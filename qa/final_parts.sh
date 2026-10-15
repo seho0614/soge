@@ -65,6 +65,8 @@ python3 srv_w5.py > srv_w5.log 2>&1; r srv_w5 "$(tail -1 srv_w5.log)"
 [ -f test_v1040.py ] && { python3 test_v1040.py > test_v1040.log 2>&1; r test_v1040 "$(tail -1 test_v1040.log)"; }
 # v10.41 — 소개장터 「많이 찾는 키워드」 칩은 시안대로(통합 검색 결과 「전체」 탭)
 [ -f test_v1041.py ] && { python3 test_v1041.py > test_v1041.log 2>&1; r test_v1041 "$(tail -1 test_v1041.log)"; }
+# v10.42 — 옛 도메인 정리(sogaebank.com · D098) · 나의공간 「소개몰」 꼬리표 · 리드관 보류 삭제
+[ -f test_v1042.py ] && { KIT=${K%/sgb} python3 test_v1042.py > test_v1042.log 2>&1; r test_v1042 "$(tail -1 test_v1042.log)"; }
 # 10/2 서버 기능 (결제·환불 · 파일 · 리드 배정 · 어댑터) — 어댑터 인스턴스(3121·3122·3123)를 띄워 실제 HTTP 로
 bash adapters_up.sh > adapters.log 2>&1
 API_TOSS=http://localhost:3121/api/v1 python3 srv_pay.py > srv_pay.log 2>&1; r srv_pay "$(tail -1 srv_pay.log)"
