@@ -1,0 +1,29 @@
+PASS 상세 view=0 은 조회 수를 올리지 않음 0->0
+PASS 공개 문의 화면 200 · 화면 번호 
+PASS 제목 「공개 문의 N건」 n=0
+PASS 단추 3 (질문 남기기 · 1:1 문의 · 매물 상세로) 
+PASS INV-2 안내 
+PASS 질문 줄 수 = 서버 0
+PASS 공개 문의 화면은 조회 수 그대로 0->0
+PASS 상세 「문의 내용」에 「전체 보기」 링크 
+PASS 없는 관은 404 404
+PASS 증빙 올릴 자리 201
+PASS 증빙 올리기 확인 READY 200
+PASS 남의 파일은 증빙으로 못 붙임(422) (422, 'IMAGE_INVALID')
+PASS 막힌 접수는 분쟁을 남기지 않음 
+PASS 분쟁 접수 + 증빙 1 (201, {'id': 'e8fa0d23-9268-46a6-9b19-340361a053dd', 'status': 'OPEN', 'evidenceCount': 1})
+PASS DB dispute_messages 에 증빙 
+PASS GET /me/disputes 처리 현황 · 증빙 수 
+PASS 운영 분쟁 목록에 증빙 이름 [{'fileId': 'e807d9cb-e1e9-41bd-b9d2-9a862a78c111', 'name': 'evidence.pdf'}]
+PASS 운영이 증빙 열기(GET /files/id) 200
+PASS 시험 분쟁 종결(보류 해제) 200
+PASS 분쟁 요약 4칸(처리 중 · 종결 · 이번 달 · 72시간) {'open': 0, 'closed': 0, 'openedThisMonth': 0, 'over72h': 0}
+PASS 분쟁 요약 — 회원은 403 
+PASS 분쟁 목록 state=all · days 
+PASS 의료 심의 반려 — 사유 없으면 400 
+PASS 의료 심의 반려 — 대기 아닌 소재 409 NOT_PENDING 
+PASS 의료 심의 반려 — 회원은 403 
+PASS buyer@x.com 은 개인 회원(MEMBER 만) 
+PASS 개인 회원이 자기 거래 분쟁 접수 → 201 (201, {'id': '7e55d08c-9a8d-4b13-bf74-907a574f4fdd', 'status': 'OPEN', 'evidenceCount': 0})
+PASS 개인 회원 · 남의 거래 → 409 NOT_A_PARTY(권한 403 아님) (409, {'code': 'NOT_A_PARTY', 'message': '이 거래의 당사자가 아닙니다.'})
+{"pass": 28, "fail": 0}

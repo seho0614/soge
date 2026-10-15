@@ -1,0 +1,57 @@
+ok   1a 주문 시 재고 차감 39->37
+ok   1b 발송 전 취소 신청 접수 (201, {'id': '8227c5fd-82a9-45f5-b6fc-1a68cfd17eef', 'kind': 'CANCEL', 'state': 'REQUESTED', 'customerOpened': None, 'createdAt': '2026-10-1
+ok   1c 운영 목록에 접수 건이 보임 200
+ok   1d 고객은 운영 목록 불가(403) 403
+ok   1e 고객은 승인 불가(403) 403
+ok   1f 상태 형식 오류 400 400
+ok   1g 반려는 사유 필수(422) (422, {'code': 'NOTE_REQUIRED', 'message': '반려하시려면 이유를 적어야 합니다 — 청약철회는 법이 준 권리라 근거가 필요합니다.'})
+ok   1h 승인 → 주문 CANCELED · restockedAt (201, {'id': '8227c5fd-82a9-45f5-b6fc-1a68cfd17eef', 'state': 'APPROVED', 'orderNo': 'H26101200003', 'orderStatus': 'CANCELED', 'restockedAt
+ok   1i 재고가 원래대로 (한 번) 39 now 39
+ok   1j 같은 신청 재승인 409 (409, {'code': 'ALREADY_DECIDED', 'message': '이미 처리된 신청입니다.'})
+ok   1k 결제 취소·재갱신에도 재고 두 번 안 돌아옴 39
+ok   1l 취소된 주문을 되살릴 수 없음(HLTO) ERROR:  HLTO: 취소·반품된 주문은 상태를 바꿀 수 없습니다 — 새로 주문해 주십시오 (H26101200003)
+CONTEXT:  PL/pgSQL function fn_hlt_order_restock() l
+ok   1m 취소된 주문 재신청 409 (409, {'code': 'ALREADY', 'message': '이미 취소·반품된 주문입니다.'})
+ok   1n 결제 취소 트리거 → 주문 취소 · 재고 복구 ('CANCELED', 39, 39)
+ok   2a 발송 전 반품 → 422 HLT_RETURN_BEFORE_SHIP (422, {'code': 'HLT_RETURN_BEFORE_SHIP', 'message': '아직 발송 전입니다. 주문 취소로 신청해 주십시오.', 'details': {'deadline': None}})
+ok   2b 모르는 사유 코드 400 400
+ok   2c 발송 후 취소 → 422 HLT_CANCEL_AFTER_SHIP (422, {'code': 'HLT_CANCEL_AFTER_SHIP', 'message': '이미 발송되어 취소할 수 없습니다. 받으신 뒤 반품으로 신청해 주십시오.', 'details': {'deadline': None}})
+ok   2d 배송 중(수령 전) 반품은 가능으로 판정 {'cancel': {'ok': False, 'code': 'HLT_CANCEL_AFTER_SHIP', 'message': '이미 발송되어 취소할 수 없습니다. 받으신 뒤 반품으로 신청해 주십시오.', 'deadline': None}, 'return'
+ok   2e 받은 지 10일 · 단순 변심 반품 → 422 HLT_WITHDRAWAL_EXPIRED (422, {'code': 'HLT_WITHDRAWAL_EXPIRED', 'message': '청약철회 기간(받으신 날부터 7일)이 지났습니다. 상품이 상했거나 다른 것이 왔거나 표시와 다르면 그 사유로 신청해 주십시오.', 'details': {'d
+ok   2f 앱을 거치지 않아도 트리거가 막음(HLTR) ERROR:  HLTR: 청약철회 기간(받으신 날부터 7일)이 지났습니다. 상품이 상했거나 다른 것이 왔거나 표시와 다르면 그 사유로 신청해 주십시오.
+CONTEXT:  PL/pgSQL function fn_hlt_
+ok   2g 주문 상세 판정: 변심 불가 · 하자 가능 {'cancel': {'ok': False, 'code': 'HLT_CANCEL_AFTER_SHIP', 'message': '이미 발송되어 취소할 수 없습니다. 받으신 뒤 반품으로 신청해 주십시오.', 'deadline': None}, 'return'
+ok   2h 하자 사유는 3개월 안이라 접수 (201, {'id': '2f0da671-861f-4cdf-9e80-d7a8e2e87fbb', 'kind': 'RETURN', 'state': 'REQUESTED', 'customerOpened': None, 'createdAt': '2026-10-1
+ok   2i 반품 승인 → RETURNED · 재고 +1 (201, {'id': '2f0da671-861f-4cdf-9e80-d7a8e2e87fbb', 'state': 'APPROVED', 'orderNo': 'H26101200005', 'orderStatus': 'RETURNED', 'restockedAt
+ok   2j 받은 지 3일 단순 변심 반품 접수 (201, {'id': '0d298a9d-c855-473f-b337-843368519c0d', 'kind': 'RETURN', 'state': 'REQUESTED', 'customerOpened': None, 'createdAt': '2026-10-1
+ok   2k 반려 → 주문 상태 유지 · 재고 그대로 (201, {'id': '0d298a9d-c855-473f-b337-843368519c0d', 'state': 'REJECTED', 'orderNo': 'H26101200006', 'orderStatus': 'DELIVERED', 'restockedA
+ok   2l 남의 주문 반품 신청 → 409 NOT_FOUND (409, {'code': 'NOT_FOUND', 'message': '없는 주문입니다.'})
+ok   3a 기본 배송지 변경 · 기본은 1개 (200, {'id': '511d95cd-6564-4b29-acc6-57f5af1677dd', 'isDefault': True, 'note': '기본 배송지로 정했습니다.'}, '1')
+ok   3b 남의 배송지 기본 지정 → 409 409
+ok   3c 남의 배송지 삭제 → 409 409
+ok   3d 진행 중 주문의 배송지 삭제 → 409 ADDRESS_IN_USE (409, {'code': 'ADDRESS_IN_USE', 'message': '진행 중인 주문이 이 배송지로 가고 있어 지울 수 없습니다. 배송이 끝난 뒤 지워 주십시오.'})
+ok   3e 지난 주문 배송지 삭제 → 소프트 삭제(행 남음) (200, {'id': 'b06494e2-edb3-4846-8268-90d006826b8f', 'deleted': True, 'newDefault': None, 'note': '지웠습니다.'})
+ok   3f 지운 배송지는 목록에 없음 2
+ok   3g 지운 배송지로 주문 불가 422 (422, {'code': 'BAD_ADDRESS', 'message': '배송지를 다시 골라 주십시오.'})
+ok   3h 기본 배송지 삭제(주문 없음) → 행 삭제 · 다른 배송지가 기본 (200, {'id': '511d95cd-6564-4b29-acc6-57f5af1677dd', 'deleted': True, 'newDefault': '92b9bdca-391c-4e20-83e7-1d6b7b41236c', 'note': '지웠습니다. 
+ok   3i 삭제 후에도 기본 1개 1
+ok   3j 형식 틀린 id → 409 NOT_FOUND 409
+ok   3k 비로그인 삭제 → 401/403 403
+ok   4a 고민 14개(시안 · D027) · 성분 있는 것만 ['IMMUNE', 'EYE', 'BONE', 'LIVER', 'MEN', 'SLEEP', 'DIET', 'GLUCOSE', 'SKIN', 'FATIGUE', 'BRAIN', 'STOMACH', 'ANTIOX', 'CIRC']
+ok   4b 고민 상세 (대소문자 무관) 성분·상품 (200, ['RED-30', 'p03'])
+ok   4c 없는 고민 409 409
+ok   4d 성분 상세 상품·고민 (200, [{'code': 'FATIGUE', 'name': '피로회복', 'icon': '🔋'}, {'code': 'CIRC', 'name': '혈행', 'icon': '🩺'}])
+ok   4d-2 잠긴 갈래에만 상품이 있는 성분(멀티비타민) — 성분은 남고 상품은 0 (200, [])
+ok   4e 부형제 상세 409 409
+ok   4f 성분 목록에 productCount · minPrice {'code': 'VITC', 'name': '비타민C', 'aliases': None, 'note': None, 'isGroup': False, 'parent': None, 'featured': True, 'sort': 10, 'needsLicens
+ok   4g ?ingredient= 필터 ['RED-30']
+ok   4h ?concern= 필터(혈행 = 오메가3 · 홍삼 → 견본 p03 · 홍삼 스틱) ['RED-30', 'p03']
+ok   4h-2 잠긴 갈래의 상품뿐인 성분(멀티비타민) — 상품 0 200
+ok   4i 목록에 categoryCode {'code': 'BIKE-01', 'name': '실내 자전거 접이식', 'price': 129000, 'stock': 30, 'reviewNo': None, 'ratingAvg': None, 'reviewCount': 0, 'withdrawal':
+ok   4j 상세에 soldOut · ingredients {'code': 'RED-30', 'name': '홍삼 농축액 스틱 30포', 'price': 45000, 'stock': 0, 'reviewNo': None, 'ratingAvg': None, 'reviewCount': 0, 'withdrawal':
+ok   4j-2 (정리) 홍삼 스틱 재고를 되돌림 ('30', '30')
+ok   4k 고민 이름에 질병명 금지(HLTK) ERROR:  HLTK: 고민 이름·설명에 "당뇨" 을(를) 쓸 수 없습니다 — 질병명·효능이 아닌 상태 표현으로 적어 주십시오
+CONTEXT:  PL/pgSQL function fn_hlt_concern_guard
+ok   INV 취소·반품 주문은 모두 재고 되돌림 기록(또는 개봉 미복구 사유 — D006) 
+ok   INV 계정당 기본 배송지 ≤1 · 지운 배송지는 기본 아님 
+통과 53 / 53

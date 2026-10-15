@@ -1,0 +1,294 @@
+소개뱅크 개발 Docker — 진짜 기반 이미지 확인 (2026-10-09 14:06:38 · 방식 fresh)
+킷 폴더: /tmp/dock_kit
+
+[1] Docker
+  통과  Docker 가 켜져 있음 — 29.4.3
+
+[2] 기반 이미지 받기 (Docker Hub)
+  건너뜀  node:22-slim 받기 (REALCHECK_SKIP_PULL=1)
+  건너뜀  postgres:16 받기 (REALCHECK_SKIP_PULL=1)
+
+[3] 진짜 이미지인가
+  실패  node:22-slim 에 공식 이미지 표지(NODE_VERSION=22.x)가 없음 — Docker Hub 의 공식 이미지가 아님(직접 만든 대체 이미지) — 없음
+  실패  postgres:16 에 공식 이미지 표지(PG_MAJOR=16)가 없음 — Docker Hub 의 공식 이미지가 아님(직접 만든 대체 이미지) — 없음
+  통과  node 버전 — v22.22.2
+  통과  PostgreSQL 버전 — postgres (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+        node:22-slim  sha256:bd5cb5ee666baa5a3b15c90e3b1adb788a8921eb71d2da0692a9e562b2a0ba36  만든 때 2026-10-01T22:22:09.933116543+09:00
+        postgres:16  sha256:1db68fb846cd07788c265246c35653e9cb848cf70681feea0a2f00f4db09151d  만든 때 2026-10-01T22:23:21.96317043+09:00
+
+[새 설치] DB 볼륨을 지우고 처음부터 합니다 — 개발 데이터(화면에서 넣은 것 포함)가 사라집니다.
+  통과  DB 볼륨을 지움 (새 설치로 확인)
+
+[4] 진짜 이미지로 다시 빌드 (몇 분 걸립니다)
+ Image dock_kit-checks Building 
+ Image dock_kit-web Building 
+ Image dock_kit-scheduler Building 
+ Image dock_kit-site Building 
+ Image dock_kit-api Building 
+ Image dock_kit-migrate Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.65kB done
+#1 DONE 0.0s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 367B done
+#2 DONE 0.0s
+
+#3 [scheduler internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.38kB done
+#3 DONE 0.0s
+
+#4 [web internal] load metadata for docker.io/library/node:22-slim
+#4 DONE 0.0s
+
+#5 [site internal] load build definition from Dockerfile
+#5 transferring dockerfile: 292B done
+#5 DONE 0.0s
+
+#6 [site internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [web internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [api internal] load .dockerignore
+#8 transferring context: 184B done
+#8 DONE 0.0s
+
+#9 [site internal] load build context
+#9 transferring context: 26.02kB 0.0s done
+#9 DONE 0.1s
+
+#10 [web internal] load build context
+#10 transferring context: 3.55kB done
+#10 DONE 0.0s
+
+#11 [migrate internal] load build context
+#11 transferring context: 103.03kB 0.1s done
+#11 DONE 0.1s
+
+#12 [site 1/5] FROM docker.io/library/node:22-slim@sha256:bd5cb5ee666baa5a3b15c90e3b1adb788a8921eb71d2da0692a9e562b2a0ba36
+#12 resolve docker.io/library/node:22-slim@sha256:bd5cb5ee666baa5a3b15c90e3b1adb788a8921eb71d2da0692a9e562b2a0ba36 0.1s done
+#12 DONE 0.1s
+
+#13 [site 3/5] COPY package.json package-lock.json* ./
+#13 CACHED
+
+#14 [site 4/5] RUN npm install --no-audit --no-fund
+#14 CACHED
+
+#15 [web 4/5] RUN npm install --no-audit --no-fund
+#15 CACHED
+
+#16 [web 3/5] COPY package.json package-lock.json* ./
+#16 CACHED
+
+#17 [web 2/5] WORKDIR /app
+#17 CACHED
+
+#18 [web 5/5] COPY . .
+#18 CACHED
+
+#19 [site 5/5] COPY . .
+#19 CACHED
+
+#20 [migrate 3/6] WORKDIR /app
+#20 CACHED
+
+#21 [migrate 4/6] COPY package.json package-lock.json ./
+#21 CACHED
+
+#22 [migrate 2/6] RUN apt-get update && apt-get install -y --no-install-recommends       postgresql-client curl ca-certificates python3  && rm -rf /var/lib/apt/lists/*
+#22 CACHED
+
+#23 [migrate 5/6] RUN npm ci --no-audit --no-fund
+#23 CACHED
+
+#24 [site] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:3dbc0891fe5620b824891ac18294007f1d5813f41ba03e433f1ee37d042847fe done
+#24 exporting config sha256:9d9d3d3d4b9afc06c9f63ad2c918dcb22ffcb33ae551d6a2f7c72452cfbf1773 done
+#24 exporting attestation manifest sha256:647dfc4839b91febf3007750bc798bd934c050345e1ac50cf70f165f62c95b61 0.0s done
+#24 exporting manifest list sha256:7ccafdd1d996cf96eaa3ca46b47314443931234ac62f45f3430ed93bfd1c8abd 0.0s done
+#24 naming to docker.io/library/dock_kit-site:latest done
+#24 unpacking to docker.io/library/dock_kit-site:latest 0.0s done
+#24 DONE 0.2s
+
+#25 [web] exporting to image
+#25 exporting layers done
+#25 exporting manifest sha256:412013661fbd30832e2ddab569b304ecfa3712a142a6a11e2948a75b1f742de6 done
+#25 exporting config sha256:d7705395708e05e134c2aaa3a0484ed1ba3781955956285e3fd873d15877fb85 done
+#25 exporting attestation manifest sha256:be6153fbbc1974d36d0b6e76e248442a8d57794dcddd352fe6e6dcd13d1df627 0.1s done
+#25 exporting manifest list sha256:185a99a1829227eed8b1270222ae8ad9e88f56f8748adeeb3d427e40c629dd53 0.0s done
+#25 naming to docker.io/library/dock_kit-web:latest done
+#25 unpacking to docker.io/library/dock_kit-web:latest 0.0s done
+#25 DONE 0.2s
+
+#26 [scheduler 6/6] COPY . .
+#26 DONE 0.3s
+
+#27 [site] resolving provenance for metadata file
+#27 DONE 0.0s
+
+#28 [web] resolving provenance for metadata file
+#28 DONE 0.0s
+
+#29 [migrate] exporting to image
+#29 exporting layers 1.4s done
+#29 exporting manifest sha256:1f3d4930be30f0fe2b935b31a8c008d0263d333fb348511b4fb2761b6fc8b308 0.0s done
+#29 exporting config sha256:5945e06719e9f94028dd325ff85a60e983947a51042a1e59f38daa5535c87173 0.0s done
+#29 exporting attestation manifest sha256:5027a6b47739173a19c41a2610e3cd73e3facbb3982ede439ee5d5480b9d0112 0.0s done
+#29 exporting manifest list sha256:7d41bb48b1cffc61c4faa00ea628b59be0622c27dbc85b376b2b449bf67bd3df 0.0s done
+#29 naming to docker.io/library/dock_kit-migrate:latest
+#29 naming to docker.io/library/dock_kit-migrate:latest done
+#29 unpacking to docker.io/library/dock_kit-migrate:latest
+#29 unpacking to docker.io/library/dock_kit-migrate:latest 0.9s done
+#29 DONE 2.4s
+
+#30 [checks] exporting to image
+#30 exporting layers 1.4s done
+#30 exporting manifest sha256:1a376edf0a40a3460e8060b12b301d2cee324145951e62dcfce1e6e6c6246cea 0.0s done
+#30 exporting config sha256:dfd41b05caa3f17a0d8a82e5ed0b7d9b5db5944c73fa0ab029470840b19c1dd2 0.0s done
+#30 exporting attestation manifest sha256:55e269fa9e35822f15fe0e263a79af94032d16026a4d0132168851cdd718b634 0.0s done
+#30 exporting manifest list sha256:c2ec0f41424ba1d0b7293c4187803fd926721887f06960c1d32f038c2e3f543b 0.0s done
+#30 naming to docker.io/library/dock_kit-checks:latest done
+#30 unpacking to docker.io/library/dock_kit-checks:latest 0.9s done
+#30 DONE 2.4s
+
+#31 [api] exporting to image
+#31 exporting layers 1.4s done
+#31 exporting manifest sha256:8c3b25cc98bac86297b6f28225be2fd3e303214e92dce0821889e95891fb32ec 0.0s done
+#31 exporting config sha256:513c6602f73e1e71e6f237f15400edc1116dbb6046c00abb688cba8a2c225217 0.0s done
+#31 exporting attestation manifest sha256:8f2a27ed892f18f7783d628b3c73f2b47e94dc17dce982875c089b88aac536e1 0.0s done
+#31 exporting manifest list sha256:3d3c69d5cd9d9685cc4976a79751f6e0d8ea48be10bd8e3868f001d0a3cab96f 0.0s done
+#31 naming to docker.io/library/dock_kit-api:latest done
+#31 unpacking to docker.io/library/dock_kit-api:latest 0.9s done
+#31 DONE 2.5s
+
+#32 [scheduler] exporting to image
+#32 exporting layers 1.4s done
+#32 exporting manifest sha256:f4a15c0570d0ebaae3b7c5b2a421a6568e6e83ae027ef5ef8aea833d8dc4614e 0.0s done
+#32 exporting config sha256:23dc2880230985d6cac3a8ac0f802b3f029d71ac878b404fc6d7aea3ac832222 0.0s done
+#32 exporting attestation manifest sha256:ea9ef5825d9ccbda36f7a02f73190b0567c590597709d46d1d16efa5a999298e 0.0s done
+#32 exporting manifest list sha256:5d6041ee8c0c330332ae895d1317463f4524b839cb8174de2a1faa83cdb51b00 0.0s done
+#32 naming to docker.io/library/dock_kit-scheduler:latest done
+#32 unpacking to docker.io/library/dock_kit-scheduler:latest 1.0s done
+#32 DONE 2.5s
+
+#33 [checks] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [migrate] resolving provenance for metadata file
+#34 DONE 0.1s
+
+#35 [api] resolving provenance for metadata file
+#35 DONE 0.1s
+
+#36 [scheduler] resolving provenance for metadata file
+#36 DONE 0.0s
+ Image dock_kit-web Built 
+ Image dock_kit-api Built 
+ Image dock_kit-checks Built 
+ Image dock_kit-migrate Built 
+ Image dock_kit-scheduler Built 
+ Image dock_kit-site Built 
+  통과  빌드 (migrate · api · scheduler · web · site · checks)
+
+[5] 기동
+ Network dock_kit_default Creating 
+ Network dock_kit_default Created 
+ Volume dock_kit_sgb-pgdata Creating 
+ Volume dock_kit_sgb-pgdata Created 
+ Container sgb-db Creating 
+ Container sgb-db Created 
+ Container sgb-migrate Creating 
+ Container sgb-ads-migrate Creating 
+ Container sgb-migrate Created 
+ Container sgb-ads-migrate Created 
+ Container sgb-api Creating 
+ Container sgb-api Created 
+ Container sgb-site Creating 
+ Container sgb-scheduler Creating 
+ Container sgb-web Creating 
+ Container sgb-site Created 
+ Container sgb-scheduler Created 
+ Container sgb-web Created 
+ Container sgb-db Starting 
+ Container sgb-db Started 
+ Container sgb-db Waiting 
+ Container sgb-db Waiting 
+ Container sgb-db Healthy 
+ Container sgb-ads-migrate Starting 
+ Container sgb-db Healthy 
+ Container sgb-migrate Starting 
+ Container sgb-migrate Started 
+ Container sgb-ads-migrate Started 
+ Container sgb-db Waiting 
+ Container sgb-migrate Waiting 
+ Container sgb-ads-migrate Waiting 
+ Container sgb-ads-migrate Exited 
+ Container sgb-db Healthy 
+ Container sgb-migrate Exited 
+ Container sgb-api Starting 
+ Container sgb-api Started 
+ Container sgb-api Waiting 
+ Container sgb-api Waiting 
+ Container sgb-api Waiting 
+ Container sgb-api Healthy 
+ Container sgb-scheduler Starting 
+ Container sgb-api Healthy 
+ Container sgb-site Starting 
+ Container sgb-api Healthy 
+ Container sgb-web Starting 
+ Container sgb-web Started 
+ Container sgb-site Started 
+ Container sgb-scheduler Started 
+  통과  docker compose up -d (준비 · API 준비 대기 포함)
+  통과  API 컨테이너 healthy — healthy
+
+[6] 마이그레이션 · 컨테이너 안 버전
+  통과  마이그레이션 적용 수 = 파일 수 — 적용 88 / 파일 88
+  통과  API 컨테이너의 node — v22.22.2
+  통과  DB 컨테이너의 PostgreSQL — postgres (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+[7] 통합 검정 컨테이너 (sgb_check — 개발 데이터를 건드리지 않습니다 · 몇 분 걸립니다)
+  안전  ⑭ 오픈 점검의 SQL 이 전부 실행됨 (「?」 0건)
+  안전  ⑮ deploy/aws 스크립트 문법 오류 0
+  안전  ⑯ Nginx 설정 — 빈 자리 0 · server 바로 아래 allow/deny 0 · location 안 deny 4
+  안전  ⑰ PowerShell 도우미 — docker 직접 호출 0 · UTF-8(BOM) · native.ps1 경유
+안전 23 · ▲위험 0
+접두어 119종 · 등록 119종
+  ok  트리거 오류가 모두 이용자에게 전달됩니다
+라우트 462건 · 보호 384 · 무표시 78
+  ok  공개 구역 외에는 전부 표시가 있습니다
+SQL 대조: 확인 920 · 통과 920 · 이름 오류 0 · 동적 SQL 건너뜀 54
+
+════ 2. 광고 플랫폼 검정 (sgb_ads) ════
+== 광고 플랫폼 검정 ==================================
+  ok   AD-01 인피드 표기 없이 불가
+  ok   AD-02 인피드 추천점수 포함 불가
+  ok   AD-03 확인 오래된 광고주 없음
+  ok   AD-04 본체에 없는 참조 없음
+  ok   AD-05 노출 기록 삭제 불가
+  ok   AD-06 판매 공백 없음
+  ok   AD-07 만료 임박 소재 없음
+  ok   AD-08 성향 표가 없음
+======================================================
+안전 8 · ▲위험 0
+
+통합 검정 — 전체 통과
+  통과  통합 검정 — 전체 통과 — 종료 코드 0
+
+[8] 주소 · 투표
+  통과  API — http://localhost:13000/api/v1/health → 200
+  통과  운영 화면 — http://localhost:15173/ → 200
+  통과  사용자 웹 메인 — http://localhost:15174/ → 200
+  통과  소개광장 투표 목록 — http://localhost:15174/community/polls → 200
+  통과  안심소개 — http://localhost:15174/mall → 200
+  통과  시안 — http://localhost:15174/proto/SGB_Prototype_v10_28.html → 200
+  통과  메인에 나가는 투표 3건(비교해요 · 궁금해요 · 써본 의견) — VS ASK USED
+
+진짜 이미지 확인 — 실패 2건 (통과 18) · 위에서 「실패」 줄을 보십시오
+결과 파일: /tmp/dock_kit/realcheck_20261009_140638.txt

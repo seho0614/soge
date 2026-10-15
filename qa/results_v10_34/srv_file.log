@@ -1,0 +1,80 @@
+ok   A-0 용도별 형식 · 크기 표 (file_policies) — 문서 PDF/JPG/PNG 10MB · 자료 MP4 50MB OWNERSHIP_DOC:application/pdf:10485760,OWNERSHIP_DOC:image/jpeg:10485760,OWNERSHIP_DOC:image/png:10485760,MARKETING_MATERIAL:application/pdf:20971520,
+ok   A-1 자리 만들기 → UPLOADING · 이름 정리(경로 · 금지문자 제거) · 저장 키에 이용자 이름 없음 (201, '등기부 _원본_.pdf', 'ownership_doc/2026/10/cc7d7884-bc0e-4567-ba20-fae70e493012.pdf')
+ok   A-2 바이트 PUT (토큰 주소) (200, {'ok': True, 'size': 2036, 'sha256': 'bc7b90eb14c18bb45604722dde4b1ce4c49ef65e8328245cc8f58a305ed43b64', 'note': '받았습니다. complete 를 부르면 확인합니다.'}
+ok   A-3 complete → READY · 서버가 계산한 해시 · 형식 (200, {'ok': True, 'fileId': 'cc7d7884-bc0e-4567-ba20-fae70e493012', 'name': '등기부 _원본_.pdf', 'purpose': 'OWNERSHIP_DOC', 'contentType': 'application/p
+ok   A-3b complete 다시 → 같은 결과 (멱등) (200, {'ok': True, 'fileId': 'cc7d7884-bc0e-4567-ba20-fae70e493012', 'name': '등기부 _원본_.pdf', 'purpose': 'OWNERSHIP_DOC', 'contentType': 'application/p
+ok   A-4 주인 열기 → 5분 주소 → 같은 바이트 · attachment · nosniff (200, 200, 'attachment; filename="___ ____.pdf"; filename*=UTF-8\'\'%EB%93%B1%EA%B8%B0%EB%B6%80%20_%EC%9B%90%EB%B3%B8_.pdf')
+ok   A-4b disposition=inline inline; filename="___ ____.pdf"; filename*=UTF-8''%EB%93%B1%EA%B8%B0%EB%B6%80%20_%EC%9B%90%EB%B3%B8_.pdf
+ok   A-5 남의 등기부 → 404(존재도 숨김) · 비로그인 → 403 · 지급 담당(PAYOUT) → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'}, 403, 404)
+ok   A-6 운영(ADMIN) · 심사(REVIEWER) 열기 OK · 감사 FILE_OPEN 2건(주소 · 토큰은 안 남김) (200, 200, 0, 2, '0')
+ok   A-7 받지 않는 형식(HTML · SVG) → 422 FILE_TYPE (422, {'code': 'FILE_TYPE', 'message': '이 형식은 받지 않습니다. PDF · JPG · PNG 파일만 올려 주십시오.', 'details': {'allowed': [{'content_type': 'application/pdf', 'max
+ok   A-8 크기 초과 → 422 FILE_TOO_LARGE (문서 10MB · 영상 50MB) (422, {'code': 'FILE_TOO_LARGE', 'message': '파일이 너무 큽니다 — PDF 는 최대 10MB 입니다.', 'details': {'maxBytes': 10485760}}, 422, {'code': 'FILE_TOO_LARGE', 'me
+ok   A-9 용도별 올리는 사람 — 회원은 마케팅자료 403 · 없는 용도 400 (403, {'code': 'FORBIDDEN', 'message': '이 용도의 파일을 올릴 권한이 없습니다.'}, 201, 400)
+ok   A-10 형식 위장(.pdf 로 HTML) → complete 422 FILE_TYPE_MISMATCH · REJECTED · 열 수 없음 (422, {'code': 'FILE_TYPE_MISMATCH', 'message': '파일 내용이 PDF 가 아닙니다 (판정: 알 수 없음). 새로 올려 주십시오.'}, 404)
+ok   A-11 밝힌 크기보다 작게 올림 → 422 FILE_SIZE_MISMATCH · REJECTED (422, {'code': 'FILE_SIZE_MISMATCH', 'message': '크기가 다릅니다 (밝힌 2136 · 실제 2036 바이트). 새로 올려 주십시오.'})
+ok   A-12 해시 불일치 → 422 FILE_HASH_MISMATCH (422, {'code': 'FILE_HASH_MISMATCH', 'message': '해시(SHA-256)가 다릅니다 — 올리는 중 바뀌었거나 다른 파일입니다. 새로 올려 주십시오.'})
+ok   A-13 밝힌 크기보다 큰 바이트(Content-Length) → 413 · 여전히 UPLOADING (413, {'code': 'FILE_TOO_LARGE', 'message': '밝힌 크기보다 큰 파일입니다.'})
+ok   A-14 chunked 로 크게 보냄 → 413(또는 연결 끊김) · 디스크에 남지 않음(complete 409 미업로드) (413, 'b\'{"code":"FILE_TOO_LARGE","message":"\\xeb\\xb0\\x9d\\xed\\x9e\\x8c \\xed\\x81\\xac\\xea\\', 409, {'code': 'FILE_NOT_UPLOADED', 'message': '아
+ok   A-15 토큰 — 변조 · get 토큰으로 PUT · 다른 파일 토큰 · 없음 → 403 FILE_TOKEN_INVALID ((403, {'code': 'FILE_TOKEN_INVALID', 'message': '주소가 올바르지 않습니다.'}), 403, 403, 403)
+ok   A-16 만료된 토큰 → 403 FILE_TOKEN_EXPIRED (403, {'code': 'FILE_TOKEN_EXPIRED', 'message': '주소가 만료되었습니다. 다시 받아 주십시오.'})
+ok   A-17 내려받기 주소 — 만료 403 · put 토큰으로 GET 403 ((403, {'code': 'FILE_TOKEN_EXPIRED', 'message': '주소가 만료되었습니다. 다시 받아 주십시오.'}), 403)
+ok   A-18 Content-Type 이 밝힌 형식과 다름 → 415 (415, {'code': 'FILE_CONTENT_TYPE', 'message': 'Content-Type 은 application/pdf 이어야 합니다.'})
+ok   A-19 남의 파일 complete → 404 · 안 올리고 complete → 409 FILE_NOT_UPLOADED (404, 409, {'code': 'FILE_NOT_UPLOADED', 'message': '아직 파일이 올라오지 않았습니다. 올린 뒤 다시 부르십시오.'})
+ok   A-20 READY 파일에 다시 PUT(바꿔치기) → 409 (409, {'code': 'FILE_STATE', 'message': '이미 READY 상태인 파일입니다. 새로 올려 주십시오.'})
+ok   A-21 경로 조작 · 없는 id /files/..%2F..%2Fetc%2Fpasswd → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   A-21 경로 조작 · 없는 id /files/%2e%2e → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   A-21 경로 조작 · 없는 id /files/00000000-0000-0000-0000-000000000000 → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   A-22 경로 조작 id 에 맞춘 토큰으로 내려받기 → 404 (디스크에 닿지 않음) (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   A-23 DB — 저장 키 경로 조작 거절 (ck_files_storage_key) ERROR:  new row for relation "files" violates check constraint "ck_files_storage_key"
+DETAIL:  Failing row contains (01a
+ok   A-24 DB — 크기 바꾸기 · READY→UPLOADING · 처음부터 READY 거절 ('ERROR:  FILE: 올린 파일의 주인 · 용도 · 형식 · 크기 · 위치는 바꿀 수 없습니다\nCONTEXT:  PL/pgSQL functi', 'ERROR:  FILE: READY 에서 UPLOADING 로 바꿀 수 없습니다\nCONTEXT:  PL/pgSQ
+ok   A-25 DB — 파일 기록 삭제 거절 (DELETED 상태로만) ERROR:  FILE: 파일 기록은 지우지 않습니다 — 상태를 DELETED 로 바꾸십시오
+CONTEXT:  PL/pgSQL function fn_files_no_delete()
+ok   A-26 올리는 중 파일 한 시간 20개 제한 → 21번째 422 ([201, 201, 422], {'code': 'FILE', 'message': '올리는 중인 파일이 너무 많습니다. 잠시 후 다시 시도해 주십시오'})
+ok   A-27 지우기 — 남의 것 404 · 내 것 DELETED · 그 뒤 열기 404 (404, 200, 404)
+ok   B-1 소유 확인을 파일로 제출 → doc_file_id · doc_key=파일 이름 (201, {'ok': True, 'id': '46eec590-1d56-49f1-bf28-f952ee1ebbc8', 'state': 'SUBMITTED', 'note': '접수했습니다. 확인이 끝나면 매물을 공개하실 수 있습니다. 보통 하루 안에 끝납니다.'}, '7d
+ok   B-2 내 소유 확인 상태에 docFileId {'ok': True, 'state': 'SUBMITTED', 'docKey': '등기사항증명서_운양동.pdf', 'docFileId': '7ddae9fb-e74e-4cd6-8d83-8dddc97473ec', 'issuedOn': '2026-10-11T15:00:00.
+ok   B-3 운영 대기 목록에 docFileId · 형식 · 크기 {'id': '46eec590-1d56-49f1-bf28-f952ee1ebbc8', 'listingId': 'fb9d1368-c5cd-4137-bd16-e8badfa74014', 'title': 'D007 시험 매물 1', 'docKey': '등기사항증명서_운양동.pd
+ok   B-4 운영 「문서 열기」 → 같은 바이트(inline) (200, 200)
+ok   B-5 남이 올린 파일로 제출 → 422 FILE (DB 트리거) (422, {'code': 'FILE', 'message': '신청자가 올린 파일이 아닙니다'})
+ok   B-6 확인 전(UPLOADING) 파일로 제출 → 422 FILE (422, {'code': 'FILE', 'message': '올리기가 끝나지 않았거나 쓸 수 없는 파일입니다 (UPLOADING)'})
+ok   B-7 거절된(REJECTED · 형식 위장) 파일로 제출 → 422 FILE (422, {'code': 'FILE', 'message': '올리기가 끝나지 않았거나 쓸 수 없는 파일입니다 (REJECTED)'})
+ok   B-8 같은 등기부 파일로 다른 매물 → 409 DUPLICATE (409, {'code': 'DUPLICATE', 'message': '이미 존재하는 값입니다.'})
+ok   B-9 파일도 이름도 없음 → 400 · fileId 형식 틀림 → 400 (400, {'code': 'VALIDATION_ERROR', 'message': 'docKey must be longer than or equal to 1 characters / docKey must be a string', 'field': 'docKey'}, 400
+ok   B-10 (호환) 이름만 제출도 그대로 됨 → doc_file_id 없음 (201, {'ok': True, 'id': '945e0141-dad5-401d-a1cd-85ace5373f51', 'state': 'SUBMITTED', 'note': '접수했습니다. 확인이 끝나면 매물을 공개하실 수 있습니다. 보통 하루 안에 끝납니다.'})
+ok   B-11 제출에 쓰인 파일 지우기 → 422 FILE (422, {'code': 'FILE', 'message': '제출 · 등록에 쓰인 파일은 지울 수 없습니다'})
+ok   B-12 제출된 등기부를 다른 회원이 열기 → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   B-13 정리 — 시험 제출 거절로 닫음 
+ok   C-1 운영 자료 등록 → 심의 대기(PENDING) · file_key=파일 이름 (201, {'ok': True, 'id': '980af066-4cc6-4f7e-ae65-92111f0a7732', 'state': 'PENDING', 'note': '심의 대기로 올렸습니다. 승인되면 파트너 자료실에 나갑니다.'})
+ok   C-2 심의 큐에 fileId · 이름 {'id': '980af066-4cc6-4f7e-ae65-92111f0a7732', 'title': 'D007 시험 배너', 'kind': 'BANNER', 'body': '가을 태양광 상담 이벤트', 'createdAt': '2026-10-11T15:56:56.749
+ok   C-3 심의 전 파트너 열기 → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   C-4 승인 후 파트너 자료실에 fileId · ACTIVE 파트너 내려받기 OK ({'id': '980af066-4cc6-4f7e-ae65-92111f0a7732', 'title': 'D007 시험 배너', 'kind': 'BANNER', 'fileKey': '가을 배너.png', 'body': '가을 태양광 상담 이벤트', 'createdAt':
+ok   C-5 파트너가 아닌 회원 → 403 PARTNER_ONLY (403, {'code': 'PARTNER_ONLY', 'message': '파트너로 승인된 계정만 내려받을 수 있습니다.'})
+ok   C-6 형식 불일치(영상에 PNG) 422 FILE · 파일 없는 배너 422 · 본문 없는 문구 422 (422, {'code': 'FILE', 'message': '영상 자료는 MP4 파일이어야 합니다'}, 422, 422)
+ok   C-7 MP4 영상 자료 등록 (201, {'ok': True, 'id': '072ded91-ec98-40e5-bea6-89530963b4bf', 'state': 'PENDING', 'note': '심의 대기로 올렸습니다. 승인되면 파트너 자료실에 나갑니다.'})
+ok   C-8 다른 용도(등기부) 파일을 자료로 → 422 FILE (422, {'code': 'FILE', 'message': '다른 용도로 올린 파일입니다 (OWNERSHIP_DOC ≠ MARKETING_MATERIAL)'})
+ok   C-9 회원이 자료 등록 → 403 (403, {'code': 'FORBIDDEN', 'message': '권한이 없습니다.'})
+ok   C-10 DB — 승인된 자료의 파일 바꿔치기 거절 ERROR:  FILE: 심의를 통과한 자료의 파일 · 문구는 바꿀 수 없습니다 — 새 자료로 올려 다시 심의받으십시오
+CONTEXT:  PL/pgSQL function fn_file_ref_material() li
+ok   C-11 자료 목록은 회원에게도 보이되(fileId 포함) 내려받기만 파트너로 제한 200
+ok   D-1 가이드 등록 → 파트너가이드에 fileId · 파트너 내려받기 (201, {'id': 'bc1d7816-0814-4f49-8a14-ee90289826e7', 'title': 'D007 시험 가이드', 'body': '링크를 만들고 공유하는 법', 'sortOrder': 1, 'fileId': 'a9111a74-c457-4b2d-b
+ok   D-2 파트너 아닌 회원 → 403 PARTNER_ONLY (403, {'code': 'PARTNER_ONLY', 'message': '파트너로 승인된 계정만 내려받을 수 있습니다.'})
+ok   D-3 다른 용도(마케팅) 파일을 가이드에 → 422 FILE (422, {'code': 'FILE', 'message': '다른 용도로 올린 파일입니다 (MARKETING_MATERIAL ≠ PARTNER_GUIDE)'})
+ok   D-4 가이드 끄기 → 목록에서 빠짐 · 첨부 404 (200, 404)
+ok   D-5 운영 가이드 전체(꺼진 것 포함) 200
+ok   D-6 회원이 가이드 등록 → 403 (403, {'code': 'FORBIDDEN', 'message': '권한이 없습니다.'})
+ok   D-7 첨부 떼기 (200, {'ok': True, 'id': 'bc1d7816-0814-4f49-8a14-ee90289826e7', 'isActive': False, 'note': '고쳤습니다.'})
+ok   S-1 S3 모드 — presigned PUT 주소 (가짜 S3 · 경로 방식 · content-length;content-type;host 서명 · 600초) (201, 'http://127.0.0.1:9022/sgb-test/ownership_doc/2026/10/b9e29f9f-c533-4fb9-83ba-74f3b522cd93.pdf?X-Amz-Algorithm=AWS4-HMAC-')
+ok   S-2 서명한 Content-Type 과 다르게 PUT → S3 가 거절(SignatureDoesNotMatch) (403, [('PUT', 'SignatureDoesNotMatch')])
+ok   S-3 서명한 크기와 다른 바이트 → S3 가 거절 (403, [('PUT', 'SignatureDoesNotMatch')])
+ok   S-4 서명 변조 → 403 403
+ok   S-5 S3 에 아직 없음 → complete 409 FILE_NOT_UPLOADED (409, {'code': 'FILE_NOT_UPLOADED', 'message': '아직 파일이 올라오지 않았습니다. 올린 뒤 다시 부르십시오.'})
+ok   S-6 presigned PUT 성공 (가짜 S3 가 서명 검증 통과) (200, [('PUT', None)])
+ok   S-7 complete — 서버가 presigned GET 으로 S3 바이트를 읽어 크기 · 해시 · 형식 확인 → READY (200, {'ok': True, 'fileId': 'b9e29f9f-c533-4fb9-83ba-74f3b522cd93', 'name': '등기부(S3).pdf', 'purpose': 'OWNERSHIP_DOC', 'contentType': 'application/pd
+ok   S-8 내려받기 presigned GET (300→3초 설정) · response-content-disposition(한글 RFC5987) · 바이트 동일 (200, 200, 'attachment; filename="___(S3).pdf"; filename*=UTF-8\'\'%EB%93%B1%EA%B8%B0%EB%B6%80%28S3%29.pdf')
+ok   S-9 만료된 presigned GET → S3 403 (Request has expired) (403, b'<?xml version="1.0"?><Error><Code>AccessDenied</Code><Message>Request has expire')
+ok   S-10 S3 모드에서도 남의 파일 → 404 (404, {'code': 'NOT_FOUND', 'message': '파일을 찾을 수 없습니다.'})
+ok   S-11 S3 형식 위장 → 422 FILE_TYPE_MISMATCH · S3 객체 삭제(presigned DELETE) (True, 422, {'code': 'FILE_TYPE_MISMATCH', 'message': '파일 내용이 PDF 가 아닙니다 (판정: 알 수 없음). 새로 올려 주십시오.'}, [('GET', None), ('DELETE', None)])
+ok   S-12 S3 모드에서는 로컬 토큰 주소를 쓰지 않음 → 404 (404, {'code': 'NOT_FOUND', 'message': '대상을 찾을 수 없습니다.'})
+ok   O-1 오프라인 시험 (AWS SigV4 공식 예시 aeeed9bb… · f4780e2d… · 자격 증명 · 경로 조작 · 매직바이트 · 토큰) 통과 45 / 45
+통과 76 / 76

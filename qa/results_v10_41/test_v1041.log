@@ -1,0 +1,7 @@
+ok   시안 — 칩을 누르면 통합 검색 결과 「전체」 탭(S.stab2 = "전체" · go("src")) — if (t.hasAttribute("data-mny-kw")) {         e.preventDefault();         S.q = S.kw = t.getAttribute("data-mny-kw"); S.stab2 = "전체"; go("src");         return; 
+ok   시안 — 검색 부분(SPOP · 결과 화면)은 바탕 v10.39 그대로 — 
+ok   칩 주소 — 모두 /search?q=그 말 (관 조건 없음 = 전체 탭) — 5개 /search?q=%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4 /search?q=%EC%86%8C%EA%B0%9C /search?q=%EC%84%A4%EB%B9%84
+ok   칩 「인테리어」을 누르면 통합 검색 결과 · 「전체」 탭이 켜짐 — /search?q=인테리어 · 켜진 탭 ALL
+ok   결과 화면 — 「‘…’ 검색 결과」 머리 · 오류 화면 아님 — 
+ok   쪽 스크립트 오류 없음 — 
+통과 6 / 6

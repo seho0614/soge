@@ -1,0 +1,18 @@
+ok   AUD-1 감사 쪽에 감사 기록 표가 붙어 있지 않음 · 보관 표 · 임계 칸 감사
+ok   AUD-2 「기록 보기」 → #/gov-audit/logs · 제목 감사 기록 #/gov-audit/logs
+ok   AUD-3 행위로 찾기 3
+ok   AUD-4 「← 감사 징후」 → 감사 #/gov-audit/signals
+ok   AUD-5 「징후 확인」 → 판단 칸(징후 고르기) 
+ok   PTN-1 목록 카드 20곳씩 · 더 보기(20곳 넘을 때만) (16, 16)
+ok   PTN-2 상세 따로 열림(목록 없음) · 계약 · 서류 #/partners/detail/87aff6c2-f6cb-4244-bd1e-191e50255ed8
+ok   PTN-3 「← 파트너사 목록」 
+ok   PTN-4 뒤로 가기 → 목록 #/partners/list
+ok   SIT-1 1단계 → 다음 → 2단계(코드 · 이름) · 소개 대상 유지 
+ok   SIT-2 ← 이전 → 1단계(고른 것 유지) 
+ok   HPR-1 한 쪽에 상품 · 고치기(읽기) · 변경 기록 · 성분 · 갈래 
+ok   HPR-2 「고치기」 → 입력 화면(같은 상품) BIKE-01
+ok   HPR-3 「갈래 · 판매 범위」 칩 → 같은 쪽 그 구역으로 92.40625
+ok   SEG-1 대상 보기 → #/ai-ops/segments-preview · 제목 옮길 대상 미리보기
+ok   SEG-2 ← 성향 학습 · 제목 AI 운영 AI 운영
+ok   JS 오류 없음 []
+통과 17 / 17

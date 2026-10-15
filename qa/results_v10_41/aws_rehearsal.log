@@ -1,0 +1,52 @@
+ok   A-1 https 메인 200 200
+ok   A-2 메인이 실제 자료 판 — 「디자인 예시입니다」 문구 없음 
+ok   A-3 https 소개광장 투표 화면 200 200
+ok   A-4 사이트를 거친 API 상태 {'status': 'ok', 'db': True, 'time': '2026-10-14T06:57:54.113Z'}
+ok   A-5 운영 화면 주소의 API {'status': 'ok', 'db': True, 'time': '2026-10-14T06:57:54.131Z'}
+ok   A-6 운영 화면(빌드한 파일)이 Nginx 로 나옴 200
+ok   A-7 운영 화면의 깊은 주소도 index.html 로 200
+ok   A-8 API 문서(/docs)는 운영 서버에 없음 404
+ok   A-9 시안 주소 200
+ok   B-1 가입 화면(5단계) — 발행 약관이 있으면 약관마다 동의 칸 · 없으면 「약관 준비 중입니다」 발행 약관 2 · 동의 칸 2 · 약관 단계 1
+ok   B-2 가입됨 (운영 DB 에 계정 1건) 1 · 지금 주소 https://sogaebaenk.co.kr/signup/done?t=PERSONAL
+ok   B-3 로그인 쿠키가 심김 — Secure · HttpOnly {'sgb_visitor': (False, False), 'sgb_at': (True, True), 'sgb_rt': (True, True)}
+ok   B-4 브라우저의 로그인 필요 호출이 통함 (사이트가 토큰을 붙여 넘김) 200
+ok   B-5 http 주소에서는 로그인이 유지되지 않음 (그래서 https 가 먼저입니다) 쿠키 [] · me 403
+ok   B-6 https 에서 다시 로그인 — 유지됨 200
+ok   B-7 인증서 전에 미리 보기 — http://localhost(SSH 터널과 같은 조건)에서는 로그인이 유지됨 200
+ok   C-1 올린 직후에는 투표 0건 — 메인 카드 3장은 「준비 중」 polls 0 · 카드 0
+ok   C-2 seed-polls.sql — 확정한 질문 3건이 메인에 ['VS:로봇청소기를 산다면, 어느 쪽을 고르시겠어요?', 'ASK:소개받아 살 때 가장 먼저 보는 것은?', 'USED:공기청정기를 써 보신 분들의 의견을 들려주세요!']
+ok   C-3 한 번 더 돌려도 그대로 3건 3
+ok   C-4 메인에 카드 3장 3
+ok   C-5 카드 그림이 깨지지 않음 [['/home/d/sec-poll.png', 29], ['/home/d/vs-a.png', 82], ['/home/d/vs-b.png', 78], ['/home/d/poll-bags.png', 82]]
+ok   D-1 SUPER 부여 (SQL 한 줄) 
+ok   D-2 운영 화면 로그인 18
+ok   D-3 투표 만들기 (준비 중으로 저장) e6f115cd-51cf-4f8a-aacd-d986082c2ba2
+ok   D-4 열기 
+ok   D-5 사용자 웹 투표 목록에 나옴 
+ok   D-6 감사 기록이 남음 (POLL_CREATE) 
+ok   D-7 「법정 고지」 — 사회관계망 주소 입력 칸 4개 4
+ok   E-1 메인 카드에서 비로그인 투표 비교해요 로봇청소기를 산다면, 어느 쪽을 고르시겠어요? 흡입력 우선 100% · 1표 VS 가성비 우선 0% · 0표 투표했습니다 1명 참여  투표했습니다. 고맙습니다.
+ok   E-2 새로 열어도 내 표가 유지됨 
+ok   E-3 지어낸 X-Forwarded-For 로 하루 한도(5표)를 못 피함 — Nginx 가 실제 접속 IP 로 덮어씀 5표까지 받고 그다음 (422, 'POLL_IP_LIMIT') · 기록된 IP 종류 1
+ok   E-4 한도에 걸린 뒤에는 방문자 키를 지어내도 같음 (422, {'code': 'POLL_IP_LIMIT', 'message': '같은 인터넷 주소에서 오늘 넣을 수 있는 표 수(5건)를 넘었습니다 — 로그인하면 투표할 수 있습니다'})
+ok   F-1 Origin 이 다른 사이트면 403 CSRF (403, {'code': 'CSRF', 'message': '다른 사이트에서 온 요청은 받지 않습니다.'})
+ok   F-2 우리 주소(https)의 Origin 은 출처 검사를 통과 (그 뒤 한도에 걸림) — HTTPS 를 Nginx 에서 끊어도 같은 출처로 봄 (422, 'POLL_IP_LIMIT')
+ok   G-1 올리기 → 확정 → 내려받기 {'step': 'done', 'complete': 200, 'state': 'READY', 'get': 200, 'url': '/api/v1/files/a5ef2dab-73ed-4aa3-bf97-5db1ca116513/content?t=1791961412.BK9ysl__8tWQj3H4IXu1VdLsUjpzNAwDVlYKo22s64Y', 'bytes': 1
+ok   G-2 파일이 앱 폴더 밖(~/sgb-data/uploads)에 저장됨 — 판을 바꿔도 남음 sgb-data/uploads 파일 1개 · 앱 폴더 안 uploads 0
+ok   H-1 정의에 없는 항목이 섞이면 400 (개발 서버는 조용히 버림) (400, {'code': 'VALIDATION_ERROR', 'message': 'property remember should not exist', 'field': 'property'})
+ok   H-2 정의대로 보내면 로그인 201/200 201
+ok   H-3 운영(production)에서는 알림톡 연동 전 상담 신청을 받지 않음 · 응답에 인증번호 없음 (422, {'code': 'NOTIFY_NOT_READY', 'message': '인증번호 발송 준비 중이라 지금은 상담 신청을 받지 않습니다.'})
+ok   I-1 운영 DB 에는 시험용 업체 · 사무소가 없음 — 상담 업종 22종 · 받는 업종 0 · 「(시험)」 서비스 0 · 게재 0 (apply.sh 는 시드를 부르지 않음) (200, 22, [])
+ok   I-2 새 길 GET /consult/categories/{code} — 이사짐 200(인증업체 0 · 받는 지역 없음 · 진행 규칙) · 없는 업종 404 (200, {'id': '6dec6132-9a0e-4471-8425-e962e1d76429', 'code': 'CSL_MOVING', 'name': '이사짐', 'status': 'APPROVED', 'publishMode': 'GATED', 'consultMode': 'LEAD', 'partnerCount': 0, 'regions': [], 'rules'
+ok   I-3 업종 상세 쪽 — 200 · 받을 업체가 없어 「준비 중」(막힌 단추) · 신청서로 가는 단추 없음 200
+ok   I-4 신청서 쪽(…/apply) — 200 · 신청서 없이 「아직 받지 않습니다」 안내 200
+ok   I-5 법률 사무소 쪽 — 200 · 게재 중인 사무소 없음(시험용 사무소가 들어가지 않음) 200
+ok   J-1 관 이름이 「소개몰」(D024) · 검색 사전에 옛 이름 → 소개몰 (200, '소개몰')
+ok   J-2 새 길 GET /health/categories — 건강기능식품 잠금 · 의료기기 미판매(D025) · 그 갈래에 판매 중 상품 0 · 청약철회 규칙 이름 「건강기기」 (200, {'HLT_FOOD': 'OPEN', 'HLT_COSMETIC': 'OPEN', 'HLT_FUNC': 'LOCKED', 'HLT_MEDDEV': 'NOT_SOLD'})
+ok   J-3 판매 약관(HLT_SALE · DRAFT 1.0) — 「배송비는 받지 않습니다」 · 옛 이름 없음 · 시안의 이용안내에 실은 글과 같음(9/30 서버에서 올려도 개발 DB 와 같은 글이 됨 — 발행 전인 초안은 본문만 고쳐짐) ('DRAFT 1.0', 1909, 1917)
+ok   J-4 소개몰 메인 — 200 · 사진 띠(제시 디자인) · 머리줄 메뉴 「소개몰」 · 그림이 모두 뜸(Nginx → 사용자 웹) (200, ['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내'], [19, 0])
+ok   J-5 이용안내 — 「배송비는 받지 않습니다(전 상품 무료)」 · 의료기기 「현재 판매하지 않습니다」 · 건강기능식품 준비 중 · 판매 약관은 발행됐으면 전문, 발행 전이면 「아직 발행되지 않았습니다」(DRAFT 1.0) (200, 'DRAFT 1.0')
+ok   J-6 잠긴 갈래(건강기능식품) 주소 — 200 · 「준비 중」 안내 · 상품 카드 없음 200
+ok   J-7 없는 주소 — 404 · 한글 화면(「없는 주소입니다」 · 「홈으로」) 404
+통과 51 / 51

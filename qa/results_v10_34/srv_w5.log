@@ -1,0 +1,80 @@
+ok   1-1 로그인 없이 GET /partner/cash → 403 UNAUTHENTICATED(기존 규약) 403
+ok   1-2 파트너 아님(MEMBER) → 409 NOT_PARTNER (409, {'code': 'NOT_PARTNER', 'message': '파트너가 아닙니다.'})
+ok   1-3 파트너 — 총 잔액 · 유상 · 보너스 · 자동 청구 · 한도 · 사용 내역 · 범위 안내 ['mode', 'total', 'paid', 'bonus', 'bonusRate', 'grade', 'canMoney', 'auto']
+ok   1-4 최소 금액 미만 → 422 CHARGE_TOO_SMALL (422, {'code': 'CHARGE_TOO_SMALL', 'message': '한 번에 10,000원 이상 충전합니다.'})
+ok   1-5 최대 금액 초과 → 422 CHARGE_TOO_LARGE (422, {'code': 'CHARGE_TOO_LARGE', 'message': '한 번에 2,000,000원까지 충전합니다.'})
+ok   1-6 원 단위 아님 → 400 400
+ok   1-7 충전 → 승인(스텁) → 유상 +50,000 · 보너스 +등급 할인 (201, {'ok': True, 'state': 'DONE', 'already': False, 'stub': True, 'total': 417000, 'paid': 350000, 'bonus': 67000, 'note': '충전되었습니다(시험 결제 — 실제 돈은 오가지 않았습니다).'
+ok   1-8 같은 주문 두 번 승인 → 한 번만(already) (201, {'ok': True, 'already': True, 'state': 'DONE', 'note': '이미 충전되었습니다.'})
+ok   1-9 남의 충전 주문 승인 → 404 (404, {'code': 'NOT_FOUND', 'message': '충전 주문이 없습니다.'})
+ok   1-10 금액이 다른 승인 → 422 AMOUNT_MISMATCH (422, {'code': 'AMOUNT_MISMATCH', 'message': '결제 금액이 주문 금액과 다릅니다.'})
+ok   1-11 유상 잔액보다 큰 환불 → 422(보너스는 환불 안 함) (422, {'code': 'LEADCASH', 'message': '환불할 수 있는 유상 잔액은 350,000원입니다 — 등급 할인(보너스) 잔액은 환불하지 않습니다'})
+ok   1-12 환불 10,000 → 결제 취소(스텁) · 그 충전 보너스 회수 (201, {'ok': True, 'id': '9ec75f8c-dc27-482c-ba92-ec5613828373', 'state': 'DONE', 'refunded': 10000, 'clawback': 2000, 'paid': 340000, 'bonus': 65000, 'note': '
+ok   1-13 자동 청구 — 충전 금액이 최소보다 작음 → 422 (422, {'code': 'BAD_AUTO', 'message': '충전 금액은 10,000원 ~ 2,000,000원입니다.'})
+ok   1-14 자동 청구 끄기 (200, {'ok': True, 'on': False, 'engine': False, 'note': '자동 청구를 껐습니다.'})
+ok   1-15 운영 잔액 목록 — 파트너 → 403 403
+ok   1-16 운영 잔액 목록(ADMIN) — 합계 · 불변식 0 (200, {'ok': True, 'items': []}, {'paid': 1940000, 'bonus': 271000})
+ok   1-17 운영 원장(SUPER) — 거래마다 줄(차변 · 대변) 8
+ok   1-18 조정 — 잔액 아래로 감액 → 422 (422, {'code': 'LEADCASH', 'message': '줄일 수 있는 금액은 65,000원까지입니다.'})
+ok   1-19 조정(+1,000 보너스) — 원장 ADJUST (201, {'ok': True, 'entryId': 89, 'wallet': {'paid': 340000, 'bonus': 66000, 'autoOn': False, 'autoBelow': None, 'autoAmount': None, 'autoFailedAt': None, 'auto
+ok   1-20 DB: 원장 줄은 고칠 수 없음 ERROR:  LEADCASH: 원장은 고치거나 지울 수 없습니다 — 바로잡기는 반대 기입(ADJUST)으로 하십시오
+CONTEXT:  PL/pgSQL function fn_lea
+ok   1-21 DB: 지갑 잔액은 0 아래로 못 감(CHECK) ERROR:  new row for relation "lead_cash_wallets" violates check constraint "lead_cash_wallets_paid_b
+ok   2-1 등급 입력 — 파트너 → 403 403
+ok   2-2 등급 — 알림톡 대역 밖(미응답에 A+) → 422 LEADGRADE (422, {'code': 'LEADGRADE', 'message': 'A+ 등급은 알림톡 「확정」 결과에만 붙습니다'})
+ok   2-3 등급 A+ · 알림톡 확정 (201, {'id': 'a278c37c-04ec-4e3c-a279-fc1724ec9d3e', 'grade': 'A', 'gradeLabel': 'A+', 'alimState': 'CONFIRMED'})
+ok   2-4 목록에 등급 배지 · 알림톡 · 예상 확인비용 = 기준 × 85% ('A+', 2550, 3000)
+ok   2-5 열람 → 잔액에서 확인비용 차감(보너스 먼저) (201, 2550, {'bonus': 2550, 'paid': 0}, 406000, 403450)
+ok   2-6 메모 남기기 (201, {'id': 1, 'body': '오전 통화 · 견적 재요청', 'createdAt': '2026-10-11T15:54:41.426Z'})
+ok   2-7 메모에 전화번호 → 422 LEADMEMO (422, {'code': 'LEADMEMO', 'message': '메모에 전화번호 · 이메일을 적지 마십시오 — 연락처는 보관 기한이 지나면 파기됩니다'})
+ok   2-8 남의 배정에 메모 → 422(받은 리드가 아님) (422, {'code': 'LEADMEMO', 'message': '받은 리드가 아닙니다'})
+ok   2-9 반려 한도(이번 달 · 15%) · 내역 {'month': '2026-10', 'received': 2, 'used': 0, 'cap': 1}
+ok   2-10 잔액 0 → 열람 막힘 422 LEADCASH · 열람 기록도 남지 않음 (422, {'code': 'LEADCASH', 'message': '리드 이용료 잔액이 없습니다 — 「리드 이용료」에서 충전하신 뒤 여십시오.'})
+ok   2-11 충전 뒤 열람 → 됨 (201, {'summary': '[W5 시험 d688e4] 잔액 없음', 'sido': '서울', 'sigungu': '금천구', 'fee': 3000, 'viewedAt': '2026-10-11T15:54:41.665Z', 'parts': {'bonus': 2000, 'paid': 
+ok   3-1 위자드 정의 — 등록 방식 6종 · 매트릭스 축(이사짐 4×6) · 등급 비율 (6, '이사짐')
+ok   3-2 위자드 등록 → 검수 대기 · 등록 방식 MATRIX (201, {'id': '2a9cc1c5-3279-4c48-a21f-dd82d638f243', 'status': 'IN_REVIEW', 'formType': 'MATRIX', 'note': '검수를 거쳐 승인됩니다. 승인 전에는 리드가 오지 않습니다.'})
+ok   3-3 소개비율 범위 밖(20%) → 400 400
+ok   3-4 남의 서비스 상세 → 404 404
+ok   3-5 남의 서비스 수정 → 404 404
+ok   3-6 확인비용만 바꿈 → 노출 그대로(APPROVED) (200, {'id': '2a9cc1c5-3279-4c48-a21f-dd82d638f243', 'status': 'APPROVED', 'updatedAt': '2026-10-11T15:54:41.718Z', 'reReview': False, 'note': '저장했습니다.'})
+ok   3-7 내용 수정 → 재검수(IN_REVIEW) (200, {'id': '2a9cc1c5-3279-4c48-a21f-dd82d638f243', 'status': 'IN_REVIEW', 'updatedAt': '2026-10-11T15:54:41.725Z', 'reReview': True, 'note': '고친 내용은 재검수 대상입니다
+ok   3-8 노출 중단 → 재개 (201, 201)
+ok   3-9 블록에 전화번호 → 422 (422, {'code': 'BLOCK_PHONE', 'message': '상세페이지에 전화번호를 적지 마십시오 — 연락은 상담 신청으로 받습니다.'})
+ok   3-10 없는 블록 → 422 422
+ok   3-11 업종에 없는 구간 → 422 (422, {'code': 'SERVICE', 'message': '이 업종의 견적 구간이 아닙니다(NOPE × R1)'})
+ok   3-12 상세 — 블록 6 · 매트릭스 · 처리 이력(검수 · 승인 · 수정 · 중단 · 재개) ['RESUME', 'SUSPEND', 'APPROVE', 'EDIT', 'APPROVE', 'SUBMIT']
+ok   3-13 단가 — 단가 폼 · 구간(4×6) · 내 단가 = 최고 확인비용 {'categoryId': '239dbdfe-d623-420e-8b0c-1c00986cf2a8', 'categoryName': '이사짐', 'gwanCode': 'MAL', 'formType': 'MATRIX', 'rows': 4, 'cols': 6, 'baseFee': 3000, 'b
+ok   3-14 결함: 상담 업종 「단가 미정」 0(기준가가 비어 있는 행 없음) []
+ok   3-15 소개비 보상표 — 성사 % · 재소개 보너스 23
+ok   4-1 연락처를 열지 않은 건 이행 보고 → 422 (422, {'code': 'FULFILL', 'message': '연락처를 연(확인비용을 낸) 건만 이행을 보고할 수 있습니다'})
+ok   4-2 이행 보고 → 고객 확인 대기 (201, {'id': '9c72d079-832a-4ea3-bb49-b1119fb89ffe', 'consumerState': 'WAITING', 'note': '보고했습니다. 소비자가 확인하면 성사로 잡힙니다.'})
+ok   4-3 신청자가 아닌 회원의 확인 → 409 (409, {'code': 'NOT_WAITING', 'message': '확인할 이행 보고가 아닙니다(이미 확인했거나 내 상담이 아닙니다).'})
+ok   4-4 신청자(buyer)의 이행 보고 목록 1
+ok   4-5 신청자 확인 → 성사(CONFIRMED) (201, {'ok': True, 'state': 'CONFIRMED'})
+ok   4-6 한 번만 확인 409
+ok   4-7 실적 — 성사 · 성사율 · 8등급 분포(A+ 1건 이상) (1, 50)
+ok   4-8 신뢰 배지 4종(조건이 만듦) ['누적 성사 500건 이상:미달', '평점 4.5 이상:달성', '3개월 무분쟁:기간 미달', '자격증 제출:달성']
+ok   5-1 회사 · 계정 — 사업자 정보 · 계정 · 약관(파트너 이용약관 포함) · 회사 관리 ['HLT_SALE', 'PARTNER', 'MARKETING_NIGHT']
+ok   5-2 사업자 정보 변경 요청 접수 (201, {'id': '0fa70568-cc75-4e0f-9042-1d2a0f631ed9', 'state': 'REQUESTED', 'createdAt': '2026-10-11T15:54:41.938Z', 'note': '변경 요청을 접수했습니다 — 승인은 본사가 합니다. 승인되면 사
+ok   5-3 운영 승인 → 사업자 정보에 바로 반영 (201, {'id': '0fa70568-cc75-4e0f-9042-1d2a0f631ed9', 'state': 'APPROVED', 'businessId': 'aaaaaaaa-0000-4000-a000-000000000001'})
+ok   5-4 가입 안 한 이메일 초대 → 422 NO_ACCOUNT (422, {'code': 'NO_ACCOUNT', 'message': '그 이메일로 가입한 회원이 없습니다 — 먼저 소개뱅크에 가입하도록 알려 주십시오.'})
+ok   5-5 파트너 아님 → 409 · (이웃 파트너 대표는 초대 가능) (201, 409)
+ok   5-6 전용 트랙 3탭 자료 {'repair': 0, 'car': 0, 'catalog': 0}
+ok   5-7 연락처를 열지 않은 요청에 견적 → 422 (422, {'code': 'TRACK', 'message': '연락처를 연(확인비용을 낸) 요청에만 견적을 보낼 수 있습니다'})
+ok   5-8 카탈로그 품목 등록 (201, {'ok': True, 'id': '9d13904c-eff9-4788-8160-f8be6aca92ff', 'state': 'LISTED'})
+ok   5-9 알림 모두 읽음 (201, {'ok': True, 'read': 4})
+ok   5-10 정산 — 성사 정산(payouts) · 수령 계좌 · 세금계산서 · 옛 필드 ['unpaid', 'billed', 'voided', 'unpaidCount', 'unpaidCap', 'months', 'payouts', 'account', 'invoices', 'payoutDay', 'note']
+ok   5-11 결함: 정산 기간 역전 0 (시작 ≤ 끝) 
+ok   5-12 파트너 홈 — 오늘 상담 · 이번 달 이용료 · 정산 예정 · 업체 카드 {'manager': '소개자', 'mainCategory': '이사짐', 'categoryCount': 20, 'form': 'CONSULT', 'regionNames': ['서울 2곳']}
+ok   6-1 제휴 대시보드 — 오늘 · 어제 · 소개 고객 · 등급 · 정산 예정일 · 알림 · 이름 · 피드 {'payoutDate': '2026-11-10', 'displayName': '소OO'}
+ok   6-2 피드에 다른 회원 이름 없음(시 · 도 · 상품 · 금액만) []
+ok   6-3 추천상품에 표지 · 사진 칸 2
+ok   6-4 정산 기간 역전 → 422 (422, {'code': 'BAD_PERIOD', 'message': '정산 기간의 끝이 시작보다 앞입니다.'})
+ok   6-5 끝나지 않은 기간 → 422 (422, {'code': 'BAD_PERIOD', 'message': '끝나지 않은 기간(오늘 이후)은 정산하지 않습니다 — 어제까지로 정하십시오.'})
+ok   6-6 DB: 기간 역전 줄 → CHECK 거절 ERROR:  new row for relation "partner_settlements" violates check constraint "ck_pstl_period"
+DETAIL
+ok   7-1 끝나지 않은 달 세금계산서 요청 → 422 (422, {'code': 'LEADCASH', 'message': '끝나지 않은 달(2026-10)은 만들 수 없습니다'})
+ok   7-2 규칙(등급 할인 · 등급 기준 · 배지) 200
+ok   7-3 운영 API — 회원 → 403 403
+ok   7-4 원장 불변식 0 (끝) 
+통과 77 / 77

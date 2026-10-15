@@ -1,0 +1,46 @@
+ok   A-1 사용자 웹의 /api 넘김 → API (GET {사용자 웹}/api/v1/health = API 의 응답 · db: true) | (200, {'status': 'ok', 'db': True, 'time': '2026-10-14T02:25:28.902Z'})
+ok   A-2 운영 화면의 /api 넘김 → API (GET {운영 화면}/api/v1/health · db: true) | (200, {'status': 'ok', 'db': True, 'time': '2026-10-14T02:25:28.906Z'})
+ok   A-3 사용자 웹의 서버 쪽 조회 → API → DB (매물 상세 쪽에 DB 의 그 제목이 그려짐) | (200, '상세시험 사무실 인테리어 소개 f7ce37')
+ok   A-3b 같은 매물을 API 로 읽어도 같은 제목 | 200
+ok   A-4 소개몰 상품 상세 — DB 의 이름 · 값이 화면에 그려짐 | (200, ['BELL-30', '도라지 배즙 100ml×30', '28000'])
+ok   A-5 사용자 웹 로그인(서버 액션 → API /auth/login) → 쿠키가 심김 · 스크립트가 못 읽는 쿠키(httpOnly) | (['sgb_at', 'sgb_rt', 'sgb_tc', 'sgb_visitor'], '/money')
+ok   A-6 브라우저 → 사용자 웹 /api 넘김 → API (쿠키만으로 내 요약 200 · 그 계정의 id) | 200
+ok   A-6b 쿠키 없이는 거절(401 · 403) | 403
+ok   A-7 로그인한 화면이 DB 의 내 주문을 그림(내 주문 쪽에 DB 의 최근 주문 번호) | H26101400620
+ok   A-8 운영 화면 로그인 → API → 묶음 18개 · 탭 48개가 열림 · 실패한 API 응답 0 | (23, [])
+ok   A-9 운영 화면 「외부 연동」이 DB 의 7건을 모두 그림 | []
+ok   A-10 화면 코드가 부르는 API 주소가 모두 서버에 있음 — 사용자 웹 274종 · 운영 화면 238종 · 없는 주소 0 | {}
+ok   A-12 운영 화면의 쓰기 요청이 모두 로그인 토큰을 붙이는 공용 함수(api)를 거침 — 직접 fetch() 로 보내는 곳 0(G-178) | []
+ok   A-12b (사실 기록) 토큰 없는 운영 쓰기 요청은 서버가 거절(403) — 그래서 위 화면의 단추는 눌러도 처리되지 않음 | 403
+ok   A-11 API 640개 가운데 화면 코드와 이어진 것 522개 · 정적 대조로 못 이은 118개의 갈래 | {'운영 화면(조립한 주소)': 42, '화면 없음(API 만)': 21, '사용자 웹(서버 쪽 호출 · 조립한 주소)': 51, '서버끼리(스케줄러 · 웹훅 · 내부 키)': 4}
+ok   B-1 사용자 웹이 내주는 시안(/proto/SGB_Prototype_v10_41.html)이 킷의 시안 3벌과 같은 파일 | (200, 8492279, {'킷 맨 위': '6b87a4f1db1a9d5a', 'spec/proto.html': '6b87a4f1db1a9d5a', 'site/public/proto': '6b87a4f1db1a9d5a'})
+ok   B-2 (참고) 시안 ↔ 서버 대조 묶음 srv_proto — 통과 33 / 33 | 
+ok   C-1 예약 작업 실행 주소는 토큰 없이 · 틀린 토큰으로 403 | (403, 403)
+ok   C-2 맞는 토큰(X-Job-Token)이면 실행 — 곧바로 한 번 더 불러도 안전(같은 시간대 작업은 한 번만) | (201, '{"ran": ["notify_dispatch", "subscription_billing", "sla_alert", "expire_badges", "risk_scan", "k_alert", "deal_auto_con', 201, '{"ran": [], "skipped": []}')
+ok   C-3 스케줄러(scripts/scheduler-daemon.js)가 부르는 주소 · 머리말이 그 API 와 같음 | 
+ok   C-4 광고 서버용 내부 API 는 키 없이 · 틀린 키로 403(회원 사업자 명부를 긁지 못하게) | (403, 403)
+ok   C-5 맞는 내부 키(X-Internal-Key)면 사업자 실재 · 성향 조회 200 | (200, {'exists': True, 'name': '시험판매사', 'active': True}, 200)
+ok   C-6 광고 서버(sgb-ads)의 호출 코드가 본체와 같은 주소 · 같은 머리말(X-Internal-Key)을 씀(G-175) | {'광고 서버가 보내는 머리말': ['X-Internal-Key'], '본체가 읽는 머리말': 'x-internal-key'}
+ok   C-7 본체 서버는 광고 DB(sgb_ads)에 직접 붙지 않음(접속 문자열 없음 — 광고 쪽이 본체에 물어봄) | 
+ok   C-8 광고 노출 기록(POST /ads/:id/impression) → ad_events 에 한 줄 | (201, 9757, 9758, '{"ok": true, "slot": "HERO"}')
+ok   C-9 조회 80건을 40개씩 동시에 — 모두 200(DB 연결 풀이 버팀 · 0.5초) | {200: 80}
+ok   C-10 API 는 다른 출처의 브라우저 호출을 허용하지 않음(CORS 허용 머리말 없음 — 화면은 같은 출처의 /api 넘김으로만 부름) | []
+ok   D-1 외부 연동 상태 — DB 9건 = 운영 API(GET /admin/integrations) 9건 · 상태 값이 같음 | [('NTS', 'TESTING'), ('PG', 'TESTING'), ('PASS', 'NOT_STARTED'), ('BANK', 'NOT_STARTED'), ('ALIMTALK', 'NOT_STARTED'), ('SAFENUM', 'NOT_STARTED'), ('ESIGN', 'NOT_STARTED'), ('BROKER', 'NOT_STARTED'), ('ETAX', 'NOT_STARTE
+ok   D-2 연동 상태는 운영자만(일반 회원 403) | 403
+ok   D-3 연동 표의 키 이름(운영 화면 「외부 연동」에 보이는 이름) = 서버 코드가 읽는 환경 변수 이름 — 어댑터가 있는 연동 모두(G-174) | [('NTS', 'NTS_SERVICE_KEY'), ('PG', 'TOSS_SECRET_KEY'), ('PASS', 'PASS_API_KEY'), ('BANK', 'BANK_VERIFY_KEY'), ('ALIMTALK', 'ALIMTALK_KEY'), ('SAFENUM', 'SAFENUM_KEY'), ('ESIGN', 'ESIGN_API_KEY'), ('BROKER', 'BROKER_LOOK
+ok   D-4 (사실 기록) 어댑터 코드가 아직 없는 연동 — 상태가 모두 「미착수」 | ['ALIMTALK', 'SAFENUM']
+ok   D-5 본인인증 — 키(PASS_API_KEY)가 없는 지금은 「시험(stub)」 표식이 응답에 실림 | (201, {'success': True, 'stub': True, 'verifiedAt': '2026-10-14T02:25:42.638Z'})
+ok   D-6 결제 — 키(TOSS_SECRET_KEY)가 없는 지금은 「시험 결제(paymentStub)」 표식이 응답에 실림(GET /me/referral-codes/quota) | (200, True)
+ok   D-7 알림톡 — 연동 전(미착수)에는 상담 신청의 인증번호를 문자로 보내지 못함 → 개발 환경에서만 응답에 실어 주고, 그 밖의 환경은 접수를 받지 않음(코드가 integrations.ALIMTALK 를 읽음) | NOT_STARTED
+ok   D-8 전자계약 — 키(ESIGN_API_KEY)가 없으면 stub 표식을 싣는 코드 경로 | 
+ok   D-9 (사실 기록) 050 안심번호 — 서버에 호출 코드가 없음(도입 여부 미결 · 상태 「미착수」) | 
+ok   D-10 (사실 기록) 「키 등록됨」으로 표시된 연동 — 이 표시는 운영자가 손으로 켜는 값이며 서버가 환경 변수를 보고 정하지 않음(이 개발 환경에는 그 키가 없음) | {'표시 켜짐': ['NTS'], '이 환경의 키': []}
+ok   E-1 간주 모드 4종(assume.payment · assume.broker · assume.bank · assume.etax — v10.34 전자세금계산서)이 지금 모두 켜짐(개발 기본값) | {'assume.payment': 'on', 'assume.broker': 'on', 'assume.bank': 'on', 'assume.etax': 'on'}
+ok   E-2 공개 설정 API 가 간주 값을 화면으로 내려 줌(화면이 「간주」 표식을 그릴 수 있게) | {'assume.payment': 'on', 'assume.broker': 'on', 'assume.bank': 'on', 'assume.etax': 'on'}
+ok   E-3 오픈 점검(scripts/open-check.sh)이 간주 모드를 「0이어야 함」으로 봄 — 켠 채로는 통과하지 못함(지금 켜진 수 4 · 가상 계좌 1) | 
+ok   E-3b (사실 기록 · G-176) 운영 화면 「오픈 체크리스트」(GET /admin/open-blockers)는 설정 · 약관 · 바닥줄 · 외부 연동만 보고 간주 모드는 보지 않음 — 간주는 쉘 점검과 「불변식」 탭이 봄 | {'지금 잡힌 갈래': ['ASSUME', 'INTEGRATION', 'TERM'], '건수': 10, '간주 언급': True}
+ok   E-3c (v10.27 · G-176) 중개사 자격 대조(국토부)가 외부 연동 표에 BROKER 로 있음(오픈 차단 · 키 이름 BROKER_LOOKUP_KEY) · 서버는 환경 변수(BROKER_LOOKUP_*)와 assume.broker 스위치로 동작 | BROKER
+ok   E-4 (사실 기록) 간주 값을 읽는 곳 — assume.broker 는 서버가 읽어 중개사 대조를 건너뜀 · assume.payment 는 사용자 웹의 표시 · assume.bank 는 DB(가상 계좌 · 오픈 점검) | {'assume.payment': {'서버': 0, '사용자 웹': 1, '운영 화면': 0, 'DB 함수 · 뷰': 0}, 'assume.broker': {'서버': 7, '사용자 웹': 0, '운영 화면': 1, 'DB 함수 · 뷰': 0}, 'assume.bank': {'서버': 0, '사용자 웹': 1, '운영 화면': 0, 'DB 함수 · 뷰': 2}}
+ok   E-5 (사실 기록) 실제 결제가 시험 결제인지는 assume.payment 가 아니라 결제 키(TOSS_SECRET_KEY)가 정함 — 스위치만 끄고 키를 안 넣으면 여전히 시험 결제 | 
+
+통과 44 / 44

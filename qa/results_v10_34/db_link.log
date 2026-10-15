@@ -1,0 +1,65 @@
+ok   A-1 API 가 DB 를 보고 있음(GET /health → db: true) | {'status': 'ok', 'db': True, 'time': '2026-10-11T17:00:38.477Z'}
+ok   A-2 적용 기록(schema_migrations) 131건 = 마이그레이션 폴더 131개 · 이름이 모두 같음 | {'기록에만': [], '폴더에만': []}
+ok   A-3 적용한 뒤 바뀐 마이그레이션 파일이 없음(기록의 checksum = 지금 파일 · scripts/migrate.js 와 같은 계산) — 있으면 그 DB 에서 migrate 가 멈춥니다(종료 코드 1) | 131개 모두 같음
+ok   A-3b 마이그레이션 도구의 상태 확인(node scripts/migrate.js --status) — 변경감지 0 · 적용 예정 0 · 종료 코드 0 | (0, '적용 0 · 기존 131 · 변경감지 0')
+ok   A-4 객체 수가 매트릭스와 같음 — 표 255 · 뷰 312 · 함수 374 | {'매트릭스': (255, 312, 374)}
+ok   A-5 「검사 안 함(NOT VALID)」으로 둔 제약 — 있으면 목록(옛 자료에는 적용하지 않고 새 자료만 막는 제약) | [['leads', 'ck_leads_summary_no_phone'], ['category_matrix_axes', 'ck_cma_axis_type']]
+ok   A-6 꺼 둔 트리거가 없음 | 트리거 299개 모두 켜짐
+ok   B-1 뷰 312개를 모두 실제로 읽음 — 오류 0 | 0.9초
+ok   B-2 표 255개를 모두 실제로 읽음 — 오류 0 · 자료가 있는 표 185개 · 빈 표 70개 | 
+ok   C-1 가입(POST /auth/signup) → accounts 에 한 행 · 비밀번호는 그대로 적히지 않음(해시) | (201, ['60c6de35-86bf-4eb6-aafb-ca0d855b08e3', 'DB연동 시험', 'ACTIVE'])
+ok   C-1b 다시 API 로 읽으면 같은 계정(GET /me/summary) | 200
+ok   C-2 이름 변경(PATCH /me/account) → accounts.name · updated_at 이 바뀜 | 200
+ok   C-3 찜(POST /me/favorites/:id) → favorites 1행 · 해제(DELETE) → 0행 | (201, '1', 200, '0')
+ok   C-4 글쓰기(POST /me/community/posts) → posts 1행 · 작성자 = 그 계정 · 게시판 QNA | (201, [['813ee79a-7812-4e30-aa97-8ef39df9daf1', 'QNA', 'PENDING', '60c6de35-86bf-4eb6-aafb-ca0d855b08e3']])
+ok   C-4b API 로 다시 읽으면 같은 제목 — 작성자 이름은 첫 글자만(「바OO」) | (200, '바OO')
+ok   C-5 댓글(POST …/comments) → post_comments 1행 · posts.comment_count 가 1 로(트리거/같은 거래) | (201, '1')
+ok   C-6 글 삭제(DELETE /me/community/posts/:id) → posts.state 가 DELETED(행은 남김 — 달린 댓글 보존) | (200, 'DELETED/true')
+ok   C-6b 지운 글을 주소로 열면 제목 · 본문이 나가지 않음 — 남(비로그인) · 쓴 사람 모두 「지운 글」 자리만(G-173) | (200, ['board', 'comments', 'deleted', 'id', 'note', 'ok'], ['board', 'comments', 'deleted', 'id', 'note', 'ok'])
+ok   C-6c 지운 글은 목록 · 검색(GET /community/board)에 나오지 않음 | 200
+ok   C-7 장바구니 담기(POST /me/health/cart) → hlt_cart_items 수량 +1 · 뷰 v_hlt_cart 의 배송비 0 | (201, '', '1', [['0']])
+ok   C-7b (정리) 장바구니를 처음 수량으로 | 
+ok   C-8 주문(POST /health/orders · p17 × 2) → hlt_orders 1행 + hlt_order_items 1행 · 금액 = 단가 × 2 · 배송비 0 | (201, [['0ca4d77d-6530-4bf3-8dcd-681475c41792', '36000', '0', '36000', 'PENDING']], [['2', '18000', '36000']])
+ok   C-9 같은 거래에서 재고가 줄어듦(36 → 34) | (36, 34)
+ok   C-10 API 로 다시 읽으면 DB 와 같은 금액 · 상태 | (200, 'PENDING')
+ok   C-11 취소 → 주문 상태가 바뀌고 재고가 처음으로(36) | ('CANCELED', 36)
+ok   C-12 운영 설정 변경(PATCH /admin/site-settings) → site_settings.value | 200
+ok   C-13 같은 변경이 감사 기록(audit.audit_logs)에 한 줄 남음 | (2084, 2085, [['SITE_SETTING_UPDATE', 'SITE_SETTING', 'ADMIN']])
+ok   C-14 공개 설정 API 로 다시 읽으면 바꾼 값 | https://www.instagram.com/dblink_ef883f
+ok   C-14b (정리) 설정을 처음 값으로 | 
+ok   C-15 상담 신청(POST /consult/requests) → consult_requests 1행 · 전화번호는 그대로 적히지 않음(암호문 + 해시) | (201, ['4d357221-5800-4a55-82c8-8fe407507194', 'PENDING_VERIFY', 't', '64'], 1)
+ok   C-15b (정리) 시험 신청을 지움 | 
+ok   D-1 감사 기록은 고칠 수 없음(UPDATE 거절) | ERROR:  append-only table: UPDATE on audit_logs is forbidden (IP·User-Agent 마스킹만 허용) CONTEXT:  PL/pgSQL function fn_block_audit_write() line 20 at RAISE
+ok   D-2 감사 기록은 지울 수 없음(DELETE 거절) | ERROR:  append-only table: DELETE on audit_logs is forbidden CONTEXT:  PL/pgSQL function fn_block_audit_write() line 4 at RAISE
+ok   D-3 재고는 음수가 될 수 없음(옵션 재고 CHECK · v10.26) | ERROR:  new row for relation "hlt_product_options" violates check constraint "hlt_product_options_stock_check" DETAIL:  Failing row contains (3fead19a-46b7-43a9-8feb-2509a3f3c8e8, 4036ae39-3116-4031-8
+ok   D-3b 상품 행의 재고는 직접 고칠 수 없음 — 옵션에서 계산(HLTP · v10.26) | ERROR:  HLTP: 상품의 값 · 재고는 옵션에서 계산됩니다 — 옵션(hlt_product_options)을 고치십시오 (p17) CONTEXT:  PL/pgSQL function fn_hlt_product_derived_guard() line 5 at RAISE
+ok   D-4 같은 이메일로 계정을 둘 만들 수 없음(유일 제약) | ERROR:  duplicate key value violates unique constraint "accounts_email_key" DETAIL:  Key (email)=(buyer@x.com) already exists.
+ok   D-5 없는 계정으로 주문을 넣을 수 없음(참조 제약) | ERROR:  insert or update on table "hlt_orders" violates foreign key constraint "hlt_orders_account_id_fkey" DETAIL:  Key (account_id)=(00000000-0000-4000-8000-00000000dead) is not present in table "ac
+ok   D-6 주문 상태에 없는 값을 넣을 수 없음 | ERROR:  HLTO: 취소·반품된 주문은 상태를 바꿀 수 없습니다 — 새로 주문해 주십시오 (H26101200066) CONTEXT:  PL/pgSQL function fn_hlt_order_restock() line 13 at RAISE
+ok   D-7 배송 기록에 없는 상태(SHIPPED)를 넣을 수 없음 | ERROR:  HLTS: CANCELED 주문에는 배송 기록을 넣을 수 없습니다 (H26101200066) CONTEXT:  PL/pgSQL function fn_hlt_ship_guard() line 6 at RAISE
+ok   D-8 잠긴 갈래(HLT_FUNC)의 상품은 「판매 중」이 될 수 없음(fn_hlt_product_guard) | ERROR:  HLTP: 건강기능식품은 준비 중입니다. 2단계에 엽니다(건강기능식품 판매업 영업신고와 표시 · 광고 심의 체계를 갖춘 뒤). CONTEXT:  PL/pgSQL function fn_hlt_product_guard() line 14 at RAISE
+ok   D-9 설정 값은 정해 둔 모양만(assume.payment 에 on/off 아닌 값 거절) | ERROR:  SETTING: assume.payment 값이 형식에 맞지 않습니다 (허용 ^(on|off)$, 예: on) CONTEXT:  PL/pgSQL function fn_setting_validate() line 6 at RAISE
+ok   D-10 리드 요약에 전화번호를 넣을 수 없음(ck_leads_summary_no_phone — 새 자료에 적용) | ERROR:  new row for relation "leads" violates check constraint "ck_leads_summary_no_phone" DETAIL:  Failing row contains (2da3b02c-d7e3-4026-94d8-f4d723a1be52, null, null, null, null, 연락처 010-1234-567
+ok   D-11 한 계정이 같은 투표에 두 번 표를 넣을 수 없음(유일 제약) | ERROR:  POLL_CLOSED: 마감된 투표입니다 CONTEXT:  PL/pgSQL function fn_poll_vote_guard() line 9 at RAISE
+ok   D-12 (참고) DB 불변식 · 공격 검정 전체 묶음(npm run verify)은 전수 검정 A 구간에서 따로 돕니다 | 통과 3 / 실패 0
+ok   E-1 한 품목이 틀린 주문은 통째로 거절 — 주문 행이 늘지 않고 재고도 그대로 | (422, 'NOT_ON_SALE')
+ok   E-2 재고(36)보다 많이 주문하면 거절 — 주문 행 · 재고 그대로 | (422, 'HLTO')
+ok   E-3 (사실 기록 · G-171) 주문 생성은 요청 키로 중복을 막지 않음 — 같은 키 두 번 = 주문 1건 | (201, 201, 'H26101200068', 'H26101200068')
+ok   E-3b 주문서의 「결제하기」 단추는 보내는 동안 꺼짐(disabled={!ready || pending}) — 두 번 눌러 주문이 둘 생기지 않게 | 
+ok   E-3c 요청 키 장치가 붙은 처리기 2곳(구독 시작 · 소개코드 발급) · 처리 기록 표 idempotency_records 에 성공 기록이 있음 | (2, 172)
+ok   E-4 재고 1개를 네 요청이 동시에 사면 한 건만 성공 · 재고는 0(음수 아님) | ([201, 422, 422, 422], 0)
+ok   E-5 (정리) 시험 주문을 모두 취소하고 재고를 처음(36)으로 | [('H26101200068', 'CANCELED'), ('H26101200068', 'CANCELED'), ('H26101200069', 'CANCELED')]
+ok   F-1 표 · 열(이름 · 형 · 빈 값 허용 · 기본값) — 쓰던 개발 DB 2518 = 새로 설치한 DB 2518 · 차이 0 | 같음
+ok   F-2 뷰(정의) — 쓰던 개발 DB 312 = 새로 설치한 DB 312 · 차이 0 | 같음
+ok   F-3 함수(본문) — 쓰던 개발 DB 379 = 새로 설치한 DB 379 · 차이 0 | 같음
+ok   F-4 제약 — 쓰던 개발 DB 1327 = 새로 설치한 DB 1327 · 차이 0 | 같음
+ok   F-5 트리거 — 쓰던 개발 DB 299 = 새로 설치한 DB 299 · 차이 0 | 같음
+ok   F-6 색인 — 쓰던 개발 DB 528 = 새로 설치한 DB 528 · 차이 0 | 같음
+ok   G-1b (v10.27 · G-172) 쓰지 않던 빈 표 public._t 는 D031 에서 지웠음 — DB 에 없고 서버 코드도 부르지 않음 | 
+ok   G-1 표 255개 가운데 API 처리기와 이어진 표 225개 · 이어지지 않은 표 30개 — 모두 까닭이 있음(서버 코드 · DB 내부) | {'서버 코드가 씀(매트릭스가 처리기와 잇지 못한 표 — 공용 서비스 · 배치 · 가드)': 11, 'DB 안에서만 씀(트리거 · 함수 · 뷰)': 19}
+ok   G-2 API 640개 가운데 표를 쓰는 것 605개 · 표를 쓰지 않는 것 35개(상태 확인 · 계산 · 외부 호출 · 공용 서비스 경유) | ['POST /admin/adx/confirm', 'POST /admin/adx/close-month', 'GET /ads/external/serve', 'POST /ads/external/click', 'PATCH /admin/advertisers/:id/status', 'POST /ai/classify/feedback', 'POST /admin/clas
+ok   H-1 시각 열은 모두 시간대 포함(timestamptz) — 시간대 없는 시각 열 0 | DB 시간대 Etc/UTC
+ok   H-2 DB 글자 틀이 UTF8 | UTF8
+ok   H-3 한글 · 기호가 API → DB → API 로 그대로(위 C-2 의 이름) | 바꾼 이름 한글
+
+통과 63 / 63

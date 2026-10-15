@@ -1,0 +1,27 @@
+ok   전제 — 시험 회원은 본인인증 · 사업자 없음 — 1059c117-1a79-4d98-a882-2ce8ae661b09
+ok   문의 — 사업자 아닌 개인도 문의 가능(canInquire) — 200 canInquire=True reason=None
+ok   문의 — 대화 열기 — 201 {'conversationId': 'ff9b7974-ed52-47de-82b2-82a6bbbad290', 'masked': False}
+ok   거래 만들기 — 개인 회원(전: 사업자만 403) — 201 {'dealId': '41ba139e-e9c1-4fea-986b-c15d7557a0a2', 'attributedCode': None, 'existing': True}
+ok   소개비 제시 — 역할 · 사업자로 막히지 않음(기능 스위치 · 상태는 별개) — 422 {'code': 'FEATURE_OFF', 'message': '소개비는 현재 당사자 간 합의 사항이며 플랫폼이 중개하지 않습니다'}
+ok   계약서 발급 — 역할 · 사업자로 막히지 않음 — 201 {'id': 'a312ce11-7167-446b-8b51-c0d48c64380d', 'documentKey': 's3://contracts/41ba139e-e9c1-4fea-986b-c15d7557
+ok   등록 — 개인 회원 MNY — 201 {'listingId': 'c525df62-364e-41bb-bad7-787095b5597a', 'reviewId': 'a201f8df-0c1e-4503-a54a-da8c801d7
+ok   등록 — 개인 회원 BIZ — 201 {'listingId': '37562787-11da-4f05-8782-9dfaa18daa78', 'reviewId': '4d937797-569d-4945-a87e-4727b61ee
+ok   등록 — 개인 회원 MAL — 201 {'listingId': 'f336780f-df8b-4b5e-b831-88bb650aa201', 'reviewId': '24811182-c3f1-4d6a-9f84-fbf58b6d5
+ok   등록 — 인증이 필요한 업종(보험 · 의료 GATED)은 자격 심사 없으면 막힘(인증 규칙 유지) — 422 {'code': 'GATED', 'message': '의료기기는 광고 사전심의를 받으셔야 등록하실 수 있습니다 (의료기기법 24조). 심의필 번호를 함께 적어 주십시오.'}
+ok   급구 · 급매 신청 — 역할 · 사업자로 막히지 않음(전: 사업자만) — 422 {'code': 'BADGE_LISTING_NOT_PUBLISHED', 'message': '노출 중인 매물에만 신청할 수 있습니다.'}
+ok   요청에 소개 제안 — 개인(전: 사업자만) — 409 {'code': 'ALREADY_PROPOSED', 'message': '이미 제안한 요청입니다.'}
+ok   구독 시작 — 개인(전: 사업자만) — 201 {'subscriptionId': 'd171bf02-c0ed-415a-a6fc-0e8ef2e0e8a3', 'id': 'd171bf02-c0ed-415a-a6fc-0e8ef2e0e8a3', 'plan
+ok   원장 보기 — 개인 — 200
+ok   소개창업 자문 서비스 올리기 — 개인(전: 인증 사업자만) — 201 {'no': 9111, 'kind': 'SVC'}
+ok   내 요약 — 사업자 인증이 막힌 단계로 나오지 않음 — blockedBy=None
+ok   이용약관 — 발행 · 초안 본문에 「모든 업무」 · 인증이 필요한 업종 줄 — 1.0:ARCHIVED 1.1:PUBLISHED
+ok   자주 묻는 질문 · 안내 문구 — 개인도 모든 업무 — 
+ok   신규 가입자 첫 화면 — API ?for=new — 200 · {'value': 'MAL'}
+ok   로그인 화면 안내 — 「모든 업무」 · 사업자만 문구 없음 — 
+ok   가입 완료 화면 — 「시작하기」가 신규 가입자 첫 화면(안심소개 /mall) — /mall 시작하기
+ok   대화 화면 — 개인 회원에게 「계약서 요청하기」 단추(전: 사업자 전환 안내) — /chat/ffffffff-0000-4000-a000-000000000001?c=ff9b7974-ed52-47de-82b2-82a6bbbad290
+ok   나의공간 — 「사업자 전환하기」가 막힌 단계로 나오지 않음 — 
+ok   사업자 전환 화면 — 개인도 모든 업무 · 사업자 인증은 사업자로 소개비 받을 때 — 
+ok   쪽 스크립트 오류 없음 — 
+되돌림: HERO
+통과 25 / 25

@@ -1,0 +1,30 @@
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYWFhMDAwMC0wMDAwLTQwMDAtYTAwMC0wMDAwMDAwMDAwYWQiLCJyb2xlcyI6WyJBRE1JTiIsIlNVUEVSIiwiTUVNQkVSIiwiQklaX09X
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ZjlhMGFmZi00ZTdiLTQzN2QtODgyNi03ZTc0MGFlOTZmM2QiLCJyb2xlcyI6WyJQQVlPVVQiXSwiaXYiOnRydWUsImJ2IjpmYWxzZSwi
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxYTVkNDc4MS1mNzBhLTQ2NGEtODJkNi1iOWExZWE5ODFhOGUiLCJyb2xlcyI6WyJBRE1JTiIsIk1FTUJFUiIsIkJJWl9PV05FUiIsIkJJ
+ok   Q5-1 운영 계정 /me/summary 200 {"principal": {"accountId": "aaaa0000-0000-4000-a000-0000000000ad", "roles": ["ADMIN", "SUPER", "MEMBER", "BIZ_OWNER", "BIZ_STAFF"], "identityVerifiedAt": "2026-10-11T15:
+ok   Q5-3 운영 계정 관심 목록(사용자 기능) 200 []
+ok   Q5-4 운영 기능은 그대로 200 {"reviewPending": 1, "slaBreached": 0, "autoRatePct": 0, "settlementPending": 0, "disputesOpen": 0, "criticalAlerts": 0, "openBlockers": 10, "kValue": 1.13, "settlementPe
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJyb2xlcyI6WyJNRU1CRVIiXSwiaXYiOnRydWUsImJ2IjpmYWxzZSwi
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0xMTExMTExMTExMTEiLCJyb2xlcyI6WyJCSVpfT1dORVIiLCJNRU1CRVIiXSwiaXYiOnRydWUs
+ok   None 201 {"listingId": "fb5b5b33-5bec-4866-976d-3ec11ebdcbda", "reviewId": "83db5feb-d0c9-4937-af36-c7b07c2d76c9", "status": "IN_REVIEW", "autoApproved": false}
+ok   None 200 {"id": "83db5feb-d0c9-4937-af36-c7b07c2d76c9", "status": "APPROVED", "targetStatus": "PUBLISHED"}
+ok   Q2-1 개인 회원 문의 201 {"conversationId": "8903b668-5917-457f-a3e9-2000a6390333", "masked": false}
+ok   Q2-2 판매자(사업자) 거래 생성 201 {"dealId": "baac0ee9-4b82-4c94-b558-127145db24d8", "attributedCode": "OK1"}
+ok   Q2-3 개인 회원 거래 확인 (전: 403) 201 {"dealId": "baac0ee9-4b82-4c94-b558-127145db24d8", "status": "INQUIRY", "confirmations": 1, "waitingCounterpart": true, "note": "상대방 확인을 기다립니다."}
+ok   Q2-4 개인 회원 대금 신고 (전: 403) 201 {"id": "986e7fe7-aa9b-40d8-aa22-aeeb4ac61ba6", "reportedAt": "2026-10-11T15:50:34.146Z", "dealStatus": "INQUIRY"}
+ok   Q3-1 판매자 확인 → 양측 완료 201 {"dealId": "baac0ee9-4b82-4c94-b558-127145db24d8", "status": "CONFIRMED", "confirmations": 2, "waitingCounterpart": false, "note": "양측이 확인해 거래가 확정되었습니다."}
+ok   None 201 {"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmZjdlMmI2MC05MDk5LTQxZTktYmYzNi1hZjBjMmZmNjNhNjIiLCJyb2xlcyI6WyJNRU1CRVIiXSwiaXYiOmZhbHNlLCJidiI6ZmFsc2Us
+ok   Q2-5 본인인증 없는 개인은 차단 403 {"code": "IDENTITY_REQUIRED", "message": "본인인증이 필요합니다."}
+ok   Q4-1 본인인증 없으면 계좌 등록 차단 403 {"code": "IDENTITY_REQUIRED", "message": "본인인증이 필요합니다."}
+ok   Q4-3 본인인증한 파트너는 등록 201 {"ok": true, "id": "468b4d77-82fe-493e-86b5-2c11cbf08a81", "last4": "9012", "note": "등록했습니다. 이어서 1원 인증을 하셔야 지급됩니다."}
+ok   Q1-1 지급 담당 — 지급 데스크 조회 200 {"queue": [], "drafts": [{"kind": "PARTNER", "id": "8fa92ae5-676d-4d46-97cd-8eeee801a098", "sub": "AFFILIATE", "payee": "소개사", "from": "2027-02-13T15:00:00.000Z", "to": "
+ok   Q1-2 운영 — 지급 데스크 조회 200 {"queue": [], "drafts": [{"kind": "PARTNER", "id": "8fa92ae5-676d-4d46-97cd-8eeee801a098", "sub": "AFFILIATE", "payee": "소개사", "from": "2027-02-13T15:00:00.000Z", "to": "
+ok   Q1-3 확정 전 지급 차단 422 {"code": "NOT_CONFIRMED", "message": "지급할 수 있는 정산이 아닙니다 (확정된 것만)."}
+ok   Q1-4 지급 담당은 확정 불가 403 {"code": "FORBIDDEN", "message": "권한이 없습니다."}
+ok   Q1-5 운영(ADMIN) 확정 201 {"ok": true, "id": "8fa92ae5-676d-4d46-97cd-8eeee801a098", "status": "CONFIRMED", "note": "확정했습니다. 지급은 지급 담당이 합니다."}
+ok   Q1-6 운영은 지급 불가 403 {"code": "FORBIDDEN", "message": "권한이 없습니다."}
+ok   Q1-7 이체 참조 없으면 차단 400 {"code": "VALIDATION_ERROR", "message": "ref must be longer than or equal to 3 characters", "field": "ref"}
+ok   Q1-8 지급 담당 지급 기록 201 {"ok": true, "id": "8fa92ae5-676d-4d46-97cd-8eeee801a098", "status": "PAID", "ref": "KB-20261001-1469d", "note": "지급을 기록했습니다. 되돌릴 수 없습니다 — 틀렸으면 다음 회차에서 조정하십시오."}
+ok   Q1-10 이중 지급 차단 422 {"code": "NOT_CONFIRMED", "message": "지급할 수 있는 정산이 아닙니다 (확정된 것만)."}
+
+통과 26 / 26

@@ -1,0 +1,113 @@
+
+> verify
+> bash scripts/verify-all.sh && npm run verify:jobs && bash scripts/check-testsafety.sh && npm run check:errcodes && npm run check:acl && npm run check:sql
+
+
+── 마이그레이션 적용 ──
+적용 135 · 기존 0 · 변경감지 0
+
+── 재실행 안전성 ──
+적용 0 · 기존 135 · 변경감지 0
+
+── DB 불변식 ──
+통과 305 / 실패 0
+
+── 연동 로직 시험 ──
+통과 13 · 실패 0
+
+── 비밀값 유출 점검 ──
+안전 5 · ▲위험 0
+
+── 국세청 어댑터 (오프라인) ──
+통과 10 · 실패 0
+
+── 결제 어댑터 (오프라인) ──
+통과 49 · 실패 0
+
+── 공격 검정 ──
+안전 642 · 건너뜀 1 · ★오류 0 · ▲뚫림 0
+
+── OpenAPI 병합 ──
+코드에서 추출: 574 paths · 640 operations
+
+── 생성 파일 드리프트 ──
+응답 표본으로 채움: 57건
+병합: 스키마 있음 640 · 미정의 0
+API 리스트: 640 오퍼레이션 · 정의 640
+필수 131 / 전체 640 · 미정의 0
+DB 설계서: 테이블 255 · 뷰 312 · 함수 374
+Flow 설계서: 5 흐름 · 19 단계
+방침 초안 생성 · 미입력 0건
+코드 정의서: 도메인 43 · 코드 195 · 중복 5
+알림 문구 123건 · 메시지 554건 · DB 예외 150건
+프로토타입: 화면 149/212 · API 640 · 코드 195 · 알림 123
+codes.ts 일치
+
+── 문서 정합성 ──
+통과 26 / 실패 0
+
+── 부팅 스모크 ──
+라우트 640건
+
+── 타입 검사 (백엔드) ──
+백엔드 타입 오류 0
+
+── 타입 검사 (프런트) ──
+프런트 타입 오류 0
+
+전체 검증 통과
+
+> verify:jobs
+> node scripts/verify-jobs.js
+
+== 배치 등록 대조 ==
+  ok   EventBridge 스케줄 1건 (tick)
+  ok   모든 배치가 job_schedules 에 있음 (19건)
+  ok   job_schedules 의 배치가 모두 코드에 있음
+
+통과 3 / 실패 0
+== 시험 안전 점검 =====================================
+  안전  ① WHERE 없는 UPDATE·DELETE 없음
+  안전  ② merge-openapi 중복 실행 없음
+  안전  ③ 건너뜀 표시 기능 있음
+  안전  ④ 함수 부재를 차단으로 오인하지 않음
+  안전  ⑤ REF 에 terms 없음 (생성기가 만듦)
+  안전  ⑤ REF 에 job_schedules 있음
+  안전  ⑤ REF 에 classify_vocab 있음
+  안전  ⑤ REF 에 lead_grade_rates 있음
+  안전  ⑤ REF 에 report_reasons 있음
+  안전  ⑤ REF 에 trust_weights 있음
+  안전  ⑤ REF 에 listing_checklist 있음
+  안전  ⑥ site 미정의 CSS 토큰 없음
+  안전  ⑥ web 미정의 CSS 토큰 없음
+  안전  ⑦ SMS 길이를 바이트로 셈
+  안전  ⑧ 시안 TO_PATH↔ROUTES 짝 맞음
+  안전  ⑨ 코드 화면 ID 가 정의에 있음
+  안전  ⑩ 화면 ID 중복 없음
+  안전  ⑪ 기준선에 함수 정의가 있음
+  안전  ⑫ 관 코드 목록이 최신
+=======================================================
+  ok   ⑬ 주소 매핑에 관 4개 전부
+=======================================================
+  안전  ⑭ 오픈 점검의 SQL 이 전부 실행됨 (「?」 0건)
+  안전  ⑮ deploy/aws 스크립트 문법 오류 0
+  안전  ⑯ Nginx 설정 — 빈 자리 0 · server 바로 아래 allow/deny 0 · location 안 deny 4
+  안전  ⑰ PowerShell 도우미 — docker 직접 호출 0 · UTF-8(BOM) · native.ps1 경유
+안전 23 · ▲위험 0
+
+> check:errcodes
+> node scripts/check-errcodes.js
+
+접두어 169종 · 등록 169종
+  ok  트리거 오류가 모두 이용자에게 전달됩니다
+
+> check:acl
+> node scripts/check-acl.js
+
+라우트 636건 · 보호 527 · 무표시 109
+  ok  공개 구역 외에는 전부 표시가 있습니다
+
+> check:sql
+> node scripts/check-sql.js
+
+SQL 대조: 확인 1306 · 통과 1306 · 이름 오류 0 · 동적 SQL 건너뜀 88

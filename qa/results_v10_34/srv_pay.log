@@ -1,0 +1,69 @@
+ok   P-1 주문 → 결제 준비(READY) · 주문 결제 대기 · 재고 1 감소 ('READY', 'PENDING|-|-', 30, 29)
+ok   P-2 금액 조작(+1000) → 422 AMOUNT_MISMATCH · 승인 안 됨 · 주문 결제 대기 (422, {'code': 'AMOUNT_MISMATCH', 'message': '결제 금액이 주문 금액과 다릅니다 — 결제를 승인하지 않았습니다(주문 45,000원).', 'details': {'expected': 45000, 'got': 46000}})
+ok   P-2b 금액 조작(문자열 · -1) → 422 (422, 'AMOUNT_MISMATCH')
+ok   P-3 남의 주문 승인 → 409 NOT_FOUND (409, {'code': 'NOT_FOUND', 'message': '없는 주문입니다.'})
+ok   P-3b 로그인 없이 → 403 403
+ok   P-3c paymentKey 형식 오류 → 400 400
+ok   P-3d amount 없음 → 400 400
+ok   P-4 승인 → 결제 PAID · stub:true · 주문 PAID(트리거) (201, {'id': '60a62fa4-2329-4c93-bc36-912beb090d7d', 'method': 'CARD', 'amount': 45000, 'state': 'PAID', 'stub': True, 'pgStatus': 'DONE', 'approvedAt': '2026-1
+ok   P-5 같은 paymentKey 다시 → 같은 결과(again) · PAID 1건 (201, {'id': '60a62fa4-2329-4c93-bc36-912beb090d7d', 'method': 'CARD', 'amount': 45000, 'state': 'PAID', 'stub': True, 'pgStatus': 'DONE', 'approvedAt': '2026-1
+ok   P-6 결제된 주문에 다른 키로 승인 → 409 ALREADY (409, {'code': 'ALREADY', 'message': '이미 결제되었거나 취소된 주문입니다.'})
+ok   P-7 주문 상세에 결제 정보(stub) — 화면 "시험 결제" 표시 근거 · secret 없음 {'id': '60a62fa4-2329-4c93-bc36-912beb090d7d', 'method': 'CARD', 'amount': 45000, 'state': 'PAID', 'stub': True, 'pgStatus': 'DONE', 'approvedAt': '2026-10-11T1
+ok   P-8 다른 주문의 paymentKey 재사용 → 409 PAYMENT_KEY_MISMATCH (409, {'code': 'PAYMENT_KEY_MISMATCH', 'message': '다른 주문의 결제입니다.'})
+ok   R-1 결제된 주문 취소 신청 (취소에 보낸 개봉 표시는 무시) (201, {'id': '61f2bd33-64ff-41c3-b4fb-1208ed92cc2d', 'kind': 'CANCEL', 'state': 'REQUESTED', 'customerOpened': None, 'createdAt': '2026-10-11T15:56:09.777Z', 'e
+ok   R-2 취소에 opened:true → 422 CANCEL_NOT_OPENED (422, {'code': 'CANCEL_NOT_OPENED', 'message': '발송 전 취소는 개봉일 수 없습니다 — 개봉 판정은 반품에만 합니다.'})
+ok   R-3 승인 전 환불 → 409 NOT_APPROVED (409, {'code': 'NOT_APPROVED', 'message': '승인된 신청만 환불합니다.'})
+ok   R-3b 구매자가 승인 → 403 403
+ok   R-4 승인 → 주문 CANCELED · 환불 REFUNDED(전액) · 결제 CANCELED (201, {'id': '61f2bd33-64ff-41c3-b4fb-1208ed92cc2d', 'state': 'REFUNDED', 'orderNo': 'H26101200012', 'orderStatus': 'CANCELED', 'restockedAt': '2026-10-11T15:56
+ok   R-5 재고 한 번 복구 (+1) (28, 29, 'CANCELED|2026-10-11 15:56:09.866323+00|-')
+ok   R-6 환불 다시 → 같은 결과(again) · 재고 그대로 (201, {'id': '61f2bd33-64ff-41c3-b4fb-1208ed92cc2d', 'state': 'REFUNDED', 'orderNo': 'H26101200012', 'refundAmount': 45000, 'shipDeduction': 0, 'stub': True, 'a
+ok   R-7 고객 내역에 환불 완료 · 금액 {'id': '61f2bd33-64ff-41c3-b4fb-1208ed92cc2d', 'orderNo': 'H26101200012', 'kind': 'CANCEL', 'reason': 'CHANGE_MIND', 'state': 'REFUNDED', 'decideNote': None, 'r
+ok   R-8 구매자가 환불 API → 403 403
+ok   R-9 미결제 주문 취소 승인 → 환불 없음(APPROVED 유지) · 주문 CANCELED (201, {'id': '869efc9d-8c85-4e6f-84bb-18d62892ccfa', 'state': 'APPROVED', 'orderNo': 'H26101200013', 'orderStatus': 'CANCELED', 'restockedAt': '2026-10-11T15:56
+ok   R-10 미결제 건 환불 API → 409 NOT_PAID (409, {'code': 'NOT_PAID', 'message': '결제되지 않은 주문이라 환불할 것이 없습니다.'})
+ok   O-1 반품 신청 + 고객 개봉 표시(참고) 저장 (201, {'id': '923ff60a-9ef3-422e-b1eb-011c5edbd3b8', 'kind': 'RETURN', 'state': 'REQUESTED', 'customerOpened': True, 'createdAt': '2026-10-11T15:56:10.671Z', 'e
+ok   O-2 반품 승인에 개봉 판정 없음 → 422 OPENED_REQUIRED · 주문 그대로 (422, {'code': 'OPENED_REQUIRED', 'message': '반품을 승인하시려면 개봉 여부를 골라 주십시오 — 개봉이면 재판매할 수 없어 재고로 되돌리지 않습니다.'})
+ok   O-2b opened 형식 오류 → 400 400
+ok   O-3 개봉 반품 승인 → RETURNED · 재고 미복구(restock_skipped=OPENED) · 환불 (201, {'id': '923ff60a-9ef3-422e-b1eb-011c5edbd3b8', 'state': 'REFUNDED', 'orderNo': 'H26101200014', 'orderStatus': 'RETURNED', 'restockedAt': None, 'restockSki
+ok   O-4 결제 CANCELED 가 반품을 취소로 바꾸지 않음 (주문 RETURNED 유지) RETURNED|-|OPENED
+ok   O-5 미개봉 반품 승인 → RETURNED · 재고 +1 · 환불 REFUNDED (201, {'id': '1b50c7a0-636a-4dd9-8dd8-7521f1dddabf', 'state': 'REFUNDED', 'orderNo': 'H26101200015', 'orderStatus': 'RETURNED', 'restockedAt': '2026-10-11T15:56
+ok   O-6 운영 목록 REFUNDED 탭 · 개봉 판정 · 고객 표시 · 환불액(결제 − 왕복 배송비 6,000) {'id': '923ff60a-9ef3-422e-b1eb-011c5edbd3b8', 'kind': 'RETURN', 'reason': 'CHANGE_MIND', 'detail': '열어 봤습니다', 'state': 'REFUNDED', 'decideNote': None, 'created
+ok   G-1 이미 재고 복구한 반품에 미복구 사유 붙이기 → 거부 ERROR:  HLTO: 이미 닫힌 주문의 재고 처리는 바꿀 수 없습니다 (H26101200015)
+CONTEXT:  PL/pgSQL function fn_hlt_order_restock() line 22 at RA
+ok   G-2 미복구 사유는 지울 수 없음 (트리거가 되돌림) 
+ok   G-3 취소에 미복구(개봉) 사유 → 거부 ERROR:  HLTO: 재고 미복구(개봉)는 반품에만 붙일 수 있습니다 — 발송 전 취소는 개봉일 수 없습니다 (H26101200016)
+CONTEXT:  PL/pgSQL function fn_hlt_order_r
+ok   G-4 거래 키 없는 PAID → 거부 (ck_hlt_pay_paid_key) ERROR:  new row for relation "hlt_payments" violates check constraint "ck_hlt_pay_paid_key"
+DETAIL:  Failing row contain
+ok   G-5 불변식: 취소·반품 주문은 재고 복구 또는 미복구 사유 중 정확히 하나 
+ok   W-1 가상계좌 승인 → 입금 대기(READY + 계좌 안내) · 주문 결제 대기 (201, {'id': '5558cb93-1ac4-4aa5-adb4-f7b3b90045b9', 'method': 'VBANK', 'amount': 45000, 'state': 'READY', 'stub': True, 'pgStatus': 'WAITING_FOR_DEPOSIT', 'app
+ok   W-2 같은 키 다시 → 같은 입금 대기(again) (201, 'READY')
+ok   W-3 가상계좌 발급 뒤 수단 변경 → 409 VBANK_WAITING (409, {'code': 'VBANK_WAITING', 'message': '가상계좌가 이미 발급되어 입금을 기다리고 있습니다. 다른 수단으로 결제하시려면 주문을 취소하고 새로 주문해 주십시오.'})
+ok   W-4 웹훅 — 모르는 주문 → 200 IGNORED (200, {'ok': True, 'eventType': 'DEPOSIT_CALLBACK', 'action': 'IGNORED', 'note': '소개몰 결제가 아닙니다.'})
+ok   W-5 웹훅 — 모르는 paymentKey → IGNORED (본문 DONE 을 믿지 않음) (200, {'ok': True, 'eventType': 'PAYMENT_STATUS_CHANGED', 'action': 'IGNORED', 'note': '소개몰 결제가 아닙니다.'})
+ok   W-6 입금 알림(DEPOSIT_CALLBACK, 로그인 없음) → 재조회 DONE → 결제 PAID · 주문 PAID (200, {'ok': True, 'eventType': 'DEPOSIT_CALLBACK', 'action': 'PAID', 'pgStatus': 'DONE', 'state': 'PAID', 'stub': True, 'orderNo': 'H26101200017', 'note': '입금이
+ok   W-7 같은 알림 재전송 → ALREADY (변화 없음) (200, {'ok': True, 'eventType': 'PAYMENT_STATUS_CHANGED', 'action': 'ALREADY', 'pgStatus': 'DONE', 'state': 'PAID', 'stub': True, 'orderNo': 'H26101200017', 'no
+ok   W-8 빈 본문 → IGNORED (200, {'ok': False, 'eventType': 'UNKNOWN', 'action': 'IGNORED', 'note': 'paymentKey · orderId 가 없습니다.'})
+ok   W-9 가상계좌 결제 취소 승인 → 스텁 환불 REFUNDED (201, '승인하고 45,000원을 환불했습니다(시험 결제 — 실제 돈 없음). 재고를 되돌렸습니다.')
+ok   T-1 토스 거절(400 REJECT_CARD_COMPANY) → 422 PAY_REJECTED · 토스 문구 · 주문 결제 대기 · READY 유지(사유 기록) (422, {'code': 'PAY_REJECTED', 'message': '카드사에서 거절했습니다', 'details': {'pgCode': 'REJECT_CARD_COMPANY'}})
+ok   T-2 토스 500 → 422 PAY_REJECTED (성공으로 바꾸지 않음) (422, {'code': 'PAY_REJECTED', 'message': '토스 내부 오류', 'details': {'pgCode': 'FAILED_INTERNAL_SYSTEM_PROCESSING'}})
+ok   T-3 토스 승인 금액 ≠ 주문 금액 → 422 · 승인 안 함 (422, {'code': 'PAY_REJECTED', 'message': '결제 금액 불일치(요청 45000 · 실제 44900)', 'details': {'pgCode': None}})
+ok   T-4 토스 승인(DONE) → PAID · stub:false · 주문 PAID (201, {'id': 'c19d2b1b-0ab6-4518-84c4-9c5c499829fa', 'method': 'CARD', 'amount': 45000, 'state': 'PAID', 'stub': False, 'pgStatus': 'DONE', 'approvedAt': '2026-
+ok   T-5 토스로 간 요청: Basic 시크릿 · {paymentKey, orderId=주문번호, amount=주문금액} · 본문에 키 없음 {'m': 'POST', 'path': '/v1/payments/confirm', 'auth': 'Basic dGVzdF9za19tb2NrOg==', 'body': {'paymentKey': 'mk-done-27104122e964', 'orderId': 'H26101200018', 'a
+ok   T-6 같은 키 다시 → 토스를 다시 부르지 않고 같은 결과 (201, True)
+ok   T-7 ALREADY_PROCESSED_PAYMENT → 조회(DONE · 같은 주문·금액)로 승인 복구 (201, {'id': '0f613721-a717-4b03-a278-60bee9e152ca', 'method': 'CARD', 'amount': 45000, 'state': 'PAID', 'stub': False, 'pgStatus': 'DONE', 'approvedAt': '2026-
+ok   T-8 취소 승인 → 토스 취소(전액) → REFUNDED · 결제 CANCELED (201, {'id': '3eae66d6-fca7-4704-952a-b9b663bfab5b', 'state': 'REFUNDED', 'orderNo': 'H26101200018', 'orderStatus': 'CANCELED', 'restockedAt': '2026-10-11T15:56
+ok   T-9 토스 취소 요청: 경로 /v1/payments/{key}/cancel · Idempotency-Key=hlt-refund-{신청id} · cancelReason · 전액이라 cancelAmount 없음 {'m': 'POST', 'path': '/v1/payments/mk-done-27104122e964/cancel', 'auth': 'Basic dGVzdF9za19tb2NrOg==', 'body': {'cancelReason': '소개몰 주문 취소 승인 (H26101200018)'},
+ok   T-10 환불 실패 → 승인(APPROVED) 유지 · ok:false · 오류 기록 · 결제 PAID 유지 (201, {'id': 'bcf2ebfc-7a6c-478c-a97c-3410eb82cbbb', 'state': 'APPROVED', 'orderNo': 'H26101200019', 'orderStatus': 'CANCELED', 'restockedAt': '2026-10-11T15:56
+ok   T-11 다시 시도도 실패 → 502 REFUND_FAILED · 토스 문구 (502, {'code': 'REFUND_FAILED', 'message': '환불하지 못했습니다 — 취소 할 수 없는 금액 입니다.. 승인 상태로 남아 있으니 다시 시도해 주십시오.', 'details': {'pgCode': 'NOT_CANCELABLE_AMOUNT'}})
+ok   T-12 원인 해소 후 다시 시도 → REFUNDED · 오류 지움 (201, {'id': 'bcf2ebfc-7a6c-478c-a97c-3410eb82cbbb', 'state': 'REFUNDED', 'orderNo': 'H26101200019', 'refundAmount': 45000, 'shipDeduction': 0, 'stub': False, '
+ok   T-13 가상계좌 → WAITING_FOR_DEPOSIT · 계좌 안내 · secret 은 응답에 없음 (201, {'id': '3b4c8e4a-3258-4fec-8298-53246a843152', 'method': 'VBANK', 'amount': 45000, 'state': 'READY', 'stub': False, 'pgStatus': 'WAITING_FOR_DEPOSIT', 'ap
+ok   T-14 입금 알림 본문은 DONE 이지만 토스 조회는 WAITING → 반영 안 함 (200, {'ok': True, 'eventType': 'DEPOSIT_CALLBACK', 'action': 'WAITING', 'pgStatus': 'WAITING_FOR_DEPOSIT', 'state': 'READY', 'stub': False, 'orderNo': 'H261012
+ok   T-15 secret 불일치 입금 알림 → REJECTED (200, {'ok': False, 'eventType': 'DEPOSIT_CALLBACK', 'action': 'REJECTED', 'note': '입금 알림 secret 이 맞지 않습니다.'})
+ok   T-16 토스 조회 실패 → 502 (토스가 재전송) · 반영 안 함 (502, {'code': 'PG_LOOKUP_FAILED', 'message': '결제 조회 실패 — 내부 오류'})
+ok   T-17 실제 입금(조회 DONE) → PAID · 주문 PAID (200, {'ok': True, 'eventType': 'DEPOSIT_CALLBACK', 'action': 'PAID', 'pgStatus': 'DONE', 'state': 'PAID', 'stub': False, 'orderNo': 'H26101200020', 'note': '입금
+ok   T-18 재전송 → ALREADY (200, {'ok': True, 'eventType': 'PAYMENT_STATUS_CHANGED', 'action': 'ALREADY', 'pgStatus': 'DONE', 'state': 'PAID', 'stub': False, 'orderNo': 'H26101200020', 'n
+ok   T-19 입금 전 만료 → 결제 FAILED · 주문은 결제 대기(취소로 바꾸지 않음) (200, {'ok': True, 'eventType': 'PAYMENT_STATUS_CHANGED', 'action': 'FAILED', 'pgStatus': 'EXPIRED', 'state': 'FAILED', 'stub': False, 'orderNo': 'H26101200021'
+ok   T-20a 입금된 가상계좌 취소 승인 → 환불 계좌 없어 실패 · APPROVED 유지 환불 계좌 정보가 필요합니다.
+ok   T-20b 가상계좌 환불 → refundReceiveAccount 가 토스로 감 · REFUNDED · 계좌는 DB 에 안 남음 (201, {'id': 'f24cf852-0020-4207-b380-223a3b475973', 'state': 'REFUNDED', 'orderNo': 'H26101200020', 'refundAmount': 45000, 'shipDeduction': 0, 'stub': False, '
+통과 65 / 65

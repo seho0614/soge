@@ -1,0 +1,135 @@
+PASS guest HTTP 200 200
+PASS guest 오류 문구 없음 
+PASS guest 내용 판 = sample sample
+PASS guest 메인 전용 헤더 1개 · 공통 헤더 없음 
+PASS guest 헤더 메뉴 = 관 이름(/gwans) + 소개광장 + 이용안내 ['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내'] ['/money', '/mall', '/biz', '/health', '/community', '/guide']
+PASS guest 메뉴 이름 「소개몰」(v10.25 — 10/7 결정 · 전에는 「소개뱅크몰」) ['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내']
+PASS guest 헤더 오른쪽 — 로그인 · 무료 회원가입 ['로그인', '무료 회원가입'] ['/login', '/signup']
+PASS guest 헤더 검색 아이콘 → /search · 로고 → / · 로고는 그림에서 잘라 낸 것 
+PASS guest 메인 전용 푸터 1개 · 공통 푸터 없음 
+PASS guest 푸터 약관 · 고객센터 링크 = /footer-links 7
+PASS guest 푸터 법정 표시 — 사업자등록번호 · 통신판매업 · 통신판매중개자 고지 울금천-1772호 · 직업정보제공사업 신고번호 해당 없음
+
+소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다. 상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.
+
+메인의 사진 · 순위 · 평점 · 인물은 디자인 예시입니다 — 실제 매물 · 상품 · 후기가 아닙니다. 「이건 어때?」의 참여 수는 실제로 넣은 표 수입니다.
+PASS guest 푸터 바로가기(소개받기 · 파트너센터 · AI 3 · 나의공간 · 고객센터) ['/request', '/partner', '/ai/classify', '/ai/match', '/ai/profile', '/my', '/support/new']
+PASS guest 사회관계망 아이콘 4개 — 주소를 넣은 0개만 그 주소로(새 창), 나머지는 링크가 아니라 「준비 중」 [['sns.facebook', 'SPAN', None, None, None], ['sns.instagram', 'SPAN', None, None, None], ['sns.x', 'SPAN', None, None, None], ['sns.youtube', 'SPAN', None, None, None]]
+PASS guest 저작권 연도 = 올해 
+PASS guest 히어로 제목 무엇을 찾고 계세요?
+소뱅AI가 딱 맞는 소개를 이어드려요.
+PASS guest 검색 탭 = AI 검색 + 살아 있는 관 + 동네정보 + 사람/전문가 ['AI 검색', '상품', '서비스', '업체', '창업', '동네정보', '사람/전문가']
+PASS guest 추천 칩 4개 → /search?q= 4
+PASS guest 안내 카드 장수 = 광고(있으면) + 안내 2 / 5 ad=True
+PASS guest 처음 보이는 장 = 그림의 장(전문가 포트폴리오 · 광고가 있으면 2번째) pf 2 / 5
+PASS guest 오늘의 소개뱅크 — 큰 배너 = 그림(가을 나들이 맛집 TOP 10) · 배너 그림은 잘라 낸 것 
+PASS guest 순위 카드 = 그림(인기 급상승 상품 · 소개를 기다리는 요청 · 판교 · 분당) ['인기 급상승 상품', '소개를 기다리는 요청', '판교 · 분당']
+PASS guest 순위 카드의 줄을 누르면 실제 화면으로(상품 검색 · 소개받기 · 소개광장) 
+PASS guest 오늘의 PICK 5장 = 그림(제목 · 꼬리표 · 가격 · 할인율 · 별점) ['AI 음식물처리기 A1', '김현우 세무사', '무인 스터디카페 창업', '판교 가족식당 추천', '카페에서 중요한 것은?']
+PASS guest PICK 사진 5장 = 그림에서 잘라 낸 것 
+PASS guest 최근 뜨는 창업 4장 = 그림(제목 · 꼬리표 · 사진) 
+PASS guest 지금, 어떤 소개가 필요하세요? — 살아 있는 관 + 소개광장 ['/health', '/money', '/mall', '/biz', '/community']
+PASS guest 믿고 연결받는 안심소개 4장 → 상담 업종 · 안심소개 · 매물 목록 · 상담 신청 ['/mal/consult', '/mall', '/mall/list', '/consult']
+PASS guest 소개뱅크 핵심 4개 ['#home-q', '/ai/match', '/mall', '/request']
+PASS guest 띠배너 → /community · 양쪽 그림은 잘라 낸 것 
+PASS guest 이건 어때? 3장 = 서버의 투표(종류마다 1건) · 참여 수 = 실제 표 수 · 없는 종류는 「준비 중」 [['VS', '42d537df-0b2d-4226-9e0f-a7f2e37cb540', '', '로봇청소기를 산다면, 어느 쪽을 고르시겠어요?', '0명 참여'], ['ASK', 'f2bf3625-54d7-4858-8137-ee5832f0f779', '', '소개받아 살 때 가장 먼저 보는 것은?', '0명 참여'], ['USED', '5f281b96-307
+PASS guest 이건 어때? — 그림의 예시 숫자(3,482 · 4,219 · 812명) 없음 · 투표 전에는 비율이 안 보임 · 「전체보기」는 투표 목록 
+PASS guest 이건 어때? — 버튼(투표하기 · 투표하기 · 의견 남기기) 또는 「투표 보러 가기」 ['투표하기', '투표하기', '의견 남기기']
+PASS guest 지금 우리동네 3장 = 그림(동네픽 · 동네소개 · 동네참여 · 거리) 
+PASS guest 푸터에 「디자인 예시」 한 줄(실제 매물 · 상품 · 후기가 아님 · 「이건 어때?」 참여 수는 실제 표 수) 
+PASS guest 나를 위한 소개 → 로그인 · 무료 회원가입 ['/login', '/signup']
+PASS guest 그림 63장 전부 뜸 []
+PASS guest 사진 · 아이콘 · 로고는 전부 주신 그림에서 잘라 낸 것(/home/d) []
+PASS guest 새로 그린 아이콘(svg.home-ic) 없음 
+PASS guest 링크 전수 34개 200 
+PASS guest 콘솔 오류 0 
+PASS guest API 4xx/5xx 0 
+PASS guest 광고 장이 보이기 전에는 노출을 기록하지 않음 []
+PASS guest 안내 카드 「다음」 — 5장을 돌아 처음으로 ['pf', 'biz', 'health', 'community', 'ad', 'pf']
+PASS guest 광고 장 — 「광고」 표시 · 광고주 이름 · 노출 기록 POST 2xx 한 번(여러 번 돌아와도) 광고 [('/api/v1/ads/6792bc7e-7f6d-4b80-a9ca-51154b8a55c1/impression', 201)]
+PASS guest 광고 버튼 → 클릭 기록 + 이동/안내 [('/api/v1/ads/6792bc7e-7f6d-4b80-a9ca-51154b8a55c1/click', 201)] moved=True
+PASS guest 안내 장 버튼 → 실제 화면 /mall
+PASS guest 빈 검색 → 안내 문구 
+PASS guest 탭 「상품」 → 몰 상품 검색으로 · 안내 문구 바뀜 예) 음식물처리기, 공기청정기
+PASS guest 「상품」 팝업 Enter → /health/search?q=혈압계 http://localhost:5174/health/search?q=%ED%98%88%EC%95%95%EA%B3%84
+PASS guest 탭 「창업」 팝업 Enter → /search?q=주방&gwanCode=BIZ http://localhost:5174/search?q=%EC%A3%BC%EB%B0%A9&gwanCode=BIZ
+PASS guest 「AI 검색」 팝업 Enter → /search?q=창업 (관 조건 없음) http://localhost:5174/search?q=%EC%B0%BD%EC%97%85
+PASS guest 추천 칩 → 그 말로 검색 팝업 → Enter → 검색 결과 판교 가족식당 추천해줘 http://localhost:5174/search?q=판교+가족식당+추천해줘
+PASS guest PICK 화살표 — 넘길 카드가 없으면(그림의 5장) 「전체보기」와 같은 곳으로 http://localhost:5174/search
+PASS guest 핵심 「AI로 찾고」 → 히어로 검색 팝업 
+PASS guest 메인 → 관(화면 전환) — 공통 헤더 · 푸터 · 본문 틀 그대로 http://localhost:5174/mall
+PASS guest 공통 헤더 메뉴 그대로(소개받기 · 소개광장 · 파트너센터 · 나의공간 · 로그인 · 무료 회원가입) (['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내', '소개받기', '파트너센터', '나의공간', '🔔', '로그인', '무료 회원가입'], [])
+PASS guest 메인 → 소개장터 메인(화면 전환) — 두 관 전용 머리줄 · 바닥줄(색조 money) · 메인 전용 · 공통 헤더 없음 http://localhost:5174/money
+PASS guest 관 → 메인(로고) — 메인 전용 헤더 · 푸터로 바뀜 http://localhost:5174/
+PASS guest /mall 바로 열기 — 공통 헤더 · 푸터 
+PASS guest 390px 메인 본문 가로 넘침 없음 {"sw": 390, "homeRight": 390, "homeSW": 390, "homeCW": 390, "worst": 390, "who": "home-hd"}
+PASS guest 390px 문서 전체 가로 스크롤 없음 scrollWidth=390
+PASS intro 로그인 쿠키 sgb_visitor,sgb_at,sgb_rt,sgb_tc
+PASS intro HTTP 200 200
+PASS intro 오류 문구 없음 
+PASS intro 내용 판 = sample sample
+PASS intro 메인 전용 헤더 1개 · 공통 헤더 없음 
+PASS intro 헤더 메뉴 = 관 이름(/gwans) + 소개광장 + 이용안내 ['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내'] ['/money', '/mall', '/biz', '/health', '/community', '/guide']
+PASS intro 메뉴 이름 「소개몰」(v10.25 — 10/7 결정 · 전에는 「소개뱅크몰」) ['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내']
+PASS intro 헤더 오른쪽 — 나의공간 · 소개받기 ['나의공간', '소개받기'] ['/my', '/request']
+PASS intro 헤더 검색 아이콘 → /search · 로고 → / · 로고는 그림에서 잘라 낸 것 
+PASS intro 메인 전용 푸터 1개 · 공통 푸터 없음 
+PASS intro 푸터 약관 · 고객센터 링크 = /footer-links 7
+PASS intro 푸터 법정 표시 — 사업자등록번호 · 통신판매업 · 통신판매중개자 고지 울금천-1772호 · 직업정보제공사업 신고번호 해당 없음
+
+소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다. 상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.
+
+메인의 사진 · 순위 · 평점 · 인물은 디자인 예시입니다 — 실제 매물 · 상품 · 후기가 아닙니다. 「이건 어때?」의 참여 수는 실제로 넣은 표 수입니다.
+PASS intro 푸터 바로가기(소개받기 · 파트너센터 · AI 3 · 나의공간 · 고객센터) ['/request', '/partners', '/partner', '/ai/classify', '/ai/match', '/ai/profile', '/my', '/support/new']
+PASS intro 사회관계망 아이콘 4개 — 주소를 넣은 0개만 그 주소로(새 창), 나머지는 링크가 아니라 「준비 중」 [['sns.facebook', 'SPAN', None, None, None], ['sns.instagram', 'SPAN', None, None, None], ['sns.x', 'SPAN', None, None, None], ['sns.youtube', 'SPAN', None, None, None]]
+PASS intro 저작권 연도 = 올해 
+PASS intro 히어로 제목 무엇을 찾고 계세요?
+소뱅AI가 딱 맞는 소개를 이어드려요.
+PASS intro 검색 탭 = AI 검색 + 살아 있는 관 + 동네정보 + 사람/전문가 ['AI 검색', '상품', '서비스', '업체', '창업', '동네정보', '사람/전문가']
+PASS intro 추천 칩 4개 → /search?q= 4
+PASS intro 안내 카드 장수 = 광고(있으면) + 안내 2 / 5 ad=True
+PASS intro 처음 보이는 장 = 그림의 장(전문가 포트폴리오 · 광고가 있으면 2번째) pf 2 / 5
+PASS intro 오늘의 소개뱅크 — 큰 배너 = 그림(가을 나들이 맛집 TOP 10) · 배너 그림은 잘라 낸 것 
+PASS intro 순위 카드 = 그림(인기 급상승 상품 · 소개를 기다리는 요청 · 판교 · 분당) ['인기 급상승 상품', '소개를 기다리는 요청', '판교 · 분당']
+PASS intro 순위 카드의 줄을 누르면 실제 화면으로(상품 검색 · 소개받기 · 소개광장) 
+PASS intro 오늘의 PICK 5장 = 그림(제목 · 꼬리표 · 가격 · 할인율 · 별점) ['AI 음식물처리기 A1', '김현우 세무사', '무인 스터디카페 창업', '판교 가족식당 추천', '카페에서 중요한 것은?']
+PASS intro PICK 사진 5장 = 그림에서 잘라 낸 것 
+PASS intro 최근 뜨는 창업 4장 = 그림(제목 · 꼬리표 · 사진) 
+PASS intro 지금, 어떤 소개가 필요하세요? — 살아 있는 관 + 소개광장 ['/health', '/money', '/mall', '/biz', '/community']
+PASS intro 믿고 연결받는 안심소개 4장 → 상담 업종 · 안심소개 · 매물 목록 · 상담 신청 ['/mal/consult', '/mall', '/mall/list', '/consult']
+PASS intro 소개뱅크 핵심 4개 ['#home-q', '/ai/match', '/mall', '/request']
+PASS intro 띠배너 → /community · 양쪽 그림은 잘라 낸 것 
+PASS intro 이건 어때? 3장 = 서버의 투표(종류마다 1건) · 참여 수 = 실제 표 수 · 없는 종류는 「준비 중」 [['VS', '42d537df-0b2d-4226-9e0f-a7f2e37cb540', '', '로봇청소기를 산다면, 어느 쪽을 고르시겠어요?', '0명 참여'], ['ASK', 'f2bf3625-54d7-4858-8137-ee5832f0f779', '', '소개받아 살 때 가장 먼저 보는 것은?', '0명 참여'], ['USED', '5f281b96-307
+PASS intro 이건 어때? — 그림의 예시 숫자(3,482 · 4,219 · 812명) 없음 · 투표 전에는 비율이 안 보임 · 「전체보기」는 투표 목록 
+PASS intro 이건 어때? — 버튼(투표하기 · 투표하기 · 의견 남기기) 또는 「투표 보러 가기」 ['투표하기', '투표하기', '의견 남기기']
+PASS intro 지금 우리동네 3장 = 그림(동네픽 · 동네소개 · 동네참여 · 거리) 
+PASS intro 푸터에 「디자인 예시」 한 줄(실제 매물 · 상품 · 후기가 아님 · 「이건 어때?」 참여 수는 실제 표 수) 
+PASS intro 나를 위한 소개 → /ai/profile ['/ai/profile']
+PASS intro 내 요약 = /me/summary ['5', '1', '14'] vs ['5', '1', '14']
+PASS intro 그림 63장 전부 뜸 []
+PASS intro 사진 · 아이콘 · 로고는 전부 주신 그림에서 잘라 낸 것(/home/d) []
+PASS intro 새로 그린 아이콘(svg.home-ic) 없음 
+PASS intro 링크 전수 35개 200 
+PASS intro 콘솔 오류 0 
+PASS intro API 4xx/5xx 0 
+PASS intro 광고 장이 보이기 전에는 노출을 기록하지 않음 []
+PASS intro 안내 카드 「다음」 — 5장을 돌아 처음으로 ['pf', 'biz', 'health', 'community', 'ad', 'pf']
+PASS intro 광고 장 — 「광고」 표시 · 광고주 이름 · 노출 기록 POST 2xx 한 번(여러 번 돌아와도) 광고 [('/api/v1/ads/a66dfc08-837c-4905-8c43-3c7e190a781f/impression', 201)]
+PASS intro 광고 버튼 → 클릭 기록 + 이동/안내 [('/api/v1/ads/a66dfc08-837c-4905-8c43-3c7e190a781f/click', 201)] moved=True
+PASS intro 안내 장 버튼 → 실제 화면 /mall
+PASS intro 빈 검색 → 안내 문구 
+PASS intro 탭 「상품」 → 몰 상품 검색으로 · 안내 문구 바뀜 예) 음식물처리기, 공기청정기
+PASS intro 「상품」 팝업 Enter → /health/search?q=혈압계 http://localhost:5174/health/search?q=%ED%98%88%EC%95%95%EA%B3%84
+PASS intro 탭 「창업」 팝업 Enter → /search?q=주방&gwanCode=BIZ http://localhost:5174/search?q=%EC%A3%BC%EB%B0%A9&gwanCode=BIZ
+PASS intro 「AI 검색」 팝업 Enter → /search?q=창업 (관 조건 없음) http://localhost:5174/search?q=%EC%B0%BD%EC%97%85
+PASS intro 추천 칩 → 그 말로 검색 팝업 → Enter → 검색 결과 판교 가족식당 추천해줘 http://localhost:5174/search?q=판교+가족식당+추천해줘
+PASS intro PICK 화살표 — 넘길 카드가 없으면(그림의 5장) 「전체보기」와 같은 곳으로 http://localhost:5174/search
+PASS intro 핵심 「AI로 찾고」 → 히어로 검색 팝업 
+PASS intro 메인 → 관(화면 전환) — 공통 헤더 · 푸터 · 본문 틀 그대로 http://localhost:5174/mall
+PASS intro 공통 헤더 메뉴(소개받기 · 소개광장 · 파트너센터 · 나의공간) + 로그인 뒤에는 「로그아웃」(로그인 · 회원가입 링크 없음 — G-181) (['소개장터', '안심소개', '소개창업', '소개몰', '소개광장', '이용안내', '소개받기', '파트너센터', '나의공간', '고객센터', '🔔5'], ['로그아웃'])
+PASS intro 메인 → 소개장터 메인(화면 전환) — 두 관 전용 머리줄 · 바닥줄(색조 money) · 메인 전용 · 공통 헤더 없음 http://localhost:5174/money
+PASS intro 관 → 메인(로고) — 메인 전용 헤더 · 푸터로 바뀜 http://localhost:5174/
+PASS intro /mall 바로 열기 — 공통 헤더 · 푸터 
+PASS intro 390px 메인 본문 가로 넘침 없음 {"sw": 390, "homeRight": 390, "homeSW": 390, "homeCW": 390, "worst": 390, "who": "home-hd"}
+PASS intro 390px 문서 전체 가로 스크롤 없음 scrollWidth=390
+124/124

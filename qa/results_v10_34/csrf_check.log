@@ -1,0 +1,8 @@
+ok   C-1 브라우저 주소와 같은 Origin → 통과 
+ok   C-2 다른 사이트 Origin → 403 CSRF 
+ok   C-3 호스트 이름 앞부분만 같은 Origin → 403 
+ok   C-4 Origin: null → 403 
+ok   C-5 앞단이 HTTPS 를 끊는 운영(Origin https://도메인 · Host 도메인) → 통과 
+ok   C-6 앞단이 넘긴 X-Forwarded-Host 와 같은 Origin → 통과 
+ok   C-7 Origin 없는 요청(서버 간 호출) → 기존대로 통과 
+통과 7 / 7

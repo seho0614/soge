@@ -1,0 +1,263 @@
+PASS [guest] /mall HTTP 200
+PASS [guest] /mall Application error 없음
+PASS [guest] /mall 콘솔 오류 0
+PASS [guest] /mall 띠 · 시연 「보는 사람」 없음
+PASS [guest] /mall 내부 링크 전부 200
+PASS [guest] /mall 390px 가로 넘침 없음
+PASS [guest] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)
+PASS [guest] /mall 인증업체만 게시 = API mal.partner_only(off)
+PASS [guest] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)
+PASS [guest] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)
+PASS [guest] /mall 일반 → 「소개합니다」(/mall/give)
+PASS [guest] /mall 기본 축에는 중개사 매물 링크 없음
+PASS [guest] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내
+PASS [guest] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음
+PASS [guest] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL
+PASS [guest] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시
+PASS [guest] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)
+PASS [guest] /mall 축 탭 클릭 → ?axis=consult
+PASS [guest] /mall?axis=consult HTTP 200
+PASS [guest] /mall?axis=consult Application error 없음
+PASS [guest] /mall?axis=consult 콘솔 오류 0
+PASS [guest] /mall?axis=consult 띠 · 시연 「보는 사람」 없음
+PASS [guest] /mall?axis=consult 내부 링크 전부 200
+PASS [guest] /mall?axis=consult 390px 가로 넘침 없음
+PASS [guest] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2
+PASS [guest] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API
+PASS [guest] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음
+PASS [guest] 상담 축 카드 버튼 → /partner/apply
+PASS [guest] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)
+PASS [guest] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)
+PASS [guest] /mall/list HTTP 200
+PASS [guest] /mall/list Application error 없음
+PASS [guest] /mall/list 콘솔 오류 0
+PASS [guest] /mall/list 띠 · 시연 「보는 사람」 없음
+PASS [guest] /mall/list 내부 링크 전부 200
+PASS [guest] /mall/list 390px 가로 넘침 없음
+PASS [guest] /mall/give HTTP 200
+PASS [guest] /mall/give Application error 없음
+PASS [guest] /mall/give 콘솔 오류 0
+PASS [guest] /mall/give 띠 · 시연 「보는 사람」 없음
+PASS [guest] /mall/give 내부 링크 전부 200
+PASS [guest] /mall/give 390px 가로 넘침 없음
+PASS [guest] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」
+PASS [guest] 소개하기 안내 추가 단가 = API
+PASS [guest] 소개하기 안내 비로그인 — 내 소개코드 칸 없음
+PASS [guest] /consult HTTP 200
+PASS [guest] /consult Application error 없음
+PASS [guest] /consult 콘솔 오류 0
+PASS [guest] /consult 내부 링크 전부 200
+PASS [guest] /consult 390px 가로 넘침 없음
+PASS [guest] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시
+PASS [guest] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22
+PASS [guest] /consult?cat=CSL_CLEANING HTTP 200
+PASS [guest] /consult?cat=CSL_CLEANING Application error 없음
+PASS [guest] /consult?cat=CSL_CLEANING 콘솔 오류 0
+PASS [guest] /consult?cat=CSL_CLEANING 내부 링크 전부 200
+PASS [guest] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음
+PASS [guest] /consult?cat=CSL_CLEANING → 업종 미리 고름
+PASS [guest] /mal/consult HTTP 200
+PASS [guest] /mal/consult Application error 없음
+PASS [guest] /mal/consult 콘솔 오류 0
+PASS [guest] /mal/consult 내부 링크 전부 200
+PASS [guest] /mal/consult 390px 가로 넘침 없음
+PASS [guest] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크
+PASS [guest] /mal/consult/CSL_CLEANING HTTP 200
+PASS [guest] /mal/consult/CSL_CLEANING Application error 없음
+PASS [guest] /mal/consult/CSL_CLEANING 콘솔 오류 0
+PASS [guest] /mal/consult/CSL_CLEANING 내부 링크 전부 200
+PASS [guest] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음
+PASS [guest] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply
+PASS [guest] /mal/consult/CSL_CLEANING/apply HTTP 200
+PASS [guest] /mal/consult/CSL_CLEANING/apply Application error 없음
+PASS [guest] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0
+PASS [guest] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200
+PASS [guest] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음
+PASS [guest] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)
+PASS [guest] /mal/consult/CSL_LEGAL HTTP 200
+PASS [guest] /mal/consult/CSL_LEGAL Application error 없음
+PASS [guest] /mal/consult/CSL_LEGAL 콘솔 오류 0
+PASS [guest] /mal/consult/CSL_LEGAL 내부 링크 전부 200
+PASS [guest] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음
+PASS [guest] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)
+PASS [intro] 로그인
+PASS [intro] /mall HTTP 200
+PASS [intro] /mall Application error 없음
+PASS [intro] /mall 콘솔 오류 0
+PASS [intro] /mall 띠 · 시연 「보는 사람」 없음
+PASS [intro] /mall 내부 링크 전부 200
+PASS [intro] /mall 390px 가로 넘침 없음
+PASS [intro] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)
+PASS [intro] /mall 인증업체만 게시 = API mal.partner_only(off)
+PASS [intro] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)
+PASS [intro] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)
+PASS [intro] /mall 입점 업체 → 「매물 등록」(/register)
+PASS [intro] /mall 기본 축에는 중개사 매물 링크 없음
+PASS [intro] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내
+PASS [intro] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음
+PASS [intro] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL
+PASS [intro] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시
+PASS [intro] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)
+PASS [intro] /mall 축 탭 클릭 → ?axis=consult
+PASS [intro] /mall?axis=consult HTTP 200
+PASS [intro] /mall?axis=consult Application error 없음
+PASS [intro] /mall?axis=consult 콘솔 오류 0
+PASS [intro] /mall?axis=consult 띠 · 시연 「보는 사람」 없음
+PASS [intro] /mall?axis=consult 내부 링크 전부 200
+PASS [intro] /mall?axis=consult 390px 가로 넘침 없음
+PASS [intro] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2
+PASS [intro] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API
+PASS [intro] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음
+PASS [intro] 상담 축 카드 버튼 → /partner/leads
+PASS [intro] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)
+PASS [intro] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)
+PASS [intro] /mall/list HTTP 200
+PASS [intro] /mall/list Application error 없음
+PASS [intro] /mall/list 콘솔 오류 0
+PASS [intro] /mall/list 띠 · 시연 「보는 사람」 없음
+PASS [intro] /mall/list 내부 링크 전부 200
+PASS [intro] /mall/list 390px 가로 넘침 없음
+PASS [intro] /mall/give HTTP 200
+PASS [intro] /mall/give Application error 없음
+PASS [intro] /mall/give 콘솔 오류 0
+PASS [intro] /mall/give 띠 · 시연 「보는 사람」 없음
+PASS [intro] /mall/give 내부 링크 전부 200
+PASS [intro] /mall/give 390px 가로 넘침 없음
+PASS [intro] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」
+PASS [intro] 소개하기 안내 추가 단가 = API
+PASS [intro] 소개하기 안내 이번 달 무료 남은 수 = API /me/referral-codes/quota
+PASS [intro] /consult HTTP 200
+PASS [intro] /consult Application error 없음
+PASS [intro] /consult 콘솔 오류 0
+PASS [intro] /consult 내부 링크 전부 200
+PASS [intro] /consult 390px 가로 넘침 없음
+PASS [intro] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시
+PASS [intro] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22
+PASS [intro] /consult?cat=CSL_CLEANING HTTP 200
+PASS [intro] /consult?cat=CSL_CLEANING Application error 없음
+PASS [intro] /consult?cat=CSL_CLEANING 콘솔 오류 0
+PASS [intro] /consult?cat=CSL_CLEANING 내부 링크 전부 200
+PASS [intro] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음
+PASS [intro] /consult?cat=CSL_CLEANING → 업종 미리 고름
+PASS [intro] /mal/consult HTTP 200
+PASS [intro] /mal/consult Application error 없음
+PASS [intro] /mal/consult 콘솔 오류 0
+PASS [intro] /mal/consult 내부 링크 전부 200
+PASS [intro] /mal/consult 390px 가로 넘침 없음
+PASS [intro] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크
+PASS [intro] /mal/consult/CSL_CLEANING HTTP 200
+PASS [intro] /mal/consult/CSL_CLEANING Application error 없음
+PASS [intro] /mal/consult/CSL_CLEANING 콘솔 오류 0
+PASS [intro] /mal/consult/CSL_CLEANING 내부 링크 전부 200
+PASS [intro] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음
+PASS [intro] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply
+PASS [intro] /mal/consult/CSL_CLEANING/apply HTTP 200
+PASS [intro] /mal/consult/CSL_CLEANING/apply Application error 없음
+PASS [intro] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0
+PASS [intro] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200
+PASS [intro] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음
+PASS [intro] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)
+PASS [intro] /mal/consult/CSL_LEGAL HTTP 200
+PASS [intro] /mal/consult/CSL_LEGAL Application error 없음
+PASS [intro] /mal/consult/CSL_LEGAL 콘솔 오류 0
+PASS [intro] /mal/consult/CSL_LEGAL 내부 링크 전부 200
+PASS [intro] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음
+PASS [intro] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)
+PASS [person] 로그인
+PASS [person] /mall HTTP 200
+PASS [person] /mall Application error 없음
+PASS [person] /mall 콘솔 오류 0
+PASS [person] /mall 띠 · 시연 「보는 사람」 없음
+PASS [person] /mall 내부 링크 전부 200
+PASS [person] /mall 390px 가로 넘침 없음
+PASS [person] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)
+PASS [person] /mall 인증업체만 게시 = API mal.partner_only(off)
+PASS [person] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)
+PASS [person] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)
+PASS [person] /mall 일반 → 「소개합니다」(/mall/give)
+PASS [person] /mall 기본 축에는 중개사 매물 링크 없음
+PASS [person] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내
+PASS [person] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음
+PASS [person] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL
+PASS [person] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시
+PASS [person] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)
+PASS [person] /mall 축 탭 클릭 → ?axis=consult
+PASS [person] /mall?axis=consult HTTP 200
+PASS [person] /mall?axis=consult Application error 없음
+PASS [person] /mall?axis=consult 콘솔 오류 0
+PASS [person] /mall?axis=consult 띠 · 시연 「보는 사람」 없음
+PASS [person] /mall?axis=consult 내부 링크 전부 200
+PASS [person] /mall?axis=consult 390px 가로 넘침 없음
+PASS [person] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2
+PASS [person] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API
+PASS [person] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음
+PASS [person] 상담 축 카드 버튼 → /partner/apply
+PASS [person] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)
+PASS [person] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)
+PASS [person] /mall/list HTTP 200
+PASS [person] /mall/list Application error 없음
+PASS [person] /mall/list 콘솔 오류 0
+PASS [person] /mall/list 띠 · 시연 「보는 사람」 없음
+PASS [person] /mall/list 내부 링크 전부 200
+PASS [person] /mall/list 390px 가로 넘침 없음
+PASS [person] /mall/give HTTP 200
+PASS [person] /mall/give Application error 없음
+PASS [person] /mall/give 콘솔 오류 0
+PASS [person] /mall/give 띠 · 시연 「보는 사람」 없음
+PASS [person] /mall/give 내부 링크 전부 200
+PASS [person] /mall/give 390px 가로 넘침 없음
+PASS [person] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」
+PASS [person] 소개하기 안내 추가 단가 = API
+PASS [person] 소개하기 안내 이번 달 무료 남은 수 = API /me/referral-codes/quota
+PASS [person] /consult HTTP 200
+PASS [person] /consult Application error 없음
+PASS [person] /consult 콘솔 오류 0
+PASS [person] /consult 내부 링크 전부 200
+PASS [person] /consult 390px 가로 넘침 없음
+PASS [person] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시
+PASS [person] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22
+PASS [person] /consult?cat=CSL_CLEANING HTTP 200
+PASS [person] /consult?cat=CSL_CLEANING Application error 없음
+PASS [person] /consult?cat=CSL_CLEANING 콘솔 오류 0
+PASS [person] /consult?cat=CSL_CLEANING 내부 링크 전부 200
+PASS [person] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음
+PASS [person] /consult?cat=CSL_CLEANING → 업종 미리 고름
+PASS [person] /mal/consult HTTP 200
+PASS [person] /mal/consult Application error 없음
+PASS [person] /mal/consult 콘솔 오류 0
+PASS [person] /mal/consult 내부 링크 전부 200
+PASS [person] /mal/consult 390px 가로 넘침 없음
+PASS [person] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크
+PASS [person] /mal/consult/CSL_CLEANING HTTP 200
+PASS [person] /mal/consult/CSL_CLEANING Application error 없음
+PASS [person] /mal/consult/CSL_CLEANING 콘솔 오류 0
+PASS [person] /mal/consult/CSL_CLEANING 내부 링크 전부 200
+PASS [person] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음
+PASS [person] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply
+PASS [person] /mal/consult/CSL_CLEANING/apply HTTP 200
+PASS [person] /mal/consult/CSL_CLEANING/apply Application error 없음
+PASS [person] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0
+PASS [person] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200
+PASS [person] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음
+PASS [person] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)
+PASS [person] /mal/consult/CSL_LEGAL HTTP 200
+PASS [person] /mal/consult/CSL_LEGAL Application error 없음
+PASS [person] /mal/consult/CSL_LEGAL 콘솔 오류 0
+PASS [person] /mal/consult/CSL_LEGAL 내부 링크 전부 200
+PASS [person] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음
+PASS [person] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)
+PASS [person] 제출용 새 회원 로그인
+PASS [person] 동의 없이 「인증번호 받고 신청」 → 화면이 막고 사유 표시
+PASS [person] 「인증번호 받고 신청」 → 휴대폰 확인 단계(개발 환경 인증번호 표시) · 아직 「내 상담 신청」 없음
+PASS [person] 틀린 인증번호 → 서버 사유 표시 · 전달 안 됨
+PASS [person] 인증번호 확인 → 전달 화면(DELIVERED) · 서버에 1건 · 인증업체 1곳에 보냄
+PASS [person] 「새로 신청」 → 신청서로 돌아감
+PASS [person] 「내 상담 신청」에 새 건 표시(업체 1곳에 보냄)
+PASS [person] 같은 번호 · 같은 업종 재신청 → 서버 거부 사유 표시 · 건수 그대로
+PASS [person] (정리) 시험 신청을 운영 API 로 종료
+PASS [person] 제출 중 스크립트 오류 0
+PASS [다른 관] /money 200 · 안심소개 구성 안 섞임
+PASS [다른 관] /biz 200 · 안심소개 구성 안 섞임
+PASS [다른 관] /health 200 · 안심소개 구성 안 섞임
+
+261/261  → /home/claude/qa/web_mal.json
