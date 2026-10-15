@@ -20,10 +20,12 @@ import { MailService } from '../../common/mail/mail.service';
  * 24시간 안에 열지 않으면 다른 1곳으로 넘어갑니다(배치 lead_assign).
  *
  * ── 인증번호 발송 ─────────────────────────────────────────────────
- * 알림톡(integrations.ALIMTALK = LIVE)이 있으면 알림톡, 없으면 **메일(v10.43)** 로 보냅니다.
- *   메일은 SMTP_* · MAIL_FROM 설정이 있고 notify.email_verified = on 일 때만(MailService.ready).
- *   메일 인증번호는 **이메일을 확인할 뿐 휴대폰 번호를 확인하지 않습니다** — 10/2 결정(알림톡 전 대체 수단)대로입니다.
- *   메일을 보내지 못하면 그 신청을 지우고(연락처 암호문 포함) OTP_SEND_FAILED 로 알립니다 — 받지 못한 번호로 하루 횟수를 쓰지 않게.
+ * **두 길을 함께 씁니다(v10.43 · 10/15 대표 결정 「둘 중 하나만 인증하면 됨 · 둘 다 사용」)**
+ *   휴대폰 = 알림톡(integrations.ALIMTALK = LIVE) · 이메일 = 메일(SMTP_* · 발신 주소 · notify.email_verified = on · MailService.ready)
+ *   준비된 길 모두로 **같은 인증번호 하나**를 보냅니다 — 어느 쪽으로 받은 번호를 넣어도 확인됩니다(verify 는 그대로).
+ *   메일만으로 확인하면 휴대폰 번호는 확인되지 않습니다 — 대표 결정으로 허용.
+ *   메일이 유일한 길인데 보내지 못하면 그 신청을 지우고(연락처 암호문 포함) OTP_SEND_FAILED — 받지 못한 신청이 하루 횟수를 쓰지 않게.
+ *   알림톡도 준비된 경우 메일 실패는 신청을 막지 않고 안내 문구에서 뺍니다.
  * 둘 다 없으면: 개발 환경(NODE_ENV=development)에서만 응답에 devCode 를 실어 흐름을 시험할 수 있게 하고,
  * 그 밖의 환경(staging · production)에서는 신청 자체를 받지 않습니다(NOTIFY_NOT_READY).
  *
@@ -147,7 +149,7 @@ export class ConsultService {
     if (!cat) throw new PolicyViolation('CATEGORY_REQUIRED', '상담 업종을 확인해 주십시오.');
 
     const alimtalk = await this.notifyReady();
-    const byMail = !alimtalk && await this.mail.ready();   /* v10.43 — 알림톡 전에는 메일로 */
+    const byMail = await this.mail.ready();   /* v10.43 — 휴대폰 · 이메일 둘 다 (둘 중 하나로 확인) */
     const ready = alimtalk || byMail;
     /* ★ 인증번호를 응답에 싣는 것은 **개발 환경(NODE_ENV=development)일 때만**입니다.
      *   올린 kit 은 「운영(production)이 아니면」 실었습니다 — staging 처럼 실제 번호가 들어오는 환경에서도
@@ -199,11 +201,16 @@ export class ConsultService {
             + `직접 신청하지 않으셨다면 이 메일을 무시하십시오 — 확인하지 않은 신청은 업체에 가지 않습니다.\n\n`
             + `본 메일은 발신 전용입니다.\n(주)한국바이오헬스케어 소개뱅크 사업부`,
       });
-      if (!sent.ok) {
+      if (!sent.ok && !alimtalk) {
         await this.db.query(`DELETE FROM consult_requests WHERE id = $1 AND lead_id IS NULL`, [row.id]);
         throw new PolicyViolation('OTP_SEND_FAILED', '인증번호 메일을 보내지 못했습니다. 이메일 주소를 확인하신 뒤 다시 시도해 주십시오.');
       }
-      note = `${ConsultService.maskEmail(email)} 로 인증번호를 보냈습니다(메일). 받은편지함에 없으면 스팸함을 확인해 주십시오.`;
+      const where = ConsultService.maskEmail(email);
+      if (sent.ok) {
+        note = alimtalk
+          ? `휴대폰(알림톡)과 이메일 ${where} 로 같은 인증번호를 보냈습니다. 둘 중 하나로 받은 번호를 넣어 주십시오.`
+          : `${where} 로 인증번호를 보냈습니다(메일). 받은편지함에 없으면 스팸함을 확인해 주십시오.`;
+      }
     }
     return {
       id: row.id, state: 'PENDING_VERIFY', expiresInMinutes: OTP_TTL_MIN,

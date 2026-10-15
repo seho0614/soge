@@ -112,7 +112,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
 
   const sent = step === 'verify' && !!req;
   return (
-    <form onSubmit={sent ? verify : (e) => { e.preventDefault(); setErr('휴대폰 확인을 먼저 해 주십시오 — 휴대폰 칸 옆 「인증번호 받기」를 누르십시오.'); }}
+    <form onSubmit={sent ? verify : (e) => { e.preventDefault(); setErr('인증번호 확인을 먼저 해 주십시오 — 휴대폰 칸 옆 「인증번호 받기」를 누르면 휴대폰 또는 이메일로 보내 드립니다.'); }}
           className="mal-form cslf" noValidate data-consult-verify={sent ? req!.id : undefined}>
       {fixed ? (
         <input type="hidden" name="categoryId" value={f.categoryId} />
@@ -138,6 +138,8 @@ export function ConsultForm({ categories, initialId, fixed }: {
             <button className="mal-btn ghost sm" type="button" onClick={submit} disabled={busy || sent || open.length === 0} data-csl-otp="">
               {sent ? '보냈습니다' : busy ? '보내는 중…' : '인증번호 받기'}</button>
           </span></label>
+        {/* v10.43 (10/15 대표 결정 A) — 휴대폰(알림톡) · 이메일 둘 다로 같은 번호를 보내고, 둘 중 하나로 확인 */}
+        <p className="mal-ls" data-csl-otp-hint="">인증번호는 휴대폰 또는 이메일로 보내 드립니다 — 둘 중 하나로 받은 번호를 넣으면 됩니다.</p>
         {/* v10.28 (작업 지시서 4절) — 이메일(필수). 휴대폰 확인을 마친 뒤 업체가 연락처를 열 때 함께 전달 · 암호화 보관 */}
         <label className="fld"><span>이메일</span>
           <input name="email" type="email" value={f.email} onChange={set('email')} placeholder="name@example.com" autoComplete="email" maxLength={120} /></label>
