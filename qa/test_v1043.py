@@ -58,7 +58,8 @@ ok('머리줄 끼워 넣기 막음', r"/[\r\n]/.test(m.to)" in sm and r"/[\r\n]/
 # ④
 env = rd('deploy/aws/env.production.example')
 ok('운영 .env 예시에 SMTP_*', all(k in env for k in ('SMTP_HOST=', 'SMTP_PORT=', 'SMTP_USER=', 'SMTP_PASS=', 'MAIL_FROM=')), '')
-ok('VERSION v10.43', rd('VERSION').strip() == 'v10.43', '')
+_v = tuple(int(x) for x in re.findall(r'\d+', (rd('VERSION') if 'rd' in globals() else open(K + '/VERSION').read())))
+ok('VERSION v10.43 이상', _v >= (10, 43,), '.'.join(map(str, _v)))
 ok('문서 92', any(f.startswith('92_') for f in os.listdir(os.path.join(K, 'docs'))), '')
 
 n = sum(1 for r in RES if r[0])

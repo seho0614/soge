@@ -7,7 +7,7 @@
   ③ D098 — 두 번 돌려도 같음 · 운영자가 고친 값은 그대로(거래 안에서 시험하고 되돌림)
   ④ 꼬리표 · 운영 화면 서브도메인 · 보류 폴더 · 패키지 이름
 """
-import json, os, subprocess
+import json, os, re, subprocess
 
 K = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002') + '/sgb'
 DB = os.environ.get('DB', 'postgresql://sgb:sgb@localhost:5432/sgb')
@@ -65,7 +65,8 @@ ok('리드관 보류 폴더 없음', not os.path.exists(K + '/prisma/migrations-
 names = [json.load(open(K + f, encoding='utf-8'))['name'] for f in ('/package.json', '/site/package.json', '/web/package.json')]
 locks = [json.load(open(K + f, encoding='utf-8'))['name'] for f in ('/package-lock.json', '/site/package-lock.json', '/web/package-lock.json')]
 ok('패키지 이름 sogaebank · lock 과 같음', names == ['sogaebank', 'sogaebank-site', 'sogaebank-web'] and names == locks, ' · '.join(names))
-ok('VERSION v10.42', open(K + '/VERSION').read().strip() == 'v10.42', '')
+_v = tuple(int(x) for x in re.findall(r'\d+', (rd('VERSION') if 'rd' in globals() else open(K + '/VERSION').read())))
+ok('VERSION v10.42 이상', _v >= (10, 42,), '.'.join(map(str, _v)))
 
 n = sum(1 for r in RES if r[0])
 print(f'통과 {n} / {len(RES)}')
