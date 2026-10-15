@@ -1,0 +1,1471 @@
+{
+ "main1": {
+  "ids": [
+   "SB-HOM-MAIN-011"
+  ],
+  "h1": ""
+ },
+ "main2": {
+  "ids": [
+   "SB-HOM-MAIN-010"
+  ],
+  "h1": ""
+ },
+ "list": {
+  "ids": [
+   "SB-MNY-MAIN-010"
+  ],
+  "h1": ""
+ },
+ "listl": {
+  "ids": [
+   "SB-MAL-MAIN-010"
+  ],
+  "h1": ""
+ },
+ "listb": {
+  "ids": [
+   "SB-BIZ-MAIN-010"
+  ],
+  "h1": ""
+ },
+ "win": {
+  "ids": [
+   "SB-MNY-WIN-010"
+  ],
+  "h1": ""
+ },
+ "bst": {
+  "ids": [
+   "SB-MNY-BST-010"
+  ],
+  "h1": ""
+ },
+ "urg": {
+  "ids": [
+   "SB-MNY-URG-010"
+  ],
+  "h1": ""
+ },
+ "saf": {
+  "ids": [
+   "SB-MNY-SAF-010"
+  ],
+  "h1": ""
+ },
+ "reqdm": {
+  "ids": [
+   "SB-HOM-REQ-M30"
+  ],
+  "h1": ""
+ },
+ "detail": {
+  "ids": [
+   "SB-BIZ-DTL-010"
+  ],
+  "h1": ""
+ },
+ "dtm": {
+  "ids": [
+   "SB-HOM-DTL-M10"
+  ],
+  "h1": ""
+ },
+ "reqn": {
+  "ids": [
+   "SB-HOM-REQ-010"
+  ],
+  "h1": ""
+ },
+ "reql": {
+  "ids": [
+   "SB-HOM-REQ-020"
+  ],
+  "h1": ""
+ },
+ "reqd": {
+  "ids": [
+   "SB-HOM-REQ-030"
+  ],
+  "h1": ""
+ },
+ "join": {
+  "ids": [
+   "SB-HOM-AUT-020"
+  ],
+  "h1": "회원가입",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 회원가입 단계 폼 (전 SB-HOM-AUT-010)"
+ },
+ "joind": {
+  "ids": [
+   "SB-HOM-AUT-020"
+  ],
+  "h1": "가입 신청 완료",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · /signup/done — 회원가입의 끝 화면 (전 SB-HOM-AUT-020)"
+ },
+ "login": {
+  "ids": [
+   "SB-HOM-AUT-010"
+  ],
+  "h1": "로그인",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 로그인 카드 (전 SB-HOM-AUT-030)"
+ },
+ "ask": {
+  "ids": [
+   "SB-HOM-MCH-010"
+  ],
+  "h1": ""
+ },
+ "asklock": {
+  "ids": [
+   "SB-HOM-MCH-010-L"
+  ],
+  "h1": ""
+ },
+ "cs": {
+  "ids": [
+   "SB-HOM-ETC-030"
+  ],
+  "h1": ""
+ },
+ "csdone": {
+  "ids": [
+   "SB-HOM-ETC-031"
+  ],
+  "h1": ""
+ },
+ "reg": {
+  "ids": [
+   "SB-HOM-REG-010"
+  ],
+  "h1": ""
+ },
+ "regm": {
+  "ids": [
+   "SB-HOM-REG-010-M1"
+  ],
+  "h1": ""
+ },
+ "myacc": {
+  "ids": [
+   "SB-MYP-ACC-010"
+  ],
+  "h1": "프로필 · 사업자 정보"
+ },
+ "admmbr": {
+  "ids": [
+   "SB-ADM-MBR-010"
+  ],
+  "h1": "회원 목록"
+ },
+ "admmbrd": {
+  "ids": [
+   "SB-ADM-MBR-020"
+  ],
+  "h1": "회원 상세"
+ },
+ "admown": {
+  "ids": [
+   "SB-ADM-OWN-010"
+  ],
+  "h1": "소유 확인 대기"
+ },
+ "admInv": {
+  "ids": [
+   "SB-ADM-INV-010"
+  ],
+  "h1": "불변식 현황"
+ },
+ "admacl": {
+  "ids": [
+   "SB-ADM-ACL-010"
+  ],
+  "h1": "권한 계층"
+ },
+ "ptn": {
+  "ids": [
+   "SB-PTC-DSH-010"
+  ],
+  "h1": "파트너센터",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnlead": {
+  "ids": [
+   "SB-PTC-CTR-300"
+  ],
+  "h1": "상담 신청",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnsvc": {
+  "ids": [
+   "SB-PTC-CTR-200"
+  ],
+  "h1": "내 서비스",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptncash": {
+  "ids": [
+   "SB-PTC-CTR-400"
+  ],
+  "h1": "리드 이용료",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnstl": {
+  "ids": [
+   "SB-PTC-CTR-410"
+  ],
+  "h1": "정산",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptntrust": {
+  "ids": [
+   "SB-PTC-CTR-600"
+  ],
+  "h1": "신뢰지표",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnapply": {
+  "ids": [
+   "SB-PTC-CTR-100"
+  ],
+  "h1": "입점 신청",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnreg": {
+  "ids": [
+   "SB-PTC-CTR-210"
+  ],
+  "h1": "서비스 등록",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnregion": {
+  "ids": [
+   "SB-PTC-CTR-230"
+  ],
+  "h1": "서비스 지역",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnsvcd": {
+  "ids": [
+   "SB-PTC-CTR-201"
+  ],
+  "h1": "서비스 상세 · 상세페이지",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnperf": {
+  "ids": [
+   "SB-PTC-CTR-450"
+  ],
+  "h1": "성과 관리",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnbiz": {
+  "ids": [
+   "SB-PTC-CTR-610"
+  ],
+  "h1": "회사 · 계정",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnnoti": {
+  "ids": [
+   "SB-PTC-CTR-700"
+  ],
+  "h1": "공지 · 알림",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnstats": {
+  "ids": [
+   "SB-PTC-CTR-500"
+  ],
+  "h1": "실적",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnprice": {
+  "ids": [
+   "SB-PTC-CTR-900"
+  ],
+  "h1": "단가 · 소개비",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptntrack": {
+  "ids": [
+   "SB-PTC-CTR-950"
+  ],
+  "h1": "전용 트랙",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnrej": {
+  "ids": [
+   "SB-PTC-CTR-330"
+  ],
+  "h1": "반려 · 이의신청",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ptnrev": {
+  "ids": [
+   "SB-PTC-CTR-250"
+  ],
+  "h1": "승인 · 반려 이력",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2dsh": {
+  "ids": [
+   "SB-AFC-DSH-010"
+  ],
+  "h1": "",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2lnk": {
+  "ids": [
+   "SB-AFC-LNK-010"
+  ],
+  "h1": "내 소개링크",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2ord": {
+  "ids": [
+   "SB-AFC-ORD-010"
+  ],
+  "h1": "주문 현황",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2rev": {
+  "ids": [
+   "SB-AFC-REV-010"
+  ],
+  "h1": "수익관리",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2stl": {
+  "ids": [
+   "SB-AFC-STL-010"
+  ],
+  "h1": "정산내역",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2rec": {
+  "ids": [
+   "SB-AFC-REC-010"
+  ],
+  "h1": "추천상품",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2mkt": {
+  "ids": [
+   "SB-AFC-MKT-010"
+  ],
+  "h1": "마케팅자료실",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2ntc": {
+  "ids": [
+   "SB-AFC-NTC-010"
+  ],
+  "h1": "공지사항",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2qna": {
+  "ids": [
+   "SB-AFC-QNA-010"
+  ],
+  "h1": "1:1 문의",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "p2gde": {
+  "ids": [
+   "SB-AFC-GDE-010"
+  ],
+  "h1": "파트너가이드",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "affapl": {
+  "ids": [
+   "SB-AFF-APL-010"
+  ],
+  "h1": "파트너 입점 심사"
+ },
+ "affprd": {
+  "ids": [
+   "SB-AFF-PRD-010"
+  ],
+  "h1": "제휴상품 · 단가"
+ },
+ "affgol": {
+  "ids": [
+   "SB-AFF-GOL-010"
+  ],
+  "h1": "목표 설정 · 지급"
+ },
+ "affmtr": {
+  "ids": [
+   "SB-AFF-MTR-010"
+  ],
+  "h1": "마케팅자료 심의"
+ },
+ "affstl": {
+  "ids": [
+   "SB-AFF-STL-010"
+  ],
+  "h1": "트랙별 정산 배치"
+ },
+ "schres": {
+  "ids": [
+   "SB-HOM-SCH-020"
+  ],
+  "h1": "검색 결과"
+ },
+ "admsch": {
+  "ids": [
+   "SB-ADM-SCH-010"
+  ],
+  "h1": "검색 파서"
+ },
+ "admaud": {
+  "ids": [
+   "SB-ADM-AUD-010"
+  ],
+  "h1": "감사"
+ },
+ "admdic": {
+  "ids": [
+   "SB-ADM-DIC-010"
+  ],
+  "h1": "검색 사전"
+ },
+ "admcls2": {
+  "ids": [
+   "SB-ADM-CLS-020"
+  ],
+  "h1": "분류 학습"
+ },
+ "admseg": {
+  "ids": [
+   "SB-ADM-SEG-010"
+  ],
+  "h1": "성향 학습"
+ },
+ "admrsk2": {
+  "ids": [
+   "SB-ADM-RSK-020"
+  ],
+  "h1": "위험감지 학습"
+ },
+ "cmu": {
+  "ids": [
+   "SB-HOM-CMU-010"
+  ],
+  "h1": "커뮤니티"
+ },
+ "cmud": {
+  "ids": [
+   "SB-HOM-CMU-020"
+  ],
+  "h1": "식자재 공급처 소개하고 540만원 받은 이야기"
+ },
+ "cmuw": {
+  "ids": [
+   "SB-HOM-CMU-030"
+  ],
+  "h1": "글쓰기"
+ },
+ "admcmu": {
+  "ids": [
+   "SB-ADM-CMU-010"
+  ],
+  "h1": "커뮤니티 검수"
+ },
+ "myctrd": {
+  "ids": [
+   "SB-MYP-CTR-020"
+  ],
+  "h1": "계약서 · 체결"
+ },
+ "report": {
+  "ids": [
+   "SB-HOM-RPT-010"
+  ],
+  "h1": "신고하기"
+ },
+ "myrpt": {
+  "ids": [
+   "SB-MYP-RPT-010"
+  ],
+  "h1": "내 신고 내역"
+ },
+ "myevt": {
+  "ids": [
+   "SB-MYP-EVT-010"
+  ],
+  "h1": "내 이벤트 참여"
+ },
+ "admrpt": {
+  "ids": [
+   "SB-ADM-RPT-010"
+  ],
+  "h1": "신고 처리"
+ },
+ "admevt": {
+  "ids": [
+   "SB-ADM-EVT-010"
+  ],
+  "h1": "이벤트 관리"
+ },
+ "admais": {
+  "ids": [
+   "SB-ADM-AIS-010"
+  ],
+  "h1": "AI 운영"
+ },
+ "admadi": {
+  "ids": [
+   "SB-ADM-ADS-020"
+  ],
+  "h1": "광고 플랫폼 연동"
+ },
+ "admadb": {
+  "ids": [
+   "SB-ADM-ADB-010"
+  ],
+  "h1": "광고 과금 · 정산"
+ },
+ "admcol": {
+  "ids": [
+   "SB-ADM-COL-010"
+  ],
+  "h1": "수집 관리"
+ },
+ "admhst": {
+  "ids": [
+   "SB-ADM-HST-010"
+  ],
+  "h1": "건강몰 정산"
+ },
+ "my": {
+  "ids": [
+   "SB-MYP-DSH-010"
+  ],
+  "h1": "나의공간"
+ },
+ "mylst": {
+  "ids": [
+   "SB-MYP-LST-010"
+  ],
+  "h1": "내 등록 리스팅"
+ },
+ "mylik": {
+  "ids": [
+   "SB-MYP-LIK-010"
+  ],
+  "h1": "관심 목록"
+ },
+ "mystl": {
+  "ids": [
+   "SB-MYP-STL-010"
+  ],
+  "h1": "정산 신청"
+ },
+ "mypay": {
+  "ids": [
+   "SB-MYP-STL-020"
+  ],
+  "h1": "지급 내역 · 세금계산서"
+ },
+ "mysub": {
+  "ids": [
+   "SB-MYP-SUB-010"
+  ],
+  "h1": "구독 · 소개코드"
+ },
+ "mydeal": {
+  "ids": [
+   "SB-MYP-DEA-010"
+  ],
+  "h1": "소개 내역"
+ },
+ "deal": {
+  "ids": [
+   "SB-HOM-DEL-010"
+  ],
+  "h1": "계약 · 성사 확정"
+ },
+ "dealp": {
+  "ids": [
+   "SB-HOM-DEL-020"
+  ],
+  "h1": "결제 · 대금"
+ },
+ "dealc": {
+  "ids": [
+   "SB-HOM-DEL-030"
+  ],
+  "h1": "성사 확정"
+ },
+ "prop": {
+  "ids": [
+   "SB-HOM-REQ-030"
+  ],
+  "h1": "소개 제안 · 수락",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 소개 제안 · 수락 = 요청 상세의 제안 (전 SB-HOM-MCH-020)"
+ },
+ "adm": {
+  "ids": [
+   "SB-ADM-DSH-010"
+  ],
+  "h1": "운영 대시보드"
+ },
+ "admrev": {
+  "ids": [
+   "SB-ADM-REV-010"
+  ],
+  "h1": "리스팅 검수"
+ },
+ "admrevd": {
+  "ids": [
+   "SB-ADM-REV-020"
+  ],
+  "h1": "검수 · V-3301"
+ },
+ "admstl": {
+  "ids": [
+   "SB-ADM-STL-010"
+  ],
+  "h1": "정산 승인"
+ },
+ "admdel": {
+  "ids": [
+   "SB-ADM-DEL-010"
+  ],
+  "h1": "거래 감독"
+ },
+ "admusr": {
+  "ids": [
+   "SB-ADM-USR-010"
+  ],
+  "h1": "회원 관리"
+ },
+ "admcat": {
+  "ids": [
+   "SB-ADM-CAT-010"
+  ],
+  "h1": "업종 관리"
+ },
+ "admdsp": {
+  "ids": [
+   "SB-ADM-MAIN-030"
+  ],
+  "h1": "노출 · 배치",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 노출 · 배치 = 메인 운영 화면 구성 (전 SB-ADM-DSP-010)"
+ },
+ "admpol": {
+  "ids": [
+   "SB-ADM-POL-010"
+  ],
+  "h1": "정책"
+ },
+ "admsit": {
+  "ids": [
+   "SB-ADM-SIT-010"
+  ],
+  "h1": "사이트 · 관 관리"
+ },
+ "admsitn": {
+  "ids": [
+   "SB-ADM-SIT-020"
+  ],
+  "h1": "새 관 만들기"
+ },
+ "admsitd": {
+  "ids": [
+   "SB-ADM-SIT-030"
+  ],
+  "h1": "소개머니 · 관 설정"
+ },
+ "admsitc": {
+  "ids": [
+   "SB-ADM-SIT-040"
+  ],
+  "h1": "오픈 체크리스트"
+ },
+ "admgux": {
+  "ids": [
+   "SB-ADM-GWN-010"
+  ],
+  "h1": "관 UI/UX 관리",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "admptn": {
+  "ids": [
+   "SB-ADM-PTN-010"
+  ],
+  "h1": "파트너사"
+ },
+ "admptna": {
+  "ids": [
+   "SB-ADM-PTN-020"
+  ],
+  "h1": "입점 신청 승인"
+ },
+ "admptns": {
+  "ids": [
+   "SB-ADM-PTN-030"
+  ],
+  "h1": "서비스 검수 승인"
+ },
+ "admptnm": {
+  "ids": [
+   "SB-ADM-PTN-040"
+  ],
+  "h1": "의료 심의 · 본사 확인"
+ },
+ "admptnr": {
+  "ids": [
+   "SB-ADM-PTN-050"
+  ],
+  "h1": "리드 반려 · 인정 / 기각"
+ },
+ "admptnc": {
+  "ids": [
+   "SB-ADM-PTN-060"
+  ],
+  "h1": "카테고리 마스터"
+ },
+ "admptnq": {
+  "ids": [
+   "SB-ADM-PTN-070"
+  ],
+  "h1": "규제 카테고리 자격 심사"
+ },
+ "admptnw": {
+  "ids": [
+   "SB-ADM-PTN-080"
+  ],
+  "h1": "리드 이용료 · 등급"
+ },
+ "admhub": {
+  "ids": [
+   "SB-ADM-SIT-050"
+  ],
+  "h1": "통합 메인 관리"
+ },
+ "admcom": {
+  "ids": [
+   "SB-ADM-SIT-060"
+  ],
+  "h1": "관 공통 경계"
+ },
+ "admleg": {
+  "ids": [
+   "SB-ADM-SIT-070"
+  ],
+  "h1": "사이트 기본 정보 · 법정 고지"
+ },
+ "ask1": {
+  "ids": [
+   "SB-HOM-CSB-010"
+  ],
+  "h1": "1:1 문의"
+ },
+ "askl": {
+  "ids": [
+   "SB-HOM-CSB-020"
+  ],
+  "h1": "내 문의 내역"
+ },
+ "myctr": {
+  "ids": [
+   "SB-MYP-CTR-010"
+  ],
+  "h1": "계약 진행"
+ },
+ "ctrw": {
+  "ids": [
+   "SB-HOM-DEL-010"
+  ],
+  "h1": "계약서 작성",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "ctrd": {
+  "ids": [
+   "SB-MYP-CTR-020"
+  ],
+  "h1": "계약 진행",
+  "mapped": "20260930 수동 대응(시안이 화면 ID 를 그리지 않음)"
+ },
+ "mypaym": {
+  "ids": [
+   "SB-MYP-PAY-010"
+  ],
+  "h1": "결제 수단"
+ },
+ "myntf": {
+  "ids": [
+   "SB-MYP-NTF-010"
+  ],
+  "h1": "알림"
+ },
+ "admbil": {
+  "ids": [
+   "SB-ADM-BIL-010"
+  ],
+  "h1": "청구 현황"
+ },
+ "reged": {
+  "ids": [
+   "SB-HOM-REG-020"
+  ],
+  "h1": "소개하기 수정"
+ },
+ "rvw": {
+  "ids": [
+   "SB-HOM-RVW-010"
+  ],
+  "h1": "후기 작성"
+ },
+ "admmain1": {
+  "ids": [
+   "SB-ADM-MAIN-010"
+  ],
+  "h1": "메인 · 배너 · 광고"
+ },
+ "admmain2": {
+  "ids": [
+   "SB-ADM-MAIN-020"
+  ],
+  "h1": "메인 · 관 노출"
+ },
+ "admmain3": {
+  "ids": [
+   "SB-ADM-MAIN-030"
+  ],
+  "h1": "메인 · 화면 구성"
+ },
+ "admmain4": {
+  "ids": [
+   "SB-ADM-MAIN-040"
+  ],
+  "h1": "메인 · 콘텐츠"
+ },
+ "admrev3": {
+  "ids": [
+   "SB-ADM-REV-030"
+  ],
+  "h1": "자동검수 규칙"
+ },
+ "admrev4": {
+  "ids": [
+   "SB-ADM-REV-040"
+  ],
+  "h1": "표본 감사"
+ },
+ "admsit8": {
+  "ids": [
+   "SB-ADM-SIT-080"
+  ],
+  "h1": "외부 연동"
+ },
+ "admcod": {
+  "ids": [
+   "SB-ADM-COD-010"
+  ],
+  "h1": "코드 라벨"
+ },
+ "admbdg": {
+  "ids": [
+   "SB-ADM-BDG-010"
+  ],
+  "h1": "배지 검수"
+ },
+ "mybiz2": {
+  "ids": [
+   "SB-MYP-BIZ-020"
+  ],
+  "h1": "사업자 전환"
+ },
+ "mysubup": {
+  "ids": [
+   "SB-MYP-SUB-020"
+  ],
+  "h1": "한도 안내"
+ },
+ "introhome": {
+  "ids": [
+   "SB-MYP-INT-010"
+  ],
+  "h1": "소개 활동"
+ },
+ "introinv": {
+  "ids": [
+   "SB-MYP-INT-020"
+  ],
+  "h1": "소개 초대"
+ },
+ "introact": {
+  "ids": [
+   "SB-MYP-INT-030"
+  ],
+  "h1": "활동 내역"
+ },
+ "invcons": {
+  "ids": [
+   "SB-HOM-INV-010"
+  ],
+  "h1": "소개 요청을 확인해 주세요"
+ },
+ "lstm": {
+  "ids": [
+   "SB-MNY-LST-010"
+  ],
+  "h1": "소개장터 전체 목록"
+ },
+ "lstl2": {
+  "ids": [
+   "SB-MAL-LST-010"
+  ],
+  "h1": "안심소개 전체 목록"
+ },
+ "lstb2": {
+  "ids": [
+   "SB-BIZ-LST-010"
+  ],
+  "h1": "소개창업 전체 목록"
+ },
+ "dtlm": {
+  "ids": [
+   "SB-MNY-DTL-010"
+  ],
+  "h1": "강남 소재 프랜차이즈 본사 식자재 공급처"
+ },
+ "dtll": {
+  "ids": [
+   "SB-MAL-DTL-010"
+  ],
+  "h1": "수도권 물류창고 3,300㎡ 임대 이전 건"
+ },
+ "regb": {
+  "ids": [
+   "SB-BIZ-REG-010"
+  ],
+  "h1": "사업 기회 등록"
+ },
+ "src": {
+  "ids": [
+   "SB-HOM-SRC-010"
+  ],
+  "h1": "‘식자재’ 검색 결과"
+ },
+ "lsth": {
+  "ids": [
+   "SB-HOM-LST-010"
+  ],
+  "h1": "전체 목록"
+ },
+ "guide": {
+  "ids": [
+   "SB-HOM-GDE-010"
+  ],
+  "h1": "이용안내",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 이용안내 — 화면 정의서에 없는 시안 화면 (전 SB-HOM-ETC-010)"
+ },
+ "commu": {
+  "ids": [
+   "SB-HOM-CMU-010"
+  ],
+  "h1": "커뮤니티",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · 소개광장 게시판 (전 SB-HOM-ETC-020)"
+ },
+ "evt": {
+  "ids": [
+   "SB-MNY-EVT-010"
+  ],
+  "h1": "이벤트존"
+ },
+ "aicls": {
+  "ids": [
+   "SB-AIS-CLS-010"
+  ],
+  "h1": "AI 자동 카테고리 분류"
+ },
+ "airec": {
+  "ids": [
+   "SB-AIS-REC-010"
+  ],
+  "h1": "AI 추천 결과"
+ },
+ "aiprf": {
+  "ids": [
+   "SB-AIS-PRF-010"
+  ],
+  "h1": "관심 성향 분석"
+ },
+ "aiprfd": {
+  "ids": [
+   "SB-AIS-PRF-020"
+  ],
+  "h1": "성향 등록"
+ },
+ "admad": {
+  "ids": [
+   "SB-ADM-ADS-010"
+  ],
+  "h1": "광고 관리"
+ },
+ "admrsk": {
+  "ids": [
+   "SB-ADM-RSK-010"
+  ],
+  "h1": "AI 위험감지"
+ },
+ "brkapp": {
+  "ids": [
+   "SB-BIZ-BRK-010"
+  ],
+  "h1": "중개사 인증 신청"
+ },
+ "brkmy": {
+  "ids": [
+   "SB-BIZ-BRK-011"
+  ],
+  "h1": "내 인증 상태"
+ },
+ "admbrk": {
+  "ids": [
+   "SB-ADM-BRK-010"
+  ],
+  "h1": "중개사 인증 심사"
+ },
+ "admbrkd": {
+  "ids": [
+   "SB-ADM-BRK-011"
+  ],
+  "h1": "인증 심사 상세"
+ },
+ "malbrk": {
+  "ids": [
+   "SB-MAL-BRK-010"
+  ],
+  "h1": "공인중개사 매물 연동"
+ },
+ "integ": {
+  "ids": [
+   "SB-ADM-ITG-010"
+  ],
+  "h1": "통합 현황"
+ },
+ "acl": {
+  "ids": [
+   "SB-ADM-ACL-010"
+  ],
+  "h1": "라우트 등록표 · 권한 계층"
+ },
+ "gwansep": {
+  "ids": [
+   "SB-ADM-GWN-010"
+  ],
+  "h1": "관 별 체계 분리"
+ },
+ "invreg": {
+  "ids": [
+   "SB-ADM-INV-010"
+  ],
+  "h1": "불변식 등기부"
+ },
+ "adx": {
+  "ids": [
+   "SB-ADS-PLT-010"
+  ],
+  "h1": "광고 플랫폼 (외부 송출)"
+ },
+ "payout": {
+  "ids": [
+   "SB-ADS-PAY-010"
+  ],
+  "h1": "퍼블리셔 지급"
+ },
+ "health#/": {
+  "ids": [
+   "SB-HLT-HUB-010"
+  ],
+  "h1": ""
+ },
+ "health#/direct": {
+  "ids": [
+   "SB-HLT-HUB-020"
+  ],
+  "h1": ""
+ },
+ "health#/c/HLT_FOOD": {
+  "ids": [
+   "SB-HLT-CAT-010"
+  ],
+  "h1": ""
+ },
+ "health#/search": {
+  "ids": [
+   "SB-HLT-CAT-020"
+  ],
+  "h1": ""
+ },
+ "health#/ingredients": {
+  "ids": [
+   "SB-HLT-CAT-030"
+  ],
+  "h1": ""
+ },
+ "health#/i/VITC": {
+  "ids": [
+   "SB-HLT-CAT-040"
+  ],
+  "h1": ""
+ },
+ "health#/concerns": {
+  "ids": [
+   "SB-HLT-CAT-050"
+  ],
+  "h1": ""
+ },
+ "health#/w/IMMUNE": {
+  "ids": [
+   "SB-HLT-CAT-060"
+  ],
+  "h1": ""
+ },
+ "health#/p/p01": {
+  "ids": [
+   "SB-HLT-PRD-010"
+  ],
+  "h1": ""
+ },
+ "health#/cart": {
+  "ids": [
+   "SB-HLT-CRT-010"
+  ],
+  "h1": ""
+ },
+ "health#/order": {
+  "ids": [
+   "SB-HLT-ORD-010"
+  ],
+  "h1": ""
+ },
+ "health#/order/pay": {
+  "ids": [
+   "SB-HLT-ORD-020"
+  ],
+  "h1": ""
+ },
+ "health#/order/done": {
+  "ids": [
+   "SB-HLT-ORD-030"
+  ],
+  "h1": ""
+ },
+ "health#/order/fail": {
+  "ids": [
+   "SB-HLT-ORD-040"
+  ],
+  "h1": ""
+ },
+ "health#/my/orders": {
+  "ids": [
+   "SB-HLT-MYO-010"
+  ],
+  "h1": ""
+ },
+ "health#/my/orders/H20260908-000041": {
+  "ids": [
+   "SB-HLT-MYO-020"
+  ],
+  "h1": ""
+ },
+ "health#/my/orders/H20260908-000041/track": {
+  "ids": [
+   "SB-HLT-MYO-030"
+  ],
+  "h1": ""
+ },
+ "health#/my/returns/new": {
+  "ids": [
+   "SB-HLT-RTN-010"
+  ],
+  "h1": ""
+ },
+ "health#/my/returns": {
+  "ids": [
+   "SB-HLT-RTN-020"
+  ],
+  "h1": ""
+ },
+ "health#/my/addresses": {
+  "ids": [
+   "SB-HLT-ADR-010"
+  ],
+  "h1": ""
+ },
+ "health#/guide": {
+  "ids": [
+   "SB-HLT-ETC-010"
+  ],
+  "h1": ""
+ },
+ "srvclk": {
+  "ids": [
+   "SB-AFC-LNK-010"
+  ],
+  "h1": ""
+ },
+ "srvacc": {
+  "ids": [
+   "SB-AFC-STL-010"
+  ],
+  "h1": ""
+ },
+ "srvstk": {
+  "ids": [
+   "SB-ADM-HST-010"
+  ],
+  "h1": ""
+ },
+ "srvwd": {
+  "ids": [
+   "SB-HLT-RTN-010"
+  ],
+  "h1": ""
+ },
+ "srvadr": {
+  "ids": [
+   "SB-HLT-ADR-010"
+  ],
+  "h1": ""
+ },
+ "srvcon": {
+  "ids": [
+   "SB-HLT-CAT-050"
+  ],
+  "h1": ""
+ },
+ "srvops": {
+  "ids": [
+   "SB-ADM-PTN-030"
+  ],
+  "h1": ""
+ },
+ "srvhub": {
+  "ids": [],
+  "h1": "서버 연동 (v10.2)"
+ },
+ "malcsl": {
+  "ids": [
+   "SB-MAL-CSL-010",
+   "SB-MAL-CSL-020",
+   "SB-MAL-CSL-030"
+  ],
+  "h1": "상담 신청",
+  "mapped": "20261002 v10.11 — 안심소개 모듈 화면(#/mal/consult · #/mal/consult/{code}/apply). 업종 목록 · 신청 · 휴대폰 확인 · 접수 (v10.24 — 신청서 주소가 …/apply 로 옮겨졌고 앞 주소는 업종 상세 malcsld)"
+ },
+ "malgive": {
+  "ids": [
+   "SB-MAL-GIV-010"
+  ],
+  "h1": "소개하기 안내",
+  "mapped": "20261002 v10.11 — 안심소개 모듈 화면(#/mal/give)"
+ },
+ "ptnlst": {
+  "ids": [
+   "SB-PTC-LST-010"
+  ],
+  "h1": "내 매물",
+  "mapped": "20261002 v10.11 — 안심소개 파트너센터 모듈 화면(#/partner/listings)"
+ },
+ "cmupoll": {
+  "ids": [
+   "SB-HOM-CMU-040"
+  ],
+  "h1": "이건 어때?",
+  "mapped": "20261002 v10.14 — 시안 모듈 M_poll 화면(#/community/polls)"
+ },
+ "admpoll": {
+  "ids": [
+   "SB-ADM-CMU-020"
+  ],
+  "h1": "투표 관리",
+  "mapped": "20261002 v10.14 — 시안 모듈 M_poll 화면(#/admin/community/polls)"
+ },
+ "admpay": {
+  "ids": [
+   "SB-ADM-PAY-010"
+  ],
+  "h1": "지급 데스크",
+  "mapped": "20261002 v10.14 — 시안 모듈 M_poll 화면(#/admin/payouts)"
+ },
+ "admlasg": {
+  "ids": [
+   "SB-ADM-PTN-090"
+  ],
+  "h1": "리드 배정",
+  "mapped": "20261002 v10.14 — 시안 모듈 M_poll 화면(#/admin/partners/leads)"
+ },
+ "bjob": {
+  "ids": [
+   "SB-BIZ-JOB-020"
+  ],
+  "h1": "공고 상세",
+  "mapped": "20261007 v10.22 — 시안에만 있는 화면(실제 웹 미구현) · #/g/biz/job/9101"
+ },
+ "bsvc": {
+  "ids": [
+   "SB-BIZ-SVC-020"
+  ],
+  "h1": "자문 서비스 상세",
+  "mapped": "20261007 v10.22 — 시안에만 있는 화면(실제 웹 미구현) · #/g/biz/advisory/9201"
+ },
+ "bpol": {
+  "ids": [
+   "SB-BIZ-POL-020"
+  ],
+  "h1": "정책 상세",
+  "mapped": "20261007 v10.22 — 시안에만 있는 화면(실제 웹 미구현) · #/g/biz/policy/9301"
+ },
+ "bedu": {
+  "ids": [
+   "SB-BIZ-EDU-020"
+  ],
+  "h1": "교육 상세",
+  "mapped": "20261007 v10.22 — 시안에만 있는 화면(실제 웹 미구현) · #/g/biz/edu/9401"
+ },
+ "malcsld": {
+  "ids": [
+   "SB-MAL-CSL-025"
+  ],
+  "h1": "상담 업종",
+  "mapped": "20261007 v10.24 — 상담 업종 상세(#/mal/consult/{code}). 인증업체 수 · 받는 지역 · 진행 순서 · 맨 아래 줄 「상담 신청」. 법률 · 세무는 같은 주소에서 사무소 목록"
+ },
+ "admhpr": {
+  "ids": [
+   "SB-ADM-HPR-010",
+   "SB-ADM-HPR-011",
+   "SB-ADM-HPR-020",
+   "SB-ADM-HPR-030"
+  ],
+  "h1": "소개몰 상품",
+  "mapped": "20261008 v10.26 — 운영 「소개몰 상품」 한 화면에 상품 · 고치기 · 성분/고민 · 갈래/판매 범위(proto_patch_1026.py)"
+ },
+ "termsv": {
+  "ids": [
+   "SB-HOM-ETC-021"
+  ],
+  "h1": "약관 전문",
+  "mapped": "20261009 v10.27 — G-199 약관 전문 화면"
+ },
+ "safgd": {
+  "ids": [
+   "SB-MNY-SAF-020"
+  ],
+  "h1": "사기 예방 가이드",
+  "mapped": "20261009 v10.27 — G-130"
+ },
+ "bpolsrc": {
+  "ids": [
+   "SB-BIZ-POL-030"
+  ],
+  "h1": "공고 원문",
+  "mapped": "20261009 v10.27 — G-130 · 시안만(개발중)"
+ },
+ "adland": {
+  "ids": [
+   "SB-ADS-LND-010"
+  ],
+  "h1": "광고주 랜딩",
+  "mapped": "20261009 v10.27 — G-130 · 시안만(개발중)"
+ },
+ "admptnd": {
+  "ids": [
+   "SB-ADM-PTN-011"
+  ],
+  "h1": "파트너사 상세",
+  "mapped": "20261009 v10.27 — G-130"
+ },
+ "admaudl": {
+  "ids": [
+   "SB-ADM-AUD-020"
+  ],
+  "h1": "감사 기록",
+  "mapped": "20261009 v10.27 — G-130"
+ },
+ "admsegp": {
+  "ids": [
+   "SB-ADM-SEG-020"
+  ],
+  "h1": "옮길 대상 미리보기",
+  "mapped": "20261009 v10.27 — G-130 · 시안만(개발중)"
+ },
+ "ctrform": {
+  "ids": [
+   "SB-MYP-CTR-030"
+  ],
+  "h1": "계약서 양식 전문",
+  "mapped": "20261009 v10.27 — G-130"
+ },
+ "health#/my/orders/H20261002-000041/track/carrier": {
+  "ids": [
+   "SB-HLT-MYO-040"
+  ],
+  "h1": "택배사 조회",
+  "mapped": "20261009 v10.27 — G-130 · 소개몰 겹쳐 뜨는 틀"
+ },
+ "admhor": {
+  "ids": [
+   "SB-ADM-HOR-010"
+  ],
+  "h1": "소개몰 주문",
+  "mapped": "20261009 v10.28 — 소개몰 운영 · 약관 재동의"
+ },
+ "admhrv": {
+  "ids": [
+   "SB-ADM-HRV-010"
+  ],
+  "h1": "소개몰 리뷰 · 문의",
+  "mapped": "20261009 v10.28 — 소개몰 운영 · 약관 재동의"
+ },
+ "trmagr": {
+  "ids": [
+   "SB-HOM-ETC-022"
+  ],
+  "h1": "약관 동의",
+  "mapped": "20261009 v10.28 — 소개몰 운영 · 약관 재동의"
+ },
+ "verify": {
+  "ids": [
+   "SB-HOM-AUT-030"
+  ],
+  "h1": "본인 · 사업자 인증",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · v10.31 시안 새 키(/verify) (전 없음)"
+ },
+ "qna": {
+  "ids": [
+   "SB-HOM-MCH-020"
+  ],
+  "h1": "공개 문의",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · v10.31 시안 새 키(/l/{id}/qna) (전 없음)"
+ },
+ "dspu": {
+  "ids": [
+   "SB-HOM-ETC-010"
+  ],
+  "h1": "분쟁 접수 · 처리 현황",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · v10.31 시안 새 키(/support/dispute) (전 없음)"
+ },
+ "terms": {
+  "ids": [
+   "SB-HOM-ETC-020"
+  ],
+  "h1": "약관 · 법정 고지",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · v10.31 시안 새 키(/terms) (전 없음)"
+ },
+ "admdspt": {
+  "ids": [
+   "SB-ADM-DSP-010"
+  ],
+  "h1": "분쟁 처리",
+  "mapped": "20261011 v10.32 — 시안 v10.31 화면 키 표(MAP) 기준으로 짝 바로잡음 · v10.31 시안 새 키(/admin/disputes) (전 없음)"
+ }
+}

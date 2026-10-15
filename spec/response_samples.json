@@ -1,0 +1,2544 @@
+{
+ "post /api/v1/me/listings/{id}/ownership": {
+  "ok": true,
+  "id": "6c546df0-377b-4304-ae67-f61b7e16fac2",
+  "state": "SUBMITTED",
+  "note": "접수했습니다. 확인이 끝나면 매물을 공개하실 수 있습니다. 보통 하루 안에 끝납니다."
+ },
+ "post /api/v1/admin/ownership/{id}/decide": {
+  "ok": false,
+  "note": "확인 대기 상태가 아닙니다."
+ },
+ "post /api/v1/admin/affiliates/applications/{id}/decide": {
+  "ok": false,
+  "note": "심사 대기 상태가 아닙니다."
+ },
+ "post /api/v1/admin/affiliates/products": {
+  "ok": true,
+  "id": "b60869ab-b86f-406a-bf7f-304475a5d96c",
+  "code": "AP-001",
+  "status": "DRAFT",
+  "note": "등록했습니다. 아직 DRAFT 라 파트너에게 보이지 않습니다 — 판매중으로 바꾸십시오."
+ },
+ "post /api/v1/admin/affiliates/materials/{id}/review": {
+  "ok": false,
+  "note": "심의 대기 상태가 아닙니다."
+ },
+ "post /api/v1/admin/affiliates/settlements/run": {
+  "ok": true,
+  "created": 0,
+  "items": [],
+  "note": "대상이 없습니다."
+ },
+ "post /api/v1/admin/audit/reviews": {
+  "ok": true,
+  "id": "b53448b5-2791-42c2-bfee-49c42179b5cf",
+  "signalCode": "PII_NIGHT",
+  "verdict": "NORMAL",
+  "reviewedAt": "2026-09-30T14:54:06.156Z",
+  "note": "기록했습니다."
+ },
+ "post /api/v1/admin/classify/correct": {
+  "ok": false,
+  "note": "없는 분류 기록입니다."
+ },
+ "post /api/v1/admin/classify/learn": {
+  "ok": true,
+  "applied": 0,
+  "items": [],
+  "note": "반영할 것이 없습니다. 아직 신호가 모자랍니다."
+ },
+ "post /api/v1/admin/classify/learn/revert": {
+  "ok": false,
+  "note": "먼저 classify.learn.enabled 를 off 로 바꾸십시오 — 되돌리는 사이에 또 학습되면 끝이 없습니다."
+ },
+ "post /api/v1/admin/risk/learn": {
+  "ok": true,
+  "applied": 0,
+  "items": [],
+  "note": "예외로 둘 것이 없습니다."
+ },
+ "post /api/v1/admin/risk/exemptions": {
+  "ok": true,
+  "id": "dd1cc6e5-a2c1-44d1-bf13-8d73b2135cbd",
+  "expiresAt": "2026-12-29T14:54:06.205Z",
+  "note": "예외로 두었습니다. 기한이 지나면 다시 뜹니다."
+ },
+ "get /api/v1/me/account": {
+  "account": {
+   "id": "44444444-4444-4444-4444-444444444444",
+   "email": "person@x.com",
+   "name": "개인",
+   "phone": null,
+   "accountType": "INDIVIDUAL",
+   "status": "ACTIVE",
+   "identityVerifiedAt": "2026-09-30T13:11:32.709Z",
+   "createdAt": "2026-09-30T13:11:30.971Z"
+  },
+  "business": {
+   "id": "aaaaaaaa-0000-4000-a000-000000000002",
+   "bizRegNo": "1110000002",
+   "companyName": "미인증사",
+   "ceoName": "대표",
+   "bizType": null,
+   "bizItem": null,
+   "address": null,
+   "verifiedAt": "2026-09-30T13:11:32.711Z",
+   "ntsStatus": null,
+   "rejectReason": null
+  },
+  "editable": {
+   "name": true,
+   "phone": true,
+   "email": false,
+   "business": false,
+   "bizRegNo": false
+  },
+  "note": "본인인증을 마치셨습니다. 이름을 바꾸시면 다시 인증해야 합니다."
+ },
+ "get /api/v1/community/posts": [],
+ "get /api/v1/community/posts/{id}": [],
+ "get /api/v1/admin/community/queue": {
+  "pending": [],
+  "reported": [],
+  "lateCount": 0,
+  "note": null
+ },
+ "get /api/v1/me/listings/{id}/ownership": {
+  "ok": true,
+  "state": "SUBMITTED",
+  "docKey": "reg-20260918-001.pdf",
+  "issuedOn": "2026-09-17T15:00:00.000Z",
+  "hasEncumbrance": true,
+  "rejectReason": null,
+  "decidedAt": null,
+  "note": "확인 중입니다."
+ },
+ "get /api/v1/admin/ownership-queue": {
+  "items": [
+   {
+    "id": "6c546df0-377b-4304-ae67-f61b7e16fac2",
+    "listingId": "c0b865ce-cbe2-43f4-9a6d-8a159f117cc2",
+    "title": "E2E 화면 등록 — 사무실 인테리어 소개",
+    "docKey": "reg-20260918-001.pdf",
+    "issuedOn": "2026-09-17T15:00:00.000Z",
+    "hasEncumbrance": true,
+    "applicant": "소개자",
+    "createdAt": "2026-09-30T14:54:05.880Z",
+    "docAgeDays": 12
+   }
+  ],
+  "note": "등기사항증명서를 직접 보고 판단하십시오. 자동 승인 경로가 없습니다."
+ },
+ "get /api/v1/admin/invariants": {
+  "total": 77,
+  "ok": 73,
+  "broken": 4,
+  "items": [
+   {
+    "view": "v_ad_attr_orphan",
+    "count": 0,
+    "ok": true,
+    "note": "광고주가 안 적힌 광고 귀속"
+   },
+   {
+    "view": "v_ad_overdue_running",
+    "count": 0,
+    "ok": true,
+    "note": "연체인데 아직 나가고 있는 광고"
+   },
+   {
+    "view": "v_ad_sellable_gap",
+    "count": 0,
+    "ok": true,
+    "note": "팔았거나 팔 수 있는데 나갈 소재가 없는 자리"
+   },
+   {
+    "view": "v_ad_slot_conflict",
+    "count": 0,
+    "ok": true,
+    "note": "전면과 띄움이 같은 기간에 잡힌 건"
+   },
+   {
+    "view": "v_ai_client_scored",
+    "count": 0,
+    "ok": true,
+    "note": "서버 점수로는 후보에 들지 않는데 배정된 건"
+   },
+   {
+    "view": "v_alimtalk_ad_words",
+    "count": 0,
+    "ok": true,
+    "note": "광고성 표현이 든 정보성 알림톡"
+   },
+   {
+    "view": "v_assumed_on",
+    "count": 3,
+    "ok": false,
+    "note": "켜져 있는 간주 모드"
+   },
+   {
+    "view": "v_audit_over_retention",
+    "count": 0,
+    "ok": true,
+    "note": "보관 기간을 넘긴 감사 기록"
+   },
+   {
+    "view": "v_audit_review_overdue",
+    "count": 3,
+    "ok": false,
+    "note": "징후가 떴는데 정해진 시간 안에 확인하지 않은 것"
+   },
+   {
+    "view": "v_audit_review_thin",
+    "count": 0,
+    "ok": true,
+    "note": "사유가 열 자도 안 되는 확인 기록"
+   },
+   {
+    "view": "v_bank_assumed",
+    "count": 1,
+    "ok": false,
+    "note": "간주 계좌로 돌고 있는 상태"
+   },
+   {
+    "view": "v_broker_commission_leak",
+    "count": 0,
+    "ok": true,
+    "note": "소개형 4관에 스며든 수수료 컬럼"
+   },
+   {
+    "view": "v_broker_gate_leak",
+    "count": 0,
+    "ok": true,
+    "note": "중개사 인증도 등기부 확인도 없이 올라간 부동산"
+   },
+   {
+    "view": "v_card_columns",
+    "count": 0,
+    "ok": true,
+    "note": "카드 정보 컬럼"
+   },
+   {
+    "view": "v_classify_blocked_learned",
+    "count": 0,
+    "ok": true,
+    "note": "학습으로 제한업종에 들어간 어휘"
+   },
+   {
+    "view": "v_classify_learn_burst",
+    "count": 0,
+    "ok": true,
+    "note": "하루에 50개 넘게 학습된 날"
+   },
+   {
+    "view": "v_classify_overweight",
+    "count": 0,
+    "ok": true,
+    "note": "상한을 넘은 어휘"
+   },
+   {
+    "view": "v_classify_unlinked",
+    "count": 0,
+    "ok": true,
+    "note": "실제 업종에 연결되지 않은 분류"
+   },
+   {
+    "view": "v_company_account",
+    "count": 1,
+    "ok": false,
+    "note": "회사 수금 계좌"
+   },
+   {
+    "view": "v_contract_draft_marks",
+    "count": 0,
+    "ok": true,
+    "note": "쓰이고 있는 계약 양식에 남은 미확정 표시"
+   },
+   {
+    "view": "v_contract_no_template",
+    "count": 0,
+    "ok": true,
+    "note": "표준 양식이 아닌 계약"
+   },
+   {
+    "view": "v_contract_stub",
+    "count": 0,
+    "ok": true,
+    "note": "스텁으로 서명된 계약"
+   },
+   {
+    "view": "v_direct_notice_missing",
+    "count": 0,
+    "ok": true,
+    "note": "직판 관인데 고지가 없는 것"
+   },
+   {
+    "view": "v_duty_conflict",
+    "count": 0,
+    "ok": true,
+    "note": "승인과 지급을 겸한 사람"
+   },
+   {
+    "view": "v_enc_key_direct_use",
+    "count": 0,
+    "ok": true,
+    "note": "열쇠를 fn_enc_key() 를 거치지 않고 직접 꺼내는 함수"
+   },
+   {
+    "view": "v_enc_key_missing",
+    "count": 0,
+    "ok": true,
+    "note": "암호화돼야 하는데 비어 있는 값"
+   },
+   {
+    "view": "v_gated_no_review",
+    "count": 0,
+    "ok": true,
+    "note": "심의필 번호 없이 올라온 심의 대상"
+   },
+   {
+    "view": "v_gated_unqualified_public",
+    "count": 0,
+    "ok": true,
+    "note": "자격 심사 없이 공개·심사 중인 보험·의료 게시물"
+   },
+   {
+    "view": "v_hlt_license_expired",
+    "count": 0,
+    "ok": true,
+    "note": "자격 만료인데 판매 중"
+   },
+   {
+    "view": "v_hlt_paid_no_actor",
+    "count": 0,
+    "ok": true,
+    "note": "누가 지급했는지 없는 정산"
+   },
+   {
+    "view": "v_hlt_settle_missed",
+    "count": 0,
+    "ok": true,
+    "note": "확정된 지 2주가 넘도록 정산에 안 들어간 주문"
+   },
+   {
+    "view": "v_hlt_wrong_gwan",
+    "count": 0,
+    "ok": true,
+    "note": "건강몰이 아닌 업종의 판매 상품"
+   },
+   {
+    "view": "v_internal_key_missing",
+    "count": 0,
+    "ok": true,
+    "note": "내부 API 키가 비어 있는 상태"
+   },
+   {
+    "view": "v_inv11_violations",
+    "count": 0,
+    "ok": true,
+    "note": "INV-11 위반 — 자금을 수탁하는 컬럼"
+   },
+   {
+    "view": "v_inv9_violations",
+    "count": 0,
+    "ok": true,
+    "note": "INV-9 위반 — 소개비에서 공제하는 컬럼"
+   },
+   {
+    "view": "v_landing_broken",
+    "count": 0,
+    "ok": true,
+    "note": "없거나 중지된 관을 랜딩으로 지정한 것"
+   },
+   {
+    "view": "v_lead_contact_unlogged",
+    "count": 0,
+    "ok": true,
+    "note": "업체에 전달됐는데 열람 기록이 없는 리드"
+   },
+   {
+    "view": "v_lead_fee_void_mismatch",
+    "count": 0,
+    "ok": true,
+    "note": "무효 시각과 상태가 어긋난 이용료"
+   },
+   {
+    "view": "v_lead_fee_void_without_rule",
+    "count": 0,
+    "ok": true,
+    "note": "규칙 없이 무효 처리된 이용료"
+   },
+   {
+    "view": "v_lead_no_consent",
+    "count": 0,
+    "ok": true,
+    "note": "동의 기록 없이 수집된 리드 연락처"
+   },
+   {
+    "view": "v_lead_purge_overdue",
+    "count": 0,
+    "ok": true,
+    "note": "파기 기한을 넘긴 리드 연락처"
+   },
+   {
+    "view": "v_lead_restricted_leak",
+    "count": 0,
+    "ok": true,
+    "note": "제한업종인데 만들어진 리드"
+   },
+   {
+    "view": "v_led_category_selfmade",
+    "count": 0,
+    "ok": true,
+    "note": "회원이 요청해 만들어진 리드관 업종"
+   },
+   {
+    "view": "v_listing_gate_on_counter",
+    "count": 0,
+    "ok": true,
+    "note": "K7 — 조회수·찜 갱신에도 도는 BEFORE UPDATE 트리거"
+   },
+   {
+    "view": "v_location_columns",
+    "count": 0,
+    "ok": true,
+    "note": "좌표 컬럼"
+   },
+   {
+    "view": "v_location_waiver_broken",
+    "count": 0,
+    "ok": true,
+    "note": "폐기 판단이 깨진 곳"
+   },
+   {
+    "view": "v_marketing_night_violation",
+    "count": 0,
+    "ok": true,
+    "note": "야간 동의 없이 밤에 보낸 광고"
+   },
+   {
+    "view": "v_marketing_no_consent",
+    "count": 0,
+    "ok": true,
+    "note": "동의 없이 나간 광고성 알림"
+   },
+   {
+    "view": "v_mmat_unreviewed_live",
+    "count": 0,
+    "ok": true,
+    "note": "심의자 없이 승인된 자료"
+   },
+   {
+    "view": "v_no_intro_leak",
+    "count": 0,
+    "ok": true,
+    "note": "소개가 막힌 업종(보험·의료)에 스며든 소개비·소개자"
+   },
+   {
+    "view": "v_partner_path_conflict",
+    "count": 0,
+    "ok": true,
+    "note": "파트너센터 경로가 둘 다 설정된 상태"
+   },
+   {
+    "view": "v_partner_track_mixed",
+    "count": 0,
+    "ok": true,
+    "note": "트랙이 섞인 정산"
+   },
+   {
+    "view": "v_payout_stub",
+    "count": 0,
+    "ok": true,
+    "note": "스텁으로 통과한 정산 계좌"
+   },
+   {
+    "view": "v_phase2_blockers",
+    "count": 0,
+    "ok": true,
+    "note": "2차 일괄 오픈을 막는 관"
+   },
+   {
+    "view": "v_porder_unattributed_paid",
+    "count": 0,
+    "ok": true,
+    "note": "귀속되지 않았는데 확정·정산된 주문"
+   },
+   {
+    "view": "v_post_pending_long",
+    "count": 0,
+    "ok": true,
+    "note": "첫 글 검수가 2일 넘게 밀린 것"
+   },
+   {
+    "view": "v_pstl_paid_no_account",
+    "count": 0,
+    "ok": true,
+    "note": "인증 계좌 없이 지급된 정산"
+   },
+   {
+    "view": "v_ptn_approval_gap",
+    "count": 0,
+    "ok": true,
+    "note": "승인·반려·무효 처리에서 근거가 빠진 건"
+   },
+   {
+    "view": "v_rate_partial",
+    "count": 0,
+    "ok": true,
+    "note": "관 전용 단가표가 일부 등급만 가진 건"
+   },
+   {
+    "view": "v_realty_broker_unverified",
+    "count": 0,
+    "ok": true,
+    "note": "중개사 인증 없이 중개사 매물로 표시된 것"
+   },
+   {
+    "view": "v_realty_unmarked",
+    "count": 0,
+    "ok": true,
+    "note": "구분 없이 올라간 부동산 매물"
+   },
+   {
+    "view": "v_refund_violation",
+    "count": 0,
+    "ok": true,
+    "note": "당일이 아니거나 이미 이용한 구독의 환불"
+   },
+   {
+    "view": "v_report_not_escalated",
+    "count": 0,
+    "ok": true,
+    "note": "신고가 임계치를 넘었는데 검수 큐에 없는 건"
+   },
+   {
+    "view": "v_restricted_unlinked",
+    "count": 0,
+    "ok": true,
+    "note": "업종이 연결되지 않은 제한업종"
+   },
+   {
+    "view": "v_review_no_event",
+    "count": 0,
+    "ok": true,
+    "note": "결정됐는데 이력이 없는 검수 건"
+   },
+   {
+    "view": "v_risk_exempt_forever",
+    "count": 0,
+    "ok": true,
+    "note": "기한 없는 예외"
+   },
+   {
+    "view": "v_risk_law_exempted",
+    "count": 0,
+    "ok": true,
+    "note": "법이 정한 규칙에 생긴 예외"
+   },
+   {
+    "view": "v_risk_overexempted",
+    "count": 0,
+    "ok": true,
+    "note": "예외가 20건 넘는 규칙"
+   },
+   {
+    "view": "v_search_dict_empty",
+    "count": 0,
+    "ok": true,
+    "note": "사전이 빈 상태"
+   },
+   {
+    "view": "v_search_pii_columns",
+    "count": 0,
+    "ok": true,
+    "note": "INV-SCH1 위반 — 파서 로그에 사람을 가리키는 컬럼"
+   },
+   {
+    "view": "v_search_raw_stored",
+    "count": 0,
+    "ok": true,
+    "note": "INV-SCH2 위반 — 원문 검색어가 저장된 기록"
+   },
+   {
+    "view": "v_search_zero_hit_terms",
+    "count": 0,
+    "ok": true,
+    "note": "결과가 자주 0건인 검색어"
+   },
+   {
+    "view": "v_segment_learn_no_consent",
+    "count": 0,
+    "ok": true,
+    "note": "동의하지 않은 회원의 세그먼트가 바뀐 기록"
+   },
+   {
+    "view": "v_segment_shift_thrash",
+    "count": 0,
+    "ok": true,
+    "note": "한 달에 3번 이상 세그먼트가 바뀐 회원"
+   },
+   {
+    "view": "v_template_unused",
+    "count": 0,
+    "ok": true,
+    "note": "템플릿은 있는데 부르는 곳이 없는 알림"
+   },
+   {
+    "view": "v_terms_empty",
+    "count": 0,
+    "ok": true,
+    "note": "본문이 빈 약관"
+   },
+   {
+    "view": "v_withdrawn_still_public",
+    "count": 0,
+    "ok": true,
+    "note": "탈퇴한 계정인데 아직 공개 중인 매물·요청"
+   }
+  ],
+  "note": "4건이 정상이 아닙니다. 위에서부터 보십시오."
+ },
+ "get /api/v1/admin/acl": {
+  "roles": [
+   {
+    "role": "GUEST",
+    "description": "로그인하지 않은 사람",
+    "count": 0
+   },
+   {
+    "role": "MEMBER",
+    "description": "로그인한 회원",
+    "count": 32
+   },
+   {
+    "role": "BIZ_OWNER",
+    "description": "사업자 대표",
+    "count": 29
+   },
+   {
+    "role": "BIZ_STAFF",
+    "description": "사업자 직원",
+    "count": 1
+   },
+   {
+    "role": "REVIEWER",
+    "description": "검수 담당",
+    "count": 1
+   },
+   {
+    "role": "ADMIN",
+    "description": "운영",
+    "count": 2
+   },
+   {
+    "role": "PAYOUT",
+    "description": "지급 전담 — ADMIN 과 겸직 불가",
+    "count": 1
+   },
+   {
+    "role": "SUPER",
+    "description": "최고 운영",
+    "count": 1
+   }
+  ],
+  "conflict": [],
+  "note": null
+ },
+ "get /api/v1/partner/affiliate/dashboard": {
+  "ok": true,
+  "month": {
+   "clicks": 0,
+   "orders": 0,
+   "earned": 0,
+   "payable": 0
+  },
+  "goal": null,
+  "recent": [],
+  "note": "제휴수수료는 소개뱅크가 지급합니다. 소개비(당사자끼리 직접)와 다른 것입니다."
+ },
+ "get /api/v1/partner/affiliate/links": [],
+ "get /api/v1/partner/affiliate/orders": [],
+ "get /api/v1/partner/affiliate/revenues": {
+  "items": [],
+  "note": "소개비와 제휴수수료는 성격이 달라 정산과 세금계산서가 따로 나갑니다."
+ },
+ "get /api/v1/partner/affiliate/settlements": {
+  "items": [],
+  "account": null,
+  "note": "정산 계좌를 등록하고 인증하셔야 지급됩니다."
+ },
+ "get /api/v1/partner/affiliate/products": [],
+ "get /api/v1/partner/affiliate/materials": [],
+ "get /api/v1/partner/affiliate/inquiries": [],
+ "get /api/v1/partner/affiliate/guides": [],
+ "get /api/v1/admin/affiliates/applications": {
+  "items": [],
+  "note": null
+ },
+ "get /api/v1/admin/affiliates/products": [
+  {
+   "id": "b60869ab-b86f-406a-bf7f-304475a5d96c",
+   "code": "AP-001",
+   "name": "태양광 상담 신청",
+   "advertiser": "표본 수집용 입력 6166",
+   "commission": 50000,
+   "status": "DRAFT",
+   "landingUrl": "https://eng633.co.kr/",
+   "orders": 0,
+   "rateChanges": 1,
+   "updatedAt": "2026-09-30T14:54:06.026Z"
+  }
+ ],
+ "get /api/v1/admin/affiliates/goals": [],
+ "get /api/v1/admin/affiliates/materials/queue": {
+  "items": [],
+  "note": null
+ },
+ "get /api/v1/admin/affiliates/settlements": [],
+ "get /api/v1/admin/search/parser": {
+  "enabled": false,
+  "calls": 0,
+  "fallbacks": 0,
+  "fallback_pct": null,
+  "avg_ms": null,
+  "note": "최근 24시간 호출이 없습니다."
+ },
+ "get /api/v1/admin/audit/signals": {
+  "items": [
+   {
+    "code": "PII_BURST",
+    "view": "v_audit_pii_burst",
+    "note": "하루에 개인정보를 많이 본 사람",
+    "count": 1,
+    "ok": false,
+    "lastReview": null
+   },
+   {
+    "code": "PII_NIGHT",
+    "view": "v_audit_night_access",
+    "note": "업무 시간 밖 열람",
+    "count": 2,
+    "ok": false,
+    "lastReview": {
+     "reviewedAt": "2026-09-30T14:54:06.156Z",
+     "verdict": "NORMAL",
+     "reason": "본인 확인 결과 야근 중 정산 처리였습니다"
+    }
+   },
+   {
+    "code": "ADMIN_BURST",
+    "view": "v_audit_admin_burst",
+    "note": "운영 행위가 몰림 — 자동화 도구일 수 있습니다",
+    "count": 1,
+    "ok": false,
+    "lastReview": null
+   },
+   {
+    "code": "ADMIN_NIGHT",
+    "view": "v_audit_admin_night",
+    "note": "밤중 운영 행위 — 계정이 털렸을 수 있습니다",
+    "count": 5,
+    "ok": false,
+    "lastReview": null
+   },
+   {
+    "code": "SAME_TARGET",
+    "view": "v_audit_same_target",
+    "note": "한 사람을 반복 열람 — 가장 흔한 유출 형태입니다",
+    "count": 0,
+    "ok": true,
+    "lastReview": null
+   },
+   {
+    "code": "NO_REASON",
+    "view": "v_audit_no_reason",
+    "note": "이유 없이 개인정보를 본 기록",
+    "count": 0,
+    "ok": true,
+    "lastReview": null
+   }
+  ],
+  "overdue": [
+   {
+    "code": "PII_BURST",
+    "signalCount": 1,
+    "lastReviewed": null
+   },
+   {
+    "code": "ADMIN_BURST",
+    "signalCount": 1,
+    "lastReviewed": null
+   },
+   {
+    "code": "ADMIN_NIGHT",
+    "signalCount": 5,
+    "lastReviewed": null
+   }
+  ],
+  "note": "3건이 정해진 시간 안에 확인되지 않았습니다. 밀리면 아무도 안 봅니다."
+ },
+ "get /api/v1/admin/audit/logs": [
+  {
+   "at": "2026-09-30T14:54:06.210Z",
+   "action": "RISK_EXEMPT",
+   "targetType": "RISK",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.194Z",
+   "action": "RISK_LEARN",
+   "targetType": "RISK",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.184Z",
+   "action": "CLASSIFY_REVERT",
+   "targetType": "CLASSIFY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.176Z",
+   "action": "CLASSIFY_LEARN",
+   "targetType": "CLASSIFY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.169Z",
+   "action": "CLASSIFY_CORRECT",
+   "targetType": "CLASSIFY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.160Z",
+   "action": "AUDIT_REVIEW",
+   "targetType": "AUDIT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.147Z",
+   "action": "PARTNER_SETTLE_RUN",
+   "targetType": "SETTLEMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.137Z",
+   "action": "MATERIAL_REVIEW",
+   "targetType": "MATERIAL",
+   "targetId": "359c160a-2c83-402a-9eed-b9dd2a306903",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.029Z",
+   "action": "AFFILIATE_PRODUCT_CREATE",
+   "targetType": "PRODUCT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:06.023Z",
+   "action": "PARTNER_APPROVE",
+   "targetType": "PARTNER",
+   "targetId": "5fc3e922-1d95-4ada-80cc-6bdb25301783",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:05.961Z",
+   "action": "OWNERSHIP_DECIDE",
+   "targetType": "LISTING",
+   "targetId": "0141e8cc-829d-4eb7-bb23-55087a6220ed",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:54:05.882Z",
+   "action": "OWNERSHIP_SUBMIT",
+   "targetType": "LISTING",
+   "targetId": "c0b865ce-cbe2-43f4-9a6d-8a159f117cc2",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:51:30.658Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:51:23.532Z",
+   "action": "REPORT_CREATE",
+   "targetType": "REPORT",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:51:17.280Z",
+   "action": "DISPUTE_OPEN",
+   "targetType": "DISPUTE",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:50:53.567Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:50:37.497Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:50:33.698Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:49:01.114Z",
+   "action": "ACCOUNT_VIEW",
+   "targetType": "ACCOUNT",
+   "targetId": "22222222-2222-2222-2222-222222222222",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:49:01.108Z",
+   "action": "ACCOUNT_LIST",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.995Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.981Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.970Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.960Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.950Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.942Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.566Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:48:58.511Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "ca0fd089-342c-425f-ba41-e036a15e3c8a",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:48:58.506Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "ca0fd089-342c-425f-ba41-e036a15e3c8a",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.501Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "ca0fd089-342c-425f-ba41-e036a15e3c8a",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:48:58.489Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "2914bd60-ef20-4662-9dbc-8cc9c61662a0",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.476Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:48:58.043Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "35a15d3d-bbff-43df-9aaf-dc278d11337c",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:58.034Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "3e65865e-23e3-43ff-9c0c-208ad0df7974",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:57.931Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:48:57.862Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "5df3d5dd-827f-4411-96c3-6bb8afe82cc0",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:48:57.794Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:48:57.783Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:48:57.767Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:48:53.798Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:48:46.964Z",
+   "action": "REPORT_CREATE",
+   "targetType": "REPORT",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:41:15.826Z",
+   "action": "REPORT_CREATE",
+   "targetType": "REPORT",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:41:09.791Z",
+   "action": "DISPUTE_OPEN",
+   "targetType": "DISPUTE",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:40:47.309Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:40:31.723Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:40:28.216Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:39:24.873Z",
+   "action": "BILLING_KEY_REGISTER",
+   "targetType": "BILLING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:38:57.692Z",
+   "action": "ACCOUNT_VIEW",
+   "targetType": "ACCOUNT",
+   "targetId": "22222222-2222-2222-2222-222222222222",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:57.685Z",
+   "action": "ACCOUNT_LIST",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.657Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.647Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.627Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.615Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.602Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.595Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.214Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:38:55.155Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "c39e75f4-19a3-4e17-96d2-ae859360d596",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:38:55.149Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "c39e75f4-19a3-4e17-96d2-ae859360d596",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.140Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "c39e75f4-19a3-4e17-96d2-ae859360d596",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:38:55.124Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "dc588739-75e7-4ace-a8eb-6df770737fab",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:38:55.107Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:38:54.711Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "c5c00d20-d8a6-4384-8868-4102a7b8c1fa",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.703Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "85c51836-3191-4d2d-ba9a-ed3e1c206261",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.624Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.559Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "94247cef-40d2-48f1-bcb1-615b260ae1bc",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.509Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.496Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:38:54.484Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:37:58.888Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:37:35.126Z",
+   "action": "REPORT_CREATE",
+   "targetType": "REPORT",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:36:37.270Z",
+   "action": "DISPUTE_OPEN",
+   "targetType": "DISPUTE",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:36:26.736Z",
+   "action": "TERM_AGREE",
+   "targetType": "TERM",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:36:14.416Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:35:58.719Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:35:55.171Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:33:25.929Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:33:25.503Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:33:25.018Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:28:23.749Z",
+   "action": "ACCOUNT_VIEW",
+   "targetType": "ACCOUNT",
+   "targetId": "22222222-2222-2222-2222-222222222222",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:23.737Z",
+   "action": "ACCOUNT_LIST",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.570Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.557Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.544Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.532Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.513Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.503Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:28:21.071Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:28:21.001Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "f395c07f-65db-4389-b0ff-2c8026d7bb7e",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:28:20.990Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "f395c07f-65db-4389-b0ff-2c8026d7bb7e",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.976Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "f395c07f-65db-4389-b0ff-2c8026d7bb7e",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:28:20.955Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "829f1a48-cc14-48ad-9f16-0ece99584859",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.940Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:28:20.306Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "d3e602a7-effc-4878-9089-c6ba1d925f1a",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.293Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "9b773092-22a4-4780-a6bb-5962d9aad1c9",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.201Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.115Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "e66f44f1-a5dc-476a-95f5-f8bd5d6ae60d",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.041Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:28:20.008Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:28:19.983Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:28:00.251Z",
+   "action": "JOB_RUN",
+   "targetType": "JOB",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:28:00.237Z",
+   "action": "JOB_RUN",
+   "targetType": "JOB",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:27:56.105Z",
+   "action": "REFERRAL_CODE_ISSUE",
+   "targetType": "REFERRAL_CODE",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:27:56.082Z",
+   "action": "SUBSCRIPTION_CHANGE",
+   "targetType": "SUBSCRIPTION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:24:04.690Z",
+   "action": "ACCOUNT_VIEW",
+   "targetType": "ACCOUNT",
+   "targetId": "22222222-2222-2222-2222-222222222222",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:04.681Z",
+   "action": "ACCOUNT_LIST",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.630Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.615Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.603Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.585Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.565Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.552Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.152Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:24:02.085Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "35970409-7e94-4151-a734-81f76a4e08d1",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:24:02.076Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "35970409-7e94-4151-a734-81f76a4e08d1",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.068Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "35970409-7e94-4151-a734-81f76a4e08d1",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:24:02.049Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "ac596e12-eccd-4657-bb56-de507e67bd8f",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:24:02.033Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:24:01.594Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "03ce7411-7be6-4a9c-8e56-082435f84fde",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.584Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "a7cd8b68-a929-4a63-8648-bd56db81c3e2",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.481Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.408Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "f3faf733-2e0b-447f-ad01-266fcdeee03f",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.335Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.309Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:24:01.292Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:06:38.377Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:38.368Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:38.360Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:38.342Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:38.331Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:38.324Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.964Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:37.868Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "53b7aa90-07fa-4dfd-9e79-5fe77299ee47",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:37.860Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "53b7aa90-07fa-4dfd-9e79-5fe77299ee47",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.841Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "53b7aa90-07fa-4dfd-9e79-5fe77299ee47",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:37.797Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "2f02c8c9-647c-4a88-af7c-05d899373dc8",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.787Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:37.374Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "221801bb-0e9f-4bb7-a24a-bcbb04efadf6",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.366Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "79df3822-ef0f-413a-a79b-e273b03cb2f0",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.278Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.205Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "ab564081-97d6-4389-b1d1-3af182b08f3d",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.151Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.140Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:37.128Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:06:36.250Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:36.239Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:36.230Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:36.218Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:36.201Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:36.170Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:35.698Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:35.603Z",
+   "action": "PAYMENT_REPORT",
+   "targetType": "DEAL",
+   "targetId": "073dbd93-f463-4ba3-9179-ed521d4b6970",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:35.581Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "073dbd93-f463-4ba3-9179-ed521d4b6970",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:35.569Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "073dbd93-f463-4ba3-9179-ed521d4b6970",
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:35.551Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "19e3c9fe-2717-4d8b-8e70-26c40912a0b2",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:35.533Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "개인"
+  },
+  {
+   "at": "2026-09-30T14:06:35.074Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "9fec599d-c74a-4728-a35e-6981831ca3be",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:35.066Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "43f9be56-d823-484a-9edb-cae9184a87b5",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:34.972Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:34.914Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "013f1318-48f7-49f6-b1b9-0e918f5deefc",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:34.855Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:34.844Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:34.834Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:06:20.741Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.732Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.718Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.702Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.687Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.680Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.279Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.101Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "4846f28c-2568-4498-9019-1bfdb22f24ac",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.062Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "2be9975b-d9be-4a14-aeab-48cd9e0ecb61",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:20.034Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.595Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "246243dc-5524-4451-9c93-3592da023179",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.586Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "ad1ddcc0-bee2-4195-b151-78cd775886d8",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.472Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.406Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "1d4d3422-6ad9-478f-a587-60bce6f8eef3",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.361Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.352Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:19.340Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:06:18.485Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.474Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.465Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.454Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.433Z",
+   "action": "PARTNER_REGION_SET",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.422Z",
+   "action": "PARTNER_SERVICE_CREATE",
+   "targetType": "PARTNER",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  },
+  {
+   "at": "2026-09-30T14:06:18.039Z",
+   "action": "REQUEST_CREATE",
+   "targetType": "REQUEST",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:06:17.977Z",
+   "action": "DEAL_CONFIRM",
+   "targetType": "DEAL",
+   "targetId": "0fcf80ac-c44e-4859-b3b1-a6c3d992d2e6",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:17.924Z",
+   "action": "DEAL_CREATE",
+   "targetType": "DEAL",
+   "targetId": "465fbeb9-e98a-44bb-918b-7ed87fae3463",
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:17.874Z",
+   "action": "CONVERSATION_START",
+   "targetType": "CONVERSATION",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "구매자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.809Z",
+   "action": "REVIEW_DECIDE",
+   "targetType": "REVIEW_ITEM",
+   "targetId": "139ab254-6ea2-4f13-927a-50f0cff4c2e5",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.782Z",
+   "action": "REVIEW_APPROVED",
+   "targetType": "LISTING",
+   "targetId": "d441e841-f49d-4b78-b8ff-70369265f166",
+   "role": "REVIEWER",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.663Z",
+   "action": "LISTING_CREATE",
+   "targetType": "LISTING",
+   "targetId": null,
+   "role": "BIZ_OWNER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.596Z",
+   "action": "BUSINESS_VERIFY",
+   "targetType": "BUSINESS",
+   "targetId": "0c0635f6-936e-40a9-aa90-f96b36bee86e",
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.535Z",
+   "action": "BUSINESS_APPLY",
+   "targetType": "BUSINESS",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.507Z",
+   "action": "IDENTITY_VERIFY",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": "MEMBER",
+   "actor": "E2E 판매자"
+  },
+  {
+   "at": "2026-09-30T14:06:16.486Z",
+   "action": "ACCOUNT_SIGNUP",
+   "targetType": "ACCOUNT",
+   "targetId": null,
+   "role": null,
+   "actor": "(탈퇴)"
+  },
+  {
+   "at": "2026-09-30T14:05:38.931Z",
+   "action": "SEGMENT_LEARN",
+   "targetType": "SEGMENT",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:05:38.919Z",
+   "action": "AUTO_REVIEW_POLICY",
+   "targetType": "AUTO_REVIEW_POLICY",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:05:38.909Z",
+   "action": "SEARCH_SYNONYM_ADD",
+   "targetType": "SEARCH_SYNONYM",
+   "targetId": null,
+   "role": "ADMIN",
+   "actor": "운영자"
+  },
+  {
+   "at": "2026-09-30T14:05:38.880Z",
+   "action": "LEAD_VIEW",
+   "targetType": "LEAD",
+   "targetId": "395deb3e-245a-4cf1-aeec-8c7de1de589d",
+   "role": "BIZ_OWNER",
+   "actor": "소개자"
+  }
+ ],
+ "get /api/v1/admin/audit/reviews": {
+  "items": [
+   {
+    "id": "b53448b5-2791-42c2-bfee-49c42179b5cf",
+    "signalCode": "PII_NIGHT",
+    "verdict": "NORMAL",
+    "reason": "본인 확인 결과 야근 중 정산 처리였습니다",
+    "actionTaken": "표본 수집용 입력 a678",
+    "reviewedAt": "2026-09-30T14:54:06.156Z",
+    "reviewedBy": "운영자"
+   }
+  ],
+  "thinCount": 0,
+  "note": null
+ },
+ "get /api/v1/admin/classify/learn/log": {
+  "items": [],
+  "note": null
+ },
+ "get /api/v1/admin/risk/exemptions": {
+  "items": [
+   {
+    "id": "dd1cc6e5-a2c1-44d1-bf13-8d73b2135cbd",
+    "rule": "RSK-06",
+    "ruleName": "자전거래 의심",
+    "subject": "acct:U-4471",
+    "reason": "같은 그룹 계열사라 정상입니다",
+    "signals": 1,
+    "createdAt": "2026-09-30T14:54:06.205Z",
+    "expiresAt": "2026-12-29T14:54:06.205Z",
+    "expired": false
+   }
+  ],
+  "note": null
+ },
+ "patch /api/v1/me/account": {
+  "id": "44444444-4444-4444-4444-444444444444",
+  "name": "김도현",
+  "phone": "010-1234-5678",
+  "note": "수정했습니다."
+ },
+ "patch /api/v1/me/business": {
+  "ok": false,
+  "note": "인증이 끝난 사업자 정보는 고칠 수 없습니다. 바뀐 내용이 있으면 다시 인증하십시오."
+ },
+ "patch /api/v1/admin/affiliates/products/{id}": {
+  "ok": true,
+  "id": "b60869ab-b86f-406a-bf7f-304475a5d96c",
+  "commission": 1,
+  "status": "DRAFT",
+  "note": "단가를 바꿨습니다. **이미 생긴 주문에는 소급하지 않습니다** — 새 주문부터 적용됩니다."
+ },
+ "delete /api/v1/admin/risk/exemptions/{id}": {
+  "ok": true,
+  "rule": "RSK-06",
+  "subject": "acct:U-4471",
+  "note": "해제했습니다. 다음부터 다시 경보가 뜹니다."
+ },
+ "post /api/v1/me/community/posts": {
+  "id": "669694ce-81a7-4996-b9d7-62f9c5ac755a",
+  "board": "QNA",
+  "state": "PENDING",
+  "note": "첫 글이라 확인 후 올라갑니다. 보통 하루 안에 끝납니다."
+ },
+ "post /api/v1/community/classify": {
+  "board": "QNA",
+  "score": 13,
+  "matched": [
+   "나요",
+   "질문",
+   "누가"
+  ],
+  "confident": true,
+  "note": null
+ },
+ "post /api/v1/partner/affiliate/links": {
+  "ok": true,
+  "id": "6a9b1634-4fcd-4e67-8160-9cb2b07b1d92",
+  "code": "PTN-DDEFEA6C",
+  "note": "링크를 만들었습니다."
+ },
+ "post /api/v1/partner/affiliate/settlement-account": {
+  "ok": true,
+  "id": "b9bec953-3b1d-4281-b45d-8743bb6e4a50",
+  "last4": "9012",
+  "note": "등록했습니다. 1원 인증을 거쳐야 지급됩니다 — 계좌인증 연동 전이라 아직 실제로 보내지 않습니다."
+ },
+ "post /api/v1/partner/affiliate/inquiries": {
+  "ok": true,
+  "id": "7a3fd804-9ed2-4039-a558-b15d2529e127",
+  "note": "접수했습니다."
+ },
+ "post /api/v1/admin/affiliates/goals": {
+  "ok": false,
+  "note": "개인 또는 등급 중 하나를 고르십시오."
+ },
+ "post /api/v1/search/prompt": {
+  "read": {
+   "sizeMax": 10,
+   "urgent": true
+  },
+  "candidates": [
+   {
+    "code": "RE",
+    "name": "부동산 · 점포",
+    "gwan": "MAL",
+    "score": 7,
+    "matched": [
+     "상가",
+     "평"
+    ]
+   }
+  ],
+  "blocked": null,
+  "note": null,
+  "privacy": "검색어는 분류를 위해 일시적으로 처리되며 저장되지 않습니다."
+ },
+ "post /api/v1/me/community/posts/{id}/comments": {
+  "ok": true,
+  "id": "c6de017c-10c3-459a-abe3-32c49782743d",
+  "createdAt": "2026-09-30T14:55:34.857Z"
+ },
+ "post /api/v1/admin/community/posts/{id}/approve": {
+  "ok": true,
+  "note": "올렸습니다."
+ },
+ "post /api/v1/admin/community/posts/{id}/hide": {
+  "ok": false,
+  "note": "사유를 적으십시오. 안 적으면 같은 글이 다시 올라옵니다."
+ },
+ "patch /api/v1/me/community/posts/{id}": {
+  "ok": true,
+  "id": "669694ce-81a7-4996-b9d7-62f9c5ac755a",
+  "board": "QNA",
+  "title": "표본 수집 — 소개비 세금계산서는 누가 끊나요"
+ },
+ "delete /api/v1/me/community/posts/{id}": {
+  "ok": true,
+  "note": "지웠습니다. 달린 댓글은 남습니다."
+ },
+ "get /api/v1/community/board": {
+  "items": [
+   {
+    "id": "9d70525c-f0a7-4275-8dc9-25e1f0d60c8f",
+    "board": "QNA",
+    "title": "소개비 세금계산서는 누가 끊나요",
+    "state": "PUBLISHED",
+    "views": 0,
+    "commentCount": 0,
+    "isPinned": false,
+    "createdAt": "2026-10-05T05:40:02.885Z",
+    "pendingMine": false,
+    "author": "김OO"
+   }
+  ],
+  "total": 1,
+  "page": 1,
+  "size": 1,
+  "pages": 1
+ }
+}

@@ -1,0 +1,12 @@
+node_modules
+*/node_modules
+site/.next
+.dev-db
+.env
+.git
+docs/06_openapi.json
+web/dist
+web/node_modules
+site/node_modules
+docs/matrix
+uploads

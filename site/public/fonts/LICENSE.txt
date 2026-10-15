@@ -1,0 +1,15 @@
+이 폴더의 글꼴 (소개장터 메인 · v10.29 · 2026-10-09 디자인 시트 「02. 폰트」)
+
+1) 페이퍼로지 (Paperlogy) — Paperlogy-5Medium.woff2 · Paperlogy-7Bold.woff2
+   · 만든 곳: 이주임 · 김도균 (Freesentation)      안내: https://freesentation.blog/paperlogyfont
+   · 사용 조건: SIL Open Font License 1.1 (글꼴 파일 안의 name 표 13번에 적혀 있습니다)
+   · 받은 곳: https://github.com/fonts-archive/Paperlogy
+
+2) 나눔스퀘어 네오 (NanumSquare Neo) — NanumSquareNeo.woff2(400) · NanumSquareNeoB.woff2(700) · NanumSquareNeoEB.woff2(800)
+   · 만든 곳: NAVER Corp.                          안내: https://www.sandollcloud.com/free-font/17678/NanumSquareNeo
+   · 사용 조건: SIL Open Font License 1.1
+   · 받은 곳: https://github.com/fonts-archive/NanumSquareNeo
+
+SIL OFL 1.1 요지 — 웹 탑재 · 상업적 사용 · 수정 · 재배포 가능. 글꼴 파일만 따로 파는 것은 금지. 재배포할 때 이 저작권 · 사용 조건 표시를 같이 둡니다.
+전문: https://openfontlicense.org/open-font-license-official-text/
+올리기 전에 위 안내 쪽의 최신 조건을 한 번 더 확인하십시오.

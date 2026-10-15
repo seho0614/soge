@@ -1,0 +1,22 @@
+// 소개뱅크 Prisma 스키마
+//
+// ⚠ 이 파일은 진실의 출처가 아닙니다. prisma/migrations/ 가 정본입니다.
+//   트리거·CHECK·부분 인덱스·뷰는 Prisma 스키마로 표현되지 않으므로,
+//   introspect 결과를 마이그레이션보다 우선하지 마십시오.
+//
+// 모델 생성:
+//   npx prisma db pull      # 마이그레이션 적용된 DB에서 모델 역생성
+//   npx prisma generate
+//
+// 금액 컬럼은 반드시 Decimal 로 매핑되어야 합니다. Float 이면 정산에서 원 단위가 틀립니다.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema", "views"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "pii", "audit"]
+}

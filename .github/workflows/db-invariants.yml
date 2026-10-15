@@ -1,0 +1,55 @@
+name: DB Invariants
+
+on:
+  push:
+    paths: ['prisma/migrations/**', 'scripts/**', '.github/workflows/db-invariants.yml']
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sgb_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sgb_ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply migrations
+        run: bash scripts/migrate.sh
+
+      - name: Migrations must be idempotent
+        run: bash scripts/migrate.sh
+
+      - name: Verify invariants
+        run: bash scripts/verify-invariants.sh
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Regenerate docs and codes
+        run: |
+          node scripts/gen-docs.js
+          npm run docs:swagger
+          node scripts/merge-openapi.js
+          node scripts/gen-codes.js > src/generated/codes.ts
+
+      - name: Fail if generated files drift
+        run: git diff --exit-code docs/ src/generated/
+
+      - name: Verify design docs
+        run: node scripts/verify-docs.js

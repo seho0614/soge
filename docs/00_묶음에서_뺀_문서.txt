@@ -1,0 +1,32 @@
+# v10.41 묶음에서 뺀 것 — 묶음 크기 한도(30MiB) · 10/9 「zip/tar 에 문서는 필수 문서만」(설계 · 절차 + 이번 판).
+#   · 78 대조표 · results_v10_29 · g137 → v10.29 묶음(SGB_DevDocker_Integrated_20261002_v10_29.zip · tar.gz)에 그대로 있습니다.
+#   · v10.31 ~ v10.33 시험 결과(qa/results_v10_31 ~ 33) → 각 판 묶음에 그대로 있습니다. (v10.34 전수 검정 결과 qa/results_v10_34 도 함께 넣습니다 · v10.35 ~ v10.40 결과는 각 판 묶음에)
+#   · money_main_20261009.webp(받은 그림 원본) → 따로 드린 파일입니다. sgb/docs/design/ 에 넣으면 qa/cut_money.py --check · qa/measure_mny.py 가 원본으로 직접 견줍니다.
+SGB_Prototype_v10_41.html
+sgb/docs/design/plaza_design_20261007.png
+sgb/docs/design/mall_design_from_chat_89332263.jpeg
+sgb/spec/design/hero_page_20261002.png
+qa/results_v10_30
+qa/results_v10_31
+qa/results_v10_32
+qa/results_v10_33
+qa/results_v10_35
+qa/results_v10_36
+qa/results_v10_37
+qa/results_v10_38
+qa/results_v10_39
+qa/results_v10_40
+sgb/docs/SGB_Matrix_Verification_20261010_v10_31.xlsx
+sgb/docs/SGB_Matrix_Verification_20261014_v10_41.xlsx
+
+# ── 아래는 v10.29 묶음을 만들 때 적은 목록 그대로입니다 ──
+# v10.30 묶음에서 뺀 것 — 묶음 크기 한도(30MiB) · 10/9 「zip/tar 에 문서는 필수 문서만」(설계 · 절차 + 이번 판).
+sgb/docs/78_시안반영_대조표_v10.29_20261009.html
+sgb/docs/design/money_main_20261009.webp
+qa/g137
+qa/results_v10_29
+
+# v10.29 묶음에서 뺀 문서 — 10/9 「zip/tar 에 문서는 필수 문서만」(설계 · 절차 + 이번 판). 모두 git(v10.29 태그)에 있습니다.
+#   보는 법: git show v10.29:<경로>   또는   git checkout v10.29 -- <경로>
+sgb/docs/77_소개몰배송_구매확정_리뷰문의_약관한벌_재동의_개인정산_v10.28_20261009.md
+qa/results_v10_28/

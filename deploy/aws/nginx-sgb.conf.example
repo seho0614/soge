@@ -1,0 +1,86 @@
+# =====================================================================
+# 소개뱅크 Nginx 설정 예시 — /etc/nginx/sites-available/sgb 로 복사해서 씁니다 (절차서 6부).
+#
+#   바꿀 곳 4가지 (전부 바꾼 뒤 `sudo nginx -t`)
+#     __DOMAIN__        사용자 웹 주소           예) sogaebaenk.co.kr
+#     __ADMIN_DOMAIN__  운영 화면 주소           예) admin.sogaebaenk.co.kr
+#     __OFFICE_IP__     사무실(내 PC) 공인 IP    예) 203.0.113.10      ← https://checkip.amazonaws.com 에서 확인
+#     __APP__           앱 폴더                  예) /home/ubuntu/sgb
+#
+#   전(절차서 v2.5 8-1)과 다른 점
+#     · 전에는 전부 3000(API)으로 넘겼습니다. 이제 **사용자 웹(5174)** 이 앞에 서고, /api 는 사용자 웹이 API 로 넘깁니다
+#       (로그인 토큰 · 방문자 쿠키를 사용자 웹이 붙여 주기 때문 — Nginx 가 /api 를 3000 으로 바로 넘기면 로그인 필요 동작이 전부 403).
+#     · 운영 화면은 별도 주소에서 **빌드한 파일**(web/dist)을 내보내고, 그 주소의 /api 만 3000 으로 바로 넘깁니다.
+#     · X-Forwarded-For 를 **$remote_addr 로 덮어씁니다** — 서버가 접속자 IP 를 이 헤더의 첫 값으로 봅니다(비로그인 투표의 하루 한도 · 유입 기록).
+#       `$proxy_add_x_forwarded_for` 를 쓰면 접속자가 헤더를 지어내 한도를 피할 수 있습니다.
+#     · 접근 제한(allow · deny)은 **location 안에** 둡니다. server 바로 아래에 두면 인증서 발급 · 갱신 확인(Let's Encrypt 가
+#       http://주소/.well-known/acme-challenge/… 로 들어옴)까지 막혀, 접근 제한을 건 동안 인증서를 받지도 갱신하지도 못합니다.
+#     · HTTPS 는 이 파일을 넣은 뒤 certbot 이 붙입니다:  sudo certbot --nginx -d __DOMAIN__ -d www.__DOMAIN__ -d __ADMIN_DOMAIN__
+# =====================================================================
+
+# ── 사용자 웹 ─────────────────────────────────────────────────────────
+server {
+  listen 80;
+  server_name __DOMAIN__ www.__DOMAIN__;
+
+  # 올리는 파일(마케팅 영상 50MB 까지). 기본 1MB 면 사진도 안 올라갑니다
+  client_max_body_size 60m;
+
+  location / {
+    # ★ 열기 전(간주 모드가 켜져 있는 동안)에는 사무실에서만 — 여는 날 allow · deny 줄을 지웁니다
+    allow __OFFICE_IP__;
+    deny all;
+
+    proxy_pass http://127.0.0.1:5174;
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-Host $http_host;      # 사용자 웹이 「같은 출처」를 이 값으로 판정합니다 (주소창의 호스트 그대로)
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $http_connection;
+    proxy_read_timeout 120s;
+  }
+}
+
+# ── 운영 화면 (늘 사무실에서만) ────────────────────────────────────────
+server {
+  listen 80;
+  server_name __ADMIN_DOMAIN__;
+
+  client_max_body_size 60m;
+
+  root __APP__/web/dist;
+  index index.html;
+
+  # API — 운영 화면은 토큰을 직접 헤더에 실어 보냅니다
+  location /api/ {
+    allow __OFFICE_IP__;
+    deny all;
+
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 120s;
+  }
+
+  # 화면 — 한 장짜리 앱이라 없는 주소는 index.html 로
+  location / {
+    allow __OFFICE_IP__;
+    deny all;
+
+    try_files $uri $uri/ /index.html;
+  }
+  location /assets/ {
+    allow __OFFICE_IP__;
+    deny all;
+
+    expires 7d;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+}

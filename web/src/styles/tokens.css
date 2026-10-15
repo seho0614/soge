@@ -1,0 +1,106 @@
+/**
+ * 디자인 토큰.
+ *
+ * v10.29 — 시안(SGB_Prototype v10.28) 운영 화면의 값으로 바꿨습니다.
+ *   주색 보라 #7C3AED(단추 · 고른 탭) · 상단바 #14171C · 고른 메뉴 #4F46E5
+ *   글자 #111827/#4B5563/#6B7280 · 줄 #E5E7EB · 바탕 #E9EAEE(시안 --shell)
+ *   단추 모서리 7px · 카드 11px · 표 10px · 큰 제목 23px/900 · 본문 14px
+ * 이름(--accent · --money · --danger …)은 그대로 두고 값만 바꿉니다 — 화면 코드가 이름으로 씁니다.
+ * 관 구분은 여전히 색이 아니라 라벨과 위치로 합니다.
+ */
+:root {
+  /* v10.29 — 시안 원래 이름도 함께 둡니다(시안 CSS 를 옮길 때 그대로 쓰도록) */
+  --pp:   #7C3AED; --pp-d: #6D28D9; --pp-l: #F5F1FE; --pp-l2: #EDE7FC;
+  --bl:   #2563EB; --bl-l: #EFF6FF;
+  --or-l: #FFF7ED; --gr-l: #ECFDF5;
+  --g50:  #F9FAFB; --g100: #F3F4F6; --g200: #E5E7EB; --g500: #6B7280; --g700: #374151;
+  --shell: #E9EAEE;
+  --line2: #F3F4F6;
+  --ahd:   #14171C;      /* 운영 상단바 */
+  --ahd-on: #4F46E5;     /* 상단바에서 고른 메뉴 */
+
+  /* 기본 — 장시간 목록 스캔. 색을 아껴야 금액이 보입니다 */
+  --ink:      #111827;
+  --ink-2:    #4B5563;
+  --ink-3:    #6B7280;
+  --paper:    #FFFFFF;
+  --surface:  #F9FAFB;   /* v10.29 — 표 머리 · 옅은 칸 (시안 --g50). 화면 바탕은 --shell */
+  --line:     #E5E7EB;
+
+  /* 강조 — v10.29 시안 주색(보라). 전에는 남색 #1B4D8F */
+  --accent:   var(--pp);
+  --accent-w: var(--pp-l);
+  --accent-bg: var(--pp-l);   /* 쓰는 곳이 있는데 정의가 없었습니다 */
+
+  /* 금액 전용. 다른 어디에도 쓰지 않습니다 (시안 #0F6B4F 와 같은 계열) */
+  --money:    #0F6B4A;
+
+  /* 경고 — 반려·차단·분쟁 (시안 .no #B42318) */
+  --danger:   #B42318;
+  --danger-w: #FEF2F2;
+
+  /* 광고 · 주의 — 시안 .ts #9A5B00 / .nt.warn 바탕 */
+  --ad:       #9A5B00;
+  --ad-w:     #FFF7ED;
+  --ad-bg:    var(--ad-w);
+
+  /* tone 매핑 — 서버가 내려주는 code_labels.ui_tone */
+  --tone-neutral: var(--ink-2);
+  --tone-info:    var(--accent);
+  --tone-success: var(--money);
+  --tone-warning: var(--ad);
+  --tone-danger:  var(--danger);
+  --tone-muted:   var(--ink-3);
+
+  /* v10.29 — 시안: 단추 7px · 카드 11px */
+  --r-sm: 7px;  --r-md: 11px;
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;
+  --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+
+  /* v10.29 — 시안: 본문 14 · 작은 글 13/12 · 소제목 15 · 숫자 칸 21 */
+  --fs-xs: 12px; --fs-sm: 13px; --fs-md: 14px;
+  --fs-lg: 15px; --fs-xl: 21px; --fs-money: 20px;
+
+  --f: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --m: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --bp-tablet: 768px;
+  --bp-desktop: 1200px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--f);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--shell);           /* v10.29 — 시안 운영 화면 바탕 */
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+/* 금액은 자릿수가 흔들리면 비교가 안 됩니다 */
+.money {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-money);
+  font-weight: 700;
+  color: var(--money);
+}
+
+/* 목적지 없는 링크 — 숨기지 않습니다. 없다는 사실이 보여야 합니다 */
+.tbd {
+  border-bottom: 1px dotted var(--ink-3);
+  color: var(--ink-3);
+  cursor: help;
+}
+
+/* 세 토큰이 쓰이는데 정의가 없었습니다 — 오류 없이 스타일만 빠집니다.
+   v10.29 — 전에는 .tbd 안에만 있어 다른 곳에서는 빠졌습니다. :root 로 옮깁니다. */
+:root {
+  --card: var(--paper);
+  --ok: var(--tone-success);
+  --ok-w: #ECFDF5;
+  --c-danger: var(--danger);
+}

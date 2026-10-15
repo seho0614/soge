@@ -1,0 +1,12 @@
+node_modules
+dist/
+.next/
+*.tsbuildinfo
+.env
+.env.*.local
+.dev-db/
+npm-debug.log*
+.DS_Store
+
+# D007 로컬 파일 저장소 (UPLOAD_DIR 기본값)
+uploads/

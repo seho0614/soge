@@ -1,0 +1,123 @@
+/* 소개몰 v10.26 — 상품 자료(그림 · 성분|함량 · 정가 · 할인율 · 한 달 단가 · 옵션)를 그리는 부분.
+ *
+ * 시안(spec/proto.html 의 #hltroot 스타일 · 3557 ~ 4031줄)의 규칙을 그대로 옮겼습니다 — 10/8 「디자인은 깨지 말 것」.
+ * 시안의 색 이름(--fg2 · --bg3 · --unit …)은 이 사이트의 변수(tokens.css)에 맞춰 .hlt 안에서만 정합니다.
+ * health.css 뒤에 읽습니다(같은 이름의 카드 규칙을 시안 모양으로 덮음).
+ */
+.hlt {
+  --h-bg: var(--paper); --h-bg2: var(--surface); --h-bg3: #eef0f4;
+  --h-fg: var(--ink); --h-fg2: var(--ink-2); --h-fg3: var(--ink-3);
+  --h-line: var(--line); --h-line2: #d0d5de;
+  --h-pri: var(--accent); --h-pri-weak: var(--accent-w); --h-danger: var(--danger); --h-warn: #9a6700;
+  --h-unit: #e8710a; --h-radius: 10px; --h-direct: var(--accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hlt { --h-bg3: #232830; --h-line2: #39414d; --h-unit: #ffa94d; --h-warn: #e2b341; }
+}
+:root[data-theme="dark"] .hlt { --h-bg3: #232830; --h-line2: #39414d; --h-unit: #ffa94d; --h-warn: #e2b341; }
+
+/* ── 매대 카드 (시안 card()) ── */
+.hlt .hlt-grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 980px) { .hlt .hlt-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .hlt .hlt-grid { grid-template-columns: repeat(2, 1fr); } }
+.hlt .hlt-card { border: 1px solid var(--h-line); border-radius: var(--h-radius); overflow: hidden; background: var(--h-bg);
+  display: flex; flex-direction: column; position: relative; opacity: 1; padding: 0; gap: 0; }
+.hlt .hlt-card:hover { border-color: var(--h-line2); }
+.hlt .hlt-card-link { display: flex; flex-direction: column; padding: 0; gap: 0; color: inherit; text-decoration: none; flex: 1; }
+.hlt .hlt-thumb { aspect-ratio: 1/1; background: var(--h-bg3); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.hlt .hlt-thumb > svg:not(.hlt-rose), .hlt .hlt-thumb > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hlt .hlt-rose { position: absolute; top: 7px; left: 7px; width: 46px; height: 46px; }
+.hlt .hlt-soldveil { position: absolute; inset: 0; background: rgba(255, 255, 255, .72); display: flex; align-items: center; justify-content: center; }
+.hlt .hlt-soldveil span { font-size: 13px; font-weight: 800; color: var(--h-fg2); border: 1px solid var(--h-line2); border-radius: 999px; padding: 4px 12px; background: var(--h-bg); }
+.hlt .hlt-card-b { padding: 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.hlt .hlt-card-sl { line-height: 1; }
+.hlt .hlt-card-nm { font-weight: 700; font-size: 13.5px; line-height: 1.4; }
+.hlt .hlt-ingline { font-size: 12px; font-weight: 500; color: var(--h-fg2); letter-spacing: -.2px; }
+.hlt .hlt-ingline .bar { color: var(--h-fg3); font-weight: 400; margin: 0 2px; }
+.hlt .hlt-p26 { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; color: var(--h-fg); font-size: inherit; }
+.hlt .hlt-p26 .off { color: var(--h-danger); font-weight: 800; }
+.hlt .hlt-p26 .now { font-weight: 800; font-size: 15px; }
+.hlt .hlt-p26 .was { color: var(--h-fg3); text-decoration: line-through; font-size: 12px; font-weight: 400; }
+.hlt .hlt-u26 { font-size: 13px; color: var(--h-unit); font-weight: 700; }
+.hlt .hlt-u26 .hlt-k { font-weight: 800; }
+.hlt .hlt-u26 b { color: var(--h-unit); font-weight: 800; }
+.hlt .hlt-u26.big { font-size: 16px; }
+.hlt .hlt-sm { font-size: 12.5px; } .hlt .hlt-mut { color: var(--h-fg2); } .hlt .hlt-mut3 { color: var(--h-fg3); }
+.hlt .hlt-card .hlt-card-f { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px 10px; margin-top: auto; }
+.hlt .hlt-cartic { border: 0; background: none; padding: 2px 4px; font-size: 15px; line-height: 1; cursor: pointer; border-radius: 6px; }
+.hlt .hlt-cartic:hover { background: var(--h-bg3); }
+.hlt .hlt-cartic:disabled { opacity: .5; cursor: default; }
+.hlt .hlt-bdg.direct { background: var(--h-direct); color: #fff; }
+.hlt .hlt-bdg.st { background: var(--h-bg3); color: var(--h-fg2); font-weight: 600; }
+.hlt .hlt-bdg.st.ok { background: var(--h-pri-weak); color: var(--h-pri); }
+
+/* ── 상품 상세 (시안 SB-HLT-PRD-010) ── */
+.hlt .hlt-pd26 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 26px; align-items: start; }
+@media (max-width: 860px) { .hlt .hlt-pd26 { grid-template-columns: 1fr; } }
+.hlt .hlt-pd26 h1 { margin: 5px 0 10px; font-size: var(--fs-xl); }
+.hlt .hlt-gal { aspect-ratio: 1/1; background: var(--h-bg3); border-radius: var(--h-radius); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.hlt .hlt-gal > svg, .hlt .hlt-gal > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hlt .hlt-optrow { display: flex; gap: 8px; align-items: center; border: 1px solid var(--h-line); border-radius: 8px; padding: 9px 10px; margin-top: 7px; flex-wrap: wrap; }
+.hlt .hlt-optrow .nm { flex: 1; min-width: 120px; font-size: 13px; }
+.hlt .hlt-optrow.sold { opacity: .6; }
+.hlt .hlt-note26 { border: 1px solid var(--h-line); border-left: 3px solid var(--h-pri); background: var(--h-bg2); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.6; }
+.hlt .hlt-note26.warn { border-left-color: var(--h-warn); }
+.hlt .hlt-tabs26 { display: flex; gap: 2px; border-bottom: 1px solid var(--h-line); margin-bottom: 14px; overflow-x: auto; }
+.hlt .hlt-tabs26 span { padding: 11px 14px; font-size: 14px; border-bottom: 2px solid transparent; color: var(--h-fg2); }
+.hlt .hlt-tabs26 span.on { color: var(--h-fg); border-bottom-color: var(--h-pri); font-weight: 800; }
+.hlt .hlt-buybar { position: sticky; bottom: 0; background: var(--h-bg); border-top: 1px solid var(--h-line); padding: 10px 0; display: none; gap: 8px; z-index: 5; }
+.hlt .hlt-buybar .hlt-btn { flex: 1; }
+@media (max-width: 860px) { .hlt .hlt-buybar { display: flex; } }
+
+/* ── 성분별 (시안 SB-HLT-CAT-030) · 성분 상세 ── */
+.hlt .hlt-ingcard .unit26 { color: var(--h-unit); font-weight: 700; font-size: 12.5px; }
+.hlt .hlt-qual { font-size: 11px; }
+.hlt .hlt-grp26 { border: 1px solid var(--h-line); border-radius: var(--h-radius); padding: 12px; margin-top: 10px; }
+.hlt .hlt-grp26 h3 { margin: 0 0 8px; font-size: 14px; }
+
+/* ── 검색 자동완성 (시안 22082 ~ 22158) ── */
+.hlt .hlt-acwrap { position: relative; flex: 1; }
+.hlt .hlt-ac { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; list-style: none; margin: 0; padding: 4px;
+  background: var(--h-bg); border: 1px solid var(--h-line2); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .08); }
+.hlt .hlt-ac li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 9px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.hlt .hlt-ac li[aria-selected="true"], .hlt .hlt-ac li:hover { background: var(--h-bg3); }
+.hlt .hlt-ac li .k { color: var(--h-fg3); font-size: 11.5px; }
+
+/* ── 장바구니 · 주문 · 내 주문의 작은 그림 · 옵션 이름 ── */
+.hlt .hlt-mini { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: var(--h-bg3); flex: none; display: inline-flex; }
+.hlt .hlt-mini > svg, .hlt .hlt-mini > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hlt .hlt-optnm { font-size: 12.5px; color: var(--h-fg2); }
+.hlt .hlt-pchg { color: var(--h-danger); font-size: 12.5px; }
+.hlt .hlt-pchg s { color: var(--h-fg3); }
+
+/* v10.26 — 성분 상세의 정렬 고르기 칸(시안 #ingSort) */
+.hlt .hlt-sel { border: 1px solid var(--h-line); background: var(--h-bg, #fff); color: inherit; border-radius: 8px; padding: 6px 9px; font: inherit; font-size: 13px; }
+
+/* v10.28 (D036) — 리뷰 · 문의 탭 */
+.hlt .hlt-tabs26 a { padding: 11px 14px; font-size: 14px; border-bottom: 2px solid transparent; color: var(--h-fg2); text-decoration: none; }
+.hlt .hlt-tabs26 a.on { color: var(--h-fg); border-bottom-color: var(--h-pri); font-weight: 800; }
+.hlt .hlt-stars { color: #f5a400; letter-spacing: 1px; }
+.hlt .hlt-rvline { display: inline-block; margin: 2px 0 6px; font-size: 14px; color: var(--h-fg2); text-decoration: none; }
+.hlt .hlt-rvsum { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.hlt .hlt-rvavg { font-size: 26px; }
+.hlt .hlt-rvf { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.hlt .hlt-rvf a { padding: 4px 10px; border: 1px solid var(--h-line); border-radius: 14px; font-size: 13px; color: var(--h-fg2); text-decoration: none; }
+.hlt .hlt-rvf a.on { border-color: var(--h-pri); color: var(--h-pri); font-weight: 700; }
+.hlt .hlt-rvlist, .hlt .hlt-qnalist { list-style: none; padding: 0; margin: 8px 0; }
+.hlt .hlt-rvlist li, .hlt .hlt-qnalist li { padding: 12px 0; border-bottom: 1px solid var(--h-line); }
+.hlt .hlt-rvlist li p, .hlt .hlt-qnalist li p { margin: 6px 0 0; white-space: pre-wrap; }
+.hlt .hlt-ans { background: #f5f7fa; padding: 8px 10px; border-radius: 8px; }
+.hlt .hlt-qnaform textarea { width: 100%; }
+.hlt .hlt-qnaform .hlt-btns { justify-content: space-between; align-items: center; }
+.hlt .hlt-rvform { border: 1px solid var(--h-line); border-radius: 10px; padding: 12px; margin-top: 8px; }
+.hlt .hlt-rvform .hlt-starpick button { font-size: 24px; background: none; border: 0; color: #d8d8d8; cursor: pointer; padding: 0 2px; }
+.hlt .hlt-rvform .hlt-starpick button.on { color: #f5a400; }
+.hlt .hlt-rvform textarea { width: 100%; }
+/* v10.32 — 반품 신청(시안 hltRetNew): 칸마다 흰 상자 · 고객 귀책 강조 상자 · 반품 주소 띠 */
+.hlt .hlt-ret32 > .hlt-box { margin: 0 0 12px; }
+.hlt .hlt-ret32 > .hlt-box h3 { margin: 0 0 10px; }
+.hlt .hlt-ret32 .hlt-box .fld { margin-bottom: 10px; }
+.hlt .hlt-fault { border: 1px solid var(--h-line); border-left: 3px solid var(--h-warn); background: var(--h-bg2); border-radius: 8px; padding: 12px 15px; margin: 12px 0 6px; font-size: 13px; line-height: 1.7; }
+.hlt .hlt-fault > span { display: block; color: var(--h-fg2, #6B7280); font-size: 12.5px; }
+.hlt .hlt-fault > b { display: block; font-weight: 800; }
+.hlt .hlt-retaddr { border: 1px solid var(--h-line); border-left: 3px solid var(--h-warn); background: var(--h-bg2); border-radius: 8px; padding: 12px 15px; margin: 0 0 12px; font-size: 13px; color: var(--h-fg2, #4B5563); }

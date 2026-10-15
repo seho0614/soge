@@ -1,0 +1,219 @@
+/* 소개몰(건강관) 화면 전용 — SB-HLT-* (20261002)
+ *
+ * 색은 tokens.css 에 있는 변수만 씁니다. 금액은 --money, 제한·경고는 --danger / --ad.
+ * 기존 공용 클래스(.page-head .notice .tbl .state .cta-primary …)는 그대로 쓰고,
+ * 여기에는 건강관에만 있는 모양(hlt-*)만 둡니다.
+ */
+
+.hlt { display: flex; flex-direction: column; gap: var(--sp-4); }
+.hlt .page-head { margin-bottom: 0; }
+.hlt p { margin: 0; }
+.hlt-gap { margin-top: var(--sp-4); }
+
+/* ── 로컬 내비 · 경로 ── */
+.hlt-lnav {
+  display: flex; gap: var(--sp-1); flex-wrap: wrap;
+  padding: var(--sp-2); background: var(--paper);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.hlt-lnav a {
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-sm);
+  color: var(--ink-2); text-decoration: none; font-size: var(--fs-sm);
+}
+.hlt-lnav a:hover { background: var(--surface); }
+.hlt-lnav a.on { background: var(--accent-w); color: var(--accent); font-weight: 700; }
+.hlt-backrow { margin: 0 0 var(--sp-2); }
+.hlt-find { display: flex; flex-direction: column; gap: var(--sp-1); max-width: 420px; margin: var(--sp-3) 0; }
+.hlt-find input { padding: var(--sp-2) var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-md, 8px); font: inherit; }
+.hlt-crumb { font-size: var(--fs-xs); color: var(--ink-3); }
+.hlt-crumb a { color: var(--ink-2); }
+
+/* ── 빈 상태 ── */
+.hlt-empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-6); background: var(--paper);
+  border: 1px dashed var(--line); border-radius: var(--r-md); color: var(--ink-3);
+}
+
+/* ── 버튼 ── */
+.hlt-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--paper); color: var(--ink); font: inherit; font-size: var(--fs-sm);
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.hlt-btn:hover:not(:disabled) { border-color: var(--ink-3); }
+.hlt-btn:disabled { opacity: .5; cursor: default; }
+.hlt-btn.sm { padding: var(--sp-1) var(--sp-3); font-size: var(--fs-xs); }
+.hlt-btn.lg { padding: var(--sp-3) var(--sp-5); font-size: var(--fs-md); font-weight: 700; flex: 1; }
+.hlt-btn.pri { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.hlt-btn.danger { color: var(--danger); border-color: var(--danger-w); }
+.hlt-btns { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+
+/* ── 칩 ── */
+.hlt-chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+.hlt-chip {
+  padding: var(--sp-1) var(--sp-3); border: 1px solid var(--line); border-radius: 999px;
+  background: var(--paper); color: var(--ink-2); font: inherit; font-size: var(--fs-sm);
+  text-decoration: none; cursor: pointer;
+}
+.hlt-chip.on { border-color: var(--accent); background: var(--accent-w); color: var(--accent); font-weight: 700; }
+.hlt-chip.lock { color: var(--ink-3); background: var(--surface); cursor: default; }
+
+/* ── 배지 ── */
+.hlt-bdg {
+  display: inline-block; padding: 0 var(--sp-2); border-radius: var(--r-sm);
+  font-size: var(--fs-xs); font-weight: 700; background: var(--surface); color: var(--ink-2);
+  vertical-align: middle;
+}
+.hlt-bdg.direct { background: var(--accent-w); color: var(--accent); }
+.hlt-bdg.soldout { background: var(--danger-w); color: var(--danger); }
+.hlt-cat { font-size: var(--fs-xs); color: var(--ink-3); }
+.hlt-rev { font-size: var(--fs-xs); color: var(--ad); }
+.hlt-warn { color: var(--danger); }
+
+/* ── 상품 카드 ── */
+.hlt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
+.hlt-card {
+  display: flex; flex-direction: column; background: var(--paper);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.hlt-card:hover { border-color: var(--ink-3); }
+.hlt-card.sold { opacity: .75; }
+.hlt-card-link { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4); color: inherit; text-decoration: none; flex: 1; }
+.hlt-card-top { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+.hlt-card-nm { font-weight: 700; line-height: 1.4; }
+.hlt-card-meta { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-xs); color: var(--ink-3); }
+.hlt-card-f { padding: 0 var(--sp-4) var(--sp-4); }
+.hlt-price { color: var(--money); font-weight: 700; font-size: var(--fs-lg); }
+.hlt-price.big { font-size: var(--fs-money); }
+.hlt-add { display: flex; flex-direction: column; gap: var(--sp-1); align-items: flex-start; }
+.hlt-ok { font-size: var(--fs-xs); color: var(--money); }
+
+/* ── 성분 · 고민 카드 ── */
+.hlt-igrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--sp-3); }
+.hlt-icard {
+  display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-4);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+  color: inherit; text-decoration: none;
+}
+.hlt-icard:hover { border-color: var(--accent); }
+.hlt-icard.off { background: var(--surface); color: var(--ink-3); }
+.hlt-icard .nm { font-weight: 700; }
+.hlt-icard .pr { font-size: var(--fs-sm); color: var(--ink-2); }
+.hlt-icard .pr b { color: var(--money); }
+.hlt-unit { font-size: var(--fs-sm); color: var(--ink-2); }
+.hlt-unit b { color: var(--money); }
+
+/* ── 구역 ── */
+.hlt-sec { display: flex; flex-direction: column; gap: var(--sp-3); }
+.hlt-sec h2 { font-size: var(--fs-lg); margin: 0; display: flex; align-items: baseline; gap: var(--sp-3); }
+.hlt-more { font-size: var(--fs-sm); font-weight: 400; color: var(--accent); margin-left: auto; }
+.hlt-box {
+  display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.hlt-box h3 { margin: 0; font-size: var(--fs-md); }
+.hlt-tbl { border: 1px solid var(--line); border-radius: var(--r-sm); }
+.hlt-tbl th { width: 160px; white-space: nowrap; }
+.hlt-legal {
+  padding: var(--sp-3); background: var(--surface); border-radius: var(--r-sm);
+  font-size: var(--fs-xs); color: var(--ink-2);
+}
+.hlt-fail { border-color: var(--danger); background: var(--danger-w); color: var(--danger); }
+
+/* ── 합계 ── */
+.hlt-sum { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); font-size: var(--fs-sm); }
+.hlt-sum.tot { padding-top: var(--sp-2); border-top: 1px solid var(--line); font-size: var(--fs-md); font-weight: 700; }
+.hlt-sum.tot span:last-child { color: var(--money); }
+
+/* ── 단계 ── */
+.hlt-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.hlt-steps li {
+  padding: var(--sp-1) var(--sp-3); border-radius: 999px; font-size: var(--fs-xs);
+  background: var(--paper); border: 1px solid var(--line); color: var(--ink-3);
+}
+.hlt-steps li.done { color: var(--ink-2); }
+/* 시안 — 장바구니 → 주문서 → 결제 → 완료 (칸 사이에 화살표) */
+.hlt-steps li + li { position: relative; margin-left: var(--sp-4); }
+.hlt-steps li + li::before { content: '→'; position: absolute; left: calc(-1 * var(--sp-4) - var(--sp-1)); top: 50%; transform: translateY(-50%); color: var(--ink-3); font-weight: 400; }
+.hlt-steps li.on { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 700; }
+
+/* ── 상품 상세 ── */
+.hlt-pd { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); align-items: start; }
+.hlt-pd-main {
+  display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-5);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.hlt-pd-main h1 { margin: 0; font-size: var(--fs-xl); }
+.hlt-pd-side { display: flex; flex-direction: column; gap: var(--sp-3); }
+.hlt-buy { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* ── 수량 ── */
+.hlt-qty { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; width: fit-content; }
+.hlt-qty button { width: 32px; border: 0; background: var(--surface); font: inherit; cursor: pointer; }
+.hlt-qty button:disabled { color: var(--ink-3); cursor: default; }
+.hlt-qty input { width: 52px; border: 0; text-align: center; font: inherit; }
+
+/* ── 장바구니 · 주문 줄 ── */
+.hlt-lines { display: flex; flex-direction: column; gap: var(--sp-2); }
+.hlt-ci {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+  padding: var(--sp-3) 0; border-bottom: 1px solid var(--line);
+}
+.hlt-lines .hlt-ci { padding: var(--sp-4); background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md); }
+.hlt-ci.bad { border-color: var(--danger); }
+.hlt-ci .bd { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.hlt-ci .bd a { color: inherit; }
+.hlt-ci .form-error { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; margin: 0; }
+.hlt-ci-act { display: flex; gap: var(--sp-3); align-items: center; }
+
+/* ── 배송지 선택 · 동의 ── */
+.hlt-radios { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+.hlt-radio {
+  display: flex; gap: var(--sp-3); align-items: flex-start; width: 100%;
+  padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer;
+}
+.hlt-radio.on { border-color: var(--accent); background: var(--accent-w); }
+.hlt-chk { display: flex; gap: var(--sp-2); align-items: flex-start; font-size: var(--fs-sm); cursor: pointer; }
+.hlt-chk input { margin-top: 4px; }
+
+/* ── 주문 행 ── */
+.hlt-ord {
+  display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.hlt-ord-h { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--fs-sm); }
+
+/* ── 배송 추적 ── */
+.hlt-tl { list-style: none; margin: 0; padding: 0 0 0 var(--sp-4); border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: var(--sp-3); }
+.hlt-tl li { color: var(--ink-2); }
+.hlt-tl li.on b { color: var(--accent); }
+
+/* ── 폼 (hlt-box 안의 .auth 는 테두리를 겹치지 않습니다) ── */
+.hlt-form { border: 0; padding: 0; }
+
+@media (max-width: 1100px) { .hlt-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+  .hlt-grid { grid-template-columns: repeat(2, 1fr); }
+  .hlt-pd { grid-template-columns: 1fr; }
+  .hlt-tbl th { width: auto; white-space: normal; }
+}
+
+/* ── v10.31 (w3 · 시안 기준) — 검색 칸(「검색어」 이름표 · 넓은 칸 · 아래 검색 · 초기화) · 주문서 배송 요청사항 · 결제수단 칩 ── */
+.hlt-sform { display: flex; flex-direction: column; gap: var(--sp-2); max-width: 520px; margin: var(--sp-3) 0 var(--sp-4); }
+.hlt-sform-l { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); }
+.hlt-sform .hlt-acwrap input { width: 100%; box-sizing: border-box; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-sm); font: inherit; }
+.hlt-f { display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-3); }
+.hlt-f label { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); }
+.hlt-f input, .hlt-f select, .hlt-f textarea { padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-sm); font: inherit; background: #fff; }
+.hlt-note { padding: var(--sp-3); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); line-height: 1.6; margin: var(--sp-2) 0; }
+.hlt-note.warn { background: #FFF7E6; }
+.hlt-legal-md h2 { font-size: var(--fs-md); margin: var(--sp-4) 0 var(--sp-2); }
+.hlt-legal-md pre { white-space: pre-wrap; background: var(--surface); padding: var(--sp-3); border-radius: var(--r-sm); font: inherit; font-size: var(--fs-sm); margin: var(--sp-2) 0; }
+.hlt-legal-md table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); margin: var(--sp-2) 0; }
+.hlt-legal-md th, .hlt-legal-md td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+.hlt-legal-md blockquote { margin: var(--sp-2) 0; padding: var(--sp-2) var(--sp-3); border-left: 3px solid var(--line); color: var(--ink-2); }
+.hlt-legal-md ul { padding-left: 18px; }
+.hlt-legal-md.doc-body { white-space: normal; }
+.hlt-legal-md.doc-body pre { white-space: pre-wrap; }

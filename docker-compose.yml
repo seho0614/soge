@@ -1,0 +1,30 @@
+# =====================================================================
+# DB 만 — 앱은 PC 에서 직접 띄울 때 (README 「빠른 시작」 ②)
+#
+#   docker compose up -d        → localhost:5432  sgb · sgb_ads · sgb_check
+#
+# ★ 20260930 — 앱까지 모두 컨테이너로 띄우는 통합판은 **한 단계 위 폴더**의
+#   docker-compose.yml 입니다 (본체 + 광고 플랫폼 · 검정 컨테이너 포함).
+#   예전 이 파일에 있던 전체 구성은 ENC_KEY · API_BASE 누락과 재기동 시
+#   데이터 삭제 문제가 있어 그쪽으로 옮기고 고쳤습니다.
+# =====================================================================
+services:
+  db:
+    image: postgres:16
+    container_name: sgb-db-only
+    environment:
+      POSTGRES_USER: sgb
+      POSTGRES_PASSWORD: sgb
+      POSTGRES_DB: sgb
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports: ["5432:5432"]
+    volumes:
+      - sgb-pgdata-local:/var/lib/postgresql/data
+      - ../docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sgb -d sgb"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  sgb-pgdata-local:

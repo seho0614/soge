@@ -1,0 +1,73 @@
+/**
+ * 소개뱅크 공통 디자인 토큰 — 「디자인 시트 · 소개뱅크 전체 페이지 공통 디자인 가이드」(2026-10-09) 를 코드로 옮긴 것.
+ *
+ * · 값은 디자인 시트에 적힌 글자 그대로입니다(색 코드 · px · 굵기). 시트에 글자로 없는 값(배지 색 등)은 시트 그림에서 그 자리의 점을 재서 넣고 「잰 값」이라고 적었습니다.
+ * · 이름은 모두 --sgb- 로 시작합니다 — 지금 쓰는 styles/tokens.css(--ink · --accent …)와 겹치지 않습니다. 같이 넣어도 기존 화면은 바뀌지 않습니다.
+ * · 관마다 포인트 색이 다릅니다. 화면의 맨 바깥 요소에 data-sgb-gwan="money | mall | biz | shop | plaza" 를 주면 --sgb-point 가 그 관의 색이 됩니다.
+ */
+:root {
+  /* 01. 브랜드 컬러 (공통) */
+  --sgb-navy: #00245a;
+  --sgb-orange: #ffa03e;
+
+  /* 01. 카테고리별 메인 컬러 */
+  --sgb-money: #ffa03e;   /* 소개장터 */
+  --sgb-mall: #0f766e;    /* 안심소개 */
+  --sgb-biz: #6d28d9;     /* 소개창업 */
+  --sgb-shop: #16a34a;    /* 소개몰 */
+  --sgb-plaza: #fd580a;   /* 소개광장 */
+
+  /* 01. 시스템 컬러 */
+  --sgb-sys: #65779c;     /* 흐린 글자 · 테두리 */
+  --sgb-bg: #f5f7fa;      /* 화면 바탕 */
+
+  /* 화면 그림(소개장터 메인)에서 잰 값 — 시트에는 글자로 없습니다 */
+  --sgb-ink: #000000;         /* 본문 글자 */
+  --sgb-ink-2: #404a66;       /* 설명 글자 */
+  --sgb-ink-3: #838ca5;       /* 흐린 글자 */
+  --sgb-ph: #a4acbd;          /* 입력 칸 안내 글자 */
+  --sgb-line: #dbdbdb;        /* 카드 · 탭 테두리 */
+  --sgb-line-soft: #f0f1f4;   /* 알약 단추 테두리 */
+  --sgb-accent: #f5a008;      /* 강조 주황(제목 강조 · 검색 단추 · 별) */
+  --sgb-action: #fca22a;      /* 실행 단추 주황(제안 하기 · 고른 탭) */
+  --sgb-link: #156afd;        /* 파란 줄 단추(프로필 보기 · 더보기) */
+  --sgb-alert: #f94f51;       /* 건수 강조 */
+  --sgb-cream: #fbf4e8;       /* 옅은 주황 바탕(맨 위 구역 · 고른 줄) */
+  --sgb-tile: #f2f3f4;        /* 분야 칸 바탕 */
+
+  /* 02. 폰트 — 제목: 페이퍼로지 / 본문: 나눔스퀘어 네오 */
+  --sgb-font-title: "Paperlogy", "Nanum Square Neo", Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --sgb-font-body: "Nanum Square Neo", Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --sgb-fs-title-1: 30px;   /* 30px / ExtraBold */
+  --sgb-fs-title-2: 24px;   /* 24px / ExtraBold */
+  --sgb-fs-title-3: 18px;   /* 18px / ExtraBold */
+  --sgb-fw-title: 800;
+  --sgb-fs-body-1: 16px;    /* 16px / Regular */
+  --sgb-fs-body-2: 14px;    /* 14px / Regular · 14px / Bold */
+
+  /* 09. 라운드 및 그림자 */
+  --sgb-r-sm: 7px;    /* 작게 사용 */
+  --sgb-r-md: 11px;   /* 기본 사용 */
+  --sgb-r-lg: 16px;   /* 크게 사용 */
+  --sgb-r-pill: 999px;
+  /* 시트 글자: 「불투명도 14, 가로 / 세로 4PX, 흐림 4PX」. 시트의 견본과 화면 그림을 재면 오른쪽 · 아래로만 번지고 가장 진한 곳이 3% 남짓(#f7f7f7)이며 10px 쯤에서 사라집니다
+     — 검정 14% 로 넣으면 그림보다 훨씬 진해져, 그림에서 잰 모양에 맞췄습니다(방향 4px, 4px 는 시트 그대로). */
+  --sgb-shadow: 4px 4px 8px rgba(0, 0, 0, .04);
+
+  /* 10. 여백 기준 */
+  --sgb-gap-x: 42px;  /* 가로 여백 */
+  --sgb-gap-y: 31px;  /* 세로 여백 */
+
+  /* 06 · 11. 카드 · 배너 */
+  --sgb-card-r: 8px;          /* 상품 카드 모서리 */
+  --sgb-post-r: 7px;          /* 게시글 카드 모서리 */
+  --sgb-card-line: #65779c;   /* 카드 테두리 */
+  --sgb-banner-r: 16px;       /* 배너 모서리 · 이미지 비율 16:9 */
+
+  --sgb-point: var(--sgb-navy);
+}
+[data-sgb-gwan="money"] { --sgb-point: var(--sgb-money); }
+[data-sgb-gwan="mall"]  { --sgb-point: var(--sgb-mall); }
+[data-sgb-gwan="biz"]   { --sgb-point: var(--sgb-biz); }
+[data-sgb-gwan="shop"]  { --sgb-point: var(--sgb-shop); }
+[data-sgb-gwan="plaza"] { --sgb-point: var(--sgb-plaza); }

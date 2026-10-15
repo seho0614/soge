@@ -1,0 +1,51 @@
+{
+  "meta": {"version":"1.0","note":"G-03 알림 정책. 이벤트 코드는 code_labels 가 아니라 여기가 정본"},
+  "events": [
+    {"code":"LISTING_SUBMITTED","name":"등록 접수","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"listings → IN_REVIEW","screen":"SB-MYP-LST-010"},
+    {"code":"LISTING_APPROVED","name":"등록 승인","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"review_items → APPROVED","screen":"SB-MYP-LST-010"},
+    {"code":"LISTING_REJECTED","name":"등록 반려","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"review_items → REJECTED","screen":"SB-HOM-REG-020","payload":["reject_reason_code"]},
+    {"code":"LISTING_RESTRICTED","name":"제한업종 지정으로 노출 중단","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"restricted_industries INSERT","screen":"SB-MYP-LST-010"},
+    {"code":"BADGE_GRANTED","name":"배지 부여","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"listing_badges → GRANTED","screen":"SB-MYP-LST-010"},
+    {"code":"BADGE_REJECTED","name":"배지 반려","actor":"OWNER","channels":["INAPP"],"optout":false,"trigger":"listing_badges → REJECTED","screen":"SB-MYP-LST-010"},
+    {"code":"BADGE_EXPIRING","name":"급구 만료 임박","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"valid_until D-1","screen":"SB-MYP-LST-010"},
+
+    {"code":"INQUIRY_RECEIVED","name":"새 문의","actor":"COUNTERPART","channels":["INAPP","PUSH"],"optout":true,"trigger":"conversations INSERT","screen":"SB-HOM-MCH-010"},
+    {"code":"MESSAGE_RECEIVED","name":"새 메시지","actor":"COUNTERPART","channels":["INAPP","PUSH"],"optout":true,"trigger":"messages INSERT","screen":"SB-HOM-MCH-010"},
+    {"code":"PROPOSAL_RECEIVED","name":"소개 제안 도착","actor":"REQUESTER","channels":["INAPP","PUSH"],"optout":true,"trigger":"request_proposals INSERT","screen":"SB-HOM-REQ-030"},
+
+    {"code":"CONTRACT_ISSUED","name":"계약서 발급","actor":"BOTH","channels":["INAPP","EMAIL"],"optout":false,"trigger":"deal_contracts INSERT","screen":"SB-HOM-DEL-010"},
+    {"code":"CONTRACT_SIGN_REQUIRED","name":"서명 요청","actor":"COUNTERPART","channels":["INAPP","EMAIL","SMS"],"optout":false,"trigger":"단측 서명 완료","screen":"SB-HOM-DEL-010"},
+    {"code":"DEAL_CONFIRMED","name":"성사 확정","actor":"ALL_PARTIES","channels":["INAPP","EMAIL"],"optout":false,"trigger":"deals → CONFIRMED","screen":"SB-MYP-DEA-010"},
+    {"code":"PAYMENT_REPORTED","name":"대금 지급 신고","actor":"COUNTERPART","channels":["INAPP"],"optout":false,"trigger":"deal_payment_records INSERT","screen":"SB-HOM-DEL-020"},
+
+    {"code":"SETTLEMENT_REQUESTED","name":"정산 신청 접수","actor":"PAYEE","channels":["INAPP"],"optout":false,"trigger":"settlements INSERT","screen":"SB-MYP-STL-010"},
+    {"code":"SETTLEMENT_PAID","name":"정산 지급 완료","actor":"PAYEE","channels":["INAPP","EMAIL","SMS"],"optout":false,"trigger":"settlements → PAID","screen":"SB-MYP-STL-020"},
+    {"code":"SETTLEMENT_HELD","name":"분쟁으로 정산 보류","actor":"PAYEE","channels":["INAPP","EMAIL"],"optout":false,"trigger":"disputes INSERT","screen":"SB-MYP-STL-010"},
+    {"code":"SETTLEMENT_BLOCKED_INDIVIDUAL","name":"사업자 전환 필요","actor":"INTRODUCER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"자동 확정 시 개인 소개자","screen":"SB-MYP-BIZ-020"},
+
+    {"code":"SUBSCRIPTION_RENEWED","name":"구독 갱신","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"subscription_invoices → PAID","screen":"SB-MYP-SUB-010"},
+    {"code":"SUBSCRIPTION_PAYMENT_FAILED","name":"결제 실패","actor":"OWNER","channels":["INAPP","EMAIL","SMS"],"optout":false,"trigger":"subscriptions → PAST_DUE","screen":"SB-MYP-SUB-010"},
+    {"code":"PROMO_ENDING","name":"무료 기간 종료 예정","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"promo_ends_at D-14","screen":"SB-MYP-SUB-010","legal":"B-14 자동 유료 전환 고지"},
+    {"code":"QUOTA_EXCEEDED","name":"이용 한도 도달","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"422 VIEW_QUOTA_EXCEEDED","screen":"SB-MYP-SUB-020"},
+
+    {"code":"BUSINESS_APPROVED","name":"사업자 인증 완료","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"businesses.verified_at 설정","screen":"SB-MYP-DSH-010"},
+    {"code":"BUSINESS_REJECTED","name":"사업자 인증 반려","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"review_items(BUSINESS) → REJECTED","screen":"SB-HOM-AUT-030"},
+    {"code":"DISPUTE_OPENED","name":"분쟁 접수","actor":"COUNTERPART","channels":["INAPP","EMAIL"],"optout":false,"trigger":"disputes INSERT","screen":"SB-HOM-ETC-010"},
+    {"code":"DISPUTE_RESOLVED","name":"분쟁 처리 완료","actor":"BOTH","channels":["INAPP","EMAIL"],"optout":false,"trigger":"disputes → RESOLVED","screen":"SB-HOM-ETC-010"},
+    {"code":"INQUIRY_ANSWERED","name":"문의 답변","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":true,"trigger":"inquiries.answered_at","screen":"SB-HOM-CSB-020"},
+    {"code":"NOTICE_PUBLISHED","name":"공지 등록","actor":"ALL","channels":["INAPP"],"optout":true,"trigger":"notices.published_at","screen":"SB-MNY-EVT-010"}
+  ],
+  "admin_alerts": [
+    {"code":"REVIEW_SLA_BREACH","name":"검수 SLA 위반","channels":["INAPP","EMAIL"],"severity":"WARN"},
+    {"code":"K_VALUE_BREACH","name":"k값 경보선 초과","channels":["INAPP","EMAIL"],"severity":"CRITICAL"},
+    {"code":"PROMO_EXPIRY_UNNOTIFIED","name":"프로모션 만료 미고지","channels":["INAPP"],"severity":"WARN"},
+    {"code":"RESTRICTION_ENFORCED","name":"제한업종 지정으로 차단","channels":["INAPP"],"severity":"WARN"},
+    {"code":"ATTRIBUTION_MISSING","name":"귀속 근거 없음","channels":["INAPP"],"severity":"WARN"}
+  ],
+  "rules": {
+    "optout_false_reason": "거래·금전·법정 고지는 수신거부 대상이 아닙니다",
+    "quiet_hours": "SMS·PUSH 는 21:00~08:00 발송하지 않습니다. INAPP·EMAIL 은 제한 없음",
+    "dedup": "같은 event_code + 같은 대상은 10분 내 1회만",
+    "idempotency": "notification_deliveries.idempotency_key 로 재발송 방지"
+  }
+}

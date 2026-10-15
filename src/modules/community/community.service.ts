@@ -1,0 +1,280 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { DatabaseService } from '../../db/database.service';
+import { RequestCtx } from '../../core/request-context';
+import { NotFound, PolicyViolation } from '../../core/errors';
+
+/**
+ * 소개광장.
+ *
+ * ── 막는 것은 여기가 아니라 DB 입니다 ──────────────────────────
+ * 금칙어 · 링크 · 도배 · 첫 글 검수 · 후기 자격은 전부 트리거가
+ * 봅니다(C810). **여기서 막으면 API 를 우회하는 경로가 생깁니다** —
+ * 배치나 다른 모듈이 직접 INSERT 하면 그냥 통과합니다.
+ */
+const BOARDS = ['REVIEW', 'TRADE', 'QNA', 'NOTICE'];
+
+/**
+ * 누구나 보는 화면에 나가는 작성자 표기 (v10.23 · G-146).
+ *
+ * 소개광장은 로그인하지 않아도 봅니다. 그래서 **이름 전체를 내보내지 않습니다** —
+ * 첫 글자만 남깁니다(김OO). 매물 후기 조회(listing.service)와 같은 생각입니다.
+ *   · 운영자(ADMIN · SUPER)가 쓴 글 · 댓글은 「운영자」
+ *   · 탈퇴한 사람은 「(탈퇴)」
+ * 운영 검수 큐(queue)는 누구 글인지 알아야 하므로 이름을 그대로 둡니다.
+ */
+export function publicAuthor(name: string | null | undefined, staff?: boolean): string {
+  if (staff) return '운영자';
+  const first = [...(name ?? '').trim()][0];
+  return first ? `${first}OO` : '(탈퇴)';
+}
+
+/** 조회 줄의 `_name` · `_staff` 를 `author` 한 칸으로 바꿉니다 — 이름 전체가 응답에 실리지 않게. */
+function withAuthor<T extends { _name?: string | null; _staff?: boolean }>(r: T) {
+  const { _name, _staff, ...rest } = r;
+  return { ...rest, author: publicAuthor(_name, _staff) };
+}
+
+/* 작성자 표기에 쓰는 두 칸(_name · _staff)은 조회마다 **글자 그대로** 적습니다 — accounts a 를 LEFT JOIN 한 조회 4곳.
+ * 상수로 빼서 끼워 넣으면(템플릿 글 안의 달러-중괄호) 통합 검정의 「SQL 대조」(scripts/check-sql.js)가 그 조회를 건너뜁니다
+ * (조립한 SQL 은 조각을 알 수 없어서). 열 · 표 이름이 바뀌었을 때 검정이 잡도록 고정 글로 둡니다(qa/srv_cmu.py E-4).
+ * 이 주석에는 역따옴표를 쓰지 않습니다 — 그 검정이 역따옴표 쌍으로 SQL 을 찾습니다. */
+
+@Injectable()
+export class CommunityService {
+  constructor(private readonly db: DatabaseService) {}
+  private get me() { return RequestCtx.actorId(); }
+
+  async posts(board?: string, limit?: number) {
+    const n = Math.min(Math.max(Number(limit) || 20, 1), 50);
+    /* ★ 검수 대기 글은 **작성자 본인에게만** 보입니다.
+     *   안 보이면 "글이 사라졌다" 고 합니다. */
+    const rows = await this.db.query(
+      `SELECT p.id, p.board, p.title, p.state, p.views, p.comment_count AS "commentCount",
+              p.is_pinned AS "isPinned", p.created_at AS "createdAt",
+              a.name AS _name,
+              EXISTS (SELECT 1 FROM account_roles ar
+                       WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (p.state = 'PENDING') AS "pendingMine"
+         FROM posts p
+         LEFT JOIN accounts a ON a.id = p.author_id
+        WHERE ($1::text IS NULL OR p.board = $1)
+          AND (p.state = 'PUBLISHED'
+            OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
+        ORDER BY p.is_pinned DESC, p.created_at DESC
+        LIMIT $3`, [board ?? null, this.me ?? null, n]);
+    return rows.map(withAuthor);
+  }
+
+  /**
+   * 쪽 번호가 있는 목록 + 게시글 검색 (v10.23).
+   *
+   * `posts()` 는 배열을 그대로 돌려주는 옛 길이라(메인 · 다른 화면이 씁니다) 모양을 바꾸지 않고,
+   * 전체 건수가 필요한 소개광장 목록은 이 길을 씁니다.
+   *   · 보이는 범위는 posts() 와 같습니다 — 공개 글 + **내** 검수 대기 글.
+   *   · 검색은 fn_search_match(제목, 본문, 검색어) — 낱말이 **모두** 들어 있는 글(두 글자 이상인 낱말만 봄).
+   *   · 순서는 고정 글 먼저, 그 다음 최신순. 같은 시각이면 id 로 — 쪽 사이에 글이 겹치거나 빠지지 않게.
+   */
+  async board(q: { board?: unknown; q?: unknown; page?: unknown; size?: unknown }) {
+    /* 같은 이름을 두 번 보내면(?q=a&q=b) 값이 배열로 옵니다 — 첫 값만 씁니다(문자열 함수가 터지지 않게). */
+    const one = (v: unknown) => String((Array.isArray(v) ? v[0] : v) ?? '');
+    const board = one(q.board).trim() || null;
+    if (board && !BOARDS.includes(board)) throw new BadRequestException('없는 게시판입니다.');
+    const kw = one(q.q).trim().replace(/\s+/g, ' ');
+    if ([...kw].length > 50) throw new BadRequestException('검색어는 50자까지 넣으실 수 있습니다.');
+    const int = (v: unknown) => (/^\d{1,9}$/.test(one(v).trim()) ? Number(one(v).trim()) : NaN);
+    const pageIn = int(q.page), sizeIn = int(q.size);
+    const page = pageIn >= 1 ? Math.min(pageIn, 100000) : 1;
+    const size = sizeIn >= 1 ? Math.min(sizeIn, 50) : 10;
+
+    /* 건수 조회와 목록 조회의 조건은 **같아야** 합니다(다르면 쪽 수와 줄 수가 어긋납니다) — 두 곳을 함께 고치십시오. */
+    const args = [board, this.me ?? null, kw];
+    const [c] = await this.db.query(
+      `SELECT count(*)::int AS n
+         FROM posts p
+        WHERE ($1::text IS NULL OR p.board = $1)
+          AND (p.state = 'PUBLISHED'
+            OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
+          AND fn_search_match(p.title, p.body, $3)`, args);
+    const total = c?.n ?? 0;
+    const rows = await this.db.query(
+      `SELECT p.id, p.board, p.title, p.state, p.views, p.comment_count AS "commentCount",
+              p.is_pinned AS "isPinned", p.created_at AS "createdAt",
+              a.name AS _name,
+              EXISTS (SELECT 1 FROM account_roles ar
+                       WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (p.state = 'PENDING') AS "pendingMine"
+         FROM posts p
+         LEFT JOIN accounts a ON a.id = p.author_id
+        WHERE ($1::text IS NULL OR p.board = $1)
+          AND (p.state = 'PUBLISHED'
+            OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
+          AND fn_search_match(p.title, p.body, $3)
+        ORDER BY p.is_pinned DESC, p.created_at DESC, p.id
+        LIMIT $4 OFFSET $5`, [...args, size, (page - 1) * size]);
+    return { items: rows.map(withAuthor), total, page, size, pages: Math.ceil(total / size) };
+  }
+
+  async post(id: string) {
+    const [p] = await this.db.query(
+      `SELECT p.id, p.board, p.title, p.body, p.state, p.views,
+              p.classified_by AS "classifiedBy", p.classify_terms AS "classifyTerms",
+              p.hidden_reason AS "hiddenReason", p.created_at AS "createdAt",
+              a.name AS _name,
+              EXISTS (SELECT 1 FROM account_roles ar
+                       WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (p.author_id = $2::uuid) AS mine
+         FROM posts p
+         LEFT JOIN accounts a ON a.id = p.author_id
+        WHERE p.id = $1`, [id, this.me ?? null]);
+    if (!p) return { ok: false, note: '없는 글입니다.' };
+    const { _name, _staff, ...post } = p;       // 이름 전체는 여기서 버립니다(G-146)
+    post.author = publicAuthor(_name, _staff);
+
+    /* v10.26 (G-173) — 지운 글은 자리만 남깁니다. 제목 · 본문을 내보내지 않습니다(쓴 사람에게도 — 지운 것을 다시 내주지 않음).
+     * 전에는 가려진 글 · 검수 중인 글만 가려서, 지운 글은 주소를 알면 누구에게나 제목 · 본문이 그대로 나갔습니다
+     * (검수 중이라 남에게 안 보이던 글도 지우는 순간 공개됨). 달린 댓글은 남깁니다 — remove() 의 「달린 댓글은 남습니다」 그대로. 조회 수는 올리지 않습니다. */
+    if (p.state === 'DELETED') {
+      return { ok: true, id: p.id, board: p.board, deleted: true,
+               note: '작성자가 지운 글입니다.', comments: await this.commentsOf(id) };
+    }
+
+    /* 가려진 글은 자리를 남깁니다 — 통째로 사라지면 다시 씁니다. */
+    if (p.state === 'HIDDEN' && !p.mine) {
+      return { ok: true, id: p.id, board: p.board, hidden: true,
+               note: '신고가 들어와 확인 중입니다.' };
+    }
+    if (p.state === 'PENDING' && !p.mine) {
+      return { ok: true, id: p.id, board: p.board, pending: true,
+               note: '검수 중입니다.' };
+    }
+
+    /* v10.27 (G-201) — 글쓴이 본인이 열 때는 조회 수를 올리지 않습니다(자기 글을 고치러 여러 번 열면 조회 수가 부풀었음). */
+    if (!p.mine) {
+      await this.db.query(`UPDATE posts SET views = views + 1 WHERE id = $1`, [id]);
+    }
+
+    return { ok: true, ...post, comments: await this.commentsOf(id) };
+  }
+
+  /** 글에 달린 댓글 — 작성자 이름은 첫 글자만(G-146). 지운 댓글은 뺍니다 */
+  private async commentsOf(id: string) {
+    const comments = await this.db.query(
+      `SELECT c.id, c.parent_id AS "parentId", c.body, c.created_at AS "createdAt",
+              a.name AS _name,
+              EXISTS (SELECT 1 FROM account_roles ar
+                       WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (c.state = 'HIDDEN') AS hidden
+         FROM post_comments c
+         LEFT JOIN accounts a ON a.id = c.author_id
+        WHERE c.post_id = $1 AND c.state <> 'DELETED'
+        ORDER BY coalesce(c.parent_id, c.id), c.created_at`, [id]);
+    return comments.map(withAuthor);
+  }
+
+  async classify(title: string, body?: string) {
+    const [r] = await this.db.query(
+      `SELECT * FROM fn_classify_board_auto($1, $2)`, [title, body ?? '']);
+    return {
+      board: r?.board ?? null,
+      score: r?.score ?? 0,
+      matched: r?.matched ?? [],
+      confident: r?.confident ?? false,
+      note: r?.confident
+        ? null
+        : '어느 게시판인지 뚜렷하지 않습니다. 직접 골라 주십시오.',
+    };
+  }
+
+  async create(dto: {
+    board: string; title: string; body: string;
+    dealId?: string; classifiedBy?: string;
+  }) {
+    const [r] = await this.db.query(
+      `INSERT INTO posts (board, author_id, title, body, deal_id, classified_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, board, state`,
+      [dto.board, this.me, dto.title, dto.body,
+       dto.dealId ?? null, dto.classifiedBy ?? 'USER']);
+    return {
+      ...r,
+      note: r.state === 'PENDING'
+        ? '첫 글이라 확인 후 올라갑니다. 보통 하루 안에 끝납니다.'
+        : '올라갔습니다.',
+    };
+  }
+
+  async update(id: string, dto: { title?: string; body?: string; board?: string }) {
+    const [r] = await this.db.query(
+      `UPDATE posts SET
+          title = coalesce($3, title),
+          body  = coalesce($4, body),
+          board = coalesce($5, board),
+          updated_at = now()
+        WHERE id = $1 AND author_id = $2
+      RETURNING id, board, title`,
+      [id, this.me, dto.title ?? null, dto.body ?? null, dto.board ?? null]);
+    if (!r) return { ok: false, note: '내 글이 아니거나 없는 글입니다.' };
+    return { ok: true, ...r };
+  }
+
+  async remove(id: string) {
+    /* ★ 실제로 지우지 않습니다. 댓글이 달렸으면 **대화가 끊깁니다.** */
+    const [r] = await this.db.query(
+      `UPDATE posts SET state = 'DELETED', hidden_at = now()
+        WHERE id = $1 AND author_id = $2 RETURNING id`, [id, this.me]);
+    if (!r) return { ok: false, note: '내 글이 아니거나 없는 글입니다.' };
+    return { ok: true, note: '지웠습니다. 달린 댓글은 남습니다.' };
+  }
+
+  async comment(postId: string, dto: { body: string; parentId?: string }) {
+    const [r] = await this.db.query(
+      `INSERT INTO post_comments (post_id, parent_id, author_id, body)
+       VALUES ($1, $2, $3, $4) RETURNING id, created_at AS "createdAt"`,
+      [postId, dto.parentId ?? null, this.me, dto.body]);
+    return { ok: true, ...r };
+  }
+
+  async queue() {
+    const pending = await this.db.query(
+      `SELECT p.id, p.board, p.title, p.created_at AS "createdAt",
+              coalesce(a.name,'(탈퇴)') AS author,
+              (current_date - p.created_at::date) AS "daysWaiting"
+         FROM posts p LEFT JOIN accounts a ON a.id = p.author_id
+        WHERE p.state = 'PENDING'
+        ORDER BY p.created_at`);
+    const reported = await this.db.query(
+      `SELECT id, board, title, report_count AS "reportCount"
+         FROM v_post_reported ORDER BY report_count DESC`);
+    const [late] = await this.db.query(
+      `SELECT count(*)::int AS n FROM v_post_pending_long`);
+    return {
+      pending, reported,
+      lateCount: late?.n ?? 0,
+      note: (late?.n ?? 0) > 0
+        ? '2일 넘게 밀린 글이 있습니다 — 새 회원이 "글이 안 올라간다" 고 합니다.'
+        : null,
+    };
+  }
+
+  async approve(id: string) {
+    const [r] = await this.db.query(
+      `UPDATE posts SET state = 'PUBLISHED', updated_at = now()
+        WHERE id = $1 AND state = 'PENDING' RETURNING id`, [id]);
+    if (!r) return { ok: false, note: '검수 대기 상태가 아닙니다.' };
+    return { ok: true, note: '올렸습니다.' };
+  }
+
+  async hide(id: string, reason: string) {
+    /* ★ 사유를 안 적으면 작성자가 **같은 글을 다시 씁니다.** */
+    /* v10.27 (G-201) — 사유가 비거나 글이 없을 때 201 에 ok:false 로 답했습니다(성공 코드로 실패를 알림 —
+     * 호출하는 쪽이 상태 코드만 보면 가려진 줄 압니다). 422 REASON_REQUIRED · 404 로 답합니다. */
+    if (typeof reason !== 'string' || !reason.trim()) {
+      throw new PolicyViolation('REASON_REQUIRED', '사유를 적으십시오. 안 적으면 같은 글이 다시 올라옵니다.');
+    }
+    const [r] = await this.db.query(
+      `UPDATE posts SET state = 'HIDDEN', hidden_at = now(), hidden_reason = $2
+        WHERE id = $1 RETURNING id`, [id, reason.trim()]);
+    if (!r) throw new NotFound('없는 글입니다.');
+    return { ok: true, note: '감췄습니다. 작성자에게 사유가 보입니다.' };
+  }
+}

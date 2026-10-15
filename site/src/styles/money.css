@@ -1,0 +1,418 @@
+/**
+ * 소개장터 메인(/money) — 2026-10-09 제시 디자인 · v10.29.
+ *   근거: docs/design/money_main_20261009.webp (3000×4850 = 화면 1500px 의 2배) · docs/design/design_sheet_20261009.png (공통 디자인 시트)
+ *
+ * · 본문의 모든 이름이 `mny-` 로 시작하고 `.mny` 아래에서만 먹습니다 — 다른 화면의 스타일과 섞이지 않습니다.
+ * · 머리줄 · 바닥줄은 두 관 전용 틀(components/b2 · styles/b2.css)을 같이 씁니다. 소개장터 메인에서만 색 · 글꼴 · 치수를
+ *   그림대로 바꿉니다(`[data-b2-tone=money]` — 머리줄 / `.main-mny ~ .b2-ft` — 바닥줄). 소개광장 · 소개몰의 머리줄은 그대로입니다.
+ * · 색 · 둥글기 · 그림자는 styles/sgb-tokens.css(디자인 시트)에서 옵니다. 치수 · 글꼴 크기는 그림에서 잰 값입니다(qa/measure_mny.py 가 다시 견줍니다).
+ * · 시안(spec/proto.html)은 이 파일을 글자 그대로 넣어 씁니다 — 모양이 한 곳에서 정해집니다.
+ */
+.main.main-b2.main-mny { background: #f6f8fa; }
+.mny {
+  background: #f6f8fa; color: var(--sgb-ink);
+  font-family: var(--sgb-font-body); font-size: 16px; font-weight: 700; line-height: 1.4; letter-spacing: 0; word-break: keep-all;
+  --mny-shadow: var(--sgb-shadow);   /* 그림에서 잰 그림자 — 오른쪽 · 아래로 4px, 흐림 8px, 4% (디자인 시트 09) */
+}
+/* 기본값 지우기 — :where() 라 우선순위가 0 입니다(아래의 mny- 규칙이 늘 이깁니다) */
+:where(.mny) *, :where(.mny) *::before, :where(.mny) *::after { box-sizing: border-box; }
+:where(.mny a) { color: inherit; text-decoration: none; }
+:where(.mny img) { display: block; max-width: 100%; }
+:where(.mny button) { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; letter-spacing: inherit; }
+:where(.mny ul) { list-style: none; margin: 0; padding: 0; }
+:where(.mny h1, .mny h2, .mny h3, .mny p, .mny hr) { margin: 0; }
+.mny :focus-visible { outline: 3px solid #2f6bff; outline-offset: 2px; border-radius: 6px; }
+.mny-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mny-wrap { max-width: 1500px; margin: 0 auto; padding: 0 44px 14.5px; }
+.mny-chev { display: inline-block; width: 9px; height: 9px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); flex: none; }
+
+/* ── 1. 머리줄 (높이 75) — 두 관 전용 머리줄을 그림의 색 · 글꼴 · 치수로 ── */
+[data-b2-tone=money] .b2-hd { --b2-orange: #ffa03e; font-family: var(--sgb-font-body); }
+[data-b2-tone=money] .b2-hd .b2-in { max-width: 1500px; padding: 0 32px 0 85px; gap: 0; }
+[data-b2-tone=money] .b2-nav { gap: 28.5px; margin-left: 53px; }
+[data-b2-tone=money] .b2-nav a { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; padding: 11.5px 0 10.5px; color: #000; }
+[data-b2-tone=money] .b2-nav a[aria-current=page] { color: #000; }
+[data-b2-tone=money] .b2-nav a::after { left: 3px; right: 3.5px; bottom: 7px; height: 1.5px; }
+[data-b2-tone=money] .b2-hdr { gap: 7.5px; }
+[data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join,
+[data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { height: 49px; border-radius: 25px; font-size: 19px; font-weight: 800; font-family: inherit; }
+[data-b2-tone=money] .b2-find { width: 49px; }
+[data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { width: 112px; padding: 0 0 0 3px; gap: 7px; justify-content: center; }
+[data-b2-tone=money] .b2-lang > summary svg, [data-b2-tone=money] .b2-lngb svg { width: 37px; height: 37px; stroke-width: 1.1; color: var(--sgb-ink-2); margin: -9px -10px -6px -9px; flex: none; }
+[data-b2-tone=money] .b2-login { min-width: 112.5px; padding: 0 18px; }
+[data-b2-tone=money] .b2-join { min-width: 153.5px; height: 48px; padding: 0 18px; background: var(--sgb-orange); }
+[data-b2-tone=money] .b2-cart { display: none; }
+.b2-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 46px; margin-left: 4px; color: var(--sgb-navy); flex: none; text-decoration: none; }
+.b2-bell img, .b2-bell svg { display: block; }
+.b2-belln { position: absolute; right: 0; top: 2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #ff1022; color: #fff; font-size: 11.5px; font-weight: 800; line-height: 17px; text-align: center; box-sizing: border-box; }
+
+/* ── 2. 맨 위 구역 (높이 404.5 · 바탕 #fbf4e8) ── */
+.mny-hero { background: var(--sgb-cream); }
+.mny-hero-in { max-width: 1500px; margin: 0 auto; padding: 31px 89.5px 31px 88.5px; display: flex; justify-content: space-between; gap: 40px; }
+.mny-hero-l { flex: 0 1 728.5px; min-width: 0; padding-top: 9.5px; }
+.mny-h1 { font-family: var(--sgb-font-title); font-size: 48px; font-weight: 700; line-height: 57.5px; color: var(--sgb-navy); letter-spacing: 0; }
+.mny-h1 em { font-style: normal; color: var(--sgb-accent); }
+.mny-lead { margin-top: 2px; font-size: 20.85px; font-weight: 700; line-height: 29px; color: #09162c; }
+.mny-search { margin-top: 30px; height: 60px; border-radius: 30px; border: 1px solid #e9edf1; background: #fff; display: flex; align-items: center; padding: 0 8px 0 17px; }
+.mny-search img { width: 26px; height: 27.5px; flex: none; }
+.mny-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; margin-left: 12.5px; font: inherit; font-size: 16.7px; font-weight: 400; color: var(--sgb-ink); }
+.mny-search input::placeholder { color: var(--sgb-ph); opacity: 1; }
+.mny-search:focus-within { border-color: var(--sgb-accent); }
+.mny-search button { width: 49px; height: 49px; border-radius: 50%; background: var(--sgb-accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.mny-kw { margin-top: 19.5px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14.5px; }
+.mny-kw-t { display: inline-flex; align-items: center; gap: 9.5px; font-size: 15.7px; font-weight: 800; margin-right: 3px; }
+.mny-kw-t img { width: 14.5px; height: 18px; }
+.mny-chip { --pad: 15px; height: 36px; padding: 0 var(--pad);      /* 그림은 칩마다 안쪽 여백이 조금씩 달라(11.5 ~ 17.5px) 견본 칩에는 칩마다 --pad 를 적어 둡니다. 기본은 15px */
+  border-radius: 18px; border: 1px solid var(--sgb-line-soft); background: #fff; font-size: 14.5px; font-weight: 700; display: inline-flex; align-items: center; white-space: nowrap; }
+.mny-chip:hover { border-color: var(--sgb-accent); }
+.mny-ad { position: relative; flex: none; width: 520.5px; align-self: flex-start; border-radius: 16px; overflow: hidden; display: block; }
+.mny-ad img { width: 520.5px; height: 342.5px; }
+.mny-ad .is-prev, .mny-ad .is-next { position: absolute; bottom: 28px; width: 34px; height: 34px; border-radius: 50%; }
+.mny-ad .is-prev { right: 76px; } .mny-ad .is-next { right: 33px; }
+
+/* ── 3. 바로가기 3장 ── */
+.mny-quick { margin-top: 31px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14.5px; }
+.mny-qc { height: 105.5px; border-radius: 17px; border: 1px solid var(--sgb-line); background: #fff; box-shadow: var(--mny-shadow); display: flex; align-items: center; padding: 0 53px 0 0; position: relative; }
+.mny-qc:nth-child(1) { padding-right: 44px; }
+.mny-qc:hover { border-color: var(--sgb-action); }
+.mny-qc-i { width: 122px; flex: none; display: flex; justify-content: center; align-items: center; margin-left: 11.5px; padding-bottom: 4px; }
+.mny-qc:nth-child(3) .mny-qc-i { margin-left: 9px; }
+.mny-qc:nth-child(1) .mny-qc-i { width: 132px; margin-left: 11.75px; margin-right: -1.25px; }
+.mny-qc > div { padding-bottom: 3px; }
+.mny-qc b { display: block; font-family: var(--sgb-font-title); font-size: 25px; font-weight: 700; line-height: 30px; color: var(--sgb-navy); }
+.mny-qc span { display: block; margin-top: 11px; font-size: 16.7px; font-weight: 700; line-height: 22px; color: var(--sgb-ink-2); }
+.mny-qc .mny-chev { margin-left: auto; margin-bottom: 7px; width: 11px; height: 11px; border-width: 2px 2px 0 0; color: var(--sgb-navy); }
+
+/* ── 4. 분야 고르기 ── */
+.mny-cat { margin-top: 30px; border-radius: 17px; border: 1px solid var(--sgb-line); background: #fff; box-shadow: var(--mny-shadow); padding: 14px 38px 22.5px 38.5px; }
+.mny-cat-h { display: flex; align-items: center; gap: 28px; padding-left: 5px; }
+.mny-cat-h h2 { font-family: var(--sgb-font-title); font-size: 36.5px; font-weight: 700; line-height: 50px; color: var(--sgb-navy); white-space: nowrap; }
+.mny-cat-h p { font-size: 18.75px; font-weight: 700; color: var(--sgb-ink-3); padding-bottom: 3px; }
+.mny-more { margin-left: auto; display: inline-flex; align-items: center; gap: 1.5px; padding-right: 2.5px; font-size: 19px; font-weight: 700; color: var(--sgb-ink-3); white-space: nowrap; align-self: center; }
+.mny-more .mny-chev { color: var(--sgb-ink-2); }
+.mny-more:hover { color: var(--sgb-navy); }
+.mny-tiles { margin-top: 6.5px; display: grid; grid-template-columns: repeat(14, 1fr); gap: 15.3px; }
+.mny-tile { height: 81px; border-radius: 6px; background: var(--sgb-tile); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 9px; font-size: 11px; font-weight: 700; line-height: 14px; white-space: nowrap; letter-spacing: -.02em; }
+.mny-tile i { height: 47.5px; padding-top: 7px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+.mny-tile:hover { box-shadow: inset 0 0 0 1.5px var(--sgb-action); }
+.mny-tile.is-all, .mny-tile[aria-current=true]:first-child { background: var(--sgb-cream); }   /* 「전체」 칸의 옅은 주황 바탕은 그림(cat_all)에 든 것 — 늘 그대로 */
+.mny-tile[aria-current=true] { box-shadow: 0 0 0 1.5px var(--sgb-action); }                    /* 지금 고른 칸 — 주황 테두리(다른 칸의 아이콘에는 회색 바탕이 들어 있어 바탕은 바꾸지 않습니다) */
+.mny-sl a[aria-current=true] { color: var(--sgb-navy); font-weight: 700; }
+.mny-sl a[aria-current=true]::before { background: var(--sgb-action); }
+
+/* ── 5. 두 칸 — 왼쪽 분류 목록(221.5) + 오른쪽 구역(1154) ── */
+.mny-cols { margin-top: 32px; display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 32px 33px; align-items: stretch; margin-right: -1px; }
+.mny-side { border-radius: 21px 21px 20px 20px; background: #fff; border: 1px solid var(--sgb-line); border-top: 0; overflow: hidden; box-shadow: var(--mny-shadow); }
+.mny-side-h { height: 41.5px; background: var(--sgb-navy); color: #fff; font-family: var(--sgb-font-title); font-size: 25.5px; font-weight: 500; display: flex; align-items: center; justify-content: center; margin: 0 -1px; }
+.mny-side-b { padding: 12.5px 0 24px; }
+.mny-sg { display: grid; grid-template-columns: 33px 1fr auto; align-items: center; width: 100%; height: 39px; padding: 0 14.5px 0 16.5px; font-size: 21px; font-weight: 800; color: var(--sgb-navy); text-align: left; }
+.mny-sg img { justify-self: start; }
+.mny-sg .mny-chev { margin-left: auto; width: 10px; height: 10px; color: var(--sgb-ink-2); margin-right: 5px; }
+.mny-sg[aria-expanded=true] .mny-chev { transform: rotate(-45deg); margin-top: 6px; margin-right: 2px; }
+.mny-sg.is-on { background: var(--sgb-cream); }
+.mny-sg.is-on .mny-chev { transform: rotate(45deg); margin-top: 0; margin-right: 5px; }
+.mny-sg:hover { background: #fdf9f1; }
+.mny-sl { margin-top: -1px; padding: 0 0 14.5px 37.5px; }
+.mny-sg.is-on + .mny-sl { padding-top: 11px; padding-bottom: 8px; }
+.mny-sl[hidden] { display: none; }
+.mny-sl a { display: flex; align-items: center; height: 28.3px; font-family: var(--sgb-font-title); font-size: 18px; font-weight: 500; color: var(--sgb-ink-3); white-space: nowrap; }
+.mny-sl a::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sgb-ink-3); margin-right: 12px; flex: none; }
+.mny-sl a:hover { color: var(--sgb-navy); }
+.mny-sg + .mny-sg { margin-top: 12px; }
+.mny-sl + .mny-sg.is-plain { margin-top: 0; }
+.mny-side hr { border: 0; border-top: 1.5px solid var(--sgb-line); margin: 11.5px 16px 21px 16.5px; }
+.mny-main { min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+
+/* 구역 상자 */
+.mny-panel { border-radius: 18px; background: #fff; box-shadow: var(--mny-shadow); padding: 22px 40px 27.5px 30px; }
+.mny-ph { display: flex; align-items: center; height: 31px; }
+.mny-ph img { width: 33px; height: 33px; flex: none; margin: 0 10px 0 -1px; }
+.mny-ph h2 { font-family: var(--sgb-font-title); font-size: 31.3px; font-weight: 700; line-height: 31px; padding-bottom: 6px; color: var(--sgb-navy); white-space: nowrap; }
+
+/* ── 6. 서비스 업체 추천 · AI 추천 맞춤 공급자 — 카드 4장 ── */
+.mny-cards { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19.5px; margin-right: -7.5px; }
+.mny-card { border-radius: 8px; border: 1px solid var(--sgb-line); background: #fff; overflow: hidden; display: flex; flex-direction: column; box-shadow: 3px 3px 6px rgba(0, 0, 0, .03); }
+.mny-card > img { width: 100%; height: 104px; object-fit: cover; }
+.mny-card-b { padding: 16px 19px 18px 19.5px; display: flex; flex-direction: column; flex: 1; }
+.mny-card h3 { font-size: 19px; font-weight: 800; line-height: 24px; color: var(--sgb-ink); }
+.mny-card p { margin-top: 5px; font-size: 16.5px; font-weight: 700; line-height: 23px; color: var(--sgb-ink-2); }
+.mny-meta { margin-top: 9px; display: flex; flex-direction: column; gap: 9px; font-size: 16.5px; line-height: 19px; }
+.mny-meta span { display: flex; align-items: center; white-space: nowrap; }
+.mny-meta .is-star img { width: 21px; height: 20px; margin: 0 7.5px 0 -1px; }
+.mny-meta .is-pin img { width: 15.5px; height: 19px; margin: 0 10.5px 0 2px; }
+.mny-meta small { font-size: 16.5px; font-weight: 700; color: var(--sgb-ink-3); margin-left: 12px; }
+.mny-meta .is-pin { font-size: 17px; }
+.mny-btns { margin-top: 17.5px; display: flex; gap: 5.5px; }
+.mny-btn { flex: 1; max-width: 106.5px; height: 40.5px; border-radius: 5px; font-size: 17px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+.mny-btn.is-line { border: 1px solid var(--sgb-link); color: var(--sgb-link); background: #fff; }
+.mny-btn.is-line:hover { background: #f2f7ff; }
+.mny-btn.is-fill { background: var(--sgb-action); color: #fff; }
+.mny-btn.is-fill:hover { filter: brightness(.97); }
+/* AI 추천 — 사진이 낮고 별점 · 위치가 한 줄 */
+.mny-cards.is-ai { margin-top: 13px; }
+.mny-cards.is-ai .mny-card > img { height: 53.5px; }
+.mny-cards.is-ai .mny-card-b { padding: 10px 12px 9.5px 13.5px; }
+.mny-cards.is-ai .mny-card p { margin-top: 4px; }
+.mny-panel.is-aip { padding-bottom: 18px; }
+.mny-cards.is-ai .mny-meta { flex-direction: row; gap: 0; margin-top: 8px; }
+.mny-cards.is-ai .mny-meta span { flex: none; }
+.mny-cards.is-ai .mny-meta .is-star { min-width: 110.5px; }
+.mny-cards.is-ai .mny-meta .is-pin { margin-left: 13px; }
+.mny-cards.is-ai .mny-meta .is-pin img { margin: 0 7px 0 0; }
+.mny-cards.is-ai .mny-btns { margin-top: 11px; }
+
+/* ── 7. 지금 올라온 소개 요청 ── */
+.mny-tabs { margin-top: 12.5px; display: flex; flex-wrap: wrap; gap: 6px; }
+.mny-tab { width: 106.5px; height: 40.5px; border-radius: 5px; border: 1px solid var(--sgb-line); background: #fff; font-size: 16.6px; font-weight: 700; color: var(--sgb-ink-3); white-space: nowrap; }
+.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: #fff; }
+.mny-tab:hover { border-color: var(--sgb-action); }
+.mny-reqs { margin-top: 8px; display: flex; flex-direction: column; gap: 9.2px; margin-bottom: -6px; }
+.mny-req { display: grid; grid-template-columns: 97.5px minmax(0, 1fr) 147px 141.5px 95.5px 106.5px; align-items: center; height: 49px; }
+.mny-req[hidden] { display: none; }
+.mny-req > img { width: 97.5px; height: 49px; border-radius: 5px; object-fit: cover; }
+.mny-req-m { padding-left: 23.5px; min-width: 0; }
+.mny-req-m a { display: block; font-size: 17.7px; font-weight: 800; line-height: 22px; color: var(--sgb-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mny-req-m a:hover { color: var(--sgb-navy); text-decoration: underline; }
+.mny-req-m div { margin-top: 3.5px; display: grid; grid-template-columns: 105.5px 21.5px auto; justify-content: start; align-items: center; font-size: 12.6px; line-height: 19px; white-space: nowrap; }
+.mny-tag { justify-self: start; min-width: 78px; height: 19px; padding: 0 8px; border-radius: 9.5px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.mny-tag.is-blue { background: #ebf3ff; color: #1362f4; }
+.mny-tag.is-orange { background: #fef3e0; color: #f78013; }
+.mny-tag.is-purple { background: #f1eefe; color: #693edd; }
+.mny-req-m div img { width: 15px; height: 18px; margin-left: -1px; }      /* 요청 줄의 작은 위치 표시(그림에서 따로 자른 것 · 30×36 의 절반) */
+.mny-req-c { font-size: 13.5px; font-weight: 700; white-space: nowrap; padding-bottom: 5px; }
+.mny-req-c.is-price { color: var(--sgb-navy); }
+.mny-req-c b { font-size: 15.6px; font-weight: 700; color: var(--sgb-alert); margin-left: 10.5px; }
+.mny-btn.is-ghost { max-width: none; width: 106.5px; height: 50px; border-radius: 6px; border: 1px solid var(--sgb-action); color: var(--sgb-action); background: #fff; }
+.mny-btn.is-ghost:hover { background: #fff8ee; }
+.mny-empty { padding: 26px 0 20px; text-align: center; color: var(--sgb-ink-3); font-size: 15px; }
+
+/* ── 8. 띠 광고 ── */
+.mny-band { display: block; margin-top: 30px; border-radius: 14px; overflow: hidden; margin-right: -1.5px; }
+.mny-band img { width: 100%; height: auto; }
+
+/* ── 9. 최근 실제 연결 사례 + 공급자 등록 ── */
+.mny-bottom { margin-top: 31.5px; display: grid; grid-template-columns: minmax(0, 909px) minmax(0, 1fr); gap: 40px; align-items: center; }
+.mny-cases { border-radius: 18px; background: #fff; box-shadow: var(--mny-shadow); padding: 14px 17px 14px 17.5px; }
+.mny-cases-h { display: flex; align-items: center; height: 30px; }
+.mny-cases-h img { width: 26.5px; height: 26.5px; margin-right: 7px; }
+.mny-cases-h h2 { font-family: var(--sgb-font-title); font-size: 24.3px; font-weight: 700; line-height: 30px; padding-bottom: 3px; color: var(--sgb-navy); }
+.mny-case-l { margin-top: 9.5px; display: grid; grid-template-columns: 296px 295.5px minmax(0, 1fr); gap: 0; }
+.mny-case { display: flex; gap: 12.5px; min-width: 0; }
+.mny-case > img { width: 86px; height: 109.5px; border-radius: 6px; object-fit: cover; flex: none; }
+.mny-case div { min-width: 0; padding-top: 2px; }
+.mny-case b { display: block; font-size: 19px; font-weight: 800; line-height: 24px; white-space: nowrap; }
+.mny-case p { margin-top: 5px; font-size: 16.5px; font-weight: 700; line-height: 21px; color: var(--sgb-ink-2); white-space: nowrap; }
+.mny-case span { margin-top: 5px; display: flex; align-items: center; font-size: 17px; line-height: 21px; white-space: nowrap; }
+.mny-case span img { width: 15.5px; height: 19px; margin: 0 9px 0 3px; }
+.mny-cta { text-align: right; padding: 5px 39.5px 0 0; }
+.mny-cta p { font-family: var(--sgb-font-title); font-size: 24.3px; font-weight: 700; line-height: 29px; color: var(--sgb-navy); }
+.mny-cta a { margin-top: 13px; width: 216.5px; height: 52.5px; border-radius: 27px; background: var(--sgb-action); color: #fff; font-size: 18.7px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap; }
+.mny-cta a:hover { filter: brightness(.97); }
+
+
+/* ── 실제 웹의 광고 칸 — 소재가 글자뿐이라(GET /ads/serve?slot=GHERO) 사진 대신 남색 바탕에 같은 자리 · 같은 크기로 놓습니다 ── */
+.mny-ad.is-text { background: linear-gradient(135deg, #00245a 0%, #0a3a80 100%); color: #fff; min-height: 342.5px; padding: 28px 36px 34px; display: flex; flex-direction: column; }
+.mny-ad-tag { align-self: flex-start; height: 23px; padding: 0 10px; border-radius: 12px; background: rgba(0, 0, 0, .45); font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; }
+.mny-ad-adv { margin-top: auto; font-size: 13.5px; font-weight: 700; color: rgba(255, 255, 255, .78); }
+.mny-ad.is-text h2 { margin-top: 6px; font-family: var(--sgb-font-title); font-size: 25px; font-weight: 700; line-height: 31px; }
+.mny-ad.is-text p { margin-top: 10px; font-size: 14.5px; font-weight: 700; line-height: 21px; color: rgba(255, 255, 255, .9); }
+.mny-ad-cta { margin-top: 18px; align-self: flex-start; font-size: 16px; font-weight: 700; color: var(--sgb-accent); display: inline-flex; align-items: center; gap: 8px; }
+.mny-ad-cta:hover { text-decoration: underline; }
+.mny-ad-msg { margin-top: 8px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .85); }
+
+/* ── 실제 웹의 요청 줄 — 서버에 사진 · 지역 · 종류가 없어 그 칸만 뺍니다(나머지 자리 · 글꼴은 같음) ── */
+.mny-reqs.is-live .mny-req { grid-template-columns: minmax(0, 1fr) 147px 141.5px 95.5px 106.5px; }
+.mny-reqs.is-live .mny-req-m { padding-left: 0; }
+.mny-reqs.is-live .mny-req-m div { grid-template-columns: auto; }
+.mny-req-none { padding: 18px 0 6px; font-size: 15px; font-weight: 400; color: var(--sgb-ink-2); }
+.mny-req-none a { color: var(--sgb-link); font-weight: 700; }
+
+/* ── 10. 지금 메인에 있던 것 — 디자인 아래에 남깁니다(10/9 답 ②): 바로가기 · 인기 매물 ── */
+.mny-old { border-radius: 18px; background: #fff; box-shadow: var(--mny-shadow); padding: 22px 30px 26px; }
+.mny-old-h { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.mny-old-h h2 { font-family: var(--sgb-font-title); font-size: 24.3px; font-weight: 700; line-height: 30px; color: var(--sgb-navy); margin-right: auto; }
+.mny-old-q { display: flex; flex-wrap: wrap; gap: 6px; }
+.mny-old-q a { height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--sgb-line); background: #fff; font-size: 14.5px; font-weight: 700; color: var(--sgb-ink-2); display: inline-flex; align-items: center; white-space: nowrap; }
+.mny-old-q a:hover, .mny-old-q a.on { border-color: var(--sgb-action); color: var(--sgb-navy); }
+.mny-old-q a.on { background: var(--sgb-cream); }
+.mny-cols > .mny-old { grid-column: 2; }                 /* 디자인 구역 아래 · 같은 칸(오른쪽) — 분류 목록은 그림대로 디자인 구역의 높이까지만 */
+.mny-cols.is-live { grid-template-rows: auto 1fr; }      /* 실제 웹 — 추천 구역 2개가 없어 오른쪽 칸의 디자인 구역이 짧습니다. 분류 목록은 제 높이로 두 줄에 걸칩니다 */
+.mny-cols.is-live .mny-side { grid-row: 1 / span 2; align-self: start; }
+.mny-bottom.is-solo { display: block; margin-bottom: 14px; }                 /* 실제 웹 — 연결 사례가 없어 등록 안내만 가운데에 */
+.mny-bottom.is-solo .mny-cta { text-align: center; padding: 4px 0 0; }
+.mny-old-b { margin-top: 16px; font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 400; }
+/* 실제 웹 — 이 구역의 안쪽은 관 화면 부품(components/gwan · .gw-… · styles/proto-gwan.css)을 그대로 씁니다. 바깥 틀(.gw)의 바탕 · 여백 · 최소 높이만 풉니다 */
+.mny .mny-old-b > .gw { background: none; padding: 0; min-height: 0; }
+.mny .mny-old-l { margin-top: 14px; }
+.mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1280px) { .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* 좁은 화면 — 「소개상품 찾기」의 고르기 칸 2개 + 검색 단추를 한 줄에 하나씩(v10.29 의 .gw-gwl .gw-fbar 3칸 규칙이 좁은 화면까지 이겨 칸이 눌리던 것을 이 구역에서만 풉니다) */
+@media (max-width: 900px) { .mny .mny-old-b .gw-gwl .gw-fbar { grid-template-columns: 1fr; gap: 10px; } }
+
+/* 관 중지 안내 — 시안 .taboff 의 값 그대로 */
+.mny-off { margin: 30px 0 60px; padding: 11px 14px; border-radius: 9px; background: #fff7ed; border: 1px solid #fed7aa; font-size: 12.5px; color: #9a3412; line-height: 1.7; }
+.mny-off b { font-weight: 800; }
+
+/* ── 11. 바닥줄 — 두 관 전용 바닥줄을 그림의 색 · 글꼴 · 자리로(사업자 정보 · 통신판매중개자 고지 · 바로가기 줄은 그대로 둡니다)
+      실제 웹은 바닥줄이 본문 뒤에 따로 있어 `.main-mny ~ .b2-ft`, 시안은 색조 상자 안에 있어 `[data-b2-tone=money] .b2-ft` 입니다 ── */
+.main-mny ~ .b2-ft, [data-b2-tone=money] .b2-ft { background: #f6f8fa; font-family: var(--sgb-font-body); padding: 18px 0 30px; }
+.main-mny ~ .b2-ft .b2-in, [data-b2-tone=money] .b2-ft .b2-in { max-width: 1500px; padding: 0 45.5px 0 46px; }
+.main-mny ~ .b2-ft .b2-ftr, [data-b2-tone=money] .b2-ft .b2-ftr { gap: 0; min-height: 0; align-items: flex-start; }
+.main-mny ~ .b2-ft .b2-ftl, [data-b2-tone=money] .b2-ft .b2-ftl { gap: 6px 46.5px; margin: 11.5px 0 0 50.5px; line-height: 22px; }
+.main-mny ~ .b2-ft .b2-ftl a, .main-mny ~ .b2-ft .b2-ftl .tbd, [data-b2-tone=money] .b2-ft .b2-ftl a, [data-b2-tone=money] .b2-ft .b2-ftl .tbd { font-size: 15.5px; font-weight: 800; }
+.main-mny ~ .b2-ft .b2-ftend, [data-b2-tone=money] .b2-ft .b2-ftend { gap: 14px; align-items: flex-start; }
+.main-mny ~ .b2-ft .b2-sns, [data-b2-tone=money] .b2-ft .b2-sns { gap: 11.5px; margin-top: 6px; }
+.main-mny ~ .b2-ft .b2-sns img, [data-b2-tone=money] .b2-ft .b2-sns img { border-radius: 0; }
+.main-mny ~ .b2-ft .b2-copy, [data-b2-tone=money] .b2-ft .b2-copy { font-size: 14.6px; font-weight: 700; line-height: 22px; margin-top: 11px; color: var(--sgb-ink-3); }
+.main-mny ~ .b2-ft .b2-quick, [data-b2-tone=money] .b2-ft .b2-quick { border-top-color: #e3e7ee; margin-top: 18px; }
+.main-mny ~ .b2-ft .b2-notice, [data-b2-tone=money] .b2-ft .b2-notice { background: #fff; }
+
+/* ── 좁은 화면 — 받은 그림은 1500px 한 장입니다. 아래는 같은 색 · 모양으로 줄여 놓은 것입니다 ── */
+@media (max-width: 1460px) {
+  [data-b2-tone=money] .b2-hd .b2-in { padding: 0 24px; }
+  [data-b2-tone=money] .b2-nav { gap: 22px; margin-left: 28px; }
+  .mny-hero-in { padding: 28px 45px; }
+  .mny-ad { width: 40%; max-width: 520.5px; }
+  .mny-ad img { width: 100%; height: auto; }
+  .mny-ad.is-text { min-height: 0; }
+  .mny-tiles { grid-template-columns: repeat(7, 1fr); }
+  .mny-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mny-btn { max-width: none; }
+  .mny-req { grid-template-columns: 97.5px minmax(0, 1fr) 96px 132px 86px 106.5px; }
+  .mny-reqs.is-live .mny-req { grid-template-columns: minmax(0, 1fr) 96px 132px 86px 106.5px; }
+  .mny-bottom { grid-template-columns: 1fr; }
+  .mny-cta { text-align: center; padding: 6px 0 0; }
+  .main-mny ~ .b2-ft .b2-in, [data-b2-tone=money] .b2-ft .b2-in { padding: 0 24px; }
+  .main-mny ~ .b2-ft .b2-ftr, [data-b2-tone=money] .b2-ft .b2-ftr { flex-wrap: wrap; gap: 14px 0; }
+}
+@media (max-width: 1320px) {      /* 그림의 치수 그대로는 1290px 쯤부터 한 줄에 들어가지 않습니다 */
+  [data-b2-tone=money] .b2-nav { gap: 16px; margin-left: 18px; }
+  [data-b2-tone=money] .b2-nav a { font-size: 17px; }
+  [data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join,
+  [data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { height: 42px; font-size: 16px; }
+  [data-b2-tone=money] .b2-find { width: 42px; }
+  [data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { width: 84px; }
+  [data-b2-tone=money] .b2-login { min-width: 84px; padding: 0 14px; }
+  [data-b2-tone=money] .b2-join { min-width: 126px; height: 42px; padding: 0 14px; }
+}
+@media (max-width: 1220px) {
+  /* 머리줄 — 로고 · 메뉴 6 · 알약 단추 4 · 종이 한 줄에 들어가지 않는 폭입니다. 메뉴를 둘째 줄로 내립니다(두 관 전용 머리줄의 좁은 화면 모양과 같게 · 옆으로 밀어 봄) */
+  [data-b2-tone=money] .b2-hd { height: auto; }
+  [data-b2-tone=money] .b2-hd .b2-in { height: auto; flex-wrap: wrap; gap: 6px 10px; padding: 8px 24px 6px; }
+  [data-b2-tone=money] .b2-nav { order: 3; width: 100%; margin-left: 0; gap: 20px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  [data-b2-tone=money] .b2-nav::-webkit-scrollbar { display: none; }
+  [data-b2-tone=money] .b2-nav a { font-size: 16.5px; padding: 6px 0; }
+  [data-b2-tone=money] .b2-nav a::after { bottom: 1px; }
+}
+@media (max-width: 1100px) {
+  .mny-wrap { padding: 0 24px 14.5px; }
+  .mny-hero-in { flex-direction: column; padding: 24px; gap: 22px; }
+  .mny-hero-l { flex: none; padding-top: 0; }
+  .mny-ad { width: 100%; max-width: 520.5px; }
+  .mny-quick { grid-template-columns: 1fr; }
+  .mny-cols { grid-template-columns: 1fr; gap: 22px; margin-right: 0; }
+  .mny-cols > .mny-old { grid-column: auto; }
+  .mny-cols.is-live { grid-template-rows: none; }
+  .mny-cols.is-live .mny-side { grid-row: auto; }
+  .mny-side-b { display: grid; grid-template-columns: repeat(2, 1fr); padding: 10px 0 14px; }
+  .mny-side-b > hr { display: none; }
+  .mny-sg + .mny-sg { margin-top: 0; }
+  .mny-cat-h { flex-wrap: wrap; gap: 2px 16px; }
+  .mny-cat-h h2 { font-size: 28px; line-height: 38px; white-space: normal; }
+  .mny-case-l { grid-template-columns: 1fr; gap: 14px; }
+  .mny-band { margin-right: 0; }
+  .main-mny ~ .b2-ft .b2-ftl, [data-b2-tone=money] .b2-ft .b2-ftl { margin-left: 24px; gap: 8px 22px; }
+}
+@media (max-width: 900px) {
+  /* 머리줄 — 단추를 더 줄입니다(「KR」은 두 관 전용 머리줄과 같이 이 폭부터 감춥니다 — 실제 웹) */
+  [data-b2-tone=money] .b2-hd .b2-in { padding: 8px 16px 6px; }
+  [data-b2-tone=money] .b2-nav { gap: 16px; }
+  [data-b2-tone=money] .b2-nav a { font-size: 16px; }
+  [data-b2-tone=money] .b2-logo img { height: 40px; width: auto; }
+  [data-b2-tone=money] .b2-hdr { gap: 4px; }
+  [data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join, [data-b2-tone=money] .b2-lngb { height: 36px; font-size: 14px; }
+  [data-b2-tone=money] .b2-find { width: 36px; }
+  [data-b2-tone=money] .b2-lngb { width: auto; padding: 0 10px; gap: 2px; }
+  [data-b2-tone=money] .b2-lngb svg { width: 24px; height: 24px; margin: -4px -6px -2px -6px; }
+  [data-b2-tone=money] .b2-login { min-width: 0; padding: 0 12px; }
+  [data-b2-tone=money] .b2-join { min-width: 0; height: 36px; padding: 0 12px; }
+  .b2-bell { width: 34px; height: 36px; margin-left: 0; }
+  /* 요청 줄 — 사진 · 제목 · (시각 · 예산 · 제안 수) · 단추를 세로로 */
+  .mny-reqs { gap: 14px; margin-bottom: 0; }
+  .mny-req, .mny-reqs.is-live .mny-req { height: auto; grid-template-columns: 72px minmax(0, 1fr); grid-template-areas: "pic main" "pic info" "btn btn"; gap: 4px 12px; padding-bottom: 14px; border-bottom: 1px solid #eef0f4; }
+  .mny-reqs.is-live .mny-req { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main" "info" "btn"; }
+  .mny-req > img { grid-area: pic; width: 72px; height: 72px; align-self: start; }
+  .mny-req-m { grid-area: main; padding-left: 0; }
+  .mny-req-m a { white-space: normal; font-size: 16.5px; }
+  .mny-req-c { display: inline; }
+  .mny-req-c.is-time { grid-area: info; }
+  .mny-req-c.is-price { grid-area: info; justify-self: center; }
+  .mny-req-c.is-n { grid-area: info; justify-self: end; }
+  .mny-req .mny-btn.is-ghost { grid-area: btn; width: 100%; height: 44px; margin-top: 6px; }
+  .mny-req:last-of-type { border-bottom: 0; padding-bottom: 0; }
+  .mny-req-c { padding-bottom: 0; }
+  /* 띠 광고 — 글자가 그림에 들어 있어 줄이면 읽을 수 없습니다. 높이를 지키고 글자가 있는 왼쪽을 보여 줍니다 */
+  .mny-band { height: 64px; }
+  .mny-band img { height: 64px; width: auto; max-width: none; }
+  .main-mny ~ .b2-ft .b2-in, [data-b2-tone=money] .b2-ft .b2-in { padding: 0 16px; }
+  .main-mny ~ .b2-ft .b2-ftl, [data-b2-tone=money] .b2-ft .b2-ftl { margin-left: 0; }
+}
+@media (max-width: 720px) {
+  .mny-wrap { padding: 0 16px 14.5px; }
+  .mny-h1 { font-size: 32px; line-height: 40px; }
+  .mny-lead { font-size: 16px; line-height: 23px; }
+  .mny-hero-in { padding: 20px 16px; }
+  .mny-search { height: 52px; }
+  .mny-search button { width: 42px; height: 42px; }
+  .mny-cat { padding: 12px 14px 16px; }
+  .mny-cat-h p { font-size: 15px; }
+  .mny-more { font-size: 15px; }
+  .mny-tiles { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .mny-qc { height: 92px; }
+  .mny-qc-i { width: 104px; margin-left: 0 !important; }
+  .mny-qc-i img { transform: scale(.8); }
+  .mny-qc b { font-size: 21px; } .mny-qc span { font-size: 15px; margin-top: 4px; }
+  .mny-side-b { grid-template-columns: 1fr; }
+  .mny-panel, .mny-old { padding: 18px 14px 18px; border-radius: 14px; }
+  .mny-ph h2 { font-size: 23px; white-space: normal; }
+  .mny-ph img { width: 27px; height: 27px; }
+  .mny-cards { grid-template-columns: 1fr; margin-right: 0; }
+  .mny-card > img { height: 150px; }
+  .mny-cards.is-ai .mny-card > img { height: 96px; }
+  .mny-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .mny-tabs::-webkit-scrollbar { display: none; }
+  .mny-tab { flex: none; width: auto; padding: 0 14px; }
+  .mny-cases { padding: 14px; }
+  .mny-case b, .mny-case p { white-space: normal; }
+  .mny-cta p { font-size: 20px; line-height: 27px; }
+  .mny-ad.is-text { padding: 22px 22px 26px; }
+  .mny-ad.is-text h2 { font-size: 21px; line-height: 27px; }
+}
+
+/* ── v10.31 (w2 · 10/10 「시안 기준」) — 서버 자료로 그리게 된 7구역 ───────────────────────────────────────
+ * 시안 규칙(.mny-side hr)은 값 그대로, 실제 자료에만 있는 것(빈 안내 · 글자 띠 광고 · 추천 근거 한 줄)은 같은 색 · 글꼴로 더했습니다. */
+.mny-side hr { border: 0; border-top: 1.5px solid var(--sgb-line); margin: 11.5px 16px 21px 16.5px; }
+.mny-kw-none { font-size: 14.5px; color: var(--sgb-ink-3); }
+.mny-sl-none { font-size: 14px; color: var(--sgb-ink-3); }
+.mny-ai-note { margin-top: 9px; font-size: 12.5px; line-height: 1.6; color: var(--sgb-ink-3); }
+.mny-case b { overflow: hidden; text-overflow: ellipsis; }
+/* 띠 광고 — 서버 소재는 글자뿐이라 그림(band_ad)과 같은 자리 · 높이 · 둥글기의 남색 띠에 글자를 놓습니다(맨 위 광고 .mny-ad.is-text 와 같은 규칙) */
+.mny-band.is-text { display: flex; align-items: center; gap: 18px; min-height: 95.5px; padding: 16px 30px; color: #fff;
+  background: linear-gradient(90deg, #00245a 0%, #0a3a80 100%); position: relative; }
+.mny-band-tag { flex: none; height: 23px; padding: 0 10px; border-radius: 12px; background: rgba(0, 0, 0, .45); font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; }
+.mny-band-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.mny-band-t b { font-family: var(--sgb-font-title); font-size: 22px; font-weight: 700; line-height: 28px; }
+.mny-band-t span { font-size: 14.5px; color: rgba(255, 255, 255, .86); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mny-band-adv { flex: none; font-size: 13.5px; font-weight: 700; color: rgba(255, 255, 255, .78); }
+.mny-band-cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 21px; background: var(--sgb-accent); color: #fff; font-size: 15px; font-weight: 800; }
+.mny-band-msg { position: absolute; left: 30px; bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, .86); }
+@media (max-width: 900px) {
+  .mny-band.is-text { flex-wrap: wrap; padding: 14px 16px; gap: 10px; }
+  .mny-band-t span { white-space: normal; }
+}
+/* v10.31 (w2) — 시안 「본문으로 건너뛰기」: 평소에는 숨기고 키보드 초점이 오면 왼쪽 위에 보입니다 */
+.mny-skip{position:absolute;left:-9999px;top:0;z-index:100;padding:8px 14px;background:#111827;color:#fff;border-radius:0 0 8px 0;font-size:14px;font-weight:700}
+.mny-skip:focus{left:0}
+.mny{position:relative}
+.mny-hero:focus{outline:none}
