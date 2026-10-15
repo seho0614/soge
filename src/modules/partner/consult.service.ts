@@ -5,6 +5,7 @@ import { PartnerActorService } from './partner-actor.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { normSido } from '../../common/region';
+import { MailService } from '../../common/mail/mail.service';
 
 /**
  * 안심소개 「생활·금융 상담」 (D005 · D018)
@@ -19,9 +20,12 @@ import { normSido } from '../../common/region';
  * 24시간 안에 열지 않으면 다른 1곳으로 넘어갑니다(배치 lead_assign).
  *
  * ── 인증번호 발송 ─────────────────────────────────────────────────
- * 알림톡 연동(integrations.ALIMTALK) 전에는 실제로 보내지 못합니다.
- * 개발 환경(NODE_ENV=development)에서만 응답에 devCode 를 실어 흐름을 시험할 수 있게 하고,
- * 그 밖의 환경(staging · production)에서 연동 전이면 신청 자체를 받지 않습니다.
+ * 알림톡(integrations.ALIMTALK = LIVE)이 있으면 알림톡, 없으면 **메일(v10.43)** 로 보냅니다.
+ *   메일은 SMTP_* · MAIL_FROM 설정이 있고 notify.email_verified = on 일 때만(MailService.ready).
+ *   메일 인증번호는 **이메일을 확인할 뿐 휴대폰 번호를 확인하지 않습니다** — 10/2 결정(알림톡 전 대체 수단)대로입니다.
+ *   메일을 보내지 못하면 그 신청을 지우고(연락처 암호문 포함) OTP_SEND_FAILED 로 알립니다 — 받지 못한 번호로 하루 횟수를 쓰지 않게.
+ * 둘 다 없으면: 개발 환경(NODE_ENV=development)에서만 응답에 devCode 를 실어 흐름을 시험할 수 있게 하고,
+ * 그 밖의 환경(staging · production)에서는 신청 자체를 받지 않습니다(NOTIFY_NOT_READY).
  *
  * ── 축별 입점 ─────────────────────────────────────────────────────
  * 안심소개는 축마다 입점 승인을 받은 인증업체만 게시합니다(mal_partner_axes).
@@ -39,11 +43,14 @@ export interface ConsultCreate {
 
 @Injectable()
 export class ConsultService {
-  constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService) {}
+  constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService,
+              private readonly mail: MailService) {}
   private get me() { return RequestCtx.actorId(); }
 
   private static normPhone(p: string) { return (p ?? '').replace(/[^0-9]/g, ''); }
   private static sha(s: string) { return createHash('sha256').update(s).digest('hex'); }
+  /** ab***@example.com — 화면 안내용 */
+  private static maskEmail(e: string) { const [u, d] = e.split('@'); return `${u.slice(0, 2)}***@${d}`; }
 
   private async notifyReady(): Promise<boolean> {
     const [r] = await this.db.query<{ status: string }>(
@@ -139,7 +146,9 @@ export class ConsultService {
       [dto.categoryId ?? null, dto.categoryCode ?? null]);
     if (!cat) throw new PolicyViolation('CATEGORY_REQUIRED', '상담 업종을 확인해 주십시오.');
 
-    const ready = await this.notifyReady();
+    const alimtalk = await this.notifyReady();
+    const byMail = !alimtalk && await this.mail.ready();   /* v10.43 — 알림톡 전에는 메일로 */
+    const ready = alimtalk || byMail;
     /* ★ 인증번호를 응답에 싣는 것은 **개발 환경(NODE_ENV=development)일 때만**입니다.
      *   올린 kit 은 「운영(production)이 아니면」 실었습니다 — staging 처럼 실제 번호가 들어오는 환경에서도
      *   인증번호가 응답으로 나가 휴대폰 확인을 건너뛸 수 있었습니다. 개발이 아니면 연동 전에는 신청을 받지 않습니다. */
@@ -179,10 +188,26 @@ export class ConsultService {
     await this.db.query(`UPDATE consult_requests SET otp_hash = $2 WHERE id = $1`,
       [row.id, ConsultService.sha(row.id + ':' + code)]);
 
-    /* 알림톡 연동 후: 여기서 발송 어댑터를 부릅니다(연동 7건 중 알림톡). */
+    /* 알림톡 연동 후: 알림톡이면 여기서 발송 어댑터를 부릅니다(연동 7건 중 알림톡). */
+    let note = alimtalk ? '인증번호를 보냈습니다.' : '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.';
+    if (byMail) {
+      const sent = await this.mail.send({
+        to: email,
+        subject: `[소개뱅크] 상담 신청 인증번호 ${code}`,
+        text: `소개뱅크 안심소개 상담 신청 인증번호입니다.\n\n인증번호: ${code}\n\n`
+            + `${OTP_TTL_MIN}분 안에 신청 화면에 넣어 주십시오. 확인을 마쳐야 업체에 전달됩니다.\n`
+            + `직접 신청하지 않으셨다면 이 메일을 무시하십시오 — 확인하지 않은 신청은 업체에 가지 않습니다.\n\n`
+            + `본 메일은 발신 전용입니다.\n(주)한국바이오헬스케어 소개뱅크 사업부`,
+      });
+      if (!sent.ok) {
+        await this.db.query(`DELETE FROM consult_requests WHERE id = $1 AND lead_id IS NULL`, [row.id]);
+        throw new PolicyViolation('OTP_SEND_FAILED', '인증번호 메일을 보내지 못했습니다. 이메일 주소를 확인하신 뒤 다시 시도해 주십시오.');
+      }
+      note = `${ConsultService.maskEmail(email)} 로 인증번호를 보냈습니다(메일). 받은편지함에 없으면 스팸함을 확인해 주십시오.`;
+    }
     return {
       id: row.id, state: 'PENDING_VERIFY', expiresInMinutes: OTP_TTL_MIN,
-      note: ready ? '인증번호를 보냈습니다.' : '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.',
+      note,
       ...(ready ? {} : { devCode: code }),
     };
   }

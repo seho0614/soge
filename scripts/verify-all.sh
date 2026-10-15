@@ -46,6 +46,9 @@ npx ts-node -P tsconfig.scripts.json scripts/test-nts-offline.ts | tail -1 || FA
 step "결제 어댑터 (오프라인)"
 npx ts-node -P tsconfig.scripts.json scripts/test-payment-offline.ts | tail -1 || FAIL=1
 
+step "메일 발송기 (오프라인 · v10.43)"
+npx ts-node -P tsconfig.scripts.json scripts/test-mail-offline.ts | tail -1 || FAIL=1
+
 step "공격 검정"
 # 두 번 돌립니다. 실패하면 어느 항목인지 보여 줍니다(10/6 · v10.17 — 불변식과 같은 이유).
 for round in 1 2; do

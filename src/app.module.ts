@@ -137,6 +137,7 @@ import { ConsultService } from './modules/partner/consult.service';
 import { DirectoryService } from './modules/partner/directory.service';
 import { DirectoryController, PartnerDirectoryController, DirectoryAdminController } from './modules/partner/directory.controller';
 import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세금계산서 어댑터 · 간주 (D093) */
+import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발송(SES SMTP) · 상담 인증번호 */
 import { EtaxAdminController } from './modules/etax/etax.controller';
 import { AttributionController } from './modules/attribution/attribution.controller';
 import { LeadService } from './modules/lead/lead.service';
@@ -281,6 +282,7 @@ import { LeadService } from './modules/lead/lead.service';
     ConsultService,
     DirectoryService,
     EtaxService,
+    MailService,
     MarketService, SafetyService, BizAxisService,   // v10.31 (w2)
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
