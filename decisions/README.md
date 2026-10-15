@@ -1,0 +1,20 @@
+# 결정 기록 목록
+
+- ai-agent.md
+- automation-server-n8n.md
+- business-entity-operating-policy.md
+- community-sogae-gwangjang.md
+- deploy-cicd.md
+- domain-dns.md
+- gwan-structure-naming.md
+- legal-tax-listing-fee.md
+- mail-ses.md
+- main-hero-design.md
+- mall-return-refund.md
+- multilingual-i18n.md
+- open-blockers.md
+- p2p-individual-access.md
+- partner-center-account-basis.md
+- subscription-referral-code.md
+- tailwind-adoption.md
+- terms-publishing.md

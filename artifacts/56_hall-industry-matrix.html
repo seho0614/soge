@@ -1,0 +1,739 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>관 × 업종 매트릭스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --paper:#F6F6F3; --surface:#FFFFFF; --surface-2:#EEEEEA;
+    --ink:#1A1B1D; --ink-2:#585B60; --ink-3:#8B8F95;
+    --rule:#DBDBD6; --rule-soft:#E9E9E5;
+    --mny:#24406E; --mny-s:#E7EDF6; --mny-b:#B9CBE6;
+    --mal:#2F7A68; --mal-s:#E2F0EC; --mal-b:#B2D9CF;
+    --biz:#9C6D22; --biz-s:#F6EEDD; --biz-b:#E3CFA4;
+    --mark:#C0392B; --mark-s:#FBEAE8;
+    --f:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#161719; --surface:#1F2124; --surface-2:#282A2E;
+      --ink:#E9EAEB; --ink-2:#A5A9AF; --ink-3:#787D84;
+      --rule:#34373C; --rule-soft:#2A2C30;
+      --mny:#8FB0E0; --mny-s:#1B2635; --mny-b:#2F4460;
+      --mal:#78C2AE; --mal-s:#172823; --mal-b:#2A4940;
+      --biz:#D9AC61; --biz-s:#2B2416; --biz-b:#4C3E22;
+      --mark:#E88075; --mark-s:#331F1D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#161719; --surface:#1F2124; --surface-2:#282A2E;
+    --ink:#E9EAEB; --ink-2:#A5A9AF; --ink-3:#787D84;
+    --rule:#34373C; --rule-soft:#2A2C30;
+    --mny:#8FB0E0; --mny-s:#1B2635; --mny-b:#2F4460;
+    --mal:#78C2AE; --mal-s:#172823; --mal-b:#2A4940;
+    --biz:#D9AC61; --biz-s:#2B2416; --biz-b:#4C3E22;
+    --mark:#E88075; --mark-s:#331F1D;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f);
+       font-size:14px;line-height:1.68;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){ .wrap{padding:0 14px} }
+  code{font-family:var(--m);font-size:.88em;background:var(--surface-2);padding:1.5px 5px;border-radius:3px}
+
+  .dochd{background:var(--surface);border-bottom:2px solid var(--ink);padding:32px 0 0}
+  .dochd .t{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  h1{font-size:27px;font-weight:900;letter-spacing:-.04em;margin:0}
+  .ver{font-family:var(--m);font-size:11.5px;color:var(--ink-3);letter-spacing:.04em}
+  .lede{font-size:15px;color:var(--ink-2);max-width:68ch;margin:14px 0 22px}
+  .lede b{color:var(--ink)}
+
+  section{padding:38px 0}
+  .sh{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--ink)}
+  .sh .no{font-family:var(--m);font-size:11px;background:var(--ink);color:var(--paper);
+          padding:2px 7px;border-radius:3px;letter-spacing:.05em;flex:none}
+  h2{font-size:19px;font-weight:700;margin:0;letter-spacing:-.025em}
+  .sd{font-size:13.5px;color:var(--ink-2);margin:14px 0 0;max-width:76ch}
+  h3{font-size:14.5px;font-weight:700;margin:30px 0 0;display:flex;align-items:center;gap:8px}
+  h3::before{content:"";width:3px;height:14px;background:var(--ink-3);border-radius:2px}
+  h4{font-size:12.5px;font-weight:700;color:var(--ink-2);margin:20px 0 0;
+     font-family:var(--m);letter-spacing:.07em}
+
+  figure{margin:18px 0 0}
+  .figbox{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:20px 18px;overflow-x:auto}
+  figure svg{display:block;width:100%;max-width:100%;height:auto;color:var(--ink)}
+  figcaption{margin-top:11px;font-size:12.5px;color:var(--ink-2);max-width:78ch;line-height:1.6}
+  figcaption b{color:var(--ink)}
+  .s-box{fill:none;stroke:currentColor;stroke-width:1.3;opacity:.5}
+  .s-line{stroke:currentColor;stroke-width:1.2;opacity:.45;fill:none}
+  .s-t{fill:currentColor;font-family:var(--f);font-size:12.5px;font-weight:500}
+  .s-s{fill:currentColor;font-family:var(--f);font-size:11px;opacity:.66}
+  .s-l{fill:currentColor;font-family:var(--m);font-size:9.5px;opacity:.6;letter-spacing:.04em}
+  .s-h{fill:currentColor;font-family:var(--m);font-size:10px;letter-spacing:.13em;opacity:.52}
+  .s-r{fill:var(--mark);font-family:var(--f);font-size:11px;font-weight:500}
+
+  .gwans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0 0}
+  @media (max-width:820px){ .gwans{grid-template-columns:1fr} }
+  .gw{border:1px solid var(--rule);border-radius:10px;background:var(--surface);overflow:hidden}
+  .gw .top{padding:14px 16px 12px;border-bottom:1px solid var(--rule-soft)}
+  .gw .q{font-family:var(--m);font-size:10px;letter-spacing:.1em;opacity:.75}
+  .gw .n{font-size:19px;font-weight:900;letter-spacing:-.035em;margin-top:5px}
+  .gw .d{font-size:12.5px;color:var(--ink-2);margin-top:5px;line-height:1.55}
+  .gw .body{padding:12px 16px 14px;font-size:12.5px}
+  .gw .row{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--rule-soft)}
+  .gw .row:last-child{border-bottom:0}
+  .gw .row .k{color:var(--ink-3);font-size:11.5px;flex:none}
+  .gw .row .v{font-weight:500;text-align:right}
+  .gw-mny .top{background:var(--mny-s)} .gw-mny .n,.gw-mny .q{color:var(--mny)}
+  .gw-mal .top{background:var(--mal-s)} .gw-mal .n,.gw-mal .q{color:var(--mal)}
+  .gw-biz .top{background:var(--biz-s)} .gw-biz .n,.gw-biz .q{color:var(--biz)}
+
+  .tscroll{overflow-x:auto;margin:16px 0 0;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+  table.d{border-collapse:collapse;width:100%;min-width:880px;font-size:12.5px}
+  table.d th{background:var(--surface-2);font-weight:700;font-size:11.5px;color:var(--ink-2);
+             padding:9px 11px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+  table.d td{padding:8px 11px;border:1px solid var(--rule-soft);vertical-align:top;line-height:1.55}
+  table.d td.mono{font-family:var(--m);font-size:11.5px;white-space:nowrap}
+  table.d td.n{font-family:var(--m);font-size:11px;color:var(--ink-3);text-align:center;width:32px}
+  table.d td.k{font-weight:500;white-space:nowrap}
+  table.d tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 38%,transparent)}
+  table.d th.h-mny{background:var(--mny-s);color:var(--mny);border-color:var(--mny-b)}
+  table.d th.h-mal{background:var(--mal-s);color:var(--mal);border-color:var(--mal-b)}
+  table.d th.h-biz{background:var(--biz-s);color:var(--biz);border-color:var(--biz-b)}
+  tr.blocked td{background:var(--mark-s) !important;color:var(--mark)}
+  tr.blocked td.n{color:var(--mark)}
+  tr.grp td{background:var(--surface-2) !important;font-weight:700;font-size:11.5px;
+            color:var(--ink-2);font-family:var(--m);letter-spacing:.05em}
+
+  .tag{display:inline-block;font-size:10.5px;font-family:var(--m);padding:1.5px 6px;border-radius:3px;white-space:nowrap}
+  .g-mny{background:var(--mny-s);color:var(--mny)}
+  .g-mal{background:var(--mal-s);color:var(--mal)}
+  .g-biz{background:var(--biz-s);color:var(--biz)}
+  .g-blk{background:var(--mark-s);color:var(--mark)}
+
+  .note{border:1px solid var(--rule);border-left:3px solid var(--mark);background:var(--surface);
+        padding:13px 16px;margin:18px 0 0;border-radius:0 6px 6px 0;font-size:13px;max-width:84ch}
+  .note.info{border-left-color:var(--mny)}
+  .note.ok{border-left-color:var(--mal)}
+  .note h5{margin:0 0 5px;font-size:11px;font-family:var(--m);letter-spacing:.07em;color:var(--ink-3);font-weight:500}
+  .note p{margin:0}
+  .note p+p{margin-top:7px}
+
+  ul.k{margin:10px 0 0;padding-left:16px;max-width:80ch}
+  ul.k li{margin-bottom:5px}
+
+  .dec{border:1px solid var(--rule);border-radius:10px;background:var(--surface);margin:16px 0 0;overflow:hidden}
+  .dec > .hd{display:flex;align-items:center;gap:11px;padding:12px 16px;
+             background:var(--surface-2);border-bottom:1px solid var(--rule)}
+  .dec > .hd .id{font-family:var(--m);font-size:11px;background:var(--ink);color:var(--paper);
+                 padding:2px 8px;border-radius:3px;letter-spacing:.05em;flex:none}
+  .dec > .hd .q{font-size:14.5px;font-weight:700;letter-spacing:-.02em;flex:1;min-width:0}
+  .dec > .hd .src{font-family:var(--m);font-size:10px;color:var(--ink-3);letter-spacing:.04em;flex:none}
+  .dec .bd{padding:14px 16px 16px}
+  .opts{display:grid;gap:8px;margin-bottom:12px}
+  .opt{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:10px 12px;
+       border:1px solid var(--rule-soft);border-radius:7px;align-items:start}
+  .opt.pick{border-color:var(--mny);background:var(--mny-s)}
+  .opt .mk{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--rule);margin-top:2px}
+  .opt.pick .mk{border-color:var(--mny);background:var(--mny);box-shadow:inset 0 0 0 3px var(--mny-s)}
+  .opt .t{font-size:13px;font-weight:600}
+  .opt.pick .t{color:var(--mny)}
+  .opt .t em{font-family:var(--m);font-size:10px;font-style:normal;margin-left:7px;opacity:.7;letter-spacing:.05em}
+  .opt .r{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.55}
+  .why{font-size:12.5px;line-height:1.7;border-top:1px solid var(--rule-soft);padding-top:11px}
+  .why b{color:var(--ink)}
+  .why .lb{font-family:var(--m);font-size:10px;letter-spacing:.09em;color:var(--ink-3);display:block;margin-bottom:3px}
+  .impact{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .impact span{font-family:var(--m);font-size:10.5px;padding:3px 8px;border-radius:4px;
+               background:var(--surface-2);color:var(--ink-2)}
+  .impact span.hot{background:var(--mark-s);color:var(--mark)}
+
+  .revbox{border:1px solid var(--mark);background:var(--mark-s);border-radius:8px;
+          padding:14px 16px;margin:0 0 8px}
+  .revbox .h{font-family:var(--m);font-size:10.5px;letter-spacing:.09em;color:var(--mark);font-weight:500}
+  .revbox p{margin:6px 0 0;font-size:13px;color:var(--ink)}
+
+  footer{padding:32px 0 64px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--rule);margin-top:20px}
+</style>
+
+<div class="dochd">
+  <div class="wrap">
+    <div class="t">
+      <h1>관 × 업종 매트릭스</h1>
+      <span class="ver">DECISION #1 · v2 · 2026.08.26</span>
+    </div>
+    <p class="lede">
+      기획 회의 첫 안건이자 유일한 안건입니다.
+      <b>“무엇을 기준으로 관을 가르는가”</b> 하나만 정하면 업종 배치, 소개비 요율, 등록폼 필드,
+      제한업종 처리, 그리고 남은 결정 5건이 전부 따라옵니다.
+    </p>
+    <div class="revbox">
+      <div class="h">v2 — 판정 기준 변경</div>
+      <p>
+        v1은 관을 <b>거래 대상</b>(물건 / 사람의 일 / 사업체)으로 갈랐습니다. 이 기준은 폐기합니다.
+        세 관 모두 물건도 팔고 서비스도 중개하므로 대상으로는 갈리지 않습니다.
+        v2는 <b>누구와 누구를 연결하는가</b>로 가릅니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">01</span><h2>기준 — 누구와 누구를 연결하는가</h2></div>
+    <p class="sd">
+      소개는 언제나 <b>두 당사자를 잇는 행위</b>입니다. 그 두 당사자가 누구인지에 따라
+      계약의 성격, 소개비를 낼 주체, 플랫폼이 져야 할 책임, 적용되는 법이 모두 갈립니다.
+      이것이 관을 가르는 유일한 기준입니다.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 880 268" role="img" aria-label="연결하는 두 당사자가 개인과 개인이면 소개머니, 개인과 사업자면 소개몰, 사업자와 예비사업자면 소개창업으로 판정하는 분류 기준">
+          <defs>
+            <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0L10 5L0 10z" fill="currentColor"></path></marker>
+          </defs>
+
+          <rect class="s-box" x="270" y="16" width="340" height="40" rx="5"></rect>
+          <text class="s-t" x="440" y="41" text-anchor="middle">이 소개는 누구와 누구를 잇는가?</text>
+
+          <line class="s-line" x1="440" y1="56" x2="440" y2="72"></line>
+          <line class="s-line" x1="150" y1="72" x2="730" y2="72"></line>
+          <line class="s-line" x1="150" y1="72" x2="150" y2="100" marker-end="url(#a)"></line>
+          <line class="s-line" x1="440" y1="72" x2="440" y2="100" marker-end="url(#a)"></line>
+          <line class="s-line" x1="730" y1="72" x2="730" y2="100" marker-end="url(#a)"></line>
+
+          <text class="s-h" x="150" y="94" text-anchor="middle">개인 ↔ 개인</text>
+          <text class="s-h" x="440" y="94" text-anchor="middle">개인 ↔ 사업자</text>
+          <text class="s-h" x="730" y="94" text-anchor="middle">사업자 ↔ 예비사업자</text>
+
+          <rect x="30" y="104" width="240" height="140" rx="7" fill="var(--mny-s)" stroke="var(--mny-b)" stroke-width="1.4"></rect>
+          <text x="150" y="130" text-anchor="middle" fill="var(--mny)" font-family="var(--f)" font-size="16" font-weight="700">소개머니</text>
+          <text class="s-s" x="150" y="150" text-anchor="middle">개인 간 거래 · 당근 모델</text>
+          <text class="s-l" x="150" y="174" text-anchor="middle">중고 · 직거래 · 나눔</text>
+          <text class="s-l" x="150" y="192" text-anchor="middle">업종 12종 · 요율 3%</text>
+          <text class="s-l" x="150" y="210" text-anchor="middle">소개비 부담: 등록 시 선택</text>
+          <text class="s-l" x="150" y="230" text-anchor="middle">에스크로 필요</text>
+
+          <rect x="320" y="104" width="240" height="140" rx="7" fill="var(--mal-s)" stroke="var(--mal-b)" stroke-width="1.4"></rect>
+          <text x="440" y="130" text-anchor="middle" fill="var(--mal)" font-family="var(--f)" font-size="16" font-weight="700">소개몰</text>
+          <text class="s-s" x="440" y="150" text-anchor="middle">업체 · 사업장 정보 공유와 소개</text>
+          <text class="s-l" x="440" y="174" text-anchor="middle">업체 · 상품 · 동산 · 부동산</text>
+          <text class="s-l" x="440" y="192" text-anchor="middle">업종 12종 · 요율 5%</text>
+          <text class="s-l" x="440" y="210" text-anchor="middle">소개비 부담: 업체</text>
+          <text class="s-l" x="440" y="230" text-anchor="middle">부동산은 별도 규칙</text>
+
+          <rect x="610" y="104" width="240" height="140" rx="7" fill="var(--biz-s)" stroke="var(--biz-b)" stroke-width="1.4"></rect>
+          <text x="730" y="130" text-anchor="middle" fill="var(--biz)" font-family="var(--f)" font-size="16" font-weight="700">소개창업</text>
+          <text class="s-s" x="730" y="150" text-anchor="middle">창업 · 사업 승계</text>
+          <text class="s-l" x="730" y="174" text-anchor="middle">양수도 · 가맹 · 창업 아이템</text>
+          <text class="s-l" x="730" y="192" text-anchor="middle">업종 8종 · 요율 1.5%</text>
+          <text class="s-l" x="730" y="210" text-anchor="middle">소개비 부담: 양도인 · 본사</text>
+          <text class="s-l" x="730" y="230" text-anchor="middle">계약서 양식 제공</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>연결 관계가 갈리면 나머지가 전부 따라 갈린다.</b>
+        개인 간 거래에는 사업자가 없으므로 소개비를 낼 주체를 등록 시 정해야 하고,
+        업체 소개에는 언제나 업체가 있으므로 업체가 부담합니다.
+        창업은 양도인이나 프랜차이즈 본사가 부담합니다. 같은 “고깃집”이라도
+        중고 냉장고를 파는 개인은 소개머니, 배달 대행을 하는 업체는 소개몰, 매장을 넘기는 사장은 소개창업입니다.
+      </figcaption>
+    </figure>
+
+    <div class="gwans">
+      <div class="gw gw-mny">
+        <div class="top">
+          <div class="q">MNY · 개인 ↔ 개인</div>
+          <div class="n">소개머니</div>
+          <div class="d">개인이 팔고 개인이 사는 거래를 소개</div>
+        </div>
+        <div class="body">
+          <div class="row"><span class="k">모델</span><span class="v">당근마켓 유사</span></div>
+          <div class="row"><span class="k">업종</span><span class="v">12종</span></div>
+          <div class="row"><span class="k">요율</span><span class="v">거래액 3% · 상한 30만원</span></div>
+          <div class="row"><span class="k">부담 주체</span><span class="v">등록 시 선택 (판매자/구매자)</span></div>
+          <div class="row"><span class="k">결제</span><span class="v">에스크로 — 사기 방지</span></div>
+          <div class="row"><span class="k">플랫폼 책임</span><span class="v">통신판매중개자</span></div>
+        </div>
+      </div>
+      <div class="gw gw-mal">
+        <div class="top">
+          <div class="q">MAL · 개인 ↔ 사업자</div>
+          <div class="n">소개몰</div>
+          <div class="d">업체와 사업장을 서로 공유하고 소개</div>
+        </div>
+        <div class="body">
+          <div class="row"><span class="k">모델</span><span class="v">업체 디렉토리 + 몰 + 자산</span></div>
+          <div class="row"><span class="k">업종</span><span class="v">12종 (3개 군)</span></div>
+          <div class="row"><span class="k">요율</span><span class="v">계약액 5% · 상한 100만원</span></div>
+          <div class="row"><span class="k">부담 주체</span><span class="v">업체 (사업자)</span></div>
+          <div class="row"><span class="k">결제</span><span class="v">상품군만 에스크로</span></div>
+          <div class="row"><span class="k">플랫폼 책임</span><span class="v">중개 · 부동산은 별도</span></div>
+        </div>
+      </div>
+      <div class="gw gw-biz">
+        <div class="top">
+          <div class="q">BIZ · 사업자 ↔ 예비사업자</div>
+          <div class="n">소개창업</div>
+          <div class="d">창업과 사업 승계를 소개</div>
+        </div>
+        <div class="body">
+          <div class="row"><span class="k">모델</span><span class="v">창업 중개 · 가맹 모집</span></div>
+          <div class="row"><span class="k">업종</span><span class="v">8종</span></div>
+          <div class="row"><span class="k">요율</span><span class="v">거래액 1.5% · 상한 500만원</span></div>
+          <div class="row"><span class="k">부담 주체</span><span class="v">양도인 또는 프랜차이즈 본사</span></div>
+          <div class="row"><span class="k">결제</span><span class="v">당사자 간 · 계약서 양식 제공</span></div>
+          <div class="row"><span class="k">플랫폼 책임</span><span class="v">중개 · 계약 당사자 아님</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note info">
+      <h5>“소개비는 누가 내는가”가 관마다 다르다</h5>
+      <p>
+        이것이 v1에서 놓친 부분입니다. 당근형 개인 간 거래에는 <b>수수료를 낼 사업자가 없습니다.</b>
+        그래서 소개머니만 “등록 시 부담 주체를 선택”하는 구조가 필요하고,
+        이 선택이 곧 <b>소개합니다 / 소개원해요</b> 탭과 직결됩니다 —
+        판매자가 부담하면 “소개합니다”, 구매자가 부담하면 “소개원해요”입니다.
+        소개몰과 소개창업은 언제나 사업자가 부담하므로 이 선택이 없습니다.
+      </p>
+    </div>
+
+    <div class="note">
+      <h5>요율은 왜 이 순서인가</h5>
+      <p>
+        거래액이 클수록 요율은 낮아집니다. 소개창업 8,500만원 거래의 1.5%는 127만원,
+        소개머니 30만원 중고 거래의 3%는 9천원입니다.
+        소개자가 한 건에 들이는 노력은 비슷한데 거래액 차이가 크므로,
+        요율을 동일하게 두면 소액 거래에는 아무도 소개를 붙이지 않습니다.
+        상한선은 단일 건이 비정상적으로 커질 때의 리스크를 막습니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 매트릭스 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">02</span><h2>매트릭스 — 업종 32종</h2></div>
+    <p class="sd">
+      슬러그는 URL·SEO 랜딩에 그대로 쓰이므로 확정 후 변경하지 않습니다.
+    </p>
+
+    <h3><span class="tag g-mny">소개머니 MNY</span> &nbsp;개인 ↔ 개인 · 12종</h3>
+    <p class="sd">개인이 팔고 개인이 사는 것. 사업자 등록 없는 거래가 기본입니다.</p>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th class="h-mny" style="width:32px">#</th><th class="h-mny" style="width:170px">업종</th>
+          <th class="h-mny" style="width:130px">슬러그</th><th class="h-mny">포함</th><th class="h-mny" style="width:170px">소개 예시</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="k">자동차 · 오토바이</td><td class="mono">car</td><td>승용 · 이륜 · 부품 · 용품</td><td>중고차 직거래 연결</td></tr>
+          <tr><td class="n">2</td><td class="k">가전 · 디지털</td><td class="mono">digital</td><td>가전 · PC · 모바일 · 카메라</td><td>이사 나가는 지인 냉장고</td></tr>
+          <tr><td class="n">3</td><td class="k">가구 · 인테리어</td><td class="mono">furniture</td><td>가구 · 조명 · 소품</td><td>사무실 이전 책상 일괄</td></tr>
+          <tr><td class="n">4</td><td class="k">생활 · 주방</td><td class="mono">living</td><td>주방용품 · 생활잡화 · 수납</td><td>이사 정리 물품</td></tr>
+          <tr><td class="n">5</td><td class="k">유아 · 출산</td><td class="mono">baby</td><td>유아용품 · 완구 · 도서</td><td>육아 졸업템 나눔</td></tr>
+          <tr><td class="n">6</td><td class="k">의류 · 잡화</td><td class="mono">fashion</td><td>의류 · 가방 · 신발 · 시계</td><td>명품 시계 직거래</td></tr>
+          <tr><td class="n">7</td><td class="k">스포츠 · 레저</td><td class="mono">sports</td><td>운동기구 · 캠핑 · 자전거 · 골프</td><td>골프채 세트</td></tr>
+          <tr><td class="n">8</td><td class="k">뷰티 · 미용</td><td class="mono">beauty</td><td>화장품 · 미용기기 · 향수</td><td>미개봉 화장품</td></tr>
+          <tr><td class="n">9</td><td class="k">반려동물</td><td class="mono">pet</td><td>사료 · 용품 · 분양 정보</td><td>펫용품 일괄</td></tr>
+          <tr><td class="n">10</td><td class="k">도서 · 티켓 · 취미</td><td class="mono">hobby</td><td>도서 · 공연티켓 · 악기 · 수집품</td><td>공연 티켓 양도</td></tr>
+          <tr><td class="n">11</td><td class="k">식품 · 농수산</td><td class="mono">food</td><td>직거래 농수산물 · 가공식품</td><td>산지 직송 연결</td></tr>
+          <tr><td class="n">12</td><td class="k">기타 중고</td><td class="mono">etc-used</td><td>위에 없는 개인 간 거래</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3><span class="tag g-mal">소개몰 MAL</span> &nbsp;개인 ↔ 사업자 · 12종</h3>
+    <p class="sd">
+      업체를 소개하거나, 업체가 파는 것을 소개하거나, 사업장 자산을 소개합니다.
+      셋 다 “한쪽이 사업자”라는 공통점이 있어 한 관에 들어갑니다.
+    </p>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th class="h-mal" style="width:32px">#</th><th class="h-mal" style="width:170px">업종</th>
+          <th class="h-mal" style="width:130px">슬러그</th><th class="h-mal">포함</th><th class="h-mal" style="width:170px">소개비 부담</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="5">A군 · 업체 소개 — 디렉토리형</td></tr>
+          <tr><td class="n">1</td><td class="k">인테리어 · 시공</td><td class="mono">interior</td><td>주거 · 상업공간 시공 · 설계 · 리모델링</td><td>시공 업체</td></tr>
+          <tr><td class="n">2</td><td class="k">이사 · 청소</td><td class="mono">moving</td><td>이사 · 입주청소 · 정기청소 · 방역</td><td>업체</td></tr>
+          <tr><td class="n">3</td><td class="k">수리 · 설비</td><td class="mono">repair</td><td>가전수리 · 전기 · 배관 · 보일러</td><td>업체</td></tr>
+          <tr><td class="n">4</td><td class="k">교육 · 과외</td><td class="mono">education</td><td>학원 · 과외 · 레슨 · 컨설팅</td><td>학원 · 강사</td></tr>
+          <tr><td class="n">5</td><td class="k">마케팅 · 디자인</td><td class="mono">marketing</td><td>광고대행 · 디자인 · 브랜딩 · 촬영</td><td>대행사</td></tr>
+          <tr><td class="n">6</td><td class="k">이벤트 · 행사</td><td class="mono">event</td><td>행사기획 · 케이터링 · 대관 · 웨딩</td><td>업체</td></tr>
+          <tr><td class="n">7</td><td class="k">뷰티 · 미용업</td><td class="mono">beauty-shop</td><td>헤어 · 네일 · 피부 · 에스테틱</td><td>샵</td></tr>
+          <tr><td class="n">8</td><td class="k">반려동물 케어</td><td class="mono">pet-care</td><td>미용 · 훈련 · 호텔링 · 병원 외 서비스</td><td>업체</td></tr>
+          <tr class="grp"><td colspan="5">B군 · 업체 상품 — 몰형</td></tr>
+          <tr><td class="n">9</td><td class="k">업체 상품 · 서비스</td><td class="mono">goods</td><td>업체가 직접 판매하는 상품 · 정기 서비스 · 렌탈</td><td>판매 업체 · 에스크로 적용</td></tr>
+          <tr class="grp"><td colspan="5">C군 · 사업장 자산</td></tr>
+          <tr><td class="n">10</td><td class="k">사업용 동산</td><td class="mono">asset-movable</td><td>설비 · 기계 · 업소용 기기 · 상용차</td><td>양도 사업자</td></tr>
+          <tr><td class="n">11</td><td class="k">사업용 부동산</td><td class="mono">asset-estate</td><td>상가 · 사무실 · 공장 · 창고</td><td class="k" style="color:var(--mark)">별도 규칙 — 3장 참조</td></tr>
+          <tr><td class="n">12</td><td class="k">기타 업체 · 자산</td><td class="mono">etc-shop</td><td>위에 없는 업체 · 사업장 자산</td><td>업체</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3><span class="tag g-biz">소개창업 BIZ</span> &nbsp;사업자 ↔ 예비사업자 · 8종</h3>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th class="h-biz" style="width:32px">#</th><th class="h-biz" style="width:170px">업종</th>
+          <th class="h-biz" style="width:130px">슬러그</th><th class="h-biz">포함</th><th class="h-biz" style="width:170px">소개비 부담</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="k">외식 · 식당</td><td class="mono">fnb</td><td>일반음식점 · 주점 · 배달전문</td><td>양도인</td></tr>
+          <tr><td class="n">2</td><td class="k">카페 · 베이커리</td><td class="mono">cafe</td><td>카페 · 디저트 · 제과</td><td>양도인</td></tr>
+          <tr><td class="n">3</td><td class="k">무인 · 자동화</td><td class="mono">unmanned</td><td>무인카페 · 무인점포 · 셀프 매장</td><td>양도인 · 본사</td></tr>
+          <tr><td class="n">4</td><td class="k">교육 · 공간</td><td class="mono">space</td><td>스터디카페 · 학원 · 공유공간</td><td>양도인</td></tr>
+          <tr><td class="n">5</td><td class="k">생활 서비스 매장</td><td class="mono">life-store</td><td>세탁 · 미용실 · 반려동물샵</td><td>양도인</td></tr>
+          <tr><td class="n">6</td><td class="k">유통 · 판매점</td><td class="mono">retail</td><td>편의점 · 전문점 · 온라인 스토어</td><td>양도인</td></tr>
+          <tr><td class="n">7</td><td class="k">프랜차이즈 가맹</td><td class="mono">franchise</td><td>본사 직접 모집 가맹 건</td><td>본사 · 정액 요율</td></tr>
+          <tr><td class="n">8</td><td class="k">창업 컨설팅 · 기타</td><td class="mono">etc-startup</td><td>창업 컨설팅 · 사업 기회 · 권리 이전</td><td>제공 업체</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note ok">
+      <h5>합계 32종 — v1 대비 변경</h5>
+      <p>
+        소개머니가 서비스 목록에서 <b>개인 간 거래 목록</b>으로 완전히 바뀌었고,
+        소개몰이 상품 판매에서 <b>업체 · 자산 소개</b>로 바뀌었습니다.
+        소개창업만 v1과 거의 같습니다. 사업용 동산 · 부동산이 신설되었습니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 부동산 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">03</span><h2>부동산 — 반드시 별도 규칙이 필요한 이유</h2></div>
+
+    <div class="note">
+      <h5>먼저 분명히 해둘 것</h5>
+      <p>
+        “모두 가능”으로 정하셔도 <b>공인중개사법은 선택 사항이 아닙니다.</b>
+        중개업 등록 없이 중개를 업으로 하거나 중개보수를 받으면 형사처벌 대상입니다.
+        플랫폼에 부동산을 올리는 것 자체는 가능하지만, <b>거기서 소개비를 받는 순간 구조가 달라집니다.</b>
+        아래는 실제로 운영 가능한 형태를 정리한 것이며, 오픈 전 변호사 확인이 필요합니다.
+      </p>
+    </div>
+
+    <h4>운영 가능한 3가지 형태</h4>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:150px">형태</th><th style="width:170px">플랫폼의 역할</th><th>수익 구조</th><th style="width:150px">리스크</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">① 제휴 중개사 구조<br><span style="color:var(--mal);font-size:11px">권장</span></td>
+            <td>등록 공인중개사가 실제 중개. 플랫폼은 노출만</td>
+            <td>중개사로부터 <b>광고비 · 노출료</b> 수취. 소개비 명목 금지. 직방 · 다방 모델</td>
+            <td>낮음 — 중개사 검증 필요</td>
+          </tr>
+          <tr>
+            <td class="k">② 정보 노출만</td>
+            <td>매물 정보만 게시. 연결도 대가도 없음</td>
+            <td>수익 없음. 유입 콘텐츠로만 활용</td>
+            <td>없음 — 수익도 없음</td>
+          </tr>
+          <tr>
+            <td class="k">③ 동산만</td>
+            <td>설비 · 기계 · 상용차만 취급</td>
+            <td>일반 소개비 5% 적용 가능</td>
+            <td>없음 — 중개사법 무관</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>권장안 — ①과 ③의 조합</h4>
+    <ul class="k">
+      <li><code>asset-movable</code> (사업용 동산) — <b>일반 소개비 5% 적용.</b> 설비 · 기계 · 업소용 기기 · 상용차는 공인중개사법과 무관합니다.</li>
+      <li><code>asset-estate</code> (사업용 부동산) — <b>제휴 공인중개사만 등록 가능.</b> 등록 시 중개사무소 등록번호 · 상호 · 대표자 필수 입력, 리스팅에 상시 표기.</li>
+      <li>부동산 리스팅의 플랫폼 수익은 <b>소개비가 아니라 노출료</b>입니다. UI에도 “소개비” 대신 다른 용어를 씁니다.</li>
+      <li>일반 회원이 <code>asset-estate</code>에 등록을 시도하면 <b>중개사 인증 화면으로 유도</b>하고, 미인증 시 등록을 차단합니다.</li>
+      <li>임대차 · 매매 계약 자체는 중개사와 당사자 간에 이루어지며, 플랫폼은 계약 당사자가 아님을 상세 하단에 명시합니다.</li>
+    </ul>
+
+    <div class="note info">
+      <h5>왜 이렇게까지 하는가</h5>
+      <p>
+        브랜드 3대 축이 <b>투명 · 확실 · 합법</b>입니다. 소개비 플랫폼은 그 자체로
+        다단계 · 불법 알선으로 오해받기 쉬운 영역이라, 부동산 하나가 문제가 되면
+        나머지 31개 업종까지 신뢰를 잃습니다. 부동산은 <b>가장 큰 유입원이자 가장 큰 리스크</b>입니다.
+      </p>
+    </div>
+
+    <h3>여전히 등록 차단인 5종</h3>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:32px">#</th><th style="width:180px">영역</th><th>차단 사유 (법률 확인 필요)</th><th style="width:220px">현 시안 위치</th></tr></thead>
+        <tbody>
+          <tr class="blocked"><td class="n">1</td><td class="k">법률 · 세무 · 노무</td><td>변호사법상 사건 소개 · 알선 대가 수수 제한</td><td>소개머니 사이드바</td></tr>
+          <tr class="blocked"><td class="n">2</td><td class="k">병원 · 의료기관</td><td>의료법상 환자 유인 · 알선 제한. 의료기관 양도도 포함</td><td>인기검색어 “병원 양도”</td></tr>
+          <tr class="blocked"><td class="n">3</td><td class="k">보험 모집</td><td>보험업법상 모집 자격 요건</td><td>미노출 — 선제 차단</td></tr>
+          <tr class="blocked"><td class="n">4</td><td class="k">대출 · 금융 중개</td><td>대부업법 등 중개 자격 요건</td><td>미노출 — 선제 차단</td></tr>
+          <tr class="blocked"><td class="n">5</td><td class="k">직업소개 · 인력</td><td>직업안정법상 신고 · 등록 요건</td><td>신고 여부 확인 후 결정</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <h5>차단은 세 겹으로</h5>
+      <p>
+        ① 카테고리 목록 API 응답에 미포함 → ② 등록 API에서 <code>422</code> 거부 →
+        ③ 제목·본문 키워드 감지 시 검수 <code>R03</code>.
+        UI에서 지우는 것만으로는 부족합니다. 등록자가 “기타 중고”에 법률 상담을 올리는 경로가 남기 때문입니다.
+      </p>
+      <p>
+        <b>부동산은 이 목록에서 빠졌습니다.</b> 차단이 아니라 제휴 중개사 구조로 운영하기 때문입니다.
+        다만 <code>asset-estate</code>는 <b>중개사 인증이라는 별도 게이트</b>를 통과해야 등록됩니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 경계 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">04</span><h2>경계 사례 판정</h2></div>
+    <p class="sd">
+      기준이 “누구와 누구”이므로, 같은 물건이라도 <b>파는 사람이 개인인가 사업자인가</b>로 갈립니다.
+    </p>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:330px">사례</th><th style="width:120px">판정</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr><td class="k">개인이 쓰던 냉장고를 판다</td><td><span class="tag g-mny">소개머니</span></td><td>개인 ↔ 개인</td></tr>
+          <tr><td class="k">업소용 냉장고 판매점이 판다</td><td><span class="tag g-mal">소개몰</span></td><td>사업자가 판다 — B군 goods</td></tr>
+          <tr><td class="k">폐업하는 식당이 주방설비를 넘긴다</td><td><span class="tag g-mal">소개몰</span></td><td>사업용 동산 — C군 asset-movable</td></tr>
+          <tr><td class="k">그 식당을 통째로 넘긴다</td><td><span class="tag g-biz">소개창업</span></td><td>영업권 승계 — 예비 창업자와 연결</td></tr>
+          <tr><td class="k">개인이 중고차를 판다</td><td><span class="tag g-mny">소개머니</span></td><td>개인 ↔ 개인</td></tr>
+          <tr><td class="k">중고차 매매상사를 소개한다</td><td><span class="tag g-mal">소개몰</span></td><td>업체 소개 — A군</td></tr>
+          <tr><td class="k">인테리어 업체를 소개한다</td><td><span class="tag g-mal">소개몰</span></td><td>업체 소개 — A군 interior</td></tr>
+          <tr><td class="k">인테리어 업체를 통째로 양도한다</td><td><span class="tag g-biz">소개창업</span></td><td>사업 승계</td></tr>
+          <tr><td class="k">상가를 임대 놓는다</td><td><span class="tag g-mal">소개몰</span></td><td>asset-estate — <b>제휴 중개사만 등록</b></td></tr>
+          <tr><td class="k">그 상가에서 하던 카페를 넘긴다</td><td><span class="tag g-biz">소개창업</span></td><td>창업 승계 — 부동산이 아니라 사업</td></tr>
+          <tr><td class="k">태양광 지붕 임대 (SEBA SUN)</td><td><span class="tag g-mal">소개몰</span></td><td>업체 소개 — 설치 · 운영 사업자</td></tr>
+          <tr><td class="k">스마트팜 솔루션 도입 (세바팜)</td><td><span class="tag g-mal">소개몰</span></td><td>업체 소개 — 구축 사업자</td></tr>
+          <tr><td class="k">스마트팜 창업 패키지</td><td><span class="tag g-biz">소개창업</span></td><td>창업을 소개하면 창업관</td></tr>
+          <tr><td class="k">프랜차이즈 가맹점 모집</td><td><span class="tag g-biz">소개창업</span></td><td>본사 ↔ 예비 가맹점주 · 정액 요율</td></tr>
+          <tr><td class="k">공연 티켓 양도</td><td><span class="tag g-mny">소개머니</span></td><td>개인 ↔ 개인</td></tr>
+          <tr><td class="k">변호사 상담 연결</td><td><span class="tag g-blk">등록 불가</span></td><td>변호사법</td></tr>
+          <tr><td class="k">병원 양도</td><td><span class="tag g-blk">등록 불가</span></td><td>의료법 — 창업관에도 두지 않는다</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note ok">
+      <h5>등록 화면에서 관을 자동으로 좁히는 법</h5>
+      <p>
+        등록폼 첫 질문을 <b>“어떤 소개인가요?”</b> 3지선다로 둡니다 —
+        <b>개인 물건을 파는 소개 / 업체나 사업장을 알리는 소개 / 창업을 잇는 소개.</b>
+        관 이름(소개머니 · 소개몰 · 소개창업)을 먼저 묻지 않습니다.
+        등록자는 브랜드 용어를 모르지만 자기가 무엇을 소개하는지는 압니다.
+      </p>
+      <p>
+        업체 · 사업장을 고르면 <b>사업자등록번호 인증</b>이, 사업용 부동산을 고르면
+        <b>중개사무소 등록번호 인증</b>이 이어집니다. 인증이 관의 게이트 역할을 합니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 파생 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">05</span><h2>여기서 파생되는 결정 5건</h2></div>
+    <p class="sd">
+      매트릭스가 확정되면 아래 다섯은 <b>새로 논의할 안건이 아니라 확인할 항목</b>이 됩니다.
+      v1에서 D3 · D4가 바뀌었습니다.
+    </p>
+
+    <div class="dec">
+      <div class="hd"><span class="id">D1</span><span class="q">GNB 다섯 번째 자리를 무엇으로 채울 것인가</span><span class="src">시안 충돌</span></div>
+      <div class="bd">
+        <div class="opts">
+          <div class="opt pick"><span class="mk"></span><span>
+            <span class="t">고객센터 <em>권장</em></span>
+            <span class="r">오픈 시점에 반드시 필요한 창구. 분쟁 접수 · FAQ · 문의가 여기로 모입니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">커뮤니티</span>
+            <span class="r">운영 인력이 붙지 않으면 빈 게시판으로 남습니다. 콘텐츠가 쌓인 뒤 <b>6번째</b>로 추가.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">혜택안내</span>
+            <span class="r">별도 메뉴로 둘 분량이 아닙니다. <b>이용안내 하위 문서로 흡수</b>합니다.</span></span></div>
+        </div>
+        <div class="why">
+          <span class="lb">매트릭스에서 파생되는 이유</span>
+          관이 3개로 확정되어 GNB 1~3번이 채워졌고, 4번 이용안내에는
+          <b>관별 소개비 요율표와 부담 주체 안내</b>가 들어가야 합니다.
+          특히 소개머니의 “부담 주체 선택” 구조는 반드시 설명이 필요하므로 이용안내의 분량이 커집니다.
+          그러면 “혜택안내”가 설명할 내용이 남지 않습니다.
+        </div>
+        <div class="impact"><span>전 화면 헤더</span><span>이용안내 문서</span><span>SB-HOM-ETC-010</span></div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="hd"><span class="id">D2</span><span class="q">메인 시안 3안을 어떻게 통합할 것인가</span><span class="src">시안 충돌</span></div>
+      <div class="bd">
+        <div class="opts">
+          <div class="opt pick"><span class="mk"></span><span>
+            <span class="t">제휴 배너형 + 카테고리 사이드바 <em>권장</em></span>
+            <span class="r">히어로 좌측 · 검색 우측 · 세바팜/SEBA SUN 배너 유지 + 좌측 카테고리 사이드바 추가.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">검색 전폭형</span>
+            <span class="r">탐색은 좋지만 제휴 배너 자리가 사라집니다. 제휴사 영업의 핵심 자산을 잃습니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">히어로 중심형</span>
+            <span class="r">브랜드 전달은 강하지만 첫 화면에서 리스팅이 보이지 않습니다.</span></span></div>
+        </div>
+        <div class="why">
+          <span class="lb">매트릭스에서 파생되는 이유</span>
+          업종이 32종으로 늘었고, 소개몰이 <b>A · B · C 3개 군</b>으로 나뉘어 계층이 한 겹 더 생겼습니다.
+          아이콘 그리드 12칸으로는 담기지 않으므로 사이드바가 필요합니다.
+          동시에 세바팜 · SEBA SUN이 소개몰 A군의 실제 사례이므로,
+          <b>배너가 곧 소개몰의 대표 콘텐츠</b>가 되어 자리를 유지할 근거가 강해졌습니다.
+        </div>
+        <div class="impact"><span>SB-HOM-MAIN-010/011</span><span>카테고리 사이드바 신규</span><span>소개몰 3개 군 표현</span></div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="hd"><span class="id">D3</span><span class="q">소개비 부담 주체를 어떻게 처리할 것인가</span><span class="src">v2 신규</span></div>
+      <div class="bd">
+        <div class="opts">
+          <div class="opt pick"><span class="mk"></span><span>
+            <span class="t">소개머니만 선택 · 나머지는 고정 <em>권장</em></span>
+            <span class="r">소개머니는 등록 시 판매자/구매자 선택. 소개몰은 업체 고정, 소개창업은 양도인·본사 고정.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">전 관 선택 가능</span>
+            <span class="r">업체가 “구매자가 소개비 내세요”를 걸 수 있게 되면 소비자 반발과 분쟁이 생깁니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">전 관 고정</span>
+            <span class="r">개인 간 거래에서 누가 낼지 정할 수 없어 소개머니가 작동하지 않습니다.</span></span></div>
+        </div>
+        <div class="why">
+          <span class="lb">매트릭스에서 파생되는 이유</span>
+          당근형 개인 간 거래에는 <b>수수료를 낼 사업자가 없습니다.</b>
+          그래서 소개머니에만 부담 주체 선택이 필요하고, 이 선택이 곧
+          <b>소개합니다 / 소개원해요</b> 탭의 실질적 의미가 됩니다 —
+          판매자 부담이면 “소개합니다”, 구매자 부담이면 “소개원해요”.
+          소개몰과 소개창업은 언제나 사업자가 있으므로 선택이 필요 없습니다.
+        </div>
+        <div class="impact"><span>SB-HOM-REG-010</span><span>역할 탭 의미 확정</span><span class="hot">정산 · 이용안내</span></div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="hd"><span class="id">D4</span><span class="q">에스크로 결제를 어디에 적용할 것인가</span><span class="src">v2 변경</span></div>
+      <div class="bd">
+        <div class="opts">
+          <div class="opt pick"><span class="mk"></span><span>
+            <span class="t">소개머니 전체 + 소개몰 B군(goods) <em>권장</em></span>
+            <span class="r">개인 간 직거래는 사기 위험이 가장 크고, 업체 상품은 인도 · 청약철회가 있습니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">소개머니만</span>
+            <span class="r">업체 상품 구매에서 소비자 보호가 빠집니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">전 관 적용</span>
+            <span class="r">8,500만원 양수도 대금을 플랫폼이 보관하면 자금 관련 규제 부담이 생깁니다.</span></span></div>
+        </div>
+        <div class="why">
+          <span class="lb">v1에서 바뀐 이유</span>
+          v1은 “물건이 넘어가는 소개몰만”이었습니다. v2에서 소개머니가
+          <b>개인 간 중고 직거래</b>가 되면서 에스크로의 1순위 대상이 소개머니로 바뀌었습니다.
+          당근에서 사기 피해가 가장 많은 지점이 바로 여기이고,
+          <b>안전결제가 없으면 소개머니는 당근 대비 이점이 없습니다.</b>
+          반대로 소개몰 A군(업체 소개)과 C군(자산)은 계약 기반이므로 에스크로 대상이 아닙니다.
+        </div>
+        <div class="impact"><span>SB-HOM-DEL-020</span><span>PG 연동 범위</span><span class="hot">소개머니 핵심 차별점</span></div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="hd"><span class="id">D5</span><span class="q">모바일 하단 탭바를 도입할 것인가</span><span class="src">시안 없음</span></div>
+      <div class="bd">
+        <div class="opts">
+          <div class="opt pick"><span class="mk"></span><span>
+            <span class="t">도입 · 5탭 <em>권장</em></span>
+            <span class="r">홈 · 탐색 · <b>등록(중앙)</b> · 내소개 · 마이. 탐색을 누르면 관 3종을 먼저 묻습니다.</span></span></div>
+          <div class="opt"><span class="mk"></span><span>
+            <span class="t">미도입 · 햄버거만</span>
+            <span class="r">등록과 내 소개 내역이 2뎁스 안으로 숨습니다. 소개자의 재방문 동선이 끊깁니다.</span></span></div>
+        </div>
+        <div class="why">
+          <span class="lb">매트릭스에서 파생되는 이유</span>
+          소개머니가 당근형이 되면서 <b>모바일 비중이 결정적</b>이 되었습니다.
+          개인 간 중고거래는 사실상 모바일 전용 행위이고, 소개 링크도 메신저로 전달됩니다.
+          업종 32종을 햄버거 안에 넣으면 탐색이 불가능하므로,
+          탭바의 “탐색”이 관 3종 → 업종으로 좁혀 들어가는 진입점이어야 합니다.
+          <b>탭바를 도입하면 역할 탭은 목록 화면 안으로만 내립니다</b> — 위계가 겹치기 때문입니다.
+        </div>
+        <div class="impact"><span>전 화면 모바일</span><span>역할 탭 위치</span><span class="hot">시안에 모바일 없음</span></div>
+      </div>
+    </div>
+
+    <div class="note ok">
+      <h5>덤으로 확정되는 것 — SEO 랜딩 32개</h5>
+      <p>
+        슬러그가 정해졌으므로 <code>/mny/car</code>부터 <code>/biz/etc-startup</code>까지
+        <b>32개 랜딩 페이지가 즉시 생성 가능</b>합니다.
+        마케팅 예산이 0인 상황에서 유입의 기반이 되는 자산입니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 확정 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sh"><span class="no">06</span><h2>회의에서 확정할 것</h2></div>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:32px">#</th><th style="width:200px">질문</th><th>제안</th><th style="width:150px">확정 후 열리는 작업</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="k">분류 기준을 “연결 관계”로 할 것인가</td>
+            <td>개인↔개인 / 개인↔사업자 / 사업자↔예비사업자 — 부담 주체 · 책임 · 적용법과 일치</td>
+            <td class="mono">전 항목의 전제</td></tr>
+          <tr><td class="n">2</td><td class="k">업종 32종을 이대로 확정할 것인가</td>
+            <td>MNY 12 · MAL 12(3개 군) · BIZ 8</td>
+            <td class="mono">등록폼 · 필터 · SEO</td></tr>
+          <tr><td class="n">3</td><td class="k">요율을 3% / 5% / 1.5%로 할 것인가</td>
+            <td>상한 30 / 100 / 500만원. 프랜차이즈 가맹은 정액 별도</td>
+            <td class="mono">정산 · 제휴 영업</td></tr>
+          <tr><td class="n">4</td><td class="k">소개머니 부담 주체를 등록 시 선택하게 할 것인가</td>
+            <td>판매자 / 구매자 선택. 역할 탭과 직결</td>
+            <td class="mono">등록폼 · 역할 탭</td></tr>
+          <tr><td class="n">5</td><td class="k">부동산을 제휴 중개사 구조로 갈 것인가</td>
+            <td>중개사만 등록 · 수익은 노출료. <b>법률 자문 선행 필수</b></td>
+            <td class="mono">오픈 가능 여부</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h5>회의에 가져갈 한 문장</h5>
+      <p>
+        “관은 무엇을 파느냐가 아니라 <b>누구와 누구를 잇느냐</b>입니다.
+        개인끼리면 소개머니, 업체가 끼면 소개몰, 창업을 이으면 소개창업 —
+        이 한 줄에 동의해 주시면 업종 32종과 요율, 부담 주체, 등록폼, 남은 결정 5건이 오늘 다 정해집니다.”
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    소개뱅크 관 × 업종 매트릭스 v2.0 · 2026.08.26 개정 · 판정 기준을 “거래 대상”에서 “연결 관계”로 변경.
+    요율은 제안값이며 확정 전 시장 조사와 제휴사 협의가 필요합니다.
+    부동산 관련 서술을 포함한 법률 사항은 오픈 전 변호사 확인이 필요하며 법률 자문을 대신하지 않습니다.
+  </div>
+</footer>
+
+</body></html>

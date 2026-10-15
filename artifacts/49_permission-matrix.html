@@ -1,0 +1,235 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 권한 매트릭스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --pp:#7C3AED; --pp-d:#6D28D9; --pp-l:#F5F1FE; --bl:#2563EB; --bl-l:#EFF6FF;
+    --or:#F97316; --or-d:#EA580C; --or-l:#FFF7ED; --gr:#059669; --gr-l:#ECFDF5;
+    --am:#D97706; --am-l:#FFFBEB; --rd:#DC2626; --rd-l:#FEF2F2;
+    --mny:#2563EB; --mal:#059669; --biz:#D97706;
+    --nv:#1E293B; --ink:#0F172A; --ink2:#334155; --mut:#64748B; --mut2:#94A3B8;
+    --line:#E2E8F0; --line2:#F1F5F9; --page:#F7F8FA; --card:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+      --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --nv:#CBD5E1;
+      --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+    --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --nv:#CBD5E1;
+    --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  button,input,select{font-family:inherit;font-size:inherit}
+  button{cursor:pointer}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){ .wrap{padding:0 14px} }
+
+  .hero{color:#fff;padding:50px 0 40px}
+  .eyebrow{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.7px;
+    border-radius:999px;padding:5px 13px}
+  .hero h1{margin:16px 0 10px;font-size:36px;font-weight:900;letter-spacing:-1.2px;line-height:1.24}
+  @media (max-width:640px){ .hero h1{font-size:25px} }
+  .hero p{margin:0;max-width:760px;color:#CBD5E1;line-height:1.8}
+  .hero p b{color:#fff}
+  .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-size:12px;font-weight:600;color:#E2E8F0;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:5px 11px}
+
+  h2.s{margin:40px 0 5px;font-size:23px;font-weight:900;letter-spacing:-.8px}
+  p.sp{margin:0 0 18px;font-size:14px;color:var(--mut);max-width:840px}
+
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{background:var(--page);font-size:10.5px;font-weight:800;color:var(--mut);letter-spacing:.4px;white-space:nowrap;
+    position:sticky;top:0;z-index:2}
+  tr:last-child td{border-bottom:0}
+  td.k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mut);white-space:nowrap}
+  td.nm{font-weight:700}
+
+  .cal{border-radius:11px;padding:13px 16px;font-size:13.5px;line-height:1.8;margin-bottom:16px}
+  .cal .lb{display:block;font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:3px}
+  .cal.i{background:var(--bl-l);border:1px solid rgba(37,99,235,.24)} .cal.i .lb{color:var(--bl)}
+  .cal.w{background:var(--am-l);border:1px solid rgba(217,119,6,.28)} .cal.w .lb{color:var(--am)}
+  .cal.e{background:var(--rd-l);border:1px solid rgba(220,38,38,.25)} .cal.e .lb{color:var(--rd)}
+  .cal.s{background:var(--gr-l);border:1px solid rgba(5,150,105,.26)} .cal.s .lb{color:var(--gr)}
+  .cal b{color:var(--ink)}
+  .cal code{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--card);padding:1.5px 6px;border-radius:5px}
+
+  .bdg{display:inline-block;font-size:10.5px;font-weight:800;border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .bdg.p0{background:var(--rd-l);color:var(--rd)}
+  .bdg.p1{background:var(--am-l);color:var(--am)}
+  .bdg.p2{background:var(--line2);color:var(--mut)}
+  .bdg.ok{background:var(--gr-l);color:var(--gr)}
+  .bdg.no{background:var(--line2);color:var(--mut2)}
+  .bdg.br{background:var(--pp-l);color:var(--pp)}
+  .bdg.bl{background:var(--bl-l);color:var(--bl)}
+  .bdg.or{background:var(--or-l);color:var(--or-d)}
+  .bdg.mny{background:var(--bl-l);color:var(--mny)}
+  .bdg.mal{background:var(--gr-l);color:var(--mal)}
+  .bdg.biz{background:var(--am-l);color:var(--biz)}
+
+  .foot{margin:30px 0 60px;padding:15px 17px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;font-size:12.5px;color:var(--mut);line-height:1.85}
+  .foot b{color:var(--ink)}
+</style>
+
+<style>
+  .hero{background:linear-gradient(160deg,#2A1758 0%,#1E293B 60%,#0F172A 100%)}
+  .eyebrow{color:#C4B5FD;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.42)}
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px}
+  .role{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .role .bar{height:4px}
+  .role .bd{padding:13px 15px}
+  .role .r1{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .role h4{margin:0;font-size:15.5px;font-weight:900;letter-spacing:-.4px}
+  .role .c{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:800;color:#fff;
+    border-radius:5px;padding:2px 6px}
+  .role .en{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mut2)}
+  .role p{margin:0 0 8px;font-size:12.5px;color:var(--mut);line-height:1.7}
+  .role .sc{font-size:11px;color:var(--mut2);padding-top:8px;border-top:1px dashed var(--line)}
+  .role .sc b{color:var(--ink2)}
+
+  .mx td.f{font-weight:600;min-width:190px}
+  .mx td.s{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mut2);white-space:nowrap}
+  .mx td.p{text-align:center;width:64px}
+  .mx td.nt{font-size:12px;color:var(--mut);min-width:180px}
+  .mk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;
+    font-size:11px;font-weight:800}
+  .mk.Y{background:var(--gr-l);color:var(--gr)}
+  .mk.N{background:var(--line2);color:var(--mut2)}
+  .mk.C{background:var(--am-l);color:var(--am)}
+  .mx thead th.p{text-align:center;width:64px}
+  .grow{margin:24px 0 8px;font-size:15px;font-weight:900;letter-spacing:-.4px}
+
+  .sod{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  .sod .row{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line2)}
+  .sod .row:last-child{border-bottom:0}
+  .sod .row i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--rd);color:#fff;
+    display:grid;place-items:center;font-size:11px;font-weight:800;margin-top:2px}
+  .sod .row b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
+  .sod .row span{display:block;font-size:13px;color:var(--mut);line-height:1.8}
+  .sod .row span code{background:var(--line2);padding:1.5px 6px;border-radius:5px;font-size:12px}
+  .sod .row span b{display:inline;color:var(--ink);font-size:inherit}
+</style>
+
+<div class="hero"><div class="wrap">
+  <span class="eyebrow">PERMISSION MATRIX · v1.0</span>
+  <h1>소개뱅크 권한 매트릭스</h1>
+  <p>백오피스 13화면과 관 관리 6화면은 <b>관리자가 한 종류라고 가정하고</b> 그려져 있었습니다.
+     이 문서는 그 가정을 걷어냅니다. 이 백오피스에서 <b>정산 승인과 지급 실행</b>이 이뤄지고
+     관 관리 콘솔에서는 <b>새 관을 만들 수 있으므로</b>, 권한을 나누지 않으면
+     한 사람이 리스팅을 승인하고 그 거래의 소개비를 자기에게 보낼 수 있습니다.</p>
+  <div class="pills">
+    <span class="pill">역할 5</span><span class="pill">기능 28</span>
+    <span class="pill">직무분리 원칙 6</span><span class="pill">관 스코프 3단계</span>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <h2 class="s">1 · 역할</h2>
+  <p class="sp">역할은 늘리지 않습니다. 5개로 부족하면 <b>관 스코프</b>로 나누는 것이 먼저입니다 — 역할이 늘면 조합이 폭발합니다.</p>
+  <div class="roles">
+    <div class="role"><div class="bar" style="background:#7C3AED"></div><div class="bd"><div class="r1"><h4>최고관리자</h4><span class="c" style="background:#7C3AED">SU</span></div><div class="en">Super</div><p style="margin-top:6px">관 신설 · 권한 부여 · 정책 변경. 2인 이상 두지 않는다.</p><div class="sc">기본 스코프 · <b>전체 관</b></div></div></div>
+    <div class="role"><div class="bar" style="background:#2563EB"></div><div class="bd"><div class="r1"><h4>운영</h4><span class="c" style="background:#2563EB">OPS</span></div><div class="en">Operator</div><p style="margin-top:6px">관 설정 · 회원 관리 · 분쟁 처리. 돈에는 손대지 않는다.</p><div class="sc">기본 스코프 · <b>지정 관</b></div></div></div>
+    <div class="role"><div class="bar" style="background:#059669"></div><div class="bd"><div class="r1"><h4>검수</h4><span class="c" style="background:#059669">REV</span></div><div class="en">Reviewer</div><p style="margin-top:6px">리스팅 검수와 인증 확인만. 가장 인원이 많은 역할.</p><div class="sc">기본 스코프 · <b>지정 관</b></div></div></div>
+    <div class="role"><div class="bar" style="background:#D97706"></div><div class="bd"><div class="r1"><h4>정산</h4><span class="c" style="background:#D97706">FIN</span></div><div class="en">Finance</div><p style="margin-top:6px">정산 승인. 지급 실행은 별도 권한으로 분리한다.</p><div class="sc">기본 스코프 · <b>전체 관</b></div></div></div>
+    <div class="role"><div class="bar" style="background:#64748B"></div><div class="bd"><div class="r1"><h4>읽기전용</h4><span class="c" style="background:#64748B">RO</span></div><div class="en">ReadOnly</div><p style="margin-top:6px">조회만. 외부 자문·감사·신규 입사자에게 부여한다.</p><div class="sc">기본 스코프 · <b>지정 관</b></div></div></div>
+  </div>
+
+  <div class="cal e"><span class="lb">가장 중요한 한 줄</span>
+    <b>최고관리자에게 정산 승인 권한이 없습니다.</b> 오타가 아닙니다 —
+    권한을 만드는 사람이 돈까지 만지면 통제가 사라지기 때문입니다.
+    정산이 급하면 FIN 계정을 만들면 되고, 그 행위 자체가 감사 로그에 남습니다.</div>
+
+  <h2 class="s">2 · 권한 매트릭스</h2>
+  <p class="sp">
+    <span class="mk Y">Y</span> 허용 ·
+    <span class="mk C">C</span> 조건부(비고 참조) ·
+    <span class="mk N">N</span> 불가.
+    스코프 키는 API의 권한 문자열과 동일합니다 — 문서와 코드가 같은 이름을 씁니다.</p>
+  <div class="tw"><table class="mx"><thead><tr><th>기능</th><th>스코프 키</th><th class="p">SU</th><th class="p">OPS</th><th class="p">REV</th><th class="p">FIN</th><th class="p">RO</th><th>비고</th></tr></thead><tbody>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">리스팅 · 검수</td></tr>
+  <tr><td class="f">검수 큐 조회</td><td class="s">review:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt"></td></tr>
+  <tr><td class="f">검수 승인 · 반려</td><td class="s">review:write</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">감사 로그 필수</td></tr>
+  <tr><td class="f">리스팅 강제 내림</td><td class="s">listing:takedown</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">법적 요청·신고 대응</td></tr>
+  <tr><td class="f">리스팅 내용 직접 수정</td><td class="s">listing:edit</td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">누구도 불가 — 등록자만 수정하고 재검수를 거친다</td></tr>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">회원 · 인증</td></tr>
+  <tr><td class="f">회원 목록 조회</td><td class="s">user:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt">검수·정산은 담당 건에 연결된 회원만</td></tr>
+  <tr><td class="f">개인정보 마스킹 해제</td><td class="s">user:pii</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">사유 입력 필수 · 열람 기록 남음</td></tr>
+  <tr><td class="f">사업자 · 중개사 인증 승인</td><td class="s">verify:approve</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">INV-7의 게이트</td></tr>
+  <tr><td class="f">회원 제재 · 정지</td><td class="s">user:suspend</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt"></td></tr>
+  <tr><td class="f">회원 탈퇴 처리</td><td class="s">user:delete</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">정산 기록은 법정 기간 보존</td></tr>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">거래 · 분쟁</td></tr>
+  <tr><td class="f">거래 모니터링</td><td class="s">deal:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt"></td></tr>
+  <tr><td class="f">대화 내용 열람</td><td class="s">deal:chat</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">분쟁 접수 건에 한해 · 사유 기록</td></tr>
+  <tr><td class="f">성사 강제 확정</td><td class="s">deal:force</td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">INV-4 — API 자체를 만들지 않는다</td></tr>
+  <tr><td class="f">분쟁 접수 · 처리</td><td class="s">dispute:write</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">판정이 아니라 사실관계 확인</td></tr>
+  <tr><td class="f">분쟁 보류 해제</td><td class="s">dispute:release</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">해제해야 정산이 재개된다</td></tr>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">정산 · 지급</td></tr>
+  <tr><td class="f">정산 목록 조회</td><td class="s">settlement:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt"></td></tr>
+  <tr><td class="f">정산 승인</td><td class="s">settlement:approve</td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">최고관리자도 불가 — 승인은 정산 역할 전용</td></tr>
+  <tr><td class="f">지급 실행</td><td class="s">settlement:pay</td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">승인자와 다른 계정이어야 한다</td></tr>
+  <tr><td class="f">정산 보류 · 취소</td><td class="s">settlement:hold</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="nt"></td></tr>
+  <tr><td class="f">세무 리포트 · 지급명세</td><td class="s">settlement:tax</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="nt"></td></tr>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">관 관리</td></tr>
+  <tr><td class="f">관 목록 · 설정 조회</td><td class="s">gwan:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt"></td></tr>
+  <tr><td class="f">관 설정 변경</td><td class="s">gwan:update</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk C">C</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">운영은 담당 관의 브랜드·업종만. 요율은 불가</td></tr>
+  <tr><td class="f">요율 · 상한 변경</td><td class="s">gwan:rate</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">수익 구조 변경 — 최고관리자 전용</td></tr>
+  <tr><td class="f">관 신설</td><td class="s">gwan:create</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">PREP 상태로만 생성 · 2인 승인</td></tr>
+  <tr><td class="f">관 운영중 전환 · 중지</td><td class="s">gwan:status</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">체크리스트 통과 + 2인 승인</td></tr>
+  <tr><td colspan="8" style="background:var(--page);font-weight:800;font-size:12px;letter-spacing:.3px;color:var(--mut)">정책 · 시스템</td></tr>
+  <tr><td class="f">금칙어 · 제한업종 변경</td><td class="s">policy:write</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">변경 이력 필수</td></tr>
+  <tr><td class="f">운영자 계정 생성 · 권한 부여</td><td class="s">admin:grant</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">자기 자신에게 권한 추가 불가</td></tr>
+  <tr><td class="f">감사 로그 조회</td><td class="s">audit:read</td><td class="p"><span class="mk Y">Y</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk Y">Y</span></td><td class="nt">읽기전용 역할에 주는 이유 — 감사자용</td></tr>
+  <tr><td class="f">감사 로그 삭제</td><td class="s">audit:delete</td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="p"><span class="mk N">N</span></td><td class="nt">누구도 불가 · append-only</td></tr>
+  </tbody></table></div>
+  <h2 class="s">3 · 직무 분리 원칙</h2>
+  <p class="sp">매트릭스의 개별 칸보다 이 6가지가 먼저입니다. 새 기능이 생기면 여기에 비춰 권한을 정합니다.</p>
+  <div class="sod">
+    <div class="row"><i>1</i><div><b>검수와 정산 승인을 한 사람이 겸하지 않는다</b><span>검수자가 자기 지인의 리스팅을 승인하고, 그 거래의 소개비를 승인까지 하면 <b>한 사람이 돈을 만들 수 있습니다</b>. REV에게 <code>settlement:*</code>를 주지 않는 이유입니다.</span></div></div>
+    <div class="row"><i>2</i><div><b>정산 승인자와 지급 실행자를 분리한다</b><span>승인은 “줘도 된다”, 지급은 “실제로 보낸다”입니다. 같은 계정이면 승인 단계가 형식이 됩니다. FIN 역할 안에서도 <code>settlement:pay</code>는 별도 부여합니다.</span></div></div>
+    <div class="row"><i>3</i><div><b>최고관리자에게 정산 승인 권한을 주지 않는다</b><span>이상해 보이지만 의도된 것입니다. SU는 <b>권한을 만드는 사람</b>이라 돈까지 만지면 통제가 사라집니다. 정산이 급하면 FIN 계정을 만들고 그 사실이 감사 로그에 남습니다.</span></div></div>
+    <div class="row"><i>4</i><div><b>성사 강제 확정 API를 만들지 않는다</b><span>권한으로 막는 것이 아니라 <b>기능 자체를 만들지 않습니다</b>(INV-4). 권한으로 막으면 언젠가 “예외적으로” 열립니다.</span></div></div>
+    <div class="row"><i>5</i><div><b>감사 로그는 누구도 지울 수 없다</b><span>append-only. SU도 예외가 아닙니다. 지울 수 있으면 로그가 아닙니다.</span></div></div>
+    <div class="row"><i>6</i><div><b>자기 자신에게 권한을 더할 수 없다</b><span>SU도 자기 계정의 권한을 수정하지 못합니다. 다른 SU가 해야 하며, 그래서 SU는 2명이 필요합니다.</span></div></div>
+  </div>
+  <h2 class="s">4 · 관 스코프</h2>
+  <p class="sp">관이 늘어나면 역할이 아니라 <b>스코프</b>로 나눕니다. 같은 검수 역할이라도 담당 관이 다릅니다.</p>
+  <div class="tw"><table><thead><tr><th style="width:110px">단계</th><th style="width:190px">적용 역할</th><th>내용</th></tr></thead><tbody>
+  <tr><td class="nm">전체 관</td><td class="k">SU · FIN</td><td>정산은 관을 넘나들어 합산되므로 관 단위로 나눌 수 없습니다.</td></tr>
+  <tr><td class="nm">지정 관</td><td class="k">OPS · REV · RO</td><td>계정마다 담당 관을 지정합니다. 관이 늘어나면 담당도 나뉩니다.</td></tr>
+  <tr><td class="nm">담당 건</td><td class="k">REV · FIN의 회원 조회</td><td>자기가 처리 중인 검수·정산에 연결된 회원만 볼 수 있습니다.</td></tr>
+  </tbody></table></div>
+  <h2 class="s">5 · 계정 발급 기본값</h2>
+  <p class="sp">새 계정을 만들 때 <b>여기서 시작</b>합니다. 더 필요하면 그때 추가하되, 추가 사실이 감사 로그에 남습니다.</p>
+  <div class="tw"><table><thead><tr><th style="width:170px">대상</th><th style="width:240px">기본 권한</th><th>비고</th></tr></thead><tbody>
+  <tr><td class="nm">신규 검수자</td><td class="k">REV · 지정 관 1개</td><td>2주 후 성과 확인 뒤 관 추가</td></tr>
+  <tr><td class="nm">운영 담당</td><td class="k">OPS · 지정 관</td><td>정산 권한은 부여하지 않음</td></tr>
+  <tr><td class="nm">정산 담당</td><td class="k">FIN · 전체 관</td><td>지급 실행은 별도 · 2FA 필수</td></tr>
+  <tr><td class="nm">외부 자문 · 감사</td><td class="k">RO · 지정 관 + audit:read</td><td>기간 만료일 설정 필수</td></tr>
+  <tr><td class="nm">개발자</td><td class="k">RO · 스테이징만</td><td>운영 DB 직접 접근 금지</td></tr>
+  </tbody></table></div>
+
+  <div class="cal w"><span class="lb">아직 정하지 않은 것</span>
+    <b>2FA 적용 범위</b>와 <b>세션 만료 시간</b>은 결정 대기입니다.
+    권장은 정산·관 관리 권한을 가진 계정 전원 2FA 필수, 백오피스 세션 30분입니다.
+    관 신설 2인 승인의 <b>승인자 2인이 누구인지</b>도 결정 E-05에서 정해야 합니다.</div>
+
+  <div class="foot"><b>소개뱅크 권한 매트릭스 v1.0</b> · 2026.08.26 —
+  스코프 키는 <b>API 명세서 v1.0</b>의 권한 문자열과 동일합니다.
+  요구사항 <code>FR-ADM-01 ~ 05</code>, 결정 <code>D-05 · E-05</code>와 연결됩니다.
+  권한을 추가할 때는 매트릭스 칸이 아니라 <b>직무 분리 원칙 6가지</b>부터 확인합니다.</div>
+</div>
+
+</body></html>

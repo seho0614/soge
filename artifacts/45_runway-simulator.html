@@ -1,0 +1,476 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>소개뱅크 활주로 시뮬레이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F4F6FA; --card:#FFFFFF; --sunk:#EDF0F6;
+  --ink:#101827; --ink2:#33405A; --mut:#5C6880; --mut2:#8791A6;
+  --line:#DFE4EE; --line2:#EDF0F6;
+  --brand:#1F3864;
+  --s1:#2F5FD0; --s2:#0E8A6E; --s3:#C2610A;
+  --s1f:rgba(47,95,208,.16); --s2f:rgba(14,138,110,.16); --s3f:rgba(194,97,10,.16);
+  --ok:#0E7A56; --ok-bg:#E7F4EF; --bad:#B3300F; --bad-bg:#FBECE7;
+  --focus:#2F5FD0;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#090E1A; --card:#141C2E; --sunk:#0F1626;
+  --ink:#E9EEF8; --ink2:#C3CCDD; --mut:#8B99B3; --mut2:#6B7893;
+  --line:#243049; --line2:#1B2436;
+  --brand:#93AEDD;
+  --s1:#6A90EB; --s2:#22A883; --s3:#CB761F;
+  --s1f:rgba(106,144,235,.20); --s2f:rgba(34,168,131,.20); --s3f:rgba(203,118,31,.20);
+  --ok:#3EBE92; --ok-bg:#0F2A22; --bad:#F0765A; --bad-bg:#2C1410;
+  --focus:#6A90EB;
+}}
+:root[data-theme="dark"]{
+  --ground:#090E1A; --card:#141C2E; --sunk:#0F1626;
+  --ink:#E9EEF8; --ink2:#C3CCDD; --mut:#8B99B3; --mut2:#6B7893;
+  --line:#243049; --line2:#1B2436;
+  --brand:#93AEDD;
+  --s1:#6A90EB; --s2:#22A883; --s3:#CB761F;
+  --s1f:rgba(106,144,235,.20); --s2f:rgba(34,168,131,.20); --s3f:rgba(203,118,31,.20);
+  --ok:#3EBE92; --ok-bg:#0F2A22; --bad:#F0765A; --bad-bg:#2C1410;
+  --focus:#6A90EB;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+  font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3{text-wrap:balance;margin:0}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+
+.bar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.bar .in{max-width:1360px;margin:0 auto;padding:13px 22px;display:flex;flex-wrap:wrap;
+  align-items:center;gap:14px 20px}
+.brandmk{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.brandmk .t{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.brandmk .s{font-size:11px;color:var(--mut2);letter-spacing:.3px}
+.seg{display:flex;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--mut);font:inherit;font-size:12.5px;
+  font-weight:600;padding:5px 13px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);
+  box-shadow:0 1px 2px rgba(16,24,39,.10)}
+.tgl{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.tgl input{appearance:none;width:38px;height:21px;border-radius:999px;background:var(--line);
+  border:0;position:relative;cursor:pointer;transition:background .15s;flex:none}
+.tgl input::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;
+  background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.tgl input:checked{background:var(--s3)}
+.tgl input:checked::after{transform:translateX(17px)}
+.ghost{border:1px solid var(--line);background:var(--card);color:var(--ink2);font:inherit;
+  font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:7px;cursor:pointer}
+.ghost:hover{border-color:var(--mut2)}
+
+.page{max-width:1360px;margin:0 auto;padding:20px 22px 64px}
+
+/* readout */
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 15px;
+  display:flex;flex-direction:column;gap:2px}
+.tile .lb{font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--mut2);text-transform:uppercase}
+.tile .v{font-size:27px;font-weight:600;letter-spacing:-1px;line-height:1.15;color:var(--ink)}
+.tile .v small{font-size:14px;font-weight:500;color:var(--mut);letter-spacing:0;margin-left:2px}
+.tile .sub{font-size:11.5px;color:var(--mut)}
+.tile.state{border-left:3px solid var(--ok)}
+.tile.state.bad{border-left-color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;
+  font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;margin-top:3px}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+
+.grid{display:grid;grid-template-columns:288px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+
+/* levers */
+.rail{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 16px 14px;
+  position:sticky;top:76px}
+@media (max-width:960px){.rail{position:static}}
+.rail h2{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);
+  padding:14px 0 8px;border-bottom:1px solid var(--line2);margin-bottom:12px}
+.lv{margin-bottom:14px}
+.lv .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.lv .nm{font-size:12.5px;font-weight:500;color:var(--ink2)}
+.lv .val{font-size:13px;font-weight:600;color:var(--ink)}
+.lv input[type=range]{width:100%;appearance:none;height:4px;border-radius:2px;
+  background:var(--line);cursor:pointer;margin:0}
+.lv input[type=range]::-webkit-slider-thumb{appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--card);border:2px solid var(--s1);cursor:pointer;box-shadow:0 1px 3px rgba(16,24,39,.2)}
+.lv input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;
+  background:var(--card);border:2px solid var(--s1);cursor:pointer}
+.lv.lead input[type=range]::-webkit-slider-thumb{border-color:var(--s3)}
+.lv.lead input[type=range]::-moz-range-thumb{border-color:var(--s3)}
+.lv .hint{font-size:10.5px;color:var(--mut2);margin-top:3px}
+.rail[data-lead="off"] .lv.lead{opacity:.4;pointer-events:none}
+
+/* panels */
+.stack{display:flex;flex-direction:column;gap:16px}
+.pan{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px 18px}
+.ph{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:2px}
+.ph h3{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.ph .note{font-size:11.5px;color:var(--mut)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-left:auto}
+.leg span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);font-weight:500}
+.leg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.cw{overflow-x:auto;margin-top:10px}
+svg{display:block;width:100%;height:auto}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:16px}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+
+/* unit economics */
+.ue{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.uer{display:grid;grid-template-columns:78px minmax(0,1fr) 74px;align-items:center;gap:10px}
+.uer .k{font-size:12px;color:var(--mut)}
+.uer .track{height:15px;background:var(--sunk);border-radius:3px;position:relative;overflow:hidden}
+.uer .fill{height:100%;border-radius:3px 4px 4px 3px}
+.uer .n{font-size:12.5px;font-weight:600;text-align:right}
+.uebe{border-top:1px dashed var(--line);margin-top:4px;padding-top:9px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px}
+.uebe b{font-size:15px;font-weight:600}
+
+/* sensitivity */
+.sens{border-collapse:separate;border-spacing:2px;width:100%;min-width:440px}
+.sens th{font-size:10.5px;font-weight:600;color:var(--mut2);padding:3px 4px;text-align:center;white-space:nowrap}
+.sens th.rh{text-align:right;padding-right:8px;color:var(--mut);font-size:11.5px}
+.sens td{text-align:center;font-size:11.5px;font-weight:600;padding:7px 4px;border-radius:5px;
+  color:#fff;white-space:nowrap}
+.sens td.loss{background:var(--sunk);color:var(--mut2);font-weight:500}
+.sens td.here{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.sens{padding:3px}
+
+/* table */
+.tw{overflow-x:auto;margin-top:10px;border:1px solid var(--line);border-radius:9px}
+table.mt{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}
+table.mt th,table.mt td{padding:7px 11px;border-bottom:1px solid var(--line2);white-space:nowrap}
+table.mt th{background:var(--sunk);font-size:10.5px;font-weight:600;color:var(--mut);
+  letter-spacing:.3px;text-align:right;position:sticky;top:0}
+table.mt th:first-child{text-align:left}
+table.mt td{text-align:right}
+table.mt td:first-child{text-align:left;font-weight:600;color:var(--ink2)}
+table.mt tr:last-child td{border-bottom:0}
+table.mt tr.dry td{background:var(--bad-bg)}
+table.mt tr.bep td{background:var(--ok-bg)}
+
+.foot{margin-top:22px;font-size:11.5px;color:var(--mut);line-height:1.9}
+.foot b{color:var(--ink2)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="bar"><div class="in">
+  <div class="brandmk">
+    <span class="t">소개뱅크 활주로 시뮬레이터</span>
+    <span class="s">소개 3관 구독 + 소개리드 · 24개월 · 통합 모델 v9.0</span>
+  </div>
+  <div class="seg" role="group" aria-label="팀 시나리오">
+    <button id="sA" aria-pressed="false">A 현행 유지</button>
+    <button id="sB" aria-pressed="true">B 축소</button>
+    <button id="sC" aria-pressed="false">C 최소</button>
+  </div>
+  <label class="tgl"><input type="checkbox" id="leadOn" checked><span>소개리드 관</span></label>
+  <button class="ghost" id="reset">기본값으로</button>
+</div></div>
+
+<div class="page">
+
+  <div class="read" id="read"></div>
+
+  <div class="grid">
+    <aside class="rail" id="rail">
+      <h2>소개 3관</h2>
+      <div class="lv" data-k="new0"><div class="top"><span class="nm">월 신규 가입</span><span class="val"></span></div>
+        <input type="range" min="30" max="300" step="10"><div class="hint">1개월차 기준 · 이후 증가율 적용</div></div>
+      <div class="lv" data-k="growth"><div class="top"><span class="nm">월 가입 증가율</span><span class="val"></span></div>
+        <input type="range" min="0" max="24" step="1"><div class="hint">복리. 가장 민감한 레버 중 하나</div></div>
+      <div class="lv" data-k="conv"><div class="top"><span class="nm">유료 전환율</span><span class="val"></span></div>
+        <input type="range" min="2" max="16" step="1"></div>
+      <div class="lv" data-k="churn"><div class="top"><span class="nm">월 이탈률</span><span class="val"></span></div>
+        <input type="range" min="1" max="20" step="1"><div class="hint">다섯 레버 중 가장 둔감</div></div>
+
+      <h2>소개리드</h2>
+      <div class="lv lead" data-k="lead0"><div class="top"><span class="nm">월 리드 발생</span><span class="val"></span></div>
+        <input type="range" min="0" max="8000" step="250"></div>
+      <div class="lv lead" data-k="viewRate"><div class="top"><span class="nm">리드 열람률</span><span class="val"></span></div>
+        <input type="range" min="20" max="90" step="5"></div>
+      <div class="lv lead" data-k="leadFee"><div class="top"><span class="nm">평균 확인비용</span><span class="val"></span></div>
+        <input type="range" min="500" max="12000" step="250"><div class="hint" id="feeHint"></div></div>
+      <div class="lv lead" data-k="cpl"><div class="top"><span class="nm">리드 획득 단가</span><span class="val"></span></div>
+        <input type="range" min="0" max="4000" step="100"><div class="hint">소비자 유입 광고비 ÷ 발생 건수</div></div>
+
+      <h2>자본</h2>
+      <div class="lv" data-k="cash0"><div class="top"><span class="nm">기초 현금</span><span class="val"></span></div>
+        <input type="range" min="100" max="800" step="10"></div>
+    </aside>
+
+    <div class="stack">
+
+      <section class="pan">
+        <div class="ph"><h3>기말 현금 — 24개월</h3>
+          <span class="note" id="cashNote"></span></div>
+        <div class="cw"><svg id="cash" viewBox="0 0 760 268" role="img"
+          aria-label="24개월 기말 현금 추이"></svg></div>
+      </section>
+
+      <section class="pan">
+        <div class="ph"><h3>매출 구성</h3>
+          <span class="note">월별 · 누적 영역</span>
+          <span class="leg">
+            <span><i style="background:var(--s1)"></i>구독</span>
+            <span><i style="background:var(--s2)"></i>초과 코드</span>
+            <span><i style="background:var(--s3)"></i>리드 확인비용</span>
+          </span></div>
+        <div class="cw"><svg id="rev" viewBox="0 0 760 250" role="img"
+          aria-label="월별 매출 구성"></svg></div>
+      </section>
+
+      <div class="two">
+        <section class="pan">
+          <div class="ph"><h3>손익분기 지도</h3>
+            <span class="note">평균 확인비용 × 열람률 → 손익분기 개월차</span></div>
+          <div class="cw"><table class="sens" id="sens"></table></div>
+        </section>
+
+        <section class="pan">
+          <div class="ph"><h3>리드 단위경제</h3><span class="note">발생 1건당</span></div>
+          <div class="ue" id="ue"></div>
+        </section>
+      </div>
+
+      <section class="pan">
+        <div class="ph"><h3>월별 추정</h3><span class="note" id="tblNote"></span></div>
+        <div class="tw"><table class="mt" id="mt"></table></div>
+      </section>
+
+      <p class="foot">
+        <b>산식</b> · 기존 「활주로 시뮬레이션」 워크북의 월별 추정 수식을 그대로 옮기고 소개리드 항만 더했습니다.
+        리드관을 끄고 검수 2명으로 되돌리면 기존 문서의 필요 조달 370,382,406원 · 손익분기 19개월차와 일치합니다.<br>
+        <b>고정값</b> · STANDARD 49,000원 · PRO 149,000원 · 초과 코드 30,000원 · PRO 비중 17% ·
+        유료회원당 월 초과코드 0.17건 · 프로모션 무료 3개월 · 무료 코드 월 10건 6개월 ·
+        인건비 개발 550만 · 기획 500만 · 검수 300만 · 고정비 250만 · 콜드스타트 50만(12개월) · 알림톡 15원.<br>
+        <b>한계</b> · 파란 레버는 전부 가정치이고 실측이 아닙니다. 특히 리드 4개 값은 이번 통합에서 새로 세운 것이라
+        근거가 가장 약합니다 — 파트너센터 실적으로 교체해야 이 화면의 숫자가 예측이 됩니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const K={std:49000,pro:149000,code:30000,proRatio:.17,codePer:.17,atalk:15,
+  devCost:5.5e6,planCost:5e6,csCost:3e6,infra:1.5e6,legal:1e6,cold:5e5,
+  promoFree:3,freeCode:10,freeEnd:6,ad:0,leadGrowth:.10,M:24};
+const SC={A:{di:4,da:4,cut:99,pl:2,cs:3},B:{di:4,da:2,cut:4,pl:2,cs:3},C:{di:2,da:2,cut:1,pl:1,cs:2}};
+const DEF={new0:120,growth:.12,conv:.08,churn:.05,lead0:2000,viewRate:.55,leadFee:3000,cpl:1200,cash0:5e8};
+const LV={
+  new0:{get:v=>v,set:v=>v,fmt:v=>v.toLocaleString()+'곳'},
+  growth:{get:v=>v/100,set:v=>Math.round(v*100),fmt:v=>(v*100).toFixed(0)+'%'},
+  conv:{get:v=>v/100,set:v=>Math.round(v*100),fmt:v=>(v*100).toFixed(0)+'%'},
+  churn:{get:v=>v/100,set:v=>Math.round(v*100),fmt:v=>(v*100).toFixed(0)+'%'},
+  lead0:{get:v=>v,set:v=>v,fmt:v=>v.toLocaleString()+'건'},
+  viewRate:{get:v=>v/100,set:v=>Math.round(v*100),fmt:v=>(v*100).toFixed(0)+'%'},
+  leadFee:{get:v=>v,set:v=>v,fmt:v=>v.toLocaleString()+'원'},
+  cpl:{get:v=>v,set:v=>v,fmt:v=>v.toLocaleString()+'원'},
+  cash0:{get:v=>v*1e6,set:v=>Math.round(v/1e6),fmt:v=>(v/1e8).toFixed(2)+'억'}
+};
+let P={...DEF}, sc='B', leadOn=true;
+
+function run(p,scn,lead){const s=SC[scn];const o=[];
+  let nw=p.new0,cum=0,paid=0,ld=p.lead0,cash=p.cash0;
+  for(let n=1;n<=K.M;n++){
+    if(n>1){nw*=1+p.growth;ld*=1+K.leadGrowth;}
+    cum=n>1?cum+nw:nw;
+    const cv=nw*p.conv;
+    paid=n===1?cv:paid*(1-p.churn)+cv;
+    const pro=paid*K.proRatio, std=paid-pro;
+    const sub=n<=K.promoFree?0:std*K.std+pro*K.pro;
+    const over=Math.max(0,paid*K.codePer-(n<=K.freeEnd?K.freeCode:0));
+    const codeRev=over*K.code;
+    const views=lead?ld*p.viewRate:0, leadRev=views*p.leadFee;
+    const rev=sub+codeRev+leadRev+K.ad;
+    const dev=n<s.cut?s.di:s.da;
+    let cost=dev*K.devCost+s.pl*K.planCost+s.cs*K.csCost+K.infra+K.legal+(n<=12?K.cold:0);
+    if(lead)cost+=ld*p.cpl+ld*K.atalk;
+    const prof=rev-cost; cash+=prof;
+    o.push({n,paid,views,sub,code:codeRev,lead:leadRev,rev,cost,prof,cash});
+  } return o;}
+function mx(r,c0){const bep=r.find(x=>x.prof>=0);const dry=r.find(x=>x.cash<0);
+  return{bep:bep?bep.n:0,dry:dry?dry.n:0,need:c0-Math.min(...r.map(x=>x.cash)),end:r[r.length-1].cash};}
+const won=v=>Math.round(v).toLocaleString();
+const eok=v=>(v/1e8).toFixed(2)+'억';
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function readout(m){
+  const dry=m.dry>0;
+  document.getElementById('read').innerHTML=`
+   <div class="tile state ${dry?'bad':''}">
+     <span class="lb">활주로</span>
+     <span class="v">${dry?m.dry+'<small>개월차 소진</small>':'24<small>개월 완주</small>'}</span>
+     <span class="chip ${dry?'bad':'ok'}">${dry?'자금이 끊깁니다':'버팁니다'}</span></div>
+   <div class="tile"><span class="lb">손익분기</span>
+     <span class="v">${m.bep?m.bep+'<small>개월차</small>':'—'}</span>
+     <span class="sub">${m.bep?'그때 유료회원 '+Math.round(run(P,sc,leadOn)[m.bep-1].paid).toLocaleString()+'곳':'24개월 내 미도달'}</span></div>
+   <div class="tile"><span class="lb">필요 조달</span>
+     <span class="v">${eok(m.need)}</span>
+     <span class="sub">버퍼 +20% 기준 ${eok(m.need*1.2)}</span></div>
+   <div class="tile"><span class="lb">24개월 기말 현금</span>
+     <span class="v">${eok(m.end)}</span>
+     <span class="sub">${won(m.end)}원</span></div>`;
+}
+
+function cashChart(r,m){
+  const W=760,H=268,L=68,R=14,T=14,B=30,w=W-L-R,h=H-T-B;
+  const vals=r.map(x=>x.cash), lo=Math.min(0,...vals), hi=Math.max(P.cash0,...vals);
+  const raw=(hi-lo)/4||1, e=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/e;
+  const step=(n<=1?1:n<=2?2:n<=5?5:10)*e;
+  const y0=Math.floor(lo/step)*step, y1=Math.ceil(hi/step)*step;
+  const X=i=>L+w*i/(K.M-1), Y=v=>T+h*(1-(v-y0)/(y1-y0));
+  const zy=Y(0);
+  let g='';
+  for(let v=y0;v<=y1+step*.001;v+=step){const y=Y(v);
+    g+=`<line x1="${L}" y1="${y.toFixed(1)}" x2="${L+w}" y2="${y.toFixed(1)}" stroke="${cv('--line2')}" stroke-width="1"/>
+        <text x="${L-9}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="${cv('--mut2')}"
+        font-family="IBM Plex Mono,monospace">${(v/1e8).toFixed(1)}억</text>`;}
+  let xl='';[1,6,12,18,24].forEach(n=>{xl+=`<text x="${X(n-1).toFixed(1)}" y="${H-9}" text-anchor="middle"
+    font-size="10.5" fill="${cv('--mut2')}" font-family="IBM Plex Mono,monospace">${n}</text>`;});
+  const pts=r.map((x,i)=>`${X(i).toFixed(1)},${Y(x.cash).toFixed(1)}`).join(' ');
+  const area=`${L},${zy.toFixed(1)} ${pts} ${(L+w).toFixed(1)},${zy.toFixed(1)}`;
+  const dry=m.dry>0, col=dry?cv('--bad'):cv('--s1');
+  const fill=dry?'rgba(179,48,15,.14)':cv('--s1f');
+  let mark='';
+  const low=r.reduce((a,b)=>b.cash<a.cash?b:a);
+  const li=low.n-1;
+  mark=`<circle cx="${X(li).toFixed(1)}" cy="${Y(low.cash).toFixed(1)}" r="4.5" fill="${col}"
+      stroke="${cv('--card')}" stroke-width="2"/>
+    <text x="${X(li).toFixed(1)}" y="${(Y(low.cash)+(low.cash<P.cash0*.4?-14:22)).toFixed(1)}"
+      text-anchor="middle" font-size="11" font-weight="600" fill="${col}"
+      font-family="IBM Plex Mono,monospace">바닥 ${low.n}개월 · ${eok(low.cash)}</text>`;
+  document.getElementById('cash').innerHTML=`${g}
+    <line x1="${L}" y1="${zy.toFixed(1)}" x2="${L+w}" y2="${zy.toFixed(1)}"
+      stroke="${cv('--mut2')}" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <polygon points="${area}" fill="${fill}"/>
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>${mark}${xl}
+    <text x="${L+w}" y="${(zy-6).toFixed(1)}" text-anchor="end" font-size="10"
+      fill="${cv('--mut2')}" font-family="IBM Plex Mono,monospace">0원</text>`;
+  document.getElementById('cashNote').textContent =
+    dry?`${m.dry}개월차에 현금이 0을 지납니다`:`현금 바닥 ${low.n}개월차 · ${won(low.cash)}원`;
+}
+
+function revChart(r){
+  const W=760,H=250,L=68,R=78,T=14,B=30,w=W-L-R,h=H-T-B;
+  const hi=Math.max(...r.map(x=>x.rev))*1.08||1;
+  const X=i=>L+w*i/(K.M-1), Y=v=>T+h*(1-v/hi);
+  let g='';for(let i=0;i<=4;i++){const v=hi*i/4,y=Y(v);
+    g+=`<line x1="${L}" y1="${y.toFixed(1)}" x2="${L+w}" y2="${y.toFixed(1)}" stroke="${cv('--line2')}" stroke-width="1"/>
+      <text x="${L-9}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="${cv('--mut2')}"
+      font-family="IBM Plex Mono,monospace">${(v/1e6).toFixed(0)}백만</text>`;}
+  let xl='';[1,6,12,18,24].forEach(n=>{xl+=`<text x="${X(n-1).toFixed(1)}" y="${H-9}" text-anchor="middle"
+    font-size="10.5" fill="${cv('--mut2')}" font-family="IBM Plex Mono,monospace">${n}</text>`;});
+  const keys=[['sub','--s1','--s1f','구독'],['code','--s2','--s2f','초과 코드'],['lead','--s3','--s3f','리드']];
+  let band='',lab='',base=r.map(()=>0);
+  keys.forEach(([k,c,f,nm])=>{
+    const top=r.map((x,i)=>base[i]+x[k]);
+    const up=top.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    const dn=base.map((v,i)=>`${X(K.M-1-i).toFixed(1)},${Y(base[K.M-1-i]).toFixed(1)}`).join(' ');
+    band+=`<polygon points="${up} ${dn}" fill="${cv(f)}"/>
+      <polyline points="${up}" fill="none" stroke="${cv(c)}" stroke-width="2"/>`;
+    const last=r[K.M-1][k];
+    if(last>hi*.03){const my=Y(base[K.M-1]+last/2);
+      lab+=`<text x="${L+w+8}" y="${(my+1).toFixed(1)}" font-size="11" font-weight="600" fill="${cv(c)}"
+        font-family="IBM Plex Sans KR,sans-serif">${nm}</text>
+        <text x="${L+w+8}" y="${(my+14).toFixed(1)}" font-size="10" fill="${cv('--mut')}"
+        font-family="IBM Plex Mono,monospace">${(last/1e6).toFixed(0)}백만</text>`;}
+    base=top;});
+  document.getElementById('rev').innerHTML=g+band+lab+xl;
+}
+
+function unit(){
+  const exp=P.leadFee*P.viewRate, cost=P.cpl+K.atalk, be=cost/P.viewRate;
+  const m=Math.max(exp,cost,1);
+  const pos=exp-cost>=0;
+  document.getElementById('ue').innerHTML=`
+    <div class="uer"><span class="k">기대 매출</span>
+      <span class="track"><span class="fill" style="width:${(exp/m*100).toFixed(1)}%;background:var(--s3)"></span></span>
+      <span class="n num">${won(exp)}원</span></div>
+    <div class="uer"><span class="k">비용</span>
+      <span class="track"><span class="fill" style="width:${(cost/m*100).toFixed(1)}%;background:var(--mut2)"></span></span>
+      <span class="n num">${won(cost)}원</span></div>
+    <div class="uebe"><span>기여이익 <span class="num" style="color:${pos?'var(--ok)':'var(--bad)'}">${won(exp-cost)}원</span>
+      <span style="color:var(--mut)">· 기여율 ${exp>0?((exp-cost)/exp*100).toFixed(0):'—'}%</span></span></div>
+    <div class="uebe" style="border-top:0;padding-top:0">
+      <span style="color:var(--mut)">손익분기 확인비용</span><b class="num">${won(be)}원</b></div>
+    <p style="font-size:11.5px;color:var(--mut);margin:2px 0 0">
+      확인비용이 <span class="num">${won(be)}</span>원 아래로 내려가면 리드는 만들수록 자금을 태웁니다.
+      현재 <span class="num" style="color:${pos?'var(--ok)':'var(--bad)'}">${won(P.leadFee)}</span>원.</p>`;
+  document.getElementById('feeHint').innerHTML=
+    `손익분기선 <span class="num">${won(be)}</span>원 · 파트너센터 실측 800원대`;
+}
+
+function sens(){
+  const F=[1000,1500,2000,3000,5000,10000], V=[.35,.45,.55,.65,.75];
+  const nf=F.reduce((a,b)=>Math.abs(b-P.leadFee)<Math.abs(a-P.leadFee)?b:a);
+  const nv=V.reduce((a,b)=>Math.abs(b-P.viewRate)<Math.abs(a-P.viewRate)?b:a);
+  let h='<tr><th class="rh">확인비용＼열람률</th>'+V.map(v=>`<th>${(v*100).toFixed(0)}%</th>`).join('')+'</tr>';
+  F.forEach(f=>{h+=`<tr><th class="rh num">${f.toLocaleString()}원</th>`;
+    V.forEach(v=>{
+      const m=mx(run({...P,leadFee:f,viewRate:v},sc,leadOn),P.cash0);
+      const unitp=f*v-(P.cpl+K.atalk);
+      const near=f===nf&&v===nv;
+      if(unitp<0){h+=`<td class="loss${near?' here':''}">${m.bep||'24+'}</td>`;}
+      else{const b=m.bep||30, t=Math.max(0,Math.min(1,(26-b)/16));
+        const a=(.28+t*.62).toFixed(2);
+        h+=`<td class="${near?'here':''}" style="background:color-mix(in srgb, var(--s1) ${(a*100).toFixed(0)}%, transparent);
+          color:${t>.42?'#fff':'var(--ink)'}">${m.bep||'24+'}</td>`;}
+    });h+='</tr>';});
+  document.getElementById('sens').innerHTML=h+
+    `<caption style="caption-side:bottom;text-align:left;font-size:11px;color:var(--mut);padding-top:8px">
+     숫자는 손익분기 개월차 · 진할수록 빠릅니다. 회색 칸은 기여이익이 음수라 리드가 손해인 구간입니다.
+     테두리 = 현재 설정</caption>`;
+}
+
+function table(r,m){
+  let h=`<tr><th>개월</th><th>유료회원</th><th>리드 열람</th><th>구독</th><th>초과 코드</th>
+    <th>리드</th><th>총 매출</th><th>총 비용</th><th>손익</th><th>기말 현금</th></tr>`;
+  r.forEach(x=>{const cls=x.cash<0?'dry':(m.bep&&x.n===m.bep?'bep':'');
+    h+=`<tr class="${cls}"><td>${x.n}</td><td class="num">${Math.round(x.paid).toLocaleString()}</td>
+      <td class="num">${Math.round(x.views).toLocaleString()}</td>
+      <td class="num">${won(x.sub)}</td><td class="num">${won(x.code)}</td><td class="num">${won(x.lead)}</td>
+      <td class="num">${won(x.rev)}</td><td class="num">${won(x.cost)}</td>
+      <td class="num" style="color:${x.prof>=0?'var(--ok)':'var(--bad)'}">${won(x.prof)}</td>
+      <td class="num">${won(x.cash)}</td></tr>`;});
+  document.getElementById('mt').innerHTML=h;
+  document.getElementById('tblNote').textContent =
+    (m.bep?`초록 = 손익분기 도달 달`:'24개월 내 손익분기 미도달')+(m.dry?' · 붉은 행 = 현금 소진':'');
+}
+
+function draw(){
+  document.getElementById('rail').dataset.lead=leadOn?'on':'off';
+  const r=run(P,sc,leadOn), m=mx(r,P.cash0);
+  readout(m); cashChart(r,m); revChart(r); unit(); sens(); table(r,m);
+}
+function syncLevers(){
+  document.querySelectorAll('.lv').forEach(el=>{
+    const k=el.dataset.k, i=el.querySelector('input');
+    i.value=LV[k].set(P[k]); el.querySelector('.val').textContent=LV[k].fmt(P[k]);
+    el.querySelector('.val').className='val num';});
+}
+document.querySelectorAll('.lv').forEach(el=>{
+  const k=el.dataset.k;
+  el.querySelector('input').addEventListener('input',e=>{
+    P[k]=LV[k].get(+e.target.value);
+    el.querySelector('.val').textContent=LV[k].fmt(P[k]); draw();});
+});
+['A','B','C'].forEach(x=>document.getElementById('s'+x).addEventListener('click',()=>{
+  sc=x;['A','B','C'].forEach(y=>document.getElementById('s'+y).setAttribute('aria-pressed',String(y===x)));
+  draw();}));
+document.getElementById('leadOn').addEventListener('change',e=>{leadOn=e.target.checked;draw();});
+document.getElementById('reset').addEventListener('click',()=>{
+  P={...DEF};sc='B';leadOn=true;
+  document.getElementById('leadOn').checked=true;
+  ['A','B','C'].forEach(y=>document.getElementById('s'+y).setAttribute('aria-pressed',String(y==='B')));
+  syncLevers();draw();});
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',draw);
+syncLevers(); draw();
+</script>
+
+</body></html>

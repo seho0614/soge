@@ -1,0 +1,271 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>가맹 상담 챗봇</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#EEF2EF; --panel:#FFFFFF; --ink:#16241D; --muted:#5B6B62; --line:#D5DED8;
+  --brand:#1F5B43; --brand-ink:#FFFFFF; --accent:#E8A317; --bot:#F4F7F5; --me:#1F5B43; --me-ink:#FFFFFF;
+  --chip:#E3ECE6; --ok:#2E7D4F; --warn:#B26A00;
+  --display:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1713; --panel:#16211B; --ink:#E6EEE9; --muted:#9AAFA3; --line:#2A3A31;
+    --brand:#3E9A70; --brand-ink:#0B130F; --accent:#F0B53A; --bot:#1D2A23; --me:#2F7E5A; --me-ink:#F3FAF6;
+    --chip:#223229; --ok:#5BC08A; --warn:#E3A13B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1713; --panel:#16211B; --ink:#E6EEE9; --muted:#9AAFA3; --line:#2A3A31;
+  --brand:#3E9A70; --brand-ink:#0B130F; --accent:#F0B53A; --bot:#1D2A23; --me:#2F7E5A; --me-ink:#F3FAF6;
+  --chip:#223229; --ok:#5BC08A; --warn:#E3A13B; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+*{box-sizing:border-box}
+.app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;background:var(--panel);border-inline:1px solid var(--line)}
+header{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brandrow{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-family:var(--display);font-size:20px;flex:none}
+.brandrow h1{margin:0;font-family:var(--display);font-weight:400;font-size:22px;line-height:1.1}
+.brandrow p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.sample{margin-left:auto;font-size:11px;letter-spacing:.04em;padding:3px 8px;border-radius:999px;border:1px solid var(--accent);color:var(--warn);white-space:nowrap}
+.tabs{display:flex;gap:6px}
+.tabs button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.tabs .count{font-variant-numeric:tabular-nums;margin-left:4px;color:var(--accent)}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+#chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:10px 13px;border-radius:14px;word-break:keep-all;overflow-wrap:anywhere}
+.bot{background:var(--bot);align-self:flex-start;border-top-left-radius:4px}
+.me{background:var(--me);color:var(--me-ink);align-self:flex-end;border-top-right-radius:4px}
+.msg b{font-weight:700}
+.msg .note{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.msg table{border-collapse:collapse;width:100%;margin-top:6px;font-size:13.5px;font-variant-numeric:tabular-nums}
+.msg td{padding:5px 0;border-bottom:1px dashed var(--line)}
+.msg td:last-child{text-align:right;font-weight:500}
+.msg tr.total td{border-bottom:none;font-weight:700;padding-top:8px}
+.msg ol{margin:6px 0 0;padding-left:20px}
+.msg ol li{margin:3px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;max-width:100%}
+.chips button{font:inherit;font-size:13.5px;background:var(--chip);color:var(--ink);border:1px solid transparent;padding:7px 12px;border-radius:999px;cursor:pointer}
+.chips button:hover{border-color:var(--brand)}
+.chips button.primary{background:var(--accent);color:#1b1300;font-weight:700}
+.chips.used button{opacity:.45;pointer-events:none}
+.typing{align-self:flex-start;color:var(--muted);font-size:13px;padding:4px 2px}
+form.composer{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--panel)}
+.composer input{flex:1;min-width:0;font:inherit;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.composer button{font:inherit;font-weight:700;padding:0 16px;border-radius:12px;border:none;background:var(--brand);color:var(--brand-ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#leads{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.lead{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:4px}
+.lead .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead .name{font-weight:700}
+.pill{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.new{color:var(--warn)} .pill.done{color:var(--ok)}
+.lead .meta{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.lead .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.lead button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+@media (prefers-reduced-motion:no-preference){.msg,.chips{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+
+<div class="app">
+  <header>
+    <div class="brandrow">
+      <div class="logo" id="logo">가</div>
+      <div>
+        <h1 id="brandName">가맹 상담</h1>
+        <p id="brandSub">창업 비용·절차·지원 안내</p>
+      </div>
+      <span class="sample">예시 데이터</span>
+    </div>
+    <div class="tabs" role="tablist">
+      <button id="tabChat" role="tab" aria-selected="true">상담하기</button>
+      <button id="tabLeads" role="tab" aria-selected="false" hidden>상담 신청 목록<span class="count" id="leadCount"></span></button>
+    </div>
+  </header>
+  <main>
+    <section id="chatView" style="display:contents">
+      <div id="chat" aria-live="polite"></div>
+      <form class="composer" id="composer">
+        <input id="q" autocomplete="off" placeholder="궁금한 점을 입력하세요 (예: 창업 비용)">
+        <button type="submit">보내기</button>
+      </form>
+    </section>
+    <section id="leadsView" hidden style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div id="leads"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ================= 설정: 이 부분만 바꾸면 브랜드가 바뀝니다 ================= */
+const CONFIG = {
+  brand: "동네밥집",               // 브랜드 이름 (예시)
+  category: "한식 소형 매장",
+  store: "10~15평",
+  cost: [                            // 단위: 만원 (예시 수치)
+    ["가맹비", 500], ["교육비", 200], ["보증금(계약이행)", 300],
+    ["인테리어 (15평 기준)", 3000], ["주방설비·집기", 1500], ["간판·사인물", 400], ["초도 물품", 500]
+  ],
+  costNote: "점포 임대 보증금·권리금은 제외한 금액입니다. 지역과 매장 상태에 따라 달라집니다.",
+  royalty: "월 매출의 3% (최초 6개월 면제)",
+  profit: { sales: 4500, rate: "18~22%" },  // 월평균 매출(만원), 순이익률
+  support: ["오픈 전 2주 본사 실습 교육", "오픈 첫 주 본사 직원 현장 지원", "상권 분석 무료 제공", "창업 자금 대출 연계 상담", "월 1회 슈퍼바이저 방문 점검"],
+  location: "주거지 밀집 지역·대학가 1층, 전용 10~15평, 배달 반경 2km 안 인구 3만 명 이상을 권장합니다.",
+  hours: "평일 09:00~18:00",
+  phone: "1588-0000"
+};
+/* ========================================================================== */
+
+const $ = s => document.querySelector(s);
+const chat = $("#chat");
+const won = n => n >= 10000 ? (n/10000).toFixed(n%10000?1:0)+"억원" : n.toLocaleString("ko-KR")+"만원";
+const total = CONFIG.cost.reduce((a,[,v])=>a+v,0);
+
+$("#brandName").textContent = CONFIG.brand + " 가맹 상담";
+$("#brandSub").textContent = CONFIG.category + " · 상담시간 " + CONFIG.hours;
+$("#logo").textContent = CONFIG.brand[0];
+
+const ANSWERS = {
+  cost: () => `<b>${CONFIG.brand} 창업 비용</b> (${CONFIG.store} 기준)
+    <table>${CONFIG.cost.map(([k,v])=>`<tr><td>${k}</td><td>${won(v)}</td></tr>`).join("")}
+    <tr class="total"><td>합계</td><td>${won(total)}</td></tr></table>
+    <span class="note">${CONFIG.costNote}</span>`,
+  process: () => `<b>가맹 절차</b>는 보통 6~8주 걸립니다.
+    <ol><li>상담 신청 · 1차 전화 상담</li><li>본사 방문 상담 · <b>정보공개서</b> 받기</li>
+    <li>상권 분석 · 점포 확정</li><li>가맹 계약 (정보공개서 받은 날부터 14일 뒤 가능)</li>
+    <li>인테리어 공사 · 본사 교육 2주</li><li>오픈 · 본사 현장 지원</li></ol>
+    <span class="note">정보공개서는 본사 재무 상태·가맹점 수·평균 매출이 담긴 공식 문서입니다. 법에 따라 계약 전에 반드시 받게 되어 있습니다.</span>`,
+  support: () => `<b>본사 지원 내용</b><ol>${CONFIG.support.map(s=>`<li>${s}</li>`).join("")}</ol>`,
+  profit: () => { const s=CONFIG.profit.sales; return `<b>예상 수익</b> (기존 가맹점 평균, 예시)
+    <table><tr><td>월평균 매출</td><td>${won(s)}</td></tr><tr><td>순이익률</td><td>${CONFIG.profit.rate}</td></tr>
+    <tr class="total"><td>월 예상 순이익</td><td>약 ${won(Math.round(s*0.18))}~${won(Math.round(s*0.22))}</td></tr></table>
+    <span class="note">입지·운영 방식에 따라 차이가 큽니다. 정확한 수치는 정보공개서의 평균 매출액을 확인하세요.</span>`; },
+  royalty: () => `<b>로열티(월 사용료)</b>: ${CONFIG.royalty}<span class="note">물류 공급가 외에 별도 광고비는 받지 않습니다 (예시).</span>`,
+  location: () => `<b>입지 조건</b><br>${CONFIG.location}<span class="note">상담 신청 시 희망 지역 상권 분석을 무료로 해 드립니다.</span>`,
+  contact: () => `상담 전화: <b>${CONFIG.phone}</b> (${CONFIG.hours})<br>전화가 어려우시면 아래 <b>상담 신청</b>을 남겨 주세요. 담당자가 연락드립니다.`
+};
+const INTENTS = [
+  ["cost",/비용|얼마|창업비|가맹비|투자|금액|돈|인테리어|자금/],
+  ["royalty",/로열티|로얄티|수수료|월\s?사용료|광고비/],
+  ["profit",/수익|매출|순이익|마진|벌이|벌어/],
+  ["process",/절차|과정|순서|계약|기간|오픈|언제|정보공개서/],
+  ["support",/지원|혜택|교육|본사|대출|도움/],
+  ["location",/입지|상권|점포|자리|평수|위치|지역/],
+  ["contact",/전화|번호|연락처/],
+  ["lead",/상담|신청|문의|창업하고|하고\s?싶/]
+];
+const MENU = [["창업 비용","cost"],["가맹 절차","process"],["예상 수익","profit"],["본사 지원","support"],["입지 조건","location"],["로열티","royalty"]];
+
+function add(html, who="bot"){ const d=document.createElement("div"); d.className="msg "+who;
+  if(who==="me") d.textContent=html; else d.innerHTML=html; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d; }
+function chips(list, withLead=true){ const w=document.createElement("div"); w.className="chips";
+  list.forEach(([label,key])=>{ const b=document.createElement("button"); b.type="button"; b.textContent=label;
+    b.onclick=()=>{ w.classList.add("used"); add(label,"me"); handle(key); }; w.appendChild(b); });
+  if(withLead){ const b=document.createElement("button"); b.type="button"; b.className="primary"; b.textContent="상담 신청하기";
+    b.onclick=()=>{ w.classList.add("used"); add("상담 신청하기","me"); handle("lead"); }; w.appendChild(b); }
+  chat.appendChild(w); chat.scrollTop=chat.scrollHeight; }
+function botSay(html, next){ const t=document.createElement("div"); t.className="typing"; t.textContent="입력 중…"; chat.appendChild(t);
+  chat.scrollTop=chat.scrollHeight; setTimeout(()=>{ t.remove(); add(html); next&&next(); }, 380); }
+
+/* ---------- 상담 신청 대화 흐름 ---------- */
+const LEAD_STEPS = [
+  {key:"name",  ask:"성함을 알려 주세요.", check:v=>v.length>=2||"성함을 2자 이상 입력해 주세요."},
+  {key:"phone", ask:"연락받으실 휴대폰 번호를 입력해 주세요. (예: 010-1234-5678)",
+    check:v=>/^01[016789]-?\d{3,4}-?\d{4}$/.test(v.replace(/\s/g,""))||"휴대폰 번호 형식이 맞지 않습니다. 010-1234-5678처럼 입력해 주세요."},
+  {key:"region",ask:"창업을 희망하시는 지역은 어디인가요? (예: 인천 연수구)", check:v=>v.length>=2||"지역을 입력해 주세요."},
+  {key:"budget",ask:"준비하신 창업 자금은 어느 정도인가요?", options:["5천만원 미만","5천만~1억원","1억원 이상","아직 미정"]},
+  {key:"store", ask:"점포(매장 자리)를 이미 갖고 계신가요?", options:["있음","없음 (추천 필요)"]},
+  {key:"when",  ask:"창업 희망 시기는 언제인가요?", options:["3개월 이내","6개월 이내","1년 이내","정보만 알아보는 중"]}
+];
+let lead=null, step=-1;
+function startLead(){ lead={}; step=0; botSay("상담 신청을 도와드릴게요. 6가지만 여쭤볼게요. 중간에 그만두시려면 <b>취소</b>라고 입력하세요.", askStep); }
+function askStep(){ const s=LEAD_STEPS[step]; botSay(s.ask, ()=>{ if(s.options) chips(s.options.map(o=>[o,"__opt:"+o]), false); }); }
+function answerStep(v){
+  if(v==="취소"){ lead=null; step=-1; botSay("상담 신청을 취소했습니다. 다른 궁금한 점이 있으신가요?", ()=>chips(MENU)); return; }
+  const s=LEAD_STEPS[step];
+  if(s.check){ const r=s.check(v.trim()); if(r!==true){ botSay(r); return; } }
+  lead[s.key]=s.key==="phone"? v.replace(/\D/g,"").replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3") : v.trim();
+  step++;
+  if(step<LEAD_STEPS.length) askStep(); else finishLead();
+}
+async function finishLead(){
+  const L=lead; lead=null; step=-1;
+  const summary=`<b>신청 내용 확인</b><table>
+    <tr><td>성함</td><td>${esc(L.name)}</td></tr><tr><td>연락처</td><td>${esc(L.phone)}</td></tr>
+    <tr><td>희망 지역</td><td>${esc(L.region)}</td></tr><tr><td>창업 자금</td><td>${esc(L.budget)}</td></tr>
+    <tr><td>점포 보유</td><td>${esc(L.store)}</td></tr><tr><td>희망 시기</td><td>${esc(L.when)}</td></tr></table>`;
+  add(summary);
+  const ok = await saveLead(L);
+  botSay(ok ? `접수되었습니다. 담당자가 <b>1영업일 안에</b> 연락드립니다. 감사합니다.`
+            : `이 화면에서는 신청 내용을 저장할 수 없습니다. 번거로우시겠지만 <b>${CONFIG.phone}</b>로 전화 주세요.`,
+         ()=>chips(MENU,false));
+}
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function handle(key){
+  if(key.startsWith("__opt:")) return answerStep(key.slice(6));
+  if(key==="lead") return startLead();
+  const f=ANSWERS[key];
+  if(f) botSay(f(), ()=>chips(MENU.filter(([,k])=>k!==key)));
+}
+function route(text){
+  if(lead) return answerStep(text);
+  const hit=INTENTS.find(([,re])=>re.test(text));
+  if(hit) return handle(hit[0]);
+  botSay("말씀하신 내용은 제가 정확히 답하기 어렵습니다. 아래 항목에서 고르시거나, 상담 신청을 남겨 주시면 담당자가 직접 답해 드립니다.", ()=>chips(MENU));
+}
+$("#composer").addEventListener("submit", e=>{ e.preventDefault(); const v=$("#q").value.trim(); if(!v) return; $("#q").value=""; add(v,"me"); route(v); });
+
+/* ---------- 저장 (db) ---------- */
+let db=null, uid=null, user=null;
+async function saveLead(L){
+  if(!db||!uid) return false;
+  try{ await db.doc("leads/"+uid).set({...L, status:"new", createdAt:new Date().toISOString(), brand:CONFIG.brand}); return true; }
+  catch(e){ console.warn(e); return false; }
+}
+
+/* ---------- 관리자: 신청 목록 ---------- */
+function showTab(which){
+  const isChat=which==="chat";
+  $("#tabChat").setAttribute("aria-selected",isChat); $("#tabLeads").setAttribute("aria-selected",!isChat);
+  $("#chatView").style.display=isChat?"contents":"none"; $("#leadsView").hidden=isChat;
+}
+$("#tabChat").onclick=()=>showTab("chat"); $("#tabLeads").onclick=()=>showTab("leads");
+function renderLeads(docs){
+  const box=$("#leads"); box.innerHTML="";
+  const fresh=docs.filter(d=>d.data().status!=="done").length;
+  $("#leadCount").textContent=fresh?fresh:"";
+  if(!docs.length){ box.innerHTML='<div class="empty">아직 상담 신청이 없습니다.<br>상담하기 탭에서 직접 신청해 보면 여기에 나타납니다.</div>'; return; }
+  docs.forEach(d=>{ const L=d.data(); const done=L.status==="done";
+    const dt=new Date(L.createdAt); const when=isNaN(dt)?"":dt.toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+    const el=document.createElement("div"); el.className="lead";
+    el.innerHTML=`<div class="top"><span class="name">${esc(L.name)}</span><span class="pill ${done?"done":"new"}">${done?"연락 완료":"새 신청"}</span><span class="meta" style="margin-left:auto">${when}</span></div>
+      <div class="meta">${esc(L.phone)} · ${esc(L.region)}</div>
+      <div class="meta">자금 ${esc(L.budget)} · 점포 ${esc(L.store)} · ${esc(L.when)}</div>
+      <div class="row"><button type="button" data-a="copy">번호 복사</button><button type="button" data-a="toggle">${done?"새 신청으로 되돌리기":"연락 완료로 표시"}</button></div>`;
+    el.querySelector('[data-a="copy"]').onclick=async e=>{ try{ await navigator.clipboard.writeText(L.phone); e.target.textContent="복사됨"; }catch{ e.target.textContent=L.phone; } };
+    el.querySelector('[data-a="toggle"]').onclick=async e=>{ e.target.disabled=true; try{ await db.doc("leads/"+d.id).update({status:done?"new":"done"}); }catch(err){ e.target.textContent="변경 실패"; } };
+    box.appendChild(el); });
+}
+
+/* ---------- 시작 ---------- */
+botSay(`안녕하세요, <b>${CONFIG.brand}</b> 가맹 상담 챗봇입니다.<br>창업 비용, 절차, 예상 수익 등 궁금한 것을 눌러 보시거나 직접 입력해 주세요.`, ()=>chips(MENU));
+
+(async()=>{
+  if(!window.claude?.use) return;
+  [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+  if(user){ try{ uid=await user.id(); }catch{} }
+  if(db && user && (await user.canEdit())){
+    $("#tabLeads").hidden=false;
+    db.collection("leads").orderBy("createdAt","desc").onSnapshot(s=>renderLeads(s.docs), e=>console.warn(e));
+  }
+})();
+</script>
+
+</body></html>

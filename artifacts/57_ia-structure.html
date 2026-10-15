@@ -1,0 +1,772 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 IA 체계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --paper:#F6F6F3; --surface:#FFFFFF; --surface-2:#EEEEEA;
+    --ink:#1A1B1D; --ink-2:#585B60; --ink-3:#8B8F95;
+    --rule:#DBDBD6; --rule-soft:#E9E9E5;
+    --mny:#24406E; --mny-s:#E8EDF5;
+    --mal:#2F7A68; --mal-s:#E3F0EC;
+    --biz:#9C6D22; --biz-s:#F5EEDF;
+    --hom:#5A5D62; --hom-s:#ECECE9;
+    --adm:#5E3AA6; --adm-s:#EDE7F8;
+    --mark:#C0392B; --mark-s:#FBEAE8;
+    --f:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#161719; --surface:#1F2124; --surface-2:#282A2E;
+      --ink:#E9EAEB; --ink-2:#A5A9AF; --ink-3:#787D84;
+      --rule:#34373C; --rule-soft:#2A2C30;
+      --mny:#8FB0E0; --mny-s:#1C2735;
+      --mal:#78C2AE; --mal-s:#182924;
+      --biz:#D9AC61; --biz-s:#2C2517;
+      --hom:#A5A9AF; --hom-s:#2A2C30;
+      --adm:#B79AF0; --adm-s:#251C39;
+      --mark:#E88075; --mark-s:#331F1D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#161719; --surface:#1F2124; --surface-2:#282A2E;
+    --ink:#E9EAEB; --ink-2:#A5A9AF; --ink-3:#787D84;
+    --rule:#34373C; --rule-soft:#2A2C30;
+    --mny:#8FB0E0; --mny-s:#1C2735;
+    --mal:#78C2AE; --mal-s:#182924;
+    --biz:#D9AC61; --biz-s:#2C2517;
+    --hom:#A5A9AF; --hom-s:#2A2C30;
+    --adm:#B79AF0; --adm-s:#251C39;
+    --mark:#E88075; --mark-s:#331F1D;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f);
+       font-size:14px;line-height:1.68;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){ .wrap{padding:0 14px} }
+  code{font-family:var(--m);font-size:.88em;background:var(--surface-2);padding:1.5px 5px;border-radius:3px}
+
+  .toc{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--paper) 92%,transparent);
+       backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+  .toc .wrap{display:flex;align-items:center;gap:16px;height:46px}
+  .toc .bd{font-family:var(--m);font-size:11px;letter-spacing:.09em;color:var(--ink-3);flex:none}
+  .toc nav{display:flex;gap:1px;overflow-x:auto;scrollbar-width:none}
+  .toc nav::-webkit-scrollbar{display:none}
+  .toc a{font-size:12px;color:var(--ink-2);text-decoration:none;padding:4px 9px;border-radius:5px;white-space:nowrap}
+  .toc a:hover{background:var(--surface-2);color:var(--ink)}
+
+  .dochd{background:var(--surface);border-bottom:2px solid var(--ink);padding:30px 0 0}
+  .dochd .t{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  h1{font-size:26px;font-weight:900;letter-spacing:-.04em;margin:0}
+  .ver{font-family:var(--m);font-size:11.5px;color:var(--ink-3);letter-spacing:.04em}
+  .lede{font-size:14.5px;color:var(--ink-2);max-width:70ch;margin:14px 0 0}
+  .metatbl{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:12.5px}
+  .metatbl th,.metatbl td{border:1px solid var(--rule);padding:7px 11px;text-align:left}
+  .metatbl th{background:var(--surface-2);font-weight:500;color:var(--ink-2);width:86px;white-space:nowrap}
+  .metatbl td.mono{font-family:var(--m);font-size:11.5px}
+
+  section{padding:38px 0;scroll-margin-top:56px}
+  .sh{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--ink)}
+  .sh .no{font-family:var(--m);font-size:11px;background:var(--ink);color:var(--paper);
+          padding:2px 7px;border-radius:3px;letter-spacing:.05em;flex:none}
+  h2{font-size:19px;font-weight:700;margin:0;letter-spacing:-.025em}
+  .sd{font-size:13.5px;color:var(--ink-2);margin:14px 0 0;max-width:76ch}
+  h3{font-size:14.5px;font-weight:700;margin:30px 0 0;display:flex;align-items:center;gap:8px}
+  h3::before{content:"";width:3px;height:14px;background:var(--ink-3);border-radius:2px}
+
+  figure{margin:18px 0 0}
+  .figbox{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:20px 18px;overflow-x:auto}
+  figure svg{display:block;width:100%;max-width:100%;height:auto;color:var(--ink)}
+  figcaption{margin-top:11px;font-size:12.5px;color:var(--ink-2);max-width:78ch;line-height:1.6}
+  figcaption b{color:var(--ink)}
+
+  .s-box{fill:none;stroke:currentColor;stroke-width:1.3;opacity:.55}
+  .s-box-s{fill:none;stroke:currentColor;stroke-width:1.5;opacity:.8}
+  .s-box-d{fill:none;stroke:currentColor;stroke-width:1.2;stroke-dasharray:5 4;opacity:.4}
+  .s-line{stroke:currentColor;stroke-width:1.2;opacity:.45;fill:none}
+  .s-line-a{stroke:var(--mark);stroke-width:1.5;fill:none}
+  .s-t{fill:currentColor;font-family:var(--f);font-size:12.5px;font-weight:500}
+  .s-s{fill:currentColor;font-family:var(--f);font-size:11px;opacity:.66}
+  .s-l{fill:currentColor;font-family:var(--m);font-size:9.5px;opacity:.6;letter-spacing:.04em}
+  .s-h{fill:currentColor;font-family:var(--m);font-size:10px;letter-spacing:.13em;opacity:.52}
+  .s-r{fill:var(--mark);font-family:var(--f);font-size:11px;font-weight:500}
+
+  .tscroll{overflow-x:auto;margin:16px 0 0;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+  table.d{border-collapse:collapse;width:100%;min-width:880px;font-size:12.5px}
+  table.d th{background:var(--surface-2);font-weight:700;font-size:11.5px;color:var(--ink-2);
+             padding:9px 11px;border:1px solid var(--rule);text-align:left;white-space:nowrap}
+  table.d td{padding:9px 11px;border:1px solid var(--rule-soft);vertical-align:top;line-height:1.6}
+  table.d td.mono{font-family:var(--m);font-size:11.5px;white-space:nowrap}
+  table.d td.k{font-weight:500;white-space:nowrap}
+  table.d tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 40%,transparent)}
+
+  .tag{display:inline-block;font-size:10.5px;font-family:var(--m);padding:1.5px 6px;border-radius:3px;white-space:nowrap}
+  .g-mny{background:var(--mny-s);color:var(--mny)}
+  .g-mal{background:var(--mal-s);color:var(--mal)}
+  .g-biz{background:var(--biz-s);color:var(--biz)}
+  .g-hom{background:var(--hom-s);color:var(--hom)}
+  .g-adm{background:var(--adm-s);color:var(--adm)}
+  .g-new{background:var(--mark-s);color:var(--mark)}
+
+  /* sitemap tree */
+  .tree{border:1px solid var(--rule);border-radius:8px;background:var(--surface);
+        padding:16px 18px;margin:16px 0 0;overflow-x:auto;font-family:var(--m);font-size:12px;line-height:2}
+  .tree .n{white-space:nowrap;display:block}
+  .tree .d1{font-weight:500;font-size:13px;margin-top:10px}
+  .tree .d1:first-child{margin-top:0}
+  .tree .p{color:var(--ink-3)}
+  .tree .id{color:var(--ink-3);font-size:10.5px}
+  .tree .nw{color:var(--mark);font-size:10px}
+
+  /* nav model */
+  .navm{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:16px 0 0}
+  .nv{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:14px 16px}
+  .nv .h{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .nv .h em{font-family:var(--m);font-size:10px;font-style:normal;color:var(--ink-3);letter-spacing:.06em}
+  .nv ul{margin:9px 0 0;padding-left:15px;font-size:12.5px;color:var(--ink-2)}
+  .nv ul li{margin-bottom:4px}
+
+  .note{border:1px solid var(--rule);border-left:3px solid var(--mark);background:var(--surface);
+        padding:13px 16px;margin:18px 0 0;border-radius:0 6px 6px 0;font-size:13px;max-width:82ch}
+  .note.info{border-left-color:var(--mny)}
+  .note.ok{border-left-color:var(--mal)}
+  .note h5{margin:0 0 5px;font-size:11px;font-family:var(--m);letter-spacing:.07em;color:var(--ink-3);font-weight:500}
+  .note p{margin:0}
+  .note p+p{margin-top:7px}
+
+  ul.k{margin:10px 0 0;padding-left:16px;max-width:76ch}
+  ul.k li{margin-bottom:5px}
+
+  footer{padding:32px 0 64px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--rule);margin-top:20px}
+</style>
+
+<div class="toc">
+  <div class="wrap">
+    <span class="bd">IA SYSTEM</span>
+    <nav>
+      <a href="#axis">1 축 체계</a>
+      <a href="#map">2 사이트맵</a>
+      <a href="#nav">3 내비게이션</a>
+      <a href="#url">4 URL · ID</a>
+      <a href="#tpl">5 템플릿</a>
+      <a href="#state">6 상태 전이</a>
+      <a href="#rule">7 배치 규칙</a>
+      <a href="#dec">8 결정 사항</a>
+    </nav>
+  </div>
+</div>
+
+<div class="dochd">
+  <div class="wrap">
+    <div class="t">
+      <h1>소개뱅크 IA · 화면설계 체계</h1>
+      <span class="ver">IA SYSTEM v1.0 · 2026.08.26</span>
+    </div>
+    <p class="lede">
+      시안 10종에서 관 · 업종 · 역할 세 축이 화면마다 번갈아 1군을 차지하고 있었습니다.
+      이 문서는 그 세 축을 계층으로 고정하고, 그 위에 사이트맵 · 내비게이션 · URL · 템플릿 · 상태 전이를
+      하나의 규칙으로 묶습니다.
+    </p>
+    <table class="metatbl">
+      <tr>
+        <th>축</th><td>관 &gt; 업종 &gt; 역할 (3계층 고정)</td>
+        <th>Depth</th><td>최대 3 · 예외 없음</td>
+        <th>화면 수</th><td>28종 · 템플릿 7종</td>
+      </tr>
+      <tr>
+        <th>ID 규칙</th><td class="mono">SB-{관}-{그룹}-{일련}</td>
+        <th>URL 규칙</th><td class="mono">/{gwan}/{category}/{id}</td>
+        <th>상태</th><td>Listing 5 · Deal 4 · Settlement 4</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ 1 축 ============ -->
+<section id="axis">
+  <div class="wrap">
+    <div class="sh"><span class="no">01</span><h2>축 체계 — 세 축을 계층으로 고정</h2></div>
+    <p class="sd">
+      관은 <b>정산 규칙과 플랫폼 책임 범위가 실제로 갈리는 지점</b>이므로 1군입니다.
+      업종은 관 안에서만 의미가 있고, 역할은 같은 목록을 뒤집어 보는 방식일 뿐이므로 목록 내부로 내립니다.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 880 300" role="img" aria-label="관은 GNB에 고정되고 그 아래 업종 필터, 그 아래 역할 탭이 놓이며 각 계층이 무엇을 결정하는지 보여주는 3계층 구조">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0L10 5L0 10z" fill="currentColor"></path></marker>
+          </defs>
+
+          <text class="s-h" x="16" y="18">계층</text>
+          <text class="s-h" x="560" y="18">이 계층이 결정하는 것</text>
+          <line class="s-line" x1="16" y1="26" x2="864" y2="26"></line>
+
+          <!-- L1 -->
+          <rect class="s-box-s" x="16" y="42" width="500" height="56" rx="5"></rect>
+          <text class="s-l" x="32" y="60">1군 · GNB 고정</text>
+          <text class="s-t" x="32" y="80">관 — 소개머니 · 소개몰 · 소개창업</text>
+          <text class="s-s" x="560" y="60">정산 방식 · 소개비 요율</text>
+          <text class="s-s" x="560" y="76">플랫폼 책임 범위 (중개 / 에스크로)</text>
+          <text class="s-s" x="560" y="92">등록폼 확장 필드 · 카테고리 집합</text>
+
+          <line class="s-line" x1="266" y1="98" x2="266" y2="126" marker-end="url(#a1)"></line>
+
+          <!-- L2 -->
+          <rect class="s-box" x="56" y="130" width="460" height="56" rx="5"></rect>
+          <text class="s-l" x="72" y="148">2군 · 목록 필터 + 사이드바</text>
+          <text class="s-t" x="72" y="168">업종 — 관마다 다른 집합</text>
+          <text class="s-s" x="560" y="152">검색 · 필터 · SEO 랜딩</text>
+          <text class="s-s" x="560" y="168">제한업종 차단 지점</text>
+
+          <line class="s-line" x1="286" y1="186" x2="286" y2="214" marker-end="url(#a1)"></line>
+
+          <!-- L3 -->
+          <rect class="s-box" x="96" y="218" width="420" height="56" rx="5"></rect>
+          <text class="s-l" x="112" y="236">3군 · 목록 내부 탭</text>
+          <text class="s-t" x="112" y="256">역할 — 소개합니다 / 소개원해요</text>
+          <text class="s-s" x="560" y="240">같은 리스팅 구조의 방향만 반전</text>
+          <text class="s-s" x="560" y="256">별도 화면을 만들지 않는다</text>
+
+          <line class="s-line" x1="16" y1="288" x2="864" y2="288" stroke-dasharray="3 5"></line>
+        </svg>
+      </div>
+      <figcaption>
+        <b>계층은 “무엇이 갈리는가”로 정한다.</b>
+        관에서 정산과 책임이 갈리므로 관이 1군입니다. 업종은 관 안에서만 존재하고,
+        역할은 아무것도 갈리게 하지 않으므로 가장 아래입니다.
+      </figcaption>
+    </figure>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:76px">관</th><th style="width:56px">코드</th><th>거래 유형</th><th>정산</th><th>플랫폼 책임</th><th>업종 수</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="tag g-mny">소개머니</span></td><td class="mono">MNY</td>
+            <td>사람 ↔ 사람 소개 중개</td><td>성사 시 정률</td><td>통신판매중개자 · 당사자 아님</td><td>10</td></tr>
+          <tr><td class="k"><span class="tag g-mal">소개몰</span></td><td class="mono">MAL</td>
+            <td>검증 상품 · 서비스 직거래</td><td>결제 수수료 + 소개비</td><td>에스크로 · 청약철회 대응</td><td>12</td></tr>
+          <tr><td class="k"><span class="tag g-biz">소개창업</span></td><td class="mono">BIZ</td>
+            <td>가맹 · 양수도 · 사업기회</td><td>계약 성사 시 정액/정률</td><td>중개 · 계약서 양식 제공</td><td>8</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h5>업종 집합은 관마다 다르다</h5>
+      <p>
+        현 시안의 카테고리 18종은 관과 매핑되지 않은 평면 목록입니다.
+        “자동차/오토바이”는 소개몰에는 있어야 하지만 소개창업에는 없어야 하고,
+        “외식·식당”은 소개창업에만 있어야 합니다.
+        <b>관 × 업종 매트릭스를 확정하기 전에는 등록폼도 목록 필터도 만들 수 없습니다.</b>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 사이트맵 ============ -->
+<section id="map">
+  <div class="wrap">
+    <div class="sh"><span class="no">02</span><h2>사이트맵</h2></div>
+    <p class="sd">
+      Depth 3을 넘지 않습니다. 리스팅 상세가 가장 깊은 지점이고, 그 이후 거래 흐름은
+      깊이가 아니라 <b>단계</b>로 진행합니다.
+    </p>
+
+    <div class="tree">
+      <span class="n d1">/ &nbsp;<span class="p">메인</span> &nbsp;<span class="id">SB-HOM-MAIN-010</span></span>
+      <span class="n">├─ /search &nbsp;<span class="p">통합 검색 결과</span> &nbsp;<span class="id">SB-HOM-SRC-010</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /login · /signup · /verify &nbsp;<span class="p">인증</span> &nbsp;<span class="id">SB-HOM-AUT-010/020/030</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /register &nbsp;<span class="p">리스팅 등록 — 관 선택으로 분기</span> &nbsp;<span class="id">SB-HOM-REG-010</span></span>
+      <span class="n">├─ /guide · /notice · /terms &nbsp;<span class="p">이용안내 · 공지 · 약관</span> &nbsp;<span class="id">SB-HOM-ETC-*</span></span>
+      <span class="n">└─ /support &nbsp;<span class="p">고객센터 · 분쟁 접수</span> &nbsp;<span class="id">SB-HOM-ETC-010</span> <span class="nw">신규</span></span>
+
+      <span class="n d1">/mny &nbsp;<span class="p">소개머니</span> &nbsp;<span class="id">SB-MNY-LST-010</span></span>
+      <span class="n">├─ /mny/{category} &nbsp;<span class="p">업종 목록 — 필터 · 정렬 · 역할 탭</span></span>
+      <span class="n">└─ /mny/{category}/{id} &nbsp;<span class="p">리스팅 상세</span> &nbsp;<span class="id">SB-MNY-DTL-010</span></span>
+
+      <span class="n d1">/mal &nbsp;<span class="p">소개몰</span> &nbsp;<span class="id">SB-MAL-LST-010</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /mal/{category}</span>
+      <span class="n">└─ /mal/{category}/{id} &nbsp;<span class="id">SB-MAL-DTL-010</span></span>
+
+      <span class="n d1">/biz &nbsp;<span class="p">소개창업</span> &nbsp;<span class="id">SB-BIZ-LST-010</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /biz/{category}</span>
+      <span class="n">└─ /biz/{category}/{id} &nbsp;<span class="id">SB-BIZ-DTL-010</span></span>
+
+      <span class="n d1">/chat/{id} &nbsp;<span class="p">1:1 문의 · 매칭</span> &nbsp;<span class="id">SB-HOM-MCH-010</span> <span class="nw">신규</span></span>
+      <span class="n d1">/deal/{id} &nbsp;<span class="p">계약 · 성사</span> &nbsp;<span class="id">SB-HOM-DEL-010/020/030</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /deal/{id}/contract &nbsp;<span class="p">계약서 발급 · 서명</span></span>
+      <span class="n">├─ /deal/{id}/payment &nbsp;<span class="p">에스크로 결제</span></span>
+      <span class="n">└─ /deal/{id}/confirm &nbsp;<span class="p">성사 확정 — 양측</span></span>
+
+      <span class="n d1">/my &nbsp;<span class="p">마이페이지 대시보드</span> &nbsp;<span class="id">SB-MYP-DSH-010</span> <span class="nw">신규</span></span>
+      <span class="n">├─ /my/listings &nbsp;<span class="p">내가 등록한 리스팅</span> &nbsp;<span class="id">SB-MYP-LST-010</span></span>
+      <span class="n">├─ /my/introductions &nbsp;<span class="p">소개 내역</span></span>
+      <span class="n">├─ /my/chats &nbsp;<span class="p">문의 · 대화</span></span>
+      <span class="n">├─ /my/settlement &nbsp;<span class="p">정산 신청 · 지급 내역</span> &nbsp;<span class="id">SB-MYP-STL-010/020</span></span>
+      <span class="n">├─ /my/likes &nbsp;<span class="p">관심 목록</span> &nbsp;<span class="id">SB-MYP-LIK-010</span></span>
+      <span class="n">└─ /my/settings &nbsp;<span class="p">설정 · 알림</span></span>
+
+      <span class="n d1">admin/ &nbsp;<span class="p">관리자 — 별도 도메인</span> <span class="nw">신규</span></span>
+      <span class="n">├─ admin/review &nbsp;<span class="p">리스팅 검수 큐</span> &nbsp;<span class="id">SB-ADM-REV-010/020</span></span>
+      <span class="n">├─ admin/users &nbsp;<span class="p">회원 · 제휴사 · 인증 승인</span> &nbsp;<span class="id">SB-ADM-USR-010</span></span>
+      <span class="n">├─ admin/settlement &nbsp;<span class="p">정산 승인 · 지급 실행</span> &nbsp;<span class="id">SB-ADM-STL-010</span></span>
+      <span class="n">└─ admin/policy &nbsp;<span class="p">금칙어 · 제한업종 관리</span></span>
+    </div>
+
+    <div class="note info">
+      <h5>Depth 정책</h5>
+      <p>
+        <b>탐색은 최대 3뎁스</b>(관 → 업종 → 상세)에서 끝납니다.
+        거래 흐름(<code>/chat</code>, <code>/deal</code>)은 상세의 하위가 아니라 <b>독립 경로</b>로 둡니다 —
+        하나의 대화·거래가 여러 리스팅을 참조할 수 있고, 리스팅이 삭제돼도 거래 기록은 남아야 하기 때문입니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 내비게이션 ============ -->
+<section id="nav">
+  <div class="wrap">
+    <div class="sh"><span class="no">03</span><h2>내비게이션 모델</h2></div>
+    <p class="sd">
+      네 층위로 나눕니다. 각 층위는 담당 범위가 정해져 있고, <b>다른 층위의 항목을 끌어올리지 않습니다.</b>
+      시안에서 “커뮤니티”와 “혜택안내”가 GNB 5번 자리를 놓고 다투는 것이 바로 이 규칙이 없어서입니다.
+    </p>
+
+    <div class="navm">
+      <div class="nv">
+        <div class="h">전역 <em>GLOBAL</em></div>
+        <ul>
+          <li>로고 · 관 3종 · 이용안내 · [5번째]</li>
+          <li>통합 검색 · 인기검색어</li>
+          <li>사용자 영역 · 알림</li>
+          <li>푸터 (법적고지 포함)</li>
+        </ul>
+      </div>
+      <div class="nv">
+        <div class="h">지역 <em>LOCAL</em></div>
+        <ul>
+          <li>업종 사이드바 · 아이콘 그리드</li>
+          <li>필터바 (업종 · 지역 · 가격)</li>
+          <li>정렬 · 역할 탭</li>
+          <li>페이징</li>
+        </ul>
+      </div>
+      <div class="nv">
+        <div class="h">문맥 <em>CONTEXTUAL</em></div>
+        <ul>
+          <li>상세 하단 액션바 (Action 1개)</li>
+          <li>단계 표시 (계약 → 결제 → 확정)</li>
+          <li>브레드크럼 — 관 › 업종 › 제목</li>
+        </ul>
+      </div>
+      <div class="nv">
+        <div class="h">개인 <em>PERSONAL</em></div>
+        <ul>
+          <li>마이페이지 좌측 메뉴 6종</li>
+          <li>알림 센터</li>
+          <li>모바일 하단 탭바</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>GNB 확정안</h3>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:44px">순서</th><th style="width:110px">항목</th><th>이동</th><th>조건</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td class="k"><span class="tag g-mny">소개머니</span></td><td class="mono">/mny</td><td>항상 노출</td></tr>
+          <tr><td class="mono">2</td><td class="k"><span class="tag g-mal">소개몰</span></td><td class="mono">/mal</td><td>항상 노출 · 미오픈 시 “준비 중” 모달</td></tr>
+          <tr><td class="mono">3</td><td class="k"><span class="tag g-biz">소개창업</span></td><td class="mono">/biz</td><td>항상 노출</td></tr>
+          <tr><td class="mono">4</td><td class="k">이용안내</td><td class="mono">/guide</td><td>항상 노출 · 소개비 요율표 포함</td></tr>
+          <tr><td class="mono">5</td><td class="k">고객센터</td><td class="mono">/support</td><td><b>권장안</b> — 커뮤니티는 운영 인력 확보 후 추가</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h5>5번째 자리 — 결정 필요</h5>
+      <p>
+        시안은 <b>커뮤니티</b>(3안)와 <b>혜택안내 + 고객센터</b>(1안)로 갈립니다.
+        오픈 시점에 운영 인력이 붙지 않는 커뮤니티는 빈 게시판으로 남아 신뢰를 깎습니다.
+        <b>오픈 시에는 고객센터를 두고, 커뮤니티는 콘텐츠가 쌓인 뒤 6번째로 추가</b>하는 편을 권합니다.
+        혜택안내는 이용안내 하위 문서로 흡수합니다.
+      </p>
+    </div>
+
+    <h3>모바일 (767px 이하)</h3>
+    <ul class="k">
+      <li>GNB → 햄버거. 관 3종은 드로어 최상단에 고정.</li>
+      <li>검색 → 아이콘 → 전체화면 오버레이.</li>
+      <li>하단 고정 탭바 5종 — <b>홈 · 탐색 · 등록 · 내소개 · 마이</b>.</li>
+      <li>탭바를 쓰면 메인의 역할 탭은 목록 화면 안으로만 내린다 (위계 중복 방지).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 4 URL · ID ============ -->
+<section id="url">
+  <div class="wrap">
+    <div class="sh"><span class="no">04</span><h2>URL · 화면 ID 규칙</h2></div>
+
+    <h3>URL</h3>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:230px">패턴</th><th>의미</th><th>규칙</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">/{gwan}</td><td>관 목록</td><td>mny · mal · biz 고정. 한글 · 대문자 사용 안 함</td></tr>
+          <tr><td class="mono">/{gwan}/{category}</td><td>업종 목록</td><td>category는 영문 슬러그. SEO 랜딩 대상</td></tr>
+          <tr><td class="mono">/{gwan}/{category}/{id}</td><td>리스팅 상세</td><td>id는 숫자. 카테고리가 바뀌어도 id로 리다이렉트</td></tr>
+          <tr><td class="mono">?role=give|want</td><td>역할</td><td>쿼리로만. 경로에 넣지 않는다</td></tr>
+          <tr><td class="mono">?region=&amp;price=&amp;sort=</td><td>필터 · 정렬</td><td>모든 필터는 쿼리에 반영 — 링크 공유 가능해야 함</td></tr>
+          <tr><td class="mono">?page=</td><td>페이징</td><td>뒤로가기 시 스크롤 위치 복원</td></tr>
+          <tr><td class="mono">/chat/{id} · /deal/{id}</td><td>거래</td><td>관 경로 아래 두지 않는다 (독립 경로)</td></tr>
+          <tr><td class="mono">/my/*</td><td>개인</td><td>로그인 필수. 비로그인 접근 시 복귀 경로 유지</td></tr>
+          <tr><td class="mono">admin/*</td><td>관리자</td><td>별도 서브도메인 권장 · 검색엔진 차단</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>화면 ID</h3>
+    <p class="sd"><code>SB-{관}-{그룹}-{일련}</code> · 모달은 <code>-M{n}</code> 접미</p>
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:60px">그룹</th><th style="width:110px">의미</th><th>사용</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">MAIN</td><td class="k">메인</td><td>관 진입 전 최상위 화면</td></tr>
+          <tr><td class="mono">LST</td><td class="k">목록</td><td>관 목록 · 업종 목록 · 내 리스팅</td></tr>
+          <tr><td class="mono">DTL</td><td class="k">상세</td><td>리스팅 상세</td></tr>
+          <tr><td class="mono">REG</td><td class="k">등록</td><td>리스팅 등록 · 수정</td></tr>
+          <tr><td class="mono">SRC</td><td class="k">검색</td><td>통합 검색 결과</td></tr>
+          <tr><td class="mono">MCH</td><td class="k">매칭</td><td>1:1 대화 · 공개 문의</td></tr>
+          <tr><td class="mono">DEL</td><td class="k">계약</td><td>계약서 · 결제 · 성사 확정</td></tr>
+          <tr><td class="mono">STL</td><td class="k">정산</td><td>정산 신청 · 지급 내역</td></tr>
+          <tr><td class="mono">DSH</td><td class="k">대시보드</td><td>마이페이지 요약</td></tr>
+          <tr><td class="mono">REV</td><td class="k">검수</td><td>관리자 검수</td></tr>
+          <tr><td class="mono">AUT</td><td class="k">인증</td><td>로그인 · 가입 · 본인인증</td></tr>
+          <tr><td class="mono">ETC</td><td class="k">기타</td><td>약관 · 고객센터 · 분쟁 · 푸터</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 템플릿 ============ -->
+<section id="tpl">
+  <div class="wrap">
+    <div class="sh"><span class="no">05</span><h2>템플릿 체계</h2></div>
+    <p class="sd">
+      28개 화면을 7개 템플릿으로 묶습니다. 새 화면은 <b>먼저 기존 템플릿에 넣어보고</b>,
+      들어가지 않을 때만 새 템플릿을 만듭니다.
+    </p>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:52px">템플릿</th><th style="width:112px">이름</th><th>구성</th><th>적용 화면</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">T1</td><td class="k">랜딩</td>
+            <td>헤더 · 히어로 · 검색 · 배너 · 카테고리 · 캐러셀 · 서비스 카드 · 통계 · 푸터</td>
+            <td class="mono">HOM-MAIN-010/011</td></tr>
+          <tr><td class="mono">T2</td><td class="k">목록</td>
+            <td>헤더 · 검색 · 사이드바 · 관 헤더 · 필터바 · 그리드 · 페이징 · 푸터</td>
+            <td class="mono">MNY/MAL/BIZ-LST-010 · HOM-SRC-010 · MYP-LST-010 · MYP-LIK-010</td></tr>
+          <tr><td class="mono">T3</td><td class="k">상세</td>
+            <td>이미지 · 타이틀 · 프로필 · 실적 · 본문 · 문의 · 후기 · 하단 액션바</td>
+            <td class="mono">MNY/MAL/BIZ-DTL-010</td></tr>
+          <tr><td class="mono">T4</td><td class="k">폼</td>
+            <td>섹션 카드 반복 · 유의사항 · 취소/제출 · 확인 모달</td>
+            <td class="mono">HOM-REG-010 · AUT-020/030 · MYP-STL-010</td></tr>
+          <tr><td class="mono">T5</td><td class="k">단계</td>
+            <td>단계 표시 · 요약 패널 · 액션 영역 · 상태 배너</td>
+            <td class="mono">HOM-DEL-010/020/030</td></tr>
+          <tr><td class="mono">T6</td><td class="k">대화</td>
+            <td>대상 헤더 · 시스템 메시지 · 스크롤 영역 · 입력 · 다음 단계</td>
+            <td class="mono">HOM-MCH-010</td></tr>
+          <tr><td class="mono">T7</td><td class="k">콘솔</td>
+            <td>관리자 GNB · 요약 탭 · 큐 리스트 · 인라인 액션</td>
+            <td class="mono">ADM-REV-010/020 · ADM-USR-010 · ADM-STL-010 · MYP-DSH-010</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 900 210" role="img" aria-label="목록 템플릿 T2와 상세 템플릿 T3의 영역 구성 비교">
+          <text class="s-h" x="16" y="18">T2 목록</text>
+          <rect class="s-box" x="16" y="30" width="410" height="20" rx="3"></rect>
+          <text class="s-l" x="26" y="44">헤더 · 검색</text>
+          <rect class="s-box" x="16" y="56" width="100" height="130" rx="3"></rect>
+          <text class="s-l" x="26" y="74">사이드바</text>
+          <text class="s-l" x="26" y="90">업종</text>
+          <rect class="s-box" x="122" y="56" width="304" height="30" rx="3"></rect>
+          <text class="s-l" x="132" y="75">관 헤더 · 아이콘 그리드</text>
+          <rect class="s-box" x="122" y="92" width="304" height="22" rx="3"></rect>
+          <text class="s-l" x="132" y="107">역할 탭 · 필터 · 정렬</text>
+          <rect class="s-box-s" x="122" y="120" width="304" height="46" rx="3"></rect>
+          <text class="s-l" x="132" y="139">리스팅 그리드</text>
+          <rect class="s-box" x="122" y="170" width="304" height="16" rx="3"></rect>
+          <text class="s-l" x="132" y="182">페이징</text>
+
+          <line class="s-line" x1="452" y1="24" x2="452" y2="196" stroke-dasharray="3 5"></line>
+
+          <text class="s-h" x="478" y="18">T3 상세</text>
+          <rect class="s-box" x="478" y="30" width="406" height="20" rx="3"></rect>
+          <text class="s-l" x="488" y="44">헤더</text>
+          <rect class="s-box" x="478" y="56" width="140" height="52" rx="3"></rect>
+          <text class="s-l" x="488" y="76">이미지 1/5</text>
+          <rect class="s-box" x="624" y="56" width="260" height="52" rx="3"></rect>
+          <text class="s-l" x="634" y="74">업종 · 제목 · 가격</text>
+          <text class="s-l" x="634" y="90">조회 · 관심 · 신용</text>
+          <rect class="s-box" x="478" y="114" width="406" height="20" rx="3"></rect>
+          <text class="s-l" x="488" y="128">소개자 프로필</text>
+          <rect class="s-box-s" x="478" y="140" width="406" height="20" rx="3"></rect>
+          <text class="s-l" x="488" y="154">소개자 실적 4지표</text>
+          <rect class="s-box" x="478" y="166" width="406" height="14" rx="3"></rect>
+          <text class="s-l" x="488" y="177">본문 · 스펙 · 문의 · 후기</text>
+          <rect class="s-box-d s-line-a" x="478" y="186" width="406" height="14" rx="3" stroke="var(--mark)"></rect>
+          <text class="s-r" x="488" y="197">하단 고정 액션바 — Action 1개</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>템플릿이 같으면 화면이 늘어도 컴포넌트는 늘지 않는다.</b>
+        관 3종의 목록·상세는 데이터만 다를 뿐 같은 템플릿이므로, 관을 하나 더 열어도 신규 화면 설계는 필요 없습니다.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 6 상태 ============ -->
+<section id="state">
+  <div class="wrap">
+    <div class="sh"><span class="no">06</span><h2>상태 전이</h2></div>
+    <p class="sd">
+      IA의 마지막 층은 화면이 아니라 <b>상태</b>입니다. 어떤 화면이 보이는지가 상태로 결정되기 때문입니다.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 920 330" role="img" aria-label="리스팅은 작성중에서 검수대기 노출중으로 전이하고, 딜은 열림에서 양측 확인 후 확정되며, 확정 이후에만 정산이 생성되는 상태 전이도">
+          <defs>
+            <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0L10 5L0 10z" fill="currentColor"></path></marker>
+            <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0L10 5L0 10z" fill="var(--mark)"></path></marker>
+          </defs>
+
+          <!-- Listing -->
+          <text class="s-h" x="16" y="18">LISTING</text>
+          <rect class="s-box" x="16" y="30" width="104" height="34" rx="4"></rect>
+          <text class="s-t" x="68" y="52" text-anchor="middle">DRAFT</text>
+          <line class="s-line" x1="122" y1="47" x2="156" y2="47" marker-end="url(#s1)"></line>
+          <text class="s-l" x="139" y="40" text-anchor="middle">제출</text>
+
+          <rect class="s-box" x="158" y="30" width="112" height="34" rx="4"></rect>
+          <text class="s-t" x="214" y="52" text-anchor="middle">PENDING</text>
+          <line class="s-line" x1="272" y1="47" x2="306" y2="47" marker-end="url(#s1)"></line>
+          <text class="s-l" x="289" y="40" text-anchor="middle">승인</text>
+
+          <rect class="s-box-s" x="308" y="30" width="104" height="34" rx="4"></rect>
+          <text class="s-t" x="360" y="52" text-anchor="middle">LIVE</text>
+          <line class="s-line" x1="414" y1="47" x2="448" y2="47" marker-end="url(#s1)"></line>
+          <text class="s-l" x="431" y="40" text-anchor="middle">마감</text>
+          <rect class="s-box" x="450" y="30" width="100" height="34" rx="4"></rect>
+          <text class="s-t" x="500" y="52" text-anchor="middle">CLOSED</text>
+
+          <path class="s-line" d="M214 64 V 92 H 68 V 66" marker-end="url(#s1)"></path>
+          <text class="s-l" x="141" y="106" text-anchor="middle">반려 R01–R06 → 수정 후 재제출</text>
+          <rect class="s-box-d" x="586" y="30" width="112" height="34" rx="4"></rect>
+          <text class="s-s" x="642" y="52" text-anchor="middle">REJECTED</text>
+          <line class="s-line" x1="272" y1="40" x2="584" y2="40" stroke-dasharray="4 4" marker-end="url(#s1)"></line>
+
+          <text class="s-r" x="736" y="52">LIVE만 노출된다</text>
+
+          <line class="s-line" x1="16" y1="128" x2="904" y2="128" stroke-dasharray="3 5"></line>
+
+          <!-- Deal -->
+          <text class="s-h" x="16" y="152">DEAL</text>
+          <rect class="s-box" x="16" y="164" width="104" height="34" rx="4"></rect>
+          <text class="s-t" x="68" y="186" text-anchor="middle">OPEN</text>
+          <line class="s-line" x1="122" y1="181" x2="156" y2="181" marker-end="url(#s1)"></line>
+          <text class="s-l" x="139" y="174" text-anchor="middle">합의</text>
+
+          <rect class="s-box" x="158" y="164" width="132" height="34" rx="4"></rect>
+          <text class="s-t" x="224" y="180" text-anchor="middle">AWAIT_CONFIRM</text>
+          <text class="s-s" x="224" y="194" text-anchor="middle">확인 1 / 2</text>
+
+          <line class="s-line-a" x1="292" y1="181" x2="326" y2="181" marker-end="url(#s2)"></line>
+          <text class="s-r" x="309" y="174" text-anchor="middle">양측</text>
+
+          <rect class="s-box-s s-line-a" x="328" y="164" width="120" height="34" rx="4" stroke="var(--mark)"></rect>
+          <text class="s-t" x="388" y="186" text-anchor="middle" fill="var(--mark)">CONFIRMED</text>
+
+          <rect class="s-box-d" x="486" y="164" width="112" height="34" rx="4"></rect>
+          <text class="s-s" x="542" y="186" text-anchor="middle">DISPUTED</text>
+          <line class="s-line" x1="450" y1="181" x2="484" y2="181" stroke-dasharray="4 4" marker-end="url(#s1)"></line>
+          <text class="s-r" x="636" y="186">분쟁 시 정산 보류</text>
+
+          <line class="s-line" x1="16" y1="228" x2="904" y2="228" stroke-dasharray="3 5"></line>
+
+          <!-- Settlement -->
+          <text class="s-h" x="16" y="252">SETTLEMENT</text>
+          <path class="s-line-a" d="M388 200 V 240 H 68 V 262" marker-end="url(#s2)"></path>
+          <text class="s-r" x="230" y="254" text-anchor="middle">INV-3 — CONFIRMED 이후에만 생성</text>
+
+          <rect class="s-box" x="16" y="264" width="104" height="34" rx="4"></rect>
+          <text class="s-t" x="68" y="286" text-anchor="middle">AVAILABLE</text>
+          <line class="s-line" x1="122" y1="281" x2="156" y2="281" marker-end="url(#s1)"></line>
+          <text class="s-l" x="139" y="274" text-anchor="middle">신청</text>
+          <rect class="s-box" x="158" y="264" width="116" height="34" rx="4"></rect>
+          <text class="s-t" x="216" y="286" text-anchor="middle">REQUESTED</text>
+          <line class="s-line" x1="276" y1="281" x2="310" y2="281" marker-end="url(#s1)"></line>
+          <text class="s-l" x="293" y="274" text-anchor="middle">승인</text>
+          <rect class="s-box" x="312" y="264" width="112" height="34" rx="4"></rect>
+          <text class="s-t" x="368" y="286" text-anchor="middle">APPROVED</text>
+          <line class="s-line" x1="426" y1="281" x2="460" y2="281" marker-end="url(#s1)"></line>
+          <text class="s-l" x="443" y="274" text-anchor="middle">지급</text>
+          <rect class="s-box-s" x="462" y="264" width="100" height="34" rx="4"></rect>
+          <text class="s-t" x="512" y="286" text-anchor="middle">PAID</text>
+
+          <path class="s-line" d="M512 300 V 318 H 68" stroke-dasharray="4 4"></path>
+          <text class="s-s" x="640" y="292">지급 완료 → 누적수익 · 신뢰도 · 베스트 사례 갱신</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>화면이 아니라 상태가 노출을 결정한다.</b>
+        LIVE가 아닌 리스팅은 어떤 목록·검색·직접 URL로도 보이지 않고,
+        CONFIRMED가 아닌 Deal에서는 정산 화면 자체가 만들어지지 않습니다.
+        03단계의 신뢰 지표(누적수익 · 성사율 · 베스트 사례)는 06단계가 끝나야 채워집니다.
+      </figcaption>
+    </figure>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:100px">엔티티</th><th style="width:130px">상태</th><th>노출 · 접근 규칙</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Listing</td><td class="mono">DRAFT</td><td>본인 마이페이지에서만 보임</td></tr>
+          <tr><td class="k"></td><td class="mono">PENDING</td><td>본인 + 관리자 검수 큐. 공개 경로 전부 차단</td></tr>
+          <tr><td class="k"></td><td class="mono">LIVE</td><td>모든 공개 경로에 노출. 수정 시 재검수</td></tr>
+          <tr><td class="k"></td><td class="mono">REJECTED</td><td>본인만. 사유 코드 + 수정 가이드 동반</td></tr>
+          <tr><td class="k"></td><td class="mono">CLOSED</td><td>상세는 열리되 문의 차단 + 마감 배너</td></tr>
+          <tr><td class="k">Deal</td><td class="mono">OPEN</td><td>대화 진행 중. 정산 메뉴 비활성</td></tr>
+          <tr><td class="k"></td><td class="mono">AWAIT_CONFIRM</td><td>확인 n/2 표시. 상대에게 알림 최대 3회</td></tr>
+          <tr><td class="k"></td><td class="mono">CONFIRMED</td><td>정산 생성 가능 · 후기 작성 가능</td></tr>
+          <tr><td class="k"></td><td class="mono">DISPUTED</td><td>정산 보류. 관리자 개입</td></tr>
+          <tr><td class="k">Settlement</td><td class="mono">AVAILABLE</td><td>정산 목록에 노출</td></tr>
+          <tr><td class="k"></td><td class="mono">REQUESTED</td><td>수정 불가. 관리자 승인 대기</td></tr>
+          <tr><td class="k"></td><td class="mono">APPROVED</td><td>지급 실행 대기</td></tr>
+          <tr><td class="k"></td><td class="mono">PAID</td><td>원천징수 명세 제공. 누적수익 반영</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7 배치 규칙 ============ -->
+<section id="rule">
+  <div class="wrap">
+    <div class="sh"><span class="no">07</span><h2>배치 규칙</h2></div>
+    <p class="sd">새 요소를 어디에 둘지 다툼이 생길 때 이 규칙으로 판정합니다.</p>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:44px">R</th><th style="width:150px">규칙</th><th>판정 기준</th><th>위반 사례 (현 시안)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">R1</td><td class="k">1군은 관만</td>
+            <td>정산 규칙 또는 플랫폼 책임이 갈리지 않으면 1군에 올리지 않는다</td>
+            <td>메인 A가 역할 탭을, 카테고리 페이지가 업종을 1군에 둠</td></tr>
+          <tr><td class="mono">R2</td><td class="k">업종은 관에 종속</td>
+            <td>업종 목록은 관마다 다르며 전역 목록을 만들지 않는다</td>
+            <td>관과 매핑되지 않은 평면 카테고리 18종</td></tr>
+          <tr><td class="mono">R3</td><td class="k">단일 소스</td>
+            <td>같은 데이터를 두 곳에서 보여줄 때 API 응답은 하나여야 한다</td>
+            <td>사이드바 18종과 아이콘 12종이 서로 다른 목록</td></tr>
+          <tr><td class="mono">R4</td><td class="k">정보 계약</td>
+            <td>목록 카드에 표시한 필드는 상세에 반드시 존재한다</td>
+            <td>목록에 8,500만원 · 상세에 가격 없음</td></tr>
+          <tr><td class="mono">R5</td><td class="k">Action 1개</td>
+            <td>한 화면에 전환 CTA는 하나. 나머지는 보조 스타일</td>
+            <td>상세에 전화하기 · 문의하기 두 개가 동일 강도</td></tr>
+          <tr><td class="mono">R6</td><td class="k">정책은 서버에서</td>
+            <td>제한업종 · 금칙어는 UI가 아니라 API에서 차단한다</td>
+            <td>사이드바에 “법률/세무/노무”, “부동산”이 그대로 존재</td></tr>
+          <tr><td class="mono">R7</td><td class="k">미구현 비노출</td>
+            <td>기능이 없는 것을 문구로 먼저 약속하지 않는다</td>
+            <td>“에스크로 보안 · 계약서 양식 제공 · 실시간 채팅” 문구만 존재</td></tr>
+          <tr><td class="mono">R8</td><td class="k">거래는 독립 경로</td>
+            <td>대화 · 계약 · 정산은 리스팅의 하위가 아니다</td>
+            <td>—</td></tr>
+          <tr><td class="mono">R9</td><td class="k">부분 실패 허용</td>
+            <td>한 섹션이 실패해도 페이지 전체를 오류로 대체하지 않는다</td>
+            <td>—</td></tr>
+          <tr><td class="mono">R10</td><td class="k">복귀 경로 유지</td>
+            <td>로그인 유도 후 원래 화면으로 돌아온다. 홈으로 보내지 않는다</td>
+            <td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8 결정 ============ -->
+<section id="dec">
+  <div class="wrap">
+    <div class="sh"><span class="no">08</span><h2>확정이 필요한 항목</h2></div>
+    <p class="sd">아래 6건이 정해지지 않으면 화면정의서와 개발이 진행되지 않습니다. 위에서부터 순서대로 결정합니다.</p>
+
+    <div class="tscroll">
+      <table class="d">
+        <thead><tr><th style="width:34px">#</th><th style="width:150px">결정 항목</th><th>선택지</th><th style="width:200px">권장</th><th style="width:110px">막히면</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td class="k">관 × 업종 매트릭스</td>
+            <td>관마다 업종 집합을 별도 정의 / 공통 집합 + 관별 필터</td>
+            <td><b>관별 별도 정의</b> — 소개창업에 “유아/출산”이 있을 이유가 없다</td>
+            <td class="mono">등록폼 · 필터 · SEO</td></tr>
+          <tr><td class="mono">2</td><td class="k">GNB 5번째</td>
+            <td>커뮤니티 / 혜택안내 / 고객센터</td>
+            <td><b>고객센터</b> — 커뮤니티는 콘텐츠 확보 후 6번째로</td>
+            <td class="mono">전 화면 헤더</td></tr>
+          <tr><td class="mono">3</td><td class="k">메인 시안 통합</td>
+            <td>히어로형 / 검색 전폭형 / 제휴 배너형</td>
+            <td><b>제휴 배너형 + 카테고리 사이드바</b></td>
+            <td class="mono">HOM-MAIN</td></tr>
+          <tr><td class="mono">4</td><td class="k">페이징 방식</td>
+            <td>페이지네이션 / 더보기 / 무한스크롤</td>
+            <td><b>더보기</b> — 뒤로가기 복원이 쉽고 모바일에 적합</td>
+            <td class="mono">모든 목록</td></tr>
+          <tr><td class="mono">5</td><td class="k">결제 단계 필요 관</td>
+            <td>3관 모두 / 소개몰만 / 소개몰 + 소개창업</td>
+            <td><b>소개몰만</b> — 소개창업은 계약서까지, 결제는 당사자 간</td>
+            <td class="mono">DEL-020</td></tr>
+          <tr><td class="mono">6</td><td class="k">모바일 하단 탭바</td>
+            <td>도입 / 미도입</td>
+            <td><b>도입</b> — 소개 링크의 다수가 모바일 유입. 도입 시 역할 탭은 목록 내부로만</td>
+            <td class="mono">전 화면 모바일</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h5>1번이 먼저다</h5>
+      <p>
+        관 × 업종 매트릭스가 확정되면 2~5번은 대부분 따라 결정됩니다.
+        기획 회의의 첫 안건을 “카테고리를 관에 어떻게 나눠 붙일 것인가” 하나로 잡고,
+        나머지는 그 결정에서 파생시키는 편이 빠릅니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    소개뱅크 IA · 화면설계 체계 v1.0 · 2026.08.26 작성 · 시안 10종 대조 기준.
+    확정 필요 항목은 결정 후 개정하며, 개정 시 화면설계서 · 상세 화면설계서도 함께 갱신합니다.
+  </div>
+</footer>
+
+</body></html>

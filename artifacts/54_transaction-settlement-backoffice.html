@@ -1,0 +1,1152 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 거래·정산·백오피스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --bl:#2563EB; --bl-d:#1D4ED8; --bl-l:#EFF6FF;
+    --pp:#7C3AED; --pp-l:#F5F1FE;
+    --or:#F97316; --or-d:#EA580C; --or-l:#FFF7ED;
+    --gr:#10B981; --gr-d:#059669; --gr-l:#ECFDF5;
+    --rd:#EF4444; --rd-l:#FEF2F2;
+    --am:#D97706; --am-l:#FFFBEB;
+    --navy:#1E293B; --navy-2:#0F172A;
+    --g900:#111827; --g700:#374151; --g500:#6B7280; --g400:#9CA3AF;
+    --g200:#E5E7EB; --g100:#F3F4F6; --g50:#F9FAFB;
+    --shell:#EDEEF0; --page:#F7F8FA; --card:#FFFFFF;
+    --ink:#111827; --ink2:#4B5563; --ink3:#6B7280; --line:#E5E7EB; --line2:#F3F4F6;
+    --f:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    --sh:0 1px 2px rgba(17,24,39,.06);
+    --sh2:0 4px 16px rgba(17,24,39,.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bl:#7FA9F5; --bl-d:#6B9AF0; --bl-l:#182335;
+      --pp:#B695F5; --pp-l:#231B36;
+      --or:#F79055; --or-d:#F0803F; --or-l:#33200F;
+      --gr:#5FCFA6; --gr-d:#4EC298; --gr-l:#122A22;
+      --rd:#F27F7F; --rd-l:#301A1A;
+      --am:#E0AE55; --am-l:#2E2413;
+      --navy:#141A24; --navy-2:#0D1218;
+      --g900:#E9EBEE; --g700:#B9BFC7; --g500:#8B929B; --g400:#6E757E;
+      --g200:#333941; --g100:#262B32; --g50:#20242A;
+      --shell:#111418; --page:#171A1F; --card:#1E2228;
+      --ink:#E9EBEE; --ink2:#AEB4BC; --ink3:#868D96; --line:#333941; --line2:#262B32;
+      --sh:0 1px 2px rgba(0,0,0,.45); --sh2:0 4px 18px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bl:#7FA9F5; --bl-d:#6B9AF0; --bl-l:#182335;
+    --pp:#B695F5; --pp-l:#231B36;
+    --or:#F79055; --or-d:#F0803F; --or-l:#33200F;
+    --gr:#5FCFA6; --gr-d:#4EC298; --gr-l:#122A22;
+    --rd:#F27F7F; --rd-l:#301A1A;
+    --am:#E0AE55; --am-l:#2E2413;
+    --navy:#141A24; --navy-2:#0D1218;
+    --g900:#E9EBEE; --g700:#B9BFC7; --g500:#8B929B; --g400:#6E757E;
+    --g200:#333941; --g100:#262B32; --g50:#20242A;
+    --shell:#111418; --page:#171A1F; --card:#1E2228;
+    --ink:#E9EBEE; --ink2:#AEB4BC; --ink3:#868D96; --line:#333941; --line2:#262B32;
+    --sh:0 1px 2px rgba(0,0,0,.45); --sh2:0 4px 18px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--shell);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.6;
+       -webkit-font-smoothing:antialiased;word-break:keep-all}
+  button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--bl);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  /* ================= shell ================= */
+  .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+  @media (max-width:920px){ .app{grid-template-columns:1fr} .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)} }
+
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--page);
+        border-right:1px solid var(--line);padding:16px 13px 40px}
+  .rail h1{font-size:14.5px;font-weight:900;letter-spacing:-.03em;margin:0 0 2px;display:flex;align-items:center;gap:7px}
+  .rail .sub{font-size:10.5px;color:var(--ink3);font-family:var(--m);letter-spacing:.05em;margin-bottom:14px}
+
+  .modesw{display:flex;gap:3px;background:var(--g100);border-radius:9px;padding:3px;margin-bottom:16px}
+  .modesw button{flex:1;padding:7px 8px;border-radius:7px;font-size:12px;font-weight:700;color:var(--ink3)}
+  .modesw button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+
+  .grp{margin-bottom:13px}
+  .grp > .lbl{font-family:var(--m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+              color:var(--ink3);padding:0 8px;margin-bottom:5px;display:block}
+  .navbtn{display:block;width:100%;text-align:left;border:1px solid transparent;
+          padding:7px 9px;border-radius:7px;color:var(--ink2);line-height:1.35;margin-bottom:2px}
+  .navbtn .t{font-size:12.5px;font-weight:500;display:block}
+  .navbtn .id{font-family:var(--m);font-size:9px;color:var(--ink3);letter-spacing:.03em}
+  .navbtn:hover{background:var(--g100)}
+  .navbtn[aria-current="true"]{background:var(--card);border-color:var(--line);color:var(--ink);box-shadow:var(--sh)}
+  .navbtn[aria-current="true"] .t{font-weight:700}
+  .navbtn .bdg{float:right;font-family:var(--m);font-size:9.5px;background:var(--or);color:#fff;
+               border-radius:9px;padding:1px 6px;margin-top:1px}
+  .navbtn .bdg.z{background:var(--g200);color:var(--ink3)}
+
+  .railfoot{margin-top:16px;padding:0 8px;font-size:11px;color:var(--ink3);line-height:1.55}
+  .resetb{margin-top:10px;width:100%;border:1px solid var(--line);border-radius:7px;
+          padding:6px;font-size:11.5px;color:var(--ink3);background:var(--card)}
+  .resetb:hover{color:var(--ink)}
+
+  .stage{padding:18px 22px 60px;min-width:0;background:var(--shell)}
+  @media (max-width:640px){ .stage{padding:12px 12px 40px} }
+  .stagebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .sid{font-family:var(--m);font-size:10.5px;color:var(--ink3);letter-spacing:.04em}
+  .snote{font-size:12px;color:var(--ink2);flex:1;min-width:200px}
+  .chip{font-family:var(--m);font-size:10px;letter-spacing:.05em;padding:3px 8px;border-radius:5px;white-space:nowrap}
+  .c-u{background:var(--bl-l);color:var(--bl)}
+  .c-a{background:var(--pp-l);color:var(--pp)}
+
+  /* pipeline */
+  .pipe{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;
+        max-width:1120px;background:var(--card);margin-bottom:14px}
+  .pipe div{flex:1;padding:8px 6px;text-align:center;font-size:11px;color:var(--ink3);
+            border-right:1px solid var(--line2);font-family:var(--m);letter-spacing:.02em;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pipe div:last-child{border-right:0}
+  .pipe div.on{background:var(--or);color:#fff;font-weight:500}
+  .pipe div.done{background:var(--gr-l);color:var(--gr-d)}
+
+  /* frame */
+  .frame{background:var(--card);border:1px solid var(--line);border-radius:12px;
+         overflow:hidden;box-shadow:var(--sh2);max-width:1120px}
+  .fbar{display:flex;align-items:center;gap:7px;padding:9px 13px;background:var(--g50);border-bottom:1px solid var(--line)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--g200);flex:none}
+  .furl{flex:1;font-family:var(--m);font-size:10.5px;color:var(--ink3);background:var(--card);
+        border:1px solid var(--line);border-radius:5px;padding:3px 9px;overflow:hidden;
+        text-overflow:ellipsis;white-space:nowrap}
+
+  /* ================= product chrome ================= */
+  .gnb{display:flex;align-items:center;gap:20px;padding:11px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+  .logo{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:900;letter-spacing:-.04em;flex:none}
+  .gnbm{display:flex;gap:18px;flex:1;font-size:12.5px;font-weight:500;color:var(--ink2);overflow-x:auto;scrollbar-width:none}
+  .gnbm::-webkit-scrollbar{display:none}
+  .gnbr{display:flex;gap:7px;align-items:center;flex:none}
+
+  .body{padding:18px}
+  .h-pg{font-size:19px;font-weight:900;letter-spacing:-.035em;margin:0 0 3px}
+  .h-sub{font-size:12.5px;color:var(--ink3);margin:0 0 14px}
+  .h-sec{font-size:13px;font-weight:700;margin:20px 0 8px;display:flex;align-items:center;gap:7px}
+  .h-sec:first-child{margin-top:0}
+
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 15px;
+       border-radius:8px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--g50)}
+  .btn.sm{padding:5px 11px;font-size:11.5px;border-radius:6px}
+  .btn.bl{background:var(--bl);border-color:var(--bl);color:#fff;font-weight:700}
+  .btn.or{background:var(--or);border-color:var(--or);color:#fff;font-weight:700}
+  .btn.gr{background:var(--gr-d);border-color:var(--gr-d);color:#fff;font-weight:700}
+  .btn.rd{background:var(--rd);border-color:var(--rd);color:#fff;font-weight:700}
+  .btn:disabled{opacity:.42;cursor:not-allowed}
+
+  .panel{border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  .pad{padding:14px 16px}
+
+  .bdg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+       padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .b-gr{background:var(--gr-l);color:var(--gr-d)}
+  .b-or{background:var(--or-l);color:var(--or-d)}
+  .b-bl{background:var(--bl-l);color:var(--bl)}
+  .b-rd{background:var(--rd-l);color:var(--rd)}
+  .b-am{background:var(--am-l);color:var(--am)}
+  .b-n{background:var(--g100);color:var(--ink3)}
+
+  .alert{display:flex;gap:9px;padding:11px 13px;border-radius:9px;font-size:12.5px;
+         line-height:1.6;margin:10px 0;border:1px solid transparent}
+  .alert .ic{font-family:var(--m);font-weight:700;flex:none}
+  .a-i{background:var(--bl-l);color:var(--bl);border-color:color-mix(in srgb,var(--bl) 22%,transparent)}
+  .a-g{background:var(--gr-l);color:var(--gr-d);border-color:color-mix(in srgb,var(--gr-d) 22%,transparent)}
+  .a-w{background:var(--am-l);color:var(--am);border-color:color-mix(in srgb,var(--am) 24%,transparent)}
+  .a-r{background:var(--rd-l);color:var(--rd);border-color:color-mix(in srgb,var(--rd) 22%,transparent)}
+
+  dl.kv{display:grid;grid-template-columns:110px 1fr;margin:0;font-size:13px}
+  dl.kv dt{color:var(--ink3);padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+  dl.kv dd{margin:0;padding:6px 0;border-bottom:1px solid var(--line2);font-weight:500}
+  dl.kv dt:last-of-type,dl.kv dd:last-of-type{border-bottom:0}
+
+  .calc{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .calc .r{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line2);font-size:13px}
+  .calc .r:last-child{border-bottom:0;background:var(--g50);font-weight:900;font-size:14.5px}
+  .calc .n{font-variant-numeric:tabular-nums}
+  .calc .r.neg .n{color:var(--rd)}
+
+  .fld{margin-bottom:13px}
+  .fld label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px}
+  .fld label .req{color:var(--or)}
+  .fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--card);
+    border-radius:8px;padding:8px 11px;font-size:13.5px}
+  .fld textarea{min-height:70px;resize:vertical;line-height:1.6}
+  .fld .hint{font-size:11.5px;color:var(--ink3);margin-top:4px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+  @media (max-width:640px){ .g2,.g3{grid-template-columns:1fr} }
+
+  /* chat */
+  .chat{border:1px solid var(--line);border-radius:10px;height:250px;overflow-y:auto;
+        padding:13px;background:var(--page);display:flex;flex-direction:column;gap:8px}
+  .msg{max-width:74%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.55}
+  .msg.them{background:var(--card);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+  .msg.me{background:var(--bl);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+  .msg .who{font-size:10px;opacity:.75;font-family:var(--m);display:block;margin-bottom:3px}
+  .sysmsg{align-self:center;font-size:11.5px;color:var(--ink3);background:var(--g100);
+          padding:5px 13px;border-radius:999px;text-align:center;max-width:90%}
+  .chatin{display:flex;gap:8px;margin-top:10px}
+  .chatin input{flex:1;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:9px 12px;font-size:13px}
+
+  /* parties */
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:12px 0}
+  @media (max-width:600px){ .parties{grid-template-columns:1fr} }
+  .party{border:1px solid var(--line);border-radius:10px;padding:13px 15px;background:var(--card)}
+  .party.done{border-color:var(--gr-d);background:var(--gr-l)}
+  .party .pn{font-size:13px;font-weight:700}
+  .party .pr{font-size:11.5px;color:var(--ink3);margin-bottom:9px}
+
+  /* contract */
+  .doc{border:1px solid var(--line);border-radius:10px;background:var(--card);
+       padding:20px 22px;font-size:12.5px;line-height:1.9;max-height:270px;overflow-y:auto}
+  .doc h4{text-align:center;font-size:15px;font-weight:900;margin:0 0 16px;letter-spacing:-.02em}
+  .doc .cl{margin-bottom:11px}
+  .doc .cl b{display:block;font-size:12.5px;margin-bottom:1px}
+  .doc .sig{display:flex;justify-content:space-between;gap:16px;margin-top:18px;
+            padding-top:14px;border-top:1px solid var(--line2)}
+  .doc .sig div{flex:1;font-size:11.5px}
+  .doc .sig .nm{font-weight:700;font-size:12.5px;margin-top:3px}
+  .doc .sig .st{margin-top:5px}
+
+  /* ================= admin chrome ================= */
+  .adm-hd{display:flex;align-items:center;gap:20px;padding:11px 18px;background:var(--navy);color:#E5E7EB}
+  .adm-hd .lg{font-size:14px;font-weight:900;letter-spacing:-.03em;display:flex;align-items:center;gap:7px;flex:none}
+  .adm-hd .lg .tag{font-family:var(--m);font-size:9px;background:rgba(255,255,255,.16);
+                   padding:2px 6px;border-radius:4px;letter-spacing:.08em}
+  .adm-hd nav{display:flex;gap:16px;flex:1;font-size:12.5px;overflow-x:auto;scrollbar-width:none}
+  .adm-hd nav::-webkit-scrollbar{display:none}
+  .adm-hd nav span{white-space:nowrap;opacity:.65}
+  .adm-hd nav span.on{opacity:1;font-weight:700;border-bottom:2px solid #fff;padding-bottom:2px}
+  .adm-hd .who{font-size:11.5px;opacity:.7;flex:none}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
+  @media (max-width:840px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+  .kpi{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:13px 15px}
+  .kpi .k{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:6px}
+  .kpi .v{font-size:26px;font-weight:900;letter-spacing:-.04em;line-height:1.15;
+          font-variant-numeric:tabular-nums;margin-top:3px}
+  .kpi .d{font-size:11px;color:var(--ink3);margin-top:2px}
+  .kpi.hot .v{color:var(--or)}
+  .kpi.warn .v{color:var(--am)}
+  .kpi.ok .v{color:var(--gr-d)}
+  .kpi.info .v{color:var(--bl)}
+
+  table.q{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.q th{background:var(--g50);font-size:11px;font-weight:700;color:var(--ink3);
+             padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  table.q td{padding:10px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+  table.q tr:last-child td{border-bottom:0}
+  table.q td.mono{font-family:var(--m);font-size:11.5px;color:var(--ink2);white-space:nowrap}
+  table.q td.num{font-variant-numeric:tabular-nums;text-align:right;font-weight:600;white-space:nowrap}
+  table.q td.act{text-align:right;white-space:nowrap}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  .tw table{min-width:660px}
+
+  .empty{padding:34px 16px;text-align:center;color:var(--ink3);font-size:12.5px}
+
+  /* footer */
+  .ft{border-top:1px solid var(--line);background:var(--g50);padding:18px 20px}
+  .ft .lk{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:11px}
+  .ft .lk span.em{color:var(--ink);text-decoration:underline}
+  .ft .info{font-size:11px;color:var(--ink3);line-height:1.85}
+  .ft .info b{color:var(--ink2);font-weight:600}
+  .ft .tbd{background:var(--am-l);color:var(--am);font-family:var(--m);font-size:10px;
+           padding:1px 6px;border-radius:4px;margin-left:3px}
+  .ft .notice{margin-top:12px;padding:10px 13px;background:var(--card);border:1px solid var(--line);
+              border-radius:8px;font-size:11.5px;color:var(--ink2);line-height:1.7}
+  .ft .notice b{color:var(--ink)}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+         background:var(--g900);color:var(--page);padding:11px 20px;border-radius:9px;font-size:13px;
+         box-shadow:var(--sh2);opacity:0;pointer-events:none;z-index:80;max-width:88vw;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:no-preference){
+    .toast{transition:opacity .2s,transform .2s}
+    .btn,.navbtn,.modesw button{transition:background .13s,color .13s,border-color .13s}
+  }
+  [hidden]{display:none !important}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <h1>
+      <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true">
+        <rect x="1" y="1" width="18" height="18" rx="3" fill="var(--or)"></rect>
+        <path d="M5.5 6.6h9M5.5 10h9M5.5 13.4h5.6" stroke="var(--card)" stroke-width="1.7" stroke-linecap="round"></path>
+      </svg>
+      거래 · 정산 · 백오피스
+    </h1>
+    <div class="sub">04–06 STAGE + ADMIN</div>
+
+    <div class="modesw" role="group" aria-label="화면 모드">
+      <button id="mUser" aria-pressed="true">사용자</button>
+      <button id="mAdmin" aria-pressed="false">백오피스</button>
+    </div>
+
+    <div id="navUser"></div>
+    <div id="navAdmin" hidden></div>
+
+    <div class="railfoot">
+      두 모드가 <b>같은 데이터</b>를 씁니다. 사용자 화면에서 정산을 신청하면
+      백오피스 승인 대기에 실제로 나타납니다.
+      <button class="resetb" id="reset">데이터 초기화</button>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="stagebar">
+      <span class="chip c-u" id="sChip">04 매칭</span>
+      <span class="sid" id="sId">SB-HOM-MCH-010</span>
+      <span class="snote" id="sNote"></span>
+    </div>
+    <div class="pipe" id="pipe" hidden>
+      <div data-p="4">04 매칭</div><div data-p="5a">05 계약</div><div data-p="5b">05 결제</div>
+      <div data-p="5c">05 성사</div><div data-p="6a">06 정산신청</div><div data-p="6b">06 지급</div>
+    </div>
+    <div class="frame"><div id="screen"></div></div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s,r){ return (r||document).querySelector(s); };
+  var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+  var esc = function(s){ return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); };
+  var won = function(n){ return Number(n).toLocaleString("ko-KR") + "원"; };
+
+  var tt;
+  function toast(m){ var e=$("#toast"); e.textContent=m; e.classList.add("on");
+    clearTimeout(tt); tt=setTimeout(function(){ e.classList.remove("on"); }, 2500); }
+
+  /* ---------------- shared state ---------------- */
+  var KEY = "sgb-ops-v1";
+  var DEFAULT = {
+    mode: "user",
+    screen: "mch",
+    deal: {
+      id: "8821", gwan: "BIZ", title: "강남 역삼 프리미엄 고깃집 양수",
+      code: "HG-4471", referrer: "홍길동", seeker: "이대표", partner: "역삼점 사업주",
+      amount: 85000000, rate: 0.015, cap: 5000000,
+      status: "OPEN",           // OPEN → CONTRACT → PAID_ESCROW → AWAIT_CONFIRM → CONFIRMED
+      signSeeker: false, signPartner: false,
+      escrow: false,
+      cfSeeker: false, cfPartner: false
+    },
+    settle: { status: "NONE", bank: "○○은행 000-00-000000", holder: "홍길동", tax: "3.3" },
+    chat: [
+      {w:"them", n:"홍길동 · 인증소개자", t:"안녕하세요. 강남 고깃집 문의 주셔서 감사합니다. 실매출 자료 보여드릴 수 있습니다."},
+      {w:"me", n:"나 (이대표)", t:"권리금은 협의 가능하다고 되어 있던데, 어느 정도 범위인가요?"},
+      {w:"them", n:"홍길동 · 인증소개자", t:"사장님께 확인해보니 8,500만원 선에서 조율 가능하다고 하십니다. 매장 방문 상담 잡아드릴까요?"}
+    ],
+    reviews: [
+      {id:"L-2041", t:"성수동 무인카페 창업 풀패키지 양도", gwan:"BIZ", cat:"무인 · 자동화", who:"박대표", ago:"14분 전", sla:"23h 46m"},
+      {id:"L-2042", t:"업소용 냉장고 · 주방기기 일괄", gwan:"MAL", cat:"사업용 동산", who:"주방마트", ago:"1시간 전", sla:"22h 58m"},
+      {id:"L-2043", t:"강남 상가 임대 · 1층 코너", gwan:"MAL", cat:"사업용 부동산", who:"김공인", ago:"3시간 전", sla:"20h 12m", estate:true}
+    ],
+    verifies: [
+      {id:"U-8812", n:"주방마트", type:"사업자", no:"123-45-67890", ago:"2시간 전"},
+      {id:"U-8813", n:"김공인중개사사무소", type:"중개사", no:"제11110-2024-00087호", ago:"5시간 전", estate:true}
+    ],
+    disputes: [
+      {id:"D-104", deal:"8790", who:"최사장", reason:"매출 자료와 실제 매출 불일치", ago:"1일 전", status:"접수"}
+    ],
+    log: []
+  };
+  var S;
+
+  function load(){
+    try { var raw = localStorage.getItem(KEY); S = raw ? JSON.parse(raw) : null; } catch(e){ S = null; }
+    if (!S || !S.deal) S = JSON.parse(JSON.stringify(DEFAULT));
+  }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+  function logit(who, what){
+    S.log.unshift({ who: who, what: what, at: "방금" });
+    if (S.log.length > 12) S.log.pop();
+  }
+
+  /* ---------------- derived ---------------- */
+  function fee(){ return Math.min(Math.round(S.deal.amount * S.deal.rate), S.deal.cap); }
+  function tax(){ return S.settle.tax === "3.3" ? Math.round(fee() * 0.033) : 0; }
+  function net(){ return fee() - tax(); }
+  function bothSigned(){ return S.deal.signSeeker && S.deal.signPartner; }
+  function bothConfirmed(){ return S.deal.cfSeeker && S.deal.cfPartner; }
+  function needEscrow(){ return S.deal.gwan === "MNY" || S.deal.gwan === "MAL_B"; }
+
+  function stageOf(){
+    if (S.settle.status === "PAID") return "6b";
+    if (S.settle.status === "REQUESTED" || S.settle.status === "APPROVED") return "6a";
+    if (bothConfirmed()) return "6a";
+    if (bothSigned()) return "5c";
+    if (S.deal.status === "CONTRACT") return "5a";
+    return "4";
+  }
+
+  /* ---------------- nav ---------------- */
+  var USER_NAV = [
+    { g:"04 매칭", items:[ ["mch","1:1 문의 · 매칭","SB-HOM-MCH-010"] ] },
+    { g:"05 계약 · 성사", items:[
+      ["del1","계약서 발급 · 서명","SB-HOM-DEL-010"],
+      ["del2","에스크로 결제","SB-HOM-DEL-020"],
+      ["del3","성사 확정 — 양측","SB-HOM-DEL-030"] ] },
+    { g:"06 정산", items:[
+      ["stl1","정산 신청","SB-MYP-STL-010"],
+      ["stl2","지급 내역 · 원천징수","SB-MYP-STL-020"] ] },
+    { g:"전역", items:[ ["ft","푸터 · 법적고지","SB-HOM-ETC-020"] ] }
+  ];
+  var ADMIN_NAV = [
+    { g:"현황", items:[ ["adsh","관리자 대시보드","SB-ADM-DSH-010"] ] },
+    { g:"검수 · 인증", items:[
+      ["adrev","리스팅 검수 큐","SB-ADM-REV-010"],
+      ["adusr","회원 · 사업자 · 중개사 인증","SB-ADM-USR-010"] ] },
+    { g:"거래 · 정산", items:[
+      ["addeal","거래 모니터링","SB-ADM-DEL-010"],
+      ["adstl","정산 승인 · 지급 실행","SB-ADM-STL-010"],
+      ["addsp","분쟁 처리","SB-ADM-DSP-010"] ] },
+    { g:"정책", items:[ ["adpol","금칙어 · 제한업종 · 요율","SB-ADM-POL-010"] ] }
+  ];
+
+  var META = {
+    mch:{p:"4", id:"SB-HOM-MCH-010", note:"소개코드 귀속은 first-touch로 고정됩니다. 협의가 끝나면 계약 단계로 넘어갑니다."},
+    del1:{p:"5a", id:"SB-HOM-DEL-010", note:"플랫폼은 계약서 양식만 제공합니다. 계약 당사자가 아닙니다."},
+    del2:{p:"5b", id:"SB-HOM-DEL-020", note:"에스크로는 소개머니 전체와 소개몰 B군에만 적용됩니다. 소개창업은 당사자 간 결제입니다."},
+    del3:{p:"5c", id:"SB-HOM-DEL-030", note:"INV-4 — 양측이 모두 확인해야 성사입니다. 한쪽만으로는 확정되지 않습니다."},
+    stl1:{p:"6a", id:"SB-MYP-STL-010", note:"INV-3 — 성사 확정 이후에만 정산이 생성됩니다."},
+    stl2:{p:"6b", id:"SB-MYP-STL-020", note:"원천징수 명세는 지급 완료 후 제공됩니다."},
+    ft:{p:"", id:"SB-HOM-ETC-020", note:"전 화면 공통 영역입니다. 내용은 확정 후 채웁니다."},
+    adsh:{p:"", id:"SB-ADM-DSH-010", note:"처리해야 할 일이 있는 항목만 보여줍니다."},
+    adrev:{p:"", id:"SB-ADM-REV-010", note:"SLA 24시간. 승인 전에는 어떤 경로로도 노출되지 않습니다."},
+    adusr:{p:"", id:"SB-ADM-USR-010", note:"사업자 인증은 소개몰 등록의 게이트, 중개사 인증은 사업용 부동산 등록의 게이트입니다."},
+    addeal:{p:"", id:"SB-ADM-DEL-010", note:"거래 상태를 모니터링합니다. 관리자가 임의로 확정할 수는 없습니다."},
+    adstl:{p:"", id:"SB-ADM-STL-010", note:"정산은 자동 지급되지 않습니다. 승인 → 지급 실행 2단계를 거칩니다."},
+    addsp:{p:"", id:"SB-ADM-DSP-010", note:"분쟁이 접수된 거래는 정산이 자동 보류됩니다."},
+    adpol:{p:"", id:"SB-ADM-POL-010", note:"금칙어와 제한업종은 코드가 아니라 데이터로 관리합니다."}
+  };
+
+  function drawNav(){
+    function block(list, cur){
+      return list.map(function(sec){
+        return '<div class="grp"><span class="lbl">'+ esc(sec.g) +'</span>'+
+          sec.items.map(function(it){
+            var badge = "";
+            if (it[0] === "adrev") badge = '<span class="bdg'+ (S.reviews.length?"":" z") +'">'+ S.reviews.length +'</span>';
+            if (it[0] === "adusr") badge = '<span class="bdg'+ (S.verifies.length?"":" z") +'">'+ S.verifies.length +'</span>';
+            if (it[0] === "adstl") { var n = (S.settle.status==="REQUESTED"||S.settle.status==="APPROVED")?1:0;
+              badge = '<span class="bdg'+ (n?"":" z") +'">'+ n +'</span>'; }
+            if (it[0] === "addsp") badge = '<span class="bdg'+ (S.disputes.length?"":" z") +'">'+ S.disputes.length +'</span>';
+            return '<button class="navbtn" data-s="'+ it[0] +'" aria-current="'+ (cur===it[0]?"true":"false") +'">'+
+              badge + '<span class="t">'+ esc(it[1]) +'</span><span class="id">'+ esc(it[2]) +'</span></button>';
+          }).join("") + '</div>';
+      }).join("");
+    }
+    $("#navUser").innerHTML = block(USER_NAV, S.screen);
+    $("#navAdmin").innerHTML = block(ADMIN_NAV, S.screen);
+  }
+
+  /* ---------------- chrome ---------------- */
+  function gnb(){
+    return '<div class="gnb">'+
+      '<span class="logo"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">'+
+      '<rect x="1" y="1" width="18" height="18" rx="3" fill="var(--or)"></rect>'+
+      '<path d="M5.5 6.6h9M5.5 10h9M5.5 13.4h5.6" stroke="var(--card)" stroke-width="1.7" stroke-linecap="round"></path>'+
+      '</svg>소개뱅크</span>'+
+      '<nav class="gnbm"><span>소개머니</span><span>소개몰</span><span>소개창업</span><span>이용안내</span><span>고객센터</span></nav>'+
+      '<div class="gnbr"><span class="bdg b-n">이대표님</span></div></div>';
+  }
+  function admHd(active){
+    var m = [["adsh","현황"],["adrev","검수"],["adusr","회원 · 인증"],["addeal","거래"],
+             ["adstl","정산"],["addsp","분쟁"],["adpol","정책"]];
+    return '<div class="adm-hd"><span class="lg">소개뱅크 <span class="tag">ADMIN</span></span>'+
+      '<nav>'+ m.map(function(x){
+        return '<span class="'+ (x[0]===active?"on":"") +'">'+ esc(x[1]) +'</span>'; }).join("") +
+      '</nav><span class="who">운영자 admin@</span></div>';
+  }
+
+  /* ---------------- footer (법적고지) ---------------- */
+  function footer(){
+    return '<div class="ft">'+
+      '<div class="lk"><span class="em">이용약관</span><span class="em">개인정보처리방침</span>'+
+      '<span>운영정책</span><span>위치기반서비스 이용약관</span><span>분쟁조정 안내</span><span>고객센터</span></div>'+
+      '<div class="info">'+
+        '<b>(주)소개뱅크</b> · 대표 <span class="tbd">TBD</span> · '+
+        '사업자등록번호 <span class="tbd">TBD</span> · 통신판매업 신고번호 <span class="tbd">TBD</span><br>'+
+        '직업정보제공사업 신고번호 <span class="tbd">확인 중</span> · '+
+        '주소 <span class="tbd">TBD</span> · 전화 <span class="tbd">TBD</span> · 이메일 <span class="tbd">TBD</span><br>'+
+        '개인정보보호책임자 <span class="tbd">TBD</span> · 호스팅 사업자 <span class="tbd">TBD</span>'+
+      '</div>'+
+      '<div class="notice">'+
+        '<b>소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다.</b> '+
+        '상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.<br>'+
+        '<b>사업용 부동산</b>은 제휴 공인중개사가 중개하며, 소개뱅크는 중개행위를 하지 않고 중개보수를 받지 않습니다. '+
+        '해당 리스팅에는 중개사무소 등록번호와 상호가 표기됩니다.'+
+      '</div>'+
+    '</div>';
+  }
+
+  /* ================= USER SCREENS ================= */
+  function scMch(){
+    var log = S.chat.map(function(m){
+      return '<div class="msg '+ m.w +'"><span class="who">'+ esc(m.n) +'</span>'+ esc(m.t) +'</div>';
+    }).join("");
+    var started = S.deal.status !== "OPEN";
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">1:1 문의 · 매칭</h2>'+
+      '<p class="h-sub">'+ esc(S.deal.title) +' · 소개자 '+ esc(S.deal.referrer) +' · Deal #'+ esc(S.deal.id) +'</p>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '이 대화는 소개코드 <b>'+ esc(S.deal.code) +'</b>에 귀속되어 있습니다. 유효기간 90일, '+
+        '<b>first-touch 고정</b> — 이후 다른 소개코드로 재유입해도 귀속은 바뀌지 않습니다.</span></div>'+
+      '<div class="chat" id="chatBox">'+
+        '<div class="sysmsg">소개코드 '+ esc(S.deal.code) +' 유입 · 2026.08.26</div>'+ log +
+        (started ? '<div class="sysmsg">계약 단계로 이동했습니다</div>' : '') +
+      '</div>'+
+      '<div class="chatin"><input id="chatIn" type="text" placeholder="메시지를 입력하세요" aria-label="메시지 입력">'+
+        '<button class="btn bl" id="chatSend">보내기</button></div>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '계좌번호 · 주민번호 패턴이 감지되면 발송 전 경고합니다. 플랫폼 밖 거래 유도 표현도 안내 대상입니다.</span></div>'+
+      '<div style="display:flex;gap:9px;align-items:center;margin-top:14px">'+
+        '<span style="flex:1;font-size:12px;color:var(--ink3)">협의가 끝나면 계약 단계로 넘어갑니다.</span>'+
+        '<button class="btn or" data-act="startContract">계약 진행하기</button></div>'+
+    '</div>' + footer();
+  }
+
+  function scDel1(){
+    var d = S.deal, both = bothSigned();
+    if (d.status === "OPEN") {
+      return gnb() + '<div class="body">'+
+        '<h2 class="h-pg">계약서 발급 · 서명</h2>'+
+        '<div class="alert a-r"><span class="ic">!</span><span>'+
+          '아직 계약 단계가 시작되지 않았습니다. <b>1:1 매칭</b> 화면에서 “계약 진행하기”를 먼저 눌러주세요.</span></div>'+
+        '<button class="btn bl" data-go="mch">매칭 화면으로</button></div>' + footer();
+    }
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">계약서 발급 · 서명</h2>'+
+      '<p class="h-sub">Deal #'+ esc(d.id) +' · 소개창업 양수도 계약서 (표준 양식)</p>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '<b>소개뱅크는 계약서 양식만 제공합니다.</b> 계약의 당사자가 아니며 계약 내용에 대한 책임을 지지 않습니다. '+
+        '중요 조건은 반드시 당사자가 직접 확인하세요.</span></div>'+
+      '<div class="doc">'+
+        '<h4>사업 양수도 계약서</h4>'+
+        '<div class="cl"><b>제1조 (목적)</b>양도인은 아래 사업을 양수인에게 양도하고, 양수인은 이를 양수한다.</div>'+
+        '<div class="cl"><b>제2조 (대상)</b>'+ esc(d.title) +' · 서울 강남구 역삼동 · 99.2㎡ (약 30평)</div>'+
+        '<div class="cl"><b>제3조 (양수도 대금)</b>금 '+ won(d.amount) +' (권리금 포함, 부가세 별도)</div>'+
+        '<div class="cl"><b>제4조 (인수 범위)</b>영업권 · 시설 및 집기 일체 · 거래처 · 운영 노하우 전수</div>'+
+        '<div class="cl"><b>제5조 (소개 사실 명시)</b>본 계약은 소개뱅크를 통해 소개자 '+ esc(d.referrer) +
+          ' (소개코드 '+ esc(d.code) +')의 소개로 체결되었으며, 소개비는 양도인이 부담한다.</div>'+
+        '<div class="cl"><b>제6조 (분쟁)</b>본 계약에 관한 분쟁은 상호 협의하며, 협의가 되지 않을 경우 관할 법원에 따른다. '+
+          '소개뱅크는 중개자로서 자료 제공 외의 책임을 지지 않는다.</div>'+
+        '<div class="sig">'+
+          '<div>양수인 (소개받는자)<div class="nm">'+ esc(d.seeker) +'</div>'+
+            '<div class="st">'+ (d.signSeeker ? '<span class="bdg b-gr">서명 완료</span>' : '<span class="bdg b-n">서명 대기</span>') +'</div></div>'+
+          '<div>양도인 (제휴사)<div class="nm">'+ esc(d.partner) +'</div>'+
+            '<div class="st">'+ (d.signPartner ? '<span class="bdg b-gr">서명 완료</span>' : '<span class="bdg b-n">서명 대기</span>') +'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="parties">'+
+        '<div class="party'+ (d.signSeeker?" done":"") +'"><div class="pn">양수인 — '+ esc(d.seeker) +'</div>'+
+          '<div class="pr">Seeker</div>'+
+          (d.signSeeker ? '<span class="bdg b-gr">✓ 서명 완료</span>'
+                        : '<button class="btn sm" data-act="signSeeker">서명하기</button>') +'</div>'+
+        '<div class="party'+ (d.signPartner?" done":"") +'"><div class="pn">양도인 — '+ esc(d.partner) +'</div>'+
+          '<div class="pr">Partner</div>'+
+          (d.signPartner ? '<span class="bdg b-gr">✓ 서명 완료</span>'
+                         : '<button class="btn sm" data-act="signPartner">서명하기</button>') +'</div>'+
+      '</div>'+
+      (both ? '<div class="alert a-g"><span class="ic">✓</span><span>양측 서명 완료 — 다음 단계로 진행할 수 있습니다.</span></div>'
+            : '<div class="alert a-w"><span class="ic">…</span><span>서명 '+ ((d.signSeeker?1:0)+(d.signPartner?1:0)) +' / 2</span></div>')+
+      '<div style="display:flex;gap:9px;margin-top:14px;align-items:center">'+
+        '<button class="btn" data-act="resetSign">서명 되돌리기</button><span style="flex:1"></span>'+
+        '<button class="btn" data-go="del2" '+ (both?"":"disabled") +'>결제 단계</button>'+
+        '<button class="btn or" data-go="del3" '+ (both?"":"disabled") +'>성사 확정으로</button></div>'+
+    '</div>' + footer();
+  }
+
+  function scDel2(){
+    var d = S.deal;
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">에스크로 결제</h2>'+
+      '<p class="h-sub">Deal #'+ esc(d.id) +' · 현재 관: 소개창업 (BIZ)</p>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '<b>이 거래에는 에스크로가 적용되지 않습니다.</b><br>'+
+        '에스크로는 <b>소개머니 전체</b>와 <b>소개몰 B군(업체 상품)</b>에만 적용됩니다. '+
+        '소개창업 양수도 대금은 플랫폼이 보관하지 않습니다 — 고액 자금 보관에 따르는 규제 부담을 지지 않기 위해서입니다. '+
+        '대금은 계약서에 따라 당사자 간에 직접 지급합니다.</span></div>'+
+
+      '<h3 class="h-sec">관별 결제 방식</h3>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>관</th><th>결제 방식</th><th>플랫폼 역할</th></tr></thead><tbody>'+
+        '<tr><td><span class="bdg b-bl">소개머니</span></td><td>에스크로 예치 → 수령 확인 → 정산</td><td>대금 보관 · 분쟁 시 환불 처리</td></tr>'+
+        '<tr><td><span class="bdg b-gr">소개몰 B군</span></td><td>에스크로 예치 → 배송 · 청약철회 기간 → 정산</td><td>대금 보관 · 청약철회 대응</td></tr>'+
+        '<tr><td><span class="bdg b-or">소개몰 A · C군</span></td><td>당사자 간 직접 결제</td><td>계약 · 견적 양식 제공</td></tr>'+
+        '<tr><td><span class="bdg b-or">소개창업</span></td><td>당사자 간 직접 결제</td><td>계약서 양식 제공</td></tr>'+
+      '</tbody></table></div>'+
+
+      '<h3 class="h-sec">소개머니 · 소개몰 B군이었다면 이렇게 동작합니다</h3>'+
+      '<div class="panel pad" style="opacity:.72">'+
+        '<div class="calc" style="margin-bottom:12px">'+
+          '<div class="r"><span>결제 금액</span><span class="n">'+ won(d.amount) +'</span></div>'+
+          '<div class="r"><span>에스크로 예치</span><span class="n">보관 중</span></div>'+
+          '<div class="r"><span>수령 확인 기한</span><span class="n">7일</span></div>'+
+          '<div class="r"><span>확정 시 판매자 지급</span><span class="n">'+ won(d.amount - fee()) +'</span></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:9px"><button class="btn" disabled>결제하기</button>'+
+        '<button class="btn" disabled>수령 확인</button></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:9px;margin-top:14px;align-items:center">'+
+        '<span style="flex:1;font-size:12px;color:var(--ink3)">이 거래는 결제 단계를 건너뜁니다.</span>'+
+        '<button class="btn or" data-go="del3">성사 확정으로</button></div>'+
+    '</div>' + footer();
+  }
+
+  function scDel3(){
+    var d = S.deal, both = bothConfirmed();
+    if (!bothSigned()) {
+      return gnb() + '<div class="body">'+
+        '<h2 class="h-pg">성사 확정</h2>'+
+        '<div class="alert a-r"><span class="ic">!</span><span>'+
+          '계약서 양측 서명이 완료되어야 성사 확정을 진행할 수 있습니다. 현재 서명 '+
+          ((d.signSeeker?1:0)+(d.signPartner?1:0)) +' / 2.</span></div>'+
+        '<button class="btn bl" data-go="del1">계약서 화면으로</button></div>' + footer();
+    }
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">성사 확정</h2>'+
+      '<p class="h-sub">Deal #'+ esc(d.id) +' · '+ esc(d.title) +' · 소개코드 '+ esc(d.code) +' · tier 1</p>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '<b>INV-4</b> — 소개받는자와 제휴사가 <b>모두</b> 확인해야 성사입니다. '+
+        '관리자도 임의로 확정할 수 없습니다. 확인 시각과 IP가 기록됩니다.</span></div>'+
+      '<div class="parties">'+
+        '<div class="party'+ (d.cfSeeker?" done":"") +'"><div class="pn">소개받는자 — '+ esc(d.seeker) +'</div>'+
+          '<div class="pr">Seeker</div>'+
+          (d.cfSeeker ? '<span class="bdg b-gr">✓ 확인 완료 · 2026.08.26 14:22</span>'
+                      : '<button class="btn sm" data-act="cfSeeker">확인하기</button>') +'</div>'+
+        '<div class="party'+ (d.cfPartner?" done":"") +'"><div class="pn">제휴사 — '+ esc(d.partner) +'</div>'+
+          '<div class="pr">Partner · 소개비 부담 주체</div>'+
+          (d.cfPartner ? '<span class="bdg b-gr">✓ 확인 완료 · 2026.08.26 15:07</span>'
+                       : '<button class="btn sm" data-act="cfPartner">확인하기</button>') +'</div>'+
+      '</div>'+
+      '<div class="panel pad" style="margin-top:4px">'+
+        '<div class="fld" style="max-width:280px;margin:0"><label for="amt">거래금액</label>'+
+        '<input type="number" id="amt" value="'+ d.amount +'" step="1000000" '+ (both?"disabled":"") +'>'+
+        '<div class="hint">소개비 산정 기준값입니다. 확정 후에는 양측 재확인 없이 바꿀 수 없습니다.</div></div></div>'+
+      (both ? '<div class="alert a-g"><span class="ic">✓</span><span>'+
+                '<b>성사 확정 — Deal.status = CONFIRMED.</b> 이제 정산을 신청할 수 있고, 후기 작성도 가능해집니다.</span></div>'
+            : '<div class="alert a-w"><span class="ic">…</span><span>확인 '+ ((d.cfSeeker?1:0)+(d.cfPartner?1:0)) +' / 2 — '+
+                '7일간 미확인 시 관리자 개입 대상으로 자동 승격됩니다. 상대에게 알림이 최대 3회 재발송됩니다.</span></div>')+
+      '<div style="display:flex;gap:9px;margin-top:14px;align-items:center">'+
+        '<button class="btn" data-act="resetConfirm">되돌리기</button><span style="flex:1"></span>'+
+        '<button class="btn or" data-go="stl1" '+ (both?"":"disabled") +'>정산 신청으로</button></div>'+
+    '</div>' + footer();
+  }
+
+  function scStl1(){
+    var d = S.deal;
+    if (!bothConfirmed()) {
+      return gnb() + '<div class="body">'+
+        '<h2 class="h-pg">정산 신청</h2>'+
+        '<div class="alert a-r"><span class="ic">!</span><span>'+
+          '<b>INV-3 위반 — 정산을 생성할 수 없습니다.</b><br>'+
+          'Settlement는 <code>Deal.status = CONFIRMED</code> 이후에만 만들어집니다. '+
+          '성사 확정 화면에서 양측 확인을 먼저 완료하세요.</span></div>'+
+        '<button class="btn bl" data-go="del3">성사 확정 화면으로</button></div>' + footer();
+    }
+    var st = S.settle.status;
+    var badge = st === "PAID" ? '<span class="bdg b-gr">지급 완료</span>'
+              : st === "APPROVED" ? '<span class="bdg b-bl">승인됨 · 지급 대기</span>'
+              : st === "REQUESTED" ? '<span class="bdg b-am">신청 접수 · 승인 대기</span>'
+              : '<span class="bdg b-gr">지급 가능</span>';
+    var locked = st !== "NONE";
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">정산 신청 '+ badge +'</h2>'+
+      '<p class="h-sub">Deal #'+ esc(d.id) +' · 소개코드 '+ esc(d.code) +' · 소개자 '+ esc(d.referrer) +' · tier 1</p>'+
+      '<div class="calc">'+
+        '<div class="r"><span>거래금액</span><span class="n">'+ won(d.amount) +'</span></div>'+
+        '<div class="r"><span>소개비 요율 — 소개창업</span><span class="n">'+ (d.rate*100).toFixed(1) +'%</span></div>'+
+        '<div class="r"><span>산정 소개비</span><span class="n">'+ won(Math.round(d.amount*d.rate)) +'</span></div>'+
+        '<div class="r"><span>상한 적용 (500만원)</span><span class="n">'+ (Math.round(d.amount*d.rate) > d.cap ? "적용됨" : "미적용") +'</span></div>'+
+        '<div class="r neg"><span>원천징수 '+ (S.settle.tax === "3.3" ? "3.3%" : "없음 (세금계산서)") +'</span><span class="n">− '+ won(tax()) +'</span></div>'+
+        '<div class="r"><span>실지급액</span><span class="n">'+ won(net()) +'</span></div>'+
+      '</div>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '<b>tier = 1 고정</b> — 이 정산에는 상위 소개자가 존재하지 않습니다. '+
+        '소개받는자가 다시 소개자가 되는 체인은 시스템이 생성하지 않습니다.</span></div>'+
+      '<h3 class="h-sec">지급 정보</h3>'+
+      '<div class="g2">'+
+        '<div class="fld"><label for="bank">입금 계좌 <span class="req">*</span></label>'+
+          '<input type="text" id="bank" value="'+ esc(S.settle.bank) +'" '+ (locked?"disabled":"") +'>'+
+          '<div class="hint">예금주명과 회원 실명이 다르면 신청이 차단됩니다.</div></div>'+
+        '<div class="fld"><label for="tax">세금 처리</label>'+
+          '<select id="tax" '+ (locked?"disabled":"") +'>'+
+          '<option value="3.3" '+ (S.settle.tax==="3.3"?"selected":"") +'>사업소득 3.3% 원천징수</option>'+
+          '<option value="tax" '+ (S.settle.tax!=="3.3"?"selected":"") +'>세금계산서 발행 (사업자)</option>'+
+          '</select></div>'+
+      '</div>'+
+      (st === "NONE"
+        ? '<div style="display:flex;gap:9px;align-items:center"><span style="flex:1;font-size:12px;color:var(--ink3)">'+
+          '신청 후 관리자 승인 → 지급 실행 순으로 처리됩니다. 동일 Deal은 1회만 신청할 수 있습니다.</span>'+
+          '<button class="btn or" data-act="requestSettle">정산 신청</button></div>'
+        : '<div class="alert a-g"><span class="ic">✓</span><span>'+
+          '신청이 접수되었습니다. <b>백오피스 → 정산 승인</b> 화면에서 처리 상태를 확인할 수 있습니다.</span></div>'+
+          '<button class="btn" data-go="stl2">지급 내역 보기</button>')+
+    '</div>' + footer();
+  }
+
+  function scStl2(){
+    var st = S.settle.status;
+    var rows = "";
+    if (st === "NONE") {
+      rows = '<tr><td colspan="6"><div class="empty">신청한 정산 내역이 없습니다.</div></td></tr>';
+    } else {
+      var stTxt = st === "PAID" ? '<span class="bdg b-gr">지급 완료</span>'
+                : st === "APPROVED" ? '<span class="bdg b-bl">지급 대기</span>'
+                : '<span class="bdg b-am">승인 대기</span>';
+      rows = '<tr><td class="mono">ST-'+ esc(S.deal.id) +'</td>'+
+        '<td>'+ esc(S.deal.title) +'<div style="font-size:11px;color:var(--ink3)">소개코드 '+ esc(S.deal.code) +' · tier 1</div></td>'+
+        '<td class="num">'+ won(fee()) +'</td><td class="num">− '+ won(tax()) +'</td>'+
+        '<td class="num">'+ won(net()) +'</td><td>'+ stTxt +'</td></tr>';
+    }
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">지급 내역 · 원천징수</h2>'+
+      '<p class="h-sub">소개자 '+ esc(S.deal.referrer) +' · 2026년</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>정산번호</th><th>대상 거래</th><th style="text-align:right">소개비</th>'+
+        '<th style="text-align:right">원천징수</th><th style="text-align:right">실지급</th><th>상태</th></tr></thead>'+
+        '<tbody>'+ rows +'</tbody></table></div>'+
+      (st === "PAID"
+        ? '<div class="alert a-g"><span class="ic">✓</span><span>'+
+          '지급이 완료되었습니다. <b>원천징수영수증</b>은 지급일 기준 익월에 발급됩니다. '+
+          '누적수익 · 신뢰도 · 베스트 사례에 반영되었습니다.</span></div>'
+        : '<div class="alert a-i"><span class="ic">i</span><span>'+
+          '원천징수 명세와 영수증은 <b>지급 완료 후</b> 제공됩니다.</span></div>')+
+      '<h3 class="h-sec">연간 합계</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th>구분</th><th style="text-align:right">금액</th></tr></thead><tbody>'+
+        '<tr><td>소개비 총액</td><td class="num">'+ won(st==="PAID"?fee():0) +'</td></tr>'+
+        '<tr><td>원천징수 총액</td><td class="num">'+ won(st==="PAID"?tax():0) +'</td></tr>'+
+        '<tr><td><b>실지급 총액</b></td><td class="num"><b>'+ won(st==="PAID"?net():0) +'</b></td></tr>'+
+      '</tbody></table></div>'+
+    '</div>' + footer();
+  }
+
+  function scFooter(){
+    return gnb() + '<div class="body">'+
+      '<h2 class="h-pg">푸터 · 법적고지</h2>'+
+      '<p class="h-sub">전 화면 공통 영역 · 오류 화면과 점검 화면에서도 유지</p>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '<b>내용은 확정 후 채웁니다.</b> 아래는 들어가야 할 항목과 배치입니다. '+
+        '<code>TBD</code> 표기된 곳은 사업자 등록 · 신고번호 취득 후 입력합니다.</span></div>'+
+
+      '<h3 class="h-sec">필수 항목 체크리스트</h3>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>구분</th><th>항목</th><th>확보 방법</th><th>상태</th></tr></thead><tbody>'+
+        '<tr><td>사업자</td><td>상호 · 대표자 · 사업자등록번호</td><td>사업자등록증</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>사업자</td><td>주소 · 전화 · 이메일</td><td>—</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>신고</td><td>통신판매업 신고번호</td><td>관할 시·군·구청</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>신고</td><td>직업정보제공사업 신고번호</td><td>고용노동부 — <b>해당 여부 법률 확인 필요</b></td><td><span class="bdg b-rd">확인 중</span></td></tr>'+
+        '<tr><td>책임자</td><td>개인정보보호책임자</td><td>내부 지정</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>책임자</td><td>호스팅 사업자</td><td>인프라 확정 시</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>약관</td><td>이용약관</td><td>작성 필요</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>약관</td><td>개인정보처리방침</td><td>작성 필요</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>약관</td><td>운영정책 (금칙어 · 제한업종 · 제재)</td><td>작성 필요</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>약관</td><td>위치기반서비스 이용약관</td><td>지역 설정 기능 있으므로 필요</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+        '<tr><td>고지</td><td>통신판매중개자 지위 고지</td><td>문구 확정</td><td><span class="bdg b-gr">문구 작성됨</span></td></tr>'+
+        '<tr><td>고지</td><td>부동산 중개 주체 고지</td><td>문구 확정</td><td><span class="bdg b-gr">문구 작성됨</span></td></tr>'+
+        '<tr><td>분쟁</td><td>분쟁조정 안내 · 고객센터</td><td>창구 개설 후</td><td><span class="bdg b-am">TBD</span></td></tr>'+
+      '</tbody></table></div>'+
+
+      '<h3 class="h-sec">렌더링 결과</h3>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '아래가 실제 푸터입니다. 이 화면을 포함해 모든 화면 하단에 동일하게 붙습니다.</span></div>'+
+    '</div>' + footer();
+  }
+
+  /* ================= ADMIN SCREENS ================= */
+  function scAdSh(){
+    var stPending = (S.settle.status === "REQUESTED") ? 1 : 0;
+    var stPay = (S.settle.status === "APPROVED") ? 1 : 0;
+    var logRows = S.log.length
+      ? S.log.map(function(l){ return '<tr><td class="mono">'+ esc(l.at) +'</td><td>'+ esc(l.who) +'</td><td>'+ esc(l.what) +'</td></tr>'; }).join("")
+      : '<tr><td colspan="3"><div class="empty">아직 처리 이력이 없습니다.</div></td></tr>';
+    return admHd("adsh") + '<div class="body">'+
+      '<h2 class="h-pg">관리자 대시보드</h2>'+
+      '<p class="h-sub">2026.08.26 · 처리해야 할 일이 있는 항목만 표시합니다</p>'+
+      '<div class="kpis">'+
+        '<div class="kpi '+ (S.reviews.length?"hot":"") +'"><div class="k">검수 대기</div>'+
+          '<div class="v">'+ S.reviews.length +'</div><div class="d">SLA 24시간</div></div>'+
+        '<div class="kpi '+ (S.verifies.length?"warn":"") +'"><div class="k">인증 승인 대기</div>'+
+          '<div class="v">'+ S.verifies.length +'</div><div class="d">사업자 · 중개사</div></div>'+
+        '<div class="kpi '+ ((stPending+stPay)?"info":"") +'"><div class="k">정산 처리 대기</div>'+
+          '<div class="v">'+ (stPending+stPay) +'</div><div class="d">승인 '+ stPending +' · 지급 '+ stPay +'</div></div>'+
+        '<div class="kpi '+ (S.disputes.length?"warn":"ok") +'"><div class="k">분쟁 진행</div>'+
+          '<div class="v">'+ S.disputes.length +'</div><div class="d">정산 자동 보류</div></div>'+
+      '</div>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '<b>SLA 임박 없음.</b> 검수 대기 중 잔여 4시간 미만 건이 생기면 여기에 표시되고 등록자에게 자동 안내가 발송됩니다.</span></div>'+
+      '<h3 class="h-sec">바로가기</h3>'+
+      '<div style="display:flex;gap:9px;flex-wrap:wrap">'+
+        '<button class="btn" data-go="adrev">검수 큐 ('+ S.reviews.length +')</button>'+
+        '<button class="btn" data-go="adusr">인증 승인 ('+ S.verifies.length +')</button>'+
+        '<button class="btn" data-go="adstl">정산 처리 ('+ (stPending+stPay) +')</button>'+
+        '<button class="btn" data-go="addsp">분쟁 ('+ S.disputes.length +')</button></div>'+
+      '<h3 class="h-sec">최근 처리 이력 <span style="font-size:11px;font-weight:400;color:var(--ink3)">감사 로그</span></h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th style="width:80px">시각</th><th style="width:120px">처리자</th><th>내용</th></tr></thead>'+
+        '<tbody>'+ logRows +'</tbody></table></div>'+
+    '</div>';
+  }
+
+  function scAdRev(){
+    var rows = S.reviews.length ? S.reviews.map(function(r, i){
+      var gb = r.gwan === "BIZ" ? "b-or" : r.gwan === "MAL" ? "b-gr" : "b-bl";
+      return '<tr>'+
+        '<td class="mono">'+ esc(r.id) +'</td>'+
+        '<td>'+ esc(r.t) +
+          (r.estate ? '<div style="font-size:11px;color:var(--rd);margin-top:2px">⚠ 사업용 부동산 — 중개사 인증 확인 필요</div>' : '') +'</td>'+
+        '<td><span class="bdg '+ gb +'">'+ esc(r.gwan) +'</span><div style="font-size:11px;color:var(--ink3);margin-top:3px">'+ esc(r.cat) +'</div></td>'+
+        '<td>'+ esc(r.who) +'<div style="font-size:11px;color:var(--ink3)">'+ esc(r.ago) +'</div></td>'+
+        '<td class="mono">'+ esc(r.sla) +'</td>'+
+        '<td class="act">'+
+          '<select class="btn sm" data-rej="'+ i +'" aria-label="반려 사유" style="margin-right:5px">'+
+            '<option value="">반려 사유</option>'+
+            '<option value="R01">R01 이미지 부적합</option><option value="R02">R02 정보 불충분</option>'+
+            '<option value="R03">R03 제한업종</option><option value="R04">R04 금칙 표현</option>'+
+            '<option value="R05">R05 중복 등록</option><option value="R06">R06 연락처 검증 실패</option>'+
+          '</select>'+
+          '<button class="btn sm" data-act="reject" data-i="'+ i +'">반려</button> '+
+          '<button class="btn sm gr" data-act="approve" data-i="'+ i +'">승인</button></td></tr>';
+    }).join("") : '<tr><td colspan="6"><div class="empty">대기 중인 건이 없습니다.</div></td></tr>';
+
+    return admHd("adrev") + '<div class="body">'+
+      '<h2 class="h-pg">리스팅 검수 큐</h2>'+
+      '<p class="h-sub">SLA 24시간 · 승인 전에는 어떤 경로로도 노출되지 않습니다</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>ID</th><th>제목</th><th>관 · 업종</th><th>등록자</th><th>SLA 잔여</th><th style="text-align:right">처리</th></tr></thead>'+
+        '<tbody>'+ rows +'</tbody></table></div>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '반려 시 사유 코드와 수정 가이드가 등록자에게 함께 전달됩니다. 재제출 건은 이전 반려 이력이 검수자에게 표시되고, '+
+        '동일 등록자가 R03 · R04로 3회 반려되면 등록 권한이 일시 정지됩니다.</span></div>'+
+      '<div class="alert a-r"><span class="ic">!</span><span>'+
+        '<b>사업용 부동산 리스팅은 중개사 인증 여부를 먼저 확인하세요.</b> 미인증 등록자의 부동산 건은 R03으로 반려합니다.</span></div>'+
+    '</div>';
+  }
+
+  function scAdUsr(){
+    var rows = S.verifies.length ? S.verifies.map(function(v, i){
+      return '<tr><td class="mono">'+ esc(v.id) +'</td><td>'+ esc(v.n) +'</td>'+
+        '<td><span class="bdg '+ (v.estate?"b-rd":"b-bl") +'">'+ esc(v.type) +'</span></td>'+
+        '<td class="mono">'+ esc(v.no) +'</td><td>'+ esc(v.ago) +'</td>'+
+        '<td class="act"><button class="btn sm" data-act="vreject" data-i="'+ i +'">반려</button> '+
+        '<button class="btn sm gr" data-act="vapprove" data-i="'+ i +'">승인</button></td></tr>';
+    }).join("") : '<tr><td colspan="6"><div class="empty">승인 대기 중인 인증이 없습니다.</div></td></tr>';
+
+    return admHd("adusr") + '<div class="body">'+
+      '<h2 class="h-pg">회원 · 사업자 · 중개사 인증</h2>'+
+      '<p class="h-sub">인증이 관의 게이트 역할을 합니다</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>회원 ID</th><th>상호 · 이름</th><th>인증 유형</th><th>등록번호</th><th>접수</th><th style="text-align:right">처리</th></tr></thead>'+
+        '<tbody>'+ rows +'</tbody></table></div>'+
+      '<h3 class="h-sec">인증 유형별 권한</h3>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>인증</th><th>확인 자료</th><th>열리는 권한</th></tr></thead><tbody>'+
+        '<tr><td><span class="bdg b-n">본인인증</span></td><td>휴대폰 본인확인</td><td>소개머니 등록 · 문의 · 정산 신청</td></tr>'+
+        '<tr><td><span class="bdg b-bl">사업자</span></td><td>사업자등록증 · 국세청 상태 조회</td><td><b>소개몰 등록</b> · 제휴사 리스팅 · 세금계산서 정산</td></tr>'+
+        '<tr><td><span class="bdg b-rd">중개사</span></td><td>중개사무소 등록증 · 등록번호 조회</td><td><b>사업용 부동산(asset-estate) 등록</b></td></tr>'+
+        '<tr><td><span class="bdg b-gr">인증소개자</span></td><td>실명 + 연락처 검증 완료</td><td>상세페이지 배지 노출</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="alert a-r"><span class="ic">!</span><span>'+
+        '<b>중개사 인증 없이는 사업용 부동산을 등록할 수 없습니다.</b> 등록번호는 국가공간정보포털 조회 결과와 대조하고, '+
+        '해당 리스팅에는 중개사무소 등록번호 · 상호 · 대표자가 상시 표기됩니다.</span></div>'+
+    '</div>';
+  }
+
+  function scAdDeal(){
+    var d = S.deal;
+    var stMap = {
+      OPEN: ['<span class="bdg b-n">문의 · 협의 중</span>', "04"],
+      CONTRACT: ['<span class="bdg b-bl">계약 진행</span>', "05"]
+    };
+    var label, stage;
+    if (bothConfirmed()) { label = '<span class="bdg b-gr">CONFIRMED</span>'; stage = "05 완료"; }
+    else if (bothSigned()) { label = '<span class="bdg b-am">AWAIT_CONFIRM · '+ ((d.cfSeeker?1:0)+(d.cfPartner?1:0)) +'/2</span>'; stage = "05 성사"; }
+    else if (d.status === "CONTRACT") { label = '<span class="bdg b-bl">CONTRACT · 서명 '+ ((d.signSeeker?1:0)+(d.signPartner?1:0)) +'/2</span>'; stage = "05 계약"; }
+    else { label = stMap.OPEN[0]; stage = "04 매칭"; }
+
+    return admHd("addeal") + '<div class="body">'+
+      '<h2 class="h-pg">거래 모니터링</h2>'+
+      '<p class="h-sub">관리자는 상태를 볼 수 있지만 임의로 확정할 수 없습니다 — INV-4</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>Deal</th><th>대상 리스팅</th><th>소개자 · 소개코드</th><th>당사자</th>'+
+        '<th style="text-align:right">거래금액</th><th>단계</th><th>상태</th></tr></thead><tbody>'+
+        '<tr><td class="mono">#'+ esc(d.id) +'</td>'+
+        '<td>'+ esc(d.title) +'</td>'+
+        '<td>'+ esc(d.referrer) +'<div class="mono" style="font-size:11px;color:var(--ink3)">'+ esc(d.code) +' · tier 1</div></td>'+
+        '<td>'+ esc(d.seeker) +'<div style="font-size:11px;color:var(--ink3)">'+ esc(d.partner) +'</div></td>'+
+        '<td class="num">'+ won(d.amount) +'</td>'+
+        '<td class="mono">'+ esc(stage) +'</td><td>'+ label +'</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '<b>관리자가 할 수 있는 것</b> — 상태 조회, 당사자에게 확인 알림 재발송, 7일 초과 건 개입, 분쟁 전환.<br>'+
+        '<b>할 수 없는 것</b> — 성사 확정. 양측 확인이 없으면 어떤 권한으로도 CONFIRMED가 되지 않습니다.</span></div>'+
+      '<div style="display:flex;gap:9px;flex-wrap:wrap">'+
+        '<button class="btn" data-act="nudge">확인 알림 재발송</button>'+
+        '<button class="btn" data-act="toDispute">분쟁으로 전환</button></div>'+
+    '</div>';
+  }
+
+  function scAdStl(){
+    var st = S.settle.status;
+    var rows;
+    if (st === "NONE") {
+      rows = '<tr><td colspan="7"><div class="empty">처리 대기 중인 정산이 없습니다. 사용자 화면에서 정산을 신청해 보세요.</div></td></tr>';
+    } else {
+      var lab = st === "PAID" ? '<span class="bdg b-gr">지급 완료</span>'
+              : st === "APPROVED" ? '<span class="bdg b-bl">승인됨 · 지급 대기</span>'
+              : '<span class="bdg b-am">승인 대기</span>';
+      var act = st === "REQUESTED"
+        ? '<button class="btn sm" data-act="stlHold">보류</button> <button class="btn sm bl" data-act="stlApprove">승인</button>'
+        : st === "APPROVED"
+        ? '<button class="btn sm gr" data-act="stlPay">지급 실행</button>'
+        : '<span style="font-size:11.5px;color:var(--ink3)">완료</span>';
+      rows = '<tr><td class="mono">ST-'+ esc(S.deal.id) +'</td>'+
+        '<td>'+ esc(S.deal.referrer) +'<div class="mono" style="font-size:11px;color:var(--ink3)">'+ esc(S.settle.holder) +' · '+ esc(S.settle.bank) +'</div></td>'+
+        '<td>Deal #'+ esc(S.deal.id) +'<div style="font-size:11px;color:var(--ink3)">'+ esc(S.deal.title) +'</div></td>'+
+        '<td class="num">'+ won(fee()) +'</td><td class="num">− '+ won(tax()) +'</td>'+
+        '<td class="num">'+ won(net()) +'</td>'+
+        '<td class="act">'+ lab +'<div style="margin-top:5px">'+ act +'</div></td></tr>';
+    }
+    return admHd("adstl") + '<div class="body">'+
+      '<h2 class="h-pg">정산 승인 · 지급 실행</h2>'+
+      '<p class="h-sub">자동 지급하지 않습니다 — 승인과 지급을 분리해 오지급을 막습니다</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>정산번호</th><th>수취인 · 계좌</th><th>대상 거래</th>'+
+        '<th style="text-align:right">소개비</th><th style="text-align:right">원천징수</th>'+
+        '<th style="text-align:right">실지급</th><th style="text-align:right">상태 · 처리</th></tr></thead>'+
+        '<tbody>'+ rows +'</tbody></table></div>'+
+      '<h3 class="h-sec">승인 전 확인 항목</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th style="width:180px">항목</th><th>기준</th><th style="width:90px">결과</th></tr></thead><tbody>'+
+        '<tr><td>거래 확정 여부</td><td>Deal.status = CONFIRMED (INV-3)</td><td>'+
+          (bothConfirmed()?'<span class="bdg b-gr">통과</span>':'<span class="bdg b-rd">미충족</span>') +'</td></tr>'+
+        '<tr><td>tier 검증</td><td>Introduction.tier = 1</td><td><span class="bdg b-gr">통과</span></td></tr>'+
+        '<tr><td>예금주 일치</td><td>예금주명 = 회원 실명</td><td><span class="bdg b-gr">통과</span></td></tr>'+
+        '<tr><td>분쟁 여부</td><td>해당 Deal에 진행 중 분쟁 없음</td><td>'+
+          (S.disputes.some(function(x){return x.deal===S.deal.id;})?'<span class="bdg b-rd">보류 대상</span>':'<span class="bdg b-gr">통과</span>') +'</td></tr>'+
+        '<tr><td>중복 신청</td><td>동일 Deal 1회</td><td><span class="bdg b-gr">통과</span></td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '지급 실행은 되돌릴 수 없습니다. 계좌 오류로 실패하면 사유와 함께 재신청 안내가 발송됩니다.</span></div>'+
+    '</div>';
+  }
+
+  function scAdDsp(){
+    var rows = S.disputes.length ? S.disputes.map(function(d, i){
+      return '<tr><td class="mono">'+ esc(d.id) +'</td><td class="mono">#'+ esc(d.deal) +'</td>'+
+        '<td>'+ esc(d.who) +'</td><td>'+ esc(d.reason) +'</td><td>'+ esc(d.ago) +'</td>'+
+        '<td><span class="bdg b-am">'+ esc(d.status) +'</span></td>'+
+        '<td class="act"><button class="btn sm" data-act="dspClose" data-i="'+ i +'">종결</button></td></tr>';
+    }).join("") : '<tr><td colspan="7"><div class="empty">진행 중인 분쟁이 없습니다.</div></td></tr>';
+    return admHd("addsp") + '<div class="body">'+
+      '<h2 class="h-pg">분쟁 처리</h2>'+
+      '<p class="h-sub">분쟁이 접수된 거래는 정산이 자동 보류됩니다</p>'+
+      '<div class="tw"><table class="q">'+
+        '<thead><tr><th>분쟁 ID</th><th>Deal</th><th>접수자</th><th>사유</th><th>접수</th><th>상태</th><th style="text-align:right">처리</th></tr></thead>'+
+        '<tbody>'+ rows +'</tbody></table></div>'+
+      '<h3 class="h-sec">처리 절차</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th style="width:70px">단계</th><th>내용</th><th style="width:110px">기한</th></tr></thead><tbody>'+
+        '<tr><td class="mono">1</td><td>접수 확인 · 양측에 통보 · 해당 Deal 정산 보류</td><td>즉시</td></tr>'+
+        '<tr><td class="mono">2</td><td>양측 소명 자료 수집 (대화 기록 · 계약서 · 증빙)</td><td>7일</td></tr>'+
+        '<tr><td class="mono">3</td><td>운영자 판단 — 정산 진행 / 보류 유지 / 취소</td><td>14일</td></tr>'+
+        '<tr><td class="mono">4</td><td>결과 통보 · 신뢰도 점수 반영 (확정 시 건당 −10점)</td><td>즉시</td></tr>'+
+        '<tr><td class="mono">5</td><td>합의 불가 시 외부 분쟁조정 기관 안내</td><td>—</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="alert a-i"><span class="ic">i</span><span>'+
+        '플랫폼은 중개자이므로 <b>분쟁의 최종 판단 주체가 아닙니다.</b> 자료 제공과 절차 안내가 역할이며, '+
+        '이 점은 운영정책과 푸터 고지에 명시합니다.</span></div>'+
+    '</div>';
+  }
+
+  function scAdPol(){
+    return admHd("adpol") + '<div class="body">'+
+      '<h2 class="h-pg">금칙어 · 제한업종 · 요율</h2>'+
+      '<p class="h-sub">코드가 아니라 데이터로 관리합니다 — 배포 없이 운영자가 수정</p>'+
+      '<h3 class="h-sec">제한업종 — 등록 차단 5종</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th>영역</th><th>근거</th><th>차단 단계</th><th style="text-align:right">상태</th></tr></thead><tbody>'+
+        '<tr><td>법률 · 세무 · 노무</td><td>변호사법</td><td class="mono">목록 + API + 키워드</td><td class="act"><span class="bdg b-rd">차단</span></td></tr>'+
+        '<tr><td>병원 · 의료기관</td><td>의료법</td><td class="mono">목록 + API + 키워드</td><td class="act"><span class="bdg b-rd">차단</span></td></tr>'+
+        '<tr><td>보험 모집</td><td>보험업법</td><td class="mono">목록 + API + 키워드</td><td class="act"><span class="bdg b-rd">차단</span></td></tr>'+
+        '<tr><td>대출 · 금융 중개</td><td>대부업법</td><td class="mono">목록 + API + 키워드</td><td class="act"><span class="bdg b-rd">차단</span></td></tr>'+
+        '<tr><td>직업소개 · 인력</td><td>직업안정법</td><td class="mono">목록 + API + 키워드</td><td class="act"><span class="bdg b-am">확인 중</span></td></tr>'+
+        '<tr><td>사업용 부동산</td><td>공인중개사법</td><td class="mono">중개사 인증 게이트</td><td class="act"><span class="bdg b-bl">조건부 허용</span></td></tr>'+
+      '</tbody></table></div>'+
+      '<h3 class="h-sec">금칙 표현</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th style="width:140px">유형</th><th>표현</th><th style="width:120px">동작</th></tr></thead><tbody>'+
+        '<tr><td>수익 보장</td><td>수익 보장 · 확정 수익 · 원금 보장 · 누구나 월 ○○만원</td><td>제출 차단</td></tr>'+
+        '<tr><td>부업 프레이밍</td><td>부업 · 투잡 · 쉽게 버는</td><td>제출 차단</td></tr>'+
+        '<tr><td>서열 용어</td><td>하위 · 산하 · 라인 · 센터장 · 직급</td><td>제출 차단</td></tr>'+
+        '<tr><td>과장 표현</td><td>업계 1위 · 최고 · 100% 성사</td><td>검수 대상 표시</td></tr>'+
+      '</tbody></table></div>'+
+      '<h3 class="h-sec">요율</h3>'+
+      '<div class="tw"><table class="q"><thead><tr><th>관</th><th style="text-align:right">요율</th><th style="text-align:right">상한</th><th>부담 주체</th></tr></thead><tbody>'+
+        '<tr><td><span class="bdg b-bl">소개머니</span></td><td class="num">3.0%</td><td class="num">300,000원</td><td>등록 시 판매자/구매자 선택</td></tr>'+
+        '<tr><td><span class="bdg b-gr">소개몰</span></td><td class="num">5.0%</td><td class="num">1,000,000원</td><td>업체 고정</td></tr>'+
+        '<tr><td><span class="bdg b-or">소개창업</span></td><td class="num">1.5%</td><td class="num">5,000,000원</td><td>양도인 · 본사 고정</td></tr>'+
+        '<tr><td><span class="bdg b-or">프랜차이즈 가맹</span></td><td class="num">정액</td><td class="num">1,000,000원</td><td>본사</td></tr>'+
+        '<tr><td><span class="bdg b-rd">사업용 부동산</span></td><td class="num">소개비 없음</td><td class="num">—</td><td>중개사 노출료 별도</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="alert a-w"><span class="ic">!</span><span>'+
+        '요율 변경은 <b>변경 시점 이후 신규 소개코드부터</b> 적용됩니다. 이미 발급된 소개코드는 발급 당시 요율을 유지합니다 — '+
+        '소급 적용은 분쟁의 직접 원인이 됩니다.</span></div>'+
+    '</div>';
+  }
+
+  var RENDER = {
+    mch:scMch, del1:scDel1, del2:scDel2, del3:scDel3, stl1:scStl1, stl2:scStl2, ft:scFooter,
+    adsh:scAdSh, adrev:scAdRev, adusr:scAdUsr, addeal:scAdDeal, adstl:scAdStl, addsp:scAdDsp, adpol:scAdPol
+  };
+
+  /* ---------------- render ---------------- */
+  function render(){
+    var k = S.screen;
+    if (!RENDER[k]) k = S.screen = (S.mode === "admin" ? "adsh" : "mch");
+    $("#screen").innerHTML = RENDER[k]();
+
+    var m = META[k] || {};
+    var isAdm = k.indexOf("ad") === 0;
+    $("#sChip").className = "chip " + (isAdm ? "c-a" : "c-u");
+    $("#sChip").textContent = isAdm ? "백오피스" : (m.p ? ({"4":"04 매칭","5a":"05 계약","5b":"05 결제","5c":"05 성사","6a":"06 정산","6b":"06 지급"}[m.p]) : "전역");
+    $("#sId").textContent = m.id || "";
+    $("#sNote").textContent = m.note || "";
+
+    var pipe = $("#pipe");
+    if (isAdm || !m.p) { pipe.hidden = true; }
+    else {
+      pipe.hidden = false;
+      var order = ["4","5a","5b","5c","6a","6b"];
+      var cur = order.indexOf(stageOf());
+      $$("#pipe div").forEach(function(el){
+        var p = el.getAttribute("data-p"), i = order.indexOf(p);
+        el.classList.toggle("on", p === m.p);
+        el.classList.toggle("done", i < cur && p !== m.p);
+      });
+    }
+
+    $("#mUser").setAttribute("aria-pressed", S.mode === "user" ? "true" : "false");
+    $("#mAdmin").setAttribute("aria-pressed", S.mode === "admin" ? "true" : "false");
+    $("#navUser").hidden = S.mode !== "user";
+    $("#navAdmin").hidden = S.mode !== "admin";
+    drawNav();
+
+    var cb = $("#chatBox"); if (cb) cb.scrollTop = cb.scrollHeight;
+    save();
+  }
+  function go(k){ S.screen = k; render(); window.scrollTo({top:0, behavior:"instant"}); }
+
+  /* ---------------- events ---------------- */
+  $("#mUser").addEventListener("click", function(){ S.mode="user"; S.screen="mch"; render(); });
+  $("#mAdmin").addEventListener("click", function(){ S.mode="admin"; S.screen="adsh"; render(); });
+  $("#reset").addEventListener("click", function(){
+    S = JSON.parse(JSON.stringify(DEFAULT)); render(); toast("데이터를 초기화했습니다.");
+  });
+
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-go],[data-act]");
+    if (!t) return;
+    if (t.hasAttribute("data-go")) { go(t.getAttribute("data-go")); return; }
+    var a = t.getAttribute("data-act"), i = Number(t.getAttribute("data-i"));
+
+    if (a === "startContract") {
+      S.deal.status = "CONTRACT";
+      S.chat.push({w:"them", n:"홍길동 · 인증소개자", t:"좋습니다. 계약서 양식 보내드리겠습니다."});
+      go("del1"); toast("계약 단계로 이동했습니다."); return;
+    }
+    if (a === "signSeeker" || a === "signPartner") {
+      S.deal[a === "signSeeker" ? "signSeeker" : "signPartner"] = true;
+      render(); if (bothSigned()) toast("양측 서명 완료 — 성사 확정으로 진행할 수 있습니다."); return;
+    }
+    if (a === "resetSign") { S.deal.signSeeker = S.deal.signPartner = false; render(); return; }
+    if (a === "cfSeeker" || a === "cfPartner") {
+      var el = $("#amt"); if (el) S.deal.amount = Number(el.value) || S.deal.amount;
+      S.deal[a === "cfSeeker" ? "cfSeeker" : "cfPartner"] = true;
+      render();
+      if (bothConfirmed()) toast("성사 확정 — 정산 단계가 열렸습니다.");
+      else toast("확인 1 / 2 — 상대에게 알림이 발송되었습니다.");
+      return;
+    }
+    if (a === "resetConfirm") { S.deal.cfSeeker = S.deal.cfPartner = false; S.settle.status = "NONE"; render(); return; }
+
+    if (a === "requestSettle") {
+      var b = $("#bank"), x = $("#tax");
+      if (b) S.settle.bank = b.value;
+      if (x) S.settle.tax = x.value;
+      S.settle.status = "REQUESTED";
+      logit("이대표 (소개자)", "정산 신청 ST-" + S.deal.id + " · " + won(net()));
+      render(); toast("정산 신청 접수 — 백오피스 정산 화면에서 확인하세요."); return;
+    }
+    if (a === "stlApprove") { S.settle.status = "APPROVED";
+      logit("운영자 admin@", "정산 승인 ST-" + S.deal.id); render(); toast("승인 완료 — 지급 실행 대기."); return; }
+    if (a === "stlHold") { S.settle.status = "REQUESTED";
+      logit("운영자 admin@", "정산 보류 ST-" + S.deal.id); render(); toast("보류 처리했습니다."); return; }
+    if (a === "stlPay") { S.settle.status = "PAID";
+      logit("운영자 admin@", "지급 실행 ST-" + S.deal.id + " · " + won(net())); render();
+      toast("지급 완료 — 누적수익 · 신뢰도에 반영됩니다."); return; }
+
+    if (a === "approve") { var r = S.reviews.splice(i,1)[0];
+      logit("운영자 admin@", "리스팅 승인 " + r.id + " · " + r.t); render(); toast("승인 — 노출을 시작합니다."); return; }
+    if (a === "reject") {
+      var sel = document.querySelector('[data-rej="'+ i +'"]');
+      var code = sel ? sel.value : "";
+      if (!code) { toast("반려 사유 코드를 선택하세요."); return; }
+      var r2 = S.reviews.splice(i,1)[0];
+      logit("운영자 admin@", "리스팅 반려 " + r2.id + " · " + code);
+      render(); toast("반려 " + code + " — 사유와 수정 가이드가 전달됩니다."); return;
+    }
+    if (a === "vapprove") { var v = S.verifies.splice(i,1)[0];
+      logit("운영자 admin@", v.type + " 인증 승인 " + v.id + " · " + v.n); render(); toast("인증 승인 완료."); return; }
+    if (a === "vreject") { var v2 = S.verifies.splice(i,1)[0];
+      logit("운영자 admin@", v2.type + " 인증 반려 " + v2.id); render(); toast("인증 반려 — 사유가 전달됩니다."); return; }
+
+    if (a === "nudge") { logit("운영자 admin@", "Deal #" + S.deal.id + " 확인 알림 재발송"); render();
+      toast("확인 알림을 재발송했습니다."); return; }
+    if (a === "toDispute") {
+      if (S.disputes.some(function(x){ return x.deal === S.deal.id; })) { toast("이미 분쟁이 접수된 거래입니다."); return; }
+      S.disputes.unshift({id:"D-105", deal:S.deal.id, who:"운영자", reason:"관리자 직권 전환", ago:"방금", status:"접수"});
+      if (S.settle.status === "REQUESTED" || S.settle.status === "APPROVED") S.settle.status = "REQUESTED";
+      logit("운영자 admin@", "Deal #" + S.deal.id + " 분쟁 전환 · 정산 보류");
+      go("addsp"); toast("분쟁 전환 — 해당 거래 정산이 보류됩니다."); return;
+    }
+    if (a === "dspClose") { var d3 = S.disputes.splice(i,1)[0];
+      logit("운영자 admin@", "분쟁 종결 " + d3.id); render(); toast("분쟁을 종결했습니다."); return; }
+  });
+
+  document.addEventListener("click", function(e){
+    var b = e.target.closest(".navbtn");
+    if (b) go(b.getAttribute("data-s"));
+  });
+
+  document.addEventListener("click", function(e){
+    if (e.target.id === "chatSend") {
+      var inp = $("#chatIn"); var v = (inp.value||"").trim();
+      if (!v) return;
+      if (/\d{2,3}-?\d{2,4}-?\d{4}|\d{6}-?\d{7}|계좌|입금/.test(v)) {
+        toast("계좌 · 연락처가 감지되었습니다. 안전을 위해 플랫폼 안에서 진행해 주세요.");
+      }
+      S.chat.push({w:"me", n:"나 (이대표)", t:v});
+      S.chat.push({w:"them", n:"홍길동 · 인증소개자", t:"확인했습니다. 매장 방문 상담 일정 잡아드릴까요?"});
+      render();
+    }
+  });
+
+  load(); render();
+})();
+</script>
+
+</body></html>

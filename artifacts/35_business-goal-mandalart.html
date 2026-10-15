@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소개뱅크 만다라트</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --ink:#2b2620;
+    --sub:#6b6156;
+    --main-bg:#c8541e;
+    --main-fg:#fff;
+    --sg-bg:#f0dcc8;
+    --sg-fg:#7a3b12;
+    --act-bg:#ffffff;
+    --act-fg:#2b2620;
+    --border:#d8c9b5;
+    --block-border:#c8541e;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg:#1c1815;
+      --ink:#f2ece3;
+      --sub:#c9beae;
+      --main-bg:#e0672c;
+      --main-fg:#1c1815;
+      --sg-bg:#3a2c1c;
+      --sg-fg:#f0c99a;
+      --act-bg:#2a251f;
+      --act-fg:#f2ece3;
+      --border:#43392c;
+      --block-border:#e0672c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1c1815;
+    --ink:#f2ece3;
+    --sub:#c9beae;
+    --main-bg:#e0672c;
+    --main-fg:#1c1815;
+    --sg-bg:#3a2c1c;
+    --sg-fg:#f0c99a;
+    --act-bg:#2a251f;
+    --act-fg:#f2ece3;
+    --border:#43392c;
+    --block-border:#e0672c;
+  }
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    padding: 20px 12px 40px;
+  }
+  h1{
+    font-size: 1.15rem;
+    text-align:center;
+    margin: 4px 0 2px;
+  }
+  p.sub{
+    text-align:center;
+    color:var(--sub);
+    font-size:0.8rem;
+    margin:0 0 18px;
+  }
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+    overflow-x: auto;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(9, minmax(64px, 1fr));
+    grid-template-rows: repeat(9, minmax(64px, auto));
+    gap:3px;
+    background:var(--block-border);
+    padding:3px;
+    border-radius:10px;
+  }
+  .cell{
+    background:var(--act-bg);
+    color:var(--act-fg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:4px 3px;
+    font-size:0.62rem;
+    line-height:1.2;
+    border-radius:2px;
+    min-height:64px;
+    word-break:keep-all;
+  }
+  .cell.main{
+    background:var(--main-bg);
+    color:var(--main-fg);
+    font-weight:700;
+    font-size:0.72rem;
+  }
+  .cell.sg{
+    background:var(--sg-bg);
+    color:var(--sg-fg);
+    font-weight:700;
+    font-size:0.66rem;
+  }
+  /* thicker separators between 3x3 blocks */
+  .cell[data-br="1"]{ border-right: 3px solid var(--block-border); }
+  .cell[data-bb="1"]{ border-bottom: 3px solid var(--block-border); }
+
+  @media (min-width: 640px){
+    .cell{ font-size:0.72rem; min-height:78px; padding:6px 5px;}
+    .cell.main{ font-size:0.86rem; }
+    .cell.sg{ font-size:0.78rem; }
+  }
+
+  .legend{
+    max-width:760px;
+    margin: 16px auto 0;
+    font-size:0.72rem;
+    color:var(--sub);
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .dot{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .dot.main{ background:var(--main-bg); }
+  .dot.sg{ background:var(--sg-bg); }
+  .dot.act{ background:var(--act-bg); border:1px solid var(--border); }
+</style>
+</head>
+<body>
+  <h1>소개뱅크 사업 목표 만다라트</h1>
+  <p class="sub">중심 목표 · 8대 세부 목표 · 실천 항목 64개</p>
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="legend">
+    <span><i class="dot main"></i>중심 목표</span>
+    <span><i class="dot sg"></i>세부 목표(8)</span>
+    <span><i class="dot act"></i>실천 항목(64)</span>
+  </div>
+
+<script>
+const MAIN = "소개뱅크\n성공적 출시·성장";
+
+// 8 sub-goals, in visual order: SG1(top-left block) ... SG8(bottom-right block)
+const subgoals = [
+  {
+    name: "1차 오픈 완수\n(11/3 소개머니)",
+    actions: [
+      "footer 링크 5건\n완료(09-26)",
+      "대표 전화번호\n확정",
+      "개인정보보호\n책임자 지정",
+      "호스팅사\n확정",
+      "사업 유형\n최종 확인",
+      "약관 본문\n3건 완성",
+      "배포 리허설\n실행",
+      "GO/NO-GO\n최종 판정"
+    ]
+  },
+  {
+    name: "오픈 블로커\n15건 해소",
+    actions: [
+      "인간 액션 항목\n담당자 지정",
+      "SPF/DKIM\n설정",
+      "SMS 계약\n체결",
+      "카카오 알림톡\n템플릿 사전승인",
+      "주간 진행\n트래킹",
+      "P0~P3\n우선순위 재확인",
+      "미반영 21개\n항목 점검",
+      "완료 항목\n검증"
+    ]
+  },
+  {
+    name: "법무·약관\n확정",
+    actions: [
+      "15개 항목\n법무 회신(9/26)",
+      "약관 27개\n항목 확정",
+      "C-07\n전자상거래법 반영",
+      "ADPERSONAL\n시행(10/1) 준비",
+      "위치정보법\n(M-4) 검토 반영",
+      "6종 약관\n효력발생일 확정",
+      "법무 자문\n회신 취합",
+      "최종 약관\n게시"
+    ]
+  },
+  {
+    name: "콜드스타트\n공급자 확보",
+    actions: [
+      "사업자 20개사\n리스트업",
+      "초기 공급자\n컨택",
+      "온보딩\n프로세스 정비",
+      "인센티브/혜택\n설계",
+      "카테고리별\n균형 확보",
+      "계약/등록\n서류 준비",
+      "초기 거래\n성사 지원",
+      "피드백 반영\n개선"
+    ]
+  },
+  {
+    name: "리드관\n수익모델 확정",
+    actions: [
+      "리드 수수료\n세부 모델 결정",
+      "정액 슬롯\n광고 방식 설계",
+      "환불 정책\n수립",
+      "인보이스 발행\n주체 결정",
+      "선불/후불\n구분 확정",
+      "1리드=1사업자\n독점배분 검증",
+      "파트너센터\n26개 화면 연동",
+      "법무 검토\n반영"
+    ]
+  },
+  {
+    name: "단계별 관 확장\n(2~4관)",
+    actions: [
+      "2관(소개몰)\n오픈 준비",
+      "3관(소개창업)\n오픈 준비",
+      "4관(소개리드)\n오픈 준비",
+      "게이트 조건\n정의",
+      "관별 오픈\n일정 수립",
+      "관별 리스크\n점검",
+      "사용자 피드백\n반영",
+      "순차 오픈\n실행"
+    ]
+  },
+  {
+    name: "건강몰(HLT)\n신설",
+    actions: [
+      "직거래+입점\n병행 설계",
+      "하위가맹점\n분리정산 구축",
+      "4개 취급품목\n카테고리화",
+      "sgb 코드베이스\n개발 착수",
+      "소개엔진\n1단계 분리",
+      "소개코드\n2단계 연동설계",
+      "판매형 전환\n검증",
+      "약싸몰 벤치마킹\n반영"
+    ]
+  },
+  {
+    name: "기술 기반\n안정화",
+    actions: [
+      "백엔드 테스트\n294개 유지",
+      "DB 스키마\n베이스라인 관리",
+      "Toss 결제\n배치 안정화",
+      "프론트 108개\n화면 완성도",
+      "BO 화면 6개\nAPI 구현",
+      "불변식(INV)\n위반 0건 유지",
+      "공격 시나리오\n방어 점검",
+      "AWS 배포\n절차 검증"
+    ]
+  }
+];
+
+// block layout order (3x3 of blocks): SG1 SG2 SG3 / SG4 MAIN SG5 / SG6 SG7 SG8
+const blockOrder = [0,1,2,3,-1,4,5,6,7]; // -1 = main block
+
+function buildBlockCells(subIndex){
+  // returns 9 cell descriptors (local 0..8 row-major) for a subgoal block
+  const sg = subgoals[subIndex];
+  const cells = new Array(9);
+  let ai = 0;
+  for(let i=0;i<9;i++){
+    if(i===4){
+      cells[i] = {text: sg.name, cls:"sg"};
+    } else {
+      cells[i] = {text: sg.actions[ai], cls:"cell"};
+      ai++;
+    }
+  }
+  return cells;
+}
+
+function buildMainBlockCells(){
+  // center block: 8 subgoal names around MAIN, in same reading order as blockOrder mapping
+  const order = [0,1,2,3,4,5,6,7]; // subgoal indices in reading order skipping center
+  const cells = new Array(9);
+  let oi=0;
+  for(let i=0;i<9;i++){
+    if(i===4){
+      cells[i] = {text: MAIN, cls:"main"};
+    } else {
+      cells[i] = {text: subgoals[order[oi]].name, cls:"sg"};
+      oi++;
+    }
+  }
+  return cells;
+}
+
+const grid = document.getElementById('grid');
+const blockCellsList = blockOrder.map(idx => idx === -1 ? buildMainBlockCells() : buildBlockCells(idx));
+
+for(let R=0; R<9; R++){
+  for(let C=0; C<9; C++){
+    const blockRow = Math.floor(R/3);
+    const blockCol = Math.floor(C/3);
+    const blockIdx = blockRow*3 + blockCol;
+    const localRow = R%3;
+    const localCol = C%3;
+    const localIdx = localRow*3 + localCol;
+    const data = blockCellsList[blockIdx][localIdx];
+
+    const div = document.createElement('div');
+    div.className = 'cell ' + (data.cls === 'main' ? 'main' : data.cls === 'sg' ? 'sg' : '');
+    div.textContent = '';
+    data.text.split('\n').forEach((line, i, arr) => {
+      div.appendChild(document.createTextNode(line));
+      if(i < arr.length-1) div.appendChild(document.createElement('br'));
+    });
+
+    if(localCol===2 && blockCol<2) div.setAttribute('data-br','1');
+    if(localRow===2 && blockRow<2) div.setAttribute('data-bb','1');
+
+    grid.appendChild(div);
+  }
+}
+</script>
+</body>
+</html>

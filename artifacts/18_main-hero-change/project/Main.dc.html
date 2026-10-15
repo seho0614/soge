@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>소개뱅크 메인 — 데스크톱 변경안</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Nanum+Pen+Script&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F6FD}
+a{color:#4A2FE0;text-decoration:none}a:hover{color:#3720B8}
+input::placeholder{color:#6B6A80}
+</style>
+</helmet>
+<div style="font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #17162B; background: #F7F6FD; min-height: 100vh">
+
+<!-- 헤더 -->
+<header style="background: #FFFFFF; border-bottom: 1px solid #ECEAF7">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 68px; display: flex; align-items: center; gap: 32px">
+<a href="#top" style="display: flex; align-items: center; gap: 8px; color: #17162B; font-weight: 900; font-size: 22px">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.6" stroke-linecap="round"><path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3"></path></svg>
+<span>소개뱅크</span>
+</a>
+<nav aria-label="주 메뉴" style="display: flex; gap: 26px; font-size: 15px; font-weight: 500; flex-grow: 1">
+<a href="#" style="color: #17162B">소개장터</a>
+<a href="#" style="color: #17162B">안심소개</a>
+<a href="#" style="color: #17162B">소개창업</a>
+<a href="#" style="color: #17162B">소개뱅크몰</a>
+<a href="#" style="color: #17162B">소개광장</a>
+<a href="#" style="color: #5F5E75">이용안내</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px">
+<button aria-label="검색" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #F2F0FC; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17162B" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
+<button aria-label="알림" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #F2F0FC; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17162B" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21h4"></path></svg></button>
+<a href="#" style="height: 44px; padding: 0 18px; display: flex; align-items: center; border: 1px solid #DCD8F0; border-radius: 10px; color: #17162B; font-weight: 700; font-size: 14px">로그인</a>
+<a href="#" style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-weight: 700; font-size: 14px">무료 회원가입</a>
+</div>
+</div>
+</header>
+
+<!-- 히어로 -->
+<section id="top" style="background: linear-gradient(180deg, #F1EDFF 0%, #FBFAFF 70%, #F7F6FD 100%); padding: 64px 24px 40px">
+<div style="max-width: 1200px; margin: 0 auto; position: relative">
+<div aria-hidden="true" style="position: absolute; left: 24px; top: 30px; font-family: 'Nanum Pen Script', cursive; font-size: 26px; line-height: 1.15; color: #4A3F8C; transform: rotate(-6deg)">궁금한 게 있으신가요?<br>AI에게 물어보세요!</div>
+<div aria-hidden="true" style="position: absolute; right: 24px; top: 30px; font-family: 'Nanum Pen Script', cursive; font-size: 26px; line-height: 1.15; color: #4A3F8C; transform: rotate(6deg); text-align: right">좋은 사람, 좋은 기회가<br>연결됩니다.</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
+<h1 style="margin: 0; font-size: 52px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.2">찾지 말고, <span style="color: {{accent}}">소개받으세요.</span></h1>
+<p style="margin: 0; font-size: 19px; color: #3E3D55; font-weight: 500">사람 · 상품 · 서비스 · 사업 · 동네정보까지 AI가 찾아드립니다.</p>
+</div>
+<div style="max-width: 720px; margin: 32px auto 0">
+<label for="hero-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">무엇을 소개받고 싶으세요?</label>
+<div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid #B9A9FF; border-radius: 40px; padding: 8px 8px 8px 24px; box-shadow: 0 10px 30px rgba(91, 61, 245, 0.14)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
+<input id="hero-q" type="text" value="{{query}}" onChange="{{onQuery}}" placeholder="무엇을 소개받고 싶으세요?" style="flex-grow: 1; border: 0; outline: none; font-size: 18px; font-family: inherit; color: #17162B; background: transparent; height: 44px">
+<button aria-label="AI로 찾기" style="width: 52px; height: 52px; border-radius: 26px; border: 0; background: {{accent}}; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button onClick="{{c.pick}}" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid #E2DDF7; background: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 500; color: #2B2A44; cursor: pointer">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<!-- 관 진입 카드 -->
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 40px">
+<a href="#" style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 20px 18px; color: #17162B">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #EEE9FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5B3DF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l4-4 4 3 3-3 7 6-4 4"></path><path d="M7 13l3 3 2-1 2 2"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 17px">소개장터</strong><span style="font-size: 13px; color: #5F5E75">필요한 것을 소개받아요</span></span>
+</a>
+<a href="#" style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 20px 18px; color: #17162B">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #E3F6EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F8A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 17px">안심소개</strong><span style="font-size: 13px; color: #5F5E75">인증된 업체를 만나요</span></span>
+</a>
+<a href="#" style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 20px 18px; color: #17162B">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #FFEFE3; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C2560C" stroke-width="2" stroke-linecap="round"><path d="M5 20V13M10 20V9M15 20V11M20 20V5"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 17px">소개창업</strong><span style="font-size: 13px; color: #5F5E75">사업·창업 기회를 찾아요</span></span>
+</a>
+<a href="#" style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 20px 18px; color: #17162B">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #F3E8FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7E2FD0" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 17px">소개뱅크몰</strong><span style="font-size: 13px; color: #5F5E75">건강관부터 둘러봐요</span></span>
+</a>
+<a href="#" style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 20px 18px; color: #17162B">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #E6F0FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 17px">소개광장</strong><span style="font-size: 13px; color: #5F5E75">우리동네 이야기를 나눠요</span></span>
+</a>
+</div>
+</div>
+</section>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; display: flex; flex-direction: column; gap: 44px">
+
+<!-- HERO 광고 슬롯 (기본 소재 = 브랜드 배너) -->
+<section aria-label="광고" style="position: relative; border-radius: 24px; overflow: hidden; background: linear-gradient(110deg, #4A2FE0 0%, #6C4BFF 55%, #9D86FF 100%); color: #FFFFFF; padding: 40px 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 180px">
+<span style="position: absolute; top: 14px; right: 16px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.22)">{{slotLabel}}</span>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-weight: 900; font-size: 18px; opacity: 0.95">소개뱅크</span>
+<h2 style="margin: 0; font-size: 30px; line-height: 1.35; font-weight: 900">좋은 사람, 좋은 상품, 좋은 기회가<br>연결되는 AI 기반 소개 플랫폼</h2>
+<a href="#" style="align-self: flex-start; height: 44px; padding: 0 20px; display: flex; align-items: center; gap: 8px; border-radius: 22px; background: #FFFFFF; color: #3720B8; font-weight: 700; font-size: 14px">소개뱅크가 특별한 이유 →</a>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; max-width: 380px; justify-content: flex-end">
+<span style="padding: 10px 16px; border-radius: 14px; background: rgba(255,255,255,0.18); font-weight: 700; font-size: 14px">사람</span>
+<span style="padding: 10px 16px; border-radius: 14px; background: rgba(255,255,255,0.18); font-weight: 700; font-size: 14px">상품</span>
+<span style="padding: 10px 16px; border-radius: 14px; background: rgba(255,255,255,0.18); font-weight: 700; font-size: 14px">서비스</span>
+<span style="padding: 10px 16px; border-radius: 14px; background: rgba(255,255,255,0.18); font-weight: 700; font-size: 14px">사업</span>
+<span style="padding: 10px 16px; border-radius: 14px; background: rgba(255,255,255,0.18); font-weight: 700; font-size: 14px">동네정보</span>
+</div>
+</section>
+
+<!-- 소개뱅크몰 LIVE -->
+<section style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+<h2 style="margin: 0; font-size: 24px; font-weight: 900">소개뱅크몰 LIVE</h2>
+<span style="font-size: 14px; color: #5F5E75">지금 가장 많이 보는 상품을 실시간으로 모았어요.</span>
+<div role="tablist" aria-label="정렬" style="display: flex; gap: 8px; margin-left: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border: {{t.border}}; background: {{t.bg}}; color: {{t.fg}}">{{t.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{products}}" as="p" hint-placeholder-count="6">
+<a href="#" style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 16px; overflow: hidden; color: #17162B">
+<div style="position: relative; height: 140px; background: #F1F0F7; display: flex; align-items: center; justify-content: center; color: #6B6A80; font-size: 12px">상품 이미지<span style="position: absolute; top: 10px; left: 10px; padding: 4px 9px; border-radius: 12px; background: #D7264A; color: #FFFFFF; font-size: 11px; font-weight: 700">{{p.badge}}</span></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 14px; font-weight: 500; line-height: 1.4">{{p.name}}</span>
+<span style="font-size: 15px; font-weight: 900"><span style="color: #D7264A">[할인율]</span> [판매가]</span>
+<span style="font-size: 12px; color: #5F5E75">비교하기 · 찜 [N]</span>
+</div>
+</a>
+</sc-for>
+</div>
+</section>
+
+<!-- 소개장터 요청 -->
+<section style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: baseline; gap: 14px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 900">지금 누군가가 소개를 기다리고 있어요</h2>
+<span style="font-size: 14px; color: #5F5E75">사람·상품·서비스·사업 등 필요한 것을 소개받아보세요.</span>
+<a href="#" style="margin-left: auto; font-size: 14px; font-weight: 700">전체보기 ›</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{requests}}" as="r" hint-placeholder-count="4">
+<article style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<span style="align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: #EEE9FF; color: #3720B8; font-size: 12px; font-weight: 700">{{r.type}}</span>
+<span style="font-size: 12px; color: #5F5E75">{{r.cat}}</span>
+<h3 style="margin: 0; font-size: 16px; line-height: 1.45; font-weight: 700">{{r.title}}</h3>
+<span style="font-size: 12px; color: #5F5E75">{{r.area}} · [N]명이 소개 중</span>
+<a href="#" style="height: 44px; border-radius: 10px; background: #EEE9FF; color: #3720B8; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">소개하기</a>
+</article>
+</sc-for>
+</div>
+</section>
+
+<!-- 소개광장 · 이거 어때? -->
+<section style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: baseline; gap: 14px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 900">당신 생각은 어때요?</h2>
+<span style="font-size: 14px; color: #5F5E75">소개광장 ‘이거 어때?’ — 많은 사람들이 궁금해하고 있어요.</span>
+<a href="#" style="margin-left: auto; font-size: 14px; font-weight: 700">전체보기 ›</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<article style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<span style="align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: #E6F0FF; color: #1F4FAF; font-size: 12px; font-weight: 700">VS</span>
+<h3 style="margin: 0; font-size: 17px; font-weight: 700">로봇청소기, 당신이라면?</h3>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button style="height: 96px; border-radius: 12px; border: 1px solid #DCD8F0; background: #F7F6FD; font-family: inherit; font-size: 14px; font-weight: 700; color: #17162B; cursor: pointer">A · 흡입력 강점</button>
+<button style="height: 96px; border-radius: 12px; border: 1px solid #DCD8F0; background: #F7F6FD; font-family: inherit; font-size: 14px; font-weight: 700; color: #17162B; cursor: pointer">B · 가성비 강점</button>
+</div>
+<span style="font-size: 12px; color: #5F5E75">[N]명 참여</span>
+</article>
+<article style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+<span style="align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: #F3E8FF; color: #6A21B8; font-size: 12px; font-weight: 700">궁금해요</span>
+<h3 style="margin: 0; font-size: 17px; font-weight: 700">음식물처리기에서 가장 중요한 것은?</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="padding: 8px 12px; border-radius: 10px; background: #F7F6FD; font-size: 13px">냄새 관리</span>
+<span style="padding: 8px 12px; border-radius: 10px; background: #F7F6FD; font-size: 13px">처리 성능</span>
+<span style="padding: 8px 12px; border-radius: 10px; background: #F7F6FD; font-size: 13px">관리 편의성</span>
+<span style="padding: 8px 12px; border-radius: 10px; background: #F7F6FD; font-size: 13px">소음</span>
+<span style="padding: 8px 12px; border-radius: 10px; background: #F7F6FD; font-size: 13px">가격</span>
+</div>
+<a href="#" style="height: 44px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">투표하기</a>
+</article>
+<article style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+<span style="align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: #FFF1E0; color: #9A4A06; font-size: 12px; font-weight: 700">써봤어요</span>
+<h3 style="margin: 0; font-size: 17px; font-weight: 700">이 제품을 써본 분들의 의견이 필요해요</h3>
+<span style="font-size: 14px; color: #3E3D55">사용 중이에요 · 사용해봤어요 · 아직 안 써봤어요</span>
+<a href="#" style="margin-top: auto; height: 44px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">의견 남기기</a>
+</article>
+</div>
+</section>
+
+<!-- 띠배너 (자사 캠페인) -->
+<a href="#" style="display: flex; align-items: center; justify-content: space-between; border-radius: 18px; padding: 26px 40px; background: linear-gradient(100deg, #12112A 0%, #2A2470 60%, #5B3DF5 100%); color: #FFFFFF">
+<span style="font-size: 24px; font-weight: 900">휴대폰 바꿀 때도, 사람 부르면 될 일</span>
+<span style="font-size: 14px; font-weight: 700; opacity: 0.9">안심소개에서 보기 →</span>
+</a>
+
+<!-- 우리동네 지금 -->
+<section style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: baseline; gap: 14px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 900">우리동네 지금</h2>
+<span style="font-size: 14px; color: #5F5E75">내 위치 기준 동네픽 · 동네소개 · 동네참여</span>
+<a href="#" style="margin-left: auto; font-size: 14px; font-weight: 700">전체보기 ›</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{town}}" as="w" hint-placeholder-count="3">
+<a href="#" style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; overflow: hidden; color: #17162B; display: flex; flex-direction: column">
+<div style="position: relative; height: 150px; background: #ECEAF4; display: flex; align-items: center; justify-content: center; color: #6B6A80; font-size: 12px">동네 사진<span style="position: absolute; top: 12px; left: 12px; padding: 5px 12px; border-radius: 12px; background: #0F7A52; color: #FFFFFF; font-size: 12px; font-weight: 700">{{w.tag}}</span></div>
+<div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<strong style="font-size: 16px">{{w.title}}</strong>
+<span style="font-size: 13px; color: #5F5E75">{{w.desc}}</span>
+</div>
+</a>
+</sc-for>
+</div>
+</section>
+
+<!-- 3열 -->
+<section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<div style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline"><h2 style="margin: 0; font-size: 18px; font-weight: 900">이런 도움이 필요하세요?</h2><a href="#" style="margin-left: auto; font-size: 13px; font-weight: 700">전체보기 ›</a></div>
+<span style="font-size: 13px; color: #5F5E75">안심소개 인증 업체·전문가</span>
+<sc-for list="{{experts}}" as="e" hint-placeholder-count="3">
+<a href="#" style="display: flex; align-items: center; gap: 12px; color: #17162B">
+<span style="width: 48px; height: 48px; border-radius: 24px; background: #EEE9FF; color: #3720B8; font-weight: 900; display: flex; align-items: center; justify-content: center">{{e.ini}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1"><strong style="font-size: 15px">{{e.name}} <span style="font-size: 11px; color: #0F7A52; font-weight: 700">인증</span></strong><span style="font-size: 12px; color: #5F5E75">{{e.desc}}</span></span>
+<span aria-hidden="true" style="color: #6B6A80">›</span>
+</a>
+</sc-for>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline"><h2 style="margin: 0; font-size: 18px; font-weight: 900">최근 관심이 늘어난 창업</h2><a href="#" style="margin-left: auto; font-size: 13px; font-weight: 700">전체보기 ›</a></div>
+<span style="font-size: 13px; color: #5F5E75">소개창업 주목 아이템</span>
+<sc-for list="{{biz}}" as="b" hint-placeholder-count="3">
+<a href="#" style="display: flex; align-items: center; gap: 12px; color: #17162B">
+<span style="width: 56px; height: 48px; border-radius: 10px; background: #ECEAF4"></span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1"><strong style="font-size: 15px">{{b.name}}</strong><span style="font-size: 12px; color: #5F5E75">관심 [N]명 · 예상 창업비 [금액]</span></span>
+<span aria-hidden="true" style="color: #6B6A80">›</span>
+</a>
+</sc-for>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline"><h2 style="margin: 0; font-size: 18px; font-weight: 900">요즘 사람들이 비교하는 상품</h2><a href="#" style="margin-left: auto; font-size: 13px; font-weight: 700">전체보기 ›</a></div>
+<span style="font-size: 13px; color: #5F5E75">실제 사용자 의견과 함께 확인</span>
+<sc-for list="{{compare}}" as="m" hint-placeholder-count="3">
+<a href="#" style="display: flex; align-items: center; gap: 12px; color: #17162B">
+<span style="width: 56px; height: 48px; border-radius: 10px; background: #ECEAF4"></span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1"><strong style="font-size: 15px">{{m.name}}</strong><span style="font-size: 12px; color: #5F5E75">의견 [N]건 · {{m.desc}}</span></span>
+<span aria-hidden="true" style="color: #6B6A80">›</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<!-- 나를 위한 소개 -->
+<section style="display: flex; align-items: center; gap: 20px; background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 18px; padding: 22px 26px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 220px"><strong style="font-size: 19px">나를 위한 소개</strong><span style="font-size: 13px; color: #5F5E75">로그인하고 더 정확한 AI 추천을 받아보세요.</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex-grow: 1">
+<span style="padding: 12px 14px; border-radius: 12px; background: #F7F6FD; font-size: 13px">최근 본 상품 가격이 내려갔어요</span>
+<span style="padding: 12px 14px; border-radius: 12px; background: #F7F6FD; font-size: 13px">관심 창업 아이템에 새 매물이 있어요</span>
+<span style="padding: 12px 14px; border-radius: 12px; background: #F7F6FD; font-size: 13px">우리동네 새 동네픽이 올라왔어요</span>
+</div>
+<a href="#" style="height: 48px; padding: 0 20px; border-radius: 12px; background: {{accent}}; color: #FFFFFF; font-weight: 700; font-size: 14px; display: flex; align-items: center; white-space: nowrap">로그인하고 확인하기 →</a>
+</section>
+
+<!-- 소개뱅크 핵심 -->
+<section style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: baseline; gap: 14px"><h2 style="margin: 0; font-size: 22px; font-weight: 900">소개뱅크 핵심</h2><span style="font-size: 14px; color: #5F5E75">AI가 찾고, 비교하고, 연결합니다.</span></div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{core}}" as="k" hint-placeholder-count="6">
+<a href="#" style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; color: #17162B"><strong style="font-size: 14px">{{k.t}}</strong><span style="font-size: 12px; color: #5F5E75">{{k.d}}</span></a>
+</sc-for>
+</div>
+</section>
+</main>
+
+<!-- 푸터 -->
+<footer style="background: #FFFFFF; border-top: 1px solid #ECEAF7">
+<div style="max-width: 1200px; margin: 0 auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: #4A4960">
+<div style="display: flex; gap: 20px; flex-wrap: wrap; font-weight: 700"><a href="#" style="color: #17162B">이용약관</a><a href="#" style="color: #17162B">개인정보처리방침</a><a href="#" style="color: #17162B">제휴문의</a><a href="#" style="color: #17162B">광고문의</a><a href="#" style="color: #17162B">고객센터</a></div>
+<span>(주)한국바이오헬스케어 소개뱅크 사업부 · 대표 [대표자명] · 사업자등록번호 [000-00-00000] · 통신판매업 신고 [제0000-지역-0000호] · 주소 [주소]</span>
+<span>소개뱅크는 통신판매중개자로서 거래 당사자가 아니며, 회원 간 거래에 대한 책임은 각 판매자에게 있습니다. 단, 소개뱅크몰은 (주)한국바이오헬스케어가 직접 판매합니다.</span>
+<span>© 2026 (주)한국바이오헬스케어. All rights reserved.</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5B3DF5","options":["#5B3DF5","#4A2FE0","#3B5BDB"]},"adActive":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":3600}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { query: '', tab: 0 }; }
+  renderVals() {
+    const accent = this.props.accent ?? '#5B3DF5';
+    const chipLabels = ['판교 가족식당 추천해줘', '1천만원 창업 아이템', '음식물처리기 비교해줘', '믿을 만한 세무사 알려줘'];
+    const tabLabels = ['인기 급상승', '할인율 TOP', '재구매 높은 상품', '실시간 비교'];
+    return {
+      accent,
+      query: this.state.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      chips: chipLabels.map((label) => ({ label, pick: () => this.setState({ query: label }) })),
+      tabs: tabLabels.map((label, i) => {
+        const on = this.state.tab === i;
+        return { label, on: on ? 'true' : 'false', pick: () => this.setState({ tab: i }),
+          bg: on ? accent : '#FFFFFF', fg: on ? '#FFFFFF' : '#2B2A44', border: on ? '1px solid transparent' : '1px solid #DCD8F0' };
+      }),
+      slotLabel: this.props.adActive ? 'AD · HERO 슬롯' : 'HERO 슬롯 · 기본 소재',
+      products: [
+        { badge: '지금 많이 봐요', name: '[건강관] 상품명 1' },
+        { badge: '인기 급상승', name: '[건강관] 상품명 2' },
+        { badge: '오늘만 특가', name: '[건강관] 상품명 3' },
+        { badge: '재구매 많아요', name: '[건강관] 상품명 4' },
+        { badge: '리뷰가 좋아요', name: '[건강관] 상품명 5' },
+        { badge: '인기 급상승', name: '[건강관] 상품명 6' }
+      ],
+      requests: [
+        { type: '사람이 필요해요', cat: '세무사', title: '개인사업자 세무 상담 받을 수 있는 세무사 추천', area: '경기 성남시' },
+        { type: '상품이 필요해요', cat: '업소용 주방기기', title: '카페 오픈을 위한 커피머신 추천해주세요', area: '서울 강남구' },
+        { type: '서비스가 필요해요', cat: '사무실 청소', title: '판교 사무실 정기 청소업체 소개받고 싶어요', area: '경기 성남시' },
+        { type: '사업/기회가 필요해요', cat: '상가임대', title: '판교 주변 30평대 상가 임대 정보가 필요해요', area: '경기 성남시' }
+      ],
+      town: [
+        { tag: '동네픽', title: '판교 직장인 점심 맛집 5곳', desc: '지금 가장 많이 찾는 점심 맛집을 AI가 골랐어요.' },
+        { tag: '동네소개', title: '판교 수입차 정비 어디가 괜찮나요?', desc: '이웃이 실제 경험을 소개했어요 · 소개 [N]개' },
+        { tag: '동네참여', title: '오늘 저녁 탄천 5km 같이 뛰어요', desc: '가볍게 함께 달려요 · [N]/[N]명 참여' }
+      ],
+      experts: [
+        { ini: '세', name: '[이름] 세무사', desc: '개인·법인 세무, 절세 상담' },
+        { ini: '노', name: '[이름] 노무사', desc: '근로계약, 4대보험, 노무 자문' },
+        { ini: '중', name: '[이름] 공인중개사', desc: '상가·사무실·토지 전문' }
+      ],
+      biz: [ { name: '무인 스터디카페 창업' }, { name: '소형 편의점 창업' }, { name: '1인 미디어 스튜디오' } ],
+      compare: [
+        { name: '음식물처리기 BEST 3', desc: 'AI 분석 정리' },
+        { name: '공기청정기 비교', desc: '가격·성능 비교' },
+        { name: '안마의자 추천', desc: '써본 사람들의 평가' }
+      ],
+      core: [
+        { t: 'AI 자동 분류', d: '등록 글을 관·분류로 정리' },
+        { t: 'AI 추천 결과', d: '가장 적합한 순서로 추천' },
+        { t: '프롬프트 검색', d: '문장으로 묻고 후보를 찾기' },
+        { t: '성향 분석', d: '관심과 추천을 내게 맞게' },
+        { t: '광고 관리', d: '효율을 보며 광고 운영' },
+        { t: '파트너센터', d: '입점 신청·상담·서비스 관리' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

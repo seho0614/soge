@@ -1,0 +1,872 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 컴포넌트 스펙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    /* 브랜드 · 서비스 · 액션 — 역할이 다르므로 절대 섞지 않습니다 */
+    --brand:#7C3AED; --brand-d:#6D28D9; --brand-l:#F5F1FE; --brand-l2:#EDE7FC;
+    --svc:#2563EB; --svc-d:#1D4ED8; --svc-l:#EFF6FF;
+    --act:#F97316; --act-d:#EA580C; --act-l:#FFF7ED;
+    /* 관 액센트 */
+    --mny:#2563EB; --mal:#059669; --biz:#D97706;
+    /* 시맨틱 */
+    --ok:#059669; --ok-l:#ECFDF5; --warn:#D97706; --warn-l:#FFFBEB;
+    --err:#DC2626; --err-l:#FEF2F2; --info:#2563EB; --info-l:#EFF6FF;
+    /* 중립 */
+    --navy:#1E293B; --ink:#0F172A; --ink2:#334155; --mut:#64748B; --mut2:#94A3B8;
+    --line:#E2E8F0; --line2:#F1F5F9; --page:#F7F8FA; --card:#FFFFFF;
+    --r-sm:7px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+    --sh-1:0 1px 2px rgba(15,23,42,.06);
+    --sh-2:0 4px 14px rgba(15,23,42,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+      --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --navy:#CBD5E1;
+      --brand-l:#1E1B33; --brand-l2:#251F42; --svc-l:#0F1E3A; --act-l:#2A1A0C;
+      --ok-l:#0C2A20; --warn-l:#2A2008; --err-l:#2A1010; --info-l:#0F1E3A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+    --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --navy:#CBD5E1;
+    --brand-l:#1E1B33; --brand-l2:#251F42; --svc-l:#0F1E3A; --act-l:#2A1A0C;
+    --ok-l:#0C2A20; --warn-l:#2A2008; --err-l:#2A1010; --info-l:#0F1E3A;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  button,input,select,textarea{font-family:inherit}
+
+  /* ============ 히어로 ============ */
+  .hero{background:linear-gradient(160deg,#2A1758 0%,#1E293B 62%,#0F172A 100%);color:#fff;padding:52px 0 42px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+  @media (max-width:700px){ .wrap{padding:0 15px} }
+  .eyebrow{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.7px;color:#C4B5FD;
+    background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.42);border-radius:999px;padding:5px 13px}
+  .hero h1{margin:16px 0 10px;font-size:37px;font-weight:900;letter-spacing:-1.2px;line-height:1.22}
+  @media (max-width:700px){ .hero h1{font-size:26px} }
+  .hero p{margin:0;max-width:740px;color:#CBD5E1;font-size:15px;line-height:1.8}
+  .hero .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-size:12px;font-weight:600;color:#E2E8F0;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:5px 11px}
+
+  /* ============ 레이아웃 ============ */
+  .body{display:grid;grid-template-columns:216px 1fr;gap:34px;align-items:start;padding-top:26px}
+  @media (max-width:940px){ .body{grid-template-columns:1fr;gap:0} .toc{display:none} }
+  .toc{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;padding-bottom:30px}
+  .toc .g{padding:14px 0 5px;font-size:10px;font-weight:800;color:var(--mut2);letter-spacing:.8px;text-transform:uppercase}
+  .toc a{display:block;padding:5px 10px;border-radius:7px;font-size:12.5px;color:var(--mut);
+    text-decoration:none;border-left:2px solid transparent}
+  .toc a:hover{background:var(--card);color:var(--ink)}
+  .toc a.on{color:var(--brand);font-weight:700;border-left-color:var(--brand);background:var(--brand-l)}
+
+  /* ============ 컴포넌트 문서 ============ */
+  .cmp{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+    margin-bottom:18px;overflow:hidden;scroll-margin-top:16px}
+  .chd{padding:17px 20px 14px;border-bottom:1px solid var(--line2)}
+  .chd .r1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cid{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;color:#fff;
+    background:var(--navy);border-radius:6px;padding:3px 8px;letter-spacing:.3px}
+  .chd h2{margin:0;font-size:19px;font-weight:900;letter-spacing:-.6px}
+  .chd .en{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mut2)}
+  .chd p{margin:7px 0 0;font-size:13.5px;color:var(--mut);line-height:1.75;max-width:820px}
+
+  .demo{padding:22px 20px;background:var(--page);border-bottom:1px solid var(--line2)}
+  .demo .lb{font-size:10px;font-weight:800;color:var(--mut2);letter-spacing:.7px;margin-bottom:12px}
+  .rowd{display:flex;flex-wrap:wrap;gap:11px;align-items:center}
+  .cold{display:flex;flex-direction:column;gap:12px}
+
+  .sec{padding:16px 20px;border-bottom:1px solid var(--line2)}
+  .sec:last-child{border-bottom:0}
+  .sec h3{margin:0 0 10px;font-size:11px;font-weight:800;color:var(--mut2);letter-spacing:.7px;text-transform:uppercase}
+
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px;background:var(--card)}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{background:var(--page);font-size:10.5px;font-weight:800;color:var(--mut);letter-spacing:.4px;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  td.k{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--brand);white-space:nowrap}
+  td.v{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mut)}
+
+  .dd{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){ .dd{grid-template-columns:1fr} }
+  .dobox{border-radius:var(--r-md);padding:12px 14px;font-size:13px;line-height:1.7}
+  .dobox.do{background:var(--ok-l);border:1px solid rgba(5,150,105,.26)}
+  .dobox.dont{background:var(--err-l);border:1px solid rgba(220,38,38,.24)}
+  .dobox .lb{font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:5px;display:block}
+  .dobox.do .lb{color:var(--ok)} .dobox.dont .lb{color:var(--err)}
+  .dobox ul{margin:0;padding-left:16px} .dobox li{margin:3px 0}
+
+  .a11y{font-size:13px;color:var(--ink2);line-height:1.85}
+  .a11y code{background:var(--line2);padding:1.5px 6px;border-radius:5px;font-size:12px}
+  .a11y b{color:var(--ink)}
+
+  .note{background:var(--brand-l);border:1px solid var(--brand-l2);border-left:3px solid var(--brand);
+    border-radius:0 var(--r-md) var(--r-md) 0;padding:11px 14px;font-size:13px;line-height:1.75;color:var(--ink2)}
+  .note b{color:var(--ink)}
+
+  /* ============ 실제 컴포넌트 (스펙 대상) ============ */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    border:1px solid transparent;border-radius:var(--r-md);font-weight:700;
+    padding:10px 18px;font-size:14px;line-height:1.2;cursor:pointer;transition:background .12s,border-color .12s}
+  .btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .btn.pri{background:var(--brand);color:#fff}
+  .btn.pri:hover{background:var(--brand-d)}
+  .btn.sec{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .btn.sec:hover{border-color:var(--mut2)}
+  .btn.gho{background:transparent;color:var(--mut)}
+  .btn.gho:hover{color:var(--ink);background:var(--line2)}
+  .btn.act{background:var(--act);color:#fff}
+  .btn.act:hover{background:var(--act-d)}
+  .btn.dgr{background:var(--card);color:var(--err);border-color:rgba(220,38,38,.34)}
+  .btn.sm{padding:6px 12px;font-size:12.5px;border-radius:var(--r-sm)}
+  .btn.lg{padding:13px 24px;font-size:15.5px;border-radius:var(--r-md)}
+  .btn:disabled{opacity:.42;cursor:not-allowed}
+  .btn.load{pointer-events:none;opacity:.8}
+  .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+    border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .fld{max-width:340px}
+  .fld label{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:5px}
+  .fld label .rq{color:var(--err)}
+  .inp{width:100%;border:1px solid var(--line);border-radius:var(--r-md);padding:10px 13px;
+    background:var(--card);color:var(--ink);font-size:14px}
+  .inp::placeholder{color:var(--mut2)}
+  .inp:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:transparent}
+  .inp.bad{border-color:var(--err);background:var(--err-l)}
+  .inp:disabled{background:var(--line2);color:var(--mut2)}
+  .hlp{font-size:11.5px;color:var(--mut2);margin-top:5px}
+  .hlp.bad{color:var(--err)}
+  .cnt{font-size:11px;color:var(--mut2);text-align:right;margin-top:4px}
+
+  .tgl{width:44px;height:25px;border-radius:999px;background:var(--line);border:0;position:relative;cursor:pointer}
+  .tgl::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+  .tgl.on{background:var(--ok)} .tgl.on::after{left:22px}
+
+  .chk{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+  .chk i{width:18px;height:18px;border:2px solid var(--line);border-radius:5px;display:grid;
+    place-items:center;font-style:normal;font-size:11px;color:transparent;flex:none}
+  .chk.on i{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  .bdg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;
+    border-radius:6px;padding:2.5px 8px;letter-spacing:-.1px;white-space:nowrap}
+  .bdg.mny{background:var(--svc-l);color:var(--mny)}
+  .bdg.mal{background:var(--ok-l);color:var(--mal)}
+  .bdg.biz{background:var(--warn-l);color:var(--biz)}
+  .bdg.ok{background:var(--ok-l);color:var(--ok)}
+  .bdg.wa{background:var(--warn-l);color:var(--warn)}
+  .bdg.er{background:var(--err-l);color:var(--err)}
+  .bdg.nt{background:var(--line2);color:var(--mut)}
+  .bdg.ac{background:var(--act-l);color:var(--act-d)}
+  .bdg.br{background:var(--brand-l);color:var(--brand)}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);
+    border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink2);cursor:pointer}
+  .chip:hover{border-color:var(--mut2)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+  .chip .x{opacity:.7;font-size:11px}
+
+  .avt{width:38px;height:38px;border-radius:50%;background:var(--line2);display:grid;place-items:center;
+    font-size:14px;font-weight:800;color:var(--mut);flex:none}
+  .avt.v{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ok)}
+
+  .srch{display:flex;max-width:520px;border:2px solid var(--brand);border-radius:var(--r-md);overflow:hidden;background:var(--card)}
+  .srch select{border:0;background:var(--brand-l);color:var(--brand);font-weight:700;font-size:13px;
+    padding:0 10px;outline:none;cursor:pointer}
+  .srch input{flex:1;border:0;padding:11px 13px;font-size:14px;background:transparent;color:var(--ink);outline:none}
+  .srch button{border:0;background:var(--brand);color:#fff;padding:0 18px;font-weight:700;cursor:pointer}
+
+  .rtab{display:inline-flex;gap:8px}
+  .rtab button{border:1.5px solid var(--brand);background:var(--card);color:var(--brand);
+    border-radius:var(--r-md);padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer}
+  .rtab button.on{background:var(--brand);color:#fff}
+
+  .lcard{width:250px;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+    background:var(--card);cursor:pointer;transition:box-shadow .15s,border-color .15s}
+  .lcard:hover{border-color:var(--mut2);box-shadow:var(--sh-2)}
+  .lcard .th{height:132px;background:linear-gradient(135deg,#3B2B1E,#1F1712);position:relative}
+  .lcard .th .tag{position:absolute;left:9px;top:9px}
+  .lcard .bd{padding:12px 13px}
+  .lcard .ct{font-size:11px;color:var(--mut2);margin-bottom:3px}
+  .lcard h4{margin:0 0 6px;font-size:14px;font-weight:800;letter-spacing:-.35px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lcard .pr{font-size:16px;font-weight:900;letter-spacing:-.5px;margin-bottom:7px}
+  .lcard .mt{display:flex;gap:9px;font-size:11px;color:var(--mut2);padding-top:8px;border-top:1px dashed var(--line)}
+
+  .fee{display:inline-flex;flex-direction:column;gap:2px;background:var(--act-l);
+    border:1px solid rgba(249,115,22,.28);border-radius:var(--r-md);padding:9px 13px}
+  .fee .a{font-size:15px;font-weight:900;color:var(--act-d);letter-spacing:-.4px}
+  .fee .b{font-size:11px;color:var(--mut)}
+
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);
+    border-radius:var(--r-md);overflow:hidden;max-width:520px}
+  .trust div{padding:11px 13px;border-right:1px solid var(--line2);text-align:center}
+  .trust div:last-child{border-right:0}
+  .trust b{display:block;font-size:17px;font-weight:900;letter-spacing:-.5px}
+  .trust span{font-size:10.5px;color:var(--mut2)}
+
+  .steps{display:flex;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;max-width:640px}
+  .steps div{flex:1;padding:9px 6px;text-align:center;font-size:12px;color:var(--mut2);
+    border-right:1px solid var(--line2);background:var(--card)}
+  .steps div:last-child{border-right:0}
+  .steps div.dn{background:var(--ok-l);color:var(--ok);font-weight:700}
+  .steps div.on{background:var(--act);color:#fff;font-weight:800}
+
+  .cal{border-radius:var(--r-md);padding:12px 15px;font-size:13.5px;line-height:1.75;max-width:760px}
+  .cal .lb{display:block;font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:3px}
+  .cal.i{background:var(--info-l);border:1px solid rgba(37,99,235,.24)} .cal.i .lb{color:var(--info)}
+  .cal.w{background:var(--warn-l);border:1px solid rgba(217,119,6,.28)} .cal.w .lb{color:var(--warn)}
+  .cal.e{background:var(--err-l);border:1px solid rgba(220,38,38,.25)} .cal.e .lb{color:var(--err)}
+  .cal.s{background:var(--ok-l);border:1px solid rgba(5,150,105,.26)} .cal.s .lb{color:var(--ok)}
+
+  .gnb{display:flex;align-items:center;gap:20px;padding:12px 16px;border:1px solid var(--line);
+    border-radius:var(--r-md);background:var(--card);flex-wrap:wrap;max-width:760px}
+  .gnb .lg{font-size:15px;font-weight:900;letter-spacing:-.5px}
+  .gnb a{font-size:13px;color:var(--mut);text-decoration:none}
+  .gnb a.on{font-weight:800}
+
+  .tabbar{display:flex;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;
+    max-width:400px;background:var(--card)}
+  .tabbar div{flex:1;padding:9px 4px;text-align:center;font-size:10.5px;color:var(--mut2);border-right:1px solid var(--line2)}
+  .tabbar div:last-child{border-right:0}
+  .tabbar div.on{color:var(--brand);font-weight:800}
+  .tabbar div i{display:block;font-style:normal;font-size:15px;margin-bottom:1px}
+
+  .empty{border:1px dashed var(--line);border-radius:var(--r-lg);padding:28px 20px;text-align:center;max-width:460px}
+  .empty b{display:block;font-size:15px;font-weight:800;margin-bottom:5px}
+  .empty span{display:block;font-size:13px;color:var(--mut);margin-bottom:14px;line-height:1.7}
+
+  .modal{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);
+    box-shadow:var(--sh-2);max-width:400px;overflow:hidden}
+  .modal .mh{padding:16px 18px 0}
+  .modal h4{margin:0 0 6px;font-size:16px;font-weight:800;letter-spacing:-.4px}
+  .modal p{margin:0;font-size:13.5px;color:var(--mut);line-height:1.7}
+  .modal .mf{display:flex;gap:8px;padding:16px 18px}
+  .modal .mf .btn{flex:1}
+
+  .toastx{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--card);
+    font-size:13px;font-weight:600;padding:10px 18px;border-radius:var(--r-md)}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .toastx{background:#334155;color:#F1F5F9} }
+
+  .gate{border:1px solid rgba(217,119,6,.3);background:var(--warn-l);border-radius:var(--r-md);
+    padding:13px 16px;max-width:560px}
+  .gate b{display:block;font-size:13.5px;font-weight:800;margin-bottom:3px}
+  .gate span{display:block;font-size:12.5px;color:var(--mut);line-height:1.7;margin-bottom:11px}
+
+  .actbar{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-top-width:2px;
+    border-radius:var(--r-md);background:var(--card);padding:11px 14px;max-width:460px}
+  .actbar .ic{width:38px;height:38px;border:1px solid var(--line);border-radius:9px;display:grid;
+    place-items:center;font-size:16px;color:var(--mut)}
+  .actbar .btn{flex:1}
+
+  .pag{display:inline-flex;gap:4px}
+  .pag button{min-width:34px;height:34px;border:1px solid var(--line);background:var(--card);
+    border-radius:var(--r-sm);font-size:13px;color:var(--ink2);cursor:pointer}
+  .pag button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:800}
+
+  .ftr{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:14px 16px;
+    font-size:12px;color:var(--mut);line-height:1.85;max-width:760px}
+  .ftr .lk{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:9px}
+  .ftr .lk a{font-size:12.5px;color:var(--ink2);text-decoration:none;font-weight:700}
+  .ftr .lk a.hi{color:var(--ink);text-decoration:underline}
+  .ftr .tbd{color:var(--act-d);font-weight:700}
+  .ftr .lg2{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);color:var(--ink2)}
+
+  /* 토큰 표 */
+  .swrow{display:flex;flex-wrap:wrap;gap:9px}
+  .sw{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:var(--r-md);
+    padding:7px 11px;background:var(--card);font-size:12px}
+  .sw i{width:20px;height:20px;border-radius:6px;display:block;flex:none}
+  .sw b{font-weight:700} .sw span{color:var(--mut2);font-family:"IBM Plex Mono",monospace;font-size:11px}
+
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px}
+  .rule b{display:block;font-size:13.5px;font-weight:800;margin-bottom:4px}
+  .rule span{font-size:12.5px;color:var(--mut);line-height:1.7}
+  .rule .n{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--brand);font-weight:700}
+
+  h2.sect{margin:34px 0 6px;font-size:22px;font-weight:900;letter-spacing:-.8px}
+  p.sectp{margin:0 0 16px;font-size:14px;color:var(--mut);max-width:800px}
+</style>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">COMPONENT SPEC · v1.0</span>
+    <h1>소개뱅크 컴포넌트 스펙</h1>
+    <p>토큰이 확정된 뒤의 컴포넌트 명세입니다. 24개 컴포넌트를 실제로 렌더링해 두었고,
+      각각 언제 쓰는지 · 언제 쓰지 않는지 · 상태가 몇 개인지 · 키보드로 어떻게 다루는지를 함께 적었습니다.
+      화면에 없는 컴포넌트는 넣지 않았습니다 — 스펙은 라이브러리가 아니라 <b style="color:#fff">이 서비스가 실제로 쓰는 목록</b>입니다.</p>
+    <div class="pills">
+      <span class="pill">기본 6</span>
+      <span class="pill">입력 5</span>
+      <span class="pill">탐색 4</span>
+      <span class="pill">도메인 5</span>
+      <span class="pill">피드백 4</span>
+      <span class="pill">브랜드 퍼플 · 서비스 블루 · 액션 오렌지 3역 분리</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="body">
+    <nav class="toc" id="toc"></nav>
+    <main id="doc"></main>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+
+  /* =============== 컴포넌트 정의 =============== */
+  var C=[
+  /* ---------- 0. 기초 ---------- */
+  { g:"기초", id:"TKN-01", n:"컬러 역할", en:"color roles",
+    d:"색이 예쁜지가 아니라 <b>무엇을 뜻하는지</b>가 규칙입니다. 세 색은 역할이 다르므로 절대 서로를 대신하지 않습니다.",
+    demo:'<div class="swrow">'+
+      sw("#7C3AED","브랜드 퍼플","--brand")+sw("#2563EB","서비스 블루","--svc")+
+      sw("#F97316","액션 오렌지","--act")+sw("#1E293B","네이비","--navy")+'</div>'+
+      '<div style="height:14px"></div><div class="swrow">'+
+      sw("#2563EB","소개머니","--mny")+sw("#059669","소개몰","--mal")+sw("#D97706","소개창업","--biz")+'</div>'+
+      '<div style="height:14px"></div><div class="swrow">'+
+      sw("#059669","성공","--ok")+sw("#D97706","주의","--warn")+sw("#DC2626","오류","--err")+sw("#2563EB","정보","--info")+'</div>',
+    spec:[["--brand","#7C3AED","전 관 공통 CTA · 등록 · 제출 · 선택 상태"],
+          ["--svc","#2563EB","서비스 UI · 링크 · 정보 강조 · 소개머니 액센트"],
+          ["--act","#F97316","돈이 걸린 단일 액션 — 문의 · 결제 · 정산 신청"],
+          ["--mny / --mal / --biz","#2563EB / #059669 / #D97706","관 식별 — 배지 · GNB 활성 · 카드 상단선"],
+          ["--ok / --warn / --err","#059669 / #D97706 / #DC2626","상태 전용. 관 색과 겹쳐 보이더라도 의미가 다릅니다"]],
+    do:["관이 늘어나면 액센트를 추가하되 시맨틱 3색은 건드리지 않습니다","브랜드 퍼플은 관과 무관하게 항상 같은 뜻입니다"],
+    dont:["소개몰 초록을 성공 표시로 재사용","액션 오렌지를 강조용 장식으로 사용","관 색으로 버튼을 칠해 CTA 위계를 흐리기"],
+    a11y:"모든 조합은 본문 <b>4.5:1</b>, 큰 글씨·아이콘 <b>3:1</b>을 넘깁니다. 색만으로 상태를 전달하지 않고 항상 텍스트나 아이콘을 함께 둡니다." },
+
+  { g:"기초", id:"TKN-02", n:"타이포 · 스페이싱 · 반경", en:"type / space / radius",
+    d:"본문 15px / 1.75를 기준으로 위아래로만 움직입니다. 간격은 4의 배수, 반경은 4단계만 씁니다.",
+    demo:'<div class="cold">'+
+      '<div style="font-size:37px;font-weight:900;letter-spacing:-1.2px">37 / 900 — 페이지 타이틀</div>'+
+      '<div style="font-size:25px;font-weight:900;letter-spacing:-.9px">25 / 900 — 섹션 타이틀</div>'+
+      '<div style="font-size:19px;font-weight:800;letter-spacing:-.6px">19 / 800 — 카드 · 모달 제목</div>'+
+      '<div style="font-size:15px">15 / 400 — 본문 기준</div>'+
+      '<div style="font-size:13px;color:var(--mut)">13 / 400 — 보조 · 설명</div>'+
+      '<div style="font-size:11px;color:var(--mut2);font-weight:800;letter-spacing:.7px">11 / 800 — 라벨 · 배지</div></div>',
+    spec:[["폰트","Noto Sans KR / Malgun Gothic","숫자·코드·ID는 IBM Plex Mono"],
+          ["스페이싱","4 · 8 · 12 · 16 · 20 · 24 · 32 · 44","그 사이 값은 쓰지 않습니다"],
+          ["반경","7 / 10 / 14 / 18","--r-sm 입력·작은버튼, --r-md 버튼·필드, --r-lg 카드, --r-xl 시트"],
+          ["그림자","2단계","--sh-1 미세 구분, --sh-2 떠 있는 것(모달·호버 카드)"],
+          ["최대 폭","1400 / 1180 / 760","서비스 화면 / 문서 / 읽는 글"]],
+    do:["행간은 한글 가독성을 위해 1.7 이상 유지","letter-spacing은 큰 글씨에만 음수"],
+    dont:["임의의 13.5px·17px 같은 중간값 남발","그림자 3단계 이상 사용"],
+    a11y:"본문 최소 <b>13px</b>. 사용자가 브라우저 글씨를 키워도 레이아웃이 깨지지 않도록 고정 높이를 두지 않습니다." },
+
+  /* ---------- 1. 기본 ---------- */
+  { g:"기본", id:"CMP-01", n:"버튼", en:"Button",
+    d:"한 화면에는 <b>액션 버튼이 하나</b>입니다. 두 개가 필요하면 둘 다 중요하지 않은 것이거나, 화면을 나눠야 하는 것입니다.",
+    demo:'<div class="lb">계층</div><div class="rowd">'+
+      '<button class="btn pri">소개 등록하기</button>'+
+      '<button class="btn sec">임시저장</button>'+
+      '<button class="btn gho">취소</button>'+
+      '<button class="btn act">문의하기</button>'+
+      '<button class="btn dgr">등록 취소</button></div>'+
+      '<div style="height:18px"></div><div class="lb">크기</div><div class="rowd">'+
+      '<button class="btn pri lg">Large 13/24</button>'+
+      '<button class="btn pri">Medium 10/18</button>'+
+      '<button class="btn pri sm">Small 6/12</button></div>'+
+      '<div style="height:18px"></div><div class="lb">상태</div><div class="rowd">'+
+      '<button class="btn pri">기본</button>'+
+      '<button class="btn pri" style="background:var(--brand-d)">Hover</button>'+
+      '<button class="btn pri load"><span class="spin"></span>처리 중</button>'+
+      '<button class="btn pri" disabled>비활성</button></div>',
+    spec:[["variant","pri | sec | gho | act | dgr","pri = 브랜드 퍼플, act = 돈이 걸린 단일 액션"],
+          ["size","sm | md | lg","md 기본. lg는 랜딩 히어로와 모바일 하단 액션바에만"],
+          ["state","default / hover / active / focus / disabled / loading","loading은 텍스트를 유지하고 스피너만 추가"],
+          ["icon","leading only","트레일링 아이콘은 외부 링크(↗)에만 허용"],
+          ["최소 터치 영역","44 × 44","sm 버튼도 투명 패딩으로 44를 확보합니다"]],
+    do:["동사로 쓰기 — “등록하기”, “정산 신청”","비활성 버튼 옆에 왜 막혔는지 한 줄 두기"],
+    dont:["한 화면에 pri와 act를 같이 두기","“확인”처럼 무엇을 하는지 모르는 라벨","로딩 중 라벨을 “처리 중”으로 바꿔 원래 동작을 숨기기"],
+    a11y:"<code>&lt;button&gt;</code> 사용. 링크처럼 보이는 이동은 <code>&lt;a&gt;</code>로. <b>Enter · Space</b>로 실행되고 <code>:focus-visible</code>에 2px 브랜드 아웃라인이 보입니다. 로딩 중에는 <code>aria-busy=\"true\"</code>." },
+
+  { g:"기본", id:"CMP-02", n:"배지", en:"Badge",
+    d:"읽기 전용 표시입니다. 누를 수 있으면 배지가 아니라 칩입니다.",
+    demo:'<div class="lb">관 식별</div><div class="rowd">'+
+      '<span class="bdg mny">소개머니</span><span class="bdg mal">소개몰</span><span class="bdg biz">소개창업</span></div>'+
+      '<div style="height:16px"></div><div class="lb">상태 — Listing / Deal / Settlement</div><div class="rowd">'+
+      '<span class="bdg nt">DRAFT</span><span class="bdg wa">PENDING</span><span class="bdg ok">LIVE</span>'+
+      '<span class="bdg er">REJECTED</span><span class="bdg br">CONTRACT</span>'+
+      '<span class="bdg wa">AWAIT_CONFIRM</span><span class="bdg ok">CONFIRMED</span>'+
+      '<span class="bdg ac">REQUESTED</span><span class="bdg ok">PAID</span></div>'+
+      '<div style="height:16px"></div><div class="lb">자격 · 신뢰</div><div class="rowd">'+
+      '<span class="bdg br">인증소개자</span><span class="bdg ok">사업자 인증</span>'+
+      '<span class="bdg ok">공인중개사</span><span class="bdg ac">소개중</span></div>',
+    spec:[["tone","mny | mal | biz | ok | wa | er | nt | ac | br","상태 배지는 상태 색만, 관 배지는 관 색만"],
+          ["크기","11px / 800 / padding 2.5-8","단일 크기. 커져야 한다면 배지가 아닙니다"],
+          ["텍스트","최대 8자","넘치면 줄이지 말고 다른 컴포넌트를 쓰세요"]],
+    do:["상태값은 영문 대문자 그대로 노출해 개발·운영이 같은 말을 쓰게 하기","관 배지는 리스팅 카드 좌상단 고정"],
+    dont:["배지에 클릭 핸들러 붙이기","한 요소에 배지 3개 이상"],
+    a11y:"장식이 아니라 정보이므로 텍스트로 읽혀야 합니다. 아이콘만 있는 배지는 <code>aria-label</code> 필수." },
+
+  { g:"기본", id:"CMP-03", n:"칩 · 태그", en:"Chip",
+    d:"누를 수 있는 배지입니다. 필터 · 인기검색어 · 선택된 조건 제거에 씁니다.",
+    demo:'<div class="rowd">'+
+      '<span class="chip on">전체</span><span class="chip">외식 · 식당</span>'+
+      '<span class="chip">무인 · 자동화</span><span class="chip">프랜차이즈</span></div>'+
+      '<div style="height:16px"></div><div class="lb">선택 해제형</div><div class="rowd">'+
+      '<span class="chip on">서울 강남구 <span class="x">✕</span></span>'+
+      '<span class="chip on">5천만원 이하 <span class="x">✕</span></span></div>',
+    spec:[["variant","filter | removable","removable은 항상 선택된 상태로만 존재"],
+          ["state","default / hover / selected / disabled",""],
+          ["그룹","가로 스크롤","줄바꿈보다 가로 스크롤이 스캔에 유리합니다"]],
+    do:["첫 칩은 항상 “전체”","선택된 칩을 목록 앞으로 정렬하지 않기 — 위치가 바뀌면 다시 찾습니다"],
+    dont:["칩으로 페이지 이동시키기 — 그건 탭이나 링크입니다"],
+    a11y:"필터 칩은 <code>role=\"button\"</code> + <code>aria-pressed</code>. 제거형은 <code>aria-label=\"강남구 필터 제거\"</code>." },
+
+  { g:"기본", id:"CMP-04", n:"아바타", en:"Avatar",
+    d:"사람과 업체를 구분합니다. 인증된 소개자는 초록 링이 붙습니다 — 이 링이 이 서비스의 신뢰 신호입니다.",
+    demo:'<div class="rowd">'+
+      '<span class="avt">홍</span><span class="avt v">홍</span>'+
+      '<span class="avt" style="border-radius:10px">몰</span>'+
+      '<span class="avt" style="width:28px;height:28px;font-size:12px">이</span>'+
+      '<span class="avt" style="width:52px;height:52px;font-size:18px">김</span></div>',
+    spec:[["shape","circle | square","circle = 개인, square(r10) = 업체 · 사업장"],
+          ["size","28 / 38 / 52","목록 / 기본 / 프로필 헤더"],
+          ["verified","boolean","2px 흰 링 + 2px 초록 링. 인증 소개자에게만"]],
+    do:["이미지가 없으면 이름 첫 글자","업체는 각진 아바타로 개인과 즉시 구분"],
+    dont:["인증 링을 디자인 강조용으로 쓰기 — 법적 의미가 있는 표시입니다"],
+    a11y:"<code>alt</code>는 이름. 인증 상태는 링만으로 전달하지 말고 옆에 “인증소개자” 배지를 함께 둡니다." },
+
+  { g:"기본", id:"CMP-05", n:"단계 표시", en:"StepIndicator",
+    d:"등록 5단계와 거래 6단계에 씁니다. 지금 어디인지와 <b>몇 개가 남았는지</b>를 동시에 보여줍니다.",
+    demo:'<div class="steps"><div class="dn">04 매칭</div><div class="dn">05 계약</div>'+
+      '<div class="dn">05 결제</div><div class="dn">05 성사</div>'+
+      '<div class="on">06 정산신청</div><div>06 지급</div></div>',
+    spec:[["state","done | current | todo","done = 초록, current = 액션 오렌지, todo = 회색"],
+          ["클릭","done만 허용","앞선 단계로 되돌아갈 수는 있고 건너뛸 수는 없습니다"],
+          ["최대","7단계","넘으면 그룹으로 묶습니다"]],
+    do:["단계 번호를 도메인 단계(01~06)와 일치시키기","모바일에서는 현재 단계만 크게, 나머지는 점으로"],
+    dont:["미래 단계를 누를 수 있게 하기 — INV 위반으로 이어집니다"],
+    a11y:"<code>&lt;ol&gt;</code>로 마크업하고 현재 단계에 <code>aria-current=\"step\"</code>." },
+
+  { g:"기본", id:"CMP-06", n:"페이지네이션", en:"Pagination",
+    d:"목록에만 씁니다. 무한 스크롤은 리스팅 목록에서 쓰지 않습니다 — 이 서비스는 되돌아와 다시 찾는 탐색이 많습니다.",
+    demo:'<div class="pag"><button>‹</button><button class="on">1</button><button>2</button>'+
+      '<button>3</button><button>…</button><button>28</button><button>›</button></div>',
+    spec:[["perPage","20","카드형 목록은 24(4열 × 6줄)"],
+          ["형태","숫자형","더보기 버튼은 캐러셀·후기에만"],
+          ["URL","?page=2","뒤로가기로 정확히 그 위치에 돌아와야 합니다"]],
+    do:["페이지 상태를 URL에 남기기","마지막 페이지 번호를 항상 노출"],
+    dont:["무한 스크롤 + 푸터 법적고지 조합 — 고지에 영원히 닿지 못합니다"],
+    a11y:"<code>&lt;nav aria-label=\"페이지\"&gt;</code>, 현재 페이지에 <code>aria-current=\"page\"</code>." },
+
+  /* ---------- 2. 입력 ---------- */
+  { g:"입력", id:"CMP-07", n:"텍스트 필드", en:"TextField",
+    d:"라벨은 항상 위에 둡니다. 플레이스홀더를 라벨로 쓰지 않습니다 — 입력을 시작하면 무엇을 쓰는 칸인지 사라집니다.",
+    demo:'<div class="cold">'+
+      '<div class="fld"><label>상품/서비스명 <span class="rq">*</span></label>'+
+      '<input class="inp" placeholder="상품/서비스명을 입력해주세요"><div class="cnt">0 / 50</div></div>'+
+      '<div class="fld"><label>한줄 소개</label>'+
+      '<input class="inp" value="강남 핵심 상권 프리미엄 고깃집"><div class="hlp">목록과 검색 결과에 그대로 노출됩니다</div></div>'+
+      '<div class="fld"><label>연락처 <span class="rq">*</span></label>'+
+      '<input class="inp bad" value="010-1234"><div class="hlp bad">휴대폰 번호 11자리를 입력해주세요</div></div>'+
+      '<div class="fld"><label>사업자등록번호</label>'+
+      '<input class="inp" value="123-45-67890" disabled><div class="hlp">인증 완료된 값은 수정할 수 없습니다</div></div></div>',
+    spec:[["state","default / focus / filled / error / disabled / readonly",""],
+          ["라벨","위 · 12.5px / 700","필수는 빨간 별표"],
+          ["도움말","입력 전 표시, 오류 시 교체","두 개를 동시에 띄우지 않습니다"],
+          ["글자 수","최대치가 있으면 항상 표시","80% 넘으면 주황, 초과하면 빨강"],
+          ["검증 시점","blur + 제출","입력 중 실시간 검증은 금칙어에만"]],
+    do:["오류 문구는 무엇을 어떻게 고칠지 — “휴대폰 번호 11자리”","단위·형식은 플레이스홀더가 아니라 도움말에"],
+    dont:["플레이스홀더만 두고 라벨 생략","입력 도중 빨간 테두리로 계속 경고"],
+    a11y:"<code>&lt;label for&gt;</code> 연결 필수. 오류는 <code>aria-invalid=\"true\"</code> + <code>aria-describedby</code>로 메시지를 연결하고, <code>role=\"alert\"</code>로 읽히게 합니다." },
+
+  { g:"입력", id:"CMP-08", n:"선택 · 토글 · 체크", en:"Select / Toggle / Checkbox",
+    d:"토글은 <b>즉시 적용</b>되는 설정에만 씁니다. 저장 버튼을 눌러야 반영되는 것은 체크박스입니다.",
+    demo:'<div class="cold">'+
+      '<div class="fld"><label>소개비 부담 주체</label><select class="inp">'+
+      '<option>등록 시 선택 (판매자 / 구매자)</option><option>업체 고정</option><option>양도인 · 본사 고정</option></select></div>'+
+      '<div class="rowd" style="gap:16px"><span class="chk on" id="k1"><i>✓</i>이용약관에 동의합니다</span>'+
+      '<span class="chk" id="k2"><i>✓</i>마케팅 수신 (선택)</span></div>'+
+      '<div class="rowd" style="gap:12px"><button class="tgl on" id="t1"></button>'+
+      '<span style="font-size:13.5px">사업자 인증 게이트 — 켜면 즉시 등록이 막힙니다</span></div></div>',
+    spec:[["Select","네이티브 select","옵션 8개 넘으면 검색 가능한 콤보박스로 교체"],
+          ["Checkbox","다중 선택 · 동의","필수 동의와 선택 동의를 시각적으로 구분"],
+          ["Toggle","즉시 적용 · 되돌릴 수 있는 설정","되돌릴 수 없으면 토글이 아니라 확인 모달"],
+          ["Radio","단일 선택 3개 이하","4개 넘으면 Select"]],
+    do:["동의 항목은 필수/선택을 라벨에 명시","토글 변경 시 토스트로 결과 알리기"],
+    dont:["토글로 삭제·중지 같은 파괴적 동작 실행","전체 동의 체크가 선택 항목까지 켜기"],
+    a11y:"토글은 <code>role=\"switch\"</code> + <code>aria-checked</code>. 체크박스 그룹은 <code>&lt;fieldset&gt;&lt;legend&gt;</code>로 묶습니다." },
+
+  { g:"입력", id:"CMP-09", n:"검색 바", en:"SearchBar",
+    d:"관 스코프 셀렉트가 왼쪽에 붙습니다. 통합 메인에서는 “전체”, 관 사이트에서는 그 관으로 고정됩니다.",
+    demo:'<div class="srch"><select><option>전체</option><option>소개머니</option>'+
+      '<option>소개몰</option><option>소개창업</option></select>'+
+      '<input placeholder="상품, 서비스, 업체, 창업아이템을 검색하세요"><button>검색</button></div>'+
+      '<div style="height:14px"></div><div class="rowd" style="gap:7px">'+
+      '<span style="font-size:11.5px;color:var(--mut2);font-weight:700">인기검색어</span>'+
+      ['고깃집 인수','무인카페 창업','상가 매매','인테리어 업체']
+        .map(function(k){return '<span class="chip" style="padding:3px 10px;font-size:11.5px"># '+k+'</span>';}).join("")+
+      '</div>',
+    spec:[["scope","전체 | 관","관 사이트에서는 셀렉트가 잠기고 관 이름만 표시"],
+          ["테두리","2px 브랜드 퍼플","화면에서 가장 강한 입력이므로 유일하게 2px"],
+          ["인기검색어","최대 9개","제한업종 키워드는 서버에서 제외한 뒤 내려옵니다"],
+          ["자동완성","입력 2자부터","최근 검색어는 로컬에만 저장"]],
+    do:["검색 결과 없음일 때 관을 넓혀 다시 찾도록 제안","제한업종 검색어는 결과 대신 안내 문구"],
+    dont:["인기검색어에 “병원 양도” 같은 제한업종 노출 — 실제 시안에서 발견된 문제입니다"],
+    a11y:"<code>role=\"search\"</code> 영역, 입력에 <code>aria-label=\"통합 검색\"</code>. 자동완성 목록은 <code>role=\"listbox\"</code> + 방향키 이동." },
+
+  { g:"입력", id:"CMP-10", n:"역할 탭", en:"RoleTab",
+    d:"“소개합니다 / 소개원해요”. 이 탭의 실질적 의미는 <b>소개비를 누가 내는가</b>입니다 — 결정 A-04와 직결됩니다.",
+    demo:'<div class="rtab"><button class="on" data-rt="give">소개합니다</button>'+
+      '<button data-rt="want">소개받기</button></div>'+
+      '<div id="rtnote" class="hlp" style="margin-top:10px">판매자가 소개비를 부담합니다 · 등록된 물건을 소개해 수익을 얻습니다</div>',
+    spec:[["위치","목록 화면 상단","하단 탭바가 도입되면 GNB가 아니라 목록 안으로만"],
+          ["기본값","give","등록 유도가 목적"],
+          ["URL","?role=give","공유 링크에 상태가 남아야 합니다"]],
+    do:["탭 전환 시 부담 주체 설명을 함께 바꾸기","소개몰·소개창업에서는 탭을 숨기기 — 부담 주체가 고정입니다"],
+    dont:["역할 탭을 GNB 최상위에 두기 — 관 · 업종과 위계가 충돌합니다"],
+    a11y:"<code>role=\"tablist\"</code> / <code>role=\"tab\"</code> + <code>aria-selected</code>. 좌우 방향키로 이동." },
+
+  { g:"입력", id:"CMP-11", n:"인증 게이트", en:"VerificationGate",
+    d:"등록 버튼을 막는 대신 <b>왜 막혔고 무엇을 하면 열리는지</b>를 보여줍니다. 막힌 버튼만 있으면 이탈합니다.",
+    demo:'<div class="gate"><b>사업자 인증이 필요합니다</b>'+
+      '<span>소개몰은 사업자만 등록할 수 있습니다. 국세청 사업자등록 상태조회로 1~2분 안에 확인됩니다.</span>'+
+      '<div class="rowd"><button class="btn pri sm">사업자 인증하기</button>'+
+      '<button class="btn gho sm">다른 관에 등록하기</button></div></div>',
+    spec:[["trigger","관 설정의 gateBiz / gateBroker","관마다 다릅니다 — 소개머니는 게이트 없음"],
+          ["구성","이유 + 소요시간 + 해결 버튼 + 대안",""],
+          ["대안 제시","필수","막기만 하면 이탈, 대안을 주면 다른 관으로 갑니다"]],
+    do:["예상 소요 시간 명시","부동산은 중개사 인증이라는 점을 따로 안내"],
+    dont:["게이트를 통과 못 한 사용자에게 폼을 다 채우게 한 뒤 마지막에 막기"],
+    a11y:"<code>role=\"status\"</code>로 알리고, 게이트 때문에 비활성된 제출 버튼은 <code>aria-describedby</code>로 이 안내를 가리킵니다." },
+
+  /* ---------- 3. 탐색 ---------- */
+  { g:"탐색", id:"CMP-12", n:"GNB", en:"GlobalNav",
+    d:"관 사이트에서는 그 관의 업종이, 통합 메인에서는 관 3종이 들어갑니다. 다섯 번째 자리는 고객센터입니다(C-01).",
+    demo:'<div class="cold">'+
+      '<div class="lb" style="margin:0">통합 메인 — sogaebaenk.co.kr</div>'+
+      '<div class="gnb"><span class="lg">소개뱅크</span>'+
+      '<a href="#" style="color:var(--mny);font-weight:700">소개머니</a>'+
+      '<a href="#" style="color:var(--mal);font-weight:700">소개몰</a>'+
+      '<a href="#" style="color:var(--biz);font-weight:700">소개창업</a>'+
+      '<a href="#">이용안내</a><a href="#">고객센터</a>'+
+      '<span style="flex:1"></span><button class="btn pri sm">무료 회원가입</button></div>'+
+      '<div class="lb" style="margin:0">관 사이트 — biz.sogaebaenk.co.kr</div>'+
+      '<div class="gnb"><span class="lg" style="color:var(--biz)">소개창업</span>'+
+      '<a href="#" class="on" style="color:var(--biz)">외식 · 식당</a><a href="#">무인 · 자동화</a>'+
+      '<a href="#">프랜차이즈</a><a href="#">전체 업종</a>'+
+      '<span style="flex:1"></span><button class="btn pri sm">소개 등록</button></div></div>',
+    spec:[["높이","64 / 56(≤767)",""],
+          ["고정","sticky top","스크롤 시 그림자 --sh-1 추가"],
+          ["관 표시","로고 색 + 활성 링크 색","관 색은 GNB에서만 위계를 갖습니다"],
+          ["우측","항상 CTA 1개","비로그인 = 회원가입, 로그인 = 소개 등록"]],
+    do:["관 사이트 로고를 누르면 그 관의 메인으로","전체 업종 링크로 32종 전체를 열어주기"],
+    dont:["GNB에 업종 8개 이상 나열","관 색과 브랜드 퍼플 CTA를 나란히 같은 굵기로"],
+    a11y:"<code>&lt;header&gt;&lt;nav aria-label=\"주 메뉴\"&gt;</code>. 첫 요소로 <b>본문 바로가기</b> 스킵 링크를 둡니다." },
+
+  { g:"탐색", id:"CMP-13", n:"하단 탭바", en:"BottomTabBar",
+    d:"767px 이하에서만 나타납니다. 별도 모바일 화면이 아니라 <b>CSS 전환</b>입니다(C-04).",
+    demo:'<div class="tabbar"><div class="on"><i>⌂</i>홈</div><div><i>⌕</i>탐색</div>'+
+      '<div><i>＋</i>등록</div><div><i>◇</i>내소개</div><div><i>○</i>마이</div></div>',
+    spec:[["표시","≤767px","1024 이상에서는 GNB만"],
+          ["탭","5개 고정","늘리지 않습니다"],
+          ["탐색 탭","관 3종 → 업종 진입점","32종을 햄버거에 넣으면 탐색이 불가능하기 때문"],
+          ["안전영역","padding-bottom: env(safe-area-inset-bottom)",""]],
+    do:["등록 탭을 가운데 강조","현재 탭은 색 + 굵기 둘 다로 표시"],
+    dont:["탭바와 하단 액션바를 동시에 띄우기 — 액션바가 있을 때 탭바는 숨깁니다"],
+    a11y:"<code>role=\"tablist\"</code>, 아이콘만 있는 탭은 텍스트 라벨을 반드시 함께 둡니다." },
+
+  { g:"탐색", id:"CMP-14", n:"카테고리 내비", en:"CategoryNav",
+    d:"업종은 관 안에서만 존재합니다. 사이드바형과 아이콘 그리드형 두 가지를 쓰고, 화면 폭에 따라 갈립니다.",
+    demo:'<div class="rowd" style="align-items:flex-start;gap:16px">'+
+      '<div style="width:190px;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--card)">'+
+      '<div style="background:var(--navy);color:#fff;padding:9px 13px;font-size:12.5px;font-weight:800">☰ 소개창업 카테고리</div>'+
+      ['외식 · 식당','카페 · 베이커리','무인 · 자동화','프랜차이즈 가맹','유통 · 판매']
+      .map(function(t,i){ return '<div style="padding:8px 13px;font-size:12.5px;border-bottom:1px solid var(--line2);'+
+        (i===0?'color:var(--biz);font-weight:700':'color:var(--ink2)')+'">'+t+'</div>'; }).join("")+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,66px);gap:9px">'+
+      ['외식','카페','무인','가맹','유통','서비스','온라인','전체'].map(function(t){
+        return '<div style="border:1px solid var(--line);border-radius:var(--r-md);padding:11px 4px;text-align:center;'+
+          'background:var(--card);font-size:11px;color:var(--ink2)"><div style="font-size:17px;margin-bottom:3px">▦</div>'+t+'</div>';
+      }).join("")+'</div></div>',
+    spec:[["사이드바","≥1024px","목록 화면 좌측 고정"],
+          ["아이콘 그리드","메인 · ≤1023px","4열(모바일) / 6열(태블릿) / 8열(데스크톱)"],
+          ["제한업종","응답에 없음","숨기는 것이 아니라 API가 내려주지 않습니다"],
+          ["마지막 칸","전체 보기","32종 전체 페이지로"]],
+    do:["활성 업종을 관 색으로 표시","업종 수가 12를 넘으면 그리드에 “전체” 칸 필수"],
+    dont:["관을 넘나드는 업종 목록 만들기 — 같은 이름이어도 다른 관이면 다른 카테고리입니다"],
+    a11y:"<code>&lt;nav aria-label=\"업종\"&gt;</code> + <code>&lt;ul&gt;</code>. 아이콘 그리드도 링크 목록으로 마크업합니다." },
+
+  { g:"탐색", id:"CMP-15", n:"빈 상태", en:"EmptyState",
+    d:"오픈 초기에 가장 자주 보게 될 화면입니다. 비어 있다는 사실보다 <b>다음에 뭘 할지</b>가 중요합니다.",
+    demo:'<div class="empty"><b>아직 등록된 소개가 없습니다</b>'+
+      '<span>이 업종의 첫 번째 소개자가 되어보세요.<br>등록은 무료이고 검수는 24시간 안에 끝납니다.</span>'+
+      '<button class="btn pri">첫 소개 등록하기</button></div>',
+    spec:[["종류","비어있음 / 검색결과없음 / 오류 / 권한없음",""],
+          ["구성","제목 + 설명 + 액션 1개","일러스트는 선택"],
+          ["검색결과없음","관을 넓히는 대안 제시","“소개창업에는 없지만 소개몰에 3건 있습니다”"]],
+    do:["오픈 초기 카테고리는 등록 유도로 전환","검수 소요시간 같은 구체적 정보 넣기"],
+    dont:["“데이터가 없습니다”로 끝내기"],
+    a11y:"<code>role=\"status\"</code>. 액션 버튼에 포커스를 자동으로 옮기지는 않습니다." },
+
+  /* ---------- 4. 도메인 ---------- */
+  { g:"도메인", id:"CMP-16", n:"리스팅 카드", en:"ListingCard",
+    d:"이 서비스에서 가장 많이 반복되는 컴포넌트입니다. 목록 · 캐러셀 · 검색결과 · 마이페이지가 전부 이걸 씁니다.",
+    demo:'<div class="rowd" style="align-items:flex-start">'+
+      '<article class="lcard"><div class="th"><span class="tag bdg ac">소개중</span></div><div class="bd">'+
+      '<div class="ct">소개창업 · 외식 · 식당</div>'+
+      '<h4>특A급 프리미엄 고깃집 인수하실 분을 찾습니다</h4>'+
+      '<div class="pr">8,500만원</div>'+
+      '<div class="rowd" style="gap:5px"><span class="bdg biz">소개창업</span><span class="bdg ok">인증소개자</span></div>'+
+      '<div class="mt"><span>조회 342</span><span>관심 18</span><span>2시간 전</span></div>'+
+      '</div></article>'+
+      '<article class="lcard"><div class="th" style="background:linear-gradient(135deg,#1E3A5F,#0F1F33)">'+
+      '<span class="tag bdg br">소개원해요</span></div><div class="bd">'+
+      '<div class="ct">소개머니 · 인테리어 시공</div>'+
+      '<h4>상가 인테리어 잘하는 업체 소개받고 싶습니다</h4>'+
+      '<div class="pr" style="font-size:14px;color:var(--mut)">예산 협의</div>'+
+      '<div class="rowd" style="gap:5px"><span class="bdg mny">소개머니</span><span class="bdg nt">구매자 부담</span></div>'+
+      '<div class="mt"><span>조회 87</span><span>관심 4</span><span>1일 전</span></div>'+
+      '</div></article></div>',
+    spec:[["폭","250 고정 / 그리드에서는 1fr","4열(≥1280) 3열(≥1024) 2열(≥768) 1열"],
+          ["썸네일","16:9 · 132px","없으면 관 색 그라데이션 + 업종 아이콘"],
+          ["제목","2줄 클램프","3줄 이상 노출하지 않습니다"],
+          ["가격","협의 가능이면 “예산 협의”","0원 표기 금지"],
+          ["배지","좌상단 상태 1개 + 하단 관/자격 최대 2개",""],
+          ["필수 메타","조회 · 관심 · 경과시간",""]],
+    do:["관 배지를 항상 포함 — 통합 검색 결과에서 어느 관인지가 곧 요율입니다","클릭 영역은 카드 전체"],
+    dont:["카드 안에 버튼 넣기 — 카드 자체가 링크입니다","소개비 금액을 카드에 노출 — 상세에서만"],
+    a11y:"<code>&lt;article&gt;</code> 안에 제목을 감싸는 링크 하나. 카드 전체를 링크로 감싸지 말고 <b>제목 링크 + 오버레이</b> 방식을 씁니다." },
+
+  { g:"도메인", id:"CMP-17", n:"소개비 표시", en:"FeeDisplay",
+    d:"요율 · 상한 · <b>부담 주체</b>를 한 덩어리로 보여줍니다. 셋 중 하나라도 빠지면 분쟁이 됩니다.",
+    demo:'<div class="rowd">'+
+      '<div class="fee"><span class="a">1,275,000원</span>'+
+      '<span class="b">소개창업 1.5% · 상한 500만 · 양도인 부담</span></div>'+
+      '<div class="fee" style="background:var(--svc-l);border-color:rgba(37,99,235,.28)">'+
+      '<span class="a" style="color:var(--svc)">최대 300,000원</span>'+
+      '<span class="b">소개머니 3% · 상한 30만 · 판매자 부담</span></div></div>'+
+      '<div style="height:14px"></div>'+
+      '<div class="cal i"><span class="lb">정산 시</span>'+
+      '소개비 1,275,000원 → 원천징수 3.3% 42,075원 차감 → <b>실지급 1,232,925원</b></div>',
+    spec:[["구성","금액 + (관 요율 · 상한 · 부담 주체)","세 줄이 아니라 한 덩어리"],
+          ["확정 전","“최대 N원”","성사 전에는 예상액임을 명시"],
+          ["원천징수","정산 화면에서만 표시","목록·상세에서는 세전 금액"],
+          ["색","확정 = 액션 오렌지, 예상 = 서비스 블루",""]],
+    do:["상한이 적용되면 “상한 적용”을 명시","관이 다르면 요율이 다르다는 것을 문구로 드러내기"],
+    dont:["요율만 표시하고 부담 주체 생략","소수점 소개비 표시 — 원 단위 반올림"],
+    a11y:"금액은 <code>&lt;strong&gt;</code>. 스크린리더가 “1,275,000원 소개창업 1.5퍼센트 상한 500만 양도인 부담”으로 이어 읽히도록 한 요소 안에 둡니다." },
+
+  { g:"도메인", id:"CMP-18", n:"소개자 실적", en:"TrustStats",
+    d:"이 숫자는 <b>정산이 완료돼야</b> 채워집니다. 06단계가 없으면 03단계 상세가 비어 있는 이유가 여기 있습니다.",
+    demo:'<div class="trust"><div><b>128건</b><span>총 소개</span></div>'+
+      '<div><b>42건</b><span>성사(계약)</span></div><div><b>32.8%</b><span>성사율</span></div>'+
+      '<div><b>15,680,000원</b><span>누적수익</span></div></div>',
+    spec:[["항목","총 소개 · 성사 · 성사율 · 누적수익","4개 고정"],
+          ["갱신 시점","Settlement = PAID","CONFIRMED가 아니라 지급 완료"],
+          ["신규 소개자","“신규” 표시","0건을 0으로 보여주지 않습니다"],
+          ["누적수익","공개 여부 설정 가능","기본은 공개"]],
+    do:["성사율이 낮아도 그대로 노출 — 신뢰의 근거는 정확성입니다","관별 실적을 툴팁으로 쪼개 보여주기"],
+    dont:["가입 직후 0건을 그대로 노출","성사율을 반올림해 100%로 만들기"],
+    a11y:"수치와 라벨을 <code>&lt;dl&gt;</code>로 묶어 관계를 명확히 합니다." },
+
+  { g:"도메인", id:"CMP-19", n:"하단 액션바", en:"ActionBar",
+    d:"상세 화면 하단에 고정됩니다. 화면당 액션 1개 원칙이 가장 강하게 적용되는 곳입니다.",
+    demo:'<div class="actbar"><span class="ic">♡</span><span class="ic">↗</span>'+
+      '<button class="btn sec">질문하기</button><button class="btn act">문의하기</button></div>',
+    spec:[["구성","보조 아이콘 2 + 세컨더리 1 + 액션 1","액션은 항상 오른쪽 끝"],
+          ["고정","≤1023px sticky bottom","데스크톱에서는 우측 사이드 카드로"],
+          ["탭바와 관계","액션바가 있으면 탭바 숨김",""],
+          ["비로그인","액션 클릭 시 로그인 시트","막지 않고 이어서 진행"]],
+    do:["관심(♡)은 로그인 없이도 로컬에 저장하고 로그인 시 동기화"],
+    dont:["액션바에 오렌지 버튼 두 개","스크롤 중에 나타났다 사라졌다 하기"],
+    a11y:"아이콘 버튼에 <code>aria-label</code>. 고정 바가 본문 마지막 내용을 가리지 않도록 <code>padding-bottom</code>을 확보합니다." },
+
+  { g:"도메인", id:"CMP-20", n:"푸터 · 법적고지", en:"LegalFooter",
+    d:"전 화면 공통입니다. 통신판매중개자 지위 고지와 부동산 중개 주체 고지 <b>두 문장은 확정</b>이고, 나머지 값은 미입력 상태입니다(B-12).",
+    demo:'<div class="ftr"><div class="lk">'+
+      '<a href="#" class="hi">이용약관</a><a href="#" class="hi">개인정보처리방침</a>'+
+      '<a href="#">운영정책</a><a href="#">위치기반서비스 이용약관</a>'+
+      '<a href="#">분쟁조정 안내</a><a href="#">고객센터</a></div>'+
+      '(주)소개뱅크 · 대표 <span class="tbd">TBD</span> · 사업자등록번호 <span class="tbd">TBD</span> · '+
+      '통신판매업 신고번호 <span class="tbd">TBD</span><br>'+
+      '직업정보제공사업 신고번호 <span class="tbd">확인 중</span> · 주소 <span class="tbd">TBD</span>'+
+      '<div class="lg2"><b>소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다.</b> '+
+      '상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.<br>'+
+      '<b>사업용 부동산은 제휴 공인중개사가 중개하며</b>, 소개뱅크는 중개행위를 하지 않고 중개보수를 받지 않습니다.</div></div>',
+    spec:[["필수 링크","이용약관 · 개인정보처리방침","이 둘은 굵게 — 법정 요구"],
+          ["고지 2문장","확정","문구를 임의로 줄이지 않습니다"],
+          ["미확정 값","TBD 표시","비워두지 말고 미입력임을 드러냅니다"],
+          ["표시 위치","전 화면 · 무한스크롤 금지 구간",""]],
+    do:["관을 늘려도 푸터는 사업자 정보이므로 한 번만 설정","부동산 리스팅에는 중개사무소 등록번호를 별도 표기"],
+    dont:["“소개뱅크가 책임집니다” 같은 문구 추가 — 지위 고지와 충돌합니다"],
+    a11y:"<code>&lt;footer&gt;</code> + <code>&lt;nav aria-label=\"약관\"&gt;</code>. 고지문은 12px 이상, 본문 대비 4.5:1을 유지합니다." },
+
+  /* ---------- 5. 피드백 ---------- */
+  { g:"피드백", id:"CMP-21", n:"알림 박스", en:"Callout",
+    d:"화면에 머무는 안내입니다. 사라지는 것은 토스트, 막는 것은 모달입니다.",
+    demo:'<div class="cold">'+
+      '<div class="cal i"><span class="lb">정보</span>소개코드는 첫 유입 기준 90일간 고정됩니다.</div>'+
+      '<div class="cal s"><span class="lb">완료</span>정산 신청이 접수되었습니다. 승인 상태는 마이페이지에서 확인할 수 있습니다.</div>'+
+      '<div class="cal w"><span class="lb">주의</span>사업용 부동산은 제휴 공인중개사만 등록할 수 있습니다.</div>'+
+      '<div class="cal e"><span class="lb">INV-3 위반</span>Settlement는 Deal.status = CONFIRMED 이후에만 만들어집니다. '+
+      '성사 확정 화면에서 양측 확인을 먼저 완료하세요.</div></div>',
+    spec:[["tone","info | success | warning | error",""],
+          ["라벨","10.5px / 800 대문자","오류는 위반한 규칙 이름(INV-N)을 그대로"],
+          ["액션","최대 1개","해결 경로가 있으면 링크로"],
+          ["닫기","info만 허용","오류·주의는 조건이 해소돼야 사라집니다"]],
+    do:["오류 문구에 해결 경로를 반드시 포함","도메인 규칙 위반은 규칙 번호를 노출해 운영·개발이 같은 말을 쓰게 하기"],
+    dont:["한 화면에 알림 3개 이상","단순 안내를 warning 톤으로"],
+    a11y:"오류는 <code>role=\"alert\"</code>(즉시 읽힘), 정보·완료는 <code>role=\"status\"</code>(대기 후 읽힘)." },
+
+  { g:"피드백", id:"CMP-22", n:"모달", en:"Modal",
+    d:"되돌릴 수 없는 동작에만 씁니다. 확인 버튼이 파괴적이면 오른쪽이 아니라 <b>왼쪽</b>에 두어 습관적 클릭을 막습니다.",
+    demo:'<div class="modal"><div class="mh"><h4>등록을 취소하시겠습니까?</h4>'+
+      '<p>작성 중인 내용은 저장되지 않습니다.</p></div>'+
+      '<div class="mf"><button class="btn dgr">네, 취소할게요</button>'+
+      '<button class="btn pri">계속 작성</button></div></div>',
+    spec:[["폭","400 / 560 / 720","확인 / 폼 / 콘텐츠"],
+          ["닫기","ESC · 배경 클릭 · 취소 버튼","전부 안전한 쪽(계속 작성)으로 귀결"],
+          ["포커스","열릴 때 안전한 버튼에","포커스 트랩 필수"],
+          ["스크롤","body 잠금",""]],
+    do:["제목을 질문형으로, 본문에 잃는 것을 명시","안전한 선택을 기본 포커스로"],
+    dont:["모달 위에 모달","단순 안내에 모달 — 콜아웃이나 토스트로 충분합니다"],
+    a11y:"<code>role=\"dialog\" aria-modal=\"true\"</code> + <code>aria-labelledby</code>. ESC로 닫히고, 닫히면 <b>열었던 요소로 포커스가 돌아갑니다</b>." },
+
+  { g:"피드백", id:"CMP-23", n:"토스트", en:"Toast",
+    d:"성공했다는 사실만 알립니다. 실패나 되돌릴 수 없는 결과는 토스트로 알리지 않습니다.",
+    demo:'<div class="rowd"><span class="toastx">저장했습니다</span>'+
+      '<span class="toastx">소개코드를 복사했습니다</span></div>',
+    spec:[["지속","2.2초","되돌리기 버튼이 있으면 5초"],
+          ["위치","하단 중앙","모바일에서는 탭바 위"],
+          ["동시","1개","새 토스트가 이전 것을 교체"],
+          ["길이","한 줄","두 줄이 필요하면 콜아웃"]],
+    do:["동작 완료형으로 — “저장했습니다”","되돌릴 수 있으면 되돌리기 버튼 포함"],
+    dont:["오류를 토스트로 알리고 사라지게 하기","토스트에 링크를 넣어 누르게 하기 — 사라집니다"],
+    a11y:"<code>role=\"status\" aria-live=\"polite\"</code>. 포커스를 빼앗지 않습니다." },
+
+  { g:"피드백", id:"CMP-24", n:"데이터 테이블", en:"DataTable",
+    d:"백오피스 전용입니다. 사용자 화면에서는 카드 목록을 씁니다 — 모바일에서 표는 읽히지 않습니다.",
+    demo:'<div class="tw"><table><thead><tr><th>ID</th><th>리스팅</th><th>관</th>'+
+      '<th>상태</th><th>SLA</th><th></th></tr></thead><tbody>'+
+      '<tr><td class="k">L-2041</td><td>성수동 무인카페 창업 풀패키지 양도</td>'+
+      '<td><span class="bdg biz">소개창업</span></td><td><span class="bdg wa">PENDING</span></td>'+
+      '<td class="v">23h 46m</td><td><button class="btn sm sec">검수</button></td></tr>'+
+      '<tr><td class="k">L-2043</td><td>강남 상가 임대 · 1층 코너</td>'+
+      '<td><span class="bdg mal">소개몰</span></td><td><span class="bdg er">보류</span></td>'+
+      '<td class="v">20h 12m</td><td><button class="btn sm sec">검수</button></td></tr>'+
+      '</tbody></table></div>',
+    spec:[["최소 폭","560","좁으면 가로 스크롤 컨테이너 안에서만"],
+          ["ID 열","고정 · 모노스페이스","항상 첫 열"],
+          ["상태","배지","텍스트만 두지 않습니다"],
+          ["행 액션","마지막 열 버튼 1개","여러 개면 케밥 메뉴"],
+          ["정렬","헤더 클릭","현재 정렬은 화살표로 표시"]],
+    do:["SLA 잔여 시간처럼 시간이 걸린 값은 색으로 임박 표시","빈 결과에는 EmptyState"],
+    dont:["사용자 화면에 표 쓰기","한 행에 버튼 3개 이상"],
+    a11y:"<code>&lt;th scope=\"col\"&gt;</code> 필수. 정렬 가능한 헤더는 <code>aria-sort</code>. 가로 스크롤 컨테이너에 <code>tabindex=\"0\"</code>을 주어 키보드로도 스크롤되게 합니다." }
+  ];
+
+  function sw(hex,name,tok){
+    return '<span class="sw"><i style="background:'+hex+'"></i><b>'+esc(name)+'</b>'+
+      '<span>'+esc(tok)+'</span></span>';
+  }
+
+  /* =============== 렌더 =============== */
+  var RULES=[
+    ["R1","화면당 액션 버튼 1개","두 개가 필요하면 둘 다 중요하지 않거나 화면을 나눠야 합니다."],
+    ["R2","브랜드 · 서비스 · 액션 3색은 서로를 대신하지 않는다","관 색으로 CTA를 칠하는 순간 위계가 무너집니다."],
+    ["R3","상태는 색만으로 전달하지 않는다","항상 텍스트나 아이콘을 함께 둡니다."],
+    ["R4","막을 때는 이유와 해결 경로를 같이 준다","비활성 버튼만 있으면 이탈합니다."],
+    ["R5","되돌릴 수 없으면 모달, 되돌릴 수 있으면 토스트","토글은 되돌릴 수 있는 설정에만."],
+    ["R6","도메인 규칙 위반은 규칙 번호를 노출한다","INV-3 같은 이름을 화면에 그대로 씁니다."],
+    ["R7","업종은 관 안에서만 존재한다","같은 이름이어도 관이 다르면 다른 카테고리입니다."],
+    ["R8","표는 백오피스, 카드는 사용자 화면","모바일에서 표는 읽히지 않습니다."]
+  ];
+
+  function build(){
+    var h='<h2 class="sect">쓰기 전에 아는 8가지</h2>'+
+      '<p class="sectp">컴포넌트를 고르기 전에 적용되는 규칙입니다. 개별 스펙이 서로 충돌할 때 이쪽이 이깁니다.</p>'+
+      '<div class="rules">'+RULES.map(function(r){
+        return '<div class="rule"><span class="n">'+esc(r[0])+'</span><b>'+esc(r[1])+'</b><span>'+esc(r[2])+'</span></div>';
+      }).join("")+'</div>';
+
+    var lastG="";
+    C.forEach(function(c){
+      if(c.g!==lastG){
+        lastG=c.g;
+        h+='<h2 class="sect" id="g-'+encodeURIComponent(c.g)+'">'+esc(c.g)+'</h2>';
+      }
+      h+='<section class="cmp" id="'+c.id+'">'+
+        '<div class="chd"><div class="r1"><span class="cid">'+esc(c.id)+'</span>'+
+        '<h2>'+esc(c.n)+'</h2><span class="en">'+esc(c.en)+'</span></div><p>'+c.d+'</p></div>'+
+        '<div class="demo"><div class="lb">LIVE</div>'+c.demo+'</div>'+
+        '<div class="sec"><h3>스펙</h3><div class="tw"><table><thead><tr>'+
+          '<th style="width:130px">속성</th><th style="width:230px">값</th><th>비고</th></tr></thead><tbody>'+
+          c.spec.map(function(s){
+            return '<tr><td class="k">'+esc(s[0])+'</td><td class="v">'+esc(s[1])+'</td><td>'+esc(s[2])+'</td></tr>';
+          }).join("")+'</tbody></table></div></div>'+
+        '<div class="sec"><h3>Do / Don\'t</h3><div class="dd">'+
+          '<div class="dobox do"><span class="lb">DO</span><ul>'+
+            c.do.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul></div>'+
+          '<div class="dobox dont"><span class="lb">DON\'T</span><ul>'+
+            c.dont.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul></div>'+
+        '</div></div>'+
+        '<div class="sec"><h3>접근성</h3><div class="a11y">'+c.a11y+'</div></div>'+
+      '</section>';
+    });
+
+    h+='<div class="note" style="margin:22px 0 60px"><b>이 문서에 없는 것</b> — '+
+      '차트 · 캘린더 · 트리 · 리치 에디터는 아직 화면에 없어 넣지 않았습니다. '+
+      '필요해지는 순간에 스펙을 쓰는 것이, 미리 만들어 두고 쓰지 않는 것보다 낫습니다. '+
+      '토큰 정의와 원칙은 <b>디자인 시스템 문서</b>, 화면별 적용은 <b>화면설계서</b>를 참조합니다.</div>';
+
+    $("#doc").innerHTML=h;
+
+    var toc="", lg="";
+    C.forEach(function(c){
+      if(c.g!==lg){ lg=c.g; toc+='<div class="g">'+esc(c.g)+'</div>'; }
+      toc+='<a href="#'+c.id+'" data-t="'+c.id+'">'+esc(c.n)+'</a>';
+    });
+    $("#toc").innerHTML=toc;
+  }
+  build();
+
+  /* 데모 인터랙션 */
+  document.addEventListener("click", function(e){
+    var t=e.target.closest(".tgl"); if(t){ t.classList.toggle("on"); return; }
+    var k=e.target.closest(".chk"); if(k){ k.classList.toggle("on"); return; }
+    var c=e.target.closest(".chip"); if(c && !c.classList.contains("x")){ c.classList.toggle("on"); return; }
+    var r=e.target.closest("[data-rt]");
+    if(r){
+      Array.prototype.forEach.call(r.parentNode.children, function(b){ b.classList.remove("on"); });
+      r.classList.add("on");
+      $("#rtnote").textContent = r.getAttribute("data-rt")==="give"
+        ? "판매자가 소개비를 부담합니다 · 등록된 물건을 소개해 수익을 얻습니다"
+        : "구매자가 소개비를 부담합니다 · 원하는 것을 올리면 소개자가 찾아줍니다";
+      return;
+    }
+  });
+
+  /* TOC 하이라이트 */
+  var obs=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(!en.isIntersecting) return;
+      var a=document.querySelector('#toc a[data-t="'+en.target.id+'"]');
+      if(!a) return;
+      Array.prototype.forEach.call(document.querySelectorAll("#toc a"), function(x){ x.classList.remove("on"); });
+      a.classList.add("on");
+    });
+  }, {rootMargin:"-10% 0px -80% 0px"});
+  Array.prototype.forEach.call(document.querySelectorAll(".cmp"), function(el){ obs.observe(el); });
+})();
+</script>
+
+</body></html>

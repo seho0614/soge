@@ -1,0 +1,905 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 관 관리 콘솔</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --pp:#7C3AED; --pp-d:#6D28D9; --pp-l:#F5F1FE;
+    --bl:#2563EB; --bl-l:#EFF6FF; --or:#F97316; --or-l:#FFF7ED;
+    --gr:#059669; --gr-l:#ECFDF5; --am:#D97706; --am-l:#FFFBEB;
+    --rd:#DC2626; --rd-l:#FEF2F2;
+    --nv:#1E293B; --ink:#0F172A; --mut:#64748B; --mut2:#94A3B8;
+    --line:#E2E8F0; --line2:#F1F5F9; --page:#F7F8FA; --card:#FFFFFF; --shell:#F1F3F6;
+    --rail:#141E33; --railln:#22314F; --railtx:#CBD5E1; --raildk:#0B1220;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .mono,code{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  button,input,select,textarea{font-family:inherit;font-size:inherit}
+  button{cursor:pointer}
+
+  .app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+  @media (max-width:920px){ .app{grid-template-columns:1fr} .rail{position:static!important;height:auto!important;border-right:0;border-bottom:1px solid var(--railln)} }
+
+  /* ---------- 좌측 레일 ---------- */
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--rail);color:var(--railtx)}
+  .rhd{padding:16px 16px 13px;border-bottom:1px solid var(--railln)}
+  .rhd .lg{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:#fff;letter-spacing:-.3px}
+  .rhd .lg .d{width:8px;height:8px;border-radius:50%;background:var(--pp);box-shadow:0 0 0 3px rgba(124,58,237,.25)}
+  .rhd .lg .tag{font-size:9.5px;font-weight:800;color:#C4B5FD;background:rgba(124,58,237,.2);
+    border:1px solid rgba(124,58,237,.42);border-radius:5px;padding:2px 6px;letter-spacing:.4px}
+  .rhd p{margin:7px 0 0;font-size:11px;color:#64748B;line-height:1.6}
+  .grp{padding:14px 16px 5px;font-size:9.5px;font-weight:800;color:#475569;letter-spacing:.8px;text-transform:uppercase}
+  .nv{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:0 8px 1px;border-radius:8px;cursor:pointer}
+  .nv:hover{background:var(--raildk)}
+  .nv.on{background:#1B2947}
+  .nv .t{flex:1;font-size:12.5px;color:#CBD5E1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nv.on .t{color:#fff;font-weight:700}
+  .nv .c{font-family:"IBM Plex Mono",monospace;font-size:9px;color:#475569;flex:none}
+  .nv .sw{width:9px;height:9px;border-radius:3px;flex:none}
+  .railfoot{margin:14px 12px 26px;padding:12px 13px;background:var(--raildk);border:1px solid var(--railln);
+    border-radius:10px;font-size:11px;color:#64748B;line-height:1.7}
+  .railfoot b{color:#CBD5E1;display:block;margin-bottom:4px;font-size:11.5px}
+
+  /* ---------- 스테이지 ---------- */
+  .stage{padding:0 0 60px;min-width:0;background:var(--shell)}
+  .meta{display:flex;align-items:center;gap:10px;padding:11px 24px;background:var(--card);
+    border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:15}
+  .chip{font-size:10.5px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:3px 8px;
+    background:var(--pp-l);color:var(--pp)}
+  .meta .sid{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mut);font-weight:600}
+  .meta .nt{font-size:12.5px;color:var(--mut);flex:1;min-width:200px}
+  .inner{padding:22px 24px 0;max-width:1180px}
+  @media (max-width:640px){ .inner{padding:16px 12px 0} .meta{padding:10px 12px} }
+
+  h1.pg{margin:0 0 4px;font-size:25px;font-weight:900;letter-spacing:-.9px}
+  p.lead{margin:0 0 20px;font-size:14px;color:var(--mut);max-width:760px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:16px;overflow:hidden}
+  .phd{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+  .phd h2{margin:0;font-size:15px;font-weight:800;letter-spacing:-.4px}
+  .phd .sp{flex:1}
+  .phd .hint{font-size:12px;color:var(--mut2)}
+  .pbd{padding:16px 18px}
+
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;
+    padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+  .btn:hover{border-color:var(--mut2)}
+  .btn.pri{background:var(--pp);border-color:var(--pp);color:#fff}
+  .btn.pri:hover{background:var(--pp-d);border-color:var(--pp-d)}
+  .btn.act{background:var(--or);border-color:var(--or);color:#fff}
+  .btn.gho{background:transparent;color:var(--mut)}
+  .btn.dgr{color:var(--rd);border-color:rgba(220,38,38,.35)}
+  .btn:disabled{opacity:.42;cursor:default}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+
+  /* ---------- 관 카드 ---------- */
+  .sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .sc{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .sc:hover{border-color:var(--mut2);box-shadow:0 4px 14px rgba(15,23,42,.06)}
+  .sc .bar{height:5px}
+  .sc .bd{padding:15px 17px}
+  .sc .r1{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+  .sc h3{margin:0;font-size:17px;font-weight:900;letter-spacing:-.5px}
+  .sc .code{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:700;
+    color:var(--mut);background:var(--line2);border-radius:5px;padding:2px 7px}
+  .sc .url{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--bl);margin-bottom:11px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sc .rel{font-size:12.5px;color:var(--mut);margin-bottom:12px}
+  .sc .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding-top:11px;border-top:1px dashed var(--line)}
+  .sc .kv div{min-width:0}
+  .sc .kv b{display:block;font-size:15px;font-weight:900;letter-spacing:-.4px}
+  .sc .kv span{font-size:10.5px;color:var(--mut2)}
+  .st{font-size:10.5px;font-weight:800;border-radius:6px;padding:2.5px 8px;letter-spacing:-.1px;flex:none}
+  .st.live{background:var(--gr-l);color:var(--gr)}
+  .st.prep{background:var(--am-l);color:var(--am)}
+  .st.stop{background:var(--rd-l);color:var(--rd)}
+  .addcard{border:2px dashed var(--line);background:transparent;border-radius:14px;display:grid;
+    place-items:center;min-height:210px;cursor:pointer;color:var(--mut);text-align:center;padding:20px}
+  .addcard:hover{border-color:var(--pp);color:var(--pp);background:var(--pp-l)}
+  .addcard b{display:block;font-size:15px;font-weight:800;margin-bottom:4px}
+  .addcard span{font-size:12.5px;line-height:1.6}
+
+  /* ---------- 폼 ---------- */
+  .fg{margin-bottom:15px}
+  .fg label{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:5px}
+  .fg label .req{color:var(--rd)}
+  .fg .hint{font-size:11.5px;color:var(--mut2);margin-top:5px;line-height:1.6}
+  .in{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:var(--card);color:var(--ink)}
+  .in:focus{outline:2px solid var(--pp);outline-offset:-1px;border-color:transparent}
+  .in[readonly]{background:var(--line2);color:var(--mut)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:640px){ .two,.three{grid-template-columns:1fr} }
+  .pre{display:flex;align-items:stretch}
+  .pre .in{border-radius:9px 0 0 9px;border-right:0}
+  .pre .sfx{display:flex;align-items:center;padding:0 12px;background:var(--line2);
+    border:1px solid var(--line);border-left:0;border-radius:0 9px 9px 0;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--mut)}
+
+  .opts{display:grid;gap:9px}
+  .opt{display:grid;grid-template-columns:20px 1fr;gap:11px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:11px;cursor:pointer;background:var(--card)}
+  .opt:hover{border-color:var(--mut2)}
+  .opt.on{border-color:var(--pp);background:var(--pp-l);box-shadow:inset 0 0 0 1px var(--pp)}
+  .opt .rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-top:3px}
+  .opt.on .rd{border-color:var(--pp);border-width:5px}
+  .opt b{display:block;font-size:14px;font-weight:800;letter-spacing:-.3px}
+  .opt span{display:block;font-size:12.5px;color:var(--mut);line-height:1.65;margin-top:2px}
+
+  .sw{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .sw:last-child{border-bottom:0}
+  .sw .tx{flex:1;min-width:0}
+  .sw .tx b{display:block;font-size:13.5px;font-weight:700}
+  .sw .tx span{display:block;font-size:12px;color:var(--mut);line-height:1.6}
+  .tg{width:42px;height:24px;border-radius:999px;background:var(--line);border:0;position:relative;flex:none;
+    transition:background .15s}
+  .tg::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+  .tg.on{background:var(--gr)} .tg.on::after{left:21px}
+
+  /* ---------- 탭 ---------- */
+  .tabs{display:flex;gap:2px;padding:0 18px;background:var(--card);border-bottom:1px solid var(--line);
+    overflow-x:auto}
+  .tabs button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--mut);
+    padding:11px 13px;font-size:13px;font-weight:700;white-space:nowrap}
+  .tabs button.on{color:var(--pp);border-bottom-color:var(--pp)}
+
+  /* ---------- 표 ---------- */
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:middle}
+  th{background:var(--page);font-size:11px;font-weight:800;color:var(--mut);letter-spacing:.3px;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  td.k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mut)}
+  .gb{font-size:10.5px;font-weight:800;border-radius:5px;padding:2px 7px}
+  .gb.A{background:var(--bl-l);color:var(--bl)} .gb.B{background:var(--am-l);color:var(--am)}
+  .gb.C{background:var(--gr-l);color:var(--gr)} .gb.X{background:var(--rd-l);color:var(--rd)}
+
+  /* ---------- 알림 ---------- */
+  .cal{border-radius:11px;padding:12px 15px;font-size:13px;line-height:1.75;margin-bottom:14px}
+  .cal b{font-weight:800}
+  .cal.i{background:var(--bl-l);border:1px solid rgba(37,99,235,.24);color:var(--ink)}
+  .cal.w{background:var(--am-l);border:1px solid rgba(217,119,6,.28)}
+  .cal.e{background:var(--rd-l);border:1px solid rgba(220,38,38,.25)}
+  .cal.k{background:var(--gr-l);border:1px solid rgba(5,150,105,.26)}
+  .cal .lab{display:block;font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:3px;opacity:.85}
+
+  /* ---------- 마법사 ---------- */
+  .steps{display:flex;gap:0;margin-bottom:20px;overflow-x:auto}
+  .wst{flex:1;min-width:120px;padding:10px 12px;border-bottom:3px solid var(--line);font-size:12.5px;color:var(--mut2)}
+  .wst.on{border-bottom-color:var(--pp);color:var(--pp);font-weight:800}
+  .wst.dn{border-bottom-color:var(--gr);color:var(--gr);font-weight:700}
+  .wst em{display:block;font-style:normal;font-size:10.5px;opacity:.8;font-weight:400}
+
+  .chk{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .chk:last-child{border-bottom:0}
+  .chk i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+    font-size:11px;font-weight:800;flex:none;margin-top:1px}
+  .chk.ok i{background:var(--gr);color:#fff} .chk.no i{background:var(--line);color:var(--mut2)}
+  .chk .tx b{display:block;font-size:13.5px;font-weight:700}
+  .chk .tx span{display:block;font-size:12px;color:var(--mut);line-height:1.6}
+
+  .prev{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+  .prev .brow{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--line2);border-bottom:1px solid var(--line)}
+  .prev .brow i{width:9px;height:9px;border-radius:50%;background:#CBD5E1;display:block}
+  .prev .brow .u{flex:1;background:var(--card);border:1px solid var(--line);border-radius:6px;
+    padding:3px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mut)}
+  .prevbd{padding:16px 18px}
+  .pgnb{display:flex;align-items:center;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);
+    margin-bottom:14px;flex-wrap:wrap}
+  .pgnb .lg{font-size:14px;font-weight:900;letter-spacing:-.4px}
+  .pgnb a{font-size:12.5px;color:var(--mut);text-decoration:none}
+  .pgnb a.on{font-weight:800}
+  .pcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .pcard{border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+  .pcard b{display:block;font-size:13.5px;font-weight:800;margin-bottom:2px}
+  .pcard span{font-size:11.5px;color:var(--mut);line-height:1.55}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);
+    background:var(--nv);color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:10px;
+    opacity:0;pointer-events:none;transition:all .22s;z-index:60}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .foot{margin:26px 0 0;padding:16px 18px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;font-size:12px;color:var(--mut);line-height:1.8}
+  .foot b{color:var(--ink)}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rhd">
+      <div class="lg"><span class="d"></span>소개뱅크<span class="tag">ADMIN</span></div>
+      <p>관 관리 콘솔 — 각 관은 독립 사이트로 배포되고, 회원 · 소개코드 · 정산은 전체가 공유합니다.</p>
+    </div>
+    <div id="nav"></div>
+    <div class="railfoot">
+      <b>공유되는 것</b>
+      회원 계정 · 소개코드 귀속 · Deal · 정산 · 신뢰도 · 백오피스<br><br>
+      <b>관마다 다른 것</b>
+      도메인 · 브랜드 · 업종 · 요율 · 부담 주체 · 인증 게이트 · 정책 · SEO
+    </div>
+  </aside>
+
+  <div class="stage">
+    <div class="meta" id="meta"></div>
+    <div class="inner" id="view"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+  var won=function(n){return Number(n).toLocaleString("ko-KR")+"원";};
+  var tt; function toast(m){var e=$("#toast");e.textContent=m;e.classList.add("on");
+    clearTimeout(tt);tt=setTimeout(function(){e.classList.remove("on");},2000);}
+
+  /* ================= 데이터 ================= */
+  var RESTRICTED=[
+    {n:"법률 · 세무 · 노무", law:"변호사법 · 세무사법 · 공인노무사법"},
+    {n:"의료 · 병원 양도", law:"의료법 제27조 (환자 유인 · 알선 금지)"},
+    {n:"보험 모집", law:"보험업법 (모집 자격)"},
+    {n:"대부 · 금융 중개", law:"대부업법 · 자본시장법"},
+    {n:"직업 소개 · 인력 알선", law:"직업안정법 (유료직업소개 허가)"}
+  ];
+
+  var DEF={
+    screen:"list", tab:"basic", cur:"MNY", wstep:1,
+    wiz:{ rel:"", name:"", code:"", sub:"", color:"#7C3AED", payer:"choice",
+          rate:"", cap:"", gateBiz:false, gateBroker:false, cats:"" },
+    sites:[
+      { code:"MNY", name:"소개머니", sub:"money", color:"#2563EB", status:"STOP", order:1,
+        rel:"p2p", payer:"choice", rate:3, cap:300000, escrow:"all",
+        gateBiz:false, gateBroker:false, verify:"deal", sla:24, auto:7,
+        hero:"필요한 것도, 원하는 것도 — 소개로 해결",
+        seo:"{업종} 소개 · 소개머니 | 소개뱅크",
+        cats:[
+          ["중고 물품","used","A"],["생활 서비스","life","A"],["이사 · 청소","move","A"],
+          ["인테리어 시공","interior","A"],["과외 · 교육","edu","A"],["반려동물","pet","A"],
+          ["자동차","car","A"],["취미 · 레저","hobby","A"],["육아 · 유아","baby","A"],
+          ["디지털 · 전자","digital","A"],["스포츠 · 운동","sports","A"],["기타","etc","A"]
+        ] },
+      { code:"MAL", name:"소개몰", sub:"mall", color:"#059669", status:"LIVE", order:2,
+        rel:"p2b", payer:"biz", rate:5, cap:1000000, escrow:"groupB",
+        gateBiz:true, gateBroker:true, verify:"deal", sla:24, auto:7,
+        hero:"검증된 업체와 사업장을 소개로 만나세요",
+        seo:"{업종} 업체 소개 · 소개몰 | 소개뱅크",
+        cats:[
+          ["음식점 · 카페","fnb","A"],["뷰티 · 미용","beauty","A"],["헬스 · 필라테스","fitness","A"],
+          ["학원 · 교육","academy","A"],["자동차 정비","repair","A"],["인테리어 업체","interior","A"],
+          ["웨딩 · 이벤트","wedding","A"],["청소 · 방역","clean","A"],
+          ["업체 상품 · 서비스","goods","B"],
+          ["사업용 동산 (설비 · 기계)","equip","C"],["상용차","truck","C"],["사업용 부동산","estate","C"]
+        ] },
+      { code:"BIZ", name:"소개창업", sub:"biz", color:"#D97706", status:"LIVE", order:3,
+        rel:"b2b", payer:"seller", rate:1.5, cap:5000000, escrow:"none",
+        gateBiz:true, gateBroker:false, verify:"deal", sla:24, auto:14,
+        hero:"새로운 사업 기회를 발견하고, 함께 성장할 파트너를 만나세요",
+        seo:"{업종} 창업 · 양수도 | 소개뱅크",
+        cats:[
+          ["외식 · 식당","fnb","A"],["카페 · 베이커리","cafe","A"],["무인 · 자동화","unmanned","A"],
+          ["프랜차이즈 가맹","franchise","A"],["유통 · 판매","retail","A"],["서비스업","service","A"],
+          ["온라인 · 쇼핑몰","online","A"],["사업 양수도","transfer","A"]
+        ] }
+    ]
+  };
+
+  var REL={
+    p2p:{n:"개인 ↔ 개인", d:"양쪽 모두 개인. 수수료를 낼 사업자가 없으므로 부담 주체를 등록 시 고릅니다."},
+    p2b:{n:"개인 ↔ 사업자", d:"한쪽이 사업자입니다. 소개비는 업체가 부담하고 사업자 인증이 게이트가 됩니다."},
+    b2b:{n:"사업자 ↔ 예비사업자", d:"사업체나 권리가 이전됩니다. 소개비는 양도인 · 본사가 부담합니다."},
+    etc:{n:"기타 · 직접 정의", d:"위 셋에 해당하지 않는 새로운 연결 관계입니다."}
+  };
+  var PAYER={ choice:"등록 시 선택 (판매자 / 구매자)", biz:"업체 고정", seller:"양도인 · 본사 고정", buyer:"의뢰인 고정" };
+  var ESCROW={ all:"관 전체 적용", groupB:"B군(업체 상품)만 적용", none:"미적용 — 당사자 간 직접 결제" };
+  var STN={ LIVE:"운영중", PREP:"준비중", STOP:"중지" };
+  var STC={ LIVE:"live", PREP:"prep", STOP:"stop" };
+
+  var META={
+    list:{id:"SB-ADM-SIT-010", nt:"관은 코드가 아니라 데이터입니다. 여기서 만든 관이 그대로 하나의 사이트가 됩니다."},
+    "new":{id:"SB-ADM-SIT-020", nt:"연결 관계를 먼저 묻습니다. 관 이름은 그 다음입니다 — 순서를 바꾸면 요율도 게이트도 정할 수 없습니다."},
+    edit:{id:"SB-ADM-SIT-030", nt:"코드와 연결 관계는 생성 후 바꿀 수 없습니다. 나머지는 배포 없이 즉시 반영됩니다."},
+    launch:{id:"SB-ADM-SIT-040", nt:"준비중 → 운영중 전환 전 검증. 하나라도 미충족이면 오픈 버튼이 열리지 않습니다."},
+    portal:{id:"SB-ADM-SIT-050", nt:"통합 메인은 관이 아닙니다. 관으로 보내는 허브이며 관이 늘면 자동으로 카드가 늘어납니다."},
+    shared:{id:"SB-ADM-SIT-060", nt:"관을 나눠도 나누지 않는 것들입니다. 이 경계가 흔들리면 정산이 깨집니다."}
+  };
+
+  /* ================= 상태 ================= */
+  var KEY="sgb-sites-v1", S;
+  function load(){ try{ var r=localStorage.getItem(KEY); S=r?JSON.parse(r):null; }catch(e){S=null;}
+    if(!S||!S.sites) S=JSON.parse(JSON.stringify(DEF)); }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function site(c){ return S.sites.filter(function(x){return x.code===c;})[0]; }
+  function cur(){ return site(S.cur)||S.sites[0]; }
+
+  /* ================= 레일 ================= */
+  function drawNav(){
+    var h='<div class="grp">관</div>';
+    S.sites.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(x){
+      h+='<div class="nv'+(S.screen==="edit"&&S.cur===x.code?" on":"")+'" data-site="'+x.code+'">'+
+        '<span class="sw" style="background:'+x.color+'"></span>'+
+        '<span class="t">'+esc(x.name)+'</span><span class="c">'+esc(x.code)+'</span></div>';
+    });
+    h+='<div class="grp">콘솔</div>'+
+      nvi("list","관 목록 · 현황","SITE-010")+
+      nvi("new","새 관 만들기","SITE-020")+
+      nvi("launch","오픈 체크리스트","SITE-040")+
+      nvi("portal","통합 메인 · 허브","SITE-050")+
+      nvi("shared","공유 경계 · 영향 범위","SITE-060");
+    $("#nav").innerHTML=h;
+  }
+  function nvi(k,t,c){
+    return '<div class="nv'+(S.screen===k?" on":"")+'" data-go="'+k+'">'+
+      '<span class="t">'+esc(t)+'</span><span class="c">'+esc(c)+'</span></div>';
+  }
+
+  /* ================= 화면 · 관 목록 ================= */
+  function scList(){
+    var live=S.sites.filter(function(x){return x.status==="LIVE";}).length;
+    var cats=S.sites.reduce(function(a,x){return a+x.cats.length;},0);
+    var h='<h1 class="pg">관 목록 · 현황</h1>'+
+      '<p class="lead">관 '+S.sites.length+'개 · 운영중 '+live+'개 · 업종 합계 '+cats+'종. '+
+      '각 관은 독립 서브도메인으로 배포되고, 회원 · 소개코드 · 정산은 전체가 하나입니다.</p>';
+
+    h+='<div class="sites">';
+    S.sites.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(x){
+      h+='<article class="sc" data-open="'+x.code+'">'+
+        '<div class="bar" style="background:'+x.color+'"></div><div class="bd">'+
+        '<div class="r1"><h3>'+esc(x.name)+'</h3><span class="code">'+esc(x.code)+'</span>'+
+        '<span style="flex:1"></span><span class="st '+STC[x.status]+'">'+STN[x.status]+'</span></div>'+
+        '<div class="url">'+esc(x.sub)+'.sogaebaenk.co.kr</div>'+
+        '<div class="rel">'+esc(REL[x.rel].n)+' · 소개비 '+esc(PAYER[x.payer])+'</div>'+
+        '<div class="kv">'+
+          '<div><b>'+x.cats.length+'</b><span>업종</span></div>'+
+          '<div><b>'+x.rate+'%</b><span>요율</span></div>'+
+          '<div><b>'+(x.cap/10000)+'만</b><span>상한</span></div>'+
+        '</div></div></article>';
+    });
+    h+='<div class="addcard" data-go="new"><div><b>+ 새 관 만들기</b>'+
+      '<span>연결 관계를 정의하면 업종 · 요율 · 게이트가 따라옵니다</span></div></div>';
+    h+='</div>';
+
+    h+='<div class="cal w" style="margin-top:16px"><span class="lb">소개머니 중지</span>'+
+      '회원가입을 <b>사업자 전용</b>으로 정하면서 개인 회원이 존재하지 않게 되어, '+
+      '개인 ↔ 개인 관인 <b>소개머니를 잠정 중지</b>했습니다. 신규 등록과 신규 문의만 막히고 '+
+      '<b>진행 중인 거래와 정산은 그대로 완주</b>합니다(결정 E-01). 개인 가입이 열리면 되살립니다.</div>'+
+      '<div class="panel" style="margin-top:16px"><div class="phd"><h2>관별 설정 비교</h2>'+
+      '<span class="sp"></span><span class="hint">한 줄이라도 같은 값이면 관을 나눌 이유가 없습니다</span></div>'+
+      '<div class="pbd tw"><table><thead><tr><th>항목</th>'+
+      S.sites.map(function(x){return '<th>'+esc(x.name)+'</th>';}).join("")+
+      '</tr></thead><tbody>'+
+      cmp("연결 관계", function(x){return REL[x.rel].n;})+
+      cmp("서브도메인", function(x){return x.sub+".sogaebaenk.co.kr";})+
+      cmp("업종 수", function(x){return x.cats.length+"종";})+
+      cmp("소개비 요율", function(x){return x.rate+"%";})+
+      cmp("상한", function(x){return won(x.cap);})+
+      cmp("부담 주체", function(x){return PAYER[x.payer];})+
+      cmp("에스크로", function(x){return ESCROW[x.escrow];})+
+      cmp("사업자 인증", function(x){return x.gateBiz?"필수":"불필요";})+
+      cmp("중개사 인증", function(x){return x.gateBroker?"부동산 업종 필수":"해당 없음";})+
+      cmp("자동 성사 확정", function(x){return x.auto+"일";})+
+      '</tbody></table></div></div>';
+
+    h+=foot();
+    return h;
+  }
+  function cmp(k, f){
+    return '<tr><td class="k">'+esc(k)+'</td>'+
+      S.sites.map(function(x){return '<td>'+esc(f(x))+'</td>';}).join("")+'</tr>';
+  }
+
+  /* ================= 화면 · 새 관 만들기 ================= */
+  function scNew(){
+    var w=S.wiz, st=S.wstep;
+    var h='<h1 class="pg">새 관 만들기</h1>'+
+      '<p class="lead">관은 코드가 아니라 데이터입니다. 여기서 만든 관은 배포 없이 새 서브도메인으로 올라갑니다.</p>'+
+      '<div class="steps">'+
+        sp(1,"연결 관계","누구와 누구를 잇는가",st)+
+        sp(2,"기본 정보","이름 · 코드 · 도메인",st)+
+        sp(3,"업종","이 관에서 다룰 것",st)+
+        sp(4,"요율 · 게이트","돈과 자격",st)+
+        sp(5,"검토","준비중 상태로 생성",st)+
+      '</div><div class="panel"><div class="pbd">';
+
+    if(st===1){
+      h+='<div class="cal i"><span class="lab">먼저 이것부터</span>'+
+        '관 이름을 먼저 정하면 요율도 게이트도 정할 수 없습니다. <b>누구와 누구를 잇는가</b>가 정해져야 '+
+        '부담 주체와 인증 요건이 자동으로 따라옵니다.</div><div class="opts">';
+      ["p2p","p2b","b2b","etc"].forEach(function(k){
+        h+='<div class="opt'+(w.rel===k?" on":"")+'" data-wrel="'+k+'"><span class="rd"></span>'+
+          '<div><b>'+esc(REL[k].n)+'</b><span>'+esc(REL[k].d)+'</span></div></div>';
+      });
+      h+='</div>';
+    }
+
+    if(st===2){
+      h+='<div class="two">'+
+        fg("관 이름","wname",w.name,"예 — 소개장터. 이용자가 보는 이름입니다.",false)+
+        fg("관 코드","wcode",w.code,"영문 3자. 화면 ID와 API에 쓰이며 생성 후 변경 불가.",false)+
+      '</div>'+
+      '<div class="fg"><label>서브도메인 <span class="req">*</span></label><div class="pre">'+
+        '<input class="in" id="wsub" value="'+esc(w.sub)+'" placeholder="market">'+
+        '<span class="sfx">.sogaebaenk.co.kr</span></div>'+
+        '<div class="hint">쿠키 도메인이 하나로 묶여 로그인이 관을 넘어 유지됩니다. SEO 자산도 루트 도메인에 누적됩니다.</div></div>'+
+      '<div class="fg"><label>강조색</label>'+
+        '<input class="in" id="wcolor" type="color" value="'+esc(w.color)+'" style="height:42px;padding:4px">'+
+        '<div class="hint">GNB · 배지 · 주요 버튼에 쓰입니다. 브랜드 퍼플(#7C3AED)은 전 관 공통 CTA이므로 관 색으로 쓰지 않습니다.</div></div>';
+    }
+
+    if(st===3){
+      h+='<div class="cal w"><span class="lab">확정 후 변경 주의</span>'+
+        '업종 슬러그는 URL과 SEO 랜딩에 그대로 쓰입니다. 오픈 뒤 바꾸면 링크가 전부 깨집니다. '+
+        '초기에는 <b>줄이는 쪽</b>이 낫습니다 — 리스팅 0건인 카테고리는 빈 페이지만 늘립니다.</div>'+
+        '<div class="fg"><label>업종 목록 <span class="req">*</span></label>'+
+        '<textarea class="in" id="wcats" rows="8" placeholder="한 줄에 하나씩 · 이름, 슬러그">'+esc(w.cats)+'</textarea>'+
+        '<div class="hint">예 — <code>중고 물품, used</code> · 슬러그를 비우면 자동 생성합니다.</div></div>'+
+        '<div class="cal e"><span class="lab">등록 불가 업종</span>'+
+        RESTRICTED.map(function(r){return esc(r.n);}).join(" · ")+
+        ' — 개별 법에 걸려 어떤 관에도 만들 수 없습니다. 입력해도 저장 시 제외됩니다.</div>';
+    }
+
+    if(st===4){
+      h+='<div class="three">'+
+        fg("소개비 요율 (%)","wrate",w.rate,"거래액이 클수록 낮게. 동일 요율이면 소액 거래에 소개가 붙지 않습니다.",false)+
+        fg("상한 (원)","wcap",w.cap,"요율 계산값과 비교해 낮은 쪽을 적용합니다.",false)+
+      '</div>'+
+      '<div class="fg"><label>소개비 부담 주체</label><select class="in" id="wpayer">'+
+        Object.keys(PAYER).map(function(k){
+          return '<option value="'+k+'"'+(w.payer===k?" selected":"")+'>'+esc(PAYER[k])+'</option>';}).join("")+
+      '</select><div class="hint">개인 ↔ 개인 관은 수수료를 낼 사업자가 없으므로 등록 시 선택이 사실상 유일한 답입니다.</div></div>'+
+      '<div class="panel" style="box-shadow:none;margin:0"><div class="pbd">'+
+        swrow("사업자 인증 게이트","등록 전 국세청 사업자등록 상태조회를 통과해야 합니다","wgb",w.gateBiz)+
+        swrow("중개사 인증 게이트","부동산 업종이 있으면 제휴 공인중개사만 등록할 수 있습니다","wgk",w.gateBroker)+
+      '</div></div>';
+    }
+
+    if(st===5){
+      var cl=parseCats(w.cats);
+      h+='<div class="cal k"><span class="lab">생성 후</span>'+
+        '<b>준비중</b> 상태로 만들어집니다. 서브도메인은 잡히지만 외부에는 열리지 않고, '+
+        '오픈 체크리스트를 전부 통과해야 운영중으로 전환됩니다.</div>'+
+        '<div class="tw"><table><tbody>'+
+        rw("연결 관계", w.rel?REL[w.rel].n:"—")+
+        rw("관 이름", w.name||"—")+
+        rw("관 코드", w.code||"—")+
+        rw("주소", (w.sub||"—")+".sogaebaenk.co.kr")+
+        rw("업종", cl.length?cl.length+"종 · "+cl.slice(0,4).map(function(c){return c[0];}).join(" · ")+(cl.length>4?" 외":""):"—")+
+        rw("요율 · 상한", (w.rate||"—")+"% · "+(w.cap?won(Number(w.cap)):"—"))+
+        rw("부담 주체", PAYER[w.payer])+
+        rw("인증 게이트", [w.gateBiz?"사업자":"",w.gateBroker?"중개사":""].filter(Boolean).join(" · ")||"없음")+
+        '</tbody></table></div>';
+    }
+
+    h+='<div style="display:flex;gap:8px;margin-top:18px">'+
+      (st>1?'<button class="btn" data-wstep="'+(st-1)+'">◀ 이전</button>':'')+
+      '<span style="flex:1"></span>'+
+      (st<5?'<button class="btn pri" data-wnext="1"'+(wOk(st)?"":" disabled")+'>다음 ▶</button>'
+           :'<button class="btn act" data-wcreate="1">관 생성</button>')+
+      '</div></div></div>'+foot();
+    return h;
+  }
+  function sp(n,t,d,cu){
+    return '<div class="wst'+(n===cu?" on":(n<cu?" dn":""))+'">'+(n<cu?"✓ ":"")+esc(t)+'<em>'+esc(d)+'</em></div>';
+  }
+  function fg(lab,id,val,hint,ro){
+    return '<div class="fg"><label>'+esc(lab)+' <span class="req">*</span></label>'+
+      '<input class="in" id="'+id+'" value="'+esc(val==null?"":val)+'"'+(ro?" readonly":"")+'>'+
+      '<div class="hint">'+hint+'</div></div>';
+  }
+  function swrow(t,d,id,on){
+    return '<div class="sw"><div class="tx"><b>'+esc(t)+'</b><span>'+esc(d)+'</span></div>'+
+      '<button class="tg'+(on?" on":"")+'" id="'+id+'" aria-pressed="'+(!!on)+'"></button></div>';
+  }
+  function rw(k,v){ return '<tr><td class="k" style="width:150px">'+esc(k)+'</td><td>'+esc(v)+'</td></tr>'; }
+  function wOk(st){
+    var w=S.wiz;
+    if(st===1) return !!w.rel;
+    if(st===2) return w.name.trim() && /^[A-Za-z]{2,4}$/.test(w.code.trim()) && /^[a-z0-9-]{2,20}$/.test(w.sub.trim());
+    if(st===3) return parseCats(w.cats).length>0;
+    if(st===4) return Number(w.rate)>0 && Number(w.cap)>0;
+    return true;
+  }
+  function parseCats(txt){
+    return String(txt||"").split("\n").map(function(l){return l.trim();}).filter(Boolean)
+      .map(function(l){
+        var p=l.split(",").map(function(x){return x.trim();});
+        var name=p[0], slug=p[1]||name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"cat";
+        return [name, slug, "A"];
+      })
+      .filter(function(c){
+        return !RESTRICTED.some(function(r){ return r.n.split(" · ").some(function(w){ return c[0].indexOf(w)>=0; }); });
+      });
+  }
+
+  /* ================= 화면 · 관 설정 ================= */
+  function scEdit(){
+    var x=cur(), t=S.tab;
+    var h='<h1 class="pg">'+esc(x.name)+' 설정</h1>'+
+      '<p class="lead"><span class="mono">'+esc(x.sub)+'.sogaebaenk.co.kr</span> · '+esc(REL[x.rel].n)+
+      ' · <span class="st '+STC[x.status]+'">'+STN[x.status]+'</span></p>'+
+      '<div class="panel"><div class="tabs">'+
+      [["basic","기본"],["brand","브랜드"],["cats","업종"],["fee","요율 · 부담"],
+       ["gate","인증 게이트"],["policy","정책"],["seo","SEO"],["status","공개 상태"]]
+      .map(function(k){ return '<button data-tab="'+k[0]+'"'+(t===k[0]?' class="on"':'')+'>'+esc(k[1])+'</button>'; }).join("")+
+      '</div><div class="pbd">';
+
+    if(t==="basic"){
+      h+='<div class="two">'+
+        '<div class="fg"><label>관 이름</label><input class="in" id="eName" value="'+esc(x.name)+'">'+
+        '<div class="hint">이용자에게 보이는 이름. 언제든 바꿀 수 있습니다.</div></div>'+
+        '<div class="fg"><label>관 코드</label><input class="in" value="'+esc(x.code)+'" readonly>'+
+        '<div class="hint">화면 ID · API · 정산 기록에 박혀 있어 변경할 수 없습니다.</div></div></div>'+
+        '<div class="fg"><label>서브도메인</label><div class="pre">'+
+        '<input class="in" id="eSub" value="'+esc(x.sub)+'"><span class="sfx">.sogaebaenk.co.kr</span></div>'+
+        '<div class="hint">변경하면 기존 주소는 301로 넘겨야 합니다 — 운영중인 관은 SEO 손실을 감수해야 합니다.</div></div>'+
+        '<div class="fg"><label>연결 관계</label><input class="in" value="'+esc(REL[x.rel].n)+'" readonly>'+
+        '<div class="hint">'+esc(REL[x.rel].d)+' 생성 후 변경 불가 — 바꾸려면 새 관을 만드는 것이 맞습니다.</div></div>'+
+        '<div class="fg"><label>통합 메인 노출 순서</label>'+
+        '<input class="in" id="eOrder" type="number" min="1" max="9" value="'+x.order+'" style="max-width:120px">'+
+        '<div class="hint">허브 화면의 관 카드 순서입니다.</div></div>';
+    }
+
+    if(t==="brand"){
+      h+='<div class="fg"><label>강조색</label>'+
+        '<input class="in" id="eColor" type="color" value="'+esc(x.color)+'" style="height:42px;padding:4px;max-width:140px">'+
+        '<div class="hint">GNB 활성 표시 · 배지 · 관 전용 버튼. 전 관 공통 CTA(브랜드 퍼플)와 액션 오렌지는 건드리지 않습니다.</div></div>'+
+        '<div class="fg"><label>메인 히어로 문구</label>'+
+        '<textarea class="in" id="eHero" rows="2">'+esc(x.hero)+'</textarea>'+
+        '<div class="hint">관 진입 시 첫 화면에 뜹니다.</div></div>'+
+        '<div class="cal i"><span class="lab">미리보기</span>아래는 실제 관 GNB가 이 설정으로 어떻게 보이는지입니다.</div>'+
+        preview(x);
+    }
+
+    if(t==="cats"){
+      var gcount={A:0,B:0,C:0};
+      x.cats.forEach(function(c){ gcount[c[2]]=(gcount[c[2]]||0)+1; });
+      h+='<div class="cal w"><span class="lab">영향 범위</span>'+
+        '업종을 추가하면 <b>목록 필터 · SEO 랜딩 · 등록폼 선택지 · 카테고리 API 응답</b>이 함께 늘어납니다. '+
+        '삭제하면 해당 슬러그의 기존 링크가 404가 됩니다 — 리스팅이 있으면 삭제 대신 숨김을 씁니다.</div>'+
+        '<div class="tw"><table><thead><tr><th style="width:44px">#</th><th>업종명</th><th>슬러그</th>'+
+        '<th style="width:80px">군</th><th style="width:110px">URL</th><th style="width:70px"></th></tr></thead><tbody>'+
+        x.cats.map(function(c,i){
+          return '<tr><td class="k">'+(i+1)+'</td><td><b>'+esc(c[0])+'</b></td>'+
+            '<td class="k">'+esc(c[1])+'</td><td><span class="gb '+c[2]+'">'+c[2]+'군</span></td>'+
+            '<td class="k">/'+esc(c[1])+'</td>'+
+            '<td><button class="btn sm dgr" data-delcat="'+i+'">삭제</button></td></tr>';
+        }).join("")+'</tbody></table></div>'+
+        '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+
+        '<input class="in" id="eNewCat" placeholder="업종명, 슬러그" style="max-width:320px">'+
+        '<button class="btn pri" data-addcat="1">업종 추가</button></div>'+
+        '<div class="cal e" style="margin-top:16px"><span class="lab">전 관 공통 차단</span>'+
+        RESTRICTED.map(function(r){return '<b>'+esc(r.n)+'</b> — '+esc(r.law);}).join("<br>")+
+        '<br><br>세 겹으로 막습니다 — 카테고리 API 응답에서 제외 · 등록 API 422 거부 · 검수 단계 키워드 탐지.</div>';
+    }
+
+    if(t==="fee"){
+      var sample=85000000;
+      var fee=Math.min(Math.round(sample*x.rate/100), x.cap);
+      h+='<div class="three">'+
+        '<div class="fg"><label>소개비 요율 (%)</label><input class="in" id="eRate" value="'+x.rate+'"></div>'+
+        '<div class="fg"><label>상한 (원)</label><input class="in" id="eCap" value="'+x.cap+'"></div>'+
+        '<div class="fg"><label>부담 주체</label><select class="in" id="ePayer">'+
+        Object.keys(PAYER).map(function(k){
+          return '<option value="'+k+'"'+(x.payer===k?" selected":"")+'>'+esc(PAYER[k])+'</option>';}).join("")+
+        '</select></div></div>'+
+        '<div class="fg"><label>에스크로 적용 범위</label><select class="in" id="eEsc">'+
+        Object.keys(ESCROW).map(function(k){
+          return '<option value="'+k+'"'+(x.escrow===k?" selected":"")+'>'+esc(ESCROW[k])+'</option>';}).join("")+
+        '</select><div class="hint">직접 예치하지 않고 PG 에스크로에 위탁합니다. 금액이 큰 양수도 대금은 보관하지 않습니다.</div></div>'+
+        '<div class="cal k"><span class="lab">계산 확인 — 거래금액 '+won(sample)+'</span>'+
+        '요율 계산 '+won(Math.round(sample*x.rate/100))+' · 상한 '+won(x.cap)+' → <b>적용 소개비 '+won(fee)+'</b><br>'+
+        '원천징수 3.3% '+won(Math.round(fee*0.033))+' 차감 → 실지급 <b>'+won(fee-Math.round(fee*0.033))+'</b></div>';
+    }
+
+    if(t==="gate"){
+      h+='<div class="cal i"><span class="lab">게이트는 관 단위</span>'+
+        '연결 관계가 <b>'+esc(REL[x.rel].n)+'</b>이므로 아래 조합이 기본값입니다. '+
+        '게이트를 끄면 등록은 쉬워지지만 그 관의 신뢰 근거가 사라집니다.</div>'+
+        swrow("사업자 인증 필수","등록 전 국세청 사업자등록 상태조회 통과 + 서류 육안 확인","eGB",x.gateBiz)+
+        swrow("중개사 인증 필수","사업용 부동산 업종은 제휴 공인중개사만 등록. 리스팅에 등록번호 표기","eGK",x.gateBroker)+
+        '<div class="fg" style="margin-top:16px"><label>본인확인 강제 시점</label><select class="in" id="eVerify">'+
+        [["join","회원가입 즉시"],["deal","등록 · 1:1 문의 시작 시"],["settle","정산 신청 시에만"]]
+        .map(function(k){ return '<option value="'+k[0]+'"'+(x.verify===k[0]?" selected":"")+'>'+esc(k[1])+'</option>'; }).join("")+
+        '</select><div class="hint">가입 즉시 걸면 초기 유입이 줄고, 정산 시점에만 걸면 그때 이탈합니다.</div></div>'+
+        (x.gateBroker?'<div class="cal w" style="margin-top:14px"><span class="lab">법적 구조</span>'+
+          '사업용 부동산은 소개비가 아니라 <b>노출료</b>로 수익을 받습니다. 중개 등록 없이 중개보수를 받으면 형사처벌 대상입니다.</div>':'');
+    }
+
+    if(t==="policy"){
+      h+='<div class="two">'+
+        '<div class="fg"><label>검수 SLA (시간)</label><input class="in" id="eSla" value="'+x.sla+'">'+
+        '<div class="hint">승인 전에는 검색 · 직접 URL 어느 경로로도 노출되지 않습니다.</div></div>'+
+        '<div class="fg"><label>성사 자동 확정 (일)</label><input class="in" id="eAuto" value="'+x.auto+'">'+
+        '<div class="hint">한쪽만 확인한 뒤 이 기간이 지나면 자동 확정됩니다. 없으면 상대가 버티는 것만으로 정산이 영구 차단됩니다.</div></div></div>'+
+        '<div class="cal i"><span class="lab">관마다 다를 수 있는 이유</span>'+
+        '소개창업은 실사 기간이 길어 자동 확정을 길게 잡습니다. 소개머니는 거래가 빨라 짧게 잡습니다. '+
+        '같은 값이어야 할 이유가 없다면 관 설정으로 두는 것이 맞습니다.</div>';
+    }
+
+    if(t==="seo"){
+      h+='<div class="fg"><label>타이틀 템플릿</label><input class="in" id="eSeo" value="'+esc(x.seo)+'">'+
+        '<div class="hint"><code>{업종}</code> 자리에 업종명이 들어갑니다.</div></div>'+
+        '<div class="cal i"><span class="lab">생성되는 랜딩</span>'+
+        '이 관에서 <b>'+x.cats.length+'개</b>의 SEO 랜딩이 만들어집니다.</div>'+
+        '<div class="tw"><table><thead><tr><th>URL</th><th>타이틀</th></tr></thead><tbody>'+
+        x.cats.slice(0,5).map(function(c){
+          return '<tr><td class="k">'+esc(x.sub)+'.sogaebaenk.co.kr/'+esc(c[1])+'</td>'+
+                 '<td>'+esc(x.seo.replace("{업종}", c[0]))+'</td></tr>';
+        }).join("")+
+        (x.cats.length>5?'<tr><td class="k">…</td><td>외 '+(x.cats.length-5)+'개</td></tr>':'')+
+        '</tbody></table></div>';
+    }
+
+    if(t==="status"){
+      h+='<div class="cal '+(x.status==="LIVE"?"k":(x.status==="PREP"?"w":"e"))+'">'+
+        '<span class="lab">현재 상태</span><b>'+STN[x.status]+'</b> — '+
+        (x.status==="LIVE"?"외부에 열려 있고 검색에 노출됩니다.":
+         x.status==="PREP"?"서브도메인은 잡혀 있지만 외부에는 열리지 않습니다. 관리자만 미리보기가 가능합니다.":
+         "접속 시 통합 메인으로 리다이렉트됩니다. 기존 리스팅은 보존되고 신규 등록만 막힙니다.")+
+        '</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        ['LIVE','PREP','STOP'].map(function(k){
+          return '<button class="btn'+(x.status===k?" pri":"")+'" data-status="'+k+'">'+esc(STN[k])+'</button>';
+        }).join("")+
+        '</div>'+
+        '<div class="cal w" style="margin-top:16px"><span class="lab">중지할 때 일어나는 일</span>'+
+        '신규 등록 차단 · 신규 1:1 문의 차단 · 통합 메인 카드 숨김. '+
+        '<b>진행 중인 Deal과 정산은 그대로 살아 있습니다</b> — 관을 닫는 것과 돈을 끊는 것은 다릅니다.</div>';
+    }
+
+    h+='</div></div>';
+    if(t!=="status"&&t!=="cats") h+='<div style="display:flex;gap:8px;margin-bottom:16px">'+
+      '<button class="btn pri" data-savesite="1">변경 저장</button>'+
+      '<button class="btn gho" data-go="list">목록으로</button></div>';
+    h+=foot();
+    return h;
+  }
+
+  function preview(x){
+    return '<div class="prev"><div class="brow"><i></i><i></i><i></i>'+
+      '<span class="u">'+esc(x.sub)+'.sogaebaenk.co.kr</span></div><div class="prevbd">'+
+      '<div class="pgnb"><span class="lg" style="color:'+x.color+'">'+esc(x.name)+'</span>'+
+      x.cats.slice(0,4).map(function(c,i){
+        return '<a href="#" class="'+(i===0?"on":"")+'" style="'+(i===0?"color:"+x.color:"")+'">'+esc(c[0])+'</a>';
+      }).join("")+
+      '<span style="flex:1"></span>'+
+      '<a href="#" style="font-weight:700;color:var(--pp)">소개 등록</a></div>'+
+      '<div style="font-size:18px;font-weight:900;letter-spacing:-.6px;margin-bottom:12px">'+esc(x.hero)+'</div>'+
+      '<div class="pcards">'+x.cats.slice(0,4).map(function(c){
+        return '<div class="pcard"><b>'+esc(c[0])+'</b><span>소개비 '+x.rate+'% · 상한 '+(x.cap/10000)+'만</span></div>';
+      }).join("")+'</div></div></div>';
+  }
+
+  /* ================= 화면 · 오픈 체크리스트 ================= */
+  function scLaunch(){
+    var h='<h1 class="pg">오픈 체크리스트</h1>'+
+      '<p class="lead">준비중 관을 운영중으로 전환하기 전 검증합니다. 하나라도 미충족이면 오픈 버튼이 열리지 않습니다.</p>';
+    S.sites.forEach(function(x){
+      var c=[
+        ["업종 1종 이상 등록", x.cats.length>0, x.cats.length+"종"],
+        ["요율 · 상한 설정", x.rate>0 && x.cap>0, x.rate+"% · "+won(x.cap)],
+        ["부담 주체 확정", !!x.payer, PAYER[x.payer]],
+        ["인증 게이트 결정", true, [x.gateBiz?"사업자":"",x.gateBroker?"중개사":""].filter(Boolean).join(" · ")||"게이트 없음"],
+        ["서브도메인 DNS 연결", !!x.sub, x.sub+".sogaebaenk.co.kr"],
+        ["푸터 법적고지 값 입력", false, "TBD — 사업자번호 · 통신판매업 신고번호 미입력"],
+        ["히어로 · SEO 문구", !!(x.hero&&x.seo), x.hero?"설정됨":"미설정"],
+        ["검수 담당자 배정", x.status==="LIVE", x.status==="LIVE"?"배정됨":"미배정"]
+      ];
+      var ok=c.filter(function(y){return y[1];}).length;
+      h+='<div class="panel"><div class="phd">'+
+        '<span class="sw" style="width:10px;height:10px;border-radius:3px;background:'+x.color+'"></span>'+
+        '<h2>'+esc(x.name)+'</h2><span class="st '+STC[x.status]+'">'+STN[x.status]+'</span>'+
+        '<span class="sp"></span><span class="hint">'+ok+' / '+c.length+' 충족</span></div><div class="pbd">'+
+        c.map(function(y){
+          return '<div class="chk '+(y[1]?"ok":"no")+'"><i>'+(y[1]?"✓":"·")+'</i>'+
+            '<div class="tx"><b>'+esc(y[0])+'</b><span>'+esc(y[2])+'</span></div></div>';
+        }).join("")+
+        '<div style="margin-top:14px">'+
+        (ok===c.length
+          ? '<button class="btn act" data-open-site="'+x.code+'">운영중으로 전환</button>'
+          : '<button class="btn" disabled>미충족 '+(c.length-ok)+'건 — 전환 불가</button>')+
+        '</div></div></div>';
+    });
+    h+='<div class="cal e"><span class="lab">전 관 공통 미충족</span>'+
+      '푸터 법적고지 값이 비어 있어 <b>어떤 관도 오픈할 수 없습니다</b>. '+
+      '사업자등록번호 · 통신판매업 신고번호 · 직업정보제공사업 신고번호는 관 설정이 아니라 사업자 정보이므로 한 번만 넣으면 전 관에 적용됩니다.</div>';
+    return h+foot();
+  }
+
+  /* ================= 화면 · 통합 메인 ================= */
+  function scPortal(){
+    var live=S.sites.filter(function(x){return x.status==="LIVE";}).sort(function(a,b){return a.order-b.order;});
+    return '<h1 class="pg">통합 메인 · 허브</h1>'+
+      '<p class="lead">sogaebaenk.co.kr은 관이 아닙니다. 관으로 보내는 허브이며, 관이 늘면 카드가 자동으로 늘어납니다. '+
+      '리스팅을 직접 갖지 않으므로 관을 닫아도 허브는 무너지지 않습니다.</p>'+
+      '<div class="panel"><div class="phd"><h2>허브 미리보기</h2><span class="sp"></span>'+
+      '<span class="hint">운영중 '+live.length+'개 관만 노출됩니다</span></div><div class="pbd">'+
+      '<div class="prev"><div class="brow"><i></i><i></i><i></i><span class="u">sogaebaenk.co.kr</span></div>'+
+      '<div class="prevbd"><div class="pgnb"><span class="lg">소개뱅크</span>'+
+      live.map(function(x){ return '<a href="#" style="color:'+x.color+';font-weight:700">'+esc(x.name)+'</a>'; }).join("")+
+      '<a href="#">이용안내</a><a href="#">고객센터</a></div>'+
+      '<div style="font-size:19px;font-weight:900;letter-spacing:-.7px;margin-bottom:14px">'+
+      '소개가 가치가 되고, 가치가 수익이 되는 플랫폼</div>'+
+      '<div class="pcards">'+live.map(function(x){
+        return '<div class="pcard" style="border-top:3px solid '+x.color+'"><b>'+esc(x.name)+'</b>'+
+          '<span>'+esc(REL[x.rel].n)+'<br>'+x.cats.length+'종 · 소개비 '+x.rate+'%</span></div>';
+      }).join("")+'</div></div></div></div></div>'+
+      '<div class="panel"><div class="phd"><h2>허브가 하는 일 · 하지 않는 일</h2></div><div class="pbd tw">'+
+      '<table><thead><tr><th style="width:130px">구분</th><th>내용</th></tr></thead><tbody>'+
+      '<tr><td class="k">한다</td><td>관 카드 노출 · 통합 검색(전 관 대상) · 로그인 · 회원가입 · 이용안내 · 고객센터 · 제휴 배너</td></tr>'+
+      '<tr><td class="k">하지 않는다</td><td>리스팅 목록 · 리스팅 상세 · 등록폼 — 전부 관 사이트로 넘깁니다</td></tr>'+
+      '<tr><td class="k">이유</td><td>허브가 리스팅을 가지면 관과 중복 위계가 생기고, 어느 URL이 정본인지 검색엔진이 판단하지 못합니다</td></tr>'+
+      '</tbody></table></div></div>'+
+      '<div class="cal i"><span class="lab">통합 검색의 처리</span>'+
+      '허브에서 검색하면 결과는 전 관을 가로지르지만, 결과 클릭 시 <b>해당 관 사이트로 이동</b>합니다. '+
+      '검색 결과 페이지는 <code>noindex</code>로 두어 관 랜딩과 경쟁시키지 않습니다.</div>'+foot();
+  }
+
+  /* ================= 화면 · 공유 경계 ================= */
+  function scShared(){
+    var rows=[
+      ["회원 계정","공유","한 번 가입하면 전 관을 이용합니다. 쿠키 도메인이 <code>.sogaebaenk.co.kr</code>로 묶여 SSO가 자동으로 성립합니다."],
+      ["본인확인 · 사업자 인증","공유","한 관에서 통과한 인증은 다른 관에서도 유효합니다. 단 <b>게이트 요구는 관마다 다릅니다</b>."],
+      ["소개코드 · 귀속","공유","코드는 회원에게 붙지 관에 붙지 않습니다. 소개머니에서 유입된 사람이 소개창업에서 성사돼도 같은 소개자에게 귀속됩니다."],
+      ["Deal · 계약 · 성사","공유","거래 엔티티는 하나입니다. 관은 Deal의 속성일 뿐입니다."],
+      ["정산 · 지급","공유","관을 넘나든 소개비가 한 번에 지급됩니다. 원천징수도 소개자 단위로 합산합니다."],
+      ["신뢰도 · 실적","공유","성사율 · 누적수익 · 후기가 관을 넘어 누적됩니다. 새 관을 열어도 소개자가 처음부터 시작하지 않습니다."],
+      ["백오피스","공유","검수 · 인증 · 거래 · 정산 · 분쟁은 하나의 콘솔에서 처리합니다. 관 필터만 붙습니다."],
+      ["도메인 · 브랜드","관별","서브도메인 · 강조색 · 히어로 · 배너."],
+      ["업종 · 슬러그","관별","업종은 관 안에서만 존재합니다. 같은 이름이라도 다른 관이면 다른 카테고리입니다."],
+      ["요율 · 상한 · 부담 주체","관별","연결 관계가 다르면 돈을 내는 사람이 다릅니다."],
+      ["인증 게이트","관별","소개몰은 사업자 인증, 부동산은 중개사 인증. 소개머니는 게이트가 없습니다."],
+      ["검수 SLA · 자동 확정","관별","거래 속도가 다르므로 기간도 다릅니다."],
+      ["SEO · 랜딩","관별","관마다 독립 랜딩이 생성됩니다."]
+    ];
+    return '<h1 class="pg">공유 경계 · 영향 범위</h1>'+
+      '<p class="lead">관을 나눠도 나누지 않는 것들입니다. 이 경계가 흔들리면 정산이 깨집니다.</p>'+
+      '<div class="cal k"><span class="lab">이번 결정</span>'+
+      '<b>회원 · 소개코드 · 정산 전부 통합</b> · <b>서브도메인 분리</b> · <b>관 무제한 추가</b>. '+
+      '소개자가 관을 옮겨도 실적이 이어지므로 새 관을 열 때 소개자를 처음부터 모을 필요가 없습니다 — '+
+      '관을 늘리는 전략과 가장 잘 맞는 조합입니다.</div>'+
+      '<div class="panel"><div class="pbd tw"><table><thead><tr>'+
+      '<th style="width:180px">항목</th><th style="width:80px">범위</th><th>내용</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        return '<tr><td><b>'+esc(r[0])+'</b></td>'+
+          '<td><span class="gb '+(r[1]==="공유"?"A":"C")+'">'+esc(r[1])+'</span></td>'+
+          '<td>'+r[2]+'</td></tr>';
+      }).join("")+'</tbody></table></div></div>'+
+      '<div class="cal w"><span class="lab">통합의 대가</span>'+
+      '요율이 관마다 다른데 정산은 하나로 합쳐지므로, <b>정산 명세는 반드시 관별로 쪼개서 보여줘야 합니다</b>. '+
+      '“이번 주 소개비 132만원”만 있으면 소개자는 어느 관에서 얼마가 나왔는지 알 수 없고, 이것이 문의 1순위가 됩니다.</div>'+
+      '<div class="cal e"><span class="lab">새로 생긴 결정 항목</span>'+
+      '<b>E-01</b> 관을 닫을 때 진행 중 Deal을 어떻게 할 것인가 (권장 — 신규만 차단, 기존은 완주)<br>'+
+      '<b>E-02</b> 관 간 소개코드 귀속을 그대로 인정할 것인가 (권장 — 인정. 회원 단위 귀속)<br>'+
+      '<b>E-03</b> 관을 몇 개까지 늘릴 것인가 · 늘리는 기준은 무엇인가 (권장 — 연결 관계가 다를 때만)<br>'+
+      '<b>E-04</b> 관별 손익을 분리 집계할 것인가 (권장 — 집계는 분리, 지급은 통합)<br>'+
+      '<b>E-05</b> 관 신설 권한을 누구에게 줄 것인가 (권장 — 최고관리자 단독 + 2인 승인)'+
+      '</div>'+foot();
+  }
+
+  function foot(){
+    return '<div class="foot"><b>소개뱅크 관 관리 콘솔</b> · admin.sogaebaenk.co.kr — IP 화이트리스트 적용 영역<br>'+
+      '관 = 하나의 사이트. 서브도메인 분리 · 회원/소개코드/정산 통합 · 관 무제한 추가 구조입니다. '+
+      '법적고지 및 약관 본문은 <b>확정 후 추가</b>됩니다.</div>';
+  }
+
+  /* ================= 렌더 ================= */
+  var R={ list:scList, "new":scNew, edit:scEdit, launch:scLaunch, portal:scPortal, shared:scShared };
+  function render(){
+    var k=S.screen; if(!R[k]) k=S.screen="list";
+    var m=META[k]||META.list;
+    $("#meta").innerHTML='<span class="chip">관 관리</span>'+
+      '<span class="sid">'+esc(m.id)+'</span><span class="nt">'+esc(m.nt)+'</span>';
+    $("#view").innerHTML=R[k]();
+    drawNav(); save();
+  }
+  function go(k){ S.screen=k; render(); window.scrollTo({top:0,behavior:"instant"}); }
+
+  /* ================= 이벤트 ================= */
+  document.addEventListener("click", function(e){
+    var el;
+    if((el=e.target.closest("[data-go]"))){ go(el.getAttribute("data-go")); return; }
+    if((el=e.target.closest("[data-site]"))){ S.cur=el.getAttribute("data-site"); S.tab="basic"; go("edit"); return; }
+    if((el=e.target.closest("[data-open]"))){ S.cur=el.getAttribute("data-open"); S.tab="basic"; go("edit"); return; }
+    if((el=e.target.closest("[data-tab]"))){ S.tab=el.getAttribute("data-tab"); render(); return; }
+
+    if((el=e.target.closest("[data-wrel]"))){ S.wiz.rel=el.getAttribute("data-wrel"); render(); return; }
+    if((el=e.target.closest("[data-wstep]"))){ grabWiz(); S.wstep=Number(el.getAttribute("data-wstep")); render(); return; }
+    if(e.target.closest("[data-wnext]")){ grabWiz(); if(wOk(S.wstep)){ S.wstep++; render(); } return; }
+    if(e.target.closest("[data-wcreate]")){ createSite(); return; }
+
+    if((el=e.target.closest("[data-status]"))){
+      cur().status=el.getAttribute("data-status"); render();
+      toast(cur().name+" → "+STN[cur().status]); return;
+    }
+    if((el=e.target.closest("[data-open-site]"))){
+      site(el.getAttribute("data-open-site")).status="LIVE"; render(); toast("운영중으로 전환했습니다"); return;
+    }
+    if((el=e.target.closest("[data-delcat]"))){
+      var i=Number(el.getAttribute("data-delcat"));
+      var nm=cur().cats[i][0];
+      cur().cats.splice(i,1); render(); toast(nm+" 삭제 — /"+"슬러그 링크가 404가 됩니다"); return;
+    }
+    if(e.target.closest("[data-addcat]")){
+      var v=$("#eNewCat").value.trim(); if(!v){ toast("업종명을 입력하세요"); return; }
+      var c=parseCats(v)[0];
+      if(!c){ toast("등록할 수 없는 업종입니다 — 제한업종"); return; }
+      cur().cats.push(c); render(); toast(c[0]+" 추가 — 랜딩 1개가 생성됩니다"); return;
+    }
+    if(e.target.closest("[data-savesite]")){ saveSite(); return; }
+
+    var tg=e.target.closest(".tg");
+    if(tg){ tg.classList.toggle("on"); tg.setAttribute("aria-pressed", tg.classList.contains("on")); return; }
+  });
+
+  document.addEventListener("input", function(e){
+    if(S.screen!=="new") return;
+    if(!e.target.classList || !e.target.classList.contains("in")) return;
+    grabWiz();
+    var b=document.querySelector("[data-wnext]");
+    if(b) b.disabled=!wOk(S.wstep);
+  });
+
+  function grabWiz(){
+    var w=S.wiz;
+    var g=function(id){ var e=$("#"+id); return e?e.value:null; };
+    if(g("wname")!=null) w.name=g("wname");
+    if(g("wcode")!=null) w.code=g("wcode").toUpperCase();
+    if(g("wsub")!=null) w.sub=g("wsub").toLowerCase();
+    if(g("wcolor")!=null) w.color=g("wcolor");
+    if(g("wcats")!=null) w.cats=g("wcats");
+    if(g("wrate")!=null) w.rate=g("wrate");
+    if(g("wcap")!=null) w.cap=g("wcap");
+    if(g("wpayer")!=null) w.payer=g("wpayer");
+    if($("#wgb")) w.gateBiz=$("#wgb").classList.contains("on");
+    if($("#wgk")) w.gateBroker=$("#wgk").classList.contains("on");
+  }
+  function createSite(){
+    grabWiz();
+    var w=S.wiz;
+    if(site(w.code)){ toast("이미 있는 관 코드입니다"); return; }
+    S.sites.push({
+      code:w.code, name:w.name, sub:w.sub, color:w.color, status:"PREP",
+      order:S.sites.length+1, rel:w.rel, payer:w.payer,
+      rate:Number(w.rate), cap:Number(w.cap), escrow:"none",
+      gateBiz:!!w.gateBiz, gateBroker:!!w.gateBroker, verify:"deal", sla:24, auto:7,
+      hero:w.name+"에서 새로운 소개를 만나보세요",
+      seo:"{업종} · "+w.name+" | 소개뱅크",
+      cats:parseCats(w.cats)
+    });
+    S.wiz=JSON.parse(JSON.stringify(DEF.wiz)); S.wstep=1;
+    S.cur=w.code; S.tab="basic"; go("list");
+    toast(w.name+" 생성 — 준비중 상태입니다");
+  }
+  function saveSite(){
+    var x=cur();
+    var g=function(id){ var e=$("#"+id); return e?e.value:null; };
+    if(g("eName")!=null) x.name=g("eName");
+    if(g("eSub")!=null) x.sub=g("eSub").toLowerCase();
+    if(g("eOrder")!=null) x.order=Number(g("eOrder"))||x.order;
+    if(g("eColor")!=null) x.color=g("eColor");
+    if(g("eHero")!=null) x.hero=g("eHero");
+    if(g("eRate")!=null) x.rate=Number(g("eRate"))||x.rate;
+    if(g("eCap")!=null) x.cap=Number(g("eCap"))||x.cap;
+    if(g("ePayer")!=null) x.payer=g("ePayer");
+    if(g("eEsc")!=null) x.escrow=g("eEsc");
+    if(g("eVerify")!=null) x.verify=g("eVerify");
+    if(g("eSla")!=null) x.sla=Number(g("eSla"))||x.sla;
+    if(g("eAuto")!=null) x.auto=Number(g("eAuto"))||x.auto;
+    if($("#eGB")) x.gateBiz=$("#eGB").classList.contains("on");
+    if($("#eGK")) x.gateBroker=$("#eGK").classList.contains("on");
+    render(); toast("저장했습니다 — 배포 없이 즉시 반영됩니다");
+  }
+
+  load(); render();
+})();
+</script>
+
+</body></html>

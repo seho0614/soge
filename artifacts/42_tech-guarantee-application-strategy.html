@@ -1,0 +1,333 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>소개뱅크 기술보증 신청 전략</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#FBFAF7;
+    --surface:#FFFFFF;
+    --ink:#1A2029;
+    --ink-2:#4A535F;
+    --ink-3:#7C858F;
+    --rule:#E2DED4;
+    --rule-2:#F0EDE6;
+    --seal:#A4272C;
+    --seal-soft:#F5E8E7;
+    --moss:#3B5A46;
+    --moss-soft:#E7EFE9;
+    --amber:#8C6417;
+    --amber-soft:#F7EFDC;
+    --shadow:0 1px 2px rgba(26,32,41,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14181E;
+      --surface:#1B2027;
+      --ink:#E9E6DF;
+      --ink-2:#AEB6C0;
+      --ink-3:#7E8791;
+      --rule:#2E353E;
+      --rule-2:#242A32;
+      --seal:#E08C8C;
+      --seal-soft:#332224;
+      --moss:#8FBFA1;
+      --moss-soft:#1E2A23;
+      --amber:#D8AE62;
+      --amber-soft:#2B2519;
+      --shadow:0 1px 2px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14181E;
+    --surface:#1B2027;
+    --ink:#E9E6DF;
+    --ink-2:#AEB6C0;
+    --ink-3:#7E8791;
+    --rule:#2E353E;
+    --rule-2:#242A32;
+    --seal:#E08C8C;
+    --seal-soft:#332224;
+    --moss:#8FBFA1;
+    --moss-soft:#1E2A23;
+    --amber:#D8AE62;
+    --amber-soft:#2B2519;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-weight:400;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:56px 24px 96px}
+
+  /* ---- masthead ---- */
+  .mast{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:0}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-3);margin:0 0 14px
+  }
+  h1{
+    font-family:'Gowun Batang',serif;font-weight:700;
+    font-size:clamp(30px,5vw,42px);line-height:1.25;letter-spacing:-.01em;
+    margin:0;text-wrap:balance;
+  }
+  .sub{color:var(--ink-2);font-size:15px;margin:12px 0 0;max-width:60ch}
+
+  /* ---- deadline ---- */
+  .deadline{
+    display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;
+    background:var(--seal-soft);border-left:3px solid var(--seal);
+    padding:18px 22px;margin:28px 0 0;
+  }
+  .dday{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:30px;
+    color:var(--seal);line-height:1;font-variant-numeric:tabular-nums;
+  }
+  .deadline p{margin:0;font-size:14px;color:var(--ink-2);flex:1;min-width:240px;line-height:1.6}
+  .deadline strong{color:var(--ink);font-weight:500}
+
+  /* ---- sections ---- */
+  section{margin-top:52px}
+  h2{
+    font-family:'Gowun Batang',serif;font-weight:700;font-size:23px;
+    margin:0 0 6px;letter-spacing:-.01em;
+  }
+  .sec-note{color:var(--ink-3);font-size:13px;margin:0 0 22px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+  h3{font-size:15px;font-weight:700;margin:30px 0 8px;color:var(--ink)}
+  p{margin:0 0 14px;max-width:68ch}
+  a{color:var(--seal);text-decoration-thickness:1px;text-underline-offset:2px}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--seal);outline-offset:3px}
+
+  /* ---- scenario ---- */
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:8px 0 20px}
+  .tier{background:var(--surface);padding:20px 18px}
+  .tier .no{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink-3);margin:0 0 10px}
+  .tier .amt{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:26px;line-height:1;margin:0;font-variant-numeric:tabular-nums}
+  .tier .when{font-size:12px;color:var(--ink-3);margin:8px 0 10px}
+  .tier .why{font-size:13px;color:var(--ink-2);margin:0;line-height:1.6}
+  .tier.now .amt{color:var(--seal)}
+
+  /* ---- table ---- */
+  .scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+  thead th{
+    background:var(--rule-2);font-weight:500;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3);white-space:nowrap;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.name{font-weight:500;white-space:nowrap}
+  tr.hit td.name{color:var(--seal)}
+  tr.hit{background:var(--seal-soft)}
+
+  /* ---- reality ---- */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:24px;margin:20px 0 6px}
+  .fact .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+  .fact .k{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+
+  /* ---- checklist ---- */
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+  ol.steps>li{
+    counter-increment:s;position:relative;padding:0 0 22px 46px;
+    border-left:1px solid var(--rule);margin-left:13px;
+  }
+  ol.steps>li:last-child{border-left-color:transparent;padding-bottom:0}
+  ol.steps>li::before{
+    content:counter(s,decimal-leading-zero);
+    position:absolute;left:-13px;top:1px;width:26px;height:26px;
+    display:grid;place-items:center;border-radius:50%;
+    background:var(--surface);border:1px solid var(--rule);
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);
+  }
+  ol.steps>li.key::before{background:var(--seal);border-color:var(--seal);color:#fff}
+  .step-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+  .step-h b{font-size:15px;font-weight:700}
+  .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;
+    padding:2px 7px;border-radius:2px;white-space:nowrap;
+  }
+  .tag.must{background:var(--seal-soft);color:var(--seal)}
+  .tag.gain{background:var(--moss-soft);color:var(--moss)}
+  .tag.wk{background:var(--amber-soft);color:var(--amber)}
+  ol.steps p{font-size:13.5px;color:var(--ink-2);margin:0;line-height:1.7;max-width:62ch}
+
+  /* ---- risk ---- */
+  .risks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .risk{background:var(--surface);padding:14px 18px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+  .risk .r-t{font-weight:500;font-size:14px;min-width:180px}
+  .risk .r-d{font-size:13px;color:var(--ink-2);flex:1;min-width:240px;line-height:1.6;margin:0}
+
+  /* ---- caveat / sources ---- */
+  .caveat{border:1px solid var(--amber);background:var(--amber-soft);padding:18px 20px;margin-top:52px}
+  .caveat h2{font-size:17px;margin-bottom:8px;color:var(--amber)}
+  .caveat p{font-size:13.5px;color:var(--ink-2);margin:0}
+  .src{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-3)}
+  .src ul{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+  .src li{line-height:1.6}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">㈜한국바이오헬스케어 · 429-88-01533</p>
+    <h1>소개뱅크 기술보증 신청 전략</h1>
+    <p class="sub">기술보증기금 기술평가보증으로 최대 금액을 끌어내기 위한 금액 설계와 신청 전 준비 순서. 2026년 9월 8일 기준 현행 제도로 정리했습니다.</p>
+  </header>
+
+  <div class="deadline">
+    <div class="dday">D-50</div>
+    <p><strong>2026년 10월 28일, 창업기업 요건이 끝납니다.</strong> 법인 설립일이 2019년 10월 28일이므로 업력 7년이 그날 도래합니다. 창업 7년 이내 구간에서만 받을 수 있는 보증료 0.3%p 감면과 창업기업 우대 프로그램은 그 전에 접수해야 적용됩니다. 기준일 해석(설립일 / 사업개시일)은 지점 확인이 필요합니다.</p>
+  </div>
+
+  <section>
+    <h2>얼마를 신청할 것인가</h2>
+    <p class="sec-note">한 번에 최대를 노리기보다, 승인 확률이 높은 금액으로 시작해 실적을 만들고 올리는 편이 총액이 큽니다.</p>
+
+    <div class="tiers">
+      <div class="tier now">
+        <p class="no">1차 · 이번 신청</p>
+        <p class="amt">8억원</p>
+        <p class="when">운전자금 · 2026년 10월 내 접수</p>
+        <p class="why">계획서에 반영한 금액입니다. 개발 외주비 4.5억이 견적서로 뒷받침되면 방어 가능한 선입니다. 면담에서 하향 조정될 수 있으나, 조정되는 것 자체는 부결이 아닙니다.</p>
+      </div>
+      <div class="tier">
+        <p class="no">2차 · 오픈 직후</p>
+        <p class="amt">+3~5억</p>
+        <p class="when">2027년 상반기 · 증액 또는 IP보증</p>
+        <p class="why">구독 매출이 발생하면 매출액 기준 한도가 열립니다. 프로그램저작권·상표권을 담보로 한 소프트웨어 기술금융(IP보증)은 별도 건으로 1~10억 범위입니다.</p>
+      </div>
+      <div class="tier">
+        <p class="no">3차 · 실적 축적 후</p>
+        <p class="amt">+3억</p>
+        <p class="when">정부 R&amp;D 수행 시</p>
+        <p class="why">인증·실증 연구 특례보증은 정부 지원 연구개발비의 50% 이내 최대 3억, 보증비율 100%입니다. 성공 판정 시 후속 사업화 자금이 연계됩니다.</p>
+      </div>
+    </div>
+
+    <p>규정상 한도는 200억원, 예외한도 100억원이지만 실제 운용은 전혀 다릅니다. 첫 신청에서 두 자릿수 억원을 요구하면 소요 근거를 맞추지 못해 부결로 갑니다.</p>
+
+    <div class="facts">
+      <div class="fact"><div class="v">약 3억원</div><div class="k">최근 5년 평균 보증금액</div></div>
+      <div class="fact"><div class="v">88%</div><div class="k">2024년 보증 중 5억원 이하 비중</div></div>
+      <div class="fact"><div class="v">1% 미만</div><div class="k">30억원 초과 보증 비중</div></div>
+      <div class="fact"><div class="v">0건</div><div class="k">최근 5년 100억원 초과 신규 보증</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>쓸 수 있는 제도</h2>
+    <p class="sec-note">붉은 행이 ㈜한국바이오헬스케어가 현재 요건을 충족하는 제도입니다.</p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>제도</th><th>한도</th><th>보증비율</th><th>보증료</th><th>해당 여부</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">일반 기술평가보증</td><td class="num">매출액 연동</td><td class="num">85%</td><td class="num">—</td><td>기본</td></tr>
+          <tr class="hit"><td class="name">맞춤형 창업성장</td><td class="num">—</td><td class="num">5년 이내 95%</td><td class="num">7년 이내 −0.3%p</td><td>업력 6년 10개월 — 보증료 감면 구간</td></tr>
+          <tr class="hit"><td class="name">소프트웨어 기술금융<br>(IP보증)</td><td class="num">1~10억</td><td class="num">—</td><td class="num">—</td><td>프로그램저작권 등록 후 가능</td></tr>
+          <tr class="hit"><td class="name">인증·실증 연구<br>특례보증</td><td class="num">R&amp;D비 50%<br>최대 3억</td><td class="num">100%</td><td class="num">−1.0%p</td><td>정부 R&amp;D 수주 시</td></tr>
+          <tr><td class="name">마이스터 기술창업</td><td class="num">5억<br>(3년 이하 운전 3억)</td><td class="num">90%</td><td class="num">−0.7%p</td><td>업력 초과</td></tr>
+          <tr><td class="name">청년창업기업 우대</td><td class="num">3억</td><td class="num">95~100%</td><td class="num">연 0.3% 고정</td><td>대표자 연령 요건 확인</td></tr>
+          <tr><td class="name">예비창업자 사전보증</td><td class="num">1~10억</td><td class="num">100%</td><td class="num">−0.7%p</td><td>기존 법인이라 해당 없음</td></tr>
+          <tr><td class="name">첨단기술기업 우대</td><td class="num">20억</td><td class="num">최대 100%</td><td class="num">−0.5%p</td><td>연구개발특구 입주 요건 — 가산동 미해당</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:13px;color:var(--ink-3)">보증비율은 대출금 중 기금이 책임지는 비율입니다. 85%면 은행이 15%를 떠안으므로 은행 심사가 한 겹 더 붙습니다. 창업기업 구간에서 95%를 적용받는 것이 실행 성사율에 직결됩니다.</p>
+  </section>
+
+  <section>
+    <h2>신청 전 해야 할 일</h2>
+    <p class="sec-note">순서가 중요합니다. 1번을 건너뛰면 나머지가 의미 없습니다.</p>
+
+    <ol class="steps">
+      <li class="key">
+        <div class="step-h"><b>사업자등록 업종 추가</b><span class="tag must">필수</span><span class="tag wk">1주</span></div>
+        <p>현재 등록증의 업태는 제조업뿐입니다. 신청기술이 소프트웨어 플랫폼인데 등록증에 정보통신업이 없으면 사업 실체와 신청기술이 어긋나 첫 관문에서 걸립니다. 홈택스에서 소프트웨어 개발 및 공급업, 포털·인터넷 정보매개 서비스업을 종목으로 추가하십시오. 정정 신고만으로 당일 처리됩니다.</p>
+      </li>
+      <li class="key">
+        <div class="step-h"><b>프로그램저작권 등록</b><span class="tag must">필수</span><span class="tag wk">2~3주</span></div>
+        <p>현재 지식재산권 보유 0건입니다. 기술사업평가등급이 한도와 보증료를 동시에 결정하는데, 지식재산권은 배점이 큽니다. 한국저작권위원회 프로그램 등록은 비용이 낮고 심사가 아닌 등록 절차라 확실합니다. 프로토타입 소스와 통합설계서를 그대로 제출하면 됩니다. 이후 IP보증의 담보물도 됩니다.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>상표권 출원</b><span class="tag gain">가점</span><span class="tag wk">즉시</span></div>
+        <p>소개뱅크 및 4관 명칭을 출원하십시오. 등록까지는 1년 넘게 걸리지만 <em>출원 사실</em>만으로 계획서의 권리상태 항목을 채울 수 있습니다. 도메인은 확정됐는데 상표가 비어 있는 상태는 사업 준비도 항목에서도 감점 요인입니다.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>연구개발전담부서 설립</b><span class="tag gain">가점</span><span class="tag wk">3~4주</span></div>
+        <p>기술개발환경 항목에서 "기술인력만 확보"와 "전담부서 보유"는 등급 차이가 납니다. 기업부설연구소는 요건이 무겁지만 전담부서는 연구전담요원 1명부터 가능합니다. 한국산업기술진흥협회 온라인 신고 절차입니다.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>대표자 신용 확인</b><span class="tag must">필수</span><span class="tag wk">1일</span></div>
+        <p>노명석 대표의 개인 신용정보를 먼저 확인하십시오. 연체·체납·신용회복 이력이 있으면 기술 점수와 무관하게 보증제한 대상입니다. 제출한 예비창업자 자가진단 체크리스트에도 같은 항목이 있습니다. 국세·지방세 완납증명서도 함께 발급받아 두십시오.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>개발사 견적서 확보</b><span class="tag must">필수</span><span class="tag wk">1~2주</span></div>
+        <p>기술개발비 4.5억원이 신청액의 절반을 넘습니다. 근거가 구두 설명뿐이면 이 금액이 그대로 깎입니다. 개발사 정식 견적서 또는 계약서, 인건비는 직군별 투입 개월수 산출표로 준비하십시오. 소요자금의 구체성이 신청액 유지의 유일한 방어선입니다.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>매출 실현 근거 수집</b><span class="tag gain">가점</span><span class="tag wk">3~4주</span></div>
+        <p>오픈 전이라 매출 실적이 없다는 점이 가장 큰 약점입니다. 초기 회원 가입 의향서(LOI), 제휴 MOU, 사전 등록 신청서를 모으십시오. 기존 제조·유통 거래처에서 받아낸 종이 한 장이 시장성 항목의 점수를 바꿉니다. 목표시장 규모 추정 자료도 함께 정리하십시오.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>재무제표 점검</b><span class="tag must">필수</span><span class="tag wk">1주</span></div>
+        <p>자본잠식 여부가 결정적입니다. 잠식 상태면 기술 점수가 아무리 높아도 보증이 어렵습니다. 잠식이 있다면 신청 전 증자로 해소하는 편이 낫습니다. 세무·회계사무소와 최근 3개년 재무제표, 부채비율, 차입금 현황을 먼저 맞춰 보십시오.</p>
+      </li>
+      <li>
+        <div class="step-h"><b>지점 사전 상담</b><span class="tag gain">권장</span><span class="tag wk">신청 2주 전</span></div>
+        <p>서류를 완성한 뒤 접수하지 말고, 관할 지점에 먼저 사전 상담을 요청하십시오. 담당자가 신청 가능 금액대와 보완 서류를 미리 알려줍니다. 부결 이력은 재신청에 불리하게 남으므로, 승산이 낮다는 판단이 나오면 보완 후 접수하는 편이 낫습니다.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>감점·부결로 가는 길</h2>
+    <p class="sec-note">기술 내용이 좋아도 아래 항목에서 걸리면 심사가 진행되지 않습니다.</p>
+    <div class="risks">
+      <div class="risk"><div class="r-t">업종 불일치</div><p class="r-d">등록증 업태와 신청기술이 다름. 지금 상태가 여기 해당합니다.</p></div>
+      <div class="risk"><div class="r-t">자본잠식</div><p class="r-d">기술평가 결과와 무관하게 보증제한. 신청 전 해소해야 합니다.</p></div>
+      <div class="risk"><div class="r-t">대표자 신용도</div><p class="r-d">연체·체납·신용관리정보 등록 시 보증제한 대상.</p></div>
+      <div class="risk"><div class="r-t">소요자금 근거 부실</div><p class="r-d">견적서·계약서 없는 금액은 그대로 삭감됩니다.</p></div>
+      <div class="risk"><div class="r-t">허위·과장 기재</div><p class="r-d">계획서 안내문에 명시된 사항입니다. 보증 철회와 형사고발까지 갑니다. 보유하지 않은 특허·인증은 절대 기재하지 마십시오.</p></div>
+      <div class="risk"><div class="r-t">브로커 개입</div><p class="r-d">성공보수를 요구하는 컨설팅 개입이 확인되면 금융부조리관련기업으로 보증제한 대상이 됩니다.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>계획서에 반영한 것</h2>
+    <p class="sec-note">첨부한 기술사업계획서에서 이번에 바뀐 부분입니다.</p>
+    <p><b>신청금액</b> 운전자금 5억 → 8억원으로 상향하고, 소요자금란을 기술개발비 4.5억 / 운영·생산자금 2억 / 창업비 1억 / 기타 0.5억으로 나눈 뒤 각 항목의 산출근거를 생산추진계획에 서술했습니다.</p>
+    <p><b>정책 부합성</b> 기술경쟁력 항목 말미에 일자리 창출, 디지털 전환, 거래 투명성 제고, 자사 고용 계획 네 가지를 추가했습니다. 소개 활동을 부수입원으로 제도화한다는 점이 고용 창출형 플랫폼 논리의 핵심입니다.</p>
+    <p><b>준비 안내</b> 권리구분란에 신청 전 프로그램저작권 등록 안내를, 기술개발환경란에 연구개발전담부서 설립 권장을, 매출 실현 계획에 LOI·MOU 첨부 안내를 ※ 표시로 넣었습니다.</p>
+  </section>
+
+  <div class="caveat">
+    <h2>확인이 필요한 부분</h2>
+    <p>여기 정리한 제도 내용은 공개된 자료 기준이며, 기보 내규의 실제 한도 산정식(매출액 대비 배수)과 창업기업 기준일 해석은 공개되어 있지 않습니다. 접수 전에 관할 지점 또는 고객센터 1544-1120으로 두 가지를 확인하십시오. 첫째, 업력 7년 기준일이 법인설립일인지 사업개시일인지. 둘째, 기존 제조 매출을 근거로 산정되는 운전자금 한도가 얼마인지. 이 두 답에 따라 1차 신청액이 8억보다 커질 수도, 작아질 수도 있습니다.</p>
+  </div>
+
+  <div class="src">
+    출처
+    <ul>
+      <li><a href="https://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=632&amp;ccfNo=4&amp;cciNo=2&amp;cnpClsNo=2">찾기쉬운 생활법령정보 — 창업자금 및 보증 지원</a> · 창업기업 보증상품별 한도·보증비율·보증료 감면</li>
+      <li><a href="https://www.kibo.or.kr/main/work/work010302.do">기술보증기금 — 보증비율</a> · 신규보증 85%, 핵심분야·수출 90%, 회생지원 100%</li>
+      <li><a href="https://www.fnnews.com/news/202510121850272477">파이낸셜뉴스 — 기술보증 한도 실효성 논란</a> · 평균 보증금액, 금액대별 비중, 규정 한도</li>
+      <li><a href="https://www.rgnews.co.kr/news/articleView.html?idxno=21743">열린창업신문 — 기술보증기금 주요 보증 프로그램</a> · 소프트웨어 기술금융, 인증·실증 연구 특례보증</li>
+      <li><a href="https://www.seoul.co.kr/news/economy/2025/10/28/20251028500239">서울신문 — 첨단기술기업 우대보증</a> · 한도 20억, 보증비율 100%, 보증료 0.5%p 감면</li>
+    </ul>
+  </div>
+
+</div>
+
+</body></html>

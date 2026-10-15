@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>소개뱅크 메인 히어로 — 모바일</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Nanum+Pen+Script&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#4A2FE0;text-decoration:none}a:hover{color:#3720B8}
+input::placeholder{color:#6B6A80}
+</style>
+</helmet>
+<div style="width: 390px; height: 1120px; box-sizing: border-box; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; color: #17162B; background: #F7F6FD; overflow: hidden">
+<header style="height: 56px; padding: 0 12px 0 16px; display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; border-bottom: 1px solid #ECEAF7">
+<span style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 19px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B3DF5" stroke-width="2.6" stroke-linecap="round"><path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3"></path></svg>소개뱅크</span>
+<span style="display: flex; gap: 4px">
+<button aria-label="알림" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17162B" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10 21h4"></path></svg></button>
+<button aria-label="전체 메뉴" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17162B" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</span>
+</header>
+<nav aria-label="주 메뉴" style="display: flex; gap: 18px; padding: 0 16px; height: 46px; align-items: center; background: #FFFFFF; font-size: 14px; font-weight: 700; overflow: hidden; white-space: nowrap">
+<a href="#" style="color: #17162B">소개장터</a><a href="#" style="color: #17162B">안심소개</a><a href="#" style="color: #17162B">소개창업</a><a href="#" style="color: #17162B">소개뱅크몰</a><a href="#" style="color: #17162B">소개광장</a>
+</nav>
+<section style="background: linear-gradient(180deg, #F1EDFF 0%, #F7F6FD 100%); padding: 30px 16px 24px; display: flex; flex-direction: column; gap: 12px; text-align: center">
+<span aria-hidden="true" style="font-family: 'Nanum Pen Script', cursive; font-size: 22px; color: #4A3F8C">궁금한 게 있으신가요? AI에게 물어보세요!</span>
+<h1 style="margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1.25">찾지 말고,<br><span style="color: #5B3DF5">소개받으세요.</span></h1>
+<p style="margin: 0; font-size: 15px; color: #3E3D55">사람 · 상품 · 서비스 · 사업 · 동네정보까지<br>AI가 찾아드립니다.</p>
+<label for="m-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">무엇을 소개받고 싶으세요?</label>
+<div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 2px solid #B9A9FF; border-radius: 30px; padding: 4px 4px 4px 16px; box-shadow: 0 8px 22px rgba(91, 61, 245, 0.14)">
+<input id="m-q" type="text" placeholder="무엇을 소개받고 싶으세요?" style="flex-grow: 1; min-width: 0; border: 0; outline: none; font-size: 16px; font-family: inherit; background: transparent; height: 44px">
+<button aria-label="AI로 찾기" style="width: 46px; height: 46px; border-radius: 23px; border: 0; background: #5B3DF5; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+</div>
+<div style="display: flex; gap: 8px; overflow: hidden; white-space: nowrap">
+<button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #E2DDF7; background: #FFFFFF; font-family: inherit; font-size: 13px; color: #2B2A44">판교 가족식당 추천해줘</button>
+<button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #E2DDF7; background: #FFFFFF; font-family: inherit; font-size: 13px; color: #2B2A44">1천만원 창업 아이템</button>
+<button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #E2DDF7; background: #FFFFFF; font-family: inherit; font-size: 13px; color: #2B2A44">세무사 알려줘</button>
+</div>
+</section>
+<section style="padding: 0 16px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; text-align: center">
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 6px; color: #17162B; font-size: 12px; font-weight: 700"><span style="width: 56px; height: 56px; border-radius: 18px; background: #EEE9FF; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5B3DF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l4-4 4 3 3-3 7 6-4 4"></path><path d="M7 13l3 3 2-1 2 2"></path></svg></span>소개장터</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 6px; color: #17162B; font-size: 12px; font-weight: 700"><span style="width: 56px; height: 56px; border-radius: 18px; background: #E3F6EE; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F8A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span>안심소개</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 6px; color: #17162B; font-size: 12px; font-weight: 700"><span style="width: 56px; height: 56px; border-radius: 18px; background: #FFEFE3; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C2560C" stroke-width="2" stroke-linecap="round"><path d="M5 20V13M10 20V9M15 20V11M20 20V5"></path></svg></span>소개창업</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 6px; color: #17162B; font-size: 12px; font-weight: 700"><span style="width: 56px; height: 56px; border-radius: 18px; background: #F3E8FF; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7E2FD0" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg></span>소개뱅크몰</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 6px; color: #17162B; font-size: 12px; font-weight: 700"><span style="width: 56px; height: 56px; border-radius: 18px; background: #E6F0FF; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>소개광장</a>
+</section>
+<section aria-label="광고" style="margin: 22px 16px 0; position: relative; border-radius: 20px; background: linear-gradient(110deg, #4A2FE0 0%, #6C4BFF 60%, #9D86FF 100%); color: #FFFFFF; padding: 24px 20px; display: flex; flex-direction: column; gap: 12px">
+<span style="position: absolute; top: 12px; right: 12px; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.22)">HERO 슬롯 · 기본 소재</span>
+<strong style="font-size: 15px">소개뱅크</strong>
+<span style="font-size: 20px; font-weight: 900; line-height: 1.4">좋은 사람, 좋은 상품, 좋은 기회가<br>연결되는 AI 기반 소개 플랫폼</span>
+<a href="#" style="align-self: flex-start; height: 44px; padding: 0 16px; display: flex; align-items: center; border-radius: 22px; background: #FFFFFF; color: #3720B8; font-weight: 700; font-size: 13px">소개뱅크가 특별한 이유 →</a>
+</section>
+<section style="margin: 26px 16px 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline"><h2 style="margin: 0; font-size: 19px; font-weight: 900">소개뱅크몰 LIVE</h2><a href="#" style="margin-left: auto; font-size: 13px; font-weight: 700">더보기 ›</a></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 14px; overflow: hidden"><div style="height: 120px; background: #F1F0F7; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6B6A80">상품 이미지</div><div style="padding: 10px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span>[건강관] 상품명 1</span><strong><span style="color: #D7264A">[할인율]</span> [판매가]</strong></div></div>
+<div style="background: #FFFFFF; border: 1px solid #ECEAF7; border-radius: 14px; overflow: hidden"><div style="height: 120px; background: #F1F0F7; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6B6A80">상품 이미지</div><div style="padding: 10px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span>[건강관] 상품명 2</span><strong><span style="color: #D7264A">[할인율]</span> [판매가]</strong></div></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

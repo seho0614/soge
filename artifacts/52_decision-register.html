@@ -1,0 +1,595 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 결정 등기부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --pp:#7C3AED; --pp-d:#6D28D9; --pp-l:#F5F1FE;
+    --bl:#2563EB; --bl-l:#EFF6FF;
+    --or:#F97316; --or-l:#FFF7ED;
+    --gr:#059669; --gr-l:#ECFDF5;
+    --am:#D97706; --am-l:#FFFBEB;
+    --rd:#DC2626; --rd-l:#FEF2F2;
+    --nv:#1E293B; --ink:#0F172A; --mut:#64748B; --mut2:#94A3B8;
+    --line:#E2E8F0; --line2:#F1F5F9; --page:#F7F8FA; --card:#FFFFFF;
+  }
+  :root[data-theme="dark"], :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F1F5F9; --mut:#94A3B8; --mut2:#64748B;
+      --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33;
+      --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+      --nv:#CBD5E1;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F1F5F9; --mut:#94A3B8; --mut2:#64748B;
+    --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33;
+    --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+    --nv:#CBD5E1;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  button{font-family:inherit;cursor:pointer}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){ .wrap{padding:0 14px} }
+
+  /* ---------- 헤더 ---------- */
+  .hero{background:linear-gradient(160deg,#2A1758 0%,#1E293B 60%,#0F172A 100%);color:#fff;
+    padding:52px 0 44px;border-bottom:1px solid var(--line)}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.6px;color:#C4B5FD;background:rgba(124,58,237,.18);
+    border:1px solid rgba(124,58,237,.4);border-radius:999px;padding:5px 13px}
+  .hero h1{margin:16px 0 10px;font-size:38px;font-weight:900;letter-spacing:-1.2px;line-height:1.22}
+  @media (max-width:640px){ .hero h1{font-size:27px} }
+  .hero p{margin:0;max-width:720px;color:#CBD5E1;font-size:15px;line-height:1.8}
+  .hero .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+  .pill{font-size:12px;font-weight:600;color:#E2E8F0;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:5px 11px}
+
+  /* ---------- 요약 바 ---------- */
+  .bar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+    box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  .bar .in{display:flex;align-items:center;gap:16px;padding:11px 0;flex-wrap:wrap}
+  .cnt{display:flex;align-items:baseline;gap:6px;font-size:12.5px;color:var(--mut)}
+  .cnt b{font-size:19px;font-weight:900;color:var(--ink);letter-spacing:-.5px}
+  .cnt.ok b{color:var(--gr)} .cnt.hold b{color:var(--am)} .cnt.open b{color:var(--rd)}
+  .bar .sp{flex:1}
+  .barbtn{background:var(--page);border:1px solid var(--line);color:var(--mut);
+    border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:700}
+  .barbtn:hover{color:var(--ink);border-color:var(--mut2)}
+  .track{height:4px;background:var(--line2);border-radius:999px;width:150px;overflow:hidden}
+  .track i{display:block;height:100%;background:linear-gradient(90deg,var(--pp),var(--bl));
+    transition:width .3s ease}
+
+  /* ---------- 섹션 ---------- */
+  section{padding:44px 0 8px}
+  .shd{display:flex;align-items:flex-start;gap:14px;margin-bottom:6px}
+  .snum{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-size:15px;font-weight:900;color:#fff;letter-spacing:-.5px}
+  .snum.a{background:var(--rd)} .snum.b{background:var(--pp)}
+  .snum.c{background:var(--bl)} .snum.d{background:var(--nv)} .snum.e{background:var(--or)}
+  .shd h2{margin:0;font-size:23px;font-weight:900;letter-spacing:-.8px;line-height:1.35}
+  .shd .sub{margin:3px 0 0;font-size:13.5px;color:var(--mut);line-height:1.65}
+  .sintro{margin:14px 0 22px;padding:13px 16px;background:var(--card);border:1px solid var(--line);
+    border-left:3px solid var(--line);border-radius:0 10px 10px 0;font-size:13.5px;color:var(--mut);line-height:1.8}
+  .sintro.a{border-left-color:var(--rd)} .sintro.b{border-left-color:var(--pp)}
+  .sintro.c{border-left-color:var(--bl)} .sintro.d{border-left-color:var(--nv)}
+  .sintro.e{border-left-color:var(--or)}
+  .sintro b{color:var(--ink)}
+
+  /* ---------- 결정 카드 ---------- */
+  .d{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;
+    overflow:hidden;transition:border-color .15s}
+  .d.st-ok{border-color:rgba(5,150,105,.45)}
+  .d.st-hold{border-color:rgba(217,119,6,.45)}
+  .dtop{display:grid;grid-template-columns:auto 1fr auto;gap:13px;align-items:flex-start;
+    padding:15px 17px;cursor:pointer}
+  @media (max-width:640px){ .dtop{grid-template-columns:auto 1fr;padding:13px} }
+  .did{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;
+    color:#fff;background:var(--nv);border-radius:7px;padding:4px 8px;letter-spacing:.3px;margin-top:2px}
+  .d.g-a .did{background:var(--rd)} .d.g-b .did{background:var(--pp)}
+  .d.g-c .did{background:var(--bl)} .d.g-d .did{background:var(--nv)} .d.g-e .did{background:var(--or)}
+  .dttl{min-width:0}
+  .dttl h3{margin:0;font-size:16.5px;font-weight:800;letter-spacing:-.45px;line-height:1.45}
+  .dttl .tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:11px;font-weight:700;border-radius:6px;padding:2.5px 8px;letter-spacing:-.1px}
+  .tag.law{background:var(--rd-l);color:var(--rd)}
+  .tag.money{background:var(--am-l);color:var(--am)}
+  .tag.ux{background:var(--bl-l);color:var(--bl)}
+  .tag.ops{background:var(--pp-l);color:var(--pp)}
+  .tag.arch{background:var(--or-l);color:var(--or)}
+  .tag.time{background:var(--line2);color:var(--mut)}
+  .dst{flex:none;display:flex;gap:4px;align-items:center;margin-top:1px}
+  @media (max-width:640px){ .dst{grid-column:1/-1;margin-top:8px} }
+  .sbtn{border:1px solid var(--line);background:var(--page);color:var(--mut2);
+    border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .sbtn.on.ok{background:var(--gr);border-color:var(--gr);color:#fff}
+  .sbtn.on.hold{background:var(--am);border-color:var(--am);color:#fff}
+  .sbtn.on.open{background:var(--rd);border-color:var(--rd);color:#fff}
+
+  .dbody{display:none;padding:0 17px 16px;border-top:1px solid var(--line2)}
+  .d.open .dbody{display:block}
+  .row{padding:13px 0;border-bottom:1px dashed var(--line);display:grid;
+    grid-template-columns:96px 1fr;gap:14px;align-items:flex-start}
+  @media (max-width:640px){ .row{grid-template-columns:1fr;gap:5px} }
+  .row:last-of-type{border-bottom:0}
+  .rk{font-size:11.5px;font-weight:800;color:var(--mut2);letter-spacing:.3px;padding-top:2px}
+  .rv{font-size:14px;line-height:1.8;color:var(--ink)}
+  .rv b{font-weight:700}
+  .rv .hi{background:linear-gradient(transparent 62%, var(--pp-l) 62%);padding:0 1px;font-weight:700}
+  .rv ul{margin:5px 0 0;padding-left:17px}
+  .rv li{margin:3px 0}
+  .rv code{font-size:12.5px;background:var(--line2);padding:1.5px 6px;border-radius:5px}
+  .rec{background:var(--gr-l);border:1px solid rgba(5,150,105,.28);border-radius:10px;padding:11px 13px}
+  .rec .lab{font-size:11px;font-weight:800;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px}
+  .blk{background:var(--rd-l);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:11px 13px;
+    font-size:13.5px;color:var(--ink);line-height:1.75}
+  .blk .lab{font-size:11px;font-weight:800;color:var(--rd);letter-spacing:.5px;display:block;margin-bottom:3px}
+  .memo{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+    font-family:inherit;font-size:13px;color:var(--ink);background:var(--page);resize:vertical;min-height:56px}
+  .memo:focus{outline:2px solid var(--pp);outline-offset:-1px;border-color:transparent}
+
+  /* ---------- 의존 표 ---------- */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:18px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{background:var(--page);font-size:11.5px;font-weight:800;color:var(--mut);
+    letter-spacing:.4px;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  td.k{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:700;white-space:nowrap}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+  /* ---------- 마무리 ---------- */
+  .fin{background:var(--nv);color:#fff;border-radius:16px;padding:28px 30px;margin:34px 0 60px}
+  @media (max-width:640px){ .fin{padding:20px 18px} }
+  .fin h2{margin:0 0 8px;font-size:20px;font-weight:900;letter-spacing:-.6px;color:#fff}
+  .fin p{margin:0 0 16px;color:#CBD5E1;font-size:14px;line-height:1.8}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}
+  .stp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:13px 15px}
+  .stp b{display:block;font-size:13.5px;font-weight:800;color:#fff;margin-bottom:3px}
+  .stp span{font-size:12.5px;color:#94A3B8;line-height:1.65}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
+    background:var(--nv);color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:10px;
+    opacity:0;pointer-events:none;transition:all .22s;z-index:60}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">DECISION REGISTER · v2.2</span>
+    <h1>소개뱅크 — 확정해야 하는 것 전부</h1>
+    <p>설계·프로토타입·통합 시뮬레이터까지 만들어보며 드러난 미결 항목을 한 곳에 모았습니다.
+      31건이고, 그중 <b style="color:#FCA5A5">5건은 이것부터 정하지 않으면 나머지가 전부 멈춥니다</b>.
+      각 항목에는 이미 권장안이 있습니다 — 회의의 목적은 처음부터 논의하는 것이 아니라
+      권장안에 동의하는지, 무엇을 바꿀지를 정하는 것입니다.</p>
+    <div class="meta">
+      <span class="pill">A 전제 5건 · 55분</span>
+      <span class="pill">B 오픈 전 12건</span>
+      <span class="pill">C 확인 4건 · 15분</span>
+      <span class="pill">D 통보 5건 · 10분</span>
+      <span class="pill">E 멀티사이트 5건</span>
+      <span class="pill">체크 · 메모는 이 브라우저에 저장됩니다</span>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="wrap in">
+    <span class="cnt ok"><b id="cOk">0</b> 확정</span>
+    <span class="cnt hold"><b id="cHold">0</b> 보류</span>
+    <span class="cnt open"><b id="cOpen">31</b> 미결</span>
+    <span class="track"><i id="trk" style="width:0%"></i></span>
+    <span class="sp"></span>
+    <button class="barbtn" id="bAll">전체 펼치기</button>
+    <button class="barbtn" id="bClr">초기화</button>
+  </div>
+</div>
+
+<div class="wrap" id="doc"></div>
+
+<div class="wrap">
+  <div class="fin">
+    <h2>회의가 끝난 뒤 바로 갈리는 것</h2>
+    <p>A그룹 5건만 확정되면 그날 저녁부터 아래 4가지가 동시에 착수됩니다.
+      반대로 A-01 하나가 밀리면 나머지 25건이 전부 대기합니다 — 이 문서에서 우선순위가 아니라
+      <b style="color:#fff">순서</b>가 중요한 이유입니다.</p>
+    <div class="steps">
+      <div class="stp"><b>업종 슬러그 32개 확정</b><span>URL · SEO 랜딩 32페이지 · 카테고리 API 응답 스키마</span></div>
+      <div class="stp"><b>등록폼 동적 필드 확정</b><span>관별 필수 항목 · 인증 게이트 · 부담 주체 선택 노출 조건</span></div>
+      <div class="stp"><b>요율표 · 정산 로직 구현</b><span>상한 적용 · 원천징수 · 지급 명세 · 백오피스 승인 규칙</span></div>
+      <div class="stp"><b>법무 검토 착수</b><span>부동산 구조 · 약관 6종 · 통신판매중개자 고지 문안</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+  var tt; function toast(m){var e=$("#toast");e.textContent=m;e.classList.add("on");
+    clearTimeout(tt);tt=setTimeout(function(){e.classList.remove("on");},1900);}
+
+  /* ---------------- 데이터 ---------------- */
+  var GROUPS=[
+    { k:"a", n:"A", h:"반드시 먼저 — 이게 안 되면 회의가 무의미합니다",
+      sub:"5건 · 55분 · 여기서 나머지 21건이 전부 파생됩니다",
+      intro:"이 5건은 <b>서로 순서가 있습니다</b>. A-01이 정해져야 A-02의 업종 목록을 볼 수 있고, "+
+            "A-02가 정해져야 A-03의 요율을 붙일 수 있습니다. 순서를 바꿔 논의하면 같은 이야기를 두 번 하게 됩니다.",
+      items:[
+      { id:"A-01", t:"관(館)을 무엇으로 가를 것인가", tags:[["ops","전제"],["time","10분"]],
+        rec:"<b>누구와 누구를 연결하는가</b>로 가른다. 개인↔개인 = 소개머니 · 개인↔사업자 = 소개몰 · 사업자↔예비사업자 = 소개창업.",
+        why:"이 기준은 <span class='hi'>소개비를 낼 주체 · 플랫폼 책임 · 적용되는 법</span>이 실제로 갈리는 지점과 정확히 일치합니다. "+
+            "거래 대상(물건/서비스/사업)으로 가르는 첫 설계안은 폐기했습니다 — 세 관이 모두 물건도 팔고 서비스도 중개하므로 갈리지 않았습니다.",
+        blk:"나머지 25건 전부. 업종도 요율도 등록폼도 여기서 파생됩니다.",
+        chk:"세 관의 경계에 걸치는 사례를 두세 개 던져보고, 답이 하나로 나오는지만 확인하면 됩니다. "+
+            "예 — 개인이 자기 상가를 파는 경우, 프랜차이즈 본사가 가맹점주를 찾는 경우." },
+
+      { id:"A-02", t:"업종 32종을 이대로 확정할 것인가", tags:[["ux","IA"],["time","15분"]],
+        rec:"소개머니 12 · 소개몰 12(A 업체소개 8 / B 업체상품 1 / C 사업장자산 3) · 소개창업 8.",
+        why:"슬러그는 URL과 SEO 랜딩에 그대로 쓰이므로 <b>확정 후에는 바꾸지 않습니다</b>. "+
+             "업종을 늘리는 것보다 <span class='hi'>줄이는 쪽이 낫습니다</span> — 오픈 초기에 리스팅 0건인 카테고리가 많으면 빈 페이지만 늘어납니다.",
+        blk:"등록폼 · 목록 필터 · SEO 랜딩 32개 · 카테고리 사이드바 · 검색 인덱스",
+        chk:"매트릭스 v2 문서의 3개 표만 봅니다. 빠진 업종이 있는지, 이름이 어색한지 두 가지만." },
+
+      { id:"A-03", t:"소개비 요율과 상한을 얼마로 할 것인가", tags:[["money","수익"],["time","15분"]],
+        rec:"소개머니 3% / 상한 30만 · 소개몰 5% / 상한 100만 · 소개창업 1.5% / 상한 500만. 프랜차이즈 가맹은 정액 100만원.",
+        why:"거래액이 클수록 요율을 낮추는 이유는, 소개자가 한 건에 들이는 노력은 비슷한데 거래액 차이가 크기 때문입니다. "+
+             "동일 요율이면 <span class='hi'>소액 거래에는 아무도 소개를 붙이지 않습니다</span>.",
+        blk:"제휴사 영업 자체가 불가능합니다. 정산 화면 · 이용안내 요율표도 못 만듭니다.",
+        chk:"확정 전에 두 가지를 알아야 합니다 — 경쟁 플랫폼(창업 중개 · 프랜차이즈 브로커)의 실제 수수료 수준, "+
+            "그리고 제휴사가 감당 가능한 상단. 이건 영업 나가기 전에 반드시 필요합니다." },
+
+      { id:"A-04", t:"소개머니에서 소개비는 누가 내는가", tags:[["money","수익"],["ux","UX"],["time","10분"]],
+        rec:"등록 시 <b>판매자 / 구매자 중 선택</b>. 소개몰은 업체 고정, 소개창업은 양도인·본사 고정이라 선택이 없습니다.",
+        why:"당근형 개인 간 거래에는 <span class='hi'>수수료를 낼 사업자가 없습니다</span>. 이걸 정하지 않으면 소개머니 관 자체가 작동하지 않습니다. "+
+             "그리고 이 선택이 곧 <b>소개합니다 / 소개원해요</b> 탭의 실질적 의미가 됩니다 — 지금까지 역할 탭이 무슨 뜻인지 애매했던 이유가 여기 있습니다.",
+        blk:"등록폼 · 역할 탭 · 정산 로직 · 이용안내 · 상세 화면의 부담 주체 표기",
+        chk:"부담 주체를 등록자가 고르게 할지, 관 단위로 고정할지만 정하면 됩니다." },
+
+      { id:"A-05", t:"부동산을 어떤 구조로 다룰 것인가", tags:[["law","법률"],["time","5분+자문"]],
+        rec:"사업용 <b>동산</b>(설비·기계·상용차)은 일반 소개비 5%. 사업용 <b>부동산</b>(상가·사무실·공장)은 "+
+            "제휴 공인중개사만 등록 가능하게 하고, 플랫폼 수익은 소개비가 아니라 <b>노출료</b>로 받습니다. 직방·다방 모델입니다.",
+        why:"중개 등록 없이 중개보수를 받으면 <span class='hi'>형사처벌 대상</span>이라 “일단 해보자”가 성립하지 않습니다. "+
+             "회의에서는 방향만 정하고 실제 확정은 변호사 확인 후에 합니다.",
+        blk:"오픈 가능 여부. 부동산 하나가 문제 되면 나머지 31개 업종의 신뢰까지 잃습니다.",
+        chk:"제휴 중개사를 실제로 확보할 수 있는지 — 이 답이 “아니오”면 부동산 업종은 1차 오픈에서 뺍니다." }
+    ]},
+
+    { k:"b", n:"B", h:"오픈 전 결정 — 설계하면서 새로 드러난 것",
+      sub:"12건 · 거래·정산·백오피스를 실제로 그려보니 비어 있던 자리들",
+      intro:"기존 회의안에는 없던 항목입니다. 등록·노출 화면만 있을 때는 보이지 않다가, "+
+            "<b>계약 → 성사 확정 → 정산 → 지급</b> 구간을 화면으로 그리자 파라미터가 비어 있는 게 드러났습니다. "+
+            "A그룹처럼 서로 얽혀 있지는 않아서 병렬로 진행할 수 있지만, <b>전부 오픈 차단 조건</b>입니다.",
+      items:[
+      { id:"B-01", t:"성사 확정을 한쪽이 안 하면 어떻게 되는가", tags:[["ops","운영"],["money","정산"]],
+        rec:"한쪽 확인 후 <b>7일 경과 시 자동 확정</b>. 상대방에게 D+1 · D+3 · D+6 알림, 기간 내 이의제기하면 분쟁으로 전환.",
+        why:"양측 확인을 필수로 걸면(INV-4) 소개비를 안 주려는 쪽이 <span class='hi'>확인을 안 누르는 것만으로 정산을 영구 차단</span>할 수 있습니다. "+
+             "자동 확정 기한이 없으면 이 규칙은 소개자를 보호하는 게 아니라 소개자를 인질로 만듭니다.",
+        blk:"성사 확정 화면 · 알림 스케줄러 · 분쟁 접수 경로 · 이용약관 제N조",
+        chk:"7일이 적정한지, 관별로 다르게 할지(소개창업은 실사 기간이 길어 14일이 나을 수 있음)." },
+
+      { id:"B-02", t:"정산 주기 · 지급일 · 최소 지급액", tags:[["money","정산"],["ops","운영"]],
+        rec:"성사 확정 후 <b>신청 시점 기준 주 1회 정산, 매주 수요일 지급</b>. 최소 지급액 1만원, 미달분은 이월. 이체 수수료는 플랫폼 부담.",
+        why:"건당 즉시 지급은 이체 수수료와 검증 부담이 커지고, 월 1회는 소개자가 체감하는 회수 기간이 너무 깁니다. "+
+             "주 1회가 <span class='hi'>운영 부담과 소개자 체감 사이의 실무적 타협점</span>입니다.",
+        blk:"정산 신청 화면 문구 · 백오피스 지급 배치 · 이용안내 · 세금계산 주기",
+        chk:"초기에는 건수가 적으므로 수동 지급으로 시작할지, 처음부터 배치로 갈지." },
+
+      { id:"B-03", t:"원천징수를 3.3%로 할 것인가", tags:[["law","세무"],["money","정산"]],
+        rec:"사업소득 <b>3.3% 원천징수</b>를 기본으로 하고, 연 소득이 낮은 일회성 소개자만 기타소득 처리 여부를 검토.",
+        why:"소개비는 계속·반복적 소득이면 사업소득, 일시적이면 기타소득(8.8%)입니다. "+
+             "플랫폼이 원천징수 의무자이므로 <span class='hi'>잘못 적용하면 가산세를 플랫폼이 부담</span>합니다. "+
+             "지급명세서 제출 의무와 소개자별 연간 누적 집계 화면이 함께 필요합니다.",
+        blk:"정산 금액 표시 전체 · 지급명세 · 백오피스 세무 리포트 · 소개자 마이페이지",
+        chk:"세무사 확인 필요. 회의에서는 “3.3% 단일로 간다”는 방향만 정하면 됩니다." },
+
+      { id:"B-04", t:"에스크로를 누가 운영하는가", tags:[["law","규제"],["money","결제"]],
+        rec:"직접 예치하지 않고 <b>PG사 에스크로(결제대금예치) 위탁</b>. 소개머니 전체 + 소개몰 B군에만 적용.",
+        why:"자금을 직접 보관하면 전자금융업 등록 문제가 생깁니다. PG 위탁이면 규제 부담을 지지 않고도 "+
+             "구매자 보호를 제공할 수 있습니다. 소개창업 양수도 대금은 <span class='hi'>금액이 커서 플랫폼이 보관하지 않습니다</span> — 당사자 간 직접 결제.",
+        blk:"에스크로 결제 화면 · PG 계약 · 환불 정책 · 소개머니 관 오픈 여부",
+        chk:"PG사 선정과 수수료율. 에스크로 수수료를 누가 부담하는지도 함께." },
+
+      { id:"B-05", t:"소개코드 유효기간과 재유입 규칙", tags:[["ops","운영"],["money","정산"]],
+        rec:"first-touch 기준 <b>90일 고정</b>. 기간 내 다른 코드로 재유입해도 최초 코드 유지. 만료 후 새 코드 유입 시 갱신.",
+        why:"정산 분쟁의 대부분이 “내 소개인데 왜 저 사람이 받느냐”입니다. "+
+             "<span class='hi'>first-touch + 고정 기간</span> 하나로 이 분쟁이 거의 사라집니다. 다만 기간이 길수록 나중에 실제로 성사시킨 소개자가 불이익을 봅니다.",
+        blk:"귀속 로직 · 상세 페이지 유입 처리 · 분쟁 처리 기준 · 이용약관",
+        chk:"90일이 긴지 짧은지. 소개창업처럼 검토 기간이 긴 관은 별도 기간이 필요할 수 있습니다." },
+
+      { id:"B-06", t:"계약서를 플랫폼이 제공할 것인가", tags:[["law","법률"],["ux","UX"]],
+        rec:"<b>양식만 제공</b>하고 당사자가 직접 작성·서명. 플랫폼은 계약 당사자가 아님을 화면과 계약서에 명시. 제5조에 소개자·소개코드·부담 주체를 기재.",
+        why:"양식을 제공하면 분쟁 시 소개 귀속을 입증할 근거가 생기지만, 내용에 관여하면 <span class='hi'>플랫폼이 책임 주체로 끌려들어갑니다</span>. "+
+             "제공 범위를 어디서 끊을지가 이 항목의 핵심입니다.",
+        blk:"계약서 발급 화면 · 전자서명 수단 선정 · 약관 면책 조항",
+        chk:"전자서명을 자체 구현할지 외부 서비스를 붙일지. 법적 효력 요건은 변호사 확인." },
+
+      { id:"B-07", t:"본인확인을 어느 시점에 강제할 것인가", tags:[["law","법률"],["ux","UX"]],
+        rec:"열람은 자유, <b>등록 · 1:1 문의 시작 시 휴대폰 본인확인</b>, 정산 신청 시 실명·계좌 일치 확인.",
+        why:"소개비를 지급하려면 실명과 계좌가 반드시 필요합니다. 그런데 가입 즉시 본인확인을 걸면 "+
+             "<span class='hi'>초기 유입이 크게 줄어듭니다</span>. 돈이 오가는 지점에서만 강제하는 게 실무적 타협점입니다.",
+        blk:"회원가입 플로우 · 등록 게이트 · 정산 신청 검증 · 개인정보 수집 항목",
+        chk:"본인확인 서비스 단가와 월 예상 건수." },
+
+      { id:"B-08", t:"사업자 · 중개사 인증을 어떻게 검증하는가", tags:[["law","법률"],["ops","운영"]],
+        rec:"국세청 사업자등록 상태조회 API로 <b>자동 1차 검증</b> + 서류 제출 시 운영자 육안 확인. 중개사는 시·군·구 등록번호 대조.",
+        why:"소개몰 등록의 게이트가 사업자 인증이고, 사업용 부동산의 게이트가 중개사 인증입니다(INV-7). "+
+             "<span class='hi'>이 게이트가 뚫리면 A-05의 부동산 구조가 통째로 무의미해집니다</span>.",
+        blk:"인증 화면 · 백오피스 인증 큐 · 등록폼 게이트 · 리스팅의 중개사무소 표기",
+        chk:"자동 검증으로 어디까지 커버되는지, 수동 확인에 몇 명이 붙어야 하는지." },
+
+      { id:"B-09", t:"검수 SLA 24시간을 지킬 인력이 있는가", tags:[["ops","운영"]],
+        rec:"자동 필터(금칙어·제한업종·중복)로 1차 거르고, <b>사람은 통과분만</b> 확인. 초기 1명 · 일 50건 기준.",
+        why:"24시간 SLA를 걸어두고 지키지 못하면 등록자 이탈이 즉시 발생합니다. "+
+             "반대로 자동 승인으로 가면 제한업종이 뚫립니다 — <span class='hi'>이 둘 사이에서 인력 규모가 결정됩니다</span>.",
+        blk:"검수 큐 화면의 SLA 표시 · 알림 정책 · 운영 채용 계획",
+        chk:"오픈 초기 예상 등록 건수. 이게 없으면 인력 산정이 불가능합니다." },
+
+      { id:"B-10", t:"금칙어 · 제한업종 목록을 누가 관리하는가", tags:[["law","법률"],["ops","운영"]],
+        rec:"코드가 아니라 <b>데이터로 관리</b>하고 백오피스에서 운영자가 직접 수정. 변경 이력 기록.",
+        why:"법률·의료·보험·금융·직업소개는 개별 법에 걸려 등록 자체를 막아야 하는데, "+
+             "이 목록은 <span class='hi'>법 해석과 단속 동향에 따라 계속 바뀝니다</span>. 배포 없이 바꿀 수 있어야 합니다.",
+        blk:"정책 관리 화면 · 카테고리 API 응답 필터 · 등록 시 422 거부 · 검수 키워드 탐지",
+        chk:"초기 목록의 확정본과, 변경 권한을 누가 갖는지." },
+
+      { id:"B-11", t:"분쟁이 접수되면 정산을 어떻게 하는가", tags:[["ops","운영"],["money","정산"]],
+        rec:"분쟁 접수 즉시 해당 거래의 <b>정산 자동 보류</b>. 처리 기한 14일. 플랫폼은 사실관계만 확인하고 판정하지 않음.",
+        why:"판정을 하면 플랫폼이 분쟁 당사자가 됩니다. 그렇다고 보류를 안 하면 "+
+             "<span class='hi'>분쟁 중에 소개비가 먼저 나가버립니다</span>. 보류는 하되 판정은 하지 않는 선이 필요합니다.",
+        blk:"분쟁 처리 화면 · 정산 승인 검증 5항목 · 이용약관 분쟁조정 조항",
+        chk:"14일이 지나도 해결되지 않으면 어떻게 할지 — 이 답이 없으면 보류가 영구 보류가 됩니다." },
+
+      { id:"B-12", t:"푸터 법적고지의 실제 값과 약관 6종", tags:[["law","법률"]],
+        rec:"이용약관 · 개인정보처리방침 · 운영정책 · 위치기반서비스 이용약관 · 분쟁조정 안내 · 고객센터. "+
+            "사업자등록번호 · 통신판매업 신고번호 · 직업정보제공사업 신고번호 확인.",
+        why:"현재 전 화면 푸터가 <code>TBD</code> 상태입니다. 통신판매중개자 지위 고지와 부동산 중개 주체 고지 "+
+             "두 문장은 확정했지만, 나머지는 값이 없습니다. <span class='hi'>이건 선택 항목이 아니라 오픈 차단 조건</span>입니다.",
+        blk:"전 화면 푸터 · 회원가입 동의 화면 · 앱 심사(추후)",
+        chk:"작성 주체(법무법인 위탁 여부)와 완료 목표일." }
+    ]},
+
+    { k:"c", n:"C", h:"확인만 — A가 정해지면 답이 나옵니다",
+      sub:"4건 · 15분 · 새로 논의할 안건이 아닙니다",
+      intro:"읽고 이견이 없으면 체크만 하고 넘어갑니다. 이견이 있으면 "+
+            "<b>A그룹의 어느 결정과 충돌하는지부터</b> 확인하세요 — 대개 A를 다시 여는 문제입니다.",
+      items:[
+      { id:"C-01", t:"GNB 다섯 번째 자리는 고객센터", tags:[["ux","IA"]],
+        rec:"소개머니 · 소개몰 · 소개창업 · 이용안내 · <b>고객센터</b>.",
+        why:"요율표와 부담 주체 안내가 이용안내로 들어가면서 “혜택안내”는 설명할 내용이 없어졌습니다. "+
+             "커뮤니티는 운영 인력이 붙는 시점에 6번째로 추가합니다.",
+        blk:"전 화면 헤더", chk:"" },
+
+      { id:"C-02", t:"메인은 제휴 배너형 + 카테고리 사이드바", tags:[["ux","IA"]],
+        rec:"시안 3안 채택.",
+        why:"업종이 32종이고 소개몰이 3개 군으로 나뉘어 <span class='hi'>아이콘 12칸으로는 담기지 않습니다</span>. "+
+             "세바팜 · SEBA SUN은 소개몰 A군의 실제 사례이므로 배너 자리를 유지할 근거가 있습니다.",
+        blk:"메인 화면 · 카테고리 API", chk:"" },
+
+      { id:"C-03", t:"에스크로는 소개머니 전체 + 소개몰 B군", tags:[["money","결제"]],
+        rec:"소개창업 양수도 대금은 플랫폼이 보관하지 않습니다.",
+        why:"개인 간 직거래가 사기 위험이 가장 큽니다. 안전결제가 없으면 소개머니는 <span class='hi'>당근 대비 이점이 없습니다</span>. "+
+             "반대로 창업 양수도 대금은 금액이 커서 보관 시 자금 규제 부담이 생깁니다.",
+        blk:"결제 화면 · B-04와 연동", chk:"" },
+
+      { id:"C-04", t:"모바일은 별도 화면 없이 반응형 · 하단 탭바 도입", tags:[["ux","UX"]],
+        rec:"767 / 1024 / 1280 세 구간. 767px 이하에서 하단 탭바 5탭(홈 · 탐색 · 등록 · 내소개 · 마이).",
+        why:"업종 32종을 햄버거 메뉴에 넣으면 탐색이 불가능합니다. 탭바의 “탐색”이 관 3종 → 업종 진입점 역할을 합니다. "+
+             "도입하면 역할 탭은 목록 화면 안으로만 내립니다 — <span class='hi'>위계 중복 방지</span>.",
+        blk:"전 화면 반응형 규칙 · 디자인 시스템 브레이크포인트", chk:"" }
+    ]},
+
+    { k:"d", n:"D", h:"통보 — 결정이 아니라 알고 계셔야 할 것",
+      sub:"5건 · 10분 · 일정과 담당자만 정하면 됩니다",
+      intro:"선택지가 없는 항목입니다. 하지 않으면 오픈이 안 되거나 법적 문제가 됩니다. "+
+            "이 중 3건은 이번 작업에서 <b>설계와 프로토타입까지 만들어 두었습니다</b> — 남은 건 구현 일정입니다.",
+      items:[
+      { id:"D-01", t:"수익 구간 화면은 설계 완료 · 구현 미착수", tags:[["ops","일정"]],
+        rec:"검수 · 1:1 매칭 · 계약 · 에스크로 · 성사 확정 · 정산 신청 · 지급 명세 + 백오피스 7화면 설계 완료.",
+        why:"시안 9개 화면은 전부 등록·노출 단계였고, <span class='hi'>실제로 돈이 흐르는 구간에 화면이 하나도 없었습니다</span>. "+
+             "지금은 통합 시뮬레이터에서 한 사이클이 끝까지 돌아갑니다 — 구현 일정만 잡으면 됩니다.",
+        blk:"", chk:"" },
+
+      { id:"D-02", t:"푸터 · 법적고지 영역 설계 완료 · 내용 미확정", tags:[["law","법률"]],
+        rec:"전 화면 공통 푸터와 고지 2문장 배치 완료. 나머지 값은 <code>TBD</code>.",
+        why:"B-12에서 실제 값을 채워야 합니다. 배치는 끝났으므로 값만 들어오면 즉시 반영됩니다.",
+        blk:"", chk:"" },
+
+      { id:"D-03", t:"반응형 전환 규칙 정의 완료", tags:[["ux","UX"]],
+        rec:"별도 모바일 화면 없이 767 / 1024 / 1280 세 구간. 디자인 시스템 문서에 명세.",
+        why:"별도 모바일 화면이 없다는 것 자체는 문제가 아닙니다. 문제는 <span class='hi'>전환 규칙이 없으면 개발자마다 다르게 만든다</span>는 것이었고, 이제 규칙이 있습니다.",
+        blk:"", chk:"" },
+
+      { id:"D-04", t:"tier = 1 고정 — 다단계 구조는 만들지 않습니다", tags:[["law","법률"]],
+        rec:"소개받은 사람이 다시 소개자가 되는 체인을 시스템이 생성하지 않습니다(INV-1).",
+        why:"소개비가 상위 소개자에게 흘러가는 구조는 <span class='hi'>방문판매법상 다단계판매</span>에 해당할 수 있습니다. "+
+             "기능이 아니라 규제 문제이므로 “나중에 추가”가 성립하지 않습니다 — 데이터 모델부터 tier를 두지 않았습니다.",
+        blk:"", chk:"" },
+
+      { id:"D-05", t:"관리자 도메인 분리", tags:[["ops","인프라"]],
+        rec:"<code>admin.sogaebaenk.co.kr</code>로 분리하고 IP 화이트리스트 적용.",
+        why:"백오피스에서 정산 승인과 지급 실행이 이뤄집니다. 같은 도메인에 두면 "+
+             "<span class='hi'>사용자 세션 취약점이 그대로 지급 권한으로 이어집니다</span>.",
+        blk:"", chk:"" }
+    ]},
+
+    { k:"e", n:"E", h:"멀티사이트 — 관을 사이트로 나누면서 새로 생긴 것",
+      sub:"5건 · 관 관리 콘솔을 설계하며 드러난 경계 문제",
+      intro:"확정된 전제 세 가지 위에서만 성립하는 항목입니다 — <b>회원 · 소개코드 · 정산 전부 통합</b>, "+
+            "<b>서브도메인 분리</b>, <b>관 무제한 추가</b>. 이 셋이 바뀌면 아래 5건의 답도 전부 바뀝니다.",
+      items:[
+      { id:"E-01", t:"관을 닫을 때 진행 중 Deal을 어떻게 하는가", tags:[["arch","구조"],["ops","운영"]],
+        rec:"신규 등록 · 신규 문의만 차단하고, <b>이미 열린 Deal과 정산은 끝까지 완주</b>시킵니다. 통합 메인 카드만 즉시 숨김.",
+        why:"관을 닫는 것과 돈을 끊는 것은 다릅니다. 진행 중 거래를 함께 끊으면 소개자와 당사자가 "+
+             "<span class='hi'>플랫폼 밖에서 정산을 하게 되고</span>, 그 순간 플랫폼은 분쟁 기록도 수수료도 잃습니다.",
+        blk:"관 상태 전환 로직 · 정산 배치 · 이용약관 서비스 종료 조항",
+        chk:"완주 기한을 둘지(예 90일), 무기한으로 둘지." },
+
+      { id:"E-02", t:"관 간 소개코드 귀속을 인정할 것인가", tags:[["arch","구조"],["money","정산"]],
+        rec:"인정합니다. 소개코드는 <b>회원에게 붙지 관에 붙지 않습니다</b> — 소개머니에서 유입된 사람이 소개창업에서 성사돼도 같은 소개자에게 귀속.",
+        why:"이것이 관을 통합해 두는 가장 큰 실익입니다. 새 관을 열 때 소개자를 처음부터 모을 필요가 없습니다. "+
+             "다만 <span class='hi'>요율이 관마다 다르므로 정산액은 성사된 관의 요율을 따릅니다</span> — 유입된 관이 아니라.",
+        blk:"귀속 로직 · 정산 계산 · 소개자 마이페이지 · 분쟁 기준",
+        chk:"90일 유효기간을 관 단위로 볼지, 회원 단위로 볼지. 권장은 회원 단위." },
+
+      { id:"E-03", t:"관을 몇 개까지 늘릴 것인가 · 기준은 무엇인가", tags:[["arch","구조"],["ux","IA"]],
+        rec:"<b>연결 관계가 다를 때만</b> 새 관을 만듭니다. 같은 연결 관계면 업종을 추가하는 것이 맞습니다.",
+        why:"관을 만들 수 있게 되면 반드시 늘어납니다. 기준이 없으면 “업종이 많아서” 관을 쪼개게 되고, "+
+             "그러면 <span class='hi'>업종과 관의 위계가 다시 무너집니다</span> — 처음에 해결한 바로 그 문제로 돌아갑니다.",
+        blk:"관 신설 승인 기준 · 통합 메인 카드 레이아웃(6개 넘으면 재설계 필요)",
+        chk:"현재 세 연결 관계 외에 실제로 다른 것이 있는지. 없다면 3관으로 고정하고 콘솔은 설정 편집용으로만 씁니다." },
+
+      { id:"E-04", t:"관별 손익을 분리 집계할 것인가", tags:[["money","수익"],["ops","운영"]],
+        rec:"<b>집계는 분리, 지급은 통합.</b> 소개자에게는 한 번에 지급하되 명세는 관별로 쪼개서 보여줍니다.",
+        why:"요율이 관마다 다른데 정산이 하나로 합쳐지므로, “이번 주 소개비 132만원”만 보이면 "+
+             "<span class='hi'>어느 관에서 얼마가 나왔는지 알 수 없습니다</span>. 이것이 문의 1순위가 됩니다. "+
+             "사업부 단위 손익 판단에도 관별 집계가 필요합니다.",
+        blk:"정산 명세 화면 · 백오피스 리포트 · 소개자 마이페이지",
+        chk:"관별 집계를 원가(PG 수수료 · 인증 비용)까지 나눌지, 매출만 나눌지." },
+
+      { id:"E-05", t:"관 신설 권한을 누구에게 주는가", tags:[["ops","운영"],["law","리스크"]],
+        rec:"<b>최고관리자 단독 + 2인 승인</b>. 생성은 항상 준비중 상태로만 되고, 운영중 전환은 오픈 체크리스트 통과 후 별도 승인.",
+        why:"관 하나가 새로 열리면 도메인 · SEO · 법적고지 · 검수 인력이 모두 따라옵니다. "+
+             "<span class='hi'>버튼 하나로 만들 수 있으면 검토 없이 만들어집니다</span>. 생성 자체를 어렵게 하는 것이 아니라 공개를 어렵게 하는 구조입니다.",
+        blk:"관리자 권한 모델 · 감사 로그 · 오픈 체크리스트",
+        chk:"승인자 2인을 누구로 할지." }
+    ]}
+  ];
+
+  var DEPS=[
+    ["A-01","전제","—","A-02 · A-03 · A-04 · A-05 · B-05 · C-02 전부","즉시"],
+    ["A-02","IA","A-01","등록폼 · 목록 필터 · SEO 32페이지 · 사이드바","A-01 직후"],
+    ["A-03","수익","A-01 · A-02","제휴사 영업 · 정산 로직 · 이용안내 요율표","A-02 직후"],
+    ["A-04","수익","A-01","역할 탭 정의 · 소개머니 등록폼 · 정산 부담 주체","A-01 직후"],
+    ["A-05","법률","A-01","부동산 업종 오픈 여부 · 중개사 인증 게이트","회의 후 자문"],
+    ["B-01~B-05","정산","A-03 · A-04","정산 전 구간 · 약관 · 알림","2주 내"],
+    ["B-06~B-08","법률·인증","A-05","계약 · 인증 게이트 · 회원가입","2주 내"],
+    ["B-09~B-11","운영","A-02","검수 · 정책 · 분쟁 · 인력 산정","4주 내"],
+    ["B-12","법률","전체","오픈 차단 조건","오픈 D-30"],
+    ["E-01~E-05","멀티사이트","A-01 · A-03","관 관리 콘솔 · 정산 명세 · 권한 모델","3주 내"]
+  ];
+
+  /* ---------------- 상태 ---------------- */
+  var KEY="sgb-dec-v21";
+  var ST={};
+  try{ ST=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ ST={}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(ST)); }catch(e){} }
+  function stOf(id){ return (ST[id]&&ST[id].s)||"open"; }
+  function memoOf(id){ return (ST[id]&&ST[id].m)||""; }
+  function setSt(id,v){ ST[id]=ST[id]||{}; ST[id].s=v; save(); }
+  function setMemo(id,v){ ST[id]=ST[id]||{}; ST[id].m=v; save(); }
+
+  var ALL=[]; GROUPS.forEach(function(g){ g.items.forEach(function(it){ ALL.push(it.id); }); });
+
+  /* ---------------- 렌더 ---------------- */
+  function card(it, gk){
+    var s=stOf(it.id);
+    var rows="";
+    rows+='<div class="row"><span class="rk">권장안</span><div class="rv">'+
+      '<div class="rec"><span class="lab">RECOMMENDED</span>'+it.rec+'</div></div></div>';
+    rows+='<div class="row"><span class="rk">근거</span><div class="rv">'+it.why+'</div></div>';
+    if(it.blk) rows+='<div class="row"><span class="rk">막히면</span><div class="rv">'+
+      '<div class="blk"><span class="lab">BLOCKED</span>'+it.blk+'</div></div></div>';
+    if(it.chk) rows+='<div class="row"><span class="rk">회의에서</span><div class="rv">'+it.chk+'</div></div>';
+    rows+='<div class="row"><span class="rk">결정 기록</span><div class="rv">'+
+      '<textarea class="memo" data-memo="'+it.id+'" placeholder="확정 내용 · 변경 사항 · 담당자 · 기한">'+
+      esc(memoOf(it.id))+'</textarea></div></div>';
+
+    return '<article class="d g-'+gk+' st-'+(s==="open"?"":s)+'" data-id="'+it.id+'">'+
+      '<div class="dtop" data-toggle="1">'+
+        '<span class="did">'+esc(it.id)+'</span>'+
+        '<div class="dttl"><h3>'+it.t+'</h3><div class="tags">'+
+          it.tags.map(function(t){ return '<span class="tag '+t[0]+'">'+esc(t[1])+'</span>'; }).join("")+
+        '</div></div>'+
+        '<div class="dst">'+
+          '<button class="sbtn ok'+(s==="ok"?" on":"")+'" data-set="ok">확정</button>'+
+          '<button class="sbtn hold'+(s==="hold"?" on":"")+'" data-set="hold">보류</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="dbody">'+rows+'</div>'+
+    '</article>';
+  }
+
+  function build(){
+    var h="";
+    GROUPS.forEach(function(g){
+      h+='<section><div class="shd"><span class="snum '+g.k+'">'+g.n+'</span>'+
+        '<div><h2>'+esc(g.h)+'</h2><p class="sub">'+esc(g.sub)+'</p></div></div>'+
+        '<div class="sintro '+g.k+'">'+g.intro+'</div>'+
+        g.items.map(function(it){ return card(it, g.k); }).join("")+
+      '</section>';
+    });
+
+    h+='<section><div class="shd"><span class="snum d">↓</span>'+
+      '<div><h2>결정 순서와 파급 범위</h2><p class="sub">우선순위가 아니라 순서입니다 — 앞이 막히면 뒤가 전부 대기합니다</p></div></div>'+
+      '<div class="tblwrap"><table><thead><tr>'+
+      '<th>항목</th><th>성격</th><th>선행 조건</th><th>풀리면 착수 가능한 것</th><th>목표</th>'+
+      '</tr></thead><tbody>'+
+      DEPS.map(function(r){
+        return '<tr><td class="k">'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td>'+
+               '<td>'+esc(r[3])+'</td><td>'+esc(r[4])+'</td></tr>';
+      }).join("")+'</tbody></table></div></section>';
+
+    $("#doc").innerHTML=h;
+    count();
+  }
+
+  function count(){
+    var ok=0,hold=0;
+    ALL.forEach(function(id){ var s=stOf(id); if(s==="ok")ok++; else if(s==="hold")hold++; });
+    $("#cOk").textContent=ok; $("#cHold").textContent=hold;
+    $("#cOpen").textContent=ALL.length-ok-hold;
+    $("#trk").style.width=Math.round(ok/ALL.length*100)+"%";
+  }
+
+  document.addEventListener("click", function(e){
+    var b=e.target.closest("[data-set]");
+    if(b){
+      e.stopPropagation();
+      var art=b.closest(".d"), id=art.getAttribute("data-id"), v=b.getAttribute("data-set");
+      var nv=(stOf(id)===v)?"open":v;
+      setSt(id,nv);
+      art.className="d g-"+art.className.match(/g-(\w)/)[1]+" st-"+(nv==="open"?"":nv)+
+        (art.classList.contains("open")?" open":"");
+      Array.prototype.forEach.call(art.querySelectorAll(".sbtn"), function(x){
+        x.classList.toggle("on", x.getAttribute("data-set")===nv);
+      });
+      count();
+      toast(nv==="ok"?id+" 확정":(nv==="hold"?id+" 보류":id+" 미결로 되돌림"));
+      return;
+    }
+    var t=e.target.closest("[data-toggle]");
+    if(t){ t.closest(".d").classList.toggle("open"); }
+  });
+
+  document.addEventListener("input", function(e){
+    var m=e.target.closest("[data-memo]");
+    if(m) setMemo(m.getAttribute("data-memo"), m.value);
+  });
+
+  $("#bAll").addEventListener("click", function(){
+    var cards=$$(".d"), anyClosed=cards.some(function(c){ return !c.classList.contains("open"); });
+    cards.forEach(function(c){ c.classList.toggle("open", anyClosed); });
+    this.textContent=anyClosed?"전체 접기":"전체 펼치기";
+  });
+  $("#bClr").addEventListener("click", function(){
+    if(!confirm("체크와 메모를 모두 지웁니다. 계속할까요?")) return;
+    ST={}; save(); build(); toast("초기화했습니다");
+  });
+
+  build();
+})();
+</script>
+
+</body></html>

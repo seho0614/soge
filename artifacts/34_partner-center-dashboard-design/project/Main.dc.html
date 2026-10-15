@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>소개뱅크 파트너센터 대시보드</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Pretendard',-apple-system,sans-serif;background:#F4F6FA}
+a{color:#3B6EF6;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1560px; box-sizing: border-box; display: flex; background: #F4F6FA; color: #1B2B4B;">
+
+  <!-- 좌측 GNB -->
+  <div style="width: 240px; flex-shrink: 0; background: #101E3E; color: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box;">
+    <div style="padding: 24px 20px 18px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2FD1A3" stroke-width="2"><path d="M12 3 L21 9 L21 21 L3 21 L3 9 Z"/><path d="M9 21v-6h6v6"/></svg>
+        <div style="font-size: 17px; font-weight: 800; line-height:1.2;">소개뱅크<br/>PARTNERS</div>
+      </div>
+      <div style="font-size: 11.5px; color: #93A2C2; margin-top: 10px; line-height: 1.5;">좋은 제품을 소개하는<br/>당신이 더 특별한 세상을 만듭니다.</div>
+    </div>
+
+    <nav style="display: flex; flex-direction: column; gap: 3px; padding: 4px 14px;">
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #FFFFFF; color: #101E3E; font-size: 13.5px; font-weight: 700;">
+        <span style="width:22px;height:22px;border-radius:6px;background:#3B6EF6;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        </span>
+        대시보드
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+        추천상품
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        내 소개링크
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        수익관리
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        주문/고객현황
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/></svg>
+        정산내역
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        마케팅자료실
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
+        공지사항
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        1:1 문의
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #C3CCE3; font-size: 13.5px; font-weight: 500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        파트너가이드
+      </a>
+    </nav>
+
+    <div style="margin-top: auto; padding: 16px;">
+      <div style="background: #1A2C52; border-radius: 12px; padding: 16px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:20px;">🏆</span>
+        <div style="font-size: 12px; line-height: 1.55; color: #DCE3F5;">좋은 사람의<br/>소개가 더 나은 일상을<br/>만듭니다.</div>
+      </div>
+      <div style="margin-top: 12px; border-radius: 12px; overflow: hidden; position: relative; height: 150px;">
+        <img src="/_blob/20a8cceccd2edf45528cb59bab60720d" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+        <div style="position:absolute; inset:0; background:linear-gradient(0deg, rgba(16,30,62,0.55), rgba(16,30,62,0.05));"></div>
+        <div style="position:absolute; top:14px; left:14px; right:14px; color:#fff;">
+          <div style="font-size: 12.5px; font-weight: 800; line-height:1.4;">함께 성장하는<br/>소개뱅크 PARTNERS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 컨텐츠 -->
+  <div style="flex: 1; padding: 24px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px;">
+
+    <!-- 상단바 -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 13px; color: #6E7A96;">사람을 잇는 좋은 소개, 더 큰 가치를 만듭니다.</div>
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <button aria-label="알림" style="position: relative; width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; display:flex; align-items:center; justify-content:center;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1B2B4B" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/></svg>
+          <span style="position: absolute; top: 0px; right: 0px; background: #F04438; color: #fff; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">3</span>
+        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 30px; height: 30px; border-radius: 50%; background: #3B6EF6;"></div>
+          <span style="font-size: 13.5px; font-weight: 700;">김OO 파트너님</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6E7A96" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 히어로 배너 -->
+    <div style="background: linear-gradient(90deg, #EAF0FF 0%, #E3ECFF 55%, #D9E5FB 100%); border-radius: 18px; padding: 0; display: flex; align-items: stretch; overflow:hidden;">
+      <div style="padding: 30px 8px 30px 32px; flex: 1;">
+        <div style="font-size: 24px; font-weight: 800; color:#12203D;">김OO 파트너님</div>
+        <div style="font-size: 24px; font-weight: 800; color:#12203D; display:flex; align-items:center; gap:6px;">오늘도 수익을 만들어보세요 <span style="font-size:22px;">💙</span></div>
+        <div style="font-size: 12.5px; color: #5C6885; margin-top: 12px; line-height: 1.7;">좋은 제품을 소개하는 당신이, 더 많은 사람에게 좋은 변화를 만듭니다.<br/>소개뱅크 PARTNERS가 항상 함께합니다.</div>
+      </div>
+      <div style="width: 460px; flex-shrink:0; position:relative; overflow:hidden;">
+        <img src="/_blob/cf6afa3a0298635f540271f4b2488d33" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+      </div>
+      <div style="width: 150px; flex-shrink:0; background:#101E3E; color:#fff; padding: 26px 18px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+        <div style="font-size:15px; font-weight:800; line-height:1.4;">소개하는<br/>당신이<br/>특별합니다.</div>
+        <div style="width:24px; height:1px; background:#3A4A70;"></div>
+        <div style="font-size:9.5px; letter-spacing:0.08em; color:#93A2C2; line-height:1.7; font-weight:700;">PARTNER<br/>TODAY<br/>A BETTER<br/>TOMORROW</div>
+      </div>
+    </div>
+
+    <!-- KPI + 우측 패널 -->
+    <div style="display: flex; gap: 18px; align-items: flex-start;">
+
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 18px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#12B886;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;flex-shrink:0;">₩</span>
+            <div>
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">오늘 소개수익</div>
+              <div style="font-size: 21px; font-weight: 800; margin-top: 4px;">24,000<span style="font-size:13px;font-weight:600;">원</span></div>
+              <div style="font-size: 11px; color: #12B886; margin-top: 3px; font-weight: 700;">▲ 어제보다 12,000원 증가</div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#3B6EF6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+            </span>
+            <div>
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">이번 달 누적수익</div>
+              <div style="font-size: 21px; font-weight: 800; margin-top: 4px;">342,000<span style="font-size:13px;font-weight:600;">원</span></div>
+              <div style="font-size: 11px; color: #12B886; margin-top: 3px; font-weight: 700;">▲ 지난 달 대비 68% ↑</div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#B15DE0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            </span>
+            <div>
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">정산 예정금액</div>
+              <div style="font-size: 21px; font-weight: 800; margin-top: 4px;">280,000<span style="font-size:13px;font-weight:600;">원</span></div>
+              <div style="font-size: 11px; color: #6E7A96; margin-top: 3px;">🕐 12월 10일 정산 예정</div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#3B6EF6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </span>
+            <div>
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">소개 고객 수</div>
+              <div style="font-size: 21px; font-weight: 800; margin-top: 4px;">18<span style="font-size:13px;font-weight:600;">명</span></div>
+              <div style="font-size: 11px; color: #12B886; margin-top: 3px; font-weight: 700;">▲ 어제보다 5명 증가</div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#5B6EF6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            </span>
+            <div>
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">거래 건수</div>
+              <div style="font-size: 21px; font-weight: 800; margin-top: 4px;">12<span style="font-size:13px;font-weight:600;">건</span></div>
+              <div style="font-size: 11px; color: #12B886; margin-top: 3px; font-weight: 700;">▲ 어제보다 4건 증가</div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06); display:flex; gap:12px;">
+            <span style="width:38px;height:38px;border-radius:10px;background:#D4A017;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 7l5 3 5-6 5 6 5-3-2 12H4z"/></svg>
+            </span>
+            <div style="flex:1;">
+              <div style="font-size: 12.5px; color: #6E7A96; font-weight: 600;">파트너 등급 ⓘ</div>
+              <div style="font-size: 16px; font-weight: 800; margin-top: 4px; color: #B8860B;">골드 파트너</div>
+              <div style="height: 5px; background: #EEF1F6; border-radius: 999px; margin-top: 6px;"><div style="width: 62%; height: 100%; background: #12B886; border-radius: 999px;"></div></div>
+              <div style="font-size: 10px; color: #6E7A96; margin-top: 4px;">다음 등급까지 58,000원 남음</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오늘의 추천상품 -->
+        <div style="background: #FFFFFF; border-radius: 14px; padding: 20px; box-shadow: 0 1px 2px rgba(18,35,61,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 15px; font-weight: 800;">오늘의 추천상품 🚀</div>
+            <a href="#" style="font-size: 12px; font-weight: 700;">전체 상품 보기 ›</a>
+          </div>
+          <div style="font-size: 12px; color: #6E7A96; margin-top: 4px;">지금 가장 반응이 좋은 인기 상품이에요. 소개하고 추가 수익을 만들어보세요!</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px;">
+
+            <div style="border: 1px solid #EBEEF3; border-radius: 12px; overflow: hidden;">
+              <div style="height: 100px; position:relative; overflow:hidden;">
+                <img src="/_blob/15bbffd16b4e8fc3cf8b6f7f5bd5c0dd" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <div style="padding: 12px; position:relative;">
+                <span style="position:absolute; top:-14px; left:12px; font-size: 10px; background: #F04438; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: 5px;">🔥 인기</span>
+                <div style="font-size: 13.5px; font-weight: 700; margin-top:6px;">프리미엄 핫팩</div>
+                <div style="font-size: 11px; color:#6E7A96; margin-top: 3px;">추운 겨울, 따뜻한 마음을 전하세요</div>
+                <div style="font-size: 11.5px; color: #12B886; font-weight: 700; margin-top: 8px; background:#EAFBF4; padding:6px 8px; border-radius:6px; text-align:center;">1건 판매 시 소개수익 3,000원</div>
+                <button style="width: 100%; margin-top: 10px; background: #101E3E; color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 12.5px; font-weight: 700;">상품 소개하기 ›</button>
+              </div>
+            </div>
+
+            <div style="border: 1px solid #EBEEF3; border-radius: 12px; overflow: hidden;">
+              <div style="height: 100px; position:relative; overflow:hidden;">
+                <img src="/_blob/e6f5ddb611c56637d818e8b3737fa616" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <div style="padding: 12px; position:relative;">
+                <span style="position:absolute; top:-14px; left:12px; font-size: 10px; background: #F04438; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: 5px;">🔥 인기</span>
+                <div style="font-size: 13.5px; font-weight: 700; margin-top:6px;">프리미엄 전기매트</div>
+                <div style="font-size: 11px; color:#6E7A96; margin-top: 3px;">따뜻하고 포근한 겨울을 필수템</div>
+                <div style="font-size: 11.5px; color: #12B886; font-weight: 700; margin-top: 8px; background:#EAFBF4; padding:6px 8px; border-radius:6px; text-align:center;">1건 판매 시 소개수익 3,000원</div>
+                <button style="width: 100%; margin-top: 10px; background: #101E3E; color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 12.5px; font-weight: 700;">상품 소개하기 ›</button>
+              </div>
+            </div>
+
+            <div style="border: 1px solid #EBEEF3; border-radius: 12px; overflow: hidden;">
+              <div style="height: 100px; position:relative; overflow:hidden;">
+                <img src="/_blob/3f667819005cb6dba011a9f1ce9b682c" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+              </div>
+              <div style="padding: 12px; position:relative;">
+                <span style="position:absolute; top:-14px; left:12px; font-size: 10px; background: #12B886; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: 5px;">❤ 고수익</span>
+                <div style="font-size: 13.5px; font-weight: 700; margin-top:6px;">태양광 상담 신청</div>
+                <div style="font-size: 11px; color:#6E7A96; margin-top: 3px;">전기요금 절감, 지금이 기회입니다</div>
+                <div style="font-size: 11.5px; color: #12B886; font-weight: 700; margin-top: 8px; background:#EAFBF4; padding:6px 8px; border-radius:6px; text-align:center;">1건 상담 시 소개수익 5,000원</div>
+                <button style="width: 100%; margin-top: 10px; background: #101E3E; color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 12.5px; font-weight: 700;">상품 소개하기 ›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 빠른 홍보하기 -->
+        <div style="background: #FFFFFF; border-radius: 14px; padding: 20px; box-shadow: 0 1px 2px rgba(18,35,61,0.06);">
+          <div style="font-size: 15px; font-weight: 800;">빠른 홍보하기</div>
+          <div style="font-size: 12px; color: #6E7A96; margin-top: 4px;">내 소개링크로 지금 바로 공유하고 수익을 만들어보세요!</div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <div style="flex: 1; background: #F4F6FA; border: 1px solid #E3E8F0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #6E7A96; display:flex; align-items:center; gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E7A96" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              https://sogaebank.com/?ref=partner1234
+            </div>
+            <button style="background: #101E3E; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 12px; font-weight: 700;">복사하기</button>
+          </div>
+          <img src="/_blob/e9874b154fb00f912401c9e3dc54819e" style="width:100%; display:block; margin-top: 12px; border-radius: 10px;">
+        </div>
+      </div>
+
+      <!-- 우측 패널 -->
+      <div style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size: 13px; font-weight: 800;">이번 달 목표 달성률 ⓘ</div>
+            <a href="#" style="font-size: 11px; font-weight: 700;">상세보기 ›</a>
+          </div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top: 8px;">
+            <span style="font-size: 26px; font-weight: 800; color: #12B886;">68%</span>
+            <span style="font-size: 12px; color: #6E7A96;">342,000원 / 500,000원</span>
+          </div>
+          <div style="height: 8px; background: #EEF1F6; border-radius: 999px; margin-top: 8px;"><div style="width: 68%; height: 100%; background: #12B886; border-radius: 999px;"></div></div>
+          <div style="font-size: 11.5px; color: #6E7A96; margin-top: 12px; line-height:1.5;">💬 "지금처럼 하면 목표 달성, 충분히 가능합니다!" 🎉</div>
+        </div>
+
+        <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 13px; font-weight: 800;">지금, 이런 성과가 있어요! 🔥</div>
+            <a href="#" style="font-size: 11px; font-weight: 700;">더보기 ›</a>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px; margin-top: 12px;">
+            <div style="font-size: 11.5px; line-height: 1.5;"><span style="color:#9AA5BE;">3분 전</span> &nbsp;경기도 김OO님이 전기매트를 구매했어요! <span style="color:#12B886;font-weight:700;">+3,000원</span></div>
+            <div style="font-size: 11.5px; line-height: 1.5;"><span style="color:#9AA5BE;">12분 전</span> &nbsp;부산시 이OO님이 핫팩을 구매했어요! <span style="color:#12B886;font-weight:700;">+3,000원</span></div>
+            <div style="font-size: 11.5px; line-height: 1.5;"><span style="color:#9AA5BE;">1시간 전</span> &nbsp;서울시 박OO님이 태양광 상담을 신청했어요! <span style="color:#12B886;font-weight:700;">+5,000원</span></div>
+            <div style="font-size: 11.5px; line-height: 1.5;"><span style="color:#9AA5BE;">2시간 전</span> &nbsp;대전시 정OO님이 전기매트를 구매했어요! <span style="color:#12B886;font-weight:700;">+3,000원</span></div>
+            <div style="font-size: 11.5px; line-height: 1.5;"><span style="color:#9AA5BE;">3시간 전</span> &nbsp;인천시 김OO님이 핫팩을 구매했어요! <span style="color:#12B886;font-weight:700;">+3,000원</span></div>
+          </div>
+        </div>
+
+        <div style="background: #101E3E; border-radius: 14px; padding: 18px; color: #FFFFFF; position:relative; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size: 13px; font-weight: 800; display:flex; align-items:center; gap:6px;">🚀 소개뱅크 PARTNERS</div>
+            <span style="font-size:14px;">›</span>
+          </div>
+          <div style="font-size: 12px; color: #C3CCE3; margin-top: 8px; line-height: 1.6;">지금, 더 큰 수익의 기회가<br/>기다리고 있습니다.</div>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 12px;">
+            <div style="font-size: 11.5px; display:flex; gap:6px; align-items:center;"><span style="color:#12B886;">✔</span> 좋은 제품을 소개하고</div>
+            <div style="font-size: 11.5px; display:flex; gap:6px; align-items:center;"><span style="color:#12B886;">✔</span> 누군가의 일상을 더 좋게 만들고</div>
+            <div style="font-size: 11.5px; display:flex; gap:6px; align-items:center;"><span style="color:#12B886;">✔</span> 당신의 수익도 함께 성장합니다.</div>
+          </div>
+          <div style="text-align:right; margin-top:10px; font-size:15px; font-weight:800; font-style:italic; color:#5B8CFF;">함께, 더 멀리! ↗</div>
+        </div>
+
+        <div style="background: #FFFFFF; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 13px; font-weight: 800;">공지사항</div>
+            <a href="#" style="font-size: 11px; font-weight: 700;">더보기 ›</a>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span>• [필독] 12월 정산 일정 안내</span><span style="color:#9AA5BE;">2024.12.01</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span>• 신규 추천상품 '프리미엄 핫팩' 오픈!</span><span style="color:#9AA5BE;">2024.11.29</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span>• 파트너 전용 홍보자료 업데이트</span><span style="color:#9AA5BE;">2024.11.28</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}</style><style>:root{color-scheme:light dark;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}}:root[data-theme="dark"]{color-scheme:dark;--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}:root[data-theme="light"]{color-scheme:light}@media print{:root,:root[data-theme="dark"]{color-scheme:light;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}}body{background:var(--md-bg);color:var(--md-text);max-width:720px;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:10px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;overflow-wrap:break-word}body>:first-child{margin-top:0}h1,h2,h3,h4,h5,h6{margin:6px 0 0;line-height:1.25;font-weight:600;text-wrap:balance}h1{font-size:1.35em}h2{font-size:1.15em;color:var(--md-muted)}h3,h4,h5,h6{font-size:1em}p,ul,ol,blockquote,table,pre,hr{margin:0}strong{font-weight:600}a{color:var(--md-link);text-decoration:none}a:hover{text-decoration:underline}ul,ol{display:flex;flex-direction:column;gap:6px;padding-left:22px}ul{list-style:disc}ol{list-style:decimal}:is(li,td,th)>*+:is(p,ul,ol,blockquote){margin-top:6px}blockquote{display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--md-rule);padding-left:10px;color:var(--md-muted)}:not(pre)>code{background:var(--md-fill);padding:1px 3px;border-radius:4px;font:.92em 'SF Mono',ui-monospace,Menlo,Consolas,monospace}a>code{background:none;color:inherit}pre{background:var(--md-fill);padding:10px 12px;border-radius:6px;overflow-x:auto;font:12px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;margin-block:4px}pre code{background:none;padding:0;font:inherit}table{width:100%;border-collapse:separate;border-spacing:2px;font:inherit}th,td{padding:6px 8px;border-radius:3px;text-align:left;vertical-align:top}th{background:var(--md-fill-strong);font-weight:600}td{background:var(--md-fill)}:is(th,td) :not(pre)>code{background:transparent}hr{border:0;border-top:1px solid var(--md-rule-strong);margin-block:10px}img{max-width:100%;height:auto;border-radius:4px}</style>
+</head><body>
+<h1>소개뱅크 AWS 구축·운영·관리 절차서 (sgb 스택 기준)</h1>
+<p><strong>대상 스택: NestJS + TypeScript + Prisma + PostgreSQL 16 · Next.js(사용자) · Vite SPA(어드민)</strong>
+<strong>리전: 서울(ap-northeast-2) · 도메인: sogaebaenk.co.kr</strong>
+<strong>작성 기준: 대표(박세호) 직접 구축 · 외주 없이 콘솔 작업</strong></p>
+<blockquote>
+<p>기존 프로젝트 자료(AWS 적용 절차 v1.0/v1.1)는 Spring Boot + MySQL 스택을 전제로 작성되어 있습니다. 현재 실제 채택 스택은 NestJS + PostgreSQL이므로, 이 문서는 같은 원칙(예산 알림 우선, 기본 VPC, 키페어 백업, RDS 프라이빗 등)을 Node/PostgreSQL 환경으로 다시 옮긴 것입니다. DB 엔진·런타임·배포 방식이 전부 다르므로 기존 문서를 참고할 때는 이 문서를 우선하십시오.</p>
+</blockquote>
+<hr>
+<h2>0. 전체 그림</h2>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>서비스</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>컴퓨팅</td>
+<td>EC2 (t3.small → t3.medium)</td>
+<td>API 서버(NestJS) 구동, 개발/스테이징/운영</td>
+</tr>
+<tr>
+<td>데이터베이스</td>
+<td>RDS PostgreSQL 16</td>
+<td>운영 DB (프라이빗, 퍼블릭 접근 차단)</td>
+</tr>
+<tr>
+<td>세션·캐시</td>
+<td>ElastiCache Redis 또는 EC2 내 Redis</td>
+<td>세션 스토어, 큐</td>
+</tr>
+<tr>
+<td>파일 저장</td>
+<td>S3</td>
+<td>업로드 파일(사업자등록증, 이미지 등)</td>
+</tr>
+<tr>
+<td>네트워크</td>
+<td>기본 VPC + 보안그룹 3벌</td>
+<td>NAT 게이트웨이 없이 최소 비용</td>
+</tr>
+<tr>
+<td>도메인/HTTPS</td>
+<td>Route 53 + Let's Encrypt(와일드카드) + Nginx</td>
+<td>sogaebaenk.co.kr 및 서브도메인</td>
+</tr>
+<tr>
+<td>정적 프런트</td>
+<td>S3 + CloudFront 또는 EC2 내 Next.js 빌드</td>
+<td>사용자/어드민 UI</td>
+</tr>
+<tr>
+<td>모니터링</td>
+<td>CloudWatch + PM2</td>
+<td>헬스체크, 로그, 알람</td>
+</tr>
+</tbody>
+</table>
+<p><strong>총 소요: 약 2~3일</strong> (인프라 전업이 아니어도 가능한 범위)</p>
+<hr>
+<h2>1. 착수 전 확정 사항 — 이식성 규칙 (Node/PostgreSQL 버전)</h2>
+<p>로컬에서 만든 뒤 AWS로 옮길 때, 아래를 처음부터 지키면 &quot;설정 교체&quot;로 끝나고, 안 지키면 &quot;코드 수정 + 재검증&quot;이 됩니다.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>규칙</th>
+<th>내용</th>
+<th>안 지키면</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>설정 외부화</td>
+<td>DB 접속 정보·API 키·경로를 코드에 넣지 않음. <code>.env</code> + <code>@nestjs/config</code>로 주입. 비밀값은 환경변수로만</td>
+<td>운영 서버가 개발 DB를 바라보는 사고</td>
+</tr>
+<tr>
+<td>2</td>
+<td>파일 업로드 추상화 ★</td>
+<td><code>StorageService</code> 인터페이스로 감싸고 <code>LocalStorage</code>/<code>S3Storage</code> 구현 분리. 서비스 코드에서 <code>fs.writeFile</code> 직접 호출 금지</td>
+<td>업로드 걸린 화면 전부 재작업 (사업자등록증, 신뢰지표 증빙, 회사 이미지 7종 등)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>PostgreSQL 버전 통일</td>
+<td>로컬도 Docker/네이티브 PostgreSQL <strong>16.x</strong>로 RDS와 동일 마이너 버전</td>
+<td>로컬은 되는데 서버에서 안 되는 쿼리 차이</td>
+</tr>
+<tr>
+<td>4</td>
+<td>세션 외부화</td>
+<td>인메모리 세션 금지, Redis 세션 스토어 필수 (서브도메인 5개 관 간 세션 공유 전제)</td>
+<td>서버 재시작마다 로그인 풀림, 서브도메인 세션 공유 불가</td>
+</tr>
+<tr>
+<td>5</td>
+<td>시간대 통일</td>
+<td>서버·DB·애플리케이션 모두 UTC 고정, 표시 시점에만 KST 변환</td>
+<td>데이터 소급 보정 사실상 불가</td>
+</tr>
+<tr>
+<td>6</td>
+<td>경로 환경변수화</td>
+<td>Windows 경로·하드코딩 절대경로 금지</td>
+<td>컨테이너/서버에서 로그·업로드 경로 소실</td>
+</tr>
+<tr>
+<td>7</td>
+<td>DB 스키마는 코드로 관리</td>
+<td>Prisma Migrate로만 스키마 변경. <code>db push</code>는 로컬 실험용으로만, 운영 반영은 <code>prisma migrate deploy</code></td>
+<td>로컬·RDS 스키마 분기, 정본 불명</td>
+</tr>
+</tbody>
+</table>
+<p><strong>검수 기준</strong>: 서비스 계층에서 <code>fs.writeFile</code>/<code>fs.readFile</code> import 0건, 소스 전체에서 DB 접속 문자열·API 키 하드코딩 0건.</p>
+<hr>
+<h2>2. AWS 계정과 과금 기반 (0단계, 가장 먼저)</h2>
+<ol>
+<li>루트 계정 생성 → <strong>즉시 MFA 등록</strong> (OTP 앱)</li>
+<li><strong>AWS Budgets에서 월 임계 알림 설정</strong> — 예: 30만원. 메일 수신 확인까지 완료. <strong>이 알림을 켜기 전에는 다음 단계로 가지 않습니다.</strong></li>
+<li>결제 설정에 <strong>사업자등록번호(429-88-01533) 등록</strong> → 세금계산서 발행. 나중에 등록하면 소급이 번거로움</li>
+<li><strong>리전을 서울(ap-northeast-2)로 고정.</strong> 개인정보가 들어가는 서비스이므로 국내 리전 필수</li>
+<li><strong>IAM 관리자 사용자 생성 → 루트는 봉인.</strong> 이후 모든 콘솔·CLI 작업은 IAM 사용자로 수행</li>
+</ol>
+<blockquote>
+<p>이 단계에서 확정되는 값 — 호스팅제공자 = <code>Amazon Web Services Korea LLC</code>. 푸터 법정고지·통신판매업 신고서에 필요한 항목입니다.</p>
+</blockquote>
+<hr>
+<h2>3. 네트워크 — 기본 VPC + 보안그룹 3벌</h2>
+<p><strong>VPC를 직접 만들지 않습니다.</strong> 콘솔 마법사로 새 VPC를 만들면 NAT 게이트웨이가 함께 켜지는 경우가 많고, 이것만으로 월 6만원 안팎이 아무 일도 하지 않고 나갑니다. 최소 구성에는 기본 VPC로 충분합니다.</p>
+<p>보안그룹 3벌만 만듭니다.</p>
+<table>
+<thead>
+<tr>
+<th>보안그룹</th>
+<th>인바운드 허용</th>
+<th>대상</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sb-web</code></td>
+<td>80, 443 ← 0.0.0.0/0</td>
+<td>운영 EC2</td>
+</tr>
+<tr>
+<td><code>sb-ops</code></td>
+<td>22 ← 사무실/자택 고정 IP만, <code>/admin</code> 경로는 애플리케이션 레벨에서도 IP 제한</td>
+<td>전 서버</td>
+</tr>
+<tr>
+<td><code>sb-db</code></td>
+<td>5432 ← <code>sb-web</code> 보안그룹만</td>
+<td>RDS PostgreSQL</td>
+</tr>
+</tbody>
+</table>
+<p>Redis를 EC2에서 직접 운영한다면 <code>sb-db</code>에 6379도 <code>sb-web</code>에서만 열어둡니다.</p>
+<hr>
+<h2>4. EC2 구성</h2>
+<h3>4-1. 인스턴스 구성</h3>
+<table>
+<thead>
+<tr>
+<th>서버</th>
+<th>타입</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dev-staging</td>
+<td>t3.small</td>
+<td>개발 통합 테스트 + 스테이징 (초기 1대로 병행 가능)</td>
+</tr>
+<tr>
+<td>production</td>
+<td>t3.medium</td>
+<td>운영 API 서버</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>AMI: <strong>Ubuntu 24.04 LTS</strong></li>
+<li><strong>키페어(.pem) 생성 즉시 2곳(로컬 + 별도 보관소)에 백업.</strong> AWS는 분실 시 재발급하지 않으며, 분실하면 서버 접속이 영구히 막혀 인스턴스를 새로 만들어야 합니다</li>
+<li><strong>운영 서버에는 Elastic IP를 선점</strong>해둡니다 — 카카오 알림톡/SMS 대행사가 발신 서버 IP 등록을 요구하는 경우가 많고, 애플리케이션 완성 전에도 IP는 먼저 확보할 수 있습니다 (t3.small + Elastic IP ≈ 월 3만원)</li>
+</ul>
+<h3>4-2. 서버 초기 설정 (Ubuntu 24.04 기준)</h3>
+<pre><code class="language-bash"># Node.js 24 LTS (nvm 권장 — 버전 전환 용이)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+source ~/.bashrc
+nvm install 24
+nvm alias default 24
+
+# PM2 — 프로세스 관리자, systemd와 연동해 재부팅 시 자동 기동
+npm install -g pm2
+pm2 startup systemd   # 출력되는 명령을 그대로 sudo로 실행
+
+# PostgreSQL 클라이언트(마이그레이션·점검용, DB 자체는 RDS 사용)
+sudo apt install -y postgresql-client-16
+
+# Nginx (리버스 프록시)
+sudo apt install -y nginx
+</code></pre>
+<h3>4-3. 배포 단위 — Docker 없이 갈 경우</h3>
+<p>Docker를 쓰지 않기로 했다면(로컬 개발 절차 문서 기준과 동일하게), PM2 ecosystem 파일로 대체합니다.</p>
+<pre><code class="language-js">// ecosystem.config.js
+module.exports = {
+  apps: [{
+    name: &#39;sgb-api&#39;,
+    script: &#39;dist/main.js&#39;,
+    instances: 1,
+    exec_mode: &#39;fork&#39;,
+    env_production: {
+      NODE_ENV: &#39;production&#39;,
+      TZ: &#39;UTC&#39;,
+    },
+  }],
+};
+</code></pre>
+<pre><code class="language-bash">pm2 start ecosystem.config.js --env production
+pm2 save
+</code></pre>
+<hr>
+<h2>5. RDS — PostgreSQL 16</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>엔진</td>
+<td>PostgreSQL <strong>16.x</strong> (로컬과 마이너 버전까지 일치)</td>
+</tr>
+<tr>
+<td>인스턴스 클래스</td>
+<td>db.t3.micro (초기) → 트래픽 보고 db.t3.small로 상향</td>
+</tr>
+<tr>
+<td>퍼블릭 액세스</td>
+<td><strong>아니오</strong> (반드시)</td>
+</tr>
+<tr>
+<td>보안그룹</td>
+<td><code>sb-db</code>만 허용</td>
+</tr>
+<tr>
+<td>백업 보관 기간</td>
+<td>7일 이상, 자동 백업 활성화</td>
+</tr>
+<tr>
+<td>파라미터 그룹</td>
+<td>타임존 UTC 고정</td>
+</tr>
+<tr>
+<td>Multi-AZ</td>
+<td>초기는 비활성(비용), 운영 안정화 후 재검토</td>
+</tr>
+</tbody>
+</table>
+<p><strong>복원 연습 1회를 반드시 수행합니다.</strong> 스냅샷에서 새 인스턴스로 복원해보고, 애플리케이션이 접속되는지 확인 후 삭제. 이 30분을 건너뛰면 정말 필요한 날 복원이 안 되는 것을 그때 알게 됩니다.</p>
+<p>Prisma 연결 문자열 예:</p>
+<pre><code>DATABASE_URL=&#34;postgresql://sgb_app:${DB_PASSWORD}@&lt;RDS엔드포인트&gt;:5432/sogaebaenk?schema=public&#34;
+</code></pre>
+<hr>
+<h2>6. Redis — 세션·캐시</h2>
+<p>선택지 두 가지:</p>
+<ol>
+<li><strong>ElastiCache for Redis</strong> (권장, 관리형) — cache.t3.micro로 시작, <code>sb-db</code>와 별도 보안그룹으로 <code>sb-web</code>에서만 접근 허용</li>
+<li><strong>EC2 내 Redis 직접 설치</strong> — 초기 비용 절감용. <code>apt install redis-server</code>, <code>bind 127.0.0.1</code> 또는 내부 IP로 제한</li>
+</ol>
+<p>서브도메인 5개 관(MNY/MAL/BIZ/LED/HLT) 간 세션 공유가 전제이므로, <code>@nestjs/session</code> 또는 <code>connect-redis</code> 기반 세션 스토어를 반드시 사용하고 인메모리 세션은 쓰지 않습니다.</p>
+<hr>
+<h2>7. S3 — 파일 업로드</h2>
+<ol>
+<li>버킷 생성 (예: <code>sogaebaenk-uploads-prod</code>), <strong>퍼블릭 액세스 차단 기본값 유지</strong></li>
+<li>업로드 파일은 애플리케이션이 사전 서명 URL(presigned URL)로 접근하거나, CloudFront + OAC로 배포</li>
+<li>IAM 사용자(또는 EC2 인스턴스 프로파일)에 해당 버킷 한정 최소 권한 정책 부여 (<code>s3:PutObject</code>, <code>s3:GetObject</code>, <code>s3:DeleteObject</code> — 버킷 ARN 한정)</li>
+<li><code>StorageService</code> 구현체(<code>S3Storage</code>)에서 AWS SDK v3 사용:</li>
+</ol>
+<pre><code class="language-bash">npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+</code></pre>
+<ol start="5">
+<li>사업자등록증·인증 서류 등 민감 업로드는 버킷을 분리하거나 접두어(prefix)로 구분하고, 접근 권한을 더 엄격히 관리</li>
+</ol>
+<hr>
+<h2>8. Route 53 &amp; 도메인</h2>
+<ul>
+<li>도메인: <strong>sogaebaenk.co.kr</strong> 단일 (기존 문서의 도메인 불일치 이슈는 해소됨)</li>
+<li>5개 관을 서브도메인으로 운영할 경우 (예: <code>mal.sogaebaenk.co.kr</code>, <code>led.sogaebaenk.co.kr</code>) Route 53에 A/CNAME 레코드 등록</li>
+<li>Route 53 호스팅 영역으로 네임서버 위임 완료 후 진행</li>
+</ul>
+<hr>
+<h2>9. HTTPS — Let's Encrypt 와일드카드 인증서</h2>
+<p>AWS ACM 무료 인증서는 EC2에 직접 붙지 않으므로(ALB/CloudFront 전용), EC2 + Nginx 구성에서는 <strong>Let's Encrypt</strong>를 사용합니다.</p>
+<pre><code class="language-bash">sudo apt install -y certbot python3-certbot-dns-route53
+sudo certbot certonly --dns-route53 \
+  -d sogaebaenk.co.kr -d &#34;*.sogaebaenk.co.kr&#34;
+</code></pre>
+<ul>
+<li>서브도메인 세션 공유 전제이므로 <strong>와일드카드 인증서</strong>가 필요</li>
+<li>갱신은 자동(<code>certbot renew</code> cron/systemd timer)이지만, <strong>갱신 실패 알림</strong>을 이메일이나 Slack으로 받도록 설정</li>
+<li>Nginx는 80/443을 받아 내부 3000번(NestJS)으로 리버스 프록시</li>
+</ul>
+<pre><code class="language-nginx">server {
+    listen 443 ssl;
+    server_name sogaebaenk.co.kr;
+    ssl_certificate /etc/letsencrypt/live/sogaebaenk.co.kr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sogaebaenk.co.kr/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+</code></pre>
+<hr>
+<h2>10. 배포 절차 (사용법)</h2>
+<h3>10-1. 최초 배포</h3>
+<pre><code class="language-bash">git clone &lt;repo&gt; &amp;&amp; cd sgb
+cp .env.example .env        # 값 채워넣기 (커밋 금지)
+npm ci
+npx prisma migrate deploy    # 스키마 반영 — 절대 db push 사용 금지(운영)
+npm run build
+pm2 start ecosystem.config.js --env production
+</code></pre>
+<h3>10-2. 이후 배포 (업데이트) — <code>deploy.sh</code></h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
+git pull origin main
+npm ci
+npx prisma migrate deploy
+npm run build
+pm2 reload sgb-api --update-env   # 무중단 재기동
+</code></pre>
+<ul>
+<li><strong>롤백 절차</strong>: 배포 전 태그(<code>git tag pre-deploy-$(date +%Y%m%d%H%M)</code>)를 남기고, 문제 발생 시 해당 태그로 <code>git checkout</code> 후 재배포. 마이그레이션이 개입된 배포는 <strong>롤백 연습을 최소 1회</strong> 미리 해봅니다 — 스키마 되돌리기가 항상 간단하지 않기 때문입니다</li>
+<li>프런트(Next.js/Vite)는 별도 빌드 산출물을 S3+CloudFront로 배포하거나, 같은 EC2에서 정적 파일을 Nginx로 서빙</li>
+</ul>
+<hr>
+<h2>11. 운영·관리법</h2>
+<h3>11-1. 일상 점검</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>방법</th>
+<th>주기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>헬스체크</td>
+<td><code>/health</code> 엔드포인트 → CloudWatch 또는 UptimeRobot 등 외부 모니터 연동</td>
+<td>상시</td>
+</tr>
+<tr>
+<td>로그 확인</td>
+<td><code>pm2 logs sgb-api</code>, Nginx 액세스/에러 로그</td>
+<td>필요 시</td>
+</tr>
+<tr>
+<td>DB 부하</td>
+<td>RDS 콘솔 CPU/커넥션 수</td>
+<td>주간</td>
+</tr>
+<tr>
+<td>비용</td>
+<td>AWS Cost Explorer + Budgets 알림</td>
+<td>주간/월간</td>
+</tr>
+</tbody>
+</table>
+<h3>11-2. 로그 로테이션</h3>
+<pre><code class="language-bash">pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 50M
+pm2 set pm2-logrotate:retain 14
+</code></pre>
+<h3>11-3. 보안 관리 체크리스트</h3>
+<ul>
+<li><input disabled="" type="checkbox"> 보안그룹에 <code>0.0.0.0/0</code>으로 22번 포트가 열려있지 않은지 월 1회 점검</li>
+<li><input disabled="" type="checkbox"> <code>/admin</code> 경로 접근이 IP 제한되어 있는지 확인 (서버 권한 계층 체계가 완비되기 전까지의 임시 방어선)</li>
+<li><input disabled="" type="checkbox"> IAM 사용자 액세스 키 정기 교체(90일)</li>
+<li><input disabled="" type="checkbox"> RDS·EC2 OS 보안 패치 월 1회 적용 (<code>apt update &amp;&amp; apt upgrade</code>)</li>
+<li><input disabled="" type="checkbox"> <code>.env</code> 파일 권한 <code>600</code>, git 추적 제외 확인</li>
+</ul>
+<h3>11-4. 비용 관리</h3>
+<ul>
+<li>인스턴스 종료 후에도 <strong>공인 IP·EBS 볼륨·스냅샷은 남아 과금</strong>됩니다. 분기별로 콘솔에서 미연결 리소스(Elastic IP, 볼륨)를 점검해 정리</li>
+<li>Budgets 알림 임계값은 트래픽 증가에 맞춰 상향 조정</li>
+<li>RDS/EC2를 스테이징에서 야간·주말 자동 중지(Lambda 스케줄)하면 비용 절감 가능 (선택)</li>
+</ul>
+<h3>11-5. 백업·복구</h3>
+<ul>
+<li>RDS 자동 스냅샷(7일) + 필요 시 수동 스냅샷(주요 배포 직전)</li>
+<li>S3 버킷 버저닝 활성화로 실수 삭제 대비</li>
+<li><strong>분기 1회 복원 연습</strong>을 정기 일정으로 못박아 둘 것을 권장 — 문서 작성 시점에만 하고 잊히는 항목이 되기 쉬움</li>
+</ul>
+<hr>
+<h2>12. 운영 전환(구서버 → AWS) 시 주의</h2>
+<ol>
+<li>Route 53 TTL을 전환 1~2일 전에 짧게(300초) 낮춰둠</li>
+<li>신규 서버에서 데이터 마이그레이션 후 read-only 모드로 며칠 병행 운영해 정합성 확인</li>
+<li>전환 직후 24~48시간은 구서버를 살려둔 채(DNS만 전환) 롤백 여지를 남김</li>
+<li>전환 완료 후 TTL을 원래 값으로 복원</li>
+</ol>
+<hr>
+<h2>13. 착수 시 오늘 정할 것</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>항목</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ElastiCache vs EC2 Redis</td>
+<td>초기 비용 vs 관리 편의성</td>
+</tr>
+<tr>
+<td>2</td>
+<td>프런트 배포 방식</td>
+<td>S3+CloudFront vs 동일 EC2 Nginx 서빙</td>
+</tr>
+<tr>
+<td>3</td>
+<td>스테이징/운영 EC2 분리 시점</td>
+<td>초기엔 1대 병행도 가능, 트래픽 늘면 분리</td>
+</tr>
+<tr>
+<td>4</td>
+<td>알림톡/SMS 대행사의 발신 IP 등록 요건 확인</td>
+<td>확인되면 Elastic IP 선점을 그에 맞춰 조정</td>
+</tr>
+<tr>
+<td>5</td>
+<td>야간 스테이징 자동 중지 여부</td>
+<td>비용 절감 목적, 선택 사항</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>부록 — 되돌릴 수 없는 실수 4가지 (요약)</h2>
+<ol>
+<li><strong>NAT 게이트웨이가 딸린 커스텀 VPC</strong> — 기본 VPC로 충분, 만들지 말 것</li>
+<li><strong>키페어 분실</strong> — 생성 즉시 이중 백업</li>
+<li><strong>복원 안 해본 백업</strong> — 분기 1회 실제 복원 연습</li>
+<li><strong>방치된 리소스</strong> — 예산 알림을 가장 먼저 켜서 방어</li>
+</ol>
+
+</body></html>

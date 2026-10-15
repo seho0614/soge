@@ -1,0 +1,256 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>소개뱅크 API 명세서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --pp:#7C3AED; --pp-d:#6D28D9; --pp-l:#F5F1FE; --bl:#2563EB; --bl-l:#EFF6FF;
+    --or:#F97316; --or-d:#EA580C; --or-l:#FFF7ED; --gr:#059669; --gr-l:#ECFDF5;
+    --am:#D97706; --am-l:#FFFBEB; --rd:#DC2626; --rd-l:#FEF2F2;
+    --mny:#2563EB; --mal:#059669; --biz:#D97706;
+    --nv:#1E293B; --ink:#0F172A; --ink2:#334155; --mut:#64748B; --mut2:#94A3B8;
+    --line:#E2E8F0; --line2:#F1F5F9; --page:#F7F8FA; --card:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+      --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --nv:#CBD5E1;
+      --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F1F5F9; --ink2:#CBD5E1; --mut:#94A3B8; --mut2:#64748B;
+    --line:#22314F; --line2:#1B2947; --page:#0B1220; --card:#141E33; --nv:#CBD5E1;
+    --pp-l:#1E1B33; --bl-l:#0F1E3A; --or-l:#2A1A0C; --gr-l:#0C2A20; --am-l:#2A2008; --rd-l:#2A1010;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+  button,input,select{font-family:inherit;font-size:inherit}
+  button{cursor:pointer}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){ .wrap{padding:0 14px} }
+
+  .hero{color:#fff;padding:50px 0 40px}
+  .eyebrow{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.7px;
+    border-radius:999px;padding:5px 13px}
+  .hero h1{margin:16px 0 10px;font-size:36px;font-weight:900;letter-spacing:-1.2px;line-height:1.24}
+  @media (max-width:640px){ .hero h1{font-size:25px} }
+  .hero p{margin:0;max-width:760px;color:#CBD5E1;line-height:1.8}
+  .hero p b{color:#fff}
+  .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-size:12px;font-weight:600;color:#E2E8F0;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:5px 11px}
+
+  h2.s{margin:40px 0 5px;font-size:23px;font-weight:900;letter-spacing:-.8px}
+  p.sp{margin:0 0 18px;font-size:14px;color:var(--mut);max-width:840px}
+
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{background:var(--page);font-size:10.5px;font-weight:800;color:var(--mut);letter-spacing:.4px;white-space:nowrap;
+    position:sticky;top:0;z-index:2}
+  tr:last-child td{border-bottom:0}
+  td.k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mut);white-space:nowrap}
+  td.nm{font-weight:700}
+
+  .cal{border-radius:11px;padding:13px 16px;font-size:13.5px;line-height:1.8;margin-bottom:16px}
+  .cal .lb{display:block;font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:3px}
+  .cal.i{background:var(--bl-l);border:1px solid rgba(37,99,235,.24)} .cal.i .lb{color:var(--bl)}
+  .cal.w{background:var(--am-l);border:1px solid rgba(217,119,6,.28)} .cal.w .lb{color:var(--am)}
+  .cal.e{background:var(--rd-l);border:1px solid rgba(220,38,38,.25)} .cal.e .lb{color:var(--rd)}
+  .cal.s{background:var(--gr-l);border:1px solid rgba(5,150,105,.26)} .cal.s .lb{color:var(--gr)}
+  .cal b{color:var(--ink)}
+  .cal code{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--card);padding:1.5px 6px;border-radius:5px}
+
+  .bdg{display:inline-block;font-size:10.5px;font-weight:800;border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .bdg.p0{background:var(--rd-l);color:var(--rd)}
+  .bdg.p1{background:var(--am-l);color:var(--am)}
+  .bdg.p2{background:var(--line2);color:var(--mut)}
+  .bdg.ok{background:var(--gr-l);color:var(--gr)}
+  .bdg.no{background:var(--line2);color:var(--mut2)}
+  .bdg.br{background:var(--pp-l);color:var(--pp)}
+  .bdg.bl{background:var(--bl-l);color:var(--bl)}
+  .bdg.or{background:var(--or-l);color:var(--or-d)}
+  .bdg.mny{background:var(--bl-l);color:var(--mny)}
+  .bdg.mal{background:var(--gr-l);color:var(--mal)}
+  .bdg.biz{background:var(--am-l);color:var(--biz)}
+
+  .foot{margin:30px 0 60px;padding:15px 17px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;font-size:12.5px;color:var(--mut);line-height:1.85}
+  .foot b{color:var(--ink)}
+</style>
+
+<style>
+  .hero{background:linear-gradient(160deg,#0C2A20 0%,#1E293B 60%,#0F172A 100%)}
+  .eyebrow{color:#6EE7B7;background:rgba(5,150,105,.16);border:1px solid rgba(5,150,105,.4)}
+  .body2{display:grid;grid-template-columns:230px 1fr;gap:32px;align-items:start;padding-top:24px}
+  @media (max-width:940px){ .body2{grid-template-columns:1fr;gap:0} .toc{display:none} }
+  .toc{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;padding-bottom:30px}
+  .toc .g{padding:14px 0 5px;font-size:10px;font-weight:800;color:var(--mut2);letter-spacing:.8px;text-transform:uppercase}
+  .toc a{display:flex;gap:7px;align-items:baseline;padding:5px 9px;border-radius:7px;font-size:12px;
+    color:var(--mut);text-decoration:none}
+  .toc a:hover{background:var(--card);color:var(--ink)}
+  .toc a .m{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:800;flex:none}
+  .m.GET{color:var(--gr)} .m.POST{color:var(--or-d)} .m.PUT{color:var(--bl)} .m.DELETE{color:var(--rd)}
+
+  .ep{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-bottom:14px;
+    overflow:hidden;scroll-margin-top:16px}
+  .eph{padding:15px 18px 13px;border-bottom:1px solid var(--line2)}
+  .eph .r1{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .mt{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:800;color:#fff;
+    border-radius:5px;padding:3px 8px;letter-spacing:.4px}
+  .mt.GET{background:var(--gr)} .mt.POST{background:var(--or-d)}
+  .pth{font-family:"IBM Plex Mono",monospace;font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+  .eph h3{margin:0;font-size:14px;font-weight:700;color:var(--mut)}
+  .eph .desc{margin:8px 0 0;font-size:13.5px;color:var(--ink2);line-height:1.8}
+  .eph .desc code{background:var(--line2);padding:1.5px 6px;border-radius:5px;font-size:12px}
+  .meta2{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--mut2);
+    font-family:"IBM Plex Mono",monospace}
+  .meta2 b{color:var(--pp);font-weight:700}
+
+  .blk{padding:14px 18px;border-bottom:1px solid var(--line2)}
+  .blk:last-child{border-bottom:0}
+  .blk h4{margin:0 0 8px;font-size:10.5px;font-weight:800;color:var(--mut2);letter-spacing:.7px;text-transform:uppercase}
+  pre{margin:0;background:var(--page);border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+    overflow-x:auto;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.7;color:var(--ink2)}
+  .kv{font-size:13px}
+  .kv div{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .kv div:last-child{border-bottom:0}
+  @media (max-width:640px){ .kv div{grid-template-columns:1fr;gap:2px} }
+  .kv .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--bl)}
+  .err{display:grid;grid-template-columns:52px 190px 1fr;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .err:last-child{border-bottom:0}
+  @media (max-width:640px){ .err{grid-template-columns:52px 1fr;gap:4px} }
+  .err .c{font-family:"IBM Plex Mono",monospace;font-weight:800;color:var(--rd)}
+  .err .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink2)}
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:16px}
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+  .rule b{display:block;font-size:13.5px;font-weight:800;margin-bottom:4px}
+  .rule span{font-size:12.5px;color:var(--mut);line-height:1.7}
+  .rule span code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:11.5px}
+</style>
+
+<div class="hero"><div class="wrap">
+  <span class="eyebrow">API SPEC · v1.0 · DRAFT</span>
+  <h1>소개뱅크 API 명세서</h1>
+  <p>기존 문서에는 엔드포인트 <b>이름만</b> 38개 있었습니다. 이 문서는 그중
+     <b>핵심 14개</b>에 요청·응답·에러를 붙인 것입니다. 나머지는 이 형식을 따라 채우면 됩니다.
+     설계 규칙 6가지가 먼저 나오는데, 개별 엔드포인트보다 그쪽이 중요합니다 —
+     <b>규칙이 흔들리면 38개가 전부 흔들립니다.</b></p>
+  <div class="pills">
+    <span class="pill">엔드포인트 14</span><span class="pill">에러 코드 29</span>
+    <span class="pill">불변식 연결 INV-1~7</span><span class="pill">요구사항 추적 FR-*</span>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <h2 class="s">설계 규칙 6가지</h2>
+  <p class="sp">엔드포인트를 추가할 때 이 규칙을 먼저 확인합니다. 개별 스펙과 충돌하면 이쪽이 이깁니다.</p>
+  <div class="rules">
+    <div class="rule"><b>관 스코프 없는 조회는 없다</b><span>업종·리스팅·통계 어디든 관이 파라미터로 들어갑니다. 기본값을 두면 반드시 잘못된 관의 데이터가 섞입니다.</span></div>
+    <div class="rule"><b>제한업종은 필터가 아니라 부재다</b><span>응답에서 빼는 것이 아니라 조회 대상이 아닙니다. 프론트가 숨기는 방식은 금지합니다.</span></div>
+    <div class="rule"><b>불변식 위반은 409 + rule 필드</b><span>어떤 규칙을 어겼는지 <code>rule: "INV-3"</code>로 내려주면 화면이 그대로 문구를 만들 수 있습니다.</span></div>
+    <div class="rule"><b>존재 여부를 알려주지 않는다</b><span>권한 없는 리소스는 403이 아니라 404입니다 — 403은 존재를 알려줍니다.</span></div>
+    <div class="rule"><b>돈이 움직이면 멱등키</b><span>네트워크 재시도가 중복 지급이 되지 않게 합니다. 키 없는 요청은 400.</span></div>
+    <div class="rule"><b>스냅샷을 남긴다</b><span>Deal 생성 시 요율·상한·부담 주체를 복사합니다. 관 설정 변경이 진행 중 거래를 흔들지 않습니다.</span></div>
+  </div>
+  <h2 class="s">공통 규약</h2>
+  <div class="tw"><table><thead><tr><th style="width:120px">항목</th><th style="width:270px">값</th><th>비고</th></tr></thead><tbody>
+  <tr><td class="nm">Base URL</td><td class="k">https://api.sogaebaenk.co.kr/v1</td><td>관 사이트도 같은 API를 씁니다 — 관은 파라미터이지 별도 서버가 아닙니다.</td></tr>
+  <tr><td class="nm">인증</td><td class="k">Authorization: Bearer {access_token}</td><td>쿠키 세션은 웹에서만, 토큰은 앱·서버 간 호출에 씁니다.</td></tr>
+  <tr><td class="nm">관 스코프</td><td class="k">gwan 파라미터 또는 경로</td><td>관이 필요한 API에서 누락 시 400. 기본값을 두지 않습니다.</td></tr>
+  <tr><td class="nm">페이지네이션</td><td class="k">cursor 방식</td><td>offset을 쓰지 않습니다 — 검수 중 순서가 바뀌면 건너뛰는 건이 생깁니다.</td></tr>
+  <tr><td class="nm">멱등성</td><td class="k">Idempotency-Key 헤더</td><td>돈이 움직이는 POST에 필수 — 정산 신청 · 승인 · 지급.</td></tr>
+  <tr><td class="nm">시각</td><td class="k">RFC 3339 · KST 오프셋 포함</td><td>2026-08-26T09:12:00+09:00. UTC로 저장하고 응답에서 변환합니다.</td></tr>
+  <tr><td class="nm">금액</td><td class="k">정수 · 원 단위</td><td>소수점을 쓰지 않습니다. 반올림은 서버에서 하고 클라이언트는 계산하지 않습니다.</td></tr>
+  </tbody></table></div>
+  <h2 class="s">에러 응답 형식</h2>
+  <p class="sp">모든 에러가 같은 형태입니다. <code>rule</code> 필드가 있으면 불변식 위반이며, 화면은 이 값으로 문구를 만듭니다.</p>
+  <pre>{
+  "error": {
+    "code": "INV3_VIOLATION",
+    "message": "성사 확정 이후에만 정산을 생성할 수 있습니다.",
+    "rule": "INV-3",
+    "field": null,
+    "hint": "성사 확정 화면에서 양측 확인을 먼저 완료하세요."
+  }
+}</pre>
+
+  <h2 class="s">엔드포인트</h2>
+  <p class="sp">돈과 자격이 걸린 경로를 우선 정의했습니다. 조회 계열은 형식만 맞추면 되지만, 이 14개는 <b>규칙이 응답에 드러나야</b> 합니다.</p>
+  <div class="body2">
+    <nav class="toc" id="toc"></nav>
+    <main id="eps"></main>
+  </div>
+
+  <div class="cal w"><span class="lb">아직 확정할 수 없는 부분</span>
+    에스크로 결제(<code>POST /deals/{id}/escrow</code>)와 본인확인 콜백은
+    <b>업체가 정해져야</b> 스펙이 나옵니다(결정 B-04 · B-07). 이 두 경로는 의도적으로 비워 두었습니다 —
+    임시로 써두면 나중에 지우지 않고 그대로 구현됩니다.</div>
+
+  <div class="foot"><b>소개뱅크 API 명세서 v1.0 (draft)</b> · 2026.08.26 —
+  용어는 <b>용어사전 v1.0</b>, 요구사항 번호는 <b>요구사항 정의서 v1.0</b>, 권한 스코프는 <b>권한 매트릭스 v1.0</b>을 참조합니다.
+  나머지 24개 엔드포인트는 이 형식을 그대로 따릅니다.</div>
+</div>
+
+<script>
+var EP = [["카테고리 · 관", [{"m": "GET", "p": "/gwans", "t": "관 목록", "auth": "없음", "desc": "운영중인 관만 반환합니다. 준비중·중지 관은 응답에 없습니다 — 숨기는 것이 아니라 내려주지 않습니다.", "req": {"query": {"—": "없음"}}, "res": {"gwans": [{"code": "BIZ", "name": "소개창업", "sub": "biz", "relation": "b2b", "color": "#D97706", "rate": 1.5, "cap": 5000000, "payer": "seller", "order": 3}]}, "errors": [], "inv": "", "fr": "FR-GWAN-01"}, {"m": "GET", "p": "/gwans/{code}/categories", "t": "업종 목록", "auth": "없음", "desc": "관 스코프가 <b>경로에 필수</b>입니다. 관 없이 전체 업종을 반환하는 경로는 존재하지 않습니다. 제한업종은 이 응답에 <b>포함되지 않습니다</b> — 필터링이 아니라 애초에 조회 대상이 아닙니다.", "req": {"path": {"code": "관 코드 (MNY | MAL | BIZ | …)"}}, "res": {"gwan": "BIZ", "categories": [{"slug": "fnb", "name": "외식 · 식당", "group": "A", "escrow": false}, {"slug": "unmanned", "name": "무인 · 자동화", "group": "A", "escrow": false}]}, "errors": [["404", "GWAN_NOT_FOUND", "존재하지 않거나 운영중이 아닌 관"]], "inv": "INV-6", "fr": "FR-GWAN-02 · FR-GWAN-03"}]], ["리스팅", [{"m": "GET", "p": "/listings", "t": "리스팅 목록", "auth": "없음", "desc": "LIVE 상태만 반환합니다. PENDING·REJECTED는 등록자 본인의 마이페이지 API로만 조회됩니다.", "req": {"query": {"gwan": "필수 · 관 코드", "category": "선택 · 업종 슬러그", "role": "선택 · give | want (소개머니 전용)", "sort": "선택 · recent(기본) | popular", "cursor": "선택 · 다음 페이지 커서", "limit": "선택 · 기본 20, 최대 50"}}, "res": {"items": [{"id": 1042, "gwan": "BIZ", "category": "fnb", "title": "특A급 프리미엄 고깃집 인수하실 분을 찾습니다", "price": 85000000, "priceLabel": null, "thumb": "https://cdn…/1042.webp", "badges": ["소개중", "인증소개자"], "views": 342, "likes": 18, "createdAt": "2026-08-26T09:12:00+09:00"}], "nextCursor": "eyJpZCI6MTAxMn0", "total": 284}, "errors": [["400", "GWAN_REQUIRED", "gwan 파라미터 누락"]], "inv": "", "fr": "FR-ACC-01"}, {"m": "GET", "p": "/listings/{id}", "t": "리스팅 상세", "auth": "없음 (ref 있으면 귀속 기록)", "desc": "쿼리에 <code>ref</code>가 있으면 이 시점에 <b>귀속이 확정</b>됩니다. 이미 유효한 귀속이 있으면 새 코드는 <b>무시</b>됩니다(first-touch). 응답의 <code>attribution</code>이 실제 적용값입니다.", "req": {"path": {"id": "리스팅 ID"}, "query": {"ref": "선택 · 소개코드"}}, "res": {"id": 1042, "gwan": "BIZ", "category": "fnb", "status": "LIVE", "title": "특A급 프리미엄 고깃집 인수하실 분을 찾습니다", "price": 85000000, "fee": {"rate": 1.5, "cap": 5000000, "estimated": 1275000, "payer": "seller", "payerLabel": "양도인 부담"}, "referrer": {"nickname": "홍길동", "verified": true, "stats": {"total": 128, "closed": 42, "rate": 32.8}}, "attribution": {"code": "HG-4471", "appliedAt": "2026-08-26T09:20:11+09:00", "expiresAt": "2026-11-24T09:20:11+09:00", "firstTouch": true}, "broker": null}, "errors": [["404", "LISTING_NOT_FOUND", "없거나 LIVE가 아님 — 존재 여부를 구분해 알리지 않음"]], "inv": "INV-2", "fr": "FR-REF-02"}, {"m": "POST", "p": "/listings", "t": "리스팅 등록", "auth": "필수 · 본인확인 완료", "desc": "관이 요구하는 인증을 통과하지 않으면 <code>403 GATE_REQUIRED</code>로 거부합니다. 화면 비활성화는 보조 수단이고 <b>서버가 최종 게이트</b>입니다.", "req": {"body": {"gwan": "BIZ", "category": "fnb", "title": "…", "body": "…", "price": 85000000, "payer": "seller", "images": ["upload-id-1"], "brokerRegNo": null}}, "res": {"id": 2044, "status": "PENDING", "reviewSla": "2026-08-27T09:12:00+09:00"}, "errors": [["422", "RESTRICTED_CATEGORY", "제한업종 — 요청 category가 제한 목록에 있음"], ["403", "GATE_REQUIRED", "사업자 또는 중개사 인증 미통과. body.gate에 필요한 인증 종류 포함"], ["400", "PAYER_NOT_ALLOWED", "해당 관에서 선택 불가한 부담 주체"], ["409", "BANNED_TERM", "금칙어 검출 — 어떤 표현인지 위치와 함께 반환"]], "inv": "INV-6 · INV-7", "fr": "FR-LST-01 · FR-LST-02 · FR-LST-03"}]], ["검수", [{"m": "GET", "p": "/admin/reviews", "t": "검수 큐", "auth": "운영자 · review:read", "desc": "SLA 잔여 시간 순으로 정렬합니다. 금칙어 플래그가 붙은 건은 <code>flags</code>에 표시됩니다.", "req": {"query": {"gwan": "선택 · 관 필터", "status": "선택 · pending(기본) | flagged", "cursor": "선택"}}, "res": {"items": [{"id": 2043, "gwan": "MAL", "category": "estate", "title": "강남 상가 임대 · 1층 코너", "owner": "김공인", "submittedAt": "2026-08-26T06:00:00+09:00", "slaRemaining": "20h 12m", "flags": ["BROKER_REQUIRED"]}], "nextCursor": null}, "errors": [["403", "FORBIDDEN", "권한 없음"]], "inv": "", "fr": "FR-LST-06"}, {"m": "POST", "p": "/admin/reviews/{id}/decide", "t": "검수 승인 · 반려", "auth": "운영자 · review:write", "desc": "승인 시 리스팅이 LIVE가 되고 이때부터 노출됩니다. 반려 사유는 등록자에게 그대로 전달되므로 선택형 코드 + 자유 문구를 함께 받습니다. <b>감사 로그가 남습니다</b>.", "req": {"path": {"id": "리스팅 ID"}, "body": {"decision": "approve | reject", "reasonCode": "RESTRICTED | BANNED_TERM | INSUFFICIENT_INFO | OTHER", "message": "…"}}, "res": {"id": 2043, "status": "LIVE", "decidedBy": "admin@…", "decidedAt": "2026-08-26T09:40:00+09:00"}, "errors": [["409", "ALREADY_DECIDED", "이미 처리된 건"], ["403", "FORBIDDEN", "권한 없음"]], "inv": "", "fr": "FR-LST-05 · FR-ADM-04"}]], ["거래 · 성사", [{"m": "POST", "p": "/deals", "t": "1:1 문의 시작 · Deal 생성", "auth": "필수 · 본인확인 완료", "desc": "이 시점의 관 요율·상한·부담 주체가 Deal에 <b>복사되어 고정</b>됩니다. 이후 관 설정이 바뀌어도 이 거래에는 소급되지 않습니다.", "req": {"body": {"listingId": 1042, "message": "권리금 협의 가능한지 문의드립니다."}}, "res": {"id": 8821, "status": "OPEN", "snapshot": {"gwan": "BIZ", "rate": 1.5, "cap": 5000000, "payer": "seller", "escrow": false}, "attribution": {"code": "HG-4471", "referrerId": 771}}, "errors": [["403", "VERIFICATION_REQUIRED", "본인확인 미완료"], ["409", "SELF_DEAL", "본인 리스팅에는 문의할 수 없음"]], "inv": "INV-2", "fr": "FR-DEAL-01"}, {"m": "POST", "p": "/deals/{id}/contract", "t": "계약서 발급 · 서명", "auth": "필수 · 당사자", "desc": "플랫폼은 <b>양식만</b> 제공합니다. 제5조에 소개자·소개코드·부담 주체가 자동 기재됩니다. 양측 서명이 모두 들어와야 <code>CONTRACT</code>가 됩니다.", "req": {"path": {"id": "Deal ID"}, "body": {"action": "issue | sign", "signature": "base64…"}}, "res": {"id": 8821, "status": "CONTRACT", "signedBy": ["seeker", "partner"], "contractUrl": "https://…/contracts/8821.pdf"}, "errors": [["403", "NOT_PARTY", "거래 당사자가 아님"], ["409", "INVALID_STATE", "OPEN 상태가 아님"]], "inv": "", "fr": "FR-DEAL-03"}, {"m": "POST", "p": "/deals/{id}/confirm", "t": "성사 확정", "auth": "필수 · 당사자", "desc": "<b>양측이 모두 호출해야</b> CONFIRMED가 됩니다. 한쪽만 호출하면 AWAIT_CONFIRM에 머뭅니다. 관리자용 강제 확정 엔드포인트는 <b>존재하지 않습니다</b>.", "req": {"path": {"id": "Deal ID"}, "body": {"confirmed": true}}, "res": {"id": 8821, "status": "AWAIT_CONFIRM", "confirmations": {"seeker": true, "partner": false}, "autoConfirmAt": "2026-09-09T09:00:00+09:00"}, "errors": [["403", "NOT_PARTY", "거래 당사자가 아님"], ["409", "INVALID_STATE", "CONTRACT 상태가 아님"], ["409", "DISPUTED", "분쟁 접수된 거래"]], "inv": "INV-4", "fr": "FR-DEAL-04 · FR-DEAL-05"}]], ["정산", [{"m": "POST", "p": "/settlements", "t": "정산 신청", "auth": "필수 · 소개자 본인", "desc": "Deal이 CONFIRMED가 아니면 <code>409 INV3_VIOLATION</code>으로 거부합니다. 화면 잠금은 보조 수단이며 API를 직접 호출해도 뚫리지 않습니다. <b>멱등키 필수</b> — 같은 키로 재요청하면 같은 결과를 돌려줍니다.", "req": {"headers": {"Idempotency-Key": "필수 · UUID"}, "body": {"dealId": 8821, "bank": "국민은행", "account": "000-00-000000", "holder": "홍길동", "taxType": "3.3"}}, "res": {"id": "ST-8821", "status": "REQUESTED", "amount": {"base": 85000000, "rate": 1.5, "cap": 5000000, "fee": 1275000, "tax": 42075, "net": 1232925}, "gwanBreakdown": [{"gwan": "BIZ", "fee": 1275000}]}, "errors": [["409", "INV3_VIOLATION", "Deal이 CONFIRMED가 아님 — 화면에 규칙 번호와 해결 경로 표시"], ["422", "HOLDER_MISMATCH", "예금주명과 실명 불일치"], ["409", "ALREADY_REQUESTED", "해당 거래의 정산이 이미 존재"], ["409", "DISPUTE_HOLD", "분쟁으로 보류 중"]], "inv": "INV-3", "fr": "FR-STL-01 · FR-STL-02 · FR-STL-03"}, {"m": "POST", "p": "/admin/settlements/{id}/approve", "t": "정산 승인", "auth": "운영자 · settlement:approve", "desc": "5항목 자동 검증을 통과해야 승인됩니다 — 거래 확정 · tier=1 · 예금주 일치 · 분쟁 없음 · 중복 아님. <b>승인자와 지급 실행자는 다른 권한</b>입니다.", "req": {"path": {"id": "정산 ID"}, "headers": {"Idempotency-Key": "필수"}, "body": {"memo": "…"}}, "res": {"id": "ST-8821", "status": "APPROVED", "checks": {"dealConfirmed": true, "tierOne": true, "holderMatch": true, "noDispute": true, "noDuplicate": true}, "approvedBy": "ops@…"}, "errors": [["409", "CHECK_FAILED", "검증 실패 — 실패한 항목명 반환"], ["403", "FORBIDDEN", "승인 권한 없음"]], "inv": "INV-1 · INV-3", "fr": "FR-STL-04"}, {"m": "POST", "p": "/admin/settlements/{id}/pay", "t": "지급 실행", "auth": "운영자 · settlement:pay", "desc": "APPROVED 상태에서만 호출됩니다. 성공 시 소개자 실적 지표가 갱신되고 지급명세가 발급됩니다. 배치 재실행이 안전하도록 <b>멱등</b>합니다.", "req": {"path": {"id": "정산 ID"}, "headers": {"Idempotency-Key": "필수"}}, "res": {"id": "ST-8821", "status": "PAID", "paidAt": "2026-08-28T14:00:00+09:00", "net": 1232925, "receiptUrl": "https://…/receipts/ST-8821.pdf"}, "errors": [["409", "INVALID_STATE", "APPROVED가 아님"], ["403", "FORBIDDEN", "지급 권한 없음"], ["502", "PAYOUT_FAILED", "이체 실패 — 상태는 APPROVED 유지, 재시도 가능"]], "inv": "", "fr": "FR-STL-04 · FR-ADM-01"}]], ["관 관리", [{"m": "POST", "p": "/admin/gwans", "t": "관 생성", "auth": "최고관리자 · gwan:create", "desc": "항상 <code>PREP</code>(준비중) 상태로만 생성됩니다. 운영중 전환은 별도 엔드포인트이며 오픈 체크리스트를 통과해야 합니다.", "req": {"body": {"code": "MKT", "name": "소개장터", "sub": "market", "relation": "p2p", "rate": 3, "cap": 300000, "payer": "choice", "gateBiz": false, "gateBroker": false, "categories": [{"name": "재능 거래", "slug": "talent"}]}}, "res": {"code": "MKT", "status": "PREP", "url": "market.sogaebaenk.co.kr", "categoryCount": 1}, "errors": [["409", "CODE_TAKEN", "이미 사용 중인 관 코드"], ["422", "RESTRICTED_CATEGORY", "제한업종이 포함됨 — 해당 항목은 제외하고 사유 반환"], ["403", "FORBIDDEN", "관 생성 권한 없음"]], "inv": "INV-6", "fr": "FR-GWAN-01 · FR-ADM-05"}]]];
+(function(){
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+  var pretty=function(o){ return esc(JSON.stringify(o,null,2)); };
+  var slug=function(m,p){ return (m+"-"+p).replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,""); };
+
+  var eh="", th="";
+  EP.forEach(function(g){
+    th+='<div class="g">'+esc(g[0])+'</div>';
+    g[1].forEach(function(e){
+      var id=slug(e.m,e.p);
+      th+='<a href="#'+id+'"><span class="m '+e.m+'">'+e.m+'</span>'+esc(e.t)+'</a>';
+
+      var blocks="";
+      // 요청
+      var rq="";
+      ["headers","path","query"].forEach(function(k){
+        if(e.req && e.req[k]){
+          rq+='<div style="margin-bottom:10px"><div style="font-size:11.5px;color:var(--mut2);font-weight:700;margin-bottom:4px">'+k+'</div><div class="kv">';
+          Object.keys(e.req[k]).forEach(function(n){
+            rq+='<div><span class="n">'+esc(n)+'</span><span>'+esc(e.req[k][n])+'</span></div>';
+          });
+          rq+='</div></div>';
+        }
+      });
+      if(e.req && e.req.body){
+        rq+='<div style="font-size:11.5px;color:var(--mut2);font-weight:700;margin:10px 0 4px">body</div><pre>'+pretty(e.req.body)+'</pre>';
+      }
+      blocks+='<div class="blk"><h4>요청</h4>'+(rq||'<div class="kv"><div><span class="n">—</span><span>파라미터 없음</span></div></div>')+'</div>';
+      // 응답
+      blocks+='<div class="blk"><h4>응답 200</h4><pre>'+pretty(e.res)+'</pre></div>';
+      // 에러
+      if(e.errors && e.errors.length){
+        var er="";
+        e.errors.forEach(function(x){
+          er+='<div class="err"><span class="c">'+esc(x[0])+'</span><span class="n">'+esc(x[1])+'</span><span>'+esc(x[2])+'</span></div>';
+        });
+        blocks+='<div class="blk"><h4>에러</h4>'+er+'</div>';
+      }
+
+      eh+='<section class="ep" id="'+id+'"><div class="eph"><div class="r1">'+
+        '<span class="mt '+e.m+'">'+e.m+'</span><span class="pth">'+esc(e.p)+'</span></div>'+
+        '<h3>'+esc(e.t)+'</h3><p class="desc">'+e.desc+'</p>'+
+        '<div class="meta2"><span>인증 <b>'+esc(e.auth)+'</b></span>'+
+        (e.inv?'<span>불변식 <b>'+esc(e.inv)+'</b></span>':'')+
+        (e.fr?'<span>요구사항 <b>'+esc(e.fr)+'</b></span>':'')+
+        '</div></div>'+blocks+'</section>';
+    });
+  });
+  document.getElementById("eps").innerHTML=eh;
+  document.getElementById("toc").innerHTML=th;
+})();
+</script>
+
+</body></html>
