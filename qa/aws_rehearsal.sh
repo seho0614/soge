@@ -65,7 +65,7 @@ chmod +x "$RH/sgb/start.sh"
 cat > /etc/nginx/sites-available/sgb <<EOF
 server {
   listen $HTTP_PORT;
-  server_name sogaebaenk.co.kr www.sogaebaenk.co.kr;
+  server_name sogaebank.com www.sogaebank.com;
   client_max_body_size 20M;
   location / {
     proxy_pass http://localhost:$API_PORT;
@@ -77,7 +77,7 @@ EOF
 ln -sf /etc/nginx/sites-available/sgb /etc/nginx/sites-enabled/sgb; rm -f /etc/nginx/sites-enabled/default
 pgrep -x nginx >/dev/null && nginx -s reload || nginx
 wait_for health; rec "1-1 옛 서버 — API 만 떠 있음 (마이그레이션 43)" $? "$(psql "$DBURL" -tAc 'select count(*) from schema_migrations')"
-c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: sogaebaenk.co.kr' "http://127.0.0.1:$HTTP_PORT/")
+c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: sogaebank.com' "http://127.0.0.1:$HTTP_PORT/")
 [ "$c" = "404" ]; rec "1-2 옛 Nginx(전부 API 로)에서는 메인이 404 — 사용자 웹이 없음" $? "$c"
 
 echo "== 2. 새 킷 올리기"
@@ -100,32 +100,32 @@ grep -q "^UPLOAD_DIR=$RH/sgb-data/uploads" "$RH/sgb/.env" && [ "$(stat -c %a "$R
 echo "== 3. Nginx 교체 (예시 설정 · https 흉내)"
 mkdir -p /etc/nginx/ssl-reh
 [ -f /etc/nginx/ssl-reh/reh.crt ] || openssl req -x509 -nodes -newkey rsa:2048 -days 30 -keyout /etc/nginx/ssl-reh/reh.key -out /etc/nginx/ssl-reh/reh.crt \
-  -subj "/CN=sogaebaenk.co.kr" -addext "subjectAltName=DNS:sogaebaenk.co.kr,DNS:www.sogaebaenk.co.kr,DNS:admin.sogaebaenk.co.kr" 2>/dev/null
+  -subj "/CN=sogaebank.com" -addext "subjectAltName=DNS:sogaebank.com,DNS:www.sogaebank.com,DNS:admin.sogaebank.com" 2>/dev/null
 # 도우미(nginx-render.sh)로 만든 설정에, 리허설용으로 포트(80 → $HTTP_PORT)와 인증서 줄(certbot 이 붙이는 것)을 더합니다
-( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebaenk.co.kr admin.sogaebaenk.co.kr 127.0.0.1 ) \
+( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebank.com admin.sogaebank.com 127.0.0.1 ) \
   | sed -e "s/listen 80;/listen $HTTP_PORT;\n  listen 443 ssl;       # (리허설) certbot 이 붙이는 줄을 흉내 — 자체 서명 인증서\n  ssl_certificate \/etc\/nginx\/ssl-reh\/reh.crt;\n  ssl_certificate_key \/etc\/nginx\/ssl-reh\/reh.key;/" > /etc/nginx/sites-available/sgb
 grep -q "proxy_pass http://127.0.0.1:$SITE_PORT;" /etc/nginx/sites-available/sgb && grep -q "proxy_pass http://127.0.0.1:$API_PORT;" /etc/nginx/sites-available/sgb; rec "3-0 nginx-render.sh — .env 의 포트(PORT · SITE_PORT)를 따라 설정을 만듦" $?
 nginx -t >/dev/null 2>&1; rec "3-1 nginx -t" $?
 nginx -s reload; sleep 1
-c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: admin.sogaebaenk.co.kr' "http://127.0.0.1:$HTTP_PORT/")
+c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: admin.sogaebank.com' "http://127.0.0.1:$HTTP_PORT/")
 [ "$c" != "200" ]; rec "3-2 홈 폴더 권한이 750 이면 운영 화면이 열리지 않음 (Ubuntu 24.04 기본값과 같은 조건)" $? "$c"
 chmod o+x "$RH"
-c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: admin.sogaebaenk.co.kr' "http://127.0.0.1:$HTTP_PORT/")
+c=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: admin.sogaebank.com' "http://127.0.0.1:$HTTP_PORT/")
 [ "$c" = "200" ]; rec "3-3 chmod o+x 뒤 운영 화면 200" $? "$c"
 
 # 3-4 ~ 3-6 허용하지 않은 곳에서 오는 접속(사무실 밖) — 같은 설정을 「허용 IP = 10.9.9.9」로 한 벌 더 띄워(포트 8099) 이 PC(127.0.0.1)가 막히는지 봅니다
 mkdir -p /var/www/html/.well-known/acme-challenge; echo "acme-ok" > /var/www/html/.well-known/acme-challenge/rehearsal-token
-( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebaenk.co.kr admin.sogaebaenk.co.kr 10.9.9.9 ) \
+( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebank.com admin.sogaebank.com 10.9.9.9 ) \
   | sed -e "s/listen 80;/listen 8099;\n  location ^~ \/.well-known\/acme-challenge\/ { root \/var\/www\/html; default_type text\/plain; }   # (리허설) 인증서 확인이 들어오는 길/" > /etc/nginx/sites-available/sgb-outside
 ln -sf /etc/nginx/sites-available/sgb-outside /etc/nginx/sites-enabled/sgb-outside; nginx -t >/dev/null 2>&1 && nginx -s reload; sleep 1
 o() { curl -s -o /dev/null -w '%{http_code}' -H "Host: $1" "http://127.0.0.1:8099$2"; }
-a=$(o sogaebaenk.co.kr /); b=$(o sogaebaenk.co.kr /api/v1/health); c=$(o admin.sogaebaenk.co.kr /); d=$(o admin.sogaebaenk.co.kr /api/v1/health); e=$(o admin.sogaebaenk.co.kr /assets/x.js)
+a=$(o sogaebank.com /); b=$(o sogaebank.com /api/v1/health); c=$(o admin.sogaebank.com /); d=$(o admin.sogaebank.com /api/v1/health); e=$(o admin.sogaebank.com /assets/x.js)
 [ "$a$b$c$d$e" = "403403403403403" ]; rec "3-4 허용하지 않은 IP 에서는 사용자 웹 · 그 API · 운영 화면 · 운영 API · 화면 파일이 전부 403" $? "$a $b $c $d $e"
-f=$(o sogaebaenk.co.kr /.well-known/acme-challenge/rehearsal-token); g=$(o admin.sogaebaenk.co.kr /.well-known/acme-challenge/rehearsal-token)
+f=$(o sogaebank.com /.well-known/acme-challenge/rehearsal-token); g=$(o admin.sogaebank.com /.well-known/acme-challenge/rehearsal-token)
 [ "$f$g" = "200200" ]; rec "3-5 접근 제한 중에도 인증서 확인 길(/.well-known/acme-challenge/)은 열려 있음 — 발급 · 갱신이 막히지 않음" $? "$f $g"
-( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebaenk.co.kr admin.sogaebaenk.co.kr 10.9.9.9 open ) | sed -e "s/listen 80;/listen 8099;/" > /etc/nginx/sites-available/sgb-outside
+( cd "$RH" && bash "$RH/sgb/deploy/aws/nginx-render.sh" sogaebank.com admin.sogaebank.com 10.9.9.9 open ) | sed -e "s/listen 80;/listen 8099;/" > /etc/nginx/sites-available/sgb-outside
 nginx -t >/dev/null 2>&1 && nginx -s reload; sleep 1
-a=$(o sogaebaenk.co.kr /); c=$(o admin.sogaebaenk.co.kr /); d=$(o admin.sogaebaenk.co.kr /api/v1/health)
+a=$(o sogaebank.com /); c=$(o admin.sogaebank.com /); d=$(o admin.sogaebank.com /api/v1/health)
 [ "$a$c$d" = "200403403" ]; rec "3-6 여는 날(open) — 사용자 웹만 열리고 운영 화면은 그대로 사무실만" $? "$a $c $d"
 rm -f /etc/nginx/sites-enabled/sgb-outside /etc/nginx/sites-available/sgb-outside; nginx -s reload; sleep 1
 
@@ -185,7 +185,7 @@ c=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$API_PORT/api/v1/co
 
 # 6-9 예전 Nginx 방식(X-Forwarded-For 에 덧붙이기)이었다면 — 지어낸 주소로 하루 한도를 넘길 수 있었음을 같은 서버로 보여 줍니다
 #     (서버는 이 헤더의 **첫 값**을 접속자 IP 로 봅니다. 덧붙이기는 접속자가 보낸 값을 맨 앞에 그대로 둡니다)
-printf '%s\n' 'server {' '  listen 8098;' '  server_name sogaebaenk.co.kr;' '  location / {' \
+printf '%s\n' 'server {' '  listen 8098;' '  server_name sogaebank.com;' '  location / {' \
   "    proxy_pass http://127.0.0.1:$SITE_PORT;" '    proxy_set_header Host $http_host;' '    proxy_set_header X-Forwarded-Host $http_host;' \
   '    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' '  }' '}' > /etc/nginx/sites-available/sgb-oldxff
 ln -sf /etc/nginx/sites-available/sgb-oldxff /etc/nginx/sites-enabled/sgb-oldxff; nginx -t >/dev/null 2>&1 && nginx -s reload; sleep 1
@@ -193,7 +193,7 @@ PID=$(psql "$DBURL" -tAc "select id from polls where title like '리허설 %' or
 LIM=$(psql "$DBURL" -tAc "select value from site_settings where key='poll.guest_ip_daily_limit'"); UAS='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 v0=$(psql "$DBURL" -tAc "select count(*) from poll_votes where poll_id='$PID'"); okc=0
 for i in 1 2 3 4; do
-  c=$(curl -s -o /dev/null -w '%{http_code}' -A "$UAS" -H 'Host: sogaebaenk.co.kr' -H "X-Forwarded-For: 203.0.113.$i" -H 'content-type: application/json' --data "{\"optionId\":\"$PO\"}" "http://127.0.0.1:8098/api/v1/community/polls/$PID/vote")
+  c=$(curl -s -o /dev/null -w '%{http_code}' -A "$UAS" -H 'Host: sogaebank.com' -H "X-Forwarded-For: 203.0.113.$i" -H 'content-type: application/json' --data "{\"optionId\":\"$PO\"}" "http://127.0.0.1:8098/api/v1/community/polls/$PID/vote")
   if [ "$c" = "201" ] || [ "$c" = "200" ]; then okc=$((okc+1)); fi
 done
 v1=$(psql "$DBURL" -tAc "select count(*) from poll_votes where poll_id='$PID'")

@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
 from flow_lib import bo_tab as _bo_tab, bo_tab_names as _bo_tab_names   # v10.29 — 운영 화면 묶음 메뉴(묶음 단추 → .ad-snb 탭)
 
-DOM = os.environ.get('DOM', 'sogaebaenk.co.kr'); ADOM = os.environ.get('ADOM', 'admin.' + DOM)
+DOM = os.environ.get('DOM', 'sogaebank.com'); ADOM = os.environ.get('ADOM', 'admin.' + DOM)
 HTTPS = os.environ.get('HTTPS_PORT', '443'); HTTP = os.environ.get('HTTP_PORT', '8088')
 _sp = '' if HTTPS == '443' else ':' + HTTPS
 SITE = f'https://{DOM}{_sp}'; SITE_H = f'http://{DOM}:{HTTP}'; BO = f'https://{ADOM}{_sp}'
@@ -47,7 +47,7 @@ def curl(method, url, headers=None, body=None, jar=None, raw=None):
     return code, js, data
 
 tag = uuid.uuid4().hex[:6]
-EMAIL = f'owner-{tag}@sogaebaenk.co.kr'; PW = 'Rehearsal-' + uuid.uuid4().hex[:10]
+EMAIL = f'owner-{tag}@sogaebank.com'; PW = 'Rehearsal-' + uuid.uuid4().hex[:10]
 
 with sync_playwright() as p:
     # 도메인을 이 PC(127.0.0.1)로 풀고, 프록시 환경 값은 뺍니다(있으면 브라우저가 https 를 프록시로 보내 닿지 못합니다)
