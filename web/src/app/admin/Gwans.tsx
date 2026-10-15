@@ -119,7 +119,7 @@ function GwanList({ isSuper, onOpen, onGo, onNew }: {
     const nx = [...sorted]; const t = nx[i]!; nx[i] = nx[j]!; nx[j] = t;
     setOrder(Object.fromEntries(nx.map((g, k) => [g.code, String(k)])));
   };
-  const sub = (c: string) => `${c.toLowerCase()}.sogaebaenk.co.kr`;
+  const sub = (c: string) => `${c.toLowerCase()}.sogaebank.com`;
 
   return (
     <>
@@ -424,7 +424,7 @@ function GwanSettings({ code, created, onPick, onGo, initialTab }: {
           <thead><tr><th>항목</th><th>값</th><th>변경</th></tr></thead>
           <tbody>
             <tr><td><b>코드</b></td><td className="mono">{g.code}</td><td className="dim">생성 후 변경 불가</td></tr>
-            <tr><td><b>서브도메인</b></td><td className="mono">{g.code.toLowerCase()}.sogaebaenk.co.kr</td><td className="dim">변경 시 리다이렉트 필요</td></tr>
+            <tr><td><b>서브도메인</b></td><td className="mono">{g.code.toLowerCase()}.sogaebank.com</td><td className="dim">변경 시 리다이렉트 필요</td></tr>
             <tr><td><b>인증 게이트</b></td><td>등록 · 1:1 문의 시작 시 (서버 게이트)</td><td className="dim">즉시 반영</td></tr>
             <tr><td><b>공개 상태</b></td><td>{g.isActive ? '운영중' : '준비중'}</td><td className="dim">즉시 반영 — 「공개 상태」 탭</td></tr>
           </tbody>

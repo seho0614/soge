@@ -1,5 +1,5 @@
 {
-  "name": "sogaebaenk",
+  "name": "sogaebank",
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",

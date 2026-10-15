@@ -2,8 +2,8 @@
 # 소개뱅크 Nginx 설정 예시 — /etc/nginx/sites-available/sgb 로 복사해서 씁니다 (절차서 6부).
 #
 #   바꿀 곳 4가지 (전부 바꾼 뒤 `sudo nginx -t`)
-#     __DOMAIN__        사용자 웹 주소           예) sogaebaenk.co.kr
-#     __ADMIN_DOMAIN__  운영 화면 주소           예) admin.sogaebaenk.co.kr
+#     __DOMAIN__        사용자 웹 주소           예) sogaebank.com
+#     __ADMIN_DOMAIN__  운영 화면 주소           예) admin.sogaebank.com
 #     __OFFICE_IP__     사무실(내 PC) 공인 IP    예) 203.0.113.10      ← https://checkip.amazonaws.com 에서 확인
 #     __APP__           앱 폴더                  예) /home/ubuntu/sgb
 #

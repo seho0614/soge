@@ -1,5 +1,5 @@
 {
-  "name": "sogaebaenk-site",
+  "name": "sogaebank-site",
   "private": true,
   "scripts": {
     "dev": "next dev -p 5174",

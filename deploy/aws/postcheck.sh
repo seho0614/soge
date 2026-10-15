@@ -6,8 +6,8 @@
 #   「실패」는 고쳐야 하는 것, 「확인」은 읽고 판단할 것(오픈 전에는 정상인 것 포함)입니다.
 #   결과: 화면 + ~/sgb-data/logs/postcheck_날짜_시각.txt   ← 이 파일을 보내 주시면 됩니다
 #
-#   SITE_DOMAIN   바깥 주소(선택). 비우면 DB 의 site.domain 을 씁니다       예) sogaebaenk.co.kr
-#   ADMIN_DOMAIN  운영 화면 주소(선택)                                    예) admin.sogaebaenk.co.kr
+#   SITE_DOMAIN   바깥 주소(선택). 비우면 DB 의 site.domain 을 씁니다       예) sogaebank.com
+#   ADMIN_DOMAIN  운영 화면 주소(선택)                                    예) admin.sogaebank.com
 # =====================================================================
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"

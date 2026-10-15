@@ -333,7 +333,7 @@ const can = (role, screen) =>
       version: '1.0.0',
       description: '자동 생성 — spec/screens.json 기준. 스키마 상세는 NestJS DTO 에서 보강됩니다.',
     },
-    servers: [{ url: 'https://api.sogaebaenk.co.kr', description: '운영' }],
+    servers: [{ url: 'https://api.sogaebank.com', description: '운영' }],
     tags: [
       {name:'HOM',description:'공통'},{name:'MNY',description:'소개장터'},
       {name:'MAL',description:'안심소개'},{name:'BIZ',description:'소개창업'},

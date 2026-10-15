@@ -184,7 +184,7 @@ prisma/
     070_attribution       귀속 로그 (append-only)
     080_deal              문의 · Deal · 합의 · 계약 · 후기
     090_settlement        정산 · 세금계산서 · 분쟁
-    (100_lead             리드관 — migrations-deferred/ 로 보류)
+    (100_lead             리드관 — 10/1 폐지 · v10.42 에서 보류 파일 삭제)
     110_notify            알림 · 공지 · 광고 · 고객센터
     120_audit             감사 로그 (append-only)
     125_grants            롤 · 권한 회수 가이드

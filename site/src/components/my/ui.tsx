@@ -35,7 +35,7 @@ export function Badge({ tone = 'off', children }: { tone?: Tone; children: React
 }
 
 /** 관 표시 — 시안 .gt.g-mny 등 */
-export const GWAN_NAME: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개뱅크몰' };
+export const GWAN_NAME: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
 export function GwanTag({ code }: { code?: string | null }) {
   if (!code) return null;
   return <span className={`my-gt g-${code.toLowerCase()}`}>{GWAN_NAME[code] ?? code}</span>;

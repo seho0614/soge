@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://api.sogaebaenk.co.kr",
+      "url": "https://api.sogaebank.com",
       "description": "운영"
     }
   ],

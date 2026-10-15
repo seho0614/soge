@@ -61,7 +61,7 @@ Route53 (선택)     월 0.6천원
 
 ```
 □ AWS 계정 (결제 수단 등록 완료)
-□ 도메인 sogaebaenk.co.kr
+□ 도메인 sogaebank.com
 □ sgb-integrated-kit.zip
 □ 터미널 (맥: 터미널 / 윈도: PowerShell)
 ```
@@ -880,7 +880,7 @@ sudo nano /etc/nginx/sites-available/sgb
 ```nginx
 server {
   listen 80;
-  server_name sogaebaenk.co.kr www.sogaebaenk.co.kr;
+  server_name sogaebank.com www.sogaebank.com;
 
   # 업로드 파일이 큽니다 — 기본 1MB 면 사진이 안 올라갑니다
   client_max_body_size 20M;
@@ -926,7 +926,7 @@ sudo systemctl reload nginx
 ### 확인 — 반영될 때까지 기다립니다
 
 ```bash
-dig +short sogaebaenk.co.kr
+dig +short sogaebank.com
 ```
 
 서버 IP가 나오면 됩니다. **30분~2시간** 걸립니다.
@@ -939,7 +939,7 @@ dig +short sogaebaenk.co.kr
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d sogaebaenk.co.kr -d www.sogaebaenk.co.kr
+sudo certbot --nginx -d sogaebank.com -d www.sogaebank.com
 ```
 
 ### 물어보는 것들
@@ -954,7 +954,7 @@ sudo certbot --nginx -d sogaebaenk.co.kr -d www.sogaebaenk.co.kr
 ### 확인
 
 ```
-https://sogaebaenk.co.kr/api/v1/health
+https://sogaebank.com/api/v1/health
 ```
 
 브라우저 주소창에 **자물쇠**가 보이면 됩니다.
@@ -1059,7 +1059,7 @@ psql "$DATABASE_URL" -c "SELECT key, value FROM site_settings WHERE key='infra.e
 사업자등록증
 통신판매업 신고증
 서비스 소개서
-개인정보 처리방침 (https://sogaebaenk.co.kr/terms)
+개인정보 처리방침 (https://sogaebank.com/terms)
 고정 IP          ← 9-2에서 받은 것
 ```
 
@@ -1203,7 +1203,7 @@ pm2 restart sgb --update-env
 ```
 1  오른쪽 위 리전을 "미국 동부 (버지니아 북부)" 로 바꿉니다
 2  검색창 "Certificate Manager" → "인증서 요청"
-3  퍼블릭 인증서 → 도메인: cdn.sogaebaenk.co.kr
+3  퍼블릭 인증서 → 도메인: cdn.sogaebank.com
 4  검증 방법: DNS 검증
 5  "요청"
 6  만들어진 인증서를 열어 CNAME 값을 복사 → DNS 에 등록
@@ -1215,7 +1215,7 @@ pm2 restart sgb --update-env
 ```
 7  리전을 다시 서울로
 8  CloudFront → 배포 → 설정 "편집"
-   대체 도메인(CNAME): cdn.sogaebaenk.co.kr
+   대체 도메인(CNAME): cdn.sogaebank.com
    사용자 정의 SSL 인증서: 방금 만든 것
 9  저장
 10 DNS 에 CNAME 추가: cdn → d1234abcd.cloudfront.net
@@ -1231,7 +1231,7 @@ pm2 restart sgb --update-env
 1  검색창 "SES" → Amazon Simple Email Service
 2  왼쪽 "확인된 자격 증명" → "자격 증명 생성"
 3  자격 증명 유형: 도메인
-4  도메인: sogaebaenk.co.kr
+4  도메인: sogaebank.com
 5  "DKIM 할당" 펼치기
    ID 유형: Easy DKIM
    서명 키 길이: RSA_2048_BIT
@@ -1247,9 +1247,9 @@ pm2 restart sgb --update-env
 
 ```
 이름                                          값
-abc123._domainkey.sogaebaenk.co.kr    abc123.dkim.amazonses.com
-def456._domainkey.sogaebaenk.co.kr    def456.dkim.amazonses.com
-ghi789._domainkey.sogaebaenk.co.kr    ghi789.dkim.amazonses.com
+abc123._domainkey.sogaebank.com    abc123.dkim.amazonses.com
+def456._domainkey.sogaebank.com    def456.dkim.amazonses.com
+ghi789._domainkey.sogaebank.com    ghi789.dkim.amazonses.com
 ```
 
 **그대로 DNS에 CNAME 으로 넣으십시오.**
@@ -1264,7 +1264,7 @@ ghi789._domainkey.sogaebaenk.co.kr    ghi789.dkim.amazonses.com
 
 | 타입 | 호스트 | 값 |
 |---|---|---|
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@sogaebaenk.co.kr` |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@sogaebank.com` |
 
 ### ★ `p=none` 으로 시작하십시오
 
@@ -1279,7 +1279,7 @@ p=reject 로 두면 설정이 조금만 어긋나도
 ## 11-3. 검증 기다리기
 
 ```
-SES → 확인된 자격 증명 → sogaebaenk.co.kr
+SES → 확인된 자격 증명 → sogaebank.com
 ```
 
 `확인 보류 중` → `확인됨` 이 됩니다. **최대 72시간**입니다.
@@ -1295,7 +1295,7 @@ SES → 계정 대시보드 → "프로덕션 액세스 요청"
 ```
 메일 유형    트랜잭션
 
-웹사이트     https://sogaebaenk.co.kr
+웹사이트     https://sogaebank.com
 
 사용 사례
 회원 가입 확인, 검수 결과 통보, 주문·배송 안내 등
@@ -1317,7 +1317,7 @@ SNS 로 반송·불만 알림을 받아 자동으로 발송 대상에서
 cd ~/sgb && set -a; source .env; set +a
 
 psql "$DATABASE_URL" <<'SQL'
-UPDATE site_settings SET value = 'no-reply@sogaebaenk.co.kr'
+UPDATE site_settings SET value = 'no-reply@sogaebank.com'
  WHERE key = 'notify.mail_from';
 SQL
 ```
@@ -1520,7 +1520,7 @@ psql "$DATABASE_URL" -c "SELECT * FROM v_search_parser_health;"
 ### ④ 운영 화면에서
 
 ```
-https://sogaebaenk.co.kr/#/admin/search
+https://sogaebank.com/#/admin/search
 ```
 
 24시간 호출 · 폴백 비율 · 평균 응답이 한 화면에 보입니다.
@@ -1661,9 +1661,9 @@ psql "$DATABASE_URL" -c "SELECT count(*) FROM v_enc_key_missing;"
 
 | 주소 | 기대 |
 |---|---|
-| `https://sogaebaenk.co.kr/api/v1/health` | `{"ok":true}` |
-| `https://sogaebaenk.co.kr` | 메인 화면 |
-| `https://sogaebaenk.co.kr/docs` | API 문서 |
+| `https://sogaebank.com/api/v1/health` | `{"ok":true}` |
+| `https://sogaebank.com` | 메인 화면 |
+| `https://sogaebank.com/docs` | API 문서 |
 
 **주소창에 자물쇠**가 있어야 합니다.
 

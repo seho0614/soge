@@ -4,7 +4,7 @@
 #
 #   bash ~/sgb/deploy/aws/nginx-render.sh  <사용자 웹 주소>  <운영 화면 주소>  <사무실 IP>[,<IP>…]  [open]
 #
-#   예) bash ~/sgb/deploy/aws/nginx-render.sh sogaebaenk.co.kr admin.sogaebaenk.co.kr 203.0.113.10 | sudo tee /etc/nginx/sites-available/sgb
+#   예) bash ~/sgb/deploy/aws/nginx-render.sh sogaebank.com admin.sogaebank.com 203.0.113.10 | sudo tee /etc/nginx/sites-available/sgb
 #
 #   · 사무실 IP 는 쉼표로 여럿 넣을 수 있습니다 (집 · 사무실). 내 IP 는 PC 에서 https://checkip.amazonaws.com 을 열면 나옵니다.
 #   · 끝에 open 을 붙이면 **사용자 웹의 접근 제한을 뺍니다**(여는 날). 운영 화면은 늘 사무실 IP 만입니다.
@@ -18,7 +18,7 @@ APP_LINK="${APP_LINK:-$HOME/sgb}"
 DOMAIN="${1:-}"; ADMIN="${2:-}"; IPS="${3:-}"; MODE="${4:-closed}"
 usage() { sed -n '4,12p' "$0" | sed 's/^# \{0,3\}//' >&2; exit 1; }
 [ -n "$DOMAIN" ] && [ -n "$ADMIN" ] && [ -n "$IPS" ] || usage
-[[ "$DOMAIN" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] && [[ "$ADMIN" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "!! 주소 형식이 아닙니다 (https:// 없이 sogaebaenk.co.kr 처럼)" >&2; exit 1; }
+[[ "$DOMAIN" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] && [[ "$ADMIN" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "!! 주소 형식이 아닙니다 (https:// 없이 sogaebank.com 처럼)" >&2; exit 1; }
 [ "$DOMAIN" != "$ADMIN" ] || { echo "!! 사용자 웹과 운영 화면 주소가 같습니다 — 운영 화면은 다른 주소(admin.…)여야 합니다" >&2; exit 1; }
 ALLOW=""
 IFS=',' read -ra arr <<< "$IPS"
