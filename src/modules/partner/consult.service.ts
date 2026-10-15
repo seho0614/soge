@@ -6,6 +6,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { normSido } from '../../common/region';
 import { MailService } from '../../common/mail/mail.service';
+import { integrationLive } from '../../common/integration/switches';
 
 /**
  * 안심소개 「생활·금융 상담」 (D005 · D018)
@@ -21,7 +22,7 @@ import { MailService } from '../../common/mail/mail.service';
  *
  * ── 인증번호 발송 ─────────────────────────────────────────────────
  * **두 길을 함께 씁니다(v10.43 · 10/15 대표 결정 「둘 중 하나만 인증하면 됨 · 둘 다 사용」)**
- *   휴대폰 = 알림톡(integrations.ALIMTALK = LIVE) · 이메일 = 메일(SMTP_* · 발신 주소 · notify.email_verified = on · MailService.ready)
+ *   휴대폰 = 알림톡(ALIMTALK_KEY 있음 + integrations.ALIMTALK = LIVE · v10.44) · 이메일 = 메일(SMTP_* · 발신 주소 · notify.email_verified = on · MailService.ready)
  *   준비된 길 모두로 **같은 인증번호 하나**를 보냅니다 — 어느 쪽으로 받은 번호를 넣어도 확인됩니다(verify 는 그대로).
  *   메일만으로 확인하면 휴대폰 번호는 확인되지 않습니다 — 대표 결정으로 허용.
  *   메일이 유일한 길인데 보내지 못하면 그 신청을 지우고(연락처 암호문 포함) OTP_SEND_FAILED — 받지 못한 신청이 하루 횟수를 쓰지 않게.
@@ -54,10 +55,15 @@ export class ConsultService {
   /** ab***@example.com — 화면 안내용 */
   private static maskEmail(e: string) { const [u, d] = e.split('@'); return `${u.slice(0, 2)}***@${d}`; }
 
+  /**
+   * 알림톡으로 보낼 수 있는가 — v10.44: **키(ALIMTALK_KEY)가 있고** integrations.ALIMTALK = LIVE 일 때만.
+   *   전에는 상태만 봤습니다. 발송 어댑터가 아직 없는데 운영 화면에서 LIVE 로 바꾸면
+   *   휴대폰으로 아무것도 가지 않는데 「보냈습니다」가 나갔습니다(대표 결정 「알림톡 수정」 · 2026-10-15).
+   *   알림톡 대행사를 정해 어댑터를 붙이는 판에서 이 판단을 그 어댑터의 configured 로 바꿉니다(docs/93).
+   */
   private async notifyReady(): Promise<boolean> {
-    const [r] = await this.db.query<{ status: string }>(
-      `SELECT status FROM integrations WHERE code = 'ALIMTALK'`);
-    return r?.status === 'LIVE';
+    if (!process.env.ALIMTALK_KEY?.trim()) return false;
+    return integrationLive(this.db, 'ALIMTALK');
   }
 
   /** 상담 업종 목록 — 공개 · 준비 중 상태까지 내려 화면이 "준비 중"을 그대로 보이게 합니다 */

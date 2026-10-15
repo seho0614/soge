@@ -37,7 +37,8 @@
     "check:sql": "node scripts/check-sql.js",
     "nts:recheck": "ts-node -P tsconfig.scripts.json scripts/nts-recheck.ts",
     "test:consult": "node scripts/test-consult-flow.js",
-    "test:mail": "ts-node -P tsconfig.scripts.json scripts/test-mail-offline.ts"
+    "test:mail": "ts-node -P tsconfig.scripts.json scripts/test-mail-offline.ts",
+    "check:integrations": "ts-node -P tsconfig.scripts.json scripts/check-integrations.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

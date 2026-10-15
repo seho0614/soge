@@ -1,3 +1,5 @@
+import { IntegrationErrorKind } from '../../common/integration/errors';
+
 /* ---------------------------------------------------------------------
  * v10.34 (D093 · 2026-10-11 대표 결정) — 국세청 전자세금계산서 전송: 연결 자리(어댑터)
  *
@@ -19,7 +21,8 @@
  * ------------------------------------------------------------------- */
 
 export type EtaxStatus = 'ASSUMED' | 'SENDING' | 'SENT' | 'FAILED' | 'CANCELED';
-export type EtaxErrorKind = 'TIMEOUT' | 'NETWORK' | 'AUTH' | 'HTTP_4XX' | 'UPSTREAM' | 'BAD_RESPONSE' | 'REJECTED' | 'NOT_CONFIGURED';
+/** v10.44 — 공통 연동 오류 종류 그대로(common/integration/errors.ts) */
+export type EtaxErrorKind = IntegrationErrorKind;
 
 /** 세금계산서 한 장 — 공급자 = 소개뱅크(운영 법인) · 공급받는 자 = 업체 */
 export interface EtaxDoc {

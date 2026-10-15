@@ -5,6 +5,7 @@ import { RequestCtx } from '../../core/request-context';
 import { EtaxAdapter, EtaxDoc, EtaxResult, fmtApproval } from './etax.adapter';
 import { AssumeEtaxAdapter } from './etax.assume';
 import { HttpEtaxAdapter } from './etax.http';
+import { assumeOn } from '../../common/integration/switches';
 
 /**
  * v10.34 (D093) 국세청 전자세금계산서 전송 — 운영의 「발행」 · 「다시 보내기」 · 「상태 조회」 · 「취소(수정 발행)」
@@ -47,9 +48,8 @@ export class EtaxService {
 
   /* ── 어댑터 고르기 ───────────────────────────────────────────── */
   private async assumeOn() {
-    const [r] = await this.db.query<{ on: boolean }>(`SELECT value = 'on' AS on FROM site_settings WHERE key = 'assume.etax'`);
     /* 설정 줄이 없으면 간주로 둡니다 — 키 없이 실제 전송을 시도하지 않습니다 */
-    return r ? r.on : true;
+    return assumeOn(this.db, 'etax', true);
   }
   private httpAdapter(): EtaxAdapter {
     const url = (process.env.ETAX_URL ?? '').trim();

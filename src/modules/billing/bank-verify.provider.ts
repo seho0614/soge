@@ -22,7 +22,8 @@
  * ------------------------------------------------------------------- */
 
 import { createHash, randomInt } from 'crypto';
-import { envInt, envJson, FetchLike, getPath, httpJson, HttpErrorKind, normName, setPath } from '../../common/http-json';
+import { envInt, envJson, FetchLike, getPath, httpJson, normName, setPath } from '../../common/http-json';
+import { IntegrationErrorKind } from '../../common/integration/errors';
 
 export interface BankVerifyResult {
   /** 1원이 실제로 보내졌는가 */
@@ -46,7 +47,8 @@ export interface BankConfirmResult {
   errorKind?: BankErrorKind;
 }
 
-export type BankErrorKind = HttpErrorKind | 'NOT_CONFIGURED' | 'REJECTED' | 'HOLDER_MISMATCH' | 'CODE_MISMATCH';
+/** v10.44 — 공통 연동 오류 종류(common/integration/errors.ts) + 계좌인증에만 있는 둘 */
+export type BankErrorKind = IntegrationErrorKind | 'HOLDER_MISMATCH' | 'CODE_MISMATCH';
 
 export abstract class BankVerifyProvider {
   /** 1원을 보냅니다. 입금자명에 코드가 찍힙니다 */

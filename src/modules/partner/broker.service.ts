@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolveBrokerLookupProvider } from './broker-lookup.provider';
+import { assumeOn } from '../../common/integration/switches';
 
 /**
  * 중개사 인증 심사 (SB-ADM-BRK-010 · 011, INV-BR1).
@@ -84,9 +85,8 @@ export class BrokerService {
               count(*) FILTER (WHERE state = 'REJECTED')::int AS rejected,
               count(*) FILTER (WHERE state = 'EXPIRED')::int  AS expired
          FROM broker_verifications`);
-    const [a] = await this.db.query<any>(
-      `SELECT value = 'on' AS on FROM site_settings WHERE key = 'assume.broker'`);
-    return { items, counts, assumed: !!a?.on, lookupConfigured: resolveBrokerLookupProvider().configured,
+    const assumed = await assumeOn(this.db, 'broker', false);
+    return { items, counts, assumed, lookupConfigured: resolveBrokerLookupProvider().configured,
              total, page, size, pages: Math.max(1, Math.ceil(total / size)), order, q };
   }
 
@@ -94,9 +94,7 @@ export class BrokerService {
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new NotFound('중개사 인증 신청이 없습니다.');
     const [row] = await this.db.query<any>(`${BrokerService.SELECT} WHERE v.id = $1`, [id]);
     if (!row) throw new NotFound('중개사 인증 신청이 없습니다.');
-    const [a] = await this.db.query<any>(
-      `SELECT value = 'on' AS on FROM site_settings WHERE key = 'assume.broker'`);
-    return { ...row, assumed: !!a?.on };
+    return { ...row, assumed: await assumeOn(this.db, 'broker', false) };
   }
 
   /** v10.32 — 보증 · 서류(시안 SB-ADM-BRK-011 셋째 칸). 읽기 전용 */

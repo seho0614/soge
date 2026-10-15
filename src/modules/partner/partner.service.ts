@@ -7,6 +7,7 @@ import { normSido } from '../../common/region';
 import { LeadCashService } from './lead-cash.service';
 import { PartnerActorService } from './partner-actor.service';
 import { FORM_KO } from './partner-center.service';
+import { assumeOn } from '../../common/integration/switches';
 
 /**
  * 파트너센터.
@@ -1054,8 +1055,7 @@ export class PartnerService {
   /** 내 중개사 인증 상태. */
   async myBroker() {
     const me = RequestCtx.actorId()!;
-    const [assumed] = await this.db.query<any>(
-      `SELECT value = 'on' AS on FROM site_settings WHERE key = 'assume.broker'`);
+    const assumed = await assumeOn(this.db, 'broker', false);
     const [r] = await this.db.query<any>(
       `SELECT v.license_no AS "licenseNo", v.office_name AS "officeName",
               v.ceo_name AS "ceoName", v.state, v.lookup_result AS "lookupResult",
@@ -1068,7 +1068,7 @@ export class PartnerService {
          JOIN businesses b ON b.id = v.business_id
         WHERE b.account_id = $1
         ORDER BY v.created_at DESC LIMIT 1`, [me]);
-    return { applied: !!r, assumed: !!assumed?.on,
+    return { applied: !!r, assumed,
       lookupConfigured: resolveBrokerLookupProvider().configured, ...(r ?? {}) };
   }
 
@@ -1095,8 +1095,7 @@ export class PartnerService {
         '이미 신청하셨습니다. 심사 중이거나 인증이 끝난 건은 다시 내지 않습니다.');
     }
 
-    const [a] = await this.db.query<any>(
-      `SELECT value = 'on' AS on FROM site_settings WHERE key = 'assume.broker'`);
+    const assumeBroker = await assumeOn(this.db, 'broker', false);
     const input = { licenseNo: dto.licenseNo.trim(), officeName: dto.officeName.trim(), ceoName: dto.ceoName.trim() };
 
     /* 외부 조회는 트랜잭션 밖에서 합니다 — 기관이 느려도 DB 잠금을 쥐고 기다리지 않게 */
@@ -1105,7 +1104,7 @@ export class PartnerService {
     if (provider.configured) {
       const r = await provider.lookup(input);
       lookup = r.result; source = r.result ? 'API' : null; detail = r.detail;
-    } else if (a?.on) {
+    } else if (assumeBroker) {
       /* 간주 모드에서는 대조를 MATCH 로 두되, 승인은 여전히 사람이 합니다.
          자동 승인까지 하면 연동 뒤에도 아무도 안 봅니다. */
       stub = true; lookup = 'MATCH'; source = 'ASSUMED';
