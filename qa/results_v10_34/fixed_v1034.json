@@ -1,0 +1,56 @@
+[
+ {
+  "no": "Q-1",
+  "kind": "결함(사용자 웹 · 프레임워크)",
+  "what": "목록 화면 수화 오류 #418(부하 때 540번 중 5 ~ 6번)",
+  "symptom": "Next 15.5.25 에 묶인 React 19.2 canary 의 수화 replay 결함 — 돌아가기 줄의 JS 조각이 늦게 오면 자리를 되돌리지 않음",
+  "done": "React 19.3.0 고침 4줄을 브라우저 번들 빌드 때 붙임(자리를 못 찾으면 빌드 멈춤)",
+  "where": "sgb/site/next-loaders/hydration-replay-fix.js · next.config.js · 커밋 95b573e",
+  "rerun": "hyd_load 0 / 540"
+ },
+ {
+  "no": "Q-2",
+  "kind": "결함(새 설치)",
+  "what": "실제 같은 시드가 부동산 희망 소개비 금지(RE_EXPOSURE_FEE)에서 멈춤",
+  "symptom": "새로 설치한 DB 에 시드 계정 · 매물 · 요청 0",
+  "done": "부동산 분류는 희망 소개비를 비움",
+  "where": "sgb/scripts/seed-realistic.js · 커밋 eedfe95",
+  "rerun": "계정 12 · 등록 28 · 요청 8"
+ },
+ {
+  "no": "Q-3",
+  "kind": "결함(새 설치)",
+  "what": "리드 이용료 선불 뒤 시험 충전 없음 → 상담 업종 0종",
+  "symptom": "「생활 · 금융 상담」 리드형 업종 모두 받을 업체 없음",
+  "done": "local-setup 에 시험 충전(잔액 0 인 곳만) · 상담 시드를 시드 뒤 한 번 더",
+  "where": "sgb/scripts/local-setup.sh · 커밋 eedfe95",
+  "rerun": "받는 업종 20종"
+ },
+ {
+  "no": "Q-4",
+  "kind": "결함(새 설치)",
+  "what": "메인 투표 시드가 두 번째 기동부터만",
+  "symptom": "처음 한 번 메인 투표 카드 「준비 중」",
+  "done": "local-setup 에 seed-polls.sql",
+  "where": "sgb/scripts/local-setup.sh · 커밋 8341e0c",
+  "rerun": "메인 투표 3건"
+ },
+ {
+  "no": "T-1",
+  "kind": "시험",
+  "what": "verify INTG · link_check E-1 기대값",
+  "symptom": "오픈을 막는 연동 · 간주 모드에 ETAX 가 1종씩 늘어남",
+  "done": "4 → 5 · 3종 → 4종",
+  "where": "sgb/scripts/verify-invariants.sh · qa/link_check.py",
+  "rerun": "verify exit 0 · link_check 44 / 44"
+ },
+ {
+  "no": "T-2",
+  "kind": "시험",
+  "what": "ui_adm_v1032 PTN-1 · site_mall M-6 · test_v1034_etax 경로",
+  "symptom": "개발 DB 에 쌓인 자료(파트너 118곳 · 판매 집계)를 가정 · 작업 사본에서 킷 경로를 못 찾음",
+  "done": "새 DB 에서도 맞게(20곳 이하면 더 보기 없음 · 집계 없으면 「새로 올라온 상품」 탭) · 킷 경로 찾기",
+  "where": "qa/ui_adm_v1032.py · site_mall.py · test_v1034_etax.py",
+  "rerun": "17 / 17 · 47 / 47 · 47 / 47"
+ }
+]

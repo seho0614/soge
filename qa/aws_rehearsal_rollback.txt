@@ -1,0 +1,5 @@
+되돌리기: /tmp/awshome/sgb-releases/v10.41_20261014_155358 → /tmp/awshome/sgb-releases/prev_20261014_155358
+   (전 판에는 사용자 웹 · 배치 실행 스크립트가 없어 API 만 띄웠습니다)
+되돌림 완료 — API 가 떴습니다 (/tmp/awshome/sgb-releases/prev_20261014_155358)
+되돌리기: /tmp/awshome/sgb-releases/prev_20261014_155358 → /tmp/awshome/sgb-releases/v10.41_20261014_155358
+되돌림 완료 — API 가 떴습니다 (/tmp/awshome/sgb-releases/v10.41_20261014_155358)

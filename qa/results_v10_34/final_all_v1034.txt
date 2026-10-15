@@ -1,0 +1,87 @@
+api_mode: /docs → 404 (404 = 운영 방식 dist/main.js · 200 = 개발 서버)
+verify: exit=0 통과 305 / 실패 0 | 안전 637 · 건너뜀 1 · ★오류 0 · ▲뚫림 0 | SQL 대조: 확인 1313 · 통과 1313 · 이름 오류 0 · 동적 SQL 건너뜀 88
+attack_pick: 통과 7 / 7
+cut_b2: 조각 7개 · 원본과 다른 것 0 []
+cut_mall: 조각 53개 · 받은 그림과 다른 것 0 []
+cut_money: 조각 53개 — 실제 웹 35개 · 시안 53개 · 원본과 다른 것 0 [] (받은 그림 파일 없이 자르기 표의 지문으로 견줌)
+ads: 안전 8 · ▲위험 0
+matrix: 매트릭스: 화면 212 (구현 212 · 시안 212) · 페이지 150+56 · API 640 · 표 255 · 뷰 312 · 함수 374 교차 점검: 상 0 · 중 0 · 하 0 
+fixtures: 준비 7 / 7
+e2e: 통과 35 / 35
+decisions: 통과 26 / 26
+decisions_ui: 통과 13 / 13
+fixes_1002: 통과 13 / 13
+PART-A-DONE
+srv_aff: 통과 42 / 42
+srv_hlt: 통과 53 / 53
+srv_ptn: 통과 74 / 74
+srv_aff_ui: 통과 15 / 15
+srv_hlt_ui: 통과 15 / 15
+srv_ptn_ui: 통과 28 / 28
+srv_proto: 통과 33 / 33
+srv_w5: 통과 77 / 77
+srv_v1031: 통과 156 / 156
+ui_adm_v1032: 통과 17 / 17
+test_v1032_two: {"pass": 28, "fail": 0}
+test_v1033_directory: 통과 54 / 54
+test_v1034_etax: 통과 47 / 47
+srv_pay: 통과 65 / 65
+srv_pay_ui: 통과 15 / 15
+srv_file: 통과 76 / 76
+srv_file_ui: 통과 15 / 15
+srv_lead: 통과 143 / 143
+srv_lead_ui: 통과 22 / 22
+srv_consult: 통과 87 / 87
+srv_consult_ui: 통과 49 / 49
+srv_retship: 통과 22 / 22
+srv_refcode: 통과 89 / 89
+srv_refcode_ui: 통과 54 / 54
+srv_viewlimit: 통과 34 / 34
+csrf: 통과 7 / 7
+srv_poll: 통과 72 / 72
+srv_poll_ui: 통과 48 / 48
+srv_billing: 통과 103 / 103
+srv_billing_ui: 통과 16 / 16
+srv_detail: 통과 38 / 38
+srv_cmu: 통과 42 / 42
+srv_cmu_ui: 통과 62 / 62
+srv_fin: 통과 28 / 28
+srv_fin_ui: 통과 29 / 29
+srv_mall: 통과 31 / 31
+site_mall: 통과 46 / 47
+fix_1026: 통과 40 / 40
+srv_opt: 통과 91 / 91
+site_opt: 통과 30 / 30
+fix_1027: 통과 35 / 35
+fix_1027b: 57/57 통과
+fix_1027b_ui: 43/43 통과
+fix_1027c: 통과 21 / 21
+fix_1028: 통과 121 / 121
+fix_1028_ui: 통과 39 / 39
+site_mny: site_mny 43/43
+PART-B-DONE
+web_main: 124/124
+web_main_live: 건너뜀 — 5176 에 live 인스턴스가 없습니다
+hyd_home: 통과 5 / 5 · 메인 270번 열기
+measure_home: 통과 28 / 28 (허용 ±12px)
+web_mal: 261/261  → /home/claude/qa/web_mal.json
+site_tz: 통과 7 / 7
+site_detail: 통과 43 / 44
+hyd_load: 통과 — 오류 0 / 540 (창 6개 동시 · 3곳 × 180)
+smoke: Counter({200: 285, 404: 15, 409: 13, 403: 10, 400: 5, 422: 2})
+pagetest: RECENT full 39 paged 39 same order True dups 0 keys_leak False FEE_DESC full 39 paged 39 same order True dups 0 keys_leak False POPULAR full 39 paged 39 same order True dups 0 keys_leak False 
+crawl_site: done
+crawl_admin: done
+PART-C-DONE
+db_link: 통과 63 / 63
+link_check: 통과 43 / 44 · 실패 1: E-1 간주 모드 3종(assume.paym
+btn_site: 쪽 660 · 단추 3048 · 반응 있음 1743 · 같은 틀에서 확인함 1005 · 같은 단추(대표만) 160 · 꺼짐 140 · 문제 0
+btn_bo: 상태 160 · 단추 1665 · 반응 있음 908 · 같은 단추(대표만) 603 · 꺼짐 106 · 무반응(처리기 있음) 48 · 문제 0
+flow_trade: 통과 91 / 91 · 흐름 8개
+flow_mall: 통과 108 / 110 · 흐름 7개 · 건너뜀 2
+flow_plaza: 통과 80 / 81 · 흐름 5개 · 건너뜀 1
+flow_biz: 통과 77 / 77 · 흐름 6개
+flow_proto: 통과 139 / 140 · 흐름 10개 · 건너뜀 1
+PART-E-DONE
+sweep_proto: done
+proto_report: 232 {'clicks': 7319, 'nav': 6051, 'toast': 700, 'dom': 506, 'input': 45, 'disabled': 17, 'none': 0, 'error': 0} dead [] 

@@ -1,0 +1,212 @@
+[
+ {
+  "step": "A-0 시험 링크 발급",
+  "ok": true,
+  "detail": "{'ok': True, 'id': 'b58cbab6-37e9-4bd0-a7ef-f7f626552e75', 'code': 'PTN-ADFB58CC', 'note': '링크를 만들었습니다.'}"
+ },
+ {
+  "step": "A-1 공개 클릭 → 착지 주소 · 1회 셈 (로그인 없이)",
+  "ok": true,
+  "detail": "(200, {'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': True, 'bot': False})"
+ },
+ {
+  "step": "A-2 같은 방문자 같은 날 다시 → 안 셈",
+  "ok": true,
+  "detail": "({'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': False, 'bot': False}, 1)"
+ },
+ {
+  "step": "A-3 다른 방문자 → 셈",
+  "ok": true,
+  "detail": "({'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': True, 'bot': False}, 2)"
+ },
+ {
+  "step": "A-4 미리보기 로봇 → 주소는 주되 안 셈",
+  "ok": true,
+  "detail": "({'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': False, 'bot': True}, {'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': False, 'bot': True}, 2)"
+ },
+ {
+  "step": "A-5 방문자 쿠키 없음 → IP·UA 해시로 하루 1회",
+  "ok": true,
+  "detail": "({'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': True, 'bot': False}, {'code': 'PTN-ADFB58CC', 'landingUrl': 'https://example.com/solar', 'counted': False, 'bot': False}, 3)"
+ },
+ {
+  "step": "A-6 방문자 원문 저장 없음 (해시 64자만)",
+  "ok": true,
+  "detail": "raw=0 rows=3"
+ },
+ {
+  "step": "A-7 내 소개링크에 클릭·오늘 클릭·공유 경로",
+  "ok": true,
+  "detail": "{'id': 'b58cbab6-37e9-4bd0-a7ef-f7f626552e75', 'code': 'PTN-ADFB58CC', 'label': 'D001 검증', 'isActive': True, 'product': '태양광 무료 상담 신청', 'commission': 50000, 'productStatus': 'ON_SALE', 'clicks': 3, 'clicksToday': 3, 'orders': 0, 'sharePath'"
+ },
+ {
+  "step": "A-8 대시보드 이번 달 클릭에 반영",
+  "ok": true,
+  "detail": "{'clicks': 3, 'orders': 0, 'earned': 0, 'payable': 0, 'lastMonthEarned': 0, 'lastMonthSamePeriod': 0, 'deltaPct': None}"
+ },
+ {
+  "step": "A-9 없는 코드 · 형식 틀린 코드 → 404",
+  "ok": true,
+  "detail": "(404, {'code': 'NOT_FOUND', 'message': '없는 링크입니다. 주소를 다시 확인해 주십시오.'}, 404)"
+ },
+ {
+  "step": "A-10 중지된 링크 → 404 LINK_INACTIVE · 안 셈",
+  "ok": true,
+  "detail": "(404, {'code': 'LINK_INACTIVE', 'message': '파트너가 사용을 멈춘 링크입니다.'})"
+ },
+ {
+  "step": "A-11 판매 중 아닌 상품 링크 → 404 PRODUCT_NOT_ON_SALE",
+  "ok": true,
+  "detail": "('PTN-0AE7C466', 404, {'code': 'PRODUCT_NOT_ON_SALE', 'message': '판매가 끝났거나 잠시 멈춘 상품입니다.'})"
+ },
+ {
+  "step": "A-12 DB 가 javascript: · //외부 착지 차단 (열린 리다이렉트)",
+  "ok": true,
+  "detail": "('ERROR:  LANDING: 착지 주소는 http:// · https:// 로 시작하거나 / 로 시작하는 내부 경로여야 합니다\\nCONTEXT:', 'ERROR:  LANDING: 착지 주소는 http:// · https:// 로 시작하거나 / 로 시작하는 내부 경로여야 합니다\\nCONTEXT:')"
+ },
+ {
+  "step": "A-13 내부 경로 착지 허용",
+  "ok": true,
+  "detail": "{'code': 'PTN-ADFB58CC', 'landingUrl': '/health', 'counted': True, 'bot': False}"
+ },
+ {
+  "step": "A-14 (트리거 우회로 들어간) 위험 착지 → API 도 404 BAD_LANDING",
+  "ok": true,
+  "detail": "(404, {'code': 'BAD_LANDING', 'message': '이동할 주소가 올바르지 않아 열지 않았습니다.'})"
+ },
+ {
+  "step": "A-15 운영 상품 등록 — javascript: 착지 422",
+  "ok": true,
+  "detail": "(422, {'code': 'LANDING', 'message': '착지 주소는 http:// · https:// 로 시작하거나 / 로 시작하는 내부 경로여야 합니다'})"
+ },
+ {
+  "step": "A-16 (회귀) 입점 심사 목록 = APPLIED 건수",
+  "ok": true,
+  "detail": "0/0"
+ },
+ {
+  "step": "B-1 비로그인 → 403",
+  "ok": true,
+  "detail": "(403, {'code': 'UNAUTHENTICATED', 'message': '로그인이 필요합니다.'})"
+ },
+ {
+  "step": "B-2 파트너 아님 → ok:false",
+  "ok": true,
+  "detail": "{'ok': False, 'note': '파트너로 승인된 계정이 아닙니다.'}"
+ },
+ {
+  "step": "B-3 본인인증 없으면 → 403 IDENTITY_REQUIRED (두 API)",
+  "ok": true,
+  "detail": "(403, {'code': 'IDENTITY_REQUIRED', 'message': '본인인증이 필요합니다.'}, 403)"
+ },
+ {
+  "step": "B-4 (준비) 시험 정산서 확정",
+  "ok": true,
+  "detail": "(201, {'ok': True, 'id': '7c36d069-3dfa-4709-86d4-811ab8675565', 'status': 'CONFIRMED', 'note': '확정했습니다. 지급은 지급 담당이 합니다.'})"
+ },
+ {
+  "step": "B-5 계좌 재등록 → 인증 풀림",
+  "ok": true,
+  "detail": "{'ok': True, 'id': '468b4d77-82fe-493e-86b5-2c11cbf08a81', 'last4': '9012', 'note': '등록했습니다. 이어서 1원 인증을 하셔야 지급됩니다.'}"
+ },
+ {
+  "step": "B-6 지급 창구 blocker = 계좌 1원 인증 전",
+  "ok": true,
+  "detail": "계좌 1원 인증 전"
+ },
+ {
+  "step": "B-7 1원 받기 전 확인 → 409 NOT_REQUESTED",
+  "ok": true,
+  "detail": "(409, {'code': 'NOT_REQUESTED', 'message': '먼저 「1원 받기」를 누르십시오.'})"
+ },
+ {
+  "step": "B-8 1원 받기 → 스텁 · 코드 · 10분 만료",
+  "ok": true,
+  "detail": "{'ok': True, 'verified': False, 'stub': True, 'expiresAt': '2026-10-11T16:01:18.558Z', 'triesLeft': 5, 'devCode': 'SGB01', 'note': '연동 전이라 실제로 1원이 가지 않았습니다 — 코드는 SGB01 입니다. 10분 안에 입력하십시오.'}"
+ },
+ {
+  "step": "B-9 바로 다시 받기 → 422 TOO_SOON",
+  "ok": true,
+  "detail": "(422, {'code': 'TOO_SOON', 'message': '1원을 방금 보냈습니다. 30초 뒤에 다시 받으실 수 있습니다.'})"
+ },
+ {
+  "step": "B-10 코드 형식 틀림·없음 → 400",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': '코드는 글자와 숫자만 적으십시오.', 'field': '코드는'}, 400)"
+ },
+ {
+  "step": "B-11 틀린 코드 → 422 CODE_MISMATCH · 시도 1",
+  "ok": true,
+  "detail": "(422, {'code': 'CODE_MISMATCH', 'message': '코드가 맞지 않습니다. (4회 남았습니다)', 'details': {'triesLeft': 4}})"
+ },
+ {
+  "step": "B-12 정산내역에 인증 진행 상태",
+  "ok": true,
+  "detail": "{'bankName': '국민은행', 'last4': '9012', 'holderName': '김소개', 'verifiedAt': None, 'verifyPending': True, 'verifyExpiresAt': '2026-10-11T16:01:18.558Z', 'verifyTries': 1, 'verifyLocked': False, 'verifyStub': True}"
+ },
+ {
+  "step": "B-13 만료된 코드 → 422 CODE_EXPIRED · DB 도 차단",
+  "ok": true,
+  "detail": "(422, {'code': 'CODE_EXPIRED', 'message': '코드는 10분 동안만 쓸 수 있습니다 — 1원을 다시 받으십시오.'}, 'ERROR:  VERIFY_EXPIRED: 인증 코드가 만료됐습니다 — 1원을 다시 받으십시오\\nCONTEXT:  PL/pgSQL function')"
+ },
+ {
+  "step": "B-14 다시 받기 → 새 코드",
+  "ok": true,
+  "detail": "{'ok': True, 'verified': False, 'stub': True, 'expiresAt': '2026-10-11T16:01:18.920Z', 'triesLeft': 4, 'devCode': 'SGB01', 'note': '연동 전이라 실제로 1원이 가지 않았습니다 — 코드는 SGB01 입니다. 10분 안에 입력하십시오.'}"
+ },
+ {
+  "step": "B-15 맞는 코드(대소문자·공백 무시) → 인증 · 코드 지움 · 시도 0",
+  "ok": true,
+  "detail": "({'ok': True, 'verified': True, 'verifiedAt': '2026-10-11T15:51:18.929Z', 'bankName': '국민은행', 'last4': '9012', 'stub': True, 'note': '인증했습니다. 연동 전이라 실제 예금주는 확인되지 않았습니다.'}, 'true/null/0')"
+ },
+ {
+  "step": "B-16 지급 창구 blocker 풀림 (v_payout_queue · GET /admin/payouts)",
+  "ok": true,
+  "detail": "('true/-', {'kind': 'PARTNER', 'id': '7c36d069-3dfa-4709-86d4-811ab8675565', 'sub': 'AFFILIATE', 'payee': '소개사', 'from': '2031-07-17T15:00:00.000Z', 'to': '2031-12-30T15:00:00.000Z', 'amount': 967, 'status': 'CONFIRMED', 'confirmedAt': '202"
+ },
+ {
+  "step": "B-17 인증된 뒤 다시 → 이미 인증됨(변화 없음)",
+  "ok": true,
+  "detail": "({'ok': True, 'verified': True, 'note': '이미 인증된 계좌입니다.'}, {'ok': True, 'verified': True, 'note': '이미 인증된 계좌입니다.'})"
+ },
+ {
+  "step": "C-1 다섯 번째 틀림 → 422 TOO_MANY_TRIES",
+  "ok": true,
+  "detail": "['CODE_MISMATCH', 'CODE_MISMATCH', 'CODE_MISMATCH', 'CODE_MISMATCH', 'TOO_MANY_TRIES']"
+ },
+ {
+  "step": "C-2 막힌 뒤 맞는 코드·다시 받기도 422",
+  "ok": true,
+  "detail": "({'code': 'TOO_MANY_TRIES', 'message': '인증 코드를 다섯 번 틀려 막혔습니다 — 계좌를 다시 등록하시거나 1:1 문의를 남겨 주십시오.'}, {'code': 'TOO_MANY_TRIES', 'message': '인증 코드를 다섯 번 틀려 막혔습니다 — 계좌를 다시 등록하시거나 1:1 문의를 남겨 주십시오.'})"
+ },
+ {
+  "step": "C-3 DB 도 막힌 계좌 인증 차단",
+  "ok": true,
+  "detail": "ERROR:  VERIFY_LOCKED: 인증 코드를 다섯 번 틀려 막혔습니다 — 계좌를 다시 등록하십시오\nCONTEXT:  PL/pgSQL function fn_pstl_acco"
+ },
+ {
+  "step": "C-4 정산내역에 막힘 표시",
+  "ok": true,
+  "detail": "{'bankName': '국민은행', 'last4': '9012', 'holderName': '김소개', 'verifiedAt': None, 'verifyPending': True, 'verifyExpiresAt': '2026-10-11T16:01:19.096Z', 'verifyTries': 5, 'verifyLocked': True, 'verifyStub': True}"
+ },
+ {
+  "step": "C-5 막힌 동안 지급 창구 blocker 유지",
+  "ok": true,
+  "detail": "계좌 1원 인증 전"
+ },
+ {
+  "step": "C-6 계좌 다시 등록 → 시도·코드 초기화(DB 트리거)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-7 재등록 뒤 다시 인증 → 풀림",
+  "ok": true,
+  "detail": "{'ok': True, 'verified': True, 'verifiedAt': '2026-10-11T15:51:19.391Z', 'bankName': '국민은행', 'last4': '9012', 'stub': True, 'note': '인증했습니다. 연동 전이라 실제 예금주는 확인되지 않았습니다.'}"
+ },
+ {
+  "step": "Z-1 원복 — intro 정산 계좌 인증 상태 · 시험 링크/정산서 삭제",
+  "ok": true,
+  "detail": "true"
+ }
+]

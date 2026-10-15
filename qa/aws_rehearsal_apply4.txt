@@ -1,0 +1,82 @@
+소개뱅크 AWS 적용 — v10.41 (2026-10-14 16:01:26 KST)
+새 킷 /tmp/awshome/SGB_DevDocker_Integrated_20261002_v10_41/sgb  →  앱 폴더 /tmp/awshome/sgb
+
+[0] 전제 확인
+  통과  Node.js v22.22.0
+  통과  메모리 + 스왑 8029MB
+  통과  디스크 여유 11298MB
+  통과  DB 접속 sgb_aws · PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+  통과  마이그레이션 — 적용됨 135 · 올릴 것 0 · 바뀐 파일 0
+
+[1] 새 판 놓기
+        start.sh 를 가져왔습니다 (ENC_KEY 를 읽는 스크립트)
+  통과  복사 /tmp/awshome/sgb-releases/v10.41_20261014_160126
+  통과  파일 저장 — 서버 디스크 /tmp/awshome/sgb-data/uploads
+
+[2] 설치 · 빌드 (10 ~ 20분 · 자세한 출력은 /tmp/awshome/sgb-data/logs/apply_20261014_160126_build.log)
+  통과  API 설치 — 3초
+  통과  앱 방식(Node)으로 DB 접속 — 적용 0 · 기존 135 · 변경감지 0
+  통과  API 빌드 — 9초
+  통과  사용자 웹 설치 — 7초
+  통과  사용자 웹 빌드 — 75초
+  통과  운영 화면 설치 — 1초
+  통과  운영 화면 빌드 — 14초
+
+[3] DB 마이그레이션
+  통과  올릴 것이 없습니다 (적용됨 135)
+
+[4] 배포 점검 (scripts/deploy-check.sh · 오픈 차단 항목은 경고만)
+        ok   타입 오류 0
+        ok   생성 파일 최신
+        ok   미적용 마이그레이션 없음
+        ok   적용된 파일 변조 없음
+        ok   불변식 위반 0건
+        ok   라벨 누락 0건
+        →   오픈 차단 19건 [ASSUME:4 FOOTER:4 INTEGRATION:5 TERM:6] (stg 는 경고만)
+        ok   미확인 CRITICAL 경보 없음
+        ok   라우트 640건 등록
+        ok   start 스크립트
+        ok   engines.node 지정
+      배포 가능
+
+[5] 교체 · pm2 등록
+  통과  /tmp/awshome/sgb → /tmp/awshome/sgb-releases/v10.41_20261014_160126
+
+[6] 기동 확인
+        pm2: sgb=online 8 · sgb-site=online 0  (online 0 이 아니면 포트를 다른 프로세스가 쓰고 있을 수 있습니다 — pm2 list)
+  실패  새 판이 뜨지 않습니다 — 전 판으로 되돌립니다
+[31m4|sgb      | [39m2026-10-14T07:03:45: 
+[31m4|sgb      | [39m2026-10-14T07:03:45: Node.js v22.22.0
+
+[90m/tmp/awshome/.pm2/logs/sgb-out.log last 15 lines:[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/axis, POST} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/axis/:no/status, PATCH} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/axis/:no/requests, POST} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/axis-requests/:no, GET} route[39m[38;5;3m +1ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/axis-requests/:id/answer, POST} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/quick, GET} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/quick, POST} route[39m[38;5;3m +1ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/quick/:id/offer, POST} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/biz/quick/:id/close, POST} route[39m[38;5;3m +0ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: [32m[Nest] 9562  - [39m10/14/2026, 4:03:45 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +71ms[39m
+[32m4|sgb      | [39m2026-10-14T07:03:45: start.sh 로 띄웁니다 (/tmp/awshome/sgb/start.sh)
+[32m4|sgb      | [39m2026-10-14T07:03:45: 
+[32m4|sgb      | [39m2026-10-14T07:03:45: > start
+[32m4|sgb      | [39m2026-10-14T07:03:45: > node dist/main.js
+[32m4|sgb      | [39m2026-10-14T07:03:45: 
+
+[90m/tmp/awshome/.pm2/logs/sgb-site-out.log last 10 lines:[39m
+[32m1|sgb-site | [39m2026-10-14T06:58:53:    - Network:      http://127.0.0.1:5274
+[32m1|sgb-site | [39m2026-10-14T06:58:53: 
+[32m1|sgb-site | [39m2026-10-14T06:58:53:  ✓ Starting...
+[32m1|sgb-site | [39m2026-10-14T06:58:54:  ✓ Ready in 569ms
+[32m1|sgb-site | [39m2026-10-14T07:01:08:    ▲ Next.js 15.5.25
+[32m1|sgb-site | [39m2026-10-14T07:01:08:    - Local:        http://127.0.0.1:5274
+[32m1|sgb-site | [39m2026-10-14T07:01:08:    - Network:      http://127.0.0.1:5274
+[32m1|sgb-site | [39m2026-10-14T07:01:08: 
+[32m1|sgb-site | [39m2026-10-14T07:01:08:  ✓ Starting...
+[32m1|sgb-site | [39m2026-10-14T07:01:08:  ✓ Ready in 461ms
+
+되돌리기: /tmp/awshome/sgb-releases/v10.41_20261014_160126 → /tmp/awshome/sgb-releases/v10.41_20261014_155856
+되돌림 완료 — API 가 떴습니다 (/tmp/awshome/sgb-releases/v10.41_20261014_155856)
+!! 적용 실패 — 전 판으로 되돌렸습니다(DB 는 새 구조 그대로). 위 로그와 /tmp/awshome/sgb-data/logs/apply_20261014_160126.txt 을 보내 주십시오.

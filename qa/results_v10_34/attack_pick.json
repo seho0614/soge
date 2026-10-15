@@ -1,0 +1,41 @@
+{
+ "items": [
+  {
+   "step": "검정 DB 에 거래 2건(성사 상태 포함)",
+   "ok": true,
+   "detail": "['cccccccc-0000-4000-a000-000000000001|CONFIRMED|22222222-2222-2222-2222-222222222222|33333333-3333-3333-3333-333333333333|11111111-1111-1111-1111-111111111111', '35828099-514c-4dd6-87c3-51bc17bdf5af|CONFIRMED|22222222-2222-2222-2222-222222222222|33333333-3333-3333-3333-333333333333|']"
+  },
+  {
+   "step": "CFD — 거래를 고르는 SQL 에 순서(ORDER BY)가 있음",
+   "ok": true,
+   "detail": "SELECT id FROM deals ORDER BY created_at, id LIMIT 1"
+  },
+  {
+   "step": "CFA — 회원을 고르는 SQL 이 고른 거래($CFD)를 보고 당사자를 뺌",
+   "ok": true,
+   "detail": "SELECT a.id FROM accounts a WHERE a.email NOT LIKE 'admin%' AND NOT EXISTS (SELECT 1 FROM deals d WHERE d.id::text = '$CFD' AND a.id IN (d.buyer_account_id, d.seller_account_id, d.introducer_account_id)) ORDER BY a.created_at, a.id LIMIT 1"
+  },
+  {
+   "step": "CFA — 거래 2건 어느 것을 골라도, 고른 회원은 그 거래의 당사자(구매자 · 판매자 · 소개자)가 아님",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "CGD — 거래를 고르는 SQL 에 순서(ORDER BY)가 있음",
+   "ok": true,
+   "detail": "SELECT id FROM deals ORDER BY created_at, id LIMIT 1"
+  },
+  {
+   "step": "CGA — 회원을 고르는 SQL 이 고른 거래($CGD)를 보고 당사자를 뺌",
+   "ok": true,
+   "detail": "SELECT a.id FROM accounts a WHERE a.email NOT LIKE 'admin%' AND NOT EXISTS (SELECT 1 FROM deals d WHERE d.id::text = '$CGD' AND a.id IN (d.buyer_account_id, d.seller_account_id, d.introducer_account_id)) ORDER BY a.created_at, a.id LIMIT 1"
+  },
+  {
+   "step": "CGA — 거래 2건 어느 것을 골라도, 고른 회원은 그 거래의 당사자(구매자 · 판매자 · 소개자)가 아님",
+   "ok": true,
+   "detail": "[]"
+  }
+ ],
+ "pass": 7,
+ "total": 7
+}

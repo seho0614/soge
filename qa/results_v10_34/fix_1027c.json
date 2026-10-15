@@ -1,0 +1,107 @@
+[
+ {
+  "step": "C-1a 파트너사 상세 200 — 회사 · 사업자번호 · 상태 · 미청구 · 한도 · 서비스(DB 건수) · 지역 · 이용료(상태별)",
+  "ok": true,
+  "detail": "(200, {'company': '소개사', 'status': 'ACTIVE', 'unpaid': 0, 'unpaidCap': 300000, 'stopped': False}, 23)"
+ },
+ {
+  "step": "C-1b 미청구 = DB 의 미청구 합계 · 수신 멈춤(stopped) = 미청구 ≥ 한도 또는 운영 중 아님",
+  "ok": true,
+  "detail": "(0, 0)"
+ },
+ {
+  "step": "C-1c uuid 가 아니면 400 · 없는 파트너 404 · 운영자가 아니면 403",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-1d 같은 주소 아래 다른 조회(GET fees · services/pending)는 그대로 200(:id 가 가로채지 않음)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-2a 파트너 알림 API 가 연결 주소(linkUrl)를 돌려줌",
+  "ok": true,
+  "detail": "(200, 'intro@x.com', [('바깥 주소 시험 48a4b7', '//evil.example/x'), ('알림 보기 시험 48a4b7', '/partner/leads')])"
+ },
+ {
+  "step": "C-3a 계약 상태에 양식 코드(templateCode) = DB 의 계약 양식",
+  "ok": true,
+  "detail": "(200, 'STD_V1', 'intro@x.com')"
+ },
+ {
+  "step": "C-4a /safety/guide 200 — 거래 전 확인 · 유형 5종 · 소개뱅크가 하는 일 · 신고",
+  "ok": true,
+  "detail": "(200, 5)"
+ },
+ {
+  "step": "C-4b 유형 「대금사기」 고르기 → 주소 ?t=c2 · 그 유형만",
+  "ok": true,
+  "detail": "http://localhost:5174/safety/guide?t=c2"
+ },
+ {
+  "step": "C-4c 고객센터에서 「사기 예방 가이드」로 가는 길",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-4d 안심소개 「먼저 확인할 것」 상자에서 「사기 예방 가이드 보기」",
+  "ok": true,
+  "detail": "1"
+ },
+ {
+  "step": "C-3b /contracts/templates/INTRO_STD — DB 의 글 그대로(제1조 ~ 제8조 · 표 2개 · 변호사법 안내 · 시행일)",
+  "ok": true,
+  "detail": "(200, 2)"
+ },
+ {
+  "step": "C-3c 구 양식(STD_V1)은 그 글 + 지금 쓰는 양식(INTRO_STD)으로 가는 길",
+  "ok": true,
+  "detail": "계약서 양식 전문\n\n소개 표준계약서 (구 버전) 0.9 — 조항은 고칠 수 없고 빈칸만 채웁니다. 시행일 2026-01-01.\n\n이 양식은 조항"
+ },
+ {
+  "step": "C-3d 없는 양식 → 「없는 양식입니다」(오류 화면 아님)",
+  "ok": true,
+  "detail": "계약서 양식 전문\n\n조항은 고칠 수 없고 빈칸만 채웁니다.\n\n없는 양식입니다.\n소개 표준계약서 보기\n← 계약 목록"
+ },
+ {
+  "step": "C-4e 이 쪽들에서 스크립트 오류 0",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "C-3e 계약서 화면에 「양식 전문 보기」 → 그 계약의 양식",
+  "ok": true,
+  "detail": "/contracts/templates/STD_V1?deal=f4b878fd-47ff-41d6-9d62-d5356fc06cf6"
+ },
+ {
+  "step": "C-2b 파트너센터 「공지 · 알림」 — 연결 주소가 있는 알림에 「보기」 · 바깥 주소(//…)는 그리지 않음",
+  "ok": true,
+  "detail": "['/partner/leads', '/partner/leads', '/partner/leads', '/money/best/mine', '/partner/business']"
+ },
+ {
+  "step": "C-5a 배송 조회 — 「송장번호 복사」 · 「택배사에서 보기」",
+  "ok": true,
+  "detail": "('H26101200058',)"
+ },
+ {
+  "step": "C-5b 택배사 조회 화면 — 택배사 · 송장번호(DB) · 넘기는 값(이름 · 주소 · 연락처는 넘기지 않음)",
+  "ok": true,
+  "detail": "('/health/orders/H26101200058/ship/carrier', '601049577460')"
+ },
+ {
+  "step": "C-5c 발송 전 주문의 택배사 조회 — 「발송 전」 안내 · 복사 단추 없음",
+  "ok": true,
+  "detail": "나의공간\n내 주문\n취소 · 반품 내역\n배송지 관리\n소개몰 가기\n내 주문 › H26101200035 › 배송 "
+ },
+ {
+  "step": "C-6a 운영 화면 파트너 목록 「상세」 → 그 파트너사 상세(서비스 · 리드 이용료)",
+  "ok": true,
+  "detail": "(True, '1dab4a66-eec7-4284-b802-1fbf70b37299', 1)"
+ },
+ {
+  "step": "C-6b 「닫기」 → 상세가 닫힘",
+  "ok": true,
+  "detail": ""
+ }
+]

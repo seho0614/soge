@@ -1,0 +1,259 @@
+{
+ "tag": "baec9e",
+ "entry": "d461355c-9665-4f12-b144-d8345ce9aa7b",
+ "directory": [
+  "bfd7de98-2e2b-46e2-b3f1-d68c51f0e848",
+  "df794203-4550-48f5-9925-40d17ca08e51"
+ ],
+ "leadCash": {
+  "A": "451a0e7d-ef26-4e08-9bc7-ced7dbd03dd8",
+  "NOCFG": "8b8cfc18-af92-4550-9024-1775c192ebe5",
+  "OK": "e0c23d70-5f0c-442c-a1be-6dce2cabadec",
+  "REJ": "bae91bba-cd77-479b-b88e-aa2b89c0eaad",
+  "TMO": "5b528ee5-d14e-4d1d-a2ce-7f3cc0601333",
+  "DOWN": "b5b20048-749a-4ee5-b5d6-897aeae927d6",
+  "BAD": "2864efe8-7795-41f2-a190-4e0907d3f05b",
+  "PEND": "b8bb7b42-05c6-4ab1-a21d-762c749310c2",
+  "RACE": "c507cfad-0172-4d8a-ab2f-8a8e21cdb9ad",
+  "AUTH": "fc553d58-8e9b-4aa8-a04a-a6d68100da90"
+ },
+ "fakePort": 3141,
+ "apiPort": 3142,
+ "results": [
+  {
+   "step": "S-1 integrations ETAX — 전자세금계산서 · NOT_STARTED · 오픈 차단 · 키 이름 ETAX_KEY · 업체 미정",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "S-2 설정 assume.etax 기본 on · on/off 형식 · 공개 범위 GLOBAL",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "S-3 오픈 체크리스트 — 「간주 모드 켜짐」 assume.etax · 외부 연동 「전자세금계산서」(연동 뒤 off 필수 목록)",
+   "ok": true,
+   "detail": "['ASSUME|assume.etax', 'INTEGRATION|전자세금계산서']"
+  },
+  {
+   "step": "S-4 운영 「외부 연동」 표에 ETAX 줄(키 값 없이 이름 · 등록 여부만)",
+   "ok": true,
+   "detail": "{'code': 'ETAX', 'name': '전자세금계산서', 'purpose': '국세청 전자세금계산서 전송 — 소개뱅크(운영 법인)가 발행하는 세금계산서(법률 · 세무 정액 노출료 · 리드 이용료)', 'provider': None, 'status': 'NOT_STARTED', 'statusLabel': '미착수', 'requiresIp': True, 'egressIp': None, 'ipRequestedAt': None"
+  },
+  {
+   "step": "S-5 상태 API(3000 · 키 없음) — 간주 · 어댑터 assume · 키 미등록",
+   "ok": true,
+   "detail": "{'assume': True, 'adapter': 'assume', 'configured': False, 'urlHost': None, 'keyName': 'ETAX_KEY', 'keySet': False, 'integration': {'status': 'NOT_STARTED', 'statusLabel': '미착수', 'provider': None, 'blocksOpen': True, 'secretKeyName': 'ETAX_"
+  },
+  {
+   "step": "S-6 상태 API(키 있는 서버) — 키 등록됨이지만 값은 응답에 없음(가림) · 업체 주소는 호스트만",
+   "ok": true,
+   "detail": "{'assume': True, 'adapter': 'assume', 'configured': True, 'urlHost': '127.0.0.1:3141', 'keyName': 'ETAX_KEY', 'keySet': True, 'integration': {'status': 'NOT_STARTED', 'statusLabel': '미착수', 'provider': None, 'blocksOpen': True, 'secretKeyNam"
+  },
+  {
+   "step": "A-1 간주 모드에서 「발행」 → 200 · 발행됨(ISSUED) · 전송 상태 ASSUMED · 승인번호 없음 · 발행 번호 칸 「간주-SGB-D-…」",
+   "ok": true,
+   "detail": "(200, {'id': 'bfd7de98-2e2b-46e2-b3f1-d68c51f0e848', 'kind': 'DIRECTORY', 'state': 'ISSUED', 'invoiceNo': '간주-SGB-D-261011-bfd7de982e', 'issuedOn': '2026-10-11', 'etaxMode': 'ASSUMED', 'etaxStatus': 'ASSUMED', 'assumed': True, 'approvalNo':"
+  },
+  {
+   "step": "A-2 DB — 승인번호 칸 비어 있음(지어내지 않음) · 발행 방식 ASSUMED · 전송 기록 1줄(assume · ASSUMED)",
+   "ok": true,
+   "detail": "['ISSUE|assume|ASSUMED|']"
+  },
+  {
+   "step": "A-3 간주 줄 다시 「발행」 → 409 ETAX_ALREADY_ASSUMED · 간주 모드 중 「다시 보내기」 → 409 ETAX_STILL_ASSUMED",
+   "ok": true,
+   "detail": "(409, {'code': 'ETAX_ALREADY_ASSUMED', 'message': '이미 간주 발행된 줄입니다 — 연동 뒤(assume.etax off) 「다시 보내기」로 실제 전송합니다.'}, 409, {'code': 'ETAX_STILL_ASSUMED', 'message': '간주 모드(assume.etax on)라 실제 전송을 할 수 없습니다 — 업체 연동 뒤 off 로 바꾸고 다시 보내십시오.'})"
+  },
+  {
+   "step": "A-4 업체 화면 — 「간주」 사실 그대로(etaxStatus ASSUMED) · 내부 번호(간주-…)는 번호 칸에 싣지 않음 · 문서 번호 · 실패 사유 칸 없음",
+   "ok": true,
+   "detail": "({'id': 'bfd7de98-2e2b-46e2-b3f1-d68c51f0e848', 'state': 'ISSUED', 'supply': 300000, 'vat': 30000, 'total': 330000, 'invoiceNo': None, 'issuedOn': '2026-10-11', 'supplierName': '(주)한국바이오헬스케어 소개뱅크 사업부', 'supplierBizNo': '429-88-01533', 'buye"
+  },
+  {
+   "step": "A-5 간주 발행된 줄에 손으로 번호 → 409(발행 요청 상태 아님)",
+   "ok": true,
+   "detail": "(409, {'code': 'NOT_REQUESTED', 'message': '발행 요청 상태가 아닙니다(이미 발행됐거나 없는 줄).'})"
+  },
+  {
+   "step": "A-6 리드 이용료 줄도 같은 규칙 — 간주 발행 · 「간주-SGB-L-…」 · 승인번호 없음",
+   "ok": true,
+   "detail": "(200, {'id': '451a0e7d-ef26-4e08-9bc7-ced7dbd03dd8', 'kind': 'LEAD_CASH', 'state': 'ISSUED', 'invoiceNo': '간주-SGB-L-261011-451a0e7def', 'issuedOn': '2026-10-11', 'etaxMode': 'ASSUMED', 'etaxStatus': 'ASSUMED', 'assumed': True, 'approvalNo':"
+  },
+  {
+   "step": "M-1 손으로 번호 넣기 → 발행됨 · 발행 방식 MANUAL(간주 · 전송과 구분) · 전송 상태 없음",
+   "ok": true,
+   "detail": "(201, {'id': 'df794203-4550-48f5-9925-40d17ca08e51', 'state': 'ISSUED', 'invoiceNo': 'T34-baec9e-2', 'issuedOn': '2026-10-11', 'etaxMode': 'MANUAL'})"
+  },
+  {
+   "step": "M-2 손으로 넣은 줄 「발행」 · 「다시 보내기」 → 409 ETAX_MANUAL(중복 발행 막음)",
+   "ok": true,
+   "detail": "(409, {'code': 'ETAX_MANUAL', 'message': '발행 번호를 손으로 넣은 줄입니다(연동 전 임시 방식) — 전송하면 중복 발행이 됩니다.'}, 409)"
+  },
+  {
+   "step": "M-3 DB — 손으로 넣은 줄을 전송 줄로 바꾸기 거부(ETAX_MANUAL) · MANUAL 인데 전송 상태 → 제약 거부",
+   "ok": true,
+   "detail": "('ERROR:  ETAX_MANUAL: 손으로 발행 번호를 넣은 줄은 전송하지 않습니다 — 중복 발행이 됩니다\\nCONTEXT:  PL/pgSQL ', 'ERROR:  new row for relation \"lead_cash_invoices\" violates check constraint \"ck_')"
+  },
+  {
+   "step": "C-1 assume.etax off · ETAX_URL 없는 서버 → 상태 어댑터 없음 · 「발행」 422 ETAX_NOT_CONFIGURED · 줄 그대로(조용히 간주로 돌지 않음)",
+   "ok": true,
+   "detail": "(200, None, 422, {'code': 'ETAX_NOT_CONFIGURED', 'message': '전자세금계산서 업체 연동이 아직 없습니다(ETAX_URL 미설정). 업체를 정해 키를 넣기 전에는 간주 모드(assume.etax on)로 두십시오.'})"
+  },
+  {
+   "step": "H-1 성공 → SENT · 승인번호 24자리(화면 8-8-8) · 발행됨 · 발행 번호 = 승인번호",
+   "ok": true,
+   "detail": "(200, {'id': 'e0c23d70-5f0c-442c-a1be-6dce2cabadec', 'kind': 'LEAD_CASH', 'state': 'ISSUED', 'invoiceNo': '20261011-00000000-12250271', 'issuedOn': '2026-10-11', 'etaxMode': 'ASP', 'etaxStatus': 'SENT', 'assumed': False, 'approvalNo': '2026"
+  },
+  {
+   "step": "H-2 업체로 간 내용 — 키는 Authorization 헤더 · 공급자 = 운영 법인 · 공급받는 자 = 업체 · 금액 · 같은 문서 번호",
+   "ok": true,
+   "detail": "{'docKey': 'SGB-L-261011-e0c23d705f', 'supplier': {'bizNo': '4298801533', 'name': '(주)한국바이오헬스케어 소개뱅크 사업부', 'ceoName': '노명석'}, 'buyer': {'bizNo': '4087615493', 'name': '전자세금시험법무baec9e'}, 'totalAmount': 110000}"
+  },
+  {
+   "step": "H-3 중복 발행 막기 — 보낸 줄 「발행」 · 「다시 보내기」 409 ETAX_ALREADY_SENT · 손으로 번호 409 · 업체 발행 요청은 1번뿐",
+   "ok": true,
+   "detail": "(409, 409, 409)"
+  },
+  {
+   "step": "H-4 업체 거절(400) → 200 으로 결과 · FAILED · 실패 사유(업체 문구) · 시각 · 시도 1 · 발행 요청 그대로",
+   "ok": true,
+   "detail": "(200, {'id': 'bae91bba-cd77-479b-b88e-aa2b89c0eaad', 'kind': 'LEAD_CASH', 'state': 'REQUESTED', 'invoiceNo': None, 'issuedOn': None, 'etaxMode': None, 'etaxStatus': 'FAILED', 'assumed': False, 'approvalNo': None, 'amendApprovalNo': None, 'd"
+  },
+  {
+   "step": "H-5 실패한 줄 「발행」 → 409 ETAX_USE_RESEND · 손으로 번호 → 409 ETAX_IN_PROGRESS",
+   "ok": true,
+   "detail": "(409, {'code': 'ETAX_USE_RESEND', 'message': '전송에 실패한 줄입니다 — 「다시 보내기」를 쓰십시오.'}, 409, {'code': 'ETAX_IN_PROGRESS', 'message': '국세청 전송을 시작한 줄입니다 — 「다시 보내기」 · 「상태 조회」로 처리하십시오(손으로 번호를 넣으면 중복 발행).'})"
+  },
+  {
+   "step": "H-6 다시 보내기 → 먼저 상태 조회(업체에 없음) → 발행 → SENT · 시도 2 · 같은 문서 번호",
+   "ok": true,
+   "detail": "(200, 'SENT', ['ISSUE|http|FAILED|HTTP_4XX', 'STATUS|http|NOT_FOUND|', 'ISSUE|http|SENT|'])"
+  },
+  {
+   "step": "H-7 시간 초과(업체는 발행 · 응답 3초 > 제한 1.5초) → FAILED · 「시간 초과」 사유 · 기록 TIMEOUT · 화면은 오래 멈추지 않음",
+   "ok": true,
+   "detail": "(200, '전자세금계산서 업체 응답 시간 초과 — 업체 쪽에서는 발행됐을 수 있습니다. 「다시 보내기」는 먼저 상태를 조회합니다.', 1.55)"
+  },
+  {
+   "step": "H-8 시간 초과 뒤 다시 보내기 → 상태 조회로 이미 발행된 문서를 찾아 SENT — 업체 발행 요청은 1번뿐(중복 발행 없음) · 문서 번호 그대로",
+   "ok": true,
+   "detail": "(200, 'SENT', 1, ['ISSUE|http|FAILED|TIMEOUT', 'STATUS|http|SENT|'])"
+  },
+  {
+   "step": "H-9 업체 장애(503) → FAILED · 「장애」 사유 · 기록 UPSTREAM",
+   "ok": true,
+   "detail": "(200, '전자세금계산서 업체 장애(5xx) — 잠시 뒤 다시 보내십시오. (업체: MAINT 점검 중(시험))')"
+  },
+  {
+   "step": "H-10 업체가 「발행됨」인데 승인번호 형식이 아님(12345) → FAILED · 승인번호 저장 안 함(지어낸 · 잘못 읽은 번호 거부)",
+   "ok": true,
+   "detail": "(200, '업체가 「발행됨」이라 했지만 국세청 승인번호(24자리) 형식이 아닙니다 — 어댑터 · 업체 확인 필요')"
+  },
+  {
+   "step": "H-11 키가 틀림(401) → FAILED · 「인증 실패 — 키 · 발신 IP」 사유 · 키 값은 사유에 없음",
+   "ok": true,
+   "detail": "(200, '전자세금계산서 업체 인증 실패 — 키(ETAX_KEY) · 발신 IP 등록을 확인하십시오. (업체: AUTH 인증 키가 맞지 않습니다(시험))')"
+  },
+  {
+   "step": "H-12 업체 접수 · 국세청 승인 대기 → SENDING · 그동안 「발행」 · 「다시 보내기」 → 409 ETAX_IN_FLIGHT",
+   "ok": true,
+   "detail": "(200, 'SENDING', 409, 409)"
+  },
+  {
+   "step": "H-13 「상태 조회」 → 승인번호를 받아 SENT · 발행됨",
+   "ok": true,
+   "detail": "(200, {'id': 'b8bb7b42-05c6-4ab1-a21d-762c749310c2', 'kind': 'LEAD_CASH', 'state': 'ISSUED', 'invoiceNo': '20261011-00000000-12250274', 'issuedOn': '2026-10-11', 'etaxMode': 'ASP', 'etaxStatus': 'SENT', 'assumed': False, 'approvalNo': '2026"
+  },
+  {
+   "step": "H-14 보낸 줄 「상태 조회」 → 409 ETAX_NOTHING_TO_CHECK",
+   "ok": true,
+   "detail": "(409, {'code': 'ETAX_NOTHING_TO_CHECK', 'message': '업체에 보낸(보내는 중 · 실패) 줄만 조회합니다.'})"
+  },
+  {
+   "step": "H-15 같은 줄을 동시에 두 번 「발행」 → 하나만 보냄(200 · 409) · 업체 발행 요청 1번 · 시도 1",
+   "ok": true,
+   "detail": "([200, 409], [None, 'ETAX_CONFLICT'], 1)"
+  },
+  {
+   "step": "H-16 취소 · 수정 발행 — 사유 5자 미만 400 · 키 없는 서버(3000)에서는 422 ETAX_NOT_CONFIGURED",
+   "ok": true,
+   "detail": "(400, 422, {'code': 'ETAX_NOT_CONFIGURED', 'message': '전자세금계산서 업체 연동이 아직 없습니다(ETAX_URL 미설정). 업체를 정해 키를 넣기 전에는 간주 모드(assume.etax on)로 두십시오.'})"
+  },
+  {
+   "step": "H-17 취소 → CANCELED · 수정세금계산서 승인번호 · 원래 승인번호 그대로 · 다시 보내기 409",
+   "ok": true,
+   "detail": "(200, {'id': 'e0c23d70-5f0c-442c-a1be-6dce2cabadec', 'kind': 'LEAD_CASH', 'state': 'ISSUED', 'invoiceNo': '20261011-00000000-12250271', 'issuedOn': '2026-10-11', 'etaxMode': 'ASP', 'etaxStatus': 'CANCELED', 'assumed': False, 'approvalNo': '"
+  },
+  {
+   "step": "H-18 보내지 않은 줄 취소 → 409 ETAX_NOT_SENT",
+   "ok": true,
+   "detail": "(409, {'code': 'ETAX_NOT_SENT', 'message': '국세청에 보낸(SENT) 세금계산서만 취소 · 수정 발행합니다.'})"
+  },
+  {
+   "step": "H-19 연동 뒤 간주 발행 줄 「다시 보내기」 → 실제 전송 SENT(승인번호) · 발행 번호 칸(간주-…)은 그대로 · 방식 ASP",
+   "ok": true,
+   "detail": "(200, {'id': 'bfd7de98-2e2b-46e2-b3f1-d68c51f0e848', 'kind': 'DIRECTORY', 'state': 'ISSUED', 'invoiceNo': '간주-SGB-D-261011-bfd7de982e', 'issuedOn': '2026-10-11', 'etaxMode': 'ASP', 'etaxStatus': 'SENT', 'assumed': False, 'approvalNo': '2026"
+  },
+  {
+   "step": "H-20 노출료 줄 내용 — 공급자 = 발행 요청 때 기록한 운영 법인 · 품목 「법률 · 세무 정액 노출료 1회차(기간)」 · 990,000 아님(1개월 330,000)",
+   "ok": true,
+   "detail": "[{'name': '법률 · 세무 정액 노출료 1회차(2026-10-11 ~ 2026-11-10)', 'supplyAmount': 300000, 'taxAmount': 30000}]"
+  },
+  {
+   "step": "H-21 업체 화면 — 보낸 줄은 발행됨 · 번호 칸 = 국세청 승인번호(8-8-8)",
+   "ok": true,
+   "detail": "('20261011-00000000-12250277', {'kind': 'LEAD_CASH', 'invoiceNo': '20261011-00000000-12250271', 'issuedOn': '2026-10-10T15:00:00.000Z', 'total': 110000, 'supply': 100000, 'vat': 10000, 'state': 'ISSUED', 'month': '2025-03', 'etaxStatus': 'C"
+  },
+  {
+   "step": "P-1 운영(ADMIN · SUPER)만 — 업체 · 검수(REVIEWER) · 지급(PAYOUT) · 비로그인 → 전부 403",
+   "ok": true,
+   "detail": "{'업체': [403, 403, 403, 403, 403], '검수': [403, 403, 403, 403, 403], '지급': [403, 403, 403, 403, 403], '비로그인': [403, 403, 403, 403, 403]}"
+  },
+  {
+   "step": "P-2 SUPER 도 됨 · 대상 아닌 종류(소개자 정산 세금계산서 등) 404 · 번호 형식 아님 404",
+   "ok": true,
+   "detail": "(200, 404, 404)"
+  },
+  {
+   "step": "G-1 감사 기록 — 발행 · 다시 보내기 · 상태 조회 · 취소(성공한 요청마다 · 대상 = 세금계산서 줄)",
+   "ok": true,
+   "detail": "{'send_D1': 1, 'resend_D1': 1, 'resend_REJ': 1, 'refresh_PEND': 1, 'cancel_OK': 1}"
+  },
+  {
+   "step": "G-2 감사 기록 · 전송 기록에 키 값 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "G-3 전송 기록은 고치거나 지울 수 없음(append-only)",
+   "ok": true,
+   "detail": "('ERROR:  append-only table: etax_send_log — 전송 기록은 고치거나 지울 수 ',)"
+  },
+  {
+   "step": "G-4 DB — 승인번호 · 문서 번호 바꾸기 거부(ETAX_FIXED) · 보낸 줄을 실패로 되돌리기 거부(ETAX_SENT)",
+   "ok": true,
+   "detail": "('ERROR:  ETAX_FIXED: 국세청 승인번호는 바꾸거나 지울 수 없습니다\\nCONTE', 'ERROR:  ETAX_FIXED: 문서 번호(SGB-L-261011-5b528ee5d1)', 'ERROR:  ETAX_SENT: 국세청에 보낸 세금계산서는 취소 · 수정 발행으로만 바꿉')"
+  },
+  {
+   "step": "G-5 DB — 간주 줄에 승인번호 넣기 거부 · 24자리 아닌 승인번호 거부(제약)",
+   "ok": true,
+   "detail": "('ERROR:  new row for relation \"lead_cash_invoices\" violates c', 'ERROR:  new row for relation \"lead_cash_invoices\" violates c')"
+  },
+  {
+   "step": "G-6 v10.33 가드 그대로 — 발행된 노출료 줄의 금액 고치기 거부(DIRECTORY_INVOICE_ISSUED) · 전송 결과 칸만 기록 가능",
+   "ok": true,
+   "detail": "ERROR:  DIRECTORY_INVOICE_ISSUED: 이미 발행된 세금계산서입니다(번호 간주-SGB-D-261011-bfd7de982e)"
+  },
+  {
+   "step": "G-7 소개자 발행 정산 세금계산서(settlements.tax_invoice_*)는 손대지 않음 — etax 칸 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "Z-1 시험 뒤 정리 — assume.etax on 으로 되돌림 · 시험 노출 종료 · 시험 API · 가짜 서버 끔",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

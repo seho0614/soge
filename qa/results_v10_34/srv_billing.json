@@ -1,0 +1,521 @@
+{
+ "items": [
+  {
+   "step": "1-1 첫 청구 거절 → 청구서 1건 FAILED · 구독 PAST_DUE",
+   "ok": true,
+   "detail": "(201, ['FAILED'], 'PAST_DUE')"
+  },
+  {
+   "step": "1-2 재시도 승인 → 같은 기간 청구서는 여전히 1건 · PAID (새 줄을 만들지 않음)",
+   "ok": true,
+   "detail": "(201, [('PAID', 2)], \"{'total': 1, 'paid': 1, 'failed': 0, 'skipped': 0, 'terminal': 0, 'pending': 0, 'recovered': 0, 'review': 0, 'expired': 0, 'errors': 0, 'refunds': {'checked': 0\")"
+  },
+  {
+   "step": "1-3 구독 기간이 정확히 한 번 연장 · ACTIVE 로 회복",
+   "ok": true,
+   "detail": "('2026-10-11T16:08:48.015565+00:00', '2026-11-10T16:08:48.015565+00:00', 'ACTIVE')"
+  },
+  {
+   "step": "1-4 결제사가 준 paymentKey 와 우리 주문번호를 따로 저장",
+   "ok": true,
+   "detail": "('pk_0140647994154fac8427', 'sub_11ca3531-b6dd-479f-bee8-18c179b108a7_1791734928015_a2', [{'kind': 'billing:approved', 't': 1791734988.766001, 'orderId': 'sub_11ca3531-b6dd-479f-bee8-18c179b108a7_1791734928015_a2', 'paymentKey': 'pk_0140647994154fac8427'}])"
+  },
+  {
+   "step": "1-5 시도마다 주문번호가 다름(거절된 주문번호를 다시 쓰지 않음) · 결제사 멱등 키를 보냄",
+   "ok": true,
+   "detail": "[('sub_11ca3531-b6dd-479f-bee8-18c179b108a7_1791734928015_a1', 'sub-charge-0168d645-83ba-4008-b32f-244af34fb173-a1'), ('sub_11ca3531-b6dd-479f-bee8-18c179b108a7_1791734928015_a2', 'sub-charge-0168d645-83ba-4008-b32f-244af34fb173-a2')]"
+  },
+  {
+   "step": "1-6 시도 횟수 2",
+   "ok": true,
+   "detail": "2"
+  },
+  {
+   "step": "1-7 이미 PAID — 배치를 다시 돌려도 청구 요청 0 · 기간 그대로",
+   "ok": true,
+   "detail": "(2, 2)"
+  },
+  {
+   "step": "1-8 승인 뒤 응답 유실 · 조회도 실패 → 청구서 PENDING(실패로 적지 않음) · 구독 기간 그대로",
+   "ok": true,
+   "detail": "(['PENDING'], 'ACTIVE')"
+  },
+  {
+   "step": "1-9 다음 배치: 새 청구 요청 0 · 주문번호 조회로 PAID 복구 · 기간 한 번 연장",
+   "ok": true,
+   "detail": "(1, ['PAID'], 2)"
+  },
+  {
+   "step": "1-9b 승인 뒤 응답 유실 · 조회는 됨 → 곧바로 주문번호로 조회해 PAID(다음 배치를 기다리지 않음) · 청구 요청 1건 · 기간 한 번 연장",
+   "ok": true,
+   "detail": "(['PAID'], 1)"
+  },
+  {
+   "step": "1-10 연결 끊김(결제사 미도달) → 청구서 PENDING",
+   "ok": true,
+   "detail": "['PENDING']"
+  },
+  {
+   "step": "1-11 방금 건은 섣불리 다시 청구하지 않음(요청 1건 그대로)",
+   "ok": true,
+   "detail": "(1, 'PENDING')"
+  },
+  {
+   "step": "1-12 결제사에 그 주문이 없음을 확인 → 실패로 닫고 **새 주문번호**로 청구 → PAID · 승인 1건",
+   "ok": true,
+   "detail": "(['PAID'], 2)"
+  },
+  {
+   "step": "1-13 (승인 직후 서버 종료) 결제사 승인 1건 · 우리 DB 는 PENDING · 기간 그대로",
+   "ok": true,
+   "detail": "(1, ['PENDING'])"
+  },
+  {
+   "step": "1-14 서버를 다시 띄운 뒤 배치: 새 청구 0 · 조회로 PAID · 기간 한 번 연장",
+   "ok": true,
+   "detail": "(1, ['PAID'])"
+  },
+  {
+   "step": "1-15 응답 지연(10초 제한 초과) · 조회 실패 → PENDING(실패 아님)",
+   "ok": true,
+   "detail": "['PENDING']"
+  },
+  {
+   "step": "1-16 → 조회로 PAID · 청구 요청 1건뿐",
+   "ok": true,
+   "detail": "('PAID', 1)"
+  },
+  {
+   "step": "1-17 결제 조회 실패(500) → PENDING 유지 · 새 청구 0",
+   "ok": true,
+   "detail": "('PENDING', 1)"
+  },
+  {
+   "step": "1-18 조회가 되면 PAID",
+   "ok": true,
+   "detail": "PAID"
+  },
+  {
+   "step": "1-19 서버 2대가 배치를 동시에 4번 → 구독 6건 모두 청구 요청 1 · 승인 1 · 청구서 1건 PAID",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "1-20 금액 불일치 승인 → PAID 아님 · 추가 청구 0 · 확인 필요로 남음",
+   "ok": true,
+   "detail": "('PENDING', 'AMOUNT_MISMATCH', 1)"
+  },
+  {
+   "step": "1-21 만료 카드(결제사 코드 INVALID_CARD_EXPIRATION · 문구에 「만료」가 없음) → FAILED · 같은 날 다시 청구하지 않음",
+   "ok": true,
+   "detail": "('FAILED', 1)"
+  },
+  {
+   "step": "1-21b 「카드 교체 필요」 안내가 나감(코드로 판단)",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "1-22 결제사가 우리 열쇠를 거절(401) → 첫 건에서 배치를 멈춤(나머지는 보내지 않음) · 결과에 오류로 표시",
+   "ok": true,
+   "detail": "(1, \"{'total': 3, 'paid': 0, 'failed': 0, 'skipped': 0, 'terminal': 0, 'pending': 1, 'recovered': 0, 'review': 1, 'expired': 0, 'errors': 1, 'refunds': {'checked': 0, 'succeeded': 0, 'failed': 0, 'unknown'\")"
+  },
+  {
+   "step": "1-23 회원은 「결제 실패」가 되지 않음 — 구독 3건 모두 ACTIVE · 결제 실패 알림 0",
+   "ok": true,
+   "detail": "(['ACTIVE', 'ACTIVE', 'ACTIVE'], [0, 0, 0])"
+  },
+  {
+   "step": "1-24 설정을 고친 뒤 배치 → 3건 모두 PAID · 승인 1건씩",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "2-1 환불 → 결제사 취소 1건(저장된 실제 paymentKey · 환불 요청 고유 멱등 키 · 사유)",
+   "ok": true,
+   "detail": "(201, {'refundId': '5fbc3e68-92f5-47a2-8c2e-82d0f75991a3', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:29.393Z', 'refundedAt': '2026-10-11T16:10:29.410Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, [{'m': 'POST', 'path': '/v1/payments/tpk_d855ccdb0be8431e85/cancel', 'body': {'cancelReason': '단순 변심', 'cancelAmount': 49000}, 'idem': '"
+  },
+  {
+   "step": "2-2 응답: 환불 완료",
+   "ok": true,
+   "detail": "(201, {'refundId': '5fbc3e68-92f5-47a2-8c2e-82d0f75991a3', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:29.393Z', 'refundedAt': '2026-10-11T16:10:29.410Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'})"
+  },
+  {
+   "step": "2-3 DB: 청구서 REFUNDED · 구독 CANCELLED · refunded_at · 환불 요청 SUCCEEDED(금액 = 청구액)",
+   "ok": true,
+   "detail": "('REFUNDED', 'CANCELLED', 'SUCCEEDED', 49000)"
+  },
+  {
+   "step": "2-4 접수 시점의 자격 · 사용량이 저장됨",
+   "ok": true,
+   "detail": "{'used': 0, 'paidOn': '2026-10-12', 'checkedAt': '2026-10-12T01:10:29+09:00'}"
+  },
+  {
+   "step": "2-4b 환불 완료 알림이 회원에게 남음(1건)",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "2-5 같은 환불을 7번 더(동시 5번 포함) → 결제사 취소는 1건 그대로 · 응답은 모두 「환불 완료」",
+   "ok": true,
+   "detail": "(1, [(201, 'SUCCEEDED'), (201, 'SUCCEEDED'), (201, 'SUCCEEDED'), (201, 'SUCCEEDED'), (201, 'SUCCEEDED'), (201, 'SUCCEEDED'), (201, 'SUCCEEDED')])"
+  },
+  {
+   "step": "2-5b 여러 번 눌러도 환불 완료 알림은 1건",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "2-6 내 구독 조회에 환불 상태가 나옴(환불 완료)",
+   "ok": true,
+   "detail": "{'subscribed': False, 'refund': {'refundId': '5fbc3e68-92f5-47a2-8c2e-82d0f75991a3', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:29.393Z', 'refundedAt': '2026-10-11T16:10:29.410Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}}"
+  },
+  {
+   "step": "2-7 취소 거절 → 422 REFUND_FAILED · 「환불 실패」 · 환불 완료로 적지 않음(청구서 PAID · 구독 ACTIVE · refunded_at 없음) · 실패 사유 기록",
+   "ok": true,
+   "detail": "(422, {'code': 'REFUND_FAILED', 'message': '환불 실패 — 취소 할 수 없는 결제 입니다.. 구독과 결제는 그대로입니다.', 'details': {'refundId': '2fccc31c-7f5b-498d-9f91-e0749ce853fe', 'state': 'FAILED', 'label': '환불 실패', 'pgCode': 'NOT_CANCELABLE_PAYMENT'}}, 'PAID', 'ACTIVE', 'FAILED')"
+  },
+  {
+   "step": "2-7b 환불 실패 알림이 회원에게 남음(1건)",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "2-8 내 구독 조회: 「환불 실패」",
+   "ok": true,
+   "detail": "{'refundId': '2fccc31c-7f5b-498d-9f91-e0749ce853fe', 'state': 'FAILED', 'label': '환불 실패', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:30.916Z', 'refundedAt': None, 'failureReason': '취소 할 수 없는 결제 입니다.', 'note': '결제사가 결제 취소를 받아들이지 않았습니다. 구독과 결제는 그대로입니다 — 다시 신청하시거나 고객센터로 문의해 주십시오.'}"
+  },
+  {
+   "step": "2-9 실패 뒤 다시 신청 → 새 환불 요청(새 멱등 키)으로 진행 → 환불 완료",
+   "ok": true,
+   "detail": "(201, {'refundId': '7cd91829-9f6b-4d9a-9a90-c00d31598fda', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:31.213Z', 'refundedAt': '2026-10-11T16:10:31.223Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, ['FAILED', 'SUCCEEDED'])"
+  },
+  {
+   "step": "2-26 결제사에서 이미 취소된 결제를 환불 신청 → 결제사 응답 ALREADY_CANCELED_PAYMENT → 조회로 확인해 「환불 완료」 · 청구서 REFUNDED · 결제사 취소 1건뿐(G-114 T-8)",
+   "ok": true,
+   "detail": "(201, {'refundId': '1b86a921-70cb-415a-974b-ca78cc82711e', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:32.216Z', 'refundedAt': '2026-10-11T16:10:32.229Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, 'REFUNDED', 'CANCELLED', 1)"
+  },
+  {
+   "step": "2-10 취소 응답 유실 · 조회도 실패 → 202 「환불 결과 확인 중」 · 완료로 적지 않음",
+   "ok": true,
+   "detail": "(202, {'refundId': 'bad7a9b2-3c60-44b4-9962-392ea5dff2e8', 'state': 'UNKNOWN', 'label': '환불 결과 확인 중', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:33.299Z', 'refundedAt': None, 'note': '결제사에서 결과를 확인하는 중입니다. 다시 결제하거나 다른 조치를 하지 않으셔도 됩니다 — 확인되는 대로 반영됩니다.'}, 'PAID', 'UNKNOWN')"
+  },
+  {
+   "step": "2-11 환불 처리 중에는 그 구독의 유료 이용(열람 수 증가)이 DB 에서 막힘",
+   "ok": true,
+   "detail": "ERROR:  REFUND: 환불 처리 중인 구독은 이용 · 갱신 · 변경할 수 없습니다 — 환불 결과가 나온 뒤에 다시 해 주십시오\nCONTEXT:  PL/pgSQL function fn_refund_guard() line 12 at RAISE"
+  },
+  {
+   "step": "2-12 내 구독 조회: 「환불 결과 확인 중」",
+   "ok": true,
+   "detail": "{'refundId': 'bad7a9b2-3c60-44b4-9962-392ea5dff2e8', 'state': 'UNKNOWN', 'label': '환불 결과 확인 중', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:33.299Z', 'refundedAt': None, 'note': '결제사에서 결과를 확인하는 중입니다. 다시 결제하거나 다른 조치를 하지 않으셔도 됩니다 — 확인되는 대로 반영됩니다.'}"
+  },
+  {
+   "step": "2-13 다시 요청 → 결제사 조회로 취소 확인 → 환불 완료 · 결제사 취소는 1건뿐(다시 취소하지 않음)",
+   "ok": true,
+   "detail": "(201, {'refundId': 'bad7a9b2-3c60-44b4-9962-392ea5dff2e8', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:33.299Z', 'refundedAt': '2026-10-11T16:10:33.587Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, 1, 'REFUNDED')"
+  },
+  {
+   "step": "2-13b 취소 응답 유실 · 조회는 됨 → 곧바로 조회해 취소를 확인하고 환불 완료 · 결제사 취소 1건",
+   "ok": true,
+   "detail": "(201, {'refundId': '1c6e0db2-5c7e-4da7-8dbf-f492347f3ebc', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:34.596Z', 'refundedAt': '2026-10-11T16:10:34.605Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, 'REFUNDED')"
+  },
+  {
+   "step": "2-14 연결 끊김 → 202 「환불 결과 확인 중」",
+   "ok": true,
+   "detail": "(202, {'refundId': '32e799be-f8c8-4882-a683-5fda48705a57', 'state': 'UNKNOWN', 'label': '환불 결과 확인 중', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:35.620Z', 'refundedAt': None, 'note': '결제사에서 결과를 확인하는 중입니다. 다시 결제하거나 다른 조치를 하지 않으셔도 됩니다 — 확인되는 대로 반영됩니다.'})"
+  },
+  {
+   "step": "2-15 배치가 대조: 결제사에 취소가 없으면 같은 멱등 키로 다시 취소 → 환불 완료(취소 처리 1건)",
+   "ok": true,
+   "detail": "('SUCCEEDED', 'REFUNDED', 2)"
+  },
+  {
+   "step": "2-15b 배치가 끝낸 환불도 회원에게 알림이 남음(환불 완료 1건) — 「확인 중」으로 답을 받은 회원이 결과를 알 수 있게",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "2-16 (환불 완료 직전 DB 장애) 결제사 취소 1건 · 응답은 「환불 완료」가 아님 · DB 도 완료 아님",
+   "ok": true,
+   "detail": "(202, {'refundId': '5187e6fe-4ee8-45f6-b6c1-fc459da2ecf2', 'state': 'UNKNOWN', 'label': '환불 결과 확인 중', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:36.960Z', 'refundedAt': None, 'note': '결제사에서 결과를 확인하는 중입니다. 다시 결제하거나 다른 조치를 하지 않으셔도 됩니다 — 확인되는 대로 반영됩니다.'}, 'PAID', 'UNKNOWN')"
+  },
+  {
+   "step": "2-17 장애가 풀린 뒤 다시 요청 → 결제사 조회로 복구 · 환불 완료 · 결제사 취소는 1건뿐",
+   "ok": true,
+   "detail": "(201, {'refundId': '5187e6fe-4ee8-45f6-b6c1-fc459da2ecf2', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:36.960Z', 'refundedAt': '2026-10-11T16:10:37.286Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, 1, 'REFUNDED', 'CANCELLED')"
+  },
+  {
+   "step": "2-18 이미 이용(열람 1건) → 422 REFUND_NOT_ELIGIBLE · 결제사 호출 0 · 환불 요청 없음",
+   "ok": true,
+   "detail": "(422, {'code': 'REFUND_NOT_ELIGIBLE', 'message': '이미 이용하신 구독은 환불할 수 없습니다 (이용 1건)'})"
+  },
+  {
+   "step": "2-19 결제 당일이 아님 → 422 REFUND_NOT_ELIGIBLE · 결제사 호출 0",
+   "ok": true,
+   "detail": "(422, {'code': 'REFUND_NOT_ELIGIBLE', 'message': '환불은 결제 당일에만 가능합니다 (결제일 2026-10-10)'})"
+  },
+  {
+   "step": "2-20 자격은 DB 가 집행 — 환불 요청을 SQL 로 직접 넣어도 막힘",
+   "ok": true,
+   "detail": "ERROR:  REFUND: 환불은 결제 당일에만 가능합니다 (결제일 2026-10-10)\nCONTEXT:  PL/pgSQL function fn_sub_refund_insert() line 13 at RAISE"
+  },
+  {
+   "step": "2-21 당일 접수 → 자정 넘어 완료: 저장됨(환불 완료 · 구독 CANCELLED)",
+   "ok": true,
+   "detail": "(202, 201, {'refundId': '3f108a9c-0d62-43e8-a399-16c17404f85d', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-10T16:10:40.721Z', 'refundedAt': '2026-10-11T16:10:41.229Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, 'CANCELLED')"
+  },
+  {
+   "step": "2-22 정기결제로 낸 기간의 환불 → 배치가 저장한 paymentKey 로 취소 · 그 청구서가 REFUNDED",
+   "ok": true,
+   "detail": "(201, {'refundId': '2cc69663-8316-45e3-8290-7739d981a413', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:10:42.464Z', 'refundedAt': '2026-10-11T16:10:42.471Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'}, [{'kind': 'billing:approved', 't': 1791735042.4500344, 'orderId': 'sub_17fe7ef7-6888-46d0-97c3-f73a160a7019_1791734982275_a1', 'paymentK"
+  },
+  {
+   "step": "2-23 환불된 구독은 다시 청구하지 않음",
+   "ok": true,
+   "detail": "(1, 1)"
+  },
+  {
+   "step": "2-24a 환불 처리 중에는 그 구독의 기간 연장(갱신)이 DB 에서 막힘",
+   "ok": true,
+   "detail": "ERROR:  REFUND: 환불 처리 중인 구독은 이용 · 갱신 · 변경할 수 없습니다 — 환불 결과가 나온 뒤에 다시 해 주십시오\nCONTEXT:  PL/pgSQL function fn_refund_guard() line 12 at RAISE"
+  },
+  {
+   "step": "2-24 환불 결과 확인 중인 구독은 기간이 끝나도 청구하지 않음",
+   "ok": true,
+   "detail": "(0, 'UNKNOWN')"
+  },
+  {
+   "step": "2-25 결제사와 다시 통하면 배치가 환불을 끝냄(환불 완료 · 구독 CANCELLED · 취소 1건)",
+   "ok": true,
+   "detail": "('SUCCEEDED', 'CANCELLED')"
+  },
+  {
+   "step": "3-1 같은 키 · 같은 내용 동시 10건(서버 2대) → 결제 승인 요청 1건 · 구독 1건 · 청구서 1건",
+   "ok": true,
+   "detail": "([(201, None), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS')], 1, 1)"
+  },
+  {
+   "step": "3-2 나머지는 409 REQUEST_IN_PROGRESS 또는 저장된 성공 응답(다른 오류 없음)",
+   "ok": true,
+   "detail": "[(201, None), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS')]"
+  },
+  {
+   "step": "3-3 끝난 뒤 같은 키로 다시 → 저장된 HTTP 상태 · 응답 그대로 · 승인 요청 늘지 않음",
+   "ok": true,
+   "detail": "(201, 201, True)"
+  },
+  {
+   "step": "3-4 같은 키 · 다른 내용 → 409 IDEMPOTENCY_KEY_REUSED",
+   "ok": true,
+   "detail": "(409, {'code': 'IDEMPOTENCY_KEY_REUSED', 'message': '같은 요청 키로 다른 내용을 보냈습니다. 새 요청에는 새 키를 쓰십시오.'})"
+  },
+  {
+   "step": "3-5 기록: 사용자 · 작업 경로 · 요청 키 · 본문 해시 · 상태 SUCCEEDED · HTTP 상태 · 시작/완료 시각",
+   "ok": true,
+   "detail": "[{'key': 'e81de5f5-0ed5-4d7f-8513-bfd5c01eb7db:POST /api/v1/subscriptions:3f695782b2bd489bb1867cf898771a4f', 'response': {'id': '9ffd640f-a6ac-4520-929e-9ee058f6d924', 'status': 'ACTIVE', 'isPromo': False, 'planCode': 'STANDARD', 'subscriptionId': '9ffd640f-a6ac-4520-929e-9ee058f6d924', 'currentPeriodEnd': '2026-11-10T16:10:45.300Z', 'currentPeriodStart': '2026-10-11T16:10:45.300Z'}, 'created_at':"
+  },
+  {
+   "step": "3-6 다른 사용자가 같은 키 → 서로 무관(각자 실행)",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': '99efc2a7-a8a2-4bd3-a329-c3392a164240', 'id': '99efc2a7-a8a2-4bd3-a329-c3392a164240', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:10:48.051Z', 'currentPeriodEnd': '2026-11-10T16:10:48.051Z', 'isPromo': False})"
+  },
+  {
+   "step": "3-7 서버 재시작 뒤 같은 키 → 저장된 응답 · 다시 실행하지 않음",
+   "ok": true,
+   "detail": "(201, 1)"
+  },
+  {
+   "step": "3-8 처리 중인 요청과 같은 키 → 곧바로 409 REQUEST_IN_PROGRESS",
+   "ok": true,
+   "detail": "(409, {'code': 'REQUEST_IN_PROGRESS', 'message': '같은 요청을 처리하는 중입니다. 잠시 뒤 결과를 확인해 주십시오.'})"
+  },
+  {
+   "step": "3-9 먼저 온 요청은 정상 완료",
+   "ok": true,
+   "detail": "[(201, {'subscriptionId': '903e8b60-23b3-42a6-99c0-ed9d3169bfc6', 'id': '903e8b60-23b3-42a6-99c0-ed9d3169bfc6', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:10:50.708Z', 'currentPeriodEnd': '2026-11-10T16:10:50.708Z', 'isPromo': False})]"
+  },
+  {
+   "step": "3-10 결제 거절(확정) → 422 PAYMENT_FAILED · 기록 FAILED · 키를 지우지 않음",
+   "ok": true,
+   "detail": "(422, {'code': 'PAYMENT_FAILED', 'message': '결제 승인이 거절되었습니다. 한도 초과'}, [{'state': 'FAILED'}])"
+  },
+  {
+   "step": "3-11 같은 키로 다시(이번에는 승인) → 실행됨 · 구독 1건",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': 'b5b4799c-b422-4b0d-9c62-cdf6877ae708', 'id': 'b5b4799c-b422-4b0d-9c62-cdf6877ae708', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:10:54.740Z', 'currentPeriodEnd': '2026-11-10T16:10:54.740Z', 'isPromo': False})"
+  },
+  {
+   "step": "3-12 (승인 뒤 DB 저장 실패) 결제사 승인 1건 · 응답 실패 · 구독 0건 · 기록은 UNKNOWN(삭제하지 않음)",
+   "ok": true,
+   "detail": "(422, {'code': 'TEST', 'message': '청구서 저장 실패(시험용 DB 장애)'}, [{'state': 'UNKNOWN'}])"
+  },
+  {
+   "step": "3-13 같은 키로 다시 → 결제 결과를 대조(이미 승인 · 금액 · 주문번호 일치)해 구독을 열어 줌 — 승인은 1건뿐",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': 'aa17dd1e-b71b-4834-a0f4-81a63f1d7e00', 'id': 'aa17dd1e-b71b-4834-a0f4-81a63f1d7e00', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:10:56.109Z', 'currentPeriodEnd': '2026-11-10T16:10:56.109Z', 'isPromo': False})"
+  },
+  {
+   "step": "3-14 (승인 직후 서버 종료) 기록 PROCESSING · 구독 0건 · 결제사 승인 1건",
+   "ok": true,
+   "detail": "([{'state': 'PROCESSING'}], 0)"
+  },
+  {
+   "step": "3-15 서버를 다시 띄운 뒤 같은 키 → 결제 결과 대조 후 구독 1건 · 승인은 1건뿐(중복 결제 없음)",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': 'f69b8064-1588-400c-994b-1d1b2814cbaf', 'id': 'f69b8064-1588-400c-994b-1d1b2814cbaf', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:10:59.002Z', 'currentPeriodEnd': '2026-11-10T16:10:59.002Z', 'isPromo': False})"
+  },
+  {
+   "step": "3-16 남이 이미 쓴 paymentKey 로 구독 시도 → 거절 · 구독 0건",
+   "ok": true,
+   "detail": "(409, {'code': 'PAYMENT_KEY_USED', 'message': '이미 사용한 결제입니다. 같은 결제로 다시 구독할 수 없습니다.'})"
+  },
+  {
+   "step": "3-17 소개코드 발급 — 같은 키 동시 8건 → 코드 1건만",
+   "ok": true,
+   "detail": "(1, [(201, None), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS'), (409, 'REQUEST_IN_PROGRESS')])"
+  },
+  {
+   "step": "3-18 옛 형식 기록(사용자:키)이 있으면 그 응답을 돌려주고 다시 실행하지 않음",
+   "ok": true,
+   "detail": "(201, {'legacy': True})"
+  },
+  {
+   "step": "4-1 결제 실패(PAST_DUE) 회원도 자동 갱신 해지 가능",
+   "ok": true,
+   "detail": "(201, {'id': 'b8aeea6f-c898-448c-b31a-71175dc4bd75', 'periodEnd': '2026-10-11T16:10:03.498Z', 'cancelAt': '2026-10-11T16:11:04.023Z', 'cancelled': True, 'alreadyCancelled': False, 'chargeInFlight': False, 'note': '해지되었습니다. 더 청구하지 않습니다(결제 재시도도 멈춥니다).'}, 'PAST_DUE')"
+  },
+  {
+   "step": "4-2 해지 뒤 배치를 돌려도 새 청구 0",
+   "ok": true,
+   "detail": "(1, 1)"
+  },
+  {
+   "step": "4-3 이미 해지한 구독 → 오류가 아니라 기존 해지 결과를 돌려줌",
+   "ok": true,
+   "detail": "(201, {'id': 'b8aeea6f-c898-448c-b31a-71175dc4bd75', 'periodEnd': '2026-10-11T16:10:03.498Z', 'cancelAt': '2026-10-11T16:11:04.023Z', 'cancelled': True, 'alreadyCancelled': True, 'chargeInFlight': False, 'note': '이미 해지한 구독입니다. 해지되었습니다. 더 청구하지 않습니다(결제 재시도도 멈춥니다).'})"
+  },
+  {
+   "step": "4-4 내 구독 조회: 해지됨 · 더 청구하지 않음 안내",
+   "ok": true,
+   "detail": "{'subscribed': True, 'id': 'b8aeea6f-c898-448c-b31a-71175dc4bd75', 'planCode': 'STANDARD', 'planName': '스탠다드', 'monthlyPrice': 49000, 'status': 'PAST_DUE', 'periodStart': '2026-09-11T16:10:03.498Z', 'periodEnd': '2026-10-11T16:10:03.498Z', 'cancelAt': '2026-10-11T16:11:04.023Z', 'isPromo': False, 'promoEndsAt': None, 'nextPlanCode': None, 'nextPlanName': None, 'nextPlanPrice': None, 'nextPlanAt': "
+  },
+  {
+   "step": "4-5 해지가 먼저 확정되면(배치가 대상을 읽은 뒤라도) 청구를 보내지 않음",
+   "ok": true,
+   "detail": "(0, [], \"[(201, {'total': 1, 'paid': 0, 'failed': 0, 'skipped': 0, 'terminal': 0, 'pending': 1, 'recovered': 0, 'review': 1, 'exp\")"
+  },
+  {
+   "step": "4-6 청구가 이미 결제사 처리 중일 때 해지 → 해지는 되고, 진행 중인 청구가 있음을 응답에 밝힘",
+   "ok": true,
+   "detail": "(201, {'id': '98a6dbfc-a865-4e27-a89c-88a4c203f3f8', 'periodEnd': '2026-10-11T16:10:09.392Z', 'cancelAt': '2026-10-11T16:11:09.701Z', 'cancelled': True, 'alreadyCancelled': False, 'chargeInFlight': True, 'note': '해지 전에 시작되어 결제사에서 진행 중인 청구가 1건 있습니다 — 그 청구가 승인되면 한 기간이 더 이어지고, 그 뒤로는 청구되지 않습니다. 원하지 않으시면 결제 당일 환불을 신청하실 수 있습니다.'})"
+  },
+  {
+   "step": "4-7 그 청구는 한 번 반영(PAID · 기간 1회 연장) · 이후 자동 청구는 없음",
+   "ok": true,
+   "detail": "('PAID', 1)"
+  },
+  {
+   "step": "4-8 다음 기간이 와도 청구하지 않음",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "step": "4-9 해지 8건과 배치 2대를 동시에 → 구독마다 청구 0 또는 1 · 해지 확정 뒤에 잡힌 청구 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "4-10 해지한 결제 실패 구독은 유예 기간이 지나면 EXPIRED(청구 없이)",
+   "ok": true,
+   "detail": "('EXPIRED', 1)"
+  },
+  {
+   "step": "4-11 구독이 없으면 409 NOT_CANCELLABLE",
+   "ok": true,
+   "detail": "(409, {'code': 'NOT_CANCELLABLE', 'message': '해지할 구독이 없습니다.'})"
+  },
+  {
+   "step": "5-1 스텁 방식: 구독 → 환불 완료 · 구독 CANCELLED · 「실제 환불 아님」 표시",
+   "ok": true,
+   "detail": "(201, 201, {'refundId': 'ba860a06-69ab-43ec-bc78-263b987b9895', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:11:27.566Z', 'refundedAt': '2026-10-11T16:11:27.582Z', 'stub': True, 'note': '연동 전(스텁)이라 실제 환불이 아닙니다.'})"
+  },
+  {
+   "step": "5-2 스텁 방식: 정기결제 → 청구서 1건 PAID · 주문번호 · 스텁 결제 키 저장",
+   "ok": true,
+   "detail": "(201, [{'id': '8b574aa8-865a-463e-87d3-d887cec028b5', 'subscription_id': 'df88ecf1-a59f-48c4-bf4f-bde82b3010a2', 'period_start': '2026-10-11T16:10:28.520622+00:00', 'period_end': '2026-11-10T16:10:28.520622+00:00', 'amount': 49000, 'payment_id': None, 'status': 'PAID', 'issued_at': '2026-10-11T16:11:29.008576+00:00', 'billing_key_id': '6fd38437-ad5a-4dbd-a9ac-08564c9aaa22', 'attempt': 1, 'failure_"
+  },
+  {
+   "step": "5-3 스텁 방식: 해지",
+   "ok": true,
+   "detail": "(201, {'id': 'df88ecf1-a59f-48c4-bf4f-bde82b3010a2', 'periodEnd': '2026-11-10T16:10:28.520Z', 'cancelAt': '2026-10-11T16:11:29.106Z', 'cancelled': True, 'alreadyCancelled': False, 'chargeInFlight': False, 'note': '2026. 11. 11.까지 이용할 수 있습니다. 이후 자동 청구되지 않습니다.'})"
+  },
+  {
+   "step": "5-4 실제 결제사로 생긴 확인 중 청구(금액 불일치)를 스텁 방식 배치가 닫지 않음 — PENDING · 확인 필요 그대로",
+   "ok": true,
+   "detail": "(201, 'PENDING', 'AMOUNT_MISMATCH')"
+  },
+  {
+   "step": "5-5 실제 결제사로 결제한 구독의 환불을 스텁 방식 서버가 받으면 「환불 완료」라고 하지 않음(202 확인 중) · 청구서 PAID · 구독 그대로",
+   "ok": true,
+   "detail": "(202, {'refundId': 'e2b380cd-7cdc-49c4-93f4-fee73d8e14a9', 'state': 'UNKNOWN', 'label': '환불 결과 확인 중', 'amount': 49000, 'requestedAt': '2026-10-11T16:11:31.954Z', 'refundedAt': None, 'note': '결제사에서 결과를 확인하는 중입니다. 다시 결제하거나 다른 조치를 하지 않으셔도 됩니다 — 확인되는 대로 반영됩니다.'}, 'PAID')"
+  },
+  {
+   "step": "5-6 결제사와 연결된 서버가 이어받으면 실제로 취소하고 환불 완료 · 결제사 취소 1건",
+   "ok": true,
+   "detail": "(201, {'refundId': 'e2b380cd-7cdc-49c4-93f4-fee73d8e14a9', 'state': 'SUCCEEDED', 'label': '환불 완료', 'amount': 49000, 'requestedAt': '2026-10-11T16:11:31.954Z', 'refundedAt': '2026-10-11T16:11:32.116Z', 'note': '결제사에서 결제 취소를 확인했습니다. 카드사에 따라 영업일 기준 3~5일 안에 반영됩니다.'})"
+  },
+  {
+   "step": "5-7 스텁 방식에서 끊긴 청구(스텁 표시)는 스텁 방식 배치가 닫고 다시 청구 → PAID(개발 환경이 막히지 않음)",
+   "ok": true,
+   "detail": "[('PAID', True, 'DONE')]"
+  },
+  {
+   "step": "6-1 해지 예약한 회원이 다시 결제 → 구독이 이어지고 자동 갱신으로 돌아옴(cancel_at 없음) · 그 결제가 청구서로 남음",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': 'c69013bc-340f-4fd8-a3b2-3b693ca94f43', 'id': 'c69013bc-340f-4fd8-a3b2-3b693ca94f43', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:11:34.413Z', 'currentPeriodEnd': '2026-11-10T16:11:34.413Z', 'isPromo': False}, None, '1')"
+  },
+  {
+   "step": "6-2 결제 실패(PAST_DUE) 회원이 직접 결제 → ACTIVE · 새 기간 · 그 결제가 청구서로 남음 · 밀린 청구는 다시 나가지 않음",
+   "ok": true,
+   "detail": "(201, {'subscriptionId': '54c02c78-ffcd-4bca-9ca0-88ab3bd5d070', 'id': '54c02c78-ffcd-4bca-9ca0-88ab3bd5d070', 'planCode': 'STANDARD', 'status': 'ACTIVE', 'currentPeriodStart': '2026-10-11T16:11:35.716Z', 'currentPeriodEnd': '2026-11-10T16:11:35.716Z', 'isPromo': False}, 'ACTIVE', [('PAID', 'tpk_060896ff8ff043ed9c'), ('FAILED', None), ('PAID', 'tpk_d9c40470177440a892')])"
+  },
+  {
+   "step": "6-3 그 뒤 배치는 청구하지 않음(기간이 새로 시작됨)",
+   "ok": true,
+   "detail": "(1, 1)"
+  },
+  {
+   "step": "6-4 정기결제 결과 확인 중(PENDING)에 직접 결제 → 409 CHARGE_IN_PROGRESS · 결제 승인 요청 0(돈이 나가지 않음)",
+   "ok": true,
+   "detail": "(409, {'code': 'CHARGE_IN_PROGRESS', 'message': '정기결제 결과를 결제사에서 확인하는 중입니다. 확인이 끝난 뒤에 다시 결제해 주십시오 — 지금 결제하면 두 번 청구될 수 있습니다.'})"
+  },
+  {
+   "step": "6-5 확인이 끝나면(PAID) 구독이 이어짐 — 청구 1건",
+   "ok": true,
+   "detail": "('PAID', 1)"
+  },
+  {
+   "step": "7-1 정기결제 작업: 청구 실패가 있어도 작업은 정상 종료 · 운영 알림(SUBSCRIPTION_BILLING_FAILED)이 남음",
+   "ok": true,
+   "detail": "(201, \"{'job': 'subscription_billing', 'affected': 0, 'detail': {'total': 1, 'paid': 0, 'failed': 1, 'skipped': 0, 'terminal': 0, 'pending': 2, 'recovered': 0, 'review': 2, 'expired': 0, 'errors': 0, 'refund\", 1, 0)"
+  },
+  {
+   "step": "7-2 카드 교체가 필요한 실패 → 알림(SUBSCRIPTION_CARD_UNUSABLE)",
+   "ok": true,
+   "detail": "(201, \"{'job': 'subscription_billing', 'affected': 1, 'detail': {'total': 2, 'paid': 1, 'failed': 1, 'skipped': 0, 'terminal': 1, 'pending': 2, 'recovered': 0, 'review': 2, 'expired': 0, 'errors': 0, 'refund\")"
+  },
+  {
+   "step": "7-3 사람이 봐야 하는 청구(금액 불일치)가 있으면 알림(SUBSCRIPTION_BILLING_REVIEW)",
+   "ok": true,
+   "detail": "(201, \"{'job': 'subscription_billing', 'affected': 0, 'detail': {'total': 1, 'paid': 0, 'failed': 0, 'skipped': 0, 'terminal': 0, 'pending': 3, 'recovered': 0, 'review': 3, 'expired': 0, 'errors': 0, 'refund\")"
+  },
+  {
+   "step": "7-4 운영 조회(확인이 필요한 청구 · 환불 · 요청)에 그 청구가 보임",
+   "ok": true,
+   "detail": "(200, \"{'pendingInvoices': [{'invoiceId': '76ac8a70-f79f-4ff4-9b25-83d487853c20', 'subscriptionId': '9755dd12-4e1d-43eb-8df3-24257d8b9eb5', 'accountId': '5f203f95-43e3-40cd-b701-f311eb57f5fb', 'periodStart':\")"
+  }
+ ],
+ "pass": 103,
+ "fail": 0
+}

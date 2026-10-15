@@ -1,0 +1,82 @@
+소개뱅크 AWS 적용 전 점검 (2026-10-14 15:53:56 KST) — 올릴 판 v10.41
+지금 앱 폴더: /tmp/awshome/sgb   ·   새 킷: /tmp/awshome/SGB_DevDocker_Integrated_20261002_v10_41/sgb
+
+[1] 프로그램
+  통과  Node.js — v22.22.0 (킷을 검정한 판과 같은 22)
+  통과  npm — 10.9.4
+  통과  pm2 — 7.0.4
+  통과  psql — 16.15
+  통과  nginx — nginx/1.24.0 (Ubuntu)
+  통과  curl — 8.5.0
+  통과  unzip — 있음
+        aws CLI 없음 (start.sh 가 Secrets Manager 를 읽는다면 필요합니다)
+
+[2] 메모리 · 디스크
+  통과  메모리 + 스왑 — 8029MB (스왑 0MB)
+  통과  디스크 여유 — 13603MB
+
+[3] 지금 도는 앱 (pm2)
+        sgb  online 0 /tmp/awshome/sgb/start.sh
+        sgb-site  없음
+        sgb-jobs  없음
+  확인  재부팅 뒤 자동 기동(pm2 startup) — 꺼져 있거나 확인 불가 — 적용 뒤 pm2 startup 을 하십시오 (절차서 5-3)
+        지금 API 상태 주소 → 200
+
+[4] 앱 폴더 · .env
+        /tmp/awshome/sgb 는 폴더 (처음 적용 — apply 가 보관 폴더로 옮기고 바로가기로 바꿉니다)
+        지금 판 표시 없음 (v10.15 이전 킷)
+  통과  .env DATABASE_URL — 있음
+  통과  .env JWT_SECRET — 있음
+  통과  .env ENC_KEY — 있음
+  통과  .env JOB_TOKEN — 있음
+  통과  .env NODE_ENV — production
+  확인  파일 저장 위치가 안 정해짐 — apply 가 UPLOAD_DIR=/tmp/awshome/sgb-data/uploads 를 .env 에 넣습니다 (앱 폴더 밖 — 판을 바꿔도 남게)
+  통과  .env 에 개발용 값 없음
+
+[5] DB
+  통과  DB 접속 — PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · DB sgb_aws
+        SSL — psql 접속: 암호화됨 · 접속 주소의 표기: sslmode=no-verify
+  통과  지금 도는 앱도 DB 에 붙어 있음 (앱의 접속 주소가 맞음)
+        마이그레이션 — 적용됨 43 · 새 킷의 파일 135 · 올릴 것 92 · 바뀐 파일 0
+  통과  이미 적용된 파일이 바뀌지 않음
+        올릴 것: C997_ops_decisions C998_screen_fixes D001_affiliate_click_verify D002_health_catalog_stock 
+        올릴 것: D003_partner_admin_lists D004_audit_night_actor D005_ansim_consult_merge D006_hlt_pay_refund_opened 
+        올릴 것: D007_file_storage D008_lead_assign_adapters D009_hlt_return_ship_deduct D010_refcode_member_attribution 
+        올릴 것: D011_view_limit_extra_paid_relink D012_refcode_listing_scope D013_view_limit_from_default3 
+        올릴 것: D014_hlt_sale_terms_1_1 D015_free_plan_views_sync D016_consult_categories_v2 D017_consult_more_categories 
+        올릴 것: D018_consult_request_flow D019_consult_directory D020_directory_base_fee D021_polls_sns 
+        올릴 것: D022_billing_integrity D023_listing_detail_reviews D024_gwan_hlt_rename_mall D025_hlt_sale_scope_free_ship 
+        올릴 것: D026_fix_pg_key_name_review_close D027_hlt_options_catalog_exchange D028_hlt_sale_terms_exchange 
+        올릴 것: D029_banned_words_unique D030_inv11_hlt_exchange_fee D031_fix_open_findings_v1027 
+        올릴 것: D032_subscription_plan_reservation D033_kst_dates D034_settlement_payee_introducer D035_hlt_ship_confirm 
+        올릴 것: D036_hlt_reviews_qna D037_hlt_rankings D038_consent_history D039_consult_email 
+        올릴 것: D040_personal_referral_settlement D041_terms_single_text D042_terms_outsource_notice D043_terms_date_repair 
+        올릴 것: D044_request_search_fields D045_request_candidates D046_listing_register_fields D047_review_tags 
+        올릴 것: D048_support_guide_content D049_support_footer_policy D050_w2_photo_region_fields D051_w2_urgent_sale_trust 
+        올릴 것: D052_w2_success_stats D053_w2_safety_suppliers D054_w2_biz_axes D055_w2_broker_guarantee 
+        올릴 것: D056_w2_policy_by_proto D057_w2_notify_templates D058_w2_trust_proto D059_w2_trust_unify 
+        올릴 것: D060_myspace_proto_v1031 D061_mall_proto_v1031 D062_terms_service_proto_v1031 D063_notify_prefs_v1031 
+        올릴 것: D064_hlt_order_time_guard_v1031 D065_ingredient_license_v1031 D070_lead_cash_prepaid 
+        올릴 것: D071_lead_grade_alim_memo D072_partner_service_forms D073_partner_fulfillment_badges 
+        올릴 것: D074_partner_company_staff D075_affiliate_dashboard_settle D076_partner_terms_invoices D077_lead_fee_quote 
+        올릴 것: D078_partner_badge_label_fix D079_lead_cash_inv11_scope D080_admin_v31_core D081_runway_finance 
+        올릴 것: D082_review_sla_notice_suspend D083_policy_axes_segpreview D084_adx_publisher_payout D085_adx_inv9_scope 
+        올릴 것: D086_settlement_insert_requested D090_merge_v1031 D091_ad_medical_review_reject D092_directory_vat_renewal 
+        올릴 것: D093_etax_adapter D094_mny_individual_landing_hlt D095_p2p_all_individual D096_partner_account_based 
+        올릴 것: D097_drop_passthrough_seller_gates
+        계정 0명 · 개발 계정(@x.com) 0명
+        간주 모드: assume.bank=on assume.broker=on assume.payment=on 
+        발신 IP(infra.egress_ip): 3.37.95.217
+        암호화 열쇠(이 접속 기준 — 앱이 띄울 때 걸므로 여기서는 f 가 정상): f
+        오픈 차단 12건 [FOOTER:4 INTEGRATION:3 TERM:5]
+
+[6] Nginx
+        켜진 설정: sgb
+              1 listen 8088;
+              1 proxy_pass http://localhost:3200;
+              1 server_name sogaebaenk.co.kr www.sogaebaenk.co.kr;
+        HTTPS 인증서 설정 없음 (https 가 없으면 사용자 웹 로그인이 유지되지 않습니다 — 절차서 6-3)
+
+적용 전 점검 — 통과 18 · 실패 0 · 확인 2
+→ 「실패」가 없습니다. 「확인」 줄을 읽고 apply.sh 로 넘어가십시오.
+결과 파일: /tmp/awshome/sgb-data/logs/precheck_20261014_155356.txt

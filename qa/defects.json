@@ -1,0 +1,2852 @@
+[
+ {
+  "no": "B-01",
+  "area": "운영 BO",
+  "sev": "상",
+  "what": "BO 에 로그인이 없음",
+  "cause": "setToken 을 부르는 곳이 없어 모든 관리자 API 가 토큰 없이 나감",
+  "evidence": "/api/v1/admin/summary 403 (실측)",
+  "fix": "로그인 화면 · sessionStorage 토큰 · refresh 재시도 · 운영 역할 확인",
+  "file": "sgb/web/src/components/Login.tsx · lib/api.ts · App.tsx"
+ },
+ {
+  "no": "B-02",
+  "area": "운영 BO",
+  "sev": "중",
+  "what": "권한 없는 탭 노출",
+  "cause": "역할 무관하게 30탭 표시",
+  "evidence": "검수자 30탭 중 26탭 403 (실측)",
+  "fix": "탭별 역할 표 — 검수자 4 · 지급 1 · ADMIN 22 · SUPER 30",
+  "file": "sgb/web/src/App.tsx"
+ },
+ {
+  "no": "B-03",
+  "area": "운영 BO",
+  "sev": "상",
+  "what": "자동검수 규칙 저장 불가",
+  "cause": "화면 PATCH /admin/auto-review/policies/{key} · 서버 /admin/policies/auto-review/{key}",
+  "evidence": "404 (실측)",
+  "fix": "화면 경로 교정",
+  "file": "sgb/web/src/app/admin/AutoReviewRules.tsx"
+ },
+ {
+  "no": "B-04",
+  "area": "API",
+  "sev": "중",
+  "what": "자동검수 사유·자동화율 API 없음",
+  "cause": "화면이 부르는 2건이 서버에 없음",
+  "evidence": "404 (실측)",
+  "fix": "GET /admin/auto-review/reasons · /rate 신설",
+  "file": "sgb/src/modules/admin/admin-ops.controller.ts · admin.service.ts"
+ },
+ {
+  "no": "B-05",
+  "area": "API",
+  "sev": "중",
+  "what": "검색 사전·성향 학습 API 5건 없음",
+  "cause": "화면(SB-ADM-DIC/SEG)과 DB 는 있고 API 만 없음",
+  "evidence": "매트릭스 교차 점검",
+  "fix": "SearchAdminController 신설 (동의어 조회·추가·삭제, 학습 후보·실행)",
+  "file": "sgb/src/modules/search/search-admin.*"
+ },
+ {
+  "no": "B-06",
+  "area": "API",
+  "sev": "상",
+  "what": "검수 승인·반려가 한 건도 안 됨",
+  "cause": "actorId 를 '0000…' 으로 하드코딩 → decision_by 외래키 위반",
+  "evidence": "PATCH /admin/reviews/{id} 409 REFERENCE (실측) — 매물·요청 공개 불가",
+  "fix": "RequestCtx.actorId() 사용",
+  "file": "sgb/src/modules/review/review.controller.ts"
+ },
+ {
+  "no": "B-07",
+  "area": "API",
+  "sev": "상",
+  "what": "관 관리 3개 API 에 닿지 않음",
+  "cause": "gwans/:code 가 gwans/manage·order·landing 보다 먼저 선언",
+  "evidence": "GET /admin/gwans/manage → '없는 관입니다' (실측)",
+  "fix": "선언 순서 교정 + 매트릭스에 '라우트 가림' 자동 점검 추가",
+  "file": "sgb/src/modules/site/site.controller.ts"
+ },
+ {
+  "no": "B-08",
+  "area": "API",
+  "sev": "상",
+  "what": "메인 운영 공지 목록 500",
+  "cause": "없는 열 notices.starts_at·ends_at",
+  "evidence": "500 (실측)",
+  "fix": "published_at 기준으로 교정",
+  "file": "sgb/src/modules/site/main.service.ts"
+ },
+ {
+  "no": "B-09",
+  "area": "API",
+  "sev": "상",
+  "what": "경영 지표 매출 500",
+  "cause": "없는 열 subscription_plans.monthly_fee (실제 monthly_price)",
+  "evidence": "500 (실측)",
+  "fix": "열 이름 교정",
+  "file": "sgb/src/modules/site/report.service.ts"
+ },
+ {
+  "no": "B-10",
+  "area": "API",
+  "sev": "상",
+  "what": "유료 구독 결제 후 구독 롤백 · 소개코드 발급 500 · 원장 500",
+  "cause": "없는 표 ledger_entries, 없는 열 referral_codes.account_id·listing_id",
+  "evidence": "POST /subscriptions·/referral-codes, GET /me/ledger·/me/referral-codes 500 (실측)",
+  "fix": "청구서(subscription_invoices)·is_extra 로 교정",
+  "file": "sgb/src/modules/billing/billing.service.ts"
+ },
+ {
+  "no": "B-11",
+  "area": "배치",
+  "sev": "중",
+  "what": "광고 만료 알림·계약 독촉 배치 실패",
+  "cause": "없는 열 notifications.category·ref_type, accounts.role",
+  "evidence": "scripts/check-sql.js 로 발견",
+  "fix": "event_code·link_url·account_roles 로 교정",
+  "file": "sgb/src/worker/scheduler.service.ts"
+ },
+ {
+  "no": "B-12",
+  "area": "API",
+  "sev": "중",
+  "what": "DB 규칙 위반이 500 으로 나감",
+  "cause": "CHECK 3종만 매핑, 나머지 CHECK·NOT NULL·FK 는 INTERNAL_ERROR",
+  "evidence": "동의어 자기참조 500 (실측)",
+  "fix": "CHECK→422 · NOT NULL→422 · FK→409 · 형식→400",
+  "file": "sgb/src/common/db-error.filter.ts"
+ },
+ {
+  "no": "B-13",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "관 전체 목록 3종 404 · 베스트 500",
+  "cause": "화면 gwan=·sort=new/urgent/POPULAR ↔ 서버 gwanCode·RECENT/FEE_DESC",
+  "evidence": "/money/list·/mall/list·/biz/list 404, /money/best 500 (실측)",
+  "fix": "서버 별칭·POPULAR 추가 + 화면 계약 교정(급한 건·인증은 배지 필터)",
+  "file": "listing.dto/service/repository · site/*/list"
+ },
+ {
+  "no": "B-14",
+  "area": "API",
+  "sev": "상",
+  "what": "목록 다음 쪽이 틀림",
+  "cause": "어떤 정렬이든 커서를 published_at 하나로 이음",
+  "evidence": "소개비순 29건 중 12건만·중복 4, 최신순 1건 누락 (실측)",
+  "fix": "정렬별 (키, id) 키셋",
+  "file": "sgb/src/modules/listing/listing.repository.ts"
+ },
+ {
+  "no": "B-15",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "소개자 홈 500",
+  "cause": "서버 {items,note} 를 배열로 받아 .slice",
+  "evidence": "/my/intro 500 (실측)",
+  "fix": "두 형태 모두 수용",
+  "file": "sgb/site/src/app/my/intro/page.tsx"
+ },
+ {
+  "no": "B-16",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "모든 화면 머리에 /undefined 링크",
+  "cause": "주소 없는 허브 관(EARN)까지 메뉴에 그림",
+  "evidence": "78개 경로 전부 (실측)",
+  "fix": "주소 있는 관만 표시",
+  "file": "sgb/site/src/app/layout.tsx · page.tsx"
+ },
+ {
+  "no": "B-17",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "약관 동의 화면의 전문 링크 404",
+  "cause": "코드를 소문자로 보냄",
+  "evidence": "/terms/service 404 (실측)",
+  "fix": "원래 코드 + 상세 화면 대소문자 무시",
+  "file": "AgreeForm.tsx · terms/[code]/page.tsx"
+ },
+ {
+  "no": "B-18",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "계약 목록 '대화로 조율' 404",
+  "cause": "/chat/[매물 id] 에 거래 id 를 넘김",
+  "evidence": "코드 확인",
+  "fix": "listingId 를 내려 주고 그것으로 연결",
+  "file": "me.service.ts · my/contracts/page.tsx"
+ },
+ {
+  "no": "B-19",
+  "area": "문서 생성",
+  "sev": "중",
+  "what": "API 문서에서 컨트롤러 4개 누락",
+  "cause": "dump-swagger 가 손으로 복사한 목록 사용",
+  "evidence": "문서 332 · 실제 342",
+  "fix": "AppModule 을 preview 로 직접 읽음",
+  "file": "sgb/scripts/dump-swagger.ts"
+ },
+ {
+  "no": "B-20",
+  "area": "화면 레지스트리",
+  "sev": "중",
+  "what": "레지스트리 정합성 8건 실패",
+  "cause": "서비스 파트너센터 18화면 누락, PTC2 ID 형식, nav 불리언 22, 역할 없는 화면, URL 충돌 2, 없는 역할 BUSINESS, 없는 상위 화면",
+  "evidence": "verify-docs FAIL 8",
+  "fix": "18화면 등록 · SB-PTC2→SB-AFC · 상위/역할/URL 교정",
+  "file": "sgb/spec/screens.json · proto.html"
+ },
+ {
+  "no": "P-01",
+  "area": "시안",
+  "sev": "중",
+  "what": "건강몰 상세 탭·언어 선택에서 스크립트 오류",
+  "cause": "본체 문서 클릭 처리기가 건강몰 data-tab 도 잡음",
+  "evidence": "R[k] is not a function 45회 (실측)",
+  "fix": "composedPath 로 건강몰 영역 제외",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "P-02",
+  "area": "시안",
+  "sev": "하",
+  "what": "'수집관리 시안 열기' 가 없는 파일로 이동",
+  "cause": "킷에 없는 소개뱅크_수집관리_로컬확인_v1.1.html 링크",
+  "evidence": "chrome-error 22회 (실측)",
+  "fix": "같은 시안의 수집 관리(SB-ADM-COL-010)로 연결",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "B-21",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "브라우저에서 하는 로그인 필요 동작이 전부 403",
+  "cause": "토큰은 httpOnly 쿠키, API 는 Authorization 헤더만 봄 — /api 는 rewrite 로만 넘김",
+  "evidence": "로그인 후 fetch('/api/v1/me/summary') → 403 (실측). 매물·요청·문의·사업자·파트너 신청 등 27개 화면",
+  "fix": "middleware 가 /api 요청에 쿠키 토큰을 붙여 프록시 · 만료 시 refresh · 쓰기 요청은 같은 출처만(CSRF)",
+  "file": "sgb/site/src/middleware.ts"
+ },
+ {
+  "no": "B-22",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "매물 문의(채팅)가 시작되지 않음",
+  "cause": "빈 본문으로 대화 생성(서버는 message 필수) · 응답 키 conversationId 를 id 로 읽음",
+  "evidence": "400 · 대화 미생성 (실측)",
+  "fix": "첫 전송 때 message 와 함께 생성",
+  "file": "sgb/site/src/components/ChatPanel.tsx"
+ },
+ {
+  "no": "B-23",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "AI 분류 체험 실패",
+  "cause": "{title, body} 전송 — 서버는 {text} · 후보 필드명(name·gwan) 불일치",
+  "evidence": "400 text must be a string (실측)",
+  "fix": "계약에 맞춤",
+  "file": "sgb/site/src/components/ClassifyTry.tsx"
+ },
+ {
+  "no": "B-24",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "결제수단 등록이 간주 상태에서도 실패",
+  "cause": "빈 본문 — authKey 필수",
+  "evidence": "400 (실측) · 스텁 키로는 201",
+  "fix": "간주 상태에서 시연용 키 전송",
+  "file": "sgb/site/src/components/PayMethod.tsx"
+ },
+ {
+  "no": "B-25",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "AI 매칭 가중치 표가 보이지 않음",
+  "cause": "서버 배열 [{code,name}] ↔ 화면 {weights:[{key,label}]}",
+  "evidence": "응답 모양 대조 (qa/shape.py)",
+  "fix": "두 모양 수용",
+  "file": "sgb/site/src/app/ai/match/page.tsx"
+ },
+ {
+  "no": "B-26",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "목록 화면 React 418(하이드레이션) 경고",
+  "cause": "'n시간 전' 계산이 서버(UTC)·브라우저(KST)에서 다름",
+  "evidence": "콘솔 오류 (실측·간헐)",
+  "fix": "시각 표시에 suppressHydrationWarning",
+  "file": "ListingCard.tsx · Questions.tsx"
+ },
+ {
+  "no": "B-27",
+  "area": "API 문서",
+  "sev": "중",
+  "what": "API 문서에 다른 API 의 스키마가 나감",
+  "cause": "DTO 클래스 이름 5쌍 중복 (ClassifyDto · CreateInquiryDto · PayoutAccountDto · MyListingDto · ProposeFeeDto) — Swagger 가 하나로 덮어씀",
+  "evidence": "문서상 필드로 보내면 400 (실측: 제휴 문의 · 커뮤니티 분류)",
+  "fix": "모듈 접두어로 이름 분리 + verify-docs 에 중복 점검 추가",
+  "file": "affiliate · community · listing · public dto · verify-docs.js"
+ },
+ {
+  "no": "Q1",
+  "area": "운영 결정",
+  "sev": "결정",
+  "what": "지급 담당 화면 없음",
+  "cause": "확정·지급 API 부재",
+  "evidence": "PAYOUT 계정 탭 1개",
+  "fix": "지급 데스크 · 2인 원칙 · 이체 참조",
+  "file": "payout.* · Payouts.tsx · C997"
+ },
+ {
+  "no": "Q2",
+  "area": "운영 결정",
+  "sev": "결정",
+  "what": "개인 회원 거래 확정 불가",
+  "cause": "BIZ_OWNER·사업자 인증 필요",
+  "evidence": "403",
+  "fix": "본인인증 개인 회원 허용",
+  "file": "deal.controller.ts"
+ },
+ {
+  "no": "Q3",
+  "area": "운영 결정",
+  "sev": "결정",
+  "what": "양측 확인 후에도 INQUIRY",
+  "cause": "계약서 서명 경로만 확정",
+  "evidence": "실측",
+  "fix": "양측 확인 즉시 CONFIRMED + 확인 버튼",
+  "file": "C997 · DealConfirm.tsx"
+ },
+ {
+  "no": "Q4",
+  "area": "운영 결정",
+  "sev": "결정",
+  "what": "제휴 계좌 본인인증 없음",
+  "cause": "게이트 없음",
+  "evidence": "—",
+  "fix": "API 게이트 + DB 트리거",
+  "file": "affiliate.controller.ts · C997"
+ },
+ {
+  "no": "Q5",
+  "area": "운영 결정",
+  "sev": "결정",
+  "what": "운영 계정 사용자 웹 비로그인처럼 보임",
+  "cause": "MEMBER 역할 없음",
+  "evidence": "/me/summary 403",
+  "fix": "ADMIN·SUPER 에 사용자 역할 부여",
+  "file": "principal.service.ts"
+ },
+ {
+  "no": "C-01",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "관 목록 '더 보기' 2쪽이 500",
+  "cause": "다음 쪽 링크에 정렬(sort)이 빠져 베스트 커서를 최신순으로 읽음 → 날짜 변환 실패",
+  "evidence": "/money?cursor=… 5역할 모두 500 (최종 링크 점검)",
+  "fix": "링크에 sort·badge 유지 + 서버는 정렬과 형이 안 맞는 커서를 첫 쪽으로 처리",
+  "file": "site/src/app/[gwan]/page.tsx · listing.repository.ts"
+ },
+ {
+  "no": "C-02",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "주소창 모르는 정렬값이면 화면 500",
+  "cause": "sort=PRICE_ASC 등 → API 400 → 페이지 오류",
+  "evidence": "/money?sort=PRICE_ASC 500",
+  "fix": "허용 정렬만 넘기고 나머지는 기본 정렬(safeSort)",
+  "file": "site/src/lib/format.ts · [gwan]/page.tsx · listings/page.tsx"
+ },
+ {
+  "no": "C-03",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "전체 목록 3종 20건 뒤를 볼 수 없음 · /listings 2쪽 정렬 풀림",
+  "cause": "money|mall|biz/list 에 다음 쪽 링크 없음, /listings 링크에 sort 없음",
+  "evidence": "23건 중 20건만 보임",
+  "fix": "다음 쪽 링크 추가 · 정렬 유지 (13개 시작점 × 최대 4쪽 전부 200)",
+  "file": "site/src/app/{money,mall,biz}/list/page.tsx · listings/page.tsx"
+ },
+ {
+  "no": "C-04",
+  "area": "API",
+  "sev": "하",
+  "what": "형식 오류 안내에 허용값이 비어 있음",
+  "cause": "@IsEnum 에 배열을 넣어 class-validator 가 값 목록을 못 만듦 (19곳)",
+  "evidence": "'gwanCode must be one of the following values: ' (빈칸)",
+  "fix": "@IsIn 으로 교체 — 'MNY, MAL, BIZ, HLT' 표시",
+  "file": "listing·catalog·admin·public·review·billing·deal DTO · worker.controller"
+ },
+ {
+  "no": "C-05",
+  "area": "API 보안",
+  "sev": "하",
+  "what": "거래 당사자가 아닌 사람이 확정 여부를 알 수 있음",
+  "cause": "상태 검사가 당사자 검사보다 먼저",
+  "evidence": "비당사자 POST /deals/{id}/confirm → 409 ALREADY_CONFIRMED",
+  "fix": "당사자 검사 먼저 → NOT_A_PARTY",
+  "file": "deal.service.ts"
+ },
+ {
+  "no": "D-01",
+  "area": "API",
+  "sev": "상",
+  "what": "검색어 + 관련도순 목록이 500 — 통합 검색이 늘 빈 결과",
+  "cause": "9/30 키셋 커서 도입 때 관련도순에서 $5·$7 이 식에서 빠져 형을 못 정함(회귀). 화면은 .catch 로 빈 결과로 숨김",
+  "evidence": "GET /listings?keyword=상가&sort=RELEVANCE → 500",
+  "fix": "관련도순에도 매개변수를 식에 남김 · 검색 화면 정렬 복원",
+  "file": "listing.repository.ts · site/src/app/search/page.tsx"
+ },
+ {
+  "no": "D-02",
+  "area": "API",
+  "sev": "상",
+  "what": "BO 메인 구성 저장이 보낸 값을 버림(200 응답)",
+  "cause": "LayoutDto 에 검증 데코레이터가 없어 whitelist 가 필드를 모두 지움",
+  "evidence": "PATCH /admin/layout 후 GET 값 불변",
+  "fix": "@IsOptional·@IsArray·@IsString 추가, 부분 수정 병합",
+  "file": "site.dto.ts · site.service.ts"
+ },
+ {
+  "no": "D-03",
+  "area": "API·DB",
+  "sev": "상",
+  "what": "제휴 입점 심사 목록이 늘 비고 반려 불가",
+  "cause": "앱은 'PENDING' 을 찾는데 표 상태는 APPLIED, 반려값 'REJECTED' 는 CHECK 에 없음",
+  "evidence": "GET /admin/affiliates/applications 0건 (APPLIED 1건 존재)",
+  "fix": "APPLIED 로 조회·판정 + C998 로 REJECTED 허용",
+  "file": "affiliate.service.ts · C998"
+ },
+ {
+  "no": "D-04",
+  "area": "API",
+  "sev": "상",
+  "what": "건강몰 주문 실패 시 품목 없는 주문이 남고 결제까지 걸 수 있음",
+  "cause": "주문 생성이 트랜잭션이 아님",
+  "evidence": "재고 초과 422 뒤 H26100100003(품목 0) 생성",
+  "fix": "트랜잭션으로 묶음 · 품목 없는 주문 결제 차단 · C998 로 기존 건 정리",
+  "file": "health-shop.service.ts · C998"
+ },
+ {
+  "no": "D-05",
+  "area": "API",
+  "sev": "중",
+  "what": "결제 버튼을 누를 때마다 준비(READY) 결제가 쌓임",
+  "cause": "멱등 처리 없음",
+  "evidence": "같은 주문 READY 여러 건",
+  "fix": "같은 수단이면 기존 건 반환, 수단 변경 시 이전 건 FAILED(★CANCELED 는 트리거가 주문을 취소시킴 — 실측으로 확인해 피함)",
+  "file": "health-shop.service.ts"
+ },
+ {
+  "no": "D-06",
+  "area": "API",
+  "sev": "중",
+  "what": "같은 주문에 취소·반품을 여러 번 접수 · 주문 뒤 장바구니가 그대로",
+  "cause": "중복 검사 없음 · 장바구니 정리 없음",
+  "evidence": "실측",
+  "fix": "처리 중 신청이 있으면 409 · 주문한 상품을 장바구니에서 제거",
+  "file": "health-shop.service.ts"
+ },
+ {
+  "no": "D-07",
+  "area": "API",
+  "sev": "중",
+  "what": "이름을 바꿔도 본인인증이 유지됨(안내문은 '다시 인증')",
+  "cause": "UPDATE 가 identity_verified_at 를 건드리지 않음",
+  "evidence": "PATCH /me/account 후 인증 유지",
+  "fix": "이름이 바뀌면 인증 해제 + identityReset 응답",
+  "file": "me.service.ts"
+ },
+ {
+  "no": "D-08",
+  "area": "BO",
+  "sev": "중",
+  "what": "광고 슬롯이 전부 '—' · 심의 필요 0건 · 광고비 입금 폼 늘 403",
+  "cause": "응답 필드 이름 불일치 · 토큰 없는 fetch",
+  "evidence": "BO 실측",
+  "fix": "필드 맞춤 · api() 사용 · 입금은 지급 탭으로 일원화",
+  "file": "web Ads.tsx · AdBilling.tsx"
+ },
+ {
+  "no": "D-09",
+  "area": "BO",
+  "sev": "하",
+  "what": "지급 담당·검수자 대시보드 403 · 신고 처리 key 경고",
+  "cause": "/admin/summary 가 ADMIN·SUPER 전용 · key 누락",
+  "evidence": "BO 실측",
+  "fix": "역할별 안내 · key 추가",
+  "file": "web Dashboard.tsx · ReportQueue.tsx"
+ },
+ {
+  "no": "D-10",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "비밀값 점검이 긴 import 경로를 키로 오인",
+  "cause": "정규식이 경로 문자열에 걸림",
+  "evidence": "partners/settlements import",
+  "fix": "import 줄 제외",
+  "file": "scripts/check-secrets.sh"
+ },
+ {
+  "no": "D-11",
+  "area": "명세",
+  "sev": "하",
+  "what": "레지스트리 권한(ADMIN·SUPER)과 서버 권한(SUPER) 불일치 4화면",
+  "cause": "명세 미갱신",
+  "evidence": "MAIN-020/030/040 · ITG-010",
+  "fix": "레지스트리를 서버 기준 SUPER 로",
+  "file": "spec/screens.json"
+ },
+ {
+  "no": "E-01",
+  "area": "사용자 웹·API",
+  "sev": "중",
+  "what": "시행 예정 약관(마케팅 수신 등)의 전문 링크가 404",
+  "cause": "전문 화면이 '지금 유효한 약관' 목록에서만 찾음 — 동의 화면은 시행 예정 약관도 미리 받음",
+  "evidence": "로그인 4역할 /terms/MARKETING · MARKETING_NIGHT 404 (링크 점검)",
+  "fix": "GET /terms/doc/{code} 신설(유효본 없으면 시행 예정 발행본, 시행일 표시)",
+  "file": "auth.controller/service · site terms/[code]"
+ },
+ {
+  "no": "E-02",
+  "area": "검정 도구",
+  "sev": "상",
+  "what": "불변식·공격 검정을 개발 DB 에 돌리면 개발 데이터가 지워짐",
+  "cause": "fixture.sql 이 표를 비움 — 대상 DB 확인 없음(10/2 작업 중 실제 발생)",
+  "evidence": "개발 DB 계정·거래·매물 소실 → 재시드",
+  "fix": "DB 이름이 _check·_ci·_test 가 아니면 멈춤(강제 SGB_FIXTURE_OK=1)",
+  "file": "verify-invariants.sh · attack-check.sh · local-setup.sh 안내"
+ },
+ {
+  "no": "E-03",
+  "area": "DB",
+  "sev": "중",
+  "what": "밤 10시~아침 7시에 검정하면 BS-05·CR-03 실패",
+  "cause": "사람 없는 기록(배치·트리거·픽스처)이 '운영자 야간 행위' 징후로 묶임",
+  "evidence": "02:58 실측 ADMIN_NIGHT 13건 > 문턱 10",
+  "fix": "D004 — 행위자 없는 기록 제외",
+  "file": "D004_audit_night_actor"
+ },
+ {
+  "no": "E-04",
+  "area": "시안",
+  "sev": "중",
+  "what": "눌러도 아무 변화 없는 버튼 116종(화면별 합 125)",
+  "cause": "시안에 처리기가 없거나 이미 선택된 탭",
+  "evidence": "sweep_proto · sweep_hlt",
+  "fix": "v10.1 시연 보장 — 탭·칩은 선택 표시, 나머지는 구현 화면 주소 안내 → 남은 6(동일 안내 반복 판정 3 · 잠김/동의 전 비활성 3)",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "E-05",
+  "area": "API",
+  "sev": "중",
+  "what": "파트너 정산 요약의 무효 합계가 늘 0",
+  "cause": "'VOID' 로 집계(표 상태는 'VOIDED')",
+  "evidence": "코드 대조",
+  "fix": "VOIDED 로 수정",
+  "file": "partner.service.ts"
+ },
+ {
+  "no": "E-06",
+  "area": "DB",
+  "sev": "중",
+  "what": "취소된 몰 주문에 결제 승인·배송 이벤트가 반영될 수 있음",
+  "cause": "fn_hlt_pay_apply · fn_hlt_ship_apply 가 주문 상태를 안 봄",
+  "evidence": "실측",
+  "fix": "D002 — 결제 대기 주문만 승인 반영, 닫힌 주문은 배송 반영 안 함",
+  "file": "D002"
+ },
+ {
+  "no": "E-07",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "취소·반품 접수 안내가 곧바로 사라짐 · 중개사 '다시 신청하기'가 제자리",
+  "cause": "접수 뒤 router.refresh · 반려 건을 상태 화면으로 되돌림",
+  "evidence": "실측",
+  "fix": "refresh 제거 · 반려/만료 건은 신청 폼으로",
+  "file": "ReturnForm.tsx · my/broker"
+ },
+ {
+  "no": "F-01",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "없는 관 · 형식이 틀린 번호의 상세 주소가 500",
+  "cause": "API 400 을 그대로 던짐 · 관 코드 확인 없음",
+  "evidence": "/zzz/123 · /money/not-a-uuid · /request/not-a-uuid → 500 (시안을 /proto/ 에 올리다 발견)",
+  "fix": "없는 관 · 400 · 404 는 모두 404 화면",
+  "file": "[gwan]/[id] · request/[id] · chat/[id] · listings/[id]/edit"
+ },
+ {
+  "no": "F-02",
+  "area": "시안",
+  "sev": "중",
+  "what": "서버 기능 6건을 시안에서 시연·확인할 수 없음",
+  "cause": "시안은 정적 — 서버 기능과 연결되지 않음",
+  "evidence": "요청(10/2)",
+  "fix": "v10.2 서버 연동 모듈 8화면 — 파일로 열면 시연, 사용자 웹(/proto/)에서 열면 실제 API",
+  "file": "spec/proto.html · site/public/proto"
+ },
+ {
+  "no": "G-01",
+  "area": "명칭",
+  "sev": "결정",
+  "what": "「커뮤니티」 → 「소개광장」",
+  "cause": "사장님 지시(10/2)",
+  "evidence": "시안 헤더 · 사용자 웹 헤더 · BO 탭",
+  "fix": "표시 문구 52곳 일괄 변경(조사 을·은·이·과·으로 맞춤). 주소(/community)·코드·DB 이름은 그대로",
+  "file": "spec/proto.html · screens.json · site · web · 주석"
+ },
+ {
+  "no": "G-02",
+  "area": "시안",
+  "sev": "하",
+  "what": "시연 안내가 뒤이어 뜬 몰 알림을 지움",
+  "cause": "시연 보장 안내의 3.2초 지우기 타이머가 내용 확인 없이 알림 칸을 비움",
+  "evidence": "몰 전수 점검 무반응 5건(약관 링크 4 · 택배사 버튼) — 개별로는 반응",
+  "fix": "내가 띄운 안내일 때만 지움",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-03",
+  "area": "시안",
+  "sev": "결정",
+  "what": "안심소개 화면의 역할 탭 · 퀵메뉴 띠 삭제",
+  "cause": "사장님 지시(10/2) — 범위: 띠 전체, 안심소개만",
+  "evidence": "#/g/mal 캡처",
+  "fix": "안심소개(MAL)에서만 「소개하기 · 소개받고 싶어요 · 소개받기 + 안내문 + 성공현황~이벤트존」 줄을 그리지 않음. 다른 관은 그대로",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-04",
+  "area": "시안",
+  "sev": "결정",
+  "what": "소개창업 화면의 역할 탭 · 퀵메뉴 띠 삭제",
+  "cause": "사장님 지시(10/2) — G-03 과 같은 줄",
+  "evidence": "#/g/biz 캡처",
+  "fix": "소개창업(BIZ)에서도 같은 줄을 그리지 않음. 남은 곳은 소개장터(MNY)뿐",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-05",
+  "area": "시안",
+  "sev": "결정",
+  "what": "메인 화면 디자이너 시안(구성1) 반영 — 업로드 v10.4.1 의 메인 변경·추가분만",
+  "cause": "사장님 지시(10/2)",
+  "evidence": "SGB_Prototype_v10_4_1.html",
+  "fix": "v10.3 기준 3방향 병합 — 메인(mainBody · #mh-style · LIVE · 추천 칩 · 히어로 검색 · 광고 관리 운영자 전용 · LIVE→상품 상세) 과 헤더 순서(소개광장 · 이용안내)를 가져오고, 안심소개 · 소개창업 띠 삭제는 유지. 충돌 3곳(제목 · 서버 연동 주소 2) 정리",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-06",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "시안 모듈 경계 점검이 없는 파일(/home/claude/fin/work.html)을 읽어 늘 실패",
+  "cause": "고정 경로",
+  "evidence": "check-proto-modules.js ENOENT",
+  "fix": "인자 또는 spec/proto.html 을 읽음 → 모듈 14개 경계 정상",
+  "file": "scripts/check-proto-modules.js"
+ },
+ {
+  "no": "G-07",
+  "area": "시안·서버·DB",
+  "sev": "결정",
+  "what": "업로드 v10.4.2 의 안심소개(상담 축 통합 · D005) 그대로 적용",
+  "cause": "사장님 지시(10/2) 「안심소개 그대로 적용」",
+  "evidence": "SGB_Prototype_v10_4_2.html · 킷 v10_4_2",
+  "fix": "시안 3방향 병합(안심소개 화면이 업로드본과 글자 단위로 같음) · D005 마이그레이션 · billing/business 서비스 · nts-recheck · 공격 검정 MX-01~10. 안심소개 띠는 업로드본대로 다시 보임(v10.4 삭제 철회), 소개창업 띠 삭제는 유지",
+  "file": "spec/proto.html · prisma/migrations/D005 · src/modules/billing · identity · scripts"
+ },
+ {
+  "no": "G-08",
+  "area": "서버·DB",
+  "sev": "결정",
+  "what": "개봉한 반품은 재고로 되돌리지 않음",
+  "cause": "사장님 결정(10/2) 「재고로 잡지 않음(개봉된 경우)」 — 전에는 운영 승인 시 무조건 재고 복귀",
+  "evidence": "srv_pay.py · SV-04/SV-P1~P7",
+  "fix": "D006 — 반품에 개봉 여부(opened) 기록, 개봉이면 restock_skipped 로 남기고 재고 증가 없음. 불변식 SV-04 를 「취소·반품은 재고 복귀 또는 건너뜀 둘 중 하나만」으로 교체",
+  "file": "prisma/migrations/D006 · src/modules/health"
+ },
+ {
+  "no": "G-09",
+  "area": "시안",
+  "sev": "결정",
+  "what": "안심소개 위쪽 버튼 줄(띠) 삭제 — 시연용 「보는 사람」 전환 포함",
+  "cause": "사장님 결정(10/2) 「위쪽 버튼 없앤다」",
+  "evidence": "srv_proto.py · sweep_proto",
+  "fix": "시안 v10.8 — MAL 도 BIZ 처럼 띠를 그리지 않음. 상담 신청 · 인증업체 등록은 본문 카드 버튼",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-10",
+  "area": "서버·화면",
+  "sev": "상",
+  "what": "결제 실연동 · 환불 없음 (소개뱅크몰)",
+  "cause": "토스 결제 승인 · 취소 · 웹훅 미구현",
+  "evidence": "srv_pay.py · srv_pay_ui.py",
+  "fix": "토스 어댑터(승인 · 조회 · 취소, TOSS_API_BASE 교체 가능) · 결제 화면(pay · success · fail · done) · 웹훅(PG 재조회 후 반영) · 반품 환불 · 정산 BO. 키 없으면 stub:true",
+  "file": "src/modules/billing/payment.provider.ts · src/modules/health · site/src/app/health/order"
+ },
+ {
+  "no": "G-11",
+  "area": "서버·화면",
+  "sev": "상",
+  "what": "파일 업로드 없음 (등기사항증명서 · 마케팅자료 · 파트너 가이드)",
+  "cause": "저장소 · 업로드 API 미구현 — 화면이 URL 입력으로 우회",
+  "evidence": "srv_file.py · srv_file_ui.py",
+  "fix": "D007 files 표 · 실제 바이트 형식 판정 · 지문(sha256) · 서버가 만드는 저장 키(경로 탈출 차단) · S3(SigV4 직접 구현)/로컬 · 내려받기 권한 검사. 불변식 SV-F1~F5",
+  "file": "prisma/migrations/D007 · src/modules/file · site/src/lib/upload.ts"
+ },
+ {
+  "no": "G-12",
+  "area": "서버·화면",
+  "sev": "상",
+  "what": "리드 배정 API 없음",
+  "cause": "상담 신청 → 업체 배정 · 열람 · 과금 흐름 미구현",
+  "evidence": "srv_lead.py · srv_lead_ui.py",
+  "fix": "D008 — 자동 배정(자격 · 미납 한도 · 가중치) · 수동 배정 · 재배정 · 열람 기한 · 열람 시 과금 · 배치 lead_assign · 상담 신청 화면(/consult) · BO 리드 배정. 불변식 SV-L1~L7",
+  "file": "prisma/migrations/D008 · src/modules/lead · site/src/app/consult · web/src/app/admin/LeadAssign.tsx"
+ },
+ {
+  "no": "G-13",
+  "area": "서버",
+  "sev": "중",
+  "what": "1원 인증 · 중개사 대조 · 국세청 조회가 스텁(가짜 응답)만",
+  "cause": "실제 어댑터 없음",
+  "evidence": "srv_lead.py H 구간(가짜 서버로 실제 HTTP)",
+  "fix": "설정형 어댑터 3종(요청 · 응답 필드를 환경변수로 대응) · 키 없으면 stub:true · 중개사 승인 출처(lookup_source API/ASSUMED/MANUAL) 기록. 업체 계약 후 필드 확인 필요",
+  "file": "src/modules/billing/bank-verify.provider.ts · src/modules/partner/broker-lookup.provider.ts · src/modules/identity/verification.provider.ts"
+ },
+ {
+  "no": "G-14",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "새 메인(구성1)이 시안에만 있고 실제 웹은 예전 메인",
+  "cause": "시안만 바뀜",
+  "evidence": "web_main.py 65/65",
+  "fix": "실제 API 로 채운 새 메인(히어로 검색 · 관 카드 · HERO 광고(노출 · 클릭 기록) · 소개뱅크몰 LIVE · 소개 요청 · 3열 · 나를 위한 소개 · 핵심 칸). 받쳐 줄 API 없는 칸(이거 어때? · 우리동네 · 비교 상품 · LIVE 인기/평점/리뷰 탭)은 「준비 중」",
+  "file": "site/src/app/page.tsx · site/src/components/home"
+ },
+ {
+  "no": "G-15",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "안심소개 상담 축 통합이 시안에만 있고 실제 /mall 은 매물 목록만",
+  "cause": "시안만 바뀜",
+  "evidence": "web_mal.py 171/171",
+  "fix": "/mall 안심소개 전용 구성(매물 축 · 생활·금융 상담 축 · 인증업체만 게시 안내 · 상담 업종 줄 → /consult) · /mall/give(소개하기 안내 · SB-MAL-GIV-010 신설) · /consult 시안 malcsl 에 맞춤. 위쪽 띠 없음",
+  "file": "site/src/components/mal · site/src/app/[gwan]/page.tsx · site/src/app/mall/give · site/src/app/consult"
+ },
+ {
+  "no": "G-16",
+  "area": "Docker",
+  "sev": "중",
+  "what": "docker compose 의 scheduler 가 늘 unhealthy",
+  "cause": "이미지 HEALTHCHECK(curl :3000)를 물려받는데 스케줄러는 3000 을 열지 않음 — 실제 compose 구동으로 발견",
+  "evidence": "docker compose ps → sgb-scheduler (unhealthy)",
+  "fix": "scheduler-daemon.js 가 tick 성공 때 /tmp/scheduler.ok 갱신, compose 에 scheduler 전용 healthcheck(3분 안 갱신) → healthy 확인",
+  "file": "docker-compose.yml · scripts/scheduler-daemon.js"
+ },
+ {
+  "no": "G-17",
+  "area": "검정",
+  "sev": "중",
+  "what": "토스 웹훅 API 가 화면 레지스트리에 없어 npm run verify 가 실패",
+  "cause": "POST /webhooks/toss 가 screens.json 에 미연결 — Docker checks 컨테이너에서 발견",
+  "evidence": "merge-openapi: 레지스트리에 없는 API 1건",
+  "fix": "SB-HLT-ORD-020(결제) apis 에 연결",
+  "file": "spec/screens.json"
+ },
+ {
+  "no": "G-18",
+  "area": "사용자 웹·보안",
+  "sev": "상",
+  "what": "Docker(next -H 0.0.0.0)에서 사용자 웹의 모든 쓰기 요청이 403 CSRF",
+  "cause": "미들웨어가 Origin 을 req.nextUrl.origin(http://0.0.0.0:5174)과만 비교 — 브라우저 Origin(http://localhost:5174)과 늘 다름. HTTPS 를 앞단에서 끊는 운영도 같은 문제",
+  "evidence": "docker 실구동 web_main 57/65 (광고 노출·클릭 403) · csrf_check.py",
+  "fix": "같은 출처 판정을 nextUrl.origin · Host(X-Forwarded-Host 우선) · SITE_ORIGINS 목록으로 — 다른 사이트 · 'null' · 이름 앞부분만 같은 Origin 은 그대로 403 (csrf_check 7/7)",
+  "file": "site/src/middleware.ts"
+ },
+ {
+  "no": "G-19",
+  "area": "Docker",
+  "sev": "중",
+  "what": "검정 컨테이너(checks)가 python3 없어 「▲위험」으로 끝남",
+  "cause": "node:22-slim 에 python3 없음 — check-testsafety.sh 가 python3 를 씀",
+  "evidence": "docker compose --profile check run → python3: command not found",
+  "fix": "sgb/Dockerfile apt 목록에 python3 추가 → 검정 「전체 통과」",
+  "file": "sgb/Dockerfile"
+ },
+ {
+  "no": "G-20",
+  "area": "Docker",
+  "sev": "중",
+  "what": "킷을 바꾼 뒤 check 가 낡은 검정 이미지로 돎",
+  "cause": "checks 는 profile 서비스라 `docker compose build`/`up --build` 가 다시 만들지 않음",
+  "evidence": "갱신 후 check 결과가 예전 코드(API 396건) 기준",
+  "fix": "dev.sh · dev.ps1 · 안내 문구를 `run --rm --build checks` 로",
+  "file": "dev.sh · dev.ps1 · docker-compose.yml · README.md"
+ },
+ {
+  "no": "G-21",
+  "area": "사용자 웹·BO·서버",
+  "sev": "중",
+  "what": "한국 시간 0~9시에 날짜가 하루 어긋남 (UTC 날짜 사용)",
+  "cause": "toISOString().slice(0,10) — UTC 기준",
+  "evidence": "0시 넘어 srv_file_ui 실패: 발급일 칸 max 가 어제라 오늘 발급본 선택 불가",
+  "fix": "소유 확인 발급일 max · BO 정산 시작일(지난주 월요일이 일요일로) · BO 제휴 이번 달 · 구독 결제 실패 알림 중복 키를 한국 날짜로",
+  "file": "site/src/app/mal/brokers/BrokerForms.tsx · web/src/app/admin/HealthSettle.tsx · web/src/app/admin/Affiliates.tsx · src/modules/billing/recurring.service.ts"
+ },
+ {
+  "no": "G-22",
+  "area": "검정 도구",
+  "sev": "중",
+  "what": "빈 DB 에서 차단 검사 2건이 헛검사(UPDATE 0건 → 「차단 안 됨」으로 실패)",
+  "cause": "SV-12(입점 반려 사유) · SV-L7(요약 연락처)이 기존 행을 고쳐 보는 방식 — 새 Docker 볼륨에는 행이 없음",
+  "evidence": "docker 첫 check: 불변식 192/2",
+  "fix": "대상 행을 같은 트랜잭션에서 만들고 되돌림 — 새 DB 3회 · 기존 DB · Docker 새 볼륨 2회 모두 194/0",
+  "file": "scripts/verify-invariants.sh"
+ },
+ {
+  "no": "G-23",
+  "area": "서버·화면·약관",
+  "sev": "결정",
+  "what": "고객 사정 반품은 왕복 배송비 6,000원을 환불액에서 뺌",
+  "cause": "사장님 결정(10/2) 「단순 변심은 왕복 배송비 차감」 — 전에는 약관에 금액이 없어 전액 환불",
+  "evidence": "srv_retship.py 22/22",
+  "fix": "D009 hlt_returns.ship_deduction + 제약(고객 사정 반품만) + 감시 뷰 v_hlt_refund_mismatch · 정책 health-policy.ts 한 곳 · 토스 부분 취소 · 반품 신청 화면 예상 환불액 · 내역 · BO 미리 보기/확인창 · 약관 초안 HLT_SALE §2 · 불변식 SV-P8~P11",
+  "file": "prisma/migrations/D009 · src/modules/health · site/src/components/health · web/src/app/admin/HealthSettle.tsx · scripts/gen-terms-draft.js"
+ },
+ {
+  "no": "G-24",
+  "area": "서버·화면",
+  "sev": "결정",
+  "what": "일반 회원(무료 BASIC) 소개코드 월 1건 — 시안대로",
+  "cause": "사장님 결정(10/2) 「소개코드는 시안대로」 — 전에는 사업자 · 유효 구독만 발급",
+  "evidence": "srv_refcode.py 49/49 · srv_refcode_ui.py 41/41",
+  "fix": "MEMBER 발급 허용 · 구독 없으면 무료 BASIC 자동 · 본인인증 1명당 월 1건 · /mall 매물 상세와 /mall/give 「소개코드 공유」(이번 달 코드 재사용 · 링크 복사)",
+  "file": "src/modules/billing · site/src/components/refcode · site/src/app/mall/give"
+ },
+ {
+  "no": "G-25",
+  "area": "서버·사용자 웹",
+  "sev": "상",
+  "what": "소개코드 유입이 어디에도 기록되지 않음 — 소개자가 거래에 붙을 수 없었음",
+  "cause": "AttributionEngine.record 를 부르는 곳 없음 · X-Ref-Code 설명만 있고 처리 없음 · captureRef 미사용",
+  "evidence": "srv_refcode T-10~T-15",
+  "fix": "POST /attribution/touch(공개 · 24시간 중복 차단 · 자기 유입 무시) + 사이트 미들웨어가 ?ref= 를 보고 기록 · sgb_visitor/sgb_ref 쿠키",
+  "file": "src/modules/attribution · src/engines/attribution · site/src/middleware.ts"
+ },
+ {
+  "no": "G-26",
+  "area": "서버·DB",
+  "sev": "상",
+  "what": "무료 요금제 초과 소개코드가 결제 없이 발급(청구처 없음)",
+  "cause": "is_extra 로 기록만 — 청구 경로 없음",
+  "evidence": "srv_refcode 결제 구간",
+  "fix": "BASIC 초과는 결제 승인 후 발급(EXTRA_PAYMENT_REQUIRED · PAYMENT_KEY_USED) · referral_code_payments · 트리거 trg_refcode_extra_paid · 불변식 SV-R1~R3. STANDARD/PRO 초과는 여전히 청구처 없음(남은 일)",
+  "file": "prisma/migrations/D010 · src/modules/billing"
+ },
+ {
+  "no": "G-27",
+  "area": "서버",
+  "sev": "상",
+  "what": "유입 기록 연결 후, 소개 링크로 온 사람이 보험·의료 매물에 문의하면 거래 생성이 422 로 막힐 수 있음",
+  "cause": "createDeal 이 소개자를 넣고 trg_gated_no_intro_deal 이 거절",
+  "evidence": "srv_refcode T-20",
+  "fix": "소개 금지 업종이면 소개자 · 귀속 코드를 비우고 거래 생성(의료법 27조 · 보험업법)",
+  "file": "src/modules/deal/deal.service.ts"
+ },
+ {
+  "no": "G-28",
+  "area": "서버",
+  "sev": "중",
+  "what": "무료 BASIC 구독이 30일 뒤 INV-8 에 막혀 소개코드 발급 불가",
+  "cause": "정기결제가 없는 0원 요금제의 기간이 갱신되지 않음",
+  "evidence": "srv_refcode",
+  "fix": "발급할 때 기간을 새로 엶",
+  "file": "src/modules/billing/billing.service.ts"
+ },
+ {
+  "no": "G-29",
+  "area": "시안",
+  "sev": "결정",
+  "what": "10/2 결정 2건을 시안에도 반영 — 시안 v10.9",
+  "cause": "실제 웹은 바뀌었는데 시안은 금액 없는 「왕복 배송비 고객 부담」 · 소개코드 공유 버튼 없음",
+  "evidence": "sweep_proto · sweep_hlt · check-proto 8종",
+  "fix": "소개뱅크몰 반품 배송비 왕복 6,000원(이용 안내 · 판매자 정보 · 반품 신청 환불 예정액) · 안심소개 매물 상세와 소개하기 안내의 「소개코드 공유」(이번 달 코드 · 링크 복사)",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-30",
+  "area": "서버·DB·BO·화면",
+  "sev": "결정",
+  "what": "요청 열람 한도 — 홍보 기간(최초 3개월) 제한 없음 · 이후 관리자 지정 · 무료 3건",
+  "cause": "사장님 결정(10/2). 전에는 소개코드를 받아 무료 구독이 생긴 회원만 월 5건으로 묶임",
+  "evidence": "srv_viewlimit.py",
+  "fix": "D011 · D013 · D015 — 스위치 request.view.limit(기본 off) · 종료일 request.view.limit_from · 무료/일반 공통 request.view.free_monthly(3) · 판정 fn_request_view_limit 한 곳 · 무료 요금제 표 값이 설정을 따라감 · BO 「요청 열람 한도」 상자 · 요청 상세의 남은 수/한도 초과 안내 · 구독 화면 표기",
+  "file": "prisma/migrations/D011 · D013 · D015 · src/modules/request · src/modules/admin · web/src/app/admin/SiteInfo.tsx · site/src/app/request/[id]"
+ },
+ {
+  "no": "G-31",
+  "area": "서버·DB·화면",
+  "sev": "결정",
+  "what": "소개코드를 매물별로 (관리자 지정 가능)",
+  "cause": "사장님 결정(10/2) 「매물별로」. 전에는 코드 1개로 모든 매물을 계속 소개",
+  "evidence": "srv_refcode.py 89 · srv_refcode_ui.py 53",
+  "fix": "D012 — referral_codes.listing_id · 같은 회원·매물 코드 1개(유일 인덱스) · 매물용 귀속 판정 fn_attribution_resolve_listing · 성사 확정 판정도 매물 기준 · 소개 금지 업종/본인 매물/미게시 매물 차단 · 설정 refcode.scope(listing|all) · 매물 상세 공유 · 소개하기 안내의 내 코드 목록",
+  "file": "prisma/migrations/D012 · src/modules/billing · src/engines/attribution · site/src/components/refcode · site/src/app/mall/give"
+ },
+ {
+  "no": "G-32",
+  "area": "서버·DB",
+  "sev": "결정",
+  "what": "유료 요금제(STANDARD · PRO) 추가 소개코드도 결제 후 발급",
+  "cause": "사장님 결정(10/2) 「적용」. 전에는 청구처 없이 is_extra 기록만",
+  "evidence": "srv_refcode A-28~A-28f",
+  "fix": "D011 — issueCodes 한 흐름으로 통합 · fn_refcode_extra_paid 가 모든 요금제를 막음 · 감시 뷰 v_refcode_extra_unpaid",
+  "file": "prisma/migrations/D011 · src/modules/billing/billing.service.ts"
+ },
+ {
+  "no": "G-33",
+  "area": "서버·DB",
+  "sev": "중",
+  "what": "예전에 로그인했던 브라우저에서 로그아웃 상태로 소개 링크를 열고 다시 로그인하면 소개자가 빠짐",
+  "cause": "visitor_identities 가 (방문자 키, 계정) 당 1행 — 재로그인해도 연결 시각이 옛날 그대로",
+  "evidence": "srv_refcode T-21 · T-22",
+  "fix": "D011 — 유일 제약 제거, 유입 뒤 로그인마다 연결 1행 추가(유입 없으면 늘지 않음)",
+  "file": "prisma/migrations/D011 · src/engines/attribution/attribution.engine.ts"
+ },
+ {
+  "no": "G-34",
+  "area": "약관·DB",
+  "sev": "결정",
+  "what": "건강상품 판매 약관 1.1 발행(반품 배송비 조항)",
+  "cause": "사장님 결정(10/2) 「발행하고 적용」",
+  "evidence": "GET /terms → HLT_SALE 1.1",
+  "fix": "D014 — 쓰던 DB(1.0 발행됨)는 조항을 넣은 1.1 을 발행하고 1.0 보관 · 새 설치는 발행 전 초안에 조항을 넣어 1.0 으로 발행(Docker 새 볼륨 실측). 불변식 SV-T1 · T2",
+  "file": "prisma/migrations/D014 · scripts/gen-terms-draft.js"
+ },
+ {
+  "no": "G-35",
+  "area": "서버",
+  "sev": "중",
+  "what": "운영 스위치 설정에 형식이 틀린 값이 저장됨(예: ON → 조용히 off)",
+  "cause": "PATCH /admin/site-settings 가 value_pattern 을 검사하지 않음",
+  "evidence": "srv_viewlimit V-12 · V-13 · V-18",
+  "fix": "필수 고지 항목이 아닌 설정은 형식이 틀리면 422 SETTING_FORMAT",
+  "file": "src/modules/admin/admin.service.ts"
+ },
+ {
+  "no": "G-36",
+  "area": "시안",
+  "sev": "결정",
+  "what": "시안 v10.10 — 소개코드 매물별 · 운영 스위치 2종",
+  "cause": "결정 반영을 시안에도 맞춤",
+  "evidence": "sweep_proto · check-proto 8종",
+  "fix": "매물 상세 공유(매물별) · 소개하기 안내의 내 코드 목록 · 사이트 기본 정보의 「요청 열람 한도」 「소개코드 범위」 스위치",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-37",
+  "area": "약관·DB",
+  "sev": "상",
+  "what": "새 설치에서 판매 약관이 반품 배송비 조항 없이 발행됨 (v10.9 는 초안 생성기에만 조항을 넣음)",
+  "cause": "발행 본문은 초안 생성기가 아니라 기준선 C880 의 글 — fixture 가 먼저 발행해 생성기 본문이 반영되지 않음",
+  "evidence": "docker 새 볼륨: HLT_SALE 1.0 PUBLISHED · 조항 없음",
+  "fix": "D014 가 발행 전 초안에도 조항을 넣음(제3조 표 아래) → 새 설치 1.0 에 조항 포함. 불변식 SV-T1 · T2",
+  "file": "prisma/migrations/D014"
+ },
+ {
+  "no": "G-38",
+  "area": "문서 생성·약관",
+  "sev": "상",
+  "what": "문서 생성(npm run docs)·발행 스크립트가 보관(ARCHIVED)된 약관 본문을 덮어씀",
+  "cause": "조건이 status <> 'PUBLISHED' — 새 판 발행으로 1.0 이 보관되면 대상이 됨",
+  "evidence": "개발 DB 의 보관된 HLT_SALE 1.0 본문이 초안 글로 바뀜",
+  "fix": "DRAFT · LEGAL_REVIEW 만 갱신",
+  "file": "scripts/gen-terms-draft.js · scripts/publish-terms.sh"
+ },
+ {
+  "no": "G-39",
+  "area": "DB·문서",
+  "sev": "중",
+  "what": "무료 요금제 열람 건수가 요금제 표(5)와 운영 설정(3) 두 곳에 있음",
+  "cause": "요금제 표 값이 약관 초안 · 요금제 API 로 나감",
+  "evidence": "docs/terms/SERVICE.md 「요청 열람 월 5건」",
+  "fix": "D015 — 무료 요금제 값을 설정값으로 맞추고 설정을 바꾸면 따라가는 트리거",
+  "file": "prisma/migrations/D015"
+ },
+ {
+  "no": "G-40",
+  "area": "배치·개인정보",
+  "sev": "상",
+  "what": "상담 신청 연락처가 동의서에 적은 6개월이 지나도 지워지지 않음 (올린 kit v10.4.7)",
+  "cause": "파기 함수(fn_consult_purge)만 있고 부르는 배치가 없음 — 주석에는 「배치가 부릅니다」",
+  "evidence": "올린 kit 전체에서 fn_consult_purge 호출 0건",
+  "fix": "pii_purge 배치(매일)가 fn_consult_purge 를 부름 · 감시 뷰 v_consult_purge_overdue · 불변식 SV-C4 · C12. 확인 안 된 신청은 하루 뒤 연락처까지 삭제",
+  "file": "src/worker/scheduler.service.ts · prisma/migrations/D018"
+ },
+ {
+  "no": "G-41",
+  "area": "API·화면",
+  "sev": "중",
+  "what": "법률 · 세무 정액 노출 기간이 화면에 하루 이르게 보임 (올린 kit v10.4.7)",
+  "cause": "날짜(DATE)를 그대로 내려 UTC 시각 문자열(10/2 → 2026-10-01T15:00:00Z)이 되고, 화면이 앞 10글자를 자름",
+  "evidence": "srv_consult C-18 · C-23 — paidFrom '2026-10-01T15:00:00.000Z'",
+  "fix": "기간을 날짜 글자(YYYY-MM-DD)로 내림 · 종료일이 시작일보다 앞서면 422 DIRECTORY_PERIOD",
+  "file": "src/modules/partner/directory.service.ts"
+ },
+ {
+  "no": "G-42",
+  "area": "상담 신청·지역",
+  "sev": "상",
+  "what": "신청서의 시 · 도(「서울특별시」)와 업체 활동 지역(「서울」)이 글자가 달라 같은 지역인데 「받을 업체 없음」이 됨 (올린 kit v10.4.7)",
+  "cause": "배분이 시 · 도를 글자 그대로 비교 — 신청서는 정식 이름 17개 목록, 활동 지역은 자유 입력",
+  "evidence": "올린 kit ConsultForm SIDO 목록 ↔ partner_regions.sido = '서울'",
+  "fix": "저장할 때 양쪽 모두 짧은 이름(서울 · 경기 …)으로 맞춤(common/region.ts normSido) · 신청서 목록도 짧은 이름",
+  "file": "src/common/region.ts · consult.service.ts · partner.service.ts · site ConsultForm.tsx"
+ },
+ {
+  "no": "G-43",
+  "area": "DB·리드",
+  "sev": "상",
+  "what": "업종이 자격 확인 업종으로 바뀐 뒤에도, 그 전에 배정받은 무자격 업체가 연락처를 열 수 있음",
+  "cause": "자격을 배정할 때만 보고 열람할 때는 보지 않음 — D016 이 이사짐 · 렌터카를 일반 → 자격 확인으로 바꿈",
+  "evidence": "개발 DB: 이사짐 미열람 배정 44건 · 자동차 5건이 무자격 업체에 남아 있었음",
+  "fix": "D018 — 열람 시점에 자격을 다시 확인(LEAD_GATED) · 전환 전 미열람 배정 회수 · 감시 뷰는 전환 시각(mode_since) 뒤만 셈",
+  "file": "prisma/migrations/D018"
+ },
+ {
+  "no": "G-44",
+  "area": "API",
+  "sev": "중",
+  "what": "15자를 넘는 DB 오류 코드(MAL_CONSULT_NOT_LISTING · LEAD_CATEGORY_CLOSED 등)가 사유 없이 500 으로 나감",
+  "cause": "오류 필터의 접두어 길이 상한이 15자",
+  "evidence": "올린 kit 의 수정 주석 — 7종이 걸림",
+  "fix": "상한 40자 · 점검기(check-errcodes)가 길이까지 확인 (올린 kit 의 수정 반영)",
+  "file": "src/common/db-error.filter.ts · scripts/check-errcodes.js"
+ },
+ {
+  "no": "G-45",
+  "area": "상담 신청",
+  "sev": "상",
+  "what": "v10.8 의 상담 신청(회원 전용 · 최대 3곳)이 시안 · 동의 문구(「인증업체 1곳」 · 로그인 없이)와 달랐음",
+  "cause": "v10.8 구현 때 알림톡 연동 전이라 휴대폰 확인을 빼고 회원 전용 · 3곳 배정으로 만듦",
+  "evidence": "시안 #/mal/consult 「인증된 업체 1곳」 ↔ 사이트 /consult 「최대 3곳」",
+  "fix": "올린 kit 흐름으로 교체 — 로그인 없이 신청 → 인증번호 확인 → 1곳. 목표 · 최대 업체 수 기본값 1 · 1. 배정 · 열람 · 과금 · 재배정은 v10.8 그대로",
+  "file": "prisma/migrations/D018 · src/modules/partner/consult.service.ts · site/src/app/consult"
+ },
+ {
+  "no": "G-46",
+  "area": "문서",
+  "sev": "중",
+  "what": "개인정보처리방침 초안에 상담 신청(비회원 연락처 수집 · 인증업체 제공 · 보유 기간)이 없음",
+  "cause": "초안 생성기가 회원 · 사업자 항목만 다룸",
+  "evidence": "docs/19_개인정보처리방침_초안.md 에 「상담」 0건",
+  "fix": "수집 항목 · 처리 목적 · 보유 기간 · 제3자 제공에 상담 신청 줄 추가(초안) — 시행 방침은 개정 절차 필요",
+  "file": "scripts/gen-privacy-policy.js"
+ },
+ {
+  "no": "G-47",
+  "area": "화면",
+  "sev": "중",
+  "what": "안내 상자 · 완료 표시의 바탕과 글자가 같은 계열의 진한 색이라 글이 잘 안 보임 (입점 신청 화면 등 .page 화면)",
+  "cause": "바탕에 tone-info · tone-success · tone-neutral(진한 색 토큰)을 씀 — 옅은 바탕용 토큰이 아님",
+  "evidence": "/partner/listings 안내 상자 바탕 rgb(27,77,143) · 글자 rgb(16,20,24)",
+  "fix": "바탕을 옅은 색(accent-w · money-w · surface)으로 — 11곳",
+  "file": "site/src/styles/site.css · tokens.css"
+ },
+ {
+  "no": "G-48",
+  "area": "API",
+  "sev": "중",
+  "what": "입점 심사 · 정액 노출 운영 목록이 200건을 넘으면 방금 판정한 건이 안 보임 (올린 kit v10.4.7)",
+  "cause": "신청 순 오름차순으로 200건만 내림",
+  "evidence": "srv_consult B-17 — 승인 200건 초과 시 실패",
+  "fix": "심사 대기는 오래된 것부터, 판정이 끝난 것은 최근 판정부터",
+  "file": "consult.service.ts · directory.service.ts"
+ },
+ {
+  "no": "G-49",
+  "area": "보안",
+  "sev": "상",
+  "what": "운영이 아닌 환경(staging 등)에서 인증번호가 응답으로 나가 휴대폰 확인을 건너뛸 수 있음 (올린 kit v10.4.7)",
+  "cause": "「NODE_ENV 가 production 이 아니면」 응답에 인증번호를 실음",
+  "evidence": "srv_consult E-1",
+  "fix": "NODE_ENV=development 일 때만 싣고, 그 밖에는 알림톡 연동 전이면 신청 거부(NOTIFY_NOT_READY)",
+  "file": "src/modules/partner/consult.service.ts"
+ },
+ {
+  "no": "G-50",
+  "area": "화면·API",
+  "sev": "중",
+  "what": "사업자 · 입점 전 회원이 「내 매물 · 입점 상태」를 열면 조회 API 가 422 를 냄",
+  "cause": "조회(GET)도 사업자 · 파트너가 없으면 오류로 처리",
+  "evidence": "crawl_site — /partner/listings 에서 422 GET /partner/axes · /partner/directory",
+  "fix": "조회는 빈 목록, 화면은 「사업자 인증이 먼저」 · 「입점 승인 뒤 신청」 안내",
+  "file": "consult.service.ts · directory.service.ts · site/src/app/partner/listings/page.tsx"
+ },
+ {
+  "no": "G-51",
+  "area": "검사 도구",
+  "sev": "하",
+  "what": "킷에 들어 있던 qa/srv_hlt.py 사본이 v10.8(D006) 이전 판 — 그대로 돌리면 47/50",
+  "cause": "D006(결제 키 필수 · 반품 승인 시 개봉 판정 필수 · 개봉 미복구 사유)에 맞춘 수정본이 킷 사본에 반영되지 않음",
+  "evidence": "킷 사본 실행 47/50 (1n · 2i · INV) ↔ 작업본 50/50",
+  "fix": "통과하는 판으로 교체",
+  "file": "qa/srv_hlt.py"
+ },
+ {
+  "no": "G-52",
+  "area": "검정",
+  "sev": "하",
+  "what": "검정 전용 DB 를 24시간 안에 25회 넘게 다시 쓰면 공격 검정 BS-05 · CR-03 이 뜸",
+  "cause": "검정마다 시스템 자동 승인 감사 기록 2건이 쌓이고, 「관리자 작업 급증」(24시간 50건 초과) 집계가 시스템 기록도 함께 셈",
+  "evidence": "전수 검정 첫 verify — 안전 603 · 뚫림 2 / 검정 DB 새로 만든 뒤 605 · 0 / Docker 새 설치 605 · 0",
+  "fix": "검정 DB 를 새로 만들어 재검정(코드 변경 없음). 시스템 기록을 집계에서 뺄지는 결정 필요 항목으로 남김",
+  "file": "(변경 없음) v_audit_admin_burst"
+ },
+ {
+  "no": "G-53",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "새 메인(/)을 열 때 가끔(3 ~ 13%) 브라우저 콘솔에 React #418(수화 실패)이 뜨고 화면을 통째로 다시 그림",
+  "cause": "메인 구역을 서버 컴포넌트로 그리자 화면 조각이 한 줄 3,200바이트(react-server-dom MAX_ROW_SIZE)를 넘어 구역마다 뒤로 밀려 따로 전송됨. 브라우저가 그 조각이 다 오기 전에 수화를 시작하면 React 가 <div class=\"home\"> 을 두 번 맞춰 보다 어긋남(태그 요소를 다시 그릴 때 수화 위치를 되돌리지 않음). 실패 자리 실측 — 항상 div.home, 다음 차례 header.home-hd",
+  "evidence": "전수 크롤 중 / 에서 2건(person · admin) · 반복 열기 실측: 고치기 전 guest 8/60 · person 3/60 (참고: /mall 1/60 · /community 0/60) → 고친 뒤 guest 0/240 · person 0/240, 전 역할 360번 0건",
+  "fix": "서버(page.tsx)는 자료만 넘기고 화면은 클라이언트 컴포넌트(HomeView)가 그리게 바꿈 — 자료는 뒤로 밀리지 않음. 미리 그려 보내는 것(SSR)은 그대로. 반복 열기 점검 hyd_home.py 추가. 다른 화면(드물게 같은 현상)은 손대지 않고 확인 항목으로 남김",
+  "file": "site/src/components/home/HomeView.tsx(신규) · app/page.tsx · components/home/Frame.tsx · qa/hyd_home.py"
+ },
+ {
+  "no": "G-54",
+  "area": "설치 · 시드",
+  "sev": "중",
+  "what": "새로 설치하면(Docker 새 볼륨 포함) 건강몰 「고민별 · 성분별」 화면에 상품이 하나도 연결되지 않음",
+  "cause": "고민–성분 · 상품–성분 연결을 D002 마이그레이션이 한 번 넣는데, 새 설치에서는 마이그레이션이 시드보다 먼저 돌아 그때 성분 · 상품이 없어 0건으로 끝남. 오래 쓰던 개발 DB 에는 연결이 남아 있어 드러나지 않았음",
+  "evidence": "DB 를 새로 만든 뒤 srv_hlt 4a · 4b · 4d · 4g · 4h 실패 · hlt_product_ingredients 0건 / 고친 뒤 Docker 새 설치에서 고민–성분 10건 · 상품–성분 4건 · GET /health/concerns 에 상품 수 표시",
+  "fix": "시드(scripts/seed-realistic.js)가 성분 · 상품을 넣은 뒤 D002 와 같은 규칙으로 연결을 넣게 함(여러 번 돌려도 같음). ※ 운영에서 판매자가 새 상품을 올릴 때 성분을 연결하는 기능은 아직 없음 — 확인 항목",
+  "file": "scripts/seed-realistic.js"
+ },
+ {
+  "no": "G-55",
+  "area": "검정",
+  "sev": "하",
+  "what": "DB 를 새로 만든 뒤 점검 8종이 준비 자료가 없어 실패(fixes_1002 · srv_aff · srv_aff_ui · srv_hlt · srv_hlt_ui · srv_proto · srv_refcode · srv_refcode_ui)",
+  "cause": "점검이 「이미 있는 자료」를 전제함 — 제휴 상품 · 소개링크, buyer 배송지, 중개사 인증 사업자의 안심소개 매물 5건(srv_ptn 이 한 번에 1건씩 만듦). 오래 쓰던 개발 DB 에는 쌓여 있었음. 제품 결함 아님",
+  "evidence": "전수 검정 1차 — 8종 실패 / 준비 스크립트 뒤 13/13 · 42/42 · 15/15 · 50/50 · 15/15 · 33/33 · 87/87 · 53/53",
+  "fix": "시험 준비 스크립트 qa/fixtures.py 추가(여러 번 돌려도 같음) · final_all.sh 맨 앞에서 실행 · qa/README 에 적음",
+  "file": "qa/fixtures.py · qa/final_all.sh · qa/README.md"
+ },
+ {
+  "no": "G-56",
+  "area": "검정",
+  "sev": "하",
+  "what": "verify 가 「site 미정의 CSS 토큰 1」 로 실패",
+  "cause": "새 메인의 카드 수 변수(--n)를 화면 코드가 줄에 직접 넣고 CSS 에는 기본값만 var(--n, 5) 로 적어, CSS 만 보는 점검이 미정의로 판단",
+  "evidence": "Docker 통합 검정 — 안전 18 · 위험 1 / 고친 뒤 위험 0",
+  "fix": "home.css 에 --n: 5 를 정의(줄에 직접 넣은 값이 우선). 화면은 같음",
+  "file": "site/src/styles/home.css"
+ },
+ {
+  "no": "G-57",
+  "area": "검정",
+  "sev": "하",
+  "what": "verify 가 「레지스트리에 없는 API 1건 — GET /signup/types」 로 실패",
+  "cause": "화면 명세(spec/screens.json)에서 이 API 는 메인 화면에만 연결돼 있었는데, 새 메인은 가입 유형 카드를 쓰지 않아 연결이 사라짐. 실제로는 회원가입 화면(/signup)이 씀",
+  "evidence": "전수 검정 1차 verify exit=1 / 고친 뒤 통과",
+  "fix": "명세에서 회원가입 화면(SB-HOM-AUT-020)에 연결. 메인 화면 명세의 API 목록도 새 메인에 맞춤(/footer-links · /site-settings/public · /community/posts)",
+  "file": "spec/screens.json · docs/01_화면정의서.md"
+ },
+ {
+  "no": "G-58",
+  "area": "검정",
+  "sev": "하",
+  "what": "Docker(개발 모드)에서 web_main 「안내 카드 다음」 2건 실패",
+  "cause": "안내 카드는 7초마다 저절로 넘어감. 느린 환경에서는 점검이 처음 장을 읽은 뒤 누르기 전에 이미 넘어가 있어 순서가 어긋남. 화면 결함 아님",
+  "evidence": "Docker 116/118 → 고친 뒤 118/118",
+  "fix": "점검이 마우스를 올려 멈춘 뒤 「지금 장」부터 세게 함",
+  "file": "qa/web_main.py"
+ },
+ {
+  "no": "P-31",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안 새 메인의 「오늘의 PICK」 첫 · 셋째 카드에서 종류 글자(상품 · 창업)가 사진 위 주황 딱지로 올라감",
+  "cause": "시안 전체에 쓰는 꾸밈 .hot(자리 고정 · 주황 바탕)이 새 메인의 종류 글자 class 와 이름이 겹침",
+  "evidence": "시안 1280px 캡처 / 고친 뒤 proto_main A-13b 통과(자리 static · 바탕 없음)",
+  "fix": "시안에서는 종류 글자에 hot 을 붙이지 않음",
+  "file": "qa/proto_main_src.js → spec/proto.html"
+ },
+ {
+  "no": "G-59",
+  "area": "사용자 웹 · 시안",
+  "sev": "하",
+  "what": "새 메인의 세로 간격이 주신 그림보다 길었음 — 1280px 에서 「소개뱅크 핵심」까지 그림 2,821px · 화면 3,200px (+13%)",
+  "cause": "구역 위아래 여백(26px)과 제목 아래 여백, 「이건 어때?」 · 「지금 우리동네」 · 「안심소개」 · 「최근 뜨는 창업」 카드 안쪽 여백이 그림보다 컸음. 순위 카드 3장이 큰 배너보다 21px 길었음",
+  "evidence": "그림(838px → 1280px 환산)과 28곳 위치 대조 — 고치기 전 최대 +379px(누적) / 고친 뒤 28곳 모두 ±9px 안 (qa/measure_home.py)",
+  "fix": "721px 이상에서 구역 간격 · 카드 높이 · 히어로 제목(43 → 47px) · 검색 탭 · 칩 · 카드 글자 크기를 그림에 맞춤. 「나를 위한 소개」는 그림처럼 화면 폭 전체 띠로. 휴대폰(720px 이하) 간격은 그대로",
+  "file": "site/src/styles/home.css → spec/proto.html(같은 CSS) · qa/measure_home.py"
+ },
+ {
+  "no": "G-60",
+  "area": "서버 · 사용자 웹",
+  "sev": "중",
+  "what": "비로그인으로 투표한 뒤 같은 브라우저로 로그인하면 메인 카드는 「투표했습니다」로 잠기는데 서버는 회원 표를 받아 줌 — 화면과 서버가 어긋남",
+  "cause": "「내가 고른 보기」를 찾을 때 계정의 표와 그 기기(방문자 쿠키)의 비로그인 표를 한꺼번에 봄. 투표를 받을 때는 계정만 봄",
+  "evidence": "srv_poll_ui B-3 실패(로그인 뒤 data-voted=1 · 버튼 잠김) / 고친 뒤 통과 · srv_poll C-10 · C-12",
+  "fix": "투표를 세는 방식과 같게 — 로그인했으면 계정 표만, 비로그인이면 방문자 표만 봄. 남는 틈(비로그인으로 넣고 로그인하면 1표 더)은 보고서 확인 항목에 적음",
+  "file": "src/modules/community/poll.service.ts (attach)"
+ },
+ {
+  "no": "G-61",
+  "area": "사용자 웹 · 운영 화면",
+  "sev": "하",
+  "what": "운영 화면에서 사회관계망 주소를 저장해도 메인 푸터에 5분 뒤에야 반영",
+  "cause": "메인이 공개 설정(/site-settings/public)을 300초 동안 기억",
+  "evidence": "srv_poll_ui E-5 — 80초 안에 링크가 안 생김 / 60초로 줄인 뒤 통과",
+  "fix": "메인의 기억 시간을 60초로 줄임 · 운영 화면에 「저장한 뒤 1분쯤 지나 반영」 안내",
+  "file": "site/src/app/page.tsx · web/src/app/admin/SiteInfo.tsx"
+ },
+ {
+  "no": "G-62",
+  "area": "문서(OpenAPI)",
+  "sev": "하",
+  "what": "npm run verify 「구현된 API 에 응답 스키마」 실패 — GET · POST /admin/community/polls",
+  "cause": "새 API 의 응답 모양을 문서에 적지 않음",
+  "evidence": "verify 문서 정합성 25/1 → 26/0",
+  "fix": "응답 모양 4종 추가 — PollAdminListDto · PollWriteResultDto · PollVoteResultDto · PollAdminDto",
+  "file": "src/modules/community/poll.dto.ts · poll.controller.ts"
+ },
+ {
+  "no": "G-63",
+  "area": "검정 도구",
+  "sev": "중",
+  "what": "시험 안전 점검 ⑧ 「시안 TO_PATH↔ROUTES 짝」이 106건 어긋남으로 나옴 — 실제로는 전부 짝이 맞음",
+  "cause": "점검이 경로 표를 첫 표에서 80,000자까지만 읽음. 시안에 모듈이 하나 늘자(투표 모듈 44KB) 본 경로 표가 그 범위 밖으로 밀림. 그동안은 우연히 범위 안이었음",
+  "evidence": "verify 안전 18 · 위험 1 → 고친 뒤 안전 19 · 위험 0",
+  "fix": "점검이 파일 끝까지 읽게 고침",
+  "file": "scripts/check-testsafety.sh"
+ },
+ {
+  "no": "G-64",
+  "area": "사용자 웹 · 시안",
+  "sev": "하",
+  "what": "메인 푸터의 「사진 · 순위 · 평점 · 참여 수 · 인물은 디자인 예시」 문구가 사실과 달라짐",
+  "cause": "「이건 어때?」의 참여 수가 실제 표 수가 됨",
+  "evidence": "화면 문구 대조",
+  "fix": "문구에서 「참여 수」를 빼고 「이건 어때?의 참여 수는 실제로 넣은 표 수」를 덧붙임",
+  "file": "site/src/components/home/Frame.tsx · qa/proto_main_src.js"
+ },
+ {
+  "no": "P-32",
+  "area": "시안",
+  "sev": "하",
+  "what": "새 화면에서 같은 버튼을 또 누르면(같은 안내가 다시 나오거나 이미 고른 것을 다시 누를 때) 「실제 동작은 구현 화면에서 확인하십시오」 안내가 끼어듦",
+  "cause": "화면이 달라지지 않으면 「시연 보장」 장치가 무반응으로 보고 안내를 띄움",
+  "evidence": "proto_poll G-1 — 「시연 안내만 뜸」 5건 → 0건 (235개 누르기)",
+  "fix": "누를 때마다 처리 번호(data-n)를 안내에 남김 · 이미 고른 보기 · 이미 보고 있는 갈래는 그렇다고 알려 줌",
+  "file": "qa/proto_px_src.js · qa/proto_main_src.js → spec/proto.html"
+ },
+ {
+  "no": "P-33",
+  "area": "시안 도구",
+  "sev": "하",
+  "what": "시안에 v10.14 를 넣는 스크립트가 2분 넘게 끝나지 않음",
+  "cause": "한 줄이 수 MB(그림 · 자료가 한 줄)인 파일에 줄 단위 정규식을 써서 되짚기가 폭증",
+  "evidence": "120초 초과 → 0.4초",
+  "fix": "정규식 대신 줄 단위로 걸러 냄",
+  "file": "qa/apply_proto_v1014.py"
+ },
+ {
+  "no": "G-65",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "Docker 새 설치에서 안심소개 웹 점검(web_mal)이 230/234 — 상담 신청 제출 4항목 실패. 다시 돌리면 234/234",
+  "cause": "점검의 로그인 대기가 2.5초 고정. Docker 의 사용자 웹은 개발 모드라 첫 요청이 느려 그 안에 로그인이 끝나지 않음. 제품 결함 아님",
+  "evidence": "docker_web_mal 230/234 → 재실행 234/234 → 점검을 고친 뒤 234/234 (로컬 운영 빌드도 234/234)",
+  "fix": "로그인 쿠키가 생길 때까지 최대 12초 기다림",
+  "file": "qa/web_mal.py"
+ },
+ {
+  "no": "G-66",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "Docker 새 설치에서 시험 준비(fixtures) 4번 「안심소개 매물 5건」이 0건으로 실패",
+  "cause": "그 자료를 만드는 점검(srv_ptn.py)의 DB 주소가 로컬로 고정돼 있어 Docker 의 DB 를 보지 못함. v10.13 때는 Docker 에서 이 준비를 돌리지 않아 드러나지 않았음",
+  "evidence": "docker_fixtures 5/6 → 6/6",
+  "fix": "환경 값 DB 를 따르게 함",
+  "file": "qa/srv_ptn.py"
+ },
+ {
+  "no": "G-67",
+  "area": "Docker 준비",
+  "sev": "중",
+  "what": "쓰던 DB 를 v10.14 로 올리면 메인 「이건 어때?」 3장이 「준비 중」으로 남음",
+  "cause": "투표 시드를 처음 설치(계정 0건) 때만 넣음. 이미 쓰던 DB 에는 마이그레이션만 돌아 투표가 하나도 없음",
+  "evidence": "docker/bootstrap.sh 의 「기존 데이터 유지」 갈래에 시드가 없음 / 고친 뒤 v10.14 볼륨 → v10.15 올리기: 「투표 시드 확인 (메인 3건)」",
+  "fix": "up 할 때마다 시드를 확인(투표가 없거나 v10.14 예시 문구 투표가 남아 있을 때만 넣음 · 운영이 만든 투표가 있으면 건드리지 않음)",
+  "file": "docker/bootstrap.sh · sgb/scripts/seed-polls.sql"
+ },
+ {
+  "no": "G-68",
+  "area": "검정 도구",
+  "sev": "중",
+  "what": "「진짜 이미지인가」를 저장소 지문(RepoDigests)으로 가리려 했는데 대체 이미지도 통과함",
+  "cause": "지문은 직접 만든(태그만 붙인) 이미지에도 붙음 — 이 환경의 대체 이미지에 실제로 붙어 있었음",
+  "evidence": "realcheck 1차 실행: 대체 이미지인데 「저장소 지문 있음」 통과 / 고친 뒤 「공식 이미지 표지 없음」 실패 2건(바른 판정)",
+  "fix": "공식 이미지가 넣어 두는 표지(NODE_VERSION=22.x · PG_MAJOR=16)로 판정",
+  "file": "docker/realcheck.sh · docker/realcheck.ps1"
+ },
+ {
+  "no": "G-69",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "확인 스크립트가 PostgreSQL 버전 확인에서 10분 넘게 멈춤",
+  "cause": "docker run postgres:16 postgres -V 가 시작 스크립트를 거치며 대체 이미지에서는 서버를 띄움",
+  "evidence": "1차 실행 10분 초과 / 고친 뒤 즉시 끝남",
+  "fix": "시작 스크립트를 거치지 않고 실행(--entrypoint postgres -V · --entrypoint node -v)",
+  "file": "docker/realcheck.sh · docker/realcheck.ps1"
+ },
+ {
+  "no": "G-70",
+  "area": "사용자 웹 · 시안",
+  "sev": "하",
+  "what": "「비교해요」 카드의 두 칸 높이가 다름(왼쪽 149px · 오른쪽 130px)",
+  "cause": "확정한 한 줄 설명이 한쪽만 두 줄이 됨. 두 칸을 가운데 맞춤으로 두었음",
+  "evidence": "1280px 캡처 / 고친 뒤 148px · 148px · 그림 대조 28/28",
+  "fix": "두 칸 높이를 같게(stretch) · 가운데 VS 는 가운데 정렬",
+  "file": "site/src/styles/home.css → spec/proto.html(같은 CSS)"
+ },
+ {
+  "no": "G-71",
+  "area": "킷",
+  "sev": "하",
+  "what": "./dev.sh 가 「Permission denied」",
+  "cause": "실행 권한 없이 포장돼 있었음(Windows 에서는 dev.ps1 을 써서 드러나지 않음)",
+  "evidence": "Docker 시험에서 ./dev.sh realcheck 실행 실패 → 권한 부여 뒤 실행",
+  "fix": "dev.sh · docker/realcheck.sh 에 실행 권한(zip · tar 에 그대로 들어감)",
+  "file": "dev.sh"
+ },
+ {
+  "no": "G-72",
+  "area": "킷",
+  "sev": "하",
+  "what": "dev.ps1 의 한글 안내가 Windows PowerShell 5.1 에서 깨질 수 있음",
+  "cause": "BOM 없는 UTF-8 파일을 5.1 은 한글 Windows 기본 문자표(CP949)로 읽음",
+  "evidence": "파일 첫 3바이트 23 20 3d → ef bb bf",
+  "fix": "dev.ps1 · docker/realcheck.ps1 을 UTF-8(BOM)으로 저장. 내용은 그대로",
+  "file": "dev.ps1 · docker/realcheck.ps1"
+ },
+ {
+  "no": "G-73",
+  "area": "운영 절차",
+  "sev": "상",
+  "what": "서버에 올리는 절차(절차서 v2.5)가 API 만 다룸 — 그 Nginx 설정(전부 3000 으로)에서는 메인 주소가 404",
+  "cause": "v2.5 를 쓴 뒤에 사용자 웹(Next.js) · 운영 화면(Vite) · 배치 · 파일 올리기가 더해졌는데 절차서는 그대로였음",
+  "evidence": "9/30 킷 · 마이그레이션 43 · pm2 로 API 만 · v2.5 8-1 의 Nginx 로 재현 → 메인 404 (aws_rehearsal 1-2)",
+  "fix": "deploy/aws(precheck · apply · postcheck · rollback · run-api/site/jobs · nginx-render) + docs/60. v2.5 머리에 바뀐 부분 표",
+  "file": "deploy/aws/* · docs/60 · docs/소개뱅크_AWS구축절차서_v2_5.md"
+ },
+ {
+  "no": "G-74",
+  "area": "운영 절차",
+  "sev": "상",
+  "what": "서버에 배치 호출기가 없음 — 알림 발송 · 구독 청구 · 탈퇴 파기(법적 의무) · 자동 확정이 오류 없이 돌지 않게 됨",
+  "cause": "절차서 v2.5 에 배치 항목이 없음(docs/25 3-5 는 EventBridge 를 전제 — 서버 1대 단계에서는 붙일 곳이 없음)",
+  "evidence": "v2.5 에서 scheduler · EventBridge · jobs/tick 검색 0건 / 리허설: sgb-jobs 등록 뒤 첫 호출에서 10종 실행 · 멈춘 배치 0",
+  "fix": "pm2 로 배치 호출기(sgb-jobs)를 함께 띄움. postcheck 가 최근 3분 호출 성공 · v_job_stale 을 봄",
+  "file": "deploy/aws/run-jobs.sh · apply.sh · postcheck.sh"
+ },
+ {
+  "no": "G-75",
+  "area": "운영 절차",
+  "sev": "상",
+  "what": "절차서 v2.5 16-3 「완전히 다시 배포」가 rm -rf sgb — .env · start.sh · 올린 파일까지 지움",
+  "cause": "앱 폴더 하나에 코드 · 설정 · 자료가 함께 있었음",
+  "evidence": "v2.5 16-3 / D007(10/2) 뒤로 올린 파일의 기본 위치가 앱 폴더 안 ./uploads",
+  "fix": "판마다 폴더(~/sgb-releases) + 바로가기(~/sgb) · 올린 파일은 앱 폴더 밖(~/sgb-data/uploads) · rollback.sh. 리허설: 되돌리기 → 다시 앞으로 → 한 번 더 적용 뒤에도 표 · 파일 그대로",
+  "file": "deploy/aws/apply.sh · rollback.sh"
+ },
+ {
+  "no": "G-76",
+  "area": "서버 스크립트",
+  "sev": "중",
+  "what": "open-check.sh 의 「미발행 약관 없음」이 늘 「?」 — 약관을 전부 발행해도 「열 수 없습니다」가 풀리지 않음",
+  "cause": "SQL 의 작은따옴표 앞에 \\ 가 붙어 문법 오류(status=\\'DRAFT\\')",
+  "evidence": "개발 DB(초안 0건)에서도 「? (기대 0)」 · psql: syntax error at or near \"\\\" → 고친 뒤 0",
+  "fix": "따옴표 정리. 시험 안전 ⑭ 로 「?」 0건을 계속 봄",
+  "file": "scripts/open-check.sh · scripts/check-testsafety.sh"
+ },
+ {
+  "no": "G-77",
+  "area": "서버 스크립트",
+  "sev": "하",
+  "what": "deploy-check.sh 의 「적용 예정 N건」이 1건 많게 나옴",
+  "cause": "\"적용 예정\" 글자를 세어 맨 끝 요약 줄(… · 적용 예정 N)까지 셈",
+  "evidence": "올릴 것 23건인 DB 에서 24",
+  "fix": "줄 머리(→)로 셈",
+  "file": "scripts/deploy-check.sh"
+ },
+ {
+  "no": "G-78",
+  "area": "서버 스크립트",
+  "sev": "중",
+  "what": "접속 주소를 앱에 맞는 SSL 표기로 적으면 psql 을 쓰는 스크립트가 전부 실패",
+  "cause": "앱(Node 드라이버)과 psql 이 알아듣는 표기가 다름 — sslmode=no-verify · uselibpqcompat 은 psql 이 거절, sslmode=require 는 앱이 인증서 대조에 실패",
+  "evidence": "SSL 을 켠 PostgreSQL 로 5가지 표기를 두 도구에 각각 넣어 확인 / 리허설을 ?sslmode=no-verify 로 실행",
+  "fix": "psql 에 넘길 때만 표기를 바꿈(deploy-check · open-check · seed-open · publish-terms · deploy/aws/lib.sh)",
+  "file": "scripts/*.sh · deploy/aws/lib.sh"
+ },
+ {
+  "no": "G-79",
+  "area": "운영 절차",
+  "sev": "중",
+  "what": "절차서 v2.5 10-5 의 환경 값 이름(S3_UPLOAD_BUCKET · S3_PUBLIC_BUCKET · CDN_BASE_URL)을 지금 코드가 읽지 않음",
+  "cause": "파일 올리기(D007 · 10/2)가 S3_BUCKET 하나로 구현됨",
+  "evidence": "src/modules/file/storage.ts — S3_BUCKET 이 있으면 S3, 없으면 서버 디스크(UPLOAD_DIR · 기본 앱 폴더 안)",
+  "fix": "precheck 가 옛 이름을 알림 · apply 가 UPLOAD_DIR(앱 폴더 밖)을 넣음 · env.production.example",
+  "file": "deploy/aws/precheck.sh · apply.sh · env.production.example"
+ },
+ {
+  "no": "G-80",
+  "area": "운영 절차",
+  "sev": "중",
+  "what": "Nginx 가 접속자가 보낸 X-Forwarded-For 를 그대로 앞에 둠 — 비로그인 투표의 하루 한도를 지어낸 주소로 넘김",
+  "cause": "v2.5 8-1 이 $proxy_add_x_forwarded_for(덧붙이기) · 서버는 이 헤더의 첫 값을 접속자 IP 로 봄",
+  "evidence": "리허설 6-7: 덧붙이기 방식에서 한도에 걸린 투표에 지어낸 주소 4개가 전부 통과 / 덮어쓰기에서는 5표 뒤 422 POLL_IP_LIMIT (E-3)",
+  "fix": "예시 설정이 $remote_addr 로 덮어씀 · postcheck 가 그 줄을 봄",
+  "file": "deploy/aws/nginx-sgb.conf.example · postcheck.sh"
+ },
+ {
+  "no": "G-81",
+  "area": "운영 절차",
+  "sev": "중",
+  "what": "운영 화면을 Nginx 로 내보내면 500 — 홈 폴더를 Nginx 가 지나가지 못함",
+  "cause": "Ubuntu 24.04 의 홈 폴더 권한이 750",
+  "evidence": "리허설 3-2: 권한 750 에서 500(stat … Permission denied) → chmod o+x 뒤 200",
+  "fix": "절차서 6-1 · postcheck 5 가 경로의 통과 권한을 봄",
+  "file": "docs/60 · deploy/aws/postcheck.sh"
+ },
+ {
+  "no": "G-82",
+  "area": "검정",
+  "sev": "중",
+  "what": "전수 검정이 개발 서버(ts-node)로만 돌았음 — 운영 서버(dist/main.js)는 정의에 없는 입력 항목을 400 으로 거절",
+  "cause": "main.ts 는 forbidNonWhitelisted, 개발 서버는 조용히 버림. 화면이 여분 항목을 보내면 운영에서만 실패하는 구조",
+  "evidence": "운영 방식 API 로 전수 재실행 — 화면 검정 전부 통과(화면은 여분 항목을 보내지 않음) · API 시험 4개만 실패(시험 코드가 여분 항목을 보냄)",
+  "fix": "전수 검정을 운영 방식 API 로 돌림(api_dist.sh). 시험 4개의 여분 항목 제거",
+  "file": "qa/api_dist.sh · final_all.sh · fixes_1002.py · srv_aff.py · srv_pay.py · srv_retship.py"
+ },
+ {
+  "no": "G-83",
+  "area": "검정",
+  "sev": "하",
+  "what": "srv_consult E-2 가 같은 날 여러 번 돌리면 실패(TOO_MANY_REQUESTS)",
+  "cause": "고정 전화번호 — 같은 번호는 하루 신청 횟수 제한",
+  "evidence": "같은 날 두 번째 실행에서 86/87",
+  "fix": "번호를 매번 새로",
+  "file": "qa/srv_consult.py"
+ },
+ {
+  "no": "G-84",
+  "area": "운영 절차",
+  "sev": "하",
+  "what": "절차서 v2.5 6-1 이 Node 20 을 설치 — 킷은 22 에서 검정(Docker 기반 이미지 node:22-slim)",
+  "cause": "절차서 작성 시점의 값",
+  "evidence": "v2.5 6-1 setup_20.x",
+  "fix": "precheck 가 실패로 알림 · apply 는 22 가 아니면 멈춤 · 절차서 4-2 ①",
+  "file": "deploy/aws/precheck.sh · apply.sh"
+ },
+ {
+  "no": "G-85",
+  "area": "Docker 도우미(PowerShell)",
+  "sev": "중",
+  "what": "`.\\dev.ps1 realcheck` 의 빌드 · 기동 단계에서 빨간 오류 덩어리(NativeCommandError)가 나옴 — 결과는 통과인데 실패처럼 보임",
+  "cause": "docker 는 진행 상황을 오류 줄(stderr)로 냅니다. PowerShell ISE 처럼 콘솔이 아닌 창에서는 PowerShell 이 그 줄을 오류 기록으로 감싸 빨갛게 표시",
+  "evidence": "10/6 실제 PC 화면 — realcheck.ps1:110(build) · :114(up -d) · 받기 출력이 한 줄씩 나오는 모양(콘솔이 아님)",
+  "fix": "docker 를 PowerShell 을 거치지 않고 .NET 으로 직접 띄워 줄 단위로 읽음(docker/native.ps1) · realcheck.ps1 16곳 · dev.ps1 10곳 교체",
+  "file": "docker/native.ps1 · docker/realcheck.ps1 · dev.ps1"
+ },
+ {
+  "no": "G-86",
+  "area": "Docker 도우미(PowerShell)",
+  "sev": "중",
+  "what": "통합 검정 출력과 「만든 때」의 한글이 깨짐(`?듦낵 258 / ?ㅽ뙣 0` · `留뚮뱺 ??`) · 결과 파일에 검정 요약 4줄이 빠짐",
+  "cause": "컨테이너의 UTF-8 출력을 PowerShell 이 콘솔 코드 페이지(CP949)로 읽음. 첫머리의 [Console]::OutputEncoding 설정은 콘솔이 아닌 창에서 듣지 않고 조용히 넘어감. 요약 줄은 깨진 글자에서 찾지 못함",
+  "evidence": "10/6 실제 PC 화면 · 작업 환경에서 같은 조건(CP949)으로 같은 깨짐을 다시 만듦(ps_native_test A1 · A2)",
+  "fix": "도우미가 UTF-8 로 직접 읽음 · 한글을 docker 인자로 넘기지 않음(「만든 때」는 PowerShell 에서 붙임)",
+  "file": "docker/native.ps1 · docker/realcheck.ps1"
+ },
+ {
+  "no": "G-87",
+  "area": "Docker 도우미(PowerShell)",
+  "sev": "중",
+  "what": "ISE 같은 창에서 `.\\dev.ps1 up` · `check` 가 docker 의 첫 진행 줄에서 멈출 수 있음",
+  "cause": "dev.ps1 은 오류가 나면 멈추게 되어 있고($ErrorActionPreference = Stop), 그 창에서는 진행 줄이 오류로 취급됨(G-85 와 같은 원인)",
+  "evidence": "원인이 같아 생기는 일 — 실제 화면으로 보지는 못함(사용자는 realcheck 만 실행)",
+  "fix": "G-85 와 같음 — docker 가 PowerShell 의 외부 명령 처리를 거치지 않음",
+  "file": "dev.ps1"
+ },
+ {
+  "no": "G-88",
+  "area": "Docker 도우미(PowerShell)",
+  "sev": "하",
+  "what": "dev.ps1 · README 의 「실행이 막히면 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned」가 내려받은 zip 을 푼 파일에는 듣지 않음",
+  "cause": "RemoteSigned 는 내려받은 파일에 서명을 요구",
+  "evidence": "10/6 실제 PC — 「디지털 서명되지 않았습니다 … PSSecurityException」",
+  "fix": "안내를 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`(그 창에서만)로 · 앞에 `.\\` 를 붙이는 것도 적음",
+  "file": "dev.ps1 · README.md"
+ },
+ {
+  "no": "G-89",
+  "area": "Docker · 광고 검정",
+  "sev": "중",
+  "what": "개발 Docker 를 설치하고 24시간이 지나면 `dev check` · `realcheck` 가 「통합 검정 실패」로 끝남 — AD-03 확인 오래된 광고주 (기대 0 / 실제 7)",
+  "cause": "시드 광고주의 확인 시각이 설치 시각으로 고정. 확인 유효 시간(verify_ttl_hours 24) 뒤에는 오래된 것으로 잡히는데, 개발 환경에는 재확인하는 것이 없음",
+  "evidence": "3일 된 Docker 볼륨으로 realcheck — 통과 16 · 실패 3(대체 이미지 2 + 통합 검정 1)",
+  "fix": "기동 · 검정 때마다 도는 ads-migrate.sh 가 「(시드)」 광고주의 확인 시각만 새로 찍음(규칙 AD-03 은 그대로)",
+  "file": "docker/ads-migrate.sh"
+ },
+ {
+  "no": "G-90",
+  "area": "Docker 도우미(PowerShell)",
+  "sev": "하",
+  "what": "dev.ps1 — docker 가 실패해도 다음 줄로 넘어가고(up 이 실패해도 주소 안내가 초록색으로 나옴) 종료 코드가 0 · docker 가 없으면 빨간 오류",
+  "cause": "docker 의 종료 코드를 보지 않음",
+  "evidence": "코드 · docker 없는 조건 시험(ps_e2e_more)",
+  "fix": "실패하면 한 줄로 알리고 그 종료 코드로 끝냄 · docker 가 없으면 안내 한 줄 + 127",
+  "file": "dev.ps1 · docker/native.ps1"
+ },
+ {
+  "no": "G-91",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안 소개뱅크몰 「내 주문 · 주문 상세 · 취소/반품 신청」의 상품 그림 자리에 `undefined` 글자가 보임",
+  "cause": "주문 줄의 그림 값이 없음 — 시안 쪽 자료",
+  "evidence": "10/6 시안 ↔ 개발 비교 자료를 만들며 화면을 찍다 찾음(몰-15 · 몰-16 · 몰-18) · 글자 수 3 · 1 · 2",
+  "fix": "v10.27 다시 확인 — 시안 소개몰 내 주문 · 주문 상세 · 반품 신청 · 내역 · 장바구니 · 주문서에 undefined 0곳(v10.21 디자인 반영 때 사라짐). 닫음",
+  "file": "spec/proto.html"
+ },
+ {
+  "no": "G-92",
+  "area": "검정",
+  "sev": "하",
+  "what": "srv_ptn 2-10(반려 신청 목록의 「당월 수신」)이 매달 5일부터 실패 — 65/66",
+  "cause": "시험이 「당월 수신 8건」으로 고정. 시험 자료의 「4일 전」 1건이 1 ~ 4일에는 지난달, 5일부터는 이번 달이라 9건이 됨. 서버 계산은 맞음",
+  "evidence": "10/6 전수 검정 — monthReceived 9 (10/3 에는 8 로 통과)",
+  "fix": "기대값을 날짜에 맞춰 계산(8 + 4일 전이 이번 달이면 1)",
+  "file": "qa/srv_ptn.py"
+ },
+ {
+  "no": "G-93",
+  "area": "검정",
+  "sev": "중",
+  "what": "통합 검정이 실패해도 「통과 257 / 실패 1」 한 줄만 나와 어느 항목이 틀렸는지 알 수 없음 · 불변식을 두 번 돌리는데 화면에 보이는 첫 번째 결과는 판정에 쓰지 않음",
+  "cause": "verify-all.sh 가 결과의 마지막 줄만 출력 · 두 번째 실행만 판정",
+  "evidence": "10/6 12:10 Docker 통합 검정에서 「통과 257 / 실패 1 · 전체 검증 실패」가 한 번 나옴 — 로그에 항목이 없어 원인을 찾지 못함. 같은 순서(새 설치 → 바로 다시)와 단독 13회 · 새 DB 3회를 다시 돌려도 재현되지 않음",
+  "fix": "실패하면 그 항목(FAIL · ▲뚫림 · ★오류 줄)을 보여 줌 · 첫 번째 결과도 판정에 넣음(불변식 · 공격 검정). ★ 12:10 의 실패 1건 자체는 원인을 확인하지 못함 — 다시 나오면 이제 항목이 보임",
+  "file": "sgb/scripts/verify-all.sh"
+ },
+ {
+  "no": "G-94",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "목록 화면에서 수화 오류(React #418)가 남 — v10.19 전수 순회 625쪽 중 2쪽(guest /money/list · person /partner/notices) · 다시 재 보니 /money/list 5/60 · /partner/notices 0/60 (v10.18 때: /money 1/60 · /mall/list 0/60)",
+  "cause": "쪽(page.tsx)의 맨 바깥이 태그 하나(<div class=\"page\"> 등)이고 내용이 크면 서버 조각이 뒤로 밀려 따로 오고, 부하 때 브라우저가 그 조각보다 먼저 수화를 시작하면 어긋남(10/8 실측: 맨 바깥만 여러 마디로 바꾸면 0 — 같은 시각 고치지 않은 쪽은 계속 남)",
+  "evidence": "hyd_load.sh(창 6개 동시 · 540번): 고치기 전 /money/list 27/180 · /mall/list 20/180 · /partner/notices 10/180 → 고친 뒤 0/540",
+  "fix": "v10.27 수정 — 쪽 105개(반환 129곳)의 맨 바깥을 여러 마디로(<>…<i hidden data-root-end/></>) — qa/tools/g94_root.js",
+  "file": "site/src/app/[gwan] · mall 목록"
+ },
+ {
+  "no": "G-95",
+  "area": "검정",
+  "sev": "하",
+  "what": "서버 적용 리허설(aws_rehearsal.sh)의 항목별 결과 파일이 갱신되지 않을 수 있음 — 화면에는 「통과 25 / 25」가 나오는데 json 은 앞 판 것 그대로",
+  "cause": "항목 설명에 글자 중간에서 잘린 바이트가 들어오면 결과를 모으는 마지막 단계가 UnicodeDecodeError 로 끝남",
+  "evidence": "10/6 v10.17 zip 리허설 — aws_rehearsal_ops.json 의 고친 시각이 10/3 그대로",
+  "fix": "깨진 바이트는 바꿔 적고 읽을 때도 건너뜀 · 다시 돌려 새 결과 파일 확인",
+  "file": "qa/aws_rehearsal.sh"
+ },
+ {
+  "no": "G-96",
+  "area": "결제",
+  "sev": "상",
+  "what": "정기결제 재시도가 승인되면 결제는 됐는데 실패로 끝남 — 구독은 「결제 실패」 그대로",
+  "cause": "앞선 시도의 실패 청구서가 있는 기간에 결제 완료 줄을 새로 넣다 유일 제약(구독 · 기간)에 걸림. 다음 배치는 같은 주문번호를 다시 보내 결제사가 「중복된 주문번호」로 거절",
+  "evidence": "10/6 srv_billing 1-2 (고치기 전) — POST /admin/billing/charge-due 409 DUPLICATE · 청구서 FAILED · 결제사 승인 1건",
+  "fix": "한 기간 = 청구서 한 줄: 실패했던 줄을 다시 잡아(PENDING) 결제 완료로 바꿈 · 시도마다 새 주문번호(sub_<구독>_<기간>_a<시도>) · 결제사 결제 키(payment_key)와 우리 주문번호(order_id)를 따로 저장 · 기간 연장은 한 번만(구독의 기간 끝 = 청구서의 기간 시작일 때)",
+  "file": "sgb/src/modules/billing/recurring.service.ts · D022"
+ },
+ {
+  "no": "G-97",
+  "area": "결제",
+  "sev": "상",
+  "what": "결제사 답을 받지 못한 청구(응답 지연 · 연결 끊김 · 5xx · 승인 직후 서버 종료)를 실패로 적고 다시 청구할 수 있었음 — 이중 청구 · 「돈은 나갔는데 기록 없음」",
+  "cause": "결과를 「승인 / 실패」 둘로만 봄. 청구를 잡은 기록 없이 결제사를 부름",
+  "evidence": "10/6 srv_billing 1-8 · 1-13 · 1-15 (고치기 전 실패)",
+  "fix": "셋으로 가름(승인 · 확정 거절 · 불명확). 먼저 청구서를 PENDING 으로 잡고 커밋한 뒤 결제사 호출 · 불명확이면 PENDING 유지(새 결제 금지) · 주문번호로 결제사에 조회(곧바로 한 번 + 배치마다)해 승인됐으면 PAID · 「그런 주문 없음」을 30분 뒤에도 받으면 그때 닫고 새 주문번호로 · 결제사 멱등 키 전송",
+  "file": "sgb/src/modules/billing/recurring.service.ts · payment.provider.ts"
+ },
+ {
+  "no": "G-98",
+  "area": "환불",
+  "sev": "상",
+  "what": "구독 환불이 결제사에 취소를 보내지 않고 DB 에만 「환불」로 적음 — 그마저 상태값 오타(CANCELED)로 제약에 걸려 늘 실패",
+  "cause": "환불 처리에 결제사 호출이 없음 · subscriptions.status 제약은 CANCELLED",
+  "evidence": "10/6 srv_billing 5-1 (고치기 전) — POST /me/subscription/refund 422 CHECK_VIOLATION(subscriptions_status_check)",
+  "fix": "환불 요청 표(subscription_refunds) 신설 — 접수(자격은 이때 DB 가 판단 · 근거 저장) → 결제사 취소(저장된 결제 키 · 요청 고유 멱등 키 · 금액 · 사유) → 취소 확인 뒤에만 환불 요청 SUCCEEDED + 청구서 REFUNDED + 구독 CANCELLED 를 한 트랜잭션으로. 응답: 201 환불 완료 · 202 환불 결과 확인 중 · 422 REFUND_FAILED",
+  "file": "sgb/src/modules/billing/recurring.service.ts · recurring.controller.ts · D022"
+ },
+ {
+  "no": "G-99",
+  "area": "환불",
+  "sev": "중",
+  "what": "환불 자격의 「결제 당일」이 UTC 날짜 · 기간 시작 기준 — 오전 9시에 날이 바뀌고, 늦게 결제된 갱신분은 결제한 날에도 환불 불가 · 소개코드를 받은 것은 「이용」으로 세지 않음 · 당일 접수한 환불이 자정을 넘겨 끝나면 저장 불가",
+  "cause": "fn_refund_eligible 이 current_period_start::date(DB 시간대) 비교 · codes_used_this_period 를 올리는 곳이 없음 · 완료 시각의 날짜를 결제일과 비교하는 트리거",
+  "evidence": "D022 대조 · 불변식 D22-06 · D22-07 · srv_billing 2-21",
+  "fix": "한국 날짜 · 실제 결제 시각(paid_at) 기준 · 이번 기간에 받은 소개코드 수를 이용에 포함 · 자격은 접수할 때만 판단하고 완료는 「결제사 취소가 확인된 환불 요청이 있는가」만 봄",
+  "file": "D022 fn_refund_basis · fn_refund_eligible · fn_refund_guard"
+ },
+ {
+  "no": "G-100",
+  "area": "결제",
+  "sev": "상",
+  "what": "같은 요청 키(Idempotency-Key)의 요청이 동시에 오면 모두 실행됨",
+  "cause": "「조회 → 실행 → 저장」 순서 — 저장 전에 온 요청은 기록을 못 봄",
+  "evidence": "10/6 srv_billing 3-1 (고치기 전) — 같은 키 10건 → 결제 승인 요청 10건 · 201 1건 + 422 PAYMENT_FAILED 9건",
+  "fix": "작업 전에 선점(INSERT … ON CONFLICT DO NOTHING · 상태 PROCESSING) + DB 잠금(pg_try_advisory_xact_lock) → 실행은 하나뿐 · 나머지는 409 REQUEST_IN_PROGRESS 또는 저장된 응답 · 같은 키 다른 내용은 409 IDEMPOTENCY_KEY_REUSED · 결과 기록은 업무 자료와 같은 트랜잭션 · 실패해도 키를 지우지 않음(FAILED · UNKNOWN)",
+  "file": "sgb/src/core/idempotency.interceptor.ts · D022"
+ },
+ {
+  "no": "G-101",
+  "area": "결제",
+  "sev": "상",
+  "what": "결제는 승인됐는데 구독 · 코드가 열리지 않는 길 — 승인 응답 유실 · 승인 뒤 DB 저장 실패 뒤 같은 결제로 다시 요청하면 「이미 처리된 결제」를 결제 실패로 돌려줌",
+  "cause": "결제사의 ALREADY_PROCESSED_PAYMENT 를 거절로 처리 · 결제 결과를 조회해 대조하는 길이 없음",
+  "evidence": "10/6 srv_billing 3-12 · 3-13 · 3-14 · 3-15 (고치기 전 실패)",
+  "fix": "confirmOrRecover — 「이미 처리됨」 · 응답 없음이면 결제 키로 조회해 승인 완료 · 금액 · 주문번호가 같으면 승인으로 인정. 이미 다른 곳에 쓴 결제 키는 거절(PAYMENT_KEY_USED) · 조회도 안 되면 422 PAYMENT_UNCERTAIN(같은 키로 다시 오면 대조)",
+  "file": "sgb/src/modules/billing/payment-recover.ts · billing.service.ts"
+ },
+ {
+  "no": "G-102",
+  "area": "결제",
+  "sev": "상",
+  "what": "해지 예약한 회원이 다시 결제하면 결제 승인 뒤 전체가 되돌아감 — 돈만 나감",
+  "cause": "결제 승인 뒤 청구서 저장이 「해지 예약된 구독은 청구할 수 없습니다」 규칙에 걸림",
+  "evidence": "10/6 srv_billing 6-1 (고치기 전) — POST /subscriptions 422 BILLING_RULE · 결제사 승인 1건",
+  "fix": "유료 결제로 다시 여는 것은 자동 갱신으로 돌아오는 것(cancel_at 을 지움). 결제 전에 막을 것(이미 쓴 결제 · 환불 처리 중 · 정기결제 결과 확인 중)은 결제를 받기 전에 확인",
+  "file": "sgb/src/modules/billing/billing.service.ts"
+ },
+ {
+  "no": "G-103",
+  "area": "결제",
+  "sev": "중",
+  "what": "결제 실패(PAST_DUE) 회원은 자동 갱신을 해지할 수 없음 — 그 사이 재시도 청구는 계속 나감 · 이미 해지한 구독에 다시 누르면 오류",
+  "cause": "해지가 ACTIVE 만 받음",
+  "evidence": "10/6 srv_billing 4-1 (고치기 전) — POST /me/subscription/cancel 409 NOT_CANCELLABLE",
+  "fix": "ACTIVE · PAST_DUE 모두 해지 · 이미 해지했으면 그때의 결과(alreadyCancelled) · 진행 중인 청구가 있으면 밝힘(chargeInFlight) · 해지한 결제 실패 구독은 유예가 지나면 배치가 만료로 닫음",
+  "file": "sgb/src/modules/billing/recurring.service.ts"
+ },
+ {
+  "no": "G-104",
+  "area": "결제",
+  "sev": "중",
+  "what": "배치가 청구 대상을 읽은 뒤 해지가 확정돼도 청구가 나갈 수 있음",
+  "cause": "대상 목록을 읽고 곧바로 결제사 호출 — 구독 줄을 잠그고 다시 보지 않음",
+  "evidence": "10/6 srv_billing 4-5 · 4-9 (해지 8건 + 배치 2대 동시)",
+  "fix": "청구를 잡을 때 구독 줄을 잠그고 대상인지 다시 확인 · 해지도 같은 줄을 잠그고 실제 시각을 찍음 · DB 트리거도 해지한 구독의 청구 잡기를 막음(API 를 거치지 않는 길 포함) · 감시 뷰 v_billing_after_cancel 에 「해지 뒤에 잡힌 청구」 추가",
+  "file": "sgb/src/modules/billing/recurring.service.ts · D022 fn_invoice_paid_lock · fn_invoice_not_cancelled"
+ },
+ {
+  "no": "G-105",
+  "area": "결제",
+  "sev": "중",
+  "what": "청구서의 기간 시작이 밀리초로 잘려 구독의 기간(마이크로초)과 달라짐 — 「이번 기간의 청구서」를 찾지 못함",
+  "cause": "기간 값을 Node 를 거쳐 다시 넣음",
+  "evidence": "D022 대조",
+  "fix": "기간 값은 SQL 안에서 구독 줄의 값 그대로 · 기존 실패 줄은 마이그레이션에서 맞춤 · 기존 결제 완료 줄은 밀리초 차이를 같은 기간으로 봄",
+  "file": "sgb/src/modules/billing/billing.service.ts · recurring.service.ts · D022"
+ },
+ {
+  "no": "G-106",
+  "area": "운영",
+  "sev": "중",
+  "what": "정기결제 실패 · 카드 교체 필요 · 알림 미발송 · 위험 탐지 알림이 남지 않고, 그 작업이 실패로 기록됨",
+  "cause": "알림 심각도에 DB 제약(INFO · WARN · CRITICAL)에 없는 값 HIGH · MEDIUM 을 씀",
+  "evidence": "10/6 srv_billing 7-1 · 7-2 (고치기 전) — POST /admin/jobs 422 CHECK_VIOLATION(ops_alerts_severity_check)",
+  "fix": "HIGH → CRITICAL · MEDIUM → WARN · 타입으로 막음. 「사람 확인 필요」 알림(SUBSCRIPTION_BILLING_REVIEW) 추가",
+  "file": "sgb/src/worker/scheduler.service.ts"
+ },
+ {
+  "no": "G-107",
+  "area": "결제",
+  "sev": "중",
+  "what": "만료 · 정지 카드처럼 다시 시도해도 같은 답인 실패를 하루 10번까지 다시 청구",
+  "cause": "「카드 교체 필요」를 실패 문구의 낱말(만료 · 분실 …)로만 판단 — 토스의 실제 문구(INVALID_CARD_EXPIRATION = 「카드 정보를 다시 확인해주세요. (유효기간)」)에는 그 낱말이 없음",
+  "evidence": "10/6 srv_billing 1-21 (고치기 전) — 같은 날 다시 청구해 PAID · 청구 요청 2건",
+  "fix": "결제사 코드로 판단(카드 자동결제 승인 에러 코드 11종) · 문구 판단은 코드가 없을 때의 대비로 남김",
+  "file": "sgb/src/modules/billing/recurring.service.ts"
+ },
+ {
+  "no": "G-108",
+  "area": "결제",
+  "sev": "중",
+  "what": "결제사가 우리 열쇠 · 요청 형식을 거절해도(401 등) 회원을 「결제 실패」로 만들고 실패 안내를 보냄 — 청구 대상 전부에게",
+  "cause": "모든 거절을 회원의 결제 실패로 처리",
+  "evidence": "10/6 srv_billing 1-22 · 1-23 (고치기 전) — 구독 3건 모두 PAST_DUE · 실패 안내 3건",
+  "fix": "연동 설정 오류(UNAUTHORIZED_KEY 등 6종)는 청구서만 닫고 구독 상태 · 유예 · 회원 안내를 건드리지 않음 · 그 배치를 멈춤 · 운영 알림. 시도 기록에 SYSTEM(회원 탓 아님) 추가 — 요청이 결제사에 닿지 않은 경우도 같음",
+  "file": "sgb/src/modules/billing/recurring.service.ts · D022"
+ },
+ {
+  "no": "G-109",
+  "area": "결제",
+  "sev": "중",
+  "what": "정기결제 결과를 확인하는 중에 회원이 직접 결제하면 두 번 낼 수 있음",
+  "cause": "확인 중인 청구가 있는지 보지 않고 결제 승인",
+  "evidence": "10/6 방어 코드를 끈 대조 실행(srv_billing 6-4) — 직접 결제 201 뒤 확인 중이던 청구도 승인으로 확인돼 v_billing_integrity 에 PAID_NOT_APPLIED 1건",
+  "fix": "확인 중인 청구가 있으면 결제를 받기 전에 409 CHARGE_IN_PROGRESS",
+  "file": "sgb/src/modules/billing/billing.service.ts"
+ },
+ {
+  "no": "G-110",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "회원이 자동 갱신 해지 · 환불을 할 화면이 없음(API 만 있음) — 환불 상태를 볼 곳도 없음",
+  "cause": "/my/subscription 이 요금제 표만 보여 줌",
+  "evidence": "10/6 site 소스 대조 — /me/subscription/detail · cancel · refund 를 부르는 곳 0",
+  "fix": "「내 구독」 추가 — 상태 · 자동 갱신 해지 · 해지 철회 · 환불 신청 · 환불 완료 / 환불 결과 확인 중 / 환불 실패 · 「환불 결과 다시 확인」. 운영 「청구 현황」에 「결제 · 환불 확인 필요」. 환불 결과 알림(완료 · 실패). 시안에도 같은 자리",
+  "file": "sgb/site/src/components/billing/SubscriptionManage.tsx · sgb/web/src/app/admin/Billing.tsx · spec/proto.html"
+ },
+ {
+  "no": "G-111",
+  "area": "검정",
+  "sev": "하",
+  "what": "감시 뷰 v_refund_violation 이 UTC 날짜 · 완료 시각으로 판단 — 당일 접수 · 자정 뒤 완료를 위반으로 봄. 공격 검정 BL-01~03 은 구독 줄에 직접 적는 길만 시험",
+  "cause": "옛 환불 모델 기준",
+  "evidence": "D022 대조",
+  "fix": "뷰를 새 모델로(결제사 취소 확인 없는 환불 · 접수 때 당일/미이용이 아니던 환불) · 공격 검정 BL 18항목 · M-23~28 · 불변식 D22-01~19 · 감시 뷰 v_billing_integrity · v_billing_pending · v_sub_refund_open · v_idempotency_open",
+  "file": "D022 · sgb/scripts/attack-check.sh · verify-invariants.sh"
+ },
+ {
+  "no": "G-112",
+  "area": "결제",
+  "sev": "상",
+  "what": "결제사 열쇠 없는 방식(스텁)의 서버가 실제 결제사로 나간 「확인 중」 청구를 실패로 닫고 스텁으로 다시 청구해 가짜 결제 완료를 만듦 · 실제 결제의 환불을 결제사 취소 없이 「환불 완료」로 답함",
+  "cause": "스텁은 모든 주문 조회에 「없음」, 모든 취소에 「성공」이라고 답함 — 이번 판에서 넣은 「조회해서 닫기」가 그 답을 그대로 믿음(전수 검정 중 개발 DB 에서 발견: 금액 불일치로 남겨 둔 청구 6건이 다른 시험의 스텁 배치에 닫혀 있었음)",
+  "evidence": "10/6 srv_billing 5-4 · 5-5 (고치기 전) — 스텁 배치 뒤 청구서 PAID(가짜) · 스텁 서버의 환불 응답 201 「환불 완료」 · 결제사 취소 0건",
+  "fix": "청구서에 스텁 표시(is_stub) — 스텁 방식의 서버는 그 표시가 있는 청구 · 환불만 닫음. 실제 결제의 환불 요청을 스텁 서버가 받으면 202 「환불 결과 확인 중」으로 두고 결제사와 연결된 서버가 이어받음",
+  "file": "sgb/src/modules/billing/recurring.service.ts · billing.service.ts · D022"
+ },
+ {
+  "no": "G-113",
+  "area": "검정",
+  "sev": "중",
+  "what": "쓰던 개발 Docker 에 v10.18 을 올린 뒤 통합 검정(dev.ps1 check)이 실패 — 「결제 · 환불 기록의 어긋남 없음」 기대 0 / 실제 6",
+  "cause": "검정 준비 자료(fixture)가 구독은 지우고 그 청구서 · 시도 기록은 남겨, 옛 판의 검정이 넣은 「결제 근거 없는 결제 완료 청구서」가 검정 DB 에 쌓여 있었음. 새로 만든 검정 DB 에서는 드러나지 않음",
+  "evidence": "10/6 작업 환경 Docker(v10.16 · v10.17 로 검정을 돌려 온 볼륨)에서 올린 직후 — FAIL D22-13 · ▲뚫림 M-27 (v10.17 에서 넣은 「실패 항목 표시」로 바로 보임)",
+  "fix": "fixture 가 구독과 함께 환불 요청 · 청구 시도 · 청구서도 비움(검정 전용 DB 에서만 도는 파일). 같은 볼륨에서 다시 — 통합 검정 전체 통과(277/0 · 627/0)",
+  "file": "sgb/scripts/fixture.sql"
+ },
+ {
+  "no": "G-114",
+  "area": "결제",
+  "sev": "상",
+  "what": "(열려 있음) 결제사(토스) 테스트 환경에서 확인하지 못함",
+  "cause": "이 작업 환경에서는 결제사에 접속할 수 없음. 검증은 실제 PostgreSQL + 가짜 결제사(토스와 같은 경로 · 응답 모양의 실제 HTTP 서버 · 장애 주입)로 했음",
+  "evidence": "docs/62 9절",
+  "fix": "(10/9 답 「지금은 가상으로 진행 · 키 받으면 추가」) 가상 결제사로 확인표 T-1 ~ T-10 확인 완료(srv_billing 103/103 · T-8 이미 취소된 결제 2-26 더함). 토스 테스트 키를 받으면 docs/62 9절의 순서대로 실제 확인 — 그 전에는 「수정 완료」로 보지 않음",
+  "file": "docs/62_결제환불정합_v10.18_20261006.md"
+ },
+ {
+  "no": "G-115",
+  "area": "시안",
+  "sev": "중",
+  "what": "시안 「급구 · 급매」 화면 — 소개하기 · 소개받고 싶어요 · 소개받기 버튼이 제목 「급구, 급매」와 겹침(「소개받기」가 제목 위에 올라가고, 제목이 그 버튼의 클릭을 가로챔)",
+  "cause": "빠른 메뉴 화면의 위쪽 줄 틀(qmRow)이 세 버튼을 184px 칸에 넣음 — 세 버튼의 폭은 262px 이라 옆 칸(제목)으로 넘침",
+  "evidence": "10/6 보내 주신 화면 · proto_urg.py 를 v10.18 시안에 돌린 결과(통과 4 / 13 — B-1 ~ B-4 실패, D-2 에서 「제목이 클릭을 가로챔」으로 멈춤)",
+  "fix": "10/6 지시 「급구급매 부분에서 소개하기 · 소개받고 싶어요 · 소개받기 버튼 삭제」대로 급구 · 급매에서는 세 버튼 칸을 그리지 않고 줄을 한 칸으로 그림. proto_urg 19/19 · 앞 판과 189장 중 urg 한 장만 다름",
+  "file": "sgb/spec/proto.html (qmRow · .gwl .rrow.qrow.noq) — qa/apply_proto_v1019.py"
+ },
+ {
+  "no": "G-116",
+  "area": "시안",
+  "sev": "중",
+  "what": "시안 「베스트매칭」 · 「사고예방」 · 「성공현황」 — 같은 줄 틀이라 「소개받기」 버튼이 제목을 덮음",
+  "cause": "G-115 와 같음(세 버튼 칸 184px < 세 버튼 262px). 10/6 지시는 급구 · 급매만이어서 손대지 않음",
+  "evidence": "10/6 측정 — 화면 너비 1000 · 1100 · 1280 · 1500 · 1920px 모두에서 세 화면의 「소개받기」가 제목 상자와 겹침",
+  "fix": "v10.27 수정(10/8 답 「세 화면에도 단추 삭제」) — 베스트매칭 · 사고예방 · 성공현황 위쪽 줄에서 소개하기 · 소개받고 싶어요 · 소개받기 칸을 뺌(급구 · 급매 · 상세와 같은 처리 · 줄은 한 칸). 확인: fix_1027_proto G-116(너비 1000 · 1280 · 1920) · proto_urg · proto_diff(바뀐 29장)",
+  "file": "sgb/spec/proto.html (qmRow)"
+ },
+ {
+  "no": "G-117",
+  "area": "검정",
+  "sev": "하",
+  "what": "결제 · 환불 시험(srv_billing.py) 3-17 「소개코드 발급 — 같은 키 동시 8건 → 코드 1건만」이 같은 달에 여러 번 돌리면 실패(101 / 102)",
+  "cause": "시험이 준비 자료의 한 계정(intro@x.com)으로 발급 — 무료 요금제의 월 무료분을 시험이 돌 때마다 하나씩 써서, 떨어진 뒤에는 서버가 정상적으로 422 EXTRA_PAYMENT_REQUIRED(결제 후 발급)로 답함. 서버 결함 아님(같은 키 8건 중 실행은 한 번 · 나머지는 409 또는 같은 422)",
+  "evidence": "10/6 v10.19 전수 실행 — (0, 409 REQUEST_IN_PROGRESS × 6 · 422 EXTRA_PAYMENT_REQUIRED × 2) · 그 계정의 이번 달 무료 코드 3건 사용",
+  "fix": "시험마다 새 회원을 만들어(가입 → 본인인증 개발 스텁) 발급 — 전체 다시 102 / 102 · Docker DB 에서도 다시 확인",
+  "file": "qa/srv_billing.py"
+ },
+ {
+  "no": "G-118",
+  "area": "파트너",
+  "sev": "하",
+  "what": "리드 이용료 반려 신청 — 남의 이용료 번호로 신청하면, 그 이용료에 이미 반려 신청이 있을 때 409 「이미 반려를 신청한 이용료입니다」로 답함(없을 때는 422 로 거절). 신청은 어느 쪽이든 만들어지지 않지만, 남의 이용료에 반려 신청이 있는지를 응답으로 알 수 있었음",
+  "cause": "POST /partner/fees/:id/dispute 가 「이미 신청했는지」를 이용료 번호만으로 먼저 봄(내 이용료인지는 그 뒤 DB 트리거가 봄) — partner.service.ts disputeFee",
+  "evidence": "10/6 v10.19 Docker 단계 — 새로 만든 DB 에서 준비 스크립트가 srv_ptn.py 를 5번 돌리자 2-7 「남의 이용료 → 422」가 409 ALREADY_REQUESTED 로 답함(65 / 66). 로컬 개발 DB 에서는 고른 이용료에 신청이 없어 66 / 66. v10.8 부터 같은 코드",
+  "fix": "v10.20 에서 고침 — 「이미 신청했는지」를 내 신청(partner_id)으로만 봄. 남의 이용료 · 없는 번호는 신청 유무와 관계없이 DB 트리거의 같은 거절 422 「내 이용료가 아닙니다」. 시험 2-7 을 이웃 파트너를 직접 만들어 「신청 없음 · 있음 · 없는 번호 · 본인 재신청」 5항목으로 바꿈(고치기 전 70 / 71 → 71 / 71 · Docker 의 API · DB 에서도 확인)",
+  "file": "sgb/src/modules/partner/partner.service.ts (disputeFee) · qa/srv_ptn.py"
+ },
+ {
+  "no": "G-119",
+  "area": "검정",
+  "sev": "하",
+  "what": "검정 매트릭스(xlsx) 「15_서버기능검증」 시트에 실패 1줄(파트너 2-7 · 409 ALREADY_REQUESTED)이 들어감 — v10.18 전달본에도 있었고 요약 · 보고에는 빠져 있었음",
+  "cause": "Docker 단계의 준비 스크립트(fixtures.py)가 srv_ptn.py 를 반복 실행하며 로컬 실행 결과 파일(srv_ptn.json)을 덮음 — 엑셀이 그 파일을 읽음. 로컬 전수 실행의 결과는 66 / 66 이었음(final_all)",
+  "evidence": "10/6 v10.19 엑셀을 만든 뒤 시트마다 실패 줄을 세다 발견 · v10.18 엑셀 15번 시트에서도 같은 줄 확인",
+  "fix": "docker_set.sh 가 준비 스크립트 앞뒤로 srv_ptn.json 을 지킴 · 로컬에서 다시 실행해 결과 파일을 되돌림(66 / 66) · build_xlsx.py 가 엑셀을 만든 뒤 시트마다 「실패」 줄을 세어 보여 주고 하나라도 있으면 종료 코드 1 로 끝남. 그 줄이 가리킨 서버 쪽 문제는 G-118",
+  "file": "qa/docker_set.sh · qa/build_xlsx.py"
+ },
+ {
+  "no": "G-120",
+  "area": "정산",
+  "sev": "중",
+  "what": "(잠재) 정산 신청(수동) POST /settlements 이 신청자가 그 거래의 소개자인지 보지 않음 — 인증된 사업자면 누구나 「확정됐고 정산이 아직 없는 거래」의 받는 사람으로 자신을 올릴 수 있음. 지금은 소개비 기능(referral_fee)이 꺼져 있어 닿지 않음(약정 소개비가 없어 422 INV_9 로 거절)",
+  "cause": "public.service.ts requestSettlement 가 받는 사람 = 요청자로 넣고, DB 트리거 fn_assert_settlement_rules 도 받는 사람이 그 거래의 소개자인지는 보지 않음(확정 여부 · 금액 · 사업자 인증만 봄). 성사 확정 때 소개자가 인증 사업자가 아니면 자동 정산이 만들어지지 않아 이 수동 길이 열림. 또 「이미 정산 신청됨」(409)을 거래 당사자인지 보기 전에 답함",
+  "evidence": "10/6 v10.20 — G-118 과 같은 종류를 찾다 코드 · 트리거 정의로 확인. 실제 호출: 남의 확정 거래로 신청 → 422 INV_9 「settlement amount <NULL> <> agreed_fee <NULL>」(기능이 꺼져 있어 막힘 · DB 내부 문구가 그대로 보임)",
+  "fix": "v10.27 수정 — 정산 신청은 그 거래의 소개자만(403 NOT_PARTY) · 없는 거래 404(전에는 아무것도 만들지 않고 201) · 거래 번호는 uuid 만(400) · DB 규칙 D034(받는 사람 = 소개자 · INV-9R) · 공격 검정 C-00 의 받는 사람을 소개자로 바로잡음. 확인: fix_1027b G-120-1 ~ 4 · attack-check C-00",
+  "file": "sgb/src/modules/public/public.service.ts (requestSettlement) · fn_assert_settlement_rules"
+ },
+ {
+  "no": "G-121",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안의 「← …(으)로 돌아가기」에 옛 관 이름이 나옴 — 소개장터 상세는 「← 소개머니(으)로 돌아가기」, 안심소개 상세는 「← 소개몰(으)로 돌아가기」",
+  "cause": "화면 이름표(NAVNAME)의 list · listl 값이 옛 이름(소개머니 · 소개몰) — 머리줄 메뉴는 소개장터 · 안심소개로 바뀌어 있음",
+  "evidence": "10/6 v10.20 상세 화면 시험을 만들며 #/g/mny · #/g/mal → 매물 → 상세의 돌아가기 글을 읽어 확인(소개창업은 「← 소개창업(으)로 돌아가기」로 맞음)",
+  "fix": "v10.21 — 돌아가기 글의 관 이름을 소개장터 · 안심소개로(NAVNAME)",
+  "file": "sgb/spec/proto.html (NAVNAME)"
+ },
+ {
+  "no": "G-122",
+  "area": "시안",
+  "sev": "중",
+  "what": "(일부 열려 있음) 시안에서 목록의 무엇을 눌러도 같은 상세가 나옴 — 소개장터 · 안심소개 · 소개창업의 메인 · 전체 목록 · 급구 · 급매 · 마이 「관심」의 매물, 계약 진행 목록, 운영 회원 · 검수 큐, 파트너센터 내 서비스 등 16곳 111건",
+  "cause": "시안의 상세 화면은 종류마다 한 건을 글로 직접 그려 둔 것 — 주소도 고정(/l/1042 · /l/4471 · /l/4468 · /request/2041 · /my/contracts/1 · /admin/review/3301 · /partner/services/59). 소개뱅크몰(건강관)과 운영 인증 심사만 자료로 그려 항목마다 다름",
+  "evidence": "10/7 qa/detail_links.py proto — 상세로 가는 링크 234건을 전부 눌러 봄: 이상 16곳 111건 · 정상 1곳(인증 심사 5건) · 소개뱅크몰 99건 정상. 실제 웹은 1,107건 모두 누른 항목의 상세(detail_links.py site)",
+  "fix": "v10.21 에서 매물 상세 3종(소개장터 · 안심소개 · 소개창업)을 고침 — 카드 83장을 하나씩 눌러 제목 · 분류 · 금액 · 지역 · 사진이 같음(proto_item.py A · B). 16곳 111건 → 6곳 24건. 남은 것(요청 · 계약 · 회원 · 검수 · 서비스 상세)은 목록표의 선택 ② — 결정 필요",
+  "file": "sgb/spec/proto.html (scDetail · gwanDetail · TO_PATH) · docs/65"
+ },
+ {
+  "no": "G-123",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안 마이 「관심」의 「보기」가 항목의 관과 맞지 않는 상세로 감 — 소개창업 · 안심소개 항목도 소개장터 상세(#/g/mny/l/4471)",
+  "cause": "「보기」 단추가 모두 data-go=\"dtlm\"(소개장터 상세)로 고정",
+  "evidence": "10/7 detail_links_proto.json — mylik 4건 전부 dtlm",
+  "fix": "v10.21 — 마이 관심의 「보기」 · 「1:1 문의」가 항목의 관 · 번호로(proto_item.py F)",
+  "file": "sgb/spec/proto.html (scMyLik)"
+ },
+ {
+  "no": "G-124",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안에 들어가는 링크를 찾지 못한 상세 화면 — 소개광장 글 상세(SB-HOM-CMU-020) · 모바일 상세 2장 · 문의방 잠금 화면. 소개광장 글 목록에는 글을 누르는 링크가 없음",
+  "cause": "목록 쪽에 상세로 가는 링크를 달지 않음",
+  "evidence": "10/7 detail_links_proto.json 의 「간 곳」에 한 번도 나오지 않는 상세 화면 · 누르기 전수(proto_sweep.json)의 소개광장 화면에 글 줄 클릭 없음. ※ 처음에는 계약서(SB-MYP-CTR-020)도 넣었으나 틀림 — 계약 진행 목록에서 들어감(화면 키가 ctrd · myctrd 둘이라 다른 이름으로 세었음 · docs/66 에서 바로잡음)",
+  "fix": "v10.21 — 소개광장 글 목록 → 글 상세 링크를 만듦(proto_item.py K). 남은 3장(모바일 상세 2 · 문의방 잠금 화면)은 같은 화면의 다른 모습이라 화면 목록에서만 엶",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-125",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "「내 구독」(v10.18 에서 넣은 화면)의 이용 기간 · 다음 청구일이 서버가 UTC 인 환경(개발 Docker · AWS)에서 하루 전으로 그려지고, 브라우저가 한국 날짜로 다시 그리며 수화 오류(React #418 — 글이 다름)가 남. 한국 0 ~ 9시에 시작 · 끝나는 구독에서 항상. 해지 안내 글(「…까지 이용」)의 날짜도 같음",
+  "cause": "날짜를 글로 바꿀 때 시간대를 주지 않음 — SubscriptionManage.tsx 의 day() · recurring.service.ts 의 안내 글 3곳. 작업 환경은 한국 시각이라 로컬 시험에서는 드러나지 않았고, v10.18 의 Docker 시험은 낮(한국 18시)에 돌려 날짜가 같았음",
+  "evidence": "10/7 01시(한국) Docker 단계 — srv_billing_ui 13 / 16 (U-2 · U-9 · U-16: Hydration failed because the server rendered text didn't match the client). site_tz.py 를 고치기 전 빌드에 돌려 2 / 7 — 서버 글 「2026. 10. 5. ~ 2026. 11. 4.」 · 브라우저 글 「2026. 10. 6. ~ 2026. 11. 5.」 · 해지 안내 「2026. 11. 4.까지」",
+  "fix": "timeZone: 'Asia/Seoul' 지정. 시험 site_tz.py 추가 — API · 사용자 웹을 TZ=UTC 로 띄우고 한국 시각 브라우저로 서버 글 = 브라우저 글 · 오류 0 · 해지 안내 글 확인(7 / 7). Docker 에서 srv_billing_ui 다시 확인",
+  "file": "sgb/site/src/components/billing/SubscriptionManage.tsx · sgb/src/modules/billing/recurring.service.ts · qa/site_tz.py"
+ },
+ {
+  "no": "G-126",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "사용자 웹의 날짜 · 시각 20곳이 서버 시간대(UTC)로 나옴 — 서버가 UTC 면 9시간 늦은 시각, 한국 0 ~ 9시의 일은 하루 전 날짜: 계약 발급 시각 · 대화 시각 · 상담 신청 시각 · 정산 내역 · 사업자 인증일 · 소개자 활동 · 초대 · 계약 이력 · 검수 마감 · 파트너 이용료 · 서비스 등록일 · 리드 접수 · 열람 기한 · 건강몰 주문일 · 주문 시각 · 정산 계좌 인증 만료 시각 · 오래된 매물의 등록일",
+  "cause": "toLocaleDateString · toLocaleString · toLocaleTimeString 에 시간대를 주지 않은 곳과 준 곳이 섞여 있었음(29곳 중 21곳이 빠짐 — G-125 의 1곳 포함)",
+  "evidence": "10/7 site_tz.py S-1 (고치기 전 빠진 곳 21) · D-3 건강몰 주문 상세의 주문 시각이 TZ=UTC 서버에서 「2026. 10. 2. PM 11:22」(한국 시각으로는 10/3 오전 8:22)",
+  "fix": "21곳 모두 timeZone: 'Asia/Seoul' 지정 · 소스 점검(S-1 · S-2)이 앞으로 빠뜨린 곳을 잡음",
+  "file": "sgb/site/src (21곳 — docs/64 3-2) · qa/site_tz.py"
+ },
+ {
+  "no": "G-127",
+  "area": "서버",
+  "sev": "하",
+  "what": "서버(DB · API)가 UTC 날짜를 쓰는 곳 — ① 건강몰 주문번호의 날짜 부분(H + YYMMDD): 한국 0 ~ 9시 주문은 전날 날짜가 붙음(예: 10/3 08:22 주문 → H261002…) ② 제휴 정산 기간(period_ym = to_char(now(),'YYYY-MM')) · 파트너 이용료 월별 묶음: 매달 1일 0 ~ 9시에는 지난달로 계산",
+  "cause": "DB 세션 시간대가 UTC 이고 to_char(now(), …) 에 한국 시간대를 주지 않음(B075_functions fn 주문번호 · affiliate.service.ts · partner.service.ts)",
+  "evidence": "10/7 site_tz.py 를 만들며 확인 — 주문 H26100200227 의 생성 시각 2026-10-02 23:22 UTC = 10/3 08:22 KST",
+  "fix": "v10.27 수정 — 마이그레이션 D033: 소개몰 주문번호의 날짜 · 제휴 클릭 집계 날짜를 한국 날짜로 · 서비스 SQL 의 월 경계(제휴 이번 달 · 목표 기간 · 이용료 월별 · 경영 지표 · 광고 청구)를 한국 시각으로. 확인: fix_1027b G-127-1 ~ 3",
+  "file": "prisma/migrations/B075_functions(주문번호) · src/modules/affiliate/affiliate.service.ts · src/modules/partner/partner.service.ts"
+ },
+ {
+  "no": "G-128",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "실제 웹 요청 목록(/request) · 요청 상세(/request/{id})의 「등록」 시각이 비어 있음",
+  "cause": "요청 조회 API(목록 · 상세)의 응답에 등록 시각(createdAt)이 없음 — 화면은 ago(r.createdAt) 을 그리는데 값이 없어 빈 칸",
+  "evidence": "10/7 detail_links.py site — 요청 상세 45건(요청 9건 × 5역할) 모두 `<dt>등록</dt><dd></dd>` · GET /requests · /requests/{id} 응답에 createdAt 없음",
+  "fix": "v10.21 — 요청 목록 · 상세 조회에 등록 시각(createdAt)을 넣음(srv_detail.py E · site_detail.py F-4 · F-5)",
+  "file": "sgb/src/modules/request/request.service.ts · request.dto.ts · site/src/app/request"
+ },
+ {
+  "no": "G-129",
+  "area": "시안",
+  "sev": "중",
+  "what": "시안에서 문의방을 거치면 다른 관의 상세로 감 — 소개창업 · 안심소개 상세에서 「질문하기 · 1:1 문의」로 문의방에 갔다가 「돌아가기」 · 「리스팅 보기」를 누르면 소개장터 상세가 열림",
+  "cause": "문의방 주소(#/chat/8821)에 관이 없어, 돌아올 때 주소가 기본 관(소개장터)으로 풀림",
+  "evidence": "10/7 detail_links.py roundtrip — 왕복 6건 중 4건이 다른 관의 상세 · 1건은 같은 화면이지만 매물 번호가 바뀜(/l/1042 → /l/4471) · 정상 1건",
+  "fix": "v10.21 — 문의방 주소가 #/g/{관}/chat/{매물번호} · 돌아가기 · 리스팅 보기가 처음 매물로(왕복 6건 중 실패 5 → 0 · proto_item.py G)",
+  "file": "sgb/spec/proto.html (ask · backLink · TO_PATH)"
+ },
+ {
+  "no": "G-130",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안의 「상세 · 보기」 단추 22건(13종)이 화면을 열지 않고 안내 글만 띄움 — 운영 파트너사 목록의 「상세」 6건 · 파트너 알림의 「보기」 5건 · 감사 기록 「기록 보기」 · 「대상 보기」 · 주문 상세 안의 「상세보기」 · 「택배사에서 보기」 등",
+  "cause": "해당 상세 화면을 그리지 않았거나(파트너사 상세 · 알림이 가리키는 화면), 외부 창이라 시연에서 열지 않음",
+  "evidence": "10/7 누르기 전수(proto_sweep.json · hlt_sweep_after.json)에서 「상세 · 보기 · 열기」 글자의 단추 중 결과가 안내(TOAST)뿐인 것",
+  "fix": "v10.27 수정(10/8 답 「22건 모두 만듬」 · 10/9 「개발에도 반영」) — 시안: 새 화면 8장(사기 예방 가이드 · 공고 원문 · 광고주 랜딩 · 파트너사 상세 · 감사 기록 · 옮길 대상 · 계약서 양식 전문 · 택배사 조회) · 파트너 알림 「보기」 5건은 그 화면으로 · 시안만 있는 3장은 「개발중」 표시. 개발: 파트너사 상세(API · 운영 화면) · 파트너 알림 「보기」 · 계약서 양식 전문 · 사기 예방 가이드 · 택배사 조회. 확인: g130_check 19/19 · fix_1027c 20/20",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-131",
+  "area": "시안",
+  "sev": "하",
+  "what": "매물 상세(그림 1)의 세 번째 후기가 잘리고 옆의 「소개 내용」 상자가 화면 밖으로 밀림 — 보내 주신 그림 1에도 잘려 있음",
+  "cause": "후기 카드(.rv2)가 다른 화면(후기 작성)의 같은 이름 규칙(2칸 격자 · 340px)을 함께 받아 넓어짐",
+  "evidence": "10/7 v10.21 을 만들며 화면 그림으로 확인 — 세 번째 후기 「박팀장」이 잘림",
+  "fix": "v10.21 — 상세의 후기 카드에만 따로 규칙(.revs .rv2{display:block})",
+  "file": "sgb/spec/proto.html (CSS)"
+ },
+ {
+  "no": "G-132",
+  "area": "시안",
+  "sev": "중",
+  "what": "소개광장(#/community · SB-HOM-CMU-010) 글 목록이 빈 표 — 머리줄 「소개광장」을 누르면 글이 한 건도 안 보임. 글 상세(SB-HOM-CMU-020)로 가는 길도 없음",
+  "cause": "글 목록 화면이 없는 자료(D.community)를 읽음 — 글 자료는 content.community 에 있음",
+  "evidence": "10/7 #/community 를 열어 표의 줄 0건 확인(같은 자료를 쓰는 옛 화면 commu 에는 6건)",
+  "fix": "v10.21 — content.community 를 읽고 제목이 그 글의 주소(#/community/{번호})로 감. 글 상세는 누른 글의 제목 · 분류 · 작성자로(proto_item.py K 4건)",
+  "file": "sgb/spec/proto.html (scCmu · scCmuD)"
+ },
+ {
+  "no": "G-133",
+  "area": "서버",
+  "sev": "중",
+  "what": "후기 작성 API(POST /deals/{id}/reviews)가 늘 실패 — 422 「필수 값이 빠졌습니다 (target_id)」. 개발 DB 의 후기 0건. 거래 당사자인지도 보지 않았음(사업자 계정이면 남의 거래에 쓸 수 있는 코드)",
+  "cause": "INSERT 에 대상(target_id · NOT NULL)을 넣지 않음 · 당사자 확인 없음",
+  "evidence": "10/7 srv_detail.py C-1 — 고치기 전 422",
+  "fix": "v10.21 (D023) — 대상 = 그 거래의 소개자(없으면 상대방) · 당사자만(403 NOT_PARTY) · 평점 상한 · DB 트리거 trg_review_rules 가 같은 규칙(verify D23 12건)",
+  "file": "sgb/src/modules/public/public.service.ts · prisma/migrations/D023_listing_detail_reviews"
+ },
+ {
+  "no": "G-134",
+  "area": "서버",
+  "sev": "중",
+  "what": "불리언 입력에 글자(\"false\" · \"no\" · \"0\")를 보내면 참으로 읽힘 — 초대 동의(agree) · 개인정보 제3자 제공 동의 · 성향 저장 동의 · 승인(approve) 등 22곳. 화면은 진짜 참 · 거짓을 보내므로 실제 이용에는 영향 없음",
+  "cause": "전역 설정(enableImplicitConversion)이 글자를 Boolean(값)으로 바꾼 뒤 @IsBoolean 이 통과시킴(건강몰 개봉 판정 2곳만 전에 막아 둠)",
+  "evidence": "10/7 POST /invites/{token}/consent {agree:\"false\"} 가 검사를 통과(고치기 전 409 없는 초대 → 고친 뒤 400)",
+  "fix": "v10.21 — 공통 장식자 @StrictBoolean(받은 값 그대로 검사)으로 22곳 모두 교체 · 소스 점검(srv_detail.py S-2)",
+  "file": "sgb/src/common/strict-boolean.ts 외 14개 파일"
+ },
+ {
+  "no": "G-135",
+  "area": "사용자 웹",
+  "sev": "상",
+  "what": "로그인하면 /mny 로 가서 404 — 로그인 직후 「페이지를 찾을 수 없습니다」. 로그인이 필요한 화면이 붙여 보낸 ?next= 도 쓰지 않아 보던 화면으로 돌아오지 못함",
+  "cause": "도착 화면 설정 값(site.landing_after_login = 관 코드 MNY)을 소문자로만 바꿔 주소로 씀 — 실제 주소는 /money. 기본 자료(B900)의 값이 MNY 라 새로 설치한 곳은 모두 해당",
+  "evidence": "10/7 site_detail.py D-1d — 고치기 전 로그인 뒤 주소 /mny · 상태 404",
+  "fix": "v10.21 — 관 코드를 주소로 바꾸는 표(GWAN_PATH)를 씀 · ?next= 는 우리 사이트 안의 경로만 따름(https://… · //… 거절) · 시험 3건",
+  "file": "sgb/site/src/app/login/page.tsx"
+ },
+ {
+  "no": "G-136",
+  "area": "사용자 웹",
+  "sev": "하",
+  "what": "매물 상세가 10초 캐시되는 조회로 읽혀 관심 담기 · 문의 가능 여부 · 조회 수가 늦게 반영됨(보는 사람마다 다른 응답인데 공개 응답용 함수를 씀)",
+  "cause": "apiGet(…, 10) — 사람마다 다른 응답은 apiGetPersonal 이어야 함",
+  "evidence": "10/7 상세를 다시 만들며 확인",
+  "fix": "v10.21 — 상세는 캐시 없이 읽고, 제목(메타)과 본문이 한 요청에서 같은 응답을 쓰도록 묶음(조회 수가 두 번 오르지 않게). 문의방(/chat/{id})은 그대로 — 다음 판",
+  "file": "sgb/site/src/app/[gwan]/[id]/page.tsx"
+ },
+ {
+  "no": "G-137",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안의 견본 사진이 5종뿐(자동차 · 노트북 · 실내 · 카페 · 상가)이라 분류와 맞지 않는 사진이 나옴 — 태양광 매물에 상가 사진 등. 사진 귀퉁이에 디자인 시안의 배지 조각이 남아 있음",
+  "cause": "시안에 넣어 둔 사진 14칸이 같은 5장을 돌려 씀",
+  "evidence": "10/7 내장 사진 14칸을 한 장에 모아 확인",
+  "fix": "v10.27 수정(10/8 답 「지금 적용」 · 「코드로 그린 그림」) — 견본 그림 14칸을 분류마다 다른 그림으로(코드로 그림 · 글자 · 상표 · 배지 없음 · 원본 qa/g137/src). 확인: proto_pixel(G-137 그림이 보이는 11장) · 전후 그림",
+  "file": "sgb/spec/proto.html (window.SGB_IMG)"
+ },
+ {
+  "no": "G-138",
+  "area": "시안",
+  "sev": "하",
+  "what": "관 화면 머리줄의 「한국어 ▾」 단추가 세로 87px 로 커져 머리줄 밖으로 나옴 · 누르면 언어 목록이 단추 아래가 아니라 화면 맨 아래(단추에서 834px 아래)에 열림 · 로그인 화면은 제목이 회색, 「로그인」 「사업자로 회원가입」 「성향 분석」 단추가 32px 로 납작하고 글자가 왼쪽. v10.1 시안에도 있던 것",
+  "cause": "① 언어 단추와 로그인 화면이 같은 이름(.lgb · .lgc)을 써서 서로의 스타일을 받음 ② 선택자가 떨어져 나간 스타일 조각(padding:15px 18px;border:1.5px solid var(--bl) …)이 바로 뒤의 .lang{position:relative} 를 삼킴",
+  "evidence": "10/7 상세 화면 그림을 보다가 확인 · proto_lang.py 고치기 전 1 / 13",
+  "fix": "v10.22 — 언어 단추의 이름을 .lngb · .lngc 로, 떨어져 나간 조각을 지움. proto_lang.py 13 / 13 · proto_pixel.py(앞 판과 그림 비교 — 언어 단추가 있는 화면 89장은 머리줄의 그 자리만, 로그인 화면은 원래 모양으로). 조각이 원래 어느 요소의 스타일이었는지는 남아 있지 않음",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-139",
+  "area": "시안",
+  "sev": "하",
+  "what": "축 목록의 강조 배지가 줄을 벗어나 화면 왼쪽 위 구석(8px · 8px)에 찍힘 — 소개창업 인력 「초단기」 2개(공고 · 지원 각각) · 빠른 매칭 「오늘」 2개 · 안심소개 상담 축 「자격 확인」 12개. v10.20 에도 있던 것",
+  "cause": "카드용 스타일 .hot{position:absolute;left:8px;top:8px} 이 .axb.hot 에도 걸림(이름 겹침)",
+  "evidence": "10/7 qa/biz_axes.py 그림 · 요소 위치 측정(position absolute · x 8 · y 8)",
+  "fix": "v10.22 — 강조 배지의 이름을 .axhot 으로(.hot 은 카드 배지의 이름). proto_axis.py F-1 — 강조 배지 16개가 모두 줄 안",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-140",
+  "area": "시안",
+  "sev": "중",
+  "what": "소개창업 인력 · 운영지원 · 정보 축의 줄 단추 22개가 모두 안내 글만 — 상세 화면 0장. 축을 골라도 주소가 #/g/biz 그대로라 바로 가는 주소도 없음(새로 열면 「창업」 축). 10/7 상세 보기 목록표(docs/66 · 68)에 빠져 있었음",
+  "cause": "축 구조를 넣은 판(9/11 · 관축재편 v2.3)의 목적이 목록 · 축 구조 합의였고 상세는 만들지 않음. 10/7 상세 보기 목록표(docs/66 · 68)는 화면을 처음 열린 상태(창업 축)로만 조사해 이 단추들이 빠져 있었음 — G-130 의 22건과 별도",
+  "evidence": "10/7 qa/biz_axes.py — 줄 단추 22개: 화면 이동 0 · 안내 글만 22 · docs/69",
+  "fix": "v10.22 (10/7 지시 「공고 · 자문 서비스 · 정책 · 교육 상세를 만들고 주소도 항목마다 다르게」) — 상세 4종(bjob · bsvc · bpol · bedu · 화면 189 → 193) · 항목별 주소 14개 · 축 · 갈래 주소 7개 · 인력 축을 엶(답 「A-09 회신 완료 — 연다」). proto_axis.py 35 / 35(고치기 전 2 / 19). 실제 웹 · 서버 · DB 에는 세 축이 아직 없음",
+  "file": "sgb/spec/proto.html (axBodyJob · axQuickMatch · axBodyCsl · axBodyInfo)"
+ },
+ {
+  "no": "G-141",
+  "area": "시안",
+  "sev": "하",
+  "what": "소개창업 세 축의 글 — 옛 관 이름 「소개머니」 2곳(+ 창업 축 확인 글의 「소개몰」 1곳) · 지난 날짜 3건(9/14 · 9/20~21 · ~2026-09-30) · 인력 축 안내가 서로 다름(「A-09 회신 뒤에 엽니다」 ↔ 소스 주석 「회신 완료」) · 「지원」 갈래가 「공고」와 같은 4건 · 「창업계획 등록」이 요청 목록으로 감 · 「초단기 급구 보러 가기」가 일반 급구급매 화면으로 감",
+  "cause": "9월 판의 견본 자료 · 문구가 그대로 남음",
+  "evidence": "10/7 qa/biz_axes.py 글 점검 · docs/69 3절",
+  "fix": "v10.22 — 관 이름을 소개장터 · 안심소개로 / 날짜는 오늘 기준으로 계산(공고 D+2 · D+8~9 · 정책 기한 D+8 · D+23 · D+44) / 인력 축을 열고 「회신 뒤」 문구 삭제 / 「지원」 갈래는 내가 소개를 요청한 공고(처음에는 비어 있음) / 「창업계획 등록」→ 소개받기 등록 / 「초단기 급구」→ 이 축의 초단기 공고만. proto_axis.py D · F",
+  "file": "sgb/spec/proto.html (AX.BIZ · AXD)"
+ },
+ {
+  "no": "G-142",
+  "area": "운영 화면",
+  "sev": "하",
+  "what": "운영 「리드 배정」의 「전체」 목록이 느림 — 개발 DB(리드 602건)에서 200줄을 내는 데 2.4초. 자료가 쌓일수록 느려짐(「미배정」 목록은 0.2초)",
+  "cause": "목록 조회가 줄마다 fn_lead_candidates(보낼 수 있는 업체 수)를 계산함 — lead.service.ts 의 eligibleCount",
+  "evidence": "10/7 v10.22 전수 실행에서 화면 시험 srv_lead_ui UI-3-2 가 실패(정해 둔 1.8초 안에 카드가 나오지 않음) → GET /admin/leads?state=ALL 2.33초 · 2.41초 실측",
+  "fix": "v10.27 다시 잼 — 「전체」 0.45초 · 대기 0.32초 · 배정 0.41초(리드 1,013건 · 운영 방식 API). 지금 기준으로 느리지 않아 닫음. 리드가 수천 건이 되면 쪽 나누기(다음 판 후보)",
+  "file": "sgb/src/modules/lead/lead.service.ts · qa/srv_lead_ui.py"
+ },
+ {
+  "no": "G-143",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "매트릭스 엑셀의 「PowerShell 도우미」 시트에 실리는 realcheck 결과가 v10.18 때의 파일 — v10.19 · v10.20 · v10.21 의 엑셀이 그 판의 결과가 아니라 v10.18 의 결과를 실음(통과 17 · 실패 2 는 네 판이 같고, 「마이그레이션 적용 67」 · 「시안 SGB_Prototype_v10_18」 두 줄의 글자가 옛 것)",
+  "cause": "build_xlsx.py 가 결과 파일 이름을 realcheck_ps_v1018.txt 로 고정해 읽음",
+  "evidence": "10/7 v10.22 엑셀 도구를 고치다 확인 · 네 판의 결과 파일을 견줌(통과 · 실패 수 같음 · 두 줄 다름)",
+  "fix": "v10.22 — 이 판의 결과 파일(realcheck_ps_v1022.txt)을 읽음. 문서(docs/63 · 64 · 67)의 PowerShell 수치는 그 판의 실행 기록에서 적은 것이라 맞음",
+  "file": "qa/build_xlsx.py"
+ },
+ {
+  "no": "G-144",
+  "area": "검정 도구",
+  "sev": "중",
+  "what": "킷의 공격 검정(`npm run verify` · `./dev.sh check` · `.\\dev.ps1 check`)이 줄 순서에 따라 「▲뚫림 CF-02 · CG-02 남의 거래로 후기 차단」 2건을 거짓으로 냄 — 10/7 Docker 검정의 두 번째 실행에서 나옴(같은 DB 를 한 번 더 돌리니 0건). 실제 규칙은 정상(당사자가 아닌 회원의 후기는 막힘)",
+  "cause": "attack-check.sh 가 「아무 회원 1명」과 「아무 거래 1건」을 순서 지정 없이 따로 고름 — 고른 회원이 마침 그 거래의 소개자이고 거래가 성사 상태면 정당한 후기라 들어감",
+  "evidence": "10/7 Docker 검정 DB: 고른 회원 1111…(그 거래의 소개자) · 거래 cccc…(성사) · 후기 글 2건이 들어가 있음. 당사자가 아닌 회원으로 넣으면 「성사된 거래에 대해서만 …」 로 막히는 것 확인. attack_pick_test.py 고치기 전 1 / 7",
+  "fix": "v10.22 — 거래를 먼저(순서를 정해) 고르고, 회원은 그 거래의 당사자가 아닌 사람으로 고름. attack_pick_test.py 7 / 7 · 공격 검정 627 / 뚫림 0. 같은 방식(순서 없는 LIMIT 1)으로 고르는 다른 항목은 전부 점검하지 않았음",
+  "file": "sgb/scripts/attack-check.sh · qa/attack_pick_test.py"
+ },
+ {
+  "no": "G-145",
+  "area": "시안",
+  "sev": "하",
+  "what": "소개뱅크몰 「고민별」 화면에서 이미 골라진 갈래 단추(「전체」)를 누르면 아무것도 보이지 않음(화면은 다시 그려지지만 보이는 변화 없음 · 안내 글도 없음). v10.21 에도 같은 동작 — 전수 누르기는 그림의 일련번호가 바뀐 것을 「화면변화」로 세어 무반응 0 으로 나왔음",
+  "cause": "시연 보장(누르면 무엇이든 보인다)이 「변화가 있었는지」를 몰 화면의 글자를 다섯 자마다 하나씩만 보고 판정 — 상품 그림(SVG)의 일련번호(id=\"ar37\" → \"ar40\")가 우연히 걸리면 「변화 있음」으로 보고 안내를 띄우지 않음",
+  "evidence": "10/7 v10.22 전수 누르기 6,121회 중 무반응 1(#/w/IMMUNE 「전체」) — 언어 단추의 이름이 두 글자 길어져 걸리는 자리가 바뀌며 드러남. proto_guard.py 고치기 전 2 / 3(자리를 0 ~ 4자 밀면 5번 중 2번만 안내 · v10.21 시안은 5번 중 0번)",
+  "fix": "v10.22 — 그림의 일련번호는 빼고 모든 글자를 봄. proto_guard.py 3 / 3 · 전수 누르기 무반응 0",
+  "file": "sgb/spec/proto.html (시연 보장 sig)"
+ },
+ {
+  "no": "G-146",
+  "area": "서버 · 사용자 웹",
+  "sev": "중",
+  "what": "소개광장 글 목록 · 글 상세 · 댓글이 작성자 이름 전체(실명)를 내보냄 — 로그인하지 않아도 보이는 화면. 매물 후기 조회는 「김○○」로 가리는데 소개광장만 그대로였음",
+  "cause": "community.service 의 세 조회가 `coalesce(a.name, '(탈퇴)') AS author` — 가리는 단계가 없음. 개발 자료의 계정 이름이 「개인 · 구매자 · 판매자」라 화면에서 드러나지 않았음",
+  "evidence": "10/7 소개뱅크몰 · 소개광장 디자인 적용 조사 중 발견. srv_cmu.py 고치기 전 9 / 40(A-1 ~ A-5 실패 — 응답에 「김가람 · 이서준 · Alex Kim」이 그대로)",
+  "fix": "v10.23 — 목록(GET /community/posts · /community/board) · 글 상세 · 댓글의 작성자를 첫 글자 + OO 로(제시 디자인의 표기). 운영자(ADMIN · SUPER)는 「운영자」, 탈퇴한 사람은 「(탈퇴)」. 운영 검수 큐는 이름 전체 그대로. srv_cmu.py 41 / 41",
+  "file": "sgb/src/modules/community/community.service.ts"
+ },
+ {
+  "no": "G-147",
+  "area": "서버 · 운영 화면",
+  "sev": "중",
+  "what": "소개뱅크몰은 운영자가 화면으로 상품을 등록 · 수정하거나 배송 상태(송장 · 배송 완료)를 바꾸는 길이 없음 — 상품은 시드 자료로만 들어가고, 배송 상태는 시험이 DB 에 직접 넣음",
+  "cause": "hlt_products 에 쓰는 API(INSERT · UPDATE)가 없고(재고 차감 1곳뿐), hlt_shipments 에 넣는 API 도 없음. 운영 화면에는 「소개뱅크몰 정산」(반품 · 정산 · 수수료율 보기)만 있음",
+  "evidence": "10/7 조사 — src 전체에서 hlt_products INSERT 0건 · hlt_shipments INSERT 0건 · web/src 에 상품 관리 화면 없음. 정산 조건(배송 완료 + 7일)에 운영 경로로는 닿지 못함",
+  "fix": "v10.26 상품 등록 · 수정(운영 「소개몰 상품」) · v10.28 배송 상태 입력(운영 「소개몰 주문」 · 발송 처리 · 배송 완료 · 송장 고침 · D035). 확인: fix_1028 A · fix_1028_ui A",
+  "file": "sgb/src/modules/health/health-shop.controller.ts"
+ },
+ {
+  "no": "G-148",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "api_smoke.py 가 없는 표 이름(community_posts)으로 글 번호를 찾음 — 실제 표는 posts. 글 상세 경로(/community/posts/:id)를 유효한 번호 없이 돌았을 수 있음",
+  "cause": "표 이름을 잘못 적음 — psql 오류가 빈 값으로 넘어가 조용히 지나감",
+  "evidence": "10/7 조사 중 발견(api_smoke.py 14행)",
+  "fix": "v10.23 — `select id from posts where state='PUBLISHED' limit 1` 로 고침(킷의 qa/api_smoke.py 도 같이). 서버 결함은 아님",
+  "file": "qa/api_smoke.py"
+ },
+ {
+  "no": "G-149",
+  "area": "사용자 웹",
+  "sev": "중",
+  "what": "(일부 고침 · 나머지 열려 있음) 실제 웹에 로그아웃 단추가 어디에도 없음 — 로그아웃 서버 동작(lib/session.ts 의 logout)은 있는데 부르는 화면이 없음. 공통 머리줄은 로그인해도 「로그인 · 회원가입」 그대로",
+  "cause": "머리줄을 모든 사람에게 같은 것으로 그려(쿠키를 읽지 않음) 로그인 여부를 반영하지 않았고, 로그아웃 단추를 둔 화면도 없음",
+  "evidence": "10/7 소개광장 비교 중 발견 — site/src 전체에서 logout 을 부르는 곳 0건(정의만 있음)",
+  "fix": "v10.23 — **소개광장의 새 머리줄에만** 넣음: 로그인하면 「나의공간 · 로그아웃」(10/7 답 「제안대로」). 그 밖의 화면(공통 머리줄 · 메인)은 그대로 — 열려 있음(다른 부분은 현 상태 유지 지시 · 결정 필요)",
+  "file": "sgb/site/src/components/b2/AuthArea.tsx"
+ },
+ {
+  "no": "G-150",
+  "area": "시안",
+  "sev": "하",
+  "what": "시안의 소개광장 목록이 두 벌이었음 — 머리줄 메뉴 · 메인의 링크는 commu(SB-HOM-ETC-020 · 탭이 동작)를, 주소 #/community 는 cmu(SB-HOM-CMU-010 · 탭이 눌러도 그대로)를 엶. 같은 주소인데 들어온 길에 따라 화면이 달랐음",
+  "cause": "화면 묶음 ②에 옛 화면(scCommunity)과 새 화면(scCmu)이 같이 남아 있었음",
+  "evidence": "10/7 시안 구조 조사 — data-go=\"commu\" 17곳 · 길 목록에 /community 가 두 줄(먼저 걸리는 것은 cmu)",
+  "fix": "v10.23 — 두 화면 키가 같은 목록(제시 디자인)을 그림. proto_diff.py 「목록 두 화면(cmu · commu)은 같은 화면」 통과",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-151",
+  "area": "서버 · 문서",
+  "sev": "중",
+  "what": "v10.23 에서 더한 길 GET /community/board 를 ① 화면 등록부(spec/screens.json)에 연결하지 않았고 ② 응답 모양(spec/response_samples.json)도 넣지 않아 통합 검정(npm run verify)이 실패(종료 코드 1) — ① 「생성 파일 드리프트: 레지스트리에 없는 API 1건」 ② 「문서 정합성: 구현된 API 에 응답 스키마 — 통과 25 / 실패 1」. API 문서(06_openapi · 07_API스키마리스트)가 419 로 남음",
+  "cause": "새 길을 만들 때 등록부 연결과 응답 표본을 넣는 일을 빠뜨림(서버 코드 · 시험만 고침). 따로 돌린 srv_cmu.py 는 이 단계를 보지 않음. ①을 고친 뒤에야 ②가 드러남(앞 단계에서 멈춰 있었음)",
+  "evidence": "10/7 v10.23 전수 검정 — 첫 실행 verify: exit=1(불변식 289/0 · 공격 627/0 인데 「전체 검증 실패」 · 「!! 레지스트리에 없는 API 1건 — GET /api/v1/community/board」) · 둘째 실행 exit=1(「FAIL 구현된 API 에 응답 스키마 → get /api/v1/community/board」)",
+  "fix": "v10.23 — spec/screens.json 의 소개광장 목록(SB-HOM-CMU-010)에 연결 · spec/response_samples.json 에 실제 응답 표본(작성자 「김OO」) 추가. 병합 「스키마 있음 420 · 미정의 0」 · 문서 정합성 26 / 0 · 통합 검정을 처음부터 다시 돌려 통과. 서버 동작은 바뀌지 않음(문서 자료 2개)",
+  "file": "sgb/spec/screens.json · sgb/spec/response_samples.json"
+ },
+ {
+  "no": "G-152",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "시험 도구 srv_proto.py 에 시안 파일 이름(SGB_Prototype_v10_22.html)이 적혀 있어, 판을 올리면 없는 파일(404)을 열고 15초 뒤 멈춤(시안 서버 연동 시험의 실제 API 구간 21건이 돌지 않음)",
+  "cause": "판을 올릴 때마다 이 줄을 손으로 고쳐 왔고 v10.23 에서 빠뜨림",
+  "evidence": "10/7 v10.23 전수 검정 2구간 — srv_proto: TimeoutError(wait_for_function 15초) · 5174/proto/…v10_22.html → 404 · …v10_23.html → 200",
+  "fix": "v10.23 — 이름을 적어 두지 않고 킷의 site/public/proto 에서 읽음(파일이 하나가 아니면 멈춤). 다시 돌려 통과. 서버 · 시안 결함 아님",
+  "file": "qa/srv_proto.py"
+ },
+ {
+  "no": "G-153",
+  "area": "서버 · 검정",
+  "sev": "하",
+  "what": "v10.23 첫 구현이 소개광장 조회 5건(목록 · 쪽 목록 2 · 글 상세 · 댓글)을 조립식 SQL(작성자 칸 · 조건을 상수로 빼서 끼움)로 써서, 통합 검정의 「SQL 대조」가 그 5건을 건너뜀 — 확인 806 → 803 · 건너뜀 31 → 36. 동작 결함은 아님(열 · 표 이름이 바뀌어도 그 검정이 잡지 못하게 됨)",
+  "cause": "같은 글을 한 곳에 두려고 상수로 뺐는데, scripts/check-sql.js 는 `${}` 가 든 SQL 을 조각을 알 수 없어 건너뜀",
+  "evidence": "10/7 v10.23 전수 검정 — 통합 검정 셋째 실행의 「SQL 대조: 확인 803 · 건너뜀 36」을 앞 판(806 · 31)과 견주다 발견. qa/srv_cmu.py E-4 를 먼저 더해 실패 확인(조립식 5건)",
+  "fix": "v10.23 — 5건을 고정 글로 풀어 씀(동작은 같음 · srv_cmu 42 / 42 · srv_cmu_ui 61 / 61 다시 통과). SQL 대조 확인 808 · 통과 808 · 건너뜀 31(앞 판 806 + 새 조회 2)",
+  "file": "sgb/src/modules/community/community.service.ts"
+ },
+ {
+  "no": "G-154",
+  "area": "시안 · 모양",
+  "sev": "중",
+  "what": "시안의 작은 링크 단추(a.bo.sm · a.bp.sm)가 줄 안에서 막대처럼 늘어남 — 상담 업종 줄 22곳(「상담 신청」 195px) · 알림 화면 3곳 · 소개자 홈 1곳. 단추(button)는 고쳐져 있었고 링크(a)만 빠져 있었음",
+  "cause": "이름이 겹침 — `.sm` 이 3칸 격자(작은 화면용 배치) 규칙으로도 쓰여, 링크로 만든 작은 단추가 격자 칸이 됨. 앞 판에서 button.sm 만 따로 눌러 둠",
+  "evidence": "10/7 v10.24 생활금융 조사(design_1007/mal_fin/survey.json) — 상담 줄의 「상담 신청」 폭 195px · proto_fin.py B-3(고치기 전 실패) · 두 판을 화면마다 찍어 견줌(/tmp/pv_pixel.py)",
+  "fix": "v10.24 — `a.bo.sm, a.bp.sm{display:inline-flex;…;width:max-content}`. 상담 줄 88px. 10/7 답 「같이 고침」에 따라 알림 3 · 소개자 홈 1도 같이(proto_fin.py G-1 · G-2). 앞 판과 그림이 달라진 화면: malcsl · myntf · introhome(proto_pixel.py)",
+  "file": "SGB_Prototype_v10_24.html (qa/apply_proto_v1024.py)"
+ },
+ {
+  "no": "G-155",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "새 시험 srv_fin.py · srv_fin_ui.py 가 상담 신청을 넣고 종료하지 않아, 시연용 업체(intro@x.com)에 미열람 배정이 남음. 다음에 도는 파트너 시험(srv_ptn.py)이 목록의 앞 3건을 「열람」만 하고 연락처는 읽지 않아, 남아 있던 신청 1건이 감시 뷰 v_lead_contact_unlogged(열람했는데 연락처 조회 기록이 없는 건)에 잡힘 → 전수 검정 첫 실행 srv_lead 142 / 143(G-V)",
+  "cause": "web_mal.py 는 시험 신청을 운영 API 로 종료해 왔는데 새 시험 둘에는 그 뒷정리를 넣지 않음. v10.24 전에는 시연용 업체가 「청소」만 받아 남는 신청이 없었음",
+  "evidence": "10/7 v10.24 전수 검정 2구간 첫 실행 — srv_lead: 「FAIL G-V v_lead_contact_unlogged = 0  1」 · 그 리드(10ad4e26…)는 srv_fin 의 「생활금융 점검(v10.24) — 이사 견적」 · 배정 열람 시각 = srv_ptn 실행 중",
+  "fix": "v10.24 — 두 시험이 끝에 운영 API(POST /admin/leads/{id}/close)로 종료하고 그 결과를 점검 항목으로 둠(srv_fin G-4 · srv_fin_ui F-3). 남아 있던 5건은 제품의 길로 정리(업체가 연락처 조회 → 기록 생김 · 운영 종료). 다시 돌려 srv_lead 143 / 143. 제품 결함 아님",
+  "file": "qa/srv_fin.py · qa/srv_fin_ui.py"
+ },
+ {
+  "no": "G-156",
+  "area": "시안 · 모양",
+  "sev": "하",
+  "what": "시안의 입력 칸(.inp)에 모양이 정해져 있지 않아 브라우저 기본 모양(높이 21px · 테두리 얇음)으로 보임 — 상담 신청서 · 운영 「월 노출료 기준 금액」. 상담 신청서 상자는 안쪽 여백 0",
+  "cause": "v10.11 · v10.12 에서 화면을 더할 때 `.inp` 를 쓰면서 스타일은 넣지 않음(다른 화면은 `.fi` 를 씀)",
+  "evidence": "10/7 v10.24 생활금융 조사 — 신청서 입력 칸 높이 21px · proto_fin.py D-2(고치기 전 실패) · 두 판 그림 비교에서 admptnw 가 달라짐",
+  "fix": "v10.24 — `.cslf .inp` 높이 40px · 둥근 테두리 · 초점 표시, 상자 여백. 운영 「월 노출료 기준 금액」도 같이(답 「같이 고침」) — 「기준 금액 저장」 단추가 두 줄로 꺾이던 것도 고침(proto_fin.py G-3)",
+  "file": "SGB_Prototype_v10_24.html (qa/apply_proto_v1024.py)"
+ },
+ {
+  "no": "G-157",
+  "area": "시안 · 기능",
+  "sev": "중",
+  "what": "시안 안심소개의 세 축(기계 · 설비 / 부동산 / 생활 · 금융 상담)에 주소가 없어, 축을 골라도 주소가 `#/g/mal` 그대로 — 새로 고침 · 뒤로 가기 · 주소 붙여 넣기를 하면 늘 첫 축으로 돌아감. 상담 업종의 상세 화면도 없었음(목록 → 바로 신청서)",
+  "cause": "소개창업의 축은 v10.22 에서 주소를 받았고 안심소개는 그때 범위 밖이었음",
+  "evidence": "10/7 지시 「생활금융 부분(리스트 및 상세 보기 · 상담하기) 작동 가능하게」 · proto_fin.py A-1 ~ A-5 · C-1 ~ C-8(고치기 전 0 / 5 에서 멈춤)",
+  "fix": "v10.24 — 축 주소 `#/g/mal` · `#/g/mal/realty` · `#/g/mal/consult` · 새 화면 malcsld(SB-MAL-CSL-025 · `#/mal/consult/{코드}`) · 신청서 `…/apply` · 돌아가기는 상담 축으로",
+  "file": "SGB_Prototype_v10_24.html (qa/apply_proto_v1024.py)"
+ },
+ {
+  "no": "G-158",
+  "area": "개발 환경",
+  "sev": "중",
+  "what": "새로 설치한 개발 · 시연 환경에서 상담 업종 20종 가운데 19종이 「준비 중」(받는 시연용 업체가 「청소 · 서울 금천구」 1건뿐) — 상담하기를 끝까지 눌러 볼 수 없었고, 법률 · 세무는 게재 0곳",
+  "cause": "처음 준비(local-setup.sh)가 시연용 업체에 청소 서비스 1건만 넣음. 규칙(받을 인증업체 0곳이면 신청을 막음)은 맞게 동작한 것",
+  "evidence": "10/7 생활금융 조사 — GET /consult/categories 의 partnerCount: 청소 1 · 나머지 0 · srv_fin.py F-4(고치기 전 실패)",
+  "fix": "v10.24 — 개발 · 시연용 시드 scripts/seed-consult-demo.sql(리드형 20업종 서비스 · 자격 심사 기록 · 지역 서울 · 경기 · 인천 / 법률 · 세무 시험용 사무소 1곳씩). 규칙은 바꾸지 않음. 운영 적용 길은 부르지 않음(srv_fin.py F-8). 시연용 업체가 1곳이라 법률 · 세무는 1곳씩(2곳씩은 업체 1곳 추가 필요)",
+  "file": "sgb/scripts/seed-consult-demo.sql · sgb/scripts/local-setup.sh · docker/bootstrap.sh"
+ },
+ {
+  "no": "G-159",
+  "area": "검정 도구",
+  "sev": "하",
+  "what": "옛 시험 3개가 옛 신청서 주소(/mal/consult/{코드}) · 줄에 링크 하나라는 가정에 묶여 있어 v10.24 에서 멈춤 — srv_lead_ui.py(비회원 신청: 입력 칸을 30초 기다리다 멈춤 · 전수 검정 첫 실행에서 결과 없음) · web_mal.py(줄 단추 점검) · srv_consult_ui.py(법률 줄의 링크 수)",
+  "cause": "신청서 주소를 `/apply` 로 옮기고 줄에 「상세 보기」 · 이름 링크를 더한 것을 옛 시험에 반영하지 않음(web_mal 은 반영 전 비교표 7절에 적어 두었고, 나머지 둘은 돌려 보고 앎)",
+  "evidence": "10/7 v10.24 — 전수 검정 2구간 첫 실행 srv_lead_ui: TimeoutError(input[name=name]) · 따로 돌린 web_mal 1건 실패 · srv_consult_ui UI-5-2",
+  "fix": "v10.24 — 세 시험을 새 주소 · 새 단추에 맞춤(web_mal 255 / 255 · srv_consult_ui 40 / 40 · srv_lead_ui 22 / 22). srv_consult_ui 가 중간에 멈추며 남긴 시험 사무소 1건은 운영 API 로 종료. 제품 결함 아님",
+  "file": "qa/srv_lead_ui.py · qa/web_mal.py · qa/srv_consult_ui.py"
+ },
+ {
+  "no": "G-160",
+  "area": "시안 · 기능",
+  "sev": "하",
+  "what": "시안의 새 화면(업종 상세 malcsld)을 주소 없이 열면(점검 도구 · 화면 목록에서 화면만 여는 경우) 「없는 업종입니다」 안내만 나옴 — 확인 받은 미리보기 시안에 있던 것",
+  "cause": "주소에서 업종 코드를 읽는데, 코드가 없을 때의 기본값을 두지 않음(소개창업 축 상세 4종은 첫 항목을 보여 줌)",
+  "evidence": "10/7 v10.24 — 앞 판과 글자 비교(proto_diff.py)를 고치다 발견 · proto_fin.py C-8 을 먼저 더해 실패 확인",
+  "fix": "v10.24 — 주소에 업종이 없으면 받는 중인 첫 업종의 상세를 보임. 주소에 없는 코드가 적혀 있으면 전과 같이 「없는 업종」 안내(C-7). 주소로 여는 모양은 미리보기와 같음",
+  "file": "SGB_Prototype_v10_24.html (qa/apply_proto_v1024.py)"
+ },
+ {
+  "no": "G-161",
+  "area": "사용자 웹 · 검정",
+  "sev": "하",
+  "what": "사용자 웹이 서버 자료를 60초 기억한 뒤, 오래 열지 않은 쪽을 처음 여는 사람에게는 예전 자료를 한 번 보여 주고 뒤에서 새로 받음 — 업체 · 사무소를 넣고 뺀 직후 처음 여는 화면의 인증업체 수 · 받는 지역 · 사무소 목록이 API 와 다를 수 있음(다시 열면 맞음). 전수 검정 첫 실행 srv_fin_ui 25 / 29 가운데 2건(D-3 · D-4)이 이것 · 1건(D-11b)은 G-159 의 남은 사무소 · 1건(Z-0)은 G-94. 열려 있음(동작 방식 — 바꿀지 결정 필요)",
+  "cause": "Next 의 자료 기억 방식(revalidate 60 — 기한이 지나도 첫 요청에는 기억해 둔 것을 주고 뒤에서 갱신). 상담 신청 자체는 서버가 다시 판정하므로 잘못 전달되지는 않음",
+  "evidence": "10/7 v10.24 전수 검정 2구간 첫 실행 — 청소 상세가 「받는 지역 3곳」(API 는 5곳) · 견줄 쪽을 먼저 한 번씩 열어 둔 뒤 다시 돌려 29 / 29 / 10/8 확장 점검 — 같은 동작이 「2시간 전에 내려간 매물이 비로그인 목록(/money/list)에 한 번 더 보이고, 누르면 없는 주소(404)」로 나타남(모든 페이지 상호 확인 · 링크 1,5xx개 가운데 1개)",
+  "fix": "v10.24 — 시험이 견줄 쪽을 먼저 열어 새 자료를 받게 함(srv_fin_ui.py). 화면 동작은 그대로 — 숫자를 늘 최신으로 보이게 하려면 그 쪽만 기억하지 않게 바꿀 수 있음(서버 부담이 조금 늘어남)",
+  "file": "qa/srv_fin_ui.py (화면: sgb/site/src/lib/api.ts 의 기억 시간)"
+ },
+ {
+  "no": "G-162",
+  "area": "시안 · 표시",
+  "sev": "중",
+  "what": "소개몰의 장바구니 · 주문서 · 주문 완료 · 내 주문 · 주문 상세 · 취소/반품 신청 — 작은 상품 그림 자리에 「undefined」가 글자로 찍힘(7곳 · v10.24 까지)",
+  "cause": "상품 자료에 그림 글자(ic) 값이 없는데 그 값을 그대로 이어 붙임",
+  "evidence": "10/7 v10.25 미리보기 점검 — proto_mall.py S-5 를 먼저 더해 실패 확인(20화면의 글자에 undefined · NaN 이 없어야 함)",
+  "fix": "v10.25 — 그 자리에 상품 그림을 칸 크기(60px)로 그림(thIc). 상품을 못 찾으면 빈 칸",
+  "file": "SGB_Prototype_v10_25.html (qa/apply_proto_v1025.py)"
+ },
+ {
+  "no": "G-163",
+  "area": "시안 · 표시",
+  "sev": "하",
+  "what": "소개몰 화면의 경로 줄 · 창 제목 · 안내 글에 옛 이름 「건강몰」이 남아 있음(69곳 — 20개 주소) · 본체 화면에는 「소개머니」 32곳 · 안심소개를 뜻하던 옛 「소개몰」 46곳",
+  "cause": "9/26 의 이름 변경(건강몰 → 소개뱅크몰 · 소개몰 → 안심소개 · 소개머니 → 소개장터) 때 머리줄 메뉴만 바뀌고 본문 글은 남음",
+  "evidence": "10/7 v10.25 — proto_mall.py N-2 · N-3 · S-2 를 먼저 더해 실패 확인",
+  "fix": "v10.25 — 이름 규칙 4가지를 순서대로 입힘(옛 소개몰 → 안심소개 · 소개머니 → 소개장터 · 건강몰 → 소개몰 · 소개뱅크몰 → 소개몰). 그림 조각 안의 글자와 제목의 판 이력은 그대로. 앞 판과 견주면 이름 말고는 본체 194장이 글자 · 모양 모두 같음(proto_diff · proto_pixel)",
+  "file": "SGB_Prototype_v10_25.html (qa/apply_proto_v1025.py 0절)"
+ },
+ {
+  "no": "G-164",
+  "area": "시안 · 기능",
+  "sev": "중",
+  "what": "소개몰 안에서 머리줄의 「무료 회원가입」 · 돋보기를 누르면 소개몰의 「없는 주소입니다」가 뜨고, 「이용안내」는 본체의 이용안내가 아니라 소개몰의 이용안내가 열림(v10.24 에도 있던 것). v10.25 에서 두 관 전용 머리줄 · 바닥줄을 쓰면서 언어 단추 · 장바구니는 무반응, 바닥의 약관 · 고객센터 · 소개받기 · 파트너센터 · 나의공간도 「없는 주소」, 사회관계망 단추는 엉뚱한 안내가 뜸",
+  "cause": "소개몰은 겹쳐 뜨는 틀이라 제 누르기 처리기가 본체의 화면 열쇠(join · src · guide …)를 제 주소로 알고 처리 · 본체의 처리기는 소개몰 안의 누르기를 통째로 건너뜀 · 본체의 알림은 소개몰 뒤에 가림",
+  "evidence": "10/8 — 머리줄 · 바닥줄의 누를 수 있는 것 30개를 하나씩 눌러 실측(고치기 전: 13종이 엉뚱한 곳 · 2종 무반응 · 3종 엉뚱한 안내). proto_mall.py H-5 를 먼저 더해 실패 확인",
+  "fix": "v10.25 — 머리줄 · 바닥줄(본체 것)의 누르기는 본체가 처리(소개몰이 닫히고 본체의 그 화면으로) · 장바구니는 소개몰의 장바구니로 · 언어를 고르면 머리줄만 다시 그림(적던 글이 지워지지 않게) · 본체 알림은 소개몰이 열려 있으면 소개몰의 알림 칸에. 소개몰 본문의 본체 화면 열쇠(나의공간 · 전체 목록)도 같은 길",
+  "file": "SGB_Prototype_v10_25.html (qa/apply_proto_v1025_x.py ①)"
+ },
+ {
+  "no": "G-165",
+  "area": "서버 · 약관",
+  "sev": "중",
+  "what": "약관 3종의 본문에 옛 관 이름이 남아 있음(4줄 — 「소개머니 · 소개몰 · 소개창업 회사는 중개만」처럼 지금은 다른 관을 가리키는 이름) · 판매 약관의 배송 조항이 「3만원 이상 무료 · 미만 3,000원」",
+  "cause": "9/26 의 이름 변경(C990)이 약관 본문은 「개정 절차로 따로」라며 남겨 둠 · 배송비는 10/8 결정(전 상품 무료)으로 바뀜",
+  "evidence": "10/7 ~ 10/8 v10.25 — srv_mall.py N-2 · S-절을 먼저 더해 실패 확인",
+  "fix": "v10.25 — D024 가 약관 3종의 글을 고침: 이미 발행된 DB 에서는 새 버전으로 발행(옛 버전은 보관 · 회원이 새 버전에 다시 동의해야 「동의함」으로 집계 — 동의하지 않아도 이용은 막지 않음), 발행 전(초안)이면 본문만 고침(9/30 서버가 이 경우 — 리허설에서 확인). 판매 약관(HLT_SALE)에 「배송비는 받지 않습니다(전 상품 무료)」 · 환불 표를 한 줄로",
+  "file": "sgb/prisma/migrations/D024_gwan_hlt_rename_mall/migration.sql"
+ },
+ {
+  "no": "G-166",
+  "area": "사용자 웹 · 표시",
+  "sev": "하",
+  "what": "없는 주소로 가면 영어 기본 화면(「404 This page could not be found.」)이 나옴 — 소개몰만이 아니라 사이트 전체",
+  "cause": "없는 주소 화면(not-found)을 만들어 두지 않아 틀의 기본 화면이 나옴",
+  "evidence": "10/7 v10.25 — 시안의 「없는 주소입니다」와 견주다 발견. site_mall.py E-1 을 먼저 더해 실패 확인",
+  "fix": "v10.25 — 한글 화면(「없는 주소입니다」 · 「홈으로」) · 창 제목 「없는 주소 · 소개뱅크」 · 응답 코드는 404 그대로",
+  "file": "sgb/site/src/app/not-found.tsx"
+ },
+ {
+  "no": "G-167",
+  "area": "시안 · 점검 도구",
+  "sev": "하",
+  "what": "시안 안의 자가 점검(window.__hltcheck — 소개몰 화면마다 공통 규칙을 보는 도구)이 낡아 13항목 가운데 6항목이 늘 실패(v10.24) — 옛 머리줄(.hlt-hd)과 빈칸 표기([　　　])를 찾음",
+  "cause": "9/17 에 소개몰의 머리줄을 본체 것으로 바꾼 뒤 점검 규칙을 고치지 않음. 이 도구를 부르는 시험이 없어 드러나지 않음",
+  "evidence": "10/8 — v10.24 시안과 v10.25 시안에서 직접 불러 봄(v10.24: 6 / 13 실패 · 고치기 전 v10.25: 10 / 13 실패). proto_mall.py X-13 을 먼저 더해 실패 확인",
+  "fix": "v10.25 — 지금의 틀에 맞춤: 두 관 전용 머리줄 · 지금 메뉴 표시 · 장바구니 · 바닥줄 · 사업자등록번호 한 번 · 고지 두 가지 · 임시 값 없음 · 입력 이름 · 중복 id · 없는 링크(본체의 화면 열쇠 포함) · 본문 클래스 접두 · 그림 설명 — 14항목. 소개몰 21화면 모두 통과 · 시험이 부름(X-13)",
+  "file": "SGB_Prototype_v10_25.html (qa/apply_proto_v1025_x.py)"
+ },
+ {
+  "no": "G-168",
+  "area": "사용자 웹 · 표시",
+  "sev": "하",
+  "what": "소개몰의 날짜 표기가 시안과 다름 — 실제 웹 「2026. 10. 3.」 「2026. 10. 3. AM 12:38」 / 시안 「2026.10.03」",
+  "cause": "브라우저의 지역 표기(toLocaleDateString)를 그대로 씀",
+  "evidence": "10/8 — 시안에 단계별 시각을 넣으며 견주다 발견. site_mall.py V-12b 를 먼저 더해 실패 확인",
+  "fix": "v10.25 — 소개몰의 날짜 · 시각을 시안대로 「2026.10.03」 「2026.10.03 14:20」(한국 시각). 파트너센터 등 다른 화면의 표기는 그대로",
+  "file": "sgb/site/src/components/health/util.ts"
+ },
+ {
+  "no": "G-169",
+  "area": "서버 · 자료",
+  "sev": "하",
+  "what": "청약철회 규칙 DEVICE 의 이름이 「의료기기 · 건강기기」 — 의료기기는 팔지 않기로 했는데(10/8) 주문 상세 · 이용안내가 의료기기를 파는 것처럼 읽힘",
+  "cause": "규칙 이름이 품목 정책보다 먼저 만들어짐",
+  "evidence": "10/8 — 시안의 이용안내에 「철회 제한」 확정 문구를 넣으며 발견. srv_mall.py K-4 · site_mall.py V-15 를 먼저 더해 실패 확인",
+  "fix": "v10.25 — D025 가 규칙 이름을 「건강기기」로(규칙 내용 — 7일 · 사용 흔적 — 은 그대로) · 이용안내의 철회 제한 글도 「건강기기」",
+  "file": "sgb/prisma/migrations/D025_hlt_sale_scope_free_ship/migration.sql · sgb/site/src/app/health/guide/page.tsx"
+ },
+ {
+  "no": "G-170",
+  "area": "시험 도구 · 운영 화면 전수",
+  "sev": "중",
+  "what": "운영 화면 전수 확인(crawl_admin_final.py)이 위 탭을 「글자가 들어 있는 첫 단추」로 눌러 「광고」 탭 대신 「광고 과금」을, 「감사」 탭 대신 「표본 감사」를 열었음 — 두 탭은 지금까지 실제로 열어 보지 않은 채 통과로 적혔음",
+  "cause": "Playwright 의 has_text 는 부분 일치",
+  "evidence": "10/8 버튼 체크 도구(btn_bo.py)를 만들며 발견 — 탭 41개 가운데 이름이 다른 탭 이름에 들어 있는 것 2개",
+  "fix": "10/8 — 탭 · 하위 탭을 순서 번호로 누르게 고침. 두 탭을 포함해 다시 돌림(오류 0)",
+  "file": "qa/crawl_admin_final.py"
+ },
+ {
+  "no": "G-173",
+  "area": "소개광장 · 서버 + 사용자 웹",
+  "sev": "상",
+  "what": "글쓴이가 지운 글이 주소(/community/{id})를 알면 누구에게나 제목 · 본문 · 댓글까지 그대로 보임. 검수 중이라 남에게 안 보이던 글도 지우는 순간 공개됨",
+  "cause": "글 상세 조회가 「가려진 글(HIDDEN)」 「검수 중(PENDING)」만 가리고 「지운 글(DELETED)」은 가리지 않음",
+  "evidence": "db_link.py C-6b · flow_plaza.py P3-19 — 지운 글 주소가 200 으로 열리고 제목 · 본문이 보임. 목록 · 검색에서는 빠짐",
+  "fix": "v10.26 수정 — 지운 글은 서버가 제목 · 본문 · 글쓴이를 내보내지 않고 「작성자가 지운 글입니다」 표시와 댓글만 줌(조회 수도 올리지 않음) · 사용자 웹 글 상세는 「지운 글」 자리와 읽기 전용 댓글을 그림. 확인: fix_1026 G-173-0 ~ 5 · db_link C-6b · flow_plaza P3-19",
+  "file": "sgb/src/modules/community/community.service.ts:116-156 · sgb/site/src/app/community/[id]/page.tsx"
+ },
+ {
+  "no": "G-177",
+  "area": "운영 화면 · 검수 큐",
+  "sev": "상",
+  "what": "운영 화면 「검수 큐」가 늘 「대기 중인 검수 건이 없습니다」로 보임 — 같은 때 서버는 대기 건을 돌려주고 있음. 운영자가 화면에서 매물 · 요청을 승인 · 반려할 수 없음(지금까지의 시험은 승인을 API 로 했음)",
+  "cause": "화면은 응답의 items 를 읽는데 서버는 목록(배열)을 그대로 줌",
+  "evidence": "flow_trade.py T3-6 · T5-5 — 화면 0건 · 같은 때 GET /admin/reviews 22건. 10/8 직접 확인: 응답이 배열 50건",
+  "fix": "v10.26 수정 — 검수 큐 응답을 화면이 읽는 모양({items, nextCursor})으로 맞춤(50건씩 · 다음 쪽 표시). 확인: fix_1026 G-177-1 ~ 3(화면에서 승인) · flow_trade T3-6 · 7 · T5-5 · 6",
+  "file": "sgb/web/src/app/admin/ReviewQueue.tsx:38-41 · sgb/src/modules/review/review.controller.ts:42"
+ },
+ {
+  "no": "G-178",
+  "area": "운영 화면 · 신고 처리 · 이벤트 · 수집 관리",
+  "sev": "상",
+  "what": "운영 화면 세 곳의 처리 단추가 눌러도 「처리하지 못했습니다」 — 「신고 처리」(처리 · 기각), 「이벤트」(상태 바꾸기 · 지급 처리), 「수집 관리」(쓰기 전부). 서버가 403 으로 거절함",
+  "cause": "이 세 화면만 공용 호출 함수(api)를 거치지 않고 fetch 로 바로 보내 로그인 토큰(Authorization)이 빠짐",
+  "evidence": "flow_trade.py T7-6(403) · link_check.py A-12(직접 fetch 5곳: ReportQueue.tsx:50 · Events.tsx:37, 51 · Collect.tsx:43) · 토큰 없는 요청 403 직접 확인",
+  "fix": "v10.26 수정 — 신고 처리 · 이벤트 · 수집 관리의 요청 5곳을 공용 호출 함수(api)로 바꿔 로그인 토큰이 실림. 운영 화면의 직접 fetch 0곳. 확인: fix_1026 G-178-1 ~ 4 · flow_trade T7-6 · link_check A-12",
+  "file": "sgb/web/src/app/admin/ReportQueue.tsx · Events.tsx · Collect.tsx"
+ },
+ {
+  "no": "G-182",
+  "area": "소개몰 · 주문서",
+  "sev": "상",
+  "what": "상품 상세의 「바로구매」로 주문한 뒤 결제 화면에서 「← 뒤로」를 누르면 주문서에 같은 상품이 다시 나오고, 거기서 결제 단추를 누르면 같은 주문이 하나 더 만들어짐(재고도 한 번 더 줄어듦)",
+  "cause": "주문서가 화면이 들고 있던 장바구니 내용을 그대로 다시 보냄 · 서버는 같은 주문을 막지 않음(G-171)",
+  "evidence": "flow_mall.py M5-4 · M5-5 — 두 번 실행 모두 재현(주문 2건 · 재고 28 → 26)",
+  "fix": "v10.26 수정 — 주문서의 주문은 서버가 같은 거래 안에서 내 장바구니와 견줘 비우고(품목 · 수량이 다르면 409 「장바구니가 바뀌었습니다」), 주문서는 열릴 때 지금 장바구니를 다시 읽음 → 「← 뒤로」 · 브라우저 뒤로 가기 뒤에 같은 주문이 또 만들어지지 않음. 확인: fix_1026 G-182-1 ~ 8 · flow_mall M5-4 · 5",
+  "file": "sgb/site/src/components/health/CartAdd.tsx:35 · OrderForm.tsx:32-37 · site/src/app/health/order/pay/page.tsx:39"
+ },
+ {
+  "no": "G-174",
+  "area": "외부 연동 · 결제 키 이름",
+  "sev": "중",
+  "what": "운영 화면 「외부 연동」과 설치 절차서(docs/26)는 결제 키 이름을 PG_SECRET_KEY 로 안내하는데 서버가 읽는 이름은 TOSS_SECRET_KEY — 안내대로 넣으면 결제가 계속 「시험 결제」로 남음",
+  "cause": "연동 표의 키 이름(integrations.secret_key_name)이 어댑터를 만들기 전 값 그대로",
+  "evidence": "link_check.py D-3 — 연동 7건 가운데 PG 만 불일치",
+  "fix": "v10.26 수정 — 마이그레이션 D026 이 연동 표의 결제 키 이름을 TOSS_SECRET_KEY 로 고침 · 설치 절차서(docs/26) 한 줄 수정. 확인: fix_1026 G-174-1 · 2 · link_check D-3",
+  "file": "sgb/prisma/migrations/B900_reference_data · sgb/docs/26_환경설치절차서.md:236 · sgb/src/modules/billing/payment.provider.ts:543"
+ },
+ {
+  "no": "G-179",
+  "area": "사용자 웹 · 결제 수단",
+  "sev": "중",
+  "what": "결제 수단 화면(/my/payment)에서 카드를 등록해도 화면은 「등록된 결제 수단이 없습니다」 그대로 · 단추는 「처리 중…」에서 멈춤(DB 에는 등록됨)",
+  "cause": "화면은 registered · brand · last4 를 읽는데 서버는 cardCompany · cardLast4 를 줌 · 성공 뒤 「처리 중」을 풀지 않음",
+  "evidence": "flow_biz.py B1-5 · 소스 직접 확인",
+  "fix": "v10.26 수정 — 결제 수단 화면이 서버의 항목 이름(cardCompany · cardLast4)을 읽고, 등록 뒤 「처리 중」을 풂. 확인: flow_biz B1-5",
+  "file": "sgb/site/src/app/my/payment/page.tsx:10-11, 54 · site/src/components/PayMethod.tsx:34-37 · src/modules/billing/recurring.service.ts:146-153"
+ },
+ {
+  "no": "G-180",
+  "area": "사용자 웹 · 소개 요청",
+  "sev": "중",
+  "what": "소개 요청을 등록하면 곧바로 「없는 주소입니다」(404) 화면이 뜸 — 등록은 됐고 검수 대기 중인데 실패한 것처럼 보임",
+  "cause": "등록 폼이 방금 만든 요청의 상세로 보내는데, 상세는 공개된 요청만 보여 줌",
+  "evidence": "flow_trade.py T5-4 · 소스 직접 확인",
+  "fix": "v10.26 수정 — 소개 요청 등록 뒤 공개된 요청이면 상세로, 검수 대기면 「접수했습니다 · 검수 뒤 공개됩니다」 안내(소개받기 목록 · 나의공간 링크)로 보냄. 확인: flow_trade T5-4",
+  "file": "sgb/site/src/app/request/new/RequestForm.tsx:62 · src/modules/request/request.service.ts:66"
+ },
+ {
+  "no": "G-181",
+  "area": "사용자 웹 · 기본 머리줄",
+  "sev": "중",
+  "what": "소개장터 · 안심소개 · 나의공간 등 기본 머리줄은 로그인한 뒤에도 「로그인 · 회원가입」을 그대로 보여 주고 「로그아웃」이 없음(소개광장 · 소개몰의 전용 머리줄에만 로그아웃이 있음)",
+  "cause": "기본 머리줄이 로그인 상태를 보지 않고 늘 같은 링크를 그림",
+  "evidence": "flow 점검 중 관찰(flow_trade · flow_biz) · 소스 직접 확인",
+  "fix": "v10.26 수정 — 기본 머리줄이 로그인 상태를 보고 「로그아웃」을 보여 줌(로그인 전에는 로그인 · 회원가입). 확인: fix_1026 G-181-1 ~ 3",
+  "file": "sgb/site/src/app/layout.tsx:51-52"
+ },
+ {
+  "no": "G-183",
+  "area": "소개몰 · 취소",
+  "sev": "중",
+  "what": "결제 전 주문을 취소 신청한 뒤에도(운영 승인 전) 내 주문에 「결제하기」가 그대로 보이고 실제로 결제가 됨 — 그 뒤 승인되면 환불 처리",
+  "cause": "결제 가능 여부를 주문 상태(PENDING)만 보고 정함 — 취소 신청이 걸려 있는지는 보지 않음",
+  "evidence": "flow_mall.py 작성 중 관찰 · 10/8 직접 재현 — 주문 → 취소 신청(REQUESTED) → 결제 준비 · 승인이 201 로 되고 주문이 PAID → 그 뒤 운영 승인으로 취소 · 환불(28,000원) · 재고는 처음 값",
+  "fix": "v10.26 수정 — 취소 신청이 걸린 주문은 결제 준비 · 승인을 409 로 막고, 내 주문 · 결제 화면은 「취소 신청 중」을 보여 주며 결제하기 · 주문취소 단추를 숨김. 확인: fix_1026 G-183-0 ~ 5",
+  "file": "sgb/site/src/components/health/MyHltNav.tsx:34 · src/modules/health/health-shop.service.ts:544"
+ },
+ {
+  "no": "G-186",
+  "area": "운영 · 검수 큐 자료",
+  "sev": "중",
+  "what": "「사업자 인증」 탭에서 승인해도 그 사업자의 검수 큐 건이 「대기」로 남음 — 10/8 오전 기준 대기 건 1,216건 가운데 1,191건이 이미 승인된 사업자의 것(시험을 돌릴수록 늘어남). 검수 큐 「전체」는 오래된 50건만 주므로 진짜 대기 건(매물 · 요청)이 뒤로 밀림",
+  "cause": "사업자 승인 처리가 검수 큐의 그 건을 닫지 않음",
+  "evidence": "10/8 DB 직접 확인 — review_items QUEUED: BUSINESS 1,191(모두 verified_at 있음) · LISTING 3 · REQUEST 22",
+  "fix": "v10.26 수정 — 사업자 승인이 같은 거래에서 그 검수 건을 닫음 · 마이그레이션 D026 이 이미 쌓인 건을 정리(개발 DB 1,193건). 확인: fix_1026 G-186-0 ~ 2",
+  "file": "sgb/src/modules/identity/business.service.ts · src/modules/review"
+ },
+ {
+  "no": "G-175",
+  "area": "광고 서버(sgb-ads · 아직 띄우지 않음)",
+  "sev": "하",
+  "what": "광고 서버가 본체에 물어볼 때 보내는 머리말 이름(X-Internal-Token)이 본체가 읽는 이름(X-Internal-Key)과 다름 — 광고 서버를 띄우면 성향 조회 · 사업자 실재 확인이 늘 거절돼 조용히 일반 광고로만 나감",
+  "cause": "두 소스의 약속이 어긋남",
+  "evidence": "link_check.py C-6 · 본체 쪽은 맞는 키로 200 확인(C-5)",
+  "fix": "v10.27 수정 — 광고 서버가 본체를 부를 때 머리말 X-Internal-Key. 확인: fix_1027 G-175",
+  "file": "sgb-ads/src/core/core-api.ts:33 · sgb/src/core/internal-key.guard.ts"
+ },
+ {
+  "no": "G-171",
+  "area": "소개몰 · 주문 생성",
+  "sev": "하",
+  "what": "주문 생성(POST /health/orders)은 화면이 요청 키(Idempotency-Key)를 보내지만 서버가 쓰지 않음 — 같은 키로 두 번 보내면 주문이 2건. 화면은 보내는 동안 단추를 꺼서 막음(G-182 의 경우는 못 막음)",
+  "cause": "요청 키 장치는 결제 · 코드 발급 두 곳에만 붙어 있음",
+  "evidence": "db_link.py E-3(같은 키 두 번 = 주문 2건) · E-3b · E-3c",
+  "fix": "v10.27 수정 — 주문 생성에 선택형 요청 키 장치(키가 오면 같은 키의 두 번째 요청은 처음 응답 · 없으면 예전처럼). 확인: fix_1027 G-171",
+  "file": "sgb/src/modules/health/health-shop.controller.ts · src/core/idempotency.interceptor.ts"
+ },
+ {
+  "no": "G-184",
+  "area": "소개몰 · 취소 화면 글",
+  "sev": "하",
+  "what": "결제하지 않은 주문의 취소 화면에 「결제 금액 · 환불 예정액」 표가 나옴(낸 돈이 없음) · 결제 전 취소가 승인된 뒤에도 내역의 환불 금액이 「확정 전」으로 남음",
+  "cause": "취소 화면 · 내역이 결제 여부를 가리지 않음",
+  "evidence": "flow_mall.py 작성 중 관찰",
+  "fix": "v10.27 수정 — 결제 전 취소는 「환불 없음 — 낸 돈이 없습니다」(반품 신청 화면 · 내역). 확인: fix_1027 G-184",
+  "file": "sgb/src/modules/health/health-shop.service.ts:303 · site/src/components/health/ReturnForm.tsx:100 · site/src/app/my/health/returns/page.tsx:59"
+ },
+ {
+  "no": "G-185",
+  "area": "사용자 웹 · 날짜",
+  "sev": "하",
+  "what": "날짜가 하루 이르게 보이는 곳 2곳 — 파트너센터 「공지 · 알림」, 나의공간 「내 신고 내역」(한국 시각 0 ~ 9시에 생긴 것이 전날로 보임)",
+  "cause": "시각 글자를 앞 10자만 잘라 씀(세계 표준시 기준) — v10.20 에서 고친 것(G-125 · G-126)과 같은 종류의 남은 곳",
+  "evidence": "flow_plaza · flow_trade 작성 중 관찰(10/8 06시대 실행)",
+  "fix": "v10.27 수정 — 날짜를 한국 날짜로(ymdKst · 14개 화면) · 시각은 24시간 「2026-10-08 20:05」(dtKst · 22개 화면 — 서버가 그릴 때 영문 AM/PM 이 섞이던 것 포함). 확인: fix_1027b_ui G-201-g · site_tz",
+  "file": "sgb/site/src/app/partner/notices/page.tsx:43 · site/src/app/my/reports"
+ },
+ {
+  "no": "G-187",
+  "area": "운영 화면 · 외부 연동",
+  "sev": "하",
+  "what": "「외부 연동」의 발신 IP 칸을 비운 채 「전 연동에 반영」을 누르면 안내 없이 아무 일도 일어나지 않음",
+  "cause": "빈 값이면 조용히 끝냄",
+  "evidence": "btn_bo.py — 무반응(처리기 있음) · 소스 확인",
+  "fix": "v10.27 수정 — 운영 「외부 연동」 발신 IP 를 비우고 저장하면 안내 글. 확인: btn_bo",
+  "file": "sgb/web/src/app/admin/Integrations.tsx:49-50"
+ },
+ {
+  "no": "G-172",
+  "area": "DB",
+  "sev": "하",
+  "what": "쓰지 않는 빈 표 public._t 가 처음 만든 틀(B040)에 남아 있음 — 행 0 · 어디서도 참조하지 않음",
+  "cause": "틀을 뽑을 때 섞여 들어간 임시 표",
+  "evidence": "db_link.py G-1 · G-1b",
+  "fix": "v10.27 수정 — D031 이 빈 표 public._t 를 지움. 확인: fix_1027 G-172",
+  "file": "sgb/prisma/migrations/B040_tables/migration.sql:56"
+ },
+ {
+  "no": "G-176",
+  "area": "운영 화면 · 오픈 체크리스트",
+  "sev": "하",
+  "what": "운영 화면 「오픈 체크리스트」는 설정 · 약관 · 바닥줄 · 외부 연동만 보고 간주 모드(assume.*)는 보지 않음 — 간주는 쉘 점검(open-check.sh)과 「불변식」 탭이 봄. 중개사 자격 대조(국토부)는 외부 연동 7건 표에도 없음",
+  "cause": "간주 모드를 따로 만든 뒤 체크리스트 뷰에 넣지 않음",
+  "evidence": "link_check.py E-3b · E-3c",
+  "fix": "v10.27 수정 — D031: 오픈 체크리스트(v_open_blockers)에 「간주 모드 켜짐」 줄 · 외부 연동 표에 국토부 중개사 자격 대조(BROKER). 운영 화면 라벨. 확인: fix_1027 G-176-1 ~ 3 · verify INTG(8종 · 차단 4)",
+  "file": "DB 뷰 v_open_blockers"
+ },
+ {
+  "no": "G-188",
+  "area": "사용자 웹 · 가입",
+  "sev": "중",
+  "what": "가입 화면에 약관 동의 칸이 없음(약관 제목 링크만) — 가입 요청에 동의 값이 실리지 않음. 동의는 /terms/agree 화면에서만 기록됨(그 화면은 정상). 시안의 가입 4단계에는 전체 동의 · 필수 · 선택 칸이 있음",
+  "cause": "실제 웹 가입은 한 화면짜리 — 시안의 4단계 가입(유형 · 정보 · 약관)이 아직 반영되지 않음",
+  "evidence": "flow_trade.py T1-2",
+  "fix": "v10.27 수정 — 가입 화면에 약관 동의(전체 · 필수 · 선택 · 발행 약관 9종) · 서버가 필수 누락 422 · 약관마다 동의/거부 기록. 확인: fix_1027b G-188-1 ~ 7 · fix_1027b_ui G-188-U1 ~ U5",
+  "file": "sgb/site/src/app/signup/page.tsx:27 · spec/proto.html 가입 4단계"
+ },
+ {
+  "no": "G-189",
+  "area": "사용자 웹 · 구독",
+  "sev": "상",
+  "what": "요금제 화면(/my/subscription · /upgrade)에 요금제를 골라 결제를 시작하는 단추가 없음 — 「결제 연동은 준비 중입니다(PG 계약 후)」 안내만. 서버의 구독 시작 API 는 있고 시험 결제로 동작함. 구독료가 유일한 매출원이므로 오픈 전에 꼭 필요",
+  "cause": "결제사 계약 전이라 화면을 막아 둠(의도된 상태)",
+  "evidence": "flow_biz.py B1-4 — 구독 시작은 API 로 이어 감(B1-7)",
+  "fix": "v10.27 수정(10/8 답 ③) — 유료 구독 중 요금제 바꾸기 = 다음 결제일부터 예약(올리기 · 내리기 모두 · 지금 결제 없음) · 처음 유료는 지금 결제 · 예약 거두기 · 정기결제가 예약 요금제 값으로 청구하고 결제되면 바꿈 · 베이직 예약은 기간 끝에 무료로(마이그레이션 D032). 실제 웹 요금제 고르기 · 결제 패널 · 시안 ③. 확인: fix_1027b G-189-1 ~ 11 · fix_1027b_ui G-189-U1 ~ U9 · fix_1027_proto G-189-P1 · P2",
+  "file": "sgb/site/src/app/my/subscription/page.tsx:55-84 · upgrade/page.tsx:37-53"
+ },
+ {
+  "no": "G-190",
+  "area": "제휴 · 주문 귀속",
+  "sev": "중",
+  "what": "제휴 소개링크로 들어와 소개몰에서 주문 · 결제해도 제휴 주문 · 수익이 기록되지 않음 — 화면은 「클릭 후 72시간 안에 주문하면 수수료」라고 안내. 클릭 기록까지만 됨",
+  "cause": "제휴 주문 · 수익 표(partner_orders · partner_revenues)에 쓰는 서버 코드가 아직 없음",
+  "evidence": "flow_biz.py B5-12 · B5-13",
+  "fix": "v10.27 수정 — 제휴 링크를 누른 방문자(해시만) → 72시간 안 소개몰 주문에 귀속 · 결제되면 제휴 주문 · 수익 · 취소 · 반품이면 회수(D031). 확인: fix_1027 G-190",
+  "file": "sgb/src/modules/affiliate/affiliate.service.ts · src/modules/health/health-shop.service.ts"
+ },
+ {
+  "no": "G-191",
+  "area": "소개광장 · 글 신고",
+  "sev": "중",
+  "what": "소개광장 글을 신고하는 길이 없음(글 상세에 신고 단추 없음 · 신고 API 가 글을 받지 않음) — 운영 화면은 「신고 3건이 쌓이면 자동으로 가려지고 여기로 옵니다」라고 안내. 시안의 글 상세에는 신고 단추가 있음",
+  "cause": "신고 대상이 등록글 · 요청글 · 서비스 · 프로필 네 가지뿐",
+  "evidence": "flow_plaza.py P5-2 ~ 4(건너뜀) — 가림 자체는 운영 API 로 확인(통과)",
+  "fix": "v10.27 수정 — 소개광장 글 신고(글 상세의 「신고」 · 대상 POST) · 자기 글 신고 불가 · 서로 다른 회원 3명이면 가림(D031). 확인: fix_1027 G-191",
+  "file": "sgb/site/src/app/report/[targetType]/[targetId]/page.tsx:12 · src/modules/review/abuse.controller.ts:12"
+ },
+ {
+  "no": "G-192",
+  "area": "파트너센터",
+  "sev": "중",
+  "what": "파트너센터에 다음 단계로 가는 수단이 빠져 있음 — ① 활동 지역 화면에 지역을 켜는 입력 · 저장이 없음(「최소 한 곳은 켜셔야 합니다」 안내만 · API 는 있음) ② 입점 신청으로 가는 단추가 없음 ③ 서비스 등록으로 가는 단추가 없음(주소를 직접 쳐야 함)",
+  "cause": "화면이 표시까지만 만들어짐",
+  "evidence": "flow_biz.py B4-13 · 작성 중 관찰",
+  "fix": "v10.27 수정 — 파트너 서비스 지역 켜고 끄기 · 더하기 · 저장 · 서비스 화면의 단추 줄. 확인: btn_site",
+  "file": "sgb/site/src/app/partner/regions/page.tsx · partner/page.tsx:30-40 · partner/services"
+ },
+ {
+  "no": "G-193",
+  "area": "사용자 웹 · 거래 흐름",
+  "sev": "중",
+  "what": "거래 흐름에서 화면으로 갈 수 없는 길 — ① 문의에서 거래를 만드는 단추가 없음(API 만) ② 매물 등록자가 받은 문의를 모아 보는 화면이 없음 ③ 「소개 내역」에서 성사 확정 · 대금 신고 · 후기로 가는 링크가 없음(주소를 직접 열어야 함) ④ 등록자가 자기 매물을 내리는 수단이 없음",
+  "cause": "화면 사이 연결이 아직 덜 됨",
+  "evidence": "flow_trade.py — T4-4 는 API 로, 확정 · 대금 · 후기는 주소를 직접 열어 진행(단계 이름에 적음)",
+  "fix": "v10.27 수정 — 받은 문의 · 보낸 문의(/my/inquiries · 이름 첫 글자만 · 안 읽음) · 대화방 · 「계약서 요청하기」(진행 중인 거래는 하나) · 내 거래의 다음 단계 단추 · 매물 내리기(ARCHIVED) · 다시 올리기 = 수정 → 재검수. 확인: fix_1027b G-193 · fix_1027b_ui G-193-U1 ~ U15",
+  "file": "sgb/site/src/app/chat · my/deals · my/listings"
+ },
+ {
+  "no": "G-194",
+  "area": "운영 · 소개몰 발송",
+  "sev": "하",
+  "what": "운영 쪽에 소개몰 주문의 발송 처리(택배사 · 송장 · 배송 상태 입력) 화면 · API 가 없음 — 배송 상태는 DB 에 직접 넣어야 바뀜",
+  "cause": "배송 기능은 v10.27 로 나눠 둔 범위",
+  "evidence": "flow_mall.py M3 — 발송 · 배송 완료를 DB 로 넣어 이어 감(단계 이름에 적음)",
+  "fix": "v10.28 수정 — 운영 「소개몰 주문」(SB-ADM-HOR-010): 택배사 고르기 · 송장 10 ~ 14자리 · 발송 처리 → 배송중 · 배송 완료로 · 배송중일 때만 송장 고침(새 기록 · 전 기록 남음) · 감사 기록 · 배송 완료 7일(청약철회 기간이 길면 그 기간) 뒤 자동 구매확정(D035 · hlt_auto_confirm). 확인: fix_1028 A 20/20 · fix_1028_ui A 6/6",
+  "file": "sgb/web/src/app/admin/HealthSettle.tsx"
+ },
+ {
+  "no": "G-195",
+  "area": "사용자 웹 · 나의공간",
+  "sev": "하",
+  "what": "나의공간(/my) 첫 화면에 내 이름 · 요약이 없고 「관심 목록」으로 가는 카드도 없음(이름은 /my/account 에서만) — 시안은 프로필 · 요약 타일 4개 · 메뉴",
+  "cause": "실제 웹 디자인을 시안에 맞추는 작업이 미뤄져 있음",
+  "evidence": "flow_trade.py T1-8",
+  "fix": "v10.27 수정 — 나의공간 첫 화면(시안 scMy): 프로필 · 요약 4칸 · 바로가기(숫자) · 정산 안내(/me/home). 확인: fix_1027b G-195 · fix_1027b_ui G-195-U1 ~ U4",
+  "file": "sgb/site/src/app/my/page.tsx"
+ },
+ {
+  "no": "G-196",
+  "area": "시안 · 나의공간",
+  "sev": "중",
+  "what": "시안의 「설정 · 알림」 메뉴와 머리줄의 종(🔔)을 눌러도 알림 화면으로 가지 않고 안내 글만 뜸 — 알림 화면 자체는 시안 안에 있음",
+  "cause": "그 화면으로 가는 연결이 빠짐",
+  "evidence": "flow_proto.py S2-17",
+  "fix": "v10.27 수정 — 시안 머리줄 종 · 「설정 · 알림」 → 알림 센터. 확인: fix_1027_proto G-196-1 · 2",
+  "file": "sgb/spec/proto.html:9546 · :5052 · :9797"
+ },
+ {
+  "no": "G-197",
+  "area": "시안 · 끊긴 링크",
+  "sev": "중",
+  "what": "시안에서 누르면 「페이지를 찾을 수 없습니다」가 되는 단추 9곳 — 메인 「소개뱅크 핵심」의 「AI로 찾고」 카드(메인 두 판 · 주소 #mh-q)와, 결제 수단 · 알림 · 한도 안내 · 소개 활동 화면 안의 링크 7곳(#mysub · #mypay · #mylst · #introact · #introinv). 지금까지의 전수 누르기는 이것을 「화면이 바뀜」으로 세어 드러나지 않았음",
+  "cause": "가리키는 주소가 시안의 주소 표에 없음",
+  "evidence": "proto_demo.py — 전수 누르기에 「없는 주소」 표식을 더해 다시 돌리고, 표식된 주소를 하나씩 직접 넣어 다시 확인(매트릭스 56 시트)",
+  "fix": "v10.27 수정 — 시안 「#화면키」 링크는 그 화면으로 · 검색 칸 링크는 그 칸으로. 확인: fix_1027_proto G-197(9곳)",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-198",
+  "area": "시안 · 여는 길이 없는 화면",
+  "sev": "중",
+  "what": "시안 파일 안에 화면은 있는데 **어느 단추로도 · 주소로도 열리지 않는 화면** 이 있음 — 결제 수단 · 알림 · 한도 안내 · 사업자 전환 · 소개 활동 3장 · 후기 작성 · 운영의 메인 운영 4장 · 자동검수 규칙 · 표본 감사 · 외부 연동 · 코드 라벨 · 배지 검수 · 청구 현황 등(목록은 같은 시트)",
+  "cause": "화면을 넣고 메뉴 · 주소 표에 잇지 않음(또는 다른 화면이 같은 주소를 먼저 가져감)",
+  "evidence": "proto_demo.py — 단추로 닿지 않는 화면 가운데 시안의 주소 표로도 열리지 않는 것",
+  "fix": "v10.27 수정 — 시안의 열 수 없던 화면 19장에 주소 · 나의공간 바로가기 · 운영 대시보드 「다른 운영 화면」 · 소개 내역 「후기 쓰기」. 확인: fix_1027_proto G-198-1 ~ 5",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-199",
+  "area": "시안 · 글 · 숫자",
+  "sev": "하",
+  "what": "시안의 화면끼리 글 · 숫자가 맞지 않는 곳 — 개인 회원 안내(로그인 「가입 불가」 ↔ 가입 「가입 가능」) · 나의공간 건수(메뉴 9 ↔ 목록 6 · 17 ↔ 4) · 운영 대시보드 합계(1,842만원 ↔ 18,840,000원) · 소개몰 메인 카드 ↔ 상품 상세의 이름 · 정가 · 주문 번호의 날짜 ↔ 주문일 · 구독의 지난 날짜 · 약관 상태(발행 ↔ 미확정). 그리고 시안에 없는 화면: 구독 결제 화면 · 약관 전문 · 등록의 단계별 「다음」",
+  "cause": "화면마다 견본 값을 따로 적음",
+  "evidence": "flow_proto.py 작성 중 관찰 · S3-11 · S7-4 · S10-11(건너뜀 — 시안에 그 화면이 없음)",
+  "fix": "v10.27 수정 — 시안 개인 회원 가입 안내 · 메뉴 숫자 = 목록 건수 · 정산 합계 · 약관 상태 「발행」 + 약관 전문 화면 · 견본 주문번호 날짜 = 주문일 · 소개몰 메인 카드 = 실제 상품 값(10/8 답). 확인: fix_1027_proto G-199-1 ~ 9 · proto_mall R-1",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-200",
+  "area": "시안 · 시연",
+  "sev": "하",
+  "what": "시안에서 시연이 어색한 곳 — 내 등록 리스팅의 매물 이름 · 「수정」이 그 매물이 아니라 빈 새 등록 화면을 엶 · 가입 3 · 4단계가 필수 값 · 필수 약관 없이도 넘어감 · 취소 · 반품 내역의 상태가 영문(REQUESTED) · 처음 열면 창 제목이 「소개몰」",
+  "cause": "시연용 단순 처리",
+  "evidence": "flow_proto.py 작성 중 관찰",
+  "fix": "v10.27 수정 — 시안 매물 「수정」 = 그 매물 · 가입 3 · 4단계 확인 · 반품 상태 한국어 · 처음 창 제목. 확인: fix_1027_proto G-200-a ~ d",
+  "file": "sgb/spec/proto.html"
+ },
+ {
+  "no": "G-201",
+  "area": "사용자 웹 · 안내 글 · 길 안내",
+  "sev": "하",
+  "what": "흐름을 따라가다 눈에 띈 자잘한 것 — 대금 신고 뒤 안내가 이미 확정된 거래에 「상대방이 확인하면 계약서 서명으로…」 · 사업자 신청 뒤 /my/business 가 다시 빈 폼(「심사 중」 표시 없음) · 검수 큐 거르개가 관 이름 대신 코드(MNY …) · 신고 화면의 「내 등록에서 직접 비공개로」 안내와 달리 그 수단이 없음 · 본인인증 화면의 「돌아가기」가 주문서가 아니라 첫 화면으로 · 결제 화면에 내 주문으로 가는 링크 없음 · 파트너센터 열람 기한에 영문 AM 이 섞임 · 운영 API 의 글 가림이 사유가 비면 201 에 ok:false · 글쓴이 본인이 열어도 조회 수가 오름 · /register 첫 화면이 등록할 업종이 없는 갈래를 먼저 고름 · /biz/register 는 사업자 등록이 아니라 소개창업 매물 등록",
+  "cause": "-",
+  "evidence": "flow_trade · flow_mall · flow_plaza · flow_biz 작성 중 관찰(시험 단계로는 넣지 않음)",
+  "fix": "v10.27 수정 — 11건: 확정된 거래의 대금 신고 안내 · 사업자 신청 뒤 「심사 중」 · 검수 큐 관 이름 · 신고 화면 안내(내리기 생김) · 본인인증 「돌아가기」(?next=) · 결제 화면 → 내 주문 · 영문 AM/PM · 글 가림 422/404 · 글쓴이 본인 조회 제외 · /register 첫 갈래 · /biz/register 안내. 확인: fix_1027b G-201 · fix_1027b_ui G-201-*",
+  "file": "여러 곳 — 문서 74 의 표"
+ },
+ {
+  "no": "G-202",
+  "area": "시험 도구 · 시안 그림 비교",
+  "sev": "하",
+  "what": "시안 그림 비교(proto_pixel.py)가 다른 시험과 같이 돌 때 한 장(운영 「회원」 화면)의 오른쪽 끝 3점을 다르게 찍음 — 같은 두 파일을 혼자 돌리면 194장 모두 같음",
+  "cause": "부하 중 그리기 시점 차이(같은 화면을 이어서 세 번 찍으면 두 번은 같고 한 번은 다름)",
+  "evidence": "10/8 확장 점검 — 버튼 체크와 같이 돈 실행 1 / 2 → 혼자 다시 2 / 2",
+  "fix": "10/8 — 혼자 다시 돌려 통과 확인(final_all 의 _rerun 줄). 전수 검정 D 구간은 버튼 체크(E)와 겹치지 않게 돌림",
+  "file": "qa/proto_pixel.py · qa/final_parts.sh"
+ },
+ {
+  "no": "G-203",
+  "area": "DB · 금칙어 · 공격 점검",
+  "sev": "하",
+  "what": "금칙어 표(banned_words)에 「100% 성공」 줄이 422개 — 공격 점검(attack-check.sh G-02)이 돌 때마다 한 줄씩 더 넣음. 기준선(B900)에도 422줄이 들어가 새로 설치한 DB 에도 그대로. 운영 화면에서 같은 금칙어를 두 번 넣어도 「이미 등록된 금칙어입니다」가 나오지 않고 한 줄 더 들어감",
+  "cause": "banned_words 에 유일 규칙이 id 하나뿐 — `ON CONFLICT DO NOTHING` 이 걸릴 충돌이 없음",
+  "evidence": "10/8 v10.26 반영 중 발견 — select count(*) from banned_words where word='100% 성공' → 422",
+  "fix": "v10.26 수정 — 마이그레이션 D029: 같은 금칙어 줄 정리(422 → 1) + 유일 규칙 uq_banned_words_rule(말의 앞뒤 공백 · 대소문자 무시 · 맞춤 방식 · 관). 공격 점검을 여러 번 돌려도 늘지 않고, 운영 화면의 같은 금칙어는 409 「이미 등록된 금칙어입니다」. 확인: fix_1026 G-203-1 ~ 3",
+  "file": "sgb/scripts/attack-check.sh:198 · sgb/src/modules/site/site.service.ts:274 · sgb/prisma/migrations/B900_reference_data"
+ },
+ {
+  "no": "G-204",
+  "area": "시안 · 소개몰 검색 자동완성",
+  "sev": "하",
+  "what": "시안의 검색 칸에서 ↓ 로 제안을 고르고 Enter 를 치면 고른 말이 아니라 친 글자로 검색됨(소개몰 본문의 Enter 처리가 먼저 돎). 같은 결함을 v10.26 사용자 웹 자동완성을 만들며 한 번 만들었다가 시험(site_opt W-13)이 잡음",
+  "cause": "시안 — 자동완성의 키 처리가 본문 처리보다 뒤에 붙음 / 사용자 웹 — 바깥 누르기를 click 으로 봐서 Enter 가 만드는 검색 단추 click 이 목록을 먼저 닫음",
+  "evidence": "10/8 proto_opt 1b · site_opt W-13",
+  "fix": "v10.26 수정 — 시안: 자동완성의 키 처리를 잡는 단계(capture)로 · 고르면 바로 검색 / 사용자 웹: 바깥 누르기를 pointerdown 으로. 확인: proto_opt 1b · site_opt W-13",
+  "file": "sgb/spec/proto.html(hltSugBind) · sgb/site/src/components/health/SearchBox.tsx"
+ },
+ {
+  "no": "G-205",
+  "area": "DB · 자금수탁 감시(INV-11)",
+  "sev": "중",
+  "what": "v10.26 의 교환 배송비 결제 표(hlt_exchange_fees)에 결제사 거래번호 칸(pg_tid)이 생겨 통합 검정 INV-11 · 공격 검정 D-02(「자금수탁 칸 전무」)가 걸림",
+  "cause": "INV-11 의 예외가 소개몰 주문 결제(hlt_payments.pg_tid) 하나뿐 — 같은 성격의 새 결제 표를 예외에 넣지 않았음",
+  "evidence": "10/8 v10.26 전수 검정 A — verify 288 / 1 · 공격 626 · 뚫림 1(v_inv11_violations = hlt_exchange_fees.pg_tid)",
+  "fix": "v10.26 수정 — 마이그레이션 D030: v_inv11_violations 의 예외에 hlt_exchange_fees.pg_tid 한 줄(감시는 그대로). 확인: verify INV-11 · 공격 D-02 다시 돌림",
+  "file": "sgb/prisma/migrations/D027 · C850(v_inv11_violations)"
+ },
+ {
+  "no": "G-206",
+  "area": "시안 · 서버 연동 「재고 되돌리기」",
+  "sev": "하",
+  "what": "시안의 서버 연동 화면 「③ 취소 시 재고 되돌리기」(srvstk)가 v10.26 서버에서 주문하지 못함 — 옵션이 여럿인 상품에 옵션 없이 주문",
+  "cause": "v10.26 서버는 옵션이 여럿인 상품의 주문에 옵션을 요구(OPTION_REQUIRED) · 시안의 연동 코드는 상품 코드만 보냄",
+  "evidence": "10/8 v10.26 전수 검정 B — srv_proto 「TypeError: NoneType」(시연 결과 없음)",
+  "fix": "v10.26 수정 — 시안 stockLive 가 cartOptionId 를 보냄(proto_patch_1026.py). 확인: srv_proto 다시 돌림",
+  "file": "sgb/spec/proto.html(stockLive)"
+ },
+ {
+  "no": "G-207",
+  "area": "운영 화면 · 중개사 인증 심사",
+  "sev": "하",
+  "what": "「중개사 인증 심사」 목록의 심사 대기는 **오래된 것부터 200건까지만** 보임 — 대기가 200건을 넘으면 새 신청이 화면에 나오지 않고 쪽 넘김도 없음(개발 DB 에 시험 신청 202건이 쌓여 srv_lead_ui UI-4-1 이 새 신청을 찾지 못함)",
+  "cause": "GET /admin/brokers?state=PENDING — ORDER BY created_at ASC LIMIT 200 · 화면에 다음 쪽 · 검색 없음 / 시험(srv_lead · srv_lead_ui)이 넣은 신청을 닫지 않아 대기가 쌓임",
+  "evidence": "10/8 v10.26 전수 검정 B · 다시 돌림 — 두 번 모두 같은 자리에서 멈춤 · 개발 DB 심사 대기 202건(시험 계정 lbr* 175 · luibrk* 27)",
+  "fix": "v10.27 수정 — 중개사 심사 목록 쪽 넘김(50건) · 찾기 · 순서(심사 대기는 오래된 순). 확인: fix_1027 G-207",
+  "file": "sgb/src/modules/partner/broker.service.ts:50-64 · sgb/web/src/app/admin/Qualifications.tsx · qa/srv_lead.py · qa/srv_lead_ui.py"
+ },
+ {
+  "no": "G-208",
+  "area": "서버 · 권한 표시(통합 검정)",
+  "sev": "하",
+  "what": "v10.26 의 새 운영 API 12개(/admin/health/products · ingredients · sale-categories)가 통합 검정(check:acl)에서 「공개 구역이 아닌데 표시가 없음」으로 걸려 npm run verify 가 종료 코드 1 — 실제로는 막혀 있음(로그인 없이 · 일반 회원 토큰으로 4곳을 불러 모두 403)",
+  "cause": "클래스 전체 권한 @Roles 를 @Controller 위에 둠 — 다른 모든 컨트롤러는 아래에 두고, 검정 도구는 @Controller 아래의 @Roles 만 읽음",
+  "evidence": "10/8 v10.26 다시 돌린 통합 검정(새 검정 DB) — 통과 289 · 뚫림 0 인데 종료 코드 1 · check:acl 「검토 필요 12건」",
+  "fix": "v10.26 수정 — @Roles 를 @Controller 아래로(동작 같음) → check:acl 「공개 구역 외에는 전부 표시가 있습니다」 · 통합 검정 전체 통과",
+  "file": "sgb/src/modules/health/health-admin.controller.ts:96-98 · sgb/scripts/check-acl.js:67-72"
+ },
+ {
+  "no": "G-209",
+  "area": "약관 · 발행 스크립트",
+  "sev": "중",
+  "what": "약관을 처음 발행하는 길(scripts/publish-terms.sh — 로컬 설치 · 통합 검정 · 운영의 약관 발행 절차)이 초안 1.0 의 본문을 초안 생성기의 글(docs/terms/HLT_SALE.md)로 덮고 발행함 — 그 글에는 v10.26 의 교환 배송비 조항이 없어, 새로 설치한 DB 에서는 교환 배송비를 받는데 발행된 판매 약관에 근거가 없게 됨(통합 검정 DB 에서 확인: 발행 1.0 에 「교환 배송비 6,000원」 0곳)",
+  "cause": "판매 약관의 글이 두 곳(DB 의 글 — C880 · D024 · D028 / 초안 생성기의 글 — gen-terms-draft.js)에 있고, 발행 스크립트는 초안 상태의 본문을 생성기의 글로 맞춤. D028 은 DB 의 글만 고침",
+  "evidence": "10/8 Docker 쓰던 볼륨 확인 중 — 통합 검정 DB(sgb_check)의 HLT_SALE 1.0(발행) 본문에 교환 조항 없음 · 새 불변식 SV-T3 이 고치기 전 1(기대 0)",
+  "fix": "v10.26 수정 — 초안 생성기의 판매 약관에 확정 문안과 같은 교환 배송비 조항(표 두 줄 · 교환 · 상품이 없을 때)을 넣음 · 새 불변식 SV-T3(발행 · 초안 판매 약관에 「교환 배송비 6,000원」) → 통합 검정 290 / 0. 두 글의 다른 문장(장 번호 · 「의료기기 · 건강기기」 등)은 그대로 — 문서 75 의 6절",
+  "file": "sgb/scripts/gen-terms-draft.js:255-300 · sgb/scripts/publish-terms.sh:30-37 · sgb/scripts/verify-invariants.sh(SV-T3)"
+ },
+ {
+  "no": "G-210",
+  "area": "통합 검정 · 검정 픽스처(fixture.sql)",
+  "sev": "중",
+  "what": "쓰던 검정 DB(PC 의 Docker 볼륨에 남은 sgb_check — v10.25 에서 ./dev.ps1 check 를 한 번이라도 돌린 경우)에서 v10.26 의 ./dev.ps1 check 가 실패 — SV-T3(교환 배송비 조항) 1건. 새로 만든 검정 DB 에서는 통과",
+  "cause": "검정 픽스처가 약관을 1.0 만 남기고 다른 판을 지움(DELETE version <> 1.0) — 쓰던 검정 DB 에서는 1.0 이 이미 발행되어 D028 이 새 조항을 1.1 로 발행하는데, 픽스처가 그 1.1 을 지우고 옛 글의 1.0 을 다시 발행",
+  "evidence": "10/8 Docker — 쓰던 볼륨에 v10.26 을 올린 뒤 ./dev.ps1 check 종료 코드 1(통과 289 / 실패 1 · SV-T3) · 재현: v10.25 판으로 만든 검정 DB → v10.26 마이그레이션 → 고치기 전 픽스처 SV-T3 = 1 · 고친 뒤 0",
+  "fix": "v10.26 수정 — 픽스처가 다른 판을 지우기 전에 가장 새 판(시험 자리표시자 · 9.9 제외)의 본문을 1.0 에 옮김. 확인: Docker 검정 DB 를 v10.25 판 상태로 만든 뒤 ./dev.ps1 check — 적용 5 · 기존 70 · 통과 290 / 0 · 전체 통과",
+  "file": "sgb/scripts/fixture.sql:80-92"
+ },
+ {
+  "no": "G-211",
+  "area": "시험 도구 · Docker 실구동",
+  "sev": "하",
+  "what": "Docker(쓰던 볼륨)에서 시험 3묶음이 제품과 관계없이 걸림 — srv_opt T-1 · T-2(판매 약관 새 판 번호를 「1.2」로 박아 둠 — Docker 볼륨은 1.0 → 1.1) · fix_1026 G-177-3(검수 대기 건이 있는 DB 를 가정 — Docker DB 는 0건) · site_detail D-6(로그인 뒤 2.5초만 기다림 — Docker 의 개발 모드 사용자 웹은 로그인 처리가 2.45초)",
+  "cause": "개발 DB 의 상태 · 속도를 가정한 시험",
+  "evidence": "10/8 docker_1026.txt — srv_opt 89 / 91 · fix_1026 39 / 40 · site_detail 24 / 26(중간에 멈춤)",
+  "fix": "v10.26 수정 — T-1/T-2 는 「발행된 판 = 가장 새 번호 · 나머지는 보관」 · G-177-3 은 대기 건이 없으면 시험용 1건을 넣었다가 지움 · 로그인은 쿠키가 생길 때까지 최대 15초. 다시 돌림: Docker 91 / 91 · 40 / 40 · 44 / 44 · 로컬 같은 결과",
+  "file": "qa/srv_opt.py · qa/fix_1026.py · qa/site_detail.py"
+ },
+ {
+  "no": "G-212",
+  "area": "DB · 기준 데이터(B900) · 백업/복원",
+  "sev": "하",
+  "what": "기준 데이터가 외래 키를 어긴 줄을 넣음 — 운영 설정 3줄(company.bank_account · bank_name · bank_holder)의 「바꾼 사람」이 없는 계정(시험 계정 1111…) · 광고 자리 1줄의 광고주 사업자가 없는 사업자. 그래서 DB 를 pg_dump 로 떠서 새 DB 에 부으면 외래 키 2개가 만들어지지 않음(오류 2줄 · 자료는 들어감). 9/30 서버를 흉내 낸 리허설 DB · 개발 DB · 검정 DB 모두 같음",
+  "cause": "B900_reference_data 가 트리거를 내린 채(외래 키 검사 없음) 개발 DB 스냅숏의 줄을 그대로 넣음",
+  "evidence": "10/8 v10.26 서버 적용 리허설 뒤 — 리허설 DB(sgb_aws)를 pg_dump → 새 DB 로 부을 때 ad_placements_advertiser_business_id_fkey · site_settings_updated_by_fkey 오류",
+  "fix": "v10.27 수정 — 마이그레이션 D031 이 없는 계정 · 사업자를 가리키던 4줄을 비움(NULL). 확인: fix_1027 G-212-1 · 2(한 칸짜리 외래 키 전부 위반 0)",
+  "file": "sgb/prisma/migrations/B900_reference_data/migration.sql:43 · :1509"
+ },
+ {
+  "no": "G-213",
+  "area": "API · 거래(대금 신고 · 계약)",
+  "sev": "상",
+  "what": "거래 당사자가 아니어도 본인인증만 된 회원이면 남의 거래에 대금 지급 신고를 남기고 상태를 「대금 신고됨」으로 바꿀 수 있었음 · 계약 상태 · 계약 이력(당사자 실명) · 전자서명 상태를 거래 번호만 알면 볼 수 있었음 · 사업자는 남의 거래에 계약서를 발급할 수 있었음",
+  "cause": "deal.service 의 reportPayment · contractState · contractHistory · esignStatus · issueContract 에 당사자 확인이 없었음(confirmDeal · sign 에는 있음)",
+  "evidence": "fix_1027b.py G-213-1 ~ 5(고치기 전 201 · 200 → 고친 뒤 403)",
+  "fix": "v10.27 수정 — 대금 신고 · 계약 상태 · 이력 · 전자서명 상태 · 계약서 발급에 당사자 확인(403 NOT_PARTY). 확인: fix_1027b G-213-1 ~ 5",
+  "file": "sgb/src/modules/deal/deal.service.ts"
+ },
+ {
+  "no": "G-214",
+  "area": "약관 · 선택 동의 바꾸기",
+  "sev": "중",
+  "what": "선택 약관(마케팅 수신 · 맞춤형 광고 · 야간 광고)은 「언제든 바꿀 수 있다」고 안내하지만 바꿀 길이 없음 — 동의 기록(term_agreements)이 약관 판마다 한 줄 · 고칠 수 없는 줄(trg_term_agr_ro)이라 같은 판의 동의 여부를 다시 적을 수 없음",
+  "cause": "동의 기록이 「현재 상태」 한 줄로 설계됨(uq_term_agreement · 바꾸기 막음). 바꿀 때마다 한 줄 더 쌓는 이력이 아님",
+  "evidence": "flow_trade T1(10/9) — 가입 때 남긴 동의를 「약관 동의」 화면에서 다시 보내면 409 → v10.27 에서 같은 값은 다시 쓰지 않게 고침(G-216) · 다른 값은 CONSENT_ALREADY_RECORDED 로 안내",
+  "fix": "v10.28 수정 — 동의 기록을 이력으로(바꿀 때마다 한 줄 · 지우거나 고치지 않음 · D038) · 읽는 곳(약관 상태 · AI · 광고 · 마케팅/야간 감시)은 가장 최근 줄 · 감시는 보낸 시각의 동의 · 「선택 항목 바꾸기」 화면. 확인: fix_1028 D 10/10 · fix_1028_ui D 2/2",
+  "file": "sgb/src/modules/catalog/compliance.service.ts · term_agreements"
+ },
+ {
+  "no": "G-215",
+  "area": "한국 날짜(G-127 남은 곳)",
+  "sev": "중",
+  "what": "제휴 「오늘 클릭」이 한국 0 ~ 9시에 0으로 보였음(클릭 집계는 한국 날짜로 쌓는데 「오늘」은 UTC 날짜로 셈) · 광고 게재 기간(시작 · 끝 날짜) · 등기 서류 경과일 · 판매자 자격 만료도 같은 식으로 9시간 어긋남",
+  "cause": "SQL 의 current_date(DB 는 UTC)를 한국 날짜 값과 견줌 — D033(v10.27)에서 쌓는 쪽만 한국 날짜로 바꿈",
+  "evidence": "flow_biz B5(10/9 00시) — 「1 / 1」이어야 할 클릭이 「0 / 1」 · 고친 뒤 77/77 · fix_1027b G-127-4",
+  "fix": "v10.27 수정 — 「오늘」 · 기간 비교를 한국 날짜((now() AT TIME ZONE 'Asia/Seoul')::date)로. 확인: flow_biz B5 · fix_1027b G-127-4",
+  "file": "affiliate · ads · realty · health-shop service"
+ },
+ {
+  "no": "G-216",
+  "area": "약관 동의 화면",
+  "sev": "중",
+  "what": "가입 때 약관 동의를 남긴 회원(v10.27 G-188)이 「약관 동의」 화면에서 「동의하고 계속」을 누르면 409(「이 기록은 수정하거나 삭제할 수 없습니다」)",
+  "cause": "동의 저장이 ON CONFLICT DO UPDATE 였는데 동의 기록은 고칠 수 없는 줄(trg_term_agr_ro)",
+  "evidence": "flow_trade T1 s5(10/9) · 고친 뒤 91/91",
+  "fix": "v10.27 수정 — 이미 기록된 같은 동의는 다시 쓰지 않음(unchanged) · 다른 값은 CONSENT_ALREADY_RECORDED 안내(G-214). 확인: flow_trade T1",
+  "file": "sgb/src/modules/catalog/compliance.service.ts"
+ },
+ {
+  "no": "G-217",
+  "area": "약관 · 발행 글",
+  "sev": "상",
+  "what": "킷 안에 약관 글이 두 벌 — 초안 생성기의 글(docs/terms · 법률 문체)과 DB 의 글(C880 · 쉬운 말 · 개발 DB 에 발행 · 작업 지시서 3절의 조항 번호가 맞는 쪽). 판매 약관 말고는 모두 달랐고, 운영 서버에서 처음 발행하면 publish-terms.sh 가 초안 본문을 생성기의 글로 덮어 **검토한 글과 다른 글**이 발행될 뻔함. 상담 신청 동의 문구의 항목 이름(「휴대폰」)도 처리방침(「휴대폰 번호」)과 달랐음",
+  "cause": "생성기(gen-terms-draft.js)와 마이그레이션(C880)이 각자 글을 가짐 · 둘을 대조하는 검사가 없었음(판매 약관만 v10.27 에 맞춤)",
+  "evidence": "10/9 비교표 5절(생성기 ↔ DB 대조) · scripts/publish-terms.sh 32 ~ 35줄 · 통합 검정 DB(sgb_check) 의 발행 본문 = 생성기의 글",
+  "fix": "v10.28 수정(10/9 답 「DB 의 글 + 지시서 3절」) — 글을 scripts/terms-text.js 하나로(생성기 · docs/terms 같은 글) · D041: 초안은 본문만 고치고 발행된 DB 는 다음 판 발행(바뀐 점 change_note · 재동의) · 통합 검정 SV-T5(발행 · 초안 본문 = docs 9종) · SV-T6(옛 이름) · 처리방침 보호책임자 전화(법정 고지 값) · 상담 동의 문구 「휴대폰 번호」 · 발행 스크립트 기본 9종. 확인: fix_1028 G-1 ~ G-8 · F-8 · verify 300/0",
+  "file": "sgb/scripts/terms-text.js · gen-terms-draft.js · publish-terms.sh · verify-invariants.sh · prisma/migrations/D041_terms_single_text"
+ },
+ {
+  "no": "G-218",
+  "area": "약관 · 개인정보 처리업무 위탁",
+  "sev": "중",
+  "what": "위탁 약관(OUTSOURCE)의 DB 의 글은 제목이 「개인정보 처리 위탁 **동의**」이고 제4조가 「동의를 거부할 권리 — 거부하시면 가입 · 이용이 어렵습니다」로 적혀 있음. 처리 위탁은 보통 동의가 아니라 **알리는 사항**(공개 · 고지)이라, 거부하면 가입을 못 하는 「동의」로 적는 것이 맞는지 확인이 필요함(생성기의 글은 「동의를 받는 사항이 아니라 알려 드리는 사항」으로 적혀 있었음)",
+  "cause": "지시서 3절이 위탁을 「수정 없음」으로 두어, 10/9 결정(DB 의 글 그대로)에 따라 DB 의 글을 한 벌로 삼음",
+  "evidence": "docs/terms/OUTSOURCE.md · 약관 표의 is_required = false(필수 아님)인데 글은 「거부하면 이용이 어렵다」",
+  "fix": "10/9 답 「알림으로」 → v10.28 반영 — 글: 「개인정보 처리 위탁 안내」 · 「이 글은 알림입니다(동의 받는 항목 아님 · 개인정보 보호법 제26조)」 · 제4조 「동의를 거부할 권리」 → 「알림」 · DB: terms.is_notice(D042) · 발행 판을 새 번호(1.1)의 알림으로(1.0 과 그 동의 기록은 그대로 보관) · 알림 판에 동의 기록을 막는 트리거 · 서버: 동의 목록(/terms/required) · 가입 동의에서 뺌 · 동의를 보내면 422 NOTICE_ONLY · 약관 목록 · 전문에 isNotice · 화면: 가입 · 약관 동의 · 선택 항목에 동의 칸 없음 → 「알림」 링크 한 줄 · 약관 목록 · 전문에 「알림」 · 시안 이용안내 · 약관 전문 · 가입 4단계 · 재동의 화면. 확인: fix_1028 I 14/14 · fix_1028_ui H 7/7 · fix_1028_proto H-32 ~ H-35 · verify SV-T7 ~ T9 · attack AD-04. 법령 문구는 시행 전 법률 검토로 한 번 더 확인",
+  "file": "sgb/scripts/terms-text.js(OUTSOURCE) · sgb/docs/terms/OUTSOURCE.md · prisma/migrations/D042_terms_outsource_notice · compliance.service.ts · auth.service.ts · site NoticeTerms"
+ },
+ {
+  "no": "G-219",
+  "area": "통합 검정 픽스처",
+  "sev": "하",
+  "what": "통합 검정 픽스처가 약관 본문의 〔시행일〕을 to_char(…, 'YYYY년 M월 D일') 로 채워 「2026년 M월 4일」이 박혔음(M 은 형식 글자가 아니고 D 는 요일 번호) — 검정 DB 의 판매 약관 발행 본문에 남아 있었음",
+  "cause": "Postgres 날짜 형식 글자를 잘못 씀",
+  "evidence": "SV-T5 HLT_SALE(검정 DB 1건 다름) · 본문 끝줄",
+  "fix": "v10.28 수정 — 형식 'YYYY\"년\" FMMM\"월\" FMDD\"일\"' · 이미 박힌 것도 바로잡음 · 픽스처를 다시 돌리지 않는 쓰던 개발 DB(처음 설치 때 local-setup.sh 가 픽스처를 돌린 PC 의 Docker 볼륨)는 D043 이 발행 약관의 시행일 줄만 고침(10/9 Docker 검정 srv_mall K-5 로 찾음 · 보관된 판은 그대로). 확인: verify SV-T5 HLT_SALE · SV-T10 · docker srv_mall K-5",
+  "file": "sgb/scripts/fixture.sql"
+ },
+ {
+  "no": "G-220",
+  "area": "운영 · 후기 검토 대기열",
+  "sev": "중",
+  "what": "후기 검토 대기열의 「다음 쪽」 표지(cursor)가 마감 시각을 밀리초까지만 담아, 같은 밀리초 안의 마이크로초가 다른 줄이 다음 쪽에서 빠지거나 겹칠 수 있었음 — 같은 시각인 줄이 여럿이면 순서도 정해지지 않았음",
+  "cause": "표지를 JS Date(밀리초) 로 만들고 정렬에 줄 번호(id)를 함께 쓰지 않음",
+  "evidence": "fix_1026 G-177-2(쪽 넘김 합계가 전체 건수와 다름)",
+  "fix": "v10.28 수정 — 표지 = 마감 시각(마이크로초) | 줄 번호 · (마감 시각, 줄 번호) 순 정렬 · 형식이 틀린 표지는 400 BAD_CURSOR. 확인: fix_1028 H-1 · H-2 · fix_1026 G-177-2",
+  "file": "sgb/src/modules/review/review.repository.ts · review.service.ts"
+ },
+ {
+  "no": "G-221",
+  "area": "약관 · 마이그레이션 D041 · D042",
+  "sev": "중",
+  "what": "D041(약관 한 벌)이 위탁(OUTSOURCE)의 옛 「동의」 글을 담고 있어, D042(위탁 = 알림)를 적용한 DB 에서 D041 을 다시 돌리면 위탁 1.2 를 옛 「동의」 글 · 알림 아님으로 새로 발행했음(동의 목록 · 가입 동의에 위탁이 다시 나타남)",
+  "cause": "G-218 반영 때 D042 만 더하고, 같은 판 안의 D041 에 남은 위탁 글을 빼지 않음 — D041 은 「같은 글이면 건너뜀」이라 다시 돌려도 안전해야 하는데 D042 뒤에는 글이 달라짐",
+  "evidence": "fix_1028 G-8(D041 다시 돌리기) 뒤 I-1 ~ I-12 · fix_1028_ui H 실패 — 개발 DB 위탁 1.2 = 동의 글 · is_notice false",
+  "fix": "v10.28 안(배포 전)에서 D041 의 위탁 줄을 뺌(위탁은 D042 가 맞춤) · 개발 · 검정 DB 의 기록값(checksum) 맞춤 · 개발 DB 는 D042 를 다시 적용해 1.3(알림)으로 바로잡음(1.2 와 그 기록은 보관). 확인: fix_1028 120/120(G-8 뒤 I 전부 통과)",
+  "file": "sgb/prisma/migrations/D041_terms_single_text/migration.sql"
+ },
+ {
+  "no": "G-222",
+  "area": "사용자 웹 · 수화(#418)",
+  "sev": "중",
+  "what": "v10.28 에 새로 만든 화면 조각 4곳이 날짜 · 시각을 toLocaleString/DateString('ko-KR') 로 그려, 서버(Node)는 「PM 12:35」 · 브라우저는 「오후 12:35」가 되어 「약관 동의」 화면(선택 항목 바꾸기의 「마지막으로 바꾼 때」)에서 수화 오류 #418 이 매번 남(가입 직후 · 화면이 한 번 다시 그려짐)",
+  "cause": "v10.27 G-201 규칙(lib/format 의 dtKst · ymdKst 를 씀)을 새 조각(OptionalConsents · ConfirmButton · ReviewPanels · ShopMain)에서 지키지 않음",
+  "evidence": "flow_trade T1 16(두 번 모두 /terms/agree · args=text) · flow_mall M3 17 · Node 「2026. 10. 9. PM 12:35:12」 ↔ Chromium 「… 오후 12:35:12」 실측",
+  "fix": "v10.28 수정 — 4곳 모두 dtKst · ymdKst 로 · 같은 실수를 막는 소스 검사(fix_1028 H-3 — 사용자 웹에서 날짜를 toLocale… 로 그리는 곳 0) · flow 의 쪽 오류에 주소를 붙임. 확인: flow_trade 91/91 · flow_mall · fix_1028 H-3",
+  "file": "site/src/app/terms/agree/OptionalConsents.tsx · components/health/ConfirmButton.tsx · ReviewPanels.tsx · components/shop/ShopMain.tsx"
+ },
+ {
+  "no": "G-223",
+  "area": "통합 검정 픽스처 · 쓰던 검정 DB",
+  "sev": "중",
+  "what": "쓰던 검정 DB(Docker 볼륨의 sgb_check)에서 통합 검정 픽스처가 약관 판을 1.0 하나로 줄이며 본문만 옮겨, 위탁 1.0 이 「알림」 글인데 알림이 아닌 판으로 발행됨 → SV-T7 실패 · 공격 검정 AD-04 가 대상이 없어 「뚫림」(PowerShell check · realcheck 의 통합 검정)",
+  "cause": "G-210(v10.26)의 「다음 판 본문을 1.0 에 옮김」이 v10.28 의 새 칸(is_notice · 제목)을 옮기지 않음 — 새로 만든 검정 DB 에서는 D042 가 초안 1.0 에 표시해 드러나지 않음",
+  "evidence": "ps_chain check rc=1 · dev.sh check — SV-T7 기대 0 / 실제 1 · ▲뚫림 AD-04 · Docker sgb_check 의 위탁 1.0 = 알림 글 · is_notice false",
+  "fix": "v10.28 수정 — 픽스처가 본문과 함께 알림 표시 · 제목을 옮기고, 「알림」 글인 위탁 판을 알림으로 표시. 확인: dev.sh check 통과 304 / 0 · 뚫림 0 · PowerShell check rc=0 · 새 검정 DB verify 304 / 0",
+  "file": "sgb/scripts/fixture.sql"
+ }
+]

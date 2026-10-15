@@ -1,0 +1,362 @@
+[
+ {
+  "step": "A-1 메인에 낼 투표 — 종류마다 1건, 비교해요 · 궁금해요 · 써본 의견 순",
+  "ok": true,
+  "detail": "(200, ['VS', 'ASK', 'USED'])"
+ },
+ {
+  "step": "A-2 참여 수 = 보기별 표의 합 = DB 의 실제 표 수 (꾸며 넣은 숫자 없음)",
+  "ok": true,
+  "detail": "[('VS', 0), ('ASK', 0), ('USED', 0)]"
+ },
+ {
+  "step": "A-3 열린 투표 · 방문자 키 없이 보면 「내가 고른 보기」 없음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "A-4 전체 목록 — 열린 것 · 마감된 것만(준비 중 · 감춘 것은 없음) · 열린 것이 먼저",
+  "ok": true,
+  "detail": "(200, {'OPEN'}, 3)"
+ },
+ {
+  "step": "A-5 1건 조회 200 · 없는 투표 404",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "B-1 운영 목록 — 토큰 없음 「로그인 필요」 · 일반 회원 403 · 운영 200",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "B-2 만들기 · 바꾸기 — 토큰 없음 「로그인 필요」 · 일반 회원 403 · 아무것도 안 생김",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "B-3 제목 3자 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "B-4 보기 1개 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "B-5 없는 종류 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "B-6 그림 주소가 /경로 · https 가 아님 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "B-7 만들면 「준비 중」(DRAFT) — 아직 보이지 않음",
+  "ok": true,
+  "detail": "(201, {'ok': True, 'id': 'cfc4d4d6-dc44-42b9-bcc8-a75b9af8e1c3', 'state': 'DRAFT', 'note': '만들었습니다. 아직 준비 중이라 보이지 않습니다 — 「열기」를 눌러야 투표를 받습니다.'})"
+ },
+ {
+  "step": "B-8 「비교해요」 보기 3개로 열기 → 422 POLL_OPTIONS (정확히 2개)",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_OPTIONS', 'message': '「비교해요」는 보기가 정확히 2개여야 열 수 있습니다 (지금 3개)'})"
+ },
+ {
+  "step": "B-9 마감 시각이 지난 채로 열기 → 422 POLL_ENDS_AT · 보기 교체도 함께 되돌아감",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_ENDS_AT', 'message': '마감 시각이 이미 지났습니다 — 마감을 비우거나 앞으로 잡으십시오'})"
+ },
+ {
+  "step": "B-10 보기 2개로 바꾸고 열기 → 열림 · 공개 목록에 나옴 · 0표",
+  "ok": true,
+  "detail": "(200, {'ok': True, 'id': 'cfc4d4d6-dc44-42b9-bcc8-a75b9af8e1c3', 'state': 'OPEN'})"
+ },
+ {
+  "step": "B-11 감사 기록 — 만들기 · 바꾸기가 남음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-1 비로그인 · 방문자 키 없음 → 400 (사용자 웹이 쿠키로 붙입니다)",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'field': 'X-Visitor-Key', 'message': '방문자 키(X-Visitor-Key)가 없거나 형식이 맞지 않습니다. 사용자 웹에서 투표하십시오.'})"
+ },
+ {
+  "step": "C-2 자동 프로그램(curl) → 422 POLL_BOT · 표 0",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_BOT', 'message': '자동 프로그램의 투표는 받지 않습니다.'})"
+ },
+ {
+  "step": "C-3 보기 값이 형식에 안 맞음 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "C-4 비로그인 투표 → 201 · 1명 참여 · 내가 고른 보기",
+  "ok": true,
+  "detail": "(201, '투표했습니다.')"
+ },
+ {
+  "step": "C-5 DB — 계정 없음 · 방문자 키 · 주소는 64자 해시 · 투표일",
+  "ok": true,
+  "detail": "true|qa-3c9e62-0001|64|true"
+ },
+ {
+  "step": "C-6 주소(IP) 원문은 저장하지 않음 — 칸이 없고 값에도 없음",
+  "ok": true,
+  "detail": "id,poll_id,option_id,account_id,visitor_key,ip_hash,vote_day,created_at"
+ },
+ {
+  "step": "C-7 같은 방문자가 또 → 409 POLL_VOTED · 표는 그대로 1",
+  "ok": true,
+  "detail": "(409, {'code': 'POLL_VOTED', 'message': '이미 투표하셨습니다.'})"
+ },
+ {
+  "step": "C-8 다시 열어도 「내가 고른 보기」가 남음 · 다른 방문자에게는 없음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-9 다른 투표의 보기로 → 422 POLL_OPTION",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_OPTION', 'message': '이 투표의 보기가 아닙니다'})"
+ },
+ {
+  "step": "C-10 회원 투표 → 201 · 2명 참여 (같은 기기의 비로그인 표와 따로 셈)",
+  "ok": true,
+  "detail": "(201, 2)"
+ },
+ {
+  "step": "C-11 같은 회원이 또(방문자 키를 바꿔도) → 409 POLL_VOTED",
+  "ok": true,
+  "detail": "(409, {'code': 'POLL_VOTED', 'message': '이미 투표하셨습니다.'})"
+ },
+ {
+  "step": "C-12 회원으로 조회하면 계정의 표가 「내가 고른 보기」",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-13 한도 설정 — 0 · 글자는 거절, 2 는 저장",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-14 같은 주소 · 방문자 키만 바꿔 3번 → 2번까지 201, 3번째 422 POLL_IP_LIMIT",
+  "ok": true,
+  "detail": "[(201, None), (201, None), (422, 'POLL_IP_LIMIT')]"
+ },
+ {
+  "step": "C-15 다른 주소는 들어감",
+  "ok": true,
+  "detail": "(201, None)"
+ },
+ {
+  "step": "C-16 한도에 걸린 주소라도 회원은 들어감(한도는 비로그인만)",
+  "ok": true,
+  "detail": "(201, None)"
+ },
+ {
+  "step": "C-17 비로그인 투표 설정 — 엉뚱한 값은 거절, off 는 저장",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-18 끈 뒤 비로그인 투표 → 401 POLL_LOGIN · 표는 그대로",
+  "ok": true,
+  "detail": "(401, {'code': 'POLL_LOGIN', 'message': '로그인한 회원만 투표할 수 있습니다.'})"
+ },
+ {
+  "step": "C-19 DB 에 직접 넣어도 막힘(POLL_LOGIN) — 화면 · 서버를 거치지 않아도",
+  "ok": true,
+  "detail": "ERROR:  POLL_LOGIN: 로그인한 회원만 투표할 수 있습니다\nCONTEXT:  PL/pgSQL function fn_poll_vote_guard() line 26 at RAISE"
+ },
+ {
+  "step": "C-20 끈 뒤에도 회원은 투표됨",
+  "ok": true,
+  "detail": "(201, None)"
+ },
+ {
+  "step": "C-21 끈 뒤에도 보기(조회)는 로그인 없이 됨",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-22 다시 켜면 비로그인 투표가 들어감",
+  "ok": true,
+  "detail": "(201, None)"
+ },
+ {
+  "step": "C-23 마감 → 닫은 때가 남음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-24 마감 뒤 투표 → 422 POLL_CLOSED",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_CLOSED', 'message': '마감된 투표입니다.'})"
+ },
+ {
+  "step": "C-25 마감 뒤에도 결과는 보임(6표) · 목록에 「마감」으로",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "C-26 마감 시각이 지난 열린 투표 → 422 POLL_CLOSED (운영이 닫지 않아도)",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_CLOSED', 'message': '마감된 투표입니다.'})"
+ },
+ {
+  "step": "D-1 표가 들어온 투표의 보기 바꾸기 → 422 POLL_LOCKED · 보기 그대로",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_LOCKED', 'message': '표가 들어온 투표는 보기를 바꿀 수 없습니다 — 새 투표를 만드십시오'})"
+ },
+ {
+  "step": "D-2 표가 들어온 투표를 준비 중으로 → 422 POLL_LOCKED",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_LOCKED', 'message': '표가 들어온 투표는 준비 중으로 되돌릴 수 없습니다 — 마감하거나 감추십시오'})"
+ },
+ {
+  "step": "D-3 표가 들어온 투표의 종류 바꾸기(DB 직접) → POLL_LOCKED",
+  "ok": true,
+  "detail": "ERROR:  POLL_LOCKED: 표가 들어온 투표는 종류를 바꿀 수 없습니다\nCONTEXT:  PL/pgSQL function fn_poll_guard() line 6 at "
+ },
+ {
+  "step": "D-4 넣은 표 고치기 · 지우기(DB 직접) → POLL_VOTE_FIXED · 표 2 그대로",
+  "ok": true,
+  "detail": "ERROR:  POLL_VOTE_FIXED: 넣은 표는 고치거나 지울 수 없습니다\nCONTEXT:  PL/pgSQL function fn_pol"
+ },
+ {
+  "step": "D-5 한 사람 한 표를 DB 가 보장 — 고유 색인 2개(계정 · 방문자)",
+  "ok": true,
+  "detail": "poll_votes_pkey,ux_poll_votes_account,ux_poll_votes_visitor"
+ },
+ {
+  "step": "D-6 표가 들어온 투표에 보기 추가(DB 직접) → POLL_LOCKED",
+  "ok": true,
+  "detail": "ERROR:  POLL_LOCKED: 표가 들어온 투표는 보기를 바꿀 수 없습니다 — 새 투표를 만드십시오\nCONTEXT:  PL/pgSQL function fn_poll_opti"
+ },
+ {
+  "step": "D-7 사유 없이 감추기 → 422 POLL_HIDE_REASON",
+  "ok": true,
+  "detail": "(422, {'code': 'POLL_HIDE_REASON', 'message': '감추는 사유를 5자 이상 적어 주십시오.'})"
+ },
+ {
+  "step": "D-8 사유 1자 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "D-9 사유를 적고 감추기 → 공개 목록 · 1건 조회에서 빠짐 · 운영 목록에는 사유와 표 수가 남음",
+  "ok": true,
+  "detail": "(200, 'HIDDEN')"
+ },
+ {
+  "step": "D-10 감춘 투표에 투표 → 404",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "D-11 없는 투표 바꾸기 → 404",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "E-1 준비 중인 투표는 메인에 안 나감",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "E-2 열면 — 순서가 더 앞선 투표가 그 종류의 메인 카드에(종류마다 여전히 1건)",
+  "ok": true,
+  "detail": "(True, 1)"
+ },
+ {
+  "step": "E-3 운영 목록의 「나가는 중」은 1건뿐",
+  "ok": true,
+  "detail": "[('시험 3c9e62 메인', True), ('로봇청소기를 산다면, ', False)]"
+ },
+ {
+  "step": "E-4 「메인에 내기」를 끄면 원래 투표로 돌아옴",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "E-5 v_poll_home — 종류마다 1건(3/3)",
+  "ok": true,
+  "detail": "3/3"
+ },
+ {
+  "step": "F-1 공개 설정에 sns.facebook · instagram · x · youtube 4개",
+  "ok": true,
+  "detail": "['sns.facebook', 'sns.instagram', 'sns.x', 'sns.youtube']"
+ },
+ {
+  "step": "F-2 토큰 없음 「로그인 필요」 · 일반 회원 403",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "F-3 http:// · javascript: · 주소 형식 아님 · 빈칸 섞임 → 전부 거절",
+  "ok": true,
+  "detail": "[422, 422, 422, 422]"
+ },
+ {
+  "step": "F-4 https:// 주소 → 저장 · 공개 설정으로 나감",
+  "ok": true,
+  "detail": "(200, {'key': 'sns.instagram', 'value': 'https://www.instagram.com/sogaebank_3c9e62'})"
+ },
+ {
+  "step": "F-5 비우기 → 저장(아이콘은 「준비 중」으로 돌아감)",
+  "ok": true,
+  "detail": "(200, {'key': 'sns.instagram', 'value': ''})"
+ },
+ {
+  "step": "F-6 설정 4개 모두 형식 검사가 걸려 있고 오픈 필수 항목은 아님",
+  "ok": true,
+  "detail": "4"
+ },
+ {
+  "step": "G-1 빈 DB → 확정한 질문 3건(보기 2 · 5 · 3 · 열림 · 0표) · 두 번 돌려도 3건",
+  "ok": true,
+  "detail": "['VS|로봇청소기를 산다면, 어느 쪽을 고르시겠어요?|OPEN|2|0', 'ASK|소개받아 살 때 가장 먼저 보는 것은?|OPEN|5|0', 'USED|공기청정기를 써 보신 분들의 의견을 들려주세요!|OPEN|3|0']"
+ },
+ {
+  "step": "G-2 v10.14 예시 문구 투표가 표 없이 남은 DB → 그 투표는 지워지고 확정한 질문 3건",
+  "ok": true,
+  "detail": "['VS|로봇청소기를 산다면, 어느 쪽을 고르시겠어요?|OPEN|2|0', 'ASK|소개받아 살 때 가장 먼저 보는 것은?|OPEN|5|0', 'USED|공기청정기를 써 보신 분들의 의견을 들려주세요!|OPEN|3|0']"
+ },
+ {
+  "step": "G-3 예시 문구 투표에 표가 있으면 → 지우지 않고 「감춤」(사유 · 표 1 그대로) + 확정한 질문 3건",
+  "ok": true,
+  "detail": "['VS|로봇청소기를 산다면, 어느 쪽을 고르시겠어요?|OPEN|2|0', 'ASK|소개받아 살 때 가장 먼저 보는 것은?|OPEN|5|0', 'USED|공기청정기를 써 보신 분들의 의견을 들려주세요!|OPEN|3|0', 'VS|둘 중 어떤 제품이 더 좋을까요?|HIDDEN|2|1|예시 문구 투표 — 확정한 질문으로 바꿈 (v10.15)']"
+ },
+ {
+  "step": "G-4 운영이 만든 투표만 있는 DB → 아무것도 넣지 않음(1건 그대로)",
+  "ok": true,
+  "detail": "['ASK|운영이 직접 만든 투표입니다|DRAFT|0|0']"
+ },
+ {
+  "step": "G-5 시험 뒤 검정 DB 에 남은 것 없음(되돌림)",
+  "ok": true,
+  "detail": "('0', '0')"
+ },
+ {
+  "step": "Z-1 공용 설정을 처음 값으로 되돌림",
+  "ok": true,
+  "detail": "{'poll.guest_vote': 'on', 'poll.guest_ip_daily_limit': '5', 'sns.instagram': ''}"
+ },
+ {
+  "step": "Z-2 시험 투표는 모두 「감춤」으로 — 사용자 화면에 남지 않음",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "Z-3 메인에 나가는 투표는 처음 그대로(3건)",
+  "ok": true,
+  "detail": ""
+ }
+]

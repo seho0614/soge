@@ -1,0 +1,157 @@
+[
+ {
+  "step": "N-1 관 이름이 「소개몰」(GET /gwans)",
+  "ok": true,
+  "detail": "소개몰"
+ },
+ {
+  "step": "N-2 약관 3종 본문에 옛 이름이 없음 · 판매 약관 「소개장터 · 안심소개 · 소개창업 회사는 중개만 …」 · 이용약관 「소개몰(직판)」",
+  "ok": true,
+  "detail": "{'HLT_SALE': [], 'SERVICE': [], 'THIRDPARTY': []}"
+ },
+ {
+  "step": "N-3 직판 고지 문구가 공개 설정으로 내려오고 이름이 「소개몰」",
+  "ok": true,
+  "detail": "소개몰에서 판매하는 상품은 소개뱅크가 직접 판매합니다. 상품의 하자·배송·반품·환불에 대한 책임은 소개뱅크에 있습니다."
+ },
+ {
+  "step": "N-4 검색 사전 — 「소개뱅크몰」 「소개쇼핑몰」 「건강몰」 → 소개몰 · 「소개몰 → 안심소개」 줄은 없음",
+  "ok": true,
+  "detail": "{'건강식품': '소개몰', '영양제': '소개몰', '건강몰': '소개몰', '건강상품관': '소개몰', '소개뱅크몰': '소개몰', '소개쇼핑몰': '소개몰'}"
+ },
+ {
+  "step": "S-0 (준비) 3만원 미만이면서 재고가 있는 판매 중 상품이 있음",
+  "ok": true,
+  "detail": "[['p17', '18000', '36']]"
+ },
+ {
+  "step": "S-1 3만원 미만 주문(p17 18,000원 × 1) — 배송비 0 · 결제 금액 = 상품 금액(전에는 + 3,000원)",
+  "ok": true,
+  "detail": "(201, {'shipFee': 0, 'total': 18000, 'note': '배송비는 없습니다(전 상품 무료).'})"
+ },
+ {
+  "step": "S-1b 주문 응답의 안내 글이 「3만원」을 말하지 않음",
+  "ok": true,
+  "detail": "배송비는 없습니다(전 상품 무료)."
+ },
+ {
+  "step": "S-2 DB 의 주문 — ship_fee 0 · total = goods_amount",
+  "ok": true,
+  "detail": "[['18000', '0', '18000']]"
+ },
+ {
+  "step": "S-3a 결제 전 주문 — 환불 기준 금액 0 · paid false(G-184)",
+  "ok": true,
+  "detail": "{'customerReasons': ['CHANGE_MIND', 'WRONG_ORDER'], 'roundTripFee': 6000, 'paid': False, 'paidAmount': 0, 'customerRefundEstimate': 0}"
+ },
+ {
+  "step": "S-3 반품 왕복 배송비는 6,000원 그대로 — 고객 사정 반품의 환불 예상액 = 결제 금액 − 6,000원",
+  "ok": true,
+  "detail": "{'customerReasons': ['CHANGE_MIND', 'WRONG_ORDER'], 'roundTripFee': 6000, 'paid': True, 'paidAmount': 18000, 'customerRefundEstimate': 12000}"
+ },
+ {
+  "step": "S-4 장바구니 요약 — 배송비 0 · 합계 = 상품 금액 · 안내 글에 「3만원」 「더 담으시면」 없음",
+  "ok": true,
+  "detail": "{'goods': 18000, 'shipFee': 0, 'total': 18000, 'note': '배송비는 없습니다(전 상품 무료).'}"
+ },
+ {
+  "step": "S-5 판매 약관 — 「배송비는 받지 않습니다」가 있고 「3만원」 「배송비를 내신 주문」이 없음 · 왕복 6,000원 조항은 그대로",
+  "ok": true,
+  "detail": "['① **회원 사정(단순 변심 · 잘못 주문)으로 반품**하시면 **왕복 배송비 6,000원**', '(보내 드린 배송비 3,000원 + 돌려받는 배송비 3,000원)을 **환불 금액에서 뺍니다**', '| 상품 하자 · 오배송 · 표시·광고와 다름 · 배송 지연 | 전액 (배송비를 받지 않습니다) |', '| 회원 사정 교환(단순 변심 · 잘못 주문) | 환불 없음 · 교환 배송비 6,000원 신청 때 결제 |', '| 회사 사정 교환 · 반려된 교환 | 교환 배송비를 받지 않거나 전액 돌려드림 |', '   **왕복 배송비 6"
+ },
+ {
+  "step": "S-6 정책 파일 — 왕복 반품 배송비를 「편도 배송비 × 2」로 계산하지 않음(배송비가 0 이 되어도 6,000원이 유지되게)",
+  "ok": true,
+  "detail": "['export const HLT_SHIP_FEE = 0;', 'export const HLT_RETURN_SHIP_ONE_WAY = 3000;', 'export const HLT_RETURN_SHIP_ROUND_TRIP = 6000;', \"export const HLT_CUSTOMER_REASONS = ['CHANGE_MIND', 'WRONG_ORDER'] as const;\", 'export const HLT_EXCHANGE_SHIP_ROUND_TRIP = 6000;', 'export const HLT_EXCHANGE_WAIT_D"
+ },
+ {
+  "step": "S-9 (정리) 시험 주문을 취소해 재고가 처음과 같음",
+  "ok": true,
+  "detail": "(36, '36')"
+ },
+ {
+  "step": "L-1 GET /health/categories → 200 · 줄마다 code · name · state · note · productCount",
+  "ok": true,
+  "detail": "(200, [{'code': 'HLT_FOOD', 'name': '건강식품', 'state': 'OPEN', 'note': None, 'productCount': 17}, {'code': 'HLT_COSMETIC', 'name': '화장품', 'state': 'OPEN', 'note': None, 'productCount': 1}])"
+ },
+ {
+  "step": "L-2 건강식품 = 열림(OPEN) · 건강기능식품 = 잠금(LOCKED · 안내 글 있음) · 의료기기 = 판매하지 않음(NOT_SOLD · 안내 글 있음)",
+  "ok": true,
+  "detail": "{'HLT_FOOD': ('OPEN', None), 'HLT_COSMETIC': ('OPEN', None), 'HLT_FUNC': ('LOCKED', '건강기능식품은 준비 중입니다. 2단계에 엽니다(건강기능식품 판매업 영업신고와 표시 · 광고 심의 체계를 갖춘 뒤).'), 'HLT_MEDDEV': ('NOT_SOLD', '의료기기는 현재 판매하지 않습니다(의료기기법 제24조 — 광고 사전심의 대상).'), 'HLT_FITNESS': ('OPEN', None)}"
+ },
+ {
+  "step": "L-2b 잠금 · 미판매 갈래의 상품 수는 0 · 열린 갈래의 상품 수는 DB 의 판매 중(품절 포함) 수와 같음",
+  "ok": true,
+  "detail": "[('HLT_FOOD', 17), ('HLT_COSMETIC', 1), ('HLT_FUNC', 0), ('HLT_MEDDEV', 0), ('HLT_FITNESS', 1)]"
+ },
+ {
+  "step": "L-3 상품 목록에 건강기능식품 · 의료기기 상품이 없음",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "L-4 DB — 건강기능식품 · 의료기기 상품은 모두 판매 중지(STOPPED) · 지우지 않음",
+  "ok": true,
+  "detail": "[['BP-01', 'STOPPED', 'HLT_MEDDEV'], ['LACT-30', 'STOPPED', 'HLT_FUNC'], ['OMG-60', 'STOPPED', 'HLT_FUNC'], ['THM-01', 'STOPPED', 'HLT_MEDDEV'], ['VITD-90', 'STOPPED', 'HLT_FUNC'], ['p15', 'STOPPED', 'HLT_FUNC']]"
+ },
+ {
+  "step": "L-5 잠긴 갈래의 상품 상세(BP-01) — 200 이 아님(판매 중인 상품이 아닙니다)",
+  "ok": true,
+  "detail": "(409, {'code': 'NOT_FOUND', 'message': '판매 중인 상품이 아닙니다.'})"
+ },
+ {
+  "step": "L-6 잠긴 갈래의 상품 주문(BP-01) — 거절(주문이 생기지 않음)",
+  "ok": true,
+  "detail": "(422, {'code': 'NOT_ON_SALE', 'message': '판매 중이 아닌 상품이 있습니다.'})"
+ },
+ {
+  "step": "L-7 DB 규칙 — 잠긴 갈래의 상품을 「판매 중」으로 바꾸면 거절(HLTP)",
+  "ok": true,
+  "detail": "ERROR:  HLTP: 의료기기는 현재 판매하지 않습니다(의료기기법 제24조 — 광고 사전심의 대상).\nCONTEXT:  PL/pgSQL function fn_hlt_product_guard() line 14 at RAISE"
+ },
+ {
+  "step": "L-7b 열린 갈래(건강식품)의 상품은 「판매 중」으로 둘 수 있음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "L-8 성분 목록의 상품 수가 판매 중 상품만 센 값과 같음(잠긴 갈래의 상품은 세지 않음 · 성분군 제외)",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "K-1 매물 등록 규칙(restricted_industries · HLT)은 그대로 — 의료기기 = 심의필(GATED) · 의약품 · 의료 서비스 = 금지(BLOCK)",
+  "ok": true,
+  "detail": "{'PHARM': 'BLOCK', 'MEDICAL': 'BLOCK', 'MEDDEV': 'GATED'}"
+ },
+ {
+  "step": "K-2 판매불가 매물 노출 0(v_hlt_sale_violation)",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "K-3 결제 전 주문 · 지난 주문은 그대로 — 주문 품목이 가리키는 상품이 모두 남아 있음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "K-4 청약철회 규칙 DEVICE 의 이름에 「의료기기」가 없음(건강기기) — 팔지 않는 품목을 규칙 이름에 두지 않음",
+  "ok": true,
+  "detail": "건강기기"
+ },
+ {
+  "step": "K-5 시안의 이용안내에 싣는 판매 약관 전문(qa/hlt_sale_terms.md)이 DB 의 지금 약관(HLT_SALE · 게시 중)과 같은 글(시행일 날짜만 다를 수 있음)",
+  "ok": true,
+  "detail": "(1909, 1909, [])"
+ },
+ {
+  "step": "E-1 새 API(GET /health/categories)가 화면 등록부에 연결됨",
+  "ok": true,
+  "detail": "['SB-HLT-CAT-010']"
+ },
+ {
+  "step": "E-2 새 조회의 SQL 이 고정 문자열(끼워 넣기 없음)",
+  "ok": true,
+  "detail": "categories() {\n    return this.db.query(\n      `SELECT c.code, c.name, coalesce(s.state, 'OPEN') AS state, s.note,\n     "
+ }
+]

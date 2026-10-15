@@ -1,0 +1,235 @@
+소개뱅크 AWS 적용 — v10.41 (2026-10-14 15:53:58 KST)
+새 킷 /tmp/awshome/SGB_DevDocker_Integrated_20261002_v10_41/sgb  →  앱 폴더 /tmp/awshome/sgb
+
+[0] 전제 확인
+  통과  Node.js v22.22.0
+  통과  메모리 + 스왑 8029MB
+  통과  디스크 여유 13603MB
+  통과  DB 접속 sgb_aws · PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+  통과  마이그레이션 — 적용됨 43 · 올릴 것 92 · 바뀐 파일 0
+
+[1] 새 판 놓기
+        start.sh 를 가져왔습니다 (ENC_KEY 를 읽는 스크립트)
+  통과  복사 /tmp/awshome/sgb-releases/v10.41_20261014_155358
+        .env 에 UPLOAD_DIR=/tmp/awshome/sgb-data/uploads 를 넣었습니다 (S3_BUCKET 이 없어서)
+  통과  파일 저장 — 서버 디스크 /tmp/awshome/sgb-data/uploads
+
+[2] 설치 · 빌드 (10 ~ 20분 · 자세한 출력은 /tmp/awshome/sgb-data/logs/apply_20261014_155358_build.log)
+  통과  API 설치 — 7초
+  통과  앱 방식(Node)으로 DB 접속 — 적용 0 · 기존 43 · 변경감지 0 · 적용 예정 92
+  통과  API 빌드 — 8초
+  통과  사용자 웹 설치 — 21초
+  통과  사용자 웹 빌드 — 79초
+  통과  운영 화면 설치 — 3초
+  통과  운영 화면 빌드 — 14초
+
+[3] DB 마이그레이션
+        올릴 것: C997_ops_decisions C998_screen_fixes D001_affiliate_click_verify D002_health_catalog_stock 
+        올릴 것: D003_partner_admin_lists D004_audit_night_actor D005_ansim_consult_merge D006_hlt_pay_refund_opened 
+        올릴 것: D007_file_storage D008_lead_assign_adapters D009_hlt_return_ship_deduct D010_refcode_member_attribution 
+        올릴 것: D011_view_limit_extra_paid_relink D012_refcode_listing_scope D013_view_limit_from_default3 
+        올릴 것: D014_hlt_sale_terms_1_1 D015_free_plan_views_sync D016_consult_categories_v2 D017_consult_more_categories 
+        올릴 것: D018_consult_request_flow D019_consult_directory D020_directory_base_fee D021_polls_sns 
+        올릴 것: D022_billing_integrity D023_listing_detail_reviews D024_gwan_hlt_rename_mall D025_hlt_sale_scope_free_ship 
+        올릴 것: D026_fix_pg_key_name_review_close D027_hlt_options_catalog_exchange D028_hlt_sale_terms_exchange 
+        올릴 것: D029_banned_words_unique D030_inv11_hlt_exchange_fee D031_fix_open_findings_v1027 
+        올릴 것: D032_subscription_plan_reservation D033_kst_dates D034_settlement_payee_introducer D035_hlt_ship_confirm 
+        올릴 것: D036_hlt_reviews_qna D037_hlt_rankings D038_consent_history D039_consult_email 
+        올릴 것: D040_personal_referral_settlement D041_terms_single_text D042_terms_outsource_notice D043_terms_date_repair 
+        올릴 것: D044_request_search_fields D045_request_candidates D046_listing_register_fields D047_review_tags 
+        올릴 것: D048_support_guide_content D049_support_footer_policy D050_w2_photo_region_fields D051_w2_urgent_sale_trust 
+        올릴 것: D052_w2_success_stats D053_w2_safety_suppliers D054_w2_biz_axes D055_w2_broker_guarantee 
+        올릴 것: D056_w2_policy_by_proto D057_w2_notify_templates D058_w2_trust_proto D059_w2_trust_unify 
+        올릴 것: D060_myspace_proto_v1031 D061_mall_proto_v1031 D062_terms_service_proto_v1031 D063_notify_prefs_v1031 
+        올릴 것: D064_hlt_order_time_guard_v1031 D065_ingredient_license_v1031 D070_lead_cash_prepaid 
+        올릴 것: D071_lead_grade_alim_memo D072_partner_service_forms D073_partner_fulfillment_badges 
+        올릴 것: D074_partner_company_staff D075_affiliate_dashboard_settle D076_partner_terms_invoices D077_lead_fee_quote 
+        올릴 것: D078_partner_badge_label_fix D079_lead_cash_inv11_scope D080_admin_v31_core D081_runway_finance 
+        올릴 것: D082_review_sla_notice_suspend D083_policy_axes_segpreview D084_adx_publisher_payout D085_adx_inv9_scope 
+        올릴 것: D086_settlement_insert_requested D090_merge_v1031 D091_ad_medical_review_reject D092_directory_vat_renewal 
+        올릴 것: D093_etax_adapter D094_mny_individual_landing_hlt D095_p2p_all_individual D096_partner_account_based 
+        올릴 것: D097_drop_passthrough_seller_gates
+        ★ 마이그레이션은 되돌릴 수 없습니다(전진 전용). 되돌리는 길은 **RDS 스냅샷 복원**뿐입니다.
+        ASSUME_YES=1 — 스냅샷 확인을 건너뜁니다 (리허설)
+        ok C997_ops_decisions           12ms
+        ok C998_screen_fixes            2ms
+        ok D001_affiliate_click_verify  8ms
+        ok D002_health_catalog_stock    18ms
+        ok D003_partner_admin_lists     9ms
+        ok D004_audit_night_actor       3ms
+        ok D005_ansim_consult_merge     20ms
+        ok D006_hlt_pay_refund_opened   6ms
+        ok D007_file_storage            15ms
+        ok D008_lead_assign_adapters    31ms
+        ok D009_hlt_return_ship_deduct  3ms
+        ok D010_refcode_member_attribution 15ms
+        ok D011_view_limit_extra_paid_relink 5ms
+        ok D012_refcode_listing_scope   5ms
+        ok D013_view_limit_from_default3 1ms
+        ok D014_hlt_sale_terms_1_1      2ms
+        ok D015_free_plan_views_sync    2ms
+        ok D016_consult_categories_v2   3ms
+        ok D017_consult_more_categories 2ms
+        ok D018_consult_request_flow    28ms
+        ok D019_consult_directory       17ms
+        ok D020_directory_base_fee      2ms
+        ok D021_polls_sns               23ms
+        ok D022_billing_integrity       27ms
+        ok D023_listing_detail_reviews  4ms
+        ok D024_gwan_hlt_rename_mall    5ms
+        ok D025_hlt_sale_scope_free_ship 6ms
+        ok D026_fix_pg_key_name_review_close 2ms
+        ok D027_hlt_options_catalog_exchange 48ms
+        ok D028_hlt_sale_terms_exchange 3ms
+        ok D029_banned_words_unique     6ms
+        ok D030_inv11_hlt_exchange_fee  3ms
+        ok D031_fix_open_findings_v1027 17ms
+        ok D032_subscription_plan_reservation 7ms
+        ok D033_kst_dates               2ms
+        ok D034_settlement_payee_introducer 1ms
+        ok D035_hlt_ship_confirm        5ms
+        ok D036_hlt_reviews_qna         19ms
+        ok D037_hlt_rankings            6ms
+        ok D038_consent_history         7ms
+        ok D039_consult_email           3ms
+        ok D040_personal_referral_settlement 3ms
+        ok D041_terms_single_text       6ms
+        ok D042_terms_outsource_notice  2ms
+        ok D043_terms_date_repair       2ms
+        ok D044_request_search_fields   3ms
+        ok D045_request_candidates      2ms
+        ok D046_listing_register_fields 6ms
+        ok D047_review_tags             2ms
+        ok D048_support_guide_content   4ms
+        ok D049_support_footer_policy   5ms
+        ok D050_w2_photo_region_fields  13ms
+        ok D051_w2_urgent_sale_trust    8ms
+        ok D052_w2_success_stats        11ms
+        ok D053_w2_safety_suppliers     13ms
+        ok D054_w2_biz_axes             20ms
+        ok D055_w2_broker_guarantee     3ms
+        ok D056_w2_policy_by_proto      5ms
+        ok D057_w2_notify_templates     1ms
+        ok D058_w2_trust_proto          4ms
+        ok D059_w2_trust_unify          3ms
+        ok D060_myspace_proto_v1031     10ms
+        ok D061_mall_proto_v1031        8ms
+        ok D062_terms_service_proto_v1031 4ms
+        ok D063_notify_prefs_v1031      1ms
+        ok D064_hlt_order_time_guard_v1031 1ms
+        ok D065_ingredient_license_v1031 1ms
+        ok D070_lead_cash_prepaid       43ms
+        ok D071_lead_grade_alim_memo    13ms
+        ok D072_partner_service_forms   33ms
+        ok D073_partner_fulfillment_badges 13ms
+        ok D074_partner_company_staff   18ms
+        ok D075_affiliate_dashboard_settle 8ms
+        ok D076_partner_terms_invoices  8ms
+        ok D077_lead_fee_quote          2ms
+        ok D078_partner_badge_label_fix 1ms
+        ok D079_lead_cash_inv11_scope   0ms
+        ok D080_admin_v31_core          21ms
+        ok D081_runway_finance          7ms
+        ok D082_review_sla_notice_suspend 9ms
+        ok D083_policy_axes_segpreview  15ms
+        ok D084_adx_publisher_payout    31ms
+        ok D085_adx_inv9_scope          3ms
+        ok D086_settlement_insert_requested 1ms
+        ok D090_merge_v1031             7ms
+        ok D091_ad_medical_review_reject 3ms
+        ok D092_directory_vat_renewal   34ms
+        ok D093_etax_adapter            14ms
+        ok D094_mny_individual_landing_hlt 2ms
+        ok D095_p2p_all_individual      7ms
+        ok D096_partner_account_based   14ms
+        ok D097_drop_passthrough_seller_gates 1ms
+        적용 92 · 기존 43 · 변경감지 0
+  통과  마이그레이션 적용 수 = 파일 수 — 135 / 135
+
+[4] 배포 점검 (scripts/deploy-check.sh · 오픈 차단 항목은 경고만)
+        ok   타입 오류 0
+        ok   생성 파일 최신
+        ok   미적용 마이그레이션 없음
+        ok   적용된 파일 변조 없음
+        ok   불변식 위반 0건
+        ok   라벨 누락 0건
+        →   오픈 차단 19건 [ASSUME:4 FOOTER:4 INTEGRATION:5 TERM:6] (stg 는 경고만)
+        ok   미확인 CRITICAL 경보 없음
+        ok   라우트 640건 등록
+        ok   start 스크립트
+        ok   engines.node 지정
+      배포 가능
+
+[5] 교체 · pm2 등록
+        전 판을 /tmp/awshome/sgb-releases/prev_20261014_155358 로 옮겼습니다
+  통과  /tmp/awshome/sgb → /tmp/awshome/sgb-releases/v10.41_20261014_155358
+
+[6] 기동 확인
+  통과  API · 사용자 웹이 떴습니다 (새 프로세스 · 재시작 0회)
+
+적용 끝 — 이어서 적용 후 확인을 돌립니다.
+기록: /tmp/awshome/sgb-data/logs/apply_20261014_155358.txt
+소개뱅크 AWS 적용 후 확인 (2026-10-14 15:56:45 KST) — v10.41
+앱 폴더: /tmp/awshome/sgb → /tmp/awshome/sgb-releases/v10.41_20261014_155358
+
+[1] 프로세스 (pm2)
+  통과  sgb — online · 재시작 0회
+  통과  sgb-site — online · 재시작 0회
+  통과  sgb-jobs (배치 호출기) — online · 재시작 0회
+  통과  sgb 는 실행 스크립트(run-api.sh)로 등록됨
+  확인  재부팅 뒤 자동 기동이 꺼져 있거나 확인할 수 없음 — pm2 startup 이 알려 주는 sudo 명령을 한 번 실행하고 pm2 save (절차서 5-3)
+  통과  pm2 save 기록 있음
+
+[2] API
+  통과  상태 주소 — {"status":"ok","db":true,"time":"2026-10-14T06:56:46.594Z"}
+  통과  API 문서(/docs)는 운영에서 닫혀 있음 — http://127.0.0.1:3200/docs → 404
+  통과  .env NODE_ENV=production
+  통과  기동 로그 정상
+
+[3] DB
+  통과  마이그레이션 — 적용 135 / 파일 135 · 올릴 것 0 · 바뀐 파일 0
+  통과  불변식 위반 0건
+  통과  개발 계정(@x.com) 없음
+  통과  열쇠 없이 저장된 자료 0건
+  통과  미확인 CRITICAL 경보 0건
+        계정 0명 · 관리자 0명
+
+[4] 사용자 웹
+  통과  메인 — http://127.0.0.1:5274/ → 200
+  통과  소개광장 투표 — http://127.0.0.1:5274/community/polls → 200
+  통과  안심소개 — http://127.0.0.1:5274/mall → 200
+  통과  로그인 화면 — http://127.0.0.1:5274/login → 200
+  통과  사이트를 거친 API — http://127.0.0.1:5274/api/v1/health → 200
+  통과  메인이 실제 자료로 떠 있음 (HOME_CONTENT=live)
+  통과  시안 — http://127.0.0.1:5274/proto/SGB_Prototype_v10_41.html → 200
+
+[5] 운영 화면
+  통과  빌드 결과 있음 — /tmp/awshome/sgb/web/dist (Nginx 가 이 폴더를 내보냅니다)
+  실패  Nginx 가 /tmp/awshome 를 지나갈 수 없음 (권한 750) — chmod o+x /tmp/awshome  — 지나가기만 허용(목록은 못 봄 · .env 는 600 이라 못 읽음)
+
+[6] 배치
+  통과  배치 호출 성공 (최근 3분 안) — 2026-10-14T06:57:34.871Z
+  통과  멈춘 배치 0건
+
+[7] 파일 저장
+  통과  서버 디스크 — /tmp/awshome/sgb-data/uploads (앱 폴더 밖 · 쓰기 가능) — ★ 이 폴더는 RDS 스냅샷에 들어가지 않습니다. 따로 백업하십시오
+
+[8] 바깥 주소 (Nginx · HTTPS)
+  실패  Nginx 설정에 사용자 웹(5274)으로 넘기는 줄이 없음 — 아직 예전 설정(전부 3000 으로)입니다 — 절차서 6부
+  확인  Nginx 설정에 운영 화면(web/dist)이 없음 — 절차서 6부
+  확인  X-Forwarded-For 를 $remote_addr 로 덮어쓰는 줄이 없음 — 비로그인 투표의 IP 하루 한도가 헤더 조작으로 뚫리거나, 모두 같은 IP 로 묶입니다 — 절차서 6부 예시대로
+  확인  HTTPS 가 아직 없음 — 사용자 웹 로그인은 https(또는 localhost)에서만 유지됩니다 — 절차서 6-3
+  확인  https://sogaebaenk.co.kr/api/v1/health → 000 — 도메인 · 인증서가 아직이면 정상입니다. 접근 제한(사무실 IP만)을 걸었으면 403 이 정상입니다
+
+[9] 열기 전 상태 (오픈 전에는 「확인」이 정상입니다)
+  확인  간주 모드가 켜져 있음: assume.payment assume.broker assume.bank assume.etax  — 실제 결제 · 중개사 대조 · 실계좌 · 국세청 전자세금계산서 전송 없이 통과합니다(assume.etax 켜짐이면 「발행(간주)」은 실제 세금계산서가 아님 — 홈택스에서 발행 후 번호 넣기) — 연동 뒤 끄기 전에는 손님에게 열지 마십시오
+  실패  간주 모드가 켜진 채 접근 제한이 없음 — Nginx 에 사무실 IP 만 허용(allow … ; deny all;)을 거십시오 — 지금은 주소를 아는 누구나 가입 · 결제 간주가 됩니다 (절차서 6-2)
+  확인  오픈 차단 19건 — ASSUME:4 FOOTER:4 INTEGRATION:5 TERM:6 — 여는 날까지 해소 (npm run open:check)
+  확인  약관 — 발행 2 · 초안 7 — 법무 확인 뒤 EFFECTIVE_FROM=시행일 npm run terms:publish
+  통과  발신 IP(infra.egress_ip) — 3.37.95.217
+        메인에 나가는 투표 0건 (3건이 아니면 그 자리는 「준비 중」으로 나옵니다 — 운영 화면 「이건 어때? 투표」)
+        사회관계망 주소: facebook=비어 있음 instagram=비어 있음 x=비어 있음 youtube=비어 있음 
+
+적용 후 확인 — 통과 26 · 실패 3 · 확인 8
+→ 「실패」 줄을 먼저 고치십시오 (절차서 8부 「막혔을 때」).
+결과 파일: /tmp/awshome/sgb-data/logs/postcheck_20261014_155645.txt

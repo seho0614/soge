@@ -1,0 +1,77 @@
+[
+ {
+  "step": "UI-1 소유 확인 폼에 파일 선택칸 (이름 입력칸 아님)",
+  "ok": true,
+  "detail": "D007 시험 매물 1"
+ },
+ {
+  "step": "UI-2 10MB 초과 파일 → 화면에서 막음",
+  "ok": true,
+  "detail": "파일이 10MB 를 넘습니다. 해상도를 낮추거나 PDF 로 저장해 주십시오."
+ },
+ {
+  "step": "UI-3 .pdf 이름의 HTML → 서버가 거절(파일 내용이 PDF 가 아닙니다)",
+  "ok": true,
+  "detail": "파일 내용이 PDF 가 아닙니다 (판정: 알 수 없음). 새로 올려 주십시오."
+ },
+ {
+  "step": "UI-4 실제 파일 올림 → 소유 확인 SUBMITTED · 파일 READY · 해시 일치 · 이름",
+  "ok": true,
+  "detail": "SUBMITTED|READY|824c852be975a5d946fb3f4bf2e9de0705af691f8fd1fd9752292a8953023e93|등기사항증명서_UI시험.pdf"
+ },
+ {
+  "step": "UI-5 「제출한 문서 보기」 → 새 창이 같은 PDF 를 inline 으로 받음",
+  "ok": true,
+  "detail": "[(200, 'inline; filename=\"________UI__')]"
+ },
+ {
+  "step": "UI-6 BO 소유 확인 「문서 열기」 → 등기부 원본 바이트 · 감사 기록",
+  "ok": true,
+  "detail": "(1, [(200, 'fU51kmQkp3Q6U4u2q99_ltabEag20y4&inline=1')], '1')"
+ },
+ {
+  "step": "UI-7 BO 거절(사유) → 정리",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "UI-8 BO 자료 등록(PNG 파일) → PENDING · 파일 READY · 해시 일치",
+  "ok": true,
+  "detail": "9e6bda99-54d3-4e52-95c8-f70b4445ed7d"
+ },
+ {
+  "step": "UI-9 심의 큐 「파일 열기」 → 같은 PNG",
+  "ok": true,
+  "detail": "[(200, 'KQQNyETsLWqyhS9s-FxdxzoCOhZP3ww&inline=1')]"
+ },
+ {
+  "step": "UI-10 영상 자료에 PNG → 화면이 막음(MP4 만)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "UI-11 BO 승인 → APPROVED",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "UI-12 BO 가이드 등록(PDF 첨부) → 활성 · 파일 READY",
+  "ok": true,
+  "detail": "094252f6-dd77-4eb2-a823-a1c6fac6d902"
+ },
+ {
+  "step": "UI-13 파트너 자료실 「내려받기」 → 실제 다운로드 · 같은 PNG · 한글 파일 이름",
+  "ok": true,
+  "detail": "배너_c1e27e.png"
+ },
+ {
+  "step": "UI-14 파트너가이드 「첨부 내려받기」 → 같은 PDF",
+  "ok": true,
+  "detail": "가이드첨부_c1e27e.pdf"
+ },
+ {
+  "step": "UI-15 파트너 아닌 회원 「내려받기」 → 「파트너로 승인된 계정만」 안내",
+  "ok": true,
+  "detail": "파트너로 승인된 계정만 내려받을 수 있습니다."
+ }
+]

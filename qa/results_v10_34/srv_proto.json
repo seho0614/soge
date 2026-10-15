@@ -1,0 +1,167 @@
+[
+ {
+  "step": "S-0 file:// → 시연 모드",
+  "ok": true,
+  "detail": "False"
+ },
+ {
+  "step": "S-1 서버 연동 홈 7기능",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-2 클릭: 같은 방문자 1회 · 새 방문자 +1 · 로봇 0",
+  "ok": true,
+  "detail": "(12, 13, 14, 14)"
+ },
+ {
+  "step": "S-3 계좌: 변경→1원→틀림 2→인증",
+  "ok": true,
+  "detail": "인정보보호책임자 노명석 · 호스팅 Amazon Web Services (AWS)\n소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다. 상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.\n시안의 사진은 목업(예시)이며 파일에 함께 담겨 있습니다 — 실제 매물·상품 사진이 아닙니다. 운영에서는 등록자가 올린 사진으로 바뀝니다."
+ },
+ {
+  "step": "S-4 계좌: 5회 틀림 → 잠김",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-5 재고: 주문 −1 → 승인 +1",
+  "ok": true,
+  "detail": "[20, 19, 19, 20]"
+ },
+ {
+  "step": "S-6 재고: 다시 승인 거부",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-7 청약철회 판정 5단계(발송전 반품×·7일×·하자○·발송후 취소×)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-8 배송지: 진행 중 주문 배송지 삭제 거부",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-9 배송지: 기본은 1개",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-10 성분·고민 열기 · 질병명 거부 안내",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-11 운영 목록 시연",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "S-12 시연 중 스크립트 오류 0",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "L-0 사용자 웹에서 열면 서버 연동",
+  "ok": true,
+  "detail": "http://localhost:5174/api/v1"
+ },
+ {
+  "step": "L-1 세 계정 로그인",
+  "ok": true,
+  "detail": "['partner', 'buyer', 'admin']"
+ },
+ {
+  "step": "L-2 내 소개링크(서버)",
+  "ok": true,
+  "detail": "['PTN-8F8684D1', 'PTN-0AE7C466']"
+ },
+ {
+  "step": "L-3 /r/{code}: 새 방문자 +1 · 같은 방문자 다시 0",
+  "ok": true,
+  "detail": "(1, 2, 2, '이미 센 방문자 — 세지 않음')"
+ },
+ {
+  "step": "L-4 계좌 변경 → 인증 풀림",
+  "ok": true,
+  "detail": "{'bankName': '국민은행', 'last4': '9012', 'holderName': '김소개', 'verifiedAt': None, 'verifyPending': False, 'verifyExpiresAt': None, 'verifyTries': 0, 'verifyLocked': False, 'verifyStub': False}"
+ },
+ {
+  "step": "L-5 1원 받기(스텁 코드)",
+  "ok": true,
+  "detail": "연동 전이라 실제로 1원이 가지 않았습니다 — 코드는 SGB01 입니다. 10분 안에 입력하십시오. — 개발 스텁 코드: SGB01"
+ },
+ {
+  "step": "L-6 틀린 코드 → 시도 +1",
+  "ok": true,
+  "detail": "{'bankName': '국민은행', 'last4': '9012', 'holderName': '김소개', 'verifiedAt': None, 'verifyPending': True, 'verifyExpiresAt': '2026-10-11T16:04:31.605Z', 'verifyTries': 1, 'verifyLocked': False, 'verifyStub': True}"
+ },
+ {
+  "step": "L-7 맞는 코드 → 인증 완료",
+  "ok": true,
+  "detail": "({'bankName': '국민은행', 'last4': '9012', 'holderName': '김소개', 'verifiedAt': '2026-10-11T15:54:32.434Z', 'verifyPending': False, 'verifyExpiresAt': '2026-10-11T16:04:31.605Z', 'verifyTries': 0, 'verifyLocked': False, 'verif"
+ },
+ {
+  "step": "L-8 서버 재고: 주문 −1 → 취소 승인 +1 (정확히 1회)",
+  "ok": true,
+  "detail": "[['시작', '마그네슘 350 데일리', 102], ['주문 (1개)', 'H26101200011 PENDING', 101], ['취소 신청', 'HTTP 201 접수했습니다. 3영업일 안에 알려 드립니다.', 101], ['운영 승인', 'HTTP 201 승인했습니다. 결제 전 주문이라 환불할 것이 없습니다. 재고를 되돌렸습니다.', 102]]"
+ },
+ {
+  "step": "L-9 같은 건 재승인 → 거부 · 재고 그대로",
+  "ok": true,
+  "detail": "['같은 건 다시 승인', 'HTTP 409 ALREADY_DECIDED', 102]"
+ },
+ {
+  "step": "L-10 서버 판정(returnable) 불러옴",
+  "ok": true,
+  "detail": "[('H26101200011', 'CANCELED'), ('H26101200010', 'PENDING'), ('H26101200008', 'CANCELED'), ('H26101200007', 'CANCELED')]"
+ },
+ {
+  "step": "L-11 취소된 주문은 취소·반품 모두 불가",
+  "ok": true,
+  "detail": "5"
+ },
+ {
+  "step": "L-12 배송지 추가",
+  "ok": true,
+  "detail": "3"
+ },
+ {
+  "step": "L-13 기본 변경 · 기본은 1개",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "L-14 배송지 삭제(또는 사용 중 거부 사유)",
+  "ok": true,
+  "detail": "(3, 3, 'ADDRESS_IN_USE — 진행 중인 주문이 이 배송지로 가고 있어 지울 수 없습니다. 배송이 끝난 뒤 지워 주십시오.')"
+ },
+ {
+  "step": "L-15 고민 목록(DB)",
+  "ok": true,
+  "detail": "['IMMUNE', 'EYE', 'BONE', 'LIVER', 'MEN', 'SLEEP', 'DIET', 'GLUCOSE', 'SKIN', 'FATIGUE', 'BRAIN', 'STOMACH', 'ANTIOX', 'CIRC']"
+ },
+ {
+  "step": "L-16 고민 상세 → 성분 · 상품",
+  "ok": true,
+  "detail": "['유산균', '비타민C', '비타민D', '멀티비타민']"
+ },
+ {
+  "step": "L-17 운영 목록 4종(서버)",
+  "ok": true,
+  "detail": "{'svc': 1, 'rej': 20, 'aff': 0, 'brk': 10}"
+ },
+ {
+  "step": "L-18 서버 호출 5xx 0",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "L-19 연동 중 스크립트 오류 0",
+  "ok": true,
+  "detail": "[]"
+ }
+]

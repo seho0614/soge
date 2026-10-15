@@ -1,0 +1,860 @@
+[
+ {
+  "step": "0-1 시험 파트너 13곳 준비 · 보험 자격 승인(운영 API)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 201, '')"
+ },
+ {
+  "step": "0-2 상담 축 입점 — 업체 신청 → 운영 승인(POST /partner/axes · /admin/partner-axes/{id}/decide) · 한 곳은 미입점",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 201)"
+ },
+ {
+  "step": "A-1 상담 업종 22종 — 리드형 20 · 월 정액 노출형 2(법률 · 세무) · 받을 수 있는 인증업체 수",
+  "ok": true,
+  "skip": false,
+  "detail": "[('CSL_IT', 1), ('CSL_CONSTRUCTION', 1), ('CSL_MARKETING', 1), ('CSL_EDU', 1), ('CSL_DESIGN', 1), ('CSL_RENTAL', 1)]"
+ },
+ {
+  "step": "A-1b 예전 업종 API(GET /categories/consult)는 없어짐 → 404",
+  "ok": true,
+  "skip": false,
+  "detail": "404"
+ },
+ {
+  "step": "A-2 비로그인 신청 가능 → PENDING_VERIFY · 인증번호(개발 응답) · 확인 전 리드 없음(INV-12) · 연락처는 암호문",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 'e7fbe2d7-eb2e-4cbc-b317-93ff3e804600', 'state': 'PENDING_VERIFY', 'expiresInMinutes': 5, 'note': '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.', 'devCode': '233346'}, 'PENDING_VERIFY|true|true|true|true|true')"
+ },
+ {
+  "step": "A-3 제3자 제공 동의 없음 → 422 CONSENT_REQUIRED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'CONSENT_REQUIRED', 'message': '개인정보 제3자 제공에 동의해야 신청할 수 있습니다.'})"
+ },
+ {
+  "step": "A-5 전화번호 형식 → 400 · 010 아닌 번호 → 422 PHONE_INVALID",
+  "ok": true,
+  "skip": false,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'phone must match /^[0-9\\\\- ]{10,14}$/ regular expression', 'field': 'phone'})"
+ },
+ {
+  "step": "A-6 상담 축이 아닌 업종(MAL_APT) → 422 CONSULT_AXIS (DB 게이트)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'CONSULT_AXIS', 'message': '상담 신청은 안심소개 「생활·금융 상담」 업종에서만 받습니다'})"
+ },
+ {
+  "step": "A-7 업종 코드 형식(CSL_*) 밖 → 400",
+  "ok": true,
+  "skip": false,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'categoryCode must match /^CSL_[A-Z_]{2,30}$/ regular expression', 'field': 'categoryCode'})"
+ },
+ {
+  "step": "A-8 보관 업종(카드) → 422 CONSULT_CLOSED · 정액 노출형(법률) → 422 CONSULT_DIRECTORY_ONLY (15자 넘는 코드도 사유가 그대로 감)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'CONSULT_CLOSED', 'message': '지금은 이 업종의 상담 신청을 받지 않습니다'}, 422, {'code': 'CONSULT_DIRECTORY_ONLY', 'message': '이 업종은 상담 신청을 받지 않습니다 — 업체 정보를 보고 직접 연락하십시오'})"
+ },
+ {
+  "step": "A-10 틀린 인증번호 → 422 OTP_MISMATCH · 리드 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'OTP_MISMATCH', 'message': '인증번호가 맞지 않습니다.'})"
+ },
+ {
+  "step": "A-11 없는 신청 확인 → 404 · 번호 형식 아님 → 400",
+  "ok": true,
+  "skip": false,
+  "detail": "(404, 404)"
+ },
+ {
+  "step": "A-12 5회 틀리면 잠김 → 맞는 번호도 409 OTP_LOCKED · 리드 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(409, {'code': 'OTP_LOCKED', 'message': '인증번호를 여러 번 틀려 신청이 잠겼습니다. 다시 신청해 주십시오.'})"
+ },
+ {
+  "step": "A-13 자격 확인 업종에 자격 업체 없음(인테리어) → 확인해도 NO_PARTNER · 리드 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'NO_PARTNER', 'leadId': None, 'note': '지금 이 지역·업종에서 받을 수 있는 업체가 없습니다. 연락처는 다른 곳에 넘기지 않습니다.', 'requestId': '47fe4c5b-1005-4a73-be20-adbd15a56aa1', 'id': None})"
+ },
+ {
+  "step": "B-1 확인 → 즉시 인증업체 1곳 배분 · ASSIGNED · 목표 1곳(INV-L1)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'DELIVERED', 'leadId': 'd6b40d99-5f46-452e-90b9-d53a39ba8820', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.', 'requestId': '3cdcdfb1-ae23-4291-bebd-88a0688358e3', 'id': 'd6b40d99-5f46-452e-90b9-d53a39ba8820'}, 'ASSIGNED|1|WEB|tru"
+ },
+ {
+  "step": "B-2 배분은 조건을 만족하는 4곳 중에서만 (탈락 업체 0)",
+  "ok": true,
+  "skip": false,
+  "detail": "set()"
+ },
+ {
+  "step": "B-3 연락처는 pii 에 암호화 · leads 에 평문 없음 · 신청 표의 연락처는 지움",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "B-4 열람 기한 · 배정 방식 AUTO",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "B-4b 이미 전달된 신청을 다시 확인해도 같은 리드 · 중복 배분 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'DELIVERED', 'leadId': 'd6b40d99-5f46-452e-90b9-d53a39ba8820', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.'})"
+ },
+ {
+  "step": "B-5 같은 번호 · 같은 업종 24시간 안 재신청 → 409 DUPLICATE_REQUEST",
+  "ok": true,
+  "skip": false,
+  "detail": "(409, {'code': 'DUPLICATE_REQUEST', 'message': '같은 번호로 같은 업종 상담을 오늘 이미 신청하셨습니다. 업체의 연락을 기다려 주십시오.'})"
+ },
+ {
+  "step": "B-6 공정 순환 — 둘째 신청은 첫 신청과 다른 업체로",
+  "ok": true,
+  "skip": false,
+  "detail": "({'05012927-923c-457d-89cf-1a9177adf6e2'}, {'23752146-35ac-4c54-a7f4-ce2bbc3cdf91'})"
+ },
+ {
+  "step": "B-6b 메모에 연락처가 있으면 요약으로 쓰지 않음(열람 전 무료 노출) · 비로그인 신청은 신청자 없음 · 셋째도 다른 업체",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'DELIVERED', 'leadId': '6ff29615-1523-4bbe-8ed6-ca8a15265d12', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.', 'requestId': '25cef7f0-1f69-4314-8b19-d9e92e6c1863', 'id': '6ff29615-1523-4bbe-8ed6-ca8a15265d12'}, {'269b0ba2-f120-41a"
+ },
+ {
+  "step": "B-7 후보 순번 점수 = 최근 30일 수신 ÷ 등급 가중치",
+  "ok": true,
+  "skip": false,
+  "detail": "[('D청소ce248e', 0, 1, 0), ('A청소ce248e', 1, 1, 1), ('B청소ce248e', 1, 1, 1), ('타지역청소ce248e', 0, 1, 0), ('잔액없음청소ce248e', 0, 1, 0)]"
+ },
+ {
+  "step": "B-8 배분된 파트너에게 알림(LEAD_DELIVERED)",
+  "ok": true,
+  "skip": false,
+  "detail": "1"
+ },
+ {
+  "step": "E-1 비활동(SUSPENDED) 업체 제외 · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "활동 중 아님(SUSPENDED)"
+ },
+ {
+  "step": "E-2 지역 밖 업체 제외 · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "활동 지역 밖"
+ },
+ {
+  "step": "E-3 리드 이용료 잔액 부족 업체 제외 · 사유(선불 · W5)",
+  "ok": true,
+  "skip": false,
+  "detail": "리드 이용료 잔액 부족"
+ },
+ {
+  "step": "E-4 서비스 미승인(검수 중) 업체 제외 · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "이 업종의 승인된 서비스 없음"
+ },
+ {
+  "step": "E-4b 상담 축 입점 승인 없는 업체 제외 · 사유(D018)",
+  "ok": true,
+  "skip": false,
+  "detail": "상담 축 입점 승인 없음"
+ },
+ {
+  "step": "E-5 이미 배정한 업체는 \"이미 배정함\"",
+  "ok": true,
+  "skip": false,
+  "detail": "[['이미 배정함']]"
+ },
+ {
+  "step": "E-6 GATED(보험) — 자격 승인 업체에만 · 무자격 업체 제외",
+  "ok": true,
+  "skip": false,
+  "detail": "({'state': 'DELIVERED', 'leadId': '5096f153-890e-4468-b552-426767d92329', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.', 'requestId': '61eb25e8-d1f6-4869-9826-f583bbf9168b', 'id': '5096f153-890e-4468-b552-426767d92329'}, ['자격 심사 미통과'])"
+ },
+ {
+  "step": "E-7 신청자 본인 업체에는 보내지 않음(로그인한 채 신청)",
+  "ok": true,
+  "skip": false,
+  "detail": "({'state': 'DELIVERED', 'leadId': 'a797d9c2-a435-4e1b-8614-432037a1b2c1', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.', 'requestId': 'bf2d23de-cfac-43d6-be7e-d0d479831468', 'id': 'a797d9c2-a435-4e1b-8614-432037a1b2c1'}, ['신청자 본인 업체'])"
+ },
+ {
+  "step": "C-1 파트너 리드 목록에 배정 건(업종 · 기한 · 미열람 · 연락처 없음)",
+  "ok": true,
+  "skip": false,
+  "detail": "{'deliveryId': '3c6d6fec-ecc4-4e59-b1d2-a46ccee0eba0', 'leadId': 'd6b40d99-5f46-452e-90b9-d53a39ba8820', 'summary': '다음 달 32평 입주 청소 — 시험 ce248e', 'sido': '시험도', 'sigungu': '리드ce248e', 'urgent': False, 'deliveredAt': '2026-10-11T15:58:20.313"
+ },
+ {
+  "step": "C-2 열람 전 연락처 → 422 NOT_VIEWED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'NOT_VIEWED', 'message': '먼저 「연락처 열기」로 열람하셔야 합니다. 열람할 때 이용료가 발생합니다.'})"
+ },
+ {
+  "step": "C-3 열람 → 이용료 3,000(lead.default_fee) · 상태 VIEWED · 응답에 연락처 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'summary': '다음 달 32평 입주 청소 — 시험 ce248e', 'sido': '시험도', 'sigungu': '리드ce248e', 'fee': 3000, 'viewedAt': '2026-10-11T15:58:22.163Z', 'parts': {'bonus': 3000, 'paid': 0}, 'contactUrl': '/partner/leads/3c6d6fec-ecc4-4e59-b1d2-a46ccee0eb"
+ },
+ {
+  "step": "C-4 열람 후 연락처 — 이름 · 번호 복호화",
+  "ok": true,
+  "skip": false,
+  "detail": "(200, {'deliveryId': '3c6d6fec-ecc4-4e59-b1d2-a46ccee0eba0', 'contact': {'name': '홍길동', 'phone': '01017071111', 'address': None, 'email': 'consult.test@example.com'}, 'note': '상담 목적 외에 쓰거나 남에게 넘기면 개인정보 보호법 위반입니다. 이 조회는 기록됩니다.'})"
+ },
+ {
+  "step": "C-5 연락처 조회는 pii_access_logs 에 남음 · 감사 로그(audit_logs)에 평문 없음",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "C-6 남의 배정 연락처 → 409",
+  "ok": true,
+  "skip": false,
+  "detail": "(409, {'code': 'NO_SUCH_LEAD', 'message': '받은 리드가 아닙니다.'})"
+ },
+ {
+  "step": "C-7 재열람 → 이용료 한 번만",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'summary': '다음 달 32평 입주 청소 — 시험 ce248e', 'sido': '시험도', 'sigungu': '리드ce248e', 'fee': 3000, 'viewedAt': '2026-10-11T15:58:22.163Z', 'parts': None, 'contactUrl': '/partner/leads/3c6d6fec-ecc4-4e59-b1d2-a46ccee0eba0/contact', 'note': '"
+ },
+ {
+  "step": "C-8 반려 신청 (D003 흐름) → REQUESTED",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 52, 'feeId': 49, 'state': 'REQUESTED', 'requestedAt': '2026-10-11T15:58:22.471Z', 'note': '접수했습니다. 운영이 확인해 인정하면 확인비용이 잔액으로 환급됩니다.'})"
+ },
+ {
+  "step": "C-9 반려 인정 → 이용료 VOIDED",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 52, 'feeId': 49, 'partnerId': '05012927-923c-457d-89cf-1a9177adf6e2', 'state': 'ACCEPTED', 'ruleCode': 'RSK-02', 'note': '인정했습니다. 확인비용이 파트너 잔액으로 환급됩니다(전환 전 후불분이면 청구에서 뺍니다).'})"
+ },
+ {
+  "step": "C-10 신청자 화면(로그인한 채 신청): 보낸 곳 1곳 · 연락처를 받아 간 업체(제3자 제공 내역)",
+  "ok": true,
+  "skip": false,
+  "detail": "{'id': 'd6b40d99-5f46-452e-90b9-d53a39ba8820', 'categoryName': '청소', 'summary': '다음 달 32평 입주 청소 — 시험 ce248e', 'sido': '시험도', 'sigungu': '리드ce248e', 'createdAt': '2026-10-11T15:58:20.313Z', 'assignState': 'ASSIGNED', 'target': 1, 'closeReaso"
+ },
+ {
+  "step": "C-10b 「내 상담 신청」은 로그인 필요 → 403",
+  "ok": true,
+  "skip": false,
+  "detail": "403"
+ },
+ {
+  "step": "D-1 일반 회원 → 403",
+  "ok": true,
+  "skip": false,
+  "detail": "403"
+ },
+ {
+  "step": "D-2 잘못된 state → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "422"
+ },
+ {
+  "step": "D-3 대기열(ALL) — 상태 · 배정 현황 · 보낼 수 있는 업체 수 · 설정(목표 1 · 최대 1)",
+  "ok": true,
+  "skip": false,
+  "detail": "({'assignState': 'ASSIGNED', 'active': 1, 'viewed': 1, 'eligibleCount': 3}, {'target': 1, 'maxPartners': 1, 'viewTtlHours': 24, 'maxAgeHours': 72, 'weights': [{'grade': 'BRONZE', 'weight': 1}, {'grade': 'SILVER', 'weight': 1.2}, {'grade': '"
+ },
+ {
+  "step": "D-4 없는 신청 → 404",
+  "ok": true,
+  "skip": false,
+  "detail": "404"
+ },
+ {
+  "step": "D-5 일반 회원 수동 배정 → 403",
+  "ok": true,
+  "skip": false,
+  "detail": "403"
+ },
+ {
+  "step": "D-6 partnerIds 형식 → 400",
+  "ok": true,
+  "skip": false,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'each value in partnerIds must be a UUID', 'field': 'each'})"
+ },
+ {
+  "step": "D-7 이미 1곳이 받은 신청에 다른 업체 수동 배정 → 422 LEAD_ASSIGN (최대 1곳 — 1리드 = 1업체)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '한 상담 신청은 최대 1곳까지만 보냅니다 (지금 1곳)'})"
+ },
+ {
+  "step": "D-8 이미 배정한 업체 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '한 상담 신청은 최대 1곳까지만 보냅니다 (지금 1곳)'})"
+ },
+ {
+  "step": "D-11 목표 수 이상 배정된 신청에 자동 고르기 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '이미 1곳에 보냈습니다 — 더 보내려면 업체를 직접 고르십시오(최대 1곳)'})"
+ },
+ {
+  "step": "D-12 열람한 배정 회수 → 409 ALREADY_VIEWED",
+  "ok": true,
+  "skip": false,
+  "detail": "(409, {'code': 'ALREADY_VIEWED', 'message': '열람한 배정은 거둘 수 없습니다 — 연락처가 이미 넘어갔고 이용료가 생겼습니다.'})"
+ },
+ {
+  "step": "D-13 사유 없는 재배정 → 400",
+  "ok": true,
+  "skip": false,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'reason must be shorter than or equal to 300 characters / reason should not be empty / reason must be a string', 'field': 'reason'})"
+ },
+ {
+  "step": "D-14 재배정 — 안 연 배정 회수(REVOKED) · 새 업체 1곳(REASSIGN) · 같은 때에 받은 곳은 1곳",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': '29cdc387-8cd9-491b-9cae-e2ac6a7d3326', 'assignState': 'ASSIGNED', 'revoked': [{'deliveryId': '4e97467f-615c-4810-8645-5ff26d1e07bf', 'partnerId': '23752146-35ac-4c54-a7f4-ce2bbc3cdf91'}], 'assigned': [{'deliveryId': '9c7de42b-"
+ },
+ {
+  "step": "D-15 회수된 업체에 사유 알림 · 목록에서 빠짐",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "B-9 등급 가중치 — PLATINUM 은 가중치 2 · 같은 수신이면 점수 절반(먼저 받음)",
+  "ok": true,
+  "skip": false,
+  "detail": "{'partnerId': '0361dd49-4a0a-48b5-a1fc-be7ff210fb70', 'company': 'G청소ce248e', 'grade': 'PLATINUM', 'partnerStatus': 'ACTIVE', 'eligible': True, 'reasons': [], 'serviceOk': True, 'qualOk': True, 'regionOk': True, 'capOk': True, 'unpaid': 0, "
+ },
+ {
+  "step": "D-16 회수된 배정 열람 → 422 LEAD_DELIVERY (트리거)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_DELIVERY', 'message': '회수된 배정이라 열람할 수 없습니다 — 다른 업체로 넘어갔습니다'})"
+ },
+ {
+  "step": "D-17 공백 사유 종료 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'REASON_REQUIRED', 'message': '종료 사유를 적어 주십시오.'})"
+ },
+ {
+  "step": "D-18 종료 → CLOSED · 안 연 배정 전부 회수",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': '71bcb9fa-dbec-4113-84b8-32bbeb5a5beb', 'assignState': 'CLOSED', 'revoked': 1, 'note': '종료했습니다. 아직 열지 않은 배정 1건을 거뒀습니다. 이미 열람한 업체의 이용료는 그대로입니다.'})"
+ },
+ {
+  "step": "D-19 다시 종료 → 409",
+  "ok": true,
+  "skip": false,
+  "detail": "409"
+ },
+ {
+  "step": "D-20 종료된 신청 배정 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '종료된 상담 신청입니다'})"
+ },
+ {
+  "step": "F-1 받을 업체 없음 → NO_PARTNER · 리드를 만들지 않음 · 연락처는 신청 표에만(다른 곳에 넘기지 않음)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'NO_PARTNER', 'leadId': None, 'note': '지금 이 지역·업종에서 받을 수 있는 업체가 없습니다. 연락처는 다른 곳에 넘기지 않습니다.', 'requestId': '7d6e7765-9229-4dbe-9837-306f9c351de5', 'id': None})"
+ },
+ {
+  "step": "C-11 받을 업체가 없던 신청도 「내 상담 신청」에 NO_PARTNER 로 보임",
+  "ok": true,
+  "skip": false,
+  "detail": "[{'id': '7d6e7765-9229-4dbe-9837-306f9c351de5', 'categoryName': '중고차', 'summary': 'CSL_USEDCAR 상담 부탁드립니다 — 시험 ce248e f4f8', 'sido': '시험도', 'sigungu': '리드ce248e', 'createdAt': '2026-10-11T15:58:25.887Z', 'assignState': 'NO_PARTNER', 'target'"
+ },
+ {
+  "step": "F-2 잘못된 작업 토큰 → 403",
+  "ok": true,
+  "skip": false,
+  "detail": "403"
+ },
+ {
+  "step": "F-3 업체가 생긴 뒤 같은 신청을 다시 확인 → 그때 1곳에 전달(DELIVERED)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'state': 'DELIVERED', 'leadId': '7b5ec6d2-5f5a-43b7-aa4b-ff74742245a0', 'note': '인증된 업체 1곳에 전달했습니다. 업체가 연락드립니다.'})"
+ },
+ {
+  "step": "F-5 열람 기한 지난 배정 열람 → 422 LEAD_DELIVERY (배치 전에도)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_DELIVERY', 'message': '열람 기한이 지난 배정이라 열람할 수 없습니다 — 다른 업체로 넘어갑니다'})"
+ },
+ {
+  "step": "F-3b 배치(lead_assign) — 기한 지난 배정 EXPIRED · 다른 1곳으로 넘김 · 같은 때 받은 곳은 1곳",
+  "ok": true,
+  "skip": false,
+  "detail": "({'24f84a85-ec35-4626-8087-b1019517588b': ['EXPIRED', 'AUTO', '11276872-665c-4fa7-80b8-050f49545c07'], '5971e8d8-c50f-4351-87e8-e098108d4695': ['DELIVERED', 'AUTO', '73e2307f-35b6-484f-b9c0-b9b76bbf48e8']}, {'expired': 1, 'revoked': 0, 'ass"
+ },
+ {
+  "step": "F-4 다시 돌려도 중복 배정 없음(멱등)",
+  "ok": true,
+  "skip": false,
+  "detail": "{'expired': 0, 'revoked': 0, 'assigned': 0, 'touched': 0, 'unmatched': 0, 'failed': 0}"
+ },
+ {
+  "step": "F-6 배치 — 정지 업체의 안 연 배정 REVOKED · 빈자리를 새 업체 1곳에",
+  "ok": true,
+  "skip": false,
+  "detail": "({'24f84a85-ec35-4626-8087-b1019517588b': ['EXPIRED', 'AUTO', '11276872-665c-4fa7-80b8-050f49545c07'], '5971e8d8-c50f-4351-87e8-e098108d4695': ['REVOKED', 'AUTO', '73e2307f-35b6-484f-b9c0-b9b76bbf48e8'], '97498786-7e39-4be5-b5db-dd3cc9bed42"
+ },
+ {
+  "step": "F-7 만료된 배정 열람 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "422"
+ },
+ {
+  "step": "F-7b 여러 번 넘어가도 상담 리드를 같은 때에 두 곳이 받은 적 없음(v_lead_multi_delivery)",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "F-8 기한 지난 신청 — 받은 곳 있으면 ASSIGNED · 없으면 UNMATCHED (운영 실행 API)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'expired': 0, 'revoked': 0, 'assigned': 0, 'touched': 0, 'unmatched': 1, 'failed': 0, 'note': '만료 0 · 회수 0 · 새 배정 0건(0개 신청) · 미배정 전환 1 · 실패 0'})"
+ },
+ {
+  "step": "F-10 배치가 미배정 전환 → 경보 LEAD_UNMATCHED",
+  "ok": true,
+  "skip": false,
+  "detail": "{'expired': 0, 'revoked': 1, 'assigned': 0, 'touched': 0, 'unmatched': 1, 'failed': 0}"
+ },
+ {
+  "step": "D-21 기본 대기열(QUEUE) = OPEN · UNMATCHED 만, 미배정 먼저",
+  "ok": true,
+  "skip": false,
+  "detail": "{'open': 0, 'assigned': 6, 'unmatched': 2, 'closed': 1, 'legacy': 114}"
+ },
+ {
+  "step": "D-22 미배정 건 — 후보 없으면 수동 배정도 422 NO_CANDIDATE",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'NO_CANDIDATE', 'message': '지금 보낼 수 있는 업체가 없습니다 — 후보 목록의 탈락 사유(지역 · 서비스 · 자격 · 한도)를 확인하십시오.'})"
+ },
+ {
+  "step": "D-9a 조건 밖 업체(지역) 수동 배정 → 422 LEAD_ASSIGN · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '타지역렌탈ce248e — 활동 지역 밖'})"
+ },
+ {
+  "step": "D-9b 상담 축 입점 승인 없는 업체 수동 배정 → 422 LEAD_ASSIGN · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '미입점렌탈ce248e — 상담 축 입점 승인 없음'})"
+ },
+ {
+  "step": "D-9c 그 업종 서비스 없는 업체 → 422",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LEAD_ASSIGN', 'message': '이 업종(렌탈)에 서비스를 등록하지 않은 업체입니다'})"
+ },
+ {
+  "step": "D-10 · D-23 업체가 생긴 뒤 수동 배정(ADMIN) → MANUAL · 배정자 기록 · 미배정이 ASSIGNED 로",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': '8dc724ea-8d42-479e-aaec-37f2d69430ab', 'assignState': 'ASSIGNED', 'assigned': [{'deliveryId': 'ccbd713c-9a43-4d5e-926c-70617972c66f', 'partnerId': '1ffd0ae4-22cd-4f59-9fdd-cae44658ba60', 'company': 'K렌탈ce248e'}], 'note': 'K렌탈c"
+ },
+ {
+  "step": "A-9 같은 번호 하루 신청 한도(lead.intake.daily_limit=5) → 6번째 422",
+  "ok": true,
+  "skip": false,
+  "detail": "[201, 201, 201, 201, 201, 'TOO_MANY_REQUESTS']"
+ },
+ {
+  "step": "G-1 비활동 파트너에게 직접 배정 → 트리거 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_ASSIGN: 활동 중인 파트너에게만 보낼 수 있습니다 (현재 SUSPENDED)\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 9 at RAISE"
+ },
+ {
+  "step": "G-2 자격 없는 업체에 GATED 리드 직접 배정 → 트리거 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_GATED: INSURANCE 자격 심사를 통과한 파트너에게만 보낼 수 있습니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 45 at RAISE"
+ },
+ {
+  "step": "G-3 그 업종 승인 서비스 없는 업체에 직접 배정 → 트리거 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_ASSIGN: 이 업종의 승인된 서비스가 없는 파트너입니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 37 at RAISE"
+ },
+ {
+  "step": "G-4 한 신청 최대 업체 수(1) 초과 → 트리거 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_ASSIGN: 한 상담 신청은 최대 1곳까지만 보냅니다 — 신청자 개인정보가 그만큼 퍼집니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 52 at RAISE"
+ },
+ {
+  "step": "G-4b 상담 축 입점 승인 없는 업체에 직접 배정 → 트리거 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_ASSIGN: 종료된 상담 신청은 보낼 수 없습니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 14 at RAISE"
+ },
+ {
+  "step": "G-4c 사유가 입점 승인(LEAD_PARTNER_AXIS)",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_PARTNER_AXIS: 안심소개 상담 축 입점 승인을 받은 업체에만 보낼 수 있습니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 32 at RAISE"
+ },
+ {
+  "step": "G-5 열람한 배정 회수(직접 UPDATE) → 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_DELIVERY: 열람한 배정은 회수 · 만료할 수 없습니다 — 연락처가 이미 전달됐습니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 95 at RAISE"
+ },
+ {
+  "step": "G-6 만료된 배정 되살리기 → 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_DELIVERY: 끝난 배정은 되살릴 수 없습니다 — 새로 배정하십시오\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 98 at RAISE"
+ },
+ {
+  "step": "G-7 열람 시각 고치기 → 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_DELIVERY: 열람 기록은 바꿀 수 없습니다 — 이용료의 근거입니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 92 at RAISE"
+ },
+ {
+  "step": "G-8 같은 업체 중복 배정 → 거부(최대 1곳 · UNIQUE)",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_ASSIGN: 한 상담 신청은 최대 1곳까지만 보냅니다 — 신청자 개인정보가 그만큼 퍼집니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 52 at RAISE"
+ },
+ {
+  "step": "G-9 상담 축 밖 업종 리드 → 거부(LEAD_AXIS)",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_AXIS: 상담 신청은 안심소개 「생활·금융 상담」 업종에서만 만들 수 있습니다\nCONTEXT:  PL/pgSQL function fn_lead_restricted_guard() line 19 at RAISE"
+ },
+ {
+  "step": "G-10 요약에 연락처 → CHECK 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  new row for relation \"leads\" violates check constraint \"ck_leads_summary_no_phone\"\nDETAIL:  Failing row contains (bc09d770-a00b-4dba"
+ },
+ {
+  "step": "G-11 정액 노출형(법률) 리드 → LEAD_DIRECTORY_ONLY · 보관 업종(카드) 리드 → LEAD_CATEGORY_CLOSED",
+  "ok": true,
+  "skip": false,
+  "detail": "('ERROR:  LEAD_DIRECTORY_ONLY: 이 업종은 리드를 만들지 않습니다(월 정액 노출형)\\nCONTEXT:  PL/pgSQL function fn_lead_restricted_guard() line 28 at RAISE', 'ERROR:  LEAD_CATEGORY_CLOSED: 지금은 이 업종의 상담 신청을 받지 않습니다\\nCONTEXT:  PL/pgSQL function fn_lead_restricted_g"
+ },
+ {
+  "step": "G-12 확인 전 신청을 DB 함수로 직접 배분 → CONSULT_UNVERIFIED",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  CONSULT_UNVERIFIED: 휴대폰 확인 전에는 업체에 전달하지 않습니다\nCONTEXT:  PL/pgSQL function fn_consult_deliver(uuid) line 11 at RAISE"
+ },
+ {
+  "step": "G-13 배정 뒤 자격이 풀린 업체의 열람 → 거부(LEAD_GATED — 열람할 때 자격을 다시 봄)",
+  "ok": true,
+  "skip": false,
+  "detail": "ERROR:  LEAD_GATED: 자격 확인 업종입니다 — INSURANCE 자격 심사를 통과한 뒤에 열람할 수 있습니다\nCONTEXT:  PL/pgSQL function fn_lead_delivery_guard() line 78 at RAISE"
+ },
+ {
+  "step": "G-14 자격 확인 업종 전환 시각(mode_since) — 이사짐 · 자동차는 D016 적용 시각, 옛 규칙(보험)은 -infinity",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "G-V v_lead_delivery_gated_leak = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_delivery_overcap = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_delivery_state_mismatch = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_contact_unlogged = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_axis_leak = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_restricted_leak = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_assign_stuck = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_consult_lead_unverified = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_lead_multi_delivery = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_directory_lead_leak = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "G-V v_consult_purge_overdue = 0",
+  "ok": true,
+  "skip": false,
+  "detail": "0"
+ },
+ {
+  "step": "H-1 1원 송금 — 실제 HTTP · 지도대로 중첩 본문 · 인증 헤더 · stub:false",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 'ff42491f-8146-4868-bfb4-72d97e28dc8f', 'bankName': '국민', 'holderName': 'lbank시험', 'stub': False, 'note': '1원을 보냈습니다. 입금자명에 찍힌 코드를 적어 주십시오.'}, {'data': {'bank_cd': '004', 'acct_no': '100215751234', 'acct_nm': 'lbank시험'}})"
+ },
+ {
+  "step": "H-2 틀린 코드 → 422 CODE_MISMATCH (서버 저장 코드와 대조)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'CODE_MISMATCH', 'message': '코드가 맞지 않습니다. (4회 남았습니다)'})"
+ },
+ {
+  "step": "H-3 업체가 준 코드(4821) → 인증 · stub:false",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'verified': True, 'bankName': '국민', 'holderName': 'lbank시험', 'isDefault': True, 'stub': False, 'note': '인증됐습니다. 이 계좌로 지급됩니다.'})"
+ },
+ {
+  "step": "H-4 1원 송금 실패 — 업체 거절(rsp_code E101) → 오류 코드 문구 지도 → 422 BANK_SEND_FAILED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, '계좌번호를 확인해 주십시오 (시험 문구)', 0.01)"
+ },
+ {
+  "step": "H-4 1원 송금 실패 — HTTP 400 → 계좌 확인 + 기관 메시지 → 422 BANK_SEND_FAILED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, '계좌 정보를 확인해 주십시오. (기관: bank code mismatch)', 0.01)"
+ },
+ {
+  "step": "H-4 1원 송금 실패 — HTTP 503 → 기관 장애 → 422 BANK_SEND_FAILED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, '계좌인증 기관 장애입니다. 잠시 뒤 다시 시도해 주십시오.', 0.01)"
+ },
+ {
+  "step": "H-4 1원 송금 실패 — 응답 예금주 다름 → 거부 → 422 BANK_SEND_FAILED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, '예금주명이 신청하신 이름과 다릅니다. 본인 명의 계좌를 등록해 주십시오.', 0.01)"
+ },
+ {
+  "step": "H-4 1원 송금 실패 — 응답 지연(1초 제한) → 시간 초과 → 422 BANK_SEND_FAILED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, '계좌인증 기관의 응답이 늦습니다. 잠시 뒤 다시 시도해 주십시오.', 1.01)"
+ },
+ {
+  "step": "H-5 키가 응답 · 감사 로그에 없음",
+  "ok": true,
+  "skip": false,
+  "detail": ""
+ },
+ {
+  "step": "H-6 키 없는 인스턴스(API)는 그대로 스텁 · stub:true",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 'be222956-bf6c-41f9-a6aa-8edc1cfa8f56', 'bankName': '국민', 'holderName': 'lbank시험', 'stub': True, 'note': '연동 전이라 실제로 1원이 보내지지 않았습니다 — 코드는 SGB01 입니다.'})"
+ },
+ {
+  "step": "H-7 중개사 대조 10001 → MATCH",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': 'MATCH', 'lookupSource': 'API', 'lookupDetail': '국토부 등록 정보와 일치합니다.'})"
+ },
+ {
+  "step": "H-7 중개사 대조 10002 → MISMATCH",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': 'MISMATCH', 'lookupSource': 'API', 'lookupDetail': '사무소명 불일치(등록: 구로공인중개사사무소)'})"
+ },
+ {
+  "step": "H-7 중개사 대조 10003 → MISMATCH",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': 'MISMATCH', 'lookupSource': 'API', 'lookupDetail': '영업 상태 아님(휴업)'})"
+ },
+ {
+  "step": "H-7 중개사 대조 55555 → NOT_FOUND",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': 'NOT_FOUND', 'lookupSource': 'API', 'lookupDetail': '개설등록번호 11545-2026-55555 로 등록된 중개사무소가 조회되지 않습니다.'})"
+ },
+ {
+  "step": "H-7 중개사 대조 99998 → 미조회",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': None, 'lookupSource': None, 'lookupDetail': '중개사무소 조회 응답이 늦어 대조하지 못했습니다 — 운영이 다시 조회합니다.'})"
+ },
+ {
+  "step": "H-7 중개사 대조 99997 → 미조회",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': None, 'lookupSource': None, 'lookupDetail': '중개사무소 조회 기관 장애로 대조하지 못했습니다 — 운영이 다시 조회합니다.'})"
+ },
+ {
+  "step": "H-7 중개사 대조 99996 → 미조회",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': None, 'lookupSource': None, 'lookupDetail': '중개사무소 조회 응답 형식이 설정과 다릅니다(BROKER_LOOKUP_ITEMS_PATH · FIELDS 확인).'})"
+ },
+ {
+  "step": "H-7 중개사 대조 99995 → 미조회",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'lookupResult': None, 'lookupSource': None, 'lookupDetail': '중개사무소 조회 기관이 실패를 돌려줬습니다(결과 코드 22) — 운영이 다시 조회합니다.'})"
+ },
+ {
+  "step": "H-8 대조 요청 — 키 쿼리(apiKey) · 파라미터 지도(regNo) · 고정값(format)",
+  "ok": true,
+  "skip": false,
+  "detail": "/broker/search?format=json&regNo=11545-2026-99995&apiKey=broker-test-key"
+ },
+ {
+  "step": "H-9 운영 다시 조회 (지연 건) → 미조회 유지 · 사유",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': 'c05ca0d2-7b78-4233-bdad-e4154e36cced', 'lookupResult': None, 'lookupSource': None, 'lookupDetail': '중개사무소 조회 응답이 늦어 대조하지 못했습니다 — 운영이 다시 조회합니다.', 'lookupAt': None, 'looked': False, 'errorKind': 'TIMEOUT', 'note': '조회하지 못했습니다 — "
+ },
+ {
+  "step": "H-10 운영 다시 조회 (불일치 건) → API 결과 갱신",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': '1deefb83-b8fd-4277-a996-9cefe88e0877', 'lookupResult': 'MISMATCH', 'lookupSource': 'API', 'lookupDetail': '사무소명 불일치(등록: 구로공인중개사사무소)', 'lookupAt': '2026-10-11T15:58:53.576Z', 'looked': True, 'errorKind': None, 'note': '국토부 조회 결"
+ },
+ {
+  "step": "H-11 설정 없는 인스턴스에서 다시 조회 → 422 LOOKUP_NOT_CONFIGURED",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'LOOKUP_NOT_CONFIGURED', 'message': '국토부 중개사무소 조회 연동이 설정되지 않았습니다(BROKER_LOOKUP_URL · BROKER_LOOKUP_KEY) — 수기로 확인하십시오.'})"
+ },
+ {
+  "step": "H-12 NOT_FOUND 승인 → 422 BROKER (DB)",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, {'code': 'BROKER', 'message': '국토부 대조 결과가 일치해야 승인할 수 있습니다 (현재 NOT_FOUND)'})"
+ },
+ {
+  "step": "H-13 실제 대조 MATCH 승인 → VERIFIED · 간주 승인 목록(v_broker_verified_assumed)에 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, {'id': '7983ffc1-431a-4e3a-8a28-634533aee30e', 'state': 'VERIFIED', 'recheckDue': '2027-04-08T15:00:00.000Z', 'rejectReason': None, 'canPublish': True, 'note': '승인했습니다. 이 사업자의 부동산 매물 공개가 열립니다. 재확인 기한은 180일 뒤입니다.'})"
+ },
+ {
+  "step": "H-14 운영 상세에 lookupSource · lookupDetail",
+  "ok": true,
+  "skip": false,
+  "detail": "사무소명 불일치(등록: 구로공인중개사사무소)"
+ },
+ {
+  "step": "H-15 국세청 01 → VALID · stub:false · 단계 TEST(공식 주소 아님)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 'VALID', '계속사업자', 'TEST|VALID')"
+ },
+ {
+  "step": "H-15 국세청 02 → SUSPENDED · 신청 거부 422 BIZ_CLOSED(국세청 「휴업자」) · 사업자 행 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, 'BIZ_CLOSED', '휴업 · 폐업 사업자는 가입할 수 없습니다 (국세청: 휴업자).', '')"
+ },
+ {
+  "step": "H-15 국세청 03 → CLOSED · 신청 거부 422 BIZ_CLOSED(국세청 「폐업자」) · 사업자 행 없음",
+  "ok": true,
+  "skip": false,
+  "detail": "(422, 'BIZ_CLOSED', '휴업 · 폐업 사업자는 가입할 수 없습니다 (국세청: 폐업자).', '')"
+ },
+ {
+  "step": "H-15 국세청 04 → UNKNOWN · stub:false · 단계 TEST(공식 주소 아님)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 'UNKNOWN', '국세청에 등록되지 않은 사업자등록번호입니다.', 'TEST|UNKNOWN')"
+ },
+ {
+  "step": "H-15 국세청 05 → UNKNOWN · stub:false · 단계 TEST(공식 주소 아님)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 'UNKNOWN', '국세청 응답 오류(HTTP 500)', 'TEST|UNKNOWN')"
+ },
+ {
+  "step": "H-15 국세청 06 → UNKNOWN · stub:false · 단계 TEST(공식 주소 아님)",
+  "ok": true,
+  "skip": false,
+  "detail": "(201, 'UNKNOWN', '국세청 응답 지연', 'TEST|UNKNOWN')"
+ },
+ {
+  "step": "H-16 국세청 요청 — /status?serviceKey=…&returnType=JSON · 본문 b_no 배열",
+  "ok": true,
+  "skip": false,
+  "detail": "{'method': 'POST', 'path': '/nts/status?serviceKey=nts-test-key&returnType=JSON', 'auth': None, 'body': {'b_no': ['3315797306']}}"
+ },
+ {
+  "step": "I-1 국세청 연동이 LIVE 아니면 --apply 거부",
+  "ok": true,
+  "skip": false,
+  "detail": "(1, '!! 국세청 연동이 LIVE 가 아닙니다 — 시험 결과로 LIVE 를 기록하지 않습니다.\\n')"
+ },
+ {
+  "step": "I-2 대상만 보기(기본) — 아무것도 바꾸지 않음",
+  "ok": true,
+  "skip": false,
+  "detail": "재조회 대상 7건 · 국세청 연동 LIVE · 기준 주소 http://127.0.0.1:13023/nts (공식 아님 → TEST 로 기록)\n  1110000001  -  -\n  1110000002  -  -\n  333-33-33333  -  -\n  999-99-99999  -  -\n "
+ },
+ {
+  "step": "I-3 --apply (가짜 서버) — 계속 · 폐업 기록, 500 은 그대로 · 공식 주소 아니라 TEST 로 기록",
+  "ok": true,
+  "skip": false,
+  "detail": "({'01': 'TEST|VALID', '03': 'TEST|CLOSED', '05': 'STUB|VALID'}, '재조회 대상 7건 · 국세청 연동 LIVE · 기준 주소 http://127.0.0.1:13023/nts (공식 아님 → TEST 로 기록)\\n기록 4건(TEST) · 조회 실패(그대로 둠) 3건\\n')"
+ }
+]

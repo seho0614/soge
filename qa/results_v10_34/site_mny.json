@@ -1,0 +1,217 @@
+[
+ {
+  "step": "H-1 /money — 두 관 전용 머리줄 · 바닥줄(색조 money) · 본문 틀 main-mny · 옛 머리줄 없음 · 화면 끝 표시",
+  "ok": true,
+  "detail": "{'b2': 1, 'base': 0, 'tone': 'money', 'main': 'main main-b2 main-mny', 'mny': 1, 'ft': 1, 'baseFt': 0, 'end': 1}"
+ },
+ {
+  "step": "H-2 머리줄 — 메뉴 6(소개장터에 지금 화면 표시) · 그 디자인의 로고(/money/logo.png · 432×104 → 216×52) · 장바구니 대신 알림 종(숫자 없음) · 주황 #FFA03E 무료 회원가입 · 높이 75 · 나눔스퀘어 네오 19px",
+  "ok": true,
+  "detail": "{'nav': [['소개장터', '/money', 'page'], ['안심소개', '/mall', ''], ['소개창업', '/biz', ''], ['소개몰', '/health', ''], ['소개광장', '/community', ''], ['이용안내', '/guide', '']], 'logo': ['/money/logo.png', 432, 104, 216, 52], 'cart': False, 'bell': ['/my/notifications', True, False, '알림'], 'login': '로그인', 'join': '무료 회원가입', 'joinBg': 'rgb(255, 160, 62)', 'h': 75, 'under': 'rgb(255, 160, 62)', 'font': 'Nanum Square N"
+ },
+ {
+  "step": "H-3 바닥줄 — 그 디자인의 로고 · 사회관계망 3 · 약관 링크는 서버 목록 그대로 · 바로가기 줄 · 사업자 정보 · 통신판매중개자 고지 유지 · 바탕 #F6F8FA",
+  "ok": true,
+  "detail": "{'logo': ['/money/logo_foot.png', 406, 104, 203, 52], 'sns': [['/money/sns_fb.png', 64, 64], ['/money/sns_ig.png', 64, 64], ['/money/sns_yt.png', 65, 64]], 'legal': '대표 노명석 · 사업자등록번호 429-88-01533 · 통신판매업 신고 제2020-서울금천-1772호 · 직업정보제공사업 신고번호 해당 없음소개뱅크는 통신판매중개자이며 거래의 당사자가 아닙니다. 상품 · 서비스 · 사업기회에 대한 정보와 거래에 관한 책임은 등록자에게 있습니다.', 'quick': ['소개받기', '제휴 파트너센터', '안심소개 파트너센터', '나의공간', '알림'], 'bg': 'rgb(246, "
+ },
+ {
+  "step": "H-4 그 밖의 화면은 v10.29 그대로 — 소개장터의 아래 화면(/money/list · /money/event · /money/best) · 안심소개 · 소개창업 · 소개받기는 공통 머리줄(header.pc-hd), 소개광장 · 소개몰은 제 색조 · 제 로고, 메인은 제 머리줄 · 어디에도 mny- 구역 · 종 없음",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "H-5 소개장터 글꼴 5개(페이퍼로지 500 · 700 / 나눔스퀘어 네오 400 · 700 · 800)는 /money 에서만 내려받음 · 위의 9화면에서는 그 5개가 0개(공통 본문 글꼴은 따로)",
+  "ok": true,
+  "detail": "(['NanumSquareNeo.woff2', 'NanumSquareNeoB.woff2', 'NanumSquareNeoEB.woff2', 'Paperlogy-5Medium.woff2', 'Paperlogy-7Bold.woff2', 'noto-sans-kr-111-wght-normal.woff2', 'noto-sans-kr-112-wght-normal.woff2', 'noto-sans-kr-113-wght-normal.woff2', 'noto-sans-kr-114-wght-normal.woff2', 'noto-sans-kr-115-wght-normal.woff2', 'noto-sans-kr-116-wght-normal.woff2', 'noto-sans-kr-117-wght-normal.woff2', 'noto"
+ },
+ {
+  "step": "M-1 맨 위 — 제목 · 설명 글자가 그림 그대로 · 검색 칸은 /search 로 q(50자)와 관 코드(gwanCode=MNY)를 보냄 · 누르면 검색 팝업이 뜨는 칸",
+  "ok": true,
+  "detail": "(['필요한 업체를AI로 쉽게 찾아보세요.'], ['/search', 'q', '키워드를 검색해보세요.', 50, 'dialog', 'gwanCode', 'MNY'])"
+ },
+ {
+  "step": "M-2 바로가기 3 — 소개하기(/register) · 소개받고 싶어요(/request/new) · 소개받기(/request)",
+  "ok": true,
+  "detail": "(['소개하기', '소개받고 싶어요', '소개받기'], ['/register', '/request/new', '/request'])"
+ },
+ {
+  "step": "M-3 분야 14칸 — 이름은 그림 그대로 · 누르면 그 이름의 첫 낱말로 아래 목록을 거름(/money?keyword=…#mny-list) · 전체 · 기타는 거르지 않은 목록 · 지금 고른 칸 = 전체 · 전체보기(/money/list)",
+  "ok": true,
+  "detail": "(['전체', '가구, 인테리어', '청소, 방역', '이사, 운송', '중고 거래', '사무 용품', '제조, 유통', '공사, 시공', '디자인, 마케팅', 'IT, 개발', '세무, 노무', '교육, 컨설팅', '행사, 모임', '기타'], ['/money#mny-list', '/money?keyword=%EA%B0%80%EA%B5%AC#mny-list', '/money?keyword=%EC%B2%AD%EC%86%8C#mny-list', '/money?keyword=%EC%9D%B4%EC%82%AC#mny-list', '/money?keyword=%EC%A4%91%EA%B3%A0#mny-list', '/money?keyword=%EC%82%AC%EB%AC%B4#mny-list', '/money?keyw"
+ },
+ {
+  "step": "M-4 왼쪽 분류 — 전체 카테고리 · 상품 5 · 서비스 6(낱말로 아래 목록 거르기) · 전문가 · 업체(낱말) · 구해요 / 의뢰(/request)",
+  "ok": true,
+  "detail": "(['상품', '서비스', '전문가', '업체', '구해요 / 의뢰', '지역으로 찾기'], ['/money?keyword=%EA%B0%80%EA%B5%AC#mny-list', '/money?keyword=%EC%82%AC%EB%AC%B4%EC%9A%A9%ED%92%88#mny-list', '/money?keyword=%EC%A4%91%EA%B3%A0#mny-list'], ['서울', '경기', '인천', '대전', '대구', '부산', '울산', '광주', '제주', '기타 지역'])"
+ },
+ {
+  "step": "M-5 지금 올라온 소개 요청 4건 = GET /market/requests?gwanCode=MNY 그대로(제목 · 예산 · 제안 수 · 순서) · 줄과 단추가 그 요청(/request/번호)으로 · 사진(없으면 분류 그림) · 전체보기(/request)",
+  "ok": true,
+  "detail": "([['사무실 인테리어 업체를 찾습니다', '/request/785a1537-1a00-42cd-820d-c6f5f9d0493c', '협의', '제안0건', '/request/785a1537-1a00-42cd-820d-c6f5f9d0493c', '제안 하기', True], ['축산물 납품 업체 소개 부탁드립니다', '/request/430d6c73-fc7e-4147-975a-5d0ca6bf146e', '협의', '제안0건', '/request/430d6c73-fc7e-4147-975a-5d0ca6bf146e', '제안 하기', True]], [['사무실 인테리어 업체를 찾습니다', '/request/785a1537-1a00-42cd-820d-c6f5f9d0493c', '협의', '제안0건', '/request"
+ },
+ {
+  "step": "M-6 공급자 등록 안내 — 글자는 그림 그대로 · /register",
+  "ok": true,
+  "detail": "['전국의 다양한 공급자를 기다리고 있어요.지금, 새로운 기회를 만나보세요.공급자로 등록하기']"
+ },
+ {
+  "step": "M-7 색 · 글꼴 — 남색 #00245a · 강조 #f5a008 · 맨 위 바탕 #fbf4e8 · 실행 주황 #fca22a · 제목 페이퍼로지 · 본문 나눔스퀘어 네오 · 지금 있던 매물 구역은 v10.29 관 화면의 글꼴(본고딕) · 디자인 시트 토큰",
+  "ok": true,
+  "detail": "{'h1': 'rgb(0, 36, 90)', 'em': 'rgb(245, 160, 8)', 'hero': 'rgb(251, 244, 232)', 'btn': 'rgb(245, 160, 8)', 'side': 'rgb(0, 36, 90)', 'cta': 'rgb(252, 162, 42)', 'ghost': 'rgb(252, 162, 42)', 'f1': 'Paperlogy', 'f2': 'Nanum Square Neo', 'f3': 'Paperlogy', 'f4': 'Noto Sans KR', 'point': '#ffa03e', 'navy': '#00245a'}"
+ },
+ {
+  "step": "M-8 구역 순서 — 머리줄 → 맨 위 → 바로가기 → 분야 → 소개 요청 → 지금 있던 것(같은 칸 · 32px 아래) → 공급자 등록 → 바닥줄 · 분류 목록은 요청 구역과 같은 높이에서 시작",
+  "ok": true,
+  "detail": "([0, 75, 511, 646, 1294, 2035, 2751, 2943], [True, True, True, True])"
+ },
+ {
+  "step": "X-1 많이 찾는 키워드 = GET /search/keywords(없으면 「아직 집계된 검색어가 없습니다」) · 서비스 업체 추천 = GET /market/suppliers(순서) · 연결 사례 = GET /market/success/recent(건수) · 요청 종류 탭(전체 + 5)",
+  "ok": true,
+  "detail": "({'kw': ['소개'], 'kwNone': False, 'sup': ['aaaaaaaa-0000-4000-a000-000000000001', 'c12354ea-766b-4866-8284-1ff911e9be6a', '2ac7c224-5b7d-409c-835f-19870fb9fa8b', '55f96bd0-1333-421d-8331-6f65a16280ab'], 'cases': 3, 'tabs': ['전체', '상품 구매', '서비스 의뢰', '전문가 문의', '업체 찾기', '중고 구하기']}, ['소개'], ['aaaaaaaa-0000-4000-a000-000000000001', 'c12354ea-766b-4866-8284-1ff911e9be6a', '2ac7c224-5b7d-409c-835f-19870fb"
+ },
+ {
+  "step": "X-2 시안의 견본 이름 · 글(클린하우스 · 김현우 세무사 · 판교 사무실 입주청소 … 8가지)이 화면에 없음 — 값은 서버 것만",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "A-1 맨 위 광고 칸 = GET /ads/serve?slot=GHERO 의 소재 ['AD-204', 'AD-205'] 가운데 하나(광고주 · 제목 · 본문 · 단추 글자) · 「광고」 표시 · 그림의 광고 자리와 같은 크기(520.5 × 342.5 · 둥글기 16)",
+  "ok": true,
+  "detail": "{'code': 'AD-204', 'tag': '광고', 'adv': '세바코리아 (데모)', 'title': '지붕만 빌려주면 임대 수익으로 돌아옵니다', 'body': '공장 · 창고 지붕 1,000평 이상이면 설치비 0원. 20년 임대료를 먼저 계산해 드립니다.', 'cta': '수익 계산해 보기', 'w': 520.5, 'h': 342.5, 'radius': '16px'}"
+ },
+ {
+  "step": "A-2 노출 기록 — 화면에 보일 때 POST /ads/{id}/impression?slot=GHERO 를 한 번만",
+  "ok": true,
+  "detail": "['http://localhost:5174/api/v1/ads/ee9f4a27-9313-4f1f-951d-37dd35ea997b/impression?slot=GHERO']"
+ },
+ {
+  "step": "A-3 단추를 누르면 POST /ads/{id}/click?slot=GHERO 한 번 · 소재의 목적지로(목적지가 이 화면이면 매물 구역으로 내림 · 없으면 안내)",
+  "ok": true,
+  "detail": "(['http://localhost:5174/api/v1/ads/ee9f4a27-9313-4f1f-951d-37dd35ea997b/click?slot=GHERO'], '/money', '/money')"
+ },
+ {
+  "step": "O-1 「지금 인기 있는 상품/서비스」(#mny-list) — 퀵메뉴 5(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존) · 내가 등록한 상품/서비스 · 전체 목록 · 소개상품 찾기(구분 1 · 분류 9) · 관 화면 틀(.gw[data-gw=MNY])",
+  "ok": true,
+  "detail": "{'id': 'mny-list', 'h2': '지금 인기 있는 상품/서비스', 'chips': [['성공현황', '/money/new'], ['베스트매칭', '/money/best'], ['급구 · 급매', '/money/urgent'], ['사고예방', '/money/verified'], ['이벤트존', '/money/event']], 'links': [['내가 등록한 상품/서비스', '/my/listings'], ['전체 목록', '/money/list']], 'gw': 1, 'find': ['소개상품 찾기', '/money#mny-list', ['', 'G3'], 10]}"
+ },
+ {
+  "step": "O-2 매물 사진 카드 6장 = GET /listings?gwanCode=MNY&limit=6 그대로(번호 · 순서) · 광고 0건은 광고 칸에 따로 · 한 줄 6칸 · 「총 13개의 상품/서비스가 있습니다.」 · 1쪽 · 정렬 = 최신",
+  "ok": true,
+  "detail": "{'cards': ['04608825-9573-4da7-a5ec-a7e1ae27ba62', 'fb5b5b33-5bec-4866-976d-3ec11ebdcbda', 'a48cfad8-4d9a-4628-9193-ae698d5a0029', 'bc7a3858-5264-4f34-8108-3b988b1f4d53', 'e028305e-1683-4370-9368-8e48e215fb30', '8698219d-d832-4fc2-9c66-1927b5935f78'], 'ad': 0, 'cols': 6, 'tot': '총 13개의 상품/서비스가 있습니다.', 'page': '1', 'sort': 'RECENT', 'next': '/money?p=2#mny-list'}"
+ },
+ {
+  "step": "O-3 조건 8가지(인기순 · 소개비순 · 급구 · 서류 확인 · 낱말 · 분류 · 구분 · 섞은 것) — 매물 = 서버의 그 조건 그대로 · 검색 조건 줄에 고른 것이 적힘 · 주소 끝 #mny-list 로 그 구역이 화면에 옴",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "O-4 쪽 넘기기 — › 를 누르면 2쪽(주소 p=2 · 끝에 #mny-list · 매물 = 서버의 2쪽 6건 · 구역이 화면에 머묾) · ‹ 를 누르면 첫 쪽으로",
+  "ok": true,
+  "detail": "('/money?p=2#mny-list', ['4c245c0c-cbe0-4d86-a56d-06948e63a6d1', 'f19a5271-1133-4f97-b477-187b9f5879b4'], ['4c245c0c-cbe0-4d86-a56d-06948e63a6d1', 'f19a5271-1133-4f97-b477-187b9f5879b4'], 0, '1')"
+ },
+ {
+  "step": "O-5 정렬 칸에서 「소개비순」을 고르면 /money?sort=FEE_DESC#mny-list · 매물 = 서버의 소개비순 그대로",
+  "ok": true,
+  "detail": "('/money?sort=FEE_DESC#mny-list', ['4c245c0c-cbe0-4d86-a56d-06948e63a6d1', 'f19a5271-1133-4f97-b477-187b9f5879b4', 'bc7a3858-5264-4f34-8108-3b988b1f4d53'], ['4c245c0c-cbe0-4d86-a56d-06948e63a6d1', 'f19a5271-1133-4f97-b477-187b9f5879b4', 'bc7a3858-5264-4f34-8108-3b988b1f4d53'])"
+ },
+ {
+  "step": "O-6 소개상품 찾기 — 구분 「브론즈」을 고르면 분류 칸이 그 구분의 분류로 줄고, 검색을 누르면 주소에 grade= · 끝에 #mny-list · 매물 = 그 구분의 것 · 「전체 해제」 → /money#mny-list",
+  "ok": true,
+  "detail": "(10, '/money?grade=G3&cat=#mny-list', ['04608825-9573-4da7-a5ec-a7e1ae27ba62', 'fb5b5b33-5bec-4866-976d-3ec11ebdcbda'], ['04608825-9573-4da7-a5ec-a7e1ae27ba62', 'fb5b5b33-5bec-4866-976d-3ec11ebdcbda'], ['브론즈'], 0)"
+ },
+ {
+  "step": "O-7 퀵메뉴 5곳(/money/new · best · urgent · verified · event)이 v10.29 의 제 화면으로 열림(200 · 공통 머리줄 · 퀵메뉴 줄) — 이 화면으로 되돌려 보내지 않음",
+  "ok": true,
+  "detail": "[('/money/new', True, 200), ('/money/best', True, 200), ('/money/urgent', True, 200), ('/money/verified', True, 200), ('/money/event', True, 200)]"
+ },
+ {
+  "step": "L-1 /money?keyword=…#mny-list — 그 낱말이 제목 · 내용에 든 매물만(= GET /listings?keyword= 그대로 · 0건이면 빈 목록 안내) · 검색 조건 줄에 낱말 · 같은 낱말의 분야 칸 · 분류 줄에만 「지금 고른 것」 표시",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "L-2 분야 「가구, 인테리어」를 누르면 /money?keyword=가구#mny-list · 목록 구역이 화면에 옴 · 그 칸에 주황 테두리(바탕은 그림 그대로 — 그 칸 회색 · 전체 칸 옅은 주황) · 「✕ 검색어 해제」 → /money#mny-list · 다시 전체",
+  "ok": true,
+  "detail": "('/money?keyword=가구#mny-list', 0, ['가구, 인테리어'], [True, 'rgb(242, 243, 244)', True, 'rgb(251, 244, 232)', 'rgb(242, 243, 244)'], '/money#mny-list', ['전체'])"
+ },
+ {
+  "step": "L-3 낱말 한 글자 · 51자(50자까지만 씀) · 빈 낱말 · 빈칸뿐 — 모두 200 · 오류 화면 아님 · 빈 것은 거르지 않음",
+  "ok": true,
+  "detail": "[('가', 200, True, 1), ('xxxxxx', 200, True, 50), ('', 200, True, 0), ('   ', 200, True, 0)]"
+ },
+ {
+  "step": "L-4 검색칸을 누르면 v10.29 의 검색 팝업이 뜨고(글자 칸에 커서) · 「인테리어」 → 통합 검색 /search?q=인테리어&gwanCode=MNY (200) · 빈 칸에서 돋보기를 눌러도 팝업 · ESC 로 닫힘",
+  "ok": true,
+  "detail": "([1, 'spopq'], '/search?q=인테리어&gwanCode=MNY', 1, 0)"
+ },
+ {
+  "step": "L-5 가는 길 15곳 — 소개받기 · 요청 전체보기 · 분야 전체보기 · 구해요 / 의뢰 · 전체 목록 · 퀵메뉴 5 · 요청의 제안 하기(그 요청 상세) · 매물 카드(그 매물 상세) · 소개하기 · 소개받고 싶어요 · 내가 등록한 상품/서비스가 모두 열림",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "L-6 분류 묶음(상품 · 서비스) — 누르면 접히고 다시 누르면 펴짐",
+  "ok": true,
+  "detail": "[(('false', True), ('true', False)), (('false', True), ('true', False))]"
+ },
+ {
+  "step": "P-1 실제 웹의 그림 35장 = 자르기 표에서 「실제 웹」으로 표시한 것 · 화면 크기 표(pics.tsx) = 원본의 절반",
+  "ok": true,
+  "detail": "(35, 35, 35)"
+ },
+ {
+  "step": "P-2 디자인 구역의 그림 60개 — 모두 뜸 · 모두 /money/ 의 PNG · 원본의 정확히 절반 크기(늘이거나 줄이지 않음) · 둔 파일 35장이 모두 쓰임 · 지금 있던 구역의 매물 사진 6장은 v10.29 의 분류 그림(/proto-img/gwan) 그대로 뜸",
+  "ok": true,
+  "detail": "([], [], [])"
+ },
+ {
+  "step": "P-3 화면이 내주는 PNG 가 둔 파일과 바이트까지 같고(다른 형식으로 바꿔 내주지 않음) · 받은 그림의 그 자리와 점 하나까지 같음(cut_money.py --check)",
+  "ok": true,
+  "detail": "([], '조각 53개 — 실제 웹 35개 · 시안 53개 · 원본과 다른 것 0 [] (받은 그림 파일 없이 자르기 표의 지문으로 견줌)')"
+ },
+ {
+  "step": "P-4 글꼴 파일 5개(woff2) + 사용 조건 글(LICENSE.txt)이 열림 · 합계 약 1.5MB",
+  "ok": true,
+  "detail": "[('Paperlogy-5Medium.woff2', 200, 163820, True), ('Paperlogy-7Bold.woff2', 200, 163844, True), ('NanumSquareNeo.woff2', 200, 387104, True), ('NanumSquareNeoB.woff2', 200, 384992, True), ('NanumSquareNeoEB.woff2', 200, 388128, True), ('LICENSE.txt', 200, 1199, True)]"
+ },
+ {
+  "step": "P-5 스타일 392개가 모두 소개장터 이름 아래(.mny · [data-b2-tone=money] · .main-mny · .b2-bell · 토큰 :root) — 다른 화면에 닿는 규칙 0",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "B-1 GET /cart-count — 전과 같은 모양 {n, in} · ?bell=1 이면 {n: 0, bell, in} · 로그인하지 않으면 0 · false",
+  "ok": true,
+  "detail": "({'n': 0, 'in': False, 'bell': 0, 'ops': False}, {'n': 0, 'bell': 0, 'in': False, 'ops': False})"
+ },
+ {
+  "step": "B-2 로그인하면 — 나의공간 · 로그아웃 · 종의 숫자 = 읽지 않은 알림 1건(GET /me/summary) · 0 이면 숫자 없음 · 가로 넘침 없음",
+  "ok": true,
+  "detail": "({'btns': ['나의공간', '로그아웃'], 'join': False, 'cart': False, 'bell': ['1', '1', '알림 — 읽지 않은 알림 1건'], 'w': 1500}, {'n': 0, 'bell': 1, 'in': True, 'ops': False}, 1)"
+ },
+ {
+  "step": "B-3 종을 누르면 알림 화면(/my/notifications)",
+  "ok": true,
+  "detail": "http://localhost:5174/my/notifications"
+ },
+ {
+  "step": "Z-1 폭 21가지(1500 → 320px) — 가로 넘침 없음",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "Z-2 브라우저 오류 0 · 실패한 요청(4xx · 5xx) 0 — /money 를 여는 동안 (v10.29 의 구글 글꼴 요청이 시험 환경에서 막힌 것 0건은 세지 않음)",
+  "ok": true,
+  "detail": "([], [])"
+ },
+ {
+  "step": "Z-3 서버가 그려 보낸 글(HTML)에 제목 · 분야 · 요청 제목 · 매물이 들어 있음(검색 로봇 · 느린 기기)",
+  "ok": true,
+  "detail": "200"
+ },
+ {
+  "step": "Z-4 자리 대조 — 받은 그림 ↔ 실제 웹(1500px): 실제 웹에 넣은 구역의 모든 자리가 ±6px 안 · 글자색 같음 (measure_mny.py site)",
+  "ok": true,
+  "detail": "[실제 웹] 자리 77곳 · 통과 77 · 실패 0 · ±2px 안 70곳 · 가장 큰 자리 차이 4.0px (허용 ±6px · 글자색 허용 ±16) · 견주지 않은 곳 82 · 화면 높이: 그림 2425 / 만든 화면 3183"
+ }
+]

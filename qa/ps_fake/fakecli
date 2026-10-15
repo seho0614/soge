@@ -1,0 +1,21 @@
+#!/bin/bash
+# PowerShell 도우미(native.ps1) 시험용 가짜 명령 — docker 가 하는 일을 흉내 냅니다(UTF-8 한글 · 오류 줄 · 종료 코드).
+case "$1" in
+  kor)      printf 'sha256:abc  만든 때 2026-09-23T21:10:23Z\n통과 258 / 실패 0\n════ 1. 본체 검정 (sgb_check) ════\n  안전  ① WHERE 없는 UPDATE·DELETE 없음\n' ;;
+  both)     echo "표준 출력 한 줄"; echo " Container sgb-db Creating " >&2; echo "오류 줄 한글" >&2; echo "표준 출력 두 줄" ;;
+  code)     echo "끝냄 $2" >&2; exit "$2" ;;
+  args)     shift; for a in "$@"; do printf '[%s]\n' "$a"; done ;;
+  pwd)      pwd ;;
+  env)      printf '%s\n' "${SGB_RESET:-없음}" ;;
+  many)     for i in $(seq 1 "$2"); do echo "out $i"; echo "err $i" >&2; done ;;
+  seq)      seq 1 "$2" ;;
+  long)     head -c "$2" /dev/zero | tr '\0' 'x'; echo ;;
+  stdin)    n=$(cat | wc -c); echo "stdin $n" ;;
+  linger)   ( sleep 30 ) & echo "먼저 끝남"; exit 0 ;;
+  slow)     echo "시작"; sleep "$2"; echo "끝" ;;
+  ansi)     printf '\033[32m초록\033[0m 글자 \033[1;31m빨강\033[0m\n' ;;
+  bad)      printf '앞 \xff\xfe 뒤\n' ;;
+  crlf)     printf '첫 줄\r\n둘째 줄\r\n' ;;
+  tree)     ( sleep 300 ) & echo "child $!"; wait ;;
+  *)        echo "?"; exit 2 ;;
+esac

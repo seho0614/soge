@@ -1,0 +1,2642 @@
+[
+ {
+  "path": "/admin/badges",
+  "called": "/api/v1/admin/badges",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminOpsController.badges"
+ },
+ {
+  "path": "/admin/badges/history",
+  "called": "/api/v1/admin/badges/history",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminOpsController.badgeHistory"
+ },
+ {
+  "path": "/admin/disputes",
+  "called": "/api/v1/admin/disputes",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminOpsController.disputes"
+ },
+ {
+  "path": "/admin/disputes/summary",
+  "called": "/api/v1/admin/disputes/summary",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"open\":0,\"closed\":0,\"openedThisMonth\":0,\"over72h\":0}",
+  "controller": "AdminOpsController.disputeSummary"
+ },
+ {
+  "path": "/admin/auto-review/samples/summary",
+  "called": "/api/v1/admin/auto-review/samples/summary",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"autoApproved\":2,\"sampled\":0,\"mismatch\":0,\"pending\":0,\"ratePct\":5}",
+  "controller": "AdminOpsController.sampleSummary"
+ },
+ {
+  "path": "/admin/auto-review/samples",
+  "called": "/api/v1/admin/auto-review/samples",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminOpsController.samples"
+ },
+ {
+  "path": "/admin/auto-review/reasons",
+  "called": "/api/v1/admin/auto-review/reasons",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"reason\":\"TARGET_TYPE_BUSINESS\",\"cnt\":71},{\"reason\":\"FIRST_LISTING\",\"cnt\":10},{\"reason\":\"THIN_CONTENT\",\"cnt\":4},{\"reason\":\"TARGET_TYPE_REQUEST\",\"cnt\":1}]",
+  "controller": "AdminOpsController.reasons"
+ },
+ {
+  "path": "/admin/auto-review/rate",
+  "called": "/api/v1/admin/auto-review/rate",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"day\":\"2026-10-11\",\"autoRatePct\":2.3,\"submitted\":88,\"autoApproved\":2,\"manualQueue\":86}]",
+  "controller": "AdminOpsController.rate"
+ },
+ {
+  "path": "/admin/code-labels",
+  "called": "/api/v1/admin/code-labels",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"domain\":\"account.type\",\"code\":\"INDIVIDUAL\",\"label\":\"개인 회원\",\"shortLabel\":\"개인\",\"uiTone\":\"neutral\",\"audience\":\"ALL\",\"isActive\":true},{\"domain\":\"account.type\",\"code\":\"BUSINESS\",\"label\":\"사",
+  "controller": "AdminOpsController.codeLabels"
+ },
+ {
+  "path": "/admin/finance/runway",
+  "called": "/api/v1/admin/finance/runway",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"months\":[{\"month\":\"2026-10\",\"revenue\":8511550,\"cost\":0,\"net\":8511550,\"cum\":8511550,\"hasCost\":false}],\"breakEven\":{\"month\":null,\"kind\":\"NO_DATA\",\"label\":\"비용 입력 전\"},\"needPaid\":{\"count\":null,",
+  "controller": "AdminV31Controller.runway"
+ },
+ {
+  "path": "/admin/finance/costs",
+  "called": "/api/v1/admin/finance/costs",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminV31Controller.costs"
+ },
+ {
+  "path": "/admin/policy-items",
+  "called": "/api/v1/admin/policy-items",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"FEE_BASIS\",\"title\":\"소개비 산정\",\"content\":\"요율표 없음 — 당사자 협의\",\"basis\":\"A-12\",\"status\":\"CONFIRMED\",\"pendingEffect\":null,\"liveKey\":null,\"updatedAt\":\"2026-10-11T15:54:",
+  "controller": "AdminV31Controller.policyItems"
+ },
+ {
+  "path": "/admin/gwans/:code/open-check",
+  "called": "/api/v1/admin/gwans/MNY/open-check",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"code\":\"MNY\",\"name\":\"소개장터\",\"isActive\":true,\"isHub\":false,\"passed\":5,\"total\":6,\"canOpen\":false,\"checks\":[{\"key\":\"CATEGORY\",\"label\":\"업종 1종 이상 승인\",\"ok\":true,\"detail\":\"15종 승인",
+  "controller": "AdminV31Controller.openCheck"
+ },
+ {
+  "path": "/admin/gwan-axes",
+  "called": "/api/v1/admin/gwan-axes",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"gwanCode\":\"MAL\",\"gwanName\":\"안심소개\",\"axisCode\":\"ASSET\",\"name\":\"기계 · 설비 · 시설\",\"nature\":\"실물자산형\",\"judge\":\"등기 없이 실물 인도로 넘어갑니까?\",\"urgentLabel\":\"",
+  "controller": "AdminV31Controller.gwanAxes"
+ },
+ {
+  "path": "/admin/ai/learn-settings",
+  "called": "/api/v1/admin/ai/learn-settings",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"classify\":{\"enabled\":true,\"minSignals\":3,\"maxWeight\":9,\"vocab\":95},\"risk\":{\"enabled\":true,\"minSignals\":3,\"expireDays\":90,\"lawExempted\":0}}",
+  "controller": "AdminV31Controller.learnSettings"
+ },
+ {
+  "path": "/admin/segments/preview",
+  "called": "/api/v1/admin/segments/preview",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"enabled\":true,\"minClicks\":5,\"ratio\":3,\"moved\":0,\"held\":0,\"noConsent\":0,\"items\":[]}",
+  "controller": "AdminV31Controller.segmentPreview"
+ },
+ {
+  "path": "/admin/segments/log",
+  "called": "/api/v1/admin/segments/log",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdminV31Controller.segmentLog"
+ },
+ {
+  "path": "/admin/integration-status",
+  "called": "/api/v1/admin/integration-status",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"kpis\":{\"tables\":252,\"views\":312,\"routes\":640,\"protectedRoutes\":525,\"publicRoutes\":115,\"roles\":7,\"watchViews\":32,\"systems\":7,\"gwanVarRoutes\":54,\"aclMode\":\"DECORATOR\",\"payoutGate\":\"CLOSED\"},\"systems\":",
+  "controller": "AdminV31Controller.integration"
+ },
+ {
+  "path": "/admin/adx/overview",
+  "called": "/api/v1/admin/adx/overview",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"settings\":{\"payoutGate\":\"closed\",\"cpc\":300,\"holdDays\":7,\"minPayout\":50000,\"withholdingBp\":330,\"ctrSpikePct\":20,\"dcPrefixes\":0},\"publishers\":[{\"id\":\"a87e14c1-9d08-4fb4-8419-d4a9e5f46974\",\"name\":\"시",
+  "controller": "AdminV31Controller.adxOverview"
+ },
+ {
+  "path": "/ads/external/serve",
+  "called": "/api/v1/ads/external/serve",
+  "who": null,
+  "status": 422,
+  "body": "{\"code\":\"ADX_SERVE\",\"message\":\"운영 중인 퍼블리셔가 아닙니다\"}",
+  "controller": "AdxPublicController.serve"
+ },
+ {
+  "path": "/site/gwan-axes",
+  "called": "/api/v1/site/gwan-axes",
+  "who": null,
+  "status": 200,
+  "body": "[{\"gwanCode\":\"MAL\",\"gwanName\":\"안심소개\",\"axisCode\":\"ASSET\",\"name\":\"기계 · 설비 · 시설\",\"nature\":\"실물자산형\",\"judge\":\"등기 없이 실물 인도로 넘어갑니까?\",\"urgentLabel\":\"",
+  "controller": "GwanAxesPublicController.axes"
+ },
+ {
+  "path": "/admin/summary",
+  "called": "/api/v1/admin/summary",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"reviewPending\":6,\"slaBreached\":0,\"autoRatePct\":2.3,\"settlementPending\":4,\"disputesOpen\":0,\"criticalAlerts\":4,\"openBlockers\":10,\"kValue\":0.52,\"settlementPendingSum\":950000,\"bizPending\":1,\"bizToday\":1",
+  "controller": "AdminController.summary"
+ },
+ {
+  "path": "/admin/businesses",
+  "called": "/api/v1/admin/businesses",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"398737e4-b9ae-4472-b014-95590e3bbb79\",\"accountId\":\"5e0039bb-3590-4e89-b1f2-e81190fd826a\",\"bizRegNo\":\"252-89-***04\",\"companyName\":\"작은결함508c66\",\"ceoName\":\"김**\",\"ntsStatus\":\"VALID\",\"ver",
+  "controller": "AdminController.businesses"
+ },
+ {
+  "path": "/admin/deals",
+  "called": "/api/v1/admin/deals",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"39cf4c9b-dab4-41ce-90ea-a626a8586c9f\",\"title\":\"결정검증 매물 1469d\",\"status\":\"CONFIRMED\",\"statusLabel\":\"성사 확정\",\"agreedFee\":300000,\"introducerName\":\"화면 소개자\",\"gwanName\":\"",
+  "controller": "AdminController.deals"
+ },
+ {
+  "path": "/admin/settlements",
+  "called": "/api/v1/admin/settlements",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"289288c7-eaa9-4ff1-ad7e-c6d1023fe06b\",\"dealId\":\"f573eaf4-3e32-4bd7-bbdd-753809567be6\",\"amount\":300000,\"status\":\"REQUESTED\",\"no\":\"S-2026-0005\",\"statusLabel\":\"승인 대기\",\"payeeName\":\"개인 ",
+  "controller": "AdminController.settlements"
+ },
+ {
+  "path": "/admin/site-settings",
+  "called": "/api/v1/admin/site-settings",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"key\":\"badge.verified_label\",\"value\":\"서류 확인\",\"description\":\"증빙확인 배지 표시 문구 (INV-11: 품질 보증 아님)\",\"isRequiredForOpen\":true,\"valueExample\":null,\"hasIssue\":false,\"i",
+  "controller": "AdminController.settings"
+ },
+ {
+  "path": "/admin/review-reasons",
+  "called": "/api/v1/admin/review-reasons",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"THIN_CONTENT\",\"label\":\"설명이 부족합니다\",\"category\":\"CONTENT\"},{\"code\":\"MISLEADING\",\"label\":\"사실과 다른 내용입니다\",\"category\":\"CONTENT\"},{\"code\":\"CONTACT_IN_BODY\",\"label",
+  "controller": "AdminController.reasons"
+ },
+ {
+  "path": "/admin/accounts",
+  "called": "/api/v1/admin/accounts",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"993c801b-3e22-4e35-9f9b-b4c10eec4d87\",\"email\":\"dtX****@t.local\",\"name\":\"박판매\",\"phone\":null,\"accountType\":\"INDIVIDUAL\",\"status\":\"ACTIVE\",\"identityVerified\":false,\"companyName\":null,\"bizVer",
+  "controller": "AdminController.accounts"
+ },
+ {
+  "path": "/admin/accounts-counts",
+  "called": "/api/v1/admin/accounts-counts",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"active\":261,\"suspended\":0}",
+  "controller": "AdminController.accountCounts"
+ },
+ {
+  "path": "/admin/accounts/:id",
+  "called": "/api/v1/admin/accounts/22222222-2222-2222-2222-222222222222",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"ok\":true,\"account\":{\"id\":\"22222222-2222-2222-2222-222222222222\",\"email\":\"buy****@x.com\",\"name\":\"구매자\",\"phone\":null,\"accountType\":\"BUSINESS\",\"status\":\"ACTIVE\",\"identityVerifiedAt\":\"2026-10-11T15",
+  "controller": "AdminController.account"
+ },
+ {
+  "path": "/admin/collect/sources",
+  "called": "/api/v1/admin/collect/sources",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "CollectController.sources"
+ },
+ {
+  "path": "/admin/collect/fetches",
+  "called": "/api/v1/admin/collect/fetches",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "CollectController.fetches"
+ },
+ {
+  "path": "/admin/collect/health",
+  "called": "/api/v1/admin/collect/health",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"sources\":0,\"ready\":0,\"blocked\":0,\"ingredients\":29,\"items\":0,\"rates\":[],\"stuck\":[],\"note\":null}",
+  "controller": "CollectController.health"
+ },
+ {
+  "path": "/admin/advertisers",
+  "called": "/api/v1/admin/advertisers",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdBillingController.advertisers"
+ },
+ {
+  "path": "/admin/ad-invoices",
+  "called": "/api/v1/admin/ad-invoices",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdBillingController.invoices"
+ },
+ {
+  "path": "/admin/ad-receivables",
+  "called": "/api/v1/admin/ad-receivables",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AdBillingController.receivables"
+ },
+ {
+  "path": "/admin/ad-settlement",
+  "called": "/api/v1/admin/ad-settlement",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"advertisers\":0,\"invoicesThisMonth\":0,\"billedThisMonth\":0,\"collectedThisMonth\":0,\"unpaidTotal\":0,\"overdueCount\":0,\"overdueRunning\":[],\"note\":null}",
+  "controller": "AdBillingController.settlement"
+ },
+ {
+  "path": "/signup/profile-questions",
+  "called": "/api/v1/signup/profile-questions",
+  "who": null,
+  "status": 200,
+  "body": "{\"questions\":[{\"code\":\"q1\",\"question\":\"어떤 분야를 주로 다루십니까?\",\"isMulti\":true,\"options\":[{\"code\":\"re\",\"label\":\"부동산 · 점포\"},{\"code\":\"fr\",\"label\":\"프랜차이즈 · 창업\"}",
+  "controller": "AdsController.signupQuestions"
+ },
+ {
+  "path": "/profile/questions",
+  "called": "/api/v1/profile/questions",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"questions\":[{\"code\":\"q1\",\"question\":\"어떤 분야를 주로 다루십니까?\",\"isMulti\":true,\"options\":[{\"code\":\"re\",\"label\":\"부동산 · 점포\"},{\"code\":\"fr\",\"label\":\"프랜차이즈 · 창업\"}",
+  "controller": "AdsController.questions"
+ },
+ {
+  "path": "/me/profile",
+  "called": "/api/v1/me/profile",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"registered\":false,\"note\":\"등록된 성향이 없습니다. 전체 공개 광고가 나갑니다.\"}",
+  "controller": "AdsController.mine"
+ },
+ {
+  "path": "/ads/serve",
+  "called": "/api/v1/ads/serve",
+  "who": null,
+  "status": 200,
+  "body": "{\"empty\":true,\"note\":\"이 슬롯에 나갈 소재가 없습니다. 자리를 비웁니다.\"}",
+  "controller": "AdsController.serve"
+ },
+ {
+  "path": "/ads/infeed",
+  "called": "/api/v1/ads/infeed",
+  "who": null,
+  "status": 200,
+  "body": "{\"slots\":[],\"every\":8,\"note\":\"목록이 짧아 광고를 넣지 않습니다.\"}",
+  "controller": "AdsController.infeed"
+ },
+ {
+  "path": "/ads/:id",
+  "called": "/api/v1/ads/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 200,
+  "body": "{\"found\":false}",
+  "controller": "AdsController.creative"
+ },
+ {
+  "path": "/admin/ad-creatives",
+  "called": "/api/v1/admin/ad-creatives",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"AD-101\",\"advertiser\":\"세바코리아 (SEBA SUN)\",\"category\":\"에너지\",\"title\":\"지붕만 빌려주면 임대 수익으로 돌아옵니다\",\"slot\":\"HERO\",\"status\":\"ACTIVE\",\"regulated\":fals",
+  "controller": "AdsAdminController.creatives"
+ },
+ {
+  "path": "/admin/ad-creatives/slots",
+  "called": "/api/v1/admin/ad-creatives/slots",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"DTAIL\",\"name\":\"상세 하단\",\"placement\":\"상품 · 매물 상세 맨 아래. 다 보고 \\\"비슷한 걸 더 볼까\\\" 하는 자리라 **노출 수는 적어도 클릭률이 높습니다.**",
+  "controller": "AdsAdminController.slots"
+ },
+ {
+  "path": "/admin/ad-creatives/stats",
+  "called": "/api/v1/admin/ad-creatives/stats",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"creative_code\":\"AD-101\",\"advertiser\":\"세바코리아 (SEBA SUN)\",\"slot_code\":\"HERO\",\"impressions\":1,\"clicks\":0,\"ctr\":0},{\"creative_code\":\"AD-102\",\"advertiser\":\"한빛프랜차이즈\",\"slot_code\":\"",
+  "controller": "AdsAdminController.stats"
+ },
+ {
+  "path": "/internal/accounts/:id/ad-profile",
+  "called": "/api/v1/internal/accounts/22222222-2222-2222-2222-222222222222/ad-profile",
+  "who": null,
+  "status": 403,
+  "body": "{\"code\":\"INTERNAL_KEY_INVALID\",\"message\":\"내부 API 키가 맞지 않습니다.\"}",
+  "controller": "AdsInternalController.adProfile"
+ },
+ {
+  "path": "/internal/businesses/:id",
+  "called": "/api/v1/internal/businesses/2ac7c224-5b7d-409c-835f-19870fb9fa8b",
+  "who": null,
+  "status": 403,
+  "body": "{\"code\":\"INTERNAL_KEY_INVALID\",\"message\":\"내부 API 키가 맞지 않습니다.\"}",
+  "controller": "AdsInternalController.checkBiz"
+ },
+ {
+  "path": "/partner/affiliate/dashboard",
+  "called": "/api/v1/partner/affiliate/dashboard",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"ok\":true,\"today\":{\"earned\":0,\"yesterdayEarned\":0,\"earnedDelta\":0,\"orders\":0,\"yesterdayOrders\":0,\"ordersDelta\":0},\"monthExtra\":{\"lastMonthEarned\":0,\"lastMonthSamePeriod\":0,\"deltaPct\":null},\"customers",
+  "controller": "AffiliateController.dashboard"
+ },
+ {
+  "path": "/partner/affiliate/links",
+  "called": "/api/v1/partner/affiliate/links",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"a305d042-677b-4beb-9117-478e48821dac\",\"code\":\"PTN-C26B3F1F\",\"label\":\"수정확인 b76771\",\"isActive\":false,\"product\":\"수정확인 제휴 b76771\",\"commission\":1500,\"productStatus\":\"STOPPED\",\"c",
+  "controller": "AffiliateController.links"
+ },
+ {
+  "path": "/partner/affiliate/orders",
+  "called": "/api/v1/partner/affiliate/orders",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"orderNo\":\"H26101200053\",\"product\":\"수정확인 제휴 b76771\",\"linkLabel\":\"수정확인 b76771\",\"commission\":1500,\"state\":\"CANCELED\",\"attributed\":true,\"clickedAt\":\"2026-10-11T16:17:39.551Z\",\"order",
+  "controller": "AffiliateController.orders"
+ },
+ {
+  "path": "/partner/affiliate/revenues",
+  "called": "/api/v1/partner/affiliate/revenues",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"items\":[{\"date\":\"2026-10-11T15:00:00.000Z\",\"track\":\"AFFILIATE\",\"amount\":1500,\"memo\":\"소개몰 주문 H26101200053 제휴수수료(확정 전)\"},{\"date\":\"2026-10-11T15:00:00.000Z\",\"track\":\"AFFILIATE",
+  "controller": "AffiliateController.revenues"
+ },
+ {
+  "path": "/partner/affiliate/settlements",
+  "called": "/api/v1/partner/affiliate/settlements",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"fdb9c6aa-d5af-4735-908d-af3ffff29cdc\",\"track\":\"AFFILIATE\",\"from\":\"2029-05-12T15:00:00.000Z\",\"to\":\"2029-06-12T15:00:00.000Z\",\"gross\":50000,\"withholding\":1650,\"net\":48350,\"state\":\"PAID\"",
+  "controller": "AffiliateController.settlements"
+ },
+ {
+  "path": "/partner/affiliate/products",
+  "called": "/api/v1/partner/affiliate/products",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"08a63e44-e3f1-4ff4-bc78-bfe8431facb8\",\"code\":\"FX-SOLAR\",\"name\":\"태양광 무료 상담 신청\",\"advertiser\":\"세바코리아\",\"commission\":50000,\"landingUrl\":\"https://example.com/solar\",\"desc",
+  "controller": "AffiliateController.products"
+ },
+ {
+  "path": "/partner/affiliate/materials",
+  "called": "/api/v1/partner/affiliate/materials",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "AffiliateController.materials"
+ },
+ {
+  "path": "/partner/affiliate/guides",
+  "called": "/api/v1/partner/affiliate/guides",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "AffiliateController.guides"
+ },
+ {
+  "path": "/partner/affiliate/inquiries",
+  "called": "/api/v1/partner/affiliate/inquiries",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "AffiliateController.inquiries"
+ },
+ {
+  "path": "/r/:code",
+  "called": "/api/v1/r/MNY",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 링크입니다. 주소를 다시 확인해 주십시오.\"}",
+  "controller": "AffiliateController.click"
+ },
+ {
+  "path": "/admin/affiliates/applications",
+  "called": "/api/v1/admin/affiliates/applications",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"note\":null}",
+  "controller": "AffiliateController.applications"
+ },
+ {
+  "path": "/admin/affiliates/products",
+  "called": "/api/v1/admin/affiliates/products",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"801b15ef-606a-464e-9934-408c382c08cc\",\"code\":\"FX-WATER\",\"name\":\"정수기 렌탈 상담 신청\",\"advertiser\":\"맑은물렌탈\",\"commission\":30000,\"status\":\"ON_SALE\",\"landingUrl\":\"https://examp",
+  "controller": "AffiliateController.adminProducts"
+ },
+ {
+  "path": "/admin/affiliates/goals",
+  "called": "/api/v1/admin/affiliates/goals",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AffiliateController.goals"
+ },
+ {
+  "path": "/admin/affiliates/settlements",
+  "called": "/api/v1/admin/affiliates/settlements",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"fdb9c6aa-d5af-4735-908d-af3ffff29cdc\",\"track\":\"AFFILIATE\",\"from\":\"2029-05-12T15:00:00.000Z\",\"to\":\"2029-06-12T15:00:00.000Z\",\"gross\":50000,\"net\":48350,\"state\":\"PAID\",\"companyName\":\"소개사\",\"",
+  "controller": "AffiliateController.adminSettlements"
+ },
+ {
+  "path": "/admin/affiliates/guides",
+  "called": "/api/v1/admin/affiliates/guides",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AffiliateController.adminGuides"
+ },
+ {
+  "path": "/admin/affiliates/materials/queue",
+  "called": "/api/v1/admin/affiliates/materials/queue",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"note\":null}",
+  "controller": "AffiliateController.materialQueue"
+ },
+ {
+  "path": "/ai/recommend/weights",
+  "called": "/api/v1/ai/recommend/weights",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"loc\",\"name\":\"지역 적합\",\"weight\":30},{\"code\":\"cat\",\"name\":\"카테고리 일치\",\"weight\":30},{\"code\":\"win\",\"name\":\"성사 이력\",\"weight\":20},{\"code\":\"spd\",\"name\":\"응답 속도\",\"weigh",
+  "controller": "AiController.weights"
+ },
+ {
+  "path": "/ai/recommend/request",
+  "called": "/api/v1/ai/recommend/request",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"request\":null,\"mine\":[],\"weights\":[{\"code\":\"loc\",\"name\":\"지역 적합\",\"weight\":30},{\"code\":\"cat\",\"name\":\"카테고리 일치\",\"weight\":30},{\"code\":\"win\",\"name\":\"성사 이력\",\"weight\":20},{\"code\"",
+  "controller": "AiController.requestCandidates"
+ },
+ {
+  "path": "/admin/risk/rules",
+  "called": "/api/v1/admin/risk/rules",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"RSK-01\",\"name\":\"귀속 우회 의심\",\"protects\":\"INV-2 첫 접촉 90일 귀속\",\"source\":\"같은 사업자 쌍이 대화 시작 후 플랫폼 밖 연락처를 주고받고 대화를 끊은 ",
+  "controller": "RiskController.rules"
+ },
+ {
+  "path": "/admin/risk/alerts",
+  "called": "/api/v1/admin/risk/alerts",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "RiskController.alerts"
+ },
+ {
+  "path": "/admin/risk/classify-health",
+  "called": "/api/v1/admin/risk/classify-health",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"accuracy\":{\"total\":0,\"missed\":0,\"matched\":0,\"corrected\":0,\"accuracy_pct\":null},\"misses\":[],\"corrections\":[],\"unlinked\":[],\"conflicts\":[],\"vocab\":{\"terms\":95,\"cats\":9,\"restrict_terms\":65,\"restrict_co",
+  "controller": "RiskController.classifyHealth"
+ },
+ {
+  "path": "/admin/risk/rule-health",
+  "called": "/api/v1/admin/risk/rule-health",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"RSK-01\",\"name\":\"귀속 우회 의심\",\"severity\":\"HIGH\",\"raised\":0,\"false_positives\":0,\"fp_rate\":null},{\"code\":\"RSK-02\",\"name\":\"허위 · 중복 매물\",\"severity\":\"MEDIUM\",\"raised\":0,\"false",
+  "controller": "RiskController.health"
+ },
+ {
+  "path": "/ai/match/:leadId",
+  "called": "/api/v1/ai/match/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 200,
+  "body": "{\"leadId\":\"00000000-0000-4000-a000-000000000000\",\"weights\":[{\"code\":\"loc\",\"name\":\"지역 적합\",\"weight\":30},{\"code\":\"cat\",\"name\":\"카테고리 일치\",\"weight\":30},{\"code\":\"win\",\"name\":\"성사 이",
+  "controller": "AiServerController.match"
+ },
+ {
+  "path": "/me/persona",
+  "called": "/api/v1/me/persona",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"segment\":null,\"consented\":false,\"note\":\"맞춤형 광고에 동의하지 않으셨습니다. 전체 공개 광고가 나갑니다.\"}",
+  "controller": "AiServerController.myPersona"
+ },
+ {
+  "path": "/admin/classify/learn/log",
+  "called": "/api/v1/admin/classify/learn/log",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"note\":null}",
+  "controller": "LearnController.log"
+ },
+ {
+  "path": "/subscription-plans",
+  "called": "/api/v1/subscription-plans",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"BASIC\",\"name\":\"베이직\",\"monthlyPrice\":0,\"includedCodes\":0,\"requestViewsPerMonth\":3,\"listingSlots\":3,\"prioritySlotCount\":0,\"extraCodePrice\":30000,\"features\":[\"소개코드 발급 없음\",\"",
+  "controller": "BillingController.plans"
+ },
+ {
+  "path": "/me/referral-codes",
+  "called": "/api/v1/me/referral-codes",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"code\":\"99E3D1\",\"listingId\":\"a9615c72-204b-4583-9b97-52627c7a0363\",\"listingTitle\":\"금천구 사무실 임대 소개 9c6e6c\",\"gwanCode\":\"MAL\",\"listingStatus\":\"PUBLISHED\",\"isExtra\":true,\"issuedAt\":\"2",
+  "controller": "BillingController.codes"
+ },
+ {
+  "path": "/me/referral-codes/quota",
+  "called": "/api/v1/me/referral-codes/quota",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"scope\":\"listing\",\"subscribed\":true,\"planCode\":\"STANDARD\",\"planName\":\"스탠다드\",\"freePlan\":false,\"includedCodes\":3,\"usedThisMonth\":0,\"freeRemaining\":3,\"extraCodePrice\":30000,\"identityVerified\":tr",
+  "controller": "BillingController.quota"
+ },
+ {
+  "path": "/me/success-fees",
+  "called": "/api/v1/me/success-fees",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "BillingController.successFees"
+ },
+ {
+  "path": "/features",
+  "called": "/api/v1/features",
+  "who": null,
+  "status": 200,
+  "body": "[{\"feature\":\"referral_fee\",\"enabled\":false,\"description\":\"소개비 기능 스위치(기본 off · 본인인증 · 계좌 확인 연동 뒤 운영자가 켬). 켜면 당사자가 소개비를 약정",
+  "controller": "BillingController.features"
+ },
+ {
+  "path": "/me/ledger",
+  "called": "/api/v1/me/ledger",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"01c47901-a159-4df7-8e6d-9e3917cd71a8\",\"entryType\":\"EXTRA_CODE\",\"direction\":\"DEBIT\",\"amount\":30000,\"balanceAfter\":null,\"memo\":\"추가 소개코드 99E3D1 (결제)\",\"createdAt\":\"2026-10-11T16:03",
+  "controller": "BillingController.ledger"
+ },
+ {
+  "path": "/me/subscription/detail",
+  "called": "/api/v1/me/subscription/detail",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"subscribed\":true,\"id\":\"bbbbbbbb-0000-4000-a000-000000000001\",\"planCode\":\"STANDARD\",\"planName\":\"스탠다드\",\"monthlyPrice\":49000,\"status\":\"ACTIVE\",\"periodStart\":\"2026-10-10T15:23:06.441Z\",\"periodEn",
+  "controller": "RecurringController.detail"
+ },
+ {
+  "path": "/me/subscription/refund-eligible",
+  "called": "/api/v1/me/subscription/refund-eligible",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"eligible\":false,\"reason\":\"이번 기간에 결제한 내역이 없습니다\",\"paidOn\":null,\"used\":0}",
+  "controller": "RecurringController.refundEligible"
+ },
+ {
+  "path": "/me/subscription/invoices",
+  "called": "/api/v1/me/subscription/invoices",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"rcx-76d59fb7-bf6a-417e-936a-63c1ef6e15fd\",\"kind\":\"EXTRA_CODE\",\"planCode\":\"STANDARD\",\"periodStart\":\"2026-10-11T16:03:45.071Z\",\"periodEnd\":null,\"amount\":30000,\"status\":\"PAID\",\"attempt\":1,\"failur",
+  "controller": "RecurringController.invoices"
+ },
+ {
+  "path": "/me/billing-key",
+  "called": "/api/v1/me/billing-key",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"registered\":false,\"note\":\"등록된 결제 수단이 없습니다. 자동 청구가 되지 않습니다.\"}",
+  "controller": "RecurringController.billingKey"
+ },
+ {
+  "path": "/me/payout-accounts",
+  "called": "/api/v1/me/payout-accounts",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "RecurringController.payoutAccounts"
+ },
+ {
+  "path": "/admin/billing/overdue",
+  "called": "/api/v1/admin/billing/overdue",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"c528bca7-9c2f-4a49-9d3d-29eb8971505a\",\"account_id\":\"b6b8a058-caa2-4adf-98ab-1e3c2f499997\",\"plan_code\":\"STANDARD\",\"status\":\"PAST_DUE\",\"periodEnd\":\"2026-10-11T16:09:22.781Z\",\"attempt\":1,\"failure",
+  "controller": "BillingAdminController.overdue"
+ },
+ {
+  "path": "/admin/billing/policy",
+  "called": "/api/v1/admin/billing/policy",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"key\":\"billing.grace_days\",\"stored\":\"7\",\"effective\":7,\"meaning\":\"유예 일수 — 첫 실패 시점부터\",\"pattern\":\"^([1-9]|[12][0-9]|30)$\",\"example\":\"7\",\"description\":\"청구 실패 후 구독",
+  "controller": "BillingAdminController.policy"
+ },
+ {
+  "path": "/admin/billing/notice-missing",
+  "called": "/api/v1/admin/billing/notice-missing",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"subscription_id\":\"78d7ba2d-eb44-449a-9231-59a484157977\",\"account_id\":\"bdceae3c-b40e-40fb-b0e1-76c51404a193\",\"plan_code\":\"STANDARD\",\"due_at\":\"2026-11-10T16:12:22.105Z\",\"last_failure\":null}]",
+  "controller": "BillingAdminController.noticeMissing"
+ },
+ {
+  "path": "/admin/billing/attempts-today",
+  "called": "/api/v1/admin/billing/attempts-today",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"subscription_id\":\"e38966f3-8078-45b4-9a0a-4354f67dba05\",\"tries\":1,\"paid\":1,\"retryable\":0,\"terminal\":0,\"last_attempt\":\"2026-10-11T16:17:55.820Z\",\"last_detail\":null,\"plan_code\":\"PRO\",\"account_id\":\"df",
+  "controller": "BillingAdminController.attempts"
+ },
+ {
+  "path": "/admin/billing/review",
+  "called": "/api/v1/admin/billing/review",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"pendingInvoices\":[{\"invoiceId\":\"76ac8a70-f79f-4ff4-9b25-83d487853c20\",\"subscriptionId\":\"9755dd12-4e1d-43eb-8df3-24257d8b9eb5\",\"accountId\":\"5f203f95-43e3-40cd-b701-f311eb57f5fb\",\"periodStart\":\"2026-1",
+  "controller": "BillingAdminController.review"
+ },
+ {
+  "path": "/gwans",
+  "called": "/api/v1/gwans",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"EARN\",\"name\":\"소개하고 벌기\",\"description\":\"내가 아는 사람과 기업을 필요한 곳에 연결하고 소개비를 받습니다\",\"isActive\":true,\"listingCount\":0},{\"code\":\"MNY\",\"",
+  "controller": "CatalogController.gwans"
+ },
+ {
+  "path": "/categories",
+  "called": "/api/v1/categories",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"c0785a5c-bd51-4370-835b-5a8793bb5283\",\"gwanCode\":\"BIZ\",\"code\":\"BIZ_NEWSTORE\",\"name\":\"기업 신규 출점\",\"gradeCode\":\"G3\",\"feeBearer\":\"BUYER\",\"guideRate\":null,\"restrictedCode\":null,\"restrict",
+  "controller": "CatalogController.categories"
+ },
+ {
+  "path": "/codes",
+  "called": "/api/v1/codes",
+  "who": null,
+  "status": 200,
+  "body": "{\"audience\":\"USER\",\"domains\":{\"account.type\":[{\"code\":\"INDIVIDUAL\",\"label\":\"개인 회원\",\"shortLabel\":\"개인\",\"tone\":\"neutral\",\"sortOrder\":1},{\"code\":\"BUSINESS\",\"label\":\"사업자 회원\",\"shortLab",
+  "controller": "CatalogController.codeBundle"
+ },
+ {
+  "path": "/footer-links",
+  "called": "/api/v1/footer-links",
+  "who": null,
+  "status": 200,
+  "body": "[{\"section\":\"LEGAL\",\"label\":\"이용약관\",\"targetType\":\"TERM\",\"targetRef\":\"SERVICE\",\"available\":true,\"tip\":null},{\"section\":\"LEGAL\",\"label\":\"개인정보처리방침\",\"targetType\":\"TERM\",\"targetRef\":",
+  "controller": "CatalogController.footerLinks"
+ },
+ {
+  "path": "/admin/categories",
+  "called": "/api/v1/admin/categories",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"c0785a5c-bd51-4370-835b-5a8793bb5283\",\"gwanCode\":\"BIZ\",\"code\":\"BIZ_NEWSTORE\",\"name\":\"기업 신규 출점\",\"status\":\"APPROVED\",\"laborLawFlag\":\"NOT_APPLICABLE\",\"restrictedCode\":null,\"feeBearer\"",
+  "controller": "CatalogController.adminCategories"
+ },
+ {
+  "path": "/admin/policies",
+  "called": "/api/v1/admin/policies",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"restrictedIndustries\":[{\"code\":\"MEDDEV\",\"name\":\"의료기기\",\"legalBasis\":\"의료기기법 제24조 — 의료기기 광고는 사전 심의 대상입니다\",\"gwanCode\":\"HLT\",\"mode\":\"GATED\",\"blockM",
+  "controller": "CatalogController.policies"
+ },
+ {
+  "path": "/signup/types",
+  "called": "/api/v1/signup/types",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"PERSONAL\",\"label\":\"개인 회원\",\"sub\":\"요청 등록과 소개 참여를 하실 수 있습니다. 사업자등록 없이 바로 시작합니다.\",\"needsBiz\":false,\"needsCorp\":false},{\"code",
+  "controller": "CatalogController.signupTypes"
+ },
+ {
+  "path": "/site/landing",
+  "called": "/api/v1/site/landing",
+  "who": null,
+  "status": 200,
+  "body": "{\"value\":\"MNY\"}",
+  "controller": "CatalogController.siteLanding"
+ },
+ {
+  "path": "/restrictions",
+  "called": "/api/v1/restrictions",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "ComplianceController.list"
+ },
+ {
+  "path": "/terms/required",
+  "called": "/api/v1/terms/required",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"SERVICE\",\"title\":\"이용약관\",\"version\":\"1.0\",\"isRequired\":true,\"effectiveFrom\":\"2026-10-01T00:00:00.000Z\",\"agreed\":false,\"oldVersion\":false,\"changedAt\":null,\"agreedVersion\":null,\"changeNo",
+  "controller": "ComplianceController.required"
+ },
+ {
+  "path": "/terms/agreements",
+  "called": "/api/v1/terms/agreements",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "ComplianceController.history"
+ },
+ {
+  "path": "/admin/terms",
+  "called": "/api/v1/admin/terms",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"SERVICE\",\"version\":\"1.0\",\"title\":\"이용약관\",\"body\":\"# 이용약관\\n\\n## 제1조 (목적)\\n이 약관은 **(주)한국바이오헬스케어 소개뱅크 사업부**(이하 \\\"회사\\\")가",
+  "controller": "TermsController.list"
+ },
+ {
+  "path": "/admin/open-blockers",
+  "called": "/api/v1/admin/open-blockers",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"kind\":\"ASSUME\",\"item\":\"assume.bank\",\"reason\":\"간주 모드 켜짐 — 실제 확인 없이 통과시킵니다. 연동을 마친 뒤 끄십시오 (수금 계좌 간주 모드. **on 이면 가상 ",
+  "controller": "TermsController.blockers"
+ },
+ {
+  "path": "/community/posts",
+  "called": "/api/v1/community/posts",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "CommunityController.posts"
+ },
+ {
+  "path": "/community/board",
+  "called": "/api/v1/community/board",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[],\"total\":0,\"page\":1,\"size\":10,\"pages\":0}",
+  "controller": "CommunityController.board"
+ },
+ {
+  "path": "/community/posts/:id",
+  "called": "/api/v1/community/posts/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 200,
+  "body": "{\"ok\":false,\"note\":\"없는 글입니다.\"}",
+  "controller": "CommunityController.post"
+ },
+ {
+  "path": "/admin/community/queue",
+  "called": "/api/v1/admin/community/queue",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"pending\":[],\"reported\":[{\"id\":\"2350e78c-4806-4558-814f-e156ef6ca3ad\",\"board\":\"QNA\",\"title\":\"수정확인 신고 시험 글 b76771\",\"reportCount\":3}],\"lateCount\":0,\"note\":null}",
+  "controller": "CommunityController.queue"
+ },
+ {
+  "path": "/community/polls",
+  "called": "/api/v1/community/polls",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"42d537df-0b2d-4226-9e0f-a7f2e37cb540\",\"kind\":\"VS\",\"title\":\"로봇청소기를 산다면, 어느 쪽을 고르시겠어요?\",\"description\":null,\"image\":null,\"state\":\"OPEN\",\"open\":true,\"endsAt\":",
+  "controller": "PollController.list"
+ },
+ {
+  "path": "/community/polls/:id",
+  "called": "/api/v1/community/polls/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 투표입니다.\"}",
+  "controller": "PollController.one"
+ },
+ {
+  "path": "/admin/community/polls",
+  "called": "/api/v1/admin/community/polls",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"42d537df-0b2d-4226-9e0f-a7f2e37cb540\",\"kind\":\"VS\",\"title\":\"로봇청소기를 산다면, 어느 쪽을 고르시겠어요?\",\"description\":null,\"image\":null,\"state\":\"OPEN\",\"open\":true,",
+  "controller": "PollController.adminList"
+ },
+ {
+  "path": "/conversations/:id/summary",
+  "called": "/api/v1/conversations/54f307b1-569c-4e17-9516-b0690d1e896a/summary",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_PARTICIPANT\",\"message\":\"이 대화의 참여자가 아닙니다.\"}",
+  "controller": "ConversationSummaryController.summary"
+ },
+ {
+  "path": "/deals/:id/summary",
+  "called": "/api/v1/deals/cccccccc-0000-4000-a000-000000000001/summary",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"id\":\"cccccccc-0000-4000-a000-000000000001\",\"status\":\"PAYMENT_REPORTED\",\"statusLabel\":\"대금 지급 신고됨\",\"step\":2,\"myRole\":\"INTRODUCER\",\"title\":\"설비 매각\",\"targetType\":\"LISTING\",\"targetId",
+  "controller": "DealSummaryController.summary"
+ },
+ {
+  "path": "/conversations/:id/messages",
+  "called": "/api/v1/conversations/54f307b1-569c-4e17-9516-b0690d1e896a/messages",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "DealController.messages"
+ },
+ {
+  "path": "/deals/:id/contract/state",
+  "called": "/api/v1/deals/cccccccc-0000-4000-a000-000000000001/contract/state",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_PARTY\",\"message\":\"이 거래의 당사자가 아닙니다.\"}",
+  "controller": "DealController.contractState"
+ },
+ {
+  "path": "/deals/:id/contract/history",
+  "called": "/api/v1/deals/cccccccc-0000-4000-a000-000000000001/contract/history",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_PARTY\",\"message\":\"이 거래의 당사자가 아닙니다.\"}",
+  "controller": "DealController.history"
+ },
+ {
+  "path": "/contract-templates",
+  "called": "/api/v1/contract-templates",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"HLT_SELLER_STD\",\"name\":\"건강몰 입점 표준계약서\",\"version\":\"1.0\",\"scope\":\"HLT_SELLER\",\"effectiveFrom\":\"2026-11-10T15:00:00.000Z\",\"invariants\":[\"INV-H1\",\"INV-H9\",\"INV-H10\"],\"note\":nu",
+  "controller": "DealController.contractTemplates"
+ },
+ {
+  "path": "/contract-templates/:code",
+  "called": "/api/v1/contract-templates/MNY",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 양식입니다.\"}",
+  "controller": "DealController.contractTemplate"
+ },
+ {
+  "path": "/deals/:id/contract/esign",
+  "called": "/api/v1/deals/cccccccc-0000-4000-a000-000000000001/contract/esign",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_PARTY\",\"message\":\"이 거래의 당사자가 아닙니다.\"}",
+  "controller": "DealController.esignStatus"
+ },
+ {
+  "path": "/admin/etax/status",
+  "called": "/api/v1/admin/etax/status",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"assume\":true,\"adapter\":\"assume\",\"configured\":false,\"urlHost\":null,\"keyName\":\"ETAX_KEY\",\"keySet\":false,\"integration\":{\"status\":\"NOT_STARTED\",\"statusLabel\":\"미착수\",\"provider\":null,\"blocksOpen\":tru",
+  "controller": "EtaxAdminController.status"
+ },
+ {
+  "path": "/files/:id",
+  "called": "/api/v1/files/00000000-0000-4000-a000-000000000000",
+  "who": "intro",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"파일을 찾을 수 없습니다.\"}",
+  "controller": "FileController.open"
+ },
+ {
+  "path": "/files/:id/content",
+  "called": "/api/v1/files/00000000-0000-4000-a000-000000000000/content",
+  "who": null,
+  "status": 403,
+  "body": "{\"code\":\"FILE_TOKEN_INVALID\",\"message\":\"주소가 올바르지 않습니다.\"}",
+  "controller": "FileContentController.download"
+ },
+ {
+  "path": "/admin/audit/signals",
+  "called": "/api/v1/admin/audit/signals",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"code\":\"PII_BURST\",\"view\":\"v_audit_pii_burst\",\"note\":\"하루에 개인정보를 많이 본 사람\",\"count\":1,\"ok\":false,\"lastReview\":null},{\"code\":\"PII_NIGHT\",\"view\":\"v_audit_night_access\",",
+  "controller": "AuditController.signals"
+ },
+ {
+  "path": "/admin/audit/policy",
+  "called": "/api/v1/admin/audit/policy",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"retentionDays\":1095,\"reviewSlaHours\":48,\"thresholds\":[{\"code\":\"ADMIN_BURST\",\"label\":\"운영 행위 몰림\",\"threshold\":50,\"windowHrs\":24,\"note\":\"자동화 도구를 쓰고 있을 수 있습니다.\",",
+  "controller": "AuditController.policy"
+ },
+ {
+  "path": "/admin/audit/logs",
+  "called": "/api/v1/admin/audit/logs",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"at\":\"2026-10-11T16:42:29.966Z\",\"action\":\"ACCOUNT_VIEW\",\"targetType\":\"ACCOUNT\",\"targetId\":\"22222222-2222-2222-2222-222222222222\",\"role\":\"ADMIN\",\"actor\":\"운영자\"},{\"at\":\"2026-10-11T16:42:29.955Z\",",
+  "controller": "AuditController.logs"
+ },
+ {
+  "path": "/admin/audit/reviews",
+  "called": "/api/v1/admin/audit/reviews",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"thinCount\":0,\"note\":null}",
+  "controller": "AuditController.reviews"
+ },
+ {
+  "path": "/admin/invariants",
+  "called": "/api/v1/admin/invariants",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"total\":90,\"ok\":81,\"broken\":9,\"items\":[{\"view\":\"v_ad_attr_orphan\",\"count\":0,\"ok\":true,\"note\":\"광고주가 안 적힌 광고 귀속\"},{\"view\":\"v_ad_overdue_running\",\"count\":0,\"ok\":true,\"note\":\"연체",
+  "controller": "GovernController.invariants"
+ },
+ {
+  "path": "/admin/acl",
+  "called": "/api/v1/admin/acl",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"roles\":[{\"role\":\"GUEST\",\"description\":\"로그인하지 않은 사람\",\"count\":0},{\"role\":\"MEMBER\",\"description\":\"로그인한 회원\",\"count\":245},{\"role\":\"BIZ_OWNER\",\"description\":\"사업자 대표",
+  "controller": "GovernController.acl"
+ },
+ {
+  "path": "/admin/risk/exemptions",
+  "called": "/api/v1/admin/risk/exemptions",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"note\":null}",
+  "controller": "RiskLearnController.list"
+ },
+ {
+  "path": "/admin/health/products",
+  "called": "/api/v1/admin/health/products",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"code\":\"OPTTEST-2B670X\",\"name\":\"잠긴 갈래 시험\",\"price\":1000,\"stock\":1,\"reviewNo\":null,\"ratingAvg\":null,\"reviewCount\":0,\"withdrawal\":\"FOOD_SEALED\",\"category\":\"건강기능식품\",\"cat",
+  "controller": "HealthAdminController.list"
+ },
+ {
+  "path": "/admin/health/products/:code",
+  "called": "/api/v1/admin/health/products/MNY",
+  "who": "admin",
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 상품입니다.\"}",
+  "controller": "HealthAdminController.get"
+ },
+ {
+  "path": "/admin/health/products/:code/history",
+  "called": "/api/v1/admin/health/products/MNY/history",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "HealthAdminController.history"
+ },
+ {
+  "path": "/admin/health/ingredients",
+  "called": "/api/v1/admin/health/ingredients",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"VITC\",\"name\":\"비타민C\",\"aliases\":null,\"note\":null,\"isGroup\":false,\"parent\":null,\"featured\":true,\"excipient\":false,\"sort\":10,\"onSale\":1},{\"code\":\"VITD\",\"name\":\"비타민D\",\"aliases\":[\"비",
+  "controller": "HealthAdminController.ingredients"
+ },
+ {
+  "path": "/admin/health/sale-categories",
+  "called": "/api/v1/admin/health/sale-categories",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"HLT_FOOD\",\"name\":\"건강식품\",\"state\":\"OPEN\",\"note\":null,\"sort\":10,\"onSale\":17,\"total\":18,\"noticeGroup\":\"FOOD\",\"commissionRate\":10},{\"code\":\"HLT_COSMETIC\",\"name\":\"화장품\",\"state\":\"OPEN\"",
+  "controller": "HealthAdminController.saleCategories"
+ },
+ {
+  "path": "/admin/health/promos",
+  "called": "/api/v1/admin/health/promos",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"267ed0f2-1d28-4331-9566-9918f1762639\",\"slot\":\"TODAY\",\"tag\":\"시험 e8e3a6\",\"title\":\"시험 배너\",\"titleEm\":null,\"body\":null,\"linkUrl\":\"/health\",\"cta\":\"지금 바로 보기\",\"isSample\":true,\"",
+  "controller": "HealthAdminController.promos"
+ },
+ {
+  "path": "/admin/health/orders",
+  "called": "/api/v1/admin/health/orders",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"counts\":{\"toShip\":1,\"shipping\":1,\"delivered\":9,\"confirmed\":4},\"carriers\":[\"CJ대한통운\",\"한진택배\",\"롯데택배\",\"우체국택배\",\"로젠택배\"],\"items\":[{\"orderNo\":\"H26101200062\",\"status\"",
+  "controller": "HealthOrdersAdminController.list"
+ },
+ {
+  "path": "/health/products/:code/reviews",
+  "called": "/api/v1/health/products/MNY/reviews",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 상품입니다.\"}",
+  "controller": "HealthReviewPublicController.reviews"
+ },
+ {
+  "path": "/health/products/:code/qna",
+  "called": "/api/v1/health/products/MNY/qna",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 상품입니다.\"}",
+  "controller": "HealthReviewPublicController.qna"
+ },
+ {
+  "path": "/me/health/orders/:no/reviews",
+  "called": "/api/v1/me/health/orders/00000000-0000-4000-a000-000000000000/reviews",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "HealthReviewMeController.mine"
+ },
+ {
+  "path": "/admin/health/reviews",
+  "called": "/api/v1/admin/health/reviews",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "HealthReviewAdminController.reviews"
+ },
+ {
+  "path": "/admin/health/qna",
+  "called": "/api/v1/admin/health/qna",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"22faf370-7e96-4f4c-b826-daa845fb03d8\",\"body\":\"화면 문의 3e11f8 몇 알씩 먹나요\",\"isPrivate\":true,\"state\":\"HIDDEN\",\"answer\":\"하루 두 알 드시면 됩니다.\",\"answeredAt\":\"2026-10-",
+  "controller": "HealthReviewAdminController.qna"
+ },
+ {
+  "path": "/health/rankings",
+  "called": "/api/v1/health/rankings",
+  "who": null,
+  "status": 200,
+  "body": "{\"sales\":{\"basis\":\"최근 7일 판매 수량 기준\",\"from\":\"2026-10-05\",\"to\":\"2026-10-11\",\"madeAt\":\"2026-10-11T16:21:21.228Z\",\"items\":[{\"rank\":1,\"qty\":6,\"orders\":6,\"code\":\"p03\",\"name\":\"초임계 알",
+  "controller": "HealthRankController.list"
+ },
+ {
+  "path": "/health/products",
+  "called": "/api/v1/health/products",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"BIKE-01\",\"name\":\"실내 자전거 접이식\",\"price\":129000,\"stock\":29,\"reviewNo\":null,\"ratingAvg\":null,\"reviewCount\":0,\"withdrawal\":\"GENERAL\",\"category\":\"운동 · 재활 용품\",\"categoryC",
+  "controller": "HealthShopController.products"
+ },
+ {
+  "path": "/health/categories",
+  "called": "/api/v1/health/categories",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"HLT_FOOD\",\"name\":\"건강식품\",\"state\":\"OPEN\",\"note\":null,\"productCount\":17},{\"code\":\"HLT_COSMETIC\",\"name\":\"화장품\",\"state\":\"OPEN\",\"note\":null,\"productCount\":1},{\"code\":\"HLT_FUNC\",\"name\"",
+  "controller": "HealthShopController.categories"
+ },
+ {
+  "path": "/health/products/:code",
+  "called": "/api/v1/health/products/MNY",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"판매 중인 상품이 아닙니다.\"}",
+  "controller": "HealthShopController.product"
+ },
+ {
+  "path": "/health/ingredients",
+  "called": "/api/v1/health/ingredients",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"VITC\",\"name\":\"비타민C\",\"aliases\":null,\"note\":null,\"isGroup\":false,\"parent\":null,\"featured\":true,\"sort\":10,\"needsLicense\":true,\"productCount\":1,\"minUnit\":3900,\"minPrice\":14700},{\"code\":\"VI",
+  "controller": "HealthShopController.ingredients"
+ },
+ {
+  "path": "/health/ingredients/:code",
+  "called": "/api/v1/health/ingredients/MNY",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 성분입니다.\"}",
+  "controller": "HealthShopController.ingredient"
+ },
+ {
+  "path": "/health/suggest",
+  "called": "/api/v1/health/suggest",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "HealthShopController.suggest"
+ },
+ {
+  "path": "/health/products/:code/image",
+  "called": "/api/v1/health/products/MNY/image",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"상품 사진이 없습니다.\"}",
+  "controller": "HealthShopController.productImage"
+ },
+ {
+  "path": "/health/concerns",
+  "called": "/api/v1/health/concerns",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"IMMUNE\",\"name\":\"면역\",\"icon\":\"🛡\",\"note\":null,\"ingredientCount\":4,\"stockedIngredientCount\":3,\"productCount\":3},{\"code\":\"EYE\",\"name\":\"눈\",\"icon\":\"👁\",\"note\":null,\"ingredientCount\":4,\"s",
+  "controller": "HealthShopController.concerns"
+ },
+ {
+  "path": "/health/concerns/:code",
+  "called": "/api/v1/health/concerns/MNY",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 고민입니다.\"}",
+  "controller": "HealthShopController.concern"
+ },
+ {
+  "path": "/health/promos",
+  "called": "/api/v1/health/promos",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"112d0d76-3b8a-4815-a17c-7487eec57c06\",\"slot\":\"TODAY\",\"tag\":\"지금 가장 많이 찾는 건강상품\",\"title\":\"환절기 면역력 강화\",\"titleEm\":\"비타민C 특가전\",\"body\":\"온 가족",
+  "controller": "HealthShopController.promos"
+ },
+ {
+  "path": "/me/health/orders",
+  "called": "/api/v1/me/health/orders",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"orderNo\":\"H26101200056\",\"total\":18000,\"status\":\"CANCELED\",\"createdAt\":\"2026-10-11T16:17:40.693Z\",\"shippedAt\":null,\"deliveredAt\":null,\"confirmedAt\":null,\"confirmDue\":null,\"openReturn\":false,\"firstIt",
+  "controller": "HealthShopController.myOrders"
+ },
+ {
+  "path": "/me/health/orders/:no",
+  "called": "/api/v1/me/health/orders/00000000-0000-4000-a000-000000000000",
+  "who": "intro",
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 주문입니다.\"}",
+  "controller": "HealthShopController.myOrder"
+ },
+ {
+  "path": "/me/health/addresses",
+  "called": "/api/v1/me/health/addresses",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"d5aad142-88f3-4523-80e4-7aa01136d935\",\"label\":null,\"receiver\":\"확인\",\"phone\":\"010-1111-2222\",\"zipcode\":\"06000\",\"addr1\":\"서울 강남구 테헤란로 1\",\"addr2\":null,\"isDefault\":true}]",
+  "controller": "HealthShopController.addresses"
+ },
+ {
+  "path": "/me/health/returns",
+  "called": "/api/v1/me/health/returns",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"68c8522c-931a-4848-bfa4-63378c63d116\",\"orderNo\":\"H26101200056\",\"kind\":\"CANCEL\",\"reason\":\"CHANGE_MIND\",\"state\":\"REFUNDED\",\"decideNote\":\"수정 확인 시험 정리\",\"refundAmount\":18000,\"shipDe",
+  "controller": "HealthShopController.myReturns"
+ },
+ {
+  "path": "/me/health/cart",
+  "called": "/api/v1/me/health/cart",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"items\":[],\"lines\":0,\"goods\":0,\"shipFee\":0,\"total\":0,\"hasProblem\":false,\"priceChanged\":false,\"note\":\"배송비는 없습니다(전 상품 무료).\"}",
+  "controller": "HealthShopController.cart"
+ },
+ {
+  "path": "/me/health/orders/:no/shipments",
+  "called": "/api/v1/me/health/orders/00000000-0000-4000-a000-000000000000/shipments",
+  "who": "intro",
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 주문입니다.\"}",
+  "controller": "HealthShopController.shipments"
+ },
+ {
+  "path": "/admin/health/sellers",
+  "called": "/api/v1/admin/health/sellers",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"SGB-DIRECT\",\"name\":\"소개뱅크 직판관\",\"type\":\"DIRECT\",\"status\":\"ACTIVE\",\"commissionRate\":0,\"payable\":false,\"onSale\":19,\"expiredLicenses\":0}]",
+  "controller": "HealthShopController.hltSellers"
+ },
+ {
+  "path": "/admin/health/settlements",
+  "called": "/api/v1/admin/health/settlements",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"ready\":{\"n\":3,\"amount\":41640},\"blocked\":[]}",
+  "controller": "HealthShopController.hltSettlements"
+ },
+ {
+  "path": "/admin/health/returns",
+  "called": "/api/v1/admin/health/returns",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"3f9a6125-0621-457a-865e-b93039f2c7e2\",\"kind\":\"EXCHANGE\",\"reason\":\"WRONG_ORDER\",\"detail\":null,\"state\":\"REQUESTED\",\"decideNote\":null,\"createdAt\":\"2026-10-11T16:17:05.153Z\",\"decidedAt\":null,\"orde",
+  "controller": "HealthShopController.adminReturns"
+ },
+ {
+  "path": "/admin/health/commission-rates",
+  "called": "/api/v1/admin/health/commission-rates",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"categoryCode\":\"*\",\"rate\":10,\"referralPct\":0,\"note\":\"기본 수수료율. 카테고리별 요율이 없으면 이것을 씁니다.\",\"updatedAt\":\"2026-09-18T01:31:42.097Z\",\"changes\":0},{\"categoryCode",
+  "controller": "HealthShopController.commissionRates"
+ },
+ {
+  "path": "/me/summary",
+  "called": "/api/v1/me/summary",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"principal\":{\"accountId\":\"11111111-1111-1111-1111-111111111111\",\"roles\":[\"BIZ_OWNER\",\"MEMBER\"],\"identityVerifiedAt\":\"2026-10-11T15:23:08.681Z\",\"businessVerifiedAt\":\"2026-10-11T15:23:06.438Z\",\"hasActi",
+  "controller": "AuthController.summary"
+ },
+ {
+  "path": "/terms",
+  "called": "/api/v1/terms",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"ADPERSONAL\",\"version\":\"1.0\",\"title\":\"맞춤형 광고 동의\",\"body\":\"\\n# 맞춤형 광고 동의\\n\\n## 제1조 (무엇을 하는가)\\n회원의 **서비스 이용 기록**을 바탕으로 ",
+  "controller": "AuthController.terms"
+ },
+ {
+  "path": "/terms/index",
+  "called": "/api/v1/terms/index",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"ADPERSONAL\",\"version\":\"1.0\",\"title\":\"맞춤형 광고 동의\",\"status\":\"PUBLISHED\",\"isRequired\":false,\"isNotice\":false,\"effectiveFrom\":\"2026-10-01T00:00:00.000Z\",\"scheduled\":false},{\"code\":\"",
+  "controller": "AuthController.termsIndex"
+ },
+ {
+  "path": "/terms/doc/:code",
+  "called": "/api/v1/terms/doc/MNY",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"발행된 약관이 아닙니다.\"}",
+  "controller": "AuthController.term"
+ },
+ {
+  "path": "/me/introducer/matched",
+  "called": "/api/v1/me/introducer/matched",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"items\":[],\"answered\":[],\"registered\":false,\"note\":\"소개 분야를 등록하시면 맞는 요청을 보여 드립니다.\"}",
+  "controller": "IntroducerController.matched"
+ },
+ {
+  "path": "/me/introducer/profile",
+  "called": "/api/v1/me/introducer/profile",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"registered\":false,\"grade\":null,\"gradeLabel\":null,\"headline\":null,\"categories\":[],\"regions\":[],\"updatedAt\":null}",
+  "controller": "IntroducerController.profile"
+ },
+ {
+  "path": "/me/introducer/profile/options",
+  "called": "/api/v1/me/introducer/profile/options",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"categories\":[{\"code\":\"BIZ_DISTRIBUTE\",\"name\":\"다점포 · 지역 총판\",\"gwan\":\"BIZ\"},{\"code\":\"BIZ_EQUIPMENT\",\"name\":\"창업 설비 · 집기\",\"gwan\":\"BIZ\"},{\"code\":\"BIZ_FRANCHISE\",\"name\":\"프랜",
+  "controller": "IntroducerController.profileOptions"
+ },
+ {
+  "path": "/me/introducer/grades",
+  "called": "/api/v1/me/introducer/grades",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"code\":\"SEED\",\"name\":\"새싹 소개자\",\"criteria\":\"본인인증 · 프로필 완료\",\"benefit\":\"기본 요청 확인\",\"nextHint\":\"첫 유효 연결 1건이면 인증 소개자\",\"now\":null},{\"code\":",
+  "controller": "IntroducerController.grades"
+ },
+ {
+  "path": "/me/introducer/channels",
+  "called": "/api/v1/me/introducer/channels",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"channel\":\"ALIMTALK\",\"ready\":false,\"note\":\"카카오 템플릿 사전 승인 후 켭니다\"},{\"channel\":\"EMAIL\",\"ready\":false,\"note\":\"SPF·DKIM 확인 후 켭니다. 인증 없이 보내면 스팸",
+  "controller": "IntroducerController.channels"
+ },
+ {
+  "path": "/me/introducer/invites",
+  "called": "/api/v1/me/introducer/invites",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "IntroducerController.invites"
+ },
+ {
+  "path": "/me/introducer/activity",
+  "called": "/api/v1/me/introducer/activity",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"registered\":false,\"note\":\"소개자 프로필을 먼저 등록해 주십시오.\"}",
+  "controller": "IntroducerController.activity"
+ },
+ {
+  "path": "/me/points",
+  "called": "/api/v1/me/points",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"earned\":0,\"usable\":0,\"rows\":[],\"unit\":\"원\",\"note\":\"프로필 작성이나 초대 발송만으로 받은 포인트는 유효한 연결이 확인된 뒤에 열립니다.\"}",
+  "controller": "PointsController.points"
+ },
+ {
+  "path": "/invites/:token",
+  "called": "/api/v1/invites/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NO_SUCH_INVITE\",\"message\":\"유효하지 않은 링크입니다.\"}",
+  "controller": "InviteController.view"
+ },
+ {
+  "path": "/me/consult-requests",
+  "called": "/api/v1/me/consult-requests",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MyConsultController.mine"
+ },
+ {
+  "path": "/admin/leads",
+  "called": "/api/v1/admin/leads",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"f8ee9f13-aba3-4a93-8c64-d56512c853ca\",\"createdAt\":\"2026-10-11T15:58:34.376Z\",\"summary\":\"CSL_RENTAL 상담 부탁드립니다 — 시험 ce248e af03\",\"sido\":\"시험도\",\"sigungu\":\"리",
+  "controller": "LeadAdminController.list"
+ },
+ {
+  "path": "/admin/leads/:id",
+  "called": "/api/v1/admin/leads/00000000-0000-4000-a000-000000000000",
+  "who": "admin",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"상담 신청이 없습니다.\"}",
+  "controller": "LeadAdminController.get"
+ },
+ {
+  "path": "/me/listings/:id/review",
+  "called": "/api/v1/me/listings/0e210d15-1f46-486c-99c9-0045af65d645/review",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_OWNER\",\"message\":\"등록한 본인만 볼 수 있습니다.\"}",
+  "controller": "ListingEditController.review"
+ },
+ {
+  "path": "/me/listings/:id/draft",
+  "called": "/api/v1/me/listings/0e210d15-1f46-486c-99c9-0045af65d645/draft",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_OWNER\",\"message\":\"등록한 본인만 볼 수 있습니다.\"}",
+  "controller": "ListingEditController.draft"
+ },
+ {
+  "path": "/listings/:id/photos/:n",
+  "called": "/api/v1/listings/0e210d15-1f46-486c-99c9-0045af65d645/photos/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 400,
+  "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Validation failed (numeric string is expected)\"}",
+  "controller": "ListingExtController.photo"
+ },
+ {
+  "path": "/listings",
+  "called": "/api/v1/listings",
+  "who": null,
+  "status": 200,
+  "body": "{\"promoted\":[],\"organic\":[{\"id\":\"1f49fe12-d021-45ec-96cb-f7fb96a1a0fd\",\"gwanCode\":\"MNY\",\"categoryName\":\"제조 설비\",\"title\":\"상세시험 사무실 인테리어 소개 3e5193\",\"desiredFee\":500000,\"",
+  "controller": "ListingController.list"
+ },
+ {
+  "path": "/listings/:id",
+  "called": "/api/v1/listings/0e210d15-1f46-486c-99c9-0045af65d645",
+  "who": null,
+  "status": 200,
+  "body": "{\"id\":\"0e210d15-1f46-486c-99c9-0045af65d645\",\"gwanCode\":\"MAL\",\"categoryName\":\"상가 · 건물\",\"title\":\"홍대입구 먹자골목 2층 60평 임대\",\"desiredFee\":null,\"feeBearerLabel\":\"매도인 부",
+  "controller": "ListingController.detail"
+ },
+ {
+  "path": "/listings/:id/images/:n",
+  "called": "/api/v1/listings/0e210d15-1f46-486c-99c9-0045af65d645/images/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"이미지가 없습니다.\"}",
+  "controller": "ListingController.image"
+ },
+ {
+  "path": "/listings/:id/reviews",
+  "called": "/api/v1/listings/0e210d15-1f46-486c-99c9-0045af65d645/reviews",
+  "who": null,
+  "status": 200,
+  "body": "{\"count\":0,\"average\":null,\"items\":[]}",
+  "controller": "ListingController.reviews"
+ },
+ {
+  "path": "/listings/:id/questions",
+  "called": "/api/v1/listings/0e210d15-1f46-486c-99c9-0045af65d645/questions",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "ListingController.questions"
+ },
+ {
+  "path": "/market/regions",
+  "called": "/api/v1/market/regions",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[{\"code\":\"1100000000\",\"name\":\"서울\",\"count\":24},{\"code\":\"4100000000\",\"name\":\"경기\",\"count\":3},{\"code\":\"2800000000\",\"name\":\"인천\",\"count\":2},{\"code\":\"3000000000\",\"name\":\"대전\",\"count\":",
+  "controller": "MarketController.regions"
+ },
+ {
+  "path": "/search/keywords",
+  "called": "/api/v1/search/keywords",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[{\"term\":\"주방\",\"hits\":2},{\"term\":\"판교\",\"hits\":2},{\"term\":\"소개\",\"hits\":1},{\"term\":\"인테리어\",\"hits\":1}],\"basis\":\"검색어 통계(정규화된 말 · 결과가 나온 검색만). ",
+  "controller": "MarketController.keywords"
+ },
+ {
+  "path": "/market/requests",
+  "called": "/api/v1/market/requests",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"d590ef51-9272-44a3-a51b-8a659482442c\",\"gwanCode\":\"MAL\",\"title\":\"강남·서초 1층 상가 30평 이상 찾습니다\",\"categoryName\":\"상가 · 건물\",\"budgetMin\":null,\"budgetMax\":nu",
+  "controller": "MarketController.requests"
+ },
+ {
+  "path": "/market/requests/:id/photo",
+  "called": "/api/v1/market/requests/d590ef51-9272-44a3-a51b-8a659482442c/photo",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"사진이 없습니다.\"}",
+  "controller": "MarketController.requestPhoto"
+ },
+ {
+  "path": "/market/success",
+  "called": "/api/v1/market/success",
+  "who": null,
+  "status": 200,
+  "body": "{\"asOf\":\"2026.10.12\",\"period\":\"all\",\"gwanCode\":null,\"kpi\":{\"total\":{\"value\":9,\"deltaToday\":9,\"deltaPct\":null},\"fee\":{\"value\":1070000,\"deltaToday\":1070000},\"inProgress\":{\"value\":17,\"newToday\":17},\"mont",
+  "controller": "MarketController.success"
+ },
+ {
+  "path": "/market/success/recent",
+  "called": "/api/v1/market/success/recent",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[{\"listingId\":\"fb5b5b33-5bec-4866-976d-3ec11ebdcbda\",\"title\":\"결정검증 매물 1469d\",\"categoryName\":\"제조 설비\",\"gwanCode\":\"MNY\",\"fee\":300000,\"tradeAmount\":null,\"days\":1,\"region\":null",
+  "controller": "MarketController.recent"
+ },
+ {
+  "path": "/market/best",
+  "called": "/api/v1/market/best",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[],\"note\":\"실제로 성사된 거래 가운데 운영이 고르고, 매도자 · 매수자 두 분이 공개에 동의한 사례만 싣습니다. 금액 · 기간 · 과정은 거래 기록 ",
+  "controller": "MarketController.best"
+ },
+ {
+  "path": "/market/suppliers",
+  "called": "/api/v1/market/suppliers",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"aaaaaaaa-0000-4000-a000-000000000001\",\"companyName\":\"소개사\",\"mainCategory\":\"제조 설비\",\"summary\":null,\"sido\":null,\"sigungu\":null,\"listingCount\":1,\"rating\":null,\"reviewCount\":0,\"confirm",
+  "controller": "MarketController.suppliers"
+ },
+ {
+  "path": "/market/suppliers/recommended",
+  "called": "/api/v1/market/suppliers/recommended",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"94e9ae0e-c13c-4f84-95c1-e012aa6751a6\",\"companyName\":\"BRK상사34c047\",\"mainCategory\":\"사무실 · 오피스\",\"summary\":null,\"sido\":\"서울\",\"sigungu\":\"금천구\",\"listingCount\":1,\"ra",
+  "controller": "MarketController.recommended"
+ },
+ {
+  "path": "/market/suppliers/:id",
+  "called": "/api/v1/market/suppliers/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"업체를 찾을 수 없습니다.\"}",
+  "controller": "MarketController.supplier"
+ },
+ {
+  "path": "/me/success-stories",
+  "called": "/api/v1/me/success-stories",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"f5f23ed4-897f-4c98-9914-307d7489d20d\",\"headline\":\"시험 사례 e8e3a6\",\"status\":\"HIDDEN\",\"title\":\"결정검증 매물 1469d\",\"side\":\"SELLER\",\"consentAt\":\"2026-10-11T15:54:50.640Z\",\"sellerComm",
+  "controller": "MarketController.myStories"
+ },
+ {
+  "path": "/me/broker/extra",
+  "called": "/api/v1/me/broker/extra",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"applied\":false}",
+  "controller": "MarketController.brokerExtra"
+ },
+ {
+  "path": "/admin/success-stories",
+  "called": "/api/v1/admin/success-stories",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"f5f23ed4-897f-4c98-9914-307d7489d20d\",\"storyNo\":1,\"dealId\":\"41366095-26fb-437e-a4bb-50a2bcbe5a44\",\"gwanCode\":\"MNY\",\"headline\":\"시험 사례 e8e3a6\",\"summary\":\"시험으로 만든 성공 사",
+  "controller": "MarketAdminController.stories"
+ },
+ {
+  "path": "/admin/safety/cases",
+  "called": "/api/v1/admin/safety/cases",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"no\":1,\"type\":\"CONTRACT\",\"title\":\"계약금 피해 시험 e8e3a6\",\"status\":\"HIDDEN\",\"hiddenReason\":\"시험 글 정리 e8e3a6\",\"views\":2,\"createdAt\":\"2026-10-11T15:54:46.981Z\",\"authorEmail\":\"buy****@",
+  "controller": "MarketAdminController.cases"
+ },
+ {
+  "path": "/safety/cases",
+  "called": "/api/v1/safety/cases",
+  "who": null,
+  "status": 200,
+  "body": "{\"items\":[],\"total\":0,\"page\":1,\"pageCount\":1,\"types\":[{\"code\":\"CONTRACT\",\"label\":\"계약사기\",\"o\":1},{\"code\":\"PAYMENT\",\"label\":\"대금사기\",\"o\":2},{\"code\":\"GOODS\",\"label\":\"물품/서비스 사기\"",
+  "controller": "SafetyController.list"
+ },
+ {
+  "path": "/safety/cases/:no",
+  "called": "/api/v1/safety/cases/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 400,
+  "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Validation failed (numeric string is expected)\"}",
+  "controller": "SafetyController.detail"
+ },
+ {
+  "path": "/safety/safe-trade",
+  "called": "/api/v1/safety/safe-trade",
+  "who": null,
+  "status": 200,
+  "body": "{\"minAmount\":50000000,\"supportHours\":\"24시간\",\"phone\":\"1688-2887\",\"items\":[{\"key\":\"DIRECT\",\"title\":\"대금은 당사자끼리\",\"body\":\"소개뱅크는 대금을 받지도 보관하지도 않습니",
+  "controller": "SafetyController.terms"
+ },
+ {
+  "path": "/deals/:id/safe-trade",
+  "called": "/api/v1/deals/cccccccc-0000-4000-a000-000000000001/safe-trade",
+  "who": "intro",
+  "status": 403,
+  "body": "{\"code\":\"NOT_PARTY\",\"message\":\"이 거래의 당사자만 볼 수 있습니다.\"}",
+  "controller": "SafetyController.state"
+ },
+ {
+  "path": "/biz/axis/:kind",
+  "called": "/api/v1/biz/axis/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"없는 축입니다.\"}",
+  "controller": "BizAxisController.list"
+ },
+ {
+  "path": "/biz/axis/:kind/:no",
+  "called": "/api/v1/biz/axis/00000000-0000-4000-a000-000000000000/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 400,
+  "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Validation failed (numeric string is expected)\"}",
+  "controller": "BizAxisController.detail"
+ },
+ {
+  "path": "/biz/policies/:no/source",
+  "called": "/api/v1/biz/policies/00000000-0000-4000-a000-000000000000/source",
+  "who": null,
+  "status": 400,
+  "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Validation failed (numeric string is expected)\"}",
+  "controller": "BizAxisController.source"
+ },
+ {
+  "path": "/biz/axis-requests/:no",
+  "called": "/api/v1/biz/axis-requests/d590ef51-9272-44a3-a51b-8a659482442c",
+  "who": "intro",
+  "status": 400,
+  "body": "{\"code\":\"VALIDATION_ERROR\",\"message\":\"Validation failed (numeric string is expected)\"}",
+  "controller": "BizAxisController.received"
+ },
+ {
+  "path": "/biz/quick",
+  "called": "/api/v1/biz/quick",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "BizAxisController.quick"
+ },
+ {
+  "path": "/me/listings",
+  "called": "/api/v1/me/listings",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"b63e9e52-aa74-4d3d-8955-19176375c4d5\",\"title\":\"화면 문의 확인 508c66\",\"status\":\"ARCHIVED\",\"statusLabel\":\"보관됨\",\"gwanCode\":\"MNY\",\"desiredFee\":300000,\"version\":1,\"publishedAt\":\"2026-1",
+  "controller": "MeController.listings"
+ },
+ {
+  "path": "/me/deals",
+  "called": "/api/v1/me/deals",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"39cf4c9b-dab4-41ce-90ea-a626a8586c9f\",\"title\":\"결정검증 매물 1469d\",\"status\":\"CONFIRMED\",\"statusLabel\":\"성사 확정\",\"agreedFee\":300000,\"createdAt\":\"2026-10-11T16:23:00.404Z\",\"confirme",
+  "controller": "MeController.deals"
+ },
+ {
+  "path": "/me/home",
+  "called": "/api/v1/me/home",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"name\":\"소개자\",\"since\":\"2026-10-11T15:23:06.437Z\",\"identityVerifiedAt\":\"2026-10-11T15:23:08.681Z\",\"companyName\":\"소개사\",\"bizRegNo\":\"1110000001\",\"businessVerifiedAt\":\"2026-10-11T15:23:06.438Z\"",
+  "controller": "MeController.home"
+ },
+ {
+  "path": "/me/conversations",
+  "called": "/api/v1/me/conversations",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"3fe97401-78a1-442f-b621-45c2f29b9e65\",\"targetType\":\"LISTING\",\"targetId\":\"fb5b5b33-5bec-4866-976d-3ec11ebdcbda\",\"status\":\"DEAL_CREATED\",\"role\":\"RECEIVED\",\"title\":\"결정검증 매물 1469d\",\"gw",
+  "controller": "MeController.conversations"
+ },
+ {
+  "path": "/me/settlements",
+  "called": "/api/v1/me/settlements",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.settlements"
+ },
+ {
+  "path": "/me/settlements/due",
+  "called": "/api/v1/me/settlements/due",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.due"
+ },
+ {
+  "path": "/me/settlements/history",
+  "called": "/api/v1/me/settlements/history",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.history"
+ },
+ {
+  "path": "/me/favorites",
+  "called": "/api/v1/me/favorites",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.favorites"
+ },
+ {
+  "path": "/me/notifications",
+  "called": "/api/v1/me/notifications",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":205,\"eventCode\":\"LEAD_DELIVERED\",\"title\":\"새 상담 신청이 왔습니다\",\"body\":\"청소 · 서울 금천구 — 24시간 안에 열지 않으면 다른 업체로 넘어갑니다. 연락처",
+  "controller": "MeController.notifications"
+ },
+ {
+  "path": "/me/notification-prefs",
+  "called": "/api/v1/me/notification-prefs",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"emailReady\":false,\"items\":[{\"eventCode\":\"REVIEW_SLA_DELAY\",\"name\":\"검수 지연 안내\",\"optoutAllowed\":false,\"reason\":\"이용약관 제6조 ②(영업일 기준 24시간)\",\"inapp\":true,\"email\":tru",
+  "controller": "MeController.notificationPrefs"
+ },
+ {
+  "path": "/me/inquiries",
+  "called": "/api/v1/me/inquiries",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.inquiries"
+ },
+ {
+  "path": "/me/disputes",
+  "called": "/api/v1/me/disputes",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeController.disputes"
+ },
+ {
+  "path": "/me/subscription",
+  "called": "/api/v1/me/subscription",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"planCode\":\"STANDARD\",\"planName\":\"스탠다드\",\"status\":\"ACTIVE\",\"statusLabel\":\"이용 중\",\"currentPeriodEnd\":\"2026-11-09T15:23:06.441Z\",\"requestViewsUsed\":1,\"requestViewsPerMonth\":30,\"includedCode",
+  "controller": "MeController.subscription"
+ },
+ {
+  "path": "/me/contracts",
+  "called": "/api/v1/me/contracts",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"dealId\":\"39cf4c9b-dab4-41ce-90ea-a626a8586c9f\",\"contractId\":\"e81ba65c-613f-4f64-94e9-c88c377bd3b7\",\"listingId\":\"fb5b5b33-5bec-4866-976d-3ec11ebdcbda\",\"title\":\"결정검증 매물 1469d\",\"counterpar",
+  "controller": "MeController.contracts"
+ },
+ {
+  "path": "/me/account",
+  "called": "/api/v1/me/account",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"account\":{\"id\":\"11111111-1111-1111-1111-111111111111\",\"email\":\"intro@x.com\",\"name\":\"소개자\",\"phone\":null,\"jobTitle\":null,\"accountType\":\"BUSINESS\",\"status\":\"ACTIVE\",\"identityVerifiedAt\":\"2026-10-1",
+  "controller": "MeController.profile"
+ },
+ {
+  "path": "/consult/categories",
+  "called": "/api/v1/consult/categories",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"3d538c69-7875-451a-bda3-7c13c45d25a9\",\"code\":\"CSL_IT\",\"name\":\"IT·소프트웨어\",\"status\":\"APPROVED\",\"publishMode\":\"OPEN\",\"consultMode\":\"LEAD\",\"partnerCount\":1},{\"id\":\"53df4db7-089f-4d58-aba",
+  "controller": "ConsultController.categories"
+ },
+ {
+  "path": "/consult/categories/:code",
+  "called": "/api/v1/consult/categories/CSL_CLEANING",
+  "who": null,
+  "status": 200,
+  "body": "{\"id\":\"4eea45ef-b4de-4a6c-a9a3-a0f1d278e3ec\",\"code\":\"CSL_CLEANING\",\"name\":\"청소\",\"status\":\"APPROVED\",\"publishMode\":\"OPEN\",\"consultMode\":\"LEAD\",\"partnerCount\":11,\"regions\":[{\"sido\":\"시험도\",\"partn",
+  "controller": "ConsultController.category"
+ },
+ {
+  "path": "/partner/axes",
+  "called": "/api/v1/partner/axes",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"axis\":\"CONSULT\",\"state\":\"APPROVED\",\"source\":\"ADMIN\",\"reason\":\"개발 시드 — 시연용 인증업체\",\"decidedAt\":\"2026-10-11T15:23:08.697Z\",\"appliedAt\":\"2026-10-11T15:23:08.697Z\"}]",
+  "controller": "PartnerAxisController.mine"
+ },
+ {
+  "path": "/admin/partner-axes",
+  "called": "/api/v1/admin/partner-axes",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"3173c7e9-712b-48b8-9cf2-7745565d222f\",\"axis\":\"RE\",\"state\":\"PENDING\",\"source\":\"APPLY\",\"reason\":null,\"appliedAt\":\"2026-10-11T16:00:24.123Z\",\"decidedAt\":null,\"company\":\"축입점상사77046f\",\"bi",
+  "controller": "PartnerAxisAdminController.list"
+ },
+ {
+  "path": "/consult/directory/:code",
+  "called": "/api/v1/consult/directory/CSL_LEGAL",
+  "who": null,
+  "status": 200,
+  "body": "{\"category\":{\"code\":\"CSL_LEGAL\",\"name\":\"법률(변호사·법무사)\"},\"adLabel\":\"광고\",\"note\":\"노출료를 낸 업체입니다. 순서는 날마다 바뀌며 추천 순위가 아닙니다. 상담 ",
+  "controller": "DirectoryController.list"
+ },
+ {
+  "path": "/partner/directory",
+  "called": "/api/v1/partner/directory",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"0c0fe23c-95bb-45ed-90f5-8bf98533b190\",\"categoryCode\":\"CSL_LEGAL\",\"categoryName\":\"법률(변호사·법무사)\",\"displayName\":\"(시험) 가나다 법률사무소\",\"intro\":\"개발 · 시연용 ",
+  "controller": "PartnerDirectoryController.mine"
+ },
+ {
+  "path": "/partner/directory/invoices",
+  "called": "/api/v1/partner/directory/invoices",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "PartnerDirectoryController.invoices"
+ },
+ {
+  "path": "/admin/directory",
+  "called": "/api/v1/admin/directory",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"70334c3b-2c1c-4c94-bd4c-70c1949aac0b\",\"categoryCode\":\"CSL_LEGAL\",\"categoryName\":\"법률(변호사·법무사)\",\"displayName\":\"법무법인 화면e8bc45\",\"contactPhone\":\"02-555-0101\",\"sido\":\"",
+  "controller": "DirectoryAdminController.list"
+ },
+ {
+  "path": "/admin/directory/invoices",
+  "called": "/api/v1/admin/directory/invoices",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"f958b43c-1188-4592-afb3-71645c2817b1\",\"state\":\"REQUESTED\",\"supply\":600000,\"vat\":60000,\"total\":660000,\"invoiceNo\":null,\"issuedOn\":null,\"supplierName\":\"(주)한국바이오헬스케어 소개뱅",
+  "controller": "DirectoryAdminController.invoices"
+ },
+ {
+  "path": "/admin/directory/:id/history",
+  "called": "/api/v1/admin/directory/00000000-0000-4000-a000-000000000000/history",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"periods\":[],\"renewals\":[],\"invoices\":[]}",
+  "controller": "DirectoryAdminController.history"
+ },
+ {
+  "path": "/partner/cash",
+  "called": "/api/v1/partner/cash",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"mode\":\"PREPAID\",\"total\":397450,\"paid\":340000,\"bonus\":57450,\"bonusRate\":0.2,\"grade\":\"BRONZE\",\"canMoney\":true,\"auto\":{\"on\":false,\"below\":null,\"amount\":null,\"engine\":false,\"card\":null,\"failedAt\":null,\"",
+  "controller": "PartnerCenterController.cashSummary"
+ },
+ {
+  "path": "/partner/leads/:id/memos",
+  "called": "/api/v1/partner/leads/00000000-0000-4000-a000-000000000000/memos",
+  "who": "intro",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"받은 리드가 아닙니다.\"}",
+  "controller": "PartnerCenterController.memos"
+ },
+ {
+  "path": "/partner/rejects",
+  "called": "/api/v1/partner/rejects",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"cap\":{\"month\":\"2026-10\",\"received\":8,\"used\":0,\"cap\":2},\"rows\":[],\"note\":\"반려는 접수 72시간 이내 · 한 건에 한 번 · 월 접수량의 15%까지 신청할 수 있습니다. 인정되면",
+  "controller": "PartnerCenterController.rejects"
+ },
+ {
+  "path": "/partner/service-forms",
+  "called": "/api/v1/partner/service-forms",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"forms\":[{\"form\":\"MATRIX\",\"label\":\"매트릭스 견적\",\"steps\":[\"제공 서비스\",\"주요 타겟\",\"자동 견적 구간\",\"상담 확인비용\",\"소개비\",\"랜딩 미리보기\",\"등록 신청\"],\"ca",
+  "controller": "PartnerCenterController.serviceForms"
+ },
+ {
+  "path": "/partner/services/:id",
+  "called": "/api/v1/partner/services/11491474-e1c6-4a28-8ace-897b4acb79f2",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"id\":\"11491474-e1c6-4a28-8ace-897b4acb79f2\",\"title\":\"사무실 인테리어 시공\",\"body\":\"40평 이하 사무실 리모델링 전문\",\"status\":\"APPROVED\",\"rejectReason\":null,\"createdAt\":\"2026-10-11",
+  "controller": "PartnerCenterController.serviceDetail"
+ },
+ {
+  "path": "/partner/performance",
+  "called": "/api/v1/partner/performance",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"rows\":[{\"id\":\"9c72d079-832a-4ea3-bb49-b1119fb89ffe\",\"no\":\"D-9C72D0\",\"content\":\"이사 · 쓰리룸 · 송파\",\"doneOn\":\"2026-09-30T15:00:00.000Z\",\"amount\":1050000,\"consumerState\":\"CONFIRMED\",\"consum",
+  "controller": "PartnerCenterController.performance"
+ },
+ {
+  "path": "/partner/company",
+  "called": "/api/v1/partner/company",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"info\":{\"company\":\"소개사\",\"bizRegNo\":\"1110000001\",\"ceoName\":\"대표\",\"bizType\":null,\"bizItem\":\"화물운송주선 d688e4\",\"addressShort\":\"\",\"hasAddress\":false,\"verifiedAt\":\"2026-10-11T15:23:06.43",
+  "controller": "PartnerCenterController.company"
+ },
+ {
+  "path": "/partner/staff/invitations",
+  "called": "/api/v1/partner/staff/invitations",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "PartnerCenterController.myInvites"
+ },
+ {
+  "path": "/partner/tracks",
+  "called": "/api/v1/partner/tracks",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"repair\":[],\"car\":[],\"catalog\":[{\"id\":\"9d13904c-eff9-4788-8160-f8be6aca92ff\",\"name\":\"정수기 시험 d688e4\",\"saleKind\":\"RENTAL\",\"price\":39900,\"state\":\"LISTED\",\"createdAt\":\"2026-10-11T15:54:42.098Z\"",
+  "controller": "PartnerCenterController.tracks"
+ },
+ {
+  "path": "/me/fulfillment-reports",
+  "called": "/api/v1/me/fulfillment-reports",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "MeFulfillmentController.list"
+ },
+ {
+  "path": "/admin/partner-center/cash",
+  "called": "/api/v1/admin/partner-center/cash",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"partnerId\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"company\":\"소개사\",\"grade\":\"BRONZE\",\"status\":\"ACTIVE\",\"paid\":340000,\"bonus\":57450,\"autoOn\":false,\"autoBelow\":null,\"autoAmount\":null,\"au",
+  "controller": "PartnerCenterAdminController.wallets"
+ },
+ {
+  "path": "/admin/partner-center/cash/:partnerId",
+  "called": "/api/v1/admin/partner-center/cash/00000000-0000-4000-a000-000000000000",
+  "who": "admin",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"파트너가 없습니다.\"}",
+  "controller": "PartnerCenterAdminController.ledger"
+ },
+ {
+  "path": "/admin/partner-center/change-requests",
+  "called": "/api/v1/admin/partner-center/change-requests",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "PartnerCenterAdminController.changes"
+ },
+ {
+  "path": "/admin/partner-center/lead-cash-invoices",
+  "called": "/api/v1/admin/partner-center/lead-cash-invoices",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"91f7d527-eea3-4777-993b-d5918b4e1678\",\"ym\":\"2025-10\",\"total\":110000,\"supply\":100000,\"vat\":10000,\"state\":\"REQUESTED\",\"invoiceNo\":null,\"issuedOn\":null,\"company\":\"전자세금시험법무b41fa0\",",
+  "controller": "PartnerCenterAdminController.invoices"
+ },
+ {
+  "path": "/admin/partner-center/rules",
+  "called": "/api/v1/admin/partner-center/rules",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"bonusRates\":[{\"grade\":\"BRONZE\",\"rate\":0.2,\"note\":\"시안 cash.log 「등급 할인 20%」 — 등급별 차등은 운영 결정\",\"updatedAt\":\"2026-10-11T15:23:06.068Z\"},{\"grade\":\"GOLD\",\"rate\":0.2,\"n",
+  "controller": "PartnerCenterAdminController.rules"
+ },
+ {
+  "path": "/partner/dashboard",
+  "called": "/api/v1/partner/dashboard",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"applied\":true,\"id\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"grade\":\"BRONZE\",\"status\":\"ACTIVE\",\"unpaidCap\":300000,\"company\":\"소개사\",\"bizRegNo\":\"1110000001\",\"rejectReason\":null,\"approvedAt\":\"2026-1",
+  "controller": "PartnerController.dashboard"
+ },
+ {
+  "path": "/partner/services",
+  "called": "/api/v1/partner/services",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"2a9cc1c5-3279-4c48-a21f-dd82d638f243\",\"title\":\"[W5 시험 d688e4] 포장이사\",\"status\":\"APPROVED\",\"rejectReason\":null,\"createdAt\":\"2026-10-11T15:54:41.680Z\",\"updatedAt\":\"2026-10-11T15:54:41.",
+  "controller": "PartnerController.services"
+ },
+ {
+  "path": "/partner/regions",
+  "called": "/api/v1/partner/regions",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"sido\":\"경기\",\"sigungu\":\"전체\"},{\"sido\":\"서울\",\"sigungu\":\"구로구\"},{\"sido\":\"서울\",\"sigungu\":\"금천구\"},{\"sido\":\"서울\",\"sigungu\":\"전체\"},{\"sido\":\"인천\",\"sigungu\":\"전체\"}]",
+  "controller": "PartnerController.regions"
+ },
+ {
+  "path": "/partner/leads",
+  "called": "/api/v1/partner/leads",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"deliveryId\":\"8bce00b7-0f63-4343-b2bf-ac67b13c7d33\",\"leadId\":\"0518a805-d021-4f50-8ffe-f03cf4f07669\",\"summary\":\"[W5 시험 d688e4] 안 연 리드\",\"sido\":\"서울\",\"sigungu\":\"송파구\",\"urgent\":false",
+  "controller": "PartnerController.leads"
+ },
+ {
+  "path": "/partner/leads/:id/contact",
+  "called": "/api/v1/partner/leads/00000000-0000-4000-a000-000000000000/contact",
+  "who": "intro",
+  "status": 409,
+  "body": "{\"code\":\"NO_SUCH_LEAD\",\"message\":\"받은 리드가 아닙니다.\"}",
+  "controller": "PartnerController.leadContact"
+ },
+ {
+  "path": "/partner/fees",
+  "called": "/api/v1/partner/fees",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"summary\":{\"pending\":0,\"billed\":11550,\"voided\":0},\"rows\":[{\"id\":52,\"amount\":3000,\"state\":\"BILLED\",\"incurredAt\":\"2026-10-11T16:22:42.812Z\",\"billedAt\":\"2026-10-11T16:22:42.812Z\",\"voidRule\":null,\"settle",
+  "controller": "PartnerController.fees"
+ },
+ {
+  "path": "/partner/fees/disputes",
+  "called": "/api/v1/partner/fees/disputes",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "PartnerController.myDisputes"
+ },
+ {
+  "path": "/partner/reviews",
+  "called": "/api/v1/partner/reviews",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":\"2a9cc1c5-3279-4c48-a21f-dd82d638f243\",\"title\":\"[W5 시험 d688e4] 포장이사\",\"status\":\"APPROVED\",\"rejectReason\":null,\"createdAt\":\"2026-10-11T15:54:41.680Z\",\"categoryName\":\"이사짐\"},{\"id\"",
+  "controller": "PartnerController.myReviews"
+ },
+ {
+  "path": "/partner/settlement",
+  "called": "/api/v1/partner/settlement",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"unpaid\":0,\"billed\":11550,\"voided\":0,\"unpaidCount\":0,\"unpaidCap\":300000,\"months\":[{\"month\":\"2026-10\",\"leads\":4,\"amount\":11550}],\"payouts\":[{\"id\":\"fdb9c6aa-d5af-4735-908d-af3ffff29cdc\",\"track\":\"AFFILI",
+  "controller": "PartnerController.mySettlement"
+ },
+ {
+  "path": "/partner/stats",
+  "called": "/api/v1/partner/stats",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"grade\":\"BRONZE\",\"received\":8,\"viewed\":4,\"billed\":4,\"rates\":[{\"grade\":\"S\",\"rate\":1,\"label\":\"S\",\"alimBand\":\"CONFIRMED\",\"note\":\"상담 의사 확인 · 정보 완결\"},{\"grade\":\"A\",\"rate\":0.85,\"label\":",
+  "controller": "PartnerController.myStats"
+ },
+ {
+  "path": "/partner/trust",
+  "called": "/api/v1/partner/trust",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"total\":8,\"viewed\":4,\"avgViewMin\":7,\"viewRate\":50,\"badges\":[{\"code\":\"DEALS_500\",\"name\":\"누적 성사 500건 이상\",\"state\":\"미달\",\"detail\":\"지금 1건(소비자 확인 기준)\"},{\"code\":\"RATING_",
+  "controller": "PartnerController.myTrust"
+ },
+ {
+  "path": "/partner/pricing",
+  "called": "/api/v1/partner/pricing",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"categoryId\":\"3d538c69-7875-451a-bda3-7c13c45d25a9\",\"categoryName\":\"IT·소프트웨어\",\"gwanCode\":\"MAL\",\"formType\":\"CONSULT\",\"rows\":0,\"cols\":0,\"baseFee\":3000,\"baseIsDefault\":false,\"topFee\":null,\"m",
+  "controller": "PartnerController.myPricing"
+ },
+ {
+  "path": "/partner/pricing/rewards",
+  "called": "/api/v1/partner/pricing/rewards",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"2a9cc1c5-3279-4c48-a21f-dd82d638f243\",\"title\":\"[W5 시험 d688e4] 포장이사\",\"categoryName\":\"이사짐\",\"status\":\"APPROVED\",\"topFee\":25000,\"topFeeSet\":true,\"referralRate\":0.08,\"reb",
+  "controller": "PartnerController.myRewards"
+ },
+ {
+  "path": "/partner/notices",
+  "called": "/api/v1/partner/notices",
+  "who": "intro",
+  "status": 200,
+  "body": "[{\"id\":205,\"title\":\"새 상담 신청이 왔습니다\",\"body\":\"청소 · 서울 금천구 — 24시간 안에 열지 않으면 다른 업체로 넘어갑니다. 연락처를 열 때 이용료가 발",
+  "controller": "PartnerController.myNotices"
+ },
+ {
+  "path": "/partner/broker",
+  "called": "/api/v1/partner/broker",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"applied\":false,\"assumed\":true,\"lookupConfigured\":false}",
+  "controller": "PartnerController.myBroker"
+ },
+ {
+  "path": "/admin/partners",
+  "called": "/api/v1/admin/partners",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"1dab4a66-eec7-4284-b802-1fbf70b37299\",\"company\":\"화면법무e8bc45\",\"bizRegNo\":\"9137693029\",\"grade\":\"BRONZE\",\"status\":\"ACTIVE\",\"services\":0,\"unpaid\":0,\"unpaidCap\":300000,\"appliedAt\":\"2026-10-",
+  "controller": "PartnerAdminController.list"
+ },
+ {
+  "path": "/admin/partners/services/pending",
+  "called": "/api/v1/admin/partners/services/pending",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"bf420b5c-0052-43d4-b0ad-56fe138e43df\",\"title\":\"E2E 인테리어 시공 fe0931\",\"body\":\"사무실·상가 인테리어 시공. 40평 이하 전문, 하자보수 1년.\",\"status\":\"IN_REVIEW\",\"sub",
+  "controller": "PartnerAdminController.pendingServices"
+ },
+ {
+  "path": "/admin/partners/fees/void-requests",
+  "called": "/api/v1/admin/partners/fees/void-requests",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":3,\"feeId\":6,\"state\":\"REQUESTED\",\"reasonCode\":\"UNREACHABLE\",\"reason\":\"이웃 파트너의 반려 신청 — 3회 통화 시도 결번\",\"evidence\":null,\"requestedAt\":\"2026-10-11T15:49:56",
+  "controller": "PartnerAdminController.voidRequests"
+ },
+ {
+  "path": "/admin/partners/fees",
+  "called": "/api/v1/admin/partners/fees",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"partnerId\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"company\":\"소개사\",\"grade\":\"BRONZE\",\"unpaid\":0,\"unpaidCap\":300000,\"voided\":0},{\"partnerId\":\"1ffd0ae4-22cd-4f59-9fdd-cae44658ba60\",\"company\":\"K",
+  "controller": "PartnerAdminController.fees"
+ },
+ {
+  "path": "/admin/partners/cards",
+  "called": "/api/v1/admin/partners/cards",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"leads\":8,\"cash\":397450,\"category\":\"이사짐\",\"form\":\"MATRIX\",\"formLabel\":\"매트릭스 견적\",\"qualPending\":false,\"qualName\":null},{\"id\":\"0cb15f5f-c6b9",
+  "controller": "PartnerAdminController.cards"
+ },
+ {
+  "path": "/admin/partners/:id/docs",
+  "called": "/api/v1/admin/partners/5caeb567-d3aa-4228-8468-70c3ba36ecca/docs",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"partnerId\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"status\":\"ACTIVE\",\"terms\":[],\"nts\":{\"status\":null,\"checkedAt\":null,\"env\":null,\"verifiedAt\":\"2026-10-11T15:23:06.438Z\"},\"qualifications\":[{\"code\":\"AU",
+  "controller": "PartnerAdminController.docs"
+ },
+ {
+  "path": "/admin/partners/:id",
+  "called": "/api/v1/admin/partners/5caeb567-d3aa-4228-8468-70c3ba36ecca",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"id\":\"5caeb567-d3aa-4228-8468-70c3ba36ecca\",\"company\":\"소개사\",\"bizRegNo\":\"1110000001\",\"ceoName\":\"대표\",\"ntsStatus\":null,\"bizVerified\":true,\"grade\":\"BRONZE\",\"status\":\"ACTIVE\",\"unpaidCap\":300000,",
+  "controller": "PartnerAdminController.detail"
+ },
+ {
+  "path": "/admin/qualifications/rules",
+  "called": "/api/v1/admin/qualifications/rules",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"categoryCode\":\"AUTO\",\"categoryName\":\"자동차(정비·렌트)\",\"requiredDoc\":\"자동차관리사업(정비업) 등록증 또는 자동차대여사업 등록증\",\"legalBasis\":\"자동차관리법 ·",
+  "controller": "QualificationController.rules"
+ },
+ {
+  "path": "/admin/qualifications/category-master",
+  "called": "/api/v1/admin/qualifications/category-master",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"consult\":[{\"code\":\"CSL_CONSTRUCTION\",\"name\":\"건설·시공\",\"status\":\"APPROVED\",\"consultMode\":\"LEAD\",\"publishMode\":\"GATED\",\"state\":\"OPEN\",\"legalBasis\":\"건설산업기본법 — 건설업 등록\"},",
+  "controller": "QualificationController.categoryMaster"
+ },
+ {
+  "path": "/admin/qualifications",
+  "called": "/api/v1/admin/qualifications",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "QualificationController.pending"
+ },
+ {
+  "path": "/admin/qualifications/medical",
+  "called": "/api/v1/admin/qualifications/medical",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"creativeCode\":\"AD-107\",\"advertiser\":\"하나로의원\",\"category\":\"의료\",\"reviewNo\":null,\"confirmedAt\":null},{\"creativeCode\":\"AD-108\",\"advertiser\":\"신용머니대부\",\"category\":\"대부\",\"reviewN",
+  "controller": "QualificationController.medical"
+ },
+ {
+  "path": "/admin/qualifications/properties",
+  "called": "/api/v1/admin/qualifications/properties",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "QualificationController.properties"
+ },
+ {
+  "path": "/admin/brokers",
+  "called": "/api/v1/admin/brokers",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"counts\":{\"pending\":0,\"verified\":11,\"rejected\":8,\"expired\":0},\"assumed\":true,\"lookupConfigured\":false,\"total\":0,\"page\":1,\"size\":50,\"pages\":1,\"order\":\"old\",\"q\":null}",
+  "controller": "BrokerAdminController.list"
+ },
+ {
+  "path": "/admin/brokers/:id/evidence",
+  "called": "/api/v1/admin/brokers/00000000-0000-4000-a000-000000000000/evidence",
+  "who": "admin",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"중개사 인증 신청이 없습니다.\"}",
+  "controller": "BrokerAdminController.evidence"
+ },
+ {
+  "path": "/admin/brokers/:id",
+  "called": "/api/v1/admin/brokers/00000000-0000-4000-a000-000000000000",
+  "who": "admin",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"중개사 인증 신청이 없습니다.\"}",
+  "controller": "BrokerAdminController.get"
+ },
+ {
+  "path": "/health",
+  "called": "/api/v1/health",
+  "who": null,
+  "status": 200,
+  "body": "{\"status\":\"ok\",\"db\":true,\"time\":\"2026-10-11T16:42:32.075Z\"}",
+  "controller": "HealthController.check"
+ },
+ {
+  "path": "/search",
+  "called": "/api/v1/search",
+  "who": null,
+  "status": 422,
+  "body": "{\"code\":\"QUERY_TOO_SHORT\",\"message\":\"두 글자 이상 입력해 주세요.\"}",
+  "controller": "PublicController.search"
+ },
+ {
+  "path": "/gwans/:code",
+  "called": "/api/v1/gwans/MNY",
+  "who": null,
+  "status": 200,
+  "body": "{\"code\":\"MNY\",\"name\":\"소개장터\",\"description\":\"물품·용역·납품 — 무엇이든 소개하고 소개받는 곳\",\"isActive\":true,\"listingCount\":14}",
+  "controller": "PublicController.gwan"
+ },
+ {
+  "path": "/site-settings/public",
+  "called": "/api/v1/site-settings/public",
+  "who": null,
+  "status": 200,
+  "body": "{\"exposure.priority_label\":\"광고\",\"exposure.priority_notice\":\"유료 광고 상품이며, 노출 순위는 광고비 지급에 따른 것입니다.\",\"legal.refund_terms_code\":\"REFUND\",\"legal.refund_",
+  "controller": "PublicController.settings"
+ },
+ {
+  "path": "/faq",
+  "called": "/api/v1/faq",
+  "who": null,
+  "status": 200,
+  "body": "[{\"category\":\"이용\",\"question\":\"소개비는 언제 받나요?\",\"answer\":\"계약서에 양측이 서명하면 성사가 확정되고 정산이 자동으로 신청됩니다. 승인 후 매주 수요",
+  "controller": "PublicController.faq"
+ },
+ {
+  "path": "/ui-messages",
+  "called": "/api/v1/ui-messages",
+  "who": null,
+  "status": 200,
+  "body": "{\"AD_NOTICE\":\"광고 영역은 유료 노출입니다.\",\"BUSINESS_ONLY\":\"거래 만들기 · 소개비 제시 · 계약서 발급은 사업자 인증 뒤에 됩니다.\",\"CTA_ATTRIBUTION\":\"대화가 ",
+  "controller": "PublicController.uiMessages"
+ },
+ {
+  "path": "/gwans/:code/form-copy",
+  "called": "/api/v1/gwans/MNY/form-copy",
+  "who": null,
+  "status": 200,
+  "body": "[{\"role\":\"REQUEST\",\"subject\":\"상품·서비스\",\"titleHint\":\"무엇을 찾으시나요?\",\"bodyHint\":\"필요한 사양과 조건을 적어 주세요\",\"notice\":\"필요한 상품·서비스를 올리면",
+  "controller": "PublicController.formCopy"
+ },
+ {
+  "path": "/notices",
+  "called": "/api/v1/notices",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "PublicController.notices"
+ },
+ {
+  "path": "/me/listings/:id/ownership",
+  "called": "/api/v1/me/listings/0e210d15-1f46-486c-99c9-0045af65d645/ownership",
+  "who": "intro",
+  "status": 200,
+  "body": "{\"ok\":true,\"state\":null,\"note\":\"아직 제출하지 않으셨습니다. 등기사항증명서를 올리시면 확인 후 공개됩니다.\"}",
+  "controller": "RealtyController.mine"
+ },
+ {
+  "path": "/admin/ownership-queue",
+  "called": "/api/v1/admin/ownership-queue",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[],\"note\":null}",
+  "controller": "RealtyController.queue"
+ },
+ {
+  "path": "/requests",
+  "called": "/api/v1/requests",
+  "who": null,
+  "status": 200,
+  "body": "[{\"id\":\"d590ef51-9272-44a3-a51b-8a659482442c\",\"gwanCode\":\"MAL\",\"title\":\"강남·서초 1층 상가 30평 이상 찾습니다\",\"categoryName\":\"상가 · 건물\",\"summary\":\"카페 창업 예정입니다",
+  "controller": "RequestController.list"
+ },
+ {
+  "path": "/requests/:id",
+  "called": "/api/v1/requests/d590ef51-9272-44a3-a51b-8a659482442c",
+  "who": null,
+  "status": 200,
+  "body": "{\"id\":\"d590ef51-9272-44a3-a51b-8a659482442c\",\"gwanCode\":\"MAL\",\"title\":\"강남·서초 1층 상가 30평 이상 찾습니다\",\"body\":\"카페 창업 예정입니다. 권리금 1억 이하, 월세 400만",
+  "controller": "RequestController.detail"
+ },
+ {
+  "path": "/requests/:id/images/:n",
+  "called": "/api/v1/requests/d590ef51-9272-44a3-a51b-8a659482442c/images/00000000-0000-4000-a000-000000000000",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"이미지가 없습니다.\"}",
+  "controller": "RequestController.image"
+ },
+ {
+  "path": "/requests/:id/proposals",
+  "called": "/api/v1/requests/d590ef51-9272-44a3-a51b-8a659482442c/proposals",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "RequestController.proposals"
+ },
+ {
+  "path": "/report-reasons",
+  "called": "/api/v1/report-reasons",
+  "who": null,
+  "status": 200,
+  "body": "[{\"code\":\"FAKE\",\"label\":\"허위 · 과장된 내용\",\"severity\":\"HIGH\",\"gwanCode\":null},{\"code\":\"CONTACT\",\"label\":\"연락처 · 외부 유도\",\"severity\":\"HIGH\",\"gwanCode\":null},{\"code\":\"RESTRICTED\",\"",
+  "controller": "AbuseController.reasons"
+ },
+ {
+  "path": "/me/reports",
+  "called": "/api/v1/me/reports",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "AbuseController.mine"
+ },
+ {
+  "path": "/admin/report-queue",
+  "called": "/api/v1/admin/report-queue",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "AbuseController.queue"
+ },
+ {
+  "path": "/admin/reviews",
+  "called": "/api/v1/admin/reviews",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"items\":[{\"id\":\"0f61c2dc-b07d-418a-9433-4291cf9cd8c0\",\"targetType\":\"REQUEST\",\"targetId\":\"550fb9c4-67e6-46f2-95fd-c3d7d78095c7\",\"gwanCode\":\"MNY\",\"submittedBy\":\"44444444-4444-4444-4444-444444444444\",\"s",
+  "controller": "ReviewController.queue"
+ },
+ {
+  "path": "/admin/reviews/counts",
+  "called": "/api/v1/admin/reviews/counts",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"pending\":6,\"slaSoon\":0,\"slaOver\":0,\"rejected\":0}",
+  "controller": "ReviewController.counts"
+ },
+ {
+  "path": "/admin/reviews/throughput",
+  "called": "/api/v1/admin/reviews/throughput",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"day\":\"2026-10-10T15:00:00.000Z\",\"submitted\":88,\"decided\":82,\"pending\":6,\"sla_breached\":0,\"avg_hours\":0}]",
+  "controller": "ReviewController.throughput"
+ },
+ {
+  "path": "/admin/reviews/:id",
+  "called": "/api/v1/admin/reviews/00000000-0000-4000-a000-000000000000",
+  "who": "admin",
+  "status": 404,
+  "body": "{\"code\":\"NOT_FOUND\",\"message\":\"검수 건이 없습니다.\"}",
+  "controller": "ReviewController.get"
+ },
+ {
+  "path": "/admin/search/terms",
+  "called": "/api/v1/admin/search/terms",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"synonyms\":[{\"id\":\"186c1010-66cd-428c-aa4d-d766388354a8\",\"term\":\"e2efe0931\",\"canonical\":\"상가\",\"kind\":\"CATEGORY\",\"weight\":5,\"createdAt\":\"2026-10-11T15:50:32.509Z\"},{\"id\":\"05dc97d0-b220-4176-8733-28",
+  "controller": "SearchAdminController.terms"
+ },
+ {
+  "path": "/admin/segments/candidates",
+  "called": "/api/v1/admin/segments/candidates",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"enabled\":true,\"minClicks\":5,\"ratio\":3,\"items\":[],\"noConsent\":0,\"thrash\":0}",
+  "controller": "SearchAdminController.segCandidates"
+ },
+ {
+  "path": "/search/suggest",
+  "called": "/api/v1/search/suggest",
+  "who": null,
+  "status": 200,
+  "body": "{\"keywords\":[\"주방\",\"판교\",\"소개\",\"인테리어\"],\"categories\":[\"IT·소프트웨어\",\"가전 · 디지털\",\"공장 · 창고\",\"광고·마케팅\",\"기계 · 설비\",\"기업 신규 출점\",\"기",
+  "controller": "SearchController.suggest"
+ },
+ {
+  "path": "/admin/search/parser",
+  "called": "/api/v1/admin/search/parser",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"enabled\":false,\"calls\":0,\"fallbacks\":0,\"fallback_pct\":null,\"avg_ms\":null,\"note\":\"최근 24시간 호출이 없습니다.\"}",
+  "controller": "SearchController.parser"
+ },
+ {
+  "path": "/admin/payouts",
+  "called": "/api/v1/admin/payouts",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"queue\":[],\"drafts\":[],\"paid\":[{\"kind\":\"PARTNER\",\"id\":\"fdb9c6aa-d5af-4735-908d-af3ffff29cdc\",\"payee\":\"소개사\",\"amount\":48350,\"paidAt\":\"2026-10-11T15:50:49.916Z\",\"ref\":\"KB-UI-172166\",\"paidBy\":\"시",
+  "controller": "PayoutController.desk"
+ },
+ {
+  "path": "/admin/settlement-ledger",
+  "called": "/api/v1/admin/settlement-ledger",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"c8b1564a-ac12-4aa2-96a1-755758ad780b\",\"deal_id\":\"39cf4c9b-dab4-41ce-90ea-a626a8586c9f\",\"payee_account_id\":\"531f7c4d-9329-4caf-b188-80705167807b\",\"amount\":300000,\"status\":\"REQUESTED\",\"paid_mark",
+  "controller": "SettlementController.batches"
+ },
+ {
+  "path": "/admin/settlement-ledger/reconcile",
+  "called": "/api/v1/admin/settlement-ledger/reconcile",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"ok\":true,\"stage1\":{\"settlementCount\":5,\"total\":1070000},\"stage2\":{\"dealCount\":5,\"total\":1070000},\"stage3\":{\"violations\":[{\"inv\":\"INV-9\",\"count\":0},{\"inv\":\"INV-11\",\"count\":0}]},\"mismatches\":[]}",
+  "controller": "SettlementController.reconcile"
+ },
+ {
+  "path": "/events",
+  "called": "/api/v1/events",
+  "who": null,
+  "status": 200,
+  "body": "[]",
+  "controller": "EventController.live"
+ },
+ {
+  "path": "/events/:code",
+  "called": "/api/v1/events/MNY",
+  "who": null,
+  "status": 409,
+  "body": "{\"code\":\"EVENT_NOT_LIVE\",\"message\":\"진행 중인 이벤트가 아닙니다.\"}",
+  "controller": "EventController.detail"
+ },
+ {
+  "path": "/me/events",
+  "called": "/api/v1/me/events",
+  "who": "intro",
+  "status": 200,
+  "body": "[]",
+  "controller": "EventController.mine"
+ },
+ {
+  "path": "/admin/events",
+  "called": "/api/v1/admin/events",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "EventController.all"
+ },
+ {
+  "path": "/admin/events/ungranted",
+  "called": "/api/v1/admin/events/ungranted",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "EventController.ungranted"
+ },
+ {
+  "path": "/admin/reports/daily",
+  "called": "/api/v1/admin/reports/daily",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"day\":\"2026-10-10T15:00:00.000Z\",\"signups\":261,\"bizVerified\":85,\"requests\":3,\"listings\":18,\"deals\":9,\"revenue\":4608000},{\"day\":\"2026-10-09T15:00:00.000Z\",\"signups\":0,\"bizVerified\":0,\"requests\":0,\"li",
+  "controller": "ReportController.daily"
+ },
+ {
+  "path": "/admin/reports/signals",
+  "called": "/api/v1/admin/reports/signals",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"signal\":\"검수 대기 24시간 초과\",\"value\":0,\"meaning\":\"SLA 위반 — 등록자가 기다립니다\"},{\"signal\":\"응답 없는 요청 (7일)\",\"value\":4,\"meaning\":\"소개자가 없거나 매칭",
+  "controller": "ReportController.signals"
+ },
+ {
+  "path": "/admin/reports/revenue",
+  "called": "/api/v1/admin/reports/revenue",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"thisMonth\":4706000,\"lastMonth\":0,\"paidCount\":94,\"plans\":[{\"code\":\"BASIC\",\"name\":\"베이직\",\"monthlyFee\":0,\"active\":16},{\"code\":\"STANDARD\",\"name\":\"스탠다드\",\"monthlyFee\":49000,\"active\":49},{\"cod",
+  "controller": "ReportController.revenue"
+ },
+ {
+  "path": "/admin/reports/roles",
+  "called": "/api/v1/admin/reports/roles",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"accountId\":\"aaaa0000-0000-4000-a000-0000000000ad\",\"email\":\"admin@x.com\",\"name\":\"운영자\",\"roles\":\"ADMIN,SUPER\",\"lastChange\":\"2026-10-11T15:23:06.433Z\"},{\"accountId\":\"1a5d4781-f70a-464a-82d6-b9a1e",
+  "controller": "ReportController.holders"
+ },
+ {
+  "path": "/admin/reports/roles/changes",
+  "called": "/api/v1/admin/reports/roles/changes",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":4,\"email\":\"ops@t.local\",\"role\":\"ADMIN\",\"action\":\"GRANT\",\"reason\":null,\"changedBy\":null,\"changedAt\":\"2026-10-11T15:23:10.416Z\"},{\"id\":3,\"email\":\"reviewer@t.local\",\"role\":\"REVIEWER\",\"action\":\"GRA",
+  "controller": "ReportController.changes"
+ },
+ {
+  "path": "/admin/reports/pending",
+  "called": "/api/v1/admin/reports/pending",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"C3-LEADFEE\",\"title\":\"리드 단가 · 손익분기\",\"dependsOn\":\"3주 실측 (열람률 · 결제율)\",\"risk\":\"MEDIUM\",\"note\":\"도입가 3,000원으로 시작합니다(손익분기 2,209원 ",
+  "controller": "ReportController.pending"
+ },
+ {
+  "path": "/admin/reports/not-agreed",
+  "called": "/api/v1/admin/reports/not-agreed",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"accounts\":189,\"items\":945,\"byTerm\":[{\"code\":\"HLT_SALE\",\"title\":\"건강상품 판매 약관 (직판)\",\"accounts\":189},{\"code\":\"PRIVACY\",\"title\":\"개인정보처리방침\",\"accounts\":189},{\"code\":\"REF",
+  "controller": "ReportController.notAgreed"
+ },
+ {
+  "path": "/admin/gwans",
+  "called": "/api/v1/admin/gwans",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"EARN\",\"name\":\"소개하고 벌기\",\"description\":\"내가 아는 사람과 기업을 필요한 곳에 연결하고 소개비를 받습니다\",\"isActive\":true,\"openedAt\":null,\"sortOrder\":0,\"pu",
+  "controller": "SiteController.gwans"
+ },
+ {
+  "path": "/admin/gwans/manage",
+  "called": "/api/v1/admin/gwans/manage",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"EARN\",\"name\":\"소개하고 벌기\",\"isActive\":true,\"isHub\":true,\"sortOrder\":0,\"categories\":0,\"listings\":0,\"isLanding\":false},{\"code\":\"MNY\",\"name\":\"소개장터\",\"isActive\":true,\"isHub\":false",
+  "controller": "SiteController.gwanAdmin"
+ },
+ {
+  "path": "/admin/gwans/:code",
+  "called": "/api/v1/admin/gwans/MNY",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"code\":\"MNY\",\"name\":\"소개장터\",\"description\":\"물품·용역·납품 — 무엇이든 소개하고 소개받는 곳\",\"isActive\":true,\"openedAt\":null,\"sortOrder\":2,\"publishedListings\":14,\"categori",
+  "controller": "SiteController.gwan"
+ },
+ {
+  "path": "/admin/hub",
+  "called": "/api/v1/admin/hub",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"gwans\":[{\"code\":\"EARN\",\"name\":\"소개하고 벌기\",\"description\":\"내가 아는 사람과 기업을 필요한 곳에 연결하고 소개비를 받습니다\",\"isActive\":true,\"openedAt\":null,\"sortOrd",
+  "controller": "SiteController.hub"
+ },
+ {
+  "path": "/admin/scope",
+  "called": "/api/v1/admin/scope",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"key\":\"ads.daily_cap_per_user\",\"description\":\"1인당 하루 광고 노출 상한. 넘으면 그날은 더 보이지 않습니다. 커머스 목록이 12회 내외이고, 그보다 많으면 이용",
+  "controller": "SiteController.scope"
+ },
+ {
+  "path": "/admin/layout",
+  "called": "/api/v1/admin/layout",
+  "who": "admin",
+  "status": 200,
+  "body": "{\"sections\":[\"gwan_nav\",\"latest\",\"notice\"],\"gwanOrder\":[\"EARN\",\"MNY\",\"MAL\",\"BIZ\",\"HLT\"]}",
+  "controller": "SiteController.layout"
+ },
+ {
+  "path": "/admin/ads",
+  "called": "/api/v1/admin/ads",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"9bf7fb47-a82c-496c-8002-c41f83c66830\",\"slotCode\":\"ENTRY\",\"advertiserName\":null,\"imageKey\":null,\"linkUrl\":null,\"startsAt\":null,\"endsAt\":null,\"status\":\"ACTIVE\",\"impressions\":0,\"clicks\":0},{\"id\":",
+  "controller": "SiteController.ads"
+ },
+ {
+  "path": "/admin/notices",
+  "called": "/api/v1/admin/notices",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "SiteController.notices"
+ },
+ {
+  "path": "/admin/integrations",
+  "called": "/api/v1/admin/integrations",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"NTS\",\"name\":\"국세청 사업자 진위\",\"purpose\":\"사업자등록 상태 조회\",\"provider\":null,\"status\":\"TESTING\",\"statusLabel\":\"연동 시험\",\"requiresIp\":true,\"egressIp\":null,\"ipReque",
+  "controller": "SiteController.integrations"
+ },
+ {
+  "path": "/admin/banned-words",
+  "called": "/api/v1/admin/banned-words",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"id\":\"e1e9f4ec-bdad-4699-855b-4df8ce0e3b96\",\"word\":\"100% 성공\",\"matchType\":\"CONTAINS\",\"severity\":\"BLOCK\",\"gwanCode\":null,\"isActive\":true},{\"id\":\"cd62f531-89bc-44db-a5b7-3e99d8370b8f\",\"word\":\"고",
+  "controller": "SiteController.bannedWords"
+ },
+ {
+  "path": "/admin/main/sections",
+  "called": "/api/v1/admin/main/sections",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"code\":\"EARN\",\"name\":\"소개하고 벌기\",\"sortOrder\":1,\"isActive\":true,\"isLocked\":true,\"description\":\"메인 최상단 · 끌 수 없습니다\",\"updatedAt\":\"2026-09-10T07:48:18.156Z\"},{\"code\":\"MAT",
+  "controller": "SiteController.mainSections"
+ },
+ {
+  "path": "/admin/main/copy",
+  "called": "/api/v1/admin/main/copy",
+  "who": "admin",
+  "status": 200,
+  "body": "[{\"slot\":\"HERO_CTA\",\"text\":\"소개자로 시작하기\",\"note\":\"행동 버튼\",\"updatedAt\":\"2026-09-10T07:48:18.156Z\"},{\"slot\":\"HERO_SUB\",\"text\":\"내가 알고 있는 좋은 사람과 기업을 필요",
+  "controller": "SiteController.mainCopy"
+ },
+ {
+  "path": "/admin/main/notices",
+  "called": "/api/v1/admin/main/notices",
+  "who": "admin",
+  "status": 200,
+  "body": "[]",
+  "controller": "SiteController.mainNotices"
+ }
+]

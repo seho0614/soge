@@ -1,0 +1,84 @@
+"""사용자 웹 전 페이지 × 역할 순회 + 페이지 간 링크 상호 확인."""
+import json, re, subprocess, sys, time
+from urllib.parse import urljoin, urlparse
+from playwright.sync_api import sync_playwright
+BASE='http://localhost:5174'
+DB='postgresql://sgb:sgb@localhost:5432/sgb'
+def q(sql):
+    return subprocess.run(['psql',DB,'-tAc',sql],capture_output=True,text=True).stdout.strip().split('\n')[0]
+P={
+ 'listing': q("select id from listings where status='PUBLISHED' and gwan_code='MNY' order by created_at desc limit 1"),
+ 'request': q("select id from requests where status='PUBLISHED' limit 1"),
+ 'deal': q("select id from deals limit 1"),
+ 'contract': q("select id from deal_contracts limit 1") or q("select id from deals limit 1"),
+ 'conv': q("select id from conversations limit 1") or '00000000-0000-4000-a000-000000000000',
+ 'svc': q("select id from partner_services limit 1"),
+ 'post': q("select id from posts order by (state='APPROVED') desc, created_at desc limit 1") or '00000000-0000-4000-a000-000000000000',
+ 'hprod': q("select code from hlt_products where status='ON_SALE' order by code limit 1"),
+ 'horder': q("select o.order_no from hlt_orders o join accounts a on a.id=o.account_id where a.email='buyer@x.com' order by o.created_at desc limit 1") or 'H00000000000',
+ 'mylisting': q("select l.id from listings l join accounts a on a.id=l.owner_account_id where a.email='intro@x.com' order by l.created_at desc limit 1") or q("select id from listings limit 1"),
+}
+ROUTES=json.load(open('site_routes.json'))
+def fill(r):
+    m={'/{gwan}/{id}':f"/money/{P['listing']}", '/{gwan}':'/money','/listings/{id}/edit':f"/listings/{P['mylisting']}/edit",
+       '/request/{id}':f"/request/{P['request']}", '/deal/{id}/review':f"/deal/{P['deal']}/review",'/deal/{id}/contract':f"/deal/{P['deal']}/contract",
+       '/deal/{id}/payment':f"/deal/{P['deal']}/payment",'/deal/{id}/confirm':f"/deal/{P['deal']}/confirm",'/chat/{id}':f"/chat/{P['listing']}",   # /chat/[id] 는 매물 id 를 받습니다
+       '/my/contracts/{id}':f"/my/contracts/{P['contract']}", '/partner/services/{id}':f"/partner/services/{P['svc']}",
+       '/terms/{code}':'/terms/SERVICE',
+       '/community/{id}':f"/community/{P['post']}", '/health/c/{code}':'/health/c/ALL', '/health/i/{code}':'/health/i/VIT-D',
+       '/health/p/{code}':f"/health/p/{P['hprod']}", '/health/w/{code}':'/health/w/IMMUNE',
+       '/my/health/orders/{no}':f"/my/health/orders/{P['horder']}", '/my/health/orders/{no}/ship':f"/my/health/orders/{P['horder']}/ship",'/i/{token}':'/i/invalid-token-check','/report/{targetType}/{targetId}':f"/report/LISTING/{P['listing']}"}
+    return m.get(r,r)
+ROLES={'guest':None,'person':'person@x.com','buyer':'buyer@x.com','intro':'intro@x.com','admin':'admin@x.com'}
+out={'params':P,'pages':[], 'links':{}}
+BAD_TXT=['Application error','This page could not be found','Internal Server Error','Unhandled Runtime Error','처리 중 오류가 발생했습니다']
+with sync_playwright() as pw:
+    br=pw.chromium.launch()
+    for role,email in ROLES.items():
+        ctx=br.new_context(); pg=ctx.new_page()
+        if email:
+            pg.goto(BASE+'/login'); __import__('consent_ok').agree(email, 'sgb-dev-1234'); pg.fill('input[name=email]',email); pg.fill('input[name=password]','sgb-dev-1234')
+            pg.click('form.auth button'); pg.wait_for_timeout(2500)
+            ok=any(c['name'] for c in ctx.cookies() if 'at' in c['name'].lower() or 'token' in c['name'].lower())
+            print(role,'login cookies',[c['name'] for c in ctx.cookies()],file=sys.stderr)
+        for r in ROUTES:
+            url=fill(r)
+            errs=[]; apis=[]; cons=[]
+            onerr=lambda e,errs=errs:errs.append(str(e)[:160]); pg.on('pageerror',onerr)
+            def onresp(res,apis=apis):
+                u=res.url
+                if '/api/' in u and res.status>=400: apis.append(f"{res.status} {res.request.method} {urlparse(u).path}")
+            pg.on('response',onresp)
+            oncon=lambda m,cons=cons: cons.append(m.text[:160]) if m.type=='error' else None; pg.on('console',oncon)
+            t0=time.time()
+            try:
+                resp=pg.goto(BASE+url,wait_until='networkidle',timeout=30000); st=resp.status if resp else 0
+            except Exception as ex:
+                st=-1; errs.append('goto:'+str(ex)[:120])
+            dt=round(time.time()-t0,2)
+            final=urlparse(pg.url).path
+            body=pg.evaluate("document.body?document.body.innerText:''")
+            h1=pg.evaluate("(()=>{const h=document.querySelector('h1');return h?h.innerText.slice(0,50):''})()")
+            links=pg.evaluate("""[...document.querySelectorAll('a[href]')].map(a=>a.getAttribute('href')).filter(h=>h&&h.startsWith('/')&&!h.startsWith('//'))""")
+            buttons=pg.evaluate("[...document.querySelectorAll('button,input[type=submit]')].filter(b=>b.offsetParent!==null).length")
+            forms=pg.evaluate("document.querySelectorAll('form').length")
+            bad=[t for t in BAD_TXT if t in body]
+            pg.remove_listener('response',onresp)
+            rec={'role':role,'route':r,'url':url,'status':st,'final':final,'h1':h1,'len':len(body),'ms':dt,
+                 'errors':errs,'console':cons[:5],'api_fail':apis,'bad_text':bad,'links':sorted(set(l.split('#')[0] for l in links)),'buttons':buttons,'forms':forms}
+            out['pages'].append(rec)
+            flag='!!' if (st>=400 or errs or bad or apis) else '  '
+            print(flag,role,url,st,'→'+final if final!=urlparse(url).path else '',h1[:30],apis[:3],bad,errs[:1],file=sys.stderr)
+            pg.remove_listener('pageerror',onerr); pg.remove_listener('console',oncon)
+        # 링크 상호 확인 — 이 역할로 본 모든 링크를 실제로 요청
+        allLinks=sorted(set(l for p in out['pages'] if p['role']==role for l in p['links']))
+        res={}
+        for l in allLinks:
+            try:
+                r2=ctx.request.get(BASE+l,max_redirects=0,timeout=30000)
+                res[l]=r2.status
+            except Exception as ex: res[l]=str(ex)[:60]
+        out['links'][role]=res
+        ctx.close()
+    br.close()
+json.dump(out,open('site_crawl.json','w'),ensure_ascii=False,indent=1)

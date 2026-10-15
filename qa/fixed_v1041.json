@@ -1,0 +1,1 @@
+[{"no": "S-4", "kind": "검색", "what": "소개장터 「많이 찾는 키워드」 칩", "symptom": "통합 검색 결과의 「소개장터」 탭(&gwanCode=MNY)으로 감 — 시안은 「전체」 탭", "done": "시안대로 /search?q=그 말(전체 탭) · 대표 결정 「시안대로」", "where": "site/src/components/money/MoneyView.tsx", "rerun": "test_v1041"}]

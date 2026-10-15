@@ -1,0 +1,11 @@
+lint rc=0
+native rc=0
+realcheck rc=1
+check rc=1
+up rc=0
+status rc=0
+more rc=0
+down rc=0
+PS-CHAIN-DONE
+check (다시 · G-223 픽스처가 위탁의 알림 표시를 옮기도록 고친 뒤) rc=0
+realcheck (다시 · G-223 픽스처 고친 뒤) rc=1 — 진짜 이미지 확인 실패 2건(대체 이미지 표시) · 통과 17

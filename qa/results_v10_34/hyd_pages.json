@@ -1,0 +1,23 @@
+[
+ {
+  "role": "guest",
+  "path": "/money/list",
+  "n": 30,
+  "errors": 0,
+  "first": ""
+ },
+ {
+  "role": "person",
+  "path": "/partner/notices",
+  "n": 30,
+  "errors": 0,
+  "first": ""
+ },
+ {
+  "role": "guest",
+  "path": "/mall/list",
+  "n": 30,
+  "errors": 0,
+  "first": ""
+ }
+]

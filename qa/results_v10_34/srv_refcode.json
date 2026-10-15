@@ -1,0 +1,451 @@
+{
+ "pass": 89,
+ "total": 89,
+ "items": [
+  {
+   "step": "P-00 정책(10/10 시안 기준) — BASIC 포함 소개코드 0건 · 소개 제안 월 10건 · 스탠다드 3건/50건 · 프로 15건/무제한",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "S-00 운영 설정 refcode.scope = listing (기본 · 관리자 API 로 설정)",
+   "ok": true,
+   "detail": "(200, {'key': 'refcode.scope', 'value': 'listing'})"
+  },
+  {
+   "step": "A-01 새 일반 회원 quota — 본인인증 전 무료분 0 · 구독 없음 · 결제 필요 · scope=listing · 매물 없이 부르면 current 없음",
+   "ok": true,
+   "detail": "{'scope': 'listing', 'subscribed': False, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 1, 'usedThisMonth': 0, 'freeRemaining': 0, 'extraCodePrice': 30000, 'identityVerified': False, 'countScope': 'NONE', 'current': None, 'listing': None, 'blocked': None, 'paymentRequire"
+  },
+  {
+   "step": "A-02 본인인증 전 · 결제 없이 발급 → 422 EXTRA_PAYMENT_REQUIRED (금액 · 건수 details)",
+   "ok": true,
+   "detail": "{'code': 'EXTRA_PAYMENT_REQUIRED', 'message': '본인인증 전에는 무료 소개코드가 없습니다. 본인인증을 하시거나 1건 30,000원을 결제해 주십시오.', 'details': {'extraCount': 1, 'unitPrice': 30000, 'amount': 30000, 'freeRemaining': 0, 'includedCodes': 1, 'identityVerified': False}}"
+  },
+  {
+   "step": "A-03 실패한 발급은 구독도 남기지 않음(트랜잭션 롤백)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "A-04 비로그인 발급 · 목록 · 현황 → 403 UNAUTHENTICATED",
+   "ok": true,
+   "detail": "(403, 403, 403)"
+  },
+  {
+   "step": "A-05 count 11 → 400 (최대 10)",
+   "ok": true,
+   "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'count must not be greater than 10', 'field': 'count'})"
+  },
+  {
+   "step": "A-06 결제키 형식 오류 → 400",
+   "ok": true,
+   "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': '결제 키 형식이 올바르지 않습니다.', 'field': '결제'})"
+  },
+  {
+   "step": "L-01 매물 없이 발급 → 422 LISTING_REQUIRED (scope=listing)",
+   "ok": true,
+   "detail": "(422, {'code': 'LISTING_REQUIRED', 'message': '소개코드는 매물마다 따로 받습니다. 소개할 매물 상세에서 「소개코드 공유」를 눌러 주십시오.'})"
+  },
+  {
+   "step": "L-02 한 번에 2건 → 422 ONE_CODE_PER_LISTING",
+   "ok": true,
+   "detail": "(422, {'code': 'ONE_CODE_PER_LISTING', 'message': '소개코드는 매물마다 1건입니다. 한 번에 1건만 받을 수 있습니다.'})"
+  },
+  {
+   "step": "L-03 listingId 형식 오류 → 400 (발급 · 현황)",
+   "ok": true,
+   "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'listingId 는 uuid 여야 합니다.', 'field': 'listingId'}, 400, {'code': 'VALIDATION_ERROR', 'message': 'listingId 는 uuid 여야 합니다.', 'field': 'listingId'})"
+  },
+  {
+   "step": "L-04 없는 매물 → 404 (발급 · 현황)",
+   "ok": true,
+   "detail": "(404, {'code': 'NOT_FOUND', 'message': '매물을 찾을 수 없습니다.'}, 404, {'code': 'NOT_FOUND', 'message': '매물을 찾을 수 없습니다.'})"
+  },
+  {
+   "step": "L-05 게시 중이 아닌 매물 → 409 LISTING_NOT_PUBLISHED · quota.blocked · 제목은 내보내지 않음",
+   "ok": true,
+   "detail": "(409, {'code': 'LISTING_NOT_PUBLISHED', 'message': '게시 중인 매물에만 소개코드를 받을 수 있습니다.'}, 'LISTING_NOT_PUBLISHED')"
+  },
+  {
+   "step": "L-06 본인 매물 → 422 OWN_LISTING · quota.blocked",
+   "ok": true,
+   "detail": "(422, {'code': 'OWN_LISTING', 'message': '본인 매물에는 소개코드를 받을 수 없습니다.'}, 'OWN_LISTING')"
+  },
+  {
+   "step": "A-07 본인인증(개발 스텁) — stub:true · ci_hash=stub-ci",
+   "ok": true,
+   "detail": "{'success': True, 'stub': True, 'verifiedAt': '2026-10-11T16:03:40.361Z'}"
+  },
+  {
+   "step": "A-08 본인인증 후 quota(매물) — 무료 1건 · 계정 단위(ACCOUNT) · 그 매물 코드 없음 · 받을 수 있음",
+   "ok": true,
+   "detail": "{'scope': 'listing', 'subscribed': False, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 1, 'usedThisMonth': 0, 'freeRemaining': 1, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'ACCOUNT', 'current': None, 'listing': {'id': '3fdbde25-7ad7-4fbe-835d-e92b"
+  },
+  {
+   "step": "A-09 무료 1건 발급 — isExtra false · 매물에 묶임 · 무료 BASIC 구독이 자동으로 열림",
+   "ok": true,
+   "detail": "(201, [{'code': '72C58D', 'listingId': '3fdbde25-7ad7-4fbe-835d-e92bb3187950', 'isExtra': False, 'issuedAt': '2026-10-11T16:03:40.446Z', 'extraAmount': None, 'paid': False, 'reused': False}])"
+  },
+  {
+   "step": "A-10 quota.current = 그 매물의 내 코드 · 매물 없이 부르면 null · 다른 매물은 null · 무료분 0 · 결제 필요",
+   "ok": true,
+   "detail": "({'code': '72C58D', 'isExtra': False, 'issuedAt': '2026-10-11T16:03:40.446Z', 'listingId': '3fdbde25-7ad7-4fbe-835d-e92bb3187950'}, None, None)"
+  },
+  {
+   "step": "A-11 quota 조회는 아무것도 만들지 않음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "L-07 같은 매물 두 번 = 같은 코드(reused) · 무료분 1건만 소모 · 결제 정보를 보내도 결제하지 않음",
+   "ok": true,
+   "detail": "(201, [{'code': '72C58D', 'listingId': '3fdbde25-7ad7-4fbe-835d-e92bb3187950', 'isExtra': False, 'issuedAt': '2026-10-11T16:03:40.446Z', 'extraAmount': None, 'paid': False, 'reused': True}], 201)"
+  },
+  {
+   "step": "A-12 두 번째 매물(무료분 초과) · 결제 없음 → 422 EXTRA_PAYMENT_REQUIRED",
+   "ok": true,
+   "detail": "{'code': 'EXTRA_PAYMENT_REQUIRED', 'message': '이번 달 무료 소개코드(1건)를 모두 받았습니다. 추가 1건은 30,000원 결제 후 발급됩니다.', 'details': {'extraCount': 1, 'unitPrice': 30000, 'amount': 30000, 'freeRemaining': 0, 'includedCodes': 1, 'identityVerified': True}}"
+  },
+  {
+   "step": "A-13 결제 금액이 다름 → 422 AMOUNT_MISMATCH (발급 · 결제행 없음)",
+   "ok": true,
+   "detail": "{'code': 'AMOUNT_MISMATCH', 'message': '결제 금액이 맞지 않습니다 — 추가 1건은 30,000원입니다.', 'details': {'extraCount': 1, 'unitPrice': 30000, 'amount': 30000}}"
+  },
+  {
+   "step": "A-14 두 번째 매물 — 결제(스텁) 후 추가 1건 발급 · isExtra · paid · 30,000원 · 그 매물에 묶임",
+   "ok": true,
+   "detail": "(201, [{'code': 'E5A5DC', 'listingId': '76fbffcd-4ec8-47a9-89e7-28c9b78e228c', 'isExtra': True, 'issuedAt': '2026-10-11T16:03:41.129Z', 'extraAmount': 30000, 'paid': True, 'reused': False}])"
+  },
+  {
+   "step": "A-15 결제 행: 30000원 · 1건 · stub=true · 코드 행에 결제키 · 금액",
+   "ok": true,
+   "detail": "30000|1|true|30000"
+  },
+  {
+   "step": "A-16 같은 결제키로 다른 매물 → 409 PAYMENT_KEY_USED (코드 늘지 않음)",
+   "ok": true,
+   "detail": "{'code': 'PAYMENT_KEY_USED', 'message': '이미 소개코드 발급에 쓴 결제입니다. 같은 결제로 다시 받을 수 없습니다.'}"
+  },
+  {
+   "step": "A-17 세 번째 매물 — 결제 후 1건 (매물마다 1건 · 30,000원)",
+   "ok": true,
+   "detail": "(201, [{'code': 'A532B4', 'listingId': '954f9c8a-720b-448a-b3a1-129d8c5b0901', 'isExtra': True, 'issuedAt': '2026-10-11T16:03:41.369Z', 'extraAmount': 30000, 'paid': True, 'reused': False}])"
+  },
+  {
+   "step": "A-18 내 소개코드 목록(MEMBER) — 3건 · thisMonth · paymentStub · 매물 id · 제목 · 관 코드",
+   "ok": true,
+   "detail": "[('A532B4', True, True, '954f9c8a'), ('E5A5DC', True, True, '76fbffcd'), ('72C58D', False, None, '3fdbde25')]"
+  },
+  {
+   "step": "A-19 /me/subscription (MEMBER · 자동 BASIC) 정상",
+   "ok": true,
+   "detail": "{'planCode': 'BASIC', 'planName': '베이직', 'status': 'ACTIVE', 'statusLabel': '이용 중', 'currentPeriodEnd': '2026-11-10T16:03:40.446Z', 'requestViewsUsed': 0, 'requestViewsPerMonth': 3, 'includedCodes': 1, 'listingSlots': 3, 'isPromo': False, 'promoEndsAt': None, 'codesIssued': 3, 'publishedListings': 0"
+  },
+  {
+   "step": "A-20 DB: 무료 요금제 초과 코드를 결제키 없이 INSERT → 차단(REFCODE)",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 추가 소개코드는 결제 후에만 발급됩니다 (건당 30000원)\nCONTEXT:  PL/pgSQL function fn_refcode_extra_paid() line 10 at RAISE"
+  },
+  {
+   "step": "A-21 DB: 이미 다 쓴 결제키로 코드 하나 더 INSERT → 차단",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 이 결제로 받을 수 있는 소개코드(1건)를 이미 모두 받았습니다\nCONTEXT:  PL/pgSQL function fn_refcode_extra_paid() line 29 at RAIS"
+  },
+  {
+   "step": "A-22 DB: 결제 행 수정 → 차단(append-only)",
+   "ok": true,
+   "detail": "ERROR:  append-only table: UPDATE on referral_code_payments is forbidden\nCONTEXT:  PL/pgSQL function fn_block_write() li"
+  },
+  {
+   "step": "A-23 DB: 구독 없는(만료) 코드 INSERT → 여전히 INV-8 이 막음",
+   "ok": true,
+   "detail": "ERROR:  INV-8 violated: subscription bbbbbbbb-0000-4000-a000-000000000002 is EXPIRED\nCONTEXT:  PL/pgSQL function fn_asse"
+  },
+  {
+   "step": "A-24 DB: 구독 id 없이 INSERT → 차단",
+   "ok": true,
+   "detail": "ERROR:  null value in column \"subscription_id\" of relation \"referral_codes\" violates not-null constraint\nDETAIL:  Failin"
+  },
+  {
+   "step": "L-08 DB: 같은 회원 · 같은 매물의 살아 있는 코드 하나 더 INSERT → 유일 인덱스가 막음",
+   "ok": true,
+   "detail": "ERROR:  duplicate key value violates unique constraint \"uq_refcode_owner_listing_live\"\nDETAIL:  Key (owner_account_id, listing_id)=(eb72185c"
+  },
+  {
+   "step": "L-09 DB: 발급된 코드의 매물 변경 · 비우기 → 차단(불변 — 판정 재현성)",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 소개코드의 코드 · 주인 · 매물은 발급 뒤 바꿀 수 없습니다\nCONTEXT:  PL/pgSQL function fn_refcode_immutable() line 6 at RAISE"
+  },
+  {
+   "step": "L-10 DB: 게시 중이 아닌 매물에 묶인 코드 INSERT → 차단(trg_refcode_listing_guard)",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 게시 중인 매물에만 소개코드를 받을 수 있습니다\nCONTEXT:  PL/pgSQL function fn_refcode_listing_guard() line 11 at RAISE"
+  },
+  {
+   "step": "L-11 DB: 본인 매물에 묶인 코드 INSERT → 차단(trg_refcode_listing_guard)",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 본인 매물에는 소개코드를 받을 수 없습니다\nCONTEXT:  PL/pgSQL function fn_refcode_listing_guard() line 14 at RAISE"
+  },
+  {
+   "step": "A-25 같은 CI 첫 계정 — 무료 1건 발급(countScope CI)",
+   "ok": true,
+   "detail": "({'scope': 'listing', 'subscribed': False, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 1, 'usedThisMonth': 0, 'freeRemaining': 1, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'CI', 'current': None, 'listing': {'id': '3fdbde25-7ad7-4fbe-835d-e92bb318"
+  },
+  {
+   "step": "A-26 같은 달 같은 CI 다른 계정 — 무료분 공유(0) → 같은 매물이어도 422 EXTRA_PAYMENT_REQUIRED (코드는 회원마다 따로)",
+   "ok": true,
+   "detail": "({'scope': 'listing', 'subscribed': False, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 1, 'usedThisMonth': 1, 'freeRemaining': 0, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'CI', 'current': None, 'listing': {'id': '3fdbde25-7ad7-4fbe-835d-e92bb318"
+  },
+  {
+   "step": "A-27 서로 다른 매물 4건을 동시에 눌러도 무료 1건만 발급(나머지 422)",
+   "ok": true,
+   "detail": "[201, 422, 422, 422]"
+  },
+  {
+   "step": "L-12 같은 매물을 동시에 6번 → 코드 1개(1번 발급 · 5번은 그 코드 reused)",
+   "ok": true,
+   "detail": "[(201, False), (201, True), (201, True), (201, True), (201, True), (201, True)]"
+  },
+  {
+   "step": "A-28 BIZ_OWNER(intro · STANDARD) 포함분은 결제 없이 발급 (새 매물마다 1건)",
+   "ok": true,
+   "detail": "(0, 3)"
+  },
+  {
+   "step": "A-28b 포함 3건을 다 쓰면 quota.paymentRequired (유료 요금제도)",
+   "ok": true,
+   "detail": "{'scope': 'listing', 'subscribed': True, 'planCode': 'STANDARD', 'planName': '스탠다드', 'freePlan': False, 'includedCodes': 3, 'usedThisMonth': 3, 'freeRemaining': 0, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'SUBSCRIPTION', 'current': None, 'listing': {'id': 'a9615c72-204b-4583-"
+  },
+  {
+   "step": "A-28c 유료 요금제 초과(새 매물) — 결제 없이 422 EXTRA_PAYMENT_REQUIRED(30,000원) · 코드 안 늘어남",
+   "ok": true,
+   "detail": "(422, {'code': 'EXTRA_PAYMENT_REQUIRED', 'message': '이번 달 요금제에 포함된 소개코드(3건)를 모두 받았습니다. 추가 1건은 30,000원 결제 후 발급됩니다.', 'details': {'extraCount': 1, 'unitPrice': 30000, 'amount': 30000, 'freeRemaining': 0, 'includedCodes': 3, 'identityVerified': True}})"
+  },
+  {
+   "step": "A-28d 유료 요금제 초과 — 결제(stub) 후 발급 · isExtra · paid · 결제 행 1건",
+   "ok": true,
+   "detail": "(201, [{'code': '99E3D1', 'listingId': 'a9615c72-204b-4583-9b97-52627c7a0363', 'isExtra': True, 'issuedAt': '2026-10-11T16:03:45.071Z', 'extraAmount': 30000, 'paid': True, 'reused': False}])"
+  },
+  {
+   "step": "A-28g 포함분을 다 쓴 뒤에도 이미 받은 매물은 그 코드 그대로(결제 없음)",
+   "ok": true,
+   "detail": "(201, [{'code': '166EB7', 'listingId': '3fdbde25-7ad7-4fbe-835d-e92bb3187950', 'isExtra': False, 'issuedAt': '2026-10-11T16:03:45.019Z', 'extraAmount': None, 'paid': False, 'reused': True}])"
+  },
+  {
+   "step": "A-28e 유료 요금제 초과 코드를 결제키 없이 INSERT → DB 거부(trg_refcode_extra_paid)",
+   "ok": true,
+   "detail": "ERROR:  REFCODE: 추가 소개코드는 결제 후에만 발급됩니다 (건당 30000원)\nCONTEXT:  PL/pgSQL function fn_refcode_extra_paid() line 10 at RAISE"
+  },
+  {
+   "step": "A-28f 감시 뷰 v_refcode_extra_unpaid = 0",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "A-29 BIZ_OWNER 내 소개코드 목록 정상",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "step": "S-01 설정 형식 검사 — refcode.scope 에 ALL → 422 SETTING_FORMAT · 값 유지",
+   "ok": true,
+   "detail": "(422, {'code': 'SETTING_FORMAT', 'message': '값의 형식이 맞지 않습니다 (예: listing).'})"
+  },
+  {
+   "step": "S-02 관리자가 refcode.scope=all 로 바꿈",
+   "ok": true,
+   "detail": "(200, {'key': 'refcode.scope', 'value': 'all'})"
+  },
+  {
+   "step": "S-03 scope=all — 매물 없이 발급 · 코드는 매물에 안 묶임(listing_id NULL)",
+   "ok": true,
+   "detail": "(201, [{'code': '47849A', 'listingId': None, 'isExtra': False, 'issuedAt': '2026-10-11T16:03:45.998Z', 'extraAmount': None, 'paid': False, 'reused': False}])"
+  },
+  {
+   "step": "S-04 scope=all — listingId 를 보내도 묶지 않음 · 누를 때마다 새 코드(무료분 초과는 결제) → 422",
+   "ok": true,
+   "detail": "(422, {'code': 'EXTRA_PAYMENT_REQUIRED', 'message': '이번 달 무료 소개코드(1건)를 모두 받았습니다. 추가 1건은 30,000원 결제 후 발급됩니다.', 'details': {'extraCount': 1, 'unitPrice': 30000, 'amount': 30000, 'freeRemaining': 0, 'includedCodes': 1, 'identityVerified': True}})"
+  },
+  {
+   "step": "S-05 scope=all — quota.current = 이번 달 받은 코드(매물 없이)",
+   "ok": true,
+   "detail": "{'scope': 'all', 'subscribed': True, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 1, 'usedThisMonth': 1, 'freeRemaining': 0, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'ACCOUNT', 'current': {'code': '47849A', 'isExtra': False, 'issuedAt': '2026-10-"
+  },
+  {
+   "step": "S-06 scope=all — 추가 2건 = 60,000원 한 번 결제 → 2건 · 같은 결제키",
+   "ok": true,
+   "detail": "(201, [{'code': '0569D9', 'listingId': None, 'isExtra': True, 'issuedAt': '2026-10-11T16:03:46.075Z', 'extraAmount': 30000, 'paid': True, 'reused': False}, {'code': '56DA8C', 'listingId': None, 'isExtra': True, 'issuedAt': '2026-10-11T16:03:46.075Z', 'extraAmount': 30000, 'paid': True, 'reused': Fal"
+  },
+  {
+   "step": "S-07 refcode.scope 를 listing 으로 되돌림",
+   "ok": true,
+   "detail": "(200, {'key': 'refcode.scope', 'value': 'listing'})"
+  },
+  {
+   "step": "S-08 되돌린 뒤 — 매물 없이 발급은 다시 422 LISTING_REQUIRED",
+   "ok": true,
+   "detail": "(422, {'code': 'LISTING_REQUIRED', 'message': '소개코드는 매물마다 따로 받습니다. 소개할 매물 상세에서 「소개코드 공유」를 눌러 주십시오.'})"
+  },
+  {
+   "step": "T-01 공유 링크 비로그인 방문 → recorded:true · attribution_events 1건",
+   "ok": true,
+   "detail": "{'recorded': True, 'windowDays': 90}"
+  },
+  {
+   "step": "T-02 24시간 안 재방문(소문자 코드) → recorded:false DUPLICATE · 여전히 1건",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'DUPLICATE'}"
+  },
+  {
+   "step": "T-03 DB: 같은 방문자 · 같은 코드 24시간 안 직접 INSERT → 트리거가 막음(ATTR_DUP)",
+   "ok": true,
+   "detail": "ERROR:  ATTR_DUP: 같은 방문자의 같은 소개코드 유입은 24시간에 한 번만 기록합니다\nCONTEXT:  PL/pgSQL function fn_attr_dedupe_24h() line 10 at RAISE"
+  },
+  {
+   "step": "T-04 같은 방문자 동시 6번 → 1번만 기록",
+   "ok": true,
+   "detail": "[{'recorded': True, 'windowDays': 90}, {'recorded': False, 'reason': 'DUPLICATE'}, {'recorded': False, 'reason': 'DUPLICATE'}, {'recorded': False, 'reason': 'DUPLICATE'}, {'recorded': False, 'reason': 'DUPLICATE'}, {'recorded': False, 'reason': 'DUPLICATE'}]"
+  },
+  {
+   "step": "T-05 코드 주인이 로그인 상태로 자기 링크 → recorded:false SELF",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'SELF'}"
+  },
+  {
+   "step": "T-06 주인 계정과 연결된 방문자 키(비로그인) → SELF",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'SELF'}"
+  },
+  {
+   "step": "T-07 폐기 코드 → recorded:false INVALID_CODE (오류 아님)",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'INVALID_CODE'}"
+  },
+  {
+   "step": "T-08 없는 코드 → recorded:false INVALID_CODE",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'INVALID_CODE'}"
+  },
+  {
+   "step": "T-09 형식 오류(코드 · 방문자 키 없음 · 짧은 키 · landingUrl) → 400",
+   "ok": true,
+   "detail": "({'code': 'VALIDATION_ERROR', 'message': '소개코드는 영문·숫자 3~16자입니다.', 'field': '소개코드는'}, {'code': 'VALIDATION_ERROR', 'field': 'X-Visitor-Key', 'message': '방문자 키(X-Visitor-Key)가 없거나 형식이 맞지 않습니다.'}, {'code': 'VALIDATION_ERROR', 'field': 'X-Visitor-Key', 'message': '방문자 키(X-Visitor-Key)가 없거나 형식이 맞지 않습니다.'"
+  },
+  {
+   "step": "T-10 링크 미리보기 로봇 → recorded:false BOT",
+   "ok": true,
+   "detail": "{'recorded': False, 'reason': 'BOT'}"
+  },
+  {
+   "step": "T-11 로그인 방문자 → 계정도 기록(account_id)",
+   "ok": true,
+   "detail": "{'recorded': True, 'windowDays': 90}"
+  },
+  {
+   "step": "T-12 그 방문자가 가입(visitorKey) → visitor_identities 연결",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "L-13 A 매물 코드 유입 → **B 매물** 문의 · 거래: 소개자 · 귀속 코드 없음",
+   "ok": true,
+   "detail": "(201, {'dealId': '92c4dd7d-1a98-40f2-a8bd-23616c6240de', 'attributedCode': None}, '-|-')"
+  },
+  {
+   "step": "T-13 A 매물 코드 유입 → **A 매물** 문의 → 거래 생성 시 deals.introducer_account_id = 코드 주인 · attributed_code = 코드",
+   "ok": true,
+   "detail": "(201, {'dealId': 'ce27a570-e002-4f59-a174-28ae5117c8bb', 'attributedCode': '72C58D'}, 'eb72185c-49a2-4244-b93d-2d22eed380d3|72C58D')"
+  },
+  {
+   "step": "L-14 DB 함수 — 매물용 판정: A 매물=코드 · B 매물=없음 · 기존 계정 단위 판정(fn_attribution_resolve)은 그대로",
+   "ok": true,
+   "detail": "72C58D|-|72C58D"
+  },
+  {
+   "step": "L-15 재현성 — 유입 전 시점(at)으로 판정하면 없음 · 같은 입력은 같은 결과",
+   "ok": true,
+   "detail": "('0', '72C58D,72C58D')"
+  },
+  {
+   "step": "L-16 B 매물 코드(먼저) · A 매물 코드(나중) 유입 → A 매물 거래 소개자 = A 코드 주인 · B 매물 거래 소개자 = B 코드 주인",
+   "ok": true,
+   "detail": "('eb72185c-49a2-4244-b93d-2d22eed380d3|72C58D', 'a805306c-96dc-4f53-ad98-b1b2936d690e|81ED2E')"
+  },
+  {
+   "step": "L-22 확정 시점 판정 = 매물용 함수(A 매물 거래 → A 코드. 계정 단위 판정이면 먼저 본 B 코드가 찍혔을 것)",
+   "ok": true,
+   "detail": "('72C58D|81ED2E', 't')"
+  },
+  {
+   "step": "L-17 매물에 안 묶인 코드(옛 코드 · scope=all) 유입 → 어느 매물 문의든 소개자 = 코드 주인(전처럼)",
+   "ok": true,
+   "detail": "('2b931791-06dc-438d-b715-12e00b7c3942|47849A', '2b931791-06dc-438d-b715-12e00b7c3942|47849A')"
+  },
+  {
+   "step": "T-14 기존 회원이 링크로 들어와 로그인 후 문의 → 소개자 = 코드 주인",
+   "ok": true,
+   "detail": "(201, {'dealId': '7093e762-3017-402c-b26b-fbcce8169db5', 'attributedCode': '72C58D'})"
+  },
+  {
+   "step": "T-15 본인 코드 → 자기 문의 거래에 소개자 없음 (판정에서 자기 유입 제외 — DB 함수)",
+   "ok": true,
+   "detail": "({'recorded': True, 'windowDays': 90}, 201, {'dealId': 'f9f94d34-3120-4f8c-a32d-50b0cc10f1ec', 'attributedCode': None})"
+  },
+  {
+   "step": "T-16 내 소개코드 touches = 기록된 유입 수",
+   "ok": true,
+   "detail": "(5, 5)"
+  },
+  {
+   "step": "T-17 불변식: 24시간 안 같은 방문자 · 같은 코드 중복 유입 0",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "T-18 불변식: D010 이후 무료 요금제 초과 코드는 모두 결제키 있음",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "T-19 불변식: 결제 1건으로 받은 코드 수 ≤ 결제 건수",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "L-18 불변식: 다른 매물에 묶인 코드가 귀속된 거래 0 (v_deal_refcode_listing_mismatch)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "L-19 불변식: 같은 회원 · 같은 매물의 살아 있는 코드 2개 이상 0",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "T-21 유입 없는 재로그인은 연결을 늘리지 않음",
+   "ok": true,
+   "detail": "(1, 1)"
+  },
+  {
+   "step": "T-22 로그아웃 상태로 링크 → 다시 로그인 → 문의: 소개자 = 코드 주인 (전에는 빠짐)",
+   "ok": true,
+   "detail": "({'recorded': True, 'windowDays': 90}, 2, 201, {'dealId': 'fffe4b4e-8d0b-4adb-b8f2-6bb56d391b2d', 'attributedCode': '72C58D'})"
+  },
+  {
+   "step": "T-20 보험·의료 매물 시험 (해당 매물 없음 — 건너뜀)",
+   "ok": true,
+   "detail": "skip"
+  },
+  {
+   "step": "P-99 끝 — BASIC 포함 소개코드를 시안 값으로 되돌림",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "S-99 끝 — 공용 설정 refcode.scope = listing",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

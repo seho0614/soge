@@ -1,0 +1,437 @@
+[
+ {
+  "step": "A-1 업종 목록 공개 22 (리드형 20 · 정액 노출형 2) · 로그인 없이",
+  "ok": true,
+  "detail": "22"
+ },
+ {
+  "step": "A-2 자격 확인(GATED) 12 = 리드형 10(보험 · 의료 · 이사짐 · 인테리어 · 건설 · 자동차 · 여행 · 교육 · 물류 · 통신) + 법률 · 세무",
+  "ok": true,
+  "detail": "['CSL_AUTO', 'CSL_CONSTRUCTION', 'CSL_EDU', 'CSL_INSURANCE', 'CSL_INTERIOR', 'CSL_LEGAL', 'CSL_LOGISTICS', 'CSL_MEDICAL', 'CSL_MOVING', 'CSL_TAX', 'CSL_TELCO', 'CSL_TRAVEL']"
+ },
+ {
+  "step": "A-3 일반 10 = 청소 · 웨딩 · 행사 · 렌탈 · 중고차 · 광고 · 디자인 · IT · 제조 · 유통",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "A-4 카드 · 금융은 보관(목록에 없음) · 렌터카는 「자동차(정비·렌트)」로 합침",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "A-5 자격 규칙 — 법률 · 세무는 실제 등록증 규칙(LEGAL · TAX)에 연결",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "B-1 토큰 없이 입점 신청 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "B-2 사업자 인증 전 회원 → 422 BUSINESS_REQUIRED",
+  "ok": true,
+  "detail": "(422, {'code': 'BUSINESS_REQUIRED', 'message': '사업자 인증이 먼저입니다.'})"
+ },
+ {
+  "step": "B-3 없는 축 · 빈 목록 → 400",
+  "ok": true,
+  "detail": "(400, 400)"
+ },
+ {
+  "step": "B-4 신청 전 내 입점 상태 = 빈 목록",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "step": "B-5 4개 축 입점 신청 → 모두 심사 중(PENDING) · 경위 APPLY",
+  "ok": true,
+  "detail": "[{'axis': 'CONSULT', 'state': 'PENDING', 'source': 'APPLY', 'reason': None, 'decidedAt': None, 'appliedAt': '2026-10-11T16:00:24.123Z'}, {'axis': 'EQUIP', 'state': 'PENDING', 'source': 'APPLY', 'reason': None, 'decidedAt': None, 'appliedAt'"
+ },
+ {
+  "step": "B-6 심사 중인 축을 다시 신청해도 그대로(중복 행 없음)",
+  "ok": true,
+  "detail": "[{'axis': 'CONSULT', 'state': 'PENDING', 'source': 'APPLY', 'reason': None, 'decidedAt': None, 'appliedAt': '2026-10-11T16:00:24.123Z'}, {'axis': 'EQUIP', 'state': 'PENDING', 'source': 'APPLY', 'reason': None, 'decidedAt': None, 'appliedAt'"
+ },
+ {
+  "step": "B-7 일반 회원은 관리자 목록 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "B-8 잘못된 state → 422",
+  "ok": true,
+  "detail": "422"
+ },
+ {
+  "step": "B-9 관리자 목록(PENDING) — 업체 · 사업자번호 · 국세청 단계 · 중개사 인증 여부",
+  "ok": true,
+  "detail": "[{'id': '73a4a0ec-5966-456b-9ce8-f2ec00977e86', 'axis': 'SOLAR', 'state': 'PENDING', 'source': 'APPLY', 'reason': None, 'appliedAt': '2026-10-11T16:00:24.123Z', 'decidedAt': None, 'company': '축입점상사77046f', 'bizRegNo': '0959434035', 'ntsEnv'"
+ },
+ {
+  "step": "B-10 부동산 축 승인 — 중개사 인증 없으면 422 AXIS_BROKER (DB)",
+  "ok": true,
+  "detail": "(422, {'code': 'AXIS_BROKER', 'message': '부동산 축은 개업공인중개사 인증을 통과해야 승인할 수 있습니다'})"
+ },
+ {
+  "step": "B-11 사유 없는 · 5자 미만 반려 → 422 AXIS_REASON",
+  "ok": true,
+  "detail": "(422, {'code': 'AXIS_REASON', 'message': '반려 사유를 5자 이상 적어 주십시오 — 신청자에게 그대로 보입니다'}, 422)"
+ },
+ {
+  "step": "B-12 사유 있는 반려 → REJECTED · 신청자에게 사유 알림",
+  "ok": true,
+  "detail": "(201, {'id': '3173c7e9-712b-48b8-9cf2-7745565d222f', 'axis': 'RE', 'state': 'REJECTED', 'reason': '개업공인중개사 인증을 먼저 받아 주십시오', 'source': 'APPLY'})"
+ },
+ {
+  "step": "B-13 상담 축 승인 → APPROVED · 판정자 · 판정 시각 · 알림",
+  "ok": true,
+  "detail": "(201, {'id': '9246b22f-bd8e-44c8-8410-27422910e170', 'axis': 'CONSULT', 'state': 'APPROVED', 'reason': None, 'source': 'APPLY'})"
+ },
+ {
+  "step": "B-14 이미 판정한 신청 → 409 NOT_PENDING",
+  "ok": true,
+  "detail": "(409, {'code': 'NOT_PENDING', 'message': '심사 대기 중인 신청이 아닙니다.'})"
+ },
+ {
+  "step": "B-15 없는 신청 → 409 · 번호 형식 아님 → 404",
+  "ok": true,
+  "detail": "(409, 404)"
+ },
+ {
+  "step": "B-16 반려된 축(부동산)만 다시 심사로 · 승인된 축(상담)은 그대로",
+  "ok": true,
+  "detail": "{'CONSULT': {'axis': 'CONSULT', 'state': 'APPROVED', 'source': 'APPLY', 'reason': None, 'decidedAt': '2026-10-11T16:00:24.578Z', 'appliedAt': '2026-10-11T16:00:24.123Z'}, 'EQUIP': {'axis': 'EQUIP', 'state': 'PENDING', 'source': 'APPLY', 're"
+ },
+ {
+  "step": "B-17 관리자 목록(APPROVED)에 승인 건 · 일괄 이관 건은 경위 BULK_MIGRATION",
+  "ok": true,
+  "detail": "29"
+ },
+ {
+  "step": "B-18 일반 회원의 판정 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "C-1 정액 노출 목록 — 로그인 없이 · 「광고」 표시 · 안내 문구",
+  "ok": true,
+  "detail": "(200, 2)"
+ },
+ {
+  "step": "C-2 리드형 업종 · 없는 업종의 정액 노출 목록 → 404",
+  "ok": true,
+  "detail": "(404, 404)"
+ },
+ {
+  "step": "C-3 토큰 없이 게재 신청 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "C-4 입점(파트너) 신청 전 업체 → 422 PARTNER_REQUIRED",
+  "ok": true,
+  "detail": "(422, {'code': 'PARTNER_REQUIRED', 'message': '입점 신청을 먼저 해 주십시오.'})"
+ },
+ {
+  "step": "C-5 리드형 업종으로 게재 신청 → 400(업종은 법률 · 세무만)",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'categoryCode must be one of the following values: CSL_LEGAL, CSL_TAX', 'field': 'categoryCode'})"
+ },
+ {
+  "step": "C-6 대표번호 형식 → 400",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'contactPhone must match /^[0-9-]{8,14}$/ regular expression', 'field': 'contactPhone'})"
+ },
+ {
+  "step": "C-6 https 아닌 홈페이지 → 400",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'websiteUrl must match /^https:\\\\/\\\\// regular expression', 'field': 'websiteUrl'})"
+ },
+ {
+  "step": "C-6 빈 사무소 이름 → 400",
+  "ok": true,
+  "detail": "(400, {'code': 'VALIDATION_ERROR', 'message': 'displayName should not be empty', 'field': 'displayName'})"
+ },
+ {
+  "step": "C-7 게재 신청 → 심사 · 입금 확인 대기(PENDING) · 공개 목록에는 아직 없음",
+  "ok": true,
+  "detail": "{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'categoryCode': 'CSL_LEGAL', 'categoryName': '법률(변호사·법무사)', 'displayName': '법무법인 한빛77046f', 'intro': '민사 · 가사 · 부동산 분쟁', 'contactPhone': '02-1234-5678', 'websiteUrl': 'https://example.com', 'si"
+ },
+ {
+  "step": "C-8 다시 내면 정보만 고침(항목 1개 그대로)",
+  "ok": true,
+  "detail": "[{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'categoryCode': 'CSL_LEGAL', 'categoryName': '법률(변호사·법무사)', 'displayName': '법무법인 한빛77046f', 'intro': '민사 · 가사 · 부동산 · 상속', 'contactPhone': '02-1234-5678', 'websiteUrl': 'https://example.com', "
+ },
+ {
+  "step": "C-9 일반 회원은 정액 노출 관리 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "C-10 관리자 목록 — 업체 · 사업자번호 · 자격 확인 여부(미확인)",
+  "ok": true,
+  "detail": "{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'categoryCode': 'CSL_LEGAL', 'categoryName': '법률(변호사·법무사)', 'displayName': '법무법인 한빛77046f', 'contactPhone': '02-1234-5678', 'sido': '서울', 'state': 'PENDING', 'monthlyFee': None, 'paidFrom': Non"
+ },
+ {
+  "step": "C-11 자격 심사 전 노출 켜기 → 422 DIRECTORY_QUALIFICATION (DB)",
+  "ok": true,
+  "detail": "(422, {'code': 'DIRECTORY_QUALIFICATION', 'message': '자격 심사(LEGAL)를 통과해야 노출할 수 있습니다'})"
+ },
+ {
+  "step": "C-12 법률 자격 심사 승인(운영 API · 신청 행만 SQL)",
+  "ok": true,
+  "detail": "(201, 201)"
+ },
+ {
+  "step": "C-13 노출료 0원 · 입금 근거 없음 · 종료일이 시작일보다 앞 → 거부",
+  "ok": true,
+  "detail": "(400, 422, 422, {'code': 'DIRECTORY_PERIOD', 'message': '노출 기간을 확인해 주십시오 — 종료일이 시작일보다 앞설 수 없습니다.'})"
+ },
+ {
+  "step": "C-14 상담 축 입점 승인 없는 업체 → 422 DIRECTORY_AXIS (DB)",
+  "ok": true,
+  "detail": "(422, {'code': 'DIRECTORY_AXIS', 'message': '안심소개 상담 축 입점 승인이 먼저입니다'})"
+ },
+ {
+  "step": "C-15 입금 확인 → 노출 켜기(ACTIVE) · 금액 · 기간 · 판정자",
+  "ok": true,
+  "detail": "(201, {'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'state': 'ACTIVE', 'monthlyFee': 100000, 'months': 1, 'supplyAmount': 100000, 'vatAmount': 10000, 'totalAmount': 110000, 'paidFrom': '2026-10-12', 'paidTo': '2026-11-11', 'rounds': 1})"
+ },
+ {
+  "step": "C-16 공개 목록에 사무소 · 대표번호 · 홈페이지 — 사업자번호 · 금액 · 입금 근거는 내려가지 않음",
+  "ok": true,
+  "detail": "{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'displayName': '법무법인 한빛77046f', 'intro': '민사 · 가사 · 부동산 · 상속', 'contactPhone': '02-1234-5678', 'websiteUrl': 'https://example.com', 'sido': '서울'}"
+ },
+ {
+  "step": "C-17 업종 목록의 법률 「게재 N곳」 = 공개 목록 수",
+  "ok": true,
+  "detail": "3"
+ },
+ {
+  "step": "C-18 업체 화면 — 노출 중 · 기간 · 금액(v10.33 부가세 별도 — 공급가액 100,000 · 부가세 10,000 · 합계 110,000)",
+  "ok": true,
+  "detail": "{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'categoryCode': 'CSL_LEGAL', 'categoryName': '법률(변호사·법무사)', 'displayName': '법무법인 한빛77046f', 'intro': '민사 · 가사 · 부동산 · 상속', 'contactPhone': '02-1234-5678', 'websiteUrl': 'https://example.com', '"
+ },
+ {
+  "step": "C-19 노출 순서 = 날짜로 섞은 순서(돈 · 신청 순서와 무관)",
+  "ok": true,
+  "detail": "27494c79-6203-437b-b252-321a02ab1c16,8ecd63f8-d7f6-4143-bcf9"
+ },
+ {
+  "step": "C-20 정액 노출형(법률) 상담 신청 → 422 CONSULT_DIRECTORY_ONLY · 리드 · 신청 행 안 생김",
+  "ok": true,
+  "detail": "(422, {'code': 'CONSULT_DIRECTORY_ONLY', 'message': '이 업종은 상담 신청을 받지 않습니다 — 업체 정보를 보고 직접 연락하십시오'})"
+ },
+ {
+  "step": "C-21 노출 기간이 지나면 공개 목록에서 자동으로 빠짐 · 운영 관찰 뷰에 보임",
+  "ok": true,
+  "detail": "BEGIN\nUPDATE 1\nin_public=0\nlapsed=1\nROLLBACK"
+ },
+ {
+  "step": "C-22 자격 승인이 풀리면 공개 목록에서 빠짐",
+  "ok": true,
+  "detail": "IN\nSET\nUPDATE 1\nSET\nin_public=0\nROLLBACK"
+ },
+ {
+  "step": "C-23 (v10.33 A안) 노출 중인 항목을 「다시 켜기」로 연장 → 409 NOT_ACTIVATABLE — 연장은 업체 연장 신청 → 연장 입금 확인",
+  "ok": true,
+  "detail": "(409, {'code': 'NOT_ACTIVATABLE', 'message': '노출 중인 항목의 기간은 업체의 연장 신청 → 연장 입금 확인으로 늘립니다.'})"
+ },
+ {
+  "step": "C-24 노출 중인 항목 반려 → 409 NOT_CLOSABLE",
+  "ok": true,
+  "detail": "(409, {'code': 'NOT_CLOSABLE', 'message': '심사 중인 항목만 반려할 수 있습니다.'})"
+ },
+ {
+  "step": "C-25 사유 없는 종료 → 422 DIRECTORY_REASON",
+  "ok": true,
+  "detail": "(422, {'code': 'DIRECTORY_REASON', 'message': '사유를 5자 이상 적어 주십시오 — 업체에게 그대로 보입니다.'})"
+ },
+ {
+  "step": "C-26 종료 → 공개 목록에서 빠짐 · 업체 화면에 사유",
+  "ok": true,
+  "detail": "(201, {'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'state': 'ENDED', 'reason': '계약 기간 종료 요청'})"
+ },
+ {
+  "step": "C-27 종료된 항목을 다시 내면 심사 대기로(PENDING · 사유 지움)",
+  "ok": true,
+  "detail": "{'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'categoryCode': 'CSL_LEGAL', 'categoryName': '법률(변호사·법무사)', 'displayName': '법무법인 한빛77046f', 'intro': '민사 · 가사 · 부동산 분쟁', 'contactPhone': '02-1234-5678', 'websiteUrl': 'https://example.com', 'si"
+ },
+ {
+  "step": "C-28 심사 중인 신청 반려 → REJECTED · 사유",
+  "ok": true,
+  "detail": "(201, {'id': 'c3d37eae-ae5a-4e61-a15e-5d00464103b7', 'state': 'REJECTED', 'reason': '상담 축 입점 승인을 먼저 받아 주십시오'})"
+ },
+ {
+  "step": "C-29 세무는 세무 자격(TAX)이 따로 — 법률 자격만으로는 422 DIRECTORY_QUALIFICATION",
+  "ok": true,
+  "detail": "(422, {'code': 'DIRECTORY_QUALIFICATION', 'message': '자격 심사(TAX)를 통과해야 노출할 수 있습니다'})"
+ },
+ {
+  "step": "D-1 리드형 업종에 정액 노출 → 트리거 거부(DIRECTORY_CATEGORY)",
+  "ok": true,
+  "detail": "ERROR:  DIRECTORY_CATEGORY: 정액 노출은 법률 · 세무 같은 정액 노출형 업종에서만 씁니다\nCONTEXT:  PL/pgSQL function fn_directory_guard() line 10 at RAISE"
+ },
+ {
+  "step": "D-2 입금 근거 없이 ACTIVE → 제약 거부(ck_directory_active)",
+  "ok": true,
+  "detail": "ERROR:  new row for relation \"consult_directory_entries\" violates check constraint \"ck_directory_active\"\nDETAIL:  Failing row contains (8ecd"
+ },
+ {
+  "step": "D-3 사유 없이 종료 → 제약 거부(ck_directory_reason)",
+  "ok": true,
+  "detail": "ERROR:  new row for relation \"consult_directory_entries\" violates check constraint \"ck_directory_reason\"\nDETAIL:  Failing row contains (8ecd"
+ },
+ {
+  "step": "D-4 노출료는 기간 정액 — 클릭 · 연락 · 성사 건수와 잇는 칸 없음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "D-5 축 반려는 사유 필수(DB 트리거)",
+  "ok": true,
+  "detail": "ERROR:  AXIS_REASON: 반려 사유를 5자 이상 적어 주십시오 — 신청자에게 그대로 보입니다\nCONTEXT:  PL/pgSQL function fn_mal_partner_axes_guard() line 4 at RAISE"
+ },
+ {
+  "step": "D-6 연락처 원문 칸 없음(consult_requests — 암호문만)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "D-V v_directory_lead_leak = 0",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "D-V v_consult_lead_unverified = 0",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "D-V v_lead_multi_delivery = 0",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "D-V v_consult_purge_overdue = 0",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "F-1 설정 directory.monthly_fee 가 있고 형식 규칙 · 예시가 붙어 있음",
+  "ok": true,
+  "detail": "300000"
+ },
+ {
+  "step": "F-2 시작값 300,000원 — fn_directory_base_fee() = 300000",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "F-3 공개 설정에 기준 금액이 실림(업체 신청 화면 안내용)",
+  "ok": true,
+  "detail": "300000"
+ },
+ {
+  "step": "F-4 관리자 설정 목록에 보이고 오류 표시 없음",
+  "ok": true,
+  "detail": "{'key': 'directory.monthly_fee', 'value': '300000', 'description': '법률 · 세무 월 정액 노출료 기준 금액(원 · 월). 노출을 켤 때 금액을 따로 적지 않으면 이 금액으로 기록합니다. 바꿔도 이미 켠 노출의 금액은 그대로입니다.', 'isRequiredForOpen': False, 'valueExample': '300000', 'hasIssue': False, 'issu"
+ },
+ {
+  "step": "F-5 기준 금액 변경은 관리자만 — 업체 403 · 비로그인 403(UNAUTHENTICATED)",
+  "ok": true,
+  "detail": "(403, 403)"
+ },
+ {
+  "step": "F-6 형식이 틀린 값은 저장하지 않음(422 SETTING_FORMAT) — 글자 · 0 · 쉼표 · 음수 · 너무 작음 · 너무 큼 · 빈 값",
+  "ok": true,
+  "detail": "[('30만원', 422, 'SETTING_FORMAT'), ('0', 422, 'SETTING_FORMAT'), ('300,000', 422, 'SETTING_FORMAT'), ('-1', 422, 'SETTING_FORMAT'), ('12', 422, 'SETTING_FORMAT'), ('3000000000', 422, 'SETTING_FORMAT'), ('', 422, 'SETTING_FORMAT')]"
+ },
+ {
+  "step": "F-7 금액을 비우고 켜면 기준 금액으로 기록(300,000원)",
+  "ok": true,
+  "detail": "(201, {'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'state': 'ACTIVE', 'monthlyFee': 300000, 'months': 1, 'supplyAmount': 300000, 'vatAmount': 30000, 'totalAmount': 330000, 'paidFrom': '2026-11-12', 'paidTo': '2026-12-11', 'rounds': 2})"
+ },
+ {
+  "step": "F-8 업체 화면에 기록된 금액 300,000원",
+  "ok": true,
+  "detail": "300000"
+ },
+ {
+  "step": "F-9 기준 금액 변경 → 350,000원 · 감사 기록(SITE_SETTING_UPDATE)",
+  "ok": true,
+  "detail": "(200, {'key': 'directory.monthly_fee', 'value': '350000'})"
+ },
+ {
+  "step": "F-10 이미 노출 중인 건의 금액은 그대로(300,000원) — 기준 금액은 다음에 켜는 건부터",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "F-11 기간 연장(연장 신청 → 입금 확인) → 바뀐 기준 금액 350,000원으로 기록",
+  "ok": true,
+  "detail": "(201, 201, {'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'state': 'ACTIVE', 'monthlyFee': 350000, 'months': 1, 'supplyAmount': 350000, 'vatAmount': 35000, 'totalAmount': 385000, 'paidFrom': '2026-11-12', 'paidTo': '2027-01-11', 'rounds': 3"
+ },
+ {
+  "step": "F-12 금액을 적으면 그 금액이 우선(270,000원) — 건별 조정(세무 항목 · 세무 자격 승인 뒤)",
+  "ok": true,
+  "detail": "(201, {'id': '2c912692-7fd7-42f5-a67d-1e9c4bc7a8f1', 'state': 'ACTIVE', 'monthlyFee': 270000, 'months': 1, 'supplyAmount': 270000, 'vatAmount': 27000, 'totalAmount': 297000, 'paidFrom': '2026-10-12', 'paidTo': '2026-11-11', 'rounds': 1})"
+ },
+ {
+  "step": "F-13 monthlyFee: null 도 기준 금액으로(종료 → 다시 신청 → 다시 켜기)",
+  "ok": true,
+  "detail": "(201, {'id': '8ecd63f8-d7f6-4143-bcf9-03dc48571f3b', 'state': 'ACTIVE', 'monthlyFee': 350000, 'months': 1, 'supplyAmount': 350000, 'vatAmount': 35000, 'totalAmount': 385000, 'paidFrom': '2027-01-12', 'paidTo': '2027-02-11', 'rounds': 4})"
+ },
+ {
+  "step": "F-14 DB 도 형식이 틀린 기준 금액을 받지 않음(직접 SQL → fn_setting_validate 거부)",
+  "ok": true,
+  "detail": "ERROR:  SETTING: directory.monthly_fee 값이 형식에 맞지 않습니다 (허용 ^[1-9][0-9]{3,8}$, 예: 300000)\nCONTEXT:  PL/pgSQL function fn_s"
+ },
+ {
+  "step": "F-14b 기준 금액 설정이 없으면 fn_directory_base_fee() 는 null — 서버가 422 DIRECTORY_FEE 로 막음(금액을 적으라고 안내)",
+  "ok": true,
+  "detail": "BEGIN\nDELETE 1\nbase=null\nROLLBACK"
+ },
+ {
+  "step": "F-15 공개 목록에는 금액이 나가지 않음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "F-16 노출료는 여전히 기간 정액 — 기준 금액은 건수와 무관",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "F-17 시험 뒤 기준 금액 300,000원으로 되돌림",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "G-1 상담 신청 표(consult_requests)의 파기 기한 기본값은 6개월 — 동의 문구와 같음",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "G-2 업체에 전달된 연락처 보관은 설정 privacy.lead_retention_days = 90 (신청 표 기한과 별도)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "G-3 두 기한은 서로 다른 곳에서 읽음 — 신청 표 파기 함수는 purge_after 만, 리드 연락처는 설정값만",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "step": "E-1 NODE_ENV=staging · 알림톡 연동 전 → 422 NOTIFY_NOT_READY · 응답에 인증번호 없음 · 신청 행 안 생김",
+  "ok": true,
+  "detail": "(422, {'code': 'NOTIFY_NOT_READY', 'message': '인증번호 발송 준비 중이라 지금은 상담 신청을 받지 않습니다.'})"
+ },
+ {
+  "step": "E-2 NODE_ENV=development 에서는 개발용 인증번호(devCode)가 응답에 있음",
+  "ok": true,
+  "detail": "(201, {'id': 'd535163c-9e27-4a3b-bf9c-e0a61c534bd2', 'state': 'PENDING_VERIFY', 'expiresInMinutes': 5, 'note': '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.'})"
+ }
+]

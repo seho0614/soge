@@ -1,0 +1,276 @@
+{
+ "pass": 54,
+ "total": 54,
+ "items": [
+  {
+   "step": "[설정] refcode.scope=listing 이 사이트에 반영됨",
+   "ok": true,
+   "detail": "1s"
+  },
+  {
+   "step": "[비로그인] /mall/{id} HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[비로그인] 상세 문구 — 「매물마다 따로」 · 「무료 소개코드 없이 건당 30,000원」",
+   "ok": true,
+   "detail": "소개코드 공유\n\n필요한 사람에게 이 매물을 소개하세요. 소개코드는 매물마다 따로입니다 — 같은 매물은 다시 눌러도 같은 코드이고, 무료 회원은 무료 소개코드 없이 건당 30,000원으로 받습니다(유료 요금제는 포함 건수까지). 상대가 소개 링크로 들어와 90일 안에 이 매물에 문의하면 "
+  },
+  {
+   "step": "[비로그인] 상세 「소개코드 공유」 칸 — 로그인 안내",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[비로그인] /mall/give HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[비로그인] /mall/give 「준비 중」 문구 없음 · 매물 없이 누르는 공유 버튼 없음 · 「매물 상세에서 소개코드 공유」 안내 · 매물 보러 가기",
+   "ok": true,
+   "detail": "본문으로 건너뛰기\n소개뱅크\n소개장터\n안심소개\n소개창업\n소개몰\n소개광장\n이용안내\n소개받기\n|\n파트너센터\n|\n나의공간\n🔔\n로그인\n무료 회원가입\n← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소개코"
+  },
+  {
+   "step": "[회원N] 화면 로그인",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원N · 본인인증 전] /mall/{id} HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[회원N] 본인인증 전 안내 표시",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원N] 「소개코드 공유」 → 무료분 없음 → 「추가 1건 30,000원」 결제 안내(본인인증 링크 포함)",
+   "ok": true,
+   "detail": "무료 소개코드 없음 · 건당 30,000원 — 필요할 때 건마다 받습니다. 받으려면 먼저 본인인증을 해 주십시오.\n\n결제 연동 키가 없는 환경입니다 — 시험 결제(스텁)로 진행합니다. 실제 돈은 오가지 않습니다.\n\n추가 1건 30,000원 시험 결제(스텁)\n요금제 보기"
+  },
+  {
+   "step": "[회원N] 시험 결제(스텁) → 추가 코드 발급 · 결제 행 stub",
+   "ok": true,
+   "detail": "2DF1F1"
+  },
+  {
+   "step": "[회원N] 콘솔 오류 0 (클릭 후)",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[회원M] 화면 로그인",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원M] /verify 「PASS 로 본인인증」 클릭 → 인증됨(스텁)",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[회원M] /mall/{id} HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[회원M] 「소개코드 공유」 → 무료분 없음(BASIC 0건) → 「무료 소개코드 없음 · 건당 30,000원」 안내 · 아직 발급 안 됨",
+   "ok": true,
+   "detail": "무료 소개코드 없음 · 건당 30,000원 — 필요할 때 건마다 받습니다.\n\n결제 연동 키가 없는 환경입니다 — 시험 결제(스텁)로 진행합니다. 실제 돈은 오가지 않습니다.\n\n추가 1건 30,000원 시험 결제(스텁)\n요금제 보기"
+  },
+  {
+   "step": "[회원M] 「소개코드 공유」 → 시험 결제 코드 발급(그 매물에 묶임) · 공유 링크 = {사이트}/mall/{id}?ref=코드",
+   "ok": true,
+   "detail": "http://localhost:5174/mall/3fdbde25-7ad7-4fbe-835d-e92bb3187950?ref=2FD41D"
+  },
+  {
+   "step": "[회원M] 「링크 복사」 → 클립보드 = 공유 링크",
+   "ok": true,
+   "detail": "http://localhost:5174/mall/3fdbde25-7ad7-4fbe-835d-e92bb3187950?ref=2FD41D"
+  },
+  {
+   "step": "[회원M] /mall/{id} 390px 가로 넘침 없음(코드 표시 상태)",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "[회원M] 같은 매물은 다시 눌러도 같은 코드(이 매물에 받은 코드) · 새로 발급 안 함 · 무료분 1건만 소모",
+   "ok": true,
+   "detail": "2FD41D"
+  },
+  {
+   "step": "[회원M] 두 번째 매물 「소개코드 공유」 → 결제 안내(새 매물은 추가 결제) · 아직 발급 안 됨",
+   "ok": true,
+   "detail": "무료 소개코드 없음 · 건당 30,000원 — 필요할 때 건마다 받습니다.\n\n결제 연동 키가 없는 환경입니다 — 시험 결제(스텁)로 진행합니다. 실제 돈은 오가지 않습니다.\n\n추가 1건 30,000원 시험 결제(스텁)\n요금제 보기"
+  },
+  {
+   "step": "[회원M] 두 번째 매물 — 시험 결제 후 **다른 코드** · 그 매물 링크",
+   "ok": true,
+   "detail": "('92A1C4', 'http://localhost:5174/mall/76fbffcd-4ec8-47a9-89e7-28c9b78e228c?ref=92A1C4')"
+  },
+  {
+   "step": "[회원M] 콘솔 오류 0 (클릭 후)",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[회원M] 로그인 상태로 자기 링크 열기 → 유입 기록 안 됨(본인)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[방문자] 공유 링크 열기 HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[방문자] sgb_visitor 생성 · sgb_ref = 코드(90일)",
+   "ok": true,
+   "detail": "{'sgb_visitor': '5fe20e4c-6aa6-4d0c-b16e-84c08d0f4d5d', 'sgb_ref': '2FD41D'}"
+  },
+  {
+   "step": "[방문자] sgb_ref 만료 약 90일 · SameSite=Lax",
+   "ok": true,
+   "detail": "[{'name': 'sgb_ref', 'value': '2FD41D', 'domain': 'localhost', 'path': '/', 'expires': 1799510664.565707, 'httpOnly': False, 'secure': False, 'sameSite': 'Lax'}]"
+  },
+  {
+   "step": "[방문자] attribution_events 1건 (코드 · 방문자 키)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[방문자] 같은 링크 재방문 · 새로고침 → 중복 기록 없음(여전히 1건)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[방문자] 화면 가입 → 방문자 키가 새 계정에 연결(visitor_identities)",
+   "ok": true,
+   "detail": "3eea0e3a-61dc-4345-a53d-e7a4ef5c69cf"
+  },
+  {
+   "step": "[방문자] 화면 본인인증",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[방문자] 그 매물에 문의 → 거래 생성 → deals.introducer_account_id = 코드 주인(회원M)",
+   "ok": true,
+   "detail": "(201, 201, {'dealId': 'ff82b4af-3001-40a6-970a-d911ebe3dfa7', 'attributedCode': '2FD41D'}, 'e7d3b14a-1d41-4fac-ae9f-a6ec8af7b0a2|2FD41D')"
+  },
+  {
+   "step": "[방문자2] A 매물 링크로 들어와 **B 매물**에 문의 → 거래에 소개자 없음",
+   "ok": true,
+   "detail": "(201, 201, {'dealId': '9b70db8c-0ab3-4a18-ba5c-0071011aa9fa', 'attributedCode': None}, '-|-')"
+  },
+  {
+   "step": "[회원M] /mall/give HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[회원M] /mall/give 내 소개코드 목록 2건 · 유입 수 = DB",
+   "ok": true,
+   "detail": "2"
+  },
+  {
+   "step": "[회원M] /mall/give 목록 — 매물 제목 · 매물로 가는 링크 · 그 매물 공유 링크",
+   "ok": true,
+   "detail": "금천구 사무실 임대 소개 34c047\n2FD41D추가 · 시험 결제이번 달\n받은 날 2026-10-12 · 유입 2회\nhttp://localhost:5174/mall/3fdbde25-7ad7-4fbe-835d-e92"
+  },
+  {
+   "step": "[회원M] /mall/give 내 요금제 줄 — 「무료 소개코드 없음 · 건당 30,000원」 · 「준비 중」 없음",
+   "ok": true,
+   "detail": "본문으로 건너뛰기\n소개뱅크\n소개장터\n안심소개\n소개창업\n소개몰\n소개광장\n이용안내\n소개받기\n|\n파트너센터\n|\n👤 화면시험\n|\n나의공간\n|\n고객센터\n🔔\n로그아웃\n← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물"
+  },
+  {
+   "step": "[회원M] /mall/give 매물 없이 누르는 공유 버튼 없음(scope=listing) · 안내 문구",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원M] /mall/give 내부 링크 전부 200 (19개)",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[회원M] /mall/give 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "step": "[회원M] /mall/give 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[회원M · MEMBER] /my/subscription HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[회원M] /mall/give/pay 잘못된 값 HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[회원M] /mall/give/pay 잘못된 값 → 안내 · 발급 안 함",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원M] /mall/give/pay 매물(listing) 없이 → 발급하지 않음(scope=listing)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[회원M] /mall/give/pay?listing= 매물을 이어받음 — 이미 받은 매물은 같은 코드 · 결제 안 함 · 그 매물 링크",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "step": "[설정 all] 관리자가 all 로 바꾸면 /mall/give 에 받기 버튼이 다시 보임",
+   "ok": true,
+   "detail": "30s"
+  },
+  {
+   "step": "[설정 all] /mall/give HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[설정 all] 「소개코드 공유」(매물 없이) 동작 — 무료분을 다 써서 결제 안내",
+   "ok": true,
+   "detail": "소개코드 받기 · 공유\n\n필요한 사람에게 안심소개 매물을 소개하세요. 상대가 소개 링크로 들어와 90일 안에 문의하면 소개자로 기록됩니다.\n\n무료 소개코드 없음 · 건당 30,000원 — 필요할 때 건마다 받습니다."
+  },
+  {
+   "step": "[설정] refcode.scope 를 listing 으로 되돌림 · 사이트 반영",
+   "ok": true,
+   "detail": "30s"
+  },
+  {
+   "step": "[intro] 화면 로그인",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "[intro] /mall/{id} HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "step": "[intro] 「소개코드 공유」(STANDARD) → 포함분이 남았거나 이미 받은 매물이면 코드 · 아니면 결제 안내",
+   "ok": true,
+   "detail": "(3, False)"
+  },
+  {
+   "step": "[intro] /mall/give HTTP 200 · Application error 없음 · 콘솔 오류 0",
+   "ok": true,
+   "detail": "(200, [])"
+  }
+ ]
+}

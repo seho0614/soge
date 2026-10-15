@@ -1,0 +1,11 @@
+소개뱅크 AWS 적용 — v10.41 (2026-10-14 16:01:23 KST)
+새 킷 /tmp/awshome/SGB_DevDocker_Integrated_20261002_v10_41/sgb  →  앱 폴더 /tmp/awshome/sgb
+
+[0] 전제 확인
+  통과  Node.js v22.22.0
+  통과  메모리 + 스왑 8029MB
+  통과  디스크 여유 11298MB
+
+!! 멈춥니다 — .env 에 개발용 값이 남아 있습니다
+   돌던 서비스는 건드리지 않았습니다. JWT_SECRET · ENC_KEY · JOB_TOKEN 을 서버에서 새로 만든 값으로 바꾸십시오.
+   기록: /tmp/awshome/sgb-data/logs/apply_20261014_160123.txt

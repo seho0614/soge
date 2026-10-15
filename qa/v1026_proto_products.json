@@ -1,0 +1,3137 @@
+{
+ "_about": "소개몰 시안(spec/proto.html · <script id=\"hltmall-app\"> 19143–22417줄)에서 뽑은 견본 자료. 2026-10-08 Playwright 로 한 번 열어 window.__hlt 에서 읽음(외부 요청 2건 차단 — 글꼴). 파생값(sale · off · minUnit · options[].unit · label)은 시안의 계산식(19393–19416줄) 결과 그대로.",
+ "_fields": {
+  "list": "정가",
+  "sale": "대표 판매가 = 가장 짧은 개월 수 옵션(마지막 옵션)의 결제 금액",
+  "off": "할인율 = round((1 − sale/list) × 100) · list > sale 일 때만",
+  "minUnit": "한 달 단가 최솟값 = min(옵션 결제 금액 / 개월 수, 반올림)",
+  "options[].stock": "옵션별 재고(STOCK[상품:옵션])",
+  "phase": "갈래의 단계 — OPEN_PHASE(1)보다 크면 잠김",
+  "rate/rev/photo": "별점 · 후기 수 · 포토리뷰 수(지어낸 예시)"
+ },
+ "products": [
+  {
+   "id": "p01",
+   "ing": "VITC",
+   "ingName": "비타민C",
+   "amt": "3,000mg",
+   "seller": "direct",
+   "sellerName": "소개뱅크 직판관",
+   "sellerType": "DIRECT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "메가바이탈 비타민C 3000",
+   "sum": "1일 1포 · 물 없이 먹는 분말형 · 3g × 90포",
+   "list": 36750,
+   "sale": 14700,
+   "off": 60,
+   "minUnit": 3900,
+   "rate": 4.7,
+   "rev": 495,
+   "photo": 12,
+   "badge": "신규입점",
+   "form": "BOX",
+   "art": "GOLD",
+   "caution": "위가 약한 분은 식후에 드십시오. 1일 권장량을 넘기지 마십시오.",
+   "tags": [
+    "ANTIOX",
+    "IMMUNE",
+    "SKIN"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "art",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 9,
+     "pay": 35100,
+     "unit": 3900,
+     "tail": "2+1",
+     "label": "월 3,900원 × 9개월 분 : 메가바이탈 비타민C 3000 2+1",
+     "stock": 26
+    },
+    {
+     "i": 1,
+     "months": 6,
+     "pay": 25200,
+     "unit": 4200,
+     "tail": "1+1",
+     "label": "월 4,200원 × 6개월 분 : 메가바이탈 비타민C 3000 1+1",
+     "stock": 31
+    },
+    {
+     "i": 2,
+     "months": 3,
+     "pay": 14700,
+     "unit": 4900,
+     "tail": "",
+     "label": "월 4,900원 × 3개월 분 : 메가바이탈 비타민C 3000",
+     "stock": 54
+    }
+   ],
+   "notice": {
+    "제품명": "메가바이탈 비타민C 3000",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "1688-2887"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p02",
+   "ing": "VITD",
+   "ingName": "비타민D",
+   "amt": "2,000IU",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "선데이 비타민D 2000",
+   "sum": "작은 알 · 목넘김 편한 소프트캡슐",
+   "list": 29000,
+   "sale": 9900,
+   "off": 66,
+   "minUnit": 2900,
+   "rate": 4.6,
+   "rev": 1123,
+   "photo": 88,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "과다 섭취 시 고칼슘혈증이 나타날 수 있습니다. 권장량을 지키십시오.",
+   "tags": [
+    "IMMUNE",
+    "BONE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 12,
+     "pay": 34800,
+     "unit": 2900,
+     "tail": "3+1",
+     "label": "월 2,900원 × 12개월 분 : 선데이 비타민D 2000 3+1",
+     "stock": 18
+    },
+    {
+     "i": 1,
+     "months": 6,
+     "pay": 18600,
+     "unit": 3100,
+     "tail": "1+1",
+     "label": "월 3,100원 × 6개월 분 : 선데이 비타민D 2000 1+1",
+     "stock": 40
+    },
+    {
+     "i": 2,
+     "months": 3,
+     "pay": 9900,
+     "unit": 3300,
+     "tail": "",
+     "label": "월 3,300원 × 3개월 분 : 선데이 비타민D 2000",
+     "stock": 66
+    }
+   ],
+   "notice": {
+    "제품명": "선데이 비타민D 2000",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p03",
+   "ing": "OMEGA3",
+   "ingName": "오메가3",
+   "amt": "600mg",
+   "seller": "direct",
+   "sellerName": "소개뱅크 직판관",
+   "sellerType": "DIRECT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "초임계 알티지 rTG 오메가3",
+   "sum": "저온 초임계 추출 · EPA 및 DHA 함유 유지 · 1,045mg × 30캡슐",
+   "list": 82500,
+   "sale": 9900,
+   "off": 88,
+   "minUnit": 6900,
+   "rate": 4.5,
+   "rev": 1100,
+   "photo": 41,
+   "badge": "",
+   "form": "BOX",
+   "art": "BLUE",
+   "caution": "항응고제를 복용 중이면 전문가와 상담하십시오.",
+   "tags": [
+    "EYE",
+    "CIRC",
+    "BRAIN",
+    "MEN"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "art",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 3,
+     "pay": 20700,
+     "unit": 6900,
+     "tail": "2+1",
+     "label": "월 6,900원 × 3개월 분 : 초임계 알티지 rTG 오메가3 2+1",
+     "stock": 19
+    },
+    {
+     "i": 1,
+     "months": 1,
+     "pay": 9900,
+     "unit": 9900,
+     "tail": "",
+     "label": "월 9,900원 × 1개월 분 : 초임계 알티지 rTG 오메가3",
+     "stock": 48
+    }
+   ],
+   "notice": {
+    "제품명": "초임계 알티지 rTG 오메가3",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "1688-2887"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p04",
+   "ing": "LUTEIN",
+   "ingName": "루테인",
+   "amt": "20mg",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "눈 건강엔 루테인 프리미엄",
+   "sum": "마리골드꽃 추출물 · 비타민 7종 · 아연 · 500mg × 60캡슐",
+   "list": 49000,
+   "sale": 9800,
+   "off": 80,
+   "minUnit": 3900,
+   "rate": 4.4,
+   "rev": 699,
+   "photo": 19,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": "COBALT",
+   "caution": "흡연자는 섭취에 주의하십시오.",
+   "tags": [
+    "EYE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "art",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 23400,
+     "unit": 3900,
+     "tail": "1+1",
+     "label": "월 3,900원 × 6개월 분 : 눈 건강엔 루테인 프리미엄 1+1",
+     "stock": 22
+    },
+    {
+     "i": 1,
+     "months": 2,
+     "pay": 9800,
+     "unit": 4900,
+     "tail": "",
+     "label": "월 4,900원 × 2개월 분 : 눈 건강엔 루테인 프리미엄",
+     "stock": 35
+    }
+   ],
+   "notice": {
+    "제품명": "눈 건강엔 루테인 프리미엄",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p16",
+   "ing": "CALC",
+   "ingName": "칼슘",
+   "amt": "300mg",
+   "seller": "hansol",
+   "sellerName": "한솔건강",
+   "sellerType": "TENANT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "칼슘 마그네슘 아연 플러스 비타민D",
+   "sum": "1캡슐당 칼슘 300mg · 6개월분 1,350mg × 180정",
+   "list": 46500,
+   "sale": 18600,
+   "off": 60,
+   "minUnit": 2800,
+   "rate": 4.6,
+   "rev": 126,
+   "photo": 11,
+   "badge": "신규입점",
+   "form": "BOTTLE",
+   "art": "DARK",
+   "caution": "신장 질환이 있으면 전문가와 상담하십시오. 권장량을 지키십시오.",
+   "tags": [
+    "BONE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "art",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 12,
+     "pay": 33600,
+     "unit": 2800,
+     "tail": "3+1",
+     "label": "월 2,800원 × 12개월 분 : 칼슘 마그네슘 아연 플러스 비타민D 3+1",
+     "stock": 14
+    },
+    {
+     "i": 1,
+     "months": 6,
+     "pay": 18600,
+     "unit": 3100,
+     "tail": "",
+     "label": "월 3,100원 × 6개월 분 : 칼슘 마그네슘 아연 플러스 비타민D",
+     "stock": 27
+    }
+   ],
+   "notice": {
+    "제품명": "칼슘 마그네슘 아연 플러스 비타민D",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "031-700-2200"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p05",
+   "ing": "PROBIO",
+   "ingName": "유산균",
+   "amt": "100억 CFU",
+   "seller": "hansol",
+   "sellerName": "한솔건강",
+   "sellerType": "TENANT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "장케어 유산균 100억",
+   "sum": "19종 복합균 · 장까지 살아가는 코팅",
+   "list": 54000,
+   "sale": 15600,
+   "off": 71,
+   "minUnit": 4700,
+   "rate": 4.8,
+   "rev": 908,
+   "photo": 132,
+   "badge": "",
+   "form": "POUCH",
+   "art": null,
+   "caution": "항생제 복용 중에는 2시간 간격을 두십시오.",
+   "tags": [
+    "IMMUNE",
+    "GLUCOSE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 28200,
+     "unit": 4700,
+     "tail": "1+1",
+     "label": "월 4,700원 × 6개월 분 : 장케어 유산균 100억 1+1",
+     "stock": 17
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 15600,
+     "unit": 5200,
+     "tail": "",
+     "label": "월 5,200원 × 3개월 분 : 장케어 유산균 100억",
+     "stock": 29
+    }
+   ],
+   "notice": {
+    "제품명": "장케어 유산균 100억",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "031-700-2200"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p06",
+   "ing": "MAGNE",
+   "ingName": "마그네슘",
+   "amt": "350mg",
+   "seller": "direct",
+   "sellerName": "소개뱅크 직판관",
+   "sellerType": "DIRECT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "마그네슘 350 데일리",
+   "sum": "산화마그네슘 · 눈떨림 고민에",
+   "list": 24900,
+   "sale": 8700,
+   "off": 65,
+   "minUnit": 2900,
+   "rate": 4.5,
+   "rev": 415,
+   "photo": 22,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "설사가 있으면 섭취를 줄이십시오.",
+   "tags": [
+    "SLEEP",
+    "BONE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 17400,
+     "unit": 2900,
+     "tail": "1+1",
+     "label": "월 2,900원 × 6개월 분 : 마그네슘 350 데일리 1+1",
+     "stock": 44
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 8700,
+     "unit": 2900,
+     "tail": "",
+     "label": "월 2,900원 × 3개월 분 : 마그네슘 350 데일리",
+     "stock": 58
+    }
+   ],
+   "notice": {
+    "제품명": "마그네슘 350 데일리",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "1688-2887"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p07",
+   "ing": "MILK",
+   "ingName": "밀크씨슬",
+   "amt": "130mg",
+   "seller": "hansol",
+   "sellerName": "한솔건강",
+   "sellerType": "TENANT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "밀크씨슬 실리마린 130",
+   "sum": "간 건강 · 1일 1정",
+   "list": 33000,
+   "sale": 12900,
+   "off": 61,
+   "minUnit": 3900,
+   "rate": 4.3,
+   "rev": 287,
+   "photo": 9,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "국화과 알레르기가 있으면 피하십시오.",
+   "tags": [
+    "LIVER"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 23400,
+     "unit": 3900,
+     "tail": "1+1",
+     "label": "월 3,900원 × 6개월 분 : 밀크씨슬 실리마린 130 1+1",
+     "stock": 25
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 12900,
+     "unit": 4300,
+     "tail": "",
+     "label": "월 4,300원 × 3개월 분 : 밀크씨슬 실리마린 130",
+     "stock": 37
+    }
+   ],
+   "notice": {
+    "제품명": "밀크씨슬 실리마린 130",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "031-700-2200"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p08",
+   "ing": "MSM",
+   "ingName": "MSM",
+   "amt": "1,500mg",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "MSM 1500 관절",
+   "sum": "식물성 유황",
+   "list": 39000,
+   "sale": 12600,
+   "off": 68,
+   "minUnit": 3900,
+   "rate": 4.4,
+   "rev": 198,
+   "photo": 14,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "수술 예정이면 2주 전 중단하십시오.",
+   "tags": [
+    "BONE",
+    "SKIN"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 23400,
+     "unit": 3900,
+     "tail": "1+1",
+     "label": "월 3,900원 × 6개월 분 : MSM 1500 관절 1+1",
+     "stock": 20
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 12600,
+     "unit": 4200,
+     "tail": "",
+     "label": "월 4,200원 × 3개월 분 : MSM 1500 관절",
+     "stock": 33
+    }
+   ],
+   "notice": {
+    "제품명": "MSM 1500 관절",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p09",
+   "ing": "SAWPAL",
+   "ingName": "쏘팔메토",
+   "amt": "320mg",
+   "seller": "hansol",
+   "sellerName": "한솔건강",
+   "sellerType": "TENANT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "쏘팔메토 320 맨케어",
+   "sum": "1일 1정",
+   "list": 45000,
+   "sale": 14400,
+   "off": 68,
+   "minUnit": 4400,
+   "rate": 4.6,
+   "rev": 521,
+   "photo": 31,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "여성·청소년은 섭취를 권하지 않습니다.",
+   "tags": [
+    "MEN"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 26400,
+     "unit": 4400,
+     "tail": "1+1",
+     "label": "월 4,400원 × 6개월 분 : 쏘팔메토 320 맨케어 1+1",
+     "stock": 15
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 14400,
+     "unit": 4800,
+     "tail": "",
+     "label": "월 4,800원 × 3개월 분 : 쏘팔메토 320 맨케어",
+     "stock": 26
+    }
+   ],
+   "notice": {
+    "제품명": "쏘팔메토 320 맨케어",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "031-700-2200"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p10",
+   "ing": "CABBAGE",
+   "ingName": "양배추",
+   "amt": "1,000mg",
+   "seller": "direct",
+   "sellerName": "소개뱅크 직판관",
+   "sellerType": "DIRECT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "양배추 매스틱 1000",
+   "sum": "속 편한 아침을 위해",
+   "list": 31000,
+   "sale": 8970,
+   "off": 71,
+   "minUnit": 2900,
+   "rate": 4.2,
+   "rev": 176,
+   "photo": 7,
+   "badge": "",
+   "form": "POUCH",
+   "art": null,
+   "caution": "갑상선 질환이 있으면 전문가와 상담하십시오.",
+   "tags": [
+    "STOMACH",
+    "LIVER"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 17400,
+     "unit": 2900,
+     "tail": "1+1",
+     "label": "월 2,900원 × 6개월 분 : 양배추 매스틱 1000 1+1",
+     "stock": 0
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 8970,
+     "unit": 2990,
+     "tail": "",
+     "label": "월 2,990원 × 3개월 분 : 양배추 매스틱 1000",
+     "stock": 48
+    }
+   ],
+   "notice": {
+    "제품명": "양배추 매스틱 1000",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "1688-2887"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p11",
+   "ing": "BITTER",
+   "ingName": "여주",
+   "amt": "500mg",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "여주 사포닌 500",
+   "sum": "식전 섭취 권장",
+   "list": 28000,
+   "sale": 8700,
+   "off": 69,
+   "minUnit": 2490,
+   "rate": 4.1,
+   "rev": 143,
+   "photo": 5,
+   "badge": "특별가격",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "저혈당 약을 복용 중이면 전문가와 상담하십시오.",
+   "tags": [
+    "GLUCOSE",
+    "DIET",
+    "ANTIOX"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 14940,
+     "unit": 2490,
+     "tail": "1+1",
+     "label": "월 2,490원 × 6개월 분 : 여주 사포닌 500 1+1",
+     "stock": 36
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 8700,
+     "unit": 2900,
+     "tail": "",
+     "label": "월 2,900원 × 3개월 분 : 여주 사포닌 500",
+     "stock": 52
+    }
+   ],
+   "notice": {
+    "제품명": "여주 사포닌 500",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p12",
+   "ing": "COLLA",
+   "ingName": "콜라겐",
+   "amt": "1,500mg",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_COSMETIC",
+   "catName": "화장품",
+   "phase": 1,
+   "grp": "COSMETIC",
+   "name": "저분자 콜라겐 1500",
+   "sum": "어류 유래 · 무향 분말",
+   "list": 42000,
+   "sale": 14700,
+   "off": 65,
+   "minUnit": 4600,
+   "rate": 4.7,
+   "rev": 664,
+   "photo": 57,
+   "badge": "",
+   "form": "POUCH",
+   "art": null,
+   "caution": "어류 알레르기가 있으면 피하십시오.",
+   "tags": [
+    "SKIN",
+    "BONE"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 27600,
+     "unit": 4600,
+     "tail": "1+1",
+     "label": "월 4,600원 × 6개월 분 : 저분자 콜라겐 1500 1+1",
+     "stock": 28
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 14700,
+     "unit": 4900,
+     "tail": "",
+     "label": "월 4,900원 × 3개월 분 : 저분자 콜라겐 1500",
+     "stock": 41
+    }
+   ],
+   "notice": {
+    "용량 또는 중량": "1,500mg",
+    "제품 주요 사양": "상세 설명 참조",
+    "사용기한 또는 개봉 후 사용기간": "상세 설명 참조",
+    "사용방법": "상세 설명 참조",
+    "화장품제조업자": "상세 설명 참조",
+    "화장품책임판매업자": "상세 설명 참조",
+    "제조국": "대한민국",
+    "전성분": "상세 설명 참조",
+    "기능성 화장품 심사필 여부": "상세 설명 참조",
+    "사용할 때의 주의사항": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p13",
+   "ing": "MELA",
+   "ingName": "멜라토닌",
+   "amt": "3mg",
+   "seller": "hansol",
+   "sellerName": "한솔건강",
+   "sellerType": "TENANT",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "굿나잇 멜라토닌 3",
+   "sum": "취침 30분 전",
+   "list": 82500,
+   "sale": 9900,
+   "off": 88,
+   "minUnit": 9900,
+   "rate": 4.5,
+   "rev": 233,
+   "photo": 16,
+   "badge": "특별가격",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "운전 전에는 섭취하지 마십시오. 임신·수유 중에는 피하십시오.",
+   "tags": [
+    "SLEEP"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 3,
+     "pay": 29700,
+     "unit": 9900,
+     "tail": "",
+     "label": "월 9,900원 × 3개월 분 : 굿나잇 멜라토닌 3",
+     "stock": 11
+    },
+    {
+     "i": 1,
+     "months": 1,
+     "pay": 9900,
+     "unit": 9900,
+     "tail": "",
+     "label": "월 9,900원 × 1개월 분 : 굿나잇 멜라토닌 3",
+     "stock": 24
+    }
+   ],
+   "notice": {
+    "제품명": "굿나잇 멜라토닌 3",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "031-700-2200"
+   },
+   "reviews": 8,
+   "qna": 4
+  },
+  {
+   "id": "p14",
+   "ing": "PS",
+   "ingName": "포스파티딜세린",
+   "amt": "300mg",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FOOD",
+   "catName": "건강식품",
+   "phase": 1,
+   "grp": "FOOD",
+   "name": "포스파티딜세린 300",
+   "sum": "1일 1정",
+   "list": 96000,
+   "sale": 15900,
+   "off": 83,
+   "minUnit": 14900,
+   "rate": 4.4,
+   "rev": 97,
+   "photo": 4,
+   "badge": "",
+   "form": "BOTTLE",
+   "art": null,
+   "caution": "항응고제 복용 중이면 전문가와 상담하십시오.",
+   "tags": [
+    "BRAIN"
+   ],
+   "adCopy": null,
+   "adRevNo": null,
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 3,
+     "pay": 44700,
+     "unit": 14900,
+     "tail": "",
+     "label": "월 14,900원 × 3개월 분 : 포스파티딜세린 300",
+     "stock": 8
+    },
+    {
+     "i": 1,
+     "months": 1,
+     "pay": 15900,
+     "unit": 15900,
+     "tail": "",
+     "label": "월 15,900원 × 1개월 분 : 포스파티딜세린 300",
+     "stock": 19
+    }
+   ],
+   "notice": {
+    "제품명": "포스파티딜세린 300",
+    "식품유형": "상세 설명 참조",
+    "생산자": "상세 설명 참조",
+    "소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "포장단위별 내용물의 용량": "상세 설명 참조",
+    "원재료명": "상세 설명 참조",
+    "영양성분": "상세 설명 참조",
+    "보관방법": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 3
+  },
+  {
+   "id": "p15",
+   "ing": "MULTI",
+   "ingName": "멀티비타민",
+   "amt": "1일분",
+   "seller": "green",
+   "sellerName": "그린랩 공식몰",
+   "sellerType": "BRAND",
+   "cat": "HLT_FUNC",
+   "catName": "건강기능식품",
+   "phase": 2,
+   "grp": "HFF",
+   "name": "멀티비타민 데일리팩",
+   "sum": "1일 1포 · 12종 비타민 + 9종 미네랄",
+   "list": 66000,
+   "sale": 19800,
+   "off": 70,
+   "minUnit": 5900,
+   "rate": 4.6,
+   "rev": 389,
+   "photo": 27,
+   "badge": "",
+   "form": "POUCH",
+   "art": null,
+   "caution": "의약품을 복용 중이거나 임신·수유 중이면 전문가와 상담하십시오.",
+   "tags": [
+    "FATIGUE",
+    "IMMUNE"
+   ],
+   "adCopy": "비타민D는 칼슘과 인이 흡수되고 이용되는 데 필요하며, 뼈의 형성과 유지에 도움을 줄 수 있습니다.",
+   "adRevNo": "한국건강기능식품협회 제2026-1234호",
+   "keys": [
+    "id",
+    "ing",
+    "amt",
+    "seller",
+    "cat",
+    "name",
+    "sum",
+    "list",
+    "opt",
+    "rate",
+    "rev",
+    "photo",
+    "badge",
+    "form",
+    "adCopy",
+    "adRevNo",
+    "caution",
+    "tags",
+    "ingName",
+    "catName",
+    "phase",
+    "grp",
+    "options",
+    "minUnit",
+    "sale",
+    "off",
+    "notice",
+    "reviews",
+    "qna"
+   ],
+   "options": [
+    {
+     "i": 0,
+     "months": 6,
+     "pay": 35400,
+     "unit": 5900,
+     "tail": "1+1",
+     "label": "월 5,900원 × 6개월 분 : 멀티비타민 데일리팩 1+1",
+     "stock": 30
+    },
+    {
+     "i": 1,
+     "months": 3,
+     "pay": 19800,
+     "unit": 6600,
+     "tail": "",
+     "label": "월 6,600원 × 3개월 분 : 멀티비타민 데일리팩",
+     "stock": 44
+    }
+   ],
+   "notice": {
+    "제품명": "멀티비타민 데일리팩",
+    "식품의 유형": "상세 설명 참조",
+    "제조업소 명칭과 소재지": "상세 설명 참조",
+    "제조연월일": "상세 설명 참조",
+    "유통기한": "제조일로부터 24개월",
+    "용량": "상세 설명 참조",
+    "원재료명 및 함량": "상세 설명 참조",
+    "영양정보": "상세 설명 참조",
+    "기능정보": "상세 설명 참조",
+    "섭취량 및 섭취방법": "상세 설명 참조",
+    "섭취 시 주의사항": "상세 설명 참조",
+    "건강기능식품 도안": "상세 설명 참조",
+    "소비자상담 전화": "02-555-0101"
+   },
+   "reviews": 8,
+   "qna": 4
+  }
+ ],
+ "ingredients": [
+  {
+   "code": "VITC",
+   "name": "비타민C",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 3900,
+   "n": 1
+  },
+  {
+   "code": "VITD",
+   "name": "비타민D",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 2900,
+   "n": 1
+  },
+  {
+   "code": "CALC",
+   "name": "칼슘",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 2800,
+   "n": 1
+  },
+  {
+   "code": "OMEGA3",
+   "name": "오메가3",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 6900,
+   "n": 1
+  },
+  {
+   "code": "LUTEIN",
+   "name": "루테인",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 3900,
+   "n": 1
+  },
+  {
+   "code": "PROBIO",
+   "name": "유산균",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": 4700,
+   "n": 1
+  },
+  {
+   "code": "MULTI",
+   "name": "멀티비타민",
+   "feat": 1,
+   "reg": 1,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "MAGNE",
+   "name": "마그네슘",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 2900,
+   "n": 1
+  },
+  {
+   "code": "MILK",
+   "name": "밀크씨슬",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 3900,
+   "n": 1
+  },
+  {
+   "code": "MSM",
+   "name": "MSM",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 3900,
+   "n": 1
+  },
+  {
+   "code": "SAWPAL",
+   "name": "쏘팔메토",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 4400,
+   "n": 1
+  },
+  {
+   "code": "COLLA",
+   "name": "콜라겐",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 4600,
+   "n": 1
+  },
+  {
+   "code": "GARCI",
+   "name": "가르시니아",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "THEAN",
+   "name": "테아닌",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "CABBAGE",
+   "name": "양배추",
+   "feat": 0,
+   "reg": 0,
+   "minUnit": 2900,
+   "n": 1
+  },
+  {
+   "code": "BITTER",
+   "name": "여주",
+   "feat": 0,
+   "reg": 0,
+   "minUnit": 2490,
+   "n": 1
+  },
+  {
+   "code": "ALBU",
+   "name": "알부민",
+   "feat": 0,
+   "reg": 0,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "KAMUT",
+   "name": "카무트",
+   "feat": 0,
+   "reg": 0,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "PS",
+   "name": "포스파티딜세린",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 14900,
+   "n": 1
+  },
+  {
+   "code": "MELA",
+   "name": "멜라토닌",
+   "feat": 0,
+   "reg": 1,
+   "minUnit": 9900,
+   "n": 1
+  },
+  {
+   "code": "BERRY",
+   "name": "블루베리·베리류",
+   "feat": 0,
+   "reg": 0,
+   "group": 1,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "BLUEB",
+   "name": "블루베리",
+   "feat": 0,
+   "reg": 0,
+   "parent": "BERRY",
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "BILB",
+   "name": "빌베리",
+   "feat": 0,
+   "reg": 0,
+   "parent": "BERRY",
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "HONG",
+   "name": "홍삼·한방성분",
+   "feat": 0,
+   "reg": 0,
+   "group": 1,
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "REDGIN",
+   "name": "홍삼",
+   "feat": 0,
+   "reg": 1,
+   "parent": "HONG",
+   "minUnit": null,
+   "n": 0
+  },
+  {
+   "code": "DEER",
+   "name": "녹용",
+   "feat": 0,
+   "reg": 0,
+   "parent": "HONG",
+   "minUnit": null,
+   "n": 0
+  }
+ ],
+ "concerns": [
+  {
+   "code": "IMMUNE",
+   "name": "면역",
+   "icon": "🛡",
+   "ing": [
+    "PROBIO",
+    "VITC",
+    "VITD",
+    "MULTI"
+   ]
+  },
+  {
+   "code": "EYE",
+   "name": "눈",
+   "icon": "👁",
+   "ing": [
+    "LUTEIN",
+    "OMEGA3",
+    "BLUEB",
+    "BILB"
+   ]
+  },
+  {
+   "code": "BONE",
+   "name": "뼈 · 연골 · 관절",
+   "icon": "🦴",
+   "ing": [
+    "CALC",
+    "VITD",
+    "MAGNE",
+    "MSM",
+    "COLLA"
+   ]
+  },
+  {
+   "code": "LIVER",
+   "name": "간",
+   "icon": "🫀",
+   "ing": [
+    "MILK",
+    "CABBAGE"
+   ]
+  },
+  {
+   "code": "MEN",
+   "name": "남성 · 전립선",
+   "icon": "🚹",
+   "ing": [
+    "SAWPAL",
+    "OMEGA3"
+   ]
+  },
+  {
+   "code": "SLEEP",
+   "name": "수면 · 스트레스",
+   "icon": "🌙",
+   "ing": [
+    "THEAN",
+    "MAGNE",
+    "MELA"
+   ]
+  },
+  {
+   "code": "DIET",
+   "name": "다이어트",
+   "icon": "⚖️",
+   "ing": [
+    "GARCI",
+    "BITTER"
+   ]
+  },
+  {
+   "code": "GLUCOSE",
+   "name": "혈당",
+   "icon": "📉",
+   "ing": [
+    "BITTER",
+    "PROBIO"
+   ]
+  },
+  {
+   "code": "SKIN",
+   "name": "피부 · 모발",
+   "icon": "✨",
+   "ing": [
+    "COLLA",
+    "MSM",
+    "VITC"
+   ]
+  },
+  {
+   "code": "FATIGUE",
+   "name": "피로회복",
+   "icon": "🔋",
+   "ing": [
+    "MULTI",
+    "REDGIN",
+    "DEER",
+    "ALBU"
+   ]
+  },
+  {
+   "code": "BRAIN",
+   "name": "두뇌",
+   "icon": "🧠",
+   "ing": [
+    "PS",
+    "OMEGA3"
+   ]
+  },
+  {
+   "code": "STOMACH",
+   "name": "위",
+   "icon": "🍽",
+   "ing": [
+    "CABBAGE"
+   ]
+  },
+  {
+   "code": "ANTIOX",
+   "name": "항산화",
+   "icon": "🍇",
+   "ing": [
+    "VITC",
+    "BLUEB",
+    "BILB",
+    "BITTER",
+    "KAMUT"
+   ]
+  },
+  {
+   "code": "CIRC",
+   "name": "혈행",
+   "icon": "🩺",
+   "ing": [
+    "OMEGA3",
+    "REDGIN"
+   ]
+  }
+ ],
+ "categories": {
+  "HLT_FOOD": {
+   "name": "건강식품",
+   "phase": 1,
+   "grp": "FOOD"
+  },
+  "HLT_COSMETIC": {
+   "name": "화장품",
+   "phase": 1,
+   "grp": "COSMETIC"
+  },
+  "HLT_FUNC": {
+   "name": "건강기능식품",
+   "phase": 2,
+   "grp": "HFF"
+  }
+ },
+ "openPhase": 1,
+ "sellers": {
+  "direct": {
+   "id": "direct",
+   "type": "DIRECT",
+   "slug": "direct",
+   "name": "소개뱅크 직판관",
+   "company": "(주)한국바이오헬스케어 소개뱅크 사업부",
+   "ceo": "노명석",
+   "bizNo": "429-88-01533",
+   "ecom": "제2020-서울금천-1772호",
+   "addr": "서울 금천구 디지털로9길 65 (가산동, 백상스타타워1차) 307호",
+   "csTel": "1688-2887",
+   "shipFee": 0,
+   "freeAt": 0,
+   "returnFee": 6000,
+   "exchangeFee": 6000,
+   "returnAddr": "서울 금천구 디지털로9길 65 (가산동, 백상스타타워1차) 307호"
+  },
+  "green": {
+   "id": "green",
+   "type": "BRAND",
+   "slug": "greenlab",
+   "name": "그린랩 공식몰",
+   "company": "그린랩(주)",
+   "ceo": "김서연",
+   "bizNo": "214-81-00021",
+   "ecom": "제2024-서울강남-0912호",
+   "addr": "서울 강남구 테헤란로 132",
+   "csTel": "02-555-0101",
+   "shipFee": 0,
+   "freeAt": 0,
+   "returnFee": 6000,
+   "exchangeFee": 6000,
+   "returnAddr": "경기 용인시 기흥구 물류로 8"
+  },
+  "hansol": {
+   "id": "hansol",
+   "type": "TENANT",
+   "slug": "hansol",
+   "name": "한솔건강",
+   "company": "한솔건강상사",
+   "ceo": "박정우",
+   "bizNo": "132-25-88104",
+   "ecom": "제2025-경기성남-0447호",
+   "addr": "경기 성남시 분당구 대왕판교로 700",
+   "csTel": "031-700-2200",
+   "shipFee": 0,
+   "freeAt": 0,
+   "returnFee": 6000,
+   "exchangeFee": 6000,
+   "returnAddr": "경기 성남시 분당구 대왕판교로 700"
+  }
+ },
+ "sampleOrders": [
+  {
+   "no": "H20260908-000041",
+   "sellerId": "direct",
+   "status": "DELIVERED",
+   "items": [
+    {
+     "pid": "p01",
+     "oi": 2,
+     "qty": 1,
+     "price": 14700,
+     "name": "데일리 비타민C 3000",
+     "opt": "3개월 분"
+    }
+   ],
+   "goods": 14700,
+   "ship": 0,
+   "total": 14700
+  },
+  {
+   "no": "H20260903-000018",
+   "sellerId": "hansol",
+   "status": "CONFIRMED",
+   "items": [
+    {
+     "pid": "p05",
+     "oi": 1,
+     "qty": 1,
+     "price": 15600,
+     "name": "장케어 유산균 100억",
+     "opt": "3개월 분"
+    }
+   ],
+   "goods": 15600,
+   "ship": 0,
+   "total": 15600
+  },
+  {
+   "no": "H20260914-000073",
+   "sellerId": "green",
+   "status": "PREPARING",
+   "items": [
+    {
+     "pid": "p02",
+     "oi": 1,
+     "qty": 1,
+     "price": 18600,
+     "name": "선데이 비타민D 2000",
+     "opt": "6개월 분"
+    }
+   ],
+   "goods": 18600,
+   "ship": 0,
+   "total": 18600
+  }
+ ],
+ "screens": [
+  "SB-HLT-HUB-010",
+  "SB-HLT-HUB-020",
+  "SB-HLT-CAT-010",
+  "SB-HLT-CAT-020",
+  "SB-HLT-PRD-010",
+  "SB-HLT-CRT-010",
+  "SB-HLT-ORD-010",
+  "SB-HLT-ORD-020",
+  "SB-HLT-ORD-030",
+  "SB-HLT-ORD-040",
+  "SB-HLT-MYO-010",
+  "SB-HLT-MYO-020",
+  "SB-HLT-MYO-030",
+  "SB-HLT-RTN-010",
+  "SB-HLT-RTN-020",
+  "SB-HLT-ADR-010",
+  "SB-HLT-ETC-010",
+  "SB-HLT-CAT-030",
+  "SB-HLT-CAT-040",
+  "SB-HLT-CAT-050",
+  "SB-HLT-CAT-060"
+ ],
+ "routes": {
+  "SB-HLT-HUB-010": "#/",
+  "SB-HLT-HUB-020": "#/direct",
+  "SB-HLT-CAT-010": "#/c/HLT_FOOD",
+  "SB-HLT-CAT-020": "#/search",
+  "SB-HLT-CAT-030": "#/ingredients",
+  "SB-HLT-CAT-040": "#/i/VITC",
+  "SB-HLT-CAT-050": "#/concerns",
+  "SB-HLT-CAT-060": "#/w/IMMUNE",
+  "SB-HLT-PRD-010": "#/p/p01",
+  "SB-HLT-CRT-010": "#/cart",
+  "SB-HLT-ORD-010": "#/order",
+  "SB-HLT-ORD-020": "#/order/pay",
+  "SB-HLT-ORD-030": "#/order/done",
+  "SB-HLT-ORD-040": "#/order/fail",
+  "SB-HLT-MYO-010": "#/my/orders",
+  "SB-HLT-MYO-020": "#/my/orders/H20260908-000041",
+  "SB-HLT-MYO-030": "#/my/orders/H20260908-000041/track",
+  "SB-HLT-RTN-010": "#/my/returns/new",
+  "SB-HLT-RTN-020": "#/my/returns",
+  "SB-HLT-ADR-010": "#/my/addresses",
+  "SB-HLT-ETC-010": "#/guide"
+ },
+ "mainSamples": {
+  "SHOP_ING": [
+   [
+    "ing-01",
+    "비타민",
+    "VITC"
+   ],
+   [
+    "ing-02",
+    "유산균",
+    "PROBIO"
+   ],
+   [
+    "ing-03",
+    "오메가 3",
+    "OMEGA3"
+   ],
+   [
+    "ing-04",
+    "루테인",
+    "LUTEIN"
+   ],
+   [
+    "ing-05",
+    "마그네슘",
+    "MAGNE"
+   ],
+   [
+    "ing-06",
+    "콜라겐",
+    "COLLA"
+   ],
+   [
+    "ing-07",
+    "홍삼",
+    "REDGIN"
+   ],
+   [
+    "ing-08",
+    "밀크씨슬",
+    "MILK"
+   ],
+   [
+    "ing-09",
+    "단백질",
+    ""
+   ],
+   [
+    "ing-10",
+    "칼슘",
+    "CALC"
+   ]
+  ],
+  "SHOP_CON": [
+   [
+    "con-01",
+    "면역력",
+    "IMMUNE"
+   ],
+   [
+    "con-02",
+    "눈건강",
+    "EYE"
+   ],
+   [
+    "con-03",
+    "혈행,혈압",
+    "CIRC"
+   ],
+   [
+    "con-04",
+    "장 건강",
+    ""
+   ],
+   [
+    "con-05",
+    "간 건강",
+    "LIVER"
+   ],
+   [
+    "con-06",
+    "뼈, 관절",
+    "BONE"
+   ],
+   [
+    "con-07",
+    "피부, 미용",
+    "SKIN"
+   ],
+   [
+    "con-08",
+    "다이어트",
+    "DIET"
+   ],
+   [
+    "con-09",
+    "남성 건강",
+    "MEN"
+   ],
+   [
+    "con-10",
+    "여성 건강",
+    ""
+   ]
+  ],
+  "SHOP_LOW": [
+   [
+    "low-01",
+    "비타민C",
+    2000,
+    14700,
+    "비타민C 1,000mg",
+    "VITC"
+   ],
+   [
+    "low-02",
+    "유산균",
+    2300,
+    19800,
+    "프로바이오 500mg",
+    "PROBIO"
+   ],
+   [
+    "low-03",
+    "루테인",
+    2400,
+    21900,
+    "루테인 20mg",
+    "LUTEIN"
+   ],
+   [
+    "low-04",
+    "마그네슘",
+    2600,
+    16600,
+    "마그네슘 350mg",
+    "MAGNE"
+   ],
+   [
+    "low-05",
+    "콜라겐",
+    3200,
+    22500,
+    "콜라겐 1,500mg",
+    "COLLA"
+   ],
+   [
+    "low-06",
+    "오메가3",
+    3800,
+    24900,
+    "오메가3 1,000mg",
+    "OMEGA3"
+   ],
+   [
+    "low-07",
+    "홍삼",
+    4700,
+    29900,
+    "홍삼 진액 스틱",
+    "REDGIN"
+   ],
+   [
+    "low-08",
+    "밀크씨슬",
+    4900,
+    28000,
+    "밀크씨슬 130mg",
+    "MILK"
+   ]
+  ],
+  "SHOP_RANK": {
+   "hot": [
+    [
+     "rank-01",
+     "비타민C 1,000mg",
+     14700,
+     39,
+     "VITC"
+    ],
+    [
+     "rank-02",
+     "오메가3 1,000mg",
+     24900,
+     35,
+     "OMEGA3"
+    ],
+    [
+     "rank-03",
+     "루테인 20mg",
+     21900,
+     37,
+     "LUTEIN"
+    ],
+    [
+     "rank-04",
+     "유산균 500mg",
+     19800,
+     38,
+     "PROBIO"
+    ],
+    [
+     "rank-05",
+     "마그네슘 350mg",
+     16500,
+     41,
+     "MAGNE"
+    ]
+   ],
+   "fresh": [
+    [
+     "new-01",
+     "홍삼 진액스틱 30포",
+     34900,
+     0,
+     "REDGIN"
+    ],
+    [
+     "new-02",
+     "포스트바이오틱스",
+     27800,
+     0,
+     "PROBIO"
+    ],
+    [
+     "new-03",
+     "관절건강 MSM",
+     19900,
+     0,
+     "MSM"
+    ],
+    [
+     "new-04",
+     "어린이 비타민D",
+     15900,
+     0,
+     "VITD"
+    ],
+    [
+     "rank-05",
+     "마그네슘 350mg",
+     16500,
+     41,
+     "MAGNE"
+    ]
+   ],
+   "many": [
+    [
+     "many-01",
+     "비타민C 1,000mg",
+     14700,
+     39,
+     "VITC"
+    ],
+    [
+     "many-02",
+     "유산균 500mg",
+     19800,
+     38,
+     "PROBIO"
+    ],
+    [
+     "many-03",
+     "루테인 20mg",
+     21900,
+     37,
+     "LUTEIN"
+    ],
+    [
+     "many-04",
+     "마그네슘 350mg",
+     16500,
+     41,
+     "MAGNE"
+    ],
+    [
+     "many-05",
+     "콜라겐 1,500mg",
+     22900,
+     40,
+     "COLLA"
+    ]
+   ]
+  },
+  "SHOP_TABS": [
+   [
+    "hot",
+    "실시간 인기"
+   ],
+   [
+    "fresh",
+    "새로 올라온 상품"
+   ],
+   [
+    "many",
+    "많이 찾는 상품"
+   ]
+  ],
+  "SHOP_MANY": [
+   [
+    "many-01",
+    "비타민C 1,000mg",
+    14700,
+    "VITC"
+   ],
+   [
+    "many-02",
+    "유산균 500mg",
+    19800,
+    "PROBIO"
+   ],
+   [
+    "many-03",
+    "루테인 20mg",
+    21900,
+    "LUTEIN"
+   ],
+   [
+    "many-04",
+    "마그네슘 350mg",
+    16500,
+    "MAGNE"
+   ],
+   [
+    "many-05",
+    "콜라겐 1,500mg",
+    22900,
+    "COLLA"
+   ],
+   [
+    "many-06",
+    "밀크씨슬 130mg",
+    18900,
+    "MILK"
+   ]
+  ],
+  "SHOP_NEW": [
+   [
+    "new-01",
+    "홍삼 진액스틱 30포",
+    34900,
+    "4.8",
+    123,
+    "REDGIN"
+   ],
+   [
+    "new-02",
+    "포스트바이오틱스",
+    27800,
+    "4.7",
+    86,
+    "PROBIO"
+   ],
+   [
+    "new-03",
+    "관절건강 MSM",
+    19900,
+    "4.6",
+    94,
+    "MSM"
+   ],
+   [
+    "new-04",
+    "어린이 비타민D",
+    15900,
+    "4.8",
+    65,
+    "VITD"
+   ]
+  ],
+  "SHOP_DEAL": [
+   [
+    "deal-01",
+    "비타민C 1,000mg",
+    "프리미엄 정",
+    "하루 한 알, 활력 충전",
+    14700,
+    24000,
+    "4.8",
+    1234,
+    "VITC"
+   ],
+   [
+    "deal-02",
+    "유산균 500mg",
+    "프로바이오틱스",
+    "장 건강을 위한 선택",
+    19800,
+    32000,
+    "4.9",
+    856,
+    "PROBIO"
+   ],
+   [
+    "deal-03",
+    "루테인 20mg",
+    "눈 건강 포뮬러",
+    "하루 한 알, 선명한 하루",
+    21900,
+    35000,
+    "4.8",
+    642,
+    "LUTEIN"
+   ],
+   [
+    "deal-04",
+    "마그네슘 350mg",
+    "에너지 밸런스",
+    "활기찬 하루를 위해",
+    16500,
+    28000,
+    "4.7",
+    421,
+    "MAGNE"
+   ],
+   [
+    "deal-05",
+    "콜라겐 1,500mg",
+    "저분자 피쉬콜라겐",
+    "탱탱한 피부를 위한 선택",
+    22900,
+    38000,
+    "4.8",
+    978,
+    "COLLA"
+   ],
+   [
+    "deal-06",
+    "밀크씨슬 130mg",
+    "간 건강 포뮬러",
+    "간 건강을 위한 하루 한 알",
+    18900,
+    29000,
+    "4.7",
+    512,
+    "MILK"
+   ]
+  ],
+  "SHOP_WS": [
+   [
+    "건강기능식품",
+    "홍삼 농축액 스틱 도매 · 건강기능식품 인정번호 제2019-15호",
+    360000
+   ],
+   [
+    "건강식품",
+    "국산 도라지청 납품 · 품목제조신고 제2024-8821호",
+    240000
+   ],
+   [
+    "운동 · 재활 용품",
+    "재활용 실내 자전거 20대 도매",
+    420000
+   ],
+   [
+    "위생 · 방역 용품",
+    "손소독제 대용량 납품 · 의약외품 신고 완료",
+    150000
+   ]
+  ]
+ },
+ "checks": {
+  "searchSuggest": {
+   "비타": {
+    "hidden": false,
+    "items": [
+     "🔍 비타민C 성분",
+     "🔍 비타민D 성분",
+     "🔍 멀티비타민 성분"
+    ]
+   },
+   "메가": {
+    "hidden": false,
+    "items": [
+     "🔍 오메가3 성분"
+    ]
+   },
+   "콜라": {
+    "hidden": false,
+    "items": [
+     "🔍 콜라겐 성분"
+    ]
+   },
+   "오메": {
+    "hidden": false,
+    "items": [
+     "🔍 오메가3 성분"
+    ]
+   },
+   "유산": {
+    "hidden": false,
+    "items": [
+     "🔍 유산균 성분"
+    ]
+   },
+   "홍": {
+    "hidden": false,
+    "items": [
+     "🔍 홍삼·한방성분 성분",
+     "🔍 홍삼 성분"
+    ]
+   },
+   "루테인 프": {
+    "hidden": true,
+    "items": []
+   },
+   "밀크": {
+    "hidden": false,
+    "items": [
+     "🔍 밀크씨슬 성분"
+    ]
+   },
+   "칼슘": {
+    "hidden": true,
+    "items": []
+   }
+  },
+  "typeofPRD": "undefined",
+  "searchResults": {
+   "비타민C": {
+    "n": 1,
+    "names": [
+     "메가바이탈 비타민C 3000"
+    ]
+   },
+   "유산균": {
+    "n": 1,
+    "names": [
+     "장케어 유산균 100억"
+    ]
+   },
+   "콜라겐": {
+    "n": 1,
+    "names": [
+     "저분자 콜라겐 1500"
+    ]
+   },
+   "멀티비타민": {
+    "n": 0,
+    "names": []
+   },
+   "건강식품": {
+    "n": 14,
+    "names": [
+     "메가바이탈 비타민C 3000",
+     "선데이 비타민D 2000",
+     "초임계 알티지 rTG 오메가3",
+     "눈 건강엔 루테인 프리미엄",
+     "칼슘 마그네슘 아연 플러스 비타민D",
+     "장케어 유산균 100억",
+     "마그네슘 350 데일리",
+     "밀크씨슬 실리마린 130",
+     "MSM 1500 관절",
+     "쏘팔메토 320 맨케어",
+     "양배추 매스틱 1000",
+     "여주 사포닌 500",
+     "굿나잇 멜라토닌 3",
+     "포스파티딜세린 300"
+    ]
+   },
+   "화장품": {
+    "n": 1,
+    "names": [
+     "저분자 콜라겐 1500"
+    ]
+   },
+   "마그네슘": {
+    "n": 2,
+    "names": [
+     "칼슘 마그네슘 아연 플러스 비타민D",
+     "마그네슘 350 데일리"
+    ]
+   },
+   "루테인": {
+    "n": 1,
+    "names": [
+     "눈 건강엔 루테인 프리미엄"
+    ]
+   }
+  },
+  "ingredientPages": {
+   "VITC": {
+    "head": "최저 월 3,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "메가바이탈 비타민C 3000"
+    ]
+   },
+   "VITD": {
+    "head": "최저 월 2,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "선데이 비타민D 2000"
+    ]
+   },
+   "CALC": {
+    "head": "최저 월 2,800원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "칼슘 마그네슘 아연 플러스 비타민D"
+    ]
+   },
+   "OMEGA3": {
+    "head": "최저 월 6,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "초임계 알티지 rTG 오메가3"
+    ]
+   },
+   "LUTEIN": {
+    "head": "최저 월 3,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "눈 건강엔 루테인 프리미엄"
+    ]
+   },
+   "PROBIO": {
+    "head": "최저 월 4,700원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "장케어 유산균 100억"
+    ]
+   },
+   "MULTI": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "MAGNE": {
+    "head": "최저 월 2,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "마그네슘 350 데일리"
+    ]
+   },
+   "MILK": {
+    "head": "최저 월 3,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "밀크씨슬 실리마린 130"
+    ]
+   },
+   "MSM": {
+    "head": "최저 월 3,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "MSM 1500 관절"
+    ]
+   },
+   "SAWPAL": {
+    "head": "최저 월 4,400원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "쏘팔메토 320 맨케어"
+    ]
+   },
+   "COLLA": {
+    "head": "최저 월 4,600원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "저분자 콜라겐 1500"
+    ]
+   },
+   "GARCI": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "THEAN": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "CABBAGE": {
+    "head": "최저 월 2,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "양배추 매스틱 1000"
+    ]
+   },
+   "BITTER": {
+    "head": "최저 월 2,490원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "여주 사포닌 500"
+    ]
+   },
+   "ALBU": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "KAMUT": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "PS": {
+    "head": "최저 월 14,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "포스파티딜세린 300"
+    ]
+   },
+   "MELA": {
+    "head": "최저 월 9,900원 · 상품 1개",
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": [
+     "굿나잇 멜라토닌 3"
+    ]
+   },
+   "BERRY": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "BLUEB": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "BILB": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "HONG": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "REDGIN": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   },
+   "DEER": {
+    "head": null,
+    "amtChips": [],
+    "sortOpts": [
+     "월 단가 낮은 순",
+     "리뷰 많은 순",
+     "별점 높은 순"
+    ],
+    "cards": []
+   }
+  },
+  "categoryChips": {
+   "HLT_FOOD": [
+    {
+     "t": "건강식품",
+     "disabled": false,
+     "title": null
+    },
+    {
+     "t": "화장품",
+     "disabled": false,
+     "title": null
+    },
+    {
+     "t": "건강기능식품 🔒",
+     "disabled": true,
+     "title": "준비 중입니다 — 2단계 개방"
+    }
+   ],
+   "HLT_COSMETIC": [
+    {
+     "t": "건강식품",
+     "disabled": false,
+     "title": null
+    },
+    {
+     "t": "화장품",
+     "disabled": false,
+     "title": null
+    },
+    {
+     "t": "건강기능식품 🔒",
+     "disabled": true,
+     "title": "준비 중입니다 — 2단계 개방"
+    }
+   ],
+   "HLT_FUNC": [],
+   "HLT_MEDDEV": []
+  },
+  "returnScreen": {
+   "calc_default": "결제 금액\n14,700원\n반품 배송비 (왕복)\n6,000원\n환불 예정액\n8,700원\n고객 귀책이라\n6,000원이 환불액에서 빠집니다.",
+   "itemInputs": [
+    {
+     "checked": true
+    },
+    {
+     "qty": "1",
+     "min": "1",
+     "max": "1"
+    }
+   ],
+   "calc_after_uncheck": "결제 금액\n14,700원\n반품 배송비 (왕복)\n6,000원\n환불 예정액\n8,700원\n고객 귀책이라\n6,000원이 환불액에서 빠집니다.",
+   "checked_after": false,
+   "return_CHANGE_MIND": "결제 금액\n14,700원\n반품 배송비 (왕복)\n6,000원\n환불 예정액\n8,700원\n고객 귀책이라\n6,000원이 환불액에서 빠집니다.",
+   "return_WRONG_ORDER": "결제 금액\n14,700원\n반품 배송비 (왕복)\n6,000원\n환불 예정액\n8,700원\n고객 귀책이라\n6,000원이 환불액에서 빠집니다.",
+   "return_DEFECT": "결제 금액\n14,700원\n반품 배송비 (왕복)\n0원\n환불 예정액\n14,700원\n판매자 귀책이라 비용이 들지 않습니다.",
+   "return_WRONG_ITEM": "결제 금액\n14,700원\n반품 배송비 (왕복)\n0원\n환불 예정액\n14,700원\n판매자 귀책이라 비용이 들지 않습니다.",
+   "return_MISMATCH": "결제 금액\n14,700원\n반품 배송비 (왕복)\n0원\n환불 예정액\n14,700원\n판매자 귀책이라 비용이 들지 않습니다.",
+   "return_DELAY": "결제 금액\n14,700원\n반품 배송비 (왕복)\n0원\n환불 예정액\n14,700원\n판매자 귀책이라 비용이 들지 않습니다.",
+   "exchange_CHANGE_MIND": "교환 배송비 (왕복)\n6,000원\n교환은\n환불 없이\n같은 상품을 다시 보내 드립니다. 고객 귀책이라\n왕복 배송비 6,000원을 부담\n하십니다.",
+   "exchange_WRONG_ORDER": "교환 배송비 (왕복)\n6,000원\n교환은\n환불 없이\n같은 상품을 다시 보내 드립니다. 고객 귀책이라\n왕복 배송비 6,000원을 부담\n하십니다.",
+   "exchange_DEFECT": "교환 배송비 (왕복)\n0원\n교환은 환불 없이 같은 상품을 다시 보내 드립니다. 판매자 귀책이라 비용이 들지 않습니다.",
+   "exchange_WRONG_ITEM": "교환 배송비 (왕복)\n0원\n교환은 환불 없이 같은 상품을 다시 보내 드립니다. 판매자 귀책이라 비용이 들지 않습니다.",
+   "exchange_MISMATCH": "교환 배송비 (왕복)\n0원\n교환은 환불 없이 같은 상품을 다시 보내 드립니다. 판매자 귀책이라 비용이 들지 않습니다.",
+   "exchange_DELAY": "교환 배송비 (왕복)\n0원\n교환은 환불 없이 같은 상품을 다시 보내 드립니다. 판매자 귀책이라 비용이 들지 않습니다.",
+   "after_submit_route": "#/my/returns",
+   "returns_state": [
+    {
+     "no": "R20261008-1000",
+     "orderNo": "H20260908-000041",
+     "type": "EXCHANGE",
+     "typeLabel": "교환",
+     "fee": 6000,
+     "refund": 0,
+     "status": "REQUESTED",
+     "party": "CUSTOMER",
+     "keys": [
+      "no",
+      "orderNo",
+      "at",
+      "type",
+      "typeLabel",
+      "opened",
+      "reasonLabel",
+      "party",
+      "fee",
+      "refund",
+      "status"
+     ]
+    }
+   ],
+   "order_state_after": [
+    {
+     "no": "H20260908-000041",
+     "status": "EXCHANGE_REQUESTED"
+    },
+    {
+     "no": "H20260903-000018",
+     "status": "CONFIRMED"
+    },
+    {
+     "no": "H20260914-000073",
+     "status": "PREPARING"
+    }
+   ]
+  },
+  "bodyScreens": {
+   "count": 194,
+   "keywordHits": [
+    {
+     "k": "reql",
+     "hits": {
+      "재고": 1
+     },
+     "len": 1044
+    },
+    {
+     "k": "affprd",
+     "hits": {
+      "재고": 1,
+      "상품 등록": 1
+     },
+     "len": 939
+    },
+    {
+     "k": "admhst",
+     "hits": {
+      "소개몰": 2
+     },
+     "len": 2106
+    },
+    {
+     "k": "gwansep",
+     "hits": {
+      "소개몰": 1
+     },
+     "len": 1777
+    },
+    {
+     "k": "srvhub",
+     "hits": {
+      "재고": 1
+     },
+     "len": 1445
+    },
+    {
+     "k": "srvstk",
+     "hits": {
+      "재고": 3
+     },
+     "len": 639
+    },
+    {
+     "k": "srvcon",
+     "hits": {
+      "재고": 1
+     },
+     "len": 1116
+    }
+   ]
+  }
+ }
+}

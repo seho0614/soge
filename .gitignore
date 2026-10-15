@@ -1,0 +1,8 @@
+node_modules
+.next/
+dist/
+*.log
+__pycache__/
+/sgb
+/sgb-ads
+.env

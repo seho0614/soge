@@ -1,0 +1,92 @@
+[
+ {
+  "no": "Q-1",
+  "kind": "결함(사용자 웹)",
+  "what": "인증 화면 「돌아가기」 링크의 시험 손잡이 data-verify-back 빠짐",
+  "symptom": "v10.32 에서 /verify 를 시안 scVerify 대로 바꾸며 맨 아래 「돌아가기」를 시안 「← …(으)로 돌아가기」(BackBar)로 옮겼는데 손잡이가 빠짐 — ?next= 로 돌아가는지 보는 시험(G-201)이 링크를 못 찾음 (fix_1027b_ui)",
+  "done": "BackBar 에 linkData(data- 속성) 인자 · 인증 화면 링크에 data-verify-back",
+  "where": "sgb/site/src/components/common/BackBar.tsx · app/verify/page.tsx · 커밋 ce5d5d4",
+  "rerun": "fix_1027b_ui 43 / 43"
+ },
+ {
+  "no": "Q-2",
+  "kind": "결함(사용자 웹 CSS)",
+  "what": "분쟁 유형 칩의 미정의 CSS 토큰 --g600",
+  "symptom": "검사 ⑥ 「site 미정의 CSS 토큰 없음」 1건(verify exit 1) — 대체 값(#4B5563)이 있어 보이는 색은 같았음",
+  "done": "정의된 토큰 --mink2(같은 색)로",
+  "where": "sgb/site/src/styles/proto-my.css · 커밋 1a8272d",
+  "rerun": "verify exit=0"
+ },
+ {
+  "no": "Q-3",
+  "kind": "결함(API 문서)",
+  "what": "GET /admin/audit/policy 응답 스키마 없음",
+  "symptom": "문서 정합성 「구현된 API 에 응답 스키마」 실패 1",
+  "done": "ApiOkResponse 스키마",
+  "where": "sgb/src/modules/govern/audit.controller.ts · 커밋 8b4b948",
+  "rerun": "문서 정합성 26 / 26"
+ },
+ {
+  "no": "Q-4",
+  "kind": "판 이름",
+  "what": "VERSION v10.32 인데 시안 파일 이름은 v10_31",
+  "symptom": "사용자 웹 /proto/SGB_Prototype_v10_32.html 404 (link_check B-1)",
+  "done": "시안을 SGB_Prototype_v10_32.html 로(내용은 v10.31 과 같음 · 제목 줄만 · qa/bump_1032.py) · 사용자 웹 다시 빌드",
+  "where": "킷 최상위 · sgb/spec/proto.html · sgb/site/public/proto · 커밋 bcede68",
+  "rerun": "link_check 44 / 44"
+ },
+ {
+  "no": "Q-5",
+  "kind": "그대로 둠 되살림",
+  "what": "운영 파트너사 — 개발에만 있던 「입점 심사 대기 N건」 · 「미납 한도 초과 N개사」 띠 · 상세 「미청구 / 한도」 줄이 v10.32 시안 반영 중 빠짐",
+  "symptom": "v10.31 → v10.32 에서 없어진 화면 글자 31건 대조로 찾음",
+  "done": "시안 모양 안에 되살림",
+  "where": "sgb/web/src/app/admin/Partners.tsx · 커밋 683136a",
+  "rerun": "btn_bo 문제 0 · 대조표 그림"
+ },
+ {
+  "no": "Q-6",
+  "kind": "시험 자료",
+  "what": "요금제 BASIC 포함 소개코드가 1건으로 남음",
+  "symptom": "중간에 멈춘 검정(12:2x)이 srv_refcode 의 「시험 동안만 1건」 되돌리기 전에 끝남 → P-00 실패",
+  "done": "BASIC 0건(D060 · 시안)으로 되돌림",
+  "where": "개발 DB subscription_plans",
+  "rerun": "srv_refcode 89 / 89"
+ },
+ {
+  "no": "Q-7",
+  "kind": "시험 자료 표",
+  "what": "qa/money_assets.json 이 실제 웹 29장(v10.30 표)",
+  "symptom": "site_mny P-1 (35, 29, 35) — v10.31 때 고친 표가 작업 사본 되돌리기(11:16)로 되돌아감",
+  "done": "6장(flame · side_region · badge_s · star · pin · pin_s)을 「실제 웹」으로 · 킷에도",
+  "where": "qa/money_assets.json · 커밋 ce5d5d4",
+  "rerun": "site_mny 43 / 43"
+ },
+ {
+  "no": "T-1",
+  "kind": "시험",
+  "what": "fix_1028_ui F-U8 · C-U1",
+  "symptom": "인증 화면 글이 시안 글로 바뀜 · 순위 다시 집계 직후 사용자 웹이 앞 순위를 잠깐 기억",
+  "done": "시안 글도 받음 · 다르면 기억 시간을 넘겨 다시 봄",
+  "where": "qa/fix_1028_ui.py",
+  "rerun": "fix_1028_ui 45 / 45"
+ },
+ {
+  "no": "T-2",
+  "kind": "시험",
+  "what": "flow_mall 반품 환불 예상 안내 글",
+  "symptom": "안내가 시안 글(「고객 귀책이라 6,000원이 환불액에서 빠집니다」 강조 상자)로 바뀜 — 금액 · 표 값은 같음",
+  "done": "새 글도 받음",
+  "where": "qa/flow_mall.py",
+  "rerun": "(다시 돌린 결과는 09 시트)"
+ },
+ {
+  "no": "T-3",
+  "kind": "시험",
+  "what": "srv_v1031 피해 사례 하루 3건 한도",
+  "symptom": "같은 날 여러 번 돌리면 시험 회원이 한도(SAFETY_CASE_RATE)에 걸림",
+  "done": "이 시험이 남긴 글만 하루 전으로 돌려 둠",
+  "where": "qa/srv_v1031.py",
+  "rerun": "srv_v1031 156 / 156"
+ }
+]

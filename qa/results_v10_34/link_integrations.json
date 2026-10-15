@@ -1,0 +1,83 @@
+[
+ {
+  "code": "NTS",
+  "name": "국세청 사업자 진위",
+  "status": "TESTING",
+  "key": "NTS_SERVICE_KEY",
+  "code_reads_key": true,
+  "secret_registered": true,
+  "blocks_open": false
+ },
+ {
+  "code": "PG",
+  "name": "전자결제",
+  "status": "TESTING",
+  "key": "TOSS_SECRET_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": true
+ },
+ {
+  "code": "PASS",
+  "name": "본인인증",
+  "status": "NOT_STARTED",
+  "key": "PASS_API_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": true
+ },
+ {
+  "code": "BANK",
+  "name": "1원 계좌인증",
+  "status": "NOT_STARTED",
+  "key": "BANK_VERIFY_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": true
+ },
+ {
+  "code": "ALIMTALK",
+  "name": "알림톡 · SMS",
+  "status": "NOT_STARTED",
+  "key": "ALIMTALK_KEY",
+  "code_reads_key": false,
+  "secret_registered": false,
+  "blocks_open": false
+ },
+ {
+  "code": "SAFENUM",
+  "name": "050 안심번호",
+  "status": "NOT_STARTED",
+  "key": "SAFENUM_KEY",
+  "code_reads_key": false,
+  "secret_registered": false,
+  "blocks_open": false
+ },
+ {
+  "code": "ESIGN",
+  "name": "전자계약",
+  "status": "NOT_STARTED",
+  "key": "ESIGN_API_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": false
+ },
+ {
+  "code": "BROKER",
+  "name": "국토부 중개사 자격 대조",
+  "status": "NOT_STARTED",
+  "key": "BROKER_LOOKUP_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": true
+ },
+ {
+  "code": "ETAX",
+  "name": "전자세금계산서",
+  "status": "NOT_STARTED",
+  "key": "ETAX_KEY",
+  "code_reads_key": true,
+  "secret_registered": false,
+  "blocks_open": true
+ }
+]

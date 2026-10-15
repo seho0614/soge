@@ -1,0 +1,67 @@
+[
+ {
+  "step": "F-1 검색어+관련도순 (전: 500)",
+  "ok": true,
+  "detail": "200 3"
+ },
+ {
+  "step": "F-2 메인 구성 저장이 반영됨 (전: 값을 버림)",
+  "ok": true,
+  "detail": "['notice', 'latest', 'gwan_nav']"
+ },
+ {
+  "step": "F-2b 형식이 틀리면 400",
+  "ok": true,
+  "detail": "400"
+ },
+ {
+  "step": "F-3 입점 대기 목록 = APPLIED 건수 (전: 늘 0)",
+  "ok": true,
+  "detail": "1/1"
+ },
+ {
+  "step": "F-3b 반려 처리 (전: CHECK 위반)",
+  "ok": true,
+  "detail": "{'ok': True, 'id': '8a054352-4514-4270-8ada-980653c7ff75', 'status': 'REJECTED', 'note': '거절했습니다. 사유가 신청자에게 보입니다.'}"
+ },
+ {
+  "step": "F-4a 같은 이름 저장 → 인증 유지",
+  "ok": true,
+  "detail": "{'id': 'b30be36f-d3f9-47b7-8270-1cc9e89dcff9', 'name': '검증회원', 'phone': None, 'earningsPublic': False, 'identityReset': False, 'note': '수정했습니다.'}"
+ },
+ {
+  "step": "F-4b 이름 변경 → 본인인증 해제 (전: 유지)",
+  "ok": true,
+  "detail": "{'id': 'b30be36f-d3f9-47b7-8270-1cc9e89dcff9', 'name': '다른이름', 'phone': None, 'earningsPublic': False, 'identityReset': True, 'note': '수정했습니다. 이름이 바뀌어 본인인증을 다시 하셔야 합니다.'}"
+ },
+ {
+  "step": "F-5a 재고 초과 주문 실패 시 주문 행이 남지 않음 (전: 고아 주문)",
+  "ok": true,
+  "detail": "422 0->0 {'code': 'HLTO', 'message': '재고가 부족합니다 — 데일리 콜라겐 수분 크림 50ml 단품 (남은 수량 40)'}"
+ },
+ {
+  "step": "F-5b 주문 성공 + 장바구니에서 빠짐 (전: 남음)",
+  "ok": true,
+  "detail": "201 H26101200002"
+ },
+ {
+  "step": "F-5c 같은 수단 결제 두 번 → 같은 결제 건 (전: READY 가 쌓임)",
+  "ok": true,
+  "detail": "('e08bce78-2eed-4386-822d-76c7f2dee64c', 'e08bce78-2eed-4386-822d-76c7f2dee64c')"
+ },
+ {
+  "step": "F-5d 수단 변경 → 이전 준비 건 닫힘 · READY 1건 · 주문은 결제 대기 유지",
+  "ok": true,
+  "detail": "{'id': '14ea49fc-f167-42e1-a9cd-8e2a53ccbc1e', 'method': 'VBANK', 'amount': 18000, 'state': 'READY', 'orderNo': 'H26101200002', 'orderName': '데일리 콜라겐 수분 크림 50ml', 'note': '입금하실 계좌를 안내해 드립니다. 입금 확인 후 보"
+ },
+ {
+  "step": "F-5e 같은 주문 취소 중복 접수 → 409 (전: 여러 번 접수)",
+  "ok": true,
+  "detail": "(201, 409, {'code': 'ALREADY_REQUESTED', 'message': '이미 접수된 취소·반품 신청이 있습니다. 처리 결과를 기다려 주십시오.'})"
+ },
+ {
+  "step": "F-5f 품목 없는 결제 대기 주문 0건 (C998 정리)",
+  "ok": true,
+  "detail": ""
+ }
+]

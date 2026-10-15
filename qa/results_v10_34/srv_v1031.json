@@ -1,0 +1,782 @@
+[
+ {
+  "step": "A GET /admin/finance/runway — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/finance/costs — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/policy-items — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/gwans/MNY/open-check — 허용 최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 403, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/gwan-axes — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/ai/learn-settings — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/segments/preview — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/segments/log — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/qualifications/category-master — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partners/cards — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partners/5caeb567-d3aa-4228-8468-70c3ba36ecca/docs — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/brokers/84680a85-eae8-429b-8c70-b85756fb6b7f/evidence — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/audit/policy — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/integration-status — 허용 최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 403, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/adx/overview — 허용 운영·지급·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 200, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/settlements — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/accounts — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/accounts-counts — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/reviews/counts — 허용 검수·운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/auto-review/samples/summary — 허용 검수·운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/badges/history — 허용 검수·운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/audit/logs — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/ad-creatives/slots — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/success-stories — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/safety/cases — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/health/promos — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partner-center/cash — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partner-center/rules — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partner-center/change-requests — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /admin/partner-center/lead-cash-invoices — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A PATCH /admin/policy-items/FEE_BASIS — 허용 최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 403, '최고': 200}"
+ },
+ {
+  "step": "A PATCH /admin/settlements/6ddea387-8cc1-45fa-b47d-2674c9754502 — 허용 운영·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 403, '운영': 409, '최고': 409}"
+ },
+ {
+  "step": "A PATCH /admin/adx/statements/d309ee60-4cb3-43c5-94b4-122e2364cb2d — 허용 운영·지급·최고",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 403, '사업자': 403, '검수': 403, '지급': 409, '운영': 409, '최고': 409}"
+ },
+ {
+  "step": "A GET /me/home — 허용 검수·사업자·운영·최고·회원",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 200, '사업자': 200, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /me/notification-prefs — 허용 검수·사업자·운영·최고·회원",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 200, '사업자': 200, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /me/introducer/profile — 허용 검수·사업자·운영·최고·회원",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 200, '사업자': 200, '검수': 200, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /me/success-stories — 허용 검수·사업자·운영·지급·최고·회원",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 200, '사업자': 200, '검수': 200, '지급': 200, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A GET /me/fulfillment-reports — 허용 사업자·운영·최고·회원",
+  "ok": true,
+  "detail": "{'손님': 403, '회원': 200, '사업자': 200, '검수': 403, '지급': 403, '운영': 200, '최고': 200}"
+ },
+ {
+  "step": "A 공개 API 14개 — 손님 200",
+  "ok": true,
+  "detail": "14"
+ },
+ {
+  "step": "B-1 지역으로 찾기 — 시 · 도 9곳 + 기타 · 숫자 = 게시 매물 수",
+  "ok": true,
+  "detail": "(200, [('서울', 22), ('경기', 3), ('인천', 2), ('대전', 0), ('대구', 2), ('부산', 2), ('울산', 0), ('광주', 0), ('제주', 0)], '22')"
+ },
+ {
+  "step": "B-2 성공현황 — 기간 4가지 200 · 총 성공 = 성사 확정 거래 수(v_success_deals)",
+  "ok": true,
+  "detail": "({'all': (200, 3), '7d': (200, 3), 'month': (200, 3), 'year': (200, 3)}, '3')"
+ },
+ {
+  "step": "B-3 성공현황 — 이메일 · 전화 번호가 응답에 없음",
+  "ok": true,
+  "detail": "{\"asOf\": \"2026.10.12\", \"period\": \"all\", \"gwanCode\": null, \"kpi\": {\"total\": {\"value\": 3, \"deltaToday\": 3, \"deltaPct\": null}, \"fee\": {\"value\": 0, \"deltaToday\": 0}"
+ },
+ {
+  "step": "B-4 최근 실제 연결 사례 — 3건 이하 · 성사 확정 거래",
+  "ok": true,
+  "detail": "(200, \"{'items': [{'listingId': 'fb5b5b33-5bec-4866-976d-3ec11ebdcbda', 'title': '결정검증 매물 1469d', 'categoryName': '제조 설비', 'gwanCode': 'MNY', 'fee': 0, 'tradeAmount': \")"
+ },
+ {
+  "step": "B-5 베스트매칭 — 공개 동의 받은 사례만(안내 글 함께)",
+  "ok": true,
+  "detail": "(200, \"{'items': [], 'note': '실제로 성사된 거래 가운데 운영이 고르고, 매도자 · 매수자 두 분이 공개에 동의한 사례만 싣습니다. 금액 · 기간 · 과정은 거래 기록 그대로입니다.'}\")"
+ },
+ {
+  "step": "B-6 서비스 업체 추천 — 목록(업체 단위 · 신뢰도 · 성사 수)",
+  "ok": true,
+  "detail": "(200, \"[{'id': 'aaaaaaaa-0000-4000-a000-000000000001', 'companyName': '소개사', 'mainCategory': '제조 설비', 'summary': None, 'sido': None, 'sigungu': None, 'listingCount': 1\")"
+ },
+ {
+  "step": "B-7 AI 추천 맞춤 공급자 — 손님 200 · 광고 아님",
+  "ok": true,
+  "detail": "(200, \"{'items': [{'id': 'aaaaaaaa-0000-4000-a000-000000000001', 'companyName': '소개사', 'mainCategory': '제조 설비', 'summary': None, 'sido': None, 'sigungu': None, 'listin\")"
+ },
+ {
+  "step": "B-8 업체 프로필 — 200 · 사업자번호 · 대표 연락처 · 이메일이 응답에 없음",
+  "ok": true,
+  "detail": "(200, '{\"id\": \"aaaaaaaa-0000-4000-a000-000000000001\", \"companyName\": \"소개사\", \"sido\": null, \"sigungu\": null, \"verifiedSince\": \"2026.10\", \"broker\": false, \"rating\": null,')"
+ },
+ {
+  "step": "B-9 없는 업체 → 404",
+  "ok": true,
+  "detail": "(404, {'code': 'NOT_FOUND', 'message': '업체를 찾을 수 없습니다.'})"
+ },
+ {
+  "step": "B-10 안전거래 안내 — 기준 금액 = 설정 safe_trade.min_amount · 대금은 당사자끼리",
+  "ok": true,
+  "detail": "(200, 50000000)"
+ },
+ {
+  "step": "B-11 관 축(공개) — 노출 중인 축만 · 수 = gwan_axes",
+  "ok": true,
+  "detail": "(200, 3, '3')"
+ },
+ {
+  "step": "B-12 특가 배너(공개) — 켠 것 · 기간 안 · 견본 표시",
+  "ok": true,
+  "detail": "(200, \"[{'id': '112d0d76-3b8a-4815-a17c-7487eec57c06', 'slot': 'TODAY', 'tag': '지금 가장 많이 찾는 건강상품', 'title': '환절기 면역력 강화', 'titleEm': '비타민C 특가전', 'body': '온 가족이 함께하는 건강\")"
+ },
+ {
+  "step": "B-13 소개창업 축 목록 SVC 200 · 없는 축 400/404",
+  "ok": true,
+  "detail": "(200, 404)"
+ },
+ {
+  "step": "B-14 지금 올라온 요청 — 종류 · 지역 · 사진 칸",
+  "ok": true,
+  "detail": "(200, \"{'items': [], 'kinds': [{'code': 'GOODS', 'label': '상품 구매', 'n': 0}, {'code': 'SERVICE', 'label': '서비스 의뢰', 'n': 0}, {'code': 'EXPERT', 'label': '전문가 문의', 'n': \")"
+ },
+ {
+  "step": "C-1 검색어 집계 — 손님 200 · 센 말 recorded · 전화 · 이메일 · 숫자 3자리 이상은 세지 않음",
+  "ok": true,
+  "detail": "(200, {'recorded': ['소개']}, '소개')"
+ },
+ {
+  "step": "C-2 DB search_term_stats — 그 말의 hits +1 · 원문(전화 · 이메일) 행 없음",
+  "ok": true,
+  "detail": "('term,hits,zero_hits,updated_at', '0', '1')"
+ },
+ {
+  "step": "C-3 형식 — 빈 말 · 100자 넘음 → 400",
+  "ok": true,
+  "detail": "(400, 400)"
+ },
+ {
+  "step": "C-4 많이 찾는 키워드 — 200 · 제한업종 낱말 없음 · 근거 글",
+  "ok": true,
+  "detail": "(200, \"{'items': [{'term': '소개', 'hits': 1}], 'basis': '검색어 통계(정규화된 말 · 결과가 나온 검색만). 제한 업종 낱말은 뺍니다.'}\")"
+ },
+ {
+  "step": "C-5 많이 찾는 키워드에 제한업종 낱말 없음",
+  "ok": true,
+  "detail": "대출,대부,대환,저금리,무담보,신용대출,담보대출,현금서비스,당일 승인,갈아타기,카지노,토토,배팅,바카라,경마,포커,도박,사설,홀덤,슬롯,유흥,성"
+ },
+ {
+  "step": "D-1 알림 수신 설정 목록 — 종류마다 앱 · 이메일 · 끌 수 있는지 · 못 끄는 까닭",
+  "ok": true,
+  "detail": "(200, 45, 33)"
+ },
+ {
+  "step": "D-2 끌 수 있는 알림(NOTICE_PUBLISHED) 앱 알림 끔 → 목록에 반영",
+  "ok": true,
+  "detail": "(200, {'eventCode': 'NOTICE_PUBLISHED', 'channel': 'INAPP', 'enabled': False, 'note': '받지 않도록 했습니다.'}, {'eventCode': 'NOTICE_PUBLISHED', 'name': '공지 등록', 'optoutAllowed': True, 'reason': None, 'inapp': False, 'email': True})"
+ },
+ {
+  "step": "D-3 끈 종류는 보내지 않음(fn_notify · D063)",
+  "ok": true,
+  "detail": "(0, '', '0', '0')"
+ },
+ {
+  "step": "D-4 다시 켬(시험 뒤 원래대로)",
+  "ok": true,
+  "detail": "(200, {'eventCode': 'NOTICE_PUBLISHED', 'name': '공지 등록', 'optoutAllowed': True, 'reason': None, 'inapp': True, 'email': True})"
+ },
+ {
+  "step": "D-5 못 끄는 알림(REVIEW_SLA_DELAY — 돈 · 계약) 끄기 → 409 OPTOUT_FORBIDDEN",
+  "ok": true,
+  "detail": "(409, {'code': 'OPTOUT_FORBIDDEN', 'message': '「검수 지연 안내」 알림은 수신거부할 수 없습니다 — 못 받으면 손해를 보실 수 있는 안내입니다.'})"
+ },
+ {
+  "step": "D-6 없는 종류 → 404/422 · 없는 경로(SMS) → 400",
+  "ok": true,
+  "detail": "(422, 'BAD_EVENT', 400)"
+ },
+ {
+  "step": "E-1 피해 사례 작성(본인인증 회원) → 201 · 저장 전에 연락처 · 이메일 가림",
+  "ok": true,
+  "detail": "(201, {'no': 1, 'note': '등록했습니다. 연락처 · 이메일 · 계좌번호는 가려서 저장했습니다.'}, '계약금을 보냈는데 연락이 끊겼습니다. 연락처 [연락처] · 이메일 [이메일] 으로 연락했던 사람입니다. 시험 e8e3a6')"
+ },
+ {
+  "step": "E-2 본인인증 전 회원 → 403",
+  "ok": true,
+  "detail": "(403, 'IDENTITY_REQUIRED')"
+ },
+ {
+  "step": "E-3 짧은 글 · 없는 유형 → 400",
+  "ok": true,
+  "detail": "(400, 400)"
+ },
+ {
+  "step": "E-4 손님 → 403 UNAUTHENTICATED",
+  "ok": true,
+  "detail": "(403, 'UNAUTHENTICATED')"
+ },
+ {
+  "step": "E-5 공개 목록 — 방금 글이 보임 · 작성자(이메일 · 계정) 안 나감",
+  "ok": true,
+  "detail": "(200, '{\"items\": [{\"no\": 1, \"type\": \"CONTRACT\", \"typeLabel\": \"계약사기\", \"title\": \"계약금 피해 시험 e8e3a6\", \"region\": null, \"date\": \"2026.10.12\", \"views\": 0}], \"total\": 1, \"page')"
+ },
+ {
+  "step": "E-6 보기 → 조회 수 +1",
+  "ok": true,
+  "detail": "(200, 1, 2)"
+ },
+ {
+  "step": "E-7 운영 목록 — 작성자 이메일은 가린 값",
+  "ok": true,
+  "detail": "(200, '[{\"no\": 1, \"type\": \"CONTRACT\", \"title\": \"계약금 피해 시험 e8e3a6\", \"status\": \"PUBLISHED\", \"hiddenReason\": null, \"views\": 2, \"createdAt\": \"2026-10-11T15:54:46.981Z\", \"authorEmail\": \"buy****@x.com\"}]')"
+ },
+ {
+  "step": "E-8 숨김 사유 없음 → 400",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "E-9 검수 담당이 숨김 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "E-10 운영 숨김(사유) → 공개 목록에서 빠짐 · 공개 보기 404",
+  "ok": true,
+  "detail": "(201, {'ok': True}, 404)"
+ },
+ {
+  "step": "F-1 매물 사진 올리기(LISTING_IMAGE) → READY",
+  "ok": true,
+  "detail": "(201, 200, 200, {'ok': True, 'fileId': 'abd859c9-b6fd-4880-adae-ff2cf5b3a3a5', 'name': 'p.png', 'purpose': 'LISTING_IMAGE', 'contentType': 'image/png', 'size': 69, 'sha256': '60ef2349623fdd5c2ed44f613ec8fe282080169ce00705c40b5f04199afbe4fc', 'status': 'READY', 'note': '확인했습니다. 이제 제출 · 등록에 쓸 수 있습니다.'})"
+ },
+ {
+  "step": "F-2 내 매물에 사진 등록 → listing_media 한 줄(file_id)",
+  "ok": true,
+  "detail": "(201, {'mediaId': '71b2a431-c5b8-4344-ae23-c68a135d6baa', 'sortOrder': 0}, 0, 1)"
+ },
+ {
+  "step": "F-3 공개 사진 주소 → 200 image · 바이트 같음 · nosniff / 없는 번호 404",
+  "ok": true,
+  "detail": "(200, 'image/png', 69, 404)"
+ },
+ {
+  "step": "F-4 남(회원)이 내 매물에 사진 등록 → 403",
+  "ok": true,
+  "detail": "(403, 'FORBIDDEN')"
+ },
+ {
+  "step": "F-5 사업자가 남의 매물에 사진 등록 → 403/404",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "F-6 남의 파일(다른 회원이 올린 것)로 등록 → 거절(403/404/422)",
+  "ok": true,
+  "detail": "(422, 'LISTING_PHOTO_OWNER')"
+ },
+ {
+  "step": "F-7 남이 지우기 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "F-8 내가 지움 → listing_media 원래 수",
+  "ok": true,
+  "detail": "(200, {'ok': True})"
+ },
+ {
+  "step": "F-9 내 요청의 종류 · 지역 · 사진(REQUEST_IMAGE) → DB 반영",
+  "ok": true,
+  "detail": "(200, {'ok': True, 'id': '785a1537-1a00-42cd-820d-c6f5f9d0493c'}, ['SERVICE', '1100000000', '금천구', '94fc8c79-9ab2-4bac-887e-27327b1acd2f'])"
+ },
+ {
+  "step": "F-10 요청 사진(공개 · 게시 중일 때) → 200 같은 바이트 또는 게시 전 404",
+  "ok": true,
+  "detail": "(200, 69)"
+ },
+ {
+  "step": "F-11 남(다른 회원)이 요청 고침 → 403/404",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "F-12 남이 올린 파일을 내 요청 사진으로 → 422 REQUEST_PHOTO_FILE",
+  "ok": true,
+  "detail": "(422, 'REQUEST_PHOTO_FILE')"
+ },
+ {
+  "step": "F-13 시험 뒤 요청을 원래 값으로",
+  "ok": true,
+  "detail": "(200, ['', '', '', ''])"
+ },
+ {
+  "step": "G-0 (준비) 개인 소개자 — 본인인증 · 받을 계좌 확인 · 소개코드 결제(스텁) 발급",
+  "ok": true,
+  "detail": "('fb5b5b33-5bec-4866-976d-3ec11ebdcbda', 201, 201, 201, \"[{'code': 'B8F01D', 'listingId': 'fb5b5b33-5bec-4866-976d-3ec11ebdcbda', 'isExtra': True, 'issuedAt': '2026-10-11T15:54:\")"
+ },
+ {
+  "step": "G-1 계약 상태(당사자 매수자) — 200 · 내 쪽 · 소개비 · 당사자 이름 가림(이메일 없음)",
+  "ok": true,
+  "detail": "(200, '{\"id\": \"9f3cf9ab-5a5e-4201-b4c9-dce625036937\", \"state\": \"DRAFT\", \"terms\": null, \"templateCode\": \"STD_V1\", \"buyerAgreed\": false, \"sellerAgreed\": false, \"buyerSigned\": false, \"sellerSigned\": false, \"buy')"
+ },
+ {
+  "step": "G-2 계약 상태 — 당사자 아님 → 403/404",
+  "ok": true,
+  "detail": "(403, 'NOT_PARTY')"
+ },
+ {
+  "step": "G-3 계약 상태 — 손님 → 403 UNAUTHENTICATED",
+  "ok": true,
+  "detail": "(403, 'UNAUTHENTICATED')"
+ },
+ {
+  "step": "G-4a 초안(DRAFT) 계약 — 확인 요청은 409 NOT_THEIR_TURN(기다리는 쪽 없음)",
+  "ok": true,
+  "detail": "(409, 'NOT_THEIR_TURN', 'DRAFT')"
+ },
+ {
+  "step": "G-4 판매 쪽 조건 합의(SENT) 뒤 — 확인 요청은 상대(매수 쪽) 차례인 판매 쪽만 보냄 · 매수 쪽은 409 NOT_THEIR_TURN",
+  "ok": true,
+  "detail": "(201, None, 409, 'NOT_THEIR_TURN', 201, None, 'SENT')"
+ },
+ {
+  "step": "G-5 같은 날 두 번 → 409 NUDGED_TODAY · 상대에게 알림 CONTRACT_NUDGE 1건 · nudged_at 찍힘",
+  "ok": true,
+  "detail": "(409, 'NUDGED_TODAY', '1')"
+ },
+ {
+  "step": "G-6 당사자 아닌 회원의 확인 요청 → 403/404",
+  "ok": true,
+  "detail": "(403, 'NOT_PARTY')"
+ },
+ {
+  "step": "G-7 (준비) 성사 확정 → 개인 소개자(계좌 확인됨) 정산 줄 REQUESTED(새 정산은 REQUESTED 로만 · D086)",
+  "ok": true,
+  "detail": "([['4b8d5516-9dd4-4fc5-9f44-e8f67480a841', 'REQUESTED', 'fbf386c1-507e-4c6e-b305-6e7f83406eff']], 'CONFIRMED')"
+ },
+ {
+  "step": "G-8 DB — 승인 없이 바로 PAID → 거절(STL_PAID)",
+  "ok": true,
+  "detail": "ERROR:  STL_PAID: 운영 승인 전에는 지급 표시를 할 수 없습니다\nCONTEXT:  PL/pgSQL function fn_settlement_approval() line 38 at RAISE"
+ },
+ {
+  "step": "G-9 DB — 새 정산을 APPROVED 로 바로 넣기 → 거절(D086)",
+  "ok": true,
+  "detail": "ERROR:  STL_APPROVE: 새 정산은 승인 대기(REQUESTED)로만 만들 수 있습니다 — 승인 · 지급 표시는 그 뒤 단계입니다\nCONTEXT:  PL/pgSQL function fn_settlement_insert_requested()"
+ },
+ {
+  "step": "G-10 승인 전 「받았음」 → 422 STL_PAID",
+  "ok": true,
+  "detail": "(422, 'STL_PAID')"
+ },
+ {
+  "step": "G-11 승인 — 검수 · 지급 · 회원 · 당사자 → 403",
+  "ok": true,
+  "detail": "{'검수': 403, '지급': 403, '회원': 403, '소개자': 403}"
+ },
+ {
+  "step": "G-12 반려 사유 없음 → 422 REASON_REQUIRED",
+  "ok": true,
+  "detail": "(422, 'REASON_REQUIRED')"
+ },
+ {
+  "step": "G-13 PAID 로 바꾸기(운영) → 400(승인 · 반려만)",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "G-14 운영(ADMIN) 승인 → APPROVED · 승인자 · 시각 · 승인 기록(settlement_approvals)",
+  "ok": true,
+  "detail": "(200, {'id': '4b8d5516-9dd4-4fc5-9f44-e8f67480a841', 'status': 'APPROVED', 'approvedAt': '2026-10-11T15:54:49.968Z', 'note': '승인은 정산서 확인입니다. 지급은 당사자가 직접 하고 지급 표시도 당사자가 남깁니다(INV-11).'}, ['APPROVED', 'true', 'true', '1'])"
+ },
+ {
+  "step": "G-15 다시 승인 → 409 ALREADY_DECIDED",
+  "ok": true,
+  "detail": "(409, 'ALREADY_DECIDED')"
+ },
+ {
+  "step": "G-16 운영 정산 목록 — 그 줄 「승인됨 · 지급 대기」 · 정산번호 · 세금계산서 칸",
+  "ok": true,
+  "detail": "(200, \"{'id': '4b8d5516-9dd4-4fc5-9f44-e8f67480a841', 'dealId': '41366095-26fb-437e-a4bb-50a2bcbe5a44', 'amount': 120000, 'status': 'APPROVED', 'no': 'S-2026-0001', 'statusLabel': '승인됨 · 지급 대기', 'payeeName':\")"
+ },
+ {
+  "step": "G-17 남(회원)이 「받았음」 → 404",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "G-18 받는 사람(소개자)이 「받았음」 → PAID · 표시한 사람 기록",
+  "ok": true,
+  "detail": "(201, {'id': '4b8d5516-9dd4-4fc5-9f44-e8f67480a841', 'status': 'PAID', 'paid_marked_by': 'fbf386c1-507e-4c6e-b305-6e7f83406eff', 'paid_marked_at': '2026-10-11T15:54:50.080Z', 'note': '당사자 표시 기록입니다. 플랫폼이 지급을 확인한 것이 아닙니다(INV-11).'})"
+ },
+ {
+  "step": "G-19 또 「받았음」 → 422 STL_PAID",
+  "ok": true,
+  "detail": "(422, 'STL_PAID')"
+ },
+ {
+  "step": "G-20 나의공간 정산 — 그 줄 PAID",
+  "ok": true,
+  "detail": "(200, \"[{'id': '4b8d5516-9dd4-4fc5-9f44-e8f67480a841', 'dealId': '41366095-26fb-437e-a4bb-50a2bcbe5a44', 'amount': 120000, 'status': 'PAID', 'statusLabel': '당사자 지급 표시'\")"
+ },
+ {
+  "step": "G-21 성공 사례 만들기 — 검수 담당 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "G-22 성사 전 거래로 사례 → 409 STORY_DEAL_NOT_CONFIRMED",
+  "ok": true,
+  "detail": "(409, 'STORY_DEAL_NOT_CONFIRMED')"
+ },
+ {
+  "step": "G-23 성사 확정 거래로 사례 초안(DRAFT) · 두 당사자에게 동의 요청",
+  "ok": true,
+  "detail": "(201, {'id': 'f5f23ed4-897f-4c98-9914-307d7489d20d', 'storyNo': 1, 'status': 'DRAFT', 'note': '매도자 · 매수자에게 공개 동의를 요청했습니다.'})"
+ },
+ {
+  "step": "G-24 동의 전 공개 → 거절(STORY_CONSENT_REQUIRED)",
+  "ok": true,
+  "detail": "(422, 'STORY_CONSENT_REQUIRED')"
+ },
+ {
+  "step": "G-25 당사자 아닌 회원의 동의 → 403 NOT_PARTY",
+  "ok": true,
+  "detail": "(403, 'NOT_PARTY')"
+ },
+ {
+  "step": "G-26 매수자 · 매도자(한마디 · 별점) 동의",
+  "ok": true,
+  "detail": "(201, {'ok': True, 'consent': True}, 201, {'ok': True, 'consent': True})"
+ },
+ {
+  "step": "G-27 나의 사례 목록 — 그 사례",
+  "ok": true,
+  "detail": "(200, \"[{'id': 'f5f23ed4-897f-4c98-9914-307d7489d20d', 'headline': '시험 사례 e8e3a6', 'status': 'DRAFT', 'title': '결정검증 매물 1469d',\")"
+ },
+ {
+  "step": "G-28 공개 → 베스트매칭에 나옴 · 당사자 이메일 없음",
+  "ok": true,
+  "detail": "(200, '{\"items\": [{\"id\": \"f5f23ed4-897f-4c98-9914-307d7489d20d\", \"storyNo\": 1, \"headline\": \"시험 사례 e8e3a6\", \"summary\": \"시험으로 만든 성공 사례입니다\", \"reasons\": [\"빠른 연결\"], \"sellerComment\": \"좋은 연결이었습니다\", \"sellerRating\": ')"
+ },
+ {
+  "step": "G-29 당사자가 동의 철회 → 공개 중이면 내려감(HIDDEN) · 베스트매칭에서 빠짐",
+  "ok": true,
+  "detail": "(201, 'HIDDEN')"
+ },
+ {
+  "step": "G-30 시험 뒤 소개비 스위치를 원래 값으로",
+  "ok": true,
+  "detail": "off"
+ },
+ {
+  "step": "H-1 파트너 리드 이용료 — 선불(PREPAID) · 잔액 = 지갑(유상 + 보너스)",
+  "ok": true,
+  "detail": "(200, 340000, 63450, [['340000', '63450']])"
+ },
+ {
+  "step": "H-2 파트너 아닌 회원 → 409 NOT_PARTNER",
+  "ok": true,
+  "detail": "(409, 'NOT_PARTNER')"
+ },
+ {
+  "step": "H-3 손님 → 403 UNAUTHENTICATED",
+  "ok": true,
+  "detail": "(403, 'UNAUTHENTICATED')"
+ },
+ {
+  "step": "H-4 충전 금액 범위 밖(1원) → 400/422",
+  "ok": true,
+  "detail": "(422, 'CHARGE_TOO_SMALL')"
+ },
+ {
+  "step": "H-5 선불 원장 불변식(v_lead_cash_invariants) 0줄",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "step": "H-6 운영 원장(파트너 하나) — 충전 · 원장 · 환불",
+  "ok": true,
+  "detail": "(200, \"{'partner': {'id': '5caeb567-d3aa-4228-8468-70c3ba36ecca', 'company': '소개사', 'grade': 'BRONZE'}, 'wallet': {'paid': 340000, 'bonus': 63450, 'autoOn': False, 'au\")"
+ },
+ {
+  "step": "H-7 운영 원장 — ADMIN 200 · 지급 담당 403",
+  "ok": true,
+  "detail": "(200, 403)"
+ },
+ {
+  "step": "H-8 운영 조정 금액 0 → 400/422(바꾸지 않음)",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "H-9 서비스 등록 방식(견적 매트릭스 포함) 목록",
+  "ok": true,
+  "detail": "(200, \"{'forms': [{'form': 'MATRIX', 'label': '매트릭스 견적', 'steps': ['제공 서비스', '주요 타겟', '자동 견적 구간', '상담 확인비용', '소개비', '랜딩 미리보기', '등록 신청'], 'categories': ['이사짐']}, {'form\")"
+ },
+ {
+  "step": "H-10 남의 서비스 견적 매트릭스 고치기 → 404/403",
+  "ok": true,
+  "detail": "(404, 'NOT_FOUND')"
+ },
+ {
+  "step": "H-11 업종 견적 매트릭스 축(이사짐 4×6 시드) 있음",
+  "ok": true,
+  "detail": "10"
+ },
+ {
+  "step": "I-1 활주로 — 이번 달 매출 = v_monthly_revenue(지어낸 숫자 아님) · 비용 입력 전 표시",
+  "ok": true,
+  "detail": "(200, {'month': '2026-10', 'revenue': 152550, 'cost': 0, 'net': 152550, 'cum': 152550, 'hasCost': False}, '152550', {'month': None, 'kind': 'NO_DATA', 'label': '비용 입력 전'})"
+ },
+ {
+  "step": "I-2 월 비용 넣기(ETC 12,345) → ops_monthly_costs · 활주로의 그 달 비용에 반영",
+  "ok": true,
+  "detail": "(200, {'month': '2026-10', 'category': 'ETC', 'amount': 12345}, {'month': '2026-10', 'revenue': 152550, 'cost': 12345, 'net': 140205, 'cum': 140205, 'hasCost': True})"
+ },
+ {
+  "step": "I-3 형식 — 없는 항목 · 달 형식 → 400",
+  "ok": true,
+  "detail": "(400, 400)"
+ },
+ {
+  "step": "I-4 검수 담당 비용 넣기 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "I-5 시험 뒤 비용을 원래대로",
+  "ok": true,
+  "detail": "None"
+ },
+ {
+  "step": "I-6 정책 원본 — ADMIN 읽기 200 · 고치기 403 · SUPER 같은 값으로 고치기 200",
+  "ok": true,
+  "detail": "(200, 403, 200)"
+ },
+ {
+  "step": "I-7 관 축 내림(ASSET) → 공개 축 목록에서 빠짐",
+  "ok": true,
+  "detail": "(200, {'gwanCode': 'MAL', 'axisCode': 'ASSET', 'isExposed': False, 'uiType': 'LIST', 'note': '신규 노출만 멈춥니다 — 진행 중인 거래는 끝까지 갑니다.'})"
+ },
+ {
+  "step": "I-8 다시 올림(원래대로)",
+  "ok": true,
+  "detail": "200"
+ },
+ {
+  "step": "I-9 거래형 축의 UI 유형 바꾸기 → 422 GWAN_AXIS(목록형 고정)",
+  "ok": true,
+  "detail": "(422, 'GWAN_AXIS')"
+ },
+ {
+  "step": "I-10 관 오픈 체크리스트(SUPER) — 항목마다 통과 여부",
+  "ok": true,
+  "detail": "(200, \"{'code': 'MNY', 'name': '소개장터', 'isActive': True, 'isHub': False, 'passed': 5, 'total': 6, 'canOpen': False, 'checks': [{'key': 'CATEGORY', 'label': '업종 1종 이상 승\")"
+ },
+ {
+  "step": "I-11 통합 현황(SUPER) — 지금 DB 의 표 수",
+  "ok": true,
+  "detail": "(200, 252, \"{'kpis': {'tables': 252, 'views': 312, 'routes': 640, 'protectedRoutes': 525, 'publicRoutes': 115, 'roles': 7, 'watchViews': 32, 'systems': 7, 'gwanVarRoutes': \")"
+ },
+ {
+  "step": "I-12 퍼블리셔 등록(운영)",
+  "ok": true,
+  "detail": "(201, {'id': 'a87e14c1-9d08-4fb4-8419-d4a9e5f46974', 'name': '시험 퍼블리셔 e8e3a6', 'domain': 'v31-e8e3a6.example.com'})"
+ },
+ {
+  "step": "I-13 지급 담당이 퍼블리셔 등록 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "I-14 도메인 확인 전 → 송출 없음(422 ADX_SERVE 「도메인 확인 전에는 송출할 수 없습니다」)",
+  "ok": true,
+  "detail": "(422, \"{'code': 'ADX_SERVE', 'message': '도메인 확인 전에는 송출할 수 없습니다'}\")"
+ },
+ {
+  "step": "I-15 도메인 확인 → 송출 응답(소재 또는 「없음」 · 규제 소재 제외)",
+  "ok": true,
+  "detail": "(200, \"{'id': 'a87e14c1-9d08-4fb4-8419-d4a9e5f46974', 'status': 'ACTIVE', 'domainVerifiedAt': '2026-10-11T1\", \"{'impressionId': 1, 'placementId': 'f6b37edb-81d5-40ef-b721-9e7a7f705d80', 'title': '공급자로 등록하고 맞는 요청을 먼저 받으십시오', 'body': '업종 · 지역을 등록하면 그에 맞는 소개 요청이 옵니다. 소개비는 당\")"
+ },
+ {
+  "step": "I-16 클릭 → adx_clicks 한 줄(무효 판정 F1~F7 함께) · 노출 없이 누른 것은 무효로 남김",
+  "ok": true,
+  "detail": "(201, {'clickId': 1, 'valid': False, 'rule': 'F3', 'redirect': None}, '0', '1')"
+ },
+ {
+  "step": "I-17 외부 송출 현황 — 지급 담당 200 · 그 퍼블리셔",
+  "ok": true,
+  "detail": "200"
+ },
+ {
+  "step": "I-18 월 마감 달 형식 → 400",
+  "ok": true,
+  "detail": "400"
+ },
+ {
+  "step": "I-19 퍼블리셔 닫음 → 송출 없음(시험 정리)",
+  "ok": true,
+  "detail": "(200, \"{'code': 'ADX_SERVE', 'message': '운영 중인 퍼블리셔가 아닙니다'}\")"
+ },
+ {
+  "step": "I-20 특가 배너 더함(꺼 둠) → 공개 목록에 안 나옴",
+  "ok": true,
+  "detail": "(201, {'id': '267ed0f2-1d28-4331-9566-9918f1762639', 'slot': 'TODAY', 'tag': '시험 e8e3a6', 'title': '시험 배너', 'titleEm': None, 'body': None, 'linkUrl': '/health', 'cta': '지금 바로 보기', 'isSample': True, 'isActive': False, 'startsAt': None, 'endsAt': None, 'sortOrder': 0, 'live': False, 'updatedAt': '2026-10-11T15:54:51.962Z'})"
+ },
+ {
+  "step": "I-21 주소가 /health 로 시작하지 않음 → 400/422",
+  "ok": true,
+  "detail": "(400, 'VALIDATION_ERROR')"
+ },
+ {
+  "step": "I-22 검수 담당이 배너 켜기 → 403",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "step": "I-23 운영 회원 목록 — 이메일 · 연락처 가린 값(buyer@x.com 그대로 없음)",
+  "ok": true,
+  "detail": "[{\"id\": \"5550b9ce-2cb8-4d3e-a84c-93a7e9a1dbd2\", \"email\": \"v31****@t.local\", \"name\": \"구매 시험\", \"phone\": null, \"accountType\": \"INDIVIDUAL\", \"status\": \"ACTIVE\", \"id"
+ },
+ {
+  "step": "I-24 운영 설정 — 비밀 값은 가림(secret · hasValue) · 수금 계좌 끝 4자리만",
+  "ok": true,
+  "detail": "(200, [('company.bank_account', '******-**-**9999'), ('internal.api_key', 'dev************hij')])"
+ },
+ {
+  "step": "I-25 결제 대조(대조만) — 200",
+  "ok": true,
+  "detail": "(201, \"{'total': 0, 'paid': 0, 'failed': 0, 'skipped': 0, 'terminal': 0, 'pending': 0, 'recovered': 0, 'review': 0, 'expired': 0, 'errors': 0, 'refunds': {'checked': 0\")"
+ },
+ {
+  "step": "I-26 결제 대조 — 지급 담당 403",
+  "ok": true,
+  "detail": "403"
+ }
+]

@@ -1,0 +1,38 @@
+[
+ {
+  "no": "Q-1",
+  "kind": "결함(DB · 보안 검사)",
+  "what": "D092 칸 이름 expiry_notice_for 가 카드 정보 칸 금지 검사(BX-03 v_card_columns 의 「expiry」)에 걸림",
+  "symptom": "verify ▲뚫림 1 (BX-03 카드번호 컬럼 없음 — 기대 0 / 실제 1)",
+  "done": "칸 이름 end_notice_for 로 · D092 다시 적용(개발 DB)",
+  "where": "sgb/prisma/migrations/D092_directory_vat_renewal · 커밋 ef9ab35",
+  "rerun": "verify exit=0 · 뚫림 0"
+ },
+ {
+  "no": "Q-2",
+  "kind": "시험 자료",
+  "what": "정액 노출 시험 업체 이름이 시드와 같은 「(시험)」으로 시작",
+  "symptom": "srv_fin F-7(시드 사무소 4곳) 셈이 어긋남",
+  "done": "새 시험 이름 「시험33 …」 · 남은 시험 줄 이름 바꿈",
+  "where": "qa/test_v1033_directory.py · 개발 DB",
+  "rerun": "srv_fin 28 / 28"
+ },
+ {
+  "no": "Q-3",
+  "kind": "환경",
+  "what": "작업 환경이 18:23 에 다시 시작됨",
+  "symptom": "첫 회차가 끊기고 srv_ptn_ui 가 중개사 신청(PENDING)을 남김",
+  "done": "서비스 다시 띄우고 전수 검정을 처음부터 · 남은 신청은 그 시험의 뒷정리와 같은 줄로 지움",
+  "where": "—",
+  "rerun": "srv_ptn_ui 28 / 28"
+ },
+ {
+  "no": "T-1",
+  "kind": "시험",
+  "what": "srv_consult · srv_consult_ui · proto_consult 기대값",
+  "symptom": "기간이 개월 단위 · 노출 중 「다시 켜기」로 연장 불가(409) · 부가세 별도 문구",
+  "done": "새 정책에 맞춤(결과 문서 82 · result_directory)",
+  "where": "qa/srv_consult*.py · proto_consult.py",
+  "rerun": "85/85 · 49/49 · 31/31"
+ }
+]

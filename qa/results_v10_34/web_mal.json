@@ -1,0 +1,1312 @@
+{
+ "site": "http://localhost:5174",
+ "pass": 261,
+ "total": 261,
+ "items": [
+  {
+   "name": "[guest] /mall HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mall Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n기계 · 설비 · 시설 — 등기 없이 실물 인도로 넘어갑니까?\n등기가 있는 자산과 실물"
+  },
+  {
+   "name": "[guest] /mall 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall 인증업체만 게시 = API mal.partner_only(off)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "[guest] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)",
+   "ok": true,
+   "detail": "['기계 · 설비', '기타 부동산 · 장비', '매장 집기 · 진열', '발전 설비 · 플랜트', '상용차 · 특장차', '주방 설비 · 집기', '중고 장비 · 부품']"
+  },
+  {
+   "name": "[guest] /mall 일반 → 「소개합니다」(/mall/give)",
+   "ok": true,
+   "detail": "['✚ 소개합니다']"
+  },
+  {
+   "name": "[guest] /mall 기본 축에는 중개사 매물 링크 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음",
+   "ok": true,
+   "detail": "('http://localhost:5174/mall?cat=562c787c-abf9-489f-a007-455aa37d65aa', set(), 0)"
+  },
+  {
+   "name": "[guest] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL",
+   "ok": true,
+   "detail": "http://localhost:5174/search?q=%EC%82%AC%EB%AC%B4%EC%8B%A4&gwanCode=MAL"
+  },
+  {
+   "name": "[guest] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?keyword=%EC%82%AC%EB%AC%B4%EC%8B%A4"
+  },
+  {
+   "name": "[guest] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)",
+   "ok": true,
+   "detail": "http://localhost:5174/money/urgent"
+  },
+  {
+   "name": "[guest] /mall 축 탭 클릭 → ?axis=consult",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?axis=consult"
+  },
+  {
+   "name": "[guest] /mall?axis=consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mall?axis=consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall?axis=consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall?axis=consult 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 "
+  },
+  {
+   "name": "[guest] /mall?axis=consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall?axis=consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[guest] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 거래가 아닙니다 — 소비자가 신청하고, 입점 승인을 받은 업체가 연락합니다.\n\n「인증업체만 게시」는 아직 켜지지 않았습니다. 지금은 입점 승인 "
+  },
+  {
+   "name": "[guest] 상담 축 카드 버튼 → /partner/apply",
+   "ok": true,
+   "detail": "인증업체 등록"
+  },
+  {
+   "name": "[guest] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT"
+  },
+  {
+   "name": "[guest] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT/apply"
+  },
+  {
+   "name": "[guest] /mall/list HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mall/list Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall/list 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall/list 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개 전체 목록\n\n이 관에 등록된 매물/장비 전체입니다. 소개비는 요율표가 아니라 당사자 협의로 정합니다 (A-12) 묶어서 보시려면 관 메인을 이용하십시오.\n\n14건\n소개하기\n내가 "
+  },
+  {
+   "name": "[guest] /mall/list 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall/list 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mall/give HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mall/give Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mall/give 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall/give 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[guest] /mall/give 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mall/give 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[guest] 소개하기 안내 추가 단가 = API",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] 소개하기 안내 비로그인 — 내 소개코드 칸 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시",
+   "ok": true,
+   "detail": "['IT·소프트웨어', '건설·시공 (자격 업체만)', '광고·마케팅', '교육·학원 (자격 업체만)', '디자인']"
+  },
+  {
+   "name": "[guest] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22",
+   "ok": true,
+   "detail": "http://localhost:5174/consult"
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /consult?cat=CSL_CLEANING → 업종 미리 고름",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mal/consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mal/consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mal/consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n일반\n상담신청형\n청소\n\n입주 · 사무실 · 정기 청소\n\n사업자 인증과 입점 승인을 받은 업체에 연결합니다.\n\n받을 수 있는 인증업체\n11곳\n받는 지역\n5곳\n신청 정보 전달\n1곳에만\n받는 지역\n시험도\n7곳\n제주\n3곳\n경기\n1곳\n서울\n1곳\n인천\n1곳\n"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)",
+   "ok": true,
+   "detail": "← 청소(으)로 돌아가기\n청소 상담 신청\n\n상담을 신청하면 인증된 업체 1곳이 연락드립니다. 신청 정보는 그 업체에만 전달됩니다.\n\n청소 상담 신청서\n휴대폰 확인을 마친 뒤 인증업체 1곳에만 전달됩니다\n이름\n휴대폰\n인증번호 받기\n이메일\n지역 · 시 · 도\n고르십시오\n서울\n경기\n인천\n부산"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[guest] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n법률(변호사·법무사)\n\n사무소 정보를 보고 직접 연락하십시오. 소개뱅크는 상담 신청을 받거나 연결하지 않습니다.\n\n소개뱅크는 사무소를 추천하거나 연결하지 않습니다. 아래는 월 정액으로 게재한 「광고」이며, 순서는 날마다 바뀝니다. 자격(등록) 확인"
+  },
+  {
+   "name": "[intro] 로그인",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mall Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n기계 · 설비 · 시설 — 등기 없이 실물 인도로 넘어갑니까?\n등기가 있는 자산과 실물"
+  },
+  {
+   "name": "[intro] /mall 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall 인증업체만 게시 = API mal.partner_only(off)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "[intro] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)",
+   "ok": true,
+   "detail": "['기계 · 설비', '기타 부동산 · 장비', '매장 집기 · 진열', '발전 설비 · 플랜트', '상용차 · 특장차', '주방 설비 · 집기', '중고 장비 · 부품']"
+  },
+  {
+   "name": "[intro] /mall 입점 업체 → 「매물 등록」(/register)",
+   "ok": true,
+   "detail": "['✚ 매물 등록 (파트너센터)']"
+  },
+  {
+   "name": "[intro] /mall 기본 축에는 중개사 매물 링크 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음",
+   "ok": true,
+   "detail": "('http://localhost:5174/mall?cat=562c787c-abf9-489f-a007-455aa37d65aa', set(), 0)"
+  },
+  {
+   "name": "[intro] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL",
+   "ok": true,
+   "detail": "http://localhost:5174/search?q=%EC%82%AC%EB%AC%B4%EC%8B%A4&gwanCode=MAL"
+  },
+  {
+   "name": "[intro] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?keyword=%EC%82%AC%EB%AC%B4%EC%8B%A4"
+  },
+  {
+   "name": "[intro] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)",
+   "ok": true,
+   "detail": "http://localhost:5174/money/urgent"
+  },
+  {
+   "name": "[intro] /mall 축 탭 클릭 → ?axis=consult",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?axis=consult"
+  },
+  {
+   "name": "[intro] /mall?axis=consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mall?axis=consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall?axis=consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall?axis=consult 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 "
+  },
+  {
+   "name": "[intro] /mall?axis=consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall?axis=consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[intro] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 거래가 아닙니다 — 소비자가 신청하고, 입점 승인을 받은 업체가 연락합니다.\n\n「인증업체만 게시」는 아직 켜지지 않았습니다. 지금은 입점 승인 "
+  },
+  {
+   "name": "[intro] 상담 축 카드 버튼 → /partner/leads",
+   "ok": true,
+   "detail": "받은 상담 신청"
+  },
+  {
+   "name": "[intro] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT"
+  },
+  {
+   "name": "[intro] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT/apply"
+  },
+  {
+   "name": "[intro] /mall/list HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mall/list Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall/list 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall/list 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개 전체 목록\n\n이 관에 등록된 매물/장비 전체입니다. 소개비는 요율표가 아니라 당사자 협의로 정합니다 (A-12) 묶어서 보시려면 관 메인을 이용하십시오.\n\n14건\n소개하기\n내가 "
+  },
+  {
+   "name": "[intro] /mall/list 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall/list 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mall/give HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mall/give Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mall/give 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall/give 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[intro] /mall/give 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mall/give 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[intro] 소개하기 안내 추가 단가 = API",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] 소개하기 안내 이번 달 무료 남은 수 = API /me/referral-codes/quota",
+   "ok": true,
+   "detail": "({'scope': 'listing', 'subscribed': True, 'planCode': 'STANDARD', 'planName': '스탠다드', 'freePlan': False, 'includedCodes': 3, 'usedThisMonth': 0, 'freeRemaining': 3, 'extraCodePrice': 30000, 'identityVerified': True, 'countScope': 'SUBSCRIPTION', 'current': None, 'listing': None, 'blocked': None, 'paymentRequired': False, 'paymentStub': True}, 1)"
+  },
+  {
+   "name": "[intro] /consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시",
+   "ok": true,
+   "detail": "['IT·소프트웨어', '건설·시공 (자격 업체만)', '광고·마케팅', '교육·학원 (자격 업체만)', '디자인']"
+  },
+  {
+   "name": "[intro] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22",
+   "ok": true,
+   "detail": "http://localhost:5174/consult"
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /consult?cat=CSL_CLEANING → 업종 미리 고름",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mal/consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mal/consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mal/consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n일반\n상담신청형\n청소\n\n입주 · 사무실 · 정기 청소\n\n사업자 인증과 입점 승인을 받은 업체에 연결합니다.\n\n받을 수 있는 인증업체\n11곳\n받는 지역\n5곳\n신청 정보 전달\n1곳에만\n받는 지역\n시험도\n7곳\n제주\n3곳\n경기\n1곳\n서울\n1곳\n인천\n1곳\n"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)",
+   "ok": true,
+   "detail": "← 청소(으)로 돌아가기\n청소 상담 신청\n\n상담을 신청하면 인증된 업체 1곳이 연락드립니다. 신청 정보는 그 업체에만 전달됩니다.\n\n청소 상담 신청서\n휴대폰 확인을 마친 뒤 인증업체 1곳에만 전달됩니다\n이름\n휴대폰\n인증번호 받기\n이메일\n지역 · 시 · 도\n고르십시오\n서울\n경기\n인천\n부산"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[intro] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n법률(변호사·법무사)\n\n사무소 정보를 보고 직접 연락하십시오. 소개뱅크는 상담 신청을 받거나 연결하지 않습니다.\n\n소개뱅크는 사무소를 추천하거나 연결하지 않습니다. 아래는 월 정액으로 게재한 「광고」이며, 순서는 날마다 바뀝니다. 자격(등록) 확인"
+  },
+  {
+   "name": "[person] 로그인",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mall Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n기계 · 설비 · 시설 — 등기 없이 실물 인도로 넘어갑니까?\n등기가 있는 자산과 실물"
+  },
+  {
+   "name": "[person] /mall 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mall 축 탭 3개(기계 · 설비 · 시설 · 부동산 · 생활 · 금융 상담 — 시안)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall 인증업체만 게시 = API mal.partner_only(off)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall 매물 카드 수 = API /listings 첫 쪽(한 쪽 6칸 · 0)",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "[person] /mall 매물 분류 = API 안심소개 업종 - 상담 업종(7)",
+   "ok": true,
+   "detail": "['기계 · 설비', '기타 부동산 · 장비', '매장 집기 · 진열', '발전 설비 · 플랜트', '상용차 · 특장차', '주방 설비 · 집기', '중고 장비 · 부품']"
+  },
+  {
+   "name": "[person] /mall 일반 → 「소개합니다」(/mall/give)",
+   "ok": true,
+   "detail": "['✚ 소개합니다']"
+  },
+  {
+   "name": "[person] /mall 기본 축에는 중개사 매물 링크 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall?axis=realty 중개사 매물 링크(/mal/brokers) · A-07 회신 대기 안내",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall 분류 클릭 → cat= 필터 · 카드 수 API 와 같음",
+   "ok": true,
+   "detail": "('http://localhost:5174/mall?cat=562c787c-abf9-489f-a007-455aa37d65aa', set(), 0)"
+  },
+  {
+   "name": "[person] /mall 검색줄(팝업) 「사무실」 → 통합 검색 /search?q=사무실&gwanCode=MAL",
+   "ok": true,
+   "detail": "http://localhost:5174/search?q=%EC%82%AC%EB%AC%B4%EC%8B%A4&gwanCode=MAL"
+  },
+  {
+   "name": "[person] /mall?keyword=사무실(예전 주소) → API keyword 결과와 같은 수 · 검색 조건 줄에 표시",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?keyword=%EC%82%AC%EB%AC%B4%EC%8B%A4"
+  },
+  {
+   "name": "[person] /mall 급매 띠 「보러 가기」 → 「급구 · 급매」 화면(/money/urgent)",
+   "ok": true,
+   "detail": "http://localhost:5174/money/urgent"
+  },
+  {
+   "name": "[person] /mall 축 탭 클릭 → ?axis=consult",
+   "ok": true,
+   "detail": "http://localhost:5174/mall?axis=consult"
+  },
+  {
+   "name": "[person] /mall?axis=consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mall?axis=consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall?axis=consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall?axis=consult 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 "
+  },
+  {
+   "name": "[person] /mall?axis=consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall?axis=consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] 상담 축 업종 줄 = API /consult/categories(22) · 리드형 20 + 정액 노출형 2",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[person] 상담 축 줄마다 신청 가능 · 인증업체 수 · 자격 확인 · 광고(법률 · 세무) = API",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] 상담 축 안내 「업체 1곳에만 전달」 · 예전 「최대 N곳」 문구 없음",
+   "ok": true,
+   "detail": "안심소개\n전체 ⌄\n🔍\n기계 · 설비 · 시설\n실물자산형\n부동산\n등기자산형\nA-07 법무 회신 대기\n생활 · 금융 상담\n상담신청형\n생활 · 금융 상담 — 상담을 신청하면 인증된 업체 1곳이 연락드립니다.\n상담은 매물 거래가 아닙니다 — 소비자가 신청하고, 입점 승인을 받은 업체가 연락합니다.\n\n「인증업체만 게시」는 아직 켜지지 않았습니다. 지금은 입점 승인 "
+  },
+  {
+   "name": "[person] 상담 축 카드 버튼 → /partner/apply",
+   "ok": true,
+   "detail": "인증업체 등록"
+  },
+  {
+   "name": "[person] 「상세 보기」 클릭 → /mal/consult/CSL_IT (업종 상세)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT"
+  },
+  {
+   "name": "[person] 「상담 신청」 클릭 → /mal/consult/CSL_IT/apply (신청서)",
+   "ok": true,
+   "detail": "http://localhost:5174/mal/consult/CSL_IT/apply"
+  },
+  {
+   "name": "[person] /mall/list HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mall/list Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall/list 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall/list 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개 전체 목록\n\n이 관에 등록된 매물/장비 전체입니다. 소개비는 요율표가 아니라 당사자 협의로 정합니다 (A-12) 묶어서 보시려면 관 메인을 이용하십시오.\n\n14건\n소개하기\n내가 "
+  },
+  {
+   "name": "[person] /mall/list 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall/list 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mall/give HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mall/give Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mall/give 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall/give 띠 · 시연 「보는 사람」 없음",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[person] /mall/give 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mall/give 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] 소개하기 안내 BASIC 무료 0건 = API — 「무료 소개코드 없음 · 건당 30,000원」",
+   "ok": true,
+   "detail": "← 안심소개(으)로 돌아가기\n안심소개에서 소개하기\n\n일반 회원 안내\n\n매물을 직접 올리지 않아도 됩니다\n안심소개 매물은 입점 승인을 받은 인증업체만 올립니다\n1\n매물에서 소개코드를 받습니다\n\n소개할 매물 상세의 「소"
+  },
+  {
+   "name": "[person] 소개하기 안내 추가 단가 = API",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] 소개하기 안내 이번 달 무료 남은 수 = API /me/referral-codes/quota",
+   "ok": true,
+   "detail": "({'scope': 'listing', 'subscribed': False, 'planCode': 'BASIC', 'planName': '베이직', 'freePlan': True, 'includedCodes': 0, 'usedThisMonth': 0, 'freeRemaining': 0, 'extraCodePrice': 30000, 'identityVerified': False, 'countScope': 'NONE', 'current': None, 'listing': None, 'blocked': None, 'paymentRequired': True, 'paymentStub': True}, 1)"
+  },
+  {
+   "name": "[person] /consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /consult 신청서 업종 = 리드형 20종(법률 · 세무 제외) · GATED 표시",
+   "ok": true,
+   "detail": "['IT·소프트웨어', '건설·시공 (자격 업체만)', '광고·마케팅', '교육·학원 (자격 업체만)', '디자인']"
+  },
+  {
+   "name": "[person] /consult 로그인 없이도 신청서가 보임(로그인 화면으로 보내지 않음) · 업종 줄 22",
+   "ok": true,
+   "detail": "http://localhost:5174/consult"
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /consult?cat=CSL_CLEANING → 업종 미리 고름",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mal/consult HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mal/consult Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mal/consult 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mal/consult 업종 목록 22줄 · 「인증된 업체 1곳」 안내 · 입점 신청 링크",
+   "ok": true,
+   "detail": "22"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING → 업종 상세(v10.24 · 신청서는 없음) · 인증업체 수 = API(11) · 「상담 신청」 → …/apply",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n일반\n상담신청형\n청소\n\n입주 · 사무실 · 정기 청소\n\n사업자 인증과 입점 승인을 받은 업체에 연결합니다.\n\n받을 수 있는 인증업체\n11곳\n받는 지역\n5곳\n신청 정보 전달\n1곳에만\n받는 지역\n시험도\n7곳\n제주\n3곳\n경기\n1곳\n서울\n1곳\n인천\n1곳\n"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_CLEANING/apply → 신청서(업종 고정)",
+   "ok": true,
+   "detail": "← 청소(으)로 돌아가기\n청소 상담 신청\n\n상담을 신청하면 인증된 업체 1곳이 연락드립니다. 신청 정보는 그 업체에만 전달됩니다.\n\n청소 상담 신청서\n휴대폰 확인을 마친 뒤 인증업체 1곳에만 전달됩니다\n이름\n휴대폰\n인증번호 받기\n이메일\n지역 · 시 · 도\n고르십시오\n서울\n경기\n인천\n부산"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL HTTP 200",
+   "ok": true,
+   "detail": "200"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL Application error 없음",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL 콘솔 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL 내부 링크 전부 200",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL 390px 가로 넘침 없음",
+   "ok": true,
+   "detail": "0px"
+  },
+  {
+   "name": "[person] /mal/consult/CSL_LEGAL → 사무소 보기(광고 · 직접 연락 · 신청서 없음) · 게재 수 = API(2)",
+   "ok": true,
+   "detail": "← 생활 · 금융 상담(으)로 돌아가기\n법률(변호사·법무사)\n\n사무소 정보를 보고 직접 연락하십시오. 소개뱅크는 상담 신청을 받거나 연결하지 않습니다.\n\n소개뱅크는 사무소를 추천하거나 연결하지 않습니다. 아래는 월 정액으로 게재한 「광고」이며, 순서는 날마다 바뀝니다. 자격(등록) 확인"
+  },
+  {
+   "name": "[person] 제출용 새 회원 로그인",
+   "ok": true,
+   "detail": "webmal_59584667@t.local"
+  },
+  {
+   "name": "[person] 동의 없이 「인증번호 받고 신청」 → 화면이 막고 사유 표시",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] 「인증번호 받고 신청」 → 휴대폰 확인 단계(개발 환경 인증번호 표시) · 아직 「내 상담 신청」 없음",
+   "ok": true,
+   "detail": "('350429', [])"
+  },
+  {
+   "name": "[person] 틀린 인증번호 → 서버 사유 표시 · 전달 안 됨",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] 인증번호 확인 → 전달 화면(DELIVERED) · 서버에 1건 · 인증업체 1곳에 보냄",
+   "ok": true,
+   "detail": "('DELIVERED', '7a353bfa-7113-4ee3-b44d-e8a4a7d37c11', 0, 1, [{'id': '7a353bfa-7113-4ee3-b44d-e8a4a7d37c11', 'categoryName': '청소', 'summary': '다음 달 사무실 청소 상담 원합니다 — web_mal 실측', 'sido': '서울', 'sigungu': '금천구', 'createdAt': '2026-10-11T16:35:30.505Z', 'assignState': 'ASSIGNED', 'target': 1, 'closeReason': None, 'sentTo': 1, 'providedTo': [], 'contactPurged': False}])"
+  },
+  {
+   "name": "[person] 「새로 신청」 → 신청서로 돌아감",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[person] 「내 상담 신청」에 새 건 표시(업체 1곳에 보냄)",
+   "ok": true,
+   "detail": "청소\n업체에 보냄\n\n다음 달 사무실 청소 상담 원합니다 — web_mal 실측\n\n서울 금천구 · 2026-10-12 01:35 신청 · 업체 1곳에 보냄\n\n연락처를 받아 간 업체: 아직 없음"
+  },
+  {
+   "name": "[person] 같은 번호 · 같은 업종 재신청 → 서버 거부 사유 표시 · 건수 그대로",
+   "ok": true,
+   "detail": "같은 번호로 같은 업종 상담을 오늘 이미 신청하셨습니다. 업체의 연락을 기다려 주십시오."
+  },
+  {
+   "name": "[person] (정리) 시험 신청을 운영 API 로 종료",
+   "ok": true,
+   "detail": "201"
+  },
+  {
+   "name": "[person] 제출 중 스크립트 오류 0",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "[다른 관] /money 200 · 안심소개 구성 안 섞임",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "name": "[다른 관] /biz 200 · 안심소개 구성 안 섞임",
+   "ok": true,
+   "detail": "(200, [])"
+  },
+  {
+   "name": "[다른 관] /health 200 · 안심소개 구성 안 섞임",
+   "ok": true,
+   "detail": "(200, [])"
+  }
+ ]
+}

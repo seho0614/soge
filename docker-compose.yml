@@ -1,0 +1,184 @@
+# =====================================================================
+# 소개뱅크 개발 Docker — 통합판 (본체 + 광고 플랫폼) · 2026-09-30
+#
+#   copy .env.example .env          (Windows)   /   cp .env.example .env
+#   docker compose up -d --build
+#   docker compose logs -f migrate api
+#
+# 접속
+#   http://localhost:3000/api/v1/health   API
+#   http://localhost:3000/docs            API 문서 (개발 서버에만 있음)
+#   http://localhost:5173                 운영 BO (admin@x.com / sgb-dev-1234)
+#   http://localhost:5174                 사용자 웹
+#   localhost:5432                        PostgreSQL (sgb · sgb_ads · sgb_check)
+#
+# 검정 (개발 데이터를 건드리지 않습니다 — sgb_check 에서 돕니다)
+#   docker compose --profile check run --rm --build checks
+#
+# 처음부터 다시
+#   docker compose down -v && docker compose up -d --build
+#
+# ── 9/26 판에서 바뀐 것 ──────────────────────────────────────────────
+#  1. 재기동해도 개발 데이터가 남습니다      (전: up 할 때마다 fixture 가 계정·요청을 지움)
+#  2. ENC_KEY 를 넣었습니다                 (전: 정산 계좌 저장 · 리드 연락처 열람 실패)
+#  3. site 에 API_BASE 를 넣었습니다        (전: 서버 렌더가 컨테이너 자신의 3000 을 불러 전 화면 실패)
+#  4. 광고 플랫폼 DB(sgb_ads)를 함께 세웁니다
+#  5. 비밀값을 .env 로 뺐습니다              (compose 파일에 평문 없음)
+#  6. 검정 전용 DB · 검정 컨테이너를 더했습니다
+#
+# ── 운영용이 아닙니다 ────────────────────────────────────────────────
+# ts-node · vite dev · next dev 로 띄웁니다. 운영은 AWS 절차서(EC2 · RDS · pm2)를 따르십시오.
+# =====================================================================
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${PG_USER:-sgb}:${PG_PASSWORD:-sgb}@db:5432/sgb
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET 이 .env 에 없습니다}
+  ENC_KEY: ${ENC_KEY:?ENC_KEY 가 .env 에 없습니다}
+  JOB_TOKEN: ${JOB_TOKEN:?JOB_TOKEN 이 .env 에 없습니다}
+  DEV_PASSWORD: ${DEV_PASSWORD:-sgb-dev-1234}
+  NODE_ENV: development
+
+services:
+  db:
+    image: postgres:16
+    container_name: sgb-db
+    environment:
+      POSTGRES_USER: ${PG_USER:-sgb}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-sgb}
+      POSTGRES_DB: sgb
+      # 한글 정렬·검색이 개발 PC 와 같게
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports: ["${PG_PORT:-5432}:5432"]
+    volumes:
+      - sgb-pgdata:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro     # sgb_ads · sgb_check 생성 (최초 1회)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-sgb} -d sgb"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # 본체 스키마·기준 데이터. 한 번 돌고 끝납니다.
+  #   처음(계정 0건)이면 local-setup 전체, 그다음부터는 마이그레이션만.
+  #   처음처럼 다시 하려면:  SGB_RESET=1 docker compose run --rm migrate
+  migrate:
+    build: ./sgb
+    container_name: sgb-migrate
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      <<: *app-env
+      SKIP_DB_BOOT: "1"
+      SGB_RESET: ${SGB_RESET:-0}
+      EFFECTIVE_FROM: ${EFFECTIVE_FROM:-2026-10-01}
+    volumes: ["./docker:/docker:ro"]
+    command: ["bash", "/docker/bootstrap.sh"]
+    restart: "no"
+
+  # 광고 플랫폼 DB. 본체와 분리된 DB 이며 FK 로 본체를 걸지 않습니다.
+  # psql 만 있으면 되므로 postgres 이미지를 그대로 씁니다(빌드 없음).
+  ads-migrate:
+    image: postgres:16
+    container_name: sgb-ads-migrate
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      ADS_DB: postgresql://${PG_USER:-sgb}:${PG_PASSWORD:-sgb}@db:5432/sgb_ads
+      SGB_RESET: ${SGB_RESET:-0}
+    volumes:
+      - ./sgb-ads:/ads:ro
+      - ./docker:/docker:ro
+    entrypoint: ["bash", "/docker/ads-migrate.sh"]
+    restart: "no"
+
+  api:
+    build: ./sgb
+    container_name: sgb-api
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+      ads-migrate: { condition: service_completed_successfully }
+    environment:
+      <<: *app-env
+      PORT: 3000
+      # 결제사(토스) 테스트 열쇠 — 비워 두면 열쇠 없는 방식(스텁 · 실제 결제 없음)으로 뜹니다. 결제 · 환불을 결제사 테스트 환경에서 볼 때만 .env 에 넣습니다 (docs/62 9절)
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+      TOSS_API_BASE: ${TOSS_API_BASE:-}
+    ports: ["${API_PORT:-3000}:3000"]
+    restart: unless-stopped
+
+  # 배치 스케줄러 — 매분 tick. 운영은 EventBridge 를 쓰십시오.
+  scheduler:
+    build: ./sgb
+    container_name: sgb-scheduler
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      API_ORIGIN: http://api:3000
+      JOB_TOKEN: ${JOB_TOKEN}
+    command: ["node", "scripts/scheduler-daemon.js"]
+    # 이미지의 HEALTHCHECK(curl :3000)는 API 용입니다 — 스케줄러는 3000 을 열지 않으므로 그대로 두면 늘 unhealthy.
+    # 마지막 tick 성공이 3분 안이면 정상으로 봅니다 (scheduler-daemon.js 가 /tmp/scheduler.ok 를 갱신).
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$$(find /tmp/scheduler.ok -mmin -3 2>/dev/null)\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+    restart: unless-stopped
+
+  # 운영 BO (Vite). /api 를 api:3000 으로 넘깁니다.
+  web:
+    build: ./sgb/web
+    container_name: sgb-web
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      API_ORIGIN: http://api:3000
+      # v10.31 — 운영 화면의 「사용자 화면으로」 · 바닥줄 링크가 갈 사용자 웹 주소(비우면 5173 → 5174 로 짐작)
+      VITE_SITE_URL: ${SITE_URL:-http://localhost:5174}
+    ports: ["${WEB_PORT:-5173}:5173"]
+    restart: unless-stopped
+
+  # 사용자 웹 (Next.js).
+  #   API_ORIGIN — 브라우저가 부르는 /api 를 넘길 곳 (next.config.js rewrites)
+  #   API_BASE   — 서버 렌더·미들웨어가 직접 부르는 곳 (src/lib/api.ts · session.ts · middleware.ts)
+  #   ★ API_BASE 가 없으면 기본값 localhost:3000 = **이 컨테이너 자신**이라 전 화면이 실패합니다.
+  #   SITE_ORIGINS (선택) — 쓰기 요청을 받을 브라우저 주소 목록(쉼표). 보통은 필요 없습니다 — 요청의 Host 와
+  #                  같은 주소면 받습니다(10/2). 앞단 프록시가 Host 를 바꾸면 여기에 https://도메인 을 넣으십시오.
+  site:
+    build: ./sgb/site
+    container_name: sgb-site
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      API_ORIGIN: http://api:3000
+      API_BASE: http://api:3000/api/v1
+      # v10.31 — 머리줄 「관리자 페이지」(/go/admin)가 갈 운영 화면 주소 · 중개사 인증 「검수자 화면 보기」의 운영 화면 주소
+      BO_URL: ${BO_URL:-http://localhost:5173}
+      ADMIN_ORIGIN: ${ADMIN_ORIGIN:-http://localhost:5173}
+      # v10.13 — 메인(/) 내용. 비우면 디자인 그림의 예시 내용 그대로, live 면 실제 매물 · 상품 · 요청 · 글 (.env 의 HOME_CONTENT)
+      HOME_CONTENT: ${HOME_CONTENT:-}
+    ports: ["${SITE_PORT:-5174}:5174"]
+    restart: unless-stopped
+
+  # 통합 검정 — 필요할 때만.   docker compose --profile check run --rm --build checks
+  checks:
+    profiles: ["check"]
+    build: ./sgb
+    container_name: sgb-checks
+    depends_on:
+      db: { condition: service_healthy }
+      ads-migrate: { condition: service_completed_successfully }
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://${PG_USER:-sgb}:${PG_PASSWORD:-sgb}@db:5432/sgb_check
+      ADS_DB: postgresql://${PG_USER:-sgb}:${PG_PASSWORD:-sgb}@db:5432/sgb_ads
+    volumes:
+      - ./sgb-ads:/ads:ro
+      - ./docker:/docker:ro
+    command: ["bash", "/docker/checks.sh"]
+    restart: "no"
+
+volumes:
+  sgb-pgdata:
