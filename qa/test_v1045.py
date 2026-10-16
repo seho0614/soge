@@ -6,7 +6,7 @@
   partner.service    →  partner.service(파트너 본인) · partner-admin.service(운영 adm*)
 
   ① 옮긴 함수가 새 파일에 정확히 한 번 · 옛 파일에 남지 않음
-  ② 서비스 안의 this.X 가 모두 그 클래스에 있음(옮기다 빠뜨린 도우미 없음)
+  ② 서비스 안의 this.X 가 모두 그 클래스에 있음(옮기다 빠뜨린 도우미 없음) · 쓰는 이름이 모두 import 됨
   ③ 컨트롤러 · 배치가 부르는 this.<서비스>.<함수> 가 그 서비스에 있고 private 이 아님
   ④ 새 서비스가 app.module 에 등록됨 · 새 서비스는 옛 서비스를 부르지 않음(순환 없음)
   동작이 같은지는 통합 검정(통과 · 안전 · SQL 대조 수가 줄지 않음)이 봅니다.
@@ -89,6 +89,27 @@ for f in SVC:
     used = set(re.findall(r'this\.(\w+)', s))
     miss = sorted(used - members(s))
     ok(f'this.X 가 모두 클래스 안에 — {os.path.basename(f)}', not miss, ' · '.join(miss))
+
+# ②-2 쓰는 이름이 모두 불러와졌거나 선언됨 — 10/16 realcheck: 옮기면서 import 에서 StubPaymentProvider 를 빼 API 가 뜨지 못함
+#      (통합 검정의 API 시험은 형식 검사 없이 돌아 통과 · 개발 서버는 형식 검사를 해서 멈춤)
+GLOBALS = {'Promise', 'Number', 'String', 'Date', 'Error', 'Set', 'Map', 'Object', 'JSON', 'Math', 'Array', 'Boolean', 'RegExp',
+           'Record', 'NonNullable', 'Partial', 'Buffer', 'BigInt', 'Intl', 'Symbol', 'Infinity', 'NaN'}
+
+
+def undefined_names(s):
+    code = re.sub(r'/\*[\s\S]*?\*/|//[^\n]*', '', s)
+    code = re.sub(r"`(?:\\.|[^`\\])*`|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", '""', code)
+    imp = set()
+    for m in re.finditer(r'import (?:type )?\{([^}]*)\}', s):
+        imp |= {x.strip().split(' as ')[-1] for x in m.group(1).split(',') if x.strip()}
+    decl = set(re.findall(r'(?:class|interface|const|let|function|type|enum)\s+(\w+)', code))
+    used = set(re.findall(r'\b([A-Z][a-z][A-Za-z0-9_]*)\b', code))
+    return sorted(used - imp - decl - GLOBALS)
+
+
+for f in SVC:
+    miss = undefined_names(rd(f))
+    ok(f'쓰는 이름이 모두 import · 선언됨 — {os.path.basename(f)}', not miss, ' · '.join(miss))
 
 # ③ 주입받은 서비스 이름 → 파일
 CLS = {}

@@ -138,13 +138,21 @@ function ForeignSgb {
 Say ""; Say "[3-1] 다른 킷이 켜져 있지 않은가"
 $foreign = @(ForeignSgb)
 if ($foreign.Count -gt 0) {
-  Bad "다른 킷 폴더의 컨테이너가 있음" ("" + $foreign.Count + "개 — 이 킷이 뜨지 못하고, 확인 결과가 다른 킷의 것이 됩니다")
+  Say ("        다른 킷 폴더의 컨테이너 " + $foreign.Count + "개 — 그대로 두면 이 킷이 뜨지 못하고, 확인 결과가 다른 킷의 것이 됩니다")
   foreach ($f in $foreign) { Say ("        " + $f) }
-  Say "        → 위 폴더에서  docker compose --profile check down  (데이터는 남습니다)"
-  Say "          폴더가 없으면  docker ps -aq --filter name=sgb- | ForEach-Object { docker rm -f `$_ }  (컨테이너만 지움)"
-  Finish
-}
-Ok "다른 킷 컨테이너 없음"
+  $yn = Read-Host "  이 컨테이너들을 지우고 계속할까요? 컨테이너만 지우고 DB 데이터(볼륨)는 남습니다 — yes 를 입력"
+  if ($yn -ne "yes") {
+    Bad "다른 킷 폴더의 컨테이너가 있음" ("" + $foreign.Count + "개 — 지우지 않아 멈춤")
+    Say "        → 위 폴더에서  docker compose --profile check down  (데이터는 남습니다) 뒤 다시 실행하십시오"
+    Finish
+  }
+  foreach ($id in @(DkGet @("ps", "-a", "-q", "--no-trunc", "--filter", "name=sgb-") | ForEach-Object { "$_".Trim() } | Where-Object { $_ })) {
+    if (-not ((MineIds) -contains $id)) { DkQuiet @("rm", "-f", $id) }
+  }
+  $left = @(ForeignSgb)
+  Chk ($left.Count -eq 0) "다른 킷 컨테이너를 지움 (볼륨은 남김)" ("남은 것 " + $left.Count + "개")
+  if ($left.Count -gt 0) { Finish }
+} else { Ok "다른 킷 컨테이너 없음" }
 
 Say ""; Say "[4] 진짜 이미지로 다시 빌드 (몇 분 걸립니다)"
 if ($skipPull) { DkShow @("compose", "--profile", "check", "build") } else { DkShow @("compose", "--profile", "check", "build", "--pull") }
