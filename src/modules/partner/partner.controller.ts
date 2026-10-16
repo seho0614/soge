@@ -4,6 +4,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty,
 import { IsArray, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { PartnerService } from './partner.service';
+import { PartnerAdminService } from './partner-admin.service';
 import { QualificationService } from './qualification.service';
 import { BrokerService } from './broker.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -377,7 +378,7 @@ export class PartnerController {
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class PartnerAdminController {
-  constructor(private readonly svc: PartnerService) {}
+  constructor(private readonly svc: PartnerAdminService) {}   // v10.45 — 운영용 서비스를 나눔
 
   @Get()
   @ApiOperation({ summary: '파트너 목록', description: '미납이 한도를 넘으면 리드가 자동으로 멈춥니다.' })

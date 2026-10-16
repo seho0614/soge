@@ -3,6 +3,8 @@ import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { RecurringBillingService } from './recurring.service';
+import { RecurringRefundService } from './recurring-refund.service';
+import { PayoutAccountService } from './payout-account.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -117,7 +119,11 @@ export class PayoutAccountDto {
  *   사업자가 못 들어가는 곳이 생깁니다. */
 @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'SUPER')
 export class RecurringController {
-  constructor(private readonly svc: RecurringBillingService) {}
+  constructor(
+    private readonly svc: RecurringBillingService,
+    private readonly refunds: RecurringRefundService,     // v10.45 — 구독 환불
+    private readonly payout: PayoutAccountService,        // v10.45 — 정산 계좌 · 1원 인증
+  ) {}
 
   @Get('subscription/detail')
   @ApiOperation({
@@ -157,7 +163,7 @@ export class RecurringController {
       '열람한 연락처는 되돌릴 수 없습니다.',
   })
   @ApiOkResponse({ type: RefundEligibleDto })
-  refundEligible() { return this.svc.refundEligible(); }
+  refundEligible() { return this.refunds.refundEligible(); }
 
   @Post('subscription/refund')
   @ApiBearerAuth()
@@ -179,7 +185,7 @@ export class RecurringController {
   @ApiResponse({ status: 422, description: 'REFUND_NOT_ELIGIBLE(당일 아님 · 이미 이용) · REFUND_FAILED(결제사 거절) · REFUND_REASON_REQUIRED', type: ErrorDto })
   @Audit('SUBSCRIPTION_REFUND', 'SUBSCRIPTION')
   async refund(@Body() dto: RefundRequestDto, @Res({ passthrough: true }) res: Response) {
-    const out = await this.svc.refund(dto.reason);
+    const out = await this.refunds.refund(dto.reason);
     /* 완료가 아니면 202 — 「접수는 됐고 결과는 아직」 */
     if (out.state !== 'SUCCEEDED') res.status(202);
     return out;
@@ -233,7 +239,7 @@ export class RecurringController {
     description: '**인증된 계좌로만 지급됩니다.** 인증 전 계좌도 목록에는 보입니다.',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  payoutAccounts() { return this.svc.payoutAccounts(); }
+  payoutAccounts() { return this.payout.payoutAccounts(); }
 
   @Post('payout-accounts')
   @ApiBearerAuth()
@@ -247,7 +253,7 @@ export class RecurringController {
   @ApiResponse({ status: 422, description: 'PAYOUT · 형식 오류 등', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('PAYOUT_ACCOUNT_ADD', 'PAYOUT_ACCOUNT')
-  addPayoutAccount(@Body() dto: PayoutAccountDto) { return this.svc.addPayoutAccount(dto); }
+  addPayoutAccount(@Body() dto: PayoutAccountDto) { return this.payout.addPayoutAccount(dto); }
 
   @Post('payout-accounts/:id/verify')
   @ApiBearerAuth()
@@ -262,7 +268,7 @@ export class RecurringController {
   @ApiOkResponse({ type: Object })
   @Audit('PAYOUT_ACCOUNT_VERIFY', 'PAYOUT_ACCOUNT')
   verifyPayoutAccount(@Param('id') id: string, @Body() dto: { code: string }) {
-    return this.svc.verifyPayoutAccount(id, dto.code);
+    return this.payout.verifyPayoutAccount(id, dto.code);
   }
 
 }

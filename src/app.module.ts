@@ -111,9 +111,12 @@ import { AiController, RiskController, AiServerController } from './modules/ai/a
 import { AiService } from './modules/ai/ai.service';
 import { RecurringController, BillingAdminController } from './modules/billing/recurring.controller';
 import { RecurringBillingService } from './modules/billing/recurring.service';
+import { RecurringRefundService } from './modules/billing/recurring-refund.service';
+import { PayoutAccountService } from './modules/billing/payout-account.service';
 import { PartnerController, PartnerAdminController, QualificationController, BrokerAdminController } from './modules/partner/partner.controller';
 import { BrokerService } from './modules/partner/broker.service';
 import { PartnerService } from './modules/partner/partner.service';
+import { PartnerAdminService } from './modules/partner/partner-admin.service';
 /* v10.31 (W5) — 파트너센터 새 API · 리드 이용료 선불 충전 */
 import { PartnerCenterController, PartnerCenterAdminController, MeFulfillmentController } from './modules/partner/partner-center.controller';
 import { PartnerCenterService } from './modules/partner/partner-center.service';
@@ -247,11 +250,12 @@ import { LeadService } from './modules/lead/lead.service';
     IntroducerService,
     MainService,
     PartnerService, PartnerCenterService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
+    PartnerAdminService,                                                          // v10.45 — 파트너 운영(adm*)을 나눔
     QualificationService,
     BrokerService,
     ReportService,
     ComplianceService,
-    RecurringBillingService,
+    RecurringBillingService, RecurringRefundService, PayoutAccountService,   // v10.45 — 환불 · 정산 계좌를 나눔
     FileService,
     AttributionEngine, ExposureEngine,
     AuthService, PrincipalService, BusinessService,
