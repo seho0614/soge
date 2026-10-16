@@ -282,7 +282,9 @@ def g127():
         and q("select substr(fn_next_hlt_order_no(), 2, 6) = to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYMMDD')") == 't', '')
     rec('G-127-2 제휴 링크 클릭 집계 날짜 = 한국 날짜(current_date 안 씀)',
         q("select prosrc ilike '%Asia/Seoul%' and prosrc not ilike '%current_date%' from pg_proc where proname='fn_plink_click'") == 't', '')
-    src = {f: open(os.path.join(KIT, f)).read() for f in ('src/modules/affiliate/affiliate.service.ts', 'src/modules/partner/partner.service.ts', 'src/modules/site/report.service.ts', 'src/modules/ads/ad-billing.service.ts')}
+    src = {f: open(os.path.join(KIT, f)).read() for f in ('src/modules/affiliate/affiliate.service.ts', 'src/modules/partner/partner.service.ts', 'src/modules/site/report.service.ts', 'src/modules/ads/ad-billing.service.ts',
+                                                       'src/modules/partner/partner-admin.service.ts')   # v10.45 — partner.service 에서 나눈 운영용
+           if os.path.exists(os.path.join(KIT, f))}
     bad = [f for f, t in src.items() if re.search(r"date_trunc\('month', now\(\)\)|to_char\(now\(\),'YYYY-MM'\)|to_char\(incurred_at,'YYYY-MM'\)", t)]
     rec('G-127-3 월 경계(제휴 이번 달 · 목표 기간 · 이용료 월별 · 경영 지표 · 광고 청구)가 한국 시각 기준', not bad, bad)
 
