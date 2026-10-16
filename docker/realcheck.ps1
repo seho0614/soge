@@ -9,6 +9,7 @@
 #   1. Docker 가 켜져 있는지
 #   2. node:22-slim · postgres:16 을 Docker Hub 에서 받기            (못 받으면 여기서 멈춤)
 #   3. 받은 것이 진짜인지 — 공식 이미지 표지(NODE_VERSION · PG_MAJOR) · 버전(node 22 · PostgreSQL 16)
+#   3-1. 다른 킷 폴더의 컨테이너(sgb-*)가 없는지                     (있으면 폴더를 알려 주고 멈춤 · v10.45)
 #   4. 그 이미지로 전부 다시 빌드                                     (docker compose build --pull)
 #   5. 기동 · API 준비 대기                                           (개발 데이터는 그대로 둡니다)
 #   6. 마이그레이션 수 = 파일 수 · 컨테이너 안 버전
@@ -118,19 +119,51 @@ if ($mode -eq "fresh") {
   else { Say "  취소했습니다 — 개발 데이터를 둔 채로 계속합니다."; $mode = "keep" }
 }
 
+# v10.45 (2026-10-16) — 다른 킷 폴더의 컨테이너가 켜져 있으면 멈춥니다.
+#   컨테이너 이름(sgb-db · sgb-api …)이 고정이라, 다른 폴더의 킷이 켜져 있으면 이 킷은 뜨지 못하고
+#   healthy · 주소 확인은 **다른 킷이** 답해 「통과」로 적혔습니다(10/16 실측 — v10.45 를 돌렸는데 옛 킷이 답함).
+function MineIds { return @(DkGet @("compose", "--profile", "check", "ps", "-a", "-q", "--no-trunc") | ForEach-Object { "$_".Trim() } | Where-Object { $_ }) }
+function ForeignSgb {
+  $mine = MineIds
+  $out = @()
+  foreach ($id in @(DkGet @("ps", "-a", "-q", "--no-trunc", "--filter", "name=sgb-") | ForEach-Object { "$_".Trim() } | Where-Object { $_ })) {
+    if ($mine -contains $id) { continue }
+    $nm = (First (DkGet @("inspect", "--format", "{{.Name}}", $id))).TrimStart("/")
+    $lb = First (DkGet @("inspect", "--format", "{{.Config.Labels}}", $id))
+    $dir = ""; if ($lb -match "com\.docker\.compose\.project\.working_dir:(.+?)(?= com\.docker\.| [a-z0-9.\-]+:|\]$)") { $dir = $Matches[1] }
+    $out += ($nm + "  ←  " + $(if ($dir) { $dir } else { "(폴더 모름)" }))
+  }
+  return $out
+}
+Say ""; Say "[3-1] 다른 킷이 켜져 있지 않은가"
+$foreign = @(ForeignSgb)
+if ($foreign.Count -gt 0) {
+  Bad "다른 킷 폴더의 컨테이너가 있음" ("" + $foreign.Count + "개 — 이 킷이 뜨지 못하고, 확인 결과가 다른 킷의 것이 됩니다")
+  foreach ($f in $foreign) { Say ("        " + $f) }
+  Say "        → 위 폴더에서  docker compose --profile check down  (데이터는 남습니다)"
+  Say "          폴더가 없으면  docker ps -aq --filter name=sgb- | ForEach-Object { docker rm -f `$_ }  (컨테이너만 지움)"
+  Finish
+}
+Ok "다른 킷 컨테이너 없음"
+
 Say ""; Say "[4] 진짜 이미지로 다시 빌드 (몇 분 걸립니다)"
 if ($skipPull) { DkShow @("compose", "--profile", "check", "build") } else { DkShow @("compose", "--profile", "check", "build", "--pull") }
 Chk ($LASTEXITCODE -eq 0) "빌드 (migrate · api · scheduler · web · site · checks)"
 
 Say ""; Say "[5] 기동"
-DkShow @("compose", "up", "-d")
-Chk ($LASTEXITCODE -eq 0) "docker compose up -d (준비 · API 준비 대기 포함)"
+$up = @(DkTee @("compose", "up", "-d"))
+$upRc = $LASTEXITCODE
+Chk ($upRc -eq 0) "docker compose up -d (준비 · API 준비 대기 포함)"
+if ($upRc -ne 0) { foreach ($l in @($up | Select-Object -Last 20)) { $script:lines.Add("        " + "$l".Trim()) } }   # v10.45 — 실패 까닭을 결과 파일에
 $st = ""
 for ($i = 0; $i -lt 60; $i++) {
   $st = First (DkGet @("inspect", "--format", "{{.State.Health.Status}}", "sgb-api"))
   if ($st -eq "healthy") { break }
   Start-Sleep -Seconds 3
 }
+# v10.45 — sgb-api 가 이 킷의 것일 때만 통과(다른 킷이 답한 것을 통과로 적지 않음)
+$apiId = First (DkGet @("inspect", "--format", "{{.Id}}", "sgb-api"))
+if ($apiId -and -not ((MineIds) -contains $apiId)) { Bad "API 컨테이너가 이 킷의 것이 아님" "다른 킷 폴더의 sgb-api 가 답했습니다 — [3-1] 안내대로 끄고 다시 실행" ; Finish }
 Chk ($st -eq "healthy") "API 컨테이너 healthy" $st
 
 Say ""; Say "[6] 마이그레이션 · 컨테이너 안 버전"
