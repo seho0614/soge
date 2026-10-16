@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { PaymentProvider, PaymentResult, resolvePaymentProvider } from './payment.provider';
+import { PaymentProvider, PaymentResult, StubPaymentProvider, resolvePaymentProvider } from './payment.provider';
 import { RecurringRefundService } from './recurring-refund.service';
 
 /* D022 — 결과가 불명확한 청구(PENDING)를 다루는 기준 시간.
