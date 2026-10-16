@@ -2,6 +2,7 @@
 
 - 프로젝트 규칙 상세: @~/sogaebank/sgb-docs/claude/project-rules.md
 - 인계 메모(2026-10-15, 미결 과제 목록): ~/sogaebank/sgb-docs/handoff/handoff_20261015.md
+- 인계 메모(2026-10-16, 그 뒤 바뀐 것 · 운영 v10.45): ~/sogaebank/sgb-docs/handoff/handoff_20261016.md
 
 ## 이 서버 (가장 중요)
 - 이 서버(3.37.95.217, t3.small, 메모리 1.9GB)는 **운영 서버이기도 하다**. 나는 개발 사용자 sgbdev 로 일한다.
