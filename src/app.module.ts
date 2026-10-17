@@ -74,6 +74,8 @@ import { PublicService } from './modules/public/public.service';
 import { SiteController } from './modules/site/site.controller';
 import { GeoAdminController, GeoPublicController, GeoReviewController } from './modules/geo/geo.controller';   // v10.46 (D099) 카카오맵
 import { GeoService } from './common/geo/geo.service';
+import { TownFoodAdminController, TownFoodController } from './modules/community/town-food.controller';   // v10.47 (D100) 우리동네 맛집
+import { TownFoodService } from './modules/community/town-food.service';
 import { SiteService } from './modules/site/site.service';
 import { BillingController } from './modules/billing/billing.controller';
 import { BillingService } from './modules/billing/billing.service';
@@ -235,9 +237,12 @@ import { LeadService } from './modules/lead/lead.service';
     GeoPublicController,
     GeoAdminController,
     GeoReviewController,   // v10.46 (D099) 카카오맵
+    TownFoodController,
+    TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
   ],
   providers: [
     GeoService,   /* v10.46 (D099) 카카오맵 */
+    TownFoodService,   /* v10.47 (D100) 우리동네 맛집 */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */

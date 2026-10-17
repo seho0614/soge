@@ -12,6 +12,8 @@ import { NotFound, PolicyViolation } from '../../core/errors';
  * 배치나 다른 모듈이 직접 INSERT 하면 그냥 통과합니다.
  */
 const BOARDS = ['REVIEW', 'TRADE', 'QNA', 'NOTICE'];
+/* v10.47 (D100) — 우리동네 맛집 글(board FOOD)은 「전체」 목록 · 메인에 섞지 않습니다(맛집 화면 /community/food 에서만).
+ *   BOARDS 에도 넣지 않습니다 — 게시판 목록(board=)으로 고를 수 없습니다. 글 하나 보기(post) · 댓글 · 신고 · 검수는 그대로 씁니다. */
 
 /**
  * 누구나 보는 화면에 나가는 작성자 표기 (v10.23 · G-146).
@@ -57,7 +59,7 @@ export class CommunityService {
               (p.state = 'PENDING') AS "pendingMine"
          FROM posts p
          LEFT JOIN accounts a ON a.id = p.author_id
-        WHERE ($1::text IS NULL OR p.board = $1)
+        WHERE (($1::text IS NULL AND p.board <> 'FOOD') OR p.board = $1)
           AND (p.state = 'PUBLISHED'
             OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
         ORDER BY p.is_pinned DESC, p.created_at DESC
@@ -91,7 +93,7 @@ export class CommunityService {
     const [c] = await this.db.query(
       `SELECT count(*)::int AS n
          FROM posts p
-        WHERE ($1::text IS NULL OR p.board = $1)
+        WHERE (($1::text IS NULL AND p.board <> 'FOOD') OR p.board = $1)
           AND (p.state = 'PUBLISHED'
             OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
           AND fn_search_match(p.title, p.body, $3)`, args);
@@ -105,7 +107,7 @@ export class CommunityService {
               (p.state = 'PENDING') AS "pendingMine"
          FROM posts p
          LEFT JOIN accounts a ON a.id = p.author_id
-        WHERE ($1::text IS NULL OR p.board = $1)
+        WHERE (($1::text IS NULL AND p.board <> 'FOOD') OR p.board = $1)
           AND (p.state = 'PUBLISHED'
             OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
           AND fn_search_match(p.title, p.body, $3)

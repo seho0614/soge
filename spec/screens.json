@@ -2944,6 +2944,59 @@
    "note": "2026-10-02 v10.14 D021 — 진행 중 · 마감 투표 목록과 참여. 회원은 계정당 1표, 비로그인은 기기(방문자 쿠키)당 1표 · 같은 인터넷 주소 하루 한도(poll.guest_ip_daily_limit). 표는 바꾸거나 지울 수 없습니다. 비로그인 투표는 poll.guest_vote 로 끌 수 있습니다."
   },
   {
+   "id": "SB-HOM-CMU-050",
+   "name": "소개광장 › 우리동네 맛집",
+   "group": "HOM",
+   "url": "/community/food",
+   "p": "홈",
+   "roles": [
+    "GUEST",
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CMU-010",
+   "apis": [
+    "GET /community/food",
+    "GET /community/food/places",
+    "GET /site-settings/map"
+   ],
+   "note": "2026-10-17 v10.47 D100 — 이웃이 소개한 가게를 카카오 지도 · 목록으로. 지도 사용(map.enabled) off 면 「준비 중」 · 소개광장 탭 없음. 이용자 위치는 서버로 보내지 않음(「현재 위치로」는 map.food_geolocation · 처음 off)."
+  },
+  {
+   "id": "SB-HOM-CMU-051",
+   "name": "우리동네 맛집 › 가게",
+   "group": "HOM",
+   "url": "/community/food/{id}",
+   "p": "홈",
+   "roles": [
+    "GUEST",
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CMU-050",
+   "apis": [
+    "GET /community/food/places/{id}"
+   ],
+   "note": "v10.47 — 가게 정보 · 정확한 핀(영업장) · 이웃 소개 글(동네픽 · 광고 · 협찬 표시) · 「카카오맵에서 보기」."
+  },
+  {
+   "id": "SB-HOM-CMU-052",
+   "name": "우리동네 맛집 › 소개하기",
+   "group": "HOM",
+   "url": "/community/food/write",
+   "p": "홈",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CMU-050",
+   "apis": [
+    "GET /me/community/food/search",
+    "POST /me/community/food"
+   ],
+   "note": "v10.47 — 가게는 카카오에서 찾아 고름(서버가 대신 부름 · 음식점 · 카페만). 첫 글 검수 · 링크 · 도배 · 금칙어는 소개광장 글과 같음."
+  },
+  {
    "id": "SB-ADM-CMU-010",
    "name": "소개광장 검수 큐",
    "group": "ADM",
@@ -2960,7 +3013,9 @@
     "POST /admin/community/posts/{id}/approve",
     "POST /admin/community/posts/{id}/hide",
     "GET /admin/safety/cases",
-    "POST /admin/safety/cases/{no}/hide"
+    "POST /admin/safety/cases/{no}/hide",
+    "GET /admin/community/food/places",
+    "PATCH /admin/community/food/places/{id}"
    ]
   },
   {

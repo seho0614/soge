@@ -61,7 +61,7 @@ export function PostEditor({ edit, deals }: {
     start(async () => {
       const url = edit ? `/api/v1/me/community/posts/${edit.id}` : '/api/v1/me/community/posts';
       const payload = edit
-        ? { title: t, body: b, board }
+        ? (edit.board === 'FOOD' ? { title: t, body: b } : { title: t, body: b, board })   /* v10.47 — 맛집 글은 게시판을 바꾸지 않음(D100 트리거) */
         : { title: t, body: b, board, dealId: board === 'REVIEW' ? dealId : undefined,
             classifiedBy: guess?.board === board ? 'AI' : 'USER' };
       const r = await fetch(url, {
@@ -111,6 +111,8 @@ export function PostEditor({ edit, deals }: {
 
       {/* v10.31 — 시안 plzWrite: 「✨ 게시판 · 내용을 보고 고릅니다」 + 글자 칩 3개(소개 후기 · 업종 이야기 · 질문).
            읽기는 내용 칸을 벗어날 때 저절로(POST /community/classify) — 추천 단추는 시안에 없어 뺐습니다. */}
+      {/* v10.47 — 우리동네 맛집 글을 고칠 때는 게시판을 고르지 않습니다(맛집 글 그대로) */}
+      {edit?.board !== 'FOOD' && (
       <div className="card p2pad" data-board-pick="">
         <div className="p2sechd"><h2><span aria-hidden="true">✨ </span>게시판</h2>{guessing && <span className="dim">읽는 중…</span>}</div>
         <div className="dim" style={{ marginTop: 6, fontSize: 13 }}>내용을 보고 고릅니다. 맞지 않으면 직접 고르십시오.</div>
@@ -139,6 +141,7 @@ export function PostEditor({ edit, deals }: {
           </label>
         )}
       </div>
+      )}
 
       {!edit && (
         <div className="notice warn">

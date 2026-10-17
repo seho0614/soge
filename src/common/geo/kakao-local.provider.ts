@@ -21,7 +21,7 @@ export type GeoFailKind = IntegrationErrorKind | 'NOT_FOUND' | 'QUOTA';
 export type GeoPoint = { ok: true; lat: number; lng: number } | { ok: false; kind: GeoFailKind; detail?: string };
 
 export interface KakaoPlace {
-  kakaoId: string; name: string; category: string | null; phone: string | null;
+  kakaoId: string; name: string; category: string | null; group: string | null; phone: string | null;
   road: string | null; jibun: string | null; lat: number; lng: number; url: string | null;
 }
 
@@ -72,6 +72,7 @@ export async function searchKeyword(key: string | null | undefined, keyword: str
   const places = docs.map((d) => ({
     kakaoId: String(d.id ?? ''), name: String(d.place_name ?? '').slice(0, 80),
     category: d.category_name ? String(d.category_name).slice(0, 80) : null,
+    group: d.category_group_code ? String(d.category_group_code).slice(0, 3) : null,
     phone: d.phone ? String(d.phone).slice(0, 20) : null,
     road: d.road_address_name ? String(d.road_address_name).slice(0, 120) : null,
     jibun: d.address_name ? String(d.address_name).slice(0, 120) : null,

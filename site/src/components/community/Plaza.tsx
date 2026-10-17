@@ -16,6 +16,7 @@
  */
 import Link from 'next/link';
 import { BOARD } from './types';
+import { FoodTab } from './FoodTab';
 
 /** 띠 사진 — [파일, 원래 가로, 원래 세로, 띠 전체를 덮는 사진인가] */
 const PHOTO: [string, number, number, boolean] = ['/b2/plaza-photo-right.png', 1600, 1212, false];
@@ -105,6 +106,8 @@ export function PlazaTabs({ cur, q }: { cur: string; q?: string }) {
       ))}
       {/* 10/2 (D021) — 「이건 어때?」 투표는 글 게시판이 아니라 따로 있는 화면입니다(SB-HOM-CMU-040) */}
       <Link href="/community/polls" aria-current={cur === 'polls' ? 'page' : undefined} data-polls-tab>이건 어때? 투표</Link>
+      {/* v10.47 (D100) — 지도 사용이 켜져 있을 때만 나옵니다(꺼져 있으면 탭 줄 그대로) */}
+      <FoodTab cur={cur} />
     </nav>
   );
 }

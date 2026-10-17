@@ -525,6 +525,19 @@ run  "MAP-4 키는 암호문으로 저장 · 꺼내면 원래 값 · 다른 연�
   END \$\$; ROLLBACK;"
 run  "MAP-5 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','짧음', NULL); ROLLBACK;"
 
+# v10.47 (D100 · docs/98) — 우리동네 맛집: 처음엔 「현재 위치로」 꺼짐 · 공개 보기에 작성자 · 연락처 칸 없음 · 맛집 글은 게시판을 바꿀 수 없음 · 맛집 글만 가게에 붙음
+eq   "FOOD-1 「현재 위치로」(map.food_geolocation) 처음 off"   "SELECT value FROM site_settings WHERE key='map.food_geolocation'" off
+eq   "FOOD-2 공개 가게 보기(v_town_places)에 작성자 · 연락처 칸 없음" "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='v_town_places' AND column_name ~ '(author|email|phone|created_by)'" 0
+eq   "FOOD-3 맛집 글 게시판 바꾸기 막는 트리거"                 "SELECT count(*) FROM pg_trigger WHERE tgname='trg_post_board_lock' AND NOT tgisinternal" 1
+run  "FOOD-4 맛집 글이 아닌 글은 가게에 붙지 않음(TOWN_FOOD_POST)" PASS "BEGIN;
+  INSERT INTO town_places(id,kakao_place_id,name,lat,lng) VALUES ('dddddddd-1047-4000-a000-0000000000f1','99999999901','불변식 가게',37.5,127.0);
+  DO \$\$ BEGIN
+    INSERT INTO town_food_posts(post_id,place_id) VALUES ('dddddddd-1047-4000-a000-0000000000f9','dddddddd-1047-4000-a000-0000000000f1');
+    RAISE EXCEPTION 'attached';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM NOT LIKE 'TOWN_FOOD_POST:%' THEN RAISE; END IF;
+  END \$\$; ROLLBACK;"
+
 n=$($PSQL -t -A -c "SELECT count(*) FROM integrations WHERE secret_key_name LIKE '%KEY%' AND secret_registered=false;")
 if [ "$n" -ge 1 ]; then echo "  ok   INTG  키 값이 아니라 키 이름만 저장"; pass=$((pass+1));
 else echo "  FAIL INTG  키 관리 방식 확인 필요"; fail=$((fail+1)); fi

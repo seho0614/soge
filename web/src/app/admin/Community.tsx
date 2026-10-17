@@ -4,6 +4,7 @@ import { useAct } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { SafetyCases } from './MarketOps';
+import { FoodPlaces } from './FoodPlaces';
 
 interface Pending { id: string; board: string; title: string; createdAt: string; author: string; daysWaiting: number }
 interface Reported { id: string; board: string; title: string; reportCount: number }
@@ -86,6 +87,8 @@ export function Community() {
       {/* v10.31 — 안심거래 › 피해 사례 게시판(W2)의 운영 숨기기 — 같은 「글 검수」 일이라 여기 둡니다 */}
       <h3 className="sec">피해 사례 게시판 <small className="dim">안심거래 · 작성자는 공개 화면에 나오지 않음</small></h3>
       <SafetyCases />
+      {/* v10.47 (D100) — 우리동네 맛집 가게 숨기기(지도 사용이 꺼져 있고 가게가 없으면 그리지 않음) */}
+      <FoodPlaces />
     </section>
   );
 }

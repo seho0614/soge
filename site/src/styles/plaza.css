@@ -89,6 +89,7 @@
 .plz-bd-review { background-color: #FEF3E0; color: #F78013; }
 .plz-bd-qna    { background-color: #EBF3FF; color: #1362F4; }
 .plz-bd-trade  { background-color: #F1EEFE; color: #693EDD; }
+.plz-bd-food   { background-color: #E8F6EE; color: #13804A; }   /* v10.47 우리동네 맛집 */
 
 /* 쪽 번호 · 글쓰기 */
 .plz-foot { position: relative; display: flex; justify-content: center; align-items: flex-start; margin-top: 31px; min-height: 52px; }
