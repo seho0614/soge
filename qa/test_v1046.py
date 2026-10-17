@@ -27,7 +27,7 @@ def rd(rel, base=None):
 
 
 def strip(s):
-    s = re.sub(r'/\*[\s\S]*?\*/|//[^\n]*', '', s)
+    s = re.sub(r'/\*[\s\S]*?\*/|(?<![:\w])//[^\n]*', '', s)   # https:// 같은 글자 속 // 는 주석이 아님
     return s
 
 
@@ -49,7 +49,8 @@ ok('재실행 안전(IF NOT EXISTS · ON CONFLICT)', M.count('IF NOT EXISTS') >=
 ok('자료를 지우지 않음(DROP · DELETE · TRUNCATE 없음)', not re.search(r'\b(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE)\b', strip(M)), '')
 migs = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations'))
               if os.path.exists(os.path.join(K, 'prisma/migrations', d, 'migration.sql')))
-ok('마이그레이션 137 · 마지막 D099', len(migs) == 137 and migs[-1] == 'D099_kakao_map', f'{len(migs)} · {migs[-1]}')
+# 뒤 판이 마이그레이션을 더해도 통과하게(v10.47 D100 …) — 137 이상 · D099 가 있음
+ok('마이그레이션 137 이상 · D099 있음', len(migs) >= 137 and 'D099_kakao_map' in migs, f'{len(migs)} · {migs[-1]}')
 
 # ② 쓰는 이름 -----------------------------------------------------------------
 GLOBALS = {'Promise', 'Number', 'String', 'Date', 'Error', 'Set', 'Map', 'Object', 'JSON', 'Math', 'Array', 'Boolean', 'RegExp',
@@ -117,7 +118,8 @@ ok('응답 스키마 — 라우트마다 @ApiOkResponse', gc.count('@ApiOkRespon
 ok('공개 라우트는 site-settings 아래(ACL 공개 목록)', "@Get('site-settings/map')" in gc and "'site-settings'" in rd('scripts/check-acl.js'), '')
 ok('운영 키 API 는 SUPER', re.search(r"export class GeoAdminController", gc) and re.search(r"@Controller\('api/v1/admin'\)\n@Roles\('SUPER'\)\nexport class GeoAdminController", gc), '')
 ok('불리언 입력은 @StrictBoolean', '@StrictBoolean() enabled' in gc and '@IsBoolean' not in gc, '')
-ok('VERSION v10.46', rd('VERSION').strip() == 'v10.46', rd('VERSION').strip())
+ver = tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))[:2] or [0, 0])
+ok('VERSION v10.46 이상', ver >= (10, 46), rd('VERSION').strip())
 ok('설계서 docs/96 · 판 문서 docs/97', any(n.startswith('96_') for n in os.listdir(os.path.join(K, 'docs')))
    and any(n.startswith('97_') for n in os.listdir(os.path.join(K, 'docs'))), '')
 dc = rd('docker-compose.yml', I)
