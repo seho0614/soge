@@ -7,6 +7,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { storageFromEnv } from '../file/storage';
 import { RequestCtx } from '../../core/request-context';
 import { clampLimit, decodeCursor, encodeCursor } from '../../core/pagination';
+import { GeoService } from '../../common/geo/geo.service';
 
 /** v10.31 (합침) — 한 매물 사진 한도. DB(fn_listing_media_guard · w2 D050)와 같은 10장. 등록 화면(w1)은 화면에서 6장까지만 받습니다. */
 const LISTING_MAX_PHOTOS = 10;
@@ -24,6 +25,7 @@ export class ListingService {
     private readonly db: DatabaseService,
     private readonly reviews: ReviewRepository,
     private readonly repo: ListingRepository,
+    private readonly geo: GeoService,
   ) {}
 
   async submit(input: {
@@ -38,7 +40,7 @@ export class ListingService {
     /* v10.31 — 대표 · 상세 이미지: 내가 올린 READY LISTING_IMAGE 만(checkOwnImages) */
     const media = input.mediaKeys !== undefined
       ? await checkOwnImages(this.db, input.ownerAccountId, input.mediaKeys, 'LISTING_IMAGE', LISTING_MAX_PHOTOS) : undefined;
-    return this.db.transaction(async () => {
+    const out = await this.db.transaction(async () => {
       // 등급은 카테고리가 결정합니다 (A-11). 매핑표가 비어 있어도 G3 로 돕니다.
       const [g] = await this.db.query<{ grade_code: string }>(
         `SELECT grade_code FROM category_grades
@@ -77,6 +79,9 @@ export class ListingService {
         autoApproved: after.status === 'PUBLISHED',
       };
     });
+    /* v10.46 (docs/96) — 저장이 끝난 뒤 좌표를 따로 구합니다(기다리지 않음 · 지도 사용 off 면 아무것도 안 함) */
+    if (input.address !== undefined) this.geo.scheduleListing(out.listingId);
+    return out;
   }
 
   /** 수정 = 재검수. 부여된 배지는 트리거가 회수합니다. */
@@ -90,7 +95,7 @@ export class ListingService {
   }) {
     const media = input.mediaKeys !== undefined
       ? await checkOwnImages(this.db, ownerId, input.mediaKeys, 'LISTING_IMAGE', LISTING_MAX_PHOTOS) : undefined;
-    return this.db.transaction(async () => {
+    const out = await this.db.transaction(async () => {
       const [row] = await this.db.query<{ id: string; version: number }>(
         /* v10.31 (w1 · REG-020 결함) — 화면이 보내지 않은 칸은 그대로 둡니다. 전에는 소개비 부담(fee_bearer)을 안 보내면 지워졌습니다 */
         `UPDATE listings
@@ -135,6 +140,9 @@ export class ListingService {
         autoApproved: after.status === 'PUBLISHED',
       };
     });
+    /* v10.46 (docs/96) — 주소를 보냈을 때만 좌표를 다시 봅니다(주소가 같으면 geo.service 가 건너뜀) */
+    if (input.address !== undefined) this.geo.scheduleListing(out.listingId);
+    return out;
   }
 
   /** 내리기 (v10.27 · G-193). 주인만, 게시 · 검수 중 · 반려 · 임시 상태에서만 ARCHIVED 로 바꿉니다.
@@ -358,7 +366,10 @@ export class ListingService {
     const { isOwn, ownerStats, _address, ...rest } = row;
     const ad = (_address ?? null) as Record<string, string> | null;
     const address = ad ? (isOwn ? ad : { sido: ad.sido, sigungu: ad.sigungu }) : null;
-    return { ...rest, address, isOwn, owner: { ...rest.owner, ...ownerStats }, canInquire, inquireBlockReason: reason };
+    /* v10.46 (docs/96) — 지도 좌표. 지도 사용 off 면 null. 남에게는 시 · 구 중심(REGION)만 — 정확 좌표는 본인에게만.
+       좌표를 못 읽어도 상세는 그대로 나갑니다 */
+    const geo = await this.geo.listingGeo(id, !!isOwn, ad).catch(() => null);
+    return { ...rest, address, isOwn, owner: { ...rest.owner, ...ownerStats }, canInquire, inquireBlockReason: reason, geo };
   }
 
   /**

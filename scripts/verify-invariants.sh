@@ -503,9 +503,27 @@ echo "== 외부 연동 =="
 n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 # ★ 전자계약(ESIGN)을 더해 7종(2026-09-18) · 국토부 중개사 자격 대조(BROKER)를 더해 8종(v10.27 · G-176).
 #   v10.34(D093) 전자세금계산서(ETAX)를 더해 9종.
+#   v10.46(D099) 지도 · 주소 좌표(MAP · 카카오맵)를 더해 10종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "9" ]; then echo "  ok   INTG  연동 9종 등록"; pass=$((pass+1));
+if [ "$n" = "10" ]; then echo "  ok   INTG  연동 10종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
+
+# v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장
+eq   "MAP-1 공개 보기가 정확 좌표(listing_geo)를 읽지 않음"   "SELECT count(*) FROM v_geo_exact_leak" 0
+eq   "MAP-2 어떤 보기도 키(integration_secrets)를 읽지 않음"   "SELECT count(*) FROM v_secret_leak" 0
+eq   "MAP-3 지도 사용은 처음 off"                              "SELECT value FROM site_settings WHERE key='map.enabled'" off
+run  "MAP-4 키는 암호문으로 저장 · 꺼내면 원래 값 · 다른 연동 키는 받지 않음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+  SELECT * FROM fn_integ_secret_set('MAP','KAKAO_JS_KEY','invcheckJsKey0123456789', NULL);
+  DO \$\$ BEGIN
+    IF fn_integ_secret_get('MAP','KAKAO_JS_KEY') <> 'invcheckJsKey0123456789' THEN RAISE EXCEPTION 'roundtrip'; END IF;
+    IF EXISTS (SELECT 1 FROM integration_secrets WHERE position(convert_to('invcheckJsKey', 'UTF8') IN value_enc) > 0) THEN RAISE EXCEPTION 'plaintext'; END IF;
+    IF (SELECT last4 FROM integration_secrets WHERE integration_code='MAP' AND name='KAKAO_JS_KEY') <> '6789' THEN RAISE EXCEPTION 'last4'; END IF;
+    BEGIN
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      RAISE EXCEPTION 'other-key-accepted';
+    EXCEPTION WHEN check_violation THEN NULL; END;
+  END \$\$; ROLLBACK;"
+run  "MAP-5 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','짧음', NULL); ROLLBACK;"
 
 n=$($PSQL -t -A -c "SELECT count(*) FROM integrations WHERE secret_key_name LIKE '%KEY%' AND secret_registered=false;")
 if [ "$n" -ge 1 ]; then echo "  ok   INTG  키 값이 아니라 키 이름만 저장"; pass=$((pass+1));

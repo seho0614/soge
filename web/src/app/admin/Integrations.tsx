@@ -3,6 +3,7 @@ import { ymdKst } from '../../lib/format';
 import { api } from '../../lib/api';
 import { ErrorView } from '../../components/ErrorView';
 import { codeList } from '../../lib/codes';
+import { MapKeys } from './MapKeys';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -88,7 +89,7 @@ export function Integrations() {
           </tr>
         ))}</tbody>
       </table></div>
-      <div className="ad-nt info"><b>키는 이 화면에 나오지 않습니다.</b> 환경변수로만 다루며, DB 에 넣으면 덤프 · 백업 · 로그를 따라 나갑니다. 여기서는 등록 여부만 봅니다.</div>
+      <div className="ad-nt info"><b>키는 이 화면에 나오지 않습니다.</b> 환경변수로만 다루며, DB 에 넣으면 덤프 · 백업 · 로그를 따라 나갑니다. 여기서는 등록 여부만 봅니다. 카카오맵 키 2개만 예외 — 맨 아래 「카카오맵 키」(암호화 저장 · 끝 4자리만 보임).</div>
       <div className="ad-nt info"><b>IP 등록 2~4주가 가장 긴 항목입니다.</b> 계약을 먼저 걸어 두시는 편이 낫습니다.</div>
       <h2 className="ad-s2">연동별 설정 <em>{rows.length}</em> <small className="dim">개발에만 — 상태 · 사업자 · IP · 키 등록</small></h2>
 
@@ -178,8 +179,11 @@ export function Integrations() {
 
       <p className="hint">
         <b>키 값은 여기서 다루지 않습니다.</b> Secrets Manager 에 넣은 뒤 체크만 하십시오 —
-        DB 에 키가 들어가면 백업·복제본에 전부 퍼집니다.
+        DB 에 키가 들어가면 백업·복제본에 전부 퍼집니다. (카카오맵 키 2개만 예외 — 아래 구역 · 암호화 저장)
       </p>
+
+      {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
+      <MapKeys />
     </section>
   );
 }

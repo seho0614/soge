@@ -14,6 +14,7 @@ import { GwOwnerTools } from '@/components/gwan/GwOwnerTools';
 import { EarnPromo } from '@/components/gwan/GwParts';
 import { manwon, photoSrc, trustCls } from '@/components/gwan/gw';
 import { SearchBox } from '@/components/search/SearchBox';
+import { KakaoMap, type MapGeo } from '@/components/map/KakaoMap';
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -82,6 +83,11 @@ export default async function DetailPage({ params }: Props) {
   const trust = item.trust?.score ?? item.trustScore ?? null;
   const no = item.listingNo ? `L-${item.listingNo}` : item.id.slice(0, 8).toUpperCase();
   const msg = messages as Record<string, string>;
+  /* v10.46 (docs/96) — 지도에 넘길 좌표(좌표가 없거나 아직 찾는 중이면 null → 지도 칸 없음) */
+  const g = item.geo;
+  const mapGeo: MapGeo | null = !g || g.lat == null || g.lng == null ? null
+    : g.precision === 'REGION' ? { precision: 'REGION', lat: g.lat, lng: g.lng, radiusM: g.radiusM, label: g.label }
+    : { precision: 'EXACT', lat: g.lat as number, lng: g.lng as number };
 
   return (
     <><div className="gw" data-gw={code}>
@@ -151,6 +157,13 @@ export default async function DetailPage({ params }: Props) {
               <dt>등록</dt><dd suppressHydrationWarning>{when || '—'}</dd>
               <dt>상태</dt><dd>{item.statusLabel}</dd>
             </dl>
+            {/* v10.46 (docs/96) — 좌표가 있고 지도 사용이 켜져 있을 때만 그립니다(아니면 아무것도 더하지 않음 — 지금 화면 그대로).
+                남에게는 서버가 시 · 구 중심(REGION)만 줍니다 — 정확한 위치는 본인에게만 */}
+            {mapGeo && (
+              <KakaoMap geo={mapGeo}
+                caption={mapGeo.precision === 'REGION' ? <>ⓘ {mapGeo.label} 둘레입니다 — 정확한 위치는 문의 뒤 당사자끼리 확인합니다.</>
+                  : <>ⓘ 내 매물이라 정확한 위치가 보입니다 — 다른 회원에게는 시 · 구 둘레 원으로만 보입니다.</>} />
+            )}
             <p style={{ marginTop: 11 }}>조건과 일정은 1:1 문의에서 등록자와 직접 맞추실 수 있습니다.</p>
           </div>
 

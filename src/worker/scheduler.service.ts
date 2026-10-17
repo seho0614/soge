@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
 import { RecurringBillingService } from '../modules/billing/recurring.service';
 import { LeadCashService } from '../modules/partner/lead-cash.service';
+import { GeoService } from '../common/geo/geo.service';
 
 /**
  * 배치 실행기.
@@ -15,7 +16,8 @@ export type JobName =
   | 'deal_auto_confirm' | 'settlement_audit' | 'attribution_archive' | 'pii_purge'
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
-  | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry';
+  | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry'
+  | 'geo_backfill';
 
 export interface JobResult {
   job: JobName;
@@ -32,6 +34,7 @@ export class SchedulerService {
     private readonly db: DatabaseService,
     private readonly billing: RecurringBillingService,
     private readonly leadCash: LeadCashService,
+    private readonly geo: GeoService,
   ) {}
 
   /**
@@ -426,6 +429,13 @@ export class SchedulerService {
       case 'directory_expiry': {
         const [r] = await this.db.query<{ noticed: number; ended: number }>(`SELECT * FROM fn_directory_expiry_tick()`);
         affected = Number(r.noticed) + Number(r.ended); detail = { noticed: Number(r.noticed), ended: Number(r.ended) };
+        break;
+      }
+
+      /* v10.46 (D099 · docs/96) — 매물 좌표 채우기(카카오 로컬). 지도 사용(map.enabled)이 off 이거나 키가 없으면 아무것도 하지 않음 */
+      case 'geo_backfill': {
+        const r = await this.geo.backfill(50);
+        affected = r.affected; detail = r.detail;
         break;
       }
 

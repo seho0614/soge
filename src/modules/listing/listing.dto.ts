@@ -248,6 +248,20 @@ export class ListingDetailDto extends ListingCardDto {
     description: 'canInquire=false 인 이유',
   })
   inquireBlockReason?: string;
+  /* v10.46 (docs/96) */
+  @ApiPropertyOptional({ type: () => ListingGeoDto, nullable: true,
+    description: '지도 좌표. 지도 사용이 꺼져 있으면 null. 남에게는 REGION(시 · 구 중심 · 반경)만 — 정확 좌표(EXACT)는 등록자 본인에게만' })
+  geo?: ListingGeoDto | null;
+}
+
+/** v10.46 (docs/96) — 매물 상세의 지도 좌표 */
+export class ListingGeoDto {
+  @ApiProperty({ enum: ['REGION', 'EXACT'] }) precision!: string;
+  @ApiPropertyOptional({ enum: ['OK', 'PENDING', 'FAILED', 'NOT_FOUND'], description: 'EXACT(본인)일 때만' }) status?: string;
+  @ApiPropertyOptional({ example: 37.5172 }) lat?: number;
+  @ApiPropertyOptional({ example: 127.0473 }) lng?: number;
+  @ApiPropertyOptional({ example: 2000, description: 'REGION 일 때 원 반지름(m)' }) radiusM?: number;
+  @ApiPropertyOptional({ example: '서울 강남구', description: 'REGION 일 때 시 · 구 이름' }) label?: string;
 }
 
 /** 목록 응답. 광고와 일반을 섞지 않습니다 — 섞으면 프런트가 라벨을 빠뜨립니다. */

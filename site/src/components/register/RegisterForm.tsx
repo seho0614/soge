@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
+import { KakaoMap } from '@/components/map/KakaoMap';
 import { CategoryBlock, Field, ImagePicker, MoneyInput, type Cat, type Gwan, type Img } from '@/components/form/RegParts';
 
 const SUPPORT = ['계약서 검토 지원', '세무 · 회계 지원', '인수 인계 지원', '교육 지원', '지원 없음'];
@@ -149,8 +150,12 @@ export function RegisterForm({ gwans, cats, gradeLabels, initialGwan }: {
           {m('addr') && <div className="fmsg">필수 항목입니다.</div>}
         </div>
         <div className="w1-ls" style={{ marginTop: 6 }}>목록 · 상세에는 시 · 구까지만 보입니다 — 상세주소는 등록자 본인과 운영만 봅니다.</div>
+        {/* v10.46 (docs/96) — 지도 사용이 켜져 있고 키가 있으면 미리보기 핀(브라우저에서만 · 저장하지 않음). 아니면 지금 안내 그대로(fallback) */}
+        <KakaoMap previewAddress={addr.road} height={220}
+          caption={<>ⓘ 다른 회원에게는 「{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}」 둘레 원으로만 보입니다.</>}
+          fallback={
         <div className="w1-mapph" data-reg-map=""><span aria-hidden="true">📍</span>
-          <div>{addr.road ? <><b>{addr.road}</b><br />이 주소의 지도는 좌표 연동 뒤에 이 자리에 들어갑니다.</> : <>주소를 고르면 이 자리에 지도가 들어갑니다.<br />주소 검색만으로는 좌표가 나오지 않습니다.</>}</div></div>
+          <div>{addr.road ? <><b>{addr.road}</b><br />이 주소의 지도는 좌표 연동 뒤에 이 자리에 들어갑니다.</> : <>주소를 고르면 이 자리에 지도가 들어갑니다.<br />주소 검색만으로는 좌표가 나오지 않습니다.</>}</div></div>} />
       </section>
 
       <section className="w1-fsec"><h2 className="fh3">5. 거래 및 운영 정보</h2>

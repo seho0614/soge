@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { codeList, label } from '../../lib/codes';
 import { remain } from '../../lib/format';
 import { ErrorView } from '../../components/ErrorView';
+import { ListingGeoPanel } from './ListingGeoPanel';
 
 /** SB-ADM-REV-020 반려 사유 입력
  *
@@ -90,6 +91,8 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
               ))}
             </>
           ) : null}
+          {/* v10.46 (docs/96) — 매물이면 소재지 좌표 · 핀(지도 사용이 꺼져 있으면 아무것도 그리지 않음) */}
+          {item?.target_type === 'LISTING' && <ListingGeoPanel listingId={item.target_id} />}
         </div>
 
         <div className="card rvr">

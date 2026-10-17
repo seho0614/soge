@@ -72,6 +72,8 @@ import { PublicController } from './modules/public/public.controller';
 import { HealthController } from './modules/public/health.controller';
 import { PublicService } from './modules/public/public.service';
 import { SiteController } from './modules/site/site.controller';
+import { GeoAdminController, GeoPublicController, GeoReviewController } from './modules/geo/geo.controller';   // v10.46 (D099) 카카오맵
+import { GeoService } from './common/geo/geo.service';
 import { SiteService } from './modules/site/site.service';
 import { BillingController } from './modules/billing/billing.controller';
 import { BillingService } from './modules/billing/billing.service';
@@ -230,8 +232,12 @@ import { LeadService } from './modules/lead/lead.service';
     LeadAdminController,
     AttributionController,
     ListingExtController, MarketController, MarketAdminController, SafetyController, BizAxisController,   // v10.31 (w2)
+    GeoPublicController,
+    GeoAdminController,
+    GeoReviewController,   // v10.46 (D099) 카카오맵
   ],
   providers: [
+    GeoService,   /* v10.46 (D099) 카카오맵 */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */

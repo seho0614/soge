@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
+import { KakaoMap } from '@/components/map/KakaoMap';
 import { CategoryBlock, Field, ImagePicker, MoneyInput, type Cat, type Gwan, type Img } from '@/components/form/RegParts';
 
 interface Restriction { code: string; name: string; mode: string; legalBasis: string; gate: string | null; message: string }
@@ -208,12 +209,16 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
           <AddressInput value={addr} onChange={setAddr} required label="희망 지역 주소" />
           {m('addr') && <div className="fmsg">필수 항목입니다.</div>}
         </div>
+        {/* v10.46 (docs/96) — 지도 사용이 켜져 있으면 희망 지역(시 · 구) 둘레 원 미리보기 · 저장하지 않음. 아니면 지금 칸 그대로 */}
+        <KakaoMap previewAddress={[addr.sido, addr.sigungu].filter(Boolean).join(' ')} previewPrecision="REGION" height={160}
+          caption={<><b>{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}</b> — 목록 · 상세에는 시 · 구까지만 보입니다.</>}
+          fallback={
         <div className="w1-rmap" aria-live="polite">
           <div className="rmc"><span className="pin" aria-hidden="true">📍</span>
             {addr.road ? <><b>{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}</b><br />목록 · 상세에는 시 · 구까지만 보입니다.</>
               : <>우편번호 검색으로 주소를 고르면<br />지역(시 · 구)이 정해집니다.</>}
           </div>
-        </div>
+        </div>} />
         <div className="w1-ls" style={{ marginTop: 6 }}>지도는 좌표 연동 전이라 그리지 않습니다 — 상세주소는 요청자 본인과 운영만 봅니다.</div>
       </section>
 

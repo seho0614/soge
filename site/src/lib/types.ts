@@ -77,7 +77,14 @@ export interface ListingDetailData extends Omit<ListingCardData, 'owner'> {
   summary?: string | null; contractSupport?: string | null; contactHours?: string | null;
   address?: { zip?: string; road?: string; detail?: string; sido?: string; sigungu?: string } | null;
   bizInfo?: { size?: string; sales?: string; premium?: string; wish?: string; handover?: string; etc?: string } | null;
+  /** v10.46 (docs/96) — 지도 좌표. 남에게는 REGION(시 · 구 중심) 만, 본인은 EXACT · 상태. 좌표가 없으면 null(남) */
+  geo?: ListingGeo | null;
 }
+
+export type ListingGeo =
+  | { precision: 'REGION'; lat: number; lng: number; radiusM: number; label: string }
+  | { precision: 'EXACT'; status: 'OK'; lat: number; lng: number }
+  | { precision: 'EXACT'; status: 'PENDING' | 'FAILED' | 'NOT_FOUND'; lat?: undefined; lng?: undefined };
 
 export interface Gwan {
   code: string; name: string; description: string | null;

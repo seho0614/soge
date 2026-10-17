@@ -55,4 +55,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   { code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: false, secretEnv: 'SMTP_PASS',
     otherEnv: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'MAIL_FROM', 'MAIL_FROM_NAME', 'SMTP_TIMEOUT_MS'], assume: null, adapter: 'REAL',
     files: ['src/common/mail/smtp.ts', 'src/common/mail/mail.service.ts'], doc: 'docs/92 5 ~ 8절' },
+  /* v10.46 (D099) — 키는 운영 화면(외부 연동 › 카카오맵 키)에서 넣어 암호화 저장이 먼저, 없으면 .env. 간주 스위치 대신 map.enabled(처음 off) */
+  { code: 'MAP', name: '지도 · 주소 좌표(카카오맵)', dbRow: true, secretEnv: 'KAKAO_REST_KEY',
+    otherEnv: ['NEXT_PUBLIC_KAKAO_JS_KEY', 'KAKAO_LOCAL_BASE', 'KAKAO_LOCAL_TIMEOUT_MS'], assume: null, adapter: 'REAL',
+    files: ['src/common/geo/kakao-local.provider.ts', 'src/common/geo/geo.service.ts', 'src/modules/geo/geo.controller.ts', 'site/src/components/map/KakaoMap.tsx'],
+    doc: 'docs/96' },
 ];
