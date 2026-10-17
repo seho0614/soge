@@ -11,6 +11,7 @@
 - mail-ses.md
 - main-hero-design.md
 - mall-return-refund.md
+- map-kakao.md
 - multilingual-i18n.md
 - open-blockers.md
 - p2p-individual-access.md
