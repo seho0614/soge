@@ -73,6 +73,7 @@ python3 srv_w5.py > srv_w5.log 2>&1; r srv_w5 "$(tail -1 srv_w5.log)"
 [ -f test_v1044.py ] && { KIT=${K%/sgb} python3 test_v1044.py > test_v1044.log 2>&1; r test_v1044 "$(tail -1 test_v1044.log)"; }
 # v10.45 — 큰 서비스 파일 나누기(동작 그대로) · recurring → 환불 · 정산 계좌 / partner → 운영(adm*)
 [ -f test_v1045.py ] && { KIT=${K%/sgb} python3 test_v1045.py > test_v1045.log 2>&1; r test_v1045 "$(tail -1 test_v1045.log)"; }
+[ -f test_v1046.py ] && { KIT=${K%/sgb} python3 test_v1046.py > test_v1046.log 2>&1; r test_v1046 "$(tail -1 test_v1046.log)"; }
 # 10/2 서버 기능 (결제·환불 · 파일 · 리드 배정 · 어댑터) — 어댑터 인스턴스(3121·3122·3123)를 띄워 실제 HTTP 로
 bash adapters_up.sh > adapters.log 2>&1
 API_TOSS=http://localhost:3121/api/v1 python3 srv_pay.py > srv_pay.log 2>&1; r srv_pay "$(tail -1 srv_pay.log)"

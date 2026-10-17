@@ -111,6 +111,11 @@ services:
       # 결제사(토스) 테스트 열쇠 — 비워 두면 열쇠 없는 방식(스텁 · 실제 결제 없음)으로 뜹니다. 결제 · 환불을 결제사 테스트 환경에서 볼 때만 .env 에 넣습니다 (docs/62 9절)
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
       TOSS_API_BASE: ${TOSS_API_BASE:-}
+      # v10.46 카카오맵(docs/96) — 보통은 비워 두고 운영 화면 › 외부 연동 › 카카오맵 키에서 넣습니다(암호화 저장). 여기 값은 그 값이 없을 때만.
+      #   JS 키도 API 가 화면에 내려 줍니다(GET /site-settings/map) — 사용자 웹 · 운영 화면을 다시 빌드할 필요가 없습니다.
+      KAKAO_REST_KEY: ${KAKAO_REST_KEY:-}
+      NEXT_PUBLIC_KAKAO_JS_KEY: ${NEXT_PUBLIC_KAKAO_JS_KEY:-}
+      KAKAO_LOCAL_BASE: ${KAKAO_LOCAL_BASE:-}
     ports: ["${API_PORT:-3000}:3000"]
     restart: unless-stopped
 

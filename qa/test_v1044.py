@@ -53,7 +53,8 @@ ok('BankErrorKind 이어받음', "export type BankErrorKind = IntegrationErrorKi
 # ④
 reg = rd('src/common/integration/registry.ts')
 codes = re.findall(r"\{ code: '(\w+)'", reg)
-ok('목록표 10개', len(codes) == 10 and set(codes) == {'PASS', 'BANK', 'NTS', 'PG', 'ALIMTALK', 'SAFENUM', 'ESIGN', 'BROKER', 'ETAX', 'MAIL'}, ' · '.join(codes))
+# v10.46 — 뒤 판에서 연동을 더할 수 있게(MAP · D099) 「v10.44 의 10개가 모두 그대로 있음 · 겹침 없음」으로 봅니다. 개수는 판마다 그 판 시험이 봅니다(test_v1046)
+ok('목록표 10개', {'PASS', 'BANK', 'NTS', 'PG', 'ALIMTALK', 'SAFENUM', 'ESIGN', 'BROKER', 'ETAX', 'MAIL'} <= set(codes) and len(codes) == len(set(codes)), ' · '.join(codes))
 ok('대조 검정이 통합 검정에', 'scripts/check-integrations.ts' in rd('scripts/verify-all.sh'), '')
 ok('npm run check:integrations', 'check-integrations.ts' in json.loads(rd('package.json') or '{}').get('scripts', {}).get('check:integrations', ''), '')
 env = rd('deploy/aws/env.production.example')
