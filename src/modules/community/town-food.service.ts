@@ -152,7 +152,8 @@ export class TownFoodService {
       throw new PolicyViolation('PLACE_SEARCH_FAILED', f.kind === 'QUOTA' ? '오늘 가게 찾기 한도를 넘었습니다. 내일 다시 해 주십시오.'
         : f.kind === 'NOT_CONFIGURED' ? '우리동네 맛집은 준비 중입니다.' : '가게를 찾지 못했습니다. 잠시 뒤 다시 해 주십시오.');
     }
-    const food = r.places.filter((p) => p.group && FOOD_GROUPS.has(p.group));
+    const hit = r as { ok: true; places: KakaoPlace[] };   // 성공 쪽도 명시 — GeoFail 주석(ts-node strict 끔)
+    const food = hit.places.filter((p) => p.group && FOOD_GROUPS.has(p.group));
     const keep = this.picks.get(me);
     const map = keep && now - keep.at < PICK_TTL_MS ? keep.places : new Map<string, KakaoPlace>();
     food.forEach((p) => map.set(p.kakaoId, p));
@@ -160,7 +161,7 @@ export class TownFoodService {
     if (this.picks.size > 5000) for (const [k, v] of this.picks) if (now - v.at > PICK_TTL_MS) this.picks.delete(k);
     return {
       items: food.map((p) => ({ kakaoId: p.kakaoId, name: p.name, category: p.category, address: p.road ?? p.jibun, lat: p.lat, lng: p.lng })),
-      note: r.places.length > 0 && food.length === 0 ? '음식점 · 카페만 고를 수 있습니다.' : null,
+      note: hit.places.length > 0 && food.length === 0 ? '음식점 · 카페만 고를 수 있습니다.' : null,
     };
   }
 
