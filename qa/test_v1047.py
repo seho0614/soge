@@ -169,5 +169,15 @@ for f in ('src/common/geo/geo.service.ts', 'src/modules/community/town-food.serv
        not re.search(r'\br\.kind\b', t) and 'as GeoFail' in t, '')
 ok('GeoFail 형식을 내보냄', 'export type GeoFail' in rd('src/common/geo/kakao-local.provider.ts'), '')
 
+# ⑦ DTO 선언 순서 — ts-node(strict 끔)는 `x?: Dto | null` 을 design:type 으로 바로 참조 → 뒤에 선언된 클래스면 ReferenceError(2026-10-19)
+fwd = []
+for f in ('src/modules/listing/listing.dto.ts', 'src/modules/geo/geo.controller.ts', 'src/modules/community/town-food.controller.ts'):
+    t = rd(f)
+    decl = {m.group(1): m.start() for m in re.finditer(r'^(?:export\s+)?class\s+(\w+)', t, re.M)}
+    for m in re.finditer(r'^\s+\w+[!?]?:\s*([A-Z]\w+)\s*(?:\|\s*(?:null|undefined)\s*)*;', t, re.M):
+        if m.group(1) in decl and decl[m.group(1)] > m.start():
+            fwd.append(f.split('/')[-1] + ':' + m.group(1))
+ok('DTO 형식은 쓰기 전에 선언(ts-node 에서 뜸)', not fwd, ' · '.join(fwd))
+
 n_ok = sum(1 for r in RES if r[0])
 print(f'통과 {n_ok} / {len(RES)}')
