@@ -801,11 +801,15 @@ blocked "T-04 열람 없이 과금 차단" \
 $PSQL -c "UPDATE lead_deliveries SET viewed_at=now() WHERE id='$DID';" >/dev/null 2>&1
 # v10.31 (합침 · W5 D070) — 리드 이용료는 선불 충전 잔액에서 차감합니다. 시험 파트너에 잔액이 없으면 과금이 막혀(LEADCASH) T-05 가 0 이 됩니다.
 #   시험 결제(스텁) 충전 한 건을 넣습니다(원장 · 불변식을 그대로 탐 · 이미 있으면 건너뜀).
-$PSQL -c "DO \$\$ DECLARE v uuid; BEGIN
-            IF NOT EXISTS (SELECT 1 FROM lead_cash_charges WHERE order_id = 'lc-atk-t05') THEN
+# 2026-10-19 — 검정 DB(sgb_check)는 지우지 않고 계속 씁니다. 위에서 이용료 줄을 지울 때(replica) 잔액은 돌아오지 않아
+#   한 번 돌 때마다 8,000원씩 줄고, 처음 충전 1건(10만 원)만으로는 12번째 실행부터 잔액 부족(LEADCASH)으로 T-05 가 0 이 됐습니다.
+#   「충전한 적 있나」가 아니라 **지금 잔액이 이용료보다 적은가**로 봅니다 — 적을 때만 새 주문 번호로 한 건 충전.
+$PSQL -c "DO \$\$ DECLARE v uuid; o text; BEGIN
+            IF coalesce((SELECT paid_balance + bonus_balance FROM lead_cash_wallets WHERE partner_id = '$PID'), 0) < 8000 THEN
+              o := 'lc-atk-t05-' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSUS');
               INSERT INTO lead_cash_charges(partner_id, order_id, amount, bonus_rate, bonus_amount, source)
-              VALUES ('$PID', 'lc-atk-t05', 100000, 0, 0, 'MANUAL') RETURNING id INTO v;
-              PERFORM fn_lead_cash_charge_done(v, 'stub_atk_t05', 'STUB', true, NULL);
+              VALUES ('$PID', o, 100000, 0, 0, 'MANUAL') RETURNING id INTO v;
+              PERFORM fn_lead_cash_charge_done(v, 'stub_' || o, 'STUB', true, NULL);
             END IF; END \$\$;" >/dev/null 2>&1
 $PSQL -c "INSERT INTO lead_fees(delivery_id,partner_id,amount)
           VALUES ('$DID','$PID',8000) ON CONFLICT (delivery_id) DO NOTHING;" >/dev/null 2>&1
