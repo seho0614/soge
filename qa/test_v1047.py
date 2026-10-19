@@ -2,7 +2,8 @@
 
   KIT=… python3 test_v1047.py
 
-  ① D100 — posts.board FOOD · 게시판 바꾸기 잠금 · town_places · town_food_posts · v_town_places · map.food_geolocation off · 마이그레이션 138
+  ① D100 — posts.board FOOD · 게시판 바꾸기 잠금 · town_places · town_food_posts · v_town_places · map.food_geolocation off
+  ①-2 D101 — 위치기반 약관 폐기 재판단 · location_column_allow 8칸 · 마이그레이션 139
   ② 쓰는 이름이 모두 import · 선언됨
   ③ 등록 — app.module · 화면 목록(screens.json) · 공개 라우트는 community 아래
   ④ 기존 기능에 영향 없음 — 지도 off 면 탭 없음 · 「전체」 목록에 맛집 글이 섞이지 않음 · 게시판 목록 그대로 · 글 고치기 그대로
@@ -69,7 +70,20 @@ ok('「현재 위치로」 처음 off', re.search(r"\('map\.food_geolocation', '
 ok('자료를 지우지 않음(DROP TABLE · DELETE · TRUNCATE 없음)', not re.search(r'\b(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE)\b', strip(M)), '')
 migs = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations'))
               if os.path.exists(os.path.join(K, 'prisma/migrations', d, 'migration.sql')))
-ok('마이그레이션 138 · 마지막 D100', len(migs) == 138 and migs[-1] == 'D100_town_food', f'{len(migs)} · {migs[-1]}')
+ok('마이그레이션 139 이상 · D100 · D101 있음', len(migs) >= 139 and 'D100_town_food' in migs and 'D101_location_column_allow' in migs, f'{len(migs)} · {migs[-1]}')
+
+# ①-2 D101 — 위치기반 약관 폐기 재판단(2026-10-19 대표 A안) ---------------------------
+L = rd('prisma/migrations/D101_location_column_allow/migration.sql')
+ok('D101 있음', bool(L), '')
+allow = re.findall(r"\('(\w+)',\s*'(lat|lng)'", L)
+ok('허용 좌표 칸은 정확히 8개(매물 · 시군구 · 가게 · 가게 보기)', sorted(set(allow)) == sorted({(t, c) for t in ('listing_geo', 'geo_region', 'town_places', 'v_town_places') for c in ('lat', 'lng')}) and len(allow) == 8, str(len(allow)))
+ok('검정 보기 2개 모두 허용 목록만 뺌(나머지 조건 그대로)', L.count('NOT EXISTS (SELECT 1 FROM public.location_column_allow a') == 2
+   and "'^(lat|lng|lon|latitude|longitude|geohash)$'" in L and "geo_?(lat|lng|point)" in L and "('point', 'geography', 'geometry')" in L, '')
+ok('폐기 스위치는 건드리지 않음(legal.location_waived)', "key = 'legal.location_waived'\n" not in L and "SET value = 'off'" not in L, '')
+ok('근거 문구 길이 10~200(value_pattern)', all(10 <= len(v) <= 200 for v in re.findall(r"SET value = '([^']+)'", L)), '')
+ok('D101 자료를 지우지 않음', not re.search(r'\b(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE)\b', strip(L)), '')
+VI = rd('scripts/verify-invariants.sh')
+ok('불변식 LOC-1 · LOC-2', 'LOC-1' in VI and 'LOC-2' in VI, '')
 
 # ② 쓰는 이름 -----------------------------------------------------------------
 TS = ['src/modules/community/town-food.service.ts', 'src/modules/community/town-food.controller.ts',
