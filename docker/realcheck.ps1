@@ -73,6 +73,10 @@ if (-not (Test-Path ".env")) { Copy-Item ".env.example" ".env"; Say ".env 를 �
 $apiPort = EnvVal "API_PORT" "3000"; $webPort = EnvVal "WEB_PORT" "5173"; $sitePort = EnvVal "SITE_PORT" "5174"; $pgUser = EnvVal "PG_USER" "sgb"
 $skipPull = ($env:REALCHECK_SKIP_PULL -eq "1")
 
+# v10.47 (2026-10-19) — 어느 kit 으로 돌렸는지(판 · 본체 커밋)를 결과 파일 머리에
+$kv = ""; if (Test-Path "sgb/VERSION") { $kv = (Get-Content "sgb/VERSION" -Raw).Trim() }
+$kc = ""; if (Test-Path "KIT_COMMITS.txt") { $kc = ((Get-Content "KIT_COMMITS.txt") -join " · ") }
+Say ("kit 판: " + $kv + "  " + $kc)
 Say ""; Say "[1] Docker"
 DkQuiet @("info")
 if ($LASTEXITCODE -eq 0) { Ok "Docker 가 켜져 있음" (First (DkGet @("version", "--format", "{{.Server.Version}}"))) }
@@ -173,6 +177,14 @@ for ($i = 0; $i -lt 60; $i++) {
 $apiId = First (DkGet @("inspect", "--format", "{{.Id}}", "sgb-api"))
 if ($apiId -and -not ((MineIds) -contains $apiId)) { Bad "API 컨테이너가 이 킷의 것이 아님" "다른 킷 폴더의 sgb-api 가 답했습니다 — [3-1] 안내대로 끄고 다시 실행" ; Finish }
 Chk ($st -eq "healthy") "API 컨테이너 healthy" $st
+# v10.47 (2026-10-19) — API 가 안 뜨면 까닭(컨테이너 기록)을 결과 파일에 바로 남깁니다 · 따로 docker logs 를 돌리지 않게
+if ($st -ne "healthy") {
+  $log = @(DkGet @("compose", "logs", "--no-color", "--no-log-prefix", "--tail", "200", "api"))
+  $ts = @($log | Where-Object { "$_" -match "error TS[0-9]+|Error:|Nest can't resolve|EADDRINUSE|필수 환경변수" } | Select-Object -Unique -First 30)
+  if ($ts.Count -eq 0) { $ts = @($log | Select-Object -Last 30) }
+  $script:lines.Add("        --- sgb-api 기록(까닭) ---")
+  foreach ($l in $ts) { $script:lines.Add("        " + "$l".Trim()) }
+}
 
 Say ""; Say "[6] 마이그레이션 · 컨테이너 안 버전"
 $files = @(Get-ChildItem -Path "sgb/prisma/migrations" -Directory | Where-Object { Test-Path (Join-Path $_.FullName "migration.sql") }).Count
@@ -189,6 +201,12 @@ $rc = $LASTEXITCODE
 foreach ($pat in @("^통과 [0-9]+ / 실패", "뚫림", "SQL 대조", "통합 검정 —")) {
   $l = $all | Where-Object { $_ -match $pat } | Select-Object -First 1
   if ($l) { $script:lines.Add("        " + $l.Trim()) }
+}
+# v10.47 (2026-10-19) — 실패 · 뚫림 · 오류 줄을 모두 결과 파일에(요약 한 줄만으로는 어느 항목인지 모름)
+$bad = @($all | Where-Object { "$_" -match "▲뚫림|★오류|^\s*(실패|FAIL)\b|✗" } | Select-Object -First 40)
+if ($bad.Count -gt 0) {
+  $script:lines.Add("        --- 통합 검정에서 걸린 줄 ---")
+  foreach ($l in $bad) { $script:lines.Add("        " + "$l".Trim()) }
 }
 Chk ($rc -eq 0) "통합 검정 — 전체 통과" ("종료 코드 " + $rc)
 
