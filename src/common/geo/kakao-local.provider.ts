@@ -18,7 +18,10 @@ import { IntegrationErrorKind } from '../integration/errors';
 
 export type GeoFailKind = IntegrationErrorKind | 'NOT_FOUND' | 'QUOTA';
 
-export type GeoPoint = { ok: true; lat: number; lng: number } | { ok: false; kind: GeoFailKind; detail?: string };
+/** 실패 쪽. ★ 개발 서버(ts-node)는 strict 를 끄고 돌아 `if (r.ok)` 로 갈라도 실패 쪽이 좁혀지지 않습니다 —
+ *  실패 칸(kind)은 `r as GeoFail` 로 꺼내 쓰십시오(v10.47 realcheck TS2339). */
+export type GeoFail = { ok: false; kind: GeoFailKind; detail?: string };
+export type GeoPoint = { ok: true; lat: number; lng: number } | GeoFail;
 
 export interface KakaoPlace {
   kakaoId: string; name: string; category: string | null; group: string | null; phone: string | null;
@@ -60,7 +63,7 @@ export async function searchAddress(key: string | null | undefined, address: str
 
 /** 키워드 → 장소 목록(최대 15곳). 음식점(FD6) · 카페(CE7)만 고를 때 categoryGroup 을 넘깁니다 */
 export async function searchKeyword(key: string | null | undefined, keyword: string, opt: { categoryGroup?: string; lat?: number; lng?: number } = {},
-                                    fetchFn?: FetchLike): Promise<{ ok: true; places: KakaoPlace[] } | { ok: false; kind: GeoFailKind; detail?: string }> {
+                                    fetchFn?: FetchLike): Promise<{ ok: true; places: KakaoPlace[] } | GeoFail> {
   const q = keyword.trim();
   if (!q) return { ok: true, places: [] };
   const query: Record<string, string> = { query: q, size: '15' };

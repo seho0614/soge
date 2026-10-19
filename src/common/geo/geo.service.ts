@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
-import { searchAddress, GeoFailKind } from './kakao-local.provider';
+import { searchAddress, GeoFail, GeoFailKind } from './kakao-local.provider';
 
 /* ---------------------------------------------------------------------
  * v10.46 (docs/96) — 지도 · 좌표 (외부 연동 MAP)
@@ -131,11 +131,12 @@ export class GeoService {
       if (a?.sido && a?.sigungu) await this.ensureRegion(a.sido, a.sigungu).catch(() => undefined);
       return { status: 'OK', failKind: null };
     }
-    const status = r.kind === 'NOT_FOUND' ? 'NOT_FOUND' : 'FAILED';
+    const f = r as GeoFail;   // ts-node(strict 끔)는 실패 쪽을 좁히지 못합니다 — GeoFail 주석
+    const status = f.kind === 'NOT_FOUND' ? 'NOT_FOUND' : 'FAILED';
     await this.db.query(
       `UPDATE listing_geo SET status = $2, fail_kind = $3, lat = NULL, lng = NULL, updated_at = now(), tries = tries + 1
-        WHERE listing_id = $1`, [listingId, status, r.kind]);
-    return { status, failKind: r.kind };
+        WHERE listing_id = $1`, [listingId, status, f.kind]);
+    return { status, failKind: f.kind };
   }
 
   /** 시 · 구 중심을 한 번만 찾아 둡니다(이미 있으면 부르지 않음) */
@@ -285,6 +286,7 @@ export class GeoService {
       NETWORK: '서버에서 카카오로 연결하지 못했습니다(발신 · 방화벽).',
       HTTP_4XX: '카카오가 요청을 받지 않았습니다 — 「카카오맵」 사용 설정(콘솔 › 제품 설정)을 확인하십시오.',
     };
-    return { ok: false, kind: r.kind, message: why[r.kind] ?? `실패(${r.kind})` };
+    const f = r as GeoFail;   // GeoFail 주석
+    return { ok: false, kind: f.kind, message: why[f.kind] ?? `실패(${f.kind})` };
   }
 }

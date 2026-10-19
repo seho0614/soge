@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { GeoService } from '../../common/geo/geo.service';
-import { KakaoPlace, searchKeyword } from '../../common/geo/kakao-local.provider';
+import { GeoFail, KakaoPlace, searchKeyword } from '../../common/geo/kakao-local.provider';
 import { publicAuthor } from './community.service';
 
 /* ---------------------------------------------------------------------
@@ -148,8 +148,9 @@ export class TownFoodService {
     const near = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng) && lat >= 33 && lat <= 39 && lng >= 124 && lng <= 132;
     const r = await searchKeyword(await this.geo.restKey(), kw, near ? { lat, lng } : {});
     if (!r.ok) {
-      throw new PolicyViolation('PLACE_SEARCH_FAILED', r.kind === 'QUOTA' ? '오늘 가게 찾기 한도를 넘었습니다. 내일 다시 해 주십시오.'
-        : r.kind === 'NOT_CONFIGURED' ? '우리동네 맛집은 준비 중입니다.' : '가게를 찾지 못했습니다. 잠시 뒤 다시 해 주십시오.');
+      const f = r as GeoFail;   // ts-node(strict 끔)는 실패 쪽을 좁히지 못합니다 — GeoFail 주석
+      throw new PolicyViolation('PLACE_SEARCH_FAILED', f.kind === 'QUOTA' ? '오늘 가게 찾기 한도를 넘었습니다. 내일 다시 해 주십시오.'
+        : f.kind === 'NOT_CONFIGURED' ? '우리동네 맛집은 준비 중입니다.' : '가게를 찾지 못했습니다. 잠시 뒤 다시 해 주십시오.');
     }
     const food = r.places.filter((p) => p.group && FOOD_GROUPS.has(p.group));
     const keep = this.picks.get(me);
