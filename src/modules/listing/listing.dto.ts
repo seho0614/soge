@@ -227,6 +227,18 @@ export class ListingCardDto {
   @ApiProperty({ nullable: true, description: '급구 · 급매 {kind: BUY|SELL, label, until}' }) urgent!: { kind: string; label: string; until: string } | null;
 }
 
+/** v10.46 (docs/96) — 매물 상세의 지도 좌표 
+ *  ★ ListingDetailDto 보다 위에 둡니다 — ts-node(strict 끔)는 `geo?: ListingGeoDto | null` 을 design:type 으로 바로 참조해
+ *    뒤에 있으면 불러올 때 ReferenceError 로 API 가 뜨지 않습니다(2026-10-19 realcheck). */
+export class ListingGeoDto {
+  @ApiProperty({ enum: ['REGION', 'EXACT'] }) precision!: string;
+  @ApiPropertyOptional({ enum: ['OK', 'PENDING', 'FAILED', 'NOT_FOUND'], description: 'EXACT(본인)일 때만' }) status?: string;
+  @ApiPropertyOptional({ example: 37.5172 }) lat?: number;
+  @ApiPropertyOptional({ example: 127.0473 }) lng?: number;
+  @ApiPropertyOptional({ example: 2000, description: 'REGION 일 때 원 반지름(m)' }) radiusM?: number;
+  @ApiPropertyOptional({ example: '서울 강남구', description: 'REGION 일 때 시 · 구 이름' }) label?: string;
+}
+
 export class ListingDetailDto extends ListingCardDto {
   @ApiProperty({ type: ListingOwnerDetailDto, description: '등록자 + 공개 실적' }) declare owner: ListingOwnerDetailDto;
   @ApiProperty({ example: 342, description: '조회 수' }) declare viewCount: number;
@@ -252,16 +264,6 @@ export class ListingDetailDto extends ListingCardDto {
   @ApiPropertyOptional({ type: () => ListingGeoDto, nullable: true,
     description: '지도 좌표. 지도 사용이 꺼져 있으면 null. 남에게는 REGION(시 · 구 중심 · 반경)만 — 정확 좌표(EXACT)는 등록자 본인에게만' })
   geo?: ListingGeoDto | null;
-}
-
-/** v10.46 (docs/96) — 매물 상세의 지도 좌표 */
-export class ListingGeoDto {
-  @ApiProperty({ enum: ['REGION', 'EXACT'] }) precision!: string;
-  @ApiPropertyOptional({ enum: ['OK', 'PENDING', 'FAILED', 'NOT_FOUND'], description: 'EXACT(본인)일 때만' }) status?: string;
-  @ApiPropertyOptional({ example: 37.5172 }) lat?: number;
-  @ApiPropertyOptional({ example: 127.0473 }) lng?: number;
-  @ApiPropertyOptional({ example: 2000, description: 'REGION 일 때 원 반지름(m)' }) radiusM?: number;
-  @ApiPropertyOptional({ example: '서울 강남구', description: 'REGION 일 때 시 · 구 이름' }) label?: string;
 }
 
 /** 목록 응답. 광고와 일반을 섞지 않습니다 — 섞으면 프런트가 라벨을 빠뜨립니다. */
