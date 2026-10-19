@@ -538,6 +538,15 @@ run  "FOOD-4 맛집 글이 아닌 글은 가게에 붙지 않음(TOWN_FOOD_POST)
     IF SQLERRM NOT LIKE 'TOWN_FOOD_POST:%' THEN RAISE; END IF;
   END \$\$; ROLLBACK;"
 
+# v10.47 (D101) — 위치기반 약관 폐기 재판단: 판단을 거친 좌표 칸은 8개뿐 · 목록 밖 좌표 칸이 생기면 여전히 잡힘
+eq  "LOC-1 판단을 거친 좌표 칸 8개(매물 · 시군구 · 가게)" "SELECT count(*) FROM location_column_allow;" "8"
+run "LOC-2 목록 밖 좌표 칸은 여전히 잡힘" PASS "BEGIN;
+  DELETE FROM location_column_allow WHERE table_name='town_places' AND column_name='lat';
+  DO \$\$ BEGIN
+    IF (SELECT count(*) FROM v_location_columns WHERE table_name='town_places') <> 1 THEN RAISE EXCEPTION 'not caught'; END IF;
+    IF (SELECT count(*) FROM v_location_waiver_broken WHERE table_name='town_places') <> 1 THEN RAISE EXCEPTION 'not caught(BZ)'; END IF;
+  END \$\$; ROLLBACK;"
+
 n=$($PSQL -t -A -c "SELECT count(*) FROM integrations WHERE secret_key_name LIKE '%KEY%' AND secret_registered=false;")
 if [ "$n" -ge 1 ]; then echo "  ok   INTG  키 값이 아니라 키 이름만 저장"; pass=$((pass+1));
 else echo "  FAIL INTG  키 관리 방식 확인 필요"; fail=$((fail+1)); fi
