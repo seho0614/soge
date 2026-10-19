@@ -161,5 +161,13 @@ fp = rd('site/src/app/community/food/[id]/page.tsx')
 ok('가게 화면은 개인 응답(apiGetPersonal — 내 검수 중 글)', 'apiGetPersonal<Place>' in fp, '')
 ok('카카오맵 링크는 새 창 · noopener', 'target="_blank" rel="noopener noreferrer"' in fp, '')
 
+# ⑥ 개발 서버(ts-node · strict 끔)에서 뜨는가 — 2026-10-19 realcheck 에서 API 가 TS2339 로 뜨지 않았음
+#    strict 를 끄면 `if (r.ok)` 뒤에도 실패 쪽(kind)이 좁혀지지 않습니다 → 실패 칸은 `r as GeoFail` 로만 꺼냄
+for f in ('src/common/geo/geo.service.ts', 'src/modules/community/town-food.service.ts'):
+    t = strip(rd(f))
+    ok(f'ts-node 에서 뜸 — 성공 · 실패 결과의 kind 를 좁히지 않고 읽지 않음({f.split("/")[-1]})',
+       not re.search(r'\br\.kind\b', t) and 'as GeoFail' in t, '')
+ok('GeoFail 형식을 내보냄', 'export type GeoFail' in rd('src/common/geo/kakao-local.provider.ts'), '')
+
 n_ok = sum(1 for r in RES if r[0])
 print(f'통과 {n_ok} / {len(RES)}')
