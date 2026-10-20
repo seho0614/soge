@@ -32,8 +32,10 @@ const d = (s?: string) => (s ? new Date(s).toLocaleDateString('ko-KR') : '—');
  */
 export function Payouts() {
   const roles = tokenRoles();
-  const isPayout = roles.includes('PAYOUT');
-  const canConfirm = roles.includes('ADMIN') || roles.includes('SUPER');
+  /* 2026-10-21 결정 — SUPER 는 확정 · 지급 · 입금 기록 단추를 모두 봅니다. 자기가 확정한 건의 지급은 서버 · DB 가 막습니다(2인 원칙) */
+  const isSuper = roles.includes('SUPER');
+  const isPayout = isSuper || roles.includes('PAYOUT');
+  const canConfirm = isSuper || roles.includes('ADMIN');
   const desk = useApi<Desk>('/admin/payouts');
   const recv = useApi<Recv[]>('/admin/ad-receivables');
   const [busy, setBusy] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function Payouts() {
           <div className="n">{won((recv.data ?? []).reduce((a, v) => a + Number(v.unpaid || 0), 0))}</div></div>
       </div>
       {/* 시안의 「시연 — 지금 보는 사람(운영 · 지급 담당)」 전환 칩은 시연용입니다 — 실제 화면은 로그인한 계정의 역할로 단추가 갈립니다 */}
-      <div className="ad-nt info">지금 보는 사람: <b>{roles.includes('PAYOUT') ? '지급 담당 (PAYOUT)' : '운영 (ADMIN · SUPER)'}</b> — 단추는 역할에 맞는 것만 보입니다.</div>
+      <div className="ad-nt info">지금 보는 사람: <b>{isSuper ? '최고 관리자 (SUPER — 확정 · 지급 모두)' : roles.includes('PAYOUT') ? '지급 담당 (PAYOUT)' : '운영 (ADMIN)'}</b> — 단추는 역할에 맞는 것만 보입니다.</div>
       {err && <p className="form-error" role="alert">{err}</p>}
       {msg && <p className="notice">{msg}</p>}
 

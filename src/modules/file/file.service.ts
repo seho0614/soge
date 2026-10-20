@@ -4,6 +4,7 @@ import type { Readable } from 'node:stream';
 import { DatabaseService } from '../../db/database.service';
 import { AppError, Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import type { Principal } from '../../core/auth';
+import { hasRole } from '../../core/auth';
 import { RequestCtx } from '../../core/request-context';
 import { LocalStorage, StorageProvider, storageFromEnv } from './storage';
 import { SNIFF_BYTES, TYPE_LABEL, contentDisposition, sanitizeName, sniff } from './sniff';
@@ -60,7 +61,8 @@ export class FileService {
 
   /* ── 1. 올릴 자리 만들기 ───────────────────────────────────── */
   async create(p: Principal, dto: { purpose: string; name: string; contentType: string; size: number; sha256?: string }) {
-    if (!UPLOADERS[dto.purpose]?.some((r) => p.roles.includes(r as any))) {
+    const uploaders = UPLOADERS[dto.purpose];
+    if (!uploaders || !hasRole(p.roles, ...uploaders)) {   // 2026-10-21 — SUPER 는 모든 용도(hasRole)
       throw new Forbidden('FORBIDDEN', '이 용도의 파일을 올릴 권한이 없습니다.');
     }
     const ct = dto.contentType.toLowerCase().split(';')[0].trim();

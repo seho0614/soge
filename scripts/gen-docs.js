@@ -14,10 +14,12 @@ const ROLES = ['GUEST','MEMBER','BIZ_OWNER','BIZ_STAFF','REVIEWER','ADMIN','SUPE
 // 역할 상속: 상위 역할은 하위 화면에 접근 가능
 const INHERIT = {
   MEMBER:['GUEST'], BIZ_OWNER:['GUEST','MEMBER'], BIZ_STAFF:['GUEST','MEMBER'],
-  REVIEWER:['GUEST','MEMBER'], ADMIN:['GUEST','MEMBER'], SUPER:['GUEST','MEMBER','ADMIN','REVIEWER'],
+  REVIEWER:['GUEST','MEMBER'], ADMIN:['GUEST','MEMBER'],
+  /* 2026-10-21 결정 — SUPER 는 모든 권한(PAYOUT 지급 포함 · 앞으로 생기는 역할도). 상속 목록이 아니라 can() 에서 항상 참 */
+  SUPER:['모든 역할 · 모든 권한 (PAYOUT 지급 포함 · 앞으로 생기는 권한도 — 2026-10-21 결정)'],
 };
 const can = (role, screen) =>
-  screen.roles.includes(role) || (INHERIT[role]||[]).some(r => screen.roles.includes(r));
+  role === 'SUPER' || screen.roles.includes(role) || (INHERIT[role]||[]).some(r => screen.roles.includes(r));
 
 // ── 1. 화면정의서 ────────────────────────────────────────────
 {
@@ -78,6 +80,9 @@ const can = (role, screen) =>
   L.push('| 역할 | 상속 |');
   L.push('|---|---|');
   for (const r of ROLES) L.push(`| ${r} | ${(INHERIT[r]||[]).join(' · ') || '—'} |`);
+  L.push('');
+  L.push('> **SUPER** — 권한 검사를 항상 통과합니다(서버 `hasRole` · DB `fn_has_role`). 게이트(본인인증 · 구독)는 자격이라 SUPER 도 그대로 적용됩니다.');
+  L.push('> 2인 원칙(확정한 사람 ≠ 지급한 사람 · 신청자 ≠ 승인자 ≠ 집행자)은 권한이 아니라 통제라 SUPER 도 지킵니다. 감사 기록은 actor_role = SUPER 로 남습니다.');
   L.push('');
   L.push('## 게이트');
   L.push('');

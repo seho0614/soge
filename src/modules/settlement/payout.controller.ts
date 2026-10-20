@@ -77,9 +77,9 @@ export class PayoutController {
   }
 
   @Post(':kind/:id/pay')
-  @Roles('PAYOUT')
+  @Roles('PAYOUT')   // SUPER 는 AuthGuard 가 통과시킵니다(2026-10-21 결정) — 자기가 확정한 건은 DB 2인 원칙이 막음
   @ApiOperation({
-    summary: '지급 기록 (지급 담당)',
+    summary: '지급 기록 (지급 담당 · SUPER)',
     description: 'CONFIRMED → PAID. **이체 참조가 필수**이고 되돌릴 수 없습니다. ' +
       '인증된 계좌가 없거나(제휴) 하위가맹점 ID 가 없으면(소개몰) DB 가 막습니다.',
   })

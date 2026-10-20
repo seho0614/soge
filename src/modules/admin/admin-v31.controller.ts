@@ -148,7 +148,7 @@ export class AdminV31Controller {
   @Patch('adx/statements/:id')
   @Roles('ADMIN', 'SUPER', 'PAYOUT')
   @ApiOperation({ summary: '명세서 신청 · 승인 · 집행',
-    description: '신청자 ≠ 승인자 ≠ 집행자(2인 원칙). 집행은 지급 담당(PAYOUT)만 · 지급 게이트(adx.payout_gate)가 열려 있어야 · 원장 일치해야 합니다.' })
+    description: '신청자 ≠ 승인자 ≠ 집행자(2인 원칙). 집행은 지급 담당(PAYOUT) · SUPER(2026-10-21) · 지급 게이트(adx.payout_gate)가 열려 있어야 · 원장 일치해야 합니다.' })
   @Audit('ADX_STATEMENT', 'ADX')
   statement(@Param('id') id: string, @Body() dto: StatementActionDto) { return this.svc.adxStatementAction(id, dto.action, dto.paidRef); }
 }

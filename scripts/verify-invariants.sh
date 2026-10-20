@@ -1145,5 +1145,15 @@ run  "WX-5 기상청 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "
 run  "WX-6 카카오 키는 여전히 카카오 형식만(+ / = 거절)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','abcdefgh+ijklmnop/qrst==', NULL); ROLLBACK;"
 eq   "WX-7 어떤 보기도 키(integration_secrets)를 읽지 않음" "SELECT count(*) FROM v_secret_leak" 0
 
+# ── v10.51 (D104 · docs/104 · 2026-10-21 결정) SUPER 는 모든 권한 — 지급 포함 · 앞으로 생기는 역할도. 2인 원칙은 그대로 ─────
+eq   "SUP-1 SUPER 계정은 어떤 역할 검사도 통과(PAYOUT · 아직 없는 역할 포함)" \
+  "SELECT count(*) FROM account_roles WHERE role='SUPER' AND NOT fn_has_role(account_id, 'PAYOUT', 'FUTURE_ROLE_X')" 0
+eq   "SUP-2 SUPER 가 아닌 계정은 없는 역할을 받지 못함" \
+  "SELECT count(*) FROM accounts a WHERE NOT EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id=a.id AND r.role='SUPER') AND fn_has_role(a.id, 'FUTURE_ROLE_X')" 0
+eq   "SUP-3 퍼블리셔 명세서 집행 · 승인이 fn_has_role 을 씀" \
+  "SELECT count(*) FROM pg_proc WHERE proname='fn_adx_statement_flow' AND prosrc LIKE '%fn_has_role(NEW.paid_by, ''PAYOUT'')%' AND prosrc LIKE '%fn_has_role(NEW.approved_by, ''ADMIN'')%'" 1
+eq   "SUP-4 2인 원칙은 그대로(확정자 ≠ 지급자 · 신청자 ≠ 승인자 ≠ 집행자)" \
+  "SELECT count(*) FROM pg_proc WHERE (proname='fn_payout_two_person' AND prosrc LIKE '%확정한 사람이 지급할 수 없습니다%') OR (proname='fn_adx_statement_flow' AND prosrc LIKE '%승인 · 신청한 사람은 집행할 수 없습니다%')" 2
+
 echo "통과 $pass / 실패 $fail"
 [ $fail -eq 0 ] || exit 1

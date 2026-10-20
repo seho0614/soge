@@ -78,8 +78,9 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
+/* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
 const canSee = (t: Tab, roles: string[]) =>
-  (TAB_ROLES[t] ?? ['ADMIN', 'SUPER']).some((r) => roles.includes(r));
+  roles.includes('SUPER') || (TAB_ROLES[t] ?? ['ADMIN']).some((r) => roles.includes(r));
 
 /**
  * 운영 BO.

@@ -50,7 +50,8 @@ export class PrincipalService {
      *   사업자·본인인증 게이트는 그대로 적용됩니다 — 역할만 열고 자격은 열지 않습니다. */
     let roles = (row.roles?.length ? row.roles : ['MEMBER']) as Role[];
     if (roles.some((r) => r === 'ADMIN' || r === 'SUPER')) {
-      const ops = roles.filter((r) => ['SUPER', 'ADMIN', 'REVIEWER', 'PAYOUT'].includes(r));
+      /* 2026-10-21 — 순서를 고정합니다(SUPER 가 맨 앞). 감사 기록 actorRole = roles[0] 이 DB 행 순서에 따라 ADMIN 으로 남던 것을 막습니다 */
+      const ops = (['SUPER', 'ADMIN', 'REVIEWER', 'PAYOUT'] as Role[]).filter((r) => roles.includes(r));
       const user = (['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'] as Role[]).filter((r) => !ops.includes(r));
       roles = [...ops, ...user, ...roles.filter((r) => !ops.includes(r) && !user.includes(r))];
     }

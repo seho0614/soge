@@ -142,7 +142,8 @@ function Platform({ d, run, busy, flash, onGo }: { d: Overview; run: Run; busy: 
 
 function Payout({ d, run, busy, flash }: { d: Overview; run: Run; busy: string | null; flash: React.ReactNode }) {
   const roles = tokenRoles();
-  const isOps = roles.includes('ADMIN') || roles.includes('SUPER'), isPay = roles.includes('PAYOUT');
+  /* 2026-10-21 결정 — SUPER 는 신청 · 승인 · 집행 모두. 같은 건을 혼자 다 하지는 못합니다(DB 2인 원칙) */
+  const isOps = roles.includes('ADMIN') || roles.includes('SUPER'), isPay = roles.includes('PAYOUT') || roles.includes('SUPER');
   const s = d.settings;
   const [month, setMonth] = useState(() => { const t = new Date(); t.setMonth(t.getMonth() - 1); return t.toISOString().slice(0, 7); });
   const [ref, setRef] = useState<Record<string, string>>({});

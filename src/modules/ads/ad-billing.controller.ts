@@ -147,7 +147,7 @@ export class AdBillingController {
 
   @Post('ad-invoices/:id/payments')
   @ApiBearerAuth()
-  /* ★ 돈이 움직인 기록은 **지급 전담(PAYOUT)만** 남깁니다.
+  /* ★ 돈이 움직인 기록은 **지급 전담(PAYOUT)만** 남깁니다. (2026-10-21 — SUPER 는 AuthGuard 가 통과시킵니다)
    *
    *   청구를 발행한 사람이 입금까지 찍으면, 실제로 안 들어온 돈을
    *   들어온 것으로 만들 수 있습니다. 두 사람이 나눠야 사고가 나도

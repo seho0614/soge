@@ -14,6 +14,14 @@ export type Role =
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
+/* ★ 2026-10-21 결정 — SUPER 는 모든 권한을 가집니다. 정산 지급(PAYOUT 전용 API)도, 앞으로 새로 생기는 권한도 포함입니다.
+ *   @Roles 마다 'SUPER' 를 적지 않고, 권한 검사(AuthGuard · hasRole)가 SUPER 를 항상 통과시킵니다.
+ *   게이트(본인인증 · 유효 구독)는 권한이 아니라 자격이라 SUPER 도 그대로 봅니다(2026-10-01 Q5 「역할만 열고 자격은 열지 않음」).
+ *   DB 쪽 역할 검사는 fn_has_role(D104)이 같은 규칙입니다. 감사 기록은 SUPER 도 똑같이 남습니다(actorRole = SUPER). */
+export const isSuper = (roles: readonly string[] | undefined | null): boolean => !!roles?.includes('SUPER');
+export const hasRole = (roles: readonly string[] | undefined | null, ...want: string[]): boolean =>
+  isSuper(roles) || want.some((r) => !!roles?.includes(r));
+
 /** 인증 게이트 — 본인인증 · 유효 구독. v10.39 — 사업자 인증 게이트(BUSINESS_VERIFIED)는 P2P(v10.37) 뒤 쓰는 곳이 없어 뺐습니다. */
 export const GATE_KEY = 'gate';
 export type Gate = 'IDENTITY_VERIFIED' | 'ACTIVE_SUBSCRIPTION';
@@ -46,7 +54,7 @@ export class AuthGuard implements CanActivate {
 
     if (required?.length) {
       if (!principal) throw new Forbidden('UNAUTHENTICATED', '로그인이 필요합니다.');
-      if (!required.some((r) => principal.roles.includes(r))) {
+      if (!hasRole(principal.roles, ...required)) {
         throw new Forbidden('FORBIDDEN', '권한이 없습니다.');
       }
     }
@@ -65,7 +73,8 @@ export class AuthGuard implements CanActivate {
     const c = RequestCtx.get();
     if (c && principal) {
       c.actorId = principal.accountId;
-      c.actorRole = principal.roles[0];
+      /* SUPER 로 통과한 요청은 감사 기록에 SUPER 로 남깁니다 — 누가 최고 권한으로 했는지 가려야 합니다 */
+      c.actorRole = isSuper(principal.roles) ? 'SUPER' : principal.roles[0];
     }
     return true;
   }
