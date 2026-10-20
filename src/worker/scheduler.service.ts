@@ -458,6 +458,8 @@ export class SchedulerService {
         /* 상담 신청 표(D018) — 6개월 지난 연락처 파기 · 하루 넘게 확인 안 된 신청 만료.
          * 올린 kit(v10.4.7)은 함수만 있고 부르는 곳이 없어, 동의서에 적은 6개월이 지나도 지워지지 않았습니다. */
         const [consult] = await this.db.query<{ n: number }>(`SELECT fn_consult_purge() AS n`);
+        /* v10.48 (D102) — 7일 지난 비밀번호 재설정 증표 · 2일 지난 로그인 실패 기록 */
+        const [authRec] = await this.db.query<{ n: number }>(`SELECT fn_purge_auth_records() AS n`);
 
         // 파기 기한을 넘긴 건이 남아 있으면 경보 — 법정 기한 초과입니다
         const [over] = await this.db.query<{ n: string }>(
@@ -467,8 +469,8 @@ export class SchedulerService {
             '파기 기한을 넘긴 개인정보가 있습니다', { count: Number(over.n) });
         }
 
-        affected = acc.n + leads.length + consult.n;
-        detail = { accounts: acc.n, ipMasked: ip.n, leads: leads.length, consultRequests: consult.n, overdue: Number(over.n) };
+        affected = acc.n + leads.length + consult.n + authRec.n;
+        detail = { accounts: acc.n, ipMasked: ip.n, leads: leads.length, consultRequests: consult.n, authRecords: authRec.n, overdue: Number(over.n) };
         break;
       }
     }

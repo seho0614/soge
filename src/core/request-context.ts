@@ -26,6 +26,8 @@ export interface RequestContext {
   actorId?: string;
   actorRole?: string;
   ip?: string;
+  /** v10.48 — 접속자 IP. Nginx 가 X-Forwarded-For 를 $remote_addr 로 덮어쓰므로 그 첫 값, 없으면 바로 앞 연결(req.ip) */
+  clientIp?: string;
   userAgent?: string;
   /** 트랜잭션 진행 중이면 전용 커넥션. 없으면 풀에서 꺼내 씀 */
   tx?: PoolClient;

@@ -22,9 +22,10 @@ export class AuthMiddleware implements NestMiddleware {
     const header = req.headers.authorization;
     if (header?.startsWith('Bearer ')) {
       try {
-        const { sub } = this.auth.verify(header.slice(7));
+        const { sub, tv } = this.auth.verify(header.slice(7));
         const principal = await this.principals.load(sub);
-        if (principal) {
+        /* v10.48 (D102) — 비밀번호 변경 · 재설정 · 탈퇴 뒤에는 그 전 증표의 판 번호(tv)가 맞지 않아 비로그인으로 봅니다 */
+        if (principal && (principal.tokenVersion ?? 0) === tv) {
           (req as any).principal = principal;
           const c = RequestCtx.get();
           if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; }

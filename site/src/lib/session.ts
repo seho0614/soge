@@ -1,5 +1,5 @@
 'use server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { REF_COOKIE, VISITOR_COOKIE } from './api';
 
 const AT = 'sgb_at';
@@ -48,10 +48,24 @@ export async function captureRef(ref: string) {
 
 type AuthResult = { ok: true; reconsent?: boolean } | { ok: false; code: string; message: string };
 
+/**
+ * v10.48 (D102) — 서버 액션이 API 를 부를 때 **접속자 IP** 를 넘깁니다.
+ *   넘기지 않으면 API 는 이 서버(사용자 웹)의 IP 로 보아, 로그인 실패 횟수 제한(같은 IP 1분 5회)이 모든 사람에게 한꺼번에 걸립니다.
+ *   운영 Nginx 가 X-Forwarded-For 를 $remote_addr 로 덮어쓰므로 그 첫 값이 실제 접속자입니다.
+ */
+async function fwdHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
+  const h: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
+  try {
+    const xff = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim();
+    if (xff) h['X-Forwarded-For'] = xff;
+  } catch { /* 요청 밖에서 불림 — 넘길 것 없음 */ }
+  return h;
+}
+
 async function post(path: string, body: unknown, keep = true): Promise<AuthResult> {
   const res = await fetch(BASE + path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await fwdHeaders(),
     body: JSON.stringify(body),
     cache: 'no-store',
   });
@@ -98,6 +112,58 @@ export async function logout() {
   jar.delete(RT);
   jar.delete('sgb_tc');
   jar.delete('sgb_keep');
+}
+
+/* ── v10.48 (D102) 비밀번호 찾기 · 재설정 · 변경 · 회원 탈퇴 ─────────────────────── */
+
+export type ActResult = { ok: true; note?: string; devLink?: string } | { ok: false; code: string; message: string; details?: unknown };
+
+async function call(method: string, path: string, body: unknown, withAuth: boolean): Promise<{ status: number; data: any }> {
+  const jar = await cookies();
+  const extra: Record<string, string> = {};
+  if (withAuth) {
+    const at = jar.get(AT)?.value;
+    if (!at) return { status: 401, data: { code: 'UNAUTHENTICATED', message: '로그인이 풀렸습니다. 다시 로그인해 주십시오.' } };
+    extra.Authorization = `Bearer ${at}`;
+  }
+  const res = await fetch(BASE + path, { method, headers: await fwdHeaders(extra), body: JSON.stringify(body), cache: 'no-store' });
+  return { status: res.status, data: await res.json().catch(() => null) };
+}
+
+function fail(data: any, fallback: string): ActResult {
+  return { ok: false, code: data?.code ?? 'UNKNOWN', message: data?.message ?? fallback, details: data?.details };
+}
+
+/** SB-HOM-AUT-040 — 가입한 이메일로 재설정 링크(계정이 있든 없든 같은 답) */
+export async function forgotPassword(email: string): Promise<ActResult> {
+  const r = await call('POST', '/auth/password/forgot', { email }, false);
+  if (r.status >= 400) return fail(r.data, '요청을 처리하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.');
+  return { ok: true, note: r.data?.note, ...(r.data?.devLink ? { devLink: r.data.devLink } : {}) };
+}
+
+/** SB-HOM-AUT-041 — 링크의 token 으로 새 비밀번호. 이 브라우저의 로그인도 지웁니다(다시 로그인) */
+export async function resetPassword(token: string, password: string): Promise<ActResult> {
+  const r = await call('POST', '/auth/password/reset', { token, password }, false);
+  if (r.status >= 400) return fail(r.data, '비밀번호를 바꾸지 못했습니다.');
+  await logout();
+  return { ok: true, note: r.data?.note };
+}
+
+/** SB-MYP-ACC-010 — 로그인 상태에서 변경. 새 증표를 쿠키에 다시 담습니다(다른 기기는 끊김) */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<ActResult> {
+  const r = await call('PATCH', '/me/password', { currentPassword, newPassword }, true);
+  if (r.status >= 400) return fail(r.data, '비밀번호를 바꾸지 못했습니다.');
+  const jar = await cookies();
+  if (r.data?.accessToken && r.data?.refreshToken) await saveTokens(r.data.accessToken, r.data.refreshToken, jar.get('sgb_keep')?.value !== '0');
+  return { ok: true, note: r.data?.note };
+}
+
+/** SB-MYP-ACC-020 — 회원 탈퇴. 끝나면 로그인 쿠키를 지웁니다 */
+export async function withdrawAccount(password: string, reason: string, memo?: string): Promise<ActResult> {
+  const r = await call('POST', '/me/withdraw', { password, reason, ...(memo ? { memo } : {}) }, true);
+  if (r.status >= 400) return fail(r.data, '탈퇴를 처리하지 못했습니다.');
+  await logout();
+  return { ok: true, note: r.data?.note };
 }
 
 /** 현재 로그인 상태. 토큰이 아니라 서버가 조립한 principal 입니다 */

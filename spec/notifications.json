@@ -33,6 +33,8 @@
     {"code":"DISPUTE_OPENED","name":"분쟁 접수","actor":"COUNTERPART","channels":["INAPP","EMAIL"],"optout":false,"trigger":"disputes INSERT","screen":"SB-HOM-ETC-010"},
     {"code":"DISPUTE_RESOLVED","name":"분쟁 처리 완료","actor":"BOTH","channels":["INAPP","EMAIL"],"optout":false,"trigger":"disputes → RESOLVED","screen":"SB-HOM-ETC-010"},
     {"code":"INQUIRY_ANSWERED","name":"문의 답변","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":true,"trigger":"inquiries.answered_at","screen":"SB-HOM-CSB-020"},
+    {"code":"PASSWORD_CHANGED","name":"비밀번호 변경","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"accounts.password_changed_at 설정 (변경 · 재설정 · v10.48 D102)","screen":"SB-MYP-ACC-010"},
+    {"code":"LOGIN_LOCKED","name":"로그인 잠금","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"auth_throttle.locked_until 설정 (5회 연속 실패 · v10.48 D102)","screen":"SB-HOM-AUT-040"},
     {"code":"NOTICE_PUBLISHED","name":"공지 등록","actor":"ALL","channels":["INAPP"],"optout":true,"trigger":"notices.published_at","screen":"SB-MNY-EVT-010"}
   ],
   "admin_alerts": [

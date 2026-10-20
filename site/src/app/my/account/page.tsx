@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { me } from '@/lib/session';
+import { me, changePassword } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
-import { ProfileForm, BusinessForm, EarningsForm } from './AccountForms';
+import { ProfileForm, BusinessForm, EarningsForm, PasswordForm } from './AccountForms';
 import { MyHead, Note, Table } from '@/components/my/ui';
 
 import { ymdKst } from '@/lib/format';
@@ -38,6 +38,7 @@ const d = (iso: string | null) => iso ? ymdKst(iso) : '';
  *
  * ★ 무엇을 고칠 수 있는지 **묻지 않아도 알려 줍니다** — 고치려다 거절당하고 나서야 알면 안 됩니다.
  * v10.29 — 시안(scMyAcc) 배치: 고칠 수 없는 것 안내 → 회원 정보(입력 카드) → 본인인증 안내 → 공개 설정 → 사업자 정보 표 → 안내 · 다시 인증.
+ * v10.48 (D102) — 회원 정보 아래 비밀번호 변경(PATCH /me/password) · 맨 아래 회원 탈퇴(SB-MYP-ACC-020 /my/account/withdraw).
  */
 export default async function MyAccountPage() {
   const p = await me();
@@ -53,6 +54,11 @@ export default async function MyAccountPage() {
     );
   }
   const b = a.business;
+
+  async function doChangePassword(current: string, next: string) {
+    'use server';
+    return changePassword(current, next);
+  }
 
   return (
     <><div data-my-account="">
@@ -72,6 +78,10 @@ export default async function MyAccountPage() {
           <Link className="my-bp" href="/verify">본인인증하기</Link>
         </Note>
       )}
+
+      <h2 className="my-st2">비밀번호 변경</h2>
+      <PasswordForm action={doChangePassword} />
+      <p className="my-ls">비밀번호를 바꾸시면 <b>다른 기기의 로그인이 모두 풀립니다.</b> 지금 비밀번호를 5번 잘못 넣으시면 30분 동안 잠깁니다.</p>
 
       <h2 className="my-st2">공개 설정</h2>
       <EarningsForm name={a.account.name} on={!!a.account.earningsPublic} />
@@ -111,6 +121,12 @@ export default async function MyAccountPage() {
           )}
         </>
       )}
+
+      <h2 className="my-st2">회원 탈퇴</h2>
+      <Note kind="plain" className="act" data-withdraw-entry="">
+        <div><b>소개뱅크를 그만 이용하시려면</b><p>진행 중인 거래 · 정산 · 주문이 없어야 탈퇴하실 수 있습니다. 탈퇴 화면에서 먼저 확인해 드립니다.</p></div>
+        <Link className="my-bo" href="/my/account/withdraw">회원 탈퇴</Link>
+      </Note>
     </div><i hidden data-root-end="" /></>
   );
 }

@@ -2,7 +2,8 @@
 /**
  * SB-HOM-AUT-030 로그인 폼 — v10.31 시안 scLogin: 이메일 · 비밀번호(보기) · 로그인 상태 유지 · 이메일 찾기 · 비밀번호 재설정 · 로그인.
  *   로그인 상태 유지를 끄면 브라우저를 닫을 때 로그인이 풀립니다(쿠키 — lib/session · middleware).
- *   이메일 찾기 · 비밀번호 재설정: 메일 발송(SES)이 아직 없어 고객센터 「계정 · 사업자 인증」 문의로 잇습니다(결정 기록).
+ *   v10.48 — 비밀번호 찾기는 /login/forgot(메일 링크 · SB-HOM-AUT-040). 이메일 찾기는 고객센터 「계정」 문의.
+ *   5번 연속 틀리면 30분 잠금(423 ACCOUNT_LOCKED) — 서버 문구를 그대로 보이고 비밀번호 찾기 단추를 함께 둡니다.
  */
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
@@ -16,6 +17,7 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
   const [show, setShow] = useState(false);
   const [keep, setKeep] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,7 +28,7 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
     start(async () => {
       const r = await action(email, pw, keep);
       if (r.ok) router.push(r.reconsent ? `/terms/agree?next=${encodeURIComponent(next)}` : next);
-      else setErr(r.message);
+      else { setErr(r.message); setLocked(r.code === 'ACCOUNT_LOCKED' || r.code === 'TOO_MANY_ATTEMPTS'); }
     });
   }
 
@@ -44,9 +46,11 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
         </div></div>
       <div className="w1-lgo2">
         <label className="w1-chk"><input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} /> 로그인 상태 유지</label>
-        <Link className="w1-lnk2" href="/support/new#inquiry">이메일 찾기 · 비밀번호 재설정</Link>
+        {/* v10.48 — 비밀번호는 메일 링크로 재설정(SB-HOM-AUT-040). 이메일 찾기는 지금처럼 고객센터 「계정」 문의 */}
+        <span><Link className="w1-lnk2" href="/login/forgot">비밀번호 찾기</Link>{' · '}
+          <Link className="w1-lnk2" href="/support/new#inquiry">이메일 찾기</Link></span>
       </div>
-      {err && <p className="w1-err form-error" role="alert">{err}</p>}
+      {err && <p className="w1-err form-error" role="alert">{err}{locked && <> <Link className="w1-lnk2" href="/login/forgot">비밀번호 찾기</Link></>}</p>}
       <button className="w1-bp w1-lgb cta-primary" disabled={pending}>{pending ? '처리 중…' : '로그인'}</button>
     </form>
   );

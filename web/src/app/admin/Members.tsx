@@ -219,6 +219,8 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
         </>
       )}
 
+      <LoginLock id={a.id} />
+
       <StatusChange id={a.id} status={a.status} suspended={!!d.postingSuspension} onDone={load} onBack={onBack} />
     </>
   );
@@ -264,6 +266,50 @@ function StatusChange({ id, status, suspended, onDone, onBack }: { id: string; s
                               onClick={() => run(`/admin/accounts/${id}/posting-suspension/lift`, {}, '등록 정지를 풀었습니다.')}>등록 정지 풀기</button>}
         <button className="btn-plain" onClick={onBack}>목록으로</button>
       </div>
+    </>
+  );
+}
+
+/**
+ * v10.48 (D102) — 로그인 잠금. 같은 이메일로 5번 연속 틀리면 30분 잠깁니다(저절로 풀림).
+ *   고객센터에서 본인 확인을 마친 뒤에만 「잠금 풀기」를 누릅니다 — 감사 기록 LOGIN_UNLOCK.
+ */
+type LockState = { locked: boolean; lockedUntil: string | null; recentFails: number; lastFailAt: string | null };
+function LoginLock({ id }: { id: string }) {
+  const [st, setSt] = useState<LockState | null>(null);
+  const [msg, setMsg] = useState<[boolean, string] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () => { api<LockState>(`/admin/accounts/${id}/login-lock`).then(setSt).catch(() => setSt(null)); };
+  useEffect(load, [id]);
+  const unlock = () => {
+    setBusy(true); setMsg(null);
+    api(`/admin/accounts/${id}/login-lock`, { method: 'DELETE' })
+      .then(() => { setMsg([true, '로그인 잠금을 풀었습니다.']); load(); })
+      .catch((e) => setMsg([false, e instanceof ApiFailure ? e.body.message : '풀지 못했습니다.']))
+      .finally(() => setBusy(false));
+  };
+  if (!st) return null;
+  return (
+    <>
+      <h3 className="ad-s2">로그인 잠금</h3>
+      <div className="ad-tw">
+        <table className="tbl" data-login-lock={st.locked ? 'locked' : 'open'}>
+          <thead><tr><th style={{ width: 200 }}>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td><b>상태</b></td><td>{st.locked
+              ? <span className="ad-bg no">잠김 ~ {ymdhm(st.lockedUntil)}</span>
+              : <span className="ad-bg ok">잠기지 않음</span>}</td></tr>
+            <tr><td><b>최근 연속 실패</b></td><td>{st.locked ? '—' : `${st.recentFails}번`}{st.lastFailAt && ` · 마지막 ${ymdhm(st.lastFailAt)}`}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      {msg && <p className={msg[0] ? 'form-ok' : 'form-error'} role="status">{msg[1]}</p>}
+      {st.locked && (
+        <div className="ad-dact">
+          <button className="btn-plain" disabled={busy} onClick={unlock} data-login-unlock>잠금 풀기</button>
+          <span className="muted">본인 확인을 마친 뒤에만 푸십시오. 30분이 지나면 저절로 풀립니다.</span>
+        </div>
+      )}
     </>
   );
 }

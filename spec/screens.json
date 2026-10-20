@@ -198,6 +198,38 @@
    "state": "business.status"
   },
   {
+   "id": "SB-HOM-AUT-040",
+   "name": "비밀번호 찾기",
+   "group": "HOM",
+   "url": "/login/forgot",
+   "p": "P0",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "POST /auth/password/forgot"
+   ],
+   "nav": "SB-HOM-AUT-010",
+   "note": "v10.48 (D102) — 가입 이메일로 30분 · 1회용 재설정 링크. 계정이 있든 없든 같은 답. 같은 이메일 · 같은 IP 1시간 5회. 메일 발송(SES) 준비 전 운영은 고객센터 안내(MAIL_NOT_READY)."
+  },
+  {
+   "id": "SB-HOM-AUT-041",
+   "name": "비밀번호 재설정",
+   "group": "HOM",
+   "url": "/login/reset",
+   "p": "P0",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "POST /auth/password/reset"
+   ],
+   "nav": "SB-HOM-AUT-040",
+   "note": "v10.48 (D102) — 메일 링크의 token 으로 새 비밀번호. 바꾸면 모든 기기의 로그인이 끊기고 로그인 잠금이 풀립니다."
+  },
+  {
    "id": "SB-HOM-LST-010",
    "name": "통합 전체 목록",
    "group": "HOM",
@@ -2831,8 +2863,26 @@
    "apis": [
     "GET /me/account",
     "PATCH /me/account",
-    "PATCH /me/business"
+    "PATCH /me/business",
+    "PATCH /me/password"
    ]
+  },
+  {
+   "id": "SB-MYP-ACC-020",
+   "name": "회원 탈퇴",
+   "group": "MYP",
+   "url": "/my/account/withdraw",
+   "p": "마이페이지",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/withdraw/check",
+    "POST /me/withdraw"
+   ],
+   "nav": "SB-MYP-ACC-010",
+   "note": "v10.48 (D102) — 진행 중인 거래 · 분쟁 · 정산 · 소개몰 주문 · 환불 · 리드캐시 잔액이 있으면 막습니다(이용약관 제13조 ②). 비밀번호 확인 · 사유."
   },
   {
    "id": "SB-ADM-MBR-010",
@@ -2869,7 +2919,9 @@
    "apis": [
     "GET /admin/accounts/{id}",
     "PATCH /admin/accounts/{id}/status",
-    "PATCH /admin/accounts/{id}/posting-suspension/lift"
+    "PATCH /admin/accounts/{id}/posting-suspension/lift",
+    "GET /admin/accounts/{id}/login-lock",
+    "DELETE /admin/accounts/{id}/login-lock"
    ]
   },
   {

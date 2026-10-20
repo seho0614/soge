@@ -25,6 +25,8 @@ export interface Principal {
   identityVerifiedAt: Date | null;
   businessVerifiedAt: Date | null;
   hasActiveSubscription: boolean;
+  /** v10.48 (D102) — accounts.token_version. 로그인 증표의 tv 와 다르면 그 증표는 무효입니다 */
+  tokenVersion?: number;
 }
 
 @Injectable()

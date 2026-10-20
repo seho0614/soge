@@ -126,3 +126,42 @@ export function BusinessForm({ biz }: {
     </form>
   );
 }
+
+type Act = { ok: true; note?: string } | { ok: false; code: string; message: string };
+
+/**
+ * v10.48 (D102) — 비밀번호 변경 (서버 액션 changePassword → PATCH /me/password)
+ *   지금 비밀번호가 틀리면 로그인 실패와 같이 셉니다(5번 → 30분 잠금). 바꾸면 이 기기는 새 로그인으로 이어지고 다른 기기는 끊깁니다.
+ */
+export function PasswordForm({ action }: { action: (current: string, next: string) => Promise<Act> }) {
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const cur = String(fd.get('currentPassword') ?? ''), nw = String(fd.get('newPassword') ?? ''), nw2 = String(fd.get('newPassword2') ?? '');
+    setMsg(null);
+    if (!cur) { setMsg({ ok: false, msg: '지금 비밀번호를 넣어 주십시오.' }); return; }
+    if (nw.length < 10 || !/[A-Za-z]/.test(nw) || !/[0-9]/.test(nw) || !/[^A-Za-z0-9]/.test(nw)) {
+      setMsg({ ok: false, msg: '새 비밀번호는 영문 · 숫자 · 특수문자를 섞어 10자 이상이어야 합니다.' }); return;
+    }
+    if (nw !== nw2) { setMsg({ ok: false, msg: '새 비밀번호 두 칸이 같지 않습니다.' }); return; }
+    start(async () => {
+      const r = await action(cur, nw);
+      if (r.ok) { setMsg({ ok: true, msg: r.note ?? '비밀번호를 바꿨습니다.' }); form.reset(); }
+      else setMsg({ ok: false, msg: r.message });
+    });
+  }
+
+  return (
+    <form className="card p2pad p2form" onSubmit={submit} data-password-form="">
+      <label className="fld"><span>지금 비밀번호</span><input name="currentPassword" type="password" autoComplete="current-password" maxLength={100} /></label>
+      <label className="fld"><span>새 비밀번호</span><input name="newPassword" type="password" autoComplete="new-password" maxLength={100} placeholder="영문 · 숫자 · 특수문자 10자 이상" /></label>
+      <label className="fld"><span>새 비밀번호 확인</span><input name="newPassword2" type="password" autoComplete="new-password" maxLength={100} /></label>
+      {msg && <p className={msg.ok ? 'ok-note' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.msg}</p>}
+      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? '바꾸는 중…' : '비밀번호 바꾸기'}</button></div>
+    </form>
+  );
+}

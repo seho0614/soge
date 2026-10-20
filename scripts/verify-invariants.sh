@@ -1031,5 +1031,95 @@ eq   "D23-10 본인이 켜면 뷰에 값이 나옴" "BEGIN; UPDATE accounts SET 
 eq   "D23-11 총 소개 · 성사 · 성사율은 공개 여부와 관계없이 나옴(성사율은 총 소개 0 이면 null)" "SELECT count(*) FROM v_owner_public_stats WHERE total_deals IS NULL OR confirmed_deals IS NULL OR (total_deals = 0) <> (success_rate IS NULL)" 0
 eq   "D23-12 후기 규칙 트리거가 켜져 있음" "SELECT count(*) FROM pg_trigger WHERE tgname='trg_review_rules' AND tgenabled='O'" 1
 
+
+# ── v10.48 (D102) 로그인 잠금 · 요청 횟수 제한 · 비밀번호 재설정 · 회원 탈퇴 ─────────────────────
+#   모든 시험은 BEGIN … ROLLBACK 안의 DO 블록에서 확인하고 마지막에 'ok' 만 냅니다(자료를 남기지 않음 ·
+#   psql 이 여러 문장의 결과를 모두 찍어 값이 섞이지 않게). 이메일은 실제로 없는 주소(@t.invalid).
+AE="zz-auth-inv@t.invalid"; AIP=$(printf '%064d' 7)
+authq() { # $1=라벨 $2=DO 블록 본문(plpgsql) — 문제가 있으면 RAISE, 없으면 ok
+  eq "$1" "BEGIN; DO \$\$ DECLARE a uuid; t timestamptz; x text; BEGIN $2 END \$\$; SELECT 'ok'; ROLLBACK;" "ok"
+}
+eq  "AUTH-01 설정 5개 · 처음 값(5회 · 30분 · IP 1분 5회 · 재설정 1시간 5회 · 링크 30분)" \
+  "SELECT string_agg(key || '=' || value, ',' ORDER BY key) FROM site_settings WHERE key IN ('auth.login.max_fail','auth.login.lock_minutes','auth.login.ip_fail_per_min','auth.reset.per_hour','auth.reset.ttl_minutes');" \
+  "auth.login.ip_fail_per_min=5,auth.login.lock_minutes=30,auth.login.max_fail=5,auth.reset.per_hour=5,auth.reset.ttl_minutes=30"
+authq "AUTH-02 4번 틀리면 잠기지 않고 5번째에 잠김" "
+  PERFORM fn_login_fail('$AE', NULL) FROM generate_series(1,3);
+  SELECT locked_until INTO t FROM fn_login_fail('$AE', NULL); IF t IS NOT NULL THEN RAISE EXCEPTION '4번째에 잠김'; END IF;
+  SELECT locked_until INTO t FROM fn_login_fail('$AE', NULL); IF t IS NULL THEN RAISE EXCEPTION '5번째에 안 잠김'; END IF;"
+authq "AUTH-03 잠긴 동안 문 앞에서 막힘(LOCKED) · 풀면 열림" "
+  PERFORM fn_login_fail('$AE', NULL) FROM generate_series(1,5);
+  SELECT blocked INTO x FROM fn_login_gate('$AE', NULL); IF x IS DISTINCT FROM 'LOCKED' THEN RAISE EXCEPTION 'gate=%', x; END IF;
+  IF fn_login_clear('$AE') <> 1 THEN RAISE EXCEPTION 'clear 0'; END IF;
+  SELECT blocked INTO x FROM fn_login_gate('$AE', NULL); IF x IS NOT NULL THEN RAISE EXCEPTION '풀린 뒤 gate=%', x; END IF;"
+authq "AUTH-04 잠금은 설정한 30분을 넘지 않음" "
+  PERFORM fn_login_fail('$AE', NULL) FROM generate_series(1,5);
+  SELECT locked_until INTO t FROM auth_throttle WHERE key_kind='LOGIN_EMAIL' AND key_hash=fn_auth_email_key('$AE');
+  IF NOT (t <= now() + interval '30 minutes 1 second' AND t > now() + interval '29 minutes') THEN RAISE EXCEPTION 'locked_until=%', t; END IF;"
+authq "AUTH-05 이메일은 대소문자 · 앞뒤 공백과 관계없이 같은 키 · 해시(원문 아님)" "
+  IF fn_auth_email_key(' ZZ-Auth-Inv@T.invalid ') <> fn_auth_email_key('$AE') THEN RAISE EXCEPTION '대소문자'; END IF;
+  IF fn_auth_email_key('$AE') !~ '^[0-9a-f]{64}\$' THEN RAISE EXCEPTION '해시 아님'; END IF;"
+authq "AUTH-06 같은 IP 의 실패 1분 5회 → 다른 이메일도 TOO_MANY" "
+  PERFORM fn_login_fail('a' || g || '$AE', '$AIP') FROM generate_series(1,5) g;
+  SELECT blocked INTO x FROM fn_login_gate('other-$AE', '$AIP'); IF x IS DISTINCT FROM 'TOO_MANY' THEN RAISE EXCEPTION 'gate=%', x; END IF;"
+authq "AUTH-07 성공(지움) 뒤에는 처음부터 다시 셈" "
+  PERFORM fn_login_fail('$AE', NULL) FROM generate_series(1,4); PERFORM fn_login_clear('$AE');
+  SELECT locked_until INTO t FROM fn_login_fail('$AE', NULL); IF t IS NOT NULL THEN RAISE EXCEPTION '지운 뒤 1번에 잠김'; END IF;"
+authq "AUTH-08 재설정 메일 요청은 같은 이메일 1시간 5회까지(6번째 거절)" "
+  PERFORM fn_reset_request_allowed('$AE', NULL) FROM generate_series(1,5);
+  IF fn_reset_request_allowed('$AE', NULL) THEN RAISE EXCEPTION '6번째 허용'; END IF;"
+authq "AUTH-09 재설정 증표는 한 번만" "
+  SELECT id INTO a FROM accounts WHERE status='ACTIVE' ORDER BY created_at LIMIT 1;
+  PERFORM fn_password_reset_issue(a, repeat('a',64), NULL);
+  IF fn_password_reset_consume(repeat('a',64)) IS DISTINCT FROM a THEN RAISE EXCEPTION '첫 사용 실패'; END IF;
+  IF fn_password_reset_consume(repeat('a',64)) IS NOT NULL THEN RAISE EXCEPTION '두 번 씀'; END IF;"
+authq "AUTH-10 새로 요청하면 그 전 증표는 무효" "
+  SELECT id INTO a FROM accounts WHERE status='ACTIVE' ORDER BY created_at LIMIT 1;
+  PERFORM fn_password_reset_issue(a, repeat('b',64), NULL); PERFORM fn_password_reset_issue(a, repeat('c',64), NULL);
+  IF fn_password_reset_consume(repeat('b',64)) IS NOT NULL THEN RAISE EXCEPTION '옛 증표가 살아 있음'; END IF;
+  IF fn_password_reset_consume(repeat('c',64)) IS NULL THEN RAISE EXCEPTION '새 증표 실패'; END IF;"
+authq "AUTH-11 만료된 증표는 못 씀" "
+  SELECT id INTO a FROM accounts WHERE status='ACTIVE' ORDER BY created_at LIMIT 1;
+  PERFORM fn_password_reset_issue(a, repeat('d',64), NULL);
+  UPDATE password_reset_tokens SET created_at = now() - interval '2 hours', expires_at = now() - interval '90 minutes' WHERE token_hash = repeat('d',64);
+  IF fn_password_reset_consume(repeat('d',64)) IS NOT NULL THEN RAISE EXCEPTION '만료 증표 사용'; END IF;"
+authq "AUTH-12 막는 일이 없는 회원은 탈퇴됨 — 상태 · 판 번호 · 기록 · 보관 기한 · 매물 내림" "
+  INSERT INTO accounts (email, password_hash, name) VALUES ('wd-$AE', 'x', '탈퇴시험') RETURNING id INTO a;
+  PERFORM fn_account_withdraw(a, 'LOW_USE', NULL);
+  SELECT status INTO x FROM accounts WHERE id = a; IF x <> 'WITHDRAWN' THEN RAISE EXCEPTION 'status=%', x; END IF;
+  IF (SELECT token_version FROM accounts WHERE id = a) <> 1 THEN RAISE EXCEPTION '판 번호'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM account_withdrawals WHERE account_id = a) THEN RAISE EXCEPTION '기록 없음'; END IF;
+  IF (SELECT retention_until FROM accounts WHERE id = a) IS NULL THEN RAISE EXCEPTION '보관 기한 없음'; END IF;"
+authq "AUTH-13 진행 중인 거래가 있으면 탈퇴 함수가 막음(WITHDRAW_BLOCKED)" "
+  SELECT buyer_account_id INTO a FROM deals ORDER BY created_at LIMIT 1;
+  IF a IS NULL THEN RAISE EXCEPTION '시험 거래 없음'; END IF;
+  SET LOCAL session_replication_role = replica;
+  UPDATE deals SET status='NEGOTIATING' WHERE id = (SELECT id FROM deals ORDER BY created_at LIMIT 1);
+  SET LOCAL session_replication_role = origin;
+  BEGIN PERFORM fn_account_withdraw(a, 'LOW_USE', NULL); RAISE EXCEPTION '탈퇴됨';
+  EXCEPTION WHEN raise_exception THEN GET STACKED DIAGNOSTICS x = MESSAGE_TEXT;
+    IF x NOT LIKE 'WITHDRAW_BLOCKED%' THEN RAISE EXCEPTION '다른 이유: %', x; END IF; END;"
+authq "AUTH-14 함수를 거치지 않고 withdrawn_at 을 직접 찍어도 막힘(가드 트리거)" "
+  SELECT seller_account_id INTO a FROM deals ORDER BY created_at LIMIT 1;
+  SET LOCAL session_replication_role = replica;
+  UPDATE deals SET status='CONTRACTED' WHERE id = (SELECT id FROM deals ORDER BY created_at LIMIT 1);
+  SET LOCAL session_replication_role = origin;
+  BEGIN UPDATE accounts SET withdrawn_at = now() WHERE id = a; RAISE EXCEPTION '탈퇴됨';
+  EXCEPTION WHEN raise_exception THEN GET STACKED DIAGNOSTICS x = MESSAGE_TEXT;
+    IF x NOT LIKE 'WITHDRAW_BLOCKED%' THEN RAISE EXCEPTION '다른 이유: %', x; END IF; END;"
+authq "AUTH-15 「기타」 사유는 내용이 있어야 함" "
+  INSERT INTO accounts (email, password_hash, name) VALUES ('wd2-$AE', 'x', '탈퇴시험') RETURNING id INTO a;
+  BEGIN PERFORM fn_account_withdraw(a, 'OTHER', NULL); RAISE EXCEPTION '탈퇴됨';
+  EXCEPTION WHEN check_violation THEN NULL; END;"
+authq "AUTH-16 탈퇴한 회원의 재설정 증표는 못 씀" "
+  INSERT INTO accounts (email, password_hash, name) VALUES ('wd3-$AE', 'x', '탈퇴시험') RETURNING id INTO a;
+  PERFORM fn_password_reset_issue(a, repeat('e',64), NULL);
+  UPDATE accounts SET withdrawn_at = now() WHERE id = a;
+  IF fn_password_reset_consume(repeat('e',64)) IS NOT NULL THEN RAISE EXCEPTION '탈퇴 회원 증표 사용'; END IF;"
+eq  "AUTH-17 감시 보기 3개 0(잠금 과다 · 남은 증표 · 돈 걸린 채 탈퇴)" \
+  "SELECT (SELECT count(*) FROM v_auth_lock_overlong) + (SELECT count(*) FROM v_reset_token_live_overdue) + (SELECT count(*) FROM v_withdrawn_with_open_items);" "0"
+eq  "AUTH-18 알림 종류 2개(비밀번호 변경 · 로그인 잠금) — 수신거부 불가" \
+  "SELECT count(*) FROM notification_event_policies WHERE event_code IN ('PASSWORD_CHANGED','LOGIN_LOCKED') AND NOT optout_allowed;" "2"
+eq  "AUTH-19 탈퇴 가드 트리거가 켜져 있음" "SELECT count(*) FROM pg_trigger WHERE tgname='trg_account_withdraw_guard' AND tgenabled='O'" "1"
+
 echo "통과 $pass / 실패 $fail"
 [ $fail -eq 0 ] || exit 1

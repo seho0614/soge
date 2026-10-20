@@ -13,6 +13,7 @@ export class ContextMiddleware implements NestMiddleware {
       {
         requestId,
         ip: req.ip,
+        clientIp: (String(req.headers['x-forwarded-for'] ?? '').split(',')[0] ?? '').trim() || req.ip,
         userAgent: req.headers['user-agent'],
       },
       () => next(),

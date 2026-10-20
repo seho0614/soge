@@ -145,6 +145,8 @@ import { DirectoryService } from './modules/partner/directory.service';
 import { DirectoryController, PartnerDirectoryController, DirectoryAdminController } from './modules/partner/directory.controller';
 import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세금계산서 어댑터 · 간주 (D093) */
 import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발송(SES SMTP) · 상담 인증번호 */
+import { AccountSecurityController } from './modules/identity/account-security.controller';  /* v10.48 비밀번호 재설정 · 변경 · 탈퇴 · 잠금 */
+import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
 import { AttributionController } from './modules/attribution/attribution.controller';
 import { LeadService } from './modules/lead/lead.service';
@@ -159,6 +161,7 @@ import { LeadService } from './modules/lead/lead.service';
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     AuthController,
+    AccountSecurityController,
     CommunityController,
     PollController,
     RealtyController,
@@ -269,7 +272,7 @@ import { LeadService } from './modules/lead/lead.service';
     RecurringBillingService, RecurringRefundService, PayoutAccountService,   // v10.45 — 환불 · 정산 계좌를 나눔
     FileService,
     AttributionEngine, ExposureEngine,
-    AuthService, PrincipalService, BusinessService,
+    AuthService, PrincipalService, BusinessService, AccountSecurityService,
     CatalogService, CodeService, TermsService,
     ReviewService, ReviewRepository,
     ListingService, ListingRepository, FavoriteService,

@@ -3523,6 +3523,47 @@ blocked "H-01 제한업종 리스팅 직행 게시" \
            1000000,'SELLER','PUBLISHED',now());"
 
 echo
+echo "== AX. 계정 보안 (v10.48 · D102) ======================"
+# 비밀번호 재설정 증표의 원문이 DB 에 남으면, DB 를 읽을 수 있는 사람이 남의 비밀번호를 바꿉니다.
+eq "AX-01 재설정 증표 원문 컬럼 없음" \
+  "SELECT count(*) FROM information_schema.columns
+    WHERE table_name='password_reset_tokens' AND column_name IN ('token','token_plain','raw_token');" "0"
+blocked "AX-02 해시가 아닌 증표 저장 차단" \
+  "INSERT INTO password_reset_tokens (account_id, token_hash, expires_at)
+   VALUES ((SELECT id FROM accounts LIMIT 1), 'plain-token-value', now() + interval '10 minutes');" \
+  "SELECT count(*) FROM accounts"
+blocked "AX-03 1시간 넘게 사는 증표 차단" \
+  "INSERT INTO password_reset_tokens (account_id, token_hash, expires_at)
+   VALUES ((SELECT id FROM accounts LIMIT 1), repeat('f',64), now() + interval '2 hours');" \
+  "SELECT count(*) FROM accounts"
+# 이메일 · IP 원문을 키로 넣으면 로그인 실패 기록이 그대로 개인정보 목록이 됩니다.
+blocked "AX-04 이메일 원문 키 저장 차단" \
+  "INSERT INTO auth_throttle (key_kind, key_hash) VALUES ('LOGIN_EMAIL', 'someone@example.com');"
+blocked "AX-05 잠금을 3시간 넘게 거는 것 차단(운영 실수 · 조작)" \
+  "INSERT INTO auth_throttle (key_kind, key_hash, locked_until) VALUES ('LOGIN_EMAIL', repeat('1',64), now() + interval '1 day');"
+blocked "AX-06 IP · 재설정 기록에 잠금 차단(잠금은 이메일만)" \
+  "INSERT INTO auth_throttle (key_kind, key_hash, locked_until) VALUES ('LOGIN_IP', repeat('2',64), now() + interval '10 minutes');"
+# ★ 탈퇴로 진행 중인 거래 · 정산에서 빠져나가면 상대방이 연락할 길이 사라집니다(약관 제13조 ②).
+err_is "AX-07 진행 중인 거래가 있는 회원의 withdrawn_at 직접 기록 차단" \
+  "SET LOCAL session_replication_role = replica;
+   UPDATE deals SET status='PAYMENT_REPORTED' WHERE id = (SELECT id FROM deals ORDER BY created_at LIMIT 1);
+   SET LOCAL session_replication_role = origin;
+   UPDATE accounts SET withdrawn_at = now() WHERE id = (SELECT buyer_account_id FROM deals ORDER BY created_at LIMIT 1)" \
+  "WITHDRAW_BLOCKED"
+blocked "AX-08 없는 탈퇴 사유 차단" \
+  "INSERT INTO account_withdrawals (account_id, reason_code) VALUES ((SELECT id FROM accounts LIMIT 1), 'HACKED');" \
+  "SELECT count(*) FROM accounts"
+eq "AX-09 감시 보기 0(잠금 과다 · 남은 증표 · 돈 걸린 채 탈퇴)" \
+  "SELECT (SELECT count(*) FROM v_auth_lock_overlong) + (SELECT count(*) FROM v_reset_token_live_overdue) + (SELECT count(*) FROM v_withdrawn_with_open_items);" "0"
+# 정지 · 탈퇴 회원이 증표로 비밀번호를 바꿔 다시 들어오면 정지가 무의미합니다.
+eqq "AX-10 정지 회원의 재설정 증표는 못 씀" \
+  "BEGIN; DO \$\$ DECLARE a uuid; BEGIN
+     SELECT id INTO a FROM accounts WHERE status='ACTIVE' ORDER BY created_at DESC LIMIT 1;
+     PERFORM fn_password_reset_issue(a, repeat('9',64), NULL);
+     UPDATE accounts SET status='SUSPENDED' WHERE id = a;
+     IF fn_password_reset_consume(repeat('9',64)) IS NOT NULL THEN RAISE EXCEPTION 'used'; END IF;
+   END \$\$; SELECT 'ok'; ROLLBACK;" "ok"
+echo
 echo "======================================================="
 printf "안전 %d · 건너뜀 %d · ★오류 %d · ▲뚫림 %d\n" $safe $skip $broken $hole
 [ $hole -eq 0 ]

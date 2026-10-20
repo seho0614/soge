@@ -3,7 +3,8 @@ import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../../db/database.service';
 import { PrincipalService } from './principal.service';
-import { Forbidden, PolicyViolation, NotFound } from '../../core/errors';
+import { AppError, Forbidden, PolicyViolation, NotFound } from '../../core/errors';
+import { AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText } from './auth-throttle';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
 import { RequestCtx } from '../../core/request-context';
 
@@ -19,17 +20,44 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string, visitorKey?: string) {
+    /* v10.48 (D102) — 로그인 잠금 · 요청 횟수 제한. 판정은 DB 함수 한 곳입니다.
+     *   같은 이메일 5회 연속 실패 → 30분 잠금(423) · 같은 IP 의 실패 1분 5회 → 429.
+     *   계정이 없는 이메일도 똑같이 세고 똑같이 답합니다 — 잠금 여부로 계정 유무를 알 수 없게. */
+    const ipKey = clientIpKey();
+    const [gate] = await this.db.query<{ blocked: string | null; retry_after_sec: number }>(
+      `SELECT blocked, retry_after_sec FROM fn_login_gate($1, $2)`, [email, ipKey]);
+    if (gate && gate.blocked === 'LOCKED') throw new AccountLocked(gate.retry_after_sec);
+    if (gate && gate.blocked === 'TOO_MANY') {
+      throw new TooManyAttempts('TOO_MANY_ATTEMPTS',
+        `로그인 실패가 많아 잠시 막았습니다. ${minutesText(gate.retry_after_sec)} 뒤에 다시 시도해 주십시오.`, gate.retry_after_sec);
+    }
+
     const [acc] = await this.db.query<{ id: string; password_hash: string; status: string }>(
       `SELECT id, password_hash, status FROM accounts WHERE email = $1`,
       [email],
     );
     // 계정 없음과 비밀번호 불일치를 구분하지 않습니다 — 계정 존재 여부가 새면 안 됩니다
-    if (!acc || !(await bcrypt.compare(password, acc.password_hash))) {
-      throw new Forbidden('INVALID_CREDENTIALS', '이메일 또는 비밀번호가 올바르지 않습니다.');
+    if (!acc || !acc.password_hash || !(await bcrypt.compare(password, acc.password_hash))) {
+      const [f] = await this.db.query<{ fails: number; locked_until: Date | null }>(
+        `SELECT fails, locked_until FROM fn_login_fail($1, $2)`, [email, ipKey]);
+      if (f && f.locked_until) {
+        if (acc) await this.notifyLocked(acc.id);
+        throw new AccountLocked(Math.ceil((new Date(f.locked_until).getTime() - Date.now()) / 1000));
+      }
+      const [mx] = await this.db.query<{ v: number }>(`SELECT fn_setting_int('auth.login.max_fail', 5) AS v`);
+      const left = Math.max(0, Number(mx?.v ?? 5) - Number(f?.fails ?? 0));
+      throw new AppError(403, {
+        code: 'INVALID_CREDENTIALS',
+        message: left > 0 && left <= 2
+          ? `이메일 또는 비밀번호가 올바르지 않습니다. ${left}번 더 틀리면 잠시 잠깁니다.`
+          : '이메일 또는 비밀번호가 올바르지 않습니다.',
+        details: { attemptsLeft: left },
+      });
     }
     if (acc.status !== 'ACTIVE') {
       throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
     }
+    await this.db.query(`SELECT fn_login_clear($1)`, [email]);
 
     // ★ 귀속 연결. 이 호출이 빠지면 비로그인 유입이 전부 유실됩니다
     if (visitorKey) {
@@ -40,14 +68,20 @@ export class AuthService {
     return this.issue(acc.id);
   }
 
+  /** 잠겼다는 알림 — 본인이 아니라면 비밀번호를 바꾸라는 뜻. 알림을 남기지 못해도 로그인 응답은 그대로 */
+  private async notifyLocked(accountId: string) {
+    await this.db.query(
+      `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+       VALUES ($1, 'LOGIN_LOCKED', '로그인이 잠시 잠겼습니다',
+               '비밀번호가 여러 번 틀려 로그인을 잠시 막았습니다. 직접 하신 것이 아니라면 비밀번호를 바꿔 주십시오.', '/login/forgot')`,
+      [accountId]).catch(() => undefined);
+  }
+
   async signup(input: {
     email: string; password: string; name: string; visitorKey?: string; agreedTerms?: unknown; jobTitle?: string;
   }) {
     /* v10.31 — 시안 가입 3단계 「영문 · 숫자 · 특수문자 조합 10자 이상」(전: 10자 이상만) */
-    if (input.password.length < 10 || !/[A-Za-z]/.test(input.password) || !/[0-9]/.test(input.password)
-        || !/[^A-Za-z0-9]/.test(input.password)) {
-      throw new PolicyViolation('WEAK_PASSWORD', '비밀번호는 영문 · 숫자 · 특수문자를 섞어 10자 이상이어야 합니다.');
-    }
+    assertStrongPassword(input.password);   /* v10.48 — 변경 · 재설정과 같은 규칙(auth-throttle.ts) */
     /* v10.27 (G-188) — 가입 때 약관 동의를 받습니다(시안 가입 4단계 「전체 · 필수 · 선택」).
      *   전에는 DTO 에 agreedTerms 가 있었지만 **서비스가 읽지 않아** 동의 기록이 남지 않았습니다.
      *   agreedTerms 를 보내면: 발행된 필수 약관이 모두 들어 있어야 하고(아니면 422 REQUIRED_TERM),
@@ -105,9 +139,11 @@ export class AuthService {
     });
   }
 
-  private async issue(accountId: string) {
+  /** 로그인 증표 발급. v10.48 — 비밀번호 변경 뒤 새 증표를 주려고 공개합니다(AccountSecurityService). tv = accounts.token_version */
+  async issue(accountId: string) {
     const principal = await this.principals.load(accountId);
     if (!principal) throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
+    const tv = principal.tokenVersion ?? 0;
 
     const secret = process.env.JWT_SECRET!;
     const accessToken = jwt.sign(
@@ -117,23 +153,25 @@ export class AuthService {
         iv: !!principal.identityVerifiedAt,
         bv: !!principal.businessVerifiedAt,
         sub_active: principal.hasActiveSubscription,
+        tv,
       },
       secret,
       { expiresIn: ACCESS_TTL },
     );
-    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh' }, secret, {
+    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv }, secret, {
       expiresIn: `${REFRESH_TTL_DAYS}d`,
     });
     return { accessToken, refreshToken, principal };
   }
 
   /** access 토큰 검증. refresh 토큰은 여기서 거부합니다 — 14일짜리가 access 로 쓰이면 만료가 무의미해집니다. */
-  verify(token: string): { sub: string } {
+  verify(token: string): { sub: string; tv: number } {
     const payload = this.decode(token);
     if (payload.typ === 'refresh') {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
-    return { sub: payload.sub };
+    /* v10.48 — 판 번호가 없는 증표(이 판 전에 발급)는 0 으로 봅니다. 계정 판 번호도 처음 0 이라 그대로 통합니다 */
+    return { sub: payload.sub, tv: Number(payload.tv ?? 0) };
   }
 
   /** refresh 토큰으로 재발급. principal 을 DB 에서 다시 조립하므로 정지·만료가 즉시 반영됩니다. */
@@ -142,12 +180,17 @@ export class AuthService {
     if (payload.typ !== 'refresh') {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
+    /* v10.48 — 비밀번호를 바꾸거나 탈퇴하면 판 번호가 올라가 그 전 refresh 증표로는 다시 받지 못합니다 */
+    const p = await this.principals.load(payload.sub);
+    if (!p || (p.tokenVersion ?? 0) !== Number(payload.tv ?? 0)) {
+      throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
+    }
     return this.issue(payload.sub);
   }
 
-  private decode(token: string): { sub: string; typ?: string } {
+  private decode(token: string): { sub: string; typ?: string; tv?: number } {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string };
+      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string; tv?: number };
     } catch {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }

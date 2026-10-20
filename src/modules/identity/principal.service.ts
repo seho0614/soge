@@ -20,9 +20,11 @@ export class PrincipalService {
       business_verified_at: Date | null;
       has_active_subscription: boolean;
       status: string;
+      token_version: number;
     }>(
       `SELECT a.id AS account_id,
               a.status,
+              a.token_version,
               a.identity_verified_at,
               array_remove(array_agg(DISTINCT r.role), NULL) AS roles,
               (SELECT max(b.verified_at) FROM businesses b WHERE b.account_id = a.id)
@@ -59,6 +61,7 @@ export class PrincipalService {
       identityVerifiedAt: row.identity_verified_at,
       businessVerifiedAt: row.business_verified_at,
       hasActiveSubscription: row.has_active_subscription,
+      tokenVersion: Number(row.token_version ?? 0),
     };
   }
 
