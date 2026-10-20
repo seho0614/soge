@@ -116,6 +116,8 @@ services:
       KAKAO_REST_KEY: ${KAKAO_REST_KEY:-}
       NEXT_PUBLIC_KAKAO_JS_KEY: ${NEXT_PUBLIC_KAKAO_JS_KEY:-}
       KAKAO_LOCAL_BASE: ${KAKAO_LOCAL_BASE:-}
+      # v10.49 오늘의 날씨(docs/101) — 보통은 비워 두고 운영 화면 › 외부 연동 › 날씨 키에서 넣습니다(암호화 저장)
+      KMA_SERVICE_KEY: ${KMA_SERVICE_KEY:-}
     ports: ["${API_PORT:-3000}:3000"]
     restart: unless-stopped
 

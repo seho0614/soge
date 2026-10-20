@@ -97,11 +97,11 @@ ok('배치 — JOBS', "'geo_backfill'," in wc, '')
 ok('배치 — 생성자에 GeoService', 'private readonly geo: GeoService' in sch, '')
 reg = rd('src/common/integration/registry.ts')
 codes = re.findall(r"\{ code: '(\w+)'", reg)
-ok('연동 목록표 11개 · MAP', len(codes) == 11 and codes[-1] == 'MAP' and len(set(codes)) == 11, ' · '.join(codes))
+ok('연동 목록표 11개 이상 · MAP', len(codes) >= 11 and 'MAP' in codes and len(set(codes)) == len(codes), ' · '.join(codes))   # v10.49 WEATHER 추가로 고정 풀기
 env = rd('deploy/aws/env.production.example')
 ok('운영 .env 예시 KAKAO_REST_KEY · NEXT_PUBLIC_KAKAO_JS_KEY', 'KAKAO_REST_KEY=' in env and 'NEXT_PUBLIC_KAKAO_JS_KEY=' in env, '')
 inv = rd('scripts/verify-invariants.sh')
-ok('불변식 연동 10종', 'if [ "$n" = "10" ]; then echo "  ok   INTG  연동 10종 등록"' in inv, '')
+ok('불변식 연동 10종 이상', re.search(r'if \[ "\$n" = "1\d" \]', inv) is not None, '')   # v10.49 11종
 ok('불변식 MAP-1 ~ 5', all(f'"MAP-{i} ' in inv for i in range(1, 6)), '')
 sc = json.loads(rd('spec/screens.json') or '{}')
 apis = {(s['id'], a) for s in sc.get('screens', []) for a in s.get('apis', [])}

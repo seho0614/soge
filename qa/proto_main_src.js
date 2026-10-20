@@ -309,8 +309,32 @@
     '</div></footer>';
   }
   /* 메인 한 장 — 헤더부터 푸터까지. 시연용 진입 바(demoBar)는 본문 끝에 그대로 둡니다 */
+  /* v10.49 (D103 · docs/101) — 히어로 바로 아래 「오늘의 날씨」 한 줄. 시안은 예시 값(실제 웹은 기상청 자료 · 꺼져 있거나 실패하면 띠 없음) */
+  var MHX_WX = [["SEOUL","서울",18,"맑음",11,21,10,45],["BUSAN","부산",20,"구름 많음",15,23,20,60],["JEJU","제주",21,"흐림",17,23,60,75]];
+  function mxWeather(){
+    var cur = MHX_WX.filter(function(r){ return r[0]===(S.mhxWx||"SEOUL"); })[0] || MHX_WX[0];
+    var sun = '<svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="#FFC53D" stroke="#F5A300"/>'+
+      [0,45,90,135,180,225,270,315].map(function(a){ return '<line x1="16" y1="3.5" x2="16" y2="6.5" stroke="#F5A300" transform="rotate('+a+' 16 16)"/>'; }).join("")+'</svg>';
+    var cloud = '<svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke-width="2" aria-hidden="true"><path d="M10 24h13a5 5 0 0 0 .6-9.96A7 7 0 0 0 10.2 15 4.5 4.5 0 0 0 10 24Z" stroke="#7C8AA5" fill="#EEF2F8"/></svg>';
+    return '<section class="home-wx" aria-labelledby="mh-wx-h"><div class="home-in"><div class="home-wxin">'+
+      '<h2 id="mh-wx-h" class="home-wxt">오늘의 날씨</h2>'+
+      '<select class="home-wxsel" aria-label="날씨 지역 고르기" data-mhxwx="1">'+MHX_WX.map(function(r){
+        return '<option value="'+r[0]+'"'+(r[0]===cur[0]?' selected':'')+'>'+esc(r[1])+'</option>'; }).join("")+'</select>'+
+      '<span class="home-wxnow">'+(cur[3]==="맑음"?sun:cloud)+'<b>'+cur[2]+'°</b><span>'+esc(cur[3])+'</span></span>'+
+      '<span class="home-wxi">최저 <b>'+cur[4]+'°</b> · 최고 <b>'+cur[5]+'°</b></span>'+
+      '<span class="home-wxi">강수 <b>'+cur[6]+'%</b></span><span class="home-wxi">습도 <b>'+cur[7]+'%</b></span>'+
+      '<span class="home-wxsrc">기상청 제공 · 14시 기준 (시안 예시 값)</span>'+
+    '</div></div></section>';
+  }
+  document.addEventListener("change", function(ev){
+    var t = ev.target;
+    if (!t || !t.getAttribute || t.getAttribute("data-mhxwx") !== "1") return;
+    S.mhxWx = t.value;
+    var sec = t.closest && t.closest("section.home-wx");
+    if (sec) { sec.outerHTML = mxWeather(); var n = document.querySelector("select[data-mhxwx]"); if (n) n.focus(); }
+  });
   function mainPageX(){
-    return '<div class="home" data-content="sample">'+mxHeader()+mxHero()+mxToday()+mxNeeds()+mxPicks()+mxPoll()+mxStrip()+mxTown()+
+    return '<div class="home" data-content="sample">'+mxHeader()+mxHero()+mxWeather()+mxToday()+mxNeeds()+mxPicks()+mxPoll()+mxStrip()+mxTown()+
       (mxGwanOn("MAL") ? mxTrust() : '')+(mxGwanOn("BIZ") ? mxStartup() : '')+mxForMe()+mxCore()+
       (window.__AD && window.__AD.demoBar ? '<div class="wrap home-demo">'+window.__AD.demoBar()+'</div>' : '')+
       mxFooter()+'</div>';
