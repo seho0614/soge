@@ -110,6 +110,13 @@
 .home-chip { display: inline-flex; align-items: center; gap: 10px; background: #fff; border-radius: 26px; padding: 11px 24px; font-size: 15.5px; font-weight: 600; box-shadow: 0 8px 22px rgba(64, 48, 160, .08); white-space: nowrap; }
 .home-chip .home-ln { color: var(--hv); }
 .home-chip:hover { color: var(--hv); }
+/* v10.50 (docs/102) — 히어로 퀵메뉴 5칸(소개장터 성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존). 모양은 소개장터 .gw-qmenu 와 같게 */
+.home-qm { display: inline-flex; margin-top: 16px; background: #fff; border: 1px solid var(--hline); border-radius: 12px; overflow: hidden; box-shadow: var(--hshadow); max-width: 100%; }
+.home-qm a { display: flex; align-items: center; gap: 8px; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #3C4658; border-right: 1px solid #EEF0F5; white-space: nowrap; }
+.home-qm a:last-child { border-right: 0; }
+.home-qm a:hover { background: #F7F6FF; color: var(--hv); }
+.home-qm a:focus-visible { outline: 3px solid var(--hv-l); outline-offset: -3px; }
+.home-qe { font-size: 18px; line-height: 1; }
 
 /* 히어로 오른쪽 카드 — 넘겨 보는 안내 · HERO 광고 */
 .home-promo { position: relative; min-height: 336px; }
@@ -477,6 +484,8 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-top: 18px; padding-bottom: 6px; gap: 10px; }
   .home-chips::-webkit-scrollbar { display: none; }
   .home-chip { padding: 10px 16px; font-size: 14px; }
+  .home-qm { display: flex; flex-wrap: wrap; margin-top: 12px; }
+  .home-qm a { flex: 1 1 33%; justify-content: center; padding: 12px 10px; font-size: 13px; border-bottom: 1px solid #EEF0F5; }
   .home-promo { min-height: 0; }
   .home-promo::before, .home-promo::after { display: none; }
   .home-ps { min-height: 0; padding: 20px 20px 22px; }

@@ -28,6 +28,7 @@ import { isOps } from '@/components/common/links';
 import { Line, Pic } from './Icons';
 import { Core, ForMe, Needs, Picks, Poll, Startup, Strip, Today, Town, Trust } from './Sections';
 import { Weather } from './Weather';
+import { QM } from '@/components/gwan/gw';
 
 export interface HomeViewProps {
   c: HomeContent;
@@ -76,6 +77,14 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
               </Link>
             ))}
           </div>
+          {/* v10.50 (docs/102) — 소개장터 퀵메뉴 5칸(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존)을 히어로 검색칩 아래에도. 소개장터 관이 꺼져 있으면 숨김 */}
+          {on('MNY') && (
+            <nav className="home-qm" aria-label="소개장터 바로가기">
+              {QM.map((q) => (
+                <Link key={q.key} href={q.href} data-qm={q.key}><span className="home-qe" aria-hidden="true">{q.em}</span>{q.label}</Link>
+              ))}
+            </nav>
+          )}
         </div>
       </section>
 
