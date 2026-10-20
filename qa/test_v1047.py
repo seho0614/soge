@@ -124,7 +124,8 @@ ok('운영 API 는 ADMIN · SUPER', "@Controller('api/v1/admin')\n@Roles('ADMIN'
 ok('불리언 입력은 @StrictBoolean', tc.count('@StrictBoolean()') == 2 and '@IsBoolean' not in tc, '')
 inv = rd('scripts/verify-invariants.sh')
 ok('불변식 FOOD-1 ~ 4', all(f'"FOOD-{i} ' in inv for i in range(1, 5)), '')
-ok('VERSION v10.47', rd('VERSION').strip() == 'v10.47', rd('VERSION').strip())
+ver = tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))[:2] or [0, 0])
+ok('VERSION v10.47 이상', ver >= (10, 47), rd('VERSION').strip())   # v10.48 부터 다음 판에서도 그대로 돌게(v1046 과 같은 방식)
 ok('판 문서 docs/98', any(n.startswith('98_') for n in os.listdir(os.path.join(K, 'docs'))), '')
 ok('final_parts 에 test_v1047', 'test_v1047' in rd('qa/final_parts.sh', I), '')
 
