@@ -17,5 +17,6 @@
 - p2p-individual-access.md
 - partner-center-account-basis.md
 - subscription-referral-code.md
+- super-all-permissions.md
 - tailwind-adoption.md
 - terms-publishing.md
