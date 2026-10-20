@@ -60,4 +60,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     otherEnv: ['NEXT_PUBLIC_KAKAO_JS_KEY', 'KAKAO_LOCAL_BASE', 'KAKAO_LOCAL_TIMEOUT_MS'], assume: null, adapter: 'REAL',
     files: ['src/common/geo/kakao-local.provider.ts', 'src/common/geo/geo.service.ts', 'src/modules/geo/geo.controller.ts', 'site/src/components/map/KakaoMap.tsx'],
     doc: 'docs/96' },
+  /* v10.49 (D103) — 메인 「오늘의 날씨」. 키는 카카오맵과 같이 운영 화면(외부 연동 › 날씨 키)에서 넣어 암호화 저장이 먼저, 없으면 .env. 스위치 weather.enabled(처음 off) */
+  { code: 'WEATHER', name: '날씨(기상청 단기예보)', dbRow: true, secretEnv: 'KMA_SERVICE_KEY',
+    otherEnv: ['KMA_API_BASE', 'KMA_TIMEOUT_MS'], assume: null, adapter: 'REAL',
+    files: ['src/modules/weather/weather.provider.ts', 'src/modules/weather/weather.service.ts', 'src/modules/weather/weather.controller.ts', 'site/src/components/home/Weather.tsx'],
+    doc: 'docs/101' },
 ];

@@ -3563,6 +3563,21 @@ eqq "AX-10 정지 회원의 재설정 증표는 못 씀" \
      UPDATE accounts SET status='SUSPENDED' WHERE id = a;
      IF fn_password_reset_consume(repeat('9',64)) IS NOT NULL THEN RAISE EXCEPTION 'used'; END IF;
    END \$\$; SELECT 'ok'; ROLLBACK;" "ok"
+echo "== WXA. 오늘의 날씨 키 · 설정 (v10.49 · D103) ======================"
+# 설정 형식 검사는 트리거가 여럿입니다(trg_setting_validate 「SETTING:」 · trg_site_setting_format 「SETTING_FORMAT」) — 앞부분 SETTING 으로 봅니다.
+# 키 표가 「아무 연동 키나」 받기 시작하면 결제 · 계좌 키가 DB 백업으로 퍼집니다 — 받는 이름은 셋뿐입니다.
+blocked "WXA-01 날씨 연동에 다른 이름의 키 저장 차단" \
+  "INSERT INTO integration_secrets (integration_code, name, value_enc, last4) VALUES ('WEATHER', 'TOSS_SECRET_KEY', '\\x00', '0000');"
+err_is "WXA-02 기상청 키 칸에 따옴표 · 꺾쇠(스크립트) 넣기 차단" \
+  "SET LOCAL app.enc_key = 'atk-check-enc-key-0123456789abcdef';
+   SELECT * FROM fn_integ_secret_set('WEATHER', 'KMA_SERVICE_KEY', 'abc''); DROP TABLE accounts; --<script>x</script>', NULL)" \
+  "INTEG_SECRET_FORMAT"
+err_is "WXA-03 날씨 처음 지역에 없는 지역 넣기 차단" \
+  "UPDATE site_settings SET value = 'PYONGYANG' WHERE key = 'weather.default_region'" \
+  "SETTING"
+err_is "WXA-04 날씨 사용 스위치에 on · off 밖의 값 차단" \
+  "UPDATE site_settings SET value = 'yes' WHERE key = 'weather.enabled'" \
+  "SETTING"
 echo
 echo "======================================================="
 printf "안전 %d · 건너뜀 %d · ★오류 %d · ▲뚫림 %d\n" $safe $skip $broken $hole

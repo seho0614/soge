@@ -51,6 +51,9 @@ const PUBLIC_OK = new Set([
      **로그인 없이 보입니다**(목록을 보려고 가입해야 하면 아무도 안 들어옵니다). 요청 사진은 그 요청의 공개 범위를 서비스가 봅니다.
      쓰기(POST · PATCH · DELETE)는 모두 @Roles 가 붙어 있습니다 — 이 목록은 표시 없는 라우트만 통과시킵니다. */
   'market', 'safety', 'biz',
+  /* ★ v10.49 (D103) 메인 「오늘의 날씨」 GET /weather/today — 기상청 공개 자료(지역 날씨)만 돌려줍니다. 키 · 개인정보 없음.
+     기상청은 발표 × 지역마다 한 번만 부르므로 이 주소를 많이 불러도 기상청 호출이 늘지 않습니다. 운영 키 API(/admin/weather)는 SUPER 입니다. */
+  'weather',
 ]);
 
 function walk(dir, out = []) {

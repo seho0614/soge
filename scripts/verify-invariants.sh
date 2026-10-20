@@ -504,8 +504,9 @@ n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 # ★ 전자계약(ESIGN)을 더해 7종(2026-09-18) · 국토부 중개사 자격 대조(BROKER)를 더해 8종(v10.27 · G-176).
 #   v10.34(D093) 전자세금계산서(ETAX)를 더해 9종.
 #   v10.46(D099) 지도 · 주소 좌표(MAP · 카카오맵)를 더해 10종.
+#   v10.49(D103) 날씨(WEATHER · 기상청 단기예보)를 더해 11종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "10" ]; then echo "  ok   INTG  연동 10종 등록"; pass=$((pass+1));
+if [ "$n" = "11" ]; then echo "  ok   INTG  연동 11종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
 
 # v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장
@@ -1120,6 +1121,26 @@ eq  "AUTH-17 감시 보기 3개 0(잠금 과다 · 남은 증표 · 돈 걸린 �
 eq  "AUTH-18 알림 종류 2개(비밀번호 변경 · 로그인 잠금) — 수신거부 불가" \
   "SELECT count(*) FROM notification_event_policies WHERE event_code IN ('PASSWORD_CHANGED','LOGIN_LOCKED') AND NOT optout_allowed;" "2"
 eq  "AUTH-19 탈퇴 가드 트리거가 켜져 있음" "SELECT count(*) FROM pg_trigger WHERE tgname='trg_account_withdraw_guard' AND tgenabled='O'" "1"
+
+# ── v10.49 (D103 · docs/101) 메인 「오늘의 날씨」 — 처음엔 꺼짐 · 키는 암호문 · 형식 검사 · 다른 연동 키는 여전히 못 넣음 ─────
+eq   "WX-1 날씨 사용(weather.enabled) 처음 off"          "SELECT value FROM site_settings WHERE key='weather.enabled'" off
+eq   "WX-2 처음 지역 SEOUL"                              "SELECT value FROM site_settings WHERE key='weather.default_region'" SEOUL
+eq   "WX-3 연동 표 WEATHER · 키 이름 KMA_SERVICE_KEY · 오픈을 막지 않음" \
+  "SELECT count(*) FROM integrations WHERE code='WEATHER' AND secret_key_name='KMA_SERVICE_KEY' AND NOT blocks_open" 1
+run  "WX-4 기상청 키(Decoding · + / =)는 암호문으로 저장 · 꺼내면 원래 값 · 결제 키는 여전히 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+  SELECT * FROM fn_integ_secret_set('WEATHER','KMA_SERVICE_KEY','invWxKey+abc/DEF0123456789==', NULL);
+  DO \$\$ BEGIN
+    IF fn_integ_secret_get('WEATHER','KMA_SERVICE_KEY') <> 'invWxKey+abc/DEF0123456789==' THEN RAISE EXCEPTION 'roundtrip'; END IF;
+    IF EXISTS (SELECT 1 FROM integration_secrets WHERE position(convert_to('invWxKey', 'UTF8') IN value_enc) > 0) THEN RAISE EXCEPTION 'plaintext'; END IF;
+    IF NOT (SELECT secret_registered FROM integrations WHERE code='WEATHER') THEN RAISE EXCEPTION 'registered'; END IF;
+    BEGIN
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      RAISE EXCEPTION 'other-key-accepted';
+    EXCEPTION WHEN check_violation THEN NULL; END;
+  END \$\$; ROLLBACK;"
+run  "WX-5 기상청 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('WEATHER','KMA_SERVICE_KEY','짧은 키 <script>', NULL); ROLLBACK;"
+run  "WX-6 카카오 키는 여전히 카카오 형식만(+ / = 거절)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','abcdefgh+ijklmnop/qrst==', NULL); ROLLBACK;"
+eq   "WX-7 어떤 보기도 키(integration_secrets)를 읽지 않음" "SELECT count(*) FROM v_secret_leak" 0
 
 echo "통과 $pass / 실패 $fail"
 [ $fail -eq 0 ] || exit 1

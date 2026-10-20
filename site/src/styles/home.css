@@ -200,6 +200,34 @@
   .home-band.core { padding: 6px 0 4px; }
 }
 
+/* ── 오늘의 날씨 (v10.49 · D103 · docs/101) — 히어로 바로 아래 한 줄 ─────────────── */
+.home-wx { padding: 12px 0 2px; background: #F6F9FC; }
+.home-wxin {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; min-height: 54px; padding: 8px 20px;
+  background: #fff; border: 1px solid var(--hline); border-radius: 16px; box-shadow: var(--hshadow); font-size: 14.5px; color: var(--hk2);
+}
+.home-wxin.busy { opacity: .55; }
+.home-wxt { font-size: 15.5px; font-weight: 800; color: var(--hk); letter-spacing: -.02em; }
+.home-wxsel {
+  height: 34px; padding: 0 28px 0 12px; border: 1px solid var(--hline); border-radius: 999px; background: #F5F6FB; color: var(--hk);
+  font: inherit; font-weight: 700; cursor: pointer; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #8790A0 50%), linear-gradient(135deg, #8790A0 50%, transparent 50%);
+  background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px; background-size: 5px 5px; background-repeat: no-repeat;
+}
+.home-wxsel:focus-visible { outline: 3px solid var(--hv-l); outline-offset: 2px; }
+.home-wxnow { display: inline-flex; align-items: center; gap: 8px; color: var(--hk); }
+.home-wxnow b { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.home-wxnow span { font-weight: 700; }
+.home-wxi b { color: var(--hk); font-weight: 700; }
+.home-wxsrc { margin-left: auto; font-size: 12.5px; color: var(--hk3); white-space: nowrap; }
+@media (max-width: 720px) {
+  .home-wx { padding: 10px 0 0; }
+  .home-wxin { gap: 4px 12px; padding: 10px 14px; font-size: 13.5px; }
+  .home-wxt { width: auto; font-size: 14.5px; }
+  .home-wxnow b { font-size: 19px; }
+  .home-wxsrc { margin-left: 0; width: 100%; }
+}
+
 /* ── 오늘의 소개뱅크 ─────────────────────────────────────────────────── */
 .home-today { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; }
 .home-bn { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 451 / 206; box-shadow: var(--hshadow); background: #F6E6D2; container-type: inline-size; }

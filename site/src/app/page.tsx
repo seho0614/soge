@@ -15,13 +15,15 @@
  *
  * 조회는 여기서 한 번에 합니다. API 하나가 실패해도 그 칸만 비웁니다(.catch).
  *   늘        GET /gwans · /footer-links · /site-settings/public · /ads/serve?slot=HERO(성향 광고) · /me/summary(로그인) · /community/polls?scope=home(투표)
+ *             · /weather/today?region=(v10.49 오늘의 날씨 · 10분 캐시 · 지역은 쿠키 sgb_wx · 없으면 운영이 정한 처음 지역)
  *   live 만   GET /listings · /requests · /health/products · /community/posts
  */
+import { cookies } from 'next/headers';
 import { apiGet, apiGetPersonal, apiGetVisitor } from '@/lib/api';
 import { me } from '@/lib/session';
 import type { FooterLink, Gwan, ListingListData } from '@/lib/types';
 import type { HltProduct } from '@/components/health/types';
-import type { AdServe, HomeRequest, MeSummary } from '@/components/home/types';
+import { WX_COOKIE, WX_REGION_RE, type AdServe, type HomeRequest, type MeSummary, type WeatherToday } from '@/components/home/types';
 import type { PromoSlide } from '@/components/home/HeroPromo';
 import type { Poll } from '@/components/community/poll';
 import { HomeView } from '@/components/home/HomeView';
@@ -42,8 +44,10 @@ export default async function Home() {
   const principal = await me().catch(() => null);
   const loggedIn = !!principal;
   const liveMode = process.env.HOME_CONTENT === 'live';
+  const wxPick = (await cookies()).get(WX_COOKIE)?.value ?? '';
+  const wxRegion = WX_REGION_RE.test(wxPick) ? wxPick : '';
 
-  const [gwans, links, settings, ad, summary, polls] = await Promise.all([
+  const [gwans, links, settings, ad, summary, polls, weather] = await Promise.all([
     apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]),
     apiGet<FooterLink[]>('/footer-links', 300).catch(() => [] as FooterLink[]),
     /* 60초 — 운영이 넣은 사회관계망 주소 · 법정 표시가 1분 안에 메인에 반영됩니다(v10.14 · 전에는 5분) */
@@ -52,6 +56,8 @@ export default async function Home() {
     loggedIn ? apiGetPersonal<MeSummary>('/me/summary').catch(() => null) : Promise.resolve(null),
     /* 「이건 어때?」 — 메인에 낼 투표(종류마다 1건). 내가 고른 보기가 사람(계정 · 방문자)마다 달라 캐시하지 않습니다 (D021) */
     apiGetVisitor<Poll[]>('/community/polls?scope=home').catch(() => [] as Poll[]),
+    /* v10.49 (D103) 오늘의 날씨 — 기상청 자료는 API 가 발표마다 한 번만 받습니다. 실패하면 띠를 그리지 않습니다 */
+    apiGet<WeatherToday>(`/weather/today${wxRegion ? `?region=${wxRegion}` : ''}`, 600).catch(() => null),
   ]);
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
   const on = (c: string) => live.includes(c);
@@ -81,6 +87,7 @@ export default async function Home() {
   /* ★ 화면은 HomeView(클라이언트 컴포넌트)가 그립니다 — 여기서는 **자료만** 넘깁니다. 이유는 HomeView.tsx 머리말(수화 오류 #418). */
   return (
     <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
-      live={live} ad={heroAd} slides={slides} start={start} chips={CHIPS} year={new Date().getFullYear()} polls={polls} />
+      live={live} ad={heroAd} slides={slides} start={start} chips={CHIPS} year={new Date().getFullYear()} polls={polls}
+      weather={weather} />
   );
 }

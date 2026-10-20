@@ -19,7 +19,7 @@
 import Link from 'next/link';
 import type { FooterLink, Gwan } from '@/lib/types';
 import type { HomeContent } from './content';
-import type { AdServe, MeSummary } from './types';
+import type { AdServe, MeSummary, WeatherToday } from './types';
 import type { Poll as PollData } from '../community/poll';
 import { HERO_SEARCH_EVENT, HeroSearch } from './HeroSearch';
 import { HeroPromo, type PromoSlide } from './HeroPromo';
@@ -27,6 +27,7 @@ import { DemoBar, HomeFooter, HomeHeader } from './Frame';
 import { isOps } from '@/components/common/links';
 import { Line, Pic } from './Icons';
 import { Core, ForMe, Needs, Picks, Poll, Startup, Strip, Today, Town, Trust } from './Sections';
+import { Weather } from './Weather';
 
 export interface HomeViewProps {
   c: HomeContent;
@@ -45,9 +46,11 @@ export interface HomeViewProps {
   year: number;
   /** 메인에 낼 투표(종류마다 1건 · 없을 수 있음) — 실제 표 수 포함 */
   polls: PollData[];
+  /** v10.49 (D103) 오늘의 날씨 — 없거나 available=false 면 띠를 그리지 않습니다 */
+  weather: WeatherToday | null;
 }
 
-export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls }: HomeViewProps) {
+export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather }: HomeViewProps) {
   const on = (code: string) => live.includes(code);
   return (
     <div className="home" data-content={c.mode}>
@@ -76,6 +79,8 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
         </div>
       </section>
 
+      {/* v10.49 (D103 · docs/101) — 상단 배너(히어로) 바로 아래 「오늘의 날씨」 한 줄 */}
+      {weather?.available && <Weather w={weather} />}
       <Today c={c} />
       <Needs live={live} />
       <Picks c={c} />

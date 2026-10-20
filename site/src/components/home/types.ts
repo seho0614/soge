@@ -44,3 +44,25 @@ export interface MeSummary {
   displayName?: string | null;
   principal?: { roles?: string[] } | null;
 }
+
+/** v10.49 (D103 · docs/101) GET /weather/today?region= — 메인 「오늘의 날씨」. available=false 면 띠를 그리지 않습니다 */
+export interface WeatherToday {
+  available: boolean;
+  region: string;
+  regionName: string;
+  regions: { code: string; name: string }[];
+  temp: number | null;
+  label: string | null;
+  icon: 'sun' | 'partly' | 'cloud' | 'rain' | 'sleet' | 'snow' | null;
+  min: number | null;
+  max: number | null;
+  pop: number | null;
+  humidity: number | null;
+  observedAt: string | null;
+  source: string;
+}
+
+/** 방문자가 고른 날씨 지역(시 · 도 코드)을 기억하는 쿠키 — 서버(page.tsx)와 브라우저(Weather.tsx)가 같이 씁니다.
+ *  ★ 'use client' 파일에서 내보내면 서버 쪽에서 값이 아니라 참조가 되므로 이 파일에 둡니다 */
+export const WX_COOKIE = 'sgb_wx';
+export const WX_REGION_RE = /^[A-Z]{4,10}$/;
