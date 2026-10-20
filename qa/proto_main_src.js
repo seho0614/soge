@@ -112,6 +112,9 @@
       '</div>'+mxPromo()+'</div>'+
       '<div class="home-chips">'+MHX_CHIPS.map(function(c){
         return '<button type="button" class="home-chip mh-chip" data-q="'+esc(c)+'">'+mxLn("search",18,2.4)+esc(c)+'</button>'; }).join("")+'</div>'+
+      /* v10.50 (docs/102) — 히어로 퀵메뉴 5칸 → 소개장터 퀵메뉴 화면 */
+      '<nav class="home-qm" aria-label="소개장터 바로가기">'+[["🏆","성공현황","win"],["🎖","베스트매칭","bst"],["🚨","급구 · 급매","urg"],["🛡","사고예방","saf"],["🎁","이벤트존","evt"]].map(function(q){
+        return '<a href="#" data-go="'+q[2]+'"><span class="home-qe" aria-hidden="true">'+q[0]+'</span>'+esc(q[1])+'</a>'; }).join("")+'</nav>'+
     '</div></section>';
   }
   function mxHead(ic, t, d, go){
