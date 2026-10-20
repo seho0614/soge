@@ -605,8 +605,11 @@ PV1=aaaa9999-0000-4000-a000-0000000000f1
 PV2=aaaa9999-0000-4000-a000-0000000000f2
 $PSQL -c "DELETE FROM identity_verifications WHERE account_id IN ('$PV1','$PV2'); DELETE FROM accounts WHERE id IN ('$PV1','$PV2');" >/dev/null 2>&1
 $PSQL -c "INSERT INTO accounts(id,email,password_hash,name,phone,account_type) VALUES ('$PV1','pv1@t.com','h','탈퇴1','010-1111-2222','INDIVIDUAL'),('$PV2','pv2@t.com','h','탈퇴2','010-3333-4444','INDIVIDUAL');" >/dev/null 2>&1
-$PSQL -c "SET session_replication_role=replica; INSERT INTO deals(id,listing_id,buyer_account_id,seller_account_id,introducer_account_id,attributed_code,tier,agreed_fee,status) VALUES ('aaaa9999-0000-4000-a000-0000000000dd','$L','$PV2','$SEL','$B','OK1',1,1000000,'INQUIRY') ON CONFLICT DO NOTHING; SET session_replication_role=origin;" >/dev/null 2>&1
-$PSQL -c "UPDATE accounts SET withdrawn_at=now() WHERE id IN ('$PV1','$PV2');" >/dev/null 2>&1
+$PSQL -c "SET session_replication_role=replica; INSERT INTO deals(id,listing_id,buyer_account_id,seller_account_id,introducer_account_id,attributed_code,tier,agreed_fee,status) VALUES ('aaaa9999-0000-4000-a000-0000000000dd','$L','$PV2','$SEL','$B','OK1',1,1000000,'SETTLED') ON CONFLICT (id) DO UPDATE SET status='SETTLED'; SET session_replication_role=origin;" >/dev/null 2>&1
+# v10.49.1 — v10.48(D102) 가드 트리거는 진행 중 거래(최근 30일 INQUIRY 포함)가 있으면 탈퇴를 막습니다.
+#   「거래 이력 → 5년 보관」은 끝난 거래(SETTLED)로 봅니다. 한쪽이 막혀도 다른 쪽 시험이 묻히지 않게 한 명씩 탈퇴시킵니다.
+$PSQL -c "UPDATE accounts SET withdrawn_at=now() WHERE id='$PV1';" >/dev/null 2>&1
+$PSQL -c "UPDATE accounts SET withdrawn_at=now() WHERE id='$PV2';" >/dev/null 2>&1
 
 v=$($PSQL -t -A -c "SELECT (retention_until = current_date)::text FROM accounts WHERE id='$PV1';")
 if [ "$v" = "true" ]; then echo "  ok   PII   거래 없으면 즉시 파기 대상"; pass=$((pass+1));
