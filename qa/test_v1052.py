@@ -75,11 +75,12 @@ ok('주황 · 초록 관(소개장터 · 소개몰 · 소개광장)은 남색 �
    all(re.search(rf'\[data-sgb-gwan="{g}"\][^}}]*--sgb-on-point: var\(--sgb-navy\)', SG) for g in ('money', 'shop', 'plaza')), '')
 
 # ③ 묶어 둔 화면
+B2 = re.match(r'v10\.(5[4-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.54 2단계 B 에서 묶음을 풂 — 아래 넷은 test_v1054 가 봄
 bind = PC[PC.find('.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow {'):]
 bind = bind[:bind.find('}')]
 lost = [k for k in want if k not in ('--fs-xl',) and not re.search(rf'(?<![\w-]){re.escape(k)}:\s*[^v;][^;]*;', bind)]
-ok('묶어 둔 화면은 바뀐 옛 이름 모두 전 값', not lost, str(lost))
-ok('묶어 둔 화면은 제목 글꼴 막음 · 생활금융 상담은 전 본문 글꼴', ':where(.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow) :where(h1, h2, h3) { font-family: inherit; }' in PC and '.main-home, .mal.mal-narrow { font-family: var(--f); }' in PC, '')
+ok('묶어 둔 화면은 바뀐 옛 이름 모두 전 값', B2 or not lost, str(lost))
+ok('묶어 둔 화면은 제목 글꼴 막음 · 생활금융 상담은 전 본문 글꼴', B2 or ':where(.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow) :where(h1, h2, h3) { font-family: inherit; }' in PC and '.main-home, .mal.mal-narrow { font-family: var(--f); }' in PC, '')
 
 # ④ 글꼴 · 관 표시
 ok('제목 h1 ~ h3 은 시트 제목 글꼴(:where · 점수 0)', ':where(h1, h2, h3) { font-family: var(--sgb-font-title); }' in SC, '')
@@ -88,7 +89,7 @@ ok('글꼴 파일 5개 선언 그대로', len(re.findall(r'@font-face', FN)) == 
 CH = rd('site/src/components/Chrome.tsx')
 pairs = dict(re.findall(r"\['(/\w+)', '(\w+)'\]", CH[CH.find('const SGB_GWAN'):CH.find('export const sgbGwanOf')]))
 ok('주소 → 관 6개(소개장터 · 안심소개 둘 · 소개창업 · 소개몰 · 소개광장)', pairs == {'/money': 'money', '/mall': 'mall', '/mal': 'mall', '/biz': 'biz', '/health': 'shop', '/community': 'plaza'}, str(pairs))
-ok('관 표시는 일반 화면(base)에만', "data-sgb-gwan={s === 'base' ? sgbGwanOf(p) : undefined}" in CH, '')
+ok('관 표시는 일반 화면(base)에만', B2 or "data-sgb-gwan={s === 'base' ? sgbGwanOf(p) : undefined}" in CH, '')
 ok('Chrome.tsx — sgbGwanOf 앞에 정의 · usePathname 그대로', CH.find('export const sgbGwanOf') < CH.find('export function MainWrap') and "import { usePathname } from 'next/navigation';" in CH, '')
 
 # ⑤ 시안
@@ -102,7 +103,7 @@ pm = PR[PR.find('v10.52 디자인 통일 — 화면 칸에 디자인 시트 표�
 pm = pm[:pm.find('}catch(_){}')]
 km = re.search(r'var SGB_KEEP = \{([^}]*)\}', pm)
 keep = set(re.findall(r'"(\w+)":1', km.group(1))) if km else set()
-ok('시안 묶어 둔 화면 — 메인 히어로 · 소개장터 메인 · 소개광장 · 운영 화면', {'main1', 'main2', 'list', 'cmu', 'commu', 'adm'} <= keep, f'{len(keep)}개')
+ok('시안 묶어 둔 화면 — 메인 히어로 · 소개장터 메인 · 소개광장 · 운영 화면', B2 or {'main1', 'main2', 'list', 'cmu', 'commu', 'adm'} <= keep, f'{len(keep)}개')
 ok('시안 관 화면은 묶지 않음(안심소개 · 소개창업 · 상세 · 로그인 · 나의공간)', not ({'listl', 'listb', 'detail', 'login', 'my', 'win'} & keep), '')
 ok('시안 주소 → 관(mny · mal · biz)', '{ mny: "money", mal: "mall", biz: "biz" }' in pm and 'el.setAttribute("data-sgb", "");' in pm, '')
 ok('시안 · 실제 웹 설명 P2P(B2B 아님)', '<meta name="description" content="개인 · 사업자 누구나 거래처 · 매물 · 창업 자리를 소개하고 소개비를 받는 P2P 소개 플랫폼입니다.">' in PR and 'B2B 플랫폼' not in PR and '사업자끼리 소개하고' not in PR and 'P2P 소개 플랫폼' in rd('site/src/app/layout.tsx') and "B2B 소개 플랫폼'" not in rd('site/src/app/layout.tsx'), '')

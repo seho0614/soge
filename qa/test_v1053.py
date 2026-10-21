@@ -42,6 +42,7 @@ for f in sorted(glob.glob(os.path.join(ST, '*.css'))):
         s = s[s.find('}') + 1:]                   # 처음 :root(옛 값) 다음부터 — 별칭 블록이 덮어씀
     if b == 'proto-common.css':
         s = re.sub(r'\.main-home, \.main-b2, \.b2-hd, \.b2-ft, \.mal\.mal-narrow \{[^}]*\}', '', s)   # 묶어 둔 화면
+        s = re.sub(r'(?m)^\.main-home \{[^}]*\}', '', s)                                                # v10.54 부터 메인만 묶음
     for sel, body in re.findall(r'([^{}]+)\{([^{}]*)\}', s):
         for k, v in re.findall(rf'(?<![\w-])({NAMES})\s*:\s*([^;]+)', body):
             if not v.strip().startswith('var(--sgb-'):
@@ -64,8 +65,9 @@ ok('상담 신청(.mal-proto) — 보라 → 관 색', '.mal-proto { --accent: v
 
 # ③ 묶어 둔 화면 · 시안
 PC = rd('site/src/styles/proto-common.css')
-ok('묶어 둔 화면(메인 · 소개광장 · 소개몰 · 소개장터 메인 · 생활금융 상담)은 그대로', '.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow {' in PC and '--pp: #7C3AED;' in PC, '')
-ok('생활금융 상담 — 묶음(.mal.mal-narrow 점수 2)이 .mal-proto(점수 1)보다 셈', '.mal.mal-narrow' in PC, '')
+B = re.match(r'v10\.(5[4-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.54 2단계 B 에서 묶음을 풂(test_v1054 가 봄)
+ok('묶어 둔 화면(메인 · 소개광장 · 소개몰 · 소개장터 메인 · 생활금융 상담)은 그대로', B or ('.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow {' in PC and '--pp: #7C3AED;' in PC), '2단계 B 뒤 — test_v1054' if B else '')
+ok('생활금융 상담 — 묶음(.mal.mal-narrow 점수 2)이 .mal-proto(점수 1)보다 셈', B or '.mal.mal-narrow' in PC, '2단계 B 뒤 — test_v1054' if B else '')
 PR = rd('spec/proto.html')
 ok('시안 — 같은 규칙(#screen[data-sgb] 별칭)이 그대로', '#screen[data-sgb] { --f: var(--sgb-font-body); font-family: var(--sgb-font-body); }' in PR, '')
 ok('VERSION v10.53 이상', re.match(r'v10\.(5[3-9]|[6-9]\d)', rd('VERSION').strip()) is not None, rd('VERSION').strip())
