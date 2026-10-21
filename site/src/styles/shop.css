@@ -8,9 +8,11 @@
  *   사진 띠 326px · 구역 폭 1410px · 구역 사이 36px · 타일 93px · 아래 띠 110px
  * 시안(spec/proto.html)도 이 파일을 글자 그대로 씁니다 — 두 곳의 모양이 갈라지지 않게.
  */
+/* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 초록은 소개몰 관 색(<main data-sgb-gwan="shop">)의 글자 · 단추용 #12883e(흰 글자 대비 4.5 이상) ·
+ * 흐린 글자 #8A8F9C → 시트 #6b7694 · 글꼴은 나눔스퀘어 네오. 할인 빨강 · 구역 바탕(크림 · 회색) · 사진 띠의 밝은 초록 #22C55E(어두운 바탕 위)는 그대로 */
 .shop, .shop-sub {
-  --shop-navy: #00245A; --shop-green: #17A34A; --shop-orange: #F5A008; --shop-red: #E5362F; --shop-dim: #8A8F9C; --shop-ink: #111;
-  font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --shop-navy: var(--sgb-navy); --shop-green: var(--sgb-point-text); --shop-orange: var(--sgb-accent); --shop-red: #E5362F; --shop-dim: var(--sgb-ink-3); --shop-ink: var(--sgb-ink);
+  font-family: var(--sgb-font-body);
 }
 .shop { background: #fff; color: var(--shop-ink); padding-bottom: 8px; }
 .shop a { text-decoration: none; color: inherit; }
@@ -64,7 +66,7 @@
 .shop-tile:hover { box-shadow: 0 0 0 2px var(--shop-green); }
 .shop-tile b { font-size: 17.5px; font-weight: 800; letter-spacing: -.6px; color: #111; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; box-sizing: border-box; }
 .shop-tile .emo { height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 34px; line-height: 1; }
-.shop-tile .ini { width: 44px; height: 44px; border-radius: 50%; background: #EAF6EE; color: var(--shop-green); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; }
+.shop-tile .ini { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-point-l); color: var(--shop-green); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; }
 
 /* 성분별 최저가 */
 .shop-low { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
@@ -143,7 +145,7 @@
 .shop-prodc > a { display: flex; flex-direction: column; padding: 14px 16px 10px; gap: 5px; min-width: 0; flex: 1; }
 .shop-prodc .noph { height: 74px; border-radius: 8px; background: repeating-linear-gradient(135deg, #F4F5F7 0 10px, #EEF0F3 10px 20px); color: #9A9FAA; display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: -.3px; margin-bottom: 6px; }
 .shop-prodc .top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--shop-dim); }
-.shop-prodc .bdg { padding: 1px 8px; border-radius: 5px; background: #EAF6EE; color: var(--shop-green); font-weight: 800; font-size: 12.5px; }
+.shop-prodc .bdg { padding: 1px 8px; border-radius: 5px; background: var(--sgb-point-l); color: var(--shop-green); font-weight: 800; font-size: 12.5px; }
 .shop-prodc .bdg.out { background: #FDECEC; color: var(--shop-red); }
 .shop-prodc b { font-size: 18px; font-weight: 700; letter-spacing: -.6px; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shop-prodc .pr { font-size: 19px; font-weight: 800; letter-spacing: -.5px; color: #111; }
@@ -165,17 +167,18 @@
 
 /* ── 소개몰의 다른 쪽(상품 상세 · 장바구니 · 주문 …) — 본문은 지금 내용 그대로, 폭과 강조 색만 맞춥니다 ── */
 .shop-sub { max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px; box-sizing: border-box; background: #fff;
-  --accent: #17A34A; --accent-w: #EAF6EE; }
+  --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }
 .shop-sub .page-head h1, .shop-sub h1 { color: var(--shop-navy); }
 .shop-sub .cta-primary, .shop-sub .btn-primary { background: var(--shop-green); border-color: var(--shop-green); }
 
 /* 바닥 고지 — 소개몰에서는 직판 고지와 통신판매중개자 고지를 같이 보입니다(10/7 결정). 어느 거래에 붙는 말인지 앞에 꼬리표를 답니다 */
 .b2-notice + .b2-notice { margin-top: 6px; }
-.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #EAF6EE; color: #17A34A; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
+.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #e9f7ee; color: #12883e; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
 .b2-notice[data-notice=inter] .b2-ntag { background: #EEF2F8; color: #00245A; }
+/* 2026-10-21 2단계 B — 바닥줄은 <main> 밖이라 관 표시가 닿지 않아, 시트의 소개몰 값(point-l · point-text)을 글자로 적었습니다 */
 
 /* 두 관 전용 머리줄 — 소개몰에서는 그림대로 「무료 회원가입」이 초록입니다(소개광장은 주황 그대로) */
-[data-b2-tone=shop] .b2-join { background: #17A34A; }
+[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }   /* 머리줄의 B2Tone 에 data-sgb-gwan="shop" (Chrome.tsx) */
 
 @media (max-width: 1280px) {
   .shop-hero h1 { left: 48px; font-size: 40px; } .shop-hero .shop-lead { left: 48px; } .shop-find { left: 48px; max-width: calc(100% - 96px); }

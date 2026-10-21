@@ -193,7 +193,7 @@
 }
 
 /* ── v10.31 (w2 · 시안 malcsl 기준) — 상담 화면 단추 색은 시안 안심소개 보라 · 신청서 한 장(휴대폰 옆 「인증번호 받기」) ── */
-/* 2026-10-21 디자인 통일 2단계 A(docs/106) — 보라 → 관 색. 생활금융 상담(.mal.mal-narrow)은 proto-common.css 가 2단계 B 까지 전 값으로 묶어 둠(점수가 더 높음) */
+/* 2026-10-21 디자인 통일 2단계 A(docs/106) — 보라 → 관 색. 생활금융 상담(.mal.mal-narrow)도 2단계 B(docs/107)에서 묶음을 풀어 같은 관 색 */
 .mal-proto { --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }
 .mal-fs { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: var(--sp-3); }
 .mal-fs:disabled input, .mal-fs:disabled select, .mal-fs:disabled textarea { background: var(--surface); color: var(--ink-2); }

@@ -3232,9 +3232,10 @@ img{-webkit-user-drag:none;user-select:none}
  *   남색 #00245A · 주황 #F5A008 · 흐린 글자 #838CA5 · 머리줄 75px · 본문 폭 1380px
  */
 
+/* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 남색 · 주황 · 글자 · 줄은 시트와 같은 값, 흐린 글자는 #838CA5 → 시트 #6b7694(대비 4.5) · 글꼴은 나눔스퀘어 네오 */
 .b2-hd, .b2-ft, .main-b2 {
-  --b2-navy: #00245A; --b2-orange: #F5A008; --b2-ink: #000; --b2-dim: #838CA5; --b2-line: #DBDBDB; --b2-w: 1380px;
-  font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --b2-navy: var(--sgb-navy); --b2-orange: var(--sgb-accent); --b2-ink: var(--sgb-ink); --b2-dim: var(--sgb-ink-3); --b2-line: var(--sgb-line); --b2-w: 1380px;
+  font-family: var(--sgb-font-body);
 }
 .b2-in { max-width: calc(var(--b2-w) + 48px); margin: 0 auto; padding: 0 24px; }
 
@@ -3323,13 +3324,17 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
  *   남색 #00245A · 주황 #F5A008 · 표 머리 #F7F8FA · 줄 #DBDBDB
  *   배지 — 소개 후기 #FEF3E0/#F78013 · 질문 #EBF3FF/#1362F4 · 업종 이야기 #F1EEFE/#693EDD
  *   사진 띠 303px · 탭 150×44 · 표 줄 44px · 쪽 번호 38px · 글쓰기 184×52 · 본문 폭 1380px
- * 글꼴은 그림만으로 이름을 알 수 없어 지금 글꼴(Pretendard → 없으면 기기 글꼴)에 굵기 · 크기만 맞췄습니다.
+ * 글꼴은 그림만으로 이름을 알 수 없어 굵기 · 크기만 맞췄습니다. 2026-10-21 2단계 B 부터 글꼴은 디자인 시트(나눔스퀘어 네오 · 제목 페이퍼로지).
  */
+/* 2026-10-21 디자인 통일 2단계 B(docs/107 · 대표 「시트 관 색」) — 제목은 브랜드 남색 그대로, 탭 · 단추 · 링크 · 강조는 소개광장 관 색으로.
+ *   --plz-pt  흰 바탕 위 글자 · 테두리 · 흰 글자 단추 바탕 = 시트 point-text #d24502(대비 4.5)
+ *   --plz-orange  큰 단추(글쓰기) · 고른 쪽 번호 바탕 = 시트 소개광장 색 #fd580a · 그 위 글자는 남색(--sgb-on-point · 10/21 결정 ③)
+ *   흐린 글자 #838CA5 → 시트 #6b7694 · 분류 배지 색은 그대로 */
 .plz {
-  --plz-navy: #00245A; --plz-orange: #F5A008; --plz-line: #DBDBDB; --plz-dim: #838CA5;
-  /* 이 화면 안에서는 공용 부품(.btn-primary · .notice · 투표 카드)의 강조색도 남색으로 — 부품을 따로 만들지 않고 색만 바꿉니다 */
-  --accent: #00245A; --accent-w: #EEF2F8; --line: #DBDBDB;
-  background: #fff; color: #000;
+  --plz-navy: var(--sgb-navy); --plz-pt: var(--sgb-point-text); --plz-orange: var(--sgb-point); --plz-line: var(--sgb-line); --plz-dim: var(--sgb-ink-3);
+  /* 이 화면 안에서는 공용 부품(.btn-primary · .notice · 투표 카드)의 강조색도 관 색으로 — 부품을 따로 만들지 않고 색만 바꿉니다 */
+  --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); --line: var(--sgb-line);
+  background: #fff; color: var(--sgb-ink);
 }
 .plz-in, .plz-body { max-width: 1428px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
@@ -3348,8 +3353,8 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .plz-find { position: absolute; left: 532px; top: 68px; width: 510px; height: 60px; display: flex; align-items: center; background: #fff; border-radius: 30px; padding: 0 6px 0 28px; box-shadow: 0 0 0 2px rgba(254, 243, 225, .9); box-sizing: border-box; }
 .plz-find input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 17px; color: #000; }
 .plz-find input::placeholder { color: #A4ACBD; }
-.plz-find:focus-within { box-shadow: 0 0 0 2px var(--plz-navy); }
-.plz-find button { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--plz-navy); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.plz-find:focus-within { box-shadow: 0 0 0 2px var(--plz-pt); }
+.plz-find button { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--plz-pt); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .plz-say { position: absolute; left: 64px; top: 169px; display: flex; align-items: center; gap: 19px; }
 .plz-mega { width: 104px; height: auto; display: block; flex: none; }
 .plz-note { display: flex; flex-direction: column; font-size: 20px; line-height: 1.45; font-weight: 500; letter-spacing: -.4px; color: #000; }
@@ -3365,20 +3370,20 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .plz-body h1 { font-size: 28px; font-weight: 900; letter-spacing: -.6px; color: var(--plz-navy); margin: 0 0 8px; }
 .plz-body .page-head { margin: 28px 0 8px; }
 .plz-body .page-head h1 { margin: 0; }
-.plz-body .page-head a { color: var(--plz-navy); }
+.plz-body .page-head a { color: var(--plz-pt); }
 .plz-body .lead { color: #333; margin: 0 0 16px; }
 .plz-narrow { max-width: 960px; margin: 28px auto 0; }
 
 /* 알약 탭 */
 .plz-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .plz-tabs a { min-width: 150px; height: 44px; padding: 0 18px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--plz-line); border-radius: 10px; background-color: #fff; color: var(--plz-navy); font-size: 18px; font-weight: 800; letter-spacing: -.4px; text-decoration: none; white-space: nowrap; }
-.plz-tabs a:hover { border-color: var(--plz-navy); }
-.plz-tabs a[aria-current=page] { background-color: var(--plz-navy); border-color: var(--plz-navy); color: #fff; }
+  border: 1px solid var(--plz-line); border-radius: 10px; background-color: #fff; color: var(--plz-pt); font-size: 18px; font-weight: 800; letter-spacing: -.4px; text-decoration: none; white-space: nowrap; }
+.plz-tabs a:hover { border-color: var(--plz-pt); }
+.plz-tabs a[aria-current=page] { background-color: var(--plz-pt); border-color: var(--plz-pt); color: #fff; }
 
 .plz-found { margin: 18px 0 0; font-size: 15.5px; color: #333; }
-.plz-found b { color: var(--plz-navy); }
-.plz-found a, .plz-empty a, .plz-err a { color: var(--plz-navy); text-decoration: underline; margin-left: 8px; }
+.plz-found b { color: var(--plz-pt); }
+.plz-found a, .plz-empty a, .plz-err a { color: var(--plz-pt); text-decoration: underline; margin-left: 8px; }
 .plz-empty { margin: 31px 0 0; padding: 56px 20px; border: 1px solid var(--plz-line); border-radius: 8px; text-align: center; color: #555; font-size: 17px; }
 .plz-err { margin-top: 31px; }
 
@@ -3394,11 +3399,11 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .plz-tbl th:nth-child(4), .plz-tbl td:nth-child(4) { width: 210px; }
 .plz-tbl th:nth-child(5), .plz-tbl td:nth-child(5) { width: 148px; }
 .plz-tbl td:nth-child(4), .plz-tbl td:nth-child(5) { font-variant-numeric: tabular-nums; }
-.plz-tbl td a { color: #000; text-decoration: none; }
-.plz-tbl td a:hover { color: var(--plz-navy); text-decoration: underline; }
+.plz-tbl td a { color: var(--sgb-ink); text-decoration: none; }
+.plz-tbl td a:hover { color: var(--plz-pt); text-decoration: underline; }
 .plz-tbl tbody tr:hover { background: #FAFBFC; }
-.plz-pin { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px; background: var(--plz-navy); color: #fff; font-size: 12.5px; font-weight: 700; vertical-align: 2px; }
-.plz-cc { margin-left: 6px; color: var(--plz-orange); font-size: 15px; font-weight: 700; }
+.plz-pin { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px; background: var(--plz-pt); color: #fff; font-size: 12.5px; font-weight: 700; vertical-align: 2px; }
+.plz-cc { margin-left: 6px; color: var(--plz-pt); font-size: 15px; font-weight: 700; }
 .plz-tbl .state { margin-left: 8px; }
 
 /* 분류 배지 */
@@ -3413,12 +3418,12 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .plz-pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .plz-pager > * { min-width: 38px; height: 38px; padding: 0 6px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--plz-line); border-radius: 6px;
   background-color: #fff; color: #000; font-size: 18px; text-decoration: none; font-variant-numeric: tabular-nums; }
-.plz-pager a:hover { border-color: var(--plz-navy); }
-.plz-pager [aria-current=page] { background-color: var(--plz-orange); border-color: var(--plz-orange); font-weight: 600; }
+.plz-pager a:hover { border-color: var(--plz-pt); }
+.plz-pager [aria-current=page] { background-color: var(--plz-orange); border-color: var(--plz-orange); color: var(--sgb-on-point); font-weight: 600; }
 .plz-pager [aria-label] { font-size: 26px; line-height: 1; padding-bottom: 4px; }
 .plz-pager [aria-disabled=true] { color: #C4C8D0; }
 .plz-pager .gap { border-color: transparent; color: #999; }
-.plz-write { position: absolute; right: 0; top: 0; width: 184px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background-color: var(--plz-orange); color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
+.plz-write { position: absolute; right: 0; top: 0; width: 184px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 22px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
 .plz-write:hover { filter: brightness(.96); }
 
 /* ── 글 상세 · 글쓰기 ── */
@@ -3431,13 +3436,13 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .plz-narrow .card { border-color: var(--plz-line); border-radius: 10px; }
 .plz-narrow .card:hover { border-color: var(--plz-line); }
 .plz-backw { margin: 28px 0 0; text-align: center; }
-.plz-back { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 26px; border: 1px solid var(--plz-navy); border-radius: 10px; color: var(--plz-navy); font-size: 17px; font-weight: 800; text-decoration: none; background: #fff; }
+.plz-back { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 26px; border: 1px solid var(--plz-pt); border-radius: 10px; color: var(--plz-pt); font-size: 17px; font-weight: 800; text-decoration: none; background: #fff; }
 .plz-back:hover { background: var(--accent-w); }
 .plz .btn-sm { border-radius: 8px; }
-.plz .btn-sm.p2primary { background: var(--plz-navy); border-color: var(--plz-navy); color: #fff; }
-.plz form.cmu-editor .btn-sm.p2primary { background: var(--plz-orange); border-color: var(--plz-orange); font-weight: 800; padding: 8px 26px; font-size: 16px; }
-.plz .cmu-boards .opt.on { border-color: var(--plz-navy); }
-.plz .btn-primary { background: var(--plz-navy); border-color: var(--plz-navy); }
+.plz .btn-sm.p2primary { background: var(--plz-pt); border-color: var(--plz-pt); color: #fff; }
+.plz form.cmu-editor .btn-sm.p2primary { background: var(--plz-orange); border-color: var(--plz-orange); color: var(--sgb-on-point); font-weight: 800; padding: 8px 26px; font-size: 16px; }
+.plz .cmu-boards .opt.on { border-color: var(--plz-pt); }
+.plz .btn-primary { background: var(--plz-pt); border-color: var(--plz-pt); }
 /* 글쓰기의 안내 상자 — 공용 모양은 붉은 띠(경고)입니다. 여기는 경고가 아니라 안내라 시안과 같은 베이지로 둡니다(10/7 확인) */
 .plz .notice.warn { background: #FFF7ED; border: 1px solid #FFF7ED; border-left: 1px solid #FFF7ED; border-radius: 9px; color: #111; }
 .plz .notice.warn b { color: inherit; }
@@ -3496,7 +3501,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .b2-hd .lgm { top: calc(100% + 6px); }
 .b2-ftl a[data-t] { color: var(--b2-dim); font-weight: 600; }
 .b2-sns button { border: 0; background: none; padding: 0; opacity: .35; display: inline-flex; }
-.plz { font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.plz { font-family: var(--sgb-font-body); }   /* 2026-10-21 2단계 B — 시트 본문 글꼴 */
 .plz a { text-decoration: none; }
 .plz-find button { padding: 0; }
 .plz-sid { margin: 22px 0 0; text-align: right; color: #B0B6C3; font-size: 12px; font-family: var(--m); }
@@ -3709,7 +3714,7 @@ a.bo.sm, a.bp.sm{display:inline-flex;align-items:center;justify-content:center;g
 .mny-chev { display: inline-block; width: 9px; height: 9px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); flex: none; }
 
 /* ── 1. 머리줄 (높이 75) — 두 관 전용 머리줄을 그림의 색 · 글꼴 · 치수로 ── */
-[data-b2-tone=money] .b2-hd { --b2-orange: #ffa03e; font-family: var(--sgb-font-body); }
+[data-b2-tone=money] .b2-hd { --b2-orange: var(--sgb-orange); font-family: var(--sgb-font-body); }
 [data-b2-tone=money] .b2-hd .b2-in { max-width: 1500px; padding: 0 32px 0 85px; gap: 0; }
 [data-b2-tone=money] .b2-nav { gap: 28.5px; margin-left: 53px; }
 [data-b2-tone=money] .b2-nav a { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; padding: 11.5px 0 10.5px; color: #000; }
@@ -3922,7 +3927,7 @@ a.bo.sm, a.bp.sm{display:inline-flex;align-items:center;justify-content:center;g
 .mny-cols.is-live .mny-side { grid-row: 1 / span 2; align-self: start; }
 .mny-bottom.is-solo { display: block; margin-bottom: 14px; }                 /* 실제 웹 — 연결 사례가 없어 등록 안내만 가운데에 */
 .mny-bottom.is-solo .mny-cta { text-align: center; padding: 4px 0 0; }
-.mny-old-b { margin-top: 16px; font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 400; }
+.mny-old-b { margin-top: 16px; font-family: var(--sgb-font-body); font-weight: 400; }
 /* 실제 웹 — 이 구역의 안쪽은 관 화면 부품(components/gwan · .gw-… · styles/proto-gwan.css)을 그대로 씁니다. 바깥 틀(.gw)의 바탕 · 여백 · 최소 높이만 풉니다 */
 .mny .mny-old-b > .gw { background: none; padding: 0; min-height: 0; }
 .mny .mny-old-l { margin-top: 14px; }
@@ -10498,13 +10503,14 @@ function paint(key, params){
   el.innerHTML = R[key] ? R[key]() : "";
   /* v10.52 디자인 통일 — 화면 칸에 디자인 시트 표시(qa/apply_proto_v1052.py) · 묶어 둔 화면은 빼고 · 관은 주소로(실제 웹 Chrome.tsx 와 같은 규칙) */
   try{
-    var SGB_KEEP = {"000041":1,"HLT_FOOD":1,"IMMUNE":1,"VITC":1,"acl":1,"addresses":1,"adm":1,"admInv":1,"admacl":1,"admad":1,"admadb":1,"admadi":1,"admais":1,"admaud":1,"admbdg":1,"admbil":1,"admbrk":1,"admbrkd":1,"admcat":1,"admcls2":1,"admcmu":1,"admcod":1,"admcol":1,"admcom":1,"admdel":1,"admdic":1,"admdsp":1,"admdspt":1,"admevt":1,"admgux":1,"admhpr":1,"admhst":1,"admhub":1,"admlasg":1,"admleg":1,"admmain1":1,"admmain2":1,"admmain3":1,"admmain4":1,"admmbr":1,"admmbrd":1,"admown":1,"admpay":1,"admpol":1,"admpoll":1,"admptn":1,"admptna":1,"admptnc":1,"admptnm":1,"admptnq":1,"admptnr":1,"admptns":1,"admptnw":1,"admrev":1,"admrev3":1,"admrev4":1,"admrevd":1,"admrpt":1,"admrsk":1,"admrsk2":1,"admsch":1,"admseg":1,"admsit":1,"admsit8":1,"admsitc":1,"admsitd":1,"admsitn":1,"admstl":1,"admusr":1,"cart":1,"cmu":1,"cmud":1,"cmupoll":1,"cmuw":1,"commu":1,"concerns":1,"direct":1,"done":1,"fail":1,"gwansep":1,"ingredients":1,"integ":1,"invreg":1,"list":1,"main1":1,"main2":1,"new":1,"order":1,"orders":1,"p01":1,"pay":1,"returns":1,"search":1,"srvadr":1,"srvcon":1,"srvops":1,"srvstk":1,"srvwd":1,"track":1};
+    var SGB_KEEP = {"acl":1,"adm":1,"admInv":1,"admacl":1,"admad":1,"admadb":1,"admadi":1,"admais":1,"admaud":1,"admbdg":1,"admbil":1,"admbrk":1,"admbrkd":1,"admcat":1,"admcls2":1,"admcmu":1,"admcod":1,"admcol":1,"admcom":1,"admdel":1,"admdic":1,"admdsp":1,"admdspt":1,"admevt":1,"admgux":1,"admhpr":1,"admhst":1,"admhub":1,"admlasg":1,"admleg":1,"admmain1":1,"admmain2":1,"admmain3":1,"admmain4":1,"admmbr":1,"admmbrd":1,"admown":1,"admpay":1,"admpol":1,"admpoll":1,"admptn":1,"admptna":1,"admptnc":1,"admptnm":1,"admptnq":1,"admptnr":1,"admptns":1,"admptnw":1,"admrev":1,"admrev3":1,"admrev4":1,"admrevd":1,"admrpt":1,"admrsk":1,"admrsk2":1,"admsch":1,"admseg":1,"admsit":1,"admsit8":1,"admsitc":1,"admsitd":1,"admsitn":1,"admstl":1,"admusr":1,"gwansep":1,"integ":1,"invreg":1,"main1":1,"main2":1,"srvops":1,"srvstk":1};
+    var SGB_G = {"000041":"shop","HLT_FOOD":"shop","IMMUNE":"shop","VITC":"shop","addresses":"shop","cart":"shop","cmu":"plaza","cmud":"plaza","cmupoll":"plaza","cmuw":"plaza","commu":"plaza","concerns":"shop","direct":"shop","done":"shop","fail":"shop","ingredients":"shop","list":"money","new":"shop","order":"shop","orders":"shop","p01":"shop","pay":"shop","returns":"shop","search":"shop","srvadr":"shop","srvcon":"shop","srvwd":"shop","track":"shop"};   /* v10.54 2단계 B — 두 관 · 소개장터 메인의 관 */
     if (SGB_KEEP[key]) { el.removeAttribute("data-sgb"); el.removeAttribute("data-sgb-gwan"); }
     else {
       el.setAttribute("data-sgb", "");
       var sgbH = (location.hostname || "").toLowerCase(), sgbP = (location.hash || "").replace(/^#/, "");
       var sgbM = sgbH.match(/^(mny|mal|biz)\./) || sgbP.match(/^\/g\/(mny|mal|biz)(\/|$)/);
-      var sgbG = sgbM ? { mny: "money", mal: "mall", biz: "biz" }[sgbM[1]] : "";
+      var sgbG = sgbM ? { mny: "money", mal: "mall", biz: "biz" }[sgbM[1]] : (SGB_G[key] || "");
       if (sgbG) el.setAttribute("data-sgb-gwan", sgbG); else el.removeAttribute("data-sgb-gwan");
     }
   }catch(_){}
@@ -20931,9 +20937,11 @@ window.addEventListener("hashchange", paint);
  *   사진 띠 326px · 구역 폭 1410px · 구역 사이 36px · 타일 93px · 아래 띠 110px
  * 시안(spec/proto.html)도 이 파일을 글자 그대로 씁니다 — 두 곳의 모양이 갈라지지 않게.
  */
+/* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 초록은 소개몰 관 색(<main data-sgb-gwan="shop">)의 글자 · 단추용 #12883e(흰 글자 대비 4.5 이상) ·
+ * 흐린 글자 #8A8F9C → 시트 #6b7694 · 글꼴은 나눔스퀘어 네오. 할인 빨강 · 구역 바탕(크림 · 회색) · 사진 띠의 밝은 초록 #22C55E(어두운 바탕 위)는 그대로 */
 .shop, .shop-sub {
-  --shop-navy: #00245A; --shop-green: #17A34A; --shop-orange: #F5A008; --shop-red: #E5362F; --shop-dim: #8A8F9C; --shop-ink: #111;
-  font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --shop-navy: var(--sgb-navy); --shop-green: var(--sgb-point-text); --shop-orange: var(--sgb-accent); --shop-red: #E5362F; --shop-dim: var(--sgb-ink-3); --shop-ink: var(--sgb-ink);
+  font-family: var(--sgb-font-body);
 }
 .shop { background: #fff; color: var(--shop-ink); padding-bottom: 8px; }
 .shop a { text-decoration: none; color: inherit; }
@@ -20987,7 +20995,7 @@ window.addEventListener("hashchange", paint);
 .shop-tile:hover { box-shadow: 0 0 0 2px var(--shop-green); }
 .shop-tile b { font-size: 17.5px; font-weight: 800; letter-spacing: -.6px; color: #111; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; box-sizing: border-box; }
 .shop-tile .emo { height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 34px; line-height: 1; }
-.shop-tile .ini { width: 44px; height: 44px; border-radius: 50%; background: #EAF6EE; color: var(--shop-green); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; }
+.shop-tile .ini { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-point-l); color: var(--shop-green); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; }
 
 /* 성분별 최저가 */
 .shop-low { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
@@ -21066,7 +21074,7 @@ window.addEventListener("hashchange", paint);
 .shop-prodc > a { display: flex; flex-direction: column; padding: 14px 16px 10px; gap: 5px; min-width: 0; flex: 1; }
 .shop-prodc .noph { height: 74px; border-radius: 8px; background: repeating-linear-gradient(135deg, #F4F5F7 0 10px, #EEF0F3 10px 20px); color: #9A9FAA; display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: -.3px; margin-bottom: 6px; }
 .shop-prodc .top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--shop-dim); }
-.shop-prodc .bdg { padding: 1px 8px; border-radius: 5px; background: #EAF6EE; color: var(--shop-green); font-weight: 800; font-size: 12.5px; }
+.shop-prodc .bdg { padding: 1px 8px; border-radius: 5px; background: var(--sgb-point-l); color: var(--shop-green); font-weight: 800; font-size: 12.5px; }
 .shop-prodc .bdg.out { background: #FDECEC; color: var(--shop-red); }
 .shop-prodc b { font-size: 18px; font-weight: 700; letter-spacing: -.6px; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shop-prodc .pr { font-size: 19px; font-weight: 800; letter-spacing: -.5px; color: #111; }
@@ -21088,17 +21096,18 @@ window.addEventListener("hashchange", paint);
 
 /* ── 소개몰의 다른 쪽(상품 상세 · 장바구니 · 주문 …) — 본문은 지금 내용 그대로, 폭과 강조 색만 맞춥니다 ── */
 .shop-sub { max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px; box-sizing: border-box; background: #fff;
-  --accent: #17A34A; --accent-w: #EAF6EE; }
+  --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }
 .shop-sub .page-head h1, .shop-sub h1 { color: var(--shop-navy); }
 .shop-sub .cta-primary, .shop-sub .btn-primary { background: var(--shop-green); border-color: var(--shop-green); }
 
 /* 바닥 고지 — 소개몰에서는 직판 고지와 통신판매중개자 고지를 같이 보입니다(10/7 결정). 어느 거래에 붙는 말인지 앞에 꼬리표를 답니다 */
 .b2-notice + .b2-notice { margin-top: 6px; }
-.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #EAF6EE; color: #17A34A; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
+.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #e9f7ee; color: #12883e; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
 .b2-notice[data-notice=inter] .b2-ntag { background: #EEF2F8; color: #00245A; }
+/* 2026-10-21 2단계 B — 바닥줄은 <main> 밖이라 관 표시가 닿지 않아, 시트의 소개몰 값(point-l · point-text)을 글자로 적었습니다 */
 
 /* 두 관 전용 머리줄 — 소개몰에서는 그림대로 「무료 회원가입」이 초록입니다(소개광장은 주황 그대로) */
-[data-b2-tone=shop] .b2-join { background: #17A34A; }
+[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }   /* 머리줄의 B2Tone 에 data-sgb-gwan="shop" (Chrome.tsx) */
 
 @media (max-width: 1280px) {
   .shop-hero h1 { left: 48px; font-size: 40px; } .shop-hero .shop-lead { left: 48px; } .shop-find { left: 48px; max-width: calc(100% - 96px); }

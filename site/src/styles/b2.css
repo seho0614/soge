@@ -7,9 +7,10 @@
  */
 .main.main-b2 { max-width: none; padding: 0; background: #fff; }
 
+/* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 남색 · 주황 · 글자 · 줄은 시트와 같은 값, 흐린 글자는 #838CA5 → 시트 #6b7694(대비 4.5) · 글꼴은 나눔스퀘어 네오 */
 .b2-hd, .b2-ft, .main-b2 {
-  --b2-navy: #00245A; --b2-orange: #F5A008; --b2-ink: #000; --b2-dim: #838CA5; --b2-line: #DBDBDB; --b2-w: 1380px;
-  font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --b2-navy: var(--sgb-navy); --b2-orange: var(--sgb-accent); --b2-ink: var(--sgb-ink); --b2-dim: var(--sgb-ink-3); --b2-line: var(--sgb-line); --b2-w: 1380px;
+  font-family: var(--sgb-font-body);
 }
 .b2-in { max-width: calc(var(--b2-w) + 48px); margin: 0 auto; padding: 0 24px; }
 

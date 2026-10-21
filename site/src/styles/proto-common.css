@@ -5,14 +5,14 @@
 body:has([data-own-chrome]) .pc-hd { display: none !important; }
 body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
 
-/* ── 이미 제 디자인을 맞춘 화면은 v10.28 토큰 값으로 묶어 둡니다 ──────────────────────
- * 메인(.main-home) · 소개광장/소개몰(.main-b2 · 두 관 전용 머리 · 바닥) · 생활금융 상담(.mal.mal-narrow).
- * tokens.css 를 시안 값으로 바꾸면서 이 화면들이 달라지지 않게 — 전과 같은 그림인지 찍어 확인했습니다. */
-.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow {
+/* ── 메인(.main-home)은 v10.28 토큰 값으로 묶어 둡니다 ──────────────────────
+ * 10/2 「그림 그대로」 결정 · 10/4 새 그림 미정 — 디자인 통일에서 따로 정합니다(10/21 대표 「이번엔 빼기」).
+ * 2026-10-21 2단계 B(docs/107) — 소개광장 · 소개몰 · 소개장터 메인(.main-b2 · 두 관 전용 머리 · 바닥) · 생활금융 상담(.mal.mal-narrow)은 묶음에서 풀어 디자인 시트로. */
+.main-home {
   --ink: #101418; --ink-2: #4A5560; --ink-3: #7A868F; --surface: #F2F4F6; --line: #E3E7EB;
   --accent: #1B4D8F; --accent-w: #EEF3FA;
   --fs-md: 15px; --fs-xl: 22px;
-  /* 2026-10-21 디자인 통일 1단계 — tokens.css 의 옛 이름이 디자인 시트 값을 가리키게 바뀌었습니다. 이 화면들은 2단계까지 지금 모양 그대로(v10.29 값) */
+  /* 2026-10-21 디자인 통일 1단계 — tokens.css 의 옛 이름이 디자인 시트 값을 가리키게 바뀌었습니다. 메인은 지금 모양 그대로(v10.29 값) */
   --pp: #7C3AED; --pp-d: #6D28D9; --pp-l: #F5F1FE; --pp-l2: #EDE7FC;
   --bl: #2563EB; --bl-d: #1D4ED8; --bl-l: #EFF6FF; --line-2: #F3F4F6; --bg: #F7F8FA;
   --r-sm: 4px; --r-md: 8px; --r-lg: 10px; --r-xl: 11px;
@@ -20,13 +20,11 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
   --f: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   font-size: 15px; line-height: 1.6; word-break: normal;
 }
-/* 글꼴 — 메인 · 소개광장 · 소개몰 · 소개장터 메인은 제 글꼴을 따로 정해 두었고(home.css · b2.css · shop.css · money.css), 생활금융 상담만 body 를 물려받으므로 전 글꼴로 */
-.main-home, .mal.mal-narrow { font-family: var(--f); }
-/* 제목 글꼴(site.css 의 페이퍼로지)도 이 화면들에는 쓰지 않습니다 — 둘 다 :where 라 화면별 제목 규칙이 그대로 이깁니다 */
-:where(.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow) :where(h1, h2, h3) { font-family: inherit; }
-.mal.mal-narrow .page-head h1 { font-weight: 700; letter-spacing: normal; }
-/* 위 화면들은 바탕도 전 값(#F2F4F6) */
-body:has(.main-home), body:has(.main-b2), body:has(.mal.mal-narrow) { background: #F2F4F6; }
+/* 글꼴 — 메인은 제 글꼴(home.css). 제목 글꼴(site.css 의 페이퍼로지)도 쓰지 않습니다 — 둘 다 :where 라 화면별 제목 규칙이 그대로 이깁니다 */
+.main-home { font-family: var(--f); }
+:where(.main-home) :where(h1, h2, h3) { font-family: inherit; }
+/* 메인은 바탕도 전 값(#F2F4F6) */
+body:has(.main-home) { background: #F2F4F6; }
 
 /* ── 머리줄 (시안 header() — .hd · .hdin · .lg · .gnb · .hr) ───────────────────── */
 .pc-hd { background: var(--paper); border-bottom: 1px solid var(--line); }

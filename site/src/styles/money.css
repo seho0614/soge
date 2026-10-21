@@ -27,7 +27,7 @@
 .mny-chev { display: inline-block; width: 9px; height: 9px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); flex: none; }
 
 /* ── 1. 머리줄 (높이 75) — 두 관 전용 머리줄을 그림의 색 · 글꼴 · 치수로 ── */
-[data-b2-tone=money] .b2-hd { --b2-orange: #ffa03e; font-family: var(--sgb-font-body); }
+[data-b2-tone=money] .b2-hd { --b2-orange: var(--sgb-orange); font-family: var(--sgb-font-body); }
 [data-b2-tone=money] .b2-hd .b2-in { max-width: 1500px; padding: 0 32px 0 85px; gap: 0; }
 [data-b2-tone=money] .b2-nav { gap: 28.5px; margin-left: 53px; }
 [data-b2-tone=money] .b2-nav a { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; padding: 11.5px 0 10.5px; color: #000; }
@@ -240,7 +240,7 @@
 .mny-cols.is-live .mny-side { grid-row: 1 / span 2; align-self: start; }
 .mny-bottom.is-solo { display: block; margin-bottom: 14px; }                 /* 실제 웹 — 연결 사례가 없어 등록 안내만 가운데에 */
 .mny-bottom.is-solo .mny-cta { text-align: center; padding: 4px 0 0; }
-.mny-old-b { margin-top: 16px; font-family: Pretendard, "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 400; }
+.mny-old-b { margin-top: 16px; font-family: var(--sgb-font-body); font-weight: 400; }
 /* 실제 웹 — 이 구역의 안쪽은 관 화면 부품(components/gwan · .gw-… · styles/proto-gwan.css)을 그대로 씁니다. 바깥 틀(.gw)의 바탕 · 여백 · 최소 높이만 풉니다 */
 .mny .mny-old-b > .gw { background: none; padding: 0; min-height: 0; }
 .mny .mny-old-l { margin-top: 14px; }

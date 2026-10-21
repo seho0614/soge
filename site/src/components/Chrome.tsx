@@ -78,16 +78,19 @@ export function MainWrap({ children }: { children: React.ReactNode }) {
   const p = usePathname();
   const s = skinOf(p);
   /* v10.31 — 「본문으로 건너뛰기」(layout) 가 가리키는 곳: id="main" */
-  if (s === 'b2' && isShop(p) && p !== '/health') return <main id="main" tabIndex={-1} className="main main-b2"><div className="shop-sub">{children}</div></main>;
-  if (isMoneyMain(p)) return <main id="main" tabIndex={-1} className="main main-b2 main-mny">{children}</main>;
-  /* 관 표시는 일반 화면(base)에만 — 메인 · 소개광장 · 소개몰은 2단계까지 지금 모양(proto-common.css 가 묶어 둠) */
+  /* 2026-10-21 2단계 B(docs/107) — 소개광장 · 소개몰 · 소개장터 메인에도 관 표시. 메인(/)만 빼 둡니다(proto-common.css 가 묶어 둠 · 10/2 「그림 그대로」) */
+  const g = s === 'home' ? undefined : sgbGwanOf(p);
+  if (s === 'b2' && isShop(p) && p !== '/health') return <main id="main" tabIndex={-1} className="main main-b2" data-sgb-gwan="shop"><div className="shop-sub">{children}</div></main>;
+  if (isMoneyMain(p)) return <main id="main" tabIndex={-1} className="main main-b2 main-mny" data-sgb-gwan={g}>{children}</main>;
   return <main id="main" tabIndex={-1} className={s === 'home' ? 'main main-home' : s === 'b2' ? 'main main-b2' : 'main'}
-    data-sgb-gwan={s === 'base' ? sgbGwanOf(p) : undefined}>{children}</main>;
+    data-sgb-gwan={g}>{children}</main>;
 }
 
 /** 두 관 전용 머리줄 · 바닥줄의 색조 — 소개몰에서는 그림대로 「무료 회원가입」이 초록, 소개광장은 주황 그대로(styles/shop.css 의 [data-b2-tone=shop])
  *  소개장터 메인은 money — 글꼴 · 치수 · 주황(#FFA03E)을 그 디자인대로(styles/money.css 의 [data-b2-tone=money]) */
 export function B2Tone({ children }: { children: React.ReactNode }) {
   const p = usePathname();
-  return <div data-b2-tone={isMoneyMain(p) ? 'money' : isShop(p) ? 'shop' : 'plaza'}>{children}</div>;
+  /* 2026-10-21 2단계 B — 머리줄은 <main> 밖이라 여기에도 관 표시(소개몰 「무료 회원가입」 초록 = 시트 소개몰 글자색) */
+  const t = isMoneyMain(p) ? 'money' : isShop(p) ? 'shop' : 'plaza';
+  return <div data-b2-tone={t} data-sgb-gwan={t}>{children}</div>;
 }
