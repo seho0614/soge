@@ -70,6 +70,29 @@
   --bp-desktop: 1200px;
 }
 
+/* ── 2026-10-21 디자인 통일 1단계(docs/105 · decisions/design-standard.md) ─────────────────────────
+ * 기준은 디자인 시트(sgb-tokens.css) 하나입니다. 위의 옛 이름은 화면 CSS 3,000여 곳이 쓰므로 지우지 않고, 시트 값을 가리키게만 바꿉니다.
+ * 이미 제 디자인을 맞춘 화면(메인 · 소개장터 메인 · 소개광장 · 소개몰 · 생활금융 상담)은 proto-common.css 가 전 값으로 묶어 둡니다(2단계에서 옮김).
+ * 그대로 두는 것: 금액 · 경고 · 광고 색(--money · --danger · --ad), 회색 단계(--g*), 주황(--or), 간격(--sp-*), 글자 크기(--fs-* · --fs-xl 만 시트 24px). */
+:root {
+  --ink: var(--sgb-ink);  --ink-2: var(--sgb-ink-2);  --ink-3: var(--sgb-ink-3);
+  --line: var(--sgb-line);  --line-2: var(--sgb-line-soft);
+  --surface: var(--sgb-bg);  --bg: var(--sgb-bg);
+  --accent: var(--sgb-link);  --accent-w: var(--sgb-link-l);
+  --bl: var(--sgb-link);  --bl-d: var(--sgb-link-d);  --bl-l: var(--sgb-link-l);
+  --r-sm: var(--sgb-r-sm);  --r-md: var(--sgb-r-sm);  --r-lg: var(--sgb-r-md);  --r-xl: var(--sgb-r-md);
+  --fs-xl: var(--sgb-fs-title-2);
+  --f: var(--sgb-font-body);
+  --sh: var(--sgb-shadow);  --sh2: var(--sgb-shadow-up);
+}
+/* 주색(옛 보라 --pp)은 관 색을 따릅니다. 관 표시가 붙은 요소에서 다시 풀어야 그 관의 색이 됩니다(변수는 정의한 곳에서 값이 정해짐).
+ * --pp 는 글자색(35곳)과 흰 글자 단추 바탕(31곳)에 함께 쓰이므로, 둘 다 읽히는 point-text 를 가리킵니다.
+ * 시트 색 그대로의 바탕 + 남색 글자 단추는 4단계(단추 3종)에서 바꿉니다.
+ * main[data-sgb-gwan] 로 한정 — 소개장터 메인(MoneyView)의 안쪽 data-sgb-gwan 에서 다시 풀리면 묶어 둔 화면이 바뀝니다. */
+:root, main[data-sgb-gwan] {
+  --pp: var(--sgb-point-text);  --pp-d: var(--sgb-point-d);  --pp-l: var(--sgb-point-l);  --pp-l2: var(--sgb-point-l2);
+}
+
 * { box-sizing: border-box; }
 
 body {

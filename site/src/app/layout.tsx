@@ -25,7 +25,8 @@ import '@/styles/proto-partner.css';
 
 export const metadata: Metadata = {
   title: { default: '소개뱅크', template: '%s · 소개뱅크' },
-  description: '사업자 간 거래를 소개하고 소개비를 받는 B2B 소개 플랫폼',
+  /* 2026-10-21 — B2B → P2P(10/13 결정 · 개인 회원도 모든 업무) */
+  description: '개인 · 사업자 누구나 거래처 · 매물 · 창업 자리를 소개하고 소개비를 받는 P2P 소개 플랫폼',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -12,8 +12,18 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
   --ink: #101418; --ink-2: #4A5560; --ink-3: #7A868F; --surface: #F2F4F6; --line: #E3E7EB;
   --accent: #1B4D8F; --accent-w: #EEF3FA;
   --fs-md: 15px; --fs-xl: 22px;
+  /* 2026-10-21 디자인 통일 1단계 — tokens.css 의 옛 이름이 디자인 시트 값을 가리키게 바뀌었습니다. 이 화면들은 2단계까지 지금 모양 그대로(v10.29 값) */
+  --pp: #7C3AED; --pp-d: #6D28D9; --pp-l: #F5F1FE; --pp-l2: #EDE7FC;
+  --bl: #2563EB; --bl-d: #1D4ED8; --bl-l: #EFF6FF; --line-2: #F3F4F6; --bg: #F7F8FA;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 10px; --r-xl: 11px;
+  --sh: 0 1px 2px rgba(17,24,39,.06); --sh2: 0 4px 18px rgba(17,24,39,.10);
+  --f: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   font-size: 15px; line-height: 1.6; word-break: normal;
 }
+/* 글꼴 — 메인 · 소개광장 · 소개몰 · 소개장터 메인은 제 글꼴을 따로 정해 두었고(home.css · b2.css · shop.css · money.css), 생활금융 상담만 body 를 물려받으므로 전 글꼴로 */
+.main-home, .mal.mal-narrow { font-family: var(--f); }
+/* 제목 글꼴(site.css 의 페이퍼로지)도 이 화면들에는 쓰지 않습니다 — 둘 다 :where 라 화면별 제목 규칙이 그대로 이깁니다 */
+:where(.main-home, .main-b2, .b2-hd, .b2-ft, .mal.mal-narrow) :where(h1, h2, h3) { font-family: inherit; }
 .mal.mal-narrow .page-head h1 { font-weight: 700; letter-spacing: normal; }
 /* 위 화면들은 바탕도 전 값(#F2F4F6) */
 body:has(.main-home), body:has(.main-b2), body:has(.mal.mal-narrow) { background: #F2F4F6; }

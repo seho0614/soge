@@ -15,8 +15,12 @@
 .hd-right .hd-out { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--ink-2); font-size: var(--fs-sm); }
 .hd-right .hd-out:hover { color: var(--accent); }
 .hd-right .hd-out:disabled { opacity: .6; cursor: default; }
+/* 2026-10-21 디자인 통일 1단계 — 제목은 디자인 시트의 제목 글꼴(페이퍼로지). :where 라 화면별 제목 규칙이 있으면 그쪽이 이깁니다.
+ *   메인 · 소개광장 · 소개몰 · 소개장터 메인 · 생활금융 상담은 proto-common.css 가 막아 둡니다 */
+:where(h1, h2, h3) { font-family: var(--sgb-font-title); }
+
 .btn-primary {
-  /* v10.29 — 시안 .bp (보라 · 모서리 8px · 굵게) */
+  /* v10.29 — 시안 .bp (2026-10-21 부터 관 색 · 모서리 7px — tokens.css 옛 이름이 디자인 시트를 가리킴) */
   background: var(--pp); color: #fff !important; font-weight: 700;
   padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md);
 }

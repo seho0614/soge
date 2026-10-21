@@ -66,13 +66,23 @@ export function BaseFooter({ children }: { children: React.ReactNode }) {
 }
 
 /** 본문 틀 — 메인 · 두 관은 화면 폭 전체를 씁니다(사진 띠 · 구역 바탕). 다른 화면은 1200px 그대로 */
+/** 2026-10-21 디자인 통일 1단계(docs/105) — 주소 → 디자인 시트의 관(data-sgb-gwan). 관 색(--sgb-point …)이 이 표시를 따라 바뀝니다.
+ *  /mall · /mal 은 안심소개(MAL), /health 는 소개몰입니다(lib/format.ts PATH_GWAN). 그 밖의 주소는 표시 없음 = 남색 */
+const SGB_GWAN: [string, string][] = [
+  ['/money', 'money'], ['/mall', 'mall'], ['/mal', 'mall'], ['/biz', 'biz'], ['/health', 'shop'], ['/community', 'plaza'],
+];
+export const sgbGwanOf = (p: string | null): string | undefined =>
+  p ? SGB_GWAN.find(([b]) => p === b || p.startsWith(b + '/'))?.[1] : undefined;
+
 export function MainWrap({ children }: { children: React.ReactNode }) {
   const p = usePathname();
   const s = skinOf(p);
   /* v10.31 — 「본문으로 건너뛰기」(layout) 가 가리키는 곳: id="main" */
   if (s === 'b2' && isShop(p) && p !== '/health') return <main id="main" tabIndex={-1} className="main main-b2"><div className="shop-sub">{children}</div></main>;
   if (isMoneyMain(p)) return <main id="main" tabIndex={-1} className="main main-b2 main-mny">{children}</main>;
-  return <main id="main" tabIndex={-1} className={s === 'home' ? 'main main-home' : s === 'b2' ? 'main main-b2' : 'main'}>{children}</main>;
+  /* 관 표시는 일반 화면(base)에만 — 메인 · 소개광장 · 소개몰은 2단계까지 지금 모양(proto-common.css 가 묶어 둠) */
+  return <main id="main" tabIndex={-1} className={s === 'home' ? 'main main-home' : s === 'b2' ? 'main main-b2' : 'main'}
+    data-sgb-gwan={s === 'base' ? sgbGwanOf(p) : undefined}>{children}</main>;
 }
 
 /** 두 관 전용 머리줄 · 바닥줄의 색조 — 소개몰에서는 그림대로 「무료 회원가입」이 초록, 소개광장은 주황 그대로(styles/shop.css 의 [data-b2-tone=shop])
