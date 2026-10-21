@@ -7,18 +7,19 @@
  * 그 뒤의 「v10.29 실제 웹 덧붙임」은 실제 자료 · 공통 부품(검색줄 · 돌아가기 줄)에 맞추느라 더한 것입니다.
  */
 .gw{
-  --pp:#7C3AED; --pp-d:#6D28D9; --pp-l:#F5F1FE; --pp-l2:#EDE7FC;
-  --bl:#2563EB; --bl-d:#1D4ED8; --bl-l:#EFF6FF;
+  /* 2026-10-21 디자인 통일 2단계 A(docs/106) — 시트 값 이름으로(관 색은 <main data-sgb-gwan> 을 따름). 상태 색(--or · --gr · --rd) · 회색(--g*) · --card · --navy 는 5단계까지 그대로 */
+  --pp:var(--sgb-point-text); --pp-d:var(--sgb-point-d); --pp-l:var(--sgb-point-l); --pp-l2:var(--sgb-point-l2);
+  --bl:var(--sgb-link); --bl-d:var(--sgb-link-d); --bl-l:var(--sgb-link-l);
   --or:#F97316; --or-d:#EA580C; --or-l:#FFF7ED;
   --gr:#10B981; --gr-d:#059669; --gr-l:#ECFDF5;
   --rd:#EF4444; --navy:#1E293B;
   --g900:#111827; --g700:#374151; --g500:#6B7280; --g400:#9CA3AF;
   --g300:#D1D5DB; --g200:#E5E7EB; --g100:#F3F4F6; --g50:#F9FAFB;
-  --shell:#E9EAEE; --bg:#F7F8FA; --card:#FFFFFF;
-  --ink:#111827; --ink2:#4B5563; --ink3:#6B7280; --line:#E5E7EB; --line2:#F3F4F6;
-  --f:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --shell:var(--sgb-bg); --bg:var(--sgb-bg); --card:#FFFFFF;
+  --ink:var(--sgb-ink); --ink2:var(--sgb-ink-2); --ink3:var(--sgb-ink-3); --line:var(--sgb-line); --line2:var(--sgb-line-soft);
+  --f:var(--sgb-font-body);
   --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  --sh:0 1px 2px rgba(17,24,39,.06); --sh2:0 4px 18px rgba(17,24,39,.10);
+  --sh:var(--sgb-shadow); --sh2:var(--sgb-shadow-up);
   --s1:#2563EB;--s2:#0D9488;--s3:#F59E0B;--s4:#7C3AED;--s5:#E11D48;--s6:#94A3B8;
   background:var(--shell);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.55;
   -webkit-font-smoothing:antialiased;word-break:keep-all;padding-bottom:28px;min-height:60vh;

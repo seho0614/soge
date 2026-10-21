@@ -8,13 +8,14 @@
  */
 
 /* ── 바탕 · 본문 폭 — 이 화면에서만(.pt-root 가 있을 때). 시안 body 바탕 #E9EAEE · 전용 상단바는 화면 폭 전체 ── */
-body:has(.pt-root) { background: #E9EAEE; }
+body:has(.pt-root) { background: var(--sgb-bg); }   /* 2026-10-21 2단계 A — 시안 #E9EAEE → 시트 바탕 */
 body:has(.pt-root) main.main { max-width: none; padding: 0; }
 
 .pt-root {
-  --pt-ink: #111827; --pt-ink2: #4B5563; --pt-ink3: #6B7280;
-  --pt-line: #E5E7EB; --pt-line2: #F3F4F6; --pt-g50: #F9FAFB; --pt-g700: #374151;
-  --pt-pp: #7C3AED; --pt-pp-d: #6D28D9; --pt-bl-l: #EFF6FF;
+  /* 2026-10-21 디자인 통일 2단계 A(docs/106) — 시트 값 이름으로. 회색(--pt-g50 · --pt-g700)과 전용 상단바(.pt-hd 초록)는 그대로 */
+  --pt-ink: var(--sgb-ink); --pt-ink2: var(--sgb-ink-2); --pt-ink3: var(--sgb-ink-3);
+  --pt-line: var(--sgb-line); --pt-line2: var(--sgb-line-soft); --pt-g50: #F9FAFB; --pt-g700: #374151;
+  --pt-pp: var(--sgb-point-text); --pt-pp-d: var(--sgb-point-d); --pt-bl-l: var(--sgb-link-l);
   color: var(--pt-ink); font-size: 14px;
 }
 .pt-root a { color: inherit; }

@@ -689,4 +689,5 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-vfy p.w1-vmore { margin: 12px 0 0; font-size: 12px; color: var(--ink-3); }
 .w1-vfy p.w1-vmore a { color: var(--pp); font-weight: 700; }
 /* v10.32 (추가) — 인증 화면은 나의공간 틀(.mys) 밖이라 my- 부품이 쓰는 토큰(--mink · --mline · --card)을 여기서도 정의 */
-.w1-vfy { --mink: #111827; --mink2: #4B5563; --mink3: #6B7280; --mline: #E5E7EB; --mline2: #F3F4F6; --card: #FFFFFF; }
+/* 2026-10-21 디자인 통일 2단계 A(docs/106) — 시트 값 이름으로 */
+.w1-vfy { --mink: var(--sgb-ink); --mink2: var(--sgb-ink-2); --mink3: var(--sgb-ink-3); --mline: var(--sgb-line); --mline2: var(--sgb-line-soft); --card: #FFFFFF; }

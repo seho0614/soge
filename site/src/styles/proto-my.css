@@ -6,11 +6,12 @@
  */
 
 .mys {
-  --pp: #7C3AED; --pp-d: #6D28D9; --pp-l: #F5F1FE; --pp-l2: #EDE7FC;
-  --bl: #2563EB; --bl-l: #EFF6FF; --or: #F97316; --gr: #10B981; --navy: #1E293B;
+  /* 2026-10-21 디자인 통일 2단계 A(docs/106) — 시트 값 이름으로(관 색은 <main data-sgb-gwan> 을 따름). 상태 색(--or · --gr · --rd) · 회색(--g*) · --card · --navy 는 5단계까지 그대로 */
+  --pp: var(--sgb-point-text); --pp-d: var(--sgb-point-d); --pp-l: var(--sgb-point-l); --pp-l2: var(--sgb-point-l2);
+  --bl: var(--sgb-link); --bl-l: var(--sgb-link-l); --or: #F97316; --gr: #10B981; --navy: #1E293B;
   --g700: #374151; --g500: #6B7280; --g400: #9CA3AF; --g300: #D1D5DB; --g100: #F3F4F6; --g50: #F9FAFB;
   --card: #FFFFFF;
-  --mink: #111827; --mink2: #4B5563; --mink3: #6B7280; --mline: #E5E7EB; --mline2: #F3F4F6;
+  --mink: var(--sgb-ink); --mink2: var(--sgb-ink-2); --mink3: var(--sgb-ink-3); --mline: var(--sgb-line); --mline2: var(--sgb-line-soft);
   color: var(--mink);
   padding: 0 0 60px;
 }
