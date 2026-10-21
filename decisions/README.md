@@ -5,6 +5,7 @@
 - business-entity-operating-policy.md
 - community-sogae-gwangjang.md
 - deploy-cicd.md
+- design-standard.md
 - domain-dns.md
 - gwan-structure-naming.md
 - legal-tax-listing-fee.md
