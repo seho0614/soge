@@ -3,12 +3,12 @@
  *
  * 모든 이름이 `plz-` 로 시작합니다(다른 화면과 이름이 겹치지 않게). 색 · 치수는 받은 그림(6000px = 화면 1500px)에서 잰 값입니다.
  *   남색 #00245A · 주황 #F5A008 · 표 머리 #F7F8FA · 줄 #DBDBDB
- *   배지 — 소개 후기 #FEF3E0/#F78013 · 질문 #EBF3FF/#1362F4 · 업종 이야기 #F1EEFE/#693EDD
+ *   배지 — 소개 후기 #FEF3E0/#a83701(v10.55 · 전 #F78013 대비 2.37) · 질문 #EBF3FF/#1362F4 · 업종 이야기 #F1EEFE/#693EDD
  *   사진 띠 303px · 탭 150×44 · 표 줄 44px · 쪽 번호 38px · 글쓰기 184×52 · 본문 폭 1380px
  * 글꼴은 그림만으로 이름을 알 수 없어 굵기 · 크기만 맞췄습니다. 2026-10-21 2단계 B 부터 글꼴은 디자인 시트(나눔스퀘어 네오 · 제목 페이퍼로지).
  */
 /* 2026-10-21 디자인 통일 2단계 B(docs/107 · 대표 「시트 관 색」) — 제목은 브랜드 남색 그대로, 탭 · 단추 · 링크 · 강조는 소개광장 관 색으로.
- *   --plz-pt  흰 바탕 위 글자 · 테두리 · 흰 글자 단추 바탕 = 시트 point-text #d24502(대비 4.5)
+ *   --plz-pt  흰 바탕 위 글자 · 테두리 · 흰 글자 단추 바탕 = 시트 point-text #c44002(흰 바탕 5.15 · 연한 바탕 4.62 · v10.55)
  *   --plz-orange  큰 단추(글쓰기) · 고른 쪽 번호 바탕 = 시트 소개광장 색 #fd580a · 그 위 글자는 남색(--sgb-on-point · 10/21 결정 ③)
  *   흐린 글자 #838CA5 → 시트 #6b7694 · 분류 배지 색은 그대로 */
 .plz {
@@ -90,10 +90,10 @@
 /* 분류 배지 */
 .plz-bd { display: inline-flex; align-items: center; justify-content: center; min-width: 100px; height: 24px; padding: 0 10px; box-sizing: border-box; border-radius: 6px; font-size: 15px; font-weight: 500; letter-spacing: -.3px;
   background-color: #EEF2F8; color: #00245A; }
-.plz-bd-review { background-color: #FEF3E0; color: #F78013; }
+.plz-bd-review { background-color: #FEF3E0; color: #a83701; }   /* v10.55 대비 2.37 → 5.95 */
 .plz-bd-qna    { background-color: #EBF3FF; color: #1362F4; }
 .plz-bd-trade  { background-color: #F1EEFE; color: #693EDD; }
-.plz-bd-food   { background-color: #E8F6EE; color: #13804A; }   /* v10.47 우리동네 맛집 */
+.plz-bd-food   { background-color: #E8F6EE; color: #0e6e32; }   /* v10.47 우리동네 맛집 */
 
 /* 쪽 번호 · 글쓰기 */
 .plz-foot { position: relative; display: flex; justify-content: center; align-items: flex-start; margin-top: 31px; min-height: 52px; }

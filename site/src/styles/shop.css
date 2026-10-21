@@ -74,7 +74,7 @@
 .shop-lowc:hover { box-shadow: 0 0 0 2px var(--shop-green); }
 .shop-lowc .ph { height: 124px; display: flex; align-items: center; justify-content: center; }
 .shop-lowc b { font-size: 19px; font-weight: 700; letter-spacing: -.8px; line-height: 1.22; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.shop-lowc .was { margin-top: 8px; font-size: 16.5px; letter-spacing: -.5px; color: #A4A9B3; white-space: nowrap; }
+.shop-lowc .was { margin-top: 8px; font-size: 16.5px; letter-spacing: -.5px; color: var(--sgb-ink-3); white-space: nowrap; }
 .shop-lowc .spec { margin-top: 5px; font-size: 18px; letter-spacing: -.7px; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 오늘의 건강상품 */
@@ -131,10 +131,10 @@
 .shop-dealc:hover { box-shadow: 0 0 0 2px var(--shop-green); }
 .shop-dealc .ph { height: 86px; display: flex; align-items: center; justify-content: center; }
 .shop-dealc b { margin-top: 6px; font-size: 18.5px; font-weight: 700; letter-spacing: -.7px; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.shop-dealc .ds { margin-top: 4px; font-size: 16.5px; line-height: 1.25; letter-spacing: -.6px; color: #9A9FAA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-dealc .ds { margin-top: 4px; font-size: 16.5px; line-height: 1.25; letter-spacing: -.6px; color: var(--sgb-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shop-dealc .pr { margin-top: 8px; font-size: 18.5px; letter-spacing: -.8px; white-space: nowrap; overflow: hidden; }
 .shop-dealc .pr strong { font-weight: 500; color: var(--shop-red); }
-.shop-dealc .pr s { margin-left: 6px; font-size: 17px; color: #9A9FAA; }
+.shop-dealc .pr s { margin-left: 6px; font-size: 17px; color: var(--sgb-ink-3); }
 .shop-dealc .pr i { font-style: normal; margin-left: 5px; color: var(--shop-red); }
 .shop-dealc .shop-star { margin-top: 6px; }
 
@@ -143,7 +143,7 @@
 .shop-prodc { background: #fff; border-radius: 10px; display: flex; flex-direction: column; min-width: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, .04); overflow: hidden; }
 .shop-prodc:hover { box-shadow: 0 0 0 2px var(--shop-green); }
 .shop-prodc > a { display: flex; flex-direction: column; padding: 14px 16px 10px; gap: 5px; min-width: 0; flex: 1; }
-.shop-prodc .noph { height: 74px; border-radius: 8px; background: repeating-linear-gradient(135deg, #F4F5F7 0 10px, #EEF0F3 10px 20px); color: #9A9FAA; display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: -.3px; margin-bottom: 6px; }
+.shop-prodc .noph { height: 74px; border-radius: 8px; background: repeating-linear-gradient(135deg, #F4F5F7 0 10px, #EEF0F3 10px 20px); color: var(--sgb-ink-2); display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: -.3px; margin-bottom: 6px; }
 .shop-prodc .top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--shop-dim); }
 .shop-prodc .bdg { padding: 1px 8px; border-radius: 5px; background: var(--sgb-point-l); color: var(--shop-green); font-weight: 800; font-size: 12.5px; }
 .shop-prodc .bdg.out { background: #FDECEC; color: var(--shop-red); }
@@ -173,7 +173,7 @@
 
 /* 바닥 고지 — 소개몰에서는 직판 고지와 통신판매중개자 고지를 같이 보입니다(10/7 결정). 어느 거래에 붙는 말인지 앞에 꼬리표를 답니다 */
 .b2-notice + .b2-notice { margin-top: 6px; }
-.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #e9f7ee; color: #12883e; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
+.b2-ntag { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 5px; background: #e9f7ee; color: #117f3a; font-size: 12px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; vertical-align: 1px; }
 .b2-notice[data-notice=inter] .b2-ntag { background: #EEF2F8; color: #00245A; }
 /* 2026-10-21 2단계 B — 바닥줄은 <main> 밖이라 관 표시가 닿지 않아, 시트의 소개몰 값(point-l · point-text)을 글자로 적었습니다 */
 
@@ -221,4 +221,4 @@
 
 /* v10.28 (D037) — 순위 번호 · 판매 수 */
 .shop-rk { display: inline-block; min-width: 20px; height: 20px; line-height: 20px; border-radius: 4px; background: var(--shop-green); color: #fff; font-size: 12px; text-align: center; margin-right: 2px; }
-.shop-newc .spec { display: block; font-size: 12px; color: #888; margin-top: 2px; }
+.shop-newc .spec { display: block; font-size: 12px; color: var(--sgb-ink-3); margin-top: 2px; }

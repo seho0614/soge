@@ -22,8 +22,8 @@
 .fd-empty { padding: 18px 14px; color: var(--ink2, #555); font-size: 14px; }
 .fd-note { font-size: 13px; color: var(--ink2, #555); margin: 8px 0 0; line-height: 1.6; }
 .fd-badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: 1px; }
-.fd-badge.pick { background: #E8F6EE; color: #13804A; }
-.fd-badge.ad { background: #FFF3E0; color: #C25E00; }
+.fd-badge.pick { background: #E8F6EE; color: #0e6e32; }   /* v10.55 대비 4.5 이상 */
+.fd-badge.ad { background: #FFF3E0; color: #a83701; }
 .fd-badge.wait { background: #EEF0F3; color: #555; }
 .fd-place { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 14px; }
 .fd-info dl { display: grid; grid-template-columns: 70px 1fr; gap: 6px 10px; margin: 10px 0; font-size: 14px; }

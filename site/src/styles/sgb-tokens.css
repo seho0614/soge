@@ -91,8 +91,9 @@
   --sgb-bp-desk: 1240px;
 }
 /* 관 표시는 components/Chrome.tsx(MainWrap)가 <main> 에 붙입니다. 소개장터 메인은 MoneyView 가 따로 붙입니다 */
-[data-sgb-gwan="money"] { --sgb-point: var(--sgb-money); --sgb-on-point: var(--sgb-navy); --sgb-point-text: #b85e00; --sgb-point-d: #8f4900; --sgb-point-l: var(--sgb-cream); --sgb-point-l2: #f8e6cc; }
+/* 2026-10-21 v10.55(docs/108) — 관 글자색(point-text)은 흰 바탕과 관 연한 바탕(point-l) 둘 다에서 대비 4.5 이상. 소개장터 #b85e00 → #ad5800 · 소개몰 #12883e → #117f3a · 소개광장 #d24502 → #c44002 */
+[data-sgb-gwan="money"] { --sgb-point: var(--sgb-money); --sgb-on-point: var(--sgb-navy); --sgb-point-text: #ad5800; --sgb-point-d: #8f4900; --sgb-point-l: var(--sgb-cream); --sgb-point-l2: #f8e6cc; }
 [data-sgb-gwan="mall"]  { --sgb-point: var(--sgb-mall);  --sgb-on-point: #ffffff;         --sgb-point-text: var(--sgb-mall); --sgb-point-d: #0b5f58; --sgb-point-l: #e6f4f2; --sgb-point-l2: #cce9e5; }
 [data-sgb-gwan="biz"]   { --sgb-point: var(--sgb-biz);   --sgb-on-point: #ffffff;         --sgb-point-text: var(--sgb-biz);  --sgb-point-d: #5b21b6; --sgb-point-l: #f3eefd; --sgb-point-l2: #e6dcfa; }
-[data-sgb-gwan="shop"]  { --sgb-point: var(--sgb-shop);  --sgb-on-point: var(--sgb-navy); --sgb-point-text: #12883e; --sgb-point-d: #0e6e32; --sgb-point-l: #e9f7ee; --sgb-point-l2: #d3efdc; }
-[data-sgb-gwan="plaza"] { --sgb-point: var(--sgb-plaza); --sgb-on-point: var(--sgb-navy); --sgb-point-text: #d24502; --sgb-point-d: #a83701; --sgb-point-l: #fff0e7; --sgb-point-l2: #ffdcc7; }
+[data-sgb-gwan="shop"]  { --sgb-point: var(--sgb-shop);  --sgb-on-point: var(--sgb-navy); --sgb-point-text: #117f3a; --sgb-point-d: #0e6e32; --sgb-point-l: #e9f7ee; --sgb-point-l2: #d3efdc; }
+[data-sgb-gwan="plaza"] { --sgb-point: var(--sgb-plaza); --sgb-on-point: var(--sgb-navy); --sgb-point-text: #c44002; --sgb-point-d: #a83701; --sgb-point-l: #fff0e7; --sgb-point-l2: #ffdcc7; }
