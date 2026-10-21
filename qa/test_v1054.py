@@ -67,11 +67,12 @@ ok('소개광장 — 탭 · 단추 · 링크 = 관 색(--plz-pt) · 제목 = 남
    '--plz-pt: var(--sgb-point-text)' in PZ and '--plz-orange: var(--sgb-point)' in PZ
    and '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);' in PZ and '.plz .btn-primary { background: var(--plz-pt);' in PZ
    and 'color: var(--plz-navy); margin: 0 0 8px;' in PZ and 'background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 22px;' in PZ, '')
-ok('소개광장 — 분류 배지 색은 그대로', '.plz-bd-review { background-color: #FEF3E0; color: #F78013; }' in PZ, '')
+V55 = re.match(r'v10\.(5[5-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.55 대비 고침(test_v1055 가 봄)
+ok('소개광장 — 분류 배지 색은 그대로', V55 or '.plz-bd-review { background-color: #FEF3E0; color: #F78013; }' in PZ, 'v10.55 대비 고침 뒤 — test_v1055' if V55 else '')
 SH = rd('site/src/styles/shop.css')
 ok('소개몰 — 초록 = 시트 소개몰 글자색 · 할인 빨강 · 구역 바탕 그대로',
    '--shop-green: var(--sgb-point-text)' in SH and '--shop-red: #E5362F' in SH and '.shop-sec.cream { background: #FDF5E8; }' in SH, '')
-ok('소개몰 — 머리줄 「무료 회원가입」 · 바닥 꼬리표', '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }' in SH and 'background: #e9f7ee; color: #12883e;' in SH, '')
+ok('소개몰 — 머리줄 「무료 회원가입」 · 바닥 꼬리표', '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }' in SH and (V55 or 'background: #e9f7ee; color: #12883e;' in SH), '')
 ok('두 관 머리 · 바닥줄 — 시트 값 · 본문 글꼴', '--b2-dim: var(--sgb-ink-3)' in rd('site/src/styles/b2.css') and 'font-family: var(--sgb-font-body);' in rd('site/src/styles/b2.css'), '')
 ok('생활금융 상담 — .mal-proto 관 색이 먹음(묶음 없음)', '.mal-proto { --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }' in rd('site/src/styles/mal.css'), '')
 ok('메인(home.css)은 그대로 — 보라 #5B3DF8', '--hv: #5B3DF8' in rd('site/src/styles/home.css'), '')
