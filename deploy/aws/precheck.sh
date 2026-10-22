@@ -111,6 +111,7 @@ if [ -n "${DATABASE_URL:-}" ] && db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$drift" != "0" ] && echo "$st" | grep '^바뀜' | sed 's/^/        /' | tee -a "$OUT"
   info "계정 $(q "select count(*) from accounts")명 · 개발 계정(@x.com) $(q "select count(*) from accounts where email like '%@x.com'")명"
   info "간주 모드: $(qn "select key||'='||value from site_settings where key like 'assume.%' order by 1" | tr '\n' ' ')"
+  info "기능 스위치: $(qn "select key||'='||value from site_settings where key like 'feature.%' order by 1" | tr '\n' ' ')"   # v10.65 D105 — 대문자 ON 이면 적용 뒤 켜짐으로 읽힘
   info "발신 IP(infra.egress_ip): $(q "select coalesce(nullif(value,''),'(비어 있음)') from site_settings where key='infra.egress_ip'")"
   info "암호화 열쇠(이 접속 기준 — 앱이 띄울 때 걸므로 여기서는 f 가 정상): $(q "select is_set from v_enc_key_status")"
   info "오픈 차단 $(q "select count(*) from v_open_blockers")건 [$(q "select string_agg(kind||':'||c, ' ') from (select kind, count(*) c from v_open_blockers group by kind) x")]"

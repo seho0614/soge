@@ -513,12 +513,44 @@ export class AdminService {
       throw new PolicyViolation('SETTING_FORMAT',
         `값의 형식이 맞지 않습니다${meta.example ? ` (예: ${meta.example})` : ''}.`);
     }
+    await this.checkSwitch(key, value);
     const [row] = await this.db.query(
       `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
         WHERE key = $1 RETURNING key, value`,
       [key, value, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     return row;
+  }
+
+  /* v10.65 (docs/121 · docs/111 6-3) — 간주 · 소개비 스위치를 「실제로 돌리는 쪽」으로 바꿀 때만 조건을 봅니다.
+   *   반대쪽(간주 다시 켜기 · 소개비 끄기)은 언제나 됩니다 — 문제가 생기면 바로 되돌릴 수 있게.
+   *   운영 화면 「오픈 체크리스트 › 관리자 스위치」가 같은 조건을 미리 보여 줍니다(web/src/app/admin/Switches.tsx). */
+  static readonly SWITCH_RULES: Record<string, { to: string; integ?: string[]; status?: string[]; bank?: boolean; why: string }> = {
+    'assume.payment': { to: 'off', integ: ['PG'], status: ['TESTING', 'LIVE'], why: '전자결제(PG)가 시험 중이거나 연결됨' },
+    'assume.broker': { to: 'off', integ: ['BROKER'], status: ['TESTING', 'LIVE'], why: '국토부 중개사 대조가 시험 중이거나 연결됨' },
+    'assume.etax': { to: 'off', integ: ['ETAX'], status: ['TESTING', 'LIVE'], why: '전자세금계산서가 시험 중이거나 연결됨' },
+    'assume.bank': { to: 'off', bank: true, why: '사이트 기본 정보에 실제 수금 계좌 세 항목이 들어 있음' },
+    'feature.referral_fee': { to: 'on', integ: ['PASS', 'BANK'], status: ['LIVE'], why: '본인인증 · 1원 계좌인증이 모두 연결됨(LIVE)' },
+  };
+
+  private async checkSwitch(key: string, value: string) {
+    const rule = AdminService.SWITCH_RULES[key];
+    if (!rule || (value ?? '').trim() !== rule.to) return;
+    if (rule.integ) {
+      const rows = await this.db.query<{ code: string; status: string }>(
+        `SELECT code, status FROM integrations WHERE code = ANY($1::text[])`, [rule.integ]);
+      const bad = rule.integ.filter((c) => !rows.some((r) => r.code === c && rule.status!.includes(r.status)));
+      if (bad.length) {
+        const now = rule.integ.map((c) => `${c} ${rows.find((r) => r.code === c)?.status ?? '없음'}`).join(' · ');
+        throw new PolicyViolation('SWITCH_PREREQ', `아직 바꿀 수 없습니다 — 조건: ${rule.why}. 지금: ${now}. 외부 연동 탭에서 상태를 먼저 바꿔 주십시오.`);
+      }
+    }
+    if (rule.bank) {
+      const [r] = await this.db.query<{ ready: boolean }>(
+        `SELECT count(*) >= 3 AND bool_and(coalesce(btrim(value), '') <> '' AND value NOT LIKE '%시험용%' AND value NOT LIKE '999999-%') AS ready
+           FROM site_settings WHERE key LIKE 'company.bank%'`);
+      if (!r?.ready) throw new PolicyViolation('SWITCH_PREREQ', `아직 바꿀 수 없습니다 — 조건: ${rule.why}. 사이트 기본 정보 탭에서 수금 계좌를 먼저 넣어 주십시오(넣으면 저절로 꺼집니다).`);
+    }
   }
 
   reviewReasons() {

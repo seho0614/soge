@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
+import { Switches } from './Switches';
 
 interface Blocker { kind: string; item: string; reason: string }
 interface Check { key: string; label: string; ok: boolean; detail: string; go: string | null }
@@ -78,6 +79,9 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
                 title={r?.isActive ? '이미 운영중입니다' : !r?.canOpen ? '하나라도 미충족이면 열리지 않습니다' : undefined}>운영중으로 전환</button>
         {onGo && <button className="btn-plain" onClick={() => onGo('siteinfo')}>법정 고지 채우기</button>}
       </div>
+
+      {/* v10.65 (docs/121) — 간주 모드 · 소개비 스위치를 운영 화면에서 */}
+      <Switches />
 
       <h2 className="ad-s2">서비스 오픈을 막는 항목 <em>{data.length}</em> <small className="dim">개발에만 — 간주 모드 · 외부 연동 · 설정</small></h2>
       {blockers.error ? <ErrorView error={blockers.error} /> : data.length === 0
