@@ -34,7 +34,7 @@ export function IntroAnswer({ requestId }: { requestId: string }) {
       <button type="button" className="my-bo" disabled={!!busy} onClick={() => void answer('CHECKING')} data-ans="CHECKING">확인해 보겠습니다</button>
       <button type="button" className="my-bo sm" disabled={!!busy} onClick={() => void answer('DONT_KNOW')} data-ans="DONT_KNOW">잘 모릅니다</button>
       <button type="button" className="my-bo sm" disabled={!!busy} onClick={() => void answer('NOT_MY_FIELD')} data-ans="NOT_MY_FIELD">관심 없는 분야</button>
-      {err && <span className="my-ls" role="alert" style={{ color: '#B42318' }}>{err}</span>}
+      {err && <span className="my-ls" role="alert" style={{ color: 'var(--sgb-rd-text)' }}>{err}</span>}
     </div>
   );
 }

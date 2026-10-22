@@ -321,10 +321,10 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
             <div className="w1-jrow">
               <div className="w1-fl"><label htmlFor="j-pw">비밀번호 <span className="rq">*</span></label>
                 <input id="j-pw" className="w1-in" type="password" autoComplete="new-password" placeholder="영문 · 숫자 · 특수문자 조합 10자 이상" value={pw} onChange={(e) => setPw(e.target.value)} />
-                {pw && !PW_OK(pw) && <div className="w1-fh" style={{ color: '#B45309' }}>영문 · 숫자 · 특수문자를 섞어 10자 이상</div>}</div>
+                {pw && !PW_OK(pw) && <div className="w1-fh" style={{ color: 'var(--sgb-or-text)' }}>영문 · 숫자 · 특수문자를 섞어 10자 이상</div>}</div>
               <div className="w1-fl"><label htmlFor="j-pw2">비밀번호 확인 <span className="rq">*</span></label>
                 <input id="j-pw2" className="w1-in" type="password" autoComplete="new-password" placeholder="한 번 더 입력해주세요" value={pw2} onChange={(e) => setPw2(e.target.value)} />
-                {pw2 && pw !== pw2 && <div className="w1-fh" style={{ color: '#B45309' }}>위 비밀번호와 다릅니다</div>}</div>
+                {pw2 && pw !== pw2 && <div className="w1-fh" style={{ color: 'var(--sgb-or-text)' }}>위 비밀번호와 다릅니다</div>}</div>
             </div>
           </div>
         )}

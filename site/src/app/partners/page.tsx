@@ -112,14 +112,14 @@ export default async function PartnersDashboard() {
     <div className="p2dgrid">
       <div className="p2dl">
         <div className="p2kpis6">
-          {kpi('#12B886', <b style={{ color: '#fff', fontSize: 16 }}>₩</b>, '오늘 소개수익', n(t?.earned ?? 0), '원', delta(t?.earnedDelta, '원'))}
-          {kpi('#3B6EF6', svg(<><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></>), '이번 달 누적수익', n(m.earned), '원',
+          {kpi('var(--sgb-mall)', <b style={{ color: '#fff', fontSize: 16 }}>₩</b>, '오늘 소개수익', n(t?.earned ?? 0), '원', delta(t?.earnedDelta, '원'))}
+          {kpi('var(--sgb-link)', svg(<><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></>), '이번 달 누적수익', n(m.earned), '원',
             m.deltaPct != null ? (m.deltaPct >= 0 ? <span className="up">▲ 지난 달 같은 기간 대비 {m.deltaPct}% ↑</span> : <span className="dn">▼ 지난 달 같은 기간 대비 {-m.deltaPct}% ↓</span>) : '확정 · 정산된 주문')}
-          {kpi('#B15DE0', svg(<><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M2 10h20" /></>), '정산 예정금액', n(m.payable), '원', pay ? <>🕐 {pay} 정산 예정 · <Link href="/partners/settlements">정산내역 ›</Link></> : <Link href="/partners/settlements">정산내역 ›</Link>)}
-          {kpi('#3B6EF6', svg(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>), '소개 고객 수', n(d.customers?.today ?? 0), '명', delta(d.customers?.delta, '명'))}
-          {kpi('#5B6EF6', svg(<><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></>), '거래 건수', n(t?.orders ?? 0), '건', delta(t?.ordersDelta, '건'))}
+          {kpi('var(--sgb-biz)', svg(<><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M2 10h20" /></>), '정산 예정금액', n(m.payable), '원', pay ? <>🕐 {pay} 정산 예정 · <Link href="/partners/settlements">정산내역 ›</Link></> : <Link href="/partners/settlements">정산내역 ›</Link>)}
+          {kpi('var(--sgb-link)', svg(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>), '소개 고객 수', n(d.customers?.today ?? 0), '명', delta(d.customers?.delta, '명'))}
+          {kpi('var(--sgb-navy)', svg(<><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></>), '거래 건수', n(t?.orders ?? 0), '건', delta(t?.ordersDelta, '건'))}
           <div className="p2kpi">
-            <span className="ic" style={{ background: '#D4A017' }}>{svg(<path d="M2 7l5 3 5-6 5 6 5-3-2 12H4z" />)}</span>
+            <span className="ic" style={{ background: 'var(--sgb-or-text)' }}>{svg(<path d="M2 7l5 3 5-6 5 6 5-3-2 12H4z" />)}</span>
             <div style={{ flex: 1 }}>
               <div className="k">파트너 등급 ⓘ</div>
               <div className="v tier">{tier?.grade ? `${GR[tier.grade] ?? tier.grade} 파트너` : '—'}</div>

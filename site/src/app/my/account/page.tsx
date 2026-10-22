@@ -103,7 +103,7 @@ export default async function MyAccountPage() {
             <tr><td>업태 · 종목</td><td>{[b.bizType, b.bizItem].filter(Boolean).join(' · ') || '—'}</td></tr>
             <tr><td>주소</td><td>{b.address ?? '—'}</td></tr>
             <tr><td>국세청 확인</td><td>{b.ntsStatus ?? (b.verifiedAt ? '확인됨' : '—')}{b.verifiedAt && ` · ${d(b.verifiedAt)}`}</td></tr>
-            {b.rejectReason && <tr><td>반려 사유</td><td style={{ color: '#B42318' }}>{b.rejectReason}</td></tr>}
+            {b.rejectReason && <tr><td>반려 사유</td><td style={{ color: 'var(--sgb-rd-text)' }}>{b.rejectReason}</td></tr>}
           </Table>
           {a.editable.business ? (
             <>
