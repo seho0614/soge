@@ -190,7 +190,7 @@
 .home-band.forme { background: #fff; padding: 14px 0 6px; }
 .home-band.core { background: #fff; padding: 18px 0 26px; }
 /* 721px 이상 — 구역 사이 간격을 주신 그림(838px 를 1280px 로 환산)에 맞춥니다. 실측: 각 구역 시작 위치가 그림과 ±10px 안 (qa/measure_home.py) */
-@media (min-width: 721px) {
+@media (min-width: 641px) {
   .home-band { padding: 18px 0; }
   .home-sh { margin-bottom: 11px; }
   .home-band.today { padding: 22px 0 20px; }
@@ -230,7 +230,7 @@
 .home-wxnow span { font-weight: 700; }
 .home-wxi b { color: var(--hk); font-weight: 700; }
 .home-wxsrc { margin-left: auto; font-size: 12px; color: var(--hk3); white-space: nowrap; }
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .home-wx { padding: 10px 0 0; }
   .home-wxin { gap: 4px 12px; padding: 10px 14px; font-size: 14px; }
   .home-wxt { width: auto; font-size: 14px; }
@@ -440,7 +440,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 @media (max-width: 1260px) {
   .home-chips { justify-content: flex-start; }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .home-hd .home-in { gap: 20px; }
   .home-nav { gap: 18px; font-size: 14px; }
   .home-heroin { grid-template-columns: minmax(0, 1fr); gap: 34px; }
@@ -462,7 +462,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 }
 
 /* ── 720px 이하 (휴대폰) ─────────────────────────────────────────────── */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .home-in { padding: 0 16px; }
   .home-hd { border-radius: 0 0 var(--sgb-r-lg, 16px) var(--sgb-r-lg, 16px); }
   .home-hd .home-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding-top: 10px; padding-bottom: 8px; }
@@ -563,7 +563,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 .home-demob .dbe { font-size: 18px; display: block; margin-bottom: 4px; }
 .home-demob .dbc b { display: block; font-size: 13px; font-weight: 800; color: var(--sgb-ink); margin-bottom: 2px; }
 .home-demob .dbs { font-size: 12px; color: var(--sgb-ink-2); line-height: 1.45; display: block; }
-@media (max-width: 940px) { .home-demob .dbg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .home-demob .dbg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* v10.31 (w1) — 로그인 뒤 머리줄 단추가 늘어 좁은 폭에서 넘치지 않게(👤 이름 · 나의공간 · 소개받기 · 로그아웃 · 관리자 페이지) */
 .home-hd .home-in { min-width: 0; }
 .home-nav { min-width: 0; }
@@ -574,7 +574,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-hd .home-pill { padding: 0 14px; }
   .home-hd .home-who { max-width: 110px; }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .home-nav { overflow-x: auto; scrollbar-width: none; }
   .home-nav::-webkit-scrollbar { display: none; }
   .home-hd .home-pill.dev { display: none; }

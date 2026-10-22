@@ -88,7 +88,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-join { padding: 0 16px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-lang > summary { padding: 0 14px; }
 }
-@media (max-width: 1180px) {
+@media (max-width: 1240px) {
   .b2-ftr { flex-wrap: wrap; gap: 14px 28px; }
   .b2-nav { gap: 18px; margin-left: 4px; }
   .b2-nav a { font-size: 16px; }
@@ -96,7 +96,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   .b2-find, .b2-login, .b2-join, .b2-lang > summary { font-size: 14px; height: 40px; }
   .b2-find { width: 40px; }
 }
-@media (max-width: 1130px) {
+@media (max-width: 1240px) {
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hd .b2-in { gap: 12px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-logo img { height: 38px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { gap: 14px; margin-left: 0; overflow-x: auto; scrollbar-width: none; }

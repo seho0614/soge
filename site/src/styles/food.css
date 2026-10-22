@@ -44,7 +44,7 @@
 .fd-res li:last-child { border-bottom: 0; }
 .fd-res button { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: #fff; cursor: pointer; font: inherit; }
 .fd-res button:hover { background: #F3FAF6; }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .fd-grid, .fd-place { grid-template-columns: minmax(0, 1fr); }
   .fd-list { max-height: none; }
 }

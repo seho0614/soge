@@ -246,7 +246,7 @@
 .mny .mny-old-l { margin-top: 14px; }
 .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 @media (max-width: 1280px) { .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 720px) { .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .mny .mny-old-b .gw-pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* 좁은 화면 — 「소개상품 찾기」의 고르기 칸 2개 + 검색 단추를 한 줄에 하나씩(v10.29 의 .gw-gwl .gw-fbar 3칸 규칙이 좁은 화면까지 이겨 칸이 눌리던 것을 이 구역에서만 풉니다) */
 @media (max-width: 900px) { .mny .mny-old-b .gw-gwl .gw-fbar { grid-template-columns: 1fr; gap: 10px; } }
 
@@ -296,7 +296,7 @@
   [data-b2-tone=money] .b2-login { min-width: 84px; padding: 0 14px; }
   [data-b2-tone=money] .b2-join { min-width: 126px; height: 42px; padding: 0 14px; }
 }
-@media (max-width: 1220px) {
+@media (max-width: 1240px) {
   /* 머리줄 — 로고 · 메뉴 6 · 알약 단추 4 · 종이 한 줄에 들어가지 않는 폭입니다. 메뉴를 둘째 줄로 내립니다(두 관 전용 머리줄의 좁은 화면 모양과 같게 · 옆으로 밀어 봄) */
   [data-b2-tone=money] .b2-hd { height: auto; }
   [data-b2-tone=money] .b2-hd .b2-in { height: auto; flex-wrap: wrap; gap: 6px 10px; padding: 8px 24px 6px; }
@@ -305,7 +305,7 @@
   [data-b2-tone=money] .b2-nav a { font-size: 16px; padding: 6px 0; }
   [data-b2-tone=money] .b2-nav a::after { bottom: 1px; }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .mny-wrap { padding: 0 24px 14.5px; }
   .mny-hero-in { flex-direction: column; padding: 24px; gap: 22px; }
   .mny-hero-l { flex: none; padding-top: 0; }
@@ -358,7 +358,7 @@
   .main-mny ~ .b2-ft .b2-in, [data-b2-tone=money] .b2-ft .b2-in { padding: 0 16px; }
   .main-mny ~ .b2-ft .b2-ftl, [data-b2-tone=money] .b2-ft .b2-ftl { margin-left: 0; }
 }
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .mny-wrap { padding: 0 16px 14.5px; }
   .mny-h1 { font-size: 32px; line-height: 40px; }
   .mny-lead { font-size: 16px; line-height: 23px; }

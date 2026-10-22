@@ -226,11 +226,11 @@ a.pt-tile:hover { border-color: var(--pt-pp); box-shadow: var(--sgb-shadow, 4px 
 .pt-bar i { display: block; height: 100%; background: var(--pt-pp); border-radius: 999px; }
 
 /* ── 좁은 화면 ── 시안은 390 폭에서 메뉴가 넘쳐 겹칩니다(시안 결함 · diffs). 메뉴를 로고 아래 한 줄 가로 밀기로 둡니다 */
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .pt-tiles { grid-template-columns: repeat(2, 1fr); }
   .pt-esc { grid-template-columns: 1fr; }
 }
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .pt-hd .pt-in { flex-wrap: wrap; gap: 6px 12px; padding-top: 10px; padding-bottom: 6px; }
   .pt-gnb { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
   .pt-phr { margin-left: auto; }
@@ -239,7 +239,7 @@ a.pt-tile:hover { border-color: var(--pt-pp); box-shadow: var(--sgb-shadow, 4px 
   .pt-lstat { justify-content: flex-start; }
   .pt-lact { justify-content: flex-start; }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .pt-in { padding: 0 16px; }
   .pt-tiles { grid-template-columns: 1fr; }
   .pt-pgh { flex-direction: column; align-items: flex-start; }
@@ -288,7 +288,7 @@ textarea.pt-input { width: 100%; min-height: 76px; }
   border-radius: 999px; padding: 6px 11px; background: #fff; }
 .pt-steps-wiz li.on { background: var(--pt-pp); color: #fff; border-color: var(--pt-pp); }
 .pt-steps-wiz li.done { background: #ECFDF5; color: #0F6B4F; border-color: #A7F3D0; }
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .pt-subnow { grid-template-columns: 1fr; }
   .pt-cap { flex-wrap: wrap; }
   .pt-cap .cl { align-items: flex-start; }

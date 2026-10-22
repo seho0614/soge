@@ -130,7 +130,7 @@
 .plz .notice.warn b { color: inherit; }
 
 /* ── 좁은 화면 ── */
-@media (max-width: 1180px) {
+@media (max-width: 1240px) {
   .plz-find { left: auto; right: 24px; width: min(420px, 38vw); }
   .plz-photo { opacity: .55; }
 }

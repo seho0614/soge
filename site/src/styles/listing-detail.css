@@ -70,7 +70,7 @@
 .ldp-bar .bar-go:disabled { background: var(--ink-3); cursor: default; }
 .ldp-bar-msg { margin: 0; padding: 0 var(--sp-5) var(--sp-3); font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
 
-@media (max-width: 767px) {
+@media (max-width: 900px) {
   .ldp-hero { grid-template-columns: 1fr; padding: var(--sp-4); gap: var(--sp-4); }
   .ldp-prof { margin: 0 var(--sp-4); }
   .ldp-sec { padding: var(--sp-4) var(--sp-4) 0; }

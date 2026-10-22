@@ -220,7 +220,7 @@
 .my-fv textarea { min-height: 84px; resize: vertical; }
 .my-fv input[type="date"] { flex: 0 0 auto; min-width: 0; }
 .my-ctrf .my-ctra { margin-top: 12px; }
-@media (max-width: 700px) { .my-fr { flex-direction: column; gap: 6px; } .my-fr > label { flex: none; padding-top: 0; } .my-fv input, .my-fv textarea { min-width: 0; } }
+@media (max-width: 640px) { .my-fr { flex-direction: column; gap: 6px; } .my-fr > label { flex: none; padding-top: 0; } .my-fv input, .my-fv textarea { min-width: 0; } }
 /* 기존 정산 부품(PayoutBox · ClaimButton)의 주 단추를 시안 보라로 */
 .mys .btn-sm.p2primary { background: var(--pp); border-color: var(--pp); color: #fff; }
 .mys .sec-title { font-size: 14px; font-weight: 800; margin: 4px 0 8px; }
@@ -284,7 +284,7 @@
 .my-main .auth-wrap, .my-main .page, .my-main .wrap { max-width: none; margin: 0; padding: 0; }
 
 /* ── 좁은 화면 (시안 @media 860 · 560) ── */
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .my-lay { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .my-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
   .my-nav .my-mh, .my-nav .my-mh2 { display: none; }
@@ -295,11 +295,11 @@
   .my-lact { justify-content: flex-start; }
   .my-ul.cols { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 700px) {
+@media (max-width: 640px) {
   .my-ctrp { flex-direction: column; align-items: stretch; gap: 8px; }
   .my-cpx { display: none; }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .my-tiles, .my-mgrid, .my-stat4 { grid-template-columns: 1fr 1fr; }
   .my-mgrid { grid-template-columns: 1fr; }
   .my-pgh { flex-direction: column; align-items: flex-start; }

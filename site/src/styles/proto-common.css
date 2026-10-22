@@ -53,7 +53,7 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
   .pc-gnb::-webkit-scrollbar { display: none; }
   .pc-gnb a { font-size: 14px; }
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .pc-hr .sep, .pc-hr a.txt, .pc-hr .who { display: none; }
   .pc-gnb .m-only { display: inline; color: var(--ink-3); }
   .pc-wrap { padding: 0 16px; }
@@ -79,7 +79,7 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
 .pc-ft .nt2 { margin-top: 12px; padding: 11px 14px; background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--sgb-r-sm, 7px); font-size: 12px; color: var(--ink-2); line-height: 1.75; }
 .pc-ft .nt2 b { color: var(--ink); }
-@media (max-width: 760px) { .pc-ft { padding: 16px 0; } .pc-ft .pc-wrap { padding: 0 16px; } }
+@media (max-width: 900px) { .pc-ft { padding: 16px 0; } .pc-ft .pc-wrap { padding: 0 16px; } }
 
 /* ── 돌아가기 줄 (시안 backLink() · .bkl) ─────────────────────────────────────── */
 .pc-bkbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -95,7 +95,7 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
 .pc-srow .scol { flex: 1; min-width: 0; }
 .pc-srow.top { padding: 24px 0 0; display: flex; flex-direction: column; align-items: center; }
 .pc-srow.top .scol { width: 100%; max-width: 852px; }
-@media (max-width: 1100px) { .pc-srow > aside { display: none; } }
+@media (max-width: 1240px) { .pc-srow > aside { display: none; } }
 .pc-sb { display: flex; border: 2px solid var(--pp); border-radius: var(--sgb-r-sm, 7px); overflow: hidden; background: var(--paper); position: relative; margin: 0; }
 .pc-sb.blue { border-color: var(--bl); }
 .pc-sb .sc { padding: 0 13px; border-right: 1px solid var(--line); font-size: 14px; font-weight: 500;
@@ -193,8 +193,8 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
 .pc-src .nt { margin: 14px 0; padding: 12px 14px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; line-height: 1.65;
   border: 1px solid var(--bl-l); background: var(--bl-l); color: var(--ink); }
 .pc-src .srch { margin: 0 0 16px; }
-@media (max-width: 820px) { .pc-src .lrow { grid-template-columns: 1fr; gap: 9px; } }
-@media (max-width: 560px) { .pc-src .pgh { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 900px) { .pc-src .lrow { grid-template-columns: 1fr; gap: 9px; } }
+@media (max-width: 640px) { .pc-src .pgh { flex-direction: column; align-items: flex-start; } }
 
 /* v10.29 — 통합 검색 결과 줄의 「보기」 칸(시안 .lact) — 검정(가드 ⑥)에서 정의 없음으로 잡힘 */
 .pc-src .lact { display: flex; gap: 6px; flex-shrink: 0; }

@@ -203,7 +203,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2main .tbl td.num, .p2main .tbl th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* v10.29 — 좁은 화면: 시안처럼 메뉴가 위로(가로 밀기) · 인사 띠 사진 숨김 · 대시보드 한 줄 */
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .p2dgrid { flex-direction: column; align-items: stretch; }
   .p2dr { width: 100%; }
   .p2qbtns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -230,7 +230,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
   .p2body { padding: 16px; }
   .p2body .tbl { display: block; overflow-x: auto; }
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .p2kpis6 { grid-template-columns: 1fr; }
   .p2qbtns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .p2url { flex-direction: column; }
@@ -271,7 +271,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
    링크 칸에 최소 폭을 주고, 주소는 꺾을 수 있는 자리(/ · - · .)에서 먼저 꺾습니다. */
 .p2main .tbl td.p2lnk { min-width: 240px; }
 .p2main .tbl td.p2lnk [data-testid="share-url"] { word-break: normal; overflow-wrap: anywhere; display: inline-block; max-width: 100%; line-height: 1.5; }
-@media (max-width: 560px) { .p2main .tbl td.p2lnk { min-width: 210px; } }
+@media (max-width: 640px) { .p2main .tbl td.p2lnk { min-width: 210px; } }
 
 /* v10.31 (W5 · 10/10 시안 기준 SB-AFC-DSH-010) — 증감 · 등급 칸 · 추천상품 표지 · 사진 · 알림 숫자 */
 .p2kpi .n .up { color: #12B886; font-weight: 700; }

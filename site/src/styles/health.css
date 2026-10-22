@@ -193,8 +193,8 @@
 /* ── 폼 (hlt-box 안의 .auth 는 테두리를 겹치지 않습니다) ── */
 .hlt-form { border: 0; padding: 0; }
 
-@media (max-width: 1100px) { .hlt-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 768px) {
+@media (max-width: 1240px) { .hlt-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) {
   .hlt-grid { grid-template-columns: repeat(2, 1fr); }
   .hlt-pd { grid-template-columns: 1fr; }
   .hlt-tbl th { width: auto; white-space: normal; }
