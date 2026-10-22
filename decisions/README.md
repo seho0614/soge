@@ -1,6 +1,7 @@
 # 결정 기록 목록
 
 - ai-agent.md
+- auto-review.md
 - automation-server-n8n.md
 - business-entity-operating-policy.md
 - community-sogae-gwangjang.md
