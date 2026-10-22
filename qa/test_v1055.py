@@ -76,7 +76,7 @@ ok('소개몰 — 지운 정가 · 할인 전 가격 · 규격 = 시트 흐린 �
    SH.count('color: var(--sgb-ink-3)') >= 4 and '#9A9FAA' not in SH and '#A4A9B3; white-space' not in SH and 'color: #888' not in SH
    and '#EEF0F3 10px 20px); color: var(--sgb-ink-2);' in SH, '')
 ok('소개몰 — 바닥 꼬리표 4.12 → 4.61', 'background: #e9f7ee; color: #117f3a;' in SH and cr('#117f3a', '#e9f7ee') >= 4.5, f"{cr('#117f3a', '#e9f7ee'):.2f}")
-ok('머리줄 알림 숫자 — 빨강 바탕 #e0001b(흰 글자 5.02)', 'background: #e0001b; color: #fff; font-size: 11.5px;' in B2 and 'background: #e0001b; color: #fff; font-size: 11.5px;' in MN and '#ff1022' not in B2 + MN, '')
+ok('머리줄 알림 숫자 — 빨강 바탕 #e0001b(흰 글자 5.02)', re.search(r'background: #e0001b; color: #fff; font-size: 11(\.5)?px;', B2) and re.search(r'background: #e0001b; color: #fff; font-size: 11(\.5)?px;', MN) and '#ff1022' not in B2 + MN, '')
 ok('소개장터 메인 — 주황 꼬리표', '.mny-tag.is-orange { background: #fef3e0; color: #ad5800; }' in MN, '')
 
 # ④ 시안

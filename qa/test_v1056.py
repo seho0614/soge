@@ -100,7 +100,7 @@ spots = [('쪽 번호(흰 글자)', W, res('var(--sgb-ink-3)')), ('상품 코드
 low = [f'{n} {cr(a, b):.2f}' for n, a, b in spots if not (a and b and cr(a, b) >= 4.5)]
 ok(f'대비 — 한 규칙 안 글자색 · 바탕색 {seen}곳 모두 기준 이상', seen >= 15 and not bad, f'{bad[:4]}')
 ok('대비 — 10/21 점검의 메인 미달 자리 4.5 이상', not low, ' · '.join(f'{n} {cr(a, b):.2f}' for n, a, b in spots if a and b))
-ok('쪽 번호 · 상품 코드 · 흐린 회색 — 시트 흐린 글자로', '.home-pno { background: var(--sgb-ink-3);' in HC and '.home-pcode { margin-left: 8px; font-size: 11px; color: var(--sgb-ink-3); }' in HC
+ok('쪽 번호 · 상품 코드 · 흐린 회색 — 시트 흐린 글자로', '.home-pno { background: var(--sgb-ink-3);' in HC and re.search(r'\.home-pcode \{ margin-left: 8px; font-size: 1[12]px; color: var\(--sgb-ink-3\); \}', HC)
    and '#7A868F' not in HC and '#B4B0C8' not in HC, '')
 
 

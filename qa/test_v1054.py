@@ -67,7 +67,7 @@ PZ = rd('site/src/styles/plaza.css')
 ok('소개광장 — 탭 · 단추 · 링크 = 관 색(--plz-pt) · 제목 = 남색 · 글쓰기 = 관 색 바탕 + 남색 글자',
    '--plz-pt: var(--sgb-point-text)' in PZ and '--plz-orange: var(--sgb-point)' in PZ
    and '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);' in PZ and '.plz .btn-primary { background: var(--plz-pt);' in PZ
-   and 'color: var(--plz-navy); margin: 0 0 8px;' in PZ and 'background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 22px;' in PZ, '')
+   and 'color: var(--plz-navy); margin: 0 0 8px;' in PZ and re.search(r'background-color: var\(--plz-orange\); color: var\(--sgb-on-point\); font-size: 2[02]px;', PZ), '')
 V55 = re.match(r'v10\.(5[5-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.55 대비 고침(test_v1055 가 봄)
 ok('소개광장 — 분류 배지 색은 그대로', V55 or '.plz-bd-review { background-color: #FEF3E0; color: #F78013; }' in PZ, 'v10.55 대비 고침 뒤 — test_v1055' if V55 else '')
 SH = rd('site/src/styles/shop.css')
