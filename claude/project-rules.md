@@ -36,7 +36,7 @@
 - 소스 관리: AWS CodeCommit 저장소 4개 — sgb-core · sgb-adx · sgb-infra · sgb-docs
 - 버전 관리: SemVer 태그, 운영 배포는 태그 커밋만
 - 스테이징 서버 없음 — 배포 흐름은 **개발 서버 점검(`~/sgb-check.sh` realcheck) → 대표 승인 → 운영 서버 적용**
-- 소개뱅크 서비스 서버는 1대(3.37.95.217, 탄력적 IP) · AWS 서비스 서버에서는 도커를 쓰지 않음
+- 소개뱅크 서비스 서버는 1대(3.37.95.217, 탄력적 IP) · AWS 서비스(운영) 서버에서는 도커를 쓰지 않음. 개발 서버의 점검판(`~/sgb-check.sh`, rootless 도커)은 예외
 - 자동화: OpenClaw 는 별도 자동화 EC2 1대 추가, n8n 도 그 자동화 EC2 로 옮기고 그 서버에서만 n8n 용 도커 허용
 - 운영 도메인: sogaebank.com (가비아 등록, AWS 사용) — 문서에 있던 sogaebaenk.co.kr 아님
 - 외부 연동 신청 발신 IP: 3.37.95.217 (바꾸지 않음)
