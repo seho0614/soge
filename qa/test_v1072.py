@@ -107,15 +107,19 @@ if API:
         except Exception: js = None
         return st, js
     login = lambda e: call('POST', '/auth/login', body={'email': e, 'password': 'sgb-dev-1234'})[1]['accessToken']
-    ADM, MEM = login('admin@x.com'), login(os.environ.get('MEMBER', 'member@t.local'))
+    ADM, MEM = login('admin@x.com'), login(os.environ.get('MEMBER', 'person@x.com'))
     st, js = call('GET', '/admin/community/posts?state=PUBLISHED&size=5', ADM)
     ok('④ 글 찾기 — 운영자 200 · 모양', st == 200 and isinstance(js, dict) and {'items', 'total', 'page', 'size', 'pages'} <= set(js) and js['size'] == 5, f'{st}')
     st2, _ = call('GET', '/admin/community/posts', MEM)
     st3, _ = call('GET', '/admin/community/posts?state=NOPE', ADM)
     ok('④ 글 찾기 — 일반 회원 403 · 없는 상태 400', st2 == 403 and st3 == 400, f'{st2} {st3}')
-    tgt = (js or {}).get('items') or []
-    if tgt:
-        pid = tgt[0]['id']
+    # 시험 글을 직접 만듭니다(회원이 쓰고 · 첫 글이면 운영자가 승인) — 남의 글을 건드리지 않게
+    tag = uuid.uuid4().hex[:6]
+    sc, jc = call('POST', '/me/community/posts', MEM, {'board': 'QNA', 'title': f'점검 되살리기 {tag}', 'body': f'점검 되살리기 본문입니다 {tag}'})
+    pid = (jc or {}).get('id')
+    if pid and (jc or {}).get('state') == 'PENDING':
+        call('POST', f'/admin/community/posts/{pid}/approve', ADM)
+    if pid:
         s1, _ = call('POST', f'/admin/community/posts/{pid}/hide', ADM, {'reason': '점검 감추기'})
         s2, j2 = call('GET', '/admin/community/posts?state=HIDDEN&size=50', ADM)
         s3, _ = call('POST', f'/admin/community/posts/{pid}/unhide', ADM, {'reason': ' '})
@@ -126,7 +130,7 @@ if API:
         ok('④ 되살리기 — 사유 없으면 422 · 되살림 · 다시 누르면 409 · 회원 403', s3 == 422 and s4 in (200, 201) and (j4 or {}).get('ok') is True and s5 == 409 and s6 == 403,
            f'{s3} {s4} {s5} {s6} {j4}')
     else:
-        ok('④ 공개 글 1건 이상', False, 'items 0')
+        ok('④ 시험 글 쓰기', False, f'{sc} {jc}')
 else:
     print('     (API 없음 — ④ 건너뜀 · API=http://localhost:13000/api/v1 로 점검판에서)')
 
