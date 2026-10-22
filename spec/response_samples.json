@@ -2511,6 +2511,31 @@
   "ok": false,
   "note": "사유를 적으십시오. 안 적으면 같은 글이 다시 올라옵니다."
  },
+ "get /api/v1/admin/community/posts": {
+  "items": [
+   {
+    "id": "669694ce-81a7-4996-b9d7-62f9c5ac755a",
+    "board": "QNA",
+    "title": "표본 수집 — 소개비 세금계산서는 누가 끊나요",
+    "state": "HIDDEN",
+    "reportCount": 3,
+    "commentCount": 0,
+    "createdAt": "2026-10-22T09:00:00.000Z",
+    "hiddenAt": "2026-10-22T10:00:00.000Z",
+    "hiddenReason": "신고 3건 — 운영 확인 대기",
+    "author": "김소개"
+   }
+  ],
+  "total": 1,
+  "page": 1,
+  "size": 20,
+  "pages": 1
+ },
+ "post /api/v1/admin/community/posts/{id}/unhide": {
+  "ok": true,
+  "dismissed": 3,
+  "note": "다시 올렸습니다. 처리 전 신고 3건은 기각으로 닫았습니다."
+ },
  "patch /api/v1/me/community/posts/{id}": {
   "ok": true,
   "id": "669694ce-81a7-4996-b9d7-62f9c5ac755a",

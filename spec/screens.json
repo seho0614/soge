@@ -3071,6 +3071,8 @@
     "GET /admin/community/queue",
     "POST /admin/community/posts/{id}/approve",
     "POST /admin/community/posts/{id}/hide",
+    "GET /admin/community/posts",
+    "POST /admin/community/posts/{id}/unhide",
     "GET /admin/safety/cases",
     "POST /admin/safety/cases/{no}/hide",
     "GET /admin/community/food/places",
