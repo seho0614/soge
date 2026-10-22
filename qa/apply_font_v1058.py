@@ -96,4 +96,65 @@ if sel:   # 시안 — 같은 화면의 규칙만(선택자로 고름). 묶음 2
     pr0 = open(p, encoding='utf-8').read()
     pr = re.sub(r'(<style[^>]*>)(.*?)(</style>)', lambda m: m.group(1) + keep_comments(m.group(2), lambda c: fix(c, sel)) + m.group(3), pr0, flags=re.S)
     if pr != pr0: open(p, 'w', encoding='utf-8').write(pr)
-print(f'묶음 {GROUP} · 실제 웹 {len(done)} 파일', web, '· 시안', dict(STAT))
+extra = {}
+if GROUP == '3':
+    # v10.60 마무리 — 시안 전체 <style> · 시안 화면 코드 안 style="…" · 사용자 웹 .tsx 안 크기
+    SM, MD, LG = 'var(--sgb-r-sm, 7px)', 'var(--sgb-r-md, 11px)', 'var(--sgb-r-lg, 16px)'
+    SH, UP = 'var(--sgb-shadow, 4px 4px 8px rgba(0, 0, 0, .04))', 'var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10))'
+    def inline(txt):
+        n = {'fs': 0, 'r': 0, 'sh': 0}
+        def f1(m):
+            v = float(m.group(2)); t = v if v > 30 else (12 if v < 12 else step(v))
+            if t == v: return m.group(0)
+            n['fs'] += 1; return f'{m.group(1)}{t:g}px'
+        txt = re.sub(r'(font-size:\s*)([\d.]+)px(?=\s*[;"\'])', f1, txt)
+        def f2(m):
+            v = float(m.group(2))
+            if v <= 4: return m.group(0)
+            t = '999px' if v >= 20 else SM if v <= 9 else MD if v <= 13.5 else LG
+            if t == m.group(2) + 'px': return m.group(0)
+            n['r'] += 1; return m.group(1) + t
+        txt = re.sub(r'(border-radius:\s*)([\d.]+)px(?=\s*[;"\'])', f2, txt)
+        def f3(m):
+            v = m.group(2)
+            if 'inset' in v or 'var(' in v or re.match(r'\s*0 0 0 ', v): return m.group(0)
+            nums = [float(x) for x in re.findall(r'(-?[\d.]+)px', re.sub(r'rgba?\([^)]*\)', '', v))]
+            if len(nums) < 2: return m.group(0)
+            n['sh'] += 1; return m.group(1) + (UP if (len(nums) > 2 and nums[2] >= 16) or nums[1] >= 6 else SH)
+        txt = re.sub(r'(box-shadow:\s*)([^;"\']*\d+px[^;"\']*)(?=[;"\'])', f3, txt)
+        return txt, n
+    p = os.path.join(CORE, 'spec/proto.html')
+    pr0 = open(p, encoding='utf-8').read()
+    for k in STAT: STAT[k] = 0
+    pr = re.sub(r'(<style[^>]*>)(.*?)(</style>)', lambda m: m.group(1) + keep_comments(m.group(2), fix) + m.group(3), pr0, flags=re.S)
+    parts = re.split(r'(<style[^>]*>.*?</style>)', pr, flags=re.S)
+    tot = {'fs': 0, 'r': 0, 'sh': 0}
+    for i in range(0, len(parts), 2):
+        parts[i], c = inline(parts[i])
+        for k in tot: tot[k] += c[k]
+    pr = ''.join(parts)
+    if pr != pr0: open(p, 'w', encoding='utf-8').write(pr)
+    extra['시안 <style>'] = dict(STAT); extra['시안 style="…"'] = tot
+    # 사용자 웹 .tsx — style={{ fontSize: N }} (차트 안 SVG <text> 는 그림 좌표라 그대로)
+    SRC = os.path.join(CORE, 'site/src')
+    nt = 0
+    for root, _, fs in os.walk(SRC):
+        for f in fs:
+            if not f.endswith('.tsx'): continue
+            q = os.path.join(root, f); t0 = open(q, encoding='utf-8').read()
+            def f4(m):
+                global nt
+                line_start = t0.rfind('\n', 0, m.start()) + 1
+                if '<text' in t0[line_start:m.start()]: return m.group(0)
+                v = float(m.group(2)); t = v if v > 30 else (12 if v < 12 else step(v))
+                if t == v: return m.group(0)
+                nt += 1
+                return m.group(1) + (f"'{t:g}px'" if m.group(3) else f'{t:g}')
+            t1 = re.sub(r"(fontSize:\s*)'?([\d.]+)(px')?", f4, t0)
+            if t1 != t0: open(q, 'w', encoding='utf-8').write(t1)
+    extra['.tsx 글자 크기'] = nt
+    # 소개코드 이동 쪽(route.ts 안 HTML) — 시트 숫자 그대로(이 쪽은 시트 파일을 불러오지 않음)
+    q = os.path.join(SRC, 'app/r/[code]/route.ts'); t0 = open(q, encoding='utf-8').read()
+    t1 = t0.replace('border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06)', 'border-radius:16px;box-shadow:4px 4px 8px rgba(0,0,0,.04)').replace('padding:10px 18px;border-radius:8px;', 'padding:10px 18px;border-radius:7px;')
+    if t1 != t0: open(q, 'w', encoding='utf-8').write(t1); extra['route.ts'] = 1
+print(f'묶음 {GROUP} · 실제 웹 {len(done)} 파일', web, '· 시안', dict(STAT), extra)
