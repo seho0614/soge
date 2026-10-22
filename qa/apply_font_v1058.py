@@ -74,6 +74,12 @@ def keep_comments(css, fn):
 
 
 files, sel = GROUPS[GROUP]
+if GROUP == '2':
+    # 관 화면 CSS 는 시안 클래스에 gw- · w1- 를 붙인 사본(.panel → .gw-panel) — 시안에서는 앞머리를 뗀 같은 이름의 규칙을 고릅니다
+    names = set()
+    for f in files:
+        names |= set(re.findall(r'\.(?:gw|w1)-([a-zA-Z][\w-]*)', re.sub(r'/\*[\s\S]*?\*/', '', open(os.path.join(ST, f), encoding='utf-8').read())))
+    sel = r'\.(?:' + '|'.join(sorted(map(re.escape, names), key=len, reverse=True)) + r')(?![\w-])'
 if files is None:
     used = set(GROUPS['1'][0]) | set(GROUPS['2'][0]) | {'sgb-tokens.css', 'noto-sans-kr.css', 'money-fonts.css'}
     files = sorted(f for f in os.listdir(ST) if f.endswith('.css') and f not in used)
