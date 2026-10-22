@@ -367,7 +367,7 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
           {need && !t && <div className="empty need" role="alert">무엇을 소개받고 싶은지 적어 주세요.</div>}
           {empty && (
             <div className="empty">찾으시는 것이 없습니다.<br />
-              <span style={{ fontSize: '11.5px' }}>다른 말로 해 보시거나 위 추천 검색어를 눌러 보십시오.</span>
+              <span style={{ fontSize: '12px' }}>다른 말로 해 보시거나 위 추천 검색어를 눌러 보십시오.</span>
             </div>
           )}
           {groups.map((g) => (

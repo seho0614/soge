@@ -80,7 +80,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <span className={`hlt-bdg ${seller ? 'direct' : 'tenant'}`}>{seller ? '직판' : '입점'}</span>
             {' '}<span className="hlt-sm hlt-mut">{p.sellerName ?? '소개뱅크 직판관'}</span>
           </div>
-          {ing && <div className="hlt-ingline" data-ingline="1" style={{ fontSize: 15, marginTop: 9 }}>{ing.name}{ing.amount && <> <span className="bar">|</span> {ing.amount}</>}</div>}
+          {ing && <div className="hlt-ingline" data-ingline="1" style={{ fontSize: 14, marginTop: 9 }}>{ing.name}{ing.amount && <> <span className="bar">|</span> {ing.amount}</>}</div>}
           <h1>{p.name}</h1>
           {(p.reviewCount ?? 0) > 0 && <Link className="hlt-rvline" href={`/health/p/${encodeURIComponent(code)}?tab=reviews#reviews`} data-rating-line>
             <span className="hlt-stars">{stars(Number(p.ratingAvg ?? 0))}</span> {Number(p.ratingAvg ?? 0).toFixed(1)} · 리뷰 {p.reviewCount}개</Link>}
@@ -89,7 +89,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
           <div className="hlt-p26" style={{ margin: '14px 0 2px' }}>{p.offPct ? <span className="was">{krw(p.listPrice)}</span> : null}</div>
           <div className="hlt-p26">
             {p.offPct ? <span className="off" style={{ fontSize: 20 }}>{p.offPct}%</span> : null}
-            <span className="now" style={{ fontSize: 25 }}>{krw(p.price)}</span>
+            <span className="now" style={{ fontSize: 24 }}>{krw(p.price)}</span>
           </div>
           {p.minUnit != null && (p.optionCount ?? 1) > 1 && (
             <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 6 }}>최대 할인가 <b>한 달 {krw(p.minUnit)}</b> (지금 살 수 있는 옵션 기준)</div>

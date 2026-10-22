@@ -47,13 +47,13 @@ export default async function InvitePage({ params }: Props) {
 
       <div className="w1-panel" style={{ padding: '14px 16px', marginTop: 12 }}>
         <span className="w1-ls">소개하는 분</span>
-        <div style={{ fontSize: 17, fontWeight: 800, margin: '2px 0' }}>{inv.introducer}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, margin: '2px 0' }}>{inv.introducer}</div>
         <span className="w1-ls">{inv.gradeLabel ?? '소개자'} · 유효 연결 {inv.introducerValid ?? 0}건</span>
       </div>
 
       <h2 className="w1-h2" style={{ marginTop: 20 }}>어떤 요청입니까</h2>
       <div className="w1-panel" style={{ padding: '14px 16px' }} data-invite-request>
-        <b style={{ fontSize: 15 }}>{inv.title}</b>
+        <b style={{ fontSize: 14 }}>{inv.title}</b>
         <p className="w1-ls" style={{ margin: '4px 0 8px' }}>{[inv.gwanName, inv.region, inv.categoryName].filter(Boolean).join(' · ')}</p>
         {inv.body && <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'var(--ink-2)' }}>{inv.body}</p>}
       </div>

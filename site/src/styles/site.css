@@ -99,7 +99,7 @@
 .detail-main h1 { font-size: var(--fs-xl); font-weight: 900; letter-spacing: -.5px; margin: 0 0 var(--sp-3); }
 .detail-fee { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-4);
               padding-bottom: var(--sp-4); border-bottom: 1px solid var(--line); }
-.detail-fee .money { font-size: 26px; }
+.detail-fee .money { font-size: 24px; }
 .detail-meta { display: grid; grid-template-columns: 72px 1fr; gap: var(--sp-2) var(--sp-3);
                font-size: var(--fs-sm); margin: 0 0 var(--sp-4); }
 .detail-meta dt { color: var(--ink-3); }
@@ -456,13 +456,13 @@
 .invite-card{margin:16px 0;padding:18px 20px}
 .invite-gwan{display:inline-block;padding:3px 10px;border-radius:999px;
   background:var(--accent-w);color:var(--accent);font-size:12px;font-weight:800;margin-bottom:8px}
-.invite-subject{font-size:17px;font-weight:900;line-height:1.45;letter-spacing:-.3px}
+.invite-subject{font-size:16px;font-weight:900;line-height:1.45;letter-spacing:-.3px}
 .invite-memo{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);
   color:var(--ink-2);font-size:14px;white-space:pre-wrap}
 
 .invite-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .invite-actions .btn{width:100%}
-.invite-foot{margin:2px 0 0;text-align:center;color:var(--ink-3);font-size:12.5px}
+.invite-foot{margin:2px 0 0;text-align:center;color:var(--ink-3);font-size:12px}
 @media(min-width:560px){
   .invite-actions{flex-direction:row}
   .invite-actions .btn{width:auto;flex:1}
@@ -472,23 +472,23 @@
 /* ── 파트너센터 (SB-PTC-*) ──────────────────────────────────────────
  * 파트너는 숫자를 보러 옵니다 — 읽기 쉬운 표와 지표가 전부입니다. */
 .page{max-width:960px;margin:0 auto;padding:24px 20px 56px}
-.page h1{font-size:23px;font-weight:900;letter-spacing:-.5px;margin:0 0 6px}
-.page h2{font-size:15.5px;font-weight:900;margin:28px 0 10px}
+.page h1{font-size:24px;font-weight:900;letter-spacing:-.5px;margin:0 0 6px}
+.page h2{font-size:14px;font-weight:900;margin:28px 0 10px}
 .page .lead{color:var(--ink-2);font-size:14px;margin:0 0 20px;max-width:640px}
 
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
 @media(max-width:640px){.kpis{grid-template-columns:1fr}}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:16px 18px}
 .kpi .k{font-size:12px;color:var(--ink-3);margin-bottom:5px}
-.kpi .v{font-size:22px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
-.kpi .n{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.kpi .v{font-size:20px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.kpi .n{font-size:12px;color:var(--ink-3);margin-top:3px}
 
 .page .tbl td.num,.page .tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
 .page .tbl .dim{color:var(--ink-3)}
 .page .tbl tr.mine{background:var(--accent-w)}
 .page .tbl td.reason{color:var(--ink-2);font-size:13px;max-width:280px}
 
-.st{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.st{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700}
 .st.ok{background:var(--money-w);color:var(--money)}
 .st.wait{background:var(--surface);color:var(--ink-2)}
 .st.no{background:var(--danger-w);color:var(--danger)}
@@ -506,14 +506,14 @@
   background:var(--surface);margin-bottom:8px}
 .notice-list li.unread{border-left:3px solid var(--accent)}
 .nt-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-.nt-body{margin:6px 0 0;color:var(--ink-2);font-size:13.5px;white-space:pre-wrap}
+.nt-body{margin:6px 0 0;color:var(--ink-2);font-size:14px;white-space:pre-wrap}
 
 /* ── 성향 설문 (SB-AIS-PRF-010) · 분류 (SB-AIS-CLS-010) ─────────────
  * 고르기 쉬워야 끝까지 답합니다 — 중간에 그만두면 아무 소용이 없습니다. */
 .survey{margin:20px 0}
 .q{border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:18px 20px;margin:0 0 14px;
   background:var(--surface)}
-.q legend{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;
+.q legend{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;
   padding:0 6px;letter-spacing:-.2px}
 .q-no{display:inline-flex;align-items:center;justify-content:center;
   width:22px;height:22px;border-radius:999px;background:var(--accent);color:#fff;
@@ -549,8 +549,8 @@
 .grid-links .card-link{display:block;padding:16px 18px;border:1px solid var(--line);
   border-radius:var(--sgb-r-md, 11px);background:var(--surface);text-decoration:none;color:inherit}
 .grid-links .card-link:hover{border-color:var(--accent)}
-.grid-links .card-link strong{display:block;font-size:14.5px;font-weight:800;margin-bottom:3px}
-.grid-links .card-link span{font-size:12.5px;color:var(--ink-3)}
+.grid-links .card-link strong{display:block;font-size:14px;font-weight:800;margin-bottom:3px}
+.grid-links .card-link span{font-size:12px;color:var(--ink-3)}
 
 /* 카드 번호 뒤 4자리 등 — 자릿수가 눈에 들어와야 합니다. */
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
@@ -572,14 +572,14 @@
 .evs{display:grid;gap:12px;margin:16px 0}
 .ev{background:var(--surface);border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:18px 20px}
 .evh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
-.evh h2{font-size:16.5px;font-weight:900;margin:0;letter-spacing:-.3px;line-height:1.4}
-.evs-sum{margin:7px 0 0;color:var(--ink-2);font-size:13.5px;line-height:1.6}
+.evh h2{font-size:16px;font-weight:900;margin:0;letter-spacing:-.3px;line-height:1.4}
+.evs-sum{margin:7px 0 0;color:var(--ink-2);font-size:14px;line-height:1.6}
 .evb{display:flex;gap:10px;align-items:baseline;margin:13px 0 0;padding:11px 14px;
   border-radius:var(--sgb-r-sm, 7px);background:var(--accent-w)}
 .evb .k{flex:0 0 auto;font-size:12px;color:var(--ink-3);font-weight:700}
-.evb strong{font-size:14.5px;font-weight:900;color:var(--accent)}
-.evf{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12.5px}
-.ls{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.evb strong{font-size:14px;font-weight:900;color:var(--accent)}
+.evf{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px}
+.ls{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
 
 /* ── 검정이 잡은 미정의 클래스 (2026-09-23) ──────────────────────
    없는 클래스는 ★ 조용히 무시됩니다 — 눈으로는 못 찾습니다. */
@@ -600,8 +600,8 @@
 /* ── 나머지 미정의 클래스 (2026-09-23) ──────────────────────────
    계약 화면 · 가입 유형 선택에서 쓰는 것들입니다. */
 .wrap{max-width:1200px;margin:0 auto;padding:0 16px}
-.sub{font-size:12.5px;color:var(--ink-3,#888780);margin-top:3px}
-.t{font-size:13.5px;font-weight:600}
+.sub{font-size:12px;color:var(--ink-3,#888780);margin-top:3px}
+.t{font-size:14px;font-weight:600}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line,#E8E8E4);
       margin-bottom:14px;overflow-x:auto}
 .tabs>*{padding:9px 14px;font-size:13px;font-weight:600;
@@ -676,7 +676,7 @@
 .myhome .prof { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--line);
                 border-radius: var(--sgb-r-md, 11px); background: var(--paper); margin: var(--sp-3) 0 var(--sp-4); }
 .myhome .prof .av { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff;
-                    display: grid; place-items: center; font-size: 21px; font-weight: 900; flex: none; }
+                    display: grid; place-items: center; font-size: 20px; font-weight: 900; flex: none; }
 .myhome .prof .pi { flex: 1; min-width: 0; }
 .myhome .prof .pi > b { font-size: 16px; font-weight: 900; }
 .myhome .prof .ps { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
@@ -685,14 +685,14 @@
                 display: flex; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
 .myhome .tile:hover, .myhome .mcard:hover { border-color: var(--accent); }
 .myhome .tile .tl { font-size: 12px; color: var(--ink-3); font-weight: 700; }
-.myhome .tile b { font-size: 21px; font-weight: 900; letter-spacing: -.5px; }
-.myhome .tile .tu { font-size: 11.5px; color: var(--ink-3); }
+.myhome .tile b { font-size: 20px; font-weight: 900; letter-spacing: -.5px; }
+.myhome .tile .tu { font-size: 12px; color: var(--ink-3); }
 .myhome .s2 { font-size: var(--fs-md); margin: var(--sp-5) 0 var(--sp-3); }
 .myhome .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .myhome .mcard { background: var(--paper); border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); padding: 14px;
                  display: flex; flex-direction: column; gap: 4px; color: inherit; text-decoration: none; }
-.myhome .mcard b { font-size: 13.5px; font-weight: 800; }
-.myhome .mcard b i { font-style: normal; font-size: 11px; color: var(--accent); }
+.myhome .mcard b { font-size: 14px; font-weight: 800; }
+.myhome .mcard b i { font-style: normal; font-size: 12px; color: var(--accent); }
 .myhome .mcard span { font-size: 12px; color: var(--ink-3); line-height: 1.55; }
 @media (max-width: 768px) { .myhome .tiles { grid-template-columns: repeat(2, 1fr); } .myhome .mgrid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 420px) { .myhome .mgrid { grid-template-columns: 1fr; } }
@@ -736,4 +736,4 @@
 .notice.notice-ok p { margin: 4px 0 0; font-size: var(--fs-sm); }
 /* v10.32 (추가) — 신고하기(SB-HOM-RPT-010) 「본인인증이 필요합니다」 띠: 시안 .nt.warn(연한 살구 #FFF7ED · 테두리 같은 색) · 굵은 줄은 따로 한 줄 */
 .page .note.warn.rpt-idv{background:#FFF7ED;border:1px solid #FFF7ED;border-radius:var(--sgb-r-sm, 7px);padding:12px 14px;font-size:13px;line-height:1.65;color:var(--ink)}
-.page .note.warn.rpt-idv > b{display:block;margin-bottom:4px;font-size:12.5px;color:var(--ink)}
+.page .note.warn.rpt-idv > b{display:block;margin-bottom:4px;font-size:12px;color:var(--ink)}

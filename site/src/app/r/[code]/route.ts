@@ -43,9 +43,9 @@ function unavailable(message: string, status = 404) {
 :root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--fg:#1d2330;--dim:#5b6475;--pri:#1f5eff}
 @media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--fg:#e8ebf1;--dim:#a2abbb;--pri:#6f97ff}}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-main{max-width:440px;margin:12vh auto;padding:32px 24px;background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);text-align:center}
+main{max-width:440px;margin:12vh auto;padding:32px 24px;background:var(--card);border-radius:16px;box-shadow:4px 4px 8px rgba(0,0,0,.04);text-align:center}
 h1{font-size:20px;margin:0 0 8px}p{color:var(--dim);margin:0 0 20px}
-a{display:inline-block;padding:10px 18px;border-radius:8px;background:var(--pri);color:#fff;text-decoration:none;font-weight:600}
+a{display:inline-block;padding:10px 18px;border-radius:7px;background:var(--pri);color:#fff;text-decoration:none;font-weight:600}
 </style></head><body><main data-testid="aff-link-unavailable">
 <h1>링크를 열 수 없습니다</h1><p>${esc(message)}</p><a href="/">소개뱅크 홈으로</a>
 </main></body></html>`;

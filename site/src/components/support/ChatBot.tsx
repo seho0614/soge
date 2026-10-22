@@ -86,7 +86,7 @@ export function ChatBot({ qa, loggedIn }: { qa: BotQa[]; loggedIn: boolean }) {
                 {(r.go || (r.hand && !handed)) && (
                   <div className="w1-cgo">
                     {r.go && <Link className="w1-bo sm" href={r.go[0]}>{r.go[1]}</Link>}
-                    {r.hand && !handed && <button type="button" className="w1-bp" style={{ padding: '6px 12px', fontSize: 12.5 }} onClick={() => void handoff()} disabled={busy}>상담원 연결</button>}
+                    {r.hand && !handed && <button type="button" className="w1-bp" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => void handoff()} disabled={busy}>상담원 연결</button>}
                   </div>
                 )}
               </div>

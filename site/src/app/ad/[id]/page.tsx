@@ -46,7 +46,7 @@ export default async function AdLanding({ params, searchParams }: {
           <span className="w1-blind" style={{ background: 'var(--g200)', color: 'var(--g900)' }}>{c.label ?? '광고'}</span>
           <span className="w1-ls">{[c.advertiser, c.category, c.code].filter(Boolean).join(' · ')}</span>
         </div>
-        <h1 style={{ margin: '10px 0 6px', fontSize: 22, fontWeight: 900, letterSpacing: '-.6px' }}>{c.title}</h1>
+        <h1 style={{ margin: '10px 0 6px', fontSize: 20, fontWeight: 900, letterSpacing: '-.6px' }}>{c.title}</h1>
         {c.body && <p style={{ margin: '0 0 14px', color: 'var(--ink-2)', lineHeight: 1.7 }}>{c.body}</p>}
         <h2 className="w1-h2" style={{ marginTop: 18 }}>광고주 페이지 미리보기</h2>
         <div className="w1-nt" data-adl-cta="1"><b>{c.cta ?? '자세히 보기'}</b><br />

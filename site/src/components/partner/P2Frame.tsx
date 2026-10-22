@@ -65,7 +65,7 @@ export function P2Hero({ name }: { name: string }) {
     <div className={`p2hero${dash ? ' dash' : ''}`}>
       <div className="p2herotx">
         <div className="h1">{name}</div>
-        <div className="h1">오늘도 수익을 만들어보세요 <span style={{ fontSize: 22 }} aria-hidden>💙</span></div>
+        <div className="h1">오늘도 수익을 만들어보세요 <span style={{ fontSize: 20 }} aria-hidden>💙</span></div>
         <p>좋은 제품을 소개하는 당신이, 더 많은 사람에게 좋은 변화를 만듭니다.<br />소개뱅크 PARTNERS가 항상 함께합니다.</p>
       </div>
       {dash ? (

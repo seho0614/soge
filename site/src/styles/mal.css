@@ -213,7 +213,7 @@
    지역 두 칸(시 · 도 + 시 · 군 · 구) · 카드 머리 줄 · 연락처 안내는 개발 기능이라 그대로(열 560 안에 둠). */
 .mal.mal-csl33 { max-width: 1140px; margin: 0 auto; font-size: 14px; }
 .mal.mal-csl33 .mal-head { display: block; margin: 6px 0 22px; }
-.mal.mal-csl33 .mal-head h1 { font-size: 23px; font-weight: 900; margin: 0; }
+.mal.mal-csl33 .mal-head h1 { font-size: 24px; font-weight: 900; margin: 0; }
 .mal.mal-csl33 .mal-head .mal-desc { margin: 6px 0 0; font-size: 13px; color: var(--g500, #6B7280); }
 .mal.mal-csl33 .mal-panel { padding: 18px 20px 20px; border-radius: var(--sgb-r-md, 11px); border-color: var(--g200, #E5E7EB); }
 .mal.mal-csl33 .mal-sh2 { max-width: none; }
@@ -223,10 +223,10 @@
 .mal.mal-csl33 .mal-form .fld input, .mal.mal-csl33 .mal-form .fld select, .mal.mal-csl33 .mal-form .fld textarea {
   height: 40px; padding: 9px 12px; border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-sm, 7px); font-size: 14px; background: #fff; }
 .mal.mal-csl33 .mal-form .fld textarea { height: auto; min-height: 84px; }
-.mal.mal-csl33 .mal-form label.chk { border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-md, 11px); padding: 14px; background: #fff; font-size: 12.5px; gap: 8px; }
+.mal.mal-csl33 .mal-form label.chk { border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-md, 11px); padding: 14px; background: #fff; font-size: 12px; gap: 8px; }
 .mal.mal-csl33 .mal-btn { border-radius: var(--sgb-r-sm, 7px); font-size: 13px; padding: 8px 18px; }
 .mal.mal-csl33 .mal-btn.ghost:not(:disabled) { border-color: var(--g200, #E5E7EB); color: var(--g700, #374151); background: #fff; font-weight: 500; padding: 7px 16px; }
-.mal.mal-csl33 .mal-btn.ghost.sm { padding: 7px 12px; font-size: 12.5px; }
+.mal.mal-csl33 .mal-btn.ghost.sm { padding: 7px 12px; font-size: 12px; }
 .mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled) { background: #7C3AED; border-color: #7C3AED; color: #fff; }
 .mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled):hover { background: #6D28D9; }
 .mal.mal-csl33 .mal-act { margin-top: 4px; }

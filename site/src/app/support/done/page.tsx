@@ -31,7 +31,7 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
           사업자 인증 · 정산 관련 문의는 확인에 시간이 더 걸릴 수 있습니다. <b>분쟁 조정</b>은 이 창구가 아니라 분쟁 접수에서 해야 정산 보류가 걸립니다.</div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 18 }}>
           <Link className="w1-bo" href="/support/history">문의 내역 보기</Link>
-          <Link className="w1-bor" href="/" style={{ padding: '9px 16px', fontSize: 13.5 }}>메인으로</Link>{/* v10.32 — 시안 주황 */}
+          <Link className="w1-bor" href="/" style={{ padding: '9px 16px', fontSize: 14 }}>메인으로</Link>{/* v10.32 — 시안 주황 */}
         </div>
       </div>
     </div>

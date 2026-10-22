@@ -108,11 +108,11 @@ export default async function RequestDetail({ params }: Props) {
           <div className="w1-panel" style={{ padding: 17 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 7, marginBottom: 9 }}>
               <span className={`w1-gb2 ${GCLS[r.gwanCode] ?? 'm'}`}>{gn}</span>
-              {r.categoryName && <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{r.categoryName}</span>}
+              {r.categoryName && <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{r.categoryName}</span>}
               {r.closed ? <span className="w1-dday">마감</span>
                 : r.dday != null && <span className={`w1-dday${soon ? ' soon' : ''}`}>D-{r.dday}</span>}
             </div>
-            <h1 style={{ margin: '0 0 9px', fontSize: 22, fontWeight: 900, letterSpacing: '-.8px', lineHeight: 1.35, overflowWrap: 'anywhere' }}>{r.title}</h1>
+            <h1 style={{ margin: '0 0 9px', fontSize: 20, fontWeight: 900, letterSpacing: '-.8px', lineHeight: 1.35, overflowWrap: 'anywhere' }}>{r.title}</h1>
             {!!r.images?.length && (
               <div className="w1-rqimg" data-request-images={r.images.length}>
                 {r.images.map((u, i) => <a key={u} href={u} target="_blank" rel="noopener"><img src={u} alt={i === 0 ? '대표 이미지' : `상세 이미지 ${i}`} loading="lazy" /></a>)}
@@ -167,7 +167,7 @@ export default async function RequestDetail({ params }: Props) {
               그래서 여기서는 <b>요청자가 수락한 제안</b>에 귀속이 붙습니다.</span>
           </div>
           <div className="w1-panel" style={{ padding: 15, marginTop: 12 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 7 }}>제안이 수락되면</div>
+            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 7 }}>제안이 수락되면</div>
             <div className="w1-nt3">① 1:1 대화가 열리고 Deal이 생성됩니다<br />
               ② 소개코드가 발급됩니다 — 이때 <b>양측 구독을 검사</b>합니다(INV-8)<br />
               ③ 이후 흐름은 “소개 합니다”와 같습니다 — 계약 · 성사 확정 · 정산</div>
