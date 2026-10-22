@@ -63,17 +63,18 @@ PC = strip(rd('site/src/styles/proto-common.css'))
 V56 = re.match(r'v10\.(5[6-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.56 메인도 시트로(test_v1056 이 봄)
 ok('proto-common.css — 묶음은 메인(.main-home)만 · 소개광장 · 소개몰 · 생활금융 상담 풀림',
    (V56 or '.main-home {' in PC and '--pp: #7C3AED;' in PC) and not re.search(r'\.main-b2|\.mal-narrow|\.b2-hd|\.b2-ft', PC), 'v10.56 메인 묶음도 풀림 — test_v1056' if V56 else '')
+V62 = re.match(r'v10\.(6[2-9]|[7-9]\d)', rd('VERSION').strip()) is not None    # v10.62 단추 3종 — 단추 색은 test_v1062 가 봄
 PZ = rd('site/src/styles/plaza.css')
 ok('소개광장 — 탭 · 단추 · 링크 = 관 색(--plz-pt) · 제목 = 남색 · 글쓰기 = 관 색 바탕 + 남색 글자',
    '--plz-pt: var(--sgb-point-text)' in PZ and '--plz-orange: var(--sgb-point)' in PZ
-   and '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);' in PZ and '.plz .btn-primary { background: var(--plz-pt);' in PZ
+   and '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);' in PZ and (V62 or '.plz .btn-primary { background: var(--plz-pt);' in PZ)
    and 'color: var(--plz-navy); margin: 0 0 8px;' in PZ and re.search(r'background-color: var\(--plz-orange\); color: var\(--sgb-on-point\); font-size: 2[02]px;', PZ), '')
 V55 = re.match(r'v10\.(5[5-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.55 대비 고침(test_v1055 가 봄)
 ok('소개광장 — 분류 배지 색은 그대로', V55 or '.plz-bd-review { background-color: #FEF3E0; color: #F78013; }' in PZ, 'v10.55 대비 고침 뒤 — test_v1055' if V55 else '')
 SH = rd('site/src/styles/shop.css')
 ok('소개몰 — 초록 = 시트 소개몰 글자색 · 할인 빨강 · 구역 바탕 그대로',
    '--shop-green: var(--sgb-point-text)' in SH and '--shop-red: #E5362F' in SH and '.shop-sec.cream { background: #FDF5E8; }' in SH, '')
-ok('소개몰 — 머리줄 「무료 회원가입」 · 바닥 꼬리표', '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }' in SH and (V55 or 'background: #e9f7ee; color: #12883e;' in SH), '')
+ok('소개몰 — 머리줄 「무료 회원가입」 · 바닥 꼬리표', (V62 or '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }' in SH) and (V55 or 'background: #e9f7ee; color: #12883e;' in SH), '')
 ok('두 관 머리 · 바닥줄 — 시트 값 · 본문 글꼴', '--b2-dim: var(--sgb-ink-3)' in rd('site/src/styles/b2.css') and 'font-family: var(--sgb-font-body);' in rd('site/src/styles/b2.css'), '')
 ok('생활금융 상담 — .mal-proto 관 색이 먹음(묶음 없음)', '.mal-proto { --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }' in rd('site/src/styles/mal.css'), '')
 ok('메인(home.css)은 그대로 — 보라 #5B3DF8', V56 or '--hv: #5B3DF8' in rd('site/src/styles/home.css'), 'v10.56 메인도 시트로 — test_v1056' if V56 else '')
@@ -114,7 +115,7 @@ ok('시안 — 묶어 둔 화면은 메인 히어로 · 운영 화면만(소개�
 ok('시안 — 관 표시(소개광장 plaza · 소개몰 shop · 소개장터 메인 money)', '"cmu":"plaza"' in PR and '"cart":"shop"' in PR and '"list":"money"' in PR and '(SGB_G[key] || "")' in PR, '')
 ok('시안 — 실제 웹과 같은 CSS 고침', all(t in PR for t in (
     '--plz-pt: var(--sgb-point-text)', '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);', '--b2-dim: var(--sgb-ink-3)',
-    '--shop-green: var(--sgb-point-text)', '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }',
+    '--shop-green: var(--sgb-point-text)',
     '.plz { font-family: var(--sgb-font-body); }', '[data-b2-tone=money] .b2-hd { --b2-orange: var(--sgb-orange);')), '')
 ok('시안 — 옛 값 남지 않음', '--plz-navy: #00245A' not in PR and '--shop-green: #17A34A' not in PR and '--b2-dim: #838CA5' not in PR, '')
 
