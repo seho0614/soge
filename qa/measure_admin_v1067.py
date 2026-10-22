@@ -13,6 +13,7 @@ from playwright.sync_api import sync_playwright
 
 CORE, NAME = sys.argv[1], sys.argv[2]
 BASE = os.environ.get('BASE', 'http://localhost:15173')
+VW = int(os.environ.get('VW', '1440'))   # v10.68 — 화면 폭(좁은 화면은 VW=900)
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results_v10_67', NAME)
 os.makedirs(os.path.join(OUT, 'shots'), exist_ok=True)
 menu = open(os.path.join(CORE, 'web/src/lib/adminMenu.ts'), encoding='utf-8').read()
@@ -49,7 +50,7 @@ SCAN = r"""() => {
 }"""
 res = {}
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1440, 'height': 900})
+    b = p.chromium.launch(); pg = b.new_page(viewport={'width': VW, 'height': 900})
     pg.goto(BASE + '/'); pg.wait_for_selector('input[name=email]', timeout=60000)
     pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', 'sgb-dev-1234'); pg.keyboard.press('Enter')
     pg.wait_for_timeout(2500)

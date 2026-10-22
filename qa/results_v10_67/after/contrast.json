@@ -1,0 +1,821 @@
+{
+ "home": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 35,
+   "12px": 14,
+   "23px": 1,
+   "21px": 5,
+   "11.5px": 11,
+   "16px": 1,
+   "18px": 4,
+   "13.5px": 15
+  },
+  "fonts": {
+   "Nanum Square Neo": 87,
+   "Paperlogy": 5
+  },
+  "label": "대시보드"
+ },
+ "reports": {
+  "low": [],
+  "sizes": {
+   "15px": 11,
+   "13px": 297,
+   "12px": 4,
+   "23px": 1,
+   "11.5px": 23,
+   "13.5px": 6,
+   "11px": 7,
+   "20px": 2,
+   "14px": 3,
+   "12.5px": 2
+  },
+  "fonts": {
+   "Nanum Square Neo": 345,
+   "Paperlogy": 10,
+   "monospace": 1
+  },
+  "label": "경영 지표"
+ },
+ "report-queue": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 37,
+   "12px": 7,
+   "23px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 46,
+   "Paperlogy": 1
+  },
+  "label": "신고 처리"
+ },
+ "events": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 33,
+   "12px": 5,
+   "23px": 1,
+   "14px": 2,
+   "11.5px": 5
+  },
+  "fonts": {
+   "Nanum Square Neo": 45,
+   "Paperlogy": 3
+  },
+  "label": "이벤트"
+ },
+ "ai-ops": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 47,
+   "12px": 5,
+   "23px": 1,
+   "12.5px": 6,
+   "11.5px": 2,
+   "14px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 62,
+   "Paperlogy": 2
+  },
+  "label": "AI 운영"
+ },
+ "ad-billing": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 46,
+   "12px": 7,
+   "23px": 1,
+   "14px": 4,
+   "11.5px": 17
+  },
+  "fonts": {
+   "Nanum Square Neo": 72,
+   "Paperlogy": 5
+  },
+  "label": "광고 과금"
+ },
+ "collect": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 43,
+   "12px": 4,
+   "23px": 1,
+   "11.5px": 8,
+   "14px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 57,
+   "Paperlogy": 2
+  },
+  "label": "수집 관리"
+ },
+ "queue": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 38,
+   "12px": 10,
+   "23px": 1,
+   "11px": 3
+  },
+  "fonts": {
+   "Nanum Square Neo": 53,
+   "Paperlogy": 1
+  },
+  "label": "검수 큐"
+ },
+ "badges": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 38,
+   "12px": 5,
+   "23px": 1,
+   "11.5px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 51,
+   "Paperlogy": 5
+  },
+  "label": "배지 신청"
+ },
+ "audit": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 38,
+   "12px": 9,
+   "23px": 1,
+   "18px": 4,
+   "11.5px": 4
+  },
+  "fonts": {
+   "Nanum Square Neo": 57,
+   "Paperlogy": 3
+  },
+  "label": "표본 감사"
+ },
+ "rules": {
+  "low": [],
+  "sizes": {
+   "15px": 7,
+   "13px": 226,
+   "12px": 60,
+   "23px": 1,
+   "11.5px": 13,
+   "11px": 74,
+   "14px": 4
+  },
+  "fonts": {
+   "Nanum Square Neo": 325,
+   "Paperlogy": 10,
+   "IBM Plex Mono": 50
+  },
+  "label": "자동검수 규칙"
+ },
+ "disputes": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 38,
+   "12px": 8,
+   "23px": 1,
+   "21px": 4,
+   "11.5px": 12
+  },
+  "fonts": {
+   "Nanum Square Neo": 64,
+   "Paperlogy": 1
+  },
+  "label": "분쟁"
+ },
+ "category": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 445,
+   "12px": 8,
+   "23px": 1,
+   "14px": 4,
+   "12.5px": 2,
+   "11.5px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 465,
+   "Paperlogy": 3
+  },
+  "label": "업종 승인"
+ },
+ "members": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 140,
+   "12px": 73,
+   "23px": 1,
+   "12.5px": 2,
+   "11.5px": 7
+  },
+  "fonts": {
+   "Nanum Square Neo": 201,
+   "Paperlogy": 1,
+   "IBM Plex Mono": 23
+  },
+  "label": "회원"
+ },
+ "users": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 94,
+   "12px": 24,
+   "23px": 1,
+   "11px": 5,
+   "12.5px": 1,
+   "11.5px": 5
+  },
+  "fonts": {
+   "Nanum Square Neo": 116,
+   "Paperlogy": 3,
+   "IBM Plex Mono": 15
+  },
+  "label": "사업자 인증"
+ },
+ "community": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 41,
+   "12px": 5,
+   "23px": 1,
+   "14px": 5,
+   "11.5px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 53,
+   "Paperlogy": 7
+  },
+  "label": "글 검수"
+ },
+ "polls": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 54,
+   "12px": 17,
+   "23px": 1,
+   "14px": 24,
+   "11.5px": 7
+  },
+  "fonts": {
+   "Nanum Square Neo": 96,
+   "Paperlogy": 8,
+   "monospace": 1
+  },
+  "label": "이건 어때? 투표"
+ },
+ "ownership": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 40,
+   "12px": 4,
+   "23px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 46,
+   "Paperlogy": 3
+  },
+  "label": "소유 확인"
+ },
+ "deals": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 42,
+   "12px": 7,
+   "23px": 1,
+   "11px": 5,
+   "11.5px": 9
+  },
+  "fonts": {
+   "Nanum Square Neo": 63,
+   "Paperlogy": 1,
+   "IBM Plex Mono": 2
+  },
+  "label": "거래 모니터링"
+ },
+ "settlement": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 43,
+   "12px": 4,
+   "23px": 1,
+   "11px": 6,
+   "11.5px": 7
+  },
+  "fonts": {
+   "Nanum Square Neo": 62,
+   "Paperlogy": 1
+  },
+  "label": "정산"
+ },
+ "payouts": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 41,
+   "12px": 8,
+   "23px": 1,
+   "21px": 4,
+   "11.5px": 9,
+   "14px": 8
+  },
+  "fonts": {
+   "Nanum Square Neo": 64,
+   "Paperlogy": 9
+  },
+  "label": "지급"
+ },
+ "hlt-settle": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 90,
+   "12px": 21,
+   "23px": 1,
+   "14px": 11,
+   "11.5px": 12
+  },
+  "fonts": {
+   "Nanum Square Neo": 118,
+   "Paperlogy": 9,
+   "IBM Plex Mono": 10
+  },
+  "label": "소개몰 정산"
+ },
+ "hlt-products": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 417,
+   "12px": 164,
+   "23px": 1,
+   "12.5px": 4,
+   "14px": 9,
+   "11.5px": 43,
+   "10px": 17,
+   "11px": 10
+  },
+  "fonts": {
+   "Nanum Square Neo": 578,
+   "Paperlogy": 12,
+   "IBM Plex Mono": 77
+  },
+  "label": "소개몰 상품"
+ },
+ "hlt-orders": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 40,
+   "12px": 4,
+   "23px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 46,
+   "Paperlogy": 1
+  },
+  "label": "소개몰 주문"
+ },
+ "hlt-reviews": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 40,
+   "12px": 5,
+   "23px": 1
+  },
+  "fonts": {
+   "Nanum Square Neo": 47,
+   "Paperlogy": 1
+  },
+  "label": "소개몰 리뷰 · 문의"
+ },
+ "billing": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 49,
+   "12px": 14,
+   "23px": 1,
+   "14px": 7,
+   "11.5px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 71,
+   "Paperlogy": 8
+  },
+  "label": "청구"
+ },
+ "checklist": {
+  "low": [],
+  "sizes": {
+   "15px": 5,
+   "13px": 85,
+   "12px": 15,
+   "23px": 1,
+   "16px": 1,
+   "11px": 12,
+   "11.5px": 6,
+   "14px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 114,
+   "Paperlogy": 12,
+   "monospace": 5
+  },
+  "label": "오픈 체크리스트"
+ },
+ "policy": {
+  "low": [],
+  "sizes": {
+   "15px": 3,
+   "13px": 231,
+   "12px": 284,
+   "23px": 1,
+   "11.5px": 14,
+   "11px": 101,
+   "14px": 36
+  },
+  "fonts": {
+   "Nanum Square Neo": 492,
+   "Paperlogy": 8,
+   "IBM Plex Mono": 170
+  },
+  "label": "정책"
+ },
+ "siteinfo": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 72,
+   "12px": 41,
+   "23px": 1,
+   "16px": 1,
+   "11px": 7,
+   "11.5px": 5,
+   "14px": 10
+  },
+  "fonts": {
+   "Nanum Square Neo": 115,
+   "Paperlogy": 9,
+   "IBM Plex Mono": 19
+  },
+  "label": "법정 고지"
+ },
+ "integrations": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 97,
+   "12px": 140,
+   "23px": 1,
+   "16px": 1,
+   "11px": 22,
+   "11.5px": 8,
+   "12.5px": 1,
+   "14px": 16
+  },
+  "fonts": {
+   "Nanum Square Neo": 237,
+   "Paperlogy": 8,
+   "IBM Plex Mono": 47
+  },
+  "label": "외부 연동"
+ },
+ "mainops": {
+  "low": [],
+  "sizes": {
+   "15px": 10,
+   "13px": 170,
+   "12px": 70,
+   "23px": 1,
+   "12.5px": 4,
+   "11.5px": 16,
+   "11px": 18
+  },
+  "fonts": {
+   "Nanum Square Neo": 214,
+   "Paperlogy": 9,
+   "IBM Plex Mono": 66
+  },
+  "label": "메인 운영"
+ },
+ "gwans": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 80,
+   "12px": 40,
+   "23px": 1,
+   "12.5px": 4,
+   "11.5px": 9,
+   "11px": 7,
+   "14px": 1,
+   "13.5px": 4
+  },
+  "fonts": {
+   "Nanum Square Neo": 140,
+   "Paperlogy": 2,
+   "IBM Plex Mono": 6
+  },
+  "label": "관 관리"
+ },
+ "hub": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 78,
+   "12px": 4,
+   "23px": 1,
+   "11.5px": 5,
+   "11px": 6,
+   "13.5px": 2
+  },
+  "fonts": {
+   "Nanum Square Neo": 97,
+   "Paperlogy": 5
+  },
+  "label": "통합 허브"
+ },
+ "partners": {
+  "low": [],
+  "sizes": {
+   "15px": 3,
+   "13px": 47,
+   "12px": 35,
+   "23px": 1,
+   "12.5px": 9,
+   "21px": 4,
+   "11.5px": 12,
+   "14px": 2,
+   "11px": 2
+  },
+  "fonts": {
+   "Nanum Square Neo": 99,
+   "Paperlogy": 2,
+   "IBM Plex Mono": 14
+  },
+  "label": "파트너"
+ },
+ "partner-axes": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 32,
+   "12px": 4,
+   "23px": 1,
+   "13.3333px": 3
+  },
+  "fonts": {
+   "Nanum Square Neo": 38,
+   "Paperlogy": 1,
+   "Arial": 3
+  },
+  "label": "안심소개 입점 심사"
+ },
+ "directory": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 34,
+   "12px": 5,
+   "23px": 1,
+   "13.3333px": 7
+  },
+  "fonts": {
+   "Nanum Square Neo": 41,
+   "Paperlogy": 1,
+   "Arial": 7
+  },
+  "label": "법률·세무 정액 노출"
+ },
+ "affiliates": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 34,
+   "12px": 7,
+   "23px": 1,
+   "12.5px": 5
+  },
+  "fonts": {
+   "Nanum Square Neo": 48,
+   "Paperlogy": 3
+  },
+  "label": "제휴"
+ },
+ "quals": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 36,
+   "12px": 10,
+   "23px": 1,
+   "12.5px": 6
+  },
+  "fonts": {
+   "Nanum Square Neo": 54,
+   "Paperlogy": 3
+  },
+  "label": "자격 심사"
+ },
+ "risk": {
+  "low": [],
+  "sizes": {
+   "15px": 3,
+   "13px": 64,
+   "12px": 29,
+   "23px": 1,
+   "11px": 4,
+   "12.5px": 1,
+   "11.5px": 10,
+   "14px": 4
+  },
+  "fonts": {
+   "Nanum Square Neo": 100,
+   "Paperlogy": 2,
+   "IBM Plex Mono": 14
+  },
+  "label": "위험감지"
+ },
+ "ads": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 116,
+   "12px": 133,
+   "23px": 1,
+   "12.5px": 3,
+   "11px": 23,
+   "11.5px": 14,
+   "14px": 4
+  },
+  "fonts": {
+   "Nanum Square Neo": 240,
+   "Paperlogy": 3,
+   "monospace": 1,
+   "IBM Plex Mono": 54
+  },
+  "label": "광고"
+ },
+ "roles": {
+  "low": [],
+  "sizes": {
+   "15px": 5,
+   "13px": 69,
+   "12px": 4,
+   "23px": 1,
+   "12.5px": 2,
+   "11.5px": 10,
+   "11px": 8
+  },
+  "fonts": {
+   "Nanum Square Neo": 95,
+   "Paperlogy": 4
+  },
+  "label": "권한 관리"
+ },
+ "gov-audit": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 76,
+   "12px": 11,
+   "23px": 1,
+   "12.5px": 4,
+   "11.5px": 12,
+   "14px": 3
+  },
+  "fonts": {
+   "Nanum Square Neo": 99,
+   "Paperlogy": 4,
+   "IBM Plex Mono": 6
+  },
+  "label": "감사"
+ },
+ "invariants": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 48,
+   "12px": 20,
+   "23px": 1,
+   "21px": 4,
+   "14px": 5,
+   "11.5px": 5
+  },
+  "fonts": {
+   "Nanum Square Neo": 67,
+   "Paperlogy": 6,
+   "IBM Plex Mono": 12
+  },
+  "label": "불변식"
+ },
+ "codes": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 229,
+   "12px": 394,
+   "23px": 1,
+   "11.5px": 5
+  },
+  "fonts": {
+   "Nanum Square Neo": 240,
+   "Paperlogy": 3,
+   "IBM Plex Mono": 390
+  },
+  "label": "코드 라벨"
+ },
+ "integ": {
+  "low": [],
+  "sizes": {
+   "15px": 4,
+   "13px": 91,
+   "12px": 12,
+   "12.5px": 1,
+   "23px": 1,
+   "11.5px": 18,
+   "19px": 9,
+   "11px": 15
+  },
+  "fonts": {
+   "Nanum Square Neo": 140,
+   "Paperlogy": 3,
+   "IBM Plex Mono": 8
+  },
+  "label": "통합 현황"
+ },
+ "adx": {
+  "low": [],
+  "sizes": {
+   "15px": 7,
+   "13px": 88,
+   "12px": 12,
+   "12.5px": 1,
+   "23px": 1,
+   "11.5px": 13
+  },
+  "fonts": {
+   "Nanum Square Neo": 108,
+   "Paperlogy": 7,
+   "IBM Plex Mono": 7
+  },
+  "label": "외부 송출"
+ },
+ "adx-payout": {
+  "low": [],
+  "sizes": {
+   "15px": 6,
+   "13px": 57,
+   "12px": 4,
+   "12.5px": 1,
+   "23px": 1,
+   "11.5px": 12
+  },
+  "fonts": {
+   "Nanum Square Neo": 76,
+   "Paperlogy": 5
+  },
+  "label": "퍼블리셔 지급"
+ },
+ "gwan-ux": {
+  "low": [],
+  "sizes": {
+   "15px": 2,
+   "13px": 65,
+   "12px": 19,
+   "23px": 1,
+   "14px": 3,
+   "11px": 14,
+   "11.5px": 29
+  },
+  "fonts": {
+   "Nanum Square Neo": 132,
+   "Paperlogy": 1
+  },
+  "label": "관 UI/UX"
+ }
+}
