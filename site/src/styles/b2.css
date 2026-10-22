@@ -41,7 +41,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .b2-lang > summary::-webkit-details-marker { display: none; }
 .b2-langm { position: absolute; right: 0; top: 52px; min-width: 190px; background: #fff; border: 1px solid var(--b2-line); border-radius: var(--sgb-r-md, 11px); padding: 10px 14px; box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); display: flex; flex-direction: column; gap: 4px; z-index: 40; }
 .b2-langm .on { font-weight: 800; color: var(--b2-navy); }
-.b2-langm small { color: var(--b2-dim); font-size: 12.5px; }
+.b2-langm small { color: var(--b2-dim); font-size: 12px; }
 .b2-cart { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; color: var(--b2-orange); text-decoration: none; margin-left: 4px; }
 .b2-cartn { position: absolute; right: 0; top: 2px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: var(--sgb-r-md, 11px); background: var(--b2-navy); color: #fff; font-size: 12px; font-weight: 700; line-height: 19px; text-align: center; box-sizing: border-box; }
 
@@ -49,7 +49,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .b2-ft { background: #fff; padding: 22px 0 28px; margin-top: 0; }
 .b2-ftr { display: flex; align-items: center; gap: 36px; min-height: 66px; }
 .b2-ftl { display: flex; align-items: center; gap: 8px 26px; flex-wrap: wrap; }
-.b2-ftl a, .b2-ftl .tbd { color: var(--b2-ink); font-size: 15px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.b2-ftl a, .b2-ftl .tbd { color: var(--b2-ink); font-size: 14px; font-weight: 800; text-decoration: none; white-space: nowrap; }
 .b2-ftl a:hover { color: var(--b2-navy); }
 .b2-ftl .tbd { color: var(--b2-dim); font-weight: 600; cursor: help; }
 .b2-ftend { margin-left: auto; display: flex; align-items: center; gap: 16px; }
@@ -57,19 +57,19 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 .b2-sns > * { display: inline-flex; }
 .b2-sns span { opacity: .35; cursor: help; }
 .b2-sns img { display: block; border-radius: var(--sgb-r-sm, 7px); }
-.b2-copy { color: var(--b2-dim); font-size: 15px; white-space: nowrap; }
+.b2-copy { color: var(--b2-dim); font-size: 14px; white-space: nowrap; }
 .b2-quick { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #EEF0F4; }
-.b2-quick a { color: #4B5565; font-size: 13.5px; text-decoration: none; }
+.b2-quick a { color: #4B5565; font-size: 14px; text-decoration: none; }
 .b2-quick a:hover { color: var(--b2-navy); text-decoration: underline; }
-.b2-legal { margin-top: 12px; color: #6B7280; font-size: 12.5px; line-height: 1.7; }
+.b2-legal { margin-top: 12px; color: #6B7280; font-size: 12px; line-height: 1.7; }
 .b2-legal p { margin: 0; }
 .b2-legal .tbd { color: #B45309; cursor: help; }
 .b2-notice { margin-top: 6px !important; padding: 8px 12px; background: #F7F8FA; border-radius: var(--sgb-r-sm, 7px); color: #4B5565; }
 
 /* v10.31 (w1) — 로그인 뒤 🔔 · 관리자 페이지 */
 .b2-ntf { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 46px; font-size: 20px; text-decoration: none; flex: none; }
-.b2-ntf .b2-belln { position: absolute; right: 0; top: 2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--sgb-r-sm, 7px); background: #e0001b; color: #fff; font-size: 11.5px; font-weight: 800; line-height: 17px; text-align: center; box-sizing: border-box; }
-.b2-adm { font-size: 15px; padding: 0 16px; }
+.b2-ntf .b2-belln { position: absolute; right: 0; top: 2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--sgb-r-sm, 7px); background: #e0001b; color: #fff; font-size: 11px; font-weight: 800; line-height: 17px; text-align: center; box-sizing: border-box; }
+.b2-adm { font-size: 14px; padding: 0 16px; }
 
 /* ── 좁은 화면 ──
  * v10.31 (F-9) — 1280 ~ 1326px · 901 ~ 1124px 에서 머리줄이 가로로 넘치던 것: 폭을 세 단계로 줄입니다(로고 · 메뉴 글자 · 단추 여백 · 언어 칸).
@@ -81,7 +81,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hd .b2-in { gap: 18px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-logo img { height: 44px; width: auto; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { gap: 22px; margin-left: 8px; }
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 16.5px; }
+  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 16px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-find, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-login, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-join, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-lang > summary { height: 42px; font-size: 16px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-find { width: 42px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-login { padding: 0 18px; }
@@ -93,7 +93,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   .b2-nav { gap: 18px; margin-left: 4px; }
   .b2-nav a { font-size: 16px; }
   .b2-login { padding: 0 16px; } .b2-lang > summary { padding: 0 14px; }
-  .b2-find, .b2-login, .b2-join, .b2-lang > summary { font-size: 15px; height: 40px; }
+  .b2-find, .b2-login, .b2-join, .b2-lang > summary { font-size: 14px; height: 40px; }
   .b2-find { width: 40px; }
 }
 @media (max-width: 1130px) {
@@ -101,7 +101,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-logo img { height: 38px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { gap: 14px; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav::-webkit-scrollbar { display: none; }
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 15px; }
+  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 14px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-lang { display: none; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hdr { gap: 5px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-find, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-login, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-join { height: 38px; font-size: 14px; }
@@ -117,7 +117,7 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   .b2-logo img { height: 36px; width: auto; }
   .b2-nav { order: 3; width: 100%; margin-left: 0; gap: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .b2-nav::-webkit-scrollbar { display: none; }
-  .b2-nav a { font-size: 15px; }
+  .b2-nav a { font-size: 14px; }
   .b2-hdr { gap: 4px; }
   .b2-lang { display: none; }
   .b2-find, .b2-login, .b2-join { height: 34px; font-size: 13px; }
@@ -130,5 +130,5 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 /* v10.31 (w1) — 좁은 화면에서 로그인 뒤 단추(나의공간 · 로그아웃 · 🔔 · 관리자 페이지 · 장바구니)가 넘치지 않게 오른쪽 묶음을 줄바꿈 */
 @media (max-width: 900px) {
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hdr { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-adm { height: 34px; font-size: 12.5px; padding: 0 9px; }
+  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-adm { height: 34px; font-size: 12px; padding: 0 9px; }
 }

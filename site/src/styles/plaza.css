@@ -30,25 +30,25 @@
 .plz-hero .plz-in { position: relative; height: 100%; }
 .plz-hero h1, .plz-hero .plz-h { position: absolute; left: 66px; top: 36px; margin: 0; font-size: 46px; line-height: 1.1; font-weight: 900; letter-spacing: -1.5px; color: var(--plz-navy); }
 .plz-hero .plz-h a { color: inherit; text-decoration: none; }
-.plz-hero .plz-lead { position: absolute; left: 66px; top: 100px; margin: 0; font-size: 21px; line-height: 1.3; font-weight: 500; letter-spacing: -.4px; color: var(--plz-navy); white-space: nowrap; }
+.plz-hero .plz-lead { position: absolute; left: 66px; top: 100px; margin: 0; font-size: 20px; line-height: 1.3; font-weight: 500; letter-spacing: -.4px; color: var(--plz-navy); white-space: nowrap; }
 .plz-find { position: absolute; left: 532px; top: 68px; width: 510px; height: 60px; display: flex; align-items: center; background: #fff; border-radius: 999px; padding: 0 6px 0 28px; box-shadow: 0 0 0 2px rgba(254, 243, 225, .9); box-sizing: border-box; }
-.plz-find input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 17px; color: #000; }
+.plz-find input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: #000; }
 .plz-find input::placeholder { color: #A4ACBD; }
 .plz-find:focus-within { box-shadow: 0 0 0 2px var(--plz-pt); }
 .plz-find button { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--plz-pt); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .plz-say { position: absolute; left: 64px; top: 169px; display: flex; align-items: center; gap: 19px; }
 .plz-mega { width: 104px; height: auto; display: block; flex: none; }
 .plz-note { display: flex; flex-direction: column; font-size: 20px; line-height: 1.45; font-weight: 500; letter-spacing: -.4px; color: #000; }
-.plz-note b { font-size: 22px; font-weight: 800; color: var(--plz-navy); }
+.plz-note b { font-size: 20px; font-weight: 800; color: var(--plz-navy); }
 
 /* 하위 화면의 낮은 띠 */
 .plz-hero.sm { height: 124px; }
 .plz-hero.sm .plz-h { top: 26px; font-size: 36px; }
-.plz-hero.sm .plz-lead { top: 76px; font-size: 17px; }
+.plz-hero.sm .plz-lead { top: 76px; font-size: 16px; }
 
 /* ── 본문 ── */
 .plz-body { padding-top: 31px; padding-bottom: 35px; }
-.plz-body h1 { font-size: 28px; font-weight: 900; letter-spacing: -.6px; color: var(--plz-navy); margin: 0 0 8px; }
+.plz-body h1 { font-size: 30px; font-weight: 900; letter-spacing: -.6px; color: var(--plz-navy); margin: 0 0 8px; }
 .plz-body .page-head { margin: 28px 0 8px; }
 .plz-body .page-head h1 { margin: 0; }
 .plz-body .page-head a { color: var(--plz-pt); }
@@ -62,17 +62,17 @@
 .plz-tabs a:hover { border-color: var(--plz-pt); }
 .plz-tabs a[aria-current=page] { background-color: var(--plz-pt); border-color: var(--plz-pt); color: #fff; }
 
-.plz-found { margin: 18px 0 0; font-size: 15.5px; color: #333; }
+.plz-found { margin: 18px 0 0; font-size: 14px; color: #333; }
 .plz-found b { color: var(--plz-pt); }
 .plz-found a, .plz-empty a, .plz-err a { color: var(--plz-pt); text-decoration: underline; margin-left: 8px; }
-.plz-empty { margin: 31px 0 0; padding: 56px 20px; border: 1px solid var(--plz-line); border-radius: var(--sgb-r-sm, 7px); text-align: center; color: #555; font-size: 17px; }
+.plz-empty { margin: 31px 0 0; padding: 56px 20px; border: 1px solid var(--plz-line); border-radius: var(--sgb-r-sm, 7px); text-align: center; color: #555; font-size: 16px; }
 .plz-err { margin-top: 31px; }
 
 /* 표 */
 .plz-tblw { margin-top: 31px; border: 1px solid var(--plz-line); border-radius: var(--sgb-r-sm, 7px); overflow: hidden; }
 .plz-found + .plz-tblw, .plz-found + .plz-empty { margin-top: 12px; }
 .plz-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 18px; }
-.plz-tbl th { height: 42px; padding: 0; background-color: #F7F8FA; color: var(--plz-navy); font-size: 17px; font-weight: 800; text-align: center; }
+.plz-tbl th { height: 42px; padding: 0; background-color: #F7F8FA; color: var(--plz-navy); font-size: 16px; font-weight: 800; text-align: center; }
 .plz-tbl td { height: 44px; padding: 0 8px; border-top: 1px solid var(--plz-line); text-align: center; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plz-tbl th:first-child, .plz-tbl td:first-child { text-align: left; padding-left: 39px; }
 .plz-tbl th:nth-child(2), .plz-tbl td:nth-child(2) { width: 200px; }
@@ -83,12 +83,12 @@
 .plz-tbl td a { color: var(--sgb-ink); text-decoration: none; }
 .plz-tbl td a:hover { color: var(--plz-pt); text-decoration: underline; }
 .plz-tbl tbody tr:hover { background: #FAFBFC; }
-.plz-pin { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px; background: var(--plz-pt); color: #fff; font-size: 12.5px; font-weight: 700; vertical-align: 2px; }
-.plz-cc { margin-left: 6px; color: var(--plz-pt); font-size: 15px; font-weight: 700; }
+.plz-pin { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px; background: var(--plz-pt); color: #fff; font-size: 12px; font-weight: 700; vertical-align: 2px; }
+.plz-cc { margin-left: 6px; color: var(--plz-pt); font-size: 14px; font-weight: 700; }
 .plz-tbl .state { margin-left: 8px; }
 
 /* 분류 배지 */
-.plz-bd { display: inline-flex; align-items: center; justify-content: center; min-width: 100px; height: 24px; padding: 0 10px; box-sizing: border-box; border-radius: var(--sgb-r-sm, 7px); font-size: 15px; font-weight: 500; letter-spacing: -.3px;
+.plz-bd { display: inline-flex; align-items: center; justify-content: center; min-width: 100px; height: 24px; padding: 0 10px; box-sizing: border-box; border-radius: var(--sgb-r-sm, 7px); font-size: 14px; font-weight: 500; letter-spacing: -.3px;
   background-color: #EEF2F8; color: #00245A; }
 .plz-bd-review { background-color: #FEF3E0; color: #a83701; }   /* v10.55 대비 2.37 → 5.95 */
 .plz-bd-qna    { background-color: #EBF3FF; color: #1362F4; }
@@ -102,23 +102,23 @@
   background-color: #fff; color: #000; font-size: 18px; text-decoration: none; font-variant-numeric: tabular-nums; }
 .plz-pager a:hover { border-color: var(--plz-pt); }
 .plz-pager [aria-current=page] { background-color: var(--plz-orange); border-color: var(--plz-orange); color: var(--sgb-on-point); font-weight: 600; }
-.plz-pager [aria-label] { font-size: 26px; line-height: 1; padding-bottom: 4px; }
+.plz-pager [aria-label] { font-size: 24px; line-height: 1; padding-bottom: 4px; }
 .plz-pager [aria-disabled=true] { color: #C4C8D0; }
 .plz-pager .gap { border-color: transparent; color: #999; }
-.plz-write { position: absolute; right: 0; top: 0; width: 184px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--sgb-r-md, 11px); background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 22px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
+.plz-write { position: absolute; right: 0; top: 0; width: 184px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--sgb-r-md, 11px); background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 20px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
 .plz-write:hover { filter: brightness(.96); }
 
 /* ── 글 상세 · 글쓰기 ── */
 .plz-post { border: 1px solid var(--plz-line); border-radius: var(--sgb-r-md, 11px); padding: 26px 32px 30px; margin: 4px 0 16px; }
 .plz-post header { border-bottom: 1px solid #ECEEF2; padding-bottom: 16px; margin-bottom: 20px; }
-.plz-post h1 { margin: 12px 0 10px; font-size: 26px; line-height: 1.35; }
-.plz-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; color: var(--plz-dim); font-size: 15px; }
-.plz-post .doc-body { margin: 0; font-size: 17px; line-height: 1.9; word-break: break-word; }
+.plz-post h1 { margin: 12px 0 10px; font-size: 24px; line-height: 1.35; }
+.plz-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; color: var(--plz-dim); font-size: 14px; }
+.plz-post .doc-body { margin: 0; font-size: 16px; line-height: 1.9; word-break: break-word; }
 .plz-narrow h2 { font-size: 20px; font-weight: 800; color: var(--plz-navy); margin: 28px 0 10px; }
 .plz-narrow .card { border-color: var(--plz-line); border-radius: var(--sgb-r-md, 11px); }
 .plz-narrow .card:hover { border-color: var(--plz-line); }
 .plz-backw { margin: 28px 0 0; text-align: center; }
-.plz-back { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 26px; border: 1px solid var(--plz-pt); border-radius: var(--sgb-r-md, 11px); color: var(--plz-pt); font-size: 17px; font-weight: 800; text-decoration: none; background: #fff; }
+.plz-back { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 26px; border: 1px solid var(--plz-pt); border-radius: var(--sgb-r-md, 11px); color: var(--plz-pt); font-size: 16px; font-weight: 800; text-decoration: none; background: #fff; }
 .plz-back:hover { background: var(--accent-w); }
 .plz .btn-sm { border-radius: var(--sgb-r-sm, 7px); }
 .plz .btn-sm.p2primary { background: var(--plz-pt); border-color: var(--plz-pt); color: #fff; }
@@ -140,37 +140,37 @@
   .plz-hero .plz-in { padding-top: 18px; padding-bottom: 16px; }
   .plz-hero h1, .plz-hero .plz-h, .plz-hero .plz-lead, .plz-find, .plz-say { position: static; }
   .plz-hero h1, .plz-hero .plz-h, .plz-hero.sm .plz-h { font-size: 30px; }
-  .plz-hero .plz-lead, .plz-hero.sm .plz-lead { font-size: 15px; white-space: normal; margin-top: 4px; }
+  .plz-hero .plz-lead, .plz-hero.sm .plz-lead { font-size: 14px; white-space: normal; margin-top: 4px; }
   .plz-find { width: 100%; height: 48px; margin-top: 12px; padding-left: 18px; }
   .plz-find button { width: 38px; height: 38px; }
   .plz-say { margin-top: 12px; gap: 10px; align-items: flex-start; }
   .plz-mega { width: 54px; }
-  .plz-note { font-size: 13.5px; } .plz-note b { font-size: 15px; }
+  .plz-note { font-size: 14px; } .plz-note b { font-size: 14px; }
   .plz-photo { opacity: .28; height: 100%; }
   .plz-hero.sm { height: auto; }
   .plz-body { padding-top: 16px; }
   .plz-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
   .plz-tabs::-webkit-scrollbar { display: none; }
-  .plz-tabs a { min-width: 0; height: 38px; padding: 0 14px; font-size: 15px; flex: none; }
+  .plz-tabs a { min-width: 0; height: 38px; padding: 0 14px; font-size: 14px; flex: none; }
   .plz-tblw { margin-top: 16px; }
-  .plz-tbl { table-layout: auto; font-size: 15px; }
+  .plz-tbl { table-layout: auto; font-size: 14px; }
   .plz-tbl thead { display: none; }
   .plz-tbl tbody tr { display: grid; grid-template-columns: auto 1fr auto auto; gap: 2px 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--plz-line); }
   .plz-tbl tbody tr:first-child { border-top: 0; }
   .plz-tbl td { height: auto; padding: 0; border: 0; text-align: left; font-size: 13px; color: #555; width: auto !important; }
   .plz-tbl td:first-child { grid-column: 1 / -1; padding-left: 0; font-size: 16px; color: #000; white-space: normal; }
   .plz-tbl td:nth-child(5)::before { content: "조회 "; }
-  .plz-bd { min-width: 0; height: 22px; font-size: 12.5px; }
+  .plz-bd { min-width: 0; height: 22px; font-size: 12px; }
   .plz-foot { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 18px; }
   .plz-pager { gap: 4px; flex-wrap: nowrap; }
-  .plz-pager > * { min-width: 32px; height: 34px; padding: 0 4px; font-size: 15px; }
+  .plz-pager > * { min-width: 32px; height: 34px; padding: 0 4px; font-size: 14px; }
   .plz-pager .gap { min-width: 18px; padding: 0; }
   .plz-write { position: static; width: 100%; height: 48px; font-size: 18px; }
   .plz-post { padding: 18px 16px 20px; }
-  .plz-post h1 { font-size: 21px; }
+  .plz-post h1 { font-size: 20px; }
 }
 
 /* v10.31 (w1) — 글쓰기 게시판 글자 칩(시안 plzWrite .opts · .opt) */
 .plz .cmu-opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.plz .cmu-opt { border: 1px solid var(--plz-line); background: #fff; color: #333; border-radius: 999px; padding: 8px 16px; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+.plz .cmu-opt { border: 1px solid var(--plz-line); background: #fff; color: #333; border-radius: 999px; padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .plz .cmu-opt.on { border-color: var(--plz-pt); background: var(--sgb-point-l); color: var(--plz-pt); }
