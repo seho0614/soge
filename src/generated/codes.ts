@@ -683,7 +683,7 @@ export const CodeMeta: Record<string, Record<string, {
     MANUAL: { label: "수동", tone: 'info', audience: 'ADMIN' },
   },
   'review.manual_reason': {
-    UNVERIFIED_BUSINESS: { label: "사업자 인증 전", tone: 'warning', audience: 'ADMIN' },
+    UNVERIFIED_BUSINESS: { label: "본인 · 사업자 인증 전", tone: 'warning', audience: 'ADMIN' },
     FIRST_LISTING: { label: "첫 등록", tone: 'info', audience: 'ADMIN' },
     HIGH_FEE: { label: "고액", tone: 'warning', audience: 'ADMIN' },
     PRIOR_REJECT: { label: "반려 이력", tone: 'warning', audience: 'ADMIN' },
