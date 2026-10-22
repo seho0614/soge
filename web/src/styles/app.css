@@ -438,7 +438,7 @@
   .ad-tiles, .stat-row { grid-template-columns: repeat(2, 1fr); }
   .ad-mgrid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 900px) {
+@media (max-width: 640px) {
   .ad-in { padding: 8px 12px; gap: 8px 12px; }
   .ad-gnb { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .ad-gnb button { white-space: nowrap; flex: 0 0 auto; }
