@@ -36,11 +36,12 @@
 [data-b2-tone=money] .b2-hdr { gap: 7.5px; }
 [data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join,
 [data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { height: 49px; border-radius: 999px; font-size: 18px; font-weight: 800; font-family: inherit; }
+[data-b2-tone=money] .b2-join { border-radius: var(--sgb-btn-r, 7px); --sgb-v1062: 1; }
 [data-b2-tone=money] .b2-find { width: 49px; }
 [data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { width: 112px; padding: 0 0 0 3px; gap: 7px; justify-content: center; }
 [data-b2-tone=money] .b2-lang > summary svg, [data-b2-tone=money] .b2-lngb svg { width: 37px; height: 37px; stroke-width: 1.1; color: var(--sgb-ink-2); margin: -9px -10px -6px -9px; flex: none; }
 [data-b2-tone=money] .b2-login { min-width: 112.5px; padding: 0 18px; }
-[data-b2-tone=money] .b2-join { min-width: 153.5px; height: 48px; padding: 0 18px; background: var(--sgb-orange); }
+[data-b2-tone=money] .b2-join { min-width: 153.5px; height: 48px; padding: 0 18px; background: var(--sgb-btn-bg, #00245a); }
 [data-b2-tone=money] .b2-cart { display: none; }
 .b2-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 46px; margin-left: 4px; color: var(--sgb-navy); flex: none; text-decoration: none; }
 .b2-bell img, .b2-bell svg { display: block; }
@@ -144,9 +145,9 @@
 .mny-meta .is-pin { font-size: 16px; }
 .mny-btns { margin-top: 17.5px; display: flex; gap: 5.5px; }
 .mny-btn { flex: 1; max-width: 106.5px; height: 40.5px; border-radius: var(--sgb-r-sm, 7px); font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
-.mny-btn.is-line { border: 1px solid var(--sgb-link); color: var(--sgb-link); background: #fff; }
-.mny-btn.is-line:hover { background: #f2f7ff; }
-.mny-btn.is-fill { background: var(--sgb-action); color: #fff; }
+.mny-btn.is-line { border: 1px solid var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); background: var(--sgb-btn3-bg, #fff); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
+.mny-btn.is-line:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
+.mny-btn.is-fill { background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
 .mny-btn.is-fill:hover { filter: brightness(.97); }
 /* AI 추천 — 사진이 낮고 별점 · 위치가 한 줄 */
 .mny-cards.is-ai { margin-top: 13px; }
@@ -182,8 +183,8 @@
 .mny-req-c { font-size: 14px; font-weight: 700; white-space: nowrap; padding-bottom: 5px; }
 .mny-req-c.is-price { color: var(--sgb-navy); }
 .mny-req-c b { font-size: 16px; font-weight: 700; color: var(--sgb-alert); margin-left: 10.5px; }
-.mny-btn.is-ghost { max-width: none; width: 106.5px; height: 50px; border-radius: var(--sgb-r-sm, 7px); border: 1px solid var(--sgb-action); color: var(--sgb-action); background: #fff; }
-.mny-btn.is-ghost:hover { background: #fff8ee; }
+.mny-btn.is-ghost { max-width: none; width: 106.5px; height: var(--sgb-btn-h, 40px); border-radius: var(--sgb-btn-r, 7px); border: 1px solid var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); background: var(--sgb-btn3-bg, #fff); font-weight: var(--sgb-btn-fw, 700); font-size: var(--sgb-btn-fs, 14px)}
+.mny-btn.is-ghost:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
 .mny-empty { padding: 26px 0 20px; text-align: center; color: var(--sgb-ink-3); font-size: 14px; }
 
 /* ── 8. 띠 광고 ── */
@@ -405,7 +406,7 @@
 .mny-band-t b { font-family: var(--sgb-font-title); font-size: 20px; font-weight: 700; line-height: 28px; }
 .mny-band-t span { font-size: 14px; color: rgba(255, 255, 255, .86); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mny-band-adv { flex: none; font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, .78); }
-.mny-band-cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 999px; background: var(--sgb-accent); color: #fff; font-size: 14px; font-weight: 800; }
+.mny-band-cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: var(--sgb-btn-h, 40px); padding: 0 var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700); }
 .mny-band-msg { position: absolute; left: 30px; bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, .86); }
 @media (max-width: 900px) {
   .mny-band.is-text { flex-wrap: wrap; padding: 14px 16px; gap: 10px; }

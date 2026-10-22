@@ -15,6 +15,7 @@ import '@/styles/shop.css';
 import '@/styles/hlt26.css';
 /* 20261009 (v10.29) — 소개장터 메인. 디자인 시트의 토큰(--sgb-…)은 이름이 달라 기존 화면에 닿지 않습니다. 글꼴 파일은 그 글꼴을 쓰는 화면(/money)에서만 내려받습니다. */
 import '@/styles/sgb-tokens.css';
+import '@/styles/sgb-buttons.css';   // v10.62 단추 3종(docs/118)
 import '@/styles/money-fonts.css';
 import '@/styles/money.css';
 /* v10.29 — 시안 디자인 반영: 공통 틀 · 관 화면 · 나의공간 · 파트너센터/제휴 */

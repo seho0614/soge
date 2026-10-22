@@ -21,9 +21,8 @@
 
 .btn-primary {
   /* v10.29 — 시안 .bp (2026-10-21 부터 관 색 · 모서리 7px — tokens.css 옛 이름이 디자인 시트를 가리킴) */
-  background: var(--pp); color: #fff !important; font-weight: 700;
-  padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md);
-}
+  background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff) !important; font-weight: var(--sgb-btn-fw, 700);
+  padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs, 14px)}
 
 /* v10.29 — 시안 본문 폭(.wrap 1400px · 좌우 20px · 위 16px · 아래 60px — .srcw/.myw) */
 .main { max-width: var(--wrap); margin: 0 auto; padding: 16px 20px 60px; }
@@ -112,18 +111,17 @@
 /* ★ 문의하기가 주 동선입니다. 전화는 보조 — 통화는 귀속 밖입니다 (INV-2) */
 .cta-primary {
   /* v10.29 — 시안 주요 단추(.bp): 보라 · 모서리 8px */
-  width: 100%; padding: var(--sp-3); border: 0; border-radius: var(--r-md);
-  background: var(--pp); color: #fff; font: inherit; font-weight: 700;
-  font-size: var(--fs-md); cursor: pointer;
+  width: 100%; padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border: 0; border-radius: var(--sgb-btn-r, 7px);
+  background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); font: inherit; font-weight: var(--sgb-btn-fw, 700);
+  font-size: var(--sgb-btn-fs, 14px); cursor: pointer;
 }
 .cta-primary:disabled { background: var(--ink-3); cursor: default; }
 .cta-blocked { background: var(--ink-2); font-size: var(--fs-sm); font-weight: 500; }
 
 .cta-secondary {
-  width: 100%; margin-top: var(--sp-2); padding: var(--sp-2);
-  background: none; border: 1px solid var(--line); border-radius: var(--r-sm);
-  color: var(--ink-3); font: inherit; font-size: var(--fs-sm); cursor: pointer;
-}
+  width: 100%; margin-top: var(--sp-2); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px);
+  background: var(--sgb-btn2-bg, #fff); border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px);
+  color: var(--sgb-btn2-fg, #00245a); font: inherit; font-size: var(--sgb-btn-fs, 14px); cursor: pointer; font-weight: var(--sgb-btn-fw, 700)}
 .cta-note { margin: var(--sp-3) 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-align: center; }
 
 /* ── 푸터 ── */
@@ -151,7 +149,7 @@
   .detail-side { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; }
   .cta { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0;
          display: grid; grid-template-columns: 2fr 1fr; gap: var(--sp-2); align-items: center; }
-  .cta-secondary { margin-top: 0; }
+  .cta-secondary { margin-top: 0; border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
   .cta-note { display: none; }
   .detail-main { margin-bottom: 88px; }
 }
@@ -185,11 +183,11 @@
 .addr input[readonly] { background: var(--paper); color: var(--ink-2); }
 .req         { color: var(--danger); font-style: normal; }
 .dim         { color: var(--ink-3); font-size: var(--fs-sm); }
-.btn-sm      { padding: 6px 11px; border: 1px solid var(--line);   /* v10.29 — 시안 .bo.sm */
-               background: var(--paper); color: var(--g700);
-               border-radius: var(--sgb-r-sm, 7px); font-size: 12px; cursor: pointer;
-               white-space: nowrap; }
-.btn-sm:hover:not(:disabled) { background: var(--g50); }
+.btn-sm      { padding: var(--sgb-btn-py-sm, 6px) var(--sgb-btn-px-sm, 12px); border: 1px solid var(--sgb-btn2-line, #dbdbdb);   /* v10.29 — 시안 .bo.sm */
+               background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a);
+               border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs-sm, 13px); cursor: pointer;
+               white-space: nowrap; font-weight: var(--sgb-btn-fw, 700)}
+.btn-sm:hover:not(:disabled) { background: var(--sgb-btn2-hover, #f5f7fa); }
 .btn-sm:disabled { opacity: .5; cursor: default; }
 .fld input {
   padding: var(--sp-3); border: 1px solid var(--line);

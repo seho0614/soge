@@ -65,12 +65,12 @@
 /* 버튼 */
 .mal-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); border: 1px solid var(--accent);
-  background: var(--accent); color: var(--paper); font: inherit; font-size: var(--fs-sm); font-weight: 700;
+  padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); border: 1px solid var(--sgb-btn-bg, #00245a);
+  background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); font: inherit; font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700);
   text-decoration: none; cursor: pointer; white-space: nowrap;
 }
-.mal-btn.ghost { background: var(--paper); color: var(--accent); }
-.mal-btn.sm { padding: var(--sp-1) var(--sp-3); font-size: var(--fs-xs); }
+.mal-btn.ghost { background: var(--sgb-btn3-bg, #fff); color: var(--sgb-btn3-fg, #00245a); border: 1px solid var(--sgb-btn3-fg, #00245a); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
+.mal-btn.sm { padding: var(--sgb-btn-py-sm, 6px) var(--sgb-btn-px-sm, 12px); font-size: var(--sgb-btn-fs-sm, 13px); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700)}
 .mal-btn:disabled { opacity: .5; cursor: default; border-color: var(--line); color: var(--ink-3); background: var(--surface); }
 .mal-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mal-act { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
@@ -205,9 +205,9 @@
 .mal-backbar { margin-bottom: var(--sp-3); }
 /* v10.32 — 생활 · 금융 상담 업종 줄(시안 scCsl): 시안 폭 · 「상담 신청」 보라(--pp) · 「상세 보기 · 사무소 보기」 회색 테두리 */
 .mal.mal-csl32 { max-width: 1140px; }
-.mal.mal-csl32 .mal-row-r .mal-btn:not(.ghost):not(:disabled) { background: var(--pp, #7C3AED); border-color: var(--pp, #7C3AED); color: #fff; }
-.mal.mal-csl32 .mal-row-r .mal-btn:not(.ghost):not(:disabled):hover { background: var(--pp-d, #6D28D9); }
-.mal.mal-csl32 .mal-row-r .mal-btn.ghost:not(:disabled) { border-color: var(--g200, #E5E7EB); color: var(--g700, #374151); background: var(--paper, #fff); }
+.mal.mal-csl32 .mal-row-r .mal-btn:not(.ghost):not(:disabled) { background: var(--sgb-btn3-bg, #fff); border-color: var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); }
+.mal.mal-csl32 .mal-row-r .mal-btn:not(.ghost):not(:disabled):hover { background: var(--sgb-btn2-hover, #f5f7fa); }
+.mal.mal-csl32 .mal-row-r .mal-btn.ghost:not(:disabled) { border-color: var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); background: var(--sgb-btn3-bg, #fff); }
 /* v10.32 (추가) — 상담 신청서(SB-MAL-CSL-030 · 시안 scCsl): 시안 폭 1140 · 넓은 카드(18px 20px 20px) 안 입력 열 560px ·
    제목 아래 설명 · 입력칸 40px · 동의 상자 테두리 · 「상담 신청」 보라(#7C3AED) 맨 왼쪽 · 회색 테두리 보조 단추.
    지역 두 칸(시 · 도 + 시 · 군 · 구) · 카드 머리 줄 · 연락처 안내는 개발 기능이라 그대로(열 560 안에 둠). */
@@ -224,11 +224,11 @@
   height: 40px; padding: 9px 12px; border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-sm, 7px); font-size: 14px; background: #fff; }
 .mal.mal-csl33 .mal-form .fld textarea { height: auto; min-height: 84px; }
 .mal.mal-csl33 .mal-form label.chk { border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-md, 11px); padding: 14px; background: #fff; font-size: 12px; gap: 8px; }
-.mal.mal-csl33 .mal-btn { border-radius: var(--sgb-r-sm, 7px); font-size: 13px; padding: 8px 18px; }
-.mal.mal-csl33 .mal-btn.ghost:not(:disabled) { border-color: var(--g200, #E5E7EB); color: var(--g700, #374151); background: #fff; font-weight: 500; padding: 7px 16px; }
+.mal.mal-csl33 .mal-btn { border-radius: var(--sgb-btn-r, 7px); font-size: 13px; padding: 8px 18px; }
+.mal.mal-csl33 .mal-btn.ghost:not(:disabled) { border-color: var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); background: var(--sgb-btn3-bg, #fff); font-weight: var(--sgb-btn-fw, 700); padding: 7px 16px; }
 .mal.mal-csl33 .mal-btn.ghost.sm { padding: 7px 12px; font-size: 12px; }
-.mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled) { background: #7C3AED; border-color: #7C3AED; color: #fff; }
-.mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled):hover { background: #6D28D9; }
+.mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled) { background: var(--sgb-btn3-bg, #fff); border-color: var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); }
+.mal.mal-csl33 .mal-btn:not(.ghost):not(:disabled):hover { background: var(--sgb-btn2-hover, #f5f7fa); }
 .mal.mal-csl33 .mal-act { margin-top: 4px; }
 .mal.mal-csl33 .mal-act [data-csl-submit] { order: -1; }
 .mal.mal-csl33 .mal-form .fld input, .mal.mal-csl33 .mal-form .fld select, .mal.mal-csl33 .mal-form .fld textarea { font-weight: 400; color: var(--ink, #111827); }

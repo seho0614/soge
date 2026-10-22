@@ -2,7 +2,7 @@
 .fd-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 18px 0 10px; }
 .fd-head h1 { margin: 0; font-size: 24px; }
 .fd-head p { margin: 4px 0 0; color: var(--ink2, #555); font-size: 14px; }
-.fd-cta { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: var(--sgb-r-sm, 7px); background: #13804A; color: #fff; font-weight: 600; text-decoration: none; }
+.fd-cta { display: inline-flex; align-items: center; height: var(--sgb-btn-h, 40px); padding: 0 var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); font-weight: var(--sgb-btn-fw, 700); text-decoration: none; font-size: var(--sgb-btn-fs, 14px)}
 .fd-cta:hover { filter: brightness(1.05); }
 .fd-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
 .fd-bar input { height: 38px; padding: 0 12px; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-sm, 7px); min-width: 0; flex: 1 1 180px; }

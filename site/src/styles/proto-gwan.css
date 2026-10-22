@@ -40,11 +40,11 @@
 /* ───────────── 시안에서 옮긴 규칙 (proto_lite.html <style> · 값 그대로) ───────────── */
 .gw-fbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--g50);border-bottom:1px solid var(--line)}
 .gw-wrap{max-width:1400px;margin:0 auto;padding:0 20px}
-.gw-bo{border:1px solid var(--line);background:var(--card);color:var(--g700);padding:7px 16px;
-      border-radius:var(--sgb-r-sm, 7px);font-size:13px;font-weight:500}
-.gw-bo:hover{background:var(--g50)}
-.gw-bp{background:var(--pp);color:#fff;padding:8px 18px;border-radius:var(--sgb-r-sm, 7px);font-size:13px;font-weight:700}
-.gw-bp:hover{background:var(--pp-d)}
+.gw-bo{border:1px solid var(--sgb-btn2-line, #dbdbdb);background:var(--sgb-btn2-bg, #fff);color:var(--sgb-btn2-fg, #00245a);padding:var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px);
+      border-radius:var(--sgb-btn-r, 7px);font-size:var(--sgb-btn-fs, 14px);font-weight:var(--sgb-btn-fw, 700)}
+.gw-bo:hover{background:var(--sgb-btn2-hover, #f5f7fa)}
+.gw-bp{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff);padding:var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px);border-radius:var(--sgb-btn-r, 7px);font-size:var(--sgb-btn-fs, 14px);font-weight:var(--sgb-btn-fw, 700)}
+.gw-bp:hover{background:var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 .gw-spromo.gw-farm{width:330px;padding:0;overflow:hidden;border-color:#CFE6D6;align-items:stretch;
                background:linear-gradient(120deg,#EEF7F0 0%,#E4F2E8 60%,#DAEDE0 100%)}
 .gw-spromo.gw-farm .gw-ptx{padding:13px 14px;display:flex;flex-direction:column;justify-content:center}
@@ -632,7 +632,7 @@ dl.gw-spec dd{margin:0;padding:4px 0;font-weight:500}
 .gw-abar{display:flex;gap:11px;align-items:center;padding:15px 20px;border-top:1px solid var(--line);
         background:var(--g50);margin-top:20px}
 .gw-abar .gw-sp{flex:1}
-.gw-abar .gw-go{background:var(--or);color:#fff;padding:12px 26px;border-radius:var(--sgb-r-sm, 7px);font-size:14px;font-weight:700;
+.gw-abar .gw-go{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff);padding:12px 26px;border-radius:var(--sgb-btn-r, 7px);font-size:14px;font-weight:var(--sgb-btn-fw, 700);
             display:flex;flex-direction:column;align-items:center;line-height:1.25}
 .gw-abar .gw-go small{font-size:12px;font-weight:400;opacity:.9}
 .gw-fld{margin-bottom:14px}
@@ -1036,7 +1036,7 @@ a.gw-bo.gw-sm, a.gw-bp.gw-sm{display:inline-flex;align-items:center;justify-cont
 .gw .gw-regwrap .fld > span,.gw .gw-brkwrap .fld > span{font-size:13px;font-weight:700;color:var(--ink)}
 .gw .gw-regwrap .fld input,.gw .gw-regwrap .fld select,.gw .gw-regwrap .fld textarea,.gw .gw-brkwrap .inp{width:100%;border:1px solid var(--line);border-radius:var(--sgb-r-sm, 7px);padding:11px 13px;font-size:14px;background:var(--card);color:var(--ink)}
 .gw .gw-regwrap .fld em,.gw .gw-regwrap .hint,.gw .gw-brkwrap .hint{font-size:12px;color:var(--ink3);font-style:normal}
-.gw .gw-regwrap .cta-primary,.gw .gw-brkwrap .btn-primary{background:var(--pp);color:#fff;border:0;border-radius:var(--sgb-r-sm, 7px);padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;width:auto}
+.gw .gw-regwrap .cta-primary,.gw .gw-brkwrap .btn-primary{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff);border:0;border-radius:var(--sgb-btn-r, 7px);padding:11px 20px;font-size:14px;font-weight:var(--sgb-btn-fw, 700);cursor:pointer;width:auto}
 .gw .gw-regwrap .cta-primary:disabled,.gw .gw-brkwrap .btn-primary:disabled{opacity:.5;cursor:default}
 .gw .gw-dact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media (max-width:640px){ .gw .gw-regwrap .role-tabs{grid-template-columns:1fr} }
@@ -1212,7 +1212,7 @@ a.gw-bo.gw-sm, a.gw-bp.gw-sm{display:inline-flex;align-items:center;justify-cont
 .gw .gw-regfull .gw-regf .gw-fset{border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);background:var(--card);padding:16px 17px 4px;margin:0 0 13px;position:relative}
 .gw .gw-regfull .gw-regf .gw-fset>legend{float:left;width:100%;padding:0;margin:0 0 12px;font-size:14px;font-weight:900;color:var(--ink)}
 .gw .gw-regfull .gw-regf .gw-fset>legend+*{clear:both}
-.gw .gw-regfull .gw-regf>.cta-primary{width:auto;display:inline-flex;align-items:center;padding:9px 18px;font-size:14px;border-radius:var(--sgb-r-sm, 7px);margin-top:2px}
+.gw .gw-regfull .gw-regf>.cta-primary{width:auto;display:inline-flex;align-items:center;padding:9px 18px;font-size:14px;border-radius:var(--sgb-btn-r, 7px);margin-top:2px}
 /* 실버 머리(gw-g2)가 2열 격자 이름(.gw-g2)과 겹쳐 격자로 그려지던 것 — 등급 머리는 늘 한 줄 */
 .gw-catl .gw-gd.gw-g1,.gw-catl .gw-gd.gw-g2,.gw-catl .gw-gd.gw-g3,.gw-catl .gw-gd.gw-g4{display:flex;grid-template-columns:none}
 .gw-catl .gw-gi.gw-gempty{display:block;padding:8px 13px 8px 26px;border-bottom:1px solid var(--line2)}
@@ -1220,5 +1220,5 @@ a.gw-bo.gw-sm, a.gw-bp.gw-sm{display:inline-flex;align-items:center;justify-cont
 /* v10.32 (추가) — 사업 기회 등록(시안 scRegBiz): 검수 안내 띠 아래 [등록 신청] [등록 취소] 나란히(폼 안 끝 줄) */
 .gw .gw-regfull form.auth > .gw-nt{margin:0}
 .gw .gw-regfull form.auth > .gw-regact{margin:4px 0 6px}
-.gw .gw-regfull .gw-regact .cta-primary{width:auto;display:inline-flex;align-items:center;padding:8px 18px;font-size:13px;border-radius:var(--sgb-r-sm, 7px);margin:0;line-height:18px}
-.gw .gw-regfull .gw-regact .gw-bo{padding:7px 16px;font-size:13px;border-radius:var(--sgb-r-sm, 7px);line-height:18px}
+.gw .gw-regfull .gw-regact .cta-primary{width:auto;display:inline-flex;align-items:center;padding:8px 18px;font-size:13px;border-radius:var(--sgb-btn-r, 7px);margin:0;line-height:18px}
+.gw .gw-regfull .gw-regact .gw-bo{padding:7px 16px;font-size:13px;border-radius:var(--sgb-btn-r, 7px);line-height:18px}

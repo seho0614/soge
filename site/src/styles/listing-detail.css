@@ -29,9 +29,10 @@
 .ldp-prof-act { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
 .ldp-prof-act .btn, .ldp-prof-act .btn-call { font: inherit; font-size: var(--fs-sm); font-weight: 600; padding: 8px 16px; border-radius: var(--r-md);
           cursor: pointer; text-decoration: none; }
-.ldp-prof-act .btn-q { background: var(--accent-w); color: var(--accent); border: 1px solid transparent; }
+.ldp-prof-act .btn-call { border-radius: var(--sgb-btn-r, 7px); --sgb-v1062: 1; }
+.ldp-prof-act .btn-q { background: var(--sgb-btn3-bg, #fff); color: var(--sgb-btn3-fg, #00245a); border: 1px solid var(--sgb-btn3-fg, #00245a); }
 /* 전화는 귀속 밖입니다 — 낮은 대비로 둡니다 */
-.ldp-prof-act .btn-call { background: var(--paper); color: var(--ink-2); border: 1px solid var(--line); }
+.ldp-prof-act .btn-call { background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a); border: 1px solid var(--sgb-btn2-line, #dbdbdb); }
 .ldp-prof-msg { flex-basis: 100%; margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
 
 .ldp-sec { padding: var(--sp-5) var(--sp-5) 0; }
@@ -60,12 +61,12 @@
 
 .ldp-barwrap { margin-top: var(--sp-5); border-top: 1px solid var(--line); background: var(--surface); }
 .ldp-bar { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; padding: var(--sp-4) var(--sp-5); }
-.ldp-bar .bar-btn { font: inherit; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); background: var(--paper);
-          border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.ldp-bar .bar-btn { font: inherit; font-size: var(--fs-sm); font-weight: var(--sgb-btn-fw, 700); color: var(--sgb-btn2-fg, #00245a); background: var(--sgb-btn2-bg, #fff);
+          border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px); padding: 8px 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .ldp-bar .bar-btn.on { color: var(--danger); border-color: var(--danger); background: var(--danger-w); }
 .ldp-bar .bar-report { background: transparent; border-color: transparent; color: var(--ink-3); }
-.ldp-bar .bar-go { font: inherit; font-size: var(--fs-md); font-weight: 700; color: #fff; background: var(--accent); border: 0;
-          border-radius: var(--r-md); padding: 12px 26px; cursor: pointer; margin-left: auto; }
+.ldp-bar .bar-go { font: inherit; font-size: var(--fs-md); font-weight: var(--sgb-btn-fw, 700); color: var(--sgb-btn-fg, #fff); background: var(--sgb-btn-bg, #00245a); border: 0;
+          border-radius: var(--sgb-btn-r, 7px); padding: 12px 26px; cursor: pointer; margin-left: auto; }
 .ldp-bar .bar-go.bar-blocked { background: var(--ink-2); font-size: var(--fs-sm); font-weight: 500; }
 .ldp-bar .bar-go:disabled { background: var(--ink-3); cursor: default; }
 .ldp-bar-msg { margin: 0; padding: 0 var(--sp-5) var(--sp-3); font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }

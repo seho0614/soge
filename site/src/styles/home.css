@@ -36,12 +36,12 @@
 
 /* 알약 버튼 — 헤더 · 나를 위한 소개 */
 .home-pill {
-  height: 44px; padding: 0 28px; border-radius: 999px; border: 1px solid var(--hline); background: #fff;
-  font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;
+  height: var(--sgb-btn-h, 40px); padding: 0 var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); border: 1px solid var(--sgb-btn2-line, #dbdbdb); background: var(--sgb-btn2-bg, #fff);
+  font-weight: var(--sgb-btn-fw, 700); font-size: var(--sgb-btn-fs, 14px); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;
 }
-.home-pill:hover { border-color: var(--hv-l); }
-.home-pill.p { background: var(--hv); color: #fff; border-color: var(--hv); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); }
-.home-pill.p:hover { background: var(--hv-d); }
+.home-pill:hover { border-color: var(--sgb-btn2-line, #dbdbdb); }
+.home-pill.p { background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border-color: var(--sgb-btn-bg, #00245a); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
+.home-pill.p:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 
 /* 꼬리표 */
 .home-bdg { display: inline-flex; align-items: center; font-size: 12px; font-weight: 800; border-radius: var(--sgb-r-md, 11px); padding: 3px 11px; color: #fff; white-space: nowrap; }
@@ -549,8 +549,8 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 
 /* v10.31 (w1) — 로그인 뒤 머리줄: 👤 이름 · 개발에만 있는 「소개받기」는 옅게 */
 .home-hd .home-who { font-size: 14px; font-weight: 700; color: var(--sgb-ink-2); white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
-.home-hd .home-pill.dev { color: var(--sgb-ink-3); }
-.home-hd button.home-pill { font: inherit; cursor: pointer; background: #fff; }
+.home-hd .home-pill.dev { color: var(--sgb-btn2-fg, #00245a); }
+.home-hd button.home-pill { font: inherit; cursor: pointer; background: var(--sgb-btn2-bg, #fff); }
 /* v10.31 (w1) — 시안 demoBar 「AI 시연」 */
 .home-demo { padding: 8px 0 26px; }
 .home-demob { background: #fff; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-lg, 16px); padding: 16px; }

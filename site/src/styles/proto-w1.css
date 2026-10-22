@@ -85,10 +85,10 @@ textarea.w1-in { resize: vertical; min-height: 88px; line-height: 1.65; }
 .w1-bdone { background: var(--bl); color: #fff; border: 0; border-radius: var(--sgb-r-sm, 7px); padding: 11px 22px; font: inherit; font-size: 14px;
   font-weight: 700; cursor: pointer; white-space: nowrap; }
 .w1-bdone:disabled { opacity: .55; cursor: default; }
-.w1-bo { border: 1px solid var(--line); background: var(--paper); color: var(--g700); padding: 9px 16px; border-radius: var(--sgb-r-sm, 7px); font: inherit;
-  font-size: 13px; cursor: pointer; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
-.w1-bo:hover { background: var(--g50); }
-.w1-bo.sm { padding: 6px 12px; font-size: 12px; }
+.w1-bo { border: 1px solid var(--sgb-btn2-line, #dbdbdb); background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); font: inherit;
+  font-size: var(--sgb-btn-fs, 14px); cursor: pointer; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-weight: var(--sgb-btn-fw, 700)}
+.w1-bo:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
+.w1-bo.sm { padding: var(--sgb-btn-py-sm, 6px) var(--sgb-btn-px-sm, 12px); font-size: var(--sgb-btn-fs-sm, 13px); border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700)}
 .w1-err { color: var(--rd, #DC2626); font-size: 12px; margin: 8px 0 0; }
 .w1-ok { color: var(--gr-d, #047857); font-size: 12px; margin: 8px 0 0; font-weight: 700; }
 .w1-h2 { font-size: 14px; font-weight: 800; margin: 0 0 11px; }
@@ -104,7 +104,7 @@ textarea.w1-in { resize: vertical; min-height: 88px; line-height: 1.65; }
 .w1-aieng .lb { display: block; font-size: 12px; font-weight: 800; letter-spacing: .03em; color: var(--ink-3); margin-bottom: 4px; }
 @media (max-width: 900px) { .w1-aieng { grid-template-columns: 1fr; } }
 .w1-ls { font-size: 12px; color: var(--ink-3); }
-.w1-bp { background: var(--pp); color: #fff; border: 0; border-radius: var(--sgb-r-sm, 7px); padding: 9px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+.w1-bp { background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border: 0; border-radius: var(--sgb-btn-r, 7px); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font: inherit; font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .w1-bp:disabled { opacity: .5; cursor: default; }
 
 /* 성향(시안 .prfw · .qcard · .qop · .segbox …) */
@@ -428,7 +428,7 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-lgf span[role=button].w1-bo { display: inline-flex; align-items: center; cursor: pointer; user-select: none; white-space: nowrap; }
 /* 기존 시험 손잡이(form.auth · .cta-primary · .form-error)를 단 폼 — 공용 모양을 덮어 w1 모양 그대로 */
 .w1 form.auth.w1-plain { display: block; background: none; border: 0; border-radius: 0; padding: 0; gap: 0; }
-.w1-plain .cta-primary.w1-bp { width: auto; padding: 9px 16px; font-size: 14px; border-radius: var(--sgb-r-sm, 7px); }
+.w1-plain .cta-primary.w1-bp { width: auto; padding: 9px 16px; font-size: 14px; border-radius: var(--sgb-btn-r, 7px); }
 .w1-plain .form-error.w1-err { background: none; padding: 0; margin: 8px 0 0; }
 
 /* 전체 목록(시안 scAllList — .cta3 · .c3 · .gcards · .gcard · .gt · 표) */
@@ -623,8 +623,8 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 @media (max-width: 900px) { .w1-csb .w1-chat { min-height: 260px; } }
 .w1-csb .w1-dact { justify-content: flex-start; }
 /* 주황 실행 단추(시안 .bp 가 주황인 자리 — 문의 접수하기 · 메인으로 등) */
-.w1-bor { background: var(--or); color: #fff; border: 0; border-radius: var(--sgb-r-sm, 7px); padding: 12px 22px; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-.w1-bor:hover:not(:disabled) { background: var(--or-d); }
+.w1-bor { background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border: 0; border-radius: var(--sgb-btn-r, 7px); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font: inherit; font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.w1-bor:hover:not(:disabled) { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 .w1-bor:disabled { opacity: .5; cursor: default; }
 .w1-jsub { display: flex; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 18px; }
 /* 상품/서비스 등록(시안 scReg) — 폭 · 등록완료 주황 · 지도 자리 */
@@ -657,8 +657,8 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-lgh h1 { text-align: left; font-size: 24px; letter-spacing: -.8px; margin-bottom: 5px; }
 .w1-lgh p { text-align: left; margin-bottom: 20px; }
 .w1-lgh p b { color: var(--ink); }
-.w1-lgc .w1-bp.w1-lgb { background: #2563EB; height: 47px; font-size: 14px; border-radius: var(--sgb-r-sm, 7px); }
-.w1-lgc .w1-bp.w1-lgb:hover { background: #1D4ED8; }
+.w1-lgc .w1-bp.w1-lgb { background: var(--sgb-btn-bg, #00245a); height: 47px; font-size: 14px; border-radius: var(--sgb-btn-r, 7px); }
+.w1-lgc .w1-bp.w1-lgb:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 /* v10.32 (추가) — 약관(SB-HOM-ETC-020 · 시안 terms/termsv): 한 카드(제목 · 판 · 시행일 · 조 목록 · 본문) */
 .w1-tcard { background: #fff; border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); padding: 14px; margin: 0 0 13px; }
 .w1-tcard > b { display: block; font-size: 14px; font-weight: 800; }
@@ -680,11 +680,11 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-vfy ol.steps li p.ok-note { margin: 14px 0 0; font-weight: 400; color: var(--ink) !important; }
 .w1-vfy .my-nt { margin: 14px 0; }
 .w1-vfy .verify { align-items: flex-start; }
-.w1-vfy .verify .cta-primary { width: auto; padding: 8px 18px; font-size: 13px; border-radius: var(--sgb-r-sm, 7px); }
+.w1-vfy .verify .cta-primary { width: auto; padding: 8px 18px; font-size: 13px; border-radius: var(--sgb-btn-r, 7px); }
 .w1-vfy .my-inp.w1-vinp { display: block; width: 100%; max-width: 560px; height: 44px; border: 1px solid var(--g200, #E5E7EB); border-radius: var(--sgb-r-sm, 7px); padding: 10px 12px; background: #fff; font-size: 14px; }
 .w1-vfy .my-fld > span { font-size: 12px; color: var(--ink-2); }
 .w1-vfy form.auth { background: none; border: 0; padding: 0; max-width: 560px; }
-.w1-vfy form.auth .cta-primary { width: auto; align-self: flex-start; padding: 8px 18px; font-size: 13px; border-radius: var(--sgb-r-sm, 7px); }
+.w1-vfy form.auth .cta-primary { width: auto; align-self: flex-start; padding: 8px 18px; font-size: 13px; border-radius: var(--sgb-btn-r, 7px); }
 .w1-vfy .result { padding: 12px 14px; }
 .w1-vfy p.w1-vmore { margin: 12px 0 0; font-size: 12px; color: var(--ink-3); }
 .w1-vfy p.w1-vmore a { color: var(--pp); font-weight: 700; }

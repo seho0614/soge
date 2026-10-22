@@ -106,11 +106,11 @@
 /* ── 단추 ── */
 .my-bo, .my-bp { font: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   text-decoration: none; cursor: pointer; white-space: nowrap; line-height: 1.4; }
-.my-bo { border: 1px solid var(--mline); background: var(--card); color: var(--g700); padding: 7px 16px;
-  border-radius: var(--sgb-r-sm, 7px); font-size: 13px; font-weight: 500; }
-.my-bo:hover { background: var(--g50); }
-.my-bp { border: 0; background: var(--pp); color: #fff !important; padding: 8px 18px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; font-weight: 700; }
-.my-bp:hover { background: var(--pp-d); }
+.my-bo { border: 1px solid var(--sgb-btn2-line, #dbdbdb); background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px);
+  border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700); }
+.my-bo:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
+.my-bp { border: 0; background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff) !important; padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs, 14px); font-weight: var(--sgb-btn-fw, 700); }
+.my-bp:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 .my-bo.sm, .my-bp.sm { font-size: 12px; padding: 6px 11px; }
 .my-bo.off, .my-bo[disabled], .my-bp[disabled], .my-bp.off { opacity: .45; cursor: not-allowed; }
 .my-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 6px; align-items: center; }
@@ -222,11 +222,11 @@
 .my-ctrf .my-ctra { margin-top: 12px; }
 @media (max-width: 640px) { .my-fr { flex-direction: column; gap: 6px; } .my-fr > label { flex: none; padding-top: 0; } .my-fv input, .my-fv textarea { min-width: 0; } }
 /* 기존 정산 부품(PayoutBox · ClaimButton)의 주 단추를 시안 보라로 */
-.mys .btn-sm.p2primary { background: var(--pp); border-color: var(--pp); color: #fff; }
+.mys .btn-sm.p2primary { background: var(--sgb-btn-bg, #00245a); border-color: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); }
 .mys .sec-title { font-size: 14px; font-weight: 800; margin: 4px 0 8px; }
 /* 기존 결제 · 구독 부품(PlanPicker · SubscriptionManage · PayMethod)의 단추를 시안 보라로 — 기능은 그대로 */
-.mys .btn-primary { background: var(--pp); border-color: var(--pp); color: #fff; }
-.mys .btn-primary:hover { background: var(--pp-d); }
+.mys .btn-primary { background: var(--sgb-btn-bg, #00245a); border-color: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); }
+.mys .btn-primary:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 
 /* ── 소개자 화면 (시안 .reqs .chan .cpy .stat4) ── */
 .my-reqs { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }

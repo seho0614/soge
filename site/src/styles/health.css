@@ -38,15 +38,14 @@
 /* ── 버튼 ── */
 .hlt-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-sm);
-  background: var(--paper); color: var(--ink); font: inherit; font-size: var(--fs-sm);
-  text-decoration: none; cursor: pointer; white-space: nowrap;
-}
-.hlt-btn:hover:not(:disabled) { border-color: var(--ink-3); }
+  padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px);
+  background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a); font: inherit; font-size: var(--sgb-btn-fs, 14px);
+  text-decoration: none; cursor: pointer; white-space: nowrap; font-weight: var(--sgb-btn-fw, 700)}
+.hlt-btn:hover:not(:disabled) { border-color: var(--sgb-btn2-line, #dbdbdb); }
 .hlt-btn:disabled { opacity: .5; cursor: default; }
-.hlt-btn.sm { padding: var(--sp-1) var(--sp-3); font-size: var(--fs-xs); }
-.hlt-btn.lg { padding: var(--sp-3) var(--sp-5); font-size: var(--fs-md); font-weight: 700; flex: 1; }
-.hlt-btn.pri { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.hlt-btn.sm { padding: var(--sgb-btn-py-sm, 6px) var(--sgb-btn-px-sm, 12px); font-size: var(--sgb-btn-fs-sm, 13px); border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700)}
+.hlt-btn.lg { padding: var(--sp-3) var(--sp-5); font-size: var(--fs-md); font-weight: var(--sgb-btn-fw, 700); flex: 1; border: 1px solid var(--sgb-btn2-line, #dbdbdb); border-radius: var(--sgb-btn-r, 7px)}
+.hlt-btn.pri { background: var(--sgb-btn-bg, #00245a); border-color: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
 .hlt-btn.danger { color: var(--danger); border-color: var(--danger-w); }
 .hlt-btns { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
 

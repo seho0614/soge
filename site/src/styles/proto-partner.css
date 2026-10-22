@@ -35,8 +35,8 @@ body:has(.pt-root) main.main { max-width: none; padding: 0; }
 .pt-gnb a.on { background: #0F6B4F; color: #fff !important; }
 .pt-phr { display: flex; align-items: center; gap: 11px; }
 .pt-phr .pt-ls { color: #7FA396; }
-.pt-phr .pt-bo { background: transparent; border-color: #2C5147; color: #E7F4EF !important; }
-.pt-phr .pt-bo:hover { border-color: #6EE7B7; color: #6EE7B7 !important; background: transparent; }
+.pt-phr .pt-bo { background: var(--sgb-btn2-bg, #fff); border-color: var(--sgb-btn2-line, #dbdbdb); color: var(--sgb-btn2-fg, #00245a) !important; }
+.pt-phr .pt-bo:hover { border-color: var(--sgb-btn2-line, #dbdbdb); color: var(--sgb-btn2-fg, #00245a) !important; background: var(--sgb-btn2-hover, #f5f7fa); }
 
 /* ── 본문 틀 (시안 .wrap.admw) ── */
 .pt-wrap { padding-top: 20px; padding-bottom: 60px; }
@@ -50,24 +50,24 @@ body:has(.pt-root) main.main { max-width: none; padding: 0; }
 
 /* 단추 (시안 .bo · .bp · .sm) — 링크(<a>)로도 씁니다 */
 .pt-bo, .pt-bp { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  font: inherit; font-size: 13px; border-radius: var(--sgb-r-sm, 7px); cursor: pointer; text-decoration: none;
+  font: inherit; font-size: 13px; border-radius: var(--sgb-btn-r, 7px); cursor: pointer; text-decoration: none;
   line-height: 1.4; white-space: nowrap; box-sizing: border-box; }
-.pt-bo { border: 1px solid var(--pt-line); background: #fff; color: var(--pt-g700) !important;
-  padding: 7px 16px; font-weight: 500; }
-.pt-bo:hover { background: var(--pt-g50); }
-.pt-bp { border: 1px solid var(--pt-pp); background: var(--pt-pp); color: #fff !important;
-  padding: 8px 18px; font-weight: 700; }
-.pt-bp:hover { background: var(--pt-pp-d); }
+.pt-bo { border: 1px solid var(--sgb-btn2-line, #dbdbdb); background: var(--sgb-btn2-bg, #fff); color: var(--sgb-btn2-fg, #00245a) !important;
+  padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-weight: var(--sgb-btn-fw, 700); border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs, 14px)}
+.pt-bo:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
+.pt-bp { border: 1px solid var(--sgb-btn-bg, #00245a); background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff) !important;
+  padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-weight: var(--sgb-btn-fw, 700); border-radius: var(--sgb-btn-r, 7px); font-size: var(--sgb-btn-fs, 14px)}
+.pt-bp:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 .pt-bo.sm, .pt-bp.sm { font-size: 12px; padding: 6px 11px; }
 .pt-bo[disabled], .pt-bp[disabled], .pt-bo.off { opacity: .45; cursor: not-allowed; }
 
 /* 이미 있는 공용 부품(입점 신청 · 축 입점 · 반려 신청 · 지역 편집 …)의 단추 · 안내도 시안 모양으로 — 이 화면 안에서만 */
-.pt-root .btn-primary { display: inline-flex; align-items: center; background: var(--pt-pp); border: 1px solid var(--pt-pp);
-  color: #fff; padding: 8px 18px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; font-weight: 700; text-decoration: none; }
-.pt-root .btn-primary:hover:not(:disabled) { background: var(--pt-pp-d); }
+.pt-root .btn-primary { display: inline-flex; align-items: center; background: var(--sgb-btn-bg, #00245a); border: 1px solid var(--sgb-btn-bg, #00245a);
+  color: var(--sgb-btn-fg, #fff); padding: 8px 18px; border-radius: var(--sgb-btn-r, 7px); font-size: 13px; font-weight: var(--sgb-btn-fw, 700); text-decoration: none; }
+.pt-root .btn-primary:hover:not(:disabled) { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
 .pt-root .btn-primary:disabled { opacity: .45; }
-.pt-root .btn-sm { display: inline-flex; align-items: center; background: #fff; border: 1px solid var(--pt-line);
-  color: var(--pt-g700); padding: 6px 11px; border-radius: var(--sgb-r-sm, 7px); font-size: 12px; text-decoration: none; }
+.pt-root .btn-sm { display: inline-flex; align-items: center; background: var(--sgb-btn2-bg, #fff); border: 1px solid var(--sgb-btn2-line, #dbdbdb);
+  color: var(--sgb-btn2-fg, #00245a); padding: 6px 11px; border-radius: var(--sgb-btn-r, 7px); font-size: 12px; text-decoration: none; }
 .pt-root .notice, .pt-root .note { margin: 14px 0; padding: 12px 14px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; line-height: 1.65;
   border: 1px solid var(--pt-line); background: var(--pt-g50); color: var(--pt-ink2); }
 .pt-root .notice.warn, .pt-root .note.warn { border-color: #FDE68A; background: #FFFBEB; }
