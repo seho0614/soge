@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 
 export class GwanAdminDto {
@@ -164,9 +164,10 @@ export class BannedWordDto {
 
 export class CreateBannedWordDto {
   @ApiProperty() @IsString() @MinLength(1) word!: string;
+  /* v10.69(D106) — 맞춤 방식 · 수위는 정해진 값만. REGEX 문법은 DB 트리거(trg_banned_words_regex)가 봅니다 — 틀리면 422 BANNED_REGEX */
   @ApiPropertyOptional({ enum: ['EXACT','CONTAINS','REGEX'], default: 'CONTAINS' })
-  @IsOptional() @IsString() matchType?: string;
-  @ApiProperty({ enum: ['BLOCK','WARN'] }) @IsString() severity!: string;
+  @IsOptional() @IsIn(['EXACT', 'CONTAINS', 'REGEX']) matchType?: string;
+  @ApiProperty({ enum: ['BLOCK','WARN'] }) @IsIn(['BLOCK', 'WARN']) severity!: string;
   @ApiPropertyOptional({ enum: ['MNY', 'MAL', 'BIZ', 'HLT'] })
   @IsOptional() @IsString() gwanCode?: string;
 }
