@@ -113,6 +113,25 @@ export class CommunityController {
   queue() { return this.svc.queue(); }
 
   @ApiBearerAuth()
+  @Get('admin/community/posts')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '글 찾기 (운영)',
+    description:
+      '모든 글을 상태 · 게시판 · 검색어로 찾습니다(v10.72) — 신고가 쌓이기 전의 글을 감추거나, 감춘 글을 되살릴 때 씁니다. ' +
+      '`{ items, total, page, size, pages }` · `size` 1 ~ 50(기본 20) · 작성자 이름은 그대로 나갑니다(운영 화면).',
+  })
+  @ApiQuery({ name: 'state', required: false, enum: ['PENDING', 'PUBLISHED', 'HIDDEN', 'DELETED'] })
+  @ApiQuery({ name: 'board', required: false, enum: ['REVIEW', 'TRADE', 'QNA', 'NOTICE', 'FOOD'] })
+  @ApiQuery({ name: 'q', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'size', required: false })
+  adminPosts(@Query('state') state?: unknown, @Query('board') board?: unknown, @Query('q') q?: unknown,
+             @Query('page') page?: unknown, @Query('size') size?: unknown) {
+    return this.svc.adminPosts({ state, board, q, page, size });
+  }
+
+  @ApiBearerAuth()
   @Post('admin/community/posts/:id/approve')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '글 승인' })
@@ -129,5 +148,20 @@ export class CommunityController {
   @Audit('POST_HIDE', 'POST')
   hide(@Param('id') id: string, @Body() dto: { reason: string }) {
     return this.svc.hide(id, dto.reason);
+  }
+
+  @ApiBearerAuth()
+  @Post('admin/community/posts/:id/unhide')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '감춘 글 되살리기',
+    description:
+      '감춘 글(HIDDEN)만 다시 올립니다(v10.72). **사유를 반드시 적으십시오**(감사 기록). ' +
+      '그 글의 처리 전 신고는 기각으로 닫고 신고 수를 0 으로 둡니다 — 새 신고 3건이 쌓여야 다시 가려집니다. ' +
+      '작성자가 지운 글은 되살리지 않습니다(409).',
+  })
+  @Audit('POST_UNHIDE', 'POST')
+  unhide(@Param('id') id: string, @Body() dto: { reason: string }) {
+    return this.svc.unhide(id, dto?.reason);
   }
 }

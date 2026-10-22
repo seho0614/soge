@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
-import { NotFound, PolicyViolation } from '../../core/errors';
+import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /**
  * 소개광장.
@@ -12,6 +12,10 @@ import { NotFound, PolicyViolation } from '../../core/errors';
  * 배치나 다른 모듈이 직접 INSERT 하면 그냥 통과합니다.
  */
 const BOARDS = ['REVIEW', 'TRADE', 'QNA', 'NOTICE'];
+/** 운영 글 찾기에서 고를 수 있는 상태 (v10.72) — posts_state_check 와 같음 */
+const ADMIN_STATES = ['PENDING', 'PUBLISHED', 'HIDDEN', 'DELETED'];
+/** 되살릴 때 처리 전 신고를 닫는 문구 — 신고한 사람에게 그대로 보입니다 */
+const UNHIDE_RESOLUTION = '운영 확인 결과 규칙에 어긋나지 않는 글로 보고 다시 올렸습니다.';
 /* v10.47 (D100) — 우리동네 맛집 글(board FOOD)은 「전체」 목록 · 메인에 섞지 않습니다(맛집 화면 /community/food 에서만).
  *   BOARDS 에도 넣지 않습니다 — 게시판 목록(board=)으로 고를 수 없습니다. 글 하나 보기(post) · 댓글 · 신고 · 검수는 그대로 씁니다. */
 
@@ -245,7 +249,7 @@ export class CommunityService {
         WHERE p.state = 'PENDING'
         ORDER BY p.created_at`);
     const reported = await this.db.query(
-      `SELECT id, board, title, report_count AS "reportCount"
+      `SELECT id, board, title, report_count AS "reportCount", hidden_at AS "hiddenAt"
          FROM v_post_reported ORDER BY report_count DESC`);
     const [late] = await this.db.query(
       `SELECT count(*)::int AS n FROM v_post_pending_long`);
@@ -266,6 +270,49 @@ export class CommunityService {
     return { ok: true, note: '올렸습니다.' };
   }
 
+  /**
+   * 운영 — 글 찾기 (v10.72).
+   *
+   * 검수 큐(queue)는 첫 글과 신고 3건 이상인 글만 보여 줍니다. 신고가 쌓이기 전의 광고 · 욕설 글이나
+   * 잘못 가려진 글을 찾으려면 **모든 글**을 상태 · 게시판 · 검색어로 찾아야 합니다.
+   *   · 운영 화면이라 작성자 이름을 그대로 둡니다(queue 와 같음). 맛집 글(FOOD)도 고를 수 있습니다.
+   *   · 건수 조회와 목록 조회의 조건은 **같아야** 합니다 — 두 곳을 함께 고치십시오.
+   */
+  async adminPosts(q: { state?: unknown; board?: unknown; q?: unknown; page?: unknown; size?: unknown }) {
+    const one = (v: unknown) => String((Array.isArray(v) ? v[0] : v) ?? '');
+    const state = one(q.state).trim() || null;
+    if (state && !ADMIN_STATES.includes(state)) throw new BadRequestException('없는 상태입니다.');
+    const board = one(q.board).trim() || null;
+    if (board && ![...BOARDS, 'FOOD'].includes(board)) throw new BadRequestException('없는 게시판입니다.');
+    const kw = one(q.q).trim().replace(/\s+/g, ' ');
+    if ([...kw].length > 50) throw new BadRequestException('검색어는 50자까지 넣으실 수 있습니다.');
+    const int = (v: unknown) => (/^\d{1,9}$/.test(one(v).trim()) ? Number(one(v).trim()) : NaN);
+    const pageIn = int(q.page), sizeIn = int(q.size);
+    const page = pageIn >= 1 ? Math.min(pageIn, 100000) : 1;
+    const size = sizeIn >= 1 ? Math.min(sizeIn, 50) : 20;
+
+    const args = [state, board, kw];
+    const [c] = await this.db.query(
+      `SELECT count(*)::int AS n
+         FROM posts p
+        WHERE ($1::text IS NULL OR p.state = $1)
+          AND ($2::text IS NULL OR p.board = $2)
+          AND fn_search_match(p.title, p.body, $3)`, args);
+    const total = c?.n ?? 0;
+    const items = await this.db.query(
+      `SELECT p.id, p.board, p.title, p.state, p.report_count AS "reportCount",
+              p.comment_count AS "commentCount", p.created_at AS "createdAt",
+              p.hidden_at AS "hiddenAt", p.hidden_reason AS "hiddenReason",
+              coalesce(a.name,'(탈퇴)') AS author
+         FROM posts p LEFT JOIN accounts a ON a.id = p.author_id
+        WHERE ($1::text IS NULL OR p.state = $1)
+          AND ($2::text IS NULL OR p.board = $2)
+          AND fn_search_match(p.title, p.body, $3)
+        ORDER BY p.created_at DESC, p.id
+        LIMIT $4 OFFSET $5`, [...args, size, (page - 1) * size]);
+    return { items, total, page, size, pages: Math.ceil(total / size) };
+  }
+
   async hide(id: string, reason: string) {
     /* ★ 사유를 안 적으면 작성자가 **같은 글을 다시 씁니다.** */
     /* v10.27 (G-201) — 사유가 비거나 글이 없을 때 201 에 ok:false 로 답했습니다(성공 코드로 실패를 알림 —
@@ -275,8 +322,54 @@ export class CommunityService {
     }
     const [r] = await this.db.query(
       `UPDATE posts SET state = 'HIDDEN', hidden_at = now(), hidden_reason = $2
-        WHERE id = $1 RETURNING id`, [id, reason.trim()]);
-    if (!r) throw new NotFound('없는 글입니다.');
+        WHERE id = $1 AND state <> 'DELETED' RETURNING id`, [id, reason.trim()]);
+    /* v10.72 — 작성자가 지운 글(DELETED)은 감추지 않습니다(감추면 「감춘 글」 이 되어 되살리기 대상이 됩니다). */
+    if (!r) throw new NotFound('없는 글이거나 작성자가 지운 글입니다.');
     return { ok: true, note: '감췄습니다. 작성자에게 사유가 보입니다.' };
+  }
+
+  /**
+   * 운영 — 감춘 글 되살리기 (v10.72).
+   *
+   * 신고 3건이면 글이 자동으로 가려집니다(D031). 정상 글이었으면 되돌릴 길이 있어야 합니다 —
+   * 없으면 경쟁사 세 명이 정상 글을 없앨 수 있습니다.
+   *   · 감춘 글(HIDDEN)만 · 사유 필수(감사 기록 POST_UNHIDE 에 남음).
+   *   · 그 글의 처리 전 신고(OPEN · QUEUED)는 **기각**으로 닫고 신고 수를 0 으로 둡니다(대표 결정 A · 2026-10-22).
+   *     신고 수 트리거(fn_report_escalate)는 OPEN · QUEUED · UPHELD 만 세므로, 되살린 뒤에는 **새 신고 3건**이 쌓여야 다시 가려집니다.
+   *     신고 기록은 지우지 않습니다. 신고한 사람에게는 결과를 알립니다(abuse.service resolve 와 같음).
+   *   · 작성자가 지운 글(DELETED)은 되살리지 않습니다 — 작성자 뜻입니다.
+   */
+  async unhide(id: string, reason: string) {
+    if (typeof reason !== 'string' || !reason.trim()) {
+      throw new PolicyViolation('REASON_REQUIRED', '되살리는 사유를 적으십시오. 감사 기록에 남습니다.');
+    }
+    const [p] = await this.db.query<{ state: string }>(`SELECT state FROM posts WHERE id = $1`, [id]);
+    if (!p) throw new NotFound('없는 글입니다.');
+    if (p.state !== 'HIDDEN') {
+      throw new StateConflict('NOT_HIDDEN', p.state === 'DELETED'
+        ? '작성자가 지운 글은 되살리지 않습니다.' : '감춘 글이 아닙니다.');
+    }
+    return this.db.transaction(async () => {
+      const [r] = await this.db.query(
+        `UPDATE posts SET state = 'PUBLISHED', hidden_at = NULL, hidden_reason = NULL,
+                          report_count = 0, updated_at = now()
+          WHERE id = $1 AND state = 'HIDDEN' RETURNING id`, [id]);
+      if (!r) throw new StateConflict('NOT_HIDDEN', '감춘 글이 아닙니다.');
+      const closed = await this.db.query<{ reporter_id: string | null }>(
+        `UPDATE reports
+            SET state = 'DISMISSED', resolution = $2, handled_by = $3, handled_at = now()
+          WHERE target_type = 'POST' AND target_id = $1 AND state IN ('OPEN','QUEUED')
+          RETURNING reporter_id`, [id, UNHIDE_RESOLUTION, this.me ?? null]);
+      const reporters = [...new Set(closed.map((c) => c.reporter_id).filter((x): x is string => !!x))];
+      if (reporters.length) {
+        await this.db.query(
+          `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+           SELECT x, 'REPORT_RESOLVED', '신고 처리 결과를 알려 드립니다', $2, '/my/reports'
+             FROM unnest($1::uuid[]) AS x
+           ON CONFLICT DO NOTHING`, [reporters, UNHIDE_RESOLUTION]);
+      }
+      return { ok: true, dismissed: closed.length,
+               note: closed.length ? `다시 올렸습니다. 처리 전 신고 ${closed.length}건은 기각으로 닫았습니다.` : '다시 올렸습니다.' };
+    });
   }
 }
