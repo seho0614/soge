@@ -2,16 +2,16 @@
 .fd-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 18px 0 10px; }
 .fd-head h1 { margin: 0; font-size: 24px; }
 .fd-head p { margin: 4px 0 0; color: var(--ink2, #555); font-size: 14px; }
-.fd-cta { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 8px; background: #13804A; color: #fff; font-weight: 600; text-decoration: none; }
+.fd-cta { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: var(--sgb-r-sm, 7px); background: #13804A; color: #fff; font-weight: 600; text-decoration: none; }
 .fd-cta:hover { filter: brightness(1.05); }
 .fd-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-.fd-bar input { height: 38px; padding: 0 12px; border: 1px solid var(--line, #E3E6EA); border-radius: 8px; min-width: 0; flex: 1 1 180px; }
-.fd-bar button { height: 38px; padding: 0 14px; border: 1px solid var(--line, #E3E6EA); border-radius: 8px; background: #fff; cursor: pointer; }
+.fd-bar input { height: 38px; padding: 0 12px; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-sm, 7px); min-width: 0; flex: 1 1 180px; }
+.fd-bar button { height: 38px; padding: 0 14px; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-sm, 7px); background: #fff; cursor: pointer; }
 .fd-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.fd-chip { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--line, #E3E6EA); background: #fff; font-size: 13px; cursor: pointer; }
+.fd-chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line, #E3E6EA); background: #fff; font-size: 13px; cursor: pointer; }
 .fd-chip em { font-style: normal; color: #13804A; margin-left: 4px; }
 .fd-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.fd-list { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow: auto; border: 1px solid var(--line, #E3E6EA); border-radius: 10px; }
+.fd-list { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow: auto; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-md, 11px); }
 .fd-list li { border-bottom: 1px solid var(--line, #E3E6EA); }
 .fd-list li:last-child { border-bottom: 0; }
 .fd-list a { display: block; padding: 12px 14px; color: inherit; text-decoration: none; }
@@ -21,7 +21,7 @@
 .fd-cnt { font-size: 12.5px; color: #13804A; margin-top: 4px; }
 .fd-empty { padding: 18px 14px; color: var(--ink2, #555); font-size: 14px; }
 .fd-note { font-size: 13px; color: var(--ink2, #555); margin: 8px 0 0; line-height: 1.6; }
-.fd-badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: 1px; }
+.fd-badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: var(--sgb-r-md, 11px); margin-left: 6px; vertical-align: 1px; }
 .fd-badge.pick { background: #E8F6EE; color: #0e6e32; }   /* v10.55 대비 4.5 이상 */
 .fd-badge.ad { background: #FFF3E0; color: #a83701; }
 .fd-badge.wait { background: #EEF0F3; color: #555; }
@@ -35,11 +35,11 @@
 .fd-posts .fd-ex { font-size: 14px; color: var(--ink2, #555); margin-top: 4px; line-height: 1.6; }
 .fd-form { display: grid; gap: 12px; max-width: 720px; }
 .fd-form label { display: grid; gap: 6px; font-size: 14px; }
-.fd-form input[type="text"], .fd-form textarea { padding: 10px 12px; border: 1px solid var(--line, #E3E6EA); border-radius: 8px; font: inherit; }
+.fd-form input[type="text"], .fd-form textarea { padding: 10px 12px; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-sm, 7px); font: inherit; }
 .fd-form textarea { min-height: 140px; }
 .fd-chk { display: flex !important; gap: 8px; align-items: flex-start; grid-template-columns: none; }
-.fd-pick { border: 1px solid #13804A; border-radius: 10px; padding: 12px 14px; background: #F3FAF6; }
-.fd-res { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line, #E3E6EA); border-radius: 10px; max-height: 320px; overflow: auto; }
+.fd-pick { border: 1px solid #13804A; border-radius: var(--sgb-r-md, 11px); padding: 12px 14px; background: #F3FAF6; }
+.fd-res { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line, #E3E6EA); border-radius: var(--sgb-r-md, 11px); max-height: 320px; overflow: auto; }
 .fd-res li { border-bottom: 1px solid var(--line, #E3E6EA); }
 .fd-res li:last-child { border-bottom: 0; }
 .fd-res button { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: #fff; cursor: pointer; font: inherit; }

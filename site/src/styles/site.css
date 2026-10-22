@@ -187,7 +187,7 @@
 .dim         { color: var(--ink-3); font-size: var(--fs-sm); }
 .btn-sm      { padding: 6px 11px; border: 1px solid var(--line);   /* v10.29 — 시안 .bo.sm */
                background: var(--paper); color: var(--g700);
-               border-radius: 7px; font-size: 12px; cursor: pointer;
+               border-radius: var(--sgb-r-sm, 7px); font-size: 12px; cursor: pointer;
                white-space: nowrap; }
 .btn-sm:hover:not(:disabled) { background: var(--g50); }
 .btn-sm:disabled { opacity: .5; cursor: default; }
@@ -319,8 +319,8 @@
 .msg p { margin: 0; }
 .msg time { font-size: var(--fs-xs); color: var(--ink-3); }
 .msg.mine { text-align: right; }
-.msg.mine p { display: inline-block; background: var(--accent-w); border-radius: 10px; padding: 6px 10px; }
-.msg:not(.mine) p { display: inline-block; background: var(--surface); border-radius: 10px; padding: 6px 10px; }
+.msg.mine p { display: inline-block; background: var(--accent-w); border-radius: var(--sgb-r-md, 11px); padding: 6px 10px; }
+.msg:not(.mine) p { display: inline-block; background: var(--surface); border-radius: var(--sgb-r-md, 11px); padding: 6px 10px; }
 .msg time { display: block; }
 .masked { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--ad); }
 .chat-input { display: grid; gap: var(--sp-2); padding: var(--sp-3);
@@ -478,7 +478,7 @@
 
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
 @media(max-width:640px){.kpis{grid-template-columns:1fr}}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:16px 18px}
 .kpi .k{font-size:12px;color:var(--ink-3);margin-bottom:5px}
 .kpi .v{font-size:22px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
 .kpi .n{font-size:11.5px;color:var(--ink-3);margin-top:3px}
@@ -493,16 +493,16 @@
 .st.wait{background:var(--surface);color:var(--ink-2)}
 .st.no{background:var(--danger-w);color:var(--danger)}
 
-.page .note{border-radius:10px;padding:13px 16px;font-size:13px;margin:14px 0;line-height:1.7}
+.page .note{border-radius:var(--sgb-r-md, 11px);padding:13px 16px;font-size:13px;margin:14px 0;line-height:1.7}
 .page .note.info{background:var(--accent-w);border:1px solid var(--line)}
 .page .note.warn{background:var(--danger-w);border:1px solid var(--danger-w)}
 .page .note.ok{background:var(--money-w);border:1px solid var(--line)}
 
 .empty{padding:36px 20px;text-align:center;color:var(--ink-3);font-size:14px;
-  background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+  background:var(--surface);border:1px dashed var(--line);border-radius:var(--sgb-r-md, 11px)}
 
 .notice-list{list-style:none;margin:0;padding:0}
-.notice-list li{padding:14px 16px;border:1px solid var(--line);border-radius:10px;
+.notice-list li{padding:14px 16px;border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);
   background:var(--surface);margin-bottom:8px}
 .notice-list li.unread{border-left:3px solid var(--accent)}
 .nt-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
@@ -511,7 +511,7 @@
 /* ── 성향 설문 (SB-AIS-PRF-010) · 분류 (SB-AIS-CLS-010) ─────────────
  * 고르기 쉬워야 끝까지 답합니다 — 중간에 그만두면 아무 소용이 없습니다. */
 .survey{margin:20px 0}
-.q{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 14px;
+.q{border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:18px 20px;margin:0 0 14px;
   background:var(--surface)}
 .q legend{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;
   padding:0 6px;letter-spacing:-.2px}
@@ -520,24 +520,24 @@
   font-size:12px;font-weight:900;flex:none}
 .opts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .opt{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;
-  border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px;
+  border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);cursor:pointer;font-size:14px;
   line-height:1.6}
 .opt:hover{background:var(--surface)}
 .opt.on{border-color:var(--accent);background:var(--accent-w)}
 .opt input{margin-top:3px;flex:none}
 
 .consent{margin-top:20px;padding:18px 20px;border:1.5px solid var(--accent);
-  border-radius:12px;background:var(--accent-w)}
+  border-radius:var(--sgb-r-md, 11px);background:var(--accent-w)}
 .consent .opt{border:0;background:none;padding:0 0 14px;cursor:pointer}
 .consent .opt:hover{background:none}
 
-.inp{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;
+.inp{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);
   font:inherit;font-size:14px;margin-bottom:12px;resize:vertical}
 
 /* ── AI 분류 결과 (SB-AIS-CLS-010) ──────────────────────────────── */
 .cls-hits{list-style:none;margin:16px 0 0;padding:0}
 .cls-hits li{display:flex;align-items:center;gap:10px;padding:11px 14px;
-  border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--surface)}
+  border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);margin-bottom:7px;background:var(--surface)}
 .cls-hits .rank{flex:0 0 22px;height:22px;line-height:22px;text-align:center;
   border-radius:999px;background:var(--accent-w);color:var(--accent);
   font-size:12px;font-weight:800}
@@ -547,7 +547,7 @@
 .grid-links{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
 @media(max-width:700px){.grid-links{grid-template-columns:1fr}}
 .grid-links .card-link{display:block;padding:16px 18px;border:1px solid var(--line);
-  border-radius:12px;background:var(--surface);text-decoration:none;color:inherit}
+  border-radius:var(--sgb-r-md, 11px);background:var(--surface);text-decoration:none;color:inherit}
 .grid-links .card-link:hover{border-color:var(--accent)}
 .grid-links .card-link strong{display:block;font-size:14.5px;font-weight:800;margin-bottom:3px}
 .grid-links .card-link span{font-size:12.5px;color:var(--ink-3)}
@@ -570,12 +570,12 @@
 /* ── 이벤트 (SB-MNY-EVT-010) ────────────────────────────────────────
  * 무엇을 받는지가 가장 크게 보여야 합니다 — 그것 때문에 참여합니다. */
 .evs{display:grid;gap:12px;margin:16px 0}
-.ev{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+.ev{background:var(--surface);border:1px solid var(--line);border-radius:var(--sgb-r-md, 11px);padding:18px 20px}
 .evh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
 .evh h2{font-size:16.5px;font-weight:900;margin:0;letter-spacing:-.3px;line-height:1.4}
 .evs-sum{margin:7px 0 0;color:var(--ink-2);font-size:13.5px;line-height:1.6}
 .evb{display:flex;gap:10px;align-items:baseline;margin:13px 0 0;padding:11px 14px;
-  border-radius:9px;background:var(--accent-w)}
+  border-radius:var(--sgb-r-sm, 7px);background:var(--accent-w)}
 .evb .k{flex:0 0 auto;font-size:12px;color:var(--ink-3);font-weight:700}
 .evb strong{font-size:14.5px;font-weight:900;color:var(--accent)}
 .evf{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12.5px}
@@ -584,7 +584,7 @@
 /* ── 검정이 잡은 미정의 클래스 (2026-09-23) ──────────────────────
    없는 클래스는 ★ 조용히 무시됩니다 — 눈으로는 못 찾습니다. */
 .ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;
-       padding:8px 14px;border-radius:8px;border:1px solid var(--line,#E8E8E4);
+       padding:8px 14px;border-radius:var(--sgb-r-sm, 7px);border:1px solid var(--line,#E8E8E4);
        background:transparent;color:var(--ink-2,#5C6885);font-size:13px;
        font-weight:600;cursor:pointer}
 .ghost:hover{border-color:var(--accent,#2563EB);color:var(--accent,#2563EB)}
@@ -618,7 +618,7 @@
 
 /* 가입 유형 선택 */
 .typepick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-.tpb{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:10px;
+.tpb{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:var(--sgb-r-md, 11px);
      border:1px solid var(--line,#E8E8E4);background:#fff;cursor:pointer;
      text-align:left;font:inherit}
 .tpb[aria-pressed="true"],.tpb.on{border-color:var(--accent,#2563EB);
@@ -649,7 +649,7 @@
 .sub-manage:hover{border-color:var(--line)}
 .sub-manage h2{margin:0 0 var(--sp-3);font-size:16px}
 .sub-manage .tbl th{width:96px;white-space:nowrap}
-.sub-manage .note{border-radius:10px;padding:13px 16px;font-size:13px;margin:14px 0;line-height:1.7}
+.sub-manage .note{border-radius:var(--sgb-r-md, 11px);padding:13px 16px;font-size:13px;margin:14px 0;line-height:1.7}
 .sub-manage .note.info{background:var(--accent-w);border:1px solid var(--line)}
 .sub-manage .note.warn{background:var(--danger-w);border:1px solid var(--danger-w)}
 .sub-manage .warn-text{color:var(--danger)}
@@ -662,7 +662,7 @@
 .btn-sm.danger { border-color: var(--danger); color: var(--danger); }
 .inq-row { display: grid; gap: 4px; }
 .inq-last { color: var(--ink-2); font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60ch; }
-.unread-dot { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: var(--fs-xs); text-align: center; }
+.unread-dot { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: var(--sgb-r-md, 11px); background: var(--accent); color: #fff; font-size: var(--fs-xs); text-align: center; }
 /* v10.27 (G-188) — 가입 약관 동의 */
 .consent { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-3); margin: var(--sp-3) 0; }
 .consent legend { font-weight: 700; padding: 0 4px; }
@@ -674,14 +674,14 @@
 .consent em.opt { color: var(--ink-3); font-style: normal; }
 /* v10.27 (G-195) — 나의공간 첫 화면(시안 scMy) */
 .myhome .prof { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--line);
-                border-radius: 11px; background: var(--paper); margin: var(--sp-3) 0 var(--sp-4); }
+                border-radius: var(--sgb-r-md, 11px); background: var(--paper); margin: var(--sp-3) 0 var(--sp-4); }
 .myhome .prof .av { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff;
                     display: grid; place-items: center; font-size: 21px; font-weight: 900; flex: none; }
 .myhome .prof .pi { flex: 1; min-width: 0; }
 .myhome .prof .pi > b { font-size: 16px; font-weight: 900; }
 .myhome .prof .ps { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
 .myhome .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
-.myhome .tile { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; padding: 14px;
+.myhome .tile { background: var(--paper); border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); padding: 14px;
                 display: flex; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
 .myhome .tile:hover, .myhome .mcard:hover { border-color: var(--accent); }
 .myhome .tile .tl { font-size: 12px; color: var(--ink-3); font-weight: 700; }
@@ -689,7 +689,7 @@
 .myhome .tile .tu { font-size: 11.5px; color: var(--ink-3); }
 .myhome .s2 { font-size: var(--fs-md); margin: var(--sp-5) 0 var(--sp-3); }
 .myhome .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.myhome .mcard { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; padding: 14px;
+.myhome .mcard { background: var(--paper); border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); padding: 14px;
                  display: flex; flex-direction: column; gap: 4px; color: inherit; text-decoration: none; }
 .myhome .mcard b { font-size: 13.5px; font-weight: 800; }
 .myhome .mcard b i { font-style: normal; font-size: 11px; color: var(--accent); }
@@ -735,5 +735,5 @@
 .notice.notice-ok { background: var(--gr-l, #ECFDF5); border-color: var(--gr-l, #ECFDF5); }
 .notice.notice-ok p { margin: 4px 0 0; font-size: var(--fs-sm); }
 /* v10.32 (추가) — 신고하기(SB-HOM-RPT-010) 「본인인증이 필요합니다」 띠: 시안 .nt.warn(연한 살구 #FFF7ED · 테두리 같은 색) · 굵은 줄은 따로 한 줄 */
-.page .note.warn.rpt-idv{background:#FFF7ED;border:1px solid #FFF7ED;border-radius:9px;padding:12px 14px;font-size:13px;line-height:1.65;color:var(--ink)}
+.page .note.warn.rpt-idv{background:#FFF7ED;border:1px solid #FFF7ED;border-radius:var(--sgb-r-sm, 7px);padding:12px 14px;font-size:13px;line-height:1.65;color:var(--ink)}
 .page .note.warn.rpt-idv > b{display:block;margin-bottom:4px;font-size:12.5px;color:var(--ink)}

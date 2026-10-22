@@ -31,7 +31,7 @@
   --bg:   #F7F8FA;
   --f: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --sh: 0 1px 2px rgba(17,24,39,.06); --sh2: 0 4px 18px rgba(17,24,39,.10);
+  --sh: var(--sgb-shadow, 4px 4px 8px rgba(0, 0, 0, .04)); --sh2: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10));
 
   /* 금액 전용. 다른 어디에도 쓰지 않습니다 */
   --money:    #0F6B4A;

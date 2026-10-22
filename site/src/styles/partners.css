@@ -12,20 +12,20 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2brand .bt strong { font-size: 17px; font-weight: 800; line-height: 1.2; color: #fff; }
 .p2brand .bs { font-size: 11.5px; color: #93A2C2; margin-top: 10px; line-height: 1.5; }
 .p2menu { display: flex; flex-direction: column; gap: 3px; padding: 4px 14px; }
-.p2menu a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+.p2menu a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px);
             color: #C3CCE3; font-size: 13.5px; font-weight: 500; text-decoration: none; }
 .p2menu a:hover { background: #1A2C52; color: #fff; }
 .p2menu a.on { background: #fff; color: #101E3E; font-weight: 700; }
-.p2menu a .ic { width: 22px; height: 22px; border-radius: 6px; background: #3B6EF6;
+.p2menu a .ic { width: 22px; height: 22px; border-radius: var(--sgb-r-sm, 7px); background: #3B6EF6;
                 display: flex; align-items: center; justify-content: center; flex: none; }
 .p2backw { padding: 16px 14px 0; }
-.p2back { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 10px;
+.p2back { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px);
           border: 1px solid #2A3C60; color: #C3CCE3; font-size: 13px; text-decoration: none; }
 .p2back:hover { background: #1A2C52; color: #fff; }
 .p2foot { margin-top: auto; padding: 16px; }
-.p2card { background: #1A2C52; border-radius: 12px; padding: 16px; display: flex; gap: 10px; align-items: flex-start; }
+.p2card { background: #1A2C52; border-radius: var(--sgb-r-md, 11px); padding: 16px; display: flex; gap: 10px; align-items: flex-start; }
 .p2card .tx { font-size: 12px; line-height: 1.55; color: #DCE3F5; }
-.p2img { margin-top: 12px; border-radius: 12px; overflow: hidden; position: relative; height: 150px; }
+.p2img { margin-top: 12px; border-radius: var(--sgb-r-md, 11px); overflow: hidden; position: relative; height: 150px; }
 .p2img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .p2img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(16,30,62,.55), rgba(16,30,62,.05)); }
 .p2imgtx { position: absolute; top: 14px; left: 14px; right: 14px; color: #fff; font-size: 12.5px; font-weight: 800; line-height: 1.4; z-index: 1; }
@@ -39,7 +39,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2user { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; }
 .p2user .av { width: 30px; height: 30px; border-radius: 50%; background: #3B6EF6; flex: none; }
 
-.p2hero { background: linear-gradient(90deg, #EAF0FF 0%, #E3ECFF 55%, #D9E5FB 100%); border-radius: 18px;
+.p2hero { background: linear-gradient(90deg, #EAF0FF 0%, #E3ECFF 55%, #D9E5FB 100%); border-radius: var(--sgb-r-lg, 16px);
           display: flex; align-items: stretch; overflow: hidden; min-height: 190px; }
 .p2herotx { padding: 30px 8px 30px 32px; flex: 1; }
 .p2herotx .h1 { font-size: 24px; font-weight: 800; color: #12203D; display: flex; align-items: center; gap: 6px; line-height: 1.5; }
@@ -55,22 +55,22 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2notice { margin: 0; }
 
 /* 흰 본문 상자 — 시안 .p2body. 안의 기존 쪽머리 · 안내 · 표 · 상태를 시안 page() · note() · table() · .st 모양으로 */
-.p2body { background: #fff; border-radius: 14px; padding: 20px 22px; }
+.p2body { background: #fff; border-radius: var(--sgb-r-lg, 16px); padding: 20px 22px; }
 .p2body .page-head { margin: 6px 0 0; }
 .p2body .page-head h1 { margin: 0; font-size: 23px; font-weight: 900; letter-spacing: -.5px; color: #111827; }
 .p2body .page-head + .lead { margin: 6px 0 18px; padding-bottom: 14px; border-bottom: 1px solid #E5E7EB;
   font-size: 13px; color: #6B7280; line-height: 1.6; max-width: none; }
-.p2body .notice { margin: 14px 0; padding: 12px 14px; border-radius: 9px; font-size: 13px; line-height: 1.65;
+.p2body .notice { margin: 14px 0; padding: 12px 14px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; line-height: 1.65;
   border: 1px solid #EFF6FF; background: #EFF6FF; color: #111827; }
 .p2body .notice.warn { border-color: #FDE68A; background: #FFFBEB; color: #4B5563; }
 .p2body .notice b { color: #111827; }
-.p2body .tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; border: 1px solid #E5E7EB; border-radius: 10px; overflow: hidden; background: #fff; }
+.p2body .tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; border: 1px solid #E5E7EB; border-radius: var(--sgb-r-md, 11px); overflow: hidden; background: #fff; }
 .p2body .tbl th { text-align: left; font-size: 11.5px; font-weight: 800; color: #6B7280; padding: 11px 13px;
   background: #F9FAFB; border-bottom: 1px solid #E5E7EB; white-space: nowrap; }
 .p2body .tbl td { padding: 12px 13px; border-bottom: 1px solid #F3F4F6; color: #4B5563; vertical-align: top; }
 .p2body .tbl tr:last-child td { border-bottom: 0; }
 .p2body .tbl tbody th { background: #F9FAFB; width: 120px; }
-.p2body .empty { padding: 44px 20px; text-align: center; color: #6B7280; font-size: 13.5px; border: 1px dashed #E5E7EB; border-radius: 10px; background: #F9FAFB; }
+.p2body .empty { padding: 44px 20px; text-align: center; color: #6B7280; font-size: 13.5px; border: 1px dashed #E5E7EB; border-radius: var(--sgb-r-md, 11px); background: #F9FAFB; }
 .p2body .state { display: inline-block; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap;
   background: #F9FAFB; color: #6B7280; border: 1px solid #E5E7EB; }
 .p2body .state.state-published { background: #ECFDF5; color: #0F6B4F; border-color: #A7F3D0; }
@@ -81,7 +81,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
   border-radius: 999px; padding: 8px 14px; text-decoration: none; }
 .p2body .tabs a.on { background: #7C3AED; border-color: #7C3AED; color: #fff; }
 .p2body .sec-title { font-size: 15px; font-weight: 800; margin: 26px 0 10px; }
-.p2body .p2list > li { border: 1px solid #E5E7EB; border-radius: 10px; }
+.p2body .p2list > li { border: 1px solid #E5E7EB; border-radius: var(--sgb-r-md, 11px); }
 .p2body .btn-primary, .p2body .cta-primary { background: #7C3AED; border-color: #7C3AED; }
 
 /* 대시보드(시안 scP2Dsh) — 왼쪽 칸들 + 오른쪽 320px */
@@ -89,34 +89,34 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2dl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
 .p2dr { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
 .p2kpis6 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.p2kpi { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(18,35,61,.06); display: flex; gap: 12px; }
-.p2kpi .ic { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.p2kpi { background: #fff; border-radius: var(--sgb-r-lg, 16px); padding: 18px; box-shadow: var(--sgb-shadow, 4px 4px 8px rgba(0, 0, 0, .04)); display: flex; gap: 12px; }
+.p2kpi .ic { width: 38px; height: 38px; border-radius: var(--sgb-r-md, 11px); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .p2kpi .k { font-size: 12.5px; color: #6E7A96; font-weight: 600; }
 .p2kpi .v { font-size: 21px; font-weight: 800; margin-top: 4px; color: #1B2B4B; }
 .p2kpi .v small { font-size: 13px; font-weight: 600; margin-left: 1px; }
 .p2kpi .n { font-size: 11px; color: #6E7A96; margin-top: 3px; }
 .p2kpi .n a { color: #12B886; font-weight: 700; text-decoration: none; }
-.p2card2 { background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 2px rgba(18,35,61,.06); }
+.p2card2 { background: #fff; border-radius: var(--sgb-r-lg, 16px); padding: 20px; box-shadow: var(--sgb-shadow, 4px 4px 8px rgba(0, 0, 0, .04)); }
 .p2card2.sm { padding: 18px; }
 .p2card2 h2 { font-size: 15px; font-weight: 800; margin: 0; color: #1B2B4B; }
 .p2card2.sm h2 { font-size: 13px; }
 .p2card2 .p2sechd { margin: 0; align-items: baseline; }
 .p2card2 .p2sechd a { font-size: 12px; font-weight: 700; color: #1B2B4B; }
 .p2sub { font-size: 12px; color: #6E7A96; margin: 4px 0 0; line-height: 1.6; }
-.p2card2 .empty { margin: 14px 0 0; padding: 26px; text-align: center; color: #6E7A96; font-size: 13px; background: #F4F6FA; border-radius: 10px; }
+.p2card2 .empty { margin: 14px 0 0; padding: 26px; text-align: center; color: #6E7A96; font-size: 13px; background: #F4F6FA; border-radius: var(--sgb-r-md, 11px); }
 .p2pcards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
-.p2pc { border: 1px solid #EBEEF3; border-radius: 12px; overflow: hidden; }
+.p2pc { border: 1px solid #EBEEF3; border-radius: var(--sgb-r-md, 11px); overflow: hidden; }
 .p2pc .bd { padding: 12px; }
 .p2pc strong { display: block; font-size: 13.5px; font-weight: 700; margin-top: 2px; }
 .p2pc p { font-size: 11px; color: #6E7A96; margin: 3px 0 0; min-height: 16px; }
-.p2pc .earn { font-size: 11.5px; color: #12B886; font-weight: 700; margin-top: 8px; background: #EAFBF4; padding: 6px 8px; border-radius: 6px; text-align: center; }
-.p2pc .bt { display: block; width: 100%; margin-top: 10px; background: #101E3E; color: #fff; border-radius: 8px; padding: 9px;
+.p2pc .earn { font-size: 11.5px; color: #12B886; font-weight: 700; margin-top: 8px; background: #EAFBF4; padding: 6px 8px; border-radius: var(--sgb-r-sm, 7px); text-align: center; }
+.p2pc .bt { display: block; width: 100%; margin-top: 10px; background: #101E3E; color: #fff; border-radius: var(--sgb-r-sm, 7px); padding: 9px;
             font-size: 12.5px; font-weight: 700; text-align: center; text-decoration: none; box-sizing: border-box; }
 .p2url { display: flex; gap: 8px; margin-top: 12px; }
-.p2url .box { flex: 1; min-width: 0; background: #F4F6FA; border: 1px solid #E3E8F0; border-radius: 10px; padding: 10px 14px;
+.p2url .box { flex: 1; min-width: 0; background: #F4F6FA; border: 1px solid #E3E8F0; border-radius: var(--sgb-r-md, 11px); padding: 10px 14px;
               font-size: 12px; color: #6E7A96; display: flex; align-items: center; gap: 8px; overflow: hidden; }
 .p2url .box span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.p2dark { background: #101E3E; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.p2dark { background: #101E3E; color: #fff; border: none; border-radius: var(--sgb-r-md, 11px); padding: 10px 18px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .p2dark:disabled { opacity: .45; cursor: not-allowed; }
 .p2qbtns { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .p2qbtns .q { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 84px;
@@ -142,7 +142,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2feed .rw b { color: #1B2B4B; font-weight: 500; }
 .p2feed .rw em { color: #12B886; font-weight: 700; font-style: normal; }
 .p2feed .state { font-size: 10.5px; }
-.p2navy { display: block; background: #101E3E; border-radius: 14px; padding: 18px; color: #fff; text-decoration: none; }
+.p2navy { display: block; background: #101E3E; border-radius: var(--sgb-r-lg, 16px); padding: 18px; color: #fff; text-decoration: none; }
 .p2navy .p2nhd { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
 .p2navy p { font-size: 12px; color: #C3CCE3; margin: 8px 0 0; line-height: 1.6; }
 .p2navy ul { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; }
@@ -282,7 +282,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2pc .ph { height: 100px; position: relative; overflow: hidden; background: #F4F6FA; }
 .p2pc .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .p2pc .bd { position: relative; }
-.p2pc .tag { display: inline-block; font-size: 10px; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: 5px; margin-bottom: 4px; }
+.p2pc .tag { display: inline-block; font-size: 10px; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: var(--sgb-r-sm, 7px); margin-bottom: 4px; }
 .p2pc .ph + .bd .tag { position: absolute; top: -14px; left: 12px; margin: 0; }
 .p2pc .tag.hot { background: #F04438; }
 .p2pc .tag.high { background: #12B886; }
