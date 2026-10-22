@@ -51,9 +51,9 @@ ok('D098 적용 기록 있음', out == 'D098_domain_sogaebank_com', out or err)
 _, before, _ = psql('-c', SETTINGS)
 rc, out, err = psql('-c', 'BEGIN', '-f', D098, '-f', D098, '-c', SETTINGS, '-c', 'ROLLBACK')
 ok('D098 두 번 돌려도 오류 없음 · 값 그대로', rc == 0 and before in out, err[:200])
-rc, out, err = psql('-c', 'BEGIN', '-c', "UPDATE site_settings SET value='staging.example.com' WHERE key='site.domain'",
+rc, out, err = psql('-c', 'BEGIN', '-c', "UPDATE site_settings SET value='staging.sogaebank.net' WHERE key='site.domain'",   # 자리표시자 낱말(example 등 · setting_placeholders)이 없는 값 — 설정 값 검사 트리거가 막지 않게
                     '-f', D098, '-c', "select value from site_settings where key='site.domain'", '-c', 'ROLLBACK')
-ok('운영자가 고친 site.domain 은 D098 이 바꾸지 않음', rc == 0 and 'staging.example.com' in out, (out or err).replace('\n', ' ; ')[-120:])
+ok('운영자가 고친 site.domain 은 D098 이 바꾸지 않음', rc == 0 and 'staging.sogaebank.net' in out, (out or err).replace('\n', ' ; ')[-120:])
 _, after, _ = psql('-c', SETTINGS)
 ok('시험 뒤 개발 DB 값 그대로(되돌림)', after == before, '')
 
