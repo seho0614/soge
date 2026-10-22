@@ -1,0 +1,205 @@
+{
+ "screens": 211,
+ "rows": {
+  "p2dsh": [
+   {
+    "style": "font-size: 12px; color: #93A2C2; margin-top: 10px; line-height: 1.5;",
+    "fg": "#93a2c2",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 6.41,
+    "text": "좋은 제품을 소개하는\n당신이 더 특별한 세상을 만듭니다.",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#93A2C2"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "추천상품",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "내 소개링크",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "수익관리",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "주문/고객현황",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "정산내역",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "마케팅자료실",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "공지사항",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "1:1 문의",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sgb-r-md, 11px); color: #C3CCE3; font-size: 14px; font-weight: 500;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "파트너가이드",
+    "size": "14px",
+    "weight": "500",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--sgb-r-md, 11px);border:1px solid #2A3C60;color:#C3CCE3;font-size:13px;text-decoration:none",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "소개뱅크로 가기",
+    "size": "13px",
+    "weight": "400",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "font-size: 12px; line-height: 1.55; color: #DCE3F5;",
+    "fg": "#dce3f5",
+    "bg": "#1a2c52",
+    "kind": "color",
+    "cr": 10.71,
+    "text": "좋은 사람의\n소개가 더 나은 일상을\n만듭니다.",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#DCE3F5"
+   },
+   {
+    "style": "font-size:12px; letter-spacing:0.08em; color:#93A2C2; line-height:1.7; font-weight:700;",
+    "fg": "#93a2c2",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 6.41,
+    "text": "PARTNER\nTODAY\nA BETTER\nTOMORROW",
+    "size": "12px",
+    "weight": "700",
+    "declared": "#93A2C2"
+   },
+   {
+    "style": "font-size: 12px; color: #C3CCE3; margin-top: 8px; line-height: 1.6;",
+    "fg": "#c3cce3",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 10.23,
+    "text": "지금, 더 큰 수익의 기회가\n기다리고 있습니다.",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#C3CCE3"
+   },
+   {
+    "style": "color:#12B886;",
+    "fg": "#12b886",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 6.44,
+    "text": "✔",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#12B886"
+   },
+   {
+    "style": "color:#12B886;",
+    "fg": "#12b886",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 6.44,
+    "text": "✔",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#12B886"
+   },
+   {
+    "style": "color:#12B886;",
+    "fg": "#12b886",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 6.44,
+    "text": "✔",
+    "size": "12px",
+    "weight": "400",
+    "declared": "#12B886"
+   },
+   {
+    "style": "text-align:right; margin-top:10px; font-size:14px; font-weight:800; font-style:italic; color:#5B8CFF;",
+    "fg": "#5b8cff",
+    "bg": "#101e3e",
+    "kind": "color",
+    "cr": 5.2,
+    "text": "함께, 더 멀리! ↗",
+    "size": "14px",
+    "weight": "800",
+    "declared": "#5B8CFF"
+   }
+  ]
+ }
+}
