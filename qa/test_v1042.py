@@ -29,7 +29,8 @@ def psql(*args):
 SETTINGS = "select key || '=' || value || ' | ' || coalesce(value_example,'') from site_settings where key in ('site.domain','site.base_url','site.partner_subdomain') order by key"
 
 # ① 킷
-KEEP = ('prisma/migrations/B900_reference_data/', 'prisma/migrations/C870_partner_path/', 'prisma/migrations/D098_domain_sogaebank_com/', 'docs/60_', 'docs/91_')
+KEEP = ('prisma/migrations/B900_reference_data/', 'prisma/migrations/C870_partner_path/', 'prisma/migrations/D098_domain_sogaebank_com/', 'docs/60_', 'docs/91_',
+        'docs/99_', 'docs/111_')   # 99 · 111 — 「옛 도메인 아님 · 정리함」을 설명하는 문장(v10.50 · v10.56 뒤에 생긴 문서)
 left = []
 for root, ds, fs in os.walk(K):
     ds[:] = [d for d in ds if d not in ('node_modules', '.git', '.next', 'dist')]
@@ -38,7 +39,7 @@ for root, ds, fs in os.walk(K):
         try: s = open(p, encoding='utf-8').read()
         except Exception: continue
         if OLD in s and not rel.startswith(KEEP): left.append(rel)
-ok('킷 — 옛 도메인은 B900 · C870 · D098 · 문서 60 · 91 에만 남음', not left, ' · '.join(left[:5]))
+ok('킷 — 옛 도메인은 B900 · C870 · D098 · 문서 60 · 91 · 99 · 111 에만 남음', not left, ' · '.join(left[:5]))
 
 # ② DB
 rc, out, err = psql('-c', SETTINGS)

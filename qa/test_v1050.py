@@ -3,7 +3,7 @@
   KIT=… python3 -I test_v1050.py
 
   ① 화면 — 히어로 안 · 검색칩 다음 · 소개장터 관이 켜졌을 때만 · QM 목록 재사용 · 주소 5개가 실제 페이지
-  ② CSS — 쓰는 클래스가 모두 정의됨 · 720px 접힘
+  ② CSS — 쓰는 클래스가 모두 정의됨 · 휴대전화 폭 접힘(720px — v10.61 부터 640px)
   ③ 시안 — mxHero 에 같은 줄 · 시안 화면 키(win · bst · urg · saf · evt)가 라우트에 있음 · 원본(proto_main_src.js)도 같음
   ④ 기록 — screens.json 메모 · VERSION · docs/102
 """
@@ -43,8 +43,8 @@ ok('아이콘은 읽지 않게(aria-hidden) · 이름표 있음', 'className="ho
 CSS = rd('site/src/styles/home.css')
 for c in ('home-qm', 'home-qe'):
     ok(f'CSS .{c} 정의', re.search(r'\.' + c + r'\b[^{]*\{', CSS) is not None, '')
-blk = ''.join(CSS[m.start():CSS.find('\n}', m.start())] for m in re.finditer(r'@media \(max-width: 720px\)', CSS))   # 720px 묶음이 여러 개
-ok('720px 에서 3칸씩 접힘', '.home-qm a { flex: 1 1 33%' in blk and '.home-qm { display: flex; flex-wrap: wrap' in blk, '')
+blk = ''.join(CSS[m.start():CSS.find('\n}', m.start())] for m in re.finditer(r'@media \(max-width: (?:720|640)px\)', CSS))   # 묶음이 여러 개 · v10.61 화면 폭 3단계(docs/117)에서 720 → 640
+ok('휴대전화 폭(640 · 전 720px)에서 3칸씩 접힘', '.home-qm a { flex: 1 1 33%' in blk and '.home-qm { display: flex; flex-wrap: wrap' in blk, '')
 ok('키보드 초점 표시', '.home-qm a:focus-visible' in CSS, '')
 
 # ③ 시안

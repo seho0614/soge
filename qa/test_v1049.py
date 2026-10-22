@@ -194,7 +194,7 @@ for m in re.finditer(r'className="([^"{]*)"', W):
 used |= {'home-wxin', 'busy'}
 defined = set(re.findall(r'\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)', css))
 ok('띠 클래스가 모두 home.css 에 정의', used <= defined, ' '.join(sorted(used - defined)))
-ok('휴대폰(720px 이하) 접힘 규칙', re.search(r'@media \(max-width: 720px\) \{\n  \.home-wx ', css) is not None, '')
+ok('휴대폰(640 · 전 720px 이하) 접힘 규칙', re.search(r'@media \(max-width: (?:720|640)px\) \{\n  \.home-wx ', css) is not None, '')   # v10.61 화면 폭 3단계(docs/117)에서 720 → 640
 WK = rd('web/src/app/admin/WeatherKeys.tsx')
 ok('운영 화면 — 키 입력은 password · 자동완성 끔 · 끝 4자리만', 'type="password" autoComplete="off"' in WK and 'd.key.masked' in WK, '')
 ok('운영 화면 — 키 없으면 켜기 · 시험 못 누름', "disabled={busy === '_test' || !keyOk}" in WK and "busy === '_patch' || !keyOk" in WK, '')
