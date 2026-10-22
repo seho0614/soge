@@ -496,7 +496,7 @@
 .page .note.warn{background:var(--danger-w);border:1px solid var(--danger-w)}
 .page .note.ok{background:var(--money-w);border:1px solid var(--line)}
 
-.empty{padding:36px 20px;text-align:center;color:var(--ink-3);font-size:14px;
+.empty{padding:36px 20px;text-align:center;color:var(--sgb-ink-2);font-size:14px;
   background:var(--surface);border:1px dashed var(--line);border-radius:var(--sgb-r-md, 11px)}
 
 .notice-list{list-style:none;margin:0;padding:0}

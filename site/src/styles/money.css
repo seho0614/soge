@@ -52,7 +52,7 @@
 .mny-hero-in { max-width: 1500px; margin: 0 auto; padding: 31px 89.5px 31px 88.5px; display: flex; justify-content: space-between; gap: 40px; }
 .mny-hero-l { flex: 0 1 728.5px; min-width: 0; padding-top: 9.5px; }
 .mny-h1 { font-family: var(--sgb-font-title); font-size: 48px; font-weight: 700; line-height: 57.5px; color: var(--sgb-navy); letter-spacing: 0; }
-.mny-h1 em { font-style: normal; color: var(--sgb-accent); }
+.mny-h1 em { font-style: normal; color: var(--sgb-or-text); }
 .mny-lead { margin-top: 2px; font-size: 20px; font-weight: 700; line-height: 29px; color: #09162c; }
 .mny-search { margin-top: 30px; height: 60px; border-radius: 999px; border: 1px solid #e9edf1; background: #fff; display: flex; align-items: center; padding: 0 8px 0 17px; }
 .mny-search img { width: 26px; height: 27.5px; flex: none; }
@@ -182,7 +182,7 @@
 .mny-req-m div img { width: 15px; height: 18px; margin-left: -1px; }      /* 요청 줄의 작은 위치 표시(그림에서 따로 자른 것 · 30×36 의 절반) */
 .mny-req-c { font-size: 14px; font-weight: 700; white-space: nowrap; padding-bottom: 5px; }
 .mny-req-c.is-price { color: var(--sgb-navy); }
-.mny-req-c b { font-size: 16px; font-weight: 700; color: var(--sgb-alert); margin-left: 10.5px; }
+.mny-req-c b { font-size: 16px; font-weight: 700; color: var(--sgb-rd-text); margin-left: 10.5px; }
 .mny-btn.is-ghost { max-width: none; width: 106.5px; height: var(--sgb-btn-h, 40px); border-radius: var(--sgb-btn-r, 7px); border: 1px solid var(--sgb-btn3-fg, #00245a); color: var(--sgb-btn3-fg, #00245a); background: var(--sgb-btn3-bg, #fff); font-weight: var(--sgb-btn-fw, 700); font-size: var(--sgb-btn-fs, 14px)}
 .mny-btn.is-ghost:hover { background: var(--sgb-btn2-hover, #f5f7fa); }
 .mny-empty { padding: 26px 0 20px; text-align: center; color: var(--sgb-ink-3); font-size: 14px; }
@@ -217,7 +217,7 @@
 .mny-ad-adv { margin-top: auto; font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, .78); }
 .mny-ad.is-text h2 { margin-top: 6px; font-family: var(--sgb-font-title); font-size: 24px; font-weight: 700; line-height: 31px; }
 .mny-ad.is-text p { margin-top: 10px; font-size: 14px; font-weight: 700; line-height: 21px; color: rgba(255, 255, 255, .9); }
-.mny-ad-cta { margin-top: 18px; align-self: flex-start; font-size: 16px; font-weight: 700; color: var(--sgb-accent); display: inline-flex; align-items: center; gap: 8px; }
+.mny-ad-cta { margin-top: 18px; align-self: flex-start; font-size: 16px; font-weight: 700; color: var(--sgb-or-text); display: inline-flex; align-items: center; gap: 8px; }
 .mny-ad-cta:hover { text-decoration: underline; }
 .mny-ad-msg { margin-top: 8px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .85); }
 

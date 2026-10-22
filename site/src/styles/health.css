@@ -57,7 +57,7 @@
   text-decoration: none; cursor: pointer;
 }
 .hlt-chip.on { border-color: var(--accent); background: var(--accent-w); color: var(--accent); font-weight: 700; }
-.hlt-chip.lock { color: var(--ink-3); background: var(--surface); cursor: default; }
+.hlt-chip.lock { color: var(--sgb-ink-2); background: var(--surface); cursor: default; }
 
 /* ── 배지 ── */
 .hlt-bdg {

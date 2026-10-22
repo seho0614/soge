@@ -193,18 +193,18 @@
 .my-cp { flex: 1; }
 .my-cp .my-ls { display: block; font-size: 12px; color: var(--g500); margin-bottom: 2px; }
 .my-cp b { font-size: 14px; font-weight: 800; color: var(--mink); }
-.my-cpx { color: var(--g400); font-size: 14px; }
+.my-cpx { color: var(--sgb-ink-3); font-size: 14px; }
 .my-ctrn { font-size: 13px; color: var(--g700); margin-bottom: 12px; }
 .my-ctra { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.my-nt3 { font-size: 12px; color: var(--g400); line-height: 1.65; }
+.my-nt3 { font-size: 12px; color: var(--sgb-ink-3); line-height: 1.65; }
 .my-nt3 b { color: var(--mink3); }
 .my-ctst { display: flex; gap: 0; list-style: none; margin: 12px 0; padding: 0; }
-.my-ctst li { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; font-size: 12px; color: var(--g400); }
+.my-ctst li { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; font-size: 12px; color: var(--sgb-ink-3); }
 .my-ctst li::before { content: ""; position: absolute; top: 11px; left: -50%; width: 100%; height: 2px; background: var(--mline); }
 .my-ctst li:first-child::before { display: none; }
 .my-ctst li.done::before, .my-ctst li.on::before { background: var(--pp); }
 .my-ctst .my-n { width: 23px; height: 23px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: var(--g100); color: var(--g500); font-weight: 800; font-size: 12px; position: relative; z-index: 1; }
+  background: var(--g100); color: var(--sgb-ink-3); font-weight: 800; font-size: 12px; position: relative; z-index: 1; }
 .my-ctst li.done .my-n { background: var(--pp); color: #fff; }
 .my-ctst li.on .my-n { background: var(--pp); color: #fff; box-shadow: 0 0 0 4px var(--pp-l2); }
 .my-ctst li.on .my-t { color: var(--pp); font-weight: 800; }

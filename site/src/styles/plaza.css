@@ -104,7 +104,7 @@
 .plz-pager [aria-current=page] { background-color: var(--plz-orange); border-color: var(--plz-orange); color: var(--sgb-on-point); font-weight: 600; }
 .plz-pager [aria-label] { font-size: 24px; line-height: 1; padding-bottom: 4px; }
 .plz-pager [aria-disabled=true] { color: #C4C8D0; }
-.plz-pager .gap { border-color: transparent; color: #999; }
+.plz-pager .gap { border-color: transparent; color: var(--sgb-ink-3); }
 .plz-write { position: absolute; right: 0; top: 0; width: 184px; height: 52px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--sgb-r-md, 11px); background-color: var(--plz-orange); color: var(--sgb-on-point); font-size: 20px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
 .plz-write:hover { filter: brightness(.96); }
 
