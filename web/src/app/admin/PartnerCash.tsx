@@ -93,7 +93,7 @@ export function CashWallets() {
         <button className="btn-plain" disabled={a.busy === 'auto'} onClick={() => a.run('auto', () => api(`${PC}/cash/auto-run`, { method: 'POST', body: '{}' }), w.reload, '자동 청구를 한 번 돌렸습니다.')}>자동 청구 지금 돌리기</button>
       </div>
       {open && <CashLedger id={open} onDone={w.reload} />}
-      <p className="dim" style={{ fontSize: 12.5 }}>{d.note}</p>
+      <p className="dim" style={{ fontSize: 12 }}>{d.note}</p>
     </>
   );
 }

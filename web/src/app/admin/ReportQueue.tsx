@@ -118,7 +118,7 @@ export function ReportQueue() {
                           rows={2} value={text} maxLength={500}
                           placeholder="처리 내용을 적어 주십시오. 신고한 분에게 그대로 전달됩니다."
                           onChange={(e) => setText(e.target.value)}
-                          style={{ width: '100%', padding: 9, borderRadius: 8 }} />
+                          style={{ width: '100%', padding: 9, borderRadius: 'var(--sgb-r-sm)' }} />
                         <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
                           <button className="btn-primary" disabled={busy}
                             onClick={() => void resolve(r.id, 'UPHELD')}>

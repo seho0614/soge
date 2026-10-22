@@ -70,7 +70,7 @@ export function Users({ onGo }: { onGo?: (tab: string) => void }) {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="상호 · 대표 · 사업자번호로 찾기" aria-label="사업자 찾기" />
         </div>
       </div>
-      {counts.data && <p className="dim" style={{ fontSize: 12.5, margin: '-4px 0 8px' }} data-acc-counts>개인 회원을 포함한 전체 계정 — 정상 {counts.data.active.toLocaleString('ko-KR')} · 정지 {counts.data.suspended.toLocaleString('ko-KR')} (개인 회원은 「회원」 탭에서 찾고 정지합니다)</p>}
+      {counts.data && <p className="dim" style={{ fontSize: 12, margin: '-4px 0 8px' }} data-acc-counts>개인 회원을 포함한 전체 계정 — 정상 {counts.data.active.toLocaleString('ko-KR')} · 정지 {counts.data.suspended.toLocaleString('ko-KR')} (개인 회원은 「회원」 탭에서 찾고 정지합니다)</p>}
       {err && <p className="form-error">{err}</p>}
       {ok && <p className="form-ok" role="status">{ok}</p>}
 
@@ -83,8 +83,8 @@ export function Users({ onGo }: { onGo?: (tab: string) => void }) {
           <div className="row-main">
             <strong>{b.companyName} <span className="dim">{b.no}</span></strong>
             <span className="dim">사업자 {b.bizRegNo} · 대표 {b.ceoName} · {ymd(b.createdAt)}</span>
-            {ntsFail(b) && <span style={{ color: 'var(--danger)', fontSize: 12.5, fontWeight: 700, marginTop: 6 }}>사업자등록번호 확인 실패({b.ntsStatus === 'CLOSED' ? '폐업' : '휴업'}) — 승인 불가</span>}
-            {b.rejectedAt && <span style={{ color: 'var(--danger)', fontSize: 12.5 }}>반려 {ymd(b.rejectedAt)} — {b.rejectReason}</span>}
+            {ntsFail(b) && <span style={{ color: 'var(--danger)', fontSize: 12, fontWeight: 700, marginTop: 6 }}>사업자등록번호 확인 실패({b.ntsStatus === 'CLOSED' ? '폐업' : '휴업'}) — 승인 불가</span>}
+            {b.rejectedAt && <span style={{ color: 'var(--danger)', fontSize: 12 }}>반려 {ymd(b.rejectedAt)} — {b.rejectReason}</span>}
           </div>
           <div className="row-main" style={{ flex: '0 0 180px' }}>
             <span className="ad-bg pp" style={{ alignSelf: 'flex-start' }}>{b.planCode ?? 'BASIC'}</span>

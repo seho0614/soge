@@ -51,7 +51,7 @@ export function FinanceCosts() {
         <input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모(선택)" aria-label="비용 메모" />
         <button className="btn-ok" disabled={!/^[0-9,]+$/.test(amt.trim()) || a.busy === 'cost'} onClick={save}>저장</button>
       </div>
-      <p className="dim" style={{ fontSize: 12.5 }}>같은 달 · 같은 항목을 다시 넣으면 그 값으로 바뀝니다(누가 · 언제 넣었는지 남음).</p>
+      <p className="dim" style={{ fontSize: 12 }}>같은 달 · 같은 항목을 다시 넣으면 그 값으로 바뀝니다(누가 · 언제 넣었는지 남음).</p>
       <div className="ad-tw"><table className="tbl">
         <thead><tr><th>{month} 항목</th><th className="num-cell">금액</th><th>메모</th><th>입력</th></tr></thead>
         <tbody>
@@ -78,7 +78,7 @@ export function FinanceCosts() {
             </tr>))}</tbody>
         </table></div>
       )}
-      {r && <p className="dim" style={{ fontSize: 12.5 }}>손익분기 {r.breakEven.label} · {r.basis}</p>}
+      {r && <p className="dim" style={{ fontSize: 12 }}>손익분기 {r.breakEven.label} · {r.basis}</p>}
     </section>
   );
 }

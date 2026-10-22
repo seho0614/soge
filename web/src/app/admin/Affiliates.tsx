@@ -483,7 +483,7 @@ function Settlements({ onGo }: { onGo?: (tab: string) => void }) {
       <Flash msg={a.msg} err={a.err} />
       <div className="card pad">
         <div className="form-grid">
-          <div><span className="dim" style={{ fontSize: 12.5 }}>트랙</span>
+          <div><span className="dim" style={{ fontSize: 12 }}>트랙</span>
             <div className="ad-flt sm" role="radiogroup" aria-label="트랙" style={{ margin: '4px 0 0' }}>
               {Object.entries(TRACK).map(([k, t]) => (
                 <button key={k} type="button" role="radio" aria-checked={track === k} className={track === k ? 'on' : ''} onClick={() => setTrack(k)}>{t}</button>

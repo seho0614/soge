@@ -73,7 +73,7 @@ export function SuccessStories({ deals }: { deals: Array<{ id: string; title?: s
                 onClick={() => a.run('new', () => api('/admin/success-stories', { method: 'POST', body: JSON.stringify({ dealId, headline: head, summary: sum || undefined }) }),
                   () => { setDealId(''); setHead(''); setSum(''); l.reload(); })}>사례 초안 · 동의 요청</button>
       </div>
-      <p className="dim" style={{ fontSize: 12.5 }}>금액 · 기간 · 과정은 거래 기록 그대로입니다. 매도자 · 매수자 두 분이 공개에 동의한 사례만 공개할 수 있습니다(DB 가 막음).</p>
+      <p className="dim" style={{ fontSize: 12 }}>금액 · 기간 · 과정은 거래 기록 그대로입니다. 매도자 · 매수자 두 분이 공개에 동의한 사례만 공개할 수 있습니다(DB 가 막음).</p>
     </>
   );
 }

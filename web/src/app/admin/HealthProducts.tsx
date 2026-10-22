@@ -144,9 +144,9 @@ function Preview({ code, cats, onEdit }: { code: string; cats: Cat[]; onEdit: ()
 }
 
 function Thumb({ r }: { r: Pick<Row, 'imageUrl' | 'art'> }) {
-  if (r.imageUrl) return <img src={r.imageUrl} alt="" style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6 }} />;
+  if (r.imageUrl) return <img src={r.imageUrl} alt="" style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 'var(--sgb-r-sm)' }} />;
   if (!r.art?.form) return <span className="dim">사진 없음</span>;
-  return <span className="mono" style={{ display: 'inline-block', width: 34, height: 34, lineHeight: '34px', textAlign: 'center', borderRadius: 6, background: 'var(--sgb-bg)', fontSize: 10 }}>{FORM[r.art.form] ?? r.art.form}</span>;
+  return <span className="mono" style={{ display: 'inline-block', width: 34, height: 34, lineHeight: '34px', textAlign: 'center', borderRadius: 'var(--sgb-r-sm)', background: 'var(--sgb-bg)', fontSize: 12 }}>{FORM[r.art.form] ?? r.art.form}</span>;
 }
 
 function Products({ cats: catList, pick, onPick, onEdit }: { cats: Cat[]; pick: string | null; onPick: (c: string) => void; onEdit: (c: string) => void }) {

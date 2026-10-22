@@ -59,7 +59,7 @@ export function RiskAlerts() {
     <section>
       <Pills label="경보 등급" value={f} onChange={setF}
              items={[['all', '전체', live.length], ['HIGH', '높음', cnt('HIGH')], ['MEDIUM', '보통', cnt('MEDIUM')], ['LOW', '낮음', cnt('LOW')]]} />
-      <label className="dim" style={{ fontSize: 12.5, display: 'block', margin: '-4px 0 10px' }}>
+      <label className="dim" style={{ fontSize: 12, display: 'block', margin: '-4px 0 10px' }}>
         <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} /> 처리한 경보도 보기(최근 100건)
       </label>
       {broken.length > 0 && (

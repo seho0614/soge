@@ -61,13 +61,13 @@
 
   /* v10.29 — 시안: 본문 14 · 작은 글 13/12 · 소제목 15 · 숫자 칸 21 */
   --fs-xs: 12px; --fs-sm: 13px; --fs-md: 14px;
-  --fs-lg: 15px; --fs-xl: 21px; --fs-money: 20px;
+  --fs-lg: 14px; --fs-xl: 20px; --fs-money: 20px;   /* v10.68 — 시트 8단계(15 → 14 · 21 → 20) */
 
   --f: var(--sgb-font-body);   /* v10.67 — 전: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif */
   --m: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 
-  --bp-tablet: 768px;
-  --bp-desktop: 1200px;
+  --bp-tablet: 900px;    /* v10.68 — 시트 화면 폭 3단계 */
+  --bp-desktop: 1240px;
 }
 
 * { box-sizing: border-box; }

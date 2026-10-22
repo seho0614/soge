@@ -134,7 +134,7 @@ export function Qualifications({ onGo }: { onGo?: (tab: string) => void } = {}) 
       <SubTabs tabs={tabs} value={view} onChange={(v) => { a.clear(); setView(v); }} />
       {onGo && (view === 'pending' || view === 'cats' || view === 'medical') && (
         <div className="ad-chk" data-ptn-links style={{ flexWrap: 'wrap', margin: '-4px 0 10px' }}>
-          <span className="dim" style={{ fontSize: 12.5 }}>파트너사</span>
+          <span className="dim" style={{ fontSize: 12 }}>파트너사</span>
           {PTN_LINKS.map(([to, t]) => <button key={to} className="btn-plain btn-sm" data-go={to} onClick={() => onGo(to)}>{t}</button>)}
         </div>
       )}

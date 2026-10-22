@@ -199,7 +199,7 @@ function Toggle({ on, busy, onChange }: { on: boolean; busy: boolean; onChange: 
       role="switch" aria-checked={on} disabled={busy}
       onClick={() => onChange(!on)}
       style={{
-        width: 44, height: 24, borderRadius: 12, cursor: busy ? 'wait' : 'pointer',
+        width: 44, height: 24, borderRadius: 'var(--sgb-r-md)', cursor: busy ? 'wait' : 'pointer',
         border: '1px solid var(--line)', padding: 2,
         background: on ? 'var(--money)' : 'var(--line)',
         display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',

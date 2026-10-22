@@ -61,7 +61,7 @@ export function Categories() {
           <div className="row-main">
             <strong>{c.name}</strong>
             <span className="dim">{c.gwanCode} · {c.code} · 매물 {c.listingCount}</span>
-            {c.restrictedCode && <span style={{ color: 'var(--danger)', fontSize: 12.5 }}>제한업종 여부 확인 필요 ({c.restrictedCode})</span>}
+            {c.restrictedCode && <span style={{ color: 'var(--danger)', fontSize: 12 }}>제한업종 여부 확인 필요 ({c.restrictedCode})</span>}
           </div>
           <div className="row-act">
             <select defaultValue="" id={`f-${c.id}`}>

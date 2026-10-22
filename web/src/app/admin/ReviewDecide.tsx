@@ -65,7 +65,7 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
             {r && <span className={`ad-chip ${r.over ? 'no' : 'warn'}`}>SLA {r.over ? r.text : `잔여 ${r.text.replace(' 남음', '')}`}</span>}
           </div>
           <h2>{item?.targetTitle || `검수 · ${id.slice(0, 8)}`}</h2>
-          {item?.targetBody && <p data-rv-body style={{ whiteSpace: 'pre-wrap', fontSize: 13.5, lineHeight: 1.7, color: 'var(--ink-2)', margin: '0 0 12px' }}>{item.targetBody}</p>}
+          {item?.targetBody && <p data-rv-body style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)', margin: '0 0 12px' }}>{item.targetBody}</p>}
           <div className="ad-dsum">
             <div><span>등록자</span><b>{item?.submitterName ?? '—'}</b></div>
             <div><span>사업자등록번호</span><b>{item?.bizRegNo ?? '—'}{item?.ntsStatus === 'VALID' && <span className="ad-chip ok" style={{ marginLeft: 6 }}>국세청 확인</span>}</b></div>

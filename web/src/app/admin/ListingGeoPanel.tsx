@@ -75,7 +75,7 @@ export function ListingGeoPanel({ listingId }: { listingId: string }) {
       </div>
       {g.lat != null && g.lng != null && (
         <div ref={box} role="img" aria-label="매물 소재지 지도"
-             style={{ height: 200, borderRadius: 8, border: '1px solid var(--line)', overflow: 'hidden', margin: '8px 0' }} />
+             style={{ height: 200, borderRadius: 'var(--sgb-r-sm)', border: '1px solid var(--line)', overflow: 'hidden', margin: '8px 0' }} />
       )}
       {canRetry && <button className="btn-sm" disabled={busy} onClick={retry}>다시 변환</button>}
       {msg && <p className="hint" role="status">{msg}</p>}
