@@ -104,7 +104,9 @@ export class ReviewService {
               coalesce(sb.company_name, sa.name) AS "submitterName",
               coalesce(sb.biz_reg_no, bz.biz_reg_no) AS "bizRegNo",
               coalesce(sb.nts_status, bz.nts_status) AS "ntsStatus",
-              sa.phone IS NOT NULL AS "hasPhone", sa.identity_verified_at IS NOT NULL AS "identityVerified"
+              sa.phone IS NOT NULL AS "hasPhone", sa.identity_verified_at IS NOT NULL AS "identityVerified",
+              /* v10.71(D108) — 금칙어는 매물 글 칸 모두(제목 · 본문 · 요약 · 지역 상세 · 연락 시간 · 업체 정보) */
+              CASE WHEN l.id IS NOT NULL THEN fn_listing_text(l) WHEN bl.id IS NOT NULL THEN fn_listing_text(bl) END AS "listingText"
          FROM review_items ri
          LEFT JOIN listings l  ON ri.target_type = 'LISTING' AND l.id = ri.target_id
          LEFT JOIN requests rq ON ri.target_type = 'REQUEST' AND rq.id = ri.target_id
@@ -127,12 +129,12 @@ export class ReviewService {
         LIMIT 3`, [t.categoryId, text]).catch(() => [] as { name: string }[]) : [];
     checks.push({ key: 'restricted', label: '제한업종 검사', ok: restricted.length === 0,
       detail: restricted.length ? `${restricted.map((r) => r.name).join(' · ')} 에 해당할 수 있습니다 — 확인이 필요합니다.` : '해당 없음' });
-    /* ② 금칙 표현 */
-    const banned = await this.db.query<{ word: string }>(
-      `SELECT word FROM banned_words WHERE is_active AND $1 ILIKE '%' || word || '%' LIMIT 5`, [text])
-      .catch(() => [] as { word: string }[]);
+    /* ② 금칙 표현 — v10.71(D108) 실제 판정과 같은 함수(맞춤 방식 · 관 · 낱말 일치 · 정규식). 전: 맞춤 방식 · 관을 무시한 「포함」 검사 */
+    const banned = await this.db.query<{ word: string; severity: string }>(
+      `SELECT DISTINCT w.word, w.severity FROM fn_check_banned_words($1, $2) w ORDER BY w.severity, w.word LIMIT 5`,
+      [t?.listingText ?? text, row.gwan_code]).catch(() => [] as { word: string; severity: string }[]);
     checks.push({ key: 'banned', label: '금칙 표현 검사', ok: banned.length === 0,
-      detail: banned.length ? `「${banned.map((b) => b.word).join('」 · 「')}」 표현이 있습니다.` : '해당 없음' });
+      detail: banned.length ? `${banned.map((b) => `「${b.word}」(${b.severity === 'BLOCK' ? '차단' : '주의'})`).join(' · ')} 표현이 있습니다.` : '해당 없음' });
     /* ③ 중복 — 같은 제목이 다른 매물로 이미 있는가(최근 90일) */
     const dup = t?.title && row.target_type === 'LISTING' ? await this.db.query<{ id: string; same: boolean }>(
       `SELECT id, owner_account_id = $3 AS same FROM listings

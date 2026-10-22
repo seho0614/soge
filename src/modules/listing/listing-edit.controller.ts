@@ -51,9 +51,9 @@ export class ListingEditService {
     let flagged: string[] = [];
     if (ri?.reasonCode === 'BANNED_WORD') {
       const rows = await this.db.query<{ w: string }>(
-        `SELECT DISTINCT b.word AS w FROM banned_words b, listings l
-          WHERE l.id = $1 AND b.is_active AND position(lower(b.word) IN lower(coalesce(l.title,'') || ' ' || coalesce(l.body,''))) > 0
-          LIMIT 10`, [id]).catch(() => [] as Array<{ w: string }>);
+        `SELECT DISTINCT w.word AS w FROM listings l, fn_check_banned_words(fn_listing_text(l), l.gwan_code) w
+          WHERE l.id = $1
+          LIMIT 10`, [id])   /* v10.71(D108) — 실제 판정과 같은 함수 · 매물 글 칸 모두. 전: 제목 · 본문의 「포함」만(맞춤 방식 · 관 무시) */.catch(() => [] as Array<{ w: string }>);
       flagged = rows.map((r) => r.w);
     }
     const history = await this.db.query<any>(

@@ -8,8 +8,8 @@ import { DatabaseService } from '../../db/database.service';
  * 앱에 규칙을 복제하지 않는 이유: 두 곳에 두면 어긋나고, 어긋나면
  * "왜 이 건이 자동 승인됐는가"를 설명할 수 없습니다.
  *
- * 이 클래스가 하는 일은 셋뿐입니다.
- *   판정 조회 · 정책 조정 · 자동화율 관측
+ * 이 클래스가 하는 일은 둘뿐입니다(v10.71 — 정책 조정은 CatalogService).
+ *   판정 조회 · 자동화율 관측
  */
 export type ManualReason =
   | 'AUTO_DISABLED' | 'UNVERIFIED_BUSINESS' | 'FIRST_LISTING' | 'HIGH_FEE'
@@ -48,41 +48,8 @@ export class AutoReviewEngine {
     );
   }
 
-  /**
-   * 정책 변경은 감사 대상입니다.
-   * 자동화 범위를 넓히는 것은 사람의 검토를 줄이는 결정이므로,
-   * 누가 언제 무엇을 바꿨는지가 남아야 합니다.
-   */
-  async updatePolicy(
-    key: string,
-    patch: { enabled?: boolean; numValue?: number | null },
-    actorId: string,
-  ) {
-    return this.db.transaction(async () => {
-      const [before] = await this.db.query(
-        `SELECT key, enabled, num_value FROM auto_review_policies WHERE key = $1`, [key],
-      );
-      if (!before) return null;
-
-      const [after] = await this.db.query(
-        `UPDATE auto_review_policies
-            SET enabled    = coalesce($2, enabled),
-                num_value  = coalesce($3, num_value),
-                updated_by = $4, updated_at = now()
-          WHERE key = $1
-        RETURNING key, enabled, num_value AS "numValue", description`,
-        [key, patch.enabled ?? null, patch.numValue ?? null, actorId],
-      );
-
-      await this.db.query(
-        `INSERT INTO audit.audit_logs
-           (actor_account_id, actor_role, action, target_type, target_id, before_data, after_data)
-         VALUES ($1,'ADMIN','AUTO_REVIEW_POLICY_UPDATE','POLICY',NULL,$2::jsonb,$3::jsonb)`,
-        [actorId, JSON.stringify(before), JSON.stringify(after)],
-      );
-      return after;
-    });
-  }
+  /* v10.71 — 정책 변경(updatePolicy)은 지웠습니다. 쓰는 곳이 없었고, 운영 화면은 CatalogService.updateAutoReviewPolicy
+   *   (PATCH admin/policies/auto-review/:key · @Audit 감사 기록 · 값 범위는 DB trg_auto_review_policy_guard)를 씁니다 — 두 곳에 두면 다시 어긋납니다. */
 
   /** 자동화율 — 이 숫자가 곧 검수 여력입니다 */
   rate(days = 30) {

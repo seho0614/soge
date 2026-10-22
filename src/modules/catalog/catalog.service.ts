@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { StateConflict } from '../../core/errors';
+import { RequestCtx } from '../../core/request-context';
 
 @Injectable()
 export class CatalogService {
@@ -87,7 +88,7 @@ export class CatalogService {
       restrictedIndustries: restricted,
       bannedWordCount: banned[0]?.n ?? 0,
       autoReviewPolicies: Object.fromEntries(auto.map(p => [p.key, {
-        enabled: p.enabled, numValue: p.num_value ? Number(p.num_value) : null,
+        enabled: p.enabled, numValue: p.num_value != null ? Number(p.num_value) : null,   // v10.71 — 전: 0 이 「없음」으로 보임
         description: p.description,
       }])),
     };
@@ -121,10 +122,10 @@ export class CatalogService {
     const [row] = await this.db.query(
       `UPDATE auto_review_policies
           SET enabled = coalesce($2, enabled), num_value = coalesce($3, num_value),
-              updated_at = now()
+              updated_by = $4, updated_at = now()   -- v10.71 — 바꾼 사람도 표에(범위 검사는 DB · POLICY_VALUE)
         WHERE key = $1
       RETURNING key, enabled, num_value AS "numValue", description`,
-      [key, enabled ?? null, numValue ?? null]);
+      [key, enabled ?? null, numValue ?? null, RequestCtx.actorId() ?? null]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 규칙입니다.');
     return row;
   }
