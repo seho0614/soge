@@ -35,16 +35,16 @@
 
 - 소스 관리: AWS CodeCommit 저장소 4개 — sgb-core · sgb-adx · sgb-infra · sgb-docs
 - 버전 관리: SemVer 태그, 운영 배포는 태그 커밋만
-- 스테이징 서버 없음 — 배포 흐름은 **PC 로컬 점검(realcheck) → 대표 승인 → 운영 서버 적용**
+- 스테이징 서버 없음 — 배포 흐름은 **개발 서버 점검(`~/sgb-check.sh` realcheck) → 대표 승인 → 운영 서버 적용**
 - 소개뱅크 서비스 서버는 1대(3.37.95.217, 탄력적 IP) · AWS 서비스 서버에서는 도커를 쓰지 않음
 - 자동화: OpenClaw 는 별도 자동화 EC2 1대 추가, n8n 도 그 자동화 EC2 로 옮기고 그 서버에서만 n8n 용 도커 허용
 - 운영 도메인: sogaebank.com (가비아 등록, AWS 사용) — 문서에 있던 sogaebaenk.co.kr 아님
 - 외부 연동 신청 발신 IP: 3.37.95.217 (바꾸지 않음)
 
-## 5. 서버에서 Claude 가 지킬 것 (2026-10-15 이관 기준)
+## 5. 서버에서 Claude 가 지킬 것 (2026-10-15 이관 기준 · 2026-10-22 개발 전용 서버로 고침)
 
-- 개발 사용자 sgbdev 로만 작업. 운영 폴더(/home/ubuntu), pm2, RDS, Nginx 는 건드리지 않음
-- 서버(메모리 1.9GB)에서 npm 설치 · 빌드 · 테스트 금지 → `bash ~/make-kit.sh` 로 kit 을 만들어 PC 에서 realcheck
+- 개발 사용자 sgbdev 로만 작업. 확인판(/home/ubuntu, pm2, 도메인, 운영진 확인용)과 RDS, Nginx 는 건드리지 않음
+- 이 서버는 개발 전용(t3.large). 고친 뒤 `~/sgb-check.sh 갈래` 로 realcheck → 통과한 것만 풀 리퀘스트(상세는 CLAUDE.md 「점검」)
 - main 직접 커밋 금지, feature/ 갈래 → 풀 리퀘스트 → 병합. 태그는 대표 승인 후 사람이 붙임
 - .env · 비밀키 · 액세스 키 읽기·커밋 금지
 
