@@ -52,7 +52,7 @@ ok('옛 이름 16개가 디자인 시트를 가리킴', not miss, str(miss))
 ok('--pp 계열은 :root 와 main[data-sgb-gwan] 에서 풀림(관마다 색)', ':root, main[data-sgb-gwan] {' in alias, '')
 kept = [k for k in ('--money', '--danger', '--ad', '--or', '--g400', '--sp-4') if re.search(rf'\n\s*{k}:\s*var\(--sgb', alias)]
 ok('금액 · 경고 · 광고 · 주황 · 회색 · 간격은 그대로', not kept, str(kept))
-ok('흐린 글자 #6b7694 — 흰 바탕 대비 4.5 이상', root.get('--sgb-ink-3') == '#6b7694' and cr('#6b7694', '#ffffff') >= 4.5, f"{cr('#6b7694', '#ffffff'):.2f}")
+ok('흐린 글자 #6b7694(v10.63 부터 #646f8c) — 흰 바탕 대비 4.5 이상', root.get('--sgb-ink-3') in ('#6b7694', '#646f8c') and cr('#6b7694', '#ffffff') >= 4.5, f"{cr('#6b7694', '#ffffff'):.2f}")
 ok('시트 글자 단계 8개(30 · 24 · 20 · 18 · 16 · 14 · 13 · 12)', sorted({int(root[k][:-2]) for k in root if re.match(r'--sgb-fs-', k)}) == [12, 13, 14, 16, 18, 20, 24, 30], '')
 
 # ② 관 색
