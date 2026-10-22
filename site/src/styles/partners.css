@@ -284,8 +284,8 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2pc .bd { position: relative; }
 .p2pc .tag { display: inline-block; font-size: 12px; color: #fff; font-weight: 700; padding: 3px 7px; border-radius: var(--sgb-r-sm, 7px); margin-bottom: 4px; }
 .p2pc .ph + .bd .tag { position: absolute; top: -14px; left: 12px; margin: 0; }
-.p2pc .tag.hot { background: #F04438; }
-.p2pc .tag.high { background: #12B886; }
+.p2pc .tag.hot { background: var(--sgb-rd-text); }
+.p2pc .tag.high { background: var(--sgb-mall); }
 .p2bell i { position: absolute; top: 0; right: 0; background: #F04438; color: #fff; font-size: 11px; font-weight: 700; font-style: normal;
   min-width: 16px; height: 16px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; box-sizing: border-box; }
 .p2mine { margin-top: 10px; font-size: 12px; color: #5C6885; }
