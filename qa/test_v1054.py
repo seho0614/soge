@@ -60,8 +60,9 @@ C = rd('site/src/components/Chrome.tsx')
 ok('Chrome.tsx — 메인만 빼고 관 표시(소개광장 · 소개몰 · 소개장터 메인 포함)', "const g = s === 'home' ? undefined : sgbGwanOf(p);" in C and 'data-sgb-gwan={g}' in C and "data-sgb-gwan=\"shop\"><div className=\"shop-sub\">" in C, '')
 ok('Chrome.tsx — 두 관 머리줄(B2Tone)에도 관 표시', 'data-b2-tone={t} data-sgb-gwan={t}' in C, '')
 PC = strip(rd('site/src/styles/proto-common.css'))
+V56 = re.match(r'v10\.(5[6-9]|[6-9]\d)', rd('VERSION').strip()) is not None    # v10.56 메인도 시트로(test_v1056 이 봄)
 ok('proto-common.css — 묶음은 메인(.main-home)만 · 소개광장 · 소개몰 · 생활금융 상담 풀림',
-   '.main-home {' in PC and '--pp: #7C3AED;' in PC and not re.search(r'\.main-b2|\.mal-narrow|\.b2-hd|\.b2-ft', PC), '')
+   (V56 or '.main-home {' in PC and '--pp: #7C3AED;' in PC) and not re.search(r'\.main-b2|\.mal-narrow|\.b2-hd|\.b2-ft', PC), 'v10.56 메인 묶음도 풀림 — test_v1056' if V56 else '')
 PZ = rd('site/src/styles/plaza.css')
 ok('소개광장 — 탭 · 단추 · 링크 = 관 색(--plz-pt) · 제목 = 남색 · 글쓰기 = 관 색 바탕 + 남색 글자',
    '--plz-pt: var(--sgb-point-text)' in PZ and '--plz-orange: var(--sgb-point)' in PZ
@@ -75,7 +76,7 @@ ok('소개몰 — 초록 = 시트 소개몰 글자색 · 할인 빨강 · 구역
 ok('소개몰 — 머리줄 「무료 회원가입」 · 바닥 꼬리표', '[data-b2-tone=shop] .b2-join { background: var(--sgb-point-text); }' in SH and (V55 or 'background: #e9f7ee; color: #12883e;' in SH), '')
 ok('두 관 머리 · 바닥줄 — 시트 값 · 본문 글꼴', '--b2-dim: var(--sgb-ink-3)' in rd('site/src/styles/b2.css') and 'font-family: var(--sgb-font-body);' in rd('site/src/styles/b2.css'), '')
 ok('생활금융 상담 — .mal-proto 관 색이 먹음(묶음 없음)', '.mal-proto { --accent: var(--sgb-point-text); --accent-w: var(--sgb-point-l); }' in rd('site/src/styles/mal.css'), '')
-ok('메인(home.css)은 그대로 — 보라 #5B3DF8', '--hv: #5B3DF8' in rd('site/src/styles/home.css'), '')
+ok('메인(home.css)은 그대로 — 보라 #5B3DF8', V56 or '--hv: #5B3DF8' in rd('site/src/styles/home.css'), 'v10.56 메인도 시트로 — test_v1056' if V56 else '')
 
 # ④ 대비
 T = rd('site/src/styles/sgb-tokens.css')
@@ -109,7 +110,7 @@ PR = rd('spec/proto.html')
 km = re.search(r'var SGB_KEEP = \{([^}]*)\}', PR)
 keep = set(re.findall(r'"(\w+)":1', km.group(1))) if km else set()
 ok('시안 — 묶어 둔 화면은 메인 히어로 · 운영 화면만(소개광장 · 소개몰 · 소개장터 메인 풀림)',
-   km and {'main1', 'main2'} <= keep and not keep & {'cmu', 'cmud', 'cmuw', 'cmupoll', 'commu', 'list', 'HLT_FOOD', 'cart'}, f'{len(keep)}개')
+   km and (V56 or {'main1', 'main2'} <= keep) and not keep & {'cmu', 'cmud', 'cmuw', 'cmupoll', 'commu', 'list', 'HLT_FOOD', 'cart'}, f'{len(keep)}개')
 ok('시안 — 관 표시(소개광장 plaza · 소개몰 shop · 소개장터 메인 money)', '"cmu":"plaza"' in PR and '"cart":"shop"' in PR and '"list":"money"' in PR and '(SGB_G[key] || "")' in PR, '')
 ok('시안 — 실제 웹과 같은 CSS 고침', all(t in PR for t in (
     '--plz-pt: var(--sgb-point-text)', '.plz-tabs a[aria-current=page] { background-color: var(--plz-pt);', '--b2-dim: var(--sgb-ink-3)',

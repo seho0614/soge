@@ -32,13 +32,13 @@ PROTO_ONLY = '''
 .home { position: relative; }
 .home-hd { position: relative; }                               /* 시안의 #screen 은 가로 넘침을 자르므로(overflow-x) 붙어 있는 머리(sticky)를 쓰지 않습니다 */
 .home-hd .gnb { display: flex; flex: 0 1 auto; gap: 28px; min-width: 0; overflow: visible; white-space: nowrap; }
-.home-hd .gnb a { font-size: 15px; font-weight: 600; color: #3C4658; }
+.home-hd .gnb a { font-size: 15px; font-weight: 600; color: var(--sgb-ink-2); }
 .home-hd .gnb a:hover { color: var(--hv); }
 .home-user { font-size: 14px; color: var(--hk2); white-space: nowrap; }
 button.home-pill, button.home-icbtn, button.home-chip, button.home-snsi, button.home-pnext, button.home-railnext { cursor: pointer; font-family: inherit; }
 button.home-pill { border: 1px solid var(--hline); background: #fff; color: var(--hk); }
 button.home-pill.p { background: var(--hv); color: #fff; border-color: var(--hv); }
-button.home-icbtn { border: 0; background: #F1F2F8; color: var(--hk); }
+button.home-icbtn { border: 0; background: var(--sgb-tile); color: var(--hk); }
 button.home-chip { border: 0; background: #fff; color: var(--hk); }
 button.home-snsi { border: 0; background: none; padding: 0; }
 .home-sbin input.si { width: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--hk); padding: 2px 0; }
@@ -52,8 +52,8 @@ button.home-snsi { border: 0; background: none; padding: 0; }
 .home-padw .adhero h3 { margin: 8px 0 8px; font-size: 21px; line-height: 1.36; font-weight: 800; color: var(--hk); letter-spacing: -.03em; display: block; -webkit-line-clamp: unset; overflow: visible; }
 .home-padw .adhero p { margin: 0 0 14px; font-size: 14.5px; line-height: 1.55; color: var(--hk2); opacity: 1; display: block; -webkit-line-clamp: unset; overflow: visible; }
 .home-padw .adhero .adcta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0; }
-.home-padw .adhero .adcta .bp { background: #fff; color: var(--hv); font-weight: 800; font-size: 15px; border-radius: 24px; padding: 11px 22px; box-shadow: 0 8px 18px rgba(64, 48, 160, .12); }
-.home-padw .adhero .adcta .ls { font-size: 11px; color: #A7A3BD; }
+.home-padw .adhero .adcta .bp { background: #fff; color: var(--hv); font-weight: 800; font-size: 15px; border-radius: 24px; padding: 11px 22px; box-shadow: 0 8px 18px rgba(0, 36, 90, .12); }
+.home-padw .adhero .adcta .ls { font-size: 11px; color: var(--sgb-ink-3); }
 .home-padw .adhero .adwhy { margin: 12px 0 0 !important; padding: 0; border: 0; font-size: 12.5px; line-height: 1.5; color: var(--hk3); background: none; }
 .home-padw .adhero .adwhy b { color: var(--hk2); }
 .home-padw .adhero .adlk { color: var(--hv); text-decoration: underline; font-size: 12.5px; }
