@@ -75,7 +75,7 @@ export function AdBilling() {
             <th>미수금</th>
             <td>
               {sum.unpaidTotal > 0
-                ? <b style={{ color: '#B42318' }}>{won(sum.unpaidTotal)}원</b>
+                ? <b style={{ color: 'var(--sgb-rd-text)' }}>{won(sum.unpaidTotal)}원</b>
                 : <span className="dim">없음</span>}
               {sum.overdueCount > 0 && <span className="dim"> · 연체 {sum.overdueCount}건</span>}
             </td>
@@ -96,7 +96,7 @@ export function AdBilling() {
                 <td>{won(i.total)}</td>
                 <td>
                   {won(i.paid)}
-                  {i.unpaid > 0 && <b style={{ color: '#B42318' }}> · 잔액 {won(i.unpaid)}</b>}
+                  {i.unpaid > 0 && <b style={{ color: 'var(--sgb-rd-text)' }}> · 잔액 {won(i.unpaid)}</b>}
                 </td>
                 <td className="dim">{ymdKst(i.dueDate)}</td>
                 <td>
@@ -121,7 +121,7 @@ export function AdBilling() {
             {(recv.data ?? []).map((v) => (
               <tr key={v.id}>
                 <td><b>{v.invoiceNo}</b></td><td>{v.advertiser}</td>
-                <td><b style={{ color: '#B42318' }}>{won(v.unpaid)}원</b></td>
+                <td><b style={{ color: 'var(--sgb-rd-text)' }}>{won(v.unpaid)}원</b></td>
                 <td className="dim">{ymdKst(v.dueDate)}</td>
                 <td>{v.overdueDays > 0 ? <b className="warn-text">{v.overdueDays}일</b> : '—'}</td>
               </tr>
@@ -146,7 +146,7 @@ export function AdBilling() {
               <td>{won(a.collected)}</td>
               <td>
                 {a.unpaid > 0
-                  ? <b style={{ color: '#B42318' }}>{won(a.unpaid)}</b>
+                  ? <b style={{ color: 'var(--sgb-rd-text)' }}>{won(a.unpaid)}</b>
                   : <span className="dim">—</span>}
               </td>
               <td>

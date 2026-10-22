@@ -69,7 +69,7 @@ export function Collect() {
       </table>
 
       <h3 style={{ marginTop: 22 }}>수집 대상</h3>
-      {msg && <p className="dim" style={{ color: '#B42318' }}>{msg}</p>}
+      {msg && <p className="dim" style={{ color: 'var(--sgb-rd-text)' }}>{msg}</p>}
       <table className="tbl">
         <thead>
           <tr><th>대상</th><th>robots</th><th>법무</th><th>간격</th><th>상태</th><th></th></tr>

@@ -1,0 +1,11 @@
+/**
+ * 운영 화면 글꼴 — 디자인 시트(2026-10-09) 02. 폰트: 제목 페이퍼로지 · 본문 나눔스퀘어 네오. v10.67(docs/123)
+ * · 파일은 사용자 웹(site/public/fonts)과 같은 것 — Vite 가 /assets/ 로 묶습니다(Nginx 의 /assets/ 7일 캐시 · 설정 그대로)
+ * · 숫자 · 코드는 지금처럼 --m(IBM Plex Mono) — 금액 자릿수 비교용
+ * · 사용 조건: SIL Open Font License 1.1 — assets/fonts/LICENSE.txt
+ */
+@font-face { font-family: 'Paperlogy'; font-weight: 500; font-style: normal; font-display: swap; src: url('../assets/fonts/Paperlogy-5Medium.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Nanum Square Neo'; font-weight: 400; font-style: normal; font-display: swap; src: url('../assets/fonts/NanumSquareNeo.woff2') format('woff2'); }
+@font-face { font-family: 'Nanum Square Neo'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/NanumSquareNeoB.woff2') format('woff2'); }
+@font-face { font-family: 'Nanum Square Neo'; font-weight: 800; font-style: normal; font-display: swap; src: url('../assets/fonts/NanumSquareNeoEB.woff2') format('woff2'); }

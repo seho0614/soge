@@ -1906,19 +1906,19 @@ html.is-mobile #screen{max-width:430px;margin:0 auto;box-shadow:0 0 0 1px var(--
 .prop .pf span{display:flex;gap:6px}
 
 /* ── 관리자 백오피스 ── 사용자 화면과 눈으로 구분되게 어두운 머리를 씁니다 */
-.ahd{background:#14171C;color:#EDEFF3;position:relative;z-index:3}
+.ahd{background:var(--sgb-navy);color:#EDEFF3;position:relative;z-index:3}
 .ahd .ain{display:flex;align-items:center;gap:22px;height:59px}
 .ahd .alg{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;
   color:var(--sgb-ink-3);text-decoration:none;white-space:nowrap}
-.ahd .alg b{color:var(--sgb-link-d);font-weight:900}
+.ahd .alg b{color:var(--sgb-orange);font-weight:900}
 .ahd .alg .d{width:9px;height:9px;border-radius:50%;background:#34D399}
 .ahd .agnb{display:flex;gap:2px;flex:1;flex-wrap:wrap}
 .ahd .agnb a{font-size:13px;font-weight:700;color:var(--sgb-ink-3);text-decoration:none;
   padding:7px 11px;border-radius:var(--sgb-r-sm, 7px)}
-.ahd .agnb a:hover{background:#252B34;color:#fff}
-.ahd .agnb a.on{background:#4F46E5;color:#fff}
+.ahd .agnb a:hover{background:#001a42;color:#fff}
+.ahd .agnb a.on{background:var(--sgb-orange);color:var(--sgb-navy)}
 .ahd .ahr{display:flex;align-items:center;gap:11px}
-.ahd .ahr .ls{color:var(--sgb-ink-3)}
+.ahd .ahr .ls{color:#AEB6C2}
 .ahd .ahr .bo{background:var(--sgb-btn2-bg, #fff);border-color:var(--sgb-btn2-line, #dbdbdb);color:var(--sgb-btn2-fg, #00245a)}
 .ahd .ahr .bo:hover{border-color:var(--sgb-btn2-line, #dbdbdb);color:var(--sgb-btn2-fg, #00245a)}
 .admw{padding-top:20px}
@@ -2385,9 +2385,9 @@ button.busy::after{content:"…";margin-left:5px}
   border:0;border-radius:var(--sgb-r-sm, 7px);padding:5px 9px;cursor:pointer;white-space:nowrap}
 .rsw button:hover{color:var(--pp)}
 .rsw button.on{background:var(--pp);color:#fff}
-.ahd .rsw,.phd .rsw{background:transparent;border-color:#39414D}
-.ahd .rsw button,.phd .rsw button{color:var(--sgb-ink-3)}
-.ahd .rsw button.on,.phd .rsw button.on{background:#4F46E5;color:#fff}
+.phd .rsw{background:transparent;border-color:#39414D}.ahd .rsw{background:transparent;border-color:rgba(255,255,255,.32)}
+.phd .rsw button{color:var(--sgb-ink-3)}.ahd .rsw button{color:#AEB6C2}
+.phd .rsw button.on{background:#4F46E5;color:#fff}.ahd .rsw button.on{background:var(--sgb-orange);color:var(--sgb-navy)}
 @media (max-width:1240px){ .rsw{display:none} }
 
 /* 점검 B — 쪽번호 옆 안내. 목 데이터가 한 쪽뿐일 때 그렇다고 말합니다. */

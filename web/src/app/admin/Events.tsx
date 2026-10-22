@@ -81,7 +81,7 @@ export function Events() {
                   <td>{u.benefit}</td>
                   <td>
                     {u.waitingDays > 7
-                      ? <b style={{ color: '#B42318' }}>{u.waitingDays}일</b>
+                      ? <b style={{ color: 'var(--sgb-rd-text)' }}>{u.waitingDays}일</b>
                       : <span className="dim">{u.waitingDays}일</span>}
                   </td>
                   <td>
@@ -122,7 +122,7 @@ export function Events() {
               <td className="dim">{e.startsAt?.slice(5, 10)} ~ {e.endsAt?.slice(5, 10)}</td>
               <td>
                 {e.joins}{e.maxJoins ? ` / ${e.maxJoins}` : ''}
-                {e.ungranted > 0 && <b style={{ color: '#B42318' }}> · 미지급 {e.ungranted}</b>}
+                {e.ungranted > 0 && <b style={{ color: 'var(--sgb-rd-text)' }}> · 미지급 {e.ungranted}</b>}
               </td>
               <td><span className={`badge ${e.status === 'PUBLISHED' ? '' : 'badge-urgent'}`}>
                 {ST[e.status] ?? e.status}</span></td>
@@ -143,7 +143,7 @@ export function Events() {
         </tbody>
       </table>
 
-      {msg && <p className="dim" style={{ color: '#B42318' }}>{msg}</p>}
+      {msg && <p className="dim" style={{ color: 'var(--sgb-rd-text)' }}>{msg}</p>}
 
       <div className="notice">
         <b>끝난 이벤트는 다시 열 수 없습니다.</b>

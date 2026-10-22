@@ -66,7 +66,7 @@ export function ReportQueue() {
     <div>
       <p className="hint">
         처리 대기 <b>{data.length}건</b>
-        {old.length > 0 ? <> · <b style={{ color: '#B42318' }}>3일 넘은 것 {old.length}건</b></> : null}
+        {old.length > 0 ? <> · <b style={{ color: 'var(--sgb-rd-text)' }}>3일 넘은 것 {old.length}건</b></> : null}
       </p>
 
       {old.length > 0 && (
@@ -99,7 +99,7 @@ export function ReportQueue() {
                   <td className="dim" style={{ maxWidth: 240 }}>{r.detail ?? '—'}</td>
                   <td>
                     {r.sameTarget > 1
-                      ? <b style={{ color: '#B42318' }}>{r.sameTarget}건</b>
+                      ? <b style={{ color: 'var(--sgb-rd-text)' }}>{r.sameTarget}건</b>
                       : <span className="dim">1건</span>}
                   </td>
                   <td className="dim">{days(r.createdAt)}</td>
@@ -129,7 +129,7 @@ export function ReportQueue() {
                             아닙니다 (기각)
                           </button>
                         </div>
-                        {msg && <p className="dim" style={{ color: '#B42318', marginTop: 6 }}>{msg}</p>}
+                        {msg && <p className="dim" style={{ color: 'var(--sgb-rd-text)', marginTop: 6 }}>{msg}</p>}
                         <p className="hint" style={{ marginTop: 6 }}>
                           <b>인정해도 글이 자동으로 내려가지는 않습니다.</b>
                           검수 큐에서 따로 결정하십시오 — 신고와 조치는 별개입니다.

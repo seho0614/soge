@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
 import { captureRef } from './lib/api';
+import './styles/sgb-tokens.css';   // v10.67 — 디자인 시트(사용자 웹과 같은 파일)
+import './styles/admin-fonts.css';
 import './styles/tokens.css';
 import './styles/app.css';
 
