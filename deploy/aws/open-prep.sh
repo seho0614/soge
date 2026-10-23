@@ -12,6 +12,7 @@
 #     ① 시험 계정 정지(SUSPENDED)                     — 오픈 직전에만(시험 중에 하면 「사용할 수 없는 계정」)
 #     ② 그 계정의 매물 · 요청 → 보관(ARCHIVED)
 #     ③ 그 계정의 소개광장 글 → 감춤(사유 「오픈 전 시험 글 정리」) · 댓글 → 감춤
+#     ④ (v10.83) 지금까지 쌓인 검색어 통계를 추천 검색어에서 숨김(hidden) — 오픈 전 시험 기간에 쌓인 말 · 통계는 남음
 #   그대로 두는 것(개수만 보여 줌): 거래 · 주문 · 상담 — 상대가 있는 기록이라 사람이 판단
 #
 #   check 가 더 보는 것: 메인 내용 모드(HOME_CONTENT — 비어 있으면 운영 기본 live) · 오픈 차단 수(v_open_blockers)
@@ -37,6 +38,7 @@ count() {
   say "  · 매물 $(q "SELECT count(*) FROM listings WHERE owner_account_id IN $T AND status <> 'ARCHIVED'")건 (보관 안 된 것)"
   say "  · 요청 $(q "SELECT count(*) FROM requests WHERE owner_account_id IN $T AND status <> 'ARCHIVED'")건 (보관 안 된 것)"
   say "  · 소개광장 글 $(q "SELECT count(*) FROM posts WHERE author_id IN $T AND state IN ('PUBLISHED','PENDING')")건 · 댓글 $(q "SELECT count(*) FROM post_comments WHERE author_id IN $T AND state = 'PUBLISHED'")건 (보이는 것)"
+  say "  · 추천 검색어로 보이는 말 $(q "SELECT count(*) FROM search_term_stats WHERE NOT hidden" || echo '?')개 (오픈 전 시험 기간에 쌓인 것)"
   say "  · (그대로 둠 — 사람이 판단) 거래 $(q "SELECT count(*) FROM deals WHERE buyer_account_id IN $T OR seller_account_id IN $T" || echo '?')건"
 }
 
@@ -58,7 +60,7 @@ if [ "$MODE" = check ]; then
   say ""; say "읽기만 했습니다. 정리하려면 오픈 직전에: bash $HERE/open-prep.sh apply"; say "결과 파일: $OUT"; exit 0
 fi
 
-say ""; say "[3] 정리 — 시험 계정 정지 · 매물 · 요청 보관 · 글 · 댓글 감춤 (지우는 것 없음 · 한 거래)"
+say ""; say "[3] 정리 — 시험 계정 정지 · 매물 · 요청 보관 · 글 · 댓글 감춤 · 추천 검색어 숨김 (지우는 것 없음 · 한 거래)"
 printf "오픈 직전입니까? 시험 계정으로 더는 로그인할 수 없게 됩니다 (yes/no): "
 read -r yn
 [ "$yn" = "yes" ] || { say "  멈춤 — 아무것도 바꾸지 않았습니다"; exit 1; }
@@ -71,16 +73,17 @@ WITH a AS (UPDATE accounts SET status = 'SUSPENDED' WHERE id IN (SELECT id FROM 
      p AS (UPDATE posts SET state = 'HIDDEN', hidden_at = now(), hidden_reason = '오픈 전 시험 글 정리'
             WHERE author_id IN (SELECT id FROM t_acc) AND state IN ('PUBLISHED','PENDING') RETURNING 1),
      c AS (UPDATE post_comments SET state = 'HIDDEN', hidden_at = now()
-            WHERE author_id IN (SELECT id FROM t_acc) AND state = 'PUBLISHED' RETURNING 1)
+            WHERE author_id IN (SELECT id FROM t_acc) AND state = 'PUBLISHED' RETURNING 1),
+     s AS (UPDATE search_term_stats SET hidden = true WHERE NOT hidden RETURNING 1)
 SELECT 'done ' || (SELECT count(*) FROM a) || ' ' || (SELECT count(*) FROM l) || ' ' || (SELECT count(*) FROM r) || ' '
-       || (SELECT count(*) FROM p) || ' ' || (SELECT count(*) FROM c);
+       || (SELECT count(*) FROM p) || ' ' || (SELECT count(*) FROM c) || ' ' || (SELECT count(*) FROM s);
 COMMIT;
 SQL
 )
 line=$(echo "$res" | grep '^done ' | tail -1)
 if [ -n "$line" ]; then
   set -- $line
-  ok "정리함" "계정 정지 $2 · 매물 보관 $3 · 요청 보관 $4 · 글 감춤 $5 · 댓글 감춤 $6"
+  ok "정리함" "계정 정지 $2 · 매물 보관 $3 · 요청 보관 $4 · 글 감춤 $5 · 댓글 감춤 $6 · 추천 검색어 숨김 $7"
 else
   bad "정리 실패 — 아무것도 바뀌지 않았습니다(한 거래)" "$(echo "$res" | tail -3 | tr '\n' ' ')"
 fi

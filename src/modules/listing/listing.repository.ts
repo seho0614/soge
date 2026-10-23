@@ -183,8 +183,9 @@ export class ListingRepository {
                lower(coalesce(l.title,'') || ' ' || coalesce(l.body,''))
                  LIKE fn_search_like(fn_search_head($3)))  /* K4 — % · _ 이스케이프 */
           AND ($3::text IS NULL OR fn_search_match(l.title, l.body, $3))
-          /* v10.31 — match=TITLE: 제목 · 업종 이름에 든 것만(시안 통합 검색) */
-          AND ($3::text IS NULL OR NOT $12::boolean OR lower(l.title) LIKE fn_search_like($3) OR lower(cat.name) LIKE fn_search_like($3))
+          /* v10.31 — match=TITLE: 제목 · 업종 이름에 든 것만(시안 통합 검색)
+           * v10.83 — 검색어 덩어리 그대로가 아니라 **낱말마다**(fn_search_match · 제목 + 업종 이름) — 「고깃 집」 · 「양도 고깃집」 · 「강남 상가」가 0건이던 것 */
+          AND ($3::text IS NULL OR NOT $12::boolean OR fn_search_match(l.title, cat.name, $3))
           AND ($4::text IS NULL OR EXISTS (
                 SELECT 1 FROM listing_badges bb
                  WHERE bb.listing_id = l.id AND bb.badge_type = $4

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { expandKeyword } from '../../core/search-expand';
 
 /**
  * 소개광장.
@@ -97,7 +98,7 @@ export class CommunityService {
     const size = sizeIn >= 1 ? Math.min(sizeIn, 50) : 10;
 
     /* 건수 조회와 목록 조회의 조건은 **같아야** 합니다(다르면 쪽 수와 줄 수가 어긋납니다) — 두 곳을 함께 고치십시오. */
-    const args = [board, this.me ?? null, kw];
+    const args = [board, this.me ?? null, (await expandKeyword(this.db, kw)) ?? ''];   // v10.83 (D111) — 동의어 · 오타 교정어
     const [c] = await this.db.query(
       `SELECT count(*)::int AS n
          FROM posts p
@@ -312,7 +313,7 @@ export class CommunityService {
     const page = pageIn >= 1 ? Math.min(pageIn, 100000) : 1;
     const size = sizeIn >= 1 ? Math.min(sizeIn, 50) : 20;
 
-    const args = [state, board, kw];
+    const args = [state, board, (await expandKeyword(this.db, kw)) ?? ''];   // v10.83 (D111)
     const [c] = await this.db.query(
       `SELECT count(*)::int AS n
          FROM posts p

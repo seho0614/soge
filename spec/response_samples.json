@@ -2605,5 +2605,11 @@
   "reason": "다시 보니 문제없음",
   "dismissed": 3,
   "note": "다시 보이게 했습니다. 처리 전 신고 3건은 기각으로 닫았습니다."
+ },
+ "post /api/v1/admin/search/terms/hide": {
+  "ok": true,
+  "term": "08ae6c",
+  "hidden": true,
+  "note": "추천 검색어에서 뺐습니다."
  }
 }

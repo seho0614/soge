@@ -41,8 +41,10 @@ export class PublicController {
   @ApiQuery({ name: 'q', required: true })
   @ApiOkResponse({ type: SearchResultDto })
   @ApiResponse({ status: 422, description: 'QUERY_TOO_SHORT', type: ErrorDto })
-  search(@Query('q') q: string, @Query('limit') limit?: number) {
-    return this.svc.search(q, limit ?? 20);
+  search(@Query('q') q: string, @Query('limit') limit?: unknown) {
+    /* v10.83 — limit 이 숫자가 아니거나(abc · 1.5) 음수면 500 이었습니다 → 1 ~ 50 정수만 · 아니면 20 */
+    const n = Number(Array.isArray(limit) ? limit[0] : limit);
+    return this.svc.search(String(Array.isArray(q) ? q[0] : q ?? ''), Number.isInteger(n) && n >= 1 ? Math.min(n, 50) : 20);
   }
 
   @Get('gwans/:code')

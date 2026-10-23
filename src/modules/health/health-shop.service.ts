@@ -10,6 +10,7 @@ import {
 } from './health-policy';
 import { CARD_COLS, CARD_FROM, OPTION_COLS, SEARCH_BODY } from './health-catalog.sql';
 import { storageFromEnv } from '../file/storage';
+import { expandKeyword } from '../../core/search-expand';
 
 /** 교환 배송비 결제 상태 — NONE(0원) · UNPAID · PAID · REFUNDED. 신청 r 이 FROM 에 있어야 합니다 */
 const FEE_STATE_SQL = `CASE WHEN r.exchange_fee = 0 THEN
@@ -43,7 +44,8 @@ export class HealthShopService {
    * v10.26 — 카드 항목(표제 성분 · 정가 · 할인율 · 한 달 최저 · 배지 · 그림 · 판매자 유형 · 담을 옵션)이 함께 오고,
    *   검색 낱말은 상품 이름 · 한 줄 설명 · 갈래 이름 · 성분 이름(다른 이름 포함)에서 찾습니다(전에는 상품 이름만).
    */
-  products(category?: string, keyword?: string, ingredient?: string, concern?: string) {
+  async products(category?: string, keyword?: string, ingredient?: string, concern?: string) {
+    const kw = await expandKeyword(this.db, keyword);   // v10.83 (D111) — 동의어 · 오타 교정어
     return this.db.query(
       `SELECT ${CARD_COLS}
          FROM ${CARD_FROM}
@@ -59,7 +61,7 @@ export class HealthShopService {
                   JOIN hlt_concerns k ON k.code = ci.concern_code AND k.is_active
                  WHERE pi.product_id = p.id AND upper(ci.concern_code) = upper($4)))
         ORDER BY p.created_at DESC LIMIT 100`,
-      [category || null, keyword || null, ingredient || null, concern || null]);
+      [category || null, kw, ingredient || null, concern || null]);
   }
 
   /**

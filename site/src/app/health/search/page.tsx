@@ -20,9 +20,11 @@ const POPULAR = ['비타민C', '유산균', '루테인', '마그네슘', '콜라
  */
 export default async function HltSearch({ searchParams }: Props) {
   const q = ((await searchParams).q ?? '').trim().slice(0, 50);
+  /* v10.83 — 한 글자는 「두 글자 이상」(전: 한 글자 낱말을 건너뛰어 판매 중 상품이 전부 나옴) */
+  const short = !!q && q.replace(/\s/g, '').length < 2;
   const ings = q ? [] : await apiGet<HltIngredient[]>('/health/ingredients', 60).catch(() => [] as HltIngredient[]);
   const popular = POPULAR.filter((w) => ings.some((g) => g.name === w && g.productCount > 0 && g.minPrice != null));
-  const list = q
+  const list = q && !short
     ? await apiGet<HltProduct[]>(`/health/products?keyword=${encodeURIComponent(q)}`, 30).catch(() => null)
     : [];
 
@@ -43,6 +45,8 @@ export default async function HltSearch({ searchParams }: Props) {
             ))}
           </div>
         </section>
+      ) : short ? (
+        <HltEmpty msg="두 글자 이상 입력해 주세요." href="/health/search" label="검색어 지우기" />
       ) : list === null ? (
         <p className="form-error" role="alert">검색하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.</p>
       ) : list.length === 0 ? (

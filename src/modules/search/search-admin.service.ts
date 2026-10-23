@@ -20,13 +20,21 @@ export class SearchAdminService {
     const intents = await this.db.query(
       `SELECT term, field, operator, value, note FROM search_intents ORDER BY term`);
     const top = await this.db.query(
-      `SELECT term, hits::int, zero_hits::int AS "zeroHits"
+      `SELECT term, hits::int, zero_hits::int AS "zeroHits", hidden
          FROM search_term_stats ORDER BY hits DESC, term LIMIT 50`);
     const zeroHit = await this.db.query(
       `SELECT term, hits::int, zero_hits::int AS "zeroHits"
          FROM search_term_stats WHERE zero_hits > 0
         ORDER BY zero_hits DESC, term LIMIT 50`);
     return { synonyms, intents, top, zeroHit };
+  }
+
+  /** v10.83 (D111) — 추천 검색어 숨기기 · 보이기. 통계는 지우지 않습니다 */
+  async hideTerm(term: string, hidden: boolean) {
+    const [r] = await this.db.query<{ term: string }>(
+      `UPDATE search_term_stats SET hidden = $2 WHERE term = $1 RETURNING term`, [term, hidden]);
+    if (!r) throw new NotFound('검색어 통계에 없는 말입니다.');
+    return { ok: true, term: r.term, hidden, note: hidden ? '추천 검색어에서 뺐습니다.' : '추천 검색어에 다시 나옵니다.' };
   }
 
   async addSynonym(dto: { term: string; canonical: string; kind: string; weight?: number }) {

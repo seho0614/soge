@@ -4,6 +4,7 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolveBizStatusProvider } from '../identity/verification.provider';
+import { expandKeyword } from '../../core/search-expand';
 
 /**
  * 사용자 공개 API.
@@ -38,9 +39,11 @@ export class PublicService {
 
   /** 통합 검색. 매물과 요청을 함께 봅니다 */
   async search(q: string, limit = 20) {
-    if (!q || q.trim().length < 2) {
+    if (!q || q.replace(/\s/g, '').length < 2) {
       throw new PolicyViolation('QUERY_TOO_SHORT', '두 글자 이상 입력해 주세요.');
     }
+    /* v10.83 (D111) — 검색어 덩어리 그대로(제목 LIKE)가 아니라 **낱말마다** · 동의어 · 오타 교정어로 넓혀서(목록 검색과 같은 규칙) */
+    const kw = (await expandKeyword(this.db, q)) ?? q;
     const [listings, requests] = await Promise.all([
       this.db.query(
         `SELECT l.id, l.gwan_code AS "gwanCode", c.name AS "categoryName", l.title,
@@ -51,9 +54,9 @@ export class PublicService {
              ★ K2 — lower(title) LIKE 로 써야 pg_bigm 색인(idx_listings_title_bigm)을 탑니다.
                     ILIKE 는 pg_bigm 색인을 쓰지 못합니다.
              ★ K4 — fn_search_like 가 % · _ · 역슬래시를 글자로 취급합니다('%' 로 전건이 나오던 것). */
-          WHERE l.status='PUBLISHED' AND lower(l.title) LIKE fn_search_like($1)
+          WHERE l.status='PUBLISHED' AND fn_search_match(l.title, c.name, $1)
           ORDER BY fn_search_rank(l.title, $1) ASC, l.published_at DESC
-          LIMIT $2`, [q, limit]),
+          LIMIT $2`, [kw, limit]),
       this.db.query(
         /* v10.31 — 시안 결과 줄의 「등록자 · 예산」: 회사명(비공개 요청 · 인증 전이면 없음) · 예산(공개한 요청만) · 지역 · 업종.
                       공개 범위가 「전체」가 아닌 요청은 제목 · 관만(로그인 여부를 보지 않는 공개 검색이라). 마감된 요청은 뺍니다 */
@@ -66,9 +69,9 @@ export class PublicService {
            FROM requests r
            LEFT JOIN categories c ON c.id = r.category_id
            LEFT JOIN businesses b ON b.account_id = r.owner_account_id AND b.verified_at IS NOT NULL
-          WHERE r.status='PUBLISHED' AND (r.closes_at IS NULL OR r.closes_at > now()) AND lower(r.title) LIKE fn_search_like($1)
+          WHERE r.status='PUBLISHED' AND (r.closes_at IS NULL OR r.closes_at > now()) AND fn_search_match(r.title, c.name, $1)
           ORDER BY fn_search_rank(r.title, $1) ASC, r.created_at DESC
-          LIMIT $2`, [q, limit]),
+          LIMIT $2`, [kw, limit]),
     ]);
     return { listings, requests, total: listings.length + requests.length };
   }

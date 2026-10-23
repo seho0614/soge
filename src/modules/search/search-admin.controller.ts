@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional,
          ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { SearchAdminService } from './search-admin.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -46,6 +46,14 @@ export class TermStatDto {
   @ApiProperty() term!: string;
   @ApiProperty() hits!: number;
   @ApiProperty({ description: '결과 0건으로 끝난 횟수 — 사전에 넣을 후보' }) zeroHits!: number;
+  @ApiPropertyOptional({ description: '추천 검색어에서 숨김(v10.83 · D111)' }) hidden?: boolean;
+}
+/** v10.83 (D111) — 추천 검색어 숨기기 · 보이기 */
+export class TermHideDto {
+  @ApiProperty({ example: '08ae6c', description: '검색어 통계의 말 그대로' })
+  @IsString() @Length(1, 60) term!: string;
+  @ApiProperty({ example: true, description: 'true 숨김 · false 다시 보임' })
+  @IsBoolean() hidden!: boolean;
 }
 export class IntentRowDto {
   @ApiProperty() term!: string;
@@ -98,6 +106,14 @@ export class SearchAdminController {
     description: '동의어 · 주관 표현 · 많이 찾는 말 · 0건으로 끝난 말. 0건 목록이 사전에 넣을 후보입니다.' })
   @ApiOkResponse({ type: SearchTermsDto })
   terms() { return this.svc.terms(); }
+
+  @Post('search/terms/hide')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '추천 검색어 숨기기 · 보이기',
+    description: '검색 팝업 · 관 화면의 추천 검색어에서 뺍니다(v10.83 · D111). 통계는 지우지 않고 그대로 쌓입니다. 없는 말은 404.' })
+  @ApiResponse({ status: 404, type: ErrorDto })
+  @Audit('SEARCH_TERM_HIDE', 'SEARCH_TERM')
+  hideTerm(@Body() dto: TermHideDto) { return this.svc.hideTerm(dto.term, dto.hidden); }
 
   @Post('search/synonyms')
   @Roles('ADMIN', 'SUPER')

@@ -7,6 +7,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { storageFromEnv } from '../file/storage';
 import { RequestCtx } from '../../core/request-context';
 import { clampLimit, decodeCursor, encodeCursor } from '../../core/pagination';
+import { expandKeyword } from '../../core/search-expand';
 import { GeoService } from '../../common/geo/geo.service';
 
 /** v10.31 (합침) — 한 매물 사진 한도. DB(fn_listing_media_guard · w2 D050)와 같은 10장. 등록 화면(w1)은 화면에서 6장까지만 받습니다. */
@@ -245,12 +246,14 @@ export class ListingService {
     const page = q.page && q.page > 0 ? Math.min(q.page, 500) : undefined;
     const cursor = page ? null : decodeCursor(q.cursor);
     const regionCode = q.regionCode ? (q.regionCode.toUpperCase() === 'ETC' ? 'ETC' : q.regionCode) : undefined;
-    const f = { gwanCode: q.gwanCode, categoryId: q.categoryId, keyword: q.keyword, badge: q.badge,
+    /* v10.83 (D111) — 검색어를 낱말마다 동의어 · 오타 교정어로 넓혀 넘깁니다(목록 · 건수 · 관련순이 같은 검색어) */
+    const keyword = (await expandKeyword(this.db, q.keyword)) ?? undefined;
+    const f = { gwanCode: q.gwanCode, categoryId: q.categoryId, keyword, badge: q.badge,
                 regionCode, axis: q.axis, urgent: q.urgent, group: q.group, match: q.match };
     const wantTotal = !!page || q.withTotal === '1' || q.withTotal === 'true';
     const [promoted, rows, total] = await Promise.all([
       cursor || (page && page > 1) ? Promise.resolve([]) : this.repo.promoted(q.gwanCode, q.categoryId),
-      this.repo.organic({ ...q, ...f, cursor, limit, offset: page ? (page - 1) * limit : undefined }),
+      this.repo.organic({ ...q, ...f, cursor, limit, offset: page ? (page - 1) * limit : undefined }),   // f.keyword(넓힌 것)가 q.keyword 를 덮음
       wantTotal ? this.repo.count(f) : Promise.resolve(null),
     ]);
 

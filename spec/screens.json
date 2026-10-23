@@ -3629,6 +3629,7 @@
    "nav": "SB-ADM-DSH-010",
    "apis": [
     "GET /admin/search/terms",
+    "POST /admin/search/terms/hide",
     "POST /admin/search/synonyms",
     "DELETE /admin/search/synonyms/{id}"
    ]

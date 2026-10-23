@@ -146,7 +146,7 @@ export class SearchService {
           UNION SELECT lower(name) FROM restricted_industries WHERE is_active AND mode IN ('BLOCK','AD_ONLY')`),
       this.db.query<{ term: string; hits: number }>(
         `SELECT s.term, s.hits::int AS hits FROM search_term_stats s
-          WHERE s.hits > s.zero_hits AND length(btrim(s.term)) BETWEEN 2 AND 20
+          WHERE s.hits > s.zero_hits AND length(btrim(s.term)) BETWEEN 2 AND 20 AND NOT s.hidden   /* v10.83 — 운영이 숨긴 말 빼기(D111) */
             AND ($1 = '' OR lower(s.term) LIKE fn_search_like($1))
             AND ($2::text IS NULL OR EXISTS (
                   SELECT 1 FROM listings l WHERE l.status = 'PUBLISHED' AND l.gwan_code = $2

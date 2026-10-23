@@ -43,6 +43,8 @@ export default async function SearchPage({ searchParams }: {
 }) {
   const sp = await searchParams;
   const q = (sp.q ?? '').trim();
+  /* v10.83 — 한 글자는 어디서든 「두 글자 이상」(통합 검색 API 규칙과 같게 · 전: 상품 탭만 한 글자로 찾아 13건 등) */
+  const short = !!q && q.replace(/\s/g, '').length < 2;
   const gwanCode = sp.gwanCode && LIST_GWANS.includes(sp.gwanCode) ? sp.gwanCode : undefined;
   const tab = sp.tab && (sp.tab in TABS_FIXED || LIST_GWANS.includes(sp.tab)) ? sp.tab : (gwanCode ?? 'ALL');
   const gTab = LIST_GWANS.includes(tab) ? tab : undefined;
@@ -56,7 +58,7 @@ export default async function SearchPage({ searchParams }: {
 
   /* v10.32 — 시안처럼 관 칩마다 건수를 붙이려고 세 묶음(상품 · 요청 · 소개광장)을 늘 읽고, 고른 탭에 맞는 것만 보입니다(관 탭이면 그 관 줄만) */
   const lqs = new URLSearchParams({ limit: '20', sort: 'RELEVANCE', keyword: q, match: 'TITLE' });  /* v10.31 — 제목 · 업종에 든 것만(시안) */
-  const [all, hit, board] = q ? await Promise.all([
+  const [all, hit, board] = q && !short ? await Promise.all([
     apiGet<ListingListData>(`/listings?${lqs}`, 10).catch(() => EMPTY),
     q.length >= 2
       ? apiGet<{ requests: ReqHit[] }>(`/search?${new URLSearchParams({ q, limit: '20' })}`, 10).catch(() => ({ requests: [] as ReqHit[] }))
@@ -64,7 +66,7 @@ export default async function SearchPage({ searchParams }: {
     apiGet<Board>(`/community/board?${new URLSearchParams({ q: q.slice(0, 50), size: '10' })}`, 10).catch(() => ({ items: [], total: 0 })),
   ]) : [EMPTY, { requests: [] as ReqHit[] }, { items: [], total: 0 } as Board];
   /* 관 탭이면 그 관만 따로 읽습니다(전체 20건 안에 안 든 줄까지) */
-  const list = gTab && q
+  const list = gTab && q && !short
     ? await apiGet<ListingListData>(`/listings?${new URLSearchParams({ limit: '20', sort: 'RELEVANCE', keyword: q, match: 'TITLE', gwanCode: gTab })}`, 10).catch(() => EMPTY)
     : all;
 
@@ -100,13 +102,15 @@ export default async function SearchPage({ searchParams }: {
           <h1>{q ? `‘${q}’ 검색 결과` : '통합 검색'}</h1>
           <p>세 관과 소개받기 · 소개광장을 한 번에 찾습니다. 통합 메인은 관이 아니라 허브입니다.</p>
         </div>
-        {q && <span className="did">{n}건</span>}
+        {q && !short && <span className="did">{n}건</span>}
       </div>
 
       {/* 개발에만 있던 결과 화면 안 검색칸 — 같은 검색 팝업을 엽니다(diffs 기록) */}
       <div className="srch"><SearchBox variant="gwan" blue defaultValue={q} gwanCode={gwanCode as SearchGwan | undefined} /></div>
 
-      {q ? (
+      {short ? (
+        <div className="emp" role="status" data-search-short="">두 글자 이상 입력해 주세요.</div>
+      ) : q ? (
         <>
           <nav className="tabs2" aria-label="검색 결과 묶음">
             {tabs.map(([v, label]) => (

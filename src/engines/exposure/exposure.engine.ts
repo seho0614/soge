@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
+import { expandKeyword } from '../../core/search-expand';
 
 /**
  * 노출·랭킹 엔진 (B-13R2 · B-20 · INV-11)
@@ -18,11 +19,12 @@ export class ExposureEngine {
   constructor(private readonly db: DatabaseService) {}
 
   /** 기본 목록 — 중립 정렬. 구독 등급이 순서에 영향을 주지 않습니다. */
-  organic(params: {
+  async organic(params: {
     gwanCode: string; categoryId?: string; keyword?: string;
     sort?: SortMode; cursor?: string; limit?: number;
   }) {
     const limit = Math.min(params.limit ?? 20, 50);
+    const keyword = await expandKeyword(this.db, params.keyword);   // v10.83 (D111) — 동의어 · 오타 교정어
     const order =
       params.sort === 'FEE_DESC' ? 'l.desired_fee DESC NULLS LAST, l.id DESC'
       : params.sort === 'RELEVANCE' && params.keyword
@@ -47,7 +49,7 @@ export class ExposureEngine {
           AND l.is_priority_exposed = false
         ORDER BY ${order}
         LIMIT $4`,
-      [params.gwanCode, params.categoryId ?? null, params.keyword ?? null, limit],
+      [params.gwanCode, params.categoryId ?? null, keyword, limit],
     );
   }
 
