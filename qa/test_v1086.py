@@ -83,7 +83,7 @@ for root, ds, fs in os.walk(os.path.join(K, 'src')):
 ok('A① 옛 파일을 불러오는 곳 없음', not old_ref, ' · '.join(old_ref))
 
 # ② A
-SVC = list(PLAN) + ['src/modules/health/health-shop.shared.ts', 'src/modules/partner/partner-shared.ts']
+SVC = list(PLAN) + ['src/modules/health/health-shop.shared.ts']   # v10.87 — partner-shared.ts 는 되돌림(docs/141)
 for f in PLAN:
     s = rd(f)
     miss = sorted(set(re.findall(r'this\.(\w+)', s)) - members(s))
@@ -148,6 +148,16 @@ for c in ('HealthCatalogService', 'HealthCheckoutService', 'HealthPaymentService
     ok(f'A④ app.module 에 {c}', re.search(r'\n\s+[^\n]*\b' + c + r'\b,', am) is not None and f'import {{ {c} }}' in am, '')
 ok('A④ app.module 에 HealthShopService 없음', 'HealthShopService' not in am, '')
 
+# v10.87 — 파트너 mine() 을 세 서비스에 그대로(매트릭스 생성기가 this.actors.forMember 를 따라가게 · docs/141)
+def mine_body(s):
+    i = s.find('  private async mine() {')
+    return s[i:s.find('\n  }\n', i)] if i >= 0 else ''
+mb = [mine_body(rd(f'src/modules/partner/{x}.service.ts')) for x in ('partner', 'partner-lead', 'partner-money')]
+ok('A⑤ 파트너 세 서비스의 mine() 이 this.actors.forMember(this.me) 를 부름 · 본문이 서로 같음',
+   all('this.actors.forMember(this.me)' in b for b in mb) and len(set(mb)) == 1, '')
+ok('A⑤ partner-shared.ts 없음 · myPartner 부르는 곳 없음', not rd('src/modules/partner/partner-shared.ts')
+   and all('myPartner(' not in rd(f'src/modules/partner/{x}.service.ts') for x in ('partner', 'partner-lead', 'partner-money')), '')
+
 # B · C — 화면 파일 나누기
 FRONT = {
     'web/src/app/admin/Gwans.tsx': ['gwans/GwanList.tsx', 'gwans/GwanNew.tsx', 'gwans/GwanSettings.tsx', 'gwans/GwanScope.tsx', 'gwans/shared.ts'],
@@ -197,7 +207,7 @@ ok('C 검색 팝업 — 밖에서 쓰던 이름 그대로(SCOPES · logSearch ·
 
 _v = tuple(int(x) for x in re.findall(r'\d+', rd('VERSION')))
 ok('VERSION v10.86 이상', _v >= (10, 86), '.'.join(map(str, _v)))
-ok('문서 140', any(f.startswith('140_') for f in os.listdir(os.path.join(K, 'docs'))), '')
+ok('문서 140 · 141', all(any(f.startswith(n + '_') for f in os.listdir(os.path.join(K, 'docs'))) for n in ('140', '141')), '')
 
 n = sum(1 for r in RES if r[0])
 print(f'통과 {n} / {len(RES)}')
