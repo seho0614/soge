@@ -14,6 +14,8 @@
 | `seed-test-users.sql` | v10.36 — 시험 계정 6개(@t.local · 비밀번호는 실행 때 `-v pw=…`). 다시 돌리면 비밀번호를 바꾸고 정지를 풉니다. **오픈 직전 정지**(파일 머리말) | 운영 DB(accounts · account_roles) |
 | `env.production.example` | 운영 `.env` 에 들어가는 값의 이름과 뜻 | — |
 | `lib.sh` | 공용 함수 | — |
+| `cloudwatch/setup.sh` | v10.88 — CloudWatch 경보 12개 · 메일(SNS `sgb-alerts`) · 로그 그룹 4개 · 오류 줄 필터. **AWS CloudShell 에서** check · apply · test(docs/142) | AWS 계정(CloudWatch · SNS · Logs) |
+| `cloudwatch/agent.json` | v10.88 — CloudWatch 에이전트 설정(메모리 · 디스크 · pm2 로그 · Nginx 오류 로그). 서버에서 `amazon-cloudwatch-agent-ctl -a fetch-config … -c file:…/agent.json` | 없음(설정 파일) |
 
 서버의 폴더
 
