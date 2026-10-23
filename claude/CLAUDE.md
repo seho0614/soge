@@ -3,7 +3,7 @@
 - 프로젝트 규칙 상세: @~/sogaebank/sgb-docs/claude/project-rules.md
 - 인계 메모(2026-10-15, 미결 과제 목록): ~/sogaebank/sgb-docs/handoff/handoff_20261015.md
 - 인계 메모(2026-10-16, 그 뒤 바뀐 것 · 운영 v10.45): ~/sogaebank/sgb-docs/handoff/handoff_20261016.md
-- 인계 메모(2026-10-22 · 10/23 이어 씀, 최신 · v10.84 · 마이그레이션 150 · 디자인 1 ~ 6단계 · 운영 화면 디자인 기준 · 자동검수 점검 · 기능 점검(`qa/func_check.sh` · `SITE_MODE=prod` · 전부 통과 · 검색 점검) · 소개광장 글 찾기 · 댓글 감추기 · 댓글 신고 · 감사 징후 D109 · 검색 정리 D111 · 동의어 D112 · 운영 v10.65 적용 · **다음은 운영 적용 v10.84(docs/134)** → E): ~/sogaebank/sgb-docs/handoff/handoff_20261022.md
+- 인계 메모(2026-10-22 · 10/23 이어 씀, 최신 · v10.85 · 마이그레이션 150 · 디자인 1 ~ 6단계 · 운영 화면 디자인 기준 · 자동검수 점검 · 기능 점검(`qa/func_check.sh` · `SITE_MODE=prod` · 전부 통과 · 검색 점검) · 소개광장 글 찾기 · 댓글 감추기 · 댓글 신고 · 감사 징후 D109 · 검색 정리 D111 · 동의어 D112 · 알림 메일 발송 · 운영 v10.65 적용 · **다음은 운영 적용 v10.85(docs/134)** → E): ~/sogaebank/sgb-docs/handoff/handoff_20261022.md
 
 ## 이 서버 (가장 중요)
 - 이 서버(3.37.95.217)는 **개발 전용 서버(t3.large)**. 나는 개발 사용자 sgbdev 로 일한다.
