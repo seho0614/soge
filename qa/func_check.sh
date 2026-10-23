@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 서비스 전체 기능 점검 (v10.73) — 개발 서버 점검판에서 흐름 시험 8가지를 차례로 돌립니다.
 #
-#   ~/sgb-check.sh main up                 # 먼저 점검판을 올림(갈래는 바꿔도 됨)
+#   SITE_MODE=prod ~/sgb-check.sh main up  # 먼저 점검판을 올림(갈래는 바꿔도 됨) · 사용자 웹 운영 방식 권장(v10.74)
 #   bash ~/sogaebank/sgb-infra/qa/func_check.sh
 #   ONLY="flow_trade crawl_site" CRAWL_ROLES=admin bash …/func_check.sh    # 일부만
 #   ~/sgb-check.sh main down
@@ -16,12 +16,15 @@ QA=$(cd "$(dirname "$0")" && pwd)
 KIT=$(dirname "$(find ~/kits/run/current -maxdepth 3 -path '*/sgb/VERSION' 2>/dev/null | head -1)")
 [ -n "$KIT" ] && [ -d "$KIT" ] || { echo "[중단] 점검판 kit 이 없습니다 — 먼저 ~/sgb-check.sh 갈래 up"; exit 1; }
 curl -s -o /dev/null --max-time 10 http://localhost:13000/api/v1/health || { echo "[중단] 점검판 API(13000)가 응답하지 않습니다 — ~/sgb-check.sh 갈래 up"; exit 1; }
+# v10.74 — 운영 방식(SITE_MODE=prod)이면 사용자 웹이 빌드를 마칠 때까지 기다립니다(최대 15분)
+for i in $(seq 1 90); do [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://localhost:15174/)" = 200 ] && break; sleep 10; done
+SMODE=$(docker inspect -f '{{join .Config.Cmd " "}}' sgb-site 2>/dev/null | grep -q 'next start' && echo prod || echo dev)
 IMG=sgb-qa:v1
 docker image inspect $IMG >/dev/null 2>&1 || docker build -q -t $IMG "$QA/qa-image" >/dev/null || { echo "[중단] 시험 이미지를 만들지 못했습니다"; exit 1; }
 RES=~/check-results/$(date +%Y%m%d_%H%M)_func; mkdir -p "$RES/w"
 cp -r "$QA"/. "$RES/w/"
 ONLY=${ONLY:-fixtures e2e flow_trade flow_biz flow_mall flow_plaza crawl_site crawl_admin}
-echo "== 기능 점검: $(cat "$KIT/VERSION") · $ONLY → $RES" | tee "$RES/summary.txt"
+echo "== 기능 점검: $(cat "$KIT/VERSION") · 사용자 웹 $SMODE · $ONLY → $RES" | tee "$RES/summary.txt"
 touch "$RES/.start"
 for s in $ONLY; do
   t0=$(date +%s)
