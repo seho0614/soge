@@ -23,7 +23,7 @@ IMG=sgb-qa:v1
 docker image inspect $IMG >/dev/null 2>&1 || docker build -q -t $IMG "$QA/qa-image" >/dev/null || { echo "[중단] 시험 이미지를 만들지 못했습니다"; exit 1; }
 RES=~/check-results/$(date +%Y%m%d_%H%M)_func; mkdir -p "$RES/w"
 cp -r "$QA"/. "$RES/w/"
-ONLY=${ONLY:-fixtures e2e flow_trade flow_biz flow_mall flow_plaza crawl_site crawl_admin}
+ONLY=${ONLY:-fixtures e2e flow_trade flow_biz flow_mall flow_plaza crawl_site crawl_admin search_check}   # v10.83 — 검색 점검(search_check.py)
 echo "== 기능 점검: $(cat "$KIT/VERSION") · 사용자 웹 $SMODE · $ONLY → $RES" | tee "$RES/summary.txt"
 touch "$RES/.start"
 for s in $ONLY; do

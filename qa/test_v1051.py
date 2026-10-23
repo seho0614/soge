@@ -64,7 +64,7 @@ ok('명세서 집행 · 승인이 fn_has_role', "IF NOT fn_has_role(NEW.paid_by,
 ok('명세서 2인 원칙 · 게이트 · 원장 그대로', all(t in D104 for t in ('자기가 신청한 것을 자기가 승인할 수 없습니다(2인 원칙)', '승인 · 신청한 사람은 집행할 수 없습니다(2인 원칙)', 'ADX_GATE', 'ADX_LEDGER')), '')
 ok('D104 는 자료를 지우지 않음', not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D104), '')
 _mig = sorted(d for d in os.listdir(MIG) if os.path.isdir(os.path.join(MIG, d)))
-ok('D104 가 마지막 마이그레이션 · 142개(v10.65 부터 D105 · 143 — test_v1065 · v10.69 부터 D106 · 144 — test_v1069)', (_mig[-1], len(_mig)) in (('D104_super_all_permissions', 142), ('D105_switch_format', 143), ('D106_banned_regex_guard', 144), ('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148)), f'{_mig[-1]} · {len(_mig)}')
+ok('D104 가 마지막 마이그레이션 · 142개(v10.65 부터 D105 · 143 — test_v1065 · v10.69 부터 D106 · 144 — test_v1069)', (_mig[-1], len(_mig)) in (('D104_super_all_permissions', 142), ('D105_switch_format', 143), ('D106_banned_regex_guard', 144), ('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149)), f'{_mig[-1]} · {len(_mig)}')
 ok('정산 2인 원칙(fn_payout_two_person)은 그대로', '확정한 사람이 지급할 수 없습니다 — 2인 원칙' in rd('prisma/migrations/C997_ops_decisions/migration.sql'), '')
 VI = rd('scripts/verify-invariants.sh')
 ok('invariants SUP-1 ~ SUP-4', all(f'"SUP-{i} ' in VI for i in range(1, 5)), '')
