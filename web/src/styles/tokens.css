@@ -72,6 +72,9 @@
 
 * { box-sizing: border-box; }
 
+/* v10.77 — 입력 칸 · 고르기 칸 · 글 칸 · 꾸밈 없는 단추가 브라우저 기본값(13.33px · 시스템 글꼴) 대신 본문 글자(14px = 단추 시트 --sgb-btn-fs)를 따릅니다(따로 정한 칸은 그대로) */
+input, select, textarea, button { font: inherit; }
+
 body {
   margin: 0;
   font-family: var(--f);
