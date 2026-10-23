@@ -74,6 +74,13 @@ def family(h):
     return 'other'
 
 
+# v10.77 — 바탕을 다른 규칙이 칠하는 어두운 상단바. 이 규칙만 보면 흰 바탕으로 셈해서
+#   파트너센터(#0E2A23)의 밝은 글자를 흐린 글자(#646f8c · 실제 대비 3.05)로 바꿨고,
+#   시안 운영 화면 상단바(.ahd · 남색 · v10.67)는 다시 돌리면 되돌리려 했습니다(test_v1063 이 v10.67 부터 5/6) → 어두운 바탕으로 셉니다(docs/131).
+DARK_BG = [(re.compile(r'^\s*(\.pt-(plg|gnb|phr)\b|\.phd\b)'), '#0e2a23'),
+           (re.compile(r'^\s*\.ahd\b'), '#00245a')]
+
+
 REPL = {'grey': 'var(--sgb-ink-3)', 'or': 'var(--sgb-or-text)', 'gr': 'var(--sgb-gr-text)', 'rd': 'var(--sgb-rd-text)', 'blue': 'var(--sgb-link-d)'}
 
 
@@ -83,7 +90,7 @@ def fix(css, where):
         sel, body = m.group(1), m.group(2)
         if re.search(r':disabled|disabled|placeholder|::|\.off\b|\.dis\b', sel) or sel.strip().startswith(':root') or '@font-face' in sel: continue
         bgm = re.search(r'(?<![\w-])background(?:-color)?\s*:\s*([^;]+)', body)
-        bg = res(bgm.group(1)) if bgm else '#ffffff'
+        bg = res(bgm.group(1)) if bgm else next((c for rx, c in DARK_BG if rx.search(sel) and not re.search(r'\.(pt-)?bo\b', sel)), '#ffffff')  # 흰 단추(.bo)는 제 바탕
         if bgm and not bg: continue           # 그림 · 그러데이션 바탕은 셈하지 않음
         def one(d):
             val = d.group(2)
