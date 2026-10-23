@@ -4,7 +4,6 @@ import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { LeadCashService } from './lead-cash.service';
 import { PartnerActorService } from './partner-actor.service';
-import { myPartner } from './partner-shared';
 
 /**
  * 파트너센터 — 리드(배정된 요청) 목록 · 연락처 · 열람.
@@ -17,8 +16,16 @@ export class PartnerLeadService {
   constructor(private readonly db: DatabaseService, private readonly cash: LeadCashService,
               private readonly actors: PartnerActorService) {}
   private get me() { return RequestCtx.actorId(); }
-  /** 내 파트너 계정(없으면 null · 로그인 안 했으면 막음) — partner-shared.ts 한 곳 */
-  private mine() { return myPartner(this.actors); }
+  /** 내 파트너 계정. 없으면 신청 안내를 냅니다.
+   *  v10.31 (W5 · CTR-610 계정) — 대표 계정 또는 합류한 직원 계정(business_members · 빠지지 않은).
+   *  v10.87 — 세 서비스(핵심 · 리드 · 이용료)에 같은 본문. 매트릭스 생성기(gen-matrix)가 this.actors.forMember 의 SQL 까지 따라가게 함수로 빼지 않음 */
+  private async mine() {
+    if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
+    const p = await this.actors.forMember(this.me);   // v10.39 — 조회는 PartnerActorService 한 곳
+    if (!p) return null;
+    const { canMoney: _money, ...mine } = p;           // 이 자리가 내보내던 칸 그대로(대시보드 응답에 펼쳐 넣음)
+    return mine;
+  }
 
   /**
    * 받은 리드.
