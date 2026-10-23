@@ -73,7 +73,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
   const Cmt = ({ c, re }: { c: PostComment; re?: boolean }) => (
     <div className={'cmu-cmt' + (re ? ' re' : '')}>
       <b>{c.author}</b> <span className="dim">{dot(c.createdAt)}</span>
-      <p>{c.hidden ? <span className="dim">신고가 들어와 가려진 댓글입니다.</span> : c.body}</p>
+      <p>{c.hidden ? <span className="dim">운영 기준에 따라 가려진 댓글입니다.</span> : c.body}</p>
     </div>
   );
 

@@ -162,10 +162,12 @@ export class CommunityService {
     return { ok: true, ...post, comments: await this.commentsOf(id) };
   }
 
-  /** 글에 달린 댓글 — 작성자 이름은 첫 글자만(G-146). 지운 댓글은 뺍니다 */
+  /** 글에 달린 댓글 — 작성자 이름은 첫 글자만(G-146). 지운 댓글은 뺍니다.
+   *  v10.75 — 감춘 댓글은 본문을 내보내지 않습니다(자리만 · 화면은 「가려진 댓글」). 감춘 글과 같습니다 — 전에는 화면만 가리고 API 로는 본문이 나갔습니다. */
   private async commentsOf(id: string) {
     const comments = await this.db.query(
-      `SELECT c.id, c.parent_id AS "parentId", c.body, c.created_at AS "createdAt",
+      `SELECT c.id, c.parent_id AS "parentId",
+              CASE WHEN c.state = 'HIDDEN' THEN NULL ELSE c.body END AS body, c.created_at AS "createdAt",
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
@@ -333,7 +335,7 @@ export class CommunityService {
    *
    * 신고 3건이면 글이 자동으로 가려집니다(D031). 정상 글이었으면 되돌릴 길이 있어야 합니다 —
    * 없으면 경쟁사 세 명이 정상 글을 없앨 수 있습니다.
-   *   · 감춘 글(HIDDEN)만 · 사유 필수(감사 기록 POST_UNHIDE 에 남음).
+   *   · 감춘 글(HIDDEN)만 · 사유 필수. 감사 기록은 답(after_data)만 남기므로 답에 reason 을 담습니다(v10.75).
    *   · 그 글의 처리 전 신고(OPEN · QUEUED)는 **기각**으로 닫고 신고 수를 0 으로 둡니다(대표 결정 A · 2026-10-22).
    *     신고 수 트리거(fn_report_escalate)는 OPEN · QUEUED · UPHELD 만 세므로, 되살린 뒤에는 **새 신고 3건**이 쌓여야 다시 가려집니다.
    *     신고 기록은 지우지 않습니다. 신고한 사람에게는 결과를 알립니다(abuse.service resolve 와 같음).
@@ -368,8 +370,57 @@ export class CommunityService {
              FROM unnest($1::uuid[]) AS x
            ON CONFLICT DO NOTHING`, [reporters, UNHIDE_RESOLUTION]);
       }
-      return { ok: true, dismissed: closed.length,
+      return { ok: true, dismissed: closed.length, reason: reason.trim(),
                note: closed.length ? `다시 올렸습니다. 처리 전 신고 ${closed.length}건은 기각으로 닫았습니다.` : '다시 올렸습니다.' };
     });
+  }
+
+  /** 운영 — 글의 댓글 전체 (v10.75). 회원 화면(commentsOf)과 달리 지운 댓글 · 작성자 이름을 그대로 보여 줍니다 */
+  async adminComments(postId: string) {
+    const [p] = await this.db.query(`SELECT id FROM posts WHERE id = $1`, [postId]);
+    if (!p) throw new NotFound('없는 글입니다.');
+    const items = await this.db.query(
+      `SELECT c.id, c.parent_id AS "parentId", c.body, c.state, c.created_at AS "createdAt",
+              c.hidden_at AS "hiddenAt", coalesce(a.name,'(탈퇴)') AS author
+         FROM post_comments c
+         LEFT JOIN accounts a ON a.id = c.author_id
+        WHERE c.post_id = $1
+        ORDER BY coalesce(c.parent_id, c.id), c.created_at`, [postId]);
+    return { items };
+  }
+
+  /**
+   * 운영 — 댓글 감추기 · 되살리기 (v10.75).
+   *
+   * 댓글 표에는 감춘 사유 칸이 없습니다(마이그레이션 없이 하기로 함 · 대표 승인 2026-10-23).
+   * 그래서 사유는 **답에 담아** 감사 기록(COMMENT_HIDE · COMMENT_UNHIDE 의 after_data)에 남깁니다.
+   * 글의 댓글 수(comment_count)는 트리거(fn_comment_count)가 공개 댓글만 다시 셉니다.
+   */
+  async hideComment(id: string, reason: string) {
+    if (typeof reason !== 'string' || !reason.trim()) {
+      throw new PolicyViolation('REASON_REQUIRED', '감추는 사유를 적으십시오. 감사 기록에 남습니다.');
+    }
+    const [r] = await this.db.query(
+      `UPDATE post_comments SET state = 'HIDDEN', hidden_at = now()
+        WHERE id = $1 AND state = 'PUBLISHED' RETURNING id, post_id AS "postId"`, [id]);
+    if (r) return { ok: true, postId: r.postId, reason: reason.trim(), note: '감췄습니다. 회원 화면에는 「가려진 댓글」로 보입니다.' };
+    const [c] = await this.db.query<{ state: string }>(`SELECT state FROM post_comments WHERE id = $1`, [id]);
+    if (!c) throw new NotFound('없는 댓글입니다.');
+    throw new StateConflict('NOT_PUBLISHED', c.state === 'DELETED'
+      ? '작성자가 지운 댓글은 감추지 않습니다.' : '이미 감춘 댓글입니다.');
+  }
+
+  async unhideComment(id: string, reason: string) {
+    if (typeof reason !== 'string' || !reason.trim()) {
+      throw new PolicyViolation('REASON_REQUIRED', '되살리는 사유를 적으십시오. 감사 기록에 남습니다.');
+    }
+    const [r] = await this.db.query(
+      `UPDATE post_comments SET state = 'PUBLISHED', hidden_at = NULL
+        WHERE id = $1 AND state = 'HIDDEN' RETURNING id, post_id AS "postId"`, [id]);
+    if (r) return { ok: true, postId: r.postId, reason: reason.trim(), note: '다시 보이게 했습니다.' };
+    const [c] = await this.db.query<{ state: string }>(`SELECT state FROM post_comments WHERE id = $1`, [id]);
+    if (!c) throw new NotFound('없는 댓글입니다.');
+    throw new StateConflict('NOT_HIDDEN', c.state === 'DELETED'
+      ? '작성자가 지운 댓글은 되살리지 않습니다.' : '감춘 댓글이 아닙니다.');
   }
 }

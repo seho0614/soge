@@ -164,4 +164,43 @@ export class CommunityController {
   unhide(@Param('id') id: string, @Body() dto: { reason: string }) {
     return this.svc.unhide(id, dto?.reason);
   }
+
+  @ApiBearerAuth()
+  @Get('admin/community/posts/:id/comments')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '글의 댓글 (운영)',
+    description:
+      '그 글의 댓글을 상태와 관계없이 모두 보여 줍니다(v10.75) — 공개 · 감춤 · 지움 · 대댓글 관계 · 작성자 이름 그대로. ' +
+      '`{ items[{ id, parentId, body, state, createdAt, hiddenAt, author }] }`',
+  })
+  adminComments(@Param('id') id: string) { return this.svc.adminComments(id); }
+
+  @ApiBearerAuth()
+  @Post('admin/community/comments/:id/hide')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '댓글 감추기',
+    description:
+      '공개 댓글만 감춥니다(v10.75). **사유를 반드시 적으십시오** — 답에 담겨 감사 기록 `COMMENT_HIDE` 에 남습니다. ' +
+      '회원 화면에는 「운영 기준에 따라 가려진 댓글입니다.」로 보입니다. 공개 댓글이 아니면 409 `NOT_PUBLISHED`.',
+  })
+  @Audit('COMMENT_HIDE', 'COMMENT')
+  hideComment(@Param('id') id: string, @Body() dto: { reason: string }) {
+    return this.svc.hideComment(id, dto?.reason);
+  }
+
+  @ApiBearerAuth()
+  @Post('admin/community/comments/:id/unhide')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '감춘 댓글 되살리기',
+    description:
+      '감춘 댓글만 다시 보이게 합니다(v10.75). **사유를 반드시 적으십시오**(감사 기록 `COMMENT_UNHIDE`). ' +
+      '감춘 댓글이 아니면 409 `NOT_HIDDEN`.',
+  })
+  @Audit('COMMENT_UNHIDE', 'COMMENT')
+  unhideComment(@Param('id') id: string, @Body() dto: { reason: string }) {
+    return this.svc.unhideComment(id, dto?.reason);
+  }
 }

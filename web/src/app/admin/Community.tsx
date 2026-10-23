@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct } from '../../lib/act';
@@ -14,6 +14,9 @@ interface Found {
   id: string; board: string; title: string; state: string; reportCount: number; commentCount: number;
   createdAt: string; hiddenAt: string | null; hiddenReason: string | null; author: string;
 }
+interface AdminComment {
+  id: string; parentId: string | null; body: string; state: string; createdAt: string; hiddenAt: string | null; author: string;
+}
 interface FoundList { items: Found[]; total: number; page: number; size: number; pages: number }
 interface Queue { pending: Pending[]; reported: Reported[]; lateCount: number; note: string | null }
 
@@ -25,6 +28,7 @@ interface Queue { pending: Pending[]; reported: Reported[]; lateCount: number; n
  * 경쟁사 세 명이 신고하면 정상 글이 사라지기 때문입니다.
  *
  * v10.72 — 「글 찾기」: 신고가 쌓이기 전의 글도 찾아 감추고, 감춘 글(신고로 가려진 글 포함)은 되살립니다.
+ * v10.75 — 글 찾기 표의 「댓글」 수를 누르면 그 글의 댓글이 펼쳐지고, 댓글을 감추거나 되살립니다.
  */
 export function Community() {
   const q = useApi<Queue>('/admin/community/queue');
@@ -135,6 +139,7 @@ function PostFinder({ busy, onHide, onUnhide, reloadQueue }: {
   const [board, setBoard] = useState('');
   const [kw, setKw] = useState('');
   const [page, setPage] = useState(1);
+  const [open, setOpen] = useState<string | null>(null);
   const list = useApi<FoundList>(`/admin/community/posts?page=${page}&size=20${state ? `&state=${state}` : ''}${board ? `&board=${board}` : ''}${kw ? `&q=${encodeURIComponent(kw)}` : ''}`);
   const after = () => { list.reload(); reloadQueue(); };
 
@@ -160,21 +165,29 @@ function PostFinder({ busy, onHide, onUnhide, reloadQueue }: {
         : list.data.items.length === 0 ? <p className="muted">찾는 글이 없습니다.</p>
         : (
           <table className="tbl">
-            <thead><tr><th>제목</th><th>게시판</th><th>작성자</th><th>쓴 날</th><th>신고</th><th>상태</th><th>처리</th></tr></thead>
+            <thead><tr><th>제목</th><th>게시판</th><th>작성자</th><th>쓴 날</th><th>신고</th><th>댓글</th><th>상태</th><th>처리</th></tr></thead>
             <tbody>
               {list.data.items.map((p) => (
-                <tr key={p.id}>
+                <Fragment key={p.id}>
+                <tr>
                   <td>{p.title}{p.hiddenReason && <div className="muted">감춘 사유: {p.hiddenReason}</div>}</td>
                   <td className="muted">{BOARD_LABEL[p.board] ?? p.board}</td>
                   <td>{p.author}</td>
                   <td className="muted">{ymdKst(p.createdAt)}</td>
                   <td className="num-cell">{p.reportCount > 0 ? <b className="warn-text">{p.reportCount}</b> : 0}</td>
+                  <td className="num-cell">
+                    <button className="btn-plain" aria-expanded={open === p.id} onClick={() => setOpen(open === p.id ? null : p.id)}>
+                      {p.commentCount}{open === p.id ? ' ▲' : ' ▼'}
+                    </button>
+                  </td>
                   <td>{STATE_LABEL[p.state] ?? p.state}</td>
                   <td>
                     {(p.state === 'PUBLISHED' || p.state === 'PENDING') && <button className="btn-no" disabled={busy === p.id} onClick={() => onHide(p.id, p.title, after)}>감추기</button>}
                     {p.state === 'HIDDEN' && <button className="btn-sm" disabled={busy === p.id} onClick={() => onUnhide(p.id, p.title, after)}>되살리기</button>}
                   </td>
                 </tr>
+                {open === p.id && <tr><td colSpan={8}><CommentPanel postId={p.id} onChanged={list.reload} /></td></tr>}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -189,3 +202,51 @@ function PostFinder({ busy, onHide, onUnhide, reloadQueue }: {
     </div>
   );
 }
+
+/**
+ * v10.75 — 글의 댓글 감추기 · 되살리기.
+ *
+ * 댓글 표에는 사유 칸이 없어(마이그레이션 없음) 사유는 감사 기록에만 남습니다.
+ * 회원 화면에는 「운영 기준에 따라 가려진 댓글입니다.」로만 보입니다. 지운 댓글은 보기만 합니다.
+ */
+function CommentPanel({ postId, onChanged }: { postId: string; onChanged: () => void }) {
+  const c = useApi<{ items: AdminComment[] }>(`/admin/community/posts/${postId}/comments`);
+  const a = useAct();
+  const act = (x: AdminComment, kind: 'hide' | 'unhide') => {
+    const head = x.body.length > 30 ? `${x.body.slice(0, 30)}…` : x.body;
+    const reason = prompt(`댓글 '${head}' 을(를) ${kind === 'hide' ? '감춥니다' : '다시 보이게 합니다'}.\n사유 — 감사 기록에 남습니다`) ?? '';
+    if (!reason.trim()) { a.setErr('사유를 반드시 적으십시오. 감사 기록에 남습니다.'); return; }
+    void a.run(x.id, () => api(`/admin/community/comments/${x.id}/${kind}`, {
+      method: 'POST', body: JSON.stringify({ reason: reason.trim() }),
+    }), () => { c.reload(); onChanged(); });
+  };
+
+  if (c.error) return <ErrorView error={c.error} onRetry={c.reload} />;
+  if (!c.data) return <p className="muted">불러오는 중…</p>;
+  return (
+    <div data-comment-panel>
+      <Flash msg={a.msg} err={a.err} />
+      {c.data.items.length === 0 ? <p className="muted">댓글이 없습니다.</p> : (
+        <table className="tbl">
+          <thead><tr><th>댓글</th><th>작성자</th><th>쓴 날</th><th>상태</th><th>처리</th></tr></thead>
+          <tbody>
+            {c.data.items.map((x) => (
+              <tr key={x.id}>
+                <td>{x.parentId && <span className="muted">↳ </span>}{x.body}</td>
+                <td>{x.author}</td>
+                <td className="muted">{ymdKst(x.createdAt)}</td>
+                <td>{COMMENT_STATE[x.state] ?? x.state}</td>
+                <td>
+                  {x.state === 'PUBLISHED' && <button className="btn-no" disabled={a.busy === x.id} onClick={() => act(x, 'hide')}>감추기</button>}
+                  {x.state === 'HIDDEN' && <button className="btn-sm" disabled={a.busy === x.id} onClick={() => act(x, 'unhide')}>되살리기</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+const COMMENT_STATE: Record<string, string> = { PUBLISHED: '공개', HIDDEN: '감춤', DELETED: '작성자 삭제' };

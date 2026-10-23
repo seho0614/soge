@@ -2534,6 +2534,7 @@
  "post /api/v1/admin/community/posts/{id}/unhide": {
   "ok": true,
   "dismissed": 3,
+  "reason": "정상 후기로 확인",
   "note": "다시 올렸습니다. 처리 전 신고 3건은 기각으로 닫았습니다."
  },
  "patch /api/v1/me/community/posts/{id}": {
@@ -2565,5 +2566,30 @@
   "page": 1,
   "size": 1,
   "pages": 1
+ },
+ "get /api/v1/admin/community/posts/{id}/comments": {
+  "items": [
+   {
+    "id": "7c1d2e3f-0000-4000-a000-000000000001",
+    "parentId": null,
+    "body": "표본 수집 — 저도 같은 경험이 있습니다",
+    "state": "HIDDEN",
+    "createdAt": "2026-10-22T09:30:00.000Z",
+    "hiddenAt": "2026-10-22T11:00:00.000Z",
+    "author": "이소개"
+   }
+  ]
+ },
+ "post /api/v1/admin/community/comments/{id}/hide": {
+  "ok": true,
+  "postId": "669694ce-81a7-4996-b9d7-62f9c5ac755a",
+  "reason": "욕설",
+  "note": "감췄습니다. 회원 화면에는 「가려진 댓글」로 보입니다."
+ },
+ "post /api/v1/admin/community/comments/{id}/unhide": {
+  "ok": true,
+  "postId": "669694ce-81a7-4996-b9d7-62f9c5ac755a",
+  "reason": "다시 보니 문제없음",
+  "note": "다시 보이게 했습니다."
  }
 }

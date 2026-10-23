@@ -150,7 +150,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'gov-audit':   { title: '감사', sub: '징후를 보고 판단을 남깁니다.', screen: 'SB-ADM-AUD-010' },
   quals:         { title: '인증 · 자격 심사', sub: '자동 대조를 통과한 신청만 사람이 봅니다. 자격이 승인돼야 그 업종의 서비스 등록이 열립니다.', screen: 'SB-ADM-BRK-010' },
   ownership:     { title: '소유 확인 대기', sub: '등기사항증명서를 직접 보고 판단하십시오.', screen: 'SB-ADM-OWN-010' },
-  community:     { title: '소개광장 검수', sub: '첫 글 · 신고된 글을 보고, 모든 글을 찾아 감추거나 되살립니다.', screen: 'SB-ADM-CMU-010' },
+  community:     { title: '소개광장 검수', sub: '첫 글 · 신고된 글을 보고, 모든 글과 댓글을 찾아 감추거나 되살립니다.', screen: 'SB-ADM-CMU-010' },
   polls:         { title: '투표 관리', sub: '소개광장 「이건 어때?」와 메인의 세 장에 나오는 투표를 만들고 엽니다. 참여 수는 실제 표 수입니다.', screen: 'SB-ADM-CMU-020' },
   events:        { title: '이벤트 관리', sub: '지급 대기를 먼저 보여 줍니다 — 이벤트를 여는 것보다 약속한 것을 주는 일이 중요합니다.', screen: 'SB-ADM-EVT-010' },
   affiliates:    { title: '제휴 파트너스', sub: '관리자가 승인해야 링크를 발급할 수 있습니다. 입점 심사 · 제휴상품 · 목표 · 자료 · 정산을 여기서 처리합니다.', screen: 'SB-AFF-APL-010' },
