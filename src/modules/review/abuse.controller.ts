@@ -9,7 +9,7 @@ import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles, RequireGate } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 
-const TARGET = ['LISTING', 'REQUEST', 'SERVICE', 'PROFILE', 'POST'] as const;   // v10.27 (G-191) — 소개광장 글
+const TARGET = ['LISTING', 'REQUEST', 'SERVICE', 'PROFILE', 'POST', 'COMMENT'] as const;   // v10.27 (G-191) — 소개광장 글 · v10.80 (D110) — 소개광장 댓글
 
 export class AbuseCreateDto {
   @ApiProperty({ enum: TARGET, description: '무엇을 신고하는가' })

@@ -18,6 +18,8 @@ const ADMIN_STATES = ['PENDING', 'PUBLISHED', 'HIDDEN', 'DELETED'];
 const UNHIDE_RESOLUTION = '운영 확인 결과 규칙에 어긋나지 않는 글로 보고 다시 올렸습니다.';
 /** 신고 3건 자동 감춤의 사유 — 신고 트리거(D031 fn_report_escalate)가 적는 글자 그대로입니다(v10.76 · 시험이 둘을 대조) */
 const AUTO_HIDE_REASON = '신고 3건 — 운영 확인 대기';
+/** 댓글을 되살릴 때 처리 전 신고를 닫는 문구(v10.80) — 신고한 사람에게 그대로 보입니다 */
+const COMMENT_UNHIDE_RESOLUTION = '운영 확인 결과 규칙에 어긋나지 않는 댓글로 보고 다시 보이게 했습니다.';
 /* v10.47 (D100) — 우리동네 맛집 글(board FOOD)은 「전체」 목록 · 메인에 섞지 않습니다(맛집 화면 /community/food 에서만).
  *   BOARDS 에도 넣지 않습니다 — 게시판 목록(board=)으로 고를 수 없습니다. 글 하나 보기(post) · 댓글 · 신고 · 검수는 그대로 씁니다. */
 
@@ -167,11 +169,14 @@ export class CommunityService {
   }
 
   /** 글에 달린 댓글 — 작성자 이름은 첫 글자만(G-146). 지운 댓글은 뺍니다.
-   *  v10.75 — 감춘 댓글은 본문을 내보내지 않습니다(자리만 · 화면은 「가려진 댓글」). 감춘 글과 같습니다 — 전에는 화면만 가리고 API 로는 본문이 나갔습니다. */
+   *  v10.75 — 감춘 댓글은 본문을 내보내지 않습니다(자리만 · 화면은 「가려진 댓글」). 감춘 글과 같습니다 — 전에는 화면만 가리고 API 로는 본문이 나갔습니다.
+   *  v10.80 — mine(내 댓글 — 신고 단추를 숨김) · hiddenBy(REPORT 신고 3건 자동 · ADMIN 운영자). 댓글 표에는 사유 칸이 없어 신고 수로 가립니다(D110). */
   private async commentsOf(id: string) {
     const comments = await this.db.query(
       `SELECT c.id, c.parent_id AS "parentId",
               CASE WHEN c.state = 'HIDDEN' THEN NULL ELSE c.body END AS body, c.created_at AS "createdAt",
+              (c.author_id = $2::uuid) AS mine,
+              CASE WHEN c.state <> 'HIDDEN' THEN NULL WHEN c.report_count >= 3 THEN 'REPORT' ELSE 'ADMIN' END AS "hiddenBy",
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
@@ -179,7 +184,7 @@ export class CommunityService {
          FROM post_comments c
          LEFT JOIN accounts a ON a.id = c.author_id
         WHERE c.post_id = $1 AND c.state <> 'DELETED'
-        ORDER BY coalesce(c.parent_id, c.id), c.created_at`, [id]);
+        ORDER BY coalesce(c.parent_id, c.id), c.created_at`, [id, this.me ?? null]);
     return comments.map(withAuthor);
   }
 
@@ -257,10 +262,20 @@ export class CommunityService {
     const reported = await this.db.query(
       `SELECT id, board, title, report_count AS "reportCount", hidden_at AS "hiddenAt"
          FROM v_post_reported ORDER BY report_count DESC`);
+    /* v10.80 — 신고된 댓글(신고 3건 이상 — 글과 같은 기준 · 3건이면 자동으로 가려짐 · D110) */
+    const reportedComments = await this.db.query(
+      `SELECT c.id, c.post_id AS "postId", p.title AS "postTitle", c.body, c.state,
+              c.report_count AS "reportCount", c.hidden_at AS "hiddenAt", coalesce(a.name,'(탈퇴)') AS author
+         FROM post_comments c
+         JOIN posts p ON p.id = c.post_id
+         LEFT JOIN accounts a ON a.id = c.author_id
+        WHERE c.report_count >= 3 AND c.state <> 'DELETED'
+        ORDER BY c.report_count DESC, c.created_at DESC
+        LIMIT 100`);
     const [late] = await this.db.query(
       `SELECT count(*)::int AS n FROM v_post_pending_long`);
     return {
-      pending, reported,
+      pending, reported, reportedComments,
       lateCount: late?.n ?? 0,
       note: (late?.n ?? 0) > 0
         ? '2일 넘게 밀린 글이 있습니다 — 새 회원이 "글이 안 올라간다" 고 합니다.'
@@ -385,7 +400,7 @@ export class CommunityService {
     if (!p) throw new NotFound('없는 글입니다.');
     const items = await this.db.query(
       `SELECT c.id, c.parent_id AS "parentId", c.body, c.state, c.created_at AS "createdAt",
-              c.hidden_at AS "hiddenAt", coalesce(a.name,'(탈퇴)') AS author
+              c.hidden_at AS "hiddenAt", c.report_count AS "reportCount", coalesce(a.name,'(탈퇴)') AS author
          FROM post_comments c
          LEFT JOIN accounts a ON a.id = c.author_id
         WHERE c.post_id = $1
@@ -418,13 +433,34 @@ export class CommunityService {
     if (typeof reason !== 'string' || !reason.trim()) {
       throw new PolicyViolation('REASON_REQUIRED', '되살리는 사유를 적으십시오. 감사 기록에 남습니다.');
     }
-    const [r] = await this.db.query(
-      `UPDATE post_comments SET state = 'PUBLISHED', hidden_at = NULL
-        WHERE id = $1 AND state = 'HIDDEN' RETURNING id, post_id AS "postId"`, [id]);
-    if (r) return { ok: true, postId: r.postId, reason: reason.trim(), note: '다시 보이게 했습니다.' };
     const [c] = await this.db.query<{ state: string }>(`SELECT state FROM post_comments WHERE id = $1`, [id]);
     if (!c) throw new NotFound('없는 댓글입니다.');
-    throw new StateConflict('NOT_HIDDEN', c.state === 'DELETED'
-      ? '작성자가 지운 댓글은 되살리지 않습니다.' : '감춘 댓글이 아닙니다.');
+    if (c.state !== 'HIDDEN') {
+      throw new StateConflict('NOT_HIDDEN', c.state === 'DELETED'
+        ? '작성자가 지운 댓글은 되살리지 않습니다.' : '감춘 댓글이 아닙니다.');
+    }
+    /* v10.80 — 글 되살리기(v10.72 · 결정 A)와 같게: 처리 전 신고(OPEN · QUEUED)는 기각으로 닫고 신고 수 0 · 신고한 사람에게 알림.
+     *   신고 수 트리거(D110)는 OPEN · QUEUED · UPHELD 만 세므로, 되살린 뒤에는 새 신고 3건이 쌓여야 다시 가려집니다. */
+    return this.db.transaction(async () => {
+      const [r] = await this.db.query(
+        `UPDATE post_comments SET state = 'PUBLISHED', hidden_at = NULL, report_count = 0
+          WHERE id = $1 AND state = 'HIDDEN' RETURNING id, post_id AS "postId"`, [id]);
+      if (!r) throw new StateConflict('NOT_HIDDEN', '감춘 댓글이 아닙니다.');
+      const closed = await this.db.query<{ reporter_id: string | null }>(
+        `UPDATE reports
+            SET state = 'DISMISSED', resolution = $2, handled_by = $3, handled_at = now()
+          WHERE target_type = 'COMMENT' AND target_id = $1 AND state IN ('OPEN','QUEUED')
+          RETURNING reporter_id`, [id, COMMENT_UNHIDE_RESOLUTION, this.me ?? null]);
+      const reporters = [...new Set(closed.map((x) => x.reporter_id).filter((x): x is string => !!x))];
+      if (reporters.length) {
+        await this.db.query(
+          `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+           SELECT x, 'REPORT_RESOLVED', '신고 처리 결과를 알려 드립니다', $2, '/my/reports'
+             FROM unnest($1::uuid[]) AS x
+           ON CONFLICT DO NOTHING`, [reporters, COMMENT_UNHIDE_RESOLUTION]);
+      }
+      return { ok: true, postId: r.postId, reason: reason.trim(), dismissed: closed.length,
+               note: closed.length ? `다시 보이게 했습니다. 처리 전 신고 ${closed.length}건은 기각으로 닫았습니다.` : '다시 보이게 했습니다.' };
+    });
   }
 }

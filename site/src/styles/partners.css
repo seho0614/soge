@@ -241,6 +241,7 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .cmu-cmt { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); }
 .cmu-cmt p { margin: var(--sp-1) 0 0; white-space: pre-wrap; }
 .cmu-cmt.re { margin-left: var(--sp-5); padding-left: var(--sp-3); border-left: 2px solid var(--line); }
+.cmu-cmt .cmu-rpt { font-size: var(--sgb-fs-micro, 12px); text-decoration: underline; }   /* v10.80 — 댓글 「신고」 */
 .cmu-cform { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-2) 0 var(--sp-3); }
 .cmu-editor { display: flex; flex-direction: column; gap: var(--sp-3); }
 .cmu-guess { background: var(--accent-w); border-radius: var(--r-sm); padding: var(--sp-3); margin-bottom: var(--sp-3); }

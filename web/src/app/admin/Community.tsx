@@ -16,14 +16,18 @@ interface Found {
 }
 interface AdminComment {
   id: string; parentId: string | null; body: string; state: string; createdAt: string; hiddenAt: string | null; author: string;
+  reportCount?: number;   // v10.80
 }
 interface FoundList { items: Found[]; total: number; page: number; size: number; pages: number }
-interface Queue { pending: Pending[]; reported: Reported[]; lateCount: number; note: string | null }
+interface ReportedComment {
+  id: string; postId: string; postTitle: string; body: string; state: string; reportCount: number; hiddenAt: string | null; author: string;
+}
+interface Queue { pending: Pending[]; reported: Reported[]; reportedComments?: ReportedComment[]; lateCount: number; note: string | null }
 
 /**
  * SB-ADM-CMU-010 소개광장 검수 큐
  *
- * 첫 글과 신고 3건 이상인 글을 봅니다.
+ * 첫 글과 신고 3건 이상인 글 · 댓글(v10.80)을 봅니다.
  * 신고가 쌓이면 자동으로 가려지고 여기로 옵니다 — **자동으로 지우지는 않습니다.**
  * 경쟁사 세 명이 신고하면 정상 글이 사라지기 때문입니다.
  *
@@ -51,9 +55,20 @@ export function Community() {
     }), () => { q.reload(); after(); });
   };
 
+  /* v10.80 — 신고된 댓글 감추기 · 되살리기(되살리면 처리 전 신고는 기각 · 신고 수 0 — 글과 같음) */
+  const commentAct = (c: ReportedComment, kind: 'hide' | 'unhide') => {
+    const head = c.body.length > 30 ? `${c.body.slice(0, 30)}…` : c.body;
+    const reason = prompt(`댓글 '${head}' 을(를) ${kind === 'hide' ? '감춥니다' : '다시 보이게 합니다'}.\n사유 — 감사 기록에 남습니다${kind === 'unhide' ? '. 처리 전 신고는 기각으로 닫히고 신고한 사람에게 알립니다' : ''}`) ?? '';
+    if (!reason.trim()) { a.setErr('사유를 반드시 적으십시오. 감사 기록에 남습니다.'); return; }
+    void a.run(c.id, () => api(`/admin/community/comments/${c.id}/${kind}`, {
+      method: 'POST', body: JSON.stringify({ reason: reason.trim() }),
+    }), q.reload);
+  };
+
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const { pending, reported, lateCount, note } = q.data;
+  const reportedComments = q.data.reportedComments ?? [];
 
   return (
     <section>
@@ -105,9 +120,29 @@ export function Community() {
           </tbody>
         </table>
       )}
+      <h3 className="sec">신고된 댓글 <em>{reportedComments.length}</em></h3>
+      {reportedComments.length === 0 && <p className="muted">신고가 쌓인 댓글이 없습니다.</p>}
+      {reportedComments.length > 0 && (
+        <table className="tbl" data-reported-comments="">
+          <thead><tr><th>댓글</th><th>글</th><th>작성자</th><th>신고</th><th>상태</th><th>처리</th></tr></thead>
+          <tbody>
+            {reportedComments.map((c) => (
+              <tr key={c.id}>
+                <td>{c.body}</td><td className="muted">{c.postTitle}</td><td>{c.author}</td>
+                <td className="num-cell"><b className="warn-text">{c.reportCount}</b></td>
+                <td className="muted">{COMMENT_STATE[c.state] ?? c.state}</td>
+                <td>
+                  {c.state === 'HIDDEN' && <button className="btn-sm" disabled={a.busy === c.id} onClick={() => commentAct(c, 'unhide')}>되살리기</button>}
+                  {c.state === 'PUBLISHED' && <button className="btn-no" disabled={a.busy === c.id} onClick={() => commentAct(c, 'hide')}>감추기</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <p className="card">
         <b>신고 3건이 쌓이면 자동으로 가려지고 여기로 옵니다.</b> 자동으로 지우지는 않습니다 —
-        경쟁사 세 명이 신고하면 정상 글이 사라지기 때문입니다. 정상 글이면 「되살리기」를 누르십시오.
+        경쟁사 세 명이 신고하면 정상 글이 사라지기 때문입니다. 정상 글 · 댓글이면 「되살리기」를 누르십시오.
       </p>
       <PostFinder busy={a.busy} onHide={hide} onUnhide={unhide} reloadQueue={q.reload} />
       <p className="card warn"><b>감추실 때는 사유를 반드시 적으십시오.</b> 안 적으면 작성자가 같은 글을 다시 씁니다.</p>
@@ -228,13 +263,14 @@ function CommentPanel({ postId, onChanged }: { postId: string; onChanged: () => 
       <Flash msg={a.msg} err={a.err} />
       {c.data.items.length === 0 ? <p className="muted">댓글이 없습니다.</p> : (
         <table className="tbl">
-          <thead><tr><th>댓글</th><th>작성자</th><th>쓴 날</th><th>상태</th><th>처리</th></tr></thead>
+          <thead><tr><th>댓글</th><th>작성자</th><th>쓴 날</th><th>신고</th><th>상태</th><th>처리</th></tr></thead>
           <tbody>
             {c.data.items.map((x) => (
               <tr key={x.id}>
                 <td>{x.parentId && <span className="muted">↳ </span>}{x.body}</td>
                 <td>{x.author}</td>
                 <td className="muted">{ymdKst(x.createdAt)}</td>
+                <td className="num-cell">{(x.reportCount ?? 0) > 0 ? <b className="warn-text">{x.reportCount}</b> : 0}</td>
                 <td>{COMMENT_STATE[x.state] ?? x.state}</td>
                 <td>
                   {x.state === 'PUBLISHED' && <button className="btn-no" disabled={a.busy === x.id} onClick={() => act(x, 'hide')}>감추기</button>}

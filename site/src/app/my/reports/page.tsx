@@ -17,6 +17,7 @@ const ST: Record<string, [string, string]> = {
 };
 const TT: Record<string, string> = {
   LISTING: '등록글', REQUEST: '요청글', SERVICE: '서비스', PROFILE: '프로필',
+  POST: '소개광장 글', COMMENT: '소개광장 댓글',   // v10.80 — 전에는 글도 영어 코드로 보였음
 };
 
 /**

@@ -108,7 +108,7 @@ export class CommunityController {
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({
     summary: '검수 큐',
-    description: '첫 글과 신고 3건 이상인 글입니다. **2일 넘게 밀리면 위에 뜹니다.**',
+    description: '첫 글과 신고 3건 이상인 글 · 신고 3건 이상인 댓글(v10.80 · reportedComments)입니다. **2일 넘게 밀리면 위에 뜹니다.**',
   })
   queue() { return this.svc.queue(); }
 
@@ -197,6 +197,7 @@ export class CommunityController {
     summary: '감춘 댓글 되살리기',
     description:
       '감춘 댓글만 다시 보이게 합니다(v10.75). **사유를 반드시 적으십시오**(감사 기록 `COMMENT_UNHIDE`). ' +
+      '그 댓글의 처리 전 신고는 기각으로 닫고 신고 수를 0 으로 둡니다(v10.80 · 글 되살리기와 같음 — 새 신고 3건이 쌓여야 다시 가려짐). ' +
       '감춘 댓글이 아니면 409 `NOT_HIDDEN`.',
   })
   @Audit('COMMENT_UNHIDE', 'COMMENT')

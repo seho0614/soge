@@ -15,7 +15,9 @@ export interface PostRow {
 }
 
 export interface PostComment {
-  id: string; parentId: string | null; body: string; createdAt: string; author: string; hidden: boolean;
+  id: string; parentId: string | null; body: string | null; createdAt: string; author: string; hidden: boolean;
+  /** v10.80 — 내 댓글(신고 단추 숨김) · 가린 까닭(REPORT 신고 3건 · ADMIN 운영자) */
+  mine?: boolean; hiddenBy?: 'REPORT' | 'ADMIN' | null;
 }
 
 /** GET /community/posts/{id} — 없으면 ok:false, 가려진/검수 중인 남의 글은 hidden/pending 만, 지운 글은 deleted 와 댓글만 옵니다(v10.26 · G-173) */

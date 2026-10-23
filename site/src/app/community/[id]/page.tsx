@@ -73,7 +73,9 @@ export default async function CommunityPostPage({ params, searchParams }: {
   const Cmt = ({ c, re }: { c: PostComment; re?: boolean }) => (
     <div className={'cmu-cmt' + (re ? ' re' : '')}>
       <b>{c.author}</b> <span className="dim">{dot(c.createdAt)}</span>
-      <p>{c.hidden ? <span className="dim">운영 기준에 따라 가려진 댓글입니다.</span> : c.body}</p>
+      <p>{c.hidden ? <span className="dim">{c.hiddenBy === 'REPORT' ? '신고가 들어와 가려진 댓글입니다.' : '운영 기준에 따라 가려진 댓글입니다.'}</span> : c.body}</p>
+      {/* v10.80 — 남의 공개 댓글은 신고(본인인증 회원 · 서로 다른 3명이면 가려짐 · D110) */}
+      {loggedIn && !c.mine && !c.hidden && <a className="dim cmu-rpt" href={`/report/comment/${c.id}`} data-comment-report="">신고</a>}
     </div>
   );
 

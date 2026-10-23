@@ -11,6 +11,7 @@ interface Row {
 
 const TT: Record<string, string> = {
   LISTING: '등록글', REQUEST: '요청글', SERVICE: '서비스', PROFILE: '프로필',
+  POST: '소개광장 글', COMMENT: '소개광장 댓글',   // v10.80 — 전에는 글도 영어 코드로 보였음
 };
 
 /** 며칠 방치됐는지. 신고해 놓고 답이 없으면 신고 자체를 안 하게 됩니다. */

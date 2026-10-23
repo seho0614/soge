@@ -13,9 +13,10 @@ type Props = { params: Promise<{ targetType: string; targetId: string }> };
 const TYPE: Record<string, string> = {
   listing: 'LISTING', request: 'REQUEST', service: 'SERVICE', profile: 'PROFILE',
   post: 'POST',      // v10.27 (G-191) — 소개광장 글
+  comment: 'COMMENT', // v10.80 (D110) — 소개광장 댓글
 };
 const LABEL: Record<string, string> = {
-  LISTING: '등록글', REQUEST: '요청글', SERVICE: '서비스', PROFILE: '프로필', POST: '소개광장 글',
+  LISTING: '등록글', REQUEST: '요청글', SERVICE: '서비스', PROFILE: '프로필', POST: '소개광장 글', COMMENT: '소개광장 댓글',
 };
 
 /**
@@ -79,9 +80,9 @@ export default async function ReportPage({ params }: Props) {
         </div>
       )}
 
-      {t === 'POST' ? (
+      {t === 'POST' || t === 'COMMENT' ? (
         <div className="note info">
-          <b>서로 다른 회원 3명이 신고하면 글이 가려집니다.</b>
+          <b>서로 다른 회원 3명이 신고하면 {t === 'COMMENT' ? '댓글이' : '글이'} 가려집니다.</b>
           지우지는 않고, 운영이 확인해 다시 보이게 하거나 정리합니다(v10.27 · G-191).
         </div>
       ) : (
@@ -94,7 +95,8 @@ export default async function ReportPage({ params }: Props) {
 
       <div className="note info">
         <b>자기 글은 신고할 수 없습니다.</b>
-        {t === 'POST'
+        {t === 'COMMENT' ? null /* v10.80 — 댓글은 쓴 사람이 지우는 단추가 없음 */
+          : t === 'POST'
           ? ' 내리고 싶으시면 글 상세의 「삭제」를 쓰십시오.'
           : <> 내리고 싶으시면 <a href="/my/listings">내 등록</a>에서 「내리기」로 비공개로 바꾸십시오.</>}
       </div>
