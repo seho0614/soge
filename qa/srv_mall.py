@@ -134,7 +134,7 @@ def main():
     sc = json.load(open(os.path.join(KIT, 'spec/screens.json'), encoding='utf-8')); scr = sc if isinstance(sc, list) else sc.get('screens', [])
     used = [s['id'] for s in scr if 'GET /health/categories' in (s.get('apis') or [])]
     rec('E-1 새 API(GET /health/categories)가 화면 등록부에 연결됨', bool(used), used)
-    svc = open(os.path.join(KIT, 'src/modules/health/health-shop.service.ts'), encoding='utf-8').read()
+    svc = open(os.path.join(KIT, 'src/modules/health/health-catalog.service.ts'), encoding='utf-8').read()   # v10.86 — health-shop.service 에서 나눔
     i = svc.find('categories()'); seg = svc[i:i + 1400] if i > 0 else ''
     rec('E-2 새 조회의 SQL 이 고정 문자열(끼워 넣기 없음)', i > 0 and '${' not in seg.split('\n  }')[0], seg[:120])
 

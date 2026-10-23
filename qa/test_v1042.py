@@ -60,7 +60,8 @@ ok('시험 뒤 개발 DB 값 그대로(되돌림)', after == before, '')
 # ④ 화면 · 폴더 · 이름
 ui = open(K + '/site/src/components/my/ui.tsx', encoding='utf-8').read()
 ok('나의공간 꼬리표 — HLT 는 「소개몰」', "HLT: '소개몰'" in ui and '소개뱅크몰' not in ui, '')
-gw = open(K + '/web/src/app/admin/Gwans.tsx', encoding='utf-8').read()
+gw = ''.join(open(K + '/web/src/app/admin/' + x, encoding='utf-8').read() for x in ('Gwans.tsx', 'gwans/GwanList.tsx', 'gwans/GwanSettings.tsx')
+             if os.path.exists(K + '/web/src/app/admin/' + x))   # v10.86 — 하위 화면을 gwans/ 로 나눔
 ok('운영 화면 관 관리 — 서브도메인 xxx.sogaebank.com', gw.count('.sogaebank.com') == 2, '')
 ok('리드관 보류 폴더 없음', not os.path.exists(K + '/prisma/migrations-deferred'), '')
 names = [json.load(open(K + f, encoding='utf-8'))['name'] for f in ('/package.json', '/site/package.json', '/web/package.json')]

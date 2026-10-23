@@ -74,12 +74,16 @@ for f, names in PLAN.items():
     ok(f'옮긴 함수 {len(names)}개가 새 파일에 한 번씩 — {os.path.basename(f)}', not bad, ' · '.join(bad))
     left = [n for n in names if n in old]
     ok(f'옛 파일에 남지 않음 — {os.path.basename(OLD[f])}', not left, ' · '.join(left))
+# v10.86 — recurring.service · partner.service 를 한 번 더 나눔(test_v1086). 남을 함수는 그 갈래 파일들 어디엔가 있으면 됨
+SPLIT86 = {B + 'recurring.service.ts': [B + 'recurring-batch.service.ts', B + 'recurring-admin.service.ts'],
+           P + 'partner.service.ts': [P + 'partner-lead.service.ts', P + 'partner-money.service.ts']}
 for f, names in STAY.items():
-    miss = [n for n in names if n not in methods(rd(f))]
+    allm = set(methods(rd(f))).union(*[set(methods(rd(x))) for x in SPLIT86[f]])
+    miss = [n for n in names if n not in allm]
     ok(f'남을 함수는 그대로 — {os.path.basename(f)}', not miss, ' · '.join(miss))
 ok('BatchResult 는 recurring.service 에 · 환불 쪽은 형식만 가져옴',
-   'export interface BatchResult' in rd(B + 'recurring.service.ts')
-   and "import type { BatchResult } from './recurring.service';" in rd(B + 'recurring-refund.service.ts'), '')
+   'export interface BatchResult' in (rd(B + 'recurring.service.ts') + rd(B + 'recurring-batch.service.ts'))   # v10.86 — 배치 쪽으로
+   and re.search(r"import type \{ BatchResult \} from './recurring(-batch)?\.service';", rd(B + 'recurring-refund.service.ts')) is not None, '')
 
 # ②
 SVC = [B + 'recurring.service.ts', B + 'recurring-refund.service.ts', B + 'payout-account.service.ts',

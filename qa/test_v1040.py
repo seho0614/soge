@@ -37,7 +37,8 @@ for o in OLD:
     g = subprocess.run(['grep', '-rlF', o, K + '/site/src', K + '/spec/proto.html'], capture_output=True, text=True).stdout.split()
     ok(f'옛 글 없음 — 「{o[:28]}」', not g, ' '.join(os.path.basename(x) for x in g))
 
-SRC = {'site/src/components/auth/SignupWizard.tsx': '승인 전에도 본인인증으로', 'site/src/components/chat/AskChat.tsx': '본인인증을 마친 회원이 거래를 열 수 있습니다',
+SRC = {'site/src/components/auth/signup/StepTerms.tsx': '승인 전에도 본인인증으로',   # v10.86 — SignupWizard 에서 4단계 화면을 나눔
+       'site/src/components/chat/AskChat.tsx': '본인인증을 마친 회원이 거래를 열 수 있습니다',
        'site/src/components/ChatPanel.tsx': '본인인증을 마친 회원이 거래를 열 수 있습니다', 'site/src/components/ai/MatchView.tsx': '성사되면 소개비는 개인으로 받습니다',
        'site/src/components/billing/PlanPicker.tsx': '회원 본인 계정</b>(개인 · 사업자 대표)', 'spec/proto.html': '입점 승인을 받은 파트너(사업자 · 본인인증 개인)에게 연결합니다'}
 for f, t in SRC.items():

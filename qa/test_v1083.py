@@ -33,7 +33,7 @@ ok('① 마이그레이션 149 · 마지막 D111(v10.84 부터 D112 · 150 — t
 H = rd('src/core/search-expand.ts')
 ok('② 공용 도우미 — 한 번 부름 · | 를 띄어쓰기로', 'SELECT fn_search_expand($1) AS k' in H and ".replace(/\\|/g, ' ')" in H, '')
 uses = {f: rd(f) for f in ('src/modules/listing/listing.service.ts', 'src/engines/exposure/exposure.engine.ts', 'src/modules/public/public.service.ts',
-                          'src/modules/community/community.service.ts', 'src/modules/health/health-shop.service.ts')}
+                          'src/modules/community/community.service.ts', 'src/modules/health/health-catalog.service.ts')}   # v10.86 — 소개몰 검색은 health-catalog 로 옮김
 ok('② 넓히기를 쓰는 검색 5곳(관 목록 · 노출 엔진 · 통합 검색 · 소개광장 · 소개몰)', all('expandKeyword(this.db' in v for v in uses.values()), [k for k, v in uses.items() if 'expandKeyword(this.db' not in v])
 P = uses['src/modules/public/public.service.ts']
 ok('② 통합 검색 API — 매물 · 요청 모두 낱말별(fn_search_match · 제목 + 업종)', 'fn_search_match(l.title, c.name, $1)' in P and 'fn_search_match(r.title, c.name, $1)' in P

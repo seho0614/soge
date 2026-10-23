@@ -35,7 +35,7 @@ for f in glob.glob(os.path.join(K, 'site/src/**/*.tsx'), recursive=True):
         if m.group(1).lower() not in ('#fff', '#ffffff'): bad.append((os.path.relpath(f, K), m.group(1)))
 ok('.tsx style 안 글자색 — 숫자 색 0(흰색 빼고)', not bad, str(bad[:4]))
 ok('오류 · 주의 글자 — 상태 색 글자', "color: 'var(--sgb-rd-text)'" in rd('site/src/components/my/IntroAnswer.tsx') and "color: 'var(--sgb-rd-text)'" in rd('site/src/app/my/account/page.tsx')
-   and rd('site/src/components/auth/SignupWizard.tsx').count("color: 'var(--sgb-or-text)'") == 2, '')
+   and (rd('site/src/components/auth/SignupWizard.tsx') + rd('site/src/components/auth/signup/StepPerson.tsx')).count("color: 'var(--sgb-or-text)'") == 2, '')
 T = rd('site/src/styles/sgb-tokens.css')
 val = lambda n: re.search(r'--sgb-' + n + r':\s*(#[0-9a-fA-F]{6})', T).group(1)
 P = rd('site/src/app/partners/page.tsx')

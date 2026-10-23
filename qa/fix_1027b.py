@@ -283,7 +283,8 @@ def g127():
     rec('G-127-2 제휴 링크 클릭 집계 날짜 = 한국 날짜(current_date 안 씀)',
         q("select prosrc ilike '%Asia/Seoul%' and prosrc not ilike '%current_date%' from pg_proc where proname='fn_plink_click'") == 't', '')
     src = {f: open(os.path.join(KIT, f)).read() for f in ('src/modules/affiliate/affiliate.service.ts', 'src/modules/partner/partner.service.ts', 'src/modules/site/report.service.ts', 'src/modules/ads/ad-billing.service.ts',
-                                                       'src/modules/partner/partner-admin.service.ts')   # v10.45 — partner.service 에서 나눈 운영용
+                                                       'src/modules/partner/partner-admin.service.ts',   # v10.45 — partner.service 에서 나눈 운영용
+                                                       'src/modules/partner/partner-lead.service.ts', 'src/modules/partner/partner-money.service.ts')   # v10.86 — 리드 · 이용료
            if os.path.exists(os.path.join(KIT, f))}
     bad = [f for f, t in src.items() if re.search(r"date_trunc\('month', now\(\)\)|to_char\(now\(\),'YYYY-MM'\)|to_char\(incurred_at,'YYYY-MM'\)", t)]
     rec('G-127-3 월 경계(제휴 이번 달 · 목표 기간 · 이용료 월별 · 경영 지표 · 광고 청구)가 한국 시각 기준', not bad, bad)
@@ -293,7 +294,9 @@ if 'g127' in PARTS: safe('G-127', g127)
 def g127b():
     # 10/9 흐름 점검에서 찾음 — 한국 날짜로 쌓는 값(클릭 집계 · 광고 기간 · 서류 발급일 · 자격 만료일)을 DB 의 current_date(UTC)와 견주던 곳
     src = {f: open(os.path.join(KIT, f)).read() for f in ('src/modules/affiliate/affiliate.service.ts', 'src/modules/ads/ads.service.ts',
-                                                       'src/modules/realty/realty.service.ts', 'src/modules/health/health-shop.service.ts')}
+                                                       'src/modules/realty/realty.service.ts')
+           + tuple(f'src/modules/health/health-{x}.service.ts' for x in ('catalog', 'checkout', 'payment', 'return', 'settle'))   # v10.86 — health-shop.service 를 나눔
+           if os.path.exists(os.path.join(KIT, f))}
     bad = [f for f, t in src.items() if re.search(r'current_date', t)]
     rec('G-127-4 한국 날짜 값과 견주는 곳(제휴 「오늘 클릭」 · 광고 게재 기간 · 등기 서류 경과일 · 판매자 자격 만료)이 current_date(UTC) 대신 한국 날짜', not bad, bad)
 
