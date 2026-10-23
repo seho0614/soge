@@ -1,8 +1,9 @@
 """기능 검증 — 핵심 업무 흐름을 API 로 처음부터 끝까지 돌립니다."""
 import urllib.parse
-import json, time, urllib.request, subprocess, uuid, sys
-B='http://localhost:3000/api/v1'
-DB='postgresql://sgb:sgb@localhost:5432/sgb'
+import json, time, urllib.request, subprocess, uuid, sys, os
+# v10.73 — 주소 · DB 는 환경 변수로(없으면 집 PC 기본값) · 점검판 값은 qa/func_check.sh 가 줌
+B=os.environ.get('API','http://localhost:3000/api/v1')
+DB=os.environ.get('DB','postgresql://sgb:sgb@localhost:5432/sgb')
 q=lambda s: subprocess.run(['psql',DB,'-tAc',s],capture_output=True,text=True).stdout.strip()
 R=[]
 def call(m,p,tok=None,body=None,expect=None,name=None,headers=None):
@@ -86,5 +87,5 @@ call('PATCH','/admin/policies/auto-review/manual_fee_threshold',ADM,{'enabled':T
 call('GET','/admin/gwans/manage',ADM,name='7-4 관 관리 목록')
 call('POST','/admin/segments/learn',ADM,{},name='7-5 성향 학습 실행')
 call('GET','/admin/summary',ADM,name='7-6 운영 대시보드')
-json.dump(R,open('/home/claude/qa/e2e.json','w'),ensure_ascii=False,indent=1)
+json.dump(R,open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'e2e.json'),'w'),ensure_ascii=False,indent=1)
 print('\n통과',sum(r['ok'] for r in R),'/',len(R))

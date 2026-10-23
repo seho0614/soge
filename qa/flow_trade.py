@@ -740,7 +740,8 @@ def t6(b):
     def s2():
         pg = box['pg']; goto(pg, f'/money/{lid}'); pg.wait_for_timeout(500); a, n0 = bar0(pg), likes(pg); S['like0'] = q(f"select like_count from listings where id='{lid}'")
         pg.locator(BAR).nth(0).click()
-        ok = until(lambda: '관심 담김' in bar0(pg), 20); pg.wait_for_timeout(800)
+        ok = until(lambda: '관심 담김' in bar0(pg), 20)
+        until(lambda: int(likes(pg)) == int(n0) + 1, 5)   # v10.73 — 단추 글자가 먼저 바뀌고 관심 수는 조금 뒤에 늘어남(2026-10-22 기능 점검 첫 실행 실패)
         return bool(ok) and '관심 담기' in a and int(likes(pg)) == int(n0) + 1, f'「{a}」 누름 → 「{bar0(pg)}」 · 화면의 관심 수 {n0} → {likes(pg)} · 안내 「{one(txt(pg, ".gw-barmsg"))}」'
     R.do('매물 상세 맨 아래 줄의 「♡ 관심 담기」를 누름 → 「♥ 관심 담김」으로 바뀌고 관심 수가 1 늘어남', '화면', s2)
 

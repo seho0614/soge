@@ -2,8 +2,10 @@
 import json, re, subprocess, sys, time
 from urllib.parse import urljoin, urlparse
 from playwright.sync_api import sync_playwright
-BASE='http://localhost:5174'
-DB='postgresql://sgb:sgb@localhost:5432/sgb'
+import os
+# v10.73 — 주소 · DB 는 환경 변수로(없으면 집 PC 기본값) · 점검판 값은 qa/func_check.sh 가 줌
+BASE=os.environ.get('SITE','http://localhost:5174')
+DB=os.environ.get('DB','postgresql://sgb:sgb@localhost:5432/sgb')
 def q(sql):
     return subprocess.run(['psql',DB,'-tAc',sql],capture_output=True,text=True).stdout.strip().split('\n')[0]
 P={
@@ -30,14 +32,25 @@ def fill(r):
        '/my/health/orders/{no}':f"/my/health/orders/{P['horder']}", '/my/health/orders/{no}/ship':f"/my/health/orders/{P['horder']}/ship",'/i/{token}':'/i/invalid-token-check','/report/{targetType}/{targetId}':f"/report/LISTING/{P['listing']}"}
     return m.get(r,r)
 ROLES={'guest':None,'person':'person@x.com','buyer':'buyer@x.com','intro':'intro@x.com','admin':'admin@x.com'}
+if os.environ.get('CRAWL_ROLES'): ROLES={k:v for k,v in ROLES.items() if k in os.environ['CRAWL_ROLES'].split(',')}   # v10.73 — 역할 나눠 돌리기(CRAWL_ROLES=intro,admin)
 out={'params':P,'pages':[], 'links':{}}
 BAD_TXT=['Application error','This page could not be found','Internal Server Error','Unhandled Runtime Error','처리 중 오류가 발생했습니다']
+def go(pg, url, **kw):   # v10.73 — 점검판 사용자 웹(next dev)이 메모리 한도로 스스로 다시 켜지는 동안은 기다렸다 다시(최대 2분)
+    last = None
+    for i in range(12):
+        try: return pg.goto(url, **kw), i
+        except Exception as ex:
+            last = ex
+            if 'ERR_EMPTY_RESPONSE' in str(ex) or 'ERR_SOCKET_NOT_CONNECTED' in str(ex) or 'ERR_CONNECTION' in str(ex): time.sleep(10); continue
+            raise
+    raise last
+RESTARTS = []
 with sync_playwright() as pw:
     br=pw.chromium.launch()
     for role,email in ROLES.items():
         ctx=br.new_context(); pg=ctx.new_page()
         if email:
-            pg.goto(BASE+'/login'); __import__('consent_ok').agree(email, 'sgb-dev-1234'); pg.fill('input[name=email]',email); pg.fill('input[name=password]','sgb-dev-1234')
+            go(pg, BASE+'/login'); __import__('consent_ok').agree(email, 'sgb-dev-1234'); pg.fill('input[name=email]',email); pg.fill('input[name=password]','sgb-dev-1234')
             pg.click('form.auth button'); pg.wait_for_timeout(2500)
             ok=any(c['name'] for c in ctx.cookies() if 'at' in c['name'].lower() or 'token' in c['name'].lower())
             print(role,'login cookies',[c['name'] for c in ctx.cookies()],file=sys.stderr)
@@ -52,16 +65,25 @@ with sync_playwright() as pw:
             oncon=lambda m,cons=cons: cons.append(m.text[:160]) if m.type=='error' else None; pg.on('console',oncon)
             t0=time.time()
             try:
-                resp=pg.goto(BASE+url,wait_until='networkidle',timeout=30000); st=resp.status if resp else 0
+                resp,tries=go(pg,BASE+url,wait_until='networkidle',timeout=30000); st=resp.status if resp else 0
+                if tries: RESTARTS.append((role,url,tries))
             except Exception as ex:
                 st=-1; errs.append('goto:'+str(ex)[:120])
             dt=round(time.time()-t0,2)
             final=urlparse(pg.url).path
-            body=pg.evaluate("document.body?document.body.innerText:''")
-            h1=pg.evaluate("(()=>{const h=document.querySelector('h1');return h?h.innerText.slice(0,50):''})()")
-            links=pg.evaluate("""[...document.querySelectorAll('a[href]')].map(a=>a.getAttribute('href')).filter(h=>h&&h.startsWith('/')&&!h.startsWith('//'))""")
-            buttons=pg.evaluate("[...document.querySelectorAll('button,input[type=submit]')].filter(b=>b.offsetParent!==null).length")
-            forms=pg.evaluate("document.querySelectorAll('form').length")
+            def ev(js, d, pg=pg):   # v10.73 — 화면이 스스로 다른 주소로 넘어가는 중이면 자리 잡을 때까지 기다렸다 다시
+                for _ in range(3):
+                    try: return pg.evaluate(js)
+                    except Exception:
+                        try: pg.wait_for_load_state('networkidle', timeout=15000)
+                        except Exception: pg.wait_for_timeout(1500)
+                return d
+            final=urlparse(pg.url).path
+            body=ev("document.body?document.body.innerText:''", '')
+            h1=ev("(()=>{const h=document.querySelector('h1');return h?h.innerText.slice(0,50):''})()", '')
+            links=ev("""[...document.querySelectorAll('a[href]')].map(a=>a.getAttribute('href')).filter(h=>h&&h.startsWith('/')&&!h.startsWith('//'))""", [])
+            buttons=ev("[...document.querySelectorAll('button,input[type=submit]')].filter(b=>b.offsetParent!==null).length", 0)
+            forms=ev("document.querySelectorAll('form').length", 0)
             bad=[t for t in BAD_TXT if t in body]
             pg.remove_listener('response',onresp)
             rec={'role':role,'route':r,'url':url,'status':st,'final':final,'h1':h1,'len':len(body),'ms':dt,
@@ -81,4 +103,5 @@ with sync_playwright() as pw:
         out['links'][role]=res
         ctx.close()
     br.close()
+out['restart_waits']=RESTARTS
 json.dump(out,open('site_crawl.json','w'),ensure_ascii=False,indent=1)
