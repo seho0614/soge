@@ -4,6 +4,8 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty,
 import { IsArray, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { PartnerService } from './partner.service';
+import { PartnerLeadService } from './partner-lead.service';
+import { PartnerMoneyService } from './partner-money.service';
 import { PartnerAdminService } from './partner-admin.service';
 import { QualificationService } from './qualification.service';
 import { BrokerService } from './broker.service';
@@ -134,7 +136,11 @@ export class PartnerOkDto {
  *   같은 컨트롤러에 있어 특정 역할을 요구하면 신청을 못 합니다. */
 @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN', 'SUPER')
 export class PartnerController {
-  constructor(private readonly svc: PartnerService) {}
+  constructor(
+    private readonly svc: PartnerService,
+    private readonly lead: PartnerLeadService,      // v10.86 — 리드
+    private readonly money: PartnerMoneyService,    // v10.86 — 이용료 · 정산
+  ) {}
 
   @Post('apply')
   @ApiOperation({
@@ -200,7 +206,7 @@ export class PartnerController {
       '연락처를 여는 순간 이용료가 발생합니다.',
   })
   @ApiOkResponse({ type: PartnerOkDto, isArray: true })
-  leads() { return this.svc.leads(); }
+  leads() { return this.lead.leads(); }
 
   @Post('leads/:id/view')
   @ApiOperation({
@@ -212,7 +218,7 @@ export class PartnerController {
   @ApiParam({ name: 'id', description: 'deliveryId' })
   @ApiResponse({ status: 422, description: 'NOT_ELIGIBLE', type: ErrorDto })
   @Audit('LEAD_VIEW', 'LEAD')
-  view(@Param('id') id: string) { return this.svc.viewLead(id); }
+  view(@Param('id') id: string) { return this.lead.viewLead(id); }
 
   @Get('leads/:id/contact')
   @ApiOperation({
@@ -226,7 +232,7 @@ export class PartnerController {
   @ApiOkResponse({ type: PartnerOkDto })
   @ApiResponse({ status: 409, description: 'NOT_PARTNER · NO_SUCH_LEAD', type: ErrorDto })
   @ApiResponse({ status: 422, description: 'NOT_VIEWED — 열람 전', type: ErrorDto })
-  leadContact(@Param('id') id: string) { return this.svc.leadContact(id); }
+  leadContact(@Param('id') id: string) { return this.lead.leadContact(id); }
 
   @Get('fees')
   @ApiOperation({
@@ -236,7 +242,7 @@ export class PartnerController {
       '전환 전 후불 미청구분은 settleMode=POSTPAID 로 그대로 청구됩니다.',
   })
   @ApiOkResponse({ type: PartnerOkDto })
-  fees() { return this.svc.fees(); }
+  fees() { return this.money.fees(); }
 
   @Get('fees/disputes')
   @ApiOperation({
@@ -244,7 +250,7 @@ export class PartnerController {
     description: '신청한 반려의 판정 결과입니다. 기각이면 사유가 함께 보입니다.',
   })
   @ApiOkResponse({ type: PartnerOkDto, isArray: true })
-  myDisputes() { return this.svc.myDisputes(); }
+  myDisputes() { return this.money.myDisputes(); }
 
   @Post('fees/:id/dispute')
   @ApiOperation({
@@ -258,7 +264,7 @@ export class PartnerController {
   @ApiResponse({ status: 409, description: 'ALREADY_REQUESTED', type: ErrorDto })
   @ApiResponse({ status: 422, description: 'LEADFEE — 72시간 · 한도 · 무효 건', type: ErrorDto })
   @Audit('LEAD_FEE_DISPUTE', 'LEAD')
-  dispute(@Param('id') id: string, @Body() dto: FeeDisputeDto) { return this.svc.disputeFee(id, dto); }
+  dispute(@Param('id') id: string, @Body() dto: FeeDisputeDto) { return this.money.disputeFee(id, dto); }
 
   /* ── 파트너센터 조회 API ──────────────────────────────────────────
    *
@@ -284,7 +290,7 @@ export class PartnerController {
       '옛 필드(unpaid · billed · voided · months — 리드 이용료 합계)도 그대로 옵니다. **소개비는 여기 없습니다**(INV-9R).',
   })
   @ApiOkResponse({ type: PartnerOkDto })
-  mySettlement() { return this.svc.mySettlement(); }
+  mySettlement() { return this.money.mySettlement(); }
 
   @Get('stats')
   @ApiOperation({
@@ -314,7 +320,7 @@ export class PartnerController {
       '있습니다** — 3주 실측 후 재산정합니다.',
   })
   @ApiOkResponse({ type: PartnerOkDto, isArray: true })
-  myPricing() { return this.svc.myPricing(); }
+  myPricing() { return this.money.myPricing(); }
 
   @Get('pricing/rewards')
   @ApiOperation({
@@ -322,7 +328,7 @@ export class PartnerController {
     description: '서비스마다 최고 확인비용(S) · 성사 소개비율 · 재소개 보너스와 등급 비율. 소개비는 당사자끼리 직접(INV-9) — 약정 표시용.',
   })
   @ApiOkResponse({ type: PartnerOkDto })
-  myRewards() { return this.svc.myRewards(); }
+  myRewards() { return this.money.myRewards(); }
 
   @Get('notices')
   @ApiOperation({

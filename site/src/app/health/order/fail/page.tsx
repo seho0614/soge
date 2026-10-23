@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 /* 토스 결제창 실패 주소는 code · message · orderId 를 붙여 줍니다(D006) — msg 가 없으면 message 를 씁니다 */
 type Props = { searchParams: Promise<{ step?: string; no?: string; code?: string; msg?: string; message?: string; orderId?: string }> };
 
-/* 오류코드별 다음 행동 — 서버 오류코드(HealthShopService)를 그대로 받습니다 */
+/* 오류코드별 다음 행동 — 서버 오류코드(HealthPaymentService)를 그대로 받습니다 */
 const HINT: Record<string, string> = {
   NOT_ON_SALE: '판매가 끝난 상품이 있습니다. 장바구니에서 빼고 다시 주문해 주십시오.',
   EMPTY: '담으신 상품이 없습니다. 장바구니를 확인해 주십시오.',

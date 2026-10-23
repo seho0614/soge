@@ -3,6 +3,8 @@ import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { RecurringBillingService } from './recurring.service';
+import { RecurringBatchService } from './recurring-batch.service';
+import { RecurringAdminService } from './recurring-admin.service';
 import { RecurringRefundService } from './recurring-refund.service';
 import { PayoutAccountService } from './payout-account.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -280,7 +282,10 @@ export class RecurringController {
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class BillingAdminController {
-  constructor(private readonly svc: RecurringBillingService) {}
+  constructor(
+    private readonly admin: RecurringAdminService,     // v10.86 — 조회 · 정책
+    private readonly batch: RecurringBatchService,     // v10.86 — 지금 청구 · 지금 맞추기
+  ) {}
 
   @Get('overdue')
   @ApiOperation({
@@ -289,7 +294,7 @@ export class BillingAdminController {
       '즉시 끊지 않고 유예 기간(7일)을 둡니다. ' +
       '카드 한도 초과 한 번으로 서비스가 끊기면 이용자가 잃는 것이 더 큽니다.',
   })
-  overdue() { return this.svc.overdue(); }
+  overdue() { return this.admin.overdue(); }
 
   @Get('policy')
   @ApiOperation({
@@ -299,7 +304,7 @@ export class BillingAdminController {
       '저장된 값(`stored`)과 실제 동작에 쓰이는 값(`effective`)을 나란히 냅니다. ' +
       '둘이 다르면 설정이 먹지 않은 것입니다.',
   })
-  policy() { return this.svc.policy(); }
+  policy() { return this.admin.policy(); }
 
   @Patch('policy/:key')
   @ApiOperation({
@@ -312,7 +317,7 @@ export class BillingAdminController {
   @ApiResponse({ status: 422, description: 'SETTING — 형식 위반', type: ErrorDto })
   @Audit('BILLING_POLICY_UPDATE', 'SETTING')
   updatePolicy(@Param('key') key: string, @Body() dto: PolicyValueDto) {
-    return this.svc.updatePolicy(key, dto.value);
+    return this.admin.updatePolicy(key, dto.value);
   }
 
   @Get('notice-missing')
@@ -322,7 +327,7 @@ export class BillingAdminController {
       '청구가 실패했는데 안내가 나가지 않은 구독입니다. ' +
       '**비어 있어야 정상입니다** — 비어 있지 않으면 이용자가 모른 채 만료로 갑니다.',
   })
-  noticeMissing() { return this.svc.noticeMissing(); }
+  noticeMissing() { return this.admin.noticeMissing(); }
 
   @Get('attempts-today')
   @ApiOperation({
@@ -332,7 +337,7 @@ export class BillingAdminController {
       '카드 만료처럼 재시도해도 결과가 같은 실패는 하루 1회로 줄어듭니다 — ' +
       '같은 카드에 승인 요청을 반복하면 카드사 이상거래 탐지에 걸립니다.',
   })
-  attempts() { return this.svc.attemptsToday(); }
+  attempts() { return this.admin.attemptsToday(); }
 
   @Post('charge-due')
   @ApiOperation({
@@ -344,12 +349,12 @@ export class BillingAdminController {
       '결제사 답을 받지 못한 청구는 실패로 적지 않고 `pending` 으로 남깁니다.',
   })
   @Audit('BILLING_CHARGE_RUN', 'BILLING')
-  run() { return this.svc.chargeDue(); }
+  run() { return this.batch.chargeDue(); }
 
   @Post('reconcile')
   @ApiOperation({ summary: '지금 대조(새 청구 없음)', description: 'v10.31 — 끝나지 않은 환불 · 결과 불명확 청구만 결제사에 물어 닫습니다. 새 청구는 보내지 않습니다.' })
   @Audit('BILLING_RECONCILE', 'BILLING')
-  reconcile() { return this.svc.reconcileNow(); }
+  reconcile() { return this.batch.reconcileNow(); }
 
   @Get('review')
   @ApiOperation({
@@ -359,6 +364,6 @@ export class BillingAdminController {
       '**비어 있어야 정상입니다.** 배치가 결제사에 조회해 닫으며, 금액 불일치(`AMOUNT_MISMATCH`)처럼 자동으로 닫지 않는 것은 사람이 봐야 합니다.',
   })
   @ApiOkResponse({ type: BillingReviewDto })
-  review() { return this.svc.review(); }
+  review() { return this.admin.review(); }
 
 }

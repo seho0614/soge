@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
-import { RecurringBillingService } from '../modules/billing/recurring.service';
+import { RecurringBatchService } from '../modules/billing/recurring-batch.service';
 import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
@@ -34,7 +34,7 @@ export class SchedulerService {
 
   constructor(
     private readonly db: DatabaseService,
-    private readonly billing: RecurringBillingService,
+    private readonly billing: RecurringBatchService,
     private readonly leadCash: LeadCashService,
     private readonly geo: GeoService,
     private readonly mail: MailService,

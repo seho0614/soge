@@ -10,7 +10,11 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
-import { HealthShopService } from './health-shop.service';
+import { HealthCatalogService } from './health-catalog.service';
+import { HealthCheckoutService } from './health-checkout.service';
+import { HealthPaymentService } from './health-payment.service';
+import { HealthReturnService } from './health-return.service';
+import { HealthSettleService } from './health-settle.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles, RequireGate } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -161,7 +165,13 @@ export class HltOrderDto {
 @ApiTags('HEALTH-SHOP')
 @Controller('api/v1')
 export class HealthShopController {
-  constructor(private readonly svc: HealthShopService) {}
+  constructor(
+    private readonly catalog: HealthCatalogService,
+    private readonly checkout: HealthCheckoutService,
+    private readonly payments: HealthPaymentService,
+    private readonly returns: HealthReturnService,
+    private readonly settle: HealthSettleService,
+  ) {}
 
   @Get('health/products')
   @ApiOperation({
@@ -175,7 +185,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: HltProductDto, isArray: true })
   products(@Query('category') category?: string, @Query('keyword') keyword?: string,
            @Query('ingredient') ingredient?: string, @Query('concern') concern?: string) {
-    return this.svc.products(category, keyword, ingredient, concern);
+    return this.catalog.products(category, keyword, ingredient, concern);
   }
 
   @Get('health/categories')
@@ -187,7 +197,7 @@ export class HealthShopController {
       '회원 간 도매 · 납품 매물의 등록 규칙과는 별개입니다.',
   })
   @ApiOkResponse({ type: HltSaleCategoryDto, isArray: true })
-  categories() { return this.svc.categories(); }
+  categories() { return this.catalog.categories(); }
 
   @Get('health/products/:code')
   @ApiOperation({
@@ -196,7 +206,7 @@ export class HealthShopController {
   })
   @ApiParam({ name: 'code' })
   @ApiOkResponse({ type: HltProductDto })
-  product(@Param('code') code: string) { return this.svc.product(code); }
+  product(@Param('code') code: string) { return this.catalog.product(code); }
 
   @Get('health/ingredients')
   @ApiOperation({
@@ -204,7 +214,7 @@ export class HealthShopController {
     description: '취급 상품 수(`productCount`)와 재고 있는 상품의 최저가(`minPrice`)가 함께 옵니다. 상품이 없는 성분도 나옵니다.',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  ingredients() { return this.svc.ingredients(); }
+  ingredients() { return this.catalog.ingredients(); }
 
   @Get('health/ingredients/:code')
   @ApiOperation({
@@ -215,7 +225,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @ApiQuery({ name: 'sort', required: false, enum: ['unit', 'name'], description: 'unit = 한 달 단가 낮은 순(기본) · name = 이름순' })
-  ingredient(@Param('code') code: string, @Query('sort') sort?: string) { return this.svc.ingredient(code, sort); }
+  ingredient(@Param('code') code: string, @Query('sort') sort?: string) { return this.catalog.ingredient(code, sort); }
 
   @Get('health/suggest')
   @ApiOperation({
@@ -224,7 +234,7 @@ export class HealthShopController {
   })
   @ApiQuery({ name: 'q', required: false })
   @ApiOkResponse({ type: Object, isArray: true })
-  suggest(@Query('q') q?: string) { return this.svc.suggest(q); }
+  suggest(@Query('q') q?: string) { return this.catalog.suggest(q); }
 
   @Get('health/products/:code/image')
   @ApiOperation({ summary: '상품 사진', description: '운영 화면에서 올린 상품 사진(JPG · PNG). 판매 중(품절 포함) 상품만 — 없으면 409 NOT_FOUND(화면은 그린 그림을 씁니다).' })
@@ -232,7 +242,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND', type: ErrorDto })
   @ApiOkResponse({ description: '그림 바이트', content: { 'image/jpeg': { schema: { type: 'string', format: 'binary' } }, 'image/png': { schema: { type: 'string', format: 'binary' } } } })
   async productImage(@Param('code') code: string, @Res() res: Response) {
-    const { stream, contentType, size } = await this.svc.productImage(code);
+    const { stream, contentType, size } = await this.catalog.productImage(code);
     res.status(200);
     res.setHeader('Content-Type', contentType); res.setHeader('Content-Length', String(size));
     res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Cache-Control', 'public, max-age=300');
@@ -249,7 +259,7 @@ export class HealthShopController {
       '연결 성분이 없는 고민은 나오지 않습니다.',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  concerns() { return this.svc.concerns(); }
+  concerns() { return this.catalog.concerns(); }
 
   @Get('health/concerns/:code')
   @ApiOperation({
@@ -259,7 +269,7 @@ export class HealthShopController {
   @ApiParam({ name: 'code' })
   @ApiResponse({ status: 409, description: 'NOT_FOUND', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  concern(@Param('code') code: string) { return this.svc.concern(code); }
+  concern(@Param('code') code: string) { return this.catalog.concern(code); }
 
   @Get('health/promos')
   @ApiOperation({
@@ -267,7 +277,7 @@ export class HealthShopController {
     description: '운영이 바꾸는 배너. isSample=true 면 「견본 문구 — 광고 심의 확인 전」을 붙입니다(건강기능식품 기능성 문구는 심의 뒤에 씀).',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  promos() { return this.svc.promos(); }
+  promos() { return this.catalog.promos(); }
 
   @Post('health/orders')
   @ApiBearerAuth()
@@ -285,7 +295,7 @@ export class HealthShopController {
   @ApiResponse({ status: 422, description: 'HLTO · 재고 부족 등', type: ErrorDto })
   @ApiOkResponse({ type: HltOrderDto })
   @Audit('HLT_ORDER_CREATE', 'HLT_ORDER')
-  order(@Body() dto: OrderCreateDto, @Headers('x-visitor-key') visitorKey?: string) { return this.svc.order(dto, visitorKey); }
+  order(@Body() dto: OrderCreateDto, @Headers('x-visitor-key') visitorKey?: string) { return this.checkout.order(dto, visitorKey); }
 
   @Get('me/health/orders')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -294,7 +304,7 @@ export class HealthShopController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '내 주문' })
   @ApiOkResponse({ type: HltOrderDto, isArray: true })
-  myOrders() { return this.svc.myOrders(); }
+  myOrders() { return this.checkout.myOrders(); }
 
   @Get('me/health/orders/:no')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -304,7 +314,7 @@ export class HealthShopController {
   @ApiOperation({ summary: '주문 상세 · 배송 조회' })
   @ApiParam({ name: 'no' })
   @ApiOkResponse({ type: HltOrderDto })
-  myOrder(@Param('no') no: string) { return this.svc.myOrder(no); }
+  myOrder(@Param('no') no: string) { return this.checkout.myOrder(no); }
 
   @Get('me/health/addresses')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -313,7 +323,7 @@ export class HealthShopController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '배송지 목록' })
   @ApiOkResponse({ type: Object, isArray: true })
-  addresses() { return this.svc.addresses(); }
+  addresses() { return this.checkout.addresses(); }
 
   @Post('me/health/addresses')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -322,7 +332,7 @@ export class HealthShopController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '배송지 추가' })
   @ApiOkResponse({ type: Object })
-  addAddress(@Body() dto: AddressDto) { return this.svc.addAddress(dto); }
+  addAddress(@Body() dto: AddressDto) { return this.checkout.addAddress(dto); }
 
   @Patch('me/health/addresses/:id/default')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER')
@@ -331,7 +341,7 @@ export class HealthShopController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 409, description: 'NOT_FOUND', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  setDefaultAddress(@Param('id') id: string) { return this.svc.setDefaultAddress(id); }
+  setDefaultAddress(@Param('id') id: string) { return this.checkout.setDefaultAddress(id); }
 
   @Delete('me/health/addresses/:id')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER')
@@ -346,7 +356,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'ADDRESS_IN_USE · NOT_FOUND', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_ADDRESS_DELETE', 'HLT_ADDRESS')
-  deleteAddress(@Param('id') id: string) { return this.svc.deleteAddress(id); }
+  deleteAddress(@Param('id') id: string) { return this.checkout.deleteAddress(id); }
 
   @Post('me/health/returns')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -366,7 +376,7 @@ export class HealthShopController {
   @ApiResponse({ status: 422, description: 'HLT_CANCEL_AFTER_SHIP · HLT_RETURN_BEFORE_SHIP · HLT_WITHDRAWAL_EXPIRED', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_RETURN_REQUEST', 'HLT_RETURN')
-  requestReturn(@Body() dto: ReturnCreateDto) { return this.svc.requestReturn(dto); }
+  requestReturn(@Body() dto: ReturnCreateDto) { return this.returns.requestReturn(dto); }
 
   @Get('me/health/returns')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -375,7 +385,7 @@ export class HealthShopController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '취소 · 반품 내역' })
   @ApiOkResponse({ type: Object, isArray: true })
-  myReturns() { return this.svc.myReturns(); }
+  myReturns() { return this.returns.myReturns(); }
   /* ── 장바구니 ──────────────────────────────────────────────────── */
 
   @Get('me/health/cart')
@@ -391,7 +401,7 @@ export class HealthShopController {
       '담아 둔 사이 품절될 수 있어 `hasProblem` 을 함께 봅니다.',
   })
   @ApiOkResponse({ type: Object })
-  cart() { return this.svc.cart(); }
+  cart() { return this.checkout.cart(); }
 
   @Post('me/health/cart')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -406,7 +416,7 @@ export class HealthShopController {
   })
   @ApiResponse({ status: 422, description: 'HLTC · 재고 부족 등', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  addToCart(@Body() dto: CartAddDto) { return this.svc.addToCart(dto); }
+  addToCart(@Body() dto: CartAddDto) { return this.checkout.addToCart(dto); }
 
   @Patch('me/health/cart/:code')
   /* ★ 본인 것만 보이는 자리입니다 — 로그인 여부를 봅니다.
@@ -417,7 +427,7 @@ export class HealthShopController {
   @ApiParam({ name: 'code' })
   @ApiOkResponse({ type: Object })
   setQty(@Param('code') code: string, @Body() dto: CartQtyDto) {
-    return this.svc.setQty(code, dto.qty);
+    return this.checkout.setQty(code, dto.qty);
   }
 
   @Patch('me/health/cart/lines/:optionId')
@@ -427,7 +437,7 @@ export class HealthShopController {
   @ApiParam({ name: 'optionId', format: 'uuid' })
   @ApiOkResponse({ type: Object })
   setLineQty(@Param('optionId') optionId: string, @Body() dto: CartQtyDto) {
-    return this.svc.setLineQty(optionId, dto.qty);
+    return this.checkout.setLineQty(optionId, dto.qty);
   }
 
   @Post('me/health/cart/ack-prices')
@@ -436,7 +446,7 @@ export class HealthShopController {
   @HttpCode(200)
   @ApiOperation({ summary: '바뀐 값 확인(「확인했습니다」)', description: '담은 뒤 값이 바뀐 줄의 「담을 때 값」을 지금 값으로 맞춥니다 — 그 뒤 주문할 수 있습니다(v10.26).' })
   @ApiOkResponse({ type: Object })
-  ackPrices() { return this.svc.ackPrices(); }
+  ackPrices() { return this.checkout.ackPrices(); }
 
   /* ── 교환 배송비 (v10.26 · 약관 제3조) ───────────────────────────── */
 
@@ -448,7 +458,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND · NO_FEE · ALREADY_DECIDED · ALREADY_PAID', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_XFEE_PAY', 'HLT_RETURN')
-  payExchangeFee(@Param('id') id: string, @Body() dto: FeePayDto) { return this.svc.payExchangeFee(id, dto.method); }
+  payExchangeFee(@Param('id') id: string, @Body() dto: FeePayDto) { return this.returns.payExchangeFee(id, dto.method); }
 
   @Post('me/health/returns/:id/fee/confirm')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER')
@@ -459,7 +469,7 @@ export class HealthShopController {
   @ApiResponse({ status: 422, description: 'AMOUNT_MISMATCH · PAY_REJECTED', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_XFEE_CONFIRM', 'HLT_RETURN')
-  confirmExchangeFee(@Param('id') id: string, @Body() dto: PayConfirmDto) { return this.svc.confirmExchangeFee(id, dto.paymentKey, dto.amount); }
+  confirmExchangeFee(@Param('id') id: string, @Body() dto: PayConfirmDto) { return this.returns.confirmExchangeFee(id, dto.paymentKey, dto.amount); }
 
   /* ── 결제 ──────────────────────────────────────────────────────── */
 
@@ -478,7 +488,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_PAY', 'HLT_ORDER')
   pay(@Param('no') no: string, @Body() dto: { method: string }) {
-    return this.svc.pay(no, dto.method);
+    return this.payments.pay(no, dto.method);
   }
 
   @Post('health/orders/:no/pay/confirm')
@@ -499,7 +509,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_PAY_CONFIRM', 'HLT_ORDER')
   confirmPay(@Param('no') no: string, @Body() dto: PayConfirmDto) {
-    return this.svc.confirmPay(no, dto.paymentKey, dto.amount);
+    return this.payments.confirmPay(no, dto.paymentKey, dto.amount);
   }
 
   /* ── 토스 웹훅 ─────────────────────────────────────────────────────
@@ -517,7 +527,7 @@ export class HealthShopController {
   })
   @ApiResponse({ status: 502, description: 'PG_LOOKUP_FAILED — 토스가 재전송합니다', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  tossWebhook(@Body() body: any) { return this.svc.tossWebhook(body); }
+  tossWebhook(@Body() body: any) { return this.payments.tossWebhook(body); }
 
   /* ── 배송 ──────────────────────────────────────────────────────── */
 
@@ -532,7 +542,7 @@ export class HealthShopController {
   })
   @ApiParam({ name: 'no' })
   @ApiOkResponse({ type: Object, isArray: true })
-  shipments(@Param('no') no: string) { return this.svc.shipments(no); }
+  shipments(@Param('no') no: string) { return this.checkout.shipments(no); }
 
   /* ── 판매자 정산 (운영) ───────────────────────────────────────── */
 
@@ -546,7 +556,7 @@ export class HealthShopController {
       '돈을 보낼 곳이 없습니다. PG 계약 뒤에 채우십시오.',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  hltSellers() { return this.svc.hltSellers(); }
+  hltSellers() { return this.settle.hltSellers(); }
 
   @Get('admin/health/settlements')
   @ApiBearerAuth()
@@ -559,7 +569,7 @@ export class HealthShopController {
       '주 정산이어도 실제 지급은 2~3주 뒤입니다.',
   })
   @ApiOkResponse({ type: Object })
-  hltSettlements() { return this.svc.hltSettlements(); }
+  hltSettlements() { return this.settle.hltSettlements(); }
 
   @Post('admin/health/settlements/close')
   @ApiBearerAuth()
@@ -574,7 +584,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_SETTLE_CLOSE', 'HLT_SETTLEMENT')
   closeSettlement(@Body() dto: { periodFrom: string }) {
-    return this.svc.closeSettlement(dto.periodFrom);
+    return this.settle.closeSettlement(dto.periodFrom);
   }
 
   @Get('admin/health/returns')
@@ -583,7 +593,7 @@ export class HealthShopController {
   @ApiOperation({ summary: '취소 · 반품 신청 목록', description: '기본은 접수(REQUESTED)만. `state=ALL` 이면 전부.' })
   @ApiQuery({ name: 'state', required: false, enum: ['REQUESTED', 'APPROVED', 'REJECTED', 'REFUNDED', 'ALL'] })
   @ApiOkResponse({ type: Object, isArray: true })
-  adminReturns(@Query('state') state?: string) { return this.svc.adminReturns(state); }
+  adminReturns(@Query('state') state?: string) { return this.returns.adminReturns(state); }
 
   @Post('admin/health/returns/:id/decide')
   @ApiBearerAuth()
@@ -604,7 +614,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_RETURN_DECIDE', 'HLT_RETURN')
   decideReturn(@Param('id') id: string, @Body() dto: ReturnDecideDto) {
-    return this.svc.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault);
+    return this.returns.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault);
   }
 
   @Post('admin/health/returns/:id/convert')
@@ -618,7 +628,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND · ALREADY_DECIDED · ORDER_CLOSED', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_EXCHANGE_CONVERT', 'HLT_RETURN')
-  convertExchange(@Param('id') id: string, @Body() dto: ConvertDto) { return this.svc.convertExchange(id, dto.note); }
+  convertExchange(@Param('id') id: string, @Body() dto: ConvertDto) { return this.returns.convertExchange(id, dto.note); }
 
   @Post('admin/health/returns/:id/fee-refund')
   @ApiBearerAuth()
@@ -628,7 +638,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND · NOT_REFUNDABLE · NOT_DECIDED', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('HLT_XFEE_REFUND', 'HLT_RETURN')
-  retryExchangeFeeRefund(@Param('id') id: string) { return this.svc.retryExchangeFeeRefund(id); }
+  retryExchangeFeeRefund(@Param('id') id: string) { return this.returns.retryExchangeFeeRefund(id); }
 
   @Post('admin/health/returns/:id/refund')
   @ApiBearerAuth()
@@ -647,7 +657,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_REFUND', 'HLT_RETURN')
   refund(@Param('id') id: string, @Body() dto: RefundDto) {
-    return this.svc.refund(id, dto.refundReceiveAccount);
+    return this.returns.refund(id, dto.refundReceiveAccount);
   }
 
   @Get('admin/health/commission-rates')
@@ -660,6 +670,6 @@ export class HealthShopController {
       '바꾸시면 이력이 남고, **이미 판매된 건에는 적용되지 않습니다.**',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  commissionRates() { return this.svc.commissionRates(); }
+  commissionRates() { return this.settle.commissionRates(); }
 
 }

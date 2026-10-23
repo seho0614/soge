@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { CancelResult, PaymentLookup, PaymentProvider, StubPaymentProvider, resolvePaymentProvider } from './payment.provider';
-import type { BatchResult } from './recurring.service';
+import type { BatchResult } from './recurring-batch.service';
 
 /** 다른 곳에서 방금 잡은 환불 요청은 이 시간 동안 건드리지 않습니다 */
 const REFUND_BUSY_SEC = 30;

@@ -1,17 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolveBrokerLookupProvider } from './broker-lookup.provider';
 import { normSido } from '../../common/region';
-import { LeadCashService } from './lead-cash.service';
 import { PartnerActorService } from './partner-actor.service';
 import { assumeOn } from '../../common/integration/switches';
+import { myPartner } from './partner-shared';
 
 /**
  * 파트너센터.
  *
  * v10.45 (2026-10-16 · 리팩토링) — 운영 화면용(adm*: 입점 심사 · 서비스 검수 · 이용료 무효 · 반려 신청 처리)은 partner-admin.service.ts 로 나눴습니다.
+ * v10.86 (리팩토링) — 리드(요청 열람)는 partner-lead.service.ts, 이용료 · 이의 · 정산 · 가격 · 보상은 partner-money.service.ts 로 나눴습니다.
  *
  * ── 리드 이용료는 정보 이용료입니다 ────────────────────────────────
  * "요청 목록을 볼 권한"의 값입니다. **열람 시점에 발생하고 성사와 무관합니다.**
@@ -26,20 +27,10 @@ import { assumeOn } from '../../common/integration/switches';
  */
 @Injectable()
 export class PartnerService {
-  private readonly log = new Logger(PartnerService.name);
-  constructor(private readonly db: DatabaseService, private readonly cash: LeadCashService,
-              private readonly actors: PartnerActorService) {}
+  constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService) {}
   private get me() { return RequestCtx.actorId(); }
-
-  /** 내 파트너 계정. 없으면 신청 안내를 냅니다.
-   *  v10.31 (W5 · CTR-610 계정) — 대표 계정 또는 합류한 직원 계정(business_members · 빠지지 않은). */
-  private async mine() {
-    if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
-    const p = await this.actors.forMember(this.me);   // v10.39 — 조회는 PartnerActorService 한 곳
-    if (!p) return null;
-    const { canMoney: _money, ...mine } = p;           // 이 자리가 내보내던 칸 그대로(대시보드 응답에 펼쳐 넣음)
-    return mine;
-  }
+  /** 내 파트너 계정(없으면 null · 로그인 안 했으면 막음) — partner-shared.ts 한 곳 */
+  private mine() { return myPartner(this.actors); }
 
   /* ── 입점 ──────────────────────────────────────────────────────── */
 
@@ -269,229 +260,6 @@ export class PartnerService {
 
   /* ── 리드 ──────────────────────────────────────────────────────── */
 
-  /**
-   * 받은 리드.
-   *
-   * **열람 전에는 요약만 보입니다.** 지역·분야·시기까지는 무료이고,
-   * 연락처를 여는 순간 이용료가 발생합니다.
-   */
-  async leads() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    /* D008 — 배정 상태 · 열람 기한 · 업종을 함께 냅니다. 회수(REVOKED)된 건은 뺍니다 —
-     * 운영이 거둬 간 건을 계속 보여 주면 "왜 못 여나" 를 묻게 됩니다. */
-    const rows = await this.db.query<any>(
-      `SELECT d.id AS "deliveryId", l.id AS "leadId", l.summary, l.sido, l.sigungu,
-              l.is_urgent AS "urgent", d.delivered_at AS "deliveredAt",
-              d.viewed_at AS "viewedAt", d.state, d.expires_at AS "expiresAt",
-              c.name AS "categoryName",
-              (pc.lead_id IS NOT NULL AND pc.purged_at IS NULL) AS "hasContact",
-              f.amount AS "fee", f.state AS "feeState", f.id AS "feeId",
-              /* v10.31 (W5 · CTR-300) — 등급 · 알림톡 · 예상 확인비용 · 메모 · 반려 신청 상태 */
-              l.grade, fn_lead_grade_label(l.grade) AS "gradeLabel", l.alim_state AS "alimState",
-              fn_lead_fee_quote(l.id, d.partner_id) AS "feeQuote",
-              (SELECT m.body FROM lead_delivery_memos m WHERE m.delivery_id = d.id ORDER BY m.created_at DESC LIMIT 1) AS memo,
-              (SELECT count(*)::int FROM lead_delivery_memos m WHERE m.delivery_id = d.id) AS "memoCount",
-              x.state AS "disputeState", x.id AS "disputeId",
-              (f.id IS NOT NULL AND f.state <> 'VOIDED' AND x.id IS NULL
-                AND d.delivered_at >= now() - interval '72 hours') AS "disputable"
-         FROM lead_deliveries d
-         JOIN leads l ON l.id = d.lead_id
-         LEFT JOIN categories c ON c.id = l.category_id
-         LEFT JOIN pii.lead_contacts pc ON pc.lead_id = l.id
-         LEFT JOIN lead_fees f ON f.delivery_id = d.id
-         LEFT JOIN lead_fee_disputes x ON x.fee_id = f.id
-        WHERE d.partner_id = $1 AND d.state <> 'REVOKED'
-        ORDER BY (d.state = 'DELIVERED') DESC, d.delivered_at DESC LIMIT 100`, [p.id]);
-
-    return rows.map(r => ({
-      ...r,
-      // 열람 전에는 연락처 자리를 아예 내려보내지 않습니다. 열람 뒤에도 목록에는 싣지 않습니다 —
-      // 연락처는 GET /partner/leads/{id}/contact 로만 풀리고, 풀 때마다 기록이 남습니다.
-      contact: r.viewedAt ? '(열람됨 — 연락처 보기로 확인)' : null,
-      note: r.state === 'EXPIRED' ? '열람 기한이 지나 다른 업체로 넘어갔습니다.'
-        : r.viewedAt ? null : '연락처를 열면 확인비용이 리드 이용료 잔액에서 빠집니다.',
-    }));
-  }
-
-  /**
-   * 열람한 리드의 연락처 (D008).
-   *
-   * 열람(과금)과 나눕니다 — 열람 응답은 감사 로그(audit_logs.after_data)에 통째로 남아,
-   * 거기에 연락처를 실으면 평문 개인정보가 감사 로그에 쌓입니다. 여기서는
-   * pii.fn_read_lead_contact 만 거치고, 그 함수가 열람 기록(pii_access_logs)을 남깁니다.
-   */
-  async leadContact(deliveryId: string) {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    if (!/^[0-9a-f-]{36}$/i.test(deliveryId)) throw new StateConflict('NO_SUCH_LEAD', '받은 리드가 아닙니다.');
-    const [d] = await this.db.query<any>(
-      `SELECT d.id, d.lead_id, d.viewed_at, d.state,
-              pc.lead_id IS NOT NULL AS has_contact, pc.purged_at
-         FROM lead_deliveries d
-         LEFT JOIN pii.lead_contacts pc ON pc.lead_id = d.lead_id
-        WHERE d.id = $1 AND d.partner_id = $2`, [deliveryId, p.id]);
-    if (!d) throw new StateConflict('NO_SUCH_LEAD', '받은 리드가 아닙니다.');
-    if (!d.viewed_at) {
-      throw new PolicyViolation('NOT_VIEWED', '먼저 「연락처 열기」로 열람하셔야 합니다. 열람할 때 이용료가 발생합니다.');
-    }
-    if (!d.has_contact) {
-      return { deliveryId, contact: null, note: '연락처가 따로 저장되지 않은 옛 형식 리드입니다.' };
-    }
-    if (d.purged_at) {
-      return { deliveryId, contact: null, purgedAt: d.purged_at,
-        note: '보관 기한이 지나 연락처를 파기했습니다(개인정보 보호법).' };
-    }
-    const [c] = await this.db.query<any>(
-      `SELECT name, phone, address, email FROM pii.fn_read_lead_contact($1, $2, $3)`,      /* v10.28 — 이메일(상담 신청에서 받은 것 · 옛 신청은 null) */
-      [d.lead_id, this.me, `파트너 리드 열람 — 배정 ${deliveryId}`]);
-    return { deliveryId, contact: c ?? null,
-      note: '상담 목적 외에 쓰거나 남에게 넘기면 개인정보 보호법 위반입니다. 이 조회는 기록됩니다.' };
-  }
-
-  /**
-   * 리드 열람 = 과금.
-   *
-   * 이 시점 하나뿐입니다. 성사되면 더 내지 않고, 안 되면 돌려받지도 않습니다 —
-   * 정보 이용료이기 때문입니다.
-   */
-  async viewLead(deliveryId: string) {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-
-    const [elig] = await this.db.query<{ can_receive: boolean; balance: string }>(
-      'SELECT can_receive, balance FROM v_partner_eligible WHERE partner_id = $1', [p.id]);
-    if (!elig?.can_receive) {
-      /* v10.31 (W5 · D070) — 선불 잔액이 없으면 그 이유를 먼저 말합니다 */
-      if (elig && Number(elig.balance) <= 0) {
-        throw new PolicyViolation('LEADCASH', '리드 이용료 잔액이 없습니다 — 「리드 이용료」에서 충전하신 뒤 여십시오.');
-      }
-      throw new PolicyViolation('NOT_ELIGIBLE',
-        '이전 후불 미납 한도를 넘었거나 승인된 서비스·활동 지역이 없습니다.');
-    }
-
-    return this.db.transaction(async () => {
-      const [d] = await this.db.query<any>(
-        `UPDATE lead_deliveries SET viewed_at = coalesce(viewed_at, now())
-          WHERE id = $1 AND partner_id = $2
-        RETURNING id, lead_id, viewed_at`, [deliveryId, p.id]);
-      if (!d) throw new StateConflict('NO_SUCH_LEAD', '받은 리드가 아닙니다.');
-
-      // 이미 과금된 건이면 다시 붙이지 않습니다(UNIQUE 가 막지만 메시지가 낫습니다).
-      const [exist] = await this.db.query<{ amount: string }>(
-        'SELECT amount FROM lead_fees WHERE delivery_id = $1', [d.id]);
-
-      let fee = exist?.amount;
-      let parts: { bonus: number; paid: number } | null = null;
-      if (!exist) {
-        /* v10.31 (W5 · D077) — 확인비용은 DB 한 곳(fn_lead_fee_quote)에서 정합니다:
-         *   파트너가 이 업종에 정한 최고 확인비용 → 업종 기준 단가 → 기본 단가(lead.default_fee), × 리드 등급 비율.
-         * ★ 코드에 기본값을 박지 않습니다(전에는 8,000 이 박혀 단가를 낮춰도 그대로 매겨졌습니다). */
-        const [price] = await this.db.query<{ fee: string | null }>(
-          `SELECT fn_lead_fee_quote($1, $2) AS fee`, [d.lead_id, p.id]);
-        /* 선불(D070) — 이 INSERT 의 트리거가 잔액에서 뺍니다(보너스 먼저). 모자라면 LEADCASH 로 막히고 열람도 함께 되돌아갑니다 */
-        const [f] = await this.db.query<{ amount: string; bonus_part: string | null; paid_part: string | null }>(
-          `INSERT INTO lead_fees(delivery_id, partner_id, amount)
-           VALUES ($1,$2,$3) RETURNING amount, bonus_part, paid_part`,
-          /* 설정도 없으면 과금하지 않습니다 — 모르는 값으로 청구하느니
-           *  안 받는 편이 낫습니다. 감시 뷰가 이 상태를 잡습니다. */
-          [d.id, p.id, Number(price?.fee ?? 0)]);
-        fee = f.amount;
-        parts = { bonus: Number(f.bonus_part ?? 0), paid: Number(f.paid_part ?? 0) };
-      }
-
-      const [lead] = await this.db.query<any>(
-        `SELECT summary, sido, sigungu FROM leads WHERE id = $1`, [d.lead_id]);
-      return { ...lead, fee: Number(fee), viewedAt: d.viewed_at, parts,
-        contactUrl: `/partner/leads/${d.id}/contact`,
-        note: parts
-          ? `확인비용 ${Number(fee).toLocaleString('ko-KR')}원이 잔액에서 빠졌습니다${parts.bonus ? `(보너스 ${parts.bonus.toLocaleString('ko-KR')}원 · 유상 ${parts.paid.toLocaleString('ko-KR')}원)` : ''}. 성사 여부와 무관합니다.`
-          : '이미 연 리드입니다 — 확인비용은 한 번만 냅니다.' };
-    }).then((out) => {
-      /* 자동 청구 — 잔액이 기준 아래로 내려갔으면 뒤에서 한 번 충전합니다(실패해도 열람은 그대로) */
-      void this.cash.runAuto(p.id).catch((e) => this.log.warn(`lead cash auto: ${e?.message ?? e}`));
-      return out;
-    });
-  }
-
-  /* ── 이용료 ────────────────────────────────────────────────────── */
-
-  /** v10.31 (W5 · D070 · 10/10 시안 기준) — 선불 충전 잔액에서 차감한 내역(전환 전 후불분은 settleMode=POSTPAID). 잔액 · 충전은 GET /partner/cash */
-  async fees() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-
-    const rows = await this.db.query(
-      `SELECT f.id, f.amount, f.state, f.incurred_at AS "incurredAt",
-              f.billed_at AS "billedAt", f.void_rule AS "voidRule",
-              f.settle_mode AS "settleMode", f.bonus_part AS "bonusPart", f.paid_part AS "paidPart",
-              l.summary, d.delivered_at AS "deliveredAt",
-              (f.state <> 'VOIDED' AND x.id IS NULL
-                AND d.delivered_at >= now() - interval '72 hours') AS "disputable",
-              x.id AS "disputeId", x.state AS "disputeState",
-              x.decision_reason AS "disputeDecision"
-         FROM lead_fees f
-         JOIN lead_deliveries d ON d.id = f.delivery_id
-         JOIN leads l ON l.id = d.lead_id
-         LEFT JOIN lead_fee_disputes x ON x.fee_id = f.id
-        WHERE f.partner_id = $1
-        ORDER BY f.incurred_at DESC LIMIT 100`, [p.id]);
-
-    const [sum] = await this.db.query<any>(
-      `SELECT coalesce(sum(amount) FILTER (WHERE state='PENDING'),0) AS pending,
-              coalesce(sum(amount) FILTER (WHERE state='BILLED'),0)  AS billed,
-              coalesce(sum(amount) FILTER (WHERE state='VOIDED'),0)  AS voided
-         FROM lead_fees WHERE partner_id = $1`, [p.id]);
-
-    return { summary: sum, rows, unpaidCap: Number(p.unpaidCap),
-      note: '리드를 열 때 확인비용이 선불 충전 잔액에서 빠집니다(보너스 먼저). 반려가 인정되면 잔액으로 환급됩니다.' };
-  }
-
-  /* ── 리드 반려 신청 (T-04) — 파트너 쪽. 운영의 인정 · 기각은 partner-admin.service.ts ── */
-
-  /** 파트너: 반려 신청. 자격은 DB 가 봅니다. */
-  async disputeFee(feeId: string, dto: { reasonCode: string; reason: string; evidence?: string }) {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    if (!/^\d+$/.test(feeId)) throw new PolicyViolation('BAD_ID', '이용료 번호가 올바르지 않습니다.');
-    /* 20261006 (v10.20 · G-118) — 「이미 신청했는지」는 **내 신청**만 봅니다.
-     *   전에는 이용료 번호만으로 찾아, 남의 이용료에 반려 신청이 있으면 409(이미 신청)로,
-     *   없으면 422(내 이용료가 아닙니다)로 답했습니다 — 남의 이용료에 신청이 있는지를 응답으로 알 수 있었습니다.
-     *   이제 남의 이용료 · 없는 번호는 신청 유무와 관계없이 DB 트리거(fn_lead_fee_dispute_guard)의
-     *   같은 거절 「내 이용료가 아닙니다」로 끝납니다(트리거는 fee_id 유일 제약보다 먼저 돕니다). */
-    const [dup] = await this.db.query<any>(
-      'SELECT state FROM lead_fee_disputes WHERE fee_id = $1 AND partner_id = $2', [feeId, p.id]);
-    if (dup) throw new StateConflict('ALREADY_REQUESTED', '이미 반려를 신청한 이용료입니다. 한 건에 한 번만 신청할 수 있습니다.');
-    const [row] = await this.db.query<any>(
-      `INSERT INTO lead_fee_disputes(fee_id, partner_id, reason_code, reason, evidence)
-       VALUES ($1,$2,$3,$4,$5)
-       RETURNING id, fee_id AS "feeId", state, created_at AS "requestedAt"`,
-      [feeId, p.id, dto.reasonCode, dto.reason.trim(), dto.evidence?.trim() || null]);
-    return { ...row, note: '접수했습니다. 운영이 확인해 인정하면 확인비용이 잔액으로 환급됩니다.' };
-  }
-
-  /** 파트너: 내 반려 신청. */
-  async myDisputes() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    return this.db.query(
-      `SELECT x.id, x.fee_id AS "feeId", x.state, x.reason_code AS "reasonCode",
-              x.reason, x.evidence, x.created_at AS "requestedAt",
-              x.rule_code AS "ruleCode", x.decision_reason AS "decisionReason",
-              x.decided_at AS "decidedAt", f.amount, l.summary
-         FROM lead_fee_disputes x
-         JOIN lead_fees f ON f.id = x.fee_id
-         JOIN lead_deliveries d ON d.id = f.delivery_id
-         JOIN leads l ON l.id = d.lead_id
-        WHERE x.partner_id = $1
-        ORDER BY x.created_at DESC LIMIT 100`, [p.id]);
-  }
-
-  /* ── 파트너센터 조회 ──────────────────────────────────────────────
-   * 전부 `this.mine()` 로 자기 파트너를 잡고 시작합니다 —
-   * 남의 실적·단가가 보이면 담합의 재료가 됩니다.
-   * ─────────────────────────────────────────────────────────────── */
-
   /** 승인·반려 이력. 사유 없는 반려는 없습니다. */
   async myReviews() {
     const p = await this.mine();
@@ -505,76 +273,6 @@ export class PartnerService {
          LEFT JOIN categories c ON c.id = s.category_id
         WHERE s.partner_id = $1
         ORDER BY s.created_at DESC LIMIT 100`, [p.id]);
-  }
-
-  /**
-   * 정산 (SB-PTC-CTR-410) — v10.31 (W5 · 10/10 시안 기준) 「성사된 소개의 정산 내역과 수령 계좌 · 세금계산서」
-   *
-   *   정산 내역  회사가 이 파트너에게 **실제로 지급하는** 정산(partner_settlements — 지급 데스크 · 두 사람 확인)과 그 기간의 성사(확정 주문) 건수.
-   *   수령 계좌  partner_settlement_accounts(1원 인증 — 제휴 정산과 같은 계좌 · 같은 API)
-   *   세금계산서 지급 정산의 세금계산서(partner_invoices) + 리드 이용료 세금계산서 발행 요청(lead_cash_invoices)
-   *              + v10.33 법률 · 세무 정액 노출료 세금계산서(consult_directory_invoices · kind DIRECTORY)
-   * 소개비는 여기 없습니다 — 당사자끼리 직접(INV-9R). 리드 이용료(충전 · 차감)는 「리드 이용료」 화면입니다.
-   * 전에 이 화면에 있던 리드 이용료 합계(unpaid · billed · voided · months)는 그대로 함께 냅니다(옛 화면 호환).
-   */
-  async mySettlement() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    const [sum] = await this.db.query<any>(
-      `SELECT coalesce(sum(amount) FILTER (WHERE state='PENDING'),0)::bigint AS unpaid,
-              coalesce(sum(amount) FILTER (WHERE state='BILLED'),0)::bigint  AS billed,
-              coalesce(sum(amount) FILTER (WHERE state='VOIDED'),0)::bigint  AS voided,
-              count(*) FILTER (WHERE state='PENDING')                        AS "unpaidCount"
-         FROM lead_fees WHERE partner_id = $1`, [p.id]);
-    const months = await this.db.query(
-      `SELECT to_char(incurred_at AT TIME ZONE 'Asia/Seoul','YYYY-MM') AS month,
-              count(*)                        AS leads,
-              coalesce(sum(amount),0)::bigint AS amount
-         FROM lead_fees
-        WHERE partner_id = $1 AND state <> 'VOIDED'
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 12`, [p.id]);
-    const payouts = await this.db.query<any>(
-      `SELECT s.id, s.track, s.period_from::text AS "from", s.period_to::text AS "to",
-              to_char(s.period_to, 'YYYY-MM') AS month,
-              s.gross_amount AS gross, s.withholding, s.net_amount AS net, s.state, s.paid_at AS "paidAt",
-              (SELECT count(*)::int FROM partner_orders o
-                WHERE o.partner_id = s.partner_id AND o.attributed AND o.state IN ('CONFIRMED','SETTLED')
-                  AND o.ordered_at::date BETWEEN s.period_from AND s.period_to) AS deals
-         FROM partner_settlements s
-        WHERE s.partner_id = $1
-        ORDER BY s.period_to DESC, s.period_from DESC LIMIT 24`, [p.id]);
-    const [acc] = await this.db.query<any>(
-      `SELECT bank_name AS "bankName", account_last4 AS "last4", holder_name AS "holderName",
-              verified_at AS "verifiedAt", verify_stub AS "verifyStub"
-         FROM partner_settlement_accounts WHERE partner_id = $1`, [p.id]);
-    const invoices = await this.db.query<any>(
-      `SELECT 'SETTLEMENT' AS kind, i.invoice_no AS "invoiceNo", i.issued_on AS "issuedOn", i.amount AS total,
-              NULL::bigint AS supply, NULL::bigint AS vat, 'ISSUED' AS state,
-              to_char(s.period_to, 'YYYY-MM') AS month, NULL::text AS "etaxStatus", NULL::text AS "approvalNo"
-         FROM partner_invoices i JOIN partner_settlements s ON s.id = i.settlement_id
-        WHERE s.partner_id = $1
-       UNION ALL
-       /* v10.34 (D093) — 운영 법인이 발행하는 두 가지는 국세청 전송 상태 · 승인번호를 함께. 번호 칸 = 승인번호(있으면) · 손으로 넣은 번호.
-          간주 발행은 내부 번호를 싣지 않음(「전송 대기 — 연동 전」) */
-       SELECT 'LEAD_CASH', CASE WHEN etax_approval_no IS NOT NULL THEN substr(etax_approval_no,1,8)||'-'||substr(etax_approval_no,9,8)||'-'||substr(etax_approval_no,17,8)
-                                WHEN etax_mode = 'ASSUMED' THEN NULL ELSE invoice_no END, issued_on, total, supply, vat, state, ym,
-              etax_status, etax_approval_no
-         FROM lead_cash_invoices WHERE partner_id = $1
-       UNION ALL
-       /* v10.33 (D092) — 법률 · 세무 정액 노출료(입금 확인마다 1건 · 공급자 = 운영 법인) */
-       SELECT 'DIRECTORY', CASE WHEN etax_approval_no IS NOT NULL THEN substr(etax_approval_no,1,8)||'-'||substr(etax_approval_no,9,8)||'-'||substr(etax_approval_no,17,8)
-                                WHEN etax_mode = 'ASSUMED' THEN NULL ELSE invoice_no END, issued_on, total, supply, vat, state,
-              to_char(created_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM'), etax_status, etax_approval_no
-         FROM consult_directory_invoices WHERE partner_id = $1
-        ORDER BY 8 DESC, 1 LIMIT 48`, [p.id]);
-    const [pd] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'affiliate.payout_day'`);
-    return { ...sum, unpaidCap: p.unpaidCap, months,
-      payouts: payouts.map((r) => ({ ...r, gross: Number(r.gross), withholding: Number(r.withholding), net: Number(r.net) })),
-      account: acc ?? null,
-      invoices: invoices.map((r) => ({ ...r, total: Number(r.total), supply: r.supply != null ? Number(r.supply) : null, vat: r.vat != null ? Number(r.vat) : null,
-        approvalNo: r.approvalNo ? `${r.approvalNo.slice(0, 8)}-${r.approvalNo.slice(8, 16)}-${r.approvalNo.slice(16)}` : null })),
-      payoutDay: Number(pd?.value ?? 10),
-      note: '회사가 지급하는 정산입니다. 확정되면 익월 지급일에 인증된 수령 계좌로 보냅니다(원천징수 3.3%). 소개비는 당사자끼리 직접 주고받아 여기 없습니다.' };
   }
 
   /** 실적과 등급. 등급이 오르면 같은 리드를 더 싸게 받습니다. */
@@ -636,70 +334,6 @@ export class PartnerService {
     const badges = await this.db.query<any>(
       `SELECT code, name, state, detail FROM fn_partner_badges($1) ORDER BY sort_order`, [p.id]);
     return { ...t, viewRate: pct(t?.viewed ?? 0, t?.total ?? 0), badges };
-  }
-
-  /**
-   * 내 단가표 (SB-PTC-CTR-900) — v10.31 (W5 · 시안 「카테고리 · 단가 폼 · 구간 · 상태」 + 「소개비 보상표」)
-   *   단가 폼 = 업종의 등록 방식(categories.service_form) · 구간 = 매트릭스 축 수 / 건당 / 월 요금 …
-   *   기준가 = 업종 기준 단가(없으면 기본 단가) · 내 단가 = 내가 정한 최고 확인비용(S 등급) — 없으면 기준가
-   *   ★ 남의 단가는 보이지 않습니다(담합의 재료). 도입가인 동안은 바뀔 수 있습니다.
-   */
-  async myPricing() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    const rows = await this.db.query<any>(
-      `WITH d AS (SELECT (SELECT value::numeric FROM site_settings WHERE key = 'lead.default_fee' AND value ~ '^[0-9]+$') AS dfee)
-       SELECT c.id AS "categoryId", c.name AS "categoryName", c.gwan_code AS "gwanCode", c.service_form AS "formType",
-              (SELECT count(*) FROM category_matrix_axes a WHERE a.category_id = c.id AND a.axis_type = 'ROW' AND a.is_active)::int AS "rows",
-              (SELECT count(*) FROM category_matrix_axes a WHERE a.category_id = c.id AND a.axis_type = 'COL' AND a.is_active)::int AS "cols",
-              coalesce(c.lead_fee, d.dfee) AS "baseFee", (c.lead_fee IS NULL) AS "baseIsDefault",
-              max(s.top_fee) AS "topFee",
-              coalesce(max(s.top_fee), c.lead_fee, d.dfee) AS "myFee",
-              (SELECT count(*) FROM partner_service_matrix m JOIN partner_services s2 ON s2.id = m.service_id
-                WHERE s2.partner_id = $1 AND s2.category_id = c.id)::int AS "matrixCells",
-              c.lead_fee_provisional AS provisional
-         FROM partner_services s
-         JOIN categories c ON c.id = s.category_id
-         CROSS JOIN d
-        WHERE s.partner_id = $1 AND s.status = 'APPROVED'
-        GROUP BY c.id, d.dfee
-        ORDER BY c.gwan_code, c.name`, [p.id]);
-    const FORM: Record<string, string> = { MATRIX: '매트릭스 견적', CONTRACT: '계약 성사형', CONSULT: '상담형',
-      RENTAL: '약정 월요금형', PAYMENT: '결제형(레거시)', MEDICAL: '의료 심의 트랙' };
-    return rows.map((r) => {
-      const form = r.formType as string | null;
-      const range = !form ? '—'
-        : form === 'MATRIX' ? (r.rows && r.cols ? `${r.rows}×${r.cols} 구간` : '구간 미정')
-        : form === 'RENTAL' ? '월 요금' : form === 'MEDICAL' ? '시술별' : '건당';
-      const state = !form ? 'NO_FORM'
-        : form === 'MATRIX' && !(r.rows && r.cols) ? 'NO_AXES'
-        : form === 'MATRIX' && r.matrixCells === 0 ? 'EMPTY'
-        : r.provisional ? 'PROVISIONAL' : 'SET';
-      return { ...r, formLabel: form ? FORM[form] ?? form : '미정', range, state,
-        baseFee: r.baseFee != null ? Number(r.baseFee) : null, myFee: r.myFee != null ? Number(r.myFee) : null,
-        topFee: r.topFee != null ? Number(r.topFee) : null };
-    });
-  }
-
-  /** v10.31 (W5 · CTR-900) — 소개비 보상표 · 등급별 확인비용(최고 확인비용 × 비율) */
-  async myRewards() {
-    const p = await this.mine();
-    if (!p) throw new StateConflict('NOT_PARTNER', '파트너가 아닙니다.');
-    const rows = await this.db.query<any>(
-      `SELECT s.id, s.title, c.name AS "categoryName", s.status,
-              coalesce(s.top_fee, c.lead_fee, (SELECT value::numeric FROM site_settings WHERE key = 'lead.default_fee' AND value ~ '^[0-9]+$')) AS "topFee",
-              (s.top_fee IS NOT NULL) AS "topFeeSet",
-              s.referral_rate AS "referralRate", s.rebate_bonus AS "rebateBonus"
-         FROM partner_services s LEFT JOIN categories c ON c.id = s.category_id
-        WHERE s.partner_id = $1 AND s.status IN ('APPROVED','IN_REVIEW','SUSPENDED')
-        ORDER BY s.created_at DESC`, [p.id]);
-    const rates = await this.db.query<any>(
-      `SELECT grade, label, rate FROM lead_grade_rates WHERE gwan_code IS NULL ORDER BY rank`);
-    return { items: rows.map((r) => ({ ...r, topFee: r.topFee != null ? Number(r.topFee) : null,
-        referralRate: r.referralRate != null ? Number(r.referralRate) : null,
-        rebateBonus: r.rebateBonus != null ? Number(r.rebateBonus) : null })),
-      rates: rates.map((r) => ({ ...r, rate: Number(r.rate) })),
-      note: '성사 소개비 · 재소개 보너스는 파트너가 소개자에게 약속하는 조건입니다 — 소개비는 당사자끼리 직접 주고받고 회사를 거치지 않습니다(INV-9).' };
   }
 
   /** 공지·알림. v10.31 (W5 · CTR-700) — 분류(리드 · 검수 · 리드 이용료 · 정산 · 공지)와 「보기」가 갈 화면을 함께 냅니다 */

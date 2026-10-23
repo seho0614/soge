@@ -97,7 +97,11 @@ import { SchedulerService } from './worker/scheduler.service';
 import { CollectController } from './modules/admin/collect.controller';
 import { CollectService } from './modules/admin/collect.service';
 import { HealthShopController } from './modules/health/health-shop.controller';
-import { HealthShopService } from './modules/health/health-shop.service';
+import { HealthCatalogService } from './modules/health/health-catalog.service';
+import { HealthCheckoutService } from './modules/health/health-checkout.service';
+import { HealthPaymentService } from './modules/health/health-payment.service';
+import { HealthReturnService } from './modules/health/health-return.service';
+import { HealthSettleService } from './modules/health/health-settle.service';
 import { HealthAdminController } from './modules/health/health-admin.controller';
 import { HealthAdminService } from './modules/health/health-admin.service';
 import { HealthOrdersAdminController, HealthOrderConfirmController } from './modules/health/health-orders.controller';
@@ -117,11 +121,15 @@ import { AiController, RiskController, AiServerController } from './modules/ai/a
 import { AiService } from './modules/ai/ai.service';
 import { RecurringController, BillingAdminController } from './modules/billing/recurring.controller';
 import { RecurringBillingService } from './modules/billing/recurring.service';
+import { RecurringBatchService } from './modules/billing/recurring-batch.service';
+import { RecurringAdminService } from './modules/billing/recurring-admin.service';
 import { RecurringRefundService } from './modules/billing/recurring-refund.service';
 import { PayoutAccountService } from './modules/billing/payout-account.service';
 import { PartnerController, PartnerAdminController, QualificationController, BrokerAdminController } from './modules/partner/partner.controller';
 import { BrokerService } from './modules/partner/broker.service';
 import { PartnerService } from './modules/partner/partner.service';
+import { PartnerLeadService } from './modules/partner/partner-lead.service';
+import { PartnerMoneyService } from './modules/partner/partner-money.service';
 import { PartnerAdminService } from './modules/partner/partner-admin.service';
 /* v10.31 (W5) — 파트너센터 새 API · 리드 이용료 선불 충전 */
 import { PartnerCenterController, PartnerCenterAdminController, MeFulfillmentController } from './modules/partner/partner-center.controller';
@@ -255,7 +263,7 @@ import { LeadService } from './modules/lead/lead.service';
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */
     AdminV31Service,
-    HealthShopService,
+    HealthCatalogService, HealthCheckoutService, HealthPaymentService, HealthReturnService, HealthSettleService,   // v10.86 — 건강몰 서비스를 나눔
     HealthAdminService,
     HealthOrdersService,
     HealthReviewService,
@@ -269,12 +277,14 @@ import { LeadService } from './modules/lead/lead.service';
     IntroducerService,
     MainService,
     PartnerService, PartnerCenterService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
+    PartnerLeadService, PartnerMoneyService,   // v10.86 — 파트너 리드 · 이용료를 나눔
     PartnerAdminService,                                                          // v10.45 — 파트너 운영(adm*)을 나눔
     QualificationService,
     BrokerService,
     ReportService,
     ComplianceService,
     RecurringBillingService, RecurringRefundService, PayoutAccountService,   // v10.45 — 환불 · 정산 계좌를 나눔
+    RecurringBatchService, RecurringAdminService,   // v10.86 — 정기 청구 배치 · 운영 조회를 나눔
     FileService,
     AttributionEngine, ExposureEngine,
     AuthService, PrincipalService, BusinessService, AccountSecurityService,
