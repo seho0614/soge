@@ -18,7 +18,10 @@ P={
  'post': q("select id from posts order by (state='APPROVED') desc, created_at desc limit 1") or '00000000-0000-4000-a000-000000000000',
  'hprod': q("select code from hlt_products where status='ON_SALE' order by code limit 1"),
  'horder': q("select o.order_no from hlt_orders o join accounts a on a.id=o.account_id where a.email='buyer@x.com' order by o.created_at desc limit 1") or 'H00000000000',
- 'mylisting': q("select l.id from listings l join accounts a on a.id=l.owner_account_id where a.email='intro@x.com' order by l.created_at desc limit 1") or q("select id from listings limit 1"),
+ # v10.79 — 고치기 화면의 매물: 순회 역할은 매물이 없어(intro 0건 → 전에는 아무 매물이나 골라 intro 도 404) 개발 계정 seller@x.com 의 공개 매물.
+ #   순회 역할에게는 남의 매물이라 404 가 맞음(expected_404) · 주인 seller 로 한 번 따로 열어 200 을 봄(맨 끝 owner_check)
+ 'mylisting': q("select l.id from listings l join accounts a on a.id=l.owner_account_id where a.email='seller@x.com' order by (l.status='PUBLISHED') desc, l.created_at desc limit 1") or q("select id from listings limit 1"),
+ 'mylisting_owner': q("select a.email from listings l join accounts a on a.id=l.owner_account_id where a.email='seller@x.com' order by (l.status='PUBLISHED') desc, l.created_at desc limit 1"),
 }
 ROUTES=json.load(open('site_routes.json'))
 def fill(r):
@@ -31,6 +34,8 @@ def fill(r):
        '/health/p/{code}':f"/health/p/{P['hprod']}", '/health/w/{code}':'/health/w/IMMUNE',
        '/my/health/orders/{no}':f"/my/health/orders/{P['horder']}", '/my/health/orders/{no}/ship':f"/my/health/orders/{P['horder']}/ship",'/i/{token}':'/i/invalid-token-check','/report/{targetType}/{targetId}':f"/report/LISTING/{P['listing']}"}
     return m.get(r,r)
+# v10.79 — 404 가 맞는 곳(오류로 세지 않고 expected_404 로 적음): 일부러 넣은 잘못된 초대 주소 · 남의 매물 고치기 화면
+EXPECT_404={'/i/{token}': lambda role: True, '/listings/{id}/edit': lambda role: True}   # 순회 역할 중에는 그 매물 주인이 없음
 ROLES={'guest':None,'person':'person@x.com','buyer':'buyer@x.com','intro':'intro@x.com','admin':'admin@x.com'}
 if os.environ.get('CRAWL_ROLES'): ROLES={k:v for k,v in ROLES.items() if k in os.environ['CRAWL_ROLES'].split(',')}   # v10.73 — 역할 나눠 돌리기(CRAWL_ROLES=intro,admin)
 out={'params':P,'pages':[], 'links':{}}
@@ -88,6 +93,7 @@ with sync_playwright() as pw:
             pg.remove_listener('response',onresp)
             rec={'role':role,'route':r,'url':url,'status':st,'final':final,'h1':h1,'len':len(body),'ms':dt,
                  'errors':errs,'console':cons[:5],'api_fail':apis,'bad_text':bad,'links':sorted(set(l.split('#')[0] for l in links)),'buttons':buttons,'forms':forms}
+            if st==404 and r in EXPECT_404 and EXPECT_404[r](role): rec['expected_404']=True   # v10.79
             out['pages'].append(rec)
             flag='!!' if (st>=400 or errs or bad or apis) else '  '
             print(flag,role,url,st,'→'+final if final!=urlparse(url).path else '',h1[:30],apis[:3],bad,errs[:1],file=sys.stderr)
@@ -102,6 +108,15 @@ with sync_playwright() as pw:
             except Exception as ex: res[l]=str(ex)[:60]
         out['links'][role]=res
         ctx.close()
+    # v10.79 — 주인이 자기 매물 고치기 화면을 열면 200 · 「소개하기 수정」
+    if P.get('mylisting_owner'):
+        ctx=br.new_context(); pg=ctx.new_page(); em=P['mylisting_owner']
+        go(pg, BASE+'/login'); __import__('consent_ok').agree(em, 'sgb-dev-1234'); pg.fill('input[name=email]',em); pg.fill('input[name=password]','sgb-dev-1234')
+        pg.click('form.auth button'); pg.wait_for_timeout(2500)
+        url=fill('/listings/{id}/edit'); resp,_=go(pg, BASE+url, wait_until='domcontentloaded', timeout=60000); pg.wait_for_timeout(1500)
+        h1=(pg.locator('h1').first.inner_text() if pg.locator('h1').count() else '')
+        out['owner_check']={'owner':em,'url':url,'status':resp.status if resp else None,'h1':h1,'ok':bool(resp) and resp.status==200 and '소개하기 수정' in h1}
+        print('owner_check',out['owner_check'],file=sys.stderr); ctx.close()
     br.close()
 out['restart_waits']=RESTARTS
 json.dump(out,open('site_crawl.json','w'),ensure_ascii=False,indent=1)

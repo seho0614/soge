@@ -34,7 +34,9 @@ for s in $ONLY; do
     -e KIT=/core -e QA=/w -e SGB_ROOT=/core -e SGB_QA_OUT=/w/out -e CRAWL_ROLES="${CRAWL_ROLES:-}" \
     $IMG timeout 5400 python3 "$s.py" > "$RES/log_$s.txt" 2>&1
   rc=$?
-  case $s in crawl_*) last="결과 아래 줄" ;; *) last=$(tail -1 "$RES/log_$s.txt" | cut -c1-200) ;; esac
+  case $s in crawl_*) last="결과 아래 줄" ;;
+    flow_*) last=$(grep -E '^통과 [0-9]+ / [0-9]+' "$RES/log_$s.txt" | tail -1 | cut -c1-200); [ -n "$last" ] || last=$(tail -1 "$RES/log_$s.txt" | cut -c1-200) ;;   # v10.79 — 흐름 요약이 섞여 찍혀도 전체 줄
+    *) last=$(tail -1 "$RES/log_$s.txt" | cut -c1-200) ;; esac
   echo "$s | rc=$rc · $(( $(date +%s) - t0 ))s · $last" | tee -a "$RES/summary.txt"
 done
 # 이번에 새로 쓴 결과만 (qa 폴더에 남아 있던 옛 결과는 빼고)
@@ -47,10 +49,13 @@ if os.path.exists(p):
     d = json.load(open(p))
     w = d.get('restart_waits') or []
     pg = d.get('pages') or []
-    bad = [x for x in pg if x.get('errors') or x.get('api_fail') or x.get('bad_text') or (x.get('status') or 0) >= 400]
-    ph = [x for x in bad if '{' in x.get('route', '') and not (x.get('errors') or x.get('api_fail') or x.get('bad_text'))]
-    print(f'사용자 웹 | 화면 {len(pg)} · 오류 {len(bad) - len(ph)} · 표본 없는 주소(404) {len(ph)}'
-          + (' — ' + ' · '.join(sorted({x["route"] for x in ph})) if ph else ''))
+    # v10.79 — 404 가 맞는 곳(잘못된 초대 주소 · 남의 매물 고치기)은 crawl_site 가 expected_404 로 적음 — 오류에서 뺌
+    exp = [x for x in pg if x.get('expected_404') and not (x.get('errors') or x.get('api_fail') or x.get('bad_text'))]
+    bad = [x for x in pg if x not in exp and (x.get('errors') or x.get('api_fail') or x.get('bad_text') or (x.get('status') or 0) >= 400)]
+    print(f'사용자 웹 | 화면 {len(pg)} · 오류 {len(bad)} · 기대한 404 {len(exp)}'
+          + (' — 오류: ' + ' · '.join(sorted({f"{x['role']}:{x['route']} {x.get('status')}" for x in bad}))[:300] if bad else ''))
+    oc = d.get('owner_check') or {}
+    if oc: print(f"사용자 웹 | 주인이 자기 매물 고치기 화면 → {oc.get('status')} · {'통과' if oc.get('ok') else '실패'} ({oc.get('owner')})")
     print(f'사용자 웹 다시 켜짐을 기다린 곳 {len(w)}곳' + (' — ' + ' · '.join(f'{r}:{u}({n}번)' for r, u, n in w[:10]) if w else ''))
 p = os.path.join(sys.argv[1], 'admin_crawl.json')
 if os.path.exists(p):

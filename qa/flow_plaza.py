@@ -915,16 +915,32 @@ def p5(b):
         return s1 < 300 and (j1 or {}).get('already') is True and s2 == 400 and rc == '1' and stt == 'PUBLISHED', f'같은 회원이 다시 → {s1} already={(j1 or {}).get("already")} · 대상 COMMUNITY_POST → {s2} · 글의 신고 수 {rc} · {stt}'
     W.step('같은 회원이 API 로 다시 신고(POST /reports · 대상 POST) → 앞의 신고를 그대로 돌려줌(already) · 신고 수 그대로 1 · 받지 않는 대상 이름은 400', 'API', api_report)
 
-    def bo_reported():
-        bo = watched(bo_login(bctx, 'admin@x.com'), 'P5 운영 화면'); P['bo'] = bo; dialogs(bo)
+    def bo_find():
+        # v10.79 — v10.72 「글 찾기」 · 「되살리기」(대표 결정 A: 처리 전 신고는 기각 · 신고 수 0 · 신고한 사람에게 알림)를 화면으로.
+        #   (전: 운영 화면에 공개 글을 가릴 단추가 없어 「신고된 글」 표에 오르는지만 보고 건너뜀 → v10.72 뒤로는 글이 보여 「시험 한계」 실패)
+        bo = watched(bo_login(bctx, 'admin@x.com'), 'P5 운영 화면'); P['bo'] = bo; box = dialogs(bo)
         if not bo_tab(bo, '소개광장 검수'): return False, '「소개광장 검수」 탭을 찾지 못함'
-        bo.wait_for_selector('.bo-main h3.sec', timeout=30000); bo.wait_for_timeout(800)
-        t = bo_main(bo); n = bo.locator('.bo-main table.tbl tbody tr', has_text=TITLE).count()
-        m = re.search(r'신고된 글\s*(\d+)', norm(t))
-        if n: return False, f'운영 화면에 그 글이 {n}줄 있음 — 시험을 보강해야 함(시험 한계)'
-        return 'skip', (f'건너뜀 — 운영 화면 「소개광장 검수」에는 「첫 글 검수」와 「신고된 글」(신고 3건 이상) 두 표뿐이고, 공개된 글을 찾아 가리는 단추가 없음. '
-                        f'신고를 넣을 길이 없어 「신고된 글 {m.group(1) if m else "?"}」 표에 이 글이 오르지 않음(web/src/app/admin/Community.tsx · v_post_reported 는 report_count >= 3)')
-    W.step('운영 화면 「소개광장 검수」의 「신고된 글」 표에 그 글이 올라오고 「감추기」를 누름', '운영 화면', bo_reported)
+        bo.wait_for_selector('[data-post-finder]', timeout=30000)
+        bo.fill('[data-post-finder] input[name=q]', KW); bo.click('[data-post-finder] button[type=submit]')
+        row = lambda: bo.locator('[data-post-finder] table.tbl > tbody > tr', has_text=TITLE)
+        if not until(lambda: row().count() == 1 or None, 20): return False, f'글 찾기에서 「{KW}」로 그 글을 찾지 못함 · {norm(text(bo, "[data-post-finder]"))[:120]}'
+        box['next'].append(f'흐름 점검 화면 감추기 {TAG}')
+        btn = exact_btn(row().first, '감추기')
+        if not btn: return False, '찾은 줄에 「감추기」 단추가 없음'
+        btn.click()
+        hid = until(lambda: q(f"select state from posts where id='{S['hpost']}'") == 'HIDDEN' or None, 20)
+        bo.select_option('[data-post-finder] select[aria-label="상태"]', '')           # 「모든 상태」 — 감춘 글도 보이게
+        if not until(lambda: row().count() == 1 and exact_btn(row().first, '되살리기') or None, 20): return False, f'감춘 뒤 「되살리기」 단추가 없음 · 감춤 {bool(hid)}'
+        box['next'].append(f'흐름 점검 화면 되살리기 {TAG}')
+        exact_btn(row().first, '되살리기').click()
+        back = until(lambda: q(f"select state from posts where id='{S['hpost']}'") == 'PUBLISHED' or None, 20)
+        rc = q(f"select report_count from posts where id='{S['hpost']}'")
+        rep = q(f"select count(*) filter (where state = 'DISMISSED') || '/' || count(*) from reports where target_type = 'POST' and target_id='{S['hpost']}'")
+        rid = q(f"select id from accounts where email='{S['r_email']}'")
+        nt = q(f"select count(*) from notifications where account_id='{rid}' and event_code = 'REPORT_RESOLVED'")
+        ok = bool(hid) and bool(back) and rc == '0' and rep == '1/1' and nt.isdigit() and int(nt) >= 1
+        return ok, f'찾음 1줄 · 「감추기」 → {"감춤" if hid else "안 바뀜"} · 「되살리기」 → {"공개" if back else "안 바뀜"} · 신고 수 {rc} · 신고 기각/전체 {rep} · 신고한 사람 알림 {nt} · 입력 창 {[m for _, m in box["seen"]][:2]}'
+    W.step('운영 화면 「소개광장 검수 › 글 찾기」에서 그 글을 찾아 「감추기」(사유) → 감춤 → 「되살리기」(사유) → 공개 · 신고 수 0 · 처리 전 신고는 기각 · 신고한 사람에게 알림(v10.72 결정 A)', '운영 화면', bo_find)
 
     def api_hide():
         st0, j0 = call('POST', f"/admin/community/posts/{S['hpost']}/hide", S['ADM'], {'reason': '  '})
@@ -932,7 +948,7 @@ def p5(b):
         st, j = call('POST', f"/admin/community/posts/{S['hpost']}/hide", S['ADM'], {'reason': REASON})
         # v10.27 (G-201) — 사유 없이는 422 REASON_REQUIRED(전에는 201 에 ok:false)
         return st0 == 422 and (j0 or {}).get('code') == 'REASON_REQUIRED' and mid == 'PUBLISHED' and st < 300 and (j or {}).get('ok') is True, f'사유 없이 → {st0} {(j0 or {}).get("code")}(글은 {mid} 그대로) · 사유 적고 → {st} {(j or {}).get("note")!r}'
-    W.step('운영자가 그 글을 가림 — 운영 화면에는 이 글을 가릴 단추가 없어 운영 API POST /admin/community/posts/{id}/hide 로 함(사유 없이는 거절 · 사유를 적으면 가려짐)', 'API', api_hide, must=True)
+    W.step('운영자가 그 글을 다시 가림 — 운영 API POST /admin/community/posts/{id}/hide(사유 없이는 거절 · 사유를 적으면 가려짐)', 'API', api_hide, must=True)
 
     def db_hidden():
         x = rows(f"select state, coalesce(hidden_reason,''), (hidden_at is not null)::text from posts where id='{S['hpost']}'")[0]
@@ -943,9 +959,9 @@ def p5(b):
         st = goto(g, f"/community/{S['hpost']}")
         t = norm(text(g, '.plz-body')); html = g.content()
         api = call('GET', f"/community/posts/{S['hpost']}")[1] or {}
-        ok = st == 200 and norm(text(g, '.plz-body h1')) == '가려진 글' and '신고가 들어와 확인 중입니다' in t and TITLE not in html and BODY[:20] not in html and REASON not in html and 'title' not in api and 'body' not in api and api.get('hidden') is True
+        ok = st == 200 and norm(text(g, '.plz-body h1')) == '가려진 글' and '운영 기준에 따라 가려진 글입니다' in t and TITLE not in html and BODY[:20] not in html and REASON not in html and 'title' not in api and 'body' not in api and api.get('hidden') is True
         return ok, f'{st} · 화면 {t[:70]!r} · 제목 · 본문 · 사유가 화면에 없음 {TITLE not in html and BODY[:20] not in html and REASON not in html} · API 응답 칸 {sorted(api)}'
-    W.step('로그인하지 않은 사람이 그 글 주소를 엶 → 「가려진 글」 자리만 보임(「신고가 들어와 확인 중입니다」) · 제목 · 본문 · 가린 사유는 화면에도 응답에도 없음', '화면', hidden_guest)
+    W.step('로그인하지 않은 사람이 그 글 주소를 엶 → 「가려진 글」 자리만 보임(운영자가 가린 글이라 「운영 기준에 따라 가려진 글입니다」 · v10.76) · 제목 · 본문 · 가린 사유는 화면에도 응답에도 없음', '화면', hidden_guest)
 
     def hidden_list():
         goto(g, '/community'); g.fill('.plz-find input[name=q]', KW); g.press('.plz-find input[name=q]', 'Enter')
