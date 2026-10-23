@@ -67,7 +67,7 @@ for f in ('src/modules/admin/admin.service.ts', 'web/src/app/admin/Switches.tsx'
 
 ok('precheck — 기능 스위치 값을 보여 줌', "where key like 'feature.%'" in rd('deploy/aws/precheck.sh'), '')
 n = len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))])
-ok('마이그레이션 파일 143(v10.69 부터 D106 · 144 — test_v1069)', n in (143, 144, 145, 146, 147), str(n))
+ok('마이그레이션 파일 143(v10.69 부터 D106 · 144 — test_v1069)', n in (143, 144, 145, 146, 147, 148), str(n))
 ok('VERSION v10.65 이상', re.match(r'v10\.(6[5-9]|[7-9]\d)', rd('VERSION').strip()) is not None, rd('VERSION').strip())
 c = sum(1 for r in RES if r[0])
 print(f'통과 {c} / {len(RES)}')

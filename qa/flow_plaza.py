@@ -905,6 +905,28 @@ def p5(b):
         return bool(n) and rc == '1' and stt == 'PUBLISHED', f'글 상세 {st} · 「신고」 → {href} → 사유 고르고 「신고하기」 → reports 1건 {bool(n)} · 글의 신고 수 {rc} · 글은 그대로 {stt}(3건부터 가림)'
     W.step('다른 회원(한신고)이 그 글 상세에서 「신고」를 눌러 신고함 → 신고 1건 · 글은 그대로(3건부터 가림)', '화면', look_report)
 
+    def look_comment_report():
+        # v10.80 (D110) — 댓글도 신고: 글쓴이가 단 댓글을 다른 회원이 「신고」 → 신고 화면(/report/comment/{댓글}) → 신고 1건 · 댓글은 그대로(3건부터 가림)
+        st0, j0 = call('POST', f"/me/community/posts/{S['hpost']}/comments", S['h_tok'], {'body': f'흐름 점검 댓글입니다 {TAG}'})
+        S['hcmt'] = cid = (j0 or {}).get('id')
+        if not cid: return False, f'댓글 쓰기 {st0} {j0}'
+        rp = P['r']; goto(rp, f"/community/{S['hpost']}")
+        link = rp.locator(f'a[data-comment-report][href="/report/comment/{cid}"]')
+        if link.count() != 1: return False, f'댓글 「신고」 링크 {link.count()}개'
+        link.click()
+        try: rp.wait_for_url(re.compile(r'/report/comment/'), timeout=20000)
+        except Exception: pass
+        rp.wait_for_timeout(800)
+        lead = norm(text(rp, 'p.lead'))
+        rp.locator('.opts button.opt').first.click(); rp.wait_for_timeout(200)
+        ta = rp.locator('textarea.inp')
+        if ta.count(): ta.fill(f'흐름 점검 댓글 신고 {TAG}')
+        rp.locator('button.btn-primary', has_text='신고하기').click()
+        n = until(lambda: q(f"select count(*) from reports where target_type='COMMENT' and target_id='{cid}'") == '1' or None, 20)
+        x = rows(f"select state, report_count from post_comments where id='{cid}'")[0]
+        return bool(n) and x == ['PUBLISHED', '1'] and '소개광장 댓글' in lead, f'댓글 「신고」 → {rp.url[-60:]} · 안내 {lead[:30]!r} · reports 1건 {bool(n)} · 댓글 {x}(3건부터 가림)'
+    W.step('다른 회원(한신고)이 글쓴이의 댓글에서 「신고」를 눌러 신고함(v10.80) → 신고 1건 · 댓글은 그대로(3건부터 가림)', '화면', look_comment_report)
+
     def api_report():
         # 같은 회원의 두 번째 신고는 세지 않음 · 받지 않는 대상 이름(COMMUNITY_POST)은 400
         code = next((x['code'] for x in (call('GET', '/report-reasons')[1] or []) if x['code'] != 'OTHER'), 'OTHER')

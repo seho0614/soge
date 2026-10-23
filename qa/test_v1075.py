@@ -62,7 +62,8 @@ ok('② 운영 화면 — 댓글 감추기 · 되살리기 · 사유 없으면 �
 ok('② 운영 화면 — 표 칸 수와 펼침 칸(colSpan 8) 일치', W.count('<th>', W.find('function PostFinder(')) - W.count('<th>', W.find('function CommentPanel(')) == 8 and 'colSpan={8}' in W, '')
 ok('② import — Fragment', "import { Fragment, useState } from 'react';" in W, '')
 ok('② 메뉴 부제', '모든 글과 댓글을 찾아 감추거나 되살립니다' in MENU, '')
-ok('② 회원 화면 — 신고 기능이 없으므로 「운영 기준에 따라 가려진 댓글」', '운영 기준에 따라 가려진 댓글입니다.' in SITE and '신고가 들어와 가려진 댓글' not in SITE, '')
+ok('② 회원 화면 — 신고 기능이 없으므로 「운영 기준에 따라 가려진 댓글」(v10.80 댓글 신고 뒤로는 신고로 가려지면 「신고가 들어와」 — test_v1080)', '운영 기준에 따라 가려진 댓글입니다.' in SITE
+   and ('신고가 들어와 가려진 댓글' not in SITE or "c.hiddenBy === 'REPORT' ? '신고가 들어와 가려진 댓글입니다.'" in SITE), '')
 
 if DB:
     def psql(sql):
