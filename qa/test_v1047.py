@@ -33,7 +33,7 @@ def strip(s):
 
 GLOBALS = {'Promise', 'Number', 'String', 'Date', 'Error', 'Set', 'Map', 'Object', 'JSON', 'Math', 'Array', 'Boolean', 'RegExp',
            'Record', 'NonNullable', 'Partial', 'Buffer', 'BigInt', 'Intl', 'Symbol', 'Infinity', 'NaN', 'Awaited', 'ReturnType',
-           'React', 'HTMLDivElement', 'HTMLElement', 'HTMLInputElement', 'IntersectionObserver', 'AbortSignal', 'URLSearchParams',
+           'React', 'HTMLDivElement', 'HTMLElement', 'HTMLInputElement', 'IntersectionObserver', 'AbortSignal', 'URLSearchParams', 'FormData',
            'Readonly', 'Pick', 'Omit', 'Exclude'}
 
 
