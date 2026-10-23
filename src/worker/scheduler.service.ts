@@ -3,6 +3,8 @@ import { DatabaseService } from '../db/database.service';
 import { RecurringBillingService } from '../modules/billing/recurring.service';
 import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
+import { MailService } from '../common/mail/mail.service';
+import { NotifyMailSender } from '../common/mail/notify-mail';
 
 /**
  * 배치 실행기.
@@ -35,6 +37,7 @@ export class SchedulerService {
     private readonly billing: RecurringBillingService,
     private readonly leadCash: LeadCashService,
     private readonly geo: GeoService,
+    private readonly mail: MailService,
   ) {}
 
   /**
@@ -310,9 +313,11 @@ export class SchedulerService {
             `사흘 넘게 밖으로 나가지 못한 알림 ${stuck.length}건 — 채널이 준비되지 않았습니다`,
             { count: stuck.length });
         }
+        /* v10.85 — 대기(QUEUED) 메일을 실제로 보냄(메일 설정 + notify.email_verified 가 모두 있을 때만 · src/common/mail/notify-mail.ts) */
+        const mailed = await new NotifyMailSender(this.db, this.mail).run();
         affected = sent;
-        detail = { sent, skipped, stuck: stuck.length, ready: [...ready],
-                   note: '실제 발송은 어댑터 연동 후입니다' };
+        detail = { sent, skipped, stuck: stuck.length, ready: [...ready], mail: mailed,
+                   note: mailed.ready ? '메일은 SES 로 보냄 · 문자(SMS)는 어댑터 연동 후' : '메일 설정 전 — 대기열에만 남김(SMTP_* · notify.email_verified)' };
         break;
       }
 

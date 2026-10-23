@@ -49,6 +49,9 @@ npx ts-node -P tsconfig.scripts.json scripts/test-payment-offline.ts | tail -1 |
 step "메일 발송기 (오프라인 · v10.43)"
 npx ts-node -P tsconfig.scripts.json scripts/test-mail-offline.ts | tail -1 || FAIL=1
 
+step "알림 메일 발송 (v10.85 · 거래 안에서 되돌림)"
+npx ts-node -P tsconfig.scripts.json scripts/test-notify-mail.ts | tail -1 || FAIL=1
+
 step "외부 연동 목록 대조 (v10.44)"
 npx ts-node -P tsconfig.scripts.json scripts/check-integrations.ts | tail -1 || FAIL=1
 
