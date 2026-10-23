@@ -44,9 +44,11 @@ body:has([data-own-chrome='all']) .pc-ft { display: none !important; }
 .pc-bo.sm, .pc-bp.sm { font-size: 12px; padding: 6px 11px; display: inline-flex; align-items: center; gap: 6px; }
 
 /* 좁은 화면 — 시안은 900px 아래에서 메뉴를 숨기고(햄버거 자리 · C-04) 760px 아래에서 오른쪽 글자 링크를 숨깁니다.
- * 실제 웹은 관으로 갈 길이 없어지므로 메뉴를 둘째 줄(옆으로 밀기)로 내립니다 — diffs 기록. */
-@media (max-width: 900px) {
-  .pc-hdin { flex-wrap: wrap; height: auto; padding: 10px 0 0; row-gap: 6px; gap: 12px; }
+ * 실제 웹은 관으로 갈 길이 없어지므로 메뉴를 둘째 줄(옆으로 밀기)로 내립니다 — diffs 기록.
+ * v10.81 (F-9) — 둘째 줄로 내리는 폭을 900 → 1240px(시트 화면 폭 3단계 640 · 900 · 1240 의 하나 · design-standard #13). 901 ~ 1060px 에서 한 줄 메뉴 끝이 최대 127px 잘려(overflow: hidden)
+ *   보이지도 누를 수도 없었습니다(/mall · /biz · /partners 실측). 오른쪽 글자 링크 · m-only 는 그대로 900px 기준(아래 블록). */
+@media (max-width: 1240px) {
+  .pc-hdin { flex-wrap: wrap; height: auto; padding: 10px 20px 0; row-gap: 6px; gap: 12px; }   /* v10.81 — 옆 여백 20px 유지(900px 아래는 다음 블록 .pc-wrap 16px 가 덮음) */
   .pc-lg { order: 1; }
   .pc-hr { order: 2; margin-left: auto; }
   .pc-gnb { order: 3; flex: 1 0 100%; overflow-x: auto; gap: 18px; padding: 6px 0 10px; scrollbar-width: none; }
