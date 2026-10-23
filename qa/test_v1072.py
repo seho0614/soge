@@ -51,11 +51,11 @@ ok('① 신고된 글 — 감춘 때(hiddenAt)를 돌려줌', 'hidden_at AS "hid
 
 ok('② 운영 화면 — 글 찾기(상태 · 게시판 · 검색 · 쪽)', 'function PostFinder(' in W and '<PostFinder ' in W and '/admin/community/posts?page=' in W
    and 'aria-label="상태"' in W and 'aria-label="게시판"' in W and '다음 쪽 →' in W, '')
-ok('② 운영 화면 — 되살리기 단추(찾기 표 · 신고된 글 표) · 사유 없으면 안 보냄', W.count('되살리기</button>') == 2 and '/unhide`' in W
+ok('② 운영 화면 — 되살리기 단추(찾기 표 · 신고된 글 표) · 사유 없으면 안 보냄', W.count('되살리기</button>') >= 2 and '/unhide`' in W
    and '되살리실 때도 사유를 적으십시오' in W, '')
 ok('② 운영 화면 — 지운 글은 단추 없음', "p.state === 'PUBLISHED' || p.state === 'PENDING'" in W and "p.state === 'HIDDEN'" in W, '')
-ok('② 메뉴 부제', '모든 글을 찾아 감추거나 되살립니다' in MENU, '')
-ok('② import — useState · ymdKst', "import { useState } from 'react';" in W and "import { ymdKst } from '../../lib/format';" in W, '')
+ok('② 메뉴 부제', re.search(r'모든 글(과 댓글)?을 찾아 감추거나 되살립니다', MENU) is not None, '')  # v10.75 「글과 댓글」
+ok('② import — useState · ymdKst', re.search(r"import \{ (Fragment, )?useState \} from 'react';", W) is not None and "import { ymdKst } from '../../lib/format';" in W, '')
 
 if DB:
     def psql(sql):
