@@ -112,7 +112,7 @@ ok('시안 · 실제 웹 설명 P2P(B2B 아님)', '<meta name="description" cont
 ok('VERSION v10.52 이상', re.match(r'v10\.(5[2-9]|[6-9]\d)', rd('VERSION').strip()) is not None, rd('VERSION').strip())
 doc = rd('docs/105_디자인통일_1단계_v10.52_20261021.md')
 ok('작업 문서 docs/105', all(h in doc for h in ('## 1. 결론', '## 3. 바뀐 파일', '## 5. 집 PC 확인', '## 6. 운영 적용')), '')
-ok('DB 변경 없음(마이그레이션 142 그대로 · v10.65 D105 부터 143 — test_v1065 · v10.69 D106 부터 144 — test_v1069)', len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (142, 143, 144, 145, 146, 147, 148, 149), '')
+ok('DB 변경 없음(마이그레이션 142 그대로 · v10.65 D105 부터 143 — test_v1065 · v10.69 D106 부터 144 — test_v1069)', len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (142, 143, 144, 145, 146, 147, 148, 149, 150), '')
 
 n_ok = sum(1 for r in RES if r[0])
 print(f'통과 {n_ok} / {len(RES)}')

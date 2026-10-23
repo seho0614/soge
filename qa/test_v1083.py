@@ -28,7 +28,7 @@ ok('① 판정 · 앞 거르기 · 관련순이 | 를 읽음(같은 이름 · �
    and "THEN ''   -- D111" in M and "string_to_array(split_part(btrim(p_kw), ' ', 1), '|')" in M, '')
 ok('① 자료를 지우지 않음', not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE)\b', M), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 149 · 마지막 D111', (len(mig), mig[-1] if mig else '') == (149, 'D111_search_synonym_expand'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 149 · 마지막 D111(v10.84 부터 D112 · 150 — test_v1084)', (len(mig), mig[-1] if mig else '') in ((149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 H = rd('src/core/search-expand.ts')
 ok('② 공용 도우미 — 한 번 부름 · | 를 띄어쓰기로', 'SELECT fn_search_expand($1) AS k' in H and ".replace(/\\|/g, ' ')" in H, '')
@@ -95,7 +95,7 @@ if API and DB:
     ok('④ limit 이상한 값 → 500 아님', all(x == 200 for x in st), st)
     ADM = call('POST', '/auth/login', body={'email': 'admin@x.com', 'password': 'sgb-dev-1234'})[1]['accessToken']
     if t:
-        typo = '고기집'
+        typo = '고깃집점검' + uuid.uuid4().hex[:4]   # 사전에 없는 시험용 말(v10.84 부터 「고기집」은 기본 사전에 있음 · D112)
         s0 = G('/search', q=typo)[1]
         sa, ja = call('POST', '/admin/search/synonyms', ADM, {'term': typo, 'canonical': '고깃집', 'kind': 'ITEM', 'weight': 5})
         s1 = G('/search', q=typo)[1]

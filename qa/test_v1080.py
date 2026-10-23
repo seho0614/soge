@@ -39,7 +39,7 @@ ok('① fn_report_escalate — D031 그대로 + 댓글 갈래(서로 다른 신�
    and "WHERE target_type = 'COMMENT' AND target_id = NEW.target_id AND state IN ('OPEN','QUEUED','UPHELD')" in e, '')
 ok('① 자료를 지우지 않음', not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE)\b', M), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 148 · 마지막 D110(v10.83 부터 D111 · 149 — test_v1083)', (len(mig), mig[-1] if mig else '') in ((148, 'D110_comment_report'), (149, 'D111_search_synonym_expand')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 148 · 마지막 D110(v10.83 부터 D111 · 149 — test_v1083)', (len(mig), mig[-1] if mig else '') in ((148, 'D110_comment_report'), (149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 S, C = rd('src/modules/community/community.service.ts'), rd('src/modules/community/community.controller.ts')
 ok('② 신고 API 대상에 COMMENT', "'POST', 'COMMENT'] as const" in rd('src/modules/review/abuse.controller.ts'), '')
