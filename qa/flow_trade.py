@@ -336,10 +336,19 @@ def t2(b, prev):
     R.do('인증 화면 2번 칸의 「사업자 정보 등록」을 누르면 「사업자 전환」 화면(/my/business)의 신청 폼이 열림', '화면', s4)
 
     def s5():
-        pg.fill('main form.auth input[name=bizRegNo]', BRN); pg.fill('main form.auth input[name=companyName]', COMP); pg.fill('main form.auth input[name=ceoName]', NAME)
-        pg.click('main form.auth button.cta-primary')
-        msg = until(lambda: one(txt(pg, 'main .result .ok-note')) or one(txt(pg, 'main form.auth .form-error')), 25) or ''
-        return '신청이 접수되었습니다' in msg, f'안내 「{msg[:50]}」 · 「{one(txt(pg, "main .result .stub-note"))[:44]}」 · 사업장 주소는 비워 둠(「주소 검색」이 바깥 서비스(다음 우편번호)를 불러 누르지 않음 · 직접 입력 칸은 읽기 전용)'
+        # v10.84 — 운영 방식 사용자 웹은 화면이 먼저 그려지고 단추는 스크립트가 다 붙은 뒤에 동작합니다. 그 전에 누르면 아무 일도 없어
+        #   안내가 안 뜸(10/23 한 번 · 40/90). → 다 붙을 때까지 기다리고, 그래도 서버에 신청이 안 갔으면(DB 에 행 없음) 한 번만 다시 누름(기록에 남김).
+        try: pg.wait_for_load_state('networkidle', timeout=20000)
+        except Exception: pass
+        tries = 0
+        def submit():
+            pg.fill('main form.auth input[name=bizRegNo]', BRN); pg.fill('main form.auth input[name=companyName]', COMP); pg.fill('main form.auth input[name=ceoName]', NAME)
+            pg.click('main form.auth button.cta-primary')
+            return until(lambda: one(txt(pg, 'main .result .ok-note')) or one(txt(pg, 'main form.auth .form-error')), 25) or ''
+        msg = submit(); tries += 1
+        if not msg and q(f"select count(*) from businesses where account_id='{S['aid']}'") == '0':
+            msg = submit(); tries += 1
+        return '신청이 접수되었습니다' in msg, f'안내 「{msg[:50]}」 · 「{one(txt(pg, "main .result .stub-note"))[:44]}」 · 누른 횟수 {tries}(2 = 첫 번째는 화면 준비 전이라 서버에 안 감) · 사업장 주소는 비워 둠(「주소 검색」이 바깥 서비스(다음 우편번호)를 불러 누르지 않음 · 직접 입력 칸은 읽기 전용)'
     R.do('사업자등록번호 · 상호 · 대표자명을 채우고 「사업자 인증 신청」을 누름 → 「신청이 접수되었습니다」', '화면', s5)
 
     def s6():
