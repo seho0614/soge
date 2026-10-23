@@ -16,6 +16,8 @@ const BOARDS = ['REVIEW', 'TRADE', 'QNA', 'NOTICE'];
 const ADMIN_STATES = ['PENDING', 'PUBLISHED', 'HIDDEN', 'DELETED'];
 /** 되살릴 때 처리 전 신고를 닫는 문구 — 신고한 사람에게 그대로 보입니다 */
 const UNHIDE_RESOLUTION = '운영 확인 결과 규칙에 어긋나지 않는 글로 보고 다시 올렸습니다.';
+/** 신고 3건 자동 감춤의 사유 — 신고 트리거(D031 fn_report_escalate)가 적는 글자 그대로입니다(v10.76 · 시험이 둘을 대조) */
+const AUTO_HIDE_REASON = '신고 3건 — 운영 확인 대기';
 /* v10.47 (D100) — 우리동네 맛집 글(board FOOD)은 「전체」 목록 · 메인에 섞지 않습니다(맛집 화면 /community/food 에서만).
  *   BOARDS 에도 넣지 않습니다 — 게시판 목록(board=)으로 고를 수 없습니다. 글 하나 보기(post) · 댓글 · 신고 · 검수는 그대로 씁니다. */
 
@@ -144,10 +146,12 @@ export class CommunityService {
                note: '작성자가 지운 글입니다.', comments: await this.commentsOf(id) };
     }
 
-    /* 가려진 글은 자리를 남깁니다 — 통째로 사라지면 다시 씁니다. */
+    /* 가려진 글은 자리를 남깁니다 — 통째로 사라지면 다시 씁니다.
+     * v10.76 — 신고 3건으로 자동으로 가려진 글만 「신고가 들어와 확인 중」. 운영자가 감춘 글(v10.72)은 신고가 없어도
+     *   같은 문구가 나갔습니다 → 「운영 기준에 따라 가려진 글」(댓글 v10.75 와 같은 말). 운영자가 적은 사유는 작성자에게만 보입니다. */
     if (p.state === 'HIDDEN' && !p.mine) {
       return { ok: true, id: p.id, board: p.board, hidden: true,
-               note: '신고가 들어와 확인 중입니다.' };
+               note: p.hiddenReason === AUTO_HIDE_REASON ? '신고가 들어와 확인 중입니다.' : '운영 기준에 따라 가려진 글입니다.' };
     }
     if (p.state === 'PENDING' && !p.mine) {
       return { ok: true, id: p.id, board: p.board, pending: true,
