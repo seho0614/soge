@@ -106,13 +106,13 @@ keep = set(re.findall(r'"(\w+)":1', km.group(1))) if km else set()
 ok('시안 묶어 둔 화면 — 메인 히어로 · 소개장터 메인 · 소개광장 · 운영 화면', B2 or {'main1', 'main2', 'list', 'cmu', 'commu', 'adm'} <= keep, f'{len(keep)}개')
 ok('시안 관 화면은 묶지 않음(안심소개 · 소개창업 · 상세 · 로그인 · 나의공간)', not ({'listl', 'listb', 'detail', 'login', 'my', 'win'} & keep), '')
 ok('시안 주소 → 관(mny · mal · biz)', '{ mny: "money", mal: "mall", biz: "biz" }' in pm and 'el.setAttribute("data-sgb", "");' in pm, '')
-ok('시안 · 실제 웹 설명 P2P(B2B 아님)', '<meta name="description" content="개인 · 사업자 누구나 거래처 · 매물 · 창업 자리를 소개하고 소개비를 받는 P2P 소개 플랫폼입니다.">' in PR and 'B2B 플랫폼' not in PR and '사업자끼리 소개하고' not in PR and 'P2P 소개 플랫폼' in rd('site/src/app/layout.tsx') and "B2B 소개 플랫폼'" not in rd('site/src/app/layout.tsx'), '')
+ok('시안 · 실제 웹 설명 P2P(B2B 아님)', '<meta name="description" content="개인 · 사업자 누구나 거래처 · 매물 · 창업 자리를 소개하고 소개비를 받는 P2P 소개 플랫폼입니다.">' in PR and 'B2B 플랫폼' not in PR and '사업자끼리 소개하고' not in PR and 'P2P 소개 플랫폼' in (rd('site/src/app/layout.tsx') + rd('site/src/i18n/messages/ko.json')) and "B2B 소개 플랫폼'" not in rd('site/src/app/layout.tsx'), '')   # v10.95 — 설명은 사전(ko.json)
 
 # ⑥ 기록
 ok('VERSION v10.52 이상', re.match(r'v10\.(5[2-9]|[6-9]\d)', rd('VERSION').strip()) is not None, rd('VERSION').strip())
 doc = rd('docs/105_디자인통일_1단계_v10.52_20261021.md')
 ok('작업 문서 docs/105', all(h in doc for h in ('## 1. 결론', '## 3. 바뀐 파일', '## 5. 집 PC 확인', '## 6. 운영 적용')), '')
-ok('DB 변경 없음(마이그레이션 142 그대로 · v10.65 D105 부터 143 — test_v1065 · v10.69 D106 부터 144 — test_v1069)', len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (142, 143, 144, 145, 146, 147, 148, 149, 150), '')
+ok('DB 변경 없음(마이그레이션 142 그대로 · v10.65 D105 부터 143 — test_v1065 · v10.69 D106 부터 144 — test_v1069)', len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154), '')   # v10.95 — v10.89(151)부터 빠져 있던 것 더함
 
 n_ok = sum(1 for r in RES if r[0])
 print(f'통과 {n_ok} / {len(RES)}')
