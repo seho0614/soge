@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DealService } from './deal.service';
+import { DealContractService } from './deal-contract.service';
 import {
   ContractDto, ConversationDto, DealDto, FeeAgreementDto, IssueContractDto,
   MessageDto, ProposeFeeDto, ReportPaymentDto, SendMessageDto, SignResultDto,
@@ -17,7 +18,7 @@ import { Audit } from '../../core/audit.interceptor';
 @ApiResponse({ status: 403, description: '권한 없음 · 게이트 미충족', type: ErrorDto })
 @Controller('api/v1')
 export class DealController {
-  constructor(private readonly service: DealService) {}
+  constructor(private readonly service: DealService, private readonly contracts: DealContractService) {}   // v10.92 — 계약서는 DealContractService
 
   @Post('conversations')
   /* 개인회원도 문의는 할 수 있습니다(결정 ⑤).
@@ -169,7 +170,7 @@ export class DealController {
   @Audit('CONTRACT_SIGN', 'DEAL')
   /* signContract2 가 상태 전이까지 합니다 —
      기존 sign() 은 서명 시각만 찍고 AGREED→SIGNED 로 넘기지 않았습니다. */
-  sign(@Param('id') id: string) { return this.service.signContract2(id); }
+  sign(@Param('id') id: string) { return this.contracts.signContract2(id); }
 
   @Post('deals/:id/payment-report')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')   // Q2 — 개인 당사자도 신고
@@ -196,7 +197,7 @@ export class DealController {
   @ApiOperation({ summary: '계약 진행 상태',
     description: '양측이 각각 어디까지 했는지 봅니다. stalled 는 3일 넘게 멈춘 건입니다.' })
   @ApiOkResponse({ type: ContractStateDto })
-  contractState(@Param('id') id: string) { return this.service.contractState(id); }
+  contractState(@Param('id') id: string) { return this.contracts.contractState(id); }
 
   @Post('deals/:id/contract/agree')
   @Roles('MEMBER','BIZ_OWNER','BIZ_STAFF')
@@ -207,7 +208,7 @@ export class DealController {
   @ApiOkResponse({ type: ContractStateDto })
   @Audit('CONTRACT_AGREE', 'CONTRACT')
   agree(@Param('id') id: string, @Body() dto: AgreeContractDto) {
-    return this.service.agreeContract(id, dto.terms);
+    return this.contracts.agreeContract(id, dto.terms);
   }
 
   @Post('deals/:id/contract/draft')
@@ -216,7 +217,7 @@ export class DealController {
     description: '보내지 않고 내 쪽에만 남깁니다 — 상대의 합의에 영향이 없고, 저장한 사람에게만 보입니다. 「서명 요청 보내기」(조건 합의)를 누르면 지워집니다.' })
   @Audit('CONTRACT_DRAFT', 'CONTRACT')
   draft(@Param('id') id: string, @Body() dto: DraftContractDto) {
-    return this.service.saveContractDraft(id, dto.terms);
+    return this.contracts.saveContractDraft(id, dto.terms);
   }
 
   @Post('deals/:id/contract/nudge')
@@ -224,7 +225,7 @@ export class DealController {
   @ApiOperation({ summary: '계약 확인 요청 (v10.31 · 시안 계약 진행 「확인 요청」)',
     description: '상대 차례인 계약에 상대에게 알림(CONTRACT_NUDGE · 수신거부 불가)을 보냅니다. 하루 한 번(409 NUDGED_TODAY) · 내 차례면 409 NOT_THEIR_TURN.' })
   @Audit('CONTRACT_NUDGE', 'CONTRACT')
-  nudge(@Param('id') id: string) { return this.service.nudgeContract(id); }
+  nudge(@Param('id') id: string) { return this.contracts.nudgeContract(id); }
 
   @Post('deals/:id/contract/counter')
   @Roles('MEMBER','BIZ_OWNER','BIZ_STAFF')
@@ -232,7 +233,7 @@ export class DealController {
     description: '무엇을 고쳐야 하는지 남아야 상대가 움직일 수 있습니다.' })
   @Audit('CONTRACT_COUNTER', 'CONTRACT')
   counter(@Param('id') id: string, @Body() dto: CounterContractDto) {
-    return this.service.counterContract(id, dto.memo, dto.terms);
+    return this.contracts.counterContract(id, dto.memo, dto.terms);
   }
 
   @Post('deals/:id/contract/fulfil')
@@ -244,7 +245,7 @@ export class DealController {
       '대금은 당사자끼리 직접 주고받습니다.' })
   @Audit('CONTRACT_FULFIL', 'CONTRACT')
   fulfil(@Param('id') id: string) {
-    return this.service.fulfilContract(id);
+    return this.contracts.fulfilContract(id);
   }
 
   @Post('deals/:id/contract/cancel')
@@ -252,14 +253,14 @@ export class DealController {
   @ApiOperation({ summary: '계약 파기' })
   @Audit('CONTRACT_CANCEL', 'CONTRACT')
   cancel(@Param('id') id: string, @Body() dto: CancelContractDto) {
-    return this.service.cancelContract(id, dto.reason);
+    return this.contracts.cancelContract(id, dto.reason);
   }
 
   @Get('deals/:id/contract/history')
   @Roles('MEMBER','BIZ_OWNER','BIZ_STAFF')
   @ApiOperation({ summary: '계약 이력',
     description: '분쟁에서 "누가 언제 무엇을 했는가"의 근거입니다. 수정·삭제되지 않습니다.' })
-  history(@Param('id') id: string) { return this.service.contractHistory(id); }
+  history(@Param('id') id: string) { return this.contracts.contractHistory(id); }
   /* ── 전자계약 ─────────────────────────────────────────────────── */
 
   @Get('contract-templates')
@@ -270,13 +271,13 @@ export class DealController {
       '성사 시점 · 해지 조건이 계약마다 달라집니다.',
   })
   @ApiOkResponse({ type: Object, isArray: true })
-  contractTemplates() { return this.service.contractTemplates(); }
+  contractTemplates() { return this.contracts.contractTemplates(); }
 
   @Get('contract-templates/:code')
   @ApiOperation({ summary: '양식 본문', description: '서명 전에 무엇에 동의하시는지 보십시오.' })
   @ApiParam({ name: 'code' })
   @ApiOkResponse({ type: Object })
-  contractTemplate(@Param('code') code: string) { return this.service.contractTemplate(code); }
+  contractTemplate(@Param('code') code: string) { return this.contracts.contractTemplate(code); }
 
   @Post('deals/:id/contract/esign')
   @ApiBearerAuth()
@@ -293,7 +294,7 @@ export class DealController {
   @ApiResponse({ status: 422, description: '계약 상태 불일치', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   @Audit('CONTRACT_ESIGN', 'DEAL')
-  requestESign(@Param('id') id: string) { return this.service.requestESign(id); }
+  requestESign(@Param('id') id: string) { return this.contracts.requestESign(id); }
 
   @Get('deals/:id/contract/esign')
   @ApiBearerAuth()
@@ -306,6 +307,6 @@ export class DealController {
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object })
-  esignStatus(@Param('id') id: string) { return this.service.esignStatus(id); }
+  esignStatus(@Param('id') id: string) { return this.contracts.esignStatus(id); }
 
 }

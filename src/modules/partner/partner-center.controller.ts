@@ -8,6 +8,7 @@ import { Audit } from '../../core/audit.interceptor';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { LeadCashService } from './lead-cash.service';
 import { PartnerCenterService } from './partner-center.service';
+import { PartnerCenterAdminService } from './partner-center-admin.service';
 
 /* ── DTO ─────────────────────────────────────────────────────────────── */
 export class CashChargeDto {
@@ -318,7 +319,7 @@ export class MeFulfillmentController {
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class PartnerCenterAdminController {
-  constructor(private readonly cash: LeadCashService, private readonly svc: PartnerCenterService) {}
+  constructor(private readonly cash: LeadCashService, private readonly svc: PartnerCenterAdminService) {}   // v10.92 — adm* 는 PartnerCenterAdminService
 
   @Get('cash')
   @ApiOperation({ summary: '리드 이용료 선불 잔액 — 파트너별 · 합계 · 원장 불변식', description: '유상 잔액 합계 = 선불로 보관 중인 금액. 불변식(v_lead_cash_invariants)은 0줄이어야 정상.' })

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Headers, Ip, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AffiliateService } from './affiliate.service';
+import { AffiliateAdminService } from './affiliate-admin.service';
 import {
   CreateLinkDto, CreateProductDto, UpdateProductDto, SetGoalDto,
   ReviewMaterialDto, SettleRunDto, AffiliatePayoutAccountDto, AffiliateInquiryDto,
@@ -28,7 +29,7 @@ import { Audit } from '../../core/audit.interceptor';
 @ApiBearerAuth()
 @Controller('api/v1')
 export class AffiliateController {
-  constructor(private readonly svc: AffiliateService) {}
+  constructor(private readonly svc: AffiliateService, private readonly admin: AffiliateAdminService) {}   // v10.92 — 운영 화면은 AffiliateAdminService
 
   /* ── 파트너 ───────────────────────────────────────────────── */
 
@@ -198,20 +199,20 @@ export class AffiliateController {
     summary: '파트너 입점 심사',
     description: '신청 목록과 사업자 정보. **사업자 인증을 마친 곳만** 승인하십시오.',
   })
-  applications() { return this.svc.applications(); }
+  applications() { return this.admin.applications(); }
 
   @Post('admin/affiliates/applications/:id/decide')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '입점 승인 · 반려', description: '반려면 사유를 적으십시오.' })
   @Audit('PARTNER_APPROVE', 'PARTNER')
   decide(@Param('id') id: string, @Body() dto: ReviewMaterialDto) {
-    return this.svc.decideApplication(id, dto);
+    return this.admin.decideApplication(id, dto);
   }
 
   @Get('admin/affiliates/products')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '제휴상품 목록' })
-  adminProducts() { return this.svc.adminProducts(); }
+  adminProducts() { return this.admin.adminProducts(); }
 
   @Post('admin/affiliates/products')
   @Roles('ADMIN', 'SUPER')
@@ -220,7 +221,7 @@ export class AffiliateController {
     description: '**건당 정액**입니다. 비율이 아닌 것은 거래액을 우리가 못 보기 때문입니다.',
   })
   @Audit('AFFILIATE_PRODUCT_CREATE', 'PRODUCT')
-  createProduct(@Body() dto: CreateProductDto) { return this.svc.createProduct(dto); }
+  createProduct(@Body() dto: CreateProductDto) { return this.admin.createProduct(dto); }
 
   @Patch('admin/affiliates/products/:id')
   @Roles('ADMIN', 'SUPER')
@@ -232,19 +233,19 @@ export class AffiliateController {
   })
   @Audit('AFFILIATE_PRODUCT_UPDATE', 'PRODUCT')
   updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    return this.svc.updateProduct(id, dto);
+    return this.admin.updateProduct(id, dto);
   }
 
   @Get('admin/affiliates/goals')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '목표 현황', description: '**개인별 설정이 등급 일괄보다 우선합니다.**' })
-  goals(@Query('ym') ym?: string) { return this.svc.goals(ym); }
+  goals(@Query('ym') ym?: string) { return this.admin.goals(ym); }
 
   @Post('admin/affiliates/goals')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '목표 설정' })
   @Audit('PARTNER_GOAL_SET', 'PARTNER')
-  setGoal(@Body() dto: SetGoalDto) { return this.svc.setGoal(dto); }
+  setGoal(@Body() dto: SetGoalDto) { return this.admin.setGoal(dto); }
 
   @Get('admin/affiliates/settlements')
   @Roles('ADMIN', 'SUPER', 'PAYOUT')
@@ -252,7 +253,7 @@ export class AffiliateController {
     summary: '정산 현황',
     description: '**트랙별로 따로 돕니다** — 소개비와 제휴수수료는 주기가 다를 수 있습니다.',
   })
-  adminSettlements() { return this.svc.adminSettlements(); }
+  adminSettlements() { return this.admin.adminSettlements(); }
 
   @Post('admin/affiliates/settlements/run')
   @Roles('ADMIN', 'SUPER')
@@ -261,7 +262,7 @@ export class AffiliateController {
     description: '확정된 주문을 모아 정산서를 만듭니다. **지급은 별도 승인**입니다.',
   })
   @Audit('PARTNER_SETTLE_RUN', 'SETTLEMENT')
-  runSettle(@Body() dto: SettleRunDto) { return this.svc.runSettle(dto); }
+  runSettle(@Body() dto: SettleRunDto) { return this.admin.runSettle(dto); }
 
   /* ── 마케팅자료 · 파트너가이드 등록 (D007) ─────────────────── */
 
@@ -278,7 +279,7 @@ export class AffiliateController {
   @ApiOkResponse({ schema: { type: 'object', properties: {
     ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, state: { type: 'string', example: 'PENDING' }, note: { type: 'string' } } } })
   @Audit('MATERIAL_CREATE', 'MATERIAL')
-  createMaterial(@Body() dto: CreateMaterialDto) { return this.svc.createMaterial(dto); }
+  createMaterial(@Body() dto: CreateMaterialDto) { return this.admin.createMaterial(dto); }
 
   @Get('admin/affiliates/guides')
   @Roles('ADMIN', 'SUPER')
@@ -288,7 +289,7 @@ export class AffiliateController {
     isActive: { type: 'boolean' }, updatedAt: { type: 'string', format: 'date-time' },
     fileId: { type: 'string', format: 'uuid', nullable: true }, fileName: { type: 'string', nullable: true },
     fileType: { type: 'string', nullable: true }, fileSize: { type: 'integer', nullable: true } } } } })
-  adminGuides() { return this.svc.adminGuides(); }
+  adminGuides() { return this.admin.adminGuides(); }
 
   @Post('admin/affiliates/guides')
   @Roles('ADMIN', 'SUPER')
@@ -299,7 +300,7 @@ export class AffiliateController {
   @ApiOkResponse({ schema: { type: 'object', properties: {
     ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, isActive: { type: 'boolean' }, note: { type: 'string' } } } })
   @Audit('GUIDE_CREATE', 'GUIDE')
-  createGuide(@Body() dto: CreateGuideDto) { return this.svc.createGuide(dto); }
+  createGuide(@Body() dto: CreateGuideDto) { return this.admin.createGuide(dto); }
 
   @Patch('admin/affiliates/guides/:id')
   @Roles('ADMIN', 'SUPER')
@@ -307,12 +308,12 @@ export class AffiliateController {
   @ApiOkResponse({ schema: { type: 'object', properties: {
     ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, isActive: { type: 'boolean' }, note: { type: 'string' } } } })
   @Audit('GUIDE_UPDATE', 'GUIDE')
-  updateGuide(@Param('id') id: string, @Body() dto: UpdateGuideDto) { return this.svc.updateGuide(id, dto); }
+  updateGuide(@Param('id') id: string, @Body() dto: UpdateGuideDto) { return this.admin.updateGuide(id, dto); }
 
   @Get('admin/affiliates/materials/queue')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '마케팅자료 심의 큐' })
-  materialQueue() { return this.svc.materialQueue(); }
+  materialQueue() { return this.admin.materialQueue(); }
 
   @Post('admin/affiliates/materials/:id/review')
   @Roles('ADMIN', 'SUPER')
@@ -322,6 +323,6 @@ export class AffiliateController {
   })
   @Audit('MATERIAL_REVIEW', 'MATERIAL')
   reviewMaterial(@Param('id') id: string, @Body() dto: ReviewMaterialDto) {
-    return this.svc.reviewMaterial(id, dto);
+    return this.admin.reviewMaterial(id, dto);
   }
 }

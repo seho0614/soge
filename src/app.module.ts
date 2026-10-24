@@ -43,12 +43,14 @@ import { RequestService } from './modules/request/request.service';
 
 import { DealController } from './modules/deal/deal.controller';
 import { DealService } from './modules/deal/deal.service';
+import { DealContractService } from './modules/deal/deal-contract.service';
 
 import { MeController } from './modules/me/me.controller';
 import { SearchController } from './modules/search/search.controller';
 import { SearchService } from './modules/search/search.service';
 import { AffiliateController } from './modules/affiliate/affiliate.controller';
 import { AffiliateService } from './modules/affiliate/affiliate.service';
+import { AffiliateAdminService } from './modules/affiliate/affiliate-admin.service';
 import { RiskLearnController } from './modules/govern/risklearn.controller';
 import { RiskLearnService } from './modules/govern/risklearn.service';
 import { SearchAdminController } from './modules/search/search-admin.controller';
@@ -134,6 +136,7 @@ import { PartnerAdminService } from './modules/partner/partner-admin.service';
 /* v10.31 (W5) — 파트너센터 새 API · 리드 이용료 선불 충전 */
 import { PartnerCenterController, PartnerCenterAdminController, MeFulfillmentController } from './modules/partner/partner-center.controller';
 import { PartnerCenterService } from './modules/partner/partner-center.service';
+import { PartnerCenterAdminService } from './modules/partner/partner-center-admin.service';
 import { LeadCashService } from './modules/partner/lead-cash.service';
 import { PartnerActorService } from './modules/partner/partner-actor.service';
 import { IntroducerController, PointsController, InviteController } from './modules/introducer/introducer.controller';
@@ -276,7 +279,7 @@ import { LeadService } from './modules/lead/lead.service';
     AiService,
     IntroducerService,
     MainService,
-    PartnerService, PartnerCenterService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
+    PartnerService, PartnerCenterService, PartnerCenterAdminService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
     PartnerLeadService, PartnerMoneyService,   // v10.86 — 파트너 리드 · 이용료를 나눔
     PartnerAdminService,                                                          // v10.45 — 파트너 운영(adm*)을 나눔
     QualificationService,
@@ -292,7 +295,7 @@ import { LeadService } from './modules/lead/lead.service';
     ReviewService, ReviewRepository,
     ListingService, ListingRepository, FavoriteService,
     RequestService,
-    DealService,
+    DealService, DealContractService,   // v10.92
     MeService,
     CommunityService,
     PollService,
@@ -303,7 +306,7 @@ import { LeadService } from './modules/lead/lead.service';
     RiskLearnService,
     SearchAdminService,
     PayoutService,
-    AffiliateService,
+    AffiliateService, AffiliateAdminService,   // v10.92
     SearchService,
     PublicService,
     SiteService,
