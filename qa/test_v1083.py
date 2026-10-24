@@ -40,7 +40,7 @@ ok('② 통합 검색 API — 매물 · 요청 모두 낱말별(fn_search_match 
    and 'lower(l.title) LIKE fn_search_like($1)' not in P and 'lower(r.title) LIKE fn_search_like($1)' not in P, '')
 ok('② 통합 검색 표(match=TITLE)도 낱말별', 'NOT $12::boolean OR fn_search_match(l.title, cat.name, $3)' in rd('src/modules/listing/listing.repository.ts'), '')
 ok('② limit — 1 ~ 50 정수만 · 아니면 20', 'Number.isInteger(n) && n >= 1 ? Math.min(n, 50) : 20' in rd('src/modules/public/public.controller.ts'), '')
-S = rd('src/modules/search/search.service.ts'); A = rd('src/modules/search/search-admin.controller.ts'); W = rd('web/src/app/admin/AiLearn.tsx')
+S = rd('src/modules/search/search.service.ts'); A = rd('src/modules/search/search-admin.controller.ts'); W = rd('web/src/app/admin/AiLearn.tsx') + rd('web/src/app/admin/ailearn/SearchDict.tsx')   # v10.92 — 검색 사전 화면은 ailearn/SearchDict.tsx
 ok('② 추천 검색어 — 숨긴 말 빼기 · 운영 API · 화면 단추', 'AND NOT s.hidden' in S and "@Post('search/terms/hide')" in A and "@Audit('SEARCH_TERM_HIDE', 'SEARCH_TERM')" in A
    and 'data-search-top' in W and "hideTerm(t, true)" in W and "hideTerm(t, false)" in W, '')
 ok('② 두 글자 안내 — 통합 검색 · 소개몰 화면', 'data-search-short' in rd('site/src/app/search/page.tsx') and "q && !short ? await Promise.all([" in rd('site/src/app/search/page.tsx')
