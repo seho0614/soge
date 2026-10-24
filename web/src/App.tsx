@@ -42,6 +42,7 @@ import { Polls } from './app/admin/Polls';
 import { Ownership } from './app/admin/Ownership';
 import { HealthSettle } from './app/admin/HealthSettle';
 import { HealthProducts } from './app/admin/HealthProducts';
+import { Translations } from './app/admin/Translations';
 import { HealthOrders } from './app/admin/HealthOrders';
 import { HealthReviews } from './app/admin/HealthReviews';
 import { Affiliates } from './app/admin/Affiliates';
@@ -221,6 +222,7 @@ function Console() {
         {tab === 'ownership' && <Ownership />}
         {tab === 'hlt-settle' && <HealthSettle onGo={go} />}
         {tab === 'hlt-products' && <HealthProducts />}
+        {tab === 'i18n' && <Translations />}
         {tab === 'hlt-orders' && <HealthOrders onGo={go} />}
         {tab === 'hlt-reviews' && <HealthReviews onGo={go} />}
         {tab === 'affiliates' && <Affiliates onGo={go} />}

@@ -3635,6 +3635,30 @@
    ]
   },
   {
+   "id": "SB-ADM-TRN-010",
+   "name": "번역",
+   "group": "ADM",
+   "url": "/admin/i18n",
+   "p": "운영",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/i18n",
+   "apis": [
+    "GET /admin/i18n/translations",
+    "GET /admin/i18n/source",
+    "PUT /admin/i18n/translations",
+    "POST /admin/i18n/translations/{id}/approve",
+    "POST /admin/i18n/translations/{id}/reject",
+    "GET /admin/i18n/langs",
+    "POST /admin/i18n/langs/{code}"
+   ],
+   "note": "v10.93 다국어 1단계 기반(D115 · docs/148 · docs/150) — 번역 목록 · 승인 · 번역 넣기(MANUAL) · 언어 켜고 끄기. 다국어(i18n.enabled)가 꺼져 있는 동안 손님 화면은 바뀌지 않음"
+  },
+  {
    "id": "SB-ADM-CLS-020",
    "name": "분류 학습",
    "group": "ADM",

@@ -43,6 +43,8 @@ import { RequestService } from './modules/request/request.service';
 
 import { DealController } from './modules/deal/deal.controller';
 import { DealService } from './modules/deal/deal.service';
+import { I18nController } from './modules/i18n/i18n.controller';
+import { I18nService } from './modules/i18n/i18n.service';
 import { DealContractService } from './modules/deal/deal-contract.service';
 
 import { MeController } from './modules/me/me.controller';
@@ -174,6 +176,7 @@ import { LeadService } from './modules/lead/lead.service';
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     AuthController,
+    I18nController,   // v10.93 다국어 기반
     AccountSecurityController,
     CommunityController,
     PollController,
@@ -296,6 +299,7 @@ import { LeadService } from './modules/lead/lead.service';
     ListingService, ListingRepository, FavoriteService,
     RequestService,
     DealService, DealContractService,   // v10.92
+    I18nService,   // v10.93
     MeService,
     CommunityService,
     PollService,
