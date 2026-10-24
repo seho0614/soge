@@ -1,4 +1,4 @@
-"""v10.89 시험 — 멈춘 배치 점검(v_job_stale)이 요일 배치(at_dow)를 7일 주기로 봄(D113 · docs/143)
+"""v10.89 시험 — 멈춘 배치 점검(v_job_stale)이 요일 배치(at_dow)를 7일 주기로 봄(D113) · 기본 자료 광고 9개 끝나는 날(D114) · BD-03(docs/143)
 
   KIT=… [DB=postgresql://sgb:sgb@localhost:15432/sgb] python3 -I test_v1089.py
 
@@ -34,7 +34,16 @@ ok('① 지우는 문장 없음 · job_schedules 그대로', not re.search(r'\b(
 ok('① 뷰 설명에 D113', "COMMENT ON VIEW public.v_job_stale IS" in M and 'D113' in M[M.find('COMMENT ON VIEW'):], '')
 ok('① settlement_audit 는 요일 배치(at_dow 4)', re.search(r"\('settlement_audit', 1440, 10, 0, 4, true", rd('prisma/migrations/B900_reference_data/migration.sql')), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 151 · 마지막 D113', (len(mig), mig[-1] if mig else '') == (151, 'D113_job_stale_weekly'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 152 · 마지막 D114', (len(mig), mig[-1] if mig else '') == (152, 'D114_seed_ad_ends_extend'), f'{len(mig)} · {mig[-1] if mig else ""}')
+A = rd('prisma/migrations/D114_seed_ad_ends_extend/migration.sql')
+S = rd('prisma/migrations/B900_reference_data/migration.sql')
+pairs = re.findall(r"\('([0-9a-f-]{36})'::uuid, '(AD-\d{3})', '([^']+)'::timestamptz\)", A)
+seed = {(i, c, e) for i, e, c in re.findall(r"VALUES \('([0-9a-f-]{36})',[^\n]*?'[^']*', '(2026-1[0-2]-[^']+)', 'ACTIVE'[^\n]*?'(AD-\d{3})'", S)}
+ok('② D114 — 9줄 · id · 코드 · 처음 끝나는 날이 B900 과 같음', len(pairs) == 9 and set(pairs) == seed, f'{len(pairs)} · B900 {len(seed)}')
+ok('② D114 — 새 끝나는 날 2027-09-30 23:59:59+00 · 다른 HERO 와 같음', "SET ends_at = '2027-09-30 23:59:59+00'" in A and S.count("'2027-09-30 23:59:59+00', 'ACTIVE'") >= 4, '')
+ok('② D114 — 처음 값 그대로 · ACTIVE 인 줄만 · 지우는 문장 없음', 'AND p.ends_at = s.old_ends' in A and "AND p.status = 'ACTIVE'" in A and not re.search(r'\b(DELETE|TRUNCATE|DROP|INSERT)\b', A), '')
+X = rd('scripts/attack-check.sh')
+ok('② BD-03 — 기본 자료 소재(AD-세 자리)는 세지 않음 · 기대 0', "FROM v_ad_expiring WHERE creative_code !~ '^AD-[0-9]{3}\\$';\" \"0\"" in X, '')
 ok('① postcheck 는 뷰를 그대로 씀', 'from v_job_stale where not never_ran' in rd('deploy/aws/postcheck.sh'), '')
 
 if DB:
@@ -58,6 +67,13 @@ ROLLBACK;
     ok('③ 22일 전 — 요일 배치도 멈춤', b == 'B:zz_t1089_daily,zz_t1089_weekold', b or r.stderr.strip()[:200])
     r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-c', "SELECT count(*) FROM job_schedules WHERE job LIKE 'zz_t1089%'"], capture_output=True, text=True)
     ok('③ 되돌림 — 시험 작업 남지 않음', r.stdout.strip() == '0', r.stdout.strip() or r.stderr.strip())
+
+if DB:
+    r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-c',
+        "SELECT count(*) FILTER (WHERE ends_at = '2027-09-30 23:59:59+00'), count(*) FROM ad_placements WHERE creative_code IN ('AD-103','AD-110','AD-201','AD-202','AD-203','AD-204','AD-205','AD-206','AD-207')"], capture_output=True, text=True)
+    ok('④ DB — 9개 모두 2027-09-30', r.stdout.strip() == '9|9', r.stdout.strip() or r.stderr.strip())
+    r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-c', "SELECT count(*) FROM v_ad_expiring WHERE creative_code ~ '^AD-[0-9]{3}$'"], capture_output=True, text=True)
+    ok('④ DB — 기본 자료 소재 중 7일 안에 끝나는 것 0', r.stdout.strip() == '0', r.stdout.strip() or r.stderr.strip())
 
 bad = [x for x in RES if not x[0]]
 print(f'\n결과 — 통과 {len(RES) - len(bad)} · 실패 {len(bad)}')

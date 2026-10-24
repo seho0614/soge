@@ -25,7 +25,7 @@ ok('겹치는 치는 말 없음', len({(t, k) for t, c, k, w in rows}) == 31, ''
 seeds = ''.join(open(f, encoding='utf-8').read() for f in glob.glob(os.path.join(K, 'prisma/migrations/C92*/migration.sql')))
 ok('기존 사전(C920 ~)과 같은 치는 말 · 종류 없음', not [t for t, c, k, w in rows if re.search(rf"\('{re.escape(t)}',\s*'[^']+',\s*'{k}'", seeds)], '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('마이그레이션 150 · 마지막 D112(v10.89 부터 D113 · 151 — test_v1089)', (len(mig), mig[-1] if mig else '') in ((150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('마이그레이션 150 · 마지막 D112(v10.89 부터 D113 · 151 — test_v1089)', (len(mig), mig[-1] if mig else '') in ((150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly'), (152, 'D114_seed_ad_ends_extend')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 def psql(sql):
     r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True)
