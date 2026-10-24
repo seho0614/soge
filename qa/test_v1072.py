@@ -115,7 +115,12 @@ if API:
     ok('④ 글 찾기 — 일반 회원 403 · 없는 상태 400', st2 == 403 and st3 == 400, f'{st2} {st3}')
     # 시험 글을 직접 만듭니다(회원이 쓰고 · 첫 글이면 운영자가 승인) — 남의 글을 건드리지 않게
     tag = uuid.uuid4().hex[:6]
-    sc, jc = call('POST', '/me/community/posts', MEM, {'board': 'QNA', 'title': f'점검 되살리기 {tag}', 'body': f'점검 되살리기 본문입니다 {tag}'})
+    # 점검판 DB 는 판을 바꿔도 이어집니다 — 하루 5개 한도에 걸리면 다음 회원으로(그 회원이 작성자 · test_v1076 과 같음 · v10.90)
+    for who in [os.environ.get('MEMBER', 'person@x.com'), 'intro@x.com', 'seller@x.com']:
+        WR = login(who)
+        sc, jc = call('POST', '/me/community/posts', WR, {'board': 'QNA', 'title': f'점검 되살리기 {tag}', 'body': f'점검 되살리기 본문입니다 {tag}'})
+        if (jc or {}).get('id'):
+            break
     pid = (jc or {}).get('id')
     if pid and (jc or {}).get('state') == 'PENDING':
         call('POST', f'/admin/community/posts/{pid}/approve', ADM)

@@ -51,8 +51,9 @@ ok('② 로그 그룹이 setup.sh 의 필터와 같음', all(g in s for g in gro
 # ③
 names = sorted(set(re.findall(r'\balarm (sgb-[a-z0-9-]+)', s)) | {f'sgb-log-{x}' for x in ('api', 'site', 'jobs', 'nginx') if 'sgb-log-' in s})
 want_a = sorted(['sgb-ec2-cpu', 'sgb-ec2-status', 'sgb-ec2-mem', 'sgb-ec2-disk', 'sgb-rds-cpu', 'sgb-rds-conn', 'sgb-rds-storage', 'sgb-rds-mem',
-                 'sgb-log-api', 'sgb-log-site', 'sgb-log-jobs', 'sgb-log-nginx'])
-ok('③ 경보 12개 이름', names == want_a, ' · '.join(sorted(set(names) ^ set(want_a))))
+                 'sgb-log-api', 'sgb-log-site', 'sgb-log-jobs', 'sgb-log-nginx'] + (['sgb-review-sla'] if 'sgb-review-sla' in s else []))   # v10.90 부터 13개(test_v1090)
+NA, NF = len(want_a), 4 + ('sgb-ReviewSlaBreach' in s)
+ok(f'③ 경보 {NA}개 이름', names == want_a and NA in (12, 13), ' · '.join(sorted(set(names) ^ set(want_a))))
 ok('③ 지우는 명령 없음(delete-*)', not re.search(r'\baws\b[^\n]*delete-|do_ [a-z]+ delete-', s), '')
 ok('③ 받는 메일을 파일에 적지 않음', not re.search(r'[\w.]+@[\w-]+\.[a-z]{2,}', s), '')
 
@@ -85,12 +86,12 @@ def run(mode, inp=''):
 
 
 r, c = run('check')
-ok('④ check — 바꾸는 명령 0 · 할일 경보 12', r.returncode == 0 and not MUT.search(c) and r.stdout.count('할일 경보') == 12, r.stderr[-200:])
+ok(f'④ check — 바꾸는 명령 0 · 할일 경보 {NA}', r.returncode == 0 and not MUT.search(c) and r.stdout.count('할일 경보') == NA, r.stderr[-200:])
 r, c = run('apply', 'no\n')
 ok('④ apply 에 no — 바꾸는 명령 0', r.returncode != 0 and not MUT.search(c), '')
 r, c = run('apply', 'yes\n')
 cnt = {k: len(re.findall(rf'^{k}', c, re.M)) for k in ('sns create-topic', 'sns subscribe', 'logs put-metric-filter', 'cloudwatch put-metric-alarm')}
-ok('④ apply 에 yes — 주제 1 · 구독 1 · 필터 4 · 경보 12', r.returncode == 0 and list(cnt.values()) == [1, 1, 4, 12], str(cnt))
+ok(f'④ apply 에 yes — 주제 1 · 구독 1 · 필터 {NF} · 경보 {NA}', r.returncode == 0 and list(cnt.values()) == [1, 1, NF, NA], str(cnt))
 ok('④ 경보마다 울릴 때 · 풀릴 때 메일(alarm · ok actions)', all('--alarm-actions arn:' in l and '--ok-actions arn:' in l for l in c.splitlines() if l.startswith('cloudwatch put-metric-alarm')), '')
 ok('④ 연결 수 경보 = max_connections 의 80%', re.search(r'sgb-rds-conn .*--threshold 80 ', c) is not None, '')
 r, c = run('test')
