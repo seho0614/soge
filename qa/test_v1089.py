@@ -34,7 +34,7 @@ ok('① 지우는 문장 없음 · job_schedules 그대로', not re.search(r'\b(
 ok('① 뷰 설명에 D113', "COMMENT ON VIEW public.v_job_stale IS" in M and 'D113' in M[M.find('COMMENT ON VIEW'):], '')
 ok('① settlement_audit 는 요일 배치(at_dow 4)', re.search(r"\('settlement_audit', 1440, 10, 0, 4, true", rd('prisma/migrations/B900_reference_data/migration.sql')), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 152 · 마지막 D114', (len(mig), mig[-1] if mig else '') == (152, 'D114_seed_ad_ends_extend'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 152 · 마지막 D114(v10.93 부터 D115 · 153 — test_v1093)', (len(mig), mig[-1] if mig else '') in ((152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base')), f'{len(mig)} · {mig[-1] if mig else ""}')
 A = rd('prisma/migrations/D114_seed_ad_ends_extend/migration.sql')
 S = rd('prisma/migrations/B900_reference_data/migration.sql')
 pairs = re.findall(r"\('([0-9a-f-]{36})'::uuid, '(AD-\d{3})', '([^']+)'::timestamptz\)", A)
