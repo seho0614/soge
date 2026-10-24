@@ -37,7 +37,7 @@ ok('① 「인증 전」 = 사업자 인증 없음 그리고 본인인증 없음
 ok('① 이름표 · 정책 설명 · 재실행 안전 · 자료를 지우지 않음', "SET label = '본인 · 사업자 인증 전'" in M and "WHERE key = 'manual_unverified_business'" in M
    and M.count('IS DISTINCT FROM') == 2 and not re.search(r'\bDELETE\b|\bDROP\b|\bTRUNCATE\b', re.sub(r'--[^\n]*', '', M)), '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마지막 마이그레이션 D107 · 145개(v10.71 부터 D108 · 146 — test_v1071)', (mig[-1], len(mig)) in (('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150)), f'{mig[-1]} · {len(mig)}')
+ok('① 마지막 마이그레이션 D107 · 145개(v10.71 부터 D108 · 146 — test_v1071)', (mig[-1], len(mig)) in (('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150), ('D113_job_stale_weekly', 151)), f'{mig[-1]} · {len(mig)}')
 ok('② codes.ts 이름표 = DB 이름표', '    UNVERIFIED_BUSINESS: { label: "본인 · 사업자 인증 전", tone: \'warning\', audience: \'ADMIN\' },' in rd('src/generated/codes.ts'), '')
 
 if DB:
