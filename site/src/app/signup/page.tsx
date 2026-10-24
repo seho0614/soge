@@ -5,8 +5,12 @@ import { apiGet } from '@/lib/api';
 import { SignupWizard, type JoinTerm, type SignupType } from '@/components/auth/SignupWizard';
 import type { Q } from '@/components/ProfileSurvey';
 import '@/styles/proto-w1.css';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { isSignupTypeKey } from '@/i18n/keys';
 
-export const metadata: Metadata = { title: '회원가입' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('signup'))('title') };
+}
 
 /**
  * SB-HOM-AUT-020 회원가입 — v10.31 시안 scJoin(5단계 · SignupWizard).
@@ -16,13 +20,14 @@ export const metadata: Metadata = { title: '회원가입' };
  */
 export default async function SignupPage() {
   if (await me()) redirect('/');
+  const [t, locale] = await Promise.all([getTranslations('signup'), getLocale()]);
   const [terms, all, types, qs] = await Promise.all([
     apiGet<JoinTerm[]>('/terms/required', 60).catch(() => [] as JoinTerm[]),
     apiGet<Array<{ code: string; title: string; isNotice?: boolean }>>('/terms', 60).catch(() => []),
     apiGet<SignupType[]>('/signup/types', 300).catch(() => [
-      { code: 'PERSONAL', label: '개인 회원', sub: '요청 등록과 소개 참여를 하실 수 있습니다.', needsBiz: false, needsCorp: false },
-      { code: 'SOLE', label: '개인 사업자', sub: '사업자등록번호로 인증합니다.', needsBiz: true, needsCorp: false },
-      { code: 'CORP', label: '법인 사업자', sub: '사업자등록번호와 법인등록번호가 필요합니다.', needsBiz: true, needsCorp: true },
+      { code: 'PERSONAL', label: t('types.PERSONAL.label'), sub: t('types.PERSONAL.sub'), needsBiz: false, needsCorp: false },
+      { code: 'SOLE', label: t('types.SOLE.label'), sub: t('types.SOLE.sub'), needsBiz: true, needsCorp: false },
+      { code: 'CORP', label: t('types.CORP.label'), sub: t('types.CORP.sub'), needsBiz: true, needsCorp: true },
     ] as SignupType[]),
     apiGet<{ questions: Q[] }>('/signup/profile-questions', 300).catch(() => ({ questions: [] as Q[] })),
   ]);
@@ -35,11 +40,10 @@ export default async function SignupPage() {
   return (
     <div className="w1 w1-jw" data-screen="SB-HOM-AUT-020">
       <div className="w1-jh">
-        <h1>회원가입</h1>
-        <p><b>개인 회원도 가입하실 수 있습니다.</b> 요청 등록과 소개 참여는 개인회원도 가능하며, 본인인증을 하시면 소개비도 받으십니다.
-          본인인증을 하시면 모든 업무를 하실 수 있고, 등록에 인증이 필요한 업종(공인중개사 · 보험 · 의료 등)만 그 인증을 받은 뒤 등록합니다.</p>
+        <h1>{t('title')}</h1>
+        <p>{t.rich('lead', { b: (c) => <b>{c}</b> })}</p>
       </div>
-      <SignupWizard types={types} action={doSignup}
+      <SignupWizard types={locale === 'ko' ? types : types.map((x) => (isSignupTypeKey(x.code) ? { ...x, label: t(`types.${x.code}.label`), sub: t(`types.${x.code}.sub`) } : x))} action={doSignup}
         terms={terms.map((t) => ({ code: t.code, title: t.title, isRequired: t.isRequired }))}
         notices={all.filter((t) => t.isNotice).map((t) => ({ code: t.code, title: t.title }))}
         questions={qs.questions ?? []} />

@@ -20,6 +20,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { Q } from '@/components/ProfileSurvey';
 import { STEPS, PW_OK, fmtBrn, type AuthResult, type BizCheck, type SegRes, type SignupType, type JoinTerm } from './signup/rules';
 import { StepType } from './signup/StepType';
@@ -35,6 +36,7 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
   action: (email: string, password: string, name: string, agreed: string[], jobTitle: string) => Promise<AuthResult>;
 }) {
   const router = useRouter();
+  const t = useTranslations('signup');
   const [pending, start] = useTransition();
   const [step, setStep] = useState(1);
   const [type, setType] = useState(types[0]?.code ?? 'PERSONAL');
@@ -92,37 +94,37 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
 
   async function verify() {
     const d = brn.replace(/\D/g, '');
-    if (d.length !== 10) { setErr('사업자등록번호 10자리를 입력해 주십시오.'); return; }
+    if (d.length !== 10) { setErr(t('err.brn10')); return; }
     setErr(null); setChkBusy(true);
     try {
       const r = await fetch('/api/v1/signup/biz-check', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bizRegNo: d }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { setChk(null); setErr(j.message ?? '조회하지 못했습니다. 잠시 후 다시 시도해 주십시오.'); }
+      if (!r.ok) { setChk(null); setErr(j.message ?? t('err.lookupFail')); }
       else { setChk(j as BizCheck); setBrn(fmtBrn(d)); }
-    } catch { setErr('조회하지 못했습니다. 잠시 후 다시 시도해 주십시오.'); }
+    } catch { setErr(t('err.lookupFail')); }
     setChkBusy(false);
   }
 
   /** 지금 단계에서 다음으로 갈 수 있는지 — 안 되면 이유 */
   function blocker(s: number): string | null {
     if (s === 2 && needsBiz) {
-      if (!chk) return '사업자등록번호를 인증해야 다음 단계로 넘어갑니다.';
-      if (chk.taken) return '이미 가입된 사업자등록번호입니다 — 사업자당 계정 1개입니다.';
-      if (!chk.ok) return '휴업 · 폐업 사업자는 가입할 수 없습니다.';
-      if (needsCorp && corp.replace(/\D/g, '').length !== 13) return '법인등록번호 13자리를 입력해 주십시오.';
-      if (company.trim().length < 2) return '상호를 입력해 주십시오.';
-      if (ceo.trim().length < 2) return '대표자명을 입력해 주십시오.';
+      if (!chk) return t('err.verifyFirst');
+      if (chk.taken) return t('err.taken');
+      if (!chk.ok) return t('err.closed');
+      if (needsCorp && corp.replace(/\D/g, '').length !== 13) return t('err.corp13');
+      if (company.trim().length < 2) return t('err.company');
+      if (ceo.trim().length < 2) return t('err.ceo');
     }
     if (s === 3) {
-      if (name.trim().length < 2) return '담당자명(실명)을 입력해 주십시오.';
-      if (type === 'SOLE' && name.replace(/\s/g, '') !== ceo.replace(/\s/g, '')) return '개인 사업자는 대표자가 가입자 본인이어야 합니다 — 담당자명과 대표자명이 같아야 합니다.';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return '이메일 주소를 확인해 주십시오.';
-      if (!PW_OK(pw)) return '비밀번호는 영문 · 숫자 · 특수문자를 섞어 10자 이상이어야 합니다.';
-      if (pw !== pw2) return '비밀번호 확인이 다릅니다.';
+      if (name.trim().length < 2) return t('err.name');
+      if (type === 'SOLE' && name.replace(/\s/g, '') !== ceo.replace(/\s/g, '')) return t('err.soleSelf');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return t('err.email');
+      if (!PW_OK(pw)) return t('err.weakPw');
+      if (pw !== pw2) return t('err.pwMismatch');
     }
-    if (s === 4 && !reqOn) return '필수 항목에 모두 동의해야 다음으로 넘어갑니다.';
+    if (s === 4 && !reqOn) return t('err.requiredTerms');
     return null;
   }
 
@@ -187,11 +189,11 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
     });
   }
 
-  const shown = useMemo(() => STEPS.map((x, i) => ({ n: i + 1, t: x[0], s: i === 1 && !needsBiz ? '개인 회원 — 해당 없음' : x[1] })), [needsBiz]);
+  const shown = useMemo(() => STEPS.map((k, i) => ({ n: i + 1, t: t(`steps.${k}.t`), s: i === 1 && !needsBiz ? t('steps.bizNone') : t(`steps.${k}.s`) })), [needsBiz, t]);
 
   return (
     <>
-      <div className="w1-jst" role="list" aria-label="가입 단계">
+      <div className="w1-jst" role="list" aria-label={t('stepsLabel')}>
         {shown.map((x) => {
           const c = x.n === step ? 'on' : x.n < step ? 'dn' : '';
           return (
@@ -221,14 +223,14 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
         {err && <p className="w1-err" role="alert" style={{ marginTop: 12 }}>{err}</p>}
 
         <div className="w1-jnav">
-          {step > 1 ? <button type="button" className="w1-jb o" onClick={() => go(step === 3 && !needsBiz ? 1 : step - 1)}>◀ 이전</button> : <span />}
+          {step > 1 ? <button type="button" className="w1-jb o" onClick={() => go(step === 3 && !needsBiz ? 1 : step - 1)}>{t('prev')}</button> : <span />}
           {step < 5
             ? <button type="button" className="w1-jb p" data-js={step + 1} onClick={() => go(step + 1)}
-                disabled={step === 2 && needsBiz && !chk?.ok}>다음 ▶</button>
-            : <button type="button" className="w1-jb a" disabled={pending} onClick={submit}>{pending ? '신청하는 중…' : '가입 신청하기'}</button>}
+                disabled={step === 2 && needsBiz && !chk?.ok}>{t('next')}</button>
+            : <button type="button" className="w1-jb a" disabled={pending} onClick={submit}>{pending ? t('submitting') : t('submit')}</button>}
         </div>
       </div>
-      <p className="w1-nt3" style={{ textAlign: 'center', marginTop: 14 }}>이미 계정이 있으신가요? <Link href="/login">로그인</Link></p>
+      <p className="w1-nt3" style={{ textAlign: 'center', marginTop: 14 }}>{t('haveAccount')} <Link href="/login">{t('login')}</Link></p>
     </>
   );
 }

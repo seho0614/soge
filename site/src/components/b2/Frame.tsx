@@ -32,6 +32,11 @@ import { TonePic } from './TonePic';
 import { MnyPic } from '@/components/money/pics';
 import { footerHref } from '@/components/common/links';
 import { FindButton } from '@/components/search/FindButton';
+import { useLocale, useTranslations } from 'next-intl';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { langInfo } from '@/i18n/request';
+import { LangSwitch } from '@/i18n/LangSwitch';
+import { isGwanKey } from '@/i18n/keys';
 
 /** 잘라 낸 그림 — [파일, 원래 가로, 원래 세로]. 화면에는 h 높이에 맞춰 같은 비율로 넣습니다. */
 const PIC = {
@@ -63,29 +68,43 @@ function Ic({ name, size = 22, w = 1.8 }: { name: keyof typeof ICON; size?: numb
   );
 }
 
+/** v10.95 — 언어 자리: 다국어가 꺼져 있으면 전처럼 「KR · 다른 언어는 준비 중」, 켜져 있고 언어가 둘 이상이면 언어 단추 */
+async function B2Lang({ chev }: { chev: React.ReactNode }) {
+  const info = await langInfo();
+  const t = await getTranslations('b2');
+  if (info.enabled && info.items.length > 1) {
+    return <LangSwitch items={info.items.map(({ code, name }) => ({ code, name }))} locale={await getLocale()} />;
+  }
+  return (
+    <details className="b2-lang">
+      <summary aria-label={t('langNow')}>KR {chev}</summary>
+      <div className="b2-langm" role="group" aria-label={t('langPick')}>
+        <span className="on" aria-current="true">{t('langKo')}</span>
+        <small>{t('langSoon')}</small>
+      </div>
+    </details>
+  );
+}
+
 export function B2Header({ gwans }: { gwans: Gwan[] }) {
+  const h = useTranslations('header');
+  const locale = useLocale();
   return (
     <header className="b2-hd">
       <div className="b2-in">
-        <Link href="/" className="b2-logo" aria-label="소개뱅크 메인으로"><TonePic base={<Pic name="logo" h={52} alt="소개뱅크" />} money={<MnyPic name="logo" alt="소개뱅크" />} /></Link>
-        <nav className="b2-nav" aria-label="주 메뉴">
+        <Link href="/" className="b2-logo" aria-label={h('logoHome')}><TonePic base={<Pic name="logo" h={52} alt={h('brand')} />} money={<MnyPic name="logo" alt={h('brand')} />} /></Link>
+        <nav className="b2-nav" aria-label={h('mainMenu')}>
           {/* 주소가 없는 관(허브 EARN 등)과 중지된 관은 뺍니다 — 공통 머리줄 · 메인 머리줄과 같은 규칙 */}
           {gwans.filter((g) => g.isActive !== false && GWAN_PATH[g.code]).map((g) => (
-            <NavLink key={g.code} href={`/${GWAN_PATH[g.code]}`}>{g.name}</NavLink>
+            <NavLink key={g.code} href={`/${GWAN_PATH[g.code]}`}>{locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name}</NavLink>
           ))}
-          <NavLink href="/community">소개광장</NavLink>
-          <NavLink href="/guide">이용안내</NavLink>
+          <NavLink href="/community">{h('community')}</NavLink>
+          <NavLink href="/guide">{h('guide')}</NavLink>
         </nav>
         <div className="b2-hdr">
           {/* v10.40 — 시안 SPOP: 머리줄 돋보기는 검색 팝업을 엽니다(전: 결과 화면 링크) */}
           <FindButton className="b2-find"><Ic name="search" /></FindButton>
-          <details className="b2-lang">
-            <summary aria-label="언어 — 한국어">KR <Ic name="chev" size={20} w={2} /></summary>
-            <div className="b2-langm" role="group" aria-label="언어 선택">
-              <span className="on" aria-current="true">한국어 (KR)</span>
-              <small>다른 언어는 준비 중입니다.</small>
-            </div>
-          </details>
+          <B2Lang chev={<Ic name="chev" size={20} w={2} />} />
           {/* 로그인 · 무료 회원가입(로그인했으면 나의공간 · 로그아웃) · 장바구니 숫자 — 사람마다 달라 브라우저에서 받습니다(AuthArea) */}
           <AuthArea cartIcon={<Ic name="cart" size={30} w={1.5} />} bellIcon={<Ic name="bell" size={36} w={1.25} />} />
         </div>
@@ -96,26 +115,30 @@ export function B2Header({ gwans }: { gwans: Gwan[] }) {
 
 /* 사회관계망 — [이름, 그림, 설정 키]. 주소는 운영 화면 「사이트 기본 정보」에서 넣습니다(D021 · 설정 sns.*) — 메인 바닥줄과 같은 규칙입니다.
  * 주소가 있으면 새 창으로 그 계정에, 비어 있으면 「준비 중」(누를 수 없음)입니다. https 주소만 받습니다. 그림에는 세 개(엑스 없음)입니다. */
-const SNS: [string, 'sns-1' | 'sns-2' | 'sns-3', string, 'sns_fb' | 'sns_ig' | 'sns_yt'][] = [['페이스북', 'sns-1', 'sns.facebook', 'sns_fb'], ['인스타그램', 'sns-2', 'sns.instagram', 'sns_ig'], ['유튜브', 'sns-3', 'sns.youtube', 'sns_yt']];
+/* v10.95 — 이름은 사전 키(b2.sns.*) */
+const SNS: ['facebook' | 'instagram' | 'youtube', 'sns-1' | 'sns-2' | 'sns-3', string, 'sns_fb' | 'sns_ig' | 'sns_yt'][] = [['facebook', 'sns-1', 'sns.facebook', 'sns_fb'], ['instagram', 'sns-2', 'sns.instagram', 'sns_ig'], ['youtube', 'sns-3', 'sns.youtube', 'sns_yt']];
 const snsUrl = (v: string | null | undefined) => (v && /^https:\/\/[^\s]{4,200}$/.test(v) ? v : null);
 
-const QUICK: [string, string][] = [
-  ['소개받기', '/request'], ['제휴 파트너센터', '/partners'], ['안심소개 파트너센터', '/partner'], ['나의공간', '/my'], ['알림', '/my/notifications'],
+/* v10.95 — 글자는 사전 키(b2.quick.*) */
+const QUICK: ['request' | 'affPartners' | 'ansimPartner' | 'my' | 'alerts', string][] = [
+  ['request', '/request'], ['affPartners', '/partners'], ['ansimPartner', '/partner'], ['my', '/my'], ['alerts', '/my/notifications'],
 ];
 
 export function B2Footer({ links, settings, year }: { links: FooterLink[]; settings: Record<string, string | null>; year: number }) {
+  const t = useTranslations('b2');
+  const h = useTranslations('header');
   const all = links;   /* v10.31 — 서버 순서 그대로(시안 다섯 · 개발에만 있는 것 순) */
   return (
     <footer className="b2-ft">
       <div className="b2-in">
         <div className="b2-ftr">
-          <Link href="/" className="b2-logo" aria-label="소개뱅크 메인으로"><TonePic base={<Pic name="logo-ft" h={50} alt="소개뱅크 — 소개하면 돈이 된다" />} money={<MnyPic name="logo_foot" alt="소개뱅크 — 소개하면 돈이 된다" />} /></Link>
+          <Link href="/" className="b2-logo" aria-label={h('logoHome')}><TonePic base={<Pic name="logo-ft" h={50} alt={t('logoSlogan')} />} money={<MnyPic name="logo_foot" alt={t('logoSlogan')} />} /></Link>
           <div className="b2-ftl">
-            <Link href="/">서비스 소개</Link>
+            <Link href="/">{t('about')}</Link>
             {all.map((l) => l.available ? (
               <Link key={l.label} href={footerHref(l)}>{l.label}</Link>
             ) : (
-              <span key={l.label} className="tbd" title={l.tip ?? '준비 중입니다'}>{l.label}</span>
+              <span key={l.label} className="tbd" title={l.tip ?? t('preparing')}>{l.label}</span>
             ))}
           </div>
           <div className="b2-ftend">
@@ -124,33 +147,33 @@ export function B2Footer({ links, settings, year }: { links: FooterLink[]; setti
                 const url = snsUrl(settings[key]);
                 const img = <TonePic base={<Pic name={pic} h={30} />} money={<MnyPic name={mpic} />} />;
                 return url ? (
-                  <a key={name} className="on" href={url} target="_blank" rel="noopener noreferrer" aria-label={`소개뱅크 ${name} (새 창)`} title={`소개뱅크 ${name}`} data-sns={key}>{img}</a>
+                  <a key={name} className="on" href={url} target="_blank" rel="noopener noreferrer" aria-label={t('snsOpen', { name: t(`sns.${name}`) })} title={t('snsTitle', { name: t(`sns.${name}`) })} data-sns={key}>{img}</a>
                 ) : (
-                  <span key={name} role="img" aria-label={`${name} — 준비 중`} title={`${name} 계정은 준비 중입니다`} data-sns={key}>{img}</span>
+                  <span key={name} role="img" aria-label={t('snsSoonLabel', { name: t(`sns.${name}`) })} title={t('snsSoonTitle', { name: t(`sns.${name}`) })} data-sns={key}>{img}</span>
                 );
               })}
             </div>
-            <span className="b2-copy">{year} 소개뱅크. All rights reserved.</span>
+            <span className="b2-copy">{t('copyright', { year })}</span>
           </div>
         </div>
 
-        <nav className="b2-quick" aria-label="바로가기">
-          {QUICK.map(([t, href]) => <Link key={href} href={href}>{t}</Link>)}
+        <nav className="b2-quick" aria-label={t('quickLabel')}>
+          {QUICK.map(([k, href]) => <Link key={href} href={href}>{t(`quick.${k}`)}</Link>)}
         </nav>
 
         {/* 법정 표시 — 공통 바닥줄(components/Footer.tsx)과 같은 값 · 같은 규칙입니다 */}
         <div className="b2-legal">
           <p>
-            {settings['footer.ceo_name'] && <>대표 {settings['footer.ceo_name']} · </>}
+            {settings['footer.ceo_name'] && <>{t('ceo')} {settings['footer.ceo_name']} · </>}
             {settings['footer.biz_reg_no']
-              ? <>사업자등록번호 {settings['footer.biz_reg_no']}</>
-              : <span className="tbd" title="오픈 전 입력 필요">사업자등록번호 —</span>}
+              ? <>{t('bizRegNo')} {settings['footer.biz_reg_no']}</>
+              : <span className="tbd" title={t('tipNeeded')}>{t('bizRegNo')} —</span>}
             {' · '}
             {settings['footer.mail_order_no']
-              ? <>통신판매업 신고 {settings['footer.mail_order_no']}</>
-              : <span className="tbd" title="C-07 신고 대상 확정. 오픈 차단 항목">통신판매업 신고번호 —</span>}
+              ? <>{t('mailOrder')} {settings['footer.mail_order_no']}</>
+              : <span className="tbd" title={t('tipMailOrder')}>{t('mailOrderNo')} —</span>}
             {/* v10.31 (합침 · w6 D080) — 직업정보제공사업 신고번호(footer.job_info_no) */}
-            {settings['footer.job_info_no'] && <>{' · '}직업정보제공사업 신고번호 {settings['footer.job_info_no']}</>}
+            {settings['footer.job_info_no'] && <>{' · '}{t('jobInfoNo')} {settings['footer.job_info_no']}</>}
           </p>
           {/* 소개몰에서는 직판 고지를 같이 — 화면에 따라 달라 브라우저에서 고릅니다(B2Notice) */}
           <B2Notice inter={settings['legal.intermediary_notice']} direct={settings['legal.direct_notice']} />

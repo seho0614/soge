@@ -10,7 +10,7 @@ import { Audit } from '../../core/audit.interceptor';
 /* ─────────────────────────────────────────────────────────────────────
  * 다국어 1단계 기반 — v10.93 (D115 · docs/148 · docs/150)
  *
- *   손님 화면 API(켜진 언어 · 내 언어)는 2단계(화면 글)에서 화면과 함께 붙입니다 — 이번 판은 운영 화면만.
+ *   손님 화면   GET /i18n/langs(켜진 언어 · 꺼져 있으면 한국어만) · PUT /me/lang(회원이 고른 언어) — v10.95(2-1)
  *   운영 화면   언어 켜고 끄기 · 번역 목록 · 원문 보기 · 번역 넣기(MANUAL) · 승인 · 반려
  *   i18n.enabled 가 off 면 손님 화면에는 한국어만 나갑니다(언어 단추 숨김 그대로).
  * ──────────────────────────────────────────────────────────────────── */
@@ -20,6 +20,22 @@ const FIELDS = [...new Set(Object.values(I18N_FIELDS).flat())];
 
 export class LangActiveDto {
   @ApiProperty({ example: true }) @IsBoolean() isActive!: boolean;
+}
+export class I18nLangDto {
+  @ApiProperty({ example: 'ko' }) code!: string;
+  @ApiProperty({ example: '한국어', description: '그 언어로 적은 이름' }) name!: string;
+  @ApiProperty({ description: '좌우 반전(아랍어)' }) rtl!: boolean;
+}
+export class I18nLangsDto {
+  @ApiProperty({ description: 'i18n.enabled — off 면 한국어만' }) enabled!: boolean;
+  @ApiProperty({ type: [I18nLangDto] }) items!: I18nLangDto[];
+}
+export class MyLangDto {
+  @ApiProperty({ example: 'en' }) @IsString() @Matches(/^[a-z]{2}$/) lang!: string;
+}
+export class MyLangOkDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ example: 'en' }) lang!: string;
 }
 export class TranslationUpsertDto {
   @ApiProperty({ enum: TYPES, example: 'NOTICE' }) @IsIn(TYPES) targetType!: string;
@@ -92,6 +108,19 @@ export class TranslationOkDto {
 @Controller('api/v1')
 export class I18nController {
   constructor(private readonly svc: I18nService) {}
+
+  @Get('i18n/langs')
+  @ApiOperation({ summary: '켜진 언어', description: '다국어(i18n.enabled)가 꺼져 있으면 한국어만 — 사용자 웹이 언어 단추를 그릴지 · 어떤 사전을 쓸지 여기서 정합니다.' })
+  @ApiOkResponse({ type: I18nLangsDto })
+  langs() { return this.svc.langs(); }
+
+  @ApiBearerAuth()
+  @Put('me/lang')
+  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER')
+  @ApiOperation({ summary: '내 언어 저장', description: '켜진 언어만 받습니다(422 LANG_NOT_ACTIVE). 로그인하지 않은 손님은 쿠키(sgb_lang)만 씁니다.' })
+  @ApiOkResponse({ type: MyLangOkDto })
+  @ApiResponse({ status: 422, type: ErrorDto })
+  setMyLang(@Body() dto: MyLangDto) { return this.svc.setMyLang(dto.lang); }
 
   @ApiBearerAuth()
   @Get('admin/i18n/langs')

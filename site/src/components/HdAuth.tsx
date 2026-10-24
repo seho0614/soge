@@ -23,6 +23,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { logout } from '@/lib/session';
 import { SearchBox } from '@/components/search/SearchBox';
 import { isOps } from '@/components/common/links';
+import { useTranslations } from 'next-intl';
 
 export function HdAuth() {
   const pathname = usePathname() ?? '';
@@ -32,6 +33,7 @@ export function HdAuth() {
   const [name, setName] = useState<string | null>(null);
   const [ops, setOps] = useState(false);
   const [busy, start] = useTransition();
+  const t = useTranslations('header');
 
   useEffect(() => {
     let live = true;
@@ -67,16 +69,16 @@ export function HdAuth() {
 
   const on = (href: string) => (pathname === href || pathname.startsWith(href + '/') ? 'on' : undefined);
   const bell = (
-    <Link href="/my/notifications" className="pc-bell" title="알림 센터" aria-label={unread ? `알림 ${unread}건` : '알림 센터'}>
+    <Link href="/my/notifications" className="pc-bell" title={t('bell')} aria-label={unread ? t('bellUnread', { n: unread }) : t('bell')}>
       🔔{unread > 0 && <i>{unread > 9 ? '9+' : unread}</i>}
     </Link>
   );
   /* 개발에만 있는 링크 */
   const dev = (
     <>
-      <Link href="/request" className={['txt dev', on('/request')].filter(Boolean).join(' ')}>소개받기</Link>
+      <Link href="/request" className={['txt dev', on('/request')].filter(Boolean).join(' ')}>{t('request')}</Link>
       <span className="sep">|</span>
-      <Link href="/partners" className={['txt dev', on('/partners')].filter(Boolean).join(' ')}>파트너센터</Link>
+      <Link href="/partners" className={['txt dev', on('/partners')].filter(Boolean).join(' ')}>{t('partners')}</Link>
       <span className="sep">|</span>
     </>
   );
@@ -86,7 +88,7 @@ export function HdAuth() {
     return (
       <>
         {dev}
-        <Link href="/my" className={['txt', on('/my')].filter(Boolean).join(' ')}>나의공간</Link>
+        <Link href="/my" className={['txt', on('/my')].filter(Boolean).join(' ')}>{t('my')}</Link>
         <SearchBox variant="header" />
         {bell}
         <span className="hd-wait" aria-hidden style={{ display: 'inline-block', minWidth: 150 }} data-hd-wait="" />
@@ -97,25 +99,25 @@ export function HdAuth() {
     return (
       <>
         {dev}
-        <span className="who" title={name ?? undefined}>👤 {name ? (name.length > 12 ? name.slice(0, 12) + '…' : name) : '회원'}</span><span className="sep">|</span>
-        <Link href="/my" className={['txt', on('/my')].filter(Boolean).join(' ')}>나의공간</Link>
+        <span className="who" title={name ?? undefined}>👤 {name ? (name.length > 12 ? name.slice(0, 12) + '…' : name) : t('member')}</span><span className="sep">|</span>
+        <Link href="/my" className={['txt', on('/my')].filter(Boolean).join(' ')}>{t('my')}</Link>
         <span className="sep">|</span>
-        <Link href="/support/new" className={['txt', on('/support')].filter(Boolean).join(' ')}>고객센터</Link>
+        <Link href="/support/new" className={['txt', on('/support')].filter(Boolean).join(' ')}>{t('support')}</Link>
         <SearchBox variant="header" />
         {bell}
-        <button type="button" className="pc-bo hd-out" onClick={out} disabled={busy}>{busy ? '나가는 중…' : '로그아웃'}</button>
-        {ops && <a href="/go/admin" className="pc-bp hd-adm">관리자 페이지</a>}
+        <button type="button" className="pc-bo hd-out" onClick={out} disabled={busy}>{busy ? t('loggingOut') : t('logout')}</button>
+        {ops && <a href="/go/admin" className="pc-bp hd-adm">{t('admin')}</a>}
       </>
     );
   }
   return (
     <>
       {dev}
-      <Link href="/my" className={['txt dev', on('/my')].filter(Boolean).join(' ')}>나의공간</Link>
+      <Link href="/my" className={['txt dev', on('/my')].filter(Boolean).join(' ')}>{t('my')}</Link>
       <SearchBox variant="header" />
       {bell}
-      <Link href="/login" className="pc-bo">로그인</Link>
-      <Link href="/signup" className="pc-bp">무료 회원가입</Link>
+      <Link href="/login" className="pc-bo">{t('login')}</Link>
+      <Link href="/signup" className="pc-bp">{t('signup')}</Link>
     </>
   );
 }

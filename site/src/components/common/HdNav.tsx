@@ -5,20 +5,22 @@
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 const under = (p: string, href: string) => p === href || p.startsWith(href + '/');
 
 export function HdNav({ items }: { items: Array<{ href: string; label: string }> }) {
   const p = usePathname() ?? '';
+  const t = useTranslations('header');
   return (
-    <nav className="pc-gnb" aria-label="주 메뉴">
+    <nav className="pc-gnb" aria-label={t('mainMenu')}>
       {items.map((m) => {
         const on = under(p, m.href);
         return <Link key={m.href + m.label} href={m.href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}>{m.label}</Link>;
       })}
-      <Link href="/request" className="m-only">소개받기</Link>
-      <Link href="/partners" className="m-only">파트너센터</Link>
-      <Link href="/my" className="m-only">나의공간</Link>
+      <Link href="/request" className="m-only">{t('request')}</Link>
+      <Link href="/partners" className="m-only">{t('partners')}</Link>
+      <Link href="/my" className="m-only">{t('my')}</Link>
     </nav>
   );
 }

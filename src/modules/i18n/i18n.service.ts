@@ -26,6 +26,23 @@ export class I18nService {
     return r?.value ?? null;
   }
 
+  /** 손님 화면 — 다국어 켜짐 여부 · 켜진 언어(꺼져 있으면 한국어만) · v10.95 */
+  async langs() {
+    const enabled = (await this.setting('i18n.enabled')) === 'on';
+    const items = await this.db.query<{ code: string; name: string; rtl: boolean }>(
+      `SELECT code, native AS name, rtl FROM i18n_langs WHERE is_active ORDER BY sort_order, code`);
+    return { enabled, items: enabled ? items : items.filter((x) => x.code === 'ko') };
+  }
+
+  /** 회원이 고른 언어 — 켜진 언어만 · v10.95 */
+  async setMyLang(lang: string) {
+    if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
+    const [l] = await this.db.query<{ code: string }>(`SELECT code FROM i18n_langs WHERE code = $1 AND is_active`, [lang]);
+    if (!l) throw new PolicyViolation('LANG_NOT_ACTIVE', '지금은 고를 수 없는 언어입니다.');
+    await this.db.query(`UPDATE accounts SET preferred_lang = $2 WHERE id = $1`, [this.me, lang]);
+    return { ok: true, lang };
+  }
+
   /* ── 운영 화면 ─────────────────────────────────────────────── */
 
   async adminLangs() {

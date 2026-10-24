@@ -5,13 +5,15 @@
  */
 import { useState, type ReactNode } from 'react';
 import { SearchPopup } from './SearchPopup';
+import { useTranslations } from 'next-intl';
 import type { SearchGwan } from './SearchBox';
 
 export function FindButton({ className, gwanCode, children }: { className: string; gwanCode?: SearchGwan; children: ReactNode }) {
+  const h = useTranslations('header');
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={className} aria-label="검색" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+      <button type="button" className={className} aria-label={h('search')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
         {children}
       </button>
       {open && <SearchPopup seed="" gwanCode={gwanCode} onClose={() => setOpen(false)} />}

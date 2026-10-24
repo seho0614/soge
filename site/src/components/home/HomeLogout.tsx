@@ -3,13 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { logout } from '@/lib/session';
+import { useTranslations } from 'next-intl';
 
 export function HomeLogout() {
   const router = useRouter();
   const [busy, start] = useTransition();
+  const h = useTranslations('header');
   return (
     <button type="button" className="home-pill" disabled={busy} onClick={() => start(async () => { await logout(); router.refresh(); })}>
-      {busy ? '나가는 중…' : '로그아웃'}
+      {busy ? h('loggingOut') : h('logout')}
     </button>
   );
 }

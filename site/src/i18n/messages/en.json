@@ -1,0 +1,377 @@
+{
+  "meta": {
+    "title": "SogaeBank",
+    "description": "A P2P referral platform where anyone — individuals or businesses — can refer clients, listings and business spots and earn referral fees"
+  },
+  "common": {
+    "skipToMain": "Skip to main content"
+  },
+  "lang": {
+    "label": "Language"
+  },
+  "header": {
+    "logoHome": "SogaeBank home",
+    "brand": "SogaeBank",
+    "mainMenu": "Main menu",
+    "community": "Community",
+    "guide": "How it works",
+    "request": "Get referred",
+    "partners": "Partner Center",
+    "my": "My page",
+    "bell": "Notifications",
+    "bellUnread": "{n} notifications",
+    "member": "Member",
+    "support": "Help center",
+    "loggingOut": "Signing out…",
+    "logout": "Sign out",
+    "admin": "Admin",
+    "login": "Log in",
+    "signup": "Sign up free",
+    "search": "Search",
+    "gwan": {
+      "MNY": "Marketplace",
+      "MAL": "Safe Referral",
+      "BIZ": "Startups",
+      "HLT": "Sogae Mall"
+    }
+  },
+  "footer": {
+    "preparing": "Coming soon",
+    "tipCompany": "Company name — to be entered before launch",
+    "ceo": "CEO",
+    "tipCeo": "CEO — to be entered before launch",
+    "bizRegNo": "Business reg. no.",
+    "tipNeeded": "To be entered before launch",
+    "mailOrderNo": "Mail-order business no.",
+    "tipMailOrder": "Registration required (C-07). Blocks launch",
+    "jobInfoNo": "Job-information business no.",
+    "address": "Address",
+    "phone": "Phone",
+    "privacyOfficer": "Privacy officer",
+    "hosting": "Hosting"
+  },
+  "b2": {
+    "langNow": "Language — Korean",
+    "langPick": "Choose language",
+    "langKo": "Korean (KR)",
+    "langSoon": "Other languages are coming soon.",
+    "logoSlogan": "SogaeBank — referrals that pay",
+    "about": "About",
+    "preparing": "Coming soon",
+    "snsOpen": "SogaeBank on {name} (new window)",
+    "snsTitle": "SogaeBank on {name}",
+    "snsSoonLabel": "{name} — coming soon",
+    "snsSoonTitle": "Our {name} account is coming soon",
+    "copyright": "{year} SogaeBank. All rights reserved.",
+    "quickLabel": "Quick links",
+    "ceo": "CEO",
+    "bizRegNo": "Business reg. no.",
+    "tipNeeded": "To be entered before launch",
+    "mailOrder": "Mail-order reg.",
+    "mailOrderNo": "Mail-order business no.",
+    "tipMailOrder": "Registration required (C-07). Blocks launch",
+    "jobInfoNo": "Job-information business no.",
+    "bell": "Notifications",
+    "bellUnread": "Notifications — {n} unread",
+    "cart": "Sogae Mall cart",
+    "cartCount": "{n} items in cart",
+    "directTag": "Sold by Sogae Mall",
+    "interTag": "Member-to-member deals",
+    "sns": {
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "x": "X",
+      "youtube": "YouTube"
+    },
+    "quick": {
+      "request": "Get referred",
+      "affPartners": "Affiliate Partner Center",
+      "ansimPartner": "Safe Referral Partner Center",
+      "my": "My page",
+      "alerts": "Notifications"
+    }
+  },
+  "home": {
+    "quick": {
+      "request": "Get referred",
+      "affPartners": "Affiliate Partner Center",
+      "ansimPartner": "Safe Referral Partner Center",
+      "aiClassify": "AI auto-classify",
+      "aiMatch": "AI recommendations",
+      "aiProfile": "Interest profile",
+      "my": "My page",
+      "support": "Help center",
+      "ads": "Ad management"
+    },
+    "artnoteSample": "Photos, rankings, ratings and people on the home page are design samples — not real listings, products or reviews. Vote counts in “What do you think?” are real.",
+    "artnoteLive": "Images on the home page illustrate categories — they are not photos of real listings or products.",
+    "demoTitle": "AI demo",
+    "demoSub": "A rules engine — no AI model API is called.",
+    "demo": {
+      "classify": {
+        "t": "AI auto-classify",
+        "s": "Sorts posts into section, category and grade"
+      },
+      "match": {
+        "t": "AI recommendations",
+        "s": "Change the weights and the ranking changes"
+      },
+      "profile": {
+        "t": "Interest profile",
+        "s": "Ads and recommendations are picked from this"
+      },
+      "ads": {
+        "t": "Ad management (ops)",
+        "s": "Assign slots and segments"
+      },
+      "risk": {
+        "t": "AI risk detection (ops)",
+        "s": "7 rules and false-positive odds"
+      },
+      "prompt": {
+        "t": "Prompt search",
+        "s": "Reads a sentence and picks candidates"
+      },
+      "ansimPartner": {
+        "t": "Safe Referral Partner Center",
+        "s": "Apply · my listings · consults · settlement"
+      },
+      "affSales": {
+        "t": "Affiliate sales",
+        "s": "Screens for partners"
+      }
+    }
+  },
+  "login": {
+    "title": "Log in",
+    "lead": "<b>Individuals can join too</b> and post requests or take part in referrals. <b>Verify your identity and you can also receive referral fees.</b> Individuals can do everything; only fields that require a license (real estate, insurance, medical, etc.) need that license before posting.",
+    "reconsentLb": "If the terms changed since your last login",
+    "reconsentBody": "you go to the <b>terms consent page</b> right after logging in — review the changes, agree to the required terms, and you continue where you were going.",
+    "reconsentLink": "See the consent page",
+    "pendingLb": "If your account is awaiting approval",
+    "pendingBody": "you can still log in. If you have verified your identity, <b>posting, creating deals and settlement</b> work right away — business approval only matters <b>when you receive fees as a business (tax invoice)</b>. We show any remaining steps when you need them. <b>Browsing and search are unrestricted.</b>",
+    "pendingLink": "See verification steps",
+    "noAccount": "No account yet?",
+    "signup": "Sign up",
+    "profileTitle": "Add your interests",
+    "profileSub": "Six questions after you sign up or log in",
+    "profileBody": "<b>Home-page ads and referral suggestions</b> follow your interests. We never give it to advertisers, and you can delete it anytime.",
+    "profileLink": "Analyze and save my interests",
+    "whoCanJoin": "Individuals, sole proprietors and corporations can all join. Suspended or closed businesses cannot pass business verification."
+  },
+  "forgot": {
+    "title": "Forgot password",
+    "lead": "Enter your sign-up email and we will send a <b>password reset link</b>. The link works <b>once, for 30 minutes</b>.",
+    "noMailLb": "No email?",
+    "noMailBody": "Check your spam folder first. If you cannot remember your email, contact the help center under “Account” — we will help after confirming it is you.",
+    "support": "Contact help center",
+    "remembered": "Remembered your password?",
+    "login": "Log in"
+  },
+  "reset": {
+    "title": "Reset password",
+    "lead": "Enter a new password — <b>at least 10 characters mixing letters, numbers and symbols</b>. Changing it <b>signs you out on all other devices.</b>",
+    "badLb": "This link is not valid",
+    "badBody": "Make sure you opened the link exactly as it is in the email. If 30 minutes have passed or you already used it, please request a new one.",
+    "forgot": "Forgot password"
+  },
+  "loginForm": {
+    "needBoth": "Please enter your email and password.",
+    "email": "Email",
+    "emailPh": "The email you signed up with",
+    "password": "Password",
+    "hide": "Hide",
+    "show": "Show",
+    "keep": "Keep me logged in",
+    "forgotPw": "Forgot password",
+    "forgotEmail": "Forgot email",
+    "working": "Working…",
+    "submit": "Log in"
+  },
+  "pwForm": {
+    "weak": "Your password must be at least 10 characters and mix letters, numbers and symbols.",
+    "emailInvalid": "That email address does not look right.",
+    "sentDefault": "If that email is registered, we sent a reset link.",
+    "joinedEmail": "Sign-up email",
+    "emailPh": "The email you signed up with",
+    "support": "Contact help center",
+    "checkMail": "Check your email",
+    "devLink": "<b>Development test link</b> (in production it is sent by email only):",
+    "openReset": "Open reset page",
+    "sending": "Sending…",
+    "sendLink": "Send reset link",
+    "mismatch": "The two passwords do not match.",
+    "changedDefault": "Your password has been changed.",
+    "changedLb": "Changed",
+    "goLogin": "Log in",
+    "newPw": "New password",
+    "newPwPh": "10+ characters: letters, numbers, symbols",
+    "hide": "Hide",
+    "show": "Show",
+    "newPw2": "Confirm new password",
+    "newPw2Ph": "Once more",
+    "requestAgain": "Request again",
+    "changing": "Changing…",
+    "change": "Change password"
+  },
+  "signup": {
+    "title": "Sign up",
+    "lead": "<b>Individuals can sign up too.</b> Individuals can post requests and take part in referrals, and receive referral fees after identity verification. Once verified you can do everything; only fields that require a license (real estate, insurance, medical, etc.) need that license before posting.",
+    "types": {
+      "PERSONAL": {
+        "label": "Individual",
+        "sub": "Post requests and take part in referrals."
+      },
+      "SOLE": {
+        "label": "Sole proprietor",
+        "sub": "Verified with your business registration number."
+      },
+      "CORP": {
+        "label": "Corporation",
+        "sub": "Needs your business and corporate registration numbers."
+      }
+    },
+    "steps": {
+      "type": {
+        "t": "Member type",
+        "s": "Corporation · sole proprietor"
+      },
+      "biz": {
+        "t": "Business check",
+        "s": "Registration number lookup"
+      },
+      "person": {
+        "t": "Your details",
+        "s": "Contact person · identity"
+      },
+      "terms": {
+        "t": "Terms",
+        "s": "Submit · awaiting review"
+      },
+      "profile": {
+        "t": "Interests",
+        "s": "Tailored ads · suggestions (optional)"
+      },
+      "bizNone": "Individuals — not needed"
+    },
+    "stepsLabel": "Sign-up steps",
+    "prev": "◀ Back",
+    "next": "Next ▶",
+    "submitting": "Submitting…",
+    "submit": "Sign up",
+    "haveAccount": "Already have an account?",
+    "login": "Log in",
+    "err": {
+      "brn10": "Please enter your 10-digit business registration number.",
+      "lookupFail": "The lookup failed. Please try again shortly.",
+      "verifyFirst": "Verify your business registration number to continue.",
+      "taken": "This business number is already registered — one account per business.",
+      "closed": "Suspended or closed businesses cannot sign up.",
+      "corp13": "Please enter your 13-digit corporate registration number.",
+      "company": "Please enter the company name.",
+      "ceo": "Please enter the CEO name.",
+      "name": "Please enter your real name.",
+      "soleSelf": "For a sole proprietorship, the CEO must be you — your name and the CEO name must match.",
+      "email": "Please check your email address.",
+      "weakPw": "Your password must be at least 10 characters and mix letters, numbers and symbols.",
+      "pwMismatch": "The password confirmation does not match.",
+      "requiredTerms": "Agree to all required items to continue."
+    },
+    "typeSameLb": "Individuals and businesses can do the same things",
+    "typeSameBody": "<b>Individuals</b> can post requests and take part in referrals, and <b>receive referral fees after identity verification</b>. Only fields that require a license (real estate, insurance, medical, etc.) need that license before posting. To receive fees as a business (tax invoice), switch to a business account later in My page.",
+    "typeTitle": "1. Choose your member type",
+    "typeLabel": "Member type",
+    "typeText": {
+      "PERSONAL": "Start right away without a business registration. You can <b>post requests and take part in referrals</b>, and receive referral fees after identity verification. You can do <b>everything</b>; only fields that require a license (real estate, insurance, medical, etc.) need that license before posting.",
+      "SOLE": "We verify your 10-digit business registration number. The CEO must be <b>you</b>. We also check that the business is not suspended or closed.",
+      "CORP": "We verify both your business registration number and your <b>13-digit corporate registration number</b>. The CEO may be someone other than you."
+    },
+    "biz": {
+      "title": "2. Business check",
+      "brn": "Business registration no.",
+      "checking": "Checking…",
+      "verify": "Verify",
+      "brnHint": "<b>Corporations and sole proprietors alike</b> go through the National Tax Service status check. Suspended or closed businesses cannot sign up.",
+      "corp": "Corporate registration no.",
+      "corpPh": "000000-0000000 (13 digits)",
+      "corpHint": "Checked against corporate registry records. Sole proprietors do not have this.",
+      "corpNone": "Sole proprietor — not needed",
+      "corpNoneHint": "Sole proprietors do not need a corporate registration number.",
+      "okLb": "Lookup complete",
+      "okLbStub": " · simulated",
+      "okLine": "Business no. <b>{brn}</b> · <b>{status}</b>{detail}",
+      "statusValid": "Active business",
+      "statusChecking": "Checking status",
+      "okStub": " — this is a <b>simulated result</b> until the tax service is connected.",
+      "okNote": "The tax status check does not return the company or CEO name — enter them exactly as on your registration certificate. <b>Our staff check them at approval.</b>",
+      "noLb": "Cannot sign up",
+      "taken": "This business number is already registered — one account per business.",
+      "closedLine": "The tax service shows this business as <b>{state}</b>{detail}.",
+      "stateClosed": "closed",
+      "stateSuspended": "suspended",
+      "beforeLb": "Not verified yet",
+      "beforeBody": "Verify your business registration number to continue. <b>Verify</b> checks the tax status and whether the number is already registered.",
+      "failTitle": "Sign-up is refused when",
+      "fail1": "the business is suspended or closed — caught by the tax lookup regardless of type",
+      "fail2": "the business number is already registered — one account per business",
+      "fail3": "the company name differs from the tax-registered name",
+      "company": "Company name",
+      "companyPhCorp": "e.g. Seba Korea Co., Ltd.",
+      "companyPhSole": "Name on your registration certificate",
+      "ceo": "CEO name",
+      "soleSelf": "For a sole proprietorship the CEO must be <b>you</b> (same as your name in step 3).",
+      "bizType": "Business type",
+      "bizTypePh": "e.g. Wholesale/retail",
+      "bizItem": "Business item",
+      "bizItemPh": "e.g. E-commerce"
+    },
+    "person": {
+      "title": "3. Your details",
+      "diffLb": "How this differs from the business check",
+      "diffBody": "The business check confirms the <b>business</b>; identity verification confirms the <b>person</b>. Use your real name — it is matched with the bank account holder at settlement.",
+      "name": "Your name",
+      "namePh": "Enter your real name",
+      "phone": "Phone identity check",
+      "phoneBody": "After signing up you go straight to <b>identity verification (PASS)</b>. The verified name must match your settlement account holder.",
+      "email": "Email",
+      "emailPh": "Enter your work email",
+      "emailHint": "Review results and settlement notices go to this address. It is also your login ID.",
+      "job": "Department · title",
+      "jobPh": "e.g. Head of Business Development",
+      "pw": "Password",
+      "pwPh": "10+ characters: letters, numbers, symbols",
+      "pwWeak": "At least 10 characters mixing letters, numbers and symbols",
+      "pw2": "Confirm password",
+      "pw2Ph": "Enter it once more",
+      "pw2Diff": "Does not match the password above"
+    },
+    "terms": {
+      "title": "4. Terms",
+      "noneLb": "Terms in preparation",
+      "noneBody": "No terms have been published yet — we will ask for consent once they are.",
+      "all": "Agree to all",
+      "allSub": "I agree to all required and optional items.",
+      "required": "Required",
+      "optional": "Optional",
+      "view": "View ›",
+      "afterLb": "After you submit",
+      "afterBiz": "<b>Business verification completes after staff approval</b>, usually within 1 business day. Even before approval, with identity verification you can do <b>everything, including posting and creating deals</b> — after approval you receive fees as a business (tax invoice).",
+      "afterPersonal": "Individuals <b>join immediately</b>. To receive referral fees, verify your identity after signing up.",
+      "fullLb": "Full terms",
+      "fullBody": "“View ›” opens the full terms in a new window. Agree to all required items to continue.",
+      "noticeLb": "Notice",
+      "noticeTail": "— these are notices about who we entrust data to and for what, not items to agree to (nothing to choose)."
+    },
+    "profile": {
+      "title": "5. Interests",
+      "optional": "(optional · you can skip this)",
+      "whyLb": "Why we ask",
+      "whyBody": "Used only to choose home-page <b>ads</b> and the order of referral suggestions. Never given to advertisers; you can delete it later in My page.",
+      "multi": "Multiple choice",
+      "nowLb": "Current result",
+      "consent": "By signing up I agree that this is saved and used to sort home-page ads and suggestions (never given to advertisers · delete anytime).",
+      "noneLb": "No result yet",
+      "noneBody": "You can skip this. In that case only <b>general ads</b> are shown."
+    }
+  }
+}

@@ -15,34 +15,40 @@ import type { Gwan } from '@/lib/types';
 import { GWAN_PATH } from '@/lib/format';
 import { HdNav } from './HdNav';
 import { HdAuth } from '@/components/HdAuth';
+import { useLocale, useTranslations } from 'next-intl';
+import { LangPick } from '@/i18n/LangPick';
+import { isGwanKey } from '@/i18n/keys';
 
 export function Logo() {
+  const t = useTranslations('header');
   return (
-    <Link className="pc-lg" href="/" aria-label="소개뱅크 메인으로">
+    <Link className="pc-lg" href="/" aria-label={t('logoHome')}>
       <svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true">
         <path d="M4.5 9A4.5 4.5 0 0 1 9 4.5h3v3.6H9.3A1.2 1.2 0 0 0 8.1 9.3V12H4.5V9Z" fill="#2563EB" />
         <path d="M23.5 19a4.5 4.5 0 0 1-4.5 4.5h-3v-3.6h2.7a1.2 1.2 0 0 0 1.2-1.2V16h3.6v3Z" fill="#2563EB" />
         <path d="M23.5 9A4.5 4.5 0 0 0 19 4.5h-3v3.6h2.7A1.2 1.2 0 0 1 19.9 9.3V12h3.6V9Z" fill="#10B981" />
         <path d="M4.5 19A4.5 4.5 0 0 0 9 23.5h3v-3.6H9.3A1.2 1.2 0 0 1 8.1 18.7V16H4.5v3Z" fill="#10B981" />
       </svg>
-      <span className="t">소개뱅크</span>
+      <span className="t">{t('brand')}</span>
     </Link>
   );
 }
 
 export function SiteHeader({ gwans }: { gwans: Gwan[] }) {
+  const t = useTranslations('header');
+  const locale = useLocale();
   /* 20260930 — 주소가 없는 관(허브 EARN 등)은 뺍니다(href="/undefined" 방지) */
-  const menu = gwans.filter((g) => GWAN_PATH[g.code]).map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: g.name }));
+  const menu = gwans.filter((g) => GWAN_PATH[g.code]).map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: locale !== 'ko' && isGwanKey(g.code) ? t(`gwan.${g.code}`) : g.name }));   // v10.95 — 한국어는 늘 서버 이름(운영자가 바꿀 수 있음) · 다른 언어만 사전
   return (
     <header className="pc-hd">
       <div className="pc-wrap pc-hdin">
         <Logo />
         <HdNav items={[
           ...menu,
-          { href: '/community', label: '소개광장' },
-          { href: '/guide', label: '이용안내' },
+          { href: '/community', label: t('community') },
+          { href: '/guide', label: t('guide') },
         ]} />
-        <div className="pc-hr"><HdAuth /></div>
+        <div className="pc-hr"><LangPick /><HdAuth /></div>
       </div>
     </header>
   );

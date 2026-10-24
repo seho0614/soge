@@ -12,6 +12,7 @@
  * 🔍(제출)를 누르면 칸의 말로 통합 검색 결과(/search?q=)로 갑니다. 칸이 비어 있으면 팝업을 엽니다.
  */
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SearchPopup } from './SearchPopup';
 
 export type SearchGwan = 'MNY' | 'MAL' | 'BIZ' | 'HLT';
@@ -38,6 +39,7 @@ export function SearchBox({
   placeholder = '상품, 서비스, 업체, 창업아이템을 검색하세요', catLabel = '전체', aside, className,
 }: SearchBoxProps) {
   const [open, setOpen] = useState(false);
+  const h = useTranslations('header');   // v10.95 — 머리줄 돋보기 이름만(관 화면 검색칸은 2-2)
   const [seed, setSeed] = useState('');
   const [val, setVal] = useState(defaultValue);
 
@@ -51,7 +53,7 @@ export function SearchBox({
   if (variant === 'header') {
     return (
       <>
-        <button type="button" className="pc-hsch" aria-label="검색" title="검색" onClick={() => openWith('')}>
+        <button type="button" className="pc-hsch" aria-label={h('search')} title={h('search')} onClick={() => openWith('')}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
           </svg>

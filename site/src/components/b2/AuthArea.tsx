@@ -18,6 +18,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { logout } from '@/lib/session';
 import { isMoneyMain } from '@/components/Chrome';
+import { useTranslations } from 'next-intl';
 
 const num = (v: unknown) => (Number.isFinite(Number(v)) ? Math.max(0, Number(v)) : 0);
 
@@ -27,6 +28,8 @@ export function AuthArea({ cartIcon, bellIcon }: { cartIcon: React.ReactNode; be
   const money = isMoneyMain(pathname) && !!bellIcon;
   const [st, setSt] = useState<{ in: boolean; n: number; bell: number; ops: boolean }>({ in: false, n: 0, bell: 0, ops: false });
   const [busy, start] = useTransition();
+  const h = useTranslations('header');
+  const t = useTranslations('b2');
 
   useEffect(() => {
     let live = true;
@@ -49,31 +52,31 @@ export function AuthArea({ cartIcon, bellIcon }: { cartIcon: React.ReactNode; be
     <>
       {st.in ? (
         <>
-          <Link className="b2-login" href="/my">나의공간</Link>
-          <button type="button" className="b2-login b2-out" onClick={out} disabled={busy}>{busy ? '나가는 중…' : '로그아웃'}</button>
+          <Link className="b2-login" href="/my">{h('my')}</Link>
+          <button type="button" className="b2-login b2-out" onClick={out} disabled={busy}>{busy ? h('loggingOut') : h('logout')}</button>
           {/* v10.31 — 시안 소개광장 머리줄(로그인 뒤): 🔔 · 관리자 페이지(운영 역할만 · → 운영 화면). 소개장터 메인은 아래 종을 그대로 씁니다 */}
           {!money && (
-            <Link className="b2-ntf" href="/my/notifications" aria-label={st.bell > 0 ? `알림 — 읽지 않은 알림 ${st.bell}건` : '알림'} title="알림">
+            <Link className="b2-ntf" href="/my/notifications" aria-label={st.bell > 0 ? t('bellUnread', { n: st.bell }) : t('bell')} title={t('bell')}>
               🔔{st.bell > 0 && <span className="b2-belln" aria-hidden>{st.bell > 99 ? '99+' : st.bell}</span>}
             </Link>
           )}
-          {st.ops && <a className="b2-join b2-adm" href="/go/admin">관리자 페이지</a>}
+          {st.ops && <a className="b2-join b2-adm" href="/go/admin">{h('admin')}</a>}
         </>
       ) : (
         <>
-          <Link className="b2-login" href="/login">로그인</Link>
-          <Link className="b2-join" href="/signup">무료 회원가입</Link>
+          <Link className="b2-login" href="/login">{h('login')}</Link>
+          <Link className="b2-join" href="/signup">{h('signup')}</Link>
         </>
       )}
       {money ? (
-        <Link className="b2-bell" href="/my/notifications" aria-label={st.in && st.bell > 0 ? `알림 — 읽지 않은 알림 ${st.bell}건` : '알림'} data-bell={st.in ? st.bell : ''}>
+        <Link className="b2-bell" href="/my/notifications" aria-label={st.in && st.bell > 0 ? t('bellUnread', { n: st.bell }) : t('bell')} data-bell={st.in ? st.bell : ''}>
           {bellIcon}
           {st.in && st.bell > 0 && <span className="b2-belln" aria-hidden>{st.bell > 99 ? '99+' : st.bell}</span>}
         </Link>
       ) : (
-        <Link className="b2-cart" href="/health/cart" aria-label="소개몰 장바구니">
+        <Link className="b2-cart" href="/health/cart" aria-label={t('cart')}>
           {cartIcon}
-          <span className="b2-cartn" aria-label={`장바구니에 담긴 상품 ${st.n}개`}>{st.n}</span>
+          <span className="b2-cartn" aria-label={t('cartCount', { n: st.n })}>{st.n}</span>
         </Link>
       )}
     </>

@@ -1,5 +1,8 @@
+/* v10.95 — 다국어(next-intl · src/i18n/request.ts) */
+const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
+
 /** @type {import('next').NextConfig} */
-module.exports = {
+module.exports = withNextIntl({
   reactStrictMode: true,
   /* D007 — 개발(로컬 저장소)에서는 파일 바이트가 /api 프록시(middleware)를 지납니다.
    * 기본 10MB 를 넘으면 Next 가 **조용히 잘라** 넘깁니다(→ 서버가 크기 불일치로 거절).
@@ -22,4 +25,4 @@ module.exports = {
     const api = process.env.API_ORIGIN || 'http://localhost:3000';
     return [{ source: '/api/:path*', destination: `${api}/api/:path*` }];
   },
-};
+});

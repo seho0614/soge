@@ -11,14 +11,16 @@
  */
 import { usePathname } from 'next/navigation';
 import { isShop } from '@/components/Chrome';
+import { useTranslations } from 'next-intl';
 
 export function B2Notice({ inter, direct }: { inter?: string | null; direct?: string | null }) {
+  const t = useTranslations('b2');
   const shop = isShop(usePathname());
   if (shop && direct) {
     return (
       <>
-        <p className="b2-notice" data-notice="direct"><span className="b2-ntag">소개몰 직판 상품</span>{direct}</p>
-        {inter && <p className="b2-notice" data-notice="inter"><span className="b2-ntag">매물 등 회원 간 거래</span>{inter}</p>}
+        <p className="b2-notice" data-notice="direct"><span className="b2-ntag">{t('directTag')}</span>{direct}</p>
+        {inter && <p className="b2-notice" data-notice="inter"><span className="b2-ntag">{t('interTag')}</span>{inter}</p>}
       </>
     );
   }
