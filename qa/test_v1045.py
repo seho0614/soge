@@ -147,7 +147,7 @@ for f in [B + 'recurring.controller.ts', P + 'partner.controller.ts', 'src/worke
 rc = rd(B + 'recurring.controller.ts')
 ok('회원 환불 · 정산 계좌 API 가 새 서비스로',
    'this.refunds.refund(dto.reason)' in rc and 'this.refunds.refundEligible()' in rc and 'this.payout.verifyPayoutAccount(id, dto.code)' in rc, '')
-pc = rd(P + 'partner.controller.ts')
+pc = rd(P + 'partner.controller.ts') + rd(P + 'partner-admin.controller.ts')   # v10.96 — 운영 파트너 컨트롤러는 partner-admin.controller.ts
 ok('운영 파트너 컨트롤러가 PartnerAdminService 로',
    re.search(r'export class PartnerAdminController \{\s*constructor\(private readonly svc: PartnerAdminService\)', pc) is not None, '')
 
