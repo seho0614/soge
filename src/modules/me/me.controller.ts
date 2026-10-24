@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { MeService } from './me.service';
+import { MeActivityService } from './me-activity.service';
+import { MeMoneyService } from './me-money.service';
+import { MeNotifyService } from './me-notify.service';
 import { SettlementService } from '../settlement/settlement.service';
 import {
   MySettlementDueDto,
@@ -26,7 +29,8 @@ import { Roles, RequireGate } from '../../core/auth';
  * MEMBER 전용으로 두면 사업자가 자기 관심·알림·구독을 못 봅니다. */
 @Roles('MEMBER','BIZ_OWNER','BIZ_STAFF')
 export class MeController {
-  constructor(private readonly svc: MeService, private readonly stl: SettlementService) {}
+  constructor(private readonly svc: MeService, private readonly stl: SettlementService,
+              private readonly activity: MeActivityService, private readonly money: MeMoneyService, private readonly notify: MeNotifyService) {}   // v10.96
 
   @Get('listings')
   /* v10.31 — 본인인증 개인도 매물을 등록합니다(약관 제4조). 전에는 사업자만 열람(403)이라 나의공간 메뉴 숫자(4)와 목록(403)이 달랐습니다.
@@ -36,7 +40,7 @@ export class MeController {
     description: '반려 건은 rejectReasonLabel · rejectFixGuide(고치는 법)가 함께 옵니다. 행마다 조회 · 관심 · 문의(1:1 대화) 수 · 업종 · 등급(v10.31).',
   })
   @ApiOkResponse({ type: MyListingDto, isArray: true })
-  listings(@Query('limit') limit?: number) { return this.svc.listings(limit); }
+  listings(@Query('limit') limit?: number) { return this.activity.listings(limit); }
 
   @Get('deals')
   @ApiOperation({
@@ -44,7 +48,7 @@ export class MeController {
     description: 'myPart 로 이 거래에서 내 역할(매수·매도·소개자)을 알려줍니다.',
   })
   @ApiOkResponse({ type: MyDealDto, isArray: true })
-  deals(@Query('limit') limit?: number) { return this.svc.deals(limit); }
+  deals(@Query('limit') limit?: number) { return this.activity.deals(limit); }
 
   @Get('home')
   @ApiOperation({
@@ -68,7 +72,7 @@ export class MeController {
   @ApiOkResponse({ type: MyConversationDto, isArray: true })
   conversations(@Query('role') role?: string, @Query('listingId') listingId?: string,
                 @Query('id') id?: string, @Query('limit') limit?: number) {
-    return this.svc.conversations({ role, listingId, id, limit });
+    return this.activity.conversations({ role, listingId, id, limit });
   }
 
   @Get('settlements')
@@ -79,7 +83,7 @@ export class MeController {
     description: '본인인증 회원(개인 · 사업자). payee 는 BUSINESS(사업자로 받음) · PERSON(개인으로 받음). amount 는 공제 없는 소개비 전액입니다.',
   })
   @ApiOkResponse({ type: MySettlementDto, isArray: true })
-  settlements() { return this.svc.settlements(false); }
+  settlements() { return this.money.settlements(false); }
 
   @Get('settlements/due')
   @RequireGate('IDENTITY_VERIFIED')
@@ -88,13 +92,13 @@ export class MeController {
     description: '내가 소개자이고 성사가 확정됐으며 소개비 약정이 있는데 정산 줄이 없는 거래. 개인이 받을 계좌를 나중에 확인한 경우 여기서 「소개비 받기」를 누릅니다.',
   })
   @ApiOkResponse({ type: MySettlementDueDto, isArray: true })
-  due() { return this.svc.settlementsDue(); }
+  due() { return this.money.settlementsDue(); }
 
   @Get('settlements/history')
   @RequireGate('IDENTITY_VERIFIED')
   @ApiOperation({ summary: '지급 내역' })
   @ApiOkResponse({ type: MySettlementDto, isArray: true })
-  history() { return this.svc.settlements(true); }
+  history() { return this.money.settlements(true); }
 
   @Post('settlements/:id/tax-invoice')
   @RequireGate('IDENTITY_VERIFIED')
@@ -104,7 +108,7 @@ export class MeController {
   })
   @Audit('SETTLEMENT_TAX_INVOICE', 'SETTLEMENT')
   @ApiOkResponse({ type: Object })   /* v10.31 합침 — 응답 모양을 문서에(검정 「구현된 API 에 응답 스키마」) */
-  taxInvoice(@Param('id') id: string, @Body() dto: TaxInvoiceDto) { return this.svc.markTaxInvoice(id, dto?.no); }
+  taxInvoice(@Param('id') id: string, @Body() dto: TaxInvoiceDto) { return this.money.markTaxInvoice(id, dto?.no); }
 
   @Post('settlements/:id/paid')
   @RequireGate('IDENTITY_VERIFIED')
@@ -119,20 +123,20 @@ export class MeController {
   @Get('favorites')
   @ApiOperation({ summary: '관심 목록' })
   @ApiOkResponse({ type: ListingCardDto, isArray: true })
-  favorites(@Query('limit') limit?: number) { return this.svc.favorites(limit); }
+  favorites(@Query('limit') limit?: number) { return this.activity.favorites(limit); }
 
   @Get('notifications')
   @ApiOperation({ summary: '알림' })
   @ApiQuery({ name: 'unread', required: false, type: Boolean })
   @ApiOkResponse({ type: NotificationDto, isArray: true })
   notifications(@Query('unread') unread?: string, @Query('limit') limit?: number) {
-    return this.svc.notifications(unread === '1' || unread === 'true', limit);
+    return this.notify.notifications(unread === '1' || unread === 'true', limit);
   }
 
   @Patch('notifications/read')
   @ApiOperation({ summary: '알림 전체 읽음' })
   @ApiOkResponse({ type: MarkReadResultDto })
-  read() { return this.svc.markRead(); }
+  read() { return this.notify.markRead(); }
 
   @Get('notification-prefs')
   @ApiOperation({
@@ -140,24 +144,24 @@ export class MeController {
     description: '종류별 인앱 · 이메일 · 수신거부 가능 여부. 돈 · 계약이 걸린 알림은 수신거부할 수 없습니다. 이메일은 도메인 인증 전이라 아직 보내지 않습니다(emailReady).',
   })
   @ApiOkResponse({ type: NotificationPrefsDto })
-  notificationPrefs() { return this.svc.notificationPrefs(); }
+  notificationPrefs() { return this.notify.notificationPrefs(); }
 
   @Patch('notification-prefs')
   @ApiOperation({ summary: '알림 수신 설정 바꾸기', description: '수신거부할 수 없는 종류를 끄려 하면 409 OPTOUT_FORBIDDEN.' })
   @ApiOkResponse({ type: Object })   /* v10.31 합침 — 응답 모양을 문서에(검정 「구현된 API 에 응답 스키마」) */
   setNotificationPref(@Body() dto: SetNotificationPrefDto) {
-    return this.svc.setNotificationPref(dto.eventCode, dto.channel, dto.enabled);
+    return this.notify.setNotificationPref(dto.eventCode, dto.channel, dto.enabled);
   }
 
   @Get('inquiries')
   @ApiOperation({ summary: '내 문의 내역' })
   @ApiOkResponse({ type: MyInquiryDto, isArray: true })
-  inquiries() { return this.svc.inquiries(); }
+  inquiries() { return this.notify.inquiries(); }
 
   @Get('disputes')
   @ApiOperation({ summary: '내 분쟁', description: '내가 접수한 분쟁만(본인 것). v10.32 — 분쟁 접수 · 처리 현황 표(SB-HOM-ETC-010)가 읽습니다 · 거래 이름 · 유형 글자 포함.' })
   @ApiOkResponse({ type: MyDisputeDto, isArray: true })
-  disputes() { return this.svc.disputes(); }
+  disputes() { return this.notify.disputes(); }
 
   @Get('subscription')
   @ApiOperation({
@@ -171,7 +175,7 @@ export class MeController {
   @ApiOkResponse({ type: ContractListDto, isArray: true })
   @ApiOperation({ summary: '내 계약 목록',
     description: '매수·매도 어느 쪽이든 내가 당사자인 계약입니다. stalled 는 3일 넘게 멈춘 건.' })
-  contracts() { return this.svc.contracts(); }
+  contracts() { return this.activity.contracts(); }
 
   /* ── 프로필 · 사업자 정보 ─────────────────────────────────────
    *

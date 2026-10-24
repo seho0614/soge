@@ -74,6 +74,9 @@ import { CommunityService } from './modules/community/community.service';
 import { PollController } from './modules/community/poll.controller';
 import { PollService } from './modules/community/poll.service';
 import { MeService } from './modules/me/me.service';
+import { MeActivityService } from './modules/me/me-activity.service';
+import { MeMoneyService } from './modules/me/me-money.service';
+import { MeNotifyService } from './modules/me/me-notify.service';
 import { PublicController } from './modules/public/public.controller';
 import { HealthController } from './modules/public/health.controller';
 import { PublicService } from './modules/public/public.service';
@@ -116,6 +119,8 @@ import { HealthReviewPublicController, HealthReviewMeController, HealthReviewAdm
 import { HealthReviewService } from './modules/health/health-review.service';
 import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
+import { AdminMemberService } from './modules/admin/admin-member.service';
+import { AdminReviewService } from './modules/admin/admin-review.service';
 /* v10.31 (w6 · 공유 파일) — 운영 화면 시안 기준 서버 자료 */
 import { AdminV31Controller, AdxPublicController, GwanAxesPublicController } from './modules/admin/admin-v31.controller';
 import { AdminV31Service } from './modules/admin/admin-v31.service';
@@ -131,7 +136,10 @@ import { RecurringBatchService } from './modules/billing/recurring-batch.service
 import { RecurringAdminService } from './modules/billing/recurring-admin.service';
 import { RecurringRefundService } from './modules/billing/recurring-refund.service';
 import { PayoutAccountService } from './modules/billing/payout-account.service';
-import { PartnerController, PartnerAdminController, QualificationController, BrokerAdminController } from './modules/partner/partner.controller';
+import { PartnerController } from './modules/partner/partner.controller';
+import { PartnerAdminController } from './modules/partner/partner-admin.controller';   // v10.96 — 컨트롤러 4개를 파일 4개로
+import { QualificationController } from './modules/partner/qualification.controller';
+import { BrokerAdminController } from './modules/partner/broker-admin.controller';
 import { BrokerService } from './modules/partner/broker.service';
 import { PartnerService } from './modules/partner/partner.service';
 import { PartnerLeadService } from './modules/partner/partner-lead.service';
@@ -304,7 +312,7 @@ import { LeadService } from './modules/lead/lead.service';
     DealService, DealContractService,   // v10.92
     I18nService,   // v10.93
     AgentService,  // v10.94
-    MeService,
+    MeService, MeActivityService, MeMoneyService, MeNotifyService,   // v10.96
     CommunityService,
     PollService,
     RealtyService,
@@ -321,7 +329,7 @@ import { LeadService } from './modules/lead/lead.service';
     BillingService,
     SettlementService,
     SchedulerService,
-    AdminService,
+    AdminService, AdminMemberService, AdminReviewService,   // v10.96
     LeadService,
     ConsultService,
     DirectoryService,

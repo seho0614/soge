@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { AdminService } from './admin.service';
+import { AdminReviewService } from './admin-review.service';
 import {
   AuditSampleDto, BadgeRequestDto, CodeLabelDto, DisputeAdminDto, DisputeSummaryDto,
   ResolveDisputeDto, UpdateCodeLabelDto,
@@ -39,7 +40,7 @@ export class AutoRateDto {
 @Controller('api/v1/admin')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class AdminOpsController {
-  constructor(private readonly svc: AdminService) {}
+  constructor(private readonly svc: AdminService, private readonly reviewSvc: AdminReviewService) {}   // v10.96 — 배지 · 자동검수 통계 · 표본 감사
 
   @Get('badges')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
@@ -50,12 +51,12 @@ export class AdminOpsController {
       '승인·반려는 reviewItemId 로 검수 API 를 호출하십시오.',
   })
   @ApiOkResponse({ type: BadgeRequestDto, isArray: true })
-  badges() { return this.svc.badges(); }
+  badges() { return this.reviewSvc.badges(); }
 
   @Get('badges/history')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
   @ApiOperation({ summary: '배지 발급 이력', description: 'v10.31 — 시안 「발급 이력」(사업자 · 배지 · 발급 · 만료). 최근 100건' })
-  badgeHistory() { return this.svc.badgeHistory(); }
+  badgeHistory() { return this.reviewSvc.badgeHistory(); }
 
   @Get('disputes')
   @Roles('ADMIN', 'SUPER')
@@ -95,13 +96,13 @@ export class AdminOpsController {
   @Get('auto-review/samples/summary')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
   @ApiOperation({ summary: '표본 감사 요약', description: 'v10.31 — 최근 30일 자동 승인 · 표본 · 불일치 · 표본율' })
-  sampleSummary() { return this.svc.auditSummary(); }
+  sampleSummary() { return this.reviewSvc.auditSummary(); }
 
   @Post('auto-review/samples/resample')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
   @ApiOperation({ summary: '표본 다시 뽑기', description: 'v10.31 — 표본율에 모자라는 만큼 최근 30일 자동 승인 건에서 무작위로 더 뽑습니다(기존 표본 · 결과는 그대로).' })
   @Audit('AUTO_REVIEW_RESAMPLE', 'REVIEW_ITEM')
-  resample() { return this.svc.resample(); }
+  resample() { return this.reviewSvc.resample(); }
 
   @Get('auto-review/samples')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
@@ -110,7 +111,7 @@ export class AdminOpsController {
     description: '자동 승인 건의 5%입니다. 표본 감사 없이 자동화하면 오판을 영원히 모릅니다.',
   })
   @ApiOkResponse({ type: AuditSampleDto, isArray: true })
-  samples() { return this.svc.auditSamples(); }
+  samples() { return this.reviewSvc.auditSamples(); }
 
   @Get('auto-review/reasons')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
@@ -119,7 +120,7 @@ export class AdminOpsController {
     description: '어떤 규칙이 사람의 시간을 얼마나 쓰는지. 규칙을 조정할 근거입니다.',
   })
   @ApiOkResponse({ type: ReasonStatDto, isArray: true })
-  reasons() { return this.svc.autoReviewReasons(); }
+  reasons() { return this.reviewSvc.autoReviewReasons(); }
 
   @Get('auto-review/rate')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
@@ -128,7 +129,7 @@ export class AdminOpsController {
     description: 'v_auto_review_rate. 첫 행이 오늘(또는 가장 최근 제출일)입니다.',
   })
   @ApiOkResponse({ type: AutoRateDto, isArray: true })
-  rate() { return this.svc.autoReviewRate(); }
+  rate() { return this.reviewSvc.autoReviewRate(); }
 
   @Post('auto-review/samples/:id')
   @Roles('REVIEWER', 'ADMIN', 'SUPER')
@@ -139,7 +140,7 @@ export class AdminOpsController {
   @ApiParam({ name: 'id', format: 'uuid', description: 'review_items.id' })
   @Audit('AUTO_REVIEW_AUDIT', 'REVIEW_ITEM')
   audit(@Param('id') id: string, @Body() dto: RecordAuditDto) {
-    return this.svc.recordAudit(id, dto.correct, dto.memo);
+    return this.reviewSvc.recordAudit(id, dto.correct, dto.memo);
   }
 
   @Get('code-labels')

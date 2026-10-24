@@ -2,53 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { maskBizNo, maskEmail, maskName, maskPhone } from '../../common/mask';
 
 /**
  * 백오피스 조회·처리.
  *
  * 판정은 전부 DB 가 합니다 — 분쟁 접수 시 정산 보류도, 배지 승인 시
  * 노출 반영도 트리거입니다. 여기서는 상태만 바꿉니다.
+ *
+ * v10.96 (리팩토링) — 검수 · 표본 감사는 admin-review.service.ts, 회원 · 사업자는 admin-member.service.ts 로 나눴습니다. 설정 · 스위치 검사(SWITCH_RULES) · 코드 라벨은 여기 그대로.
  */
 @Injectable()
 export class AdminService {
   constructor(private readonly db: DatabaseService) {}
-
-  /** 배지 신청 검수 (SB-ADM-BDG-010). 배지는 전건 수동입니다 */
-  badges() {
-    return this.db.query(
-      `SELECT b.id, b.badge_type AS "badgeType",
-              coalesce(cl.label, b.badge_type) AS "badgeLabel",
-              b.listing_id AS "listingId", l.title AS "listingTitle",
-              coalesce(bz.company_name, a.name) AS "ownerName",
-              b.urgent_reason AS "urgentReason", b.valid_until AS "validUntil",
-              b.evidence, b.requested_at AS "requestedAt",
-              ri.id AS "reviewItemId"
-         FROM listing_badges b
-         JOIN listings l ON l.id = b.listing_id
-         JOIN accounts a ON a.id = b.requested_by
-         LEFT JOIN businesses bz ON bz.account_id = a.id AND bz.verified_at IS NOT NULL
-         LEFT JOIN code_labels cl ON cl.domain='badge.type' AND cl.code=b.badge_type
-         LEFT JOIN review_items ri ON ri.target_type='LISTING_BADGE' AND ri.target_id=b.id
-        WHERE b.status = 'IN_REVIEW'
-        ORDER BY b.requested_at`);
-  }
-
-  /** v10.31 — 배지 발급 이력(시안 SB-ADM-BDG-010 「발급 이력」) */
-  badgeHistory() {
-    return this.db.query(
-      `SELECT b.id, coalesce(bz.company_name, a.name) AS "ownerName", coalesce(cl.label, b.badge_type) AS "badgeLabel",
-              l.title AS "listingTitle", b.status, b.decided_at AS "decidedAt", b.valid_until AS "validUntil",
-              b.reject_reason_code AS "rejectReasonCode"
-         FROM listing_badges b
-         JOIN listings l ON l.id = b.listing_id
-         JOIN accounts a ON a.id = b.requested_by
-         LEFT JOIN businesses bz ON bz.account_id = a.id AND bz.verified_at IS NOT NULL
-         LEFT JOIN code_labels cl ON cl.domain='badge.type' AND cl.code=b.badge_type
-        WHERE b.status <> 'IN_REVIEW' AND b.decided_at IS NOT NULL
-        ORDER BY b.decided_at DESC LIMIT 100`);
-  }
-
   /** v10.32 — 분쟁 숫자 4칸(시안 scAdmDspt: 처리 중 · 종결 · 이번 달 접수 · 72시간 넘김). 전부 disputes 실제 행 수 */
   async disputeSummary() {
     const [r] = await this.db.query<any>(
@@ -124,103 +89,6 @@ export class AdminService {
     });
   }
 
-  /** 표본 감사 (SB-ADM-REV-040). 자동 승인이 옳았는지 사후 확인 */
-  /** 수동 검수 사유별 건수. manual_reasons 는 배열이라 풀어서 셉니다. (20260930 신설) */
-  autoReviewReasons() {
-    return this.db.query(
-      `SELECT r AS reason, count(*)::int AS cnt
-         FROM review_items, unnest(manual_reasons) AS r
-        WHERE submitted_at > now() - interval '30 days'
-        GROUP BY r ORDER BY cnt DESC, r`);
-  }
-
-  /** 일별 자동화율. (20260930 신설) */
-  autoReviewRate() {
-    return this.db.query(
-      `SELECT day::text AS day, auto_rate_pct::float8 AS "autoRatePct",
-              submitted::int, auto_approved::int AS "autoApproved", manual_queue::int AS "manualQueue"
-         FROM v_auto_review_rate
-        WHERE day > current_date - 30
-        ORDER BY day DESC`);
-  }
-
-  auditSamples() {
-    return this.db.query(
-      `SELECT ri.id, ri.target_id AS "targetId", l.title,
-              l.desired_fee AS "desiredFee", ri.decided_at AS "decidedAt",
-              (ri.reject_memo IS NULL) AS pending, ri.reject_memo AS memo
-         FROM review_items ri
-         LEFT JOIN listings l ON l.id = ri.target_id
-        WHERE ri.audit_sampled AND ri.decision_mode = 'AUTO'
-        ORDER BY ri.decided_at DESC LIMIT 50`);
-  }
-
-  /** v10.31 (시안 SB-ADM-REV-040 칸 「자동 승인 · 표본 · 불일치 · 표본율」) — 최근 30일 */
-  async auditSummary() {
-    const [r] = await this.db.query<Record<string, string | null>>(
-      `SELECT count(*) FILTER (WHERE decision_mode = 'AUTO' AND status = 'APPROVED') AS auto,
-              count(*) FILTER (WHERE audit_sampled AND decision_mode = 'AUTO') AS sampled,
-              count(*) FILTER (WHERE audit_sampled AND decision_mode = 'AUTO' AND reject_memo LIKE '감사: 부적정%') AS mismatch,
-              count(*) FILTER (WHERE audit_sampled AND decision_mode = 'AUTO' AND reject_memo IS NULL) AS pending,
-              (SELECT num_value FROM auto_review_policies WHERE key = 'sample_audit_rate') AS rate
-         FROM review_items WHERE decided_at > now() - interval '30 days'`);
-    return { autoApproved: Number(r.auto), sampled: Number(r.sampled), mismatch: Number(r.mismatch),
-             pending: Number(r.pending), ratePct: r.rate == null ? null : Number(r.rate) };
-  }
-
-  /**
-   * v10.31 (시안 「표본 다시 뽑기」) — 최근 30일 자동 승인 건 중 표본율에 모자라는 만큼 무작위로 더 뽑습니다.
-   * 이미 뽑힌 표본은 그대로(결과가 지워지지 않음) — 모자란 만큼만 더합니다.
-   */
-  async resample() {
-    const rows = await this.db.query<{ id: string }>(
-      `WITH cfg AS (SELECT coalesce((SELECT num_value FROM auto_review_policies WHERE key = 'sample_audit_rate'), 5) AS rate),
-            pool AS (SELECT id, audit_sampled FROM review_items
-                      WHERE decision_mode = 'AUTO' AND status = 'APPROVED' AND decided_at > now() - interval '30 days'),
-            need AS (SELECT greatest(ceil(count(*) * (SELECT rate FROM cfg) / 100.0) - count(*) FILTER (WHERE audit_sampled), 0)::int AS n FROM pool)
-       UPDATE review_items SET audit_sampled = true
-        WHERE id IN (SELECT id FROM pool WHERE NOT audit_sampled ORDER BY random() LIMIT (SELECT n FROM need))
-       RETURNING id`);
-    return { added: rows.length, note: rows.length ? `표본 ${rows.length}건을 더 뽑았습니다.` : '표본율을 이미 채웠습니다 — 더 뽑을 것이 없습니다.' };
-  }
-
-  /** 감사 결과 기록. 틀렸으면 노출을 중단합니다 */
-  async recordAudit(reviewItemId: string, correct: boolean, memo?: string) {
-    return this.db.transaction(async () => {
-      const [ri] = await this.db.query<{ target_id: string }>(
-        `UPDATE review_items SET reject_memo = $2 WHERE id = $1 RETURNING target_id`,
-        [reviewItemId, correct ? '감사: 적정' : `감사: 부적정 — ${memo ?? ''}`]);
-      if (!ri) throw new StateConflict('NOT_FOUND', '감사 대상을 찾을 수 없습니다.');
-      if (!correct) {
-        await this.db.query(
-          `UPDATE listings SET status = 'SUSPENDED' WHERE id = $1 AND status = 'PUBLISHED'`,
-          [ri.target_id]);
-      }
-      return { reviewItemId, correct };
-    });
-  }
-
-  /** 코드 라벨 (SB-ADM-COD-010) */
-  codeLabels(domain?: string) {
-    return this.db.query(
-      `SELECT domain, code, label, short_label AS "shortLabel",
-              ui_tone AS "uiTone", audience, is_active AS "isActive"
-         FROM code_labels
-        WHERE ($1::text IS NULL OR domain = $1)
-        ORDER BY domain, sort_order`, [domain ?? null]);
-  }
-
-  async updateCodeLabel(domain: string, code: string, label: string, shortLabel?: string) {
-    const [row] = await this.db.query(
-      `UPDATE code_labels SET label = $3, short_label = coalesce($4, short_label),
-              updated_at = now()
-        WHERE domain = $1 AND code = $2
-      RETURNING domain, code, label, short_label AS "shortLabel"`,
-      [domain, code, label, shortLabel ?? null]);
-    if (!row) throw new StateConflict('NOT_FOUND', '코드를 찾을 수 없습니다.');
-    return row;
-  }
-
   /** 관리자 대시보드 (SB-ADM-DSH-010) */
   async summary() {
     const [n] = await this.db.query<Record<string, string | null>>(
@@ -255,123 +123,6 @@ export class AdminService {
       settlementPendingSum: Number(n.settlement_sum), bizPending: Number(n.biz_pending), bizToday: Number(n.biz_today),
       reviewCapacity: Number(n.review_cap) || 50, decidedToday: Number(n.decided_today), slaSoon: Number(n.sla_soon),
     };
-  }
-
-  /**
-   * 사업자 신청 · 회원 관리 (SB-ADM-USR-010). 미승인 건이 위로 옵니다.
-   * v10.31 (10/10 시안 기준) — 시안 줄(상호 · 번호 · 사업자 128-86-***12 · 대표 김** · 요금제 · 서류)과 탭(승인 대기 · 정상 · 정지).
-   *   사업자등록번호 · 대표 이름은 가려서 보냅니다(시안 표기 · 개인정보). 찾기는 서버가 원래 값으로 합니다(q).
-   *   반려(rejectedAt) · 회원 상태(accountStatus) · 요금제(planCode)를 더했습니다.
-   */
-  async businesses(q?: string) {
-    const rows = await this.db.query<any>(
-      `SELECT b.id, b.account_id AS "accountId", b.biz_reg_no AS "bizRegNo", b.company_name AS "companyName",
-              b.ceo_name AS "ceoName", b.nts_status AS "ntsStatus",
-              b.verified_at AS "verifiedAt", a.name AS "accountName", a.status AS "accountStatus",
-              b.rejected_at AS "rejectedAt", b.reject_reason AS "rejectReason",
-              b.created_at AS "createdAt",
-              (SELECT s.plan_code FROM subscriptions s WHERE s.account_id = b.account_id AND s.status = 'ACTIVE'
-                ORDER BY s.current_period_end DESC NULLS LAST LIMIT 1) AS "planCode"
-         FROM businesses b JOIN accounts a ON a.id = b.account_id
-        WHERE b.kind = 'BUSINESS'   /* v10.38 (D096) — 개인 활동 정보는 사업자 신청이 아닙니다 */
-          AND ($1::text IS NULL OR b.company_name ILIKE '%'||$1||'%' OR b.ceo_name ILIKE '%'||$1||'%'
-               OR b.biz_reg_no LIKE '%'||regexp_replace($1,'\\D','','g')||'%' AND length(regexp_replace($1,'\\D','','g')) >= 3
-               OR a.name ILIKE '%'||$1||'%')
-        ORDER BY (b.verified_at IS NOT NULL OR b.rejected_at IS NOT NULL), b.created_at DESC LIMIT 200`, [q?.trim() || null]);
-    return rows.map((r) => ({
-      ...r,
-      bizRegNo: maskBizNo(r.bizRegNo, 'mid'),
-      ceoName: maskName(r.ceoName),
-      accountName: maskName(r.accountName),
-      no: `M-${String(r.id).slice(0, 4).toUpperCase()}`,
-    }));
-  }
-
-  /**
-   * v10.31 — 사업자 신청 반려(시안 「반려」). 사유를 남기고 검수 대기 건도 반려로 닫습니다.
-   * 반려된 신청자는 사업자 전환 화면에서 고쳐 다시 신청할 수 있습니다(새 신청이 생기면 반려 표시는 그 줄에만 남음).
-   */
-  async rejectBusiness(id: string, reason: string) {
-    if (!reason?.trim() || reason.trim().length < 2) throw new PolicyViolation('REASON_REQUIRED', '반려 사유를 적어 주십시오.');
-    return this.db.transaction(async () => {
-      const [b] = await this.db.query<{ account_id: string }>(
-        `UPDATE businesses SET rejected_at = now(), rejected_by = $2, reject_reason = $3
-          WHERE id = $1 AND kind = 'BUSINESS' AND verified_at IS NULL AND rejected_at IS NULL RETURNING account_id`,
-        [id, RequestCtx.actorId(), reason.trim()]);
-      if (!b) throw new StateConflict('ALREADY_DECIDED', '이미 승인했거나 반려한 신청입니다.');
-      await this.db.query(
-        `UPDATE review_items SET status = 'REJECTED', decision_by = $2, decided_at = now(),
-                reject_reason_code = 'OTHER', reject_memo = $3
-          WHERE target_type = 'BUSINESS' AND target_id = $1 AND status IN ('QUEUED','IN_PROGRESS')`,
-        [id, RequestCtx.actorId(), reason.trim()]);
-      await this.db.query(
-        `INSERT INTO notifications (account_id, event_code, title, body, link_url)
-         VALUES ($1, 'BUSINESS_REJECTED', '사업자 신청이 반려되었습니다', $2, '/my/business')`,
-        [b.account_id, `사유: ${reason.trim()} — 고쳐서 다시 신청하실 수 있습니다.`]);
-      return { id, status: 'REJECTED' };
-    });
-  }
-
-  /**
-   * v10.31 — 회원 상태 변경(시안 회원 상세 「상태 변경」 · 회원 관리 「정지」 탭). 정상 ↔ 정지만. 사유 필수 · 기록(account_status_changes).
-   * 자기 자신과 최고 관리자(SUPER)는 바꿀 수 없습니다. 정지하면 로그인이 막히고 소개코드가 멈춥니다(trg_revoke_on_status).
-   */
-  async setAccountStatus(id: string, status: string, reason: string) {
-    if (!['ACTIVE', 'SUSPENDED'].includes(status)) throw new PolicyViolation('BAD_STATUS', '정상 또는 정지로만 바꿀 수 있습니다.');
-    if (!reason?.trim() || reason.trim().length < 2) throw new PolicyViolation('REASON_REQUIRED', '상태를 바꾸는 사유를 적어 주십시오.');
-    if (id === RequestCtx.actorId()) throw new PolicyViolation('SELF_CHANGE', '자기 계정의 상태는 바꿀 수 없습니다.');
-    return this.db.transaction(async () => {
-      const [a] = await this.db.query<{ status: string; sup: boolean }>(
-        `SELECT status, EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role = 'SUPER') AS sup
-           FROM accounts a WHERE id = $1 FOR UPDATE`, [id]);
-      if (!a) throw new StateConflict('NOT_FOUND', '없는 회원입니다.');
-      if (a.sup) throw new PolicyViolation('PROTECTED_ACCOUNT', '최고 관리자 계정은 이 화면에서 바꿀 수 없습니다.');
-      if (a.status === 'WITHDRAWN') throw new StateConflict('WITHDRAWN', '탈퇴한 회원입니다.');
-      if (a.status === status) throw new StateConflict('SAME_STATUS', status === 'ACTIVE' ? '이미 정상입니다.' : '이미 정지된 회원입니다.');
-      await this.db.query(`UPDATE accounts SET status = $2 WHERE id = $1`, [id, status]);
-      await this.db.query(
-        `INSERT INTO account_status_changes (account_id, from_status, to_status, reason, changed_by) VALUES ($1,$2,$3,$4,$5)`,
-        [id, a.status, status, reason.trim(), RequestCtx.actorId()]);
-      return { id, from: a.status, status };
-    });
-  }
-
-  /** v10.31 — 등록 일시 정지(제한업종 · 금칙 표현 반려 3회) 풀기 */
-  async liftPostingSuspension(accountId: string) {
-    const rows = await this.db.query(
-      `UPDATE posting_suspensions SET lifted_at = now(), lifted_by = $2
-        WHERE account_id = $1 AND lifted_at IS NULL AND until_at > now() RETURNING id`,
-      [accountId, RequestCtx.actorId()]);
-    if (!rows.length) throw new StateConflict('NOT_SUSPENDED', '풀 등록 정지가 없습니다.');
-    return { accountId, lifted: rows.length };
-  }
-
-  /**
-   * 사업자 승인. verified_at 이 소개비 수령 자격의 기준일입니다 (INV-10).
-   * 승격이지 재가입이 아니므로 계정은 그대로 두고 타입만 바꿉니다.
-   */
-  async verifyBusiness(id: string) {
-    return this.db.transaction(async () => {
-      const [biz] = await this.db.query<{ account_id: string }>(
-        `UPDATE businesses SET verified_at = now(), verified_by = $2
-          WHERE id = $1 AND kind = 'BUSINESS' AND verified_at IS NULL RETURNING account_id`,
-        [id, RequestCtx.actorId()]);
-      if (!biz) throw new StateConflict('ALREADY_VERIFIED', '이미 승인된 사업자입니다.');
-
-      await this.db.query(
-        `UPDATE accounts SET account_type='BUSINESS' WHERE id = $1`, [biz.account_id]);
-      await this.db.query(
-        `INSERT INTO account_roles (account_id, role, granted_by) VALUES ($1,'BIZ_OWNER',$2)
-         ON CONFLICT DO NOTHING`, [biz.account_id, RequestCtx.actorId()]);
-      /* v10.26 (G-186) — 이 사업자의 검수 대기 건도 같은 거래에서 승인으로 닫습니다.
-       * 전에는 「사업자 인증」에서 승인해도 검수 큐의 그 건이 대기로 남아 쌓였습니다(10/8 실측 1,191건) —
-       * 검수 큐는 오래된 50건만 보여 주므로 진짜 대기 건(매물 · 요청)이 뒤로 밀렸습니다. */
-      await this.db.query(
-        `UPDATE review_items SET status = 'APPROVED', decision_by = $2, decided_at = now()
-          WHERE target_type = 'BUSINESS' AND target_id = $1 AND status IN ('QUEUED','IN_PROGRESS')`,
-        [id, RequestCtx.actorId()]);
-      return { id, accountId: biz.account_id };
-    });
   }
 
   /** 거래 모니터링 (SB-ADM-DEL-010). 조회 전용 — 임의 확정 불가 (INV-4)
@@ -466,6 +217,27 @@ export class AdminService {
     return row;
   }
 
+  /** 코드 라벨 (SB-ADM-COD-010) */
+  codeLabels(domain?: string) {
+    return this.db.query(
+      `SELECT domain, code, label, short_label AS "shortLabel",
+              ui_tone AS "uiTone", audience, is_active AS "isActive"
+         FROM code_labels
+        WHERE ($1::text IS NULL OR domain = $1)
+        ORDER BY domain, sort_order`, [domain ?? null]);
+  }
+
+  async updateCodeLabel(domain: string, code: string, label: string, shortLabel?: string) {
+    const [row] = await this.db.query(
+      `UPDATE code_labels SET label = $3, short_label = coalesce($4, short_label),
+              updated_at = now()
+        WHERE domain = $1 AND code = $2
+      RETURNING domain, code, label, short_label AS "shortLabel"`,
+      [domain, code, label, shortLabel ?? null]);
+    if (!row) throw new StateConflict('NOT_FOUND', '코드를 찾을 수 없습니다.');
+    return row;
+  }
+
   /**
    * v10.31 (10/10 결함 — 법정 고지 화면에 내부 API 키 · 수금 계좌번호가 그대로 보임) —
    * 비밀 값은 서버에서 가려서 보냅니다. 화면에는 「가린 값 + 들어 있는지」만, 바꿀 때만 새 값을 입력합니다(PATCH 는 그대로).
@@ -522,17 +294,6 @@ export class AdminService {
     return row;
   }
 
-  /* v10.65 (docs/121 · docs/111 6-3) — 간주 · 소개비 스위치를 「실제로 돌리는 쪽」으로 바꿀 때만 조건을 봅니다.
-   *   반대쪽(간주 다시 켜기 · 소개비 끄기)은 언제나 됩니다 — 문제가 생기면 바로 되돌릴 수 있게.
-   *   운영 화면 「오픈 체크리스트 › 관리자 스위치」가 같은 조건을 미리 보여 줍니다(web/src/app/admin/Switches.tsx). */
-  static readonly SWITCH_RULES: Record<string, { to: string; integ?: string[]; status?: string[]; bank?: boolean; why: string }> = {
-    'assume.payment': { to: 'off', integ: ['PG'], status: ['TESTING', 'LIVE'], why: '전자결제(PG)가 시험 중이거나 연결됨' },
-    'assume.broker': { to: 'off', integ: ['BROKER'], status: ['TESTING', 'LIVE'], why: '국토부 중개사 대조가 시험 중이거나 연결됨' },
-    'assume.etax': { to: 'off', integ: ['ETAX'], status: ['TESTING', 'LIVE'], why: '전자세금계산서가 시험 중이거나 연결됨' },
-    'assume.bank': { to: 'off', bank: true, why: '사이트 기본 정보에 실제 수금 계좌 세 항목이 들어 있음' },
-    'feature.referral_fee': { to: 'on', integ: ['PASS', 'BANK'], status: ['LIVE'], why: '본인인증 · 1원 계좌인증이 모두 연결됨(LIVE)' },
-  };
-
   private async checkSwitch(key: string, value: string) {
     const rule = AdminService.SWITCH_RULES[key];
     if (!rule || (value ?? '').trim() !== rule.to) return;
@@ -553,119 +314,20 @@ export class AdminService {
     }
   }
 
-  reviewReasons() {
-    return this.db.query(
-      `SELECT code, label, category FROM review_reason_codes
-        WHERE is_active ORDER BY sort_order`);
-  }
-
   openBlockers() {
     return this.db.query(`SELECT kind, item, reason FROM v_open_blockers`);
   }
 
   /* ── 회원 상세 (운영) ─────────────────────────────────────────── */
 
-  /** v10.31 (10/10 결함 · 시안 kim****@) — 목록에는 가린 이메일 · 연락처만 보냅니다. 찾기는 원래 값으로 */
-  async accounts(q?: string, limit?: number, status?: string) {
-    const n = Math.min(Math.max(Number(limit) || 30, 1), 100);
-    const rows = await this.db.query<any>(
-      `SELECT a.id, a.email, a.name, a.phone,
-              a.account_type AS "accountType", a.status,
-              (a.identity_verified_at IS NOT NULL) AS "identityVerified",
-              b.company_name AS "companyName",
-              (b.verified_at IS NOT NULL) AS "bizVerified",
-              a.created_at AS "createdAt", a.last_login_at AS "lastLoginAt"
-         FROM accounts a
-         LEFT JOIN businesses b ON b.account_id = a.id AND b.kind = 'BUSINESS'
-        WHERE a.withdrawn_at IS NULL
-          AND ($3::text IS NULL OR a.status = $3)
-          AND ($1::text IS NULL OR a.name ILIKE '%'||$1||'%'
-                OR a.email::text ILIKE '%'||$1||'%'
-                OR coalesce(a.phone,'') ILIKE '%'||$1||'%')
-        ORDER BY a.created_at DESC
-        LIMIT $2`, [q ?? null, n, status ?? null]);
-    return rows.map((r) => ({ ...r, email: maskEmail(r.email), phone: maskPhone(r.phone) }));
-  }
-
-  /** v10.31 — 회원 관리 탭 숫자(정상 · 정지) */
-  async accountCounts() {
-    const [r] = await this.db.query<Record<string, string>>(
-      `SELECT count(*) FILTER (WHERE status = 'ACTIVE') AS active,
-              count(*) FILTER (WHERE status = 'SUSPENDED') AS suspended
-         FROM accounts WHERE withdrawn_at IS NULL`);
-    return { active: Number(r.active), suspended: Number(r.suspended) };
-  }
-
-  async account(id: string) {
-    const [acc] = await this.db.query<any>(
-      `SELECT a.id, a.email, a.name, a.phone,
-              a.account_type AS "accountType", a.status,
-              a.identity_verified_at AS "identityVerifiedAt",
-              a.created_at AS "createdAt", a.last_login_at AS "lastLoginAt",
-              a.withdrawn_at AS "withdrawnAt"
-         FROM accounts a WHERE a.id = $1`, [id]);
-    if (!acc) return { ok: false, note: '없는 회원입니다.' };
-    /* v10.31 (10/10 결함 · 시안 kim****@ · 010-****-2280) — 상세도 가린 값만 */
-    acc.email = maskEmail(acc.email); acc.phone = maskPhone(acc.phone);
-
-    const [biz] = await this.db.query<any>(
-      `SELECT b.id, b.biz_reg_no AS "bizRegNo", b.company_name AS "companyName",
-              b.ceo_name AS "ceoName", b.nts_status AS "ntsStatus",
-              b.verified_at AS "verifiedAt", b.reject_reason AS "rejectReason", b.rejected_at AS "rejectedAt"
-         FROM businesses b WHERE b.account_id = $1 AND b.kind = 'BUSINESS'`, [id]);
-    if (biz) biz.bizRegNo = maskBizNo(biz.bizRegNo);
-
-    /* v10.31 — 상태 변경 기록 · 등록 일시 정지(시안 「상태 변경」) */
-    const statusLog = await this.db.query(
-      `SELECT c.from_status AS "from", c.to_status AS "to", c.reason, c.changed_at AS "at", x.name AS "by"
-         FROM account_status_changes c LEFT JOIN accounts x ON x.id = c.changed_by
-        WHERE c.account_id = $1 ORDER BY c.changed_at DESC LIMIT 10`, [id]);
-    const [postingSuspension] = await this.db.query(
-      `SELECT until_at AS "until", reason FROM posting_suspensions
-        WHERE account_id = $1 AND lifted_at IS NULL AND until_at > now() ORDER BY until_at DESC LIMIT 1`, [id]);
-
-    const roles = await this.db.query(
-      `SELECT role FROM account_roles WHERE account_id = $1 ORDER BY role`, [id]);
-
-    const listings = await this.db.query(
-      `SELECT l.id, l.title, l.status, coalesce(cl.label, l.status) AS "statusLabel", l.created_at AS "createdAt"
-         FROM listings l LEFT JOIN code_labels cl ON cl.domain = 'listing.status' AND cl.code = l.status
-        WHERE l.owner_account_id = $1
-        ORDER BY l.created_at DESC LIMIT 10`, [id]);
-    const [listingCount] = await this.db.query<{ n: string }>(`SELECT count(*) AS n FROM listings WHERE owner_account_id = $1`, [id]);
-
-    const deals = await this.db.query(
-      `SELECT d.id, d.status, coalesce(cl.label, d.status) AS "statusLabel", d.created_at AS "createdAt",
-              CASE WHEN d.buyer_account_id = $1 THEN '매수'
-                   WHEN d.seller_account_id = $1 THEN '매도'
-                   ELSE '소개' END AS side
-         FROM deals d LEFT JOIN code_labels cl ON cl.domain = 'deal.status' AND cl.code = d.status
-        WHERE d.buyer_account_id = $1 OR d.seller_account_id = $1
-           OR d.introducer_account_id = $1
-        ORDER BY d.created_at DESC LIMIT 10`, [id]);
-    const [dealCount] = await this.db.query<{ n: string }>(
-      `SELECT count(*) AS n FROM deals WHERE buyer_account_id = $1 OR seller_account_id = $1 OR introducer_account_id = $1`, [id]);
-
-    /* ★ 이 회원이 **신고한 것과 신고당한 것**을 함께 봅니다.
-     *   한쪽만 보면 "상습 신고자" 인지 "상습 피신고자" 인지 모릅니다. */
-    const [rep] = await this.db.query(
-      `SELECT
-         (SELECT count(*) FROM reports WHERE reporter_id = $1) AS "reported",
-         (SELECT count(*) FROM reports WHERE target_type='ACCOUNT' AND target_id = $1)
-           AS "reportedAgainst"`, [id]);
-
-    return {
-      ok: true,
-      account: acc,
-      business: biz ?? null,
-      roles: roles.map((r: { role: string }) => r.role),
-      listings, deals,
-      listingCount: Number(listingCount?.n ?? 0), dealCount: Number(dealCount?.n ?? 0),
-      statusLog, postingSuspension: postingSuspension ?? null,
-      reports: rep,
-      note: acc.withdrawnAt
-        ? '탈퇴한 회원입니다. 보관 기간이 지나면 개인정보가 지워집니다.'
-        : null,
-    };
-  }
+  /* v10.65 (docs/121 · docs/111 6-3) — 간주 · 소개비 스위치를 「실제로 돌리는 쪽」으로 바꿀 때만 조건을 봅니다.
+   *   반대쪽(간주 다시 켜기 · 소개비 끄기)은 언제나 됩니다 — 문제가 생기면 바로 되돌릴 수 있게.
+   *   운영 화면 「오픈 체크리스트 › 관리자 스위치」가 같은 조건을 미리 보여 줍니다(web/src/app/admin/Switches.tsx). */
+  static readonly SWITCH_RULES: Record<string, { to: string; integ?: string[]; status?: string[]; bank?: boolean; why: string }> = {
+    'assume.payment': { to: 'off', integ: ['PG'], status: ['TESTING', 'LIVE'], why: '전자결제(PG)가 시험 중이거나 연결됨' },
+    'assume.broker': { to: 'off', integ: ['BROKER'], status: ['TESTING', 'LIVE'], why: '국토부 중개사 대조가 시험 중이거나 연결됨' },
+    'assume.etax': { to: 'off', integ: ['ETAX'], status: ['TESTING', 'LIVE'], why: '전자세금계산서가 시험 중이거나 연결됨' },
+    'assume.bank': { to: 'off', bank: true, why: '사이트 기본 정보에 실제 수금 계좌 세 항목이 들어 있음' },
+    'feature.referral_fee': { to: 'on', integ: ['PASS', 'BANK'], status: ['LIVE'], why: '본인인증 · 1원 계좌인증이 모두 연결됨(LIVE)' },
+  };
 }

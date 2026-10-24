@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { AdminMemberService } from './admin-member.service';
+import { AdminReviewService } from './admin-review.service';
 import {
   AdminBusinessDto, AdminDealDto, AdminSettlementDto, AdminSummaryDto,
   DecideSettlementDto, ReviewReasonDto, SiteSettingDto, UpdateSettingDto,
@@ -18,7 +20,7 @@ import { PiiAccess } from '../../core/pii-audit.interceptor';
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(private readonly admin: AdminService, private readonly memberSvc: AdminMemberService, private readonly reviewSvc: AdminReviewService) {}   // v10.96 — 회원 · 사업자 / 검수 이유
 
   @Get('summary')
   @ApiOperation({
@@ -34,14 +36,14 @@ export class AdminController {
   @PiiAccess('BUSINESS', '사업자 승인 심사')
   @ApiOperation({ summary: '사업자 신청 목록', description: '미승인 건이 위로 옵니다.' })
   @ApiOkResponse({ type: AdminBusinessDto, isArray: true })
-  businesses(@Query('q') q?: string) { return this.admin.businesses(q); }
+  businesses(@Query('q') q?: string) { return this.memberSvc.businesses(q); }
 
   @Patch('businesses/:id/reject')
   @ApiOperation({ summary: '사업자 신청 반려', description: 'v10.31 — 시안 「반려」. 사유 필수 · 검수 대기 건도 반려로 닫고 신청자에게 알립니다.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 409, description: 'ALREADY_DECIDED', type: ErrorDto })
   @Audit('BUSINESS_REJECT', 'BUSINESS')
-  rejectBusiness(@Param('id') id: string, @Body() dto: ReasonDto) { return this.admin.rejectBusiness(id, dto.reason); }
+  rejectBusiness(@Param('id') id: string, @Body() dto: ReasonDto) { return this.memberSvc.rejectBusiness(id, dto.reason); }
 
   @Patch('businesses/:id/verify')
   @ApiOperation({
@@ -53,7 +55,7 @@ export class AdminController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 409, description: 'ALREADY_VERIFIED', type: ErrorDto })
   @Audit('BUSINESS_VERIFY', 'BUSINESS')
-  verify(@Param('id') id: string) { return this.admin.verifyBusiness(id); }
+  verify(@Param('id') id: string) { return this.memberSvc.verifyBusiness(id); }
 
   @Get('deals')
   @PiiAccess('ACCOUNT', '거래 모니터링')
@@ -111,7 +113,7 @@ export class AdminController {
     description: '자유서술이 아니라 코드값입니다. 사유 분포가 다음 자동화 후보를 알려 줍니다.',
   })
   @ApiOkResponse({ type: ReviewReasonDto, isArray: true })
-  reasons() { return this.admin.reviewReasons(); }
+  reasons() { return this.reviewSvc.reviewReasons(); }
 
   /* ── 회원 상세 (운영) ─────────────────────────────────────────
    *
@@ -126,12 +128,12 @@ export class AdminController {
   })
   @Audit('ACCOUNT_LIST', 'ACCOUNT')
   accounts(@Query('q') q?: string, @Query('limit') limit?: number, @Query('status') status?: string) {
-    return this.admin.accounts(q, limit, status && ['ACTIVE', 'SUSPENDED'].includes(status) ? status : undefined);
+    return this.memberSvc.accounts(q, limit, status && ['ACTIVE', 'SUSPENDED'].includes(status) ? status : undefined);
   }
 
   @Get('accounts-counts')
   @ApiOperation({ summary: '회원 수(정상 · 정지)', description: 'v10.31 — 회원 관리 탭 숫자' })
-  accountCounts() { return this.admin.accountCounts(); }
+  accountCounts() { return this.memberSvc.accountCounts(); }
 
   @Patch('accounts/:id/status')
   @ApiOperation({
@@ -140,13 +142,13 @@ export class AdminController {
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @Audit('ACCOUNT_STATUS', 'ACCOUNT')
-  setStatus(@Param('id') id: string, @Body() dto: AccountStatusDto) { return this.admin.setAccountStatus(id, dto.status, dto.reason); }
+  setStatus(@Param('id') id: string, @Body() dto: AccountStatusDto) { return this.memberSvc.setAccountStatus(id, dto.status, dto.reason); }
 
   @Patch('accounts/:id/posting-suspension/lift')
   @ApiOperation({ summary: '등록 일시 정지 풀기', description: 'v10.31 — 제한업종 · 금칙 표현 반려 3회로 걸린 7일 등록 정지를 운영이 풉니다.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @Audit('POSTING_SUSPENSION_LIFT', 'ACCOUNT')
-  liftPosting(@Param('id') id: string) { return this.admin.liftPostingSuspension(id); }
+  liftPosting(@Param('id') id: string) { return this.memberSvc.liftPostingSuspension(id); }
 
   @Get('accounts/:id')
   @Roles('ADMIN', 'SUPER')
@@ -158,5 +160,5 @@ export class AdminController {
       '누가 언제 봤는지 기록이 필요합니다(개인정보 보호법 29조).',
   })
   @Audit('ACCOUNT_VIEW', 'ACCOUNT')
-  account(@Param('id') id: string) { return this.admin.account(id); }
+  account(@Param('id') id: string) { return this.memberSvc.account(id); }
 }
