@@ -30,10 +30,10 @@ ok('① package-lock 에 next-intl 4.14.9', '"node_modules/next-intl": {\n      
 ok('① next.config — 플러그인(src/i18n/request.ts)', "require('next-intl/plugin')('./src/i18n/request.ts')" in rd('site/next.config.js'), '')
 R = rd('site/src/i18n/request.ts')
 i_en = R.find('if (info.enabled)'); i_ck = R.find('(await cookies())')
-ok('① request.ts — 꺼져 있으면 쿠키를 읽지 않음 · 켜진 언어만 · 한국어 바탕에 덮기', 0 < i_en < i_ck and "info.items.some((i) => i.code === c)" in R and 'merge(ko as Dict' in R, '')
-ok('① 사전 형식 검사(global.d.ts — Messages: typeof ko)', 'Messages: typeof ko;' in rd('site/src/i18n/global.d.ts'), '')
+ok('① request.ts — 꺼져 있으면 쿠키를 읽지 않음 · 켜진 언어만 · 한국어 바탕에 덮기', 0 < i_en < i_ck and "info.items.some((i) => i.code === c)" in R and ('merge(ko as Dict' in R or 'messagesFor(locale)' in R), '')   # v10.97 — 묶음 파일(messages/index.ts)
+ok('① 사전 형식 검사(global.d.ts — Messages: typeof ko)', ('Messages: typeof ko;' in rd('site/src/i18n/global.d.ts') or 'Messages: typeof KO;' in rd('site/src/i18n/global.d.ts')), '')   # v10.97
 L = rd('site/src/app/layout.tsx')
-ok('① layout — NextIntlClientProvider · html lang={locale} · 제목 · 설명은 사전', '<NextIntlClientProvider locale={locale} messages={messages}>' in L and '<html lang={locale}>' in L and "getTranslations('meta')" in L, '')
+ok('① layout — NextIntlClientProvider · html lang={locale} · 제목 · 설명은 사전', ('<NextIntlClientProvider locale={locale} messages={messages}>' in L or '<NextIntlClientProvider locale={locale} messages={pick(messages, GLOBAL_NS)}' in L) and '<html lang={locale}>' in L and "getTranslations('meta')" in L, '')
 
 ko = json.loads(rd('site/src/i18n/messages/ko.json') or '{}'); en = json.loads(rd('site/src/i18n/messages/en.json') or '{}')
 
