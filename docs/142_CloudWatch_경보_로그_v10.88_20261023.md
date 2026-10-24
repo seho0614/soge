@@ -24,7 +24,7 @@
 | sgb-rds-cpu | DB CPU | 80% 이상 5분 | AWS 기본 |
 | sgb-rds-conn | DB 연결 수 | max_connections 의 80% 이상 | AWS 기본 |
 | sgb-rds-storage | DB 남은 저장 공간 | 할당량의 15% 이하 | AWS 기본 |
-| sgb-rds-mem | DB 남은 메모리 | 200MB 이하 10분 | AWS 기본 |
+| sgb-rds-mem | DB 남은 메모리 | 200MB 이하 10분 — **운영은 64MB**(2026-10-24 · 7절) | AWS 기본 |
 | sgb-log-api | API(Nest) 오류 줄 `ERROR` | 5분에 10건 이상 | 에이전트 → 지표 필터 |
 | sgb-log-site | 사용자 웹(Next) `ERROR` · `Error:` · `⨯` | 5분에 10건 이상 | 〃 |
 | sgb-log-jobs | 배치 `tick 실패` · `JOB_TOKEN` | 5분에 10건 이상 | 〃 |
@@ -93,7 +93,8 @@ bash setup.sh test
 
 ### 5-1. 서버에 권한 붙이기 (AWS 콘솔)
 
-IAM → 역할 → **sgb-ec2-s3**(서버에 붙은 역할 — AWS 구축 절차서 10-4) → 권한 추가 → 정책 연결 → **CloudWatchAgentServerPolicy** 체크 → 권한 추가.
+IAM → 역할 → **sgb-ec2-role**(서버에 붙은 역할 · 인스턴스 프로필 같은 이름 — AWS 구축 절차서 10-4 의 `sgb-ec2-s3` 는 실제에 없음 · 2026-10-24 확인) → 권한 추가 → 정책 연결 → **CloudWatchAgentServerPolicy** 체크 → 권한 추가.
+(CloudShell: `aws iam attach-role-policy --role-name sgb-ec2-role --policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy`)
 
 - [ ] 역할의 권한 목록에 CloudWatchAgentServerPolicy 가 보임
 
@@ -144,3 +145,19 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop   
 - `bash -n` 문법 · agent.json 형식 · `qa/test_v1088.py`(경보 12개 이름 · 로그 파일 6개가 pm2 이름 sgb · sgb-site · sgb-jobs 와 맞음 · 지우는 명령 없음 · apply 가 묻기 전에 바꾸지 않음)
 - 가짜 aws 명령으로 check · apply(no · yes) · test 를 돌림 — no 면 바꾼 것 0 · yes 면 주제 1 · 구독 1 · 필터 4 · 경보 12
 - **실제 AWS 에 만드는 시험은 하지 않았습니다** — 4-3 check 결과로 처음 확인합니다.
+
+## 7. 실제 구축 결과 (2026-10-24)
+
+| 단계 | 결과 |
+|---|---|
+| 4-2 | DB max_connections **81**(db.t3.micro · 메모리 1GB) → 연결 경보 64개 이상 |
+| 4-3 check | EC2 `i-055ee32624ab1a113` · RDS sgb-db(20GB) · 할일 24줄 · 기존 경보 0 |
+| 4-4 apply | 경보 12 · 주제 `sgb-alerts` · 로그 그룹 4 · 필터 4 — 구독 확인은 메일이 늦어 `aws sns subscribe` 로 다시 보낸 뒤 확인됨 |
+| 4-5 test | 구독 확인 뒤 ALARM · OK 메일 모두 받음 |
+| 5-1 | 역할 **sgb-ec2-role** 에 CloudWatchAgentServerPolicy(원래 AmazonSSMManagedInstanceCore 만 · S3 정책 없음) |
+| 5-2 | pm2 로그 6개 이름이 agent.json 과 같음(`-0` 없음) |
+| 5-3 | x86_64 · 에이전트 1.300074.0b1920 · 설정 검사 통과 · `running` · `configured` · systemd 자동 기동 |
+| 5-4 | `/sgb/api` 에 `i-…-out` 스트림(`-error` 는 새 오류 줄이 써질 때 생김) · CWAgent `mem_used_percent` · `disk_used_percent` 들어옴 |
+| **rds-mem** | 200MB 기준으로 **항상 ALARM** — 지난 24시간 남은 메모리 최소 98MB · 평균 107 ~ 146MB(6시간 주기로 오르내림 · 줄어드는 추세 없음) → **`RDS_FREE_MEM_MB=64` 로 apply 다시**(대표 승인). **다시 돌릴 때도 `RDS_FREE_MEM_MB=64` 를 꼭 붙일 것**(빼면 기본값 200 으로 돌아가 다시 울림) |
+
+주의 — 계정 8명 · 이용 거의 없음에서 이미 100MB 안팎이라, 오픈 뒤 64MB 경보가 잦으면 DB 를 db.t3.small(2GB)로 올릴지 검토(비용 — 요금표 확인 필요 · 운영 전환 서버 재설계 때 함께).
