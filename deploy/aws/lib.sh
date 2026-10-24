@@ -86,3 +86,24 @@ pm2_state() {
 
 # 메모리(MB) — 실제 + 스왑
 mem_total_mb() { awk '/MemTotal|SwapTotal/ {s+=$2} END {printf "%d", s/1024}' /proc/meminfo; }
+
+# 옛 판 정리(v10.91 · docs/146) — 판 보관 폴더에서 지금 판 · 직전 판만 남기고 나머지 판 폴더를 지웁니다.
+#   prune_releases <판 보관 폴더> <지금 판> <직전 판>   — apply.sh 가 새 판이 뜬 것을 확인한 뒤에만 부릅니다.
+#   지우는 것: 판 보관 폴더 **바로 아래**의 v*_* · prev_* 폴더(바로가기 · 파일은 건드리지 않음). KEEP_OLD_RELEASES=1 이면 아무것도 지우지 않습니다.
+prune_releases() {
+  local root cur prev d n=0 kb=0 names=""
+  root=$(readlink -f "$1" 2>/dev/null) || return 0
+  cur=$(readlink -f "$2" 2>/dev/null); prev=""
+  [ -n "${3:-}" ] && [ -d "$3" ] && prev=$(readlink -f "$3")
+  [ -n "$root" ] && [ -d "$root" ] && [ -n "$cur" ] && [ -d "$cur" ] || return 0
+  case "$cur" in "$root"/*) ;; *) return 0;; esac
+  if [ "${KEEP_OLD_RELEASES:-0}" = "1" ]; then info "옛 판 정리 건너뜀 (KEEP_OLD_RELEASES=1)"; return 0; fi
+  for d in "$root"/v*_* "$root"/prev_*; do
+    [ -d "$d" ] && [ ! -L "$d" ] || continue
+    [ "$d" = "$cur" ] || [ "$d" = "$prev" ] && continue
+    kb=$((kb + $(du -sk "$d" 2>/dev/null | cut -f1)))
+    rm -rf -- "$d" && { n=$((n+1)); names="$names ${d##*/}"; }
+  done
+  if [ "$n" -gt 0 ]; then info "옛 판 ${n}개 정리 · 약 $((kb / 1024))MB —$names (남김: ${cur##*/}${prev:+ · ${prev##*/}})"
+  else info "정리할 옛 판 없음 (남김: ${cur##*/}${prev:+ · ${prev##*/}})"; fi
+}

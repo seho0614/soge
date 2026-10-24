@@ -16,6 +16,7 @@
 #
 #   APP_LINK   앱 폴더(바로가기)   기본 ~/sgb
 #   REL_ROOT   판 보관 폴더        기본 ~/sgb-releases
+#   KEEP_OLD_RELEASES=1   새 판이 뜬 뒤 옛 판(지금 · 직전 판 말고)을 지우지 않음 — 기본은 지움(v10.91)
 #   DATA_DIR   판과 무관한 자료     기본 ~/sgb-data  (uploads · logs)
 #   SKIP_JOBS=1   배치 호출기를 띄우지 않음 (EventBridge 를 쓰는 서버)
 #   ASSUME_YES=1  물음을 건너뜀 — **리허설 전용**. 운영에서는 쓰지 마십시오(스냅샷 확인을 건너뜁니다)
@@ -176,6 +177,8 @@ API_URL="http://127.0.0.1:${PORT:-3000}/api/v1/health"; SITE_URL="http://127.0.0
 fresh_ok() { local st; st=$(pm2_state "$1"); set -- $st; [ "${1:-}" = "online" ] && [ "${2:-9}" = "0" ]; }
 if wait_up "$API_URL" && wait_up "$SITE_URL" && sleep 8 && fresh_ok sgb && fresh_ok sgb-site; then
   ok "API · 사용자 웹이 떴습니다 (새 프로세스 · 재시작 0회)"
+  # v10.91 — 새 판이 뜬 뒤에만 옛 판 정리(지금 판 · 직전 판은 남김 · 되돌리기용) — 끄기 KEEP_OLD_RELEASES=1
+  prune_releases "$REL_ROOT" "$REL" "$PREV"
 else
   say "        pm2: sgb=$(pm2_state sgb | cut -d' ' -f1-2) · sgb-site=$(pm2_state sgb-site | cut -d' ' -f1-2)  (online 0 이 아니면 포트를 다른 프로세스가 쓰고 있을 수 있습니다 — pm2 list)"
   say "  실패  새 판이 뜨지 않습니다 — 전 판으로 되돌립니다"
