@@ -88,6 +88,8 @@ export class SchedulerService {
       case 'sla_alert': {
         const [r] = await this.db.query<{ n: number }>(`SELECT fn_check_sla_alert() AS n`);
         affected = r.n;
+        // v10.90 — 운영자에게 알릴 길: CloudWatch 필터 「REVIEW_SLA_BREACH」 → 경보 sgb-review-sla(deploy/aws/cloudwatch/setup.sh)
+        if (r.n > 0) this.log.warn(`REVIEW_SLA_BREACH 검수 기한 넘김 ${r.n}건 — 운영 화면 › 검수 화면`);
         break;
       }
 

@@ -13,7 +13,7 @@
 
 경보를 받는 곳: SNS 주제 `sgb-alerts` → 메일(대표 지정 주소). 울릴 때(ALARM)와 풀릴 때(OK) 모두 보냅니다.
 
-## 2. 경보 12개 (기본값 — 환경 값으로 바꿀 수 있음)
+## 2. 경보 13개(v10.90 · 처음 12개) (기본값 — 환경 값으로 바꿀 수 있음)
 
 | 이름 | 무엇 | 기준 | 값이 오는 곳 |
 |---|---|---|---|
@@ -24,11 +24,12 @@
 | sgb-rds-cpu | DB CPU | 80% 이상 5분 | AWS 기본 |
 | sgb-rds-conn | DB 연결 수 | max_connections 의 80% 이상 | AWS 기본 |
 | sgb-rds-storage | DB 남은 저장 공간 | 할당량의 15% 이하 | AWS 기본 |
-| sgb-rds-mem | DB 남은 메모리 | 200MB 이하 10분 — **운영은 64MB**(2026-10-24 · 7절) | AWS 기본 |
+| sgb-rds-mem | DB 남은 메모리 | **64MB** 이하 10분(v10.90 부터 기본값 · 처음 200MB 는 항상 울려 2026-10-24 바꿈 · 7절) | AWS 기본 |
 | sgb-log-api | API(Nest) 오류 줄 `ERROR` | 5분에 10건 이상 | 에이전트 → 지표 필터 |
 | sgb-log-site | 사용자 웹(Next) `ERROR` · `Error:` · `⨯` | 5분에 10건 이상 | 〃 |
 | sgb-log-jobs | 배치 `tick 실패` · `JOB_TOKEN` | 5분에 10건 이상 | 〃 |
 | sgb-log-nginx | Nginx `[error]` 이상 | 5분에 10건 이상 | 〃 |
+| sgb-review-sla | **검수 기한 넘김**(배치 sla_alert 의 `REVIEW_SLA_BREACH` 줄 · v10.90) | 2시간에 1건 이상 | 에이전트 → 지표 필터(/sgb/api) |
 
 - 값이 없을 때(에이전트 설치 전 등)는 「정상」으로 봅니다(notBreaching) — 1단계만 해 두어도 거짓 경보가 나지 않습니다.
 - **주의** — 이 서버에는 개발용 점검판(도커)도 돕니다. 점검판을 돌릴 때 CPU · 메모리 경보가 울릴 수 있습니다(운영 전환 때 서버를 나누면 사라짐).
@@ -158,6 +159,6 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop   
 | 5-2 | pm2 로그 6개 이름이 agent.json 과 같음(`-0` 없음) |
 | 5-3 | x86_64 · 에이전트 1.300074.0b1920 · 설정 검사 통과 · `running` · `configured` · systemd 자동 기동 |
 | 5-4 | `/sgb/api` 에 `i-…-out` 스트림(`-error` 는 새 오류 줄이 써질 때 생김) · CWAgent `mem_used_percent` · `disk_used_percent` 들어옴 |
-| **rds-mem** | 200MB 기준으로 **항상 ALARM** — 지난 24시간 남은 메모리 최소 98MB · 평균 107 ~ 146MB(6시간 주기로 오르내림 · 줄어드는 추세 없음) → **`RDS_FREE_MEM_MB=64` 로 apply 다시**(대표 승인). **다시 돌릴 때도 `RDS_FREE_MEM_MB=64` 를 꼭 붙일 것**(빼면 기본값 200 으로 돌아가 다시 울림) |
+| **rds-mem** | 200MB 기준으로 **항상 ALARM** — 지난 24시간 남은 메모리 최소 98MB · 평균 107 ~ 146MB(6시간 주기로 오르내림 · 줄어드는 추세 없음) → **`RDS_FREE_MEM_MB=64` 로 apply 다시**(대표 승인). **다시 돌릴 때도 `RDS_FREE_MEM_MB=64` 를 꼭 붙일 것**(빼면 기본값 200 으로 돌아가 다시 울림) — **v10.90 에서 기본값을 64 로 바꿈**(docs/145) |
 
 주의 — 계정 8명 · 이용 거의 없음에서 이미 100MB 안팎이라, 오픈 뒤 64MB 경보가 잦으면 DB 를 db.t3.small(2GB)로 올릴지 검토(비용 — 요금표 확인 필요 · 운영 전환 서버 재설계 때 함께).

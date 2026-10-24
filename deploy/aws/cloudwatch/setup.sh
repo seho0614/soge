@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# CloudWatch 경보 만들기 (v10.88 · 2026-10-23 · docs/142) — 사람이 **AWS CloudShell** 에서 실행합니다.
+# CloudWatch 경보 만들기 (v10.88 · 2026-10-23 · v10.90 검수 기한 경보 · RDS 메모리 64MB · docs/142) — 사람이 **AWS CloudShell** 에서 실행합니다.
 #
 #   ALERT_EMAIL=받을주소 RDS_MAX_CONNECTIONS=숫자 bash setup.sh            # check — 읽기만(만들 것을 보여 줌)
 #   ALERT_EMAIL=받을주소 RDS_MAX_CONNECTIONS=숫자 bash setup.sh apply      # 만들기 — 「만들까요?」에 소문자 yes
@@ -8,17 +8,18 @@
 #
 #   만드는 것(여러 번 돌려도 같은 결과 — 같은 이름은 덮어씀 · 지우는 것 없음):
 #     · SNS 주제 sgb-alerts + 메일 구독(처음 한 번 — 받은 메일의 「Confirm subscription」을 눌러야 받기 시작)
-#     · 경보 12개(이름 sgb-*) — 울릴 때와 풀릴 때 모두 메일
+#     · 경보 13개(이름 sgb-*) — 울릴 때와 풀릴 때 모두 메일
 #         EC2   CPU ≥ 80%(5분) · 상태 점검 실패(2분) · 메모리 ≥ 90%(5분) · 디스크 ≥ 85%(5분)   ← 메모리 · 디스크는 에이전트(agent.json)가 있어야 값이 옴
-#         RDS   CPU ≥ 80%(5분) · 연결 수 ≥ max_connections 의 80% · 남은 저장 공간 ≤ 15% · 남은 메모리 ≤ 200MB(10분)
+#         RDS   CPU ≥ 80%(5분) · 연결 수 ≥ max_connections 의 80% · 남은 저장 공간 ≤ 15% · 남은 메모리 ≤ 64MB(10분 · db.t3.micro 평소 100MB 안팎 — 2026-10-24)
 #         로그  API · 사용자 웹 · 배치 · Nginx 오류 줄이 5분에 10건 이상
-#     · 로그 그룹 4개(/sgb/api · /sgb/site · /sgb/jobs · /sgb/nginx-error · 보관 30일)와 오류 줄을 세는 지표 필터 4개(이름공간 SGB)
+#         검수  기한 넘긴 검수(배치 sla_alert 의 REVIEW_SLA_BREACH 줄)가 2시간에 1건 이상(v10.90)
+#     · 로그 그룹 4개(/sgb/api · /sgb/site · /sgb/jobs · /sgb/nginx-error · 보관 30일)와 오류 줄을 세는 지표 필터 4개 + 검수 기한 필터 1개(이름공간 SGB)
 #
 #   값(환경 값으로 바꿀 수 있음)
 #     ALERT_EMAIL           경보를 받을 메일(apply 에 필요)
 #     RDS_MAX_CONNECTIONS   운영 DB 의 max_connections — 서버에서 `bash ~/sgb/deploy/aws/psql.sh -c 'SHOW max_connections'`
 #     REGION(ap-northeast-2) · EIP(3.37.95.217 — 이 주소의 EC2 를 찾음) · INSTANCE_ID · RDS_ID(DB 가 하나면 자동)
-#     CPU_PCT(80) · MEM_PCT(90) · DISK_PCT(85) · STORAGE_FREE_PCT(15) · RDS_FREE_MEM_MB(200) · LOG_ERRORS_5MIN(10)
+#     CPU_PCT(80) · MEM_PCT(90) · DISK_PCT(85) · STORAGE_FREE_PCT(15) · RDS_FREE_MEM_MB(64) · LOG_ERRORS_5MIN(10)
 #
 #   CloudShell 은 콘솔에 로그인한 사람의 권한으로 돕니다 — 서버(EC2)에는 경보를 만드는 권한을 주지 않습니다.
 # =====================================================================
@@ -29,7 +30,7 @@ export AWS_DEFAULT_REGION="${REGION:-ap-northeast-2}"
 EIP="${EIP:-3.37.95.217}"
 TOPIC_NAME="sgb-alerts"
 CPU_PCT="${CPU_PCT:-80}"; MEM_PCT="${MEM_PCT:-90}"; DISK_PCT="${DISK_PCT:-85}"
-STORAGE_FREE_PCT="${STORAGE_FREE_PCT:-15}"; RDS_FREE_MEM_MB="${RDS_FREE_MEM_MB:-200}"; LOG_ERRORS_5MIN="${LOG_ERRORS_5MIN:-10}"
+STORAGE_FREE_PCT="${STORAGE_FREE_PCT:-15}"; RDS_FREE_MEM_MB="${RDS_FREE_MEM_MB:-64}"; LOG_ERRORS_5MIN="${LOG_ERRORS_5MIN:-10}"
 
 ok()   { echo "  ok   $*"; }
 todo() { echo "  할일 $*"; }
@@ -106,6 +107,10 @@ body() {
     do_ logs put-metric-filter --log-group-name "$grp" --filter-name "sgb-$metric" --filter-pattern "$pattern" \
         --metric-transformations "metricName=$metric,metricNamespace=SGB,metricValue=1,defaultValue=0"
   done
+  # v10.90 — 검수 기한 넘김: 배치 sla_alert 가 넘긴 건이 있으면 API 로그에 「REVIEW_SLA_BREACH 검수 기한 넘김 N건」 한 줄(매시간)
+  todo "지표 필터 /sgb/api → SGB/ReviewSlaBreach (찾는 말 \"REVIEW_SLA_BREACH\")"
+  do_ logs put-metric-filter --log-group-name /sgb/api --filter-name sgb-ReviewSlaBreach --filter-pattern '"REVIEW_SLA_BREACH"' \
+      --metric-transformations "metricName=ReviewSlaBreach,metricNamespace=SGB,metricValue=1,defaultValue=0"
 
   # ── 경보 ─────────────────────────────────────────────────────────────
   # alarm 이름 · 설명 · 이름공간 · 지표 · 차원 · 통계 · 비교 · 기준 · 기간(초) · 횟수
@@ -137,6 +142,8 @@ body() {
   for m in ApiErrors SiteErrors JobsErrors NginxErrors; do
     alarm "sgb-log-$(echo "$m" | sed 's/Errors$//' | tr '[:upper:]' '[:lower:]')" "$m 오류 줄 5분에 ${LOG_ERRORS_5MIN}건 이상" SGB "$m" "" Sum $GE "$LOG_ERRORS_5MIN" 300 1
   done
+  # 2시간 — 매시간 배치가 한 번 늦어도 울렸다 풀렸다 하지 않게(모두 처리하면 2시간 안에 OK)
+  alarm sgb-review-sla  "검수 기한 넘김 2시간에 1건 이상 — 운영 화면 › 검수 화면" SGB ReviewSlaBreach "" Sum $GE 1 7200 1
 }
 
 # ── 끝 ───────────────────────────────────────────────────────────────
