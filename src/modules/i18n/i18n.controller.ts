@@ -29,6 +29,32 @@ export class TranslationUpsertDto {
   @ApiProperty({ example: 'en' }) @IsString() @Matches(/^[a-z]{2}$/) lang!: string;
   @ApiProperty({ example: 'Service notice' }) @IsString() @Length(1, 20000) text!: string;
 }
+export class AdminLangRowDto {
+  @ApiProperty({ example: 'en' }) code!: string;
+  @ApiProperty({ example: '영어' }) name!: string;
+  @ApiProperty({ example: 'English', description: '그 언어로 적은 이름' }) native!: string;
+  @ApiProperty({ description: '좌우 반전(아랍어)' }) rtl!: boolean;
+  @ApiProperty() isActive!: boolean;
+  @ApiProperty() sortOrder!: number;
+  @ApiProperty({ description: '번역 줄 수' }) translations!: number;
+}
+export class AdminLangsDto {
+  @ApiProperty({ description: 'i18n.enabled — off 면 손님 화면은 한국어만' }) enabled!: boolean;
+  @ApiPropertyOptional({ enum: ['MANUAL', 'CLAUDE', 'N8N'], description: 'i18n.engine' }) engine?: string;
+  @ApiProperty({ type: [AdminLangRowDto] }) items!: AdminLangRowDto[];
+}
+export class LangSetOkDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty() code!: string;
+  @ApiProperty() isActive!: boolean;
+}
+export class TranslationSourceDto {
+  @ApiProperty() targetType!: string;
+  @ApiProperty() targetId!: string;
+  @ApiProperty() field!: string;
+  @ApiProperty() sourceText!: string;
+  @ApiPropertyOptional() gwanCode?: string;
+}
 export class TranslationRejectDto {
   @ApiProperty({ example: '금액 표기가 원문과 다름' }) @IsString() @Length(2, 300) reason!: string;
 }
@@ -71,12 +97,14 @@ export class I18nController {
   @Get('admin/i18n/langs')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '언어 목록 (운영)' })
+  @ApiOkResponse({ type: AdminLangsDto })
   adminLangs() { return this.svc.adminLangs(); }
 
   @ApiBearerAuth()
   @Post('admin/i18n/langs/:code')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '언어 켜기 · 끄기', description: '한국어(원문)는 끌 수 없습니다(409).' })
+  @ApiOkResponse({ type: LangSetOkDto })
   @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto })
   @Audit('I18N_LANG_SET', 'I18N_LANG')
   setLang(@Param('code') code: string, @Body() dto: LangActiveDto) { return this.svc.setLangActive(code, dto.isActive); }
@@ -105,6 +133,7 @@ export class I18nController {
   @Get('admin/i18n/source')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '원문 보기 (운영)', description: '번역을 넣기 전에 원문을 봅니다.' })
+  @ApiOkResponse({ type: TranslationSourceDto })
   @ApiQuery({ name: 'targetType', enum: TYPES }) @ApiQuery({ name: 'targetId' }) @ApiQuery({ name: 'field', enum: FIELDS })
   @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 422, type: ErrorDto })
   source(@Query('targetType') targetType: string, @Query('targetId') targetId: string, @Query('field') field: string) {
