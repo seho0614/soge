@@ -1,4 +1,5 @@
 import { consultOpen, type ConsultCat } from './types';
+import { useTranslations } from 'next-intl';
 import { CSL_DESC } from './copy';
 
 /**
@@ -14,8 +15,9 @@ import { CSL_DESC } from './copy';
  *   pick 을 주면 전과 같은 「고르기」 한 단추입니다(/consult — 한 화면에서 업종을 고르고 바로 아래 신청서를 씁니다).
  */
 export function ConsultRows({ cats, label, current, pick }: { cats: ConsultCat[]; label: string; current?: string; pick?: boolean }) {
+  const t = useTranslations('consult');
   if (cats.length === 0) {
-    return <p className="mal-empty">상담 업종을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>;
+    return <p className="mal-empty">{t('rows.loadFail')}</p>;
   }
   /* v10.32 — 시안 순서: 지금 신청할 수 있는 업종(자격 확인 → 일반) → 받을 업체가 아직 없는 업종 → 준비 중 → 사무소 보기(법률 · 세무 — 맨 아래). 같은 묶음 안은 이름순 */
   const rank = (c: ConsultCat) => (consultOpen(c) ? (c.publishMode === 'GATED' ? 0 : 1)
@@ -28,39 +30,40 @@ export function ConsultRows({ cats, label, current, pick }: { cats: ConsultCat[]
         const dir = c.consultMode === 'LISTING_FEE';
         const open = consultOpen(c);
         const detail = `/mal/consult/${encodeURIComponent(c.code)}`;
+        const desc = CSL_DESC[c.code];
         return (
           <li key={c.id} className={`mal-row${current === c.code ? ' on' : ''}`} data-csl={c.code}
               data-csl-mode={dir ? 'dir' : open ? 'open' : c.status === 'PENDING' ? 'hold' : 'none'}>
             <div className="mal-row-l">
-              <span className={`mal-tag${gated ? ' gated' : ''}`}>{gated ? '자격 확인' : '일반'}</span>
+              <span className={`mal-tag${gated ? ' gated' : ''}`}>{gated ? t('common.tagGated') : t('common.tagGeneral')}</span>
               {pick ? <b>{c.name}</b> : <b><a className="mal-row-t" href={detail}>{c.name}</a></b>}
               <span className="mal-ls">
-                {CSL_DESC[c.code] ? `${CSL_DESC[c.code]} · ` : ''}
-                {c.status === 'PENDING' ? '준비 중' : dir ? `게재 ${c.partnerCount}곳` : `인증업체 ${c.partnerCount}곳`}
+                {desc ? `${t(desc)} · ` : ''}
+                {c.status === 'PENDING' ? t('rows.pending') : dir ? t('rows.listed', { n: String(c.partnerCount) }) : t('rows.certified', { n: String(c.partnerCount) })}
               </span>
             </div>
             <div className="mal-row-r">
               {c.status === 'APPROVED' && dir ? (
                 <>
-                  <span className="mal-ls">광고</span>
-                  <a className="mal-btn ghost" href={detail}>사무소 보기</a>
+                  <span className="mal-ls">{t('common.ad')}</span>
+                  <a className="mal-btn ghost" href={detail}>{t('rows.viewOffices')}</a>
                 </>
               ) : pick ? (
                 open ? (
                   <a className="mal-btn" href={`/consult?cat=${encodeURIComponent(c.code)}#csl-form`}>{label}</a>
                 ) : (
                   <>
-                    <span className="mal-ls">{c.status === 'PENDING' ? '준비 중입니다' : '받을 업체가 아직 없습니다'}</span>
-                    <button className="mal-btn ghost" type="button" disabled>준비 중</button>
+                    <span className="mal-ls">{c.status === 'PENDING' ? t('rows.pendingNote') : t('rows.noPartner')}</span>
+                    <button className="mal-btn ghost" type="button" disabled>{t('rows.pending')}</button>
                   </>
                 )
               ) : (
                 <>
-                  {!open && <span className="mal-ls">{c.status === 'PENDING' ? '준비 중입니다' : '받을 업체가 아직 없습니다'}</span>}
-                  <a className="mal-btn ghost mal-row-b" href={detail}>상세 보기</a>
+                  {!open && <span className="mal-ls">{c.status === 'PENDING' ? t('rows.pendingNote') : t('rows.noPartner')}</span>}
+                  <a className="mal-btn ghost mal-row-b" href={detail}>{t('rows.detail')}</a>
                   {open
                     ? <a className="mal-btn mal-row-b" href={`${detail}/apply`}>{label}</a>
-                    : <button className="mal-btn ghost mal-row-b" type="button" disabled>준비 중</button>}
+                    : <button className="mal-btn ghost mal-row-b" type="button" disabled>{t('rows.pending')}</button>}
                 </>
               )}
             </div>

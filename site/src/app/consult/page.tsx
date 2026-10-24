@@ -7,9 +7,12 @@ import { ConsultRows } from '@/components/mal/ConsultRows';
 import { consultOpen } from '@/components/mal/types';
 import { BackBar } from '@/components/common/BackBar';
 import '@/styles/mal.css';
+import { getTranslations } from 'next-intl/server';
 
 import { dtKst, ymdKst } from '@/lib/format';
-export const metadata: Metadata = { title: '상담 신청' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('consult'))('common.title') };
+}
 
 interface MyConsult {
   id: string; categoryName: string; summary: string; sido: string | null; sigungu: string | null;
@@ -17,10 +20,11 @@ interface MyConsult {
   providedTo: Array<{ company: string; viewedAt: string }>; contactPurged: boolean;
 }
 
-const ST: Record<string, string> = {
-  OPEN: '업체 찾는 중', ASSIGNED: '업체에 보냄', UNMATCHED: '맞는 업체 없음 — 운영 확인 중', CLOSED: '종료',
-  NO_PARTNER: '받을 업체 없음 — 전달하지 않았습니다',
-};
+const ST = {
+  OPEN: 'mine.st.open', ASSIGNED: 'mine.st.assigned', UNMATCHED: 'mine.st.unmatched', CLOSED: 'mine.st.closed',
+  NO_PARTNER: 'mine.st.noPartner',
+} as const;
+const stKey = (s: string) => (ST as Record<string, (typeof ST)[keyof typeof ST] | undefined>)[s];
 
 type Props = { searchParams: Promise<{ cat?: string }> };
 
@@ -41,6 +45,7 @@ type Props = { searchParams: Promise<{ cat?: string }> };
 export default async function ConsultPage({ searchParams }: Props) {
   const { cat } = await searchParams;
   const p = await me();
+  const t = await getTranslations('consult');
 
   const cats = await apiGet<ConsultCategory[]>('/consult/categories', 60).catch(() => [] as ConsultCategory[]);
   const mine = p ? await apiGetPersonal<MyConsult[]>('/me/consult-requests').catch(() => [] as MyConsult[]) : [];
@@ -53,69 +58,69 @@ export default async function ConsultPage({ searchParams }: Props) {
 
   return (
     <><div className="mal mal-narrow mal-proto mal-csl32">{/* v10.32 — 시안 폭 · 단추 색(상담 신청 보라 · 상세 보기 회색 테두리) */}
-      <BackBar href="/mal/consult" label="생활 · 금융 상담" wrap={false} />
+      <BackBar href="/mal/consult" label={t('common.consultName')} wrap={false} />
       <div className="page-head mal-head">
-        <h1>{picked ? `${picked.name} 상담 신청` : '상담 신청'}</h1>
+        <h1>{picked ? t('common.headPicked', { name: picked.name }) : t('common.title')}</h1>
         <p className="mal-desc">
-          이사 · 청소 · 인테리어 · 렌탈 · 보험 같은 생활 · 금융 상담을 신청하면 인증된 업체 1곳이 연락드립니다.
+          {t('page.desc')}
         </p>
       </div>
 
       <section className="mal-panel" aria-labelledby="csl-pick-h">
         <div className="mal-sh2">
-          <b id="csl-pick-h">업종 {cats.length > 0 ? `${cats.length}종` : ''}</b>
-          <span className="mal-ls">자격 확인 업종은 자격 심사를 통과한 업체에만 연결합니다</span>
+          <b id="csl-pick-h">{t('common.cats')} {cats.length > 0 ? t('common.catsCount', { n: String(cats.length) }) : ''}</b>
+          <span className="mal-ls">{t('common.gatedNote')}</span>
         </div>
-        <ConsultRows cats={cats} label="상담 신청" current={picked?.code} />
+        <ConsultRows cats={cats} label={t('common.apply')} current={picked?.code} />
       </section>
 
       {picked && !pickedOpen && (
         <div className="mal-warn" role="status">
-          <b>{picked.name} 상담은 아직 받지 않습니다.</b>{' '}
-          {picked.status === 'PENDING' ? '준비 중인 업종입니다.' : picked.publishMode === 'GATED'
-            ? '자격 심사를 통과한 업체가 아직 없습니다.' : '받을 수 있는 인증업체가 아직 없습니다.'}{' '}
-          <a href="/consult">다른 업종 보기</a>
+          <b>{t('common.notYet', { name: picked.name })}</b>{' '}
+          {picked.status === 'PENDING' ? t('common.whyPending') : picked.publishMode === 'GATED'
+            ? t('common.whyGated') : t('common.whyNone')}{' '}
+          <a href="/consult">{t('common.otherCats')}</a>
         </div>
       )}
 
       <section className="mal-panel" id="csl-form" aria-labelledby="csl-form-h">
         <div className="mal-sh2">
-          <b id="csl-form-h">{picked ? `${picked.name} 상담 신청서` : '상담 신청서'}</b>
-          <span className="mal-ls">신청 정보는 휴대폰 확인을 마친 뒤 인증업체 1곳에만 전달됩니다</span>
+          <b id="csl-form-h">{picked ? t('common.formHeadPicked', { name: picked.name }) : t('common.formHead')}</b>
+          <span className="mal-ls">{t('page.formNote')}</span>
         </div>
         {picked?.publishMode === 'GATED' && pickedOpen && (
-          <div className="mal-warn ok"><b>자격 확인 업종입니다.</b> 자격 심사를 통과한 업체에만 연결합니다.</div>
+          <div className="mal-warn ok">{t.rich('common.gatedBox', { b: (c) => <b>{c}</b> })}</div>
         )}
         <ConsultForm key={picked?.id ?? 'any'} categories={cats} initialId={pickedOpen ? picked?.id : undefined} />
         {!p && (
           <p className="mal-ls" data-guest="1">
-            로그인하지 않아도 신청할 수 있습니다. <a href="/login">로그인</a>한 채 신청하면 「내 상담 신청」에서 연락처를 받아 간 업체를 볼 수 있습니다.
+            {t.rich('page.guest', { a: (c) => <a href="/login">{c}</a> })}
           </p>
         )}
       </section>
 
       {p && (
         <>
-          <h2 className="mal-h2">내 상담 신청 <em>{mine.length}</em></h2>
-          {mine.length === 0 && <p className="hint">아직 신청한 상담이 없습니다.</p>}
+          <h2 className="mal-h2">{t('mine.head')} <em>{mine.length}</em></h2>
+          {mine.length === 0 && <p className="hint">{t('mine.empty')}</p>}
           <div className="mal-mine-list">
             {mine.map((m) => (
               <article key={m.id} className="mal-panel" data-consult={m.id}>
                 <header className="card-top">
-                  <b>{m.categoryName}</b> <span className="badge">{ST[m.assignState] ?? m.assignState}</span>
+                  <b>{m.categoryName}</b> <span className="badge">{(() => { const k = stKey(m.assignState); return k ? t(k) : m.assignState; })()}</span>
                 </header>
                 <p>{m.summary}</p>
                 <p className="hint">
-                  {[m.sido, m.sigungu].filter(Boolean).join(' ')} · {dtKst(m.createdAt)} 신청 ·
-                  {' '}{m.assignState === 'NO_PARTNER' ? '전달한 업체 없음' : `업체 ${m.sentTo}곳에 보냄`}
-                  {m.closeReason ? ` · 종료: ${m.closeReason}` : ''}
+                  {[m.sido, m.sigungu].filter(Boolean).join(' ')} · {t('mine.appliedOn', { dt: dtKst(m.createdAt) })} ·
+                  {' '}{m.assignState === 'NO_PARTNER' ? t('mine.sentNone') : t('mine.sentTo', { n: String(m.sentTo) })}
+                  {m.closeReason ? ` · ${t('mine.closed', { reason: m.closeReason })}` : ''}
                 </p>
                 <p className="hint">
-                  연락처를 받아 간 업체:{' '}
+                  {t('mine.provided')}{' '}
                   {m.providedTo.length
                     ? m.providedTo.map((x) => `${x.company}(${ymdKst(x.viewedAt)})`).join(' · ')
-                    : '아직 없음'}
-                  {m.contactPurged ? ' · 보관 기한이 지나 연락처를 파기했습니다' : ''}
+                    : t('mine.providedNone')}
+                  {m.contactPurged ? ` · ${t('mine.purged')}` : ''}
                 </p>
               </article>
             ))}

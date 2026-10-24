@@ -15,6 +15,7 @@
  */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { CopyLink } from './CopyLink';
 import type { ApiErr, RefCode, RefQuota } from './types';
 
@@ -38,11 +39,10 @@ function loadToss(): Promise<TossPaymentsFn> {
   return sdk;
 }
 
-const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
 const needsLogin = (status: number, code?: string) => status === 401 || (status === 403 && code === 'UNAUTHENTICATED');
 
-/** 소개코드 발급 — 결제 정보가 있으면 추가분 결제 승인 후 발급 */
-export async function issueCode(body: Record<string, unknown>):
+/** 소개코드 발급 — 결제 정보가 있으면 추가분 결제 승인 후 발급 · failMsg: 코드가 오지 않았을 때 문구(사전 refcode.button.issueFail) */
+export async function issueCode(body: Record<string, unknown>, failMsg: string):
   Promise<{ ok: true; code: string; codes: RefCode[] } | { ok: false; status: number; err: ApiErr }> {
   const r = await fetch('/api/v1/referral-codes', {
     method: 'POST',
@@ -53,16 +53,16 @@ export async function issueCode(body: Record<string, unknown>):
   if (!r.ok) return { ok: false, status: r.status, err: (d ?? {}) as ApiErr };
   const codes = (Array.isArray(d) ? d : []) as RefCode[];
   const first = codes[0];
-  if (!first) return { ok: false, status: 500, err: { message: '소개코드를 받지 못했습니다.' } };
+  if (!first) return { ok: false, status: 500, err: { message: failMsg } };
   return { ok: true, code: first.code, codes };
 }
 
 /** 그 매물에 소개코드를 받을 수 없는 까닭 → 화면 문구 (서버 quota.blocked) */
-const BLOCKED: Record<string, string> = {
-  NO_INTRO_CATEGORY: '보험·의료 매물에는 소개자를 둘 수 없어 소개코드를 받을 수 없습니다 (의료법 27조 · 보험업법).',
-  OWN_LISTING: '본인 매물에는 소개코드를 받을 수 없습니다.',
-  LISTING_NOT_PUBLISHED: '게시 중인 매물에만 소개코드를 받을 수 있습니다.',
-};
+const BLOCKED = {
+  NO_INTRO_CATEGORY: 'noIntroCategory',
+  OWN_LISTING: 'ownListing',
+  LISTING_NOT_PUBLISHED: 'listingNotPublished',
+} as const;
 
 type View =
   | { k: 'idle' }
@@ -72,6 +72,8 @@ type View =
 
 export function RefShareButton({ base, listingId }:
   { base: string; listingId?: string; identityVerified?: boolean }) {
+  const t = useTranslations('refcode');
+  const won = (n: number) => t('share.won', { price: n.toLocaleString('ko-KR') });
   const router = useRouter();
   const [view, setView] = useState<View>({ k: 'idle' });
   const [busy, setBusy] = useState(false);
@@ -85,30 +87,30 @@ export function RefShareButton({ base, listingId }:
       const q = (await r.json().catch(() => null)) as (RefQuota & ApiErr) | null;
       if (!r.ok || !q) {
         if (needsLogin(r.status, q?.code)) { router.push('/login'); return; }
-        setErr(q?.message ?? '소개코드 현황을 불러오지 못했습니다. 잠시 뒤 다시 눌러 주십시오.');
+        setErr(q?.message ?? t('button.quotaFail'));
         return;
       }
       const perListing = q.scope !== 'all';
       if (perListing && !listingId) {
-        setView({ k: 'msg', text: '소개코드는 매물마다 따로 받습니다. 소개할 매물 상세에서 「소개코드 공유」를 눌러 주십시오.' });
+        setView({ k: 'msg', text: t('button.perListingGuide') });
         return;
       }
-      if (q.blocked) { setView({ k: 'msg', text: BLOCKED[q.blocked] ?? '이 매물에는 소개코드를 받을 수 없습니다.' }); return; }
+      if (q.blocked) { setView({ k: 'msg', text: t(`button.blocked.${(BLOCKED as Record<string, (typeof BLOCKED)[keyof typeof BLOCKED]>)[q.blocked] ?? 'other'}`) }); return; }
       if (q.current) { setView({ k: 'shown', code: q.current.code, reused: true, perListing }); return; }
       if (q.freeRemaining > 0) {
-        const res = await issueCode(listingId ? { listingId } : {});
+        const res = await issueCode(listingId ? { listingId } : {}, t('button.issueFail'));
         if (res.ok) { setView({ k: 'shown', code: res.code, reused: !!res.codes[0]?.reused, perListing }); return; }
         if (needsLogin(res.status, res.err.code)) { router.push('/login'); return; }
         if (res.err.code === 'EXTRA_PAYMENT_REQUIRED') { setView({ k: 'pay', q: { ...q, freeRemaining: 0 } }); return; }
-        setErr(res.err.message ?? '소개코드를 받지 못했습니다.');
+        setErr(res.err.message ?? t('button.issueFail'));
         return;
       }
       if (q.paymentRequired) { setView({ k: 'pay', q }); return; }
       setView({ k: 'msg', text: q.includedCodes > 0
-        ? `이번 달 ${q.planName} 포함 소개코드(${q.includedCodes}건)를 모두 받았습니다. 받은 코드는 「안심소개에서 소개하기」에서 다시 볼 수 있습니다.`
-        : `${q.planName} 요금제에는 무료 소개코드가 없습니다 · 건당 ${q.extraCodePrice.toLocaleString('ko-KR')}원으로 받습니다. 받은 코드는 「안심소개에서 소개하기」에서 다시 볼 수 있습니다.` });
+        ? t('button.allUsedIncluded', { plan: q.planName, n: String(q.includedCodes) })
+        : t('button.noFreePlan', { plan: q.planName, price: q.extraCodePrice.toLocaleString('ko-KR') }) });
     } catch {
-      setErr('요청을 보내지 못했습니다. 잠시 뒤 다시 눌러 주십시오.');
+      setErr(t('button.requestFail'));
     } finally { setBusy(false); }
   }
 
@@ -119,14 +121,14 @@ export function RefShareButton({ base, listingId }:
     try {
       /* 시험 결제(스텁) — 결제창 키가 없을 때. 서버도 키가 없으면 stub:true 로 승인하고 돈은 오가지 않습니다 */
       if (!CLIENT_KEY) {
-        const res = await issueCode({ ...(listingId ? { listingId } : {}), paymentKey: `stub_${crypto.randomUUID()}`, orderId, amount });
+        const res = await issueCode({ ...(listingId ? { listingId } : {}), paymentKey: `stub_${crypto.randomUUID()}`, orderId, amount }, t('button.issueFail'));
         if (res.ok) {
           const again = !!res.codes[0]?.reused;   // 그 사이 같은 매물 코드를 이미 받았으면 결제하지 않고 그 코드를 돌려줍니다
           setView({ k: 'shown', code: res.code, reused: again, paid: !again, stub: !again, perListing: q.scope !== 'all' });
           return;
         }
         if (needsLogin(res.status, res.err.code)) { router.push('/login'); return; }
-        setErr(res.err.message ?? '결제가 승인되지 않았습니다.');
+        setErr(res.err.message ?? t('button.payNotApproved'));
         return;
       }
       /* 토스 결제창 — 성공하면 /mall/give/pay 로 돌아와 서버가 승인 · 발급합니다 */
@@ -134,13 +136,13 @@ export function RefShareButton({ base, listingId }:
       const origin = window.location.origin;
       const back = new URLSearchParams(listingId ? { listing: listingId } : {});
       await TossPayments(CLIENT_KEY).requestPayment('카드', {
-        amount, orderId, orderName: '소개코드 추가 1건',
+        amount, orderId, orderName: t('button.orderName'),
         successUrl: `${origin}/mall/give/pay?${back}`,
         failUrl: `${origin}/mall/give?pay=fail`,
       });
     } catch (e) {
       const x = e as { code?: string; message?: string };
-      setErr(x?.code === 'USER_CANCEL' ? '결제를 취소하셨습니다.' : (x?.message ?? '결제창을 열지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'));
+      setErr(x?.code === 'USER_CANCEL' ? t('button.payCanceled') : (x?.message ?? t('button.payOpenFail')));
     } finally { setBusy(false); }
   }
 
@@ -149,7 +151,7 @@ export function RefShareButton({ base, listingId }:
       {view.k === 'idle' && (
         <div className="rc-act">
           <button type="button" className="rc-btn" disabled={busy} onClick={() => void open()} data-refshare-open="1">
-            {busy ? '확인 중…' : '소개코드 공유'}
+            {busy ? t('button.checking') : t('button.share')}
           </button>
         </div>
       )}
@@ -157,12 +159,12 @@ export function RefShareButton({ base, listingId }:
       {view.k === 'shown' && (
         <div data-refshare-code={view.code}>
           <p>
-            내 소개코드 <span className="rc-code">{view.code}</span>
-            {view.reused && <span className="rc-tag">{view.perListing ? '이 매물에 받은 코드' : '이번 달 받은 코드'}</span>}
-            {view.paid && <span className="rc-tag">{view.stub ? '시험 결제로 추가' : '결제로 추가'}</span>}
+            {t('button.myCode')} <span className="rc-code">{view.code}</span>
+            {view.reused && <span className="rc-tag">{view.perListing ? t('button.tagListing') : t('button.tagMonth')}</span>}
+            {view.paid && <span className="rc-tag">{view.stub ? t('button.tagStubPaid') : t('button.tagPaid')}</span>}
           </p>
           <CopyLink text={`${base}?ref=${view.code}`} />
-          <p className="rc-note">소개비는 거래 당사자에게 직접 받습니다 — 소개뱅크는 대금을 맡지 않습니다.</p>
+          <p className="rc-note">{t('button.feeNote')}</p>
         </div>
       )}
 
@@ -170,28 +172,28 @@ export function RefShareButton({ base, listingId }:
         <div className="rc-warn" data-refshare-pay="1">
           {!view.q.freePlan ? (
             /* D011 — 유료 요금제도 포함 건수를 넘으면 결제 후 발급합니다 */
-            <p>이번 달 {view.q.planName} 요금제에 포함된 소개코드({view.q.includedCodes}건)를 모두 받았습니다.{view.q.scope !== 'all' && ' 새 매물의 코드는 추가 결제 후 받습니다.'}</p>
+            <p>{t('button.paidPlanUsed', { plan: view.q.planName, n: String(view.q.includedCodes) })}{view.q.scope !== 'all' && ' ' + t('button.newListingPay')}</p>
           ) : view.q.includedCodes <= 0 ? (
             /* v10.31 (합침 · w3 D060) — 무료 요금제 포함 소개코드 0건(시안) */
-            <p data-refshare-nofree="1">무료 소개코드 없음 · 건당 {view.q.extraCodePrice.toLocaleString('ko-KR')}원 — 필요할 때 건마다 받습니다.{!view.q.identityVerified && <> 받으려면 먼저 <a href="/verify">본인인증</a>을 해 주십시오.</>}</p>
+            <p data-refshare-nofree="1">{t('button.noFree', { price: view.q.extraCodePrice.toLocaleString('ko-KR') })}{!view.q.identityVerified && <>{' '}{t.rich('button.noFreeVerify', { a: (c) => <a href="/verify">{c}</a> })}</>}</p>
           ) : view.q.identityVerified ? (
-            <p>이번 달 무료 소개코드({view.q.includedCodes}건)를 모두 받았습니다.{view.q.scope !== 'all' && ' 새 매물의 코드는 추가 결제 후 받습니다.'}</p>
+            <p>{t('button.freeUsed', { n: String(view.q.includedCodes) })}{view.q.scope !== 'all' && ' ' + t('button.newListingPay')}</p>
           ) : (
-            <p>본인인증 전에는 무료 소개코드가 없습니다. <a href="/verify">본인인증</a>을 하시면 매월 {view.q.includedCodes}건을 무료로 받습니다.</p>
+            <p>{t.rich('button.unverified', { n: String(view.q.includedCodes), a: (c) => <a href="/verify">{c}</a> })}</p>
           )}
           {!CLIENT_KEY && (
-            <p className="rc-note">결제 연동 키가 없는 환경입니다 — <b>시험 결제(스텁)</b>로 진행합니다. 실제 돈은 오가지 않습니다.</p>
+            <p className="rc-note">{t.rich('button.stubNote', { b: (c) => <b>{c}</b> })}</p>
           )}
           <div className="rc-act">
             <button type="button" className="rc-btn" disabled={busy} onClick={() => void pay(view.q)} data-refshare-paybtn="1">
-              {busy ? '결제 요청 중…' : CLIENT_KEY ? `추가 1건 ${won(view.q.extraCodePrice)} 결제` : `추가 1건 ${won(view.q.extraCodePrice)} 시험 결제(스텁)`}
+              {busy ? t('button.paying') : CLIENT_KEY ? t('button.payBtn', { price: won(view.q.extraCodePrice) }) : t('button.payBtnStub', { price: won(view.q.extraCodePrice) })}
             </button>
-            <a className="rc-btn ghost" href="/my/subscription/upgrade">요금제 보기</a>
+            <a className="rc-btn ghost" href="/my/subscription/upgrade">{t('button.plans')}</a>
           </div>
         </div>
       )}
 
-      {view.k === 'msg' && <p data-refshare-msg="1">{view.text} <a href="/mall/give">안심소개에서 소개하기</a></p>}
+      {view.k === 'msg' && <p data-refshare-msg="1">{view.text} <a href="/mall/give">{t('button.giveLink')}</a></p>}
 
       {err && <p className="rc-err" role="alert">{err}</p>}
     </div>

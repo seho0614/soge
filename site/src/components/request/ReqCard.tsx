@@ -5,6 +5,7 @@
  */
 import Link from 'next/link';
 import { won } from '@/lib/format';
+import { useTranslations } from 'next-intl';
 
 export interface ReqRow {
   id: string; gwanCode: string; title: string; categoryName: string | null;
@@ -30,6 +31,7 @@ export function budgetText(min: number | null, max: number | null, open = true):
 export const reqNo = (id: string) => `R-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
 
 export function ReqCard({ r, gwanName }: { r: ReqRow; gwanName: string }) {
+  const t = useTranslations('request.card');
   const soon = r.dday != null && r.dday <= 7;
   return (
     <div className="w1-rqc" data-request={r.id}>
@@ -37,23 +39,23 @@ export function ReqCard({ r, gwanName }: { r: ReqRow; gwanName: string }) {
         <div className="top2">
           <span className={`w1-gb2 ${GCLS[r.gwanCode] ?? 'm'}`}>{gwanName}</span>
           {r.categoryName && <span className="cat2">{r.categoryName}</span>}
-          {r.companyBlind && <span className="w1-blind">🔒 회사명 비공개</span>}
+          {r.companyBlind && <span className="w1-blind">{t('blind')}</span>}
           {r.dday != null && <span className={`w1-dday${soon ? ' soon' : ''}`}>D-{r.dday}</span>}
         </div>
         <h4><Link href={`/request/${r.id}`}>{r.title}</Link></h4>
         {r.summary ? <div className="dsc">{r.summary}{r.summary.length >= 120 ? '…' : ''}</div>
-          : r.visibility && r.visibility !== 'ALL' ? <div className="dsc">{r.visibilityLabel ?? '회원'} 공개 요청입니다 — 로그인하면 내용이 보입니다.</div> : null}
+          : r.visibility && r.visibility !== 'ALL' ? <div className="dsc">{t('scopeNote', { v: r.visibilityLabel ?? t('member') })}</div> : null}
         <div className="mt3">
-          <span>📍 {r.region || '지역 미기재'}</span>
-          <span>📦 {r.quantity || '규모 미기재'}</span>
-          <span>💰 {budgetText(r.budgetMin, r.budgetMax, r.budgetOpen !== false)}</span>
+          <span>📍 {r.region || t('noRegion')}</span>
+          <span>📦 {r.quantity || t('noQuantity')}</span>
+          <span>💰 {r.budgetOpen === false ? t('budgetHidden') : budgetText(r.budgetMin, r.budgetMax)}</span>
           <span className="mono">{reqNo(r.id)}</span>
         </div>
       </div>
       <div className="side2">
-        <div className="w1-fee3">성사 시 예상 소개비<b>{r.offeredFee != null ? won(r.offeredFee) : '협의'}</b></div>
-        <Link className="w1-bprop" href={`/request/${r.id}#propose`}>소개 제안하기</Link>
-        <div className="w1-pcount">제안 {r.proposalCount ?? 0}건 · 공개 {r.visibilityLabel ?? '전체'}</div>
+        <div className="w1-fee3">{t('feeLabel')}<b>{r.offeredFee != null ? won(r.offeredFee) : t('negotiable')}</b></div>
+        <Link className="w1-bprop" href={`/request/${r.id}#propose`}>{t('propose')}</Link>
+        <div className="w1-pcount">{t('count', { n: String(r.proposalCount ?? 0), v: r.visibilityLabel ?? t('all') })}</div>
       </div>
     </div>
   );

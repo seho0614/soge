@@ -4,8 +4,11 @@ import { ConsultRows } from '@/components/mal/ConsultRows';
 import type { ConsultCat } from '@/components/mal/types';
 import '@/styles/mal.css';
 import { BackBar } from '@/components/common/BackBar';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '생활 · 금융 상담' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('consult'))('common.consultName') };
+}
 
 /**
  * SB-MAL-CSL-020 — 안심소개 「생활 · 금융 상담」 업종 목록 (시안 #/mal/consult · 서버 D005 · D016 · D017 · D018)
@@ -16,28 +19,29 @@ export const metadata: Metadata = { title: '생활 · 금융 상담' };
  * v10.31 (w2 · 시안 기준) — 「← 안심소개(으)로 돌아가기」(시안 돌아가기 줄) · 단추 색 시안 보라(.mal-proto). 안내 띠 · 입점 신청 줄(개발에만 있던 것)은 남깁니다.
  */
 export default async function ConsultListPage() {
+  const t = await getTranslations('consult');
   const cats = await apiGet<ConsultCat[]>('/consult/categories', 60).catch(() => [] as ConsultCat[]);
   return (
     <><div className="mal mal-narrow mal-proto mal-csl32">{/* v10.32 — 시안 폭 · 단추 색(상담 신청 보라 · 상세 보기 회색 테두리) */}
-      <BackBar href="/mall?axis=consult" label="안심소개" wrap={false} />
+      <BackBar href="/mall?axis=consult" label={t('list.back')} wrap={false} />
       <div className="page-head mal-head">
-        <h1>생활 · 금융 상담</h1>
-        <p className="mal-desc">업종을 고르고 상담을 신청하면 <strong>인증된 업체 1곳</strong>이 연락드립니다.</p>
+        <h1>{t('common.consultName')}</h1>
+        <p className="mal-desc">{t.rich('list.desc', { strong: (c) => <strong>{c}</strong> })}</p>
       </div>
       <div className="mal-warn ok">
-        신청 정보는 동의하신 업체 1곳에만 전달되고, 휴대폰 확인을 마친 신청만 전달됩니다.
+        {t('list.warn')}
       </div>
       <section className="mal-panel" aria-labelledby="csl-list-h">
         <div className="mal-sh2">
-          <b id="csl-list-h">업종 {cats.length > 0 ? `${cats.length}종` : ''}</b>
-          <span className="mal-ls">자격 확인 업종은 자격 심사를 통과한 업체에만 연결합니다</span>
+          <b id="csl-list-h">{t('common.cats')} {cats.length > 0 ? t('common.catsCount', { n: String(cats.length) }) : ''}</b>
+          <span className="mal-ls">{t('common.gatedNote')}</span>
         </div>
-        <ConsultRows cats={cats} label="상담 신청" />
+        <ConsultRows cats={cats} label={t('common.apply')} />
       </section>
       <div className="mal-cta">
-        <b>업체이신가요?</b>
-        <span>안심소개 파트너센터에서 입점 신청을 하시면 이 목록에 오릅니다</span>
-        <a className="mal-btn ghost sm" href="/partner/apply">입점 신청</a>
+        <b>{t('list.ctaQ')}</b>
+        <span>{t('list.ctaText')}</span>
+        <a className="mal-btn ghost sm" href="/partner/apply">{t('list.ctaBtn')}</a>
       </div>
     </div><i hidden data-root-end="" /></>
   );

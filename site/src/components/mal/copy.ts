@@ -5,32 +5,35 @@
  * 전부 API 응답으로 채웁니다 — 시안의 「인증업체 N곳」 같은 시연 숫자는 옮기지 않았습니다.
  */
 
-/** 상담 업종 한 줄 설명 — 시안 LEADCAT 의 설명 칸. 코드가 없으면 설명 없이 이름만 보입니다. */
-export const CSL_DESC: Record<string, string> = {
+/** 상담 업종 한 줄 설명 — 시안 LEADCAT 의 설명 칸. 코드가 없으면 설명 없이 이름만 보입니다.
+ *  v10.98 — 값은 사전 키(consult.desc.*)입니다. 화면에서 t(key) 로 바꿔 씁니다. */
+const CSL_DESC_KEYS = {
   /* 시안 v10.11 LEADCAT (D016 · D017 · D019) — 자격 확인 10 · 일반 10 · 월 정액 노출형 2. 카드 · 금융은 보관 */
-  CSL_INSURANCE: '보장 분석 · 리모델링 상담',
-  CSL_MEDICAL: '진료 · 시술 상담',
-  CSL_MOVING: '가정 · 사무실 이사 견적',
-  CSL_INTERIOR: '주거 · 상가 인테리어 견적',
-  CSL_CONSTRUCTION: '신축 · 증축 · 리모델링 시공',
-  CSL_AUTO: '정비 · 단기 · 장기 렌트 상담',
-  CSL_TRAVEL: '단체 · 기업 여행 · 항공권',
-  CSL_EDU: '학원 · 교습소 수강 상담',
-  CSL_LOGISTICS: '화물 운송 · 정기 배송',
-  CSL_TELCO: '휴대폰 · 인터넷 가입 상담',
-  CSL_CLEANING: '입주 · 사무실 · 정기 청소',
-  CSL_WEDDING: '웨딩홀 · 스드메 상담',
-  CSL_EVENT: '기업 행사 · 돌잔치 · 행사 대행',
-  CSL_RENTAL: '가전 · 정수기 · 사무기기 렌탈',
-  CSL_USEDCAR: '내 차 팔기 · 중고차 구입 상담',
-  CSL_MARKETING: '온라인 광고 · 브랜딩 · 홍보 대행',
-  CSL_DESIGN: '로고 · 패키지 · 인쇄물 · 웹 디자인',
-  CSL_IT: '홈페이지 · 앱 · 업무 시스템 개발',
-  CSL_MANUFACTURE: 'OEM · 시제품 · 위탁 생산',
-  CSL_TRADE: '수출입 대행 · 도매 유통',
-  CSL_LEGAL: '월 정액 노출형 — 사무소 정보를 보고 직접 연락',
-  CSL_TAX: '월 정액 노출형 — 사무소 정보를 보고 직접 연락',
-};
+  CSL_INSURANCE: 'desc.insurance',
+  CSL_MEDICAL: 'desc.medical',
+  CSL_MOVING: 'desc.moving',
+  CSL_INTERIOR: 'desc.interior',
+  CSL_CONSTRUCTION: 'desc.construction',
+  CSL_AUTO: 'desc.auto',
+  CSL_TRAVEL: 'desc.travel',
+  CSL_EDU: 'desc.edu',
+  CSL_LOGISTICS: 'desc.logistics',
+  CSL_TELCO: 'desc.telco',
+  CSL_CLEANING: 'desc.cleaning',
+  CSL_WEDDING: 'desc.wedding',
+  CSL_EVENT: 'desc.event',
+  CSL_RENTAL: 'desc.rental',
+  CSL_USEDCAR: 'desc.usedcar',
+  CSL_MARKETING: 'desc.marketing',
+  CSL_DESIGN: 'desc.design',
+  CSL_IT: 'desc.it',
+  CSL_MANUFACTURE: 'desc.manufacture',
+  CSL_TRADE: 'desc.trade',
+  CSL_LEGAL: 'desc.listingFee',
+  CSL_TAX: 'desc.listingFee',
+} as const;
+export type CslDescKey = (typeof CSL_DESC_KEYS)[keyof typeof CSL_DESC_KEYS];
+export const CSL_DESC: Record<string, CslDescKey | undefined> = CSL_DESC_KEYS;
 
 /** 축 — 시안 AX.MAL. 기계 · 설비(B)와 부동산(A)은 서버에 축 구분 API 가 없어 「매물」 하나로 묶습니다. */
 export const AXIS = {
@@ -61,8 +64,5 @@ export const SAFE_LISTING: Array<[string, string[]]> = [
   ]],
 ];
 
-export const SAFE_CONSULT = [
-  '신청 정보는 동의하신 업체 1곳에만 전달됩니다 — 여러 곳에 넘기지 않습니다',
-  '등록 · 허가가 필요한 업종은 자격 심사를 통과한 업체만 받습니다',
-  '상담 내용과 계약 조건은 업체가 정합니다 — 소개뱅크는 자격을 확인할 뿐 결과를 보증하지 않습니다',
-];
+/** v10.98 — 값은 사전 키(consult.safe.*)입니다. 화면에서 t(key) 로 바꿔 씁니다 */
+export const SAFE_CONSULT = ['safe.s1', 'safe.s2', 'safe.s3'] as const;

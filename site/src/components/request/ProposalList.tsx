@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ago } from '@/lib/format';
+import { useTranslations } from 'next-intl';
 
 export interface Proposal {
   id: string; proposerName: string; companyName: string | null; relationLabel: string | null;
@@ -18,11 +19,12 @@ const TONE: Record<string, string> = { PROPOSED: 'w2', ACCEPTED: 'a2', REJECTED:
 
 export function ProposalList({ requestId, items, owner }: { requestId: string; items: Proposal[]; owner: boolean }) {
   const router = useRouter();
+  const t = useTranslations('request.proposals');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function decide(p: Proposal, accept: boolean) {
-    if (!accept && !window.confirm('이 제안을 거절하시겠습니까? 거절한 제안은 되돌릴 수 없습니다.')) return;
+    if (!accept && !window.confirm(t('rejectConfirm'))) return;
     setErr(null); setBusy(p.id);
     try {
       const r = await fetch(`/api/v1/requests/${requestId}/proposals/${p.id}/decision`, {
@@ -30,10 +32,10 @@ export function ProposalList({ requestId, items, owner }: { requestId: string; i
         body: JSON.stringify({ decision: accept ? 'ACCEPT' : 'REJECT' }),
       });
       const b = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(b.message ?? '처리하지 못했습니다.'); return; }
+      if (!r.ok) { setErr(b.message ?? t('errDecide')); return; }
       if (accept && b.conversationId) { router.push(`/chat/${b.conversationId}`); return; }
       router.refresh();
-    } catch { setErr('연결이 끊겼습니다.'); }
+    } catch { setErr(t('errNetwork')); }
     finally { setBusy(null); }
   }
 
@@ -44,20 +46,20 @@ export function ProposalList({ requestId, items, owner }: { requestId: string; i
           <div className="ph">
             <span className="pn2">{p.companyName ?? p.proposerName}</span>
             {p.companyName && <span className="w1-nt3">{p.proposerName}{p.relationLabel ? ` · ${p.relationLabel}` : ''}</span>}
-            <span className={`pst ${TONE[p.status] ?? 'r2'}`}>{p.status === 'PROPOSED' ? (owner ? '수락 대기' : '검토중') : (p.statusLabel ?? p.status)}</span>
-            {p.mine && <span className="w1-nt3">내 제안</span>}
+            <span className={`pst ${TONE[p.status] ?? 'r2'}`}>{p.status === 'PROPOSED' ? (owner ? t('awaiting') : t('reviewing')) : (p.statusLabel ?? p.status)}</span>
+            {p.mine && <span className="w1-nt3">{t('mine')}</span>}
             <span className="ptm">{ago(p.createdAt)}</span>
           </div>
           {p.message && <div className="px">{p.message}</div>}
           {owner && p.status === 'PROPOSED' && (
             <div className="pa">
-              <button type="button" className="w1-bo sm" disabled={!!busy} onClick={() => decide(p, false)}>거절</button>
+              <button type="button" className="w1-bo sm" disabled={!!busy} onClick={() => decide(p, false)}>{t('reject')}</button>
               <button type="button" className="w1-bdone" style={{ padding: '7px 14px', fontSize: 13 }} disabled={!!busy}
-                onClick={() => decide(p, true)}>{busy === p.id ? '처리 중…' : '수락하고 대화 시작'}</button>
+                onClick={() => decide(p, true)}>{busy === p.id ? t('processing') : t('accept')}</button>
             </div>
           )}
           {p.status === 'ACCEPTED' && p.conversationId && (owner || p.mine) && (
-            <div className="pa"><a className="w1-bo sm" href={`/chat/${p.conversationId}`}>대화 열기 →</a></div>
+            <div className="pa"><a className="w1-bo sm" href={`/chat/${p.conversationId}`}>{t('openChat')}</a></div>
           )}
         </div>
       ))}

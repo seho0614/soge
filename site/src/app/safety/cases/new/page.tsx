@@ -5,6 +5,7 @@ import { BackBar } from '@/components/common/BackBar';
 import type { MarketRegions } from '@/components/market/types';
 import { SafetyCaseForm } from '@/components/gwan/SafetyCaseForm';
 import Link from 'next/link';
+import { Msgs } from '@/i18n/Msgs';
 
 export const metadata: Metadata = { title: '피해 사례 작성' };
 
@@ -23,7 +24,7 @@ export default async function Page() {
           <p className="gw-ls" style={{ margin: '0 0 14px' }}>겪으신 일을 나누면 같은 피해를 막을 수 있습니다. 작성자는 공개되지 않습니다.</p>
           {!viewer ? (
             <p className="gw-axempty"><b>로그인이 필요합니다.</b>본인인증을 마친 회원이 쓸 수 있습니다. <Link className="gw-bo gw-sm" href="/login?next=/safety/cases/new">로그인</Link></p>
-          ) : <SafetyCaseForm regions={regions?.all ?? []} />}
+          ) : <Msgs ns={['detail']}><SafetyCaseForm regions={regions?.all ?? []} /></Msgs>}
         </div>
       </div>
     </div><i hidden data-root-end="" /></>

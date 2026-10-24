@@ -4,14 +4,17 @@ import { apiGet, apiGetPersonal } from '@/lib/api';
 import { EarnPromo, RoleTabs } from '@/components/gwan/GwParts';
 import { SearchBox } from '@/components/search/SearchBox';
 import { ReqCard, type ReqRow } from '@/components/request/ReqCard';
+import { getTranslations } from 'next-intl/server';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '소개받기' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('request'))('list.title') };
+}
 
-const FILTERS: Array<{ k: string; g?: string; closing?: boolean }> = [
-  { k: '전체' }, { k: '소개장터', g: 'MNY' }, { k: '안심소개', g: 'MAL' }, { k: '소개창업', g: 'BIZ' }, { k: '마감 임박', closing: true },
+const FILTERS: Array<{ k: 'all' | 'mny' | 'mal' | 'biz' | 'closing'; g?: string; closing?: boolean }> = [
+  { k: 'all' }, { k: 'mny', g: 'MNY' }, { k: 'mal', g: 'MAL' }, { k: 'biz', g: 'BIZ' }, { k: 'closing', closing: true },
 ];
-const SORTS: Array<[string, string]> = [['CLOSING', '마감 임박순'], ['RECENT', '최신순'], ['FEE', '소개비순']];
+const SORTS: Array<[string, 'closing' | 'recent' | 'fee']> = [['CLOSING', 'closing'], ['RECENT', 'recent'], ['FEE', 'fee']];
 
 /**
  * SB-HOM-REQ-020 소개받기 목록 — v10.31 시안 scReqList 그대로.
@@ -26,6 +29,7 @@ export default async function RequestList({ searchParams }: {
   searchParams: Promise<{ g?: string; q?: string; closing?: string; sort?: string }>;
 }) {
   const sp = await searchParams;
+  const t = await getTranslations('request');
   const g = ['MNY', 'MAL', 'BIZ'].includes(sp.g ?? '') ? sp.g : undefined;
   const closing = sp.closing === '1';
   const sort = SORTS.some(([k]) => k === sp.sort) ? sp.sort! : 'CLOSING';
@@ -49,8 +53,8 @@ export default async function RequestList({ searchParams }: {
     if (o.closing) u.set('closing', '1');
     const s = o.sort ?? sort;
     if (s !== 'CLOSING') u.set('sort', s);
-    const t = u.toString();
-    return t ? `/request?${t}` : '/request';
+    const s2 = u.toString();
+    return s2 ? `/request?${s2}` : '/request';
   };
   const onF = (f: (typeof FILTERS)[number]) => (f.closing ? closing : !closing && (f.g ?? undefined) === g);
 
@@ -58,34 +62,33 @@ export default async function RequestList({ searchParams }: {
     <div className="w1 w1-wrap" data-screen="SB-HOM-REQ-020">
       <SearchBox variant="gwan" blue aside={<EarnPromo />} />
       <div style={{ marginTop: 14 }}>
-        <RoleTabs on="get" note="필요한 물품 · 용역 · 부동산 · 장비 · 창업 공간을 등록하면 소개자가 찾아드립니다!" />
+        <RoleTabs on="get" note={t('list.roleNote')} />
       </div>
 
       <div className="w1-wrn" style={{ marginTop: 14 }}>
         <span className="ic" aria-hidden="true">!</span>
-        <span><b>여기 올라온 것은 남의 회사 사정입니다.</b> “재고를 넘기고 싶다”, “설비가 필요하다”는 경쟁사와 거래처가 보면 협상 카드가 됩니다.
-          그래서 요청마다 <b>공개 범위</b>를 고르게 했고, 회사명을 가린 채 업종 · 규모만 보이는 <b>비공개 옵션</b>을 뒀습니다.</span>
+        <span>{t.rich('list.warn', { b: (c) => <b>{c}</b> })}</span>
       </div>
 
-      <div className="w1-rqf" role="group" aria-label="소개받기 거르기">
+      <div className="w1-rqf" role="group" aria-label={t('list.filterAria')}>
         {FILTERS.map((f) => (
           <Link key={f.k} className={`fb2${onF(f) ? ' on' : ''}`} href={href({ g: f.g, closing: f.closing })}
-            aria-current={onF(f) ? 'true' : undefined}>{f.k}</Link>
+            aria-current={onF(f) ? 'true' : undefined}>{t(`list.filter.${f.k}`)}</Link>
         ))}
         <span className="sp3" />
-        <span className="srt" aria-label="정렬">
+        <span className="srt" aria-label={t('list.sortAria')}>
           {SORTS.map(([k, label]) => (
-            <Link key={k} className={k === sort ? 'on' : undefined} href={href({ g, closing, sort: k })}>{label}{k === sort ? ' ⌄' : ''}</Link>
+            <Link key={k} className={k === sort ? 'on' : undefined} href={href({ g, closing, sort: k })}>{t(`list.sort.${label}`)}{k === sort ? ' ⌄' : ''}</Link>
           ))}
         </span>
       </div>
 
-      {q && <p className="w1-nt3" style={{ margin: '0 0 10px' }}>‘{q}’ 이(가) 든 요청 {rows.length}건 · <Link href={href({ g, closing })}>검색어 지우기</Link></p>}
+      {q && <p className="w1-nt3" style={{ margin: '0 0 10px' }}>{t('list.qResult', { q, n: String(rows.length) })} · <Link href={href({ g, closing })}>{t('list.qClear')}</Link></p>}
 
       {rows.length === 0 ? (
         <div className="w1-empty">
-          {q || g || closing ? '조건에 맞는 요청이 없습니다.' : '등록된 요청이 없습니다.'}
-          <div style={{ marginTop: 12 }}><Link className="w1-bo" href="/request/new">필요한 것을 요청으로 올리기</Link></div>
+          {q || g || closing ? t('list.emptyFiltered') : t('list.empty')}
+          <div style={{ marginTop: 12 }}><Link className="w1-bo" href="/request/new">{t('list.emptyCta')}</Link></div>
         </div>
       ) : (
         <div className="w1-rql">
@@ -94,9 +97,9 @@ export default async function RequestList({ searchParams }: {
       )}
 
       <p className="w1-nt3" style={{ textAlign: 'center', margin: '16px 0 4px' }}>
-        요청은 등록 후 <b>30일</b>이 지나면 자동으로 닫힙니다. 채워진 요청을 닫지 않으면 목록이 죽은 글로 채워집니다.
+        {t.rich('list.autoClose', { b: (c) => <b>{c}</b> })}
       </p>
-      <p className="w1-nt3" style={{ textAlign: 'center' }}>예상 소개비는 요청자가 적은 희망 금액입니다 — 요율표로 산정한 값이 아닙니다(A-12).</p>
+      <p className="w1-nt3" style={{ textAlign: 'center' }}>{t('list.feeNote')}</p>
     </div>
   );
 }

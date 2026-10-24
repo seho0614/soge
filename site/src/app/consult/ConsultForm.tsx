@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { consultOpen, type ConsultCat } from '@/components/mal/types';
 
 export type ConsultCategory = ConsultCat;
@@ -15,9 +16,9 @@ const SIDO = ['서울', '경기', '인천', '부산', '대구', '광주', '대�
   '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
 
 /** 응답을 읽습니다 — 서버가 준 사유(message)를 그대로 보여 줍니다 */
-async function read<T>(res: Response): Promise<T> {
+async function read<T>(res: Response, fallback: string): Promise<T> {
   const j = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(j?.message ?? '처리하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+  if (!res.ok) throw new Error(j?.message ?? fallback);
   return j as T;
 }
 const JSON_POST = { method: 'POST', headers: { 'Content-Type': 'application/json' } } as const;
@@ -38,6 +39,7 @@ const JSON_POST = { method: 'POST', headers: { 'Content-Type': 'application/json
 export function ConsultForm({ categories, initialId, fixed }: {
   categories: ConsultCategory[]; initialId?: string; fixed?: boolean;
 }) {
+  const t = useTranslations('consult');
   const open = categories.filter(consultOpen);
   const blank = {
     categoryId: initialId ?? open[0]?.id ?? '', name: '', phone: '', email: '', sido: '', sigungu: '', memo: '', agree: false,
@@ -60,19 +62,19 @@ export function ConsultForm({ categories, initialId, fixed }: {
     e.preventDefault();
     if (busy) return;
     setErr(null);
-    if (!f.categoryId) return setErr('상담 업종을 골라 주십시오.');
-    if (!f.name.trim()) return setErr('이름을 적어 주십시오.');
-    if (!/^01[016789]-?\d{3,4}-?\d{4}$/.test(f.phone.trim())) return setErr('휴대폰 번호를 010-0000-0000 형식으로 적어 주십시오.');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) return setErr('이메일을 확인해 주십시오.');
-    if (!f.sido) return setErr('지역을 골라 주십시오.');
-    if (!f.agree) return setErr('개인정보 제3자 제공에 동의해야 신청할 수 있습니다.');
+    if (!f.categoryId) return setErr(t('form.errCat'));
+    if (!f.name.trim()) return setErr(t('form.errName'));
+    if (!/^01[016789]-?\d{3,4}-?\d{4}$/.test(f.phone.trim())) return setErr(t('form.errPhone'));
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) return setErr(t('form.errEmail'));
+    if (!f.sido) return setErr(t('form.errSido'));
+    if (!f.agree) return setErr(t('form.errAgree'));
     setBusy(true);
     try {
       const r = await read<Created>(await fetch('/api/v1/consult/requests', { method: 'POST', headers: JSON_POST.headers,
         body: JSON.stringify({
           categoryId: f.categoryId, name: f.name.trim(), phone: f.phone.trim(), email: f.email.trim(), sido: f.sido,
           sigungu: f.sigungu.trim() || undefined, memo: f.memo.trim() || undefined, agree: true,
-        }) }));
+        }) }), t('form.failGeneric'));
       setReq(r); setCode(''); setStep('verify');
     } catch (e2) { setErr((e2 as Error).message); } finally { setBusy(false); }
   }
@@ -81,11 +83,11 @@ export function ConsultForm({ categories, initialId, fixed }: {
     e.preventDefault();
     if (busy || !req) return;
     setErr(null);
-    if (!/^\d{6}$/.test(code.trim())) return setErr('인증번호 6자리를 적어 주십시오.');
+    if (!/^\d{6}$/.test(code.trim())) return setErr(t('form.errCode'));
     setBusy(true);
     try {
       const r = await read<Result>(await fetch(`/api/v1/consult/requests/${req.id}/verify`, { method: 'POST', headers: JSON_POST.headers,
-        body: JSON.stringify({ code: code.trim() }) }));
+        body: JSON.stringify({ code: code.trim() }) }), t('form.failGeneric'));
       setResult(r); setStep('done');
       start(() => router.refresh());
     } catch (e2) { setErr((e2 as Error).message); } finally { setBusy(false); }
@@ -95,16 +97,16 @@ export function ConsultForm({ categories, initialId, fixed }: {
     const ok = result.state === 'DELIVERED';
     return (
       <div className="mal-done" role="status" data-consult-done={result.leadId ?? req?.id ?? ''} data-consult-state={result.state}>
-        <b>{ok ? `✓ ${cat?.name ?? ''} 상담 신청을 전달했습니다` : '지금은 받을 업체가 없습니다'}</b>
-        {ok && result.leadId && <span className="mal-ls">접수번호 {result.leadId.slice(0, 8).toUpperCase()}</span>}
+        <b>{ok ? t('form.doneOk', { name: cat?.name ?? '' }) : t('form.doneNone')}</b>
+        {ok && result.leadId && <span className="mal-ls">{t('form.receipt', { id: result.leadId.slice(0, 8).toUpperCase() })}</span>}
         <p className="notice">{result.note}</p>
-        {ok && <p>인증업체 1곳에 상담 요약이 갔습니다. 이름 · 휴대폰 · 이메일은 그 업체가 연락처를 열 때 전달됩니다.</p>}
+        {ok && <p>{t('form.doneNote')}</p>}
         <div className="mal-act">
           <button className="mal-btn ghost" type="button"
                   onClick={() => { setStep('form'); setResult(null); setReq(null); setErr(null); setF({ ...blank, categoryId: f.categoryId }); }}>
-            새로 신청
+            {t('form.again')}
           </button>
-          <a className="mal-btn" href="/mall?axis=consult">안심소개로</a>
+          <a className="mal-btn" href="/mall?axis=consult">{t('form.toSafe')}</a>
         </div>
       </div>
     );
@@ -112,64 +114,63 @@ export function ConsultForm({ categories, initialId, fixed }: {
 
   const sent = step === 'verify' && !!req;
   return (
-    <form onSubmit={sent ? verify : (e) => { e.preventDefault(); setErr('인증번호 확인을 먼저 해 주십시오 — 휴대폰 칸 옆 「인증번호 받기」를 누르면 휴대폰 또는 이메일로 보내 드립니다.'); }}
+    <form onSubmit={sent ? verify : (e) => { e.preventDefault(); setErr(t('form.errVerifyFirst')); }}
           className="mal-form cslf" noValidate data-consult-verify={sent ? req!.id : undefined}>
       {fixed ? (
         <input type="hidden" name="categoryId" value={f.categoryId} />
       ) : (
-        <label className="fld"><span>상담 업종</span>
+        <label className="fld"><span>{t('form.cat')}</span>
           <select name="categoryId" value={f.categoryId} onChange={set('categoryId')} required disabled={sent}>
-            {open.length === 0 && <option value="">지금 신청을 받는 업종이 없습니다</option>}
+            {open.length === 0 && <option value="">{t('form.noOpen')}</option>}
             {categories.filter((c) => c.consultMode === 'LEAD').map((c) => (
               <option key={c.id} value={c.id} disabled={!consultOpen(c)}>
-                {c.name}{c.publishMode === 'GATED' ? ' (자격 업체만)' : ''}{consultOpen(c) ? '' : ' — 지금은 받지 않습니다'}
+                {c.name}{c.publishMode === 'GATED' ? t('form.gatedOnly') : ''}{consultOpen(c) ? '' : t('form.closedNow')}
               </option>
             ))}
           </select>
         </label>
       )}
       <fieldset className="mal-fs" disabled={sent}>
-        <label className="fld"><span>이름</span>
+        <label className="fld"><span>{t('form.name')}</span>
           <input name="name" value={f.name} onChange={set('name')} maxLength={40} autoComplete="name" /></label>
         {/* 시안 CSL-030 — 휴대폰 칸 옆 「인증번호 받기」. 서버는 이때 신청서를 함께 받아 두고(업체에는 아직 아무것도 가지 않음 · INV-12) 인증번호를 보냅니다 */}
-        <label className="fld"><span>휴대폰</span>
+        <label className="fld"><span>{t('form.phone')}</span>
           <span className="inl">
             <input name="phone" value={f.phone} onChange={set('phone')} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" />
             <button className="mal-btn ghost sm" type="button" onClick={submit} disabled={busy || sent || open.length === 0} data-csl-otp="">
-              {sent ? '보냈습니다' : busy ? '보내는 중…' : '인증번호 받기'}</button>
+              {sent ? t('form.sent') : busy ? t('form.sending') : t('form.getCode')}</button>
           </span></label>
         {/* v10.43 (10/15 대표 결정 A) — 휴대폰(알림톡) · 이메일 둘 다로 같은 번호를 보내고, 둘 중 하나로 확인 */}
-        <p className="mal-ls" data-csl-otp-hint="">인증번호는 휴대폰 또는 이메일로 보내 드립니다 — 둘 중 하나로 받은 번호를 넣으면 됩니다.</p>
+        <p className="mal-ls" data-csl-otp-hint="">{t('form.otpHint')}</p>
         {/* v10.28 (작업 지시서 4절) — 이메일(필수). 휴대폰 확인을 마친 뒤 업체가 연락처를 열 때 함께 전달 · 암호화 보관 */}
-        <label className="fld"><span>이메일</span>
+        <label className="fld"><span>{t('form.email')}</span>
           <input name="email" type="email" value={f.email} onChange={set('email')} placeholder="name@example.com" autoComplete="email" maxLength={120} /></label>
         <div className="mal-2col">
-          <label className="fld"><span>지역 · 시 · 도</span>
+          <label className="fld"><span>{t('form.sido')}</span>
             <select name="sido" value={f.sido} onChange={set('sido')}>
-              <option value="">고르십시오</option>
+              <option value="">{t('form.choose')}</option>
               {SIDO.map((s) => <option key={s} value={s}>{s}</option>)}
             </select></label>
-          <label className="fld"><span>시 · 군 · 구 (선택)</span>
-            <input name="sigungu" value={f.sigungu} onChange={set('sigungu')} placeholder="금천구" maxLength={20} /></label>
+          <label className="fld"><span>{t('form.sigungu')}</span>
+            <input name="sigungu" value={f.sigungu} onChange={set('sigungu')} placeholder={t('form.sigunguPh')} maxLength={20} /></label>
         </div>
-        <label className="fld"><span>원하는 상담 내용 (선택 · 1000자 이내)</span>
+        <label className="fld"><span>{t('form.memo')}</span>
           <textarea name="memo" value={f.memo} onChange={set('memo')} rows={3} maxLength={1000}
-                    placeholder="예: 다음 달 15일 32평 입주 청소" />
-          <small className="hint">연락처는 적지 마십시오 — 업체가 연락처를 열기 전에 먼저 보는 부분입니다. 연락처가 들어 있으면 요약으로 쓰지 않습니다.</small>
+                    placeholder={t('form.memoPh')} />
+          <small className="hint">{t('form.memoHint')}</small>
         </label>
         <label className="chk"><input type="checkbox" name="agree" checked={f.agree} onChange={set('agree')} />
-          <span><b>개인정보 제3자 제공에 동의합니다.</b> 이름 · 휴대폰 번호 · 이메일 · 지역 · 상담 내용을 이 업종의 인증업체 1곳에
-            제공합니다. 상담이 끝나거나 6개월이 지나면 파기합니다. 동의하지 않으면 신청할 수 없습니다.</span></label>
+          <span><b>{t('form.agreeB')}</b> {t('form.agree')}</span></label>
       </fieldset>
       {sent && (
         <div className="mal-otp" data-consult-otp="">
-          <p className="mal-ls">{req!.note} 인증번호는 {req!.expiresInMinutes}분 동안 쓸 수 있습니다. 확인을 마쳐야 업체에 전달됩니다.</p>
+          <p className="mal-ls">{t('form.otpNote', { note: req!.note, min: String(req!.expiresInMinutes) })}</p>
           {req!.devCode && (
             <p className="notice" data-dev-code={req!.devCode}>
-              개발 환경 인증번호: <b>{req!.devCode}</b> (알림톡 연동 전이라 화면에 보입니다 — 운영에서는 보이지 않습니다)
+              {t.rich('form.devCode', { code: req!.devCode, b: (x) => <b>{x}</b> })}
             </p>
           )}
-          <label className="fld"><span>인증번호 6자리</span>
+          <label className="fld"><span>{t('form.otp')}</span>
             <input name="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
                    value={code} onChange={(e) => setCode(e.target.value)} /></label>
         </div>
@@ -177,10 +178,10 @@ export function ConsultForm({ categories, initialId, fixed }: {
       {err && <p className="notice warn" role="alert">{err}</p>}
       <div className="mal-act">
         {sent && <button className="mal-btn ghost" type="button" disabled={busy}
-                         onClick={() => { setStep('form'); setReq(null); setErr(null); setCode(''); }}>다시 적기</button>}
-        <a className="mal-btn ghost" href="/consult">업종 다시 고르기</a>
+                         onClick={() => { setStep('form'); setReq(null); setErr(null); setCode(''); }}>{t('form.rewrite')}</button>}
+        <a className="mal-btn ghost" href="/consult">{t('form.repick')}</a>
         <button className="mal-btn" type="submit" disabled={busy || pending || open.length === 0} data-csl-submit="">
-          {busy && sent ? '확인하는 중…' : '상담 신청'}</button>
+          {busy && sent ? t('form.verifying') : t('common.apply')}</button>
       </div>
     </form>
   );

@@ -5,10 +5,13 @@ import { BackBar } from '@/components/common/BackBar';
 import { ConsultForm } from '@/app/consult/ConsultForm';
 import { consultOpen, type ConsultCat } from '@/components/mal/types';
 import '@/styles/mal.css';
+import { getTranslations } from 'next-intl/server';
 
 type Props = { params: Promise<{ code: string }> };
 
-export const metadata: Metadata = { title: '상담 신청' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('consult'))('common.title') };
+}
 
 /**
  * SB-MAL-CSL-030 — 상담 신청 · 휴대폰 확인 · 접수 (시안 #/mal/consult/{code}/apply · D018)
@@ -28,34 +31,35 @@ export default async function ConsultApplyPage({ params }: Props) {
   if (c.status === 'APPROVED' && c.consultMode === 'LISTING_FEE') redirect(detail);
 
   const open = consultOpen(c);
+  const t = await getTranslations('consult');
   return (
     <><div className="mal mal-proto mal-csl33" data-consult-code={c.code}>{/* v10.32 (추가) — 시안 malcsl: 넓은 카드(1140) · 반폭 입력칸(560) · 제목 아래 설명 · 「상담 신청」 보라 왼쪽 */}
       <BackBar href={detail} label={c.name} wrap={false} />
       <div className="page-head mal-head">
-        <h1>{c.name} 상담 신청</h1>
-        <p className="mal-desc">상담을 신청하면 인증된 업체 1곳이 연락드립니다. 신청 정보는 그 업체에만 전달됩니다.</p>
+        <h1>{t('common.headPicked', { name: c.name })}</h1>
+        <p className="mal-desc">{t('apply.desc')}</p>
       </div>
       {c.publishMode === 'GATED' && open && (
-        <div className="mal-warn ok"><b>자격 확인 업종입니다.</b> 자격 심사를 통과한 업체에만 연결합니다.</div>
+        <div className="mal-warn ok">{t.rich('common.gatedBox', { b: (x) => <b>{x}</b> })}</div>
       )}
       {open ? (
         <section className="mal-panel" id="csl-form" aria-labelledby="csl-form-h">
           <div className="mal-sh2">
-            <b id="csl-form-h">{c.name} 상담 신청서</b>
-            <span className="mal-ls">휴대폰 확인을 마친 뒤 인증업체 1곳에만 전달됩니다</span>
+            <b id="csl-form-h">{t('common.formHeadPicked', { name: c.name })}</b>
+            <span className="mal-ls">{t('apply.formNote')}</span>
           </div>
           <ConsultForm categories={cats} initialId={c.id} fixed />
         </section>
       ) : (
         <>
           <div className="mal-warn" role="status">
-            <b>{c.name} 상담은 아직 받지 않습니다.</b>{' '}
-            {c.status === 'PENDING' ? '준비 중인 업종입니다.'
-              : c.publishMode === 'GATED' ? '자격 심사를 통과한 업체가 아직 없습니다.' : '받을 수 있는 인증업체가 아직 없습니다.'}
+            <b>{t('common.notYet', { name: c.name })}</b>{' '}
+            {c.status === 'PENDING' ? t('common.whyPending')
+              : c.publishMode === 'GATED' ? t('common.whyGated') : t('common.whyNone')}
           </div>
           <div className="mal-act">
-            <a className="mal-btn ghost" href={detail}>업종 상세</a>
-            <a className="mal-btn ghost" href="/mall?axis=consult">다른 업종 보기</a>
+            <a className="mal-btn ghost" href={detail}>{t('apply.detail')}</a>
+            <a className="mal-btn ghost" href="/mall?axis=consult">{t('common.otherCats')}</a>
           </div>
         </>
       )}

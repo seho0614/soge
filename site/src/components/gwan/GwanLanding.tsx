@@ -59,7 +59,8 @@ interface Axis {
 
 /** 축 — 시안 AX 그대로(이름 · 부제 · 판정 · 이유 · 급매 띠 · 먼저 확인할 것) · v10.97 글은 사전 gwan.axes.* */
 type GwanT = Awaited<ReturnType<typeof getTranslations<'gwan'>>>;
-function axesFor(t: GwanT): Record<'MAL' | 'BIZ', { nm: string; why: string; tabs: Axis[] }> {
+type ConsultT = Awaited<ReturnType<typeof getTranslations<'consult'>>>;
+function axesFor(t: GwanT, tc: ConsultT): Record<'MAL' | 'BIZ', { nm: string; why: string; tabs: Axis[] }> {
   return {
     MAL: { nm: t('axes.MAL.nm'), why: t('axes.MAL.why'), tabs: [
       { k: 'equip', nm: t('axes.MAL.equip.nm'), sub: t('axes.MAL.equip.sub'), catAxis: 'EQUIP', judge: t('axes.MAL.equip.judge'), urg: t('axes.MAL.equip.urg'),
@@ -67,7 +68,7 @@ function axesFor(t: GwanT): Record<'MAL' | 'BIZ', { nm: string; why: string; tab
       { k: 'realty', nm: t('axes.MAL.realty.nm'), sub: t('axes.MAL.realty.sub'), catAxis: 'RE', gate: t('axes.MAL.realty.gate'), judge: t('axes.MAL.realty.judge'), urg: t('axes.MAL.realty.urg'),
         safe: [t('axes.MAL.realty.s1'), t('axes.MAL.realty.s2'), t('axes.MAL.realty.s3'), t('axes.MAL.realty.s4')] },
       { k: 'consult', nm: t('axes.MAL.consult.nm'), sub: t('axes.MAL.consult.sub'), body: 'consult', judge: t('axes.MAL.consult.judge'),
-        why: t('axes.MAL.consult.why'), safe: SAFE_CONSULT },
+        why: t('axes.MAL.consult.why'), safe: SAFE_CONSULT.map((k) => tc(k)) },
     ] },
     BIZ: { nm: t('axes.BIZ.nm'), why: t('axes.BIZ.why'), tabs: [
       { k: 'listing', nm: t('axes.BIZ.listing.nm'), sub: t('axes.BIZ.listing.sub'), judge: t('axes.BIZ.listing.judge'), urg: t('axes.BIZ.listing.urg'),
@@ -103,12 +104,13 @@ function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: Se
 export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
   const g = GW[code];
   const t = await getTranslations('gwan');
+  const tc = await getTranslations('consult');
   const locale = await getLocale();
   const gname = t(`meta.${code}.name`), gsect = t(`meta.${code}.sect`), gallcat = t(`meta.${code}.allcat`);
   const base = `/${g.path}`;
   const serverAxes = code === 'MNY' ? null
     : await apiGet<ServerAxis[]>(`/site/gwan-axes?gwan=${code}`, 60).catch(() => null);
-  const axDef = code === 'MNY' ? null : withServerAxes(axesFor(t)[code], serverAxes, locale === 'ko');
+  const axDef = code === 'MNY' ? null : withServerAxes(axesFor(t, tc)[code], serverAxes, locale === 'ko');
   /* 예전 주소 ?axis=listing(안심소개 매물 전체)은 첫 축으로 */
   const ax = axDef ? (axDef.tabs.find((a) => a.k === q.axis) ?? axDef.tabs[0]) : null;
   const consult = ax?.body === 'consult';

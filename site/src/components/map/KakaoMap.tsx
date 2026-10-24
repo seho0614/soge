@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import '@/styles/kmap.css';
 
 /**
@@ -96,6 +97,7 @@ interface Props {
 
 export function KakaoMap({ geo, previewAddress, previewPrecision = 'EXACT', height = 200, fallback = null, caption, className }: Props) {
   /* 「사용」이 켜져 있다고 확인되기 전까지는 지금 화면(fallback)을 그대로 둡니다 — 꺼져 있으면 화면이 한 번도 바뀌지 않습니다 */
+  const t = useTranslations('refcode.map');
   const watch = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const visible = useVisible(watch);
@@ -148,8 +150,8 @@ export function KakaoMap({ geo, previewAddress, previewPrecision = 'EXACT', heig
   return (
     <div className={`kmap${className ? ' ' + className : ''}`} data-kmap={geo?.precision ?? previewPrecision}>
       <div ref={box} className="kmap-box" style={{ height }} role="img"
-           aria-label={(geo?.precision ?? previewPrecision) === 'REGION' ? `${geo?.label ?? ''} 둘레 지도` : '위치 지도'} />
-      {state === 'show' && <div className="kmap-wait" aria-hidden="true">지도를 불러오는 중…</div>}
+           aria-label={(geo?.precision ?? previewPrecision) === 'REGION' ? t('regionAria', { label: geo?.label ?? '' }) : t('locationAria')} />
+      {state === 'show' && <div className="kmap-wait" aria-hidden="true">{t('loading')}</div>}
       {caption && <div className="kmap-cap">{caption}</div>}
     </div>
   );
@@ -183,6 +185,7 @@ export function KakaoPinMap({ pins, center, height = 420, onBounds, onPick, fall
   /** 바깥에서 지도를 옮길 때(동네 고르기 · 현재 위치로) */
   mapRef?: React.MutableRefObject<{ moveTo: (lat: number, lng: number, level?: number) => void } | null>;
 }) {
+  const t = useTranslations('refcode.map');
   const box = useRef<HTMLDivElement>(null);
   const visible = useVisible(box);
   const [state, setState] = useState<'idle' | 'ready' | 'off'>('idle');
@@ -221,18 +224,18 @@ export function KakaoPinMap({ pins, center, height = 420, onBounds, onPick, fall
     if (state !== 'ready' || !map || !kakao) return;
     markers.current.forEach((m) => m.setMap(null));
     markers.current = pins.map((p) => {
-      const m = new kakao.maps.Marker({ position: new kakao.maps.LatLng(p.lat, p.lng), title: p.count ? `${p.title} · 추천 ${p.count}` : p.title });
+      const m = new kakao.maps.Marker({ position: new kakao.maps.LatLng(p.lat, p.lng), title: p.count ? t('pinTitle', { title: p.title, n: String(p.count) }) : p.title });
       m.setMap(map);
       kakao.maps.event.addListener(m, 'click', () => cb.current.onPick?.(p.id));
       return m;
     });
-  }, [pins, state]);
+  }, [pins, state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (state === 'off') return <>{fallback}</>;
   return (
     <div className={`kmap${className ? ' ' + className : ''}`} data-kmap="PINS">
-      <div ref={box} className="kmap-box" style={{ height }} role="application" aria-label="맛집 지도" />
-      {state === 'idle' && <div className="kmap-wait" aria-hidden="true">지도를 불러오는 중…</div>}
+      <div ref={box} className="kmap-box" style={{ height }} role="application" aria-label={t('pinAria')} />
+      {state === 'idle' && <div className="kmap-wait" aria-hidden="true">{t('loading')}</div>}
     </div>
   );
 }

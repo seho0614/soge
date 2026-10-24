@@ -7,10 +7,14 @@ import { PATH_GWAN } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { MyHead, Note } from '@/components/my/ui';
 import { GwQnaBoard } from '@/components/gwan/GwQnaBoard';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
-export const metadata: Metadata = { title: '공개 문의' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('detail.board'))('title') };
+}
 
 /**
  * SB-HOM-MCH-020 공개 문의 — v10.32 시안(scQna · 「/l/{no}/qna」) 단독 화면.
@@ -32,18 +36,19 @@ export default async function QnaPage({ params }: Props) {
     apiGetPersonal<never[]>(`/listings/${id}/questions`).catch(() => apiGet<never[]>(`/listings/${id}/questions`, 10).catch(() => [] as never[])),
     me(),
   ]);
+  const t = await getTranslations('detail.board');
   const detailHref = `/${gwan}/${id}`;
   const canAsk = item.canInquire;
 
   return (
     <><div className="gw" data-gw={PATH_GWAN[gwan]}>
       <div className="gw-wrap" style={{ paddingTop: 16 }}><div className="mys" data-screen="SB-HOM-MCH-020">
-        <BackBar href={detailHref} label="상세" wrap={false} />
-        <MyHead title={`공개 문의 ${questions.length}건`}
-          sub={<>{item.title} — 누구나 볼 수 있는 질문과 답입니다. 연락처 · 금액 협의는 1:1 문의에서 하십시오.</>} />
-        <GwQnaBoard listingId={item.id} detailHref={detailHref} canAsk={canAsk} canInquire={item.canInquire}
-                    loggedIn={!!viewer} initial={questions} />
-        <Note kind="info"><b>공개 문의는 모두가 봅니다.</b> 1:1 문의를 시작하는 순간 소개코드가 발급되고 귀속이 시작됩니다(INV-2).</Note>
+        <BackBar href={detailHref} label={t('back')} wrap={false} />
+        <MyHead title={t('heading', { n: String(questions.length) })}
+          sub={<>{t('sub', { title: item.title })}</>} />
+        <Msgs ns={['detail']}><GwQnaBoard listingId={item.id} detailHref={detailHref} canAsk={canAsk} canInquire={item.canInquire}
+                    loggedIn={!!viewer} initial={questions} /></Msgs>
+        <Note kind="info">{t.rich('note', { b: (c) => <b>{c}</b> })}</Note>
       </div></div>
     </div><i hidden data-root-end="" /></>
   );

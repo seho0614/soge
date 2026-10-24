@@ -1,5 +1,5 @@
 /**
- * 사전 묶기 (v10.97 · 2-2 · docs/155)
+ * 사전 묶기 (v10.97 · 2-2 · docs/155 · v10.98 2-3 · docs/156)
  *
  *   ko.json · en.json    — 2-1 사전(머리줄 · 바닥줄 · 로그인 · 가입). 모든 화면에 내려보냅니다.
  *   ko/<묶음>.json        — 2-2 부터 묶음(이름공간)마다 파일 하나.
@@ -15,9 +15,13 @@ import money from './ko/money.json';
 import shop from './ko/shop.json';
 import listing from './ko/listing.json';
 import searchPop from './ko/searchPop.json';
+import detail from './ko/detail.json';
+import consult from './ko/consult.json';
+import request from './ko/request.json';
+import refcode from './ko/refcode.json';
 
-const SHARED = { gwan, money, shop, listing, searchPop };
-const PAGE = { main, search };
+const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };   // v10.98 consult · refcode
+const PAGE = { main, search, detail, request };   // v10.98 detail · request
 
 export const KO = { ...base, ...SHARED, ...PAGE };
 export type PageNs = keyof typeof PAGE;

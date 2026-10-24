@@ -1,0 +1,80 @@
+{
+  "copy": {
+    "copied": "Copied.",
+    "blocked": "Your browser blocked copying. Press and hold the link to copy it yourself.",
+    "button": "Copy link"
+  },
+  "share": {
+    "title": "Share referral code",
+    "won": "KRW {price}",
+    "flatRate": "a flat fee",
+    "guide": "Referral codes are issued per listing. Open the listing you want to refer and tap \"Share referral code\".",
+    "browseListings": "Browse listings",
+    "perListingLead": "Refer this listing to someone who needs it. Referral codes are <b>separate for each listing</b> — tapping again on the same listing gives the same code, and",
+    "freeUnknown": "new listings this month are free up to your plan's included count.",
+    "freeN": "{n} new listings this month are free (free members · one per verified person).",
+    "freeNone": "free members get codes at {extra} each with no free codes (paid plans up to their included count).",
+    "perListingTail": "If they open your referral link and inquire about this listing within 90 days, you are recorded as the referrer.",
+    "allWithListing": "Refer this listing to someone who needs it. If they open your referral link and inquire within 90 days, you are recorded as the referrer.",
+    "allNoListing": "Refer Safe Referral listings to someone who needs them. If they open your referral link and inquire within 90 days, you are recorded as the referrer.",
+    "loginGet": "Log in to get a referral code",
+    "signup": "Sign up",
+    "verifyNoFree": "You are not verified yet — referral codes are issued after identity verification (no free codes · {extra} each).",
+    "verifyFreeN": "You are not verified yet — free referral codes ({n} per month) are given once per verified person.",
+    "verifyFree": "You are not verified yet — free referral codes are given once per verified person.",
+    "verifyLink": "Verify identity"
+  },
+  "button": {
+    "issueFail": "Could not get a referral code.",
+    "blocked": {
+      "noIntroCategory": "Insurance and medical listings cannot have referrers, so no referral code can be issued (Medical Service Act Art. 27 · Insurance Business Act).",
+      "ownListing": "You cannot get a referral code for your own listing.",
+      "listingNotPublished": "Referral codes are only available for published listings.",
+      "other": "A referral code cannot be issued for this listing."
+    },
+    "quotaFail": "Could not load your referral code status. Please try again shortly.",
+    "perListingGuide": "Referral codes are issued per listing. Open the listing you want to refer and tap \"Share referral code\".",
+    "allUsedIncluded": "You have used all referral codes included in {plan} this month ({n}). You can see your codes again in \"Refer via Safe Referral\".",
+    "noFreePlan": "The {plan} plan has no free referral codes · codes are KRW {price} each. You can see your codes again in \"Refer via Safe Referral\".",
+    "requestFail": "Could not send the request. Please try again shortly.",
+    "payNotApproved": "The payment was not approved.",
+    "orderName": "1 extra referral code",
+    "payCanceled": "You canceled the payment.",
+    "payOpenFail": "Could not open the payment window. Please try again shortly.",
+    "checking": "Checking…",
+    "share": "Share referral code",
+    "myCode": "My referral code",
+    "tagListing": "Code for this listing",
+    "tagMonth": "Code received this month",
+    "tagStubPaid": "Added via test payment",
+    "tagPaid": "Added via payment",
+    "feeNote": "You receive the referral fee directly from the parties — SogaeBank does not hold any funds.",
+    "paidPlanUsed": "You have used all referral codes included in your {plan} plan this month ({n}).",
+    "newListingPay": "Codes for new listings require an extra payment.",
+    "noFree": "No free referral codes · KRW {price} each — get one whenever you need it.",
+    "noFreeVerify": "Please complete <a>identity verification</a> first.",
+    "freeUsed": "You have used all free referral codes this month ({n}).",
+    "unverified": "There are no free referral codes before identity verification. Complete <a>identity verification</a> to get {n} free each month.",
+    "stubNote": "No payment key is configured — proceeding with a <b>test payment (stub)</b>. No real money is charged.",
+    "paying": "Requesting payment…",
+    "payBtn": "Pay {price} for 1 extra",
+    "payBtnStub": "Test-pay {price} for 1 extra (stub)",
+    "plans": "View plans",
+    "giveLink": "Refer via Safe Referral"
+  },
+  "pay": {
+    "requestFail": "Could not send the payment approval request. Refresh this page to check again — the code will not be issued twice.",
+    "alreadyUsed": "You already received a referral code for this payment.",
+    "myCodes": "View my referral codes",
+    "confirming": "Confirming your payment… Please do not close this window.",
+    "reused": "You already have referral code <c>{code}</c> for this listing. This payment was not approved.",
+    "issued": "You received extra referral code <c>{code}</c>."
+  },
+  "map": {
+    "regionAria": "Map around {label}",
+    "locationAria": "Location map",
+    "loading": "Loading map…",
+    "pinAria": "Restaurant map",
+    "pinTitle": "{title} · {n} recommendations"
+  }
+}
