@@ -1846,8 +1846,10 @@ eq "BD-02 판매 공백 없음" \
   "SELECT count(*) FROM v_ad_sellable_gap;" "0"
 
 # 당일에 알면 이미 빈 자리가 된 뒤입니다.
+#   v10.89 — 기본 자료(시연용) 소재(코드 AD-세 자리 · B900)는 세지 않습니다. 실제 소재 코드는 AD-YYYYMM-…(fn) 입니다.
+#   시연용 소재의 날짜가 다가오면 검정이 달력 때문에 실패했습니다(2026-10-24 AD-103). 운영 화면의 v_ad_expiring 은 그대로 다 보입니다.
 eq "BD-03 만료 임박 소재 없음" \
-  "SELECT count(*) FROM v_ad_expiring;" "0"
+  "SELECT count(*) FROM v_ad_expiring WHERE creative_code !~ '^AD-[0-9]{3}\$';" "0"
 
 # 실적에 데모가 섞이면 단가를 잘못 매깁니다.
 eq "BD-04 데모 소재가 표시됨" \
