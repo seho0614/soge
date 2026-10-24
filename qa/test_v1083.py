@@ -28,7 +28,7 @@ ok('① 판정 · 앞 거르기 · 관련순이 | 를 읽음(같은 이름 · �
    and "THEN ''   -- D111" in M and "string_to_array(split_part(btrim(p_kw), ' ', 1), '|')" in M, '')
 ok('① 자료를 지우지 않음', not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE)\b', M), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 149 · 마지막 D111(v10.84 부터 D112 · 150 — test_v1084)', (len(mig), mig[-1] if mig else '') in ((149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly'), (152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 149 · 마지막 D111(v10.84 부터 D112 · 150 — test_v1084)', (len(mig), mig[-1] if mig else '') in ((149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly'), (152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base'), (154, 'D116_agent_base')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 H = rd('src/core/search-expand.ts')
 ok('② 공용 도우미 — 한 번 부름 · | 를 띄어쓰기로', 'SELECT fn_search_expand($1) AS k' in H and ".replace(/\\|/g, ' ')" in H, '')

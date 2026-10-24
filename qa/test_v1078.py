@@ -33,7 +33,7 @@ ok('① 나머지 조건 그대로 — 시험용(TEST) 제외 · 창 · 문턱',
 ok('① D004(밤)와 같은 조건', 'l.actor_account_id IS NOT NULL' in rd('prisma/migrations/D004_audit_night_actor/migration.sql'), '')
 ok('① 자료를 지우지 않음', not re.search(r'\b(DELETE|TRUNCATE|DROP TABLE)\b', M), '')
 last = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 147개 · 마지막 D109(v10.80 부터 D110 · 148 — test_v1080)', (len(last), last[-1] if last else '') in ((147, 'D109_audit_burst_actor'), (148, 'D110_comment_report'), (149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly'), (152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base')), f'{len(last)} · {last[-1] if last else ""}')
+ok('① 마이그레이션 147개 · 마지막 D109(v10.80 부터 D110 · 148 — test_v1080)', (len(last), last[-1] if last else '') in ((147, 'D109_audit_burst_actor'), (148, 'D110_comment_report'), (149, 'D111_search_synonym_expand'), (150, 'D112_search_synonym_seed'), (151, 'D113_job_stale_weekly'), (152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base'), (154, 'D116_agent_base')), f'{len(last)} · {last[-1] if last else ""}')
 
 if DB:
     def psql(sql):

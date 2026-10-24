@@ -45,7 +45,7 @@ body = re.sub(r'--[^\n]*', '', M)
 ok('① 재실행 안전 · 자료를 지우지 않음', 'DROP TRIGGER IF EXISTS trg_auto_review_policy_guard' in body and not re.search(r'\bDELETE\b|\bDROP TABLE\b|\bDROP FUNCTION\b|\bTRUNCATE\b', body)
    and body.count('IS DISTINCT FROM') >= 2 and "WHERE key = 'manual_after_reject' AND num_value IS NULL" in body, '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마지막 마이그레이션 D108 · 146개(v10.78 부터 D109 · 147 — test_v1078)', (mig[-1], len(mig)) in (('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150), ('D113_job_stale_weekly', 151), ('D114_seed_ad_ends_extend', 152), ('D115_i18n_base', 153)), f'{mig[-1]} · {len(mig)}')
+ok('① 마지막 마이그레이션 D108 · 146개(v10.78 부터 D109 · 147 — test_v1078)', (mig[-1], len(mig)) in (('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150), ('D113_job_stale_weekly', 151), ('D114_seed_ad_ends_extend', 152), ('D115_i18n_base', 153), ('D116_agent_base', 154)), f'{mig[-1]} · {len(mig)}')
 R = rd('src/modules/review/review.service.ts'); E = rd('src/modules/listing/listing-edit.controller.ts'); C = rd('src/modules/catalog/catalog.service.ts'); G = rd('src/engines/review/auto-review.engine.ts')
 ok('② 검수 화면 · 수정 화면 — DB 판정 함수 · 매물 글 칸 모두', 'FROM fn_check_banned_words($1, $2) w' in R and 'fn_listing_text(l)' in R and "ILIKE '%' || word" not in R
    and 'fn_check_banned_words(fn_listing_text(l), l.gwan_code) w' in E and 'position(lower(b.word)' not in E, '')

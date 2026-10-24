@@ -36,7 +36,7 @@ body = re.sub(r'--[^\n]*', '', M)
 ok('① D106 — 재실행 안전 · 자료를 지우지 않음(끄기만)', 'DROP TRIGGER IF EXISTS trg_banned_words_regex' in body and body.count('CREATE OR REPLACE FUNCTION') == 4
    and not re.search(r'\bDELETE\b|\bDROP TABLE\b|\bTRUNCATE\b', body) and 'SET is_active = false' in body, '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마지막 마이그레이션 D106 · 144개(v10.70 부터 D107 · 145 — test_v1070)', (mig[-1], len(mig)) in (('D106_banned_regex_guard', 144), ('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150), ('D113_job_stale_weekly', 151), ('D114_seed_ad_ends_extend', 152), ('D115_i18n_base', 153)), f'{mig[-1]} · {len(mig)}')
+ok('① 마지막 마이그레이션 D106 · 144개(v10.70 부터 D107 · 145 — test_v1070)', (mig[-1], len(mig)) in (('D106_banned_regex_guard', 144), ('D107_review_identity_basis', 145), ('D108_review_rules_cleanup', 146), ('D109_audit_burst_actor', 147), ('D110_comment_report', 148), ('D111_search_synonym_expand', 149), ('D112_search_synonym_seed', 150), ('D113_job_stale_weekly', 151), ('D114_seed_ad_ends_extend', 152), ('D115_i18n_base', 153), ('D116_agent_base', 154)), f'{mig[-1]} · {len(mig)}')
 D = rd('src/modules/site/site.dto.ts')
 blk = D[D.find('export class CreateBannedWordDto'):]; blk = blk[:blk.find('\n}')]
 ok('② API — 맞춤 방식 · 수위는 정해진 값만', "@IsIn(['EXACT', 'CONTAINS', 'REGEX']) matchType" in blk and "@IsIn(['BLOCK', 'WARN']) severity" in blk
