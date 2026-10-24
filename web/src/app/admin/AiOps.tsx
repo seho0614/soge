@@ -2,7 +2,7 @@ import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
 import { useHashSub } from '../../lib/hashSub';
-import { ClassifyLearn, RiskLearn, SearchDict, SearchParser, SegmentLearn, SegmentPreview } from './AiLearn';
+import { AgentStatus, ClassifyLearn, RiskLearn, SearchDict, SearchParser, SegmentLearn, SegmentPreview } from './AiLearn';
 
 interface Accuracy { total: number; missed: number; matched: number; corrected?: number }
 interface Health {
@@ -15,7 +15,7 @@ interface Health {
   vocab?: Record<string, number>;
 }
 
-type View = 'health' | 'parser' | 'dict' | 'classify' | 'segments' | 'segments-preview' | 'risk';
+type View = 'health' | 'parser' | 'dict' | 'classify' | 'segments' | 'segments-preview' | 'risk' | 'agent';
 const TABS: SubTab<View>[] = [
   { key: 'health', label: '분류 품질', screen: 'SB-ADM-AIS-010' },
   { key: 'parser', label: '검색 파서', screen: 'SB-ADM-SCH-010' },
@@ -23,6 +23,7 @@ const TABS: SubTab<View>[] = [
   { key: 'classify', label: '분류 학습', screen: 'SB-ADM-CLS-020' },
   { key: 'segments', label: '성향 학습', screen: 'SB-ADM-SEG-010' },
   { key: 'risk', label: '위험감지 학습', screen: 'SB-ADM-RSK-020' },
+  { key: 'agent', label: 'AI 에이전트', screen: 'SB-ADM-AGT-010' },   /* v10.94 */
   /* v10.32 — 성향 학습 「대상 보기」가 여는 화면. 하위 탭 줄에는 그리지 않고(성향 학습이 켜진 채) 주소로 바로 엽니다 */
   { key: 'segments-preview', label: '옮길 대상 미리보기', screen: 'SB-ADM-SEG-020', hidden: true },
 ];
@@ -54,6 +55,7 @@ export function AiOps() {
       {view === 'segments' && <SegmentLearn onPreview={openPreview} />}
       {view === 'segments-preview' && <SegmentPreview bare onBack={() => setView('segments')} />}
       {view === 'risk' && <RiskLearn />}
+      {view === 'agent' && <AgentStatus />}
     </section>
   );
 }

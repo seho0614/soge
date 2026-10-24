@@ -171,6 +171,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
  * 여기 있으면 위 공통 제목 줄이 PAGE[탭] 대신 이 제목을 그립니다. 하위 탭 줄 · 묶음 줄은 그대로입니다.
  */
 export const SUB_PAGE: Record<string, { title: string; sub?: string; screen?: string }> = {
+  'ai-ops/agent': { title: 'AI 에이전트', sub: '스위치 · 월 상한 · 사용량 · AI 검수 일치율. 상한이 0 이면 아무것도 부르지 않습니다.', screen: 'SB-ADM-AGT-010' },
   'ai-ops/segments-preview': { title: '옮길 대상 미리보기', sub: '학습을 실행하면 옮겨질 회원입니다. 실행 전에 확인합니다.', screen: 'SB-ADM-SEG-020' },
   'gov-audit/logs':          { title: '감사 기록', sub: '운영 · 회원 행위 기록입니다. 고치거나 지울 수 없습니다.', screen: 'SB-ADM-AUD-020' },
   'partners/detail':         { title: '파트너사 상세', sub: '입점 파트너사 한 곳의 계약 · 서비스 · 리드 · 이용료를 한 화면에서 봅니다.', screen: 'SB-ADM-PTN-011' },

@@ -3659,6 +3659,24 @@
    "note": "v10.93 다국어 1단계 기반(D115 · docs/148 · docs/150) — 번역 목록 · 승인 · 번역 넣기(MANUAL) · 언어 켜고 끄기. 다국어(i18n.enabled)가 꺼져 있는 동안 손님 화면은 바뀌지 않음"
   },
   {
+   "id": "SB-ADM-AGT-010",
+   "name": "AI 에이전트",
+   "group": "ADM",
+   "url": "/admin/agent",
+   "p": "운영",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/ai-ops/agent",
+   "apis": [
+    "GET /admin/agent/status"
+   ],
+   "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0"
+  },
+  {
    "id": "SB-ADM-CLS-020",
    "name": "분류 학습",
    "group": "ADM",

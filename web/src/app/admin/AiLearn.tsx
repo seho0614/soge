@@ -14,3 +14,4 @@ export { SearchDict } from './ailearn/SearchDict';
 export { ClassifyLearn } from './ailearn/ClassifyLearn';
 export { SegmentLearn, SegmentPreview } from './ailearn/SegmentLearn';
 export { RiskLearn } from './ailearn/RiskLearn';
+export { AgentStatus } from './ailearn/AgentStatus';   // v10.94 AI 에이전트 틀
