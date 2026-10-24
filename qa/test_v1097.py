@@ -27,8 +27,8 @@ def rd(rel):
 I = 'site/src/i18n/'
 IX = rd(I + 'messages/index.ts')
 SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop']; PAGE = ['main', 'search']
-ok('① 묶음 파일 — SHARED 5 · PAGE 2 · 한국어 바탕에 그 언어를 덮음',
-   'const SHARED = { gwan, money, shop, listing, searchPop };' in IX and 'const PAGE = { main, search };' in IX and 'return merge(KO as unknown as Dict, over);' in IX, '')
+ok('① 묶음 파일 — SHARED 5 · PAGE 2 · 한국어 바탕에 그 언어를 덮음',   # v10.98 — 묶음이 늘어도 통과
+   re.search(r'const SHARED = \{ gwan, money, shop, listing, searchPop[ ,}]', IX) and re.search(r'const PAGE = \{ main, search[ ,}]', IX) and 'return merge(KO as unknown as Dict, over);' in IX, '')
 ok('① request.ts — 꺼져 있으면 쿠키를 읽지 않음 · messagesFor', 0 < rd(I + 'request.ts').find('if (info.enabled)') < rd(I + 'request.ts').find('(await cookies())') and 'messagesFor(locale)' in rd(I + 'request.ts'), '')
 ok('① 형식 검사가 묶음까지(global.d.ts — typeof KO)', 'Messages: typeof KO;' in rd(I + 'global.d.ts'), '')
 ok('① 레이아웃은 공통 묶음만 브라우저로', 'messages={pick(messages, GLOBAL_NS)}' in rd('site/src/app/layout.tsx'), '')
