@@ -35,18 +35,12 @@ export const isGwan = (c: string | undefined): c is GwanCode => c === 'MNY' || c
 /** v10.31 — 지역 설정 칸은 서버의 시 · 도(GET /market/regions)로 목록을 실제로 거릅니다(?region=시도코드). 이 표는 서버를 못 읽었을 때의 「전국」만 */
 export const REGION_ALL = { code: '', name: '전국' };
 
-/** 시안 FEATS — 아래 안내 6칸 */
-export const FEATS: [string, string][] = [
-  ['간편한 소개 등록', '누구나 쉽고 빠르게 상품, 서비스, 창업 아이템 등록'],
-  ['소개 수익 지급', '거래 성사 시 소개자에게 수익 지급'],
-  ['안전한 거래 지원', '계약서 양식 제공 및 분쟁 예방 가이드'],
-  ['실시간 문의', '거래 상대와 실시간 채팅으로 빠른 상담 가능'],
-  ['신뢰도 시스템', '후기와 평점으로 신뢰할 수 있는 거래'],
-  ['전문가 매칭', '필요한 전문가와 1:1 매칭 지원'],
-];
+/** 시안 FEATS — 아래 안내 6칸 (v10.97 · 글은 사전 gwan.feats.{키}.t · .d) */
+export const FEATS = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'] as const;
 
 /** 시안 QM — 퀵메뉴 5칸. 실제 웹 주소는 소개장터 아래 퀵메뉴 화면입니다. */
-export const QM: { key: string; em: string; label: string; href: string }[] = [
+/* v10.97 — label 은 예전 화면용 한국어 그대로 두고, 관 화면은 사전 gwan.qm.{key} 로 그립니다 */
+export const QM: { key: 'new' | 'best' | 'urgent' | 'verified' | 'event'; em: string; label: string; href: string }[] = [
   { key: 'new', em: '🏆', label: '성공현황', href: '/money/new' },
   { key: 'best', em: '🎖', label: '베스트매칭', href: '/money/best' },
   { key: 'urgent', em: '🚨', label: '급구 · 급매', href: '/money/urgent' },
@@ -55,7 +49,8 @@ export const QM: { key: string; em: string; label: string; href: string }[] = [
 ];
 
 /** 상품 분류 등급 — categories.gradeCode → 시안 골든 · 실버 · 브론즈(가칭) */
-export const GRADES: { code: string; k: string; em: string; nm: string; sub: string }[] = [
+/* v10.97 — nm · sub 는 예전 화면용 한국어 그대로, 관 화면은 사전 gwan.grade.{code}.nm · .sub */
+export const GRADES: { code: 'G1' | 'G2' | 'G3'; k: string; em: string; nm: string; sub: string }[] = [
   { code: 'G1', k: 'g1', em: '🏆', nm: '골든', sub: '높은 소개비' },
   { code: 'G2', k: 'g2', em: '🥈', nm: '실버', sub: '중간 소개비' },
   { code: 'G3', k: 'g3', em: '🥉', nm: '브론즈', sub: '부업 수준' },
@@ -92,7 +87,8 @@ export function photoSrc(categoryName: string | null | undefined, media?: string
 }
 
 /** 정렬 — 시안 「소개비순 · 마감임박 · 소개비율 · 최신」(v10.31 — 서버 정렬 DEADLINE · FEE_RATIO 신설) + 개발에 있던 인기순(남김) */
-export const SORTS: [string, string][] = [['FEE_DESC', '소개비순'], ['DEADLINE', '마감임박'], ['FEE_RATIO', '소개비율'], ['RECENT', '최신'], ['POPULAR', '인기']];
+/* v10.97 — 이름은 사전 gwan.sort.{코드}(관 화면) · 두 번째 칸 한국어는 예전 화면용 */
+export const SORTS: ['FEE_DESC' | 'DEADLINE' | 'FEE_RATIO' | 'RECENT' | 'POPULAR', string][] = [['FEE_DESC', '소개비순'], ['DEADLINE', '마감임박'], ['FEE_RATIO', '소개비율'], ['RECENT', '최신'], ['POPULAR', '인기']];
 
 /** 소개 신뢰도 띠의 색 — 시안 trustBadge(70 이상 hi · 50 이상 mid · 그 밖 low) */
 export const trustCls = (s: number) => (s >= 70 ? 'gw-hi' : s >= 50 ? 'gw-mid' : 'gw-low');

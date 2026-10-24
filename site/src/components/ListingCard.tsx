@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ListingCardData } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 import { won, ago, GWAN_PATH } from '@/lib/format';
 
 /**
@@ -9,6 +10,7 @@ import { won, ago, GWAN_PATH } from '@/lib/format';
  * 필터·정렬에만 씁니다. "브론즈 매물"로 보이면 낙인이 됩니다.
  */
 export function ListingCard({ item }: { item: ListingCardData }) {
+  const t = useTranslations('listing');
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
   return (
     <article className="card">
@@ -31,8 +33,8 @@ export function ListingCard({ item }: { item: ListingCardData }) {
 
         <div className="card-meta">
           <span>{item.owner.companyName}</span>
-          {item.owner.verified && <span className="verified">사업자 인증</span>}
-          {item.owner.confirmedDeals > 0 && <span>성사 {item.owner.confirmedDeals}건</span>}
+          {item.owner.verified && <span className="verified">{t('verified')}</span>}
+          {item.owner.confirmedDeals > 0 && <span>{t('deals', { n: String(item.owner.confirmedDeals) })}</span>}
           {/* 20260930 — 서버(UTC)와 브라우저(KST) 시각 차로 React 418 경고 */}<span className="when" suppressHydrationWarning>{ago(item.publishedAt)}</span>
         </div>
       </Link>

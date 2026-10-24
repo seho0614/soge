@@ -8,20 +8,10 @@
 import { getRequestConfig } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import { apiGet } from '@/lib/api';
-import ko from './messages/ko.json';
+import { messagesFor } from './messages';
 
 export const LANG_COOKIE = 'sgb_lang';
 export interface LangInfo { enabled: boolean; items: { code: string; name: string; rtl: boolean }[] }
-
-type Dict = { [k: string]: string | Dict };
-function merge(base: Dict, over: Dict): Dict {
-  const out: Dict = { ...base };
-  for (const [k, v] of Object.entries(over)) {
-    const b = out[k];
-    out[k] = typeof v === 'object' && typeof b === 'object' ? merge(b, v) : v;
-  }
-  return out;
-}
 
 export async function langInfo(): Promise<LangInfo> {
   return apiGet<LangInfo>('/i18n/langs', 60).catch(() => ({ enabled: false, items: [{ code: 'ko', name: '한국어', rtl: false }] }));
@@ -34,7 +24,5 @@ export default getRequestConfig(async () => {
     const c = (await cookies()).get(LANG_COOKIE)?.value;
     if (c && info.items.some((i) => i.code === c)) locale = c;
   }
-  const messages = locale === 'ko' ? ko
-    : merge(ko as Dict, (await import(`./messages/${locale}.json`).then((m) => m.default as Dict).catch(() => ({}) as Dict)));
-  return { locale, messages };
+  return { locale, messages: await messagesFor(locale) };   // v10.97 — 묶음 파일(messages/index.ts)
 });

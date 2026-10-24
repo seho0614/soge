@@ -10,6 +10,7 @@
  */
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { AdServe } from '@/components/home/types';
 
 const ROUTE: Record<string, string> = { reg: '/register', regb: '/request/new', reqn: '/request/new', reql: '/request', aiprf: '/ai/profile', commu: '/community' };
@@ -40,13 +41,14 @@ function useAdLog(ad: AdServe | null, slot: string) {
 
 function useClick(ad: AdServe | null, slot: string) {
   const router = useRouter();
+  const t = useTranslations('gwan.ad');
   const [msg, setMsg] = useState('');
   async function go() {
     if (!ad?.id) return;
     await fetch(`/api/v1/ads/${encodeURIComponent(ad.id)}/click?slot=${slot}`, { method: 'POST' }).catch(() => {});
     const to = landing(ad.landingRoute);
     if (to) { router.push(to); return; }
-    setMsg(`${ad.advertiser ?? '광고주'} 안내 페이지는 준비 중입니다. 관심을 남겨 두었습니다.`);
+    setMsg(t('notReady', { advertiser: ad.advertiser ?? t('advertiser') }));
   }
   return { go, msg };
 }
@@ -54,6 +56,7 @@ function useClick(ad: AdServe | null, slot: string) {
 const FKEY = 'gw.floatClosed';
 
 export function GwFloatAd({ ad }: { ad: AdServe | null }) {
+  const t = useTranslations('gwan.ad');
   const [closed, setClosed] = useState(true);
   useEffect(() => { try { setClosed(sessionStorage.getItem(FKEY) === '1'); } catch { setClosed(false); } }, []);
   const box = useAdLog(closed ? null : ad, 'FLOAT');
@@ -62,11 +65,11 @@ export function GwFloatAd({ ad }: { ad: AdServe | null }) {
   return (
     /* .gw 변수(색 · 그림자)를 받도록 감쌉니다 — 소개장터 메인(.mny)처럼 .gw 밖에서도 같은 모양 */
     <div className="gw gw-floatwrap">
-    <aside className="gw-adfloat" ref={box as React.RefObject<HTMLElement>} data-adbox="FLOAT" data-ad-code={ad.code ?? ''} aria-label={`광고 — ${ad.advertiser ?? ''}`}>
-      <div className="gw-adlab">{ad.label ?? '광고'}</div>
-      <button type="button" className="gw-adx" aria-label="닫기" onClick={() => { try { sessionStorage.setItem(FKEY, '1'); } catch { /* 그대로 */ } setClosed(true); }}>✕</button>
+    <aside className="gw-adfloat" ref={box as React.RefObject<HTMLElement>} data-adbox="FLOAT" data-ad-code={ad.code ?? ''} aria-label={t('aria', { advertiser: ad.advertiser ?? '' })}>
+      <div className="gw-adlab">{ad.label ?? t('label')}</div>
+      <button type="button" className="gw-adx" aria-label={t('close')} onClick={() => { try { sessionStorage.setItem(FKEY, '1'); } catch { /* 그대로 */ } setClosed(true); }}>✕</button>
       <b>{ad.title}</b><span>{ad.advertiser}</span>
-      <button type="button" className="gw-bo gw-sm" onClick={() => void go()}>{ad.cta ?? '자세히 보기'}</button>
+      <button type="button" className="gw-bo gw-sm" onClick={() => void go()}>{ad.cta ?? t('more')}</button>
       {msg && <p className="gw-admsg" role="status">{msg}</p>}
     </aside>
     </div>
@@ -74,16 +77,17 @@ export function GwFloatAd({ ad }: { ad: AdServe | null }) {
 }
 
 export function MoneyBand({ ad }: { ad: AdServe | null }) {
+  const t = useTranslations('gwan.ad');
   const box = useAdLog(ad, 'GBAND');
   const { go, msg } = useClick(ad, 'GBAND');
   if (!ad?.id || ad.empty) return null;
   return (
-    <section className="mny-band is-text" ref={box as React.RefObject<HTMLElement>} data-adbox="GBAND" data-ad-code={ad.code ?? ''} aria-label={`광고 — ${ad.advertiser ?? ''}`}>
-      <span className="mny-band-tag">{ad.label ?? '광고'}</span>
+    <section className="mny-band is-text" ref={box as React.RefObject<HTMLElement>} data-adbox="GBAND" data-ad-code={ad.code ?? ''} aria-label={t('aria', { advertiser: ad.advertiser ?? '' })}>
+      <span className="mny-band-tag">{ad.label ?? t('label')}</span>
       <div className="mny-band-t"><b>{ad.title}</b>{ad.body && <span>{ad.body}</span>}</div>
       <span className="mny-band-adv">{ad.advertiser}</span>
       <button type="button" className="mny-band-cta" onClick={() => void go()}>
-        {ad.cta ?? '자세히 보기'}
+        {ad.cta ?? t('more')}
         <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M1 5h12M9 1l4 4-4 4" /></svg>
       </button>
       {msg && <p className="mny-band-msg" role="status">{msg}</p>}

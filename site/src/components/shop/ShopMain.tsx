@@ -19,6 +19,8 @@
  * v10.25 의 「소개몰 상품」 구역(그림에 없음)은 v10.26 에서 위의 두 구역으로 바꿨습니다.
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import type { HltConcern, HltIngredient, HltProduct } from '@/components/health/types';
@@ -48,17 +50,19 @@ const Chev = ({ size = 16 }: { size?: number }) => (
 );
 
 export function SecHead({ title, lead, all }: { title: string; lead?: string; all?: string }) {
+  const t = useTranslations('shop');
   return (
     <div className="shop-sech">
       <Star />
       <h2>{title}</h2>
       {lead && <p>{lead}</p>}
-      {all && <Link className="shop-all" href={all}>전체보기 <Chev /></Link>}
+      {all && <Link className="shop-all" href={all}>{t('seeAll')} <Chev /></Link>}
     </div>
   );
 }
 
 export async function ShopMain() {
+  const t = await getTranslations('shop');
   type RankBlock = { basis: string; from: string | null; to: string | null; madeAt: string | null; items: Array<HltProduct & { rank: number; qty: number; orders: number }> };
   const noRank: RankBlock = { basis: '', from: null, to: null, madeAt: null, items: [] };
   type Promo = { id: string; tag: string; title: string; titleEm: string | null; body: string | null; linkUrl: string; cta: string; isSample: boolean };
@@ -72,7 +76,7 @@ export async function ShopMain() {
   const promo = promos[0] ?? null;
   const star = (p: HltProduct) => (p.reviewCount ? <span className="shop-star">{Number(p.ratingAvg ?? 0).toFixed(1)} <i>({Number(p.reviewCount).toLocaleString('ko-KR')})</i></span> : null);
   const md = (d: string | null) => (d ? `${Number(d.slice(5, 7))}.${Number(d.slice(8, 10))}` : '');
-  const basisLine = (r: RankBlock) => `${r.basis} · ${md(r.from)} ~ ${md(r.to)} · ${r.madeAt ? md(ymdKst(r.madeAt)) : ''} 집계`;      /* G-201 규칙 — toLocale… 쓰지 않음 */
+  const basisLine = (r: RankBlock) => `${r.basis} · ${md(r.from)} ~ ${md(r.to)} · ${t('madeAt', { date: r.madeAt ? md(ymdKst(r.madeAt)) : '' })}`;      /* G-201 규칙 — toLocale… 쓰지 않음 */
   /* 성분별 최저가 — 한 달 단가가 있는 성분(살 수 있는 옵션 기준). 값을 낸 상품 = 그 성분이 대표 성분이고 한 달 단가가 같은 상품 */
   const monthly = ings.filter((g) => !g.isGroup && g.minUnit != null).sort((a, b) => Number(a.minUnit) - Number(b.minUnit));
   const priced = monthly.length ? [] : ings.filter((g) => g.minPrice != null).sort((a, b) => (a.minPrice ?? 0) - (b.minPrice ?? 0));
@@ -86,15 +90,15 @@ export async function ShopMain() {
       <section className="shop-hero" data-shop-hero="1">
         <div className="shop-hero-in">
           <ShopPic name="hero-right" h={326} />
-          <h1>믿을 수 있는 건강 상품,<br /><em>소개몰</em>에서 만나보세요.</h1>
-          <p className="shop-lead">합리적인 가격으로 건강한 습관을 시작하세요.</p>
+          <h1>{t.rich('hero.title', { br: () => <br />, em: (c) => <em>{c}</em> })}</h1>
+          <p className="shop-lead">{t('hero.lead')}</p>
           <form className="shop-find" action="/health/search" role="search">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden><path fill="#1D6BF3" d="M12 1.5c.7 5.6 4.9 9.8 10.5 10.5C16.9 12.7 12.7 16.9 12 22.5 11.3 16.9 7.1 12.7 1.5 12 7.1 11.3 11.3 7.1 12 1.5z" /></svg>
             <label>
-              <b>어떤 건강 상품을 찾고 계신가요 ?</b>
-              <input name="q" type="search" maxLength={50} placeholder="예) 비타민 C, 유산균, 루테인, 마그네슘, 콜라겐" aria-label="건강 상품 검색어" />
+              <b>{t('hero.ask')}</b>
+              <input name="q" type="search" maxLength={50} placeholder={t('hero.placeholder')} aria-label={t('hero.inputAria')} />
             </label>
-            <button aria-label="검색">
+            <button aria-label={t('hero.submit')}>
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
             </button>
           </form>
@@ -102,20 +106,20 @@ export async function ShopMain() {
       </section>
 
       <div className="shop-in">
-        <nav className="shop-lnav" aria-label="소개몰 메뉴">
-          <Link href="/health/direct">직판관</Link>
-          <Link href="/health/c/ALL">전체제품</Link>
-          <Link href="/health/ingredients">성분별</Link>
-          <Link href="/health/concerns">고민별</Link>
+        <nav className="shop-lnav" aria-label={t('nav.aria')}>
+          <Link href="/health/direct">{t('nav.direct')}</Link>
+          <Link href="/health/c/ALL">{t('nav.all')}</Link>
+          <Link href="/health/ingredients">{t('nav.ingredients')}</Link>
+          <Link href="/health/concerns">{t('nav.concerns')}</Link>
           <span className="sp" />
-          <Link href="/health/guide">이용안내 · 청약철회</Link>
-          <Link href="/my/health/orders">내 주문</Link>
-          <Link href="/health/cart">장바구니</Link>
+          <Link href="/health/guide">{t('nav.guide')}</Link>
+          <Link href="/my/health/orders">{t('nav.orders')}</Link>
+          <Link href="/health/cart">{t('nav.cart')}</Link>
         </nav>
 
         {ings.length > 0 && (
           <section className="shop-sec cream" data-shop-ing="1">
-            <SecHead title="성분으로 찾기" lead="원하는 성분을 선택하면 관련 상품을 바로 볼 수 있어요." all="/health/ingredients" />
+            <SecHead title={t('sec.ing')} lead={t('sec.ingLead')} all="/health/ingredients" />
             <div className="shop-tiles">
               {ings.filter((g) => !g.isGroup).slice(0, 10).map((g) => {
                 const pic = ingPic(g.code);
@@ -132,7 +136,7 @@ export async function ShopMain() {
 
         {cons.length > 0 && (
           <section className="shop-sec cream" data-shop-con="1">
-            <SecHead title="고민으로 찾기" lead="건강 고민에 맞는 상품을 찾아보세요." all="/health/concerns" />
+            <SecHead title={t('sec.con')} lead={t('sec.conLead')} all="/health/concerns" />
             <div className="shop-tiles">
               {cons.slice(0, 10).map((c) => {
                 const pic = CON_PIC[c.code];
@@ -149,7 +153,7 @@ export async function ShopMain() {
 
         {monthly.length > 0 && (
           <section className="shop-sec" data-shop-low="1">
-            <SecHead title="성분별 최저가" lead="주요 성분별 가장 저렴한 상품을 확인해보세요. (30일 기준)" all="/health/ingredients" />
+            <SecHead title={t('sec.low')} lead={t('sec.lowLead')} all="/health/ingredients" />
             <div className="shop-low">
               {monthly.slice(0, 8).map((g) => {
                 const p = lowOf(g.code, Number(g.minUnit));
@@ -158,8 +162,8 @@ export async function ShopMain() {
                   <Link key={g.code} className="shop-lowc" href={`/health/i/${encodeURIComponent(g.code)}`} data-code={g.code} data-unit={g.minUnit}>
                     <span className="ph">{p ? <ProductArt p={p} size={110} /> : pic ? <ShopPic name={pic} h={64} /> : <span className="ini">{g.name.slice(0, 1)}</span>}</span>
                     <b>{g.name}</b>
-                    <b>{krw(g.minUnit)} / 30일</b>
-                    <span className="spec">{p?.mainIngredient ? `${p.mainIngredient.name}${p.mainIngredient.amount ? ` ${p.mainIngredient.amount}` : ''}` : `상품 ${g.productCount}개`}</span>
+                    <b>{t('perMonth', { price: krw(g.minUnit) })}</b>
+                    <span className="spec">{p?.mainIngredient ? `${p.mainIngredient.name}${p.mainIngredient.amount ? ` ${p.mainIngredient.amount}` : ''}` : t('productCount', { n: String(g.productCount) })}</span>
                   </Link>
                 );
               })}
@@ -168,7 +172,7 @@ export async function ShopMain() {
         )}
         {priced.length > 0 && (
           <section className="shop-sec" data-shop-low="1">
-            <SecHead title="성분별 최저가" lead="성분마다 지금 살 수 있는 상품 가운데 가장 낮은 값입니다." all="/health/ingredients" />
+            <SecHead title={t('sec.low')} lead={t('sec.lowLeadPriced')} all="/health/ingredients" />
             <div className="shop-low">
               {priced.slice(0, 8).map((g) => {
                 const pic = ingPic(g.code);
@@ -176,8 +180,8 @@ export async function ShopMain() {
                   <Link key={g.code} className="shop-lowc" href={`/health/i/${encodeURIComponent(g.code)}`} data-code={g.code}>
                     <span className="ph">{pic ? <ShopPic name={pic} h={64} /> : <span className="ini">{g.name.slice(0, 1)}</span>}</span>
                     <b>{g.name}</b>
-                    <b>{krw(g.minPrice)}부터</b>
-                    <span className="spec">상품 {g.productCount}개</span>
+                    <b>{t('from', { price: krw(g.minPrice) })}</b>
+                    <span className="spec">{t('productCount', { n: String(g.productCount) })}</span>
                   </Link>
                 );
               })}
@@ -187,7 +191,7 @@ export async function ShopMain() {
 
         {(promo || ranks.sales.items.length > 0 || ranks.orders.items.length > 0 || fresh.length > 0) && (
           <section className="shop-sec pale" data-shop-today="1">
-            <SecHead title="오늘의 건강상품" lead="지금 가장 인기 있는 건강상품과 실시간 트렌드를 확인해보세요." all="/health/c/ALL" />
+            <SecHead title={t('sec.today')} lead={t('sec.todayLead')} all="/health/c/ALL" />
             <div className="shop-today">
               {promo ? (
                 <div className="shop-promo" data-shop-promo={promo.id}>
@@ -196,7 +200,7 @@ export async function ShopMain() {
                   <h3>{promo.title}{promo.titleEm && <em>{promo.titleEm}</em>}</h3>
                   {promo.body && <p>{promo.body}</p>}
                   <Link className="go" href={promo.linkUrl}>{promo.cta} →</Link>
-                  {promo.isSample && <span className="sample" title="건강기능식품의 기능성 문구는 인정된 범위와 광고 심의를 확인한 뒤에 씁니다">견본 문구 — 광고 심의 확인 전</span>}
+                  {promo.isSample && <span className="sample" title={t('sampleTip')}>{t('sample')}</span>}
                 </div>
               ) : <div />}
               <ShopRankBox hot={ranks.sales.items} fresh={fresh} many={ranks.orders.items}
@@ -210,7 +214,7 @@ export async function ShopMain() {
           <div className="shop-two">
             {ranks.orders.items.length > 0 ? (
               <section className="shop-sec" data-shop-many="1">
-                <SecHead title="많이 찾는 상품" lead={basisLine(ranks.orders)} all="/health/c/ALL" />
+                <SecHead title={t('sec.many')} lead={basisLine(ranks.orders)} all="/health/c/ALL" />
                 <div className="shop-many">
                   {ranks.orders.items.slice(0, 6).map((p, i) => (
                     <Link key={p.code} href={`/health/p/${encodeURIComponent(p.code)}`} data-many-pid={p.code}>
@@ -223,13 +227,13 @@ export async function ShopMain() {
               </section>
             ) : (
               <section className="shop-sec" data-shop-many="0">
-                <SecHead title="많이 찾는 상품" />
-                <p className="shop-basis">아직 집계된 주문이 없습니다 — 주문이 생기면 하루 1회 순위를 매깁니다.</p>
+                <SecHead title={t('sec.many')} />
+                <p className="shop-basis">{t('noOrders')}</p>
               </section>
             )}
             {fresh.length > 0 && (
               <section className="shop-sec" data-shop-new="1">
-                <SecHead title="새로 올라온 상품" all="/health/c/ALL" />
+                <SecHead title={t('sec.fresh')} all="/health/c/ALL" />
                 <div className="shop-new">
                   {fresh.map((p) => (
                     <Link key={p.code} className="shop-newc" href={`/health/p/${encodeURIComponent(p.code)}`} data-product={p.code}>
@@ -245,7 +249,7 @@ export async function ShopMain() {
 
         {deals.length > 0 && (
           <section className="shop-sec" data-shop-deal="1">
-            <SecHead title="이번 주 특별 할인" lead="지금 가장 주목받는 할인 상품이에요." all="/health/c/ALL" />
+            <SecHead title={t('sec.deal')} lead={t('sec.dealLead')} all="/health/c/ALL" />
             <div className="shop-deal">
               {deals.map((p) => (
                 <Link key={p.code} className="shop-dealc" href={`/health/p/${encodeURIComponent(p.code)}`} data-product={p.code}>
@@ -265,11 +269,11 @@ export async function ShopMain() {
           <ShopPic name="band-left" h={110} className="l" />
           <ShopPic name="band-right" h={110} className="r" />
           <div className="tx">
-            <b>건강한 선택, <em>소개몰</em>과 함께하세요</b>
-            <span>믿을 수 있는 건강상품으로 더 나은 오늘을 만들어보세요.</span>
+            <b>{t.rich('band.title', { em: (c) => <em>{c}</em> })}</b>
+            <span>{t('band.lead')}</span>
           </div>
           {/* v10.31 (시안 「특가 상품 보러가기」) */}
-          <Link className="go" href="/health/c/ALL">특가 상품 보러가기 →</Link>
+          <Link className="go" href="/health/c/ALL">{t('band.go')}</Link>
         </section>
       </div>
     </>

@@ -16,6 +16,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { AdServe } from './types';
 import { Line } from './Icons';
 
@@ -34,6 +35,7 @@ function landing(r: string | null | undefined): string | null {
 const lines = (s: string) => s.split('\n').map((x, i) => <span key={i}>{x}</span>);
 
 export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slides: PromoSlide[]; start?: number }) {
+  const t = useTranslations('main');
   const router = useRouter();
   const n = slides.length + (ad ? 1 : 0);
   const [i, setI] = useState(start < slides.length + (ad ? 1 : 0) ? start : 0);
@@ -73,16 +75,16 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
   const s = ad ? slides[i - 1] : slides[i];
 
   return (
-    <aside className="home-promo" aria-label="소개뱅크 안내" aria-roledescription="carousel"
+    <aside className="home-promo" aria-label={t('promo.aria')} aria-roledescription="carousel"
       onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)}
       onFocus={() => setHold(true)} onBlur={() => setHold(false)}>
       <div className={`home-ps${onAd ? ' ad' : ''}`} data-slide={onAd ? 'ad' : s?.k} {...(onAd ? { 'data-adbox': 'HERO' } : {})}>
         <div className="home-ptop">
-          <span className="home-ptag">{onAd ? (ad!.label ?? '광고') : s!.tag}</span>
+          <span className="home-ptag">{onAd ? (ad!.label ?? t('promo.adLabel')) : s!.tag}</span>
           {n > 1 && (
             <span className="home-pnav">
               <span className="home-pno" aria-live="polite">{i + 1} / {n}</span>
-              <button type="button" className="home-pnext" aria-label="다음 안내" onClick={() => { setI((x) => (x + 1) % n); setMsg(''); }}>
+              <button type="button" className="home-pnext" aria-label={t('promo.next')} onClick={() => { setI((x) => (x + 1) % n); setMsg(''); }}>
                 <Line name="chev" size={16} w={2.6} />
               </button>
             </span>
@@ -101,8 +103,8 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
             )}
             {msg && <p className="home-pmsg" role="status">{msg}</p>}
             <p className="home-pwhy">
-              {ad!.matchedSegment ? '관심 성향에 맞춘 광고입니다. ' : '성향 분석 전이라 전체 공개 광고가 나갑니다. '}
-              <Link href="/ai/profile">성향 {ad!.matchedSegment ? '바꾸기' : '분석하기'}</Link>
+              {ad!.matchedSegment ? t('promo.whyMatched') : t('promo.whyAll')}
+              <Link href="/ai/profile">{ad!.matchedSegment ? t('promo.profileChange') : t('promo.profileAnalyze')}</Link>
               {ad!.code && <span className="home-pcode">{ad!.code}</span>}
             </p>
           </div>

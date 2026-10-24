@@ -6,6 +6,7 @@
  */
 import { Fragment } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { SearchBox } from '@/components/search/SearchBox';
 import { FEATS, GRADES, GW, QM, qhref, type GwanCode } from './gw';
 import { RegionPanel } from './GwClient';
@@ -14,19 +15,21 @@ export interface GwCategory { id: string; name: string; gradeCode: string | null
 
 /** 시안 farmAside() — 검색줄 오른쪽 띠 광고(스마트팜). 그림은 시안 원본(EMBEDDED_IMG/promo-farm.png). */
 export function FarmPromo() {
+  const t = useTranslations('gwan.promo');
   return (
     <aside className="gw-spromo gw-farm gw-img">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/proto-img/gwan/promo-farm.png" width={384} height={100} alt="스마트팜으로 시작하는 미래 농업" />
+      <img src="/proto-img/gwan/promo-farm.png" width={384} height={100} alt={t('farmAlt')} />
     </aside>
   );
 }
 
 /** 시안 search(true, true) 의 오른쪽 칸 — 상세 · 목록 화면의 「소개로 수익을 만드는 사람들!」 */
 export function EarnPromo() {
+  const t = useTranslations('gwan.promo');
   return (
     <aside className="gw-spromo">
-      <div className="gw-ptx"><div className="gw-pt2">소개로 수익을<br />만드는 사람들!</div><div className="gw-pd">지금 바로 소개하고<br />수익을 확인해보세요</div></div>
+      <div className="gw-ptx"><div className="gw-pt2">{t.rich('earnTitle', { br: () => <br /> })}</div><div className="gw-pd">{t.rich('earnDesc', { br: () => <br /> })}</div></div>
       <svg className="gw-pi" viewBox="0 0 120 66" aria-hidden="true">
         <path d="M6 58 L34 34 L54 46 L84 18 L110 30" stroke="#34D399" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M100 16 L112 14 L112 26" stroke="#34D399" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -41,12 +44,13 @@ export function EarnPromo() {
 
 /** 시안 사고예방 화면의 오른쪽 칸 — 「안전한 거래가 신뢰를 만들고 …」 */
 export function SafePromo() {
+  const t = useTranslations('gwan.promo');
   return (
     <aside className="gw-spromo gw-safe">
       <div className="gw-ptx">
-        <div className="gw-sft">안전한 거래가 신뢰를 만들고<br />신뢰가 더 큰 가치를 만듭니다.</div>
-        <div className="gw-sfd">소개뱅크는 안전한 거래 문화를 만듭니다.</div>
-        <Link className="gw-sfb" href="/safety/guide">자세히 보기 ›</Link>
+        <div className="gw-sft">{t.rich('safeTitle', { br: () => <br /> })}</div>
+        <div className="gw-sfd">{t('safeDesc')}</div>
+        <Link className="gw-sfb" href="/safety/guide">{t('safeMore')}</Link>
       </div>
       <div className="gw-sfi">
         <svg viewBox="0 0 120 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -75,26 +79,28 @@ export function SearchRow({ code, aside }: { code: GwanCode; aside?: React.React
  *   ※ 시안은 「소개받고 싶어요」가 사업 기회 등록(regb)으로 가 있어 실제 웹 뜻에 맞게 요청 등록으로 보냅니다(diffs 시안결함).
  */
 export function RoleTabs({ on = 'give', note }: { on?: 'give' | 'want' | 'get'; note?: string }) {
+  const t = useTranslations('gwan.role');
   return (
     <div>
       <div className="gw-tabs">
-        <Link className={`gw-tab${on === 'give' ? ' gw-on' : ''}`} href="/register">소개하기</Link>
-        <Link className={`gw-tab${on === 'want' ? ' gw-on' : ''}`} href="/request/new">소개받고 싶어요</Link>
-        <Link className={`gw-tab${on === 'get' ? ' gw-on' : ''}`} href="/request">소개받기</Link>
+        <Link className={`gw-tab${on === 'give' ? ' gw-on' : ''}`} href="/register">{t('give')}</Link>
+        <Link className={`gw-tab${on === 'want' ? ' gw-on' : ''}`} href="/request/new">{t('want')}</Link>
+        <Link className={`gw-tab${on === 'get' ? ' gw-on' : ''}`} href="/request">{t('get')}</Link>
       </div>
-      <div className="gw-tabnote">{note ?? GW.MNY.tabnote}</div>
+      <div className="gw-tabnote">{note ?? t('note')}</div>
     </div>
   );
 }
 
 /** 시안 quickMenu — 퀵메뉴 5칸(소개장터) */
 export function QuickMenu({ active }: { active?: string }) {
+  const t = useTranslations('gwan.qm');
   return (
-    <nav className="gw-qmenu" aria-label="퀵메뉴">
+    <nav className="gw-qmenu" aria-label={t('aria')}>
       {QM.map((q) => (
         <Link key={q.key} href={q.href} className={active === q.key ? 'gw-on' : undefined}
               aria-current={active === q.key ? 'page' : undefined} data-qm={q.key}>
-          <span className="gw-qe">{q.em}</span>{q.label}
+          <span className="gw-qe">{q.em}</span>{t(q.key)}
         </Link>
       ))}
     </nav>
@@ -124,6 +130,7 @@ export function GwSide({ code, cats, cat, extra, register, regions, region }: {
   regions?: { code: string; name: string }[]; region?: string;
 }) {
   const g = GW[code];
+  const t = useTranslations('gwan');
   const groups = GRADES.map((gr) => ({ gr, items: cats.filter((c) => c.gradeCode === gr.code) }));
   const etc = cats.filter((c) => !GRADES.some((gr) => gr.code === c.gradeCode));
   const link = (c: GwCategory) => (
@@ -131,34 +138,34 @@ export function GwSide({ code, cats, cat, extra, register, regions, region }: {
       {c.name}<span className="gw-cx">›</span>
     </Link>
   );
-  const reg = register ?? [{ href: code === 'BIZ' ? '/biz/register' : '/register', label: code === 'BIZ' ? '✚ 사업 기회 등록' : '✚ 소개합니다' }];
+  const reg = register ?? [{ href: code === 'BIZ' ? '/biz/register' : '/register', label: code === 'BIZ' ? t('side.registerBiz') : t('side.registerGive') }];
   return (
     <aside className="gw-side">
       <RegionPanel regions={regions} current={region} />
       {extra ?? (
         <div>
-          <div className="gw-cathd">☰ 상품 분류</div>
-          <nav className="gw-catl" aria-label="상품 분류">
+          <div className="gw-cathd">{t('side.catHead')}</div>
+          <nav className="gw-catl" aria-label={t('side.catAria')}>
             {/* v10.32 — 시안처럼 골든 · 실버 · 브론즈 세 묶음을 늘 보입니다. 묶음은 서버 분류 자료(categories.gradeCode — 운영 화면 「분류」에서 정함) 그대로이고,
                 그 등급에 든 분류가 없으면 빈 줄로 알립니다(지어서 채우지 않음) */}
             {cats.length > 0 && groups.map(({ gr, items }) => (
               <Fragment key={gr.code}>
-                <div className={`gw-gd gw-${gr.k}`} data-grade={gr.code}><span className="gw-em2">{gr.em}</span>{gr.nm}<span className="gw-gsub">({gr.sub})</span></div>
-                {items.length ? items.map(link) : <div className="gw-gi gw-gempty" data-grade-empty={gr.code}>이 등급의 분류가 아직 없습니다</div>}
+                <div className={`gw-gd gw-${gr.k}`} data-grade={gr.code}><span className="gw-em2">{gr.em}</span>{t(`grade.${gr.code}.nm`)}<span className="gw-gsub">({t(`grade.${gr.code}.sub`)})</span></div>
+                {items.length ? items.map(link) : <div className="gw-gi gw-gempty" data-grade-empty={gr.code}>{t('side.gradeEmpty')}</div>}
               </Fragment>
             ))}
             {etc.length > 0 && (
               <>
-                <div className="gw-gd gw-g4"><span className="gw-em2">⋯</span>기타</div>
+                <div className="gw-gd gw-g4"><span className="gw-em2">⋯</span>{t('side.etc')}</div>
                 {etc.map(link)}
               </>
             )}
-            {cats.length === 0 && <div className="gw-etcnote">분류를 불러오지 못했습니다.</div>}
-            <div className="gw-etcnote"><b>골든 · 실버 · 브론즈는 아직 가칭</b>이고, 소개비 수준 표기는 A-03 · A-12 확정 전 참고값입니다.</div>
+            {cats.length === 0 && <div className="gw-etcnote">{t('side.catFail')}</div>}
+            <div className="gw-etcnote">{t.rich('side.gradeNote', { b: (c) => <b>{c}</b> })}</div>
           </nav>
         </div>
       )}
-      <Link className="gw-mylist" href="/my/listings">🗂 {g.mine}</Link>
+      <Link className="gw-mylist" href="/my/listings">{t('side.mine', { mine: t(`meta.${code}.mine`) })}</Link>
       {reg.map((r) => <Link key={r.href + r.label} className="gw-mylist" href={r.href} data-role={r.role}>{r.label}</Link>)}
     </aside>
   );
@@ -166,17 +173,18 @@ export function GwSide({ code, cats, cat, extra, register, regions, region }: {
 
 /** 시안 features() — 아래 안내 6칸 */
 export function Features() {
+  const tr = useTranslations('gwan.feats');
   return (
     <div className="gw-feat">
-      {FEATS.map(([t, d]) => (
-        <div key={t} className="gw-fi">
+      {FEATS.map((k) => (
+        <div key={k} className="gw-fi">
           <span className="gw-ic">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
               <path d="m8.5 12 2.4 2.4 4.6-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          <div><div className="gw-t">{t}</div><div className="gw-d">{d}</div></div>
+          <div><div className="gw-t">{tr(`${k}.t`)}</div><div className="gw-d">{tr(`${k}.d`)}</div></div>
         </div>
       ))}
     </div>
@@ -192,6 +200,7 @@ export function Pager({ left, base, keep, page, next, right, pageCount, hash = '
   left?: React.ReactNode; base: string; keep: Record<string, string | undefined>;
   page: number; next: string | null; right?: React.ReactNode; pageCount?: number; hash?: string;
 }) {
+  const t = useTranslations('gwan.pager');
   const first = qhref(base, { ...keep, cursor: undefined, p: undefined }) + hash;
   if (pageCount != null) {
     const at = (n: number) => qhref(base, { ...keep, cursor: undefined, p: n > 1 ? String(n) : undefined }) + hash;
@@ -201,11 +210,11 @@ export function Pager({ left, base, keep, page, next, right, pageCount, hash = '
       <div className="gw-pgw">
         {left ?? <span />}
         <div className="gw-pager" data-pages={pageCount}>
-          {page > 1 ? <Link href={at(page - 1)} title="이전 쪽">‹</Link> : <button type="button" className="gw-off" disabled title="첫 쪽입니다">‹</button>}
+          {page > 1 ? <Link href={at(page - 1)} title={t('prev')}>‹</Link> : <button type="button" className="gw-off" disabled title={t('atFirst')}>‹</button>}
           {nums.map((n) => n === page
             ? <span key={n} className="gw-on" aria-current="page">{n}</span>
             : <Link key={n} href={at(n)}>{n}</Link>)}
-          {page < pageCount ? <Link href={at(page + 1)} title="다음 쪽">›</Link> : <button type="button" className="gw-off" disabled title="마지막 쪽입니다">›</button>}
+          {page < pageCount ? <Link href={at(page + 1)} title={t('next')}>›</Link> : <button type="button" className="gw-off" disabled title={t('atLast')}>›</button>}
         </div>
         {right}
       </div>
@@ -215,10 +224,10 @@ export function Pager({ left, base, keep, page, next, right, pageCount, hash = '
     <div className="gw-pgw">
       {left ?? <span />}
       <div className="gw-pager">
-        {page > 1 ? <Link href={first} title="첫 쪽으로">‹</Link> : <button type="button" className="gw-off" disabled title="첫 쪽입니다">‹</button>}
+        {page > 1 ? <Link href={first} title={t('first')}>‹</Link> : <button type="button" className="gw-off" disabled title={t('atFirst')}>‹</button>}
         <span className="gw-on" aria-current="page">{page}</span>
-        {next ? <Link href={qhref(base, { ...keep, cursor: next, p: String(page + 1) }) + hash} title="다음 쪽">›</Link>
-              : <button type="button" className="gw-off" disabled title="마지막 쪽입니다">›</button>}
+        {next ? <Link href={qhref(base, { ...keep, cursor: next, p: String(page + 1) }) + hash} title={t('next')}>›</Link>
+              : <button type="button" className="gw-off" disabled title={t('atLast')}>›</button>}
       </div>
       {right}
     </div>
@@ -227,12 +236,13 @@ export function Pager({ left, base, keep, page, next, right, pageCount, hash = '
 
 /** 시안 catEmpty — 고른 조건에 건이 없을 때 */
 export function CatEmpty({ what, clearHref }: { what: string; clearHref: string }) {
+  const t = useTranslations('gwan.empty');
   return (
     <div className="gw-catnone">
       <div className="gw-cnt2">🗂</div>
-      <div className="gw-cnh"><b>{what}</b>에 아직 등록된 건이 없습니다.</div>
-      <div className="gw-cnb">분류는 열려 있고 매물만 아직 올라오지 않은 상태입니다. 새로 올라오는 건을 기다리시거나 다른 분류를 함께 보세요.</div>
-      <Link className="gw-cnb2" href={clearHref}>전체 목록으로 돌아가기</Link>
+      <div className="gw-cnh">{t.rich('head', { what, b: (c) => <b>{c}</b> })}</div>
+      <div className="gw-cnb">{t('body')}</div>
+      <Link className="gw-cnb2" href={clearHref}>{t('back')}</Link>
     </div>
   );
 }

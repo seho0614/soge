@@ -11,6 +11,7 @@
  *   <BackBar href="/my" label="나의공간" right={<Link href="/my/listings">전체 보기</Link>} />
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export function BackBar({ href, label, right, wrap = true, linkData }: {
   /** 돌아갈 주소 */
@@ -24,9 +25,10 @@ export function BackBar({ href, label, right, wrap = true, linkData }: {
   /** v10.32 — 링크에 붙일 data- 속성(시험 손잡이 · 예: { 'data-verify-back': '' }) */
   linkData?: Record<`data-${string}`, string>;
 }) {
+  const t = useTranslations('common');
   return (
     <div className={`pc-bkbar${wrap ? ' pad' : ''}`}>
-      <Link href={href} className="pc-bkl" {...linkData}>← {label}(으)로 돌아가기</Link>
+      <Link href={href} className="pc-bkl" {...linkData}>{t('backTo', { label })}</Link>
       {right && <span className="pc-bkr">{right}</span>}
     </div>
   );

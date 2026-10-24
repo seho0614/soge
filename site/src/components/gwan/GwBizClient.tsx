@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 async function post(url: string, body: unknown) {
   const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) });
@@ -19,41 +20,44 @@ async function post(url: string, body: unknown) {
 
 export function AxisRequestButton({ no, kind, done }: { no: number; kind: 'JOB' | 'SVC'; done?: boolean }) {
   const router = useRouter();
+  const t = useTranslations('gwan.biz.req');
   const [state, setState] = useState<'idle' | 'busy' | 'done'>(done ? 'done' : 'idle');
   const [msg, setMsg] = useState('');
   const [memo, setMemo] = useState('');
   const [open, setOpen] = useState(false);
-  const label = kind === 'JOB' ? '업체 소개 요청' : '자문 요청';
-  const sub = kind === 'JOB' ? '인력대행업체 · 헤드헌팅사를 이어 드립니다' : '견적 요청 → 매칭 → 계약';
+  const label = kind === 'JOB' ? t('jobLabel') : t('svcLabel');
+  const sub = kind === 'JOB' ? t('jobSub') : t('svcSub');
   if (state === 'done') {
-    return <button type="button" className="gw-go gw-done" disabled><span>요청 접수됨</span><small>{kind === 'JOB' ? '업체 회신을 기다리는 중입니다 — 「지원」에서 봅니다' : '회신을 기다리는 중입니다'}</small></button>;
+    return <button type="button" className="gw-go gw-done" disabled><span>{t('done')}</span><small>{kind === 'JOB' ? t('jobWait') : t('svcWait')}</small></button>;
   }
   async function send() {
     setState('busy'); setMsg('');
     const r = await post(`/api/v1/biz/axis/${no}/requests`, memo.trim() ? { memo: memo.trim() } : {});
     if (r.ok || r.body.code === 'ALREADY_REQUESTED') { setState('done'); setMsg(r.body.note ?? r.body.message ?? ''); router.refresh(); return; }
     setState('idle');
-    setMsg(r.status === 403 && r.body.code === 'UNAUTHENTICATED' ? '로그인이 필요합니다.' : r.body.message ?? '요청을 보내지 못했습니다.');
+    setMsg(r.status === 403 && r.body.code === 'UNAUTHENTICATED' ? t('loginNeeded') : r.body.message ?? t('sendFail'));
   }
   return (
     <span className="gw-axreq">
       {open && (
         <span className="gw-axreq-f">
-          <input className="gw-inp" aria-label="요청 내용(선택)" placeholder="요청 내용(선택) — 연락처는 적지 마십시오" maxLength={1000} value={memo} onChange={(e) => setMemo(e.target.value)} />
+          <input className="gw-inp" aria-label={t('memo')} placeholder={t('memoPh')} maxLength={1000} value={memo} onChange={(e) => setMemo(e.target.value)} />
         </span>
       )}
       <button type="button" className="gw-go" disabled={state === 'busy'} onClick={() => (open ? void send() : setOpen(true))} data-axreq={no}>
-        <span>{open ? '요청 보내기' : label}</span><small>{sub}</small>
+        <span>{open ? t('send') : label}</span><small>{sub}</small>
       </button>
-      {msg && <span className="gw-axmsg" role="status">{msg}{msg === '로그인이 필요합니다.' && <> <Link href="/login">로그인</Link></>}</span>}
+      {msg && <span className="gw-axmsg" role="status">{msg}{msg === t('loginNeeded') && <> <Link href="/login">{t('login')}</Link></>}</span>}
     </span>
   );
 }
 
-const WHEN: [string, string][] = [['TODAY', '오늘'], ['TOMORROW', '내일'], ['WEEK', '이번 주']];
+/* v10.97 — 이름은 사전 gwan.biz.when.{코드} */
+const WHEN = ['TODAY', 'TOMORROW', 'WEEK'] as const;
 
 export function QuickMatchForm() {
   const router = useRouter();
+  const t = useTranslations('gwan.biz');
   const [when, setWhen] = useState('TODAY');
   const [n, setN] = useState('');
   const [task, setTask] = useState('');
@@ -62,26 +66,26 @@ export function QuickMatchForm() {
   const [busy, setBusy] = useState(false);
   async function go() {
     const headcount = Number(n);
-    if (!headcount || headcount < 1) { setMsg('몇 분이 필요한지 적어 주십시오.'); return; }
-    if (task.trim().length < 2) { setMsg('어떤 일인지 적어 주십시오(예: 물류센터 피킹).'); return; }
-    if (place.trim().length < 2) { setMsg('어디인지 적어 주십시오(예: 경기 김포시 운양동).'); return; }
+    if (!headcount || headcount < 1) { setMsg(t('qm.needN')); return; }
+    if (task.trim().length < 2) { setMsg(t('qm.needTask')); return; }
+    if (place.trim().length < 2) { setMsg(t('qm.needPlace')); return; }
     setBusy(true); setMsg('');
     const r = await post('/api/v1/biz/quick', { when, headcount, task: task.trim(), place: place.trim() });
     setBusy(false);
-    if (r.ok) { setMsg(r.body.note ?? '요청을 올렸습니다.'); setN(''); setTask(''); setPlace(''); router.refresh(); return; }
-    setMsg(r.status === 403 ? `${r.body.message ?? '로그인이 필요합니다.'}` : r.body.message ?? '올리지 못했습니다.');
+    if (r.ok) { setMsg(r.body.note ?? t('qm.posted')); setN(''); setTask(''); setPlace(''); router.refresh(); return; }
+    setMsg(r.status === 403 ? `${r.body.message ?? t('qm.loginNeeded')}` : r.body.message ?? t('qm.postFail'));
   }
   return (
     <div className="gw-qmf">
-      <label className="gw-fld"><span>언제까지 필요하십니까</span>
-        <div className="gw-opts">{WHEN.map(([k, t]) => <button key={k} type="button" className={`gw-opt${when === k ? ' gw-on' : ''}`} aria-pressed={when === k} onClick={() => setWhen(k)}>{t}</button>)}</div></label>
-      <label className="gw-fld"><span>몇 분이 필요하십니까</span>
-        <span className="gw-inl"><input className="gw-inp" type="number" placeholder="예: 12" min={1} max={500} value={n} onChange={(e) => setN(e.target.value)} /><span className="gw-suf">명</span></span></label>
-      <label className="gw-fld"><span>어떤 일입니까</span>
-        <input className="gw-inp" type="text" placeholder="예: 물류센터 피킹" maxLength={40} value={task} onChange={(e) => setTask(e.target.value)} /></label>
-      <label className="gw-fld"><span>어디입니까</span>
-        <input className="gw-inp" type="text" placeholder="예: 경기 김포시 운양동" maxLength={60} value={place} onChange={(e) => setPlace(e.target.value)} /></label>
-      <div className="gw-hbtn2"><button type="button" className="gw-bp" disabled={busy} onClick={() => void go()}>업체 찾기</button>
+      <label className="gw-fld"><span>{t('qm.when')}</span>
+        <div className="gw-opts">{WHEN.map((k) => <button key={k} type="button" className={`gw-opt${when === k ? ' gw-on' : ''}`} aria-pressed={when === k} onClick={() => setWhen(k)}>{t(`when.${k}`)}</button>)}</div></label>
+      <label className="gw-fld"><span>{t('qm.howMany')}</span>
+        <span className="gw-inl"><input className="gw-inp" type="number" placeholder={t('qm.nPh')} min={1} max={500} value={n} onChange={(e) => setN(e.target.value)} /><span className="gw-suf">{t('qm.unit')}</span></span></label>
+      <label className="gw-fld"><span>{t('qm.what')}</span>
+        <input className="gw-inp" type="text" placeholder={t('qm.taskPh')} maxLength={40} value={task} onChange={(e) => setTask(e.target.value)} /></label>
+      <label className="gw-fld"><span>{t('qm.where')}</span>
+        <input className="gw-inp" type="text" placeholder={t('qm.placePh')} maxLength={60} value={place} onChange={(e) => setPlace(e.target.value)} /></label>
+      <div className="gw-hbtn2"><button type="button" className="gw-bp" disabled={busy} onClick={() => void go()}>{t('qm.find')}</button>
         {msg && <span className="gw-axmsg" role="status">{msg}</span>}</div>
     </div>
   );
@@ -89,16 +93,17 @@ export function QuickMatchForm() {
 
 export function QuickOfferButton({ id, offered, mine }: { id: string; offered: boolean; mine: boolean }) {
   const router = useRouter();
+  const t = useTranslations('gwan.biz.offer');
   const [done, setDone] = useState(offered);
   const [msg, setMsg] = useState('');
   if (mine) {
-    return <button type="button" className="gw-bo gw-sm" onClick={async () => { const r = await post(`/api/v1/biz/quick/${id}/close`, {}); if (r.ok) router.refresh(); else setMsg(r.body.message ?? ''); }}>내 요청 닫기</button>;
+    return <button type="button" className="gw-bo gw-sm" onClick={async () => { const r = await post(`/api/v1/biz/quick/${id}/close`, {}); if (r.ok) router.refresh(); else setMsg(r.body.message ?? ''); }}>{t('close')}</button>;
   }
-  if (done) return <span className="gw-ls">회신함</span>;
+  if (done) return <span className="gw-ls">{t('replied')}</span>;
   return (
     <>
-      <button type="button" className="gw-bo gw-sm" title="본인인증 회원(인력대행업체 · 개인)이 이 요청에 회신합니다"
-        onClick={async () => { const r = await post(`/api/v1/biz/quick/${id}/offer`, {}); if (r.ok) { setDone(true); router.refresh(); } else setMsg(r.body.message ?? '보내지 못했습니다.'); }}>요청 보내기</button>
+      <button type="button" className="gw-bo gw-sm" title={t('title')}
+        onClick={async () => { const r = await post(`/api/v1/biz/quick/${id}/offer`, {}); if (r.ok) { setDone(true); router.refresh(); } else setMsg(r.body.message ?? t('sendFail')); }}>{t('send')}</button>
       {msg && <span className="gw-axmsg" role="status">{msg}</span>}
     </>
   );
@@ -107,6 +112,7 @@ export function QuickOfferButton({ id, offered, mine }: { id: string; offered: b
 interface Rq { id: string; kind: string; memo: string | null; status: string; answer: string | null; createdAt: string; requester: string }
 
 export function ReceivedRequests({ no }: { no: number }) {
+  const t = useTranslations('gwan.biz.rcv');
   const [rows, setRows] = useState<Rq[] | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   async function load() {
@@ -115,18 +121,18 @@ export function ReceivedRequests({ no }: { no: number }) {
   }
   useEffect(() => { void load(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [no]);
-  if (!rows) return <p className="gw-ls">받은 요청을 불러오는 중…</p>;
-  if (!rows.length) return <p className="gw-ls">아직 받은 요청이 없습니다.</p>;
+  if (!rows) return <p className="gw-ls">{t('loading')}</p>;
+  if (!rows.length) return <p className="gw-ls">{t('none')}</p>;
   return (
     <div className="gw-axrows">
       {rows.map((r) => (
         <div key={r.id} className="gw-axrow">
-          <div className="gw-axl"><span className={`gw-axb${r.status === 'ANSWERED' ? ' gw-axok' : ''}`}>{r.status === 'ANSWERED' ? '회신함' : '받음'}</span>
-            <b>{r.requester}</b><span className="gw-ls">{r.memo ?? '(내용 없음)'}{r.answer ? ` · 회신: ${r.answer}` : ''}</span></div>
+          <div className="gw-axl"><span className={`gw-axb${r.status === 'ANSWERED' ? ' gw-axok' : ''}`}>{r.status === 'ANSWERED' ? t('replied') : t('got')}</span>
+            <b>{r.requester}</b><span className="gw-ls">{r.memo ?? t('noMemo')}{r.answer ? t('answer', { answer: r.answer }) : ''}</span></div>
           {r.status !== 'ANSWERED' && (
             <div className="gw-axr">
-              <input className="gw-inp" aria-label="회신" placeholder="회신 — 연락처는 1:1 대화로" value={draft[r.id] ?? ''} onChange={(e) => setDraft({ ...draft, [r.id]: e.target.value })} />
-              <button type="button" className="gw-bo gw-sm" onClick={async () => { const t = (draft[r.id] ?? '').trim(); if (t.length < 2) return; const x = await post(`/api/v1/biz/axis-requests/${r.id}/answer`, { answer: t }); if (x.ok) void load(); }}>회신</button>
+              <input className="gw-inp" aria-label={t('replyAria')} placeholder={t('replyPh')} value={draft[r.id] ?? ''} onChange={(e) => setDraft({ ...draft, [r.id]: e.target.value })} />
+              <button type="button" className="gw-bo gw-sm" onClick={async () => { const v = (draft[r.id] ?? '').trim(); if (v.length < 2) return; const x = await post(`/api/v1/biz/axis-requests/${r.id}/answer`, { answer: v }); if (x.ok) void load(); }}>{t('reply')}</button>
             </div>
           )}
         </div>

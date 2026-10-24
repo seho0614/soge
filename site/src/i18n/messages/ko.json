@@ -4,7 +4,8 @@
     "description": "개인 · 사업자 누구나 거래처 · 매물 · 창업 자리를 소개하고 소개비를 받는 P2P 소개 플랫폼"
   },
   "common": {
-    "skipToMain": "본문으로 건너뛰기"
+    "skipToMain": "본문으로 건너뛰기",
+    "backTo": "← {label}(으)로 돌아가기"
   },
   "lang": {
     "label": "언어"

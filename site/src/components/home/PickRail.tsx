@@ -7,9 +7,11 @@
  */
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Line } from './Icons';
 
 export function PickRail({ children, label, more }: { children: React.ReactNode; label: string; more: string }) {
+  const t = useTranslations('main');
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
   function next() {
@@ -21,7 +23,7 @@ export function PickRail({ children, label, more }: { children: React.ReactNode;
   return (
     <div className="home-railw">
       <div className="home-rail" ref={ref} role="list" aria-label={label} tabIndex={0}>{children}</div>
-      <button type="button" className="home-railnext" aria-label="다음 보기" data-more={more} onClick={next}><Line name="chev" size={20} w={2.6} /></button>
+      <button type="button" className="home-railnext" aria-label={t('sec.railNext')} data-more={more} onClick={next}><Line name="chev" size={20} w={2.6} /></button>
     </div>
   );
 }

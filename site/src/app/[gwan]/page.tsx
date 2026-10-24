@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { isGwanKey } from '@/i18n/keys';
 import { apiGet } from '@/lib/api';
 import type { Gwan, ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
@@ -21,7 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!code) return {};
   const list = await apiGet<Gwan[]>('/gwans', 300).catch(() => []);
   const g = list.find((x) => x.code === code);
-  return { title: g?.name ?? '매물', description: g?.description ?? undefined };
+  const t = await getTranslations('gwan.page');
+  const [locale, th] = await Promise.all([getLocale(), getTranslations('header.gwan')]);
+  /* v10.97 — 관 이름: 한국어는 서버 이름 · 다른 언어만 사전 */
+  return { title: locale !== 'ko' && isGwanKey(code) ? th(code) : g?.name ?? t('fallbackTitle'), description: g?.description ?? undefined };
 }
 
 /** SB-{G}-MAIN-010 · SB-{G}-LST-010 — 관 랜딩 겸 목록 */
@@ -46,6 +51,9 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const data = await apiGet<ListingListData>(`/listings?${qs}`);
   const gwans = await apiGet<Gwan[]>('/gwans', 300).catch(() => []);
   const g = gwans.find((x) => x.code === code);
+  const t = await getTranslations('gwan');
+  /* v10.97 — 빠른 탭 이름은 사전(값 · 주소는 그대로) */
+  const tabs = [['', t('page.all')], ['URGENT', t('badge.URGENT')], ['VERIFIED_DOC', t('badge.VERIFIED_DOC')]];
   /* 20261007 (v10.25) — 소개몰(HLT)은 제시 디자인의 메인을 씁니다(components/shop/ShopMain). 도매 · 납품 매물 목록은 그 아래 한 구역으로 남깁니다(지금 있던 것). */
   if (code === 'HLT') {
     return (
@@ -53,15 +61,15 @@ export default async function GwanPage({ params, searchParams }: Props) {
         <ShopMain />
         <div className="shop-in">
           <section className="shop-sec" data-shop-listings="1">
-            <SecHead title="도매 · 납품 매물" lead="사업자 사이의 건강 상품 거래를 소개합니다." />
+            <SecHead title={t('page.hltTitle')} lead={t('page.hltLead')} />
             <div className="quick" style={{ margin: '0 10px 14px' }}>
-              {[['', '전체'], ['URGENT', '급구'], ['VERIFIED_DOC', '서류 확인']].map(([v, t]) => (
-                <a key={t} href={`/${gwan}${v ? `?badge=${v}` : ''}`} className={q.badge === v || (!q.badge && !v) ? 'on' : ''}>{t}</a>
+              {tabs.map(([v, l]) => (
+                <a key={l} href={`/${gwan}${v ? `?badge=${v}` : ''}`} className={q.badge === v || (!q.badge && !v) ? 'on' : ''}>{l}</a>
               ))}
             </div>
             <ListingList data={data} />
             {data.nextCursor && (
-              <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`}>더 보기</a>
+              <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`}>{t('page.more')}</a>
             )}
           </section>
         </div>
@@ -72,18 +80,18 @@ export default async function GwanPage({ params, searchParams }: Props) {
   return (
     <>
       <div className="page-head">
-        <h1>{g?.name ?? '매물'}</h1>
+        <h1>{g?.name ?? t('page.fallbackTitle')}</h1>
         <div className="quick">
-          {[['', '전체'], ['URGENT', '급구'], ['VERIFIED_DOC', '서류 확인']].map(([v, t]) => (
-            <a key={t} href={`/${gwan}${v ? `?badge=${v}` : ''}`}
-               className={q.badge === v || (!q.badge && !v) ? 'on' : ''}>{t}</a>
+          {tabs.map(([v, l]) => (
+            <a key={l} href={`/${gwan}${v ? `?badge=${v}` : ''}`}
+               className={q.badge === v || (!q.badge && !v) ? 'on' : ''}>{l}</a>
           ))}
         </div>
       </div>
       <ListingList data={data} />
       {data.nextCursor && (
         <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`} /* 20261001 — 정렬·배지를 이어 붙입니다. 빠지면 2쪽이 다른 정렬의 커서로 500 이었습니다 */>
-          더 보기
+          {t('page.more')}
         </a>
       )}
     </>

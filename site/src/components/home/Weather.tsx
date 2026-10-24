@@ -10,6 +10,7 @@
  */
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { WX_COOKIE, type WeatherToday } from './types';
 
 function WxIcon({ name }: { name: NonNullable<WeatherToday['icon']> }) {
@@ -37,6 +38,7 @@ function WxIcon({ name }: { name: NonNullable<WeatherToday['icon']> }) {
 }
 
 export function Weather({ w }: { w: WeatherToday }) {
+  const t = useTranslations('main');
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -49,8 +51,8 @@ export function Weather({ w }: { w: WeatherToday }) {
     <section className="home-wx" aria-labelledby="home-wx-h" data-weather={w.region}>
       <div className="home-in">
         <div className={`home-wxin${pending ? ' busy' : ''}`} aria-busy={pending}>
-          <h2 id="home-wx-h" className="home-wxt">오늘의 날씨</h2>
-          <select className="home-wxsel" value={w.region} aria-label="날씨 지역 고르기" disabled={pending}
+          <h2 id="home-wx-h" className="home-wxt">{t('weather.h')}</h2>
+          <select className="home-wxsel" value={w.region} aria-label={t('weather.regionAria')} disabled={pending}
                   onChange={(e) => pick(e.target.value)}>
             {w.regions.map((r) => <option key={r.code} value={r.code}>{r.name}</option>)}
           </select>
@@ -59,11 +61,11 @@ export function Weather({ w }: { w: WeatherToday }) {
             <b>{w.temp}°</b>{w.label && <span>{w.label}</span>}
           </span>
           {(w.min !== null || w.max !== null) && (
-            <span className="home-wxi">최저 <b>{w.min ?? '–'}°</b> · 최고 <b>{w.max ?? '–'}°</b></span>
+            <span className="home-wxi">{t.rich('weather.minMax', { b: (x) => <b>{x}</b>, min: String(w.min ?? '–'), max: String(w.max ?? '–') })}</span>
           )}
-          {w.pop !== null && <span className="home-wxi">강수 <b>{w.pop}%</b></span>}
-          {w.humidity !== null && <span className="home-wxi">습도 <b>{w.humidity}%</b></span>}
-          <span className="home-wxsrc">{w.source} 제공{w.observedAt ? ` · ${w.observedAt} 기준` : ''}</span>
+          {w.pop !== null && <span className="home-wxi">{t.rich('weather.pop', { b: (x) => <b>{x}</b>, v: String(w.pop) })}</span>}
+          {w.humidity !== null && <span className="home-wxi">{t.rich('weather.humidity', { b: (x) => <b>{x}</b>, v: String(w.humidity) })}</span>}
+          <span className="home-wxsrc">{t('weather.source', { src: w.source })}{w.observedAt ? t('weather.observed', { at: w.observedAt }) : ''}</span>
         </div>
       </div>
     </section>

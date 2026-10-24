@@ -1,0 +1,50 @@
+{
+  "dialog": "검색",
+  "placeholder": "무엇을 찾으십니까 — 예) 10평 이내 상가 급매",
+  "inputLabel": "검색어",
+  "close": "닫기",
+  "readRow": "이렇게 찾습니다",
+  "cond": { "region": "지역", "size": "규모", "terms": "조건", "status": "상태" },
+  "suggested": "추천 검색어",
+  "need": "무엇을 소개받고 싶은지 적어 주세요.",
+  "empty": "찾으시는 것이 없습니다.",
+  "emptyHint": "다른 말로 해 보시거나 위 추천 검색어를 눌러 보십시오.",
+  "sec": {
+    "requests": "{gwan} 요청",
+    "listings": "인기 매물",
+    "products": "소개몰 상품",
+    "posts": "소개광장 글",
+    "introducers": "소개자"
+  },
+  "rt": { "request": "요청", "fee": "소개비 {v}", "post": "소개광장", "introducer": "소개자" },
+  "soldOut": "품절",
+  "gwan": { "MNY": "소개장터", "MAL": "안심소개", "BIZ": "소개창업", "HLT": "소개몰" },
+  "grade": {
+    "SEED": "새싹 소개자",
+    "VERIFIED": "인증 소개자",
+    "EXPERT": "전문 소개자",
+    "TOP": "우수 소개자",
+    "REGION_PARTNER": "지역 파트너"
+  },
+  "scope": {
+    "ai": "AI 검색",
+    "product": "상품",
+    "service": "서비스",
+    "company": "업체",
+    "biz": "창업",
+    "town": "동네정보",
+    "pro": "사람/전문가"
+  },
+  "ft": {
+    "move": "↑↓ 이동",
+    "open": "Enter 열기 · 고른 줄이 없으면 맨 위 결과",
+    "close": "ESC 닫기",
+    "scope": "범위 · {label}"
+  },
+  "box": {
+    "placeholder": "상품, 서비스, 업체, 창업아이템을 검색하세요",
+    "cat": "전체",
+    "inputLabel": "검색어",
+    "submit": "검색"
+  }
+}

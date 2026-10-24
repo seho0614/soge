@@ -1,4 +1,5 @@
 import type { ListingListData } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 import { ListingCard } from './ListingCard';
 
 /**
@@ -8,10 +9,11 @@ import { ListingCard } from './ListingCard';
  * 표시 의무 위반입니다. 서버가 분리해 내려주는 이유가 여기 있습니다.
  */
 export function ListingList({ data }: { data: ListingListData }) {
+  const t = useTranslations('listing');
   return (
     <>
       {data.promoted.length > 0 && (
-        <section className="ad-zone" aria-label="광고">
+        <section className="ad-zone" aria-label={t('adZone')}>
           <p className="ad-notice">{data.adNotice}</p>
           <div className="grid">
             {data.promoted.map((x) => <ListingCard key={x.id} item={x} />)}
@@ -20,7 +22,7 @@ export function ListingList({ data }: { data: ListingListData }) {
       )}
 
       {data.organic.length === 0 ? (
-        <p className="empty">아직 등록된 매물이 없습니다.</p>
+        <p className="empty">{t('empty')}</p>
       ) : (
         <div className="grid">
           {data.organic.map((x) => <ListingCard key={x.id} item={x} />)}

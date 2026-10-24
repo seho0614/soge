@@ -38,6 +38,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { GWAN_PATH, ago, won } from '@/lib/format';
 import { sugMatch, type SugItem } from './sug';
 import type { SearchGwan } from './SearchBox';
@@ -49,11 +50,15 @@ export { SCOPES, logSearch, searchHref, type SearchScope } from './search-data';
 /* 관 이름 — 서버(/gwans) 정본을 한 번만 받아 둡니다 */
 let gwanCache: Record<string, string> | null = null;
 
+/* v10.97 — 문장 읽기 칩 이름(sug.ts 의 k 값) → 사전 키 */
+const COND_KEY = { 지역: 'cond.region', 규모: 'cond.size', 조건: 'cond.terms', 상태: 'cond.status' } as const;
+
 export function SearchPopup({ seed, gwanCode, scope, onClose }: {
   seed: string; gwanCode?: SearchGwan; scope?: SearchScope; onClose: () => void;
 }) {
   const sc = scope ? SCOPES[scope] : null;
   const router = useRouter();
+  const tr = useTranslations('searchPop');
   const [q, setQ] = useState(seed);
   const [hot, setHot] = useState(-1);
   const [gn, setGn] = useState<Record<string, string>>(gwanCache ?? {});
@@ -153,9 +158,9 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
         .map((r) => ({ r, s: srcScore(ws, [r.title, r.categoryName, r.summary, r.region].filter(Boolean).join(' ')) }))
         .filter((h) => h.s > 0).sort((a, b) => b.s - a.s).slice(0, 3);
       if (items.length) out.push({
-        sec: `${SRC_GN[g] ?? gn[g] ?? g} 요청`,
+        sec: tr('sec.requests', { gwan: SRC_GN[g] ? tr(SRC_GN[g]) : gn[g] ?? g }),
         items: items.map(({ r }) => ({
-          t1: r.title, t2: [r.categoryName ?? '', r.region ?? ''].join(' · '), rt: '요청', href: `/request/${r.id}`,
+          t1: r.title, t2: [r.categoryName ?? '', r.region ?? ''].join(' · '), rt: tr('rt.request'), href: `/request/${r.id}`,
         })),
       });
     });
@@ -170,35 +175,35 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
       .filter((h) => { if (seenT[h.l.title]) return false; seenT[h.l.title] = 1; return true; })
       .slice(0, 4).map((h) => h.l);
     if (ls.length) out.push({
-      sec: '인기 매물',
+      sec: tr('sec.listings'),
       items: ls.map((l) => ({
         t1: l.title, t2: [l.categoryName ?? '', reg(l)].join(' · '),
-        rt: l.dealAmount ? manwon(Number(l.dealAmount)) : l.desiredFee != null ? `소개비 ${won(l.desiredFee)}` : '',
+        rt: l.dealAmount ? manwon(Number(l.dealAmount)) : l.desiredFee != null ? tr('rt.fee', { v: won(l.desiredFee) }) : '',
         href: `/${GWAN_PATH[l.gwanCode] ?? 'money'}/${l.id}`,
       })),
     });
     if (hit.products.length) out.push({
-      sec: '소개몰 상품',
+      sec: tr('sec.products'),
       items: hit.products.slice(0, 4).map((p) => ({
-        t1: p.name, t2: [p.category, p.soldOut ? '품절' : ''].filter(Boolean).join(' · '),
+        t1: p.name, t2: [p.category, p.soldOut ? tr('soldOut') : ''].filter(Boolean).join(' · '),
         rt: won(p.price), href: `/health/p/${encodeURIComponent(p.code)}`,
       })),
     });
     if (hit.posts.length) out.push({
-      sec: '소개광장 글',
+      sec: tr('sec.posts'),
       items: hit.posts.slice(0, 4).map((p) => ({
-        t1: p.title, t2: [p.author, ago(p.createdAt)].filter(Boolean).join(' · '), rt: '소개광장', href: `/community/${p.id}`,
+        t1: p.title, t2: [p.author, ago(p.createdAt)].filter(Boolean).join(' · '), rt: tr('rt.post'), href: `/community/${p.id}`,
       })),
     });
     if ((!sc || sc.intro) && sug.introducers.length) out.push({
-      sec: '소개자',
+      sec: tr('sec.introducers'),
       items: sug.introducers.slice(0, 3).map((r) => ({
-        t1: r.alias, t2: [GRADE[r.grade] ?? r.grade, r.regions.join(', '), r.categories.join(', ')].filter(Boolean).join(' · '),
-        rt: '소개자', href: '/request',
+        t1: r.alias, t2: [GRADE[r.grade] ? tr(GRADE[r.grade]!) : r.grade, r.regions.join(', '), r.categories.join(', ')].filter(Boolean).join(' · '),
+        rt: tr('rt.introducer'), href: '/request',
       })),
     });
     return out;
-  }, [t, hit, sug, gn, gwanCode, sc]);
+  }, [t, hit, sug, gn, gwanCode, sc, tr]);
 
   /* 고를 수 있는 줄 — 결과 줄만(대표 지시 2026-10-14: 「통합 검색 결과 보기」 줄 없음 · 「이렇게 찾습니다」는 보여 주기만) */
   const rows: Row[] = useMemo(() => groups.flatMap((g) => g.items), [groups]);
@@ -245,7 +250,7 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
   const empty = t && hit.q === t && !loading && !groups.length && !readRow;   /* 시안 — 결과도 문장 읽기도 없을 때 */
 
   return createPortal(
-    <div className="pc-spop on" role="dialog" aria-modal="true" aria-label="검색" data-scope={scope ?? undefined}>
+    <div className="pc-spop on" role="dialog" aria-modal="true" aria-label={tr('dialog')} data-scope={scope ?? undefined}>
       <div className="dim" onClick={onClose} />
       <div className="box">
         <div className="hd">
@@ -254,21 +259,21 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
           </svg>
           <input
             ref={inputRef} id="spopq" type="search" autoComplete="off" value={q} maxLength={100}
-            placeholder="무엇을 찾으십니까 — 예) 10평 이내 상가 급매" aria-label="검색어"
+            placeholder={tr('placeholder')} aria-label={tr('inputLabel')}
             role="combobox" aria-expanded={rows.length > 0} aria-controls="spopbd"
             aria-activedescendant={hot >= 0 ? `spop-it-${hot}` : undefined}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button type="button" className="esc" onClick={onClose} aria-label="닫기">ESC</button>
+          <button type="button" className="esc" onClick={onClose} aria-label={tr('close')}>ESC</button>
         </div>
         <div className="bd" id="spopbd" ref={bodyRef} role="listbox">
           {readRow && (
             <div className="it sgq" data-spop-read="" style={{ cursor: 'default' }}>
               <span className="sgqh"><span className="si2" aria-hidden="true">✨</span>
-                <span className="st3">{readRow.t}</span><span className="sk">{readRow.k}</span></span>
+                <span className="st3">{readRow.t}</span><span className="sk">{tr('readRow')}</span></span>
               {(readRow.parse?.length || readRow.words?.length) ? (
                 <span className="sgqb">
-                  {readRow.parse?.map((c, n) => <span key={'c' + n} className="sgc"><i>{c.k}</i>{c.v}</span>)}
+                  {readRow.parse?.map((c, n) => <span key={'c' + n} className="sgc"><i>{COND_KEY[c.k] ? tr(COND_KEY[c.k]) : c.k}</i>{c.v}</span>)}
                   {readRow.words?.map((w, n) => <span key={'w' + n} className="sgw">{w}</span>)}
                 </span>
               ) : null}
@@ -276,7 +281,7 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
           )}
           {chips.length > 0 && (
             <>
-              <div className="sec">추천 검색어</div>
+              <div className="sec">{tr('suggested')}</div>
               <div className="chips">
                 {chips.map((c) => (
                   <button key={c} type="button" className="chip" data-sq={c}
@@ -285,10 +290,10 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
               </div>
             </>
           )}
-          {need && !t && <div className="empty need" role="alert">무엇을 소개받고 싶은지 적어 주세요.</div>}
+          {need && !t && <div className="empty need" role="alert">{tr('need')}</div>}
           {empty && (
-            <div className="empty">찾으시는 것이 없습니다.<br />
-              <span style={{ fontSize: '12px' }}>다른 말로 해 보시거나 위 추천 검색어를 눌러 보십시오.</span>
+            <div className="empty">{tr('empty')}<br />
+              <span style={{ fontSize: '12px' }}>{tr('emptyHint')}</span>
             </div>
           )}
           {groups.map((g) => (
@@ -307,8 +312,8 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
             </div>
           ))}
         </div>
-        <div className="ft"><span>↑↓ 이동</span><span>Enter 열기 · 고른 줄이 없으면 맨 위 결과</span><span>ESC 닫기</span>
-          {sc && scope !== 'ai' && <span className="scp">범위 · {sc.label}</span>}</div>
+        <div className="ft"><span>{tr('ft.move')}</span><span>{tr('ft.open')}</span><span>{tr('ft.close')}</span>
+          {sc && scope !== 'ai' && <span className="scp">{tr('ft.scope', { label: tr(sc.label) })}</span>}</div>
       </div>
     </div>,
     document.body,

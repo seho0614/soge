@@ -1,0 +1,50 @@
+{
+  "dialog": "Search",
+  "placeholder": "What are you looking for? e.g. urgent-sale shop under 10 pyeong",
+  "inputLabel": "Search term",
+  "close": "Close",
+  "readRow": "Here is how we search",
+  "cond": { "region": "Area", "size": "Size", "terms": "Terms", "status": "Status" },
+  "suggested": "Suggested keywords",
+  "need": "Tell us what you would like to be referred.",
+  "empty": "Nothing found.",
+  "emptyHint": "Try different words or tap a suggested keyword above.",
+  "sec": {
+    "requests": "{gwan} requests",
+    "listings": "Popular listings",
+    "products": "Sogae Mall products",
+    "posts": "Community posts",
+    "introducers": "Referrers"
+  },
+  "rt": { "request": "Request", "fee": "Referral fee {v}", "post": "Community", "introducer": "Referrer" },
+  "soldOut": "Sold out",
+  "gwan": { "MNY": "Marketplace", "MAL": "Safe Referral", "BIZ": "Startups", "HLT": "Sogae Mall" },
+  "grade": {
+    "SEED": "Seedling referrer",
+    "VERIFIED": "Verified referrer",
+    "EXPERT": "Expert referrer",
+    "TOP": "Top referrer",
+    "REGION_PARTNER": "Regional partner"
+  },
+  "scope": {
+    "ai": "AI search",
+    "product": "Products",
+    "service": "Services",
+    "company": "Companies",
+    "biz": "Startups",
+    "town": "Local info",
+    "pro": "People/Experts"
+  },
+  "ft": {
+    "move": "↑↓ Move",
+    "open": "Enter Open · top result if none selected",
+    "close": "ESC Close",
+    "scope": "Scope · {label}"
+  },
+  "box": {
+    "placeholder": "Search products, services, companies, startup ideas",
+    "cat": "All",
+    "inputLabel": "Search term",
+    "submit": "Search"
+  }
+}

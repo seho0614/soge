@@ -26,7 +26,8 @@ export interface Row { t1: string; t2: string; rt: string; href: string }
 export type SearchScope = 'ai' | 'product' | 'service' | 'company' | 'biz' | 'town' | 'pro';
 
 interface ScopeDef {
-  label: string;
+  /** 사전 키(searchPop.scope.*) — v10.97 */
+  label: `scope.${SearchScope}`;
   /** 요청 · 매물을 볼 관(빈 배열이면 요청 · 매물을 보지 않음) */
   gwans: string[];
   intro: boolean; products: boolean; posts: boolean;
@@ -35,13 +36,13 @@ interface ScopeDef {
 }
 
 export const SCOPES: Record<SearchScope, ScopeDef> = {
-  ai: { label: 'AI 검색', gwans: ['MNY', 'MAL', 'BIZ', 'HLT'], intro: true, products: false, posts: false, href: (q) => searchHref(q) },
-  product: { label: '상품', gwans: [], intro: false, products: true, posts: false, href: (q) => `/health/search?${new URLSearchParams({ q: q.trim() })}` },
-  service: { label: '서비스', gwans: ['MNY'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MNY') },
-  company: { label: '업체', gwans: ['MAL'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
-  biz: { label: '창업', gwans: ['BIZ'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'BIZ') },
-  town: { label: '동네정보', gwans: [], intro: false, products: false, posts: true, href: (q) => `/search?${new URLSearchParams({ q: q.trim(), tab: 'CMU' })}` },
-  pro: { label: '사람/전문가', gwans: ['MAL'], intro: true, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
+  ai: { label: 'scope.ai', gwans: ['MNY', 'MAL', 'BIZ', 'HLT'], intro: true, products: false, posts: false, href: (q) => searchHref(q) },
+  product: { label: 'scope.product', gwans: [], intro: false, products: true, posts: false, href: (q) => `/health/search?${new URLSearchParams({ q: q.trim() })}` },
+  service: { label: 'scope.service', gwans: ['MNY'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MNY') },
+  company: { label: 'scope.company', gwans: ['MAL'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
+  biz: { label: 'scope.biz', gwans: ['BIZ'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'BIZ') },
+  town: { label: 'scope.town', gwans: [], intro: false, products: false, posts: true, href: (q) => `/search?${new URLSearchParams({ q: q.trim(), tab: 'CMU' })}` },
+  pro: { label: 'scope.pro', gwans: ['MAL'], intro: true, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
 };
 
 /** 검색어 집계 — 제출 · 고를 때만(글자마다 부르지 않음). 쿠키 없이 · 실패해도 화면은 그대로 */
@@ -81,13 +82,15 @@ export function manwon(v: number): string {
   return eok ? `${eok}억${rest ? ` ${rest.toLocaleString('ko-KR')}만원` : '원'}` : `${rest.toLocaleString('ko-KR')}만원`;
 }
 
-export const SRC_GN: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
+/* v10.97 — 사전 키(searchPop.gwan.*) */
+export const SRC_GN: Record<string, 'gwan.MNY' | 'gwan.MAL' | 'gwan.BIZ' | 'gwan.HLT'> = { MNY: 'gwan.MNY', MAL: 'gwan.MAL', BIZ: 'gwan.BIZ', HLT: 'gwan.HLT' };
 
 /* 관 이름 · 순서 — 서버(/gwans) 정본을 한 번만 받습니다. 시안 GW 순서(MNY · MAL · BIZ · HLT) */
 export const GW_ORDER = ['MNY', 'MAL', 'BIZ', 'HLT'];
 
-export const GRADE: Record<string, string> = {
-  SEED: '새싹 소개자', VERIFIED: '인증 소개자', EXPERT: '전문 소개자', TOP: '우수 소개자', REGION_PARTNER: '지역 파트너',
+/* v10.97 — 사전 키(searchPop.grade.*) */
+export const GRADE: Record<string, 'grade.SEED' | 'grade.VERIFIED' | 'grade.EXPERT' | 'grade.TOP' | 'grade.REGION_PARTNER'> = {
+  SEED: 'grade.SEED', VERIFIED: 'grade.VERIFIED', EXPERT: 'grade.EXPERT', TOP: 'grade.TOP', REGION_PARTNER: 'grade.REGION_PARTNER',
 };
 
 export async function getJson<T>(url: string, signal: AbortSignal): Promise<T | null> {

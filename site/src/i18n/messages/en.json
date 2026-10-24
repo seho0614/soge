@@ -4,7 +4,8 @@
     "description": "A P2P referral platform where anyone — individuals or businesses — can refer clients, listings and business spots and earn referral fees"
   },
   "common": {
-    "skipToMain": "Skip to main content"
+    "skipToMain": "Skip to main content",
+    "backTo": "← Back to {label}"
   },
   "lang": {
     "label": "Language"

@@ -5,35 +5,34 @@
  *   많이 찾는 상품 = rankings orders(최근 7일 주문 건수). 값은 모두 서버 값 — 탭에 자료가 없으면 그 사실을 적습니다(지어내지 않음).
  */
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { HltProduct } from '@/components/health/types';
 import { krw } from '@/components/health/util';
 import { ProductArt } from '@/components/health/ProductArt';
 
 type Row = HltProduct & { rank?: number };
-const TABS: [string, string][] = [['hot', '실시간 인기'], ['fresh', '새로 올라온 상품'], ['many', '많이 찾는 상품']];
-const BASIS: Record<string, string> = {
-  hot: '최근 7일 판매 수량 기준 · 하루 1회 집계 · 취소 · 반품 제외 · 판매 중인 상품만',
-  fresh: '판매 중인 상품을 올린 순서(최근 먼저)',
-  many: '최근 7일 주문 건수 기준 · 하루 1회 집계 · 판매 중인 상품만',
-};
+/* v10.97 — 탭 이름 · 순위 근거는 사전 shop.rank.tabs.* · shop.rank.basis.* (키 = 탭 코드) */
+const TABS = ['hot', 'fresh', 'many'] as const;
+type Tab = (typeof TABS)[number];
 const Chev = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m9 6 6 6-6 6" /></svg>
 );
 
 export function ShopRankBox({ hot, fresh, many, madeAt, periods }: { hot: Row[]; fresh: Row[]; many: Row[]; madeAt?: string; periods?: { hot: string; many: string } }) {
-  const first = hot.length ? 'hot' : many.length ? 'many' : 'fresh';
-  const [tab, setTab] = useState(first);
+  const t = useTranslations('shop');
+  const first: Tab = hot.length ? 'hot' : many.length ? 'many' : 'fresh';
+  const [tab, setTab] = useState<Tab>(first);
   const rows = (tab === 'hot' ? hot : tab === 'many' ? many : fresh).slice(0, 5);
   return (
     <div className="shop-rankbox" data-shop-rank="1">
       <div className="shop-tabs" role="tablist">
-        {TABS.map(([k, t]) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} data-stab={k} onClick={() => setTab(k)}>{t}</button>
+        {TABS.map((k) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} data-stab={k} onClick={() => setTab(k)}>{t(`rank.tabs.${k}`)}</button>
         ))}
       </div>
       {rows.length === 0 ? (
-        <p className="shop-basis" data-rank-empty={tab}>아직 집계된 판매가 없습니다 — 판매가 생기면 하루 1회 순위를 매깁니다.</p>
+        <p className="shop-basis" data-rank-empty={tab}>{t('rank.empty')}</p>
       ) : (
         <ol className="shop-rank">
           {rows.map((p, i) => (
@@ -49,7 +48,7 @@ export function ShopRankBox({ hot, fresh, many, madeAt, periods }: { hot: Row[];
         </ol>
       )}
       {/* v10.31 검정 — 순위의 기간(한국 날짜)을 함께 적습니다(v10.28 D037 「기준 · 기간 · 집계 날짜」 — fix_1028_ui C-U1) */}
-      <p className="shop-basis" data-basis="1">순위 근거 — {BASIS[tab]}{tab !== 'fresh' && periods?.[tab as 'hot' | 'many'] ? ` · ${periods[tab as 'hot' | 'many']}` : ''}{madeAt && tab !== 'fresh' ? ` · ${madeAt} 집계` : ''}</p>
+      <p className="shop-basis" data-basis="1">{t('rank.basisLabel', { basis: t(`rank.basis.${tab}`) })}{tab !== 'fresh' && periods?.[tab as 'hot' | 'many'] ? ` · ${periods[tab as 'hot' | 'many']}` : ''}{madeAt && tab !== 'fresh' ? ` · ${t('madeAt', { date: madeAt })}` : ''}</p>
     </div>
   );
 }

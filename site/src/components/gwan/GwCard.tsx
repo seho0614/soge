@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import type { ListingCardData } from '@/lib/types';
 import { ago, GWAN_PATH } from '@/lib/format';
 import { manwon, photoSrc, regionText } from './gw';
@@ -12,16 +13,24 @@ import { manwon, photoSrc, regionText } from './gw';
  *  · 「경기 수원시 · 1시간 전」 — 매물 지역(없으면 인증 사업장 주소). 지역을 모르면 등록자 이름.
  *  · 왼쪽 위 딱지 — 급구 · 급매(기한 있는 표시) → 광고 → 서류 확인. 광고는 라벨과 함께만(전상법).
  */
-export function cardPrice(item: ListingCardData): { label?: string; value: string } {
-  if (item.dealAmount != null) return { value: manwon(item.dealAmount) };
-  if (item.isRealty) return { label: '노출료', value: '금액 협의' };
-  return { label: '소개비', value: manwon(item.desiredFee) };
+/** v10.97 — 글은 사전 gwan.card.*(tr 을 넘기면). 넘기지 않으면 예전처럼 한국어(다른 화면이 그대로 부름).
+ *  금액 — 한국어는 시안 「180만원」 꼴(manwon), 다른 언어는 원 단위 숫자(₩1,800,000) */
+type CardKey = 'card.exposureFee' | 'card.negotiableAmount' | 'card.fee' | 'card.negotiable';
+const CARD_KO: Record<CardKey, string> = { 'card.exposureFee': '노출료', 'card.negotiableAmount': '금액 협의', 'card.fee': '소개비', 'card.negotiable': '협의' };
+export function cardPrice(item: ListingCardData, tr?: (k: CardKey) => string, locale = 'ko'): { label?: string; value: string } {
+  const L = (k: CardKey) => (tr ? tr(k) : CARD_KO[k]);
+  const amt = (n: number | null | undefined) => (n == null ? L('card.negotiable') : locale === 'ko' ? manwon(n) : `₩${n.toLocaleString('en-US')}`);
+  if (item.dealAmount != null) return { value: amt(item.dealAmount) };
+  if (item.isRealty) return { label: L('card.exposureFee'), value: L('card.negotiableAmount') };
+  return { label: L('card.fee'), value: amt(item.desiredFee) };
 }
 
 export function GwCard({ item }: { item: ListingCardData }) {
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
   const badge = item.urgent?.label ?? (item.isAd && item.adLabel ? item.adLabel : item.badges.find((b) => b.type !== 'URGENT' && b.type !== 'URGENT_SALE')?.label);
-  const price = cardPrice(item);
+  const t = useTranslations('gwan');
+  const locale = useLocale();
+  const price = cardPrice(item, (k) => t(k), locale);
   const where = regionText(item.region) || item.owner.companyName;
   return (
     <Link className="gw-pgc" href={href} data-listing={item.id} data-urgent={item.urgent?.kind}>
@@ -45,10 +54,11 @@ export function GwCard({ item }: { item: ListingCardData }) {
 
 /** 카드 묶음 — 광고(유료 노출)는 일반과 나눠 라벨을 붙여 그립니다(ListingList 와 같은 원칙 · INV-11) */
 export function GwGrid({ promoted, organic, adNotice }: { promoted?: ListingCardData[]; organic: ListingCardData[]; adNotice?: string }) {
+  const t = useTranslations('gwan.card');
   return (
     <>
       {promoted && promoted.length > 0 && (
-        <section className="gw-adz" aria-label="광고">
+        <section className="gw-adz" aria-label={t('adsAria')}>
           <p className="gw-adn">{adNotice}</p>
           <div className="gw-pgrid">{promoted.map((x) => <GwCard key={x.id} item={x} />)}</div>
         </section>

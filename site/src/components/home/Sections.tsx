@@ -9,6 +9,7 @@
  * 무엇을 넣을지는 content.ts 가 정합니다 — 그림 내용 그대로(sample · 지금 값) / 서버 데이터(live).
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { HomeContent, PickCard, RankCard } from './content';
 import type { MeSummary } from './types';
 import { Line, Pic } from './Icons';
@@ -20,8 +21,10 @@ import type { Poll as PollData } from '../community/poll';
 
 /* eslint-disable-next-line @next/next/no-img-element */
 const Img = ({ src, alt = '' }: { src: string; alt?: string }) => <img src={`/home/${src}`} alt={alt} loading="lazy" />;
-const More = ({ href }: { href: string }) =>
-  <Link className="home-more" href={href}>전체보기 <Line name="chev" size={14} w={2.4} /></Link>;
+function More({ href }: { href: string }) {
+  const t = useTranslations('main');
+  return <Link className="home-more" href={href}>{t('sec.more')} <Line name="chev" size={14} w={2.4} /></Link>;
+}
 /** 그림 속 사진의 꼬리표 자리에 같은 폭으로 글자를 덮습니다(bw). 없으면 글자 길이만큼 */
 const Badge = ({ t, tone, bw }: { t: string; tone: string; bw?: number }) =>
   <span className={`home-bdg ${tone}${bw ? ' fit' : ''}`} style={bw ? { width: `${bw}%` } : undefined}>{t}</span>;
@@ -50,12 +53,13 @@ function Rank({ c }: { c: RankCard }) {
 }
 
 export function Today({ c }: { c: HomeContent }) {
+  const t = useTranslations('main');
   return (
     <section className="home-band today" aria-labelledby="home-today-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-today" h={36} />
-          <h2 id="home-today-h">오늘의 소개뱅크</h2>
+          <h2 id="home-today-h">{t('sec.today.h')}</h2>
           <span className="home-sd">{c.todaySub}</span>
           <More href={c.todayMore} />
         </div>
@@ -64,10 +68,10 @@ export function Today({ c }: { c: HomeContent }) {
           <div className="home-bn">
             <Img src="d/banner.png" />
             <div className="home-bnc">
-              <span className="home-hot"><Pic name="flame" h={22} /> 지금 가장 많이 찾는 곳</span>
+              <span className="home-hot"><Pic name="flame" h={22} /> {t('sec.today.hot')}</span>
               <h3>{c.banner.title[0]}<br />{c.banner.title[1]}</h3>
               <p>{c.banner.desc[0]}<br />{c.banner.desc[1]}</p>
-              <Link className="home-dark" href={c.banner.href}>지금 바로 보기 <Line name="arrow" size={18} w={2.4} /></Link>
+              <Link className="home-dark" href={c.banner.href}>{t('sec.today.go')} <Line name="arrow" size={18} w={2.4} /></Link>
             </div>
           </div>
           <div className="home-rks3">{c.ranks.map((r) => <Rank key={r.k} c={r} />)}</div>
@@ -79,31 +83,33 @@ export function Today({ c }: { c: HomeContent }) {
 
 /* ── 지금, 어떤 소개가 필요하세요? — 관 5곳 ───────────────────────────── */
 
-const NEEDS: { gwan: string; ic: string; t: string; d: [string, string]; href: string }[] = [
-  { gwan: 'HLT', ic: 'need-1', t: '물건이 필요해요', d: ['다양한 상품을', '비교하고 구매하세요'], href: '/health' },
-  { gwan: 'MNY', ic: 'need-2', t: '사람을 찾고 있어요', d: ['전문가 · 인맥을', '연결해드려요'], href: '/money' },
-  { gwan: 'MAL', ic: 'need-3', t: '업체가 필요해요', d: ['믿을 수 있는 업체를', '소개받으세요'], href: '/mall' },
-  { gwan: 'BIZ', ic: 'need-4', t: '창업을 알아봐요', d: ['유망한 창업 아이템을', '확인하세요'], href: '/biz' },
-  { gwan: 'CMU', ic: 'need-5', t: '동네정보가 궁금해요', d: ['우리동네 맛집, 생활정보를', '만나보세요'], href: '/community' },
+/* 글(t · d1 · d2)은 사전 main.sec.needs.cards.<gwan> */
+const NEEDS: { gwan: 'HLT' | 'MNY' | 'MAL' | 'BIZ' | 'CMU'; ic: string; href: string }[] = [
+  { gwan: 'HLT', ic: 'need-1', href: '/health' },
+  { gwan: 'MNY', ic: 'need-2', href: '/money' },
+  { gwan: 'MAL', ic: 'need-3', href: '/mall' },
+  { gwan: 'BIZ', ic: 'need-4', href: '/biz' },
+  { gwan: 'CMU', ic: 'need-5', href: '/community' },
 ];
 
 /** 중지된 관은 뺍니다(20260930 규칙). 소개광장은 관이 아니라 늘 둡니다. */
 export function Needs({ live }: { live: string[] }) {
+  const t = useTranslations('main');
   const cards = NEEDS.filter((c) => c.gwan === 'CMU' || live.includes(c.gwan));
   return (
     <section className="home-band needs" aria-labelledby="home-needs-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-need" h={36} />
-          <h2 id="home-needs-h">지금, 어떤 소개가 필요하세요?</h2>
-          <span className="home-sd">원하는 목적을 선택하면, 소개뱅크가 딱 맞는 정보를 찾아드려요.</span>
+          <h2 id="home-needs-h">{t('sec.needs.h')}</h2>
+          <span className="home-sd">{t('sec.needs.sub')}</span>
         </div>
-        <nav className="home-needs" aria-label="관 바로가기" style={{ ['--n' as string]: cards.length }}>
+        <nav className="home-needs" aria-label={t('sec.needs.aria')} style={{ ['--n' as string]: cards.length }}>
           {cards.map((c) => (
             <Link key={c.gwan} className="home-nd" href={c.href} data-gwan={c.gwan}>
               <Pic name={c.ic} h={50} />
-              <b>{c.t}</b>
-              <span>{c.d[0]}{' '}<br />{c.d[1]}</span>
+              <b>{t(`sec.needs.cards.${c.gwan}.t`)}</b>
+              <span>{t(`sec.needs.cards.${c.gwan}.d1`)}{' '}<br />{t(`sec.needs.cards.${c.gwan}.d2`)}</span>
               <i aria-hidden="true"><Line name="chev" size={18} w={2.4} /></i>
             </Link>
           ))}
@@ -132,17 +138,18 @@ function PickItem({ c }: { c: PickCard }) {
 }
 
 export function Picks({ c }: { c: HomeContent }) {
+  const t = useTranslations('main');
   if (!c.picks.length) return null;
   return (
     <section className="home-band picks" aria-labelledby="home-picks-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-pick" h={36} />
-          <h2 id="home-picks-h">오늘의 PICK</h2>
+          <h2 id="home-picks-h">{t('sec.picks.h')}</h2>
           <span className="home-sd">{c.picksSub}</span>
           <More href={c.picksMore} />
         </div>
-        <PickRail label="오늘의 PICK" more={c.picksMore}>
+        <PickRail label={t('sec.picks.h')} more={c.picksMore}>
           {c.picks.map((p) => <PickItem key={p.kind + p.key} c={p} />)}
         </PickRail>
       </div>
@@ -157,14 +164,15 @@ export function Picks({ c }: { c: HomeContent }) {
  * 참여 수는 서버의 실제 표 수만 씁니다.
  */
 export function Poll({ polls }: { polls: PollData[] }) {
+  const t = useTranslations('main');
   return (
     <section className="home-band poll" aria-labelledby="home-poll-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-poll" h={36} />
-          <h2 id="home-poll-h">이건 어때? 여러분의 의견을 알려주세요.</h2>
-          <span className="home-sd">실제 사용자들의 생각이 더 나은 선택을 만듭니다.</span>
-          {polls.length === 0 && <span className="home-ex">준비 중</span>}
+          <h2 id="home-poll-h">{t('sec.poll.h')}</h2>
+          <span className="home-sd">{t('sec.poll.sub')}</span>
+          {polls.length === 0 && <span className="home-ex">{t('sec.soon')}</span>}
           <More href="/community/polls" />
         </div>
         <PollCards polls={polls} />
@@ -176,18 +184,19 @@ export function Poll({ polls }: { polls: PollData[] }) {
 /* ── 띠배너 ─────────────────────────────────────────────────────────── */
 
 export function Strip({ c }: { c: HomeContent }) {
+  const t = useTranslations('main');
   return (
     <div className="home-band strip">
       <div className="home-in">
         <Link className="home-strip" href="/community">
           <span className="home-stl" aria-hidden="true"><Img src="d/strip-left.png" /></span>
           <span className="home-stc">
-            <span className="home-sttag">가을엔, 우리동네가 더 특별해요</span>
-            <b>지금, 동네 <em>맛집 카페</em>를 만나보세요!</b>
+            <span className="home-sttag">{t('sec.strip.tag')}</span>
+            <b>{t.rich('sec.strip.title', { em: (x) => <em>{x}</em> })}</b>
             <span>{c.stripSub}</span>
           </span>
           <span className="home-stleaf" aria-hidden="true"><Img src="d/leaf-1.png" /><Img src="d/leaf-2.png" /></span>
-          <span className="home-stb">지금 둘러보기 <Line name="arrow" size={18} w={2.4} /></span>
+          <span className="home-stb">{t('sec.strip.go')} <Line name="arrow" size={18} w={2.4} /></span>
           <span className="home-str" aria-hidden="true"><Img src="d/strip-right.png" /></span>
         </Link>
       </div>
@@ -198,14 +207,15 @@ export function Strip({ c }: { c: HomeContent }) {
 /* ── 지금 우리동네 ───────────────────────────────────────────────────── */
 
 export function Town({ c }: { c: HomeContent }) {
+  const tr = useTranslations('main');
   return (
     <section className="home-band town" aria-labelledby="home-town-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-town" h={36} />
-          <h2 id="home-town-h">지금 우리동네</h2>
-          <span className="home-sd pin"><Pic name="town-pin" h={24} /> 내 위치 기준으로 바로 보여드려요. (위치 허용 시)</span>
-          {!c.townReady && <span className="home-ex">준비 중</span>}
+          <h2 id="home-town-h">{tr('sec.town.h')}</h2>
+          <span className="home-sd pin"><Pic name="town-pin" h={24} /> {tr('sec.town.sub')}</span>
+          {!c.townReady && <span className="home-ex">{tr('sec.soon')}</span>}
           <More href="/community" />
         </div>
         <div className="home-towns">
@@ -217,7 +227,7 @@ export function Town({ c }: { c: HomeContent }) {
                 <b>{t.t}</b>
                 <span>{t.d[0]}<br />{t.d[1]}</span>
               </span>
-              <span className="home-twl"><Line name="pin" size={15} /> {t.loc ?? '위치 연결 후 표시'} <Line name="chev" size={15} w={2.4} /></span>
+              <span className="home-twl"><Line name="pin" size={15} /> {t.loc ?? tr('sec.town.noLoc')} <Line name="chev" size={15} w={2.4} /></span>
             </Link>
           ))}
         </div>
@@ -229,13 +239,14 @@ export function Town({ c }: { c: HomeContent }) {
 /* ── 믿고 연결받는 안심소개 ───────────────────────────────────────────── */
 
 export function Trust({ c }: { c: HomeContent }) {
+  const tr = useTranslations('main');
   return (
     <section className="home-band trust" aria-labelledby="home-trust-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-trust" h={36} />
-          <h2 id="home-trust-h">믿고 연결받는 안심소개</h2>
-          <span className="home-sd">본사 차원 · 검증된 전문가와 업체만 소개해드립니다.</span>
+          <h2 id="home-trust-h">{tr('sec.trust.h')}</h2>
+          <span className="home-sd">{tr('sec.trust.sub')}</span>
           <More href="/mall" />
         </div>
         <div className="home-trusts">
@@ -245,7 +256,7 @@ export function Trust({ c }: { c: HomeContent }) {
               <span className="home-trb">
                 <b>{t.t}</b>
                 <span>{t.d[0]}{t.d[1] && <><br />{t.d[1]}</>}</span>
-                <em>소개받기 <Line name="arrow" size={16} w={2.4} /></em>
+                <em>{tr('sec.trust.go')} <Line name="arrow" size={16} w={2.4} /></em>
               </span>
             </Link>
           ))}
@@ -258,13 +269,14 @@ export function Trust({ c }: { c: HomeContent }) {
 /* ── 최근 뜨는 창업 ──────────────────────────────────────────────────── */
 
 export function Startup({ c }: { c: HomeContent }) {
+  const t = useTranslations('main');
   return (
     <section className="home-band startup" aria-labelledby="home-startup-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-startup" h={36} />
-          <h2 id="home-startup-h">최근 뜨는 창업</h2>
-          <span className="home-sd">새로운 시작을 소개뱅크와 함께하세요.</span>
+          <h2 id="home-startup-h">{t('sec.startup.h')}</h2>
+          <span className="home-sd">{t('sec.startup.sub')}</span>
           <More href="/biz" />
         </div>
         {c.starts.length ? (
@@ -278,7 +290,7 @@ export function Startup({ c }: { c: HomeContent }) {
             ))}
           </div>
         ) : (
-          <p className="home-none">아직 올라온 창업 아이템이 없습니다. <Link href="/biz">소개창업 가기 ›</Link></p>
+          <p className="home-none">{t('sec.startup.none')} <Link href="/biz">{t('sec.startup.go')}</Link></p>
         )}
       </div>
     </section>
@@ -288,27 +300,28 @@ export function Startup({ c }: { c: HomeContent }) {
 /* ── 나를 위한 소개 ───────────────────────────────────────────────── */
 
 export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSummary | null }) {
+  const t = useTranslations('main');
   return (
     <section className="home-band forme" aria-labelledby="home-forme-h">
       <div className="home-in">
         <div className="home-forme">
           <Pic name="sec-forme" h={38} />
-          <h2 id="home-forme-h">나를 위한 소개</h2>
-          <span className="home-sd">{loggedIn ? '관심 성향을 넣으면 추천이 더 정확해져요.' : '로그인하면 관심사와 활동을 바탕으로 맞춤 소개를 보여드려요.'}</span>
+          <h2 id="home-forme-h">{t('sec.forme.h')}</h2>
+          <span className="home-sd">{loggedIn ? t('sec.forme.subIn') : t('sec.forme.subOut')}</span>
           {loggedIn && summary && (
             <span className="home-fmi">
-              <Link href="/my/notifications">새 알림 <em>{summary.unreadNotifications.toLocaleString('ko-KR')}</em></Link>
-              <Link href="/my/listings">게시 중 매물 <em>{summary.publishedListings.toLocaleString('ko-KR')}</em></Link>
-              <Link href="/my/deals">진행 중 거래 <em>{summary.openDeals.toLocaleString('ko-KR')}</em></Link>
+              <Link href="/my/notifications">{t('sec.forme.notif')} <em>{summary.unreadNotifications.toLocaleString('ko-KR')}</em></Link>
+              <Link href="/my/listings">{t('sec.forme.listings')} <em>{summary.publishedListings.toLocaleString('ko-KR')}</em></Link>
+              <Link href="/my/deals">{t('sec.forme.deals')} <em>{summary.openDeals.toLocaleString('ko-KR')}</em></Link>
             </span>
           )}
           <span className="home-fma">
             {loggedIn ? (
-              <Link className="home-pill p" href="/ai/profile" data-forme="profile">성향 분석하고 추천받기</Link>
+              <Link className="home-pill p" href="/ai/profile" data-forme="profile">{t('sec.forme.profile')}</Link>
             ) : (
               <>
-                <Link className="home-pill" href="/login" data-forme="login">로그인</Link>
-                <Link className="home-pill p" href="/signup" data-forme="signup">무료 회원가입</Link>
+                <Link className="home-pill" href="/login" data-forme="login">{t('sec.forme.login')}</Link>
+                <Link className="home-pill p" href="/signup" data-forme="signup">{t('sec.forme.signup')}</Link>
               </>
             )}
           </span>
@@ -320,20 +333,23 @@ export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSum
 
 /* ── 소개뱅크 핵심 ────────────────────────────────────────────────── */
 
-const CORE: [string, string, string, string][] = [
-  ['core-1', 'AI로 찾고', '필요한 것을 빠르게 찾아줘요', '#home-q'],
-  ['core-2', '실시간으로 비교하고', '여러 정보를 한 번에', '/ai/match'],
-  ['core-3', '안심하고 소개받고', '검증된 연결로 안심하게', '/mall'],
-  ['core-4', '좋은 연결로 이어져요', '사람 · 상품 · 기업의 연결', '/request'],
+/* [그림, 사전 키(main.sec.core.items.<키>.t · .d), 주소] */
+const CORE: [string, 'c1' | 'c2' | 'c3' | 'c4', string][] = [
+  ['core-1', 'c1', '#home-q'],
+  ['core-2', 'c2', '/ai/match'],
+  ['core-3', 'c3', '/mall'],
+  ['core-4', 'c4', '/request'],
 ];
 
 export function Core() {
+  const tr = useTranslations('main');
   return (
     <section className="home-band core" aria-labelledby="home-core-h">
       <div className="home-in">
         <div className="home-cores">
-          <div className="home-coreh"><Pic name="sec-core" h={36} /><h2 id="home-core-h">소개뱅크 핵심</h2></div>
-          {CORE.map(([ic, t, d, href]) => {
+          <div className="home-coreh"><Pic name="sec-core" h={36} /><h2 id="home-core-h">{tr('sec.core.h')}</h2></div>
+          {CORE.map(([ic, k, href]) => {
+            const t = tr(`sec.core.items.${k}.t`), d = tr(`sec.core.items.${k}.d`);
             const body = <><Pic name={ic} h={40} /><span><b>{t}</b><span>{d}</span></span></>;
             return href.startsWith('#')
               ? <a key={t} className="home-core" href={href}>{body}</a>

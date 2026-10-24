@@ -23,6 +23,7 @@
  *   안심소개 상담 업종 GET /consult/categories · 입점 여부 GET /partner/dashboard · 광고 GET /ads/serve?slot=FLOAT.
  */
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
 import { safeSort } from '@/lib/format';
@@ -56,27 +57,28 @@ interface Axis {
   gate?: string; open?: boolean; openNote?: string;
 }
 
-/** 축 — 시안 AX 그대로(이름 · 부제 · 판정 · 이유 · 급매 띠 · 먼저 확인할 것) */
-const AXES: Record<'MAL' | 'BIZ', { nm: string; why: string; tabs: Axis[] }> = {
-  MAL: { nm: '자산 성격', why: '등기가 있는 자산과 실물로 넘기는 자산은 확인할 것도 법도 다릅니다.', tabs: [
-    { k: 'equip', nm: '기계 · 설비 · 시설', sub: '실물자산형', catAxis: 'EQUIP', judge: '등기 없이 실물 인도로 넘어갑니까?', urg: '급매 · 이전',
-      safe: ['장비 가동 상태를 실물로 확인하십시오 — 사진만으로는 확인되지 않습니다', '리스 · 할부 잔액이 남아 있는지 확인하십시오',
-        '철거 · 이전 조건과 비용을 계약서에 적으십시오'] },
-    { k: 'realty', nm: '부동산', sub: '등기자산형', catAxis: 'RE', gate: 'A-07 법무 회신 대기', judge: '등기부등본이 있습니까?', urg: '급매',
-      safe: ['등기부등본으로 소유자 · 근저당 · 가압류를 확인하십시오', '권리금 이중계약 여부를 확인하십시오', '임대인 동의가 필요한 계약인지 확인하십시오',
-        '큰 금액일수록 계약서와 세금계산서를 먼저 갖추십시오 — 플랫폼은 대금에 관여하지 않습니다'] },
-    { k: 'consult', nm: '생활 · 금융 상담', sub: '상담신청형', body: 'consult', judge: '상담을 신청하면 인증된 업체 1곳이 연락드립니다.',
-      why: '상담은 매물 거래가 아닙니다 — 소비자가 신청하고, 입점 승인을 받은 업체가 연락합니다.', safe: SAFE_CONSULT },
-  ] },
-  BIZ: { nm: '창업 단계', why: '창업은 사고파는 것만이 아닙니다 — 사람도, 자문도, 정보도 오갑니다.', tabs: [
-    { k: 'listing', nm: '창업', sub: '거래형', judge: '내일 아침 문을 열고 바로 장사가 됩니까?', urg: '급매 사업체',
-      safe: ['권리금 이중계약 여부를 확인하십시오', '인허가가 승계되는 업종인지 확인하십시오', '창업부지는 안심소개 원본을 참조만 합니다(INV-GWAN2)'] },
-    { k: 'jobs', nm: '인력', sub: '매칭형', body: 'jobs', gate: '도급만 · 개인 노출 없음', open: true, openNote: '도급으로만 잇습니다 — 개인은 노출하지 않습니다.',
-      judge: '고용 관계가 성립합니까?' },
-    { k: 'advisory', nm: '운영지원', sub: '서비스형', body: 'advisory', judge: '지속적 자문 · 수행 계약이 성립합니까?' },
-    { k: 'info', nm: '정보', sub: '콘텐츠형', body: 'info', judge: '거래가 없습니다 — 열람과 신청만 합니다' },
-  ] },
-};
+/** 축 — 시안 AX 그대로(이름 · 부제 · 판정 · 이유 · 급매 띠 · 먼저 확인할 것) · v10.97 글은 사전 gwan.axes.* */
+type GwanT = Awaited<ReturnType<typeof getTranslations<'gwan'>>>;
+function axesFor(t: GwanT): Record<'MAL' | 'BIZ', { nm: string; why: string; tabs: Axis[] }> {
+  return {
+    MAL: { nm: t('axes.MAL.nm'), why: t('axes.MAL.why'), tabs: [
+      { k: 'equip', nm: t('axes.MAL.equip.nm'), sub: t('axes.MAL.equip.sub'), catAxis: 'EQUIP', judge: t('axes.MAL.equip.judge'), urg: t('axes.MAL.equip.urg'),
+        safe: [t('axes.MAL.equip.s1'), t('axes.MAL.equip.s2'), t('axes.MAL.equip.s3')] },
+      { k: 'realty', nm: t('axes.MAL.realty.nm'), sub: t('axes.MAL.realty.sub'), catAxis: 'RE', gate: t('axes.MAL.realty.gate'), judge: t('axes.MAL.realty.judge'), urg: t('axes.MAL.realty.urg'),
+        safe: [t('axes.MAL.realty.s1'), t('axes.MAL.realty.s2'), t('axes.MAL.realty.s3'), t('axes.MAL.realty.s4')] },
+      { k: 'consult', nm: t('axes.MAL.consult.nm'), sub: t('axes.MAL.consult.sub'), body: 'consult', judge: t('axes.MAL.consult.judge'),
+        why: t('axes.MAL.consult.why'), safe: SAFE_CONSULT },
+    ] },
+    BIZ: { nm: t('axes.BIZ.nm'), why: t('axes.BIZ.why'), tabs: [
+      { k: 'listing', nm: t('axes.BIZ.listing.nm'), sub: t('axes.BIZ.listing.sub'), judge: t('axes.BIZ.listing.judge'), urg: t('axes.BIZ.listing.urg'),
+        safe: [t('axes.BIZ.listing.s1'), t('axes.BIZ.listing.s2'), t('axes.BIZ.listing.s3')] },
+      { k: 'jobs', nm: t('axes.BIZ.jobs.nm'), sub: t('axes.BIZ.jobs.sub'), body: 'jobs', gate: t('axes.BIZ.jobs.gate'), open: true, openNote: t('axes.BIZ.jobs.openNote'),
+        judge: t('axes.BIZ.jobs.judge') },
+      { k: 'advisory', nm: t('axes.BIZ.advisory.nm'), sub: t('axes.BIZ.advisory.sub'), body: 'advisory', judge: t('axes.BIZ.advisory.judge') },
+      { k: 'info', nm: t('axes.BIZ.info.nm'), sub: t('axes.BIZ.info.sub'), body: 'info', judge: t('axes.BIZ.info.judge') },
+    ] },
+  };
+}
 
 /** v10.31 (합침 · w6 D083) — 운영 「관 UI/UX 관리」의 축(GET /site/gwan-axes · 노출 중인 것만). 화면 키 ↔ 서버 축 코드 */
 const AXIS_CODE: Record<string, string> = { equip: 'ASSET', realty: 'RE', consult: 'CONSULT', listing: 'STARTUP', jobs: 'STAFF', advisory: 'SUPPORT', info: 'INFO' };
@@ -84,12 +86,14 @@ interface ServerAxis { axisCode: string; name: string; nature: string | null; ju
 
 /** 서버 축 값(이름 · 성격 · 판정 · 급매 띠 · 규제)을 시안 정의 위에 얹고, 운영이 노출을 내린 축은 뺍니다.
  *  서버 답을 못 받거나 비면 시안 정의 그대로(첫 축은 늘 남김 — 관 화면이 비지 않게). */
-function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: ServerAxis[] | null) {
+/*  v10.97 — 서버 축 글(이름 · 성격 · 판정 · 급매 띠 · 규제)은 한국어일 때만 얹습니다. 다른 언어는 사전 글 · 노출 여부만 서버를 따름 */
+function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: ServerAxis[] | null, ko = true) {
   if (!rows || rows.length === 0) return def;
   const by = new Map(rows.map((r) => [r.axisCode, r]));
   const tabs = def.tabs.flatMap((t, i) => {
     const r = by.get(AXIS_CODE[t.k] ?? '');
     if (!r) return i === 0 ? [t] : [];
+    if (!ko) return [t];
     return [{ ...t, nm: r.name || t.nm, sub: r.nature || t.sub, judge: r.judge || t.judge,
       urg: r.urgentLabel ?? t.urg, gate: r.regulation || t.gate }];
   });
@@ -98,10 +102,13 @@ function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: Se
 
 export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
   const g = GW[code];
+  const t = await getTranslations('gwan');
+  const locale = await getLocale();
+  const gname = t(`meta.${code}.name`), gsect = t(`meta.${code}.sect`), gallcat = t(`meta.${code}.allcat`);
   const base = `/${g.path}`;
   const serverAxes = code === 'MNY' ? null
     : await apiGet<ServerAxis[]>(`/site/gwan-axes?gwan=${code}`, 60).catch(() => null);
-  const axDef = code === 'MNY' ? null : withServerAxes(AXES[code], serverAxes);
+  const axDef = code === 'MNY' ? null : withServerAxes(axesFor(t)[code], serverAxes, locale === 'ko');
   /* 예전 주소 ?axis=listing(안심소개 매물 전체)은 첫 축으로 */
   const ax = axDef ? (axDef.tabs.find((a) => a.k === q.axis) ?? axDef.tabs[0]) : null;
   const consult = ax?.body === 'consult';
@@ -159,14 +166,15 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
     }
   }
 
-  const gradeNm = grade ? GRADES.find((x) => x.code === grade)?.nm : undefined;
-  const regionNm = region ? (region === 'ETC' ? '기타 지역' : regions?.all.find((x) => x.code === region)?.name) : undefined;
-  const sel = [regionNm, gradeNm, cat?.name, badge === 'URGENT' ? '급구' : badge === 'VERIFIED_DOC' ? '서류 확인' : undefined, keyword && `「${keyword}」`].filter(Boolean).join(' · ');
+  const gradeX = grade ? GRADES.find((x) => x.code === grade) : undefined;
+  const gradeNm = gradeX ? t(`grade.${gradeX.code}.nm`) : undefined;
+  const regionNm = region ? (region === 'ETC' ? t('region.etc') : regions?.all.find((x) => x.code === region)?.name) : undefined;
+  const sel = [regionNm, gradeNm, cat?.name, badge === 'URGENT' ? t('badge.URGENT') : badge === 'VERIFIED_DOC' ? t('badge.VERIFIED_DOC') : undefined, keyword && t('landing.quote', { keyword })].filter(Boolean).join(' · ');
   const sortHrefs = Object.fromEntries(SORTS.map(([v]) => [v, qhref(base, { ...keep, sort: v === 'RECENT' ? undefined : v })]));
   const register = code === 'MAL'
     ? (partner
-      ? [{ href: '/register', label: '✚ 매물 등록 (파트너센터)', role: 'partner' }, { href: '/partner/listings', label: '내 매물 · 입점 상태' }]
-      : [{ href: '/mall/give', label: '✚ 소개합니다', role: 'member' }])
+      ? [{ href: '/register', label: t('landing.registerPartner'), role: 'partner' }, { href: '/partner/listings', label: t('landing.myPartnerListings') }]
+      : [{ href: '/mall/give', label: t('landing.registerGive'), role: 'member' }])
     : undefined;
   const axHref = (t: Axis) => (t === axDef?.tabs[0] ? base : qhref(base, { axis: t.k }));
   const allTotal = data?.total ?? gw?.listingCount ?? 0;
@@ -174,7 +182,7 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
   return (
     <GwFrame code={code}>
       <div className="gw-wrap" style={{ paddingTop: 13 }}>
-        <h1 className="gw-sr">{gw?.name ?? g.name}</h1>{/* 시안에는 보이는 제목이 없어 읽기 프로그램용으로만 둡니다(시안 .sr) */}
+        <h1 className="gw-sr">{locale === 'ko' ? gw?.name ?? gname : gname}</h1>{/* 시안에는 보이는 제목이 없어 읽기 프로그램용으로만 둡니다(시안 .sr) */}
         <SearchRow code={code} />
 
         {code === 'MNY' && (
@@ -182,7 +190,7 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
         )}
 
         {stopped ? (
-          <div className="gw-taboff" role="status" data-gwan-off="1"><b>{g.name}</b> 관이 <b>중지</b> 상태입니다. 신규 등록과 신규 문의만 막히고 진행 중인 거래는 그대로 완주합니다. 관을 다시 열면 이 화면이 그대로 돌아옵니다.</div>
+          <div className="gw-taboff" role="status" data-gwan-off="1">{t.rich('landing.stopped', { name: gname, b: (c) => <b>{c}</b> })}</div>
         ) : (
           <>
             {axDef && ax && (
@@ -199,12 +207,12 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                 <div className="gw-axnote">
                   <b>{ax.nm}</b> — {ax.judge} <span className="gw-ls">{ax.why ?? axDef.why}</span>
                   {ax.gate && (ax.open
-                    ? <span className="gw-axw2 gw-ok">이 축은 {ax.openNote ?? ax.gate}</span>
-                    : <span className="gw-axw2">이 축은 {ax.gate}라 아직 열지 않았습니다. 지금 보이는 매물은 미리 보기입니다 — 부동산은 소개비가 아니라 노출료이고 정산이 생성되지 않습니다(A-07).</span>)}
+                    ? <span className="gw-axw2 gw-ok">{t('landing.axOpen', { note: ax.openNote ?? ax.gate })}</span>
+                    : <span className="gw-axw2">{t('landing.axGated', { gate: ax.gate })}</span>)}
                   {code === 'MAL' && ax.catAxis === 'RE' && (
-                    <span className="gw-axbrk"><b>공인중개사 매물 연동</b>
-                      <span>제휴 중개사무소가 올린 매물을 받는 자리입니다 — A-07 회신 뒤에 엽니다. 중개사 매물은 소유 확인을 먼저 받습니다.</span>
-                      <Link className="gw-bo gw-sm" href="/mal/brokers">구조 보기 · 소유 확인 ›</Link></span>
+                    <span className="gw-axbrk"><b>{t('landing.brokerTitle')}</b>
+                      <span>{t('landing.brokerBody')}</span>
+                      <Link className="gw-bo gw-sm" href="/mal/brokers">{t('landing.brokerLink')}</Link></span>
                   )}
                 </div>
               </div>
@@ -214,8 +222,8 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
               /* 인증업체만 게시 — 운영 스위치(mal.partner_only)를 그대로 알립니다(개발에만 있는 안내 · 시안 모양 안에 둠) */
               <p className={`gw-po${settings['mal.partner_only'] === 'on' ? ' gw-on' : ''}`} data-partner-only={settings['mal.partner_only'] === 'on' ? 'on' : 'off'}>
                 {settings['mal.partner_only'] === 'on'
-                  ? <><b>인증업체만 게시합니다.</b> 안심소개 매물은 입점 승인을 받은 인증업체만 올립니다.</>
-                  : <><b>「인증업체만 게시」는 아직 켜지지 않았습니다.</b> 지금은 입점 승인 전 업체의 매물도 보일 수 있습니다 — 등록자의 「사업자 인증」 표시를 확인하십시오.</>}
+                  ? <>{t.rich('landing.partnerOnlyOn', { b: (c) => <b>{c}</b> })}</>
+                  : <>{t.rich('landing.partnerOnlyOff', { b: (c) => <b>{c}</b> })}</>}
               </p>
             )}
 
@@ -224,7 +232,7 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                 regions={regions?.all} region={region}
                 extra={!listing && ax ? (
                   <div className="gw-axaside"><b>{ax.nm}</b><span>{ax.judge}</span>
-                    <span className="gw-ls">{consult ? '업종은 관리자가 관리합니다 — 회원이 업종을 만들 수 없습니다.' : axDef?.why}</span></div>
+                    <span className="gw-ls">{consult ? t('landing.consultCatNote') : axDef?.why}</span></div>
                 ) : undefined} />
 
               <div>
@@ -233,22 +241,21 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                   : ax?.body === 'info' ? <AxisInfo d={q.d} />
                   : consult ? (
                   <div className="gw-panel gw-cslL">
-                    <div className="gw-sh2" style={{ padding: '0 0 12px' }}><b>🤝 생활 · 금융 상담</b>
-                      <span className="gw-ls">업종을 고르고 상담을 신청하면 인증된 업체 1곳이 연락드립니다</span></div>
-                    <div className="gw-axwarn gw-ok"><b>신청 정보는 업체 1곳에만 전달됩니다.</b> 동의하신 업체 말고는 연락처를 볼 수 없고, 휴대폰 확인을 마친 신청만 전달됩니다.
-                      법률 · 세무는 상담 신청 대신 <b>사무소 정보(광고)</b>를 보고 직접 연락합니다.</div>
+                    <div className="gw-sh2" style={{ padding: '0 0 12px' }}><b>{t('landing.consultTitle')}</b>
+                      <span className="gw-ls">{t('landing.consultLead')}</span></div>
+                    <div className="gw-axwarn gw-ok">{t.rich('landing.consultWarn', { b: (c) => <b>{c}</b> })}</div>
                     <div className="mal">{/* 업종 줄은 생활 · 금융 상담 화면과 같은 부품(components/mal/ConsultRows) */}
-                      <ConsultRows cats={consultCats} label="상담 신청" />
+                      <ConsultRows cats={consultCats} label={t('landing.consultRowLabel')} />
                     </div>
                     {/* 개발에만 있던 「입점 상태 보기」를 시안 안내 줄(axcta) 안에 되살림(srv_consult_ui UI-6-2) */}
                     <div className="gw-axcta mal-cta">
                       {partner ? (
-                        <><b>인증업체이십니다.</b><span>배정된 상담 신청은 파트너센터에서 확인하고 연락처를 열 수 있습니다</span>
-                          <Link className="gw-bo gw-sm" href="/partner/leads">받은 상담 신청</Link></>
+                        <><b>{t('landing.partnerYes')}</b><span>{t('landing.partnerYesBody')}</span>
+                          <Link className="gw-bo gw-sm" href="/partner/leads">{t('landing.partnerLeads')}</Link></>
                       ) : (
-                        <><b>업체이신가요?</b><span>안심소개 파트너센터에서 입점 신청과 자격 서류를 내면 이 목록에 오릅니다</span>
-                          <Link className="gw-bo gw-sm" href="/partner/apply">인증업체 등록</Link>
-                          <Link className="gw-bo gw-sm" href="/partner/listings">입점 상태 보기</Link></>
+                        <><b>{t('landing.partnerNo')}</b><span>{t('landing.partnerNoBody')}</span>
+                          <Link className="gw-bo gw-sm" href="/partner/apply">{t('landing.partnerApply')}</Link>
+                          <Link className="gw-bo gw-sm" href="/partner/listings">{t('landing.partnerStatus')}</Link></>
                       )}
                     </div>
                   </div>
@@ -256,57 +263,58 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                   <>
                     {ax?.urg && (
                       <div className="gw-axurg"><b>🔥 {ax.urg}</b>
-                        <span>{badge === 'URGENT' ? '급구 표시가 붙은 건만 보고 있습니다' : '이 축에서 마감이 임박한 건만 모읍니다'}</span>
+                        <span>{badge === 'URGENT' ? t('landing.urgOnly') : t('landing.urgDefault')}</span>
                         <Link className="gw-bo gw-sm" href={badge === 'URGENT' ? qhref(base, { ...keep, badge: undefined }) : '/money/urgent'}>
-                          {badge === 'URGENT' ? '전체 보기' : '보러 가기 ›'}</Link></div>
+                          {badge === 'URGENT' ? t('landing.viewAll') : t('landing.goSee')}</Link></div>
                     )}
 
                     <div className="gw-panel gw-find gw-narrow">
-                      <div className="gw-fh2">{g.find}</div>
+                      <div className="gw-fh2">{t(`meta.${code}.find`)}</div>
                       <form className="gw-fbar" action={base} method="get" role="search">
                         {axisParam && <input type="hidden" name="axis" value={axisParam} />}
-                        <GradeCat grades={GRADES.filter((x) => cats.some((c) => c.gradeCode === x.code)).map((x) => ({ code: x.code, label: x.code === 'G1' ? x.nm : `${x.nm} (가칭)` }))}
+                        <GradeCat grades={GRADES.filter((x) => cats.some((c) => c.gradeCode === x.code)).map((x) => ({ code: x.code, label: x.code === 'G1' ? t(`grade.${x.code}.nm`) : t('grade.tentative', { nm: t(`grade.${x.code}.nm`) }) }))}
                                   cats={cats.map((c) => ({ id: c.id, name: c.name, gradeCode: c.gradeCode ?? '' }))}
-                                  grade={grade} cat={cat?.id} allcat={g.allcat} />
+                                  grade={grade} cat={cat?.id} allcat={gallcat} />
                         {badge && <input type="hidden" name="badge" value={badge} />}
                         {sort && <input type="hidden" name="sort" value={sort} />}
                         {keyword && <input type="hidden" name="keyword" value={keyword} />}
                         {region && <input type="hidden" name="region" value={region} />}
-                        <button className="gw-fgo" type="submit">🔍 검색</button>
+                        <button className="gw-fgo" type="submit">{t('landing.search')}</button>
                       </form>
                       <div className="gw-fnote"><span className="gw-rd" />
-                        {sel ? <><b>{sel}</b> 조건으로 아래를 걸렀습니다.</> : '선택하신 구분과 분류에 맞는 건이 아래에 표시됩니다.'}</div>
+                        {sel ? <>{t.rich('landing.filtered', { sel, b: (c) => <b>{c}</b> })}</> : t('landing.filterHint')}</div>
                     </div>
 
                     {sel && (
-                      <div className="gw-catbar"><span className="gw-cbl">검색 조건</span>
-                        {regionNm && <><span className="gw-cbv">{regionNm}</span><Link className="gw-cbx" href={qhref(base, { ...keep, region: undefined })}>✕ 지역 해제</Link></>}
-                        {gradeNm && <><span className="gw-cbv">{gradeNm}</span><Link className="gw-cbx" href={qhref(base, { ...keep, grade: undefined })}>✕ 구분 해제</Link></>}
-                        {cat && <><span className="gw-cbv">{cat.name}</span><Link className="gw-cbx" href={qhref(base, { ...keep, cat: undefined })}>✕ 분류 해제</Link></>}
-                        {badge && <><span className="gw-cbv">{badge === 'URGENT' ? '급구' : '서류 확인'}</span><Link className="gw-cbx" href={qhref(base, { ...keep, badge: undefined })}>✕ 표시 해제</Link></>}
-                        {keyword && <><span className="gw-cbv">「{keyword}」</span><Link className="gw-cbx" href={qhref(base, { ...keep, keyword: undefined })}>✕ 검색어 해제</Link></>}
-                        <Link className="gw-cbx" href={qhref(base, { axis: axisParam })}>전체 해제</Link>
-                        <span className="gw-cbn">해제하면 {g.allcat}가 다시 보입니다</span>
+                      <div className="gw-catbar"><span className="gw-cbl">{t('landing.condLabel')}</span>
+                        {regionNm && <><span className="gw-cbv">{regionNm}</span><Link className="gw-cbx" href={qhref(base, { ...keep, region: undefined })}>{t('landing.clearRegion')}</Link></>}
+                        {gradeNm && <><span className="gw-cbv">{gradeNm}</span><Link className="gw-cbx" href={qhref(base, { ...keep, grade: undefined })}>{t('landing.clearGrade')}</Link></>}
+                        {cat && <><span className="gw-cbv">{cat.name}</span><Link className="gw-cbx" href={qhref(base, { ...keep, cat: undefined })}>{t('landing.clearCat')}</Link></>}
+                        {badge && <><span className="gw-cbv">{badge === 'URGENT' ? t('badge.URGENT') : t('badge.VERIFIED_DOC')}</span><Link className="gw-cbx" href={qhref(base, { ...keep, badge: undefined })}>{t('landing.clearBadge')}</Link></>}
+                        {keyword && <><span className="gw-cbv">{t('landing.quote', { keyword })}</span><Link className="gw-cbx" href={qhref(base, { ...keep, keyword: undefined })}>{t('landing.clearKeyword')}</Link></>}
+                        <Link className="gw-cbx" href={qhref(base, { axis: axisParam })}>{t('landing.clearAll')}</Link>
+                        <span className="gw-cbn">{t('landing.clearNote', { allcat: gallcat })}</span>
                       </div>
                     )}
 
                     <div className="gw-panel" style={{ marginTop: 12, padding: '16px 17px 17px' }}>
                       <div className="gw-sh2" style={{ padding: '0 0 12px' }}>
-                        <b>{cat ? `☰ ${cat.name}` : `🔥 지금 인기 있는 ${code === 'MNY' ? g.sect : ax?.nm ?? g.sect}`}</b>
-                        <Link href={`${base}/list`}>더보기 ›</Link>
+                        <b>{cat ? `☰ ${cat.name}` : t('landing.popular', { what: code === 'MNY' ? gsect : ax?.nm ?? gsect })}</b>
+                        <Link href={`${base}/list`}>{t('landing.more')}</Link>
                       </div>
                       {!data ? (
-                        <p className="gw-empty">목록을 불러오지 못했습니다. 조건을 바꾸거나 <Link href={base}>처음 화면</Link>으로 가십시오.</p>
+                        <p className="gw-empty">{t.rich('landing.loadFail', { home: (c) => <Link href={base}>{c}</Link> })}</p>
                       ) : organic.length === 0 && data.promoted.length === 0 ? (
-                        <CatEmpty what={sel || (ax?.nm ?? g.allcat)} clearHref={qhref(base, { axis: axisParam })} />
+                        <CatEmpty what={sel || (ax?.nm ?? gallcat)} clearHref={qhref(base, { axis: axisParam })} />
                       ) : (
                         <GwGrid promoted={data.promoted} organic={organic} adNotice={data.adNotice} />
                       )}
                       {data && (
                         <Pager base={base} keep={keep} page={page} next={data.nextCursor} pageCount={data.pageCount}
                           left={<span className="gw-tot">{sel
-                            ? <><b>{sel}</b> · {data.total != null ? <><b>{data.total}</b>건</> : <>이 쪽 <b>{organic.length}</b>건</>}</>
-                            : <>총 <b>{allTotal.toLocaleString('ko-KR')}</b>개의 {ax?.nm ?? g.sect}{/[가-힣]$/.test(ax?.nm ?? g.sect) && ((ax?.nm ?? g.sect).charCodeAt((ax?.nm ?? g.sect).length - 1) - 0xac00) % 28 ? '이' : '가'} 있습니다.</>}</span>}
+                            ? <><b>{sel}</b> · {data.total != null ? <>{t.rich('landing.countN', { n: String(data.total), b: (c) => <b>{c}</b> })}</> : <>{t.rich('landing.countPage', { n: String(organic.length), b: (c) => <b>{c}</b> })}</>}</>
+                            : <>{t.rich(/[가-힣]$/.test(ax?.nm ?? gsect) && ((ax?.nm ?? gsect).charCodeAt((ax?.nm ?? gsect).length - 1) - 0xac00) % 28 ? 'landing.totalI' : 'landing.totalGa',
+                                { n: allTotal.toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US'), what: ax?.nm ?? gsect, b: (c) => <b>{c}</b> })}</>}</span>}
                           right={<SortSelect value={sort ?? 'RECENT'} options={SORTS} hrefs={sortHrefs} />} />
                       )}
                     </div>
@@ -315,9 +323,9 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
 
                 {ax?.safe && (
                   <div className="gw-panel gw-axsafe">
-                    <div className="gw-sh2" style={{ padding: '0 0 9px' }}><b>⚠ {consult ? ax.nm : `${ax.nm} 거래`}에서 먼저 확인할 것</b></div>
+                    <div className="gw-sh2" style={{ padding: '0 0 9px' }}><b>{consult ? t('landing.safeHeadConsult', { nm: ax.nm }) : t('landing.safeHead', { nm: ax.nm })}</b></div>
                     <ul className="gw-axul">{ax.safe.map((x) => <li key={x}>{x}</li>)}</ul>
-                    <div className="gw-ls">축마다 위험이 다릅니다 — 이 목록은 {ax.sub} 전용입니다. <Link href="/safety/guide" data-sgd-link="">사기 예방 가이드 보기 ›</Link></div>
+                    <div className="gw-ls">{t.rich('landing.safeFoot', { sub: ax.sub, guide: (c) => <Link href="/safety/guide" data-sgd-link="">{c}</Link> })}</div>
                   </div>
                 )}
               </div>

@@ -19,6 +19,7 @@
  *   live 만   GET /listings · /requests · /health/products · /community/posts
  */
 import { cookies } from 'next/headers';
+import { getTranslations } from 'next-intl/server';
 import { apiGet, apiGetPersonal, apiGetVisitor } from '@/lib/api';
 import { me } from '@/lib/session';
 import type { FooterLink, Gwan, ListingListData } from '@/lib/types';
@@ -28,19 +29,24 @@ import type { PromoSlide } from '@/components/home/HeroPromo';
 import type { Poll } from '@/components/community/poll';
 import { HomeView } from '@/components/home/HomeView';
 import { liveContent, sampleContent } from '@/components/home/content';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/home.css';
 
-const CHIPS = ['판교 가족식당 추천해줘', '1천만원대로 시작할 창업아이템 있어?', '음식물처리기 요즘 뭐가 좋아?', '믿을 만한 세무사 소개받고 싶어'];
+/* 추천 칩 — 글은 사전(main.hero.chips) */
+const CHIPS = ['c1', 'c2', 'c3', 'c4'] as const;
 
 /* 히어로 오른쪽 카드의 안내 장. 첫 장이 그림에 있는 장(전문가 포트폴리오)입니다. gwan 이 있으면 그 관이 살아 있을 때만 냅니다 */
-const SLIDES: (PromoSlide & { gwan?: string })[] = [
-  { k: 'pf', gwan: 'MAL', tag: '전문가 포트폴리오', title: '인기 포트폴리오를\n바로 확인하세요', desc: '검증된 전문가들의\n실제 작업물과 후기를 한눈에!', cta: '지금 둘러보기', href: '/mall', art: 'd/promo-art.png' },
-  { k: 'biz', gwan: 'BIZ', tag: '소개창업', title: '뜨는 창업 아이템을\n한눈에 보세요', desc: '관심이 모이는 창업 매물을\n모았습니다', cta: '지금 둘러보기', href: '/biz', imgs: ['d/pick-3.png', 'd/start-2.png'] },
-  { k: 'health', gwan: 'HLT', tag: '소개몰', title: '필요한 상품을\n비교해 보세요', desc: '건강관 상품부터\n차례로 넓혀 갑니다', cta: '지금 둘러보기', href: '/health', imgs: ['d/pick-1.png', 'd/poll-purifier.png'] },
-  { k: 'community', tag: '소개광장', title: '우리 이야기를\n나눠 보세요', desc: '소개 후기와 동네 이야기를\n함께 봅니다', cta: '지금 둘러보기', href: '/community', imgs: ['d/pick-4.png', 'd/town-3.png'] },
+type SlideKey = 'pf' | 'biz' | 'health' | 'community';
+/* 글(tag · title · desc · cta)은 사전(main.promo) — 그릴 때 넣습니다 */
+const SLIDES: (Omit<PromoSlide, 'k' | 'tag' | 'title' | 'desc' | 'cta'> & { k: SlideKey; gwan?: string })[] = [
+  { k: 'pf', gwan: 'MAL', href: '/mall', art: 'd/promo-art.png' },
+  { k: 'biz', gwan: 'BIZ', href: '/biz', imgs: ['d/pick-3.png', 'd/start-2.png'] },
+  { k: 'health', gwan: 'HLT', href: '/health', imgs: ['d/pick-1.png', 'd/poll-purifier.png'] },
+  { k: 'community', href: '/community', imgs: ['d/pick-4.png', 'd/town-3.png'] },
 ];
 
 export default async function Home() {
+  const t = await getTranslations('main');
   const principal = await me().catch(() => null);
   const loggedIn = !!principal;
   const liveMode = process.env.HOME_CONTENT === 'live';
@@ -80,14 +86,18 @@ export default async function Home() {
   }
 
   const heroAd = ad && !ad.empty && ad.id ? ad : null;
-  const slides = SLIDES.filter((s) => !s.gwan || on(s.gwan)).map(({ gwan: _g, ...s }) => s);
+  const slides = SLIDES.filter((s) => !s.gwan || on(s.gwan)).map(({ gwan: _g, ...s }): PromoSlide => ({
+    ...s, tag: t(`promo.slides.${s.k}.tag`), title: t(`promo.slides.${s.k}.title`), desc: t(`promo.slides.${s.k}.desc`), cta: t('promo.cta'),
+  }));
   /* 그림은 「2 / 5」 — 광고가 첫 장일 때 그림에 있는 장이 둘째 장입니다. 그 장부터 엽니다 */
   const start = heroAd && slides[0]?.k === 'pf' ? 1 : 0;
 
   /* ★ 화면은 HomeView(클라이언트 컴포넌트)가 그립니다 — 여기서는 **자료만** 넘깁니다. 이유는 HomeView.tsx 머리말(수화 오류 #418). */
   return (
-    <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
-      live={live} ad={heroAd} slides={slides} start={start} chips={CHIPS} year={new Date().getFullYear()} polls={polls}
-      weather={weather} />
+    <Msgs ns={['main']}>
+      <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
+        live={live} ad={heroAd} slides={slides} start={start} chips={CHIPS.map((k) => t(`hero.chips.${k}`))} year={new Date().getFullYear()} polls={polls}
+        weather={weather} />
+    </Msgs>
   );
 }

@@ -7,8 +7,13 @@ import { BackBar } from '@/components/common/BackBar';
 import { SearchBox, type SearchGwan } from '@/components/search/SearchBox';
 import { PromptSearch } from './PromptSearch';
 import { budgetText } from '@/components/request/ReqCard';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
+import { isGwanKey } from '@/i18n/keys';
 
-export const metadata: Metadata = { title: '통합 검색' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('search'))('title') };
+}
 const EMPTY: ListingListData = { promoted: [], organic: [], nextCursor: null, adNotice: '' };
 
 interface ReqHit {
@@ -21,7 +26,7 @@ interface Board { items: PostRow[]; total: number }
 
 /* 관 탭은 목록이 있는 세 관만(시안 S4.tabs — 전체 · 소개장터 · 안심소개 · 소개창업 · 소개받기 · 소개광장) */
 const LIST_GWANS = ['MNY', 'MAL', 'BIZ'];
-const TABS_FIXED = { ALL: '전체', REQ: '소개받기', CMU: '소개광장' } as const;
+const TABS_FIXED = { ALL: 'tabs.ALL', REQ: 'tabs.REQ', CMU: 'tabs.CMU' } as const;   /* v10.97 — 사전 키(search.tabs.*) */
 
 /**
  * v10.29 — SB-HOM-SRC-010 통합 검색 결과 — 시안 scSearch 모양 그대로.
@@ -42,6 +47,9 @@ export default async function SearchPage({ searchParams }: {
   searchParams: Promise<{ q?: string; gwanCode?: string; tab?: string }>;
 }) {
   const sp = await searchParams;
+  const t = await getTranslations('search');
+  const h = await getTranslations('header');
+  const locale = await getLocale();
   const q = (sp.q ?? '').trim();
   /* v10.83 — 한 글자는 어디서든 「두 글자 이상」(통합 검색 API 규칙과 같게 · 전: 상품 탭만 한 글자로 찾아 13건 등) */
   const short = !!q && q.replace(/\s/g, '').length < 2;
@@ -50,7 +58,8 @@ export default async function SearchPage({ searchParams }: {
   const gTab = LIST_GWANS.includes(tab) ? tab : undefined;
 
   const gwans = await apiGet<Array<{ code: string; name: string }>>('/gwans', 300).catch(() => []);
-  const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, g.name]));
+  /* v10.97 — 한국어는 늘 서버 이름 · 다른 언어만 사전 */
+  const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name]));
 
   const showList = tab === 'ALL' || !!gTab;
   const showReq = tab === 'ALL' || tab === 'REQ';
@@ -83,61 +92,61 @@ export default async function SearchPage({ searchParams }: {
   const n = cnt[tab] ?? 0;
 
   const tabs: Array<[string, string]> = [
-    ['ALL', TABS_FIXED.ALL],
+    ['ALL', t(TABS_FIXED.ALL)],
     ...LIST_GWANS.filter((g) => GN[g]).map((g) => [g, GN[g]] as [string, string]),
-    ['REQ', TABS_FIXED.REQ], ['CMU', TABS_FIXED.CMU],
+    ['REQ', t(TABS_FIXED.REQ)], ['CMU', t(TABS_FIXED.CMU)],
   ];
-  const tabHref = (t: string) => {
+  const tabHref = (v: string) => {
     const u = new URLSearchParams({ q });
-    if (t !== 'ALL') u.set('tab', t);
+    if (v !== 'ALL') u.set('tab', v);
     return `/search?${u}`;
   };
-  const back = gwanCode ? { href: `/${GWAN_PATH[gwanCode]}`, label: GN[gwanCode] ?? '이전 화면' } : { href: '/', label: '메인' };
+  const back = gwanCode ? { href: `/${GWAN_PATH[gwanCode]}`, label: GN[gwanCode] ?? t('back.prev') } : { href: '/', label: t('back.main') };
 
   return (
     <div className="pc-src">
       <BackBar href={back.href} label={back.label} wrap={false} />
       <div className="pgh">
         <div>
-          <h1>{q ? `‘${q}’ 검색 결과` : '통합 검색'}</h1>
-          <p>세 관과 소개받기 · 소개광장을 한 번에 찾습니다. 통합 메인은 관이 아니라 허브입니다.</p>
+          <h1>{q ? t('resultsFor', { q }) : t('title')}</h1>
+          <p>{t('lead')}</p>
         </div>
-        {q && !short && <span className="did">{n}건</span>}
+        {q && !short && <span className="did">{t('count', { n })}</span>}
       </div>
 
       {/* 개발에만 있던 결과 화면 안 검색칸 — 같은 검색 팝업을 엽니다(diffs 기록) */}
       <div className="srch"><SearchBox variant="gwan" blue defaultValue={q} gwanCode={gwanCode as SearchGwan | undefined} /></div>
 
       {short ? (
-        <div className="emp" role="status" data-search-short="">두 글자 이상 입력해 주세요.</div>
+        <div className="emp" role="status" data-search-short="">{t('short')}</div>
       ) : q ? (
         <>
-          <nav className="tabs2" aria-label="검색 결과 묶음">
+          <nav className="tabs2" aria-label={t('tabs.label')}>
             {tabs.map(([v, label]) => (
               <Link key={v} href={tabHref(v)} className={`tb${v === tab ? ' on' : ''}`} aria-current={v === tab ? 'page' : undefined}
                 data-tab={v}>{label} <i data-tab-count="">{cnt[v] ?? 0}</i></Link>
             ))}
           </nav>
           <div className="dact">
-            <Link className="pc-bo sm" href={gwanCode ? `/search?gwanCode=${gwanCode}` : '/search'} data-search-again="">다시 검색</Link>
-            <Link className="pc-bo sm" href="/listings">전체 목록 보기</Link>
-            <Link className="pc-bo sm" href="/request/new">원하는 것을 요청으로 올리기</Link>
+            <Link className="pc-bo sm" href={gwanCode ? `/search?gwanCode=${gwanCode}` : '/search'} data-search-again="">{t('again')}</Link>
+            <Link className="pc-bo sm" href="/listings">{t('allListings')}</Link>
+            <Link className="pc-bo sm" href="/request/new">{t('postRequest')}</Link>
             {/* SB-HOM-SCH-020 — 문장으로 찾기(POST /search/prompt). key 로 검색어가 바뀌면 다시 엽니다 */}
-            <PromptSearch key={q} initial={q} gwans={gwans} />
+            <Msgs ns={['search']}><PromptSearch key={q} initial={q} gwans={gwans} /></Msgs>
           </div>
 
           {showList && (rows.length ? (
             <>
-              <h2 className="s2">상품 · 서비스 {rows.length}건</h2>
+              <h2 className="s2">{t('list.headCount', { n: rows.length })}</h2>
               <div className="tw">
                 <table className="tb2">
-                  <thead><tr><th>구분</th><th>상품 · 서비스</th><th>업종</th><th>등급</th><th>등록자</th><th>소개비</th><th>조회</th></tr></thead>
+                  <thead><tr><th>{t('list.colType')}</th><th>{t('list.colItem')}</th><th>{t('list.colCategory')}</th><th>{t('list.colGrade')}</th><th>{t('list.colOwner')}</th><th>{t('list.colFee')}</th><th>{t('list.colViews')}</th></tr></thead>
                   <tbody>
                     {rows.map((r) => (
                       <tr key={r.id + (r.ad ? '-ad' : '')}>
                         <td>
                           <span className={`gt g-${r.gwanCode.toLowerCase()}`}>{GN[r.gwanCode] ?? r.gwanCode}</span>
-                          {r.ad && <span className="gt g-ad">{r.adLabel ?? '광고'}</span>}
+                          {r.ad && <span className="gt g-ad">{r.adLabel ?? t('list.ad')}</span>}
                         </td>
                         <td><Link href={`/${GWAN_PATH[r.gwanCode] ?? 'money'}/${r.id}`}><b>{r.title}</b></Link></td>
                         <td>{r.categoryName}</td>
@@ -152,38 +161,38 @@ export default async function SearchPage({ searchParams }: {
               </div>
               {list.promoted.length > 0 && list.adNotice && <p className="ls" style={{ marginTop: 6 }}>{list.adNotice}</p>}
             </>
-          ) : (tab === 'ALL' || gTab) && <><h2 className="s2">상품 · 서비스</h2><div className="emp">{gTab ? '이 관에는 결과가 없습니다.' : '상품 · 서비스 결과가 없습니다.'}</div></>)}
+          ) : (tab === 'ALL' || gTab) && <><h2 className="s2">{t('list.head')}</h2><div className="emp">{gTab ? t('list.emptyGwan') : t('list.empty')}</div></>)}
 
           {/* v10.32 — 시안 순서: 상품 · 서비스 → 소개광장 글 → 소개받기 요청(개발) */}
           {showPost && (posts.length ? (
             <>
-              <h2 className="s2">소개광장 {board.total}건</h2>
+              <h2 className="s2">{t('posts.headCount', { n: board.total })}</h2>
               {posts.map((p) => (
                 <div key={p.id} className="lrow">
                   <div className="lt"><b>{p.title}</b><span className="ls">{p.author} · {ago(p.createdAt)}</span></div>
-                  <div className="lact"><Link className="pc-bo sm" href={`/community/${p.id}`}>보기</Link></div>
+                  <div className="lact"><Link className="pc-bo sm" href={`/community/${p.id}`}>{t('view')}</Link></div>
                 </div>
               ))}
             </>
-          ) : (tab === 'CMU' || tab === 'ALL') && <><h2 className="s2">소개광장 0건</h2><div className="emp">맞는 소개광장 글이 없습니다.</div></>)}
+          ) : (tab === 'CMU' || tab === 'ALL') && <><h2 className="s2">{t('posts.headCount', { n: 0 })}</h2><div className="emp">{t('posts.empty')}</div></>)}
           {showReq && (reqs.length ? (
             <>
-              <h2 className="s2">소개받기 요청 {reqs.length}건</h2>
+              <h2 className="s2">{t('reqs.headCount', { n: reqs.length })}</h2>
               {reqs.map((r) => (
                 <div key={r.id} className="lrow">
                   <div className="lt"><b>{r.title}</b><span className="ls">{[
                     r.companyName ?? GN[r.gwanCode], r.categoryName, r.region,
-                    r.budgetMin != null || r.budgetMax != null ? `예산 ${budgetText(r.budgetMin ?? null, r.budgetMax ?? null)}` : null,
+                    r.budgetMin != null || r.budgetMax != null ? t('reqs.budget', { v: budgetText(r.budgetMin ?? null, r.budgetMax ?? null) }) : null,
                     ago(r.createdAt)].filter(Boolean).join(' · ')}</span></div>
-                  <div className="lact"><Link className="pc-bo sm" href={`/request/${r.id}`}>보기</Link></div>
+                  <div className="lact"><Link className="pc-bo sm" href={`/request/${r.id}`}>{t('view')}</Link></div>
                 </div>
               ))}
             </>
-          ) : tab === 'REQ' && <div className="emp">{q.length < 2 ? '두 글자 이상 입력해 주세요.' : '맞는 소개받기 요청이 없습니다.'}</div>)}
+          ) : tab === 'REQ' && <div className="emp">{q.length < 2 ? t('short') : t('reqs.empty')}</div>)}
 
         </>
       ) : (
-        <div className="emp">검색어를 입력하십시오. 검색칸을 누르면 추천 검색어와 관별 결과가 바로 보입니다.</div>
+        <div className="emp">{t('noQuery')}</div>
       )}
     </div>
   );

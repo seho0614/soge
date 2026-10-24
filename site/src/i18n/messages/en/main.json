@@ -1,0 +1,163 @@
+{
+  "hero": {
+    "aiBadge": "SogaeBank AI match",
+    "titleA": "What are you looking for?",
+    "titleB": "<em>SogaeBank AI finds the right referral</em> for you.",
+    "leadA": "People, products, services, startups and local info —",
+    "leadB": "connected faster and smarter, all inside SogaeBank.",
+    "qmAria": "Marketplace shortcuts",
+    "chips": {
+      "c1": "Recommend a family restaurant in Pangyo",
+      "c2": "Any startup ideas for around 10 million won?",
+      "c3": "Which food waste disposer is good these days?",
+      "c4": "I want a referral to a trustworthy tax accountant"
+    }
+  },
+  "promo": {
+    "aria": "SogaeBank highlights",
+    "adLabel": "Ad",
+    "next": "Next slide",
+    "whyMatched": "This ad matches your interests. ",
+    "whyAll": "You have no interest profile yet, so you see general ads. ",
+    "profileChange": "Change profile",
+    "profileAnalyze": "Build profile",
+    "cta": "Browse now",
+    "slides": {
+      "pf": { "tag": "Expert portfolios", "title": "See popular portfolios\nright now", "desc": "Real work and reviews from\nverified experts at a glance!" },
+      "biz": { "tag": "Startups", "title": "Trending startup ideas\nat a glance", "desc": "We gathered the startup listings\npeople are watching" },
+      "health": { "tag": "Sogae Mall", "title": "Compare the products\nyou need", "desc": "Starting with health products,\nwe keep adding more" },
+      "community": { "tag": "Community", "title": "Share your\nstories with us", "desc": "Referral reviews and local stories,\nall in one place" }
+    }
+  },
+  "heroSearch": {
+    "tabsAria": "Search scope",
+    "label": "Ask SogaeBank anything",
+    "submitAria": "Search",
+    "empty": "Tell us what you’d like to be referred to.",
+    "tabs": {
+      "ai": { "t": "AI search", "ph": "e.g. Recommend a Korean restaurant in Pangyo for my parents" },
+      "product": { "t": "Products", "ph": "e.g. Food waste disposer, air purifier" },
+      "service": { "t": "Services", "ph": "e.g. Office interior, moving · cleaning" },
+      "company": { "t": "Businesses", "ph": "e.g. Interior companies near me" },
+      "biz": { "t": "Startups", "ph": "e.g. Startup ideas for around 10 million won" },
+      "town": { "t": "Local info", "ph": "e.g. Recommend a family restaurant in Pangyo" },
+      "pro": { "t": "People/Experts", "ph": "e.g. I want a referral to a trustworthy tax accountant" }
+    }
+  },
+  "sec": {
+    "more": "View all",
+    "soon": "Coming soon",
+    "railNext": "Show more",
+    "today": {
+      "h": "Today on SogaeBank",
+      "hot": "Most searched right now",
+      "go": "See it now"
+    },
+    "needs": {
+      "h": "What kind of referral do you need?",
+      "sub": "Pick what you want, and SogaeBank finds the right information for you.",
+      "aria": "Section shortcuts",
+      "cards": {
+        "HLT": { "t": "I need a product", "d1": "Compare a wide range", "d2": "of products and buy" },
+        "MNY": { "t": "I’m looking for someone", "d1": "We connect you with", "d2": "experts and contacts" },
+        "MAL": { "t": "I need a business", "d1": "Get referred to", "d2": "trustworthy businesses" },
+        "BIZ": { "t": "I’m exploring startups", "d1": "Check out promising", "d2": "startup ideas" },
+        "CMU": { "t": "I’m curious about my area", "d1": "Discover local restaurants", "d2": "and everyday info" }
+      }
+    },
+    "picks": {
+      "h": "Today’s PICK"
+    },
+    "poll": {
+      "h": "What do you think? Share your opinion.",
+      "sub": "Real users’ opinions lead to better choices."
+    },
+    "strip": {
+      "tag": "Autumn makes our neighborhood special",
+      "title": "Discover local <em>restaurants and cafes</em> now!",
+      "go": "Browse now"
+    },
+    "town": {
+      "h": "Around my neighborhood",
+      "sub": "Shown right away based on your location. (If location is allowed)",
+      "noLoc": "Shown once location is connected"
+    },
+    "trust": {
+      "h": "Safe Referral you can trust",
+      "sub": "We refer only experts and businesses verified by headquarters.",
+      "go": "Get referred"
+    },
+    "startup": {
+      "h": "Trending startups",
+      "sub": "Start something new with SogaeBank.",
+      "none": "No startup ideas have been posted yet.",
+      "go": "Go to Startups ›"
+    },
+    "forme": {
+      "h": "Referrals for you",
+      "subIn": "Add your interests to get more accurate recommendations.",
+      "subOut": "Log in to see referrals tailored to your interests and activity.",
+      "notif": "New notifications",
+      "listings": "Active listings",
+      "deals": "Open deals",
+      "profile": "Build profile and get recommendations",
+      "login": "Log in",
+      "signup": "Sign up free"
+    },
+    "core": {
+      "h": "SogaeBank essentials",
+      "items": {
+        "c1": { "t": "Find with AI", "d": "Quickly finds what you need" },
+        "c2": { "t": "Compare in real time", "d": "Lots of information at once" },
+        "c3": { "t": "Get referred safely", "d": "Peace of mind with verified links" },
+        "c4": { "t": "Make good connections", "d": "Connecting people · products · companies" }
+      }
+    }
+  },
+  "poll": {
+    "sending": "Sending…",
+    "vote": "Vote",
+    "opinion": "Leave your opinion",
+    "voted": "You voted",
+    "closed": "Poll closed",
+    "login": "Log in",
+    "vsResult": "{p}% · {n} votes",
+    "kindVs": "Compare",
+    "kindAsk": "Curious",
+    "kindUsed": "Need user opinions",
+    "goList": "See polls",
+    "waitVote": "Voting opens soon",
+    "waitOpinion": "Opinions open soon",
+    "soonVs": {
+      "q": "If you bought a robot vacuum, which would you choose?",
+      "aT": "Suction first",
+      "aD": "Strong suction, even if it costs more",
+      "bT": "Value first",
+      "bD": "Basic features at a lower price"
+    },
+    "soonAsk": {
+      "q": "What do you check first when buying through a referral?",
+      "o1": "Price",
+      "o2": "Reviews from people who used it",
+      "o3": "Trust in the referrer",
+      "o4": "After-sales service (A/S)",
+      "o5": "Brand"
+    },
+    "soonUsed": {
+      "q": "Tell us what you think if you’ve used an air purifier!",
+      "desc": "Filter cost · noise · power bill — we’d love your honest opinion.",
+      "o1": "Using one now",
+      "o2": "Used one before",
+      "o3": "Haven’t tried one yet"
+    }
+  },
+  "weather": {
+    "h": "Today’s weather",
+    "regionAria": "Choose weather region",
+    "minMax": "Low <b>{min}°</b> · High <b>{max}°</b>",
+    "pop": "Rain <b>{v}%</b>",
+    "humidity": "Humidity <b>{v}%</b>",
+    "source": "Provided by {src}",
+    "observed": " · as of {at}"
+  }
+}

@@ -27,6 +27,7 @@
  * v10.29 관 첫 화면에 있다가 **이 디자인으로 바뀌며 빠진 것**: 지역 설정 칸(고른 값을 기억만 하고 목록을 거르지 않던 칸) · 검색줄 옆 띠 그림(스마트팜 견본) ·
  *   아래 안내 6칸 · 왼쪽 「상품 분류」 목록(같은 분류를 「소개상품 찾기」의 고르기 칸에서 고릅니다). 관이 **중지**되면 안내 한 줄만 냅니다.
  */
+import { getTranslations } from 'next-intl/server';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import type { Gwan, ListingCardData, ListingListData } from '@/lib/types';
 import type { AdServe } from '@/components/home/types';
@@ -45,7 +46,9 @@ const AT = '#mny-list';              // 고르면 다시 이 구역으로 옵니
 const at = (p: Record<string, string | undefined | null>) => qhref(BASE, p) + AT;
 
 export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
+  const t = await getTranslations('money');
   const g = GW.MNY;
+  const tg = await getTranslations('gwan.meta.MNY');   // v10.97 — 관 안내 이름도 사전(한국어는 gw.ts 와 같음)
   const region = q.region && /^(\d{10}|ETC)$/.test(q.region) ? q.region : undefined;
   const rq = region && region !== 'ETC' ? `&regionCode=${region}` : '';
   /* 하나가 실패해도 그 칸만 비웁니다 */
@@ -75,8 +78,8 @@ export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
     return (
       <><div className="mny" data-sgb-gwan="money" data-mny-off="1">
         <div className="mny-wrap">
-          <h1 className="mny-sr">{g.name}</h1>
-          <p className="mny-off" role="status"><b>{g.name}</b> 관이 <b>중지</b> 상태입니다. 신규 등록과 신규 문의만 막히고 진행 중인 거래는 그대로 완주합니다. 관을 다시 열면 이 화면이 그대로 돌아옵니다.</p>
+          <h1 className="mny-sr">{tg('name')}</h1>
+          <p className="mny-off" role="status">{t.rich('main.off', { name: tg('name'), b: (c) => <b>{c}</b> })}</p>
         </div>
       </div><i hidden data-root-end="" /></>
     );
@@ -111,8 +114,8 @@ export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
     if (gradeCats) data = { ...data, nextCursor: null };
   }
   const gradeNm = grade ? GRADES.find((x) => x.code === grade)?.nm : undefined;
-  const regionNm = region ? (region === 'ETC' ? '기타 지역' : regions?.all.find((x) => x.code === region)?.name) : undefined;
-  const sel = [regionNm, gradeNm, cat?.name, badge === 'URGENT' ? '급구' : badge === 'VERIFIED_DOC' ? '서류 확인' : undefined, keyword && `「${keyword}」`].filter(Boolean).join(' · ');
+  const regionNm = region ? (region === 'ETC' ? t('main.etcRegion') : regions?.all.find((x) => x.code === region)?.name) : undefined;
+  const sel = [regionNm, gradeNm, cat?.name, badge === 'URGENT' ? t('main.urgent') : badge === 'VERIFIED_DOC' ? t('main.verifiedDoc') : undefined, keyword && t('main.quoted', { kw: keyword })].filter(Boolean).join(' · ');
   const sortHrefs = Object.fromEntries(SORTS.map(([v]) => [v, at({ ...keep, sort: v === 'RECENT' ? undefined : v })]));
   const josa = /[가-힣]$/.test(g.sect) && (g.sect.charCodeAt(g.sect.length - 1) - 0xac00) % 28 ? '이' : '가';
 
@@ -123,16 +126,16 @@ export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
       keywords={kw.items} regions={regions} region={region} suppliers={sup} ai={ai} cases={cases.items}
       band={band && !band.empty && band.id ? band : null} float={float && !float.empty && float.id ? float : null}
       pageCount={data?.pageCount}
-      title={cat ? cat.name : `지금 인기 있는 ${g.sect}`} sel={sel} total={gw?.listingCount ?? 0} josa={josa}
-      grades={GRADES.filter((x) => cats.some((c) => c.gradeCode === x.code)).map((x) => ({ code: x.code, label: x.code === 'G1' ? x.nm : `${x.nm} (가칭)` }))}
+      title={cat ? cat.name : t('main.popular', { sect: tg('sect') })} sel={sel} total={gw?.listingCount ?? 0} josa={josa}
+      grades={GRADES.filter((x) => cats.some((c) => c.gradeCode === x.code)).map((x) => ({ code: x.code, label: x.code === 'G1' ? x.nm : t('main.tentative', { name: x.nm }) }))}
       cats={cats.map((c) => ({ id: c.id, name: c.name, gradeCode: c.gradeCode ?? '' }))}
       grade={grade} cat={cat?.id} badge={badge} sort={sort} page={page}
       bar={[
-        ...(regionNm ? [{ label: regionNm, clear: '✕ 지역 해제', href: at({ ...keep, region: undefined }) }] : []),
-        ...(gradeNm ? [{ label: gradeNm, clear: '✕ 구분 해제', href: at({ ...keep, grade: undefined }) }] : []),
-        ...(cat ? [{ label: cat.name, clear: '✕ 분류 해제', href: at({ ...keep, cat: undefined }) }] : []),
-        ...(badge ? [{ label: badge === 'URGENT' ? '급구' : '서류 확인', clear: '✕ 표시 해제', href: at({ ...keep, badge: undefined }) }] : []),
-        ...(keyword ? [{ label: `「${keyword}」`, clear: '✕ 검색어 해제', href: at({ ...keep, keyword: undefined }) }] : []),
+        ...(regionNm ? [{ label: regionNm, clear: t('main.clearRegion'), href: at({ ...keep, region: undefined }) }] : []),
+        ...(gradeNm ? [{ label: gradeNm, clear: t('main.clearGrade'), href: at({ ...keep, grade: undefined }) }] : []),
+        ...(cat ? [{ label: cat.name, clear: t('main.clearCat'), href: at({ ...keep, cat: undefined }) }] : []),
+        ...(badge ? [{ label: badge === 'URGENT' ? t('main.urgent') : t('main.verifiedDoc'), clear: t('main.clearBadge'), href: at({ ...keep, badge: undefined }) }] : []),
+        ...(keyword ? [{ label: t('main.quoted', { kw: keyword }), clear: t('main.clearKeyword'), href: at({ ...keep, keyword: undefined }) }] : []),
       ]}
       data={data ? { promoted: data.promoted, adNotice: data.adNotice, next: data.nextCursor ? at({ ...keep, cursor: data.nextCursor, p: String(page + 1) }) : null } : null}
       organic={organic} firstHref={at(keep)} sortHrefs={sortHrefs} keep={keep}

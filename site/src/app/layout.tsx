@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import type { FooterLink, Gwan } from '@/lib/types';
+import { GLOBAL_NS, pick } from '@/i18n/messages';
 import { Footer } from '@/components/Footer';
 import { SiteHeader } from '@/components/common/SiteHeader';
 import { B2Tone, BaseFooter, BaseHeader, MainWrap, OnlySkin } from '@/components/Chrome';
@@ -49,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale}>
       {/* v10.31 (w1 · F-11) — 시안 글꼴 Noto Sans KR 은 킷 안의 파일(styles/noto-sans-kr.css · public/fonts/noto-sans-kr)로. 구글 글꼴 서버로 요청하지 않습니다 */}
       <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={pick(messages, GLOBAL_NS)} /* v10.97 — 화면 전용 묶음은 그 화면의 <Msgs> 가 */>
         {/* v10.31 — 시안 .skip 「본문으로 건너뛰기」(키보드 · 화면 읽기) */}
         <a className="skip-main" href="#main">{t('skipToMain')}</a>
         {/* 20261002 (v10.13) — 메인(/)은 제 머리 · 바닥을 따로 그립니다(components/home). 다른 화면은 아래 그대로 */}

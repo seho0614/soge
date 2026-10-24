@@ -36,10 +36,11 @@ export interface SearchBoxProps {
 
 export function SearchBox({
   variant = 'gwan', gwanCode, blue, defaultValue = '',
-  placeholder = '상품, 서비스, 업체, 창업아이템을 검색하세요', catLabel = '전체', aside, className,
+  placeholder, catLabel, aside, className,
 }: SearchBoxProps) {
   const [open, setOpen] = useState(false);
   const h = useTranslations('header');   // v10.95 — 머리줄 돋보기 이름만(관 화면 검색칸은 2-2)
+  const sp = useTranslations('searchPop');   // v10.97 — 관 화면 검색칸(2-2)
   const [seed, setSeed] = useState('');
   const [val, setVal] = useState(defaultValue);
 
@@ -73,10 +74,10 @@ export function SearchBox({
         openWith(q);   /* v10.40 — 결과는 팝업에서(대표 지시 2026-10-14 · 결과 화면으로 가지 않음) */
       }}
     >
-      <span className="sc">{catLabel} ⌄</span>
+      <span className="sc">{catLabel ?? sp('box.cat')} ⌄</span>
       <input
-        className="si" name="q" type="search" autoComplete="off" placeholder={placeholder}
-        aria-label="검색어" role="combobox" aria-autocomplete="list" aria-expanded={open} aria-haspopup="dialog"
+        className="si" name="q" type="search" autoComplete="off" placeholder={placeholder ?? sp('box.placeholder')}
+        aria-label={sp('box.inputLabel')} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-haspopup="dialog"
         value={val}
         onChange={(e) => {
           /* 새어 들어온 글자 — 뒤 칸은 비우고 팝업으로 옮깁니다(시안 그대로) */
@@ -88,7 +89,7 @@ export function SearchBox({
         onFocus={(e) => { if (!open) { e.currentTarget.blur(); openWith(val); } }}
       />
       {gwanCode && <input type="hidden" name="gwanCode" value={gwanCode} />}
-      <button className="sg" type="submit" aria-label="검색">🔍</button>
+      <button className="sg" type="submit" aria-label={sp('box.submit')}>🔍</button>
     </form>
   );
 

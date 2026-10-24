@@ -12,6 +12,7 @@
  */
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { AdServe } from '@/components/home/types';
 
 /* 시안 화면 키 → 실제 경로(HeroPromo 와 같은 표). 서버 소재의 landing_route 는 시안 키(reg 등)이거나 / 로 시작하는 경로입니다. */
@@ -23,6 +24,7 @@ function landing(r: string | null | undefined): string | null {
 }
 
 export function MoneyAd({ ad }: { ad: AdServe }) {
+  const t = useTranslations('money');
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
   const sent = useRef(false);
@@ -53,17 +55,17 @@ export function MoneyAd({ ad }: { ad: AdServe }) {
     /* 목적지가 지금 화면(/money)이면 옮기지 않고 아래 매물 목록으로 내립니다 */
     if (to === '/money') { document.getElementById('mny-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (to) { router.push(to); return; }
-    setMsg(`${ad.advertiser ?? '광고주'} 안내 페이지는 준비 중입니다. 관심을 남겨 두었습니다.`);
+    setMsg(t('ad.preparing', { advertiser: ad.advertiser ?? t('ad.advertiser') }));
   }
 
   return (
-    <div className="mny-ad is-text" ref={box} data-adbox="GHERO" data-ad-code={ad.code ?? ''} role="complementary" aria-label={`광고 — ${ad.advertiser ?? ''}`}>
-      <span className="mny-ad-tag">{ad.label ?? '광고'}</span>
+    <div className="mny-ad is-text" ref={box} data-adbox="GHERO" data-ad-code={ad.code ?? ''} role="complementary" aria-label={t('ad.aria', { advertiser: ad.advertiser ?? '' })}>
+      <span className="mny-ad-tag">{ad.label ?? t('ad.tag')}</span>
       <span className="mny-ad-adv">{ad.advertiser}</span>
       <h2>{ad.title}</h2>
       {ad.body && <p>{ad.body}</p>}
       <button type="button" className="mny-ad-cta" onClick={onCta} disabled={busy}>
-        {ad.cta ?? '자세히 보기'}
+        {ad.cta ?? t('ad.more')}
         <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M1 5h12M9 1l4 4-4 4" /></svg>
       </button>
       {msg && <p className="mny-ad-msg" role="status">{msg}</p>}

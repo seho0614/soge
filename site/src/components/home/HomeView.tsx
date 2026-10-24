@@ -17,6 +17,7 @@
  * 연도처럼 서버와 브라우저에서 달라질 수 있는 값은 page.tsx 가 정해서 넘깁니다(year).
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { FooterLink, Gwan } from '@/lib/types';
 import type { HomeContent } from './content';
 import type { AdServe, MeSummary, WeatherToday } from './types';
@@ -52,6 +53,8 @@ export interface HomeViewProps {
 }
 
 export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather }: HomeViewProps) {
+  const t = useTranslations('main');
+  const tq = useTranslations('gwan.qm');
   const on = (code: string) => live.includes(code);
   return (
     <div className="home" data-content={c.mode}>
@@ -61,9 +64,9 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
         <div className="home-in">
           <div className="home-heroin">
             <div className="home-herol">
-              <span className="home-aibdg"><Pic name="spark-s" h={19} /> 소뱅AI 연결</span>
-              <h1 id="home-h1">무엇을 찾고 계세요?<br /><em>소뱅AI가 딱 맞는 소개</em>를 이어드려요.</h1>
-              <p className="home-lead">사람, 상품, 서비스, 창업, 동네정보까지{' '}<br />소개뱅크 안에서 더 빠르고 똑똑하게 연결해드려요.</p>
+              <span className="home-aibdg"><Pic name="spark-s" h={19} /> {t('hero.aiBadge')}</span>
+              <h1 id="home-h1">{t('hero.titleA')}<br />{t.rich('hero.titleB', { em: (x) => <em>{x}</em> })}</h1>
+              <p className="home-lead">{t('hero.leadA')}{' '}<br />{t('hero.leadB')}</p>
               <HeroSearch live={live} />
             </div>
             <HeroPromo ad={ad} slides={slides} start={start} />
@@ -79,9 +82,9 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
           </div>
           {/* v10.50 (docs/102) — 소개장터 퀵메뉴 5칸(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존)을 히어로 검색칩 아래에도. 소개장터 관이 꺼져 있으면 숨김 */}
           {on('MNY') && (
-            <nav className="home-qm" aria-label="소개장터 바로가기">
+            <nav className="home-qm" aria-label={t('hero.qmAria')}>
               {QM.map((q) => (
-                <Link key={q.key} href={q.href} data-qm={q.key}><span className="home-qe" aria-hidden="true">{q.em}</span>{q.label}</Link>
+                <Link key={q.key} href={q.href} data-qm={q.key}><span className="home-qe" aria-hidden="true">{q.em}</span>{tq(q.key)}</Link>
               ))}
             </nav>
           )}

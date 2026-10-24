@@ -19,6 +19,7 @@
  * 자바스크립트가 없으면 폼 GET 으로 그 탭의 결과 화면에 갑니다. 빈 검색어만 여기서 막습니다(시안 toast 문구).
  */
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SCOPES, SearchPopup, type SearchScope } from '@/components/search/SearchPopup';
 import { Line, Pic } from './Icons';
 
@@ -27,19 +28,20 @@ const HERO_INPUT_ID = 'home-q';
 /** 히어로 아래 추천 칩이 팝업을 여는 신호 (HomeView) */
 export const HERO_SEARCH_EVENT = 'sgb:hero-search';
 
-interface Tab { k: SearchScope; t: string; action: string; gwan?: string; tab?: string; ph: string }
-/* 시안 MHX_TABS 의 글자 그대로 */
+/* 탭 이름(t) · 예시 글(ph)은 사전 main.heroSearch.tabs.<k> — 시안 MHX_TABS 의 글자 그대로 */
+interface Tab { k: SearchScope; action: string; gwan?: string; tab?: string }
 const TABS: Tab[] = [
-  { k: 'ai', t: 'AI 검색', action: '/search', ph: '예) 판교에서 부모님 모실만한 한식당 추천해줘' },
-  { k: 'product', t: '상품', action: '/health/search', gwan: 'HLT', ph: '예) 음식물처리기, 공기청정기' },
-  { k: 'service', t: '서비스', action: '/search', gwan: 'MNY', ph: '예) 사무실 인테리어, 이사 · 청소' },
-  { k: 'company', t: '업체', action: '/search', gwan: 'MAL', ph: '예) 우리동네 인테리어 업체' },
-  { k: 'biz', t: '창업', action: '/search', gwan: 'BIZ', ph: '예) 1천만원대로 시작할 창업 아이템' },
-  { k: 'town', t: '동네정보', action: '/search', tab: 'CMU', ph: '예) 판교 가족식당 추천해줘' },
-  { k: 'pro', t: '사람/전문가', action: '/search', gwan: 'MAL', ph: '예) 믿을 만한 세무사 소개받고 싶어' },
+  { k: 'ai', action: '/search' },
+  { k: 'product', action: '/health/search', gwan: 'HLT' },
+  { k: 'service', action: '/search', gwan: 'MNY' },
+  { k: 'company', action: '/search', gwan: 'MAL' },
+  { k: 'biz', action: '/search', gwan: 'BIZ' },
+  { k: 'town', action: '/search', tab: 'CMU' },
+  { k: 'pro', action: '/search', gwan: 'MAL' },
 ];
 
 export function HeroSearch({ live }: { live: string[] }) {
+  const tr = useTranslations('main');
   const tabs = TABS.filter((t) => !t.gwan || live.includes(t.gwan));
   const [tab, setTab] = useState<SearchScope>('ai');
   const [msg, setMsg] = useState('');
@@ -67,10 +69,10 @@ export function HeroSearch({ live }: { live: string[] }) {
 
   return (
     <div className="home-search">
-      <div className="home-stabs" role="tablist" aria-label="검색 범위">
+      <div className="home-stabs" role="tablist" aria-label={tr('heroSearch.tabsAria')}>
         {tabs.map((t) => (
           <button key={t.k} type="button" role="tab" aria-selected={t.k === cur.k} data-stab={t.k}
-            className={`home-stab${t.k === cur.k ? ' on' : ''}`} onClick={() => { setTab(t.k); setMsg(''); }}>{t.t}</button>
+            className={`home-stab${t.k === cur.k ? ' on' : ''}`} onClick={() => { setTab(t.k); setMsg(''); }}>{tr(`heroSearch.tabs.${t.k}.t`)}</button>
         ))}
       </div>
       <form className="home-sb" role="search" action={cur.action} method="get" data-scope={cur.k} noValidate
@@ -79,14 +81,14 @@ export function HeroSearch({ live }: { live: string[] }) {
           const v = el?.value.trim() ?? '';
           e.preventDefault();
           /* 시안: 빈 칸 제출 → 「무엇을 소개받고 싶은지 적어 주세요.」 · 말이 있으면(자바스크립트 이전에 친 글자) 그 범위 결과로 */
-          if (!v) { setMsg('무엇을 소개받고 싶은지 적어 주세요.'); return; }
+          if (!v) { setMsg(tr('heroSearch.empty')); return; }
           window.location.assign(SCOPES[cur.k].href(v));
         }}>
         <div className="home-sbin">
           <span className="home-spark" aria-hidden="true"><Pic name="spark" h={34} /></span>
           <span className="home-sbtx">
-            <label className="home-sblab" htmlFor={HERO_INPUT_ID}>소개뱅크에서 무엇이든 물어보세요</label>
-            <input id={HERO_INPUT_ID} className="si" name="q" type="search" autoComplete="off" placeholder={cur.ph}
+            <label className="home-sblab" htmlFor={HERO_INPUT_ID}>{tr('heroSearch.label')}</label>
+            <input id={HERO_INPUT_ID} className="si" name="q" type="search" autoComplete="off" placeholder={tr(`heroSearch.tabs.${cur.k}.ph`)}
               role="combobox" aria-autocomplete="list" aria-expanded={open} aria-haspopup="dialog"
               defaultValue=""
               /* 시안 SPOP 의 세 길 — mousedown(초점이 옮겨가기 전에) · focus(Tab) · input(새어 들어온 글자는 팝업으로) */
@@ -101,7 +103,7 @@ export function HeroSearch({ live }: { live: string[] }) {
           {/* 자바스크립트가 없을 때의 폼 GET — 그 탭의 결과 화면 */}
           {cur.gwan && cur.action === '/search' && <input type="hidden" name="gwanCode" value={cur.gwan} />}
           {cur.tab && <input type="hidden" name="tab" value={cur.tab} />}
-          <button type="submit" className="home-go" aria-label="검색"><Line name="search" size={24} w={2.6} /></button>
+          <button type="submit" className="home-go" aria-label={tr('heroSearch.submitAria')}><Line name="search" size={24} w={2.6} /></button>
         </div>
       </form>
       {msg && <p className="home-sbmsg" role="alert">{msg}</p>}
