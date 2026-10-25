@@ -50,6 +50,10 @@ import { TranslateService } from './modules/i18n/translate.service';
 import { BoardTranslateService } from './modules/i18n/board-translate.service';
 import { AgentController } from './modules/agent/agent.controller';
 import { AgentService } from './modules/agent/agent.service';
+import { PartnerServiceFormService } from './modules/partner/partner-service-form.service';
+import { PartnerCompanyService } from './modules/partner/partner-company.service';
+import { ConversationService } from './modules/deal/conversation.service';
+import { AffiliateAccountService } from './modules/affiliate/affiliate-account.service';
 import { ReviewShadowService } from './modules/agent/review-shadow.service';
 import { DealContractService } from './modules/deal/deal-contract.service';
 
@@ -297,7 +301,8 @@ import { LeadService } from './modules/lead/lead.service';
     AiService,
     IntroducerService,
     MainService,
-    PartnerService, PartnerCenterService, PartnerCenterAdminService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
+    PartnerService, PartnerCenterService, PartnerServiceFormService, PartnerCompanyService,   // v10.108
+    PartnerCenterAdminService, LeadCashService, PartnerActorService,   // v10.39 — 내 파트너 · 신청 줄 찾기 한 곳
     PartnerLeadService, PartnerMoneyService,   // v10.86 — 파트너 리드 · 이용료를 나눔
     PartnerAdminService,                                                          // v10.45 — 파트너 운영(adm*)을 나눔
     QualificationService,
@@ -313,7 +318,7 @@ import { LeadService } from './modules/lead/lead.service';
     ReviewService, ReviewRepository,
     ListingService, ListingRepository, FavoriteService,
     RequestService,
-    DealService, DealContractService,   // v10.92
+    DealService, DealContractService, ConversationService,   // v10.92 · v10.108
     I18nService,   // v10.93
     TranslateService,   // v10.104 등록 글 자동 번역(D118)
     BoardTranslateService,   // v10.105 소개광장 볼 때 번역(D119)
@@ -329,7 +334,7 @@ import { LeadService } from './modules/lead/lead.service';
     RiskLearnService,
     SearchAdminService,
     PayoutService,
-    AffiliateService, AffiliateAdminService,   // v10.92
+    AffiliateService, AffiliateAdminService, AffiliateAccountService,   // v10.92 · v10.108
     SearchService,
     PublicService,
     SiteService,

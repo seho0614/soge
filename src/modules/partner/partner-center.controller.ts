@@ -8,6 +8,8 @@ import { Audit } from '../../core/audit.interceptor';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { LeadCashService } from './lead-cash.service';
 import { PartnerCenterService } from './partner-center.service';
+import { PartnerServiceFormService } from './partner-service-form.service';
+import { PartnerCompanyService } from './partner-company.service';
 import { PartnerCenterAdminService } from './partner-center-admin.service';
 
 /* ── DTO ─────────────────────────────────────────────────────────────── */
@@ -128,7 +130,8 @@ export class PartnerCenterOkDto { @ApiPropertyOptional() ok?: boolean; @ApiPrope
 @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN', 'SUPER')
 @ApiResponse({ status: 409, description: 'NOT_PARTNER', type: ErrorDto })
 export class PartnerCenterController {
-  constructor(private readonly cash: LeadCashService, private readonly svc: PartnerCenterService) {}
+  constructor(private readonly cash: LeadCashService, private readonly svc: PartnerCenterService,
+              private readonly forms: PartnerServiceFormService, private readonly companySvc: PartnerCompanyService) {}   // v10.108 — 내 서비스 · 회사 계정은 따로(docs/168)
 
   /* ── 리드 이용료(선불) ── */
   @Get('cash')
@@ -178,40 +181,40 @@ export class PartnerCenterController {
   /* ── 내 서비스 ── */
   @Get('service-forms')
   @ApiOperation({ summary: '서비스 등록 위자드 정의 (SB-PTC-CTR-210)', description: '업종 → 등록 방식 · 단계 · 매트릭스 축 · 기준 단가 · 등급 비율' })
-  serviceForms() { return this.svc.serviceForms(); }
+  serviceForms() { return this.forms.serviceForms(); }
 
   @Get('services/:id')
   @ApiOperation({ summary: '서비스 상세 (SB-PTC-CTR-201)', description: '요약 · 상세페이지 블록 · 견적 매트릭스 · 처리 이력 · 받은 리드' })
   @ApiParam({ name: 'id' })
-  serviceDetail(@Param('id') id: string) { return this.svc.serviceDetail(id); }
+  serviceDetail(@Param('id') id: string) { return this.forms.serviceDetail(id); }
 
   @Patch('services/:id')
   @ApiOperation({ summary: '서비스 수정', description: '내용이 바뀌면 재검수(검수중으로 내려가고 그동안 리드가 오지 않음). 확인비용 · 소개비만 바꾸면 노출 그대로.' })
   @ApiParam({ name: 'id' })
   @Audit('PARTNER_SERVICE_EDIT', 'PARTNER')
-  updateService(@Param('id') id: string, @Body() dto: ServiceUpdateDto) { return this.svc.updateService(id, dto); }
+  updateService(@Param('id') id: string, @Body() dto: ServiceUpdateDto) { return this.forms.updateService(id, dto); }
 
   @Post('services/:id/suspend')
   @ApiOperation({ summary: '노출 중단', description: '신규 리드만 막히고 진행 중 상담은 그대로 갑니다.' })
   @ApiParam({ name: 'id' })
   @Audit('PARTNER_SERVICE_SUSPEND', 'PARTNER')
-  suspend(@Param('id') id: string) { return this.svc.suspendService(id); }
+  suspend(@Param('id') id: string) { return this.forms.suspendService(id); }
 
   @Post('services/:id/resume')
   @ApiOperation({ summary: '노출 재개', description: '내가 멈춘 서비스만(운영이 멈춘 건은 운영이 풉니다).' })
   @ApiParam({ name: 'id' })
   @Audit('PARTNER_SERVICE_RESUME', 'PARTNER')
-  resume(@Param('id') id: string) { return this.svc.resumeService(id); }
+  resume(@Param('id') id: string) { return this.forms.resumeService(id); }
 
   @Put('services/:id/blocks/:kind')
   @ApiOperation({ summary: '상세페이지 블록 저장', description: 'HERO_IMAGE · INTRO · PRICE · CASES · FAQ · LOCATION. 내용이 비면 블록을 지웁니다.' })
   @ApiParam({ name: 'id' }) @ApiParam({ name: 'kind' })
-  putBlock(@Param('id') id: string, @Param('kind') kind: string, @Body() dto: BlockDto) { return this.svc.putBlock(id, kind, dto); }
+  putBlock(@Param('id') id: string, @Param('kind') kind: string, @Body() dto: BlockDto) { return this.forms.putBlock(id, kind, dto); }
 
   @Put('services/:id/matrix')
   @ApiOperation({ summary: '견적 매트릭스 저장', description: '칸 전체를 한 번에. 구간은 업종 마스터(category_matrix_axes)에 있는 것만.' })
   @ApiParam({ name: 'id' })
-  putMatrix(@Param('id') id: string, @Body() dto: MatrixDto) { return this.svc.putMatrix(id, dto.cells); }
+  putMatrix(@Param('id') id: string, @Body() dto: MatrixDto) { return this.forms.putMatrix(id, dto.cells); }
 
   /* ── 성과 관리 ── */
   @Get('performance')
@@ -227,46 +230,46 @@ export class PartnerCenterController {
   /* ── 회사 · 계정 ── */
   @Get('company')
   @ApiOperation({ summary: '회사 · 계정 (SB-PTC-CTR-610)', description: '사업자 정보 · 변경 요청 · 계정(대표 · 직원) · 약관 · 동의 · 회사 관리(브랜드 · 소재)' })
-  company() { return this.svc.company(); }
+  company() { return this.companySvc.company(); }
 
   @Post('company/change-requests')
   @ApiOperation({ summary: '사업자 정보 변경 요청', description: '대표 계정만. 승인은 본사.' })
   @Audit('BIZ_CHANGE_REQUEST', 'BUSINESS')
-  requestChange(@Body() dto: ChangeRequestDto) { return this.svc.requestChange(dto); }
+  requestChange(@Body() dto: ChangeRequestDto) { return this.companySvc.requestChange(dto); }
 
   @Post('company/staff')
   @ApiOperation({ summary: '직원 초대', description: '대표 계정만 · 이미 가입한 회원의 이메일' })
   @Audit('PARTNER_STAFF_INVITE', 'BUSINESS')
-  inviteStaff(@Body() dto: StaffInviteDto) { return this.svc.inviteStaff(dto); }
+  inviteStaff(@Body() dto: StaffInviteDto) { return this.companySvc.inviteStaff(dto); }
 
   @Delete('company/staff/:accountId')
   @ApiOperation({ summary: '직원 빼기' })
   @ApiParam({ name: 'accountId' })
   @Audit('PARTNER_STAFF_REMOVE', 'BUSINESS')
-  removeStaff(@Param('accountId') accountId: string) { return this.svc.removeStaff(accountId); }
+  removeStaff(@Param('accountId') accountId: string) { return this.companySvc.removeStaff(accountId); }
 
   @Get('staff/invitations')
   @ApiOperation({ summary: '내가 받은 직원 초대' })
-  myInvites() { return this.svc.myInvites(); }
+  myInvites() { return this.companySvc.myInvites(); }
 
   @Post('staff/invitations/:businessId/accept')
   @ApiOperation({ summary: '직원 초대 받아들이기' })
   @ApiParam({ name: 'businessId' })
   @Audit('PARTNER_STAFF_JOIN', 'BUSINESS')
-  acceptInvite(@Param('businessId') businessId: string) { return this.svc.acceptInvite(businessId); }
+  acceptInvite(@Param('businessId') businessId: string) { return this.companySvc.acceptInvite(businessId); }
 
   @Put('company/brand')
   @ApiOperation({ summary: '회사 관리 — 브랜드명 · 소개 · 로고' })
-  putBrand(@Body() dto: BrandDto) { return this.svc.putBrand(dto); }
+  putBrand(@Body() dto: BrandDto) { return this.companySvc.putBrand(dto); }
 
   @Post('company/sites')
   @ApiOperation({ summary: '회사 관리 — 소재 추가(시 · 군 · 구까지)' })
-  addSite(@Body() dto: SiteDto) { return this.svc.addSite(dto); }
+  addSite(@Body() dto: SiteDto) { return this.companySvc.addSite(dto); }
 
   @Delete('company/sites/:id')
   @ApiOperation({ summary: '회사 관리 — 소재 빼기' })
   @ApiParam({ name: 'id' })
-  removeSite(@Param('id') id: string) { return this.svc.removeSite(id); }
+  removeSite(@Param('id') id: string) { return this.companySvc.removeSite(id); }
 
   /* ── 전용 트랙 ── */
   @Get('tracks')

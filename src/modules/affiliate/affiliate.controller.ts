@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Headers, Ip, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AffiliateService } from './affiliate.service';
+import { AffiliateAccountService } from './affiliate-account.service';
 import { AffiliateAdminService } from './affiliate-admin.service';
 import {
   CreateLinkDto, CreateProductDto, UpdateProductDto, SetGoalDto,
@@ -29,7 +30,8 @@ import { Audit } from '../../core/audit.interceptor';
 @ApiBearerAuth()
 @Controller('api/v1')
 export class AffiliateController {
-  constructor(private readonly svc: AffiliateService, private readonly admin: AffiliateAdminService) {}   // v10.92 — 운영 화면은 AffiliateAdminService
+  constructor(private readonly svc: AffiliateService, private readonly admin: AffiliateAdminService,
+              private readonly account: AffiliateAccountService) {}   // v10.108 — 정산 계좌 · 1원 인증은 AffiliateAccountService(docs/168)   // v10.92 — 운영 화면은 AffiliateAdminService
 
   /* ── 파트너 ───────────────────────────────────────────────── */
 
@@ -90,7 +92,7 @@ export class AffiliateController {
     description: '**본인인증 후에만** 등록됩니다. 번호는 암호화해 두고 뒤 4자리만 보여 드립니다.',
   })
   @Audit('PARTNER_ACCOUNT_SET', 'PARTNER')
-  setAccount(@Body() dto: AffiliatePayoutAccountDto) { return this.svc.setAccount(dto); }
+  setAccount(@Body() dto: AffiliatePayoutAccountDto) { return this.account.setAccount(dto); }
 
   /* ── 정산 계좌 1원 인증 (D001) ──────────────────────────────────
    * 계좌를 등록·변경하면 인증이 풀립니다. 전에는 다시 인증할 길이 없어
@@ -113,7 +115,7 @@ export class AffiliateController {
     expiresAt: { type: 'string', format: 'date-time' }, triesLeft: { type: 'integer' },
     devCode: { type: 'string', description: '스텁일 때만' }, note: { type: 'string' } } } })
   @Audit('PARTNER_ACCOUNT_VERIFY_SEND', 'PARTNER')
-  requestVerify() { return this.svc.requestVerify(); }
+  requestVerify() { return this.account.requestVerify(); }
 
   @Post('partner/affiliate/settlement-account/verify')
   @Roles('MEMBER', 'BIZ_OWNER')
@@ -130,7 +132,7 @@ export class AffiliateController {
     ok: { type: 'boolean' }, verified: { type: 'boolean' }, verifiedAt: { type: 'string', format: 'date-time' },
     bankName: { type: 'string' }, last4: { type: 'string' }, stub: { type: 'boolean' }, note: { type: 'string' } } } })
   @Audit('PARTNER_ACCOUNT_VERIFY', 'PARTNER')
-  confirmVerify(@Body() dto: VerifySettlementAccountDto) { return this.svc.confirmVerify(dto.code); }
+  confirmVerify(@Body() dto: VerifySettlementAccountDto) { return this.account.confirmVerify(dto.code); }
 
   @Get('partner/affiliate/products')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')

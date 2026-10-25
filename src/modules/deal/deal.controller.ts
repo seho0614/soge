@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DealService } from './deal.service';
+import { ConversationService } from './conversation.service';
 import { DealContractService } from './deal-contract.service';
 import {
   ContractDto, ConversationDto, DealDto, FeeAgreementDto, IssueContractDto,
@@ -18,7 +19,8 @@ import { Audit } from '../../core/audit.interceptor';
 @ApiResponse({ status: 403, description: '권한 없음 · 게이트 미충족', type: ErrorDto })
 @Controller('api/v1')
 export class DealController {
-  constructor(private readonly service: DealService, private readonly contracts: DealContractService) {}   // v10.92 — 계약서는 DealContractService
+  constructor(private readonly service: DealService, private readonly contracts: DealContractService,
+              private readonly convs: ConversationService) {}   // v10.108 — 문의 대화는 ConversationService(docs/168)   // v10.92 — 계약서는 DealContractService
 
   @Post('conversations')
   /* 개인회원도 문의는 할 수 있습니다(결정 ⑤).
@@ -39,7 +41,7 @@ export class DealController {
   })
   @ApiResponse({ status: 422, description: 'OWN_TARGET — 본인 게시물', type: ErrorDto })
   @Audit('CONVERSATION_START', 'CONVERSATION')
-  start(@Body() dto: StartConversationDto) { return this.service.startConversation(dto); }
+  start(@Body() dto: StartConversationDto) { return this.convs.startConversation(dto); }
 
   @Get('conversations/:id/messages')
   @Roles('MEMBER','BIZ_OWNER','BIZ_STAFF')
@@ -47,7 +49,7 @@ export class DealController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: MessageDto, isArray: true })
   messages(@Param('id') id: string, @Query('limit') limit?: number) {
-    return this.service.messages(id, limit);
+    return this.convs.messages(id, limit);
   }
 
   @Post('conversations/:id/messages')
@@ -56,7 +58,7 @@ export class DealController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: MessageDto })
   send(@Param('id') id: string, @Body() dto: SendMessageDto) {
-    return this.service.send(id, dto);
+    return this.convs.send(id, dto);
   }
 
   @Post('conversations/:id/deal')
