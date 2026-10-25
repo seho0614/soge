@@ -2,7 +2,8 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BOARD, WRITABLE, type ClassifyResult } from './types';
+import { useTranslations } from 'next-intl';
+import { WRITABLE, isBoard, type ClassifyResult } from './types';
 
 interface Deal { id: string; title: string; statusLabel: string }
 
@@ -23,6 +24,7 @@ export function PostEditor({ edit, deals }: {
   edit?: { id: string; title: string; body: string; board: string };
   deals: Deal[];
 }) {
+  const tr = useTranslations('plaza');
   const router = useRouter();
   const [pending, start] = useTransition();
   const [title, setTitle] = useState(edit?.title ?? '');
@@ -34,7 +36,7 @@ export function PostEditor({ edit, deals }: {
   const [err, setErr] = useState<string | null>(null);
 
   async function classify() {
-    if (title.trim().length < 1) { setErr('제목을 먼저 쓰십시오.'); return; }
+    if (title.trim().length < 1) { setErr(tr('editor.titleFirst')); return; }
     setErr(null); setGuessing(true);
     try {
       const r = await fetch('/api/v1/community/classify', {
@@ -42,7 +44,7 @@ export function PostEditor({ edit, deals }: {
         body: JSON.stringify({ title: title.trim().slice(0, 100), body: body.slice(0, 10000) }),
       });
       const d = await r.json().catch(() => null) as (ClassifyResult & { message?: string }) | null;
-      if (!r.ok || !d) { setErr(d?.message ?? '게시판을 추천하지 못했습니다. 직접 골라 주십시오.'); return; }
+      if (!r.ok || !d) { setErr(d?.message ?? tr('editor.classifyFail')); return; }
       setGuess(d);
       /* 뚜렷할 때만 미리 골라 둡니다 — 공지는 회원이 쓸 수 없어 고르지 않습니다 */
       if (d.confident && d.board && (WRITABLE as readonly string[]).includes(d.board) && !board) setBoard(d.board);
@@ -53,10 +55,10 @@ export function PostEditor({ edit, deals }: {
     e.preventDefault();
     setErr(null);
     const t = title.trim(); const b = body.trim();
-    if (t.length < 2) { setErr('제목을 두 글자 이상 쓰십시오.'); return; }
-    if (b.length < 10) { setErr('내용을 열 자 이상 쓰십시오.'); return; }
-    if (!board) { setErr('게시판을 고르십시오 — 내용을 다 쓰시면 읽고 골라 드립니다.'); return; }
-    if (!edit && board === 'REVIEW' && !dealId) { setErr('소개 후기는 성사된 거래를 고르셔야 쓸 수 있습니다.'); return; }
+    if (t.length < 2) { setErr(tr('editor.titleShort')); return; }
+    if (b.length < 10) { setErr(tr('editor.bodyShort')); return; }
+    if (!board) { setErr(tr('editor.boardNeeded')); return; }
+    if (!edit && board === 'REVIEW' && !dealId) { setErr(tr('editor.dealNeeded')); return; }
 
     start(async () => {
       const url = edit ? `/api/v1/me/community/posts/${edit.id}` : '/api/v1/me/community/posts';
@@ -73,11 +75,11 @@ export function PostEditor({ edit, deals }: {
       if (r.status === 401) { router.push('/login'); return; }
       if (!r.ok) {
         setErr(d?.code === 'VALIDATION_ERROR'
-          ? '입력한 내용을 확인해 주십시오. 제목 2~100자, 내용 10자 이상입니다.'
-          : d?.message ?? '올리지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+          ? tr('editor.invalid')
+          : d?.message ?? tr('editor.postFail'));
         return;
       }
-      if (d?.ok === false) { setErr(d.note ?? '저장하지 못했습니다.'); return; }
+      if (d?.ok === false) { setErr(d.note ?? tr('editor.saveFail')); return; }
       const id = edit?.id ?? d?.id;
       router.push(id ? `/community/${id}${edit ? '?saved=1' : `?posted=${d?.state ?? ''}`}` : '/community');
       router.refresh();
@@ -86,11 +88,11 @@ export function PostEditor({ edit, deals }: {
 
   function remove() {
     if (!edit) return;
-    if (!window.confirm('이 글을 지우시겠습니까? 달린 댓글은 남습니다.')) return;
+    if (!window.confirm(tr('post.confirmDelete'))) return;
     start(async () => {
       const r = await fetch(`/api/v1/me/community/posts/${edit.id}`, { method: 'DELETE' });
       const d = await r.json().catch(() => null) as { ok?: boolean; note?: string; message?: string } | null;
-      if (!r.ok || d?.ok === false) { setErr(d?.note ?? d?.message ?? '지우지 못했습니다.'); return; }
+      if (!r.ok || d?.ok === false) { setErr(d?.note ?? d?.message ?? tr('post.deleteFail')); return; }
       router.push('/community?deleted=1');
       router.refresh();
     });
@@ -99,13 +101,13 @@ export function PostEditor({ edit, deals }: {
   return (
     <form className="cmu-editor" onSubmit={submit}>
       <div className="card p2pad p2form">
-        <label className="fld"><span>제목</span>
+        <label className="fld"><span>{tr('editor.title')}</span>
           <input className="inp" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100}
-            placeholder="예: 소개비 세금계산서는 누가 끊나요" />
+            placeholder={tr('editor.titlePh')} />
         </label>
-        <label className="fld"><span>내용</span>
+        <label className="fld"><span>{tr('editor.body')}</span>
           <textarea className="inp" rows={8} value={body} onChange={(e) => setBody(e.target.value)} maxLength={10000}
-            placeholder="열 자 이상 쓰십시오." onBlur={() => { if (title.trim() && body.trim().length >= 10) void classify(); }} />
+            placeholder={tr('editor.bodyPh')} onBlur={() => { if (title.trim() && body.trim().length >= 10) void classify(); }} />
         </label>
       </div>
 
@@ -114,30 +116,30 @@ export function PostEditor({ edit, deals }: {
       {/* v10.47 — 우리동네 맛집 글을 고칠 때는 게시판을 고르지 않습니다(맛집 글 그대로) */}
       {edit?.board !== 'FOOD' && (
       <div className="card p2pad" data-board-pick="">
-        <div className="p2sechd"><h2><span aria-hidden="true">✨ </span>게시판</h2>{guessing && <span className="dim">읽는 중…</span>}</div>
-        <div className="dim" style={{ marginTop: 6, fontSize: 13 }}>내용을 보고 고릅니다. 맞지 않으면 직접 고르십시오.</div>
+        <div className="p2sechd"><h2><span aria-hidden="true">✨ </span>{tr('editor.board')}</h2>{guessing && <span className="dim">{tr('editor.reading')}</span>}</div>
+        <div className="dim" style={{ marginTop: 6, fontSize: 13 }}>{tr('editor.boardHint')}</div>
         {guess && (
           <div className="cmu-guess">
-            <p><b>이렇게 읽었습니다</b> — {guess.board ? <>게시판 <b>{BOARD[guess.board] ?? guess.board}</b></> : '게시판을 정하지 못했습니다'}</p>
+            <p><b>{tr('editor.readAs')}</b> — {guess.board ? <>{tr('editor.boardIs')} <b>{isBoard(guess.board) ? tr(`board.${guess.board}`) : guess.board}</b></> : tr('editor.noBoard')}</p>
             {guess.matched.length > 0 && (
               <p className="cmu-chips">{guess.matched.map((m) => <span key={m} className="badge badge-verified_doc">{m}</span>)}</p>
             )}
-            <p className="dim">{guess.note ?? '맞지 않으면 직접 고르십시오.'}</p>
+            <p className="dim">{guess.note ?? tr('editor.pickYourself')}</p>
           </div>
         )}
-        <div className="cmu-opts" role="radiogroup" aria-label="게시판">
+        <div className="cmu-opts" role="radiogroup" aria-label={tr('editor.board')}>
           {WRITABLE.map((b) => (
             <button key={b} type="button" role="radio" aria-checked={board === b} aria-pressed={board === b}
-              className={'cmu-opt' + (board === b ? ' on' : '')} data-board={b} onClick={() => setBoard(b)}>{BOARD[b]}</button>
+              className={'cmu-opt' + (board === b ? ' on' : '')} data-board={b} onClick={() => setBoard(b)}>{tr(`board.${b}`)}</button>
           ))}
         </div>
         {!edit && board === 'REVIEW' && (
-          <label className="fld cmu-deal"><span>후기를 쓸 거래</span>
+          <label className="fld cmu-deal"><span>{tr('editor.deal')}</span>
             <select value={dealId} onChange={(e) => setDealId(e.target.value)}>
-              <option value="">성사된 거래를 고르십시오</option>
+              <option value="">{tr('editor.dealPick')}</option>
               {deals.map((d) => <option key={d.id} value={d.id}>{d.title} · {d.statusLabel}</option>)}
             </select>
-            {deals.length === 0 && <em>성사된 거래가 없어 소개 후기는 아직 쓰실 수 없습니다.</em>}
+            {deals.length === 0 && <em>{tr('editor.noDeal')}</em>}
           </label>
         )}
       </div>
@@ -145,16 +147,15 @@ export function PostEditor({ edit, deals }: {
 
       {!edit && (
         <div className="notice warn">
-          <b>첫 글은 확인 후 올라갑니다.</b> 보통 하루 안에 끝나고, 두 번째부터는 바로 올라갑니다.<br />
-          가입 7일이 안 되셨으면 <b>링크를 넣으실 수 없습니다.</b> 하루에 5개까지 쓰실 수 있습니다.
+          {tr.rich('editor.firstNote', { b: (c) => <b>{c}</b>, br: () => <br /> })}
         </div>
       )}
-      {!edit && <div className="notice info"><b>소개 후기</b>는 성사된 거래를 고르셔야 쓸 수 있습니다.</div>}
+      {!edit && <div className="notice info">{tr.rich('editor.reviewNote', { b: (c) => <b>{c}</b> })}</div>}
       {err && <p className="form-error" role="alert">{err}</p>}
       <div className="p2act">
-        <button className="btn-sm p2primary" disabled={pending}>{pending ? '저장 중…' : edit ? '수정 저장' : '올리기'}</button>
-        <Link className="btn-sm" href={edit ? `/community/${edit.id}` : '/community'}>취소</Link>
-        {edit && <button type="button" className="btn-sm" onClick={remove} disabled={pending}>삭제</button>}
+        <button className="btn-sm p2primary" disabled={pending}>{pending ? tr('editor.saving') : edit ? tr('editor.saveEdit') : tr('editor.submit')}</button>
+        <Link className="btn-sm" href={edit ? `/community/${edit.id}` : '/community'}>{tr('editor.cancel')}</Link>
+        {edit && <button type="button" className="btn-sm" onClick={remove} disabled={pending}>{tr('post.delete')}</button>}
       </div>
     </form>
   );

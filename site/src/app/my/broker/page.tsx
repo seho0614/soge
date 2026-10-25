@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BrokerApply } from '@/components/BrokerApply';
 import { BackBar } from '@/components/common/BackBar';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.broker'))('title') };
@@ -70,7 +71,7 @@ export default async function BrokerPage() {
         {!p.identityVerifiedAt && !p.businessVerifiedAt ? (
           <div className="gw-nt gw-warn"><b>{t('needId')}</b> <Link href="/verify">{t('goVerify')}</Link></div>
         ) : (
-          <div className="gw-brkform gw-brkwrap"><BrokerApply assumed={!!b?.assumed} /></div>
+          <div className="gw-brkform gw-brkwrap"><Msgs ns={['join']}><BrokerApply assumed={!!b?.assumed} /></Msgs></div>
         )}
 
         <div className="gw-dact" style={{ marginTop: 12 }}>

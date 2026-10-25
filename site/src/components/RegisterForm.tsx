@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface Category { id: string; gwanCode: string; name: string; feeBearer: string | null }
 interface Result { listingId: string; status: string; autoApproved: boolean }
@@ -13,6 +14,7 @@ interface Result { listingId: string; status: string; autoApproved: boolean }
  */
 export function RegisterForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
+  const t = useTranslations('forms');
   const [pending, start] = useTransition();
   const [done, setDone] = useState<Result | null>(null);
   const [err, setErr] = useState<{ code: string; message: string } | null>(null);
@@ -37,7 +39,7 @@ export function RegisterForm({ categories }: { categories: Category[] }) {
         }),
       });
       const d = await r.json();
-      if (!r.ok) { setErr({ code: d.code ?? 'UNKNOWN', message: d.message ?? '등록하지 못했습니다.' }); return; }
+      if (!r.ok) { setErr({ code: d.code ?? 'UNKNOWN', message: d.message ?? t('common.regFail') }); return; }
       setDone(d as Result);
       router.refresh();
     });
@@ -48,14 +50,14 @@ export function RegisterForm({ categories }: { categories: Category[] }) {
       <div className="result">
         {done.autoApproved ? (
           <>
-            <p className="ok-note">등록 완료 — 바로 노출됩니다.</p>
-            <a className="cta-primary as-link" href={`/money/${done.listingId}`}>매물 보기</a>
+            <p className="ok-note">{t('old.doneAuto')}</p>
+            <a className="cta-primary as-link" href={`/money/${done.listingId}`}>{t('old.view')}</a>
           </>
         ) : (
           <>
-            <p className="ok-note">검수 요청되었습니다.</p>
-            <p className="hint">24시간 안에 결과를 알려 드립니다.</p>
-            <a className="cta-primary as-link" href="/my/listings">내 리스팅</a>
+            <p className="ok-note">{t('old.doneReview')}</p>
+            <p className="hint">{t('old.doneReviewHint')}</p>
+            <a className="cta-primary as-link" href="/my/listings">{t('old.myListings')}</a>
           </>
         )}
       </div>
@@ -65,44 +67,44 @@ export function RegisterForm({ categories }: { categories: Category[] }) {
   return (
     <form className="auth" onSubmit={submit}>
       <label className="fld">
-        <span>업종</span>
+        <span>{t('common.cat')}</span>
         <select name="categoryId" required>
-          <option value="">선택하십시오</option>
+          <option value="">{t('old.pick')}</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <em>등급은 업종이 결정합니다. 직접 고르지 않습니다</em>
+        <em>{t('old.catHint')}</em>
       </label>
 
       <label className="fld">
-        <span>제목</span>
+        <span>{t('lf.title')}</span>
         <input name="title" required minLength={5} maxLength={100} />
       </label>
 
       <label className="fld">
-        <span>내용</span>
+        <span>{t('edit.body')}</span>
         <textarea name="body" rows={6} />
-        <em>30자 미만이면 사람이 검수합니다. 충분히 적으면 자동 승인됩니다</em>
+        <em>{t('old.bodyHint')}</em>
       </label>
 
       <label className="fld">
-        <span>희망 소개비</span>
+        <span>{t('old.fee')}</span>
         <input name="desiredFee" type="number" min={0} step={10000} placeholder="3000000" />
-        <em>최종 금액은 당사자 합의로 정해집니다. 플랫폼이 계산하지 않습니다</em>
+        <em>{t('old.feeHint')}</em>
       </label>
 
       <label className="fld">
-        <span>부담 주체</span>
+        <span>{t('reg.bearerLabel')}</span>
         <select name="feeBearer">
-          <option value="">협의</option>
-          <option value="BUYER">매수인 부담</option>
-          <option value="SELLER">매도인 부담</option>
+          <option value="">{t('lf.bearerNego')}</option>
+          <option value="BUYER">{t('lf.bearerBuyer')}</option>
+          <option value="SELLER">{t('lf.bearerSeller')}</option>
         </select>
       </label>
 
-      {err && <p className="form-error" role="alert">{err.message}{err.code === 'POSTING_SUSPENDED' && <> <a href="/support/new?type=ACCOUNT">고객센터 문의</a></>}</p>}
+      {err && <p className="form-error" role="alert">{err.message}{err.code === 'POSTING_SUSPENDED' && <> <a href="/support/new?type=ACCOUNT">{t('lf.support')}</a></>}</p>}
 
       <button className="cta-primary" disabled={pending}>
-        {pending ? '등록 중…' : '등록하기'}
+        {pending ? t('common.submitting') : t('old.submit')}
       </button>
     </form>
   );

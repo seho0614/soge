@@ -10,6 +10,7 @@ import { AddressForm } from '@/components/health/AddressForm';
 import { AddressActions } from '@/components/health/AddressActions';
 
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hAddr.meta') };
@@ -67,7 +68,7 @@ export default async function MyHltAddresses({ searchParams }: Props) {
 
       <section className="hlt-box hlt-gap">
         <h3>{t('hAddr.new')}</h3>
-        <AddressForm next={next} />
+        <Msgs ns={['my', 'myDeal', 'order', 'forms']}><AddressForm next={next} /></Msgs>
       </section>
     </div><i hidden data-root-end="" /></>
   );

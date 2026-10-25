@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Gwan } from '@/lib/types';
 import { ListingForm } from './ListingForm';
 import type { CodeEntry, FormCopy } from '@/lib/content';
@@ -26,20 +27,21 @@ export function RegisterTabs({ gwan, categories, copy, roles, messages, sections
   note?: React.ReactNode;
   cancel?: React.ReactNode;
 }) {
+  const t = useTranslations('forms.tabs');
   const [role, setRole] = useState<Role>('OFFER');
 
   // 관이 중지 상태면 등록 자체를 열지 않습니다
   if (!gwan.isActive) {
     return (
       <div className="notice">
-        <strong>{gwan.name}</strong> 은(는) 현재 등록을 받지 않습니다.
+        {t.rich('closed', { strong: (c) => <strong>{c}</strong>, name: gwan.name })}
       </div>
     );
   }
 
   const HINT: Record<string, string> = {
-    OFFER: '내가 가진 것을 소개해 소개비를 받습니다',
-    REQUEST: '필요한 것을 올리면 소개자가 제안합니다',
+    OFFER: t('hintOffer'),
+    REQUEST: t('hintRequest'),
   };
   const TABS = roles.map((r) => ({ key: r.code as Role, label: r.label, hint: HINT[r.code] ?? '' }));
 

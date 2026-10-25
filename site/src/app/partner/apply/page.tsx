@@ -7,6 +7,7 @@ import { ApplyForm } from '@/components/ApplyForm';
 import { AxisApply } from '@/components/AxisApply';
 import { Bg, Note, Pgh, Tw, bizNo } from '@/components/partner/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('apply') };
@@ -77,7 +78,7 @@ export default async function ApplyPage() {
                 <br />{t('rejFix')}
               </div>
             ) : null}
-            {actorOk && !applied ? <ApplyForm /> : null}
+            {actorOk && !applied ? <Msgs ns={['join']}><ApplyForm /></Msgs> : null}
           </div>
         </li>
 
@@ -97,7 +98,7 @@ export default async function ApplyPage() {
 
       {/* 2026-10-02 — 안심소개 축별 입점 (서버 D018). 본인 · 사업자 확인 뒤에 고릅니다(v10.38 · 개인 가능). 입점 승인과 따로 축마다 심사합니다. */}
       {/* 시안 .fset 「입점할 축 — 여러 개 고를 수 있고 축마다 따로 승인합니다」 자리. 부품(AxisApply)이 제 제목 · 표를 그립니다 */}
-      {actorOk ? <AxisApply /> : <Note kind="info">{t.rich('axisFirst', { b: B })}</Note>}
+      {actorOk ? <Msgs ns={['join']}><AxisApply /></Msgs> : <Note kind="info">{t.rich('axisFirst', { b: B })}</Note>}
 
       {/* v10.32 — 시안 「STEP 01 · 사업자 확인」 표 + 알림 안내 띠. 시안의 개발 현황 칩(국세청 키 없음 · PASS 미연동) 대신 이 계정의 실제 상태를 적습니다 */}
       {acc && (

@@ -9,6 +9,7 @@ import { BrokerExtraForm, type BrokerExtraValue } from '@/components/BrokerExtra
 import { BROKER_DOCS } from '@/components/broker-docs';   // v10.31 검정 — 'use client' 파일의 배열을 서버 화면에서 가져오면 참조만 넘어와 500
 
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.brokerSt'))('title') };
@@ -146,7 +147,7 @@ export default async function BrokerStatusPage() {
         {b.applied && (
           <details className="gw-panel" style={{ marginTop: 10, padding: '12px 16px' }}>
             <summary><b>{t('edit')}</b></summary>
-            <BrokerExtraForm init={ex} />
+            <Msgs ns={['join']}><BrokerExtraForm init={ex} /></Msgs>
           </details>
         )}
 

@@ -4,6 +4,7 @@
  *   단계 칸은 그 화면으로 가는 링크(시안은 「다음 — …」 단추로만 오감 — 실제 웹은 주소가 곧 화면).
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { won } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 
@@ -19,26 +20,24 @@ export interface DealSummary {
   myReview: { rating: number; body: string | null; tags?: string[]; createdAt: string } | null;
 }
 
-const STEPS: Array<[string, string, string]> = [
-  ['계약서', '계약 조건을 양측이 확인합니다', 'contract'],
-  ['결제 · 대금', '대금은 당사자끼리 직접 — 지급 사실만 신고합니다 (INV-11)', 'payment'],
-  ['성사 확정', '양측이 각각 확인해야 넘어갑니다 (INV-4)', 'confirm'],
-];
+/* v10.101 — 단계 이름 · 설명은 사전 키(deal.shell.steps.{path}.t · .s) */
+const STEPS = ['contract', 'payment', 'confirm'] as const;
 export const dealNo = (id: string) => `D-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
 
 export function DealShell({ d, step, title, sub, children }: { d: DealSummary; step: number; title: string; sub: React.ReactNode; children: React.ReactNode }) {
+  const t = useTranslations('deal');
   return (
     <div className="w1 w1-wrap w1-deal" data-deal={d.id}>{/* v10.32 — 시안 .wrap.dealw 폭(가운데 좁은 폭 1000px 를 뺌) */}
-      <BackBar href="/my/deals" label="소개 내역" wrap={false} />
+      <BackBar href="/my/deals" label={t('common.backDeals')} wrap={false} />
       <div className="w1-pgh">
         <div><h1>{title}</h1><p>{sub}</p></div>
         <span className="w1-did">{dealNo(d.id)} · {d.statusLabel ?? d.status}</span>
       </div>
       <ol className="w1-steps">
-        {STEPS.map(([t, s, path], i) => (
-          <li key={t} style={{ display: 'contents' }}>
+        {STEPS.map((path, i) => (
+          <li key={path} style={{ display: 'contents' }}>
             <Link className={`st${i === step ? ' on' : i < d.step ? ' done' : ''}`} href={`/deal/${d.id}/${path}`} aria-current={i === step ? 'step' : undefined}>
-              <span className="n">{i + 1}</span><b>{t}</b><span className="sd">{s}</span>
+              <span className="n">{i + 1}</span><b>{t(`shell.steps.${path}.t`)}</b><span className="sd">{t(`shell.steps.${path}.s`)}</span>
             </Link>
           </li>
         ))}
@@ -50,15 +49,16 @@ export function DealShell({ d, step, title, sub, children }: { d: DealSummary; s
 }
 
 export function DealSummaryTable({ d }: { d: DealSummary }) {
+  const t = useTranslations('deal.shell');
   return (
     <div className="w1-dsum">
-      <div className="dr"><span>대상 {d.targetType === 'REQUEST' ? '요청' : '리스팅'}</span><b>{d.title ?? '—'}</b></div>
-      <div className="dr"><span>소개자</span><b>{d.introducer ?? '없음(직접 거래)'}</b></div>
-      <div className="dr"><span>소개코드</span><b>{d.refCode ? <><code>{d.refCode}</code> · tier {d.tier}</> : <i>귀속 코드 없음</i>}</b></div>
-      <div className="dr"><span>거래 당사자</span><b>{d.buyer} ↔ {d.seller}</b></div>
-      <div className="dr"><span>거래금액</span><b>{d.amount != null ? won(d.amount) : <i>계약서에서 양측이 합의하면 나옵니다</i>}</b></div>
-      <div className="dr"><span>소개비</span><b>{d.agreedFee != null ? <>{won(d.agreedFee)} <i>— 양측 협의 (A-12)</i></> : <i>협의 전</i>}</b></div>
-      <div className="dr"><span>소개비 부담</span><b>{d.feeBearerLabel ?? <i>협의</i>}</b></div>
+      <div className="dr"><span>{t('target', { kind: d.targetType === 'REQUEST' ? t('kindRequest') : t('kindListing') })}</span><b>{d.title ?? '—'}</b></div>
+      <div className="dr"><span>{t('introducer')}</span><b>{d.introducer ?? t('noIntroducer')}</b></div>
+      <div className="dr"><span>{t('refCode')}</span><b>{d.refCode ? <><code>{d.refCode}</code> · tier {d.tier}</> : <i>{t('noCode')}</i>}</b></div>
+      <div className="dr"><span>{t('parties')}</span><b>{d.buyer} ↔ {d.seller}</b></div>
+      <div className="dr"><span>{t('amount')}</span><b>{d.amount != null ? won(d.amount) : <i>{t('amountPending')}</i>}</b></div>
+      <div className="dr"><span>{t('fee')}</span><b>{d.agreedFee != null ? <>{won(d.agreedFee)} <i>{t('feeAgreed')}</i></> : <i>{t('feePending')}</i>}</b></div>
+      <div className="dr"><span>{t('bearer')}</span><b>{d.feeBearerLabel ?? <i>{t('bearerPending')}</i>}</b></div>
     </div>
   );
 }

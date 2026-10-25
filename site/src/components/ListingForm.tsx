@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { Gwan } from '@/lib/types';
 import type { Role } from './RegisterTabs';
 import type { FormCopy } from '@/lib/content';
@@ -19,6 +20,7 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
   cancel?: React.ReactNode;
 }) {
   const router = useRouter();
+  const t = useTranslations('forms');
   const [pending, start] = useTransition();
   const [err, setErr] = useState<{ code: string; message: string } | null>(null);
   // 관마다 무엇을 등록하는지가 다릅니다. 문구는 서버가 관리합니다
@@ -49,7 +51,7 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
       const d = await r.json().catch(() => null);
       if (!r.ok) {
         // 422 message 는 사용자에게 그대로 보여도 되는 문장입니다
-        setErr({ code: d?.code ?? '', message: d?.message ?? '등록하지 못했습니다.' });
+        setErr({ code: d?.code ?? '', message: d?.message ?? t('common.regFail') });
         return;
       }
       // 자동검수를 통과하면 status 가 PUBLISHED 로 옵니다
@@ -58,48 +60,48 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
   }
 
   if (categories.length === 0) {
-    return <p className="empty">등록 가능한 업종이 없습니다. 고객센터로 문의해 주세요.</p>;
+    return <p className="empty">{t('lf.noCat')}</p>;
   }
 
   if (sections && isOffer) {
     /* 시안 scRegBiz — 1. 기본 정보(구분 · 제목 · 한줄 소개) · 2. 거래 조건(희망 금액 · 소개비). 상세 내용 · 소개비 부담은 개발에 있던 칸(남김) */
     return (
       <form className="auth gw-regf" onSubmit={submit}>
-        <fieldset className="gw-fset"><legend>1. 기본 정보</legend>
+        <fieldset className="gw-fset"><legend>{t('common.sec1')}</legend>
           <div className="gw-g2">
-            <label className="fld"><span>구분 <i>*</i></span>
+            <label className="fld"><span>{t('lf.kind')} <i>*</i></span>
               <select name="categoryId" required>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-            <label className="fld"><span>제목 <i>*</i></span>
-              <input name="title" required placeholder={L?.titleHint ?? '최대 50자'} minLength={5} maxLength={50} /></label>
+            <label className="fld"><span>{t('lf.title')} <i>*</i></span>
+              <input name="title" required placeholder={L?.titleHint ?? t('lf.titlePh')} minLength={5} maxLength={50} /></label>
           </div>
-          <label className="fld"><span>한줄 소개 <i>*</i></span>
-            <input name="summary" required minLength={2} maxLength={60} placeholder="최대 60자 — 목록 카드 · 상세 맨 위에 나옵니다" /></label>
-          <label className="fld"><span>상세 내용</span>
+          <label className="fld"><span>{t('reg.intro')} <i>*</i></span>
+            <input name="summary" required minLength={2} maxLength={60} placeholder={t('lf.summaryPh')} /></label>
+          <label className="fld"><span>{t('req.desc')}</span>
             <textarea name="body" rows={6} placeholder={L?.bodyHint} /><em>{messages.THIN_CONTENT_HINT}</em></label>
         </fieldset>
-        <fieldset className="gw-fset"><legend>2. 거래 조건</legend>
+        <fieldset className="gw-fset"><legend>{t('lf.sec2')}</legend>
           <div className="gw-g2">
-            <label className="fld"><span>희망 금액 (원)</span>
-              <input name="dealAmount" type="number" inputMode="numeric" min={0} placeholder="협의 가능 — 비우면 「금액 협의」" /></label>
-            <label className="fld"><span>소개비 (원)</span>
-              <input name="desiredFee" type="number" inputMode="numeric" min={0} placeholder="협의 — 요율표를 쓰지 않습니다 (A-12)" />
+            <label className="fld"><span>{t('lf.dealAmount')}</span>
+              <input name="dealAmount" type="number" inputMode="numeric" min={0} placeholder={t('lf.dealAmountPh')} /></label>
+            <label className="fld"><span>{t('edit.fee')}</span>
+              <input name="desiredFee" type="number" inputMode="numeric" min={0} placeholder={t('lf.feePh')} />
               <em>{messages.FEE_NOT_CALCULATED}</em></label>
           </div>
-          <label className="fld"><span>소개비 부담</span>
-            <select name="feeBearer"><option value="NEGOTIABLE">협의</option><option value="BUYER">매수인 부담</option><option value="SELLER">매도인 부담</option></select></label>
+          <label className="fld"><span>{t('lf.bearer')}</span>
+            <select name="feeBearer"><option value="NEGOTIABLE">{t('lf.bearerNego')}</option><option value="BUYER">{t('lf.bearerBuyer')}</option><option value="SELLER">{t('lf.bearerSeller')}</option></select></label>
         </fieldset>
         {err && (
           <p className="form-error" role="alert">{err.message}
-            {err.code === 'LISTING_SLOT_LIMIT' && <> <a href="/my/subscription/upgrade">구독 안내 보기</a></>}
-            {err.code === 'POSTING_SUSPENDED' && <> <a href="/support/new?type=ACCOUNT">고객센터 문의</a></>}</p>
+            {err.code === 'LISTING_SLOT_LIMIT' && <> <a href="/my/subscription/upgrade">{t('lf.upgrade')}</a></>}
+            {err.code === 'POSTING_SUSPENDED' && <> <a href="/support/new?type=ACCOUNT">{t('lf.support')}</a></>}</p>
         )}
         {note}
         {cancel ? (
           <div className="gw-dact gw-regact">{/* v10.32 (추가) — 시안: 검수 안내 띠 아래 [등록 신청] [등록 취소] 나란히 */}
-            <button className="cta-primary" disabled={pending}>{pending ? '등록 중…' : '등록 신청'}</button>
+            <button className="cta-primary" disabled={pending}>{pending ? t('common.submitting') : t('lf.apply')}</button>
             {cancel}
           </div>
-        ) : <button className="cta-primary" disabled={pending}>{pending ? '등록 중…' : '등록 신청'}</button>}
+        ) : <button className="cta-primary" disabled={pending}>{pending ? t('common.submitting') : t('lf.apply')}</button>}
       </form>
     );
   }
@@ -107,19 +109,19 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
   return (
     <form className="auth" onSubmit={submit}>
       <label className="fld">
-        <span>업종</span>
+        <span>{t('common.cat')}</span>
         <select name="categoryId" required>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </label>
 
       <label className="fld">
-        <span>{isOffer ? `${L?.subject ?? ''} 제목` : '구하는 것'}</span>
+        <span>{isOffer ? t('lf.subjectTitle', { subject: L?.subject ?? '' }) : t('lf.wanted')}</span>
         <input name="title" required placeholder={L?.titleHint} minLength={5} />
       </label>
 
       <label className="fld">
-        <span>상세 내용</span>
+        <span>{t('req.desc')}</span>
         <textarea name="body" rows={7} placeholder={L?.bodyHint} />
         <em>{messages.THIN_CONTENT_HINT}</em>
       </label>
@@ -127,24 +129,24 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
       {isOffer ? (
         <>
           <label className="fld">
-            <span>희망 소개비 (원)</span>
+            <span>{t('lf.desiredFee')}</span>
             <input name="desiredFee" type="number" inputMode="numeric" placeholder="3000000" />
             <em>{messages.FEE_NOT_CALCULATED}</em>
           </label>
           <label className="fld">
-            <span>소개비 부담</span>
+            <span>{t('lf.bearer')}</span>
             <select name="feeBearer">
-              <option value="BUYER">매수인 부담</option>
-              <option value="SELLER">매도인 부담</option>
-              <option value="NEGOTIABLE">협의</option>
+              <option value="BUYER">{t('lf.bearerBuyer')}</option>
+              <option value="SELLER">{t('lf.bearerSeller')}</option>
+              <option value="NEGOTIABLE">{t('lf.bearerNego')}</option>
             </select>
           </label>
         </>
       ) : (
         <label className="fld">
-          <span>제시 소개비 (원)</span>
+          <span>{t('lf.offeredFee')}</span>
           <input name="offeredFee" type="number" inputMode="numeric" />
-          <em>소개해 주신 분께 드릴 금액입니다</em>
+          <em>{t('lf.offeredFeeHint')}</em>
         </label>
       )}
 
@@ -152,7 +154,7 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
         <p className="form-error" role="alert">
           {err.message}
           {err.code === 'LISTING_SLOT_LIMIT' && (
-            <> <a href="/my/subscription/upgrade">구독 안내 보기</a></>
+            <> <a href="/my/subscription/upgrade">{t('lf.upgrade')}</a></>
           )}
         </p>
       )}
@@ -161,13 +163,13 @@ export function ListingForm({ gwan, role, categories, copy, messages, sections =
       {cancel ? (
         <div className="gw-dact gw-regact">{/* v10.32 (추가) — 안내 띠 아래 등록 · 취소 나란히(소개받기 탭도 같은 자리) */}
           <button className="cta-primary" disabled={pending}>
-            {pending ? '등록 중…' : isOffer ? `${L?.subject ?? ''} 등록` : '소개 요청 등록'}
+            {pending ? t('common.submitting') : isOffer ? t('lf.subjectReg', { subject: L?.subject ?? '' }) : t('lf.requestReg')}
           </button>
           {cancel}
         </div>
       ) : (
         <button className="cta-primary" disabled={pending}>
-          {pending ? '등록 중…' : isOffer ? `${L?.subject ?? ''} 등록` : '소개 요청 등록'}
+          {pending ? t('common.submitting') : isOffer ? t('lf.subjectReg', { subject: L?.subject ?? '' }) : t('lf.requestReg')}
         </button>
       )}
     </form>

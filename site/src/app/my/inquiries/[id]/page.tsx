@@ -7,6 +7,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { GWAN_PATH } from '@/lib/format';
 import { MyHead } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.inq'))('roomTitle') };
@@ -37,7 +38,7 @@ export default async function InquiryRoom({ params }: { params: Promise<{ id: st
           {c.dealId && <> · <Link href={`/deal/${c.dealId}/contract`} data-inq-deal={c.dealId}>{t('viewDeal')}</Link></>}
         </>}
         right={<Link className="my-bo" href={`/my/inquiries?tab=${c.role === 'SENT' ? 'sent' : 'received'}`}>‹ {c.role === 'SENT' ? t('sent') : t('received')}</Link>} />
-      <ChatPanel conversationId={c.id} />
+      <Msgs ns={['deal']}><ChatPanel conversationId={c.id} /></Msgs>
     </div><i hidden data-root-end="" /></>
   );
 }

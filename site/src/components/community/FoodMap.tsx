@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { KakaoPinMap, loadKakaoMaps, mapConfig, type MapPin } from '@/components/map/KakaoMap';
 
 /**
@@ -18,6 +19,7 @@ interface Region { sido: string; sigungu: string; count: number; lat: number; ln
 const START = { lat: 37.5665, lng: 126.978, level: 6 };   // 서울시청 — 동네를 고르기 전 처음 자리
 
 export function FoodMap({ regions, geolocation, loggedIn }: { regions: Region[]; geolocation: boolean; loggedIn: boolean }) {
+  const t = useTranslations('plaza.food');
   const first = regions[0];
   const [items, setItems] = useState<Pin[]>([]);
   const [truncated, setTruncated] = useState(false);
@@ -46,12 +48,12 @@ export function FoodMap({ regions, geolocation, loggedIn }: { regions: Region[];
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
         if (my !== seq.current) return;
-        if (!ok) { setMsg(d?.message ?? '가게를 불러오지 못했습니다.'); setItems([]); return; }
+        if (!ok) { setMsg(d?.message ?? t('loadFail')); setItems([]); return; }
         setMsg(null); setItems(d.items ?? []); setTruncated(!!d.truncated);
       })
-      .catch(() => { if (my === seq.current) setMsg('가게를 불러오지 못했습니다. 잠시 후 다시 해 주십시오.'); })
+      .catch(() => { if (my === seq.current) setMsg(t('loadRetry')); })
       .finally(() => { if (my === seq.current) setLoading(false); });
-  }, []);
+  }, [t]);
 
   const onBounds = useCallback((b: { swLat: number; swLng: number; neLat: number; neLng: number }) => {
     bounds.current = b;
@@ -63,25 +65,25 @@ export function FoodMap({ regions, geolocation, loggedIn }: { regions: Region[];
 
   async function goTown(e?: React.FormEvent) {
     e?.preventDefault();
-    const t = town.trim();
-    if (!t) return;
+    const tw = town.trim();
+    if (!tw) return;
     setMsg(null);
     try {
       const c = await mapConfig();
       if (!c.jsKey) return;
       const kakao = await loadKakaoMaps(c.jsKey);
-      new kakao.maps.services.Geocoder().addressSearch(t, (r: { x: string; y: string }[], st: string) => {
+      new kakao.maps.services.Geocoder().addressSearch(tw, (r: { x: string; y: string }[], st: string) => {
         if (st === kakao.maps.services.Status.OK && r[0]) mapRef.current?.moveTo(Number(r[0].y), Number(r[0].x), 5);
-        else setMsg(`「${t}」을(를) 찾지 못했습니다 — 예) 분당구 정자동 · 마포구 연남동`);
+        else setMsg(t('townNotFound', { town: tw }));
       });
-    } catch { setMsg('동네를 찾지 못했습니다.'); }
+    } catch { setMsg(t('townFail')); }
   }
 
   function here() {
-    if (!navigator.geolocation) { setMsg('이 브라우저는 현재 위치를 지원하지 않습니다.'); return; }
+    if (!navigator.geolocation) { setMsg(t('geoNone')); return; }
     navigator.geolocation.getCurrentPosition(
       (p) => mapRef.current?.moveTo(p.coords.latitude, p.coords.longitude, 4),   // 지도만 옮김 — 서버로 보내지 않음
-      () => setMsg('현재 위치를 쓸 수 없습니다(브라우저에서 위치 권한을 막았거나 꺼져 있음).'),
+      () => setMsg(t('geoDenied')),
       { maximumAge: 60_000, timeout: 8000 });
   }
 
@@ -89,16 +91,16 @@ export function FoodMap({ regions, geolocation, loggedIn }: { regions: Region[];
 
   return (
     <>
-      <form className="fd-bar" onSubmit={goTown} role="search" aria-label="동네 고르기">
-        <input value={town} onChange={(e) => setTown(e.target.value)} placeholder="동네 이름 — 예) 분당구 정자동" aria-label="동네 이름" maxLength={40} />
-        <button type="submit">동네로 이동</button>
-        {geolocation && <button type="button" onClick={here} title="브라우저 안에서 지도만 옮깁니다 — 위치를 저장하지 않습니다">📍 현재 위치로</button>}
+      <form className="fd-bar" onSubmit={goTown} role="search" aria-label={t('townAria')}>
+        <input value={town} onChange={(e) => setTown(e.target.value)} placeholder={t('townPh')} aria-label={t('townLabel')} maxLength={40} />
+        <button type="submit">{t('townGo')}</button>
+        {geolocation && <button type="button" onClick={here} title={t('hereTitle')}>📍 {t('here')}</button>}
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); load(); } }}
-               placeholder="가게 이름" aria-label="가게 이름으로 거르기" maxLength={40} />
-        <button type="button" onClick={load}>거르기</button>
+               placeholder={t('nameFilterPh')} aria-label={t('nameFilterAria')} maxLength={40} />
+        <button type="button" onClick={load}>{t('filter')}</button>
       </form>
       {regions.length > 0 && (
-        <div className="fd-chips" aria-label="가게가 있는 동네">
+        <div className="fd-chips" aria-label={t('chipsAria')}>
           {regions.slice(0, 12).map((r) => (
             <button key={`${r.sido} ${r.sigungu}`} type="button" className="fd-chip" onClick={() => mapRef.current?.moveTo(r.lat, r.lng, 6)}>
               {r.sido} {r.sigungu}<em>{r.count}</em>
@@ -109,26 +111,26 @@ export function FoodMap({ regions, geolocation, loggedIn }: { regions: Region[];
       <div className="fd-grid">
         <KakaoPinMap pins={pins} center={first ? { lat: first.lat, lng: first.lng, level: 6 } : START} height={440}
           onBounds={onBounds} onPick={setOn} mapRef={mapRef}
-          fallback={<p className="fd-empty">지도를 불러오지 못했습니다. 잠시 후 새로 고침해 주십시오.</p>} />
+          fallback={<p className="fd-empty">{t('mapFail')}</p>} />
         <div>
           <ul className="fd-list" aria-live="polite" aria-busy={loading}>
             {items.length === 0 ? (
-              <li className="fd-empty">{loading ? '불러오는 중…' : '이 지도 안에는 아직 소개된 맛집이 없습니다. 첫 소개를 남겨 주십시오.'}</li>
+              <li className="fd-empty">{loading ? t('loading') : t('emptyMap')}</li>
             ) : items.map((p) => (
               <li key={p.id} className={on === p.id ? 'on' : undefined}>
                 <Link href={`/community/food/${p.id}`}>
-                  <div className="fd-nm">{p.name}{p.picks > 0 && <span className="fd-badge pick">동네픽</span>}</div>
+                  <div className="fd-nm">{p.name}{p.picks > 0 && <span className="fd-badge pick">{t('pick')}</span>}</div>
                   <div className="fd-sub">{[p.category?.split('>').pop()?.trim(), p.region].filter(Boolean).join(' · ')}</div>
-                  <div className="fd-cnt">이웃 추천 {p.count}</div>
+                  <div className="fd-cnt">{t('recs', { n: String(p.count) })}</div>
                 </Link>
               </li>
             ))}
           </ul>
-          {truncated && <p className="fd-note">가게가 많아 200곳까지만 보입니다 — 지도를 확대하십시오.</p>}
+          {truncated && <p className="fd-note">{t('truncated')}</p>}
           {msg && <p className="fd-note" role="alert">{msg}</p>}
           <p className="fd-note">
-            {loggedIn ? <Link className="fd-cta" href="/community/food/write">맛집 소개하기</Link>
-              : <Link className="fd-cta" href="/login?next=/community/food/write">로그인하고 맛집 소개하기</Link>}
+            {loggedIn ? <Link className="fd-cta" href="/community/food/write">{t('writeH')}</Link>
+              : <Link className="fd-cta" href="/login?next=/community/food/write">{t('loginWrite')}</Link>}
           </p>
         </div>
       </div>

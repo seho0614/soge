@@ -6,8 +6,11 @@ import { ymdKst } from '@/lib/format';
 import { MyFrame } from '@/components/my/MyFrame';
 import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 import { MyHead, Note, Empty } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '계약서 양식 전문' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('deal.meta'))('template') };
+}
 export const dynamic = 'force-dynamic';
 
 interface Tpl { code: string; name: string; version: string; scope: string; body: string; effectiveFrom: string | null }
@@ -49,31 +52,32 @@ export default async function ContractTemplatePage({ params, searchParams }: Pro
   const code = decodeURIComponent((await params).code);
   /* v10.31 (시안 「← 계약서 · 체결」) — 계약서 화면에서 열면 ?deal={거래} 를 받아 그 계약서로 돌아갑니다(형식이 맞을 때만) */
   const deal = (await searchParams)?.deal ?? '';
+  const tr = await getTranslations('deal.tpl');
   const back = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deal)
-    ? { href: `/my/contracts/${deal}`, label: '← 계약서 · 체결' } : { href: '/my/contracts', label: '← 계약 진행' };
+    ? { href: `/my/contracts/${deal}`, label: tr('backDeal') } : { href: '/my/contracts', label: tr('backList') };
   let t: Tpl | null = null; let err: string | null = null;
   try { t = await apiGet<Tpl>(`/contract-templates/${encodeURIComponent(code)}`, 300); }
-  catch (e) { err = e instanceof ApiFailure && e.status < 500 ? '없는 양식입니다.' : '양식을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.'; }
+  catch (e) { err = e instanceof ApiFailure && e.status < 500 ? tr('notFound') : tr('loadFail'); }
   /* v10.29 — 시안(scCtrForm)은 나의공간 「계약 진행」 안의 화면입니다. 로그인한 사람에게는 같은 틀(왼쪽 메뉴)로 보입니다.
    *   글은 그대로 DB(contract_templates) 판을 그립니다 — 시안에 박힌 글이 아닙니다. */
   if (!t) {
-    return (<Msgs ns={['my', 'myDeal', 'order']}><MyFrame><div className="my-ctf-wrap" data-ctform-none="">
-      <MyHead title="계약서 양식 전문" sub="조항은 고칠 수 없고 빈칸만 채웁니다." />
+    return (<Msgs ns={['my', 'myDeal', 'order', 'deal']}><MyFrame><div className="my-ctf-wrap" data-ctform-none="">
+      <MyHead title={tr('title')} sub={tr('sub')} />
       <Empty>{err}</Empty>
-      <div className="my-btns"><Link className="my-bo" href="/contracts/templates/INTRO_STD">소개 표준계약서 보기</Link><Link className="my-bo" href="/my/contracts">← 계약 목록</Link></div>
+      <div className="my-btns"><Link className="my-bo" href="/contracts/templates/INTRO_STD">{tr('viewStd')}</Link><Link className="my-bo" href="/my/contracts">{tr('backContracts')}</Link></div>
     </div><i hidden data-root-end="" /></MyFrame></Msgs>);
   }
   return (
-    <Msgs ns={['my', 'myDeal', 'order']}><MyFrame><div className="my-ctf-wrap" data-ctform={t.code}>
-      <MyHead title="계약서 양식 전문"
-        sub={`${t.name} ${t.version} — 조항은 고칠 수 없고 빈칸만 채웁니다.${t.effectiveFrom ? ` 시행일 ${ymdKst(t.effectiveFrom)}.` : ''}`} />
+    <Msgs ns={['my', 'myDeal', 'order', 'deal']}><MyFrame><div className="my-ctf-wrap" data-ctform={t.code}>
+      <MyHead title={tr('title')}
+        sub={tr('subFull', { name: t.name, version: t.version, eff: t.effectiveFrom ? tr('eff', { date: ymdKst(t.effectiveFrom) }) : '' })} />
       <div className="my-card my-ctf ctf">
-        <div className="note info"><b>이 양식은 조항을 고칠 수 없습니다.</b> 빈칸만 채우십시오. 조항을 개별 수정하면 저희가 법률사무를 취급한 것이 되어 변호사법 109조에 걸립니다.</div>
+        <div className="note info">{tr.rich('locked', { b: (x) => <b>{x}</b> })}</div>
         {render(t.body)}
       </div>
-      <Note kind="info"><b>실제 계약서와 같은 글입니다.</b> 서명하실 계약서는 이 판({t.code} {t.version})으로 만들어지며, 화면은 그 글을 그대로 보여 드립니다.</Note>
+      <Note kind="info">{tr.rich('same', { code: t.code, version: t.version, b: (x) => <b>{x}</b> })}</Note>
       {t.scope === 'INTRO' && t.code !== 'INTRO_STD' && (
-        <Note kind="info">지금 쓰는 양식은 <Link href="/contracts/templates/INTRO_STD">소개 표준계약서(INTRO_STD)</Link>입니다.</Note>
+        <Note kind="info">{tr.rich('current', { link: (x) => <Link href="/contracts/templates/INTRO_STD">{x}</Link> })}</Note>
       )}
       <div className="my-btns"><Link className="my-bo" href={back.href} data-ctform-back="">{back.label}</Link></div>
     </div><i hidden data-root-end="" /></MyFrame></Msgs>

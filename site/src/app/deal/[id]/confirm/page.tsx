@@ -6,9 +6,13 @@ import { dtKst } from '@/lib/format';
 import { DealConfirm } from '@/components/DealConfirm';
 import { DealShell } from '@/components/deal/DealShell';
 import { loadDeal } from '@/components/deal/load';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '성사 확정' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('deal.meta'))('confirm') };
+}
 
 /**
  * SB-HOM-DEL-030 성사 확정 — v10.31 시안 scDealConfirm: 3단계 띠 · 거래 정보 표 · 확인 n/2 목록 · 7일 자동 안내 · 정산 신청으로 / 이전 — 결제.
@@ -20,37 +24,38 @@ export default async function ConfirmPage({ params }: { params: Promise<{ id: st
   const r = await loadDeal(id);
   if ('error' in r) return <div className="w1 w1-wrap"><div className="w1-empty">{r.error}</div></div>;
   const d = r.d;
+  const t = await getTranslations('deal');
   const conf = (p: string) => d.confirmations.find((c) => c.party === p);
-  const parties: Array<[string, string, string]> = [['BUYER', '소개받는자', d.buyer], ['SELLER', '제휴사', d.seller]];
+  const parties: Array<[string, string, string]> = [['BUYER', t('confirm.buyer'), d.buyer], ['SELLER', t('confirm.seller'), d.seller]];
   const done = parties.filter(([p]) => conf(p)).length;
   const all = ['CONFIRMED', 'SETTLED'].includes(d.status) || done === 2;
   const mine = d.myRole !== 'INTRODUCER' && !conf(d.myRole) && !all;
   return (
-    <DealShell d={d} step={2} title="성사 확정" sub="소개받는자와 제휴사가 각각 확인해야 성사입니다 (INV-4). 한쪽만 눌러서는 넘어가지 않습니다.">
+    <DealShell d={d} step={2} title={t('confirm.title')} sub={t('confirm.sub')}>
       <div className="w1-cfm">
-        <div className="cn"><b>확인 {all ? 2 : done} / 2</b><span className={`w1-bg ${all ? 'ok' : 'wait'}`}>{all ? '성사 확정' : '대기 중'}</span></div>
+        <div className="cn"><b>{t('confirm.count', { n: String(all ? 2 : done) })}</b><span className={`w1-bg ${all ? 'ok' : 'wait'}`}>{all ? t('confirm.title') : t('confirm.waiting')}</span></div>
         {parties.map(([p, role, name]) => {
           const c = conf(p);
           return (
             <div key={p} className="cw">
-              <div><b>{role} · {name}</b>{d.myRole === p ? ' (나)' : ''}
-                <div className="w1-ls">{c ? `${dtKst(c.confirmedAt)}${c.isAuto ? ' · 자동 확정' : ''}` : all ? '계약서 서명으로 확정' : '아직 확인하지 않았습니다'}</div></div>
-              {c || all ? <span className="w1-bg ok">확인 완료</span> : <span className="w1-bg wait">대기</span>}
+              <div><b>{role} · {name}</b>{d.myRole === p ? t('common.me') : ''}
+                <div className="w1-ls">{c ? `${dtKst(c.confirmedAt)}${c.isAuto ? t('confirm.auto') : ''}` : all ? t('confirm.bySign') : t('confirm.notYet')}</div></div>
+              {c || all ? <span className="w1-bg ok">{t('confirm.checked')}</span> : <span className="w1-bg wait">{t('common.wait')}</span>}
             </div>
           );
         })}
       </div>
-      <div className="w1-nt warn" style={{ marginTop: 10 }}><b>7일 동안 응답이 없으면 자동으로 확정됩니다.</b> 확인 철회는 상대가 확인하기 전까지만 됩니다.</div>
+      <div className="w1-nt warn" style={{ marginTop: 10 }}>{t.rich('confirm.autoNote', { b: (c) => <b>{c}</b> })}</div>
       {all
-        ? <div className="w1-nt ok" style={{ marginTop: 8 }}><b>양측 확인이 끝났습니다 — 정산을 신청할 수 있습니다 (INV-3).</b>{d.confirmedAt ? ` 확정 ${dtKst(d.confirmedAt)}` : ''}</div>
-        : <div className="w1-nt" style={{ marginTop: 8 }}><b>아직 정산을 신청할 수 없습니다.</b> 양측 확인이 끝나야 열립니다 — 지금은 {done}/2 진행 중입니다.</div>}
+        ? <div className="w1-nt ok" style={{ marginTop: 8 }}>{t.rich('confirm.allDone', { b: (c) => <b>{c}</b> })}{d.confirmedAt ? t('confirm.confirmedAt', { at: dtKst(d.confirmedAt) }) : ''}</div>
+        : <div className="w1-nt" style={{ marginTop: 8 }}>{t.rich('confirm.notReady', { n: String(done), b: (c) => <b>{c}</b> })}</div>}
       {/* 거래 당사자에게는 늘 둡니다 — 확인한 뒤(mine 이 거짓)에도 같은 자리에 남아 결과 글이 지워지지 않음(단추만 빠짐) */}
-      {d.myRole !== 'INTRODUCER' && <DealConfirm dealId={d.id} done={!mine} />}
+      {d.myRole !== 'INTRODUCER' && <Msgs ns={['deal']}><DealConfirm dealId={d.id} done={!mine} /></Msgs>}
       <div className="w1-dact">
-        {all ? <Link className="w1-bp" href="/my/settlement">정산 신청으로</Link>
-          : <button className="w1-bp" disabled title="양측 확인이 모두 끝나야 정산을 신청할 수 있습니다(INV-4).">정산 신청으로</button>}
-        <Link className="w1-bo" href={`/deal/${d.id}/payment`}>이전 — 결제</Link>
-        {all && d.myRole !== 'INTRODUCER' && <Link className="w1-bo" href={`/deal/${d.id}/review`}>후기 쓰기</Link>}
+        {all ? <Link className="w1-bp" href="/my/settlement">{t('confirm.settle')}</Link>
+          : <button className="w1-bp" disabled title={t('confirm.settleTitle')}>{t('confirm.settle')}</button>}
+        <Link className="w1-bo" href={`/deal/${d.id}/payment`}>{t('confirm.prev')}</Link>
+        {all && d.myRole !== 'INTRODUCER' && <Link className="w1-bo" href={`/deal/${d.id}/review`}>{t('confirm.review')}</Link>}
       </div>
     </DealShell>
   );

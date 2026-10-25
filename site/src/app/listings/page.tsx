@@ -4,9 +4,13 @@ import { apiGet } from '@/lib/api';
 import { GWAN_PATH, safeSort, won } from '@/lib/format';
 import type { ListingCardData, ListingListData } from '@/lib/types';
 import { BackBar } from '@/components/common/BackBar';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { isGwanKey } from '@/i18n/keys';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '전체 목록' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('forms.all'))('title') };
+}
 
 const GCLS: Record<string, string> = { MNY: 'g-mny', MAL: 'g-mal', BIZ: 'g-biz', HLT: 'g-hlt' };
 
@@ -27,60 +31,65 @@ export default async function AllListings({ searchParams }: {
     apiGet<ListingListData>(`/listings?${qs}`).catch(() => ({ promoted: [], organic: [], nextCursor: null, adNotice: '' }) as ListingListData),
     apiGet<Array<{ code: string; name: string; isActive: boolean; listingCount?: number }>>('/gwans', 300).catch(() => []),
   ]);
-  const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, g.name]));
+  const t = await getTranslations('forms.all');
+  const th = await getTranslations('header.gwan');
+  const ko = (await getLocale()) === 'ko';
+  /* 관 이름 — 한국어는 서버 이름 그대로 · 다른 언어만 사전(header.gwan.*) */
+  const gname = (code: string, name: string) => (!ko && isGwanKey(code) ? th(code) : name);
+  const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, gname(g.code, g.name)]));
   const nav = gwans.filter((g) => g.isActive && GWAN_PATH[g.code]);
   const rows: Array<ListingCardData & { ad?: boolean }> = [...data.promoted.map((r) => ({ ...r, ad: true })), ...data.organic];
   const total = gwans.filter((g) => GWAN_PATH[g.code] && g.code !== 'HLT').reduce((n, g) => n + (g.listingCount ?? 0), 0);
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-LST-010">
-      <BackBar href="/" label="메인" wrap={false} />
+      <BackBar href="/" label={t('back')} wrap={false} />
       <div className="w1-aih" style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0 }}>전체 목록</h1>
-        {total > 0 && <span className="w1-bg off">{total.toLocaleString('ko-KR')}건</span>}
-        <p style={{ flexBasis: '100%', margin: '4px 0 0' }}>세 관의 등록 건을 한 자리에서 봅니다. 관을 고르면 그 관의 목록으로 좁혀집니다.</p>
+        <h1 style={{ margin: 0 }}>{t('title')}</h1>
+        {total > 0 && <span className="w1-bg off">{t('count', { n: total.toLocaleString('ko-KR') })}</span>}
+        <p style={{ flexBasis: '100%', margin: '4px 0 0' }}>{t('sub')}</p>
       </div>
 
       <div className="w1-cta3">
-        <Link className="c3 c3a" href="/register"><b>소개하기</b><span>내가 아는 곳을 올립니다</span></Link>
-        <Link className="c3 c3b" href="/request/new"><b>소개받고 싶어요</b><span>찾는 것을 올립니다</span></Link>
-        <Link className="c3 c3c" href="/request"><b>소개받기</b><span>올라온 것 중에서 고릅니다</span></Link>
+        <Link className="c3 c3a" href="/register"><b>{t('cta.give')}</b><span>{t('cta.giveSub')}</span></Link>
+        <Link className="c3 c3b" href="/request/new"><b>{t('cta.want')}</b><span>{t('cta.wantSub')}</span></Link>
+        <Link className="c3 c3c" href="/request"><b>{t('cta.get')}</b><span>{t('cta.getSub')}</span></Link>
       </div>
 
       <div className="w1-gcards">
         {nav.map((g) => (
           <Link key={g.code} className={`gcard ${GCLS[g.code] ?? ''}`} href={`/${GWAN_PATH[g.code]}`}>
-            <b>{g.name}</b><span>{g.code} 목록으로</span>
+            <b>{gname(g.code, g.name)}</b><span>{t('toList', { code: g.code })}</span>
           </Link>
         ))}
       </div>
 
       <div className="w1-lsth">
         <span className="w1-ls">{data.adNotice || ''}</span>
-        <span className="srt" aria-label="정렬">
-          {([['', '최신순'], ['FEE_DESC', '소개비순']] as const).map(([v, t]) => (
-            <Link key={t} href={v ? `/listings?sort=${v}` : '/listings'} className={(sort ?? '') === v ? 'on' : undefined}
-              aria-current={(sort ?? '') === v ? 'true' : undefined}>{t}</Link>
+        <span className="srt" aria-label={t('sort')}>
+          {([['', 'latest'], ['FEE_DESC', 'fee']] as const).map(([v, k]) => (
+            <Link key={k} href={v ? `/listings?sort=${v}` : '/listings'} className={(sort ?? '') === v ? 'on' : undefined}
+              aria-current={(sort ?? '') === v ? 'true' : undefined}>{t(`sorts.${k}`)}</Link>
           ))}
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="w1-empty">등록된 매물이 없습니다.</div>
+        <div className="w1-empty">{t('empty')}</div>
       ) : (
         <div className="w1-tbw">
           <table className="w1-tb">
-            <thead><tr><th>구분</th><th>상품 · 서비스</th><th>업종</th><th>등급</th><th>등록자</th><th>소개비</th></tr></thead>
+            <thead><tr><th>{t('th.gwan')}</th><th>{t('th.item')}</th><th>{t('th.cat')}</th><th>{t('th.grade')}</th><th>{t('th.owner')}</th><th>{t('th.fee')}</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={`${r.ad ? 'ad' : 'o'}-${r.id}`} data-listing={r.id}>
                   <td><span className={`w1-gt ${GCLS[r.gwanCode] ?? ''}`}>{GN[r.gwanCode] ?? r.gwanCode}</span>
-                    {r.ad && <span className="w1-bg wait" style={{ marginLeft: 4 }}>{r.adLabel ?? '광고'}</span>}</td>
+                    {r.ad && <span className="w1-bg wait" style={{ marginLeft: 4 }}>{r.adLabel ?? t('ad')}</span>}</td>
                   <td><Link href={`/listings/${r.id}`}><b>{r.title}</b></Link></td>
                   <td>{r.categoryName}</td>
                   <td>{r.gradeLabel ? <span className={`w1-bg ${r.gradeCode === 'G1' ? 'ok' : 'off'}`}>{r.gradeLabel}</span> : '—'}</td>
                   <td>{r.owner.companyName}{r.owner.verified ? ' ✓' : ''}</td>
-                  <td>{r.desiredFee ? won(r.desiredFee) : '협의'}</td>
+                  <td>{r.desiredFee ? won(r.desiredFee) : t('nego')}</td>
                 </tr>
               ))}
             </tbody>
@@ -89,7 +98,7 @@ export default async function AllListings({ searchParams }: {
       )}
       {data.nextCursor && (
         <div style={{ textAlign: 'center', marginTop: 14 }}>
-          <Link className="w1-bo" href={`/listings?${new URLSearchParams({ ...(sort ? { sort } : {}), cursor: data.nextCursor })}`}>더 보기</Link>
+          <Link className="w1-bo" href={`/listings?${new URLSearchParams({ ...(sort ? { sort } : {}), cursor: data.nextCursor })}`}>{t('more')}</Link>
         </div>
       )}
     </div>

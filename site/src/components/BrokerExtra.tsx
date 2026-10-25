@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadFile } from '@/lib/upload';
+import { useTranslations } from 'next-intl';
 
 /**
  * v10.31 (w2 · 시안 scBrkApp · scBrkMy 기준) — 중개사 인증의 「제출 서류」 체크 · 서류 파일(선택) · 보증(공제) 칸.
@@ -18,6 +19,7 @@ export interface BrokerExtraValue {
 }
 
 export function useBrokerExtra(init?: BrokerExtraValue | null) {
+  const t = useTranslations('join.brokerExtra');
   const [docs, setDocs] = useState<string[]>(init?.submittedDocs ?? ['REG_CERT', 'GUARANTEE']);
   const [g, setG] = useState({
     org: init?.guaranteeOrg ?? '', cert: init?.guaranteeCertNo ?? '', amount: init?.guaranteeAmount ? String(init.guaranteeAmount) : '',
@@ -37,29 +39,29 @@ export function useBrokerExtra(init?: BrokerExtraValue | null) {
       }),
     });
     const j = await r.json().catch(() => null);
-    if (!r.ok) throw new Error(j?.message ?? '서류 · 보증 정보를 저장하지 못했습니다.');
+    if (!r.ok) throw new Error(j?.message ?? t('saveFail'));
     setFiles([]);
   }
   const fields = (
     <>
-      <div className="fld"><span>제출 서류</span>
+      <div className="fld"><span>{t('docs')}</span>
         <div className="gw-brkdocs">{BROKER_DOCS.map(([k, t]) => (
           <label key={k} className="gw-brkdoc"><input type="checkbox" name="doc" value={k} checked={docs.includes(k)}
             onChange={(e) => setDocs(e.target.checked ? [...docs, k] : docs.filter((x) => x !== k))} /><span>{t}</span></label>
         ))}</div>
-        <label className="gw-ls" style={{ display: 'block', marginTop: 6 }}>서류 파일 (선택 · PDF · 사진, 최대 8개)
+        <label className="gw-ls" style={{ display: 'block', marginTop: 6 }}>{t('files')}
           <input type="file" multiple accept="application/pdf,image/*" onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 8))} /></label>
-        <span className="gw-ls">{init?.docFileCount ? `이미 올린 서류 ${init.docFileCount}개 · ` : ''}올린 파일은 본인과 검수자만 엽니다.</span>
+        <span className="gw-ls">{init?.docFileCount ? t('uploaded', { n: String(init.docFileCount) }) : ''}{t('privacy')}</span>
       </div>
-      <div className="fld"><span>보증(공제)</span>
+      <div className="fld"><span>{t('guarantee')}</span>
         <div className="gw-g2">
-          <input className="inp" placeholder="기관 (예: 공인중개사협회)" value={g.org} maxLength={60} onChange={(e) => setG({ ...g, org: e.target.value })} />
-          <input className="inp" placeholder="증서 번호" value={g.cert} maxLength={60} onChange={(e) => setG({ ...g, cert: e.target.value })} />
-          <input className="inp" placeholder="금액(원)" inputMode="numeric" value={g.amount} onChange={(e) => setG({ ...g, amount: e.target.value })} />
-          <span className="gw-inl"><input className="inp" type="date" value={g.from} onChange={(e) => setG({ ...g, from: e.target.value })} aria-label="보증 시작일" />
-            ~ <input className="inp" type="date" value={g.until} onChange={(e) => setG({ ...g, until: e.target.value })} aria-label="보증 만료일" /></span>
+          <input className="inp" placeholder={t('orgPh')} value={g.org} maxLength={60} onChange={(e) => setG({ ...g, org: e.target.value })} />
+          <input className="inp" placeholder={t('certPh')} value={g.cert} maxLength={60} onChange={(e) => setG({ ...g, cert: e.target.value })} />
+          <input className="inp" placeholder={t('amountPh')} inputMode="numeric" value={g.amount} onChange={(e) => setG({ ...g, amount: e.target.value })} />
+          <span className="gw-inl"><input className="inp" type="date" value={g.from} onChange={(e) => setG({ ...g, from: e.target.value })} aria-label={t('from')} />
+            ~ <input className="inp" type="date" value={g.until} onChange={(e) => setG({ ...g, until: e.target.value })} aria-label={t('until')} /></span>
         </div>
-        <span className="gw-ls">공제는 공개 API 가 없어 증서 입력과 만료일 관리로 갑니다. 보증 없이는 승인되지 않습니다(INV-BR4).</span>
+        <span className="gw-ls">{t('guaranteeNote')}</span>
       </div>
     </>
   );
@@ -69,17 +71,18 @@ export function useBrokerExtra(init?: BrokerExtraValue | null) {
 /** 내 인증 상태 화면 — 보증(공제) · 서류를 고쳐 올리는 칸 */
 export function BrokerExtraForm({ init }: { init?: BrokerExtraValue | null }) {
   const router = useRouter();
+  const t = useTranslations('join.brokerExtra');
   const x = useBrokerExtra(init);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   return (
     <form className="gw-brkform" onSubmit={async (e) => {
-      e.preventDefault(); setMsg(null); setBusy('저장하는 중…');
-      try { await x.save((s) => setBusy(s)); setMsg('저장했습니다.'); router.refresh(); }
+      e.preventDefault(); setMsg(null); setBusy(t('saving'));
+      try { await x.save((s) => setBusy(s)); setMsg(t('saved')); router.refresh(); }
       catch (e2) { setMsg((e2 as Error).message); } finally { setBusy(null); }
     }}>
       {x.fields}
-      <div className="gw-dact"><button className="gw-bp gw-sm" type="submit" disabled={!!busy}>{busy ?? '서류 · 보증 저장'}</button></div>
+      <div className="gw-dact"><button className="gw-bp gw-sm" type="submit" disabled={!!busy}>{busy ?? t('save')}</button></div>
       {msg && <p className="gw-ls" role="status">{msg}</p>}
     </form>
   );

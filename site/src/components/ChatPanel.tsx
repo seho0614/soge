@@ -2,6 +2,7 @@
 import { dtKst } from '@/lib/format';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface Message { id: number; senderId: string; body: string; createdAt: string; masked: boolean; mine?: boolean }
 
@@ -19,6 +20,7 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
   const [pending, start] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const t = useTranslations('deal.chat');
   const [dealBusy, setDealBusy] = useState(false);
 
   /* v10.27 (G-193) — 시안(scAsk)의 「계약서 요청하기 ›」. 문의한 대화로 거래를 열고(POST /conversations/{id}/deal · 이미 있으면 그 거래)
@@ -31,8 +33,8 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
       const d = await r.json().catch(() => null);
       if (!r.ok || !d?.dealId) {
         setErr(r.status === 403
-          ? (d?.message ?? '본인인증을 마친 회원이 거래를 열 수 있습니다.')
-          : (d?.message ?? '거래를 열지 못했습니다. 잠시 후 다시 시도해 주십시오.'));
+          ? (d?.message ?? t('idRequired'))
+          : (d?.message ?? t('dealFailRetry')));
         return;
       }
       router.push(`/deal/${d.dealId}/contract`);
@@ -64,14 +66,14 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
   }, [listingId, conversationId]);
 
   async function open(first: string): Promise<string | null> {
-    if (!listingId) { setErr('대화를 찾을 수 없습니다.'); return null; }
+    if (!listingId) { setErr(t('notFound')); return null; }
     const r = await fetch('/api/v1/conversations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetType: 'LISTING', targetId: listingId, message: first }),
     });
     const d = await r.json().catch(() => null);
-    if (!r.ok) { setErr(d?.message ?? '대화를 열지 못했습니다.'); return null; }
+    if (!r.ok) { setErr(d?.message ?? t('openFail')); return null; }
     const id = d?.conversationId ?? d?.id ?? null;
     setConvId(id);
     return id;
@@ -105,7 +107,7 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
       });
       if (!r.ok) {
         const d = await r.json().catch(() => null);
-        setErr(d?.message ?? '보내지 못했습니다.');
+        setErr(d?.message ?? t('sendFail'));
         setText(body);
         return;
       }
@@ -117,12 +119,12 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
     <section className="chat">
       <div className="chat-log">
         {msgs.length === 0 ? (
-          <p className="empty">첫 문의를 남겨 보십시오.</p>
+          <p className="empty">{t('empty')}</p>
         ) : (
           msgs.map((m) => (
             <div key={m.id} className={m.mine ? 'msg mine' : 'msg'} data-msg={m.mine ? 'mine' : 'other'}>
               <p>{m.body}</p>
-              {m.masked && <em className="masked">연락처가 가려졌습니다</em>}
+              {m.masked && <em className="masked">{t('masked')}</em>}
               <time>{dtKst(m.createdAt)}</time>
             </div>
           ))
@@ -135,18 +137,18 @@ export function ChatPanel({ listingId, conversationId }: { listingId?: string; c
       <form className="chat-input" onSubmit={send}>
         <textarea
           value={text} onChange={(e) => setText(e.target.value)}
-          placeholder="문의 내용을 적어 주십시오" rows={3}
+          placeholder={t('ph')} rows={3}
         />
         <button className="cta-primary" disabled={pending || !text.trim()}>
-          {pending ? '전송 중…' : '보내기'}
+          {pending ? t('sending') : t('send')}
         </button>
       </form>
       {convId && (
         <div className="chat-next" data-deal-next>
           <button type="button" className="cta-primary" disabled={dealBusy} onClick={requestContract} data-request-contract>
-            {dealBusy ? '여는 중…' : '계약서 요청하기 ›'}
+            {dealBusy ? t('opening') : t('reqContract')}
           </button>
-          <p className="hint">플랫폼은 계약서 <b>양식만</b> 제공하며 계약 당사자가 아닙니다. 거래를 열면 소개 이력이 기록됩니다.</p>
+          <p className="hint">{t.rich('hint', { b: (x) => <b>{x}</b> })}</p>
         </div>
       )}
     </section>

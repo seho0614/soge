@@ -5,9 +5,13 @@ import { apiGetPersonal, ApiFailure } from '@/lib/api';
 import type { ListingDetailData } from '@/lib/types';
 import { BackBar } from '@/components/common/BackBar';
 import { ListingEditForm, type Draft, type ReviewState } from '@/components/ListingEditForm';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '소개하기 수정' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('forms.editPage'))('title') };
+}
 
 /** SB-HOM-REG-020 — v10.31 시안 scRegEdit. 수정은 재검수를 유발하고 배지가 회수됩니다 */
 export default async function EditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,14 +27,16 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     apiGetPersonal<Draft | null>(`/me/listings/${id}/draft`).catch(() => null),
   ]);
 
+  const t = await getTranslations('forms.editPage');
+
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-REG-020" style={{ maxWidth: 860 }}>
-      <BackBar href="/my/listings" label="내 등록" wrap={false} />
+      <BackBar href="/my/listings" label={t('back')} wrap={false} />
       <div className="w1-aih" style={{ marginTop: 10 }}>
-        <h1>소개하기 수정</h1>
-        <p>반려된 등록을 고쳐 다시 검수를 받습니다. 새로 등록하지 마십시오 — 같은 건이 검수 큐에 두 번 쌓입니다.</p>
+        <h1>{t('title')}</h1>
+        <p>{t('sub')}</p>
       </div>
-      <div style={{ marginTop: 12 }}><ListingEditForm item={item} review={review} draft={draft && draft.savedAt ? draft : null} /></div>
+      <div style={{ marginTop: 12 }}><Msgs ns={['forms']}><ListingEditForm item={item} review={review} draft={draft && draft.savedAt ? draft : null} /></Msgs></div>
     </div>
   );
 }

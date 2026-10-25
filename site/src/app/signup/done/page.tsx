@@ -5,8 +5,11 @@ import { me } from '@/lib/session';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { GWAN_PATH } from '@/lib/format';
 import '@/styles/proto-w1.css';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '가입 신청 접수' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('join.done'))('metaTitle') };
+}
 
 interface Account {
   account: { name: string; email: string; identityVerifiedAt: string | null } | null;
@@ -24,6 +27,7 @@ const fmtBrn = (d: string) => (d?.length === 10 ? `${d.slice(0, 3)}-${d.slice(3,
  */
 export default async function SignupDone({ searchParams }: { searchParams: Promise<{ biz?: string; msg?: string }> }) {
   if (!(await me())) redirect('/login?next=/signup/done');
+  const t = await getTranslations('join.done');
   const sp = await searchParams;
   const [acc, mine, landing] = await Promise.all([
     apiGetPersonal<Account>('/me/account').catch(() => null),
@@ -34,54 +38,53 @@ export default async function SignupDone({ searchParams }: { searchParams: Promi
   const startHref = GWAN_PATH[landing] ? `/${GWAN_PATH[landing]}` : '/';
   const biz = acc?.business ?? null;
   const failed = sp.biz === 'fail' && !biz;
-  const ntsLabel = !biz ? '' : biz.ntsStatus === 'VALID' ? `자동 통과${biz.ntsEnv === 'STUB' ? ' (모의 조회)' : ''}` : biz.ntsStatus ? '확인 필요' : '조회 대기';
+  const ntsLabel = !biz ? '' : biz.ntsStatus === 'VALID' ? `${t('ntsPass')}${biz.ntsEnv === 'STUB' ? t('ntsStub') : ''}` : biz.ntsStatus ? t('ntsCheck') : t('ntsWait');
 
   const steps: Array<[string, string, string]> = biz
-    ? [['접수', '완료', 'dn'], ['사업자 확인', ntsLabel, biz.ntsStatus === 'VALID' ? 'dn' : 'on'],
-       ['운영자 승인', biz.verifiedAt ? '승인' : biz.rejectReason ? '반려' : '심사 중', biz.verifiedAt ? 'dn' : 'on'],
-       ['가입 완료', biz.verifiedAt ? '완료' : '대기', biz.verifiedAt ? 'dn' : '']]
-    : [['접수', '완료', 'dn'], ['사업자 확인', '해당 없음', ''], ['운영자 승인', '해당 없음', ''], ['가입 완료', '완료', 'dn']];
+    ? [[t('stReceived'), t('stDone'), 'dn'], [t('stBiz'), ntsLabel, biz.ntsStatus === 'VALID' ? 'dn' : 'on'],
+       [t('stApproval'), biz.verifiedAt ? t('stApproved') : biz.rejectReason ? t('stRejected') : t('stReviewing'), biz.verifiedAt ? 'dn' : 'on'],
+       [t('stJoined'), biz.verifiedAt ? t('stDone') : t('stWaiting'), biz.verifiedAt ? 'dn' : '']]
+    : [[t('stReceived'), t('stDone'), 'dn'], [t('stBiz'), t('stNa'), ''], [t('stApproval'), t('stNa'), ''], [t('stJoined'), t('stDone'), 'dn']];
 
   return (
     <div className="w1 w1-jw" data-screen="SB-HOM-AUT-020" data-state="done">
       <div className="w1-done">
         <div className="dic" aria-hidden="true">✓</div>
-        <h1>{biz ? '가입 신청이 접수되었습니다' : '가입이 완료되었습니다'}</h1>
+        <h1>{biz ? t('titleBiz') : t('titlePersonal')}</h1>
         {biz ? (
-          <p>{biz.companyName} · 사업자등록번호 {fmtBrn(biz.bizRegNo)}<br />
-            <b>운영자 승인 후</b> 사업자 인증이 완료됩니다. 영업일 기준 1일 이내에 처리됩니다.</p>
+          <p>{t('bizLine1', { company: biz.companyName, brn: fmtBrn(biz.bizRegNo) })}<br />
+            {t.rich('bizLine2', { b: (c) => <b>{c}</b> })}</p>
         ) : (
-          <p>{acc?.account?.name ?? ''} 님 · {acc?.account?.email ?? ''}<br />
-            개인 회원으로 가입되었습니다. <b>본인인증</b>을 하시면 소개비도 받으십니다.</p>
+          <p>{t('personalLine1', { name: acc?.account?.name ?? '', email: acc?.account?.email ?? '' })}<br />
+            {t.rich('personalLine2', { b: (c) => <b>{c}</b> })}</p>
         )}
         <div className="w1-dst">
           {steps.map(([t, s, c]) => <div key={t} className={`d1 ${c}`}><b>{t}</b><span>{s}</span></div>)}
         </div>
 
         {failed && (
-          <div className="w1-jc e" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">사업자 신청이 접수되지 않았습니다</span>
-            계정은 만들어졌습니다. {sp.msg ? <>{sp.msg} </> : null}<Link href="/my/business">나의공간 → 사업자 전환</Link>에서 다시 신청해 주십시오.</div>
+          <div className="w1-jc e" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">{t('failLb')}</span>
+            {t('failAccount')}{' '}{sp.msg ? <>{sp.msg} </> : null}{t.rich('failRetry', { a: (c) => <Link href="/my/business">{c}</Link> })}</div>
         )}
 
         {mine?.registered ? (
-          <div className="w1-jc s" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">관심 성향</span>
-            <b>{mine.name ?? mine.segment}</b> ({mine.segment})로 저장했습니다. 메인 광고와 소개 추천이 이 성향으로 정렬됩니다.{' '}
-            <b>나의공간 → 관심 성향</b>(<Link href="/ai/profile">다시 하기</Link>)에서 언제든 다시 하거나 지울 수 있습니다.</div>
+          <div className="w1-jc s" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">{t('prefLb')}</span>
+            {t.rich('prefSaved', { name: mine.name ?? mine.segment ?? '', segment: mine.segment ?? '', b: (c) => <b>{c}</b>, a: (c) => <Link href="/ai/profile">{c}</Link> })}</div>
         ) : (
-          <div className="w1-jc i" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">관심 성향</span>
-            성향을 넣지 않으셨습니다 — 전체 공개 광고만 나갑니다. 나중에 <b>나의공간 → 관심 성향</b>(<Link href="/ai/profile">지금 넣기</Link>)에서 넣을 수 있습니다.</div>
+          <div className="w1-jc i" style={{ textAlign: 'left', marginTop: 18 }}><span className="lb">{t('prefLb')}</span>
+            {t.rich('prefNone', { b: (c) => <b>{c}</b>, a: (c) => <Link href="/ai/profile">{c}</Link> })}</div>
         )}
 
-        <div className="w1-jc i" style={{ textAlign: 'left', marginTop: 12 }}><span className="lb">{biz ? '승인 전에 할 수 있는 것' : '지금 할 수 있는 것'}</span>
-          리스팅 <b>열람과 검색</b>, 요청 등록과 소개 참여는 지금도 됩니다.{' '}
-          {biz ? <>본인인증을 하시면 <b>모든 업무</b>를 지금 하실 수 있고, <b>사업자로 받는 소개비(세금계산서)</b>만 승인 후에 열립니다.</>
-            : <><b>본인인증</b>을 하시면 모든 업무(등록 · 문의 · 거래 · 소개비 받기)를 하실 수 있습니다. 등록에 인증이 필요한 업종만 그 인증을 받습니다.</>}
+        <div className="w1-jc i" style={{ textAlign: 'left', marginTop: 12 }}><span className="lb">{biz ? t('canBeforeLb') : t('canNowLb')}</span>
+          {t.rich('canNow', { b: (c) => <b>{c}</b> })}{' '}
+          {biz ? t.rich('canBiz', { b: (c) => <b>{c}</b> })
+            : t.rich('canPersonal', { b: (c) => <b>{c}</b> })}
         </div>
 
         <div className="w1-dact">
-          {!acc?.account?.identityVerifiedAt && <Link className="w1-jb p" href="/verify">본인인증 하기</Link>}
-          <Link className="w1-jb o" href={startHref} data-signup-start={landing || 'MAIN'}>{startHref === '/' ? '메인으로' : '시작하기'}</Link>
-          <Link className="w1-jb a" href="/listings">리스팅 둘러보기</Link>
+          {!acc?.account?.identityVerifiedAt && <Link className="w1-jb p" href="/verify">{t('verifyBtn')}</Link>}
+          <Link className="w1-jb o" href={startHref} data-signup-start={landing || 'MAIN'}>{startHref === '/' ? t('toMain') : t('start')}</Link>
+          <Link className="w1-jb a" href="/listings">{t('browse')}</Link>
         </div>
       </div>
     </div>

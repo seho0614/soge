@@ -5,17 +5,23 @@
  * 비율은 투표한 뒤(또는 마감 뒤)에만 보입니다. 숫자는 전부 서버의 실제 표 수입니다.
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ymdKst } from '@/lib/format';
-import { type Poll, POLL_KIND, people, pct, usePoll } from './poll';
+import { type Poll, POLL_KIND, pct, usePoll } from './poll';
 
 function Card({ p }: { p: Poll }) {
-  const h = usePoll(p);
-  const k = POLL_KIND[h.poll.kind] ?? { label: h.poll.kind, tone: '', cta: '투표하기' };
+  const t = useTranslations('plaza');
+  const h = usePoll(p, {
+    pick: t('poll.msg.pick'), ok: t('poll.msg.ok'), already: t('poll.msg.already'),
+    login: t('poll.msg.login'), fail: t('poll.msg.fail'), offline: t('poll.msg.offline'),
+  });
+  const kk = POLL_KIND[h.poll.kind];
+  const k = kk ? { label: t(kk.label), cta: t(kk.cta) } : { label: h.poll.kind, cta: t('poll.vote') };
   return (
     <article className={`poll-card${h.poll.open ? '' : ' closed'}`} data-poll={h.poll.id} data-kind={h.poll.kind} data-voted={h.voted ? '1' : '0'}>
       <div className="poll-top">
         <span className="poll-kind">{k.label}</span>
-        <span className="poll-state">{h.poll.open ? (h.poll.endsAt ? `${ymdKst(h.poll.endsAt)} 마감` : '진행 중') : '마감'}</span>
+        <span className="poll-state">{h.poll.open ? (h.poll.endsAt ? t('poll.endsAt', { date: ymdKst(h.poll.endsAt) }) : t('poll.ongoing')) : t('poll.ended')}</span>
       </div>
       <h2>{h.poll.title}</h2>
       {h.poll.description && <p className="poll-desc">{h.poll.description}</p>}
@@ -32,7 +38,7 @@ function Card({ p }: { p: Poll }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {o.image && <img src={o.image} alt="" loading="lazy" />}
                 <span className="poll-ol"><span>{o.label}</span>{o.sub && <small>{o.sub}</small>}</span>
-                {h.result && <em>{v}% · {o.votes.toLocaleString('ko-KR')}표</em>}
+                {h.result && <em>{t('poll.result', { p: String(v), n: o.votes.toLocaleString('ko-KR') })}</em>}
               </button>
             </li>
           );
@@ -40,13 +46,13 @@ function Card({ p }: { p: Poll }) {
       </ul>
       <div className="poll-foot">
         {h.canVote
-          ? <button type="button" className="btn-primary" onClick={h.vote} disabled={h.busy} data-vote>{h.busy ? '보내는 중…' : k.cta}</button>
-          : <span className="poll-done" data-done>{h.voted ? '투표했습니다' : '마감된 투표'}</span>}
-        <span className="poll-total" data-total={h.poll.total}>{people(h.poll.total)}</span>
+          ? <button type="button" className="btn-primary" onClick={h.vote} disabled={h.busy} data-vote>{h.busy ? t('poll.sending') : k.cta}</button>
+          : <span className="poll-done" data-done>{h.voted ? t('poll.voted') : t('poll.closed')}</span>}
+        <span className="poll-total" data-total={h.poll.total}>{t('poll.people', { n: h.poll.total.toLocaleString('ko-KR') })}</span>
       </div>
       {h.msg && (
         <p className={`poll-msg ${h.msg.kind}`} role={h.msg.kind === 'ok' ? 'status' : 'alert'}>
-          {h.msg.text}{h.msg.kind === 'login' && <> <Link href="/login">로그인</Link></>}
+          {h.msg.text}{h.msg.kind === 'login' && <> <Link href="/login">{t('poll.login')}</Link></>}
         </p>
       )}
     </article>

@@ -1,14 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGetPersonal, ApiFailure } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
+import { Msgs } from '@/i18n/Msgs';
 import { type PostDetail, type PostComment } from '@/components/community/types';
 import { BoardBadge, PlazaHero, PlazaTabs, dot } from '@/components/community/Plaza';
 import { CommentForm, ReplyToggle } from '@/components/community/CommentForm';
 import { PostOwnerActions } from '@/components/community/PostOwnerActions';
 import '@/styles/plaza.css';
 
-export const metadata: Metadata = { title: '소개광장 글' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('post.title') };
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -29,11 +33,12 @@ export default async function CommunityPostPage({ params, searchParams }: {
   const { id } = await params;
   const { posted, saved } = await searchParams;
   const principal = await me();
+  const t = await getTranslations('plaza');
 
   let d: PostDetail | null = null;
-  let failMsg = '글을 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.';
+  let failMsg = t('post.loadFail');
   if (!UUID.test(id)) {
-    d = { ok: false, note: '없는 글입니다.' };
+    d = { ok: false, note: t('post.noSuch') };
   } else {
     d = await apiGetPersonal<PostDetail>(`/community/posts/${id}`).catch((e) => {
       if (e instanceof ApiFailure && e.status < 500) failMsg = e.body.message;
@@ -41,24 +46,24 @@ export default async function CommunityPostPage({ params, searchParams }: {
     });
   }
 
-  const back = <p className="plz-backw"><Link className="plz-back" href="/community">← 목록으로</Link></p>;
+  const back = <p className="plz-backw"><Link className="plz-back" href="/community">{t('post.back')}</Link></p>;
   /** 틀 — 낮은 사진 띠 + 알약 탭(고른 게시판 표시) + 본문 */
   const Shell = ({ board, children }: { board?: string; children: React.ReactNode }) => (
     <div className="plz">
       <PlazaHero small />
       <div className="plz-body">
         <PlazaTabs cur={board ?? 'none'} />
-        <div className="plz-narrow">{children}</div>
+        <div className="plz-narrow"><Msgs ns={['plaza']}>{children}</Msgs></div>
       </div>
     </div>
   );
 
   if (!d) return <Shell><p className="form-error" role="alert">{failMsg}</p>{back}</Shell>;
-  if (!d.ok) return <Shell><h1>소개광장</h1><p className="plz-empty">{d.note ?? '없는 글입니다.'} 지워졌거나 주소가 잘못되었습니다.</p>{back}</Shell>;
+  if (!d.ok) return <Shell><h1>{t('hero.name')}</h1><p className="plz-empty">{d.note ?? t('post.noSuch')} {t('post.goneOrBad')}</p>{back}</Shell>;
   if (d.hidden || d.pending) {
     return (
       <Shell board={d.board}>
-        <h1>{d.hidden ? '가려진 글' : '검수 중인 글'}</h1>
+        <h1>{d.hidden ? t('post.hiddenTitle') : t('post.pendingTitle')}</h1>
         <p className="notice">{d.note}</p>
         {back}
       </Shell>
@@ -73,9 +78,9 @@ export default async function CommunityPostPage({ params, searchParams }: {
   const Cmt = ({ c, re }: { c: PostComment; re?: boolean }) => (
     <div className={'cmu-cmt' + (re ? ' re' : '')}>
       <b>{c.author}</b> <span className="dim">{dot(c.createdAt)}</span>
-      <p>{c.hidden ? <span className="dim">{c.hiddenBy === 'REPORT' ? '신고가 들어와 가려진 댓글입니다.' : '운영 기준에 따라 가려진 댓글입니다.'}</span> : c.body}</p>
+      <p>{c.hidden ? <span className="dim">{c.hiddenBy === 'REPORT' ? t('comment.hiddenReport') : t('comment.hiddenAdmin')}</span> : c.body}</p>
       {/* v10.80 — 남의 공개 댓글은 신고(본인인증 회원 · 서로 다른 3명이면 가려짐 · D110) */}
-      {loggedIn && !c.mine && !c.hidden && <a className="dim cmu-rpt" href={`/report/comment/${c.id}`} data-comment-report="">신고</a>}
+      {loggedIn && !c.mine && !c.hidden && <a className="dim cmu-rpt" href={`/report/comment/${c.id}`} data-comment-report="">{t('comment.report')}</a>}
     </div>
   );
 
@@ -83,11 +88,11 @@ export default async function CommunityPostPage({ params, searchParams }: {
   if (d.deleted) {
     return (
       <Shell board={d.board}>
-        <h1>지운 글</h1>
-        <p className="notice">{d.note ?? '작성자가 지운 글입니다.'}</p>
+        <h1>{t('post.deletedTitle')}</h1>
+        <p className="notice">{d.note ?? t('post.deletedNote')}</p>
         {roots.length > 0 && (
           <>
-            <h2>댓글 {comments.length}</h2>
+            <h2>{t('comment.count', { n: String(comments.length) })}</h2>
             <div className="card p2pad">
               {roots.map((c) => (
                 <div key={c.id}>
@@ -105,31 +110,31 @@ export default async function CommunityPostPage({ params, searchParams }: {
 
   return (
     <Shell board={d.board}>
-      {posted === 'PENDING' && <p className="notice"><b>글을 올렸습니다.</b> 첫 글이라 확인 후 다른 분들께 보입니다. 보통 하루 안에 끝납니다.</p>}
-      {posted === 'PUBLISHED' && <p className="ok-note" role="status">글을 올렸습니다.</p>}
-      {saved && <p className="ok-note" role="status">수정했습니다.</p>}
+      {posted === 'PENDING' && <p className="notice">{t.rich('post.postedPending', { b: (c) => <b>{c}</b> })}</p>}
+      {posted === 'PUBLISHED' && <p className="ok-note" role="status">{t('post.posted')}</p>}
+      {saved && <p className="ok-note" role="status">{t('post.saved')}</p>}
 
       <article className="plz-post">
         <header>
           <BoardBadge board={d.board} />
           <h1>{d.title}</h1>
           <p className="plz-meta">
-            <span>{d.author}</span><span>{dot(d.createdAt)}</span><span>조회 {(d.views ?? 0).toLocaleString('ko-KR')}</span>
-            {d.state === 'PENDING' && <span className="state state-suspended">검수 중 · 나만 보임</span>}
-            {d.state === 'HIDDEN' && <span className="state state-rejected">가려짐</span>}
+            <span>{d.author}</span><span>{dot(d.createdAt)}</span><span>{t('post.views', { n: (d.views ?? 0).toLocaleString('ko-KR') })}</span>
+            {d.state === 'PENDING' && <span className="state state-suspended">{t('pendingMine')}</span>}
+            {d.state === 'HIDDEN' && <span className="state state-rejected">{t('post.hidden')}</span>}
           </p>
         </header>
-        {d.state === 'HIDDEN' && d.hiddenReason && <div className="notice warn"><b>가려진 사유:</b> {d.hiddenReason}</div>}
+        {d.state === 'HIDDEN' && d.hiddenReason && <div className="notice warn"><b>{t('post.hiddenReason')}</b> {d.hiddenReason}</div>}
         <p className="doc-body">{d.body}</p>
       </article>
       {d.board === 'REVIEW' && (
-        <div className="notice"><b>성사된 거래가 확인된 후기입니다.</b> 거래 기록이 없으면 후기를 쓰실 수 없습니다.</div>
+        <div className="notice">{t.rich('post.reviewNote', { b: (c) => <b>{c}</b> })}</div>
       )}
       {d.mine && <PostOwnerActions id={d.id!} />}
 
-      <h2>댓글 {comments.length}</h2>
+      <h2>{t('comment.count', { n: String(comments.length) })}</h2>
       <div className="card p2pad">
-        {roots.length === 0 ? <p className="dim">아직 댓글이 없습니다.</p> : roots.map((c) => (
+        {roots.length === 0 ? <p className="dim">{t('comment.none')}</p> : roots.map((c) => (
           <div key={c.id}>
             <Cmt c={c} />
             {kids(c.id).map((k) => <Cmt key={k.id} c={k} re />)}
@@ -137,7 +142,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
           </div>
         ))}
       </div>
-      <p className="hint">대댓글은 1단계까지입니다. 더 깊으면 화면에서 읽기 어렵습니다.</p>
+      <p className="hint">{t('comment.depthHint')}</p>
       <CommentForm postId={d.id!} loggedIn={loggedIn} reportHref={!d.mine && d.state === 'PUBLISHED' ? `/report/post/${d.id}` : undefined} />
       {back}
     </Shell>

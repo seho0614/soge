@@ -9,7 +9,12 @@ import { FileOpenButton } from '@/components/files/FileOpenButton';
 import { BackBar } from '@/components/common/BackBar';
 
 import { ymdKst } from '@/lib/format';
-export const metadata: Metadata = { title: '중개사 매물 · 소유 확인' };
+import { getLocale, getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('join.malBrokers'))('metaTitle') };
+}
 
 interface Detail {
   id: string; gwanCode: string; categoryName: string; title: string; body: string | null;
@@ -27,10 +32,11 @@ interface Category { id: string; name: string }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const won = (n: number | null) => (n == null ? '협의' : n.toLocaleString('ko-KR') + '원');
 const ymd = (iso?: string | null) => iso ? ymdKst(iso) : '—';
-const OWN: Record<string, { t: string; c: string }> = {
-  SUBMITTED: { t: '확인 중', c: 'state-in_review' },
-  VERIFIED:  { t: '확인 완료', c: 'state-published' },
-  REJECTED:  { t: '거절', c: 'state-rejected' },
+/* t — 사전 키(join.malBrokers.own.<상태>) */
+const OWN: Record<string, { t: 'own.SUBMITTED' | 'own.VERIFIED' | 'own.REJECTED'; c: string }> = {
+  SUBMITTED: { t: 'own.SUBMITTED', c: 'state-in_review' },
+  VERIFIED:  { t: 'own.VERIFIED', c: 'state-published' },
+  REJECTED:  { t: 'own.REJECTED', c: 'state-rejected' },
 };
 
 /**
@@ -62,6 +68,7 @@ export default async function MalBrokersPage({ searchParams }: {
   if (!p) redirect('/login');
 
   const { view, mine, created } = await searchParams;
+  const [t, th, locale] = await Promise.all([getTranslations('join.malBrokers'), getTranslations('header.gwan'), getLocale()]);
 
   const [list, categories, myRows, gwans, settings] = await Promise.all([
     apiGet<ListingListData>('/listings?gwanCode=MAL&axis=RE&limit=20&sort=RECENT', 30).catch(() => null),
@@ -72,15 +79,15 @@ export default async function MalBrokersPage({ searchParams }: {
   ]);
   /* v10.31 (w2 · 시안 기준) — 시안 「아직 열지 않았습니다 — A-07 법무 회신 대기」. 운영 스위치 mal.broker_sync.open(D056 · 기본 off)이 켜지기 전에는 목록을 열지 않습니다 */
   const opened = settings['mal.broker_sync.open'] === 'on';
-  const malName = gwans.find((g) => g.code === 'MAL')?.name ?? '부동산';
+  const malName = locale !== 'ko' ? th('MAL') : (gwans.find((g) => g.code === 'MAL')?.name ?? t('malFallback'));
   const rows = list ? [...list.promoted, ...list.organic] : null;
 
   /* 펼쳐 볼 매물 */
   let viewed: Detail | null = null; let viewErr: string | null = null;
   if (view) {
-    if (!UUID.test(view)) viewErr = '없는 매물입니다.';
+    if (!UUID.test(view)) viewErr = t('noListing');
     else viewed = await apiGetPersonal<Detail>(`/listings/${view}`).catch((e) => {
-      viewErr = e instanceof ApiFailure && e.status === 404 ? '없는 매물이거나 내려간 매물입니다.' : '매물을 불러오지 못했습니다.';
+      viewErr = e instanceof ApiFailure && e.status === 404 ? t('goneListing') : t('loadFail');
       return null;
     });
   }
@@ -100,7 +107,7 @@ export default async function MalBrokersPage({ searchParams }: {
       const d = await apiGetPersonal<Detail>(`/listings/${mine}`).catch(() => null);
       if (d?.gwanCode === 'MAL') ownTarget = { id: d.id, title: d.title, status: d.status, statusLabel: d.statusLabel };
     }
-    if (!ownTarget) ownErr = '내가 올린 부동산 매물이 아닙니다.';
+    if (!ownTarget) ownErr = t('notMine');
     else own = await apiGetPersonal<Ownership>(`/me/listings/${ownTarget.id}/ownership`).catch(() => null);
   }
 
@@ -108,71 +115,68 @@ export default async function MalBrokersPage({ searchParams }: {
     <><div className="gw">
       <div className="gw-wrap gw-aiw">
         <BackBar href="/mall" label={malName} wrap={false} />
-        <div className="gw-pgh"><div><h1>공인중개사 매물 연동</h1><p>중개사 매물 · 소유 확인 — {malName} 축A(부동산) 전용입니다.</p></div></div>
+        <div className="gw-pgh"><div><h1>{t('h1')}</h1><p>{t('sub', { mal: malName })}</p></div></div>
         {!opened ? (
           <>
             <div className="gw-nt gw-warn" data-broker-sync="closed">
-              <b>아직 열지 않았습니다 — A-07 법무 회신 대기.</b>{' '}
-              공인중개사법 제18조의2 ③ 에 따라 <b>개업공인중개사가 아니면 중개대상물을 표시 · 광고할 수 없습니다.</b>{' '}
-              그래서 이 화면은 제휴 중개사무소가 올린 매물만 받아 보여 주는 자리이고, 회신 전에는 목록을 열지 않습니다.
+              {t.rich('closedWarn', { b: (c) => <b>{c}</b> })}
             </div>
             <div className="gw-gapgate">
-              <div className="gw-gapg1"><span className="gw-lb">선행 조건</span>
+              <div className="gw-gapg1"><span className="gw-lb">{t('preLb')}</span>
                 <ol className="gw-safelist">
-                  <li><b>A-07 법무 회신</b> — 소개뱅크가 노출료만 받는 구조가 중개행위에 해당하지 않는지</li>
-                  <li><b>중개사 인증</b> — 등록번호 대조와 보증(공제) 확인이 끝난 사무소만(INV-BR1)</li>
-                  <li>제휴 계약 — 매물 제공 범위 · 갱신 주기 · 책임 소재</li>
+                  <li>{t.rich('pre1', { b: (c) => <b>{c}</b> })}</li>
+                  <li>{t.rich('pre2', { b: (c) => <b>{c}</b> })}</li>
+                  <li>{t('pre3')}</li>
                 </ol></div>
-              <div className="gw-gapg2"><span className="gw-lb">지금 할 수 있는 것</span>
-                <p>중개사 인증은 먼저 받아 둘 수 있습니다. 인증이 끝난 사무소는 회신 직후 바로 매물을 올릴 수 있습니다.</p>
-                <div className="gw-dact"><Link className="gw-bp gw-sm" href="/my/broker">중개사 인증 신청</Link><Link className="gw-bo gw-sm" href="/my/broker/status">심사 현황</Link></div>
-                <p className="gw-ls" style={{ marginTop: 8 }}>본인 소유 물건이시면 아래에서 초안을 올리고 등기로 소유 확인을 받아 두실 수 있습니다.</p></div>
+              <div className="gw-gapg2"><span className="gw-lb">{t('nowLb')}</span>
+                <p>{t('nowP')}</p>
+                <div className="gw-dact"><Link className="gw-bp gw-sm" href="/my/broker">{t('applyBroker')}</Link><Link className="gw-bo gw-sm" href="/my/broker/status">{t('reviewStatus')}</Link></div>
+                <p className="gw-ls" style={{ marginTop: 8 }}>{t('ownHint')}</p></div>
             </div>
             <div className="gw-gaplock">
-              <div className="gw-gaplh"><b>제휴 중개사무소 매물</b><span className="gw-axwait">회신 전 · 미개방</span></div>
-              <div className="gw-tw"><table className="gw-tb2"><thead><tr><th>매물</th><th>지역</th><th>조건</th><th>제공</th></tr></thead>
-                <tbody><tr className="gw-lockrow"><td colSpan={4}>회신 전이라 목록을 열지 않았습니다.</td></tr></tbody></table></div>
-              <div className="gw-ls">회신 전에는 목록을 열지 않습니다 — 열어 두면 아직 자격이 확인되지 않은 매물이 표시 · 광고된 것이 됩니다.</div>
+              <div className="gw-gaplh"><b>{t('lockTitle')}</b><span className="gw-axwait">{t('lockBadge')}</span></div>
+              <div className="gw-tw"><table className="gw-tb2"><thead><tr><th>{t('th.listing')}</th><th>{t('th.region')}</th><th>{t('th.terms')}</th><th>{t('th.provider')}</th></tr></thead>
+                <tbody><tr className="gw-lockrow"><td colSpan={4}>{t('lockRow')}</td></tr></tbody></table></div>
+              <div className="gw-ls">{t('lockNote')}</div>
             </div>
           </>
         ) : (<>
         <div className="gw-nt gw-warn">
-          <b>개업공인중개사가 아니면 중개대상물을 표시·광고할 수 없습니다(공인중개사법 제18조의2 ③).</b>
-          그래서 부동산은 중개사 인증을 받은 사무소가 올린 매물, 또는 등기로 소유가 확인된 본인 물건만 공개됩니다.
+          {t.rich('openWarn', { b: (c) => <b>{c}</b> })}
         </div>
 
         <div className="gw-gapgate">
           <div className="gw-gapg1">
-            <span className="gw-lb">중개사무소이십니까</span>
-            <p>등록번호 대조와 보증(공제) 확인이 끝난 사무소만 부동산 매물을 공개할 수 있습니다.</p>
-            <div className="gw-dact"><Link className="gw-bp gw-sm" href="/my/broker">중개사 인증 신청</Link><Link className="gw-bo gw-sm" href="/my/broker/status">내 인증 상태</Link></div>
+            <span className="gw-lb">{t('areYouOffice')}</span>
+            <p>{t('officeP')}</p>
+            <div className="gw-dact"><Link className="gw-bp gw-sm" href="/my/broker">{t('applyBroker')}</Link><Link className="gw-bo gw-sm" href="/my/broker/status">{t('myStatus')}</Link></div>
           </div>
           <div className="gw-gapg2">
-            <span className="gw-lb">본인 소유 물건이십니까</span>
-            <p>초안을 올리고 등기사항증명서로 소유 확인을 받으시면 공개할 수 있습니다. 사람이 확인합니다.</p>
-            <div className="gw-dact"><Link className="gw-bp gw-sm" href="#new">본인 물건 올리기</Link></div>
+            <span className="gw-lb">{t('areYouOwner')}</span>
+            <p>{t('ownerP')}</p>
+            <div className="gw-dact"><Link className="gw-bp gw-sm" href="#new">{t('ownerBtn')}</Link></div>
           </div>
         </div>
 
         {/* ── 공개된 부동산 매물 ── */}
         <div className="gw-gaplock gw-open">
-          <div className="gw-gaplh"><b>부동산 매물</b><span className="gw-axwait">공개 중{rows ? ` · ${rows.length}건` : ''}</span></div>
+          <div className="gw-gaplh"><b>{t('listTitle')}</b><span className="gw-axwait">{t('listBadge')}{rows ? t('count', { n: String(rows.length) }) : ''}</span></div>
           {rows === null ? (
-            <p className="form-error" role="alert">매물을 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.</p>
+            <p className="form-error" role="alert">{t('listFail')}</p>
           ) : rows.length === 0 ? (
-            <p className="gw-empty">공개된 부동산 매물이 아직 없습니다.</p>
+            <p className="gw-empty">{t('listEmpty')}</p>
           ) : (
             <div className="gw-tw">
               <table className="gw-tb2">
-                <thead><tr><th>매물</th><th>업종</th><th className="num">희망 소개비</th><th>제공</th><th /></tr></thead>
+                <thead><tr><th>{t('th.listing')}</th><th>{t('th.category')}</th><th className="num">{t('th.fee')}</th><th>{t('th.provider')}</th><th /></tr></thead>
                 <tbody>
                   {rows.map((l) => (
                     <tr key={l.id}>
-                      <td>{l.isAd && <span className="badge badge-ad">{l.adLabel ?? '광고'}</span>} {l.title}</td>
+                      <td>{l.isAd && <span className="badge badge-ad">{l.adLabel ?? t('ad')}</span>} {l.title}</td>
                       <td>{l.categoryName}</td>
                       <td className="num">{won(l.desiredFee)}</td>
-                      <td>{l.owner.companyName}{l.owner.verified && <> <span className="gw-bg gw-ok">인증</span></>}</td>
-                      <td><Link href={`/mal/brokers?view=${l.id}#view`}>자세히</Link></td>
+                      <td>{l.owner.companyName}{l.owner.verified && <> <span className="gw-bg gw-ok">{t('verified')}</span></>}</td>
+                      <td><Link href={`/mal/brokers?view=${l.id}#view`}>{t('details')}</Link></td>
                     </tr>
                   ))}
                 </tbody>
@@ -189,13 +193,13 @@ export default async function MalBrokersPage({ searchParams }: {
             {viewed ? (
               <>
                 <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>{viewed.title}</b></div>
-                <p className="gw-ls">{viewed.categoryName} · {viewed.regionNames.join(', ') || '지역 미기재'} · {viewed.statusLabel} · 공개 {ymd(viewed.publishedAt)}</p>
-                <p className="doc-body">{viewed.body ?? '설명이 없습니다.'}</p>
-                <p>희망 소개비 <b>{won(viewed.desiredFee)}</b> {viewed.feeBearerLabel && <span className="gw-ls">({viewed.feeBearerLabel})</span>}</p>
-                <p className="gw-ls">제공: {viewed.owner.companyName} {viewed.owner.verified ? '· 사업자 인증' : ''} · 성사 {viewed.owner.confirmedDeals}건</p>
+                <p className="gw-ls">{viewed.categoryName} · {viewed.regionNames.join(', ') || t('noRegion')} · {viewed.statusLabel} · {t('published', { date: ymd(viewed.publishedAt) })}</p>
+                <p className="doc-body">{viewed.body ?? t('noBody')}</p>
+                <p>{t.rich('viewFee', { fee: won(viewed.desiredFee), b: (c) => <b>{c}</b> })} {viewed.feeBearerLabel && <span className="gw-ls">({viewed.feeBearerLabel})</span>}</p>
+                <p className="gw-ls">{t('viewOwner', { company: viewed.owner.companyName, verified: viewed.owner.verified ? t('bizVerified') : '', n: String(viewed.owner.confirmedDeals) })}</p>
                 <div className="gw-dact">
-                  <Link className="gw-bp gw-sm" href={`/mall/${viewed.id}`}>매물 상세 · 문의하기</Link>
-                  <Link className="gw-bo gw-sm" href="/mal/brokers">닫기</Link>
+                  <Link className="gw-bp gw-sm" href={`/mall/${viewed.id}`}>{t('toDetail')}</Link>
+                  <Link className="gw-bo gw-sm" href="/mal/brokers">{t('close')}</Link>
                 </div>
               </>
             ) : <p className="form-error" role="alert">{viewErr}</p>}
@@ -204,38 +208,38 @@ export default async function MalBrokersPage({ searchParams }: {
 
         {/* ── 내 부동산 매물 · 소유 확인 ── */}
         <div className="gw-panel" style={{ marginTop: 12, padding: '16px 17px' }}>
-          <div className="gw-sh2" style={{ padding: '0 0 8px' }} id="own"><b>내 부동산 매물 · 소유 확인</b></div>
+          <div className="gw-sh2" style={{ padding: '0 0 8px' }} id="own"><b>{t('ownTitle')}</b></div>
           {mine && (
             ownErr ? <p className="form-error" role="alert">{ownErr}</p> : ownTarget && (
               <section className="gw-brkbox" style={{ marginBottom: 12 }}>
-                {created && <p className="ok-note" role="status">초안을 올렸습니다. 이제 소유 확인을 요청하십시오 — 확인 전에는 공개되지 않습니다.</p>}
+                {created && <p className="ok-note" role="status">{t('created')}</p>}
                 <h3>{ownTarget.title} <span className="gw-ls">· {ownTarget.statusLabel}</span></h3>
                 {own ? (
                   <>
                     <p>
-                      {own.state ? <span className={'state ' + OWN[own.state]?.c}>{OWN[own.state]?.t ?? own.state}</span> : <span className="state state-suspended">미제출</span>}
+                      {own.state ? <span className={'state ' + OWN[own.state]?.c}>{OWN[own.state] ? t(OWN[own.state]!.t) : own.state}</span> : <span className="state state-suspended">{t('notSubmitted')}</span>}
                       {' '}{own.note}
                     </p>
                     {own.state && (
-                      <p className="gw-ls">제출 문서 {own.docKey} · 발급일 {ymd(own.issuedOn)}{own.hasEncumbrance ? ' · 권리제한 있음' : ''}{own.decidedAt ? ` · 판정 ${ymd(own.decidedAt)}` : ''}
-                        {own.docFileId && <> <FileOpenButton fileId={own.docFileId} inline label="제출한 문서 보기" /></>}</p>
+                      <p className="gw-ls">{t('ownDoc', { doc: own.docKey ?? '', date: ymd(own.issuedOn) })}{own.hasEncumbrance ? t('encumbered') : ''}{own.decidedAt ? t('decided', { date: ymd(own.decidedAt) }) : ''}
+                        {own.docFileId && <> <FileOpenButton fileId={own.docFileId} inline label={t('viewDoc')} /></>}</p>
                     )}
-                    {own.rejectReason && <div className="gw-nt gw-warn"><b>거절 사유:</b> {own.rejectReason}</div>}
-                    {own.state !== 'VERIFIED' && <OwnershipForm listingId={ownTarget.id} />}
-                    {own.state === 'SUBMITTED' && <p className="gw-ls">다시 제출하시면 이전 제출을 대신합니다.</p>}
-                    {own.state === 'VERIFIED' && <Link className="gw-bo gw-sm" href={`/listings/${ownTarget.id}/edit`}>설명 적고 공개하기(매물 수정)</Link>}
+                    {own.rejectReason && <div className="gw-nt gw-warn"><b>{t('rejectB')}</b> {own.rejectReason}</div>}
+                    {own.state !== 'VERIFIED' && <Msgs ns={['join']}><OwnershipForm listingId={ownTarget.id} /></Msgs>}
+                    {own.state === 'SUBMITTED' && <p className="gw-ls">{t('resubmit')}</p>}
+                    {own.state === 'VERIFIED' && <Link className="gw-bo gw-sm" href={`/listings/${ownTarget.id}/edit`}>{t('publish')}</Link>}
                   </>
-                ) : <p className="form-error" role="alert">소유 확인 상태를 불러오지 못했습니다.</p>}
-                <p className="gw-ls"><Link href="/my/listings">내 리스팅 전체 보기</Link></p>
+                ) : <p className="form-error" role="alert">{t('ownLoadFail')}</p>}
+                <p className="gw-ls"><Link href="/my/listings">{t('allMine')}</Link></p>
               </section>
             )
           )}
           {myMal.length === 0 ? (
-            <p className="gw-ls">올리신 부동산 매물이 없습니다.</p>
+            <p className="gw-ls">{t('noMine')}</p>
           ) : (
             <div className="gw-tw">
               <table className="gw-tb2">
-                <thead><tr><th>매물</th><th>상태</th><th>소유 확인</th><th /></tr></thead>
+                <thead><tr><th>{t('th.listing')}</th><th>{t('th.state')}</th><th>{t('th.own')}</th><th /></tr></thead>
                 <tbody>
                   {myMal.map((m, i) => {
                     const o = owns[i];
@@ -243,8 +247,8 @@ export default async function MalBrokersPage({ searchParams }: {
                       <tr key={m.id}>
                         <td>{m.title}</td>
                         <td>{m.statusLabel}</td>
-                        <td>{o?.state ? <span className={'state ' + OWN[o.state]?.c}>{OWN[o.state]?.t}</span> : <span className="gw-ls">미제출</span>}</td>
-                        <td><Link href={`/mal/brokers?mine=${m.id}#own`}>{o?.state === 'VERIFIED' ? '보기' : '소유 확인'}</Link></td>
+                        <td>{o?.state ? <span className={'state ' + OWN[o.state]?.c}>{OWN[o.state] ? t(OWN[o.state]!.t) : undefined}</span> : <span className="gw-ls">{t('notSubmitted')}</span>}</td>
+                        <td><Link href={`/mal/brokers?mine=${m.id}#own`}>{o?.state === 'VERIFIED' ? t('view') : t('th.own')}</Link></td>
                       </tr>
                     );
                   })}
@@ -256,14 +260,14 @@ export default async function MalBrokersPage({ searchParams }: {
 
         {/* ── 본인 소유 물건 올리기 ── */}
         <div className="gw-panel" style={{ marginTop: 12, padding: '16px 17px' }}>
-          <div className="gw-sh2" style={{ padding: '0 0 8px' }} id="new"><b>본인 소유 물건 올리기</b>
-            <span className="gw-ls">초안으로 올라갑니다. 등기로 소유가 확인되기 전에는 누구에게도 보이지 않습니다.</span></div>
+          <div className="gw-sh2" style={{ padding: '0 0 8px' }} id="new"><b>{t('newTitle')}</b>
+            <span className="gw-ls">{t('newNote')}</span></div>
           {categories.length
-            ? <OwnerListingForm categories={categories} />
-            : <p className="form-error" role="alert">업종 목록을 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.</p>}
+            ? <Msgs ns={['join']}><OwnerListingForm categories={categories} /></Msgs>
+            : <p className="form-error" role="alert">{t('catFail')}</p>}
         </div>
 
-        <div className="gw-prfact" style={{ marginTop: 14 }}><Link className="gw-bo" href="/mall">안심소개로</Link></div>
+        <div className="gw-prfact" style={{ marginTop: 14 }}><Link className="gw-bo" href="/mall">{t('toMal')}</Link></div>
       </div>
     </div><i hidden data-root-end="" /></>
   );

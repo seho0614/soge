@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export interface DisputableFee { id: number; summary: string; amount: string; deliveredAt?: string }
 
-const REASONS: Array<[string, string]> = [
-  ['UNREACHABLE', '연락 불가 — 번호가 없거나 받지 않음'],
-  ['FALSE_INFO', '허위 정보 — 요청 내용이 사실과 다름'],
-  ['DUPLICATE', '중복 리드 — 같은 요청을 이미 받음'],
-  ['OUT_OF_SCOPE', '지역 · 분야 밖 — 켜지 않은 지역·업종'],
-];
+/* v10.101 — 사유 이름은 사전 키(deal.fee.reasons.*) */
+const REASONS = [
+  ['UNREACHABLE', 'unreachable'],
+  ['FALSE_INFO', 'falseInfo'],
+  ['DUPLICATE', 'duplicate'],
+  ['OUT_OF_SCOPE', 'outOfScope'],
+] as const;
 
 /**
  * 리드 반려 신청 폼 (SB-PTC-CTR-330 → POST /partner/fees/{id}/dispute).
@@ -20,13 +22,14 @@ const REASONS: Array<[string, string]> = [
  */
 export function FeeDisputeForm({ fees }: { fees: DisputableFee[] }) {
   const router = useRouter();
+  const t = useTranslations('deal.fee');
   const [f, setF] = useState({ feeId: String(fees[0]?.id ?? ''), reasonCode: 'UNREACHABLE', reason: '', evidence: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
   async function submit() {
-    if (f.reason.trim().length < 5) { setErr('무엇이 사실과 달랐는지 다섯 글자 이상 적어 주십시오.'); return; }
+    if (f.reason.trim().length < 5) { setErr(t('short')); return; }
     setBusy(true); setErr(null); setOk(null);
     try {
       const r = await fetch(`/api/v1/partner/fees/${f.feeId}/dispute`, {
@@ -34,51 +37,51 @@ export function FeeDisputeForm({ fees }: { fees: DisputableFee[] }) {
         body: JSON.stringify({ reasonCode: f.reasonCode, reason: f.reason, evidence: f.evidence || undefined }),
       });
       const d = await r.json().catch(() => null) as { message?: string; note?: string } | null;
-      if (!r.ok) { setErr(d?.message ?? '신청하지 못했습니다.'); return; }
-      setOk(d?.note ?? '접수했습니다.');
+      if (!r.ok) { setErr(d?.message ?? t('fail')); return; }
+      setOk(d?.note ?? t('ok'));
       setF({ ...f, reason: '', evidence: '' });
       router.refresh();
     } catch {
-      setErr('신청하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+      setErr(t('failRetry'));
     } finally { setBusy(false); }
   }
 
   if (!fees.length) {
-    return <div className="empty">지금 반려를 신청할 수 있는 이용료가 없습니다 (리드 접수 후 72시간 이내 · 한 건에 한 번).</div>;
+    return <div className="empty">{t('empty')}</div>;
   }
   return (
     <div className="card" style={{ padding: '18px 20px' }} id="dispute-form">
-      <label className="fld"><span>이용료</span>
+      <label className="fld"><span>{t('fee')}</span>
         <select value={f.feeId} onChange={(e) => setF({ ...f, feeId: e.target.value })} name="feeId">
           {fees.map((x) => (
             <option key={x.id} value={x.id}>
-              {x.id}번 · {x.summary} · {Number(x.amount).toLocaleString('ko-KR')}원
+              {t('feeNo', { id: String(x.id) })} · {x.summary} · {Number(x.amount).toLocaleString('ko-KR')}원
             </option>
           ))}
         </select>
       </label>
-      <label className="fld"><span>사유</span>
+      <label className="fld"><span>{t('reason')}</span>
         <select value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })} name="reasonCode">
-          {REASONS.map(([c, l]) => <option key={c} value={c}>{l}</option>)}
+          {REASONS.map(([c, l]) => <option key={c} value={c}>{t(`reasons.${l}`)}</option>)}
         </select>
       </label>
-      <label className="fld"><span>무엇이 사실과 달랐나</span>
+      <label className="fld"><span>{t('what')}</span>
         <textarea rows={3} maxLength={1000} value={f.reason} name="reason"
-          placeholder="예) 안내된 번호가 결번입니다. 3회 통화 시도"
+          placeholder={t('whatPh')}
           onChange={(e) => setF({ ...f, reason: e.target.value })} />
       </label>
-      <label className="fld"><span>근거 (선택)</span>
+      <label className="fld"><span>{t('evidence')}</span>
         <input className="inp" maxLength={2000} value={f.evidence} name="evidence"
-          placeholder="통화 기록 · 문자 발송 내역 등"
+          placeholder={t('evidencePh')}
           onChange={(e) => setF({ ...f, evidence: e.target.value })} />
       </label>
       <button type="button" className="btn-primary" disabled={busy || !f.feeId} onClick={() => void submit()}>
-        {busy ? '신청하는 중…' : '반려 신청'}
+        {busy ? t('busy') : t('submit')}
       </button>
       {err ? <p className="form-error" role="alert">{err}</p> : null}
       {ok ? <p className="ok-note" role="status">{ok}</p> : null}
       <p className="hint">
-        <b>상담이 결렬된 것은 반려 사유가 아닙니다.</b> 리드 자체의 결함만 인정됩니다.
+        {t.rich('hint', { b: (x) => <b>{x}</b> })}
       </p>
     </div>
   );

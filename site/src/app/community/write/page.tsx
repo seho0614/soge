@@ -1,14 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
+import { Msgs } from '@/i18n/Msgs';
 import { apiGetPersonal } from '@/lib/api';
 import { PostEditor } from '@/components/community/PostEditor';
 import type { PostDetail } from '@/components/community/types';
 import { PlazaHero } from '@/components/community/Plaza';
 import '@/styles/plaza.css';
 
-export const metadata: Metadata = { title: '소개광장 글쓰기' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('write.title') };
+}
 
 interface MyDeal { id: string; title: string; status: string; statusLabel: string }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,6 +31,7 @@ export default async function CommunityWritePage({ searchParams }: { searchParam
   if (!p) redirect('/login');
 
   const { edit } = await searchParams;
+  const t = await getTranslations('plaza');
   let initial: { id: string; title: string; body: string; board: string } | undefined;
   let editErr: string | null = null;
 
@@ -34,8 +39,8 @@ export default async function CommunityWritePage({ searchParams }: { searchParam
     const d = UUID.test(edit)
       ? await apiGetPersonal<PostDetail>(`/community/posts/${edit}`).catch(() => null)
       : null;
-    if (!d || !d.ok || !d.id) editErr = '고칠 글을 찾지 못했습니다.';
-    else if (!d.mine) editErr = '내가 쓴 글만 고칠 수 있습니다.';
+    if (!d || !d.ok || !d.id) editErr = t('write.notFound');
+    else if (!d.mine) editErr = t('write.notMine');
     else initial = { id: d.id, title: d.title ?? '', body: d.body ?? '', board: d.board ?? '' };
   }
 
@@ -48,15 +53,15 @@ export default async function CommunityWritePage({ searchParams }: { searchParam
       <PlazaHero small />
       <div className="plz-body">
       <div className="plz-narrow">
-      <h1>{initial ? '글 수정' : '글쓰기'}</h1>
-      <p className="lead">제목과 내용을 쓰시면 <b>어느 게시판인지 골라 드립니다.</b></p>
+      <h1>{initial ? t('write.editH') : t('write.newH')}</h1>
+      <p className="lead">{t.rich('write.lead', { b: (c) => <b>{c}</b> })}</p>
       {editErr ? (
         <>
           <p className="form-error" role="alert">{editErr}</p>
-          <p className="auth-foot"><Link href="/community">목록으로</Link></p>
+          <p className="auth-foot"><Link href="/community">{t('write.toList')}</Link></p>
         </>
       ) : (
-        <PostEditor edit={initial} deals={deals.map((x) => ({ id: x.id, title: x.title, statusLabel: x.statusLabel }))} />
+        <Msgs ns={['plaza']}><PostEditor edit={initial} deals={deals.map((x) => ({ id: x.id, title: x.title, statusLabel: x.statusLabel }))} /></Msgs>
       )}
       </div>
       </div>

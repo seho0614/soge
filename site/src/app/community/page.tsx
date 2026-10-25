@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGetPersonal, ApiFailure } from '@/lib/api';
-import { BOARD, type PostRow } from '@/components/community/types';
+import { getTranslations } from 'next-intl/server';
+import { isBoard, type PostRow } from '@/components/community/types';
 import { BoardBadge, Pager, PlazaHero, PlazaTabs, PLAZA_TABS, dot, plazaHref } from '@/components/community/Plaza';
 import '@/styles/plaza.css';
 
-export const metadata: Metadata = { title: '소개광장' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('hero.name') };
+}
 
 interface Board { items: PostRow[]; total: number; page: number; size: number; pages: number }
 
@@ -24,6 +27,7 @@ export default async function CommunityPage({ searchParams }: {
   searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string }>;
 }) {
   const sp = await searchParams;
+  const t = await getTranslations('plaza');
   const one = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v) ?? '';
   const cur = PLAZA_TABS.some((t) => t.v === one(sp.board)) ? one(sp.board) : '';
   const q = one(sp.q).trim().replace(/\s+/g, ' ');
@@ -35,7 +39,7 @@ export default async function CommunityPage({ searchParams }: {
   if (q) qs.set('q', q);
   let err: string | null = null;
   const b = await apiGetPersonal<Board>(`/community/board?${qs}`).catch((e) => {
-    err = e instanceof ApiFailure && e.status === 400 ? e.body.message : '글 목록을 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.';
+    err = e instanceof ApiFailure && e.status === 400 ? e.body.message : t('list.loadFail');
     return null;
   });
   const rows = b?.items ?? [];
@@ -45,36 +49,36 @@ export default async function CommunityPage({ searchParams }: {
     <><div className="plz">
       <PlazaHero q={q} board={cur} />
       <div className="plz-body">
-        {sp.deleted && <p className="ok-note" role="status">글을 지웠습니다. 달린 댓글은 남습니다.</p>}
+        {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
         {q && b && (
           <p className="plz-found" role="status">
-            <b>「{q}」</b> 검색 결과 {b.total.toLocaleString('ko-KR')}건 <Link href={plazaHref({ board: cur })}>검색 지우기</Link>
+            {t.rich('list.found', { b: (c) => <b>{c}</b>, q, n: b.total.toLocaleString('ko-KR'), clear: (c) => <Link href={plazaHref({ board: cur })}>{c}</Link> })}
           </p>
         )}
 
         {err ? (
-          <p className="plz-err form-error" role="alert">{err} <Link href="/community">전체 목록으로</Link></p>
+          <p className="plz-err form-error" role="alert">{err} <Link href="/community">{t('list.toAll')}</Link></p>
         ) : rows.length === 0 ? (
           <p className="plz-empty">
             {b && b.total > 0
-              ? <>{page}쪽에는 글이 없습니다. <Link href={hrefOf(1)}>1쪽으로</Link></>
+              ? <>{t.rich('list.emptyPage', { page: String(page), first: (c) => <Link href={hrefOf(1)}>{c}</Link> })}</>
               : q
-                ? <>찾으시는 글이 없습니다. 낱말을 줄이거나 <Link href={plazaHref({ board: cur })}>검색을 지워</Link> 보십시오.</>
-                : <>{cur ? `${BOARD[cur]} 게시판에 아직 글이 없습니다.` : '아직 올라온 글이 없습니다.'} 첫 글을 남겨 보십시오.</>}
+                ? <>{t.rich('list.emptySearch', { clear: (c) => <Link href={plazaHref({ board: cur })}>{c}</Link> })}</>
+                : <>{cur ? t('list.emptyBoard', { board: isBoard(cur) ? t(`board.${cur}`) : cur }) : t('list.emptyAll')} {t('list.firstPost')}</>}
           </p>
         ) : (
           <div className="plz-tblw">
             <table className="plz-tbl">
-              <thead><tr><th scope="col">제목</th><th scope="col">분류</th><th scope="col">작성자</th><th scope="col">작성일</th><th scope="col">조회</th></tr></thead>
+              <thead><tr><th scope="col">{t('list.th.title')}</th><th scope="col">{t('list.th.board')}</th><th scope="col">{t('list.th.author')}</th><th scope="col">{t('list.th.date')}</th><th scope="col">{t('list.th.views')}</th></tr></thead>
               <tbody>
                 {rows.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      {p.isPinned && <span className="plz-pin">고정</span>}
+                      {p.isPinned && <span className="plz-pin">{t('list.pinned')}</span>}
                       <Link href={`/community/${p.id}`}>{p.title}</Link>
-                      {p.commentCount > 0 && <span className="plz-cc" aria-label={`댓글 ${p.commentCount}개`}>[{p.commentCount}]</span>}
-                      {p.pendingMine && <span className="state state-suspended">검수 중 · 나만 보임</span>}
+                      {p.commentCount > 0 && <span className="plz-cc" aria-label={t('list.comments', { n: String(p.commentCount) })}>[{p.commentCount}]</span>}
+                      {p.pendingMine && <span className="state state-suspended">{t('pendingMine')}</span>}
                     </td>
                     <td><BoardBadge board={p.board} /></td>
                     <td>{p.author}</td>
@@ -89,7 +93,7 @@ export default async function CommunityPage({ searchParams }: {
 
         <div className="plz-foot">
           {b && b.pages > 0 && <Pager page={b.page} pages={b.pages} hrefOf={hrefOf} />}
-          <Link className="plz-write cmu-write" href="/community/write">글쓰기</Link>
+          <Link className="plz-write cmu-write" href="/community/write">{t('list.write')}</Link>
         </div>
       </div>
     </div><i hidden data-root-end="" /></>

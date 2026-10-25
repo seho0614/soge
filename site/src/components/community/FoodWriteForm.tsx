@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 /**
  * v10.47 (D100 · docs/98) — 맛집 소개 글 쓰기 (SB-HOM-CMU-052)
@@ -15,6 +16,7 @@ import { useState, useTransition } from 'react';
 interface Found { kakaoId: string; name: string; category: string | null; address: string | null }
 
 export function FoodWriteForm({ preset }: { preset: { kakaoId: string; name: string } | null }) {
+  const t = useTranslations('plaza.food');
   const router = useRouter();
   const [pending, start] = useTransition();
   const [q, setQ] = useState('');
@@ -31,31 +33,31 @@ export function FoodWriteForm({ preset }: { preset: { kakaoId: string; name: str
   async function search(e?: React.FormEvent) {
     e?.preventDefault();
     const k = q.trim();
-    if ([...k].length < 2) { setNote('가게 이름을 두 글자 이상 넣으십시오.'); return; }
+    if ([...k].length < 2) { setNote(t('qShort')); return; }
     setBusy(true); setNote(null); setErr(null);
     try {
       const r = await fetch(`/api/v1/me/community/food/search?q=${encodeURIComponent(k)}`, { headers: { Accept: 'application/json' } });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setFound([]); setNote(d.message ?? '가게를 찾지 못했습니다.'); return; }
+      if (!r.ok) { setFound([]); setNote(d.message ?? t('searchFail')); return; }
       setFound(d.items ?? []);
-      setNote(d.note ?? ((d.items ?? []).length === 0 ? '찾은 가게가 없습니다. 이름을 바꾸거나 동네 이름을 함께 넣어 보십시오 — 예) 정자동 칼국수' : null));
-    } catch { setNote('가게를 찾지 못했습니다. 잠시 후 다시 해 주십시오.'); }
+      setNote(d.note ?? ((d.items ?? []).length === 0 ? t('searchNone') : null));
+    } catch { setNote(t('searchRetry')); }
     finally { setBusy(false); }
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (!pick) { setErr('가게를 먼저 찾아 고르십시오.'); return; }
-    if (title.trim().length < 2) { setErr('제목을 두 글자 이상 쓰십시오.'); return; }
-    if (body.trim().length < 10) { setErr('소개를 열 자 이상 쓰십시오.'); return; }
+    if (!pick) { setErr(t('pickFirst')); return; }
+    if (title.trim().length < 2) { setErr(t('titleShort')); return; }
+    if (body.trim().length < 10) { setErr(t('bodyShort')); return; }
     start(async () => {
       const r = await fetch('/api/v1/me/community/food', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kakaoPlaceId: pick.kakaoId, title: title.trim(), body: body.trim(), menu: menu.trim() || undefined, sponsored }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErr(d.message ?? '저장하지 못했습니다.'); return; }
+      if (!r.ok) { setErr(d.message ?? t('saveFail')); return; }
       router.push(`/community/food/${d.placeId}?posted=${d.state === 'PENDING' ? 'wait' : '1'}`);
     });
   }
@@ -65,16 +67,16 @@ export function FoodWriteForm({ preset }: { preset: { kakaoId: string; name: str
       {pick ? (
         <div className="fd-pick" data-food-pick>
           <b>{pick.name}</b>{pick.address && <span className="dim"> · {pick.address}</span>}
-          {!preset && <> <button type="button" className="btn-sm" onClick={() => { setPick(null); }}>다른 가게 고르기</button></>}
+          {!preset && <> <button type="button" className="btn-sm" onClick={() => { setPick(null); }}>{t('pickOther')}</button></>}
         </div>
       ) : (
         <>
-          <form className="fd-bar" onSubmit={search} role="search" aria-label="가게 찾기">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="가게 이름 — 예) 정자동 칼국수" aria-label="가게 이름" maxLength={40} autoFocus />
-            <button type="submit" disabled={busy}>{busy ? '찾는 중…' : '가게 찾기'}</button>
+          <form className="fd-bar" onSubmit={search} role="search" aria-label={t('find')}>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('findPh')} aria-label={t('findLabel')} maxLength={40} autoFocus />
+            <button type="submit" disabled={busy}>{busy ? t('finding') : t('find')}</button>
           </form>
           {found && found.length > 0 && (
-            <ul className="fd-res" aria-label="찾은 가게">
+            <ul className="fd-res" aria-label={t('found')}>
               {found.map((f) => (
                 <li key={f.kakaoId}>
                   <button type="button" onClick={() => setPick(f)}>
@@ -90,17 +92,16 @@ export function FoodWriteForm({ preset }: { preset: { kakaoId: string; name: str
       )}
 
       <form className="fd-form" onSubmit={submit}>
-        <label>제목<input type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="예) 점심에 줄 서는 칼국수집" /></label>
-        <label>소개<textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={3000} placeholder="직접 먹어 본 것 · 분위기 · 기다리는 시간처럼 이웃에게 도움이 되는 이야기를 열 자 이상 써 주십시오." /></label>
-        <label>추천 메뉴 <span className="dim">(선택)</span><input type="text" value={menu} onChange={(e) => setMenu(e.target.value)} maxLength={60} placeholder="예) 바지락 칼국수" /></label>
+        <label>{t('fTitle')}<input type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder={t('fTitlePh')} /></label>
+        <label>{t('fBody')}<textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={3000} placeholder={t('fBodyPh')} /></label>
+        <label>{t('fMenu')} <span className="dim">{t('optional')}</span><input type="text" value={menu} onChange={(e) => setMenu(e.target.value)} maxLength={60} placeholder={t('fMenuPh')} /></label>
         <label className="fd-chk"><input type="checkbox" checked={sponsored} onChange={(e) => setSponsored(e.target.checked)} />
-          <span><b>광고 · 협찬입니다</b> — 가게에서 무료 음식 · 할인 · 돈을 받고 쓰는 글이면 반드시 체크하십시오. 글에 「광고 · 협찬」이 표시됩니다.</span></label>
+          <span>{t.rich('sponsoredChk', { b: (c) => <b>{c}</b> })}</span></label>
         <div className="notice warn">
-          <b>첫 글은 확인 후 올라갑니다.</b> 가입 7일이 안 되셨으면 링크를 넣으실 수 없습니다. 하루에 5개까지 쓰실 수 있습니다.
-          가게를 깎아내리거나 사실이 아닌 내용은 신고로 가려질 수 있습니다.
+          {t.rich('firstNote', { b: (c) => <b>{c}</b> })}
         </div>
         {err && <p className="form-error" role="alert">{err}</p>}
-        <p><button type="submit" className="fd-cta" disabled={pending}>{pending ? '올리는 중…' : '소개 올리기'}</button></p>
+        <p><button type="submit" className="fd-cta" disabled={pending}>{pending ? t('posting') : t('submit')}</button></p>
       </form>
     </div>
   );

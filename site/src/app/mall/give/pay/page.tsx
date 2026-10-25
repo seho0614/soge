@@ -9,8 +9,11 @@ import { refScope } from '@/components/refcode/RefShare';
 import { RefPayConfirm } from '@/components/refcode/RefPayConfirm';
 import '@/styles/mal.css';
 import '@/components/refcode/refcode.css';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '소개코드 결제 확인' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('join.givePay'))('title') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string; listing?: string }> };
@@ -23,6 +26,7 @@ type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; am
  */
 export default async function RefPayPage({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('join.givePay');
   const { paymentKey, orderId, amount, listing } = await searchParams;
   const amt = Number(amount);
   const valid = !!paymentKey && /^[A-Za-z0-9_-]{1,200}$/.test(paymentKey)
@@ -40,11 +44,11 @@ export default async function RefPayPage({ searchParams }: Props) {
 
   return (
     <><div className="mal mal-narrow">
-      <a className="mal-back" href="/mall/give">‹ 안심소개에서 소개하기</a>
-      <div className="page-head mal-head"><h1>소개코드 결제 확인</h1></div>
+      <a className="mal-back" href="/mall/give">{t('back')}</a>
+      <div className="page-head mal-head"><h1>{t('title')}</h1></div>
       {ok
         ? <RefPayConfirm paymentKey={paymentKey!} orderId={orderId!} amount={amt} base={base} listingId={lid} />
-        : <p className="mal-empty">결제 정보가 올바르지 않습니다. <a href="/mall/give">안심소개에서 소개하기</a>에서 내 소개코드를 확인해 주십시오.</p>}
+        : <p className="mal-empty">{t.rich('invalid', { a: (c) => <a href="/mall/give">{c}</a> })}</p>}
     </div><i hidden data-root-end="" /></>
   );
 }

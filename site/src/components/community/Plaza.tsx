@@ -15,18 +15,20 @@
  *     「글자 없는 원본 사진」을 주시면(10/7 답 ③) public/b2/plaza-photo.png 로 넣고 PHOTO 한 줄만 바꾸면 됩니다.
  */
 import Link from 'next/link';
-import { BOARD } from './types';
+import { useTranslations } from 'next-intl';
+import { isBoard } from './types';
 import { FoodTab } from './FoodTab';
 
 /** 띠 사진 — [파일, 원래 가로, 원래 세로, 띠 전체를 덮는 사진인가] */
 const PHOTO: [string, number, number, boolean] = ['/b2/plaza-photo-right.png', 1600, 1212, false];
 
+/* v10.101 2-5b — 글자는 사전 키(plaza.tabs.*) */
 export const PLAZA_TABS = [
-  { v: '',       t: '전체' },
-  { v: 'REVIEW', t: '소개 후기' },
-  { v: 'TRADE',  t: '업종 이야기' },
-  { v: 'QNA',    t: '질문' },
-  { v: 'NOTICE', t: '공지' },
+  { v: '',       t: 'tabs.all' },
+  { v: 'REVIEW', t: 'tabs.REVIEW' },
+  { v: 'TRADE',  t: 'tabs.TRADE' },
+  { v: 'QNA',    t: 'tabs.QNA' },
+  { v: 'NOTICE', t: 'tabs.NOTICE' },
 ] as const;
 
 /** 목록 주소 — 값이 있는 것만 싣습니다(1쪽 · 빈 검색어는 뺍니다). */
@@ -48,8 +50,9 @@ export function dot(iso?: string | null) {
 }
 
 export function BoardBadge({ board }: { board?: string | null }) {
+  const t = useTranslations('plaza');
   const b = board ?? '';
-  return <span className={`plz-bd plz-bd-${b.toLowerCase() || 'etc'}`}>{BOARD[b] ?? b}</span>;
+  return <span className={`plz-bd plz-bd-${b.toLowerCase() || 'etc'}`}>{isBoard(b) ? t(`board.${b}`) : b}</span>;
 }
 
 function Photo() {
@@ -59,13 +62,14 @@ function Photo() {
 }
 
 export function PlazaHero({ small, q, board }: { small?: boolean; q?: string; board?: string }) {
+  const t = useTranslations('plaza.hero');
   if (small) {
     return (
-      <section className="plz-hero sm" aria-label="소개광장">
+      <section className="plz-hero sm" aria-label={t('name')}>
         <Photo />
         <div className="plz-in">
-          <p className="plz-h"><Link href="/community">소개광장</Link></p>
-          <p className="plz-lead">소개 후기와 업종 이야기가 모이는 자리입니다.</p>
+          <p className="plz-h"><Link href="/community">{t('name')}</Link></p>
+          <p className="plz-lead">{t('lead')}</p>
         </div>
       </section>
     );
@@ -74,12 +78,12 @@ export function PlazaHero({ small, q, board }: { small?: boolean; q?: string; bo
     <section className="plz-hero">
       <Photo />
       <div className="plz-in">
-        <h1>소개광장</h1>
-        <p className="plz-lead">소개 후기와 업종 이야기가 모이는 자리입니다.</p>
+        <h1>{t('name')}</h1>
+        <p className="plz-lead">{t('lead')}</p>
         <form className="plz-find" action="/community" method="get" role="search">
           {board && <input type="hidden" name="board" value={board} />}
-          <input name="q" defaultValue={q ?? ''} maxLength={50} placeholder="게시글을 검색해보세요." aria-label="게시글 검색" autoComplete="off" />
-          <button type="submit" aria-label="검색">
+          <input name="q" defaultValue={q ?? ''} maxLength={50} placeholder={t('searchPh')} aria-label={t('searchAria')} autoComplete="off" />
+          <button type="submit" aria-label={t('search')}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></svg>
           </button>
         </form>
@@ -87,9 +91,9 @@ export function PlazaHero({ small, q, board }: { small?: boolean; q?: string; bo
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="plz-mega" src="/b2/megaphone.png" width={415} height={370} alt="" aria-hidden />
           <div className="plz-note">
-            <b>누구나 쓰실 수 있습니다.</b>
-            <span>다만, 첫 글은 확인 후 올라갑니다 - 보통 하루 안에 끝납니다.</span>
-            <span>소개 후기는 성사된 거래가 있어야 쓰실 수 있습니다.</span>
+            <b>{t('note1')}</b>
+            <span>{t('note2')}</span>
+            <span>{t('note3')}</span>
           </div>
         </div>
       </div>
@@ -99,13 +103,14 @@ export function PlazaHero({ small, q, board }: { small?: boolean; q?: string; bo
 
 /** 알약 탭 — cur: 게시판 코드('' = 전체) 또는 'polls'. 검색어가 있으면 글 탭 다섯 개가 그것을 잃지 않습니다. */
 export function PlazaTabs({ cur, q }: { cur: string; q?: string }) {
+  const tr = useTranslations('plaza');
   return (
-    <nav className="plz-tabs" aria-label="게시판">
+    <nav className="plz-tabs" aria-label={tr('tabs.aria')}>
       {PLAZA_TABS.map((t) => (
-        <Link key={t.v || 'all'} href={plazaHref({ board: t.v, q })} aria-current={cur === t.v ? 'page' : undefined}>{t.t}</Link>
+        <Link key={t.v || 'all'} href={plazaHref({ board: t.v, q })} aria-current={cur === t.v ? 'page' : undefined}>{tr(t.t)}</Link>
       ))}
       {/* 10/2 (D021) — 「이건 어때?」 투표는 글 게시판이 아니라 따로 있는 화면입니다(SB-HOM-CMU-040) */}
-      <Link href="/community/polls" aria-current={cur === 'polls' ? 'page' : undefined} data-polls-tab>이건 어때? 투표</Link>
+      <Link href="/community/polls" aria-current={cur === 'polls' ? 'page' : undefined} data-polls-tab>{tr('tabs.polls')}</Link>
       {/* v10.47 (D100) — 지도 사용이 켜져 있을 때만 나옵니다(꺼져 있으면 탭 줄 그대로) */}
       <FoodTab cur={cur} />
     </nav>
@@ -114,6 +119,7 @@ export function PlazaTabs({ cur, q }: { cur: string; q?: string }) {
 
 /** 쪽 번호 — 7쪽까지는 전부, 그보다 많으면 지금 쪽 둘레 다섯 개 + 처음 · 끝. */
 export function Pager({ page, pages, hrefOf }: { page: number; pages: number; hrefOf: (p: number) => string }) {
+  const t = useTranslations('plaza.pager');
   if (pages < 1) return null;
   const nums: (number | 'gap')[] = [];
   if (pages <= 7) { for (let i = 1; i <= pages; i++) nums.push(i); }
@@ -128,14 +134,14 @@ export function Pager({ page, pages, hrefOf }: { page: number; pages: number; hr
       ? <Link href={hrefOf(to)} aria-label={label} rel={to < page ? 'prev' : 'next'}>{ch}</Link>
       : <span aria-label={label} aria-disabled="true">{ch}</span>;
   return (
-    <nav className="plz-pager" aria-label="쪽 번호">
-      <Arrow to={page - 1} label="이전 쪽" ch="‹" />
+    <nav className="plz-pager" aria-label={t('aria')}>
+      <Arrow to={page - 1} label={t('prev')} ch="‹" />
       {nums.map((n, i) => n === 'gap'
         ? <span key={`g${i}`} className="gap" aria-hidden>…</span>
         : n === page
           ? <span key={n} aria-current="page">{n}</span>
           : <Link key={n} href={hrefOf(n)}>{n}</Link>)}
-      <Arrow to={page + 1} label="다음 쪽" ch="›" />
+      <Arrow to={page + 1} label={t('next')} ch="›" />
     </nav>
   );
 }

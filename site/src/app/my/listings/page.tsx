@@ -7,6 +7,7 @@ import { won, GWAN_PATH, dtKst, ymdKst } from '@/lib/format';
 import { ArchiveButton } from '@/components/ArchiveButton';
 import { MyHead, Tabs, Note, Empty, GwanTag, shortId, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.lst'))('title') };
@@ -98,7 +99,7 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
                   : <Link className="my-bo sm" href={`/listings/${r.id}/edit`}>{t('edit')}</Link>}
                 {r.status === 'PUBLISHED' && <Link className="my-bo sm" href={`/${GWAN_PATH[r.gwanCode ?? ''] ?? 'money'}/${r.id}`}>{t('view')}</Link>}
                 {r.status !== 'ARCHIVED' && <Link className="my-bo sm" href={`/my/inquiries?listing=${r.id}`} data-listing-inq={r.id}>{t('received')}</Link>}
-                {['PUBLISHED', 'IN_REVIEW', 'REJECTED', 'DRAFT'].includes(r.status) && <ArchiveButton id={r.id} title={r.title} />}
+                {['PUBLISHED', 'IN_REVIEW', 'REJECTED', 'DRAFT'].includes(r.status) && <Msgs ns={['deal']}><ArchiveButton id={r.id} title={r.title} /></Msgs>}
               </div>
               {r.status === 'REJECTED' && r.rejectReasonLabel && (
                 <div className="my-rej"><b>{t('rejected', { reason: r.rejectReasonLabel })}</b><p>{r.rejectFixGuide ?? t('fixDefault')}</p></div>

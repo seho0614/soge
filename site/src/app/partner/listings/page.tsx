@@ -7,6 +7,7 @@ import { AxisApply } from '@/components/AxisApply';
 import { DirectoryApply } from '@/components/DirectoryApply';
 import { Empty, Note, Pgh, S2, Tw } from '@/components/partner/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import { isGwanKey } from '@/i18n/keys';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,7 +45,7 @@ export default async function PartnerListingsPage() {
 
       <S2>{t('axisH')}</S2>
       {actorOk ? (
-        <AxisApply />
+        <Msgs ns={['join']}><AxisApply /></Msgs>
       ) : (
         <Note kind="info" data-need="business">
           {t.rich('needId', { b: (c) => <b>{c}</b> })}{' '}
@@ -77,7 +78,7 @@ export default async function PartnerListingsPage() {
       </Note>
 
       {partner ? (
-        <DirectoryApply />
+        <Msgs ns={['join']}><DirectoryApply /></Msgs>
       ) : actorOk ? (
         <Note kind="plain" data-need="partner">
           {t.rich('dirNote', { b: (c) => <b>{c}</b> })}{' '}

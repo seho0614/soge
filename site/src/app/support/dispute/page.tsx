@@ -8,8 +8,11 @@ import { MyFrame } from '@/components/my/MyFrame';
 import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 import { MyHead, Note, Empty, Table, Badge, shortId, type Tone } from '@/components/my/ui';
 import { codeList, uiMessages } from '@/lib/content';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '분쟁 접수 · 처리 현황' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('deal.meta'))('dispute') };
+}
 
 interface Deal { id: string; title?: string; status: string; statusLabel?: string; agreedFee: number | null }
 interface MyDispute {
@@ -39,32 +42,33 @@ export default async function DisputePage() {
     uiMessages(),
     apiGet<MyDispute[]>('/me/disputes', 0).catch(() => [] as MyDispute[]),
   ]);
+  const t = await getTranslations('deal.dispute');
 
   return (
-    <><Msgs ns={['my', 'myDeal', 'order']}><MyFrame active="mydeal">{/* v10.32 (추가) — 시안 myShell("mydeal"): 왼쪽 메뉴 「소개 내역」 켜짐 */}
-      <MyHead title="분쟁 접수 · 처리 현황"
-        sub={<>거래 상대와 풀리지 않는 일을 접수합니다. 소개뱅크는 거래 당사자가 아니라 <b>기록과 절차</b>를 돕습니다 — 대금은 당사자끼리 주고받습니다.</>} />
+    <><Msgs ns={['my', 'myDeal', 'order', 'deal']}><MyFrame active="mydeal">{/* v10.32 (추가) — 시안 myShell("mydeal"): 왼쪽 메뉴 「소개 내역」 켜짐 */}
+      <MyHead title={t('pageTitle')}
+        sub={<>{t.rich('pageSub', { b: (x) => <b>{x}</b> })}</>} />
       <DisputeForm deals={deals.map((d) => ({ id: d.id, label: d.title ?? d.id.slice(0, 8) }))}
         reasons={reasons} />
 
-      <h2 className="my-st2">처리 현황</h2>
+      <h2 className="my-st2">{t('status')}</h2>
       {mine.length === 0 ? (
-        <Empty data-dispute-empty="">접수한 분쟁이 없습니다. 접수하시면 이 표에서 처리 상태를 보실 수 있습니다.</Empty>
+        <Empty data-dispute-empty="">{t('empty')}</Empty>
       ) : (
-        <Table head={['접수 번호', '거래', '유형', '상태', '접수']}>
+        <Table head={[t('head.no'), t('head.deal'), t('head.type'), t('head.state'), t('head.opened')]}>
           {mine.map((d) => (
             <tr key={d.id} data-dispute-row={d.id}>
               <td>{shortId(d.id, 'D-')}</td>
               <td>{d.dealTitle ?? shortId(d.dealId)}</td>
-              <td>{d.reasonLabel ?? d.reasonCode}{(d.evidenceCount ?? 0) > 0 && <div className="my-ls">증빙 {d.evidenceCount}건</div>}</td>
+              <td>{d.reasonLabel ?? d.reasonCode}{(d.evidenceCount ?? 0) > 0 && <div className="my-ls">{t('evidence', { n: String(d.evidenceCount) })}</div>}</td>
               <td><Badge tone={TONE[d.status] ?? 'off'}>{d.statusLabel}</Badge>{d.resolution && <div className="my-ls">{d.resolution}</div>}</td>
               <td>{ymdKst(d.openedAt).slice(5)}</td>
             </tr>
           ))}
         </Table>
       )}
-      <Note kind="warn" data-msg="DISPUTE_HOLD"><b>{msg.DISPUTE_HOLD ?? '분쟁이 접수된 거래는 정산이 자동으로 보류됩니다.'}</b> 처리가 끝나면(처리 완료 · 기각) 보류가 풀립니다.</Note>
-      <Note kind="info"><b>합의가 안 되면</b> 꼬리줄 「분쟁조정 안내」의 외부 조정 기관으로 이어 드립니다. 소개뱅크가 누가 옳은지 판정하지 않습니다.</Note>
+      <Note kind="warn" data-msg="DISPUTE_HOLD"><b>{msg.DISPUTE_HOLD ?? t('holdDefault')}</b> {t('holdTail')}</Note>
+      <Note kind="info">{t.rich('outside', { b: (x) => <b>{x}</b> })}</Note>
     </MyFrame></Msgs><i hidden data-root-end="" /></>
   );
 }

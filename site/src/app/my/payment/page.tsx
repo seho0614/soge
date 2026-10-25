@@ -8,6 +8,7 @@ import { PayMethod } from '@/components/PayMethod';
 import type { SubDetail } from '@/components/billing/SubscriptionManage';
 import { MyHead, Note, wonP, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.pay'))('title') };
@@ -79,7 +80,7 @@ export default async function PaymentPage() {
             <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
             <span className="my-ls">{d?.subscribed ? `${wonP(d.nextChargeAmount ?? d.monthlyPrice ?? null)} · ${d.planName ?? ''}` : t('noSub')}</span>
           </div>
-          <PayMethod registered={registered} assumed={assumed} />
+          <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
         </div>
       ) : (
         <>
@@ -95,7 +96,7 @@ export default async function PaymentPage() {
               <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
               <span className="my-ls">{d?.subscribed ? `${wonP(d.nextChargeAmount ?? d.monthlyPrice ?? null)} · ${d.planName ?? ''}` : t('noSub')}</span>
             </div>
-            <PayMethod registered={registered} assumed={assumed} />
+            <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
           </div>
           <Note kind="warn">
             <b>{t('noCardB')}</b> {d?.subscribed ? t('noCardSub', { period: grace ? t('days', { n: String(grace) }) : t('grace') }) : t('noCardFree')}

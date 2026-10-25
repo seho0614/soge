@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Gwan } from '@/lib/types';
 import type { CodeEntry, FormCopy } from '@/lib/content';
 import { RegisterTabs } from './RegisterTabs';
@@ -15,6 +16,7 @@ export function RegisterPicker({ gwans, categories, roles, messages }: {
   roles: CodeEntry[];
   messages: Record<string, string>;
 }) {
+  const t = useTranslations('forms.old');
   const [code, setCode] = useState(gwans[0]?.code ?? 'MNY');
   const [copy, setCopy] = useState<FormCopy[]>([]);
 
@@ -26,7 +28,7 @@ export function RegisterPicker({ gwans, categories, roles, messages }: {
   }, [code]);
 
   const gwan = gwans.find((g) => g.code === code);
-  if (!gwan) return <p className="empty">등록 가능한 관이 없습니다.</p>;
+  if (!gwan) return <p className="empty">{t('noGwan')}</p>;
 
   return (
     <>

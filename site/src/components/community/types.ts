@@ -1,11 +1,11 @@
 import { ymdKst } from '@/lib/format';
 /* 소개광장 응답 모양 — /community/* (2026-10-02 실측) */
 
-export const BOARD: Record<string, string> = {
-  REVIEW: '소개 후기', TRADE: '업종 이야기', QNA: '질문', NOTICE: '공지',
-  /* v10.47 (D100) — 우리동네 맛집 글(글 하나 보기 · 고치기에서만 보임 · 「전체」 목록에는 섞이지 않음) */
-  FOOD: '우리동네 맛집',
-};
+/* 게시판 이름은 사전(plaza.board.*) — v10.101 2-5b. 모르는 코드는 코드 그대로 보입니다(isBoard 로 거름)
+ * v10.47 (D100) — FOOD 우리동네 맛집 글(글 하나 보기 · 고치기에서만 보임 · 「전체」 목록에는 섞이지 않음) */
+export const BOARDS = ['REVIEW', 'TRADE', 'QNA', 'NOTICE', 'FOOD'] as const;
+export type BoardCode = (typeof BOARDS)[number];
+export const isBoard = (c: string | null | undefined): c is BoardCode => !!c && (BOARDS as readonly string[]).includes(c);
 /** 회원이 고를 수 있는 게시판 (공지는 운영만 씁니다) */
 export const WRITABLE = ['REVIEW', 'TRADE', 'QNA'] as const;
 

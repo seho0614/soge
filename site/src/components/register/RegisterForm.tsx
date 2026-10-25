@@ -13,14 +13,17 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
 import { KakaoMap } from '@/components/map/KakaoMap';
 import { CategoryBlock, Field, ImagePicker, MoneyInput, type Cat, type Gwan, type Img } from '@/components/form/RegParts';
 
-const SUPPORT = ['계약서 검토 지원', '세무 · 회계 지원', '인수 인계 지원', '교육 지원', '지원 없음'];
-const WISH = ['즉시 인계 희망', '협의 후 결정', '3개월 내', '6개월 내', '기한 없음'];
-const HANDOVER = ['운영 교육 지원', '거래처 승계', '직원 승계', '설비 · 집기 포함', '지원 없음'];
-const BEARER: Record<string, string> = { MNY: '공급 기업 부담', MAL: '양도인 · 매도인 부담', BIZ: '양도인 · 본사 부담' };
+/* v10.101 (2-5b) — 고르기 값(서버로 보내는 글자)은 한국어 그대로 · 보이는 글자는 사전 forms.reg.support · wish · handover · bearer */
+const SUPPORT = [['계약서 검토 지원', 'contract'], ['세무 · 회계 지원', 'tax'], ['인수 인계 지원', 'handover'], ['교육 지원', 'edu'], ['지원 없음', 'none']] as const;
+const WISH = [['즉시 인계 희망', 'now'], ['협의 후 결정', 'nego'], ['3개월 내', 'm3'], ['6개월 내', 'm6'], ['기한 없음', 'none']] as const;
+const HANDOVER = [['운영 교육 지원', 'edu'], ['거래처 승계', 'clients'], ['직원 승계', 'staff'], ['설비 · 집기 포함', 'equip'], ['지원 없음', 'none']] as const;
+const BEARER = ['MNY', 'MAL', 'BIZ'] as const;
+const isBearer = (g: string): g is (typeof BEARER)[number] => (BEARER as readonly string[]).includes(g);
 
 interface CheckResult { allowed: boolean; blocked: Array<{ code: string; legalBasis: string }>; gated: unknown[]; message: string | null }
 
@@ -28,6 +31,7 @@ export function RegisterForm({ gwans, cats, gradeLabels, initialGwan }: {
   gwans: Gwan[]; cats: Cat[]; gradeLabels: Record<string, string>; initialGwan?: string;
 }) {
   const router = useRouter();
+  const t = useTranslations('forms');
   const [busy, setBusy] = useState(false);
   const [v, setV] = useState({
     gwan: initialGwan ?? '', cat: '', title: '', intro: '', desc: '', fee: '', support: '', hours: '',
@@ -56,19 +60,19 @@ export function RegisterForm({ gwans, cats, gradeLabels, initialGwan }: {
     return () => clearTimeout(t);
   }, [v.title, v.intro, v.desc, v.gwan]);
 
-  const NEED: Array<[keyof typeof v | 'addr', string]> = [['gwan', '관'], ['cat', '업종'], ['title', '상품/서비스명'], ['intro', '한줄 소개'],
-    ['desc', '상세 설명'], ['fee', '소개비'], ['support', '계약 지원'], ['hours', '문의 가능 시간'], ['sales', '월매출'], ['wish', '희망조건'], ['addr', '주소']];
+  const NEED: Array<[keyof typeof v | 'addr', string]> = [['gwan', t('common.gwan')], ['cat', t('common.cat')], ['title', t('reg.name')], ['intro', t('reg.intro')],
+    ['desc', t('reg.desc')], ['fee', t('reg.fee')], ['support', t('reg.supportLabel')], ['hours', t('common.hours')], ['sales', t('reg.sales')], ['wish', t('reg.wishLabel')], ['addr', t('addr.label')]];
 
   async function submit() {
     const bad = NEED.filter(([k]) => (k === 'addr' ? !addr.road.trim() : !String(v[k]).trim()));
-    if (v.title.trim() && v.title.trim().length < 5 && !bad.some(([k]) => k === 'title')) bad.push(['title', '상품/서비스명(5자 이상)']);
+    if (v.title.trim() && v.title.trim().length < 5 && !bad.some(([k]) => k === 'title')) bad.push(['title', t('reg.need.title')]);
     setMiss(new Set(bad.map((b) => b[0])));
     if (bad.length) {
-      setErr(`아직 비어 있는 필수 항목이 ${bad.length}개 있습니다 — ${bad.slice(0, 3).map((b) => b[1]).join(' · ')}${bad.length > 3 ? ` 외 ${bad.length - 3}개` : ''}`);
+      setErr(t('common.missing', { n: String(bad.length), list: bad.slice(0, 3).map((b) => b[1]).join(' · '), more: bad.length > 3 ? t('common.missingMore', { n: String(bad.length - 3) }) : '' }));
       setTimeout(() => document.querySelector('.fmiss')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
       return;
     }
-    if (chk && !chk.allowed) { setErr(chk.message ?? '이 분야는 등록하실 수 없습니다.'); return; }
+    if (chk && !chk.allowed) { setErr(chk.message ?? t('common.blockedMsg')); return; }
     setErr(null); setBusy(true);
     const c = cats.find((x) => x.id === v.cat);
     const biz = Object.fromEntries((['size', 'sales', 'premium', 'wish', 'handover', 'etc'] as const).map((k) => [k, v[k].trim()]).filter(([, x]) => x));
@@ -84,108 +88,108 @@ export function RegisterForm({ gwans, cats, gradeLabels, initialGwan }: {
       });
       const d = await r.json().catch(() => ({}));
       /* v10.31 (합침 · w6 D082) — 등록 일시 정지(422 POSTING_SUSPENDED)는 서버 문장(풀리는 날 포함) 그대로 + 고객센터 안내 */
-      if (!r.ok) { setErr((d.message ?? '등록하지 못했습니다.') + (d.code === 'POSTING_SUSPENDED' ? ' — 풀리는 날 전에 등록하려면 고객센터로 문의해 주십시오.' : '')); setBusy(false); return; }
+      if (!r.ok) { setErr((d.message ?? t('common.regFail')) + (d.code === 'POSTING_SUSPENDED' ? t('common.suspended') : '')); setBusy(false); return; }
       router.push(d?.autoApproved ? '/my/listings?published=1' : '/my/listings?review=1');
-    } catch { setErr('등록하지 못했습니다. 잠시 후 다시 시도해 주십시오.'); setBusy(false); }
+    } catch { setErr(t('common.regFailRetry')); setBusy(false); }
   }
 
   const m = (k: string) => miss.has(k);
   return (
     <div className="w1-rgw w1-rgw-reg" data-form="reg">{/* v10.32 — 시안 폭(가운데 좁은 폭을 뺌) · 등록완료 주황 · 지도 자리 · 입력 칸 수 띠 */}
       <div className="w1-rghd">
-        <div><h1>상품/서비스 등록하기</h1>
-          <div className="rgs">소개할 상품/서비스의 정보를 정확하게 입력해주세요.</div></div>
-        <span className="req">* 필수 입력 항목</span>
+        <div><h1>{t('reg.title')}</h1>
+          <div className="rgs">{t('reg.sub')}</div></div>
+        <span className="req">{t('common.reqMark')}</span>
       </div>
 
-      <section className="w1-fsec"><h2 className="fh3">1. 기본 정보</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('common.sec1')}</h2>
         <CategoryBlock gwans={gwans} cats={cats} gwan={v.gwan} cat={v.cat} gradeLabels={gradeLabels} miss={miss}
           onGwan={(g) => setV((o) => ({ ...o, gwan: g, cat: '' }))} onCat={set('cat')} />
         <div className="w1-g2">
-          <Field id="f-title" label="상품/서비스명" req max={50} count={v.title.length} miss={m('title')}>
-            <input id="f-title" className="w1-in" name="title" maxLength={50} placeholder="상품/서비스명을 입력해주세요" value={v.title} onChange={on('title')} />
+          <Field id="f-title" label={t('reg.name')} req max={50} count={v.title.length} miss={m('title')}>
+            <input id="f-title" className="w1-in" name="title" maxLength={50} placeholder={t('reg.namePh')} value={v.title} onChange={on('title')} />
           </Field>
-          <Field id="f-intro" label="한줄 소개" req max={60} count={v.intro.length} miss={m('intro')}>
-            <input id="f-intro" className="w1-in" name="summary" maxLength={60} placeholder="상품/서비스를 한 줄로 소개해주세요" value={v.intro} onChange={on('intro')} />
+          <Field id="f-intro" label={t('reg.intro')} req max={60} count={v.intro.length} miss={m('intro')}>
+            <input id="f-intro" className="w1-in" name="summary" maxLength={60} placeholder={t('reg.introPh')} value={v.intro} onChange={on('intro')} />
           </Field>
         </div>
         <ImagePicker purpose="LISTING_IMAGE" value={imgs} onChange={setImgs} />
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">2. 상품/서비스 상세 설명</h2>
-        <Field id="f-desc" label="상세 설명" req max={3000} count={v.desc.length} miss={m('desc')}
-          hint="30자 이상이면 자동검수를 거칠 수 있습니다 — 짧으면 사람이 봅니다.">
+      <section className="w1-fsec"><h2 className="fh3">{t('reg.sec2')}</h2>
+        <Field id="f-desc" label={t('reg.desc')} req max={3000} count={v.desc.length} miss={m('desc')}
+          hint={t('reg.descHint')}>
           <textarea id="f-desc" className="w1-in" name="body" rows={7} maxLength={3000} value={v.desc} onChange={on('desc')}
-            placeholder="상품/서비스의 특징, 장점, 제공 내용 등을 자세히 적어 주세요." />
+            placeholder={t('reg.descPh')} />
         </Field>
         {chk && !chk.allowed && (
-          <div className="w1-jc e" data-restricted=""><span className="lb">이 분야는 등록하실 수 없습니다</span>{chk.message}
-            {chk.blocked.map((r) => <div key={r.code} className="w1-ls">근거: {r.legalBasis}</div>)}</div>
+          <div className="w1-jc e" data-restricted=""><span className="lb">{t('common.blocked')}</span>{chk.message}
+            {chk.blocked.map((r) => <div key={r.code} className="w1-ls">{t('common.basis', { basis: r.legalBasis })}</div>)}</div>
         )}
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">3. 소개 조건</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('reg.sec3')}</h2>
         <div className="w1-g3">
-          <Field id="f-fee" label="소개비" req unit="원" miss={m('fee')}
-            hint={<><b>소개비는 요율표로 산정하지 않습니다 (A-12).</b> 여기 적은 금액을 기준으로 1:1 대화에서 <b>당사자끼리 협의해</b> 최종 확정합니다.</>}>
-            <MoneyInput id="f-fee" value={v.fee} onChange={set('fee')} placeholder="예) 500,000" />
+          <Field id="f-fee" label={t('reg.fee')} req unit={t('common.won')} miss={m('fee')}
+            hint={<>{t.rich('reg.feeHint', { b: (c) => <b>{c}</b> })}</>}>
+            <MoneyInput id="f-fee" value={v.fee} onChange={set('fee')} placeholder={t('common.feePh')} />
           </Field>
-          <Field id="f-support" label="계약 지원" req miss={m('support')} hint={<>플랫폼은 <b>양식만 제공</b>하고 계약 당사자가 아닙니다.</>}>
+          <Field id="f-support" label={t('reg.supportLabel')} req miss={m('support')} hint={<>{t.rich('reg.supportHint', { b: (c) => <b>{c}</b> })}</>}>
             <select id="f-support" className="w1-in" value={v.support} onChange={on('support')}>
-              <option value="">선택하세요</option>{SUPPORT.map((x) => <option key={x} value={x}>{x}</option>)}
+              <option value="">{t('reg.pick')}</option>{SUPPORT.map(([x, k]) => <option key={x} value={x}>{t(`reg.support.${k}`)}</option>)}
             </select>
           </Field>
-          <Field id="f-hours" label="문의 가능 시간" req miss={m('hours')} hint="이 시간 밖 문의에는 자동 안내가 나갑니다.">
-            <input id="f-hours" className="w1-in" maxLength={60} placeholder="예) 평일 10:00 ~ 18:00" value={v.hours} onChange={on('hours')} />
+          <Field id="f-hours" label={t('common.hours')} req miss={m('hours')} hint={t('reg.hoursHint')}>
+            <input id="f-hours" className="w1-in" maxLength={60} placeholder={t('common.hoursPh')} value={v.hours} onChange={on('hours')} />
           </Field>
         </div>
-        <Field label="부담 주체" auto hint="관마다 고정입니다 — 소개장터는 공급 기업, 안심소개는 양도인 · 매도인, 소개창업은 양도인 · 본사.">
-          <div className={`w1-in gradebox${v.gwan ? ' on' : ''}`}>{v.gwan ? (BEARER[v.gwan] ?? '판매 쪽 부담') : '관을 고르면 정해집니다'}</div>
+        <Field label={t('reg.bearerLabel')} auto hint={t('reg.bearerHint')}>
+          <div className={`w1-in gradebox${v.gwan ? ' on' : ''}`}>{v.gwan ? (isBearer(v.gwan) ? t(`reg.bearer.${v.gwan}`) : t('reg.bearer.default')) : t('reg.bearerEmpty')}</div>
         </Field>
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">4. 지역 정보</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('common.sec4')}</h2>
         <div className={m('addr') ? 'fmiss' : undefined}>
-          <AddressInput value={addr} onChange={(a) => { setAddr(a); if (miss.has('addr')) setMiss((s) => { const n = new Set(s); n.delete('addr'); return n; }); }} required label="소재지 주소" />
-          {m('addr') && <div className="fmsg">필수 항목입니다.</div>}
+          <AddressInput value={addr} onChange={(a) => { setAddr(a); if (miss.has('addr')) setMiss((s) => { const n = new Set(s); n.delete('addr'); return n; }); }} required label={t('reg.addr')} />
+          {m('addr') && <div className="fmsg">{t('common.required')}</div>}
         </div>
-        <div className="w1-ls" style={{ marginTop: 6 }}>목록 · 상세에는 시 · 구까지만 보입니다 — 상세주소는 등록자 본인과 운영만 봅니다.</div>
+        <div className="w1-ls" style={{ marginTop: 6 }}>{t('reg.addrNote')}</div>
         {/* v10.46 (docs/96) — 지도 사용이 켜져 있고 키가 있으면 미리보기 핀(브라우저에서만 · 저장하지 않음). 아니면 지금 안내 그대로(fallback) */}
         <KakaoMap previewAddress={addr.road} height={220}
-          caption={<>ⓘ 다른 회원에게는 「{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}」 둘레 원으로만 보입니다.</>}
+          caption={<>{t('reg.mapCaption', { region: [addr.sido, addr.sigungu].filter(Boolean).join(' ') })}</>}
           fallback={
         <div className="w1-mapph" data-reg-map=""><span aria-hidden="true">📍</span>
-          <div>{addr.road ? <><b>{addr.road}</b><br />이 주소의 지도는 좌표 연동 뒤에 이 자리에 들어갑니다.</> : <>주소를 고르면 이 자리에 지도가 들어갑니다.<br />주소 검색만으로는 좌표가 나오지 않습니다.</>}</div></div>} />
+          <div>{addr.road ? <><b>{addr.road}</b><br />{t('reg.mapLater')}</> : <>{t.rich('reg.mapEmpty', { br: () => <br /> })}</>}</div></div>} />
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">5. 거래 및 운영 정보</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('reg.sec5')}</h2>
         <div className="w1-g3">
-          <Field id="f-size" label="매장 · 설비 규모"><input id="f-size" className="w1-in" maxLength={40} placeholder="예) 99.2m² (약 30평)" value={v.size} onChange={on('size')} /></Field>
-          <Field id="f-sales" label="월매출" req miss={m('sales')}><input id="f-sales" className="w1-in" maxLength={40} placeholder="예) 8,000만원 내외" value={v.sales} onChange={on('sales')} /></Field>
-          <Field id="f-premium" label="권리금"><input id="f-premium" className="w1-in" maxLength={40} placeholder="예) 협의 가능" value={v.premium} onChange={on('premium')} /></Field>
+          <Field id="f-size" label={t('reg.size')}><input id="f-size" className="w1-in" maxLength={40} placeholder={t('reg.sizePh')} value={v.size} onChange={on('size')} /></Field>
+          <Field id="f-sales" label={t('reg.sales')} req miss={m('sales')}><input id="f-sales" className="w1-in" maxLength={40} placeholder={t('reg.salesPh')} value={v.sales} onChange={on('sales')} /></Field>
+          <Field id="f-premium" label={t('reg.premium')}><input id="f-premium" className="w1-in" maxLength={40} placeholder={t('reg.premiumPh')} value={v.premium} onChange={on('premium')} /></Field>
         </div>
         <div className="w1-g3">
-          <Field id="f-wish" label="희망조건" req miss={m('wish')}>
-            <select id="f-wish" className="w1-in" value={v.wish} onChange={on('wish')}><option value="">선택하세요</option>{WISH.map((x) => <option key={x} value={x}>{x}</option>)}</select>
+          <Field id="f-wish" label={t('reg.wishLabel')} req miss={m('wish')}>
+            <select id="f-wish" className="w1-in" value={v.wish} onChange={on('wish')}><option value="">{t('reg.pick')}</option>{WISH.map(([x, k]) => <option key={x} value={x}>{t(`reg.wish.${k}`)}</option>)}</select>
           </Field>
-          <Field id="f-handover" label="인수지원">
-            <select id="f-handover" className="w1-in" value={v.handover} onChange={on('handover')}><option value="">선택하세요</option>{HANDOVER.map((x) => <option key={x} value={x}>{x}</option>)}</select>
+          <Field id="f-handover" label={t('reg.handoverLabel')}>
+            <select id="f-handover" className="w1-in" value={v.handover} onChange={on('handover')}><option value="">{t('reg.pick')}</option>{HANDOVER.map(([x, k]) => <option key={x} value={x}>{t(`reg.handover.${k}`)}</option>)}</select>
           </Field>
-          <Field id="f-etc" label="기타 지원 사항"><input id="f-etc" className="w1-in" maxLength={60} placeholder="예) 운영 노하우 전수" value={v.etc} onChange={on('etc')} /></Field>
+          <Field id="f-etc" label={t('reg.etc')}><input id="f-etc" className="w1-in" maxLength={60} placeholder={t('reg.etcPh')} value={v.etc} onChange={on('etc')} /></Field>
         </div>
-        <div className="w1-ls">이 섹션은 <b>관 · 업종에 따라 항목이 달라집니다</b>. 지금은 세 관이 같은 칸을 씁니다.</div>
+        <div className="w1-ls">{t.rich('reg.sec5Note', { b: (c) => <b>{c}</b> })}</div>
       </section>
 
-      <div className="w1-nt" data-reg-filled="" style={{ margin: '0 0 12px' }}><b>지금까지 {Object.values(v).filter((x) => x.trim()).length + (addr.road ? 1 : 0) + (imgs.length ? 1 : 0)}칸 입력했습니다.</b> 등록완료를 누르면 <b>내 등록 리스팅</b>에 검수대기로 한 건이 추가됩니다.</div>
+      <div className="w1-nt" data-reg-filled="" style={{ margin: '0 0 12px' }}>{t.rich('reg.filled', { b: (c) => <b>{c}</b>, n: String(Object.values(v).filter((x) => x.trim()).length + (addr.road ? 1 : 0) + (imgs.length ? 1 : 0)) })}</div>
       <div className="w1-fend">
-        <div className="fw"><b>⊙ 유의사항</b>
-          <span><i>✓</i>등록된 정보는 검수 후 공개됩니다(검수 대기 · SLA 24시간).</span>
-          <span><i>✓</i>허위 정보 등록 시 서비스 이용이 제한될 수 있습니다.</span>
-          <span><i>✓</i>등록 후 「내 등록 리스팅」에서 수정할 수 있습니다 — 수정하면 다시 검수합니다.</span>
+        <div className="fw"><b>{t('common.notice')}</b>
+          <span><i>✓</i>{t('reg.n1')}</span>
+          <span><i>✓</i>{t('common.noFalse')}</span>
+          <span><i>✓</i>{t('reg.n3')}</span>
         </div>
         <div className="fbtns">
-          <button type="button" className="bcan" onClick={() => router.back()}>등록취소</button>
-          <button type="button" className="bok" disabled={busy} onClick={() => void submit()} data-fdone="reg">{busy ? '등록 중…' : '등록완료'}</button>
+          <button type="button" className="bcan" onClick={() => router.back()}>{t('reg.cancel')}</button>
+          <button type="button" className="bok" disabled={busy} onClick={() => void submit()} data-fdone="reg">{busy ? t('common.submitting') : t('common.done')}</button>
         </div>
       </div>
       {err && <p className="w1-err" role="alert" style={{ textAlign: 'right' }}>{err}</p>}

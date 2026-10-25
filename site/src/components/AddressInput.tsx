@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 /**
  * 주소 입력 (Daum 우편번호 서비스).
@@ -43,8 +44,9 @@ export const EMPTY_ADDRESS: AddressValue = {
 
 let loading: Promise<void> | null = null;
 
-function loadScript(): Promise<void> {
-  if (typeof window === 'undefined') return Promise.reject(new Error('브라우저에서만 동작합니다'));
+/** v10.101 (2-5b) — 오류 문장은 부르는 쪽이 사전(forms.addr)에서 넘깁니다 */
+function loadScript(msg: { browserOnly: string; loadFail: string }): Promise<void> {
+  if (typeof window === 'undefined') return Promise.reject(new Error(msg.browserOnly));
   if ((window as any).daum?.Postcode) return Promise.resolve();
   // 여러 번 눌러도 스크립트는 한 번만 받습니다.
   if (loading) return loading;
@@ -54,7 +56,7 @@ function loadScript(): Promise<void> {
     el.src = SCRIPT_SRC;
     el.async = true;
     el.onload = () => resolve();
-    el.onerror = () => { loading = null; reject(new Error('주소 검색을 불러오지 못했습니다')); };
+    el.onerror = () => { loading = null; reject(new Error(msg.loadFail)); };
     document.head.appendChild(el);
   });
   return loading;
@@ -70,8 +72,10 @@ interface Props {
 }
 
 export function AddressInput({
-  value, onChange, hideDetail = false, required = false, label = '주소',
+  value, onChange, hideDetail = false, required = false, label: label0,
 }: Props) {
+  const t = useTranslations('forms.addr');
+  const label = label0 ?? t('label');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const detailRef = useRef<HTMLInputElement>(null);
@@ -79,7 +83,7 @@ export function AddressInput({
   const open = useCallback(async () => {
     setErr(null); setBusy(true);
     try {
-      await loadScript();
+      await loadScript({ browserOnly: t('browserOnly'), loadFail: t('loadFail') });
       new (window as any).daum.Postcode({
         oncomplete: (data: any) => {
           onChange({
@@ -98,10 +102,10 @@ export function AddressInput({
     } catch (e: any) {
       // 외부 스크립트라 사내망·차단 환경에서 안 올 수 있습니다.
       // 그때 주소를 못 넣게 하면 가입 자체가 막힙니다.
-      setErr(`${e.message} 아래에 직접 입력하실 수 있습니다.`);
+      setErr(t('manual', { msg: e.message }));
       setBusy(false);
     }
-  }, [onChange, value.detail, hideDetail]);
+  }, [onChange, value.detail, hideDetail, t]);
 
   const set = (k: keyof AddressValue) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.target.value });
@@ -115,12 +119,12 @@ export function AddressInput({
             className="addr-zip"
             value={value.zipcode}
             onChange={set('zipcode')}
-            placeholder="우편번호"
+            placeholder={t('zip')}
             readOnly={!err}
-            aria-label="우편번호"
+            aria-label={t('zip')}
           />
           <button type="button" className="btn-sm" onClick={open} disabled={busy}>
-            {busy ? '여는 중…' : '주소 검색'}
+            {busy ? t('opening') : t('search')}
           </button>
         </div>
       </label>
@@ -129,9 +133,9 @@ export function AddressInput({
         className="addr-road"
         value={value.road}
         onChange={set('road')}
-        placeholder="도로명 주소"
+        placeholder={t('road')}
         readOnly={!err}
-        aria-label="도로명 주소"
+        aria-label={t('road')}
       />
 
       {!hideDetail && (
@@ -140,8 +144,8 @@ export function AddressInput({
           className="addr-detail"
           value={value.detail}
           onChange={set('detail')}
-          placeholder="상세주소 (동·호수 등)"
-          aria-label="상세주소"
+          placeholder={t('detailPh')}
+          aria-label={t('detail')}
         />
       )}
 
@@ -149,8 +153,7 @@ export function AddressInput({
 
       {value.sido && (
         <p className="dim">
-          지역 매칭에 <strong>{value.sido} {value.sigungu}</strong> 를 씁니다.
-          상세주소는 매칭에 쓰지 않습니다.
+          {t.rich('matchNote', { strong: (c) => <strong>{c}</strong>, sido: value.sido, sigungu: value.sigungu })}
         </p>
       )}
     </div>

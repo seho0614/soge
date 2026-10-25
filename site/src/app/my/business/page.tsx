@@ -8,6 +8,7 @@ import { apiGetPersonal } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 interface Biz { companyName: string | null; bizRegNo: string | null; verifiedAt: string | null; rejectReason: string | null; ntsStatus: string | null; createdAt?: string | null }
 
@@ -90,7 +91,7 @@ export default async function BusinessPage() {
       </p>
 
       <h2 className="my-s2" id="biz-form">{t('hForm')}</h2>
-      <div className="my-card"><BusinessForm /></div>
+      <div className="my-card"><Msgs ns={['join', 'forms']}><BusinessForm /></Msgs></div>
 
       <p className="my-ls"><Link href="/verify">{t('toVerify')}</Link></p>
     </div><i hidden data-root-end="" /></>

@@ -1,13 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { apiGetVisitor } from '@/lib/api';
+import { Msgs } from '@/i18n/Msgs';
 import type { Poll } from '@/components/community/poll';
 import { PollList } from '@/components/community/PollList';
 import { PlazaHero, PlazaTabs } from '@/components/community/Plaza';
 import '@/styles/poll.css';
 import '@/styles/plaza.css';
 
-export const metadata: Metadata = { title: '이건 어때? · 소개광장' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('polls.title') };
+}
 
 /**
  * SB-HOM-CMU-040 소개광장 「이건 어때?」 투표 — GET /community/polls · POST /community/polls/{id}/vote (D021)
@@ -19,6 +23,7 @@ export const metadata: Metadata = { title: '이건 어때? · 소개광장' };
 export default async function PollsPage() {
   const polls = await apiGetVisitor<Poll[]>('/community/polls').catch(() => null);
   const open = polls?.filter((p) => p.open).length ?? 0;
+  const t = await getTranslations('plaza.polls');
 
   return (
     <><div className="plz">
@@ -26,23 +31,22 @@ export default async function PollsPage() {
       <div className="plz-body">
       <PlazaTabs cur="polls" />
       <div className="page-head">
-        <h1>이건 어때?</h1>
-        <Link href="/community">소개광장으로</Link>
+        <h1>{t('h')}</h1>
+        <Link href="/community">{t('toPlaza')}</Link>
       </div>
-      <p className="lead">여러분의 의견을 알려 주세요. 실제 사용자들의 생각이 더 나은 선택을 만듭니다.</p>
+      <p className="lead">{t('lead')}</p>
       <div className="notice">
-        <b>로그인 없이 투표하실 수 있습니다.</b> 한 사람이 한 번만 투표할 수 있고, 넣은 표는 바꿀 수 없습니다.
-        결과는 투표한 뒤에 보입니다. 참여 수는 <b>실제로 투표한 수</b>입니다.
+        {t.rich('notice', { b: (c) => <b>{c}</b> })}
       </div>
 
       {polls === null ? (
-        <p className="form-error" role="alert">투표를 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.</p>
+        <p className="form-error" role="alert">{t('loadFail')}</p>
       ) : polls.length === 0 ? (
-        <p className="empty">지금 열린 투표가 없습니다. 곧 새 투표가 올라옵니다.</p>
+        <p className="empty">{t('empty')}</p>
       ) : (
         <>
-          <p className="dim" data-poll-count={polls.length}>진행 중 {open}건 · 마감 {polls.length - open}건</p>
-          <PollList polls={polls} />
+          <p className="dim" data-poll-count={polls.length}>{t('count', { open: String(open), closed: String(polls.length - open) })}</p>
+          <Msgs ns={['plaza']}><PollList polls={polls} /></Msgs>
         </>
       )}
       </div>

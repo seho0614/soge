@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * 거래 확인 (2026-10-01 결정 Q2 · Q3).
@@ -11,12 +12,13 @@ import { useRouter } from 'next/navigation';
  */
 export function DealConfirm({ dealId, done = false }: { dealId: string; done?: boolean }) {
   const router = useRouter();
+  const t = useTranslations('deal.dc');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function confirmDeal() {
-    if (!window.confirm('이 거래가 성사되었음을 확인합니다. 상대방도 확인하면 확정되며 되돌릴 수 없습니다.')) return;
+    if (!window.confirm(t('ask'))) return;
     setBusy(true); setErr(null); setMsg(null);
     try {
       const r = await fetch(`/api/v1/deals/${dealId}/confirm`, {
@@ -25,10 +27,10 @@ export function DealConfirm({ dealId, done = false }: { dealId: string; done?: b
       const d = await r.json().catch(() => null);
       if (!r.ok) {
         if (d?.code === 'IDENTITY_REQUIRED') { router.push('/verify'); return; }
-        setErr(d?.message ?? '확인하지 못했습니다.');
+        setErr(d?.message ?? t('fail'));
         return;
       }
-      setMsg(d?.note ?? '확인했습니다.');
+      setMsg(d?.note ?? t('ok'));
       router.refresh();
     } finally { setBusy(false); }
   }
@@ -40,7 +42,7 @@ export function DealConfirm({ dealId, done = false }: { dealId: string; done?: b
     <div style={{ marginTop: 12 }}>
       {!done && (
         <button className="cta-primary" disabled={busy} onClick={() => void confirmDeal()}>
-          {busy ? '처리 중…' : '거래 성사 확인'}
+          {busy ? t('busy') : t('btn')}
         </button>
       )}
       {msg && <p className="notice" role="status">{msg}</p>}

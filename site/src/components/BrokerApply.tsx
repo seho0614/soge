@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBrokerExtra } from './BrokerExtra';
+import { useTranslations } from 'next-intl';
 
 /**
  * 중개사 인증 신청 폼.
@@ -15,6 +16,7 @@ import { useBrokerExtra } from './BrokerExtra';
  */
 export function BrokerApply({ assumed }: { assumed: boolean }) {
   const router = useRouter();
+  const t = useTranslations('join.brokerApply');
   const [f, setF] = useState({ licenseNo: '', officeName: '', ceoName: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -25,10 +27,7 @@ export function BrokerApply({ assumed }: { assumed: boolean }) {
     && f.officeName.trim() && f.ceoName.trim();
 
   async function submit() {
-    if (assumed && !confirm(
-      '지금은 국토부 연동 전이라 번호 대조를 하지 않습니다.\n' +
-      '연동 후 실제와 다르면 인증이 취소됩니다. 진행하시겠습니까?'
-    )) return;
+    if (assumed && !confirm(t('confirmAssumed'))) return;
     setBusy(true); setErr(null);
     try {
       const r = await fetch('/api/v1/partner/broker', {
@@ -38,30 +37,30 @@ export function BrokerApply({ assumed }: { assumed: boolean }) {
       });
       if (!r.ok) throw new Error(String(r.status));
     } catch {
-      setErr('신청하지 못했습니다. 본인인증(또는 사업자 인증)이 끝났는지 확인해 주십시오.');
+      setErr(t('failed'));
       setBusy(false);
       return;
     }
     try { await extra.save((s) => setStep(s)); }
-    catch (e) { setErr(`신청은 접수했습니다. 다만 ${(e as Error).message} 「내 인증 상태」에서 다시 올려 주십시오.`); setBusy(false); return; }
+    catch (e) { setErr(t('extraFailed', { message: (e as Error).message })); setBusy(false); return; }
     router.push('/my/broker/status');
   }
 
   return (
     <div className="card" style={{ padding: '18px 20px' }}>
       <label className="fld">
-        <span>중개사무소 등록번호</span>
+        <span>{t('licenseNo')}</span>
         <input className="inp mono" value={f.licenseNo} maxLength={20}
           placeholder="11680-2022-00099"
           onChange={(e) => setF({ ...f, licenseNo: e.target.value })} />
       </label>
       <label className="fld">
-        <span>사무소 상호</span>
+        <span>{t('officeName')}</span>
         <input className="inp" value={f.officeName} maxLength={40}
           onChange={(e) => setF({ ...f, officeName: e.target.value })} />
       </label>
       <label className="fld">
-        <span>대표자명</span>
+        <span>{t('ceo')}</span>
         <input className="inp" value={f.ceoName} maxLength={20}
           onChange={(e) => setF({ ...f, ceoName: e.target.value })} />
       </label>
@@ -70,11 +69,11 @@ export function BrokerApply({ assumed }: { assumed: boolean }) {
 
       <button type="button" className="btn-primary" disabled={!done || busy}
         onClick={() => void submit()}>
-        {busy ? (step ?? '신청하는 중…') : '신청하고 대조하기'}
+        {busy ? (step ?? t('working')) : t('submit')}
       </button>
       {err ? <p className="form-error">{err}</p> : null}
       <p className="hint">
-        등록증에 적힌 그대로 입력하십시오. <b>다르면 반려됩니다.</b>
+        {t.rich('hint', { b: (c) => <b>{c}</b> })}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * 입점 신청 폼.
@@ -11,6 +12,7 @@ import { useRouter } from 'next/navigation';
  */
 export function ApplyForm() {
   const router = useRouter();
+  const t = useTranslations('join.applyForm');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -25,7 +27,7 @@ export function ApplyForm() {
       if (!res.ok) throw new Error(String(res.status));
       router.refresh();
     } catch {
-      setErr('접수하지 못했습니다. 잠시 후 다시 눌러 주십시오.');
+      setErr(t('failed'));
       setBusy(false);
     }
   }
@@ -34,11 +36,11 @@ export function ApplyForm() {
     <div>
       <button type="button" className="btn-primary" disabled={busy}
         onClick={() => void submit()}>
-        {busy ? '접수하는 중…' : '입점 신청하기'}
+        {busy ? t('working') : t('submit')}
       </button>
       {err ? <p className="form-error">{err}</p> : null}
       <p className="hint">
-        업종과 지역은 <b>신청 뒤에 정하셔도 됩니다</b>.
+        {t.rich('hint', { b: (c) => <b>{c}</b> })}
       </p>
     </div>
   );

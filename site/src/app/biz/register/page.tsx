@@ -7,8 +7,12 @@ import { codeList, formCopy, uiMessages } from '@/lib/content';
 import Link from 'next/link';
 import { RegisterTabs } from '@/components/RegisterTabs';
 import { BackBar } from '@/components/common/BackBar';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '소개창업 매물 등록' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('forms.bizPage'))('title') };
+}
 
 interface Category { id: string; name: string; gwanCode: string }
 
@@ -37,22 +41,23 @@ export default async function BizRegisterPage() {
   const slaM = slaMsg?.match(/^(.+?\.)\s+(.*)$/s);
   const sla: [string, string] | null = slaM ? [slaM[1] ?? '', slaM[2] ?? ''] : null;
   if (!gwan) notFound();
+  const t = await getTranslations('forms.bizPage');
+  /* 관 이름 — 한국어는 서버 이름 그대로(운영자가 바꿀 수 있음) · 다른 언어만 사전 */
+  const gname = (await getLocale()) !== 'ko' ? (await getTranslations('header.gwan'))('BIZ') : gwan.name;
 
   return (
     <><div className="gw">
       <div className="gw-wrap gw-aiw gw-regfull">{/* v10.32 — 시안 폭 · 1·2 판을 따로 된 카드로 · 등록 신청 단추를 왼쪽 보통 크기로 */}
-        <BackBar href="/biz" label={gwan.name} wrap={false} />
+        <BackBar href="/biz" label={gname} wrap={false} />
         <div className="gw-pgh"><div>
-          <h1>사업 기회 등록</h1>
+          <h1>{t('h')}</h1>
           {/* v10.27 (G-201) — 무엇을 올리는 곳인지, 사업자 인증은 어디서 하는지 첫 줄에 적습니다(주소는 바꾸지 않음 — 이미 쓰는 링크 보존). */}
           <p data-biz-reg-note>
-            소개창업은 가맹 · 신규 출점 · 점포 양수도를 다룹니다. 고정자산이 넘어가는지가 관을 가르는 기준입니다 (A-01).
-            {gwan.name}에 소개할 매물(창업 · 가맹 · 양도 등)을 올리는 곳입니다.
-            사업자 인증은 여기가 아니라 <Link href="/my/business">나의공간 › 사업자 전환</Link>에서 합니다.
+            {t.rich('note', { name: gname, link: (c) => <Link href="/my/business">{c}</Link> })}
           </p>
         </div></div>
         <div className="gw-regwrap">
-          <RegisterTabs
+          <Msgs ns={['forms']}><RegisterTabs
             gwan={gwan}
             categories={cats.map((c) => ({ id: c.id, name: c.name }))}
             copy={copy}
@@ -62,9 +67,9 @@ export default async function BizRegisterPage() {
             /* v10.32 (추가) — 시안: 검수 안내 띠 아래 [등록 신청] [등록 취소] 나란히(전: 등록 신청이 띠 위 · 등록 취소가 띠 아래 따로) */
             note={<div className="gw-nt gw-info" data-msg="REVIEW_SLA_NOTE">{sla
               ? <><b>{sla[0]}</b> {sla[1]}</>
-              : <><b>등록하면 검수를 거칩니다.</b> 영업일 기준 24시간 이내에 처리되고, 반려되면 사유와 수정 가이드가 함께 옵니다.</>}</div>}
-            cancel={<Link className="gw-bo" href="/biz">등록 취소</Link>}
-          />
+              : <>{t.rich('sla', { b: (c) => <b>{c}</b> })}</>}</div>}
+            cancel={<Link className="gw-bo" href="/biz">{t('cancel')}</Link>}
+          /></Msgs>
         </div>
       </div>
     </div><i hidden data-root-end="" /></>

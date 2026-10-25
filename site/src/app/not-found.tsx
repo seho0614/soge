@@ -1,7 +1,6 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { getTranslations } from 'next-intl/server';
+import { DocTitle } from '@/components/common/DocTitle';
 
 /**
  * 없는 주소(404) — v10.25 (G-166)
@@ -11,14 +10,16 @@ import { useEffect } from 'react';
  *
  * 창 제목은 화면이 뜬 뒤에 바꿉니다 — 이 파일의 metadata 내보내기는 없는 주소 화면에 쓰이지 않고(제목이 「소개뱅크」로 남음),
  * <title> 을 본문에 두면 머리에 제목이 두 개가 됩니다.
+ * v10.101 (2-5b · 다국어) — 서버 부품으로 바꿔 사전(join.notFound)을 읽고, 창 제목만 작은 브라우저 부품(DocTitle)이 바꿉니다.
  */
-export default function NotFound() {
-  useEffect(() => { document.title = '없는 주소 · 소개뱅크'; }, []);
+export default async function NotFound() {
+  const t = await getTranslations('join.notFound');
   return (
     <article className="doc" data-notfound>
-      <h1>없는 주소입니다</h1>
-      <p>주소가 바뀌었거나 지워진 화면입니다. 주소를 다시 확인해 주십시오.</p>
-      <p><Link className="btn-sm" href="/">홈으로</Link></p>
+      <DocTitle title={t('docTitle')} />
+      <h1>{t('title')}</h1>
+      <p>{t('body')}</p>
+      <p><Link className="btn-sm" href="/">{t('home')}</Link></p>
     </article>
   );
 }

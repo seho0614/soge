@@ -7,9 +7,13 @@ import { RoleTabs } from '@/components/gwan/GwParts';
 import type { Cat, Gwan } from '@/components/form/RegParts';
 import { RequestForm } from './RequestForm';
 import { gradeLabels } from '@/lib/grades';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '소개받기 등록' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('forms.reqPage'))('title') };
+}
 
 const REQ_GWANS = ['MNY', 'MAL', 'BIZ'];
 
@@ -19,6 +23,7 @@ export default async function NewRequest({ searchParams }: { searchParams: Promi
   if (!p) redirect('/login?next=/request/new');
   if (!p.identityVerifiedAt) redirect('/verify?next=/request/new');
   const sp = await searchParams;
+  const t = await getTranslations('forms');
 
   const [gw, labels, ...lists] = await Promise.all([
     apiGet<Array<Gwan & { isActive: boolean }>>('/gwans', 300).catch(() => []),
@@ -31,12 +36,12 @@ export default async function NewRequest({ searchParams }: { searchParams: Promi
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-REQ-010">
-      <BackBar href="/request" label="이전 화면" wrap={false} />
+      <BackBar href="/request" label={t('common.prev')} wrap={false} />
       <div style={{ marginTop: 12 }}>
-        <RoleTabs on="want" note="원하는 상품이나 서비스를 소개받고 연결 기회를 만들어보세요!" />
+        <RoleTabs on="want" note={t('reqPage.note')} />
       </div>
-      <RequestForm gwans={gwans} cats={cats} gradeLabels={labels}
-        initialGwan={REQ_GWANS.includes(sp.g ?? '') ? sp.g : undefined} />
+      <Msgs ns={['forms']}><RequestForm gwans={gwans} cats={cats} gradeLabels={labels}
+        initialGwan={REQ_GWANS.includes(sp.g ?? '') ? sp.g : undefined} /></Msgs>
     </div>
   );
 }

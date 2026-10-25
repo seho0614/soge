@@ -2,6 +2,7 @@
 import { dtKst } from '@/lib/format';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export interface Contract { id: string; issuedAt: string; signedByBuyerAt: string | null; signedBySellerAt: string | null }
 
@@ -14,6 +15,7 @@ export interface Contract { id: string; issuedAt: string; signedByBuyerAt: strin
 /* v10.31 — 이미 발급된 계약서가 있으면 그 상태로 엽니다(전: 늘 「계약서 발급」 단추부터 — 거래 정보 GET /deals/{id}/summary 의 contract) */
 export function ContractPanel({ dealId, initial }: { dealId: string; initial?: Contract | null }) {
   const router = useRouter();
+  const t = useTranslations('deal.cp');
   const [pending, start] = useTransition();
   const [c, setC] = useState<Contract | null>(initial ?? null);
   const [err, setErr] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function ContractPanel({ dealId, initial }: { dealId: string; initial?: C
     start(async () => {
       const r = await fetch(`/api/v1/deals/${dealId}${path}`, { method: 'POST' });
       const d = await r.json().catch(() => null);
-      if (!r.ok) { setErr(d?.message ?? '처리하지 못했습니다.'); return; }
+      if (!r.ok) { setErr(d?.message ?? t('fail')); return; }
       onOk(d);
       router.refresh();
     });
@@ -37,34 +39,33 @@ export function ContractPanel({ dealId, initial }: { dealId: string; initial?: C
       {!c ? (
         <button className="cta-primary" disabled={pending}
                 onClick={() => call('/contract', (d) => setC(d as Contract))}>
-          {pending ? '발급 중…' : '계약서 발급'}
+          {pending ? t('issuing') : t('issue')}
         </button>
       ) : (
         <>
           <p className="ok-note">
-            발급 {dtKst(c.issuedAt)} · 금액이 고정되었습니다.
+            {t('issued', { at: dtKst(c.issuedAt) })}
           </p>
           <ul className="sign-state">
-            <li className={c.signedByBuyerAt ? 'done' : ''}>매수인 {c.signedByBuyerAt ? '서명 완료' : '대기'}</li>
-            <li className={c.signedBySellerAt ? 'done' : ''}>매도인 {c.signedBySellerAt ? '서명 완료' : '대기'}</li>
+            <li className={c.signedByBuyerAt ? 'done' : ''}>{t('buyer', { state: c.signedByBuyerAt ? t('signed') : t('wait') })}</li>
+            <li className={c.signedBySellerAt ? 'done' : ''}>{t('seller', { state: c.signedBySellerAt ? t('signed') : t('wait') })}</li>
           </ul>
 
           {both ? (
-            <p className="ok-note">양측 서명 완료 — 성사가 확정되고 정산이 신청되었습니다.</p>
+            <p className="ok-note">{t('both')}</p>
           ) : (
             <>
               <p className="notice">
-                <strong>두 번째 서명이 성사를 확정합니다.</strong> 확정되면 정산이 자동으로 신청되고
-                되돌릴 수 없습니다.
+                {t.rich('notice', { strong: (x) => <strong>{x}</strong> })}
               </p>
               <label className="chk">
                 <input type="checkbox" checked={confirmed}
                        onChange={(e) => setConfirmed(e.target.checked)} />
-                내용을 확인했습니다
+                {t('check')}
               </label>
               <button className="cta-primary" disabled={pending || !confirmed}
                       onClick={() => call('/contract/sign', (d) => setC(d as Contract))}>
-                {pending ? '서명 중…' : '서명하기'}
+                {pending ? t('signing') : t('sign')}
               </button>
             </>
           )}

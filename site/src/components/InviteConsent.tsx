@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 type Props = { token: string; introducer: string; consented?: boolean };
 
@@ -15,12 +16,13 @@ type Props = { token: string; introducer: string; consented?: boolean };
  */
 export function InviteConsent({ token, introducer, consented }: Props) {
   const router = useRouter();
+  const t = useTranslations('deal.invite');
   const [busy, setBusy] = useState<'agree' | 'decline' | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   async function send(agree: boolean) {
-    if (!agree && !window.confirm('이 소개를 거절하시겠습니까? 소개하신 분에게는 거절 사실만 전달됩니다.')) return;
+    if (!agree && !window.confirm(t('declineAsk'))) return;
     setBusy(agree ? 'agree' : 'decline');
     setErr(null); setNote(null);
     try {
@@ -28,12 +30,12 @@ export function InviteConsent({ token, introducer, consented }: Props) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agree }),
       });
       const r = (await res.json().catch(() => ({}))) as { chatId?: string | null; note?: string; message?: string };
-      if (!res.ok) { setErr(r.message ?? '처리하지 못했습니다. 잠시 후 다시 눌러 주십시오.'); setBusy(null); return; }
+      if (!res.ok) { setErr(r.message ?? t('fail')); setBusy(null); return; }
       if (agree && r.chatId) { router.push(`/chat/${r.chatId}`); return; }
       setNote(r.note ?? null);
       router.refresh();
     } catch {
-      setErr('연결이 끊겼습니다. 잠시 후 다시 눌러 주십시오.');
+      setErr(t('cut'));
     }
     setBusy(null);
   }
@@ -41,10 +43,10 @@ export function InviteConsent({ token, introducer, consented }: Props) {
   if (consented) {
     return (
       <div>
-        <div className="w1-nt ok"><b>이미 동의하셨습니다.</b> 로그인한 상태라면 아래 단추로 요청하신 분과의 대화를 엽니다.</div>
+        <div className="w1-nt ok">{t.rich('consented', { b: (x) => <b>{x}</b> })}</div>
         <div className="w1-prfact" style={{ marginTop: 10 }}>
-          <button type="button" className="w1-bp" disabled={busy !== null} onClick={() => void send(true)}>{busy ? '여는 중…' : '대화 열기'}</button>
-          <Link className="w1-bo" href={`/login?next=/i/${encodeURIComponent(token)}`}>로그인</Link>
+          <button type="button" className="w1-bp" disabled={busy !== null} onClick={() => void send(true)}>{busy ? t('opening') : t('open')}</button>
+          <Link className="w1-bo" href={`/login?next=/i/${encodeURIComponent(token)}`}>{t('login')}</Link>
         </div>
         {note && <p className="w1-ok" role="status">{note}</p>}
         {err && <p className="w1-err" role="alert">{err}</p>}
@@ -56,15 +58,15 @@ export function InviteConsent({ token, introducer, consented }: Props) {
     <div>
       <div className="w1-prfact">
         <button type="button" className="w1-bp" disabled={busy !== null} onClick={() => void send(true)}>
-          {busy === 'agree' ? '연결하는 중…' : '동의하고 연결'}
+          {busy === 'agree' ? t('connecting') : t('agree')}
         </button>
         <button type="button" className="w1-bo" disabled={busy !== null} onClick={() => void send(false)}>
-          {busy === 'decline' ? '전달하는 중…' : '거절'}
+          {busy === 'decline' ? t('declining') : t('decline')}
         </button>
       </div>
       {note && <p className="w1-ok" role="status">{note}</p>}
       {err && <p className="w1-err" role="alert">{err}</p>}
-      <p className="w1-ls" style={{ marginTop: 8 }}>동의하면 대화가 열립니다. 동의 기록은 남습니다. 거절하셔도 {introducer} 님에게 사유는 전달되지 않습니다.</p>
+      <p className="w1-ls" style={{ marginTop: 8 }}>{t('note', { name: introducer })}</p>
     </div>
   );
 }

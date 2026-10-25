@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * 결제 수단 등록·삭제.
@@ -12,14 +13,12 @@ import { useRouter } from 'next/navigation';
 export function PayMethod({ registered, assumed }:
   { registered: boolean; assumed: boolean }) {
   const router = useRouter();
+  const t = useTranslations('deal.payMethod');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function register() {
-    if (assumed && !confirm(
-      '지금은 연동 전이라 실제 카드가 등록되지 않습니다.\n' +
-      '화면 확인용으로만 진행하시겠습니까?'
-    )) return;
+    if (assumed && !confirm(t('assumed'))) return;
     setBusy(true); setErr(null);
     try {
       const r = await fetch('/api/v1/me/billing-key', {
@@ -34,16 +33,13 @@ export function PayMethod({ registered, assumed }:
       router.refresh();
       setBusy(false);      // v10.26 (G-179) — 성공한 뒤에도 풀어야 합니다. 전에는 단추가 「처리 중…」에서 멈췄습니다(화면만 새로 받고 이 칸은 그대로 남음)
     } catch {
-      setErr('등록하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+      setErr(t('regFail'));
       setBusy(false);
     }
   }
 
   async function remove() {
-    if (!confirm(
-      '결제 수단을 삭제하시겠습니까?\n\n' +
-      '미납이 남아 있으면 삭제할 수 없고, 삭제 후에는 구독이 갱신되지 않습니다.'
-    )) return;
+    if (!confirm(t('removeAsk'))) return;
     setBusy(true); setErr(null);
     try {
       const r = await fetch('/api/v1/me/billing-key', { method: 'DELETE' });
@@ -52,7 +48,7 @@ export function PayMethod({ registered, assumed }:
       setBusy(false);
     } catch {
       /* 미납이 있으면 서버가 막습니다 — 그 이유를 알려야 합니다. */
-      setErr('삭제하지 못했습니다. 미납이 남아 있으면 먼저 정리하셔야 합니다.');
+      setErr(t('removeFail'));
       setBusy(false);
     }
   }
@@ -61,12 +57,12 @@ export function PayMethod({ registered, assumed }:
     <div className="invite-actions">
       <button type="button" className="btn-primary" disabled={busy}
         onClick={() => void register()}>
-        {busy ? '처리 중…' : registered ? '카드 바꾸기' : '카드 등록하기'}
+        {busy ? t('busy') : registered ? t('change') : t('register')}
       </button>
       {registered ? (
         <button type="button" className="btn ghost" disabled={busy}
           onClick={() => void remove()}>
-          삭제
+          {t('remove')}
         </button>
       ) : null}
       {err ? <p className="form-error">{err}</p> : null}

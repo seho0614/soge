@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GWAN_PATH } from '@/lib/format';
+import { useTranslations } from 'next-intl';
 
 export interface Weight { code: string; name: string; weight: number }
 export interface Cand {
@@ -18,6 +19,7 @@ export interface Ad { empty: boolean; id?: string; advertiser?: string; title?: 
 
 export function MatchView({ weights, cands, gwanCode, ad }: { weights: Weight[]; cands: Cand[]; gwanCode: string; ad: Ad | null }) {
   const router = useRouter();
+  const t = useTranslations('join.ai.matchView');
   const base = useMemo(() => Object.fromEntries(weights.map((w) => [w.code, w.weight])), [weights]);
   const [W, setW] = useState<Record<string, number>>(base);
   const tot = Object.values(W).reduce((a, b) => a + Number(b || 0), 0) || 1;
@@ -42,7 +44,7 @@ export function MatchView({ weights, cands, gwanCode, ad }: { weights: Weight[];
   return (
     <div className="w1-aiwrap">
       <div className="w1-aiwb">
-        <div className="w1-aiwh"><b>가중치</b><button type="button" className="w1-bo sm" onClick={() => setW(base)}>기본값으로</button></div>
+        <div className="w1-aiwh"><b>{t('weights')}</b><button type="button" className="w1-bo sm" onClick={() => setW(base)}>{t('reset')}</button></div>
         {weights.map((w) => (
           <label key={w.code} className="w1-aiwrow" htmlFor={`w-${w.code}`}>
             <span>{w.name}</span>
@@ -51,24 +53,24 @@ export function MatchView({ weights, cands, gwanCode, ad }: { weights: Weight[];
             <b>{Number(W[w.code] ?? 0)}</b>
           </label>
         ))}
-        <div className="w1-ls">합계 {Object.values(W).reduce((a, b) => a + Number(b || 0), 0)} — 합이 100이 아니어도 됩니다. 비율로 나눠 씁니다.</div>
+        <div className="w1-ls">{t('sum', { n: String(Object.values(W).reduce((a, b) => a + Number(b || 0), 0)) })}</div>
       </div>
       <div className="w1-aicol">
         {ad && !ad.empty && ad.id && (
           <div className="w1-adrec" data-adbox="RECS">
-            <span className="adlab">광고</span>
+            <span className="adlab">{t('ad')}</span>
             <div><b>{ad.title}</b><span className="w1-ls" style={{ display: 'block', marginTop: 2 }}>{ad.advertiser} · {ad.code}</span></div>
-            <button type="button" className="w1-bo sm" onClick={adClick}>{ad.cta ?? '자세히 보기'}</button>
-            <div className="adwhy">스폰서 자리입니다. <b>점수 계산에 넣지 않았고</b> 순위에도 끼지 않습니다 — 광고와 추천을 섞으면 표시광고법상 문제가 됩니다.</div>
+            <button type="button" className="w1-bo sm" onClick={adClick}>{ad.cta ?? t('more')}</button>
+            <div className="adwhy">{t.rich('adWhy', { b: (c) => <b>{c}</b> })}</div>
           </div>
         )}
-        {rows.length === 0 && <div className="w1-empty">이 요청의 관에 게시 중인 사업자 매물이 아직 없습니다 — 후보가 생기면 여기에 줄 세웁니다.</div>}
+        {rows.length === 0 && <div className="w1-empty">{t('empty')}</div>}
         {rows.map(({ c, sc }, i) => (
           <div key={c.listingId} className={`w1-reccard${i === 0 ? ' on' : ''}`}>
             <div className="w1-rcdh">
               <span className="rkr">{i + 1}</span>
-              <div style={{ minWidth: 0 }}><b>{c.company}</b><span className="w1-ls">{[c.categoryName, c.region ?? '주소 미등록'].join(' · ')}</span></div>
-              <div className="rsc"><b>{sc}</b><span>점</span></div>
+              <div style={{ minWidth: 0 }}><b>{c.company}</b><span className="w1-ls">{[c.categoryName, c.region ?? t('noAddress')].join(' · ')}</span></div>
+              <div className="rsc"><b>{sc}</b><span>{t('points')}</span></div>
             </div>
             <div className="w1-rbars">
               {weights.map((w) => (
@@ -76,13 +78,13 @@ export function MatchView({ weights, cands, gwanCode, ad }: { weights: Weight[];
               ))}
             </div>
             <div className="w1-rmeta">
-              성사 {c.deals}건 · 평균 응답 {c.replyHours != null ? `${c.replyHours}시간` : '기록 없음'}
-              {c.reviewCount ? ` · 후기 ★${c.reviewAvg} (${c.reviewCount})` : ''} · 매물 <Link href={`/${GWAN_PATH[gwanCode] ?? 'money'}/${c.listingId}`}>{c.listingTitle}</Link>
+              {t('deals', { n: String(c.deals), reply: c.replyHours != null ? t('hours', { n: String(c.replyHours) }) : t('noRecord') })}
+              {c.reviewCount ? t('reviews', { avg: String(c.reviewAvg), n: String(c.reviewCount) }) : ''}{t('listing')}<Link href={`/${GWAN_PATH[gwanCode] ?? 'money'}/${c.listingId}`}>{c.listingTitle}</Link>
             </div>
             <div className="w1-rflag">
               {!c.verified
-                ? <span className="w1-rfl no">사업자 인증 없음 — 성사되면 소개비는 개인으로 받습니다(본인인증 · 받을 계좌 확인).</span>
-                : <span className="w1-rfl ok">인증 문제 없음 — 1:1 문의를 시작하면 소개코드가 발급됩니다.</span>}
+                ? <span className="w1-rfl no">{t('noBiz')}</span>
+                : <span className="w1-rfl ok">{t('okBiz')}</span>}
             </div>
           </div>
         ))}

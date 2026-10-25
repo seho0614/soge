@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from './AddressInput';
 
 /**
@@ -12,6 +13,7 @@ import { AddressInput, EMPTY_ADDRESS, type AddressValue } from './AddressInput';
 /** regNo — v10.32 (추가): 인증 화면(/verify)에서 국세청 조회(POST /signup/biz-check)를 통과한 번호를 넘기면 그 번호로 고정(읽기 전용)합니다. 없으면 전과 같음 */
 export function BusinessForm({ regNo }: { regNo?: string } = {}) {
   const router = useRouter();
+  const t = useTranslations('join.businessForm');
   const [pending, start] = useTransition();
   const [done, setDone] = useState<{ ntsVerified: boolean } | null>(null);
   const [err, setErr] = useState<{ code: string; message: string } | null>(null);
@@ -42,7 +44,7 @@ export function BusinessForm({ regNo }: { regNo?: string } = {}) {
       const d = await r.json();
       if (!r.ok) {
         // 409 BIZ_REG_NO_TAKEN 은 재시도해도 같은 결과입니다
-        setErr({ code: d.code ?? 'UNKNOWN', message: d.message ?? '신청하지 못했습니다.' });
+        setErr({ code: d.code ?? 'UNKNOWN', message: d.message ?? t('failed') });
         return;
       }
       setDone(d);
@@ -53,10 +55,10 @@ export function BusinessForm({ regNo }: { regNo?: string } = {}) {
   if (done) {
     return (
       <div className="result">
-        <p className="ok-note">신청이 접수되었습니다. 담당자 확인 후 알려 드립니다.</p>
+        <p className="ok-note">{t('received')}</p>
         {!done.ntsVerified && (
           <p className="stub-note">
-            국세청 조회는 <strong>연동 준비 중</strong>입니다 — 실제 확인이 이루어지지 않았습니다.
+            {t.rich('stub', { strong: (c) => <strong>{c}</strong> })}
           </p>
         )}
       </div>
@@ -66,25 +68,25 @@ export function BusinessForm({ regNo }: { regNo?: string } = {}) {
   return (
     <form className="auth" onSubmit={submit}>
       <label className="fld">
-        <span>사업자등록번호</span>
+        <span>{t('brn')}</span>
         {regNo
           ? <input name="bizRegNo" required readOnly defaultValue={regNo} inputMode="numeric" />
           : <input name="bizRegNo" required placeholder="1234567890" inputMode="numeric" />}
-        <em>{regNo ? '국세청 조회를 마친 번호입니다' : '하이픈 없이 10자리'}</em>
+        <em>{regNo ? t('brnLocked') : t('brnHint')}</em>
       </label>
-      <label className="fld"><span>상호</span><input name="companyName" required /></label>
-      <label className="fld"><span>대표자명</span><input name="ceoName" required /></label>
-      <AddressInput value={addr} onChange={setAddr} label="사업장 주소" />
+      <label className="fld"><span>{t('company')}</span><input name="companyName" required /></label>
+      <label className="fld"><span>{t('ceo')}</span><input name="ceoName" required /></label>
+      <AddressInput value={addr} onChange={setAddr} label={t('address')} />
 
       {err && (
         <p className="form-error" role="alert">
           {err.message}
-          {err.code === 'BIZ_REG_NO_TAKEN' && <> 이미 등록된 번호는 다시 신청할 수 없습니다.</>}
+          {err.code === 'BIZ_REG_NO_TAKEN' && <> {t('taken')}</>}
         </p>
       )}
 
       <button className="cta-primary" disabled={pending}>
-        {pending ? '신청 중…' : '사업자 인증 신청'}
+        {pending ? t('working') : t('submit')}
       </button>
     </form>
   );

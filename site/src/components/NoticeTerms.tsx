@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
 
 interface Term { code: string; title: string; isNotice?: boolean }
 
@@ -12,13 +13,14 @@ export async function NoticeTerms() {
   const terms = await apiGet<Term[]>('/terms', 60).catch(() => [] as Term[]);
   const list = terms.filter((t) => t.isNotice);
   if (!list.length) return null;
+  const tr = await getTranslations('join.noticeTerms');
   return (
     <p className="hint" data-notice-terms>
-      <b>알림</b>{' '}
+      <b>{tr('label')}</b>{' '}
       {list.map((t, i) => (
         <span key={t.code}>{i > 0 && ' · '}<Link href={`/terms/${t.code}`} data-notice-term={t.code}>{t.title}</Link></span>
       ))}
-      {' '}— 동의를 받는 항목이 아니라 알려 드리는 안내입니다. 따로 고르실 것이 없습니다.
+      {' '}{tr('body')}
     </p>
   );
 }

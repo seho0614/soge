@@ -8,9 +8,13 @@ import { BackBar } from '@/components/common/BackBar';
 import { RoleTabs } from '@/components/gwan/GwParts';
 import type { Cat, Gwan } from '@/components/form/RegParts';
 import { RegisterForm } from '@/components/register/RegisterForm';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '상품/서비스 등록' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('forms.regPage'))('title') };
+}
 
 const REG_GWANS = ['MNY', 'MAL', 'BIZ'];
 
@@ -24,6 +28,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   if (!p) redirect('/login?next=/register');
   if (!p.identityVerifiedAt) redirect('/verify?next=/register');
   const sp = await searchParams;
+  const t = await getTranslations('forms');
 
   const [gw, labels, ...lists] = await Promise.all([
     apiGet<Array<Gwan & { isActive: boolean }>>('/gwans', 300).catch(() => []),
@@ -38,19 +43,19 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     .map((g) => ({ code: g.code, name: g.name }));
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-REG-010">
-      <BackBar href="/" label="이전 화면" wrap={false} />
+      <BackBar href="/" label={t('common.prev')} wrap={false} />
       <div style={{ marginTop: 12 }}>
-        <RoleTabs on="give" note="다양한 상품과 서비스를 소개하고 수익을 만들어보세요!" />
+        <RoleTabs on="give" note={t('regPage.note')} />
       </div>
       {gwans.length > 0 ? (
-        <RegisterForm gwans={gwans} cats={cats} gradeLabels={labels} initialGwan={REG_GWANS.includes(sp.g ?? '') ? sp.g : undefined} />
+        <Msgs ns={['forms']}><RegisterForm gwans={gwans} cats={cats} gradeLabels={labels} initialGwan={REG_GWANS.includes(sp.g ?? '') ? sp.g : undefined} /></Msgs>
       ) : (
         <div className="w1-rgw w1-rgw-reg">
-          <div className="w1-rghd"><div><h1>상품/서비스 등록하기</h1></div></div>
-          <div className="w1-jc w" data-reg-locked=""><span className="lb">지금 등록할 수 있는 관이 없습니다</span>
-            열린 관의 업종이 준비되면 등록하실 수 있습니다. 그동안 <b>요청 등록과 소개 참여</b>를 하실 수 있습니다.
+          <div className="w1-rghd"><div><h1>{t('reg.title')}</h1></div></div>
+          <div className="w1-jc w" data-reg-locked=""><span className="lb">{t('regPage.lockedTitle')}</span>
+            {t.rich('regPage.lockedBody', { b: (c) => <b>{c}</b> })}
             <div className="w1-dact" style={{ justifyContent: 'flex-start' }}>
-              <Link className="w1-jb o" href="/request/new">소개받고 싶어요(요청 등록)</Link>
+              <Link className="w1-jb o" href="/request/new">{t('regPage.lockedCta')}</Link>
             </div>
           </div>
         </div>

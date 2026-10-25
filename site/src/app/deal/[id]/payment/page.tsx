@@ -6,9 +6,13 @@ import { dtKst, won } from '@/lib/format';
 import { PaymentReportForm } from '@/components/PaymentReportForm';
 import { DealShell } from '@/components/deal/DealShell';
 import { loadDeal } from '@/components/deal/load';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '결제 · 대금' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('deal.meta'))('payment') };
+}
 
 /**
  * SB-HOM-DEL-020 결제 · 대금 — v10.31 시안 scDealPay 의 모양: 3단계 띠 · 거래 정보 표 · 금액 · 대금 수수 · 양측 3칸 · 현황 표 · 다음/이전.
@@ -22,34 +26,35 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
   const r = await loadDeal(id);
   if ('error' in r) return <div className="w1 w1-wrap"><div className="w1-empty">{r.error}</div></div>;
   const d = r.d;
+  const t = await getTranslations('deal');
   const by = (p: string) => d.payments.find((x) => x.party === p);
   const n = ['BUYER', 'SELLER'].filter((p) => by(p)).length;
   return (
-    <DealShell d={d} step={1} title="결제 · 대금" sub="대금은 당사자끼리 직접 주고받습니다. 플랫폼은 보관하거나 중계하지 않습니다 — 여기서는 지급 사실만 신고합니다 (INV-11).">
+    <DealShell d={d} step={1} title={t('pay.title')} sub={t('pay.sub')}>
       <div className="w1-esc">
-        <div className="er"><span>거래금액</span><b>{d.amount != null ? won(d.amount) : '합의 전'}</b>
-          {d.amount != null && <span className={`w1-bg ${d.amount >= 50_000_000 ? 'ok' : 'off'}`}>{d.amount >= 50_000_000 ? '5,000만원 이상' : '5,000만원 미만'}</span>}</div>
-        <div className="er"><span>대금 수수</span><b>당사자 직접</b><span className="w1-bg off">에스크로 미사용</span></div>
-        <div className="er"><span>양측 지급 신고</span><b>{n} / 2</b><span className={`w1-bg ${n === 2 ? 'ok' : 'wait'}`}>{n === 2 ? '완료' : '대기'}</span></div>
+        <div className="er"><span>{t('pay.amount')}</span><b>{d.amount != null ? won(d.amount) : t('pay.amountPending')}</b>
+          {d.amount != null && <span className={`w1-bg ${d.amount >= 50_000_000 ? 'ok' : 'off'}`}>{d.amount >= 50_000_000 ? t('pay.over') : t('pay.under')}</span>}</div>
+        <div className="er"><span>{t('pay.transfer')}</span><b>{t('pay.direct')}</b><span className="w1-bg off">{t('pay.noEscrow')}</span></div>
+        <div className="er"><span>{t('pay.reports')}</span><b>{n} / 2</b><span className={`w1-bg ${n === 2 ? 'ok' : 'wait'}`}>{n === 2 ? t('pay.done') : t('common.wait')}</span></div>
       </div>
-      <div className="w1-nt">플랫폼은 대금을 보관하지 않습니다. 지급 신고는 성사 확정과 분쟁 때 근거로 쓰입니다 — 금액 · 계좌는 받지 않습니다.</div>
+      <div className="w1-nt">{t('pay.note')}</div>
 
-      <h2 className="w1-s2">신고 현황</h2>
-      <table className="w1-tb"><thead><tr><th>당사자</th><th>대금 지급 신고</th></tr></thead>
+      <h2 className="w1-s2">{t('pay.status')}</h2>
+      <table className="w1-tb"><thead><tr><th>{t('pay.thParty')}</th><th>{t('pay.thReport')}</th></tr></thead>
         <tbody>
           {([['BUYER', d.buyer], ['SELLER', d.seller]] as const).map(([p, name]) => {
             const x = by(p);
-            return <tr key={p}><td><b>{name}</b>{d.myRole === p ? ' (나)' : ''}</td>
-              <td>{x ? <><span className="w1-bg ok">신고</span> {dtKst(x.reportedAt)} · {x.method}</> : <span className="w1-bg wait">미신고</span>}</td></tr>;
+            return <tr key={p}><td><b>{name}</b>{d.myRole === p ? t('common.me') : ''}</td>
+              <td>{x ? <><span className="w1-bg ok">{t('pay.reported')}</span> {dtKst(x.reportedAt)} · {x.method}</> : <span className="w1-bg wait">{t('pay.notReported')}</span>}</td></tr>;
           })}
         </tbody></table>
-      <div className="w1-nt" style={{ marginTop: 10 }}><b>관에 따라 이 단계를 건너뛸 수 있습니다.</b> 계약서 없이 진행한 거래는 성사 확정에서 양측이 각각 확인하면 됩니다.</div>
+      <div className="w1-nt" style={{ marginTop: 10 }}>{t.rich('pay.skipNote', { b: (c) => <b>{c}</b> })}</div>
 
-      {d.myRole !== 'INTRODUCER' && (<><h2 className="w1-s2">대금 지급 신고</h2><PaymentReportForm dealId={d.id} /></>)}
+      {d.myRole !== 'INTRODUCER' && (<><h2 className="w1-s2">{t('pay.thReport')}</h2><Msgs ns={['deal']}><PaymentReportForm dealId={d.id} /></Msgs></>)}
 
       <div className="w1-dact">
-        <Link className="w1-bp" href={`/deal/${d.id}/confirm`}>다음 — 성사 확정</Link>
-        <Link className="w1-bo" href={`/deal/${d.id}/contract`}>이전 — 계약서</Link>
+        <Link className="w1-bp" href={`/deal/${d.id}/confirm`}>{t('pay.next')}</Link>
+        <Link className="w1-bo" href={`/deal/${d.id}/contract`}>{t('pay.prev')}</Link>
       </div>
     </DealShell>
   );

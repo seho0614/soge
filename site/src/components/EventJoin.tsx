@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * 이벤트 참여.
@@ -12,6 +13,7 @@ import { useRouter } from 'next/navigation';
 export function EventJoin({ code, full, benefit }:
   { code: string; full: boolean; benefit: string }) {
   const router = useRouter();
+  const t = useTranslations('join.eventJoin');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -25,13 +27,13 @@ export function EventJoin({ code, full, benefit }:
         throw new Error(d?.message ?? String(r.status));
       }
       const d = await r.json();
-      setDone(d?.note ?? '참여되었습니다.');
+      setDone(d?.note ?? t('joined'));
       router.refresh();
     } catch (e) {
       const m = e instanceof Error ? e.message : '';
       setErr(/로그인|UNAUTH|401/.test(m)
-        ? '먼저 로그인하셔야 참여하실 수 있습니다.'
-        : m || '참여하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+        ? t('needLogin')
+        : m || t('failed'));
     }
     setBusy(false);
   }
@@ -42,10 +44,10 @@ export function EventJoin({ code, full, benefit }:
     <div style={{ marginTop: 12 }}>
       <button type="button" className="btn-primary" disabled={busy || full}
         onClick={() => void join()}>
-        {full ? '정원이 찼습니다' : busy ? '참여하는 중…' : '참여하기'}
+        {full ? t('full') : busy ? t('working') : t('submit')}
       </button>
       {err ? <p className="form-error">{err}</p> : null}
-      <p className="hint">받으실 것: <b>{benefit}</b></p>
+      <p className="hint">{t.rich('benefit', { benefit, b: (c) => <b>{c}</b> })}</p>
     </div>
   );
 }

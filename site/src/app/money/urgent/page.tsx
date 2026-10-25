@@ -8,33 +8,40 @@ import { Pager } from '@/components/gwan/GwParts';
 import { SortSelect } from '@/components/gwan/GwClient';
 import { photoSrc, qhref, regionText } from '@/components/gwan/gw';
 import { cardPrice } from '@/components/gwan/GwCard';
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '급구 · 급매' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('gwan'))('qm.urgent') };
+}
 
 type Props = { searchParams: Promise<{ t?: string; g?: string; sort?: string; p?: string; region?: string }> };
 
 /** 시안 UTABS · UCATS · 정렬 칸 그대로 — 서버 값으로 잇습니다 */
-const UTABS: [string, string, string][] = [['all', '전체', 'ANY'], ['buy', '급구', 'BUY'], ['sell', '급매', 'SELL']];
-const UCATS: [string, string][] = [['', '전체 상품'], ['RE', '부동산'], ['CAR', '자동차'], ['BIZ', '창업/프랜차이즈'], ['MACHINE', '기계/설비'], ['LIFE', '생활/기타']];
-const USORT: [string, string][] = [['RECENT', '최신순'], ['AMOUNT_ASC', '낮은 가격순'], ['AMOUNT_DESC', '높은 가격순'], ['POPULAR', '관심 많은순'], ['DEADLINE', '마감임박순']];
+/* v10.101 2-5b — 글자는 사전 키(plaza.urgent.*) */
+const UTABS = [['all', 'urgent.tab.all', 'ANY'], ['buy', 'urgent.tab.buy', 'BUY'], ['sell', 'urgent.tab.sell', 'SELL']] as const;
+const UCATS = [['', 'urgent.cat.all'], ['RE', 'urgent.cat.RE'], ['CAR', 'urgent.cat.CAR'], ['BIZ', 'urgent.cat.BIZ'], ['MACHINE', 'urgent.cat.MACHINE'], ['LIFE', 'urgent.cat.LIFE']] as const;
+const USORT = [['RECENT', 'urgent.sort.RECENT'], ['AMOUNT_ASC', 'urgent.sort.AMOUNT_ASC'], ['AMOUNT_DESC', 'urgent.sort.AMOUNT_DESC'], ['POPULAR', 'urgent.sort.POPULAR'], ['DEADLINE', 'urgent.sort.DEADLINE']] as const;
 const ymd = (iso: string | null) => (iso ? ymdKst(iso).replace(/-/g, '.') : '—');
 const href = (x: ListingCardData) => `/${GWAN_PATH[x.gwanCode] ?? 'money'}/${x.id}`;
 
 function UCard({ x }: { x: ListingCardData }) {
+  const t = useTranslations('plaza.urgent');
+  const m = useTranslations('money');
   const price = cardPrice(x);
   return (
     <Link className="gw-uc" href={href(x)} data-listing={x.id} data-urgent={x.urgent?.kind}>
       <div className="gw-uimg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="gw-thp" src={photoSrc(x.categoryName, x.thumbUrl ? [x.thumbUrl] : null)} alt="" loading="lazy" />
-        <span className="gw-ubadge"><span className="gw-ug" title={x.urgent?.label}>급</span><span className="gw-uct">{x.categoryName}</span></span>
+        <span className="gw-ubadge"><span className="gw-ug" title={x.urgent?.label}>{t('mark')}</span><span className="gw-uct">{x.categoryName}</span></span>
       </div>
       <div className="gw-ub">
         <div className="gw-ut">{x.title}</div>
-        <div className="gw-ud">{x.urgent ? `${x.urgent.label} · ~${ymd(x.urgent.until)} · ` : ''}{x.summary ?? `${x.owner.companyName}${x.owner.verified ? ' · 사업자 인증' : ''}`}</div>
+        <div className="gw-ud">{x.urgent ? `${x.urgent.label} · ~${ymd(x.urgent.until)} · ` : ''}{x.summary ?? `${x.owner.companyName}${x.owner.verified ? ` · ${t('bizVerified')}` : ''}`}</div>
         <div className="gw-up">{price.label && <small className="gw-prl">{price.label}</small>} {price.value}</div>
-        <div className="gw-ul">📍 {regionText(x.region) || '지역 미상'}</div>
-        <div className="gw-um"><span>등록일 {ymd(x.publishedAt)}</span><span>♡ {x.likeCount}</span></div>
+        <div className="gw-ul">📍 {regionText(x.region) || m('unknownRegion')}</div>
+        <div className="gw-um"><span>{t('postedAt', { date: ymd(x.publishedAt) })}</span><span>♡ {x.likeCount}</span></div>
       </div>
     </Link>
   );
@@ -53,7 +60,8 @@ function UCard({ x }: { x: ListingCardData }) {
  */
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
-  const tab = UTABS.find(([k]) => k === q.t) ?? UTABS[0]!;
+  const t = await getTranslations('plaza');
+  const tab = UTABS.find(([k]) => k === q.t) ?? UTABS[0];
   const group = UCATS.some(([k]) => k === q.g) ? q.g : undefined;
   const sort = USORT.some(([k]) => k === q.sort) ? q.sort : undefined;
   const region = q.region && /^(\d{10}|ETC)$/.test(q.region) ? q.region : undefined;
@@ -68,50 +76,52 @@ export default async function Page({ searchParams }: Props) {
   const gHrefs = Object.fromEntries(UCATS.map(([k]) => [k, qhref(base, { ...keep, g: k || undefined, p: undefined })]));
   const sHrefs = Object.fromEntries(USORT.map(([k]) => [k, qhref(base, { ...keep, sort: k, p: undefined })]));
   const rows = data ? [...data.promoted, ...data.organic] : [];
+  const catOpts: [string, string][] = UCATS.map(([k, l]) => [k, t(l)]);
+  const sortOpts: [string, string][] = USORT.map(([k, l]) => [k, t(l)]);
+  const groupKey = UCATS.find(([k]) => k === group)?.[1];
 
   return (
-    <><QuickFrame active="urgent" title="급구, 급매" sub="급하게 구하거나 빠르게 판매해야 하는 매물/상품을 한눈에 확인하세요!" region={region}>
+    <><QuickFrame active="urgent" title={t('urgent.title')} sub={t('urgent.sub')} region={region}>
       <div className="gw-ufilt">
-        {UTABS.map(([k, t]) => (
-          <Link key={k} className={`gw-uf${tab[0] === k ? ' gw-on' : ''}`} href={qhref(base, { ...keep, t: k === 'all' ? undefined : k, p: undefined })} data-utab={k}>{t}</Link>
+        {UTABS.map(([k, l]) => (
+          <Link key={k} className={`gw-uf${tab[0] === k ? ' gw-on' : ''}`} href={qhref(base, { ...keep, t: k === 'all' ? undefined : k, p: undefined })} data-utab={k}>{t(l)}</Link>
         ))}
-        <SortSelect className="gw-usel" value={group ?? ''} options={UCATS} hrefs={gHrefs} />
-        <SortSelect className="gw-usel gw-usort" value={sort ?? 'DEADLINE'} options={USORT} hrefs={sHrefs} />
+        <SortSelect className="gw-usel" value={group ?? ''} options={catOpts} hrefs={gHrefs} />
+        <SortSelect className="gw-usel gw-usort" value={sort ?? 'DEADLINE'} options={sortOpts} hrefs={sHrefs} />
       </div>
       <div className="gw-ulay">
         <div>
-          {!data ? <p className="gw-empty gw-panel">목록을 불러오지 못했습니다.</p>
+          {!data ? <p className="gw-empty gw-panel">{t('urgent.loadFail')}</p>
             : rows.length === 0 ? (
               <div className="gw-panel gw-empty" data-urgent-empty="">
-                지금 {tab[0] === 'all' ? '급구 · 급매' : tab[1]} 표시가 붙은 {group ? `「${UCATS.find(([k]) => k === group)?.[1]}」 ` : ''}건이 없습니다.
-                급하게 구하시거나 파시려면 매물을 올린 뒤 내 매물에서 「급구 · 급매」를 신청하십시오(운영 심사 · 기한이 지나면 자동 해제).
+                {t('urgent.empty', { kind: tab[0] === 'all' ? t('urgent.both') : t(tab[1]), group: group && groupKey ? t('urgent.emptyGroup', { g: t(groupKey) }) : '' })}
               </div>
             ) : (
               <div className="gw-ugrid">{rows.map((x) => <UCard key={x.id} x={x} />)}</div>
             )}
           {data && <Pager base={base} keep={keep} page={page} next={null} pageCount={data.pageCount}
-                          left={<span className="gw-tot">총 <b>{(data.total ?? rows.length).toLocaleString('ko-KR')}</b>건 · 급하게 찾는 건은 <b>먼저 노출</b>됩니다(마감이 가까운 순).</span>} />}
+                          left={<span className="gw-tot">{t.rich('urgent.total', { b: (c) => <b>{c}</b>, n: (data.total ?? rows.length).toLocaleString('ko-KR') })}</span>} />}
         </div>
         <aside>
           <div className="gw-urec">
-            <b>급구/급매 추천 매물</b>
-            {(rec?.organic ?? []).length === 0 ? <p className="gw-urnone">추천할 급구 · 급매 매물이 아직 없습니다.</p>
+            <b>{t('urgent.recH')}</b>
+            {(rec?.organic ?? []).length === 0 ? <p className="gw-urnone">{t('urgent.recNone')}</p>
               : rec!.organic.map((x) => (
                 <Link key={x.id} className="gw-ur" href={href(x)}>
                   <span className="gw-uri">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img className="gw-thp" src={photoSrc(x.categoryName, x.thumbUrl ? [x.thumbUrl] : null)} alt="" loading="lazy" />
-                    <span className="gw-urg">급</span>
+                    <span className="gw-urg">{t('urgent.mark')}</span>
                   </span>
                   <span className="gw-urb"><span className="gw-urc">{x.categoryName}</span><span className="gw-urt">{x.title}</span><span className="gw-urp">{cardPrice(x).value}</span></span>
                 </Link>
               ))}
           </div>
           <div className="gw-uadd">
-            <div className="gw-uah"><span>급구, 급매 등록 안내</span><span>›</span></div>
-            <p>급하게 구인/판매를 원하신다면 빠르고 간편하게 등록하세요.</p>
-            <Link className="gw-uab" href="/register">매물 등록하기</Link>
-            <Link className="gw-uab2" href="/my/listings">내 매물에서 급구 · 급매 신청 ›</Link>
+            <div className="gw-uah"><span>{t('urgent.addH')}</span><span>›</span></div>
+            <p>{t('urgent.addP')}</p>
+            <Link className="gw-uab" href="/register">{t('urgent.register')}</Link>
+            <Link className="gw-uab2" href="/my/listings">{t('urgent.apply')}</Link>
           </div>
         </aside>
       </div>

@@ -12,8 +12,11 @@ import '@/styles/mal.css';
 import Link from 'next/link';
 import { BackBar } from '@/components/common/BackBar';
 import '@/components/refcode/refcode.css';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '안심소개에서 소개하기' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('join.give'))('title') };
+}
 
 type Props = { searchParams: Promise<{ pay?: string; code?: string; message?: string }> };
 
@@ -39,6 +42,7 @@ type Props = { searchParams: Promise<{ pay?: string; code?: string; message?: st
  */
 export default async function MalGivePage({ searchParams }: Props) {
   const sp = await searchParams;
+  const t = await getTranslations('join.give');
   const [plans, p, origin, scope] = await Promise.all([
     apiGet<Plan[]>('/subscription-plans', 300).catch(() => [] as Plan[]),
     me().catch(() => null),
@@ -63,89 +67,89 @@ export default async function MalGivePage({ searchParams }: Props) {
   return (
     <><div className="gw">
       <div className="gw-wrap gw-aiw">
-        <BackBar href="/mall" label="안심소개" wrap={false} />
-        <div className="gw-pgh"><div><h1>안심소개에서 소개하기</h1><p>일반 회원 안내</p></div></div>
+        <BackBar href="/mall" label={t('back')} wrap={false} />
+        <div className="gw-pgh"><div><h1>{t('title')}</h1><p>{t('sub')}</p></div></div>
 
         {payFail && (
           <div className="gw-nt gw-warn" role="alert" data-pay-fail="1">
-            <b>결제가 완료되지 않았습니다{sp.message ? ` — ${sp.message.slice(0, 120)}` : ''}.</b> 소개코드는 발급되지 않았습니다.
+            <b>{t('payFailB')}{sp.message ? ` — ${sp.message.slice(0, 120)}` : ''}.</b> {t('payFailTail')}
           </div>
         )}
 
         <div className="gw-panel">
           <div className="gw-sh2" style={{ padding: '0 0 10px' }}>
-            <b>매물을 직접 올리지 않아도 됩니다</b>
-            <span className="gw-ls">안심소개 매물은 입점 승인을 받은 인증업체만 올립니다</span>
+            <b>{t('p1Title')}</b>
+            <span className="gw-ls">{t('p1Sub')}</span>
           </div>
           <ol className="gw-nsteps">
-            <li className="gw-on"><span className="gw-n">1</span><div><b>매물에서 소개코드를 받습니다</b>
+            <li className="gw-on"><span className="gw-n">1</span><div><b>{t('s1B')}</b>
               <p>{perListing
-                ? '소개할 매물 상세의 「소개코드 공유」를 누릅니다. 소개코드는 매물마다 따로이고, 같은 매물은 다시 눌러도 같은 코드입니다.'
-                : '소개할 매물 상세의 「소개코드 공유」를 누릅니다. 아래에서 바로 받아 안심소개 전체 링크로 보낼 수도 있습니다.'}</p>
-              <Link className="gw-bo gw-sm" href="/mall">매물 보러 가기</Link></div></li>
-            <li><span className="gw-n">2</span><div><b>필요한 사람에게 보냅니다</b>
-              <p>{perListing ? '상대가 코드로 그 매물에 문의하면 90일 동안 소개자로 기록됩니다.' : '상대가 코드로 문의하면 90일 동안 소개자로 기록됩니다.'}</p></div></li>
-            <li><span className="gw-n">3</span><div><b>거래가 성사되면 소개비를 받습니다</b>
-              <p>소개비는 당사자에게 직접 받습니다 — 소개뱅크는 대금을 맡지 않습니다.</p></div></li>
+                ? t('s1Listing')
+                : t('s1All')}</p>
+              <Link className="gw-bo gw-sm" href="/mall">{t('browse')}</Link></div></li>
+            <li><span className="gw-n">2</span><div><b>{t('s2B')}</b>
+              <p>{perListing ? t('s2Listing') : t('s2All')}</p></div></li>
+            <li><span className="gw-n">3</span><div><b>{t('s3B')}</b>
+              <p>{t('s3P')}</p></div></li>
           </ol>
         </div>
 
         <div className="gw-panel" style={{ marginTop: 12 }}>
-          <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>이번 달 무료 소개코드</b><span className="gw-ls">무료({basic?.name ?? 'BASIC'}) 회원</span></div>
+          <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>{t('freeTitle')}</b><span className="gw-ls">{t('freeMember', { plan: basic?.name ?? 'BASIC' })}</span></div>
           {basic ? (
             <>
               {/* v10.31 — W3(D060 · 시안 기준)가 BASIC 포함 소개코드를 0건으로 바꾸면 「무료 소개코드 없음 · 건당 금액」 글이 나옵니다(서버 값 그대로) */}
               {basic.includedCodes > 0 ? (
-                <p data-plan="BASIC"><b>월 {basic.includedCodes}건{perListing && ` (새 매물 ${basic.includedCodes}건)`}</b> · 매월 1일에 지급하고 남은 건은 넘어가지 않습니다 · 본인인증 1명당 {basic.includedCodes}건입니다.</p>
+                <p data-plan="BASIC"><b>{t('monthly', { n: String(basic.includedCodes) })}{perListing && t('newListings', { n: String(basic.includedCodes) })}</b>{t('monthlyTail', { n: String(basic.includedCodes) })}</p>
               ) : (
-                <p data-plan="BASIC"><b>무료 소개코드 없음 · 건당 {won(basic.extraCodePrice)}</b> · 필요할 때 건마다 받습니다.</p>
+                <p data-plan="BASIC"><b>{t('noFree', { price: won(basic.extraCodePrice) })}</b>{t('noFreeTail')}</p>
               )}
               <p className="gw-ls">
-                {perListing && '소개코드는 매물마다 따로 받습니다. '}더 필요하면 건당 {won(basic.extraCodePrice)}으로 추가하거나
-                {upper.length > 0 && <> {upper.map((u) => u.includedCodes > 0 ? `${u.name}(월 ${u.includedCodes}건)` : u.name).join(' · ')}로</>} 바꿀 수 있습니다. 요금은 변경될 수 있습니다.
+                {perListing && t('perListingNote')}{t('moreA', { price: won(basic.extraCodePrice) })}
+                {upper.length > 0 && <> {t('moreUpper', { list: upper.map((u) => u.includedCodes > 0 ? t('upperItem', { name: u.name, n: String(u.includedCodes) }) : u.name).join(' · ') })}</>}{t('moreB')}
               </p>
             </>
           ) : (
-            <p className="gw-ls">요금제 정보를 불러오지 못했습니다. <Link href="/my/subscription">구독 · 소개코드</Link>에서 확인하십시오.</p>
+            <p className="gw-ls">{t.rich('noPlans', { a: (c) => <Link href="/my/subscription">{c}</Link> })}</p>
           )}
           {quota && (
             <p className="gw-mine" data-my-quota={quota.freeRemaining}>
-              내 요금제: <b>{quota.planName}</b>{!quota.subscribed && ' (첫 소개코드를 받을 때 무료로 시작)'}
+              {t.rich('myPlan', { plan: quota.planName, b: (c) => <b>{c}</b> })}{!quota.subscribed && t('planFreeStart')}
               {quota.includedCodes > 0 ? <>
-                {' · '}이번 달 {perListing ? '새 매물 ' : ''}무료 소개코드 {quota.usedThisMonth} / {quota.includedCodes}건 사용
-                {quota.countScope === 'CI' && ' (같은 본인인증 계정 합산)'}
-                {!quota.identityVerified && ' · 본인인증 전이라 무료분이 없습니다'}
-              </> : <>{' · '}무료 소개코드 없음 · 건당 {won(quota.extraCodePrice)}</>}
+                {' · '}{t(perListing ? 'usageListing' : 'usageAll', { used: String(quota.usedThisMonth), inc: String(quota.includedCodes) })}
+                {quota.countScope === 'CI' && t('ciSum')}
+                {!quota.identityVerified && t('noIdFree')}
+              </> : <>{' · '}{t('noFree', { price: won(quota.extraCodePrice) })}</>}
             </p>
           )}
           {/* scope=listing 이면 여기서는 받지 않습니다 — 위 1단계의 안내 · 「매물 보러 가기」로 매물 상세에서 받습니다 */}
-          {!perListing && <RefShare path="/mall" title="소개코드 받기 · 공유" />}
+          {!perListing && <RefShare path="/mall" title={t('refShareTitle')} />}
         </div>
 
         {p && (
           <div className="gw-panel" style={{ marginTop: 12 }} data-my-codes={codes ? codes.length : -1}>
-            <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>내 소개코드</b><span className="gw-ls">{perListing ? '매물마다 따로 · ' : ''}유입은 같은 방문자를 24시간에 한 번 셉니다</span></div>
+            <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>{t('myCodes')}</b><span className="gw-ls">{perListing ? t('perListingPrefix') : ''}{t('touchNote')}</span></div>
             {codes === null ? (
-              <p className="gw-ls">내 소개코드를 불러오지 못했습니다. 잠시 뒤 새로고침해 주십시오.</p>
+              <p className="gw-ls">{t('codesFail')}</p>
             ) : codes.length === 0 ? (
-              <p className="gw-ls">아직 받은 소개코드가 없습니다. <b>매물 상세에서 「소개코드 공유」</b>를 누르면 그 매물의 코드가 여기에 쌓입니다.</p>
+              <p className="gw-ls">{t.rich('codesEmpty', { b: (c) => <b>{c}</b> })}</p>
             ) : (
               <ul className="rc-list">
                 {codes.map((c) => (
                   <li key={c.code} data-code={c.code} data-listing={c.listingId ?? ''}>
                     {c.listingId ? (
-                      <div><a href={listingHref(c)} data-code-listing="1"><b>{c.listingTitle ?? '매물'}</b></a>
-                        {c.listingStatus && c.listingStatus !== 'PUBLISHED' && <span className="rc-tag">게시 끝</span>}</div>
+                      <div><a href={listingHref(c)} data-code-listing="1"><b>{c.listingTitle ?? t('listing')}</b></a>
+                        {c.listingStatus && c.listingStatus !== 'PUBLISHED' && <span className="rc-tag">{t('ended')}</span>}</div>
                     ) : (
-                      <div><b>모든 매물</b> <span className="rc-meta">매물에 묶이지 않은 코드</span></div>
+                      <div><b>{t('allListings')}</b> <span className="rc-meta">{t('unbound')}</span></div>
                     )}
                     <span className="rc-code">{c.code}</span>
-                    {c.isExtra && <span className="rc-tag">{c.paid ? (c.paymentStub ? '추가 · 시험 결제' : `추가 · ${won(c.extraAmount ?? 0)}`) : '초과'}</span>}
-                    {c.revokedAt && <span className="rc-tag">실효</span>}
-                    {c.thisMonth && !c.revokedAt && <span className="rc-tag">이번 달</span>}
+                    {c.isExtra && <span className="rc-tag">{c.paid ? (c.paymentStub ? t('extraStub') : t('extraPaid', { amount: won(c.extraAmount ?? 0) })) : t('over')}</span>}
+                    {c.revokedAt && <span className="rc-tag">{t('revoked')}</span>}
+                    {c.thisMonth && !c.revokedAt && <span className="rc-tag">{t('thisMonth')}</span>}
                     <div className="rc-meta">
-                      받은 날 {ymdKst(c.issuedAt)}
-                      {' · '}유입 <b data-touches={c.touches ?? 0}>{c.touches ?? 0}</b>회
+                      {t('issued', { date: ymdKst(c.issuedAt) })}
+                      {' · '}{t.rich('touches', { n: String(c.touches ?? 0), b: (x) => <b data-touches={c.touches ?? 0}>{x}</b> })}
                     </div>
                     {!c.revokedAt && <CopyLink text={shareUrl(c)} />}
                   </li>
@@ -158,14 +162,14 @@ export default async function MalGivePage({ searchParams }: Props) {
         {!p && (
           /* v10.31 (w2 · 시안 scGive) — 시안의 「내 소개코드」 구역은 로그인하지 않은 분에게도 자리를 둡니다(목록은 로그인 뒤) */
           <div className="gw-panel" style={{ marginTop: 12 }} data-my-codes="guest">
-            <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>내 소개코드</b><span className="gw-ls">유입은 같은 방문자를 24시간에 한 번 셉니다</span></div>
-            <p className="gw-ls">로그인하시면 받은 소개코드와 유입 수가 여기에 나옵니다. <Link href="/login?next=/mall/give">로그인</Link> · <Link href="/signup">회원가입</Link></p>
+            <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>{t('myCodes')}</b><span className="gw-ls">{t('touchNote')}</span></div>
+            <p className="gw-ls">{t.rich('guest', { login: (c) => <Link href="/login?next=/mall/give">{c}</Link>, signup: (c) => <Link href="/signup">{c}</Link> })}</p>
           </div>
         )}
 
         <div className="gw-prfact">
-          <Link className="gw-bp" href="/mall">매물 보러 가기</Link>
-          <Link className="gw-bo" href="/partner/apply">업체이신가요? 입점 신청</Link>
+          <Link className="gw-bp" href="/mall">{t('browse')}</Link>
+          <Link className="gw-bo" href="/partner/apply">{t('partnerApply')}</Link>
         </div>
       </div>
     </div><i hidden data-root-end="" /></>

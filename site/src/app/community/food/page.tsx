@@ -1,13 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
+import { Msgs } from '@/i18n/Msgs';
 import { PlazaHero, PlazaTabs } from '@/components/community/Plaza';
 import { FoodMap } from '@/components/community/FoodMap';
 import '@/styles/plaza.css';
 import '@/styles/food.css';
 
-export const metadata: Metadata = { title: '우리동네 맛집 · 소개광장' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('food.title') };
+}
 
 interface Meta { enabled: boolean; geolocation: boolean; regions: { sido: string; sigungu: string; count: number; lat: number; lng: number }[] }
 
@@ -22,6 +26,7 @@ export default async function FoodPage() {
     apiGet<Meta>('/community/food', 60).catch(() => null),
     me(),
   ]);
+  const t = await getTranslations('plaza.food');
   return (
     <><div className="plz">
       <PlazaHero small />
@@ -29,18 +34,17 @@ export default async function FoodPage() {
         <PlazaTabs cur="food" />
         <div className="fd-head">
           <div>
-            <h1>우리동네 맛집</h1>
-            <p>이웃이 직접 다녀와 소개한 가게입니다. 추천 수는 공개된 소개 글 수입니다 — 별점이나 광고 순위가 아닙니다.</p>
+            <h1>{t('h')}</h1>
+            <p>{t('lead')}</p>
           </div>
         </div>
         {!m?.enabled ? (
-          <p className="plz-empty">우리동네 맛집은 준비 중입니다. <Link href="/community">소개광장으로</Link></p>
+          <p className="plz-empty">{t('soon')} <Link href="/community">{t('toPlaza')}</Link></p>
         ) : (
           <>
-            <FoodMap regions={m.regions} geolocation={m.geolocation} loggedIn={!!p} />
+            <Msgs ns={['plaza']}><FoodMap regions={m.regions} geolocation={m.geolocation} loggedIn={!!p} /></Msgs>
             <p className="fd-note">
-              「동네픽」은 소개뱅크 운영팀이 소개한 가게입니다. 「광고 · 협찬」은 쓴 사람이 대가를 받았다고 밝힌 글입니다.
-              가게 정보는 카카오맵에서 가져온 이름 · 주소뿐이고, 영업시간 · 메뉴 · 전화는 「카카오맵에서 보기」에서 확인하십시오.
+              {t('note')}
             </p>
           </>
         )}

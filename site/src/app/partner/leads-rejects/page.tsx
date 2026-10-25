@@ -7,6 +7,7 @@ import { apiGet } from '@/lib/api';
 import { FeeDisputeForm } from '@/components/FeeDisputeForm';
 import { Bg, Empty, Note, Pgh, S2, Tw, won, type Tone } from '@/components/partner/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partnerOps.rejects'))('title') };
@@ -79,7 +80,7 @@ export default async function LeadsRejectsPage() {
 
       <S2>{tl('tab.rej')}</S2>
       <div className="pt-fset">
-        <FeeDisputeForm fees={open.map((x) => ({ id: x.id, summary: x.summary, amount: x.amount, deliveredAt: x.deliveredAt }))} />
+        <Msgs ns={['deal']}><FeeDisputeForm fees={open.map((x) => ({ id: x.id, summary: x.summary, amount: x.amount, deliveredAt: x.deliveredAt }))} /></Msgs>
       </div>
       <Note kind="plain">{t.rich('otherNote', { a: (c) => <Link href="/support">{c}</Link> })}</Note>
       <div className="pt-dact">

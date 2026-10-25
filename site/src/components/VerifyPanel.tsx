@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export interface IdentityResult { success: boolean; stub: boolean }
 
@@ -13,6 +14,7 @@ export interface IdentityResult { success: boolean; stub: boolean }
  */
 export function VerifyPanel() {
   const router = useRouter();
+  const t = useTranslations('join.verifyPanel');
   const [pending, start] = useTransition();
   const [res, setRes] = useState<IdentityResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -27,11 +29,11 @@ export function VerifyPanel() {
           body: JSON.stringify({ provider: 'PASS' }),
         });
         const d = await r.json();
-        if (!r.ok) { setErr(d.message ?? '인증에 실패했습니다.'); return; }
+        if (!r.ok) { setErr(d.message ?? t('failed')); return; }
         setRes(d as IdentityResult);
         router.refresh();
       } catch {
-        setErr('인증 서버에 연결하지 못했습니다.');
+        setErr(t('noServer'));
       }
     });
   }
@@ -39,14 +41,14 @@ export function VerifyPanel() {
   return (
     <div className="verify">
       <button className="cta-primary" onClick={run} disabled={pending}>
-        {pending ? '인증 중…' : 'PASS 로 본인인증'}
+        {pending ? t('working') : t('submit')}
       </button>
 
       {err && <p className="form-error" role="alert">{err}</p>}
 
       {res?.stub && (
         <p className="stub-note">
-          연동 준비 중입니다 — <strong>실제 확인이 이루어지지 않았습니다.</strong>
+          {t.rich('stub', { strong: (c) => <strong>{c}</strong> })}
         </p>
       )}
     </div>

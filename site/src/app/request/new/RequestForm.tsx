@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
 import { KakaoMap } from '@/components/map/KakaoMap';
 import { CategoryBlock, Field, ImagePicker, MoneyInput, type Cat, type Gwan, type Img } from '@/components/form/RegParts';
@@ -25,6 +26,7 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
   gwans: Gwan[]; cats: Cat[]; gradeLabels: Record<string, string>; initialGwan?: string;
 }) {
   const router = useRouter();
+  const t = useTranslations('forms');
   const [pending, start] = useTransition();
   const [gwan, setGwan] = useState(initialGwan ?? '');
   const [cat, setCat] = useState('');
@@ -71,13 +73,13 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
 
   function need(): Array<[string, string]> {
     const out: Array<[string, string]> = [];
-    if (!gwan) out.push(['gwan', '관']);
-    if (!cat) out.push(['cat', '업종']);
-    if (title.trim().length < 5) out.push(['title', '제목(5자 이상)']);
-    if (!body.trim()) out.push(['desc', '상세 내용']);
-    if (!fee) out.push(['fee', '예상 소개비']);
-    if (!hours.trim()) out.push(['hours', '문의 가능 시간']);
-    if (!addr.road.trim()) out.push(['addr', '희망 지역 주소']);
+    if (!gwan) out.push(['gwan', t('common.gwan')]);
+    if (!cat) out.push(['cat', t('common.cat')]);
+    if (title.trim().length < 5) out.push(['title', t('req.need.title')]);
+    if (!body.trim()) out.push(['desc', t('req.desc')]);
+    if (!fee) out.push(['fee', t('req.fee')]);
+    if (!hours.trim()) out.push(['hours', t('common.hours')]);
+    if (!addr.road.trim()) out.push(['addr', t('req.addr')]);
     return out;
   }
 
@@ -91,12 +93,12 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
     const bad = need();
     setTried(true);
     if (bad.length) {
-      setErr(`아직 비어 있는 필수 항목이 ${bad.length}개 있습니다 — ${bad.slice(0, 3).map((b) => b[1]).join(' · ')}${bad.length > 3 ? ` 외 ${bad.length - 3}개` : ''}`);
+      setErr(t('common.missing', { n: String(bad.length), list: bad.slice(0, 3).map((b) => b[1]).join(' · '), more: bad.length > 3 ? t('common.missingMore', { n: String(bad.length - 3) }) : '' }));
       document.querySelector('.fmiss')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    if (bmin && bmax && Number(bmin) > Number(bmax)) { setErr('희망 예산의 최소가 최대보다 큽니다.'); return; }
-    if (blocked) { setErr(chk?.message ?? '이 분야는 등록하실 수 없습니다.'); return; }
+    if (bmin && bmax && Number(bmin) > Number(bmax)) { setErr(t('req.budgetOrder')); return; }
+    if (blocked) { setErr(chk?.message ?? t('common.blockedMsg')); return; }
     setErr(null);
     const res = await fetch('/api/v1/requests', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -113,7 +115,7 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
     });
     const b = await res.json().catch(() => ({}));
     /* v10.31 (합침 · w6 D082) — 등록 일시 정지(422 POSTING_SUSPENDED · 풀리는 날 포함) · 제안 한도(422 PROPOSAL_QUOTA_EXCEEDED)는 서버 문장 그대로 */
-    if (!res.ok) { setErr((b.message ?? '등록하지 못했습니다.') + (b.code === 'POSTING_SUSPENDED' ? ' — 풀리는 날 전에 등록하려면 고객센터로 문의해 주십시오.' : '')); return; }
+    if (!res.ok) { setErr((b.message ?? t('common.regFail')) + (b.code === 'POSTING_SUSPENDED' ? t('common.suspended') : '')); return; }
     /* v10.26 (G-180) — 상세는 공개된 요청만 — 검수 대기면 접수 안내 */
     if (b.status === 'PUBLISHED') { start(() => router.push(`/request/${b.requestId}`)); return; }
     setQueued(true);
@@ -124,11 +126,11 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
     return (
       <div className="w1-done" data-request-queued="">
         <div className="dic" aria-hidden="true">✓</div>
-        <h1>요청을 접수했습니다</h1>
-        <p>확인(검수)이 끝나면 「소개받기」 목록에 공개됩니다. 보통 24시간 안에 끝납니다.<br />등록 후 <b>30일</b>이 지나면 자동으로 닫힙니다.</p>
+        <h1>{t('req.queued.title')}</h1>
+        <p>{t.rich('req.queued.body', { br: () => <br />, b: (c) => <b>{c}</b> })}</p>
         <div className="w1-dact">
-          <Link className="w1-jb p" href="/request">소개받기 목록</Link>
-          <Link className="w1-jb o" href="/my">나의공간</Link>
+          <Link className="w1-jb p" href="/request">{t('req.queued.list')}</Link>
+          <Link className="w1-jb o" href="/my">{t('req.queued.my')}</Link>
         </div>
       </div>
     );
@@ -138,100 +140,100 @@ export function RequestForm({ gwans, cats, gradeLabels, initialGwan }: {
   return (
     <div className="w1-rgw" data-form="reqn">
       <div className="w1-rghd">
-        <div><h1>소개받기 등록하기</h1>
-          <div className="rgs">원하는 상품/서비스 정보를 입력해주세요. 소개뱅크 회원들이 연결해 드립니다.</div></div>
-        <span className="req">* 필수 입력 항목</span>
+        <div><h1>{t('req.title')}</h1>
+          <div className="rgs">{t('req.sub')}</div></div>
+        <span className="req">{t('common.reqMark')}</span>
       </div>
 
-      <section className="w1-fsec"><h2 className="fh3">1. 기본 정보</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('common.sec1')}</h2>
         <CategoryBlock gwans={gwans} cats={cats} gwan={gwan} cat={cat} gradeLabels={gradeLabels} miss={miss}
           onGwan={(g) => { setGwan(g); setCat(''); }} onCat={setCat} />
-        <Field id="f-title" label="소개받을 제목" req max={60} count={title.length} miss={m('title')}>
-          <input id="f-title" className="w1-in" name="title" maxLength={60} placeholder="제목을 입력해주세요" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Field id="f-title" label={t('req.titleLabel')} req max={60} count={title.length} miss={m('title')}>
+          <input id="f-title" className="w1-in" name="title" maxLength={60} placeholder={t('req.titlePh')} value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
-        <ImagePicker purpose="REQUEST_IMAGE" value={imgs} onChange={setImgs} what="원하는 상품/서비스" />
+        <ImagePicker purpose="REQUEST_IMAGE" value={imgs} onChange={setImgs} kind="request" />
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">2. 소개받기 상세 내용</h2>
-        <Field id="f-desc" label="상세 내용" req max={3000} count={body.length} miss={m('desc')}>
+      <section className="w1-fsec"><h2 className="fh3">{t('req.sec2')}</h2>
+        <Field id="f-desc" label={t('req.desc')} req max={3000} count={body.length} miss={m('desc')}>
           <textarea id="f-desc" className="w1-in" name="body" rows={7} maxLength={3000} value={body} onChange={(e) => setBody(e.target.value)}
-            placeholder="소개받고 싶은 상품/서비스에 대해 자세하게 적어 주세요." />
+            placeholder={t('req.descPh')} />
         </Field>
         {blocked && (
-          <div className="w1-jc e" data-restricted=""><span className="lb">이 분야는 등록하실 수 없습니다</span>
-            {chk?.message}{chk?.blocked.map((r) => <div key={r.code} className="w1-ls">근거: {r.legalBasis}</div>)}</div>
+          <div className="w1-jc e" data-restricted=""><span className="lb">{t('common.blocked')}</span>
+            {chk?.message}{chk?.blocked.map((r) => <div key={r.code} className="w1-ls">{t('common.basis', { basis: r.legalBasis })}</div>)}</div>
         )}
         {chk && chk.allowed && chk.gated.length > 0 && (
-          <div className="w1-jc w"><span className="lb">자격 확인이 필요한 분야입니다</span>{chk.message}</div>
+          <div className="w1-jc w"><span className="lb">{t('req.gated')}</span>{chk.message}</div>
         )}
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">3. 계약 조건</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('req.sec3')}</h2>
         <div className="w1-g3">
-          <Field id="f-fee" label="예상 소개비" req unit="원" miss={m('fee')} hint="소개 성사 시 지급 가능한 예상 소개비를 적어 주세요.">
-            <MoneyInput id="f-fee" value={fee} onChange={setFee} placeholder="예) 500,000" />
+          <Field id="f-fee" label={t('req.fee')} req unit={t('common.won')} miss={m('fee')} hint={t('req.feeHint')}>
+            <MoneyInput id="f-fee" value={fee} onChange={setFee} placeholder={t('common.feePh')} />
           </Field>
-          <Field id="f-hours" label="문의 가능 시간" req miss={m('hours')} hint="문의 및 연락이 가능한 시간대를 적어 주세요.">
-            <input id="f-hours" className="w1-in" maxLength={60} placeholder="예) 평일 10:00 ~ 18:00" value={hours} onChange={(e) => setHours(e.target.value)} />
+          <Field id="f-hours" label={t('common.hours')} req miss={m('hours')} hint={t('req.hoursHint')}>
+            <input id="f-hours" className="w1-in" maxLength={60} placeholder={t('common.hoursPh')} value={hours} onChange={(e) => setHours(e.target.value)} />
           </Field>
-          <div className="w1-fnote2"><span className="fi3" aria-hidden="true">👤</span><span><b>안내사항</b><p>정확한 조건 입력은 빠른 매칭에 도움이 됩니다.</p></span></div>
+          <div className="w1-fnote2"><span className="fi3" aria-hidden="true">👤</span><span><b>{t('req.infoTitle')}</b><p>{t('req.infoBody')}</p></span></div>
         </div>
         <div className="w1-g3">
-          <Field id="f-bmin" label="희망 예산 (최소)" unit="원">
-            <MoneyInput id="f-bmin" value={bmin} onChange={setBmin} placeholder="예) 10,000,000" />
+          <Field id="f-bmin" label={t('req.bmin')} unit={t('common.won')}>
+            <MoneyInput id="f-bmin" value={bmin} onChange={setBmin} placeholder={t('req.bminPh')} />
           </Field>
-          <Field id="f-bmax" label="희망 예산 (최대)" unit="원">
-            <MoneyInput id="f-bmax" value={bmax} onChange={setBmax} placeholder="예) 20,000,000" />
+          <Field id="f-bmax" label={t('req.bmax')} unit={t('common.won')}>
+            <MoneyInput id="f-bmax" value={bmax} onChange={setBmax} placeholder={t('req.bmaxPh')} />
           </Field>
-          <Field id="f-qty" label="규모 · 수량" hint="예산을 비우면 「협의」로 보입니다.">
-            <input id="f-qty" className="w1-in" maxLength={60} placeholder="예) 주 5회 · 1,200평" value={qty} onChange={(e) => setQty(e.target.value)} />
+          <Field id="f-qty" label={t('req.qty')} hint={t('req.qtyHint')}>
+            <input id="f-qty" className="w1-in" maxLength={60} placeholder={t('req.qtyPh')} value={qty} onChange={(e) => setQty(e.target.value)} />
           </Field>
         </div>
         <div className="w1-g3">
-          <Field label="공개 범위" hint="누가 이 요청의 내용을 볼 수 있는지 정합니다.">
-            <div className="w1-seg" role="radiogroup" aria-label="공개 범위">
-              {([['ALL', '전체'], ['MEMBER', '회원'], ['VERIFIED', '인증 회원']] as const).map(([k, t]) => (
-                <button key={k} type="button" role="radio" aria-checked={vis === k} className={vis === k ? 'on' : undefined} onClick={() => setVis(k)}>{t}</button>
+          <Field label={t('req.vis')} hint={t('req.visHint')}>
+            <div className="w1-seg" role="radiogroup" aria-label={t('req.vis')}>
+              {(['ALL', 'MEMBER', 'VERIFIED'] as const).map((k) => (
+                <button key={k} type="button" role="radio" aria-checked={vis === k} className={vis === k ? 'on' : undefined} onClick={() => setVis(k)}>{t(`req.visOpt.${k}`)}</button>
               ))}
             </div>
           </Field>
-          <Field label="회사명 비공개" hint="켜면 회사명을 가리고 업종 · 규모만 보입니다.">
-            <label className="w1-chk"><input type="checkbox" checked={blind} onChange={(e) => setBlind(e.target.checked)} /> 회사명을 가립니다</label>
+          <Field label={t('req.blind')} hint={t('req.blindHint')}>
+            <label className="w1-chk"><input type="checkbox" checked={blind} onChange={(e) => setBlind(e.target.checked)} /> {t('req.blindChk')}</label>
           </Field>
-          <Field label="예산 공개" hint="끄면 예산은 요청자 본인만 봅니다.">
-            <label className="w1-chk"><input type="checkbox" checked={budgetOpen} onChange={(e) => setBudgetOpen(e.target.checked)} /> 희망 예산을 공개합니다</label>
+          <Field label={t('req.budgetOpen')} hint={t('req.budgetOpenHint')}>
+            <label className="w1-chk"><input type="checkbox" checked={budgetOpen} onChange={(e) => setBudgetOpen(e.target.checked)} /> {t('req.budgetOpenChk')}</label>
           </Field>
         </div>
       </section>
 
-      <section className="w1-fsec"><h2 className="fh3">4. 지역 정보</h2>
+      <section className="w1-fsec"><h2 className="fh3">{t('common.sec4')}</h2>
         <div className={m('addr') ? 'fmiss' : undefined}>
-          <AddressInput value={addr} onChange={setAddr} required label="희망 지역 주소" />
-          {m('addr') && <div className="fmsg">필수 항목입니다.</div>}
+          <AddressInput value={addr} onChange={setAddr} required label={t('req.addr')} />
+          {m('addr') && <div className="fmsg">{t('common.required')}</div>}
         </div>
         {/* v10.46 (docs/96) — 지도 사용이 켜져 있으면 희망 지역(시 · 구) 둘레 원 미리보기 · 저장하지 않음. 아니면 지금 칸 그대로 */}
         <KakaoMap previewAddress={[addr.sido, addr.sigungu].filter(Boolean).join(' ')} previewPrecision="REGION" height={160}
-          caption={<><b>{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}</b> — 목록 · 상세에는 시 · 구까지만 보입니다.</>}
+          caption={<>{t.rich('req.mapCaption', { b: (c) => <b>{c}</b>, region: [addr.sido, addr.sigungu].filter(Boolean).join(' ') })}</>}
           fallback={
         <div className="w1-rmap" aria-live="polite">
           <div className="rmc"><span className="pin" aria-hidden="true">📍</span>
-            {addr.road ? <><b>{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}</b><br />목록 · 상세에는 시 · 구까지만 보입니다.</>
-              : <>우편번호 검색으로 주소를 고르면<br />지역(시 · 구)이 정해집니다.</>}
+            {addr.road ? <><b>{[addr.sido, addr.sigungu].filter(Boolean).join(' ')}</b><br />{t('req.cityOnly')}</>
+              : <>{t.rich('req.mapEmpty', { br: () => <br /> })}</>}
           </div>
         </div>} />
-        <div className="w1-ls" style={{ marginTop: 6 }}>지도는 좌표 연동 전이라 그리지 않습니다 — 상세주소는 요청자 본인과 운영만 봅니다.</div>
+        <div className="w1-ls" style={{ marginTop: 6 }}>{t('req.mapNote')}</div>
       </section>
 
       <div className="w1-fend">
-        <div className="fw"><b>⊙ 유의사항</b>
-          <span><i>✓</i>등록된 정보는 검수 후 공개됩니다.</span>
-          <span><i>✓</i>허위 정보 등록 시 서비스 이용이 제한될 수 있습니다.</span>
-          <span><i>✓</i>등록 후 관리 페이지에서 수정 및 삭제가 가능합니다.</span>
-          <span className="w1-ls">지금까지 {filled}칸 입력했습니다. 등록 후 30일이 지나면 자동으로 닫힙니다.</span>
+        <div className="fw"><b>{t('common.notice')}</b>
+          <span><i>✓</i>{t('req.n1')}</span>
+          <span><i>✓</i>{t('common.noFalse')}</span>
+          <span><i>✓</i>{t('req.n3')}</span>
+          <span className="w1-ls">{t('req.filled', { n: String(filled) })}</span>
         </div>
         <div className="fbtns">
-          <button type="button" className="bcan" onClick={reset}>입력 지우기</button>
-          <button type="button" className="bok" onClick={() => void submit()} disabled={pending} data-fdone="reqn">{pending ? '등록 중…' : '등록완료'}</button>
+          <button type="button" className="bcan" onClick={reset}>{t('req.reset')}</button>
+          <button type="button" className="bok" onClick={() => void submit()} disabled={pending} data-fdone="reqn">{pending ? t('common.submitting') : t('common.done')}</button>
         </div>
       </div>
       {err && <p className="w1-err" role="alert" style={{ textAlign: 'right' }}>{err}</p>}

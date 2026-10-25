@@ -1,5 +1,5 @@
 /**
- * 사전 묶기 (v10.97 · 2-2 · docs/155 · v10.98 2-3 · docs/156 · v10.99 2-4 · docs/157 · v10.100 2-5a · docs/158)
+ * 사전 묶기 (v10.97 · 2-2 · docs/155 · v10.98 2-3 · docs/156 · v10.99 2-4 · docs/157 · v10.100 2-5a · docs/158 · v10.101 2-5b · docs/159)
  *
  *   ko.json · en.json    — 2-1 사전(머리줄 · 바닥줄 · 로그인 · 가입). 모든 화면에 내려보냅니다.
  *   ko/<묶음>.json        — 2-2 부터 묶음(이름공간)마다 파일 하나.
@@ -27,9 +27,13 @@ import partner from './ko/partner.json';
 import partnerOps from './ko/partnerOps.json';
 import affiliate from './ko/affiliate.json';
 import billing from './ko/billing.json';
+import plaza from './ko/plaza.json';
+import forms from './ko/forms.json';
+import deal from './ko/deal.json';
+import join from './ko/join.json';
 
 const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };   // v10.98 consult · refcode
-const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing };   // v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing
+const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join };   // v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join
 
 export const KO = { ...base, ...SHARED, ...PAGE };
 export type PageNs = keyof typeof PAGE;

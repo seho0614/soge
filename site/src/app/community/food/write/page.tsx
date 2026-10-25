@@ -2,13 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiGet } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
+import { Msgs } from '@/i18n/Msgs';
 import { PlazaHero } from '@/components/community/Plaza';
 import { FoodWriteForm } from '@/components/community/FoodWriteForm';
 import '@/styles/plaza.css';
 import '@/styles/food.css';
 
-export const metadata: Metadata = { title: '맛집 소개하기 · 소개광장' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('plaza'))('food.writeTitle') };
+}
 
 /**
  * SB-HOM-CMU-052 우리동네 맛집 › 소개하기 — GET /me/community/food/search · POST /me/community/food (v10.47 · D100)
@@ -23,6 +27,7 @@ export default async function FoodWritePage({ searchParams }: { searchParams: Pr
   const self = `/community/food/write${sp.kakao ? `?kakao=${encodeURIComponent(sp.kakao)}&name=${encodeURIComponent(sp.name ?? '')}` : ''}`;
   if (!p) redirect(`/login?next=${encodeURIComponent(self)}`);
   const m = await apiGet<{ enabled: boolean }>('/community/food', 60).catch(() => null);
+  const t = await getTranslations('plaza.food');
   const kakao = /^[0-9]{1,20}$/.test(sp.kakao ?? '') ? sp.kakao! : null;
 
   return (
@@ -30,11 +35,11 @@ export default async function FoodWritePage({ searchParams }: { searchParams: Pr
       <PlazaHero small />
       <div className="plz-body">
         <div className="plz-narrow">
-          <h1>맛집 소개하기</h1>
-          <p className="lead">직접 다녀온 가게를 이웃에게 소개해 주십시오. <b>가게는 카카오맵에서 찾아 고릅니다.</b></p>
+          <h1>{t('writeH')}</h1>
+          <p className="lead">{t.rich('writeLead', { b: (c) => <b>{c}</b> })}</p>
           {!m?.enabled
-            ? <p className="plz-empty">우리동네 맛집은 준비 중입니다. <Link href="/community">소개광장으로</Link></p>
-            : <FoodWriteForm preset={kakao ? { kakaoId: kakao, name: (sp.name ?? '').slice(0, 80) } : null} />}
+            ? <p className="plz-empty">{t('soon')} <Link href="/community">{t('toPlaza')}</Link></p>
+            : <Msgs ns={['plaza']}><FoodWriteForm preset={kakao ? { kakaoId: kakao, name: (sp.name ?? '').slice(0, 80) } : null} /></Msgs>}
         </div>
       </div>
     </div></>

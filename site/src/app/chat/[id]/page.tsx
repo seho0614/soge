@@ -7,12 +7,17 @@ import { me } from '@/lib/session';
 import { GWAN_PATH, won } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { AskChat } from '@/components/chat/AskChat';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
+import { isGwanKey } from '@/i18n/keys';
 import '@/styles/proto-w1.css';
 
-export const metadata: Metadata = { title: '1:1 문의' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('deal.meta'))('chat') };
+}
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ c?: string }> };
 
-const GN: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
+/* v10.101 — 관 이름은 사전 키(header.gwan.*) */
 const GCLS: Record<string, string> = { MNY: 'g-mny', MAL: 'g-mal', BIZ: 'g-biz' };
 
 /**
@@ -41,28 +46,31 @@ export default async function ChatPage({ params, searchParams }: Props) {
   }
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
   const photo = item.mediaUrls?.[0];
+  const t = await getTranslations('deal');
+  const th = await getTranslations('header');
+  const gn = (c: string) => (isGwanKey(c) ? th(`gwan.${c}`) : c);
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-MCH-010">
-      <BackBar href={href} label="이전 화면" wrap={false} />
+      <BackBar href={href} label={t('common.prevScreen')} wrap={false} />
       <div className="w1-askbar chat-item">
         <div className="th">{photo ? <img src={photo} alt="" /> : <span aria-hidden="true">{(item.categoryName ?? '?').slice(0, 1)}</span>}</div>
         <div className="tx">
-          <div className="c">{GN[item.gwanCode] ?? item.gwanCode} · {item.categoryName ?? '기타'}</div>
+          <div className="c">{gn(item.gwanCode)} · {item.categoryName ?? t('chat.catDefault')}</div>
           <h2>{item.title}</h2>
           <div className="m">
-            <span className={`w1-gt ${GCLS[item.gwanCode] ?? ''}`}>{GN[item.gwanCode] ?? item.gwanCode}</span>
-            <span className="fe">{item.desiredFee ? `소개비 ${won(item.desiredFee)}` : '소개비 협의 (A-12)'}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
+            <span className={`w1-gt ${GCLS[item.gwanCode] ?? ''}`}>{gn(item.gwanCode)}</span>
+            <span className="fe">{item.desiredFee ? t('chat.fee', { fee: won(item.desiredFee) }) : t('chat.feeTbd')}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
           </div>
         </div>
-        <Link className="lk" href={href}>리스팅 보기 ›</Link>
+        <Link className="lk" href={href}>{t('chat.viewListing')}</Link>
       </div>
       {own ? (
-        <div className="w1-jc i" style={{ marginTop: 14 }}><span className="lb">내 매물입니다</span>
-          내 매물에는 문의할 수 없습니다. 이 매물에 온 문의는 <Link href={`/my/inquiries?listing=${item.id}`}>나의공간 → 받은 문의</Link>에서 답합니다.</div>
+        <div className="w1-jc i" style={{ marginTop: 14 }}><span className="lb">{t('chat.own')}</span>
+          {t.rich('chat.ownBody', { link: (x) => <Link href={`/my/inquiries?listing=${item.id}`}>{x}</Link> })}</div>
       ) : (
-        <AskChat listingId={item.id} conversationId={/^[0-9a-f-]{36}$/i.test(sp.c ?? '') ? sp.c : null}
-          canDeal={!!p.identityVerifiedAt && p.roles.some((r) => r === 'MEMBER' || r === 'BIZ_OWNER' || r === 'BIZ_STAFF')} listingFee={item.desiredFee} bearerLabel={item.feeBearerLabel} />
+        <Msgs ns={['deal']}><AskChat listingId={item.id} conversationId={/^[0-9a-f-]{36}$/i.test(sp.c ?? '') ? sp.c : null}
+          canDeal={!!p.identityVerifiedAt && p.roles.some((r) => r === 'MEMBER' || r === 'BIZ_OWNER' || r === 'BIZ_STAFF')} listingFee={item.desiredFee} bearerLabel={item.feeBearerLabel} /></Msgs>
       )}
     </div>
   );

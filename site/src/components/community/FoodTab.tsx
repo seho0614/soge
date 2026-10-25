@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 
 /**
@@ -10,5 +11,6 @@ import { apiGet } from '@/lib/api';
 export async function FoodTab({ cur }: { cur: string }) {
   const m = await apiGet<{ enabled: boolean }>('/community/food', 60).catch(() => null);
   if (!m?.enabled) return null;
-  return <Link href="/community/food" aria-current={cur === 'food' ? 'page' : undefined} data-food-tab>우리동네 맛집</Link>;
+  const t = await getTranslations('plaza');
+  return <Link href="/community/food" aria-current={cur === 'food' ? 'page' : undefined} data-food-tab>{t('tabs.food')}</Link>;
 }
