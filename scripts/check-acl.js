@@ -57,6 +57,10 @@ const PUBLIC_OK = new Set([
   /* ★ v10.49 (D103) 메인 「오늘의 날씨」 GET /weather/today — 기상청 공개 자료(지역 날씨)만 돌려줍니다. 키 · 개인정보 없음.
      기상청은 발표 × 지역마다 한 번만 부르므로 이 주소를 많이 불러도 기상청 호출이 늘지 않습니다. 운영 키 API(/admin/weather)는 SUPER 입니다. */
   'weather',
+  /* ★ v10.109 (D121 · docs/170) AI 상담 안내 /agent/chat · /agent/chat/status · /agent/chat/{id}/handoff — 사이트 공통 단추라 **로그인 전에도** 씁니다.
+     자주 묻는 질문 · 공지 · 약관 발행본만 근거로 답하고 **조회 도구가 없어** 누구의 정보도 돌려주지 않습니다. 스위치(agent.chat.enabled · 꺼짐) ·
+     AI 전체 · 월 상한 · 하루 횟수(회원 id · 방문자 쿠키 · 비회원 전체)가 막고, 남의 상담은 회원 id · 방문자 키가 같아야 이어 쓸 수 있습니다. 운영 목록은 /admin/agent/chats(@Roles). */
+  'agent',
 ]);
 
 function walk(dir, out = []) {

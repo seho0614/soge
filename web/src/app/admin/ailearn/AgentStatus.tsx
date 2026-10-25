@@ -1,4 +1,6 @@
+import { Fragment, useState } from 'react';
 import { useApi } from '../../../lib/useApi';
+import { api } from '../../../lib/api';
 import { n } from '../../../lib/act';
 import { ErrorView } from '../../../components/ErrorView';
 
@@ -15,7 +17,7 @@ interface Status {
   agreement: { model: string; decided: number; agreed: number; unsure: number; agreePct: string | null }[];
   note: string;
 }
-const CH_KO: Record<string, string> = { REVIEW_SHADOW: '검수 보조(병행)', SITE_CHAT: '고객응대 안내', AUDIT: '감사 보조', SETTLE: '정산 보조' };
+const CH_KO: Record<string, string> = { REVIEW_SHADOW: '검수 보조(병행)', SITE_CHAT: '고객응대 안내', AUDIT: '감사 보조', SETTLE: '정산 보조', TRANSLATE: '등록 글 번역', BOARD: '게시판 번역' };
 const WHY_KO: Record<string, string> = {
   AGENT_OFF: '전체 꺼짐(agent.enabled)', CHANNEL_OFF: '이 통로 꺼짐', CHANNEL_NOT_READY: '아직 없는 통로',
   CAP_ZERO: '월 상한 0', CAP_REACHED: '월 상한에 닿음',
@@ -75,6 +77,8 @@ export function AgentStatus() {
       )}
       <p className="hint">통과 기준(ai-agent #15) — 2주 · 100건 이상 · 방향 일치 90% 이상. 통과해도 자동 처리는 하지 않습니다(의견만).</p>
 
+      <AgentChats />
+
       <h3 className="sec">요금표(100만 토큰당 달러)</h3>
       <table className="tbl" data-agent-prices>
         <thead><tr><th>모델</th><th>입력</th><th>출력</th><th>캐시 읽기</th><th>기준일</th><th>메모</th></tr></thead>
@@ -84,6 +88,58 @@ export function AgentStatus() {
         ))}</tbody>
       </table>
       <p className="hint">요금은 바뀔 수 있습니다 — 계약 전 Anthropic 요금표로 다시 확인하십시오.</p>
+    </>
+  );
+}
+
+/* ── v10.109 (D121 · docs/170) AI 상담 목록 — 읽기만 · 연락처는 가려 저장됨 · 보관 5년(agent.chat_retention_days) ── */
+interface ChatRow { id: string; status: string; member: boolean; inquiryId: string | null; createdAt: string; purgeAfter: string; turns: number; firstQuestion: string | null }
+interface ChatMsg { role: string; body: string; model: string | null; stopReason: string | null; createdAt: string }
+const ST_KO: Record<string, string> = { OPEN: '진행', HANDED_OFF: '담당자에게 넘김', CLOSED: '끝남' };
+const when = (iso: string) => new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
+
+function AgentChats() {
+  const [status, setStatus] = useState('');
+  const r = useApi<ChatRow[]>(`/admin/agent/chats${status ? `?status=${status}` : ''}`);
+  const [open, setOpen] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<ChatMsg[] | null>(null);
+  const show = (id: string) => {
+    if (open === id) { setOpen(null); return; }
+    setOpen(id); setMsgs(null);
+    api<ChatMsg[]>(`/admin/agent/chats/${id}`).then(setMsgs).catch(() => setMsgs([]));
+  };
+  return (
+    <>
+      <h3 className="sec">AI 상담(고객응대 안내)</h3>
+      <div className="row" style={{ gap: 6, marginBottom: 8 }}>
+        {['', 'OPEN', 'HANDED_OFF', 'CLOSED'].map((s) => (
+          <button key={s || 'ALL'} className={`btn-sm${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>{s ? ST_KO[s] : '전체'}</button>
+        ))}
+      </div>
+      {r.error ? <ErrorView error={r.error} onRetry={r.reload} /> : !r.data ? <p className="muted">불러오는 중…</p> : r.data.length === 0 ? (
+        <p className="muted">아직 상담이 없습니다(스위치 agent.chat.enabled 가 꺼져 있으면 손님 화면에 단추가 없습니다).</p>
+      ) : (
+        <table className="tbl" data-agent-chats>
+          <thead><tr><th>시작</th><th>손님</th><th>첫 질문</th><th>질문 수</th><th>상태</th><th>1:1 문의</th></tr></thead>
+          <tbody>{r.data.map((c) => (
+            <Fragment key={c.id}>
+              <tr onClick={() => show(c.id)} style={{ cursor: 'pointer' }} data-agent-chat={c.id}>
+                <td>{when(c.createdAt)}</td><td>{c.member ? '회원' : '비회원'}</td><td>{c.firstQuestion ?? '—'}</td>
+                <td className="num-cell">{n(c.turns)}</td><td>{ST_KO[c.status] ?? c.status}</td><td>{c.inquiryId ? c.inquiryId.slice(0, 8) : '—'}</td>
+              </tr>
+              {open === c.id && (
+                <tr><td colSpan={6}>
+                  {!msgs ? <p className="muted">불러오는 중…</p> : msgs.map((m, i) => (
+                    <p key={i} style={{ margin: '4px 0', whiteSpace: 'pre-wrap' }}><b>{m.role === 'user' ? '손님' : 'AI'}</b> {m.body}
+                      {m.stopReason && m.role === 'assistant' && m.stopReason !== 'end_turn' ? <span className="muted"> ({m.stopReason})</span> : null}</p>
+                  ))}
+                  <p className="hint">보관 기한 {when(c.purgeAfter)} · 손님 글의 연락처 · 링크는 가려 저장됩니다.</p>
+                </td></tr>
+              )}
+            </Fragment>
+          ))}</tbody>
+        </table>
+      )}
     </>
   );
 }

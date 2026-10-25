@@ -1,5 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { AgentChatService } from './agent-chat.service';
+import { ErrorDto } from '../../common/dto/common.dto';
 import { AgentService } from './agent.service';
 import { Roles } from '../../core/auth';
 
@@ -59,10 +62,72 @@ export class AgentStatusDto {
   @ApiProperty() note!: string;
 }
 
+/* v10.109 (D121 · docs/170) — AI 상담 안내 */
+export class ChatStatusDto {
+  @ApiProperty({ description: '단추를 보일지 — 스위치 · AI 전체 · 월 상한 · 엔진이 모두 될 때만 true' }) enabled!: boolean;
+  @ApiPropertyOptional({ nullable: true, description: '오늘 남은 횟수(켜져 있을 때만)' }) remaining!: number | null;
+}
+export class ChatAskDto {
+  @ApiPropertyOptional({ description: '이어 묻는 상담 번호(처음이면 비움)' }) @IsOptional() @IsUUID() conversationId?: string;
+  @ApiProperty({ maxLength: 500, description: '질문(500자까지) · 전화 · 이메일 · 링크는 가려 보내고 가린 글로 저장' }) @IsString() @MaxLength(500) message!: string;
+}
+export class ChatSourceDto {
+  @ApiProperty() question!: string;
+  @ApiPropertyOptional({ nullable: true }) linkHref!: string | null;
+}
+export class ChatAnswerDto {
+  @ApiProperty() conversationId!: string;
+  @ApiProperty({ description: '답(근거 밖이면 「모름」 + 넘기기 권함)' }) answer!: string;
+  @ApiProperty({ description: '담당자에게 넘기기를 권하는가' }) handoff!: boolean;
+  @ApiProperty({ type: [ChatSourceDto], description: '근거로 쓴 자주 묻는 질문(최대 3)' }) sources!: ChatSourceDto[];
+  @ApiPropertyOptional({ nullable: true }) remaining!: number | null;
+}
+export class ChatHandoffDto {
+  @ApiPropertyOptional({ description: '비회원은 필수 — 회신받을 이메일' }) @IsOptional() @IsString() @MaxLength(200) email?: string;
+  @ApiPropertyOptional({ maxLength: 1000 }) @IsOptional() @IsString() @MaxLength(1000) note?: string;
+}
+export class ChatHandoffOkDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ description: '접수된 1:1 문의 번호' }) inquiryId!: string;
+}
+
 @ApiTags('AGENT')
 @Controller('api/v1')
 export class AgentController {
-  constructor(private readonly svc: AgentService) {}
+  constructor(private readonly svc: AgentService, private readonly chats: AgentChatService) {}
+
+  @Get('agent/chat/status')
+  @ApiOperation({ summary: 'AI 상담 단추 상태 (v10.109)', description: '꺼져 있으면 enabled false — 사이트는 단추를 그리지 않습니다.' })
+  @ApiHeader({ name: 'X-Visitor-Key', required: false, description: '비회원 — 사이트 방문자 쿠키(sgb_visitor) 값(남은 횟수)' })
+  @ApiOkResponse({ type: ChatStatusDto })
+  chatStatus(@Headers('x-visitor-key') visitorKey?: string) { return this.chats.status(visitorKey); }
+
+  @Post('agent/chat')
+  @ApiOperation({ summary: 'AI 상담 — 묻기 (v10.109 · 2단계 안내)', description: '자주 묻는 질문 · 공지 · 약관 발행본만 근거로 답합니다. 내 정보 · 남의 정보를 조회하지 않습니다. 스위치 agent.chat.enabled · AI 전체 · 월 상한 · 하루 횟수(회원 · 방문자 · 비회원 전체). 돈 · 분쟁 · 개인 사정 · 법률 판단은 넘기기를 권합니다.' })
+  @ApiHeader({ name: 'X-Visitor-Key', required: false, description: '비회원 — 사이트 방문자 쿠키 값(하루 횟수 · 내 상담 확인)' })
+  @ApiOkResponse({ type: ChatAnswerDto })
+  @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto }) @ApiResponse({ status: 422, type: ErrorDto })
+  chat(@Body() dto: ChatAskDto, @Headers('x-visitor-key') visitorKey?: string) { return this.chats.chat(dto, visitorKey); }
+
+  @Post('agent/chat/:id/handoff')
+  @ApiOperation({ summary: 'AI 상담 — 담당자에게 넘기기 (v10.109)', description: '1:1 문의(channel BOT)로 접수하고 상담 기록(연락처 가림)을 붙입니다 · 운영 경보. AI 를 부르지 않습니다.' })
+  @ApiHeader({ name: 'X-Visitor-Key', required: false })
+  @ApiOkResponse({ type: ChatHandoffOkDto })
+  @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto }) @ApiResponse({ status: 422, type: ErrorDto })
+  handoff(@Param('id') id: string, @Body() dto: ChatHandoffDto, @Headers('x-visitor-key') visitorKey?: string) { return this.chats.handoff(id, dto, visitorKey); }
+
+  @ApiBearerAuth()
+  @Get('admin/agent/chats')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'AI 상담 목록 (운영 · 읽기만 · v10.109)' })
+  @ApiQuery({ name: 'status', required: false, enum: ['OPEN', 'HANDED_OFF', 'CLOSED'] })
+  chatList(@Query('status') status?: string) { return this.chats.adminList(status); }
+
+  @ApiBearerAuth()
+  @Get('admin/agent/chats/:id')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'AI 상담 대화 (운영 · 읽기만 · 연락처는 가려 저장됨)' })
+  chatMessages(@Param('id') id: string) { return this.chats.adminMessages(id); }
 
   @ApiBearerAuth()
   @Get('admin/agent/status')

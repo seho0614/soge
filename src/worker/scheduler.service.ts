@@ -7,6 +7,7 @@ import { MailService } from '../common/mail/mail.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
+import { AgentChatService } from '../modules/agent/agent-chat.service';
 
 /**
  * 배치 실행기.
@@ -21,7 +22,7 @@ export type JobName =
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry'
-  | 'geo_backfill' | 'translate_jobs' | 'review_shadow';
+  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge';
 
 export interface JobResult {
   job: JobName;
@@ -42,6 +43,7 @@ export class SchedulerService {
     private readonly mail: MailService,
     private readonly translate: TranslateService,
     private readonly reviewShadow: ReviewShadowService,
+    private readonly agentChat: AgentChatService,
   ) {}
 
   /**
@@ -460,6 +462,13 @@ export class SchedulerService {
       /* v10.106 (D120 · docs/165) — AI 검수 보조(병행): 의견만 저장 · 검수 상태는 바꾸지 않음 · 스위치 · AI 전체 · 월 상한이 막으면 아무것도 부르지 않음 */
       case 'review_shadow': {
         const r = await this.reviewShadow.runBatch(10);
+        affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.109 (D121 · docs/170) — AI 상담 대화 정리: 보관 기간(agent.chat_retention_days · 5년)이 지난 대화 · 메시지 · 90일 지난 하루 횟수 줄 */
+      case 'agent_chat_purge': {
+        const r = await this.agentChat.purge();
         affected = r.affected; detail = r.detail;
         break;
       }

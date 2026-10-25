@@ -17,6 +17,7 @@ const JOBS = [
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */
   'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */
   'review_shadow',      /* v10.106 (D120) AI 검수 보조(병행) — 의견만 저장 · 스위치 · 월 상한이 막으면 건너뜀 */
+  'agent_chat_purge',   /* v10.109 (D121) AI 상담 대화 보관 기간(5년) 지난 것 정리 */
 ] as const;
 
 export class RunJobDto {

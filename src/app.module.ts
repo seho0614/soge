@@ -55,6 +55,7 @@ import { PartnerCompanyService } from './modules/partner/partner-company.service
 import { ConversationService } from './modules/deal/conversation.service';
 import { AffiliateAccountService } from './modules/affiliate/affiliate-account.service';
 import { ReviewShadowService } from './modules/agent/review-shadow.service';
+import { AgentChatService } from './modules/agent/agent-chat.service';
 import { DealContractService } from './modules/deal/deal-contract.service';
 
 import { MeController } from './modules/me/me.controller';
@@ -324,6 +325,7 @@ import { LeadService } from './modules/lead/lead.service';
     BoardTranslateService,   // v10.105 소개광장 볼 때 번역(D119)
     AgentService,  // v10.94
     ReviewShadowService,   // v10.106 AI 검수 보조(병행 · D120)
+    AgentChatService,      // v10.109 AI 상담 안내(D121)
     MeService, MeActivityService, MeMoneyService, MeNotifyService,   // v10.96
     CommunityService,
     PollService,

@@ -13,18 +13,20 @@ export interface AgentReply {
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  /** v10.109 — 프롬프트 캐시에 새로 쓴 토큰(입력의 약 1.25배 값) · 없으면 0 */
+  cacheWriteTokens?: number;
   stopReason: string;
 }
 export interface AgentProvider {
   readonly name: 'MOCK' | 'CLAUDE' | 'N8N';
   /** effort — 생각 · 답 길이를 줄이는 정도(v10.104 · 번역은 low). 받지 않는 엔진은 무시 */
-  complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high' }): Promise<AgentReply>;
+  complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply>;
 }
 
 /** 시험용 — 밖으로 나가지 않습니다. 받은 마지막 말을 짧게 되돌리고 토큰 수는 글자 수로 어림합니다 */
 export class MockAgentProvider implements AgentProvider {
   readonly name = 'MOCK' as const;
-  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high' }): Promise<AgentReply> {
+  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply> {
     const last = input.messages[input.messages.length - 1]?.content ?? '';
     const text = `[시험 응답] ${last.slice(0, 80)}`;
     return { text, model: input.model, inputTokens: Math.ceil((input.system.length + last.length) / 2), outputTokens: Math.ceil(text.length / 2),
@@ -42,14 +44,17 @@ export class ClaudeAgentProvider implements AgentProvider {
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey, maxRetries: 1, timeout: 45_000 });   // 배치 시간 예산(40초) 안에서 — 길게 매달리지 않음
   }
-  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high' }): Promise<AgentReply> {
+  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply> {
     const r = await this.client.messages.create({
-      model: input.model, max_tokens: input.maxTokens, system: input.system, messages: input.messages,
+      model: input.model, max_tokens: input.maxTokens, messages: input.messages,
+      // v10.109 — 긴 지시문(고객응대 지식 묶음)은 프롬프트 캐시에 — 같은 지시문이면 다음 호출부터 입력 값이 약 1/10
+      system: input.cacheSystem ? [{ type: 'text', text: input.system, cache_control: { type: 'ephemeral' } }] : input.system,
       ...(input.effort ? { output_config: { effort: input.effort } } : {}),
     });
     const text = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
     return { text, model: r.model, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens,
-             cacheReadTokens: r.usage.cache_read_input_tokens ?? 0, stopReason: r.stop_reason ?? 'unknown' };
+             cacheReadTokens: r.usage.cache_read_input_tokens ?? 0, cacheWriteTokens: r.usage.cache_creation_input_tokens ?? 0,
+             stopReason: r.stop_reason ?? 'unknown' };
   }
 }
 
