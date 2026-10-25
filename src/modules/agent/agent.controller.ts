@@ -86,6 +86,23 @@ export class ChatHandoffDto {
   @ApiPropertyOptional({ description: '비회원은 필수 — 회신받을 이메일' }) @IsOptional() @IsString() @MaxLength(200) email?: string;
   @ApiPropertyOptional({ maxLength: 1000 }) @IsOptional() @IsString() @MaxLength(1000) note?: string;
 }
+export class AgentChatRowDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: ['OPEN', 'HANDED_OFF', 'CLOSED'] }) status!: string;
+  @ApiProperty({ description: '회원 상담인가(아니면 비회원)' }) member!: boolean;
+  @ApiPropertyOptional({ nullable: true, description: '넘긴 1:1 문의 번호' }) inquiryId!: string | null;
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+  @ApiProperty({ format: 'date-time', description: '보관 기한(이 뒤 배치가 지움)' }) purgeAfter!: string;
+  @ApiProperty() turns!: number;
+  @ApiPropertyOptional({ nullable: true, description: '첫 질문 앞부분(연락처는 가려 저장됨)' }) firstQuestion!: string | null;
+}
+export class AgentChatMessageDto {
+  @ApiProperty({ enum: ['user', 'assistant', 'tool'] }) role!: string;
+  @ApiProperty() body!: string;
+  @ApiPropertyOptional({ nullable: true }) model!: string | null;
+  @ApiPropertyOptional({ nullable: true }) stopReason!: string | null;
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+}
 export class ChatHandoffOkDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty({ description: '접수된 1:1 문의 번호' }) inquiryId!: string;
@@ -121,12 +138,15 @@ export class AgentController {
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: 'AI 상담 목록 (운영 · 읽기만 · v10.109)' })
   @ApiQuery({ name: 'status', required: false, enum: ['OPEN', 'HANDED_OFF', 'CLOSED'] })
+  @ApiOkResponse({ type: [AgentChatRowDto] })
   chatList(@Query('status') status?: string) { return this.chats.adminList(status); }
 
   @ApiBearerAuth()
   @Get('admin/agent/chats/:id')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: 'AI 상담 대화 (운영 · 읽기만 · 연락처는 가려 저장됨)' })
+  @ApiOkResponse({ type: [AgentChatMessageDto] })
+  @ApiResponse({ status: 404, type: ErrorDto })
   chatMessages(@Param('id') id: string) { return this.chats.adminMessages(id); }
 
   @ApiBearerAuth()

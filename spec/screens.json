@@ -527,11 +527,14 @@
     "GET /faq",
     "GET /ui-messages",
     "POST /inquiries",
-    "GET /codes"
+    "GET /codes",
+    "GET /agent/chat/status",
+    "POST /agent/chat",
+    "POST /agent/chat/{id}/handoff"
    ],
    "nav": "SB-HOM-MAIN-010",
    "state": "inquiry.status",
-   "note": "분쟁조정 안내는 여기의 별도 경로로 접수합니다 (푸터 링크 목적지)"
+   "note": "분쟁조정 안내는 여기의 별도 경로로 접수합니다 (푸터 링크 목적지) · v10.109 AI 상담 안내 API(D121 · docs/170 — 꺼짐 · 사이트 공통 단추 화면은 v10.110)"
   },
   {
    "id": "SB-HOM-CSB-020",
@@ -3681,7 +3684,9 @@
    "nav": "SB-ADM-DSH-010",
    "bo": "#/ai-ops/agent",
    "apis": [
-    "GET /admin/agent/status"
+    "GET /admin/agent/status",
+    "GET /admin/agent/chats",
+    "GET /admin/agent/chats/{id}"
    ],
    "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0"
   },
