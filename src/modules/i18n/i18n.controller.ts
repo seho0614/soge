@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOpt
          ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsString, Length, Matches } from 'class-validator';
 import { I18nService, I18N_FIELDS } from './i18n.service';
+import { TranslateService } from './translate.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -121,6 +122,36 @@ export class CatalogPageDto {
   @ApiProperty() size!: number;
   @ApiProperty() pages!: number;
 }
+export class TranslateJobDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: ['LISTING', 'REQUEST'] }) targetType!: string;
+  @ApiProperty() targetId!: string;
+  @ApiProperty({ example: 'en' }) lang!: string;
+  @ApiProperty({ enum: ['QUEUED', 'RUNNING', 'DONE', 'HELD', 'FAILED'] }) state!: string;
+  @ApiProperty() attempts!: number;
+  @ApiPropertyOptional({ description: 'AUTO_APPROVED · DRAFT(금칙어 — 승인 대기) · SKIPPED(사람 승인 번역 있음) · SOURCE_MISSING · REFUSAL · TOO_LONG' }) result?: string;
+  @ApiPropertyOptional() lastError?: string;
+  @ApiProperty() updatedAt!: string;
+  @ApiPropertyOptional({ description: '원문 제목' }) title?: string;
+}
+export class TranslateJobPageDto {
+  @ApiProperty({ type: [TranslateJobDto] }) items!: TranslateJobDto[];
+  @ApiProperty() total!: number;
+  @ApiProperty() page!: number;
+  @ApiProperty() size!: number;
+  @ApiProperty() pages!: number;
+  @ApiProperty({ description: '상태별 줄 수', example: { QUEUED: 3, DONE: 40 } }) counts!: Record<string, number>;
+  @ApiPropertyOptional({ description: '엔진(MOCK · CLAUDE · 없으면 null = 아무것도 부르지 않음)' }) provider?: string;
+}
+export class TranslateRetryDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty() id!: string;
+  @ApiPropertyOptional() state?: string;
+}
+export class TranslateBackfillDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ description: '넣은 줄 수(스위치가 꺼져 있으면 0)' }) queued!: number;
+}
 export class TranslationOkDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty() id!: string;
@@ -131,7 +162,7 @@ export class TranslationOkDto {
 @ApiTags('I18N')
 @Controller('api/v1')
 export class I18nController {
-  constructor(private readonly svc: I18nService) {}
+  constructor(private readonly svc: I18nService, private readonly tr: TranslateService) {}
 
   @Get('i18n/langs')
   @ApiOperation({ summary: '켜진 언어', description: '다국어(i18n.enabled)가 꺼져 있으면 한국어만 — 사용자 웹이 언어 단추를 그릴지 · 어떤 사전을 쓸지 여기서 정합니다.' })
@@ -234,6 +265,36 @@ export class I18nController {
   @ApiResponse({ status: 404, type: ErrorDto })
   @Audit('I18N_TRANSLATION_REJECT', 'I18N_TRANSLATION')
   reject(@Param('id') id: string, @Body() dto: TranslationRejectDto) { return this.svc.reject(this.idOf(id), dto.reason); }
+
+  /* ── v10.104 등록 글 자동 번역(3-2 · D118 · docs/162) ───────────── */
+
+  @ApiBearerAuth()
+  @Get('admin/i18n/jobs')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '자동 번역 작업 줄 (운영 · v10.104)', description: '매물 · 요청 × 언어 한 줄 · 상태별 수 · 지금 엔진. 스위치(i18n.auto_translate.enabled) · AI 전체 · 월 상한이 막으면 배치는 아무것도 하지 않습니다.' })
+  @ApiQuery({ name: 'state', required: false, enum: ['QUEUED', 'RUNNING', 'DONE', 'HELD', 'FAILED'] })
+  @ApiQuery({ name: 'page', required: false }) @ApiQuery({ name: 'size', required: false })
+  @ApiOkResponse({ type: TranslateJobPageDto })
+  jobs(@Query('state') state?: string, @Query('page') page?: string, @Query('size') size?: string) {
+    const num = (v?: string) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : undefined; };
+    return this.tr.jobs({ state: ['QUEUED', 'RUNNING', 'DONE', 'HELD', 'FAILED'].includes(state ?? '') ? state : undefined, page: num(page), size: num(size) });
+  }
+
+  @ApiBearerAuth()
+  @Post('admin/i18n/jobs/:id/retry')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '자동 번역 다시 시도', description: '보류 · 실패 · 끝난 줄을 대기로 되돌립니다(시도 횟수 0).' })
+  @ApiOkResponse({ type: TranslateRetryDto })
+  @Audit('I18N_JOB_RETRY', 'I18N_JOB')
+  retry(@Param('id') id: string) { return this.tr.retry(this.idOf(id)); }
+
+  @ApiBearerAuth()
+  @Post('admin/i18n/jobs/backfill')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '노출 중인 등록 글 한꺼번에 넣기', description: '자동 번역 스위치를 켠 뒤 처음 한 번 — 지금 손님에게 보이는 매물 · 요청을 작업 줄에 넣습니다(스위치가 꺼져 있으면 0).' })
+  @ApiOkResponse({ type: TranslateBackfillDto })
+  @Audit('I18N_JOB_BACKFILL', 'I18N_JOB')
+  backfill() { return this.tr.backfill(); }
 
   private idOf(id: string) {
     if (!/^\d{1,18}$/.test(id ?? '')) return '0';   // 숫자가 아니면 없는 번호로 → 404

@@ -77,6 +77,9 @@ export class PublicService {
     ]);
     /* v10.103 (3-1) — 업종 이름만 화면 언어로(찾기는 원문으로 했음) · 숨긴 _cid 는 지움 */
     await this.i18n.overlayBy([...listings, ...requests], 'CATEGORY', '_cid', { categoryName: 'name' });
+    /* v10.104 (3-2) — 제목 · 본문 번역 */
+    await this.i18n.overlay(listings, 'LISTING', (r: any) => String(r.id), { title: 'title', body: 'body' });
+    await this.i18n.overlay(requests, 'REQUEST', (r: any) => String(r.id), { title: 'title', body: 'body' });
     return { listings, requests, total: listings.length + requests.length };
   }
 

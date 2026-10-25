@@ -5,6 +5,7 @@ import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
+import { TranslateService } from '../modules/i18n/translate.service';
 
 /**
  * 배치 실행기.
@@ -19,7 +20,7 @@ export type JobName =
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry'
-  | 'geo_backfill';
+  | 'geo_backfill' | 'translate_jobs';
 
 export interface JobResult {
   job: JobName;
@@ -38,6 +39,7 @@ export class SchedulerService {
     private readonly leadCash: LeadCashService,
     private readonly geo: GeoService,
     private readonly mail: MailService,
+    private readonly translate: TranslateService,
   ) {}
 
   /**
@@ -442,6 +444,13 @@ export class SchedulerService {
       /* v10.46 (D099 · docs/96) — 매물 좌표 채우기(카카오 로컬). 지도 사용(map.enabled)이 off 이거나 키가 없으면 아무것도 하지 않음 */
       case 'geo_backfill': {
         const r = await this.geo.backfill(50);
+        affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.104 (D118 · docs/162) — 등록 글 자동 번역. 스위치 · AI 전체 · 월 상한 중 하나라도 막히면 아무것도 부르지 않음 */
+      case 'translate_jobs': {
+        const r = await this.translate.runBatch(10);
         affected = r.affected; detail = r.detail;
         break;
       }

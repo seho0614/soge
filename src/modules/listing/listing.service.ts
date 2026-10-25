@@ -266,6 +266,8 @@ export class ListingService {
     const lastRow = rows[Math.min(limit, rows.length) - 1] as { _sk?: string; id: string } | undefined;
     /* v10.103 (3-1) — 업종 이름만 화면 언어로 · 숨긴 _cid 는 지움(광고 · 일반 한 번에) */
     await this.i18n.overlayBy([...(promoted as Record<string, unknown>[]), ...organic], 'CATEGORY', '_cid', { categoryName: 'name' });
+    /* v10.104 (3-2) — 제목 · 본문은 자동 · 사람 승인 번역 */
+    await this.i18n.overlay([...(promoted as Record<string, unknown>[]), ...organic], 'LISTING', (r) => (r.id == null ? null : String(r.id)), { title: 'title', body: 'body' });
     return {
       promoted,
       organic,
@@ -370,6 +372,8 @@ export class ListingService {
       `UPDATE listings SET view_count = view_count + 1 WHERE id = $1`, [id]);
     /* v10.103 (3-1) — 업종 이름만 화면 언어로(categoryId 는 그대로) */
     await this.i18n.overlayOne(row, 'CATEGORY', (r) => r.categoryId, { categoryName: 'name' });
+    /* v10.104 (3-2) — 제목 · 본문 번역. 주인에게는 늘 원문(고치기 화면이 이 응답을 씀 — 번역문이 원문으로 저장되면 안 됨) */
+    if (!row.isOwn) await this.i18n.overlayOne(row, 'LISTING', (r) => String(r.id), { title: 'title', body: 'body' });
 
     /* v10.21 (D023) — 등록자의 공개 실적을 owner 에 합칩니다(목록 카드의 owner 는 그대로 3항목). */
     const { isOwn, ownerStats, _address, ...rest } = row;

@@ -88,7 +88,10 @@ export class RequestService {
         ORDER BY ${order} LIMIT $2`,
       [q.gwanCode ?? null, clampLimit(q.limit), kw.toLowerCase(), !!q.closing, actor ?? null]);
     /* v10.103 (3-1) — 업종 이름만 화면 언어로(찾기는 원문으로 했음) · 숨긴 _cid 는 지움 */
-    return this.i18n.overlayBy(rows, 'CATEGORY', '_cid', { categoryName: 'name' });
+    await this.i18n.overlayBy(rows, 'CATEGORY', '_cid', { categoryName: 'name' });
+    /* v10.104 (3-2) — 제목 · 본문 번역(목록은 고치기에 쓰지 않음 · 고치기는 상세 — 주인에게 원문) */
+    await this.i18n.overlay(rows, 'REQUEST', (r: any) => String(r.id), { title: 'title', body: 'body' });
+    return rows;
   }
 
   /**
@@ -133,6 +136,8 @@ export class RequestService {
     if (!row) throw new NotFound('요청을 찾을 수 없습니다.');
     /* v10.103 (3-1) — 업종 이름만 화면 언어로 · 숨긴 _cid 는 지움 */
     await this.i18n.overlayBy([row], 'CATEGORY', '_cid', { categoryName: 'name' });
+    /* v10.104 (3-2) — 제목 · 본문 번역. 주인에게는 늘 원문 */
+    if (actor !== row.ownerAccountId) await this.i18n.overlayOne(row, 'REQUEST', (r: any) => String(r.id), { title: 'title', body: 'body' });
     /* 공개 범위 — 회원 · 인증 회원 공개 요청은 그 조건을 채운 사람에게만 내용을 보입니다(시안 「공개 범위」) */
     if (row.visibility !== 'ALL' && actor !== row.ownerAccountId) {
       const [a] = actor ? await this.db.query<{ v: boolean }>(

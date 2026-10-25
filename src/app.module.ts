@@ -45,6 +45,7 @@ import { DealController } from './modules/deal/deal.controller';
 import { DealService } from './modules/deal/deal.service';
 import { I18nController } from './modules/i18n/i18n.controller';
 import { I18nService } from './modules/i18n/i18n.service';
+import { TranslateService } from './modules/i18n/translate.service';
 import { AgentController } from './modules/agent/agent.controller';
 import { AgentService } from './modules/agent/agent.service';
 import { DealContractService } from './modules/deal/deal-contract.service';
@@ -311,6 +312,7 @@ import { LeadService } from './modules/lead/lead.service';
     RequestService,
     DealService, DealContractService,   // v10.92
     I18nService,   // v10.93
+    TranslateService,   // v10.104 등록 글 자동 번역(D118)
     AgentService,  // v10.94
     MeService, MeActivityService, MeMoneyService, MeNotifyService,   // v10.96
     CommunityService,

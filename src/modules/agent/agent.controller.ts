@@ -8,6 +8,7 @@ export class AgentSwitchesDto {
   @ApiProperty({ description: 'agent.review_shadow.enabled' }) reviewShadow!: boolean;
   @ApiProperty({ description: 'agent.chat.enabled' }) chat!: boolean;
   @ApiProperty({ description: 'agent.chat.member_lookup.enabled' }) memberLookup!: boolean;
+  @ApiProperty({ description: 'i18n.auto_translate.enabled — 등록 글 자동 번역(v10.104 · D118)' }) translate!: boolean;
 }
 export class AgentLimitsDto {
   @ApiProperty() guestDaily!: number;
@@ -48,6 +49,7 @@ export class AgentStatusDto {
   @ApiProperty() monthCostUsd!: string;
   @ApiPropertyOptional() reviewModel?: string;
   @ApiPropertyOptional() chatModel?: string;
+  @ApiPropertyOptional({ description: 'i18n.translate_model(v10.104)' }) translateModel?: string;
   @ApiProperty({ type: AgentLimitsDto }) limits!: AgentLimitsDto;
   @ApiProperty({ type: [AgentChannelStateDto] }) channels!: AgentChannelStateDto[];
   @ApiProperty({ type: [AgentUsageRowDto] }) usage!: AgentUsageRowDto[];

@@ -15,6 +15,7 @@ const JOBS = [
   'event_close', 'lead_assign', 'hlt_auto_confirm', 'hlt_rank', 'lead_cash_auto',
   'directory_expiry',   /* v10.33 (D092) 정액 노출 만료 안내 · 자동 종료 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */
+  'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */
 ] as const;
 
 export class RunJobDto {

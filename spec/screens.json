@@ -3654,6 +3654,9 @@
    "apis": [
     "GET /admin/i18n/translations",
     "GET /admin/i18n/catalog",
+    "GET /admin/i18n/jobs",
+    "POST /admin/i18n/jobs/{id}/retry",
+    "POST /admin/i18n/jobs/backfill",
     "GET /admin/i18n/source",
     "PUT /admin/i18n/translations",
     "POST /admin/i18n/translations/{id}/approve",

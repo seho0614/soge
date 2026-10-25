@@ -12,12 +12,14 @@ import { SubTabs, type SubTab } from '../../components/SubTabs';
  *   다국어(i18n.enabled)가 꺼져 있는 동안 손님 화면은 바뀌지 않습니다 — 미리 넣고 승인해 둡니다.
  *   v10.103 다국어 3-1 — 「원문 목록」: 운영 글(공지 · 자주 묻는 질문 · 약관 · 분류 이름 · 소개몰 상품)을 골라
  *     칸마다 번역 상태를 보고, 그 자리에서 원문을 보며 번역을 넣고 승인 · 반려 (GET admin/i18n/catalog)
+ *   v10.104 다국어 3-2 — 「자동 번역」: 등록 글(매물 · 요청) 자동 번역 작업 줄 · 다시 시도 · 노출 중인 글 한꺼번에 넣기 (GET admin/i18n/jobs)
  * ════════════════════════════════════════════════════════════════════ */
 
-type View = 'list' | 'catalog' | 'new' | 'langs';
+type View = 'list' | 'catalog' | 'jobs' | 'new' | 'langs';
 const TABS: SubTab<View>[] = [
   { key: 'list', label: '번역 목록 · 승인', screen: 'SB-ADM-TRN-010' },
   { key: 'catalog', label: '원문 목록', screen: 'SB-ADM-TRN-010' },
+  { key: 'jobs', label: '자동 번역', screen: 'SB-ADM-TRN-010' },
   { key: 'new', label: '번역 넣기', screen: 'SB-ADM-TRN-010' },
   { key: 'langs', label: '언어', screen: 'SB-ADM-TRN-010' },
 ];
@@ -36,6 +38,11 @@ const FIELD_KO: Record<string, string> = { title: '제목', body: '본문', ques
 const ST_KO: Record<string, string> = {
   DRAFT: '승인 대기', APPROVED: '승인', AUTO_APPROVED: '자동 승인', MACHINE: '기계 번역', REJECTED: '반려',
 };
+/** 자동 번역 작업 줄 상태 · 결과(v10.104) */
+const JOB_KO: Record<string, string> = { QUEUED: '대기', RUNNING: '처리 중', DONE: '끝', HELD: '보류', FAILED: '실패' };
+const RESULT_KO: Record<string, string> = {
+  AUTO_APPROVED: '자동 승인', DRAFT: '금칙어 — 승인 대기', SKIPPED: '사람이 승인한 번역 있음', SOURCE_MISSING: '원문 없음', REFUSAL: '엔진 거절', TOO_LONG: '글이 김',
+};
 
 interface Row {
   id: string; targetType: string; targetId: string; field: string; lang: string; text: string; status: string; engine: string;
@@ -53,6 +60,7 @@ export function Translations() {
       <SubTabs tabs={TABS} value={view} onChange={setView} />
       {view === 'list' && <List onEdit={(r) => { setPrefill(r); setView('new'); }} />}
       {view === 'catalog' && <Catalog />}
+      {view === 'jobs' && <Jobs />}
       {view === 'new' && <NewOne prefill={prefill} onDone={() => { setPrefill(null); setView('list'); }} />}
       {view === 'langs' && <LangList />}
     </>
@@ -111,6 +119,70 @@ function List({ onEdit }: { onEdit: (r: Row) => void }) {
                   {x.status !== 'REJECTED' && <button className="btn-sm ghost" disabled={a.busy === 'rj:' + x.id} onClick={() => reject(x)}>반려</button>}
                   <button className="btn-sm ghost" onClick={() => onEdit(x)}>고치기</button>
                 </td>
+              </tr>
+            ))}</tbody>
+          </table>
+          <p className="row-act">
+            <button className="btn-sm ghost" disabled={page <= 1} onClick={() => setPage(page - 1)}>이전</button>
+            <span>{page} / {r.data.pages} · {n(r.data.total)}건</span>
+            <button className="btn-sm ghost" disabled={page >= r.data.pages} onClick={() => setPage(page + 1)}>다음</button>
+          </p>
+        </>
+      )}
+    </>
+  );
+}
+
+/* ── 자동 번역 (v10.104 · 3-2) ─────────────────────────────────────── */
+
+interface Job { id: string; targetType: string; targetId: string; lang: string; state: string; attempts: number; result: string | null; lastError: string | null; updatedAt: string; title: string | null }
+interface JobPage { items: Job[]; total: number; page: number; size: number; pages: number; counts: Record<string, number>; provider: string | null }
+
+function Jobs() {
+  const [state, setState] = useState('');
+  const [page, setPage] = useState(1);
+  const qs = new URLSearchParams(Object.entries({ state, page: String(page), size: '20' }).filter(([, v]) => v)).toString();
+  const r = useApi<JobPage>(`/admin/i18n/jobs?${qs}`);
+  const a = useAct();
+  const retry = (x: Job) => void a.run('rt:' + x.id, () => api(`/admin/i18n/jobs/${x.id}/retry`, { method: 'POST' }), r.reload, '다시 시도합니다 — 다음 배치(1분 안)에 번역합니다.');
+  const backfill = () => {
+    if (!confirm('지금 손님에게 보이는 매물 · 요청을 모두 자동 번역 줄에 넣습니다. 건수만큼 비용이 듭니다(월 상한 안에서). 계속할까요?')) return;
+    void a.run('bf', () => api<{ queued: number }>('/admin/i18n/jobs/backfill', { method: 'POST' }), r.reload, '넣었습니다 — 스위치가 꺼져 있으면 0건입니다.');
+  };
+  const c = r.data?.counts ?? {};
+  return (
+    <>
+      <h2>자동 번역 (매물 · 요청)</h2>
+      <p className="notice info">매물 · 요청이 손님에게 보이게 되면(검수 승인) · 보이는 동안 고쳐지면 번역 줄에 들어가고, 1분마다 몇 건씩 번역합니다.
+        번역문에 차단 금칙어가 있으면 자동 승인하지 않고 「번역 목록」에 승인 대기로 남습니다. 사람이 승인한 번역은 덮어쓰지 않습니다.
+        켜는 조건: 사이트 설정 <b>i18n.auto_translate.enabled</b> · AI 에이전트 전체 · 월 상한(AI 에이전트 화면) · 엔진 키(운영 .env).</p>
+      <p className="row-act">
+        <span>엔진: <b>{r.data ? (r.data.provider ?? '없음 — 아무것도 부르지 않음') : '…'}</b></span>
+        {Object.keys(JOB_KO).map((k) => <span key={k} className="pill">{JOB_KO[k]} {n(c[k] ?? 0)}</span>)}
+        <button className="btn-sm ghost" disabled={a.busy === 'bf'} onClick={backfill}>노출 중인 글 한꺼번에 넣기</button>
+      </p>
+      <div className="row-act">
+        <select value={state} onChange={(e) => { setState(e.target.value); setPage(1); }} aria-label="상태">
+          <option value="">상태 전체</option>{Object.entries(JOB_KO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+      <Flash msg={a.msg} err={a.err} />
+      {r.error ? <ErrorView error={r.error} onRetry={r.reload} /> : !r.data ? <p className="muted">불러오는 중…</p> : r.data.items.length === 0 ? (
+        <p className="muted">작업 줄이 없습니다.</p>
+      ) : (
+        <>
+          <table className="tbl" data-i18n-jobs>
+            <thead><tr><th>대상</th><th>원문 제목</th><th>언어</th><th>상태</th><th>결과</th><th>바뀐 때</th><th></th></tr></thead>
+            <tbody>{r.data.items.map((x) => (
+              <tr key={x.id}>
+                <td>{TYPE_KO[x.targetType] ?? x.targetType}<br /><span className="muted">{x.targetId.slice(0, 13)}</span></td>
+                <td className="wrap">{x.title ?? <span className="bad">원문 없음</span>}</td>
+                <td>{x.lang}</td>
+                <td>{JOB_KO[x.state] ?? x.state}{x.attempts > 0 && <span className="muted"> · {x.attempts}회</span>}</td>
+                <td className="wrap">{x.result ? (RESULT_KO[x.result] ?? x.result) : '—'}{x.lastError && <><br /><span className="bad">{x.lastError}</span></>}</td>
+                <td>{ymdhm(x.updatedAt)}</td>
+                <td>{['HELD', 'FAILED', 'DONE'].includes(x.state) && (
+                  <button className="btn-sm ghost" disabled={a.busy === 'rt:' + x.id} onClick={() => retry(x)}>다시 시도</button>)}</td>
               </tr>
             ))}</tbody>
           </table>
