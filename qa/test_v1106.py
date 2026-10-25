@@ -28,7 +28,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D120_ai_review_shadow/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 158 · 마지막 D120', (len(mig), mig[-1] if mig else '') == (158, 'D120_ai_review_shadow'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 158 · 마지막 D120(v10.109 부터 D121 · 159 — test_v1109)', (len(mig), mig[-1] if mig else '') in ((158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 엔진 칸(CLAUDE · MOCK · N8N) · 색인 · 배치 5분 · 지우는 문장 없음',
    "ADD COLUMN IF NOT EXISTS engine text NOT NULL DEFAULT 'CLAUDE'" in M and "CHECK (engine IN ('CLAUDE','MOCK','N8N'))" in M
    and 'idx_ai_review_opinions_item' in M and "('review_shadow', 5," in M and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M), '')

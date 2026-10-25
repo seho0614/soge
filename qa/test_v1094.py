@@ -35,10 +35,13 @@ ok('① 허용 함수 — 꺼짐 · 통로 · 상한 0 · 상한 닿음', all(x 
 ok('① 사용량 함수 — 상한에 닿으면 agent.enabled off · 경보 AGENT_CAP_REACHED', "SET value = 'off'" in M and "'AGENT_CAP_REACHED', 'CRITICAL'" in M, '')
 ok('① 지우는 문장 없음 · 재실행 안전', not re.search(r'(?<!ON )\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT (') >= 3, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/agent/agent.controller.ts'); S = rd('src/modules/agent/agent.service.ts'); P = rd('src/modules/agent/agent.provider.ts')
-ok('② API 1개 — GET admin/agent/status · 운영', re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C) == [('Get', 'admin/agent/status')] and "@Roles('ADMIN', 'SUPER')" in C, '')
+_routes = re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C)
+ok('② API — GET admin/agent/status · 운영(v10.109 부터 AI 상담 5개 더함 — test_v1109)', ('Get', 'admin/agent/status') in _routes
+   and set(_routes) <= {('Get', 'admin/agent/status'), ('Get', 'agent/chat/status'), ('Post', 'agent/chat'), ('Post', 'agent/chat/:id/handoff'), ('Get', 'admin/agent/chats'), ('Get', 'admin/agent/chats/:id')}
+   and "@Roles('ADMIN', 'SUPER')" in C, str(_routes))
 ok('② 어댑터 — MOCK · 환경 값 없으면 null(v10.104 부터 CLAUDE 는 키가 있을 때만 — test_v1104)', "env.AGENT_PROVIDER === 'MOCK'" in P and 'return null;' in P
    and ('import Anthropic' not in P or "env.AGENT_PROVIDER === 'CLAUDE' && (env.ANTHROPIC_API_KEY ?? '').length > 20" in P), '')
 ok('② 판단은 DB 함수(fn_agent_allowed · fn_agent_record_usage)', 'fn_agent_allowed($1)' in S and 'fn_agent_record_usage($1, $2, $3, $4, $5)' in S, '')
