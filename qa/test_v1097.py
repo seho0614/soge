@@ -64,7 +64,7 @@ FILES = ['app/page.tsx', 'components/home/HomeView.tsx', 'components/home/Sectio
 # 남기기로 한 한글(자료 · 비교 값) — 그 줄에 이 표시가 있으면 뺌 · docs/155 §2
 KEEP = {'components/gwan/GwanLanding.tsx': ['/[가-힣]$/'], 'components/money/MoneyMain.tsx': ['/[가-힣]$/'], 'components/money/MoneyView.tsx': ["josa === '이'"],
         'components/gwan/GwCard.tsx': ['const CARD_KO'], 'components/gwan/GwBizAxes.tsx': ["path: '/", "'공고'", "'지원'", "'빠른 매칭'"],
-        'components/shop/ShopMain.tsx': ["'특별가격'"], 'app/search/PromptSearch.tsx': ['const eok'], 'components/search/SearchPopup.tsx': ['COND_KEY', "k: '", "x.k !== '등록'"]}
+        'components/shop/ShopMain.tsx': ["'특별가격'"], 'app/search/PromptSearch.tsx': ['const eok', 'const price = '], 'components/search/SearchPopup.tsx': ['COND_KEY', "k: '", "x.k !== '등록'"]}
 
 
 def strip_comments(t):
