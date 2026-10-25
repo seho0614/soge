@@ -28,8 +28,9 @@ I = 'site/src/i18n/'
 IX = rd(I + 'messages/index.ts')
 SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode']; PAGE = ['main', 'search', 'detail', 'request']
 NEW = ['detail', 'consult', 'request', 'refcode']   # 2-3 에서 더한 묶음
-ok('① 묶음 파일 — SHARED 7 · PAGE 4 · 한국어 바탕에 그 언어를 덮음',
-   'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX and 'const PAGE = { main, search, detail, request };' in IX and 'return merge(KO as unknown as Dict, over);' in IX, '')
+_pg = re.search(r'const PAGE = \{([^}]*)\}', IX)   # v10.99 — 뒤 단계에서 PAGE 묶음이 늘어도 통과
+ok('① 묶음 파일 — SHARED 7 · PAGE 4(이상) · 한국어 바탕에 그 언어를 덮음',
+   'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX and _pg and set(PAGE) <= {x.strip() for x in _pg.group(1).split(',')} and 'return merge(KO as unknown as Dict, over);' in IX, '')
 ok('① request.ts — 꺼져 있으면 쿠키를 읽지 않음 · messagesFor', 0 < rd(I + 'request.ts').find('if (info.enabled)') < rd(I + 'request.ts').find('(await cookies())') and 'messagesFor(locale)' in rd(I + 'request.ts'), '')
 ok('① 형식 검사가 묶음까지(global.d.ts — typeof KO)', 'Messages: typeof KO;' in rd(I + 'global.d.ts'), '')
 ok('① 레이아웃은 공통 묶음만 브라우저로', 'messages={pick(messages, GLOBAL_NS)}' in rd('site/src/app/layout.tsx'), '')
