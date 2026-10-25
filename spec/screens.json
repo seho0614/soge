@@ -2966,6 +2966,7 @@
    "nav": "SB-HOM-CMU-010",
    "apis": [
     "GET /community/posts/{id}",
+    "POST /community/posts/{id}/translate",
     "POST /me/community/posts/{id}/comments"
    ]
   },

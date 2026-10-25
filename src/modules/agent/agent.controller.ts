@@ -9,6 +9,7 @@ export class AgentSwitchesDto {
   @ApiProperty({ description: 'agent.chat.enabled' }) chat!: boolean;
   @ApiProperty({ description: 'agent.chat.member_lookup.enabled' }) memberLookup!: boolean;
   @ApiProperty({ description: 'i18n.auto_translate.enabled — 등록 글 자동 번역(v10.104 · D118)' }) translate!: boolean;
+  @ApiProperty({ description: 'i18n.board_on_view — 소개광장 볼 때 번역(v10.105 · D119)' }) board!: boolean;
 }
 export class AgentLimitsDto {
   @ApiProperty() guestDaily!: number;

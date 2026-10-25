@@ -101,6 +101,22 @@ export class I18nService {
     return rows;
   }
 
+  /**
+   * v10.105 — 분류 번호 없이 업종 이름(글자)만 있는 줄(업체 대표 업종 · 성사 사례 스냅숏 등)에 분류 이름 번역을 얹음.
+   *   같은 이름의 분류가 여럿이면 번역이 있는 것 하나를 씀. 한국어 · 다국어 꺼짐이면 아무것도 하지 않음.
+   */
+  async overlayCategoryNames<T extends Record<string, any>>(rows: T[], key: string): Promise<T[]> {
+    if (!rows.length || !(await this.activeLang())) return rows;
+    const names = [...new Set(rows.map((r) => r[key]).filter((x): x is string => typeof x === 'string' && !!x))];
+    if (!names.length) return rows;
+    const cats = await this.db.query<{ id: string; name: string }>(`SELECT id::text, name FROM categories WHERE name = ANY($1::text[])`, [names]);
+    const byId = cats.map((c) => ({ name: c.name, id: c.id, name2: c.name }));
+    await this.overlay(byId, 'CATEGORY', (c) => c.id, { name2: 'name' });
+    const tr = new Map(byId.filter((c) => c.name2 !== c.name).map((c) => [c.name, c.name2]));
+    for (const r of rows) { const t = tr.get(r[key]); if (t) (r as any)[key] = t; }
+    return rows;
+  }
+
   /** 손님 화면 — 다국어 켜짐 여부 · 켜진 언어(꺼져 있으면 한국어만) · v10.95 */
   async langs() {
     const enabled = (await this.setting('i18n.enabled')) === 'on';

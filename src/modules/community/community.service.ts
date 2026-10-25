@@ -3,6 +3,8 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { expandKeyword } from '../../core/search-expand';
+import { I18nService } from '../i18n/i18n.service';
+import { BoardTranslateService } from '../i18n/board-translate.service';
 
 /**
  * 소개광장.
@@ -52,7 +54,7 @@ function withAuthor<T extends { _name?: string | null; _staff?: boolean }>(r: T)
 
 @Injectable()
 export class CommunityService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly board3: BoardTranslateService) {}
   private get me() { return RequestCtx.actorId(); }
 
   async posts(board?: string, limit?: number) {
@@ -65,7 +67,8 @@ export class CommunityService {
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
-              (p.state = 'PENDING') AS "pendingMine"
+              (p.state = 'PENDING') AS "pendingMine",
+              (p.author_id = $2::uuid) AS _mine
          FROM posts p
          LEFT JOIN accounts a ON a.id = p.author_id
         WHERE (($1::text IS NULL AND p.board <> 'FOOD') OR p.board = $1)
@@ -73,6 +76,7 @@ export class CommunityService {
             OR (p.state = 'PENDING' AND p.author_id = $2::uuid))
         ORDER BY p.is_pinned DESC, p.created_at DESC
         LIMIT $3`, [board ?? null, this.me ?? null, n]);
+    await this.overlayTitles(rows);   // v10.105 (3-3) — 저장된 기계 번역 제목(내 글은 원문)
     return rows.map(withAuthor);
   }
 
@@ -113,7 +117,8 @@ export class CommunityService {
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
-              (p.state = 'PENDING') AS "pendingMine"
+              (p.state = 'PENDING') AS "pendingMine",
+              (p.author_id = $2::uuid) AS _mine
          FROM posts p
          LEFT JOIN accounts a ON a.id = p.author_id
         WHERE (($1::text IS NULL AND p.board <> 'FOOD') OR p.board = $1)
@@ -122,10 +127,11 @@ export class CommunityService {
           AND fn_search_match(p.title, p.body, $3)
         ORDER BY p.is_pinned DESC, p.created_at DESC, p.id
         LIMIT $4 OFFSET $5`, [...args, size, (page - 1) * size]);
+    await this.overlayTitles(rows);   // v10.105 (3-3) — 저장된 기계 번역 제목(찾기는 원문으로 했음 · 내 글은 원문)
     return { items: rows.map(withAuthor), total, page, size, pages: Math.ceil(total / size) };
   }
 
-  async post(id: string) {
+  async post(id: string, orig = false) {
     const [p] = await this.db.query(
       `SELECT p.id, p.board, p.title, p.body, p.state, p.views,
               p.classified_by AS "classifiedBy", p.classify_terms AS "classifyTerms",
@@ -166,8 +172,23 @@ export class CommunityService {
       await this.db.query(`UPDATE posts SET views = views + 1 WHERE id = $1`, [id]);
     }
 
-    return { ok: true, ...post, comments: await this.commentsOf(id) };
+    /* v10.105 (3-3) — 저장된 기계 번역(「기계 번역」 표시 · translated) · 글쓴이 본인에게는 원문 · 「번역 보기」를 보여 줄지(i18nAvailable) */
+    if (!p.mine && !orig) await this.i18n.overlayOne(post, 'POST', (r: any) => String(r.id), { title: 'title', body: 'body' }, 'translated');
+    const comments = await this.commentsOf(id);
+    if (!orig) await this.i18n.overlay(comments.filter((c: any) => !c.mine && !c.hidden), 'COMMENT', (c: any) => String(c.id), { body: 'body' }, 'translated');
+    const lang = await this.i18n.activeLang();
+    const i18nAvailable = !!lang && !p.mine && !orig && p.state === 'PUBLISHED' && await this.board3.available() && (await this.board3.pending(id, lang)) > 0;   // 남은 칸이 있을 때만 「번역 보기」
+    return { ok: true, ...post, comments, ...(lang ? { i18nAvailable } : {}) };
   }
+
+  /** v10.105 (3-3) — 목록 제목에 저장된 기계 번역(내 글은 원문) · 숨긴 _mine 은 지움 */
+  private async overlayTitles(rows: any[]) {
+    try { await this.i18n.overlay(rows.filter((r) => !r._mine), 'POST', (r: any) => String(r.id), { title: 'title' }); }
+    finally { for (const r of rows) delete r._mine; }
+  }
+
+  /** v10.105 (3-3) — 「번역 보기」 */
+  translate(id: string, visitorKey?: string) { return this.board3.translatePost(id, visitorKey); }
 
   /** 글에 달린 댓글 — 작성자 이름은 첫 글자만(G-146). 지운 댓글은 뺍니다.
    *  v10.75 — 감춘 댓글은 본문을 내보내지 않습니다(자리만 · 화면은 「가려진 댓글」). 감춘 글과 같습니다 — 전에는 화면만 가리고 API 로는 본문이 나갔습니다.

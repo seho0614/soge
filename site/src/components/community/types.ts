@@ -18,6 +18,8 @@ export interface PostComment {
   id: string; parentId: string | null; body: string | null; createdAt: string; author: string; hidden: boolean;
   /** v10.80 — 내 댓글(신고 단추 숨김) · 가린 까닭(REPORT 신고 3건 · ADMIN 운영자) */
   mine?: boolean; hiddenBy?: 'REPORT' | 'ADMIN' | null;
+  /** v10.105 (3-3) — 기계 번역이 얹힘 */
+  translated?: boolean;
 }
 
 /** GET /community/posts/{id} — 없으면 ok:false, 가려진/검수 중인 남의 글은 hidden/pending 만, 지운 글은 deleted 와 댓글만 옵니다(v10.26 · G-173) */
@@ -28,6 +30,8 @@ export interface PostDetail {
   createdAt?: string; author?: string; mine?: boolean;
   hidden?: boolean; pending?: boolean; deleted?: boolean;
   comments?: PostComment[];
+  /** v10.105 (3-3) — 기계 번역이 얹힘 · 「번역 보기」를 보여 줄지 */
+  translated?: boolean; i18nAvailable?: boolean;
 }
 
 export interface ClassifyResult {

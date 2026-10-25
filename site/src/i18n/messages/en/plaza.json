@@ -485,5 +485,13 @@
       }
     },
     "guideMore": "More in the fraud prevention guide ›"
+  },
+  "mt": {
+    "label": "Machine translation",
+    "showOrig": "Show original",
+    "showTr": "Show translation",
+    "translate": "Translate",
+    "busy": "Translating…",
+    "fail": "Could not translate. Please try again later."
   }
 }

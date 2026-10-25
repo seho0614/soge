@@ -4,6 +4,7 @@ import { apiGetPersonal, ApiFailure } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
 import { Msgs } from '@/i18n/Msgs';
+import { TranslateButton } from '@/components/community/TranslateButton';
 import { type PostDetail, type PostComment } from '@/components/community/types';
 import { BoardBadge, PlazaHero, PlazaTabs, dot } from '@/components/community/Plaza';
 import { CommentForm, ReplyToggle } from '@/components/community/CommentForm';
@@ -28,10 +29,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export default async function CommunityPostPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ posted?: string; saved?: string }>;
+  searchParams: Promise<{ posted?: string; saved?: string; orig?: string }>;
 }) {
   const { id } = await params;
-  const { posted, saved } = await searchParams;
+  const { posted, saved, orig } = await searchParams;
   const principal = await me();
   const t = await getTranslations('plaza');
 
@@ -40,7 +41,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
   if (!UUID.test(id)) {
     d = { ok: false, note: t('post.noSuch') };
   } else {
-    d = await apiGetPersonal<PostDetail>(`/community/posts/${id}`).catch((e) => {
+    d = await apiGetPersonal<PostDetail>(`/community/posts/${id}${orig === '1' ? '?orig=1' : ''}`).catch((e) => {   // v10.105 — 「원문 보기」
       if (e instanceof ApiFailure && e.status < 500) failMsg = e.body.message;
       return null;
     });
@@ -78,7 +79,8 @@ export default async function CommunityPostPage({ params, searchParams }: {
   const Cmt = ({ c, re }: { c: PostComment; re?: boolean }) => (
     <div className={'cmu-cmt' + (re ? ' re' : '')}>
       <b>{c.author}</b> <span className="dim">{dot(c.createdAt)}</span>
-      <p>{c.hidden ? <span className="dim">{c.hiddenBy === 'REPORT' ? t('comment.hiddenReport') : t('comment.hiddenAdmin')}</span> : c.body}</p>
+      <p>{c.hidden ? <span className="dim">{c.hiddenBy === 'REPORT' ? t('comment.hiddenReport') : t('comment.hiddenAdmin')}</span> : c.body}
+        {c.translated && <span className="dim" data-mt=""> · {t('mt.label')}</span>}</p>
       {/* v10.80 — 남의 공개 댓글은 신고(본인인증 회원 · 서로 다른 3명이면 가려짐 · D110) */}
       {loggedIn && !c.mine && !c.hidden && <a className="dim cmu-rpt" href={`/report/comment/${c.id}`} data-comment-report="">{t('comment.report')}</a>}
     </div>
@@ -125,6 +127,11 @@ export default async function CommunityPostPage({ params, searchParams }: {
           </p>
         </header>
         {d.state === 'HIDDEN' && d.hiddenReason && <div className="notice warn"><b>{t('post.hiddenReason')}</b> {d.hiddenReason}</div>}
+        {/* v10.105 (다국어 3-3) — 기계 번역 표시 · 원문 보기 / 번역 보기(누를 때만 번역 · 다국어가 꺼져 있거나 한국어면 나오지 않음) */}
+        {d.translated && <p className="plz-meta" data-mt=""><span>{t('mt.label')}</span><Link href={`/community/${d.id}?orig=1`}>{t('mt.showOrig')}</Link></p>}
+        {orig === '1' && <p className="plz-meta" data-mt-orig=""><Link href={`/community/${d.id}`}>{t('mt.showTr')}</Link></p>}
+        {/* 아직 번역 안 된 칸(나중에 달린 댓글 포함)이 있을 때만 */}
+        {orig !== '1' && d.i18nAvailable && <TranslateButton postId={d.id!} />}
         <p className="doc-body">{d.body}</p>
       </article>
       {d.board === 'REVIEW' && (

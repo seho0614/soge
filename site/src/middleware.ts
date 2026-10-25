@@ -138,7 +138,8 @@ export async function middleware(req: NextRequest) {
      *    쿠키가 없으면 여기서 만들어 응답에 심고, 그 값을 X-Visitor-Key 로 API 에 넘깁니다.
      *    브라우저가 보낸 X-Visitor-Key 는 믿지 않고 **쿠키 값으로 덮어씁니다** — 헤더만 바꿔 여러 번 투표하지 못하게. */
     let newVisitor: string | null = null;
-    if (req.nextUrl.pathname.startsWith('/api/v1/community/polls')) {
+    /*    v10.105 (다국어 3-3) — 소개광장 「번역 보기」도 같은 방식(비회원 하루 횟수를 방문자 쿠키로 셈 · 머리말을 바꿔 한도를 피하지 못하게) */
+    if (req.nextUrl.pathname.startsWith('/api/v1/community/polls') || /^\/api\/v1\/community\/posts\/[0-9a-f-]{36}\/translate$/i.test(req.nextUrl.pathname)) {
       let visitor = req.cookies.get(VISITOR)?.value;
       if (!visitor || !VISITOR_RE.test(visitor)) { visitor = crypto.randomUUID(); newVisitor = visitor; }
       headers.set('x-visitor-key', visitor);

@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ErrorDto } from '../../common/dto/common.dto';
 import { CommunityService } from './community.service';
 import { CreatePostDto, UpdatePostDto, CreateCommentDto, CommunityClassifyDto } from './community.dto';
 import { Roles } from '../../core/auth';
@@ -16,6 +17,14 @@ import { Audit } from '../../core/audit.interceptor';
  * 우회하는 경로가 생깁니다.
  *   ① 금칙어  ② 링크 제한  ③ 도배  ④ 첫 글 검수  ⑤ 신고
  */
+export class BoardTranslateOkDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ description: '이번에 번역해 저장한 칸 수' }) translated!: number;
+  @ApiPropertyOptional({ description: '금칙어 · 원문에 없는 연락처로 내보내지 않은 칸 수(원문 그대로)' }) held?: number;
+  @ApiProperty({ description: '이미 번역되어 있던 칸 수' }) skipped!: number;
+  @ApiPropertyOptional() note?: string;
+}
+
 @ApiTags('COMMUNITY')
 @Controller('api/v1')
 export class CommunityController {
@@ -52,7 +61,15 @@ export class CommunityController {
 
   @Get('community/posts/:id')
   @ApiOperation({ summary: '글 상세 · 댓글' })
-  post(@Param('id') id: string) { return this.svc.post(id); }
+  @ApiQuery({ name: 'orig', required: false, description: '1 이면 번역을 얹지 않고 원문(v10.105 · 「원문 보기」)' })
+  post(@Param('id') id: string, @Query('orig') orig?: string) { return this.svc.post(id, orig === '1'); }
+
+  @Post('community/posts/:id/translate')
+  @ApiOperation({ summary: '번역 보기 (v10.105 · 다국어 3-3)', description: '화면 언어로 글 · 보이는 댓글을 번역해 저장합니다(다음 사람은 비용 없이). 스위치 i18n.board_on_view · AI 전체 · 월 상한 · 하루 횟수(회원 · 방문자). 금칙어에 걸린 칸은 원문 그대로.' })
+  @ApiHeader({ name: 'X-Visitor-Key', required: false, description: '비회원 — 사이트 방문자 쿠키(sgb_visitor) 값(하루 횟수)' })
+  @ApiOkResponse({ type: () => BoardTranslateOkDto })
+  @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto }) @ApiResponse({ status: 422, type: ErrorDto })
+  translate(@Param('id') id: string, @Headers('x-visitor-key') visitorKey?: string) { return this.svc.translate(id, visitorKey); }
 
   @Post('community/classify')
   @ApiOperation({

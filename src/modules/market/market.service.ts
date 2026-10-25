@@ -4,6 +4,7 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
 import { RequestCtx } from '../../core/request-context';
 import { storageFromEnv } from '../file/storage';
 import { SearchService } from '../search/search.service';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * v10.31 (w2 · 10/10 「시안 기준」) — 관 화면(소개장터 · 안심소개 · 소개창업)의 시안 구역 중 서버 자료가 없던 것.
@@ -20,7 +21,7 @@ import { SearchService } from '../search/search.service';
  */
 @Injectable()
 export class MarketService {
-  constructor(private readonly db: DatabaseService, private readonly search: SearchService) {}
+  constructor(private readonly db: DatabaseService, private readonly search: SearchService, private readonly i18n: I18nService) {}
 
   /* ── 지역으로 찾기 ───────────────────────────────────────────────── */
   /** 시 · 도 17곳과 그 관의 게시 매물 수. 시안 순서(서울 · 경기 · 인천 · 대전 · 대구 · 부산 · 울산 · 광주 · 제주)가 먼저이고 나머지는 「기타 지역」 */
@@ -64,7 +65,7 @@ export class MarketService {
   async requests(q: { gwanCode?: string; kind?: string; regionCode?: string; limit?: number }) {
     const lim = Math.min(Math.max(Number(q.limit) || 4, 1), 30);
     const rows = await this.db.query(
-      `SELECT r.id, r.gwan_code AS "gwanCode", r.title, c.name AS "categoryName",
+      `SELECT r.id, r.gwan_code AS "gwanCode", r.title, c.name AS "categoryName", r.category_id::text AS "_cid",
               r.budget_min AS "budgetMin", r.budget_max AS "budgetMax", r.offered_fee AS "offeredFee",
               r.created_at AS "createdAt", r.kind, kl.label AS "kindLabel",
               coalesce(rg.sido, rb.sido) AS sido,
@@ -90,6 +91,9 @@ export class MarketService {
               (SELECT count(*)::int FROM requests r WHERE r.status = 'PUBLISHED' AND r.kind = k.code
                   AND ($1::text IS NULL OR r.gwan_code = $1)) AS n
          FROM code_labels k WHERE k.domain = 'request.kind' AND k.is_active ORDER BY k.sort_order`, [q.gwanCode ?? null]);
+    /* v10.105 — 화면 언어(3-1 업종 이름 · 3-2 요청 제목 번역) · 숨긴 _cid 는 지움 */
+    await this.i18n.overlayBy(rows, 'CATEGORY', '_cid', { categoryName: 'name' });
+    await this.i18n.overlay(rows, 'REQUEST', (r: any) => String(r.id), { title: 'title' });
     return { items: rows, kinds };
   }
 
@@ -243,7 +247,8 @@ export class MarketService {
 
   /** 소개장터 메인 「최근 실제 연결 사례」 */
   async recentCases(gwanCode?: string, limit = 3) {
-    return { items: await this.recentRows(gwanCode ?? null, Math.min(Math.max(Number(limit) || 3, 1), 12)) };
+    const items = await this.recentRows(gwanCode ?? null, Math.min(Math.max(Number(limit) || 3, 1), 12));
+    return { items: await this.i18n.overlayCategoryNames(items, 'categoryName') };   // v10.105 — 업종 이름을 화면 언어로
   }
 
   /* ── 베스트매칭 ───────────────────────────────────────────────────── */
@@ -376,15 +381,16 @@ export class MarketService {
          THEN '/api/v1/listings/' || s.top_listing_id || '/photos/0' END AS "thumbUrl"`;
 
   /** 「서비스 업체 추천」 — 신뢰도 · 평점 · 성사 순(광고 아님 · 돈으로 순서를 사지 않습니다) */
-  suppliers(q: { gwanCode?: string; regionCode?: string; categoryId?: string; limit?: number }) {
+  async suppliers(q: { gwanCode?: string; regionCode?: string; categoryId?: string; limit?: number }) {
     const lim = Math.min(Math.max(Number(q.limit) || 4, 1), 40);
-    return this.db.query(
+    const rows = await this.db.query(
       `SELECT ${this.SUP} FROM v_suppliers s
         WHERE ($1::text IS NULL OR s.gwan_code = $1)
           AND ($2::text IS NULL OR left(s.sido_code, 2) = left($2, 2))
           AND ($3::uuid IS NULL OR $3::uuid = ANY (s.category_ids))
         ORDER BY s.trust_score DESC, s.rating DESC NULLS LAST, s.confirmed_deals DESC, s.last_published_at DESC, s.supplier_id
         LIMIT $4`, [q.gwanCode ?? null, q.regionCode ?? null, q.categoryId ?? null, lim]);
+    return this.i18n.overlayCategoryNames(rows, 'mainCategory');   // v10.105 — 대표 업종 이름을 화면 언어로
   }
 
   /**
@@ -439,6 +445,7 @@ export class MarketService {
       const { loc, cat, win, spd, trust, ...card } = r; void loc; void cat; void win; void spd; void trust;
       return { ...card, score: total, parts };
     }).sort((a: any, b: any) => b.score - a.score || Number(b.trustScore) - Number(a.trustScore)).slice(0, lim);
+    await this.i18n.overlayCategoryNames(scored, 'mainCategory');   // v10.105 — 대표 업종 이름을 화면 언어로
     return {
       items: scored, weights, personal, engine: 'WEIGHTED_SUM',
       note: personal
