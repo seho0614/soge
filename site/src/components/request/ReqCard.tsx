@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { won } from '@/lib/format';
 import { useFmt } from '@/lib/useFmt';
 import type { Fmt } from '@/lib/fmtBind';
+import { EN_WORDS } from '@/lib/fmt';
 import { useTranslations } from 'next-intl';
 
 export interface ReqRow {
@@ -23,12 +24,13 @@ export const GCLS: Record<string, string> = { MNY: 'm', MAL: 'l', BIZ: 'b', HLT:
 /*  v10.102 (2-5c) — fm(useFmt · getFmt)을 넘기면 한국어 밖에서는 억 · 만 줄임 없이 전체 금액(₩1,200,000)과 영어 글로. 넘기지 않거나 한국어면 예전 글자 그대로 */
 export function budgetText(min: number | null, max: number | null, open = true, fm?: Fmt): string {
   if (fm && !fm.ko) {
-    if (!open) return 'Budget hidden';
+    /* v10.107 — 영어 글은 lib/fmt.ts 의 언어 표(EN_WORDS)에 모음(「Negotiable」과 같은 곳 · 언어가 늘면 그 표에) */
+    if (!open) return EN_WORDS.budgetHidden;
     const w = (n: number) => fm.won(n);
     if (min != null && max != null) return min === max ? w(min) : `${w(min)} ~ ${w(max)}`;
-    if (max != null) return `Up to ${w(max)}`;
-    if (min != null) return `${w(min)} or more`;
-    return 'Budget negotiable';
+    if (max != null) return EN_WORDS.upTo(w(max));
+    if (min != null) return EN_WORDS.orMore(w(min));
+    return EN_WORDS.budgetNego;
   }
   if (!open) return '예산 비공개';
   const f = (n: number) => (n >= 100_000_000 ? `${+(n / 100_000_000).toFixed(1)}억` : n >= 10_000 ? `${Math.round(n / 10_000).toLocaleString('ko-KR')}만원` : won(n));

@@ -117,6 +117,23 @@ export class I18nService {
     return rows;
   }
 
+  private catNames = new Map<string, { at: number; map: Map<string, string> }>();
+  /**
+   * v10.107 — 업종(분류) 이름 → 그 언어 번역 표(승인 · 자동 승인 · 낡지 않은 것만) · 언어마다 60초 기억.
+   *   응답 출구(CategoryNameInterceptor)가 categoryName 같은 칸을 바꿀 때 씁니다. 같은 이름의 분류가 여럿이면 번역이 있는 것 하나.
+   */
+  async categoryNameMap(lang: string): Promise<Map<string, string>> {
+    const c = this.catNames.get(lang);
+    if (c && Date.now() - c.at < 60_000) return c.map;
+    const rows = await this.db.query<{ name: string; text: string }>(
+      `SELECT c.name, t.text FROM categories c
+         JOIN v_translation_state t ON t.target_type = 'CATEGORY' AND t.target_id = c.id::text AND t.field = 'name' AND t.lang = $1
+        WHERE t.status = ANY($2::text[]) AND NOT t.is_stale AND NOT t.source_missing`, [lang, liveOf('CATEGORY')]);
+    const map = new Map(rows.filter((r) => r.text && r.text !== r.name).map((r) => [r.name, r.text]));
+    this.catNames.set(lang, { at: Date.now(), map });
+    return map;
+  }
+
   /** 손님 화면 — 다국어 켜짐 여부 · 켜진 언어(꺼져 있으면 한국어만) · v10.95 */
   async langs() {
     const enabled = (await this.setting('i18n.enabled')) === 'on';

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { connection } from 'next/server';
 import { DocTitle } from '@/components/common/DocTitle';
 
 /**
@@ -11,8 +12,10 @@ import { DocTitle } from '@/components/common/DocTitle';
  * 창 제목은 화면이 뜬 뒤에 바꿉니다 — 이 파일의 metadata 내보내기는 없는 주소 화면에 쓰이지 않고(제목이 「소개뱅크」로 남음),
  * <title> 을 본문에 두면 머리에 제목이 두 개가 됩니다.
  * v10.101 (2-5b · 다국어) — 서버 부품으로 바꿔 사전(join.notFound)을 읽고, 창 제목만 작은 브라우저 부품(DocTitle)이 바꿉니다.
+ * v10.107 — connection() 으로 요청마다 그림. 전에는 빌드 때 한국어로 한 번 그려 두어(정적) 영어 화면에서도 한국어가 나왔습니다.
  */
 export default async function NotFound() {
+  await connection();
   const t = await getTranslations('join.notFound');
   return (
     <article className="doc" data-notfound>

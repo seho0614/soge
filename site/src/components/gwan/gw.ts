@@ -72,10 +72,22 @@ const PHOTO_MAP: [string, string][] = [
   ['의류', 'cloth'], ['패션', 'cloth'], ['잡화', 'cloth'],
   ['태양광', 'solar'], ['에너지', 'solar'],
   ['인수', 'mac'], ['합병', 'mac'], ['세무', 'mac'], ['법무', 'mac'], ['지분', 'mac'],
+  /* v10.107 — 영어 화면: 업종 이름이 번역되어 오면(docs/166) 한국어 낱말이 없어 모두 shop 이 되던 것. 한국어 낱말 뒤에 · 대소문자 무시 */
+  ['used car', 'car'], ['car', 'car'], ['vehicle', 'car'], ['motorcycle', 'car'], ['truck', 'truck'], ['freight', 'truck'], ['logistic', 'truck'],
+  ['appliance', 'mac'], ['electronic', 'mac'], ['digital', 'mac'], ['equipment', 'cnc'], ['parts', 'cnc'], ['machine', 'cnc'], ['facilit', 'fridge'],
+  ['interior', 'int'], ['office', 'int'], ['furniture', 'int'], ['remodel', 'int'], ['lease', 'int'], ['rental', 'int'],
+  ['apartment', 'apt'], ['housing', 'apt'], ['real estate', 'apt'], ['building', 'shop'], ['store', 'shop'], ['shop', 'shop'],
+  ['land', 'land'], ['factory', 'land'], ['distributor', 'land'],
+  ['cafe', 'cafe'], ['café', 'cafe'], ['unmanned', 'cafe'], ['franchise', 'cafe'], ['startup', 'cafe'],
+  ['restaurant', 'bunsik'], ['dining', 'bunsik'], ['snack', 'bunsik'], ['delivery', 'bunsik'],
+  ['ingredient', 'fruit'], ['agri', 'fruit'], ['food', 'fruit'], ['produce', 'fruit'],
+  ['clothing', 'cloth'], ['apparel', 'cloth'], ['fashion', 'cloth'], ['accessor', 'cloth'],
+  ['solar', 'solar'], ['energy', 'solar'],
+  ['acquisition', 'mac'], ['merger', 'mac'], ['m&a', 'mac'], ['tax', 'mac'], ['legal', 'mac'], ['equity', 'mac'],
 ];
 
 export function photoKey(categoryName: string | null | undefined): string {
-  const t = String(categoryName ?? '');
+  const t = String(categoryName ?? '').toLowerCase();
   for (const [w, k] of PHOTO_MAP) if (t.includes(w)) return k;
   return 'shop';
 }

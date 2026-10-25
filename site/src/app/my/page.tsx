@@ -7,6 +7,7 @@ import { ymdKst } from '@/lib/format';
 import type { MyHome } from '@/components/my/MyFrame';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.home'))('title') };
@@ -31,6 +32,7 @@ export default async function MyPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.home');
+  const f = await getFmt();   // v10.107 — 누적 수익: 한국어 「원」 · 다른 언어 「₩1,200,000」
   const h = await apiGetPersonal<Home>('/me/home').catch(() => null);
 
   /* v10.37 (D095 · P2P) — 사업자 인증은 막힌 단계가 아닙니다(사업자로 소개비를 받을 때만) */
@@ -50,7 +52,7 @@ export default async function MyPage() {
     { t: t('tiles.open'), v: n('openDeals'),     u: t('unitCount'), href: '/my/deals' },
     { t: t('tiles.closed'),         v: n('closedDeals'),   u: t('unitCount'), href: '/my/settlement/history' },
     { t: t('tiles.pending'),    v: n('settlePending'), u: t('unitCount'), href: '/my/settlement' },
-    { t: t('tiles.earned'),    v: n('earned'),        u: t('unitWon'), href: '/my/settlement/history' },
+    { t: t('tiles.earned'),    v: n('earned'),        u: t('unitWon'), href: '/my/settlement/history', money: true },
   ];
   const zero = !!h && tiles.every((x) => !x.v);
 
@@ -118,8 +120,8 @@ export default async function MyPage() {
           {tiles.map((x) => (
             <Link key={x.t} className="my-tile" href={x.href}>
               <span className="my-tl">{x.t}</span>
-              <b>{(x.v ?? 0).toLocaleString('ko-KR')}</b>
-              <span className="my-tu">{x.u}</span>
+              <b>{'money' in x && !f.ko ? f.won(x.v ?? 0) : (x.v ?? 0).toLocaleString('ko-KR')}</b>
+              {!('money' in x && !f.ko) && <span className="my-tu">{x.u}</span>}
             </Link>
           ))}
         </div>

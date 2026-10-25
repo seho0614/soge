@@ -7,6 +7,7 @@ import { ContextMiddleware } from './core/context.middleware';
 import { AuthGuard } from './core/auth';
 import { AuditInterceptor } from './core/audit.interceptor';
 import { PiiAuditInterceptor } from './core/pii-audit.interceptor';
+import { CategoryNameInterceptor } from './modules/i18n/category-name.interceptor';
 
 import { AttributionEngine } from './engines/attribution/attribution.engine';
 import { ExposureEngine } from './engines/exposure/exposure.engine';
@@ -345,6 +346,7 @@ import { LeadService } from './modules/lead/lead.service';
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PiiAuditInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: CategoryNameInterceptor },   // v10.107 업종 이름을 화면 언어로(docs/166)
   ],
   exports: [DatabaseService, AttributionEngine, ExposureEngine],
 })

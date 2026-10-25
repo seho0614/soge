@@ -9,7 +9,11 @@
 export type Loc = string;
 const isKo = (loc: Loc) => loc === 'ko';
 
-const EN = { nego: 'Negotiable', now: 'just now', h: (n: number) => `${n}h ago`, m: (n: number) => `${n} min ago`, d: (n: number) => `${n}d ago` };
+const EN = { nego: 'Negotiable',
+  /* v10.107 — 요청 예산 글(ReqCard budgetText) */
+  budgetHidden: 'Budget hidden', budgetNego: 'Budget negotiable', upTo: (w: string) => `Up to ${w}`, orMore: (w: string) => `${w} or more`,
+  now: 'just now', h: (n: number) => `${n}h ago`, m: (n: number) => `${n} min ago`, d: (n: number) => `${n}d ago` };
+export const EN_WORDS = EN;
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** 숫자만(천 단위 쉼표) — ko · en 모양이 같습니다 */
