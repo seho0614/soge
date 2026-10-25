@@ -35,11 +35,12 @@ ok('① 허용 함수 — 꺼짐 · 통로 · 상한 0 · 상한 닿음', all(x 
 ok('① 사용량 함수 — 상한에 닿으면 agent.enabled off · 경보 AGENT_CAP_REACHED', "SET value = 'off'" in M and "'AGENT_CAP_REACHED', 'CRITICAL'" in M, '')
 ok('① 지우는 문장 없음 · 재실행 안전', not re.search(r'(?<!ON )\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT (') >= 3, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/agent/agent.controller.ts'); S = rd('src/modules/agent/agent.service.ts'); P = rd('src/modules/agent/agent.provider.ts')
 ok('② API 1개 — GET admin/agent/status · 운영', re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C) == [('Get', 'admin/agent/status')] and "@Roles('ADMIN', 'SUPER')" in C, '')
-ok('② 어댑터 — MOCK 만 · 외부 SDK 없음 · 환경 값 없으면 null', "env.AGENT_PROVIDER === 'MOCK'" in P and '@anthropic-ai/sdk\'' not in P.replace('`@anthropic-ai/sdk`', '') and 'import Anthropic' not in P, '')
+ok('② 어댑터 — MOCK · 환경 값 없으면 null(v10.104 부터 CLAUDE 는 키가 있을 때만 — test_v1104)', "env.AGENT_PROVIDER === 'MOCK'" in P and 'return null;' in P
+   and ('import Anthropic' not in P or "env.AGENT_PROVIDER === 'CLAUDE' && (env.ANTHROPIC_API_KEY ?? '').length > 20" in P), '')
 ok('② 판단은 DB 함수(fn_agent_allowed · fn_agent_record_usage)', 'fn_agent_allowed($1)' in S and 'fn_agent_record_usage($1, $2, $3, $4, $5)' in S, '')
 ok('② 승인 · 반려 · 상태 바꾸기 없음(ai-agent #7)', not re.search(r"UPDATE\s+(review_items|listings|requests|deals|settlements)", S + C), '')
 app = rd('src/app.module.ts')
@@ -104,8 +105,8 @@ if API:
     login = lambda e: call('POST', '/auth/login', body={'email': e, 'password': 'sgb-dev-1234'})[1]['accessToken']
     ADM, MEM = login('admin@x.com'), login(os.environ.get('MEMBER', 'person@x.com'))
     s1, j = call('GET', '/admin/agent/status', ADM)
-    ok('④ 상태 200 · 꺼짐 · 상한 0 · 통로 2개 모두 막힘 · 요금표 3', s1 == 200 and j['enabled'] is False and j['capUsd'] == '0'
-       and len(j['channels']) == 2 and all(not c['ok'] for c in j['channels']) and len(j['prices']) == 3, f'{s1}')
+    ok('④ 상태 200 · 꺼짐 · 상한 0 · 통로 2개(v10.104 부터 번역 더해 3개) 모두 막힘 · 요금표 3', s1 == 200 and j['enabled'] is False and j['capUsd'] == '0'
+       and len(j['channels']) in (2, 3) and all(not c['ok'] for c in j['channels']) and len(j['prices']) == 3, f'{s1}')
     s2, _ = call('GET', '/admin/agent/status', MEM)
     ok('④ 회원 403', s2 == 403, f'{s2}')
 

@@ -118,6 +118,10 @@ services:
       KAKAO_LOCAL_BASE: ${KAKAO_LOCAL_BASE:-}
       # v10.49 오늘의 날씨(docs/101) — 보통은 비워 두고 운영 화면 › 외부 연동 › 날씨 키에서 넣습니다(암호화 저장)
       KMA_SERVICE_KEY: ${KMA_SERVICE_KEY:-}
+      # v10.104 AI 엔진(docs/162) — 보통은 비워 둠(아무것도 부르지 않음). 시험은 실행할 때 AGENT_PROVIDER=MOCK(밖으로 안 나감).
+      #   CLAUDE 는 ANTHROPIC_API_KEY 와 함께 — 키는 .env 에만(저장소 · 대화에 남기지 않음)
+      AGENT_PROVIDER: ${AGENT_PROVIDER:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports: ["${API_PORT:-3000}:3000"]
     restart: unless-stopped
 
