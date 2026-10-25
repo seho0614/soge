@@ -6,12 +6,14 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
 import { publicAuthor } from '../community/community.service';
 import { RequestCtx } from '../../core/request-context';
 import { clampLimit } from '../../core/pagination';
+import { I18nService } from '../i18n/i18n.service';
 
 @Injectable()
 export class RequestService {
   constructor(
     private readonly db: DatabaseService,
     private readonly reviews: ReviewRepository,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(input: Record<string, unknown>) {
@@ -55,13 +57,13 @@ export class RequestService {
    *         예상 소개비 · 제안 n건 · 공개 범위. 30일이 지나 마감된 요청(closes_at 지남)은 빠집니다.
    *   공개 범위(visibility)가 회원 · 인증 회원인 요청은 목록에 제목 · 관 · 업종 · D-day 까지만 보이고 내용 · 지역 · 예산은 가립니다(로그인 안 한 사람에게).
    */
-  list(q: { gwanCode?: string; limit?: number; q?: string; closing?: boolean; sort?: string }) {
+  async list(q: { gwanCode?: string; limit?: number; q?: string; closing?: boolean; sort?: string }) {
     const actor = RequestCtx.actorId();
     const kw = (q.q ?? '').trim().slice(0, 50);
     const order = q.sort === 'RECENT' ? 'r.created_at DESC'
       : q.sort === 'FEE' ? 'r.offered_fee DESC NULLS LAST, r.created_at DESC'
       : 'r.closes_at ASC NULLS LAST, r.created_at DESC';
-    return this.db.query(
+    const rows = await this.db.query<Record<string, unknown>>(
       `SELECT r.id, r.gwan_code AS "gwanCode", r.title, c.name AS "categoryName",
               CASE WHEN r.visibility = 'ALL' OR $5::uuid IS NOT NULL THEN left(r.body, 120) END AS "summary",
               CASE WHEN r.visibility = 'ALL' OR $5::uuid IS NOT NULL THEN r.region END AS "region",
@@ -75,7 +77,8 @@ export class RequestService {
                    ELSE greatest(0, ceil(extract(epoch FROM (r.closes_at - now())) / 86400))::int END AS "dday",
               r.created_at AS "createdAt",   /* v10.21 (G-128) — 화면의 「등록」이 이 값을 씁니다. 없어서 빈 칸으로 나왔습니다 */
               (SELECT label FROM code_labels WHERE domain='request.status' AND code=r.status) AS "statusLabel",
-              (SELECT count(*)::int FROM request_proposals p WHERE p.request_id = r.id) AS "proposalCount"
+              (SELECT count(*)::int FROM request_proposals p WHERE p.request_id = r.id) AS "proposalCount",
+              r.category_id::text AS "_cid"
          FROM requests r LEFT JOIN categories c ON c.id = r.category_id
         WHERE r.status = 'PUBLISHED' AND ($1::text IS NULL OR r.gwan_code = $1)
           AND (r.closes_at IS NULL OR r.closes_at > now())
@@ -84,6 +87,8 @@ export class RequestService {
           AND (NOT $4 OR r.closes_at <= now() + interval '7 days')
         ORDER BY ${order} LIMIT $2`,
       [q.gwanCode ?? null, clampLimit(q.limit), kw.toLowerCase(), !!q.closing, actor ?? null]);
+    /* v10.103 (3-1) — 업종 이름만 화면 언어로(찾기는 원문으로 했음) · 숨긴 _cid 는 지움 */
+    return this.i18n.overlayBy(rows, 'CATEGORY', '_cid', { categoryName: 'name' });
   }
 
   /**
@@ -121,11 +126,13 @@ export class RequestService {
                    ELSE greatest(0, ceil(extract(epoch FROM (r.closes_at - now())) / 86400))::int END AS "dday",
               (r.closes_at IS NOT NULL AND r.closes_at <= now()) AS "closed",
               CASE WHEN r.company_blind THEN NULL ELSE b.company_name END AS "companyName",
-              r.image_keys AS "imageKeys"
+              r.image_keys AS "imageKeys", r.category_id::text AS "_cid"
          FROM requests r LEFT JOIN categories c ON c.id = r.category_id
          LEFT JOIN businesses b ON b.account_id = r.owner_account_id AND b.verified_at IS NOT NULL
         WHERE r.id = $1 AND r.status IN ('PUBLISHED','CLOSED')`, [id]);
     if (!row) throw new NotFound('요청을 찾을 수 없습니다.');
+    /* v10.103 (3-1) — 업종 이름만 화면 언어로 · 숨긴 _cid 는 지움 */
+    await this.i18n.overlayBy([row], 'CATEGORY', '_cid', { categoryName: 'name' });
     /* 공개 범위 — 회원 · 인증 회원 공개 요청은 그 조건을 채운 사람에게만 내용을 보입니다(시안 「공개 범위」) */
     if (row.visibility !== 'ALL' && actor !== row.ownerAccountId) {
       const [a] = actor ? await this.db.query<{ v: boolean }>(

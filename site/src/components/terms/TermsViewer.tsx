@@ -11,7 +11,7 @@ import { BackBar } from '@/components/common/BackBar';
 import { Markdown, toc } from './Markdown';
 
 export interface TermIndex { code: string; version: string; title: string; status: string; isRequired: boolean; isNotice: boolean; effectiveFrom: string | null; scheduled: boolean }
-export interface TermDoc { code: string; version: string; title: string; body: string; isRequired: boolean; effectiveFrom?: string; scheduled?: boolean; isNotice?: boolean }
+export interface TermDoc { code: string; version: string; title: string; body: string; isRequired: boolean; effectiveFrom?: string; scheduled?: boolean; isNotice?: boolean; translated?: boolean }
 
 /* 시안 이용안내 표의 순서 */
 const ORDER = ['SERVICE', 'PRIVACY', 'REFUND', 'THIRDPARTY', 'OUTSOURCE', 'HLT_SALE', 'ADPERSONAL', 'MARKETING', 'MARKETING_NIGHT', 'LOCATION'];
@@ -65,8 +65,8 @@ export function TermsViewer({ list, doc, code, index = false }: { list: TermInde
           <span className="doc-meta">{tr('viewer.version', { v: doc.version })}{doc.isRequired ? tr('viewer.required') : ''}{doc.isNotice ? <> · <span data-term-notice="">{tr('viewer.noticeMeta')}</span></> : ''}
             {doc.effectiveFrom ? tr(doc.scheduled ? 'viewer.scheduled' : 'viewer.effective', { date: f.ymd(doc.effectiveFrom, ymdKst(doc.effectiveFrom)) }) : ''}</span>
           {items.length > 0 && <ol className="w1-tjo">{items.map((x) => <li key={x.id}><a href={`#${x.id}`}>{x.text}</a></li>)}</ol>}
-          {/* v10.102 — 약관 본문은 한국어만(서버 · 마크다운). 다른 언어 화면에는 「한국어판이 우선」 한 줄 */}
-          {!f.ko && <p className="w1-ls" data-terms-lang="">{tr('viewer.koOnly')}</p>}
+          {/* v10.102 — 다른 언어 화면에는 「한국어판이 우선」 한 줄 · v10.103(3-1) 승인된 번역이 얹히면 「참고용 번역」(결정 #11) */}
+          {!f.ko && <p className="w1-ls" data-terms-lang={doc.translated ? 'ref' : ''}>{tr(doc.translated ? 'viewer.refTranslation' : 'viewer.koOnly')}</p>}
           <article className="doc-body" data-terms-body="1">
             {doc.body ? <Markdown text={doc.body} /> : <p className="w1-ls">{tr('viewer.empty')}</p>}
           </article>

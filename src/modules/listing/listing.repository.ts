@@ -129,7 +129,7 @@ export class ListingRepository {
     const where = this.filters(p);
 
     return this.db.query(
-      `SELECT ${this.CARD}, (${k.expr})::text AS "_sk"
+      `SELECT ${this.CARD}, (${k.expr})::text AS "_sk", l.category_id::text AS "_cid"   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
          FROM listings l ${this.JOINS}
         WHERE ${where}
           AND ${after}
@@ -208,7 +208,7 @@ export class ListingRepository {
   /** 우선노출 — 별도 슬롯. 라벨 없이는 DB 가 애초에 저장을 막습니다 (B-20). */
   promoted(gwanCode?: string, categoryId?: string, limit = 3) {
     return this.db.query(
-      `SELECT ${this.CARD}
+      `SELECT ${this.CARD}, l.category_id::text AS "_cid"
          FROM listings l ${this.JOINS}
          JOIN subscriptions s ON s.account_id = l.owner_account_id
                              AND s.status IN ('ACTIVE','PAST_DUE')

@@ -5,6 +5,7 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
 import { RequestCtx } from '../../core/request-context';
 import { resolveBizStatusProvider } from '../identity/verification.provider';
 import { expandKeyword } from '../../core/search-expand';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 사용자 공개 API.
@@ -13,7 +14,7 @@ import { expandKeyword } from '../../core/search-expand';
  */
 @Injectable()
 export class PublicService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId()!; }
 
   /**
@@ -47,7 +48,7 @@ export class PublicService {
     const [listings, requests] = await Promise.all([
       this.db.query(
         `SELECT l.id, l.gwan_code AS "gwanCode", c.name AS "categoryName", l.title,
-                l.desired_fee AS "desiredFee", l.published_at AS "publishedAt"
+                l.desired_fee AS "desiredFee", l.published_at AS "publishedAt", l.category_id::text AS "_cid"
            FROM listings l JOIN categories c ON c.id = l.category_id
           /* % 는 한글에서 0건이라 부분 일치로 찾고, 정렬은
              **일치 위치**로 합니다 — similarity 도 한글에서는 0 입니다.
@@ -65,7 +66,8 @@ export class PublicService {
                 CASE WHEN r.visibility = 'ALL' THEN r.region END AS region,
                 CASE WHEN r.visibility = 'ALL' AND r.budget_open THEN r.budget_min END AS "budgetMin",
                 CASE WHEN r.visibility = 'ALL' AND r.budget_open THEN r.budget_max END AS "budgetMax",
-                CASE WHEN r.visibility = 'ALL' AND NOT r.company_blind THEN b.company_name END AS "companyName"
+                CASE WHEN r.visibility = 'ALL' AND NOT r.company_blind THEN b.company_name END AS "companyName",
+                r.category_id::text AS "_cid"
            FROM requests r
            LEFT JOIN categories c ON c.id = r.category_id
            LEFT JOIN businesses b ON b.account_id = r.owner_account_id AND b.verified_at IS NOT NULL
@@ -73,6 +75,8 @@ export class PublicService {
           ORDER BY fn_search_rank(r.title, $1) ASC, r.created_at DESC
           LIMIT $2`, [kw, limit]),
     ]);
+    /* v10.103 (3-1) — 업종 이름만 화면 언어로(찾기는 원문으로 했음) · 숨긴 _cid 는 지움 */
+    await this.i18n.overlayBy([...listings, ...requests], 'CATEGORY', '_cid', { categoryName: 'name' });
     return { listings, requests, total: listings.length + requests.length };
   }
 
@@ -97,14 +101,17 @@ export class PublicService {
 
   /** FAQ 는 데이터입니다. 관리자가 바꿀 때 배포가 필요하면 안 됩니다 */
   /* v10.31 — channel(FAQ 기본 · CS · GUIDE · BOT)으로 고릅니다. 챗봇 낱말 · 「…에서 보기」 · 상담원 연결 여부도 함께(D048) */
-  faq(gwanCode?: string, channel?: string) {
+  async faq(gwanCode?: string, channel?: string) {
     const ch = ['FAQ', 'CS', 'GUIDE', 'BOT'].includes(channel ?? '') ? channel! : 'FAQ';
-    return this.db.query(
-      `SELECT category, question, answer, keywords, link_href AS "linkHref", link_label AS "linkLabel", handoff
+    const rows = await this.db.query<Record<string, unknown>>(
+      `SELECT category, question, answer, keywords, link_href AS "linkHref", link_label AS "linkLabel", handoff,
+              id::text AS "_id"
          FROM faqs
         WHERE is_active AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
           AND $2 = ANY(channels)
         ORDER BY sort_order, category`, [gwanCode ?? null, ch]);
+    /* v10.103 (3-1) — 질문 · 답만 화면 언어로. 챗봇 낱말(keywords)은 원문 그대로 · 숨긴 _id 는 지움 */
+    return this.i18n.overlayBy(rows, 'FAQ', '_id', { question: 'question', answer: 'answer' });
   }
 
   /** 화면 고정 문구. 법적 근거가 있어 임의로 지우면 안 됩니다 */
@@ -123,14 +130,16 @@ export class PublicService {
          FROM gwan_form_copy WHERE gwan_code = $1 ORDER BY role DESC`, [gwanCode]);
   }
 
-  notices(gwanCode?: string) {
-    return this.db.query(
+  async notices(gwanCode?: string) {
+    const rows = await this.db.query<Record<string, unknown>>(
       `SELECT id, gwan_code AS "gwanCode", title, body,
               is_pinned AS "isPinned", published_at AS "publishedAt"
          FROM notices
         WHERE published_at IS NOT NULL AND published_at <= now()
           AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
         ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null]);
+    /* v10.103 (3-1) — 승인된 번역이 있으면 화면 언어로 */
+    return this.i18n.overlay(rows, 'NOTICE', (r) => String(r.id), { title: 'title', body: 'body' });
   }
 
   async createInquiry(input: {

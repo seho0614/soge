@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { CARD_COLS, CARD_FROM } from './health-catalog.sql';
+import { I18nService } from '../i18n/i18n.service';
 
 const MASK = `coalesce(left(btrim(a.name), 1), '회') || '○○'`;
 
@@ -13,7 +14,7 @@ const MASK = `coalesce(left(btrim(a.name), 1), '회') || '○○'`;
  */
 @Injectable()
 export class HealthReviewService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
 
   private async productId(code: string) {
     const [p] = await this.db.query<any>(`SELECT id FROM hlt_products WHERE code = $1 AND status IN ('ON_SALE','SOLD_OUT','STOPPED')`, [code]);
@@ -138,6 +139,8 @@ export class HealthReviewService {
         `SELECT to_char(min(basis_from), 'YYYY-MM-DD') AS "from", to_char(max(basis_to), 'YYYY-MM-DD') AS "to", max(made_at) AS "madeAt" FROM hlt_rankings WHERE snapshot_date = $1 AND kind = $2`, [last.d, kind]) : [null];
       out[kind] = { basis: `최근 7일 ${basis} 기준`, from: m?.from ?? null, to: m?.to ?? null, madeAt: m?.madeAt ?? null, items };
     }
+    /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(두 순위 한 번에) */
+    await this.i18n.overlay([...out.SALES_7D.items, ...out.ORDERS_7D.items], 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });
     return { sales: out.SALES_7D, orders: out.ORDERS_7D };
   }
 

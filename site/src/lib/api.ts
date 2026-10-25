@@ -46,6 +46,10 @@ async function buildHeaders(): Promise<Record<string, string>> {
    *   sgb_ref 쿠키(REF_COOKIE)는 미들웨어가 남겨 두기만 합니다(지금 읽는 곳 없음 — 기록의 근거는 attribution_events). */
   const token = jar.get('sgb_at')?.value;
   if (token) headers.Authorization = `Bearer ${token}`;
+  /* v10.103 (다국어 3-1 · docs/161) — 화면 언어를 API 에 알립니다. 한국어 · 쿠키 없음이면 보내지 않아 캐시 · 응답이 전과 같습니다.
+   *   API 가 다국어 켜짐 · 켜진 언어인지 보고, 승인된 번역만 원문 대신 내려 줍니다(꺼져 있으면 원문 그대로). */
+  const lang = jar.get('sgb_lang')?.value;
+  if (lang && lang !== 'ko' && /^[a-z]{2}$/.test(lang)) headers['X-Lang'] = lang;
   return headers;
 }
 
@@ -85,6 +89,17 @@ export async function apiGetVisitor<T>(path: string): Promise<T> {
  *   캐시 키에 쿠키가 없어 남의 응답이 갈 수 있습니다.
  *   그런 것은 apiGetPersonal 을 쓰십시오.
  */
+/**
+ * v10.103 — 누구에게나 같은 공개 응답(언어 목록 등) · 로그인 토큰 · 언어 머리말을 붙이지 않습니다.
+ *   붙이면 캐시가 토큰 · 언어마다 따로 생겨, 운영이 설정을 바꾼 직후 어떤 사람에게는 옛 값이 나옵니다(docs/157 §3-1 · docs/161).
+ */
+export async function apiGetPublic<T>(path: string, revalidate = 30): Promise<T> {
+  const res = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, next: { revalidate } });
+  const body = await res.json().catch(() => ({ code: 'PARSE_ERROR', message: '응답을 읽을 수 없습니다.' }));
+  if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
+  return body as T;
+}
+
 export async function apiGet<T>(path: string, revalidate = 30): Promise<T> {
   const headers = await buildHeaders();
 

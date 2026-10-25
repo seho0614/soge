@@ -33,6 +33,8 @@ export interface RequestContext {
   tx?: PoolClient;
   /** 외부 작업 표시. 트랜잭션 안팎에서 같은 물건을 봐야 하므로 **값이 아니라 그릇**을 넘깁니다(withTx 가 복사해도 같은 그릇) */
   ext?: ExternalMarks;
+  /** v10.103 — 사용자 웹이 알려 준 화면 언어(X-Lang · 한국어가 아닐 때만). 켜짐 · 켜진 언어인지는 I18nService.overlay 가 봅니다 */
+  lang?: string;
 }
 
 const als = new AsyncLocalStorage<RequestContext>();
@@ -51,6 +53,10 @@ export const RequestCtx = {
   },
   actorId(): string | undefined {
     return als.getStore()?.actorId;
+  },
+  /** v10.103 — 화면 언어(한국어면 undefined) */
+  lang(): string | undefined {
+    return als.getStore()?.lang;
   },
   /** 외부 결제 표시를 남깁니다. 표시 그릇이 없는 요청(중복 요청 장치 밖)에서는 아무 일도 하지 않습니다 */
   markPayment(m: NonNullable<ExternalMarks['payment']>): void {

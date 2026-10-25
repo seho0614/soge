@@ -34,7 +34,8 @@
     "effective": " · effective {date}",
     "scheduled": " · takes effect {date}",
     "empty": "Not written yet.",
-    "koOnly": "This document is provided in Korean. The Korean version prevails."
+    "koOnly": "This document is provided in Korean. The Korean version prevails.",
+    "refTranslation": "This is a reference translation. The Korean version prevails."
   },
   "guide": {
     "back": "Home",
@@ -42,12 +43,30 @@
     "intro": "SogaeBank is where you make referrals and earn referral fees. Individual members can do everything once they sign up and verify their identity; only businesses that need a license to register (real estate agents, insurance, medical, etc.) register after getting that verification.",
     "flowH": "From referral to payout",
     "flow": {
-      "s1": { "t": "Sign up · verify", "d": "Individuals verify their identity, businesses verify with their business registration number, and an operator approves. Before approval you can only browse." },
-      "s2": { "t": "List or request", "d": "List what you can refer, or post what you need as a request." },
-      "s3": { "t": "Review", "d": "An operator checks it. Restricted businesses cannot be listed." },
-      "s4": { "t": "1:1 chat · referral code", "d": "When a chat starts, a referral code is issued and attribution begins." },
-      "s5": { "t": "Contract · deal confirmed", "d": "A deal is closed only when both sides confirm." },
-      "s6": { "t": "Settlement", "d": "The full referral fee goes to the referrer — the platform takes nothing." }
+      "s1": {
+        "t": "Sign up · verify",
+        "d": "Individuals verify their identity, businesses verify with their business registration number, and an operator approves. Before approval you can only browse."
+      },
+      "s2": {
+        "t": "List or request",
+        "d": "List what you can refer, or post what you need as a request."
+      },
+      "s3": {
+        "t": "Review",
+        "d": "An operator checks it. Restricted businesses cannot be listed."
+      },
+      "s4": {
+        "t": "1:1 chat · referral code",
+        "d": "When a chat starts, a referral code is issued and attribution begins."
+      },
+      "s5": {
+        "t": "Contract · deal confirmed",
+        "d": "A deal is closed only when both sides confirm."
+      },
+      "s6": {
+        "t": "Settlement",
+        "d": "The full referral fee goes to the referrer — the platform takes nothing."
+      }
     },
     "faqH": "FAQ",
     "faqEmpty": "Coming soon.",

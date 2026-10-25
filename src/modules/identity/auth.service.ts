@@ -7,6 +7,7 @@ import { AppError, Forbidden, PolicyViolation, NotFound } from '../../core/error
 import { AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText } from './auth-throttle';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
 import { RequestCtx } from '../../core/request-context';
+import { I18nService } from '../i18n/i18n.service';
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly db: DatabaseService,
     private readonly principals: PrincipalService,
     private readonly attribution: AttributionEngine,
+    private readonly i18n: I18nService,
   ) {}
 
   async login(email: string, password: string, visitorKey?: string) {
@@ -214,7 +216,8 @@ export class AuthService {
                  effective_from ASC
         LIMIT 1`, [code]);
     if (!t) throw new NotFound('발행된 약관이 아닙니다.');
-    return t;
+    /* v10.103 (3-1) — 참고용 번역(효력은 한국어 원문) · 얹었으면 translated: true */
+    return this.i18n.overlayOne(t, 'TERM', (r) => `${r.code}@${r.version}`, { title: 'title', body: 'body' }, 'translated');
   }
 
   /** 유효한 약관만. 버전이 여러 개면 최신 것만 내려갑니다. */
@@ -223,19 +226,23 @@ export class AuthService {
    *   상태 글(발행 · 2026-10-01 시행 / 시행 예정 / 폐기)과 함께. 본문은 싣지 않습니다(전문은 /terms/doc/{code}).
    */
   async termsIndex() {
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT DISTINCT ON (code) code, version, title, status, is_required AS "isRequired", is_notice AS "isNotice",
               CASE WHEN effective_from = 'infinity' THEN NULL ELSE effective_from END AS "effectiveFrom",
               (effective_from > now() AND status = 'PUBLISHED') AS scheduled
          FROM terms WHERE status IN ('PUBLISHED','ARCHIVED')
         ORDER BY code, (status = 'PUBLISHED' AND effective_from <= now()) DESC, (status = 'PUBLISHED') DESC, effective_from DESC`);
+    /* v10.103 (3-1) — 제목만 참고용 번역 */
+    return this.i18n.overlay(rows, 'TERM', (r) => `${r.code}@${r.version}`, { title: 'title' }, 'translated');
   }
 
   async terms() {
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT DISTINCT ON (code) code, version, title, body, is_required AS "isRequired", is_notice AS "isNotice"
          FROM terms WHERE effective_from <= now()
         ORDER BY code, effective_from DESC`,
     );
+    /* v10.103 (3-1) — 참고용 번역(동의 기록은 code · 판으로 남아 원문 기준) */
+    return this.i18n.overlay(rows, 'TERM', (r) => `${r.code}@${r.version}`, { title: 'title', body: 'body' }, 'translated');
   }
 }

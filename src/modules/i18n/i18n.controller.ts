@@ -17,6 +17,9 @@ import { Audit } from '../../core/audit.interceptor';
 
 const TYPES = Object.keys(I18N_FIELDS);
 const FIELDS = [...new Set(Object.values(I18N_FIELDS).flat())];
+const STATUSES_DOC = I18nService.STATUSES;
+/** 원문 목록(운영 글) 대상 — v10.103 · 3-1 */
+const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT'];
 
 export class LangActiveDto {
   @ApiProperty({ example: true }) @IsBoolean() isActive!: boolean;
@@ -97,6 +100,27 @@ export class TranslationPageDto {
   @ApiProperty() size!: number;
   @ApiProperty() pages!: number;
 }
+export class CatalogFieldDto {
+  @ApiProperty({ example: 'title' }) field!: string;
+  @ApiPropertyOptional({ description: '번역 번호(없으면 아직 안 넣음)' }) id?: string;
+  @ApiPropertyOptional({ enum: STATUSES_DOC }) status?: string;
+  @ApiPropertyOptional({ description: '원문이 고쳐져 낡음' }) isStale?: boolean;
+  @ApiPropertyOptional({ description: '번역문' }) text?: string;
+  @ApiPropertyOptional({ description: '반려 사유' }) rejectReason?: string;
+}
+export class CatalogRowDto {
+  @ApiProperty({ description: '대상 번호 — 공지 · FAQ · 분류는 id, 약관은 「코드@판」, 소개몰 상품은 상품 코드' }) targetId!: string;
+  @ApiProperty({ description: '원문 제목 · 이름' }) label!: string;
+  @ApiPropertyOptional() gwanCode?: string;
+  @ApiProperty({ type: [CatalogFieldDto] }) fields!: CatalogFieldDto[];
+}
+export class CatalogPageDto {
+  @ApiProperty({ type: [CatalogRowDto] }) items!: CatalogRowDto[];
+  @ApiProperty() total!: number;
+  @ApiProperty() page!: number;
+  @ApiProperty() size!: number;
+  @ApiProperty() pages!: number;
+}
 export class TranslationOkDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty() id!: string;
@@ -156,6 +180,21 @@ export class I18nController {
       stale: stale === 'true' ? true : stale === 'false' ? false : undefined,
       page: num(page), size: num(size),
     });
+  }
+
+  @ApiBearerAuth()
+  @Get('admin/i18n/catalog')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '원문 목록 · 번역 상태 (운영 · v10.103)', description: '운영 글(공지 · 자주 묻는 질문 · 약관 · 분류 이름 · 소개몰 상품)을 그 언어 번역 상태와 함께. 등록 글 · 게시판은 3-2 · 3-3 에서 자동.' })
+  @ApiQuery({ name: 'targetType', enum: CATALOG_TYPES }) @ApiQuery({ name: 'lang', example: 'en' })
+  @ApiQuery({ name: 'q', required: false, description: '제목 · 이름 찾기' }) @ApiQuery({ name: 'page', required: false }) @ApiQuery({ name: 'size', required: false })
+  @ApiOkResponse({ type: CatalogPageDto })
+  @ApiResponse({ status: 422, type: ErrorDto })
+  catalog(@Query('targetType') targetType: string, @Query('lang') lang: string, @Query('q') q?: string,
+          @Query('page') page?: string, @Query('size') size?: string) {
+    const num = (v?: string) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : undefined; };
+    return this.svc.catalog({ targetType: CATALOG_TYPES.includes(targetType) ? targetType : '', lang: String(lang ?? ''),
+      q: typeof q === 'string' ? q.slice(0, 50) : undefined, page: Math.min(num(page) ?? 1, 10000), size: num(size) });
   }
 
   @ApiBearerAuth()

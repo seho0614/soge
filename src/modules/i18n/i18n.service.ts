@@ -7,7 +7,11 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 export const I18N_FIELDS: Record<string, string[]> = {
   NOTICE: ['title', 'body'], FAQ: ['question', 'answer'], TERM: ['title', 'body'],
   LISTING: ['title', 'body'], REQUEST: ['title', 'body'], POST: ['title', 'body'], COMMENT: ['body'],
+  CATEGORY: ['name'], HLT_PRODUCT: ['name', 'summary'],   // v10.103 · D117
 };
+/** 손님 화면에 나가는 상태 — 승인 · 자동 승인 · 기계 번역(게시판 글 · 댓글만 · 3-3) */
+const LIVE = ['APPROVED', 'AUTO_APPROVED', 'MACHINE'];
+const liveOf = (type: string) => (['POST', 'COMMENT'].includes(type) ? LIVE : ['APPROVED', 'AUTO_APPROVED']);   // 운영 글 · 약관은 사람 · 자동 승인만
 const STATUSES = ['DRAFT', 'APPROVED', 'AUTO_APPROVED', 'MACHINE', 'REJECTED'];
 
 /**
@@ -24,6 +28,77 @@ export class I18nService {
   private async setting(key: string): Promise<string | null> {
     const [r] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = $1`, [key]);
     return r?.value ?? null;
+  }
+
+  /* ── 손님 화면에 번역 얹기 (v10.103 · 3-1 · docs/161) ───────────── */
+
+  private live: { at: number; enabled: boolean; langs: Set<string> } | null = null;
+  /** 지금 요청의 화면 언어 — 다국어가 켜져 있고 그 언어가 켜져 있을 때만(아니면 null = 원문) · 설정은 30초 기억 */
+  async activeLang(): Promise<string | null> {
+    const lang = RequestCtx.lang();
+    if (!lang) return null;
+    if (!this.live || Date.now() - this.live.at > 30_000) {
+      const enabled = (await this.setting('i18n.enabled')) === 'on';
+      const rows = await this.db.query<{ code: string }>(`SELECT code FROM i18n_langs WHERE is_active AND code <> 'ko'`);
+      this.live = { at: Date.now(), enabled, langs: new Set(rows.map((r) => r.code)) };
+    }
+    return this.live.enabled && this.live.langs.has(lang) ? lang : null;
+  }
+
+  /**
+   * 승인 · 낡지 않은 번역을 원문 대신 넣습니다. 원문이 고쳐진(낡은) 줄 · 승인 전 줄은 쓰지 않아 원문이 그대로 나갑니다.
+   *   rows    API 가 내보낼 줄들(그 자리에서 고침 · 같은 배열을 돌려줌)
+   *   type    대상(NOTICE · FAQ · TERM · CATEGORY · HLT_PRODUCT …)
+   *   idOf    줄 → 대상 번호(공지 id · 약관 「코드@판」 · 분류 id · 상품 코드)
+   *   fields  { 줄의 칸 이름: 번역 칸 }  예) { title: 'title', body: 'body' } · { categoryName: 'name' }
+   *   mark    번역을 하나라도 넣은 줄에 true 로 둘 칸 이름(약관 「참고용 번역」 표시 등)
+   * 한국어 · 다국어 꺼짐이면 아무것도 하지 않습니다(손님 화면은 전과 같음).
+   */
+  async overlay<T extends Record<string, any>>(rows: T[], type: string, idOf: (r: T) => string | null | undefined,
+    fields: Record<string, string>, mark?: string): Promise<T[]> {
+    if (!rows.length) return rows;
+    const lang = await this.activeLang();
+    if (!lang) return rows;
+    const ids = [...new Set(rows.map(idOf).filter((x): x is string => !!x))];
+    if (!ids.length) return rows;
+    const tr = await this.db.query<{ target_id: string; field: string; text: string }>(
+      `SELECT target_id, field, text FROM v_translation_state
+        WHERE target_type = $1 AND lang = $2 AND target_id = ANY($3::text[]) AND field = ANY($4::text[])
+          AND status = ANY($5::text[]) AND NOT is_stale AND NOT source_missing`,
+      [type, lang, ids, [...new Set(Object.values(fields))], liveOf(type)]);
+    if (!tr.length) return rows;
+    const m = new Map(tr.map((x) => [`${x.target_id}\u0000${x.field}`, x.text]));
+    const markOn = 'body' in fields ? 'body' : null;   // 본문이 있으면 본문이 얹혔을 때만 표시(제목만 번역된 약관에 「참고용 번역」이 붙지 않게)
+    for (const r of rows) {
+      const id = idOf(r);
+      if (!id) continue;
+      let hit = false;
+      for (const [k, f] of Object.entries(fields)) {
+        const t = m.get(`${id}\u0000${f}`);
+        if (t != null && r[k] != null) { (r as any)[k] = t; if (!markOn || k === markOn) hit = true; }
+      }
+      if (hit && mark) (r as any)[mark] = true;
+    }
+    return rows;
+  }
+
+  /** 한 줄짜리 — overlay 와 같음 */
+  async overlayOne<T extends Record<string, any>>(row: T | null | undefined, type: string, idOf: (r: T) => string | null | undefined,
+    fields: Record<string, string>, mark?: string): Promise<T | null | undefined> {
+    if (!row) return row;
+    await this.overlay([row], type, idOf, fields, mark);
+    return row;
+  }
+
+  /**
+   * 숨겨 실은 번호 칸(idKey · 예: _cid = 분류 id)으로 얹고 그 칸은 지웁니다 — 응답 모양은 전과 같음(v10.103 · 3-1).
+   * 한국어 · 다국어 꺼짐이어도 칸은 지웁니다.
+   */
+  async overlayBy<T extends Record<string, any>>(rows: T[], type: string, idKey: string,
+    fields: Record<string, string>, mark?: string): Promise<T[]> {
+    try { await this.overlay(rows, type, (r) => (r[idKey] == null ? null : String(r[idKey])), fields, mark); }
+    finally { for (const r of rows) delete (r as any)[idKey]; }
+    return rows;
   }
 
   /** 손님 화면 — 다국어 켜짐 여부 · 켜진 언어(꺼져 있으면 한국어만) · v10.95 */
@@ -58,6 +133,7 @@ export class I18nService {
     const [r] = await this.db.query<{ code: string }>(
       `UPDATE i18n_langs SET is_active = $2 WHERE code = $1 RETURNING code`, [code, isActive]);
     if (!r) throw new NotFound('없는 언어입니다.');
+    this.live = null;   // v10.103 — 끄고 켠 것을 손님 화면 번역에 바로(30초 기억을 비움)
     return { ok: true, code, isActive };
   }
 
@@ -76,6 +152,39 @@ export class I18nService {
               translated_at AS "translatedAt", approved_at AS "approvedAt", reject_reason AS "rejectReason"
          FROM v_translation_state ${where}
         ORDER BY translated_at DESC, id DESC LIMIT ${size} OFFSET ${(page - 1) * size}`, p);
+    return { items, total, page, size, pages: Math.max(1, Math.ceil(total / size)) };
+  }
+
+  /**
+   * 원문 목록 — 운영 글(공지 · 자주 묻는 질문 · 약관 · 분류 이름 · 소개몰 상품)을 고르고 그 언어 번역 상태를 함께 봄 (v10.103 · 3-1)
+   *   칸마다 status(없으면 null) · 낡음 · 번역 번호 · 번역문 · 반려 사유. 등록 글 · 게시판은 3-2 · 3-3 에서 자동으로 줄이 생기므로 여기 없음.
+   */
+  async catalog(q: { targetType: string; lang: string; q?: string; page?: number; size?: number }) {
+    const SRC: Record<string, { from: string; id: string; label: string; gwan: string; order: string }> = {
+      NOTICE: { from: 'notices s', id: 's.id::text', label: 's.title', gwan: 's.gwan_code', order: 's.created_at DESC' },
+      FAQ: { from: 'faqs s', id: 's.id::text', label: 's.question', gwan: 's.gwan_code', order: 's.sort_order, s.updated_at DESC' },
+      TERM: { from: 'terms s', id: "s.code || '@' || s.version", label: 's.title', gwan: 's.gwan_code', order: 's.code, s.version DESC' },
+      CATEGORY: { from: 'categories s', id: 's.id::text', label: 's.name', gwan: 's.gwan_code', order: 's.gwan_code, s.name' },
+      HLT_PRODUCT: { from: 'hlt_products s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.created_at DESC' },
+    };
+    const src = SRC[q.targetType];
+    if (!src) throw new PolicyViolation('I18N_FIELD', `원문 목록이 없는 대상입니다 (${q.targetType}).`);
+    if (!/^[a-z]{2}$/.test(q.lang) || q.lang === 'ko') throw new PolicyViolation('LANG_UNKNOWN', '번역할 언어를 고르십시오.');
+    const size = Math.min(Math.max(q.size ?? 20, 1), 100), page = Math.max(q.page ?? 1, 1);
+    const kw = q.q?.trim() ? `%${q.q.trim()}%` : null;
+    const [{ total }] = await this.db.query<{ total: number }>(
+      `SELECT count(*)::int AS total FROM ${src.from} ${kw ? `WHERE ${src.label} ILIKE $1` : ''}`, kw ? [kw] : []);
+    const p: unknown[] = [q.targetType, q.lang, I18N_FIELDS[q.targetType]];
+    if (kw) p.push(kw);
+    const where = kw ? `WHERE ${src.label} ILIKE $4` : '';
+    const items = await this.db.query(
+      `SELECT ${src.id} AS "targetId", ${src.label} AS label, ${src.gwan} AS "gwanCode",
+              (SELECT coalesce(json_agg(json_build_object('field', f, 'id', v.id::text, 'status', v.status, 'isStale', v.is_stale, 'text', v.text, 'rejectReason', v.reject_reason)
+                                        ORDER BY array_position($3::text[], f)), '[]'::json)
+                 FROM unnest($3::text[]) f
+                 LEFT JOIN v_translation_state v ON v.target_type = $1 AND v.lang = $2 AND v.target_id = ${src.id} AND v.field = f) AS fields
+         FROM ${src.from} ${where}
+        ORDER BY ${src.order} LIMIT ${size} OFFSET ${(page - 1) * size}`, p);
     return { items, total, page, size, pages: Math.max(1, Math.ceil(total / size)) };
   }
 

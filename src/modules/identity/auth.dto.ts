@@ -150,4 +150,5 @@ export class TermDto {
   @ApiProperty() body!: string;
   @ApiProperty() isRequired!: boolean;
   @ApiPropertyOptional({ description: 'v10.28 (G-218) — 알림(동의를 받지 않는 안내 · 예: 개인정보 처리 위탁)' }) isNotice?: boolean;
+  @ApiPropertyOptional({ description: 'v10.103 — 참고용 번역이 얹혔는지(효력은 한국어 원문 · 한국어 화면에는 없음)' }) translated?: boolean;
 }

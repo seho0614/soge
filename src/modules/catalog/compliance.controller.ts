@@ -33,6 +33,7 @@ export class TermStateDto {
   @ApiPropertyOptional({ nullable: true, description: 'v10.28 — 마지막으로 동의 · 거부를 기록한 때' }) changedAt?: string | null;
   @ApiPropertyOptional({ nullable: true, description: 'v10.28 — 마지막으로 동의한 판(동의한 적 없으면 null)' }) agreedVersion?: string | null;
   @ApiPropertyOptional({ nullable: true, description: 'v10.28 — 이 판에서 바뀐 점(재동의 화면의 「바뀐 점」)' }) changeNote?: string | null;
+  @ApiPropertyOptional({ description: 'v10.103 — 참고용 번역이 얹혔는지(제목 · 한국어 화면에는 없음)' }) translated?: boolean;
 }
 
 /** 제한업종 검사 · 약관 동의 */

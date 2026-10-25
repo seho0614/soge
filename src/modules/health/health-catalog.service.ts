@@ -5,6 +5,7 @@ import { HLT_EXCHANGE_SHIP_ROUND_TRIP, exchangeFee } from './health-policy';
 import { CARD_COLS, CARD_FROM, OPTION_COLS, SEARCH_BODY } from './health-catalog.sql';
 import { storageFromEnv } from '../file/storage';
 import { expandKeyword } from '../../core/search-expand';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 건강몰 — 상품 · 성분 · 고민 · 기획전(읽기).
@@ -12,7 +13,7 @@ import { expandKeyword } from '../../core/search-expand';
  */
 @Injectable()
 export class HealthCatalogService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   /**
    * 상품 목록. `ingredient` · `concern` 으로 좁힐 수 있습니다(D002 — 성분–상품 연결 표).
    * 고민으로 좁히면 그 고민에 묶인 성분 중 하나라도 든 상품입니다. 성분군(D027)이면 아래 성분이 든 상품까지입니다.
@@ -21,7 +22,7 @@ export class HealthCatalogService {
    */
   async products(category?: string, keyword?: string, ingredient?: string, concern?: string) {
     const kw = await expandKeyword(this.db, keyword);   // v10.83 (D111) — 동의어 · 오타 교정어
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT ${CARD_COLS}
          FROM ${CARD_FROM}
         WHERE p.status IN ('ON_SALE','SOLD_OUT')
@@ -37,6 +38,8 @@ export class HealthCatalogService {
                  WHERE pi.product_id = p.id AND upper(ci.concern_code) = upper($4)))
         ORDER BY p.created_at DESC LIMIT 100`,
       [category || null, kw, ingredient || null, concern || null]);
+    /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(찾기는 원문으로 했음) */
+    return this.i18n.overlay(rows, 'HLT_PRODUCT', (r) => r.code, { name: 'name', summary: 'summary' });
   }
 
   /**
@@ -90,6 +93,8 @@ export class HealthCatalogService {
       return { label: it.label, value: v };
     });
     const { id, seller_id, noticeValues, noticeGroup, ...view } = p;
+    /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(같은 성분 상품까지 한 번에). 상품정보제공고시(notice)는 위에서 원문으로 만듦 */
+    await this.i18n.overlay([view, ...same], 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });
     return {
       ...view, ingredients, options, notice, sameIngredient: same,
       exchangeFee: HLT_EXCHANGE_SHIP_ROUND_TRIP,
@@ -117,16 +122,18 @@ export class HealthCatalogService {
    * v10.26 — 화장품(D027 · 열림)이 더해졌습니다.
    */
   categories() {
-    return this.db.query(
+    return this.db.query<Record<string, any>>(
       `SELECT c.code, c.name, coalesce(s.state, 'OPEN') AS state, s.note,
-              count(p.id)::int AS "productCount"
+              count(p.id)::int AS "productCount", c.id::text AS "_cid"
          FROM categories c
          LEFT JOIN hlt_sale_categories s ON s.category_code = c.code
          LEFT JOIN hlt_products p ON p.category_id = c.id AND p.status IN ('ON_SALE','SOLD_OUT')
         WHERE c.gwan_code = 'HLT'
         GROUP BY c.id, s.category_code
        HAVING s.category_code IS NOT NULL OR count(p.id) > 0
-        ORDER BY coalesce(s.sort, 100), c.name`);
+        ORDER BY coalesce(s.sort, 100), c.name`)
+      /* v10.103 (3-1) — 갈래 이름만 화면 언어로 · 숨긴 _cid 는 지움 */
+      .then((rows) => this.i18n.overlayBy(rows, 'CATEGORY', '_cid', { name: 'name' }));
   }
 
   /* ── 성분 · 고민 (D002 · D027) ─────────────────────────────────────
@@ -272,6 +279,7 @@ export class HealthCatalogService {
                         JOIN hlt_concern_ingredients ci ON ci.ingredient_code = pi.ingredient_code AND ci.concern_code = $1
                        WHERE pi.product_id = p.id)
         ORDER BY p.created_at DESC LIMIT 100`, [k.code]);
+    await this.i18n.overlay(products, 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });   // v10.103 (3-1)
     return { ...k, ingredients, products };
   }
 

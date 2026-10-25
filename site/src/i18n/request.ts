@@ -7,14 +7,15 @@
  */
 import { getRequestConfig } from 'next-intl/server';
 import { cookies } from 'next/headers';
-import { apiGet } from '@/lib/api';
+import { apiGetPublic } from '@/lib/api';
 import { messagesFor } from './messages';
 
 export const LANG_COOKIE = 'sgb_lang';
 export interface LangInfo { enabled: boolean; items: { code: string; name: string; rtl: boolean }[] }
 
 export async function langInfo(): Promise<LangInfo> {
-  return apiGet<LangInfo>('/i18n/langs', 60).catch(() => ({ enabled: false, items: [{ code: 'ko', name: '한국어', rtl: false }] }));
+  return apiGetPublic<LangInfo>('/i18n/langs', 60).catch(   // v10.103 — 토큰 · 언어마다 캐시가 갈리지 않게
+    () => ({ enabled: false, items: [{ code: 'ko', name: '한국어', rtl: false }] }));
 }
 
 export default getRequestConfig(async () => {

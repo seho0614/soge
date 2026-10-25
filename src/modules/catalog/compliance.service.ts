@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 제한업종 검사 · 약관 동의.
@@ -14,7 +15,7 @@ import { RequestCtx } from '../../core/request-context';
  */
 @Injectable()
 export class ComplianceService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
 
   /**
    * 제한업종 검사.
@@ -81,7 +82,7 @@ export class ComplianceService {
    */
   async required() {
     const me = RequestCtx.actorId();
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       /* v10.28 (G-214 · D038) — 동의 기록은 바꿀 때마다 한 줄씩 쌓입니다. 지금 상태 = 그 약관의 가장 최근 줄(지금 판) */
       `SELECT t.code, t.title, t.version, t.is_required AS "isRequired",
               t.effective_from AS "effectiveFrom",
@@ -99,6 +100,8 @@ export class ComplianceService {
           /* v10.31 (합침 · D090) — 대상이 정해진 약관(파트너 이용약관 audience=PARTNER)은 그 회원에게만. 로그인 전(가입 화면)은 전체 대상만 */
           AND fn_term_applies($1::uuid, t.audience)
         ORDER BY t.display_order`, [me ?? null]);
+    /* v10.103 (3-1) — 제목만 참고용 번역(동의는 code 로 받아 원문 판에 기록) */
+    return this.i18n.overlay(rows, 'TERM', (r) => `${r.code}@${r.version}`, { title: 'title' }, 'translated');
   }
 
   /**

@@ -9,6 +9,7 @@ import { RequestCtx } from '../../core/request-context';
 import { clampLimit, decodeCursor, encodeCursor } from '../../core/pagination';
 import { expandKeyword } from '../../core/search-expand';
 import { GeoService } from '../../common/geo/geo.service';
+import { I18nService } from '../i18n/i18n.service';
 
 /** v10.31 (합침) — 한 매물 사진 한도. DB(fn_listing_media_guard · w2 D050)와 같은 10장. 등록 화면(w1)은 화면에서 6장까지만 받습니다. */
 const LISTING_MAX_PHOTOS = 10;
@@ -27,6 +28,7 @@ export class ListingService {
     private readonly reviews: ReviewRepository,
     private readonly repo: ListingRepository,
     private readonly geo: GeoService,
+    private readonly i18n: I18nService,
   ) {}
 
   async submit(input: {
@@ -262,6 +264,8 @@ export class ListingService {
       const { _sk, ...rest } = r; void _sk; return rest;
     });
     const lastRow = rows[Math.min(limit, rows.length) - 1] as { _sk?: string; id: string } | undefined;
+    /* v10.103 (3-1) — 업종 이름만 화면 언어로 · 숨긴 _cid 는 지움(광고 · 일반 한 번에) */
+    await this.i18n.overlayBy([...(promoted as Record<string, unknown>[]), ...organic], 'CATEGORY', '_cid', { categoryName: 'name' });
     return {
       promoted,
       organic,
@@ -364,6 +368,8 @@ export class ListingService {
 
     if (countView) await this.db.query(
       `UPDATE listings SET view_count = view_count + 1 WHERE id = $1`, [id]);
+    /* v10.103 (3-1) — 업종 이름만 화면 언어로(categoryId 는 그대로) */
+    await this.i18n.overlayOne(row, 'CATEGORY', (r) => r.categoryId, { categoryName: 'name' });
 
     /* v10.21 (D023) — 등록자의 공개 실적을 owner 에 합칩니다(목록 카드의 owner 는 그대로 3항목). */
     const { isOwn, ownerStats, _address, ...rest } = row;

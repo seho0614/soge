@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { I18nService } from '../i18n/i18n.service';
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
 
   gwans() {
     return this.db.query(
@@ -15,8 +16,8 @@ export class CatalogService {
          FROM gwans g WHERE g.is_active ORDER BY g.sort_order`);
   }
 
-  categories(gwanCode?: string) {
-    return this.db.query(
+  async categories(gwanCode?: string) {
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT c.id, c.gwan_code AS "gwanCode", c.code, c.name,
               coalesce(cg.grade_code,'G3') AS "gradeCode",
               c.fee_bearer AS "feeBearer",
@@ -31,6 +32,8 @@ export class CatalogService {
             ORDER BY g.effective_from DESC LIMIT 1) cg ON true
         WHERE c.status = 'APPROVED' AND ($1::text IS NULL OR c.gwan_code = $1)
         ORDER BY c.gwan_code, c.name`, [gwanCode ?? null]);
+    /* v10.103 (3-1) — 분류 이름만 화면 언어로(code · id 는 그대로 · 순서는 원문 이름순) */
+    return this.i18n.overlay(rows, 'CATEGORY', (r) => String(r.id), { name: 'name' });
   }
 
   adminCategories() {
