@@ -8,8 +8,11 @@ import { viewLimitText, type PublicSettings } from '@/components/billing/viewLim
 import { SubscriptionManage, type RefundEligible, type SubDetail } from '@/components/billing/SubscriptionManage';
 import { PlanPicker } from '@/components/billing/PlanPicker';
 import { MyHead, Note, Table, Empty, wonP, type Tone } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '구독 · 소개코드' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.sub'))('title') };
+}
 
 interface Plan {
   code: string; name: string; monthlyPrice: number; includedCodes: number;
@@ -23,8 +26,9 @@ interface SubNow { planCode: string | null; planName: string | null; codesIssued
 /** GET /me/subscription/invoices — 결제 내역 */
 interface Invoice { id: string; kind?: 'SUBSCRIPTION' | 'EXTRA_CODE'; planCode?: string | null; periodStart: string; periodEnd: string | null; amount: number; status: string; failureReason: string | null; paidAt: string | null; refundedAt: string | null; issuedAt: string | null; codeCount?: number | null }
 
-const INV: Record<string, [string, Tone]> = {
-  PAID: ['완료', 'ok'], FAILED: ['실패', 'no'], PENDING: ['확인 중', 'wait'], REFUNDED: ['환불', 'off'], SKIPPED: ['건너뜀', 'off'],
+/** v10.99 — 상태 이름은 사전 키(my.sub.inv.*) */
+const INV: Record<string, ['paid' | 'failed' | 'pending' | 'refunded' | 'skipped', Tone]> = {
+  PAID: ['paid', 'ok'], FAILED: ['failed', 'no'], PENDING: ['pending', 'wait'], REFUNDED: ['refunded', 'off'], SKIPPED: ['skipped', 'off'],
 };
 
 /**
@@ -40,6 +44,8 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
   const payFail = (await searchParams).pay === 'fail';
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('my.sub');
+  const B = (c: React.ReactNode) => <b>{c}</b>;
   const plans = await apiGet<Plan[]>('/subscription-plans', 300).catch(() => [] as Plan[]);
   /* D011 — 요청 열람 한도는 운영 설정입니다(홍보 기간에는 제한 없음). 설정은 짧게(30초) 캐시합니다 */
   const settings = await apiGet<PublicSettings>('/site-settings/public', 30).catch(() => ({} as PublicSettings));
@@ -58,8 +64,8 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <MyHead title="구독 · 소개코드" sub="소개뱅크의 수익원은 두 가지입니다 — 월 구독료와 초과 소개코드 발급비. 거래금액에 연동되는 수수료는 없습니다." />
-      {payFail && <Note kind="warn" role="alert" data-pay-fail="">결제가 완료되지 않았습니다. 돈은 나가지 않았습니다 — 다시 시도해 주십시오.</Note>}
+      <MyHead title={t('title')} sub={t('sub')} />
+      {payFail && <Note kind="warn" role="alert" data-pay-fail="">{t('payFail')}</Note>}
 
       {/* 내 구독 — 자동 갱신 해지 · 해지 철회 · 환불(환불 완료 · 환불 결과 확인 중 · 환불 실패). 구독이 없으면 나오지 않습니다 */}
       <SubscriptionManage detail={detail} eligible={eligible} />
@@ -67,29 +73,28 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
       {detail?.subscribed && (
         <div className="my-subnow" data-sub-now="">
           <div>
-            <span className="my-ls">현재 요금제</span>
-            <b className="big">{detail.planName}{detail.monthlyPrice != null && ` · ${wonP(detail.monthlyPrice)}/월`}</b>
-            <span className="my-ls">{ymdKst(detail.periodStart)} 시작{detail.nextChargeAt ? ` · 다음 결제 ${ymdKst(detail.nextChargeAt)}` : ''}</span>
+            <span className="my-ls">{t('curPlan')}</span>
+            <b className="big">{detail.planName}{detail.monthlyPrice != null && t('perMonth', { price: wonP(detail.monthlyPrice) })}</b>
+            <span className="my-ls">{t('started', { date: ymdKst(detail.periodStart) })}{detail.nextChargeAt ? t('nextCharge', { date: ymdKst(detail.nextChargeAt) }) : ''}</span>
           </div>
           <div>
-            <span className="my-ls">이번 달 소개코드</span>
+            <span className="my-ls">{t('monthCodes')}</span>
             <b className="big">{now?.codesIssued ?? 0} / {cap ?? '—'}</b>
-            <span className="my-ls">{cap != null ? `남은 ${Math.max(0, cap - (now?.codesIssued ?? 0))}장` : ''}{extraN > 0 ? ` · 초과 발급 ${extraN}건` : ''}</span>
+            <span className="my-ls">{cap != null ? t('left', { n: String(Math.max(0, cap - (now?.codesIssued ?? 0))) }) : ''}{extraN > 0 ? t('extraIssued', { n: String(extraN) }) : ''}</span>
           </div>
-          <a className="my-bo" href="#plans">요금제 변경</a>
+          <a className="my-bo" href="#plans">{t('changePlan')}</a>
         </div>
       )}
 
       <Note kind="info">
-        <b>초과 소개코드는 건당 {wonP(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000)} 정액입니다.</b> 거래금액이 얼마든 금액은 같습니다 — 소개비에서 떼는 구조가 아니기 때문입니다 (B-13R · INV-9).
-        소개비는 거래 당사자끼리 직접 정하고 주고받으며, 소개뱅크는 이를 대신 보관하거나 지급하지 않고 공제하지도 않습니다.
+        {t.rich('extraNote', { b: B, price: wonP(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000) })}
       </Note>
 
       {!p.businessVerifiedAt && (
-        <Note kind="plain">개인 회원도 구독하실 수 있습니다. 사업자로 소개비(세금계산서)를 받으시려면 <Link href="/my/business">사업자 전환 ›</Link></Note>
+        <Note kind="plain">{t('personal')} <Link href="/my/business">{t('toBiz')}</Link></Note>
       )}
 
-      <h2 className="my-s2">요금제</h2>
+      <h2 className="my-s2">{t('hPlans')}</h2>
       {/* v10.27 (G-189) — 요금제 고르기 · 구독 결제. 처음 유료는 지금 결제, 유료 구독 중 올리기 · 내리기는 다음 결제일부터 예약(10/8 답 ③) */}
       <div className="my-plans-w">
         <PlanPicker
@@ -100,35 +105,35 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
             lines: [
               ...(pl.features?.length
                 ? pl.features.map((t, i) => ({ k: `f${i}`, t }))
-                : [{ k: 'codes', t: pl.includedCodes ? `소개코드 월 ${pl.includedCodes}건` : '소개코드 발급 없음' }]),
-              { k: 'view', t: `요청 열람 ${viewLimitText(settings, pl)}` },
-              { k: 'slots', t: `노출 슬롯 ${pl.listingSlots ?? '무제한'}${pl.listingSlots ? '건' : ''}` },
+                : [{ k: 'codes', t: pl.includedCodes ? t('codesN', { n: String(pl.includedCodes) }) : t('codesNone') }]),
+              { k: 'view', t: t('view', { v: viewLimitText(settings, pl) }) },
+              { k: 'slots', t: t('slots', { v: pl.listingSlots == null ? t('unlimited') : pl.listingSlots ? t('count', { n: String(pl.listingSlots) }) : String(pl.listingSlots) }) },
             ],
-            note: pl.code === 'BASIC' ? `소개코드가 필요하면 건당 ${wonP(pl.extraCodePrice ?? 30000)} 정액으로 발급합니다.` : '해지하면 노출 슬롯이 줄어 매물이 내려갑니다.',
+            note: pl.code === 'BASIC' ? t('basicNote', { price: wonP(pl.extraCodePrice ?? 30000) }) : t('paidNote'),
           }))}
         />
       </div>
 
       {/* 환불 조건은 결제 전에 보여야 합니다. 결제하고 나서 알면 "몰랐다" 가 분쟁이 됩니다. */}
       <Note kind="warn">
-        <b>환불은 결제 당일에만 가능합니다.</b> 구독을 켜시면 그 순간부터 요청을 열람하실 수 있어,
-        <b> 한 건이라도 열람하시면 당일이어도 환불되지 않습니다</b> — 열람한 연락처는 되돌릴 수 없기 때문입니다.
+        {t.rich('refundNote', { b: B })}
       </Note>
-      <p className="my-ls">결제사 키를 넣기 전에는 <b>시험 결제</b>로 동작합니다(돈이 오가지 않음). 키를 넣으면 토스 결제창이 열립니다.</p>
+      <p className="my-ls">{t.rich('testPay', { b: B })}</p>
 
-      <h2 className="my-s2">결제 내역</h2>
+      <h2 className="my-s2">{t('hInvoices')}</h2>
       {invoices.length === 0 ? (
-        <Empty data-sub-invoices="0">결제 내역이 없습니다.</Empty>
+        <Empty data-sub-invoices="0">{t('noInvoices')}</Empty>
       ) : (
-        <Table head={['일자', '항목', '금액', '상태']}>
+        <Table head={[t('thDate'), t('thItem'), t('thAmount'), t('thStatus')]}>
           {invoices.map((v) => {
-            const st = INV[v.status] ?? [v.status, 'off' as Tone];
+            const s = INV[v.status];
+            const st: [string, Tone] = s ? [t(`inv.${s[0]}`), s[1]] : [v.status, 'off'];
             return (
               <tr key={v.id}>
                 <td>{ymdKst(v.paidAt ?? v.issuedAt ?? v.periodStart)}</td>
                 <td>{v.kind === 'EXTRA_CODE'
-                  ? <>초과 소개코드 {v.codeCount ?? 1}건</>
-                  : <>{plans.find((x) => x.code === v.planCode)?.name ?? ''} 구독료 <span className="my-ls">{ymdKst(v.periodStart)} ~ {ymdKst(v.periodEnd)}</span></>}
+                  ? <>{t('extraRow', { n: String(v.codeCount ?? 1) })}</>
+                  : <>{plans.find((x) => x.code === v.planCode)?.name ?? ''} {t('fee')} <span className="my-ls">{ymdKst(v.periodStart)} ~ {ymdKst(v.periodEnd)}</span></>}
                   {v.failureReason ? <><br /><span className="my-ls">{v.failureReason}</span></> : null}</td>
                 <td><b>{wonP(v.amount)}</b></td>
                 <td><span className={`my-bg ${st[1]}`}>{st[0]}</span></td>

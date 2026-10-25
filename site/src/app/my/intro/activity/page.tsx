@@ -4,8 +4,11 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '활동 내역' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('act.title') };
+}
 
 interface Card {
   registered?: boolean; note?: string;
@@ -33,6 +36,8 @@ interface Grade { code: string; name: string; criteria: string; benefit: string;
 export default async function ActivityPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('myDeal');
+  const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   const [card, points, grades] = await Promise.all([
     apiGet<Card>('/me/introducer/activity', 0).catch(() => null),
@@ -43,37 +48,37 @@ export default async function ActivityPage() {
 
   return (
     <><div data-intro-activity="">
-      <MyHead title="활동 내역" sub="소개 활동과 적립 내역입니다. 포인트는 유효한 연결이 확인된 뒤에 사용할 수 있습니다."
-        right={<span className="my-ls">사용 가능 {pt(points?.usable)}</span>} />
+      <MyHead title={t('act.title')} sub={t('act.sub')}
+        right={<span className="my-ls">{t('act.usableN', { v: pt(points?.usable) })}</span>} />
 
-      {!reg && <Note kind="warn">{card?.note ?? '소개자 프로필을 먼저 등록해 주십시오.'}</Note>}
+      {!reg && <Note kind="warn">{card?.note ?? t('intro.needProfile')}</Note>}
       <div className="my-stat4" data-intro-stat="">
-        <div><span className="my-ls">제가 알아요</span><b>{card?.responses ?? 0}건</b></div>
-        <div><span className="my-ls">보낸 초대</span><b>{card?.invitesSent ?? 0}건</b></div>
-        <div><span className="my-ls">동의</span><b>{card?.invitesConsented ?? 0}건</b></div>
-        <div><span className="my-ls">유효 연결</span><b>{card?.validConnections ?? 0}건</b></div>
+        <div><span className="my-ls">{t('answer.know')}</span><b>{t('intro.count', { n: String(card?.responses ?? 0) })}</b></div>
+        <div><span className="my-ls">{t('act.sent')}</span><b>{t('intro.count', { n: String(card?.invitesSent ?? 0) })}</b></div>
+        <div><span className="my-ls">{t('act.consented')}</span><b>{t('intro.count', { n: String(card?.invitesConsented ?? 0) })}</b></div>
+        <div><span className="my-ls">{t('intro.valid')}</span><b>{t('intro.count', { n: String(card?.validConnections ?? 0) })}</b></div>
       </div>
 
       <div className="my-subnow two">
-        <div><span className="my-ls">적립</span><b className="big">{pt(points?.earned)}</b><span className="my-ls">활동으로 쌓인 전체</span></div>
-        <div><span className="my-ls">사용 가능</span><b className="big">{pt(points?.usable)}</b><span className="my-ls">유효 연결이 확인된 분</span></div>
+        <div><span className="my-ls">{t('act.earned')}</span><b className="big">{pt(points?.earned)}</b><span className="my-ls">{t('act.earnedDesc')}</span></div>
+        <div><span className="my-ls">{t('act.usable')}</span><b className="big">{pt(points?.usable)}</b><span className="my-ls">{t('act.usableDesc')}</span></div>
       </div>
 
-      <Note kind="info"><b>프로필 작성이나 초대 발송만으로 받은 포인트는 바로 쓸 수 없습니다.</b> 실제 상담으로 이어진 것이 확인되면 그때 열립니다 — 가짜 계정을 막기 위해서입니다.</Note>
+      <Note kind="info">{t.rich('act.pointNote', { b: b_ })}</Note>
 
-      <h2 className="my-s2">적립 내역</h2>
+      <h2 className="my-s2">{t('act.rowsH')}</h2>
       {(points?.rows ?? []).length === 0 ? (
-        <p className="my-ls">아직 적립 내역이 없습니다.</p>
+        <p className="my-ls">{t('act.rowsEmpty')}</p>
       ) : (
         <div className="my-tbl-w">
           <table className="my-tbl">
-            <thead><tr><th>활동</th><th>포인트</th><th>사용</th><th>날짜</th></tr></thead>
+            <thead><tr><th>{t('act.colAct')}</th><th>{t('act.colPt')}</th><th>{t('act.colUse')}</th><th>{t('act.colDate')}</th></tr></thead>
             <tbody>
               {(points?.rows ?? []).map((r) => (
                 <tr key={r.id}>
                   <td>{r.name}</td>
                   <td className="my-num">{pt(r.points)}</td>
-                  <td><span className={`my-bg ${r.redeemable ? 'ok' : 'wait'}`}>{r.redeemable ? '가능' : '확인 대기'}</span></td>
+                  <td><span className={`my-bg ${r.redeemable ? 'ok' : 'wait'}`}>{r.redeemable ? t('act.ok') : t('act.wait')}</span></td>
                   <td className="my-ls">{ymdKst(r.earnedAt)}</td>
                 </tr>
               ))}
@@ -82,14 +87,14 @@ export default async function ActivityPage() {
         </div>
       )}
 
-      <h2 className="my-s2">등급</h2>
+      <h2 className="my-s2">{t('intro.grade')}</h2>
       <div className="my-tbl-w" data-intro-grades="">
         <table className="my-tbl">
-          <thead><tr><th>등급</th><th>기준</th><th>혜택</th></tr></thead>
+          <thead><tr><th>{t('intro.grade')}</th><th>{t('act.colCriteria')}</th><th>{t('act.colBenefit')}</th></tr></thead>
           <tbody>
             {grades.map((g) => (
               <tr key={g.code} className={g.now ? 'on' : undefined}>
-                <td><b>{g.name}</b>{g.now && <> <span className="my-bg ok">현재</span></>}</td>
+                <td><b>{g.name}</b>{g.now && <> <span className="my-bg ok">{t('act.now')}</span></>}</td>
                 <td className="my-ls">{g.criteria}</td>
                 <td className="my-ls">{g.benefit}</td>
               </tr>
@@ -97,12 +102,11 @@ export default async function ActivityPage() {
           </tbody>
         </table>
       </div>
-      {reg && <p className="my-ls" data-intro-rate="">수락률 {card?.consentRate != null ? `${card.consentRate}%` : '—'} · 평균 평가 {card?.avgRating ?? '—'}</p>}
-      <Note kind="info"><b>등급은 보낸 건수가 아니라 수락률과 만족도로 정해집니다.</b> 아는 곳에만 보내시는 편이 등급에 낫습니다.</Note>
+      {reg && <p className="my-ls" data-intro-rate="">{t('act.rateLine', { rate: card?.consentRate != null ? `${card.consentRate}%` : '—', avg: String(card?.avgRating ?? '—') })}</p>}
+      <Note kind="info">{t.rich('act.gradeNote', { b: b_ })}</Note>
 
       <Note kind="warn">
-        <b>회원을 데려오는 것으로는 수당이 없습니다.</b> 초대한 분이 첫 소개를 마치면 1회만 적립되고, 그분의 이후 활동으로는 아무것도 발생하지 않습니다 —
-        다단계가 되지 않도록 구조로 막았습니다.
+        {t.rich('act.mlmNote', { b: b_ })}
       </Note>
     </div><i hidden data-root-end="" /></>
   );

@@ -4,8 +4,11 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { SubPayConfirm } from '@/components/billing/SubPayConfirm';
 import { MyHead, Note } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '구독 결제 확인' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.subPay'))('title') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string; plan?: string }> };
@@ -19,14 +22,15 @@ type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; am
 export default async function SubPayPage({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
   const { paymentKey, orderId, plan } = await searchParams;
+  const t = await getTranslations('my.subPay');
   const ok = !!paymentKey && /^[A-Za-z0-9_-]{1,200}$/.test(paymentKey)
     && !!orderId && /^[A-Za-z0-9_-]{6,64}$/.test(orderId) && !!plan && /^[A-Z_]{2,20}$/.test(plan);
   return (
     <><div className="auth-wrap">
-      <MyHead title="구독 결제 확인" sub="결제사 승인을 확인한 뒤 구독이 열립니다." />
+      <MyHead title={t('title')} sub={t('sub')} />
       {ok
         ? <SubPayConfirm paymentKey={paymentKey!} orderId={orderId!} plan={plan!} />
-        : <Note kind="warn">결제 정보가 올바르지 않습니다. <a href="/my/subscription">구독 · 소개코드</a>에서 다시 확인해 주십시오.</Note>}
+        : <Note kind="warn">{t.rich('bad', { a: (c) => <a href="/my/subscription">{c}</a> })}</Note>}
     </div><i hidden data-root-end="" /></>
   );
 }

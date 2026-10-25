@@ -6,8 +6,12 @@ import { me } from '@/lib/session';
 import type { HltCart } from '@/components/health/types';
 import { HltNav, HltSteps } from '@/components/health/HltParts';
 import { CartView } from '@/components/health/CartView';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '장바구니 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('order'))('meta.cart') };
+}
 export const dynamic = 'force-dynamic';
 
 /**
@@ -16,21 +20,22 @@ export const dynamic = 'force-dynamic';
  */
 export default async function HltCartPage() {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('order');
 
   let cart: HltCart | null = null;
   let err: string | null = null;
   try {
     cart = await apiGetPersonal<HltCart>('/me/health/cart');
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '장바구니를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('common.cartLoadFail');
   }
 
   return (
     <><div className="hlt">
       <HltNav on="cart" />
-      <div className="page-head"><h1>장바구니</h1></div>
+      <div className="page-head"><h1>{t('cartPage.title')}</h1></div>
       <HltSteps at={0} />
-      {cart ? <CartView initial={cart} /> : <p className="form-error" role="alert">{err}</p>}
+      {cart ? <Msgs ns={['order']}><CartView initial={cart} /></Msgs> : <p className="form-error" role="alert">{err}</p>}
     </div><i hidden data-root-end="" /></>
   );
 }

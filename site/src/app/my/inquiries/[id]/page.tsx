@@ -6,8 +6,11 @@ import { me } from '@/lib/session';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GWAN_PATH } from '@/lib/format';
 import { MyHead } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '1:1 대화' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.inq'))('roomTitle') };
+}
 
 interface Conv {
   id: string; targetType: string; targetId: string; role: 'SENT' | 'RECEIVED';
@@ -22,17 +25,18 @@ export default async function InquiryRoom({ params }: { params: Promise<{ id: st
   const list = await apiGet<Conv[]>(`/me/conversations?id=${id}`, 0).catch(() => [] as Conv[]);
   const c = list[0];
   if (!c) notFound();
+  const t = await getTranslations('my.inq');
 
   return (
     <><div data-inq-room={c.id}>
       {/* v10.29 — 나의공간 틀 안에서 시안 머리 모양으로. 대화(ChatPanel)는 그대로 */}
-      <MyHead title={c.title ?? '(삭제된 대상)'}
+      <MyHead title={c.title ?? t('deleted')}
         sub={<>
-          {c.role === 'RECEIVED' ? '문의한 분' : '받는 분'} {c.counterpartName}
-          {c.targetType === 'LISTING' && <> · <Link href={`/${GWAN_PATH[c.gwanCode ?? ''] ?? 'money'}/${c.targetId}`}>매물 보기</Link></>}
-          {c.dealId && <> · <Link href={`/deal/${c.dealId}/contract`} data-inq-deal={c.dealId}>거래 보기</Link></>}
+          {c.role === 'RECEIVED' ? t('asker') : t('receiver')} {c.counterpartName}
+          {c.targetType === 'LISTING' && <> · <Link href={`/${GWAN_PATH[c.gwanCode ?? ''] ?? 'money'}/${c.targetId}`}>{t('viewListing')}</Link></>}
+          {c.dealId && <> · <Link href={`/deal/${c.dealId}/contract`} data-inq-deal={c.dealId}>{t('viewDeal')}</Link></>}
         </>}
-        right={<Link className="my-bo" href={`/my/inquiries?tab=${c.role === 'SENT' ? 'sent' : 'received'}`}>‹ {c.role === 'SENT' ? '보낸 문의' : '받은 문의'}</Link>} />
+        right={<Link className="my-bo" href={`/my/inquiries?tab=${c.role === 'SENT' ? 'sent' : 'received'}`}>‹ {c.role === 'SENT' ? t('sent') : t('received')}</Link>} />
       <ChatPanel conversationId={c.id} />
     </div><i hidden data-root-end="" /></>
   );

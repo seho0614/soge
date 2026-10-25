@@ -5,8 +5,11 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { MyHead, Note, Empty, Table } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '내 이벤트 참여' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.events'))('title') };
+}
 
 interface J {
   code: string; title: string; benefit: string; endsAt: string;
@@ -25,30 +28,31 @@ export default async function MyEventsPage() {
 
   const rows = await apiGet<J[]>('/me/events', 0).catch(() => [] as J[]);
   const waiting = rows.filter((r) => !r.grantedAt).length;
+  const t = await getTranslations('my.events');
 
   return (
     <>
-      <MyHead title="내 이벤트 참여"
-        sub={waiting > 0 ? `참여하신 이벤트와 지급 상태입니다. 확인 중인 참여가 ${waiting}건 있습니다.` : '참여하신 이벤트와 지급 상태입니다.'} />
+      <MyHead title={t('title')}
+        sub={waiting > 0 ? t('subWaiting', { n: String(waiting) }) : t('sub')} />
       {rows.length === 0 ? (
-        <Empty>참여하신 이벤트가 없습니다. <Link href="/money/event">진행 중인 이벤트 보기 ›</Link></Empty>
+        <Empty>{t('empty')} <Link href="/money/event">{t('browse')}</Link></Empty>
       ) : (
-        <Table head={['이벤트', '혜택', '상태', '참여']}>
+        <Table head={[t('thEvent'), t('thBenefit'), t('thStatus'), t('thJoined')]}>
           {rows.map((r) => (
             <tr key={r.code}>
               <td><b>{r.title}</b></td>
               <td>{r.benefit}</td>
               <td>
                 {r.grantedAt
-                  ? <><span className="my-bg ok">지급됨</span>{r.grantNote ? <span className="my-ls blk">{r.grantNote}</span> : null}</>
-                  : <span className="my-bg wait">확인 중</span>}
+                  ? <><span className="my-bg ok">{t('granted')}</span>{r.grantNote ? <span className="my-ls blk">{r.grantNote}</span> : null}</>
+                  : <span className="my-bg wait">{t('checking')}</span>}
               </td>
               <td>{ymdKst(r.joinedAt)}</td>
             </tr>
           ))}
         </Table>
       )}
-      <Note kind="info"><b>참여하셨다고 바로 받으시는 것은 아닙니다.</b> 운영이 확인한 뒤 드리며, 드린 뒤에는 알림이 갑니다.</Note>
+      <Note kind="info"><b>{t('noteB')}</b> {t('noteText')}</Note>
     </>
   );
 }

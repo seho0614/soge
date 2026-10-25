@@ -9,9 +9,13 @@ import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { ReturnForm } from '@/components/health/ReturnForm';
 import { ProductArt } from '@/components/health/ProductArt';
-import { krw, ORDER_LABEL, RETURN_KIND, ymd } from '@/components/health/util';
+import { codeText, krw, ORDER_LABEL, RETURN_KIND, ymd } from '@/components/health/util';
 
-export const metadata: Metadata = { title: '취소 · 반품 신청 · 소개몰' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('hRetNew.meta') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<{ o?: string }> };
@@ -25,11 +29,13 @@ type Judge =
  * 발송 전이면 취소, 발송 후면 반품·교환, 받은 날부터 청약철회 기간이 지나면 판매자 사유(하자·오배송·
  * 표시와 다름, 3개월)만 받습니다. 접수할 때 서버가 같은 판정으로 다시 막으므로 여기는 안내용입니다.
  */
-function judge(o: HltOrder, open: HltReturn | undefined): Judge {
-  if (open) return { ok: false, reason: `이미 접수된 ${RETURN_KIND[open.kind] ?? ''} 신청이 있습니다(${ymd(open.createdAt)}). 결과를 기다려 주십시오.` };
+type MyDealT = Awaited<ReturnType<typeof getTranslations<'myDeal'>>>;
+type OrderT = Awaited<ReturnType<typeof getTranslations<'order'>>>;
+function judge(o: HltOrder, open: HltReturn | undefined, t: MyDealT, to: OrderT): Judge {
+  if (open) return { ok: false, reason: t('hRetNew.already', { kind: codeText(to, 'returnKind', open.kind, RETURN_KIND[open.kind] ?? ''), d: ymd(open.createdAt) }) };
   const r = o.returnable;
-  if (!r) return { ok: false, reason: '신청 가능 여부를 확인하지 못했습니다. 잠시 뒤 다시 열어 주십시오.' };
-  const until = (d: string | null) => (d ? ` (신청 마감 ${ymd(new Date(new Date(d).getTime() - 1).toISOString())})` : '');
+  if (!r) return { ok: false, reason: t('hRetNew.judgeFail') };
+  const until = (d: string | null) => (d ? t('hRetNew.until', { d: ymd(new Date(new Date(d).getTime() - 1).toISOString()) }) : '');
   if (r.cancel.ok) return { ok: true, kinds: ['CANCEL'], sellerOnly: false, note: r.cancel.message };
   if (r.return.ok) return { ok: true, kinds: ['RETURN', 'EXCHANGE'], sellerOnly: false, note: r.return.message + until(r.return.deadline) };
   if (r.returnSellerFault.ok) {
@@ -41,6 +47,8 @@ function judge(o: HltOrder, open: HltReturn | undefined): Judge {
 
 export default async function MyHltReturnNew({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('myDeal');
+  const to = await getTranslations('order');
   const no = (await searchParams).o;
 
   /* ── 주문을 고르지 않고 들어온 경우 — 대상 주문 목록 ── */
@@ -50,18 +58,18 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
     return (
       <><div className="hlt">
         <MyHltNav on="returns" />
-        <div className="page-head"><h1>취소 · 반품 신청</h1></div>
+        <div className="page-head"><h1>{t('hRetNew.title')}</h1></div>
         {rows === null ? (
-          <p className="form-error" role="alert">주문을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>
+          <p className="form-error" role="alert">{t('h.loadFail')}</p>
         ) : target.length === 0 ? (
-          <HltEmpty msg="취소·반품할 주문이 없습니다." href="/my/health/orders" label="내 주문" />
+          <HltEmpty msg={t('hRetNew.noTarget')} href="/my/health/orders" label={t('hNav.orders')} />
         ) : (
           <section className="hlt-box">
-            <h3>주문 선택</h3>
+            <h3>{t('hRetNew.pickH')}</h3>
             {target.map((o) => (
               <div key={o.orderNo} className="hlt-sum">
-                <span>{ymd(o.createdAt)} · {o.orderNo} · {ORDER_LABEL[o.status] ?? o.status} · {krw(o.total)}</span>
-                <Link className="hlt-btn sm" href={`/my/health/returns/new?o=${encodeURIComponent(o.orderNo)}`}>이 주문 선택</Link>
+                <span>{ymd(o.createdAt)} · {o.orderNo} · {codeText(to, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status)} · {krw(o.total)}</span>
+                <Link className="hlt-btn sm" href={`/my/health/returns/new?o=${encodeURIComponent(o.orderNo)}`}>{t('hRetNew.pick')}</Link>
               </div>
             ))}
           </section>
@@ -75,21 +83,21 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
   try {
     o = await apiGetPersonal<HltOrder>(`/me/health/orders/${encodeURIComponent(no)}`);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '주문을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.loadFail');
   }
   if (!o) {
     return (
       <><div className="hlt">
         <MyHltNav on="returns" />
-        <div className="page-head"><h1>취소 · 반품 신청</h1></div>
-        <HltEmpty msg={err ?? '주문을 찾을 수 없습니다.'} href="/my/health/returns/new" label="주문 다시 고르기" />
+        <div className="page-head"><h1>{t('hRetNew.title')}</h1></div>
+        <HltEmpty msg={err ?? t('h.notFound')} href="/my/health/returns/new" label={t('hRetNew.repick')} />
       </div><i hidden data-root-end="" /></>
     );
   }
 
   const returns = await apiGetPersonal<HltReturn[]>('/me/health/returns').catch(() => [] as HltReturn[]);
   const open = returns.find((r) => r.orderNo === o!.orderNo && ['REQUESTED', 'APPROVED'].includes(r.state));
-  const j = judge(o, open);
+  const j = judge(o, open, t, to);
   const enc = encodeURIComponent(o.orderNo);
   /* v10.32 — 시안의 「반품 주소」 띠: 첫 품목의 판매자 반품 주소(공개 상품 상세 API 의 returnAddr — 판매자 값이 없으면 회사 주소) */
   const retAddr = j.ok && j.kinds.includes('RETURN') && o.items[0]?.code
@@ -99,18 +107,18 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
   const itemsBox = (
       <section className="hlt-box" data-ret-items="">
         {/* v10.31 (시안 「① 항목 선택 (주문 전체)」 — 품목 그림 · 이름 · 옵션 × 수량) */}
-        <h3>① 항목 선택 <span className="hint">(주문 전체 · {ORDER_LABEL[o.status] ?? o.status})</span></h3>
+        <h3>{t('hRetNew.itemsH')} <span className="hint">{t('hRetNew.itemsHint', { s: codeText(to, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status) })}</span></h3>
         {o.items.map((i) => (
           <div key={i.optionId ?? i.code} className="hlt-ci" data-item={i.code}>
             <span className="hlt-mini"><ProductArt p={i} size={44} /></span>
             <div className="bd">
               <b>{i.name}</b>
-              <span className="hint">{i.optionLabel && i.optionLabel !== '단품' ? `${i.optionLabel} × ` : ''}{i.qty}개{i.withdrawalBlockedIf && ` · 철회 제한: ${i.withdrawalBlockedIf}`}</span>
+              <span className="hint">{i.optionLabel && i.optionLabel !== '단품' ? `${i.optionLabel} × ` : ''}{t('h.qty', { n: String(i.qty) })}{i.withdrawalBlockedIf && t('hRetNew.limit', { v: i.withdrawalBlockedIf })}</span>
             </div>
             <b className="money">{krw(i.amount)}</b>
           </div>
         ))}
-        <div className="hlt-sum tot"><span>결제 금액</span><span>{krw(o.total)}</span></div>
+        <div className="hlt-sum tot"><span>{t('h.payAmount')}</span><span>{krw(o.total)}</span></div>
       </section>
   );
 
@@ -118,12 +126,12 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
     <><div className="hlt">
       <MyHltNav on="returns" />
       <div className="hlt-crumb">
-        <Link href="/my/health/orders">내 주문</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › 취소·반품
+        <Link href="/my/health/orders">{t('hNav.orders')}</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › {t('hRetNew.crumb')}
       </div>
-      <div className="page-head"><h1>{j.ok && j.kinds[0] === 'CANCEL' ? '주문 취소' : '취소 · 반품 신청'}</h1></div>
+      <div className="page-head"><h1>{j.ok && j.kinds[0] === 'CANCEL' ? t('hRetNew.cancelTitle') : t('hRetNew.title')}</h1></div>
       {/* 시안 — 항목 선택 → 사유 → 환불 확인 → 접수. 개발분은 주문 단위라 「항목 선택」이 아래 「대상 주문」입니다(일부 반품은 다음 판) */}
-      <ol className="hlt-steps" aria-label="신청 단계">
-        <li className="on">항목 선택</li><li>사유</li><li>환불 확인</li><li>접수</li>
+      <ol className="hlt-steps" aria-label={t('hRetNew.stepsLabel')}>
+        <li className="on">{t('hRetNew.s1')}</li><li>{t('hReturns.reason')}</li><li>{t('hRetNew.s3')}</li><li>{t('hRetNew.s4')}</li>
       </ol>
 
       {!j.ok ? (
@@ -131,17 +139,16 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
           {itemsBox}
           <div className="hlt-box hlt-fail" role="alert">{j.reason}</div>
           <div className="hlt-btns">
-            <Link className="hlt-btn" href={`/my/health/orders/${enc}`}>주문 상세</Link>
-            <Link className="hlt-btn" href="/my/health/returns">취소 · 반품 내역</Link>
-            <Link className="hlt-btn" href="/health/guide">청약철회 안내</Link>
+            <Link className="hlt-btn" href={`/my/health/orders/${enc}`}>{t('hOrder.title')}</Link>
+            <Link className="hlt-btn" href="/my/health/returns">{t('hNav.returns')}</Link>
+            <Link className="hlt-btn" href="/health/guide">{t('hRetNew.guide')}</Link>
           </div>
         </>
       ) : (
         <>
           {j.note && <div className="notice">{j.note}</div>}
           <div className="notice">
-            식품은 개봉하면 반품이 어렵습니다 — 개봉 여부 판단은 판매자가 합니다.
-            <b> 상품이 상했거나 다른 것이 왔으면 여셨더라도 돌려받으실 수 있습니다.</b>
+            {t.rich('hRetNew.foodNote', { b: (c) => <b>{c}</b> })}
           </div>
           <ReturnForm orderNo={o.orderNo} kinds={j.kinds} sellerOnly={j.sellerOnly} ship={o.returnShip} exchangeFee={o.exchangeFee} items={itemsBox} returnAddr={retAddr} />
         </>

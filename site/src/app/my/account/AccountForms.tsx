@@ -1,18 +1,26 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 type Res = { ok?: boolean; note?: string; message?: string; code?: string } | null;
 
-async function patch(url: string, body: unknown): Promise<{ ok: boolean; msg: string }> {
+/** v10.99 — 저장 결과 문구(사전 my.accForm.*) */
+type PatchMsgs = { relogin: string; failed: string; failedShort: string; saved: string };
+function usePatchMsgs(): PatchMsgs {
+  const t = useTranslations('my.accForm');
+  return { relogin: t('relogin'), failed: t('saveFailed'), failedShort: t('saveFailedShort'), saved: t('saved') };
+}
+
+async function patch(url: string, body: unknown, m: PatchMsgs): Promise<{ ok: boolean; msg: string }> {
   const r = await fetch(url, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   });
   const d = (await r.json().catch(() => null)) as Res;
-  if (r.status === 401) return { ok: false, msg: '로그인이 풀렸습니다. 다시 로그인해 주십시오.' };
-  if (!r.ok) return { ok: false, msg: d?.message ?? '저장하지 못했습니다. 잠시 후 다시 시도해 주십시오.' };
-  if (d?.ok === false) return { ok: false, msg: d.note ?? '저장하지 못했습니다.' };
-  return { ok: true, msg: d?.note ?? '수정했습니다.' };
+  if (r.status === 401) return { ok: false, msg: m.relogin };
+  if (!r.ok) return { ok: false, msg: d?.message ?? m.failed };
+  if (d?.ok === false) return { ok: false, msg: d.note ?? m.failedShort };
+  return { ok: true, msg: d?.note ?? m.saved };
 }
 
 /**
@@ -21,6 +29,8 @@ async function patch(url: string, body: unknown): Promise<{ ok: boolean; msg: st
  */
 export function ProfileForm({ name, phone, email }: { name: string; phone: string | null; email: string }) {
   const router = useRouter();
+  const t = useTranslations('my.accForm');
+  const pm = usePatchMsgs();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -30,12 +40,12 @@ export function ProfileForm({ name, phone, email }: { name: string; phone: strin
     const n = String(fd.get('name') ?? '').trim();
     const ph = String(fd.get('phone') ?? '').trim();
     setMsg(null);
-    if (n.length < 2) { setMsg({ ok: false, msg: '이름을 두 글자 이상 쓰십시오.' }); return; }
+    if (n.length < 2) { setMsg({ ok: false, msg: t('nameShort') }); return; }
     if (ph && !/^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(ph)) {
-      setMsg({ ok: false, msg: '연락처 형식이 맞지 않습니다. 예: 010-1234-5678' }); return;
+      setMsg({ ok: false, msg: t('phoneBad') }); return;
     }
     start(async () => {
-      const r = await patch('/api/v1/me/account', { name: n, phone: ph || undefined });
+      const r = await patch('/api/v1/me/account', { name: n, phone: ph || undefined }, pm);
       setMsg(r);
       if (r.ok) router.refresh();
     });
@@ -43,11 +53,11 @@ export function ProfileForm({ name, phone, email }: { name: string; phone: strin
 
   return (
     <form className="card p2pad p2form" onSubmit={submit}>
-      <label className="fld"><span>이름</span><input name="name" defaultValue={name} maxLength={40} required /></label>
-      <label className="fld"><span>연락처</span><input name="phone" type="tel" defaultValue={phone ?? ''} placeholder="010-1234-5678" /></label>
-      <div className="fld"><span>이메일 <span className="dim">(고칠 수 없음)</span></span><div className="masked">{email}</div></div>
+      <label className="fld"><span>{t('name')}</span><input name="name" defaultValue={name} maxLength={40} required /></label>
+      <label className="fld"><span>{t('phone')}</span><input name="phone" type="tel" defaultValue={phone ?? ''} placeholder="010-1234-5678" /></label>
+      <div className="fld"><span>{t('email')} <span className="dim">{t('emailLocked')}</span></span><div className="masked">{email}</div></div>
       {msg && <p className={msg.ok ? 'ok-note' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.msg}</p>}
-      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? '저장 중…' : '저장'}</button></div>
+      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? t('saving') : t('save')}</button></div>
     </form>
   );
 }
@@ -61,6 +71,8 @@ export function ProfileForm({ name, phone, email }: { name: string; phone: strin
  */
 export function EarningsForm({ name, on }: { name: string; on: boolean }) {
   const router = useRouter();
+  const t = useTranslations('my.accForm');
+  const pm = usePatchMsgs();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -69,7 +81,7 @@ export function EarningsForm({ name, on }: { name: string; on: boolean }) {
     const checked = (e.currentTarget.elements.namedItem('earningsPublic') as HTMLInputElement).checked;
     setMsg(null);
     start(async () => {
-      const r = await patch('/api/v1/me/account', { name, earningsPublic: checked });
+      const r = await patch('/api/v1/me/account', { name, earningsPublic: checked }, pm);
       setMsg(r);
       if (r.ok) router.refresh();
     });
@@ -79,11 +91,11 @@ export function EarningsForm({ name, on }: { name: string; on: boolean }) {
     <form className="card p2pad p2form" onSubmit={submit}>
       <label className="chk">
         <input type="checkbox" name="earningsPublic" defaultChecked={on} />
-        <span><b>누적수익 공개</b> — 내 매물 상세의 「소개자 실적」에 누적수익(정산받은 소개비 합계)을 보여 줍니다.</span>
+        <span><b>{t('earnB')}</b>{t('earnText')}</span>
       </label>
-      <p className="hint">꺼 두면 총 소개 · 성사(계약) · 성사율만 나옵니다. 로그인하지 않은 사람도 보는 화면이니, 공개를 원하실 때만 켜십시오. 언제든 다시 끌 수 있습니다.</p>
+      <p className="hint">{t('earnHint')}</p>
       {msg && <p className={msg.ok ? 'ok-note' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.msg}</p>}
-      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? '저장 중…' : '공개 설정 저장'}</button></div>
+      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? t('saving') : t('savePublic')}</button></div>
     </form>
   );
 }
@@ -96,6 +108,8 @@ export function BusinessForm({ biz }: {
   biz: { companyName: string | null; ceoName: string | null; bizType: string | null; bizItem: string | null; address: string | null };
 }) {
   const router = useRouter();
+  const t = useTranslations('my.accForm');
+  const pm = usePatchMsgs();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -108,7 +122,7 @@ export function BusinessForm({ biz }: {
       const r = await patch('/api/v1/me/business', {
         companyName: v('companyName'), ceoName: v('ceoName'),
         bizType: v('bizType'), bizItem: v('bizItem'), address: v('address'),
-      });
+      }, pm);
       setMsg(r);
       if (r.ok) router.refresh();
     });
@@ -116,13 +130,13 @@ export function BusinessForm({ biz }: {
 
   return (
     <form className="card p2pad p2form" onSubmit={submit}>
-      <label className="fld"><span>상호</span><input name="companyName" defaultValue={biz.companyName ?? ''} maxLength={60} /></label>
-      <label className="fld"><span>대표자</span><input name="ceoName" defaultValue={biz.ceoName ?? ''} maxLength={40} /></label>
-      <label className="fld"><span>업태</span><input name="bizType" defaultValue={biz.bizType ?? ''} maxLength={60} /></label>
-      <label className="fld"><span>종목</span><input name="bizItem" defaultValue={biz.bizItem ?? ''} maxLength={60} /></label>
-      <label className="fld"><span>주소</span><input name="address" defaultValue={biz.address ?? ''} maxLength={200} /></label>
+      <label className="fld"><span>{t('company')}</span><input name="companyName" defaultValue={biz.companyName ?? ''} maxLength={60} /></label>
+      <label className="fld"><span>{t('ceo')}</span><input name="ceoName" defaultValue={biz.ceoName ?? ''} maxLength={40} /></label>
+      <label className="fld"><span>{t('bizType')}</span><input name="bizType" defaultValue={biz.bizType ?? ''} maxLength={60} /></label>
+      <label className="fld"><span>{t('bizItem')}</span><input name="bizItem" defaultValue={biz.bizItem ?? ''} maxLength={60} /></label>
+      <label className="fld"><span>{t('address')}</span><input name="address" defaultValue={biz.address ?? ''} maxLength={200} /></label>
       {msg && <p className={msg.ok ? 'ok-note' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.msg}</p>}
-      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? '저장 중…' : '사업자 정보 저장'}</button></div>
+      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? t('saving') : t('saveBiz')}</button></div>
     </form>
   );
 }
@@ -134,6 +148,7 @@ type Act = { ok: true; note?: string } | { ok: false; code: string; message: str
  *   지금 비밀번호가 틀리면 로그인 실패와 같이 셉니다(5번 → 30분 잠금). 바꾸면 이 기기는 새 로그인으로 이어지고 다른 기기는 끊깁니다.
  */
 export function PasswordForm({ action }: { action: (current: string, next: string) => Promise<Act> }) {
+  const t = useTranslations('my.accForm');
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -143,25 +158,25 @@ export function PasswordForm({ action }: { action: (current: string, next: strin
     const fd = new FormData(form);
     const cur = String(fd.get('currentPassword') ?? ''), nw = String(fd.get('newPassword') ?? ''), nw2 = String(fd.get('newPassword2') ?? '');
     setMsg(null);
-    if (!cur) { setMsg({ ok: false, msg: '지금 비밀번호를 넣어 주십시오.' }); return; }
+    if (!cur) { setMsg({ ok: false, msg: t('pwCurNeed') }); return; }
     if (nw.length < 10 || !/[A-Za-z]/.test(nw) || !/[0-9]/.test(nw) || !/[^A-Za-z0-9]/.test(nw)) {
-      setMsg({ ok: false, msg: '새 비밀번호는 영문 · 숫자 · 특수문자를 섞어 10자 이상이어야 합니다.' }); return;
+      setMsg({ ok: false, msg: t('pwRule') }); return;
     }
-    if (nw !== nw2) { setMsg({ ok: false, msg: '새 비밀번호 두 칸이 같지 않습니다.' }); return; }
+    if (nw !== nw2) { setMsg({ ok: false, msg: t('pwMismatch') }); return; }
     start(async () => {
       const r = await action(cur, nw);
-      if (r.ok) { setMsg({ ok: true, msg: r.note ?? '비밀번호를 바꿨습니다.' }); form.reset(); }
+      if (r.ok) { setMsg({ ok: true, msg: r.note ?? t('pwChanged') }); form.reset(); }
       else setMsg({ ok: false, msg: r.message });
     });
   }
 
   return (
     <form className="card p2pad p2form" onSubmit={submit} data-password-form="">
-      <label className="fld"><span>지금 비밀번호</span><input name="currentPassword" type="password" autoComplete="current-password" maxLength={100} /></label>
-      <label className="fld"><span>새 비밀번호</span><input name="newPassword" type="password" autoComplete="new-password" maxLength={100} placeholder="영문 · 숫자 · 특수문자 10자 이상" /></label>
-      <label className="fld"><span>새 비밀번호 확인</span><input name="newPassword2" type="password" autoComplete="new-password" maxLength={100} /></label>
+      <label className="fld"><span>{t('pwCur')}</span><input name="currentPassword" type="password" autoComplete="current-password" maxLength={100} /></label>
+      <label className="fld"><span>{t('pwNew')}</span><input name="newPassword" type="password" autoComplete="new-password" maxLength={100} placeholder={t('pwPh')} /></label>
+      <label className="fld"><span>{t('pwNew2')}</span><input name="newPassword2" type="password" autoComplete="new-password" maxLength={100} /></label>
       {msg && <p className={msg.ok ? 'ok-note' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.msg}</p>}
-      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? '바꾸는 중…' : '비밀번호 바꾸기'}</button></div>
+      <div className="p2act"><button className="btn-sm p2primary" disabled={pending}>{pending ? t('pwChanging') : t('pwSubmit')}</button></div>
     </form>
   );
 }

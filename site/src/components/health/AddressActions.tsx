@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { needsLogin } from './util';
 
 /**
@@ -12,6 +13,7 @@ import { needsLogin } from './util';
  * 기본 배송지를 지우면 서버가 가장 최근 배송지를 기본으로 정합니다.
  */
 export function AddressActions({ id, isDefault, label }: { id: string; isDefault: boolean; label: string }) {
+  const t = useTranslations('order');
   const router = useRouter();
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function AddressActions({ id, isDefault, label }: { id: string; isDefault
       const d = await r.json().catch(() => null);
       if (!r.ok) {
         if (needsLogin(r.status, d?.code)) { router.push('/login'); return; }
-        setErr(r.status >= 500 ? '처리하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.' : d?.message ?? '처리하지 못했습니다.');
+        setErr(r.status >= 500 ? t('addr.errProc') : d?.message ?? t('addr.errProcShort'));
         return;
       }
       router.refresh();
@@ -35,10 +37,10 @@ export function AddressActions({ id, isDefault, label }: { id: string; isDefault
     <div className="hlt-btns">
       {!isDefault && (
         <button type="button" className="hlt-btn sm" disabled={pending}
-          onClick={() => run('PATCH', `${base}/default`)}>기본으로</button>
+          onClick={() => run('PATCH', `${base}/default`)}>{t('addr.setDefault')}</button>
       )}
       <button type="button" className="hlt-btn sm" disabled={pending}
-        onClick={() => { if (confirm(`'${label}' 배송지를 지웁니다.`)) run('DELETE', base); }}>삭제</button>
+        onClick={() => { if (confirm(t('addr.confirmDelete', { label }))) run('DELETE', base); }}>{t('addr.delete')}</button>
       {err && <p className="form-error" role="alert">{err}</p>}
     </div>
   );

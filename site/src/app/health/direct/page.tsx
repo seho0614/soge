@@ -3,8 +3,12 @@ import type { Metadata } from 'next';
 import { apiGet } from '@/lib/api';
 import type { HltProduct } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid, SellerBox } from '@/components/health/HltParts';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '직판관 · 소개몰' };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('order'))('meta.direct') };
+}
 
 /**
  * 직판관.
@@ -14,21 +18,22 @@ export const metadata: Metadata = { title: '직판관 · 소개몰' };
  * 생기면 API 에 판매자 유형이 와야 여기서 거를 수 있습니다.
  */
 export default async function HltDirect() {
+  const t = await getTranslations('order');
   const list = await apiGet<HltProduct[]>('/health/products', 30).catch(() => null);
 
   return (
     <><div className="hlt">
       <HltNav on="direct" />
-      <Crumb items={[{ label: '직판관' }]} />
-      <div className="page-head"><h1>직판관 <span className="hlt-bdg direct">직판</span></h1></div>
+      <Crumb items={[{ label: t('directPage.title') }]} />
+      <div className="page-head"><h1>{t('directPage.title')} <span className="hlt-bdg direct">{t('common.direct')}</span></h1></div>
       <SellerBox compact />
       {list === null ? (
-        <p className="form-error" role="alert">상품을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>
+        <p className="form-error" role="alert">{t('directPage.loadFail')}</p>
       ) : list.length === 0 ? (
-        <HltEmpty msg="등록된 상품이 없습니다." href="/health" label="소개몰 홈" />
+        <HltEmpty msg={t('directPage.empty')} href="/health" label={t('directPage.home')} />
       ) : (
         <>
-          <p className="hint">전체 {list.length}개</p>
+          <p className="hint">{t('directPage.total', { n: String(list.length) })}</p>
           <ProductGrid list={list} />
         </>
       )}

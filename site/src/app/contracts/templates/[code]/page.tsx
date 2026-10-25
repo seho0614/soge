@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { apiGet, ApiFailure } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyFrame } from '@/components/my/MyFrame';
+import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 import { MyHead, Note, Empty } from '@/components/my/ui';
 
 export const metadata: Metadata = { title: '계약서 양식 전문' };
@@ -56,14 +57,14 @@ export default async function ContractTemplatePage({ params, searchParams }: Pro
   /* v10.29 — 시안(scCtrForm)은 나의공간 「계약 진행」 안의 화면입니다. 로그인한 사람에게는 같은 틀(왼쪽 메뉴)로 보입니다.
    *   글은 그대로 DB(contract_templates) 판을 그립니다 — 시안에 박힌 글이 아닙니다. */
   if (!t) {
-    return (<MyFrame><div className="my-ctf-wrap" data-ctform-none="">
+    return (<Msgs ns={['my', 'myDeal', 'order']}><MyFrame><div className="my-ctf-wrap" data-ctform-none="">
       <MyHead title="계약서 양식 전문" sub="조항은 고칠 수 없고 빈칸만 채웁니다." />
       <Empty>{err}</Empty>
       <div className="my-btns"><Link className="my-bo" href="/contracts/templates/INTRO_STD">소개 표준계약서 보기</Link><Link className="my-bo" href="/my/contracts">← 계약 목록</Link></div>
-    </div><i hidden data-root-end="" /></MyFrame>);
+    </div><i hidden data-root-end="" /></MyFrame></Msgs>);
   }
   return (
-    <MyFrame><div className="my-ctf-wrap" data-ctform={t.code}>
+    <Msgs ns={['my', 'myDeal', 'order']}><MyFrame><div className="my-ctf-wrap" data-ctform={t.code}>
       <MyHead title="계약서 양식 전문"
         sub={`${t.name} ${t.version} — 조항은 고칠 수 없고 빈칸만 채웁니다.${t.effectiveFrom ? ` 시행일 ${ymdKst(t.effectiveFrom)}.` : ''}`} />
       <div className="my-card my-ctf ctf">
@@ -75,6 +76,6 @@ export default async function ContractTemplatePage({ params, searchParams }: Pro
         <Note kind="info">지금 쓰는 양식은 <Link href="/contracts/templates/INTRO_STD">소개 표준계약서(INTRO_STD)</Link>입니다.</Note>
       )}
       <div className="my-btns"><Link className="my-bo" href={back.href} data-ctform-back="">{back.label}</Link></div>
-    </div><i hidden data-root-end="" /></MyFrame>
+    </div><i hidden data-root-end="" /></MyFrame></Msgs>
   );
 }

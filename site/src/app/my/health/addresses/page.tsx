@@ -9,7 +9,11 @@ import { MyHltNav } from '@/components/health/MyHltNav';
 import { AddressForm } from '@/components/health/AddressForm';
 import { AddressActions } from '@/components/health/AddressActions';
 
-export const metadata: Metadata = { title: '배송지 관리 · 소개몰' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('hAddr.meta') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<{ next?: string }> };
@@ -21,6 +25,7 @@ type Props = { searchParams: Promise<{ next?: string }> };
  */
 export default async function MyHltAddresses({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('myDeal');
   /* 돌아갈 곳은 사이트 안 경로만 받습니다 — 바깥 주소로 튕기지 않게 */
   const raw = (await searchParams).next;
   const next = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : undefined;
@@ -30,27 +35,27 @@ export default async function MyHltAddresses({ searchParams }: Props) {
   try {
     rows = await apiGetPersonal<HltAddress[]>('/me/health/addresses');
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '배송지를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('hAddr.loadFail');
   }
 
   return (
     <><div className="hlt">
       <MyHltNav on="addresses" />
       <div className="page-head">
-        <h1>배송지 관리</h1>
-        {next && <Link className="hlt-btn sm" href={next}>주문서로 돌아가기</Link>}
+        <h1>{t('hNav.addresses')}</h1>
+        {next && <Link className="hlt-btn sm" href={next}>{t('hAddr.back')}</Link>}
       </div>
 
       {rows === null ? (
         <p className="form-error" role="alert">{err}</p>
       ) : rows.length === 0 ? (
-        <p className="empty">등록된 배송지가 없습니다. 아래에서 첫 배송지를 등록해 주십시오 — 첫 배송지가 기본 배송지가 됩니다.</p>
+        <p className="empty">{t('hAddr.empty')}</p>
       ) : (
         <div className="rows">
           {rows.map((a) => (
             <div key={a.id} className="hlt-box">
               <div className="hlt-ord-h">
-                <span>{a.isDefault && <span className="hlt-bdg">기본</span>} <b>{a.label || '배송지'}</b></span>
+                <span>{a.isDefault && <span className="hlt-bdg">{t('hAddr.default')}</span>} <b>{a.label || t('hAddr.addr')}</b></span>
                 <span className="hint">{a.receiver} · {a.phone}</span>
               </div>
               <p>({a.zipcode}) {a.addr1} {a.addr2 ?? ''}</p>
@@ -61,7 +66,7 @@ export default async function MyHltAddresses({ searchParams }: Props) {
       )}
 
       <section className="hlt-box hlt-gap">
-        <h3>새 배송지</h3>
+        <h3>{t('hAddr.new')}</h3>
         <AddressForm next={next} />
       </section>
     </div><i hidden data-root-end="" /></>

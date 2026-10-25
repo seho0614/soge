@@ -9,7 +9,11 @@ import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { ExchangeFeeConfirm, ExchangeFeePay } from '@/components/health/ExchangeFeePay';
 
-export const metadata: Metadata = { title: '교환 배송비 결제 · 소개몰' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('hFee.meta') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = {
@@ -24,6 +28,7 @@ type Props = {
  */
 export default async function MyHltReturnFee({ params, searchParams }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('myDeal');
   const { id } = await params;
   const q = await searchParams;
   const list = await apiGetPersonal<HltReturn[]>('/me/health/returns').catch(() => null);
@@ -34,21 +39,21 @@ export default async function MyHltReturnFee({ params, searchParams }: Props) {
   return (
     <><div className="hlt">
       <MyHltNav on="returns" />
-      <div className="hlt-crumb"><Link href="/my/health/returns">취소 · 반품 내역</Link> › 교환 배송비</div>
-      <div className="page-head"><h1>교환 배송비 결제</h1></div>
+      <div className="hlt-crumb"><Link href="/my/health/returns">{t('hNav.returns')}</Link> › {t('hReturns.exFee')}</div>
+      <div className="page-head"><h1>{t('hFee.title')}</h1></div>
       {!r ? (
-        <HltEmpty msg={list === null ? '신청을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.' : '신청을 찾을 수 없습니다.'}
-          href="/my/health/returns" label="취소 · 반품 내역" />
+        <HltEmpty msg={list === null ? t('hFee.loadFail') : t('hFee.notFound')}
+          href="/my/health/returns" label={t('hNav.returns')} />
       ) : valid ? (
         <ExchangeFeeConfirm returnId={r.id} paymentKey={q.paymentKey!} amount={amt} />
       ) : r.feeState === 'UNPAID' && r.state === 'REQUESTED' ? (
         <>
-          {q.fail && <div className="hlt-box hlt-fail" role="alert">{q.message ?? '결제가 승인되지 않았습니다.'}{q.code && <> ({q.code})</>}</div>}
+          {q.fail && <div className="hlt-box hlt-fail" role="alert">{q.message ?? t('hFee.notApproved')}{q.code && <> ({q.code})</>}</div>}
           <ExchangeFeePay returnId={r.id} amount={Number(r.exchangeFee ?? 0)} />
         </>
       ) : (
-        <HltEmpty msg={r.feeState === 'PAID' ? '교환 배송비를 이미 결제하셨습니다.' : '결제할 교환 배송비가 없습니다.'}
-          href="/my/health/returns" label="취소 · 반품 내역" />
+        <HltEmpty msg={r.feeState === 'PAID' ? t('hFee.already') : t('hFee.nothing')}
+          href="/my/health/returns" label={t('hNav.returns')} />
       )}
     </div><i hidden data-root-end="" /></>
   );

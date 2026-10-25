@@ -5,6 +5,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { DisputeForm } from '@/components/DisputeForm';
 import { MyFrame } from '@/components/my/MyFrame';
+import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 import { MyHead, Note, Empty, Table, Badge, shortId, type Tone } from '@/components/my/ui';
 import { codeList, uiMessages } from '@/lib/content';
 
@@ -40,7 +41,7 @@ export default async function DisputePage() {
   ]);
 
   return (
-    <><MyFrame active="mydeal">{/* v10.32 (추가) — 시안 myShell("mydeal"): 왼쪽 메뉴 「소개 내역」 켜짐 */}
+    <><Msgs ns={['my', 'myDeal', 'order']}><MyFrame active="mydeal">{/* v10.32 (추가) — 시안 myShell("mydeal"): 왼쪽 메뉴 「소개 내역」 켜짐 */}
       <MyHead title="분쟁 접수 · 처리 현황"
         sub={<>거래 상대와 풀리지 않는 일을 접수합니다. 소개뱅크는 거래 당사자가 아니라 <b>기록과 절차</b>를 돕습니다 — 대금은 당사자끼리 주고받습니다.</>} />
       <DisputeForm deals={deals.map((d) => ({ id: d.id, label: d.title ?? d.id.slice(0, 8) }))}
@@ -64,6 +65,6 @@ export default async function DisputePage() {
       )}
       <Note kind="warn" data-msg="DISPUTE_HOLD"><b>{msg.DISPUTE_HOLD ?? '분쟁이 접수된 거래는 정산이 자동으로 보류됩니다.'}</b> 처리가 끝나면(처리 완료 · 기각) 보류가 풀립니다.</Note>
       <Note kind="info"><b>합의가 안 되면</b> 꼬리줄 「분쟁조정 안내」의 외부 조정 기관으로 이어 드립니다. 소개뱅크가 누가 옳은지 판정하지 않습니다.</Note>
-    </MyFrame><i hidden data-root-end="" /></>
+    </MyFrame></Msgs><i hidden data-root-end="" /></>
   );
 }

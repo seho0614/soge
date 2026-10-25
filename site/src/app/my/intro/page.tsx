@@ -7,8 +7,11 @@ import { ymdKst } from '@/lib/format';
 import { MyHead, Note, GwanTag } from '@/components/my/ui';
 import { IntroAnswer } from '@/components/my/IntroAnswer';
 import { IntroProfileChips } from '@/components/my/IntroProfileChips';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '소개 활동' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('intro.title') };
+}
 
 interface Act {
   registered?: boolean; note?: string;
@@ -39,6 +42,8 @@ interface Matched { requestId?: string; id?: string; title?: string; summary?: s
 export default async function IntroHome() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('myDeal');
+  const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   const [act, matchedRes, prof] = await Promise.all([
     apiGet<Act>('/me/introducer/activity', 0).catch(() => null),
@@ -53,34 +58,34 @@ export default async function IntroHome() {
 
   return (
     <><div data-intro-home="">
-      <MyHead title="소개 활동"
-        sub="등록하신 분야와 지역에 맞는 요청만 보여드립니다. 아는 곳이 있으면 '제가 알아요'를 누르시면 됩니다."
-        right={<span className="my-ls">{reg ? act?.gradeLabel ?? act?.grade ?? '' : '소개자 프로필 전'}</span>} />
+      <MyHead title={t('intro.title')}
+        sub={t('intro.sub')}
+        right={<span className="my-ls">{reg ? act?.gradeLabel ?? act?.grade ?? '' : t('intro.noProfile')}</span>} />
 
       {reg ? (
         <div className="my-subnow" data-intro-grade="">
-          <div><span className="my-ls">등급</span><b className="big">{act?.gradeLabel ?? act?.grade ?? '—'}</b><span className="my-ls">{act?.nextGrade ?? '가장 높은 등급입니다'}</span></div>
-          <div><span className="my-ls">유효 연결</span><b className="big">{act?.validConnections ?? 0}건</b>
-            <span className="my-ls">수락률 {rate}{act?.avgRating != null ? ` · 평균 ${act.avgRating}점` : ''}</span></div>
-          <Link className="my-bo" href="/my/intro/activity">활동 내역</Link>
+          <div><span className="my-ls">{t('intro.grade')}</span><b className="big">{act?.gradeLabel ?? act?.grade ?? '—'}</b><span className="my-ls">{act?.nextGrade ?? t('intro.topGrade')}</span></div>
+          <div><span className="my-ls">{t('intro.valid')}</span><b className="big">{t('intro.count', { n: String(act?.validConnections ?? 0) })}</b>
+            <span className="my-ls">{t('intro.rate', { rate })}{act?.avgRating != null ? t('intro.avg', { v: String(act.avgRating) }) : ''}</span></div>
+          <Link className="my-bo" href="/my/intro/activity">{t('intro.activity')}</Link>
         </div>
       ) : (
-        <Note kind="warn" data-intro-unreg=""><b>{act?.note ?? '소개자 프로필을 먼저 등록해 주십시오.'}</b> 아래 「내 소개 분야」에서 분야 · 지역을 추가하시면 프로필이 만들어지고 맞춤 요청과 등급이 나옵니다.</Note>
+        <Note kind="warn" data-intro-unreg=""><b>{act?.note ?? t('intro.needProfile')}</b> {t('intro.unregHint')}</Note>
       )}
 
-      <Note kind="info"><b>등급은 보낸 건수가 아니라 수락률과 만족도로 정해집니다.</b> 아는 곳에만 보내는 편이 등급에 낫습니다.</Note>
+      <Note kind="info">{t.rich('intro.gradeNote', { b: b_ })}</Note>
 
-      <h2 className="my-s2">내게 맞는 요청 <em>{matched.length}</em></h2>
+      <h2 className="my-s2">{t('intro.matchedH')} <em>{matched.length}</em></h2>
       {matched.length === 0 ? (
-        <Note kind="warn"><b>지금은 맞는 요청이 없습니다.</b> {note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, '') || '분야와 지역을 넓히면 더 많이 보실 수 있습니다.'}</Note>
+        <Note kind="warn"><b>{t('intro.noMatch')}</b> {note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, '') || t('intro.widen')}</Note>
       ) : (
         <div className="my-reqs">
           {matched.slice(0, 20).map((m) => {
             const id = m.requestId ?? m.id ?? '';
             return (
               <div key={id} className="my-req" data-intro-req={id}>
-                <div className="my-rh"><b>{m.title ?? m.summary ?? '(제목 없음)'}</b>{m.urgent ? <span className="my-bg no">급구</span> : m.gwan ? <GwanTag code={m.gwan} /> : m.gwanName ? <span className="my-bg wait">{m.gwanName}</span> : null}</div>
-                <p className="my-ls">{[m.region, m.category, m.createdAt ? `${ymdKst(m.createdAt)} 등록` : m.postedAt ? ymdKst(m.postedAt) : '', m.closesAt ? `${ymdKst(m.closesAt)} 마감` : ''].filter(Boolean).join(' · ')}</p>
+                <div className="my-rh"><b>{m.title ?? m.summary ?? t('intro.noTitle')}</b>{m.urgent ? <span className="my-bg no">{t('intro.urgent')}</span> : m.gwan ? <GwanTag code={m.gwan} /> : m.gwanName ? <span className="my-bg wait">{m.gwanName}</span> : null}</div>
+                <p className="my-ls">{[m.region, m.category, m.createdAt ? t('intro.posted', { d: ymdKst(m.createdAt) }) : m.postedAt ? ymdKst(m.postedAt) : '', m.closesAt ? t('intro.closes', { d: ymdKst(m.closesAt) }) : ''].filter(Boolean).join(' · ')}</p>
                 {m.body && <p>{m.body}</p>}
                 {id && <IntroAnswer requestId={id} />}
               </div>
@@ -91,18 +96,18 @@ export default async function IntroHome() {
 
       {answered.length > 0 && (
         <>
-          <h2 className="my-s2">답한 요청 <em>{answered.length}</em></h2>
+          <h2 className="my-s2">{t('intro.answeredH')} <em>{answered.length}</em></h2>
           <div className="my-reqs" data-intro-answered="">
             {answered.map((a) => (
               <div key={a.requestId} className="my-req done">
                 <div className="my-rh"><b>{a.title}</b>{a.gwan && <GwanTag code={a.gwan} />}</div>
-                <p className="my-ls">{[a.category, a.createdAt ? `${ymdKst(a.createdAt)} 등록` : ''].filter(Boolean).join(' · ')}</p>
+                <p className="my-ls">{[a.category, a.createdAt ? t('intro.posted', { d: ymdKst(a.createdAt) }) : ''].filter(Boolean).join(' · ')}</p>
                 {a.body && <p>{a.body}</p>}
                 <div className="my-ansd">
-                  <span className="my-bg ok">{a.answerLabel}{a.invites > 0 ? ' · 초대 발송' : ''}</span>
+                  <span className="my-bg ok">{a.answerLabel}{a.invites > 0 ? t('intro.invited') : ''}</span>
                   {a.invites > 0
-                    ? <Link className="my-bo sm" href="/my/intro/invite">초대 현황</Link>
-                    : a.answer === 'KNOW' && <Link className="my-bo sm" href={`/my/intro/invite?request=${encodeURIComponent(a.requestId)}`}>초대 보내기</Link>}
+                    ? <Link className="my-bo sm" href="/my/intro/invite">{t('intro.inviteStatus')}</Link>
+                    : a.answer === 'KNOW' && <Link className="my-bo sm" href={`/my/intro/invite?request=${encodeURIComponent(a.requestId)}`}>{t('intro.sendInvite')}</Link>}
                 </div>
               </div>
             ))}
@@ -110,21 +115,20 @@ export default async function IntroHome() {
         </>
       )}
 
-      <h2 className="my-s2" id="mine">내 소개 분야</h2>
+      <h2 className="my-s2" id="mine">{t('intro.mine')}</h2>
       <IntroProfileChips categories={prof?.categories ?? []} regions={prof?.regions ?? []} />
 
       {/* 개발에만 있던 할 일 바로가기 — 시안 바로가기 칸 모양으로 남깁니다 */}
-      <h2 className="my-s2">할 일</h2>
+      <h2 className="my-s2">{t('intro.todo')}</h2>
       <div className="my-mgrid">
-        <Link className="my-mcard" href="/my/intro/invite"><b>초대 보내기</b><span>아는 곳에 링크를 전달합니다</span></Link>
-        <Link className="my-mcard" href="/my/intro/activity"><b>활동 · 포인트</b><span>지금까지의 기록을 봅니다</span></Link>
-        <Link className="my-mcard" href="/my/deals"><b>소개 내역</b><span>진행 중인 거래를 봅니다</span></Link>
+        <Link className="my-mcard" href="/my/intro/invite"><b>{t('intro.sendInvite')}</b><span>{t('intro.todoInvite')}</span></Link>
+        <Link className="my-mcard" href="/my/intro/activity"><b>{t('intro.todoAct')}</b><span>{t('intro.todoActDesc')}</span></Link>
+        <Link className="my-mcard" href="/my/deals"><b>{t('intro.todoDeals')}</b><span>{t('intro.todoDealsDesc')}</span></Link>
       </div>
 
       {/* 소개코드가 언제 잡히는지 모르면 소개비를 못 받습니다. 이것이 소개자가 가장 자주 놓치는 지점입니다. */}
       <Note kind="warn">
-        <b>소개코드는 1:1 대화가 시작되는 순간 발급됩니다.</b> 전화나 카톡으로만 진행하시면 <b>소개자가 누구인지 증명할 수 없어 소개비를 받지 못합니다.</b> 반드시 초대 링크로 연결하십시오.
-        귀속은 첫 접촉으로부터 90일입니다. <b>소개비는 전액 소개자에게</b> 갑니다 — 플랫폼은 한 푼도 떼지 않습니다.
+        {t.rich('intro.codeNote', { b: b_ })}
       </Note>
     </div><i hidden data-root-end="" /></>
   );

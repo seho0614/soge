@@ -8,9 +8,13 @@ import type { HltOrder, HltShipment } from '@/components/health/types';
 import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { CopyText } from '@/components/health/CopyText';
-import { ORDER_LABEL, SHIP_LABEL, ymdhm } from '@/components/health/util';
+import { codeText, ORDER_LABEL, SHIP_LABEL, ymdhm } from '@/components/health/util';
 
-export const metadata: Metadata = { title: '배송 조회 · 소개몰' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('hShip.meta') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ no: string }> };
@@ -22,6 +26,8 @@ type Props = { params: Promise<{ no: string }> };
  */
 export default async function MyHltShip({ params }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('myDeal');
+  const to = await getTranslations('order');
   const no = decodeURIComponent((await params).no);
   const enc = encodeURIComponent(no);
 
@@ -34,15 +40,15 @@ export default async function MyHltShip({ params }: Props) {
       apiGetPersonal<HltShipment[]>(`/me/health/orders/${enc}/shipments`),
     ]);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '배송 정보를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.shipLoadFail');
   }
 
   if (!o) {
     return (
       <><div className="hlt">
         <MyHltNav on="orders" />
-        <div className="page-head"><h1>배송 조회</h1></div>
-        <HltEmpty msg={err ?? '주문을 찾을 수 없습니다.'} href="/my/health/orders" label="내 주문" />
+        <div className="page-head"><h1>{t('hShip.title')}</h1></div>
+        <HltEmpty msg={err ?? t('h.notFound')} href="/my/health/orders" label={t('hNav.orders')} />
       </div><i hidden data-root-end="" /></>
     );
   }
@@ -53,38 +59,38 @@ export default async function MyHltShip({ params }: Props) {
     <><div className="hlt">
       <MyHltNav on="orders" />
       <div className="hlt-crumb">
-        <Link href="/my/health/orders">내 주문</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › 배송 조회
+        <Link href="/my/health/orders">{t('hNav.orders')}</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › {t('hShip.title')}
       </div>
-      <div className="page-head"><h1>배송 조회</h1></div>
+      <div className="page-head"><h1>{t('hShip.title')}</h1></div>
 
       <section className="hlt-box">
         <table className="tbl hlt-tbl">
           <tbody>
-            <tr><th>주문번호</th><td>{o.orderNo}</td></tr>
-            <tr><th>주문 상태</th><td>{ORDER_LABEL[o.status] ?? o.status}</td></tr>
-            <tr><th>택배사</th><td>{last?.carrier ?? '발송 전'}</td></tr>
-            <tr><th>송장번호</th><td className="mono">{last?.trackingNo ?? '발송 전'}</td></tr>
+            <tr><th>{t('h.orderNo')}</th><td>{o.orderNo}</td></tr>
+            <tr><th>{t('hShip.state')}</th><td>{codeText(to, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status)}</td></tr>
+            <tr><th>{t('h.carrier')}</th><td>{last?.carrier ?? t('h.notShipped')}</td></tr>
+            <tr><th>{t('h.trackingNo')}</th><td className="mono">{last?.trackingNo ?? t('h.notShipped')}</td></tr>
           </tbody>
         </table>
         {last?.trackingNo && (
           <div className="hlt-btns">
-            <CopyText text={last.trackingNo} label="송장번호 복사" />
-            <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship/carrier`} data-carrier-link="">택배사에서 보기</Link>
+            <CopyText text={last.trackingNo} label={t('h.copyTracking')} />
+            <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship/carrier`} data-carrier-link="">{t('hShip.atCarrier')}</Link>
           </div>
         )}
       </section>
 
       <section className="hlt-box">
-        <h3>배송 추적</h3>
+        <h3>{t('hShip.trackH')}</h3>
         {ships.length === 0 ? (
           <p className="hint">
-            아직 발송 전입니다. 결제 확인 후 영업일 2일 안에 보내 드리고, 보내면 여기에 기록이 남습니다.
+            {t('hShip.none')}
           </p>
         ) : (
           <ul className="hlt-tl">
             {ships.map((s, i) => (
               <li key={i} className={i === 0 ? 'on' : undefined}>
-                <b>{SHIP_LABEL[s.state] ?? s.state}</b> <span className="hint">{ymdhm(s.happenedAt)}</span>
+                <b>{codeText(to, 'shipState', s.state, SHIP_LABEL[s.state] ?? s.state)}</b> <span className="hint">{ymdhm(s.happenedAt)}</span>
                 {s.note && <p className="hint">{s.note}</p>}
               </li>
             ))}
@@ -93,9 +99,9 @@ export default async function MyHltShip({ params }: Props) {
       </section>
 
       <div className="hlt-btns">
-        <Link className="hlt-btn" href={`/my/health/orders/${enc}`}>주문 상세</Link>
+        <Link className="hlt-btn" href={`/my/health/orders/${enc}`}>{t('hOrder.title')}</Link>
         {['SHIPPED', 'DELIVERED', 'CONFIRMED'].includes(o.status) &&
-          <Link className="hlt-btn" href={`/my/health/returns/new?o=${enc}`}>반품신청</Link>}
+          <Link className="hlt-btn" href={`/my/health/returns/new?o=${enc}`}>{t('hBtn.ret')}</Link>}
       </div>
     </div><i hidden data-root-end="" /></>
   );

@@ -4,6 +4,7 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ReportForm } from '@/components/ReportForm';
 import { MyFrame } from '@/components/my/MyFrame';
+import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 
 export const metadata: Metadata = { title: '신고하기' };
 
@@ -44,7 +45,7 @@ export default async function ReportPage({ params }: Props) {
   const SEV: Record<string, string> = { HIGH: '높음', MEDIUM: '보통', LOW: '낮음' };
   /* v10.31 — 시안 RPT-010: 왼쪽 나의공간 메뉴(MyFrame) + 사유 · 심각도 표 + 본인인증 안내 */
   return (
-    <MyFrame><div className="page narrow" data-screen="SB-HOM-RPT-010" style={{ margin: 0, maxWidth: 'none' }}>
+    <Msgs ns={['my', 'myDeal', 'order']}><MyFrame><div className="page narrow" data-screen="SB-HOM-RPT-010" style={{ margin: 0, maxWidth: 'none' }}>
       <h1>신고하기</h1>
       <p className="lead">
         이 {LABEL[t] ?? '글'}의 어떤 점이 문제인지 알려 주십시오.
@@ -100,6 +101,6 @@ export default async function ReportPage({ params }: Props) {
           ? ' 내리고 싶으시면 글 상세의 「삭제」를 쓰십시오.'
           : <> 내리고 싶으시면 <a href="/my/listings">내 등록</a>에서 「내리기」로 비공개로 바꾸십시오.</>}
       </div>
-    </div></MyFrame>
+    </div></MyFrame></Msgs>
   );
 }

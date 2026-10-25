@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * 성분 상세의 정렬 고르기 — 시안 SB-HLT-CAT-040 의 「정렬」 고르기 칸.
@@ -8,16 +9,17 @@ import { useRouter } from 'next/navigation';
  */
 export function IngSort({ base, sort, amt }: { base: string; sort: string; amt?: string }) {
   const router = useRouter();
+  const t = useTranslations('hlt.sort');
   return (
-    <select id="ingSort" className="hlt-sel" value={sort} aria-label="정렬"
+    <select id="ingSort" className="hlt-sel" value={sort} aria-label={t('aria')}
       onChange={(e) => {
         const q = new URLSearchParams();
         if (e.target.value !== 'unit') q.set('sort', e.target.value);
         if (amt) q.set('amt', amt);
         router.push(`${base}${q.size ? `?${q}` : ''}`);
       }}>
-      <option value="unit">월 단가 낮은 순</option>
-      <option value="name">이름순</option>
+      <option value="unit">{t('unit')}</option>
+      <option value="name">{t('name')}</option>
     </select>
   );
 }

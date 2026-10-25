@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 type Sug = { word: string; kind: string; code: string };
 
@@ -15,6 +16,7 @@ type Sug = { word: string; kind: string; code: string };
  */
 export function SearchBox({ q }: { q: string }) {
   const router = useRouter();
+  const t = useTranslations('hlt.searchBox');
   const [v, setV] = useState(q);
   const [list, setList] = useState<Sug[]>([]);
   const [open, setOpen] = useState(false);
@@ -52,9 +54,9 @@ export function SearchBox({ q }: { q: string }) {
   return (
     <form className="hlt-sform" action="/health/search" role="search"
       onSubmit={(e) => { if (shown && active >= 0) { e.preventDefault(); go(list[active]!.word); } }}>
-      <label htmlFor="qInput" className="hlt-sform-l">검색어</label>
+      <label htmlFor="qInput" className="hlt-sform-l">{t('label')}</label>
       <div className="hlt-acwrap" ref={wrap}>
-        <input id="qInput" name="q" type="search" value={v} autoComplete="off" placeholder="성분 · 상품명" aria-label="검색어"
+        <input id="qInput" name="q" type="search" value={v} autoComplete="off" placeholder={t('placeholder')} aria-label={t('label')}
           role="combobox" aria-expanded={shown} aria-controls="hltSug" aria-autocomplete="list"
           aria-activedescendant={shown && active >= 0 ? `hltSug-${active}` : undefined}
           onChange={(e) => setV(e.target.value)}
@@ -77,9 +79,9 @@ export function SearchBox({ q }: { q: string }) {
         )}
       </div>
       <div className="hlt-btns">
-        <button className="hlt-btn pri">검색</button>
+        <button className="hlt-btn pri">{t('search')}</button>
         <button type="button" className="hlt-btn" data-search-reset=""
-          onClick={() => { setV(''); setList([]); setOpen(false); router.push('/health/search'); }}>초기화</button>
+          onClick={() => { setV(''); setList([]); setOpen(false); router.push('/health/search'); }}>{t('reset')}</button>
       </div>
     </form>
   );

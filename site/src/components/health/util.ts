@@ -91,12 +91,7 @@ export const reasonLabel = (code: string) =>
 /** 청약철회 기간 기본값 — 전자상거래법 17조. withdrawal_rules.days 가 오면 그 값을 씁니다 (판정은 서버가 합니다) */
 export const RETURN_WINDOW_DAYS = 7;
 
-/** 청약철회 규칙 코드 → 짧은 라벨 (목록 응답에는 코드만 옵니다) */
-export const WITHDRAWAL_SHORT: Record<string, string> = {
-  FOOD_SEALED: '개봉 시 청약철회 제한',
-  DEVICE: '사용 시 청약철회 제한',
-  GENERAL: '수령 후 7일 청약철회',
-};
+/** 청약철회 규칙 코드 → 짧은 라벨은 v10.99 부터 사전 hlt.card.withdrawal.<코드> (목록 응답에는 코드만 옵니다) */
 
 /* ── 성분 · 고민 ───────────────────────────────────────────────────
  * D002 부터 서버 표(hlt_product_ingredients · hlt_concerns · hlt_concern_ingredients)와
@@ -108,10 +103,17 @@ export const WITHDRAWAL_SHORT: Record<string, string> = {
  * ──────────────────────────────────────────────────────────────── */
 
 /* ── 취급하지 않는 카테고리 ───────────────────────────────────────
- * 카테고리 표에는 있지만 법상 팔 수 없는 것 — 비어 있는 이유를 알려 드립니다. */
-export const NOT_SOLD: Record<string, string> = {
-  HLT_PHARM: '의약품은 약사법 제44조에 따라 약국 개설자가 아니면 판매할 수 없어 취급하지 않습니다.',
-  HLT_MEDICAL: '의료 서비스는 의료법 제27조(환자 유인·알선 금지)에 따라 이곳에서 판매하지 않습니다.',
+ * 카테고리 표에는 있지만 법상 팔 수 없는 것 — 비어 있는 이유는 v10.99 부터 사전 hlt.category.notSoldBy.<코드>. */
+
+/**
+ * v10.99 (다국어 2-4) — 코드 → 사전 글자(order.<묶음>.<코드> · 예: orderState.PAID).
+ *   위의 한국어 표(ORDER_LABEL · PAY_STATE …)는 사전과 같은 글자이고, 사전에 없는 코드일 때만 씁니다(fallback).
+ *   t 는 useTranslations('order') / getTranslations('order').
+ */
+type CodeT = { (key: never): string; has: (key: never) => boolean };
+export const codeText = (t: CodeT, group: string, code: string, fallback: string) => {
+  const k = `${group}.${code}` as never;
+  return t.has(k) ? t(k) : fallback;
 };
 
 /** 로그인 필요 응답인가 — API 는 비로그인에 403 UNAUTHENTICATED 를 줍니다 */

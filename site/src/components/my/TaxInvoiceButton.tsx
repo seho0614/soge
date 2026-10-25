@@ -5,9 +5,11 @@
  */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function TaxInvoiceButton({ id }: { id: string }) {
   const r = useRouter();
+  const t = useTranslations('my.taxInv');
   const [open, setOpen] = useState(false);
   const [no, setNo] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,19 +21,19 @@ export function TaxInvoiceButton({ id }: { id: string }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(no.trim() ? { no: no.trim() } : {}),
       });
       const j = await res.json().catch(() => null);
-      if (!res.ok) { setErr(j?.message ?? '표시하지 못했습니다.'); return; }
+      if (!res.ok) { setErr(j?.message ?? t('failed')); return; }
       r.refresh();
-    } catch { setErr('연결하지 못했습니다.'); } finally { setBusy(false); }
+    } catch { setErr(t('network')); } finally { setBusy(false); }
   }
   if (!open) {
     return <button type="button" className="my-bo sm" onClick={() => setOpen(true)} data-taxinv={id}
-      title="세금계산서는 소개자가 직접 발행합니다 — 플랫폼이 대신 발행하지 않습니다.">미발행</button>;
+      title={t('title')}>{t('notIssued')}</button>;
   }
   return (
     <span className="my-addf" data-taxinv-form={id}>
-      <input value={no} onChange={(e) => setNo(e.target.value)} maxLength={40} placeholder="승인번호(선택)" aria-label="세금계산서 승인번호" />
-      <button type="button" className="my-bp sm" disabled={busy} onClick={mark}>발행 완료로 표시</button>
-      <button type="button" className="my-bo sm" onClick={() => setOpen(false)}>닫기</button>
+      <input value={no} onChange={(e) => setNo(e.target.value)} maxLength={40} placeholder={t('noPh')} aria-label={t('noAria')} />
+      <button type="button" className="my-bp sm" disabled={busy} onClick={mark}>{t('mark')}</button>
+      <button type="button" className="my-bo sm" onClick={() => setOpen(false)}>{t('close')}</button>
       {err && <span className="my-ls warnx" role="alert">{err}</span>}
     </span>
   );

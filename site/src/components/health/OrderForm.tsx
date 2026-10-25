@@ -3,7 +3,8 @@ import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { HltAddress, HltCart } from './types';
-import { krw, needsLogin, PAY_METHODS } from './util';
+import { useTranslations } from 'next-intl';
+import { codeText, krw, needsLogin, PAY_METHODS } from './util';
 import { ProductArt } from './ProductArt';
 
 /**
@@ -16,6 +17,7 @@ import { ProductArt } from './ProductArt';
  *   결제수단 「간편결제」 칩(결제사 결제창에서 고름) · 결제 금액의 「할인」 줄(쿠폰 · 적립금이 없어 0원 — 판매가에 이미 할인이 들어 있음).
  */
 export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAddress[] }) {
+  const t = useTranslations('order');
   const router = useRouter();
   const [addr, setAddr] = useState(addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? '');
   const [method, setMethod] = useState('CARD');
@@ -70,8 +72,8 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
         if (d?.code === 'CART_CHANGED') { setErr(d.message); router.refresh(); return; }
         /* v10.26 — 담은 뒤 값이 바뀐 상품이 있음 — 장바구니에서 「확인했습니다」를 받습니다 */
         if (d?.code === 'PRICE_CHANGED') { setErr(d.message); router.refresh(); return; }
-        if (r.status >= 500) { setErr('주문을 접수하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'); return; }
-        const q = new URLSearchParams({ step: 'order', code: d?.code ?? String(r.status), msg: d?.message ?? '주문을 접수하지 못했습니다.' });
+        if (r.status >= 500) { setErr(t('form.errServer')); return; }
+        const q = new URLSearchParams({ step: 'order', code: d?.code ?? String(r.status), msg: d?.message ?? t('form.errOrder') });
         router.push(`/health/order/fail?${q}`);
         return;
       }
@@ -83,15 +85,15 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
   return (
     <>
       <section className="hlt-box">
-        <h3>주문 상품</h3>
+        <h3>{t('form.items')}</h3>
         {cart.items.map((i) => (
           <div key={i.optionId} className="hlt-ci" data-order-line={i.optionId}>
             <span className="hlt-mini"><ProductArt p={i} size={44} /></span>
             <div className="bd">
               <b>{i.name}</b>
               {i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm" data-optlabel>{i.optionLabel}</span>}
-              <span className="hint">{krw(i.price)} × {i.qty}개</span>
-              {i.withdrawalBlockedIf && <span className="hint">청약철회 제한: {i.withdrawalBlockedIf}</span>}
+              <span className="hint">{t('form.unitQty', { price: krw(i.price), qty: String(i.qty) })}</span>
+              {i.withdrawalBlockedIf && <span className="hint">{t('common.withdrawalLimit', { v: i.withdrawalBlockedIf })}</span>}
             </div>
             <b className="money">{krw(i.amount)}</b>
           </div>
@@ -99,90 +101,89 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
       </section>
 
       <section className="hlt-box">
-        <h3>배송지</h3>
+        <h3>{t('form.address')}</h3>
         {addresses.length === 0 ? (
           <div className="notice">
-            배송지가 없습니다. 먼저 등록하십시오.{' '}
-            <Link href="/my/health/addresses?next=/health/order">배송지 등록</Link>
+            {t('form.noAddress')}{' '}
+            <Link href="/my/health/addresses?next=/health/order">{t('form.addAddress')}</Link>
           </div>
         ) : !pick && picked ? (
           <div className="hlt-addr-picked" data-addr-picked>
             <p>
-              <b>{picked.label || '배송지'}</b>{picked.isDefault && <span className="hlt-bdg">기본</span>}
+              <b>{picked.label || t('form.address')}</b>{picked.isDefault && <span className="hlt-bdg">{t('form.default')}</span>}
               {' '}{picked.receiver} · {picked.phone}<br />
               <span className="hint">({picked.zipcode}) {picked.addr1} {picked.addr2 ?? ''}</span>
             </p>
             <div className="hlt-btns">
-              <button type="button" className="hlt-btn sm" data-addr-change onClick={() => setPick(true)}>변경</button>
-              <Link className="hlt-btn sm" href="/my/health/addresses?next=/health/order">배송지 관리</Link>
+              <button type="button" className="hlt-btn sm" data-addr-change onClick={() => setPick(true)}>{t('form.change')}</button>
+              <Link className="hlt-btn sm" href="/my/health/addresses?next=/health/order">{t('form.manageAddress')}</Link>
             </div>
           </div>
         ) : (
-          <div className="hlt-radios" role="radiogroup" aria-label="배송지">
+          <div className="hlt-radios" role="radiogroup" aria-label={t('form.address')}>
             {addresses.map((a) => (
               <label key={a.id} className={`hlt-radio${addr === a.id ? ' on' : ''}`}>
                 <input type="radio" name="addr" value={a.id} checked={addr === a.id} onChange={() => { setAddr(a.id); setPick(false); }} />
                 <span>
-                  <b>{a.label || '배송지'}</b>{a.isDefault && <span className="hlt-bdg">기본</span>}
+                  <b>{a.label || t('form.address')}</b>{a.isDefault && <span className="hlt-bdg">{t('form.default')}</span>}
                   {' '}{a.receiver} · {a.phone}<br />
                   <span className="hint">({a.zipcode}) {a.addr1} {a.addr2 ?? ''}</span>
                 </span>
               </label>
             ))}
-            <Link className="hlt-btn sm" href="/my/health/addresses?next=/health/order">배송지 관리</Link>
+            <Link className="hlt-btn sm" href="/my/health/addresses?next=/health/order">{t('form.manageAddress')}</Link>
           </div>
         )}
         <div className="hlt-f" data-ship-memo="">
-          <label htmlFor="shipMemo">배송 요청사항</label>
-          <input id="shipMemo" value={memo} maxLength={50} placeholder="부재 시 경비실에 맡겨 주세요"
+          <label htmlFor="shipMemo">{t('form.shipMemo')}</label>
+          <input id="shipMemo" value={memo} maxLength={50} placeholder={t('form.shipMemoPh')}
             onChange={(e) => setMemo(e.target.value)} />
-          <span className="hint">{memo.length}/50 · 전화번호 · 계좌번호는 적지 마십시오(받는 분 연락처는 배송지에 있습니다).</span>
+          <span className="hint">{t('form.shipMemoHint', { n: String(memo.length) })}</span>
         </div>
       </section>
 
       <section className="hlt-box">
-        <h3>결제수단</h3>
-        <div className="hlt-chips" role="radiogroup" aria-label="결제수단">
+        <h3>{t('common.payMethod')}</h3>
+        <div className="hlt-chips" role="radiogroup" aria-label={t('common.payMethod')}>
           {PAY_METHODS.map((m) => (
             <button key={m.code} type="button" role="radio" aria-checked={method === m.code}
-              className={`hlt-chip${method === m.code ? ' on' : ''}`} onClick={() => setMethod(m.code)}>{m.label}</button>
+              className={`hlt-chip${method === m.code ? ' on' : ''}`} onClick={() => setMethod(m.code)}>{codeText(t, 'payMethod', m.code, m.label)}</button>
           ))}
         </div>
-        {method === 'EASY' && <p className="hint">간편결제(토스페이 · 카카오페이 · 네이버페이 등)는 다음 단계의 결제창에서 고릅니다.</p>}
-        <p className="hint">카드번호는 저희 쪽에 남지 않습니다 — PG 가 처리하고 저희는 거래번호만 받습니다.</p>
+        {method === 'EASY' && <p className="hint">{t('form.easyNote')}</p>}
+        <p className="hint">{t('form.cardNote')}</p>
       </section>
 
       <section className="hlt-box">
-        <h3>결제 금액</h3>
-        <div className="hlt-sum"><span>상품 금액</span><span>{krw(cart.goods)}</span></div>
-        <div className="hlt-sum"><span>배송비</span><span>{cart.shipFee === 0 ? '무료' : krw(cart.shipFee)}</span></div>
-        <div className="hlt-sum" data-discount=""><span>할인</span><span>{krw(0)}</span></div>
-        <div className="hlt-sum tot"><span>총 결제 금액</span><span>{krw(cart.total)}</span></div>
-        <p className="hint">금액은 주문할 때 서버가 다시 계산합니다.</p>
+        <h3>{t('common.payAmount')}</h3>
+        <div className="hlt-sum"><span>{t('common.goods')}</span><span>{krw(cart.goods)}</span></div>
+        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : krw(cart.shipFee)}</span></div>
+        <div className="hlt-sum" data-discount=""><span>{t('form.discount')}</span><span>{krw(0)}</span></div>
+        <div className="hlt-sum tot"><span>{t('form.total')}</span><span>{krw(cart.total)}</span></div>
+        <p className="hint">{t('form.recalc')}</p>
       </section>
 
       {/* 두 동의를 하나로 합치지 않습니다 — 개인정보보호법상 동의 항목은 구분해 표시해야 합니다(시안) */}
       <section className="hlt-box">
-        <h3>동의</h3>
+        <h3>{t('form.agree')}</h3>
         <label className="hlt-chk">
           <input type="checkbox" checked={agree1} onChange={(e) => setAgree1(e.target.checked)} />
-          <span>[필수] 주문 내용과 청약철회 조건을 확인했으며 구매에 동의합니다
-            {' '}(<Link href="/health/guide">이용안내 · 청약철회</Link>)</span>
+          <span>{t.rich('form.agree1', { link: (c) => <Link href="/health/guide">{c}</Link> })}</span>
         </label>
         <label className="hlt-chk">
           <input type="checkbox" checked={agree2} onChange={(e) => setAgree2(e.target.checked)} />
-          <span>[필수] 배송을 위해 받는 분 성함 · 연락처 · 주소를 배송사에 제공하는 데 동의합니다</span>
+          <span>{t('form.agree2')}</span>
         </label>
       </section>
 
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={!ready || pending} onClick={submit}>
-        {pending ? '주문 접수 중…' : `${krw(cart.total)} 결제하기`}
+        {pending ? t('form.submitting') : t('common.payBtn', { amount: krw(cart.total) })}
       </button>
       {!ready && !pending && (
         <p className="cta-note">
-          {!addr ? '배송지를 등록해 주십시오.' : !(agree1 && agree2) ? '필수 동의 두 가지에 체크해 주십시오.'
-            : cart.priceChanged ? <>가격이 바뀐 상품이 있습니다 — <Link href="/health/cart">장바구니</Link>에서 확인해 주십시오.</> : '주문할 수 없는 항목이 있습니다.'}
+          {!addr ? t('form.needAddr') : !(agree1 && agree2) ? t('form.needAgree')
+            : cart.priceChanged ? <>{t.rich('form.priceChanged', { link: (c) => <Link href="/health/cart">{c}</Link> })}</> : t('form.cannotOrder')}
         </p>
       )}
     </>

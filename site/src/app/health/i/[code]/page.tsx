@@ -1,13 +1,18 @@
 /** SB-HLT-CAT-040 성분 상세 — v10.26 시안(spec/proto.html SB-HLT-CAT-040) */
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { apiGet, ApiFailure } from '@/lib/api';
 import type { HltIngredientDetail } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid } from '@/components/health/HltParts';
 import { IngSort } from '@/components/health/IngSort';
 import { krw } from '@/components/health/util';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '성분 상세 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('hlt');
+  return { title: t('meta.title', { title: t('ingredient.title') }) };
+}
 
 type Props = { params: Promise<{ code: string }>; searchParams: Promise<{ sort?: string; amt?: string }> };
 
@@ -23,6 +28,8 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
   const code = decodeURIComponent(raw);
   const sp = await searchParams;
   const sort = sp.sort === 'name' || sp.sort === 'NAME' ? 'name' : 'unit';
+  const t = await getTranslations('hlt.ingredient');
+  const tc = await getTranslations('hlt.common');
 
   let g: HltIngredientDetail | null = null;
   let missing = false;
@@ -36,7 +43,7 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
     return (
       <><div className="hlt">
         <HltNav on="ing" back="/health/ingredients" />
-        <p className="form-error" role="alert">성분 정보를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>
+        <p className="form-error" role="alert">{t('loadFail')}</p>
       </div><i hidden data-root-end="" /></>
     );
   }
@@ -44,8 +51,8 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
     return (
       <><div className="hlt">
         <HltNav on="ing" back="/health/ingredients" />
-        <Crumb items={[{ href: '/health/ingredients', label: '성분별' }, { label: '없는 성분' }]} />
-        <HltEmpty msg="없는 성분입니다." href="/health/ingredients" label="성분별 보기" />
+        <Crumb items={[{ href: '/health/ingredients', label: tc('byIng') }, { label: t('missing') }]} />
+        <HltEmpty msg={t('missingMsg')} href="/health/ingredients" label={tc('viewByIng')} />
       </div><i hidden data-root-end="" /></>
     );
   }
@@ -67,55 +74,55 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
   return (
     <><div className="hlt" data-screen="SB-HLT-CAT-040">
       <HltNav on="ing" back="/health/ingredients" />
-      <Crumb items={[{ href: '/health/ingredients', label: '성분별' }, { label: g.name }]} />
-      <div className="page-head"><h1>{g.name}{g.needsLicense && <> <span className="hlt-bdg st" data-license="">자격 필요</span></>}</h1></div>
-      {g.aliases && g.aliases.length > 0 && <p className="hint">다른 이름 · {g.aliases.join(' · ')}</p>}
+      <Crumb items={[{ href: '/health/ingredients', label: tc('byIng') }, { label: g.name }]} />
+      <div className="page-head"><h1>{g.name}{g.needsLicense && <> <span className="hlt-bdg st" data-license="">{tc('license')}</span></>}</h1></div>
+      {g.aliases && g.aliases.length > 0 && <p className="hint">{t('aliases', { list: g.aliases.join(' · ') })}</p>}
       {g.note && <p className="lead">{g.note}</p>}
       {g.minUnit != null ? (
-        <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 8 }}>최저 <b>월 {krw(g.minUnit)}</b> · 상품 {list.length}개</div>
+        <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 8 }}>{t.rich('minMonth', { amt: krw(g.minUnit), n: String(list.length), b: (c) => <b>{c}</b> })}</div>
       ) : inStock.length > 0 ? (
-        <p className="hlt-unit">최저 <b>{krw(Math.min(...inStock.map((p) => Number(p.price))))}</b> · 상품 {list.length}개</p>
+        <p className="hlt-unit">{t.rich('minPrice', { amt: krw(Math.min(...inStock.map((p) => Number(p.price)))), n: String(list.length), b: (c) => <b>{c}</b> })}</p>
       ) : null}
 
       {g.isGroup && (g.children ?? []).length > 0 && (
         <div className="hlt-chips" data-ing-children>
-          <span className="hint">아래 성분</span>
+          <span className="hint">{t('children')}</span>
           {(g.children ?? []).map((c) => <Link key={c.code} className="hlt-chip" href={`/health/i/${encodeURIComponent(c.code)}`}>{c.name}</Link>)}
         </div>
       )}
 
       {amts.length > 1 && (
         <section className="hlt-sec" data-amounts>
-          <h2>함량</h2>
+          <h2>{t('amounts')}</h2>
           <div className="hlt-chips">
-            <Link className={`hlt-chip${amt ? '' : ' on'}`} href={href()}>전체</Link>
+            <Link className={`hlt-chip${amt ? '' : ' on'}`} href={href()}>{tc('all')}</Link>
             {amts.map((a) => <Link key={a} className={`hlt-chip${amt === a ? ' on' : ''}`} href={href(a)} data-amt={a}>{a}</Link>)}
           </div>
         </section>
       )}
 
       <div className="hlt-chips" style={{ marginTop: 16 }}>
-        <label htmlFor="ingSort" className="hint">정렬</label>
-        <IngSort base={base} sort={sort} amt={amt} />
-        <span className="hint">여기 기본값은 <b>월 단가순</b>입니다 — 성분 페이지에 온 분은 무엇을 살지는 이미 정하셨습니다.</span>
+        <label htmlFor="ingSort" className="hint">{t('sort')}</label>
+        <Msgs ns={['hlt']}><IngSort base={base} sort={sort} amt={amt} /></Msgs>
+        <span className="hint">{t.rich('sortNote', { b: (c) => <b>{c}</b> })}</span>
       </div>
 
-      <p className="hint" style={{ margin: '14px 0 10px' }}>{shown.length}개</p>
+      <p className="hint" style={{ margin: '14px 0 10px' }}>{tc('count', { n: String(shown.length) })}</p>
       {shown.length === 0
-        ? <HltEmpty msg="이 성분은 아직 취급하지 않습니다." href="/health/ingredients" label="성분별 보기" />
+        ? <HltEmpty msg={t('notCarried')} href="/health/ingredients" label={tc('viewByIng')} />
         : <ProductGrid list={shown} />}
 
       {g.concerns.length > 0 && (
         <section className="hlt-sec">
-          <h2>{g.name} 를 많이 찾는 고민</h2>
+          <h2>{t('concernsTitle', { name: g.name })}</h2>
           <div className="hlt-chips">
             {g.concerns.map((c) => <Link key={c.code} className="hlt-chip" href={`/health/w/${encodeURIComponent(c.code)}`}>{c.icon} {c.name}</Link>)}
           </div>
-          <p className="hint">같은 성분이 여러 고민에 걸립니다 — 고민과 성분은 다대다입니다.</p>
+          <p className="hint">{t('manyToMany')}</p>
         </section>
       )}
       <p className="hint hlt-gap">
-        성분이 같아도 제조사는 다를 수 있습니다. 성분과 함량은 상품에 표시된 값 그대로입니다.
+        {t('mfr')}
       </p>
     </div><i hidden data-root-end="" /></>
   );

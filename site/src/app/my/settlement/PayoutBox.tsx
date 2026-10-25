@@ -1,13 +1,15 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export interface PayoutAccount {
   id: string; bankName: string; accountNo: string; holderName: string;
   verified: boolean; isDefault: boolean; isStub: boolean; verifyTries: number; verifiedAt: string | null;
 }
 
-/* 은행 코드는 금융결제원 표준 3자리(파트너 정산 계좌 화면과 같은 목록). */
+/* 은행 코드는 금융결제원 표준 3자리(파트너 정산 계좌 화면과 같은 목록).
+ * v10.99 — 은행 이름은 서버로 보내는 값(bankName)이라 사전에 넣지 않습니다. */
 const BANKS: Array<[string, string]> = [
   ['004', '국민은행'], ['088', '신한은행'], ['020', '우리은행'], ['081', '하나은행'],
   ['011', '농협은행'], ['003', '기업은행'], ['090', '카카오뱅크'], ['092', '토스뱅크'],
@@ -23,6 +25,7 @@ const BANKS: Array<[string, string]> = [
  */
 export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
   const router = useRouter();
+  const t = useTranslations('myDeal');
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(accounts.length === 0);
   const [info, setInfo] = useState<string | null>(null);
@@ -41,8 +44,8 @@ export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
       });
       const d = await r.json().catch(() => null);
       if (r.status === 401) { router.push('/login'); return; }
-      if (!r.ok) { setErr(d?.message ?? '등록하지 못했습니다.'); return; }
-      setInfo(d?.note ?? '1원을 보냈습니다. 입금자명의 코드를 적어 주십시오.');
+      if (!r.ok) { setErr(d?.message ?? t('payout.addFail')); return; }
+      setInfo(d?.note ?? t('payout.sent'));
       setOpen(false); router.refresh();
     });
   }
@@ -50,21 +53,21 @@ export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
   function verify(id: string, e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const code = String(new FormData(e.currentTarget).get('code') ?? '').trim();
-    if (!code) { setErr('코드를 적어 주십시오.'); return; }
+    if (!code) { setErr(t('payout.needCode')); return; }
     setErr(null); setInfo(null);
     start(async () => {
       const r = await fetch(`/api/v1/me/payout-accounts/${encodeURIComponent(id)}/verify`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
       const d = await r.json().catch(() => null);
-      if (!r.ok) { setErr(d?.message ?? '확인하지 못했습니다.'); return; }
-      setInfo(d?.note ?? '계좌를 확인했습니다.'); router.refresh();
+      if (!r.ok) { setErr(d?.message ?? t('payout.verifyFail')); return; }
+      setInfo(d?.note ?? t('payout.verified')); router.refresh();
     });
   }
 
   return (
     <section className="card p2pad" data-payout-box>
-      <h2 className="sec-title">받을 계좌</h2>
-      <p className="hint">본인 명의 계좌로 1원을 보내 확인합니다. 화면에는 뒤 4자리만 보입니다. 회사는 이 계좌로 돈을 보내지 않습니다 — 소개비는 거래 당사자가 직접 지급합니다.</p>
+      <h2 className="sec-title">{t('payout.title')}</h2>
+      <p className="hint">{t('payout.hint')}</p>
       {accounts.length > 0 && (
         <ul className="rows" data-payout-list>
           {accounts.map((a) => (
@@ -73,40 +76,40 @@ export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
                 <span>{a.bankName} {a.accountNo.slice(-4).padStart(8, '*')}</span>
                 <span className="muted">{a.holderName}</span>
                 {a.verified
-                  ? <span className="state state-ok">{a.isStub ? '확인 간주(연동 전)' : '확인됨'}</span>
-                  : <span className="state state-wait">확인 전</span>}
+                  ? <span className="state state-ok">{a.isStub ? t('stl.assumed') : t('payout.ok')}</span>
+                  : <span className="state state-wait">{t('payout.pending')}</span>}
               </div>
               {!a.verified && (a.verifyTries >= 5
-                ? <p className="form-error" role="alert">코드를 다섯 번 틀려 막혔습니다 — 고객센터로 연락 주십시오.</p>
+                ? <p className="form-error" role="alert">{t('payout.locked')}</p>
                 : (
                   <form className="p2form" onSubmit={(e) => verify(a.id, e)} data-payout-verify={a.id}>
                     <label className="fld">
-                      <span>입금자명 코드</span>
-                      <input name="code" maxLength={20} required autoComplete="one-time-code" placeholder="예: SGB01" data-payout-code />
-                      <em>다섯 번 틀리면 막힙니다 ({5 - a.verifyTries}회 남음)</em>
+                      <span>{t('payout.code')}</span>
+                      <input name="code" maxLength={20} required autoComplete="one-time-code" placeholder={t('payout.codePh')} data-payout-code />
+                      <em>{t('payout.tries', { n: String(5 - a.verifyTries) })}</em>
                     </label>
-                    <button className="btn-sm p2primary" disabled={pending} data-payout-verify-send>확인</button>
+                    <button className="btn-sm p2primary" disabled={pending} data-payout-verify-send>{t('payout.verifyBtn')}</button>
                   </form>))}
             </li>
           ))}
         </ul>
       )}
       {!open ? (
-        <button type="button" className="btn-sm" onClick={() => setOpen(true)} data-payout-open>다른 계좌 등록</button>
+        <button type="button" className="btn-sm" onClick={() => setOpen(true)} data-payout-open>{t('payout.other')}</button>
       ) : (
         <form className="p2form" onSubmit={add} data-payout-form>
-          <label className="fld"><span>은행</span>
+          <label className="fld"><span>{t('payout.bank')}</span>
             <select name="bankCode" defaultValue="004" required data-payout-bank>
               {BANKS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
             </select></label>
-          <label className="fld"><span>계좌번호</span>
-            <input name="accountNo" inputMode="numeric" pattern="[0-9-]{9,20}" required placeholder="예: 123456-01-234567" data-payout-no /></label>
-          <label className="fld"><span>예금주</span>
-            <input name="holderName" minLength={2} maxLength={30} required placeholder="본인 이름" data-payout-holder />
-            <em>본인 명의 계좌만 받습니다</em></label>
+          <label className="fld"><span>{t('payout.accNo')}</span>
+            <input name="accountNo" inputMode="numeric" pattern="[0-9-]{9,20}" required placeholder={t('payout.accNoPh')} data-payout-no /></label>
+          <label className="fld"><span>{t('payout.holder')}</span>
+            <input name="holderName" minLength={2} maxLength={30} required placeholder={t('payout.holderPh')} data-payout-holder />
+            <em>{t('payout.ownOnly')}</em></label>
           <div className="p2act">
-            <button className="btn-sm p2primary" disabled={pending} data-payout-add>{pending ? '보내는 중…' : '1원 보내기'}</button>
-            {accounts.length > 0 && <button type="button" className="link-btn" onClick={() => setOpen(false)}>취소</button>}
+            <button className="btn-sm p2primary" disabled={pending} data-payout-add>{pending ? t('payout.sending') : t('payout.send1')}</button>
+            {accounts.length > 0 && <button type="button" className="link-btn" onClick={() => setOpen(false)}>{t('payout.cancel')}</button>}
           </div>
         </form>
       )}

@@ -2,14 +2,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import type { HltCategory, HltProduct, HltSaleCategory } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid } from '@/components/health/HltParts';
-import { NOT_SOLD } from '@/components/health/util';
 
 type Props = { params: Promise<{ code: string }> };
 
-export const metadata: Metadata = { title: '전체제품 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('hlt');
+  return { title: t('meta.title', { title: t('common.allProducts') }) };
+}
 
 /**
  * 카테고리는 **자격·심의를 거는 축**입니다(시안). 소비자 진열축은 성분·고민입니다.
@@ -23,6 +26,8 @@ export const metadata: Metadata = { title: '전체제품 · 소개몰' };
 export default async function HltCategoryPage({ params }: Props) {
   const { code: raw } = await params;
   const code = decodeURIComponent(raw).toUpperCase();
+  const t = await getTranslations('hlt.category');
+  const tc = await getTranslations('hlt.common');
   const [sale, cats] = await Promise.all([
     apiGet<HltSaleCategory[]>('/health/categories', 60).catch(() => null),
     apiGet<HltCategory[]>('/categories?gwanCode=HLT', 300).catch(() => [] as HltCategory[]),
@@ -37,7 +42,7 @@ export default async function HltCategoryPage({ params }: Props) {
   const list = cat && !closed
     ? await apiGet<HltProduct[]>(`/health/products?category=${encodeURIComponent(code)}`, 30).catch(() => null)
     : [];
-  const title = code === 'ALL' ? '전체제품' : cat?.name ?? '카테고리';
+  const title = code === 'ALL' ? tc('allProducts') : cat?.name ?? t('fallback');
   const firstOpen = opens[0] ? `/health/c/${opens[0].code}` : '/health';
 
   return (
@@ -46,8 +51,7 @@ export default async function HltCategoryPage({ params }: Props) {
       <Crumb items={[{ label: title }]} />
       <div className="page-head"><h1>{title}</h1></div>
       <p className="hint">
-        카테고리는 <b>자격·심의를 거는 축</b>입니다. 무엇을 살지 고르실 때는
-        {' '}<Link href="/health/ingredients">성분별</Link> · <Link href="/health/concerns">고민별</Link>이 빠릅니다.
+        {t.rich('hint', { b: (c) => <b>{c}</b>, ing: (c) => <Link href="/health/ingredients">{c}</Link>, con: (c) => <Link href="/health/concerns">{c}</Link> })}
       </p>
 
       <div className="hlt-chips" data-sale-cats>
@@ -56,30 +60,30 @@ export default async function HltCategoryPage({ params }: Props) {
         ))}
         {locks.map((c) => (
           /* 시안과 같게 누를 수 없습니다 — 안내는 풍선 글(주소로 바로 오면 아래의 안내가 나옵니다) */
-          <span key={c.code} className={`hlt-chip lock${c.code === code ? ' on' : ''}`} aria-disabled="true" title={c.note ?? '준비 중입니다'}>{c.name} 🔒</span>
+          <span key={c.code} className={`hlt-chip lock${c.code === code ? ' on' : ''}`} aria-disabled="true" title={c.note ?? tc('preparing')}>{c.name} 🔒</span>
         ))}
       </div>
       {/* 남기기로 한 것(10/8) — 팔지 않는 품목 안내로 가는 길. 전에는 갈래 단추(의약품 · 의료 서비스)를 눌러야 보였습니다 */}
-      <p className="hint">의약품 · 의료 서비스 · 의료기기는 팔지 않습니다 — <Link href="/health/guide#not-sold">취급하지 않는 것</Link></p>
+      <p className="hint">{t.rich('notSold', { link: (c) => <Link href="/health/guide#not-sold">{c}</Link> })}</p>
 
       {closed ? (
         <div className="hlt-empty" data-closed={closed.state}>
           <p>{closed.state === 'LOCKED' ? '🔒 ' : ''}{closed.note}</p>
-          <Link className="hlt-btn" href={firstOpen}>열린 품목 보기</Link>
+          <Link className="hlt-btn" href={firstOpen}>{t('openItems')}</Link>
         </div>
       ) : !cat ? (
-        <HltEmpty msg="없는 카테고리입니다." href={firstOpen} label="열린 품목 보기" />
+        <HltEmpty msg={t('missing')} href={firstOpen} label={t('openItems')} />
       ) : list === null ? (
-        <p className="form-error" role="alert">상품을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>
+        <p className="form-error" role="alert">{tc('loadFailProduct')}</p>
       ) : list.length === 0 ? (
-        NOT_SOLD[code]
-          ? <div className="notice">{NOT_SOLD[code]}</div>
-          : <HltEmpty msg={`${title} 에 등록된 상품이 아직 없습니다.`} href={firstOpen} label="열린 품목 보기" />
+        t.has(`notSoldBy.${code}` as never)
+          ? <div className="notice">{t(`notSoldBy.${code}` as never)}</div>
+          : <HltEmpty msg={t('empty', { title })} href={firstOpen} label={t('openItems')} />
       ) : (
         <>
-          <p className="hint">전체 {list.length}개</p>
+          <p className="hint">{t('total', { n: String(list.length) })}</p>
           <ProductGrid list={list} />
-          <p className="hint hlt-gap">전체 {list.length}개 · 한 쪽입니다.</p>
+          <p className="hint hlt-gap">{t('totalPage', { n: String(list.length) })}</p>
         </>
       )}
     </div><i hidden data-root-end="" /></>

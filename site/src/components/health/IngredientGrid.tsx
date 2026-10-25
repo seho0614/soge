@@ -8,6 +8,7 @@
  */
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { HltIngredient } from './types';
 import { krw } from './util';
 
@@ -15,18 +16,22 @@ import { krw } from './util';
 function Chip({ g }: { g: HltIngredient }) {
   const unit = g.minUnit != null ? Number(g.minUnit) : null;
   const min = g.minPrice != null ? Number(g.minPrice) : null;
+  const t = useTranslations('hlt.ingGrid');
+  const tc = useTranslations('hlt.common');
+  const n = String(g.productCount);
+  const b = (c: React.ReactNode) => <b>{c}</b>;
   return (
     <Link href={`/health/i/${encodeURIComponent(g.code)}`} data-ing={g.code}
       className={`hlt-icard${g.productCount ? '' : ' off'}`}>
       <span className="nm">{g.name}</span>
       {g.aliases && g.aliases.length > 0 && <span className="hint">{g.aliases.join(' · ')}</span>}
       <span className="pr">
-        {unit != null ? <>월 <b>{krw(unit)}</b> 부터 · {g.productCount}개</>
-          : min != null ? <>최저 <b>{krw(min)}</b> · {g.productCount}개</>
-            : g.productCount ? <>{g.productCount}개 · 지금은 품절</> : '취급 준비 중'}
+        {unit != null ? <>{t.rich('unitFrom', { amt: krw(unit), n, b })}</>
+          : min != null ? <>{t.rich('minFrom', { amt: krw(min), n, b })}</>
+            : g.productCount ? <>{t('soldNow', { n })}</> : t('notCarried')}
       </span>
       {/* v10.31 (시안 「자격 필요」 — 건강기능식품 기능성 원료 · 서버 needsLicense) */}
-      {g.needsLicense && <span className="hlt-bdg st" data-license="">자격 필요</span>}
+      {g.needsLicense && <span className="hlt-bdg st" data-license="">{tc('license')}</span>}
     </Link>
   );
 }
@@ -37,6 +42,7 @@ function Chip({ g }: { g: HltIngredient }) {
  * 시안의 「자격 필요」 표는 넣지 않습니다(10/8 확인 B-6).
  */
 export function IngredientGrid({ ings }: { ings: HltIngredient[] }) {
+  const t = useTranslations('hlt.ingGrid');
   const [q, setQ] = useState('');
   const k = q.trim().toLowerCase();
   const hit = (g: HltIngredient) =>
@@ -50,39 +56,39 @@ export function IngredientGrid({ ings }: { ings: HltIngredient[] }) {
   return (
     <>
       <label className="hlt-find">
-        <span className="hint">성분 찾기</span>
+        <span className="hint">{t('find')}</span>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder="성분명을 입력하십시오" aria-label="성분 찾기" />
+          placeholder={t('findPh')} aria-label={t('find')} />
       </label>
       {k ? (
         found.length === 0
-          ? <p className="hint" role="status">‘{q.trim()}’ 에 맞는 성분이 없습니다.</p>
+          ? <p className="hint" role="status">{t('noMatch', { q: q.trim() })}</p>
           : <div className="hlt-igrid" data-ing-found>{found.map((g) => <Chip key={g.code} g={g} />)}</div>
       ) : (
         <>
           {feat.length > 0 && (
             <section className="hlt-sec" data-ing-sec="featured">
-              <h2>많이 찾는 성분</h2>
+              <h2>{t('featured')}</h2>
               <div className="hlt-igrid">{feat.map((g) => <Chip key={g.code} g={g} />)}</div>
             </section>
           )}
           <section className="hlt-sec" data-ing-sec="all">
-            <h2>전체 성분</h2>
+            <h2>{t('all')}</h2>
             <div className="hlt-igrid">{flat.map((g) => <Chip key={g.code} g={g} />)}</div>
           </section>
           {groups.length > 0 && (
             <section className="hlt-sec" data-ing-sec="groups">
-              <h2>성분군</h2>
+              <h2>{t('groups')}</h2>
               {groups.map((g) => {
                 const kids = ings.filter((x) => x.parent === g.code);
                 return (
                   <div key={g.code} className="hlt-box" style={{ marginBottom: 10 }} data-ing-group={g.code}>
-                    <h3><Link href={`/health/i/${encodeURIComponent(g.code)}`}>{g.name}</Link> <span className="hlt-sm hlt-mut3">{kids.length}종</span></h3>
+                    <h3><Link href={`/health/i/${encodeURIComponent(g.code)}`}>{g.name}</Link> <span className="hlt-sm hlt-mut3">{t('kinds', { n: String(kids.length) })}</span></h3>
                     <div className="hlt-igrid" style={{ marginTop: 10 }}>{kids.map((x) => <Chip key={x.code} g={x} />)}</div>
                   </div>
                 );
               })}
-              <p className="hlt-sm hlt-mut3">성분 트리는 <b>2단까지</b>입니다. 3단은 소비자가 못 찾습니다.</p>
+              <p className="hlt-sm hlt-mut3">{t.rich('treeNote', { b: (c) => <b>{c}</b> })}</p>
             </section>
           )}
         </>

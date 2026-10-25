@@ -4,8 +4,12 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { HltEmpty, HltNav, HltSteps } from '@/components/health/HltParts';
 import { PayConfirm } from '@/components/health/PayConfirm';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '결제 확인 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('order'))('meta.paySuccess') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string }> };
@@ -19,6 +23,7 @@ type Props = { searchParams: Promise<{ paymentKey?: string; orderId?: string; am
  */
 export default async function HltPaySuccess({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('order');
   const { paymentKey, orderId, amount } = await searchParams;
   const amt = Number(amount);
   const valid = !!paymentKey && /^[A-Za-z0-9_-]{1,200}$/.test(paymentKey)
@@ -27,11 +32,11 @@ export default async function HltPaySuccess({ searchParams }: Props) {
   return (
     <><div className="hlt">
       <HltNav on="cart" back="/health/order" />
-      <div className="page-head"><h1>결제 확인</h1></div>
+      <div className="page-head"><h1>{t('successPage.title')}</h1></div>
       <HltSteps at={2} />
       {valid
-        ? <PayConfirm orderNo={orderId!} paymentKey={paymentKey!} amount={amt} />
-        : <HltEmpty msg="결제 정보가 올바르지 않습니다. 내 주문에서 결제 상태를 확인해 주십시오." href="/my/health/orders" label="내 주문" />}
+        ? <Msgs ns={['order']}><PayConfirm orderNo={orderId!} paymentKey={paymentKey!} amount={amt} /></Msgs>
+        : <HltEmpty msg={t('successPage.invalid')} href="/my/health/orders" label={t('common.myOrders')} />}
     </div><i hidden data-root-end="" /></>
   );
 }

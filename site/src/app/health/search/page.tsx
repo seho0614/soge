@@ -1,12 +1,17 @@
 /** SB-HLT-CAT-020 검색 */
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
+import { Msgs } from '@/i18n/Msgs';
 import type { HltIngredient, HltProduct } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid } from '@/components/health/HltParts';
 import { SearchBox } from '@/components/health/SearchBox';
 
-export const metadata: Metadata = { title: '검색 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('hlt');
+  return { title: t('meta.title', { title: t('search.title') }) };
+}
 
 type Props = { searchParams: Promise<{ q?: string }> };
 
@@ -27,18 +32,19 @@ export default async function HltSearch({ searchParams }: Props) {
   const list = q && !short
     ? await apiGet<HltProduct[]>(`/health/products?keyword=${encodeURIComponent(q)}`, 30).catch(() => null)
     : [];
+  const t = await getTranslations('hlt.search');
 
   return (
     <><div className="hlt">
       <HltNav on="search" />
-      <Crumb items={[{ label: '검색' }]} />
-      <div className="page-head"><h1>검색</h1></div>
+      <Crumb items={[{ label: t('title') }]} />
+      <div className="page-head"><h1>{t('title')}</h1></div>
 
-      <SearchBox key={q} q={q} />
+      <Msgs ns={['hlt']}><SearchBox key={q} q={q} /></Msgs>
 
       {!q ? (popular.length === 0 ? null :
         <section className="hlt-box" data-popular>
-          <h3>인기 검색어</h3>
+          <h3>{t('popular')}</h3>
           <div className="hlt-chips">
             {popular.map((w) => (
               <Link key={w} className="hlt-chip" href={`/health/search?q=${encodeURIComponent(w)}`}>{w}</Link>
@@ -46,14 +52,14 @@ export default async function HltSearch({ searchParams }: Props) {
           </div>
         </section>
       ) : short ? (
-        <HltEmpty msg="두 글자 이상 입력해 주세요." href="/health/search" label="검색어 지우기" />
+        <HltEmpty msg={t('short')} href="/health/search" label={t('clear')} />
       ) : list === null ? (
-        <p className="form-error" role="alert">검색하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.</p>
+        <p className="form-error" role="alert">{t('fail')}</p>
       ) : list.length === 0 ? (
-        <HltEmpty msg={`‘${q}’ 에 대한 결과가 없습니다.`} href="/health/search" label="검색어 지우기" />
+        <HltEmpty msg={t('none', { q })} href="/health/search" label={t('clear')} />
       ) : (
         <>
-          <p className="hint">‘{q}’ 결과 {list.length}개</p>
+          <p className="hint">{t('result', { q, n: String(list.length) })}</p>
           <ProductGrid list={list} />
         </>
       )}

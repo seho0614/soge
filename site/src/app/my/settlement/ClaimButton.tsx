@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * v10.28 「소개비 받기」 — POST /settlements {dealId}. 성사 때 자동으로 정산이 생기지 않은 거래(개인이 계좌를 나중에 확인한 경우 등)에 씁니다.
@@ -8,6 +9,7 @@ import { useRouter } from 'next/navigation';
  */
 export function ClaimButton({ dealId, ready }: { dealId: string; ready: boolean }) {
   const router = useRouter();
+  const t = useTranslations('myDeal');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -18,8 +20,8 @@ export function ClaimButton({ dealId, ready }: { dealId: string; ready: boolean 
       const r = await fetch('/api/v1/settlements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dealId }) });
       const d = await r.json().catch(() => null);
       if (r.status === 401) { router.push('/login'); return; }
-      if (!r.ok) { setErr(d?.message ?? '신청하지 못했습니다.'); return; }
-      setMsg(d?.note ?? '정산을 신청했습니다.');
+      if (!r.ok) { setErr(d?.message ?? t('claim.fail')); return; }
+      setMsg(d?.note ?? t('claim.done'));
       router.refresh();
     } finally { setBusy(false); }
   }
@@ -27,8 +29,8 @@ export function ClaimButton({ dealId, ready }: { dealId: string; ready: boolean 
   return (
     <span className="acts" data-stl-claim-wrap={dealId}>
       <button type="button" className="btn-sm p2primary" disabled={busy} onClick={go} data-stl-claim={dealId}
-        title={ready ? undefined : '받을 계좌를 먼저 확인해 주십시오'}>{busy ? '신청하는 중…' : '소개비 받기'}</button>
-      {!ready && <span className="dim">받을 계좌 확인이 먼저입니다</span>}
+        title={ready ? undefined : t('claim.needAccTitle')}>{busy ? t('claim.busy') : t('claim.btn')}</button>
+      {!ready && <span className="dim">{t('claim.needAcc')}</span>}
       {msg && <span className="ok-note" role="status">{msg}</span>}
       {err && <span className="form-error" role="alert" data-stl-claim-err>{err}</span>}
     </span>

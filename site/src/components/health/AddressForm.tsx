@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
+import { useTranslations } from 'next-intl';
 import { needsLogin } from './util';
 
 /**
@@ -11,6 +12,7 @@ import { needsLogin } from './util';
  * 첫 배송지는 서버가 기본 배송지로 둡니다. `next` 가 있으면 저장 뒤 그리로 돌아갑니다(주문서).
  */
 export function AddressForm({ next }: { next?: string }) {
+  const t = useTranslations('order');
   const router = useRouter();
   const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   const [pending, start] = useTransition();
@@ -23,8 +25,8 @@ export function AddressForm({ next }: { next?: string }) {
     const fd = new FormData(form);
     setErr(null); setOk(false);
     const phone = String(fd.get('phone') ?? '').trim();
-    if (!addr.zipcode.trim() || !addr.road.trim()) { setErr('주소를 찾아 넣어 주십시오.'); return; }
-    if (!/^[0-9-]{9,14}$/.test(phone)) { setErr('연락처를 숫자로 적어 주십시오. 예) 010-1234-5678'); return; }
+    if (!addr.zipcode.trim() || !addr.road.trim()) { setErr(t('addr.errAddr')); return; }
+    if (!/^[0-9-]{9,14}$/.test(phone)) { setErr(t('addr.errPhone')); return; }
     start(async () => {
       const r = await fetch('/api/v1/me/health/addresses', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -40,7 +42,7 @@ export function AddressForm({ next }: { next?: string }) {
       const d = await r.json().catch(() => null);
       if (!r.ok) {
         if (needsLogin(r.status, d?.code)) { router.push('/login'); return; }
-        setErr(r.status >= 500 ? '저장하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.' : d?.message ?? '저장하지 못했습니다.');
+        setErr(r.status >= 500 ? t('addr.errSave') : d?.message ?? t('addr.errSaveShort'));
         return;
       }
       /* v10.25 — 「기본 배송지로 설정」에 체크했으면 저장한 배송지를 기본으로 바꿉니다(첫 배송지는 서버가 이미 기본으로 둡니다) */
@@ -57,15 +59,15 @@ export function AddressForm({ next }: { next?: string }) {
 
   return (
     <form className="auth hlt-form" onSubmit={submit}>
-      <label className="fld"><span>배송지명</span><input name="label" placeholder="집 · 회사" maxLength={20} /></label>
-      <label className="fld"><span>받는 분</span><input name="receiver" required maxLength={30} /></label>
-      <label className="fld"><span>연락처</span><input name="phone" required inputMode="tel" placeholder="010-0000-0000" /></label>
+      <label className="fld"><span>{t('addr.label')}</span><input name="label" placeholder={t('addr.labelPh')} maxLength={20} /></label>
+      <label className="fld"><span>{t('addr.receiver')}</span><input name="receiver" required maxLength={30} /></label>
+      <label className="fld"><span>{t('addr.phone')}</span><input name="phone" required inputMode="tel" placeholder="010-0000-0000" /></label>
       {/* v10.31 (시안 「우편번호 · 주소 찾기 / 도로명 주소 / 상세 주소」) */}
-      <AddressInput value={addr} onChange={setAddr} required label="우편번호" />
-      <label className="hlt-chk"><input type="checkbox" name="makeDefault" /> <span>기본 배송지로 설정</span></label>
+      <AddressInput value={addr} onChange={setAddr} required label={t('addr.zip')} />
+      <label className="hlt-chk"><input type="checkbox" name="makeDefault" /> <span>{t('addr.makeDefault')}</span></label>
       {err && <p className="form-error" role="alert">{err}</p>}
-      {ok && <p className="ok-note" role="status">배송지를 저장했습니다.</p>}
-      <button className="cta-primary" disabled={pending}>{pending ? '저장 중…' : next ? '저장하고 주문서로' : '배송지 저장'}</button>
+      {ok && <p className="ok-note" role="status">{t('addr.saved')}</p>}
+      <button className="cta-primary" disabled={pending}>{pending ? t('addr.saving') : next ? t('addr.saveToOrder') : t('addr.save')}</button>
     </form>
   );
 }

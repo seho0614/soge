@@ -6,8 +6,11 @@ import { apiGet } from '@/lib/api';
 import { won, GWAN_PATH } from '@/lib/format';
 import type { ListingCardData } from '@/lib/types';
 import { MyHead, Note, Empty, Table, GwanTag, shortId } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '관심 목록' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.likes'))('title') };
+}
 
 /**
  * SB-MYP-LIK-010
@@ -17,15 +20,16 @@ export const metadata: Metadata = { title: '관심 목록' };
 export default async function LikesPage() {
   if (!(await me())) redirect('/login');
   const rows = await apiGet<ListingCardData[]>('/me/favorites', 0).catch(() => [] as ListingCardData[]);
+  const t = await getTranslations('my.likes');
 
   return (
     <>
-      <MyHead title="관심 목록"
-        sub="담아 둔 상품 · 서비스입니다. 계약은 1:1 대화에서 조건을 맞춘 뒤 요청하십시오 — 소개코드는 대화가 시작되는 순간 발급됩니다 (INV-2)." />
+      <MyHead title={t('title')}
+        sub={t('sub')} />
       {rows.length === 0 ? (
-        <Empty data-likes-empty="">담아 둔 항목이 없습니다. <Link href="/money">소개장터 둘러보기 ›</Link></Empty>
+        <Empty data-likes-empty="">{t('empty')} <Link href="/money">{t('browse')}</Link></Empty>
       ) : (
-        <Table head={['구분', '상품 · 서비스', '업종', '소개비', '등록자', '']}>
+        <Table head={[t('thGwan'), t('thItem'), t('thCategory'), t('thFee'), t('thOwner'), '']}>
           {rows.map((x) => (
             <tr key={x.id} data-like-row={x.id}>
               <td><GwanTag code={x.gwanCode} /></td>
@@ -35,8 +39,8 @@ export default async function LikesPage() {
               <td>{x.owner?.companyName ?? '—'}</td>
               <td>
                 <div className="my-lka">
-                  <Link className="my-bo sm" href={`/${GWAN_PATH[x.gwanCode] ?? 'money'}/${x.id}`}>보기</Link>
-                  <Link className="my-bp sm" href={`/chat/${x.id}`}>1:1 문의 ›</Link>
+                  <Link className="my-bo sm" href={`/${GWAN_PATH[x.gwanCode] ?? 'money'}/${x.id}`}>{t('view')}</Link>
+                  <Link className="my-bp sm" href={`/chat/${x.id}`}>{t('ask')}</Link>
                 </div>
               </td>
             </tr>
@@ -45,8 +49,7 @@ export default async function LikesPage() {
       )}
       {/* 안내는 목록이 있든 없든 늘 보여야 합니다 — 계약으로 바로 가려다 소개비를 놓치는 일을 막는 문구입니다(시안 그대로). */}
       <Note kind="info">
-        <b>계약은 바로 요청하실 수 없습니다.</b> 1:1 대화가 시작되는 순간 소개코드가 발급되고 귀속이 시작됩니다(INV-2).
-        대화를 건너뛰면 <b>소개자가 누구인지 증명할 수 없어</b> 소개비를 받지 못합니다.
+        {t.rich('note', { b: (c) => <b>{c}</b> })}
       </Note>
     </>
   );

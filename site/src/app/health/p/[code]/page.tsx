@@ -1,10 +1,12 @@
 /** SB-HLT-PRD-010 상품 상세 — v10.26 시안(spec/proto.html 20184 ~ 20378) 그대로 */
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { apiGet, ApiFailure } from '@/lib/api';
 import type { HltProductDetail } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid, SellerBox } from '@/components/health/HltParts';
 import { OptionRows } from '@/components/health/OptionRows';
+import { Msgs } from '@/i18n/Msgs';
 import { ProductArt } from '@/components/health/ProductArt';
 import { krw, RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/util';
 import { QnaPanel, ReviewsPanel, stars } from '@/components/health/ReviewPanels';
@@ -16,7 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
   const p = await apiGet<HltProductDetail>(`/health/products/${encodeURIComponent(decodeURIComponent(code))}`, 30)
     .catch(() => null);
-  return { title: `${p?.name ?? '상품 상세'} · 소개몰` };
+  const t = await getTranslations('hlt');
+  return { title: t('meta.title', { title: p?.name ?? t('product.title') }) };
 }
 
 /**
@@ -33,21 +36,24 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   const tab = sp.tab === 'reviews' || sp.tab === 'qna' ? sp.tab : 'detail';
   const rating = Number(sp.rating) >= 1 && Number(sp.rating) <= 5 ? Number(sp.rating) : undefined;
   const code = decodeURIComponent(raw);
+  const t = await getTranslations('hlt.product');
+  const tc = await getTranslations('hlt.common');
+  const tk = await getTranslations('hlt.card');
 
   let p: HltProductDetail | null = null;
   let err: string | null = null;
   try {
     p = await apiGet<HltProductDetail>(`/health/products/${encodeURIComponent(code)}`, 30);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '상품을 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : tc('loadFailProduct');
   }
 
   if (!p) {
     return (
       <><div className="hlt">
         <HltNav />
-        <Crumb items={[{ label: '상품 상세' }]} />
-        <HltEmpty msg={err ?? '판매 중인 상품이 아닙니다.'} href="/health/c/ALL" label="전체제품 보기" />
+        <Crumb items={[{ label: t('title') }]} />
+        <HltEmpty msg={err ?? t('notOnSale')} href="/health/c/ALL" label={tc('viewAllProducts')} />
       </div><i hidden data-root-end="" /></>
     );
   }
@@ -62,7 +68,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
     <><div className="hlt" data-screen="SB-HLT-PRD-010">
       <HltNav back="/health" />
       <Crumb items={[
-        ing ? { href: `/health/i/${encodeURIComponent(ing.code)}`, label: ing.name } : { href: '/health/c/ALL', label: '전체제품' },
+        ing ? { href: `/health/i/${encodeURIComponent(ing.code)}`, label: ing.name } : { href: '/health/c/ALL', label: tc('allProducts') },
         { label: p.name },
       ]} />
 
@@ -73,17 +79,17 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <div>
               {p.badge && <span className="hlt-bdg st ok" data-badge={p.badge}>{p.badge}</span>}
               {/* 옵션이 하나뿐인 상품은 옵션 줄(품절 표)을 그리지 않아 여기에 품절을 적습니다 */}
-              {p.soldOut && <>{p.badge && ' '}<span className="hlt-bdg soldout" data-soldout>품절</span></>}
+              {p.soldOut && <>{p.badge && ' '}<span className="hlt-bdg soldout" data-soldout>{tk('soldOut')}</span></>}
             </div>
           )}
           <div style={{ marginTop: 6 }}>
-            <span className={`hlt-bdg ${seller ? 'direct' : 'tenant'}`}>{seller ? '직판' : '입점'}</span>
-            {' '}<span className="hlt-sm hlt-mut">{p.sellerName ?? '소개뱅크 직판관'}</span>
+            <span className={`hlt-bdg ${seller ? 'direct' : 'tenant'}`}>{seller ? tk('direct') : tk('tenant')}</span>
+            {' '}<span className="hlt-sm hlt-mut">{p.sellerName ?? tk('defaultSeller')}</span>
           </div>
           {ing && <div className="hlt-ingline" data-ingline="1" style={{ fontSize: 14, marginTop: 9 }}>{ing.name}{ing.amount && <> <span className="bar">|</span> {ing.amount}</>}</div>}
           <h1>{p.name}</h1>
           {(p.reviewCount ?? 0) > 0 && <Link className="hlt-rvline" href={`/health/p/${encodeURIComponent(code)}?tab=reviews#reviews`} data-rating-line>
-            <span className="hlt-stars">{stars(Number(p.ratingAvg ?? 0))}</span> {Number(p.ratingAvg ?? 0).toFixed(1)} · 리뷰 {p.reviewCount}개</Link>}
+            <span className="hlt-stars">{stars(Number(p.ratingAvg ?? 0))}</span> {t('ratingLine', { avg: Number(p.ratingAvg ?? 0).toFixed(1), n: String(p.reviewCount) })}</Link>}
           {p.summary && <p className="hlt-mut hlt-sm">{p.summary}</p>}
 
           <div className="hlt-p26" style={{ margin: '14px 0 2px' }}>{p.offPct ? <span className="was">{krw(p.listPrice)}</span> : null}</div>
@@ -92,43 +98,43 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <span className="now" style={{ fontSize: 24 }}>{krw(p.price)}</span>
           </div>
           {p.minUnit != null && (p.optionCount ?? 1) > 1 && (
-            <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 6 }}>최대 할인가 <b>한 달 {krw(p.minUnit)}</b> (지금 살 수 있는 옵션 기준)</div>
+            <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 6 }}>{t.rich('maxDiscount', { amt: krw(p.minUnit), b: (c) => <b>{c}</b> })}</div>
           )}
-          {p.reviewNo && <p className="hlt-rev">광고 사전심의 {p.reviewNo}</p>}
+          {p.reviewNo && <p className="hlt-rev">{t('adReview', { no: p.reviewNo })}</p>}
 
-          <OptionRows code={p.code} name={p.name} options={p.options ?? []} />
+          <Msgs ns={['order']}><OptionRows code={p.code} name={p.name} options={p.options ?? []} /></Msgs>
 
           <div style={{ marginTop: 18 }}><SellerBox /></div>
 
           <section className="hlt-box" data-withdrawal-block="1" data-ship-block style={{ marginTop: 12 }}>
-            <h3>배송 · 교환 · 반품</h3>
+            <h3>{t('shipTitle')}</h3>
             <table className="tbl hlt-tbl">
               <tbody>
-                <tr><th>배송비</th><td>전 상품 무료</td></tr>
-                <tr><th>반품 배송비</th><td>왕복 {krw(RETURN_SHIP_ROUND_TRIP)} (단순 변심 · 잘못 주문 시 환불액에서 뺍니다)</td></tr>
+                <tr><th>{t('shipFee')}</th><td>{t('shipFeeVal')}</td></tr>
+                <tr><th>{t('returnFee')}</th><td>{t('returnFeeVal', { amt: krw(RETURN_SHIP_ROUND_TRIP) })}</td></tr>
                 {/* v10.26 — 시안의 「교환 배송비」 줄. 회원 사정(단순 변심 · 잘못 주문) 교환만 · 신청 때 결제(약관 제3조) */}
-                <tr data-exchange-fee={p.exchangeFee}><th>교환 배송비</th><td>왕복 {krw(p.exchangeFee)} (단순 변심 · 잘못 주문 시 신청 때 결제 · 하자 · 오배송은 무료)</td></tr>
-                {p.returnAddr && <tr><th>반품 주소</th><td>{p.returnAddr}</td></tr>}
-                <tr><th>청약철회</th><td>수령 후 {days}일 이내 (전자상거래법 제17조)</td></tr>
-                {p.withdrawalBlockedIf && <tr><th>철회 제한</th><td className="hlt-warn">{p.withdrawalBlockedIf}</td></tr>}
-                {p.withdrawalLaw && <tr><th>근거</th><td>{p.withdrawalLaw}</td></tr>}
+                <tr data-exchange-fee={p.exchangeFee}><th>{t('exchangeFee')}</th><td>{t('exchangeFeeVal', { amt: krw(p.exchangeFee) })}</td></tr>
+                {p.returnAddr && <tr><th>{t('returnAddr')}</th><td>{p.returnAddr}</td></tr>}
+                <tr><th>{t('withdrawal')}</th><td>{t('withdrawalVal', { days: String(days) })}</td></tr>
+                {p.withdrawalBlockedIf && <tr><th>{t('withdrawalBlocked')}</th><td className="hlt-warn">{p.withdrawalBlockedIf}</td></tr>}
+                {p.withdrawalLaw && <tr><th>{t('law')}</th><td>{p.withdrawalLaw}</td></tr>}
               </tbody>
             </table>
-            <p className="hint">자세한 것은 <Link href="/health/guide">이용안내 · 청약철회</Link></p>
+            <p className="hint">{t.rich('more', { link: (c) => <Link href="/health/guide">{c}</Link> })}</p>
           </section>
         </div>
       </div>
 
       {p.notMedicine && (
         <div className="hlt-note26" data-notdrug="1" style={{ marginTop: 14 }}>
-          건강기능식품은 질병의 예방이나 치료를 위한 의약품이 아닙니다. 복용 중인 약이 있으시면 의사나 약사와 상의하십시오.
+          {tc('notMedicine')}
         </div>
       )}
 
       <section className="hlt-sec">
         {/* 시안의 탭 줄 — v10.28 (D036) 리뷰 · 문의 */}
         <div className="hlt-tabs26" role="tablist">
-          {([['detail', '상세 설명'], ['reviews', `리뷰 ${p.reviewCount ?? 0}`], ['qna', '문의']] as const).map(([k, label]) =>
+          {([['detail', t('tabDetail')], ['reviews', t('tabReviews', { n: String(p.reviewCount ?? 0) })], ['qna', t('tabQna')]] as const).map(([k, label]) =>
             <Link key={k} href={`/health/p/${encodeURIComponent(code)}${k === 'detail' ? '' : `?tab=${k}`}`} role="tab" aria-selected={tab === k}
               className={tab === k ? 'on' : undefined} data-tab={k} scroll={false}>{label}</Link>)}
         </div>
@@ -138,13 +144,13 @@ export default async function HltProductPage({ params, searchParams }: Props) {
         <div className="hlt-box">
           {p.summary && <p>{p.summary}</p>}
           <div className="hlt-note26 warn" style={{ marginTop: 12 }}>
-            <b>성분이 같아도 제조사는 다를 수 있습니다</b><br />
-            소개몰은 성분으로 정리해 파는 곳이라, 같은 성분·같은 함량이어도 회차에 따라 제조사나 포장이 달라질 수 있습니다. 성분과 함량은 표시된 값 그대로입니다.
+            <b>{t('mfrTitle')}</b><br />
+            {t('mfrBody')}
           </div>
         </div>
         {(p.notice ?? []).length > 0 && (
           <div className="hlt-box" data-notice-block="1" style={{ marginTop: 12 }}>
-            <h3>상품정보제공고시</h3>
+            <h3>{t('noticeTitle')}</h3>
             <table className="tbl hlt-tbl" style={{ marginTop: 8 }}>
               <tbody>{p.notice.map((r) => <tr key={r.label}><th>{r.label}</th><td>{r.value}</td></tr>)}</tbody>
             </table>
@@ -161,13 +167,13 @@ export default async function HltProductPage({ params, searchParams }: Props) {
 
       {same.length > 0 && ing && (
         <section className="hlt-sec">
-          <h2>{ing.name} 의 다른 상품 <Link className="hlt-more" href={`/health/i/${encodeURIComponent(ing.code)}`}>전체 보기</Link></h2>
+          <h2>{t('sameTitle', { name: ing.name })} <Link className="hlt-more" href={`/health/i/${encodeURIComponent(ing.code)}`}>{t('viewAll')}</Link></h2>
           <ProductGrid list={same} />
         </section>
       )}
       {cons.length > 0 && (
         <section className="hlt-sec">
-          <h2>관련 고민</h2>
+          <h2>{t('related')}</h2>
           <div className="hlt-chips">
             {cons.map((c) => <Link key={c.code} className="hlt-chip" href={`/health/w/${c.code}`}>{c.icon} {c.name}</Link>)}
           </div>

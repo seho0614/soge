@@ -1,7 +1,8 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { krw, needsLogin, PAY_METHODS, serverPayMethod } from './util';
+import { useTranslations } from 'next-intl';
+import { codeText, krw, needsLogin, PAY_METHODS, serverPayMethod } from './util';
 import { afterConfirmUrl, confirmPay } from './PayConfirm';
 import type { HltPayment } from './types';
 
@@ -41,6 +42,7 @@ function loadToss(): Promise<TossPaymentsFn> {
  */
 export function PayForm({ orderNo, total, initialMethod, buyerName }:
   { orderNo: string; total: number; initialMethod: string; buyerName?: string }) {
+  const t = useTranslations('order');
   const router = useRouter();
   const [method, setMethod] = useState(PAY_METHODS.some((m) => m.code === initialMethod) ? initialMethod : 'CARD');
   const [pending, start] = useTransition();
@@ -63,8 +65,8 @@ export function PayForm({ orderNo, total, initialMethod, buyerName }:
       const d = (await r.json().catch(() => null)) as (HltPayment & { code?: string; message?: string }) | null;
       if (!r.ok) {
         if (needsLogin(r.status, d?.code)) { router.push('/login'); return; }
-        if (r.status >= 500) { setErr('결제 요청을 보내지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'); return; }
-        fail(d?.code ?? String(r.status), d?.message ?? '결제가 승인되지 않았습니다.');
+        if (r.status >= 500) { setErr(t('common.payReqFail')); return; }
+        fail(d?.code ?? String(r.status), d?.message ?? t('common.notApproved'));
         return;
       }
       /* 가상계좌가 이미 발급돼 입금을 기다리는 중 — 안내 화면으로 */
@@ -76,7 +78,7 @@ export function PayForm({ orderNo, total, initialMethod, buyerName }:
 
       /* 2-a) 시험 결제(스텁) — 클라이언트 키가 없을 때 */
       if (!CLIENT_KEY) {
-        const res = await confirmPay(orderNo, `stub_${crypto.randomUUID()}`, amount);
+        const res = await confirmPay(orderNo, `stub_${crypto.randomUUID()}`, amount, { server: t('common.confirmReqFail'), rejected: t('common.notApproved') });
         if (!res.ok && needsLogin(res.status, res.code)) { router.push('/login'); return; }
         router.push(afterConfirmUrl(orderNo, res));
         return;
@@ -96,30 +98,30 @@ export function PayForm({ orderNo, total, initialMethod, buyerName }:
         });
       } catch (e) {
         const x = e as { code?: string; message?: string };
-        if (x?.code === 'USER_CANCEL') { setErr('결제를 취소하셨습니다. 다시 결제하시려면 버튼을 눌러 주십시오.'); return; }
-        if (!x?.code) { setErr('결제창을 열지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'); return; }
-        fail(x.code, x.message ?? '결제가 승인되지 않았습니다.');
+        if (x?.code === 'USER_CANCEL') { setErr(t('common.userCancel')); return; }
+        if (!x?.code) { setErr(t('common.windowFail')); return; }
+        fail(x.code, x.message ?? t('common.notApproved'));
       }
     });
   }
 
   return (
     <>
-      <div className="hlt-chips" role="radiogroup" aria-label="결제수단">
+      <div className="hlt-chips" role="radiogroup" aria-label={t('common.payMethod')}>
         {PAY_METHODS.map((m) => (
           <button key={m.code} type="button" role="radio" aria-checked={method === m.code}
-            className={`hlt-chip${method === m.code ? ' on' : ''}`} onClick={() => setMethod(m.code)}>{m.label}</button>
+            className={`hlt-chip${method === m.code ? ' on' : ''}`} onClick={() => setMethod(m.code)}>{codeText(t, 'payMethod', m.code, m.label)}</button>
         ))}
       </div>
-      {method === 'EASY' && <p className="hint" data-easy-note="">간편결제(토스페이 · 카카오페이 · 네이버페이 등)는 결제창에서 고릅니다. 결제 기록은 카드 결제로 남습니다.</p>}
+      {method === 'EASY' && <p className="hint" data-easy-note="">{t('pay.easyNote')}</p>}
       {!CLIENT_KEY && (
         <p className="notice" role="note">
-          결제 연동 키가 없는 환경입니다 — <b>시험 결제(스텁)</b>로 진행합니다. 실제 돈은 오가지 않습니다.
+          {t.rich('common.stubNotice', { b: (c) => <b>{c}</b> })}
         </p>
       )}
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={pending} onClick={pay}>
-        {pending ? '결제 요청 중…' : CLIENT_KEY ? `${krw(total)} 결제하기` : `시험 결제(스텁) · ${krw(total)}`}
+        {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: krw(total) }) : t('common.stubBtn', { amount: krw(total) })}
       </button>
     </>
   );

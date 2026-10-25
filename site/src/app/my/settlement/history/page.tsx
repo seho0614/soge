@@ -6,8 +6,11 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note, Empty, Table, wonP, shortId } from '@/components/my/ui';
 import { TaxInvoiceButton } from '@/components/my/TaxInvoiceButton';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '지급 내역 · 세금계산서' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('stlHist.title') };
+}
 
 interface Settlement {
   id: string; dealId?: string; amount: number; status: string; statusLabel?: string;
@@ -29,6 +32,7 @@ export default async function SettlementHistoryPage() {
   if (!p) redirect('/login');
   /* v10.28 — 본인인증 회원(개인 · 사업자) 모두 소개비를 받습니다(INV-10R). 전: 사업자만 */
   if (!p.identityVerifiedAt) redirect('/verify');
+  const t = await getTranslations('myDeal');
 
   const rows = await apiGet<Settlement[]>('/me/settlements/history', 0).catch(() => [] as Settlement[]);
   const paid = rows.filter((r) => r.status === 'PAID');
@@ -36,30 +40,30 @@ export default async function SettlementHistoryPage() {
 
   return (
     <>
-      <MyHead title="지급 내역 · 세금계산서" sub="지급된 소개비와 처리 상태입니다. 세금계산서는 소개자가 직접 발행합니다 — 플랫폼이 대신 발행하지 않습니다."
-        right={<span className="my-ls">지급 {paid.length}건</span>} />
+      <MyHead title={t('stlHist.title')} sub={t('stlHist.sub')}
+        right={<span className="my-ls">{t('stlHist.paidN', { n: String(paid.length) })}</span>} />
       {rows.length === 0 ? (
-        <Empty>지급 내역이 없습니다. 정산이 지급되면 여기에 쌓입니다.</Empty>
+        <Empty>{t('stlHist.empty')}</Empty>
       ) : (
-        <Table head={['정산번호', '소개 건', '소개코드', '소개비', '부가세', '지급일', '세금계산서', '상태 · 받는 방식']}>
+        <Table head={[t('stl.cols.no'), t('stlHist.cols.deal'), t('stlHist.cols.code'), t('stl.cols.fee'), t('stlHist.cols.vat'), t('stl.cols.paid'), t('stlHist.cols.tax'), t('stlHist.cols.statePayee')]}>
           {rows.map((r) => (
             <tr key={r.id} data-stl-hist={r.id}>
               <td>{shortId(r.id, 'S-')}</td>
-              <td><b>{r.title ?? '소개 건'}</b>{r.dealId && <><br /><span className="my-ls">{shortId(r.dealId, 'D-')}</span></>}</td>
+              <td><b>{r.title ?? t('form.dealDefault')}</b>{r.dealId && <><br /><span className="my-ls">{shortId(r.dealId, 'D-')}</span></>}</td>
               <td>{r.attributedCode ? <span className="my-code">{r.attributedCode}</span> : '—'}</td>
               <td><b>{wonP(r.amount)}</b></td>
               <td>{r.vat != null ? wonP(r.vat) : '—'}</td>
               <td>{r.paidAt ? ymdKst(r.paidAt) : '—'}</td>
-              <td>{r.payee !== 'BUSINESS' ? <span className="my-ls">해당 없음(개인)</span>
-                : r.taxInvoiceIssuedAt ? <span className="my-bg ok" title={r.taxInvoiceNo ?? ''}>발행 완료</span>
-                : r.status === 'PAID' ? <TaxInvoiceButton id={r.id} /> : <span className="my-ls">지급 후</span>}</td>
+              <td>{r.payee !== 'BUSINESS' ? <span className="my-ls">{t('stlHist.na')}</span>
+                : r.taxInvoiceIssuedAt ? <span className="my-bg ok" title={r.taxInvoiceNo ?? ''}>{t('stlHist.issued')}</span>
+                : r.status === 'PAID' ? <TaxInvoiceButton id={r.id} /> : <span className="my-ls">{t('stlHist.afterPay')}</span>}</td>
               <td><span className={`my-bg ${r.status === 'PAID' ? 'ok' : 'no'}`}>{r.statusLabel ?? r.status}</span>{' '}
-                <span className="my-ls">{r.payee === 'PERSON' ? '개인' : r.payee === 'BUSINESS' ? '사업자' : ''}</span></td>
+                <span className="my-ls">{r.payee === 'PERSON' ? t('stlHist.person') : r.payee === 'BUSINESS' ? t('stlHist.biz') : ''}</span></td>
             </tr>
           ))}
         </Table>
       )}
-      <Note kind="ok">누적 지급 <b>{wonP(total)}</b> · 공제 <b>0원</b> — {messages.NO_DEDUCTION}</Note>
+      <Note kind="ok">{t.rich('stlHist.total', { total: wonP(total), msg: messages.NO_DEDUCTION ?? '', b: (c) => <b>{c}</b> })}</Note>
     </>
   );
 }

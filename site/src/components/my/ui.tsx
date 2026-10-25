@@ -4,6 +4,8 @@
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
+import { isGwanKey } from '@/i18n/keys';
 
 /** 화면 머리 — 시안 .pgh (제목 · 설명 · 오른쪽) */
 export function MyHead({ title, sub, right }: { title: ReactNode; sub?: ReactNode; right?: ReactNode }) {
@@ -34,11 +36,11 @@ export function Badge({ tone = 'off', children }: { tone?: Tone; children: React
   return <span className={`my-bg ${tone}`}>{children}</span>;
 }
 
-/** 관 표시 — 시안 .gt.g-mny 등 */
-export const GWAN_NAME: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
+/** 관 표시 — 시안 .gt.g-mny 등 · v10.99 관 이름은 사전(header.gwan.*)에서(docs/157) */
 export function GwanTag({ code }: { code?: string | null }) {
+  const t = useTranslations('header');
   if (!code) return null;
-  return <span className={`my-gt g-${code.toLowerCase()}`}>{GWAN_NAME[code] ?? code}</span>;
+  return <span className={`my-gt g-${code.toLowerCase()}`}>{isGwanKey(code) ? t(`gwan.${code}`) : code}</span>;
 }
 
 /** 탭 — 시안 tabs() (.tabs2). 실제 웹은 주소(?tab=)로 바꿉니다 — 새로고침 · 공유해도 같은 탭 */

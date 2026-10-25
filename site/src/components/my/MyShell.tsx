@@ -18,48 +18,54 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BackBar } from '@/components/common/BackBar';
+import { useTranslations } from 'next-intl';
+import type { KO } from '@/i18n/messages';
+
+/** v10.99 — 메뉴 · 돌아가기 이름은 사전 키(my.shell.menu.*)로 둡니다(docs/157) */
+type MenuKey = keyof typeof KO.my.shell.menu;
 
 export type MyCounts = Partial<Record<'listings' | 'allDeals' | 'contracts' | 'conversations' | 'settlePending' | 'favorites', number | null>>;
 
-interface Item { key: string; label: string; href: string; count?: keyof MyCounts; match?: (p: string) => boolean }
+interface Item { key: string; label: MenuKey; href: string; count?: keyof MyCounts; match?: (p: string) => boolean }
 
 const under = (p: string, base: string) => p === base || p.startsWith(base + '/');
 
 /** 시안 순서 그대로 (D.my.menu → counts() 의 push 5개) */
 export const MY_MENU: Item[] = [
-  { key: 'mylst',  label: '내 등록 리스팅', href: '/my/listings',      count: 'listings' },
-  { key: 'mydeal', label: '소개 내역',      href: '/my/deals',         count: 'allDeals' },
-  { key: 'myctr',  label: '계약 진행',      href: '/my/contracts',     count: 'contracts', match: (p) => under(p, '/my/contracts') || under(p, '/contracts/templates') },
-  { key: 'ask',    label: '문의 · 대화',    href: '/my/inquiries',     count: 'conversations' },
-  { key: 'mystl',  label: '정산 · 지급',    href: '/my/settlement',    count: 'settlePending' },
-  { key: 'mylik',  label: '관심 목록',      href: '/my/likes',         count: 'favorites' },
-  { key: 'mysub',  label: '구독 · 소개코드', href: '/my/subscription', match: (p) => p === '/my/subscription' || under(p, '/my/subscription/pay') },
-  { key: 'aiprf',  label: '관심 성향',      href: '/ai/profile' },
-  { key: 'brkmy',  label: '중개사 인증',    href: '/my/broker' },
-  { key: 'mypaym', label: '결제 수단',      href: '/my/payment' },
-  { key: 'myntf',  label: '알림',           href: '/my/notifications' },
-  { key: 'mysubup', label: '한도 안내 · 요금제', href: '/my/subscription/upgrade' },
-  { key: 'mybiz2', label: '사업자 전환',    href: '/my/business' },
-  { key: 'introhome', label: '소개 활동',   href: '/my/intro' },
+  { key: 'mylst',  label: 'listings', href: '/my/listings',      count: 'listings' },
+  { key: 'mydeal', label: 'deals',      href: '/my/deals',         count: 'allDeals' },
+  { key: 'myctr',  label: 'contracts',      href: '/my/contracts',     count: 'contracts', match: (p) => under(p, '/my/contracts') || under(p, '/contracts/templates') },
+  { key: 'ask',    label: 'inquiries',    href: '/my/inquiries',     count: 'conversations' },
+  { key: 'mystl',  label: 'settlement',    href: '/my/settlement',    count: 'settlePending' },
+  { key: 'mylik',  label: 'likes',      href: '/my/likes',         count: 'favorites' },
+  { key: 'mysub',  label: 'subscription', href: '/my/subscription', match: (p) => p === '/my/subscription' || under(p, '/my/subscription/pay') },
+  { key: 'aiprf',  label: 'aiProfile',      href: '/ai/profile' },
+  { key: 'brkmy',  label: 'broker',    href: '/my/broker' },
+  { key: 'mypaym', label: 'payment',      href: '/my/payment' },
+  { key: 'myntf',  label: 'notifications',           href: '/my/notifications' },
+  { key: 'mysubup', label: 'upgrade', href: '/my/subscription/upgrade' },
+  { key: 'mybiz2', label: 'business',    href: '/my/business' },
+  { key: 'introhome', label: 'intro',   href: '/my/intro' },
 ];
 
 /** 이 주소들은 공통 틀을 씌우지 않습니다 */
 const NO_SHELL = ['/my/health', '/my/broker'];
 
 /** 돌아가기 줄 — 시안은 이력의 직전 화면, 실제 웹은 정해 둔 윗 화면(BackBar 방식) */
-function backOf(p: string): { href: string; label: string } {
-  if (p === '/my') return { href: '/', label: '메인' };
-  if (under(p, '/my/settlement/history')) return { href: '/my/settlement', label: '정산 · 지급' };
-  if (p.startsWith('/my/intro/')) return { href: '/my/intro', label: '소개 활동' };
-  if (p.startsWith('/my/contracts/')) return { href: '/my/contracts', label: '계약 진행' };
-  if (under(p, '/contracts/templates')) return { href: '/my/contracts', label: '계약 진행' };
-  if (p.startsWith('/my/inquiries/')) return { href: '/my/inquiries', label: '문의 · 대화' };
-  if (p.startsWith('/my/subscription/')) return { href: '/my/subscription', label: '구독 · 소개코드' };
-  return { href: '/my', label: '나의공간' };
+function backOf(p: string): { href: string; label: MenuKey } {
+  if (p === '/my') return { href: '/', label: 'main' };
+  if (under(p, '/my/settlement/history')) return { href: '/my/settlement', label: 'settlement' };
+  if (p.startsWith('/my/intro/')) return { href: '/my/intro', label: 'intro' };
+  if (p.startsWith('/my/contracts/')) return { href: '/my/contracts', label: 'contracts' };
+  if (under(p, '/contracts/templates')) return { href: '/my/contracts', label: 'contracts' };
+  if (p.startsWith('/my/inquiries/')) return { href: '/my/inquiries', label: 'inquiries' };
+  if (p.startsWith('/my/subscription/')) return { href: '/my/subscription', label: 'subscription' };
+  return { href: '/my', label: 'my' };
 }
 
 export function MyShell({ counts, children, active }: { counts: MyCounts | null; children: React.ReactNode; active?: string }) {
   const p = usePathname() ?? '/my';
+  const t = useTranslations('my.shell');
   if (NO_SHELL.some((b) => under(p, b))) return <>{children}</>;
   const back = backOf(p);
   /* v10.32 (추가) — 넘겨받은 active(메뉴 key)가 있으면 그 항목을 켭니다(주소가 /my 밖인 화면 — 분쟁 접수 등) */
@@ -71,22 +77,22 @@ export function MyShell({ counts, children, active }: { counts: MyCounts | null;
 
   return (
     <div className="mys" data-my-shell="">
-      <BackBar href={back.href} label={back.label} />
+      <BackBar href={back.href} label={t(`menu.${back.label}`)} />
       <div className="my-lay">
-        <aside className="my-nav" aria-label="나의공간 메뉴" data-my-nav="">
-          <div className="my-mh">나의공간</div>
+        <aside className="my-nav" aria-label={t('navAria')} data-my-nav="">
+          <div className="my-mh">{t('menu.my')}</div>
           {MY_MENU.map((m) => (
             <Link key={m.key} href={m.href} className={on(m) ? 'on' : undefined} aria-current={on(m) ? 'page' : undefined} data-my-nav-item={m.key}>
-              {m.label}{n(m)}
+              {t(`menu.${m.label}`)}{n(m)}
             </Link>
           ))}
-          <div className="my-mh2">계정</div>
-          <Link href="/my/account" className={under(p, '/my/account') ? 'on' : undefined} data-my-nav-item="myacc">프로필 · 사업자 정보</Link>
+          <div className="my-mh2">{t('account')}</div>
+          <Link href="/my/account" className={under(p, '/my/account') ? 'on' : undefined} data-my-nav-item="myacc">{t('profile')}</Link>
           {/* 시안 v10.27 G-196 — 「설정 · 알림」은 알림 화면(수신 설정이 그 안에 있음) */}
-          <Link href="/my/notifications#prefs" data-my-nav-item="myset">설정 · 알림</Link>
+          <Link href="/my/notifications#prefs" data-my-nav-item="myset">{t('settings')}</Link>
           {/* v10.31 (시안 결함 X2) — 시안에는 화면만 있고 들어갈 길이 없던 두 화면(내 신고 내역 · 내 이벤트 참여) */}
-          <Link href="/my/reports" className={under(p, '/my/reports') ? 'on' : undefined} aria-current={under(p, '/my/reports') ? 'page' : undefined} data-my-nav-item="myrpt">내 신고 내역</Link>
-          <Link href="/my/events" className={under(p, '/my/events') ? 'on' : undefined} aria-current={under(p, '/my/events') ? 'page' : undefined} data-my-nav-item="myevt">내 이벤트 참여</Link>
+          <Link href="/my/reports" className={under(p, '/my/reports') ? 'on' : undefined} aria-current={under(p, '/my/reports') ? 'page' : undefined} data-my-nav-item="myrpt">{t('reports')}</Link>
+          <Link href="/my/events" className={under(p, '/my/events') ? 'on' : undefined} aria-current={under(p, '/my/events') ? 'page' : undefined} data-my-nav-item="myevt">{t('events')}</Link>
         </aside>
         <div className="my-main">{children}</div>
       </div>

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { needsLogin } from './util';
 import type { HltPayment } from './types';
 
@@ -12,7 +13,8 @@ import type { HltPayment } from './types';
  * ★ 금액 대조는 서버가 합니다(주문 금액 ≠ amount 면 422 AMOUNT_MISMATCH). 화면은 받은 값을 그대로 보냅니다.
  * 같은 paymentKey 로 두 번 불러도 서버가 같은 결과를 돌려줍니다 — 새로고침해도 안전합니다.
  */
-export async function confirmPay(orderNo: string, paymentKey: string, amount: number):
+/* v10.99 — tx: 화면 사전의 글자(서버 오류 · 승인 거절 기본 문구) — 부르는 쪽이 useTranslations 로 넘깁니다 */
+export async function confirmPay(orderNo: string, paymentKey: string, amount: number, tx: { server: string; rejected: string }):
   Promise<{ ok: true; pay: HltPayment } | { ok: false; status: number; code: string; message: string }> {
   const r = await fetch(`/api/v1/health/orders/${encodeURIComponent(orderNo)}/pay/confirm`, {
     method: 'POST',
@@ -22,7 +24,7 @@ export async function confirmPay(orderNo: string, paymentKey: string, amount: nu
   const d = await r.json().catch(() => null);
   if (!r.ok) {
     return { ok: false, status: r.status, code: d?.code ?? String(r.status),
-      message: r.status >= 500 ? '결제 승인 요청을 보내지 못했습니다. 잠시 뒤 다시 시도해 주십시오.' : d?.message ?? '결제가 승인되지 않았습니다.' };
+      message: r.status >= 500 ? tx.server : d?.message ?? tx.rejected };
   }
   return { ok: true, pay: d as HltPayment };
 }
@@ -39,6 +41,7 @@ export function afterConfirmUrl(orderNo: string, res: Awaited<ReturnType<typeof 
 
 /** 결제창 성공 주소에서 한 번 승인하고 넘어갑니다 */
 export function PayConfirm({ orderNo, paymentKey, amount }: { orderNo: string; paymentKey: string; amount: number }) {
+  const t = useTranslations('order');
   const router = useRouter();
   const once = useRef(false);
   const [err, setErr] = useState<string | null>(null);
@@ -48,26 +51,26 @@ export function PayConfirm({ orderNo, paymentKey, amount }: { orderNo: string; p
     once.current = true;
     void (async () => {
       try {
-        const res = await confirmPay(orderNo, paymentKey, amount);
+        const res = await confirmPay(orderNo, paymentKey, amount, { server: t('common.confirmReqFail'), rejected: t('common.notApproved') });
         if (!res.ok && needsLogin(res.status, res.code)) { router.replace('/login'); return; }
         router.replace(afterConfirmUrl(orderNo, res));
       } catch {
-        setErr('결제 승인 요청을 보내지 못했습니다. 이 화면을 새로고침하시면 다시 확인합니다 — 두 번 결제되지 않습니다.');
+        setErr(t('common.confirmReqFailRefresh'));
       }
     })();
-  }, [orderNo, paymentKey, amount, router]);
+  }, [orderNo, paymentKey, amount, router, t]);
 
   return err ? (
     <div className="hlt-box hlt-fail" role="alert">
       <b>{err}</b>
       <div className="hlt-btns">
-        <Link className="hlt-btn" href={`/my/health/orders/${encodeURIComponent(orderNo)}`}>주문 상세</Link>
+        <Link className="hlt-btn" href={`/my/health/orders/${encodeURIComponent(orderNo)}`}>{t('common.orderDetail')}</Link>
       </div>
     </div>
   ) : (
     <div className="hlt-box" role="status" aria-live="polite">
-      <b>결제를 확인하고 있습니다…</b>
-      <p className="hint">창을 닫지 마십시오. 확인되면 주문 완료 화면으로 넘어갑니다.</p>
+      <b>{t('common.checking')}</b>
+      <p className="hint">{t('pay.closeHint')}</p>
     </div>
   );
 }

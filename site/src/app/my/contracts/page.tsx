@@ -6,8 +6,11 @@ import { me } from '@/lib/session';
 import { won, ymdKst } from '@/lib/format';
 import { MyHead, Tabs, Note, shortId, type Tone } from '@/components/my/ui';
 import { NudgeButton } from '@/components/my/NudgeButton';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '계약 진행' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('ctr.title') };
+}
 
 interface Contract {
   dealId: string; contractId: string; listingId?: string | null; title: string; counterpart: string;
@@ -20,14 +23,9 @@ interface Contract {
   mine?: string; theirs?: string; nextAction?: string; canNudge?: boolean; nudgedAt?: string | null;
 }
 
-const TABS = [
-  { k: 'all',  t: '전체' },
-  { k: 'req',  t: '계약 요청' },
-  { k: 'run',  t: '계약 진행' },
-  { k: 'done', t: '계약 완료' },
-  { k: 'hold', t: '계약 보류' },
-];
-const STEPS = ['조건 협의', '양측 합의', '양측 서명', '이행 확인', '성사'];
+/* v10.99 — 탭 · 단계 이름은 사전(myDeal.ctr.tabs.* · myDeal.steps.*) */
+const TABS = [{ k: 'all' }, { k: 'req' }, { k: 'run' }, { k: 'done' }, { k: 'hold' }] as const;
+const STEPS = ['talk', 'agree', 'sign', 'fulfil', 'done'] as const;
 
 /** 상태를 탭으로 묶습니다. 이용자는 코드가 아니라 "지금 뭘 해야 하나"로 봅니다. */
 function tabOf(s: string) {
@@ -44,8 +42,7 @@ function stepOf(s: string) {
   return 0;
 }
 const TONE: Record<string, Tone> = { req: 'wait', run: 'wait', done: 'ok', hold: 'no' };
-const side = (agreed: boolean, signed: boolean) => (signed ? '서명 완료' : agreed ? '합의 완료' : '검토 중');
-const PART: Record<string, string> = { BUYER: '구매 쪽', SELLER: '판매 쪽' };
+const side = (agreed: boolean, signed: boolean) => (signed ? 'signed' : agreed ? 'agreed' : 'review') as 'signed' | 'agreed' | 'review';
 
 /**
  * SB-MYP-CTR-010 — 계약 진행 목록
@@ -57,6 +54,7 @@ export default async function Page({ searchParams }:
   { searchParams: Promise<{ tab?: string }> }) {
   const user = await me();
   if (!user) redirect('/login?next=/my/contracts');
+  const t = await getTranslations('myDeal');
 
   const { tab: t0 = 'all' } = await searchParams;
   const tab = TABS.some((x) => x.k === t0) ? t0 : 'all';
@@ -65,15 +63,15 @@ export default async function Page({ searchParams }:
 
   return (
     <>
-      <MyHead title="계약 진행" sub="당사자끼리 맺고 계신 계약입니다. 소개뱅크는 양식만 제공하며 계약 당사자가 아닙니다 — 조건과 이행 책임은 당사자에게 있습니다." />
+      <MyHead title={t('ctr.title')} sub={t('ctr.sub')} />
 
-      <Tabs label="계약 상태" cur={tab} items={TABS.map((x) => ({
-        k: x.k, t: x.t, href: `/my/contracts?tab=${x.k}`,
+      <Tabs label={t('ctr.tabsLabel')} cur={tab} items={TABS.map((x) => ({
+        k: x.k, t: t(`ctr.tabs.${x.k}`), href: `/my/contracts?tab=${x.k}`,
         n: x.k === 'all' ? list.length : list.filter(c => tabOf(c.state) === x.k).length,
       }))} />
 
       {rows.length === 0 ? (
-        <Note kind="info">이 상태의 계약이 없습니다. 1:1 대화에서 조건을 맞춘 뒤 「계약서 요청하기」로 시작합니다.</Note>
+        <Note kind="info">{t('ctr.empty')}</Note>
       ) : (
         <div data-ctr-list="">
           {rows.map(c => {
@@ -88,48 +86,48 @@ export default async function Page({ searchParams }:
                   </div>
                   <span>
                     {/* 3일 넘게 멈춘 건은 눈에 띄어야 합니다 — 한쪽이 잊은 경우가 많습니다. */}
-                    {c.stalled && <span className="my-bg no" style={{ marginRight: 6 }}>3일째 대기</span>}
+                    {c.stalled && <span className="my-bg no" style={{ marginRight: 6 }}>{t('ctr.stalled')}</span>}
                     <span className={`my-bg ${TONE[tabOf(c.state)]}`}>{c.stateLabel}</span>
                   </span>
                 </div>
-                <ol className="my-ctst" aria-label="계약 단계">
-                  {STEPS.map((t, i) => (
-                    <li key={t} className={i === cur ? 'on' : i < cur ? 'done' : ''}><span className="my-n">{i + 1}</span><span className="my-t">{t}</span></li>
+                <ol className="my-ctst" aria-label={t('ctr.stepsLabel')}>
+                  {STEPS.map((k, i) => (
+                    <li key={k} className={i === cur ? 'on' : i < cur ? 'done' : ''}><span className="my-n">{i + 1}</span><span className="my-t">{t(`steps.${k}`)}</span></li>
                   ))}
                 </ol>
                 {/* 양측 상태를 나란히. 한쪽만 보이면 "왜 안 되지"가 됩니다. */}
                 <div className="my-ctrp" data-ctr-sides="">
                   {c.mine != null ? (
                     <>
-                      <div className="my-cp"><span className="my-ls">나{c.myPart ? ` · ${PART[c.myPart]}` : ''}</span><b>{c.mine}</b></div>
+                      <div className="my-cp"><span className="my-ls">{t('ctr.me')}{c.myPart ? ` · ${t(`ctr.part.${c.myPart}`)}` : ''}</span><b>{c.mine}</b></div>
                       <div className="my-cpx">↔</div>
                       <div className="my-cp"><span className="my-ls">{c.counterpart}</span><b>{c.theirs}</b></div>
                     </>
                   ) : (
                     <>
-                      <div className="my-cp"><span className="my-ls">구매 쪽</span><b>{side(c.buyerAgreed, c.buyerSigned)}</b></div>
+                      <div className="my-cp"><span className="my-ls">{t('ctr.part.BUYER')}</span><b>{t(`ctr.side.${side(c.buyerAgreed, c.buyerSigned)}`)}</b></div>
                       <div className="my-cpx">↔</div>
-                      <div className="my-cp"><span className="my-ls">판매 쪽</span><b>{side(c.sellerAgreed, c.sellerSigned)}</b></div>
+                      <div className="my-cp"><span className="my-ls">{t('ctr.part.SELLER')}</span><b>{t(`ctr.side.${side(c.sellerAgreed, c.sellerSigned)}`)}</b></div>
                     </>
                   )}
                 </div>
                 {c.nextAction && <div className="my-ctrn" data-ctr-next="">{c.nextAction}</div>}
                 <div className="my-ctra">
                   <Link className="my-bp" href={`/my/contracts/${c.dealId}`}>
-                    {ro ? '계약서 보기' : c.state === 'DRAFT' || tabOf(c.state) === 'req' ? '계약서 작성 ›' : '계약 진행 ›'}
+                    {ro ? t('ctr.btnView') : c.state === 'DRAFT' || tabOf(c.state) === 'req' ? t('ctr.btnWrite') : t('ctr.btnRun')}
                   </Link>
                   {ro ? (
-                    <button type="button" className="my-bo" disabled title="완료된 계약은 고칠 수 없습니다. 바꾸시려면 파기하고 다시 맺으십시오.">수정 불가</button>
+                    <button type="button" className="my-bo" disabled title={t('ctr.noEditTitle')}>{t('ctr.noEdit')}</button>
                   ) : (
                     <>
                       {/* 20260930 — /chat/[id] 는 **매물 id** 를 받습니다. 요청 기반 거래(매물 없음)는 계약 화면에서 조율합니다. */}
-                      {c.listingId && <Link className="my-bo" href={`/chat/${c.listingId}`}>대화로 조율</Link>}
+                      {c.listingId && <Link className="my-bo" href={`/chat/${c.listingId}`}>{t('ctr.chat')}</Link>}
                       {c.state !== 'CANCELLED' && <NudgeButton dealId={c.dealId} disabled={c.canNudge === false}
-                        title={c.canNudge === false ? (c.nudgedAt ? '오늘 이미 확인 요청을 보냈습니다.' : '지금은 회원님 차례입니다.') : '상대방에게 확인 요청 알림을 보냅니다.'} />}
+                        title={c.canNudge === false ? (c.nudgedAt ? t('ctr.nudgeSent') : t('ctr.nudgeYourTurn')) : t('ctr.nudgeSend')} />}
                     </>
                   )}
                 </div>
-                <div className="my-nt3">소개비 {c.fee != null ? won(c.fee) : '(확정 전)'}은 <b>성사가 확정된 뒤</b> 소개자에게 지급됩니다. 대금은 당사자끼리 직접 주고받으시고, 플랫폼은 보관하지 않습니다.</div>
+                <div className="my-nt3">{t.rich('ctr.feeNote', { fee: c.fee != null ? won(c.fee) : t('ctr.feeTbd'), b: (x) => <b>{x}</b> })}</div>
               </div>
             );
           })}

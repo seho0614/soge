@@ -6,8 +6,11 @@ import { me } from '@/lib/session';
 import { won, GWAN_PATH, dtKst, ymdKst } from '@/lib/format';
 import { ArchiveButton } from '@/components/ArchiveButton';
 import { MyHead, Tabs, Note, Empty, GwanTag, shortId, type Tone } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '내 등록 리스팅' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.lst'))('title') };
+}
 
 interface MyListing {
   id: string; title: string; status: string; statusLabel: string | null; gwanCode?: string;
@@ -21,12 +24,13 @@ interface MyListing {
 }
 
 /* v10.29 — 시안 탭(전체 · 노출중 · 검수대기 · 반려 · 작성중 · 마감) ↔ 서버 상태 */
-const TABS: { k: string; t: string; st: string[] }[] = [
-  { k: 'PUBLISHED', t: '노출중', st: ['PUBLISHED'] },
-  { k: 'IN_REVIEW', t: '검수대기', st: ['IN_REVIEW'] },
-  { k: 'REJECTED', t: '반려', st: ['REJECTED'] },
-  { k: 'DRAFT', t: '작성중', st: ['DRAFT'] },
-  { k: 'ARCHIVED', t: '마감', st: ['ARCHIVED'] },
+/* v10.99 — 탭 이름은 사전 키(my.lst.tab.*) */
+const TABS: { k: string; t: 'published' | 'inReview' | 'rejected' | 'draft' | 'archived'; st: string[] }[] = [
+  { k: 'PUBLISHED', t: 'published', st: ['PUBLISHED'] },
+  { k: 'IN_REVIEW', t: 'inReview', st: ['IN_REVIEW'] },
+  { k: 'REJECTED', t: 'rejected', st: ['REJECTED'] },
+  { k: 'DRAFT', t: 'draft', st: ['DRAFT'] },
+  { k: 'ARCHIVED', t: 'archived', st: ['ARCHIVED'] },
 ];
 const TONE: Record<string, Tone> = { PUBLISHED: 'ok', IN_REVIEW: 'wait', DRAFT: 'wait', REJECTED: 'no', ARCHIVED: 'off' };
 
@@ -45,26 +49,27 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
   const want = (await searchParams).st;
   const tab = TABS.find((t) => t.k === want) ? want! : 'all';
   const rows = tab === 'all' ? all : all.filter((r) => TABS.find((t) => t.k === tab)!.st.includes(r.status));
+  const t = await getTranslations('my.lst');
 
   return (
     <>
-      <MyHead title="내 등록 리스팅" sub="상태와 성과를 함께 봅니다. 반려 건은 사유와 수정 가이드를 같이 띄웁니다."
-        right={<Link className="my-bp" href="/register">새 등록</Link>} />
+      <MyHead title={t('title')} sub={t('sub')}
+        right={<Link className="my-bp" href="/register">{t('new')}</Link>} />
 
-      <Tabs label="리스팅 상태" cur={tab} items={[
-        { k: 'all', t: '전체', n: all.length, href: '/my/listings' },
-        ...TABS.map((t) => ({ k: t.k, t: t.t, n: all.filter((r) => t.st.includes(r.status)).length, href: `/my/listings?st=${t.k}` })),
+      <Tabs label={t('tabsAria')} cur={tab} items={[
+        { k: 'all', t: t('tab.all'), n: all.length, href: '/my/listings' },
+        ...TABS.map((x) => ({ k: x.k, t: t(`tab.${x.t}`), n: all.filter((r) => x.st.includes(r.status)).length, href: `/my/listings?st=${x.k}` })),
       ]} />
 
       {forbidden ? (
         <Note kind="warn" className="act" data-lst-forbidden="">
-          <div><b>리스팅을 볼 수 없습니다.</b><p>본인인증을 마치면 등록한 리스팅의 상태와 반려 사유를 여기서 보실 수 있습니다.</p></div>
-          <Link className="my-bp" href="/verify">본인인증</Link>
+          <div><b>{t('forbiddenB')}</b><p>{t('forbiddenText')}</p></div>
+          <Link className="my-bp" href="/verify">{t('verify')}</Link>
         </Note>
       ) : all.length === 0 ? (
-        <Empty>등록한 리스팅이 없습니다. <Link href="/register">첫 리스팅을 등록해 보십시오 ›</Link></Empty>
+        <Empty>{t('empty')} <Link href="/register">{t('first')}</Link></Empty>
       ) : rows.length === 0 ? (
-        <Empty>이 상태의 리스팅이 없습니다.</Empty>
+        <Empty>{t('emptyTab')}</Empty>
       ) : (
         <div data-my-listings>
           {rows.map((r) => (
@@ -75,28 +80,28 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
                   <GwanTag code={r.gwanCode} />
                   {r.categoryName && <span className="my-ck">{r.categoryName}</span>}
                   {r.gradeLabel && r.status !== 'DRAFT' && <span className="my-ck">{r.gradeLabel}</span>}
-                  {r.desiredFee != null && <span className="my-ck">소개비 {won(r.desiredFee)}</span>}
-                  {r.status === 'IN_REVIEW' && r.slaDueAt && <span className="my-ck warn">검수 마감 {dtKst(r.slaDueAt)}</span>}
+                  {r.desiredFee != null && <span className="my-ck">{t('fee', { fee: won(r.desiredFee) })}</span>}
+                  {r.status === 'IN_REVIEW' && r.slaDueAt && <span className="my-ck warn">{t('sla', { date: dtKst(r.slaDueAt) })}</span>}
                 </div>
                 <Link className="my-lnk" href={`/listings/${r.id}/edit`}>{r.title}</Link>
                 <span className="my-ls blk">{[shortId(r.id, 'L-'), ymdKst(r.publishedAt ?? r.createdAt ?? r.updatedAt)].filter(Boolean).join(' · ')}</span>
               </div>
               <div className="my-lstat" data-lstat={r.id}>
-                <span>조회 <b>{(r.viewCount ?? 0).toLocaleString('ko-KR')}</b></span>
-                <span>관심 <b>{(r.likeCount ?? 0).toLocaleString('ko-KR')}</b></span>
-                <span>문의 <b>{(r.inquiryCount ?? 0).toLocaleString('ko-KR')}</b></span>
+                <span>{t('views')} <b>{(r.viewCount ?? 0).toLocaleString('ko-KR')}</b></span>
+                <span>{t('likes')} <b>{(r.likeCount ?? 0).toLocaleString('ko-KR')}</b></span>
+                <span>{t('inquiries')} <b>{(r.inquiryCount ?? 0).toLocaleString('ko-KR')}</b></span>
               </div>
               <div className="my-lact">
                 {/* v10.27 (G-193) — 수정 화면은 /listings/{id}/edit */}
-                {r.status === 'REJECTED' ? <Link className="my-bo sm" href={`/listings/${r.id}/edit`}>수정 후 재제출</Link>
-                  : r.status === 'ARCHIVED' ? <Link className="my-bo sm" href={`/listings/${r.id}/edit`} data-relist={r.id}>수정해서 다시 올리기</Link>
-                  : <Link className="my-bo sm" href={`/listings/${r.id}/edit`}>수정</Link>}
-                {r.status === 'PUBLISHED' && <Link className="my-bo sm" href={`/${GWAN_PATH[r.gwanCode ?? ''] ?? 'money'}/${r.id}`}>보기</Link>}
-                {r.status !== 'ARCHIVED' && <Link className="my-bo sm" href={`/my/inquiries?listing=${r.id}`} data-listing-inq={r.id}>받은 문의</Link>}
+                {r.status === 'REJECTED' ? <Link className="my-bo sm" href={`/listings/${r.id}/edit`}>{t('resubmit')}</Link>
+                  : r.status === 'ARCHIVED' ? <Link className="my-bo sm" href={`/listings/${r.id}/edit`} data-relist={r.id}>{t('relist')}</Link>
+                  : <Link className="my-bo sm" href={`/listings/${r.id}/edit`}>{t('edit')}</Link>}
+                {r.status === 'PUBLISHED' && <Link className="my-bo sm" href={`/${GWAN_PATH[r.gwanCode ?? ''] ?? 'money'}/${r.id}`}>{t('view')}</Link>}
+                {r.status !== 'ARCHIVED' && <Link className="my-bo sm" href={`/my/inquiries?listing=${r.id}`} data-listing-inq={r.id}>{t('received')}</Link>}
                 {['PUBLISHED', 'IN_REVIEW', 'REJECTED', 'DRAFT'].includes(r.status) && <ArchiveButton id={r.id} title={r.title} />}
               </div>
               {r.status === 'REJECTED' && r.rejectReasonLabel && (
-                <div className="my-rej"><b>반려 · {r.rejectReasonLabel}</b><p>{r.rejectFixGuide ?? '사유를 고쳐 다시 제출하시면 재검수합니다.'}</p></div>
+                <div className="my-rej"><b>{t('rejected', { reason: r.rejectReasonLabel })}</b><p>{r.rejectFixGuide ?? t('fixDefault')}</p></div>
               )}
             </div>
           ))}

@@ -9,7 +9,11 @@ import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { CopyText } from '@/components/health/CopyText';
 
-export const metadata: Metadata = { title: '택배사 조회 · 소개몰' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('hCarrier.meta') };
+}
 export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ no: string }> };
@@ -22,6 +26,7 @@ type Props = { params: Promise<{ no: string }> };
  */
 export default async function MyHltCarrier({ params }: Props) {
   if (!(await me())) redirect('/login');
+  const t = await getTranslations('myDeal');
   const no = decodeURIComponent((await params).no);
   const enc = encodeURIComponent(no);
   let o: HltOrder | null = null; let ships: HltShipment[] = []; let err: string | null = null;
@@ -31,48 +36,48 @@ export default async function MyHltCarrier({ params }: Props) {
       apiGetPersonal<HltShipment[]>(`/me/health/orders/${enc}/shipments`),
     ]);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : '배송 정보를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.';
+    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.shipLoadFail');
   }
   if (!o) {
-    return (<><div className="hlt"><MyHltNav on="orders" /><div className="page-head"><h1>택배사 조회</h1></div>
-      <HltEmpty msg={err ?? '주문을 찾을 수 없습니다.'} href="/my/health/orders" label="내 주문" /></div><i hidden data-root-end="" /></>);
+    return (<><div className="hlt"><MyHltNav on="orders" /><div className="page-head"><h1>{t('hCarrier.title')}</h1></div>
+      <HltEmpty msg={err ?? t('h.notFound')} href="/my/health/orders" label={t('hNav.orders')} /></div><i hidden data-root-end="" /></>);
   }
   const last = ships.find((s) => s.trackingNo) ?? null;
   return (
     <><div className="hlt">
       <MyHltNav on="orders" />
       <div className="hlt-crumb">
-        <Link href="/my/health/orders">내 주문</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › <Link href={`/my/health/orders/${enc}/ship`}>배송 조회</Link> › 택배사 조회
+        <Link href="/my/health/orders">{t('hNav.orders')}</Link> › <Link href={`/my/health/orders/${enc}`}>{o.orderNo}</Link> › <Link href={`/my/health/orders/${enc}/ship`}>{t('hShip.title')}</Link> › {t('hCarrier.title')}
       </div>
-      <div className="page-head"><h1>택배사 조회</h1></div>
+      <div className="page-head"><h1>{t('hCarrier.title')}</h1></div>
       <section className="hlt-box" data-carrier="">
         {last ? (
           <>
-            <p className="hint">아래 값으로 <b>택배사 조회 창을 새 창</b>으로 엽니다. 보던 소개몰 화면은 그대로 남습니다.</p>
+            <p className="hint">{t.rich('hCarrier.intro', { b: (c) => <b>{c}</b> })}</p>
             <table className="tbl hlt-tbl"><tbody>
-              <tr><th>택배사</th><td>{last.carrier ?? '—'}</td></tr>
-              <tr><th>송장번호</th><td className="mono">{last.trackingNo}</td></tr>
-              <tr><th>넘기는 값</th><td>택배사 코드 · 송장번호만 — 이름 · 주소 · 연락처는 넘기지 않습니다</td></tr>
-              <tr><th>연동 전</th><td>택배사 조회 창이 열리지 않으면 송장번호를 복사해 택배사 누리집에서 직접 조회하십시오</td></tr>
+              <tr><th>{t('h.carrier')}</th><td>{last.carrier ?? '—'}</td></tr>
+              <tr><th>{t('h.trackingNo')}</th><td className="mono">{last.trackingNo}</td></tr>
+              <tr><th>{t('hCarrier.passed')}</th><td>{t('hCarrier.passedV')}</td></tr>
+              <tr><th>{t('hCarrier.pre')}</th><td>{t('hCarrier.preV')}</td></tr>
             </tbody></table>
             <div className="hlt-btns">
-              {last.trackUrl && <a className="hlt-btn sm pri" href={last.trackUrl} target="_blank" rel="noopener noreferrer" data-carrier-open="">택배사 조회 창 열기 ↗</a>}
-              <CopyText text={last.trackingNo ?? ''} label="송장번호 복사" />
-              <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship`}>← 배송 조회</Link></div>
+              {last.trackUrl && <a className="hlt-btn sm pri" href={last.trackUrl} target="_blank" rel="noopener noreferrer" data-carrier-open="">{t('hCarrier.open')}</a>}
+              <CopyText text={last.trackingNo ?? ''} label={t('h.copyTracking')} />
+              <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship`}>{t('hCarrier.back')}</Link></div>
           </>
         ) : (
           <>
             {/* v10.32 — 발송 전에도 시안의 표 · 단추 2 모양(값은 비어 있음 · 단추는 누를 수 없음) */}
-            <p className="hint">아직 발송 전이라 송장번호가 없습니다. 보내면 여기서 택배사와 송장번호를 볼 수 있습니다.</p>
+            <p className="hint">{t('hCarrier.none')}</p>
             <table className="tbl hlt-tbl" data-carrier-empty=""><tbody>
-              <tr><th>택배사</th><td className="hint">발송 전</td></tr>
-              <tr><th>송장번호</th><td className="hint">발송 전</td></tr>
-              <tr><th>넘기는 값</th><td>택배사 코드 · 송장번호만 — 이름 · 주소 · 연락처는 넘기지 않습니다</td></tr>
-              <tr><th>연동 전</th><td>택배사 조회 창이 열리지 않으면 송장번호를 복사해 택배사 누리집에서 직접 조회하십시오</td></tr>
+              <tr><th>{t('h.carrier')}</th><td className="hint">{t('h.notShipped')}</td></tr>
+              <tr><th>{t('h.trackingNo')}</th><td className="hint">{t('h.notShipped')}</td></tr>
+              <tr><th>{t('hCarrier.passed')}</th><td>{t('hCarrier.passedV')}</td></tr>
+              <tr><th>{t('hCarrier.pre')}</th><td>{t('hCarrier.preV')}</td></tr>
             </tbody></table>
             <div className="hlt-btns">
-              <button type="button" className="hlt-btn sm pri" disabled title="발송 뒤에 열 수 있습니다">택배사 조회 창 열기 ↗</button>
-              <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship`}>← 배송 조회</Link></div>
+              <button type="button" className="hlt-btn sm pri" disabled title={t('hCarrier.afterShip')}>{t('hCarrier.open')}</button>
+              <Link className="hlt-btn sm" href={`/my/health/orders/${enc}/ship`}>{t('hCarrier.back')}</Link></div>
           </>
         )}
       </section>

@@ -8,8 +8,11 @@ import { PayoutBox, type PayoutAccount } from './PayoutBox';
 import { ClaimButton } from './ClaimButton';
 import { PaidMarkButton } from './PaidMarkButton';
 import { MyHead, Note, Empty, Table, wonP, shortId, type Tone } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '정산 · 소개비 받기' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('myDeal'))('stl.title') };
+}
 
 interface Settlement {
   id: string; dealId?: string; amount: number; status: string; statusLabel?: string | null;
@@ -41,17 +44,19 @@ const TONE: Record<string, Tone> = { PAID: 'ok', REQUESTED: 'wait', HELD: 'wait'
 export default async function SettlementPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('myDeal');
+  const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   if (!p.identityVerifiedAt) {
     return (
       <><div data-stl-need="IDENTITY">
-        <MyHead title="정산 · 소개비 받기" sub="본인인증 회원이면 소개비를 받습니다. 성사가 확정된 건만 신청할 수 있고 (INV-3) 소개비에서 떼는 금액은 없습니다 (INV-9)." />
+        <MyHead title={t('stl.title')} sub={t('stl.sub')} />
         <Note kind="warn" className="act">
           <div>
-            <b>본인인증을 하시면 소개비를 받으실 수 있습니다</b>
-            <p>개인 회원도 받습니다. 사업자 인증은 사업자로 소개비(세금계산서)를 받으실 때만 필요합니다.</p>
+            <b>{t('stl.needIdTitle')}</b>
+            <p>{t('stl.needIdDesc')}</p>
           </div>
-          <Link className="my-bp" href="/verify">본인인증하기</Link>
+          <Link className="my-bp" href="/verify">{t('stl.verify')}</Link>
         </Note>
       </div><i hidden data-root-end="" /></>
     );
@@ -73,81 +78,79 @@ export default async function SettlementPage() {
 
   return (
     <>
-      <MyHead title="정산 · 소개비 받기" sub="본인인증 회원이면 소개비를 받습니다. 성사가 확정된 건만 신청할 수 있고 (INV-3) 소개비에서 떼는 금액은 없습니다 (INV-9)." />
+      <MyHead title={t('stl.title')} sub={t('stl.sub')} />
       {!on && (
         <Note kind="warn" data-stl-off="">
-          <b>소개비 기능은 아직 열리지 않았습니다</b> — 본인인증 · 계좌 확인 연동을 마친 뒤 운영자가 엽니다.
-          그 전에는 거래가 성사돼도 정산이 생기지 않습니다.
+          {t.rich('stl.off', { b: b_ })}
         </Note>
       )}
 
       <div data-stl-payee={isBiz ? 'BUSINESS' : 'PERSON'}>
         {isBiz
-          ? <Note kind="ok"><b>사업자로 받습니다</b> — 사업자 인증 {ymdKst(p.businessVerifiedAt)}. 공제 0, 소개비 전액이 그대로 들어옵니다. 세금계산서는 소개자가 직접 발행합니다.</Note>
-          : <Note kind="info"><b>개인으로 받습니다</b> — 정산을 신청할 때 <b>본인 명의 받을 계좌</b>를 확인합니다. 사업자 인증을 하시면 사업자로 받습니다(<Link href="/my/business">사업자 전환</Link>).
-              {' '}<b>소개비는 거래 당사자가 직접 지급합니다</b> — 소개뱅크는 소개비를 대신 받거나 보내지 않습니다.</Note>}
+          ? <Note kind="ok">{t.rich('stl.biz', { d: ymdKst(p.businessVerifiedAt), b: b_ })}</Note>
+          : <Note kind="info">{t.rich('stl.person', { b: b_, link: (c) => <Link href="/my/business">{c}</Link> })}</Note>}
       </div>
 
       {isBiz && due.some((d) => d.payeeAs === 'PERSON') && (
-        <Note kind="warn" data-stl-noretro=""><b>사업자 인증 전에 성사된 거래는 개인으로 받습니다.</b> 인증 시각이 소개비 수령 자격의 기준일이며 소급되지 않습니다 — 그 거래는 받을 계좌를 확인한 뒤 「소개비 받기」를 누르십시오.</Note>
+        <Note kind="warn" data-stl-noretro="">{t.rich('stl.noRetro', { b: b_ })}</Note>
       )}
       {needAcc && <div className="my-card"><PayoutBox accounts={accounts} /></div>}
 
-      <Note kind="info" data-stl-tax=""><b>세금</b> — 소개비는 받는 분의 소득이므로 세금 신고는 받는 분이 하십니다. 소개뱅크는 소개비를 지급하지 않아 원천징수하지 않습니다.</Note>
+      <Note kind="info" data-stl-tax="">{t.rich('stl.tax', { b: b_ })}</Note>
 
-      <h2 className="my-s2">받을 소개비</h2>
+      <h2 className="my-s2">{t('stl.dueH')}</h2>
       {due.length === 0 ? (
-        <Empty data-stl-due-empty="">신청 가능한 건이 없습니다. 성사가 확정되면 정산이 자동으로 생기고, 계좌 확인이 늦어 생기지 않은 거래만 여기에 나타납니다.</Empty>
+        <Empty data-stl-due-empty="">{t('stl.dueEmpty')}</Empty>
       ) : (
         <div data-stl-due="">
           {due.map((d) => (
             <div key={d.dealId} className="my-dcard" data-stl-due-row={d.dealId} data-payee-as={d.payeeAs ?? ''}>
-              <div className="my-dh"><b>{d.title ?? '소개 거래'}</b><span className="my-bg ok">신청 가능</span></div>
+              <div className="my-dh"><b>{d.title ?? t('stl.dealDefault')}</b><span className="my-bg ok">{t('stl.claimable')}</span></div>
               <div className="my-dm">
-                <span>거래 {shortId(d.dealId, 'D-')}</span>
+                <span>{t('stl.deal', { id: shortId(d.dealId, 'D-') })}</span>
                 {d.attributedCode && <span className="my-code">{d.attributedCode} · tier {d.tier ?? 1}</span>}
                 {d.counterpart && <span>{d.counterpart}</span>}
-                <span>확정 {ymdKst(d.confirmedAt)}</span>
-                <span>{d.payeeAs === 'BUSINESS' ? '사업자로 받음' : '개인으로 받음'}</span>
+                <span>{t('stl.confirmed', { d: ymdKst(d.confirmedAt) })}</span>
+                <span>{d.payeeAs === 'BUSINESS' ? t('stl.asBiz') : t('stl.asPerson')}</span>
               </div>
               <div className="my-calc">
-                <div className="my-cr"><span>거래금액</span><b>{d.dealAmount != null ? wonP(d.dealAmount) : <span className="my-ls">계약서 금액 없음</span>}</b></div>
-                <div className="my-cr"><span>소개비 <i>양측 협의로 정한 금액입니다 (A-12)</i></span><b>{wonP(d.amount)}</b></div>
-                <div className="my-cr"><span>공제</span><b className="ok">0원</b></div>
-                <div className="my-cr tot"><span>실지급액</span><b>{wonP(d.amount)}</b></div>
-                {d.payeeAs === 'BUSINESS' && d.vat != null && <div className="my-cr sub"><span>부가세 10% (별도 청구)</span><b>{wonP(d.vat)}</b></div>}
+                <div className="my-cr"><span>{t('stl.dealAmount')}</span><b>{d.dealAmount != null ? wonP(d.dealAmount) : <span className="my-ls">{t('stl.noCtrAmount')}</span>}</b></div>
+                <div className="my-cr"><span>{t.rich('stl.feeRow', { i: (c) => <i>{c}</i> })}</span><b>{wonP(d.amount)}</b></div>
+                <div className="my-cr"><span>{t('stl.deduct')}</span><b className="ok">{t('stl.zero')}</b></div>
+                <div className="my-cr tot"><span>{t('stl.net')}</span><b>{wonP(d.amount)}</b></div>
+                {d.payeeAs === 'BUSINESS' && d.vat != null && <div className="my-cr sub"><span>{t('stl.vat')}</span><b>{wonP(d.vat)}</b></div>}
               </div>
               {d.payeeAs === 'BUSINESS' && (
-                <div className="my-bank" data-stl-bank=""><span>입금 계좌</span>
-                  {verifiedAcc ? <><b>{verifiedAcc.bankName} {verifiedAcc.accountNo} · {verifiedAcc.holderName}</b><span className="my-bg ok">{verifiedAcc.isStub ? '확인 간주(연동 전)' : '실명 확인됨'}</span></>
-                    : <span className="my-ls">등록된 계좌가 없습니다 — 상대에게 직접 알려 주십시오(소개뱅크는 이체하지 않습니다)</span>}
+                <div className="my-bank" data-stl-bank=""><span>{t('stl.bank')}</span>
+                  {verifiedAcc ? <><b>{verifiedAcc.bankName} {verifiedAcc.accountNo} · {verifiedAcc.holderName}</b><span className="my-bg ok">{verifiedAcc.isStub ? t('stl.assumed') : t('stl.realName')}</span></>
+                    : <span className="my-ls">{t('stl.noAcc')}</span>}
                 </div>
               )}
               <div className="my-dact">
                 <ClaimButton dealId={d.dealId} ready={d.payeeAs === 'BUSINESS' || !!verifiedAcc} />
-                <Link className="my-bo" href="/my/settlement/history">지급 내역 보기</Link>
+                <Link className="my-bo" href="/my/settlement/history">{t('stl.viewHistory')}</Link>
               </div>
             </div>
           ))}
-          <Note kind="info">신청 대기 <b>{due.length}건 · 소개비 합계 {wonP(sum)}</b></Note>
+          <Note kind="info">{t.rich('stl.pendingSum', { n: String(due.length), sum: wonP(sum), b: b_ })}</Note>
         </div>
       )}
 
       {/* 개발에만 있던 「정산 내역」(신청한 정산의 상태) — 시안 모양 표로 남깁니다 */}
-      <h2 className="my-s2">정산 내역</h2>
+      <h2 className="my-s2">{t('stl.histH')}</h2>
       {rows.length === 0 ? (
-        <Empty>정산 내역이 없습니다.</Empty>
+        <Empty>{t('stl.histEmpty')}</Empty>
       ) : (
         <>
         {/* v10.31 (합침 · w6 D080) — 정산 승인 단계: 승인 대기(신청) → 승인됨 · 지급 대기(운영이 정산서 확인) → 지급 완료(당사자 표시) */}
-        <Note kind="info">신청한 정산은 <b>승인 대기</b> → 운영이 정산서를 확인하면 <b>승인됨 · 지급 대기</b> → 소개비를 받으면 <b>받았음 표시</b>(지급 완료) 순서로 바뀝니다. 「받았음 표시」는 승인된 건에만 있습니다.</Note>
-        <Table head={['정산번호', '소개비', '상태', '받는 방식', '신청일', '지급일', '처리']}>
+        <Note kind="info">{t.rich('stl.flow', { b: b_ })}</Note>
+        <Table head={[t('stl.cols.no'), t('stl.cols.fee'), t('stl.cols.state'), t('stl.cols.payee'), t('stl.cols.requested'), t('stl.cols.paid'), t('stl.cols.action')]}>
           {rows.map((s) => (
             <tr key={s.id} data-stl-row={s.id}>
               <td>{shortId(s.id, 'S-')}</td>
               <td><b>{wonP(s.amount)}</b></td>
               <td><span className={`my-bg ${TONE[s.status] ?? 'off'}`}>{s.statusLabel ?? s.status}</span></td>
-              <td>{s.payee && <span data-stl-row-payee={s.payee}>{s.payee === 'PERSON' ? '개인으로 받음' : '사업자로 받음'}</span>}</td>
+              <td>{s.payee && <span data-stl-row-payee={s.payee}>{s.payee === 'PERSON' ? t('stl.asPerson') : t('stl.asBiz')}</span>}</td>
               <td>{ymdKst(s.requestedAt)}</td>
               <td>{s.paidAt ? ymdKst(s.paidAt) : '—'}</td>
               <td>{s.status === 'APPROVED' ? <PaidMarkButton id={s.id} /> : <span className="my-ls">—</span>}</td>
@@ -156,7 +159,7 @@ export default async function SettlementPage() {
         </Table>
         </>
       )}
-      <div className="my-btns"><Link className="my-bo" href="/my/settlement/history">지급 내역 · 세금계산서 ›</Link></div>
+      <div className="my-btns"><Link className="my-bo" href="/my/settlement/history">{t('stl.toHistory')}</Link></div>
     </>
   );
 }

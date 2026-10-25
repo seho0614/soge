@@ -5,8 +5,11 @@ import { apiGet } from '@/lib/api';
 import Link from 'next/link';
 import { BrokerApply } from '@/components/BrokerApply';
 import { BackBar } from '@/components/common/BackBar';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '중개사 인증' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.broker'))('title') };
+}
 
 interface B {
   applied: boolean; assumed: boolean;
@@ -31,6 +34,8 @@ interface B {
 export default async function BrokerPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('my.broker');
+  const B = (c: React.ReactNode) => <b>{c}</b>;
 
   const b = await apiGet<B>('/partner/broker', 0).catch(() => null);
   /* 반려 · 만료된 건은 다시 신청하는 자리입니다 — 상태 화면으로 돌려보내면
@@ -41,40 +46,40 @@ export default async function BrokerPage() {
   return (
     <><div className="gw">
       <div className="gw-wrap gw-aiw">
-        <BackBar href="/my" label="나의공간" wrap={false} />
-        <div className="gw-pgh"><div><h1>중개사 인증 신청</h1><p>부동산을 소개하시려면 <b>개설등록번호 확인</b>이 필요합니다(공인중개사법 9조).</p></div></div>
+        <BackBar href="/my" label={t('backMy')} wrap={false} />
+        <div className="gw-pgh"><div><h1>{t('h1')}</h1><p>{t.rich('lead', { b: B })}</p></div></div>
 
         <div className="gw-nt gw-warn">
-          <b>공인중개사법 제18조의2 ③</b> — 개업공인중개사가 아닌 자는 중개대상물을 표시 · 광고할 수 없습니다. 그래서 부동산 매물은 인증을 마친 사업자만 공개할 수 있습니다.
+          <b>{t('lawB')}</b>{t('lawText')}
         </div>
 
         {retry ? (
           <div className="gw-nt gw-warn">
-            <b>{b?.state === 'EXPIRED' ? '인증 기한이 지났습니다.' : '이전 신청이 반려되었습니다.'}</b>
-            {b?.rejectReason ? <> 사유: {b.rejectReason}</> : null} 고쳐서 다시 신청해 주십시오.
+            <b>{b?.state === 'EXPIRED' ? t('expired') : t('rejected')}</b>
+            {b?.rejectReason ? <>{t('reason', { reason: b.rejectReason })}</> : null} {t('retry')}
           </div>
         ) : null}
 
         {b?.assumed ? (
           <div className="gw-nt gw-warn">
-            <b>지금은 국토부 연동 전이라 대조를 건너뜁니다.</b> 입력하신 번호가 실제와 맞는지 확인하지 않습니다 — 연동 후 다시 확인하며, 맞지 않으면 인증이 취소됩니다.
+            <b>{t('assumedB')}</b> {t('assumedText')}
           </div>
         ) : null}
 
         {/* v10.38 (D096 · P2P) — 공인중개사 인증은 개인(본인인증)도 신청합니다. 인증 대상은 개설등록번호입니다 */}
         {!p.identityVerifiedAt && !p.businessVerifiedAt ? (
-          <div className="gw-nt gw-warn"><b>본인인증이 먼저 필요합니다.</b> <Link href="/verify">인증하러 가기 →</Link></div>
+          <div className="gw-nt gw-warn"><b>{t('needId')}</b> <Link href="/verify">{t('goVerify')}</Link></div>
         ) : (
           <div className="gw-brkform gw-brkwrap"><BrokerApply assumed={!!b?.assumed} /></div>
         )}
 
         <div className="gw-dact" style={{ marginTop: 12 }}>
-          <Link className="gw-bo" href="/my/broker/status">내 인증 상태</Link>
-          <Link className="gw-bo" href="/mal/brokers">공인중개사 매물 연동</Link>
+          <Link className="gw-bo" href="/my/broker/status">{t('myStatus')}</Link>
+          <Link className="gw-bo" href="/mal/brokers">{t('brokers')}</Link>
         </div>
 
-        <div className="gw-nt gw-info"><b>대조가 맞아도 자동 승인은 없습니다.</b> 명의 도용은 번호 대조로 거를 수 없어 운영이 한 번 더 봅니다.</div>
-        <div className="gw-nt gw-info"><b>180일마다 다시 확인합니다.</b> 폐업하셨는데 인증이 남아 있으면 안 되기 때문입니다.</div>
+        <div className="gw-nt gw-info"><b>{t('noAutoB')}</b> {t('noAutoText')}</div>
+        <div className="gw-nt gw-info"><b>{t('recheckB')}</b> {t('recheckText')}</div>
       </div>
     </div><i hidden data-root-end="" /></>
   );

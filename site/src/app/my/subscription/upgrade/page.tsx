@@ -6,8 +6,11 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { viewLimitText, type PublicSettings } from '@/components/billing/viewLimit';
 import { MyHead, Note, wonP } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '한도 안내' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.subUp'))('title') };
+}
 
 interface Plan {
   code: string; name: string; monthlyPrice: number; includedCodes: number;
@@ -33,46 +36,47 @@ export default async function UpgradePage() {
     apiGet<PublicSettings>('/site-settings/public', 30).catch(() => ({} as PublicSettings)),   // D011 — 요청 열람 한도 설정
     apiGet<SubNow>('/me/subscription', 0).catch(() => null),
   ]);
-  const lim = (n: number | null) => (n == null ? '무제한' : String(n));
+  const t = await getTranslations('my.subUp');
+  const lim = (n: number | null) => (n == null ? t('unlimited') : String(n));
   const used = now?.codesIssued ?? 0;
   const cap = now?.includedCodes ?? null;
 
   return (
     <><div data-my-upgrade="">
-      <MyHead title="한도 안내"
-        sub="구독은 시장에 계속 보이기 위한 것입니다. 이번 달 한도를 다 쓰시면 다음 달에 초기화되거나 지금 올리실 수 있습니다."
+      <MyHead title={t('title')}
+        sub={t('sub')}
         right={<>
-          <a className="my-bp" href="/my/subscription#plans" data-upgrade-go="">요금제 올리기</a>
-          <Link className="my-bo" href="/my/subscription">그대로 두기</Link>
+          <a className="my-bp" href="/my/subscription#plans" data-upgrade-go="">{t('go')}</a>
+          <Link className="my-bo" href="/my/subscription">{t('keep')}</Link>
         </>} />
 
       <div className="my-subnow two" data-upgrade-now="">
         <div>
-          <span className="my-ls">현재</span>
-          <b className="big">{now?.planName ?? '구독 없음'}</b>
-          <span className="my-ls">{now?.currentPeriodEnd ? `${ymdKst(now.currentPeriodEnd)} 초기화` : '구독하시면 소개코드를 발급하실 수 있습니다'}</span>
+          <span className="my-ls">{t('now')}</span>
+          <b className="big">{now?.planName ?? t('noSub')}</b>
+          <span className="my-ls">{now?.currentPeriodEnd ? t('reset', { date: ymdKst(now.currentPeriodEnd) }) : t('subscribeHint')}</span>
         </div>
         <div>
-          <span className="my-ls">소개코드 발급</span>
+          <span className="my-ls">{t('codes')}</span>
           <b className="big">{used} / {cap ?? '—'}</b>
-          <span className="my-ls">{cap != null && used >= cap ? '한도 도달' : cap != null ? `남은 ${cap - used}장` : ''}</span>
+          <span className="my-ls">{cap != null && used >= cap ? t('reached') : cap != null ? t('left', { n: String(cap - used) }) : ''}</span>
         </div>
       </div>
 
-      <Note kind="warn"><b>취소한 소개코드도 사용량에 포함됩니다.</b> 취소해도 그달 한도는 복원되지 않습니다 — 발급 전에 한 번 더 확인해 주세요.</Note>
+      <Note kind="warn"><b>{t('cancelB')}</b> {t('cancelText')}</Note>
 
-      <h2 className="my-s2">요금제 비교</h2>
+      <h2 className="my-s2">{t('hCompare')}</h2>
       <div className="my-tbl-w">
         <table className="my-tbl" data-upgrade-plans="">
-          <thead><tr><th>요금제</th><th>월 회비</th><th>소개코드 발급</th><th>리스팅 슬롯</th><th>소개 제안</th><th>요청 열람</th><th>우선노출</th></tr></thead>
+          <thead><tr><th>{t('thPlan')}</th><th>{t('thFee')}</th><th>{t('codes')}</th><th>{t('thSlots')}</th><th>{t('thProposal')}</th><th>{t('thView')}</th><th>{t('thPriority')}</th></tr></thead>
           <tbody>
             {plans.map((p) => (
               <tr key={p.code} className={p.code === now?.planCode ? 'on' : undefined}>
-                <td><b>{p.name}</b>{p.code === now?.planCode && <> <span className="my-bg ok">현재</span></>}</td>
-                <td className="my-num"><b>{p.monthlyPrice === 0 ? '0원' : wonP(p.monthlyPrice)}</b></td>
+                <td><b>{p.name}</b>{p.code === now?.planCode && <> <span className="my-bg ok">{t('now')}</span></>}</td>
+                <td className="my-num"><b>{p.monthlyPrice === 0 ? t('zeroWon') : wonP(p.monthlyPrice)}</b></td>
                 <td className="my-num">{p.includedCodes}</td>
                 <td className="my-num">{lim(p.listingSlots)}</td>
-                <td className="my-num">{p.proposalLimit == null ? '무제한' : `월 ${p.proposalLimit}`}</td>
+                <td className="my-num">{p.proposalLimit == null ? t('unlimited') : t('perMonth', { n: String(p.proposalLimit) })}</td>
                 <td className="my-num" data-view-limit={p.code}>{viewLimitText(settings, p)}</td>
                 <td className="my-num">{p.prioritySlotCount}</td>
               </tr>
@@ -83,8 +87,7 @@ export default async function UpgradePage() {
 
       {/* v10.27 (G-189) 규칙 그대로 — 유료 구독 중 바꾸면 다음 결제일부터(지금 결제 없음) */}
       <Note kind="info">
-        <b>유료 구독 중이면 바꾼 요금제는 다음 결제일부터 적용됩니다(지금 결제 없음).</b> 처음 유료 구독은 오늘부터 시작합니다.
-        소개코드 초과분은 건당 {wonP(plans[0]?.extraCodePrice ?? 30000)} 정액입니다. 거래 금액과 무관합니다.
+        {t.rich('ruleNote', { b: (c) => <b>{c}</b>, price: wonP(plans[0]?.extraCodePrice ?? 30000) })}
       </Note>
     </div><i hidden data-root-end="" /></>
   );

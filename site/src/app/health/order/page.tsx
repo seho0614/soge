@@ -7,8 +7,12 @@ import { me } from '@/lib/session';
 import type { HltAddress, HltCart } from '@/components/health/types';
 import { HltEmpty, HltNav, HltSteps } from '@/components/health/HltParts';
 import { OrderForm } from '@/components/health/OrderForm';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '주문서 · 소개몰' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('order'))('meta.order') };
+}
 export const dynamic = 'force-dynamic';
 
 /**
@@ -18,6 +22,7 @@ export const dynamic = 'force-dynamic';
 export default async function HltOrderPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('order');
 
   const allowed = p.roles.some((r) => ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'].includes(r));
   const [cart, addresses] = await Promise.all([
@@ -28,25 +33,25 @@ export default async function HltOrderPage() {
   return (
     <><div className="hlt">
       <HltNav on="cart" back="/health/cart" />
-      <div className="page-head"><h1>주문서</h1></div>
+      <div className="page-head"><h1>{t('orderPage.title')}</h1></div>
       <HltSteps at={1} />
 
       {!allowed ? (
-        <div className="notice">회원 계정으로만 주문하실 수 있습니다. 운영 계정으로는 주문하지 않습니다.</div>
+        <div className="notice">{t('orderPage.memberOnly')}</div>
       ) : !p.identityVerifiedAt ? (
         <div className="notice notice-act">
           <div>
-            <strong>주문하시려면 본인인증이 필요합니다.</strong>
-            <p>건강상품은 소개뱅크가 직접 팔기 때문에 구매자 확인이 필요합니다.</p>
+            <strong>{t('orderPage.needVerify')}</strong>
+            <p>{t('orderPage.verifyWhy')}</p>
           </div>
-          <Link className="cta-primary as-link" href="/verify?next=/health/order">본인인증하기</Link>
+          <Link className="cta-primary as-link" href="/verify?next=/health/order">{t('common.verify')}</Link>
         </div>
       ) : cart === null ? (
-        <p className="form-error" role="alert">장바구니를 불러오지 못했습니다. 잠시 뒤 다시 열어 주십시오.</p>
+        <p className="form-error" role="alert">{t('common.cartLoadFail')}</p>
       ) : cart.items.length === 0 ? (
-        <HltEmpty msg="주문할 상품이 없습니다." href="/health/cart" label="장바구니" />
+        <HltEmpty msg={t('orderPage.noItems')} href="/health/cart" label={t('common.cart')} />
       ) : (
-        <OrderForm cart={cart} addresses={addresses} />
+        <Msgs ns={['order']}><OrderForm cart={cart} addresses={addresses} /></Msgs>
       )}
     </div><i hidden data-root-end="" /></>
   );

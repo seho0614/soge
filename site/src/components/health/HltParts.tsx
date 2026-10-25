@@ -4,9 +4,12 @@
  * 서버 컴포넌트입니다. 담기 버튼만 클라이언트(CartAdd)로 떼어 둡니다.
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
+import { Msgs } from '@/i18n/Msgs';
 import type { HltProduct } from './types';
-import { krw, WITHDRAWAL_SHORT } from './util';
+import { krw } from './util';
 import { CartAdd } from './CartAdd';
 import { ProductArt, Rosette } from './ProductArt';
 
@@ -19,17 +22,19 @@ import { ProductArt, Rosette } from './ProductArt';
  * on 은 예전 메뉴 줄의 표시용이었습니다 — 부르는 쪽을 한꺼번에 고치지 않으려고 받기만 합니다.
  */
 export function HltNav({ back = '/health' }: { on?: string; back?: string }) {
+  const t = useTranslations('hlt.common');
   return (
     <div className="hlt-backrow">
-      <Link className="hlt-btn sm" href={back} data-back>← 뒤로</Link>
+      <Link className="hlt-btn sm" href={back} data-back>{t('back')}</Link>
     </div>
   );
 }
 
 export function Crumb({ items }: { items: { href?: string; label: string }[] }) {
+  const t = useTranslations('hlt.common');
   return (
     <div className="hlt-crumb">
-      <Link href="/health">소개몰</Link>
+      <Link href="/health">{t('mall')}</Link>
       {items.map((it, i) => (
         <span key={i}> › {it.href ? <Link href={it.href}>{it.label}</Link> : it.label}</span>
       ))}
@@ -49,9 +54,10 @@ export function HltEmpty({ msg, href, label }: { msg: string; href?: string; lab
 
 /** 주문 단계 — 장바구니 → 주문서 → 결제 → 완료 */
 export function HltSteps({ at }: { at: 0 | 1 | 2 | 3 }) {
-  const s = ['장바구니', '주문서', '결제', '완료'];
+  const t = useTranslations('hlt.steps');
+  const s = [t('cart'), t('form'), t('pay'), t('done')];
   return (
-    <ol className="hlt-steps" aria-label="주문 단계">
+    <ol className="hlt-steps" aria-label={t('aria')}>
       {s.map((l, i) => <li key={l} className={i === at ? 'on' : i < at ? 'done' : undefined}>{l}</li>)}
     </ol>
   );
@@ -64,6 +70,7 @@ export function HltSteps({ at }: { at: 0 | 1 | 2 | 3 }) {
  * 시안과 다른 곳: 후기 수는 v10.27(후기 자료가 생긴 뒤)이라 두지 않습니다. 심의필 번호가 있으면 청약철회 글 옆에 둡니다(개발분에 남기기로 한 것).
  */
 export function ProductCard({ p }: { p: HltProduct }) {
+  const t = useTranslations('hlt.card');
   const seller = p.sellerType === 'DIRECT' || !p.sellerType;
   return (
     <article className="hlt-card" data-product={p.code}>
@@ -71,12 +78,12 @@ export function ProductCard({ p }: { p: HltProduct }) {
         <div className="hlt-thumb">
           <ProductArt p={p} size={168} />
           {p.badge && <Rosette label={p.badge} />}
-          {p.soldOut && <div className="hlt-soldveil"><span>품절</span></div>}
+          {p.soldOut && <div className="hlt-soldveil"><span>{t('soldOut')}</span></div>}
         </div>
         <div className="hlt-card-b">
           <div className="hlt-card-sl">
-            <span className={`hlt-bdg ${seller ? 'direct' : 'tenant'}`}>{seller ? '직판' : '입점'}</span>
-            {' '}<span className="hlt-sm hlt-mut3">{p.sellerName ?? '소개뱅크 직판관'}</span>
+            <span className={`hlt-bdg ${seller ? 'direct' : 'tenant'}`}>{seller ? t('direct') : t('tenant')}</span>
+            {' '}<span className="hlt-sm hlt-mut3">{p.sellerName ?? t('defaultSeller')}</span>
           </div>
           {p.mainIngredient && (
             <div className="hlt-ingline" data-ingline="1">{p.mainIngredient.name}{p.mainIngredient.amount && <> <span className="bar">|</span> {p.mainIngredient.amount}</>}</div>
@@ -87,18 +94,18 @@ export function ProductCard({ p }: { p: HltProduct }) {
             {p.offPct ? <span className="off">{p.offPct}%</span> : null}
             <span className="now">{krw(p.price)}</span>
           </div>
-          {p.minUnit != null && <div className="hlt-u26" data-unit="1"><span className="hlt-k">한 달</span> <b>{krw(p.minUnit)}</b> 부터</div>}
+          {p.minUnit != null && <div className="hlt-u26" data-unit="1">{t.rich('unitFrom', { amt: krw(p.minUnit), k: (c) => <span className="hlt-k">{c}</span>, b: (c) => <b>{c}</b> })}</div>}
           {/* v10.28 (D036) — 보이는 리뷰가 있으면 별점 · 수(시안 카드의 ★) */}
           {(p.reviewCount ?? 0) > 0 && <div className="hlt-sm" data-card-rating><span className="hlt-stars">★</span> {Number(p.ratingAvg ?? 0).toFixed(1)} <span className="hlt-mut">({p.reviewCount})</span></div>}
           <div className="hlt-sm hlt-mut3 hlt-wd" data-wd="1">
-            {WITHDRAWAL_SHORT[p.withdrawal] ?? p.withdrawal}{p.reviewNo && <> · {p.reviewNo}</>}
+            {t.has(`withdrawal.${p.withdrawal}` as never) ? t(`withdrawal.${p.withdrawal}` as never) : p.withdrawal}{p.reviewNo && <> · {p.reviewNo}</>}
           </div>
         </div>
       </Link>
       <div className="hlt-card-f">
         <span className="hlt-sm hlt-mut3">{p.category}</span>
         {p.soldOut || !p.cartOptionId
-          ? <span className="hlt-sm hlt-mut3" data-soldhint="1">품절 — 입고되면 다시 담으실 수 있습니다</span>
+          ? <span className="hlt-sm hlt-mut3" data-soldhint="1">{t('soldHint')}</span>
           : <CartAdd code={p.code} name={p.name} optionId={p.cartOptionId} compact />}
       </div>
     </article>
@@ -106,7 +113,8 @@ export function ProductCard({ p }: { p: HltProduct }) {
 }
 
 export function ProductGrid({ list }: { list: HltProduct[] }) {
-  return <div className="hlt-grid">{list.map((p) => <ProductCard key={p.code} p={p} />)}</div>;
+  /* 담기 단추(CartAdd · 브라우저 부품)가 hlt 사전을 쓰므로 여기서 내려보냅니다 — 부르는 화면마다 감싸지 않도록(v10.99 · 2-4) */
+  return <Msgs ns={['hlt']}><div className="hlt-grid">{list.map((p) => <ProductCard key={p.code} p={p} />)}</div></Msgs>;
 }
 
 /**
@@ -116,27 +124,27 @@ export function ProductGrid({ list }: { list: HltProduct[] }) {
 export async function SellerBox({ compact = false }: { compact?: boolean }) {
   const s = await apiGet<Record<string, string | null>>('/site-settings/public', 300)
     .catch(() => ({} as Record<string, string | null>));
+  const t = await getTranslations('hlt.seller');
   const rows: [string, string | null | undefined][] = [
-    ['상호', s['footer.company_name']],
-    ['대표자', s['footer.ceo_name']],
-    ['사업자등록번호', s['footer.biz_reg_no']],
-    ['통신판매업 신고번호', s['footer.mail_order_no']],
-    ['사업장 주소', s['footer.address']],
-    ['연락처', s['footer.phone']],
+    [t('company'), s['footer.company_name']],
+    [t('ceo'), s['footer.ceo_name']],
+    [t('bizNo'), s['footer.biz_reg_no']],
+    [t('mailOrderNo'), s['footer.mail_order_no']],
+    [t('address'), s['footer.address']],
+    [t('phone'), s['footer.phone']],
   ];
   return (
     <section className="hlt-box" data-seller-block="1">
-      <h3>판매자 정보</h3>
+      <h3>{t('title')}</h3>
       {!compact && (
         <table className="tbl hlt-tbl">
           <tbody>
-            {rows.map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || '확정 전'}</td></tr>)}
+            {rows.map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || t('tbd')}</td></tr>)}
           </tbody>
         </table>
       )}
       <p className="hlt-legal">
-        소개몰(건강관)은 <b>소개뱅크가 직접 판매</b>합니다 — 다른 관처럼 중개만 하는 곳이 아닙니다.
-        상품의 하자 · 배송 · 반품 · 환불 책임이 판매자인 {s['footer.company_name'] ?? '당사'}에 있습니다.
+        {t.rich('legal', { company: s['footer.company_name'] ?? t('companyFallback'), b: (c) => <b>{c}</b> })}
       </p>
     </section>
   );

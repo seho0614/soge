@@ -6,11 +6,13 @@
  */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 type C = { code: string; name: string };
 
 export function IntroProfileChips({ categories, regions }: { categories: C[]; regions: C[] }) {
   const router = useRouter();
+  const t = useTranslations('myDeal');
   const [cats, setCats] = useState(categories);
   const [regs, setRegs] = useState(regions);
   const [open, setOpen] = useState<'cat' | 'reg' | null>(null);
@@ -36,11 +38,11 @@ export function IntroProfileChips({ categories, regions }: { categories: C[]; re
         body: JSON.stringify({ categories: nextCats.map((x) => x.code), regions: nextRegs.map((x) => x.code) }),
       });
       const j = await r.json().catch(() => null);
-      if (!r.ok) { setMsg({ ok: false, t: j?.message ?? '저장하지 못했습니다.' }); return; }
+      if (!r.ok) { setMsg({ ok: false, t: j?.message ?? t('chips.saveFail') }); return; }
       setCats(j.categories ?? nextCats); setRegs(j.regions ?? nextRegs);
-      setMsg({ ok: true, t: j.note ?? '저장했습니다.' }); setOpen(null); setPick(''); setSg('');
+      setMsg({ ok: true, t: j.note ?? t('chips.saved') }); setOpen(null); setPick(''); setSg('');
       router.refresh();
-    } catch { setMsg({ ok: false, t: '연결하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.' }); }
+    } catch { setMsg({ ok: false, t: t('netErr') }); }
     finally { setBusy(false); }
   }
 
@@ -49,37 +51,37 @@ export function IntroProfileChips({ categories, regions }: { categories: C[]; re
       <div className="my-chips" data-intro-cats="">
         {cats.map((c) => (
           <span key={c.code} className="my-chip on">{c.name}
-            <button type="button" className="x" aria-label={`${c.name} 빼기`} disabled={busy} onClick={() => save(cats.filter((x) => x.code !== c.code), regs)}>×</button>
+            <button type="button" className="x" aria-label={t('chips.remove', { name: c.name })} disabled={busy} onClick={() => save(cats.filter((x) => x.code !== c.code), regs)}>×</button>
           </span>
         ))}
-        <button type="button" className="my-chip my-chip-btn" onClick={() => load('cat')} aria-expanded={open === 'cat'} title="분야를 넓히면 맞춤 요청이 늘어납니다.">+ 분야 추가</button>
+        <button type="button" className="my-chip my-chip-btn" onClick={() => load('cat')} aria-expanded={open === 'cat'} title={t('chips.catTitle')}>{t('chips.addCat')}</button>
       </div>
       {open === 'cat' && (
         <div className="my-addf">
-          <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="추가할 분야">
-            <option value="">분야를 고르십시오</option>
+          <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label={t('chips.catLabel')}>
+            <option value="">{t('chips.catPick')}</option>
             {(opts?.categories ?? []).filter((o) => !cats.some((c) => c.code === o.code)).map((o) => <option key={o.code} value={o.code}>{o.name}</option>)}
           </select>
           <button type="button" className="my-bp sm" disabled={!pick || busy}
-            onClick={() => { const o = opts?.categories.find((x) => x.code === pick); if (o) void save([...cats, { code: o.code, name: o.name }], regs); }}>추가</button>
+            onClick={() => { const o = opts?.categories.find((x) => x.code === pick); if (o) void save([...cats, { code: o.code, name: o.name }], regs); }}>{t('chips.add')}</button>
         </div>
       )}
       <div className="my-chips" data-intro-regs="">
         {regs.map((c) => (
           <span key={c.code} className="my-chip on">{c.name}
-            <button type="button" className="x" aria-label={`${c.name} 빼기`} disabled={busy} onClick={() => save(cats, regs.filter((x) => x.code !== c.code))}>×</button>
+            <button type="button" className="x" aria-label={t('chips.remove', { name: c.name })} disabled={busy} onClick={() => save(cats, regs.filter((x) => x.code !== c.code))}>×</button>
           </span>
         ))}
-        <button type="button" className="my-chip my-chip-btn" onClick={() => load('reg')} aria-expanded={open === 'reg'} title="활동 지역은 시·군·구 단위로 맞춥니다.">+ 지역 추가</button>
+        <button type="button" className="my-chip my-chip-btn" onClick={() => load('reg')} aria-expanded={open === 'reg'} title={t('chips.regTitle')}>{t('chips.addReg')}</button>
       </div>
       {open === 'reg' && (
         <div className="my-addf">
-          <select value={sido} onChange={(e) => setSido(e.target.value)} aria-label="시 · 도">
+          <select value={sido} onChange={(e) => setSido(e.target.value)} aria-label={t('chips.sido')}>
             {(opts?.sido ?? ['서울']).map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input value={sg} onChange={(e) => setSg(e.target.value)} maxLength={20} placeholder="시 · 군 · 구 (예: 금천구)" aria-label="시 · 군 · 구" />
+          <input value={sg} onChange={(e) => setSg(e.target.value)} maxLength={20} placeholder={t('chips.sgPh')} aria-label={t('chips.sg')} />
           <button type="button" className="my-bp sm" disabled={!sg.trim() || busy}
-            onClick={() => { const v = `${sido} ${sg.trim()}`; if (!regs.some((r) => r.code === v)) void save(cats, [...regs, { code: v, name: v }]); }}>추가</button>
+            onClick={() => { const v = `${sido} ${sg.trim()}`; if (!regs.some((r) => r.code === v)) void save(cats, [...regs, { code: v, name: v }]); }}>{t('chips.add')}</button>
         </div>
       )}
       {msg && <p className={`my-ls ${msg.ok ? '' : 'warnx'}`} role="status">{msg.t}</p>}

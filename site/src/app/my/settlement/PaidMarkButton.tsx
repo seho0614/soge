@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * v10.31 (합침 · w6 정산 승인 단계 D080) — 「받았음 표시」 POST /me/settlements/{id}/paid.
@@ -9,24 +10,25 @@ import { useRouter } from 'next/navigation';
  */
 export function PaidMarkButton({ id }: { id: string }) {
   const router = useRouter();
+  const t = useTranslations('myDeal');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function go() {
-    if (!window.confirm('소개비를 받으셨습니까? 한 번 표시하면 되돌릴 수 없습니다.')) return;
+    if (!window.confirm(t('paid.confirm'))) return;
     setBusy(true); setErr(null);
     try {
       const r = await fetch(`/api/v1/me/settlements/${id}/paid`, { method: 'POST' });
       const d = await r.json().catch(() => null);
       if (r.status === 401) { router.push('/login'); return; }
-      if (!r.ok) { setErr(d?.message ?? '표시하지 못했습니다.'); return; }
+      if (!r.ok) { setErr(d?.message ?? t('paid.fail')); return; }
       router.refresh();
     } finally { setBusy(false); }
   }
 
   return (
     <span className="acts" data-stl-paid-wrap={id}>
-      <button type="button" className="btn-sm p2primary" disabled={busy} onClick={go} data-stl-paid={id}>{busy ? '표시하는 중…' : '받았음 표시'}</button>
+      <button type="button" className="btn-sm p2primary" disabled={busy} onClick={go} data-stl-paid={id}>{busy ? t('paid.busy') : t('paid.btn')}</button>
       {err && <span className="form-error" role="alert">{err}</span>}
     </span>
   );

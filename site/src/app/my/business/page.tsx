@@ -7,10 +7,13 @@ import { BusinessForm } from '@/components/BusinessForm';
 import { apiGetPersonal } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note } from '@/components/my/ui';
+import { getTranslations } from 'next-intl/server';
 
 interface Biz { companyName: string | null; bizRegNo: string | null; verifiedAt: string | null; rejectReason: string | null; ntsStatus: string | null; createdAt?: string | null }
 
-export const metadata: Metadata = { title: '사업자 전환' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('my.biz'))('title') };
+}
 
 /* v10.31 (10/10 시안 기준 · 결정 기록 P4) — 시안(scMyBiz2) 두 목록 · 경고를 글자 그대로 씁니다:
  *   「소개비 수령 (INV-10)」은 사업자 인증 후 목록, 「인증 시각이 소개비 수령 자격의 기준일 · 인증 전 성사 건은 소급되지 않습니다」 경고.
@@ -18,8 +21,9 @@ export const metadata: Metadata = { title: '사업자 전환' };
  *   개인(본인인증)으로 받는 정산(INV-10R · 시안 정산 화면의 「개인 회원」)은 그대로라, 개발에만 있던 안내 한 줄로 정산 화면에 잇습니다(규칙 ③). */
 /* v10.37 (D095 · 10/13 · P2P) — 모든 업무는 본인인증 개인도 · 인증이 필요한 등록만 그 인증 · 사업자 인증은 사업자로 소개비를 받을 때 */
 /* v10.38 (D096 · P2P) — 파트너 입점 · 공인중개사 인증 · 자격 심사 · 인력대행 회신도 본인인증 개인이 합니다(계정 기준) */
-const CAN_NOW = ['모든 관 등록 · 요청 등록', "'제가 알아요'로 소개 참여", '문의 · 거래 만들기 · 소개비 제시 · 계약서', '급구 · 급매 신청', '공고 · 자문 서비스 올리기', '파트너 입점 · 공인중개사 인증 · 자격 심사 신청', '소개비 받기(개인)'];
-const AFTER = ['사업자로 소개비 받기(세금계산서)', '사업자 배지'];
+/* v10.99 — 목록 글은 사전 키(my.biz.can.* · my.biz.after.*) */
+const CAN_NOW = ['register', 'iKnow', 'deal', 'urgent', 'post', 'partner', 'feeIndividual'] as const;
+const AFTER = ['feeBiz', 'badge'] as const;
 
 /**
  * SB-MYP-BIZ-020 사업자 전환 안내
@@ -32,15 +36,16 @@ export default async function BusinessPage() {
   const p = await me();
   const messages = await uiMessages();
   if (!p) redirect('/login');
+  const t = await getTranslations('my.biz');
 
   if (p.businessVerifiedAt) {
     return (
       <><div data-biz-done="">
-        <MyHead title="사업자 인증 완료" sub="사업자로 소개비(세금계산서)를 받으실 수 있습니다." />
-        <Note kind="ok">{ymdKst(p.businessVerifiedAt)} 에 인증되었습니다. 이 시각 뒤에 성사된 거래부터 소개비를 사업자로 받습니다(그 전 성사 건은 소급되지 않고 개인으로 받습니다).</Note>
-        <h2 className="my-s2">사업자 인증 후 가능한 것</h2>
-        <ul className="my-ul cols">{AFTER.map((x) => <li key={x}>{x}</li>)}</ul>
-        <div className="my-btns"><Link className="my-bo" href="/my/account">사업자 정보 보기</Link><Link className="my-bo" href="/my">나의공간</Link></div>
+        <MyHead title={t('doneTitle')} sub={t('doneSub')} />
+        <Note kind="ok">{t('doneNote', { date: ymdKst(p.businessVerifiedAt) })}</Note>
+        <h2 className="my-s2">{t('hAfter')}</h2>
+        <ul className="my-ul cols">{AFTER.map((x) => <li key={x}>{t(`after.${x}`)}</li>)}</ul>
+        <div className="my-btns"><Link className="my-bo" href="/my/account">{t('viewBiz')}</Link><Link className="my-bo" href="/my">{t('my')}</Link></div>
       </div><i hidden data-root-end="" /></>
     );
   }
@@ -51,43 +56,43 @@ export default async function BusinessPage() {
   if (biz && !biz.rejectReason) {
     return (
       <><div data-biz-pending>
-        <MyHead title="사업자 인증 심사 중" sub="신청하신 내용을 운영자가 확인하고 있습니다. 결과는 알림으로 알려 드립니다." />
+        <MyHead title={t('pendingTitle')} sub={t('pendingSub')} />
         <div className="my-card">
-          <b>{biz.companyName ?? '(상호 없음)'}</b>
-          {biz.bizRegNo && <div className="my-ls">사업자등록번호 {biz.bizRegNo}</div>}
-          {biz.createdAt && <div className="my-ls">신청일 {ymdKst(biz.createdAt)}</div>}
+          <b>{biz.companyName ?? t('noCompany')}</b>
+          {biz.bizRegNo && <div className="my-ls">{t('bizRegNo', { no: biz.bizRegNo })}</div>}
+          {biz.createdAt && <div className="my-ls">{t('appliedOn', { date: ymdKst(biz.createdAt) })}</div>}
         </div>
-        <Note kind="info">잘못 적은 것이 있으면 심사가 끝나기 전에 <Link href="/my/account">프로필 · 사업자 정보 수정</Link>에서 고치실 수 있습니다.</Note>
+        <Note kind="info">{t.rich('pendingNote', { a: (c) => <Link href="/my/account">{c}</Link> })}</Note>
       </div><i hidden data-root-end="" /></>
     );
   }
 
   return (
     <><div data-biz-apply="">
-      <MyHead title="사업자 전환"
-        sub="개인회원도 본인인증으로 모든 업무를 하실 수 있습니다. 사업자 인증은 사업자로 소개비(세금계산서)를 받으실 때 하시면 됩니다."
-        right={<a className="my-bp" href="#biz-form">사업자 인증하기</a>} />
+      <MyHead title={t('title')}
+        sub={t('sub')}
+        right={<a className="my-bp" href="#biz-form">{t('apply')}</a>} />
       {biz?.rejectReason && (
-        <Note kind="warn" role="alert" data-biz-rejected="">지난 신청이 반려되었습니다 — {biz.rejectReason}. 고쳐서 다시 신청해 주십시오.</Note>
+        <Note kind="warn" role="alert" data-biz-rejected="">{t('rejected', { reason: biz.rejectReason })}</Note>
       )}
 
-      <h2 className="my-s2">지금 하실 수 있는 것</h2>
-      <ul className="my-ul cols my-cols3" data-biz-can="">{/* v10.32 — 시안 3열 */}{CAN_NOW.map((x) => <li key={x}>{x}</li>)}</ul>
-      <h2 className="my-s2">사업자 인증 후 가능한 것</h2>
-      <ul className="my-ul cols my-cols3" data-biz-after="">{AFTER.map((x) => <li key={x}>{x}</li>)}</ul>
+      <h2 className="my-s2">{t('hNow')}</h2>
+      <ul className="my-ul cols my-cols3" data-biz-can="">{/* v10.32 — 시안 3열 */}{CAN_NOW.map((x) => <li key={x}>{t(`can.${x}`)}</li>)}</ul>
+      <h2 className="my-s2">{t('hAfter')}</h2>
+      <ul className="my-ul cols my-cols3" data-biz-after="">{AFTER.map((x) => <li key={x}>{t(`after.${x}`)}</li>)}</ul>
 
-      <Note kind="info"><b>사업자 인증은 국세청 조회로 확인합니다.</b> 등록번호와 상호가 맞아야 하고, 휴업·폐업 상태면 인증되지 않습니다.</Note>
-      <Note kind="warn" data-biz-noretro=""><b>인증 시각이 소개비 수령 자격의 기준일입니다.</b> 인증 전에 성사된 건은 소급되지 않습니다 — 먼저 인증하시는 편이 낫습니다.</Note>
+      <Note kind="info"><b>{t('ntsB')}</b> {t('ntsText')}</Note>
+      <Note kind="warn" data-biz-noretro=""><b>{t('retroB')}</b> {t('retroText')}</Note>
       {/* 개발에만 있던 안내(규칙 ③) — 본인인증 개인 수령(INV-10R)과 거래 만들기 · 계약서 발급(사업자) · 사람 확인 */}
       <p className="my-ls" data-biz-dev="">
-        {messages.BUSINESS_ONLY} 사업자 인증 전 성사 건의 소개비는 <Link href="/my/settlement">정산</Link>에서 본인인증 · 받을 계좌 확인으로 개인으로 받습니다.
+        {messages.BUSINESS_ONLY} {t.rich('devNote', { a: (c) => <Link href="/my/settlement">{c}</Link> })}
         {' '}{messages.MANUAL_REVIEW}
       </p>
 
-      <h2 className="my-s2" id="biz-form">사업자 정보 입력</h2>
+      <h2 className="my-s2" id="biz-form">{t('hForm')}</h2>
       <div className="my-card"><BusinessForm /></div>
 
-      <p className="my-ls"><Link href="/verify">인증 현황으로 ›</Link></p>
+      <p className="my-ls"><Link href="/verify">{t('toVerify')}</Link></p>
     </div><i hidden data-root-end="" /></>
   );
 }
