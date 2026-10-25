@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * SB-PTC-CTR-230 서비스(활동) 지역 — 켜고 끄기 · 더하기 · 저장 (v10.27 · G-192)
@@ -17,6 +18,7 @@ const key = (r: Region) => `${r.sido} ${r.sigungu}`;
 
 export function RegionEditor({ initial }: { initial: Region[] }) {
   const router = useRouter();
+  const t = useTranslations('partner.region');
   const [on, setOn] = useState<Region[]>(initial);
   const [off, setOff] = useState<Region[]>([]);
   const [sido, setSido] = useState('서울');
@@ -32,14 +34,14 @@ export function RegionEditor({ initial }: { initial: Region[] }) {
   }
   function add() {
     const s = sigungu.trim();
-    if (!s) { setMsg(['err', '시 · 군 · 구를 적어 주십시오 — 예: 금천구']); return; }
-    if (s.length > 20 || /\d|동$|호$/.test(s)) { setMsg(['err', '시 · 군 · 구까지만 적어 주십시오(동 · 호수는 넣지 않습니다).']); return; }
+    if (!s) { setMsg(['err', t('needSgg')]); return; }
+    if (s.length > 20 || /\d|동$|호$/.test(s)) { setMsg(['err', t('sggOnly')]); return; }
     const r = { sido, sigungu: s };
-    if (on.some((x) => key(x) === key(r))) { setMsg(['err', `${key(r)}은(는) 이미 켜져 있습니다.`]); return; }
+    if (on.some((x) => key(x) === key(r))) { setMsg(['err', t('already', { r: key(r) })]); return; }
     setOff(off.filter((x) => key(x) !== key(r))); setOn([...on, r]); setSigungu(''); setMsg(null);
   }
   async function save() {
-    if (!on.length) { setMsg(['err', '최소 한 곳은 켜셔야 합니다. 켜진 지역이 없으면 리드가 오지 않습니다.']); return; }
+    if (!on.length) { setMsg(['err', t('needOne')]); return; }
     setBusy(true); setMsg(null);
     try {
       const r = await fetch('/api/v1/partner/regions', {
@@ -48,46 +50,46 @@ export function RegionEditor({ initial }: { initial: Region[] }) {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d?.message ?? String(r.status));
-      setMsg(['ok', `저장했습니다 — ${on.length}개 지역에서 리드를 받습니다.`]);
+      setMsg(['ok', t('savedN', { n: String(on.length) })]);
       router.refresh();
     } catch (e) {
-      setMsg(['err', e instanceof Error && e.message ? e.message : '저장하지 못했습니다. 잠시 후 다시 시도해 주십시오.']);
+      setMsg(['err', e instanceof Error && e.message ? e.message : t('saveFail')]);
     } finally { setBusy(false); }
   }
 
   return (
     <div data-region-editor>
       {/* v10.29 — 시안 scPtnRegion 모양(.s2 소제목 · .chips 칩 · .fset 입력 묶음) */}
-      <h2 className="pt-s2">영업 중 {on.length}곳</h2>
+      <h2 className="pt-s2">{t('onTitle', { n: String(on.length) })}</h2>
       {on.length === 0
-        ? <p className="pt-ls">켠 지역이 없습니다.</p>
+        ? <p className="pt-ls">{t('noneOn')}</p>
         : <div className="pt-chips region-chips">{on.map((r) => (
             <button key={key(r)} type="button" className="pt-chip on" data-region-on={key(r)}
-                    title="누르면 끕니다" onClick={() => toggle(r, false)}>{key(r)} ✕</button>))}</div>}
-      <h2 className="pt-s2">꺼둔 지역 {off.length}곳</h2>
+                    title={t('tapOff')} onClick={() => toggle(r, false)}>{key(r)} ✕</button>))}</div>}
+      <h2 className="pt-s2">{t('offTitle', { n: String(off.length) })}</h2>
       {off.length === 0
-        ? <p className="pt-ls">끈 지역이 없습니다. 위의 지역을 누르면 여기로 옵니다.</p>
+        ? <p className="pt-ls">{t('noneOff')}</p>
         : <div className="pt-chips region-chips">{off.map((r) => (
             <button key={key(r)} type="button" className="pt-chip" data-region-off={key(r)}
-                    title="누르면 다시 켭니다" onClick={() => toggle(r, true)}>{key(r)} ＋</button>))}</div>}
+                    title={t('tapOn')} onClick={() => toggle(r, true)}>{key(r)} ＋</button>))}</div>}
 
       <div className="pt-fset" style={{ marginTop: 14 }}>
-        <h3>지역 더하기</h3>
+        <h3>{t('add')}</h3>
         <div className="row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-          <select aria-label="시 · 도" value={sido} onChange={(e) => setSido(e.target.value)}>
+          <select aria-label={t('sidoAria')} value={sido} onChange={(e) => setSido(e.target.value)}>
             {SIDO.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input aria-label="시 · 군 · 구" placeholder="시 · 군 · 구 (예: 금천구)" value={sigungu} maxLength={20}
+          <input aria-label={t('sggAria')} placeholder={t('sggPh')} value={sigungu} maxLength={20}
                  onChange={(e) => setSigungu(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} />
-          <button type="button" className="pt-bo" onClick={add} data-region-add>켜기</button>
+          <button type="button" className="pt-bo" onClick={add} data-region-add>{t('turnOn')}</button>
         </div>
       </div>
 
       <div className="row" style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
         <button type="button" className="pt-bp" disabled={busy || !dirty} onClick={save} data-region-save>
-          {busy ? '저장하는 중…' : '저장'}
+          {busy ? t('saving') : t('save')}
         </button>
-        {dirty && !busy && <span className="pt-ls">바꾼 내용이 아직 저장되지 않았습니다.</span>}
+        {dirty && !busy && <span className="pt-ls">{t('dirty')}</span>}
       </div>
       {msg && <p className={msg[0] === 'ok' ? 'pt-nt ok' : 'pt-nt warn'} role={msg[0] === 'ok' ? 'status' : 'alert'} data-region-msg={msg[0]}>{msg[1]}</p>}
     </div>

@@ -14,6 +14,7 @@
  */
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 const IC = {
   lnk: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
@@ -45,13 +46,14 @@ const Svg = ({ d }: { d: React.ReactNode }) => (
 
 export function P2Promo({ url, label }: { url: string | null; label?: string | null }) {
   const [msg, setMsg] = useState<string | null>(null);
-  const text = `${label ? label + ' — ' : ''}소개뱅크에서 확인해 보세요`;
+  const t = useTranslations('partner.p2.promo');
+  const text = label ? t('shareTextL', { label }) : t('shareText');
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(null), 3000); };
 
   async function copy() {
     if (!url) return;
-    try { await navigator.clipboard.writeText(url); flash('링크를 복사했습니다.'); }
-    catch { flash('브라우저가 복사를 막았습니다. 주소를 길게 눌러 직접 복사해 주십시오.'); }
+    try { await navigator.clipboard.writeText(url); flash(t('copied')); }
+    catch { flash(t('copyBlocked')); }
   }
   async function talk() {
     if (!url) return;
@@ -59,19 +61,19 @@ export function P2Promo({ url, label }: { url: string | null; label?: string | n
       try {
         const K = await loadKakao();
         if (!K.isInitialized()) K.init(KAKAO_KEY);
-        K.Share.sendDefault({ objectType: 'text', text, link: { webUrl: url, mobileWebUrl: url }, buttonTitle: '자세히 보기' });
+        K.Share.sendDefault({ objectType: 'text', text, link: { webUrl: url, mobileWebUrl: url }, buttonTitle: t('kakaoButton') });
         return;
       } catch { /* 카카오 SDK 를 못 받으면 아래 기기 공유로 */ }
     }
     const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
     if (nav.share) {
-      try { await nav.share({ title: '소개뱅크', text, url }); return; } catch { return; /* 닫음 */ }
+      try { await nav.share({ title: t('shareTitle'), text, url }); return; } catch { return; /* 닫음 */ }
     }
-    try { await navigator.clipboard.writeText(`${text}\n${url}`); flash('주소를 복사했습니다 — 카카오톡 대화창에 붙여 넣으십시오.'); }
-    catch { flash('이 기기에서는 공유 창을 열 수 없습니다. 주소를 복사해 카카오톡에 붙여 넣으십시오.'); }
+    try { await navigator.clipboard.writeText(`${text}\n${url}`); flash(t('copiedTalk')); }
+    catch { flash(t('noShare')); }
   }
   const off = !url;
-  const offTitle = '링크를 먼저 만드십시오 — 「내 소개링크 생성」';
+  const offTitle = t('offTitle');
   const band = url ? `https://band.us/plugin/share?body=${encodeURIComponent(`${text}\n${url}`)}&route=${encodeURIComponent(url)}` : undefined;
   const sms = url ? `sms:?&body=${encodeURIComponent(`${text} ${url}`)}` : undefined;
 
@@ -80,21 +82,21 @@ export function P2Promo({ url, label }: { url: string | null; label?: string | n
       <div className="p2url">
         <div className="box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E7A96" strokeWidth="2" aria-hidden>{IC.lnk}</svg>
-          {url ? <span data-testid="share-url">{url}</span> : <span>아직 만든 링크가 없습니다. 「내 소개링크 생성」으로 만드십시오.</span>}
+          {url ? <span data-testid="share-url">{url}</span> : <span>{t('noLink')}</span>}
         </div>
-        <button type="button" className="p2dark" onClick={() => void copy()} disabled={off} title={off ? offTitle : undefined}>복사하기</button>
+        <button type="button" className="p2dark" onClick={() => void copy()} disabled={off} title={off ? offTitle : undefined}>{t('copy')}</button>
       </div>
       <div className="p2qbtns">
-        <Link className="q blue" href="/partners/links#new"><Svg d={IC.lnk} /><b>내 소개링크 생성</b><span>맞춤 링크 만들기</span></Link>
-        <button type="button" className="q yellow" onClick={() => void talk()} disabled={off} title={off ? offTitle : undefined}><Svg d={IC.talk} /><b>카톡 공유</b><span>카카오톡으로 전송</span></button>
+        <Link className="q blue" href="/partners/links#new"><Svg d={IC.lnk} /><b>{t('newLink')}</b><span>{t('newLinkSub')}</span></Link>
+        <button type="button" className="q yellow" onClick={() => void talk()} disabled={off} title={off ? offTitle : undefined}><Svg d={IC.talk} /><b>{t('talk')}</b><span>{t('talkSub')}</span></button>
         {band
-          ? <a className="q green" href={band} target="_blank" rel="noopener noreferrer"><Svg d={IC.band} /><b>밴드 공유</b><span>네이버 밴드로 전송</span></a>
-          : <button type="button" className="q green" disabled title={offTitle}><Svg d={IC.band} /><b>밴드 공유</b><span>네이버 밴드로 전송</span></button>}
+          ? <a className="q green" href={band} target="_blank" rel="noopener noreferrer"><Svg d={IC.band} /><b>{t('band')}</b><span>{t('bandSub')}</span></a>
+          : <button type="button" className="q green" disabled title={offTitle}><Svg d={IC.band} /><b>{t('band')}</b><span>{t('bandSub')}</span></button>}
         {sms
-          ? <a className="q purple" href={sms}><Svg d={IC.sms} /><b>문자 공유</b><span>문자로 바로 보내기</span></a>
-          : <button type="button" className="q purple" disabled title={offTitle}><Svg d={IC.sms} /><b>문자 공유</b><span>문자로 바로 보내기</span></button>}
-        <Link className="q dark" href="/partners/materials"><Svg d={IC.copy} /><b>홍보문구 복사</b><span>바로 사용하기</span></Link>
-        <Link className="q red" href="/partners/materials"><Svg d={IC.play} /><b>쇼츠용 영상 받기</b><span>SNS 홍보용 영상</span></Link>
+          ? <a className="q purple" href={sms}><Svg d={IC.sms} /><b>{t('sms')}</b><span>{t('smsSub')}</span></a>
+          : <button type="button" className="q purple" disabled title={offTitle}><Svg d={IC.sms} /><b>{t('sms')}</b><span>{t('smsSub')}</span></button>}
+        <Link className="q dark" href="/partners/materials"><Svg d={IC.copy} /><b>{t('copyText')}</b><span>{t('copyTextSub')}</span></Link>
+        <Link className="q red" href="/partners/materials"><Svg d={IC.play} /><b>{t('shorts')}</b><span>{t('shortsSub')}</span></Link>
       </div>
       {msg && <p className="p2msg" role="status">{msg}</p>}
     </div>

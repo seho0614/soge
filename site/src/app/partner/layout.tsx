@@ -2,7 +2,9 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { OwnChrome } from '@/components/common/OwnChrome';
 import { PartnerTopBar } from '@/components/partner/PartnerShell';
-import { GRADE_KO } from '@/components/partner/ui';
+import { GRADE_KO, ptCode } from '@/components/partner/ui';
+import { Msgs } from '@/i18n/Msgs';
+import { getTranslations } from 'next-intl/server';
 
 interface Dash { applied: boolean; company?: string; grade?: string; card?: { mainCategory?: string | null; categoryCount?: number } }
 
@@ -16,15 +18,19 @@ interface Dash { applied: boolean; company?: string; grade?: string; card?: { ma
  * 로그인 확인 · 이동은 각 화면이 합니다(여기서 막으면 화면별 안내가 사라집니다).
  */
 export default async function PartnerLayout({ children }: { children: React.ReactNode }) {
+  const t = await getTranslations('partner');
   const p = await me();
   const d = p ? await apiGet<Dash>('/partner/dashboard', 0).catch(() => null) : null;
-  const cat = d?.card?.mainCategory ? `${d.card.mainCategory}${(d.card.categoryCount ?? 0) > 1 ? ` 외 ${(d.card.categoryCount ?? 1) - 1}` : ''}` : `${GRADE_KO[d?.grade ?? ''] ?? d?.grade ?? ''} 등급`;
+  const cat = d?.card?.mainCategory ? `${d.card.mainCategory}${(d.card.categoryCount ?? 0) > 1 ? t('common.more', { n: String((d.card.categoryCount ?? 1) - 1) }) : ''}`
+    : t('shell.gradeLabel', { grade: ptCode(t, 'grade', d?.grade, GRADE_KO[d?.grade ?? ''] ?? d?.grade ?? '') });
   const corp = d?.applied && d.company ? `${d.company} · ${cat}` : null;
   return (
-    <div className="pt-root" data-ptc-shell="">
-      <OwnChrome />
-      <PartnerTopBar corp={corp} />
-      <div className="pt-in pt-wrap">{children}</div>
-    </div>
+    <Msgs ns={['partner', 'partnerOps', 'affiliate']}>
+      <div className="pt-root" data-ptc-shell="">
+        <OwnChrome />
+        <PartnerTopBar corp={corp} />
+        <div className="pt-in pt-wrap">{children}</div>
+      </div>
+    </Msgs>
   );
 }

@@ -4,18 +4,22 @@ import { ymdKst } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
-import { Bg, Empty, Note, Pgh, Tw, type Tone } from '@/components/partner/ui';
+import { Bg, Empty, Note, Pgh, ptCode, Tw, type Tone } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '승인 · 반려 이력' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partner.meta'))('reviews') };
+}
 
 interface Row {
   id: string; title: string; status: string;
   rejectReason: string | null; createdAt: string; categoryName: string | null;
 }
 
-const LABEL: Record<string, [string, Tone]> = {
-  DRAFT: ['작성 중', 'wait'], IN_REVIEW: ['검수 중', 'wait'], APPROVED: ['승인', 'ok'],
-  REJECTED: ['반려', 'no'], SUSPENDED: ['중지', 'no'],
+/* v10.100 (다국어 2-5a) — 결과 글자는 사전 partner.reviews.st.<코드> */
+const LABEL: Record<string, Tone> = {
+  DRAFT: 'wait', IN_REVIEW: 'wait', APPROVED: 'ok',
+  REJECTED: 'no', SUSPENDED: 'no',
 };
 
 /**
@@ -28,18 +32,20 @@ const LABEL: Record<string, [string, Tone]> = {
 export default async function ReviewsPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('partner.reviews');
+  const tp = await getTranslations('partner');
 
   const rows = await apiGet<Row[]>('/partner/reviews', 0).catch(() => []);
 
   return (
-    <><Pgh title="승인 · 반려 이력" sub={<>검수 결과와 재제출 경로입니다. <b>반려된 건은 사유를 고쳐 다시 올리시면</b> 됩니다.</>} />
+    <><Pgh title={t('title')} sub={<>{t.rich('sub', { b: (c) => <b>{c}</b> })}</>} />
 
       {rows.length === 0 ? (
-        <Empty>아직 검수 이력이 없습니다. 서비스를 등록하시면 여기에 쌓입니다.</Empty>
+        <Empty>{t('empty')}</Empty>
       ) : (
-        <Tw head={['서비스', '이름', '요청일', '결과', '이후']}>
+        <Tw head={[t('thSvc'), t('thName'), t('thDate'), t('thResult'), t('thAfter')]}>
           {rows.map((r) => {
-            const st = LABEL[r.status] ?? [r.status, 'off' as Tone];
+            const st = [ptCode(t, 'st', r.status, r.status), LABEL[r.status] ?? ('off' as Tone)] as const;
             return (
               <tr key={r.id}>
                 <td><b className="pt-code">{r.categoryName ?? '—'}</b></td>
@@ -48,8 +54,8 @@ export default async function ReviewsPage() {
                 <td><Bg tone={st[1]}>{st[0]}</Bg></td>
                 <td className="reason">
                   {r.status === 'REJECTED'
-                    ? <>{r.rejectReason ?? '—'} <Link className="pt-bo sm" href={`/partner/services/${encodeURIComponent(r.id)}`}>고쳐 내기</Link></>
-                    : r.status === 'IN_REVIEW' ? <span className="pt-ls">대기</span> : r.status === 'APPROVED' ? '노출중' : '—'}
+                    ? <>{r.rejectReason ?? '—'} <Link className="pt-bo sm" href={`/partner/services/${encodeURIComponent(r.id)}`}>{t('fix')}</Link></>
+                    : r.status === 'IN_REVIEW' ? <span className="pt-ls">{t('wait')}</span> : r.status === 'APPROVED' ? t('live') : '—'}
                 </td>
               </tr>
             );
@@ -57,8 +63,8 @@ export default async function ReviewsPage() {
         </Tw>
       )}
 
-      <Note kind="info"><b>반려되면 새로 등록하지 말고 그 건을 고쳐서 내십시오.</b> 새로 내면 검수 큐에 두 번 쌓여 결과가 늦어집니다.</Note>
-      <div className="pt-dact"><Link className="pt-bo" href="/partner/services">내 서비스로</Link></div>
+      <Note kind="info">{t.rich('note', { b: (c) => <b>{c}</b> })}</Note>
+      <div className="pt-dact"><Link className="pt-bo" href="/partner/services">{tp('common.toServices')}</Link></div>
     <i hidden data-root-end="" /></>
   );
 }

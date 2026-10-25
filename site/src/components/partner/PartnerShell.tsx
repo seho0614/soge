@@ -11,21 +11,23 @@
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
-export const PTC_NAV: Array<[string, string]> = [
-  ['/partner', '홈'],
-  ['/partner/apply', '입점 신청'],
-  ['/partner/listings', '내 매물'],
-  ['/partner/leads', '상담 신청'],
-  ['/partner/services', '내 서비스'],
-  ['/partner/pricing', '단가 · 소개비'],
-  ['/partner/tracks', '전용 트랙'],
-  ['/partner/cash', '리드 이용료'],
-  ['/partner/settlement', '정산'],
-  ['/partner/stats', '실적'],
-  ['/partner/business', '회사 · 계정'],
-  ['/partner/notices', '공지 · 알림'],
-];
+/* v10.100 (다국어 2-5a) — 이름은 사전 partner.shell.nav.<키> */
+export const PTC_NAV = [
+  ['/partner', 'home'],
+  ['/partner/apply', 'apply'],
+  ['/partner/listings', 'listings'],
+  ['/partner/leads', 'leads'],
+  ['/partner/services', 'services'],
+  ['/partner/pricing', 'pricing'],
+  ['/partner/tracks', 'tracks'],
+  ['/partner/cash', 'cash'],
+  ['/partner/settlement', 'settlement'],
+  ['/partner/stats', 'stats'],
+  ['/partner/business', 'business'],
+  ['/partner/notices', 'notices'],
+] as const;
 
 /** 메뉴에 없는 화면 → 켤 메뉴 */
 const BELONGS: Array<[string, string]> = [
@@ -50,19 +52,20 @@ function activeOf(path: string): string {
 export function PartnerTopBar({ corp }: { corp?: string | null }) {
   const path = usePathname() ?? '/partner';
   const act = activeOf(path);
+  const t = useTranslations('partner.shell');
   return (
     <header className="pt-hd" data-ptc-top="">
       <div className="pt-in">
-        <Link className="pt-plg" href="/partner"><span className="d" />소개뱅크 <b>안심소개 파트너센터</b></Link>
-        <nav className="pt-gnb" aria-label="파트너센터 메뉴">
+        <Link className="pt-plg" href="/partner"><span className="d" />{t.rich('brand', { b: (c) => <b>{c}</b> })}</Link>
+        <nav className="pt-gnb" aria-label={t('menuAria')}>
           {PTC_NAV.map(([href, label]) => (
             <Link key={href} href={href} className={href === act ? 'on' : undefined}
-                  aria-current={href === act ? 'page' : undefined}>{label}</Link>
+                  aria-current={href === act ? 'page' : undefined}>{t(`nav.${label}`)}</Link>
           ))}
         </nav>
         <div className="pt-phr">
           {corp ? <span className="pt-ls">{corp}</span> : null}
-          <Link className="pt-bo sm" href="/">사용자 화면으로</Link>
+          <Link className="pt-bo sm" href="/">{t('toUser')}</Link>
         </div>
       </div>
     </header>

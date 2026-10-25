@@ -10,29 +10,32 @@ export const ymd = (iso: string | null | undefined) =>
 export const ymdhm = (iso: string | null | undefined) =>
   iso ? dtKst(iso) : '—';
 
-/* 상태 → 한국어 · 표시 등급. 서버 코드를 그대로 보이지 않습니다. */
-export const ORDER_STATE: Record<string, { t: string; c: string }> = {
-  PENDING:   { t: '확인 중', c: 'state-in_review' },
-  CONFIRMED: { t: '확정',   c: 'state-published' },
-  SETTLED:   { t: '정산됨', c: 'state-published' },
-  CANCELED:  { t: '취소',   c: 'state-rejected' },
+/* 상태 → 표시 등급. 서버 코드를 그대로 보이지 않습니다.
+ * v10.100 (다국어 2-5a) — 글자는 사전 affiliate.<묶음>.<코드>(orderState · settleState · inqState · track · materialKind).
+ *   codeText(t, 'orderState', code) — 사전에 없는 코드는 코드 그대로. t 는 useTranslations('affiliate') / getTranslations('affiliate'). */
+export const ORDER_STATE: Record<string, { c: string }> = {
+  PENDING:   { c: 'state-in_review' },
+  CONFIRMED: { c: 'state-published' },
+  SETTLED:   { c: 'state-published' },
+  CANCELED:  { c: 'state-rejected' },
 };
 
-export const SETTLE_STATE: Record<string, { t: string; c: string }> = {
-  DRAFT:     { t: '확정 대기', c: 'state-in_review' },
-  CONFIRMED: { t: '지급 대기', c: 'state-in_review' },
-  PAID:      { t: '지급 완료', c: 'state-published' },
-  CARRIED:   { t: '이월',     c: 'state-suspended' },
+export const SETTLE_STATE: Record<string, { c: string }> = {
+  DRAFT:     { c: 'state-in_review' },
+  CONFIRMED: { c: 'state-in_review' },
+  PAID:      { c: 'state-published' },
+  CARRIED:   { c: 'state-suspended' },
 };
 
-export const INQ_STATE: Record<string, { t: string; c: string }> = {
-  OPEN:     { t: '확인 중',   c: 'state-in_review' },
-  ANSWERED: { t: '답변 완료', c: 'state-published' },
-  CLOSED:   { t: '종료',     c: 'state-suspended' },
+export const INQ_STATE: Record<string, { c: string }> = {
+  OPEN:     { c: 'state-in_review' },
+  ANSWERED: { c: 'state-published' },
+  CLOSED:   { c: 'state-suspended' },
 };
 
-export const TRACK: Record<string, string> = { AFFILIATE: '제휴수수료', REFERRAL: '소개비' };
-
-export const MATERIAL_KIND: Record<string, string> = {
-  IMAGE: '이미지', BANNER: '배너', COPY: '카피', VIDEO: '영상', DOC: '문서',
+type CodeT = { (key: never): string; has: (key: never) => boolean };
+/** 코드 → 사전 글자(affiliate.<group>.<code>) · 없으면 코드 그대로 */
+export const codeText = (t: CodeT, group: 'orderState' | 'settleState' | 'inqState' | 'track' | 'materialKind' | 'dash.grade', code: string) => {
+  const k = `${group}.${code}` as never;
+  return t.has(k) ? t(k) : code;
 };

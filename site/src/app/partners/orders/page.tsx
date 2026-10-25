@@ -3,18 +3,23 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
-import { krw, ymdhm, ORDER_STATE } from '@/components/partners/fmt';
+import { krw, ymdhm, ORDER_STATE, codeText } from '@/components/partners/fmt';
 import type { AffOrder } from '@/components/partners/types';
 
-export const metadata: Metadata = { title: '주문/고객현황' };
+import { getTranslations } from 'next-intl/server';
 
-/* 탭 — 서버 state 값 그대로. 모르는 값이 주소로 오면 전체로 돌립니다. */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('affiliate'))('orders.title') };
+}
+
+/* 탭 — 서버 state 값 그대로. 글자는 사전(전체 = affiliate.orders.tabAll · 나머지 = affiliate.orderState.<값>).
+ * (탭 이름 「확인 중 · 확정 · 정산됨 · 취소」는 orderState 사전 글자와 같습니다.) 모르는 값이 주소로 오면 전체로 돌립니다. */
 const TABS = [
-  { v: '',          t: '전체' },
-  { v: 'PENDING',   t: '확인 중' },
-  { v: 'CONFIRMED', t: '확정' },
-  { v: 'SETTLED',   t: '정산됨' },
-  { v: 'CANCELED',  t: '취소' },
+  { v: '' },
+  { v: 'PENDING' },
+  { v: 'CONFIRMED' },
+  { v: 'SETTLED' },
+  { v: 'CANCELED' },
 ];
 
 /** 클릭 → 주문까지 걸린 시간. 72시간 규칙을 눈으로 보게 합니다. */
@@ -33,34 +38,35 @@ function gap(click: string | null, order: string) {
 export default async function PartnerOrdersPage({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('affiliate');
 
   const { state } = await searchParams;
-  const cur = TABS.some((t) => t.v === state) ? state ?? '' : '';
+  const cur = TABS.some((x) => x.v === state) ? state ?? '' : '';
   const qs = cur ? `?state=${cur}` : '';
   const rows = await apiGetPersonal<AffOrder[]>(`/partner/affiliate/orders${qs}`).catch(() => null);
 
   return (
     <>
-      <div className="page-head"><h1>주문/고객현황</h1></div>
-      <p className="lead">내 링크로 들어온 주문입니다.</p>
+      <div className="page-head"><h1>{t('orders.title')}</h1></div>
+      <p className="lead">{t('orders.lead')}</p>
       <div className="notice">
-        <b>클릭 후 72시간 안에 주문해야 수수료가 붙습니다.</b> 여러 파트너의 링크를 거쳤다면 <b>마지막으로 누른</b> 링크에 귀속됩니다.
+        {t.rich('orders.rule', { b: (c) => <b>{c}</b> })}
       </div>
 
       <div className="tabs" role="tablist">
-        {TABS.map((t) => (
-          <Link key={t.v || 'all'} href={t.v ? `/partners/orders?state=${t.v}` : '/partners/orders'}
-            role="tab" aria-selected={cur === t.v} className={cur === t.v ? 'on' : undefined}>{t.t}</Link>
+        {TABS.map((tab) => (
+          <Link key={tab.v || 'all'} href={tab.v ? `/partners/orders?state=${tab.v}` : '/partners/orders'}
+            role="tab" aria-selected={cur === tab.v} className={cur === tab.v ? 'on' : undefined}>{tab.v ? codeText(t, 'orderState', tab.v) : t('orders.tabAll')}</Link>
         ))}
       </div>
 
       {rows === null ? (
-        <p className="form-error" role="alert">주문을 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.</p>
+        <p className="form-error" role="alert">{t('orders.loadFail')}</p>
       ) : rows.length === 0 ? (
-        <p className="empty">{cur ? '이 상태의 주문이 없습니다.' : '아직 들어온 주문이 없습니다.'}</p>
+        <p className="empty">{cur ? t('orders.emptyState') : t('orders.empty')}</p>
       ) : (
         <table className="tbl">
-          <thead><tr><th>주문번호</th><th>상품</th><th>링크</th><th className="num">수수료</th><th>상태</th><th>클릭 → 주문</th><th>주문일시</th></tr></thead>
+          <thead><tr><th>{t('orders.colOrderNo')}</th><th>{t('common.colProduct')}</th><th>{t('orders.colLink')}</th><th className="num">{t('common.colCommission')}</th><th>{t('common.colState')}</th><th>{t('orders.colGap')}</th><th>{t('orders.colOrderedAt')}</th></tr></thead>
           <tbody>
             {rows.map((o) => (
               <tr key={o.orderNo}>
@@ -70,8 +76,8 @@ export default async function PartnerOrdersPage({ searchParams }: { searchParams
                 <td className="num">{o.attributed ? krw(o.commission) : <span className="dim">—</span>}</td>
                 <td>
                   {o.attributed
-                    ? <span className={'state ' + (ORDER_STATE[o.state]?.c ?? '')}>{ORDER_STATE[o.state]?.t ?? o.state}</span>
-                    : <span className="state state-rejected">귀속 안 됨</span>}
+                    ? <span className={'state ' + (ORDER_STATE[o.state]?.c ?? '')}>{codeText(t, 'orderState', o.state)}</span>
+                    : <span className="state state-rejected">{t('orders.unattributed')}</span>}
                   {o.noteIfUnattributed && <div className="dim">{o.noteIfUnattributed}</div>}
                 </td>
                 <td>{gap(o.clickedAt, o.orderedAt)}</td>

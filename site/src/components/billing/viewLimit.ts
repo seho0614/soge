@@ -18,8 +18,11 @@ export function viewLimitOn(s: PublicSettings): boolean {
   return today >= from;
 }
 
-export function viewLimitText(s: PublicSettings, plan: { monthlyPrice: number; requestViewsPerMonth: number | null }): string {
-  if (!viewLimitOn(s)) return '제한 없음 (홍보 기간)';
-  if (Number(plan.monthlyPrice) === 0) return `월 ${s['request.view.free_monthly'] ?? '3'}건`;
-  return plan.requestViewsPerMonth == null ? '무제한' : `월 ${plan.requestViewsPerMonth}건`;
+/** v10.100 (2-5a) — 화면 문구는 부르는 쪽이 사전(billing.viewLimit)에서 넘깁니다 */
+export interface ViewLimitMsgs { promo: string; unlimited: string; perMonth: (n: string) => string }
+
+export function viewLimitText(s: PublicSettings, plan: { monthlyPrice: number; requestViewsPerMonth: number | null }, m: ViewLimitMsgs): string {
+  if (!viewLimitOn(s)) return m.promo;
+  if (Number(plan.monthlyPrice) === 0) return m.perMonth(s['request.view.free_monthly'] ?? '3');
+  return plan.requestViewsPerMonth == null ? m.unlimited : m.perMonth(String(plan.requestViewsPerMonth));
 }

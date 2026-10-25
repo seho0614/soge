@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './act';
+import { useTranslations } from 'next-intl';
 
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
@@ -31,6 +32,7 @@ function loadToss(): Promise<TossPaymentsFn> {
 const won = (n: number | null | undefined) => `${Number(n ?? 0).toLocaleString('ko-KR')}원`;
 
 export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: number; max: number; room: number; bonusRate: number; canMoney: boolean }) {
+  const t = useTranslations('partnerOps.cashPanel');
   const router = useRouter();
   const [amount, setAmount] = useState<number>(Math.min(Math.max(300000, min), Math.max(min, Math.min(max, room))));
   const [busy, setBusy] = useState(false);
@@ -45,7 +47,7 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
       if (!CLIENT_KEY) {
         const r = await api<{ note: string }>('POST', '/partner/cash/charges/confirm',
           { orderId: c.orderId, paymentKey: `stub_${crypto.randomUUID()}`, amount: c.amount });
-        setMsg(['ok', r.note ?? '충전되었습니다.']);
+        setMsg(['ok', r.note ?? t('charged')]);
         router.refresh();
         return;
       }
@@ -57,11 +59,11 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
       });
     } catch (e) {
       const x = e as { code?: string; message?: string };
-      setMsg(['err', x?.code === 'USER_CANCEL' ? '결제를 취소하셨습니다.' : (x?.message ?? '충전하지 못했습니다.')]);
+      setMsg(['err', x?.code === 'USER_CANCEL' ? t('canceled') : (x?.message ?? t('chargeFail'))]);
     } finally { setBusy(false); }
   }
 
-  if (!canMoney) return <p className="pt-ls">충전은 대표 계정이나 정산 권한이 있는 직원만 할 수 있습니다.</p>;
+  if (!canMoney) return <p className="pt-ls">{t('noPerm')}</p>;
   return (
     <div data-cash-charge>
       <div className="pt-row">
@@ -70,17 +72,17 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
             <button key={v} type="button" className={`pt-chip${v === amount ? ' on' : ''}`} onClick={() => setAmount(v)}>{won(v)}</button>
           ))}
         </div>
-        <label>직접 입력(원)
+        <label>{t('direct')}
           <input className="pt-input" type="number" inputMode="numeric" min={min} max={max} step={1000} value={amount}
                  onChange={(e) => setAmount(Math.floor(Number(e.target.value) || 0))} style={{ width: 140 }} />
         </label>
         <button type="button" className="pt-bp" onClick={() => void charge()} disabled={busy || amount < min || amount > max || amount > room}>
-          {busy ? '결제 중…' : `${won(amount)} 충전`}
+          {busy ? t('paying') : t('chargeBtn', { amt: won(amount) })}
         </button>
       </div>
       <p className="pt-ls" style={{ marginTop: 6 }}>
-        등급 할인 {Math.round(bonusRate * 100)}% — 보너스 {won(bonus)}이 함께 들어옵니다 · 한 번에 {won(min)} ~ {won(max)} · 지금 더 넣을 수 있는 금액 {won(room)}
-        {!CLIENT_KEY && <> · <b>시험 결제</b>(결제창 키가 없어 실제 돈은 오가지 않습니다)</>}
+        {t('chargeInfo', { pct: String(Math.round(bonusRate * 100)), bonus: won(bonus), min: won(min), max: won(max), room: won(room) })}
+        {!CLIENT_KEY && <> · {t.rich('stubInfo', { b: (c) => <b>{c}</b> })}</>}
       </p>
       {msg && <p className={`pt-msg ${msg[0]}`} role="status">{msg[1]}</p>}
     </div>
@@ -91,6 +93,7 @@ export function AutoForm({ on, below, amount, engine, card, min, max, canMoney }
   on: boolean; below: number | null; amount: number | null; engine: boolean; card: { company: string | null; last4: string | null } | null;
   min: number; max: number; canMoney: boolean;
 }) {
+  const t = useTranslations('partnerOps.cashPanel');
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const [b, setB] = useState<number>(below ?? 100000);
@@ -107,27 +110,27 @@ export function AutoForm({ on, below, amount, engine, card, min, max, canMoney }
   return (
     <div data-cash-auto>
       <div className="pt-subnow">
-        <div><span className="pt-ls">설정</span>
-          <b>{below != null && amount != null ? `${won(below)} 미만이면 ${won(amount)} 청구` : '정하지 않음'}</b>
-          <span className="pt-ls">{on ? '켜짐' : '꺼짐'}</span></div>
-        <div><span className="pt-ls">실행 엔진</span>
-          <b>{engine ? '동작' : '없음'}</b>
-          <span className="pt-ls">{engine ? `등록된 카드 ${card?.company ?? ''} ····${card?.last4 ?? ''}` : '등록된 카드(빌링키)가 없어 실제 충전이 돌지 않습니다'}</span></div>
-        {canMoney ? <button type="button" className="pt-bo" onClick={() => setEdit(!edit)}>설정 변경</button> : <span className="pt-ls">대표 · 정산 권한만</span>}
+        <div><span className="pt-ls">{t('setting')}</span>
+          <b>{below != null && amount != null ? t('rule', { below: won(below), amt: won(amount) }) : t('unset')}</b>
+          <span className="pt-ls">{on ? t('on') : t('off')}</span></div>
+        <div><span className="pt-ls">{t('engine')}</span>
+          <b>{engine ? t('engineOn') : t('engineNone')}</b>
+          <span className="pt-ls">{engine ? t('card', { company: card?.company ?? '', last4: card?.last4 ?? '' }) : t('noCard')}</span></div>
+        {canMoney ? <button type="button" className="pt-bo" onClick={() => setEdit(!edit)}>{t('change')}</button> : <span className="pt-ls">{t('permOnly')}</span>}
       </div>
       {edit && (
         <div className="pt-fset" style={{ marginTop: 10 }}>
           <div className="pt-row">
-            <label>잔액이 이 금액 미만이면
+            <label>{t('belowLabel')}
               <input className="pt-input" type="number" min={1000} step={1000} value={b} onChange={(e) => setB(Math.floor(Number(e.target.value) || 0))} style={{ width: 140 }} />
             </label>
-            <label>이 금액을 충전
+            <label>{t('amtLabel')}
               <input className="pt-input" type="number" min={min} max={max} step={1000} value={a} onChange={(e) => setA(Math.floor(Number(e.target.value) || 0))} style={{ width: 140 }} />
             </label>
-            <button type="button" className="pt-bp" disabled={busy} onClick={() => void save(true)}>켜고 저장</button>
-            {on && <button type="button" className="pt-bo" disabled={busy} onClick={() => void save(false)}>끄기</button>}
+            <button type="button" className="pt-bp" disabled={busy} onClick={() => void save(true)}>{t('saveOn')}</button>
+            {on && <button type="button" className="pt-bo" disabled={busy} onClick={() => void save(false)}>{t('turnOff')}</button>}
           </div>
-          {!engine && <p className="pt-ls" style={{ marginTop: 6 }}>카드는 <a href="/my/subscription">구독 · 결제</a>에서 등록합니다 — 같은 카드로 자동 충전합니다.</p>}
+          {!engine && <p className="pt-ls" style={{ marginTop: 6 }}>{t.rich('cardNote', { a: (c) => <a href="/my/subscription">{c}</a> })}</p>}
         </div>
       )}
       {msg && <p className={`pt-msg ${msg[0]}`} role="status">{msg[1]}</p>}
@@ -136,6 +139,7 @@ export function AutoForm({ on, below, amount, engine, card, min, max, canMoney }
 }
 
 export function RefundForm({ refundable, canMoney }: { refundable: number; canMoney: boolean }) {
+  const t = useTranslations('partnerOps.cashPanel');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<number>(refundable);
@@ -143,7 +147,7 @@ export function RefundForm({ refundable, canMoney }: { refundable: number; canMo
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<['ok' | 'err', string] | null>(null);
   async function go() {
-    if (!confirm(`유상 잔액 ${won(amount)}을 결제 취소로 돌려받습니다. 그 충전의 등급 할인(보너스)은 회수됩니다. 진행할까요?`)) return;
+    if (!confirm(t('refundConfirm', { amt: won(amount) }))) return;
     setBusy(true); setMsg(null);
     try {
       const r = await api<{ note: string }>('POST', '/partner/cash/refunds', { amount, reason });
@@ -155,19 +159,19 @@ export function RefundForm({ refundable, canMoney }: { refundable: number; canMo
     <div data-cash-refund>
       {!open
         ? <button type="button" className="pt-bo" disabled={refundable <= 0} onClick={() => { setAmount(refundable); setOpen(true); }}>
-            유상 잔액 환불{refundable > 0 ? ` (최대 ${won(refundable)})` : ''}</button>
+            {t('refundBtn')}{refundable > 0 ? ` ${t('refundMax', { amt: won(refundable) })}` : ''}</button>
         : (
           <div className="pt-fset">
             <div className="pt-row">
-              <label>환불 금액(원)
+              <label>{t('refundAmt')}
                 <input className="pt-input" type="number" min={1} max={refundable} value={amount} onChange={(e) => setAmount(Math.floor(Number(e.target.value) || 0))} style={{ width: 140 }} />
               </label>
-              <label style={{ flex: 1, minWidth: 200 }}>사유
-                <input className="pt-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 이번 분기 영업을 쉽니다" />
+              <label style={{ flex: 1, minWidth: 200 }}>{t('reason')}
+                <input className="pt-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPh')} />
               </label>
               <button type="button" className="pt-bp" disabled={busy || amount <= 0 || amount > refundable || reason.trim().length < 2} onClick={() => void go()}>
-                {busy ? '환불 중…' : '환불 신청'}</button>
-              <button type="button" className="pt-bo" onClick={() => setOpen(false)}>닫기</button>
+                {busy ? t('refunding') : t('refundReq')}</button>
+              <button type="button" className="pt-bo" onClick={() => setOpen(false)}>{t('close')}</button>
             </div>
           </div>
         )}
@@ -178,18 +182,19 @@ export function RefundForm({ refundable, canMoney }: { refundable: number; canMo
 
 /** 결제창에서 돌아온 뒤 승인 확인 — 한 번만 */
 export function CashPayConfirm({ paymentKey, orderId, amount }: { paymentKey: string; orderId: string; amount: number }) {
-  const [st, setSt] = useState<['wait' | 'ok' | 'err', string]>(['wait', '결제를 확인하는 중입니다…']);
+  const t = useTranslations('partnerOps.cashPanel');
+  const [st, setSt] = useState<['wait' | 'ok' | 'err', string]>(['wait', t('checking')]);
   const sent = useRef(false);
   useEffect(() => {
     if (sent.current) return; sent.current = true;
     void api<{ note: string }>('POST', '/partner/cash/charges/confirm', { orderId, paymentKey, amount })
-      .then((r) => setSt(['ok', r.note ?? '충전되었습니다.']))
+      .then((r) => setSt(['ok', r.note ?? t('charged')]))
       .catch((e) => setSt(['err', (e as Error).message]));
   }, [paymentKey, orderId, amount]);
   return (
     <div data-cash-pay={st[0]}>
       <p className={`pt-msg ${st[0] === 'err' ? 'err' : 'ok'}`} role="status">{st[1]}</p>
-      {st[0] !== 'wait' && <p><a className="pt-bp" href="/partner/cash">리드 이용료로</a></p>}
+      {st[0] !== 'wait' && <p><a className="pt-bp" href="/partner/cash">{t('backToCash')}</a></p>}
     </div>
   );
 }

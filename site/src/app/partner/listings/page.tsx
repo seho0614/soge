@@ -6,13 +6,17 @@ import { apiGetPersonal } from '@/lib/api';
 import { AxisApply } from '@/components/AxisApply';
 import { DirectoryApply } from '@/components/DirectoryApply';
 import { Empty, Note, Pgh, S2, Tw } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
+import { isGwanKey } from '@/i18n/keys';
 
-export const metadata: Metadata = { title: '내 매물 · 입점 상태' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partnerOps.listings'))('metaTitle') };
+}
 
 interface Dash { applied: boolean; status?: string }
 interface MyListing { id: string; title: string; status: string; statusLabel: string | null; gwanCode?: string; rejectReasonLabel: string | null }
 
-const GWAN: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
+/* 관 이름(고정 글자)은 사전 header.gwan.<코드> (v10.100 · 2-5a) */
 
 /**
  * SB-PTC-LST-010 — 안심소개 파트너센터 내 매물 · 입점 상태 (D018 · D019)
@@ -33,29 +37,31 @@ export default async function PartnerListingsPage() {
     apiGetPersonal<MyListing[]>('/me/listings').catch(() => [] as MyListing[]),
   ]);
   const partner = d?.status === 'ACTIVE';
+  const t = await getTranslations('partnerOps.listings');
+  const th = await getTranslations('header.gwan');
   return (
-    <><Pgh title="내 매물" sub="안심소개에 올리는 매물은 여기서 등록하고 관리합니다. 축마다 입점 승인을 받아야 게시됩니다." />
+    <><Pgh title={t('title')} sub={t('sub')} />
 
-      <S2>축별 입점 상태</S2>
+      <S2>{t('axisH')}</S2>
       {actorOk ? (
         <AxisApply />
       ) : (
         <Note kind="info" data-need="business">
-          <b>본인인증이 먼저입니다.</b> 인증을 마치면 여기서 입점할 축을 고를 수 있습니다(사업자 인증은 선택).{' '}
-          <Link href="/verify">인증하러 가기 →</Link>
+          {t.rich('needId', { b: (c) => <b>{c}</b> })}{' '}
+          <Link href="/verify">{t('goVerify')}</Link>
         </Note>
       )}
 
-      <S2>매물 {mine.length}건</S2>
+      <S2>{t('countH', { n: String(mine.length) })}</S2>
       {mine.length === 0 ? (
-        <Empty>등록한 매물이 없습니다. 아래 「매물 등록」으로 시작하십시오.</Empty>
+        <Empty>{t('empty')}</Empty>
       ) : (
-        <Tw head={['번호', '매물', '분류', '상태']}>
+        <Tw head={[t('th.no'), t('th.listing'), t('th.gwan'), t('th.state')]}>
           {mine.slice(0, 20).map((r) => (
             <tr key={r.id}>
               <td><span className="pt-code">{r.id.slice(0, 8)}</span></td>
               <td><b>{r.title}</b>{r.rejectReasonLabel ? <div className="pt-wn">{r.rejectReasonLabel}</div> : null}</td>
-              <td>{r.gwanCode ? GWAN[r.gwanCode] ?? r.gwanCode : '—'}</td>
+              <td>{r.gwanCode ? (isGwanKey(r.gwanCode) ? th(r.gwanCode) : r.gwanCode) : '—'}</td>
               <td>{r.statusLabel ?? r.status}</td>
             </tr>
           ))}
@@ -63,27 +69,27 @@ export default async function PartnerListingsPage() {
       )}
 
       <Note kind="info">
-        <b>등록 폼은 사용자 화면의 소개 등록 폼을 그대로 엽니다.</b> 승인되지 않은 축의 분류는 고를 수 없게 막는 것이 서버 규칙입니다.
+        {t.rich('formNote', { b: (c) => <b>{c}</b> })}
       </Note>
       {/* v10.32 — 시안의 노란 띠 자리. 시안 문구(오픈 전 게시 제한 스위치가 꺼짐)는 개발 현황 메모라, 지금 실제로 켜져 있는 규칙을 적습니다 */}
       <Note kind="warn" data-listing-gate="">
-        <b>입점 승인 전에는 게시되지 않습니다.</b> 안심소개 매물은 그 축의 입점 승인을 받은 업체만 게시할 수 있습니다 — 승인 전에 올리면 서버가 막습니다(MAL_PARTNER_ONLY).
+        {t.rich('gateNote', { b: (c) => <b>{c}</b> })}
       </Note>
 
       {partner ? (
         <DirectoryApply />
       ) : actorOk ? (
         <Note kind="plain" data-need="partner">
-          <b>법률 · 세무 사무소 노출(월 정액)</b>은 입점 신청이 승인된 뒤에 신청할 수 있습니다.{' '}
-          <Link href="/partner/apply">입점 신청 →</Link>
+          {t.rich('dirNote', { b: (c) => <b>{c}</b> })}{' '}
+          <Link href="/partner/apply">{t('apply')}</Link>
         </Note>
       ) : null}
 
       <div className="pt-dact actions">
-        <Link className="pt-bp" href="/register">매물 등록</Link>
-        <Link className="pt-bo" href="/partner/apply">다른 축 입점 신청</Link>
-        <Link className="pt-bo" href="/my/listings">등록한 매물 보기</Link>
-        <Link className="pt-bo" href="/partner">파트너센터로</Link>
+        <Link className="pt-bp" href="/register">{t('register')}</Link>
+        <Link className="pt-bo" href="/partner/apply">{t('otherAxis')}</Link>
+        <Link className="pt-bo" href="/my/listings">{t('myListings')}</Link>
+        <Link className="pt-bo" href="/partner">{t('toCenter')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

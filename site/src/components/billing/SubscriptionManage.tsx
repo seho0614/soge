@@ -3,6 +3,7 @@ import { ymdKst } from '@/lib/format';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /** GET /me/subscription/detail */
 export interface SubDetail {
@@ -38,6 +39,8 @@ const won = (n?: number) => (n == null ? '—' : `${Number(n).toLocaleString('ko
  */
 export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | null; eligible: RefundEligible | null }) {
   const router = useRouter();
+  const t = useTranslations('billing.manage');
+  const tc = useTranslations('billing.common');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [reason, setReason] = useState('');
@@ -57,16 +60,16 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
       });
       const j = await r.json().catch(() => null);
       if (!r.ok) {
-        setMsg({ kind: 'err', text: j?.message ?? '처리하지 못했습니다. 잠시 후 다시 시도해 주십시오.' });
+        setMsg({ kind: 'err', text: j?.message ?? t('errGeneric') });
       } else if (path === 'refund') {
         /* 201 환불 완료 · 202 환불 결과 확인 중 — 서버가 준 말을 그대로 */
         setMsg({ kind: r.status === 201 ? 'ok' : 'err', text: `${j?.label ?? ''}${j?.note ? ` — ${j.note}` : ''}` });
       } else {
-        setMsg({ kind: 'ok', text: j?.note ?? '처리했습니다.' });
+        setMsg({ kind: 'ok', text: j?.note ?? t('done') });
       }
       router.refresh();
     } catch {
-      setMsg({ kind: 'err', text: '연결하지 못했습니다. 잠시 후 다시 시도해 주십시오.' });
+      setMsg({ kind: 'err', text: tc('network') });
     } finally {
       setBusy(null);
     }
@@ -77,47 +80,47 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
     try {
       const r = await fetch('/api/v1/subscriptions/reservation', { method: 'DELETE' });
       const j = await r.json().catch(() => null);
-      setMsg(r.ok ? { kind: 'ok', text: j?.note ?? '예약을 거두었습니다.' } : { kind: 'err', text: j?.message ?? '처리하지 못했습니다.' });
+      setMsg(r.ok ? { kind: 'ok', text: j?.note ?? t('unreserved') } : { kind: 'err', text: j?.message ?? t('failShort') });
       router.refresh();
     } catch {
-      setMsg({ kind: 'err', text: '연결하지 못했습니다. 잠시 후 다시 시도해 주십시오.' });
+      setMsg({ kind: 'err', text: tc('network') });
     } finally { setBusy(null); }
   }
 
   function askRefund() {
-    if (!reason.trim()) { setMsg({ kind: 'err', text: '환불 사유를 적어 주십시오.' }); return; }
+    if (!reason.trim()) { setMsg({ kind: 'err', text: t('needReason') }); return; }
     void post('refund', 'refund', { reason: reason.trim() },
-      '환불을 신청하시겠습니까?\n\n결제사에서 결제 취소가 확인되면 구독이 바로 끝납니다.');
+      t('askRefund'));
   }
 
   return (
     <section className="card sub-manage" data-sub-manage>
-      <h2>내 구독</h2>
+      <h2>{t('title')}</h2>
 
       {detail.subscribed ? (
         <table className="tbl">
           <tbody>
-            <tr><th>요금제</th><td>{detail.planName} <span className="dim">{paid ? `월 ${won(detail.monthlyPrice)}` : '무료'}</span></td></tr>
+            <tr><th>{t('thPlan')}</th><td>{detail.planName} <span className="dim">{paid ? tc('monthly', { price: won(detail.monthlyPrice) }) : tc('free')}</span></td></tr>
             <tr>
-              <th>상태</th>
+              <th>{t('thStatus')}</th>
               <td data-sub-status={detail.status}>
-                {detail.status === 'PAST_DUE' ? <strong className="warn-text">결제 실패</strong> : '이용 중'}
+                {detail.status === 'PAST_DUE' ? <strong className="warn-text">{t('pastDue')}</strong> : t('active')}
               </td>
             </tr>
-            <tr><th>이용 기간</th><td>{day(detail.periodStart)} ~ {day(detail.periodEnd)}</td></tr>
+            <tr><th>{t('thPeriod')}</th><td>{day(detail.periodStart)} ~ {day(detail.periodEnd)}</td></tr>
             <tr>
-              <th>자동 갱신</th>
-              <td>{detail.autoRenew ? '자동 갱신' : `해지함 (${day(detail.cancelAt)})`}</td>
+              <th>{t('thRenew')}</th>
+              <td>{detail.autoRenew ? t('renewOn') : t('canceled', { date: day(detail.cancelAt) })}</td>
             </tr>
-            <tr><th>다음 청구</th><td>{detail.nextChargeAt ? `${day(detail.nextChargeAt)}${detail.nextChargeAmount ? ` · ${won(detail.nextChargeAmount)}` : ''}` : '청구 예정 없음'}</td></tr>
+            <tr><th>{t('thNext')}</th><td>{detail.nextChargeAt ? `${day(detail.nextChargeAt)}${detail.nextChargeAmount ? ` · ${won(detail.nextChargeAmount)}` : ''}` : t('noNext')}</td></tr>
             {detail.nextPlanCode ? (
               <tr data-sub-reserved={detail.nextPlanCode}>
-                <th>요금제 예약</th>
+                <th>{t('thReserved')}</th>
                 <td>
-                  {day(detail.periodEnd)}부터 <b>{detail.nextPlanName}</b>{' '}
-                  <span className="dim">{Number(detail.nextPlanPrice ?? 0) > 0 ? `월 ${won(detail.nextPlanPrice ?? 0)}` : '무료'}</span>{' '}
+                  {t('from', { date: day(detail.periodEnd) })}<b>{detail.nextPlanName}</b>{' '}
+                  <span className="dim">{Number(detail.nextPlanPrice ?? 0) > 0 ? tc('monthly', { price: won(detail.nextPlanPrice ?? 0) }) : tc('free')}</span>{' '}
                   <button type="button" className="btn-sm" data-act="unreserve" disabled={!!busy} onClick={() => void unreserve()}>
-                    {busy === 'unreserve' ? '처리 중…' : '예약 거두기'}
+                    {busy === 'unreserve' ? tc('processing') : t('unreserve')}
                   </button>
                 </td>
               </tr>
@@ -125,14 +128,14 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
           </tbody>
         </table>
       ) : (
-        <p className="dim">이용 중인 구독이 없습니다.</p>
+        <p className="dim">{t('none')}</p>
       )}
 
       {detail.notice ? <div className="note warn" data-sub-notice>{detail.notice}</div> : null}
 
       {rf ? (
         <div className={`note ${rf.state === 'SUCCEEDED' ? 'info' : 'warn'}`} data-refund-state={rf.state}>
-          <b>{rf.label}</b> <span className="dim">{won(rf.amount)} · 신청 {day(rf.requestedAt)}</span>
+          <b>{rf.label}</b> <span className="dim">{t('requested', { amount: won(rf.amount), date: day(rf.requestedAt) })}</span>
           {rf.state === 'FAILED' && rf.failureReason ? <> — {rf.failureReason}</> : null}
           <br />{rf.note}
         </div>
@@ -144,31 +147,31 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
             /* 확인 중에는 새 신청 · 해지를 받지 않습니다 — 같은 환불이 두 번 들어가지 않게 */
             <button type="button" className="btn-primary" data-act="refund-check" disabled={!!busy}
               onClick={() => void post('refund-check', 'refund', {})}>
-              {busy === 'refund-check' ? '확인 중…' : '환불 결과 다시 확인'}
+              {busy === 'refund-check' ? t('checking') : t('refundCheck')}
             </button>
           ) : (
             <>
               {paid && detail.autoRenew ? (
                 <button type="button" className="btn ghost" data-act="cancel" disabled={!!busy}
                   onClick={() => void post('cancel', 'cancel', { reason: '회원 해지' },
-                    '자동 갱신을 해지하시겠습니까?\n\n이미 결제한 기간은 그대로 이용하실 수 있고, 이후로는 청구되지 않습니다.')}>
-                  {busy === 'cancel' ? '처리 중…' : '자동 갱신 해지'}
+                    t('askCancel'))}>
+                  {busy === 'cancel' ? tc('processing') : t('cancelBtn')}
                 </button>
               ) : null}
               {detail.cancelAt && detail.status === 'ACTIVE' ? (
                 <button type="button" className="btn ghost" data-act="resume" disabled={!!busy}
                   onClick={() => void post('resume', 'resume', {})}>
-                  {busy === 'resume' ? '처리 중…' : '해지 철회'}
+                  {busy === 'resume' ? tc('processing') : t('resume')}
                 </button>
               ) : null}
               {/* v10.31 (시안 「환불 사유 · 환불 신청」 — 유료 구독이면 늘 보임) — 조건이 안 되면 단추는 누를 수 없고 까닭을 바로 아래에 적습니다(판정은 서버) */}
               {paid ? (
                 <>
-                  <input className="inp" name="refundReason" maxLength={200} placeholder="환불 사유 (필수)"
-                    value={reason} onChange={(e) => setReason(e.target.value)} aria-label="환불 사유" />
+                  <input className="inp" name="refundReason" maxLength={200} placeholder={t('reasonPh')}
+                    value={reason} onChange={(e) => setReason(e.target.value)} aria-label={t('reasonAria')} />
                   <button type="button" className="btn ghost" data-act="refund" disabled={!!busy || eligible?.eligible === false}
-                    title={eligible?.eligible === false ? eligible.reason ?? '지금은 환불할 수 없습니다.' : ''} onClick={askRefund}>
-                    {busy === 'refund' ? '결제사에 확인하는 중…' : '환불 신청'}
+                    title={eligible?.eligible === false ? eligible.reason ?? t('cantRefund') : ''} onClick={askRefund}>
+                    {busy === 'refund' ? t('refundBusy') : t('refundBtn')}
                   </button>
                 </>
               ) : null}
@@ -178,7 +181,7 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
       ) : null}
 
       {detail.subscribed && paid && !refundOpen && eligible && !eligible.eligible && eligible.reason ? (
-        <p className="hint" data-refund-why>환불: {eligible.reason}</p>
+        <p className="hint" data-refund-why>{t('why', { reason: eligible.reason })}</p>
       ) : null}
 
       {msg ? <p className={msg.kind === 'ok' ? 'form-ok' : 'form-error'} data-sub-msg role="status">{msg.text}</p> : null}

@@ -4,10 +4,13 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
-import { Bg, Empty, Note, Pgh, Tabs, Tw, won, type Tone } from '@/components/partner/ui';
+import { Bg, Empty, Note, Pgh, ptCode, Tabs, Tw, won, type Tone } from '@/components/partner/ui';
 import { CatalogForm, CatalogToggle, QuoteForm } from './TrackForms';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '전용 트랙' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partner.meta'))('tracks') };
+}
 
 interface Tracks {
   repair: Array<{ deliveryId: string; no: string; summary: string; area: string; deliveredAt: string; viewedAt: string | null; state: string;
@@ -19,7 +22,8 @@ interface Tracks {
 }
 type Tab = 'repair' | 'car' | 'catalog';
 const STAGE: Record<string, Tone> = { '견적 요청': 'wait', '연락처 확인': 'wait', '견적 발송': 'ok', '성사': 'ok', '기한 지남': 'off' };
-const LST: Record<string, [string, Tone]> = { PUBLISHED: ['노출중', 'ok'], IN_REVIEW: ['검수중', 'wait'], DRAFT: ['작성중', 'wait'], REJECTED: ['반려', 'no'], SUSPENDED: ['정지', 'no'], ARCHIVED: ['보관', 'off'] };
+/* v10.100 (다국어 2-5a) — 매물 상태 글자는 사전 partner.tracks.lst.<코드> */
+const LST: Record<string, Tone> = { PUBLISHED: 'ok', IN_REVIEW: 'wait', DRAFT: 'wait', REJECTED: 'no', SUSPENDED: 'no', ARCHIVED: 'off' };
 
 /**
  * SB-PTC-CTR-950 전용 트랙 — v10.31 (W5 · 10/10 시안 기준 scPtnTrack) · 주소도 시안대로 /partner/tracks (옛 /repair-inbox 는 여기로)
@@ -32,36 +36,38 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
   if (!p) redirect('/login');
   const sp = await searchParams;
   const tab: Tab = (['repair', 'car', 'catalog'] as const).includes(sp.tab as Tab) ? (sp.tab as Tab) : 'repair';
+  const tt = await getTranslations('partner.tracks');
+  const won0 = (await getTranslations('partner.common.unit'))('won');
   const t = await apiGet<Tracks>('/partner/tracks', 0).catch(() => null);
-  if (!t) return <><Pgh title="전용 트랙" /><Empty>파트너가 아닙니다. <Link href="/partner/apply">입점 신청</Link>부터 해 주십시오.</Empty><i hidden data-root-end="" /></>;
+  if (!t) return <><Pgh title={tt('title')} /><Empty>{tt.rich('notPartner', { apply: (c) => <Link href="/partner/apply">{c}</Link> })}</Empty><i hidden data-root-end="" /></>;
   const fresh = t.repair.filter((r) => !r.viewedAt && r.state === 'DELIVERED').length;
   const href = (x: Tab) => (x === 'repair' ? '/partner/tracks' : `/partner/tracks?tab=${x}`);
 
   return (
-    <><Pgh title="전용 트랙" sub="카테고리마다 접수 형태가 다릅니다 — 견적요청함 · 매물 · 카탈로그." />
+    <><Pgh title={tt('title')} sub={tt('sub')} />
       <Tabs cur={tab} items={[
-        { key: 'repair', label: '판금 · 도색', count: t.repair.length, href: href('repair') },
-        { key: 'car', label: '중고차 매물', count: t.car.length, href: href('car') },
-        { key: 'catalog', label: '제품 카탈로그', count: t.catalog.length, href: href('catalog') },
+        { key: 'repair', label: tt('tabRepair'), count: t.repair.length, href: href('repair') },
+        { key: 'car', label: tt('tabCar'), count: t.car.length, href: href('car') },
+        { key: 'catalog', label: tt('tabCatalog'), count: t.catalog.length, href: href('catalog') },
       ]} />
 
       {tab === 'repair' && (
         <>
           <p className="pt-ls" data-repair-count style={{ margin: '0 0 10px' }}>
-            {fresh > 0 ? <>열어 보지 않은 새 요청 <b>{fresh}건</b> · 받은 요청 전체 {t.repair.length}건</> : t.repair.length > 0 ? <>새 요청(안 연 요청)은 없습니다 · 받은 요청 전체 {t.repair.length}건</> : '받은 요청이 없습니다.'}
+            {fresh > 0 ? <>{tt.rich('fresh', { b: (c) => <b>{c}</b>, n: String(fresh), total: String(t.repair.length) })}</> : t.repair.length > 0 ? <>{tt('noFresh', { total: String(t.repair.length) })}</> : tt('noReq')}
           </p>
           {t.repair.length === 0 ? (
-            <Empty>아직 받은 견적 요청이 없습니다. <Link href="/partner/regions">서비스 지역</Link>과 <Link href="/partner/services">정비 · 판금 서비스</Link>를 열어 두시면 배정됩니다.</Empty>
+            <Empty>{tt.rich('emptyRepair', { regions: (c) => <Link href="/partner/regions">{c}</Link>, services: (c) => <Link href="/partner/services">{c}</Link> })}</Empty>
           ) : (
-            <Tw head={['요청번호', '차량 · 부위', '상태', '접수', '견적']}>
+            <Tw head={[tt('thNo'), tt('thCar'), tt('thState'), tt('thDate'), tt('thQuote')]}>
               {t.repair.map((r) => (
                 <tr key={r.deliveryId} className={r.viewedAt ? undefined : 'mine'}>
                   <td><b className="pt-code">{r.no}</b></td>
                   <td><b>{r.summary}</b><div className="pt-ls">{r.area || '—'}</div></td>
                   <td><Bg tone={STAGE[r.stage] ?? 'off'}>{r.stage}</Bg></td>
                   <td>{ymdKst(r.deliveredAt)}</td>
-                  <td>{r.viewedAt ? <>{r.quoteAmount ? <b>{won(r.quoteAmount)}원 </b> : null}<QuoteForm deliveryId={r.deliveryId} amount={r.quoteAmount} /></>
-                    : r.state === 'DELIVERED' ? <Link className="pt-bp sm" href="/partner/leads?tab=new">연락처 열기({won(r.feeQuote)}원)</Link> : '—'}</td>
+                  <td>{r.viewedAt ? <>{r.quoteAmount ? <b>{won(r.quoteAmount)}{won0} </b> : null}<QuoteForm deliveryId={r.deliveryId} amount={r.quoteAmount} /></>
+                    : r.state === 'DELIVERED' ? <Link className="pt-bp sm" href="/partner/leads?tab=new">{tt('openContact', { fee: won(r.feeQuote) })}</Link> : '—'}</td>
                 </tr>
               ))}
             </Tw>
@@ -72,17 +78,17 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
 
       {tab === 'car' && (
         <>
-          {t.car.length === 0 ? <Empty>등록한 중고차 매물이 없습니다. <Link href="/register">매물 등록</Link>에서 「자동차」 분류로 올리시면 여기에 모입니다.</Empty> : (
-            <Tw head={['매물번호', '차량', '가격', '상태', '국토부 조회']}>
+          {t.car.length === 0 ? <Empty>{tt.rich('emptyCar', { reg: (c) => <Link href="/register">{c}</Link> })}</Empty> : (
+            <Tw head={[tt('thListNo'), tt('thVehicle'), tt('thPrice'), tt('thState'), tt('thMolit')]}>
               {t.car.map((c) => {
-                const st = LST[c.status] ?? [c.status, 'off' as Tone];
+                const st = [ptCode(tt, 'lst', c.status, c.status), LST[c.status] ?? ('off' as Tone)] as const;
                 return (
                   <tr key={c.id}>
                     <td><b className="pt-code">{c.no}</b></td>
                     <td><b>{c.title}</b><div className="pt-ls">{c.categoryName} · {ymdKst(c.createdAt)}</div></td>
-                    <td>—<div className="pt-ls">매물 글에 적은 가격</div></td>
+                    <td>—<div className="pt-ls">{tt('priceInPost')}</div></td>
                     <td><Bg tone={st[1]}>{st[0]}</Bg></td>
-                    <td><Bg tone="off">조회 전</Bg></td>
+                    <td><Bg tone="off">{tt('notQueried')}</Bg></td>
                   </tr>
                 );
               })}
@@ -94,14 +100,14 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
 
       {tab === 'catalog' && (
         <>
-          {t.catalog.length === 0 ? <Empty>등록한 제품이 없습니다. 렌탈 · 판매 품목을 아래에서 등록합니다.</Empty> : (
-            <Tw head={['제품', '형태', '가격', '상태', '']} numCols={[2]}>
+          {t.catalog.length === 0 ? <Empty>{tt('emptyCatalog')}</Empty> : (
+            <Tw head={[tt('thProduct'), tt('thKind'), tt('thPrice'), tt('thState'), '']} numCols={[2]}>
               {t.catalog.map((c) => (
                 <tr key={c.id}>
                   <td><b>{c.name}</b></td>
-                  <td>{c.saleKind === 'RENTAL' ? '렌탈' : '판매'}</td>
-                  <td className="num">{won(c.price)}원{c.saleKind === 'RENTAL' ? '/월' : ''}</td>
-                  <td>{c.state === 'LISTED' ? <Bg tone="ok">등록됨</Bg> : <Bg tone="off">숨김</Bg>}</td>
+                  <td>{c.saleKind === 'RENTAL' ? tt('rental') : tt('sale')}</td>
+                  <td className="num">{won(c.price)}{won0}{c.saleKind === 'RENTAL' ? tt('perMonth') : ''}</td>
+                  <td>{c.state === 'LISTED' ? <Bg tone="ok">{tt('listed')}</Bg> : <Bg tone="off">{tt('hidden')}</Bg>}</td>
                   <td><CatalogToggle id={c.id} state={c.state} /></td>
                 </tr>
               ))}
@@ -111,7 +117,7 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
         </>
       )}
 
-      <Note kind="info"><b>{t.notes.track}</b>{t.enabled.length === 0 ? ' 지금 승인된 서비스에 전용 트랙 업종(정비 · 중고차 · 렌탈)이 없습니다.' : ''}</Note>
+      <Note kind="info"><b>{t.notes.track}</b>{t.enabled.length === 0 ? tt('noTrack') : ''}</Note>
     <i hidden data-root-end="" /></>
   );
 }

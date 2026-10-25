@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
-import { viewLimitText, type PublicSettings } from '@/components/billing/viewLimit';
+import { viewLimitText, type PublicSettings, type ViewLimitMsgs } from '@/components/billing/viewLimit';
 import { MyHead, Note, wonP } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 
@@ -37,6 +37,8 @@ export default async function UpgradePage() {
     apiGet<SubNow>('/me/subscription', 0).catch(() => null),
   ]);
   const t = await getTranslations('my.subUp');
+  const tv = await getTranslations('billing.viewLimit');
+  const vlm: ViewLimitMsgs = { promo: tv('promo'), unlimited: tv('unlimited'), perMonth: (n) => tv('perMonth', { n }) };
   const lim = (n: number | null) => (n == null ? t('unlimited') : String(n));
   const used = now?.codesIssued ?? 0;
   const cap = now?.includedCodes ?? null;
@@ -77,7 +79,7 @@ export default async function UpgradePage() {
                 <td className="my-num">{p.includedCodes}</td>
                 <td className="my-num">{lim(p.listingSlots)}</td>
                 <td className="my-num">{p.proposalLimit == null ? t('unlimited') : t('perMonth', { n: String(p.proposalLimit) })}</td>
-                <td className="my-num" data-view-limit={p.code}>{viewLimitText(settings, p)}</td>
+                <td className="my-num" data-view-limit={p.code}>{viewLimitText(settings, p, vlm)}</td>
                 <td className="my-num">{p.prioritySlotCount}</td>
               </tr>
             ))}

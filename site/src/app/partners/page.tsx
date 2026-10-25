@@ -7,10 +7,13 @@ import { me } from '@/lib/session';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { AffiliateApply } from '@/components/partners/AffiliateApply';
 import { P2Promo } from '@/components/partner/P2Promo';
-import { krw, ymd, ORDER_STATE } from '@/components/partners/fmt';
+import { krw, ymd, ORDER_STATE, codeText } from '@/components/partners/fmt';
+import { getTranslations } from 'next-intl/server';
 import type { AffDashboard, AffLink, AffProduct, Notice } from '@/components/partners/types';
 
-export const metadata: Metadata = { title: '파트너센터' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('affiliate'))('dash.title') };
+}
 
 interface LeadDash { applied: boolean; status?: string; note?: string }
 
@@ -25,17 +28,19 @@ interface LeadDash { applied: boolean; status?: string; note?: string }
  *
  * 이번 달 클릭 · 주문 · 수익 · 정산 예정, 목표 달성률, 최근 주문.
  * ★ 목표는 운영이 정합니다 — 없으면 "아직 정해지지 않았습니다" 로 둡니다(0% 로 보이면 오해합니다).
+ * v10.100 (다국어 2-5a) — 글자는 사전 affiliate.dash(tr). 금액 · 날짜 · 「○분 전」 표기는 2-5c 까지 한국어 그대로.
  * ★ 제휴수수료는 회사가 지급합니다. 소개비(당사자끼리)와 헷갈리지 않게 note 를 항상 띄웁니다.
  */
 export default async function PartnersDashboard() {
   const p = await me();
   if (!p) redirect('/login');
+  const tr = await getTranslations('affiliate');
 
   const d = await apiGetPersonal<AffDashboard>('/partner/affiliate/dashboard').catch(() => null);
 
   if (!d) {
     return (
-      <><div className="p2body"><div className="page-head"><h1>대시보드</h1></div><p className="form-error">대시보드를 불러오지 못했습니다. 잠시 후 다시 시도해 주십시오.</p></div><i hidden data-root-end="" /></>
+      <><div className="p2body"><div className="page-head"><h1>{tr('dash.h1')}</h1></div><p className="form-error">{tr('dash.loadFail')}</p></div><i hidden data-root-end="" /></>
     );
   }
 
@@ -47,29 +52,29 @@ export default async function PartnersDashboard() {
     const applied = !!lead?.applied;
     return (
       <div className="p2body">
-        <div className="page-head"><h1>파트너센터</h1></div>
+        <div className="page-head"><h1>{tr('dash.title')}</h1></div>
         <p className="lead">
-          제휴상품 링크를 뿌리고, 링크로 들어온 주문이 확정되면 <b>건당 정해진 수수료</b>를 소개뱅크가 지급합니다.
+          {tr.rich('dash.apply.lead', { b: (c) => <b>{c}</b> })}
         </p>
-        <h2 id="apply" className="sec-title">파트너 신청 방법</h2>
+        <h2 id="apply" className="sec-title">{tr('dash.apply.title')}</h2>
         <ol className="p2steps">
           <li className={actorOk ? 'done' : 'now'}>
-            <strong>1. 본인 · 사업자 확인</strong> <span className="dim">{p.businessVerifiedAt ? '사업자 인증 완료' : actorOk ? '본인인증 완료 · 개인' : '필요'}</span>
-            <p>본인인증을 하면 개인으로 파트너가 됩니다(수수료는 원천징수 3.3% 뒤 지급). 사업자로 받으시려면 사업자 인증을 하십시오 — 선택입니다.</p>
-            {!actorOk && <Link className="btn-sm" href="/verify">본인인증하기</Link>}
+            <strong>{tr('dash.apply.s1')}</strong> <span className="dim">{p.businessVerifiedAt ? tr('dash.apply.s1Biz') : actorOk ? tr('dash.apply.s1Personal') : tr('dash.apply.s1Need')}</span>
+            <p>{tr('dash.apply.s1Desc')}</p>
+            {!actorOk && <Link className="btn-sm" href="/verify">{tr('common.verifyNow')}</Link>}
           </li>
           <li className={applied ? 'done' : actorOk ? 'now' : ''}>
-            <strong>2. 파트너 신청</strong> <span className="dim">{applied ? '신청함' : '대기'}</span>
-            <p>입점 신청과 같은 절차입니다. 한 번 신청하시면 됩니다.</p>
+            <strong>{tr('dash.apply.s2')}</strong> <span className="dim">{applied ? tr('dash.apply.applied') : tr('dash.apply.waiting')}</span>
+            <p>{tr('dash.apply.s2Desc')}</p>
             {actorOk && !applied && <AffiliateApply />}
           </li>
           <li className={applied ? 'now' : ''}>
-            <strong>3. 운영 승인</strong>{' '}
-            <span className="dim">{applied ? (lead?.status === 'ACTIVE' ? '승인됨' : '심사 중') : '대기'}</span>
-            <p>사람이 봅니다 — 자동 승인은 두지 않았습니다. 승인되면 이 화면에 수익 현황이 나옵니다.</p>
+            <strong>{tr('dash.apply.s3')}</strong>{' '}
+            <span className="dim">{applied ? (lead?.status === 'ACTIVE' ? tr('dash.apply.approved') : tr('dash.apply.reviewing')) : tr('dash.apply.waiting')}</span>
+            <p>{tr('dash.apply.s3Desc')}</p>
           </li>
         </ol>
-        <p className="hint">처음이시면 <Link href="/partners/guides">파트너가이드</Link>를 먼저 보십시오.</p>
+        <p className="hint">{tr.rich('dash.apply.hint', { a: (c) => <Link href="/partners/guides">{c}</Link> })}</p>
       </div>
     );
   }
@@ -89,11 +94,12 @@ export default async function PartnersDashboard() {
   const shareUrl = firstLink ? origin + (firstLink.sharePath ?? `/r/${firstLink.code}`) : null;
   const n = (v: number | string) => Number(v || 0).toLocaleString('ko-KR');
 
-  const delta = (v: number | undefined, unit: string, base = '어제보다') => v == null ? null
-    : v > 0 ? <span className="up">▲ {base} {n(v)}{unit} 증가</span> : v < 0 ? <span className="dn">▼ {base} {n(-v)}{unit} 감소</span> : <span>{base.replace('보다', '와')} 같음</span>;
+  const DELTA = { won: ['dash.delta.upWon', 'dash.delta.downWon'], people: ['dash.delta.upPeople', 'dash.delta.downPeople'], count: ['dash.delta.upCount', 'dash.delta.downCount'] } as const;
+  const delta = (v: number | undefined, unit: keyof typeof DELTA) => v == null ? null
+    : v > 0 ? <span className="up">{tr(DELTA[unit][0], { n: n(v) })}</span> : v < 0 ? <span className="dn">{tr(DELTA[unit][1], { n: n(-v) })}</span> : <span>{tr('dash.delta.same')}</span>;
   const t = d.today;
   const tier = d.tier;
-  const GR: Record<string, string> = { BRONZE: '브론즈', SILVER: '실버', GOLD: '골드', PLATINUM: '플래티넘' };
+  const GR = (g: string) => codeText(tr, 'dash.grade', g);
   const pay = d.payoutDate ? `${Number(d.payoutDate.slice(5, 7))}월 ${Number(d.payoutDate.slice(8, 10))}일` : null;
   const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); return m < 60 ? `${m}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
   const kpi = (color: string, icon: ReactNode, label: string, value: string, unit: string, sub?: ReactNode) => (
@@ -112,27 +118,27 @@ export default async function PartnersDashboard() {
     <div className="p2dgrid">
       <div className="p2dl">
         <div className="p2kpis6">
-          {kpi('var(--sgb-mall)', <b style={{ color: '#fff', fontSize: 16 }}>₩</b>, '오늘 소개수익', n(t?.earned ?? 0), '원', delta(t?.earnedDelta, '원'))}
-          {kpi('var(--sgb-link)', svg(<><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></>), '이번 달 누적수익', n(m.earned), '원',
-            m.deltaPct != null ? (m.deltaPct >= 0 ? <span className="up">▲ 지난 달 같은 기간 대비 {m.deltaPct}% ↑</span> : <span className="dn">▼ 지난 달 같은 기간 대비 {-m.deltaPct}% ↓</span>) : '확정 · 정산된 주문')}
-          {kpi('var(--sgb-biz)', svg(<><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M2 10h20" /></>), '정산 예정금액', n(m.payable), '원', pay ? <>🕐 {pay} 정산 예정 · <Link href="/partners/settlements">정산내역 ›</Link></> : <Link href="/partners/settlements">정산내역 ›</Link>)}
-          {kpi('var(--sgb-link)', svg(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>), '소개 고객 수', n(d.customers?.today ?? 0), '명', delta(d.customers?.delta, '명'))}
-          {kpi('var(--sgb-navy)', svg(<><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></>), '거래 건수', n(t?.orders ?? 0), '건', delta(t?.ordersDelta, '건'))}
+          {kpi('var(--sgb-mall)', <b style={{ color: '#fff', fontSize: 16 }}>₩</b>, tr('dash.kpi.todayEarned'), n(t?.earned ?? 0), '원', delta(t?.earnedDelta, 'won'))}
+          {kpi('var(--sgb-link)', svg(<><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></>), tr('dash.kpi.monthEarned'), n(m.earned), '원',
+            m.deltaPct != null ? (m.deltaPct >= 0 ? <span className="up">{tr('dash.kpi.momUp', { pct: String(m.deltaPct) })}</span> : <span className="dn">{tr('dash.kpi.momDown', { pct: String(-m.deltaPct) })}</span>) : tr('dash.kpi.confirmedSettled'))}
+          {kpi('var(--sgb-biz)', svg(<><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M2 10h20" /></>), tr('dash.kpi.payable'), n(m.payable), '원', pay ? <>{tr.rich('dash.kpi.payOn', { date: pay, a: (c) => <Link href="/partners/settlements">{c}</Link> })}</> : <Link href="/partners/settlements">{tr('dash.kpi.settlementsLink')}</Link>)}
+          {kpi('var(--sgb-link)', svg(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>), tr('dash.kpi.customers'), n(d.customers?.today ?? 0), tr('dash.kpi.unitPeople'), delta(d.customers?.delta, 'people'))}
+          {kpi('var(--sgb-navy)', svg(<><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></>), tr('dash.kpi.orders'), n(t?.orders ?? 0), tr('dash.kpi.unitCount'), delta(t?.ordersDelta, 'count'))}
           <div className="p2kpi">
             <span className="ic" style={{ background: 'var(--sgb-or-text)' }}>{svg(<path d="M2 7l5 3 5-6 5 6 5-3-2 12H4z" />)}</span>
             <div style={{ flex: 1 }}>
-              <div className="k">파트너 등급 ⓘ</div>
-              <div className="v tier">{tier?.grade ? `${GR[tier.grade] ?? tier.grade} 파트너` : '—'}</div>
+              <div className="k">{tr('dash.kpi.grade')}</div>
+              <div className="v tier">{tier?.grade ? tr('dash.kpi.gradeName', { grade: GR(tier.grade) }) : '—'}</div>
               <div className="p2bar" aria-hidden style={{ marginTop: 6 }}><i style={{ width: `${tier?.progress ?? 0}%` }} /></div>
-              <div className="n">{tier?.remaining != null && tier.next ? `다음 등급(${GR[tier.next] ?? tier.next})까지 ${n(tier.remaining)}원 남음` : tier?.next ? (tier.note ?? '다음 등급 기준은 운영이 정합니다.') : '가장 높은 등급입니다'}</div>
+              <div className="n">{tier?.remaining != null && tier.next ? tr('dash.kpi.nextRemain', { grade: GR(tier.next), amount: `${n(tier.remaining)}원` }) : tier?.next ? (tier.note ?? tr('dash.kpi.nextNote')) : tr('dash.kpi.top')}</div>
             </div>
           </div>
         </div>
-        <p className="p2sub" data-p2-devkpi>오늘 클릭 {n(todayClicks)}회 · 이번 달 클릭 {n(m.clicks)}회 · 사용 중 링크 {n(activeLinks)}개 <Link href="/partners/links">내 소개링크 ›</Link></p>
+        <p className="p2sub" data-p2-devkpi>{tr.rich('dash.kpi.devLine', { today: n(todayClicks), month: n(m.clicks), links: n(activeLinks), a: (c) => <Link href="/partners/links">{c}</Link> })}</p>
 
         <section className="p2card2">
-          <div className="p2sechd"><h2>오늘의 추천상품 <span aria-hidden>🚀</span></h2><Link href="/partners/products">전체 상품 보기 ›</Link></div>
-          <p className="p2sub">지금 가장 반응이 좋은 인기 상품이에요. 소개하고 추가 수익을 만들어보세요!</p>
+          <div className="p2sechd"><h2>{tr('dash.rec.title')} <span aria-hidden>🚀</span></h2><Link href="/partners/products">{tr('dash.rec.all')}</Link></div>
+          <p className="p2sub">{tr('dash.rec.sub')}</p>
           {products.length ? (
             <div className="p2pcards">
               {products.slice(0, 3).map((x) => (
@@ -144,88 +150,88 @@ export default async function PartnersDashboard() {
                     </div>
                   ) : null}
                   <div className="bd">
-                    {x.tag ? <span className={`tag ${x.tag === 'HOT' ? 'hot' : 'high'}`}>{x.tag === 'HOT' ? '🔥 인기' : '❤ 고수익'}</span> : null}
+                    {x.tag ? <span className={`tag ${x.tag === 'HOT' ? 'hot' : 'high'}`}>{x.tag === 'HOT' ? tr('dash.rec.tagHot') : tr('dash.rec.tagHigh')}</span> : null}
                     <strong>{x.name}</strong>
                     <p>{x.description ?? x.advertiser ?? ''}</p>
-                    <div className="earn">1건 판매 시 소개수익 {krw(x.commission)}</div>
-                    <Link className="bt" href="/partners/products">상품 소개하기 ›</Link>
+                    <div className="earn">{tr('dash.rec.earn', { amount: krw(x.commission) })}</div>
+                    <Link className="bt" href="/partners/products">{tr('dash.rec.introduce')}</Link>
                   </div>
                 </div>
               ))}
             </div>
-          ) : <p className="empty">지금 판매 중인 제휴상품이 없습니다.</p>}
+          ) : <p className="empty">{tr('common.noProductsOnSale')}</p>}
         </section>
 
         <section className="p2card2">
-          <h2>빠른 홍보하기</h2>
-          <p className="p2sub">내 소개링크로 지금 바로 공유하고 수익을 만들어보세요!</p>
+          <h2>{tr('dash.promo.title')}</h2>
+          <p className="p2sub">{tr('dash.promo.sub')}</p>
           <P2Promo url={shareUrl} label={firstLink?.product ?? null} />
         </section>
       </div>
 
       <div className="p2dr">
         <section className="p2card2 sm">
-          <div className="p2sechd"><h2>이번 달 목표 달성률</h2><Link href="/partners/revenues">상세보기 ›</Link></div>
+          <div className="p2sechd"><h2>{tr('dash.goal.title')}</h2><Link href="/partners/revenues">{tr('dash.goal.detail')}</Link></div>
           {d.goal ? (
             <>
               <div className="p2rate"><b>{rate ?? 0}%</b><span>{krw(m.earned)} / {krw(d.goal.target)}</span></div>
               <div className="p2bar" aria-hidden><i style={{ width: `${Math.min(rate ?? 0, 100)}%` }} /></div>
               {d.goalCheer ? <p className="p2sub">💬 &quot;{d.goalCheer}&quot;</p> : null}
-              {d.goal.reward != null && <p className="p2sub">달성 시 보상 {krw(d.goal.reward)} · {d.goal.source} 목표</p>}
+              {d.goal.reward != null && <p className="p2sub">{tr('dash.goal.reward', { amount: krw(d.goal.reward), source: String(d.goal.source) })}</p>}
             </>
           ) : (
-            <p className="p2sub">이번 달 목표가 아직 정해지지 않았습니다. 목표는 운영이 정합니다.</p>
+            <p className="p2sub">{tr('dash.goal.none')}</p>
           )}
         </section>
 
         <section className="p2card2 sm">
-          <div className="p2sechd"><h2>지금, 이런 성과가 있어요! <span aria-hidden>🔥</span></h2><Link href="/partners/orders">더보기 ›</Link></div>
+          <div className="p2sechd"><h2>{tr('dash.feed.title')} <span aria-hidden>🔥</span></h2><Link href="/partners/orders">{tr('common.more')}</Link></div>
           {d.feed?.length ? (
             <div className="p2feed" data-p2-feed>
               {d.feed.map((f, i) => (
                 <div key={i} className="rw">
-                  <span className="t">{ago(f.at)}</span> {f.area ? `${f.area} ` : ''}회원님이 <b>{f.product}</b>{f.kind === 'MALL' ? '을(를) 구매했어요!' : '을(를) 신청했어요!'}{' '}
+                  <span className="t">{ago(f.at)}</span> {tr.rich(f.kind === 'MALL' ? 'dash.feed.mall' : 'dash.feed.service', { area: f.area || 'none', product: f.product, b: (c) => <b>{c}</b> })}{' '}
                   {f.amount > 0 ? <em>+{krw(f.amount)}</em> : null}
                 </div>
               ))}
             </div>
-          ) : <p className="p2sub">최근 7일 동안 제휴 링크로 들어온 구매 소식이 없습니다.</p>}
+          ) : <p className="p2sub">{tr('dash.feed.empty')}</p>}
           {d.recent?.length ? (
-            <details className="p2mine"><summary>내 링크의 최근 주문 {d.recent.length}건</summary>
+            <details className="p2mine"><summary>{tr('dash.feed.mine', { n: String(d.recent.length) })}</summary>
               <div className="p2feed">
                 {d.recent.map((o) => (
                   <div key={o.orderNo} className="rw">
                     <span className="t">{ymd(o.orderedAt)}</span> <b>{o.product}</b>{' '}
-                    <span className={'state ' + (ORDER_STATE[o.state]?.c ?? '')}>{ORDER_STATE[o.state]?.t ?? o.state}</span>{' '}
+                    <span className={'state ' + (ORDER_STATE[o.state]?.c ?? '')}>{codeText(tr, 'orderState', o.state)}</span>{' '}
                     <em>+{krw(o.commission)}</em>
                   </div>
                 ))}
               </div>
             </details>
           ) : null}
-          <p className="p2sub" style={{ marginTop: 6 }}>다른 회원의 이름은 보이지 않습니다 — 시 · 도와 상품만 알려 드립니다.</p>
+          <p className="p2sub" style={{ marginTop: 6 }}>{tr('dash.feed.privacy')}</p>
         </section>
 
         <Link className="p2navy" href="/partners/guides">
-          <div className="p2nhd"><b><span aria-hidden>🚀</span> 소개뱅크 PARTNERS</b><span aria-hidden>›</span></div>
-          <p>지금, 더 큰 수익의 기회가<br />기다리고 있습니다.</p>
+          <div className="p2nhd"><b><span aria-hidden>🚀</span> {tr('dash.navy.brand')}</b><span aria-hidden>›</span></div>
+          <p>{tr.rich('dash.navy.text', { br: () => <br /> })}</p>
           <ul>
-            <li>좋은 제품을 소개하고</li>
-            <li>누군가의 일상을 더 좋게 만들고</li>
-            <li>당신의 수익도 함께 성장합니다.</li>
+            <li>{tr('dash.navy.li1')}</li>
+            <li>{tr('dash.navy.li2')}</li>
+            <li>{tr('dash.navy.li3')}</li>
           </ul>
-          <div className="go">함께, 더 멀리! ↗</div>
+          <div className="go">{tr('dash.navy.go')}</div>
         </Link>
 
         <section className="p2card2 sm">
-          <div className="p2sechd"><h2>공지사항</h2><Link href="/partners/notices">더보기 ›</Link></div>
+          <div className="p2sechd"><h2>{tr('dash.notices.title')}</h2><Link href="/partners/notices">{tr('common.more')}</Link></div>
           {notices.length ? (
             <ul className="p2ntc">
               {notices.slice(0, 3).map((x) => (
-                <li key={x.id}><Link href={`/partners/notices#n-${x.id}`}>{x.isPinned ? '[필독] ' : ''}{x.title}</Link><span>{ymd(x.publishedAt)}</span></li>
+                <li key={x.id}><Link href={`/partners/notices#n-${x.id}`}>{x.isPinned ? tr('dash.notices.pinned') : ''}{x.title}</Link><span>{ymd(x.publishedAt)}</span></li>
               ))}
             </ul>
-          ) : <p className="p2sub">등록된 공지가 없습니다.</p>}
+          ) : <p className="p2sub">{tr('common.noNotices')}</p>}
         </section>
 
         {d.note && <p className="p2note">{d.note}</p>}

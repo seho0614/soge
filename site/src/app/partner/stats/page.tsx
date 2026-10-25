@@ -3,9 +3,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
-import { Empty, GRADE_KO, Note, Pgh, S2, Tile, won } from '@/components/partner/ui';
+import { Empty, GRADE_KO, Note, Pgh, ptCode, S2, Tile, won } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '실적 · 등급' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partner.meta'))('stats') };
+}
 
 interface S {
   grade: string; received: number; viewed: number; billed: number;
@@ -22,43 +25,45 @@ interface S {
 export default async function StatsPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('partner.stats');
+  const tp = await getTranslations('partner');
   const s = await apiGet<S>('/partner/stats', 0).catch(() => null);
-  if (!s) return <><Pgh title="실적" /><Empty>파트너가 아닙니다.</Empty><i hidden data-root-end="" /></>;
+  if (!s) return <><Pgh title={t('title')} /><Empty>{tp('common.notPartner')}</Empty><i hidden data-root-end="" /></>;
   const dist = (s.dist ?? []).filter((d) => d.grade || d.count > 0);
   const mx = Math.max(1, ...dist.map((d) => d.count));
   const total = dist.reduce((a, d) => a + d.count, 0);
   const totalFee = dist.reduce((a, d) => a + Number(d.fee), 0);
 
   return (
-    <><Pgh title="실적" sub="받은 리드가 어떤 등급으로 들어왔는지가 곧 지출 구조입니다." />
+    <><Pgh title={t('title')} sub={t('sub')} />
       <div className="pt-tiles">
-        <Tile label="받은 리드" value={Number(s.received).toLocaleString('ko-KR')} unit="건" href="/partner/leads" />
-        <Tile label="연락처 열람" value={Number(s.viewed).toLocaleString('ko-KR')} unit="건" href="/partner/cash" />
-        <Tile label="성사" value={(s.confirmed ?? 0).toLocaleString('ko-KR')} unit="건" sub="소비자가 확인한 이행" href="/partner/performance" />
-        <Tile label="성사율" value={s.convRate ?? '—'} unit={s.convRate != null ? '%' : undefined} sub={`파트너 등급 ${GRADE_KO[s.grade] ?? s.grade}`} />
+        <Tile label={t('recv')} value={Number(s.received).toLocaleString('ko-KR')} unit={tp('common.unit.case')} href="/partner/leads" />
+        <Tile label={t('viewed')} value={Number(s.viewed).toLocaleString('ko-KR')} unit={tp('common.unit.case')} href="/partner/cash" />
+        <Tile label={t('conv')} value={(s.confirmed ?? 0).toLocaleString('ko-KR')} unit={tp('common.unit.case')} sub={t('convSub')} href="/partner/performance" />
+        <Tile label={t('convRate')} value={s.convRate ?? '—'} unit={s.convRate != null ? '%' : undefined} sub={t('gradeSub', { grade: ptCode(tp, 'grade', s.grade, GRADE_KO[s.grade] ?? s.grade) })} />
       </div>
 
-      <S2>8등급 분포</S2>
+      <S2>{t('dist')}</S2>
       <div className="pt-tw">
         <table className="pt-tb2">
-          <thead><tr><th>등급</th><th className="num">건수</th><th>분포</th><th className="num">확인비용 합계</th></tr></thead>
+          <thead><tr><th>{t('thGrade')}</th><th className="num">{t('thCount')}</th><th>{t('thDist')}</th><th className="num">{t('thFee')}</th></tr></thead>
           <tbody>
             {dist.map((d) => (
               <tr key={d.label}>
                 <td><span className={`pt-gbadge ${d.grade ? `g${d.label.replace(/[+\-]/, '')}` : 'miss'}`}>{d.label}</span></td>
-                <td className="num"><b>{d.count}</b>건</td>
+                <td className="num"><b>{d.count}</b>{tp('common.unit.case')}</td>
                 <td><div className="pt-bar"><i style={{ width: `${Math.round((d.count / mx) * 100)}%` }} /></div></td>
-                <td className="num">{won(d.fee)}원</td>
+                <td className="num">{won(d.fee)}{tp('common.unit.won')}</td>
               </tr>
             ))}
-            <tr><td><b>합계</b></td><td className="num"><b>{total}</b>건</td><td /><td className="num"><b>{won(totalFee)}원</b></td></tr>
+            <tr><td><b>{t('total')}</b></td><td className="num"><b>{total}</b>{tp('common.unit.case')}</td><td /><td className="num"><b>{won(totalFee)}{tp('common.unit.won')}</b></td></tr>
           </tbody>
         </table>
       </div>
-      <Note kind="info"><b>등급 분포가 곧 지출 구조입니다.</b> S · A 대역이 늘면 건수는 그대로여도 확인비용 지출이 커집니다. 「미판정」은 알림톡 결과가 없어 기준 단가 그대로 낸 건입니다.</Note>
+      <Note kind="info">{t.rich('note', { b: (c) => <b>{c}</b> })}</Note>
       <div className="pt-dact">
-        <Link className="pt-bo" href="/partner/trust">신뢰지표</Link>
-        <Link className="pt-bo" href="/partner/performance">성과 관리</Link>
+        <Link className="pt-bo" href="/partner/trust">{t('trust')}</Link>
+        <Link className="pt-bo" href="/partner/performance">{t('perf')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

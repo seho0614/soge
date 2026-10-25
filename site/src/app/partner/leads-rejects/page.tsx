@@ -6,8 +6,11 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { FeeDisputeForm } from '@/components/FeeDisputeForm';
 import { Bg, Empty, Note, Pgh, S2, Tw, won, type Tone } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '반려 · 이의신청' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partnerOps.rejects'))('title') };
+}
 
 interface Fee {
   id: number; amount: string; state: string; voidRule: string | null; summary: string; incurredAt: string;
@@ -20,8 +23,8 @@ interface Rej {
     requestedAt: string; state: string; decisionReason: string | null; decidedAt: string | null; amount: number; settleMode: string; restored: number | null }>;
   note: string;
 }
-const ST: Record<string, [string, Tone]> = { REQUESTED: ['본사 심사중', 'wait'], ACCEPTED: ['인정', 'ok'], DISMISSED: ['기각', 'no'] };
-const RC: Record<string, string> = { FALSE_INFO: '허위 정보', UNREACHABLE: '연락 불가', DUPLICATE: '중복 접수', OUT_OF_SCOPE: '다른 지역 · 분야 요청' };
+/* 상태 글자 · 반려 사유 글자는 사전 partnerOps.rejects.st.<코드> · rc.<코드> (v10.100 · 2-5a) */
+const ST: Record<string, Tone> = { REQUESTED: 'wait', ACCEPTED: 'ok', DISMISSED: 'no' };
 
 /**
  * SB-PTC-CTR-330 반려 · 이의신청 — v10.31 (W5 · 10/10 시안 기준 scPtnRej) · 주소도 시안대로 /partner/leads-rejects(옛 /partner/rejects 는 여기로)
@@ -38,23 +41,26 @@ export default async function LeadsRejectsPage() {
   ]);
   const open = (f?.rows ?? []).filter((x) => x.disputable);
   const rows = r?.rows ?? [];
+  const t = await getTranslations('partnerOps.rejects');
+  const tl = await getTranslations('partnerOps.leads');
+  const code = (g: 'st' | 'rc', c: string) => (t.has(`${g}.${c}` as never) ? t(`${g}.${c}` as never) : c);
 
   return (
-    <><Pgh title="반려 · 이의신청" sub="잘못 들어온 리드는 반려를 신청합니다. 인정되면 확인비용이 환급됩니다." />
-      {rows.length === 0 ? <Empty>신청한 반려가 없습니다.</Empty> : (
-        <Tw id="my-disputes" head={['신청번호', '리드', '사유', '신청일', '결과']}>
+    <><Pgh title={t('title')} sub={t('sub')} />
+      {rows.length === 0 ? <Empty>{t('empty')}</Empty> : (
+        <Tw id="my-disputes" head={[t('th.no'), t('th.lead'), t('th.reason'), t('th.date'), t('th.result')]}>
           {rows.map((d) => {
-            const st = ST[d.state] ?? [d.state, 'wait' as Tone];
+            const st: [string, Tone] = [code('st', d.state), ST[d.state] ?? 'wait'];
             return (
               <tr key={d.id}>
                 <td><b className="pt-code">{d.no}</b></td>
                 <td><span className="pt-code">{d.leadNo}</span><div className="pt-ls">{d.summary}</div></td>
-                <td className="reason"><b>{RC[d.reasonCode] ?? d.reasonCode}</b> — {d.reason}</td>
+                <td className="reason"><b>{code('rc', d.reasonCode)}</b> — {d.reason}</td>
                 <td>{ymdKst(d.requestedAt)}</td>
                 <td>
                   <Bg tone={st[1]}>{st[0]}</Bg>
                   {d.state === 'ACCEPTED'
-                    ? <div className="pt-ls">확인비용 {won(d.restored ?? d.amount)}원 {d.settleMode === 'PREPAID' ? '환급' : '청구에서 뺌(전환 전 후불분)'}</div>
+                    ? <div className="pt-ls">{tl('fee')} {won(d.restored ?? d.amount)}원 {d.settleMode === 'PREPAID' ? t('refunded') : t('deducted')}</div>
                     : d.decisionReason ? <div className="pt-ls">{d.decisionReason}</div> : null}
                 </td>
               </tr>
@@ -62,23 +68,23 @@ export default async function LeadsRejectsPage() {
           })}
         </Tw>
       )}
-      <Note kind="info"><b>반려는 접수 72시간 이내 · 한 건에 한 번 · 월 15% 한도 세 조건을 모두 만족해야 자격이 있습니다.</b> 자격은 서버(DB)가 봅니다.</Note>
+      <Note kind="info">{t.rich('eligNote', { b: (c) => <b>{c}</b> })}</Note>
       {r?.cap && (
         <div className="pt-cap" data-reject-cap>
           <div className="cb"><div className="cf" style={{ width: `${Math.min(100, Math.round((r.cap.used / Math.max(1, r.cap.cap)) * 100))}%` }} /></div>
-          <div className="cl"><b>{r.cap.used} / {r.cap.cap}건</b><span className="pt-ls">{r.cap.month} · 접수 {r.cap.received}건의 15%</span></div>
+          <div className="cl"><b>{tl('capCount', { used: String(r.cap.used), cap: String(r.cap.cap) })}</b><span className="pt-ls">{r.cap.month} · {tl('capOf', { n: String(r.cap.received) })}</span></div>
         </div>
       )}
-      <Note kind="warn"><b>상담 결렬은 반려 사유가 아닙니다.</b> 판정은 위험감지 규칙 근거로 본사가 합니다 — 인정되면 차감한 그대로(보너스 몫은 보너스로) 잔액에 돌아옵니다.</Note>
+      <Note kind="warn">{t.rich('judgeNote', { b: (c) => <b>{c}</b> })}</Note>
 
-      <S2>반려 신청</S2>
+      <S2>{tl('tab.rej')}</S2>
       <div className="pt-fset">
         <FeeDisputeForm fees={open.map((x) => ({ id: x.id, summary: x.summary, amount: x.amount, deliveredAt: x.deliveredAt }))} />
       </div>
-      <Note kind="plain">그 밖의 이의(금액 · 등급)는 <Link href="/support">고객센터</Link>로 문의해 주십시오.</Note>
+      <Note kind="plain">{t.rich('otherNote', { a: (c) => <Link href="/support">{c}</Link> })}</Note>
       <div className="pt-dact">
-        <Link className="pt-bo" href="/partner/leads">상담 신청으로</Link>
-        <Link className="pt-bo" href="/partner/cash">리드 이용료</Link>
+        <Link className="pt-bo" href="/partner/leads">{t('toLeads')}</Link>
+        <Link className="pt-bo" href="/partner/cash">{t('toCash')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

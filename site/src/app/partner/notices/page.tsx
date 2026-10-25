@@ -6,8 +6,12 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { Bg, Empty, Note, Pgh, Tabs, Tw } from '@/components/partner/ui';
 import { ActButton } from '@/components/partner/act';
+import { getTranslations } from 'next-intl/server';
+import { isGwanKey } from '@/i18n/keys';
 
-export const metadata: Metadata = { title: '공지 · 알림' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partner.meta'))('notices') };
+}
 
 interface N {
   id: string; title: string; body: string | null;
@@ -16,7 +20,7 @@ interface N {
 }
 interface Notice { id: string; gwanCode: string | null; title: string; body: string; isPinned: boolean; publishedAt: string | null }
 
-const GWAN: Record<string, string> = { MNY: '소개장터', MAL: '안심소개', BIZ: '소개창업', HLT: '소개몰' };
+/* v10.100 (다국어 2-5a) — 관 이름은 머리줄과 같은 사전 header.gwan.<코드> */
 
 /**
  * SB-PTC-CTR-700 공지 · 알림 센터 — v10.29 시안 scPtnNoti 배치(탭 「공지사항 · 알림」 → 표 / 알림 줄)
@@ -28,6 +32,8 @@ const GWAN: Record<string, string> = { MNY: '소개장터', MAL: '안심소개',
 export default async function NoticesPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('partner.notices');
+  const tg = await getTranslations('header.gwan');
   const sp = await searchParams;
   const tab = sp.tab === 'alarm' ? 'alarm' : 'notice';
 
@@ -38,36 +44,36 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
   const unread = rows.filter((r) => !r.readAt).length;
 
   return (
-    <><Pgh title="공지 · 알림" sub={unread > 0 ? <>본사 공지와 내 알림입니다. 읽지 않은 알림이 <b>{unread}건</b> 있습니다.</> : '본사 공지와 내 알림입니다.'} />
+    <><Pgh title={t('title')} sub={unread > 0 ? <>{t.rich('subUnread', { b: (c) => <b>{c}</b>, n: String(unread) })}</> : t('sub')} />
       <Tabs cur={tab} items={[
-        { key: 'notice', label: '공지사항', count: notices.length, href: '/partner/notices' },
-        { key: 'alarm', label: '알림', count: unread, href: '/partner/notices?tab=alarm' },
+        { key: 'notice', label: t('tabNotice'), count: notices.length, href: '/partner/notices' },
+        { key: 'alarm', label: t('tabAlarm'), count: unread, href: '/partner/notices?tab=alarm' },
       ]} />
 
       {tab === 'notice' ? (
-        notices.length === 0 ? <Empty>등록된 공지가 없습니다.</Empty> : (
-          <Tw head={['제목', '분류', '등록일']}>
+        notices.length === 0 ? <Empty>{t('empty')}</Empty> : (
+          <Tw head={[t('thTitle'), t('thKind'), t('thDate')]}>
             {notices.map((x) => (
               <tr key={x.id}>
-                <td>{x.isPinned ? <><Bg tone="no">필독</Bg> </> : null}<b>{x.title}</b>
-                  {x.body ? <details><summary className="pt-ls">내용 보기</summary><p className="pt-ls" style={{ whiteSpace: 'pre-wrap' }}>{x.body}</p></details> : null}
+                <td>{x.isPinned ? <><Bg tone="no">{t('pinned')}</Bg> </> : null}<b>{x.title}</b>
+                  {x.body ? <details><summary className="pt-ls">{t('viewBody')}</summary><p className="pt-ls" style={{ whiteSpace: 'pre-wrap' }}>{x.body}</p></details> : null}
                 </td>
-                <td>{x.gwanCode ? GWAN[x.gwanCode] ?? x.gwanCode : '전체'}</td>
+                <td>{x.gwanCode ? (isGwanKey(x.gwanCode) ? tg(x.gwanCode) : x.gwanCode) : t('all')}</td>
                 <td>{x.publishedAt ? ymdKst(x.publishedAt) : '—'}</td>
               </tr>
             ))}
           </Tw>
         )
       ) : rows.length === 0 ? (
-        <Empty>아직 받은 알림이 없습니다.</Empty>
+        <Empty>{t('emptyAlarm')}</Empty>
       ) : (
         <div className="notice-list">
           {rows.map((n) => (
             <div key={n.id} className={`pt-lrow${n.readAt ? ' read' : ' unread'}`}>
               <div className="lt">
                 <div className="lh">
-                  <span className="pt-ck">{n.kind ?? '공지'}</span>
-                  {n.readAt ? <Bg tone="off">읽음</Bg> : <Bg tone="wait">안 읽음</Bg>}
+                  <span className="pt-ck">{n.kind ?? t('kindNotice')}</span>
+                  {n.readAt ? <Bg tone="off">{t('read')}</Bg> : <Bg tone="wait">{t('unread')}</Bg>}
                 </div>
                 <b>{n.title}</b>
                 <span className="pt-ls">{ymdKst(n.createdAt)}{n.body ? ` · ${n.body}` : ''}</span>
@@ -76,16 +82,16 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
               <div className="pt-lact">
                 {/* v10.27 (G-130) — 그 알림의 화면으로. 사이트 안 주소만(바깥 주소 · // 로 시작하는 것은 그리지 않음) */}
                 {(() => { const go = n.goUrl ?? n.linkUrl; return go && /^\/(?![\/\\])/.test(go)
-                  ? <Link className="pt-bo sm nt-go" href={go} data-ntgo="">보기</Link> : null; })()}
+                  ? <Link className="pt-bo sm nt-go" href={go} data-ntgo="">{t('view')}</Link> : null; })()}
               </div>
             </div>
           ))}
-          {unread > 0 && <div className="pt-dact"><ActButton url="/partner/notices/read-all" label="모두 읽음" done="모두 읽음으로 표시했습니다." /></div>}
+          {unread > 0 && <div className="pt-dact"><ActButton url="/partner/notices/read-all" label={t('readAll')} done={t('readAllDone')} /></div>}
         </div>
       )}
 
       <Note kind="info">
-        <b>알림톡을 놓치셔도 여기 남습니다.</b> 정책 변경과 청구 안내는 이 목록에서 다시 확인하실 수 있습니다.
+        {t.rich('note', { b: (c) => <b>{c}</b> })}
       </Note>
     <i hidden data-root-end="" /></>
   );

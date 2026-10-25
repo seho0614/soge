@@ -6,8 +6,11 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, SVC_ST, Tw, won } from '@/components/partner/ui';
 import { BlockEditor, MatrixEditor, ServiceActions } from '@/components/partner/ServiceTools';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '서비스 상세 · 상세페이지' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partnerOps.svcDetail'))('title') };
+}
 
 interface D {
   id: string; title: string; body: string | null; status: string; rejectReason: string | null; createdAt: string; updatedAt: string;
@@ -20,7 +23,7 @@ interface D {
   stats: { received: number; viewed: number };
   canEdit: boolean; canSuspend: boolean; canResume: boolean;
 }
-const ACT: Record<string, string> = { SUBMIT: '검수 요청', APPROVE: '승인', REJECT: '반려', EDIT: '수정 · 재검수', SUSPEND: '노출 중단', RESUME: '노출 재개' };
+/* 처리 · 검수 상태 글자는 사전 partnerOps.svcDetail.act.<코드> · svcSt.<코드> (v10.100 · 2-5a) */
 
 /**
  * SB-PTC-CTR-201 서비스 상세 · 상세페이지 — v10.31 (W5 · 10/10 시안 기준 scPtnSvcDetail)
@@ -31,50 +34,54 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
   const p = await me();
   if (!p) redirect('/login');
   const { id } = await params;
+  const t = await getTranslations('partnerOps.svcDetail');
+  const to = await getTranslations('partnerOps');
+  const svc = (c: string) => (to.has(`svcSt.${c}` as never) ? to(`svcSt.${c}` as never) : SVC_ST[c]?.[0] ?? c);
+  const act = (c: string) => (t.has(`act.${c}` as never) ? t(`act.${c}` as never) : c);
   const s = await apiGet<D>(`/partner/services/${encodeURIComponent(id)}`, 0).catch(() => null);
   if (!s) {
     return (
-      <><Pgh title="서비스 상세" />
-        <Empty>해당 서비스를 찾을 수 없습니다.</Empty>
-        <div className="pt-dact"><Link className="pt-bo" href="/partner/services">목록으로</Link></div>
+      <><Pgh title={t('short')} />
+        <Empty>{t('notFound')}</Empty>
+        <div className="pt-dact"><Link className="pt-bo" href="/partner/services">{t('toList')}</Link></div>
       <i hidden data-root-end="" /></>
     );
   }
-  const st = s.status === 'SUSPENDED' && s.suspendedBy === 'PARTNER' ? ['보관(노출 중단)', 'off'] as const : SVC_ST[s.status] ?? [s.status, 'off'] as const;
+  const st = s.status === 'SUSPENDED' && s.suspendedBy === 'PARTNER' ? [t('archived'), 'off'] as const : [svc(s.status), SVC_ST[s.status]?.[1] ?? 'off'] as const;
 
   return (
-    <><Pgh title="서비스 상세 · 상세페이지" sub="상세페이지는 블록을 쌓아 만듭니다." />
+    <><Pgh title={t('title')} sub={t('sub')} />
       <div className="pt-dsum">
-        <div className="dr"><span>서비스</span><b>{s.title}</b></div>
-        <div className="dr"><span>상태</span><b><Bg tone={st[1]}>{st[0]}</Bg></b></div>
-        <div className="dr"><span>등록 방식</span><b>{s.formLabel ?? '간단 등록'}{s.categoryName ? ` · ${s.categoryName}` : ''}</b></div>
-        <div className="dr"><span>서비스 ID</span><b className="pt-code">S-{s.id.slice(0, 8)}</b></div>
-        <div className="dr"><span>주요 타겟</span><b>{s.target ?? '—'}</b></div>
-        <div className="dr"><span>최고 확인비용</span><b>{s.topFee ? `${won(s.topFee)}원` : s.categoryFee ? `업종 기준 ${won(s.categoryFee)}원` : '—'}</b></div>
-        <div className="dr"><span>소개비</span><b>{s.referralRate != null ? `성사 ${Math.round(s.referralRate * 1000) / 10}%` : '—'}{s.rebateBonus ? ` · 재소개 ${won(s.rebateBonus)}원` : ''}</b></div>
-        <div className="dr"><span>받은 리드</span><b>{s.stats.received}건 (연락처 열람 {s.stats.viewed})</b></div>
-        <div className="dr"><span>수정일</span><b>{ymdKst(s.updatedAt)}</b></div>
+        <div className="dr"><span>{t('k.svc')}</span><b>{s.title}</b></div>
+        <div className="dr"><span>{t('k.state')}</span><b><Bg tone={st[1]}>{st[0]}</Bg></b></div>
+        <div className="dr"><span>{t('k.form')}</span><b>{s.formLabel ?? t('simple')}{s.categoryName ? ` · ${s.categoryName}` : ''}</b></div>
+        <div className="dr"><span>{t('k.id')}</span><b className="pt-code">S-{s.id.slice(0, 8)}</b></div>
+        <div className="dr"><span>{t('k.target')}</span><b>{s.target ?? '—'}</b></div>
+        <div className="dr"><span>{t('k.topFee')}</span><b>{s.topFee ? `${won(s.topFee)}원` : s.categoryFee ? t('catBase', { amt: `${won(s.categoryFee)}원` }) : '—'}</b></div>
+        <div className="dr"><span>{t('k.refFee')}</span><b>{s.referralRate != null ? t('onDeal', { pct: String(Math.round(s.referralRate * 1000) / 10) }) : '—'}{s.rebateBonus ? ` · ${t('rebate', { amt: `${won(s.rebateBonus)}원` })}` : ''}</b></div>
+        <div className="dr"><span>{t('k.leads')}</span><b>{t('recvLine', { n: String(s.stats.received), v: String(s.stats.viewed) })}</b></div>
+        <div className="dr"><span>{t('k.updated')}</span><b>{ymdKst(s.updatedAt)}</b></div>
       </div>
       {s.status === 'REJECTED' && s.rejectReason && (
-        <Note kind="warn"><b>반려 사유</b> — {s.rejectReason}<br />새로 등록하지 말고 「서비스 수정」으로 고쳐 다시 내십시오.</Note>
+        <Note kind="warn"><b>{t('rejReason')}</b> — {s.rejectReason}<br />{t('rejFix')}</Note>
       )}
 
-      <S2>상세페이지 블록</S2>
-      <Tw head={['블록', '상태', '내용', '']}>
+      <S2>{t('blocksH')}</S2>
+      <Tw head={[t('bth.block'), t('k.state'), t('bth.body'), '']}>
         {s.blocks.map((b) => (
           <tr key={b.kind} data-block-row={b.kind}>
             <td><b>{b.label}</b></td>
-            <td>{b.filled ? <Bg tone="ok">등록됨</Bg> : <Bg tone="off">비어 있음</Bg>}</td>
-            <td>{b.body ? <span style={{ whiteSpace: 'pre-wrap' }}>{b.body.length > 120 ? `${b.body.slice(0, 120)}…` : b.body}</span> : b.fileId ? '사진 1' : '—'}</td>
+            <td>{b.filled ? <Bg tone="ok">{t('filled')}</Bg> : <Bg tone="off">{t('emptyBlock')}</Bg>}</td>
+            <td>{b.body ? <span style={{ whiteSpace: 'pre-wrap' }}>{b.body.length > 120 ? `${b.body.slice(0, 120)}…` : b.body}</span> : b.fileId ? t('photo1') : '—'}</td>
             <td><BlockEditor id={s.id} kind={b.kind} label={b.label} body={b.body} fileId={b.fileId} /></td>
           </tr>
         ))}
       </Tw>
-      <Note kind="info"><b>상세페이지는 블록을 쌓아 만듭니다.</b> 블록 순서와 노출은 배포 없이 바뀝니다.</Note>
-      <Note kind="warn"><b>노출 중인 서비스를 수정하면 재검수 대상이 되어 다시 검수중으로 내려갑니다</b> — 그동안 리드가 들어오지 않습니다. 확인비용 · 소개비만 바꾸면 그대로입니다.</Note>
+      <Note kind="info">{t.rich('blockNote', { b: (c) => <b>{c}</b> })}</Note>
+      <Note kind="warn">{t.rich('editNote', { b: (c) => <b>{c}</b> })}</Note>
 
       {s.formType === 'MATRIX' && (<>
-        <S2>자동 견적 매트릭스</S2>
+        <S2>{t('mxH')}</S2>
         <MatrixEditor id={s.id} rows={s.matrix.rows} cols={s.matrix.cols} cells={s.matrix.cells} />
       </>)}
 
@@ -83,19 +90,19 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
                       baseFee={s.categoryFee != null ? Number(s.categoryFee) : null}
                       canEdit={s.canEdit} canSuspend={s.canSuspend} canResume={s.canResume} status={s.status} />
 
-      <S2>처리 이력</S2>
-      {s.events.length === 0 ? <Empty>이력이 없습니다.</Empty> : (
-        <Tw head={['일자', '처리', '상태', '사유']}>
+      <S2>{t('histH')}</S2>
+      {s.events.length === 0 ? <Empty>{t('histEmpty')}</Empty> : (
+        <Tw head={[t('hth.date'), t('hth.act'), t('k.state'), t('hth.reason')]}>
           {s.events.map((e, i) => (
-            <tr key={i}><td>{ymdKst(e.at)}</td><td><b>{ACT[e.action] ?? e.action}</b></td>
-              <td>{e.to ? (SVC_ST[e.to]?.[0] ?? e.to) : '—'}</td><td>{e.reason ?? '—'}</td></tr>
+            <tr key={i}><td>{ymdKst(e.at)}</td><td><b>{act(e.action)}</b></td>
+              <td>{e.to ? svc(e.to) : '—'}</td><td>{e.reason ?? '—'}</td></tr>
           ))}
         </Tw>
       )}
       <div className="pt-dact">
-        <Link className="pt-bo" href="/partner/services">목록으로</Link>
-        <Link className="pt-bo" href="/partner/regions">서비스 지역</Link>
-        <Link className="pt-bp" href="/partner/reviews">승인 · 반려 이력</Link>
+        <Link className="pt-bo" href="/partner/services">{t('toList')}</Link>
+        <Link className="pt-bo" href="/partner/regions">{t('regions')}</Link>
+        <Link className="pt-bp" href="/partner/reviews">{t('reviews')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

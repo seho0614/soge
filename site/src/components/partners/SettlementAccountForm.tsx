@@ -3,9 +3,11 @@ import { hmKst } from '@/lib/format';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { AffResult, AffSettlements } from './types';
 
-/* 은행 코드는 금융결제원 표준 3자리. 자주 쓰는 곳만 둡니다 — 없으면 문의로 받습니다. */
+/* 은행 이름은 API 로 보내는 값(bankName)이라 한국어 그대로 둡니다(v10.100 다국어 2-5a).
+ * 은행 코드는 금융결제원 표준 3자리. 자주 쓰는 곳만 둡니다 — 없으면 문의로 받습니다. */
 const BANKS: Array<[string, string]> = [
   ['004', '국민은행'], ['088', '신한은행'], ['020', '우리은행'], ['081', '하나은행'],
   ['011', '농협은행'], ['003', '기업은행'], ['090', '카카오뱅크'], ['092', '토스뱅크'],
@@ -29,6 +31,8 @@ export function SettlementAccountForm({ hasAccount, identityVerified, account }:
   account?: AffSettlements['account'];
 }) {
   const router = useRouter();
+  const t = useTranslations('affiliate.account');
+  const tc = useTranslations('affiliate.common');
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [needId, setNeedId] = useState(false);
@@ -53,19 +57,19 @@ export function SettlementAccountForm({ hasAccount, identityVerified, account }:
       const d = (await r.json().catch(() => null)) as (AffResult & { code?: string; message?: string }) | null;
       if (r.status === 403 && d?.code === 'IDENTITY_REQUIRED') {
         setNeedId(true);
-        setErr('본인인증을 먼저 하셔야 계좌를 등록하실 수 있습니다. 인증 화면으로 이동합니다.');
+        setErr(t('needIdRedirect'));
         setTimeout(() => router.push('/verify'), 1200);
         return;
       }
       if (r.status === 401) { router.push('/login'); return; }
       if (!r.ok) {
         setErr(d?.code === 'VALIDATION_ERROR'
-          ? '입력한 내용을 확인해 주십시오. 계좌번호는 6~30자, 예금주는 2~30자입니다.'
-          : d?.message ?? '등록하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+          ? t('invalid')
+          : d?.message ?? t('fail'));
         return;
       }
-      if (!d?.ok) { setErr(d?.note ?? '등록하지 못했습니다.'); return; }
-      setDone(d.note ?? '등록했습니다.');
+      if (!d?.ok) { setErr(d?.note ?? t('failShort')); return; }
+      setDone(d.note ?? t('done'));
       setOpen(false);
       router.refresh();
     });
@@ -80,41 +84,41 @@ export function SettlementAccountForm({ hasAccount, identityVerified, account }:
       )}
       {!identityVerified && (
         <div className="notice notice-act">
-          <div><strong>본인인증이 필요합니다.</strong><p>계좌 명의가 회원 본인인지 확인하는 첫 단계입니다.</p></div>
-          <Link className="cta-primary as-link" href="/verify">본인인증하기</Link>
+          <div><strong>{t('needId')}</strong><p>{t('needIdDesc')}</p></div>
+          <Link className="cta-primary as-link" href="/verify">{tc('verifyNow')}</Link>
         </div>
       )}
       {done && <p className="ok-note" role="status">{done}</p>}
       {!open ? (
         <button type="button" className="btn-sm" onClick={() => setOpen(true)}>
-          {hasAccount ? '계좌 변경' : '계좌 등록'}
+          {hasAccount ? t('change') : t('register')}
         </button>
       ) : (
         <form className="p2form" onSubmit={submit}>
-          {hasAccount && <p className="hint">계좌를 바꾸시면 <b>다시 인증</b>해야 지급됩니다.</p>}
+          {hasAccount && <p className="hint">{t.rich('reverifyHint', { b: (c) => <b>{c}</b> })}</p>}
           <label className="fld">
-            <span>은행</span>
+            <span>{t('bank')}</span>
             <select name="bankCode" defaultValue="004" required>
               {BANKS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
             </select>
           </label>
           <label className="fld">
-            <span>계좌번호</span>
-            <input name="accountNo" inputMode="numeric" minLength={6} maxLength={30} required placeholder="예: 123456-01-234567" />
+            <span>{t('accountNo')}</span>
+            <input name="accountNo" inputMode="numeric" minLength={6} maxLength={30} required placeholder={t('accountNoPlaceholder')} />
           </label>
           <label className="fld">
-            <span>예금주</span>
-            <input name="holderName" minLength={2} maxLength={30} required placeholder="본인 이름" />
-            <em>본인 명의 계좌만 받습니다</em>
+            <span>{t('holder')}</span>
+            <input name="holderName" minLength={2} maxLength={30} required placeholder={t('holderPlaceholder')} />
+            <em>{t('holderNote')}</em>
           </label>
           {err && (
             <p className="form-error" role="alert">
-              {err}{needId && <> <Link href="/verify">지금 이동</Link></>}
+              {err}{needId && <> <Link href="/verify">{t('goNow')}</Link></>}
             </p>
           )}
           <div className="p2act">
-            <button className="btn-sm p2primary" disabled={pending}>{pending ? '등록 중…' : '계좌 저장'}</button>
-            {hasAccount && <button type="button" className="link-btn" onClick={() => setOpen(false)}>취소</button>}
+            <button className="btn-sm p2primary" disabled={pending}>{pending ? t('pending') : t('save')}</button>
+            {hasAccount && <button type="button" className="link-btn" onClick={() => setOpen(false)}>{tc('cancel')}</button>}
           </div>
         </form>
       )}
@@ -132,6 +136,7 @@ function AccountVerify({ account, identityVerified }: {
   account: NonNullable<AffSettlements['account']>; identityVerified: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations('affiliate.account.verify');
   const [pending, start] = useTransition();
   const [sent, setSent] = useState<boolean>(!!account.verifyPending);
   const [expiresAt, setExpiresAt] = useState<string | null>(account.verifyPending ? account.verifyExpiresAt ?? null : null);
@@ -150,13 +155,13 @@ function AccountVerify({ account, identityVerified }: {
   function fail(status: number, d: ApiBody | null) {
     if (status === 401) { router.push('/login'); return; }
     if (status === 403 && d?.code === 'IDENTITY_REQUIRED') {
-      setErr('본인인증을 먼저 하셔야 합니다. 인증 화면으로 이동합니다.');
+      setErr(t('needId'));
       setTimeout(() => router.push('/verify'), 1200);
       return;
     }
     if (d?.code === 'TOO_MANY_TRIES') setLocked(true);
     if (d?.code === 'CODE_EXPIRED' || d?.code === 'NOT_REQUESTED') { setSent(false); setExpiresAt(null); }
-    setErr(d?.code === 'VALIDATION_ERROR' ? '코드는 글자와 숫자만 적으십시오.' : d?.message ?? d?.note ?? '처리하지 못했습니다. 잠시 후 다시 시도해 주십시오.');
+    setErr(d?.code === 'VALIDATION_ERROR' ? t('invalidCode') : d?.message ?? d?.note ?? t('fail'));
   }
 
   function send() {
@@ -164,21 +169,21 @@ function AccountVerify({ account, identityVerified }: {
     start(async () => {
       const { status, d } = await call('verify/request');
       if (status >= 300 || !d?.ok) { fail(status, d); return; }
-      if (d.verified) { setInfo(d.note ?? '이미 인증된 계좌입니다.'); router.refresh(); return; }
+      if (d.verified) { setInfo(d.note ?? t('already')); router.refresh(); return; }
       setSent(true); setExpiresAt(d.expiresAt ?? null);
-      setInfo(d.note ?? '1원을 보냈습니다. 입금자명의 코드를 적어 주십시오.');
+      setInfo(d.note ?? t('sent'));
     });
   }
 
   function confirm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const code = String(new FormData(e.currentTarget).get('code') ?? '').trim();
-    if (!code) { setErr('코드를 적어 주십시오.'); return; }
+    if (!code) { setErr(t('enterCode')); return; }
     setErr(null);
     start(async () => {
       const { status, d } = await call('verify', { code });
       if (status >= 300 || !d?.ok) { fail(status, d); return; }
-      setInfo(d.note ?? '인증했습니다.');
+      setInfo(d.note ?? t('done'));
       router.refresh();
     });
   }
@@ -187,33 +192,32 @@ function AccountVerify({ account, identityVerified }: {
 
   return (
     <div className="p2verify" data-testid="account-verify">
-      <h3 className="sec-title">계좌 1원 인증</h3>
+      <h3 className="sec-title">{t('title')}</h3>
       <p className="hint">
-        <b>{account.bankName} 끝 {account.last4}</b> 계좌로 1원을 보내 드립니다. 통장 <b>입금자명에 찍힌 코드</b>를 적으시면 인증됩니다.
-        인증 전에는 지급되지 않습니다.
+        {t.rich('intro', { b: (c) => <b>{c}</b>, bank: account.bankName, last4: account.last4 })}
       </p>
       {locked ? (
         <p className="form-error" role="alert">
-          코드를 다섯 번 틀려 막혔습니다. <b>계좌를 다시 등록</b>하시면 다시 인증할 수 있습니다. 도움이 필요하시면 <Link href="/partners/inquiries">1:1 문의</Link>를 남겨 주십시오.
+          {t.rich('locked', { b: (c) => <b>{c}</b>, a: (c) => <Link href="/partners/inquiries">{c}</Link> })}
         </p>
       ) : (
         <>
           <div className="p2act">
-            <span className="dim">1단계</span>
+            <span className="dim">{t('step1')}</span>
             <button type="button" className="btn-sm p2primary" onClick={send} disabled={pending || !identityVerified}>
-              {sent ? '1원 다시 받기' : '1원 받기'}
+              {sent ? t('resend') : t('send')}
             </button>
-            {until && <span className="dim">코드 유효: {until}까지</span>}
+            {until && <span className="dim">{t('validUntil', { until })}</span>}
           </div>
           {sent && (
             <form className="p2form" onSubmit={confirm}>
               <label className="fld">
-                <span>2단계 · 입금자명 코드</span>
-                <input name="code" maxLength={20} required autoComplete="one-time-code" placeholder="예: SGB01" />
-                <em>대소문자는 가리지 않습니다 · 다섯 번 틀리면 막힙니다</em>
+                <span>{t('step2')}</span>
+                <input name="code" maxLength={20} required autoComplete="one-time-code" placeholder={t('codePlaceholder')} />
+                <em>{t('codeNote')}</em>
               </label>
               <div className="p2act">
-                <button className="btn-sm p2primary" disabled={pending}>{pending ? '확인 중…' : '인증하기'}</button>
+                <button className="btn-sm p2primary" disabled={pending}>{pending ? t('pending') : t('submit')}</button>
               </div>
             </form>
           )}

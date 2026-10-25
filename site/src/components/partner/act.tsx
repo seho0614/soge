@@ -6,6 +6,7 @@
  */
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export class ApiErr extends Error { constructor(msg: string, readonly code?: string, readonly status?: number) { super(msg); } }
 
@@ -27,19 +28,20 @@ export function ActButton({ method = 'POST', url, body, ask, label, busyLabel, c
   const [busy, setBusy] = useState(false);
   const [, start] = useTransition();
   const router = useRouter();
+  const t = useTranslations('partner.common');
   async function go() {
     if (ask && !confirm(ask)) return;
     setBusy(true); setMsg(null);
     try {
       const j = await api<any>(method, url, body ?? {});
-      setMsg(['ok', done ?? j?.note ?? '처리했습니다.']);
+      setMsg(['ok', done ?? j?.note ?? t('done')]);
       start(() => router.refresh());
     } catch (e) { setMsg(['err', (e as Error).message]); }
     finally { setBusy(false); }
   }
   return (
     <span className="pt-act" style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
-      <button type="button" className={className} onClick={() => void go()} disabled={busy}>{busy ? (busyLabel ?? '처리 중…') : label}</button>
+      <button type="button" className={className} onClick={() => void go()} disabled={busy}>{busy ? (busyLabel ?? t('busy')) : label}</button>
       {msg && <span className={`pt-msg ${msg[0]}`} role="status">{msg[1]}</span>}
     </span>
   );

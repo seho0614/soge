@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './act';
 import { uploadFile } from '@/lib/upload';
+import { useTranslations } from 'next-intl';
 
 const won = (n: number | null | undefined) => `${Number(n ?? 0).toLocaleString('ko-KR')}원`;
 type Msg = ['ok' | 'err', string] | null;
@@ -19,6 +20,7 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
   topFee: number | null; referralRate: number | null; rebateBonus: number | null; baseFee: number | null;
   canEdit: boolean; canSuspend: boolean; canResume: boolean; status: string;
 }) {
+  const t = useTranslations('partnerOps.tools');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ title, body: body ?? '', target: target ?? '', receiveMode: receiveMode ?? '',
@@ -29,7 +31,7 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
 
   async function save() {
     const content = f.title !== title || f.body !== (body ?? '') || f.target !== (target ?? '') || f.receiveMode !== (receiveMode ?? '');
-    if (content && status === 'APPROVED' && !confirm('고친 내용은 재검수 대상입니다 — 승인될 때까지 검수중으로 내려가고 그동안 리드가 오지 않습니다. 저장할까요?')) return;
+    if (content && status === 'APPROVED' && !confirm(t('editConfirm'))) return;
     setBusy(true); setM(null);
     const dto: Record<string, unknown> = {};
     if (f.title !== title) dto.title = String(f.title);
@@ -44,7 +46,7 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
     catch (e) { setM(['err', (e as Error).message]); } finally { setBusy(false); }
   }
   async function act(kind: 'suspend' | 'resume') {
-    if (kind === 'suspend' && !confirm('노출을 멈추면 신규 리드만 막히고 진행 중 상담은 그대로 갑니다. 멈출까요?')) return;
+    if (kind === 'suspend' && !confirm(t('suspendConfirm'))) return;
     setBusy(true); setM(null);
     try { const r = await api<{ note: string }>('POST', `/partner/services/${id}/${kind}`, {}); setM(['ok', r.note]); router.refresh(); }
     catch (e) { setM(['err', (e as Error).message]); } finally { setBusy(false); }
@@ -52,32 +54,32 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
   return (
     <div data-svc-actions>
       <div className="pt-dact">
-        {canEdit && <button type="button" className="pt-bo" onClick={() => setOpen(!open)}>서비스 수정</button>}
-        {canSuspend && <button type="button" className="pt-bo" disabled={busy} onClick={() => void act('suspend')}>노출 중단</button>}
-        {canResume && <button type="button" className="pt-bp" disabled={busy} onClick={() => void act('resume')}>노출 재개</button>}
+        {canEdit && <button type="button" className="pt-bo" onClick={() => setOpen(!open)}>{t('edit')}</button>}
+        {canSuspend && <button type="button" className="pt-bo" disabled={busy} onClick={() => void act('suspend')}>{t('suspend')}</button>}
+        {canResume && <button type="button" className="pt-bp" disabled={busy} onClick={() => void act('resume')}>{t('resume')}</button>}
       </div>
       {open && (
         <div className="pt-fset">
-          <h3>서비스 수정</h3>
-          <label className="fld"><span>서비스명</span><input className="pt-input" value={String(f.title)} onChange={set('title')} /></label>
-          <label className="fld"><span>설명</span><textarea className="pt-input" rows={5} value={String(f.body)} onChange={set('body')} /></label>
-          <label className="fld"><span>주요 타겟</span><input className="pt-input" value={String(f.target)} onChange={set('target')} placeholder="예: 서울 가정 이사 · 사무실 이전" /></label>
-          <label className="fld"><span>접수 방식</span>
+          <h3>{t('edit')}</h3>
+          <label className="fld"><span>{t('name')}</span><input className="pt-input" value={String(f.title)} onChange={set('title')} /></label>
+          <label className="fld"><span>{t('desc')}</span><textarea className="pt-input" rows={5} value={String(f.body)} onChange={set('body')} /></label>
+          <label className="fld"><span>{t('target')}</span><input className="pt-input" value={String(f.target)} onChange={set('target')} placeholder={t('targetPh1')} /></label>
+          <label className="fld"><span>{t('receive')}</span>
             <select className="pt-input" value={String(f.receiveMode)} onChange={set('receiveMode')}>
-              <option value="">정하지 않음</option><option value="QUOTE">견적 요청</option><option value="CALL">전화 상담</option>
-              <option value="VISIT">방문 상담</option><option value="CHAT">채팅 상담</option>
+              <option value="">{t('rm.none')}</option><option value="QUOTE">{t('rm.QUOTE')}</option><option value="CALL">{t('rm.CALL')}</option>
+              <option value="VISIT">{t('rm.VISIT')}</option><option value="CHAT">{t('rm.CHAT')}</option>
             </select></label>
           <div className="pt-row">
-            <label>최고 확인비용(S · 원){baseFee ? ` — 업종 기준 ${won(baseFee)} 이상` : ''}
+            <label>{t('topFeeLbl')}{baseFee ? ` — ${t('minBase', { amt: won(baseFee) })}` : ''}
               <input className="pt-input" type="number" value={String(f.topFee)} onChange={set('topFee')} style={{ width: 130 }} /></label>
-            <label>성사 소개비(%) — 5 ~ 12
+            <label>{t('refPctLbl')}
               <input className="pt-input" type="number" step="0.5" value={String(f.referralPct)} onChange={set('referralPct')} style={{ width: 100 }} /></label>
-            <label>재소개 보너스(건당 원)
+            <label>{t('rebateLbl')}
               <input className="pt-input" type="number" value={String(f.rebateBonus)} onChange={set('rebateBonus')} style={{ width: 130 }} /></label>
           </div>
-          <p className="pt-ls">확인비용 · 소개비만 바꾸면 노출은 그대로이고, 이름 · 설명 · 타겟 · 접수 방식을 바꾸면 재검수됩니다.</p>
-          <div className="pt-dact"><button type="button" className="pt-bp" disabled={busy} onClick={() => void save()}>{busy ? '저장 중…' : '저장'}</button>
-            <button type="button" className="pt-bo" onClick={() => setOpen(false)}>닫기</button></div>
+          <p className="pt-ls">{t('editHint')}</p>
+          <div className="pt-dact"><button type="button" className="pt-bp" disabled={busy} onClick={() => void save()}>{busy ? t('saving') : t('save')}</button>
+            <button type="button" className="pt-bo" onClick={() => setOpen(false)}>{t('close')}</button></div>
         </div>
       )}
       <MsgP m={m} />
@@ -87,6 +89,7 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
 
 /* ── 상세페이지 블록 ─────────────────────────────────────────────────── */
 export function BlockEditor({ id, kind, label, body, fileId }: { id: string; kind: string; label: string; body: string | null; fileId: string | null }) {
+  const t = useTranslations('partnerOps.tools');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(body ?? '');
@@ -97,26 +100,26 @@ export function BlockEditor({ id, kind, label, body, fileId }: { id: string; kin
     setBusy(true); setM(null);
     try {
       await api('PUT', `/partner/services/${id}/blocks/${kind}`, clear ? { body: null, fileId: null } : { body: text || null, fileId: file });
-      setM(['ok', clear ? '블록을 비웠습니다.' : '저장했습니다.']); setOpen(false); router.refresh();
+      setM(['ok', clear ? t('cleared') : t('saved')]); setOpen(false); router.refresh();
     } catch (e) { setM(['err', (e as Error).message]); } finally { setBusy(false); }
   }
   async function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
     setBusy(true); setM(null);
-    try { const u = await uploadFile(f, 'PARTNER_MEDIA'); setFile(u.fileId); setM(['ok', `${u.name} 올림 — 저장을 누르십시오.`]); }
+    try { const u = await uploadFile(f, 'PARTNER_MEDIA'); setFile(u.fileId); setM(['ok', t('uploaded', { name: u.name })]); }
     catch (x) { setM(['err', (x as Error).message]); } finally { setBusy(false); }
   }
   return (
     <span data-block={kind}>
-      {!open ? <button type="button" className="pt-bo sm" onClick={() => setOpen(true)}>{body || fileId ? '고치기' : '채우기'}</button> : (
+      {!open ? <button type="button" className="pt-bo sm" onClick={() => setOpen(true)}>{body || fileId ? t('fix') : t('fill')}</button> : (
         <span style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240 }}>
           {kind === 'HERO_IMAGE' || kind === 'CASES'
             ? <input type="file" accept="image/jpeg,image/png" onChange={(e) => void pick(e)} disabled={busy} /> : null}
-          <textarea className="pt-input" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={`${label} — 전화번호는 적지 마십시오`} />
+          <textarea className="pt-input" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={t('blockPh', { label })} />
           <span className="pt-row">
-            <button type="button" className="pt-bp sm" disabled={busy} onClick={() => void save()}>저장</button>
-            {(body || fileId) && <button type="button" className="pt-bo sm" disabled={busy} onClick={() => void save(true)}>비우기</button>}
-            <button type="button" className="pt-bo sm" onClick={() => setOpen(false)}>닫기</button>
+            <button type="button" className="pt-bp sm" disabled={busy} onClick={() => void save()}>{t('save')}</button>
+            {(body || fileId) && <button type="button" className="pt-bo sm" disabled={busy} onClick={() => void save(true)}>{t('clear')}</button>}
+            <button type="button" className="pt-bo sm" onClick={() => setOpen(false)}>{t('close')}</button>
           </span>
         </span>
       )}
@@ -128,6 +131,7 @@ export function BlockEditor({ id, kind, label, body, fileId }: { id: string; kin
 /* ── 견적 매트릭스 ───────────────────────────────────────────────────── */
 type Ax = { key: string; label: string };
 export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string; rows: Ax[]; cols: Ax[]; cells: Array<{ row: string; col: string; amount: number }>; readOnly?: boolean }) {
+  const t = useTranslations('partnerOps.tools');
   const router = useRouter();
   const init = useMemo(() => Object.fromEntries(cells.map((c) => [`${c.row}|${c.col}`, String(Math.round(c.amount / 10000))])), [cells]);
   const [v, setV] = useState<Record<string, string>>(init);
@@ -137,15 +141,15 @@ export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string;
     if (!id) return;
     setBusy(true); setM(null);
     const out = rows.flatMap((r) => cols.map((c) => ({ row: r.key, col: c.key, amount: v[`${r.key}|${c.key}`] ? Math.round(Number(v[`${r.key}|${c.key}`]) * 10000) : null })));
-    try { const r = await api<{ cells: number }>('PUT', `/partner/services/${id}/matrix`, { cells: out }); setM(['ok', `${r.cells}칸을 저장했습니다.`]); router.refresh(); }
+    try { const r = await api<{ cells: number }>('PUT', `/partner/services/${id}/matrix`, { cells: out }); setM(['ok', t('cellsSaved', { n: String(r.cells) })]); router.refresh(); }
     catch (e) { setM(['err', (e as Error).message]); } finally { setBusy(false); }
   }
-  if (!rows.length || !cols.length) return <p className="pt-ls">이 업종은 견적 구간(축)이 아직 정해지지 않았습니다 — 업종 마스터는 본사가 정합니다.</p>;
+  if (!rows.length || !cols.length) return <p className="pt-ls">{t('noAxis')}</p>;
   return (
     <div data-matrix>
       <div className="pt-tw">
         <table className="pt-tb2 pt-mx">
-          <thead><tr><th>이사유형 \ 물량</th>{cols.map((c) => <th key={c.key} className="num">{c.label}</th>)}</tr></thead>
+          <thead><tr><th>{t('mxCorner')}</th>{cols.map((c) => <th key={c.key} className="num">{c.label}</th>)}</tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.key}><td><b>{r.label}</b></td>
@@ -159,7 +163,7 @@ export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string;
           </tbody>
         </table>
       </div>
-      {!readOnly && id && <div className="pt-dact"><button type="button" className="pt-bp" disabled={busy} onClick={() => void save()}>{busy ? '저장 중…' : '매트릭스 저장'}</button><span className="pt-ls">단위 만원 · 빈 칸은 「견적 문의」로 보입니다</span></div>}
+      {!readOnly && id && <div className="pt-dact"><button type="button" className="pt-bp" disabled={busy} onClick={() => void save()}>{busy ? t('saving') : t('mxSave')}</button><span className="pt-ls">{t('mxUnit')}</span></div>}
       <MsgP m={m} />
     </div>
   );
@@ -173,6 +177,7 @@ export interface WizCategory {
 export function ServiceWizard({ categories, rates, blocks }: {
   categories: WizCategory[]; rates: Array<{ grade: string; label: string; rate: number }>; blocks: Array<{ kind: string; label: string }>;
 }) {
+  const t = useTranslations('partnerOps.tools');
   const router = useRouter();
   const [catId, setCatId] = useState('');
   const cat = categories.find((c) => c.id === catId) ?? null;
@@ -211,52 +216,52 @@ export function ServiceWizard({ categories, rates, blocks }: {
     if (!cat) return null;
     if (/제공 서비스|접수 방식|시술 선택|상품 정의/.test(name)) return (
       <>
-        <label className="fld"><span>서비스명</span><input className="pt-input" value={f.title} onChange={set('title')} placeholder={isMatrix ? '예: 한빛 포장이사 · 서울 전지역' : '예: 사무실 입주청소'} /></label>
-        <label className="fld"><span>설명</span><textarea className="pt-input" rows={5} value={f.body} onChange={set('body')} placeholder="어떤 일을 하시는지, 어떤 요청을 받고 싶으신지" /></label>
-        {!isMatrix && <label className="fld"><span>접수 방식</span>
+        <label className="fld"><span>{t('name')}</span><input className="pt-input" value={f.title} onChange={set('title')} placeholder={isMatrix ? t('namePhMx') : t('namePh')} /></label>
+        <label className="fld"><span>{t('desc')}</span><textarea className="pt-input" rows={5} value={f.body} onChange={set('body')} placeholder={t('descPh')} /></label>
+        {!isMatrix && <label className="fld"><span>{t('receive')}</span>
           <select className="pt-input" value={f.receiveMode} onChange={set('receiveMode')} disabled={!!cat.restrictedCode}>
-            <option value="QUOTE">견적 요청</option><option value="CALL">전화 상담</option><option value="VISIT">방문 상담</option><option value="CHAT">채팅 상담</option>
-          </select>{cat.restrictedCode ? <span className="pt-ls">규제 업종은 접수 방식이 고정됩니다(보험업법 · 의료법 제27조).</span> : null}</label>}
+            <option value="QUOTE">{t('rm.QUOTE')}</option><option value="CALL">{t('rm.CALL')}</option><option value="VISIT">{t('rm.VISIT')}</option><option value="CHAT">{t('rm.CHAT')}</option>
+          </select>{cat.restrictedCode ? <span className="pt-ls">{t('fixedReceive')}</span> : null}</label>}
       </>
     );
-    if (/주요 타겟/.test(name)) return <label className="fld"><span>주요 타겟</span><input className="pt-input" value={f.target} onChange={set('target')} placeholder="예: 서울 · 경기 남부 가정 이사, 쓰리룸 이상" /></label>;
+    if (/주요 타겟/.test(name)) return <label className="fld"><span>{t('target')}</span><input className="pt-input" value={f.target} onChange={set('target')} placeholder={t('targetPh2')} /></label>;
     if (/자동 견적/.test(name)) return (
-      <><p className="pt-ls">이사유형 × 물량 칸에 기본 견적(만원)을 넣습니다 — 축은 업종 마스터(본사)가 정합니다.</p>
+      <><p className="pt-ls">{t('mxHint')}</p>
         {cat.rows.length && cat.cols.length ? (
-          <div className="pt-tw"><table className="pt-tb2 pt-mx"><thead><tr><th>이사유형 \ 물량</th>{cat.cols.map((c) => <th key={c.key} className="num">{c.label}</th>)}</tr></thead>
+          <div className="pt-tw"><table className="pt-tb2 pt-mx"><thead><tr><th>{t('mxCorner')}</th>{cat.cols.map((c) => <th key={c.key} className="num">{c.label}</th>)}</tr></thead>
             <tbody>{cat.rows.map((r) => <tr key={r.key}><td><b>{r.label}</b></td>{cat.cols.map((c) => { const k = `${r.key}|${c.key}`; return <td key={k} className="num"><input className="pt-input" type="number" min={0} value={mx[k] ?? ''} onChange={(e) => setMx({ ...mx, [k]: e.target.value })} placeholder="만원" aria-label={`${r.label} ${c.label} 만원`} /></td>; })}</tr>)}</tbody></table></div>
-        ) : <p className="pt-ls">이 업종은 견적 구간이 아직 정해지지 않았습니다.</p>}</>
+        ) : <p className="pt-ls">{t('noAxisShort')}</p>}</>
     );
     if (/확인비용/.test(name)) return (
-      <><label className="fld"><span>최고 확인비용(S 등급 · 원){cat.baseFee ? ` — 업종 기준 ${won(cat.baseFee)} 이상` : ''}</span>
+      <><label className="fld"><span>{t('topFeeLblWiz')}{cat.baseFee ? ` — ${t('minBase', { amt: won(cat.baseFee) })}` : ''}</span>
         <input className="pt-input" type="number" min={cat.baseFee ?? 1} value={f.topFee} onChange={set('topFee')} placeholder={String(cat.baseFee ?? '')} style={{ maxWidth: 200 }} /></label>
-        <p className="pt-ls">최고 확인비용 하나만 정하면 8등급이 자동으로 채워집니다.</p>
-        <div className="pt-tw"><table className="pt-tb2"><thead><tr><th>등급</th><th className="num">비율</th><th className="num">확인비용</th></tr></thead>
+        <p className="pt-ls">{t('topHint')}</p>
+        <div className="pt-tw"><table className="pt-tb2"><thead><tr><th>{t('th.grade')}</th><th className="num">{t('th.rate')}</th><th className="num">{t('th.fee')}</th></tr></thead>
           <tbody>{rates.map((r) => <tr key={r.grade}><td><span className={`pt-gbadge g${r.label.replace(/[+\-]/, '')}`}>{r.label}</span></td><td className="num">{Math.round(r.rate * 100)}%</td><td className="num"><b>{won(Math.round(top * r.rate))}</b></td></tr>)}</tbody></table></div></>
     );
     if (/소개비|리워드/.test(name)) return (
       <div className="pt-row">
-        <label>성사 소개비(거래액의 %) — 협의 구간 5 ~ 12<input className="pt-input" type="number" step="0.5" min={5} max={12} value={f.referralPct} onChange={set('referralPct')} style={{ width: 110 }} /></label>
-        <label>재소개 보너스(건당 원 · 3개월 내 재계약)<input className="pt-input" type="number" min={0} value={f.rebateBonus} onChange={set('rebateBonus')} style={{ width: 140 }} /></label>
-        <p className="pt-ls" style={{ flexBasis: '100%' }}>소개비는 당사자끼리 직접 주고받습니다 — 회사를 거치지 않습니다(이용약관 제3조).</p>
+        <label>{t('refPctLblWiz')}<input className="pt-input" type="number" step="0.5" min={5} max={12} value={f.referralPct} onChange={set('referralPct')} style={{ width: 110 }} /></label>
+        <label>{t('rebateLblWiz')}<input className="pt-input" type="number" min={0} value={f.rebateBonus} onChange={set('rebateBonus')} style={{ width: 140 }} /></label>
+        <p className="pt-ls" style={{ flexBasis: '100%' }}>{t('refDirect')}</p>
       </div>
     );
     if (/상세 페이지|랜딩|심의 제출|상품정보/.test(name)) return (
       <>{blocks.map((b) => (
         <label key={b.kind} className="fld"><span>{b.label}</span>
-          <textarea className="pt-input" rows={2} value={bl[b.kind] ?? ''} onChange={(e) => setBl({ ...bl, [b.kind]: e.target.value })} placeholder="비워 두면 「비어 있음」 — 전화번호는 적지 마십시오" /></label>
+          <textarea className="pt-input" rows={2} value={bl[b.kind] ?? ''} onChange={(e) => setBl({ ...bl, [b.kind]: e.target.value })} placeholder={t('blockPhWiz')} /></label>
       ))}
         {/랜딩/.test(name) && (
-          <div className="pt-dsum"><div className="dr"><span>서비스</span><b>{f.title || '—'}</b></div><div className="dr"><span>타겟</span><b>{f.target || '—'}</b></div>
-            <div className="dr"><span>최고 확인비용</span><b>{won(top)}</b></div><div className="dr"><span>견적 칸</span><b>{Object.values(mx).filter(Boolean).length}칸</b></div></div>
+          <div className="pt-dsum"><div className="dr"><span>{t('svc')}</span><b>{f.title || '—'}</b></div><div className="dr"><span>{t('targetShort')}</span><b>{f.target || '—'}</b></div>
+            <div className="dr"><span>{t('topFee')}</span><b>{won(top)}</b></div><div className="dr"><span>{t('mxCells')}</span><b>{t('cellsN', { n: String(Object.values(mx).filter(Boolean).length) })}</b></div></div>
         )}</>
     );
     return (
       <div className="pt-dsum">
-        <div className="dr"><span>업종</span><b>{cat.name}</b></div><div className="dr"><span>등록 방식</span><b>{cat.formLabel}</b></div>
-        <div className="dr"><span>서비스명</span><b>{f.title || '— (첫 단계에서 적어 주십시오)'}</b></div>
-        <div className="dr"><span>최고 확인비용</span><b>{won(top)}</b></div>
-        <div className="dr"><span>다음</span><b>본사 검수 — 승인 전에는 리드가 오지 않습니다</b></div>
+        <div className="dr"><span>{t('cat')}</span><b>{cat.name}</b></div><div className="dr"><span>{t('form')}</span><b>{cat.formLabel}</b></div>
+        <div className="dr"><span>{t('name')}</span><b>{f.title || t('titleMissing')}</b></div>
+        <div className="dr"><span>{t('topFee')}</span><b>{won(top)}</b></div>
+        <div className="dr"><span>{t('next')}</span><b>{t('nextVal')}</b></div>
       </div>
     );
   })();
@@ -264,22 +269,22 @@ export function ServiceWizard({ categories, rates, blocks }: {
   return (
     <div data-svc-wizard>
       <div className="pt-fset">
-        <h3>1. 업종 고르기 — 업종이 등록 화면을 정합니다</h3>
+        <h3>{t('pickH')}</h3>
         <select className="pt-input" value={catId} onChange={(e) => { setCatId(e.target.value); setStep(0); setM(null); }} style={{ maxWidth: 360 }}>
-          <option value="">업종을 고르십시오</option>
-          {categories.map((c) => <option key={c.id} value={c.id} disabled={!c.form}>{c.name} — {c.form ? `${c.formLabel} · ${c.steps.length}단계` : '폼 유형 미지정(등록 불가)'}</option>)}
+          <option value="">{t('pickPh')}</option>
+          {categories.map((c) => <option key={c.id} value={c.id} disabled={!c.form}>{c.name} — {c.form ? `${c.formLabel} · ${t('stepsN', { n: String(c.steps.length) })}` : t('noForm')}</option>)}
         </select>
       </div>
       {cat && (
         <div className="pt-fset">
-          <h3>{cat.formLabel} {steps.length}단계</h3>
+          <h3>{cat.formLabel} {t('stepsN', { n: String(steps.length) })}</h3>
           <ol className="pt-steps-wiz">{steps.map((s, i) => <li key={s} className={i === step ? 'on' : i < step ? 'done' : undefined}>{i + 1}. {s}</li>)}</ol>
           {view}
           <div className="pt-dact">
-            {step > 0 && <button type="button" className="pt-bo" onClick={() => setStep(step - 1)}>이전</button>}
+            {step > 0 && <button type="button" className="pt-bo" onClick={() => setStep(step - 1)}>{t('prev')}</button>}
             {step < steps.length - 1
-              ? <button type="button" className="pt-bp" onClick={() => setStep(step + 1)} disabled={step === 0 && (!f.title.trim() || !f.body.trim())}>다음</button>
-              : <button type="button" className="pt-bp" disabled={busy || !f.title.trim() || !f.body.trim()} onClick={() => void submit()}>{busy ? '보내는 중…' : '등록 신청(검수 요청)'}</button>}
+              ? <button type="button" className="pt-bp" onClick={() => setStep(step + 1)} disabled={step === 0 && (!f.title.trim() || !f.body.trim())}>{t('nextBtn')}</button>
+              : <button type="button" className="pt-bp" disabled={busy || !f.title.trim() || !f.body.trim()} onClick={() => void submit()}>{busy ? t('sending') : t('submit')}</button>}
           </div>
           <MsgP m={m} />
         </div>

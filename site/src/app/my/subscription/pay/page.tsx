@@ -5,6 +5,7 @@ import { me } from '@/lib/session';
 import { SubPayConfirm } from '@/components/billing/SubPayConfirm';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.subPay'))('title') };
@@ -29,7 +30,7 @@ export default async function SubPayPage({ searchParams }: Props) {
     <><div className="auth-wrap">
       <MyHead title={t('title')} sub={t('sub')} />
       {ok
-        ? <SubPayConfirm paymentKey={paymentKey!} orderId={orderId!} plan={plan!} />
+        ? <Msgs ns={['billing']}><SubPayConfirm paymentKey={paymentKey!} orderId={orderId!} plan={plan!} /></Msgs>
         : <Note kind="warn">{t.rich('bad', { a: (c) => <a href="/my/subscription">{c}</a> })}</Note>}
     </div><i hidden data-root-end="" /></>
   );

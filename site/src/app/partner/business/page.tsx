@@ -4,10 +4,13 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
-import { Bg, bizNo, Empty, GRADE_KO, Note, PARTNER_ST, Pgh, Tabs, Tw, won } from '@/components/partner/ui';
+import { Bg, bizNo, Empty, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, Tabs, Tw, won } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
 import { BrandForm, ChangeRequestForm, InviteAccept, SiteForm, SiteRemove, StaffInviteForm, StaffRemove } from './BizForms';
 
-export const metadata: Metadata = { title: '회사 · 계정' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partner.meta'))('business') };
+}
 
 interface Dash {
   applied: boolean; company?: string; grade?: string; status?: string; bizRegNo?: string;
@@ -24,8 +27,8 @@ interface Company {
   sites: Array<{ id: string; name: string; sido: string; sigungu: string | null }>;
   notes: { info: string; staff: string; brand: string };
 }
-const FIELD: Record<string, string> = { ADDRESS: '주소 변경', COMPANY_NAME: '상호 변경', CEO_NAME: '대표자 변경', BIZ_TYPE: '업태 변경', BIZ_ITEM: '종목 변경' };
-const CH: Record<string, ['ok' | 'wait' | 'no' | 'off', string]> = { REQUESTED: ['wait', '승인 대기'], APPROVED: ['ok', '반영됨'], REJECTED: ['no', '반려'], WITHDRAWN: ['off', '철회'] };
+/* v10.100 (다국어 2-5a) — 변경 항목 · 상태 글자는 사전 partner.biz.field.<코드> · partner.biz.ch.<코드> */
+const CH: Record<string, 'ok' | 'wait' | 'no' | 'off'> = { REQUESTED: 'wait', APPROVED: 'ok', REJECTED: 'no', WITHDRAWN: 'off' };
 type Tab = 'info' | 'acct' | 'terms' | 'brand';
 
 /**
@@ -39,6 +42,9 @@ type Tab = 'info' | 'acct' | 'terms' | 'brand';
 export default async function BusinessPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('partner.biz');
+  const tp = await getTranslations('partner');
+  const B = (c: React.ReactNode) => <b>{c}</b>;
   const sp = await searchParams;
   const tab: Tab = (['info', 'acct', 'terms', 'brand'] as const).includes(sp.tab as Tab) ? (sp.tab as Tab) : 'info';
 
@@ -47,58 +53,59 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
     apiGet<Company>('/partner/company', 0).catch(() => null),
     apiGet<Array<{ businessId: string; company: string }>>('/partner/staff/invitations', 0).catch(() => []),
   ]);
-  const st = PARTNER_ST[d?.status ?? ''] ?? [d?.status ?? '—', 'off'];
+  const st0 = PARTNER_ST[d?.status ?? ''] ?? [d?.status ?? '—', 'off'];
+  const st = [ptCode(tp, 'partnerSt', d?.status, st0[0]), st0[1]] as const;
   const href = (t: Tab) => (t === 'info' ? '/partner/business' : `/partner/business?tab=${t}`);
 
   return (
-    <><Pgh title="회사 · 계정" sub="사업자 정보 · 계정 · 약관 · 브랜드를 한 자리에서 봅니다." />
+    <><Pgh title={t('title')} sub={t('sub')} />
       {inv.map((x) => <InviteAccept key={x.businessId} businessId={x.businessId} company={x.company} />)}
       <Tabs cur={tab} items={[
-        { key: 'info', label: '사업자 정보', href: href('info') },
-        { key: 'acct', label: '계정', href: href('acct') },
-        { key: 'terms', label: '약관 · 동의', href: href('terms') },
-        { key: 'brand', label: '회사 관리', href: href('brand') },
+        { key: 'info', label: t('tabInfo'), href: href('info') },
+        { key: 'acct', label: t('tabAcct'), href: href('acct') },
+        { key: 'terms', label: t('tabTerms'), href: href('terms') },
+        { key: 'brand', label: t('tabBrand'), href: href('brand') },
       ]} />
 
       {tab === 'info' && (
         <>
-          <Tw head={['항목', '값']}>
+          <Tw head={[t('thItem'), t('thValue')]}>
             {c ? (
               <>
-                <tr><td><b>상호</b></td><td>{c.info.company}</td></tr>
-                <tr><td><b>사업자등록번호</b></td><td>{c.info.bizRegNo ? bizNo(c.info.bizRegNo) : <>없음 — <b>개인으로 활동</b> <span className="pt-ls">(본인인증 · v10.38 P2P)</span></>}</td></tr>
-                <tr><td><b>대표자</b></td><td>{c.info.ceoName ?? '—'}</td></tr>
-                <tr><td><b>업태 · 종목</b></td><td>{[c.info.bizType, c.info.bizItem].filter(Boolean).join(' · ') || '—'}</td></tr>
-                <tr><td><b>주소</b></td><td>{c.info.addressShort ? `${c.info.addressShort} ***` : c.info.hasAddress ? '등록됨 ***' : '—'}</td></tr>
-                <tr><td><b>입점일</b></td><td>{c.info.approvedAt ? ymdKst(c.info.approvedAt) : '심사 중'}</td></tr>
+                <tr><td><b>{t('company')}</b></td><td>{c.info.company}</td></tr>
+                <tr><td><b>{t('bizNo')}</b></td><td>{c.info.bizRegNo ? bizNo(c.info.bizRegNo) : <>{t.rich('noBizNo', { b: B, ls: (x) => <span className="pt-ls">{x}</span> })}</>}</td></tr>
+                <tr><td><b>{t('ceo')}</b></td><td>{c.info.ceoName ?? '—'}</td></tr>
+                <tr><td><b>{t('bizType')}</b></td><td>{[c.info.bizType, c.info.bizItem].filter(Boolean).join(' · ') || '—'}</td></tr>
+                <tr><td><b>{t('address')}</b></td><td>{c.info.addressShort ? `${c.info.addressShort} ***` : c.info.hasAddress ? t('addrRegistered') : '—'}</td></tr>
+                <tr><td><b>{t('since')}</b></td><td>{c.info.approvedAt ? ymdKst(c.info.approvedAt) : t('inReview')}</td></tr>
               </>
             ) : null}
-            <tr><td><b>본인인증</b></td><td><Bg tone={p.identityVerifiedAt ? 'ok' : 'no'}>{p.identityVerifiedAt ? '완료' : '필요'}</Bg></td></tr>
-            <tr><td><b>사업자 인증</b></td><td>
-              <Bg tone={p.businessVerifiedAt ? 'ok' : 'off'}>{p.businessVerifiedAt ? '완료' : '선택'}</Bg>
-              {!p.businessVerifiedAt ? <> <span className="pt-ls">사업자로 받으실 때만 —</span> <Link href="/verify">인증하러 가기 →</Link></> : null}
-              {c?.info.ntsEnv && c.info.ntsEnv !== 'LIVE' ? <span className="pt-ls"> · 국세청 조회 {c.info.ntsEnv}</span> : null}
+            <tr><td><b>{t('identity')}</b></td><td><Bg tone={p.identityVerifiedAt ? 'ok' : 'no'}>{p.identityVerifiedAt ? t('done') : t('need')}</Bg></td></tr>
+            <tr><td><b>{t('bizVerify')}</b></td><td>
+              <Bg tone={p.businessVerifiedAt ? 'ok' : 'off'}>{p.businessVerifiedAt ? t('done') : t('optional')}</Bg>
+              {!p.businessVerifiedAt ? <> <span className="pt-ls">{t('bizOnly')}</span> <Link href="/verify">{t('goVerify')}</Link></> : null}
+              {c?.info.ntsEnv && c.info.ntsEnv !== 'LIVE' ? <span className="pt-ls">{t('ntsEnv', { env: c.info.ntsEnv })}</span> : null}
             </td></tr>
             {d?.applied ? (
               <>
-                <tr><td><b>등급 · 상태</b></td><td><b>{GRADE_KO[d.grade ?? ''] ?? d.grade ?? '—'}</b> <Bg tone={st[1]}>{st[0]}</Bg></td></tr>
-                <tr><td><b>승인 업종</b></td><td>{d.services?.approved ?? 0}개{d.services?.in_review ? <span className="pt-ls"> · 검수 중 {d.services.in_review}</span> : null}</td></tr>
-                <tr><td><b>지역</b></td><td>{d.regions ?? 0}곳 <Link className="pt-bo sm" href="/partner/regions">바꾸기</Link></td></tr>
-                <tr><td><b>이전 후불 미납 한도</b></td><td>{won(d.unpaidCap)}원<span className="pt-ls"> · 전환 전 미청구분에만 씁니다(리드 이용료는 선불)</span></td></tr>
+                <tr><td><b>{t('gradeSt')}</b></td><td><b>{ptCode(tp, 'grade', d.grade, GRADE_KO[d.grade ?? ''] ?? d.grade ?? '—')}</b> <Bg tone={st[1]}>{st[0]}</Bg></td></tr>
+                <tr><td><b>{t('svcApproved')}</b></td><td>{t('countEa', { n: String(d.services?.approved ?? 0) })}{d.services?.in_review ? <span className="pt-ls">{t('inReviewN', { n: String(d.services.in_review) })}</span> : null}</td></tr>
+                <tr><td><b>{t('region')}</b></td><td>{t('countPlace', { n: String(d.regions ?? 0) })} <Link className="pt-bo sm" href="/partner/regions">{t('change')}</Link></td></tr>
+                <tr><td><b>{t('unpaidCap')}</b></td><td>{won(d.unpaidCap)}{tp('common.unit.won')}<span className="pt-ls">{t('unpaidCapNote')}</span></td></tr>
               </>
             ) : null}
           </Tw>
           {c?.changes.map((x) => (
             <div className="pt-crow" key={x.id} style={{ marginTop: 10 }}>
-              <div><b>변경 요청 — {FIELD[x.field] ?? x.field}: {x.afterValue}</b><span className="pt-ls">{ymdKst(x.createdAt)} · {x.reason}{x.decisionReason ? ` · 본사: ${x.decisionReason}` : ''}</span></div>
-              <Bg tone={CH[x.state]?.[0] ?? 'off'}>{CH[x.state]?.[1] ?? x.state}</Bg>
+              <div><b>{t('changeReq', { field: ptCode(t, 'field', x.field, x.field), value: x.afterValue })}</b><span className="pt-ls">{ymdKst(x.createdAt)} · {x.reason}{x.decisionReason ? t('hqDecision', { reason: x.decisionReason }) : ''}</span></div>
+              <Bg tone={CH[x.state] ?? 'off'}>{ptCode(t, 'ch', x.state, x.state)}</Bg>
             </div>
           ))}
           {c?.isOwner ? <ChangeRequestForm /> : null}
-          <Note kind="warn"><b>{c?.notes.info ?? '국세청 조회 결과를 판단 근거로 쓰지 마십시오.'}</b></Note>
+          <Note kind="warn"><b>{c?.notes.info ?? t('ntsWarn')}</b></Note>
           {!d?.applied ? (
             <div style={{ marginTop: 14 }}>
-              <Empty>아직 입점 신청을 하지 않으셨습니다.<div style={{ marginTop: 12 }}><Link className="pt-bp" href="/partner/apply">입점 신청하기</Link></div></Empty>
+              <Empty>{t('notApplied')}<div style={{ marginTop: 12 }}><Link className="pt-bp" href="/partner/apply">{t('applyNow')}</Link></div></Empty>
             </div>
           ) : null}
         </>
@@ -106,13 +113,13 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
 
       {tab === 'acct' && (c ? (
         <>
-          <Tw head={['구분', '아이디', '권한', '상태', '']}>
+          <Tw head={[t('thKind'), t('thId'), t('thRole'), t('thState'), '']}>
             {c.staff.map((s) => (
               <tr key={s.accountId}>
-                <td><b>{s.role === 'OWNER' ? '대표 계정' : '직원 계정'}</b>{s.name ? <div className="pt-ls">{s.name}</div> : null}</td>
+                <td><b>{s.role === 'OWNER' ? t('owner') : t('staff')}</b>{s.name ? <div className="pt-ls">{s.name}</div> : null}</td>
                 <td>{s.email}</td>
-                <td>{s.role === 'OWNER' ? '대표' : s.canSettle ? '상담 · 정산' : '상담'}</td>
-                <td>{s.joined ? <Bg tone="ok">활성</Bg> : <Bg tone="wait">초대 대기</Bg>}</td>
+                <td>{s.role === 'OWNER' ? t('roleOwner') : s.canSettle ? t('roleSettle') : t('roleConsult')}</td>
+                <td>{s.joined ? <Bg tone="ok">{t('active')}</Bg> : <Bg tone="wait">{t('invited')}</Bg>}</td>
                 <td>{c.isOwner && s.role !== 'OWNER' ? <StaffRemove accountId={s.accountId} /> : null}</td>
               </tr>
             ))}
@@ -120,41 +127,41 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
           {c.isOwner ? <StaffInviteForm /> : null}
           <Note kind="warn"><b>{c.notes.staff}</b></Note>
         </>
-      ) : <Empty>파트너가 아닙니다.</Empty>)}
+      ) : <Empty>{tp('common.notPartner')}</Empty>)}
 
       {tab === 'terms' && (c ? (
         <>
-          <Tw head={['문서', '동의', '일자']}>
-            {c.terms.map((t) => (
-              <tr key={t.code}>
-                <td><b>{t.title}</b>{t.status !== 'PUBLISHED' ? <span className="pt-ls"> · 법무 검토 중(아직 시행 전)</span> : null}</td>
-                <td>{t.status !== 'PUBLISHED' ? <Bg tone="off">시행 전</Bg> : t.agreed ? <Bg tone="ok">동의</Bg> : <Bg tone="off">미동의</Bg>}</td>
-                <td>{t.agreedAt ? `${ymdKst(t.agreedAt)}${t.version ? ` · ${t.version}판` : ''}` : '—'}</td>
+          <Tw head={[t('thDoc'), t('thAgree'), t('thDate')]}>
+            {c.terms.map((tm) => (
+              <tr key={tm.code}>
+                <td><b>{tm.title}</b>{tm.status !== 'PUBLISHED' ? <span className="pt-ls">{t('legalReview')}</span> : null}</td>
+                <td>{tm.status !== 'PUBLISHED' ? <Bg tone="off">{t('notYet')}</Bg> : tm.agreed ? <Bg tone="ok">{t('agreed')}</Bg> : <Bg tone="off">{t('notAgreed')}</Bg>}</td>
+                <td>{tm.agreedAt ? `${ymdKst(tm.agreedAt)}${tm.version ? t('version', { v: tm.version }) : ''}` : '—'}</td>
               </tr>
             ))}
           </Tw>
-          <Note kind="info">동의하신 약관은 <Link href="/terms">약관 페이지</Link>에서 판본별로 보실 수 있습니다. <b>개정되면 다시 동의를 받습니다.</b></Note>
+          <Note kind="info">{t.rich('termsNote', { b: B, terms: (x) => <Link href="/terms">{x}</Link> })}</Note>
         </>
-      ) : <Empty>약관을 불러오지 못했습니다.</Empty>)}
+      ) : <Empty>{t('termsFail')}</Empty>)}
 
       {tab === 'brand' && (c ? (
         <>
           <div className="pt-dsum">
-            <div className="dr"><span>브랜드명</span><b>{c.brand?.brandName ?? '—'}</b></div>
-            <div className="dr"><span>로고</span><b>{c.brand?.logoFileId ? '등록됨' : '없음'}</b></div>
-            <div className="dr"><span>등록 소재</span><b>{c.sites.length}곳</b></div>
+            <div className="dr"><span>{t('brandName')}</span><b>{c.brand?.brandName ?? '—'}</b></div>
+            <div className="dr"><span>{t('logo')}</span><b>{c.brand?.logoFileId ? t('registered') : t('none')}</b></div>
+            <div className="dr"><span>{t('sites')}</span><b>{t('countPlace', { n: String(c.sites.length) })}</b></div>
           </div>
           {c.sites.length > 0 && (
             <div style={{ marginTop: 10 }}>
-              <Tw head={['소재', '지역', '']}>
+              <Tw head={[t('thSite'), t('thRegion'), '']}>
                 {c.sites.map((s) => <tr key={s.id}><td><b>{s.name}</b></td><td>{s.sido} {s.sigungu ?? ''}</td><td>{c.isOwner ? <SiteRemove id={s.id} /> : null}</td></tr>)}
               </Tw>
             </div>
           )}
           <Note kind="info"><b>{c.notes.brand}</b></Note>
-          {c.isOwner ? <><BrandForm brandName={c.brand?.brandName ?? null} intro={c.brand?.intro ?? null} hasLogo={!!c.brand?.logoFileId} /><SiteForm /></> : <p className="pt-ls">회사 관리는 대표 계정이 합니다.</p>}
+          {c.isOwner ? <><BrandForm brandName={c.brand?.brandName ?? null} intro={c.brand?.intro ?? null} hasLogo={!!c.brand?.logoFileId} /><SiteForm /></> : <p className="pt-ls">{t('ownerOnly')}</p>}
         </>
-      ) : <Empty>파트너가 아닙니다.</Empty>)}
+      ) : <Empty>{tp('common.notPartner')}</Empty>)}
     <i hidden data-root-end="" /></>
   );
 }

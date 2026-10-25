@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { ymdKst } from '@/lib/format';
 import type { SubDetail } from './SubscriptionManage';
 
@@ -40,6 +41,11 @@ type Kind = 'NEW' | 'UP' | 'DOWN';
 
 export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[]; detail: SubDetail | null; canSubscribe: boolean }) {
   const router = useRouter();
+  const t = useTranslations('billing.plan');
+  const tc = useTranslations('billing.common');
+  const locale = useLocale();
+  /* 한국어만 조사(으로 · 로)를 붙입니다 */
+  const roN = (n: string) => (locale === 'ko' ? ro(n) : n);
   const [pick, setPick] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -64,15 +70,15 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
         body: JSON.stringify({ planCode: p.code }),
       });
       const j = await r.json().catch(() => null);
-      if (!r.ok) { setMsg(['err', j?.message ?? '예약하지 못했습니다.']); return; }
-      setMsg(['ok', j?.note ?? `${nextDay}부터 ${ro(p.name)} 바뀝니다.`]); setPick(null);
+      if (!r.ok) { setMsg(['err', j?.message ?? t('reserveFail')]); return; }
+      setMsg(['ok', j?.note ?? t('reservedMsg', { date: nextDay, plan: roN(p.name) })]); setPick(null);
       router.refresh();
-    } catch { setMsg(['err', '연결하지 못했습니다. 잠시 후 다시 시도해 주십시오.']); }
+    } catch { setMsg(['err', tc('network')]); }
     finally { setBusy(false); }
   }
 
   async function pay(p: PlanLite) {
-    if (!agree) { setMsg(['err', '환불 조건 확인 칸을 체크해 주십시오.']); return; }
+    if (!agree) { setMsg(['err', t('needAgree')]); return; }
     setBusy(true); setMsg(null);
     const orderId = `sub-${crypto.randomUUID()}`;
     try {
@@ -83,8 +89,8 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
           body: JSON.stringify({ planCode: p.code, paymentKey: `stub_${crypto.randomUUID()}`, orderId }),
         });
         const j = await r.json().catch(() => null);
-        if (!r.ok) { setMsg(['err', j?.message ?? '결제가 승인되지 않았습니다.']); return; }
-        setMsg(['ok', `결제가 승인되었습니다(시험 결제 · ${won(p.monthlyPrice)}) — 오늘부터 ${p.name} 요금제입니다.`]); setPick(null); setAgree(false);
+        if (!r.ok) { setMsg(['err', j?.message ?? t('notApproved')]); return; }
+        setMsg(['ok', t('stubOk', { amount: won(p.monthlyPrice), plan: p.name })]); setPick(null); setAgree(false);
         router.refresh();
         return;
       }
@@ -97,21 +103,21 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
       });
     } catch (e) {
       const x = e as { code?: string; message?: string };
-      setMsg(['err', x?.code === 'USER_CANCEL' ? '결제를 취소하셨습니다.' : (x?.message ?? '결제창을 열지 못했습니다. 잠시 뒤 다시 시도해 주십시오.')]);
+      setMsg(['err', x?.code === 'USER_CANCEL' ? t('userCancel') : (x?.message ?? t('openFail'))]);
     } finally { setBusy(false); }
   }
 
   function button(p: PlanLite) {
     if (!canSubscribe) return null;
-    if (p.code === curCode) return <span className="badge verified" data-plan-current={p.code}>지금 요금제</span>;
-    if (detail?.nextPlanCode === p.code) return <span className="badge" data-plan-reserved={p.code}>{nextDay}부터 예약됨</span>;
-    if (reserveMode && detail?.cancelAt) return <span className="dim">해지 예약을 거두면 바꿀 수 있습니다</span>;
+    if (p.code === curCode) return <span className="badge verified" data-plan-current={p.code}>{t('current')}</span>;
+    if (detail?.nextPlanCode === p.code) return <span className="badge" data-plan-reserved={p.code}>{t('reservedBadge', { date: nextDay })}</span>;
+    if (reserveMode && detail?.cancelAt) return <span className="dim">{t('unreserveFirst')}</span>;
     const k = kindOf(p);
     /* 구독이 없을 때 무료(베이직)는 결제 없이 시작 — 소개코드를 처음 받을 때도 서버가 열어 줍니다 */
     return (
       <button type="button" className={pick === p.code ? 'btn-primary on' : 'btn-primary'} data-plan-pick={p.code} aria-expanded={pick === p.code}
               onClick={() => { setPick(pick === p.code ? null : p.code); setAgree(false); setMsg(null); }}>
-        {k === 'NEW' ? (Number(p.monthlyPrice) > 0 ? '이 요금제로' : '무료로 시작') : '이 요금제로 (다음 결제일부터)'}
+        {k === 'NEW' ? (Number(p.monthlyPrice) > 0 ? t('pickPaid') : t('startFree')) : t('pickNext')}
       </button>
     );
   }
@@ -125,8 +131,8 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
         {plans.map((pl) => (
           <div key={pl.code} className={pl.code === curCode ? 'card plan on' : 'card plan'} data-plan={pl.code}>
             {/* v10.32 — 시안: 이름 옆 「이용 중」 칩 · 값 뒤 「/월」 */}
-            <strong className="plan-nm">{pl.name}{pl.code === curCode && <span className="plan-using">이용 중</span>}</strong>
-            <div className="money">{Number(pl.monthlyPrice) === 0 ? '무료' : <>{won(pl.monthlyPrice)}<small className="plan-per">/월</small></>}</div>
+            <strong className="plan-nm">{pl.name}{pl.code === curCode && <span className="plan-using">{t('using')}</span>}</strong>
+            <div className="money">{Number(pl.monthlyPrice) === 0 ? tc('free') : <>{won(pl.monthlyPrice)}<small className="plan-per">{t('perMonth')}</small></>}</div>
             <ul>{(pl.lines ?? []).map((l) => <li key={l.k} data-plan-line={l.k} {...(l.k === 'view' ? { 'data-view-limit': pl.code } : {})}>{l.t}</li>)}</ul>
             {pl.note && <p className="plan-note">{pl.note}</p>}
             <div className="plan-btn">{button(pl)}</div>
@@ -134,47 +140,49 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
         ))}
       </div>
       {!canSubscribe && (
-        <p className="notice" data-plan-needbiz>요금제 결제는 <b>회원 본인 계정</b>(개인 · 사업자 대표)으로 할 수 있습니다. 직원 계정으로는 고르실 수 없습니다.</p>
+        <p className="notice" data-plan-needbiz>{t.rich('needBiz', { b: (c) => <b>{c}</b> })}</p>
       )}
 
       {to && k && (
         <section className="card sub-pay" data-plan-panel={k}>
-          <h2>{k === 'NEW' ? `${to.name} 구독 시작` : k === 'UP' ? `${ro(to.name)} 올리기 — 예약` : `${ro(to.name)} 내리기 — 예약`}</h2>
+          <h2>{k === 'NEW' ? t('hNew', { plan: to.name }) : k === 'UP' ? t('hUp', { plan: roN(to.name) }) : t('hDown', { plan: roN(to.name) })}</h2>
           <table className="tbl"><tbody>
-            <tr><th>지금 요금제</th><td>{cur ? `${cur.name} · 월 ${won(cur.monthlyPrice)}` : '없음'}{reserveMode && ` · 다음 결제일 ${nextDay}`}</td></tr>
-            <tr><th>바꿀 요금제</th><td>{to.name} · {Number(to.monthlyPrice) > 0 ? `월 ${won(to.monthlyPrice)}` : '무료'}</td></tr>
-            <tr><th>적용</th><td>{k === 'NEW' ? `오늘부터 30일${Number(to.monthlyPrice) > 0 ? ` · 그 뒤 월 ${won(to.monthlyPrice)} 자동 결제` : ''}` : <><b>{nextDay}(다음 결제일)부터</b> {to.name} · 그 전까지는 {cur?.name} 그대로</>}</td></tr>
-            <tr><th>이번에 결제할 금액</th><td data-plan-amount>{k === 'NEW' ? (Number(to.monthlyPrice) > 0 ? won(to.monthlyPrice) : '없음(무료)') : '지금 결제 없음'}</td></tr>
+            <tr><th>{t('thCur')}</th><td>{cur ? t('curVal', { plan: cur.name, price: won(cur.monthlyPrice) }) : t('none')}{reserveMode && t('nextPay', { date: nextDay })}</td></tr>
+            <tr><th>{t('thTo')}</th><td>{to.name} · {Number(to.monthlyPrice) > 0 ? tc('monthly', { price: won(to.monthlyPrice) }) : tc('free')}</td></tr>
+            <tr><th>{t('thApply')}</th><td>{k === 'NEW' ? `${t('applyNew')}${Number(to.monthlyPrice) > 0 ? t('applyAuto', { price: won(to.monthlyPrice) }) : ''}` : <>{t.rich('applyReserve', { b: (c) => <b>{c}</b>, date: nextDay, plan: to.name, cur: cur?.name ?? '' })}</>}</td></tr>
+            <tr><th>{t('thAmount')}</th><td data-plan-amount>{k === 'NEW' ? (Number(to.monthlyPrice) > 0 ? won(to.monthlyPrice) : t('noneFree')) : t('noPayNow')}</td></tr>
           </tbody></table>
 
           {k === 'NEW' && Number(to.monthlyPrice) > 0 ? (
             <>
-              <div className="note warn"><b>환불은 결제 당일에만 가능합니다.</b> 결제하시는 순간부터 요청을 열람하실 수 있어, <b>한 건이라도 열람하시면 당일이어도 환불되지 않습니다</b> — 열람한 연락처는 되돌릴 수 없기 때문입니다.</div>
-              <label className="agree-line"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} data-plan-agree /> 위 금액 · 자동 결제 · 환불 조건을 확인했습니다 <b className="warn-text">(필수)</b></label>
+              <div className="note warn">{t.rich('refundWarn', { b: (c) => <b>{c}</b> })}</div>
+              <label className="agree-line"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} data-plan-agree /> {t('agree')} <b className="warn-text">{t('required')}</b></label>
               <div className="invite-actions">
                 <button type="button" className="btn-primary" disabled={busy || !agree} onClick={() => void pay(to)} data-plan-pay>
-                  {busy ? '결제하는 중…' : `${won(to.monthlyPrice)} 결제하기`}
+                  {busy ? t('paying') : t('payBtn', { amount: won(to.monthlyPrice) })}
                 </button>
-                <button type="button" className="btn ghost" onClick={() => setPick(null)}>닫기</button>
+                <button type="button" className="btn ghost" onClick={() => setPick(null)}>{tc('close')}</button>
               </div>
-              {!CLIENT_KEY && <p className="hint">결제사 키가 없는 환경이라 <b>시험 결제</b>입니다 — 실제 돈은 오가지 않습니다.</p>}
+              {!CLIENT_KEY && <p className="hint">{t.rich('stubHint', { b: (c) => <b>{c}</b> })}</p>}
             </>
           ) : k === 'NEW' ? (
             <div className="invite-actions">
-              <button type="button" className="btn-primary" disabled={busy} onClick={() => void reserve(to)} data-plan-free>{busy ? '처리 중…' : '무료로 시작'}</button>
-              <button type="button" className="btn ghost" onClick={() => setPick(null)}>닫기</button>
+              <button type="button" className="btn-primary" disabled={busy} onClick={() => void reserve(to)} data-plan-free>{busy ? tc('processing') : t('startFree')}</button>
+              <button type="button" className="btn ghost" onClick={() => setPick(null)}>{tc('close')}</button>
             </div>
           ) : (
             <>
               <div className="note info">
-                <b>지금 결제하는 돈은 없습니다.</b> {nextDay}부터 {ro(to.name)} 바뀝니다{Number(to.monthlyPrice) > 0 ? `(월 ${won(to.monthlyPrice)})` : '(무료)'}.
-                그 전까지 {cur?.name}의 혜택이 그대로이고, 예약은 그 전에 거둘 수 있습니다.
-                {k === 'UP' && <> 그날 등록하신 카드로 새 월 회비가 결제되고, <b>결제가 되어야</b> 바뀝니다{!detail?.hasBillingKey && <> — <a href="/my/payment">결제 수단</a>을 먼저 등록해 주십시오</>}.</>}
-                {k === 'DOWN' && Number(to.monthlyPrice) < Number(cur?.monthlyPrice ?? 0) && ' 요금제를 내리면 다음 결제일부터 노출 슬롯이 줄어 넘치는 매물이 내려갑니다.'}
+                {t.rich('reserveInfo', { b: (c) => <b>{c}</b>, date: nextDay, plan: roN(to.name), cur: cur?.name ?? '',
+                  fee: Number(to.monthlyPrice) > 0 ? t('feeMonthly', { price: won(to.monthlyPrice) }) : t('feeFree') })}
+                {k === 'UP' && <> {detail?.hasBillingKey
+                  ? t.rich('upInfo', { b: (c) => <b>{c}</b> })
+                  : t.rich('upInfoNoKey', { b: (c) => <b>{c}</b>, a: (c) => <a href="/my/payment">{c}</a> })}</>}
+                {k === 'DOWN' && Number(to.monthlyPrice) < Number(cur?.monthlyPrice ?? 0) && <> {t('downInfo')}</>}
               </div>
               <div className="invite-actions">
-                <button type="button" className="btn-primary" disabled={busy} onClick={() => void reserve(to)} data-plan-reserve>{busy ? '처리 중…' : `${nextDay}부터 바꾸기`}</button>
-                <button type="button" className="btn ghost" onClick={() => setPick(null)}>닫기</button>
+                <button type="button" className="btn-primary" disabled={busy} onClick={() => void reserve(to)} data-plan-reserve>{busy ? tc('processing') : t('changeBtn', { date: nextDay })}</button>
+                <button type="button" className="btn ghost" onClick={() => setPick(null)}>{tc('close')}</button>
               </div>
             </>
           )}

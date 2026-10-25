@@ -3,12 +3,14 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface Contact { name: string | null; phone: string | null; address: string | null; email?: string | null }
 
 /** 연락처를 그 자리에서 보여 줍니다. 목록을 새로 그리면 사라지므로 다시 보려면 다시 누릅니다(기록됨). */
 function ContactView({ c, note }: { c: Contact | null; note?: string | null }) {
-  if (!c) return <p className="hint">{note ?? '연락처가 없습니다.'}</p>;
+  const t = useTranslations('partnerOps.leads.view');
+  if (!c) return <p className="hint">{note ?? t('noContact')}</p>;
   const tel = (c.phone ?? '').replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
   return (
     <div className="pt-nt ok notice" data-contact>
@@ -20,10 +22,10 @@ function ContactView({ c, note }: { c: Contact | null; note?: string | null }) {
   );
 }
 
-async function fetchContact(deliveryId: string) {
+async function fetchContact(deliveryId: string, failMsg: string) {
   const res = await fetch(`/api/v1/partner/leads/${deliveryId}/contact`);
   const b = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(b.message ?? '연락처를 불러오지 못했습니다.');
+  if (!res.ok) throw new Error(b.message ?? failMsg);
   return b as { contact: Contact | null; note?: string };
 }
 
@@ -39,37 +41,38 @@ export function ViewLeadButton({ deliveryId, fee }: { deliveryId: string; fee?: 
   const [cash, setCash] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
+  const t = useTranslations('partnerOps.leads.view');
 
   async function open() {
     /* v10.31 (W5 · 선불) — 시안 문구 그대로 */
-    if (!confirm(`열면 리드 이용료에서 확인비용${fee ? ` ${Number(fee).toLocaleString('ko-KR')}원` : ''}이 빠집니다 — 보너스 잔액부터 차감됩니다. 이름 · 휴대폰 · 이메일이 보이고 열람 기록이 남습니다.`)) return;
+    if (!confirm(t('confirm', { fee: fee ? ` ${Number(fee).toLocaleString('ko-KR')}원` : '' }))) return;
     setErr(null);
     const res = await fetch(`/api/v1/partner/leads/${deliveryId}/view`, { method: 'POST' });
     if (!res.ok) {
       const b = await res.json().catch(() => ({}));
-      setErr(b.message ?? '열람하지 못했습니다.');
+      setErr(b.message ?? t('viewFail'));
       setCash(b.code === 'LEADCASH');
       start(() => router.refresh());
       return;
     }
-    try { setShown(await fetchContact(deliveryId)); } catch (e) { setErr((e as Error).message); }
+    try { setShown(await fetchContact(deliveryId, t('contactFail'))); } catch (e) { setErr((e as Error).message); }
   }
 
   if (shown) {
     return (
       <div className="card-meta">
-        <span className="pt-bg ok badge verified">열람함</span>
+        <span className="pt-bg ok badge verified">{t('viewed')}</span>
         <ContactView c={shown.contact} note={shown.note} />
-        <button className="pt-bo sm" onClick={() => start(() => router.refresh())}>목록 새로고침</button>
+        <button className="pt-bo sm" onClick={() => start(() => router.refresh())}>{t('refresh')}</button>
       </div>
     );
   }
   return (
     <div className="card-meta">
       <button className="pt-bp sm" onClick={open} disabled={pending}>
-        {pending ? '여는 중…' : '연락처 열기'}
+        {pending ? t('opening') : t('open')}
       </button>
-      {err && <p className="pt-nt warn notice">{err}{cash ? <> <a href="/partner/cash">충전하러 가기</a></> : null}</p>}
+      {err && <p className="pt-nt warn notice">{err}{cash ? <> <a href="/partner/cash">{t('topUp')}</a></> : null}</p>}
     </div>
   );
 }
@@ -79,15 +82,16 @@ export function ContactButton({ deliveryId }: { deliveryId: string }) {
   const [shown, setShown] = useState<{ contact: Contact | null; note?: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations('partnerOps.leads.view');
   async function show() {
     setBusy(true); setErr(null);
-    try { setShown(await fetchContact(deliveryId)); } catch (e) { setErr((e as Error).message); }
+    try { setShown(await fetchContact(deliveryId, t('contactFail'))); } catch (e) { setErr((e as Error).message); }
     setBusy(false);
   }
   if (shown) return <ContactView c={shown.contact} note={shown.note} />;
   return (
     <>
-      <button className="pt-bo sm" onClick={show} disabled={busy}>{busy ? '불러오는 중…' : '연락처 보기'}</button>
+      <button className="pt-bo sm" onClick={show} disabled={busy}>{busy ? t('loading') : t('show')}</button>
       {err && <p className="pt-nt warn notice">{err}</p>}
     </>
   );

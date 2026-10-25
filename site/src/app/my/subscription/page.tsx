@@ -4,11 +4,12 @@ import { redirect } from 'next/navigation';
 import { apiGet } from '@/lib/api';
 import { me } from '@/lib/session';
 import { ymdKst } from '@/lib/format';
-import { viewLimitText, type PublicSettings } from '@/components/billing/viewLimit';
+import { viewLimitText, type PublicSettings, type ViewLimitMsgs } from '@/components/billing/viewLimit';
 import { SubscriptionManage, type RefundEligible, type SubDetail } from '@/components/billing/SubscriptionManage';
 import { PlanPicker } from '@/components/billing/PlanPicker';
 import { MyHead, Note, Table, Empty, wonP, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.sub'))('title') };
@@ -45,6 +46,8 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.sub');
+  const tv = await getTranslations('billing.viewLimit');
+  const vlm: ViewLimitMsgs = { promo: tv('promo'), unlimited: tv('unlimited'), perMonth: (n) => tv('perMonth', { n }) };
   const B = (c: React.ReactNode) => <b>{c}</b>;
   const plans = await apiGet<Plan[]>('/subscription-plans', 300).catch(() => [] as Plan[]);
   /* D011 — 요청 열람 한도는 운영 설정입니다(홍보 기간에는 제한 없음). 설정은 짧게(30초) 캐시합니다 */
@@ -68,7 +71,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
       {payFail && <Note kind="warn" role="alert" data-pay-fail="">{t('payFail')}</Note>}
 
       {/* 내 구독 — 자동 갱신 해지 · 해지 철회 · 환불(환불 완료 · 환불 결과 확인 중 · 환불 실패). 구독이 없으면 나오지 않습니다 */}
-      <SubscriptionManage detail={detail} eligible={eligible} />
+      <Msgs ns={['billing']}><SubscriptionManage detail={detail} eligible={eligible} /></Msgs>
 
       {detail?.subscribed && (
         <div className="my-subnow" data-sub-now="">
@@ -96,7 +99,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
 
       <h2 className="my-s2">{t('hPlans')}</h2>
       {/* v10.27 (G-189) — 요금제 고르기 · 구독 결제. 처음 유료는 지금 결제, 유료 구독 중 올리기 · 내리기는 다음 결제일부터 예약(10/8 답 ③) */}
-      <div className="my-plans-w">
+      <div className="my-plans-w"><Msgs ns={['billing']}>
         <PlanPicker
           detail={detail}
           canSubscribe={p.roles.some((r) => r === 'MEMBER' || r === 'BIZ_OWNER')}   /* v10.37 (D095) — 개인 회원도 구독 */
@@ -106,13 +109,13 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
               ...(pl.features?.length
                 ? pl.features.map((t, i) => ({ k: `f${i}`, t }))
                 : [{ k: 'codes', t: pl.includedCodes ? t('codesN', { n: String(pl.includedCodes) }) : t('codesNone') }]),
-              { k: 'view', t: t('view', { v: viewLimitText(settings, pl) }) },
+              { k: 'view', t: t('view', { v: viewLimitText(settings, pl, vlm) }) },
               { k: 'slots', t: t('slots', { v: pl.listingSlots == null ? t('unlimited') : pl.listingSlots ? t('count', { n: String(pl.listingSlots) }) : String(pl.listingSlots) }) },
             ],
             note: pl.code === 'BASIC' ? t('basicNote', { price: wonP(pl.extraCodePrice ?? 30000) }) : t('paidNote'),
           }))}
         />
-      </div>
+      </Msgs></div>
 
       {/* 환불 조건은 결제 전에 보여야 합니다. 결제하고 나서 알면 "몰랐다" 가 분쟁이 됩니다. */}
       <Note kind="warn">

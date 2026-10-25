@@ -5,7 +5,11 @@ import { apiGet } from '@/lib/api';
 import { ymd } from '@/components/partners/fmt';
 import type { Notice } from '@/components/partners/types';
 
-export const metadata: Metadata = { title: '파트너 공지사항' };
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('affiliate'))('notices.metaTitle') };
+}
 
 /**
  * SB-AFC-NTC-010 공지사항 — GET /notices
@@ -16,25 +20,26 @@ export const metadata: Metadata = { title: '파트너 공지사항' };
 export default async function PartnerNoticesPage() {
   const p = await me();
   if (!p) redirect('/login');
+  const t = await getTranslations('affiliate');
 
   const rows = await apiGet<Notice[]>('/notices', 60).catch(() => null);
 
   return (
     <>
-      <div className="page-head"><h1>공지사항</h1></div>
-      <p className="lead">파트너 대상 공지입니다.</p>
+      <div className="page-head"><h1>{t('notices.title')}</h1></div>
+      <p className="lead">{t('notices.lead')}</p>
 
       {rows === null ? (
-        <p className="form-error" role="alert">공지를 불러오지 못했습니다. 잠시 후 새로고침해 주십시오.</p>
+        <p className="form-error" role="alert">{t('notices.loadFail')}</p>
       ) : rows.length === 0 ? (
-        <p className="empty">등록된 공지가 없습니다.</p>
+        <p className="empty">{t('common.noNotices')}</p>
       ) : (
         <ul className="p2list">
           {rows.map((n) => (
             <li key={n.id} id={`n-${n.id}`} className="card p2pad">
               <details>
                 <summary>
-                  {n.isPinned && <span className="state state-in_review">고정</span>} <strong>{n.title}</strong>{' '}
+                  {n.isPinned && <span className="state state-in_review">{t('notices.pinned')}</span>} <strong>{n.title}</strong>{' '}
                   <span className="dim">{ymd(n.publishedAt)}</span>
                 </summary>
                 <p className="doc-body">{n.body}</p>

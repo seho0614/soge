@@ -9,6 +9,7 @@
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /* 시안 P2ICON — 선 두께 · 모양 그대로 */
 const ICON: Record<string, React.ReactNode> = {
@@ -24,25 +25,26 @@ const ICON: Record<string, React.ReactNode> = {
   gde: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>,
 };
 
-/* 시안 PTC2NAV 순서 그대로 — 화면마다 메뉴 자리가 같아야 찾지 않습니다. */
-const MENU: Array<[string, string, string]> = [
-  ['/partners', '대시보드', 'dsh'],
-  ['/partners/products', '추천상품', 'rec'],
-  ['/partners/links', '내 소개링크', 'lnk'],
-  ['/partners/revenues', '수익관리', 'rev'],
-  ['/partners/orders', '주문/고객현황', 'ord'],
-  ['/partners/settlements', '정산내역', 'stl'],
-  ['/partners/materials', '마케팅자료실', 'mkt'],
-  ['/partners/notices', '공지사항', 'ntc'],
-  ['/partners/inquiries', '1:1 문의', 'qna'],
-  ['/partners/guides', '파트너가이드', 'gde'],
-];
+/* 시안 PTC2NAV 순서 그대로 — 화면마다 메뉴 자리가 같아야 찾지 않습니다. v10.100 (다국어 2-5a) — 이름은 사전 partner.p2.menu.<아이콘 키> */
+const MENU = [
+  ['/partners', 'dsh'],
+  ['/partners/products', 'rec'],
+  ['/partners/links', 'lnk'],
+  ['/partners/revenues', 'rev'],
+  ['/partners/orders', 'ord'],
+  ['/partners/settlements', 'stl'],
+  ['/partners/materials', 'mkt'],
+  ['/partners/notices', 'ntc'],
+  ['/partners/inquiries', 'qna'],
+  ['/partners/guides', 'gde'],
+] as const;
 
 export function P2Menu() {
   const path = usePathname() ?? '';
+  const t = useTranslations('partner.p2');
   return (
-    <nav className="p2menu" aria-label="파트너센터 메뉴">
-      {MENU.map(([href, t, ic]) => {
+    <nav className="p2menu" aria-label={t('menuAria')}>
+      {MENU.map(([href, ic]) => {
         const on = href === '/partners' ? path === '/partners' : path === href || path.startsWith(href + '/');
         return (
           <Link key={href} href={href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}>
@@ -51,7 +53,7 @@ export function P2Menu() {
             ) : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{ICON[ic]}</svg>
             )}
-            {t}
+            {t(`menu.${ic}`)}
           </Link>
         );
       })}
@@ -61,12 +63,14 @@ export function P2Menu() {
 
 export function P2Hero({ name }: { name: string }) {
   const dash = (usePathname() ?? '') === '/partners';
+  const t = useTranslations('partner.p2');
+  const br = () => <br />;
   return (
     <div className={`p2hero${dash ? ' dash' : ''}`}>
       <div className="p2herotx">
         <div className="h1">{name}</div>
-        <div className="h1">오늘도 수익을 만들어보세요 <span style={{ fontSize: 20 }} aria-hidden>💙</span></div>
-        <p>좋은 제품을 소개하는 당신이, 더 많은 사람에게 좋은 변화를 만듭니다.<br />소개뱅크 PARTNERS가 항상 함께합니다.</p>
+        <div className="h1">{t('heroLine')} <span style={{ fontSize: 20 }} aria-hidden>💙</span></div>
+        <p>{t.rich('heroP', { br })}</p>
       </div>
       {dash ? (
         <>
@@ -76,7 +80,7 @@ export function P2Hero({ name }: { name: string }) {
             <img src="/proto-img/partner/p2-hero.png" alt="" />
           </div>
           <div className="p2herotag">
-            <div className="t">소개하는<br />당신이<br />특별합니다.</div>
+            <div className="t">{t.rich('heroTag', { br })}</div>
             <div className="ln" />
             <div className="s">PARTNER<br />TODAY<br />A BETTER<br />TOMORROW</div>
           </div>

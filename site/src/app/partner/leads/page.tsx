@@ -7,8 +7,11 @@ import { ViewLeadButton, ContactButton } from './ViewLeadButton';
 import { LeadMemo } from './LeadMemo';
 import { dtKst, ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, Tabs, Tw, won } from '@/components/partner/ui';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '상담 신청' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('partnerOps.leads'))('title') };
+}
 
 interface Lead {
   deliveryId: string; leadId: string; summary: string;
@@ -30,8 +33,7 @@ const isRej = (l: Lead) => !!l.disputeState && l.disputeState === 'REQUESTED';
 const isNew = (l: Lead) => !l.viewedAt && l.state !== 'EXPIRED' && l.state !== 'REVOKED';
 const isDone = (l: Lead) => !!l.viewedAt && !isRej(l);
 const isExp = (l: Lead) => !l.viewedAt && (l.state === 'EXPIRED' || l.state === 'REVOKED');
-const ALIM: Record<string, string> = { NONE: '미발송', SENT: '발송', CONFIRMED: '확정', NO_RESPONSE: '미응답', FAILED: '발송실패', CANCELED: '취소' };
-const BAND: Record<string, string> = { CONFIRMED: '확정', NO_RESPONSE: '미응답', FAILED: '발송실패' };
+/* 알림톡 상태 · 등급 조건 글자는 사전 partnerOps.leads.alim.<코드> · band.<코드> (v10.100 · 2-5a) */
 const gcls = (label?: string | null) => (label ? `g${label.replace(/[+\-]/, '')}` : 'miss');
 
 /**
@@ -59,25 +61,26 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   /* 등급표의 「최고 확인비용」 — 내 업종 중 가장 높은 S 단가(시안 grade.top) */
   const top = pricing.reduce((m, r) => Math.max(m, Number(r.myFee ?? 0)), 0);
   const cap = rej?.cap;
+  const t = await getTranslations('partnerOps.leads');
+  const code = (g: 'alim' | 'band', c: string) => (t.has(`${g}.${c}` as never) ? t(`${g}.${c}` as never) : c);
 
   return (
-    <><Pgh title="상담 신청" sub="리드를 열면 확인비용이 리드 이용료에서 빠집니다. 등급이 곧 금액입니다." />
+    <><Pgh title={t('title')} sub={t('sub')} />
 
       <Tabs cur={tab} items={[
-        { key: 'all', label: '전체', count: leads.length, href: href('all') },
-        { key: 'new', label: '확인 전', count: unread, href: href('new') },
-        { key: 'done', label: '확인 완료', count: leads.filter(isDone).length, href: href('done') },
-        { key: 'rej', label: '반려 신청', count: leads.filter(isRej).length, href: href('rej') },
-        { key: 'exp', label: '기한 지남', count: leads.filter(isExp).length, href: href('exp') },
+        { key: 'all', label: t('tab.all'), count: leads.length, href: href('all') },
+        { key: 'new', label: t('tab.new'), count: unread, href: href('new') },
+        { key: 'done', label: t('tab.done'), count: leads.filter(isDone).length, href: href('done') },
+        { key: 'rej', label: t('tab.rej'), count: leads.filter(isRej).length, href: href('rej') },
+        { key: 'exp', label: t('tab.exp'), count: leads.filter(isExp).length, href: href('exp') },
       ]} />
 
       {leads.length === 0 ? (
         <Empty>
-          아직 받은 상담 신청이 없습니다. 상담 업종의 승인된 서비스 · 활동 지역 · 리드 이용료 잔액이 있어야 배정됩니다
-          (보험 · 카드 · 금융 · 통신 · 의료는 자격 심사 통과가 먼저입니다).
+          {t('emptyAll')}
         </Empty>
       ) : rows.length === 0 ? (
-        <Empty>이 상태의 상담이 없습니다.</Empty>
+        <Empty>{t('emptyTab')}</Empty>
       ) : rows.map((l) => {
         const done = !!l.viewedAt;
         const exp = isExp(l);
@@ -88,32 +91,32 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                    className={`pt-lrow${exp ? ' read' : ''} req${done || exp ? ' done' : ''}`}>
             <div className="lt">
               <div className="lh">
-                <span className={`pt-gbadge ${gcls(label)}`} title={label ? `${label} 등급` : '알림톡 결과가 없어 등급 전'}>{label ?? '미판정'}</span>
-                <span className="pt-ck">알림톡 {ALIM[l.alimState ?? 'NONE'] ?? l.alimState}</span>
-                {l.urgent ? <Bg tone="no">급구</Bg> : null}
-                <Bg tone={rj ? 'wait' : done ? 'ok' : exp ? 'off' : 'wait'}>{rj ? '반려 신청' : done ? '확인 완료' : exp ? '기한 지남' : '확인 전'}</Bg>
+                <span className={`pt-gbadge ${gcls(label)}`} title={label ? t('gradeTitle', { label }) : t('gradeNone')}>{label ?? t('ungraded')}</span>
+                <span className="pt-ck">{t('alimLabel')} {code('alim', l.alimState ?? 'NONE')}</span>
+                {l.urgent ? <Bg tone="no">{t('urgent')}</Bg> : null}
+                <Bg tone={rj ? 'wait' : done ? 'ok' : exp ? 'off' : 'wait'}>{rj ? t('tab.rej') : done ? t('tab.done') : exp ? t('tab.exp') : t('tab.new')}</Bg>
               </div>
               <b>{l.summary}</b>
               <span className="pt-ls">
                 L-{l.leadId.replace(/-/g, '').slice(0, 6).toUpperCase()} · {l.categoryName ? `${l.categoryName} · ` : ''}
-                {[l.sido, l.sigungu].filter(Boolean).join(' ')} · 접수 {ymdKst(l.deliveredAt)}
-                {!l.viewedAt && l.state === 'DELIVERED' && l.expiresAt ? ` · ${dtKst(l.expiresAt)}까지 열람` : ''}
+                {[l.sido, l.sigungu].filter(Boolean).join(' ')} · {t('receivedOn', { d: ymdKst(l.deliveredAt) })}
+                {!l.viewedAt && l.state === 'DELIVERED' && l.expiresAt ? ` · ${t('viewUntil', { d: dtKst(l.expiresAt) })}` : ''}
               </span>
-              {exp ? <span className="pt-ls">{l.note ?? '열람 기한이 지나 다른 업체로 넘어갔습니다.'} 확인비용은 없습니다.</span> : null}
+              {exp ? <span className="pt-ls">{l.note ?? t('expiredNote')} {t('noFee')}</span> : null}
               {done ? <LeadMemo deliveryId={l.deliveryId} last={l.memo ?? null} count={l.memoCount ?? 0} /> : null}
             </div>
             <div className="pt-lstat">
-              <span>확인비용 <b>{l.fee ? `${won(l.fee)}원` : l.feeQuote != null ? `${won(l.feeQuote)}원` : '—'}</b>{!l.fee && !done && !exp ? <span className="pt-ls"> 열 때</span> : null}</span>
+              <span>{t('fee')} <b>{l.fee ? `${won(l.fee)}원` : l.feeQuote != null ? `${won(l.feeQuote)}원` : '—'}</b>{!l.fee && !done && !exp ? <span className="pt-ls"> {t('onOpen')}</span> : null}</span>
             </div>
             <div className="pt-lact">
               {rj ? (
-                <button className="pt-bo sm off" disabled title="본사가 반려 신청을 심사하는 중입니다. 결과가 나오면 열립니다.">본사 심사중</button>
+                <button className="pt-bo sm off" disabled title={t('reviewingTitle')}>{t('reviewing')}</button>
               ) : done ? (
                 l.hasContact === false
-                  ? <span className="pt-ls">연락처가 따로 저장되지 않은 옛 형식 리드입니다.</span>
+                  ? <span className="pt-ls">{t('legacyLead')}</span>
                   : <ContactButton deliveryId={l.deliveryId} />
               ) : exp ? (
-                <button className="pt-bo sm off" disabled title="기한이 지나 열 수 없습니다.">기한 지남</button>
+                <button className="pt-bo sm off" disabled title={t('expiredTitle')}>{t('tab.exp')}</button>
               ) : (
                 <ViewLeadButton deliveryId={l.deliveryId} fee={l.feeQuote ?? null} />
               )}
@@ -122,37 +125,35 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         );
       })}
 
-      <S2>등급 · 확인비용</S2>
+      <S2>{t('gradeH')}</S2>
       <Note kind="info">
-        <b>파트너는 확인비용을 등급마다 입력하지 않습니다.</b> 최고 확인비용 하나만 정하면 8등급 비율을 곱해 전 등급이 채워집니다.
-        어느 등급이 붙느냐는 알림톡 수신 결과가 정합니다.{top ? <> 최고 확인비용 <b>{won(top)}원</b> 기준입니다(내 업종 중 가장 높은 S 단가 — <Link href="/partner/pricing">단가 · 소개비</Link>).</> : null}
+        {t.rich('gradeNote', { b: (c) => <b>{c}</b> })}{top ? t.rich('gradeTop', { fee: `${won(top)}원`, b: (c) => <b>{c}</b>, a: (c) => <Link href="/partner/pricing">{c}</Link> }) : null}
       </Note>
       {stats?.rates?.length ? (
-        <Tw head={['등급', '비율', '확인비용', '붙는 조건(알림톡)']} numCols={[1, 2]}>
+        <Tw head={[t('th.grade'), t('th.rate'), t('th.fee'), t('th.cond')]} numCols={[1, 2]}>
           {stats.rates.map((r) => (
             <tr key={r.grade}>
               <td><span className={`pt-gbadge ${gcls(r.label ?? r.grade)}`}>{r.label ?? r.grade}</span></td>
               <td className="num">{Math.round(Number(r.rate) * 100)}%</td>
               <td className="num"><b>{top ? `${won(Math.round(top * Number(r.rate)))}원` : '—'}</b></td>
-              <td>{r.alimBand ? BAND[r.alimBand] ?? r.alimBand : '—'}</td>
+              <td>{r.alimBand ? code('band', r.alimBand) : '—'}</td>
             </tr>
           ))}
         </Tw>
-      ) : <Empty>등급 비율을 불러오지 못했습니다.</Empty>}
+      ) : <Empty>{t('rateFail')}</Empty>}
       <Note kind="warn">
-        <b>알림톡 · SMS 연동이 아직 없습니다.</b> 그래서 지금 들어오는 리드는 등급이 붙지 않은 「미판정」이며, 확인비용은 기준 단가 그대로입니다 —
-        연동되면 수신 결과대로 등급이 붙습니다(운영이 확인한 결과를 넣을 수도 있습니다).
+        {t.rich('alimWarn', { b: (c) => <b>{c}</b> })}
       </Note>
 
-      <S2>반려 한도</S2>
+      <S2>{t('capH')}</S2>
       {cap ? (
         <div className="pt-cap" data-reject-cap>
           <div className="cb"><div className="cf" style={{ width: `${Math.min(100, Math.round((cap.used / Math.max(1, cap.cap)) * 100))}%` }} /></div>
-          <div className="cl"><b>{cap.used} / {cap.cap}건</b><span className="pt-ls">{cap.month} · 접수 {cap.received}건의 15%</span></div>
+          <div className="cl"><b>{t('capCount', { used: String(cap.used), cap: String(cap.cap) })}</b><span className="pt-ls">{cap.month} · {t('capOf', { n: String(cap.received) })}</span></div>
         </div>
-      ) : <Empty>반려 한도를 불러오지 못했습니다.</Empty>}
-      <Note kind="info"><b>반려는 접수 72시간 이내 · 한 건에 한 번 · 월 접수량의 15%까지입니다.</b> 한도가 없으면 확인비용을 내지 않고 리드만 소진하는 경로가 열립니다. 상담 결렬은 반려 사유가 아닙니다.</Note>
-      <div className="pt-pact"><Link className="pt-bo" href="/partner/leads-rejects">반려 · 이의신청 내역</Link></div>
+      ) : <Empty>{t('capFail')}</Empty>}
+      <Note kind="info">{t.rich('capNote', { b: (c) => <b>{c}</b> })}</Note>
+      <div className="pt-pact"><Link className="pt-bo" href="/partner/leads-rejects">{t('rejLink')}</Link></div>
     <i hidden data-root-end="" /></>
   );
 }

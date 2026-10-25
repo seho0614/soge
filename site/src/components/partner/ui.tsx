@@ -93,6 +93,18 @@ export const SVC_ST: Record<string, [string, Tone]> = {
   REJECTED: ['반려', 'no'], SUSPENDED: ['정지', 'no'],
 };
 
+/**
+ * v10.100 (다국어 2-5a) — 코드 → 사전 글자(partner.<묶음>.<코드> · 예: grade.GOLD · partnerSt.ACTIVE).
+ *   위의 한국어 표(GRADE_KO · PARTNER_ST)는 사전과 같은 글자이고, 사전에 없는 코드일 때만 씁니다(fallback).
+ *   t 는 getTranslations('partner') / useTranslations('partner').
+ */
+type CodeT = { (key: never): string; has: (key: never) => boolean };
+export const ptCode = (t: CodeT, group: string, code: string | null | undefined, fallback: string) => {
+  if (!code) return fallback;
+  const k = `${group}.${code}` as never;
+  return t.has(k) ? t(k) : fallback;
+};
+
 /** 사업자등록번호 123-45-67890 모양으로 */
 export const bizNo = (v?: string | null) => {
   const d = String(v ?? '').replace(/\D/g, '');
