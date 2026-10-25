@@ -33,7 +33,7 @@ ok('① 원문 함수 · 낡음 뷰(md5) · 한국어 끄기 막는 트리거', 
 ok('① 스위치 3개 꺼짐 · 형식 검사', all(x in M for x in ("('i18n.enabled', 'off'", "'^(on|off)$'", "('i18n.engine', 'MANUAL'", "'^(MANUAL|CLAUDE|N8N)$'", "('i18n.board_on_view', 'off'")), '')
 ok('① 지우는 문장 없음 · 재실행 안전(IF NOT EXISTS · ON CONFLICT)', not re.search(r'\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT') == 2 and 'ADD COLUMN IF NOT EXISTS preferred_lang' in M, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 153 · 마지막 D115(v10.94 부터 D116 · 154 — test_v1094)', (len(mig), mig[-1] if mig else '') in ((153, 'D115_i18n_base'), (154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 153 · 마지막 D115(v10.94 부터 D116 · 154 — test_v1094)', (len(mig), mig[-1] if mig else '') in ((153, 'D115_i18n_base'), (154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/i18n/i18n.controller.ts'); S = rd('src/modules/i18n/i18n.service.ts')
 routes = re.findall(r"@(Get|Post|Put)\('([^']+)'\)", C)
