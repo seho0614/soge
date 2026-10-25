@@ -3,6 +3,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 import type { AffResult } from './types';
 import { CopyButton } from './CopyButton';
 
@@ -21,6 +22,7 @@ export function LinkCreateForm({ products, fixed, compact }: {
   const router = useRouter();
   const t = useTranslations('affiliate.linkForm');
   const tc = useTranslations('affiliate.common');
+  const fm = useFmt();
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [made, setMade] = useState<{ code: string; note: string } | null>(null);
@@ -58,7 +60,7 @@ export function LinkCreateForm({ products, fixed, compact }: {
           <select name="productId" defaultValue="" required>
             <option value="" disabled>{t('placeholderOption')}</option>
             {products.map((p) => (
-              <option key={p.id} value={p.id}>{t('option', { name: p.name, amount: `${Number(p.commission).toLocaleString('ko-KR')}원` })}</option>
+              <option key={p.id} value={p.id}>{t('option', { name: p.name, amount: fm.won(Number(p.commission)) })}</option>
             ))}
           </select>
         </label>

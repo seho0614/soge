@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { HltAddress, HltCart } from './types';
 import { useTranslations } from 'next-intl';
-import { codeText, krw, needsLogin, PAY_METHODS } from './util';
+import { codeText, needsLogin, PAY_METHODS } from './util';
 import { ProductArt } from './ProductArt';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 주문서 — POST /health/orders { addressId, items:[{productCode, qty}] }
@@ -18,6 +19,7 @@ import { ProductArt } from './ProductArt';
  */
 export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAddress[] }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const router = useRouter();
   const [addr, setAddr] = useState(addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? '');
   const [method, setMethod] = useState('CARD');
@@ -92,10 +94,10 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
             <div className="bd">
               <b>{i.name}</b>
               {i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm" data-optlabel>{i.optionLabel}</span>}
-              <span className="hint">{t('form.unitQty', { price: krw(i.price), qty: String(i.qty) })}</span>
+              <span className="hint">{t('form.unitQty', { price: f.won(i.price, '-'), qty: String(i.qty) })}</span>
               {i.withdrawalBlockedIf && <span className="hint">{t('common.withdrawalLimit', { v: i.withdrawalBlockedIf })}</span>}
             </div>
-            <b className="money">{krw(i.amount)}</b>
+            <b className="money">{f.won(i.amount, '-')}</b>
           </div>
         ))}
       </section>
@@ -156,10 +158,10 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
 
       <section className="hlt-box">
         <h3>{t('common.payAmount')}</h3>
-        <div className="hlt-sum"><span>{t('common.goods')}</span><span>{krw(cart.goods)}</span></div>
-        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : krw(cart.shipFee)}</span></div>
-        <div className="hlt-sum" data-discount=""><span>{t('form.discount')}</span><span>{krw(0)}</span></div>
-        <div className="hlt-sum tot"><span>{t('form.total')}</span><span>{krw(cart.total)}</span></div>
+        <div className="hlt-sum"><span>{t('common.goods')}</span><span>{f.won(cart.goods, '-')}</span></div>
+        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : f.won(cart.shipFee, '-')}</span></div>
+        <div className="hlt-sum" data-discount=""><span>{t('form.discount')}</span><span>{f.won(0, '-')}</span></div>
+        <div className="hlt-sum tot"><span>{t('form.total')}</span><span>{f.won(cart.total, '-')}</span></div>
         <p className="hint">{t('form.recalc')}</p>
       </section>
 
@@ -178,7 +180,7 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
 
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={!ready || pending} onClick={submit}>
-        {pending ? t('form.submitting') : t('common.payBtn', { amount: krw(cart.total) })}
+        {pending ? t('form.submitting') : t('common.payBtn', { amount: f.won(cart.total, '-') })}
       </button>
       {!ready && !pending && (
         <p className="cta-note">

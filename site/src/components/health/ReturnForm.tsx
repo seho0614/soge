@@ -3,9 +3,10 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { codeText, krw, needsLogin, RETURN_KIND, RETURN_REASONS, RETURN_SHIP_ROUND_TRIP } from './util';
+import { codeText, needsLogin, RETURN_KIND, RETURN_REASONS, RETURN_SHIP_ROUND_TRIP } from './util';
 import type { HltReturnShip } from './types';
 import { ExchangeFeePay } from './ExchangeFeePay';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 취소 · 반품 신청 — POST /me/health/returns { orderNo, kind, reason, detail }
@@ -27,6 +28,7 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
   ship?: HltReturnShip;
 }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const kindText = (k: string) => codeText(t, 'returnKind', k, RETURN_KIND[k] ?? k);
   const router = useRouter();
   const reasons = RETURN_REASONS.filter((r) => !sellerOnly || r.party === 'SELLER');
@@ -108,9 +110,9 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
               : party === 'SELLER'
                 ? t('ret.sellerFree')
                 : kind === 'EXCHANGE'
-                  ? t('ret.exchangeFee', { fee: krw(exchangeFee) })
+                  ? t('ret.exchangeFee', { fee: f.won(exchangeFee, '-') })
                   : ship
-                    ? t('ret.returnDeduct', { fee: krw(ship.roundTripFee) })
+                    ? t('ret.returnDeduct', { fee: f.won(ship.roundTripFee, '-') })
                     : t('ret.customerPays')}
           </em>
         </label>
@@ -150,16 +152,16 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
       {kind !== 'EXCHANGE' && ship?.paid !== false && ship?.paidAmount != null && (
         <div className="hlt-box" data-refund-table data-paid={ship.paidAmount}>
           <h3>{t('ret.refundTitle')}</h3>
-          <div className="hlt-sum"><span>{t('common.payAmount')}</span><span>{krw(ship.paidAmount)}</span></div>
-          <div className="hlt-sum"><span>{t('ret.returnShip')}</span><span>{krw(deducts ? ship.paidAmount - ship.customerRefundEstimate : 0)}</span></div>
+          <div className="hlt-sum"><span>{t('common.payAmount')}</span><span>{f.won(ship.paidAmount, '-')}</span></div>
+          <div className="hlt-sum"><span>{t('ret.returnShip')}</span><span>{f.won(deducts ? ship.paidAmount - ship.customerRefundEstimate : 0, '-')}</span></div>
           <div className="hlt-sum tot" {...(deducts ? { 'data-refund-estimate': ship.customerRefundEstimate } : {})}>
             <span>{t('ret.refundDue')}</span>
-            <span>{krw(deducts ? ship.customerRefundEstimate : ship.paidAmount)}</span>
+            <span>{f.won(deducts ? ship.customerRefundEstimate : ship.paidAmount, '-')}</span>
           </div>
           {deducts ? (
             <div className="hlt-fault" data-fault-box="">
               <span>{t('ret.faultCustomer')}</span>
-              <b>{t('ret.deducted', { amount: krw(ship.paidAmount - ship.customerRefundEstimate) })}</b>
+              <b>{t('ret.deducted', { amount: f.won(ship.paidAmount - ship.customerRefundEstimate, '-') })}</b>
             </div>
           ) : (
             <p className="hint">{kind === 'CANCEL' ? t('ret.cancelFree') : t('ret.sellerFree')}</p>
@@ -171,12 +173,12 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
       {kind === 'EXCHANGE' && (
         <div className="hlt-box" data-exchange-box data-exchange-fee={party === 'SELLER' ? 0 : exchangeFee}>
           <h3>{t('ret.exchangeTitle')}</h3>
-          <div className="hlt-sum tot"><span>{t('common.feeRound')}</span><span>{krw(party === 'SELLER' ? 0 : exchangeFee)}</span></div>
+          <div className="hlt-sum tot"><span>{t('common.feeRound')}</span><span>{f.won(party === 'SELLER' ? 0 : exchangeFee, '-')}</span></div>
           <div className={`hlt-note26${party === 'SELLER' ? '' : ' warn'}`} style={{ marginTop: 10 }}>
             {t.rich('ret.exchangeNoRefund', { b: (c) => <b>{c}</b> })}{' '}
             {party === 'SELLER'
               ? <>{t.rich('ret.sellerFault', { b: (c) => <b>{c}</b> })}</>
-              : <>{t.rich('ret.customerFault', { fee: krw(exchangeFee), b: (c) => <b>{c}</b> })}</>}
+              : <>{t.rich('ret.customerFault', { fee: f.won(exchangeFee, '-'), b: (c) => <b>{c}</b> })}</>}
           </div>
           <p className="hint">{t('ret.soldOutNote')}</p>
         </div>

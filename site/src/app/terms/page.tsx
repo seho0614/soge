@@ -2,8 +2,11 @@ import type { Metadata } from 'next';
 import { apiGet } from '@/lib/api';
 import { TermsViewer, type TermDoc, type TermIndex } from '@/components/terms/TermsViewer';
 import '@/styles/proto-w1.css';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '약관 · 법적 고지' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('policy'))('meta.terms') };
+}
 
 /** 약관 · 법적 고지 — v10.31: 링크 목록 대신 시안 약관 전문 화면(탭 10종)으로. 첫 탭(이용약관)을 엽니다 */
 export default async function TermsIndex() {

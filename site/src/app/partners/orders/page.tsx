@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
-import { krw, ymdhm, ORDER_STATE, codeText } from '@/components/partners/fmt';
+import { ymdhm, ORDER_STATE, codeText } from '@/components/partners/fmt';
 import type { AffOrder } from '@/components/partners/types';
 
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,9 +24,10 @@ const TABS = [
 ];
 
 /** 클릭 → 주문까지 걸린 시간. 72시간 규칙을 눈으로 보게 합니다. */
-function gap(click: string | null, order: string) {
+function gap(click: string | null, order: string, ko: boolean) {
   if (!click) return '—';
   const h = Math.round((new Date(order).getTime() - new Date(click).getTime()) / 3_600_000);
+  if (!ko) return h < 48 ? `${h}h` : `${Math.round(h / 24)}d`;
   return h < 48 ? `${h}시간` : `${Math.round(h / 24)}일`;
 }
 
@@ -39,6 +41,7 @@ export default async function PartnerOrdersPage({ searchParams }: { searchParams
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
+  const fm = await getFmt();
 
   const { state } = await searchParams;
   const cur = TABS.some((x) => x.v === state) ? state ?? '' : '';
@@ -73,14 +76,14 @@ export default async function PartnerOrdersPage({ searchParams }: { searchParams
                 <td className="mono">{o.orderNo}</td>
                 <td>{o.product}</td>
                 <td>{o.linkLabel ?? <span className="dim">—</span>}</td>
-                <td className="num">{o.attributed ? krw(o.commission) : <span className="dim">—</span>}</td>
+                <td className="num">{o.attributed ? fm.won(o.commission, '—') : <span className="dim">—</span>}</td>
                 <td>
                   {o.attributed
                     ? <span className={'state ' + (ORDER_STATE[o.state]?.c ?? '')}>{codeText(t, 'orderState', o.state)}</span>
                     : <span className="state state-rejected">{t('orders.unattributed')}</span>}
                   {o.noteIfUnattributed && <div className="dim">{o.noteIfUnattributed}</div>}
                 </td>
-                <td>{gap(o.clickedAt, o.orderedAt)}</td>
+                <td>{gap(o.clickedAt, o.orderedAt, fm.ko)}</td>
                 <td>{ymdhm(o.orderedAt)}</td>
               </tr>
             ))}

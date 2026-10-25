@@ -11,10 +11,11 @@ import { ReviewForm, type MyReview } from '@/components/health/ReviewForm';
 import { Msgs } from '@/i18n/Msgs';
 import { ProductArt } from '@/components/health/ProductArt';
 import {
-  codeText, krw, ORDER_LABEL, ORDER_STEPS, ORDER_TONE, reasonLabel, RETURN_KIND, RETURN_STATE, RETURN_TONE, ymd, ymdhm,
+  codeText, ORDER_LABEL, ORDER_STEPS, ORDER_TONE, reasonLabel, RETURN_KIND, RETURN_STATE, RETURN_TONE, ymd, ymdhm,
 } from '@/components/health/util';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hOrder.meta') };
@@ -31,6 +32,7 @@ type Props = { params: Promise<{ no: string }> };
 export default async function MyHltOrderDetail({ params }: Props) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const to = await getTranslations('order');
   const no = decodeURIComponent((await params).no);
 
@@ -106,13 +108,13 @@ export default async function MyHltOrderDetail({ params }: Props) {
             <div className="bd">
               <Link href={`/health/p/${encodeURIComponent(i.code)}`}><b>{i.name}</b></Link>
               {i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm" data-optlabel>{i.optionLabel}</span>}
-              <span className="hint">{krw(i.unitPrice)} × {t('h.qty', { n: String(i.qty) })}</span>
+              <span className="hint">{f.won(i.unitPrice, '-')} × {t('h.qty', { n: String(i.qty) })}</span>
               <span className="hint">
                 {t('hOrder.withdraw', { n: String(i.withdrawalDays ?? 7) })}{i.withdrawalLabel && ` · ${i.withdrawalLabel}`}
                 {i.withdrawalBlockedIf && t('hOrder.limit', { v: i.withdrawalBlockedIf })}
               </span>
             </div>
-            <b className="money">{krw(i.amount)}</b>
+            <b className="money">{f.won(i.amount, '-')}</b>
           </div>
         ))}
       </section>
@@ -129,9 +131,9 @@ export default async function MyHltOrderDetail({ params }: Props) {
 
       <section className="hlt-box">
         <h3>{t('hOrder.payInfo')}</h3>
-        <div className="hlt-sum"><span>{t('hOrder.goods')}</span><span>{krw(o.goodsAmount)}</span></div>
-        <div className="hlt-sum"><span>{t('hOrder.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('hOrder.free') : krw(o.shipFee)}</span></div>
-        <div className="hlt-sum tot"><span>{t('hOrder.totalPay')}</span><span>{krw(o.total)}</span></div>
+        <div className="hlt-sum"><span>{t('hOrder.goods')}</span><span>{f.won(o.goodsAmount, '-')}</span></div>
+        <div className="hlt-sum"><span>{t('hOrder.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('hOrder.free') : f.won(o.shipFee, '-')}</span></div>
+        <div className="hlt-sum tot"><span>{t('hOrder.totalPay')}</span><span>{f.won(o.total, '-')}</span></div>
       </section>
 
       {returns.length > 0 && (
@@ -144,9 +146,9 @@ export default async function MyHltOrderDetail({ params }: Props) {
                 {r.convertedFrom && t('hOrder.converted')}
                 {/* v10.26 — 교환 배송비를 아직 내지 않은 교환은 여기서도 결제로 갑니다 */}
                 {r.kind === 'EXCHANGE' && r.feeState === 'UNPAID' && r.state === 'REQUESTED' && (
-                  <> · {t('hOrder.feeUnpaid', { v: krw(r.exchangeFee) })} <Link className="hlt-btn sm pri" href={`/my/health/returns/${encodeURIComponent(r.id)}/fee`} data-fee-pay-link>{t('hBtn.pay')}</Link></>
+                  <> · {t('hOrder.feeUnpaid', { v: f.won(r.exchangeFee, '-') })} <Link className="hlt-btn sm pri" href={`/my/health/returns/${encodeURIComponent(r.id)}/fee`} data-fee-pay-link>{t('hBtn.pay')}</Link></>
                 )}
-                {r.kind === 'EXCHANGE' && r.feeState === 'PAID' && t('hOrder.feePaid', { v: krw(r.exchangeFee) })}
+                {r.kind === 'EXCHANGE' && r.feeState === 'PAID' && t('hOrder.feePaid', { v: f.won(r.exchangeFee, '-') })}
               </span>
               <span className={`state state-${RETURN_TONE[r.state] ?? 'requested'}`}>{codeText(to, 'returnState', r.state, RETURN_STATE[r.state] ?? r.state)}</span>
             </div>

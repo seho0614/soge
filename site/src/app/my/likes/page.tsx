@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
-import { won, GWAN_PATH } from '@/lib/format';
+import { GWAN_PATH } from '@/lib/format';
 import type { ListingCardData } from '@/lib/types';
 import { MyHead, Note, Empty, Table, GwanTag, shortId } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.likes'))('title') };
@@ -21,6 +22,7 @@ export default async function LikesPage() {
   if (!(await me())) redirect('/login');
   const rows = await apiGet<ListingCardData[]>('/me/favorites', 0).catch(() => [] as ListingCardData[]);
   const t = await getTranslations('my.likes');
+  const f = await getFmt();
 
   return (
     <>
@@ -35,7 +37,7 @@ export default async function LikesPage() {
               <td><GwanTag code={x.gwanCode} /></td>
               <td><b>{x.title}</b><br /><span className="my-ls">{shortId(x.id, 'L-')}</span></td>
               <td>{x.categoryName}</td>
-              <td>{won(x.desiredFee)}</td>
+              <td>{f.won(x.desiredFee)}</td>
               <td>{x.owner?.companyName ?? '—'}</td>
               <td>
                 <div className="my-lka">

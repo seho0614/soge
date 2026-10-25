@@ -5,6 +5,7 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, bizNo, Empty, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, Tabs, Tw, won } from '@/components/partner/ui';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 import { BrandForm, ChangeRequestForm, InviteAccept, SiteForm, SiteRemove, StaffInviteForm, StaffRemove } from './BizForms';
 
@@ -43,6 +44,7 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partner.biz');
+  const f = await getFmt();
   const tp = await getTranslations('partner');
   const B = (c: React.ReactNode) => <b>{c}</b>;
   const sp = await searchParams;
@@ -91,7 +93,7 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
                 <tr><td><b>{t('gradeSt')}</b></td><td><b>{ptCode(tp, 'grade', d.grade, GRADE_KO[d.grade ?? ''] ?? d.grade ?? '—')}</b> <Bg tone={st[1]}>{st[0]}</Bg></td></tr>
                 <tr><td><b>{t('svcApproved')}</b></td><td>{t('countEa', { n: String(d.services?.approved ?? 0) })}{d.services?.in_review ? <span className="pt-ls">{t('inReviewN', { n: String(d.services.in_review) })}</span> : null}</td></tr>
                 <tr><td><b>{t('region')}</b></td><td>{t('countPlace', { n: String(d.regions ?? 0) })} <Link className="pt-bo sm" href="/partner/regions">{t('change')}</Link></td></tr>
-                <tr><td><b>{t('unpaidCap')}</b></td><td>{won(d.unpaidCap)}{tp('common.unit.won')}<span className="pt-ls">{t('unpaidCapNote')}</span></td></tr>
+                <tr><td><b>{t('unpaidCap')}</b></td><td>{f.wonOf(won(d.unpaidCap))}<span className="pt-ls">{t('unpaidCapNote')}</span></td></tr>
               </>
             ) : null}
           </Tw>

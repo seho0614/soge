@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface Term {
   code: string; title: string; version: string;
@@ -26,6 +27,7 @@ export function AgreeForm({ terms, next }: { terms: Term[]; next?: string | null
   const [ok, setOk] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
+  const tr = useTranslations('policy');
 
   const required = terms.filter((t) => t.isRequired);
   const optional = terms.filter((t) => !t.isRequired);
@@ -41,8 +43,8 @@ export function AgreeForm({ terms, next }: { terms: Term[]; next?: string | null
       }),
     });
     const b = await res.json().catch(() => ({}));
-    if (!res.ok) { setErr(b.message ?? '저장하지 못했습니다.'); return; }
-    setOk(b.note ?? '동의가 저장되었습니다.');
+    if (!res.ok) { setErr(b.message ?? tr('agree.form.saveFail')); return; }
+    setOk(b.note ?? tr('agree.form.saved'));
     /* v10.28 — 동의 화면으로 보내져 왔으면(?next=) 가려던 곳으로 */
     start(() => { if (next) router.push(next); else router.refresh(); });
   }
@@ -57,11 +59,11 @@ export function AgreeForm({ terms, next }: { terms: Term[]; next?: string | null
         data-agree-term={t.code}
       />
       <span>
-        {t.isRequired ? <b>[필수] </b> : '[선택] '}
+        {t.isRequired ? <b>{tr('agree.form.req')} </b> : `${tr('agree.form.opt')} `}
         {t.title}
       </span>
       <Link className="w1-bo sm" href={`/terms/${t.code}`} /* 20260930 — 소문자로 보내 약관 전문이 404 였습니다 */>
-        전문 보기
+        {tr('agree.form.view')}
       </Link>
     </label>
   );
@@ -70,30 +72,30 @@ export function AgreeForm({ terms, next }: { terms: Term[]; next?: string | null
     <section>
       {required.length > 0 && (
         <>
-          <h2>필수</h2>
+          <h2>{tr('agree.form.reqH')}</h2>
           {required.map(row)}
           <p className="hint">
-            동의하지 않으시면 서비스를 이용하실 수 없습니다.
+            {tr('agree.form.reqHint')}
           </p>
         </>
       )}
 
       {optional.length > 0 && (
         <>
-          <h2>선택</h2>
+          <h2>{tr('agree.form.optH')}</h2>
           {optional.map(row)}
           <p className="hint">
-            동의하지 않으셔도 서비스 이용에 영향이 없습니다.
+            {tr('agree.form.optHint')}
           </p>
         </>
       )}
 
       <button className="btn-primary" onClick={submit} disabled={pending || !canSubmit} data-agree-submit>
-        {pending ? '저장 중…' : '동의하고 계속'}
+        {pending ? tr('agree.form.saving') : tr('agree.form.submit')}
       </button>
 
       {!canSubmit && (
-        <p className="hint">필수 항목에 모두 동의하셔야 진행됩니다.</p>
+        <p className="hint">{tr('agree.form.needAll')}</p>
       )}
       {err && <div className="notice warn">{err}</div>}
       {ok && <div className="ok-note">{ok}</div>}

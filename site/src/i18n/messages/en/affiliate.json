@@ -86,8 +86,8 @@
       "devLine": "Clicks today {today} · Clicks this month {month} · Active links {links} <a>My referral links ›</a>"
     },
     "delta": {
-      "upWon": "▲ KRW {n} more than yesterday",
-      "downWon": "▼ KRW {n} less than yesterday",
+      "upWon": "▲ {n} more than yesterday",
+      "downWon": "▼ {n} less than yesterday",
       "upPeople": "▲ {n} more than yesterday",
       "downPeople": "▼ {n} fewer than yesterday",
       "upCount": "▲ {n} more than yesterday",

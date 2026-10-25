@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { ListingCardData } from '@/lib/types';
 import { useTranslations } from 'next-intl';
-import { won, ago, GWAN_PATH } from '@/lib/format';
+import { ago, GWAN_PATH } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 목록 카드. 73화면 중 관 랜딩·목록·검색·마이페이지가 모두 이걸 씁니다.
@@ -11,6 +12,7 @@ import { won, ago, GWAN_PATH } from '@/lib/format';
  */
 export function ListingCard({ item }: { item: ListingCardData }) {
   const t = useTranslations('listing');
+  const f = useFmt();
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
   return (
     <article className="card">
@@ -27,7 +29,7 @@ export function ListingCard({ item }: { item: ListingCardData }) {
         <h3 className="card-title">{item.title}</h3>
 
         <div className="card-fee">
-          <span className="money">{won(item.desiredFee)}</span>
+          <span className="money">{f.won(item.desiredFee)}</span>
           {item.feeBearerLabel && <span className="bearer">{item.feeBearerLabel}</span>}
         </div>
 
@@ -35,7 +37,7 @@ export function ListingCard({ item }: { item: ListingCardData }) {
           <span>{item.owner.companyName}</span>
           {item.owner.verified && <span className="verified">{t('verified')}</span>}
           {item.owner.confirmedDeals > 0 && <span>{t('deals', { n: String(item.owner.confirmedDeals) })}</span>}
-          {/* 20260930 — 서버(UTC)와 브라우저(KST) 시각 차로 React 418 경고 */}<span className="when" suppressHydrationWarning>{ago(item.publishedAt)}</span>
+          {/* 20260930 — 서버(UTC)와 브라우저(KST) 시각 차로 React 418 경고 */}<span className="when" suppressHydrationWarning>{f.ago(item.publishedAt, ago(item.publishedAt))}</span>
         </div>
       </Link>
     </article>

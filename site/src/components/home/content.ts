@@ -15,7 +15,9 @@
  */
 import type { ListingCardData } from '@/lib/types';
 import type { HltProduct } from '@/components/health/types';
-import { GWAN_PATH, won } from '@/lib/format';
+import { GWAN_PATH } from '@/lib/format';
+import type { getTranslations } from 'next-intl/server';
+import type { Fmt } from '@/lib/fmtBind';
 import type { HomeRequest } from './types';
 
 export interface Row { t: string; href: string }
@@ -44,56 +46,65 @@ export interface HomeContent {
   starts: StartCard[];
 }
 
-const TOWN: [string, string, [string, string], string, string][] = [
-  ['동네픽', '지금 핫한 맛집', ['우리동네 사람들이', '많이 찾는 맛집이에요.'], 'd/town-1.png', '판교역 300m'],
-  ['동네소개', '우리동네 가볼 만한 곳', ['카페, 핫플, 맛집, 생활정보까지', '한눈에 확인하세요.'], 'd/town-2.png', '정자동 500m'],
-  ['동네참여', '우리동네 이야기', ['지금 우리동네 사람들의', '생생한 이야기를 만나보세요.'], 'd/town-3.png', '분당구 1km'],
-];
+/* v10.102 2-5c — 글은 사전 main.demo.* (그림의 예시 내용 · 나중에 서버 자료로 바뀝니다). [키, 그림, 거리(사전 키)] */
+const TOWN = [
+  ['t1', 'd/town-1.png'],
+  ['t2', 'd/town-2.png'],
+  ['t3', 'd/town-3.png'],
+] as const;
+/** main 사전 번역기 — page.tsx 의 getTranslations('main') 을 넘깁니다 */
+export type MainT = Awaited<ReturnType<typeof getTranslations<'main'>>>;
+const towns = (t: MainT, withLoc: boolean): TownCard[] => TOWN.map(([k, img]) => ({
+  tag: t(`demo.towns.${k}.tag`), t: t(`demo.towns.${k}.t`), d: [t(`demo.towns.${k}.d1`), t(`demo.towns.${k}.d2`)] as [string, string],
+  img, loc: withLoc ? t(`demo.towns.${k}.loc`) : null, href: '/community',
+}));
 
 /** 그림의 내용 그대로. 누르면 실제로 있는 화면으로 갑니다 */
-export function sampleContent(live: string[]): HomeContent {
+export function sampleContent(live: string[], t: MainT, f: Fmt): HomeContent {
   const on = (c: string) => live.includes(c);
   const search = (q: string) => `/health/search?q=${encodeURIComponent(q)}`;
+  /* 검색어(q)는 한국어 그대로 보냅니다(검색 색인이 한국어) — 보이는 글만 사전 */
+  const PRODUCT_Q = [['r1', '음식물처리기'], ['r2', '에어프라이어'], ['r3', '커피머신']] as const;
   return {
     mode: 'sample',
-    todaySub: '지금 가장 많이 찾는 정보와 실시간 트렌드를 확인해보세요.', todayMore: '/search',
-    banner: { title: ['가을 나들이 맛집', 'TOP 10'], desc: ['지금 많이 찾는 가족 외식 장소를', '소개해드려요.'], href: '/community' },
+    todaySub: t('demo.sample.todaySub'), todayMore: '/search',
+    banner: { title: [t('demo.sample.banner.t1'), 'TOP 10'], desc: [t('demo.sample.banner.d1'), t('demo.sample.banner.d2')], href: '/community' },
     ranks: [
       ...(on('HLT') ? [{
-        k: 'product', badge: '실시간 LIVE', tone: 'red' as const, title: '인기 급상승 상품', art: 'd/rank-1.png',
-        rows: ['음식물처리기', '에어프라이어', '커피머신'].map((t) => ({ t, href: search(t) })), empty: { t: '소개몰 가기', href: '/health' },
+        k: 'product', badge: t('demo.sample.rank.productBadge'), tone: 'red' as const, title: t('demo.sample.rank.productTitle'), art: 'd/rank-1.png',
+        rows: PRODUCT_Q.map(([k, q]) => ({ t: t(`demo.sample.rank.product.${k}`), href: search(q) })), empty: { t: t('demo.rank.goMall'), href: '/health' },
       }] : []),
       {
-        k: 'request', badge: 'NEW', tone: 'blue', title: '소개를 기다리는 요청', art: 'd/rank-2.png',
-        rows: ['세무 상담이 필요해요', '상가 인테리어 업체', '학원 강사 구해요'].map((t) => ({ t, href: '/request' })), empty: { t: '소개받기', href: '/request' },
+        k: 'request', badge: 'NEW', tone: 'blue', title: t('demo.rank.requestTitle'), art: 'd/rank-2.png',
+        rows: (['r1', 'r2', 'r3'] as const).map((k) => ({ t: t(`demo.sample.rank.request.${k}`), href: '/request' })), empty: { t: t('demo.rank.getReferred'), href: '/request' },
       },
       {
-        k: 'community', badge: '우리동네 인기', tone: 'violet', title: '판교 · 분당', user: true, art: 'd/rank-3.png',
-        rows: ['판교 가족식당', '분당 의원', '정자동 카페'].map((t) => ({ t, href: '/community' })), empty: { t: '소개광장', href: '/community' },
+        k: 'community', badge: t('demo.sample.rank.townBadge'), tone: 'violet', title: t('demo.sample.rank.townTitle'), user: true, art: 'd/rank-3.png',
+        rows: (['r1', 'r2', 'r3'] as const).map((k) => ({ t: t(`demo.sample.rank.town.${k}`), href: '/community' })), empty: { t: t('demo.rank.community'), href: '/community' },
       },
     ],
-    picksSub: '지금 주목받는 상품, 전문가, 창업아이템, 동네정보를 한눈에!', picksMore: '/search',
+    picksSub: t('demo.sample.picksSub'), picksMore: '/search',
     picks: [
-      { key: 'p1', href: on('HLT') ? '/health' : '/search', img: 'd/pick-1.png', badge: '오늘 할인 TOP', bw: 56, tone: 'hot', kind: '상품', title: 'AI 음식물처리기 A1', strong: '238,000원', off: '32%', rate: '4.8 (532)' },
-      { key: 'p2', href: on('MAL') ? '/mal/consult' : '/search', img: 'd/pick-2.png', badge: '본사 검증', bw: 40, tone: 'teal', kind: '전문가', title: '김현우 세무사', sub: '개인 · 법인 세무 상담', rate: '4.9 (320)' },
-      { key: 'p3', href: on('BIZ') ? '/biz' : '/search', img: 'd/pick-3.png', badge: '관심 급상승', bw: 51, tone: 'hot', kind: '창업', title: '무인 스터디카페 창업', sub: '3천만원 이하 가능', rate: '4.7 (118)' },
-      { key: 'p4', href: '/community', img: 'd/pick-4.png', badge: '내 주변', bw: 39, tone: 'mint', kind: '동네정보', title: '판교 가족식당 추천', sub: '도보 5분 · 후기 1,234건', rate: '4.8 (1,234)' },
-      { key: 'p5', href: '/community/polls', img: 'd/pick-5.png', badge: '1,842명 참여', bw: 55, tone: 'blue', kind: '설문', title: '카페에서 중요한 것은?', sub: '지금 투표해보세요', rate: '4.6 (1,842)' },
+      { key: 'p1', href: on('HLT') ? '/health' : '/search', img: 'd/pick-1.png', badge: t('demo.sample.picks.p1.badge'), bw: 56, tone: 'hot', kind: t('demo.kind.product'), title: t('demo.sample.picks.p1.title'), strong: f.won(238000), off: '32%', rate: '4.8 (532)' },
+      { key: 'p2', href: on('MAL') ? '/mal/consult' : '/search', img: 'd/pick-2.png', badge: t('demo.sample.picks.p2.badge'), bw: 40, tone: 'teal', kind: t('demo.kind.expert'), title: t('demo.sample.picks.p2.title'), sub: t('demo.sample.picks.p2.sub'), rate: '4.9 (320)' },
+      { key: 'p3', href: on('BIZ') ? '/biz' : '/search', img: 'd/pick-3.png', badge: t('demo.sample.picks.p3.badge'), bw: 51, tone: 'hot', kind: t('demo.kind.biz'), title: t('demo.sample.picks.p3.title'), sub: t('demo.sample.picks.p3.sub'), rate: '4.7 (118)' },
+      { key: 'p4', href: '/community', img: 'd/pick-4.png', badge: t('demo.sample.picks.p4.badge'), bw: 39, tone: 'mint', kind: t('demo.kind.town'), title: t('demo.sample.picks.p4.title'), sub: t('demo.sample.picks.p4.sub'), rate: '4.8 (1,234)' },
+      { key: 'p5', href: '/community/polls', img: 'd/pick-5.png', badge: t('demo.sample.picks.p5.badge'), bw: 55, tone: 'blue', kind: t('demo.kind.poll'), title: t('demo.sample.picks.p5.title'), sub: t('demo.sample.picks.p5.sub'), rate: '4.6 (1,842)' },
     ],
-    stripSub: '소개뱅크가 추천하는 우리동네 감성 핫플레이스',
+    stripSub: t('demo.sample.stripSub'),
     townReady: true,
-    towns: TOWN.map(([tag, t, d, img, loc]) => ({ tag, t, d, img, loc, href: '/community' })),
+    towns: towns(t, true),
     trusts: [
-      { img: 'trust-1', t: '전문가 소개', d: ['검증된 전문가와 1:1 상담'], href: '/mal/consult' },
-      { img: 'trust-2', t: '업체 소개', d: ['믿을 수 있는 지역업체'], href: '/mall' },
-      { img: 'trust-3', t: '물건 소개', d: ['검증된 인기 상품'], href: '/mall/list' },
-      { img: 'trust-4', t: '당일연락 소개', d: ['이사 · 청소 · 수리 등', '검증된 당일 연락'], href: '/consult' },
+      { img: 'trust-1', t: t('demo.trust.expert.t'), d: [t('demo.trust.expert.d')], href: '/mal/consult' },
+      { img: 'trust-2', t: t('demo.trust.company.t'), d: [t('demo.trust.company.d')], href: '/mall' },
+      { img: 'trust-3', t: t('demo.trust.goods.t'), d: [t('demo.sample.trustGoods')], href: '/mall/list' },
+      { img: 'trust-4', t: t('demo.trust.sameDay.t'), d: [t('demo.trust.sameDay.d1'), t('demo.sample.trustSameDay')], href: '/consult' },
     ],
     starts: [
-      { key: 's1', href: '/biz', img: 'd/start-1.png', badge: '관심 급상승 +30%', tone: 'hot', bw: 53, title: '무인카페 창업', sub: '저렴한 초기비용으로 시작' },
-      { key: 's2', href: '/biz', img: 'd/start-2.png', badge: '3천만원 이하', tone: 'blue', bw: 43, title: '무인 편의점 창업', sub: '소자본으로 가능한 창업' },
-      { key: 's3', href: '/biz', img: 'd/start-3.png', badge: '1인 운영', tone: 'hot', bw: 32, title: '반려동물 케어샵', sub: '1인으로 운영 가능한 아이템' },
-      { key: 's4', href: '/biz', img: 'd/start-4.png', badge: '무점포', tone: 'hot', bw: 31, title: '1인 온라인 스토어', sub: '지금 많이 시작하는 창업' },
+      { key: 's1', href: '/biz', img: 'd/start-1.png', badge: t('demo.sample.starts.s1.badge'), tone: 'hot', bw: 53, title: t('demo.sample.starts.s1.title'), sub: t('demo.sample.starts.s1.sub') },
+      { key: 's2', href: '/biz', img: 'd/start-2.png', badge: t('demo.sample.starts.s2.badge'), tone: 'blue', bw: 43, title: t('demo.sample.starts.s2.title'), sub: t('demo.sample.starts.s2.sub') },
+      { key: 's3', href: '/biz', img: 'd/start-3.png', badge: t('demo.sample.starts.s3.badge'), tone: 'hot', bw: 32, title: t('demo.sample.starts.s3.title'), sub: t('demo.sample.starts.s3.sub') },
+      { key: 's4', href: '/biz', img: 'd/start-4.png', badge: t('demo.sample.starts.s4.badge'), tone: 'hot', bw: 31, title: t('demo.sample.starts.s4.title'), sub: t('demo.sample.starts.s4.sub') },
     ],
   };
 }
@@ -123,66 +134,68 @@ export function productArt(p: HltProduct): string {
 export function liveContent(live: string[], d: {
   prods: HltProduct[]; mal: ListingCardData[]; biz: ListingCardData[]; mny: ListingCardData[];
   reqs: HomeRequest[]; posts: { id: string; title: string }[];
-}): HomeContent {
+}, t: MainT, f: Fmt): HomeContent {
   const on = (c: string) => live.includes(c);
-  const n = (x: number) => x.toLocaleString('ko-KR');
+  const n = (x: number) => f.num(x);
   const p = d.prods.filter((x) => !x.soldOut);
+  const like = (x: number) => t('demo.live.like', { n: n(x) });
   const listing = (x: ListingCardData, kind: string, badge: string, tone: string): PickCard => ({
     key: x.id, href: `/${GWAN_PATH[x.gwanCode] ?? 'money'}/${x.id}`, img: listingArt(x.gwanCode, x.categoryName, x.title),
     badge, tone, kind, title: x.title, sub: `${x.categoryName} · ${x.owner.companyName}`,
-    meta: `소개비 ${won(x.desiredFee)}${x.likeCount > 0 ? ` · 관심 ${n(x.likeCount)}` : ''}`,
+    meta: `${t('demo.live.fee', { fee: f.won(x.desiredFee) })}${x.likeCount > 0 ? ` · ${like(x.likeCount)}` : ''}`,
   });
   const product = (x: HltProduct): PickCard => ({
-    key: x.code, href: `/health/p/${encodeURIComponent(x.code)}`, img: productArt(x), badge: '새 상품', tone: 'hot', kind: '상품',
-    title: x.name, strong: won(x.price), meta: x.category ?? '소개몰',
+    key: x.code, href: `/health/p/${encodeURIComponent(x.code)}`, img: productArt(x), badge: t('demo.live.newProduct'), tone: 'hot', kind: t('demo.kind.product'),
+    title: x.name, strong: f.won(x.price), meta: x.category ?? t('demo.live.mall'),
   });
+  const company = (x: ListingCardData) => listing(x, t('demo.kind.company'), x.owner.verified ? t('demo.live.verified') : t('demo.live.safe'), 'blue');
   const picks: PickCard[] = [];
   if (p[0]) picks.push(product(p[0]));
-  if (d.mal[0]) picks.push(listing(d.mal[0], '업체', d.mal[0].owner.verified ? '인증 업체' : '안심소개', 'blue'));
-  if (d.biz[0]) picks.push(listing(d.biz[0], '창업', d.biz[0].likeCount > 0 ? `관심 ${n(d.biz[0].likeCount)}` : '소개창업', 'hot'));
-  if (d.mny[0]) picks.push(listing(d.mny[0], '소개', '소개장터', 'mint'));
+  if (d.mal[0]) picks.push(company(d.mal[0]));
+  if (d.biz[0]) picks.push(listing(d.biz[0], t('demo.kind.biz'), d.biz[0].likeCount > 0 ? like(d.biz[0].likeCount) : t('demo.live.startups'), 'hot'));
+  if (d.mny[0]) picks.push(listing(d.mny[0], t('demo.kind.referral'), t('demo.live.market'), 'mint'));
   if (d.reqs[0]) picks.push({
-    key: d.reqs[0].id, href: `/request/${d.reqs[0].id}`, img: 't-request.svg', badge: d.reqs[0].statusLabel ?? '요청', tone: 'blue', kind: '요청',
-    title: d.reqs[0].title, sub: d.reqs[0].categoryName ?? '소개받기', meta: `제안 ${n(d.reqs[0].proposalCount)}건`,
+    key: d.reqs[0].id, href: `/request/${d.reqs[0].id}`, img: 't-request.svg', badge: d.reqs[0].statusLabel ?? t('demo.kind.request'), tone: 'blue', kind: t('demo.kind.request'),
+    title: d.reqs[0].title, sub: d.reqs[0].categoryName ?? t('demo.rank.getReferred'), meta: t('demo.live.proposals', { n: n(d.reqs[0].proposalCount) }),
   });
   if (p[1]) picks.push(product(p[1]));
-  if (d.mal[1]) picks.push(listing(d.mal[1], '업체', d.mal[1].owner.verified ? '인증 업체' : '안심소개', 'blue'));
-  if (d.biz[1]) picks.push(listing(d.biz[1], '창업', '소개창업', 'hot'));
+  if (d.mal[1]) picks.push(company(d.mal[1]));
+  if (d.biz[1]) picks.push(listing(d.biz[1], t('demo.kind.biz'), t('demo.live.startups'), 'hot'));
 
   return {
     mode: 'live',
-    todaySub: '지금 올라온 상품 · 요청 · 이야기를 한곳에서 확인해보세요.', todayMore: '/search',
+    todaySub: t('demo.live.todaySub'), todayMore: '/search',
     banner: on('MNY')
-      ? { title: ['소개장터 인기', 'TOP 10'], desc: ['관심이 가장 많이 모인 매물을', '모았어요.'], href: '/money?sort=POPULAR' }
-      : { title: ['소개뱅크', '통합 검색'], desc: ['찾는 것을 문장으로', '물어보세요.'], href: '/search' },
+      ? { title: [t('demo.live.bannerMny.t1'), 'TOP 10'], desc: [t('demo.live.bannerMny.d1'), t('demo.live.bannerMny.d2')], href: '/money?sort=POPULAR' }
+      : { title: [t('demo.live.bannerSearch.t1'), t('demo.live.bannerSearch.t2')], desc: [t('demo.live.bannerSearch.d1'), t('demo.live.bannerSearch.d2')], href: '/search' },
     ranks: [
       ...(on('HLT') ? [{
-        k: 'product', badge: '소개몰', tone: 'red' as const, title: '새로 들어온 상품', art: 'd/rank-1.png',
-        rows: d.prods.slice(0, 3).map((x) => ({ t: x.name, href: `/health/p/${encodeURIComponent(x.code)}` })), empty: { t: '소개몰 가기', href: '/health' },
+        k: 'product', badge: t('demo.live.mall'), tone: 'red' as const, title: t('demo.live.rank.productTitle'), art: 'd/rank-1.png',
+        rows: d.prods.slice(0, 3).map((x) => ({ t: x.name, href: `/health/p/${encodeURIComponent(x.code)}` })), empty: { t: t('demo.rank.goMall'), href: '/health' },
       }] : []),
       {
-        k: 'request', badge: 'NEW', tone: 'blue', title: '소개를 기다리는 요청', art: 'd/rank-2.png',
-        rows: d.reqs.slice(0, 3).map((r) => ({ t: r.title, href: `/request/${r.id}` })), empty: { t: '소개받기 요청 올리기', href: '/request' },
+        k: 'request', badge: 'NEW', tone: 'blue', title: t('demo.rank.requestTitle'), art: 'd/rank-2.png',
+        rows: d.reqs.slice(0, 3).map((r) => ({ t: r.title, href: `/request/${r.id}` })), empty: { t: t('demo.live.rank.requestEmpty'), href: '/request' },
       },
       {
-        k: 'community', badge: '소개광장', tone: 'violet', title: '새로 올라온 이야기', art: 'd/rank-3.png',
-        rows: d.posts.slice(0, 3).map((x) => ({ t: x.title, href: `/community/${x.id}` })), empty: { t: '첫 이야기를 남겨 보세요', href: '/community' },
+        k: 'community', badge: t('demo.rank.community'), tone: 'violet', title: t('demo.live.rank.communityTitle'), art: 'd/rank-3.png',
+        rows: d.posts.slice(0, 3).map((x) => ({ t: x.title, href: `/community/${x.id}` })), empty: { t: t('demo.live.rank.communityEmpty'), href: '/community' },
       },
     ],
-    picksSub: '지금 올라온 상품, 업체, 창업아이템, 요청을 한눈에!', picksMore: '/search', picks,
-    stripSub: '소개광장에서 우리동네 이야기를 나눠 보세요',
+    picksSub: t('demo.live.picksSub'), picksMore: '/search', picks,
+    stripSub: t('demo.live.stripSub'),
     townReady: false,
-    towns: TOWN.map(([tag, t, dd, img]) => ({ tag, t, d: dd, img, loc: null, href: '/community' })),
+    towns: towns(t, false),
     trusts: [
-      { img: 'trust-1', t: '전문가 소개', d: ['검증된 전문가와 1:1 상담'], href: '/mal/consult' },
-      { img: 'trust-2', t: '업체 소개', d: ['믿을 수 있는 지역업체'], href: '/mall' },
-      { img: 'trust-3', t: '물건 소개', d: ['검증된 업체의 매물'], href: '/mall/list' },
-      { img: 'trust-4', t: '당일연락 소개', d: ['이사 · 청소 · 수리 등', '인증업체 1곳이 연락'], href: '/consult' },
+      { img: 'trust-1', t: t('demo.trust.expert.t'), d: [t('demo.trust.expert.d')], href: '/mal/consult' },
+      { img: 'trust-2', t: t('demo.trust.company.t'), d: [t('demo.trust.company.d')], href: '/mall' },
+      { img: 'trust-3', t: t('demo.trust.goods.t'), d: [t('demo.live.trustGoods')], href: '/mall/list' },
+      { img: 'trust-4', t: t('demo.trust.sameDay.t'), d: [t('demo.trust.sameDay.d1'), t('demo.live.trustSameDay')], href: '/consult' },
     ],
     starts: d.biz.slice(0, 4).map((x) => ({
       key: x.id, href: `/biz/${x.id}`, img: listingArt('BIZ', x.categoryName, x.title),
-      badge: x.likeCount > 0 ? `관심 ${n(x.likeCount)}` : x.categoryName, tone: 'hot',
-      title: x.title, sub: `${x.categoryName} · 소개비 ${won(x.desiredFee)}`,
+      badge: x.likeCount > 0 ? like(x.likeCount) : x.categoryName, tone: 'hot',
+      title: x.title, sub: `${x.categoryName} · ${t('demo.live.fee', { fee: f.won(x.desiredFee) })}`,
     })),
   };
 }

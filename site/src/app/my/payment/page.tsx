@@ -6,9 +6,10 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { PayMethod } from '@/components/PayMethod';
 import type { SubDetail } from '@/components/billing/SubscriptionManage';
-import { MyHead, Note, wonP, type Tone } from '@/components/my/ui';
+import { MyHead, Note, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.pay'))('title') };
@@ -42,6 +43,7 @@ export default async function PaymentPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.pay');
+  const f = await getFmt();
   const B = (c: React.ReactNode) => <b>{c}</b>;
 
   const [k, s, d, inv] = await Promise.all([
@@ -78,7 +80,7 @@ export default async function PaymentPage() {
           <div>
             <span className="my-ls">{t('nextCharge')}</span>
             <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
-            <span className="my-ls">{d?.subscribed ? `${wonP(d.nextChargeAmount ?? d.monthlyPrice ?? null)} · ${d.planName ?? ''}` : t('noSub')}</span>
+            <span className="my-ls">{d?.subscribed ? `${f.won(d.nextChargeAmount ?? d.monthlyPrice ?? null, '—')} · ${d.planName ?? ''}` : t('noSub')}</span>
           </div>
           <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
         </div>
@@ -94,7 +96,7 @@ export default async function PaymentPage() {
             <div>
               <span className="my-ls">{t('nextCharge')}</span>
               <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
-              <span className="my-ls">{d?.subscribed ? `${wonP(d.nextChargeAmount ?? d.monthlyPrice ?? null)} · ${d.planName ?? ''}` : t('noSub')}</span>
+              <span className="my-ls">{d?.subscribed ? `${f.won(d.nextChargeAmount ?? d.monthlyPrice ?? null, '—')} · ${d.planName ?? ''}` : t('noSub')}</span>
             </div>
             <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
           </div>
@@ -122,7 +124,7 @@ export default async function PaymentPage() {
                 return (
                   <tr key={v.id}>
                     <td>{v.kind === 'EXTRA_CODE' ? ymdKst(v.periodStart) : `${ymdKst(v.periodStart)} ~ ${ymdKst(v.periodEnd).slice(5)}`}</td>
-                    <td className="my-num">{wonP(v.amount)}</td>
+                    <td className="my-num">{f.won(v.amount, '—')}</td>
                     <td><span className={`my-bg ${st[1]}`}>{st[0]}</span></td>
                     <td className="my-ls">{v.kind === 'EXTRA_CODE' ? t('extraRow', { n: String(v.codeCount ?? 1) }) : ''}{v.failureReason ?? ''}{v.status === 'FAILED' && v.attempt ? t('attempts', { n: String(v.attempt) }) : ''}</td>
                   </tr>

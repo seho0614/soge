@@ -6,8 +6,9 @@ import { apiGetPersonal, ApiFailure } from '@/lib/api';
 import { me } from '@/lib/session';
 import type { HltOrder } from '@/components/health/types';
 import { HltEmpty, HltSteps, SellerBox } from '@/components/health/HltParts';
-import { codeText, krw, ORDER_LABEL, ORDER_TONE, PAY_LABEL, PAY_STATE, ymdhm } from '@/components/health/util';
+import { codeText, ORDER_LABEL, ORDER_TONE, PAY_LABEL, PAY_STATE, ymdhm } from '@/components/health/util';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,6 +28,7 @@ export default async function HltOrderDone({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
   const { no } = await searchParams;
   const t = await getTranslations('order');
+  const f = await getFmt();
 
   let o: HltOrder | null = null;
   let err: string | null = null;
@@ -61,10 +63,10 @@ export default async function HltOrderDone({ searchParams }: Props) {
           <span className={`state state-${ORDER_TONE[o.status] ?? 'held'}`}>{codeText(t, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status)}</span>
         </div>
         {o.items.map((i) => (
-          <div key={i.optionId ?? i.code} className="hlt-sum" data-item={i.code}><span>{i.name}{i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm"> {i.optionLabel}</span>} × {i.qty}</span><span>{krw(i.amount)}</span></div>
+          <div key={i.optionId ?? i.code} className="hlt-sum" data-item={i.code}><span>{i.name}{i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm"> {i.optionLabel}</span>} × {i.qty}</span><span>{f.won(i.amount, '-')}</span></div>
         ))}
-        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('common.free') : krw(o.shipFee)}</span></div>
-        <div className="hlt-sum tot"><span>{t('common.payAmount')}</span><span>{krw(o.total)}</span></div>
+        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('common.free') : f.won(o.shipFee, '-')}</span></div>
+        <div className="hlt-sum tot"><span>{t('common.payAmount')}</span><span>{f.won(o.total, '-')}</span></div>
         {pay && (
           <p className="hint">
             {t('donePage.payInfo', { method: codeText(t, 'payMethod', pay.method, PAY_LABEL[pay.method] ?? pay.method), state: codeText(t, 'payState', pay.state, PAY_STATE[pay.state] ?? pay.state) })}
@@ -88,7 +90,7 @@ export default async function HltOrderDone({ searchParams }: Props) {
             <div className="hlt-sum"><span>{t('donePage.account')}</span><span className="mono">{vbank.accountNumber ?? '-'}</span></div>
             <div className="hlt-sum"><span>{t('donePage.holder')}</span><span>{vbank.customerName ?? '-'}</span></div>
             <div className="hlt-sum"><span>{t('donePage.due')}</span><span>{ymdhm(vbank.dueDate)}</span></div>
-            <div className="hlt-sum tot"><span>{t('donePage.depositAmount')}</span><span>{krw(o.total)}</span></div>
+            <div className="hlt-sum tot"><span>{t('donePage.depositAmount')}</span><span>{f.won(o.total, '-')}</span></div>
             <p className="hint">{t('donePage.vbankNote')}</p>
           </section>
         ) : (

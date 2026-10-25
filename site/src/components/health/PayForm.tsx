@@ -2,9 +2,10 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { codeText, krw, needsLogin, PAY_METHODS, serverPayMethod } from './util';
+import { codeText, needsLogin, PAY_METHODS, serverPayMethod } from './util';
 import { afterConfirmUrl, confirmPay } from './PayConfirm';
 import type { HltPayment } from './types';
+import { useFmt } from '@/lib/useFmt';
 
 /** 토스 결제창 클라이언트 키 — 빌드 때 들어갑니다. 없으면 시험 결제(스텁)로 진행합니다 */
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
@@ -43,6 +44,7 @@ function loadToss(): Promise<TossPaymentsFn> {
 export function PayForm({ orderNo, total, initialMethod, buyerName }:
   { orderNo: string; total: number; initialMethod: string; buyerName?: string }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const router = useRouter();
   const [method, setMethod] = useState(PAY_METHODS.some((m) => m.code === initialMethod) ? initialMethod : 'CARD');
   const [pending, start] = useTransition();
@@ -121,7 +123,7 @@ export function PayForm({ orderNo, total, initialMethod, buyerName }:
       )}
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={pending} onClick={pay}>
-        {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: krw(total) }) : t('common.stubBtn', { amount: krw(total) })}
+        {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: f.won(total, '-') }) : t('common.stubBtn', { amount: f.won(total, '-') })}
       </button>
     </>
   );

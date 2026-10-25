@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, SVC_ST, Tw, won } from '@/components/partner/ui';
 import { BlockEditor, MatrixEditor, ServiceActions } from '@/components/partner/ServiceTools';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,6 +36,7 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
   if (!p) redirect('/login');
   const { id } = await params;
   const t = await getTranslations('partnerOps.svcDetail');
+  const f = await getFmt();
   const to = await getTranslations('partnerOps');
   const svc = (c: string) => (to.has(`svcSt.${c}` as never) ? to(`svcSt.${c}` as never) : SVC_ST[c]?.[0] ?? c);
   const act = (c: string) => (t.has(`act.${c}` as never) ? t(`act.${c}` as never) : c);
@@ -57,8 +59,8 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
         <div className="dr"><span>{t('k.form')}</span><b>{s.formLabel ?? t('simple')}{s.categoryName ? ` · ${s.categoryName}` : ''}</b></div>
         <div className="dr"><span>{t('k.id')}</span><b className="pt-code">S-{s.id.slice(0, 8)}</b></div>
         <div className="dr"><span>{t('k.target')}</span><b>{s.target ?? '—'}</b></div>
-        <div className="dr"><span>{t('k.topFee')}</span><b>{s.topFee ? `${won(s.topFee)}원` : s.categoryFee ? t('catBase', { amt: `${won(s.categoryFee)}원` }) : '—'}</b></div>
-        <div className="dr"><span>{t('k.refFee')}</span><b>{s.referralRate != null ? t('onDeal', { pct: String(Math.round(s.referralRate * 1000) / 10) }) : '—'}{s.rebateBonus ? ` · ${t('rebate', { amt: `${won(s.rebateBonus)}원` })}` : ''}</b></div>
+        <div className="dr"><span>{t('k.topFee')}</span><b>{s.topFee ? f.wonOf(won(s.topFee)) : s.categoryFee ? t('catBase', { amt: f.wonOf(won(s.categoryFee)) }) : '—'}</b></div>
+        <div className="dr"><span>{t('k.refFee')}</span><b>{s.referralRate != null ? t('onDeal', { pct: String(Math.round(s.referralRate * 1000) / 10) }) : '—'}{s.rebateBonus ? ` · ${t('rebate', { amt: f.wonOf(won(s.rebateBonus)) })}` : ''}</b></div>
         <div className="dr"><span>{t('k.leads')}</span><b>{t('recvLine', { n: String(s.stats.received), v: String(s.stats.viewed) })}</b></div>
         <div className="dr"><span>{t('k.updated')}</span><b>{ymdKst(s.updatedAt)}</b></div>
       </div>

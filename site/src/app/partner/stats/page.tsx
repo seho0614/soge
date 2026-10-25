@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { Empty, GRADE_KO, Note, Pgh, ptCode, S2, Tile, won } from '@/components/partner/ui';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,6 +27,7 @@ export default async function StatsPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partner.stats');
+  const f = await getFmt();
   const tp = await getTranslations('partner');
   const s = await apiGet<S>('/partner/stats', 0).catch(() => null);
   if (!s) return <><Pgh title={t('title')} /><Empty>{tp('common.notPartner')}</Empty><i hidden data-root-end="" /></>;
@@ -53,10 +55,10 @@ export default async function StatsPage() {
                 <td><span className={`pt-gbadge ${d.grade ? `g${d.label.replace(/[+\-]/, '')}` : 'miss'}`}>{d.label}</span></td>
                 <td className="num"><b>{d.count}</b>{tp('common.unit.case')}</td>
                 <td><div className="pt-bar"><i style={{ width: `${Math.round((d.count / mx) * 100)}%` }} /></div></td>
-                <td className="num">{won(d.fee)}{tp('common.unit.won')}</td>
+                <td className="num">{f.wonOf(won(d.fee))}</td>
               </tr>
             ))}
-            <tr><td><b>{t('total')}</b></td><td className="num"><b>{total}</b>{tp('common.unit.case')}</td><td /><td className="num"><b>{won(totalFee)}{tp('common.unit.won')}</b></td></tr>
+            <tr><td><b>{t('total')}</b></td><td className="num"><b>{total}</b>{tp('common.unit.case')}</td><td /><td className="num"><b>{f.wonOf(won(totalFee))}</b></td></tr>
           </tbody>
         </table>
       </div>

@@ -58,8 +58,8 @@
       "sizeAround": "{n}평대",
       "sizeMax": "{n}평 이내",
       "sizeMin": "{n}평 이상",
-      "priceMax": "{v}원 이내",
-      "priceMin": "{v}원 이상",
+      "priceMax": "{v} 이내",
+      "priceMin": "{v} 이상",
       "urgent": "급매",
       "cheap": "가격 낮은 순",
       "new": "신규"

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { dtKst } from '@/lib/format';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 import '@/styles/proto-w1.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +19,9 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
   const no = /^Q-\d{8}-[0-9A-F]{4}$/.test(sp.no ?? '') ? sp.no! : null;
   /* v10.32 (추가) — 시안 「2026년 8월 27일 14:00까지 답변드립니다」 글꼴(서버 dueAt = 접수 시각 + 영업일 1일). 값이 없으면(주소로 바로 연 경우) 전 문구 */
   const dk = sp.due && !Number.isNaN(Date.parse(sp.due)) ? dtKst(sp.due) : '';
-  const due = dk ? `${Number(dk.slice(0, 4))}년 ${Number(dk.slice(5, 7))}월 ${Number(dk.slice(8, 10))}일 ${dk.slice(11)}` : null;
+  /* 다른 언어는 「Aug 27, 2026 14:00」 (v10.102 · 2-5c) */
+  const f = await getFmt();
+  const due = dk ? `${f.ymd(sp.due!, `${Number(dk.slice(0, 4))}년 ${Number(dk.slice(5, 7))}월 ${Number(dk.slice(8, 10))}일`)} ${dk.slice(11)}` : null;
   const t = await getTranslations('deal.support');
   /* v10.101 — 단계 · 상태 이름은 사전 키(deal.support.steps.* · stepState.*) */
   const steps = [['received', 'done', 'dn'], ['assign', 'doing', 'on'], ['write', 'wait', ''], ['send', 'wait', '']] as const;

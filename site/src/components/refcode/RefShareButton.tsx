@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { CopyLink } from './CopyLink';
 import type { ApiErr, RefCode, RefQuota } from './types';
+import { useFmt } from '@/lib/useFmt';
 
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
@@ -73,7 +74,8 @@ type View =
 export function RefShareButton({ base, listingId }:
   { base: string; listingId?: string; identityVerified?: boolean }) {
   const t = useTranslations('refcode');
-  const won = (n: number) => t('share.won', { price: n.toLocaleString('ko-KR') });
+  const f = useFmt();
+  const won = (n: number) => f.won(n);
   const router = useRouter();
   const [view, setView] = useState<View>({ k: 'idle' });
   const [busy, setBusy] = useState(false);
@@ -108,7 +110,7 @@ export function RefShareButton({ base, listingId }:
       if (q.paymentRequired) { setView({ k: 'pay', q }); return; }
       setView({ k: 'msg', text: q.includedCodes > 0
         ? t('button.allUsedIncluded', { plan: q.planName, n: String(q.includedCodes) })
-        : t('button.noFreePlan', { plan: q.planName, price: q.extraCodePrice.toLocaleString('ko-KR') }) });
+        : t('button.noFreePlan', { plan: q.planName, price: won(q.extraCodePrice) }) });
     } catch {
       setErr(t('button.requestFail'));
     } finally { setBusy(false); }
@@ -175,7 +177,7 @@ export function RefShareButton({ base, listingId }:
             <p>{t('button.paidPlanUsed', { plan: view.q.planName, n: String(view.q.includedCodes) })}{view.q.scope !== 'all' && ' ' + t('button.newListingPay')}</p>
           ) : view.q.includedCodes <= 0 ? (
             /* v10.31 (합침 · w3 D060) — 무료 요금제 포함 소개코드 0건(시안) */
-            <p data-refshare-nofree="1">{t('button.noFree', { price: view.q.extraCodePrice.toLocaleString('ko-KR') })}{!view.q.identityVerified && <>{' '}{t.rich('button.noFreeVerify', { a: (c) => <a href="/verify">{c}</a> })}</>}</p>
+            <p data-refshare-nofree="1">{t('button.noFree', { price: won(view.q.extraCodePrice) })}{!view.q.identityVerified && <>{' '}{t.rich('button.noFreeVerify', { a: (c) => <a href="/verify">{c}</a> })}</>}</p>
           ) : view.q.identityVerified ? (
             <p>{t('button.freeUsed', { n: String(view.q.includedCodes) })}{view.q.scope !== 'all' && ' ' + t('button.newListingPay')}</p>
           ) : (

@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
 import { LinkCreateForm } from '@/components/partners/LinkCreateForm';
-import { krw, ymd } from '@/components/partners/fmt';
+import { ymd } from '@/components/partners/fmt';
 import type { AffProduct } from '@/components/partners/types';
 
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,6 +23,7 @@ export default async function PartnerProductsPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
+  const fm = await getFmt();
 
   const rows = await apiGetPersonal<AffProduct[]>('/partner/affiliate/products').catch(() => null);
 
@@ -43,7 +45,7 @@ export default async function PartnerProductsPage() {
               <tr key={x.id}>
                 <td><strong>{x.name}</strong>{x.description && <div className="dim">{x.description}</div>}</td>
                 <td>{x.advertiser ?? <span className="dim">—</span>}</td>
-                <td className="num">{krw(x.commission)}</td>
+                <td className="num">{fm.won(x.commission, '—')}</td>
                 <td>{x.endedAt ? `~ ${ymd(x.endedAt)}` : t('products.always')}</td>
                 <td><LinkCreateForm products={[]} fixed={x.id} compact /></td>
               </tr>

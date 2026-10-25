@@ -10,6 +10,7 @@ import { BROKER_DOCS } from '@/components/broker-docs';   // v10.31 검정 — '
 
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.brokerSt'))('title') };
@@ -48,6 +49,7 @@ export default async function BrokerStatusPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.brokerSt');
+  const f = await getFmt();
 
   const [b0, ex] = await Promise.all([
     apiGet<B>('/partner/broker', 0).catch(() => null),
@@ -119,7 +121,7 @@ export default async function BrokerStatusPage() {
                 <dl className="gw-brdl">
                   <dt>{t('org')}</dt><dd>{g.guaranteeOrg ?? '—'}</dd>
                   <dt>{t('cert')}</dt><dd>{g.guaranteeCertNo ?? '—'}</dd>
-                  <dt>{t('amount')}</dt><dd>{g.guaranteeAmount != null ? `${Number(g.guaranteeAmount).toLocaleString('ko-KR')}원` : '—'}</dd>
+                  <dt>{t('amount')}</dt><dd>{g.guaranteeAmount != null ? f.won(g.guaranteeAmount) : '—'}</dd>
                   <dt>{t('period')}</dt><dd>{ymdKst(g.guaranteeFrom ?? undefined) || '—'} ~ {ymdKst(g.guaranteeUntil ?? undefined) || '—'}</dd>
                 </dl>
                 {ex?.guaranteeExpired && <div className="gw-ls gw-warn">{t('expiredG')}</div>}

@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiGet, ApiFailure } from '@/lib/api';
 import { me } from '@/lib/session';
-import { won, GWAN_PATH, dtKst, ymdKst } from '@/lib/format';
+import { GWAN_PATH, dtKst, ymdKst } from '@/lib/format';
 import { ArchiveButton } from '@/components/ArchiveButton';
 import { MyHead, Tabs, Note, Empty, GwanTag, shortId, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.lst'))('title') };
@@ -51,6 +52,7 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
   const tab = TABS.find((t) => t.k === want) ? want! : 'all';
   const rows = tab === 'all' ? all : all.filter((r) => TABS.find((t) => t.k === tab)!.st.includes(r.status));
   const t = await getTranslations('my.lst');
+  const f = await getFmt();
 
   return (
     <>
@@ -81,7 +83,7 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
                   <GwanTag code={r.gwanCode} />
                   {r.categoryName && <span className="my-ck">{r.categoryName}</span>}
                   {r.gradeLabel && r.status !== 'DRAFT' && <span className="my-ck">{r.gradeLabel}</span>}
-                  {r.desiredFee != null && <span className="my-ck">{t('fee', { fee: won(r.desiredFee) })}</span>}
+                  {r.desiredFee != null && <span className="my-ck">{t('fee', { fee: f.won(r.desiredFee) })}</span>}
                   {r.status === 'IN_REVIEW' && r.slaDueAt && <span className="my-ck warn">{t('sla', { date: dtKst(r.slaDueAt) })}</span>}
                 </div>
                 <Link className="my-lnk" href={`/listings/${r.id}/edit`}>{r.title}</Link>

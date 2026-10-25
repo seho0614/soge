@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { apiGet, ApiFailure } from '@/lib/api';
 import { BackBar } from '@/components/common/BackBar';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = { title: '공고 원문' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('policy'))('meta.source') };
+}
 
 type Props = { params: Promise<{ no: string }> };
 
@@ -30,52 +33,53 @@ export default async function PolicySourcePage({ params }: Props) {
     throw e;
   });
   if (!it) notFound();
+  const t = await getTranslations('policy');
   return (
     <><div className="gw" data-gw="BIZ">
       <div className="gw-gwl gw-biz">
-      <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href={`/policy/${it.no}`} label="정책 상세" wrap={false} /></div>
+      <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href={`/policy/${it.no}`} label={t('source.back')} wrap={false} /></div>
       <div className="gw-wrap" style={{ paddingTop: 14, paddingBottom: 20 }}>
         <div className="gw-panel gw-axdt" data-bpolsrc={it.no} style={{ overflow: 'hidden' }}>
           <div className="gw-axdh">
             <div className="gw-axdhl">
-              <span className="gw-axb">정책</span>
-              <span className="gw-dtcat">공고 원문</span>
-              {it.sample && <span className="gw-bg gw-wait">시연용</span>}
+              <span className="gw-axb">{t('source.axis')}</span>
+              <span className="gw-dtcat">{t('source.cat')}</span>
+              {it.sample && <span className="gw-bg gw-wait">{t('source.sample')}</span>}
             </div>
             <h1 className="gw-dtt">{it.sourceTitle}</h1>
             <div className="gw-dtsub">{it.sourceOrg ?? ''}{it.due ? ` · ~${it.due}` : ''}</div>
-            <div className="gw-dtmeta"><span className="gw-dtno">정책번호 P-{it.no}</span></div>
+            <div className="gw-dtmeta"><span className="gw-dtno">{t('source.no', { no: String(it.no) })}</span></div>
           </div>
           {it.sample && (
-            <div className="gw-axsample"><b>시연용 견본 — 실제 공고가 아닙니다.</b> 실제 서비스는 주관 기관이 낸 공고 원문(글 · 붙임 파일)과 원문 주소를 그대로 보여 줍니다.</div>
+            <div className="gw-axsample">{t.rich('source.sampleNote', { b: (c) => <b>{c}</b> })}</div>
           )}
-          <div className="gw-dsec"><h4>공고 개요</h4>
+          <div className="gw-dsec"><h4>{t('source.overview')}</h4>
             <dl className="gw-spec">
-              <dt>공고명</dt><dd>{it.sourceTitle}</dd>
-              <dt>주관 기관</dt><dd>{it.sourceOrg ?? '—'}</dd>
-              <dt>지원 규모</dt><dd>{it.scale ?? it.limit ?? '—'}</dd>
-              <dt>접수 마감</dt><dd>{it.due ? `${it.due}${it.dDay != null && it.dDay >= 0 ? ` (D-${it.dDay})` : ''}` : '상시'}</dd>
+              <dt>{t('source.name')}</dt><dd>{it.sourceTitle}</dd>
+              <dt>{t('source.org')}</dt><dd>{it.sourceOrg ?? '—'}</dd>
+              <dt>{t('source.scale')}</dt><dd>{it.scale ?? it.limit ?? '—'}</dd>
+              <dt>{t('source.due')}</dt><dd>{it.due ? `${it.due}${it.dDay != null && it.dDay >= 0 ? ` (D-${it.dDay})` : ''}` : t('source.always')}</dd>
             </dl>
           </div>
-          <div className="gw-dsec"><h4>지원 내용</h4>
+          <div className="gw-dsec"><h4>{t('source.content')}</h4>
             {it.rows.length > 0
               ? <dl className="gw-spec">{it.rows.map(([k, v], i) => <Fragment key={`${i}-${k}`}><dt>{k}</dt><dd>{v}</dd></Fragment>)}</dl>
-              : <p>지원 내용 표가 아직 없습니다. 원문 주소에서 확인하십시오.</p>}
+              : <p>{t('source.noRows')}</p>}
           </div>
           <div className="gw-dsec">
-            <h4>신청 방법</h4>
-            <p>접수는 <b>주관 기관 누리집</b>에서 합니다. 소개뱅크는 접수 · 선정에 관여하지 않습니다.</p>
-            <div className="gw-axnote2">원문 주소 {it.url
+            <h4>{t('source.how')}</h4>
+            <p>{t.rich('source.howBody', { b: (c) => <b>{c}</b> })}</p>
+            <div className="gw-axnote2">{t('source.url')} {it.url
               ? <a className="gw-code" href={it.url} target="_blank" rel="noopener noreferrer">{it.url}</a>
-              : <span className="gw-code">주관 기관이 원문 주소를 아직 알리지 않았습니다</span>} — 새 창으로 엽니다(보던 화면 유지).</div>
+              : <span className="gw-code">{t('source.noUrl')}</span>}{t('source.newWin')}</div>
           </div>
           <div className="gw-dsec" style={{ marginBottom: 16 }}>
-            <div className="gw-axinv"><b>이 축은 소개비 구조 밖입니다.</b> 열람과 신청 안내만 합니다.</div>
+            <div className="gw-axinv">{t.rich('source.outside', { b: (c) => <b>{c}</b> })}</div>
           </div>
           <div className="gw-abar">
-            <Link className="gw-bo" href="/request/new">창업계획 등록</Link>
+            <Link className="gw-bo" href="/request/new">{t('source.register')}</Link>
             <span className="gw-sp" />
-            <Link className="gw-go" href={`/policy/${it.no}`}><span>정책 상세로</span><small>지원 한도 · 신청 기한</small></Link>
+            <Link className="gw-go" href={`/policy/${it.no}`}><span>{t('source.toPolicy')}</span><small>{t('source.toPolicySub')}</small></Link>
           </div>
         </div>
       </div>

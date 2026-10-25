@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ymdKst } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 import { useTranslations } from 'next-intl';
 
 /**
@@ -34,13 +35,15 @@ const invState = (i: Invoice) => i.etaxStatus === 'SENT' ? 'sent' as const
   : i.etaxStatus === 'SENDING' || i.etaxStatus === 'FAILED' ? 'sending' as const
   : i.state === 'ISSUED' ? 'issued' as const : 'requested' as const;
 /* 노출 상태 글은 사전 join.directoryApply.state.<상태> — 없는 상태는 서버 값 그대로 */
-const won = (v: number | null | undefined) => `${Number(v ?? 0).toLocaleString('ko-KR')}원`;
+/* v10.102 (2-5c) — 금액 글자 won() 은 컴포넌트 안에서 화면 언어로(ko 「1,000원」 · en 「₩1,000」) */
 /** 부가세 = 공급가액 × 10% · 1원 미만 절사 (서버 fn_directory_vat 와 같은 규칙 — 기록은 서버가 계산합니다) */
 const vatOf = (supply: number) => Math.floor(supply / 10);
 const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export function DirectoryApply() {
   const t = useTranslations('join.directoryApply');
+  const fm = useFmt();
+  const won = (v: number | null | undefined) => fm.won(Number(v ?? 0));
   const stateText = (s: string) => { const k = `state.${s}` as never; return t.has(k) ? t(k) : s; };
   const [mine, setMine] = useState<Mine[] | null>(null);
   const [inv, setInv] = useState<Invoice[]>([]);

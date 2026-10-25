@@ -8,7 +8,8 @@ import { BackBar } from '@/components/common/BackBar';
 import { RoleTabs } from '@/components/gwan/GwParts';
 import type { Cat, Gwan } from '@/components/form/RegParts';
 import { RegisterForm } from '@/components/register/RegisterForm';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { isGwanKey } from '@/i18n/keys';
 import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
 
@@ -29,6 +30,8 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   if (!p.identityVerifiedAt) redirect('/verify?next=/register');
   const sp = await searchParams;
   const t = await getTranslations('forms');
+  const th = await getTranslations('header');
+  const locale = await getLocale();
 
   const [gw, labels, ...lists] = await Promise.all([
     apiGet<Array<Gwan & { isActive: boolean }>>('/gwans', 300).catch(() => []),
@@ -40,7 +43,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   /* v10.37 (D095 · P2P) — 개인 회원도 모든 관에 등록합니다(사업자 여부를 보지 않음). 인증이 필요한 업종(보험 · 의료 자격 · 공인중개사 · 제한업종)은
      제한업종은 폼이 미리 알려 주고(POST /restrictions/check) 자격 · 중개사 인증은 서버 · DB 게이트가 봅니다 */
   const gwans = gw.filter((g) => g.isActive && REG_GWANS.includes(g.code) && cats.some((c) => c.gwanCode === g.code))
-    .map((g) => ({ code: g.code, name: g.name }));
+    .map((g) => ({ code: g.code, name: locale !== 'ko' && isGwanKey(g.code) ? th(`gwan.${g.code}`) : g.name }));   // 관 이름 — 한국어는 서버 이름, 다른 언어만 사전(2-2 규칙)
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-REG-010">
       <BackBar href="/" label={t('common.prev')} wrap={false} />

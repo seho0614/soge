@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ListingCardData } from '@/lib/types';
 import { ago, GWAN_PATH } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 import { manwon, photoSrc, regionText } from './gw';
 
 /**
@@ -30,6 +31,7 @@ export function GwCard({ item }: { item: ListingCardData }) {
   const badge = item.urgent?.label ?? (item.isAd && item.adLabel ? item.adLabel : item.badges.find((b) => b.type !== 'URGENT' && b.type !== 'URGENT_SALE')?.label);
   const t = useTranslations('gwan');
   const locale = useLocale();
+  const f = useFmt();
   const price = cardPrice(item, (k) => t(k), locale);
   const where = regionText(item.region) || item.owner.companyName;
   return (
@@ -44,7 +46,7 @@ export function GwCard({ item }: { item: ListingCardData }) {
         <div className="gw-tt">{item.title}</div>
         <div className="gw-pr">{price.label && <small className="gw-prl">{price.label}</small>} {price.value}</div>
         <div className="gw-mt2">
-          <span suppressHydrationWarning>{where}{item.publishedAt ? ` · ${ago(item.publishedAt)}` : ''}</span>
+          <span suppressHydrationWarning>{where}{item.publishedAt ? ` · ${f.ago(item.publishedAt, ago(item.publishedAt))}` : ''}</span>
           <span>♡ {item.likeCount}</span>
         </div>
       </div>

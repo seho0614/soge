@@ -18,6 +18,7 @@ import { me } from '@/lib/session';
 import { siteOrigin } from './origin';
 import { RefShareButton } from './RefShareButton';
 import './refcode.css';
+import { getFmt } from '@/lib/getFmt';
 
 interface Plan { code: string; includedCodes: number; extraCodePrice?: number }
 
@@ -30,6 +31,7 @@ export async function refScope(): Promise<'listing' | 'all'> {
 export async function RefShare({ path = '/mall', listingId, title: titleProp }:
   { path?: string; listingId?: string; title?: string }) {
   const t = await getTranslations('refcode.share');
+  const f = await getFmt();
   const title = titleProp ?? t('title');
   const [p, origin, scope, plans] = await Promise.all([
     me().catch(() => null), siteOrigin(), refScope(),
@@ -38,7 +40,7 @@ export async function RefShare({ path = '/mall', listingId, title: titleProp }:
   const basicPlan = plans.find((x) => x.code === 'BASIC');
   const freeN = basicPlan?.includedCodes;
   /* v10.31 (합침 · w3 D060) — 무료 요금제 포함 소개코드 0건(시안)이면 「무료 소개코드 없음 · 건당 금액」 */
-  const extra = basicPlan?.extraCodePrice != null ? t('won', { price: Number(basicPlan.extraCodePrice).toLocaleString('ko-KR') }) : t('flatRate');
+  const extra = basicPlan?.extraCodePrice != null ? f.won(basicPlan.extraCodePrice) : t('flatRate');
   const perListing = scope === 'listing';
 
   if (perListing && !listingId) {

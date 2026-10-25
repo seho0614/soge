@@ -86,8 +86,8 @@
       "devLine": "오늘 클릭 {today}회 · 이번 달 클릭 {month}회 · 사용 중 링크 {links}개 <a>내 소개링크 ›</a>"
     },
     "delta": {
-      "upWon": "▲ 어제보다 {n}원 증가",
-      "downWon": "▼ 어제보다 {n}원 감소",
+      "upWon": "▲ 어제보다 {n} 증가",
+      "downWon": "▼ 어제보다 {n} 감소",
       "upPeople": "▲ 어제보다 {n}명 증가",
       "downPeople": "▼ 어제보다 {n}명 감소",
       "upCount": "▲ 어제보다 {n}건 증가",

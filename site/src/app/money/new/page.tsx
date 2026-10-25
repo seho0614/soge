@@ -6,6 +6,8 @@ import { QuickFrame } from '@/components/gwan/GwQuick';
 import { photoSrc } from '@/components/gwan/gw';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
+import { getFmt } from '@/lib/getFmt';
+import { useFmt } from '@/lib/useFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('forms.win'))('title') };
@@ -27,7 +29,7 @@ const TABS = ['all', 'mem', 'prd', 'reg'] as const;
 const PERIODS = ['all', '7d', 'month', 'year'] as const;
 type Period = (typeof PERIODS)[number];
 const SCOL = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)', 'var(--s6)'];
-const wonFmt = (n: number) => `₩ ${Math.round(n).toLocaleString('ko-KR')}`;
+const wonFmtKo = (n: number) => `₩ ${Math.round(n).toLocaleString('ko-KR')}`;
 const pct = (v: number | null) => (v == null ? '' : `${v >= 0 ? '▲' : '▼'} ${Math.abs(v)}%`);
 
 /** 보기 좋은 눈금 최댓값 */
@@ -42,21 +44,24 @@ function feeUnit(max: number): [number, string] { return max >= 100000000 ? [100
 
 function DualLine({ s }: { s: SuccessStats['trend'] }) {
   const w = useTranslations('forms.win');
+  const f = useFmt();
   const W = 470, h = 236, PL = 48, PR = 52, PT = 30, PB = 26;
   const iw = W - PL - PR, ih = h - PT - PB;
   const lmax = niceMax(Math.max(...s.counts, 3));
-  const [div, unit] = feeUnit(Math.max(...s.fees, 0));
+  /* 금액 눈금 — 한국어는 억 · 만 줄임 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+  const [div, unit]: [number, string] = f.ko ? feeUnit(Math.max(...s.fees, 0)) : [1, ''];
+  const feeLab = (v: number) => f.won(v);
   const fees = s.fees.map((f) => Math.round((f / div) * 10) / 10);
   const rmax = niceMax(Math.max(...fees, 1));
   const X = (i: number) => PL + (iw * i) / Math.max(1, s.days.length - 1);
   const YL = (v: number) => PT + ih - (ih * v) / lmax;
   const YR = (v: number) => PT + ih - (ih * v) / rmax;
   const ticks = [0, 1, 2, 3].map((k) => k / 3);
-  const line = (vals: number[], Y: (v: number) => number, col: string, u: string) => (
+  const line = (vals: number[], Y: (v: number) => number, col: string, u: string | ((v: number) => string)) => (
     <>
       <path d={vals.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ')} fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      {vals.map((v, i) => <circle key={i} cx={X(i).toFixed(1)} cy={Y(v).toFixed(1)} r="4" fill={col} stroke="var(--card)" strokeWidth="2"><title>{`${s.days[i]} · ${v}${u}`}</title></circle>)}
-      <text x={(X(vals.length - 1) - 6).toFixed(1)} y={(Y(vals[vals.length - 1] ?? 0) - 11).toFixed(1)} textAnchor="end" style={{ fill: col, fontWeight: 700 }}>{vals[vals.length - 1]}{u}</text>
+      {vals.map((v, i) => <circle key={i} cx={X(i).toFixed(1)} cy={Y(v).toFixed(1)} r="4" fill={col} stroke="var(--card)" strokeWidth="2"><title>{typeof u === 'string' ? `${s.days[i]} · ${v}${u}` : `${s.days[i]} · ${u(v)}`}</title></circle>)}
+      <text x={(X(vals.length - 1) - 6).toFixed(1)} y={(Y(vals[vals.length - 1] ?? 0) - 11).toFixed(1)} textAnchor="end" style={{ fill: col, fontWeight: 700 }}>{typeof u === 'string' ? <>{vals[vals.length - 1]}{u}</> : u(vals[vals.length - 1] ?? 0)}</text>
     </>
   );
   return (
@@ -65,11 +70,11 @@ function DualLine({ s }: { s: SuccessStats['trend'] }) {
         <g key={t}>
           <line className="gw-gl" x1={PL} y1={YL(lmax * t).toFixed(1)} x2={W - PR} y2={YL(lmax * t).toFixed(1)} />
           <text x={PL - 8} y={(YL(lmax * t) + 3.5).toFixed(1)} textAnchor="end" style={{ fill: 'var(--s1)' }}>{w('cnt', { n: String(Math.round(lmax * t)) })}</text>
-          <text x={W - PR + 8} y={(YR(rmax * t) + 3.5).toFixed(1)} textAnchor="start" style={{ fill: 'var(--s2)' }}>{t ? `${Math.round(rmax * t * 10) / 10}${unit}` : '0'}</text>
+          <text x={W - PR + 8} y={(YR(rmax * t) + 3.5).toFixed(1)} textAnchor="start" style={{ fill: 'var(--s2)' }}>{t ? (f.ko ? `${Math.round(rmax * t * 10) / 10}${unit}` : feeLab(Math.round(rmax * t))) : '0'}</text>
         </g>
       ))}
       {line(s.counts, YL, 'var(--s1)', w('unitCnt'))}
-      {line(fees, YR, 'var(--s2)', unit)}
+      {line(fees, YR, 'var(--s2)', f.ko ? unit : feeLab)}
       {s.days.map((l, i) => <text key={l} x={X(i).toFixed(1)} y={h - 7} textAnchor="middle">{l}</text>)}
     </svg>
   );
@@ -107,6 +112,9 @@ const Bar = ({ v, mx, col }: { v: number; mx: number; col: string }) => <span cl
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
   const w = await getTranslations('forms.win');
+  const f = await getFmt();
+  /* 금액 — 한국어는 그동안 쓰던 「₩ 1,234」 그대로, 다른 언어는 「₩1,234」 (v10.102 · 2-5c) */
+  const wonFmt = (n: number) => (f.ko ? wonFmtKo(n) : f.won(Math.round(n)));
   const cnt = (n: number | string) => w('cnt', { n: String(n) });
   const tab = TABS.some((k) => k === q.tab) ? q.tab! : 'all';
   const period = (PERIODS.some((k) => k === q.period) ? q.period! : 'all') as Period;

@@ -7,9 +7,10 @@ import { me } from '@/lib/session';
 import type { HltOrder } from '@/components/health/types';
 import { HltEmpty, HltNav, HltSteps } from '@/components/health/HltParts';
 import { PayForm } from '@/components/health/PayForm';
-import { codeText, krw, ORDER_LABEL } from '@/components/health/util';
+import { codeText, ORDER_LABEL } from '@/components/health/util';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('order'))('meta.pay') };
@@ -28,6 +29,7 @@ export default async function HltPayPage({ searchParams }: Props) {
   if (!p) redirect('/login');
   const { no, m } = await searchParams;
   const t = await getTranslations('order');
+  const f = await getFmt();
 
   let o: HltOrder | null = null;
   let err: string | null = null;
@@ -78,10 +80,10 @@ export default async function HltPayPage({ searchParams }: Props) {
         <section className="hlt-box">
           <h3>{t('common.orderNo', { no: o.orderNo })}</h3>
           {o.items.map((i) => (
-            <div key={i.optionId ?? i.code} className="hlt-sum" data-item={i.code}><span>{i.name}{i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm"> {i.optionLabel}</span>} × {i.qty}</span><span>{krw(i.amount)}</span></div>
+            <div key={i.optionId ?? i.code} className="hlt-sum" data-item={i.code}><span>{i.name}{i.optionLabel && i.optionLabel !== '단품' && <span className="hlt-optnm"> {i.optionLabel}</span>} × {i.qty}</span><span>{f.won(i.amount, '-')}</span></div>
           ))}
-          <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('common.free') : krw(o.shipFee)}</span></div>
-          <div className="hlt-sum tot"><span>{t('common.payAmount')}</span><span>{krw(o.total)}</span></div>
+          <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('common.free') : f.won(o.shipFee, '-')}</span></div>
+          <div className="hlt-sum tot"><span>{t('common.payAmount')}</span><span>{f.won(o.total, '-')}</span></div>
           <Msgs ns={['order']}><PayForm orderNo={o.orderNo} total={Number(o.total)} initialMethod={m ?? 'CARD'} /></Msgs>
           <p className="hint">
             {t('payPage.cardNote')}

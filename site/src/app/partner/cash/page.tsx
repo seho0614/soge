@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, Tw, won, type Tone } from '@/components/partner/ui';
 import { AutoForm, ChargeForm, RefundForm } from '@/components/partner/CashPanel';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,6 +42,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   if (!p) redirect('/login');
   const sp = await searchParams;
   const t = await getTranslations('partnerOps.cash');
+  const f = await getFmt();
   const code = (g: 'chSt' | 'rfSt', s: string) => (t.has(`${g}.${s}` as never) ? t(`${g}.${s}` as never) : s);
   const c = await apiGet<Cash>('/partner/cash', 0).catch(() => null);
   if (!c) return <><Pgh title={t('title')} /><Empty>{t.rich('notPartner', { a: (x) => <Link href="/partner/apply">{x}</Link> })}</Empty><i hidden data-root-end="" /></>;
@@ -51,11 +53,11 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       {sp.pay === 'fail' && <Note kind="warn">{t.rich('payFail', { b: (x) => <b>{x}</b> })}</Note>}
 
       <div className="pt-esc" data-cash-sum>
-        <div className="er"><span>{t('total')}</span><b>{won(c.total)}원</b></div>
-        <div className="er"><span>{t('paid')} <i className="pt-ls">{t('paidSub')}</i></span><b>{won(c.paid)}원</b></div>
-        <div className="er"><span>{t('bonus')} <i className="pt-ls">{t('bonusSub')}</i></span><b>{won(c.bonus)}원</b></div>
+        <div className="er"><span>{t('total')}</span><b>{f.wonOf(won(c.total))}</b></div>
+        <div className="er"><span>{t('paid')} <i className="pt-ls">{t('paidSub')}</i></span><b>{f.wonOf(won(c.paid))}</b></div>
+        <div className="er"><span>{t('bonus')} <i className="pt-ls">{t('bonusSub')}</i></span><b>{f.wonOf(won(c.bonus))}</b></div>
       </div>
-      <Note kind="info">{t.rich('orderNote', { used: `${won(c.month.used)}원`, bonus: `${won(c.month.usedBonus)}원`, b: (x) => <b>{x}</b> })}</Note>
+      <Note kind="info">{t.rich('orderNote', { used: f.wonOf(won(c.month.used)), bonus: f.wonOf(won(c.month.usedBonus)), b: (x) => <b>{x}</b> })}</Note>
       {c.total <= 0 && <Note kind="warn">{t.rich('zeroNote', { b: (x) => <b>{x}</b> })}</Note>}
 
       <S2>{t('chargeH')}</S2>
@@ -92,10 +94,10 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
             return (
               <tr key={x.id}>
                 <td>{ymdKst(x.approvedAt ?? x.createdAt)}{x.source === 'AUTO' ? <span className="pt-ls"> · {t('auto')}</span> : null}</td>
-                <td className="num"><b>{won(x.amount)}원</b></td>
-                <td className="num">{won(x.bonus)}원</td>
+                <td className="num"><b>{f.wonOf(won(x.amount))}</b></td>
+                <td className="num">{f.wonOf(won(x.bonus))}</td>
                 <td><Bg tone={st[1]}>{st[0]}</Bg>{x.stub ? <span className="pt-ls"> {t('stub')}</span> : null}{x.failReason ? <div className="pt-ls">{x.failReason}</div> : null}</td>
-                <td className="num">{x.refunded ? `${won(x.refunded)}원` : '—'}</td>
+                <td className="num">{x.refunded ? f.wonOf(won(x.refunded)) : '—'}</td>
               </tr>
             );
           })}
@@ -108,8 +110,8 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
               const st: [string, Tone] = [code('rfSt', r.state), RF_ST[r.state] ?? 'off'];
               return (
                 <tr key={r.id}>
-                  <td>{ymdKst(r.createdAt)}</td><td className="num">{won(r.amount)}원</td><td className="num"><b>{won(r.refunded)}원</b></td>
-                  <td className="num">{won(r.clawback)}원</td><td><Bg tone={st[1]}>{st[0]}</Bg></td><td>{r.reason}</td>
+                  <td>{ymdKst(r.createdAt)}</td><td className="num">{f.wonOf(won(r.amount))}</td><td className="num"><b>{f.wonOf(won(r.refunded))}</b></td>
+                  <td className="num">{f.wonOf(won(r.clawback))}</td><td><Bg tone={st[1]}>{st[0]}</Bg></td><td>{r.reason}</td>
                 </tr>
               );
             })}
@@ -118,9 +120,9 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       )}
 
       {c.legacy.count > 0 && (
-        <Note kind="plain">{t.rich('legacyNote', { amt: `${won(c.legacy.pending)}원`, n: String(c.legacy.count), b: (x) => <b>{x}</b>, a: (x) => <Link href="/partner/settlement">{x}</Link> })}</Note>
+        <Note kind="plain">{t.rich('legacyNote', { amt: f.wonOf(won(c.legacy.pending)), n: String(c.legacy.count), b: (x) => <b>{x}</b>, a: (x) => <Link href="/partner/settlement">{x}</Link> })}</Note>
       )}
-      <Note kind="warn">{t.rich('useNote', { max: `${won(c.limits.max)}원`, maxBal: `${won(c.limits.maxBalance)}원`, b: (x) => <b>{x}</b> })}</Note>
+      <Note kind="warn">{t.rich('useNote', { max: f.wonOf(won(c.limits.max)), maxBal: f.wonOf(won(c.limits.maxBalance)), b: (x) => <b>{x}</b> })}</Note>
       <div className="pt-dact">
         <Link className="pt-bo" href="/partner/leads">{t('lnLeads')}</Link>
         <Link className="pt-bo" href="/partner/leads-rejects">{t('lnRej')}</Link>

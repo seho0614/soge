@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
 import type { ListingListData } from '@/lib/types';
-import { GWAN_PATH, ago, won } from '@/lib/format';
+import { GWAN_PATH, ago } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { BackBar } from '@/components/common/BackBar';
 import { SearchBox, type SearchGwan } from '@/components/search/SearchBox';
 import { PromptSearch } from './PromptSearch';
@@ -49,6 +50,7 @@ export default async function SearchPage({ searchParams }: {
   const sp = await searchParams;
   const t = await getTranslations('search');
   const h = await getTranslations('header');
+  const f = await getFmt();
   const locale = await getLocale();
   const q = (sp.q ?? '').trim();
   /* v10.83 — 한 글자는 어디서든 「두 글자 이상」(통합 검색 API 규칙과 같게 · 전: 상품 탭만 한 글자로 찾아 13건 등) */
@@ -152,7 +154,7 @@ export default async function SearchPage({ searchParams }: {
                         <td>{r.categoryName}</td>
                         <td>{r.gradeLabel ?? '—'}</td>
                         <td>{r.owner?.companyName ?? '—'}</td>
-                        <td>{won(r.desiredFee)}</td>
+                        <td>{f.won(r.desiredFee)}</td>
                         <td>{(r.viewCount ?? 0).toLocaleString('ko-KR')}</td>
                       </tr>
                     ))}
@@ -169,7 +171,7 @@ export default async function SearchPage({ searchParams }: {
               <h2 className="s2">{t('posts.headCount', { n: board.total })}</h2>
               {posts.map((p) => (
                 <div key={p.id} className="lrow">
-                  <div className="lt"><b>{p.title}</b><span className="ls">{p.author} · {ago(p.createdAt)}</span></div>
+                  <div className="lt"><b>{p.title}</b><span className="ls">{p.author} · {f.ago(p.createdAt, ago(p.createdAt))}</span></div>
                   <div className="lact"><Link className="pc-bo sm" href={`/community/${p.id}`}>{t('view')}</Link></div>
                 </div>
               ))}
@@ -182,8 +184,8 @@ export default async function SearchPage({ searchParams }: {
                 <div key={r.id} className="lrow">
                   <div className="lt"><b>{r.title}</b><span className="ls">{[
                     r.companyName ?? GN[r.gwanCode], r.categoryName, r.region,
-                    r.budgetMin != null || r.budgetMax != null ? t('reqs.budget', { v: budgetText(r.budgetMin ?? null, r.budgetMax ?? null) }) : null,
-                    ago(r.createdAt)].filter(Boolean).join(' · ')}</span></div>
+                    r.budgetMin != null || r.budgetMax != null ? t('reqs.budget', { v: budgetText(r.budgetMin ?? null, r.budgetMax ?? null, true, f) }) : null,
+                    f.ago(r.createdAt, ago(r.createdAt))].filter(Boolean).join(' · ')}</span></div>
                   <div className="lact"><Link className="pc-bo sm" href={`/request/${r.id}`}>{t('view')}</Link></div>
                 </div>
               ))}

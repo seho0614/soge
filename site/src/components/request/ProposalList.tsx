@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ago } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 import { useTranslations } from 'next-intl';
 
 export interface Proposal {
@@ -20,6 +21,7 @@ const TONE: Record<string, string> = { PROPOSED: 'w2', ACCEPTED: 'a2', REJECTED:
 export function ProposalList({ requestId, items, owner }: { requestId: string; items: Proposal[]; owner: boolean }) {
   const router = useRouter();
   const t = useTranslations('request.proposals');
+  const f = useFmt();
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -48,7 +50,7 @@ export function ProposalList({ requestId, items, owner }: { requestId: string; i
             {p.companyName && <span className="w1-nt3">{p.proposerName}{p.relationLabel ? ` · ${p.relationLabel}` : ''}</span>}
             <span className={`pst ${TONE[p.status] ?? 'r2'}`}>{p.status === 'PROPOSED' ? (owner ? t('awaiting') : t('reviewing')) : (p.statusLabel ?? p.status)}</span>
             {p.mine && <span className="w1-nt3">{t('mine')}</span>}
-            <span className="ptm">{ago(p.createdAt)}</span>
+            <span className="ptm">{f.ago(p.createdAt, ago(p.createdAt))}</span>
           </div>
           {p.message && <div className="px">{p.message}</div>}
           {owner && p.status === 'PROPOSED' && (

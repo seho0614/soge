@@ -8,10 +8,11 @@ import type { HltReturn } from '@/components/health/types';
 import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import {
-  codeText, krw, reasonLabel, RETURN_KIND, RETURN_REASONS, RETURN_SHIP_ROUND_TRIP, RETURN_STATE, RETURN_TONE, ymd,
+  codeText, reasonLabel, RETURN_KIND, RETURN_REASONS, RETURN_SHIP_ROUND_TRIP, RETURN_STATE, RETURN_TONE, ymd,
 } from '@/components/health/util';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hReturns.meta') };
@@ -26,6 +27,7 @@ const isFeeState = (s: string): s is (typeof FEE_STATES)[number] => (FEE_STATES 
 export default async function MyHltReturns() {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const to = await getTranslations('order');
 
   let rows: HltReturn[] | null = null;
@@ -63,7 +65,7 @@ export default async function MyHltReturns() {
                     <tr><th>{t('hReturns.reason')}</th><td>{codeText(to, 'reason', r.reason, reasonLabel(r.reason))}</td></tr>
                     {party && r.kind === 'RETURN' && (
                       <tr><th>{t('hReturns.cost')}</th><td>{party === 'CUSTOMER'
-                        ? t('hReturns.costCustomer', { v: krw(RETURN_SHIP_ROUND_TRIP) })
+                        ? t('hReturns.costCustomer', { v: f.won(RETURN_SHIP_ROUND_TRIP, '-') })
                         : t('hReturns.costSeller')}</td></tr>
                     )}
                     {r.convertedFrom && <tr><th>{t('hReturns.changed')}</th><td>{t('hReturns.changedV')}</td></tr>}
@@ -72,14 +74,14 @@ export default async function MyHltReturns() {
                       <tr data-fee-state={r.feeState ?? 'NONE'}><th>{t('hReturns.exFee')}</th><td>
                         {r.feeState === 'REFUNDED'
                           ? t('hReturns.feeRefunded')
-                          : (r.exchangeFee ?? 0) > 0 ? `${krw(r.exchangeFee)} · ${isFeeState(r.feeState ?? 'NONE') ? t(`hReturns.fee.${(r.feeState ?? 'NONE') as (typeof FEE_STATES)[number]}`) : ''}` : t('hReturns.feeNone')}
+                          : (r.exchangeFee ?? 0) > 0 ? `${f.won(r.exchangeFee, '-')} · ${isFeeState(r.feeState ?? 'NONE') ? t(`hReturns.fee.${(r.feeState ?? 'NONE') as (typeof FEE_STATES)[number]}`) : ''}` : t('hReturns.feeNone')}
                         {r.feeState === 'UNPAID' && r.state === 'REQUESTED' && (
                           <> <Link className="hlt-btn sm pri" href={`/my/health/returns/${encodeURIComponent(r.id)}/fee`} data-fee-pay-link>{t('hBtn.pay')}</Link></>
                         )}
                       </td></tr>
                     )}
                     {r.kind !== 'EXCHANGE' && r.beforePayment && <tr><th>{t('hReturns.refund')}</th><td data-before-payment>{t('hReturns.beforePay')}</td></tr>}
-                    {r.kind !== 'EXCHANGE' && !r.beforePayment && <tr><th>{t('hReturns.refund')}</th><td data-ship-deduction={r.shipDeduction ?? 0}>{r.refundAmount != null ? krw(r.refundAmount) : t('hReturns.tbd')}{(r.shipDeduction ?? 0) > 0 && t('hReturns.deduct', { v: krw(r.shipDeduction!) })}{r.refundedAt && t('hReturns.refunded', { d: ymd(r.refundedAt) })}</td></tr>}
+                    {r.kind !== 'EXCHANGE' && !r.beforePayment && <tr><th>{t('hReturns.refund')}</th><td data-ship-deduction={r.shipDeduction ?? 0}>{r.refundAmount != null ? f.won(r.refundAmount, '-') : t('hReturns.tbd')}{(r.shipDeduction ?? 0) > 0 && t('hReturns.deduct', { v: f.won(r.shipDeduction!, '-') })}{r.refundedAt && t('hReturns.refunded', { d: ymd(r.refundedAt) })}</td></tr>}
                     {r.decideNote && <tr><th>{t('hReturns.memo')}</th><td>{r.decideNote}</td></tr>}
                   </tbody>
                 </table>

@@ -18,6 +18,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { uiMessages } from '@/lib/content';
 import { ago, GWAN_PATH } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 import type { Gwan, ListingCardData, ListingListData } from '@/lib/types';
 import type { AdServe } from '@/components/home/types';
 import { BackBar } from '@/components/common/BackBar';
@@ -47,6 +48,7 @@ function TrustBadgeIn({ v }: { v: number }) {
 function ListCard({ item }: { item: ListingCardData }) {
   const t = useTranslations('gwan');
   const locale = useLocale();
+  const f = useFmt();
   const price = cardPrice(item, (k) => t(k), locale);
   return (
     <Link className="gw-pc" href={`/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`} data-listing={item.id} data-urgent={item.urgent?.kind}>
@@ -62,7 +64,7 @@ function ListCard({ item }: { item: ListingCardData }) {
       </div>
       <TrustBadge score={item.trustScore} />
       <b>{item.title}</b>
-      <span className="gw-ls" suppressHydrationWarning>{regionText(item.region) || t('list.noRegion')}{item.publishedAt ? ` · ${ago(item.publishedAt)}` : ''}</span>
+      <span className="gw-ls" suppressHydrationWarning>{regionText(item.region) || t('list.noRegion')}{item.publishedAt ? ` · ${f.ago(item.publishedAt, ago(item.publishedAt))}` : ''}</span>
       <div className="gw-pf2"><span>{price.label ? `${price.label} ` : ''}{price.value}</span><span className="gw-ls">{t('list.likes', { n: String(item.likeCount) })}</span></div>
     </Link>
   );

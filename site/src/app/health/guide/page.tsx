@@ -6,7 +6,8 @@ import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import type { HltSaleCategory, HltTerm } from '@/components/health/types';
 import { Crumb, HltNav, SellerBox } from '@/components/health/HltParts';
-import { krw, RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/util';
+import { RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/util';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('hlt');
@@ -30,6 +31,7 @@ export default async function HltGuide() {
   const notSold = cats.filter((c) => c.state === 'NOT_SOLD');
   const locked = cats.filter((c) => c.state === 'LOCKED');
   const t = await getTranslations('hlt.guide');
+  const f = await getFmt();
 
   return (
     <><div className="hlt">
@@ -51,7 +53,7 @@ export default async function HltGuide() {
             <tr><th>{t('period')}</th><td>{t('periodVal', { days: String(RETURN_WINDOW_DAYS) })}</td></tr>
             <tr><th>{t('preShip')}</th><td>{t('preShipVal')}</td></tr>
             <tr><th>{t('postShip')}</th><td>{t('postShipVal')}</td></tr>
-            <tr><th>{t('change')}</th><td>{t('changeVal', { amt: krw(RETURN_SHIP_ROUND_TRIP) })}</td></tr>
+            <tr><th>{t('change')}</th><td>{t('changeVal', { amt: f.won(RETURN_SHIP_ROUND_TRIP, '-') })}</td></tr>
             <tr><th>{t('defect')}</th><td>{t('defectVal')}</td></tr>
             <tr><th>{t('blocked')}</th><td>{t('blockedVal')}</td></tr>
             <tr><th>{t('refund')}</th><td>{t('refundVal')}</td></tr>

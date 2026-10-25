@@ -9,9 +9,9 @@ import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import { Msgs } from '@/i18n/Msgs';
 import type { HltProduct } from './types';
-import { krw } from './util';
 import { CartAdd } from './CartAdd';
 import { ProductArt, Rosette } from './ProductArt';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 「← 뒤로」 — 시안의 하위 화면 머리(v10.25 · 2026-10-08 「시안을 기준으로」).
@@ -71,6 +71,7 @@ export function HltSteps({ at }: { at: 0 | 1 | 2 | 3 }) {
  */
 export function ProductCard({ p }: { p: HltProduct }) {
   const t = useTranslations('hlt.card');
+  const f = useFmt();
   const seller = p.sellerType === 'DIRECT' || !p.sellerType;
   return (
     <article className="hlt-card" data-product={p.code}>
@@ -89,12 +90,12 @@ export function ProductCard({ p }: { p: HltProduct }) {
             <div className="hlt-ingline" data-ingline="1">{p.mainIngredient.name}{p.mainIngredient.amount && <> <span className="bar">|</span> {p.mainIngredient.amount}</>}</div>
           )}
           <div className="hlt-card-nm">{p.name}</div>
-          {p.offPct ? <div className="hlt-p26"><span className="was">{krw(p.listPrice)}</span></div> : null}
+          {p.offPct ? <div className="hlt-p26"><span className="was">{f.won(p.listPrice, '-')}</span></div> : null}
           <div className="hlt-p26">
             {p.offPct ? <span className="off">{p.offPct}%</span> : null}
-            <span className="now">{krw(p.price)}</span>
+            <span className="now">{f.won(p.price, '-')}</span>
           </div>
-          {p.minUnit != null && <div className="hlt-u26" data-unit="1">{t.rich('unitFrom', { amt: krw(p.minUnit), k: (c) => <span className="hlt-k">{c}</span>, b: (c) => <b>{c}</b> })}</div>}
+          {p.minUnit != null && <div className="hlt-u26" data-unit="1">{t.rich('unitFrom', { amt: f.won(p.minUnit, '-'), k: (c) => <span className="hlt-k">{c}</span>, b: (c) => <b>{c}</b> })}</div>}
           {/* v10.28 (D036) — 보이는 리뷰가 있으면 별점 · 수(시안 카드의 ★) */}
           {(p.reviewCount ?? 0) > 0 && <div className="hlt-sm" data-card-rating><span className="hlt-stars">★</span> {Number(p.ratingAvg ?? 0).toFixed(1)} <span className="hlt-mut">({p.reviewCount})</span></div>}
           <div className="hlt-sm hlt-mut3 hlt-wd" data-wd="1">

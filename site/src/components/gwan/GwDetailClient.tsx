@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ago } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 
 /* v10.98 — 글은 사전 detail.bar.*(키만 둡니다) */
 const GATE: Record<string, { href: string; label: 'gateIdentity' | 'gateOwn' }> = {
@@ -109,6 +110,7 @@ interface Question {
 export function GwQna({ listingId, canAsk, notice, allHref }: { listingId: string; canAsk: boolean; notice?: string; allHref?: string }) {
   const [rows, setRows] = useState<Question[]>([]);
   const t = useTranslations('detail.qna');
+  const f = useFmt();
   const tc = useTranslations('detail.common');
   const tb = useTranslations('detail.bar');
   const [pending, start] = useTransition();
@@ -153,7 +155,7 @@ export function GwQna({ listingId, canAsk, notice, allHref }: { listingId: strin
           <div className="gw-qi"><span>{t('empty')}</span><span /></div>
         ) : rows.map((q) => (
           <div key={q.id} className="gw-qrowx">
-            <div className="gw-qi"><span>💬 {q.question} <i className="gw-qwho">— {q.askerName}</i></span><span suppressHydrationWarning>{ago(q.createdAt)}</span></div>
+            <div className="gw-qi"><span>💬 {q.question} <i className="gw-qwho">— {q.askerName}</i></span><span suppressHydrationWarning>{f.ago(q.createdAt, ago(q.createdAt))}</span></div>
             {q.answer ? (
               <div className="gw-qa"><b>{t('answer')}</b> {q.answer}</div>
             ) : q.canAnswer ? (

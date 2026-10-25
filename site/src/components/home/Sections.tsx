@@ -10,6 +10,7 @@
  */
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 import type { HomeContent, PickCard, RankCard } from './content';
 import type { MeSummary } from './types';
 import { Line, Pic } from './Icons';
@@ -301,6 +302,7 @@ export function Startup({ c }: { c: HomeContent }) {
 
 export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSummary | null }) {
   const t = useTranslations('main');
+  const f = useFmt();
   return (
     <section className="home-band forme" aria-labelledby="home-forme-h">
       <div className="home-in">
@@ -310,9 +312,9 @@ export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSum
           <span className="home-sd">{loggedIn ? t('sec.forme.subIn') : t('sec.forme.subOut')}</span>
           {loggedIn && summary && (
             <span className="home-fmi">
-              <Link href="/my/notifications">{t('sec.forme.notif')} <em>{summary.unreadNotifications.toLocaleString('ko-KR')}</em></Link>
-              <Link href="/my/listings">{t('sec.forme.listings')} <em>{summary.publishedListings.toLocaleString('ko-KR')}</em></Link>
-              <Link href="/my/deals">{t('sec.forme.deals')} <em>{summary.openDeals.toLocaleString('ko-KR')}</em></Link>
+              <Link href="/my/notifications">{t('sec.forme.notif')} <em>{f.num(summary.unreadNotifications)}</em></Link>
+              <Link href="/my/listings">{t('sec.forme.listings')} <em>{f.num(summary.publishedListings)}</em></Link>
+              <Link href="/my/deals">{t('sec.forme.deals')} <em>{f.num(summary.openDeals)}</em></Link>
             </span>
           )}
           <span className="home-fma">

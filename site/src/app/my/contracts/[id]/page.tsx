@@ -5,8 +5,9 @@ import { apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
 import ContractForm, { type ContractState } from './ContractForm';
 import { MyHead, Note, Empty, Table } from '@/components/my/ui';
-import { dtKst, won, ymdKst } from '@/lib/format';
+import { dtKst, ymdKst } from '@/lib/format';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('ctrD.title') };
@@ -44,6 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   if (!user) redirect(`/login?next=/my/contracts/${id}`);
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
   const br = () => <br />;
 
@@ -105,7 +107,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {/* ── 제3조 소개비 ── */}
           <h2 className="my-st2">{t('ctrD.a3')}</h2>
           <Table head={[t('ctrD.colItem'), t('ctrD.colContent')]}>
-            <tr><td>{t('ctrD.fee')}</td><td>{st.fee != null ? <><b>{won(st.fee)}</b> <span className="my-ls">{t('ctrD.feeAgreed')}</span></> : <span className="my-ls">{t('ctrD.feeNone')}</span>}</td></tr>
+            <tr><td>{t('ctrD.fee')}</td><td>{st.fee != null ? <><b>{f.won(st.fee)}</b> <span className="my-ls">{t('ctrD.feeAgreed')}</span></> : <span className="my-ls">{t('ctrD.feeNone')}</span>}</td></tr>
             <tr><td>{t('ctrD.payWhen')}</td><td>{t('ctrD.payWhenV')}</td></tr>
             <tr><td>{t('ctrD.code')}</td><td>{st.code ? <><span className="my-code">{st.code.code}</span>{st.code.issuedAt && <> · {t('ctrD.issued', { d: ymdKst(st.code.issuedAt) })}</>} · {t('ctrD.days90')}</> : <span className="my-ls">{t('ctrD.codeNone')}</span>}</td></tr>
             <tr><td>{t('ctrD.tax')}</td><td>{t('ctrD.taxV')}</td></tr>

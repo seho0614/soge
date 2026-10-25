@@ -5,6 +5,7 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { Bg, bizNo, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, S2, Tile, Tw, won } from '@/components/partner/ui';
 import { ymdKst } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +40,7 @@ export default async function PartnerHome() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partner.home');
+  const f = await getFmt();
   const tp = await getTranslations('partner');
   const B = (c: React.ReactNode) => <b>{c}</b>;
   const SUB = t('sub');
@@ -94,9 +96,9 @@ export default async function PartnerHome() {
       {/* 숫자 4칸 (시안 .tiles) — 시안 그대로 · 실제 값 */}
       <div className="pt-tiles" data-ptn-tiles>
         <Tile label={t('tLeads')} value={(d.today?.leads ?? 0).toLocaleString('ko-KR')} unit={tp('common.unit.case')} sub={t('tLeadsSub', { n: String(d.today?.unviewed ?? 0) })} href="/partner/leads" />
-        <Tile label={t('tFee')} value={won(d.month?.fee)} unit={tp('common.unit.won')} sub={t('tFeeSub', { bonus: won(d.month?.bonus), balance: won(d.balance) })} href="/partner/cash" />
+        <Tile label={t('tFee')} value={f.ko ? won(d.month?.fee) : f.wonOf(won(d.month?.fee))} unit={f.ko ? tp('common.unit.won') : undefined} sub={t('tFeeSub', { bonus: f.ko ? won(d.month?.bonus) : f.wonOf(won(d.month?.bonus)), balance: f.wonOf(won(d.balance)) })} href="/partner/cash" />
         <Tile label={t('tSvc')} value={d.services?.approved ?? 0} unit={tp('common.unit.ea')} sub={t('tSvcSub', { n: String(d.services?.in_review ?? 0) })} href="/partner/services" />
-        <Tile label={t('tSettle')} value={won(d.settlement?.due)} unit={tp('common.unit.won')} sub={t('tSettleSub', { day: String(d.settlement?.payoutDay ?? 10) })} href="/partner/settlement" />
+        <Tile label={t('tSettle')} value={f.ko ? won(d.settlement?.due) : f.wonOf(won(d.settlement?.due))} unit={f.ko ? tp('common.unit.won') : undefined} sub={t('tSettleSub', { day: String(d.settlement?.payoutDay ?? 10) })} href="/partner/settlement" />
       </div>
 
       {/* 시안 .pact — 「신뢰지표 보기 · 성과 관리」. 개발에 있던 바로가기(서비스 등록 · 활동 지역)는 없애지 않고 같은 줄에 둡니다(diffs) */}

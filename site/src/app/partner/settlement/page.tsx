@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, Tw, won, type Tone } from '@/components/partner/ui';
 import { SettlementAccountForm } from '@/components/partners/SettlementAccountForm';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,6 +43,7 @@ export default async function SettlementPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partnerOps.settle');
+  const f = await getFmt();
   const code = (g: 'st' | 'track', c: string) => (t.has(`${g}.${c}` as never) ? t(`${g}.${c}` as never) : c);
   if (!p.identityVerifiedAt && !p.businessVerifiedAt) {
     return (
@@ -65,7 +67,7 @@ export default async function SettlementPage() {
               <tr key={r.id}>
                 <td><b>{r.month}</b><div className="pt-ls">{ymdKst(r.from)} ~ {ymdKst(r.to)} · {code('track', r.track)}</div></td>
                 <td>{t('dealsN', { n: String(r.deals) })}</td>
-                <td className="num"><b>{won(r.net)}원</b><div className="pt-ls">{t('grossLine', { g: won(r.gross), w: won(r.withholding) })}</div></td>
+                <td className="num"><b>{f.wonOf(won(r.net))}</b><div className="pt-ls">{t('grossLine', { g: f.ko ? won(r.gross) : f.wonOf(won(r.gross)), w: f.ko ? won(r.withholding) : f.wonOf(won(r.withholding)) })}</div></td>
                 <td><Bg tone={st[1]}>{st[0]}</Bg></td>
                 <td>{r.paidAt ? ymdKst(r.paidAt) : t('scheduled', { d: nextPay(r.to, s.payoutDay) })}</td>
               </tr>
@@ -90,8 +92,8 @@ export default async function SettlementPage() {
           {s.invoices.map((i, k) => (
             <tr key={k}>
               <td>{i.month}</td><td>{i.kind === 'LEAD_CASH' ? t('kind.leadCash') : i.kind === 'DIRECTORY' ? t('kind.directory') /* v10.33 */ : t('kind.payout')}</td>
-              <td className="num">{i.supply != null ? `${won(i.supply)}원` : '—'}</td><td className="num">{i.vat != null ? `${won(i.vat)}원` : '—'}</td>
-              <td className="num"><b>{won(i.total)}원</b></td>
+              <td className="num">{i.supply != null ? f.wonOf(won(i.supply)) : '—'}</td><td className="num">{i.vat != null ? f.wonOf(won(i.vat)) : '—'}</td>
+              <td className="num"><b>{f.wonOf(won(i.total))}</b></td>
               <td><Bg tone={invSt(i)[1]}>{t(`inv.${invSt(i)[0]}`)}</Bg></td>
               <td>{i.invoiceNo ? <><span className="pt-code">{i.invoiceNo}</span> · {ymdKst(i.issuedOn)}</> : '—'}</td>
             </tr>
@@ -100,7 +102,7 @@ export default async function SettlementPage() {
       )}
       <Note kind="warn">{t.rich('etaxNote', { b: (c) => <b>{c}</b> })}</Note>
       {(Number(s.unpaid) > 0 || s.unpaidCount > 0) && (
-        <Note kind="plain">{t.rich('unpaidNote', { amt: `${won(s.unpaid)}원`, n: String(s.unpaidCount), b: (c) => <b>{c}</b> })}</Note>
+        <Note kind="plain">{t.rich('unpaidNote', { amt: f.wonOf(won(s.unpaid)), n: String(s.unpaidCount), b: (c) => <b>{c}</b> })}</Note>
       )}
       <div className="pt-dact">
         <Link className="pt-bo" href="/partner/cash">{t('kind.leadCash')}</Link>

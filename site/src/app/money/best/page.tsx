@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
-import { ago, won } from '@/lib/format';
+import { ago } from '@/lib/format';
 import type { ListingListData } from '@/lib/types';
 import type { BestStory } from '@/components/market/types';
 import { QuickFrame } from '@/components/gwan/GwQuick';
 import { GRADES, manwon, photoSrc } from '@/components/gwan/gw';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
+import type { Fmt } from '@/lib/fmtBind';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('gwan'))('qm.best') };
@@ -37,11 +39,14 @@ const STEP_IC: Record<string, string> = { REGISTERED: '📝', INQUIRY: '🔍', C
 type PlazaT = Awaited<ReturnType<typeof getTranslations<'plaza'>>>;
 const stepDesc = (t: PlazaT, code: string) => (t.has(`best.step.${code}` as never) ? t(`best.step.${code}` as never) : '');
 const grade = (g: string) => GRADES.find((x) => x.code === g) ?? GRADES[2]!;
-const feeText = (b: BestStory, t: PlazaT) => (b.fee > 0 ? manwon(b.fee) : t('best.noFee'));
+/* 금액 — 한국어는 억 · 만 줄임 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+const mw = (f: Fmt, n: number) => (f.ko ? manwon(n) : f.won(n));
+const feeText = (b: BestStory, t: PlazaT, f: Fmt) => (b.fee > 0 ? mw(f, b.fee) : t('best.noFee'));
 
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
   const t = await getTranslations('plaza');
+  const f = await getFmt();
   const g0 = await getTranslations('gwan');
   const gnm = (g: string) => g0(`grade.${grade(g).code}.nm`);
   const res = await apiGet<{ items: BestStory[] }>('/market/best?gwanCode=MNY', 30).catch(() => ({ items: [] as BestStory[] }));
@@ -72,8 +77,8 @@ export default async function Page({ searchParams }: Props) {
               <h3>{B.headline}</h3>
               <div className="gw-bd2">{B.summary ?? B.title}</div>
               <div className="gw-bstat">
-                <div className="gw-bs"><span className="gw-k3">{t('best.amount')}</span><span className="gw-v3">{B.tradeAmount != null ? manwon(B.tradeAmount) : t('best.private')}</span></div>
-                <div className="gw-bs"><span className="gw-k3">{t('best.fee')}</span><span className="gw-v3">{feeText(B, t)}</span></div>
+                <div className="gw-bs"><span className="gw-k3">{t('best.amount')}</span><span className="gw-v3">{B.tradeAmount != null ? mw(f, B.tradeAmount) : t('best.private')}</span></div>
+                <div className="gw-bs"><span className="gw-k3">{t('best.fee')}</span><span className="gw-v3">{feeText(B, t, f)}</span></div>
                 <div className="gw-bs"><span className="gw-k3">{t('best.period')}</span><span className="gw-v3">{t('best.days', { n: String(B.days) })}</span></div>
                 <div className="gw-bs"><span className="gw-k3">{t('best.region')}</span><span className="gw-v3">{B.region ?? '—'}</span></div>
               </div>
@@ -111,8 +116,8 @@ export default async function Page({ searchParams }: Props) {
                   <span className="gw-bcc"><span className={`gw-bchip gw-${grade(x.gradeCode).k}`}>{gnm(x.gradeCode)}</span><span className="gw-bchip">{x.categoryName ?? g0('side.etc')}</span></span>
                 </div>
                 <div className="gw-bcb"><div className="gw-bct">{x.headline}</div>
-                  <div className="gw-bcr"><span>· {t('best.amount')}</span><b>{x.tradeAmount != null ? manwon(x.tradeAmount) : t('best.private')}</b></div>
-                  <div className="gw-bcr"><span>· {t('best.fee')}</span><b>{feeText(x, t)}</b></div>
+                  <div className="gw-bcr"><span>· {t('best.amount')}</span><b>{x.tradeAmount != null ? mw(f, x.tradeAmount) : t('best.private')}</b></div>
+                  <div className="gw-bcr"><span>· {t('best.fee')}</span><b>{feeText(x, t, f)}</b></div>
                   <div className="gw-bcr"><span>· {t('best.period')}</span><b>{t('best.days', { n: String(x.days) })}</b></div></div>
               </Link>
             ))}
@@ -129,9 +134,9 @@ export default async function Page({ searchParams }: Props) {
                   <span className="gw-bcc"><span className="gw-bchip">{x.categoryName}</span></span>
                 </div>
                 <div className="gw-bcb"><div className="gw-bct">{x.title}</div>
-                  <div className="gw-bcr"><span>· {t('best.fee')}</span><b>{won(x.desiredFee)}</b></div>
+                  <div className="gw-bcr"><span>· {t('best.fee')}</span><b>{f.won(x.desiredFee)}</b></div>
                   <div className="gw-bcr"><span>· {t('best.likes')}</span><b>{x.likeCount}</b></div>
-                  <div className="gw-bcr"><span>· {t('best.posted')}</span><b suppressHydrationWarning>{ago(x.publishedAt)}</b></div></div>
+                  <div className="gw-bcr"><span>· {t('best.posted')}</span><b suppressHydrationWarning>{f.ago(x.publishedAt, ago(x.publishedAt))}</b></div></div>
               </Link>
             ))}
           </div></div>

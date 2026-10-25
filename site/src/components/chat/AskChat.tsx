@@ -11,7 +11,8 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { dtKst, hmKst, won, ymdKst } from '@/lib/format';
+import { dtKst, hmKst, ymdKst } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 
 interface Message { id: number; senderId: string; body: string; createdAt: string; masked: boolean; mine?: boolean }
 export interface ConvSummary {
@@ -25,7 +26,7 @@ interface Check { warn: boolean; reasons: Array<{ code: string; label: string; h
 
 const dealNo = (id: string) => `D-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
 /* v10.31 검정(G-222) — toLocale… 는 서버(Node) · 브라우저가 다른 글자를 내 수화 오류가 납니다 → 한국 시각 도우미(lib/format)로 같은 글자 */
-const ymd = (s: string) => { const [y, m, d] = ymdKst(s).split('-'); return y && m && d ? `${y}년 ${Number(m)}월 ${Number(d)}일` : ''; };
+const ymdKo = (s: string) => { const [y, m, d] = ymdKst(s).split('-'); return y && m && d ? `${y}년 ${Number(m)}월 ${Number(d)}일` : ''; };
 const hm = (s: string) => hmKst(s);
 
 export function AskChat({ listingId, conversationId: initialConv, canDeal, listingFee, bearerLabel }: {
@@ -33,6 +34,9 @@ export function AskChat({ listingId, conversationId: initialConv, canDeal, listi
 }) {
   const router = useRouter();
   const t = useTranslations('deal.chat');
+  const f = useFmt();
+  /* v10.102 (2-5c) — 날짜 줄 · 금액은 화면 언어로(ko 「2026년 10월 8일」 · en 「Oct 8, 2026」) */
+  const ymd = (s: string) => { const ko = ymdKo(s); return ko ? f.ymd(s, ko) : ''; };
   const [convId, setConvId] = useState<string | null>(initialConv ?? null);
   const [sum, setSum] = useState<ConvSummary | null>(null);
   const [msgs, setMsgs] = useState<Message[]>([]);
@@ -194,7 +198,7 @@ export function AskChat({ listingId, conversationId: initialConv, canDeal, listi
           ) : <div className="nt2">{t('noAttr')}</div>}
         </div>
         <div className="sp1"><div className="sh3">{t('feeTitle')}</div>
-          <div className="fee2"><b>{(sum?.fee.amount ?? listingFee) ? won((sum?.fee.amount ?? listingFee)!) : t('feeNeg')}</b>
+          <div className="fee2"><b>{(sum?.fee.amount ?? listingFee) ? f.won((sum?.fee.amount ?? listingFee)!) : t('feeNeg')}</b>
             <span>{sum?.fee.agreed ? t('agreed') : t('desired')}{(sum?.fee.bearerLabel ?? bearerLabel) ? ` · ${sum?.fee.bearerLabel ?? bearerLabel}` : ''}{t('vat')}</span></div>
           <div className="nt2">{t.rich('feeNote', { b: (x) => <b>{x}</b> })}</div>
         </div>

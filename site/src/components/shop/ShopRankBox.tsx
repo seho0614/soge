@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { HltProduct } from '@/components/health/types';
-import { krw } from '@/components/health/util';
+import { useFmt } from '@/lib/useFmt';
 import { ProductArt } from '@/components/health/ProductArt';
 
 type Row = HltProduct & { rank?: number };
@@ -21,6 +21,8 @@ const Chev = () => (
 
 export function ShopRankBox({ hot, fresh, many, madeAt, periods }: { hot: Row[]; fresh: Row[]; many: Row[]; madeAt?: string; periods?: { hot: string; many: string } }) {
   const t = useTranslations('shop');
+  const f = useFmt();
+  const krw = (n: number | string | null | undefined) => f.won(n, '-');   // v10.102 (2-5c) — ko 그대로 · 다른 언어 「₩12,000」
   const first: Tab = hot.length ? 'hot' : many.length ? 'many' : 'fresh';
   const [tab, setTab] = useState<Tab>(first);
   const rows = (tab === 'hot' ? hot : tab === 'many' ? many : fresh).slice(0, 5);

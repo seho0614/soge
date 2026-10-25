@@ -6,7 +6,7 @@ import { apiGet, apiGetPersonal, ApiFailure } from '@/lib/api';
 import type { ListingDetailData, ListingReviewList } from '@/lib/types';
 import { uiMessages } from '@/lib/content';
 import { me } from '@/lib/session';
-import { won, ago, ym, PATH_GWAN, ymdKst } from '@/lib/format';
+import { ago, ym, PATH_GWAN, ymdKst } from '@/lib/format';
 import { RefShare } from '@/components/refcode/RefShare';
 import { BackBar } from '@/components/common/BackBar';
 import { GwDetailBar, GwPhotos, GwProfileActions, GwQna } from '@/components/gwan/GwDetailClient';
@@ -17,6 +17,7 @@ import { SearchBox } from '@/components/search/SearchBox';
 import { KakaoMap, type MapGeo } from '@/components/map/KakaoMap';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 import { isGwanKey } from '@/i18n/keys';
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
@@ -31,9 +32,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const item = await getItem(id).catch(() => null);
   if (!item) return {};
   const t = await getTranslations('detail.meta');
+  const f = await getFmt();
   return {
     title: item.title,
-    description: t('desc', { cat: item.categoryName, fee: won(item.desiredFee) }),
+    description: t('desc', { cat: item.categoryName, fee: f.won(item.desiredFee) }),
   };
 }
 
@@ -64,6 +66,9 @@ export default async function DetailPage({ params }: Props) {
   const messages = await uiMessages();
   const t = await getTranslations('detail.page');
   const tg = await getTranslations('header.gwan');
+  const f = await getFmt();
+  /* 금액 — 한국어는 억 · 만 줄임 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+  const mw = (n: number | null | undefined) => (f.ko ? manwon(n) : f.won(n));
   let item: ListingDetailData;
   try {
     item = await getItem(id);
@@ -79,11 +84,11 @@ export default async function DetailPage({ params }: Props) {
   const code = PATH_GWAN[gwan];
   const viewer = await me();
   const reg = item.regionNames.join(' · ');
-  const when = ago(item.publishedAt);
+  const when = f.ago(item.publishedAt, ago(item.publishedAt));
   const tags = Array.from(new Set(`${item.regionNames[0] ?? ''} ${item.categoryName}`.split(/[\s/·,]+/).filter(Boolean))).slice(0, 5);
   const realty = !!item.isRealty;
-  const fee = realty ? t('feeRealty') : `${won(item.desiredFee)}${item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}`;
-  const price = item.dealAmount != null ? manwon(item.dealAmount) : realty ? t('negotiableAmount') : null;
+  const fee = realty ? t('feeRealty') : `${f.won(item.desiredFee)}${item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}`;
+  const price = item.dealAmount != null ? mw(item.dealAmount) : realty ? t('negotiableAmount') : null;
   const trust = item.trust?.score ?? item.trustScore ?? null;
   const no = item.listingNo ? `L-${item.listingNo}` : item.id.slice(0, 8).toUpperCase();
   const msg = messages as Record<string, string>;
@@ -118,9 +123,9 @@ export default async function DetailPage({ params }: Props) {
                 </span>
               </div>
               <h1 className="gw-dtt">{item.title}</h1>
-              <div className="gw-dtprice">{price ?? <><small className="gw-prl">{t('fee')}</small> {manwon(item.desiredFee)}</>}</div>
+              <div className="gw-dtprice">{price ?? <><small className="gw-prl">{t('fee')}</small> {mw(item.desiredFee)}</>}</div>
               <div className="gw-dtsub">{item.summary ? <>{item.summary}<br /></> : null}{[reg, item.categoryName].filter(Boolean).join(' · ')}
-                {!realty && price && item.desiredFee != null && <><br />{t('feeValue', { v: manwon(item.desiredFee) })}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</>}
+                {!realty && price && item.desiredFee != null && <><br />{t('feeValue', { v: mw(item.desiredFee) })}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</>}
                 {!realty && !price && item.feeBearerLabel && <><br />{t('feeValue', { v: item.feeBearerLabel })}</>}
                 {realty && <><br />{t('realtyNote')}</>}</div>
               <div className="gw-dtmeta">
@@ -149,7 +154,7 @@ export default async function DetailPage({ params }: Props) {
             <div><div className="gw-k">{t('statConfirmed')}</div><div className="gw-v">{t('count', { n: o.confirmedDeals.toLocaleString('ko-KR') })}</div></div>
             <div><div className="gw-k">{t('statRate')}</div><div className="gw-v">{o.successRate != null ? `${o.successRate}%` : '—'}</div></div>
             {/* 누적수익은 등록자 본인이 마이 > 내 정보에서 공개를 켠 경우에만 서버가 값을 줍니다(그 밖은 「비공개」 — 시안 4칸) */}
-            <div title={t('statSettledTip')}><div className="gw-k">{t('statSettled')}</div><div className="gw-v">{o.settledAmount != null ? won(o.settledAmount) : <span className="gw-ls">{t('private')}</span>}</div></div>
+            <div title={t('statSettledTip')}><div className="gw-k">{t('statSettled')}</div><div className="gw-v">{o.settledAmount != null ? f.won(o.settledAmount) : <span className="gw-ls">{t('private')}</span>}</div></div>
           </div>
 
           <div className="gw-dsec">
@@ -158,7 +163,7 @@ export default async function DetailPage({ params }: Props) {
             <dl className="gw-spec">
               <dt>{t('specCat')}</dt><dd>{item.categoryName}</dd>
               <dt>{t('specRegion')}</dt><dd>{reg || t('negotiable')}</dd>
-              <dt>{t('specAmount')}</dt><dd>{item.dealAmount != null ? manwon(item.dealAmount) : t('negotiableAmount')}</dd>
+              <dt>{t('specAmount')}</dt><dd>{item.dealAmount != null ? mw(item.dealAmount) : t('negotiableAmount')}</dd>
               <dt>{t('specFee')}</dt><dd>{fee}</dd>
               <dt>{t('specRegistered')}</dt><dd suppressHydrationWarning>{when || '—'}</dd>
               <dt>{t('specStatus')}</dt><dd>{item.statusLabel}</dd>
@@ -203,7 +208,7 @@ export default async function DetailPage({ params }: Props) {
                 <dl className="gw-spec gw-ic" style={{ gridTemplateColumns: '78px 1fr' }}>
                   <dt><i>📁</i>{t('specCat')}</dt><dd>{item.categoryName}</dd>
                   <dt><i>📍</i>{t('specRegion')}</dt><dd>{reg || t('negotiable')}</dd>
-                  <dt><i>💰</i>{t('specAmount')}</dt><dd>{item.dealAmount != null ? manwon(item.dealAmount) : realty ? t('negotiableAmount') : t('feeValue', { v: won(item.desiredFee) })}</dd>
+                  <dt><i>💰</i>{t('specAmount')}</dt><dd>{item.dealAmount != null ? mw(item.dealAmount) : realty ? t('negotiableAmount') : t('feeValue', { v: f.won(item.desiredFee) })}</dd>
                   <dt><i>🕑</i>{t('specRegistered')}</dt><dd suppressHydrationWarning>{when || '—'}</dd>
                 </dl>
                 <div className="gw-tags">{tags.map((t) => <span key={t}>#{t}</span>)}</div>

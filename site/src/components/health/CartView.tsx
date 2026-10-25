@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { HltCart } from './types';
 import { useTranslations } from 'next-intl';
-import { krw, needsLogin } from './util';
+import { needsLogin } from './util';
 import { ProductArt } from './ProductArt';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 장바구니 — 수량 바꾸기 · 빼기 (v10.26 — 줄(옵션)마다 PATCH /me/health/cart/lines/{옵션}, 0 이면 빠집니다).
@@ -15,6 +16,7 @@ import { ProductArt } from './ProductArt';
  */
 export function CartView({ initial }: { initial: HltCart }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const router = useRouter();
   const [cart, setCart] = useState(initial);
   const [pending, start] = useTransition();
@@ -73,9 +75,9 @@ export function CartView({ initial }: { initial: HltCart }) {
               <div className="bd">
                 <Link href={`/health/p/${encodeURIComponent(it.code)}`}><b>{it.name}</b></Link>
                 {it.optionLabel && it.optionLabel !== '단품' && <span className="hlt-optnm" data-optlabel>{it.optionLabel}</span>}
-                <span className="hint">{krw(it.price)} · {it.code}</span>
+                <span className="hint">{f.won(it.price, '-')} · {it.code}</span>
                 {it.priceChanged && it.addedPrice != null && (
-                  <span className="hlt-pchg" data-price-changed>{t.rich('cart.priceChanged', { was: krw(it.addedPrice), now: krw(it.price), s: (c) => <s>{c}</s>, b: (c) => <b>{c}</b> })}</span>
+                  <span className="hlt-pchg" data-price-changed>{t.rich('cart.priceChanged', { was: f.won(it.addedPrice, '-'), now: f.won(it.price, '-'), s: (c) => <s>{c}</s>, b: (c) => <b>{c}</b> })}</span>
                 )}
                 {it.withdrawalBlockedIf && <span className="hint">{t('common.withdrawalLimit', { v: it.withdrawalBlockedIf })}</span>}
                 {it.notOnSale && <p className="form-error">{t('cart.notOnSale')}</p>}
@@ -102,7 +104,7 @@ export function CartView({ initial }: { initial: HltCart }) {
                   <button type="button" disabled={pending || it.qty >= 99}
                     onClick={() => setQty(it.optionId, it.qty + 1)} aria-label={t('cart.inc', { name: it.name })}>+</button>
                 </div>
-                <b className="money">{krw(it.amount)}</b>
+                <b className="money">{f.won(it.amount, '-')}</b>
                 <button type="button" className="hlt-btn sm danger" disabled={pending}
                   onClick={() => setQty(it.optionId, 0)}>{t('cart.delete')}</button>
               </div>
@@ -114,9 +116,9 @@ export function CartView({ initial }: { initial: HltCart }) {
       {err && <p className="form-error" role="alert">{err}</p>}
 
       <section className="hlt-box">
-        <div className="hlt-sum"><span>{t('common.goods')}</span><span>{krw(cart.goods)}</span></div>
-        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : krw(cart.shipFee)}</span></div>
-        <div className="hlt-sum tot"><span>{t('cart.totalDue')}</span><span>{krw(cart.total)}</span></div>
+        <div className="hlt-sum"><span>{t('common.goods')}</span><span>{f.won(cart.goods, '-')}</span></div>
+        <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : f.won(cart.shipFee, '-')}</span></div>
+        <div className="hlt-sum tot"><span>{t('cart.totalDue')}</span><span>{f.won(cart.total, '-')}</span></div>
         {cart.note && <p className="hint">{cart.note}</p>}
         {cart.hasProblem && (
           <p className="form-error" role="alert">{t('cart.hasProblem')}</p>

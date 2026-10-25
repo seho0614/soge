@@ -5,7 +5,9 @@
  *   그림 안의 「건강기능식품」 「GMP」 **글자를 넣지 않습니다** — 시안은 건강식품 · 화장품 상품에도 이 글자가 그려졌습니다.
  *   꼴(상자 · 파우치 · 병) · 색 · 띠 · 도안 자리(선)는 그대로 둡니다. 그림에는 성분 이름 · 함량만 적습니다.
  * 서버 · 클라이언트 어디서나 씁니다(상태 없음).
+ * v10.102 2-5c — 그림 설명(aria-label)은 공통 사전 shop.artAria(async 가 아닌 부품이라 useTranslations 가 서버 · 브라우저 모두에서 됩니다).
  */
+import { useTranslations } from 'next-intl';
 type Skin = { a: string; b: string; cap: string; ink: string; band: string; bandInk: string; label: string; bg: string };
 const ART_SKIN: Record<string, Skin> = {
   GOLD: { a: '#f8cf4d', b: '#e0a100', cap: '#c08600', ink: '#3a2a00', band: '#e5484d', bandInk: '#ffffff', label: '#fffdf3', bg: '#f3f3f4' },
@@ -61,6 +63,7 @@ function Seals({ x, y, ink }: { x: number; y: number; ink: string }) {
 }
 
 export function ProductArt({ p, size = 100, className }: { p: ArtInput; size?: number; className?: string }) {
+  const t = useTranslations('shop');
   if (p.imageUrl) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img className={className} src={p.imageUrl} alt={p.name ?? ''} width={size} height={size} loading="lazy" />;
@@ -107,7 +110,7 @@ export function ProductArt({ p, size = 100, className }: { p: ArtInput; size?: n
   }
   return (
     <svg className={className} viewBox="0 0 112 112" width={size} height={size} role="img" focusable="false"
-         aria-label={`${nm} ${am} 상품 그림 (직접 그린 그림입니다)`} data-art={form}>
+         aria-label={t('artAria', { name: nm, amount: am })} data-art={form}>
       <defs><linearGradient id={u} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={k.a} /><stop offset="1" stopColor={k.b} /></linearGradient></defs>
       <rect width="112" height="112" fill={k.bg} />
       <ellipse cx="56" cy="97" rx="26" ry="4" fill="#000" opacity=".08" />

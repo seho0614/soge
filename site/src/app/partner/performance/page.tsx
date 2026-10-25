@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, Tile, Tw, won } from '@/components/partner/ui';
 import { ReportForm } from './ReportForm';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,6 +31,7 @@ export default async function PerformancePage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partner.perf');
+  const f = await getFmt();
   const tp = await getTranslations('partner');
   const mins = (m: number | null | undefined) => (m == null ? '—' : m < 60 ? tp('common.min', { n: String(m) }) : tp('common.hour', { n: String(Math.round(m / 60)) }));
   const d = await apiGet<Perf>('/partner/performance', 0).catch(() => null);
@@ -44,7 +46,7 @@ export default async function PerformancePage() {
           {d.rows.map((r) => (
             <tr key={r.id}>
               <td><b className="pt-code">{r.no}</b></td>
-              <td>{r.content}<div className="pt-ls">{r.summary}{r.amount ? ` · ${won(r.amount)}${tp('common.unit.won')}` : ''}</div></td>
+              <td>{r.content}<div className="pt-ls">{r.summary}{r.amount ? ` · ${f.wonOf(won(r.amount))}` : ''}</div></td>
               <td>{ymdKst(r.doneOn)}</td>
               <td><Bg tone="ok">{t('reported')}</Bg></td>
               <td>{r.consumerState === 'CONFIRMED' ? <Bg tone="ok">{t('confirmed')}{r.rating ? ` · ★${r.rating}` : ''}</Bg>

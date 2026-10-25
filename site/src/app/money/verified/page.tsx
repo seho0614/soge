@@ -8,6 +8,7 @@ import { Pager, SafePromo } from '@/components/gwan/GwParts';
 import { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } from '@/lib/safety';
 import type { SafeTradeTerms, SafetyCases } from '@/components/market/types';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('gwan'))('qm.verified') };
@@ -41,6 +42,7 @@ export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
   const t = await getTranslations('plaza.verified');
   const g0 = await getTranslations('gwan');
+  const f = await getFmt();
   const page = Math.max(1, Number(q.p) || 1);
   const cpage = Math.max(1, Number(q.cp) || 1);
   const ctype = q.type && CTYPE[q.type] ? q.type : undefined;
@@ -53,7 +55,8 @@ export default async function Page({ searchParams }: Props) {
   const phone = terms?.phone ?? settings['footer.phone'];
   const hours = terms?.supportHours ?? null;
   const min = terms?.minAmount ?? 50000000;
-  const minTxt = min % 100000000 === 0 ? `${min / 100000000}억원` : `${(min / 10000).toLocaleString('ko-KR')}만원`;
+  /* 한국어는 억 · 만 줄임 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+  const minTxt = !f.ko ? f.won(min) : min % 100000000 === 0 ? `${min / 100000000}억원` : `${(min / 10000).toLocaleString('ko-KR')}만원`;
   const tabs: [string, string][] = [['', t('all')], ...(cases?.types ?? []).map((x) => [x.code, x.label] as [string, string])];
   const chref = (t?: string, p?: number) => {
     const u = new URLSearchParams(); if (t) u.set('type', t); if (p && p > 1) u.set('cp', String(p));

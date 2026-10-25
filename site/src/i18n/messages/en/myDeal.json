@@ -188,7 +188,7 @@
     "noCtrAmount": "No contract amount",
     "feeRow": "Referral fee <i>amount agreed by both sides (A-12)</i>",
     "deduct": "Deductions",
-    "zero": "KRW 0",
+    "zero": "₩0",
     "net": "Net payout",
     "vat": "VAT 10% (billed separately)",
     "bank": "Deposit account",
@@ -213,12 +213,12 @@
   },
   "payout": {
     "addFail": "Could not register the account.",
-    "sent": "We sent KRW 1. Enter the code shown in the depositor name.",
+    "sent": "We sent ₩1. Enter the code shown in the depositor name.",
     "needCode": "Enter the code.",
     "verifyFail": "Could not verify.",
     "verified": "Account verified.",
     "title": "Payout account",
-    "hint": "We verify an account in your own name by sending KRW 1. Only the last 4 digits are shown. The company never sends money to this account — the referral fee is paid directly by the deal parties.",
+    "hint": "We verify an account in your own name by sending ₩1. Only the last 4 digits are shown. The company never sends money to this account — the referral fee is paid directly by the deal parties.",
     "ok": "Verified",
     "pending": "Not verified",
     "locked": "Blocked after five wrong codes — please contact customer support.",
@@ -234,7 +234,7 @@
     "holderPh": "Your name",
     "ownOnly": "Only accounts in your own name are accepted",
     "sending": "Sending…",
-    "send1": "Send KRW 1",
+    "send1": "Send ₩1",
     "cancel": "Cancel"
   },
   "claim": {
@@ -268,7 +268,7 @@
     "afterPay": "After payment",
     "person": "Individual",
     "biz": "Business",
-    "total": "Total paid <b>{total}</b> · deductions <b>KRW 0</b> — {msg}"
+    "total": "Total paid <b>{total}</b> · deductions <b>₩0</b> — {msg}"
   },
   "intro": {
     "title": "Referral activity",

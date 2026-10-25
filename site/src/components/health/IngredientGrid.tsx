@@ -10,13 +10,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { HltIngredient } from './types';
-import { krw } from './util';
+import { useFmt } from '@/lib/useFmt';
 
 /** 성분 칩 한 장 — 시안 chip(): 「월 N원 부터 · N개」 (개월 수가 없는 단품뿐이면 「최저 N원」) */
 function Chip({ g }: { g: HltIngredient }) {
   const unit = g.minUnit != null ? Number(g.minUnit) : null;
   const min = g.minPrice != null ? Number(g.minPrice) : null;
   const t = useTranslations('hlt.ingGrid');
+  const f = useFmt();
   const tc = useTranslations('hlt.common');
   const n = String(g.productCount);
   const b = (c: React.ReactNode) => <b>{c}</b>;
@@ -26,8 +27,8 @@ function Chip({ g }: { g: HltIngredient }) {
       <span className="nm">{g.name}</span>
       {g.aliases && g.aliases.length > 0 && <span className="hint">{g.aliases.join(' · ')}</span>}
       <span className="pr">
-        {unit != null ? <>{t.rich('unitFrom', { amt: krw(unit), n, b })}</>
-          : min != null ? <>{t.rich('minFrom', { amt: krw(min), n, b })}</>
+        {unit != null ? <>{t.rich('unitFrom', { amt: f.won(unit, '-'), n, b })}</>
+          : min != null ? <>{t.rich('minFrom', { amt: f.won(min, '-'), n, b })}</>
             : g.productCount ? <>{t('soldNow', { n })}</> : t('notCarried')}
       </span>
       {/* v10.31 (시안 「자격 필요」 — 건강기능식품 기능성 원료 · 서버 needsLicense) */}

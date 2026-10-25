@@ -6,9 +6,9 @@ import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
 import { LinkCreateForm } from '@/components/partners/LinkCreateForm';
 import { CopyButton } from '@/components/partners/CopyButton';
-import { krw } from '@/components/partners/fmt';
 import type { AffLink, AffProduct } from '@/components/partners/types';
 
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,6 +36,7 @@ export default async function PartnerLinksPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
+  const fm = await getFmt();
 
   const origin = await siteOrigin();
   const [links, products] = await Promise.all([
@@ -71,7 +72,7 @@ export default async function PartnerLinksPage() {
                     <code className="mono" data-testid="share-url">{shareUrl}</code>
                   </td>
                   <td>{l.product ?? '—'}</td>
-                  <td className="num">{krw(l.commission)}</td>
+                  <td className="num">{fm.won(l.commission, '—')}</td>
                   <td className="num">{(l.clicksToday ?? 0).toLocaleString('ko-KR')} / {l.clicks.toLocaleString('ko-KR')}</td>
                   <td className="num">{l.orders.toLocaleString('ko-KR')}</td>
                   <td>

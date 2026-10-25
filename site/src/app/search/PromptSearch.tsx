@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { GWAN_PATH } from '@/lib/format';
 import { useLocale, useTranslations } from 'next-intl';
 import { isGwanKey } from '@/i18n/keys';
+import { useFmt } from '@/lib/useFmt';
+import type { Fmt } from '@/lib/fmtBind';
 
 type T = ReturnType<typeof useTranslations<'search'>>;
 
@@ -15,18 +17,20 @@ interface Cand { code: string; name: string; gwan: string; score: number; matche
 interface Result { read: Read; candidates: Cand[]; blocked: string | null; note: string | null; privacy: string }
 
 
+/* 금액 칩 — 한국어는 억 · 만 줄임 + 원 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+const price = (n: number, f: Fmt) => (f.ko ? `${eok(n)}원` : f.won(n));
 const eok = (n: number) => n >= 100_000_000 ? `${+(n / 100_000_000).toFixed(1)}억` : `${Math.round(n / 10_000).toLocaleString('ko-KR')}만`;
 
 /** 읽은 조건 → [이름, 값] 칩. "AI 가 분석했습니다" 라고 쓰지 않습니다 — 규칙 엔진입니다. */
-function chips(r: Read, t: T): Array<[string, string]> {
+function chips(r: Read, t: T, f: Fmt): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   /* v10.31 — 검색 팝업의 「이렇게 찾습니다」(sug.ts)와 같은 이름 · 순서(지역 → 규모 → 조건 → 상태)로 보입니다 */
   if (r.sido || r.sigungu) out.push([t('prompt.chip.region'), [r.sido, r.sigungu].filter(Boolean).join(' ')]);
   if (r.sizeAround != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeAround', { n: r.sizeAround })]);
   if (r.sizeMax != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMax', { n: r.sizeMax })]);
   if (r.sizeMin != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMin', { n: r.sizeMin })]);
-  if (r.priceMax != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMax', { v: eok(r.priceMax) })]);
-  if (r.priceMin != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMin', { v: eok(r.priceMin) })]);
+  if (r.priceMax != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMax', { v: price(r.priceMax, f) })]);
+  if (r.priceMin != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMin', { v: price(r.priceMin, f) })]);
   if (r.urgent) out.push([t('prompt.chip.terms'), t('prompt.chip.urgent')]);
   if (r.valueForMoney) out.push([t('prompt.chip.terms'), t('prompt.chip.cheap')]);
   if (r.recent) out.push([t('prompt.chip.status'), t('prompt.chip.new')]);
@@ -44,6 +48,7 @@ export function PromptSearch({ initial, gwans }: { initial?: string; gwans: Arra
   /* 관 이름은 서버(/gwans)가 정본입니다 — 박아 두면 이름을 바꿀 때 여기만 남습니다 */
   const t = useTranslations('search');
   const h = useTranslations('header');
+  const f = useFmt();
   const locale = useLocale();
   /* v10.97 — 한국어는 늘 서버 이름 · 다른 언어만 사전 */
   const GWAN_NAME: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name]));
@@ -100,7 +105,7 @@ export function PromptSearch({ initial, gwans }: { initial?: string; gwans: Arra
     } finally { setBusy(false); }
   }
 
-  const read = res ? chips(res.read, t) : [];
+  const read = res ? chips(res.read, t, f) : [];
 
   return (
     <>

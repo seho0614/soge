@@ -6,8 +6,12 @@ import { AgreeForm } from './AgreeForm';
 import { OptionalConsents } from './OptionalConsents';
 import { NoticeTerms } from '@/components/NoticeTerms';
 import '@/styles/proto-w1.css';
+import { getTranslations } from 'next-intl/server';
+import { Msgs } from '@/i18n/Msgs';
 
-export const metadata: Metadata = { title: '약관 동의' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations('policy'))('meta.agree') };
+}
 
 interface Term {
   code: string; title: string; version: string;
@@ -38,6 +42,7 @@ function safeNext(v: string | string[] | undefined): string | null {
  * 쿠키가 없어 남의 동의 상태가 보일 수 있습니다.
  */
 export default async function AgreePage({ searchParams }: Props) {
+  const t = await getTranslations('policy');
   const sp = await searchParams;
   const next = safeNext(sp.next);
   const p = await me();
@@ -50,78 +55,76 @@ export default async function AgreePage({ searchParams }: Props) {
   return (
     <><main className="main" data-screen="SB-HOM-ETC-022">
       <div className="page-head">
-        <h1>약관 동의</h1>
+        <h1>{t('agree.title')}</h1>
         <p className="hint">
           {pending.length > 0
-            ? `동의가 필요한 필수 약관이 ${pending.length}건 있습니다.`
-            : '필수 약관에 모두 동의하셨습니다.'}
+            ? t('agree.pendingN', { n: String(pending.length) })
+            : t('agree.allDone')}
         </p>
       </div>
 
       {pending.length > 0 && (
         <div className="notice notice-act" data-reconsent>
           <div>
-            <strong>{pending.some((t) => t.agreedVersion) ? '약관이 바뀌었습니다' : '약관 동의가 필요합니다'}</strong>
-            <p>필수 약관에 동의하셔야 로그인이 필요한 기능을 쓰실 수 있습니다. 둘러보기 · 약관 보기 · 로그아웃은 그대로 됩니다.
-              선택 항목(마케팅 · 맞춤형 광고 · 야간 광고)은 지금 상태 그대로입니다.</p>
+            <strong>{pending.some((x) => x.agreedVersion) ? t('agree.changed') : t('agree.needed')}</strong>
+            <p>{t('agree.neededBody')}</p>
           </div>
         </div>
       )}
       {/* v10.32 — 시안처럼 맨 위에 띠 · 판 비교 표를 늘 둡니다. 동의할 것이 없으면 초록 띠 · 필수 약관 전체의 판(서버 값) */}
       {pending.length === 0 && terms.length > 0 && (
         <div className="notice notice-ok" data-reconsent-none="">
-          <div><strong>필수 약관에 모두 동의하셨습니다</strong>
-            <p>지금 판 그대로 동의되어 있습니다. 약관이 바뀌면 이 자리에 바뀐 점이 나오고 다시 동의를 받습니다.</p></div>
+          <div><strong>{t('agree.okTitle')}</strong>
+            <p>{t('agree.okBody')}</p></div>
         </div>
       )}
       {pending.length === 0 && terms.some((t) => t.isRequired) && (
         <table className="tbl" data-reconsent-table="all">
-          <thead><tr><th>약관</th><th>동의하신 판</th><th>지금 판</th><th>바뀐 점</th></tr></thead>
-          <tbody>{terms.filter((t) => t.isRequired).map((t) => (
-            <tr key={t.code} data-terms-row={t.code}>
-              <td>{t.title}</td>
-              <td>{t.agreedVersion ?? (t.agreed ? t.version : '—')}</td>
-              <td><b>{t.version}</b></td>
-              <td>{t.changeNote ?? '—'}</td>
+          <thead><tr><th>{t('agree.colTerm')}</th><th>{t('agree.colAgreed')}</th><th>{t('agree.colNow')}</th><th>{t('agree.colChange')}</th></tr></thead>
+          <tbody>{terms.filter((x) => x.isRequired).map((x) => (
+            <tr key={x.code} data-terms-row={x.code}>
+              <td>{x.title}</td>
+              <td>{x.agreedVersion ?? (x.agreed ? x.version : '—')}</td>
+              <td><b>{x.version}</b></td>
+              <td>{x.changeNote ?? '—'}</td>
             </tr>))}</tbody>
         </table>
       )}
       {pending.length > 0 && (
         <table className="tbl" data-reconsent-table>
-          <thead><tr><th>약관</th><th>동의하신 판</th><th>지금 판</th><th>바뀐 점</th></tr></thead>
-          <tbody>{pending.map((t) => (
-            <tr key={t.code} data-reconsent-row={t.code}>
-              <td>{t.title}</td>
-              <td>{t.agreedVersion ?? '—'}</td>
-              <td>{t.version}</td>
-              <td>{t.changeNote ?? (t.agreedVersion ? '—' : '처음 동의')}</td>
+          <thead><tr><th>{t('agree.colTerm')}</th><th>{t('agree.colAgreed')}</th><th>{t('agree.colNow')}</th><th>{t('agree.colChange')}</th></tr></thead>
+          <tbody>{pending.map((x) => (
+            <tr key={x.code} data-reconsent-row={x.code}>
+              <td>{x.title}</td>
+              <td>{x.agreedVersion ?? '—'}</td>
+              <td>{x.version}</td>
+              <td>{x.changeNote ?? (x.agreedVersion ? '—' : t('agree.first'))}</td>
             </tr>))}</tbody>
         </table>
       )}
 
       {terms.length === 0 ? (
         <div className="notice">
-          <b>아직 발행된 약관이 없습니다.</b> 발행 전에는 동의를 받지 않습니다 —
-          초안에 동의하시면 나중에 본문이 바뀌었을 때
-          무엇에 동의하셨는지 확인할 수 없습니다.
+          {t.rich('agree.none', { b: (c) => <b>{c}</b> })}
         </div>
       ) : (<>
         {/* v10.28 (G-214) — 필수 약관에 모두 동의한 회원은 선택 항목을 바로 켜고 끕니다(바꾼 기록이 쌓임) */}
+        {/* v10.102 2-5c — 두 브라우저 부품이 화면 전용 사전(policy)을 씁니다 */}
+        <Msgs ns={['policy']}>
         <AgreeForm terms={terms} next={next} />
         {/* v10.32 — 시안 순서: 필수 · 동의하고 계속 → 선택 항목 바꾸기 */}
         {pending.length === 0 && <OptionalConsents terms={terms} />}
+        </Msgs>
         {/* v10.28 (G-218) — 위탁 안내는 동의 칸이 아니라 알림 링크 */}
         <NoticeTerms />
       </>)}
 
       <div className="notice">
-        <b>동의 시각이 기록됩니다.</b> 나중에 &ldquo;동의한 적 없다&rdquo;는
-        다툼이 생기면 이 기록이 근거가 됩니다.
+        {t.rich('agree.logged', { b: (c) => <b>{c}</b> })}
       </div>
 
       <div className="notice">
-        <b>선택 항목은 언제든 바꾸실 수 있습니다.</b> 마케팅 수신과 성향 기반
-        광고는 필수가 아니며, 철회하셔도 서비스 이용에 영향이 없습니다.
+        {t.rich('agree.optAnytime', { b: (c) => <b>{c}</b> })}
       </div>
     </main><i hidden data-root-end="" /></>
   );

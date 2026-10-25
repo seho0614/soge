@@ -21,15 +21,9 @@ export const POLL_KIND: Record<string, { label: 'poll.kind.VS' | 'poll.kind.ASK'
 };
 
 export const pct = (votes: number, total: number) => (total > 0 ? Math.round((votes * 100) / total) : 0);
-/** 메인 카드(PollCards · main 묶음)용 — 투표 목록은 사전(plaza.poll.people)을 씁니다 */
-export const people = (n: number) => `${n.toLocaleString('ko-KR')}명 참여`;
 
-/** 투표 알림 글자 — 부르는 쪽이 옮긴 글자를 넘깁니다(v10.101 2-5b · 투표 목록은 plaza.poll.msg.*). 안 넘기면 한국어(메인 카드) */
+/** 투표 알림 글자 — 부르는 쪽이 옮긴 글자를 넘깁니다(v10.101 2-5b · 투표 목록은 plaza.poll.msg.* · v10.102 2-5c 메인 카드는 main.poll.msg.*) */
 export type PollTexts = Record<'pick' | 'ok' | 'already' | 'login' | 'fail' | 'offline', string>;
-const KO_TEXTS: PollTexts = {
-  pick: '보기를 먼저 골라 주세요.', ok: '투표했습니다. 고맙습니다.', already: '이미 투표하셨습니다.',
-  login: '로그인한 회원만 투표할 수 있습니다.', fail: '투표하지 못했습니다. 잠시 후 다시 해 주십시오.', offline: '연결이 끊겼습니다. 잠시 후 다시 해 주십시오.',
-};
 
 /**
  * 투표 한 건의 상태 — 고르기 · 보내기 · 결과.
@@ -37,7 +31,7 @@ const KO_TEXTS: PollTexts = {
  *   canVote  지금 투표할 수 있음(열려 있고 아직 안 함)
  *   result   결과(비율)를 보여 줄 때 — 투표했거나 마감됐을 때만. 투표 전에는 보여 주지 않습니다(남의 선택에 끌려가지 않게).
  */
-export function usePoll(initial: Poll, texts: PollTexts = KO_TEXTS) {
+export function usePoll(initial: Poll, texts: PollTexts) {
   const [poll, setPoll] = useState<Poll>(initial);
   const [sel, setSel] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

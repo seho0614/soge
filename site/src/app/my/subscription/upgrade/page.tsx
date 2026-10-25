@@ -5,8 +5,9 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { viewLimitText, type PublicSettings, type ViewLimitMsgs } from '@/components/billing/viewLimit';
-import { MyHead, Note, wonP } from '@/components/my/ui';
+import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.subUp'))('title') };
@@ -37,6 +38,7 @@ export default async function UpgradePage() {
     apiGet<SubNow>('/me/subscription', 0).catch(() => null),
   ]);
   const t = await getTranslations('my.subUp');
+  const f = await getFmt();
   const tv = await getTranslations('billing.viewLimit');
   const vlm: ViewLimitMsgs = { promo: tv('promo'), unlimited: tv('unlimited'), perMonth: (n) => tv('perMonth', { n }) };
   const lim = (n: number | null) => (n == null ? t('unlimited') : String(n));
@@ -75,7 +77,7 @@ export default async function UpgradePage() {
             {plans.map((p) => (
               <tr key={p.code} className={p.code === now?.planCode ? 'on' : undefined}>
                 <td><b>{p.name}</b>{p.code === now?.planCode && <> <span className="my-bg ok">{t('now')}</span></>}</td>
-                <td className="my-num"><b>{p.monthlyPrice === 0 ? t('zeroWon') : wonP(p.monthlyPrice)}</b></td>
+                <td className="my-num"><b>{p.monthlyPrice === 0 ? t('zeroWon') : f.won(p.monthlyPrice, '—')}</b></td>
                 <td className="my-num">{p.includedCodes}</td>
                 <td className="my-num">{lim(p.listingSlots)}</td>
                 <td className="my-num">{p.proposalLimit == null ? t('unlimited') : t('perMonth', { n: String(p.proposalLimit) })}</td>
@@ -89,7 +91,7 @@ export default async function UpgradePage() {
 
       {/* v10.27 (G-189) 규칙 그대로 — 유료 구독 중 바꾸면 다음 결제일부터(지금 결제 없음) */}
       <Note kind="info">
-        {t.rich('ruleNote', { b: (c) => <b>{c}</b>, price: wonP(plans[0]?.extraCodePrice ?? 30000) })}
+        {t.rich('ruleNote', { b: (c) => <b>{c}</b>, price: f.won(plans[0]?.extraCodePrice ?? 30000, '—') })}
       </Note>
     </div><i hidden data-root-end="" /></>
   );

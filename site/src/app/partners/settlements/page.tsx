@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
 import { SettlementAccountForm } from '@/components/partners/SettlementAccountForm';
-import { krw, ymd, SETTLE_STATE, codeText } from '@/components/partners/fmt';
+import { ymd, SETTLE_STATE, codeText } from '@/components/partners/fmt';
 import type { AffSettlements } from '@/components/partners/types';
 
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,6 +25,7 @@ export default async function PartnerSettlementsPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
+  const fm = await getFmt();
 
   const d = await apiGetPersonal<AffSettlements>('/partner/affiliate/settlements').catch(() => null);
   const acc = d?.account ?? null;
@@ -47,9 +49,9 @@ export default async function PartnerSettlementsPage() {
               <tr key={s.id}>
                 <td>{ymd(s.from)} ~ {ymd(s.to)}</td>
                 <td>{codeText(t, 'track', s.track)}</td>
-                <td className="num">{krw(s.gross)}</td>
-                <td className="num">{krw(s.withholding)}</td>
-                <td className="num"><b>{krw(s.net)}</b></td>
+                <td className="num">{fm.won(s.gross, '—')}</td>
+                <td className="num">{fm.won(s.withholding, '—')}</td>
+                <td className="num"><b>{fm.won(s.net, '—')}</b></td>
                 <td><span className={'state ' + (SETTLE_STATE[s.state]?.c ?? '')}>{codeText(t, 'settleState', s.state)}</span></td>
                 <td>{ymd(s.paidAt)}</td>
               </tr>

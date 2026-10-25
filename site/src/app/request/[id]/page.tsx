@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet, apiGetPersonal, ApiFailure } from '@/lib/api';
 import { me } from '@/lib/session';
-import { won, ago } from '@/lib/format';
+import { ago } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { BackBar } from '@/components/common/BackBar';
 import { EarnPromo, RoleTabs } from '@/components/gwan/GwParts';
 import { SearchBox } from '@/components/search/SearchBox';
@@ -47,6 +48,7 @@ export default async function RequestDetail({ params }: Props) {
   const { id } = await params;
   const t = await getTranslations('request.detail');
   const tr = await getTranslations('request');
+  const f = await getFmt();
   let r: Req;
   /* D011 (10/2) — 로그인한 회원의 응답에는 열람 한도 상태가 실려 사람마다 다릅니다 → 캐시하지 않는 쪽으로 부릅니다.
    *   비로그인은 전처럼 공개 캐시(10초). */
@@ -93,7 +95,7 @@ export default async function RequestDetail({ params }: Props) {
     [t('spec.company'), r.companyBlind ? t('spec.companyBlind') : (r.companyName ?? t('spec.companyNone'))],
     [t('spec.region'), r.region || t('spec.none')],
     [t('spec.quantity'), r.quantity || t('spec.none')],
-    [t('spec.budget'), r.budgetOpen === false && !r.isOwner ? t('spec.budgetHidden') : budgetText(r.budgetMin, r.budgetMax)],
+    [t('spec.budget'), r.budgetOpen === false && !r.isOwner ? t('spec.budgetHidden') : budgetText(r.budgetMin, r.budgetMax, true, f)],
     [t('spec.visibility'), t('spec.visibilityValue', { v: r.visibilityLabel ?? t('spec.visibilityAll') })],
     [t('spec.reqNo'), reqNo(r.id)],
   ];
@@ -124,7 +126,7 @@ export default async function RequestDetail({ params }: Props) {
             <dl className="w1-spec">
               {spec.map(([k, v]) => <Fragment key={k}><dt>{k}</dt><dd>{v}</dd></Fragment>)}
             </dl>
-            <p className="w1-nt3" style={{ marginTop: 8 }}>{t('registered', { ago: ago(r.createdAt) })}</p>
+            <p className="w1-nt3" style={{ marginTop: 8 }}>{t('registered', { ago: f.ago(r.createdAt, ago(r.createdAt)) })}</p>
             {vl?.enabled && vl.limit != null && (
               <p className="w1-nt3" data-view-limit={`${vl.used}/${vl.limit}`}>
                 {t('viewLimit', { period: vl.basis === 'PLAN' ? t('periodPlan') : t('periodMonth'), used: String(vl.used), limit: String(vl.limit) })}
@@ -158,7 +160,7 @@ export default async function RequestDetail({ params }: Props) {
         <aside style={{ minWidth: 0 }}>
           <div className="w1-panel" style={{ padding: 15 }}>
             <div style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 3 }}>{t('feeLabel')}</div>
-            <div className="w1-bigfee">{r.offeredFee != null ? won(r.offeredFee) : t('negotiable')}</div>
+            <div className="w1-bigfee">{r.offeredFee != null ? f.won(r.offeredFee) : t('negotiable')}</div>
             <div className="w1-nt3" style={{ marginTop: 8 }}>{t.rich('feeNote', { b: (c) => <b>{c}</b>, br: () => <br /> })}</div>
           </div>
           <div className="w1-wrn" style={{ marginTop: 12 }}>

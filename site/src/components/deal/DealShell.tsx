@@ -5,7 +5,7 @@
  */
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { won } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 import { BackBar } from '@/components/common/BackBar';
 
 export interface DealSummary {
@@ -50,14 +50,15 @@ export function DealShell({ d, step, title, sub, children }: { d: DealSummary; s
 
 export function DealSummaryTable({ d }: { d: DealSummary }) {
   const t = useTranslations('deal.shell');
+  const f = useFmt();
   return (
     <div className="w1-dsum">
       <div className="dr"><span>{t('target', { kind: d.targetType === 'REQUEST' ? t('kindRequest') : t('kindListing') })}</span><b>{d.title ?? '—'}</b></div>
       <div className="dr"><span>{t('introducer')}</span><b>{d.introducer ?? t('noIntroducer')}</b></div>
       <div className="dr"><span>{t('refCode')}</span><b>{d.refCode ? <><code>{d.refCode}</code> · tier {d.tier}</> : <i>{t('noCode')}</i>}</b></div>
       <div className="dr"><span>{t('parties')}</span><b>{d.buyer} ↔ {d.seller}</b></div>
-      <div className="dr"><span>{t('amount')}</span><b>{d.amount != null ? won(d.amount) : <i>{t('amountPending')}</i>}</b></div>
-      <div className="dr"><span>{t('fee')}</span><b>{d.agreedFee != null ? <>{won(d.agreedFee)} <i>{t('feeAgreed')}</i></> : <i>{t('feePending')}</i>}</b></div>
+      <div className="dr"><span>{t('amount')}</span><b>{d.amount != null ? f.won(d.amount) : <i>{t('amountPending')}</i>}</b></div>
+      <div className="dr"><span>{t('fee')}</span><b>{d.agreedFee != null ? <>{f.won(d.agreedFee)} <i>{t('feeAgreed')}</i></> : <i>{t('feePending')}</i>}</b></div>
       <div className="dr"><span>{t('bearer')}</span><b>{d.feeBearerLabel ?? <i>{t('bearerPending')}</i>}</b></div>
     </div>
   );

@@ -6,8 +6,8 @@ import { apiGet, ApiFailure } from '@/lib/api';
 import type { HltIngredientDetail } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid } from '@/components/health/HltParts';
 import { IngSort } from '@/components/health/IngSort';
-import { krw } from '@/components/health/util';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('hlt');
@@ -29,6 +29,7 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
   const sp = await searchParams;
   const sort = sp.sort === 'name' || sp.sort === 'NAME' ? 'name' : 'unit';
   const t = await getTranslations('hlt.ingredient');
+  const f = await getFmt();
   const tc = await getTranslations('hlt.common');
 
   let g: HltIngredientDetail | null = null;
@@ -79,9 +80,9 @@ export default async function HltIngredientDetail({ params, searchParams }: Prop
       {g.aliases && g.aliases.length > 0 && <p className="hint">{t('aliases', { list: g.aliases.join(' · ') })}</p>}
       {g.note && <p className="lead">{g.note}</p>}
       {g.minUnit != null ? (
-        <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 8 }}>{t.rich('minMonth', { amt: krw(g.minUnit), n: String(list.length), b: (c) => <b>{c}</b> })}</div>
+        <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 8 }}>{t.rich('minMonth', { amt: f.won(g.minUnit, '-'), n: String(list.length), b: (c) => <b>{c}</b> })}</div>
       ) : inStock.length > 0 ? (
-        <p className="hlt-unit">{t.rich('minPrice', { amt: krw(Math.min(...inStock.map((p) => Number(p.price)))), n: String(list.length), b: (c) => <b>{c}</b> })}</p>
+        <p className="hlt-unit">{t.rich('minPrice', { amt: f.won(Math.min(...inStock.map((p) => Number(p.price))), '-'), n: String(list.length), b: (c) => <b>{c}</b> })}</p>
       ) : null}
 
       {g.isGroup && (g.children ?? []).length > 0 && (

@@ -6,10 +6,11 @@ import { me } from '@/lib/session';
 import type { HltOrderRow } from '@/components/health/types';
 import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav, OrderButtons } from '@/components/health/MyHltNav';
-import { codeText, krw, ORDER_LABEL, ORDER_TONE, ymd } from '@/components/health/util';
+import { codeText, ORDER_LABEL, ORDER_TONE, ymd } from '@/components/health/util';
 import { ProductArt } from '@/components/health/ProductArt';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hOrders.meta') };
@@ -20,6 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function MyHltOrders() {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const to = await getTranslations('order');
 
   let rows: HltOrderRow[] | null = null;
@@ -58,7 +60,7 @@ export default async function MyHltOrders() {
                     </div>
                   </div>
                 )}
-                <div className="hlt-sum"><span>{t('h.payAmount')}</span><b className="money">{krw(o.total)}</b></div>
+                <div className="hlt-sum"><span>{t('h.payAmount')}</span><b className="money">{f.won(o.total, '-')}</b></div>
                 {o.shippedAt && <p className="hint">{t('hOrders.shipped', { d: ymd(o.shippedAt) })}{o.deliveredAt && t('hOrders.delivered', { d: ymd(o.deliveredAt) })}</p>}
                 <OrderButtons o={o} />
               </div>

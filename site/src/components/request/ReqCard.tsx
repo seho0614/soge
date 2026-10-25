@@ -5,6 +5,8 @@
  */
 import Link from 'next/link';
 import { won } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
+import type { Fmt } from '@/lib/fmtBind';
 import { useTranslations } from 'next-intl';
 
 export interface ReqRow {
@@ -18,7 +20,16 @@ export interface ReqRow {
 export const GCLS: Record<string, string> = { MNY: 'm', MAL: 'l', BIZ: 'b', HLT: 'h' };
 
 /** 예산 글 — 「월 800만원 내외」처럼 시안은 자유 글. 실제는 최소 · 최대 숫자라 「1억 ~ 1.5억」 */
-export function budgetText(min: number | null, max: number | null, open = true): string {
+/*  v10.102 (2-5c) — fm(useFmt · getFmt)을 넘기면 한국어 밖에서는 억 · 만 줄임 없이 전체 금액(₩1,200,000)과 영어 글로. 넘기지 않거나 한국어면 예전 글자 그대로 */
+export function budgetText(min: number | null, max: number | null, open = true, fm?: Fmt): string {
+  if (fm && !fm.ko) {
+    if (!open) return 'Budget hidden';
+    const w = (n: number) => fm.won(n);
+    if (min != null && max != null) return min === max ? w(min) : `${w(min)} ~ ${w(max)}`;
+    if (max != null) return `Up to ${w(max)}`;
+    if (min != null) return `${w(min)} or more`;
+    return 'Budget negotiable';
+  }
   if (!open) return '예산 비공개';
   const f = (n: number) => (n >= 100_000_000 ? `${+(n / 100_000_000).toFixed(1)}억` : n >= 10_000 ? `${Math.round(n / 10_000).toLocaleString('ko-KR')}만원` : won(n));
   if (min != null && max != null) return min === max ? f(min) : `${f(min)} ~ ${f(max)}`;
@@ -32,6 +43,7 @@ export const reqNo = (id: string) => `R-${id.replace(/-/g, '').slice(0, 6).toUpp
 
 export function ReqCard({ r, gwanName }: { r: ReqRow; gwanName: string }) {
   const t = useTranslations('request.card');
+  const f = useFmt();
   const soon = r.dday != null && r.dday <= 7;
   return (
     <div className="w1-rqc" data-request={r.id}>
@@ -48,12 +60,12 @@ export function ReqCard({ r, gwanName }: { r: ReqRow; gwanName: string }) {
         <div className="mt3">
           <span>📍 {r.region || t('noRegion')}</span>
           <span>📦 {r.quantity || t('noQuantity')}</span>
-          <span>💰 {r.budgetOpen === false ? t('budgetHidden') : budgetText(r.budgetMin, r.budgetMax)}</span>
+          <span>💰 {r.budgetOpen === false ? t('budgetHidden') : budgetText(r.budgetMin, r.budgetMax, true, f)}</span>
           <span className="mono">{reqNo(r.id)}</span>
         </div>
       </div>
       <div className="side2">
-        <div className="w1-fee3">{t('feeLabel')}<b>{r.offeredFee != null ? won(r.offeredFee) : t('negotiable')}</b></div>
+        <div className="w1-fee3">{t('feeLabel')}<b>{r.offeredFee != null ? f.won(r.offeredFee) : t('negotiable')}</b></div>
         <Link className="w1-bprop" href={`/request/${r.id}#propose`}>{t('propose')}</Link>
         <div className="w1-pcount">{t('count', { n: String(r.proposalCount ?? 0), v: r.visibilityLabel ?? t('all') })}</div>
       </div>

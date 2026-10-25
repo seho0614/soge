@@ -58,8 +58,8 @@
       "sizeAround": "About {n} pyeong",
       "sizeMax": "Up to {n} pyeong",
       "sizeMin": "{n} pyeong or more",
-      "priceMax": "Up to {v} KRW",
-      "priceMin": "{v} KRW or more",
+      "priceMax": "Up to {v}",
+      "priceMin": "{v} or more",
       "urgent": "Urgent sale",
       "cheap": "Lowest price",
       "new": "New"

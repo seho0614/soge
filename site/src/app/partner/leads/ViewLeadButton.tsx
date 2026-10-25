@@ -4,6 +4,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
 interface Contact { name: string | null; phone: string | null; address: string | null; email?: string | null }
 
@@ -42,10 +43,11 @@ export function ViewLeadButton({ deliveryId, fee }: { deliveryId: string; fee?: 
   const [pending, start] = useTransition();
   const router = useRouter();
   const t = useTranslations('partnerOps.leads.view');
+  const fm = useFmt();
 
   async function open() {
     /* v10.31 (W5 · 선불) — 시안 문구 그대로 */
-    if (!confirm(t('confirm', { fee: fee ? ` ${Number(fee).toLocaleString('ko-KR')}원` : '' }))) return;
+    if (!confirm(t('confirm', { fee: fee ? ` ${fm.won(Number(fee))}` : '' }))) return;
     setErr(null);
     const res = await fetch(`/api/v1/partner/leads/${deliveryId}/view`, { method: 'POST' });
     if (!res.ok) {

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 import { ymdKst } from '@/lib/format';
 import type { SubDetail } from './SubscriptionManage';
 
@@ -33,7 +34,6 @@ function loadToss(): Promise<TossPaymentsFn> {
   });
   return sdk;
 }
-const won = (n: number) => `${Number(n).toLocaleString('ko-KR')}원`;
 /* 받침이 있으면 「으로」(ㄹ 받침은 「로」) */
 const ro = (n: string) => { const c = n.charCodeAt(n.length - 1) - 0xac00; if (c < 0 || c > 11171) return `${n}(으)로`; const j = c % 28; return n + (j === 0 || j === 8 ? '로' : '으로'); };
 
@@ -43,6 +43,8 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
   const router = useRouter();
   const t = useTranslations('billing.plan');
   const tc = useTranslations('billing.common');
+  const fm = useFmt();
+  const won = (n: number) => fm.won(Number(n));
   const locale = useLocale();
   /* 한국어만 조사(으로 · 로)를 붙입니다 */
   const roN = (n: string) => (locale === 'ko' ? ro(n) : n);

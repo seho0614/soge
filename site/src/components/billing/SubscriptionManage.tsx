@@ -4,6 +4,7 @@ import { ymdKst } from '@/lib/format';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
 /** GET /me/subscription/detail */
 export interface SubDetail {
@@ -26,7 +27,6 @@ export interface RefundView {
 export interface RefundEligible { eligible: boolean; reason?: string }
 
 const day = (v?: string | null) => (v ? ymdKst(v) : '—');
-const won = (n?: number) => (n == null ? '—' : `${Number(n).toLocaleString('ko-KR')}원`);
 
 /**
  * SB-MYP-SUB-010 「내 구독」 — 자동 갱신 해지 · 해지 철회 · 환불 (v10.18 · D022)
@@ -41,6 +41,8 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
   const router = useRouter();
   const t = useTranslations('billing.manage');
   const tc = useTranslations('billing.common');
+  const fm = useFmt();
+  const won = (n?: number) => fm.won(n, '—');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [reason, setReason] = useState('');

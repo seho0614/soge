@@ -7,9 +7,10 @@ import { ymdKst } from '@/lib/format';
 import { viewLimitText, type PublicSettings, type ViewLimitMsgs } from '@/components/billing/viewLimit';
 import { SubscriptionManage, type RefundEligible, type SubDetail } from '@/components/billing/SubscriptionManage';
 import { PlanPicker } from '@/components/billing/PlanPicker';
-import { MyHead, Note, Table, Empty, wonP, type Tone } from '@/components/my/ui';
+import { MyHead, Note, Table, Empty, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.sub'))('title') };
@@ -46,6 +47,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.sub');
+  const f = await getFmt();
   const tv = await getTranslations('billing.viewLimit');
   const vlm: ViewLimitMsgs = { promo: tv('promo'), unlimited: tv('unlimited'), perMonth: (n) => tv('perMonth', { n }) };
   const B = (c: React.ReactNode) => <b>{c}</b>;
@@ -77,7 +79,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
         <div className="my-subnow" data-sub-now="">
           <div>
             <span className="my-ls">{t('curPlan')}</span>
-            <b className="big">{detail.planName}{detail.monthlyPrice != null && t('perMonth', { price: wonP(detail.monthlyPrice) })}</b>
+            <b className="big">{detail.planName}{detail.monthlyPrice != null && t('perMonth', { price: f.won(detail.monthlyPrice, '—') })}</b>
             <span className="my-ls">{t('started', { date: ymdKst(detail.periodStart) })}{detail.nextChargeAt ? t('nextCharge', { date: ymdKst(detail.nextChargeAt) }) : ''}</span>
           </div>
           <div>
@@ -90,7 +92,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
       )}
 
       <Note kind="info">
-        {t.rich('extraNote', { b: B, price: wonP(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000) })}
+        {t.rich('extraNote', { b: B, price: f.won(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000, '—') })}
       </Note>
 
       {!p.businessVerifiedAt && (
@@ -112,7 +114,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
               { k: 'view', t: t('view', { v: viewLimitText(settings, pl, vlm) }) },
               { k: 'slots', t: t('slots', { v: pl.listingSlots == null ? t('unlimited') : pl.listingSlots ? t('count', { n: String(pl.listingSlots) }) : String(pl.listingSlots) }) },
             ],
-            note: pl.code === 'BASIC' ? t('basicNote', { price: wonP(pl.extraCodePrice ?? 30000) }) : t('paidNote'),
+            note: pl.code === 'BASIC' ? t('basicNote', { price: f.won(pl.extraCodePrice ?? 30000, '—') }) : t('paidNote'),
           }))}
         />
       </Msgs></div>
@@ -138,7 +140,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
                   ? <>{t('extraRow', { n: String(v.codeCount ?? 1) })}</>
                   : <>{plans.find((x) => x.code === v.planCode)?.name ?? ''} {t('fee')} <span className="my-ls">{ymdKst(v.periodStart)} ~ {ymdKst(v.periodEnd)}</span></>}
                   {v.failureReason ? <><br /><span className="my-ls">{v.failureReason}</span></> : null}</td>
-                <td><b>{wonP(v.amount)}</b></td>
+                <td><b>{f.won(v.amount, '—')}</b></td>
                 <td><span className={`my-bg ${st[1]}`}>{st[0]}</span></td>
               </tr>
             );

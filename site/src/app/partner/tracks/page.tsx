@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, ptCode, Tabs, Tw, won, type Tone } from '@/components/partner/ui';
 import { CatalogForm, CatalogToggle, QuoteForm } from './TrackForms';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,7 +38,7 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const tab: Tab = (['repair', 'car', 'catalog'] as const).includes(sp.tab as Tab) ? (sp.tab as Tab) : 'repair';
   const tt = await getTranslations('partner.tracks');
-  const won0 = (await getTranslations('partner.common.unit'))('won');
+  const f = await getFmt();
   const t = await apiGet<Tracks>('/partner/tracks', 0).catch(() => null);
   if (!t) return <><Pgh title={tt('title')} /><Empty>{tt.rich('notPartner', { apply: (c) => <Link href="/partner/apply">{c}</Link> })}</Empty><i hidden data-root-end="" /></>;
   const fresh = t.repair.filter((r) => !r.viewedAt && r.state === 'DELIVERED').length;
@@ -66,8 +67,8 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
                   <td><b>{r.summary}</b><div className="pt-ls">{r.area || '—'}</div></td>
                   <td><Bg tone={STAGE[r.stage] ?? 'off'}>{r.stage}</Bg></td>
                   <td>{ymdKst(r.deliveredAt)}</td>
-                  <td>{r.viewedAt ? <>{r.quoteAmount ? <b>{won(r.quoteAmount)}{won0} </b> : null}<QuoteForm deliveryId={r.deliveryId} amount={r.quoteAmount} /></>
-                    : r.state === 'DELIVERED' ? <Link className="pt-bp sm" href="/partner/leads?tab=new">{tt('openContact', { fee: won(r.feeQuote) })}</Link> : '—'}</td>
+                  <td>{r.viewedAt ? <>{r.quoteAmount ? <b>{f.wonOf(won(r.quoteAmount))} </b> : null}<QuoteForm deliveryId={r.deliveryId} amount={r.quoteAmount} /></>
+                    : r.state === 'DELIVERED' ? <Link className="pt-bp sm" href="/partner/leads?tab=new">{tt('openContact', { fee: f.wonOf(won(r.feeQuote)) })}</Link> : '—'}</td>
                 </tr>
               ))}
             </Tw>
@@ -106,7 +107,7 @@ export default async function TracksPage({ searchParams }: { searchParams: Promi
                 <tr key={c.id}>
                   <td><b>{c.name}</b></td>
                   <td>{c.saleKind === 'RENTAL' ? tt('rental') : tt('sale')}</td>
-                  <td className="num">{won(c.price)}{won0}{c.saleKind === 'RENTAL' ? tt('perMonth') : ''}</td>
+                  <td className="num">{f.wonOf(won(c.price))}{c.saleKind === 'RENTAL' ? tt('perMonth') : ''}</td>
                   <td>{c.state === 'LISTED' ? <Bg tone="ok">{tt('listed')}</Bg> : <Bg tone="off">{tt('hidden')}</Bg>}</td>
                   <td><CatalogToggle id={c.id} state={c.state} /></td>
                 </tr>

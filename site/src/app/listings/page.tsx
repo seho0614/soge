@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
-import { GWAN_PATH, safeSort, won } from '@/lib/format';
+import { GWAN_PATH, safeSort } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import type { ListingCardData, ListingListData } from '@/lib/types';
 import { BackBar } from '@/components/common/BackBar';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -33,6 +34,7 @@ export default async function AllListings({ searchParams }: {
   ]);
   const t = await getTranslations('forms.all');
   const th = await getTranslations('header.gwan');
+  const f = await getFmt();
   const ko = (await getLocale()) === 'ko';
   /* 관 이름 — 한국어는 서버 이름 그대로 · 다른 언어만 사전(header.gwan.*) */
   const gname = (code: string, name: string) => (!ko && isGwanKey(code) ? th(code) : name);
@@ -89,7 +91,7 @@ export default async function AllListings({ searchParams }: {
                   <td>{r.categoryName}</td>
                   <td>{r.gradeLabel ? <span className={`w1-bg ${r.gradeCode === 'G1' ? 'ok' : 'off'}`}>{r.gradeLabel}</span> : '—'}</td>
                   <td>{r.owner.companyName}{r.owner.verified ? ' ✓' : ''}</td>
-                  <td>{r.desiredFee ? won(r.desiredFee) : t('nego')}</td>
+                  <td>{r.desiredFee ? f.won(r.desiredFee) : t('nego')}</td>
                 </tr>
               ))}
             </tbody>

@@ -115,6 +115,15 @@
     }
   },
   "poll": {
+    "people": "{n} joined",
+    "msg": {
+      "pick": "Please choose an option first.",
+      "ok": "Your vote is in. Thank you.",
+      "already": "You have already voted.",
+      "login": "Only logged-in members can vote.",
+      "fail": "Could not record your vote. Please try again shortly.",
+      "offline": "Connection lost. Please try again shortly."
+    },
     "sending": "Sending…",
     "vote": "Vote",
     "opinion": "Leave your opinion",
@@ -159,5 +168,177 @@
     "humidity": "Humidity <b>{v}%</b>",
     "source": "Provided by {src}",
     "observed": " · as of {at}"
+  },
+  "demo": {
+    "kind": {
+      "product": "Product",
+      "expert": "Expert",
+      "biz": "Startup",
+      "town": "Local",
+      "poll": "Poll",
+      "company": "Company",
+      "referral": "Referral",
+      "request": "Request"
+    },
+    "rank": {
+      "goMall": "Go to Sogae Mall",
+      "requestTitle": "Requests waiting for referrals",
+      "getReferred": "Get referred",
+      "community": "Community"
+    },
+    "trust": {
+      "expert": {
+        "t": "Expert referrals",
+        "d": "1:1 consultation with verified experts"
+      },
+      "company": {
+        "t": "Company referrals",
+        "d": "Trusted local businesses"
+      },
+      "goods": {
+        "t": "Product referrals"
+      },
+      "sameDay": {
+        "t": "Same-day contact",
+        "d1": "Moving · cleaning · repairs, etc."
+      }
+    },
+    "towns": {
+      "t1": {
+        "tag": "Local pick",
+        "t": "Trending restaurants now",
+        "d1": "Restaurants your neighbors",
+        "d2": "visit the most.",
+        "loc": "Pangyo Stn. 300m"
+      },
+      "t2": {
+        "tag": "Local guide",
+        "t": "Places worth visiting nearby",
+        "d1": "Cafes, hot spots, restaurants and local info",
+        "d2": "all at a glance.",
+        "loc": "Jeongja-dong 500m"
+      },
+      "t3": {
+        "tag": "Local talk",
+        "t": "Stories from our neighborhood",
+        "d1": "Hear the latest stories",
+        "d2": "from your neighbors.",
+        "loc": "Bundang-gu 1km"
+      }
+    },
+    "sample": {
+      "todaySub": "See what people are looking for most and live trends right now.",
+      "banner": {
+        "t1": "Autumn outing restaurants",
+        "d1": "We introduce popular places",
+        "d2": "for family dining."
+      },
+      "rank": {
+        "productBadge": "LIVE",
+        "productTitle": "Trending products",
+        "product": {
+          "r1": "Food waste disposer",
+          "r2": "Air fryer",
+          "r3": "Coffee machine"
+        },
+        "request": {
+          "r1": "Need tax advice",
+          "r2": "Shop interior contractor",
+          "r3": "Looking for an academy tutor"
+        },
+        "townBadge": "Popular nearby",
+        "townTitle": "Pangyo · Bundang",
+        "town": {
+          "r1": "Pangyo family restaurant",
+          "r2": "Bundang clinic",
+          "r3": "Jeongja-dong cafe"
+        }
+      },
+      "picksSub": "Trending products, experts, startup ideas and local info at a glance!",
+      "picks": {
+        "p1": {
+          "badge": "Today's top deal",
+          "title": "AI Food Waste Disposer A1"
+        },
+        "p2": {
+          "badge": "HQ verified",
+          "title": "Hyunwoo Kim, Tax Accountant",
+          "sub": "Personal · corporate tax advice"
+        },
+        "p3": {
+          "badge": "Trending",
+          "title": "Unmanned study cafe startup",
+          "sub": "Possible under ₩30,000,000"
+        },
+        "p4": {
+          "badge": "Near you",
+          "title": "Pangyo family restaurant picks",
+          "sub": "5 min walk · 1,234 reviews"
+        },
+        "p5": {
+          "badge": "1,842 joined",
+          "title": "What matters most in a cafe?",
+          "sub": "Vote now"
+        }
+      },
+      "stripSub": "Cozy local hot spots recommended by SogaeBank",
+      "trustGoods": "Verified popular products",
+      "trustSameDay": "verified same-day contact",
+      "starts": {
+        "s1": {
+          "badge": "Interest +30%",
+          "title": "Unmanned cafe startup",
+          "sub": "Start with low initial costs"
+        },
+        "s2": {
+          "badge": "Under ₩30,000,000",
+          "title": "Unmanned convenience store",
+          "sub": "A startup with small capital"
+        },
+        "s3": {
+          "badge": "Solo-run",
+          "title": "Pet care shop",
+          "sub": "An item one person can run"
+        },
+        "s4": {
+          "badge": "No storefront",
+          "title": "Solo online store",
+          "sub": "A popular startup right now"
+        }
+      }
+    },
+    "live": {
+      "like": "{n} likes",
+      "fee": "Referral fee {fee}",
+      "newProduct": "New",
+      "mall": "Sogae Mall",
+      "verified": "Verified company",
+      "safe": "Safe Referral",
+      "startups": "Startups",
+      "market": "Marketplace",
+      "proposals": "{n} proposals",
+      "todaySub": "See newly posted products · requests · stories in one place.",
+      "bannerMny": {
+        "t1": "Marketplace popular",
+        "d1": "Listings that drew",
+        "d2": "the most interest."
+      },
+      "bannerSearch": {
+        "t1": "SogaeBank",
+        "t2": "Unified search",
+        "d1": "Ask for what you need",
+        "d2": "in a sentence."
+      },
+      "rank": {
+        "productTitle": "New arrivals",
+        "requestEmpty": "Post a referral request",
+        "communityTitle": "New stories",
+        "communityEmpty": "Leave the first story"
+      },
+      "picksSub": "Newly posted products, companies, startup ideas and requests at a glance!",
+      "stripSub": "Share neighborhood stories in the Community",
+      "trustGoods": "Listings from verified companies",
+      "trustSameDay": "one verified company contacts you"
+    }
   }
 }

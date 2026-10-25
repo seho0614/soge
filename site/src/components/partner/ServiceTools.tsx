@@ -9,8 +9,10 @@ import { useRouter } from 'next/navigation';
 import { api } from './act';
 import { uploadFile } from '@/lib/upload';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
-const won = (n: number | null | undefined) => `${Number(n ?? 0).toLocaleString('ko-KR')}원`;
+/** v10.102 (2-5c) — 화면 언어에 묶은 원 표기(ko 「1,000원」 · en 「₩1,000」) */
+const useWon = () => { const fm = useFmt(); return (n: number | null | undefined) => fm.won(n ?? 0); };
 type Msg = ['ok' | 'err', string] | null;
 const MsgP = ({ m }: { m: Msg }) => (m ? <p className={`pt-msg ${m[0]}`} role="status">{m[1]}</p> : null);
 
@@ -21,6 +23,7 @@ export function ServiceActions({ id, title, body, target, receiveMode, topFee, r
   canEdit: boolean; canSuspend: boolean; canResume: boolean; status: string;
 }) {
   const t = useTranslations('partnerOps.tools');
+  const won = useWon();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ title, body: body ?? '', target: target ?? '', receiveMode: receiveMode ?? '',
@@ -132,6 +135,7 @@ export function BlockEditor({ id, kind, label, body, fileId }: { id: string; kin
 type Ax = { key: string; label: string };
 export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string; rows: Ax[]; cols: Ax[]; cells: Array<{ row: string; col: string; amount: number }>; readOnly?: boolean }) {
   const t = useTranslations('partnerOps.tools');
+  const fm = useFmt();
   const router = useRouter();
   const init = useMemo(() => Object.fromEntries(cells.map((c) => [`${c.row}|${c.col}`, String(Math.round(c.amount / 10000))])), [cells]);
   const [v, setV] = useState<Record<string, string>>(init);
@@ -155,8 +159,8 @@ export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string;
               <tr key={r.key}><td><b>{r.label}</b></td>
                 {cols.map((c) => {
                   const k = `${r.key}|${c.key}`;
-                  return <td key={k} className="num">{readOnly ? (v[k] ? `${v[k]}만원` : '—')
-                    : <input className="pt-input" type="number" min={0} value={v[k] ?? ''} onChange={(e) => setV({ ...v, [k]: e.target.value })} placeholder="만원" aria-label={`${r.label} ${c.label} 만원`} />}</td>;
+                  return <td key={k} className="num">{readOnly ? (v[k] ? fm.manwon(v[k]) : '—')
+                    : <input className="pt-input" type="number" min={0} value={v[k] ?? ''} onChange={(e) => setV({ ...v, [k]: e.target.value })} placeholder={t('manPh')} aria-label={t('manAria', { row: r.label, col: c.label })} />}</td>;
                 })}
               </tr>
             ))}
@@ -178,6 +182,7 @@ export function ServiceWizard({ categories, rates, blocks }: {
   categories: WizCategory[]; rates: Array<{ grade: string; label: string; rate: number }>; blocks: Array<{ kind: string; label: string }>;
 }) {
   const t = useTranslations('partnerOps.tools');
+  const won = useWon();
   const router = useRouter();
   const [catId, setCatId] = useState('');
   const cat = categories.find((c) => c.id === catId) ?? null;
@@ -229,7 +234,7 @@ export function ServiceWizard({ categories, rates, blocks }: {
       <><p className="pt-ls">{t('mxHint')}</p>
         {cat.rows.length && cat.cols.length ? (
           <div className="pt-tw"><table className="pt-tb2 pt-mx"><thead><tr><th>{t('mxCorner')}</th>{cat.cols.map((c) => <th key={c.key} className="num">{c.label}</th>)}</tr></thead>
-            <tbody>{cat.rows.map((r) => <tr key={r.key}><td><b>{r.label}</b></td>{cat.cols.map((c) => { const k = `${r.key}|${c.key}`; return <td key={k} className="num"><input className="pt-input" type="number" min={0} value={mx[k] ?? ''} onChange={(e) => setMx({ ...mx, [k]: e.target.value })} placeholder="만원" aria-label={`${r.label} ${c.label} 만원`} /></td>; })}</tr>)}</tbody></table></div>
+            <tbody>{cat.rows.map((r) => <tr key={r.key}><td><b>{r.label}</b></td>{cat.cols.map((c) => { const k = `${r.key}|${c.key}`; return <td key={k} className="num"><input className="pt-input" type="number" min={0} value={mx[k] ?? ''} onChange={(e) => setMx({ ...mx, [k]: e.target.value })} placeholder={t('manPh')} aria-label={t('manAria', { row: r.label, col: c.label })} /></td>; })}</tr>)}</tbody></table></div>
         ) : <p className="pt-ls">{t('noAxisShort')}</p>}</>
     );
     if (/확인비용/.test(name)) return (

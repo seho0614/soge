@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
-import { won, ymdKst } from '@/lib/format';
+import { ymdKst } from '@/lib/format';
 import { MyHead, Tabs, Note, shortId, type Tone } from '@/components/my/ui';
 import { NudgeButton } from '@/components/my/NudgeButton';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('ctr.title') };
@@ -55,6 +56,7 @@ export default async function Page({ searchParams }:
   const user = await me();
   if (!user) redirect('/login?next=/my/contracts');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
 
   const { tab: t0 = 'all' } = await searchParams;
   const tab = TABS.some((x) => x.k === t0) ? t0 : 'all';
@@ -127,7 +129,7 @@ export default async function Page({ searchParams }:
                     </>
                   )}
                 </div>
-                <div className="my-nt3">{t.rich('ctr.feeNote', { fee: c.fee != null ? won(c.fee) : t('ctr.feeTbd'), b: (x) => <b>{x}</b> })}</div>
+                <div className="my-nt3">{t.rich('ctr.feeNote', { fee: c.fee != null ? f.won(c.fee) : t('ctr.feeTbd'), b: (x) => <b>{x}</b> })}</div>
               </div>
             );
           })}

@@ -4,7 +4,8 @@ import { redirect, notFound } from 'next/navigation';
 import { apiGet, ApiFailure } from '@/lib/api';
 import type { ListingDetailData } from '@/lib/types';
 import { me } from '@/lib/session';
-import { GWAN_PATH, won } from '@/lib/format';
+import { GWAN_PATH } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { BackBar } from '@/components/common/BackBar';
 import { AskChat } from '@/components/chat/AskChat';
 import { getTranslations } from 'next-intl/server';
@@ -47,6 +48,7 @@ export default async function ChatPage({ params, searchParams }: Props) {
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
   const photo = item.mediaUrls?.[0];
   const t = await getTranslations('deal');
+  const f = await getFmt();
   const th = await getTranslations('header');
   const gn = (c: string) => (isGwanKey(c) ? th(`gwan.${c}`) : c);
 
@@ -60,7 +62,7 @@ export default async function ChatPage({ params, searchParams }: Props) {
           <h2>{item.title}</h2>
           <div className="m">
             <span className={`w1-gt ${GCLS[item.gwanCode] ?? ''}`}>{gn(item.gwanCode)}</span>
-            <span className="fe">{item.desiredFee ? t('chat.fee', { fee: won(item.desiredFee) }) : t('chat.feeTbd')}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
+            <span className="fe">{item.desiredFee ? t('chat.fee', { fee: f.won(item.desiredFee) }) : t('chat.feeTbd')}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
           </div>
         </div>
         <Link className="lk" href={href}>{t('chat.viewListing')}</Link>

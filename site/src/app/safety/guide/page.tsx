@@ -4,6 +4,7 @@ import { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } from '@/l
 import { BackBar } from '@/components/common/BackBar';
 import { apiGet } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 import type { SafeTradeTerms } from '@/components/market/types';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,12 +22,14 @@ type Props = { searchParams: Promise<{ t?: string }> };
 export default async function SafetyGuidePage({ searchParams }: Props) {
   const tq = (await searchParams).t;
   const t = await getTranslations('plaza.guide');
+  const f = await getFmt();
   const g0 = await getTranslations('gwan');
   const cur = SAFETY_GUIDES.some((g) => g.code === tq) ? tq : 'all';
   const list = cur === 'all' ? SAFETY_GUIDES : SAFETY_GUIDES.filter((g) => g.code === cur);
   const terms = await apiGet<SafeTradeTerms>('/safety/safe-trade', 300).catch(() => null);
   const min = terms?.minAmount ?? 50000000;
-  const man = `${(min / 10000).toLocaleString('ko-KR')}만원`;
+  /* 한국어는 「5,000만원」 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+  const man = f.manwon(min / 10000, `${(min / 10000).toLocaleString('ko-KR')}만원`);
   return (
     <><div className="gw">
       <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href="/money/verified" label={g0('qm.verified')} wrap={false} /></div>

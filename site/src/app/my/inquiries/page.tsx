@@ -6,6 +6,7 @@ import { me } from '@/lib/session';
 import { ago } from '@/lib/format';
 import { MyHead, Tabs, Note, Empty } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.inq'))('title') };
@@ -39,6 +40,7 @@ export default async function MyInquiries({ searchParams }: { searchParams: Prom
 
   const q = listing ? `&listing=${listing}` : '';
   const t = await getTranslations('my.inq');
+  const f = await getFmt();
   return (
     <><div data-inquiries={tab}>
       {/* v10.29 — 나의공간 틀 안에서 시안 모양(머리 · 탭 · 행)으로. 기능(받은/보낸 · 매물별 거르기 · 대화 열기)은 그대로 */}
@@ -73,7 +75,7 @@ export default async function MyInquiries({ searchParams }: { searchParams: Prom
                 <Link className="my-lnk" href={`/my/inquiries/${c.id}`}>{c.title ?? t('deleted')}</Link>
                 <span className="my-ls blk">{c.lastMine ? t('me') : `${c.counterpartName}: `}{c.lastBody ?? ''}</span>
               </div>
-              <div className="my-lstat"><span>{ago(c.lastAt ?? c.createdAt)}</span></div>
+              <div className="my-lstat"><span>{f.ago(c.lastAt ?? c.createdAt, ago(c.lastAt ?? c.createdAt))}</span></div>
               <div className="my-lact">
                 <Link className="my-bp sm" href={`/my/inquiries/${c.id}`}>{t('open')}</Link>
                 {c.dealId && <Link className="my-bo sm" href={`/deal/${c.dealId}/contract`} data-inq-deal={c.dealId}>{t('viewDeal')}</Link>}

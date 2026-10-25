@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
-import { dtKst, won } from '@/lib/format';
+import { dtKst } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { ContractPanel } from '@/components/ContractPanel';
 import { DealShell } from '@/components/deal/DealShell';
 import { loadDeal } from '@/components/deal/load';
@@ -26,10 +27,11 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
   const d = r.d;
   const c = d.contract;
   const t = await getTranslations('deal.contract');
+  const f = await getFmt();
   const rows: Array<[string, React.ReactNode]> = [
     [t('target'), d.title ?? '—'],
-    [t('amount'), d.amount != null ? won(d.amount) : t('amountPending')],
-    [t('fee'), d.agreedFee != null ? t('feeValue', { fee: won(d.agreedFee) }) : t('feePending')],
+    [t('amount'), d.amount != null ? f.won(d.amount) : t('amountPending')],
+    [t('fee'), d.agreedFee != null ? t('feeValue', { fee: f.won(d.agreedFee) }) : t('feePending')],
     [t('bearer'), d.feeBearerLabel ?? t('bearerPending')],
     [t('refCode'), d.refCode ? `${d.refCode} · tier ${d.tier}` : t('none')],
     [t('due'), d.dueDate ?? t('duePending')],

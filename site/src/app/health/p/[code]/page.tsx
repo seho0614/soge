@@ -8,9 +8,10 @@ import { Crumb, HltEmpty, HltNav, ProductGrid, SellerBox } from '@/components/he
 import { OptionRows } from '@/components/health/OptionRows';
 import { Msgs } from '@/i18n/Msgs';
 import { ProductArt } from '@/components/health/ProductArt';
-import { krw, RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/util';
+import { RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/util';
 import { QnaPanel, ReviewsPanel, stars } from '@/components/health/ReviewPanels';
 import { me } from '@/lib/session';
+import { getFmt } from '@/lib/getFmt';
 
 type Props = { params: Promise<{ code: string }>; searchParams?: Promise<{ tab?: string; rating?: string }> };
 
@@ -37,6 +38,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   const rating = Number(sp.rating) >= 1 && Number(sp.rating) <= 5 ? Number(sp.rating) : undefined;
   const code = decodeURIComponent(raw);
   const t = await getTranslations('hlt.product');
+  const f = await getFmt();
   const tc = await getTranslations('hlt.common');
   const tk = await getTranslations('hlt.card');
 
@@ -92,13 +94,13 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <span className="hlt-stars">{stars(Number(p.ratingAvg ?? 0))}</span> {t('ratingLine', { avg: Number(p.ratingAvg ?? 0).toFixed(1), n: String(p.reviewCount) })}</Link>}
           {p.summary && <p className="hlt-mut hlt-sm">{p.summary}</p>}
 
-          <div className="hlt-p26" style={{ margin: '14px 0 2px' }}>{p.offPct ? <span className="was">{krw(p.listPrice)}</span> : null}</div>
+          <div className="hlt-p26" style={{ margin: '14px 0 2px' }}>{p.offPct ? <span className="was">{f.won(p.listPrice, '-')}</span> : null}</div>
           <div className="hlt-p26">
             {p.offPct ? <span className="off" style={{ fontSize: 20 }}>{p.offPct}%</span> : null}
-            <span className="now" style={{ fontSize: 24 }}>{krw(p.price)}</span>
+            <span className="now" style={{ fontSize: 24 }}>{f.won(p.price, '-')}</span>
           </div>
           {p.minUnit != null && (p.optionCount ?? 1) > 1 && (
-            <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 6 }}>{t.rich('maxDiscount', { amt: krw(p.minUnit), b: (c) => <b>{c}</b> })}</div>
+            <div className="hlt-u26 big" data-unit="1" style={{ marginTop: 6 }}>{t.rich('maxDiscount', { amt: f.won(p.minUnit, '-'), b: (c) => <b>{c}</b> })}</div>
           )}
           {p.reviewNo && <p className="hlt-rev">{t('adReview', { no: p.reviewNo })}</p>}
 
@@ -111,9 +113,9 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <table className="tbl hlt-tbl">
               <tbody>
                 <tr><th>{t('shipFee')}</th><td>{t('shipFeeVal')}</td></tr>
-                <tr><th>{t('returnFee')}</th><td>{t('returnFeeVal', { amt: krw(RETURN_SHIP_ROUND_TRIP) })}</td></tr>
+                <tr><th>{t('returnFee')}</th><td>{t('returnFeeVal', { amt: f.won(RETURN_SHIP_ROUND_TRIP, '-') })}</td></tr>
                 {/* v10.26 — 시안의 「교환 배송비」 줄. 회원 사정(단순 변심 · 잘못 주문) 교환만 · 신청 때 결제(약관 제3조) */}
-                <tr data-exchange-fee={p.exchangeFee}><th>{t('exchangeFee')}</th><td>{t('exchangeFeeVal', { amt: krw(p.exchangeFee) })}</td></tr>
+                <tr data-exchange-fee={p.exchangeFee}><th>{t('exchangeFee')}</th><td>{t('exchangeFeeVal', { amt: f.won(p.exchangeFee, '-') })}</td></tr>
                 {p.returnAddr && <tr><th>{t('returnAddr')}</th><td>{p.returnAddr}</td></tr>}
                 <tr><th>{t('withdrawal')}</th><td>{t('withdrawalVal', { days: String(days) })}</td></tr>
                 {p.withdrawalBlockedIf && <tr><th>{t('withdrawalBlocked')}</th><td className="hlt-warn">{p.withdrawalBlockedIf}</td></tr>}

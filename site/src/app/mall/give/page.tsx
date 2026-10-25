@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
-import { won, ymdKst } from '@/lib/format';
+import { ymdKst } from '@/lib/format';
 import type { Plan } from '@/components/mal/types';
 import type { RefCode, RefQuota } from '@/components/refcode/types';
 import { GWAN_PATH } from '@/lib/format';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { BackBar } from '@/components/common/BackBar';
 import '@/components/refcode/refcode.css';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('join.give'))('title') };
@@ -43,6 +44,7 @@ type Props = { searchParams: Promise<{ pay?: string; code?: string; message?: st
 export default async function MalGivePage({ searchParams }: Props) {
   const sp = await searchParams;
   const t = await getTranslations('join.give');
+  const f = await getFmt();
   const [plans, p, origin, scope] = await Promise.all([
     apiGet<Plan[]>('/subscription-plans', 300).catch(() => [] as Plan[]),
     me().catch(() => null),
@@ -102,10 +104,10 @@ export default async function MalGivePage({ searchParams }: Props) {
               {basic.includedCodes > 0 ? (
                 <p data-plan="BASIC"><b>{t('monthly', { n: String(basic.includedCodes) })}{perListing && t('newListings', { n: String(basic.includedCodes) })}</b>{t('monthlyTail', { n: String(basic.includedCodes) })}</p>
               ) : (
-                <p data-plan="BASIC"><b>{t('noFree', { price: won(basic.extraCodePrice) })}</b>{t('noFreeTail')}</p>
+                <p data-plan="BASIC"><b>{t('noFree', { price: f.won(basic.extraCodePrice) })}</b>{t('noFreeTail')}</p>
               )}
               <p className="gw-ls">
-                {perListing && t('perListingNote')}{t('moreA', { price: won(basic.extraCodePrice) })}
+                {perListing && t('perListingNote')}{t('moreA', { price: f.won(basic.extraCodePrice) })}
                 {upper.length > 0 && <> {t('moreUpper', { list: upper.map((u) => u.includedCodes > 0 ? t('upperItem', { name: u.name, n: String(u.includedCodes) }) : u.name).join(' · ') })}</>}{t('moreB')}
               </p>
             </>
@@ -119,7 +121,7 @@ export default async function MalGivePage({ searchParams }: Props) {
                 {' · '}{t(perListing ? 'usageListing' : 'usageAll', { used: String(quota.usedThisMonth), inc: String(quota.includedCodes) })}
                 {quota.countScope === 'CI' && t('ciSum')}
                 {!quota.identityVerified && t('noIdFree')}
-              </> : <>{' · '}{t('noFree', { price: won(quota.extraCodePrice) })}</>}
+              </> : <>{' · '}{t('noFree', { price: f.won(quota.extraCodePrice) })}</>}
             </p>
           )}
           {/* scope=listing 이면 여기서는 받지 않습니다 — 위 1단계의 안내 · 「매물 보러 가기」로 매물 상세에서 받습니다 */}
@@ -144,7 +146,7 @@ export default async function MalGivePage({ searchParams }: Props) {
                       <div><b>{t('allListings')}</b> <span className="rc-meta">{t('unbound')}</span></div>
                     )}
                     <span className="rc-code">{c.code}</span>
-                    {c.isExtra && <span className="rc-tag">{c.paid ? (c.paymentStub ? t('extraStub') : t('extraPaid', { amount: won(c.extraAmount ?? 0) })) : t('over')}</span>}
+                    {c.isExtra && <span className="rc-tag">{c.paid ? (c.paymentStub ? t('extraStub') : t('extraPaid', { amount: f.won(c.extraAmount ?? 0) })) : t('over')}</span>}
                     {c.revokedAt && <span className="rc-tag">{t('revoked')}</span>}
                     {c.thisMonth && !c.revokedAt && <span className="rc-tag">{t('thisMonth')}</span>}
                     <div className="rc-meta">

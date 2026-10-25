@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiGet } from '@/lib/api';
 import { me } from '@/lib/session';
-import { won, ymdKst } from '@/lib/format';
+import { ymdKst } from '@/lib/format';
 import { MyHead, Empty, Table, shortId, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.deals'))('title') };
@@ -44,6 +45,7 @@ export default async function MyDeals() {
   if (!(await me())) redirect('/login');
   const rows = await apiGet<Deal[]>('/me/deals', 5).catch(() => [] as Deal[]);
   const t = await getTranslations('my.deals');
+  const f = await getFmt();
   const review = rows.find((d) => (d.myPart === 'BUYER' || d.myPart === 'SELLER') && ['CONFIRMED', 'SETTLED'].includes(d.status) && !d.iReviewed);
 
   return (
@@ -63,8 +65,8 @@ export default async function MyDeals() {
                   {d.iConfirmed && !['CONFIRMED', 'SETTLED'].includes(d.status) && <><br /><span className="my-ls">{t('myConfirmed')}</span></>}</td>
                 <td><span className="my-code">{d.attributedCode ?? '—'}</span></td>
                 <td><span className={`my-bg ${TONE(d.status)}`}>{d.statusLabel ?? d.status}</span></td>
-                <td>{d.agreedFee != null && ['CONFIRMED', 'SETTLED'].includes(d.status) ? <b>{won(d.agreedFee)}</b>
-                  : d.agreedFee != null ? <span className="my-ls">{t('feeBefore', { fee: won(d.agreedFee) })}</span> : <span className="my-ls">{t('before')}</span>}</td>
+                <td>{d.agreedFee != null && ['CONFIRMED', 'SETTLED'].includes(d.status) ? <b>{f.won(d.agreedFee)}</b>
+                  : d.agreedFee != null ? <span className="my-ls">{t('feeBefore', { fee: f.won(d.agreedFee) })}</span> : <span className="my-ls">{t('before')}</span>}</td>
                 <td>{ymdKst(d.confirmedAt ?? d.createdAt)}</td>
                 <td>
                   <div className="my-lka" data-deal-act={d.id}>

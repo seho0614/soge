@@ -15,7 +15,9 @@ import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ListingCardData } from '@/lib/types';
 import type { AdServe } from '@/components/home/types';
-import { ago, won } from '@/lib/format';
+import { ago } from '@/lib/format';
+import { won as fwon } from '@/lib/fmt';
+import { useFmt } from '@/lib/useFmt';
 import { QM, SORTS, photoSrc } from '@/components/gwan/gw';
 import { GwGrid } from '@/components/gwan/GwCard';
 import { CatEmpty, GwFrame, Pager } from '@/components/gwan/GwParts';
@@ -32,6 +34,7 @@ import { MoneySearch } from './MoneySearch';
  *  v10.97 — 글자는 사전(money.budget.*). 「만원」 묶음은 한국어에서만 씁니다(다른 언어는 원 단위 그대로) */
 type MoneyT = ReturnType<typeof useTranslations<'money'>>;
 export function budget(a: number | null, b: number | null, t: MoneyT, locale: string): string {
+  const won = (n: number) => fwon(n, locale);   // v10.102 (2-5c) — ko 「1,200,000원」 그대로 · 다른 언어 「₩1,200,000」
   const man = (n: number) => (locale === 'ko' && n % 10000 === 0 ? (n / 10000).toLocaleString('ko-KR') : null);
   if (!a && !b) return t('budget.nego');
   if (a && b) {
@@ -112,6 +115,7 @@ export interface MoneyViewProps {
 export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppliers, ai, cases, band, float, title, sel, total, josa, grades, cats, grade, cat, badge, sort, page, pageCount, bar, data, organic, sortHrefs, keep }: MoneyViewProps) {
   const t = useTranslations('money');
   const locale = useLocale();
+  const f = useFmt();
   const tg = useTranslations('gwan.meta.MNY'), tq = useTranslations('gwan.qm');   // v10.97 — 관 안내 이름 · 퀵메뉴도 사전
   const [tab, setTab] = useState('');
   const shown = reqs.items.filter((r) => !tab || r.kind === tab).slice(0, 4);
@@ -195,7 +199,7 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
                       <Link href={`/request/${r.id}`}>{r.title}</Link>
                       <div>{r.categoryName && <span className={`mny-tag ${tone(r.categoryName)}`}>{r.categoryName}</span>}<MnyPic name="pin_s" alt={t('card.region')} />{where(r.sido, r.sigungu, t('unknownRegion'))}</div>
                     </div>
-                    <span className="mny-req-c is-time" suppressHydrationWarning>{ago(r.createdAt)}</span>
+                    <span className="mny-req-c is-time" suppressHydrationWarning>{f.ago(r.createdAt, ago(r.createdAt))}</span>
                     <span className="mny-req-c is-price">{budget(r.budgetMin, r.budgetMax, t, locale)}</span>
                     <span className="mny-req-c is-n">{t.rich('view.proposals', { n: String(r.proposalCount ?? 0), b: (c) => <b>{c}</b> })}</span>
                     <Link className="mny-btn is-ghost" href={`/request/${r.id}`} aria-label={t('view.proposeAria', { title: r.title })}>{t('card.propose')}</Link>

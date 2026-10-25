@@ -4,9 +4,10 @@ import { me } from '@/lib/session';
 import { uiMessages } from '@/lib/content';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
-import { MyHead, Note, Empty, Table, wonP, shortId } from '@/components/my/ui';
+import { MyHead, Note, Empty, Table, shortId } from '@/components/my/ui';
 import { TaxInvoiceButton } from '@/components/my/TaxInvoiceButton';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('stlHist.title') };
@@ -33,6 +34,7 @@ export default async function SettlementHistoryPage() {
   /* v10.28 — 본인인증 회원(개인 · 사업자) 모두 소개비를 받습니다(INV-10R). 전: 사업자만 */
   if (!p.identityVerifiedAt) redirect('/verify');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
 
   const rows = await apiGet<Settlement[]>('/me/settlements/history', 0).catch(() => [] as Settlement[]);
   const paid = rows.filter((r) => r.status === 'PAID');
@@ -51,8 +53,8 @@ export default async function SettlementHistoryPage() {
               <td>{shortId(r.id, 'S-')}</td>
               <td><b>{r.title ?? t('form.dealDefault')}</b>{r.dealId && <><br /><span className="my-ls">{shortId(r.dealId, 'D-')}</span></>}</td>
               <td>{r.attributedCode ? <span className="my-code">{r.attributedCode}</span> : '—'}</td>
-              <td><b>{wonP(r.amount)}</b></td>
-              <td>{r.vat != null ? wonP(r.vat) : '—'}</td>
+              <td><b>{f.won(r.amount, '—')}</b></td>
+              <td>{r.vat != null ? f.won(r.vat, '—') : '—'}</td>
               <td>{r.paidAt ? ymdKst(r.paidAt) : '—'}</td>
               <td>{r.payee !== 'BUSINESS' ? <span className="my-ls">{t('stlHist.na')}</span>
                 : r.taxInvoiceIssuedAt ? <span className="my-bg ok" title={r.taxInvoiceNo ?? ''}>{t('stlHist.issued')}</span>
@@ -63,7 +65,7 @@ export default async function SettlementHistoryPage() {
           ))}
         </Table>
       )}
-      <Note kind="ok">{t.rich('stlHist.total', { total: wonP(total), msg: messages.NO_DEDUCTION ?? '', b: (c) => <b>{c}</b> })}</Note>
+      <Note kind="ok">{t.rich('stlHist.total', { total: f.won(total, '—'), msg: messages.NO_DEDUCTION ?? '', b: (c) => <b>{c}</b> })}</Note>
     </>
   );
 }

@@ -10,6 +10,8 @@ import { photoSrc, qhref, regionText } from '@/components/gwan/gw';
 import { cardPrice } from '@/components/gwan/GwCard';
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
+import { useFmt } from '@/lib/useFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('gwan'))('qm.urgent') };
@@ -28,7 +30,10 @@ const href = (x: ListingCardData) => `/${GWAN_PATH[x.gwanCode] ?? 'money'}/${x.i
 function UCard({ x }: { x: ListingCardData }) {
   const t = useTranslations('plaza.urgent');
   const m = useTranslations('money');
-  const price = cardPrice(x);
+  const g = useTranslations('gwan');
+  const f = useFmt();
+  /* 금액 — 한국어는 억 · 만 줄임 그대로, 다른 언어는 전체 숫자 ₩ (v10.102 · 2-5c) */
+  const price = cardPrice(x, (k) => g(k), f.loc);
   return (
     <Link className="gw-uc" href={href(x)} data-listing={x.id} data-urgent={x.urgent?.kind}>
       <div className="gw-uimg">
@@ -61,6 +66,8 @@ function UCard({ x }: { x: ListingCardData }) {
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
   const t = await getTranslations('plaza');
+  const g = await getTranslations('gwan');
+  const f = await getFmt();
   const tab = UTABS.find(([k]) => k === q.t) ?? UTABS[0];
   const group = UCATS.some(([k]) => k === q.g) ? q.g : undefined;
   const sort = USORT.some(([k]) => k === q.sort) ? q.sort : undefined;
@@ -113,7 +120,7 @@ export default async function Page({ searchParams }: Props) {
                     <img className="gw-thp" src={photoSrc(x.categoryName, x.thumbUrl ? [x.thumbUrl] : null)} alt="" loading="lazy" />
                     <span className="gw-urg">{t('urgent.mark')}</span>
                   </span>
-                  <span className="gw-urb"><span className="gw-urc">{x.categoryName}</span><span className="gw-urt">{x.title}</span><span className="gw-urp">{cardPrice(x).value}</span></span>
+                  <span className="gw-urb"><span className="gw-urc">{x.categoryName}</span><span className="gw-urt">{x.title}</span><span className="gw-urp">{cardPrice(x, (k) => g(k), f.loc).value}</span></span>
                 </Link>
               ))}
           </div>

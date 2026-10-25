@@ -9,9 +9,10 @@ import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { ReturnForm } from '@/components/health/ReturnForm';
 import { ProductArt } from '@/components/health/ProductArt';
-import { codeText, krw, ORDER_LABEL, RETURN_KIND, ymd } from '@/components/health/util';
+import { codeText, ORDER_LABEL, RETURN_KIND, ymd } from '@/components/health/util';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hRetNew.meta') };
@@ -48,6 +49,7 @@ function judge(o: HltOrder, open: HltReturn | undefined, t: MyDealT, to: OrderT)
 export default async function MyHltReturnNew({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const to = await getTranslations('order');
   const no = (await searchParams).o;
 
@@ -68,7 +70,7 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
             <h3>{t('hRetNew.pickH')}</h3>
             {target.map((o) => (
               <div key={o.orderNo} className="hlt-sum">
-                <span>{ymd(o.createdAt)} · {o.orderNo} · {codeText(to, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status)} · {krw(o.total)}</span>
+                <span>{ymd(o.createdAt)} · {o.orderNo} · {codeText(to, 'orderState', o.status, ORDER_LABEL[o.status] ?? o.status)} · {f.won(o.total, '-')}</span>
                 <Link className="hlt-btn sm" href={`/my/health/returns/new?o=${encodeURIComponent(o.orderNo)}`}>{t('hRetNew.pick')}</Link>
               </div>
             ))}
@@ -115,10 +117,10 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
               <b>{i.name}</b>
               <span className="hint">{i.optionLabel && i.optionLabel !== '단품' ? `${i.optionLabel} × ` : ''}{t('h.qty', { n: String(i.qty) })}{i.withdrawalBlockedIf && t('hRetNew.limit', { v: i.withdrawalBlockedIf })}</span>
             </div>
-            <b className="money">{krw(i.amount)}</b>
+            <b className="money">{f.won(i.amount, '-')}</b>
           </div>
         ))}
-        <div className="hlt-sum tot"><span>{t('h.payAmount')}</span><span>{krw(o.total)}</span></div>
+        <div className="hlt-sum tot"><span>{t('h.payAmount')}</span><span>{f.won(o.total, '-')}</span></div>
       </section>
   );
 

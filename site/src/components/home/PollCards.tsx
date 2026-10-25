@@ -14,17 +14,29 @@
  * 「준비 중」 카드의 문구는 2026-10-03 에 확정한 질문입니다(v10.15 — 시드 scripts/seed-polls.sql 과 같은 문구. 전에는 그림의 예시 문구).
  */
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 import { Line } from './Icons';
-import { type Poll, type PollOption, people, pct, usePoll } from '../community/poll';
+import { type Poll, type PollOption, type PollTexts, pct, usePoll } from '../community/poll';
 
 const ALL = '/community/polls';
 
 /* eslint-disable-next-line @next/next/no-img-element */
 const Img = ({ src }: { src: string }) => <img src={src} alt="" loading="lazy" decoding="async" />;
 
+/** 투표 알림 글자(사전 main.poll.msg.*) — v10.102 2-5c */
+function usePollTexts(): PollTexts {
+  const t = useTranslations('main');
+  return useMemo(() => ({
+    pick: t('poll.msg.pick'), ok: t('poll.msg.ok'), already: t('poll.msg.already'),
+    login: t('poll.msg.login'), fail: t('poll.msg.fail'), offline: t('poll.msg.offline'),
+  }), [t]);
+}
+
 function Foot({ h, cta }: { h: ReturnType<typeof usePoll>; cta: string }) {
   const t = useTranslations('main');
+  const f = useFmt();
   const { poll, canVote, voted, busy, vote, msg } = h;
   return (
     <>
@@ -32,7 +44,7 @@ function Foot({ h, cta }: { h: ReturnType<typeof usePoll>; cta: string }) {
         {canVote
           ? <button type="button" className="home-vbtn" onClick={vote} disabled={busy} data-vote>{busy ? t('poll.sending') : cta} <Line name="arrow" size={16} w={2.4} /></button>
           : <span className="home-vdone" data-done>{voted ? t('poll.voted') : t('poll.closed')}</span>}
-        <span data-total={poll.total}>{people(poll.total)}</span>
+        <span data-total={poll.total}>{t('poll.people', { n: f.num(poll.total) })}</span>
       </div>
       {msg && (
         <p className={`home-plmsg ${msg.kind}`} role={msg.kind === 'ok' ? 'status' : 'alert'}>
@@ -59,7 +71,8 @@ function Row({ o, h }: { o: PollOption; h: ReturnType<typeof usePoll> }) {
 
 function Vs({ p }: { p: Poll }) {
   const t = useTranslations('main');
-  const h = usePoll(p);
+  const f = useFmt();
+  const h = usePoll(p, usePollTexts());
   const [a, b] = h.poll.options;
   const tile = (o: PollOption | undefined, fallback: string) => {
     if (!o) return null;
@@ -67,7 +80,7 @@ function Vs({ p }: { p: Poll }) {
     return (
       <button type="button" className={`home-vsi${on ? ' on' : ''}`} aria-pressed={on} disabled={!h.canVote} onClick={() => h.pick(o.id)} data-opt={o.id}>
         <Img src={o.image ?? fallback} /><b>{o.label}</b>
-        <span>{h.result ? t('poll.vsResult', { p: String(pct(o.votes, h.poll.total)), n: o.votes.toLocaleString('ko-KR') }) : (o.sub ?? ' ')}</span>
+        <span>{h.result ? t('poll.vsResult', { p: String(pct(o.votes, h.poll.total)), n: f.num(o.votes) }) : (o.sub ?? ' ')}</span>
       </button>
     );
   };
@@ -85,7 +98,7 @@ function Vs({ p }: { p: Poll }) {
 
 function Ask({ p }: { p: Poll }) {
   const t = useTranslations('main');
-  const h = usePoll(p);
+  const h = usePoll(p, usePollTexts());
   return (
     <article className="home-pl" data-poll={h.poll.id} data-kind="ASK" data-voted={h.voted ? '1' : '0'}>
       <span className="home-bdg lilac">{t('poll.kindAsk')}</span>
@@ -101,7 +114,7 @@ function Ask({ p }: { p: Poll }) {
 
 function Used({ p }: { p: Poll }) {
   const t = useTranslations('main');
-  const h = usePoll(p);
+  const h = usePoll(p, usePollTexts());
   return (
     <article className="home-pl" data-poll={h.poll.id} data-kind="USED" data-voted={h.voted ? '1' : '0'}>
       <span className="home-bdg mint">{t('poll.kindUsed')}</span>

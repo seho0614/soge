@@ -9,6 +9,7 @@ import { FileOpenButton } from '@/components/files/FileOpenButton';
 import { BackBar } from '@/components/common/BackBar';
 
 import { ymdKst } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 
@@ -30,7 +31,6 @@ interface Ownership {
 interface Category { id: string; name: string }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const won = (n: number | null) => (n == null ? '협의' : n.toLocaleString('ko-KR') + '원');
 const ymd = (iso?: string | null) => iso ? ymdKst(iso) : '—';
 /* t — 사전 키(join.malBrokers.own.<상태>) */
 const OWN: Record<string, { t: 'own.SUBMITTED' | 'own.VERIFIED' | 'own.REJECTED'; c: string }> = {
@@ -69,6 +69,7 @@ export default async function MalBrokersPage({ searchParams }: {
 
   const { view, mine, created } = await searchParams;
   const [t, th, locale] = await Promise.all([getTranslations('join.malBrokers'), getTranslations('header.gwan'), getLocale()]);
+  const f = await getFmt();
 
   const [list, categories, myRows, gwans, settings] = await Promise.all([
     apiGet<ListingListData>('/listings?gwanCode=MAL&axis=RE&limit=20&sort=RECENT', 30).catch(() => null),
@@ -174,7 +175,7 @@ export default async function MalBrokersPage({ searchParams }: {
                     <tr key={l.id}>
                       <td>{l.isAd && <span className="badge badge-ad">{l.adLabel ?? t('ad')}</span>} {l.title}</td>
                       <td>{l.categoryName}</td>
-                      <td className="num">{won(l.desiredFee)}</td>
+                      <td className="num">{f.won(l.desiredFee)}</td>
                       <td>{l.owner.companyName}{l.owner.verified && <> <span className="gw-bg gw-ok">{t('verified')}</span></>}</td>
                       <td><Link href={`/mal/brokers?view=${l.id}#view`}>{t('details')}</Link></td>
                     </tr>
@@ -195,7 +196,7 @@ export default async function MalBrokersPage({ searchParams }: {
                 <div className="gw-sh2" style={{ padding: '0 0 8px' }}><b>{viewed.title}</b></div>
                 <p className="gw-ls">{viewed.categoryName} · {viewed.regionNames.join(', ') || t('noRegion')} · {viewed.statusLabel} · {t('published', { date: ymd(viewed.publishedAt) })}</p>
                 <p className="doc-body">{viewed.body ?? t('noBody')}</p>
-                <p>{t.rich('viewFee', { fee: won(viewed.desiredFee), b: (c) => <b>{c}</b> })} {viewed.feeBearerLabel && <span className="gw-ls">({viewed.feeBearerLabel})</span>}</p>
+                <p>{t.rich('viewFee', { fee: f.won(viewed.desiredFee), b: (c) => <b>{c}</b> })} {viewed.feeBearerLabel && <span className="gw-ls">({viewed.feeBearerLabel})</span>}</p>
                 <p className="gw-ls">{t('viewOwner', { company: viewed.owner.companyName, verified: viewed.owner.verified ? t('bizVerified') : '', n: String(viewed.owner.confirmedDeals) })}</p>
                 <div className="gw-dact">
                   <Link className="gw-bp gw-sm" href={`/mall/${viewed.id}`}>{t('toDetail')}</Link>

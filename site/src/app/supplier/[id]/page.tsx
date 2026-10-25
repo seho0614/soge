@@ -6,6 +6,7 @@ import { GWAN_PATH } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { GwFrame } from '@/components/gwan/GwParts';
 import { manwon, photoSrc, trustCls } from '@/components/gwan/gw';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,6 +37,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!p) notFound();
   const t = p.trust;
   const m = await getTranslations('billing.profile');
+  const fm = await getFmt();
   const ts = await getTranslations('billing.supplier');
   return (
     <><GwFrame code={code}>
@@ -77,7 +79,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
                     <span className="gw-cc">{x.categoryName}</span>
                   </div>
                   <div className="gw-pgb"><div className="gw-tt">{x.title}</div>
-                    <div className="gw-pr">{x.dealAmount != null ? manwon(x.dealAmount) : x.isRealty ? m('negotiable') : <><small className="gw-prl">{m('fee')}</small> {manwon(x.desiredFee)}</>}</div>
+                    <div className="gw-pr">{x.dealAmount != null ? (fm.ko ? manwon(x.dealAmount) : fm.won(x.dealAmount)) : x.isRealty ? m('negotiable') : <><small className="gw-prl">{m('fee')}</small> {fm.ko ? manwon(x.desiredFee) : fm.won(x.desiredFee)}</>}</div>
                     <div className="gw-mt2"><span>L-{x.listingNo}</span><span>♡ {x.likeCount}</span></div></div>
                 </Link>
               ))}

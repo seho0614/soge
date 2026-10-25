@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
-import { dtKst, won } from '@/lib/format';
+import { dtKst } from '@/lib/format';
+import { getFmt } from '@/lib/getFmt';
 import { PaymentReportForm } from '@/components/PaymentReportForm';
 import { DealShell } from '@/components/deal/DealShell';
 import { loadDeal } from '@/components/deal/load';
@@ -27,12 +28,13 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
   if ('error' in r) return <div className="w1 w1-wrap"><div className="w1-empty">{r.error}</div></div>;
   const d = r.d;
   const t = await getTranslations('deal');
+  const f = await getFmt();
   const by = (p: string) => d.payments.find((x) => x.party === p);
   const n = ['BUYER', 'SELLER'].filter((p) => by(p)).length;
   return (
     <DealShell d={d} step={1} title={t('pay.title')} sub={t('pay.sub')}>
       <div className="w1-esc">
-        <div className="er"><span>{t('pay.amount')}</span><b>{d.amount != null ? won(d.amount) : t('pay.amountPending')}</b>
+        <div className="er"><span>{t('pay.amount')}</span><b>{d.amount != null ? f.won(d.amount) : t('pay.amountPending')}</b>
           {d.amount != null && <span className={`w1-bg ${d.amount >= 50_000_000 ? 'ok' : 'off'}`}>{d.amount >= 50_000_000 ? t('pay.over') : t('pay.under')}</span>}</div>
         <div className="er"><span>{t('pay.transfer')}</span><b>{t('pay.direct')}</b><span className="w1-bg off">{t('pay.noEscrow')}</span></div>
         <div className="er"><span>{t('pay.reports')}</span><b>{n} / 2</b><span className={`w1-bg ${n === 2 ? 'ok' : 'wait'}`}>{n === 2 ? t('pay.done') : t('common.wait')}</span></div>

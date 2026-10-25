@@ -10,6 +10,7 @@ import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ago } from '@/lib/format';
+import { useFmt } from '@/lib/useFmt';
 
 interface Question {
   id: string; question: string; answer: string | null;
@@ -21,6 +22,7 @@ export function GwQnaBoard({ listingId, detailHref, canAsk, canInquire, loggedIn
 }) {
   const [rows, setRows] = useState<Question[]>(initial);
   const t = useTranslations('detail.board');
+  const f = useFmt();
   const tc = useTranslations('detail.common');
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function GwQnaBoard({ listingId, detailHref, canAsk, canInquire, loggedIn
         <div key={q.id} className="my-lrow" data-qna-row={q.id}>
           <div className="my-lt">
             <b>Q. {q.question}</b>
-            <span className="my-ls" suppressHydrationWarning>{ago(q.createdAt)} · {q.answer ? t('answered') : t('waiting')} · {q.askerName}</span>
+            <span className="my-ls" suppressHydrationWarning>{f.ago(q.createdAt, ago(q.createdAt))} · {q.answer ? t('answered') : t('waiting')} · {q.askerName}</span>
             {q.answer && <p className="my-ls" style={{ margin: '6px 0 0', color: 'var(--mink2)' }}><b>A.</b> {q.answer}</p>}
             {!q.answer && q.canAnswer && (answering === q.id ? (
               <form onSubmit={(e) => answer(q.id, e)} style={{ display: 'flex', gap: 6, marginTop: 8 }}>

@@ -5,6 +5,7 @@ import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('act.title') };
@@ -21,7 +22,6 @@ interface Points {
   rows: Array<{ id: number; name: string; points: number; redeemable: boolean; earnedAt: string }>;
 }
 /* v10.31 (시안 「8,500원」 · 10/10 시안 기준) — 포인트는 1포인트 = 1원, 「원」으로 적습니다(전: 「P」) */
-const pt = (n: number | null | undefined) => `${Number(n ?? 0).toLocaleString('ko-KR')}원`;
 interface Grade { code: string; name: string; criteria: string; benefit: string; nextHint: string | null; now: boolean }
 
 /**
@@ -37,6 +37,9 @@ export default async function ActivityPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
+  /* 포인트 금액 — ko 「8,500원」 · en 「₩8,500」 (v10.102 · 2-5c) */
+  const pt = (n: number | null | undefined) => f.won(n ?? 0);
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   const [card, points, grades] = await Promise.all([

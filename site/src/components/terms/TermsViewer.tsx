@@ -3,6 +3,9 @@
  *   목록은 GET /terms/index(유효 · 시행 예정 · 폐기), 본문은 GET /terms/doc/{code}. 폐기된 약관은 탭에서 흐리게 · 본문 대신 안내.
  */
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
+import type { Fmt } from '@/lib/fmtBind';
 import { ymdKst } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { Markdown, toc } from './Markdown';
@@ -15,13 +18,15 @@ const ORDER = ['SERVICE', 'PRIVACY', 'REFUND', 'THIRDPARTY', 'OUTSOURCE', 'HLT_S
 export function sortTerms<T extends { code: string }>(list: T[]): T[] {
   return [...list].sort((a, b) => (ORDER.indexOf(a.code) + 1 || 99) - (ORDER.indexOf(b.code) + 1 || 99));
 }
-export function termState(t: TermIndex): string {
-  if (t.status === 'ARCHIVED') return t.code === 'LOCATION' ? '폐기 · 단말기 위치 미수집' : '폐기';
-  const when = t.effectiveFrom ? ymdKst(t.effectiveFrom) : '';
-  if (t.scheduled) return `발행 · ${when} 시행 예정`;
-  if (t.isNotice) return '발행 · 알림(동의 받지 않음)';
-  if (t.code === 'HLT_SALE') return '발행 · 직판(통신판매업자)';
-  return `발행 · ${when} 시행${t.isRequired ? '' : ' · 선택'}`;
+/* v10.102 2-5c — 글자는 사전 policy.state.* · 날짜는 f.ymd(ko 는 ymdKst 그대로) */
+export type PolicyT = ReturnType<typeof useTranslations<'policy'>>;
+export function termState(t: TermIndex, tr: PolicyT, f: Fmt): string {
+  if (t.status === 'ARCHIVED') return t.code === 'LOCATION' ? tr('state.archivedLocation') : tr('state.archived');
+  const when = t.effectiveFrom ? f.ymd(t.effectiveFrom, ymdKst(t.effectiveFrom)) : '';
+  if (t.scheduled) return tr('state.scheduled', { when });
+  if (t.isNotice) return tr('state.notice');
+  if (t.code === 'HLT_SALE') return tr('state.direct');
+  return `${tr('state.effective', { when })}${t.isRequired ? '' : tr('state.optional')}`;
 }
 
 /**
@@ -30,36 +35,40 @@ export function termState(t: TermIndex): string {
  *   본문 · 판 · 시행일 · 조 목록 이동(개발 기능)은 그대로 둡니다. 폭도 시안 wrap(1240)으로.
  */
 export function TermsViewer({ list, doc, code, index = false }: { list: TermIndex[]; doc: TermDoc | null; code: string; index?: boolean }) {
+  const tr = useTranslations('policy');
+  const f = useFmt();
   const terms = sortTerms(list);
   const cur = terms.find((t) => t.code === code.toUpperCase());
   const items = doc?.body ? toc(doc.body) : [];
   return (
     <div className="w1 w1-wrap" data-screen={index ? 'SB-HOM-ETC-020' : 'SB-HOM-ETC-021'}>
-      <BackBar href="/guide" label="이용안내" wrap={false} />
+      <BackBar href="/guide" label={tr('viewer.back')} wrap={false} />
       <div className="w1-aih" style={{ marginTop: 10 }}>
-        <h1>{index ? '약관 · 법정 고지' : '약관 전문'}</h1>
-        <p>{index ? '사업자 정보 · 통신판매중개자 고지는 화면 맨 아래 바닥줄에 있습니다. ' : ''}발행된 약관입니다. 판 번호 · 시행일이 함께 나옵니다.</p>
+        <h1>{index ? tr('viewer.titleIndex') : tr('viewer.titleDoc')}</h1>
+        <p>{index ? tr('viewer.leadIndex') : ''}{tr('viewer.lead')}</p>
       </div>
-      <nav className="w1-tchips" aria-label="약관 고르기">
+      <nav className="w1-tchips" aria-label={tr('viewer.chipsAria')}>
         {terms.map((t) => (
           <Link key={t.code} href={`/terms/${t.code}`} className={`${t.code === cur?.code ? 'on' : ''}${t.status === 'ARCHIVED' ? ' off' : ''}`.trim() || undefined}
             aria-current={t.code === cur?.code ? 'page' : undefined}
-            {...(t.isNotice ? { 'data-notice-chip': '', title: '알림 · 동의 받지 않음' } : {})}>{t.title}{t.isNotice ? ' (알림)' : ''}</Link>
+            {...(t.isNotice ? { 'data-notice-chip': '', title: tr('viewer.noticeChip') } : {})}>{t.title}{t.isNotice ? tr('viewer.noticeSuffix') : ''}</Link>
         ))}
       </nav>
       {!doc ? (
         <div className="w1-panel" style={{ padding: 20 }}>
-          <b>{cur?.title ?? '약관'}</b>
-          <p className="w1-ls">{cur ? termState(cur) : '없는 약관입니다.'}{cur?.status === 'ARCHIVED' ? ' — 지금은 쓰지 않는 약관이라 전문을 싣지 않습니다.' : ''}</p>
+          <b>{cur?.title ?? tr('viewer.fallbackTitle')}</b>
+          <p className="w1-ls">{cur ? termState(cur, tr, f) : tr('viewer.notFound')}{cur?.status === 'ARCHIVED' ? tr('viewer.archivedNote') : ''}</p>
         </div>
       ) : (
         <section className="w1-tcard">
           <b>{doc.title}</b>
-          <span className="doc-meta">판 {doc.version}{doc.isRequired ? ' · 필수 동의' : ''}{doc.isNotice ? <> · <span data-term-notice="">알림(동의를 받지 않는 안내)</span></> : ''}
-            {doc.effectiveFrom ? ` · ${ymdKst(doc.effectiveFrom)} ${doc.scheduled ? '시행 예정' : '시행'}` : ''}</span>
+          <span className="doc-meta">{tr('viewer.version', { v: doc.version })}{doc.isRequired ? tr('viewer.required') : ''}{doc.isNotice ? <> · <span data-term-notice="">{tr('viewer.noticeMeta')}</span></> : ''}
+            {doc.effectiveFrom ? tr(doc.scheduled ? 'viewer.scheduled' : 'viewer.effective', { date: f.ymd(doc.effectiveFrom, ymdKst(doc.effectiveFrom)) }) : ''}</span>
           {items.length > 0 && <ol className="w1-tjo">{items.map((x) => <li key={x.id}><a href={`#${x.id}`}>{x.text}</a></li>)}</ol>}
+          {/* v10.102 — 약관 본문은 한국어만(서버 · 마크다운). 다른 언어 화면에는 「한국어판이 우선」 한 줄 */}
+          {!f.ko && <p className="w1-ls" data-terms-lang="">{tr('viewer.koOnly')}</p>}
           <article className="doc-body" data-terms-body="1">
-            {doc.body ? <Markdown text={doc.body} /> : <p className="w1-ls">아직 작성되지 않았습니다.</p>}
+            {doc.body ? <Markdown text={doc.body} /> : <p className="w1-ls">{tr('viewer.empty')}</p>}
           </article>
         </section>
       )}

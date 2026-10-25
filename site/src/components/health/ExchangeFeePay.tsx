@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { krw, needsLogin } from './util';
+import { needsLogin } from './util';
+import { useFmt } from '@/lib/useFmt';
 
 /** 토스 결제창 클라이언트 키 — PayForm 과 같은 값. 없으면 시험 결제(스텁)입니다 */
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
@@ -53,6 +54,7 @@ export async function confirmExchangeFee(id: string, paymentKey: string, amount:
  */
 export function ExchangeFeePay({ returnId, amount, onPaid }: { returnId: string; amount: number; onPaid?: (note: string) => void }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const tx: FeeTx = { server: t('common.confirmReqFail'), rejected: t('common.notApproved'), approved: t('fee.approved') };
   const router = useRouter();
   const [method, setMethod] = useState('CARD');
@@ -110,7 +112,7 @@ export function ExchangeFeePay({ returnId, amount, onPaid }: { returnId: string;
   return (
     <div className="hlt-box" data-fee-pay={returnId}>
       <h3>{t('fee.title')}</h3>
-      <div className="hlt-sum tot"><span>{t('common.feeRound')}</span><span>{krw(amount)}</span></div>
+      <div className="hlt-sum tot"><span>{t('common.feeRound')}</span><span>{f.won(amount, '-')}</span></div>
       <div className="hlt-chips" role="radiogroup" aria-label={t('common.payMethod')}>
         {FEE_METHODS.map((m) => (
           <button key={m.code} type="button" role="radio" aria-checked={method === m.code}
@@ -122,7 +124,7 @@ export function ExchangeFeePay({ returnId, amount, onPaid }: { returnId: string;
       )}
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={pending} onClick={pay}>
-        {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: krw(amount) }) : t('common.stubBtn', { amount: krw(amount) })}
+        {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: f.won(amount, '-') }) : t('common.stubBtn', { amount: f.won(amount, '-') })}
       </button>
       <p className="hint">{t('fee.note')}</p>
     </div>

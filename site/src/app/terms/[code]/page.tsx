@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation';
 import { apiGet } from '@/lib/api';
 import { TermsViewer, type TermDoc, type TermIndex } from '@/components/terms/TermsViewer';
 import '@/styles/proto-w1.css';
+import { getTranslations } from 'next-intl/server';
 
 type Props = { params: Promise<{ code: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
   const t = await apiGet<TermDoc>(`/terms/doc/${encodeURIComponent(code)}`, 300).catch(() => null);
-  return { title: t?.title ?? '약관' };
+  return { title: t?.title ?? (await getTranslations('policy'))('meta.term') };
 }
 
 /** SB-HOM-ETC-021 약관 전문 — v10.31 시안 termsv(탭 10종 · 판 · 시행일 · 조항 목록 · 본문 마크다운을 그려서). 대소문자는 서버가 가리지 않습니다. */

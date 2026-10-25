@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
 export interface DisputableFee { id: number; summary: string; amount: string; deliveredAt?: string }
 
@@ -23,6 +24,7 @@ const REASONS = [
 export function FeeDisputeForm({ fees }: { fees: DisputableFee[] }) {
   const router = useRouter();
   const t = useTranslations('deal.fee');
+  const fm = useFmt();
   const [f, setF] = useState({ feeId: String(fees[0]?.id ?? ''), reasonCode: 'UNREACHABLE', reason: '', evidence: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function FeeDisputeForm({ fees }: { fees: DisputableFee[] }) {
         <select value={f.feeId} onChange={(e) => setF({ ...f, feeId: e.target.value })} name="feeId">
           {fees.map((x) => (
             <option key={x.id} value={x.id}>
-              {t('feeNo', { id: String(x.id) })} · {x.summary} · {Number(x.amount).toLocaleString('ko-KR')}원
+              {t('feeNo', { id: String(x.id) })} · {x.summary} · {fm.won(Number(x.amount))}
             </option>
           ))}
         </select>

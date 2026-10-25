@@ -24,7 +24,7 @@ import { getTranslations } from 'next-intl/server';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import type { HltConcern, HltIngredient, HltProduct } from '@/components/health/types';
-import { krw } from '@/components/health/util';
+import { getFmt } from '@/lib/getFmt';
 import { ProductArt } from '@/components/health/ProductArt';
 import { ShopPic } from './Pic';
 import { ShopRankBox } from './ShopRankBox';
@@ -63,6 +63,8 @@ export function SecHead({ title, lead, all }: { title: string; lead?: string; al
 
 export async function ShopMain() {
   const t = await getTranslations('shop');
+  const f = await getFmt();
+  const krw = (n: number | string | null | undefined) => f.won(n, '-');   // v10.102 (2-5c) — ko 「12,000원」(없으면 「-」) 그대로 · 다른 언어 「₩12,000」
   type RankBlock = { basis: string; from: string | null; to: string | null; madeAt: string | null; items: Array<HltProduct & { rank: number; qty: number; orders: number }> };
   const noRank: RankBlock = { basis: '', from: null, to: null, madeAt: null, items: [] };
   type Promo = { id: string; tag: string; title: string; titleEm: string | null; body: string | null; linkUrl: string; cta: string; isSample: boolean };

@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './act';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
@@ -29,10 +30,12 @@ function loadToss(): Promise<TossPaymentsFn> {
   });
   return sdk;
 }
-const won = (n: number | null | undefined) => `${Number(n ?? 0).toLocaleString('ko-KR')}원`;
+/** v10.102 (2-5c) — 화면 언어에 묶은 원 표기(ko 「1,000원」 · en 「₩1,000」) */
+const useWon = () => { const fm = useFmt(); return (n: number | null | undefined) => fm.won(n ?? 0); };
 
 export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: number; max: number; room: number; bonusRate: number; canMoney: boolean }) {
   const t = useTranslations('partnerOps.cashPanel');
+  const won = useWon();
   const router = useRouter();
   const [amount, setAmount] = useState<number>(Math.min(Math.max(300000, min), Math.max(min, Math.min(max, room))));
   const [busy, setBusy] = useState(false);
@@ -94,6 +97,7 @@ export function AutoForm({ on, below, amount, engine, card, min, max, canMoney }
   min: number; max: number; canMoney: boolean;
 }) {
   const t = useTranslations('partnerOps.cashPanel');
+  const won = useWon();
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const [b, setB] = useState<number>(below ?? 100000);
@@ -140,6 +144,7 @@ export function AutoForm({ on, below, amount, engine, card, min, max, canMoney }
 
 export function RefundForm({ refundable, canMoney }: { refundable: number; canMoney: boolean }) {
   const t = useTranslations('partnerOps.cashPanel');
+  const won = useWon();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<number>(refundable);

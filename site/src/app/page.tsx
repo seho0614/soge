@@ -30,6 +30,7 @@ import type { Poll } from '@/components/community/poll';
 import { HomeView } from '@/components/home/HomeView';
 import { liveContent, sampleContent } from '@/components/home/content';
 import { Msgs } from '@/i18n/Msgs';
+import { getFmt } from '@/lib/getFmt';
 import '@/styles/home.css';
 
 /* 추천 칩 — 글은 사전(main.hero.chips) */
@@ -68,7 +69,8 @@ export default async function Home() {
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
   const on = (c: string) => live.includes(c);
 
-  let c = sampleContent(live);
+  const f = await getFmt();
+  let c = sampleContent(live, t, f);
   if (liveMode) {
     const [mal, biz, mny, reqs, prods, posts] = await Promise.all([
       apiGet<ListingListData>('/listings?gwanCode=MAL&limit=3').catch(() => null),
@@ -82,7 +84,7 @@ export default async function Home() {
     c = liveContent(live, {
       prods: on('HLT') ? prods : [], mal: on('MAL') ? (mal?.organic ?? []) : [], biz: on('BIZ') ? (biz?.organic ?? []) : [],
       mny: on('MNY') ? (mny?.organic ?? []) : [], reqs, posts,
-    });
+    }, t, f);
   }
 
   const heroAd = ad && !ad.empty && ad.id ? ad : null;

@@ -7,6 +7,7 @@ import { ViewLeadButton, ContactButton } from './ViewLeadButton';
 import { LeadMemo } from './LeadMemo';
 import { dtKst, ymdKst } from '@/lib/format';
 import { Bg, Empty, Note, Pgh, S2, Tabs, Tw, won } from '@/components/partner/ui';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -62,6 +63,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const top = pricing.reduce((m, r) => Math.max(m, Number(r.myFee ?? 0)), 0);
   const cap = rej?.cap;
   const t = await getTranslations('partnerOps.leads');
+  const f = await getFmt();
   const code = (g: 'alim' | 'band', c: string) => (t.has(`${g}.${c}` as never) ? t(`${g}.${c}` as never) : c);
 
   return (
@@ -106,7 +108,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
               {done ? <LeadMemo deliveryId={l.deliveryId} last={l.memo ?? null} count={l.memoCount ?? 0} /> : null}
             </div>
             <div className="pt-lstat">
-              <span>{t('fee')} <b>{l.fee ? `${won(l.fee)}원` : l.feeQuote != null ? `${won(l.feeQuote)}원` : '—'}</b>{!l.fee && !done && !exp ? <span className="pt-ls"> {t('onOpen')}</span> : null}</span>
+              <span>{t('fee')} <b>{l.fee ? f.wonOf(won(l.fee)) : l.feeQuote != null ? f.wonOf(won(l.feeQuote)) : '—'}</b>{!l.fee && !done && !exp ? <span className="pt-ls"> {t('onOpen')}</span> : null}</span>
             </div>
             <div className="pt-lact">
               {rj ? (
@@ -127,7 +129,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
       <S2>{t('gradeH')}</S2>
       <Note kind="info">
-        {t.rich('gradeNote', { b: (c) => <b>{c}</b> })}{top ? t.rich('gradeTop', { fee: `${won(top)}원`, b: (c) => <b>{c}</b>, a: (c) => <Link href="/partner/pricing">{c}</Link> }) : null}
+        {t.rich('gradeNote', { b: (c) => <b>{c}</b> })}{top ? t.rich('gradeTop', { fee: f.wonOf(won(top)), b: (c) => <b>{c}</b>, a: (c) => <Link href="/partner/pricing">{c}</Link> }) : null}
       </Note>
       {stats?.rates?.length ? (
         <Tw head={[t('th.grade'), t('th.rate'), t('th.fee'), t('th.cond')]} numCols={[1, 2]}>
@@ -135,7 +137,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
             <tr key={r.grade}>
               <td><span className={`pt-gbadge ${gcls(r.label ?? r.grade)}`}>{r.label ?? r.grade}</span></td>
               <td className="num">{Math.round(Number(r.rate) * 100)}%</td>
-              <td className="num"><b>{top ? `${won(Math.round(top * Number(r.rate)))}원` : '—'}</b></td>
+              <td className="num"><b>{top ? f.wonOf(won(Math.round(top * Number(r.rate)))) : '—'}</b></td>
               <td>{r.alimBand ? code('band', r.alimBand) : '—'}</td>
             </tr>
           ))}

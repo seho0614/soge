@@ -463,6 +463,8 @@
     "mxCorner": "Move type \\ volume",
     "mxSave": "Save matrix",
     "mxUnit": "Unit: 10,000 KRW · empty cells show as “Ask for a quote”",
+    "manPh": "×10,000 KRW",
+    "manAria": "{row} {col} (×10,000 KRW)",
     "namePhMx": "e.g. Hanbit packing moves · all of Seoul",
     "namePh": "e.g. Office move-in cleaning",
     "descPh": "What you do and what requests you would like to receive",

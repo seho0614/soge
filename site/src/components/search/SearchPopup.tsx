@@ -38,8 +38,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { GWAN_PATH, ago, won } from '@/lib/format';
+import { won as fwon, agoEn } from '@/lib/fmt';
 import { sugMatch, type SugItem } from './sug';
 import type { SearchGwan } from './SearchBox';
 import { type HitListing, type HitRequest, type Suggest, type HitProduct, type HitPost, type Row, type SearchScope, SCOPES, logSearch, type Group, srcToks, srcScore, manwon, SRC_GN, GW_ORDER, GRADE, getJson } from './search-data';
@@ -59,6 +60,8 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
   const sc = scope ? SCOPES[scope] : null;
   const router = useRouter();
   const tr = useTranslations('searchPop');
+  /* v10.102 (2-5c) — 금액 · 시각은 화면 언어로. 한국어는 예전 글자 그대로(manwon 「3,200만원」 · won 「1,000원」 · ago 「3시간 전」), 다른 언어는 전체 금액 「₩32,000,000」 · 「3h ago」 */
+  const loc = useLocale(), ko = loc === 'ko';
   const [q, setQ] = useState(seed);
   const [hot, setHot] = useState(-1);
   const [gn, setGn] = useState<Record<string, string>>(gwanCache ?? {});
@@ -178,7 +181,7 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
       sec: tr('sec.listings'),
       items: ls.map((l) => ({
         t1: l.title, t2: [l.categoryName ?? '', reg(l)].join(' · '),
-        rt: l.dealAmount ? manwon(Number(l.dealAmount)) : l.desiredFee != null ? tr('rt.fee', { v: won(l.desiredFee) }) : '',
+        rt: l.dealAmount ? (ko ? manwon(Number(l.dealAmount)) : fwon(Number(l.dealAmount), loc)) : l.desiredFee != null ? tr('rt.fee', { v: ko ? won(l.desiredFee) : fwon(l.desiredFee, loc) }) : '',
         href: `/${GWAN_PATH[l.gwanCode] ?? 'money'}/${l.id}`,
       })),
     });
@@ -186,13 +189,13 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
       sec: tr('sec.products'),
       items: hit.products.slice(0, 4).map((p) => ({
         t1: p.name, t2: [p.category, p.soldOut ? tr('soldOut') : ''].filter(Boolean).join(' · '),
-        rt: won(p.price), href: `/health/p/${encodeURIComponent(p.code)}`,
+        rt: ko ? won(p.price) : fwon(p.price, loc), href: `/health/p/${encodeURIComponent(p.code)}`,
       })),
     });
     if (hit.posts.length) out.push({
       sec: tr('sec.posts'),
       items: hit.posts.slice(0, 4).map((p) => ({
-        t1: p.title, t2: [p.author, ago(p.createdAt)].filter(Boolean).join(' · '), rt: tr('rt.post'), href: `/community/${p.id}`,
+        t1: p.title, t2: [p.author, ko ? ago(p.createdAt) : agoEn(p.createdAt)].filter(Boolean).join(' · '), rt: tr('rt.post'), href: `/community/${p.id}`,
       })),
     });
     if ((!sc || sc.intro) && sug.introducers.length) out.push({
@@ -203,7 +206,7 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
       })),
     });
     return out;
-  }, [t, hit, sug, gn, gwanCode, sc, tr]);
+  }, [t, hit, sug, gn, gwanCode, sc, tr, ko, loc]);
 
   /* 고를 수 있는 줄 — 결과 줄만(대표 지시 2026-10-14: 「통합 검색 결과 보기」 줄 없음 · 「이렇게 찾습니다」는 보여 주기만) */
   const rows: Row[] = useMemo(() => groups.flatMap((g) => g.items), [groups]);

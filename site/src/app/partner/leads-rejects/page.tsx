@@ -6,6 +6,7 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { FeeDisputeForm } from '@/components/FeeDisputeForm';
 import { Bg, Empty, Note, Pgh, S2, Tw, won, type Tone } from '@/components/partner/ui';
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';   // v10.101 — 아래 부품이 쓰는 사전 묶음(deal · docs/159)
 
@@ -43,6 +44,7 @@ export default async function LeadsRejectsPage() {
   const open = (f?.rows ?? []).filter((x) => x.disputable);
   const rows = r?.rows ?? [];
   const t = await getTranslations('partnerOps.rejects');
+  const fm = await getFmt();
   const tl = await getTranslations('partnerOps.leads');
   const code = (g: 'st' | 'rc', c: string) => (t.has(`${g}.${c}` as never) ? t(`${g}.${c}` as never) : c);
 
@@ -61,7 +63,7 @@ export default async function LeadsRejectsPage() {
                 <td>
                   <Bg tone={st[1]}>{st[0]}</Bg>
                   {d.state === 'ACCEPTED'
-                    ? <div className="pt-ls">{tl('fee')} {won(d.restored ?? d.amount)}원 {d.settleMode === 'PREPAID' ? t('refunded') : t('deducted')}</div>
+                    ? <div className="pt-ls">{tl('fee')} {fm.wonOf(won(d.restored ?? d.amount))} {d.settleMode === 'PREPAID' ? t('refunded') : t('deducted')}</div>
                     : d.decisionReason ? <div className="pt-ls">{d.decisionReason}</div> : null}
                 </td>
               </tr>

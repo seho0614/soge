@@ -7,8 +7,9 @@ import { ymdKst } from '@/lib/format';
 import { PayoutBox, type PayoutAccount } from './PayoutBox';
 import { ClaimButton } from './ClaimButton';
 import { PaidMarkButton } from './PaidMarkButton';
-import { MyHead, Note, Empty, Table, wonP, shortId, type Tone } from '@/components/my/ui';
+import { MyHead, Note, Empty, Table, shortId, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('stl.title') };
@@ -45,6 +46,7 @@ export default async function SettlementPage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   if (!p.identityVerifiedAt) {
@@ -114,11 +116,11 @@ export default async function SettlementPage() {
                 <span>{d.payeeAs === 'BUSINESS' ? t('stl.asBiz') : t('stl.asPerson')}</span>
               </div>
               <div className="my-calc">
-                <div className="my-cr"><span>{t('stl.dealAmount')}</span><b>{d.dealAmount != null ? wonP(d.dealAmount) : <span className="my-ls">{t('stl.noCtrAmount')}</span>}</b></div>
-                <div className="my-cr"><span>{t.rich('stl.feeRow', { i: (c) => <i>{c}</i> })}</span><b>{wonP(d.amount)}</b></div>
+                <div className="my-cr"><span>{t('stl.dealAmount')}</span><b>{d.dealAmount != null ? f.won(d.dealAmount, '—') : <span className="my-ls">{t('stl.noCtrAmount')}</span>}</b></div>
+                <div className="my-cr"><span>{t.rich('stl.feeRow', { i: (c) => <i>{c}</i> })}</span><b>{f.won(d.amount, '—')}</b></div>
                 <div className="my-cr"><span>{t('stl.deduct')}</span><b className="ok">{t('stl.zero')}</b></div>
-                <div className="my-cr tot"><span>{t('stl.net')}</span><b>{wonP(d.amount)}</b></div>
-                {d.payeeAs === 'BUSINESS' && d.vat != null && <div className="my-cr sub"><span>{t('stl.vat')}</span><b>{wonP(d.vat)}</b></div>}
+                <div className="my-cr tot"><span>{t('stl.net')}</span><b>{f.won(d.amount, '—')}</b></div>
+                {d.payeeAs === 'BUSINESS' && d.vat != null && <div className="my-cr sub"><span>{t('stl.vat')}</span><b>{f.won(d.vat, '—')}</b></div>}
               </div>
               {d.payeeAs === 'BUSINESS' && (
                 <div className="my-bank" data-stl-bank=""><span>{t('stl.bank')}</span>
@@ -132,7 +134,7 @@ export default async function SettlementPage() {
               </div>
             </div>
           ))}
-          <Note kind="info">{t.rich('stl.pendingSum', { n: String(due.length), sum: wonP(sum), b: b_ })}</Note>
+          <Note kind="info">{t.rich('stl.pendingSum', { n: String(due.length), sum: f.won(sum, '—'), b: b_ })}</Note>
         </div>
       )}
 
@@ -148,7 +150,7 @@ export default async function SettlementPage() {
           {rows.map((s) => (
             <tr key={s.id} data-stl-row={s.id}>
               <td>{shortId(s.id, 'S-')}</td>
-              <td><b>{wonP(s.amount)}</b></td>
+              <td><b>{f.won(s.amount, '—')}</b></td>
               <td><span className={`my-bg ${TONE[s.status] ?? 'off'}`}>{s.statusLabel ?? s.status}</span></td>
               <td>{s.payee && <span data-stl-row-payee={s.payee}>{s.payee === 'PERSON' ? t('stl.asPerson') : t('stl.asBiz')}</span>}</td>
               <td>{ymdKst(s.requestedAt)}</td>

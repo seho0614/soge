@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { HltOption } from './types';
 import { useTranslations } from 'next-intl';
-import { krw, needsLogin } from './util';
+import { needsLogin } from './util';
+import { useFmt } from '@/lib/useFmt';
 
 /**
  * 상품 상세의 「옵션 선택 (복용 개월 수)」 — 시안(SB-HLT-PRD-010) 그대로 (v10.26).
@@ -14,6 +15,7 @@ import { krw, needsLogin } from './util';
  */
 export function OptionRows({ code, name, options }: { code: string; name: string; options: HltOption[] }) {
   const t = useTranslations('order');
+  const f = useFmt();
   const router = useRouter();
   const [qty, setQty] = useState<Record<string, number>>(Object.fromEntries(options.map((o) => [o.id, 1])));
   const [pending, start] = useTransition();
@@ -62,9 +64,9 @@ export function OptionRows({ code, name, options }: { code: string; name: string
             <div key={o.id} className={`hlt-optrow${o.stock <= 0 ? ' sold' : ''}`} data-option={o.id}>
               <span className="nm" data-optlabel="1">
                 {/* 시안의 옵션 이름 그대로 — 「월 3,900원 × 9개월 분 : 메가바이탈 비타민C 3000 2+1」 */}
-                {o.unit != null ? t('opt.unitName', { unit: krw(o.unit), months: String(o.months), name: `${name}${o.tag ? ` ${o.tag}` : ''}` }) : o.label}
+                {o.unit != null ? t('opt.unitName', { unit: f.won(o.unit, '-'), months: String(o.months), name: `${name}${o.tag ? ` ${o.tag}` : ''}` }) : o.label}
                 {o.stock <= 0 && <> <span className="hlt-bdg soldout">{t('opt.soldout')}</span></>}
-                <br /><span className="hlt-sm hlt-mut3">{t('opt.pay', { price: krw(o.price) })}{o.stock > 0 && t('opt.leftSep', { n: String(o.stock) })}</span>
+                <br /><span className="hlt-sm hlt-mut3">{t('opt.pay', { price: f.won(o.price, '-') })}{o.stock > 0 && t('opt.leftSep', { n: String(o.stock) })}</span>
               </span>
               <Qty o={o} />
               <button type="button" className="hlt-btn sm" disabled={pending || o.stock <= 0} onClick={() => add(o, false)} data-addcart={o.id}>{t('opt.add')}</button>

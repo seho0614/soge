@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
-import { krw, ymd, codeText } from '@/components/partners/fmt';
+import { ymd, codeText } from '@/components/partners/fmt';
 import type { AffRevenues } from '@/components/partners/types';
 
+import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,6 +22,7 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
+  const fm = await getFmt();
 
   const { ym } = await searchParams;
   const okYm = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : '';
@@ -44,14 +46,14 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
         <p className="empty">{okYm ? t('revenues.emptyMonth', { ym: okYm }) : t('revenues.empty')}</p>
       ) : (
         <>
-          <div className="p2kpis"><div className="kpi"><div className="k">{t('revenues.sum', { label: okYm || t('revenues.all') })}</div><div className="v">{krw(total)}</div><div className="n">{t('revenues.count', { n: String(d.items.length) })}</div></div></div>
+          <div className="p2kpis"><div className="kpi"><div className="k">{t('revenues.sum', { label: okYm || t('revenues.all') })}</div><div className="v">{fm.won(total, '—')}</div><div className="n">{t('revenues.count', { n: String(d.items.length) })}</div></div></div>
           <table className="tbl">
             <thead><tr><th>{t('revenues.colDate')}</th><th>{t('common.colTrack')}</th><th className="num">{t('revenues.colAmount')}</th><th>{t('revenues.colMemo')}</th></tr></thead>
             <tbody>
               {d.items.map((r, i) => (
                 <tr key={`${r.date}-${i}`}>
                   <td>{ymd(r.date)}</td><td>{codeText(t, 'track', r.track)}</td>
-                  <td className="num">{krw(r.amount)}</td><td>{r.memo ?? <span className="dim">—</span>}</td>
+                  <td className="num">{fm.won(r.amount, '—')}</td><td>{r.memo ?? <span className="dim">—</span>}</td>
                 </tr>
               ))}
             </tbody>
