@@ -70,6 +70,12 @@ export class ReviewItemDto {
 
   @ApiProperty({ nullable: true }) rejectReasonCode!: string | null;
   @ApiProperty({ nullable: true, format: 'date-time' }) decidedAt!: Date | null;
+
+  /* v10.106 (D120) — AI 검수 보조 의견(참고만 · 결정은 사람) */
+  @ApiPropertyOptional({ enum: ['APPROVE', 'REJECT', 'UNSURE'], nullable: true, description: 'AI 제안(참고 · AI 는 결정하지 않음)' }) aiSuggestion?: string | null;
+  @ApiPropertyOptional({ isArray: true, type: String, nullable: true, description: 'AI 가 고른 반려 사유 코드(review_reason_codes 안)' }) aiReasonCodes?: string[] | null;
+  @ApiPropertyOptional({ nullable: true, description: 'AI 설명(짧게)' }) aiNote?: string | null;
+  @ApiPropertyOptional({ nullable: true }) aiModel?: string | null;
 }
 
 export class ReviewDecisionResultDto {

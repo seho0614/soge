@@ -44,6 +44,7 @@ export class ReviewRepository {
               coalesce(l.title, rq.title, bl.title, bz.company_name) AS "targetTitle",
               coalesce(c.name, c2.name) AS "categoryName",
               coalesce(sb.company_name, sa.name) AS "submitterName",
+              ai.suggestion AS "aiSuggestion", ai.reason_codes AS "aiReasonCodes", ai.note AS "aiNote", ai.model AS "aiModel",
               to_char(${rejected ? 'ri.decided_at' : 'ri.sla_due_at'} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || ri.id AS "cursorKey"
          FROM review_items ri
          LEFT JOIN listings l  ON ri.target_type = 'LISTING' AND l.id = ri.target_id
@@ -56,6 +57,8 @@ export class ReviewRepository {
          LEFT JOIN accounts sa ON sa.id = ri.submitted_by
          LEFT JOIN businesses sb ON sb.account_id = sa.id AND sb.verified_at IS NOT NULL
          LEFT JOIN review_reason_codes rc ON rc.code = ri.reject_reason_code
+         LEFT JOIN LATERAL (SELECT o.suggestion, o.reason_codes, o.note, o.model FROM ai_review_opinions o
+                             WHERE o.review_item_id = ri.id AND o.note IS DISTINCT FROM '[처리 중]' ORDER BY o.created_at DESC LIMIT 1) ai ON true   -- v10.106 AI 검수 보조 의견(참고 · D120)
         WHERE ${rejected
           ? `ri.status = 'REJECTED' AND ri.decided_at > now() - interval '30 days'
              AND ($2::timestamptz IS NULL OR (ri.decided_at, ri.id) < ($2::timestamptz, coalesce($4::uuid, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid)))`

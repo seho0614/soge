@@ -21,7 +21,11 @@ interface Item {
   gwanName?: string | null; gradeCode?: string | null; submitterName?: string | null;
   bizRegNo?: string | null; ntsStatus?: string | null;
   autoChecks?: { key: string; label: string; ok: boolean; detail: string }[];
+  /* v10.106 (D120) — AI 검수 보조 의견(참고만 · 결정은 사람) */
+  aiOpinion?: { suggestion: 'APPROVE' | 'REJECT' | 'UNSURE'; reasonCodes: string[] | null; note: string | null; model: string; engine: string; createdAt: string } | null;
 }
+
+const AI_TXT: Record<string, string> = { APPROVE: '승인 제안', REJECT: '반려 제안', UNSURE: '모름' };
 
 export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void }) {
   const [reasons, setReasons] = useState<{ code: string; label: string; category?: string }[]>([]);
@@ -81,6 +85,16 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
                 /* v10.32 — 시안 .flg.ok(초록) · .flg.warn(노랑). 전에는 통과 줄이 회색 */
                 <div key={c.key} className={`ad-flg ${c.ok ? 'ok' : 'warn'}`} data-auto-check={c.key}><b>{c.label}</b><span>{c.detail}</span></div>
               ))}
+            </>
+          ) : null}
+          {item?.aiOpinion ? (
+            <>
+              <h3 className="ad-s3">AI 의견 <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-3)' }}>참고만 · 결정은 검수자</span></h3>
+              <div className={`ad-flg ${item.aiOpinion.suggestion === 'APPROVE' ? 'ok' : 'warn'}`} data-ai-opinion={item.aiOpinion.suggestion}>
+                <b>{AI_TXT[item.aiOpinion.suggestion] ?? item.aiOpinion.suggestion}
+                  {item.aiOpinion.reasonCodes?.length ? ` · ${item.aiOpinion.reasonCodes.map((c) => reasons.find((x) => x.code === c)?.label ?? c).join(' · ')}` : ''}</b>
+                <span>{item.aiOpinion.note ?? '—'} ({item.aiOpinion.engine === 'MOCK' ? '시험 엔진' : item.aiOpinion.model})</span>
+              </div>
             </>
           ) : null}
           {item?.manual_reasons?.length ? (

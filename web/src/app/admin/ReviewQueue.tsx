@@ -26,7 +26,13 @@ interface ReviewItem {
   targetTitle?: string | null;
   categoryName?: string | null;
   submitterName?: string | null;
+  /* v10.106 (D120) — AI 검수 보조 의견(참고만) */
+  aiSuggestion?: 'APPROVE' | 'REJECT' | 'UNSURE' | null;
+  aiReasonCodes?: string[] | null;
 }
+/** v10.106 (D120) — AI 의견 표시(참고만 · AI 는 승인 · 반려하지 않음) */
+const AI_TXT: Record<string, string> = { APPROVE: '승인 제안', REJECT: '반려 제안', UNSURE: '모름' };
+const AI_CLS: Record<string, string> = { APPROVE: 'ok', REJECT: 'no', UNSURE: '' };
 interface Counts { pending: number; slaSoon: number; slaOver: number; rejected: number }
 interface Throughput {
   day: string; submitted: number; decided: number;
@@ -129,6 +135,9 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
                   ? <span className="ad-chip">{it.categoryName}</span>
                   : <Badge domain="review.target_type" code={it.targetType} text={label('review.target_type', it.targetType)} />}
                 {it.decisionMode === 'AUTO' && <span className="ad-chip">자동</span>}
+                {it.status !== 'REJECTED' && it.aiSuggestion && (
+                  <span className={`ad-chip ${AI_CLS[it.aiSuggestion] ?? ''}`} data-ai-suggestion={it.aiSuggestion} title="AI 검수 보조 의견 — 참고만, 결정은 검수자">AI {AI_TXT[it.aiSuggestion] ?? it.aiSuggestion}</span>
+                )}
               </div>
               <b>{it.targetTitle || `${label('review.target_type', it.targetType)} 검수`}</b>
               {/* ★ 개입 사유를 카드에 직접 표시합니다.

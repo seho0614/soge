@@ -149,6 +149,11 @@ export class ReviewService {
       detail: contact ? `본문에 연락처로 보이는 글(「${contact[0]}」)이 있습니다.`
         : t?.ntsStatus === 'VALID' ? '사업자등록번호 확인됨' : t?.identityVerified ? '본인인증 확인됨' : '본문에 연락처 없음' });
 
+    /* v10.106 (D120) — AI 검수 보조 의견(참고만 · 결정은 사람 · 최근 1건) */
+    const [ai] = await this.db.query<{ suggestion: string; reasonCodes: string[] | null; note: string | null; model: string; engine: string; createdAt: Date }>(
+      `SELECT suggestion, reason_codes AS "reasonCodes", note, model, engine, created_at AS "createdAt"
+         FROM ai_review_opinions WHERE review_item_id = $1 AND note IS DISTINCT FROM '[처리 중]' ORDER BY created_at DESC LIMIT 1`, [id]).catch(() => []);
+
     const bizRegNo: string | null = t?.bizRegNo ?? null;
     return {
       ...row,
@@ -158,6 +163,7 @@ export class ReviewService {
       /* 사업자등록번호는 검수에 필요한 값이라 그대로 보입니다(검수 담당 · 운영만 — @Roles). 조회는 감사 기록에 남습니다 */
       bizRegNo, ntsStatus: t?.ntsStatus ?? null,
       autoChecks: checks,
+      aiOpinion: ai ?? null,
     };
   }
 }
