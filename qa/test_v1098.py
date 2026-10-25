@@ -66,7 +66,7 @@ ok('② 안전 수칙(SAFE_CONSULT) · 업종 설명(CSL_DESC)은 사전 키(cop
    "export const SAFE_CONSULT = ['safe.s1', 'safe.s2', 'safe.s3'] as const" in rd('site/src/components/mal/copy.ts') and "SAFE_CONSULT.map((k) => tc(k))" in rd('site/src/components/gwan/GwanLanding.tsx'), '')
 # 남기기로 한 한글(자료 · 비교 값) — 그 줄에 이 표시가 있으면 뺌 · docs/155 §2
 KEEP = {'app/consult/ConsultForm.tsx': ['const SIDO', "'강원'"], 'components/request/ReqCard.tsx': ["'예산 비공개'", '억`', '이내`', '이상`', "'예산 협의'"],
-        'components/refcode/RefShareButton.tsx': ["requestPayment('카드'"]}   # 시도 이름(서버로 보내는 값) · 금액 표기(2-5) · 토스 결제수단 값
+        'components/refcode/RefShareButton.tsx': ["requestPayment('카드'", "orderName: '소개코드 추가 1건'"]}   # 시도 이름(서버로 보내는 값) · 금액 표기(2-5) · 토스 결제수단 값
 
 
 def strip_comments(t):
