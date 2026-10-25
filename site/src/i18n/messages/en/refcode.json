@@ -38,7 +38,6 @@
     "noFreePlan": "The {plan} plan has no free referral codes · codes are KRW {price} each. You can see your codes again in \"Refer via Safe Referral\".",
     "requestFail": "Could not send the request. Please try again shortly.",
     "payNotApproved": "The payment was not approved.",
-    "orderName": "1 extra referral code",
     "payCanceled": "You canceled the payment.",
     "payOpenFail": "Could not open the payment window. Please try again shortly.",
     "checking": "Checking…",

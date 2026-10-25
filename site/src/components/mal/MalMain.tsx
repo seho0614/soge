@@ -1,5 +1,6 @@
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
+import { getTranslations } from 'next-intl/server';
 import { safeSort } from '@/lib/format';
 import type { Gwan, ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
@@ -37,6 +38,7 @@ function href(gwan: string, p: Record<string, string | undefined>) {
  *  · 지역 설정 · 소개비율 정렬은 받쳐 줄 API 가 없어 뺐습니다. 「인증업체 N곳」은 GET /consult/categories 로 채웁니다(v10.11 · D018).
  */
 export async function MalMain({ gwan, q }: { gwan: string; q: MalQuery }) {
+  const tc = await getTranslations('consult');   // v10.98 — SAFE_CONSULT 는 사전 키
   const axis = q.axis === 'consult' ? 'consult' : 'listing';
 
   const [gwans, settings, consultCats, allCats, p] = await Promise.all([
@@ -236,7 +238,7 @@ export async function MalMain({ gwan, q }: { gwan: string; q: MalQuery }) {
           <section className="mal-panel mal-safe" aria-labelledby="mal-safe-h">
             <div className="mal-sh2"><b id="mal-safe-h">⚠ {axis === 'consult' ? ax.nm : `${ax.nm} 거래`}에서 먼저 확인할 것</b></div>
             {axis === 'consult' ? (
-              <ul>{SAFE_CONSULT.map((x) => <li key={x}>{x}</li>)}</ul>
+              <ul>{SAFE_CONSULT.map((x) => <li key={x}>{tc(x)}</li>)}</ul>
             ) : (
               SAFE_LISTING.map(([h, xs]) => (
                 <div key={h}>

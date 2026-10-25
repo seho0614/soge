@@ -136,7 +136,7 @@ export function RefShareButton({ base, listingId }:
       const origin = window.location.origin;
       const back = new URLSearchParams(listingId ? { listing: listingId } : {});
       await TossPayments(CLIENT_KEY).requestPayment('카드', {
-        amount, orderId, orderName: t('button.orderName'),
+        amount, orderId, orderName: '소개코드 추가 1건',   // 결제 기록 값 — 언어와 상관없이 같게(결제수단 '카드' 와 같음)
         successUrl: `${origin}/mall/give/pay?${back}`,
         failUrl: `${origin}/mall/give?pay=fail`,
       });
