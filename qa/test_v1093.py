@@ -33,24 +33,25 @@ ok('① 원문 함수 · 낡음 뷰(md5) · 한국어 끄기 막는 트리거', 
 ok('① 스위치 3개 꺼짐 · 형식 검사', all(x in M for x in ("('i18n.enabled', 'off'", "'^(on|off)$'", "('i18n.engine', 'MANUAL'", "'^(MANUAL|CLAUDE|N8N)$'", "('i18n.board_on_view', 'off'")), '')
 ok('① 지우는 문장 없음 · 재실행 안전(IF NOT EXISTS · ON CONFLICT)', not re.search(r'\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT') == 2 and 'ADD COLUMN IF NOT EXISTS preferred_lang' in M, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 153 · 마지막 D115(v10.94 부터 D116 · 154 — test_v1094)', (len(mig), mig[-1] if mig else '') in ((153, 'D115_i18n_base'), (154, 'D116_agent_base')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 153 · 마지막 D115(v10.94 부터 D116 · 154 — test_v1094)', (len(mig), mig[-1] if mig else '') in ((153, 'D115_i18n_base'), (154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/i18n/i18n.controller.ts'); S = rd('src/modules/i18n/i18n.service.ts')
 routes = re.findall(r"@(Get|Post|Put)\('([^']+)'\)", C)
 want = {('Get', 'admin/i18n/langs'), ('Post', 'admin/i18n/langs/:code'), ('Get', 'admin/i18n/translations'), ('Get', 'admin/i18n/source'),
         ('Put', 'admin/i18n/translations'), ('Post', 'admin/i18n/translations/:id/approve'), ('Post', 'admin/i18n/translations/:id/reject')}
-ok('② API 7개 · 모두 운영(ADMIN · SUPER)', set(routes) == want and C.count("@Roles('ADMIN', 'SUPER')") == 7, str(len(routes)))
+ok('② 운영 API 7개(v10.103 원문 목록 GET admin/i18n/catalog 더함) · 모두 운영(ADMIN · SUPER)', want <= set(routes) and C.count("@Roles('ADMIN', 'SUPER')") >= 7
+   and all(p.startswith('admin/') or p in ('i18n/langs', 'me/lang') for _, p in routes), str(len(routes)))
 ok('② 바꾸는 API 4개에 감사 기록', all(f"@Audit('{x}'" in C for x in ('I18N_LANG_SET', 'I18N_TRANSLATION_SAVE', 'I18N_TRANSLATION_APPROVE', 'I18N_TRANSLATION_REJECT')), '')
 ok('② 승인 — 낡음 · 원문 없음 409 · 금칙어 422 · 반려 답에 사유', all(x in S for x in ("'TRANSLATION_STALE'", "'SOURCE_MISSING'", "'BANNED_WORD'", "fn_check_banned_words($1, $2) WHERE severity = 'BLOCK'", "status: 'REJECTED', reason")), '')
 ok('② 서비스의 칸 목록 = DB 함수의 칸 목록', all(f"'{t}'" in M for t in ('NOTICE', 'FAQ', 'TERM', 'LISTING', 'REQUEST', 'POST', 'COMMENT')) and "COMMENT: ['body']" in S, '')
 ok('② app.module 등록', re.search(r'\bI18nController,', rd('src/app.module.ts')) and re.search(r'\bI18nService,', rd('src/app.module.ts')), '')
 scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = [x for x in scr if x['id'] == 'SB-ADM-TRN-010']
-ok('② 화면 레지스트리 SB-ADM-TRN-010 — API 7개 · 운영 · #/i18n', t and len(t[0]['apis']) == 7 and t[0]['roles'] == ['ADMIN', 'SUPER'] and t[0].get('bo') == '#/i18n', '')
+ok('② 화면 레지스트리 SB-ADM-TRN-010 — API 7개(+ v10.103 catalog) · 운영 · #/i18n', t and len(t[0]['apis']) >= 7 and t[0]['roles'] == ['ADMIN', 'SUPER'] and t[0].get('bo') == '#/i18n', '')
 menu = rd('web/src/lib/adminMenu.ts'); app = rd('web/src/App.tsx'); W = rd('web/src/app/admin/Translations.tsx')
 ok('② 운영 화면 — 탭 i18n 「번역」 · 관 관리 묶음 · App 연결', "['i18n', '번역']" in menu and "'siteinfo', 'i18n', 'hlt-products'" in menu and "{tab === 'i18n' && <Translations />}" in app, '')
 ok('② 번역 화면 — 목록 · 넣기 · 언어 · 낡음 표시 · 낡은 줄은 승인 단추 없음', all(x in W for x in ('data-i18n-list', 'data-i18n-form', 'data-i18n-langs', "!x.isStale && !x.sourceMissing", '/admin/i18n/source?')), '')
-ok('② 손님 화면 API 없음(2단계에서 화면과 함께)', "'i18n/langs'" not in C and "'me/lang'" not in C, '')
+ok('② 손님 화면 API — v10.95(2-1) 부터 i18n/langs · me/lang 두 개만', {p for _, p in routes if not p.startswith('admin/')} <= {'i18n/langs', 'me/lang'}, '')
 
 
 def psql(sql):

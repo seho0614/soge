@@ -35,7 +35,7 @@ ok('① 허용 함수 — 꺼짐 · 통로 · 상한 0 · 상한 닿음', all(x 
 ok('① 사용량 함수 — 상한에 닿으면 agent.enabled off · 경보 AGENT_CAP_REACHED', "SET value = 'off'" in M and "'AGENT_CAP_REACHED', 'CRITICAL'" in M, '')
 ok('① 지우는 문장 없음 · 재실행 안전', not re.search(r'(?<!ON )\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT (') >= 3, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 154 · 마지막 D116', (len(mig), mig[-1] if mig else '') == (154, 'D116_agent_base'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/agent/agent.controller.ts'); S = rd('src/modules/agent/agent.service.ts'); P = rd('src/modules/agent/agent.provider.ts')
 ok('② API 1개 — GET admin/agent/status · 운영', re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C) == [('Get', 'admin/agent/status')] and "@Roles('ADMIN', 'SUPER')" in C, '')
