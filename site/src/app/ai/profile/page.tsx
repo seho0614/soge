@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { BackBar } from '@/components/common/BackBar';
@@ -23,13 +22,16 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function ProfilePage() {
   const p = await me();
-  if (!p) redirect('/login?next=/ai/profile');
   const [t, ta] = await Promise.all([getTranslations('join.ai.profile'), getTranslations('join.ai')]);
 
-  const [q, mine] = await Promise.all([
-    apiGet<{ questions: Q[]; note?: string }>('/profile/questions', 300).catch(() => null),
-    apiGetPersonal<Mine>('/me/profile').catch(() => null),
-  ]);
+  /* v10.120 — 로그인 전에도 엽니다(시안 loginCta 「가입 전에도 할 수 있습니다」). 손님은 공개 문항 · 공개 진단(저장 안 함)만 —
+   *   등록은 로그인 · 가입 뒤 본인이 동의하고 누를 때(ProfileSurvey guest · lib/profileDraft) */
+  const [q, mine] = p
+    ? await Promise.all([
+        apiGet<{ questions: Q[]; note?: string }>('/profile/questions', 300).catch(() => null),
+        apiGetPersonal<Mine>('/me/profile').catch(() => null),
+      ])
+    : [await apiGet<{ questions: Q[]; note?: string }>('/signup/profile-questions', 300).catch(() => null), null];
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-AIS-PRF-010">
@@ -38,7 +40,7 @@ export default async function ProfilePage() {
       <div className="w1-nt"><b>{q?.note ?? t('noteFallback')}</b></div>
 
       {q?.questions?.length ? (
-        <Msgs ns={['join']}><ProfileSurvey questions={q.questions} mine={mine} /></Msgs>
+        <Msgs ns={['join']}><ProfileSurvey questions={q.questions} mine={mine} guest={!p} /></Msgs>
       ) : (
         <div className="w1-empty" style={{ marginTop: 14 }}>{t('loadFail')}</div>
       )}

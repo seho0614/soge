@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { logout } from '@/lib/session';
+import { clearDraft } from '@/lib/profileDraft';
 import { SearchBox } from '@/components/search/SearchBox';
 import { isOps } from '@/components/common/links';
 import { useTranslations } from 'next-intl';
@@ -59,6 +60,7 @@ export function HdAuth() {
 
   function out() {
     start(async () => {
+      clearDraft();   // v10.120 — 로그인 전 성향 답이 같은 탭의 다음 계정에 채워지지 않게
       await logout();
       setIn(false);
       try { sessionStorage.setItem('sgb.hd.in', '0'); } catch { /* 없어도 됨 */ }

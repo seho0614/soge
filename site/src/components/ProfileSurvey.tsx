@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { clearDraft, loadDraft, saveDraft } from '@/lib/profileDraft';
 
 /** 서버 GET /profile/questions 의 모양(question · label · isMulti). v10.30 까지 화면이 text 를 읽어 문항 · 보기 글이 비었습니다(결함 상). */
 export type Q = { code: string; question: string; isMulti?: boolean; options: Array<{ code: string; label: string }> };
@@ -21,8 +22,12 @@ export interface Mine { registered: boolean; segment?: string; name?: string; co
  * 저장은 「성향 등록하기」를 누를 때만 — 그 단추 바로 위의 동의 확인을 켜야 합니다(INV-AD · 동의 없이 저장하지 않음).
  *   v10.115 (D123) — 이 동의가 곧 맞춤형 광고 약관(ADPERSONAL) 동의입니다(서버가 약관 동의 기록을 남김 · 옆에 약관 전문 링크).
  * 「성향 쓰지 않기」는 저장된 성향을 지우고 맞춤형 광고 동의를 철회합니다(DELETE /me/profile) — 성향을 쓰지 않는 광고만 나갑니다.
+ *
+ * v10.120 — guest(로그인 전 · 시안 loginCta): 진단은 공개 POST /signup/profile-analyze(저장 안 함 · IP 1분 30번) ·
+ *   동의 칸 · 「성향 쓰지 않기」 없음 · 「로그인하고 등록」 · 「가입하고 등록」이 고른 답을 이 탭에만 두고(lib/profileDraft) 그 화면으로.
+ *   로그인 뒤에는 그 답을 채워 보이기만 합니다 — 동의 칸은 비어 있고, 회원이 직접 동의하고 눌러야 저장됩니다(D123).
  */
-export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine | null }) {
+export function ProfileSurvey({ questions, mine, guest = false }: { questions: Q[]; mine: Mine | null; guest?: boolean }) {
   const router = useRouter();
   const tr = useTranslations('join.profileSurvey');
   const [ans, setAns] = useState<Record<string, string[]>>({});
@@ -32,11 +37,21 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [filled, setFilled] = useState(false);
   const seq = useRef(0);
+
+  /* v10.120 — 로그인 전에 고른 답이 이 탭에 있으면 채움(회원 · 아직 등록 안 한 경우만 · 저장은 하지 않음) */
+  useEffect(() => {
+    if (guest) return;
+    if (mine?.registered) { clearDraft(); return; }   // 이미 등록한 회원 — 채우지 않고 지움(같은 탭의 다음 계정에 남지 않게)
+    const d = loadDraft(questions);
+    if (d) { setAns(d); setFilled(true); }
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const done = questions.filter((q) => (ans[q.code] ?? []).length > 0).length;
 
   function pick(q: Q, oc: string) {
+    setFilled(false);
     setAns((a) => {
       const cur = a[q.code] ?? [];
       const next = q.isMulti ? (cur.includes(oc) ? cur.filter((x) => x !== oc) : [...cur, oc]) : (cur[0] === oc ? [] : [oc]);
@@ -52,13 +67,14 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
     if (!Object.keys(ans).length) { setRes(null); return; }
     const t = setTimeout(async () => {
       try {
-        const r = await fetch('/api/v1/profile/analyze', {
+        const r = await fetch(guest ? '/api/v1/signup/profile-analyze' : '/api/v1/profile/analyze', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: ans }),
         });
         if (!r.ok) throw new Error();
         const d = await r.json();
+        if (id === seq.current) setErr(null);
         if (id === seq.current) setRes({ code: d.code, name: d.name ?? d.code, description: d.description ?? '', ranking: d.ranking ?? [], upcomingAds: d.upcomingAds ?? [] });
-      } catch { if (id === seq.current) setErr(tr('analyzeFail')); }
+      } catch { if (id === seq.current) { setRes(null); setErr(tr('analyzeFail')); } }   // v10.120 — 실패(손님 1분 30번 등)면 옛 결과를 지움
     }, 150);
     return () => clearTimeout(t);
   }, [ans]);
@@ -74,6 +90,7 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
         const j = await r.json().catch(() => ({}));
         setErr(typeof j?.message === 'string' && j.message ? j.message : tr('saveFail')); setBusy(false); return;
       }
+      clearDraft();
       router.push('/ai/profile/done');
     } catch { setErr(tr('saveFail')); setBusy(false); }
   }
@@ -85,7 +102,7 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
         const r = await fetch('/api/v1/me/profile', { method: 'DELETE' });
         if (!r.ok) throw new Error();
       }
-      setNow({ registered: false }); setSkipped(true); setAns({}); setRes(null);
+      setNow({ registered: false }); setSkipped(true); setAns({}); setRes(null); setFilled(false); clearDraft();
     } catch { setErr(tr('dropFail')); }
     setBusy(false);
   }
@@ -110,16 +127,21 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
             </div>
           </div>
         ))}
-        {res && (
+        {filled && <p className="w1-ls" data-prf-filled>{tr('draftFilled')}</p>}
+        {res && !guest && (
           <label className="w1-ls" style={{ display: 'flex', gap: 7, alignItems: 'flex-start', marginTop: 4 }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 2 }} />
             <span>{tr('agree')} <Link href="/terms/ADPERSONAL" target="_blank" rel="noreferrer" data-prf-terms>{tr('agreeTerms')}</Link></span>
           </label>
         )}
         <div className="w1-prfact">
-          <button type="button" className="w1-bo" onClick={() => { setAns({}); setRes(null); setErr(null); setAgree(false); setSkipped(false); }}>{tr('redo')}</button>
-          <button type="button" className="w1-bo" disabled={busy} onClick={() => void skip()}>{tr('skip')}</button>
-          {res
+          <button type="button" className="w1-bo" onClick={() => { setAns({}); setRes(null); setErr(null); setAgree(false); setSkipped(false); setFilled(false); clearDraft(); }}>{tr('redo')}</button>
+          {!guest && <button type="button" className="w1-bo" disabled={busy} onClick={() => void skip()}>{tr('skip')}</button>}
+          {guest && res ? <>
+              <button type="button" className="w1-bp" data-prf-guest="login" onClick={() => { saveDraft(ans); router.push('/login?next=/ai/profile'); }}>{tr('guestLogin')}</button>
+              <button type="button" className="w1-bo" data-prf-guest="signup" onClick={() => { saveDraft(ans); router.push('/signup'); }}>{tr('guestSignup')}</button>
+            </>
+            : res
             ? <button type="button" className="w1-bp" disabled={busy || !agree} onClick={() => void save()}>{busy ? tr('saving') : tr('save')}</button>
             : <button type="button" className="w1-bp" disabled>{tr('answered', { done: String(done), total: String(questions.length) })}</button>}
           {now?.registered && <Link className="w1-bo" href="/ai/profile/done">{tr('viewResult')}</Link>}
@@ -158,10 +180,11 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
         )}
         <div className="w1-segnow">
           <span className="w1-lb">{tr('nowLb')}</span>
-          {now?.registered ? <><b>{now.segment}</b> · {now.name}</>
+          {guest ? <>{tr.rich('guestNow', { b: (c) => <b>{c}</b> })}</>
+            : now?.registered ? <><b>{now.segment}</b> · {now.name}</>
             : skipped ? <>{tr.rich('nowSkipped', { b: (c) => <b>{c}</b> })}</>
             : <>{tr.rich('nowNone', { b: (c) => <b>{c}</b> })}</>}
-          <div className="w1-ls">{tr('storeNote')}</div>
+          <div className="w1-ls">{guest ? tr('guestStore') : tr('storeNote')}</div>
         </div>
       </aside>
     </div>

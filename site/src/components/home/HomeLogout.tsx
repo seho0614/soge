@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { logout } from '@/lib/session';
+import { clearDraft } from '@/lib/profileDraft';
 import { useTranslations } from 'next-intl';
 
 export function HomeLogout() {
@@ -10,7 +11,7 @@ export function HomeLogout() {
   const [busy, start] = useTransition();
   const h = useTranslations('header');
   return (
-    <button type="button" className="home-pill" disabled={busy} onClick={() => start(async () => { await logout(); router.refresh(); })}>
+    <button type="button" className="home-pill" disabled={busy} onClick={() => start(async () => { clearDraft(); await logout(); router.refresh(); })}>
       {busy ? h('loggingOut') : h('logout')}
     </button>
   );

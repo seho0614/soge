@@ -1645,6 +1645,7 @@
    "url": "/ai/profile",
    "p": "P1",
    "roles": [
+    "GUEST",
     "MEMBER"
    ],
    "gates": [],
@@ -1652,10 +1653,12 @@
     "GET /profile/questions",
     "POST /profile/analyze",
     "POST /me/profile",
-    "GET /me/persona"
+    "GET /me/persona",
+    "GET /signup/profile-questions",
+    "POST /signup/profile-analyze"
    ],
    "nav": "SB-MYP-DSH-010",
-   "note": "선택입니다. 건너뛰면 전체 공개 광고가 나갑니다. 행동 데이터를 보지 않습니다"
+   "note": "선택입니다. 건너뛰면 전체 공개 광고가 나갑니다. 행동 데이터를 보지 않습니다 · v10.120 로그인 전에도 엶(결과만 · 저장 안 함 · 고른 답은 이 탭에만 · 로그인 · 가입 뒤 채움 — 동의하고 등록해야 저장)"
   },
   {
    "id": "SB-AIS-PRF-020",

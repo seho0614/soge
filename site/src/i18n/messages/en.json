@@ -155,8 +155,8 @@
     "noAccount": "No account yet?",
     "signup": "Sign up",
     "profileTitle": "Add your interests",
-    "profileSub": "Six questions after you sign up or log in",
-    "profileBody": "Once saved, your interests shape <b>home-page ads and referral suggestions</b>. We never share them with advertisers, and you can delete them anytime.",
+    "profileSub": "You can start before signing up",
+    "profileBody": "Just six questions. Once saved, your interests shape <b>home-page ads and referral suggestions</b>. When you log in, your answers are filled in; agree to personalized ads and save to keep them. We never share them with advertisers, and you can delete them anytime.",
     "profileLink": "Analyze and save my interests",
     "whoCanJoin": "Individuals, sole proprietors and corporations can all join. Suspended or closed businesses cannot pass business verification."
   },
@@ -372,7 +372,8 @@
       "nowLb": "Current result",
       "consent": "Only if you agreed to personalized ads in step 4, this is saved when you sign up and used to pick home-page ads (never given to advertisers · delete anytime).",
       "noneLb": "No result yet",
-      "noneBody": "You can skip this. In that case only <b>general ads</b> are shown."
+      "noneBody": "You can skip this. In that case only <b>general ads</b> are shown.",
+      "draftFilled": "We've filled in the answers you chose earlier — to save them after signing up, agree to the personalized ads terms in step 4 and turn on the consent below."
     }
   },
   "region": {

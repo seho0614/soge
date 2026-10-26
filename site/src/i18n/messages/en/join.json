@@ -266,7 +266,8 @@
     "saveFail": "Couldn't save. Please try again shortly.",
     "dropFail": "Couldn't delete. Please try again shortly.",
     "multi": "Select all that apply",
-    "agree": "I agree to personalized ads — home ads are picked using this profile and the ads you click after agreeing (never shared with advertisers · withdraw any time with \"Don't use profile\" or on the Terms consent page).", "agreeTerms": "Read the full terms",
+    "agree": "I agree to personalized ads — home ads are picked using this profile and the ads you click after agreeing (never shared with advertisers · withdraw any time with \"Don't use profile\" or on the Terms consent page).",
+    "agreeTerms": "Read the full terms",
     "redo": "Start over",
     "skip": "Don't use profile",
     "saving": "Saving…",
@@ -282,7 +283,12 @@
     "nowLb": "Currently applied",
     "nowSkipped": "<b>Profile not used</b> — personalized ads consent withdrawn; only non-personalized ads are shown.",
     "nowNone": "<b>None</b> — not saved yet.",
-    "storeNote": "It is stored on the SogaeBank server (your account). Press \"Don't use profile\" to delete it immediately and unlink your ad activity."
+    "storeNote": "It is stored on the SogaeBank server (your account). Press \"Don't use profile\" to delete it immediately and unlink your ad activity.",
+    "draftFilled": "We've filled in the answers you chose before logging in — nothing is saved yet. Agree to personalized ads and press \"Save profile\" to save it.",
+    "guestLogin": "Log in to save",
+    "guestSignup": "Sign up to save",
+    "guestNow": "<b>Not saved</b> — before you log in, we only show the result. Log in or sign up and your answers will be filled in; agree and save to keep them.",
+    "guestStore": "Nothing is sent to the server before you log in. Your answers stay in this tab only and are cleared when you close it."
   },
   "eventJoin": {
     "joined": "You're in.",

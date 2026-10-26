@@ -28,6 +28,7 @@ import { StepBiz } from './signup/StepBiz';
 import { StepPerson } from './signup/StepPerson';
 import { StepTerms } from './signup/StepTerms';
 import { StepProfile } from './signup/StepProfile';
+import { clearDraft, loadDraft } from '@/lib/profileDraft';
 
 export type { SignupType, JoinTerm } from './signup/rules';
 
@@ -64,7 +65,14 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
   const [ans, setAns] = useState<Record<string, string[]>>({});
   const [seg, setSeg] = useState<SegRes | null>(null);
   const [segOk, setSegOk] = useState(false);
+  const [filled, setFilled] = useState(false);
   const seq = useRef(0);
+
+  /* v10.120 — 로그인 전 성향 화면에서 고른 답이 이 탭에 있으면 5단계에 채움(동의 칸은 비어 있음 · 켜야 가입 뒤 저장) */
+  useEffect(() => {
+    const d = loadDraft(questions);
+    if (d) { setAns(d); setFilled(true); }
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const [err, setErr] = useState<string | null>(null);
 
@@ -144,6 +152,7 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
     setAgreed((a) => { const n = new Set(a); if (n.has(code)) n.delete(code); else n.add(code); return n; });
   }
   function pick(q: Q, oc: string) {
+    setFilled(false);
     setAns((a) => {
       const c = a[q.code] ?? [];
       const next = q.isMulti ? (c.includes(oc) ? c.filter((x) => x !== oc) : [...c, oc]) : (c[0] === oc ? [] : [oc]);
@@ -181,9 +190,10 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
       /* v10.115 (D123) — 성향 저장 = 맞춤형 광고 약관 동의. 4단계에서 ADPERSONAL 에 동의한 경우에만(5단계 체크로 4단계 「동의 안 함」을 뒤집지 않음) */
       if (seg && segOk && agreed.has('ADPERSONAL') && Object.keys(ans).length) {
         try {
-          await fetch('/api/v1/me/profile', {
+          const pr = await fetch('/api/v1/me/profile', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: ans, consent: true }),
           });
+          if (pr.ok) clearDraft();   // v10.120 — 저장했으면 탭에 둔 답을 지움(안 했으면 성향 화면에서 다시 채워 줌)
         } catch { /* 성향은 선택 — 나의공간에서 다시 할 수 있습니다 */ }
       }
       router.push(`/signup/done?${q}`);
@@ -219,7 +229,7 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
 
         {step === 4 && <StepTerms terms={terms} notices={notices} needsBiz={needsBiz} agreed={agreed} allOn={allOn} setAgreed={setAgreed} setErr={setErr} toggle={toggle} />}
 
-        {step === 5 && <StepProfile questions={questions} ans={ans} pick={pick} seg={seg} segOk={segOk} setSegOk={setSegOk} />}
+        {step === 5 && <StepProfile questions={questions} ans={ans} pick={pick} seg={seg} segOk={segOk} setSegOk={setSegOk} filled={filled} />}
 
         {err && <p className="w1-err" role="alert" style={{ marginTop: 12 }}>{err}</p>}
 

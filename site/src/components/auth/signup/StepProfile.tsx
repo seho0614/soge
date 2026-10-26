@@ -4,9 +4,9 @@ import type { SegRes } from './rules';
 import { useTranslations } from 'next-intl';
 
 /** 회원가입 5 관심 성향(선택) — v10.86 SignupWizard.tsx 에서 나눔(화면 · 동작 같음) */
-export function StepProfile({ questions, ans, pick, seg, segOk, setSegOk }: {
+export function StepProfile({ questions, ans, pick, seg, segOk, setSegOk, filled = false }: {
   questions: Q[]; ans: Record<string, string[]>; pick: (q: Q, oc: string) => void;
-  seg: SegRes | null; segOk: boolean; setSegOk: (v: boolean) => void;
+  seg: SegRes | null; segOk: boolean; setSegOk: (v: boolean) => void; filled?: boolean;
 }) {
   const t = useTranslations('signup.profile');
   return (
@@ -14,6 +14,7 @@ export function StepProfile({ questions, ans, pick, seg, segOk, setSegOk }: {
       <div className="w1-jt">{t('title')} <span className="w1-ls">{t('optional')}</span></div>
       <div className="w1-jc i"><span className="lb">{t('whyLb')}</span>
         {t.rich('whyBody', { b: (c) => <b>{c}</b> })}</div>
+      {filled && <p className="w1-ls" data-prf-filled>{t('draftFilled')}</p>}   {/* v10.120 로그인 전에 고른 답 */}
       <div className="w1-prfq compact">
         {questions.map((q, i) => (
           <div key={q.code} className="w1-qcard" data-q={q.code}>
