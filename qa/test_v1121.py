@@ -50,7 +50,8 @@ ok('② copy.ts — AXIS · SAFE_LISTING 지움 · SAFE_CONSULT · CSL_DESC 남�
 use = [f for f, t in src.items() if re.search(r'\b(AXIS|SAFE_LISTING)\b', t) and 'mal/copy' in t]
 ok('② AXIS · SAFE_LISTING 을 copy.ts 에서 가져오는 곳 없음', not use, ' · '.join(use))
 
-ok('③ 판 v10.121', rd(os.path.join(K, 'VERSION')).strip() == 'v10.121', rd(os.path.join(K, 'VERSION')).strip())
+_v = tuple(int(x) for x in re.findall(r'\d+', rd(os.path.join(K, 'VERSION'))))
+ok('③ 판 v10.121 이상', _v >= (10, 121), rd(os.path.join(K, 'VERSION')).strip())
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
 ok('③ 마이그레이션 없음 — 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') == (163, 'D125_i18n_more_targets'), f'{len(mig)} · {mig[-1] if mig else ""}')
 old = [f'{t}: {g}' for t in ('test_v1100.py', 'test_v1101.py') for g in GONE if f"'{g}'" in rd(os.path.join(QA, t))]

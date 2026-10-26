@@ -58,7 +58,7 @@ ok('② 안전 수칙 사전 — 한국어 · 영어 키 같음(규칙 5 · 유�
    keys(sk) == keys(se) and len(sk.get('rules', {})) == 5 and len(sk.get('guides', {})) == 5 and len(sk.get('platform', {})) == 4 and len(sk.get('report', {})) == 3
    and not re.search(r"'[^'\n]*[가-힣][^'\n]*'", SF) and 'safety' in rd(MS + 'index.ts'), f'{len(keys(sk))} 키')
 ok('② 시 · 도 사전 17 — 세 화면이 값은 한국어 · 글자는 사전',
-   len(bk.get('region', {})) == 17 and keys(bk.get('region', {})) == keys(be.get('region', {})) and be['region'].get('seoul') == 'Seoul'
+   len([k for k in bk.get('region', {}) if k != 'all']) == 17 and keys(bk.get('region', {})) == keys(be.get('region', {})) and be['region'].get('seoul') == 'Seoul'
    and all("tr(c) : " in rd(p) and "sidoCode(" in rd(p) for p in ('site/src/app/consult/ConsultForm.tsx', 'site/src/components/partner/RegionEditor.tsx', 'site/src/app/partner/business/BizForms.tsx')), '')
 ok('② 활동 지역 칩 · 업종 상세 지역도 사전 · 바닥줄 key 는 이름 대신 순서(번역 이름이 겹쳐도)',
    '{shown(r)} ✕' in rd('site/src/components/partner/RegionEditor.tsx') and '<b>{sido(r.sido)}</b>' in rd('site/src/app/mal/consult/[code]/page.tsx')

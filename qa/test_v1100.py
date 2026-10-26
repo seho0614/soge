@@ -128,7 +128,8 @@ MONEY = ['원`', "원'", '}원', "'원'", '만원', "toLocaleString('ko-KR')"]  
 KEEP_ALL = MONEY + ["requestPayment('카드'", '.test(', "startsWith('리드 확인')"]   # 토스 결제수단 값 · 서버 글자 맞추기
 BANKS = ["은행']", "'우체국']", "'새마을금고']", "'신협']"]   # 서버로 보내는 은행 이름
 SIDO = ['const SIDO', "'강원', '충북'", "useState('서울')"]   # 서버로 보내는 시도 값
-KEEP = {'app/partner/business/BizForms.tsx': SIDO, 'components/partner/RegionEditor.tsx': SIDO,
+KEEP = {'app/partner/business/BizForms.tsx': SIDO, 'components/partner/RegionEditor.tsx': SIDO + ["=== '전체'"],   # v10.122 서버 값 「전체」(시 · 도 전체)를 사전 글자로
+        'app/partners/revenues/page.tsx': ['/^소개몰 주문', "=== '취소'"],   # v10.122 DB 트리거가 정한 메모 모양 맞추기
         'components/partners/SettlementAccountForm.tsx': BANKS,
         'app/partner/page.tsx': ['(주\\)'],   # 상호 앞 (주) 떼기
         'app/partner/tracks/page.tsx': ['const STAGE'], 'app/partner/trust/page.tsx': ['const BADGE_TONE'],   # 서버가 준 단계 · 배지 상태 글자에 색만 붙임
