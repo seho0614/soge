@@ -160,7 +160,7 @@
   },
   "apply": {
     "title": "Apply to join",
-    "sub": "Identity/business check → Application → Operator approval. You can list services after HQ approval. The check fee is deducted from your balance only when you open a lead.",
+    "sub": "Identity/business check → Application → Operator approval. You can list services after SogaeBank approval. The check fee is deducted from your balance only when you open a lead.",
     "s1": "1. Identity · Business check",
     "s1Biz": "Business verified",
     "s1Id": "Identity verified · Applying as individual",
@@ -241,7 +241,7 @@
     "unpaidCap": "Former postpaid unpaid limit",
     "unpaidCapNote": " · Applies only to unbilled amounts from before the switch (lead fees are prepaid)",
     "changeReq": "Change request — {field}: {value}",
-    "hqDecision": " · HQ: {reason}",
+    "hqDecision": " · SogaeBank: {reason}",
     "field": {
       "ADDRESS": "Address change",
       "COMPANY_NAME": "Company name change",
@@ -291,7 +291,7 @@
     "reason": "Reason",
     "reasonPh": "e.g. Office relocation",
     "request": "Request",
-    "changeNote": "The business registration number cannot be changed (a different business needs a new application). HQ approves requests, and approved changes apply immediately.",
+    "changeNote": "The business registration number cannot be changed (a different business needs a new application). SogaeBank approves requests, and approved changes apply immediately.",
     "invite": "Invite staff",
     "memberEmail": "Registered member email",
     "settleRight": "Settlement permission (top-up · refund)",
@@ -469,8 +469,8 @@
   },
   "notices": {
     "title": "Notices · Alerts",
-    "subUnread": "HQ notices and your alerts. You have <b>{n}</b> unread alerts.",
-    "sub": "HQ notices and your alerts.",
+    "subUnread": "SogaeBank notices and your alerts. You have <b>{n}</b> unread alerts.",
+    "sub": "SogaeBank notices and your alerts.",
     "tabNotice": "Notices",
     "tabAlarm": "Alerts",
     "empty": "No notices posted.",

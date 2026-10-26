@@ -549,7 +549,7 @@
   },
   "deals": {
     "title": "Referral history",
-    "sub": "Your referrals and attributed referral codes. Attribution lasts 90 days from first contact; for Get referred it starts at acceptance (INV-2 exception).",
+    "sub": "Your referrals and attributed referral codes. Attribution lasts 90 days from first contact; for referral requests it starts at acceptance (INV-2 exception).",
     "empty": "No deals in progress. Deal numbers and referral codes appear here once a referral starts.",
     "thNo": "Deal no.",
     "thItem": "Referral",

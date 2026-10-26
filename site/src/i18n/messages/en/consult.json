@@ -69,7 +69,7 @@
     "sentNone": "Not sent to any company",
     "sentTo": "Sent to {n} companies",
     "closed": "Closed: {reason}",
-    "provided": "Companies that received your contact details:",
+    "provided": "Businesses that received your contact details:",
     "providedNone": "None yet",
     "purged": "Contact details were deleted after the retention period",
     "st": {
@@ -162,7 +162,7 @@
     "sigungu": "City · county · district (optional)",
     "sigunguPh": "Geumcheon-gu",
     "memo": "What you need (optional · up to 1000 characters)",
-    "memoPh": "e.g. Move-in cleaning for a 32-pyeong apartment on the 15th next month",
+    "memoPh": "e.g. Move-in cleaning for a 32-pyeong (about 106㎡) apartment on the 15th next month",
     "memoHint": "Do not include contact details — companies see this part before opening your contact details. Text containing contact details will not be used as the summary.",
     "agreeB": "I agree to share my personal information with a third party.",
     "agree": "Your name, phone number, email, region and request details are provided to one verified company in this category. They are deleted when the consultation ends or after 6 months. You cannot apply without agreeing.",

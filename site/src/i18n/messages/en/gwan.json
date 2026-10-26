@@ -5,14 +5,14 @@
     "BIZ": { "name": "Startups", "sect": "startup items", "find": "Find startup items", "allcat": "All startup items", "mine": "My startup items" }
   },
   "badge": { "URGENT": "Urgent", "VERIFIED_DOC": "Docs verified" },
-  "sort": { "FEE_DESC": "Highest fee", "DEADLINE": "Closing soon", "FEE_RATIO": "Fee ratio", "RECENT": "Newest", "POPULAR": "Popular" },
+  "sort": { "FEE_DESC": "Highest fee", "DEADLINE": "Closing soon", "FEE_RATIO": "Highest fee rate", "RECENT": "Newest", "POPULAR": "Popular" },
   "grade": {
     "G1": { "nm": "Gold", "sub": "high referral fee" },
     "G2": { "nm": "Silver", "sub": "medium referral fee" },
-    "G3": { "nm": "Bronze", "sub": "side-income level" },
+    "G3": { "nm": "Bronze", "sub": "side income" },
     "tentative": "{nm} (tentative)"
   },
-  "qm": { "aria": "Quick menu", "new": "Success stories", "best": "Best matches", "urgent": "Urgent sales", "verified": "Fraud prevention", "event": "Events" },
+  "qm": { "aria": "Quick menu", "new": "Success stories", "best": "Best matches", "urgent": "Urgent · Quick sale", "verified": "Fraud prevention", "event": "Events" },
   "feats": {
     "f1": { "t": "Easy listing", "d": "Anyone can list products, services and startup items quickly" },
     "f2": { "t": "Referral earnings", "d": "Referrers get paid when a deal closes" },
@@ -32,7 +32,7 @@
   "role": {
     "give": "Refer",
     "want": "I want a referral",
-    "get": "Get referred",
+    "get": "Get a referral",
     "note": "Refer all kinds of products and services and start earning!"
   },
   "side": {
@@ -49,7 +49,7 @@
   "pager": {
     "prev": "Previous page",
     "next": "Next page",
-    "first": "To first page",
+    "first": "First page",
     "atFirst": "This is the first page",
     "atLast": "This is the last page"
   },
@@ -84,7 +84,7 @@
     "more": "Learn more"
   },
   "card": {
-    "exposureFee": "Exposure fee",
+    "exposureFee": "Listing fee",
     "negotiableAmount": "Price negotiable",
     "fee": "Referral fee",
     "negotiable": "Negotiable",
@@ -101,11 +101,11 @@
         "s3": "Put removal and relocation terms and costs in the contract"
       },
       "realty": {
-        "nm": "Real estate", "sub": "Registered assets", "gate": "Awaiting A-07 legal reply", "judge": "Is there a property register?", "urg": "Urgent sale",
+        "nm": "Real estate", "sub": "Registered assets", "gate": "Awaiting A-07 legal reply", "judge": "Is there a property registration record?", "urg": "Urgent sale",
         "s1": "Check the owner, mortgages and seizures on the property register",
         "s2": "Check for double contracts on key money",
         "s3": "Check whether the contract needs the landlord's consent",
-        "s4": "The larger the amount, the sooner you should prepare a contract and tax invoice — the platform does not handle payments"
+        "s4": "For large amounts, have a contract and tax invoice in place first — the platform does not handle payments"
       },
       "consult": {
         "nm": "Living & finance consulting", "sub": "Consultation request", "judge": "Request a consultation and one verified company will contact you.",
@@ -119,7 +119,7 @@
         "nm": "Startups", "sub": "Transactions", "judge": "Could you open tomorrow morning and start trading right away?", "urg": "Urgent business sales",
         "s1": "Check for double contracts on key money",
         "s2": "Check whether the business licenses can be transferred",
-        "s3": "Startup sites only reference the Safe Referral originals (INV-GWAN2)"
+        "s3": "Startup site listings only link to the original Safe Referral listings (INV-GWAN2)"
       },
       "jobs": {
         "nm": "Staffing", "sub": "Matching", "gate": "Subcontracting only · No individuals shown", "openNote": "We connect by subcontract only — individuals are never shown.",
@@ -132,7 +132,7 @@
   "landing": {
     "stopped": "<b>{name}</b> is <b>paused</b>. Only new listings and new inquiries are blocked; deals in progress will be completed as usual. When it reopens, this page will return as it was.",
     "axOpen": "This section: {note}",
-    "axGated": "This section is not open yet ({gate}). The listings shown are a preview — real estate carries an exposure fee, not a referral fee, and no settlement is created (A-07).",
+    "axGated": "This section is not open yet ({gate}). The listings shown are a preview — real estate carries a listing fee, not a referral fee, and no settlement is created (A-07).",
     "brokerTitle": "Licensed broker listings",
     "brokerBody": "This is where listings from partner brokerages will appear — it opens after the A-07 reply. Broker listings require ownership verification first.",
     "brokerLink": "See how it works · Ownership check ›",
@@ -165,35 +165,35 @@
     "clearRegion": "✕ Clear region",
     "clearGrade": "✕ Clear tier",
     "clearCat": "✕ Clear category",
-    "clearBadge": "✕ Clear mark",
+    "clearBadge": "✕ Clear badge",
     "clearKeyword": "✕ Clear keyword",
     "clearAll": "Clear all",
     "clearNote": "Clear filters to see {allcat} again",
     "popular": "🔥 Popular {what} now",
     "more": "More ›",
-    "loadFail": "Could not load the list. Change the filters or go to the <home>main page</home>.",
+    "loadFail": "Could not load the list. Change the filters or go to the <home>home page</home>.",
     "countN": "<b>{n}</b> items",
     "countPage": "<b>{n}</b> on this page",
     "totalI": "<b>{n}</b> {what} in total.",
     "totalGa": "<b>{n}</b> {what} in total.",
-    "safeHead": "⚠ Check first before a {nm} deal",
-    "safeHeadConsult": "⚠ Check first for {nm}",
+    "safeHead": "⚠ What to check before a {nm} deal",
+    "safeHeadConsult": "⚠ What to check first for {nm}",
     "safeFoot": "Risks differ by section — this list is for {sub} only. <guide>See fraud prevention guide ›</guide>"
   },
   "list": {
-    "sort": { "fee": "Highest fee", "deadline": "Closing soon", "ratio": "Fee ratio", "new": "Newest", "best": "Best", "urgent": "Urgent", "verified": "Verified" },
+    "sort": { "fee": "Highest fee", "deadline": "Closing soon", "ratio": "Highest fee rate", "new": "Newest", "best": "Best", "urgent": "Urgent", "verified": "Verified" },
     "trustTitle": "Referral trust — based on verification, consent rate and deal history (starts at 36.5)",
     "trustLabel": "Referral trust",
     "noRegion": "Region unknown",
-    "likes": "Likes {n}",
+    "likes": "♡ Saves {n}",
     "title": "{name}: all listings",
     "a12Fallback": "Referral fees are set by agreement between the parties, not by a rate table (A-12)",
-    "lead": "Everything listed in {sect} here.",
+    "lead": "All {sect} listed in this section.",
     "leadMain": "To browse by category, use the <home>section home</home>.",
     "count": "{n} items",
     "giveT": "Refer", "giveS": "Post a place you know",
     "wantT": "I want a referral", "wantS": "Post what you are looking for",
-    "getT": "Get referred", "getS": "Choose from what's posted",
+    "getT": "Get a referral", "getS": "Choose from what's posted",
     "consultNote": "Living and finance consulting such as moving, rentals, used cars and insurance is taken as requests, not listings — <consult>Living & finance consulting</consult>",
     "sortAria": "Sort",
     "loadFail": "Could not load the list. Please refresh in a moment.",
@@ -211,11 +211,11 @@
     "fee": "The hiring company pays the success fee (INV-9 · paid directly between parties)",
     "sampleTitle": "Development/demo data (scripts/seed-w2-demo.sql)",
     "sample": "Demo",
-    "b2b": "<b>We connect work, not people.</b> Job seekers are never shown; we refer members who take on the work (staffing agencies, headhunters, individuals). The referrer connects both sides and steps out — <b>we do not take part in hiring.</b>",
+    "b2b": "<b>We connect work, not people.</b> Job seekers are never shown; we refer members who take on the work (staffing agencies, headhunters, individuals). The referrer connects both sides and steps out — <b>without taking part in hiring.</b>",
     "dir": { "post": "Postings", "applied": "Applied", "quick": "Quick match" },
     "dirAria": "Staffing view",
     "when": { "TODAY": "Today", "TOMORROW": "Tomorrow", "WEEK": "This week" },
-    "hotTitle": "🔥 Short-term urgent",
+    "hotTitle": "🔥 Urgent short-term jobs",
     "hotOnly": "Showing short-term postings only",
     "urgDefault": "Items closing soon in this section",
     "viewAll": "View all",
@@ -247,17 +247,17 @@
     "edu": "Startup courses",
     "infoInv": "<b>This section is outside the referral-fee structure.</b> There are no transactions, so INV-9 (direct fee payment) does not apply, and cards have no referral fee or direction (sell/buy) fields.",
     "capacity": "{n} seats",
-    "always": "Ongoing",
+    "always": "Always open",
     "eduEmpty": "No courses are enrolling.",
     "polEmpty": "No policy notices right now.",
-    "infoEmptyTail": "Operators post the originals from host and partner organizations.",
+    "infoEmptyTail": "Our team posts original notices from host and partner organizations.",
     "planTitle": "Register my startup plan",
-    "planBody": "While browsing policies, post \"this is what I'm looking for\" right away — a Get-referred (BUY) request is created",
+    "planBody": "While browsing policies, post \"this is what I'm looking for\" right away — this creates a referral request (BUY)",
     "planBtn": "Register startup plan",
     "detailInv": "<b>This section is outside the referral-fee structure.</b> There are no transactions, so INV-9 (direct fee payment) does not apply — browse and apply only.",
     "source": "View original notice",
     "sourceSub": "Original notice · Host organization website",
-    "enrollTitle": "Partner integration not yet connected",
+    "enrollTitle": "Not yet connected to the partner organization",
     "enroll": "Enroll",
     "enrollSub": "Enrollment is handled by the partner (not yet connected)",
     "due": "Closes {due}",
@@ -322,7 +322,7 @@
     "fallbackTitle": "Listings",
     "all": "All",
     "hltTitle": "Wholesale & supply listings",
-    "hltLead": "Health product deals between businesses.",
+    "hltLead": "Referrals for health product deals between businesses.",
     "more": "Load more"
   }
 }

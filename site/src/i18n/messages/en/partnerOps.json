@@ -50,8 +50,8 @@
     "noFee": "No view fee is charged.",
     "fee": "View fee",
     "onOpen": "when opened",
-    "reviewingTitle": "HQ is reviewing your rejection request. It will open once a decision is made.",
-    "reviewing": "Under HQ review",
+    "reviewingTitle": "SogaeBank is reviewing your rejection request. It will open once a decision is made.",
+    "reviewing": "Under SogaeBank review",
     "legacyLead": "This is a legacy lead with no separately stored contact.",
     "expiredTitle": "Expired and can no longer be opened.",
     "gradeH": "Grades · view fees",
@@ -97,7 +97,7 @@
     "title": "Rejections · disputes",
     "sub": "Request a rejection for leads that came in by mistake. If accepted, the view fee is refunded.",
     "st": {
-      "REQUESTED": "Under HQ review",
+      "REQUESTED": "Under SogaeBank review",
       "ACCEPTED": "Accepted",
       "DISMISSED": "Dismissed"
     },
@@ -118,7 +118,7 @@
     "refunded": "refunded",
     "deducted": "removed from billing (postpaid, before the switch)",
     "eligNote": "<b>A rejection is eligible only if all three conditions are met: within 72 hours of receipt, once per lead, and within the 15% monthly limit.</b> Eligibility is checked by the server (DB).",
-    "judgeNote": "<b>A consultation falling through is not a reason for rejection.</b> HQ decides based on risk-detection rules — if accepted, the deducted amount returns to your balance as it was (the bonus share as bonus).",
+    "judgeNote": "<b>A consultation falling through is not a reason for rejection.</b> SogaeBank decides based on risk-detection rules — if accepted, the deducted amount returns to your balance as it was (the bonus share as bonus).",
     "otherNote": "For other disputes (amount or grade), please contact <a>Customer Center</a>.",
     "toLeads": "Back to requests",
     "toCash": "Lead credit"
@@ -183,7 +183,7 @@
       "directory": "Legal/tax listing fee",
       "payout": "Settlement payout"
     },
-    "etaxNote": "<b>NTS e-tax invoice integration is not live yet.</b> “Issue requested” means the amount is confirmed, and “Awaiting transmission — not integrated” means HQ has issued it but it has not yet been sent to the NTS. The approval number appears once sent.",
+    "etaxNote": "<b>NTS e-tax invoice integration is not live yet.</b> “Issue requested” means the amount is confirmed, and “Awaiting transmission — not integrated” means SogaeBank has issued it but it has not yet been sent to the NTS. The approval number appears once sent.",
     "unpaidNote": "<b>Unbilled postpaid fees from before the switch, {amt} ({n} items),</b> will be billed as before (Partner Terms, Article 6).",
     "affLink": "Affiliate settlements"
   },
@@ -308,13 +308,13 @@
       "updated": "Updated"
     },
     "archived": "Archived",
-    "inReview": "Awaiting HQ review — no leads until approved",
+    "inReview": "Awaiting SogaeBank review — no leads until approved",
     "simple": "Simple listing",
     "detail": "Details",
     "mxH": "Auto-quote matrix",
     "mxOf": "Quote cells of “{title}” — edit them on the service details page.",
     "mxEmpty": "No matrix-quote service. Categories that quote by “move type × volume”, like moving, fill the cells at registration.",
-    "axisNote": "<b>Quote axes (move type, volume) live in the category master.</b> HQ (category master) adds or changes axes — no deployment needed.",
+    "axisNote": "<b>Quote axes (move type, volume) live in the category master.</b> SogaeBank (category master) adds or changes axes — no deployment needed.",
     "rejNote": "<b>If rejected, fix and resubmit instead of registering again.</b> A new submission puts the same item in the review queue twice. Listings with banned phrases (‘principal guaranteed’, ‘100% success’, etc.) are not accepted."
   },
   "svcDetail": {
@@ -459,7 +459,7 @@
     "blockPh": "{label} — do not enter phone numbers",
     "clear": "Clear",
     "cellsSaved": "Saved {n} cells.",
-    "noAxis": "Quote ranges (axes) are not defined for this category yet — HQ manages the category master.",
+    "noAxis": "Quote ranges (axes) are not defined for this category yet — SogaeBank manages the category master.",
     "mxCorner": "Move type \\ volume",
     "mxSave": "Save matrix",
     "mxUnit": "Unit: 10,000 KRW · empty cells show as “Ask for a quote”",
@@ -470,7 +470,7 @@
     "descPh": "What you do and what requests you would like to receive",
     "fixedReceive": "Regulated categories have a fixed intake method (Insurance Business Act · Medical Service Act Art. 27).",
     "targetPh2": "e.g. Household moves in Seoul and southern Gyeonggi, three rooms or more",
-    "mxHint": "Enter base quotes (10,000 KRW) in the move type × volume cells — HQ defines the axes in the category master.",
+    "mxHint": "Enter base quotes (10,000 KRW) in the move type × volume cells — SogaeBank defines the axes in the category master.",
     "noAxisShort": "Quote ranges are not defined for this category yet.",
     "topFeeLblWiz": "Top view fee (grade S · KRW)",
     "topHint": "Set just the top view fee and all 8 grades are filled in automatically.",
@@ -492,7 +492,7 @@
     "form": "Type",
     "titleMissing": "— (enter it in the first step)",
     "next": "Next",
-    "nextVal": "HQ review — no leads until approved",
+    "nextVal": "SogaeBank review — no leads until approved",
     "pickH": "1. Choose a category — the category sets the registration form",
     "pickPh": "Choose a category",
     "stepsN": "{n} steps",

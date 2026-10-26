@@ -2,11 +2,11 @@
   "unknownRegion": "Region unknown",
   "search": {
     "label": "Keyword search",
-    "placeholder": "Search by keyword.",
+    "placeholder": "Search by keyword",
     "submit": "Search"
   },
   "ad": {
-    "preparing": "The {advertiser} page is being prepared. We've noted your interest.",
+    "preparing": "The {advertiser} page is coming soon. We have noted your interest.",
     "advertiser": "Advertiser",
     "aria": "Ad — {advertiser}",
     "tag": "Ad",
@@ -14,7 +14,7 @@
   },
   "tiles": {
     "all": "All",
-    "furn": "Furniture, interior",
+    "furn": "Furniture & interiors",
     "clean": "Cleaning, pest control",
     "move": "Moving, transport",
     "used": "Used goods",
@@ -35,13 +35,13 @@
       "service": "Services"
     },
     "items": {
-      "furn": "Furniture, interior",
+      "furn": "Furniture & interiors",
       "office": "Office supplies, electronics",
       "used": "Used items",
       "equip": "Industrial equipment",
       "etcGoods": "Other products",
       "clean": "Cleaning, pest control",
-      "interior": "Interior",
+      "interior": "Interior design",
       "move": "Moving, transport",
       "install": "Installation, repair",
       "ad": "Advertising, marketing",
@@ -49,7 +49,7 @@
     },
     "plain": {
       "expert": "Experts",
-      "company": "Companies",
+      "company": "Businesses",
       "want": "Wanted / Requests"
     },
     "byRegion": "Find by region",
@@ -95,19 +95,19 @@
     "clearKeyword": "✕ Clear keyword"
   },
   "view": {
-    "skip": "Skip to content",
+    "skip": "Skip to main content",
     "h1": "Find the right company<br></br>easily <em>with AI.</em>",
     "lead": "Products, services, and experts.<br></br>We connect you with trusted suppliers that match your needs.",
     "hotKeywords": "Popular keywords",
     "noKeywords": "No search keywords collected yet.",
     "quickAria": "Marketplace shortcuts",
     "quickSend": "Refer",
-    "quickSendSub": "Introduce your products and services.",
+    "quickSendSub": "Refer products and services.",
     "quickWant": "I want a referral",
     "quickWantSub": "Post a request with your conditions.",
-    "quickRecv": "Get referred",
+    "quickRecv": "Get a referral",
     "quickRecvSub": "See the latest requests.",
-    "catTitle": "What would you like to be referred to?",
+    "catTitle": "What would you like a referral for?",
     "catLead": "Choose a field for more accurate matching.",
     "seeAll": "See all",
     "suppliers": "Recommended service companies",
@@ -116,7 +116,7 @@
     "registerSupplier": "Register as a supplier",
     "requests": "Latest referral requests",
     "reqKinds": "Request type",
-    "proposals": "Offers<b>{n}</b>",
+    "proposals": "Offers <b>{n}</b>",
     "proposeAria": "Make an offer — {title}",
     "noReqKind": "No requests of this type yet. See other requests under “All”.",
     "noReqs": "No requests yet. Post the first one at <link>I want a referral</link>.",
@@ -131,15 +131,15 @@
     "conditions": "Filters",
     "clearAll": "Clear all",
     "clearHint": "Clear filters to see {allcat} again",
-    "listFail": "Couldn't load the list. Change the filters or go to the <link>start page</link>.",
+    "listFail": "Couldn't load the list. Change the filters or go to the <link>home page</link>.",
     "pageCount": "<b>{sel}</b> · <b>{n}</b> on this page",
     "totalI": "<b>{n}</b> {sect} in total.",
     "totalGa": "<b>{n}</b> {sect} in total.",
     "cases": "Recent successful connections",
     "noCases": "No successful connections yet. Be the first.",
     "caseInq": "{n} inquiries → 1 connected",
-    "caseProp": "{n} companies offered → 1 connected",
+    "caseProp": "{n} offers from companies → 1 connected",
     "caseOne": "1 connected",
-    "ctaText": "Suppliers from all over the country are waiting.<br></br>Meet new opportunities now."
+    "ctaText": "We welcome suppliers from all over the country.<br></br>Discover new opportunities today."
   }
 }

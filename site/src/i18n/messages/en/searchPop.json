@@ -1,12 +1,12 @@
 {
   "dialog": "Search",
-  "placeholder": "What are you looking for? e.g. urgent-sale shop under 10 pyeong",
+  "placeholder": "What are you looking for? e.g. retail space under 10 pyeong (about 33㎡) for quick sale",
   "inputLabel": "Search term",
   "close": "Close",
   "readRow": "Here is how we search",
-  "cond": { "region": "Area", "size": "Size", "terms": "Terms", "status": "Status" },
+  "cond": { "region": "Area", "size": "Size", "terms": "Conditions", "status": "Status" },
   "suggested": "Suggested keywords",
-  "need": "Tell us what you would like to be referred.",
+  "need": "Tell us what you’d like a referral for.",
   "empty": "Nothing found.",
   "emptyHint": "Try different words or tap a suggested keyword above.",
   "sec": {
@@ -30,19 +30,19 @@
     "ai": "AI search",
     "product": "Products",
     "service": "Services",
-    "company": "Companies",
+    "company": "Businesses",
     "biz": "Startups",
     "town": "Local info",
     "pro": "People/Experts"
   },
   "ft": {
-    "move": "↑↓ Move",
-    "open": "Enter Open · top result if none selected",
-    "close": "ESC Close",
+    "move": "↑↓ to navigate",
+    "open": "Enter to open (top result if none is selected)",
+    "close": "Esc to close",
     "scope": "Scope · {label}"
   },
   "box": {
-    "placeholder": "Search products, services, companies, startup ideas",
+    "placeholder": "Search products, services, businesses, startup ideas",
     "cat": "All",
     "inputLabel": "Search term",
     "submit": "Search"

@@ -162,8 +162,8 @@
     "budgetOrder": "The minimum budget is larger than the maximum.",
     "queued": {
       "title": "Your request has been received",
-      "body": "Once reviewed, it will appear in the Get referred list. Review usually takes under 24 hours.<br></br>It closes automatically <b>30 days</b> after posting.",
-      "list": "Get referred list",
+      "body": "Once reviewed, it will appear in the referral requests list. Review usually takes under 24 hours.<br></br>It closes automatically <b>30 days</b> after posting.",
+      "list": "Referral requests",
       "my": "My page"
     },
     "title": "Post a referral request",
@@ -209,7 +209,7 @@
   },
   "reqPage": {
     "title": "Post a request",
-    "note": "Get referred to the products or services you want and create new connections!"
+    "note": "Get referrals for the products or services you want and make new connections!"
   },
   "regPage": {
     "title": "Register a product/service",
@@ -351,7 +351,7 @@
       "giveSub": "Post a place you know",
       "want": "I want a referral",
       "wantSub": "Post what you are looking for",
-      "get": "Get referred",
+      "get": "Get a referral",
       "getSub": "Choose from what is posted"
     },
     "toList": "Go to {code} list",
@@ -405,7 +405,7 @@
       "prev": "Last month {v}",
       "monthFee": "Referral income this month"
     },
-    "warn": "<b>Real estate cannot earn referral fees</b> (A-07 · Licensed Real Estate Agents Act). <b>Real estate · commercial/building sales</b> belong to Safe Referral under A-01, and <b>real estate deals are excluded</b> from the referral income and shares on this page — real estate is counted separately as <b>exposure fees</b>, not referral fees.",
+    "warn": "<b>Real estate cannot earn referral fees</b> (A-07 · Licensed Real Estate Agents Act). <b>Real estate · commercial/building sales</b> belong to Safe Referral under A-01, and <b>real estate deals are excluded</b> from the referral income and shares on this page — real estate is counted separately as <b>listing fees</b>, not referral fees.",
     "asOf": "As of today: {d}",
     "periodAria": "Select period",
     "view": "View",
@@ -444,7 +444,7 @@
     "memSub": "{period} · by number of successes",
     "memNote": "Only the <b>first letter</b> of names is shown. An individual referrer's income is shown <b>only if they turned on disclosure</b> — the company is the contracting party and settlement is paid in the company's or the person's name.",
     "prdTitle": "Successes by product category",
-    "prdNote": "Categories are grouped by <b>grade (A-11)</b>. <b>Real estate (Safe Referral) uses exposure fees, not referral fees</b> (A-07), so it is not included in referral income totals.",
+    "prdNote": "Categories are grouped by <b>grade (A-11)</b>. <b>Real estate (Safe Referral) uses listing fees, not referral fees</b> (A-07), so it is not included in referral income totals.",
     "regMap": "Regional distribution",
     "bySucc": "By number of successes",
     "regAria": "Success distribution by region",
