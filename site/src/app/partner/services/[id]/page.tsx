@@ -38,6 +38,8 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
   const t = await getTranslations('partnerOps.svcDetail');
   const f = await getFmt();
   const to = await getTranslations('partnerOps');
+  const tf = await getTranslations('partnerOps.svcForm');
+  const blockName = (kind: string, ko: string) => f.srv(ko, tf.has(`block.${kind}` as never) ? tf(`block.${kind}` as never) : ko);   // v10.122
   const svc = (c: string) => (to.has(`svcSt.${c}` as never) ? to(`svcSt.${c}` as never) : SVC_ST[c]?.[0] ?? c);
   const act = (c: string) => (t.has(`act.${c}` as never) ? t(`act.${c}` as never) : c);
   const s = await apiGet<D>(`/partner/services/${encodeURIComponent(id)}`, 0).catch(() => null);
@@ -56,7 +58,7 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
       <div className="pt-dsum">
         <div className="dr"><span>{t('k.svc')}</span><b>{s.title}</b></div>
         <div className="dr"><span>{t('k.state')}</span><b><Bg tone={st[1]}>{st[0]}</Bg></b></div>
-        <div className="dr"><span>{t('k.form')}</span><b>{s.formLabel ?? t('simple')}{s.categoryName ? ` · ${s.categoryName}` : ''}</b></div>
+        <div className="dr"><span>{t('k.form')}</span><b>{s.formLabel ? f.srv(s.formLabel, s.formType && tf.has(`form.${s.formType}` as never) ? tf(`form.${s.formType}` as never) : s.formLabel) : t('simple')}{s.categoryName ? ` · ${s.categoryName}` : ''}</b></div>
         <div className="dr"><span>{t('k.id')}</span><b className="pt-code">S-{s.id.slice(0, 8)}</b></div>
         <div className="dr"><span>{t('k.target')}</span><b>{s.target ?? '—'}</b></div>
         <div className="dr"><span>{t('k.topFee')}</span><b>{s.topFee ? f.wonOf(won(s.topFee)) : s.categoryFee ? t('catBase', { amt: f.wonOf(won(s.categoryFee)) }) : '—'}</b></div>
@@ -72,10 +74,10 @@ export default async function ServiceDetail({ params }: { params: Promise<{ id: 
       <Tw head={[t('bth.block'), t('k.state'), t('bth.body'), '']}>
         {s.blocks.map((b) => (
           <tr key={b.kind} data-block-row={b.kind}>
-            <td><b>{b.label}</b></td>
+            <td><b>{blockName(b.kind, b.label)}</b></td>
             <td>{b.filled ? <Bg tone="ok">{t('filled')}</Bg> : <Bg tone="off">{t('emptyBlock')}</Bg>}</td>
             <td>{b.body ? <span style={{ whiteSpace: 'pre-wrap' }}>{b.body.length > 120 ? `${b.body.slice(0, 120)}…` : b.body}</span> : b.fileId ? t('photo1') : '—'}</td>
-            <td><BlockEditor id={s.id} kind={b.kind} label={b.label} body={b.body} fileId={b.fileId} /></td>
+            <td><BlockEditor id={s.id} kind={b.kind} label={blockName(b.kind, b.label)} body={b.body} fileId={b.fileId} /></td>
           </tr>
         ))}
       </Tw>

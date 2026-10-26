@@ -75,7 +75,7 @@ export default async function MyAccountPage() {
       <h2 className="my-st2">{t('hMember')}</h2>
       <ProfileForm name={a.account.name} phone={a.account.phone} email={maskEmail(a.account.email)} />
       {a.account.identityVerifiedAt ? (
-        <Note kind="warn"><b>{a.note ?? t('verifiedNote')}</b> {t('verifiedWhy')}</Note>
+        <Note kind="warn"><b>{t('verifiedNote')}</b> {t('verifiedWhy')}</Note>
       ) : (
         <Note kind="warn" className="act">
           <div><b>{t('unverified')}</b><p>{t('unverifiedWhy')}</p></div>

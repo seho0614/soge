@@ -52,7 +52,7 @@ export default async function StatsPage() {
           <tbody>
             {dist.map((d) => (
               <tr key={d.label}>
-                <td><span className={`pt-gbadge ${d.grade ? `g${d.label.replace(/[+\-]/, '')}` : 'miss'}`}>{d.label}</span></td>
+                <td><span className={`pt-gbadge ${d.grade ? `g${d.label.replace(/[+\-]/, '')}` : 'miss'}`}>{d.grade ? d.label : f.srv(d.label, t('ungraded'))}</span></td>
                 <td className="num"><b>{d.count}</b>{tp('common.unit.case')}</td>
                 <td><div className="pt-bar"><i style={{ width: `${Math.round((d.count / mx) * 100)}%` }} /></div></td>
                 <td className="num">{f.wonOf(won(d.fee))}</td>

@@ -23,6 +23,15 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
   const fm = await getFmt();
+  /* v10.122 — 수익 줄 메모는 DB 트리거(trg_hlt_aff_sync)가 정한 두 모양 · 다른 언어 화면은 사전으로(그 밖의 메모는 그대로) */
+  const memo = (m: string) => {
+    if (fm.ko) return m;
+    const a = /^소개몰 주문 (\S+) 제휴수수료\(확정 전\)$/.exec(m);
+    if (a) return t('revenues.memo.pending', { no: a[1] ?? '' });
+    const b = /^소개몰 주문 (\S+) (취소|반품) — 제휴수수료 회수$/.exec(m);
+    if (b) return t(b[2] === '취소' ? 'revenues.memo.cancel' : 'revenues.memo.return', { no: b[1] ?? '' });
+    return m;
+  };
 
   const { ym } = await searchParams;
   const okYm = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : '';
@@ -53,7 +62,7 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
               {d.items.map((r, i) => (
                 <tr key={`${r.date}-${i}`}>
                   <td>{ymd(r.date)}</td><td>{codeText(t, 'track', r.track)}</td>
-                  <td className="num">{fm.won(r.amount, '—')}</td><td>{r.memo ?? <span className="dim">—</span>}</td>
+                  <td className="num">{fm.won(r.amount, '—')}</td><td>{r.memo ? memo(r.memo) : <span className="dim">—</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -62,7 +71,7 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
       )}
 
       <div className="notice">
-        <b>{d?.note ?? t('revenues.separate')}</b><br />
+        <b>{fm.srv(d?.note, d?.note ? t('revenues.noteSrv') : t('revenues.separate'))}</b><br />
         {t.rich('revenues.separateDesc', { a: (c) => <Link href="/partners/settlements">{c}</Link> })}
       </div>
     </>

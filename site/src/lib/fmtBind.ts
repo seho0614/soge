@@ -15,6 +15,8 @@ export function bind(loc: string) {
     md: (iso: string, koText: string) => (loc === 'ko' ? koText : F.mdEn(iso)),
     ymd: (iso: string, koText: string) => (loc === 'ko' ? koText : F.ymdEn(iso)),
     mdNum: (m: number, d: number, koText: string) => (loc === 'ko' ? koText : F.mdNumEn(m, d)),
+    /** v10.122 — 서버가 준 한국어 문구(note 등): ko 는 서버 글자 그대로(없으면 other), 다른 언어는 사전 글자 other */
+    srv: (server: string | null | undefined, other: string) => (loc === 'ko' && server ? server : other),
   };
 }
 export type Fmt = ReturnType<typeof bind>;

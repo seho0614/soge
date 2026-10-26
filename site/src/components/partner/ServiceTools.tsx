@@ -176,6 +176,7 @@ export function MatrixEditor({ id, rows, cols, cells, readOnly }: { id?: string;
 /* ── 서비스 등록 위자드 ───────────────────────────────────────────────── */
 export interface WizCategory {
   id: string; name: string; form: string | null; formLabel: string; steps: string[]; baseFee: number | null;
+  stepNames?: string[];   // v10.122 — 화면에 보일 단계 이름(다른 언어) · 갈래 판단은 steps(서버 한국어)로
   restrictedCode: string | null; rows: Ax[]; cols: Ax[];
 }
 export function ServiceWizard({ categories, rates, blocks }: {
@@ -283,7 +284,7 @@ export function ServiceWizard({ categories, rates, blocks }: {
       {cat && (
         <div className="pt-fset">
           <h3>{cat.formLabel} {t('stepsN', { n: String(steps.length) })}</h3>
-          <ol className="pt-steps-wiz">{steps.map((s, i) => <li key={s} className={i === step ? 'on' : i < step ? 'done' : undefined}>{i + 1}. {s}</li>)}</ol>
+          <ol className="pt-steps-wiz">{steps.map((s, i) => <li key={s} className={i === step ? 'on' : i < step ? 'done' : undefined}>{i + 1}. {cat.stepNames?.[i] ?? s}</li>)}</ol>
           {view}
           <div className="pt-dact">
             {step > 0 && <button type="button" className="pt-bo" onClick={() => setStep(step - 1)}>{t('prev')}</button>}

@@ -1,0 +1,230 @@
+{
+  "account": {
+    "type": {
+      "INDIVIDUAL": "Individual member",
+      "BUSINESS": "Business member"
+    }
+  },
+  "badge": {
+    "status": {
+      "REQUESTED": "Requested",
+      "IN_REVIEW": "In review",
+      "GRANTED": "Displayed",
+      "REJECTED": "Rejected",
+      "EXPIRED": "Expired",
+      "REVOKED": "Revoked"
+    },
+    "type": {
+      "URGENT": "Urgent",
+      "URGENT_SALE": "Quick sale",
+      "VERIFIED_DOC": "Documents checked"
+    }
+  },
+  "broker": {
+    "doc": {
+      "REG_CERT": "Brokerage registration certificate",
+      "GUARANTEE": "Guarantee (mutual aid) certificate",
+      "LICENSE": "Licensed real estate agent certificate",
+      "ETC": "Other"
+    }
+  },
+  "business": {
+    "status": {
+      "NONE": "Not applied",
+      "IN_REVIEW": "Verification in review",
+      "VERIFIED": "Verified",
+      "REJECTED": "Verification rejected"
+    }
+  },
+  "deal": {
+    "status": {
+      "INQUIRY": "Inquiry",
+      "NEGOTIATING": "Negotiating",
+      "CONTRACTED": "Contract in progress",
+      "PAYMENT_REPORTED": "Payment reported",
+      "CONFIRMED": "Deal confirmed",
+      "SETTLED": "Settled",
+      "DISPUTED": "Disputed",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "dispute": {
+    "reason": {
+      "FEE_DISAGREE": "I disagree with the referral fee amount",
+      "NOT_INTRODUCED": "There was no referral",
+      "CONTRACT_ISSUE": "It differs from the contract",
+      "PAYMENT_ISSUE": "Payment was not made",
+      "OTHER": "Other"
+    },
+    "status": {
+      "OPEN": "Received",
+      "IN_REVIEW": "In review",
+      "RESOLVED": "Resolved",
+      "REJECTED": "Dismissed"
+    }
+  },
+  "fee": {
+    "bearer": {
+      "BUYER": "Paid by buyer",
+      "SELLER": "Paid by seller",
+      "NEGOTIABLE": "Negotiable"
+    }
+  },
+  "gwan": {
+    "ui_type": {
+      "LIST": "List",
+      "MATCH": "Matching",
+      "SERVICE": "Service",
+      "CONTENT": "Content"
+    }
+  },
+  "inquiry": {
+    "category": {
+      "DEAL": "Deals · matching",
+      "SETTLE": "Settlement · referral fees",
+      "ACCOUNT": "Account · business verification",
+      "DISPUTE": "Reports · disputes",
+      "ETC": "Other",
+      "HOWTO": "How to use",
+      "LISTING": "Listings · review",
+      "FEE": "Referral fees · settlement",
+      "BILLING": "Subscription · payment",
+      "REPORT": "Report"
+    },
+    "status": {
+      "OPEN": "Received",
+      "ANSWERED": "Answered",
+      "CLOSED": "Closed"
+    }
+  },
+  "introducer": {
+    "answer": {
+      "KNOW": "I know someone",
+      "CHECKING": "I'll check",
+      "DONT_KNOW": "I don't know",
+      "NOT_MY_FIELD": "Not my field"
+    },
+    "grade": {
+      "SEED": "Sprout referrer",
+      "VERIFIED": "Verified referrer",
+      "EXPERT": "Expert referrer",
+      "TOP": "Top referrer",
+      "REGION_PARTNER": "Regional partner"
+    }
+  },
+  "invite": {
+    "state": {
+      "SENT": "Invite sent",
+      "VIEWED": "Viewed",
+      "CONSENTED": "Consented",
+      "DECLINED": "Declined",
+      "EXPIRED": "Expired"
+    }
+  },
+  "listing": {
+    "grade": {
+      "G1": "Golden",
+      "G2": "Silver",
+      "G3": "Bronze"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "IN_REVIEW": "In review",
+      "PUBLISHED": "Live",
+      "REJECTED": "Rejected",
+      "SUSPENDED": "Suspended",
+      "ARCHIVED": "Archived"
+    }
+  },
+  "payment": {
+    "method": {
+      "BANK_TRANSFER": "Bank transfer",
+      "CASH": "Cash",
+      "OTHER": "Other"
+    }
+  },
+  "post": {
+    "badge": {
+      "WANTED": "Wanted",
+      "INTRO_WANT": "Please refer",
+      "ON_SALE": "For sale"
+    }
+  },
+  "proposal": {
+    "relation": {
+      "OTHER": "Other",
+      "CLIENT": "Client",
+      "PARTNER": "Partner company",
+      "ACQUAINTANCE": "Company I know",
+      "OWN": "Our company"
+    },
+    "status": {
+      "PROPOSED": "Proposed",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Withdrawn"
+    }
+  },
+  "register": {
+    "role": {
+      "OFFER": "Offer a referral",
+      "REQUEST": "Get a referral"
+    }
+  },
+  "request": {
+    "kind": {
+      "GOODS": "Buy goods",
+      "SERVICE": "Request a service",
+      "EXPERT": "Ask an expert",
+      "COMPANY": "Find a company",
+      "USED": "Find used items"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "IN_REVIEW": "In review",
+      "PUBLISHED": "Open",
+      "REJECTED": "Rejected",
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
+    },
+    "visibility": {
+      "ALL": "Everyone",
+      "MEMBER": "Members",
+      "VERIFIED": "Verified members"
+    }
+  },
+  "safety": {
+    "case_type": {
+      "CONTRACT": "Contract fraud",
+      "PAYMENT": "Payment fraud",
+      "GOODS": "Goods/service fraud",
+      "PRIVACY": "Personal data/voice phishing",
+      "ETC": "Other fraud"
+    }
+  },
+  "settlement": {
+    "status": {
+      "REQUESTED": "Awaiting approval",
+      "APPROVED": "Approved · awaiting payout",
+      "PAID": "Marked paid by party",
+      "HELD": "On hold due to dispute",
+      "REJECTED": "Rejected"
+    }
+  },
+  "subscription": {
+    "status": {
+      "ACTIVE": "Active",
+      "PAST_DUE": "Payment failed",
+      "CANCELLED": "Cancelled",
+      "EXPIRED": "Expired"
+    }
+  },
+  "success_fee": {
+    "status": {
+      "BILLED": "Billed",
+      "PAID": "Paid",
+      "WAIVED": "Waived",
+      "CANCELLED": "Billing cancelled"
+    }
+  }
+}

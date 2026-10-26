@@ -50,7 +50,7 @@ export default async function PartnerHome() {
   if (!d || !d.applied) {
     return (
       <><Pgh title={t('title')} sub={SUB} />
-        <Note kind="info">{d?.note ?? t('applyFirst')}</Note>
+        <Note kind="info">{t('applyFirst')}</Note>
         {/* v10.27 (G-192) — 인증을 마쳤으면 다음 단계인 「입점 신청」으로. v10.38 (D096 · P2P) — 본인인증 개인도 사업자 정보 없이 신청합니다 */}
         {p.identityVerifiedAt || p.businessVerifiedAt ? (
           <>

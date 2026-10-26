@@ -8,6 +8,7 @@ import { MyHead, Note, GwanTag } from '@/components/my/ui';
 import { IntroAnswer } from '@/components/my/IntroAnswer';
 import { IntroProfileChips } from '@/components/my/IntroProfileChips';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('intro.title') };
@@ -43,6 +44,7 @@ export default async function IntroHome() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   const [act, matchedRes, prof] = await Promise.all([
@@ -70,14 +72,14 @@ export default async function IntroHome() {
           <Link className="my-bo" href="/my/intro/activity">{t('intro.activity')}</Link>
         </div>
       ) : (
-        <Note kind="warn" data-intro-unreg=""><b>{act?.note ?? t('intro.needProfile')}</b> {t('intro.unregHint')}</Note>
+        <Note kind="warn" data-intro-unreg=""><b>{t('intro.needProfile')}</b> {t('intro.unregHint')}</Note>
       )}
 
       <Note kind="info">{t.rich('intro.gradeNote', { b: b_ })}</Note>
 
       <h2 className="my-s2">{t('intro.matchedH')} <em>{matched.length}</em></h2>
       {matched.length === 0 ? (
-        <Note kind="warn"><b>{t('intro.noMatch')}</b> {note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, '') || t('intro.widen')}</Note>
+        <Note kind="warn"><b>{t('intro.noMatch')}</b> {f.srv(note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, ''), note && !note.startsWith('지금은') ? t('intro.regToMatch') : t('intro.widen'))}</Note>
       ) : (
         <div className="my-reqs">
           {matched.slice(0, 20).map((m) => {

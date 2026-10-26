@@ -10,6 +10,7 @@ import { AddressForm } from '@/components/health/AddressForm';
 import { AddressActions } from '@/components/health/AddressActions';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,6 +28,7 @@ type Props = { searchParams: Promise<{ next?: string }> };
 export default async function MyHltAddresses({ searchParams }: Props) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   /* 돌아갈 곳은 사이트 안 경로만 받습니다 — 바깥 주소로 튕기지 않게 */
   const raw = (await searchParams).next;
   const next = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : undefined;
@@ -36,7 +38,7 @@ export default async function MyHltAddresses({ searchParams }: Props) {
   try {
     rows = await apiGetPersonal<HltAddress[]>('/me/health/addresses');
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('hAddr.loadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('hAddr.loadFail');
   }
 
   return (

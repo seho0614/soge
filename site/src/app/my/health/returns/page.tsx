@@ -35,7 +35,7 @@ export default async function MyHltReturns() {
   try {
     rows = await apiGetPersonal<HltReturn[]>('/me/health/returns');
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('hReturns.loadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('hReturns.loadFail');
   }
 
   return (

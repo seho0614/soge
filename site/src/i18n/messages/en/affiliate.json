@@ -44,6 +44,7 @@
     "howToApply": "How to apply"
   },
   "dash": {
+    "noteSrv": "Affiliate commissions are paid by SogaeBank. They are different from referral fees (paid directly between the parties).",
     "title": "Partner Center",
     "h1": "Dashboard",
     "loadFail": "Could not load the dashboard. Please try again in a moment.",
@@ -169,6 +170,7 @@
     "DOC": "Document"
   },
   "settlements": {
+    "noteSrv": "Register and verify your settlement account to receive payouts.",
     "title": "Settlements",
     "lead": "Your payout history and settlement account.",
     "verifyBelow": "Please verify under \"Account 1-won verification\" below.",
@@ -260,6 +262,8 @@
     "priceLock": "<b>Rate changes do not affect existing orders.</b> The rate is fixed at the time the order is placed."
   },
   "revenues": {
+    "memo": { "return": "SogaeMall order {no} returned — commission reclaimed", "cancel": "SogaeMall order {no} cancelled — commission reclaimed", "pending": "SogaeMall order {no} affiliate commission (not yet confirmed)"},
+    "noteSrv": "Referral fees and affiliate commissions are different in nature, so they are settled and invoiced separately.",
     "title": "Earnings",
     "lead": "Your monthly earnings.",
     "month": "Month",

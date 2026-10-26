@@ -56,7 +56,7 @@ export default async function PerformancePage() {
           ))}
         </Tw>
       )}
-      <Note kind="info"><b>{d.note}</b></Note>
+      <Note kind="info"><b>{f.srv(d.note, t('noteSrv'))}</b></Note>
       <Note kind="warn">{t.rich('consumerNote', { b: (c) => <b>{c}</b> })}</Note>
 
       <S2>{t('report')}</S2>

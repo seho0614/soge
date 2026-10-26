@@ -59,7 +59,8 @@ export default async function BrokerStatusPage() {
   const reviewer = p.roles.some((r) => ['REVIEWER', 'ADMIN', 'OPS'].includes(r));
   const adminOrigin = process.env.ADMIN_ORIGIN;
   const g = ex && ex.applied !== false && (ex.guaranteeOrg || ex.guaranteeCertNo || ex.guaranteeAmount) ? ex : null;
-  const docLabel = (k: string) => BROKER_DOCS.find(([c]) => c === k)?.[1] ?? k;
+  const td = await getTranslations('join.brokerExtra.doc');
+  const docLabel = (k: string) => (td.has(k as never) ? td(k as never) : BROKER_DOCS.find(([c]) => c === k)?.[1] ?? k);   // v10.122 — 사전 한국어 = BROKER_DOCS
 
   const ok = b.state === 'VERIFIED';
   /* 단계 — 신청 · 자동 대조(국토부 대조 결과가 있으면) · 서류 심사(운영 판정 중/끝) · 인증 완료 */

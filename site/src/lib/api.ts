@@ -5,6 +5,7 @@
  * 소개코드는 쿠키에서 읽어 헤더로 전달합니다 (INV-2).
  */
 import { cookies } from 'next/headers';
+import { localizeLabels } from './codeLabels';
 
 export interface ApiError { code: string; message: string; field?: string }
 
@@ -64,7 +65,7 @@ export async function apiGetPersonal<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path, { headers, cache: 'no-store' });
   const body = await res.json().catch(() => ({ code: 'PARSE_ERROR', message: '응답을 읽을 수 없습니다.' }));
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
-  return body as T;
+  return localizeLabels(body as T);   // v10.122 — 코드 이름표 글자(다른 언어 화면만)
 }
 
 /**
@@ -79,7 +80,7 @@ export async function apiGetVisitor<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path, { headers, cache: 'no-store' });
   const body = await res.json().catch(() => ({ code: 'PARSE_ERROR', message: '응답을 읽을 수 없습니다.' }));
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
-  return body as T;
+  return localizeLabels(body as T);   // v10.122 — 코드 이름표 글자(다른 언어 화면만)
 }
 
 /**
@@ -97,7 +98,7 @@ export async function apiGetPublic<T>(path: string, revalidate = 30): Promise<T>
   const res = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, next: { revalidate } });
   const body = await res.json().catch(() => ({ code: 'PARSE_ERROR', message: '응답을 읽을 수 없습니다.' }));
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
-  return body as T;
+  return body as T;   // v10.122 — 쿠키를 읽지 않는 공개 응답이라 이름표를 바꾸지 않음(codeLabels.ts)
 }
 
 export async function apiGet<T>(path: string, revalidate = 30): Promise<T> {
@@ -111,5 +112,5 @@ export async function apiGet<T>(path: string, revalidate = 30): Promise<T> {
   const res = await fetch(BASE + path, { headers, next: { revalidate } });
   const body = await res.json().catch(() => ({ code: 'PARSE_ERROR', message: '응답을 읽을 수 없습니다.' }));
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
-  return body as T;
+  return localizeLabels(body as T);   // v10.122 — 코드 이름표 글자(다른 언어 화면만)
 }

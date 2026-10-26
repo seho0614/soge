@@ -85,7 +85,7 @@ export default async function PartnersLayout({ children }: { children: React.Rea
         {notPartner && (
           <div className="notice notice-act p2notice">
             <div>
-              <strong>{d?.note ?? t('notPartner')}</strong>
+              <strong>{t('notPartner')}</strong>
               <p>{t('notPartnerDesc')}</p>
             </div>
             <Link className="cta-primary as-link" href="/partners#apply">{t('howToApply')}</Link>

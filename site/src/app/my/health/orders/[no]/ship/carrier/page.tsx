@@ -10,6 +10,7 @@ import { MyHltNav } from '@/components/health/MyHltNav';
 import { CopyText } from '@/components/health/CopyText';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hCarrier.meta') };
@@ -27,6 +28,7 @@ type Props = { params: Promise<{ no: string }> };
 export default async function MyHltCarrier({ params }: Props) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const no = decodeURIComponent((await params).no);
   const enc = encodeURIComponent(no);
   let o: HltOrder | null = null; let ships: HltShipment[] = []; let err: string | null = null;
@@ -36,7 +38,7 @@ export default async function MyHltCarrier({ params }: Props) {
       apiGetPersonal<HltShipment[]>(`/me/health/orders/${enc}/shipments`),
     ]);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.shipLoadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('h.shipLoadFail');
   }
   if (!o) {
     return (<><div className="hlt"><MyHltNav on="orders" /><div className="page-head"><h1>{t('hCarrier.title')}</h1></div>

@@ -20,6 +20,7 @@ export interface BrokerExtraValue {
 
 export function useBrokerExtra(init?: BrokerExtraValue | null) {
   const t = useTranslations('join.brokerExtra');
+  const tc = useTranslations('join.brokerExtra.doc');   // v10.122 — 서류 이름(값은 코드)
   const [docs, setDocs] = useState<string[]>(init?.submittedDocs ?? ['REG_CERT', 'GUARANTEE']);
   const [g, setG] = useState({
     org: init?.guaranteeOrg ?? '', cert: init?.guaranteeCertNo ?? '', amount: init?.guaranteeAmount ? String(init.guaranteeAmount) : '',
@@ -47,7 +48,7 @@ export function useBrokerExtra(init?: BrokerExtraValue | null) {
       <div className="fld"><span>{t('docs')}</span>
         <div className="gw-brkdocs">{BROKER_DOCS.map(([k, t]) => (
           <label key={k} className="gw-brkdoc"><input type="checkbox" name="doc" value={k} checked={docs.includes(k)}
-            onChange={(e) => setDocs(e.target.checked ? [...docs, k] : docs.filter((x) => x !== k))} /><span>{t}</span></label>
+            onChange={(e) => setDocs(e.target.checked ? [...docs, k] : docs.filter((x) => x !== k))} /><span>{tc.has(k as never) ? tc(k as never) : t}</span></label>
         ))}</div>
         <label className="gw-ls" style={{ display: 'block', marginTop: 6 }}>{t('files')}
           <input type="file" multiple accept="application/pdf,image/*" onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 8))} /></label>

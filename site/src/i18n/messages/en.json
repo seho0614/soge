@@ -1,4 +1,5 @@
 {
+  "bank": { "048": "Shinhyup Credit Union", "045": "MG Community Credit Cooperatives", "071": "Korea Post", "032": "Busan Bank", "031": "Daegu Bank", "023": "SC First Bank", "089": "K Bank", "092": "Toss Bank", "090": "KakaoBank", "003": "IBK Industrial Bank", "011": "NongHyup Bank", "081": "Hana Bank", "020": "Woori Bank", "088": "Shinhan Bank", "004": "KB Kookmin Bank"},
   "meta": {
     "title": "SogaeBank",
     "description": "A P2P referral platform where anyone — individuals or businesses — can refer clients, listings and startup opportunities and earn referral fees"
@@ -377,6 +378,7 @@
     }
   },
   "region": {
+    "all": "(all areas)",
     "seoul": "Seoul",
     "busan": "Busan",
     "daegu": "Daegu",

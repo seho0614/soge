@@ -29,7 +29,7 @@ export default async function MyHltOrders() {
   try {
     rows = await apiGetPersonal<HltOrderRow[]>('/me/health/orders');
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.loadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('h.loadFail');
   }
 
   return (

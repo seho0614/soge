@@ -147,6 +147,13 @@
     "ratingAria": "Rated {n}"
   },
   "pricing": {
+    "rangeCase": "Per case",
+    "rangeProc": "Per procedure",
+    "rangeMonthly": "Monthly fee",
+    "rangeTbd": "Ranges not set",
+    "rangeMx": "{r}×{c} ranges",
+    "formNone": "Not set",
+    "noteSrv": "Deal referral fees and re-referral bonuses are terms the partner promises to the referrer — referral fees are paid directly between the parties and do not go through SogaeBank (INV-9).",
     "title": "Rates · Referral fees",
     "sub": "The category determines how prices are entered.",
     "empty": "You have no approved services. Register a service and pass review to see its pricing here.",

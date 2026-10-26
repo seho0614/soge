@@ -80,7 +80,7 @@ export default async function SettlementPage() {
         {acc ? <><b>{acc.bankName} ****{acc.last4} · {acc.holderName}</b>{acc.verifiedAt ? <Bg tone="ok">{t('verified')}</Bg> : <Bg tone="wait">{t('pending')}</Bg>}{acc.verifyStub ? <span className="pt-ls">{t('stub')}</span> : null}</>
           : <b>{t('noAccount')}</b>}
       </div>
-      <Note kind="info"><b>{s.note}</b> {t('accNote')}</Note>
+      <Note kind="info"><b>{f.srv(s.note, t('noteSrv'))}</b> {t('accNote')}</Note>
       <details className="pt-fset" style={{ marginTop: 10 }}>
         <summary style={{ cursor: 'pointer', fontWeight: 800 }}>{acc ? t('accChange') : t('accAdd')}</summary>
         <div style={{ marginTop: 12 }}><SettlementAccountForm hasAccount={!!acc} identityVerified={!!p.identityVerifiedAt} account={acc ?? undefined} /></div>

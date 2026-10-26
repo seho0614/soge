@@ -32,6 +32,7 @@ export function SettlementAccountForm({ hasAccount, identityVerified, account }:
 }) {
   const router = useRouter();
   const t = useTranslations('affiliate.account');
+  const tb = useTranslations('bank');   // v10.122 — 고르는 칸의 글자만 화면 언어 · 서버로 보내는 bankName 은 한국어 그대로
   const tc = useTranslations('affiliate.common');
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export function SettlementAccountForm({ hasAccount, identityVerified, account }:
           <label className="fld">
             <span>{t('bank')}</span>
             <select name="bankCode" defaultValue="004" required>
-              {BANKS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+              {BANKS.map(([c, n]) => <option key={c} value={c}>{tb.has(c as never) ? tb(c as never) : n}</option>)}
             </select>
           </label>
           <label className="fld">

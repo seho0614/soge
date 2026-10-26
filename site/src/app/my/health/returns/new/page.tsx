@@ -85,7 +85,7 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
   try {
     o = await apiGetPersonal<HltOrder>(`/me/health/orders/${encodeURIComponent(no)}`);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.loadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('h.loadFail');
   }
   if (!o) {
     return (

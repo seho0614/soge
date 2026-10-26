@@ -1,4 +1,5 @@
 {
+  "svcForm": { "block": { "LOCATION": "Directions", "FAQ": "FAQ", "CASES": "Project examples", "PRICE": "Price list", "INTRO": "Service introduction", "HERO_IMAGE": "Main image"}, "step": { "PAYMENT": { "5": "Request review", "4": "Price · stock", "3": "Referral reward", "2": "Shipping · returns", "1": "Product information notice", "0": "Product definition"}, "MEDICAL": { "2": "Register review approval", "1": "Review submission materials", "0": "Procedures · materials"}, "RENTAL": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONSULT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONTRACT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "MATRIX": { "6": "Submit registration", "5": "Landing preview", "4": "Referral fee", "3": "Consultation view fee", "2": "Auto-quote ranges", "1": "Main target", "0": "Services offered"}}, "form": { "MEDICAL": "Medical review track", "PAYMENT": "Payment (legacy)", "RENTAL": "Monthly contract", "CONSULT": "Consultation", "CONTRACT": "Contract-based", "MATRIX": "Matrix quote"}},
   "form": {
     "MATRIX": "Matrix quote",
     "CONTRACT": "Pay on contract",
@@ -124,6 +125,7 @@
     "toCash": "Lead credit"
   },
   "settle": {
+    "noteSrv": "These are settlements paid by SogaeBank. Once confirmed, they are sent to your verified payout account on the next month's payout day (3.3% withheld). Referral fees are paid directly between the parties, so they do not appear here.",
     "metaTitle": "Partner settlement",
     "title": "Settlement",
     "sub": "Settlements for completed referrals and your payout account.",
@@ -372,6 +374,7 @@
     "reviews": "Approval · rejection history"
   },
   "svcNew": {
+    "noteSrv": "The category determines the registration form. Regulated categories have a fixed intake method (Insurance Business Act · Medical Service Act Article 27), and categories without a registration method cannot be registered yet.",
     "title": "Add service",
     "sub": "The category you choose sets the registration form. Regulated categories have a fixed intake method.",
     "noteFb": "The category determines the registration form.",

@@ -11,6 +11,7 @@ import { CopyText } from '@/components/health/CopyText';
 import { codeText, ORDER_LABEL, SHIP_LABEL, ymdhm } from '@/components/health/util';
 
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('hShip.meta') };
@@ -27,6 +28,7 @@ type Props = { params: Promise<{ no: string }> };
 export default async function MyHltShip({ params }: Props) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('myDeal');
+  const f = await getFmt();
   const to = await getTranslations('order');
   const no = decodeURIComponent((await params).no);
   const enc = encodeURIComponent(no);
@@ -40,7 +42,7 @@ export default async function MyHltShip({ params }: Props) {
       apiGetPersonal<HltShipment[]>(`/me/health/orders/${enc}/shipments`),
     ]);
   } catch (e) {
-    err = e instanceof ApiFailure && e.status < 500 ? e.body.message : t('h.shipLoadFail');
+    err = e instanceof ApiFailure && e.status < 500 && f.ko ? e.body.message : t('h.shipLoadFail');
   }
 
   if (!o) {

@@ -7,6 +7,7 @@ import { Bg, Empty, Note, Pgh, S2, Tw } from '@/components/partner/ui';
 import { ServiceWizard, type WizCategory } from '@/components/partner/ServiceTools';
 import { ServiceForm } from './ServiceForm';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partnerOps.svcNew'))('title') };
@@ -30,19 +31,29 @@ export default async function NewServicePage() {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partnerOps.svcNew');
-  const f = await apiGet<Forms>('/partner/service-forms', 0).catch(() => null);
+  const fm = await getFmt();
+  const tf = await getTranslations('partnerOps.svcForm');
+  const f0 = await apiGet<Forms>('/partner/service-forms', 0).catch(() => null);
+  /* v10.122 — 등록 방식 · 단계 · 블록 이름은 서버 한국어 그대로(단계 이름은 위자드가 갈래를 고르는 데 씀) · 다른 언어 화면은 코드로 사전 글자를 따로 넘김 */
+  const formName = (code: string | null, ko: string) => fm.srv(ko, code && tf.has(`form.${code}` as never) ? tf(`form.${code}` as never) : ko);
+  const stepNames = (code: string | null, ko: string[]) => (fm.ko || !code ? ko : ko.map((s, i) => (tf.has(`step.${code}.${i}` as never) ? tf(`step.${code}.${i}` as never) : s)));
+  const f = f0 && {
+    ...f0,
+    categories: f0.categories.map((c) => ({ ...c, formLabel: c.form ? formName(c.form, c.formLabel) : c.formLabel, stepNames: stepNames(c.form, c.steps) })),
+    blocks: f0.blocks.map((b) => ({ ...b, label: fm.srv(b.label, tf.has(`block.${b.kind}` as never) ? tf(`block.${b.kind}` as never) : b.label) })),
+  };
 
   return (
     <><Pgh title={t('title')} sub={t('sub')} />
-      <Note kind="info"><b>{f?.note ?? t('noteFb')}</b></Note>
+      <Note kind="info"><b>{fm.srv(f?.note, f ? t('noteSrv') : t('noteFb'))}</b></Note>
       {f ? (
         <Tw head={[t('th.form'), t('th.cats'), t('th.steps'), t('th.order')]}>
           {f.forms.map((x) => (
             <tr key={x.form}>
-              <td><b>{x.label}</b></td>
-              <td>{x.categories.length ? x.categories.join(' · ') : <span className="pt-ls">— ({t('noCat')})</span>}</td>
+              <td><b>{formName(x.form, x.label)}</b></td>
+              <td>{x.categories.length ? f.categories.filter((c) => c.form === x.form).map((c) => c.name).join(' · ') : <span className="pt-ls">— ({t('noCat')})</span>}</td>
               <td>{t('stepsN', { n: String(x.steps.length) })}</td>
-              <td>{x.steps.join(' → ')}</td>
+              <td>{stepNames(x.form, x.steps).join(' → ')}</td>
             </tr>
           ))}
           {f.categories.some((c) => !c.form) && (
@@ -56,9 +67,9 @@ export default async function NewServicePage() {
         const mx = f?.forms.find((x) => /매트릭스/.test(x.label)) ?? null;
         return mx ? (
           <section data-matrix-steps="">
-            <S2>{mx.label} {t('stepsN', { n: String(mx.steps.length) })}</S2>
+            <S2>{formName(mx.form, mx.label)} {t('stepsN', { n: String(mx.steps.length) })}</S2>
             <ol className="pt-nsteps">
-              {mx.steps.map((st, i) => <li key={st}><span className="n">{i + 1}</span><div><b>{st}</b></div></li>)}
+              {stepNames(mx.form, mx.steps).map((st, i) => <li key={st}><span className="n">{i + 1}</span><div><b>{st}</b></div></li>)}
             </ol>
           </section>
         ) : null;

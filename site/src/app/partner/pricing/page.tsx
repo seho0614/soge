@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface Row {
-  categoryId: string; categoryName: string; gwanCode: string; formType: string | null; formLabel: string; range: string;
+  categoryId: string; categoryName: string; gwanCode: string; formType: string | null; formLabel: string; range: string; rows: number; cols: number;
   state: 'NO_FORM' | 'NO_AXES' | 'EMPTY' | 'PROVISIONAL' | 'SET';
   baseFee: number | null; baseIsDefault: boolean; topFee: number | null; myFee: number | null; matrixCells: number; provisional: boolean;
 }
@@ -44,6 +44,7 @@ export default async function PricingPage() {
   const t = await getTranslations('billing.pricing');
   const f = await getFmt();
   const tg = await getTranslations('header.gwan');
+  const tf = await getTranslations('partnerOps.svcForm');
   const provisional = rows.some((r) => r.provisional);
   const maxS = rw?.items.reduce((m, x) => Math.max(m, Number(x.topFee ?? 0)), 0) ?? 0;
 
@@ -59,8 +60,9 @@ export default async function PricingPage() {
             return (
               <tr key={r.categoryId}>
                 <td><b>{r.categoryName}</b></td>
-                <td>{r.formLabel}</td>
-                <td>{r.range}{r.formType === 'MATRIX' && r.matrixCells ? <span className="pt-ls"> · {t('cells', { n: String(r.matrixCells) })}</span> : null}</td>
+                <td>{f.srv(r.formLabel, !r.formType ? t('formNone') : tf.has(`form.${r.formType}` as never) ? tf(`form.${r.formType}` as never) : r.formType)}</td>
+                <td>{f.srv(r.range, !r.formType ? '—' : r.formType === 'MATRIX' ? (r.rows && r.cols ? t('rangeMx', { r: String(r.rows), c: String(r.cols) }) : t('rangeTbd'))
+                  : r.formType === 'RENTAL' ? t('rangeMonthly') : r.formType === 'MEDICAL' ? t('rangeProc') : t('rangeCase'))}{r.formType === 'MATRIX' && r.matrixCells ? <span className="pt-ls"> · {t('cells', { n: String(r.matrixCells) })}</span> : null}</td>
                 <td><Bg tone={st[1]}>{st[0]}</Bg></td>
                 <td>{isGwanKey(r.gwanCode) ? tg(r.gwanCode) : r.gwanCode}</td>
                 <td className="num">{r.baseFee != null ? f.wonOf(won(r.baseFee)) : '—'}</td>
@@ -90,7 +92,7 @@ export default async function PricingPage() {
           )}
         </Tw>
       )}
-      <Note kind="info"><b>{rw?.note ?? t('noteDefault')}</b></Note>
+      <Note kind="info"><b>{f.srv(rw?.note, rw?.note ? t('noteSrv') : t('noteDefault'))}</b></Note>
       <div className="pt-dact"><Link className="pt-bo" href="/partner/services">{t('toServices')}</Link></div>
     <i hidden data-root-end="" /></>
   );

@@ -54,7 +54,7 @@ export default async function ActivityPage() {
       <MyHead title={t('act.title')} sub={t('act.sub')}
         right={<span className="my-ls">{t('act.usableN', { v: pt(points?.usable) })}</span>} />
 
-      {!reg && <Note kind="warn">{card?.note ?? t('intro.needProfile')}</Note>}
+      {!reg && <Note kind="warn">{t('intro.needProfile')}</Note>}
       <div className="my-stat4" data-intro-stat="">
         <div><span className="my-ls">{t('answer.know')}</span><b>{t('intro.count', { n: String(card?.responses ?? 0) })}</b></div>
         <div><span className="my-ls">{t('act.sent')}</span><b>{t('intro.count', { n: String(card?.invitesSent ?? 0) })}</b></div>

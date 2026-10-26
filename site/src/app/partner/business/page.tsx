@@ -104,7 +104,7 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
             </div>
           ))}
           {c?.isOwner ? <ChangeRequestForm /> : null}
-          <Note kind="warn"><b>{c?.notes.info ?? t('ntsWarn')}</b></Note>
+          <Note kind="warn"><b>{f.srv(c?.notes.info, c ? t('notesSrv.info') : t('ntsWarn'))}</b></Note>
           {!d?.applied ? (
             <div style={{ marginTop: 14 }}>
               <Empty>{t('notApplied')}<div style={{ marginTop: 12 }}><Link className="pt-bp" href="/partner/apply">{t('applyNow')}</Link></div></Empty>
@@ -127,7 +127,7 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
             ))}
           </Tw>
           {c.isOwner ? <StaffInviteForm /> : null}
-          <Note kind="warn"><b>{c.notes.staff}</b></Note>
+          <Note kind="warn"><b>{f.srv(c.notes.staff, t('notesSrv.staff'))}</b></Note>
         </>
       ) : <Empty>{tp('common.notPartner')}</Empty>)}
 
@@ -160,7 +160,7 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
               </Tw>
             </div>
           )}
-          <Note kind="info"><b>{c.notes.brand}</b></Note>
+          <Note kind="info"><b>{f.srv(c.notes.brand, t('notesSrv.brand'))}</b></Note>
           {c.isOwner ? <><BrandForm brandName={c.brand?.brandName ?? null} intro={c.brand?.intro ?? null} hasLogo={!!c.brand?.logoFileId} /><SiteForm /></> : <p className="pt-ls">{t('ownerOnly')}</p>}
         </>
       ) : <Empty>{tp('common.notPartner')}</Empty>)}

@@ -26,6 +26,7 @@ const BANKS: Array<[string, string]> = [
 export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
   const router = useRouter();
   const t = useTranslations('myDeal');
+  const tb = useTranslations('bank');   // v10.122 — 고르는 칸의 글자만 화면 언어 · 서버로 보내는 bankName 은 한국어 그대로
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(accounts.length === 0);
   const [info, setInfo] = useState<string | null>(null);
@@ -100,7 +101,7 @@ export function PayoutBox({ accounts }: { accounts: PayoutAccount[] }) {
         <form className="p2form" onSubmit={add} data-payout-form>
           <label className="fld"><span>{t('payout.bank')}</span>
             <select name="bankCode" defaultValue="004" required data-payout-bank>
-              {BANKS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+              {BANKS.map(([c, n]) => <option key={c} value={c}>{tb.has(c as never) ? tb(c as never) : n}</option>)}
             </select></label>
           <label className="fld"><span>{t('payout.accNo')}</span>
             <input name="accountNo" inputMode="numeric" pattern="[0-9-]{9,20}" required placeholder={t('payout.accNoPh')} data-payout-no /></label>

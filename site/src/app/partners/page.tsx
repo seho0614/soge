@@ -132,7 +132,7 @@ export default async function PartnersDashboard() {
               <div className="k">{tr('dash.kpi.grade')}</div>
               <div className="v tier">{tier?.grade ? tr('dash.kpi.gradeName', { grade: GR(tier.grade) }) : '—'}</div>
               <div className="p2bar" aria-hidden style={{ marginTop: 6 }}><i style={{ width: `${tier?.progress ?? 0}%` }} /></div>
-              <div className="n">{tier?.remaining != null && tier.next ? tr('dash.kpi.nextRemain', { grade: GR(tier.next), amount: fm.wonOf(n(tier.remaining)) }) : tier?.next ? (tier.note ?? tr('dash.kpi.nextNote')) : tr('dash.kpi.top')}</div>
+              <div className="n">{tier?.remaining != null && tier.next ? tr('dash.kpi.nextRemain', { grade: GR(tier.next), amount: fm.wonOf(n(tier.remaining)) }) : tier?.next ? tr('dash.kpi.nextNote') : tr('dash.kpi.top')}</div>
             </div>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default async function PartnersDashboard() {
           ) : <p className="p2sub">{tr('common.noNotices')}</p>}
         </section>
 
-        {d.note && <p className="p2note">{d.note}</p>}
+        {d.note && <p className="p2note">{fm.srv(d.note, tr('dash.noteSrv'))}</p>}
       </div>
     </div>
   );

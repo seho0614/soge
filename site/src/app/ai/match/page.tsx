@@ -8,6 +8,7 @@ import { AiEngine, AiHead } from '@/components/ai/Engine';
 import { MatchView, type Ad, type Cand, type Weight } from '@/components/ai/MatchView';
 import '@/styles/proto-w1.css';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 import { Msgs } from '@/i18n/Msgs';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,10 +33,14 @@ export default async function MatchPage({ searchParams }: { searchParams: Promis
   const rid = (await searchParams).request;
   const [t, ta] = await Promise.all([getTranslations('join.ai.match'), getTranslations('join.ai')]);
 
-  const [res, ad] = await Promise.all([
+  const [res0, ad] = await Promise.all([
     apiGetPersonal<Res>(`/ai/recommend/request${rid ? `?id=${encodeURIComponent(rid)}` : ''}`).catch(() => null),
     apiGetPersonal<Ad>('/ads/serve?slot=RECS').catch(() => null),
   ]);
+  /* v10.122 — 가중치 이름(recommend_weights.name)은 코드(loc · cat · win · spd · trust)로 화면 언어 글자 · 한국어는 서버 글자 그대로 */
+  const f = await getFmt();
+  const tw = await getTranslations('join.ai.match.w');
+  const res = res0 && { ...res0, weights: res0.weights.map((w) => ({ ...w, name: f.srv(w.name, tw.has(w.code as never) ? tw(w.code as never) : w.name) })) };
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-AIS-REC-010">

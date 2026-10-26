@@ -206,6 +206,7 @@
     "home": "Partner Center home"
   },
   "biz": {
+    "notesSrv": { "brand": "Brand materials are a trust display unit, not a service listing unit.", "staff": "Invite staff who are already members by email; they join once they accept (invitation emails are not sent yet — please tell them directly).", "info": "If the National Tax Service authenticity and closure checks are not connected yet, the status shows as “Assumed” — do not rely on it. Changes are submitted as requests and approved by SogaeBank."},
     "title": "Company · Account",
     "sub": "See business info, accounts, terms, and brand in one place.",
     "tabInfo": "Business info",
@@ -412,6 +413,7 @@
     "show": "Show again"
   },
   "perf": {
+    "noteSrv": "For contract-based services, a deal counts only after the partner reports fulfilment and the consumer confirms it. Deals are unrelated to view fees.",
     "title": "Performance",
     "sub": "For contract-closing services, the partner reports fulfillment and the deal closes once the consumer confirms.",
     "empty": "No fulfillment reports yet. When you finish a job, report it below.",
@@ -449,6 +451,7 @@
     "submit": "Report fulfillment"
   },
   "stats": {
+    "ungraded": "Ungraded",
     "title": "Results",
     "sub": "Your spending depends on the grades of the leads you receive.",
     "recv": "Leads received",

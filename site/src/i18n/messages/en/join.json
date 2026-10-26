@@ -118,6 +118,7 @@
     "hint": "Enter exactly as shown on your registration certificate. <b>Mismatches will be rejected.</b>"
   },
   "brokerExtra": {
+    "doc": { "ETC": "Other", "LICENSE": "Licensed real estate agent certificate", "GUARANTEE": "Guarantee (mutual aid) certificate", "REG_CERT": "Brokerage registration certificate"},
     "saveFail": "Couldn't save the documents and guarantee details.",
     "docs": "Documents submitted",
     "files": "Document files (optional · PDF · photos, up to 8)",
@@ -534,6 +535,7 @@
       "noValue": "None"
     },
     "match": {
+      "w": { "trust": "Trust score", "spd": "Response speed", "win": "Deal history", "cat": "Category match", "loc": "Region fit"},
       "title": "AI recommendations",
       "sub": "Ranks business candidates for one request by a weighted score across 5 factors. Move the weights and the ranking is recalculated instantly.",
       "loadFail": "Couldn't load recommendations. Please try again shortly.",

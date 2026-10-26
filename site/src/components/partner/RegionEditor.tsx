@@ -21,7 +21,7 @@ export function RegionEditor({ initial }: { initial: Region[] }) {
   const router = useRouter();
   const t = useTranslations('partner.region');
   const tr = useTranslations('region');   // v10.119 시 · 도 이름(값은 한국어 그대로)
-  const shown = (r: Region) => { const c = sidoCode(r.sido); return c ? `${tr(c)} ${r.sigungu}` : key(r); };
+  const shown = (r: Region) => { const c = sidoCode(r.sido); return c ? `${tr(c)} ${r.sigungu === '전체' ? tr('all') : r.sigungu}` : key(r); };   // v10.122 「전체」(시 · 도 전체)도 사전
   const [on, setOn] = useState<Region[]>(initial);
   const [off, setOff] = useState<Region[]>([]);
   const [sido, setSido] = useState('서울');

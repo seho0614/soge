@@ -35,7 +35,7 @@ export default async function PartnerSettlementsPage() {
       <div className="page-head"><h1>{t('settlements.title')}</h1></div>
       <p className="lead">{t('settlements.lead')}</p>
 
-      {d?.note && <div className="notice warn"><b>{d.note}</b> {acc ? <>{t('settlements.verifyBelow')}</> : null}</div>}
+      {d?.note && <div className="notice warn"><b>{fm.srv(d.note, t('settlements.noteSrv'))}</b> {acc ? <>{t('settlements.verifyBelow')}</> : null}</div>}
 
       {d === null ? (
         <p className="form-error" role="alert">{t('settlements.loadFail')}</p>

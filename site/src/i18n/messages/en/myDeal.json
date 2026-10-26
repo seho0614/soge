@@ -271,6 +271,7 @@
     "total": "Total paid <b>{total}</b> · deductions <b>₩0</b> — {msg}"
   },
   "intro": {
+    "regToMatch": "Register your referral fields to see matching requests.",
     "title": "Referral activity",
     "sub": "We show only requests that match the fields and regions you registered. If you know someone, just press “I know someone”.",
     "noProfile": "No referrer profile yet",
