@@ -29,7 +29,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D122_agent_key_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 160 · 마지막 D122', (len(mig), mig[-1] if mig else '') == (160, 'D122_agent_key_admin'), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 160 · 마지막 D122(v10.115 부터 D123 · 161 — test_v1115)', (len(mig), mig[-1] if mig else '') in ((160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 외부 연동 AGENT 줄(오픈을 막지 않음 · 발신 IP 불필요) · 받는 키에 AGENT/ANTHROPIC_API_KEY 하나만 더함 · 결제 · 계좌 · 세금계산서 키 없음',
    "VALUES ('AGENT', 'AI(Anthropic Claude)'" in M and "'ANTHROPIC_API_KEY', NULL, false," in M
    and "('MAP','KAKAO_REST_KEY'), ('MAP','KAKAO_JS_KEY'), ('WEATHER','KMA_SERVICE_KEY'), ('AGENT','ANTHROPIC_API_KEY'))" in M
@@ -118,7 +118,7 @@ if API and DB:
         ok('③ 저장 — 끝 4자리만 · 운영 화면 키 · 엔진 CLAUDE(점검판이 MOCK 이면 MOCK 이 먼저)',
            v1.get('saved') is True and v1.get('unreadable') is False and v1.get('masked') == '••••••Q7zZ' and FAKE not in json.dumps(v1)
            and ((v1.get('source'), v1.get('engine')) == (('MOCK', 'MOCK') if mock else ('ADMIN', 'CLAUDE'))), str(v1))
-        enc = psql("SELECT position('TEST1111' in convert_from(value_enc, 'LATIN1'))::text || ' ' || last4 || ' ' || (SELECT secret_registered::text FROM integrations WHERE code = 'AGENT') FROM integration_secrets WHERE integration_code = 'AGENT'")
+        enc = psql("SELECT position(convert_to('TEST1111', 'UTF8') in value_enc)::text || ' ' || last4 || ' ' || (SELECT secret_registered::text FROM integrations WHERE code = 'AGENT') FROM integration_secrets WHERE integration_code = 'AGENT'")
         ok('③ DB 에는 암호문만(평문 조각 없음) · 끝 4자리 · 외부 연동 「키 등록됨」', enc == '0 Q7zZ true', enc)
         nokey = subprocess.run(['psql', DB, '-X', '-At', '-c', "SELECT fn_integ_secret_get('AGENT', 'ANTHROPIC_API_KEY')"], capture_output=True, text=True)
         ok('③ 앞뒤 빈칸이 붙은 값도 저장(빈칸은 지움 — 끝 4자리가 빈칸이 아님) · 암호 열쇠 없는 DB 접속으로는 풀리지 않음',
