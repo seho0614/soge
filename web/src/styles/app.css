@@ -694,3 +694,24 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
 /* 의료 심의 카드 안 「광고 소재 보기」(개발에만 있는 이동) — 글자 단추 */
 .ad-inl { font: inherit; font-size: 12px; color: var(--pp); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 .kpi4.ad-krows b.bad { color: var(--danger); }
+
+/* ── v10.112 운영 로그인 — 가운데 카드(대표 2026-10-26) · 디자인 시트 값만 ─────────────── */
+.bo-login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 380px); justify-content: center; align-content: center; padding: 24px 16px; box-sizing: border-box; background: var(--sgb-bg); font-family: var(--sgb-font-body); color: var(--sgb-ink); }
+.bo-login *, .bo-login *::before, .bo-login *::after { box-sizing: border-box; }
+.bo-login-card { min-width: 0; padding: 32px 28px 24px; background: var(--paper); border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-lg); box-shadow: var(--sgb-shadow-up); }
+.bo-login-card p { max-width: none; }   /* 운영 화면 공통 문단 폭 제한을 카드 안에서는 풂 */
+.bo-login-brand { margin: 0 0 18px; display: flex; align-items: center; gap: 8px; color: var(--sgb-navy); font: var(--sgb-fw-title) var(--sgb-fs-body-1)/1 var(--sgb-font-title); }
+.bo-login-brand b { font-weight: var(--sgb-fw-title); }
+.bo-login-brand .d { width: 9px; height: 9px; border-radius: 50%; background: var(--sgb-navy); }
+.bo-login-card h1 { margin: 0; font: var(--sgb-fw-title) var(--sgb-fs-title-2)/1.25 var(--sgb-font-title); color: var(--sgb-ink); }
+.bo-login-sub { margin: 6px 0 20px; font-size: var(--sgb-fs-cap); color: var(--sgb-ink-3); }
+/* 입력 칸의 기본 최소 폭이 카드를 밀어내지 않게(휴대폰 390px) — 격자 칸 minmax(0, …) · min-width 0 */
+.bo-login-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.bo-login-form label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; font-size: var(--sgb-fs-cap); font-weight: var(--sgb-fw-bold); color: var(--sgb-ink-2); }
+.bo-login-form input { width: 100%; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-sm); font: inherit; font-weight: var(--sgb-fw-regular); font-size: var(--sgb-fs-body-1); color: var(--sgb-ink); background: var(--paper); }
+.bo-login-form input:focus { outline: 2px solid var(--sgb-navy); outline-offset: 1px; border-color: var(--sgb-navy); }
+.bo-login-go { width: 100%; min-width: 0; height: 46px; margin-top: 4px; font-size: var(--sgb-fs-body-1); }
+.bo-login-err { margin: 0; font-size: var(--sgb-fs-cap); color: var(--sgb-rd-text); }
+.bo-login-foot { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--sgb-line-soft); text-align: center; font-size: var(--sgb-fs-micro); color: var(--sgb-ink-3); }
+.bo-login-foot a { color: var(--sgb-link); font-weight: var(--sgb-fw-bold); text-decoration: none; }
+.bo-login-foot a:hover { text-decoration: underline; }
