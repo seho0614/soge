@@ -50,7 +50,7 @@ for n in SHARED + PAGE:
     if n not in NEW: continue
     fk = flat(json.loads(rd(f'{I}messages/ko/{n}.json') or '{}')); fe = flat(json.loads(rd(f'{I}messages/en/{n}.json') or '{}'))
     tot += len(fk)
-    ph = [k for k in fk if sorted(re.findall(r'\{(\w+)\}', fk[k])) != sorted(re.findall(r'\{(\w+)\}', fe.get(k, '')))]
+    ph = [k for k in fk if set(re.findall(r'\{(\w+)[},]', fk[k])) != set(re.findall(r'\{(\w+)[},]', fe.get(k, ''))) - ({'m2'} if k.startswith('prompt.chip.size') else set())]   # v10.116 — 복수형({n, plural, …})은 같은 이름이 여러 번 · 영어 칩만 ㎡({m2})
     tg = [k for k in fk if sorted(re.findall(r'</?(\w+)>', fk[k])) != sorted(re.findall(r'</?(\w+)>', fe.get(k, '')))]
     hn = [k for k, v in fe.items() if re.search('[가-힣]', v)]
     ok(f'② {n} — ko · en 키 같음 · 자리표시 · 태그 짝 · 영어에 한글 없음', fk and set(fk) == set(fe) and not ph and not tg and not hn,

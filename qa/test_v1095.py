@@ -47,7 +47,7 @@ def flat(d, p=''):
 
 fk, fe = flat(ko), flat(en)
 ok('② ko · en 키가 같음', set(fk) == set(fe) and len(fk) > 250, f'{len(fk)} · {len(fe)} · 다름 {sorted(set(fk) ^ set(fe))[:5]}')
-ph = [k for k in fk if sorted(re.findall(r'\{(\w+)\}', fk[k])) != sorted(re.findall(r'\{(\w+)\}', fe.get(k, '')))]
+ph = [k for k in fk if set(re.findall(r'\{(\w+)[},]', fk[k])) != set(re.findall(r'\{(\w+)[},]', fe.get(k, ''))) - ({'m2'} if k.startswith('prompt.chip.size') else set())]   # v10.116 — 복수형({n, plural, …})은 같은 이름이 여러 번 · 영어 칩만 ㎡({m2})
 ok('② 자리표시 짝이 같음({n} · {name} · {year} …)', not ph, ' '.join(ph[:5]))
 bt = [k for k in fk if fk[k].count('<b>') != fe.get(k, '').count('<b>') or fe.get(k, '').count('<b>') != fe.get(k, '').count('</b>')]
 ok('② 굵게(<b>) 짝이 같음', not bt, ' '.join(bt[:5]))

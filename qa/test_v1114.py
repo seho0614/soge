@@ -43,7 +43,7 @@ ok('② 정한 용어 — 옛 말 0(Get referred · exposure fee · HQ · Sign i
 ok('② 대표자 → Representative(가입 화면) · 로그아웃 → Log out', any('Representative' in v for v in E['common'].values()) and any(v == 'Log out' for v in E['common'].values()), '')
 ph = lambda s: sorted(re.findall(r'\{[^}]+\}', s)) + sorted(re.findall(r'</?[a-zA-Z0-9]+>', s))
 keydiff = [(ns, k) for ns in E for k in set(KO[ns]) ^ set(E[ns])]
-phdiff = [(ns, k) for ns in E for k in E[ns] if k in KO[ns] and isinstance(KO[ns][k], str) and sorted(re.findall(r'\{(\w+)', KO[ns][k])) != sorted(re.findall(r'\{(\w+)', E[ns][k]))]
+phdiff = [(ns, k) for ns in E for k in E[ns] if k in KO[ns] and isinstance(KO[ns][k], str) and set(re.findall(r'\{(\w+)', KO[ns][k])) != set(re.findall(r'\{(\w+)', E[ns][k])) - ({'m2'} if k.startswith('prompt.chip.size') else set())]
 tagdiff = [(ns, k) for ns in E for k in E[ns] if len(re.findall(r'<b>', E[ns][k])) != len(re.findall(r'</b>', E[ns][k]))]
 ok('③ 모든 묶음 ko · en 키가 같음', not keydiff, str(keydiff[:5]))
 ok('③ 자리표시 이름이 ko 와 같음', not phdiff, str(phdiff[:5]))
