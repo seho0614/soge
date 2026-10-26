@@ -20,7 +20,7 @@ const TYPES = Object.keys(I18N_FIELDS);
 const FIELDS = [...new Set(Object.values(I18N_FIELDS).flat())];
 const STATUSES_DOC = I18nService.STATUSES;
 /** 원문 목록(운영 글) 대상 — v10.103 · 3-1 */
-const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT'];
+const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT', 'PROFILE_Q', 'PROFILE_OPT', 'AD_SEGMENT'];   // v10.118 관심 성향
 
 export class LangActiveDto {
   @ApiProperty({ example: true }) @IsBoolean() isActive!: boolean;

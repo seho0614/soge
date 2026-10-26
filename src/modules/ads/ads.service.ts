@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { ComplianceService } from '../catalog/compliance.service';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 광고 · 관심 성향 (프론트 v3.2 서버 계층).
@@ -19,7 +20,7 @@ import { ComplianceService } from '../catalog/compliance.service';
  */
 @Injectable()
 export class AdsService {
-  constructor(private readonly db: DatabaseService, private readonly compliance: ComplianceService) {}
+  constructor(private readonly db: DatabaseService, private readonly compliance: ComplianceService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId(); }
 
   /** v10.115 (D123) — 맞춤형 광고 약관(ADPERSONAL)의 지금 동의 · 성향은 이것이 있을 때만 씁니다 */
@@ -54,8 +55,13 @@ export class AdsService {
       }
       map.get(r.code).options.push({ code: r.opt_code, label: r.label });
     }
+    /* v10.118 (D124) — 승인된 번역을 얹음(문항 PROFILE_Q · 보기 PROFILE_OPT 「문항:보기」) · 한국어 · 다국어 꺼짐이면 그대로 */
+    const qs = [...map.values()];
+    await this.i18n.overlay(qs, 'PROFILE_Q', (q) => q.code, { question: 'question' });
+    const opts = qs.flatMap((q) => q.options.map((o: any) => Object.assign(o, { _id: `${q.code}:${o.code}` })));
+    await this.i18n.overlayBy(opts, 'PROFILE_OPT', '_id', { label: 'label' });
     return {
-      questions: [...map.values()],
+      questions: qs,
       note: '선택한 값을 더해서 가장 높은 세그먼트를 씁니다. 추론이 아닙니다. ' +
             '등록하면 맞춤형 광고 동의 뒤 광고를 누른 기록으로 성향이 바뀔 수 있으며, 여섯 문항으로 사람을 규정하지 않습니다.',
     };
@@ -112,6 +118,8 @@ export class AdsService {
     /* v10.31 — 시안 PRF-010 오른쪽 칸: 세그먼트별 근거 점수 막대(ranking) · 「이 성향에 나갈 광고」(upcomingAds — 등록 화면과 같은 조회).
      *   점수는 고른 답의 가중치 합 그대로입니다(가중치 표 자체는 내보내지 않음 — 답을 역산할 수 있어서). */
     const names = await this.db.query<{ code: string; name: string }>('SELECT code, name FROM ad_segments ORDER BY code');
+    await this.i18n.overlay(names, 'AD_SEGMENT', (n) => n.code, { name: 'name' });   // v10.118
+    if (seg) await this.i18n.overlayOne(seg, 'AD_SEGMENT', (x: any) => x.code, { name: 'name', description: 'description' });
     const sc = (scores ?? {}) as Record<string, number>;
     const ranking = names.map((n) => ({ code: n.code, name: n.name, score: Number(sc[n.code] ?? 0) }))
       .filter((x) => x.score > 0).sort((a, b) => b.score - a.score || a.code.localeCompare(b.code));
@@ -171,6 +179,8 @@ export class AdsService {
          FROM v_ad_serving WHERE $1 = ANY(segments) ORDER BY creative_code`, [row.segment]);
     /* v10.31 — 시안 PRF-020 「근거 점수」 막대에 세그먼트 이름 */
     const names = await this.db.query<{ code: string; name: string }>('SELECT code, name FROM ad_segments ORDER BY code');
+    await this.i18n.overlay(names, 'AD_SEGMENT', (n) => n.code, { name: 'name' });   // v10.118
+    await this.i18n.overlayOne(row, 'AD_SEGMENT', (x: any) => x.segment, { name: 'name', description: 'description' });
     const sc = (row.scores ?? {}) as Record<string, number>;
     const ranking = names.map((n) => ({ code: n.code, name: n.name, score: Number(sc[n.code] ?? 0) }))
       .filter((x) => x.score > 0).sort((a, b) => b.score - a.score || a.code.localeCompare(b.code));

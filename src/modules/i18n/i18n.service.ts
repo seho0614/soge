@@ -8,6 +8,7 @@ export const I18N_FIELDS: Record<string, string[]> = {
   NOTICE: ['title', 'body'], FAQ: ['question', 'answer'], TERM: ['title', 'body'],
   LISTING: ['title', 'body'], REQUEST: ['title', 'body'], POST: ['title', 'body'], COMMENT: ['body'],
   CATEGORY: ['name'], HLT_PRODUCT: ['name', 'summary'],   // v10.103 · D117
+  PROFILE_Q: ['question'], PROFILE_OPT: ['label'], AD_SEGMENT: ['name', 'description'],   // v10.118 · D124 관심 성향
 };
 /** 손님 화면에 나가는 상태 — 승인 · 자동 승인 · 기계 번역(게시판 글 · 댓글만 · 3-3) */
 const LIVE = ['APPROVED', 'AUTO_APPROVED', 'MACHINE'];
@@ -199,6 +200,10 @@ export class I18nService {
       TERM: { from: 'terms s', id: "s.code || '@' || s.version", label: 's.title', gwan: 's.gwan_code', order: 's.code, s.version DESC' },
       CATEGORY: { from: 'categories s', id: 's.id::text', label: 's.name', gwan: 's.gwan_code', order: 's.gwan_code, s.name' },
       HLT_PRODUCT: { from: 'hlt_products s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.created_at DESC' },
+      /* v10.118 (D124) — 관심 성향 문항 · 보기 · 세그먼트 */
+      PROFILE_Q: { from: 'profile_questions s', id: 's.code', label: 's.question', gwan: 'NULL::text', order: 's.sort_order' },
+      PROFILE_OPT: { from: 'profile_options s', id: "s.question_code || ':' || s.code", label: 's.label', gwan: 'NULL::text', order: 's.question_code, s.sort_order' },
+      AD_SEGMENT: { from: 'ad_segments s', id: 's.code', label: 's.name', gwan: 'NULL::text', order: 's.sort_order' },
     };
     const src = SRC[q.targetType];
     if (!src) throw new PolicyViolation('I18N_FIELD', `원문 목록이 없는 대상입니다 (${q.targetType}).`);
