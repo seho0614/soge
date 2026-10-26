@@ -178,7 +178,8 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
           if (!b.ok) { const j = await b.json().catch(() => ({})); q.set('biz', 'fail'); q.set('msg', String(j.message ?? '').slice(0, 120)); }
         } catch { q.set('biz', 'fail'); }
       }
-      if (seg && segOk && Object.keys(ans).length) {
+      /* v10.115 (D123) — 성향 저장 = 맞춤형 광고 약관 동의. 4단계에서 ADPERSONAL 에 동의한 경우에만(5단계 체크로 4단계 「동의 안 함」을 뒤집지 않음) */
+      if (seg && segOk && agreed.has('ADPERSONAL') && Object.keys(ans).length) {
         try {
           await fetch('/api/v1/me/profile', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: ans, consent: true }),

@@ -29,7 +29,7 @@ export class ProfileAnswersDto {
 }
 
 export class ProfileRegisterDto extends ProfileAnswersDto {
-  @ApiProperty({ description: '성향 저장 동의. false 면 등록되지 않습니다' })
+  @ApiProperty({ description: '맞춤형 광고 약관(ADPERSONAL) 동의 — true 면 약관 동의 기록을 남기고 저장. false 면 등록되지 않습니다(v10.115)' })
   @StrictBoolean() consent!: boolean;
 }
 
@@ -175,10 +175,10 @@ export class AdsController {
   @ApiOperation({
     summary: '성향 등록',
     description:
-      '**동의가 없으면 등록되지 않습니다.** 저장된 성향은 광고 소재 선택과 ' +
-      '추천 정렬에만 쓰며 광고주에게 제공하지 않습니다. 언제든 해지할 수 있습니다.',
+      '**맞춤형 광고 약관(ADPERSONAL) 동의가 없으면 등록되지 않습니다**(v10.115 — 이 요청이 약관 동의를 기록함 · 약관이 발행 전이면 422 CONSENT_UNAVAILABLE). ' +
+      '저장된 성향은 광고를 고르는 데만 쓰며 광고주에게 제공하지 않습니다. 언제든 해지할 수 있습니다.',
   })
-  @ApiResponse({ status: 422, description: 'CONSENT_REQUIRED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'CONSENT_REQUIRED · CONSENT_UNAVAILABLE · BAD_ANSWER', type: ErrorDto })
   @Audit('PROFILE_REGISTER', 'ACCOUNT')
   register(@Body() dto: ProfileRegisterDto) {
     return this.svc.register(dto.answers, dto.consent);
@@ -200,7 +200,7 @@ export class AdsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '성향 등록 해지',
-    description: '답과 세그먼트를 남기지 않고 지웁니다. 전체 공개 광고로 돌아갑니다.',
+    description: '답과 세그먼트를 남기지 않고 지우고 맞춤형 광고 동의를 철회합니다(v10.115 — 광고 기록의 회원 연결도 끊음). 성향을 쓰지 않는 광고만 나갑니다.',
   })
   @Audit('PROFILE_WITHDRAW', 'ACCOUNT')
   @ApiOkResponse({ type: OkDto })
@@ -213,7 +213,7 @@ export class AdsController {
     summary: '슬롯 소재 조회',
     description:
       '경매도 점수도 없습니다 — 운영이 지정한 것입니다. ' +
-      '성향에 맞는 소재 → 기본 소재 → 빈 자리 순서로 고릅니다. ' +
+      '성향에 맞는 소재(맞춤형 광고 약관에 동의한 회원만 · v10.115) → 성향 지정이 없는 기본 소재 → 빈 자리 순서로 고릅니다. 동의가 없거나 비회원이면 성향을 겨냥한 소재는 나가지 않습니다. ' +
       '응답의 `label` 은 항상 "광고" 입니다(표시광고법).',
   })
   @ApiOkResponse({ type: AdServeDto })

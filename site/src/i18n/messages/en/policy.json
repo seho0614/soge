@@ -40,12 +40,12 @@
   "guide": {
     "back": "Home",
     "title": "How it works",
-    "intro": "SogaeBank is where you make referrals and earn referral fees. Individual members can do everything once they sign up and verify their identity; only businesses that need a license to register (real estate agents, insurance, medical, etc.) register after getting that verification.",
+    "intro": "SogaeBank is where you make referrals and earn referral fees. Individual members can do everything once they sign up and verify their identity; only industries that require a license to post (real estate agents, insurance, medical, etc.) need that license first.",
     "flowH": "From referral to payout",
     "flow": {
       "s1": {
         "t": "Sign up · verify",
-        "d": "Individuals verify their identity, businesses verify with their business registration number, and an operator approves. Before approval you can only browse."
+        "d": "Individuals verify their identity, businesses verify with their business registration number, and our team approves. Before approval you can only browse."
       },
       "s2": {
         "t": "List or request",
@@ -53,11 +53,11 @@
       },
       "s3": {
         "t": "Review",
-        "d": "An operator checks it. Restricted businesses cannot be listed."
+        "d": "Our team checks it. Restricted industries cannot be listed."
       },
       "s4": {
         "t": "1:1 chat · referral code",
-        "d": "When a chat starts, a referral code is issued and attribution begins."
+        "d": "When a chat starts, a referral code is issued and referral credit begins."
       },
       "s5": {
         "t": "Contract · deal confirmed",
@@ -74,7 +74,7 @@
     "colDoc": "Document",
     "colState": "Status",
     "note": "<b>Click a document name to open its full text.</b> The published version is shown as is — with its effective date and version number.",
-    "more": "Have more questions? Ask via <ask>1:1 inquiry</ask> · <cs>Customer center</cs>."
+    "more": "Have more questions? Ask via <ask>1:1 inquiry</ask> · <cs>Help Center</cs>."
   },
   "agree": {
     "title": "Agree to terms",
@@ -82,7 +82,7 @@
     "allDone": "You have agreed to all required terms.",
     "changed": "Our terms have changed",
     "needed": "Your consent is required",
-    "neededBody": "You need to agree to the required terms to use features that require login. Browsing, viewing terms and logging out still work. Optional items (marketing · personalized ads · night-time ads) stay as they are.",
+    "neededBody": "You need to agree to the required terms to use features that require login. Browsing, viewing terms and logging out still work. Optional items (marketing · personalized ads · night-time marketing messages) stay as they are.",
     "okTitle": "You have agreed to all required terms",
     "okBody": "You have agreed to the current versions. If the terms change, the changes will appear here and we will ask for your consent again.",
     "colTerm": "Terms",
@@ -119,7 +119,7 @@
       "rejected": "Declined",
       "flipReject": "Decline",
       "flipAgree": "Agree",
-      "hint": "Each change adds a new record (never deleted or edited), and ads and notifications follow the most recent record. Required terms cannot be turned off here (only by leaving the service)."
+      "hint": "Each change adds a new record (never deleted or edited), and ads and notifications follow the most recent record. Required terms cannot be turned off here (only by deleting your account)."
     }
   },
   "source": {
@@ -144,7 +144,7 @@
     "newWin": " — opens in a new window (keeps this page).",
     "outside": "<b>This section is outside the referral fee structure.</b> It only offers browsing and application guidance.",
     "register": "Register a startup plan",
-    "toPolicy": "To policy details",
+    "toPolicy": "Go to policy details",
     "toPolicySub": "Support limit · application deadline"
   }
 }

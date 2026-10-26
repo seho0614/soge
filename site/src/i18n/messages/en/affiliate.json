@@ -29,9 +29,9 @@
   },
   "layout": {
     "brand": "SogaeBank<br></br>PARTNERS",
-    "brandSub": "By introducing great products,<br></br>you make the world more special.",
+    "brandSub": "By referring great products,<br></br>you make the world more special.",
     "back": "Back to SogaeBank",
-    "card": "A good person's<br></br>referral makes everyday life<br></br>better.",
+    "card": "A referral from a good person<br></br>makes everyday life<br></br>better.",
     "imgText": "Growing together<br></br>SogaeBank PARTNERS",
     "topLead": "Good referrals that connect people create greater value.",
     "unreadAria": "{n} unread notifications",
@@ -54,11 +54,11 @@
       "s1Biz": "Business verified",
       "s1Personal": "Identity verified · Individual",
       "s1Need": "Required",
-      "s1Desc": "Verify your identity to become a partner as an individual (commissions are paid after 3.3% withholding). To receive as a business, complete business verification — this is optional.",
+      "s1Desc": "Verify your identity to become a partner as an individual (commissions are paid after 3.3% withholding). To receive commissions as a business, complete business verification — this is optional.",
       "s2": "2. Apply as a partner",
       "applied": "Applied",
       "waiting": "Waiting",
-      "s2Desc": "Same process as a seller application. You only need to apply once.",
+      "s2Desc": "Same process as the join application. You only need to apply once.",
       "s3": "3. Approval",
       "approved": "Approved",
       "reviewing": "Under review",
@@ -81,7 +81,7 @@
       "grade": "Partner tier ⓘ",
       "gradeName": "{grade} Partner",
       "nextRemain": "{amount} left to next tier ({grade})",
-      "nextNote": "The next tier criteria are set by the operator.",
+      "nextNote": "The next tier criteria are set by SogaeBank.",
       "top": "You are at the highest tier",
       "devLine": "Clicks today {today} · Clicks this month {month} · Active links {links} <a>My referral links ›</a>"
     },
@@ -116,8 +116,8 @@
     "goal": {
       "title": "This month's goal progress",
       "detail": "Details ›",
-      "reward": "Reward on achievement {amount} · {source} goal",
-      "none": "This month's goal has not been set yet. Goals are set by the operator."
+      "reward": "Reward for reaching the goal: {amount} · {source} goal",
+      "none": "This month's goal has not been set yet. Goals are set by SogaeBank."
     },
     "feed": {
       "title": "Recent successes!",
@@ -130,7 +130,7 @@
     "navy": {
       "brand": "SogaeBank PARTNERS",
       "text": "Bigger earning opportunities<br></br>are waiting for you.",
-      "li1": "Introduce great products,",
+      "li1": "Refer great products,",
       "li2": "make someone's day better,",
       "li3": "and grow your earnings too.",
       "go": "Together, further! ↗"
@@ -179,7 +179,7 @@
     "colWithholding": "Withholding",
     "colNet": "Net paid",
     "colPaidAt": "Paid on",
-    "taxNote": "<b>The 3.3% withholding</b> is business income tax. It is settled when you file your annual income tax return.",
+    "taxNote": "<b>The 3.3% withholding</b> is business income tax. It is reconciled when you file your annual comprehensive income tax return.",
     "accountTitle": "Settlement account",
     "bank": "Bank",
     "last4": "ending {last4}",
@@ -231,7 +231,7 @@
     "loadFail": "Could not load the guides. Please refresh in a moment.",
     "empty": "No guides yet. For questions, please use <a>1:1 Inquiry</a>.",
     "download": "Download attachment",
-    "diff": "<b>This is different from a referral fee.</b> A referral fee is money exchanged <b>directly between the parties</b> when you connect someone you know, while affiliate commissions are <b>paid by the company</b>. <a>Create a link from recommended products ›</a>"
+    "diff": "<b>This is different from a referral fee.</b> A referral fee is money exchanged <b>directly between the parties</b> when you connect someone you know, while affiliate commissions are <b>paid by SogaeBank</b>. <a>Create a link from recommended products ›</a>"
   },
   "orders": {
     "title": "Orders/Customers",
@@ -275,12 +275,12 @@
     "colAmount": "Amount",
     "colMemo": "Memo",
     "separate": "Referral fees and affiliate commissions are settled separately.",
-    "separateDesc": "Affiliate commissions are paid by the company, while referral fees are exchanged directly between the parties (INV-9). <a>View settlements</a>"
+    "separateDesc": "Affiliate commissions are paid by SogaeBank, while referral fees are exchanged directly between the parties (INV-9). <a>View settlements</a>"
   },
   "materials": {
     "title": "Marketing materials",
     "lead": "Only reviewed and approved materials are here.",
-    "warn": "<b>Use only the materials here.</b> If you share your own wording, it becomes <b>a statement by the company</b> and may cause problems under the advertising law.",
+    "warn": "<b>Use only the materials here.</b> If you share wording you wrote yourself, it may be treated as <b>a statement by SogaeBank</b> and violate the Act on Fair Labeling and Advertising.",
     "loadFail": "Could not load materials. Please refresh in a moment.",
     "empty": "No materials yet.",
     "file": "File: ",

@@ -19,7 +19,8 @@ export interface Mine { registered: boolean; segment?: string; name?: string; co
  * ── 진단과 저장을 나눕니다 ──────────────────────────────────────────
  * 답할 때마다 진단(POST /profile/analyze — 저장 안 함)으로 오른쪽 칸을 다시 그립니다.
  * 저장은 「성향 등록하기」를 누를 때만 — 그 단추 바로 위의 동의 확인을 켜야 합니다(INV-AD · 동의 없이 저장하지 않음).
- * 「성향 쓰지 않기」는 저장된 성향을 지웁니다(DELETE /me/profile) — 전체 공개 광고로 돌아갑니다.
+ *   v10.115 (D123) — 이 동의가 곧 맞춤형 광고 약관(ADPERSONAL) 동의입니다(서버가 약관 동의 기록을 남김 · 옆에 약관 전문 링크).
+ * 「성향 쓰지 않기」는 저장된 성향을 지우고 맞춤형 광고 동의를 철회합니다(DELETE /me/profile) — 성향을 쓰지 않는 광고만 나갑니다.
  */
 export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine | null }) {
   const router = useRouter();
@@ -69,7 +70,10 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
       const r = await fetch('/api/v1/me/profile', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: ans, consent: true }),
       });
-      if (!r.ok) throw new Error();
+      if (!r.ok) {   // v10.115 — 서버 안내 그대로(약관 준비 중 · 답 형식 등)
+        const j = await r.json().catch(() => ({}));
+        setErr(typeof j?.message === 'string' && j.message ? j.message : tr('saveFail')); setBusy(false); return;
+      }
       router.push('/ai/profile/done');
     } catch { setErr(tr('saveFail')); setBusy(false); }
   }
@@ -109,11 +113,11 @@ export function ProfileSurvey({ questions, mine }: { questions: Q[]; mine: Mine 
         {res && (
           <label className="w1-ls" style={{ display: 'flex', gap: 7, alignItems: 'flex-start', marginTop: 4 }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 2 }} />
-            <span>{tr('agree')}</span>
+            <span>{tr('agree')} <Link href="/terms/ADPERSONAL" target="_blank" rel="noreferrer" data-prf-terms>{tr('agreeTerms')}</Link></span>
           </label>
         )}
         <div className="w1-prfact">
-          <button type="button" className="w1-bo" onClick={() => { setAns({}); setRes(null); setErr(null); }}>{tr('redo')}</button>
+          <button type="button" className="w1-bo" onClick={() => { setAns({}); setRes(null); setErr(null); setAgree(false); setSkipped(false); }}>{tr('redo')}</button>
           <button type="button" className="w1-bo" disabled={busy} onClick={() => void skip()}>{tr('skip')}</button>
           {res
             ? <button type="button" className="w1-bp" disabled={busy || !agree} onClick={() => void save()}>{busy ? tr('saving') : tr('save')}</button>

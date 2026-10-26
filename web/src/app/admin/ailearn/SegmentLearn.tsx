@@ -69,7 +69,7 @@ export function SegmentLearn({ onPreview }: { onPreview?: () => void } = {}) {
       <div className="ad-tw"><table className="tbl" data-seg-safety>
         <thead><tr><th>막는 것</th><th>왜</th></tr></thead>
         <tbody>
-          <tr><td><b>동의 안 한 회원</b></td><td>성향 자체를 쓰지 않습니다 — 지금 동의 없이 바뀐 건 {d.noConsent}건</td></tr>
+          <tr><td><b>맞춤형 광고 동의가 없는 회원</b></td><td>성향 자체를 쓰지 않습니다(약관 ADPERSONAL · v10.115) — 동의 없이 바뀐 건 {d.noConsent}건 · 동의한 뒤의 클릭만 셉니다</td></tr>
           <tr><td><b>1~{Math.max(d.minClicks - 1, 1)}회 클릭</b></td><td>지나가다 누른 것일 수 있습니다(최소 {d.minClicks}회)</td></tr>
           <tr><td><b>왔다갔다</b></td><td>기준이 느슨한 것입니다 — 지금 {d.thrash}건</td></tr>
           <tr><td><b>출처 표시</b></td><td>BEHAVIOR — 질문이 아닌 행동으로 바뀜</td></tr>
@@ -101,7 +101,7 @@ export function SegmentPreview({ onBack, bare }: { onBack: () => void; bare?: bo
       <div className="kpi4">
         <div><b>{d.moved}</b><span>옮김</span></div>
         <div><b>{d.held}</b><span>보류</span></div>
-        <div><b className="good">{d.noConsent}</b><span>동의 안 함 제외</span></div>
+        <div><b className={d.noConsent > 0 ? '' : 'good'}>{d.noConsent}</b><span>동의 없이 바뀐 건(0 이어야 함)</span></div>
         <div><b>{d.minClicks}</b><span>최소 클릭</span></div>
       </div>
       <div className="ad-tw"><table className="tbl">
