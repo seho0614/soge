@@ -26,9 +26,11 @@ function chips(r: Read, t: T, f: Fmt): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   /* v10.31 — 검색 팝업의 「이렇게 찾습니다」(sug.ts)와 같은 이름 · 순서(지역 → 규모 → 조건 → 상태)로 보입니다 */
   if (r.sido || r.sigungu) out.push([t('prompt.chip.region'), [r.sido, r.sigungu].filter(Boolean).join(' ')]);
-  if (r.sizeAround != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeAround', { n: r.sizeAround })]);
-  if (r.sizeMax != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMax', { n: r.sizeMax })]);
-  if (r.sizeMin != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMin', { n: r.sizeMin })]);
+  /* v10.116 — 평 → ㎡ (1평 = 3.3058㎡ · 반올림). 한국어 칩은 「30평대」 그대로, 다른 언어는 ㎡ 를 함께(사전 sizeAround · sizeMax · sizeMin) */
+  const m2 = (p: number) => Math.round(p * 3.3058).toLocaleString('en-US');
+  if (r.sizeAround != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeAround', { n: r.sizeAround, m2: m2(r.sizeAround) })]);
+  if (r.sizeMax != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMax', { n: r.sizeMax, m2: m2(r.sizeMax) })]);
+  if (r.sizeMin != null) out.push([t('prompt.chip.size'), t('prompt.chip.sizeMin', { n: r.sizeMin, m2: m2(r.sizeMin) })]);
   if (r.priceMax != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMax', { v: price(r.priceMax, f) })]);
   if (r.priceMin != null) out.push([t('prompt.chip.price'), t('prompt.chip.priceMin', { v: price(r.priceMin, f) })]);
   if (r.urgent) out.push([t('prompt.chip.terms'), t('prompt.chip.urgent')]);

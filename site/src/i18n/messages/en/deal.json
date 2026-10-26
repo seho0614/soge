@@ -146,7 +146,7 @@
     "fail": "Could not submit.",
     "rate": "Rating",
     "stars": "Star rating",
-    "star": "{n} stars",
+    "star": "{n, plural, one {{n} star} other {{n} stars}}",
     "good": "What was good?",
     "body": "Review",
     "bodyPh": "Tell us what was helpful.",
@@ -206,7 +206,7 @@
       "state": "Status",
       "opened": "Filed"
     },
-    "evidence": "{n} attachments",
+    "evidence": "{n, plural, one {{n} attachment} other {{n} attachments}}",
     "holdDefault": "Settlement is automatically put on hold for disputed deals.",
     "holdTail": "The hold is lifted once the case is closed (resolved or rejected).",
     "outside": "<b>If no agreement is reached,</b> we connect you to the external mediation bodies listed under “Dispute mediation” in the footer. SogaeBank does not judge who is right."

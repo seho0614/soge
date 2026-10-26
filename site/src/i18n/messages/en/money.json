@@ -54,7 +54,7 @@
     },
     "byRegion": "Find by region",
     "etcTip": "{list} · region unknown — {n}",
-    "countTip": "{n} listings",
+    "countTip": "{n, plural, one {{n} listing} other {{n} listings}}",
     "regionFail": "Couldn't load the region list."
   },
   "reqTabs": {
@@ -137,8 +137,8 @@
     "totalGa": "<b>{n}</b> {sect} in total.",
     "cases": "Recent successful connections",
     "noCases": "No successful connections yet. Be the first.",
-    "caseInq": "{n} inquiries → 1 connected",
-    "caseProp": "{n} offers from companies → 1 connected",
+    "caseInq": "{n, plural, one {{n} inquiry} other {{n} inquiries}} → 1 connected",
+    "caseProp": "{n, plural, one {{n} offer} other {{n} offers}} from companies → 1 connected",
     "caseOne": "1 connected",
     "ctaText": "We welcome suppliers from all over the country.<br></br>Discover new opportunities today."
   }

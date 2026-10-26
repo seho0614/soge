@@ -49,7 +49,7 @@
     "disputed": "Your objection has been sent.",
     "network": "Could not connect.",
     "ratingAria": "Rating",
-    "points": "{n} pts",
+    "points": "{n, plural, one {{n} pt} other {{n} pts}}",
     "notePh": "Comment (required for objections)",
     "noteAria": "Comment",
     "confirm": "Confirm fulfillment",
@@ -390,7 +390,7 @@
     "notYet": "Not registered yet",
     "noCardB": "No payment method registered.",
     "noCardSub": "The charge will fail on the renewal date, and your subscription expires if you do not register within {period}.",
-    "days": "{n} days",
+    "days": "{n, plural, one {{n} day} other {{n} days}}",
     "grace": "the grace period",
     "noCardFree": "Registration is required to use subscriptions and lead fees.",
     "noStoreB": "We do not store card numbers.",
@@ -409,7 +409,7 @@
       "skipped": "Skipped"
     },
     "extraRow": "{n} extra referral codes",
-    "attempts": " · {n} attempts",
+    "attempts": " · {n, plural, one {{n} attempt} other {{n} attempts}}",
     "removeNote": "<b>Removing the payment method makes the next renewal fail.</b> To cancel, use <a>Cancel subscription</a> instead of removing the payment method — you can keep using the period already paid.",
     "nextCharge": "Next charge",
     "noSub": "No subscription"
@@ -454,7 +454,7 @@
   "events": {
     "title": "My event entries",
     "sub": "Events you joined and their reward status.",
-    "subWaiting": "Events you joined and their reward status. {n} entries are being checked.",
+    "subWaiting": "Events you joined and their reward status. {n, plural, one {{n} entry} other {{n} entries}} are being checked.",
     "empty": "You have not joined any events.",
     "browse": "See ongoing events ›",
     "thEvent": "Event",
@@ -469,7 +469,7 @@
   "reports": {
     "title": "My reports",
     "sub": "No reports in progress. You will be notified when your reports are handled.",
-    "subOpen": "{n} reports are being reviewed. You will be notified when they are handled.",
+    "subOpen": "{n, plural, one {{n} report} other {{n} reports}} are being reviewed. You will be notified when they are handled.",
     "empty": "You have not reported anything yet. If you see a problematic post, use its “Report” button.",
     "thTarget": "Reported item",
     "thReason": "Reason",
@@ -591,7 +591,7 @@
     "reported": "Reported {date}",
     "doneOn": " · Completed {date}",
     "confirmedAt": " · Confirmed {date}",
-    "rating": " · {n} pts",
+    "rating": " · {n, plural, one {{n} pt} other {{n} pts}}",
     "noteB": "SogaeBank is not a party to this deal.",
     "noteText": "Fulfillment confirmations are used for the business's performance record; payment is exchanged directly between the parties."
   },
@@ -702,7 +702,7 @@
     "expiredG": "The period has ended. Please upload a renewed certificate.",
     "noGuarantee": "No guarantee registered. <b>Approval is not possible without a guarantee (INV-BR4).</b>",
     "docs": "Submitted documents: {list}",
-    "files": " · {n} files",
+    "files": " · {n, plural, one {{n} file} other {{n} files}}",
     "guaranteeHint": "There is no public lookup for mutual aid guarantees, so you enter the certificate and we track its expiry date.",
     "hDecision": "Application · Decision",
     "decided": "Decision",

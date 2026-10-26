@@ -156,7 +156,7 @@
       "state": "Status",
       "paidOn": "Paid on"
     },
-    "dealsN": "{n} deals",
+    "dealsN": "{n, plural, one {{n} deal} other {{n} deals}}",
     "grossLine": "Gross {g} · withholding {w}",
     "scheduled": "Due {d}",
     "account": "Payout account",
@@ -184,7 +184,7 @@
       "payout": "Settlement payout"
     },
     "etaxNote": "<b>NTS e-tax invoice integration is not live yet.</b> “Issue requested” means the amount is confirmed, and “Awaiting transmission — not integrated” means SogaeBank has issued it but it has not yet been sent to the NTS. The approval number appears once sent.",
-    "unpaidNote": "<b>Unbilled postpaid fees from before the switch, {amt} ({n} items),</b> will be billed as before (Partner Terms, Article 6).",
+    "unpaidNote": "<b>Unbilled postpaid fees from before the switch, {amt} ({n, plural, one {{n} item} other {{n} items}}),</b> will be billed as before (Partner Terms, Article 6).",
     "affLink": "Affiliate settlements"
   },
   "cash": {
@@ -241,7 +241,7 @@
       "clawback": "Bonus clawback",
       "reason": "Reason"
     },
-    "legacyNote": "<b>Unbilled postpaid fees from before the switch, {amt} ({n} items),</b> will be billed as before — see <a>Settlement</a>.",
+    "legacyNote": "<b>Unbilled postpaid fees from before the switch, {amt} ({n, plural, one {{n} item} other {{n} items}}),</b> will be billed as before — see <a>Settlement</a>.",
     "useNote": "<b>Credit can only be used to prepay SogaeBank lead view fees.</b> It cannot be used at other merchants, given to other members or exchanged for cash; the paid balance is refunded by payment cancellation (grade discounts are not refundable). You can top up up to {max} at a time and hold up to {maxBal} of paid balance.",
     "lnLeads": "Consultation requests",
     "lnRej": "Rejections · disputes",
@@ -347,7 +347,7 @@
     "catBase": "Category base {amt}",
     "onDeal": "{pct}% on deal",
     "rebate": "re-referral {amt}",
-    "recvLine": "{n} ({v} contacts opened)",
+    "recvLine": "{n} ({v, plural, one {{v} contact} other {{v} contacts}} opened)",
     "rejReason": "Rejection reason",
     "rejFix": "Do not register again — fix it via “Edit service” and resubmit.",
     "blocksH": "Detail page blocks",
@@ -382,7 +382,7 @@
       "order": "Order"
     },
     "noCat": "no categories",
-    "stepsN": "{n} steps",
+    "stepsN": "{n, plural, one {{n} step} other {{n} steps}}",
     "undecided": "Undecided",
     "undecidedNote": "No form type assigned, so registration and rate entry are blocked",
     "loadFail": "Could not load registration types.",
@@ -408,7 +408,7 @@
     "axisH": "Onboarding status by business line",
     "needId": "<b>Identity verification comes first.</b> Once verified, you can choose the business lines to join here (business verification is optional).",
     "goVerify": "Verify now →",
-    "countH": "{n} listings",
+    "countH": "{n, plural, one {{n} listing} other {{n} listings}}",
     "empty": "No listings registered. Start with “Register listing” below.",
     "th": {
       "no": "No.",
@@ -458,7 +458,7 @@
     "fill": "Fill in",
     "blockPh": "{label} — do not enter phone numbers",
     "clear": "Clear",
-    "cellsSaved": "Saved {n} cells.",
+    "cellsSaved": "Saved {n, plural, one {{n} cell} other {{n} cells}}.",
     "noAxis": "Quote ranges (axes) are not defined for this category yet — SogaeBank manages the category master.",
     "mxCorner": "Move type \\ volume",
     "mxSave": "Save matrix",
@@ -487,7 +487,7 @@
     "targetShort": "Target",
     "topFee": "Top view fee",
     "mxCells": "Quote cells",
-    "cellsN": "{n} cells",
+    "cellsN": "{n, plural, one {{n} cell} other {{n} cells}}",
     "cat": "Category",
     "form": "Type",
     "titleMissing": "— (enter it in the first step)",
@@ -495,7 +495,7 @@
     "nextVal": "SogaeBank review — no leads until approved",
     "pickH": "1. Choose a category — the category sets the registration form",
     "pickPh": "Choose a category",
-    "stepsN": "{n} steps",
+    "stepsN": "{n, plural, one {{n} step} other {{n} steps}}",
     "noForm": "No form type (cannot register)",
     "prev": "Back",
     "nextBtn": "Next",

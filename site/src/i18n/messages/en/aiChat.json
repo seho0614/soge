@@ -10,7 +10,7 @@
   "send": "Send",
   "sending": "Writing an answer…",
   "count": "{n} / {max}",
-  "remaining": "{n} questions left today",
+  "remaining": "{n, plural, one {{n} question} other {{n} questions}} left today",
   "sources": "FAQs used as sources",
   "newChat": "New chat",
   "handoff": "Hand over to staff",

@@ -141,7 +141,7 @@
     "qty": "Quantity of {label}",
     "title": "Choose an option",
     "months": "(months of supply)",
-    "unitName": "{unit}/month × {months} months : {name}",
+    "unitName": "{unit}/month × {months, plural, one {{months} month} other {{months} months}} : {name}",
     "soldout": "Sold out",
     "pay": "Pay {price}",
     "leftSep": " · {n} left",
@@ -251,7 +251,7 @@
     "loadFail": "Could not load products. Please try again shortly.",
     "empty": "No products yet.",
     "home": "Sogae Mall home",
-    "total": "{n} items"
+    "total": "{n, plural, one {{n} item} other {{n} items}}"
   },
   "orderPage": {
     "title": "Checkout",

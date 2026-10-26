@@ -111,7 +111,7 @@
     "tabAi": "AI picks",
     "empty": "No businesses yet.",
     "noRegion": "Region unknown",
-    "listings": "{n} listings",
+    "listings": "{n, plural, one {{n} listing} other {{n} listings}}",
     "score": "Score {n}",
     "trust": "Trust {n}"
   },
@@ -164,7 +164,7 @@
       "noAxes": "Range not set — set by SogaeBank",
       "noForm": "No form type — entry blocked"
     },
-    "cells": "{n} cells entered",
+    "cells": "{n, plural, one {{n} cell} other {{n} cells}} entered",
     "topFee": "Top view fee",
     "warnB": "The category determines the price form. Prices cannot be entered for categories without a form type.",
     "provisional": " Current base prices are introductory — they will be recalculated after 3 weeks of data, so do not estimate revenue from them.",

@@ -20,7 +20,7 @@
     "partners": "Partner Center",
     "my": "My page",
     "bell": "Notifications",
-    "bellUnread": "{n} notifications",
+    "bellUnread": "{n, plural, one {{n} notification} other {{n} notifications}}",
     "member": "Member",
     "support": "Help Center",
     "loggingOut": "Logging out…",
@@ -75,7 +75,7 @@
     "bell": "Notifications",
     "bellUnread": "Notifications — {n} unread",
     "cart": "Sogae Mall cart",
-    "cartCount": "{n} items in cart",
+    "cartCount": "{n, plural, one {{n} item} other {{n} items}} in cart",
     "directTag": "Sold by Sogae Mall",
     "interTag": "Member-to-member deals",
     "sns": {
