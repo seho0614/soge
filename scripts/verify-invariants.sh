@@ -1165,6 +1165,11 @@ run  "AIK-3 관리 키(sk-ant-admin…)는 거절(INTEG_SECRET_FORMAT)" FAIL "BE
 run  "AIK-4 사용자 키(sk-ant-usr…)는 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('AGENT','ANTHROPIC_API_KEY','sk-ant-usr-invAikKey0123456789abcdefghijklmn', NULL); ROLLBACK;"
 eq   "AIK-5 키를 넣는 마이그레이션은 AI 를 켜지 않음(agent.enabled off)" "SELECT value FROM site_settings WHERE key='agent.enabled'" off
 
+# ── v10.115 (D123 · docs/179) 관심 성향 동의 = 맞춤형 광고 약관(ADPERSONAL) 하나 ─────
+eq   "PRF-1 약관 동의 없는 성향 0" "SELECT count(*) FROM member_ad_profiles WHERE NOT fn_adpersonal_on(account_id)" 0
+eq   "PRF-2 약관 철회 정리 트리거가 켜져 있음" "SELECT count(*) FROM pg_trigger WHERE tgname='trg_adpersonal_withdrawn' AND tgenabled='O'" 1
+eq   "PRF-3 약관 동의 없이 바뀐 성향 학습 0" "SELECT count(*) FROM v_segment_learn_no_consent" 0
+
 # ── v10.51 (D104 · docs/104 · 2026-10-21 결정) SUPER 는 모든 권한 — 지급 포함 · 앞으로 생기는 역할도. 2인 원칙은 그대로 ─────
 eq   "SUP-1 SUPER 계정은 어떤 역할 검사도 통과(PAYOUT · 아직 없는 역할 포함)" \
   "SELECT count(*) FROM account_roles WHERE role='SUPER' AND NOT fn_has_role(account_id, 'PAYOUT', 'FUTURE_ROLE_X')" 0

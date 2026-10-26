@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { ComplianceService } from '../catalog/compliance.service';
 
 /**
  * 광고 · 관심 성향 (프론트 v3.2 서버 계층).
  *
  * ── 이 서비스가 하지 않는 일 ───────────────────────────────────────
  *   · 규제 소재 차단      → fn_ad_regulated_gate · fn_ad_slot_gate
- *   · 성향 동의 검사      → fn_profile_consent_gate
+ *   · 성향 동의 검사      → fn_profile_consent_gate (v10.115 — 근거는 약관 ADPERSONAL 하나 · 끄면 DB 가 성향을 지우고 광고 기록 회원 연결을 끊음)
  *   · 광고 집계 보호      → fn_ad_events_append_only
  *   · 광고를 순위에서 배제 → ad_slots.in_ranking CHECK
  *
@@ -18,8 +19,22 @@ import { RequestCtx } from '../../core/request-context';
  */
 @Injectable()
 export class AdsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly compliance: ComplianceService) {}
   private get me() { return RequestCtx.actorId(); }
+
+  /** v10.115 (D123) — 맞춤형 광고 약관(ADPERSONAL)의 지금 동의 · 성향은 이것이 있을 때만 씁니다 */
+  private async consentOn(account: string | null | undefined): Promise<boolean> {
+    if (!account) return false;
+    const [r] = await this.db.query<{ on: boolean }>(`SELECT fn_adpersonal_on($1) AS on`, [account]);
+    return !!r?.on;
+  }
+  /** 광고 고르기 · 기록에 쓸 내 세그먼트 — 약관 동의가 없으면 null */
+  private async mySegment(): Promise<string | null> {
+    if (!this.me) return null;
+    const [p] = await this.db.query<{ segment_code: string }>(
+      `SELECT segment_code FROM member_ad_profiles WHERE account_id = $1 AND fn_adpersonal_on(account_id)`, [this.me]);
+    return p?.segment_code ?? null;
+  }
 
   /* ── 성향 ──────────────────────────────────────────────────────── */
 
@@ -42,15 +57,29 @@ export class AdsService {
     return {
       questions: [...map.values()],
       note: '선택한 값을 더해서 가장 높은 세그먼트를 씁니다. 추론이 아닙니다. ' +
-            '행동 데이터를 보지 않으며, 여섯 문항으로 사람을 규정하지 않습니다.',
+            '등록하면 맞춤형 광고 동의 뒤 광고를 누른 기록으로 성향이 바뀔 수 있으며, 여섯 문항으로 사람을 규정하지 않습니다.',
     };
   }
 
   /** 성향 계산. 덧셈입니다 — 동점이면 앞선 세그먼트를 씁니다. */
   private async score(answers: Record<string, string[]>) {
+    /* v10.115 — 답 검사: 있는 문항 · 있는 보기만 · 한 개만 고르는 문항은 1개 · 중복 없음(점수 부풀리기 · 큰 입력 막음) */
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers) || Object.keys(answers).length > 20) {
+      throw new PolicyViolation('BAD_ANSWER', '답의 형식이 맞지 않습니다.');
+    }
+    const qs = await this.db.query<{ code: string; multi: boolean; opts: string[] }>(
+      `SELECT q.code, q.is_multi AS multi, array_agg(o.code) AS opts
+         FROM profile_questions q JOIN profile_options o ON o.question_code = q.code GROUP BY q.code, q.is_multi`);
+    const known = new Map(qs.map((q) => [q.code, q]));
     const picked: { q: string; o: string }[] = [];
     for (const [q, list] of Object.entries(answers)) {
-      for (const o of (Array.isArray(list) ? list : [list])) picked.push({ q, o });
+      const def = known.get(q);
+      const arr = (Array.isArray(list) ? list : [list]).filter((x) => x !== null && x !== undefined && x !== '');
+      if (!def || arr.some((o) => typeof o !== 'string' || !def.opts.includes(o)) || new Set(arr).size !== arr.length
+          || (!def.multi && arr.length > 1)) {
+        throw new PolicyViolation('BAD_ANSWER', '없는 문항이나 보기가 있습니다. 화면을 새로 고친 뒤 다시 골라 주십시오.');
+      }
+      for (const o of arr) picked.push({ q, o });
     }
     if (!picked.length) throw new PolicyViolation('NO_ANSWER', '선택한 답이 없습니다.');
 
@@ -90,7 +119,7 @@ export class AdsService {
       `SELECT creative_code AS "code", advertiser, title, slot_code AS "slot"
          FROM v_ad_serving WHERE $1 = ANY(segments) ORDER BY creative_code`, [segment]) : [];
     return { ...seg, scores, ranking, upcomingAds, saved: false,
-      note: '아직 저장되지 않았습니다. 등록하면 광고와 추천 정렬에만 쓰입니다.' };
+      note: '아직 저장되지 않았습니다. 등록하면 광고를 고르는 데만 쓰입니다.' };
   }
 
   /**
@@ -103,21 +132,28 @@ export class AdsService {
     if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
     if (!consent) {
       throw new PolicyViolation('CONSENT_REQUIRED',
-        '성향 저장에 동의해야 등록됩니다. 동의하지 않아도 서비스는 그대로 이용할 수 있습니다.');
+        '맞춤형 광고에 동의해야 등록됩니다. 동의하지 않아도 서비스는 그대로 이용할 수 있습니다.');
     }
     const { segment, scores } = await this.score(answers);
-
-    const [row] = await this.db.query<any>(
-      `INSERT INTO member_ad_profiles(account_id, segment_code, answers, scores, consented_at)
-       VALUES ($1,$2,$3,$4, now())
-       ON CONFLICT (account_id) DO UPDATE
-         SET segment_code = EXCLUDED.segment_code, answers = EXCLUDED.answers,
-             scores = EXCLUDED.scores, consented_at = now()
-       RETURNING segment_code AS "segment", consented_at AS "consentedAt"`,
-      [this.me, segment, JSON.stringify(answers), JSON.stringify(scores)]);
-
-    return { ...row, scores,
-      note: '광고 소재 선택과 추천 정렬에만 씁니다. 광고주에게 제공하지 않습니다.' };
+    const [pub] = await this.db.query(`SELECT 1 FROM terms WHERE code = 'ADPERSONAL' AND status = 'PUBLISHED'`);
+    if (!pub) {
+      throw new PolicyViolation('CONSENT_UNAVAILABLE',
+        '맞춤형 광고 약관을 준비하고 있어 지금은 등록할 수 없습니다. 진단 결과는 저장하지 않고 보여 드립니다.');
+    }
+    return this.db.transaction(async () => {
+      /* v10.115 (D123) — 설문의 동의 = 맞춤형 광고 약관(ADPERSONAL) 동의 — 판 · 시각 · 접속 정보를 약관 동의 기록에 남깁니다 */
+      await this.compliance.agree([{ code: 'ADPERSONAL', agreed: true }]);
+      const [row] = await this.db.query<any>(
+        `INSERT INTO member_ad_profiles(account_id, segment_code, answers, scores, consented_at, source)
+         VALUES ($1,$2,$3,$4, now(), 'MEMBER')
+         ON CONFLICT (account_id) DO UPDATE
+           SET segment_code = EXCLUDED.segment_code, answers = EXCLUDED.answers,
+               scores = EXCLUDED.scores, consented_at = now(), source = 'MEMBER'
+         RETURNING segment_code AS "segment", consented_at AS "consentedAt"`,
+        [this.me, segment, JSON.stringify(answers), JSON.stringify(scores)]);
+      return { ...row, scores,
+        note: '광고를 고르는 데만 씁니다. 광고주에게 제공하지 않습니다. 「약관 동의」 화면이나 여기서 해지하면 바로 지웁니다.' };
+    });
   }
 
   async mine() {
@@ -127,7 +163,7 @@ export class AdsService {
               p.scores, p.consented_at AS "consentedAt", p.updated_at AS "updatedAt"
          FROM member_ad_profiles p JOIN ad_segments s ON s.code = p.segment_code
         WHERE p.account_id = $1`, [this.me]);
-    if (!row) return { registered: false, note: '등록된 성향이 없습니다. 전체 공개 광고가 나갑니다.' };
+    if (!row || !(await this.consentOn(this.me))) return { registered: false, note: '등록된 성향이 없습니다. 성향을 쓰지 않는 광고만 나갑니다.' };
 
     // 이 성향으로 나갈 광고를 함께 보여 줍니다 — 무엇에 쓰이는지 알 수 있어야 합니다.
     const ads = await this.db.query<any>(
@@ -141,12 +177,21 @@ export class AdsService {
     return { registered: true, ...row, ranking, upcomingAds: ads };
   }
 
-  /** 등록 해지. 답과 세그먼트를 남기지 않고 지웁니다. */
+  /**
+   * 등록 해지 = 맞춤형 광고 동의 철회(v10.115 · D123).
+   *   약관 동의 기록에 「거부」 줄을 남기면 DB 가 성향을 지우고 광고 기록의 회원 연결을 끊습니다(trg_adpersonal_withdrawn).
+   *   약관이 발행 전이거나 이미 꺼져 있으면 성향만 지웁니다.
+   */
   async withdraw() {
     if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
-    const rows = await this.db.query('DELETE FROM member_ad_profiles WHERE account_id = $1 RETURNING account_id', [this.me]);
-    return { deleted: rows.length > 0,
-      note: '성향을 지웠습니다. 이제 전체 공개 광고만 나갑니다.' };
+    return this.db.transaction(async () => {
+      const [had] = await this.db.query('SELECT 1 FROM member_ad_profiles WHERE account_id = $1', [this.me]);
+      const [pub] = await this.db.query(`SELECT 1 FROM terms WHERE code = 'ADPERSONAL' AND status = 'PUBLISHED'`);
+      if (pub && (await this.consentOn(this.me))) await this.compliance.agree([{ code: 'ADPERSONAL', agreed: false }]);
+      await this.db.query('DELETE FROM member_ad_profiles WHERE account_id = $1', [this.me]);
+      return { deleted: !!had,
+        note: '성향을 지우고 맞춤형 광고 동의를 철회했습니다. 이제 성향을 쓰지 않는 광고만 나갑니다.' };
+    });
   }
 
   /* ── 광고 노출 ─────────────────────────────────────────────────── */
@@ -157,18 +202,15 @@ export class AdsService {
    *   성향과 겹치는 소재 → 없으면 기본 소재 → 없으면 빈 자리
    */
   async serve(slot: string) {
-    const [prof] = this.me
-      ? await this.db.query<{ segment_code: string }>(
-          'SELECT segment_code FROM member_ad_profiles WHERE account_id = $1', [this.me])
-      : [];
-    const seg = prof?.segment_code ?? null;
+    /* v10.115 — 성향은 맞춤형 광고 약관에 지금 동의한 회원만. 동의가 없거나 비회원이면 성향 지정이 없는 소재만 나갑니다 */
+    const seg = await this.mySegment();
 
     const [hit] = await this.db.query<any>(
       `SELECT id, creative_code AS "code", advertiser, title, body, cta,
               landing_route AS "landingRoute", slot_code AS "slot"
          FROM v_ad_serving
         WHERE slot_code = $1
-          AND ($2::text IS NULL OR $2 = ANY(segments))
+          AND (($2::text IS NULL AND cardinality(segments) = 0) OR $2 = ANY(segments))
         ORDER BY random() LIMIT 1`, [slot, seg]);
 
     if (hit) return { ...hit, label: '광고', matchedSegment: seg, empty: false };
@@ -210,10 +252,7 @@ export class AdsService {
    * 없다는 뜻입니다. 화면 실수로 매출이 사라지면 안 됩니다.
    */
   async track(creativeId: string, slot: string | undefined, type: 'IMPRESSION' | 'CLICK') {
-    const [prof] = this.me
-      ? await this.db.query<{ segment_code: string }>(
-          'SELECT segment_code FROM member_ad_profiles WHERE account_id = $1', [this.me])
-      : [];
+    const segCode = await this.mySegment();   // v10.115 — 약관 동의가 없으면 세그먼트를 남기지 않음
     /* 슬롯을 안 보냈으면 소재에서 찾습니다. */
     let s = slot;
     if (!s) {
@@ -226,7 +265,7 @@ export class AdsService {
     await this.db.query(
       `INSERT INTO ad_events(creative_id, slot_code, event_type, account_id, segment_code)
        VALUES ($1,$2,$3,$4,$5)`,
-      [creativeId, s, type, this.me ?? null, prof?.segment_code ?? null]);
+      [creativeId, s, type, this.me ?? null, segCode]);
     return { ok: true, slot: s };
   }
 

@@ -370,7 +370,7 @@
       "whyBody": "Used only to choose home-page <b>ads</b> and the order of referral suggestions. Never given to advertisers; you can delete it later in My page.",
       "multi": "Select all that apply",
       "nowLb": "Current result",
-      "consent": "By signing up I agree that this is saved and used to sort home-page ads and suggestions (never given to advertisers · delete anytime).",
+      "consent": "Only if you agreed to personalized ads in step 4, this is saved when you sign up and used to pick home-page ads (never given to advertisers · delete anytime).",
       "noneLb": "No result yet",
       "noneBody": "You can skip this. In that case only <b>general ads</b> are shown."
     }

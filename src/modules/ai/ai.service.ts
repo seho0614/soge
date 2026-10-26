@@ -302,13 +302,15 @@ export class AiService {
         WHERE account_id = $1 AND term_code = 'ADPERSONAL' AND agreed`, [me]);
     if (!agreed) {
       return { segment: null, consented: false,
-        note: '맞춤형 광고에 동의하지 않으셨습니다. 전체 공개 광고가 나갑니다.' };
+        note: '맞춤형 광고에 동의하지 않으셨습니다. 성향을 쓰지 않는 광고만 나갑니다.' };
     }
+    /* v10.115 — 관심 성향 분석에 등록한 성향을 그대로(전에는 설문과 따로 계산해 「SEG-A」를 돌려주기도 했음) */
     const [r] = await this.db.query<any>(
-      'SELECT fn_derive_segment($1) AS segment', [me]);
+      'SELECT segment_code AS segment FROM member_ad_profiles WHERE account_id = $1', [me]);
     return {
       segment: r?.segment ?? null, consented: true,
-      note: '등록하신 관과 활동으로 정해집니다. 동의를 철회하시면 즉시 사라집니다.',
+      note: r ? '관심 성향 분석에서 등록하신 성향입니다. 맞춤형 광고 동의를 철회하시면 바로 지워집니다.'
+              : '등록된 성향이 없습니다. 관심 성향 분석에서 등록할 수 있습니다.',
     };
   }
 

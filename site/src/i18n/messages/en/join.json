@@ -25,8 +25,8 @@
     "failAccount": "Your account has been created.",
     "failRetry": "Please apply again from <a>My page → Switch to business</a>.",
     "prefLb": "Interest profile",
-    "prefSaved": "Saved as <b>{name}</b> ({segment}). Home ads and referral recommendations are sorted by this profile. You can redo or delete it any time in <b>My page → Interest profile</b> (<a>Redo</a>).",
-    "prefNone": "You haven't set an interest profile — only general ads will be shown. You can add one later in <b>My page → Interest profile</b> (<a>Add now</a>).",
+    "prefSaved": "Saved as <b>{name}</b> ({segment}). It is used only to pick home ads (personalized ads consent). You can redo or delete it any time under <b>My page → Interests</b> (<a>Redo</a>).",
+    "prefNone": "You didn't add a profile — only non-personalized ads are shown. You can add one later under <b>My page → Interests</b> (<a>Add now</a>).",
     "canBeforeLb": "What you can do before approval",
     "canNowLb": "What you can do now",
     "canNow": "<b>Browsing and searching</b> listings, posting requests and joining referrals are available now.",
@@ -262,11 +262,11 @@
   },
   "profileSurvey": {
     "analyzeFail": "Couldn't analyze. Please try again shortly.",
-    "needAgree": "You need to agree to the use of your profile for ad and recommendation sorting to save it.",
+    "needAgree": "You need to agree to personalized ads to save it.",
     "saveFail": "Couldn't save. Please try again shortly.",
     "dropFail": "Couldn't delete. Please try again shortly.",
     "multi": "Select all that apply",
-    "agree": "I agree to the use of this profile for sorting home ads and recommendations (never shared with advertisers · delete any time with \"Don't use profile\").",
+    "agree": "I agree to personalized ads — home ads are picked using this profile and the ads you click after agreeing (never shared with advertisers · withdraw any time with \"Don't use profile\" or on the Terms consent page).", "agreeTerms": "Read the full terms",
     "redo": "Start over",
     "skip": "Don't use profile",
     "saving": "Saving…",
@@ -276,13 +276,13 @@
     "resultLb": "Analysis result",
     "sumNote": "It's a simple sum — each answer carries points per segment, and we add them up. No inference.",
     "adsLb": "Ads for this profile",
-    "adsNone": "No creatives are assigned to this segment — general ads will be shown.",
+    "adsNone": "No creatives are assigned to this segment — non-personalized ads will be shown.",
     "adsNote": "Your profile is <b>only used to pick</b> ads. It is never passed to advertisers, and advertisers are not told which members saw their ads.",
     "waitNote": "Answer the questions to see your segment and its scores here. {done} / {total} answered.",
     "nowLb": "Currently applied",
-    "nowSkipped": "<b>Profile not used</b> — only general ads are shown.",
+    "nowSkipped": "<b>Profile not used</b> — personalized ads consent withdrawn; only non-personalized ads are shown.",
     "nowNone": "<b>None</b> — not saved yet.",
-    "storeNote": "It is stored on the SogaeBank server (your account). Press \"Don't use profile\" to delete it immediately."
+    "storeNote": "It is stored on the SogaeBank server (your account). Press \"Don't use profile\" to delete it immediately and unlink your ad activity."
   },
   "eventJoin": {
     "joined": "You're in.",
@@ -561,12 +561,12 @@
     },
     "profile": {
       "title": "Interest profile",
-      "sub": "Six questions sort your interests. The result is used for <b>home ads</b> and <b>recommendation sorting</b>.",
+      "sub": "Six questions sort your interests. This is used <b>only to pick home ads</b>.",
       "noteFallback": "We add up your choices and use the highest segment. No inference.",
       "loadFail": "Couldn't load the questions. Please try again shortly.",
       "eng": "Rule engine. {n} questions · per-option segment weight table (server) · 6 segments.",
       "how": "The weights of your chosen options are added per segment and the highest is used. Ties go to the earlier segment.",
-      "lim": "Behavior data is not used. Only your own answers count, so it <b>may differ from your real interests</b>, and it changes as soon as you change your answers. Six questions don't define a person.",
+      "lim": "Your profile can change based on your answers and <b>the ads you click after agreeing to personalized ads</b>. It <b>may differ from your actual interests</b>, and it updates as soon as you change your answers. Six questions don't define a person.",
       "next": "Adding browsing · search · deal history would produce segments without questions. Before that, <b>the collected items and retention period must be added to the privacy policy</b>."
     },
     "done": {
@@ -582,14 +582,14 @@
       "scoresNote": "Question weights added up per segment. No inference.",
       "adsLb": "Ads for this profile",
       "slot": "{slot} slot",
-      "adsNone": "No creatives assigned, so general ads are shown.",
+      "adsNone": "No creatives are assigned, so non-personalized ads are shown.",
       "adsNote": "Your profile is <b>only used to pick ads</b> — it is never passed to advertisers.",
-      "nextNote": "<b>Next</b> — you can redo or delete it any time in My page → <b>Interest profile</b>. Search results and rankings don't change.",
+      "nextNote": "<b>Next</b> — Redo or delete it any time under My page → <b>Interests</b>. Search results and recommendation order are not changed by your profile.",
       "checkMain": "See it on the home page",
       "redo": "Retake"
     },
     "drop": {
-      "confirm": "Delete your saved profile? Your saved answers are deleted immediately and you'll see general ads again.",
+      "confirm": "Delete your saved profile? Your answers are deleted right away and your personalized ads consent is withdrawn.",
       "failed": "Couldn't delete.",
       "working": "Deleting…",
       "submit": "Remove profile"
