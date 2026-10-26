@@ -26,7 +26,7 @@ def rd(rel):
 
 I = 'site/src/i18n/'
 IX = rd(I + 'messages/index.ts')
-SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode']; PAGE = ['main', 'search', 'detail', 'request', 'order', 'hlt', 'my', 'myDeal', 'partner', 'partnerOps', 'affiliate', 'billing', 'plaza', 'forms', 'deal', 'join', 'policy']
+SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode', 'aiChat'];  PAGE = ['main', 'search', 'detail', 'request', 'order', 'hlt', 'my', 'myDeal', 'partner', 'partnerOps', 'affiliate', 'billing', 'plaza', 'forms', 'deal', 'join', 'policy']
 NEW = ['policy', 'main', 'shop']   # 2-5c 에서 더한 · 늘린 묶음(policy 새로 · main 예시 · 투표 · shop 그림 설명)
 _pg = re.search(r'const PAGE = \{([^}]*)\}', IX)
 ok('① 묶음 파일 — SHARED 7 · PAGE 에 policy · 한국어 바탕에 그 언어를 덮음',

@@ -26,7 +26,7 @@ def rd(rel):
 
 I = 'site/src/i18n/'
 IX = rd(I + 'messages/index.ts')
-SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode']; PAGE = ['main', 'search', 'detail', 'request', 'order', 'hlt', 'my', 'myDeal', 'partner', 'partnerOps', 'affiliate', 'billing', 'plaza', 'forms', 'deal', 'join']
+SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode', 'aiChat'];  PAGE = ['main', 'search', 'detail', 'request', 'order', 'hlt', 'my', 'myDeal', 'partner', 'partnerOps', 'affiliate', 'billing', 'plaza', 'forms', 'deal', 'join']
 NEW = ['plaza', 'forms', 'deal', 'join']   # 2-5b 에서 더한 묶음(모두 화면 전용)
 _pg = re.search(r'const PAGE = \{([^}]*)\}', IX)
 ok('① 묶음 파일 — SHARED 7 · PAGE 에 2-5b 묶음 4개 · 한국어 바탕에 그 언어를 덮음',
