@@ -73,6 +73,6 @@
     "locationAria": "Location map",
     "loading": "Loading map…",
     "pinAria": "Restaurant map",
-    "pinTitle": "{title} · {n} recommendations"
+    "pinTitle": "{title} · {n, plural, one {{n} recommendation} other {{n} recommendations}}"
   }
 }

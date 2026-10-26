@@ -31,6 +31,12 @@ export function SegmentLearn({ onPreview }: { onPreview?: () => void } = {}) {
     void a.run('learn', () => api<{ applied: number; note: string }>('/admin/segments/learn', { method: 'POST' }), () => { r.reload(); log.reload(); },
       (x) => x?.note ?? `${x?.applied ?? 0}명을 옮겼습니다.`);
   };
+  /* v10.117 — 되돌리기: 그 회원의 가장 최근 이동만 · 학습은 막지 않음(다시 돌리면 같은 클릭으로 다시 옮길 수 있음) */
+  const revert = (id: string) => {
+    if (!confirm('이 이동을 되돌립니다. 성향이 그대로이면 옮기기 전 세그먼트로 돌아갑니다. 학습을 다시 돌리면 같은 클릭으로 다시 옮길 수 있습니다. 진행하시겠습니까?')) return;
+    void a.run(`rv-${id}`, () => api<{ restored: boolean; note: string }>(`/admin/segments/log/${id}/revert`, { method: 'POST' }), () => { r.reload(); log.reload(); },
+      (x) => x?.note ?? '되돌렸습니다.');
+  };
   if (preview) return <SegmentPreview onBack={() => setPreview(false)} />;
   if (r.error) return <ErrorView error={r.error} onRetry={r.reload} />;
   if (!r.data) return <p className="muted">불러오는 중…</p>;
@@ -52,13 +58,14 @@ export function SegmentLearn({ onPreview }: { onPreview?: () => void } = {}) {
 
       <h3 className="ad-s2">옮긴 기록 <em>{(log.data ?? []).length}</em></h3>
       <div className="ad-tw"><table className="tbl" data-seg-log>
-        <thead><tr><th>전</th><th>후</th><th className="num-cell">원래 클릭</th><th className="num-cell">새 클릭</th><th>일시</th></tr></thead>
+        <thead><tr><th>전</th><th>후</th><th className="num-cell">원래 클릭</th><th className="num-cell">새 클릭</th><th>일시</th><th /></tr></thead>
         <tbody>
-          {(log.data ?? []).length === 0 && <tr><td colSpan={5} className="muted">아직 옮긴 회원이 없습니다.</td></tr>}
+          {(log.data ?? []).length === 0 && <tr><td colSpan={6} className="muted">아직 옮긴 회원이 없습니다.</td></tr>}
           {(log.data ?? []).map((x) => (
             <tr key={x.id}><td>{seg(x.fromCode, x.fromName)}</td><td><b>{seg(x.toCode, x.toName)}</b></td>
               <td className="num-cell">{x.clicksFrom}</td><td className="num-cell">{x.clicksTo}</td>
-              <td>{ymdhm(x.appliedAt)}{x.revertedAt && <span className="ad-bg" style={{ marginLeft: 6 }}>되돌림</span>}</td></tr>
+              <td>{ymdhm(x.appliedAt)}{x.revertedAt && <span className="ad-bg" style={{ marginLeft: 6 }}>되돌림</span>}</td>
+              <td>{!x.revertedAt && <button className="btn-plain btn-sm" disabled={a.busy === `rv-${x.id}`} onClick={() => revert(x.id)} data-seg-revert={x.id}>되돌리기</button>}</td></tr>
           ))}
         </tbody>
       </table></div>

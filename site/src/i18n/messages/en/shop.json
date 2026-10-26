@@ -36,7 +36,7 @@
     "dealLead": "The hottest discounts right now."
   },
   "perMonth": "{price} / 30 days",
-  "productCount": "{n} products",
+  "productCount": "{n, plural, one {{n} product} other {{n} products}}",
   "from": "From {price}",
   "sampleTip": "Functional claims for health supplements are used only after checking the approved scope and ad review",
   "sample": "Sample copy — pending ad review",

@@ -424,7 +424,7 @@
     "topEmpty": "Deals completed through referrals will appear here.",
     "sir": "{name}",
     "private": "Private",
-    "dealsN": "{n} successes",
+    "dealsN": "{n, plural, one {{n} success} other {{n} successes}}",
     "recent": "Recent successes",
     "etc": "Other",
     "col": {

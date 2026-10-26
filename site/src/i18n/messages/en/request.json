@@ -7,7 +7,7 @@
     "filter": { "all": "All", "mny": "Marketplace", "mal": "Safe Referral", "biz": "Startups", "closing": "Closing soon" },
     "sortAria": "Sort",
     "sort": { "closing": "Closing soon", "recent": "Newest", "fee": "Referral fee" },
-    "qResult": "{n} requests containing ‘{q}’",
+    "qResult": "{n, plural, one {{n} request} other {{n} requests}} containing ‘{q}’",
     "qClear": "Clear search",
     "emptyFiltered": "No requests match your filters.",
     "empty": "No requests yet.",
@@ -25,7 +25,7 @@
     "feeLabel": "Expected referral fee if the deal closes",
     "negotiable": "Negotiable",
     "propose": "Offer a referral",
-    "count": "{n} offers · Visible to {v}",
+    "count": "{n, plural, one {{n} offer} other {{n} offers}} · Visible to {v}",
     "all": "everyone"
   },
   "detail": {

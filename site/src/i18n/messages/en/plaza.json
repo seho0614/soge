@@ -42,11 +42,11 @@
     "endsAt": "Ends {date}",
     "ongoing": "Open",
     "ended": "Closed",
-    "result": "{p}% · {n} votes",
+    "result": "{p}% · {n, plural, one {{n} vote} other {{n} votes}}",
     "sending": "Sending…",
     "voted": "You voted",
     "closed": "Closed poll",
-    "people": "{n} participants",
+    "people": "{n, plural, one {{n} participant} other {{n} participants}}",
     "login": "Log in",
     "msg": {
       "pick": "Please choose an option first.",
@@ -61,7 +61,7 @@
   "list": {
     "loadFail": "Could not load posts. Please refresh in a moment.",
     "deleted": "Post deleted. Its comments remain.",
-    "found": "<b>“{q}”</b> {n} results <clear>Clear search</clear>",
+    "found": "<b>“{q}”</b> {n, plural, one {{n} result} other {{n} results}} <clear>Clear search</clear>",
     "toAll": "Back to all posts",
     "emptyPage": "No posts on page {page}. <first>Go to page 1</first>",
     "emptySearch": "No matching posts. Try fewer words or <clear>clear the search</clear>.",
@@ -76,7 +76,7 @@
       "views": "Views"
     },
     "pinned": "Pinned",
-    "comments": "{n} comments",
+    "comments": "{n, plural, one {{n} comment} other {{n} comments}}",
     "write": "Write"
   },
   "post": {
@@ -353,7 +353,7 @@
     "private": "Private",
     "fee": "Referral fee",
     "period": "Time to close",
-    "days": "{n} days",
+    "days": "{n, plural, one {{n} day} other {{n} days}}",
     "region": "Region",
     "reasons": "Why it is a Best Match",
     "noReason": "No reasons from our team yet",
@@ -384,9 +384,9 @@
     "noneP": "We will notify you when a new event opens.",
     "live": "Live",
     "today": "Ends today",
-    "daysLeft": "{n} days left",
+    "daysLeft": "{n, plural, one {{n} day} other {{n} days}} left",
     "people": "{n} people",
-    "seats": "{n} spots",
+    "seats": "{n, plural, one {{n} spot} other {{n} spots}}",
     "benefit": "Reward",
     "notice": "<b>Joining does not mean you receive the reward right away.</b> We give it after our team checks, and you will be notified.",
     "myJoins": "My participation →"

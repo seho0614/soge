@@ -2,5 +2,5 @@
   "adZone": "Ads",
   "empty": "No listings yet.",
   "verified": "Business verified",
-  "deals": "{n} deals closed"
+  "deals": "{n, plural, one {{n} deal} other {{n} deals}} closed"
 }

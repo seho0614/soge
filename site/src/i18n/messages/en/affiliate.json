@@ -270,7 +270,7 @@
     "empty": "No earnings yet.",
     "all": "All",
     "sum": "{label} total",
-    "count": "{n} items",
+    "count": "{n, plural, one {{n} item} other {{n} items}}",
     "colDate": "Date",
     "colAmount": "Amount",
     "colMemo": "Memo",

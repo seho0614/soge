@@ -3729,7 +3729,8 @@
     "GET /admin/segments/candidates",
     "POST /admin/segments/learn",
     "GET /admin/ai/learn-settings",
-    "GET /admin/segments/log"
+    "GET /admin/segments/log",
+    "POST /admin/segments/log/{id}/revert"
    ]
   },
   {

@@ -115,7 +115,7 @@
     }
   },
   "poll": {
-    "people": "{n} participants",
+    "people": "{n, plural, one {{n} participant} other {{n} participants}}",
     "msg": {
       "pick": "Please choose an option first.",
       "ok": "Your vote is in. Thank you.",
@@ -130,7 +130,7 @@
     "voted": "You voted",
     "closed": "Poll closed",
     "login": "Log in",
-    "vsResult": "{p}% · {n} votes",
+    "vsResult": "{p}% · {n, plural, one {{n} vote} other {{n} votes}}",
     "kindVs": "Compare",
     "kindAsk": "Question",
     "kindUsed": "Users’ opinions wanted",
@@ -308,7 +308,7 @@
       }
     },
     "live": {
-      "like": "{n} likes",
+      "like": "{n, plural, one {{n} like} other {{n} likes}}",
       "fee": "Referral fee {fee}",
       "newProduct": "New",
       "mall": "Sogae Mall",
@@ -316,7 +316,7 @@
       "safe": "Safe Referral",
       "startups": "Startups",
       "market": "Marketplace",
-      "proposals": "{n} offers",
+      "proposals": "{n, plural, one {{n} offer} other {{n} offers}}",
       "todaySub": "See newly posted products · requests · stories in one place.",
       "bannerMny": {
         "t1": "Popular in Marketplace",
