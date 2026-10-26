@@ -63,7 +63,7 @@ FILES = ['app/[gwan]/[id]/page.tsx', 'app/[gwan]/[id]/qna/page.tsx', 'components
          'components/mal/ConsultRows.tsx',
          'app/request/page.tsx', 'app/request/[id]/page.tsx', 'components/request/ProposalForm.tsx', 'components/request/ProposalList.tsx', 'components/request/ReqCard.tsx',
          'components/refcode/RefShare.tsx', 'components/refcode/RefShareButton.tsx', 'components/refcode/RefPayConfirm.tsx', 'components/refcode/CopyLink.tsx', 'components/map/KakaoMap.tsx']
-ok('② 안전 수칙(SAFE_CONSULT) · 업종 설명(CSL_DESC)은 사전 키(copy.ts — AXIS · SAFE_LISTING 은 쓰지 않는 MalMain 만)',
+ok('② 안전 수칙(SAFE_CONSULT) · 업종 설명(CSL_DESC)은 사전 키(copy.ts — AXIS · SAFE_LISTING 은 v10.121 에 MalMain 과 함께 지움)',
    "export const SAFE_CONSULT = ['safe.s1', 'safe.s2', 'safe.s3'] as const" in rd('site/src/components/mal/copy.ts') and "SAFE_CONSULT.map((k) => tc(k))" in rd('site/src/components/gwan/GwanLanding.tsx'), '')
 # 남기기로 한 한글(자료 · 비교 값) — 그 줄에 이 표시가 있으면 뺌 · docs/155 §2
 KEEP = {'app/consult/ConsultForm.tsx': ['const SIDO', "'강원'"], 'components/request/ReqCard.tsx': ["'예산 비공개'", '억`', '이내`', '이상`', "'예산 협의'"],

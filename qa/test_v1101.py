@@ -140,7 +140,6 @@ FILES = [
     'components/PaymentReportForm.tsx',
     'components/ProfileSurvey.tsx',
     'components/RegisterForm.tsx',
-    'components/RegisterPicker.tsx',
     'components/RegisterTabs.tsx',
     'components/ReportForm.tsx',
     'components/ReviewForm.tsx',

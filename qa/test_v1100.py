@@ -119,7 +119,6 @@ FILES = [
     'components/partners/CopyButton.tsx',
     'components/partners/LinkCreateForm.tsx',
     'components/partners/PartnerInquiryForm.tsx',
-    'components/partners/PartnerNav.tsx',
     'components/partners/SettlementAccountForm.tsx',
     'components/partners/fmt.ts',
     'i18n/messages/index.ts',
