@@ -27,7 +27,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D121_agent_chat/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 159 · 마지막 D121(v10.111 부터 D122 · 160 — test_v1111)', (len(mig), mig[-1] if mig else '') in ((159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 159 · 마지막 D121(v10.111 부터 D122 · 160 — test_v1111)', (len(mig), mig[-1] if mig else '') in ((159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 하루 횟수 표 · 한도(동시에 넘지 않음) · 되돌리기 · 비회원 전체 300 · 보관 1825일 · 회원 30(손대지 않았을 때만) · 정리 배치 매일 · 지우는 문장 없음',
    'CREATE TABLE IF NOT EXISTS public.agent_chat_usage' in M and 'fn_agent_chat_take' in M and 'WHERE agent_chat_usage.n < p_limit' in M and 'fn_agent_chat_give' in M
    and "('agent.guest_daily_total', '300'" in M and "('agent.chat_retention_days', '1825'" in M and "AND value = '100'" in M

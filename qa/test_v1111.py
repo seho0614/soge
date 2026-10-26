@@ -29,7 +29,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D122_agent_key_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 160 · 마지막 D122(v10.115 부터 D123 · 161 — test_v1115)', (len(mig), mig[-1] if mig else '') in ((160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 160 · 마지막 D122(v10.115 부터 D123 · 161 — test_v1115)', (len(mig), mig[-1] if mig else '') in ((160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 외부 연동 AGENT 줄(오픈을 막지 않음 · 발신 IP 불필요) · 받는 키에 AGENT/ANTHROPIC_API_KEY 하나만 더함 · 결제 · 계좌 · 세금계산서 키 없음',
    "VALUES ('AGENT', 'AI(Anthropic Claude)'" in M and "'ANTHROPIC_API_KEY', NULL, false," in M
    and "('MAP','KAKAO_REST_KEY'), ('MAP','KAKAO_JS_KEY'), ('WEATHER','KMA_SERVICE_KEY'), ('AGENT','ANTHROPIC_API_KEY'))" in M
