@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Ip, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Min } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';   // v10.31 검정 — 참 · 거짓 입력은 받은 값 그대로(G-134 · "false" 글자가 true 로 바뀌지 않게)
@@ -43,6 +43,13 @@ export class AdxClickDto {
   @ApiProperty({ format: 'uuid' }) @IsString() publisherId!: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() impressionId?: number;
   @ApiPropertyOptional({ description: '기기 식별(해시) — 퍼블리셔 지면 스크립트가 만듦' }) @IsOptional() @IsString() device?: string;
+}
+
+/** v10.117 — 성향 학습 되돌리기 결과 */
+export class SegRevertDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ description: '성향을 옮기기 전 세그먼트로 실제로 돌렸는가(false 면 기록만 되돌림 표시)' }) restored!: boolean;
+  @ApiProperty() note!: string;
 }
 
 /** v10.31 (10/10 시안 기준) — 운영 화면에서 서버 자료가 없던 구역 */
@@ -112,6 +119,14 @@ export class AdminV31Controller {
   @Get('segments/log')
   @ApiOperation({ summary: '옮긴 기록', description: 'SB-ADM-SEG-010 — 성향 학습이 실제로 옮긴 회원(전 · 후 · 클릭 · 일시)' })
   segmentLog() { return this.svc.segmentLog(); }
+
+  @Post('segments/log/:id/revert')
+  @ApiOperation({ summary: '성향 학습 되돌리기 (v10.117)', description: 'SB-ADM-SEG-010 — 그 회원의 가장 최근 이동만. 옮기기 전 세그먼트로 돌리고(성향이 그대로이고 맞춤형 광고 동의가 있을 때) 기록에 되돌림 · 되돌린 사람을 남김. 학습은 막지 않음(다시 돌리면 같은 클릭으로 다시 옮길 수 있음).' })
+  @ApiParam({ name: 'id', description: '옮긴 기록 id' })
+  @ApiOkResponse({ type: SegRevertDto })
+  @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, description: 'ALREADY_REVERTED · NEWER_SHIFT', type: ErrorDto })
+  @Audit('SEGMENT_REVERT', 'SEGMENT')
+  revertSegment(@Param('id', ParseUUIDPipe) id: string) { return this.svc.revertSegmentShift(id); }
 
   @Get('integration-status')
   @Roles('SUPER')   // matrix SB-ADM-ITG-010 SUPER

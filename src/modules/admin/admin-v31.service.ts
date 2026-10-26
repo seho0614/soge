@@ -286,6 +286,35 @@ export class AdminV31Service {
         ORDER BY l.applied_at DESC LIMIT 50`);
   }
 
+  /**
+   * v10.117 (docs/181) — 성향 학습 되돌리기(SB-ADM-SEG-010 「옮긴 기록」의 줄마다).
+   *   그 회원의 가장 최근 이동만 되돌립니다(뒤에 또 옮겨졌으면 최근 것부터). 성향이 아직 그 세그먼트이고 약관 동의가 있으면
+   *   옮기기 전 세그먼트로 돌리고, 성향이 지워졌거나 이미 바뀌었으면 기록에만 「되돌림」을 남깁니다.
+   *   학습을 막지는 않습니다(대표 2026-10-26 「막지 않음」) — 학습을 다시 돌리면 같은 클릭으로 다시 옮길 수 있습니다.
+   */
+  async revertSegmentShift(id: string) {
+    return this.db.transaction(async () => {
+      const [l] = await this.db.query<{ account_id: string; from_code: string | null; to_code: string; applied_at: Date; reverted_at: Date | null }>(
+        `SELECT account_id, from_code, to_code, applied_at, reverted_at FROM segment_shift_log WHERE id = $1 FOR UPDATE`, [id]);
+      if (!l) throw new NotFound('없는 기록입니다.');
+      if (l.reverted_at) throw new StateConflict('ALREADY_REVERTED', '이미 되돌린 기록입니다.');
+      const [newer] = await this.db.query(
+        `SELECT 1 FROM segment_shift_log WHERE account_id = $1 AND reverted_at IS NULL AND applied_at > $2 AND id <> $3`, [l.account_id, l.applied_at, id]);
+      if (newer) throw new StateConflict('NEWER_SHIFT', '이 회원은 그 뒤에 다시 옮겨졌습니다. 최근 기록부터 되돌리십시오.');
+      const restored = l.from_code ? await this.db.query(
+        `UPDATE member_ad_profiles p
+            SET segment_code = $2,
+                source = CASE WHEN EXISTS (SELECT 1 FROM segment_shift_log o WHERE o.account_id = p.account_id AND o.reverted_at IS NULL
+                                             AND o.applied_at < $4) THEN 'BEHAVIOR' ELSE 'MEMBER' END
+          WHERE p.account_id = $1 AND p.segment_code = $3 AND fn_adpersonal_on(p.account_id)
+          RETURNING 1`, [l.account_id, l.from_code, l.to_code, l.applied_at]) : [];
+      await this.db.query(`UPDATE segment_shift_log SET reverted_at = now(), reverted_by = $2 WHERE id = $1`, [id, RequestCtx.actorId() ?? null]);
+      return { ok: true, restored: restored.length > 0,
+        note: restored.length ? '옮기기 전 세그먼트로 되돌렸습니다. 학습을 다시 돌리면 같은 클릭으로 다시 옮길 수 있습니다.'
+                              : '기록에 「되돌림」만 남겼습니다(성향이 지워졌거나 그 뒤 바뀌었음). 학습을 다시 돌리면 같은 클릭으로 다시 옮길 수 있습니다.' };
+    });
+  }
+
   /* ── 통합 현황 ─────────────────────────────────────────────────── */
 
   /** 등록된 라우트를 데코레이터(경로 · 메서드 · @Roles · @RequireGate)에서 셉니다 — 손으로 적은 표가 아닙니다 */
