@@ -89,7 +89,7 @@
     "pendingTitle": "Post under review",
     "deletedTitle": "Deleted post",
     "deletedNote": "The author deleted this post.",
-    "postedPending": "<b>Your post is up.</b> As your first post, it will be visible to others after review. This usually takes less than a day.",
+    "postedPending": "<b>Your post has been submitted.</b> Since this is your first post, others will see it after review. This usually takes less than a day.",
     "posted": "Your post is up.",
     "saved": "Changes saved.",
     "views": "Views {n}",
@@ -137,11 +137,11 @@
     "bodyPh": "Write at least 10 characters.",
     "board": "Board",
     "reading": "Reading…",
-    "boardHint": "We pick based on your content. If it is wrong, choose yourself.",
-    "readAs": "Our reading",
+    "boardHint": "We suggest a board based on your content. If it doesn't fit, choose one yourself.",
+    "readAs": "Our suggestion",
     "boardIs": "Board",
-    "noBoard": "Could not decide on a board",
-    "pickYourself": "If it is wrong, choose yourself.",
+    "noBoard": "Could not suggest a board",
+    "pickYourself": "If it doesn't fit, choose one yourself.",
     "deal": "Deal to review",
     "dealPick": "Choose a completed deal",
     "noDeal": "You have no completed deals, so you cannot write a referral review yet.",
@@ -182,13 +182,13 @@
     "writeH": "Recommend a place",
     "writeLead": "Tell your neighbors about a place you have visited. <b>Find and choose the place on Kakao Map.</b>",
     "back": "← Local eats",
-    "postedWait": "As your first post, it goes up after review. This usually takes less than a day.",
+    "postedWait": "Since this is your first post, it will go up after review. This usually takes less than a day.",
     "posted": "Your recommendation is up.",
     "dt": {
       "kind": "Category",
       "address": "Address",
       "phone": "Phone",
-      "recs": "Recommended"
+      "recs": "Recommendations"
     },
     "recCount": "{n} neighbor posts",
     "kakao": "View on Kakao Map ↗",
@@ -221,7 +221,7 @@
     "mapFail": "Could not load the map. Please refresh in a moment.",
     "loading": "Loading…",
     "emptyMap": "No places recommended in this map area yet. Be the first to recommend one.",
-    "recs": "{n} neighbor picks",
+    "recs": "{n} neighbor recommendations",
     "truncated": "Too many places — showing only 200. Zoom in on the map.",
     "loginWrite": "Log in to recommend a place",
     "qShort": "Enter at least 2 characters of the place name.",
@@ -245,7 +245,7 @@
     "fMenu": "Recommended dish",
     "optional": "(optional)",
     "fMenuPh": "e.g. Clam kalguksu",
-    "sponsoredChk": "<b>This is an ad or sponsored</b> — be sure to check this if you received free food, discounts or money from the place. The post will be labeled “Ad · Sponsored”.",
+    "sponsoredChk": "<b>This is an ad or sponsored post</b> — be sure to check this if you received free food, discounts or money from the place. The post will be labeled “Ad · Sponsored”.",
     "firstNote": "<b>Your first post is reviewed before it goes up.</b> If you joined less than 7 days ago, you cannot include links. You can write up to 5 posts a day. Posts that disparage a place or are untrue may be hidden after reports.",
     "posting": "Posting…",
     "submit": "Post recommendation"
@@ -269,13 +269,13 @@
       "howT": "How",
       "how": "Press “Agree to safe deal” on your deal page (the other party is notified). It applies once both of you press it.",
       "supportT": "Support",
-      "support": "SogaeBank support, {hours}",
+      "support": "SogaeBank Help Center, {hours}",
       "apply": "Apply from my deals",
       "applySub": "Deals whose contract amount meets the threshold"
     },
     "ifHurt": "If you were harmed or suspect fraud",
     "moneyLossT": "Financial loss",
-    "moneyLoss": "Also report to the police (112) and the National Police Agency cybercrime reporting system. SogaeBank keeps chat and contract records.",
+    "moneyLoss": "Report it to both the police (112) and the Korean National Police Agency's cybercrime reporting system. SogaeBank keeps chat and contract records.",
     "dispute": "File a dispute",
     "report": "Report an incident",
     "reportSub": "Report a listing, member or deal"
@@ -294,7 +294,7 @@
     "newTitle": "Write a fraud case",
     "newH": "Write a fraud case",
     "newLead": "Sharing what happened helps prevent the same harm. The author is not disclosed.",
-    "newLogin": "<b>Login required.</b>Members who completed identity verification can post.",
+    "newLogin": "<b>Login required.</b> Members who have completed identity verification can post.",
     "login": "Log in"
   },
   "ad": {
@@ -306,12 +306,12 @@
     "tag": "Ad",
     "preview": "Advertiser page preview",
     "more": "Learn more",
-    "ctaNote": "This is where the advertiser's apply or inquiry button goes — from this button on, the advertiser handles it. Once the advertiser registers an address, it switches to that address.",
+    "ctaNote": "This is where the advertiser's apply or inquiry button goes — from this button on, the advertiser takes over. Once the advertiser registers an address, the button links there.",
     "when": "When this page appears",
     "withUrlT": "Ads with a landing address",
-    "withUrl": "Go straight to the advertiser's reviewed address.",
+    "withUrl": "Clicks go straight to the advertiser's approved address.",
     "noUrlT": "Ads without a landing address",
-    "noUrl": "This preview page — once the advertiser registers an address, it switches to that address.",
+    "noUrl": "This preview page — once the advertiser registers an address, the ad links there instead.",
     "shareT": "What SogaeBank shares",
     "share": "Nothing — we only count clicks. Names and contact details are not sent to advertisers.",
     "toRecs": "Back to recommendations"
@@ -343,7 +343,7 @@
       "PAYMENT": "Payment record between parties",
       "CONFIRMED": "Both confirmed · deal closed"
     },
-    "noFee": "Listing fee · no referral fee",
+    "noFee": "No listing fee · no referral fee",
     "emptyH": "No Best Match stories published yet.",
     "emptyP": "We only show completed deals chosen by our team <b>with consent from both seller and buyer</b>. Amounts, durations and steps come straight from the deal records.",
     "toNew": "See success stats ›",
@@ -374,7 +374,7 @@
     "lead": "When one of your completed deals is picked as a Best Match candidate, it appears here. Amounts, durations and steps come from the deal record; names are never shown.",
     "loginNeed": "Login required.",
     "login": "Log in",
-    "empty": "<b>No stories are waiting for your consent.</b>We will notify you when our team picks one."
+    "empty": "<b>No stories are waiting for your consent.</b> We will notify you when our team picks one."
   },
   "event": {
     "roleNote": "Refer suppliers, businesses, listings and startup spots you know, and earn!",
@@ -430,7 +430,7 @@
     "apply": "Request urgent from My listings ›"
   },
   "verified": {
-    "sub": "For safe deals, prevention is the best success.",
+    "sub": "Safe deals start with prevention.",
     "all": "All",
     "guideH": "Prevention guide by incident type",
     "line2": {
@@ -445,7 +445,7 @@
     "report": "Report an incident",
     "reportNote": "Reports go to the responsible team<br></br>and are handled promptly.",
     "urgentCall": "Need urgent help?",
-    "center": "SogaeBank support",
+    "center": "SogaeBank Help Center",
     "hours": "{hours}",
     "rulesH": "5 key rules to prevent incidents",
     "safeH": "Safe deal guide",
@@ -465,15 +465,15 @@
     "casesFail": "Could not load the board.",
     "casesNone": "No cases of this type yet.",
     "casesNote": "Authors are not disclosed, and phone numbers, emails and account numbers are masked when saved. Do not include personal information such as the other party's real name — posts that target a specific person may be hidden by our team.",
-    "docH": "Docs verified listings",
+    "docH": "Document-verified listings",
     "docNote": "This mark means the documents submitted by the lister have been checked.",
     "docFail": "Could not load the list.",
-    "docNone": "No listings are marked docs verified yet.",
+    "docNone": "No document-verified listings yet.",
     "hotH": "Fraud prevention HOT TIPS",
     "hot": {
       "h1": {
         "t": "Must-checks before a contract",
-        "d": "Checking the contract, business registration and corporate registry is the very basics!"
+        "d": "Always check the contract, business registration certificate and corporate registry — it's the bare minimum!"
       },
       "h2": {
         "t": "Red-flag checklist",

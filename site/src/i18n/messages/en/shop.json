@@ -3,7 +3,7 @@
   "seeAll": "See all",
   "madeAt": "as of {date}",
   "hero": {
-    "title": "Trusted health products,<br></br>find them at <em>Sogae Mall</em>.",
+    "title": "Find trusted health products<br></br>at <em>Sogae Mall</em>.",
     "lead": "Start healthy habits at reasonable prices.",
     "ask": "What health product are you looking for?",
     "placeholder": "e.g. Vitamin C, probiotics, lutein, magnesium, collagen",
@@ -30,7 +30,7 @@
     "lowLeadPriced": "The lowest price among products available now, per ingredient.",
     "today": "Today's health picks",
     "todayLead": "See the most popular health products and live trends.",
-    "many": "Most wanted",
+    "many": "Most searched",
     "fresh": "New arrivals",
     "deal": "This week's special deals",
     "dealLead": "The hottest discounts right now."
@@ -40,17 +40,17 @@
   "from": "From {price}",
   "sampleTip": "Functional claims for health supplements are used only after checking the approved scope and ad review",
   "sample": "Sample copy — pending ad review",
-  "noOrders": "No orders collected yet — rankings are updated once a day once orders come in.",
+  "noOrders": "No orders collected yet — rankings will be updated daily once orders come in.",
   "band": {
-    "title": "A healthy choice, together with <em>Sogae Mall</em>",
-    "lead": "Make a better today with trusted health products.",
+    "title": "Make healthy choices with <em>Sogae Mall</em>",
+    "lead": "Make today better with trusted health products.",
     "go": "See special deals →"
   },
   "rank": {
     "tabs": {
       "hot": "Trending now",
       "fresh": "New arrivals",
-      "many": "Most wanted"
+      "many": "Most searched"
     },
     "basis": {
       "hot": "Units sold in the last 7 days · updated daily · excluding cancellations and returns · on-sale products only",
@@ -58,6 +58,6 @@
       "many": "Orders in the last 7 days · updated daily · on-sale products only"
     },
     "basisLabel": "Ranking basis — {basis}",
-    "empty": "No sales collected yet — rankings are updated once a day once sales come in."
+    "empty": "No sales collected yet — rankings will be updated daily once sales come in."
   }
 }

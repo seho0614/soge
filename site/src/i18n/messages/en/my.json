@@ -104,7 +104,7 @@
       },
       "deals": {
         "t": "Referral history",
-        "d": "Your referrals and attributed codes"
+        "d": "Your referrals and the codes credited to them"
       },
       "contracts": {
         "t": "Contracts",
@@ -133,7 +133,7 @@
       },
       "broker": {
         "t": "Broker verification",
-        "d": "Verification comes first to list real estate referrals"
+        "d": "Verify first to list real estate referrals"
       },
       "payment": {
         "t": "Payment methods",
@@ -172,14 +172,14 @@
         "d": "Manage Sogae Mall shipping addresses"
       }
     },
-    "blocked": "You are currently blocked at this step.",
+    "blocked": "You cannot continue past this step yet.",
     "avatarFallback": "M",
     "badgeBiz": "Business verified",
     "badgeId": "ID verified",
     "badgeNone": "Not verified",
     "bizRegNo": " · Business reg. no. {no}",
-    "trustTitle": "Referral trust {score} pts ×10 — based on verification · invite consent rate · closed deals · reviews. Sample {sample}",
-    "trust": "Trust credit {n} · ",
+    "trustTitle": "Referral trust score {score} (×10) — based on verification · invite consent rate · closed deals · reviews. Sample size: {sample}",
+    "trust": "Deal reliability {n} · ",
     "regions": "Regions",
     "register": "Add",
     "joined": "Joined {date}",
@@ -209,11 +209,11 @@
     "unverifiedWhy": "Required to make inquiries and join deals.",
     "verify": "Verify identity",
     "hPassword": "Change password",
-    "pwNote": "Changing your password <b>signs you out on all other devices.</b> Entering your current password wrong 5 times locks it for 30 minutes.",
+    "pwNote": "Changing your password <b>logs you out on all other devices.</b> If you enter your current password incorrectly 5 times, it will be locked for 30 minutes.",
     "hPublic": "Visibility",
     "hBiz": "Business info",
     "noBiz": "No business information registered.",
-    "noBizText": "Creating deals · offering referral fees · issuing contracts only need identity verification. Register business info when you receive referral fees as a business (tax invoice).",
+    "noBizText": "Creating deals · offering referral fees · issuing contracts require only identity verification. Register business info when you want to receive referral fees as a business (tax invoice).",
     "bizRegister": "Register a business",
     "thItem": "Item",
     "thValue": "Details",
@@ -224,11 +224,11 @@
     "ceo": "Representative",
     "typeItem": "Business type · Item",
     "address": "Address",
-    "nts": "NTS check",
+    "nts": "National Tax Service check",
     "ntsOk": "Confirmed",
     "rejectReason": "Rejection reason",
     "bizEditable": "You can edit it because it is not verified yet. Get business verification after editing.",
-    "bizLocked": "<b>Verified business information cannot be edited.</b> If it differs from what the NTS confirmed, <b>that confirmation becomes meaningless.</b>",
+    "bizLocked": "<b>Verified business information cannot be edited.</b> If it differs from what the National Tax Service confirmed, <b>that confirmation would no longer be valid.</b>",
     "bizLockedTail": "If anything has changed, verify again.",
     "bizReverify": "Re-verify business info",
     "hWithdraw": "Delete account",
@@ -236,7 +236,7 @@
     "withdrawText": "You can delete your account only when there are no ongoing deals · settlements · orders. The deletion page checks this first."
   },
   "accForm": {
-    "relogin": "You have been signed out. Please sign in again.",
+    "relogin": "You have been logged out. Please log in again.",
     "saveFailed": "Could not save. Please try again shortly.",
     "saveFailedShort": "Could not save.",
     "saved": "Saved.",
@@ -250,7 +250,7 @@
     "save": "Save",
     "earnB": "Show total earnings",
     "earnText": " — Shows your total earnings (sum of settled referral fees) in “Referrer record” on your listing pages.",
-    "earnHint": "When off, only total referrals · closed deals (contracts) · close rate are shown. Signed-out visitors can see this, so turn it on only if you want it public. You can turn it off any time.",
+    "earnHint": "When off, only total referrals · closed deals (contracts) · close rate are shown. Visitors who are not logged in can see this, so turn it on only if you want it public. You can turn it off any time.",
     "savePublic": "Save visibility",
     "company": "Company name",
     "ceo": "Representative",
@@ -259,7 +259,7 @@
     "address": "Address",
     "saveBiz": "Save business info",
     "pwCurNeed": "Please enter your current password.",
-    "pwRule": "The new password must be at least 10 characters mixing letters · numbers · symbols.",
+    "pwRule": "The new password must be at least 10 characters and include letters, numbers, and symbols.",
     "pwMismatch": "The two new password fields do not match.",
     "pwChanged": "Password changed.",
     "pwCur": "Current password",
@@ -272,10 +272,10 @@
   "withdraw": {
     "title": "Delete account",
     "sub": "Here is what to check before deleting your account.",
-    "signedOutB": "You are not signed in.",
+    "signedOutB": "You are not logged in.",
     "signedOutText": "If you just deleted your account, it is done — thank you for using SogaeBank.",
     "toMain": "Go to home",
-    "login": "Sign in",
+    "login": "Log in",
     "backProfile": "Back to profile",
     "loadFail": "Could not load account deletion info. Please refresh in a moment.",
     "blockedB": "You can delete your account after the items below are finished.",
@@ -326,7 +326,7 @@
     "unlimited": "Unlimited",
     "count": "{n}",
     "basicNote": "If you need a referral code, it is issued at a flat {price} each.",
-    "paidNote": "If you cancel, listing slots shrink and listings are taken down.",
+    "paidNote": "If you cancel, your listing slots decrease and some listings will be taken down.",
     "refundNote": "<b>Refunds are available only on the day of payment.</b> Once subscribed you can view requests immediately, so<b> if you view even one, no refund is given even on the same day</b> — viewed contacts cannot be taken back.",
     "testPay": "Until payment keys are set, it runs as a <b>test payment</b> (no money moves). Once keys are set, the Toss payment window opens.",
     "hInvoices": "Payment history",
@@ -338,16 +338,16 @@
     "inv": {
       "paid": "Paid",
       "failed": "Failed",
-      "pending": "Checking",
+      "pending": "Pending",
       "refunded": "Refunded",
       "skipped": "Skipped"
     },
     "extraRow": "{n} extra referral codes",
-    "fee": "subscription"
+    "fee": "Subscription fee"
   },
   "subPay": {
     "title": "Confirm subscription payment",
-    "sub": "Your subscription opens after the payment provider approves it.",
+    "sub": "Your subscription starts once the payment provider approves the payment.",
     "bad": "The payment information is invalid. Please check again in <a>Subscription · Referral codes</a>."
   },
   "subUp": {
@@ -370,7 +370,7 @@
     "thSlots": "Listing slots",
     "thProposal": "Referral offers",
     "thView": "Request views",
-    "thPriority": "Priority exposure",
+    "thPriority": "Priority placement",
     "zeroWon": "₩0",
     "unlimited": "Unlimited",
     "perMonth": "{n}/mo",
@@ -404,7 +404,7 @@
     "inv": {
       "paid": "Paid",
       "failed": "Failed · Retrying",
-      "pending": "Checking",
+      "pending": "Pending",
       "refunded": "Refunded",
       "skipped": "Skipped"
     },
@@ -446,10 +446,10 @@
     "thItem": "Product · Service",
     "thCategory": "Category",
     "thFee": "Referral fee",
-    "thOwner": "Owner",
+    "thOwner": "Listed by",
     "view": "View",
     "ask": "1:1 inquiry ›",
-    "note": "<b>You cannot request a contract right away.</b> The referral code is issued and attribution starts the moment a 1:1 chat begins (INV-2). If you skip the chat, <b>there is no proof of who referred you</b> and the referral fee cannot be paid."
+    "note": "<b>You cannot request a contract right away.</b> The referral code is issued and the referral is credited the moment a 1:1 chat begins (INV-2). If you skip the chat, <b>there is no way to prove who the referrer is</b>, so the referrer cannot receive the referral fee."
   },
   "events": {
     "title": "My event entries",
@@ -471,7 +471,7 @@
     "sub": "No reports in progress. You will be notified when your reports are handled.",
     "subOpen": "{n} reports are being reviewed. You will be notified when they are handled.",
     "empty": "You have not reported anything yet. If you see a problematic post, use its “Report” button.",
-    "thTarget": "Target",
+    "thTarget": "Reported item",
     "thReason": "Reason",
     "thStatus": "Status",
     "thResolution": "Resolution",
@@ -496,7 +496,7 @@
   "inq": {
     "title": "Inquiries · Chats",
     "roomTitle": "1:1 chat",
-    "sub": "1:1 chats stay on the platform — contact details are hidden if typed. When terms match, open a deal with “Request contract” in the chat.",
+    "sub": "1:1 chats stay on the platform — contact details are hidden if typed. Once you agree on terms, open a deal with “Request contract” in the chat.",
     "tabsAria": "Inquiry type",
     "received": "Received",
     "sent": "Sent",
@@ -506,7 +506,7 @@
     "emptyReceived": "No inquiries received.",
     "emptySent": "No inquiries sent.",
     "newN": "New {n}",
-    "notPublished": "Target is not published",
+    "notPublished": "Item is not published",
     "asker": "From",
     "receiver": "To",
     "deleted": "(Deleted item)",
@@ -526,7 +526,7 @@
       "inReview": "In review",
       "rejected": "Rejected",
       "draft": "Draft",
-      "archived": "Closed"
+      "archived": "Ended"
     },
     "forbiddenB": "You cannot view listings.",
     "forbiddenText": "After identity verification, you can see your listings' status and rejection reasons here.",
@@ -549,7 +549,7 @@
   },
   "deals": {
     "title": "Referral history",
-    "sub": "Your referrals and attributed referral codes. Attribution lasts 90 days from first contact; for referral requests it starts at acceptance (INV-2 exception).",
+    "sub": "Your referrals and the referral codes credited to them. Referral credit lasts 90 days from first contact; for referral requests it counts from acceptance (INV-2 exception).",
     "empty": "No deals in progress. Deal numbers and referral codes appear here once a referral starts.",
     "thNo": "Deal no.",
     "thItem": "Referral",
@@ -580,20 +580,20 @@
   },
   "fulfills": {
     "title": "Confirm fulfillment",
-    "sub": "Reports from the company handling your consultation that the work is done. Confirming records it as a closed deal; if something differs, you can raise an objection.",
+    "sub": "Reports from the business handling your consultation that the work is done. Confirming records it as a closed deal; if something is different, you can raise an objection.",
     "empty": "No fulfillment reports to confirm.",
     "st": {
       "waiting": "Awaiting confirmation",
       "confirmed": "Confirmed · Closed",
       "disputed": "Objection raised"
     },
-    "company": "Company",
+    "company": "Business",
     "reported": "Reported {date}",
     "doneOn": " · Completed {date}",
     "confirmedAt": " · Confirmed {date}",
     "rating": " · {n} pts",
     "noteB": "SogaeBank is not a party to this deal.",
-    "noteText": "Fulfillment confirmations are used for the company's performance record; payment is exchanged between the parties."
+    "noteText": "Fulfillment confirmations are used for the business's performance record; payment is exchanged directly between the parties."
   },
   "biz": {
     "title": "Switch to business",
@@ -603,8 +603,8 @@
       "register": "List in all sections · post requests",
       "iKnow": "Join referrals with 'I know someone'",
       "deal": "Inquiries · create deals · offer referral fees · contracts",
-      "urgent": "Apply for Urgent · quick sale",
-      "post": "Post jobs · advisory services",
+      "urgent": "Apply for Urgent · Quick sale",
+      "post": "Post notices · advisory services",
       "partner": "Partner onboarding · broker verification · qualification review",
       "feeIndividual": "Receive referral fees (individual)"
     },
@@ -614,7 +614,7 @@
     },
     "doneTitle": "Business verified",
     "doneSub": "You can receive referral fees as a business (tax invoice).",
-    "doneNote": "Verified on {date}. Referral fees for deals closed after this time are received as a business (earlier deals are not retroactive and are received as an individual).",
+    "doneNote": "Verified on {date}. Referral fees for deals closed after this time are paid to you as a business (deals closed earlier are not covered retroactively and are paid to you as an individual).",
     "hAfter": "Available after business verification",
     "viewBiz": "View business info",
     "my": "My page",
@@ -629,8 +629,8 @@
     "ntsB": "Business verification is checked against the National Tax Service.",
     "ntsText": "The registration number and company name must match; suspended or closed businesses cannot be verified.",
     "retroB": "The verification time is the reference date for receiving referral fees as a business.",
-    "retroText": "Deals closed before verification are not retroactive — it is better to verify first.",
-    "devNote": "Referral fees for deals closed before business verification are received as an individual in <a>Settlement</a> with identity verification · payout account check.",
+    "retroText": "Business verification does not apply retroactively to deals closed before it — it is better to verify first.",
+    "devNote": "Referral fees for deals closed before business verification are received as an individual in <a>Settlement</a>, after identity verification and a payout account check.",
     "hForm": "Enter business info",
     "toVerify": "Go to verification status ›"
   },
@@ -645,7 +645,7 @@
     "rejected": "Your previous application was rejected.",
     "reason": " Reason: {reason}",
     "retry": "Please fix it and apply again.",
-    "assumedB": "The MOLIT integration is not live yet, so the check is skipped.",
+    "assumedB": "The Ministry of Land (MOLIT) integration is not live yet, so the check is skipped.",
     "assumedText": "We do not verify that the number matches records — it will be checked after integration, and verification is cancelled if it does not match.",
     "needId": "Identity verification is required first.",
     "goVerify": "Verify now →",
@@ -654,7 +654,7 @@
     "noAutoB": "Even if the check matches, there is no automatic approval.",
     "noAutoText": "Identity theft cannot be caught by number matching, so our team reviews it once more.",
     "recheckB": "We re-check every 180 days.",
-    "recheckText": "Verification must not remain after a business closes."
+    "recheckText": "This ensures verification does not stay active after a business closes."
   },
   "brokerSt": {
     "title": "Broker verification status",
@@ -703,7 +703,7 @@
     "noGuarantee": "No guarantee registered. <b>Approval is not possible without a guarantee (INV-BR4).</b>",
     "docs": "Submitted documents: {list}",
     "files": " · {n} files",
-    "guaranteeHint": "Mutual aid has no public API, so it is handled by entering the certificate and tracking its expiry.",
+    "guaranteeHint": "There is no public lookup for mutual aid guarantees, so you enter the certificate and we track its expiry date.",
     "hDecision": "Application · Decision",
     "decided": "Decision",
     "beforeReview": "Not reviewed",
@@ -711,7 +711,7 @@
     "recheckHint": "Verification lapses after the re-check due date.",
     "edit": "Re-upload documents · guarantee",
     "lapseB": "Verification can lapse.",
-    "lapseText": "If MOLIT records show closure · deregistration or the guarantee expires, the daily check suspends verification and real estate referral exposure stops too (INV-BR2 · INV-BR4). We re-check every 180 days.",
+    "lapseText": "If MOLIT records show closure · deregistration or the guarantee expires, the daily check suspends verification and your real estate referrals are hidden as well (INV-BR2 · INV-BR4). We re-check every 180 days.",
     "newApply": "Apply again",
     "newApplyOff": "You cannot apply again while an application is in progress",
     "reviewer": "Open reviewer screen",

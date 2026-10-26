@@ -230,7 +230,7 @@
       "todaySub": "See what’s most searched and trending right now.",
       "banner": {
         "t1": "Autumn outing restaurants",
-        "d1": "We introduce popular places",
+        "d1": "Discover popular places",
         "d2": "for family dining."
       },
       "rank": {
@@ -316,7 +316,7 @@
       "safe": "Safe Referral",
       "startups": "Startups",
       "market": "Marketplace",
-      "proposals": "{n} proposals",
+      "proposals": "{n} offers",
       "todaySub": "See newly posted products · requests · stories in one place.",
       "bannerMny": {
         "t1": "Popular in Marketplace",

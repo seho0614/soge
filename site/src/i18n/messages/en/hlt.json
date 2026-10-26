@@ -33,9 +33,9 @@
     "unitFrom": "From <b>{amt}</b> <k>per month</k>",
     "soldHint": "Sold out — you can add it again once restocked",
     "withdrawal": {
-      "FOOD_SEALED": "No withdrawal once opened",
-      "DEVICE": "No withdrawal once used",
-      "GENERAL": "7-day withdrawal after delivery"
+      "FOOD_SEALED": "Withdrawal restricted once opened",
+      "DEVICE": "Withdrawal restricted once used",
+      "GENERAL": "7-day right of withdrawal after receipt"
     }
   },
   "seller": {
@@ -43,7 +43,7 @@
     "company": "Company name",
     "ceo": "Representative",
     "bizNo": "Business registration no.",
-    "mailOrderNo": "Mail-order business report no.",
+    "mailOrderNo": "Mail-order business registration no.",
     "address": "Business address",
     "phone": "Contact",
     "tbd": "To be confirmed",
@@ -72,7 +72,7 @@
     "starFilter": "{k}★ {n}",
     "noneForStar": "No reviews with this rating.",
     "mine": "My review",
-    "note": "Customers who confirmed their purchase can review each ordered product once. Reviews that make definitive efficacy claims appear after an operator check."
+    "note": "Customers who confirmed their purchase can review each ordered product once. Reviews that make definitive efficacy claims appear after review by our team."
   },
   "qna": {
     "login": "<login>Log in</login> to ask a question (verified members).",
@@ -86,24 +86,24 @@
     "failed": "Could not process your request.",
     "done": "Done.",
     "mine": "My review",
-    "pending": "Visible after operator check",
+    "pending": "Visible after review by our team",
     "hidden": "Hidden — {reason}",
     "edit": "Edit",
     "delete": "Delete",
     "write": "Write a review",
     "starAria": "Rating",
     "points": "{n} stars",
-    "placeholder": "10 to 1,000 characters — reviews with definitive efficacy claims appear after an operator check",
+    "placeholder": "10 to 1,000 characters — reviews with definitive efficacy claims appear after a review by our team",
     "sending": "Sending…",
     "submit": "Post review",
     "cancel": "Cancel",
-    "note": "Only you can edit or delete your review. Operators don’t delete reviews; they hide them and tell you why."
+    "note": "Only you can edit or delete your review. Our team doesn’t delete reviews; we hide them and tell you why."
   },
   "qnaForm": {
     "failed": "Could not send your question.",
     "done": "Your question has been received.",
     "placeholder": "Tell us what you’d like to know about this product (5+ characters). Please don’t include personal information.",
-    "private": "Private (only me and the operator)",
+    "private": "Private (visible only to you and our team)",
     "sending": "Sending…",
     "submit": "Ask"
   },
@@ -136,7 +136,7 @@
     "notOnSale": "This product is not on sale.",
     "ratingLine": "{avg} · {n} reviews",
     "maxDiscount": "Best price <b>{amt} per month</b> (among options available now)",
-    "adReview": "Ad pre-review {no}",
+    "adReview": "Ad pre-screening no. {no}",
     "shipTitle": "Shipping · Exchange · Returns",
     "shipFee": "Shipping fee",
     "shipFeeVal": "Free on all products",
@@ -173,13 +173,13 @@
     "sort": "Sort",
     "sortNote": "The default here is <b>monthly price</b> — visitors to an ingredient page have already decided what to buy.",
     "notCarried": "We don’t carry this ingredient yet.",
-    "concernsTitle": "Concerns that often look for {name}",
+    "concernsTitle": "Concerns where {name} is popular",
     "manyToMany": "One ingredient can relate to several concerns — concerns and ingredients are many-to-many.",
     "mfr": "The manufacturer may differ even for the same ingredient. Ingredients and amounts are exactly as labeled on the product."
   },
   "category": {
     "fallback": "Category",
-    "hint": "Categories are <b>the axis for licenses and reviews</b>. To choose what to buy, <ing>By ingredient</ing> · <con>By concern</con> is faster.",
+    "hint": "Categories are <b>used for license and review requirements</b>. To choose what to buy, <ing>By ingredient</ing> · <con>By concern</con> is faster.",
     "notSold": "We don’t sell medicines, medical services or medical devices — <link>What we don’t sell</link>",
     "openItems": "View available items",
     "missing": "This category does not exist.",
@@ -205,7 +205,7 @@
     "loadFail": "Could not load concerns. Please try again shortly.",
     "empty": "No concerns have been set up yet.",
     "ingCount": "{n} ingredients",
-    "stocked": "({n} in stock)",
+    "stocked": "({n} available)",
     "ruleTitle": "Wording rules",
     "ruleBody": "Concern names use <b>condition terms</b> only — blood sugar · blood pressure · sleep. Disease names (diabetes · hypertension · insomnia) are not used.<br></br>We say “popular ingredients”, not “effective ingredients”. Concern names and descriptions read as ad copy, so they go through automatic pre-screening.",
     "notice": "Concerns group the <b>popular ingredients</b> people look for with each concern. Health functional foods are not medicines for preventing or treating disease, and the stated functions are within the scope recognized by the Ministry of Food and Drug Safety."
