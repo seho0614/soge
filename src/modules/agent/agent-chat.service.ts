@@ -4,7 +4,6 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { AgentService } from './agent.service';
-import { AgentProvider, resolveAgentProvider } from './agent.provider';
 import { redactContacts } from './review-shadow.service';
 
 /** 질문 한 번의 글자 수 · 한 대화의 질문 수 · 지식 묶음 크기 · 다시 만드는 간격 */
@@ -50,7 +49,6 @@ export type ChatAnswer = { conversationId: string; answer: string; handoff: bool
 @Injectable()
 export class AgentChatService {
   private readonly log = new Logger(AgentChatService.name);
-  private readonly provider: AgentProvider | null = resolveAgentProvider();
   private readonly busy = new Set<string>();
   private knowledge: { at: number; text: string; faqs: { id: string; question: string; linkHref: string | null }[] } | null = null;
 
@@ -60,7 +58,7 @@ export class AgentChatService {
   /** 손님 화면 — 단추를 보일지 · 오늘 남은 횟수(켜져 있을 때만) */
   async status(visitorKey?: string) {
     const g = await this.agent.allowed('SITE_CHAT');
-    const enabled = g.ok && !!this.provider;
+    const enabled = g.ok && !!(await this.agent.provider());
     if (!enabled) return { enabled: false, remaining: null };
     const who = this.who(visitorKey);
     const limit = await this.limitOf();
@@ -71,7 +69,8 @@ export class AgentChatService {
 
   async chat(dto: { conversationId?: string; message: string }, visitorKey?: string): Promise<ChatAnswer> {
     const g = await this.agent.allowed('SITE_CHAT');
-    if (!g.ok || !this.provider) throw new PolicyViolation('AGENT_CHAT_OFF', '지금은 AI 상담을 쓸 수 없습니다. 고객센터 1:1 문의를 이용해 주십시오.');
+    const prov = await this.agent.provider();   // v10.111 — 운영 화면 키 먼저, 없으면 .env
+    if (!g.ok || !prov) throw new PolicyViolation('AGENT_CHAT_OFF', '지금은 AI 상담을 쓸 수 없습니다. 고객센터 1:1 문의를 이용해 주십시오.');
     const model = (await this.setting('agent.chat_model')) ?? 'claude-haiku-5-5';
     const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
     if (!priced) throw new PolicyViolation('AGENT_CHAT_OFF', '지금은 AI 상담을 쓸 수 없습니다. 고객센터 1:1 문의를 이용해 주십시오.');
@@ -116,7 +115,6 @@ export class AgentChatService {
 
       const kn = await this.knowledgePack();
       const safe = redactChat(message);
-      const prov = this.provider;
       let reply;
       try {
         reply = await prov.complete({

@@ -124,7 +124,19 @@ else
   echo "$ST" | grep '^올릴것' | awk '{print $2}' | paste -sd' ' | fold -s -w 110 | sed 's/^/        올릴 것: /' | tee -a "$OUT"
   say "        ★ 마이그레이션은 되돌릴 수 없습니다(전진 전용). 되돌리는 길은 **RDS 스냅샷 복원**뿐입니다."
   if [ "${ASSUME_YES:-0}" != "1" ]; then
-    read -r -p "        RDS 스냅샷을 방금 만들었습니까? 만들었으면 yes 를 입력: " yn
+    # v10.111 — 화면에서 직접 칠 때는 질문 전에 남은 입력을 버립니다(명령을 붙여 넣을 때 딸려 온 빈 줄 · 빌드 중에 친 글자가
+    #   대답으로 먹혀 멈추던 것 · 2026-10-26 운영 적용 때 두 번). 빈 대답은 세 번까지 다시 묻습니다.
+    #   printf 'yes\n' | bash apply.sh 처럼 대답을 넘기는 경우(화면이 아님)는 그대로 읽습니다.
+    yn=""
+    if [ -t 0 ]; then
+      while read -r -t 0.2 -n 10000 _junk; do :; done
+      for _try in 1 2 3; do
+        read -r -p "        RDS 스냅샷을 방금 만들었습니까? 만들었으면 yes 를 입력: " yn
+        [ -n "$yn" ] && break
+      done
+    else
+      read -r -p "        RDS 스냅샷을 방금 만들었습니까? 만들었으면 yes 를 입력: " yn
+    fi
     [ "$yn" = "yes" ] || stop "스냅샷 확인이 없어 DB 를 건드리지 않았습니다" "RDS → sgb-db → 작업 → 스냅샷 생성 뒤 다시 실행하십시오. 빌드한 새 판($REL)은 지워도 됩니다."
   else
     info "ASSUME_YES=1 — 스냅샷 확인을 건너뜁니다 (리허설)"

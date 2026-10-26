@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { AgentChatService } from './agent-chat.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { AgentService } from './agent.service';
 import { Roles } from '../../core/auth';
+import { Audit } from '../../core/audit.interceptor';
 
 /* AI 에이전트 0단계 — 운영 화면 「AI 운영 › AI 에이전트」(SB-ADM-AGT-010) · v10.94 (D116 · docs/151) */
 export class AgentSwitchesDto {
@@ -59,7 +60,30 @@ export class AgentStatusDto {
   @ApiProperty({ type: [AgentUsageRowDto] }) usage!: AgentUsageRowDto[];
   @ApiProperty({ type: [AgentPriceDto] }) prices!: AgentPriceDto[];
   @ApiProperty({ type: [AgentAgreementDto] }) agreement!: AgentAgreementDto[];
+  @ApiPropertyOptional({ nullable: true, enum: ['CLAUDE', 'MOCK'], description: 'v10.111 — 지금 엔진(없으면 null = 아무것도 부르지 않음)' }) engine!: string | null;
+  @ApiProperty({ enum: ['ADMIN', 'ENV', 'MOCK', 'NONE'], description: 'v10.111 — 키가 어디서 왔나(운영 화면 · .env · 시험 엔진 · 없음). 키 값은 없음' }) keySource!: string;
   @ApiProperty() note!: string;
+}
+
+/* v10.111 (D122 · docs/173) — AI 키(운영 화면 · SUPER) — 날씨 키와 같은 방식 */
+export class AgentKeyStateDto {
+  @ApiProperty({ enum: ['ANTHROPIC_API_KEY'] }) name!: string;
+  @ApiProperty({ enum: ['ADMIN', 'ENV', 'MOCK', 'NONE'], description: 'ADMIN = 운영 화면에서 넣음 · ENV = .env · MOCK = 시험 엔진(.env) · NONE = 없음' }) source!: string;
+  @ApiPropertyOptional({ nullable: true, enum: ['CLAUDE', 'MOCK'], description: '지금 엔진(없으면 null)' }) engine!: string | null;
+  @ApiProperty({ description: '운영 화면에 저장된 키가 있나(시험 엔진일 때도 저장은 되어 있을 수 있음)' }) saved!: boolean;
+  @ApiProperty({ description: '저장한 키를 읽지 못해(암호 열쇠 등) 쓰지 않는 중 — .env 키 또는 엔진 없음' }) unreadable!: boolean;
+  @ApiPropertyOptional({ nullable: true, example: '••••••ab12' }) masked!: string | null;
+  @ApiPropertyOptional({ nullable: true }) updatedAt!: Date | null;
+}
+export class AgentKeySetDto {
+  @ApiProperty({ minLength: 30, maxLength: 300, description: 'Anthropic 콘솔 › API Keys 에서 만든 키(sk-ant-api…)' })
+  @IsString() @MinLength(30) @MaxLength(300) value!: string;
+}
+export class AgentKeyTestDto {
+  @ApiProperty() ok!: boolean;
+  @ApiPropertyOptional({ nullable: true, description: 'AUTH · PERMISSION · RATE · TIMEOUT · NETWORK · UPSTREAM' }) kind!: string | null;
+  @ApiProperty() message!: string;
+  @ApiProperty({ type: [String], description: '쓸 수 있는 모델 이름(앞 20개)' }) models!: string[];
 }
 
 /* v10.109 (D121 · docs/170) — AI 상담 안내 */
@@ -155,4 +179,37 @@ export class AgentController {
   @ApiOperation({ summary: 'AI 에이전트 상태 (운영)', description: '스위치 · 월 상한 · 이번 달 비용 · 통로별 사용량 · 요금표 · AI 검수 일치율. 바꾸는 것은 정책(site_settings)에서 합니다.' })
   @ApiOkResponse({ type: AgentStatusDto })
   status() { return this.svc.status(); }
+
+  /* v10.111 — AI 키(SUPER) · 감사 기록은 응답을 남김 — 응답에는 끝 4자리만 있어 키 값이 감사 기록에 들어가지 않습니다 */
+  @ApiBearerAuth()
+  @Get('admin/agent/key')
+  @Roles('SUPER')
+  @ApiOperation({ summary: 'AI 키 상태 (v10.111)', description: '키 값은 내보내지 않습니다 — 끝 4자리와 어디서 왔는지(운영 화면 · .env · 시험 엔진 · 없음) · 지금 엔진만.' })
+  @ApiOkResponse({ type: AgentKeyStateDto })
+  keyView() { return this.svc.keyView(); }
+
+  @ApiBearerAuth()
+  @Put('admin/agent/key')
+  @Roles('SUPER')
+  @ApiOperation({ summary: 'AI 키 넣기 (v10.111)', description: '암호화해 저장합니다(카카오맵 · 날씨 키와 같은 열쇠). 넣은 뒤에는 다시 볼 수 없습니다 — 끝 4자리만. 1분 안에 모든 통로가 새 키로(재시작 없음). AI 를 켜지는 않습니다(스위치 · 월 상한은 그대로).' })
+  @ApiOkResponse({ type: AgentKeyStateDto })
+  @ApiResponse({ status: 422, description: 'INTEG_SECRET_FORMAT — 키 형식이 아님(sk-ant-api 로 시작해야 함)', type: ErrorDto })
+  @Audit('AGENT_KEY_SET', 'INTEGRATION')
+  setKey(@Body() dto: AgentKeySetDto) { return this.svc.setKey(dto.value); }
+
+  @ApiBearerAuth()
+  @Delete('admin/agent/key')
+  @Roles('SUPER')
+  @ApiOperation({ summary: 'AI 키 지우기 (v10.111)', description: '지우면 .env 키를 쓰고, 그것도 없으면 아무것도 부르지 않습니다.' })
+  @ApiOkResponse({ type: AgentKeyStateDto })
+  @Audit('AGENT_KEY_CLEAR', 'INTEGRATION')
+  clearKey() { return this.svc.clearKey(); }
+
+  @ApiBearerAuth()
+  @Post('admin/agent/key/test')
+  @Roles('SUPER')
+  @ApiOperation({ summary: 'AI 키 확인 (v10.111)', description: 'Anthropic 모델 목록을 한 번 읽어 키를 확인합니다 — 토큰을 쓰지 않아 비용이 없고 월 상한과 무관합니다. 키 값은 응답에 없습니다.' })
+  @ApiOkResponse({ type: AgentKeyTestDto })
+  @ApiResponse({ status: 422, description: 'AGENT_KEY_MISSING — 키 없음', type: ErrorDto })
+  testKey() { return this.svc.testKey(); }
 }

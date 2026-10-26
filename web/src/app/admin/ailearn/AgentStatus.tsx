@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
 import { useApi } from '../../../lib/useApi';
-import { api } from '../../../lib/api';
+import { api, tokenRoles } from '../../../lib/api';
 import { n } from '../../../lib/act';
 import { ErrorView } from '../../../components/ErrorView';
+import { AgentKey } from './AgentKey';
 
 /* ── SB-ADM-AGT-010 AI 에이전트 — v10.94 0단계 틀(D116 · docs/149 · docs/151) ─────────
  * 스위치 · 월 상한 · 이번 달 비용 · 통로별 사용량 · 요금표 · AI 검수 일치율을 봅니다.
@@ -15,6 +16,7 @@ interface Status {
   usage: { channel: string; model: string; requests: number; inputTokens: string; outputTokens: string; costUsd: string }[];
   prices: { model: string; inputPerM: string; outputPerM: string; cacheReadPerM: string; asOf: string; note: string | null }[];
   agreement: { model: string; decided: number; agreed: number; unsure: number; agreePct: string | null }[];
+  engine: 'CLAUDE' | 'MOCK' | null; keySource: 'ADMIN' | 'ENV' | 'MOCK' | 'NONE';   // v10.111
   note: string;
 }
 const CH_KO: Record<string, string> = { REVIEW_SHADOW: '검수 보조(병행)', SITE_CHAT: '고객응대 안내', AUDIT: '감사 보조', SETTLE: '정산 보조', TRANSLATE: '등록 글 번역', BOARD: '게시판 번역' };
@@ -23,6 +25,7 @@ const WHY_KO: Record<string, string> = {
   CAP_ZERO: '월 상한 0', CAP_REACHED: '월 상한에 닿음',
 };
 const onOff = (v: boolean) => (v ? '켜짐' : '꺼짐');
+const KEY_FROM: Record<Status['keySource'], string> = { ADMIN: '운영 화면 키', ENV: '.env 키', MOCK: '시험 엔진', NONE: '키 없음 — 아무것도 부르지 않음' };
 
 export function AgentStatus() {
   const r = useApi<Status>('/admin/agent/status');
@@ -39,6 +42,8 @@ export function AgentStatus() {
         <div><b>{d.reviewModel ?? '—'}</b><span>검수 보조 모델</span></div>
       </div>
       <p className="card">{d.note} 월 상한에 닿으면 전체가 저절로 꺼지고 운영 경보가 뜹니다. AI 의견은 따로 쌓일 뿐 검수 상태를 바꾸지 않습니다.</p>
+      <p className="hint" data-agent-engine>엔진 <b>{d.engine ?? '없음'}</b> · {KEY_FROM[d.keySource] ?? d.keySource}</p>
+      {tokenRoles().includes('SUPER') && <AgentKey onChanged={r.reload} />}
 
       <h3 className="sec">통로</h3>
       <table className="tbl" data-agent-channels>

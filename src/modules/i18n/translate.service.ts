@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NotFound, StateConflict } from '../../core/errors';
 import { DatabaseService } from '../../db/database.service';
 import { AgentService } from '../agent/agent.service';
-import { AgentProvider, resolveAgentProvider } from '../agent/agent.provider';
+import { AgentProvider } from '../agent/agent.provider';
 import { I18N_FIELDS } from './i18n.service';
 
 /** 번역 언어 이름(지시문용) — i18n_langs 의 7개 */
@@ -67,15 +67,14 @@ export function parseTranslation(text: string, keys: string[]): Record<string, s
 @Injectable()
 export class TranslateService {
   private readonly log = new Logger(TranslateService.name);
-  private readonly provider: AgentProvider | null = resolveAgentProvider();
-
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
 
   /** 배치 한 번 — 대기 줄을 최대 limit 건 */
   async runBatch(limit = 10): Promise<{ affected: number; detail: Record<string, unknown> }> {
     const g = await this.agent.allowed('TRANSLATE');
     if (!g.ok) return { affected: 0, detail: { skipped: g.reason } };
-    if (!this.provider) return { affected: 0, detail: { skipped: 'NO_PROVIDER' } };
+    const prov = await this.agent.provider();   // v10.111 — 운영 화면 키 먼저, 없으면 .env(AgentService)
+    if (!prov) return { affected: 0, detail: { skipped: 'NO_PROVIDER' } };
     // 처리 중에 멈춘 줄(10분 넘음)은 대기로 되돌림
     await this.db.query(`UPDATE translation_jobs SET state = 'QUEUED', updated_at = now() WHERE state = 'RUNNING' AND updated_at < now() - interval '10 minutes'`);
     const jobs = await this.db.query<{ id: string; target_type: string; target_id: string; lang: string; attempts: number; result: string | null }>(
@@ -96,7 +95,7 @@ export class TranslateService {
       }
       await this.db.query(`UPDATE translation_jobs SET updated_at = now() WHERE id = $1::bigint`, [j.id]);   // 처리 시작 시각(멈춤 판정)
       try {
-        const r = await this.one(j);
+        const r = await this.one(j, prov);
         out[r] = (out[r] ?? 0) + 1; done++;
       } catch (e: any) {
         const msg = String(e?.message ?? e).slice(0, 500);
@@ -111,7 +110,7 @@ export class TranslateService {
   }
 
   /** 한 줄 — 결과 AUTO_APPROVED · DRAFT · SKIPPED · SOURCE_MISSING · HELD */
-  private async one(j: { id: string; target_type: string; target_id: string; lang: string; result: string | null }): Promise<string> {
+  private async one(j: { id: string; target_type: string; target_id: string; lang: string; result: string | null }, p: AgentProvider): Promise<string> {
     const fields = I18N_FIELDS[j.target_type] ?? [];
     const src: Record<string, string> = {};
     let gwan: string | null = null;
@@ -133,7 +132,6 @@ export class TranslateService {
     // 요금표에 없는 모델이면 부르지 않음 — 불러 놓고 비용을 못 쌓으면 월 상한이 듣지 않음
     const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
     if (!priced) return this.finish(j.id, 'HELD', 'MODEL_UNPRICED', `요금표에 없는 모델입니다(${model}) — 운영 화면 AI 에이전트 요금표나 설정 i18n.translate_model 을 고치십시오.`);
-    const p = this.provider as AgentProvider;
     const reply = await p.complete({ model, system: translateSystem(j.lang), messages: [{ role: 'user', content: JSON.stringify(src) }], maxTokens: 16000, effort: 'low' });   // 번역은 생각을 적게 · 긴 본문이 잘리지 않게
     await this.agent.record('TRANSLATE', model, reply.inputTokens, reply.outputTokens, reply.cacheReadTokens);
     if (reply.stopReason === 'refusal') return this.finish(j.id, 'HELD', 'REFUSAL', '엔진이 번역을 거절했습니다 — 운영자가 직접 넣으십시오.');
@@ -193,7 +191,7 @@ export class TranslateService {
          FROM translation_jobs j ${where} ORDER BY j.updated_at DESC, j.id DESC LIMIT ${size} OFFSET ${(page - 1) * size}`, p);
     const counts = await this.db.query<{ state: string; n: number }>(`SELECT state, count(*)::int AS n FROM translation_jobs GROUP BY state`);
     return { items, total, page, size, pages: Math.max(1, Math.ceil(total / size)), counts: Object.fromEntries(counts.map((c) => [c.state, c.n])),
-             provider: this.provider?.name ?? null };
+             provider: (await this.agent.provider())?.name ?? null };
   }
 
   /** 다시 시도 — 보류 · 실패 · 끝난 줄을 대기로. 기계 번역은 원문이 같아도 다시 번역(FORCE) · 사람이 넣은 · 반려한 칸은 그대로 */

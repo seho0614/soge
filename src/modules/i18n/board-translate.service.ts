@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { AgentService } from '../agent/agent.service';
-import { AgentProvider, resolveAgentProvider } from '../agent/agent.provider';
+import { AgentProvider } from '../agent/agent.provider';
 import { I18nService } from './i18n.service';
 import { parseTranslation, suspiciousTranslation, translateSystem } from './translate.service';
 
@@ -28,14 +28,13 @@ type Item = { key: string; type: 'POST' | 'COMMENT'; id: string; field: string; 
  */
 @Injectable()
 export class BoardTranslateService {
-  private readonly provider: AgentProvider | null = resolveAgentProvider();
   private readonly busy = new Set<string>();
 
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly i18n: I18nService) {}
 
   /** 지금 이 화면에서 번역을 쓸 수 있는가(스위치 · 언어 · 엔진만 — 횟수 · 상한은 누를 때) */
   async available(): Promise<boolean> {
-    if (!this.provider || !(await this.i18n.activeLang())) return false;
+    if (!(await this.agent.provider()) || !(await this.i18n.activeLang())) return false;
     return (await this.agent.allowed('BOARD')).ok;
   }
 
@@ -55,7 +54,8 @@ export class BoardTranslateService {
     const lang = await this.i18n.activeLang();
     if (!lang) throw new PolicyViolation('LANG_NOT_ACTIVE', '지금은 번역할 수 없는 언어입니다.');
     const g = await this.agent.allowed('BOARD');
-    if (!g.ok || !this.provider) throw new StateConflict('BOARD_TRANSLATE_OFF', '지금은 번역을 쓸 수 없습니다.');
+    const prov = await this.agent.provider();   // v10.111 — 운영 화면 키 먼저, 없으면 .env
+    if (!g.ok || !prov) throw new StateConflict('BOARD_TRANSLATE_OFF', '지금은 번역을 쓸 수 없습니다.');
     const model = (await this.setting('i18n.translate_model')) ?? 'claude-haiku-5-5';
     const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
     if (!priced) throw new StateConflict('MODEL_UNPRICED', '번역 모델 설정을 확인해야 합니다 — 운영자에게 알려 주십시오.');
@@ -102,7 +102,7 @@ export class BoardTranslateService {
       try {
         for (const chunk of this.chunks(todo)) {
           if (!(await this.agent.allowed('BOARD')).ok) break;   // 도중에 상한에 닿으면 멈춤(남은 칸은 다음에)
-          const r = await this.translateChunk(chunk, lang, model);
+          const r = await this.translateChunk(chunk, lang, model, prov);
           saved += r.saved; held += r.held; failed += r.failed;
         }
       } catch (e) {
@@ -128,8 +128,7 @@ export class BoardTranslateService {
     return out;
   }
 
-  private async translateChunk(chunk: Item[], lang: string, model: string): Promise<{ saved: number; held: number; failed: number }> {
-    const prov = this.provider as AgentProvider;
+  private async translateChunk(chunk: Item[], lang: string, model: string, prov: AgentProvider): Promise<{ saved: number; held: number; failed: number }> {
     const engine = prov.name === 'MOCK' ? 'MOCK' : 'CLAUDE';
     const reply = await prov.complete({ model, system: translateSystem(lang, 'posts and comments from a community board of a referral marketplace'),
       messages: [{ role: 'user', content: JSON.stringify(Object.fromEntries(chunk.map((x) => [x.key, x.src]))) }], maxTokens: 16000, effort: 'low' });

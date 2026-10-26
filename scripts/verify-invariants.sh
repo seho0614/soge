@@ -505,8 +505,9 @@ n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 #   v10.34(D093) 전자세금계산서(ETAX)를 더해 9종.
 #   v10.46(D099) 지도 · 주소 좌표(MAP · 카카오맵)를 더해 10종.
 #   v10.49(D103) 날씨(WEATHER · 기상청 단기예보)를 더해 11종.
+#   v10.111(D122) AI(AGENT · Anthropic — 키를 운영 화면에서)를 더해 12종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "11" ]; then echo "  ok   INTG  연동 11종 등록"; pass=$((pass+1));
+if [ "$n" = "12" ]; then echo "  ok   INTG  연동 12종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
 
 # v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장
@@ -1144,6 +1145,25 @@ run  "WX-4 기상청 키(Decoding · + / =)는 암호문으로 저장 · 꺼내�
 run  "WX-5 기상청 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('WEATHER','KMA_SERVICE_KEY','짧은 키 <script>', NULL); ROLLBACK;"
 run  "WX-6 카카오 키는 여전히 카카오 형식만(+ / = 거절)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','abcdefgh+ijklmnop/qrst==', NULL); ROLLBACK;"
 eq   "WX-7 어떤 보기도 키(integration_secrets)를 읽지 않음" "SELECT count(*) FROM v_secret_leak" 0
+
+# ── v10.111 (D122 · docs/173) AI 키를 운영 화면에서 — 키는 암호문 · sk-ant-api 형식만 · 다른 연동 키는 여전히 못 넣음 · 아무것도 켜지 않음 ─────
+eq   "AIK-1 연동 표 AGENT · 키 이름 ANTHROPIC_API_KEY · 오픈을 막지 않음" \
+  "SELECT count(*) FROM integrations WHERE code='AGENT' AND secret_key_name='ANTHROPIC_API_KEY' AND NOT blocks_open" 1
+run  "AIK-2 Anthropic 키는 암호문으로 저장 · 꺼내면 원래 값(앞뒤 빈칸 지움) · 끝 4자리 · 결제 키는 여전히 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+  SELECT * FROM fn_integ_secret_set('AGENT','ANTHROPIC_API_KEY','  sk-ant-api03-invAikKey0123456789abcdefghij_XY-z9Q8  ', NULL);
+  DO \$\$ BEGIN
+    IF fn_integ_secret_get('AGENT','ANTHROPIC_API_KEY') <> 'sk-ant-api03-invAikKey0123456789abcdefghij_XY-z9Q8' THEN RAISE EXCEPTION 'roundtrip'; END IF;
+    IF EXISTS (SELECT 1 FROM integration_secrets WHERE position(convert_to('invAikKey', 'UTF8') IN value_enc) > 0) THEN RAISE EXCEPTION 'plaintext'; END IF;
+    IF (SELECT last4 FROM integration_secrets WHERE integration_code='AGENT') <> 'z9Q8' THEN RAISE EXCEPTION 'last4'; END IF;
+    IF NOT (SELECT secret_registered FROM integrations WHERE code='AGENT') THEN RAISE EXCEPTION 'registered'; END IF;
+    BEGIN
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      RAISE EXCEPTION 'other-key-accepted';
+    EXCEPTION WHEN check_violation THEN NULL; END;
+  END \$\$; ROLLBACK;"
+run  "AIK-3 관리 키(sk-ant-admin…)는 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('AGENT','ANTHROPIC_API_KEY','sk-ant-admin01-invAikKey0123456789abcdefghij', NULL); ROLLBACK;"
+run  "AIK-4 사용자 키(sk-ant-usr…)는 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('AGENT','ANTHROPIC_API_KEY','sk-ant-usr-invAikKey0123456789abcdefghijklmn', NULL); ROLLBACK;"
+eq   "AIK-5 키를 넣는 마이그레이션은 AI 를 켜지 않음(agent.enabled off)" "SELECT value FROM site_settings WHERE key='agent.enabled'" off
 
 # ── v10.51 (D104 · docs/104 · 2026-10-21 결정) SUPER 는 모든 권한 — 지급 포함 · 앞으로 생기는 역할도. 2인 원칙은 그대로 ─────
 eq   "SUP-1 SUPER 계정은 어떤 역할 검사도 통과(PAYOUT · 아직 없는 역할 포함)" \

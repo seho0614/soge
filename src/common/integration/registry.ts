@@ -65,4 +65,10 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     otherEnv: ['KMA_API_BASE', 'KMA_TIMEOUT_MS'], assume: null, adapter: 'REAL',
     files: ['src/modules/weather/weather.provider.ts', 'src/modules/weather/weather.service.ts', 'src/modules/weather/weather.controller.ts', 'site/src/components/home/Weather.tsx'],
     doc: 'docs/101' },
+  /* v10.111 (D122) — AI(Anthropic Claude). 키는 운영 화면(AI 운영 › AI 에이전트 › 「AI 키」 · SUPER)에서 넣어 암호화 저장이 먼저, 없으면 .env.
+   * 부를지 말지는 agent.enabled · 통로 스위치 · 월 상한(fn_agent_allowed). AGENT_PROVIDER=MOCK 은 점검판 시험 엔진 */
+  { code: 'AGENT', name: 'AI(Anthropic Claude)', dbRow: true, secretEnv: 'ANTHROPIC_API_KEY',
+    otherEnv: ['AGENT_PROVIDER'], assume: null, adapter: 'REAL',
+    files: ['src/modules/agent/agent.provider.ts', 'src/modules/agent/agent.service.ts', 'src/modules/agent/agent.controller.ts', 'web/src/app/admin/ailearn/AgentKey.tsx'],
+    doc: 'docs/173' },
 ];

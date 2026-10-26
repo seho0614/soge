@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { AgentService } from './agent.service';
-import { AgentProvider, resolveAgentProvider } from './agent.provider';
+import { AgentProvider } from './agent.provider';
 
 /** 배치 한 번의 시간 예산 — 5분 배치가 겹치지 않게 */
 const BUDGET_MS = 40_000;
@@ -39,18 +39,18 @@ type Opinion = { suggestion: string; reasonCodes: string[] | null; note: string 
 @Injectable()
 export class ReviewShadowService {
   private readonly log = new Logger(ReviewShadowService.name);
-  private readonly provider: AgentProvider | null = resolveAgentProvider();
 
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
 
   async runBatch(limit = 10): Promise<{ affected: number; detail: Record<string, unknown> }> {
     const g = await this.agent.allowed('REVIEW_SHADOW');
     if (!g.ok) return { affected: 0, detail: { skipped: g.reason } };
-    if (!this.provider) return { affected: 0, detail: { skipped: 'NO_PROVIDER' } };
+    const prov = await this.agent.provider();   // v10.111 — 운영 화면 키 먼저, 없으면 .env
+    if (!prov) return { affected: 0, detail: { skipped: 'NO_PROVIDER' } };
     const model = (await this.setting('agent.review_model')) ?? 'claude-sonnet-5-5';
     const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
     if (!priced) return { affected: 0, detail: { skipped: 'MODEL_UNPRICED', model } };
-    const stored = this.provider.name === 'MOCK' ? `mock:${model}` : model;
+    const stored = prov.name === 'MOCK' ? `mock:${model}` : model;
     // 멈춘 배치가 남긴 자리 표시(10분 넘음)는 지워 다시 고르게
     await this.db.query(`DELETE FROM ai_review_opinions WHERE note = $1 AND created_at < now() - interval '10 minutes'`, [CLAIM]);
 
@@ -74,11 +74,11 @@ export class ReviewShadowService {
       const [claim] = await this.db.query<{ id: string }>(
         `INSERT INTO ai_review_opinions (review_item_id, suggestion, note, model, engine)
          VALUES ($1::uuid, 'UNSURE', $2, $3, $4) ON CONFLICT (review_item_id, model) DO NOTHING RETURNING id::text`,
-        [it.id, CLAIM, stored, this.provider.name]);
+        [it.id, CLAIM, stored, prov.name]);
       if (!claim) { out.TAKEN = (out.TAKEN ?? 0) + 1; continue; }
       const st = { paid: false };
       try {
-        const r = await this.one(it, model, codes, allowed, st);
+        const r = await this.one(it, model, codes, allowed, st, prov);
         await this.save(claim.id, r);
         out[r.suggestion] = (out[r.suggestion] ?? 0) + 1; done++;
       } catch (e: any) {
@@ -99,14 +99,13 @@ export class ReviewShadowService {
     return { affected: done, detail: { picked: items.length, ...out } };
   }
 
-  private async one(it: Item, model: string, codes: Code[], allowed: Set<string>, st: { paid: boolean }): Promise<Opinion> {
+  private async one(it: Item, model: string, codes: Code[], allowed: Set<string>, st: { paid: boolean }, prov: AgentProvider): Promise<Opinion> {
     const [t] = it.target_type === 'LISTING'
       ? await this.db.query<{ title: string; text: string; category: string | null }>(
           `SELECT l.title, fn_listing_text(l) AS text, c.name AS category FROM listings l LEFT JOIN categories c ON c.id = l.category_id WHERE l.id = $1`, [it.target_id])
       : await this.db.query<{ title: string; text: string; category: string | null }>(
           `SELECT r.title, r.title || E'\\n' || coalesce(r.body, '') AS text, c.name AS category FROM requests r LEFT JOIN categories c ON c.id = r.category_id WHERE r.id = $1`, [it.target_id]);
     if (!t) return { suggestion: 'UNSURE', reasonCodes: null, note: '검수 대상 글이 없습니다.' };
-    const prov = this.provider as AgentProvider;
     const data = { kind: it.target_type, section: it.gwan_code, category: t.category, autoReviewReasons: it.manual_reasons ?? [], text: redactContacts(t.text).slice(0, 8000) };
     const reply = await prov.complete({ model, system: this.system(codes), messages: [{ role: 'user', content: JSON.stringify(data) }], maxTokens: 2000, effort: 'low' });
     st.paid = true;
