@@ -135,10 +135,10 @@ export function B2Footer({ links, settings, year }: { links: FooterLink[]; setti
           <Link href="/" className="b2-logo" aria-label={h('logoHome')}><TonePic base={<Pic name="logo-ft" h={50} alt={t('logoSlogan')} />} money={<MnyPic name="logo_foot" alt={t('logoSlogan')} />} /></Link>
           <div className="b2-ftl">
             <Link href="/">{t('about')}</Link>
-            {all.map((l) => l.available ? (
-              <Link key={l.label} href={footerHref(l)}>{l.label}</Link>
+            {all.map((l, i) => l.available ? (
+              <Link key={`${l.section}-${i}`} href={footerHref(l)}>{l.label}</Link>
             ) : (
-              <span key={l.label} className="tbd" title={l.tip ?? t('preparing')}>{l.label}</span>
+              <span key={`${l.section}-${i}`} className="tbd" title={l.tip ?? t('preparing')}>{l.label}</span>
             ))}
           </div>
           <div className="b2-ftend">

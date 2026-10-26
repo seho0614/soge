@@ -27,16 +27,20 @@ const TYPE_KO: Record<string, string> = {
   NOTICE: '공지', FAQ: '자주 묻는 질문', TERM: '약관', LISTING: '매물', REQUEST: '요청', POST: '소개광장 글', COMMENT: '댓글',
   CATEGORY: '분류 이름', HLT_PRODUCT: '소개몰 상품',
   PROFILE_Q: '관심 성향 문항', PROFILE_OPT: '관심 성향 보기', AD_SEGMENT: '관심 성향 세그먼트',   // v10.118
+  FOOTER_LINK: '바닥줄 링크', SETTING: '법정 고지', POLL: '투표', POLL_OPT: '투표 보기', INGREDIENT: '소개몰 성분', HLT_CONCERN: '소개몰 고민',   // v10.119
 };
 /** 원문 목록(3-1)에서 고를 수 있는 대상 — 서버 CATALOG_TYPES 와 같음 */
-const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT', 'PROFILE_Q', 'PROFILE_OPT', 'AD_SEGMENT'] as const;
+const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT', 'PROFILE_Q', 'PROFILE_OPT', 'AD_SEGMENT',
+  'FOOTER_LINK', 'SETTING', 'POLL', 'POLL_OPT', 'INGREDIENT', 'HLT_CONCERN'] as const;
 const FIELDS: Record<string, string[]> = {
   NOTICE: ['title', 'body'], FAQ: ['question', 'answer'], TERM: ['title', 'body'],
   LISTING: ['title', 'body'], REQUEST: ['title', 'body'], POST: ['title', 'body'], COMMENT: ['body'],
   CATEGORY: ['name'], HLT_PRODUCT: ['name', 'summary'],
   PROFILE_Q: ['question'], PROFILE_OPT: ['label'], AD_SEGMENT: ['name', 'description'],
+  FOOTER_LINK: ['label'], SETTING: ['value'], POLL: ['title', 'description'], POLL_OPT: ['label', 'sub'],
+  INGREDIENT: ['name'], HLT_CONCERN: ['name'],
 };
-const FIELD_KO: Record<string, string> = { title: '제목', body: '본문', question: '질문', answer: '답', name: '이름', summary: '요약', label: '보기', description: '설명' };
+const FIELD_KO: Record<string, string> = { title: '제목', body: '본문', question: '질문', answer: '답', name: '이름', summary: '요약', label: '보기', description: '설명', value: '문장', sub: '보조 글' };
 const ST_KO: Record<string, string> = {
   DRAFT: '승인 대기', APPROVED: '승인', AUTO_APPROVED: '자동 승인', MACHINE: '기계 번역', REJECTED: '반려',
 };

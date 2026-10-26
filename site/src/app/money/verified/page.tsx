@@ -5,7 +5,7 @@ import type { ListingListData } from '@/lib/types';
 import { QuickFrame } from '@/components/gwan/GwQuick';
 import { GwGrid } from '@/components/gwan/GwCard';
 import { Pager, SafePromo } from '@/components/gwan/GwParts';
-import { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } from '@/lib/safety';
+import { getSafety } from '@/lib/safety';
 import type { SafeTradeTerms, SafetyCases } from '@/components/market/types';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
@@ -41,6 +41,7 @@ const HOT = [['🔍', 'h1', 'c1'], ['⚠️', 'h2', 'c2'], ['📢', 'h3', 'c5']]
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
   const t = await getTranslations('plaza.verified');
+  const { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } = await getSafety();   // v10.119 화면 언어
   const g0 = await getTranslations('gwan');
   const f = await getFmt();
   const page = Math.max(1, Number(q.p) || 1);

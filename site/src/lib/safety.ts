@@ -1,44 +1,33 @@
 /**
  * v10.27 (G-130) — 사기 예방 가이드(SB-MNY-SAF-020) 글. 시안(사고예방 · 사기 예방 가이드)과 같은 글입니다.
  * 운영이 고칠 일이 생기면 콘텐츠(DB)로 옮깁니다 — 지금은 글이 정해져 있어 화면과 함께 둡니다.
+ * v10.119 — 글은 사전(messages/<언어>/safety.json)으로 옮겼습니다. 여기는 순서 · 갈래 코드 · 그림 글자만. 서버 화면에서만 부릅니다.
  */
+import { getTranslations } from 'next-intl/server';
+
 export type SafetyKind = 'c1' | 'c2' | 'c3' | 'c4' | 'c5';
 
-export const SAFETY_RULES = [
-  '시세보다 현저히 낮은 조건은 의심하기',
-  '계약 전 반드시 현장 방문 및 실물 확인',
-  '사업자등록증 · 법인등기부 등 공식 서류 확인',
-  '계약서는 반드시 서면으로 작성하고 보관',
-  '큰 금액일수록 계약서와 세금계산서를 먼저 갖추십시오 — 플랫폼은 대금에 관여하지 않습니다',
+const KINDS: { code: SafetyKind; icon: string }[] = [
+  { code: 'c1', icon: '🤝' }, { code: 'c2', icon: '💰' }, { code: 'c3', icon: '🚚' }, { code: 'c4', icon: '🪪' }, { code: 'c5', icon: '❗' },
 ];
+const PLATFORM_ICONS = ['🔒', '🧾', '⚖', '📄'];
 
-export const SAFETY_GUIDES: { code: SafetyKind; icon: string; name: string; sub: string; how: string[]; stop: string[] }[] = [
-  { code: 'c1', icon: '🤝', name: '계약사기', sub: '허위 계약, 이중 계약 등',
-    how: ['없는 매물 · 남의 매물로 계약금을 먼저 받음', '같은 물건으로 여러 사람과 계약(이중 계약)', '권한이 없는 사람이 대리인이라며 계약'],
-    stop: ['등기부 · 사업자등록증의 이름이 계약 상대와 같은지 확인', '현장 · 실물을 본 뒤 계약', '계약서는 서면으로 쓰고 사본을 보관 — 소개뱅크 계약서는 양측이 각각 서명해야 체결됩니다'] },
-  { code: 'c2', icon: '💰', name: '대금사기', sub: '선입금, 가송금 후 잠적 등',
-    how: ['선입금을 받은 뒤 연락을 끊음', '가짜 송금 확인증 · 문자로 입금했다고 속임', '제3자 · 개인 계좌로 보내라고 함'],
-    stop: ['대금은 계약 상대(사업자) 명의 계좌로만 — 이름이 다르면 멈추십시오', '소개뱅크 계좌로 보내라는 요구는 사기입니다 — 소개뱅크는 대금을 받지도 보관하지도 않습니다', '입금은 문자 말고 은행 앱에서 직접 확인'] },
-  { code: 'c3', icon: '🚚', name: '물품/서비스 사기', sub: '허위 배송, 가짜 상품 등',
-    how: ['가짜 배송 조회 링크로 결제 · 개인정보를 받음', '다른 물건 · 가짜 상품을 보냄', '착수금만 받고 용역을 하지 않음'],
-    stop: ['송장은 택배사 공식 앱 · 누리집에서 직접 조회', '물건 · 용역을 확인한 뒤 성사 확정(양측이 각각 눌러야 확정됩니다)', '용역은 단계별로 나눠 지급'] },
-  { code: 'c4', icon: '🪪', name: '개인정보/보이스피싱', sub: '개인정보 유출, 보이스피싱 등',
-    how: ['인증번호 · 비밀번호를 물어봄', '원격 조정 앱을 깔게 함', '기관 · 회사를 사칭한 전화 · 문자'],
-    stop: ['인증번호 · 비밀번호는 누구에게도 알려 주지 마십시오 — 소개뱅크는 이를 묻지 않습니다', '모르는 앱 · 링크는 설치하거나 누르지 않기', '대화는 소개뱅크 대화방 안에서 — 기록이 분쟁 근거로 남습니다'] },
-  { code: 'c5', icon: '❗', name: '기타 사기 유형', sub: '허위 광고, 투자 사기 등',
-    how: ['「원금 보장 · 고수익」을 내건 투자 권유', '등록되지 않은 대부 · 금융 광고', '실제와 다른 허위 광고'],
-    stop: ['금융 상품은 금융감독원에서 등록 여부를 먼저 확인', '대부 광고는 소개뱅크에 올릴 수 없습니다(제한 업종)', '의심되는 등록글 · 광고는 「신고」로 알려 주십시오'] },
-];
+type Guide = { name: string; sub: string; how: Record<string, string>; stop: Record<string, string> };
+type Hd = { h: string; d: string };
 
-export const SAFETY_PLATFORM: [string, string, string][] = [
-  ['🔒', '대금은 당사자끼리', '소개뱅크는 대금을 받지도 보관하지도 않습니다. 조건과 결과만 기록합니다.'],
-  ['🧾', '당사자 확인 절차', '사업자 상태조회와 서류 검증으로 신뢰도를 높입니다.'],
-  ['⚖', '분쟁 발생 시 지원', '분쟁 조정 절차와 기록 열람을 지원합니다.'],
-  ['📄', '기록 보존', '대화 · 계약 · 정산 기록을 분쟁 근거로 보존합니다.'],
-];
-
-export const SAFETY_REPORT: [string, string][] = [
-  ['신고 접수', '사고 내용을 작성하여 신고 접수합니다.'],
-  ['담당 관리팀 전달', '관리팀이 신속히 확인하고 조사를 진행합니다.'],
-  ['처리 및 회신', '조사 결과 및 조치 내용을 안내해 드립니다.'],
-];
+/** 화면 언어의 안전 수칙 · 사기 유형 · 플랫폼 장치 · 신고 절차 — 전과 같은 모양(SAFETY_RULES · SAFETY_GUIDES · SAFETY_PLATFORM · SAFETY_REPORT) */
+export async function getSafety() {
+  const t = await getTranslations('safety');
+  const raw = t.raw as (k: string) => unknown;
+  const guides = raw('guides') as Record<SafetyKind, Guide>;
+  return {
+    SAFETY_RULES: Object.values(raw('rules') as Record<string, string>),
+    SAFETY_GUIDES: KINDS.map(({ code, icon }) => ({
+      code, icon, name: guides[code].name, sub: guides[code].sub,
+      how: Object.values(guides[code].how), stop: Object.values(guides[code].stop),
+    })),
+    SAFETY_PLATFORM: Object.values(raw('platform') as Record<string, Hd>)
+      .map((x, i) => [PLATFORM_ICONS[i] ?? '•', x.h, x.d] as [string, string, string]),
+    SAFETY_REPORT: Object.values(raw('report') as Record<string, Hd>).map((x) => [x.h, x.d] as [string, string]),
+  };
+}

@@ -9,7 +9,11 @@ export const I18N_FIELDS: Record<string, string[]> = {
   LISTING: ['title', 'body'], REQUEST: ['title', 'body'], POST: ['title', 'body'], COMMENT: ['body'],
   CATEGORY: ['name'], HLT_PRODUCT: ['name', 'summary'],   // v10.103 · D117
   PROFILE_Q: ['question'], PROFILE_OPT: ['label'], AD_SEGMENT: ['name', 'description'],   // v10.118 · D124 관심 성향
+  FOOTER_LINK: ['label'], SETTING: ['value'], POLL: ['title', 'description'], POLL_OPT: ['label', 'sub'],   // v10.119 · D125
+  INGREDIENT: ['name'], HLT_CONCERN: ['name'],
 };
+/** SETTING 대상으로 번역하는 설정 키 — DB 함수 fn_i18n_source(D125)와 같음 */
+export const I18N_SETTING_KEYS = ['legal.intermediary_notice', 'legal.direct_notice'];
 /** 손님 화면에 나가는 상태 — 승인 · 자동 승인 · 기계 번역(게시판 글 · 댓글만 · 3-3) */
 const LIVE = ['APPROVED', 'AUTO_APPROVED', 'MACHINE'];
 const liveOf = (type: string) => (['POST', 'COMMENT'].includes(type) ? LIVE : ['APPROVED', 'AUTO_APPROVED']);   // 운영 글 · 약관은 사람 · 자동 승인만
@@ -80,6 +84,12 @@ export class I18nService {
       }
       if (hit && mark) (r as any)[mark] = true;
     }
+    return rows;
+  }
+
+  /** v10.119 — 상품 줄의 대표 성분(mainIngredient · { code, name }) 이름에 성분 번역(INGREDIENT · D125)을 얹음 */
+  async overlayMainIngredient(rows: Array<Record<string, any>>) {
+    await this.overlay(rows.map((r) => r?.mainIngredient).filter((g): g is Record<string, any> => !!g?.code), 'INGREDIENT', (g) => g.code, { name: 'name' });
     return rows;
   }
 
@@ -204,6 +214,13 @@ export class I18nService {
       PROFILE_Q: { from: 'profile_questions s', id: 's.code', label: 's.question', gwan: 'NULL::text', order: 's.sort_order' },
       PROFILE_OPT: { from: 'profile_options s', id: "s.question_code || ':' || s.code", label: 's.label', gwan: 'NULL::text', order: 's.question_code, s.sort_order' },
       AD_SEGMENT: { from: 'ad_segments s', id: 's.code', label: 's.name', gwan: 'NULL::text', order: 's.sort_order' },
+      /* v10.119 (D125) — 바닥줄 링크 · 법정 고지 · 투표 · 소개몰 성분 · 고민 */
+      FOOTER_LINK: { from: 'footer_links s', id: 's.id::text', label: 's.label', gwan: 'NULL::text', order: 's.sort_order' },
+      SETTING: { from: `(SELECT key, value FROM site_settings WHERE key IN ('${I18N_SETTING_KEYS.join("','")}')) s`, id: 's.key', label: 's.value', gwan: 'NULL::text', order: 's.key' },
+      POLL: { from: 'polls s', id: 's.id::text', label: 's.title', gwan: 'NULL::text', order: 's.created_at DESC' },
+      POLL_OPT: { from: 'poll_options s', id: 's.id::text', label: "(SELECT p.title FROM polls p WHERE p.id = s.poll_id) || ' › ' || s.label", gwan: 'NULL::text', order: 's.poll_id, s.sort' },
+      INGREDIENT: { from: '(SELECT * FROM ingredients WHERE NOT is_excipient) s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.sort, s.name' },
+      HLT_CONCERN: { from: 'hlt_concerns s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.sort, s.code' },
     };
     const src = SRC[q.targetType];
     if (!src) throw new PolicyViolation('I18N_FIELD', `원문 목록이 없는 대상입니다 (${q.targetType}).`);

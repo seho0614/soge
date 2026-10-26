@@ -113,11 +113,13 @@ export class CatalogService {
   }
 
   /** 목적지 없는 링크도 함께 내려 줍니다. 화면이 점선으로 그립니다. */
-  footerLinks() {
-    return this.db.query(
+  /* v10.119 — 링크 이름 번역(FOOTER_LINK · D125)을 얹음. 번호(_id)는 응답에서 지움 */
+  async footerLinks() {
+    const rows = await this.db.query<Record<string, unknown>>(
       `SELECT section, label, target_type AS "targetType", target_ref AS "targetRef",
-              available, tip
+              available, tip, id AS "_id"
          FROM v_footer_links ORDER BY sort_order`);
+    return this.i18n.overlayBy(rows, 'FOOTER_LINK', '_id', { label: 'label' });
   }
 
   /** 자동검수 규칙. 코드가 아니라 데이터입니다 (B-10) */

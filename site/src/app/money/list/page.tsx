@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { GwList } from '@/components/gwan/GwList';
 
-export const metadata: Metadata = { title: '소개장터 전체 목록' };
+/* v10.119 — 탭 제목도 화면 언어로(한국어는 전과 같은 「소개장터 전체 목록」) */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('gwan');
+  return { title: t('list.title', { name: t('meta.MNY.name') }) };
+}
 
 type Props = { searchParams: Promise<{ sort?: string; cursor?: string; badge?: string; p?: string }> };
 

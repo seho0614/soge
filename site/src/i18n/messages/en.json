@@ -374,5 +374,24 @@
       "noneLb": "No result yet",
       "noneBody": "You can skip this. In that case only <b>general ads</b> are shown."
     }
+  },
+  "region": {
+    "seoul": "Seoul",
+    "busan": "Busan",
+    "daegu": "Daegu",
+    "incheon": "Incheon",
+    "gwangju": "Gwangju",
+    "daejeon": "Daejeon",
+    "ulsan": "Ulsan",
+    "sejong": "Sejong",
+    "gyeonggi": "Gyeonggi",
+    "gangwon": "Gangwon",
+    "chungbuk": "North Chungcheong",
+    "chungnam": "South Chungcheong",
+    "jeonbuk": "North Jeolla",
+    "jeonnam": "South Jeolla",
+    "gyeongbuk": "North Gyeongsang",
+    "gyeongnam": "South Gyeongsang",
+    "jeju": "Jeju"
   }
 }

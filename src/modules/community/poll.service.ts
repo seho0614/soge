@@ -3,6 +3,7 @@ import { createHmac } from 'node:crypto';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { AppError, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { I18nService } from '../i18n/i18n.service';
 
 /** 미리보기 로봇 · 스크립트는 사람이 아닙니다 — 표로 세지 않습니다 */
 const BOT_UA = /bot|crawl|spider|slurp|preview|scrap|facebookexternalhit|embedly|headless|curl\/|wget|python-requests/i;
@@ -36,7 +37,7 @@ interface OptRow { pollId: string; id: string; sort: number; label: string; sub:
  */
 @Injectable()
 export class PollService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId(); }
 
   private static readonly COLS =
@@ -87,14 +88,21 @@ export class PollService {
             WHERE p.state IN ('OPEN', 'CLOSED')
             ORDER BY (p.state = 'OPEN' AND (p.ends_at IS NULL OR p.ends_at > now())) DESC, p.sort, p.opened_at DESC NULLS LAST, p.created_at DESC
             LIMIT 60`);
-    return this.attach(rows, voter);
+    return this.translated(await this.attach(rows, voter));
+  }
+
+  /** v10.119 — 손님 화면의 투표 · 보기 번역(POLL · POLL_OPT · D125). 운영 목록(adminList)은 원문 그대로 */
+  private async translated<T extends { title: string; options: Array<Record<string, any>> }>(polls: T[]) {
+    await this.i18n.overlay(polls, 'POLL', (p: any) => p.id, { title: 'title', description: 'description' });
+    await this.i18n.overlay(polls.flatMap((p) => p.options), 'POLL_OPT', (o) => o.id, { label: 'label', sub: 'sub' });
+    return polls;
   }
 
   async one(id: string, voter?: Voter) {
     const rows = await this.db.query<PollRow>(
       `SELECT ${PollService.COLS} FROM polls p WHERE p.id = $1 AND p.state IN ('OPEN', 'CLOSED')`, [id]);
     if (!rows.length) throw new NotFound('없는 투표입니다.');
-    return (await this.attach(rows, voter))[0];
+    return (await this.translated(await this.attach(rows, voter)))[0];
   }
 
   async vote(id: string, optionId: string, voter: Voter) {

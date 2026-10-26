@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { sidoCode } from '@/lib/sido';
 
 /**
  * SB-PTC-CTR-230 서비스(활동) 지역 — 켜고 끄기 · 더하기 · 저장 (v10.27 · G-192)
@@ -19,6 +20,8 @@ const key = (r: Region) => `${r.sido} ${r.sigungu}`;
 export function RegionEditor({ initial }: { initial: Region[] }) {
   const router = useRouter();
   const t = useTranslations('partner.region');
+  const tr = useTranslations('region');   // v10.119 시 · 도 이름(값은 한국어 그대로)
+  const shown = (r: Region) => { const c = sidoCode(r.sido); return c ? `${tr(c)} ${r.sigungu}` : key(r); };
   const [on, setOn] = useState<Region[]>(initial);
   const [off, setOff] = useState<Region[]>([]);
   const [sido, setSido] = useState('서울');
@@ -65,19 +68,19 @@ export function RegionEditor({ initial }: { initial: Region[] }) {
         ? <p className="pt-ls">{t('noneOn')}</p>
         : <div className="pt-chips region-chips">{on.map((r) => (
             <button key={key(r)} type="button" className="pt-chip on" data-region-on={key(r)}
-                    title={t('tapOff')} onClick={() => toggle(r, false)}>{key(r)} ✕</button>))}</div>}
+                    title={t('tapOff')} onClick={() => toggle(r, false)}>{shown(r)} ✕</button>))}</div>}
       <h2 className="pt-s2">{t('offTitle', { n: String(off.length) })}</h2>
       {off.length === 0
         ? <p className="pt-ls">{t('noneOff')}</p>
         : <div className="pt-chips region-chips">{off.map((r) => (
             <button key={key(r)} type="button" className="pt-chip" data-region-off={key(r)}
-                    title={t('tapOn')} onClick={() => toggle(r, true)}>{key(r)} ＋</button>))}</div>}
+                    title={t('tapOn')} onClick={() => toggle(r, true)}>{shown(r)} ＋</button>))}</div>}
 
       <div className="pt-fset" style={{ marginTop: 14 }}>
         <h3>{t('add')}</h3>
         <div className="row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
           <select aria-label={t('sidoAria')} value={sido} onChange={(e) => setSido(e.target.value)}>
-            {SIDO.map((s) => <option key={s} value={s}>{s}</option>)}
+            {SIDO.map((s) => { const c = sidoCode(s); return <option key={s} value={s}>{c ? tr(c) : s}</option>; })}
           </select>
           <input aria-label={t('sggAria')} placeholder={t('sggPh')} value={sigungu} maxLength={20}
                  onChange={(e) => setSigungu(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} />

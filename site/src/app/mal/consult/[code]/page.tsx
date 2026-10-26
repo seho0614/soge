@@ -6,6 +6,7 @@ import { consultOpen, type ConsultCatDetail } from '@/components/mal/types';
 import { CSL_DESC, SAFE_CONSULT } from '@/components/mal/copy';
 import '@/styles/mal.css';
 import { getTranslations } from 'next-intl/server';
+import { sidoCode } from '@/lib/sido';
 
 interface DirEntry { id: string; displayName: string; intro?: string | null; contactPhone: string; websiteUrl?: string | null; sido: string }
 interface DirList { adLabel: string; note: string; entries: DirEntry[] }
@@ -38,6 +39,8 @@ export default async function ConsultDetailPage({ params }: Props) {
   const c = await apiGet<ConsultCatDetail>(`/consult/categories/${encodeURIComponent(code)}`, 60).catch(() => null);
   if (!c) notFound();
   const t = await getTranslations('consult');
+  const tr = await getTranslations('region');   // v10.119 시 · 도 이름
+  const sido = (s: string) => { const k = sidoCode(s); return k ? tr(k) : s; };
 
   if (c.status === 'APPROVED' && c.consultMode === 'LISTING_FEE') {
     const dir = await apiGet<DirList>(`/consult/directory/${encodeURIComponent(c.code)}`, 60).catch(() => null);
@@ -63,7 +66,7 @@ export default async function ConsultDetailPage({ params }: Props) {
                   <div className="mal-row-l">
                     <span className="mal-tag">{dir.adLabel}</span>
                     <b>{e.displayName}</b>
-                    <span className="mal-ls">{[e.intro, e.sido].filter(Boolean).join(' · ')}</span>
+                    <span className="mal-ls">{[e.intro, e.sido && sido(e.sido)].filter(Boolean).join(' · ')}</span>
                   </div>
                   <div className="mal-row-r">
                     {e.websiteUrl && <a className="mal-btn ghost" href={e.websiteUrl} target="_blank" rel="noopener noreferrer nofollow sponsored">{t('detail.homepage')}</a>}
@@ -118,7 +121,7 @@ export default async function ConsultDetailPage({ params }: Props) {
           ) : (
             <>
               <ul className="mal-cd-regions">
-                {c.regions.map((r) => <li key={r.sido}><b>{r.sido}</b><span>{t('detail.places', { n: String(r.partnerCount) })}</span></li>)}
+                {c.regions.map((r) => <li key={r.sido}><b>{sido(r.sido)}</b><span>{t('detail.places', { n: String(r.partnerCount) })}</span></li>)}
               </ul>
               <p className="mal-ls">{t('detail.regionsNote')}</p>
             </>

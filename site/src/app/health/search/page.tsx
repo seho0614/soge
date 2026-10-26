@@ -17,7 +17,8 @@ type Props = { searchParams: Promise<{ q?: string }> };
 
 /* 시안의 인기 검색어(v10.26 시안 그대로). 지금 살 수 있는 상품이 있는 말만 보여 드립니다 — 눌러도 결과가 없으면 안 되기 때문입니다
  * (견본 상품을 넣지 않는 서버에서는 줄어듭니다). 판정은 성분 목록의 상품 수 · 최저가(GET /health/ingredients)로 합니다. */
-const POPULAR = ['비타민C', '유산균', '루테인', '마그네슘', '콜라겐'];
+/* v10.119 — 성분 코드와 찾는 낱말(한국어 · 상품 찾기는 원문으로 함). 칩 글자는 성분 이름(영어 화면이면 성분 번역) */
+const POPULAR: [string, string][] = [['VITC', '비타민C'], ['PROBIO', '유산균'], ['LUTEIN', '루테인'], ['MAGNE', '마그네슘'], ['COLLA', '콜라겐']];
 
 /**
  * 건강몰 검색은 **상품명·성분**으로 찾습니다. 본체 검색(업종·등록 제목)과
@@ -28,7 +29,10 @@ export default async function HltSearch({ searchParams }: Props) {
   /* v10.83 — 한 글자는 「두 글자 이상」(전: 한 글자 낱말을 건너뛰어 판매 중 상품이 전부 나옴) */
   const short = !!q && q.replace(/\s/g, '').length < 2;
   const ings = q ? [] : await apiGet<HltIngredient[]>('/health/ingredients', 60).catch(() => [] as HltIngredient[]);
-  const popular = POPULAR.filter((w) => ings.some((g) => g.name === w && g.productCount > 0 && g.minPrice != null));
+  const popular = POPULAR.flatMap(([code, w]) => {
+    const g = ings.find((x) => x.code === code && x.productCount > 0 && x.minPrice != null);
+    return g ? [{ w, label: g.name }] : [];
+  });
   const list = q && !short
     ? await apiGet<HltProduct[]>(`/health/products?keyword=${encodeURIComponent(q)}`, 30).catch(() => null)
     : [];
@@ -46,8 +50,8 @@ export default async function HltSearch({ searchParams }: Props) {
         <section className="hlt-box" data-popular>
           <h3>{t('popular')}</h3>
           <div className="hlt-chips">
-            {popular.map((w) => (
-              <Link key={w} className="hlt-chip" href={`/health/search?q=${encodeURIComponent(w)}`}>{w}</Link>
+            {popular.map(({ w, label }) => (
+              <Link key={w} className="hlt-chip" href={`/health/search?q=${encodeURIComponent(w)}`}>{label}</Link>
             ))}
           </div>
         </section>

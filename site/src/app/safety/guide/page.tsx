@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } from '@/lib/safety';
+import { getSafety } from '@/lib/safety';
 import { BackBar } from '@/components/common/BackBar';
 import { apiGet } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
@@ -22,6 +22,7 @@ type Props = { searchParams: Promise<{ t?: string }> };
 export default async function SafetyGuidePage({ searchParams }: Props) {
   const tq = (await searchParams).t;
   const t = await getTranslations('plaza.guide');
+  const { SAFETY_GUIDES, SAFETY_PLATFORM, SAFETY_REPORT, SAFETY_RULES } = await getSafety();   // v10.119 화면 언어
   const f = await getFmt();
   const g0 = await getTranslations('gwan');
   const cur = SAFETY_GUIDES.some((g) => g.code === tq) ? tq : 'all';

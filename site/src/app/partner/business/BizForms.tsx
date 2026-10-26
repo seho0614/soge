@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { sidoCode } from '@/lib/sido';
 import { api } from '@/components/partner/act';
 import { uploadFile } from '@/lib/upload';
 
@@ -104,12 +105,13 @@ export function SiteForm() {
   const [sido, setSido] = useState('서울');
   const [sgg, setSgg] = useState('');
   const t = useTranslations('partner.bizForm');
+  const tr = useTranslations('region');   // v10.119 시 · 도 이름(값은 한국어 그대로)
   return (
     <div className="pt-fset" data-site-form>
       <h3>{t('addSite')}</h3>
       <div className="pt-row">
         <label>{t('name')}<input className="pt-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('namePh')} /></label>
-        <label>{t('sido')}<select className="pt-input" value={sido} onChange={(e) => setSido(e.target.value)}>{SIDO.map((x) => <option key={x}>{x}</option>)}</select></label>
+        <label>{t('sido')}<select className="pt-input" value={sido} onChange={(e) => setSido(e.target.value)}>{SIDO.map((x) => { const c = sidoCode(x); return <option key={x} value={x}>{c ? tr(c) : x}</option>; })}</select></label>
         <label>{t('sgg')}<input className="pt-input" value={sgg} onChange={(e) => setSgg(e.target.value)} placeholder={t('sggPh')} /></label>
         <button type="button" className="pt-bp" disabled={busy || !name.trim()} onClick={() => void run(() => api('POST', '/partner/company/sites', { name, sido, sigungu: sgg || null }), t('added')).then((ok) => { if (ok) { setName(''); setSgg(''); } })}>{t('add')}</button>
       </div>

@@ -1,0 +1,113 @@
+{
+  "rules": {
+    "r1": "Be suspicious of terms far below the market price",
+    "r2": "Always visit the site and see the item before signing",
+    "r3": "Check official documents such as the business registration certificate and corporate register",
+    "r4": "Always put the contract in writing and keep a copy",
+    "r5": "The larger the amount, the more important it is to have the contract and tax invoice ready first — the platform does not handle payments"
+  },
+  "guides": {
+    "c1": {
+      "name": "Contract fraud",
+      "sub": "Fake contracts, double contracts, etc.",
+      "how": {
+        "h1": "Taking a deposit first for a listing that does not exist or belongs to someone else",
+        "h2": "Signing contracts with several people for the same item (double contract)",
+        "h3": "Someone without authority signs, claiming to be an agent"
+      },
+      "stop": {
+        "s1": "Check that the name on the register or business registration matches the other party",
+        "s2": "Sign only after seeing the site or item",
+        "s3": "Put the contract in writing and keep a copy — a SogaeBank contract is only concluded when both sides sign"
+      }
+    },
+    "c2": {
+      "name": "Payment fraud",
+      "sub": "Disappearing after an advance payment, fake transfers, etc.",
+      "how": {
+        "h1": "Cutting off contact after receiving an advance payment",
+        "h2": "Claiming to have paid with a fake transfer receipt or text message",
+        "h3": "Asking you to send money to a third party's or personal account"
+      },
+      "stop": {
+        "s1": "Pay only into an account in the name of the other party (business) — stop if the name differs",
+        "s2": "Any request to pay into a SogaeBank account is fraud — SogaeBank never receives or holds payments",
+        "s3": "Confirm deposits directly in your banking app, not by text message"
+      }
+    },
+    "c3": {
+      "name": "Goods/service fraud",
+      "sub": "Fake deliveries, counterfeit goods, etc.",
+      "how": {
+        "h1": "Collecting payment or personal details through a fake delivery tracking link",
+        "h2": "Sending a different item or a counterfeit",
+        "h3": "Taking an upfront fee and not doing the work"
+      },
+      "stop": {
+        "s1": "Track parcels directly in the courier's official app or website",
+        "s2": "Confirm the deal only after checking the goods or service (both sides must confirm)",
+        "s3": "Pay for services in stages"
+      }
+    },
+    "c4": {
+      "name": "Personal data/voice phishing",
+      "sub": "Personal data leaks, voice phishing, etc.",
+      "how": {
+        "h1": "Asking for verification codes or passwords",
+        "h2": "Getting you to install a remote-control app",
+        "h3": "Calls or texts impersonating an agency or company"
+      },
+      "stop": {
+        "s1": "Never share verification codes or passwords — SogaeBank never asks for them",
+        "s2": "Do not install unknown apps or tap unknown links",
+        "s3": "Keep conversations in SogaeBank chat — the record serves as evidence in a dispute"
+      }
+    },
+    "c5": {
+      "name": "Other fraud",
+      "sub": "False advertising, investment fraud, etc.",
+      "how": {
+        "h1": "Investment offers promising “guaranteed principal, high returns”",
+        "h2": "Unregistered loan or financial advertising",
+        "h3": "False advertising that does not match reality"
+      },
+      "stop": {
+        "s1": "Check first with the Financial Supervisory Service that a financial product is registered",
+        "s2": "Loan advertising cannot be posted on SogaeBank (restricted industry)",
+        "s3": "Report suspicious posts or ads with “Report”"
+      }
+    }
+  },
+  "platform": {
+    "p1": {
+      "h": "Payment between the parties",
+      "d": "SogaeBank never receives or holds payments. It records only the terms and the outcome."
+    },
+    "p2": {
+      "h": "Party verification",
+      "d": "Business status checks and document verification raise trust."
+    },
+    "p3": {
+      "h": "Support in disputes",
+      "d": "We support the dispute mediation process and access to records."
+    },
+    "p4": {
+      "h": "Record keeping",
+      "d": "Chat, contract and settlement records are kept as evidence for disputes."
+    }
+  },
+  "report": {
+    "r1": {
+      "h": "Report received",
+      "d": "Write up what happened and submit a report."
+    },
+    "r2": {
+      "h": "Passed to the team",
+      "d": "The team checks quickly and investigates."
+    },
+    "r3": {
+      "h": "Resolution and reply",
+      "d": "We let you know the findings and the action taken."
+    }
+  }
+}

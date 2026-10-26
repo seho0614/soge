@@ -7,6 +7,7 @@ import { RequestCtx } from '../../core/request-context';
 import { normSido } from '../../common/region';
 import { MailService } from '../../common/mail/mail.service';
 import { integrationLive } from '../../common/integration/switches';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 안심소개 「생활·금융 상담」 (D005 · D018)
@@ -47,7 +48,7 @@ export interface ConsultCreate {
 @Injectable()
 export class ConsultService {
   constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService,
-              private readonly mail: MailService) {}
+              private readonly mail: MailService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId(); }
 
   private static normPhone(p: string) { return (p ?? '').replace(/[^0-9]/g, ''); }
@@ -67,8 +68,9 @@ export class ConsultService {
   }
 
   /** 상담 업종 목록 — 공개 · 준비 중 상태까지 내려 화면이 "준비 중"을 그대로 보이게 합니다 */
-  categories() {
-    return this.db.query(
+  /* v10.119 — 업종 이름 번역(CATEGORY)을 얹음. 정렬은 원문(한국어) 이름 그대로 */
+  async categories() {
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT c.id, c.code, c.name, c.status,
               coalesce(r.mode, 'OPEN') AS "publishMode", c.consult_mode AS "consultMode",
               CASE WHEN c.consult_mode = 'LISTING_FEE'
@@ -80,6 +82,7 @@ export class ConsultService {
            ON r.code = c.restricted_code AND r.gwan_code = c.gwan_code AND r.is_active
         WHERE c.gwan_code = 'MAL' AND c.axis = 'CONSULT' AND c.status IN ('APPROVED','PENDING')
         ORDER BY (c.status = 'APPROVED') DESC, c.name`);
+    return this.i18n.overlay(rows, 'CATEGORY', (r) => String(r.id), { name: 'name' });
   }
 
   /**
@@ -106,6 +109,7 @@ export class ConsultService {
         WHERE c.gwan_code = 'MAL' AND c.axis = 'CONSULT' AND c.status IN ('APPROVED','PENDING')
           AND c.code = $1`, [code]);
     if (!c) throw new NotFound('없는 상담 업종입니다.');
+    await this.i18n.overlayOne(c, 'CATEGORY', (r: any) => String(r.id), { name: 'name' });   // v10.119 업종 이름 번역
 
     if (c.consultMode === 'LISTING_FEE') {
       const regions = await this.db.query(

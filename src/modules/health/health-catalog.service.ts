@@ -39,7 +39,8 @@ export class HealthCatalogService {
         ORDER BY p.created_at DESC LIMIT 100`,
       [category || null, kw, ingredient || null, concern || null]);
     /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(찾기는 원문으로 했음) */
-    return this.i18n.overlay(rows, 'HLT_PRODUCT', (r) => r.code, { name: 'name', summary: 'summary' });
+    await this.i18n.overlay(rows, 'HLT_PRODUCT', (r) => r.code, { name: 'name', summary: 'summary' });
+    return this.i18n.overlayMainIngredient(rows);   // v10.119 (D125)
   }
 
   /**
@@ -95,6 +96,10 @@ export class HealthCatalogService {
     const { id, seller_id, noticeValues, noticeGroup, ...view } = p;
     /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(같은 성분 상품까지 한 번에). 상품정보제공고시(notice)는 위에서 원문으로 만듦 */
     await this.i18n.overlay([view, ...same], 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });
+    /* v10.119 (D125) — 성분 · 고민 이름 번역 */
+    await this.i18n.overlayMainIngredient([view, ...same]);
+    await this.i18n.overlay(ingredients as any[], 'INGREDIENT', (r: any) => r.code, { name: 'name' });
+    await this.i18n.overlay(concerns as any[], 'HLT_CONCERN', (r: any) => r.code, { name: 'name' });
     return {
       ...view, ingredients, options, notice, sameIngredient: same,
       exchangeFee: HLT_EXCHANGE_SHIP_ROUND_TRIP,
@@ -164,6 +169,7 @@ export class HealthCatalogService {
          FROM ingredients g
         WHERE NOT g.is_excipient
         ORDER BY g.sort, g.name LIMIT 300`);
+    await this.i18n.overlay(rows, 'INGREDIENT', (r) => r.code, { name: 'name' });   // v10.119 (D125)
     return rows.map((r) => ({ ...r, children: r.isGroup ? rows.filter((x) => x.parent === r.code).map((x) => x.code) : undefined }));
   }
 
@@ -197,6 +203,9 @@ export class HealthCatalogService {
       `SELECT DISTINCT ON (p.code) p.code, pi.amount FROM hlt_product_ingredients pi JOIN hlt_products p ON p.id = pi.product_id
         WHERE pi.ingredient_code = $1 OR pi.ingredient_code IN (SELECT code FROM ingredients WHERE parent_code = $1)
         ORDER BY p.code, (pi.ingredient_code = $1) DESC, pi.is_main DESC`, [g.code])).map((r) => [r.code, r.amount]));
+    /* v10.119 (D125) — 성분 · 고민 이름 번역 */
+    await this.i18n.overlay([g, ...(children as any[])], 'INGREDIENT', (r: any) => r.code, { name: 'name' });
+    await this.i18n.overlay(concerns as any[], 'HLT_CONCERN', (r: any) => r.code, { name: 'name' });
     const list = (products as any[]).map((p) => ({ ...p, ingAmount: amt.get(p.code) ?? null }));
     if (sort === 'name') list.sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
     else list.sort((a, b) => (a.minUnit ?? Number.MAX_SAFE_INTEGER) - (b.minUnit ?? Number.MAX_SAFE_INTEGER) || Number(a.price) - Number(b.price));
@@ -231,8 +240,8 @@ export class HealthCatalogService {
    * 고민 목록. **연결 성분이 없는 고민은 내보내지 않습니다**(시안 규칙).
    * ingredientCount 는 묶인 성분 수, stockedIngredientCount 는 그중 상품이 있는 성분 수입니다.
    */
-  concerns() {
-    return this.db.query(
+  async concerns() {
+    const rows = await this.db.query<any>(
       `SELECT k.code, k.name, k.icon, k.note,
               count(DISTINCT ci.ingredient_code)::int AS "ingredientCount",
               count(DISTINCT pi.ingredient_code) FILTER (WHERE p.id IS NOT NULL)::int AS "stockedIngredientCount",
@@ -244,6 +253,7 @@ export class HealthCatalogService {
          LEFT JOIN hlt_products p ON p.id = pi.product_id AND p.status IN ('ON_SALE','SOLD_OUT')
         WHERE k.is_active
         GROUP BY k.code ORDER BY k.sort, k.code`);
+    return this.i18n.overlay(rows, 'HLT_CONCERN', (r) => r.code, { name: 'name' });   // v10.119 (D125)
   }
 
   /** 고민 상세 — 많이 찾는 성분(성분별 상품 수)과 상품. 상품마다 든 성분 코드가 함께 옵니다 */
@@ -280,6 +290,9 @@ export class HealthCatalogService {
                        WHERE pi.product_id = p.id)
         ORDER BY p.created_at DESC LIMIT 100`, [k.code]);
     await this.i18n.overlay(products, 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });   // v10.103 (3-1)
+    await this.i18n.overlayMainIngredient(products as any[]);
+    await this.i18n.overlayOne(k, 'HLT_CONCERN', (r: any) => r.code, { name: 'name' });   // v10.119 (D125)
+    await this.i18n.overlay(ingredients as any[], 'INGREDIENT', (r: any) => r.code, { name: 'name' });
     return { ...k, ingredients, products };
   }
 

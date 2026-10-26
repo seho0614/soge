@@ -5,7 +5,7 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
 import { RequestCtx } from '../../core/request-context';
 import { resolveBizStatusProvider } from '../identity/verification.provider';
 import { expandKeyword } from '../../core/search-expand';
-import { I18nService } from '../i18n/i18n.service';
+import { I18N_SETTING_KEYS, I18nService } from '../i18n/i18n.service';
 
 /**
  * 사용자 공개 API.
@@ -94,12 +94,14 @@ export class PublicService {
     return row;
   }
 
-  publicSettings() {
-    return this.db.query<{ key: string; value: string | null }>(
+  /* v10.119 — 법정 고지 둘(I18N_SETTING_KEYS)은 번역(SETTING · D125)이 있으면 그 언어로 */
+  async publicSettings() {
+    const rows = await this.db.query<{ key: string; value: string | null }>(
       /* 20261007 (v10.25) — 직판 고지(legal.direct_notice · scope PUBLIC)도 같이 내려 줍니다. 설정에만 있고 화면에 닿지 않아,
        *   직접 파는 소개몰 화면에 통신판매중개자 고지만 나오고 있었습니다(DB 의 v_direct_notice_missing 은 「글이 있는지」만 봅니다). */
-      `SELECT key, value FROM site_settings WHERE scope='GLOBAL' OR key='legal.direct_notice'`)
-      .then((rows) => Object.fromEntries(rows.map((r) => [r.key, r.value])));
+      `SELECT key, value FROM site_settings WHERE scope='GLOBAL' OR key='legal.direct_notice'`);
+    await this.i18n.overlay(rows.filter((r) => I18N_SETTING_KEYS.includes(r.key)), 'SETTING', (r) => r.key, { value: 'value' });
+    return Object.fromEntries(rows.map((r) => [r.key, r.value]));
   }
 
   /** FAQ 는 데이터입니다. 관리자가 바꿀 때 배포가 필요하면 안 됩니다 */

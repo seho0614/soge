@@ -104,10 +104,10 @@ export function HomeFooter({ links, settings, sample, year, loggedIn = false, op
         <div className="home-ftr">
           <Logo />
           <div className="home-ftl">
-            {all.map((l) => l.available ? (
-              <Link key={l.label} href={footerHref(l)}>{l.label}</Link>
+            {all.map((l, i) => l.available ? (
+              <Link key={`${l.section}-${i}`} href={footerHref(l)}>{l.label}</Link>
             ) : (
-              <span key={l.label} className="tbd" title={l.tip ?? b('preparing')}>{l.label}</span>
+              <span key={`${l.section}-${i}`} className="tbd" title={l.tip ?? b('preparing')}>{l.label}</span>
             ))}
           </div>
           <div className="home-ftend">

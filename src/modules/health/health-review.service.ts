@@ -141,6 +141,7 @@ export class HealthReviewService {
     }
     /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(두 순위 한 번에) */
     await this.i18n.overlay([...out.SALES_7D.items, ...out.ORDERS_7D.items], 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });
+    await this.i18n.overlayMainIngredient([...out.SALES_7D.items, ...out.ORDERS_7D.items]);   // v10.119 (D125)
     return { sales: out.SALES_7D, orders: out.ORDERS_7D };
   }
 

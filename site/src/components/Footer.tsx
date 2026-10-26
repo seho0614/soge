@@ -32,12 +32,12 @@ export function Footer({ links, settings }: {
           {links.map((l, i) => {
             const cls = [i < 2 ? 'em' : '', l.targetType === 'TERM' && DEV_ONLY.has(l.targetRef ?? '') ? 'dev' : ''].filter(Boolean).join(' ') || undefined;
             return l.available ? (
-              <Link key={l.label} className={cls} title={l.tip ?? undefined}
+              <Link key={`${l.section}-${i}`} className={cls} title={l.tip ?? undefined}
                 href={footerHref(l)}>
                 {l.label}
               </Link>
             ) : (
-              <span key={l.label} className="tbdl" title={l.tip ?? t('preparing')}>{l.label}</span>
+              <span key={`${l.section}-${i}`} className="tbdl" title={l.tip ?? t('preparing')}>{l.label}</span>
             );
           })}
         </div>

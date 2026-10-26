@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { sidoCode } from '@/lib/sido';
 import { consultOpen, type ConsultCat } from '@/components/mal/types';
 
 export type ConsultCategory = ConsultCat;
@@ -40,6 +41,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
   categories: ConsultCategory[]; initialId?: string; fixed?: boolean;
 }) {
   const t = useTranslations('consult');
+  const tr = useTranslations('region');   // v10.119 시 · 도 이름(값은 한국어 그대로)
   const open = categories.filter(consultOpen);
   const blank = {
     categoryId: initialId ?? open[0]?.id ?? '', name: '', phone: '', email: '', sido: '', sigungu: '', memo: '', agree: false,
@@ -149,7 +151,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
           <label className="fld"><span>{t('form.sido')}</span>
             <select name="sido" value={f.sido} onChange={set('sido')}>
               <option value="">{t('form.choose')}</option>
-              {SIDO.map((s) => <option key={s} value={s}>{s}</option>)}
+              {SIDO.map((s) => { const c = sidoCode(s); return <option key={s} value={s}>{c ? tr(c) : s}</option>; })}
             </select></label>
           <label className="fld"><span>{t('form.sigungu')}</span>
             <input name="sigungu" value={f.sigungu} onChange={set('sigungu')} placeholder={t('form.sigunguPh')} maxLength={20} /></label>
