@@ -1,7 +1,7 @@
 'use client';
 /**
  * v10.29 — 매물 상세(SB-{G}-DTL-010)의 브라우저 쪽 부품을 시안 모양(.abar · .dtprof 단추 · .qna)으로.
- * 동작 · API · 단추 글자는 기존 부품(components/listing/DetailBar · components/Questions)과 같습니다 — 모양만 시안입니다.
+ * 동작 · API · 단추 글자는 옛 부품(DetailBar · Questions — v10.121 에 지움)과 같습니다 — 모양만 시안입니다.
  *   GwDetailBar   맨 아래 줄  [♡ 관심 담기] [💬 질문 N] [↗ 공유하기] [신고]        [1:1 문의 시작]
  *   GwProfileActions  등록자 카드의 [💬 질문하기] [📞 전화하기]
  *   GwQna         문의 내용(공개 문의) — 목록 · 문의 남기기 · 등록자 답변
