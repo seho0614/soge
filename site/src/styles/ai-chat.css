@@ -1,0 +1,66 @@
+/* =====================================================================
+ * 사이트 공통 「AI 상담」 단추 · 대화 창 (v10.110 · docs/171)
+ * 색 · 글꼴 · 모서리 · 그림자는 디자인 시트(sgb-tokens.css) 값만 씁니다(decisions/design-standard.md).
+ * 서버가 꺼짐이라고 하면 이 요소들은 그려지지 않습니다.
+ * ===================================================================== */
+.ai-fab {
+  position: fixed; right: 16px; bottom: 16px; z-index: 70;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 12px 18px; border: 0; border-radius: var(--sgb-r-pill);
+  background: var(--sgb-action); color: var(--sgb-ink);
+  font: 800 var(--sgb-fs-body-2)/1 var(--sgb-font-body);
+  box-shadow: var(--sgb-shadow); cursor: pointer;
+}
+.ai-fab:focus-visible { outline: 3px solid var(--sgb-navy); outline-offset: 2px; }
+/* 겹침 피하기 — 관 화면 광고 카드(.gw-adfloat · 오른쪽 아래) · 휴대폰 매물 상세 아래 띠(.detail-side) 위로 */
+body:has(.gw-adfloat) .ai-fab, body:has(.gw-adfloat) .ai-panel { bottom: 200px; }
+body:has(.gw-adfloat) .ai-panel { max-height: calc(100dvh - 216px); }   /* 올린 만큼 줄여 머리줄(닫기)이 화면 밖으로 나가지 않게 */
+@media (max-width: 900px) { body:has(.detail-side) .ai-fab { bottom: 88px; } }
+
+.ai-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 900;
+  width: 360px; max-height: min(640px, calc(100vh - 32px));
+  display: flex; flex-direction: column;
+  background: var(--paper); color: var(--sgb-ink);
+  border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-lg);
+  box-shadow: var(--sgb-shadow);
+  font: 400 var(--sgb-fs-body-2)/1.55 var(--sgb-font-body);
+}
+@media (max-width: 600px) {
+  .ai-panel, body:has(.gw-adfloat) .ai-panel { left: 0; right: 0; bottom: 0; width: auto; max-height: 85dvh; border-radius: var(--sgb-r-lg) var(--sgb-r-lg) 0 0; }
+}
+.ai-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--sgb-line-soft); }
+.ai-head b { font: var(--sgb-fw-title) var(--sgb-fs-title-3)/1.2 var(--sgb-font-title); }
+.ai-sp { flex: 1; }
+.ai-x { width: 32px; height: 32px; border: 0; border-radius: var(--sgb-r-sm); background: transparent; font-size: 22px; line-height: 1; color: var(--sgb-ink-2); cursor: pointer; }
+.ai-x:hover { background: var(--sgb-tile); }
+.ai-notice { margin: 0; padding: 8px 14px; background: var(--sgb-cream); color: var(--sgb-ink-2); font-size: 12px; }
+.ai-notice small { color: var(--sgb-ink-3); }
+.ai-list { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.ai-msg { max-width: 88%; padding: 8px 12px; border-radius: var(--sgb-r-md); background: var(--sgb-bg); margin: 0; }
+.ai-msg p { margin: 0; white-space: pre-wrap; }
+.ai-msg.user { align-self: flex-end; background: var(--sgb-cream); }
+.ai-who { display: block; font-size: 11px; font-weight: 700; color: var(--sgb-ink-3); margin-bottom: 2px; }
+.ai-wait { color: var(--sgb-ink-3); }
+.ai-src { margin: 6px 0 0; padding-left: 16px; font-size: 12px; }
+.ai-src a { color: var(--sgb-link); }
+.ai-done { margin: 0; padding: 8px 12px; border-radius: var(--sgb-r-md); background: var(--sgb-cream); color: var(--sgb-gr-text); font-weight: 700; }
+.ai-err { margin: 0 14px 8px; color: var(--sgb-rd-text); font-size: 12px; }
+.ai-err a { color: var(--sgb-link); margin-left: 4px; }
+.ai-hand { padding: 0 14px 8px; font-size: 12px; color: var(--sgb-ink-2); }
+.ai-hand p { margin: 0 0 4px; }
+.ai-hand.on { background: var(--sgb-cream); padding-top: 8px; }
+.ai-hand.on .ai-link { font-weight: 800; }
+.ai-ask, .ai-form { padding: 10px 14px 14px; border-top: 1px solid var(--sgb-line-soft); display: flex; flex-direction: column; gap: 6px; }
+.ai-ask textarea, .ai-form textarea, .ai-form input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; resize: none;
+  border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-sm); font: inherit; color: var(--sgb-ink); background: var(--paper);
+}
+.ai-ask textarea::placeholder { color: var(--sgb-ph); }
+.ai-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--sgb-ink-2); }
+.ai-form small { color: var(--sgb-ink-3); }
+.ai-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ai-row small { color: var(--sgb-ink-3); font-size: 12px; }
+.ai-send { padding: 8px 16px; border: 0; border-radius: var(--sgb-r-pill); background: var(--sgb-action); color: var(--sgb-ink); font-weight: 800; cursor: pointer; }
+.ai-send:disabled { opacity: .5; cursor: default; }
+.ai-link { border: 0; background: transparent; padding: 4px 0; color: var(--sgb-link); font: inherit; font-size: 12px; cursor: pointer; }

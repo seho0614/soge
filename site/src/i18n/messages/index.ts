@@ -32,8 +32,9 @@ import forms from './ko/forms.json';
 import deal from './ko/deal.json';
 import join from './ko/join.json';
 import policy from './ko/policy.json';
+import aiChat from './ko/aiChat.json';
 
-const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };   // v10.98 consult · refcode
+const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode, aiChat };   // v10.98 consult · refcode · v10.110 aiChat(사이트 공통 AI 상담 단추)
 const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join, policy };   // v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join · v10.102 policy
 
 export const KO = { ...base, ...SHARED, ...PAGE };

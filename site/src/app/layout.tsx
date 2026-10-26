@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { SiteHeader } from '@/components/common/SiteHeader';
 import { B2Tone, BaseFooter, BaseHeader, MainWrap, OnlySkin } from '@/components/Chrome';
 import { B2Footer, B2Header } from '@/components/b2/Frame';
+import { AiChat } from '@/components/common/AiChat';
 import '@/styles/noto-sans-kr.css';   /* v10.31 (w1 · 공유) — F-11 */
 import '@/styles/tokens.css';
 import '@/styles/site.css';
@@ -26,6 +27,7 @@ import '@/styles/proto-common.css';
 import '@/styles/proto-gwan.css';
 import '@/styles/proto-my.css';
 import '@/styles/proto-partner.css';
+import '@/styles/ai-chat.css';   // v10.110 사이트 공통 AI 상담(docs/171)
 
 /* v10.95 — 제목 · 설명도 사전에서(한국어는 전과 같음) */
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,6 +65,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <MainWrap>{children}</MainWrap>
         <BaseFooter><Footer links={links} settings={settings} /></BaseFooter>
         <OnlySkin skin="b2"><B2Footer links={links} settings={settings} year={new Date().getFullYear()} /></OnlySkin>
+        {/* v10.110 (docs/171) — AI 상담 단추 · 창. 서버가 꺼짐이면 아무것도 그리지 않음 · 파트너센터 제외 */}
+        <AiChat />
         </NextIntlClientProvider>
       </body>
     </html>
