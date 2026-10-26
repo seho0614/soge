@@ -30,7 +30,7 @@ SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode']
 NEW = ['partner', 'partnerOps', 'affiliate', 'billing']   # 2-5a 에서 더한 묶음(모두 화면 전용)
 _pg = re.search(r'const PAGE = \{([^}]*)\}', IX)
 ok('① 묶음 파일 — SHARED 7 · PAGE 에 2-5a 묶음 4개 · 한국어 바탕에 그 언어를 덮음',
-   'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX and _pg and set(PAGE) <= {x.strip() for x in _pg.group(1).split(',')} and 'return merge(KO as unknown as Dict, over);' in IX, '')
+   ('const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX or 'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode, aiChat };' in IX) and _pg and set(PAGE) <= {x.strip() for x in _pg.group(1).split(',')} and 'return merge(KO as unknown as Dict, over);' in IX, '')
 ok("① 파트너센터 레이아웃 — <Msgs ns={['partner', 'partnerOps', 'affiliate']}> · 제휴 — ['affiliate', 'partner']",
    "<Msgs ns={['partner', 'partnerOps', 'affiliate']}>" in rd('site/src/app/partner/layout.tsx') and "<Msgs ns={['affiliate', 'partner']}>" in rd('site/src/app/partners/layout.tsx'), '')
 ok('① request.ts — 꺼져 있으면 쿠키를 읽지 않음 · messagesFor', 0 < rd(I + 'request.ts').find('if (info.enabled)') < rd(I + 'request.ts').find('(await cookies())') and 'messagesFor(locale)' in rd(I + 'request.ts'), '')

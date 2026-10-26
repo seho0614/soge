@@ -30,7 +30,7 @@ SHARED = ['gwan', 'money', 'shop', 'listing', 'searchPop', 'consult', 'refcode']
 NEW = ['policy', 'main', 'shop']   # 2-5c 에서 더한 · 늘린 묶음(policy 새로 · main 예시 · 투표 · shop 그림 설명)
 _pg = re.search(r'const PAGE = \{([^}]*)\}', IX)
 ok('① 묶음 파일 — SHARED 7 · PAGE 에 policy · 한국어 바탕에 그 언어를 덮음',
-   'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX and _pg and set(PAGE) <= {x.strip() for x in _pg.group(1).split(',')} and 'return merge(KO as unknown as Dict, over);' in IX, '')
+   ('const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode };' in IX or 'const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode, aiChat };' in IX) and _pg and set(PAGE) <= {x.strip() for x in _pg.group(1).split(',')} and 'return merge(KO as unknown as Dict, over);' in IX, '')
 FM = rd('site/src/lib/fmt.ts')
 ok('① 언어별 표기(lib/fmt.ts) — 한국어 「…원」 · 「협의」 그대로 · 다른 언어 「₩」 전체 숫자 · useFmt · getFmt',
    "`${Number(n).toLocaleString('ko-KR')}원`" in FM and "'협의'" in FM and "`₩${Number(n).toLocaleString('en-US')}`" in FM

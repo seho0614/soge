@@ -50,7 +50,8 @@ app = rd('src/app.module.ts')
 ok('② app.module 등록', re.search(r'\bAgentController,', app) and re.search(r'\bAgentService,', app), '')
 scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']
-ok('② 화면 SB-ADM-AGT-010 — #/ai-ops/agent · API 1', t and t[0].get('bo') == '#/ai-ops/agent' and t[0]['apis'] == ['GET /admin/agent/status'], '')
+ok('② 화면 SB-ADM-AGT-010 — #/ai-ops/agent · 상태 API(v10.109 부터 AI 상담 목록 2개 더함 — test_v1109)', t and t[0].get('bo') == '#/ai-ops/agent' and t[0]['apis'][0] == 'GET /admin/agent/status'
+   and set(t[0]['apis']) <= {'GET /admin/agent/status', 'GET /admin/agent/chats', 'GET /admin/agent/chats/{id}'}, str(t and t[0]['apis']))
 ops = rd('web/src/app/admin/AiOps.tsx'); AL = rd('web/src/app/admin/AiLearn.tsx'); W = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
 ok('② AI 운영 하위 탭 「AI 에이전트」 · 다시 내보내기', "{ key: 'agent', label: 'AI 에이전트', screen: 'SB-ADM-AGT-010' }" in ops and "{view === 'agent' && <AgentStatus />}" in ops
    and "export { AgentStatus } from './ailearn/AgentStatus';" in AL, '')
