@@ -26,7 +26,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D118_i18n_auto_translate/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 156 · 마지막 D118(v10.105 부터 D119 · 157 — test_v1105)', (len(mig), mig[-1] if mig else '') in ((156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 156 · 마지막 D118(v10.105 부터 D119 · 157 — test_v1105)', (len(mig), mig[-1] if mig else '') in ((156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 작업 줄 · 넣는 트리거(매물 · 요청 · PUBLISHED · 제목 · 본문 고침 · 스위치 꺼지면 안 넣음)',
    'CREATE TABLE IF NOT EXISTS public.translation_jobs' in M and "trg_listing_translation_enqueue" in M and "trg_request_translation_enqueue" in M
    and "NEW.status = 'PUBLISHED'" in M and "<> 'on' THEN RETURN 0" in M, '')

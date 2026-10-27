@@ -26,7 +26,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D123_profile_consent_single/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 161 · 마지막 D123(v10.118 부터 D124 · 162 — test_v1118)', (len(mig), mig[-1] if mig else '') in ((161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 161 · 마지막 D123(v10.118 부터 D124 · 162 — test_v1118)', (len(mig), mig[-1] if mig else '') in ((161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 성향 저장 둑이 약관 ADPERSONAL 의 지금 동의를 봄 · 학습 · 감시도 같은 기준',
    'CREATE OR REPLACE FUNCTION public.fn_adpersonal_on' in M and "IF NOT public.fn_adpersonal_on(NEW.account_id) THEN" in M
    and 'AND public.fn_adpersonal_on(p.account_id)' in M and "NOT public.fn_consent_at(s.account_id, 'ADPERSONAL', s.applied_at)" in M, '')
