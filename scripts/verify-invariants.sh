@@ -1147,14 +1147,14 @@ eq   "WX-1 날씨 사용(weather.enabled) 처음 off"          "SELECT value FRO
 eq   "WX-2 처음 지역 SEOUL"                              "SELECT value FROM site_settings WHERE key='weather.default_region'" SEOUL
 eq   "WX-3 연동 표 WEATHER · 키 이름 KMA_SERVICE_KEY · 오픈을 막지 않음" \
   "SELECT count(*) FROM integrations WHERE code='WEATHER' AND secret_key_name='KMA_SERVICE_KEY' AND NOT blocks_open" 1
-run  "WX-4 기상청 키(Decoding · + / =)는 암호문으로 저장 · 꺼내면 원래 값 · 결제 키는 여전히 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+run  "WX-4 기상청 키(Decoding · + / =)는 암호문으로 저장 · 꺼내면 원래 값 · 짝이 안 맞는 키는 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
   SELECT * FROM fn_integ_secret_set('WEATHER','KMA_SERVICE_KEY','invWxKey+abc/DEF0123456789==', NULL);
   DO \$\$ BEGIN
     IF fn_integ_secret_get('WEATHER','KMA_SERVICE_KEY') <> 'invWxKey+abc/DEF0123456789==' THEN RAISE EXCEPTION 'roundtrip'; END IF;
     IF EXISTS (SELECT 1 FROM integration_secrets WHERE position(convert_to('invWxKey', 'UTF8') IN value_enc) > 0) THEN RAISE EXCEPTION 'plaintext'; END IF;
     IF NOT (SELECT secret_registered FROM integrations WHERE code='WEATHER') THEN RAISE EXCEPTION 'registered'; END IF;
     BEGIN
-      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','KAKAO_REST_KEY','\\x00','0000');   -- v10.128 짝이 안 맞는 키로
       RAISE EXCEPTION 'other-key-accepted';
     EXCEPTION WHEN check_violation THEN NULL; END;
   END \$\$; ROLLBACK;"
@@ -1165,7 +1165,7 @@ eq   "WX-7 어떤 보기도 키(integration_secrets)를 읽지 않음" "SELECT c
 # ── v10.111 (D122 · docs/173) AI 키를 운영 화면에서 — 키는 암호문 · sk-ant-api 형식만 · 다른 연동 키는 여전히 못 넣음 · 아무것도 켜지 않음 ─────
 eq   "AIK-1 연동 표 AGENT · 키 이름 ANTHROPIC_API_KEY · 오픈을 막지 않음" \
   "SELECT count(*) FROM integrations WHERE code='AGENT' AND secret_key_name='ANTHROPIC_API_KEY' AND NOT blocks_open" 1
-run  "AIK-2 Anthropic 키는 암호문으로 저장 · 꺼내면 원래 값(앞뒤 빈칸 지움) · 끝 4자리 · 결제 키는 여전히 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+run  "AIK-2 Anthropic 키는 암호문으로 저장 · 꺼내면 원래 값(앞뒤 빈칸 지움) · 끝 4자리 · 짝이 안 맞는 키는 못 넣음" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
   SELECT * FROM fn_integ_secret_set('AGENT','ANTHROPIC_API_KEY','  sk-ant-api03-invAikKey0123456789abcdefghij_XY-z9Q8  ', NULL);
   DO \$\$ BEGIN
     IF fn_integ_secret_get('AGENT','ANTHROPIC_API_KEY') <> 'sk-ant-api03-invAikKey0123456789abcdefghij_XY-z9Q8' THEN RAISE EXCEPTION 'roundtrip'; END IF;
@@ -1173,7 +1173,7 @@ run  "AIK-2 Anthropic 키는 암호문으로 저장 · 꺼내면 원래 값(앞�
     IF (SELECT last4 FROM integration_secrets WHERE integration_code='AGENT') <> 'z9Q8' THEN RAISE EXCEPTION 'last4'; END IF;
     IF NOT (SELECT secret_registered FROM integrations WHERE code='AGENT') THEN RAISE EXCEPTION 'registered'; END IF;
     BEGIN
-      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','KAKAO_REST_KEY','\\x00','0000');   -- v10.128 짝이 안 맞는 키로
       RAISE EXCEPTION 'other-key-accepted';
     EXCEPTION WHEN check_violation THEN NULL; END;
   END \$\$; ROLLBACK;"
