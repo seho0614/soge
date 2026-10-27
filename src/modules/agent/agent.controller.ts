@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { AgentChatService } from './agent-chat.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { AgentService } from './agent.service';
@@ -84,6 +84,16 @@ export class AgentKeyTestDto {
   @ApiPropertyOptional({ nullable: true, description: 'AUTH · PERMISSION · RATE · TIMEOUT · NETWORK · UPSTREAM' }) kind!: string | null;
   @ApiProperty() message!: string;
   @ApiProperty({ type: [String], description: '쓸 수 있는 모델 이름(앞 20개)' }) models!: string[];
+}
+
+/* v10.135 (docs/202) — 모델 요금표 넣기 · 고치기(SUPER) — 새 모델이 나오면 관리자가 넣고 바로 고름 */
+export class AgentModelPriceSetDto {
+  @ApiProperty({ example: 'claude-sonnet-5-5', description: 'Anthropic 모델 이름(claude- 로 시작)' })
+  @IsString() @Matches(/^claude-[a-z0-9-]+$/) @MaxLength(80) model!: string;
+  @ApiProperty({ example: 2, description: '입력 100만 토큰당 달러' }) @IsNumber() @Min(0) @Max(1000) inputPerM!: number;
+  @ApiProperty({ example: 10, description: '출력 100만 토큰당 달러' }) @IsNumber() @Min(0) @Max(1000) outputPerM!: number;
+  @ApiProperty({ example: 0.2, description: '캐시 읽기 100만 토큰당 달러' }) @IsNumber() @Min(0) @Max(1000) cacheReadPerM!: number;
+  @ApiPropertyOptional({ maxLength: 200 }) @IsOptional() @IsString() @MaxLength(200) note?: string;
 }
 
 /* v10.109 (D121 · docs/170) — AI 상담 안내 */
@@ -239,4 +249,12 @@ export class AgentController {
   @ApiOkResponse({ type: AgentKeyTestDto })
   @ApiResponse({ status: 422, description: 'AGENT_KEY_MISSING — 키 없음', type: ErrorDto })
   testKey() { return this.svc.testKey(); }
+  @ApiBearerAuth()
+  @Put('admin/agent/model-prices')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '모델 요금표 넣기 · 고치기 (v10.135)', description: '없는 모델이면 더하고 있으면 요금을 고칩니다(기준일은 오늘). 요금표에 있는 모델만 AI 모델로 고를 수 있습니다 — 요금을 알아야 월 상한을 셀 수 있음. 지우기는 없음(지난 사용량의 근거).' })
+  @ApiOkResponse({ type: [AgentPriceDto] })
+  @ApiResponse({ status: 400, description: '모델 이름 · 요금 형식', type: ErrorDto })
+  @Audit('AGENT_MODEL_PRICE_SET', 'SITE_SETTING')
+  setModelPrice(@Body() dto: AgentModelPriceSetDto) { return this.svc.setModelPrice(dto); }
 }

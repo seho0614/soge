@@ -147,6 +147,19 @@ export class AgentService {
     return Number(r?.cost ?? 0);
   }
 
+  /** v10.135 (docs/202) — 모델 요금표 넣기 · 고치기(SUPER) · 기준일은 오늘 · 지우기 없음(지난 사용량의 근거) */
+  async setModelPrice(d: { model: string; inputPerM: number; outputPerM: number; cacheReadPerM: number; note?: string }) {
+    await this.db.query(
+      `INSERT INTO agent_model_prices (model, input_per_m, output_per_m, cache_read_per_m, as_of, note)
+       VALUES ($1, $2, $3, $4, (now() AT TIME ZONE 'Asia/Seoul')::date, $5)
+       ON CONFLICT (model) DO UPDATE SET input_per_m = EXCLUDED.input_per_m, output_per_m = EXCLUDED.output_per_m,
+              cache_read_per_m = EXCLUDED.cache_read_per_m, as_of = EXCLUDED.as_of, note = EXCLUDED.note`,
+      [d.model, d.inputPerM, d.outputPerM, d.cacheReadPerM, d.note?.trim() || null]);
+    return this.db.query(
+      `SELECT model, input_per_m::text AS "inputPerM", output_per_m::text AS "outputPerM", cache_read_per_m::text AS "cacheReadPerM",
+              as_of::text AS "asOf", note FROM agent_model_prices ORDER BY input_per_m`);
+  }
+
   /** 운영 화면 — 스위치 · 상한 · 이번 달 비용 · 통로별 사용량 · 요금표 · AI 검수 일치율 */
   async status() {
     const settings = await this.db.query<{ key: string; value: string | null }>(

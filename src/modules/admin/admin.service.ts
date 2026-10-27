@@ -290,6 +290,7 @@ export class AdminService {
     }
     await this.checkSwitch(key, value);
     await this.checkAiSwitch(key, value);
+    await this.checkAiModel(key, value);
     const [row] = await this.db.query(
       `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
         WHERE key = $1 RETURNING key, value`,
@@ -300,7 +301,16 @@ export class AdminService {
 
   /** v10.129 (docs/194) — AI 스위치 · 상한 · 모델 · 한도(agent.* · AI 번역)는 최고 관리자만 — 비용 · 법무에 걸린 설정(대표 승인 2026-10-27) */
   static isAiSetting(key: string): boolean {
-    return key.startsWith('agent.') || ['i18n.auto_translate.enabled', 'i18n.board_on_view', 'i18n.translate_model', 'i18n.auto_langs', 'i18n.engine'].includes(key);
+    return key.startsWith('agent.') || ['i18n.auto_translate.enabled', 'i18n.board_on_view', 'i18n.translate_model', 'i18n.auto_langs', 'i18n.engine',
+      'i18n.board_daily_member', 'i18n.board_daily_guest', 'i18n.board_daily_guest_total'].includes(key);   // v10.135 — 볼 때 번역 하루 횟수도 AI 한도
+  }
+
+  /** v10.135 (docs/202) — AI 모델은 요금표(agent_model_prices)에 있는 것만 — 요금을 모르면 월 상한을 셀 수 없음(각 통로도 요금표에 없으면 부르지 않음) */
+  static readonly AI_MODEL_KEYS = ['agent.chat_model', 'agent.review_model', 'i18n.translate_model'];
+  private async checkAiModel(key: string, value: string) {
+    if (!AdminService.AI_MODEL_KEYS.includes(key)) return;
+    const [r] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [(value ?? '').trim()]);
+    if (!r) throw new PolicyViolation('MODEL_UNPRICED', `요금표에 없는 모델입니다 — 먼저 「모델 요금표」에 ${value} 의 요금을 넣어 주십시오.`);
   }
 
   /** v10.129 — AI 전체(agent.enabled)를 켜려면 엔진이 될 키(운영 화면 키 · .env CLAUDE 키 · 점검판 MOCK)와 월 상한 > 0 이 있어야 함.

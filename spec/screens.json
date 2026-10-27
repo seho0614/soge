@@ -3704,9 +3704,10 @@
     "GET /admin/agent/key",
     "PUT /admin/agent/key",
     "DELETE /admin/agent/key",
-    "POST /admin/agent/key/test"
+    "POST /admin/agent/key/test",
+    "PUT /admin/agent/model-prices"
    ],
-   "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0 · v10.111 「AI 키」(SUPER · D122 · docs/173 — 넣기 · 지우기 · 끝 4자리 · 키 확인)"
+   "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0 · v10.111 「AI 키」(SUPER · D122 · docs/173 — 넣기 · 지우기 · 끝 4자리 · 키 확인) · v10.135 「AI 한도 · 모델」(하루 횟수 7 · 기능별 모델 · 모델 요금표 넣기 · 고치기 · SUPER · docs/202)"
   },
   {
    "id": "SB-ADM-CLS-020",
