@@ -87,11 +87,14 @@ DELETE FROM terms WHERE version = '9.9';
 --   알림이 아닌 판으로 발행돼(SV-T7) 알림 판에 동의 기록을 막는 공격 검정(AD-04)이 대상이 없어 「뚫림」으로 나왔습니다(10/9 Docker 검정).
 UPDATE terms t SET body = n.body, is_notice = n.is_notice, title = n.title
   FROM (SELECT DISTINCT ON (code) code, body, is_notice, title FROM terms
-         WHERE version <> '1.0' AND version ~ '^[0-9]+\.[0-9]+$'
+         WHERE version <> '1.0' AND version ~ '^[0-9]+\.[0-9]+$' AND status = 'PUBLISHED'   -- v10.133 — 법무 검토 초안(D131)은 옮기지 않음
            AND body NOT LIKE '%본문입니다%' AND body NOT LIKE '%(생성 대기)%' AND length(body) > 200
          ORDER BY code, split_part(version, '.', 1)::int DESC, split_part(version, '.', 2)::int DESC) n
  WHERE t.code = n.code AND t.version = '1.0' AND (t.body IS DISTINCT FROM n.body OR t.is_notice IS DISTINCT FROM n.is_notice OR t.title IS DISTINCT FROM n.title);
-DELETE FROM terms WHERE version <> '1.0';
+-- v10.133 (D131) — 마이그레이션이 만든 법무 검토 초안(새 판 · 실제 본문)은 남김 — 운영과 같게(게시된 1.0 옆에 초안)
+DELETE FROM terms WHERE version <> '1.0'
+   AND NOT (status IN ('DRAFT','LEGAL_REVIEW') AND version ~ '^[0-9]+\.[0-9]+$' AND split_part(version, '.', 1)::int < 9
+            AND body NOT LIKE '%본문입니다%' AND body NOT LIKE '%(생성 대기)%' AND length(body) > 200);
 -- 시험 자리표시자만 되돌립니다. 실제 발행분은 건드리지 않습니다.
 UPDATE terms SET status='LEGAL_REVIEW', effective_from='infinity'
  WHERE body LIKE '%본문입니다%' OR body LIKE '%(생성 대기)%';
@@ -174,10 +177,13 @@ SET session_replication_role = origin;
 --   약관 발행을 전제한 검정 4건이 함께 무너졌습니다.
 --
 --   시험이 끝난 상태는 "약관이 발행된 평상시" 여야 합니다.
+--   v10.133 (D131) — 운영의 발행(publish-terms.sh)과 같이 **미확정 표시(〔시행일〕 말고 〔…〕)가 남은 판은 발행하지 않습니다**
+--   (법무 확인 전 초안 · 처리방침의 〔확인 필요〕). 그런 판은 검토 중(LEGAL_REVIEW)으로 둡니다.
 UPDATE terms SET status = 'PUBLISHED', effective_from = '2026-11-11'
  WHERE version = '1.0'
    AND code IN ('SERVICE','PRIVACY','REFUND','THIRDPARTY','OUTSOURCE',
-                'ADPERSONAL','HLT_SALE','MARKETING','MARKETING_NIGHT');
+                'ADPERSONAL','HLT_SALE','MARKETING','MARKETING_NIGHT')
+   AND NOT EXISTS (SELECT 1 FROM regexp_matches(body, '〔[^〕]*〕', 'g') m WHERE m[1] <> '〔시행일〕');
 
 -- v10.28 (G-223) — 「알림」 글인 판은 알림으로(D042 와 같은 기준 · 동의를 받지 않음). 판을 1.0 하나로 줄인 쓰던 검정 DB 에서도 맞게.
 UPDATE terms SET is_notice = true, title = '개인정보 처리업무 위탁 안내'
