@@ -36,7 +36,7 @@ def psql(sql):
 # ① 코드
 ST = rd('src/common/i18n/server-text.ts'); IC = rd('src/modules/i18n/server-text.interceptor.ts'); F = rd('src/common/db-error.filter.ts')
 ok('① 옮기는 함수 — 한글 없으면 그대로 · 사전에 없으면 원문 · 값 자리 · 자리 안의 글도 옮김 · 안내 칸 5개',
-   "if (hit != null) return text === t ? hit : text.replace(t, hit);" in ST and "text.length > 500" in ST and "serverText(m[Number(i) + 1] ?? '', lang, depth + 1)" in ST and "new Set(['note', 'warning', 'reason', 'message', 'notice'])" in ST, '')
+   "if (hit != null) return text === t ? hit : text.replace(t, hit);" in ST and "text.length > 500" in ST and "serverText((m[Number(i) + 1] ?? '').trim(), lang, depth + 1)" in ST and "new Set(['note', 'warning', 'reason', 'message', 'notice'])" in ST, '')
 ok('① 응답 출구 — /admin 건너뜀 · 사본을 옮김(캐시 객체 보호) · 등록', "/^\\/api\\/v1\\/admin(\\/|\\?|$)/" in IC and 'structuredClone(body)' in IC and 'proto !== Object.prototype) return body;' in IC
    and 'ServerTextInterceptor' in rd('src/app.module.ts'), '')
 ok('① 오류 출구 — 언어 켜짐 확인 뒤 message 만 · /admin 건너뜀 · main.ts · dev-server.js 둘 다 I18nService 를 넘김',
@@ -44,7 +44,7 @@ ok('① 오류 출구 — 언어 켜짐 확인 뒤 message 만 · /admin 건너�
    and 'new DbErrorFilter(app.get(I18nService))' in rd('scripts/dev-server.js') and 'async langIfActive(' in rd('src/modules/i18n/i18n.service.ts'), '')
 ok('① 사용자 웹 /my/intro — 서버 글 대신 registered 로 갈래', "matchedRes?.registered === false ? t('intro.regToMatch')" in rd('site/src/app/my/intro/page.tsx')
    and "note.startsWith('지금은')" not in rd('site/src/app/my/intro/page.tsx'), '')
-ok('① 판 v10.125', rd('VERSION').strip() == 'v10.125', rd('VERSION').strip())
+ok('① 판 v10.125 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 125), rd('VERSION').strip())
 
 # ② 사전
 D = {}
