@@ -5,6 +5,7 @@ import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
 import { Bg, Empty, Note, Pgh } from '@/components/partner/ui';
 import { getTranslations } from 'next-intl/server';
+import { getFmt } from '@/lib/getFmt';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('trust') };
@@ -13,7 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
 interface T {
   total: number; viewed: number;
   avgViewMin: number | null; viewRate: number | null;
-  badges?: Array<{ code: string; name: string; state: string; detail: string | null }>;
+  badges?: Array<{ code: string; name: string; state: string; detail: string | null;
+    stateCode?: string | null; kind?: string; label?: string | null; needN?: number | null; needMonths?: number | null; curN?: number | null; curRating?: number | null; sinceOn?: string | null }>;
 }
 const BADGE_TONE: Record<string, 'ok' | 'wait' | 'no' | 'off'> = { '달성': 'ok', '심사중': 'wait', '반려': 'no' };
 
@@ -32,6 +34,23 @@ export default async function TrustPage() {
   const tp = await getTranslations('partner');
   const B = (c: React.ReactNode) => <b>{c}</b>;
   const t = await apiGet<T>('/partner/trust', 0).catch(() => null);
+  /* v10.124 (D127) — 배지 글은 DB 함수가 한국어로 지음 · 다른 언어 화면은 코드 · 숫자로 사전 글(한국어는 서버 글 그대로) */
+  const f = await getFmt();
+  const tb = await getTranslations('partner.trust.badge');
+  const LABEL: Record<string, string> = { '성사': 'deals', '이사': 'moves', '시공': 'projects' };
+  const bName = (b: NonNullable<T['badges']>[number]) => {
+    const n = b.kind === 'NO_DISPUTE' ? String(b.needMonths ?? '') : b.needN != null ? f.num(b.needN) : '';
+    const lb = b.label && LABEL[b.label] ? tb(`label.${LABEL[b.label]}` as never) : b.label ?? '';
+    return b.kind && tb.has(`name.${b.kind}` as never) ? tb(`name.${b.kind}` as never, { n, label: lb } as never) : b.name;
+  };
+  const bDetail = (b: NonNullable<T['badges']>[number]) => {
+    if (b.kind === 'DEALS') return tb('detail.deals', { n: String(b.curN ?? 0) });
+    if (b.kind === 'RATING') return b.curN ? tb('detail.rating', { r: String(b.curRating ?? ''), n: String(b.curN) }) : tb('detail.noRating');
+    if (b.kind === 'NO_DISPUTE') return b.sinceOn ? tb('detail.since', { date: f.ymd(b.sinceOn, b.sinceOn), n: String(b.curN ?? 0) }) : tb('detail.beforeApproval');
+    if (b.stateCode === 'IN_REVIEW') return tb('detail.qualReview');
+    if (b.stateCode === 'NOT_SUBMITTED') return tb('detail.qualNotNeeded');
+    return b.detail;
+  };
   if (!t) return <><Pgh title={tr('title')} /><Empty>{tp('common.notPartner')}</Empty><i hidden data-root-end="" /></>;
 
   const slow = (t.avgViewMin ?? 0) > 180;
@@ -42,8 +61,8 @@ export default async function TrustPage() {
     <><Pgh title={tr('title')} sub={tr('sub')} />
       {(t.badges ?? []).map((b) => (
         <div className="pt-crow" key={b.code} data-badge={b.code}>
-          <div><b>{b.name}</b><span className="pt-ls">{b.detail ?? ''}</span></div>
-          <Bg tone={BADGE_TONE[b.state] ?? 'off'}>{b.state}</Bg>
+          <div><b>{f.ko ? b.name : bName(b)}</b><span className="pt-ls">{(f.ko ? b.detail : bDetail(b)) ?? ''}</span></div>
+          <Bg tone={BADGE_TONE[b.state] ?? 'off'}>{!f.ko && b.stateCode && tb.has(`state.${b.stateCode}` as never) ? tb(`state.${b.stateCode}` as never) : b.state}</Bg>
         </div>
       ))}
       <Note kind="info">{tr.rich('badgeNote', { b: B })}</Note>

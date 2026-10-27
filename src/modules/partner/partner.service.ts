@@ -339,7 +339,11 @@ export class PartnerService {
     const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : null);
     /* v10.31 (W5 · CTR-600) — 조건이 만드는 신뢰 배지(조회할 때 실제 자료로 셈 — 조건이 사라지면 바로 내려감) */
     const badges = await this.db.query<any>(
-      `SELECT code, name, state, detail FROM fn_partner_badges($1) ORDER BY sort_order`, [p.id]);
+      `SELECT code, name, state, detail,
+              /* v10.124 (D127) — 다른 언어 화면이 글을 만들 재료(한국어 name · state · detail 은 그대로) */
+              state_code AS "stateCode", badge_kind AS kind, badge_label AS label, need_n AS "needN", need_months AS "needMonths",
+              cur_n AS "curN", cur_rating AS "curRating", to_char(since_on, 'YYYY-MM-DD') AS "sinceOn"
+         FROM fn_partner_badges($1) ORDER BY sort_order`, [p.id]);
     return { ...t, viewRate: pct(t?.viewed ?? 0, t?.total ?? 0), badges };
   }
 

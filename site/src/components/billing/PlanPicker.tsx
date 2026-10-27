@@ -16,7 +16,7 @@ import type { SubDetail } from './SubscriptionManage';
  *   키가 있으면 토스 결제창 → /my/subscription/pay 에서 서버가 승인합니다.
  * 환불 조건(결제 당일 · 열람 전)은 결제 전에 보이고, 확인 칸을 체크해야 결제됩니다.
  */
-export interface PlanLite { code: string; name: string; monthlyPrice: number; lines?: { k: string; t: string }[]; note?: string }
+export interface PlanLite { code: string; name: string; nameKo?: string; monthlyPrice: number; lines?: { k: string; t: string }[]; note?: string }
 
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
@@ -99,7 +99,7 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
       const TossPayments = await loadToss();
       const origin = window.location.origin;
       await TossPayments(CLIENT_KEY).requestPayment('카드', {
-        amount: Number(p.monthlyPrice), orderId, orderName: `${p.name} 구독료`,
+        amount: Number(p.monthlyPrice), orderId, orderName: `${p.nameKo ?? p.name} 구독료`,   // v10.124 — 결제 기록 값은 언어와 상관없이 원래 이름
         successUrl: `${origin}/my/subscription/pay?plan=${encodeURIComponent(p.code)}`,
         failUrl: `${origin}/my/subscription?pay=fail`,
       });

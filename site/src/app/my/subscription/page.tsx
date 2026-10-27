@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface Plan {
-  code: string; name: string; monthlyPrice: number; includedCodes: number;
+  code: string; name: string; nameKo?: string; monthlyPrice: number; includedCodes: number;
   requestViewsPerMonth: number | null; listingSlots: number | null;
   prioritySlotCount: number;
   /* v10.31 — 시안 요금제 카드 혜택 줄(서버 subscription_plans.features) · 소개 제안 월 한도(null = 무제한) */
@@ -55,12 +55,27 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
   /* D011 — 요청 열람 한도는 운영 설정입니다(홍보 기간에는 제한 없음). 설정은 짧게(30초) 캐시합니다 */
   const settings = await apiGet<PublicSettings>('/site-settings/public', 30).catch(() => ({} as PublicSettings));
   /* v10.18 (D022) — 내 구독 상태 · 환불 상태. 사람마다 다른 응답이라 캐시하지 않습니다(/me 는 apiGet 이 no-store 로 보냅니다). */
-  const [detail, eligible, now, invoices] = await Promise.all([
+  const [detail0, eligible, now, invoices] = await Promise.all([
     apiGet<SubDetail>('/me/subscription/detail', 0).catch(() => null),
     apiGet<RefundEligible>('/me/subscription/refund-eligible', 0).catch(() => null),
     apiGet<SubNow>('/me/subscription', 0).catch(() => null),
     apiGet<Invoice[]>('/me/subscription/invoices', 0).catch(() => [] as Invoice[]),
   ]);
+  /* v10.124 — 구독 · 환불 안내는 서버가 한국어 글로 지어 보냄 · 다른 언어 화면은 코드(noticeCode · 환불 state)로 사전 글(한국어는 서버 글 그대로) */
+  const ts = await getTranslations('my.sub.srv');
+  const day = (iso?: string | null) => (iso ? f.ymd(iso, '') : '');
+  const nextPrice = Number(detail0?.nextPlanPrice ?? detail0?.monthlyPrice ?? 0);
+  const detail: SubDetail | null = !detail0 || f.ko ? detail0 : {
+    ...detail0,
+    notice: detail0.noticeCode && ts.has(`notice.${detail0.noticeCode}` as never)
+      ? ts(`notice.${detail0.noticeCode}` as never, { date: day(detail0.periodEnd), plan: detail0.nextPlanName ?? '', price: f.won(nextPrice) } as never)
+      : detail0.notice,
+    ...(detail0.refund ? { refund: {
+      ...detail0.refund,
+      label: ts(detail0.refund.state === 'SUCCEEDED' ? 'refund.done' : detail0.refund.state === 'FAILED' ? 'refund.failed' : 'refund.checking'),
+      note: ts(detail0.refund.state === 'SUCCEEDED' ? (detail0.refund.stub ? 'refund.noteStub' : 'refund.noteDone') : detail0.refund.state === 'FAILED' ? 'refund.noteFailed' : 'refund.noteChecking'),
+    } } : {}),
+  };
   const cur = plans.find((x) => x.code === (detail?.planCode ?? now?.planCode));
   const cap = now?.includedCodes ?? cur?.includedCodes ?? null;
   /* 이번 달 초과 소개코드 발급 수(결제 내역의 EXTRA_CODE · 이번 달) — 시안 「초과 발급 N건」 */
@@ -106,7 +121,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
           detail={detail}
           canSubscribe={p.roles.some((r) => r === 'MEMBER' || r === 'BIZ_OWNER')}   /* v10.37 (D095) — 개인 회원도 구독 */
           plans={plans.map((pl) => ({
-            code: pl.code, name: pl.name, monthlyPrice: pl.monthlyPrice,
+            code: pl.code, name: pl.name, nameKo: pl.nameKo, monthlyPrice: pl.monthlyPrice,
             lines: [
               ...(pl.features?.length
                 ? pl.features.map((t, i) => ({ k: `f${i}`, t }))

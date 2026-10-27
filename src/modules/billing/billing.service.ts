@@ -43,6 +43,7 @@ export class BillingService {
     const tmp = rows.map((r) => ({ code: r.code, name: r.name, features: Array.isArray(r.features) && r.features.length ? r.features.join('\n') : null }));
     await this.i18n.overlay(tmp, 'PLAN', (r) => r.code, { name: 'name', features: 'features' });
     rows.forEach((r, i) => {
+      r.nameKo = r.name;   // v10.124 — 결제사로 보내는 주문 이름은 언제나 원래(한국어) 이름
       r.name = tmp[i].name;
       if (tmp[i].features != null && tmp[i].features !== r.features.join('\n')) r.features = String(tmp[i].features).split('\n');   // 번역이 얹혔을 때만(한국어는 원래 배열)
     });

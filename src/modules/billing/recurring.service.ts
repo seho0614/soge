@@ -4,6 +4,7 @@ import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolvePaymentProvider } from './payment.provider';
 import { RecurringRefundService } from './recurring-refund.service';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 정기결제 · 구독 관리.
@@ -32,7 +33,7 @@ import { RecurringRefundService } from './recurring-refund.service';
  */
 @Injectable()
 export class RecurringBillingService {
-  constructor(private readonly db: DatabaseService, private readonly refunds: RecurringRefundService) {}
+  constructor(private readonly db: DatabaseService, private readonly refunds: RecurringRefundService, private readonly i18n: I18nService) {}
   private readonly log = new Logger(RecurringBillingService.name);
   private get me() { return RequestCtx.actorId(); }
 
@@ -141,27 +142,34 @@ export class RecurringBillingService {
     /* 20261007 (v10.20 · G-125) — 안내 글의 날짜는 한국 날짜로. 서버가 UTC(개발 Docker · AWS)면 한국 0 ~ 9시에 끝나는 기간이 하루 전으로 나왔습니다. */
     const until = new Date(row.periodEnd).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
 
+    /* v10.124 — 안내는 코드(noticeCode)와 함께 — 다른 언어 화면이 코드 · 날짜 · 요금제로 글을 만듭니다(한국어 notice 는 전과 같은 글) */
+    const noticeCode = refundOpen ? 'REFUND_OPEN'
+      : row.chargeInFlight ? 'CHARGE_IN_FLIGHT'
+        : row.cancelAt ? (row.status === 'PAST_DUE' ? 'CANCELLED_UNPAID' : 'CANCEL_RESERVED')
+          : row.status === 'PAST_DUE' ? 'PAST_DUE'
+            : willCharge && !row.hasBillingKey ? 'NO_METHOD'
+              : row.nextPlanCode ? 'PLAN_CHANGE' : null;
+    const NOTICE: Record<string, string> = {
+      REFUND_OPEN: '환불 결과를 확인하는 중입니다. 결과가 나올 때까지 이 구독의 이용 · 갱신이 멈춥니다.',
+      CHARGE_IN_FLIGHT: '정기결제 결과를 결제사에서 확인하는 중입니다. 확인되는 대로 반영됩니다 — 다시 결제하지 마십시오.',
+      CANCELLED_UNPAID: '해지되었습니다. 더 청구하지 않습니다. 결제가 완료되지 않은 기간이라 지금은 유료 기능을 쓸 수 없습니다.',
+      CANCEL_RESERVED: `해지 예약되었습니다. ${until}까지 이용할 수 있고 이후 청구되지 않습니다.`,
+      PAST_DUE: '정기결제가 실패했습니다. 결제 수단을 확인해 주십시오 — 유예 기간 안에 결제되지 않으면 구독이 만료됩니다.',
+      NO_METHOD: '자동 갱신 예정이지만 결제 수단이 없습니다. 등록하지 않으면 갱신에 실패합니다.',
+      PLAN_CHANGE: `${until} 다음 결제일부터 ${row.nextPlanName}(월 ${nextPrice.toLocaleString('ko-KR')}원)으로 바뀝니다 — 예약을 거두면 지금 요금제로 이어집니다.`,
+    };
+    const notice = noticeCode ? NOTICE[noticeCode] : null;
+    /* 요금제 이름 번역(PLAN · D126) — 한국어 안내 글을 만든 뒤에 얹습니다 */
+    await this.i18n.overlay([row], 'PLAN', (r: any) => r.planCode, { planName: 'name' });
+    if (row.nextPlanCode) await this.i18n.overlay([row], 'PLAN', (r: any) => r.nextPlanCode, { nextPlanName: 'name' });
+
     return {
       subscribed: true, ...row,
       autoRenew: !row.cancelAt,
       nextChargeAt: willCharge ? row.periodEnd : null,
       nextChargeAmount: willCharge ? nextPrice : null,
       ...(refund ? { refund } : {}),
-      notice: refundOpen
-        ? '환불 결과를 확인하는 중입니다. 결과가 나올 때까지 이 구독의 이용 · 갱신이 멈춥니다.'
-        : row.chargeInFlight
-          ? '정기결제 결과를 결제사에서 확인하는 중입니다. 확인되는 대로 반영됩니다 — 다시 결제하지 마십시오.'
-          : row.cancelAt
-            ? (row.status === 'PAST_DUE'
-                ? '해지되었습니다. 더 청구하지 않습니다. 결제가 완료되지 않은 기간이라 지금은 유료 기능을 쓸 수 없습니다.'
-                : `해지 예약되었습니다. ${until}까지 이용할 수 있고 이후 청구되지 않습니다.`)
-            : row.status === 'PAST_DUE'
-              ? '정기결제가 실패했습니다. 결제 수단을 확인해 주십시오 — 유예 기간 안에 결제되지 않으면 구독이 만료됩니다.'
-              : willCharge && !row.hasBillingKey
-                ? '자동 갱신 예정이지만 결제 수단이 없습니다. 등록하지 않으면 갱신에 실패합니다.'
-                : row.nextPlanCode
-                  ? `${until} 다음 결제일부터 ${row.nextPlanName}(월 ${nextPrice.toLocaleString('ko-KR')}원)으로 바뀝니다 — 예약을 거두면 지금 요금제로 이어집니다.`
-                  : null,
+      notice, noticeCode,
     };
   }
 

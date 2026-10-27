@@ -322,6 +322,7 @@
     "accept": "Accept"
   },
   "trust": {
+    "badge": { "detail": { "qualNotNeeded": "Not needed unless your category is regulated", "qualReview": "Qualifications for regulated categories are approved by SogaeBank", "beforeApproval": "Before store approval", "since": "Since {date} · {n, plural, one {{n} dispute} other {{n} disputes}}", "noRating": "No reviews received yet", "rating": "Currently {r} ({n, plural, one {{n} review} other {{n} reviews}})", "deals": "Currently {n} (consumer-confirmed)"}, "state": { "NOT_SUBMITTED": "Not submitted", "REJECTED": "Rejected", "IN_REVIEW": "Under review", "PERIOD_SHORT": "Period not met", "NO_RATING": "No ratings", "NOT_MET": "Not yet", "ACHIEVED": "Achieved"}, "label": { "projects": "projects", "moves": "moves", "deals": "deals"}, "name": { "QUALIFICATION": "Qualification submitted", "NO_DISPUTE": "No disputes for {n, plural, one {{n} month} other {{n} months}}", "RATING": "Rating {n}+", "DEALS": "{n}+ {label} completed"}},
     "title": "Trust indicators",
     "sub": "Badges are awarded automatically when conditions are met and removed when they no longer are.",
     "badgeNote": "<b>Partners do not turn badges on or off — they are awarded automatically based on conditions.</b> When a condition no longer holds, its badge is removed automatically.",

@@ -322,6 +322,7 @@
     "accept": "받아들이기"
   },
   "trust": {
+    "badge": { "detail": { "qualNotNeeded": "규제 업종이 아니면 필요 없습니다", "qualReview": "규제 업종 자격 승인은 본사가 합니다", "beforeApproval": "입점 승인 전", "since": "{date}부터 · 분쟁 {n}건", "noRating": "아직 받은 평가가 없습니다", "rating": "현재 {r} ({n}건)", "deals": "지금 {n}건(소비자 확인 기준)"}, "state": { "NOT_SUBMITTED": "미제출", "REJECTED": "반려", "IN_REVIEW": "심사중", "PERIOD_SHORT": "기간 미달", "NO_RATING": "평가 없음", "NOT_MET": "미달", "ACHIEVED": "달성"}, "label": { "projects": "시공", "moves": "이사", "deals": "성사"}, "name": { "QUALIFICATION": "자격증 제출", "NO_DISPUTE": "{n}개월 무분쟁", "RATING": "평점 {n} 이상", "DEALS": "누적 {label} {n}건 이상"}},
     "title": "신뢰지표",
     "sub": "배지는 조건이 만들고, 조건이 사라지면 자동으로 내려갑니다.",
     "badgeNote": "<b>배지는 파트너가 켜고 끄는 것이 아니라 조건이 만듭니다.</b> 조건이 사라지면 배지도 자동으로 내려갑니다.",

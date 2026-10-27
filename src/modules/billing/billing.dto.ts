@@ -6,6 +6,7 @@ const PLANS = ['BASIC', 'STANDARD', 'PRO'] as const;
 export class PlanDto {
   @ApiProperty({ enum: PLANS }) code!: string;
   @ApiProperty() name!: string;
+  @ApiProperty({ description: 'v10.124 — 원래(한국어) 이름. 번역된 화면에서도 결제사 주문 이름은 이것으로' }) nameKo!: string;
   @ApiProperty({ description: '월 요금 (원)' }) monthlyPrice!: number;
   @ApiProperty({ description: '포함 소개코드 수' }) includedCodes!: number;
   @ApiProperty({ nullable: true, description: 'null 은 무제한' })

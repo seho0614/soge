@@ -15,7 +15,7 @@ export interface SubDetail {
   /* v10.27 (G-189) — 요금제 예약(다음 결제일부터) */
   planCode?: string; isPromo?: boolean; hasBillingKey?: boolean;
   nextPlanCode?: string | null; nextPlanName?: string | null; nextPlanPrice?: number | null; nextChargeAmount?: number | null;
-  notice?: string | null;
+  notice?: string | null; noticeCode?: string | null;   // v10.124 — 다른 언어 화면은 코드로 사전 글
   refund?: RefundView;
 }
 export interface RefundView {
