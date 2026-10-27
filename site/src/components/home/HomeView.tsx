@@ -71,12 +71,14 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
             </div>
             <HeroPromo ad={ad} slides={slides} start={start} />
           </div>
+          {/* v10.130 (대표 「한 줄로」 · 「모두 한 줄 · 작게」 2026-10-27) — 검색 예시 칩과 소개장터 바로가기를 한 줄에(PC). 칩이 길면 「…」 · 1200px 보다 좁으면 전처럼 두 줄 */}
+          <div className="home-row1" data-hero-row>
           <div className="home-chips">
             {/* v10.31 — 시안 .mh-chip: 누르면 그 말로 검색 팝업이 열립니다(HeroSearch). 자바스크립트가 없으면 링크대로 통합 검색 */}
             {chips.map((q) => (
-              <Link key={q} className="home-chip mh-chip" href={`/search?q=${encodeURIComponent(q)}`} data-q={q}
+              <Link key={q} className="home-chip mh-chip" href={`/search?q=${encodeURIComponent(q)}`} data-q={q} title={q}
                 onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent(HERO_SEARCH_EVENT, { detail: q })); }}>
-                <Line name="search" size={18} w={2.4} />{q}
+                <Line name="search" size={18} w={2.4} /><span className="home-chipt">{q}</span>
               </Link>
             ))}
           </div>
@@ -88,6 +90,7 @@ export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, a
               ))}
             </nav>
           )}
+          </div>
         </div>
       </section>
 

@@ -119,6 +119,17 @@
 .home-qm a:last-child { border-right: 0; }
 .home-qm a:hover { background: var(--hv-t1); color: var(--hv); }
 .home-qm a:focus-visible { outline: 3px solid var(--hv-l); outline-offset: -3px; }
+/* v10.130 — 검색 예시 칩 + 소개장터 바로가기를 한 줄에(넓은 화면 1200px 이상). 칩은 남는 넓이를 나눠 쓰고 길면 「…」(전체 글은 title).
+   그보다 좁으면 예시가 「판…」처럼 읽히지 않아 전처럼 두 줄 */
+@media (min-width: 1200px) {
+  .home-row1 { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+  .home-row1 .home-chips { margin-top: 0; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; gap: 8px; justify-content: flex-start; }
+  .home-row1 .home-chip { flex: 0 1 auto; min-width: 0; padding: 8px 12px; gap: 6px; font-size: 13px; }
+  .home-row1 .home-chipt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .home-row1 .home-chip svg { flex: none; width: 15px; height: 15px; }
+  .home-row1 .home-qm { margin-top: 0; flex: none; }
+  .home-row1 .home-qm a { padding: 9px 11px; gap: 5px; font-size: 13px; }
+}
 .home-qe { font-size: 18px; line-height: 1; }
 
 /* 히어로 오른쪽 카드 — 넘겨 보는 안내 · HERO 광고 */
