@@ -915,7 +915,8 @@ eq   "SV-T3 교환 배송비 조항 없는 판매 약관이 발행 · 초안 상
 for _c in SERVICE PRIVACY REFUND THIRDPARTY OUTSOURCE MARKETING MARKETING_NIGHT ADPERSONAL HLT_SALE PARTNER; do
   _f="$(dirname "$0")/../docs/terms/$_c.md"
   if [ -f "$_f" ]; then
-    eq "SV-T5 $_c 발행 · 초안 본문 = docs/terms/$_c.md" "SELECT count(*) FROM terms WHERE code='$_c' AND status <> 'ARCHIVED' AND fn_term_body_norm(body) <> fn_term_body_norm(\$SGBT\$$(cat "$_f")\$SGBT\$)" 0
+    # v10.133 (D131) — 새 판 초안이 있으면 게시된 옛 판은 옛 글 그대로(법무 확인 뒤 게시 전까지) — 초안이 있는 코드는 초안만 견줌
+    eq "SV-T5 $_c 발행 · 초안 본문 = docs/terms/$_c.md" "SELECT count(*) FROM terms t WHERE code='$_c' AND status <> 'ARCHIVED' AND NOT (status = 'PUBLISHED' AND EXISTS (SELECT 1 FROM terms d WHERE d.code = t.code AND d.status IN ('DRAFT','LEGAL_REVIEW'))) AND fn_term_body_norm(body) <> fn_term_body_norm(\$SGBT\$$(cat "$_f")\$SGBT\$)" 0
   else
     printf "  FAIL %s\n" "SV-T5 $_c — docs/terms/$_c.md 없음"; fail=$((fail+1))
   fi
