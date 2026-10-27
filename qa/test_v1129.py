@@ -41,7 +41,7 @@ ok('① 운영 화면 — AI 에이전트에 「AI 스위치」(상한 · 5개 �
 ok('① 외부 연동 — AI · 카카오맵 · 날씨 줄에 「키 넣는 곳으로 가기」',
    "AGENT: { label: '위험감지 › AI 운영 › AI 에이전트 › 「AI 키」(최고 관리자)', href: '#/ai-ops/agent' }" in IN and "sel: '[data-map-keys]'" in IN and "sel: '[data-weather-keys]'" in IN, '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 판 v10.129 · 마이그레이션 없음(166)', rd('VERSION').strip() == 'v10.129' and len(mig) == 166, f"{rd('VERSION').strip()} · {len(mig)}")
+ok('① 판 v10.129 이상 · 마이그레이션 없음(166)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 129) and len(mig) == 166, f"{rd('VERSION').strip()} · {len(mig)}")
 
 
 def call(m, p, b=None, t=None):
