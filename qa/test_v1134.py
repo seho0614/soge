@@ -2,7 +2,7 @@
 
   KIT=<kit> python3 -I test_v1134.py   (파일만 봄 · 점검판 불필요)
 
-  ① 2묶음 30건(en_review_b2_v1134.json)이 사전에 들어감 · 옛 글은 없음 · 자리({n} · <b>)가 그대로
+  ① 2묶음 30건(en_review_b2_v1134.json)이 사전에 들어감 · 옛 글은 없음 · 자리({n} · <b>)가 그대로 · 관 이름 영어 통일(API 안내 글)
   ② 복수형 17곳 — 「{n} 낱말s」 대신 ICU 복수형 · 한국어 사전은 그대로
   ③ flow_trade — 사업자 인증 신청은 서버 응답을 먼저 기다림(60초)
 """
@@ -35,6 +35,10 @@ ok('① 2묶음 30건이 사전에 들어감', len(R) == 30 and not miss, f'{len
 ph = [r['key'] for r in R if sorted(re.findall(r'\{\w+\}|<\w+>', r['en'])) != sorted(re.findall(r'\{\w+\}|<\w+>', r['proposed']))]
 ok('① 고친 글의 자리({n} · <b> …)가 옛 글과 같음', not ph, str(ph))
 ok('① 소개몰 이름 「Sogae Mall」로 통일(사용자 웹 사전에 SogaeMall 없음)', not any('SogaeMall' in open(os.path.join(M, 'en', f), encoding='utf-8').read() for f in os.listdir(os.path.join(M, 'en'))), '')
+
+ST = open(os.path.join(K, 'src/common/i18n/server-text.en.ts'), encoding='utf-8').read()
+ok('① 관 이름 영어 통일(대표 「추천대로」) — API 안내 글도 사용자 웹 머리와 같게(Marketplace · Safe Referral · Startups · Sogae Mall)',
+   not re.search(r'Sogae(Mall|Money|Market|Startup)', ST) and 'choose from Marketplace · Safe Referral · Startups' in ST and 'only in Sogae Mall' in ST, '')
 
 PL = {'affiliate': ['layout.unreadAria'], 'consult': ['detail.step3B', 'rows.certified'], 'deal': ['invite.valid'],
       'forms': ['common.missing', 'reg.filled', 'req.filled'], 'gwan': ['biz.headcount'], 'plaza': ['event.people', 'food.recCount', 'food.recs'],
