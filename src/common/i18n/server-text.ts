@@ -18,7 +18,8 @@ function patterns(lang: string): Pat[] {
   p = Object.entries(DICTS[lang] ?? {})
     .filter(([ko]) => /\{\d+\}/.test(ko))
     .map(([ko, en]) => ({
-      re: new RegExp('^' + ko.split(/(\{\d+\})/).map((s) => (/^\{\d+\}$/.test(s) ? '([\\s\\S]*?)' : s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('') + '$'),
+      /* 「{1}원」처럼 바로 뒤가 「원」인 자리는 금액(숫자)만 — 「{0}{1}원」처럼 자리가 붙어 있어도 나뉘는 곳이 하나로 정해짐 */
+      re: new RegExp('^' + ko.split(/(\{\d+\}(?=원)|\{\d+\})/).map((s, i, a) => (/^\{\d+\}$/.test(s) ? (a[i + 1]?.startsWith('원') ? '(-?[0-9][0-9,]*)' : '([\\s\\S]*?)') : s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('') + '$'),
       en,
     }))
     .sort((a, b) => b.re.source.length - a.re.source.length);   // 긴(구체적인) 모양 먼저
@@ -35,9 +36,20 @@ export function serverText(text: string, lang: string | null | undefined, depth 
   const hit = d[text] ?? d[t];
   if (hit != null) return text === t ? hit : text.replace(t, hit);   // 앞뒤 빈칸은 그대로(붙인 글의 앞 안내 등)
   if (depth > 1) return text;
+  /* 자리에 조각 글이 둘 이상 이어 들어온 경우(「{0}{1}」이 붙은 모양) — 문장마다 나눠 모두 옮겨지면 이어 붙임 */
+  if (depth === 1) {
+    const parts = t.split(/(?<=[.])\s+(?=\S)/);
+    if (parts.length > 1) {
+      const tr = parts.map((x) => serverText(x, lang, 1));   // 문장 하나는 다시 나뉘지 않음 — 값 자리 모양도 맞춰 봄
+      if (tr.every((x, i) => x !== parts[i] || !/[가-힣]/.test(x))) return tr.join(' ');
+    }
+  }
   for (const p of patterns(lang)) {
-    const m = p.re.exec(text);
-    if (m) return p.en.replace(/\{(\d+)\}/g, (_, i: string) => serverText(m[Number(i) + 1] ?? '', lang, depth + 1));
+    const m = p.re.exec(t);
+    if (!m) continue;
+    /* 자리 값은 앞뒤 빈칸을 뗀 채 옮기고, 다 채운 뒤 빈칸 · 문장 부호를 다듬음(빈 자리 · 붙인 조각 글 때문에 생기는 빈칸) */
+    const out = p.en.replace(/\{(\d+)\}/g, (_, i: string) => serverText((m[Number(i) + 1] ?? '').trim(), lang, depth + 1));
+    return depth ? out.trim() : out.replace(/\s+/g, ' ').replace(/\s+([.,)])/g, '$1').replace(/\(\s+/g, '(').trim();
   }
   return text;
 }
