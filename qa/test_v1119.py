@@ -34,7 +34,7 @@ def keys(d, pre=''):
 
 M = rd('prisma/migrations/D125_i18n_more_targets/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 대상 여섯 · 원문(법정 고지 둘만) · 이전 대상 그대로 · 바닥줄 보기 끝에 id',
    "'FOOTER_LINK','SETTING','POLL','POLL_OPT','INGREDIENT','HLT_CONCERN'" in M and "p_id IN ('legal.intermediary_notice','legal.direct_notice')" in M
    and "WHEN 'PROFILE_OPT' THEN" in M and "WHEN 'HLT_PRODUCT' THEN" in M and "'CATEGORY','POLL','POLL_OPT') AND p_id !~*" in M

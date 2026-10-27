@@ -31,7 +31,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D128_integ_keys_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'),), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'),), f'{len(mig)} · {mig[-1] if mig else ""}')
 PAIRS = re.findall(r"\('([A-Z]+)','([A-Z_]+)'\)", M.split('ADD CONSTRAINT ck_integ_secret_name')[1].split(';')[0]) if 'ADD CONSTRAINT ck_integ_secret_name' in M else []
 ok('① 받는 키 15(전부터 4 + 새 11) · MAIL 줄(오픈을 막지 않음 · 발신 IP 불필요) · ON CONFLICT DO NOTHING',
    len(PAIRS) == 15 and ('PG', 'TOSS_SECRET_KEY') in PAIRS and ('MAIL', 'SMTP_PASS') in PAIRS and ('AGENT', 'ANTHROPIC_API_KEY') in PAIRS

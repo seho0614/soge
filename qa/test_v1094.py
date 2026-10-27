@@ -35,13 +35,13 @@ ok('① 허용 함수 — 꺼짐 · 통로 · 상한 0 · 상한 닿음', all(x 
 ok('① 사용량 함수 — 상한에 닿으면 agent.enabled off · 경보 AGENT_CAP_REACHED', "SET value = 'off'" in M and "'AGENT_CAP_REACHED', 'CRITICAL'" in M, '')
 ok('① 지우는 문장 없음 · 재실행 안전', not re.search(r'(?<!ON )\b(DELETE|TRUNCATE|DROP TABLE)\b', M) and M.count('ON CONFLICT (') >= 3, '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 154 · 마지막 D116(v10.103 부터 D117 · 155 — test_v1103)', (len(mig), mig[-1] if mig else '') in ((154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill')), f'{len(mig)} · {mig[-1] if mig else ""}')
 
 C = rd('src/modules/agent/agent.controller.ts'); S = rd('src/modules/agent/agent.service.ts'); P = rd('src/modules/agent/agent.provider.ts')
 _routes = re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C)
 ok('② API — GET admin/agent/status · 운영(v10.109 부터 AI 상담 5개 더함 — test_v1109 · v10.111 부터 AI 키 4개 — test_v1111)', ('Get', 'admin/agent/status') in _routes
    and set(_routes) <= {('Get', 'admin/agent/status'), ('Get', 'agent/chat/status'), ('Post', 'agent/chat'), ('Post', 'agent/chat/:id/handoff'), ('Get', 'admin/agent/chats'), ('Get', 'admin/agent/chats/stats'), ('Get', 'admin/agent/chats/:id'),   # v10.131 비율
-                     ('Get', 'admin/agent/key'), ('Put', 'admin/agent/key'), ('Delete', 'admin/agent/key'), ('Post', 'admin/agent/key/test')}
+                     ('Get', 'admin/agent/key'), ('Put', 'admin/agent/key'), ('Delete', 'admin/agent/key'), ('Post', 'admin/agent/key/test'), ('Put', 'admin/agent/model-prices')}   # v10.135 요금표
    and "@Roles('ADMIN', 'SUPER')" in C, str(_routes))
 ok('② 어댑터 — MOCK · 환경 값 없으면 null(v10.104 부터 CLAUDE 는 키가 있을 때만 — test_v1104)', "env.AGENT_PROVIDER === 'MOCK'" in P and 'return null;' in P
    and ('import Anthropic' not in P or "env.AGENT_PROVIDER === 'CLAUDE' && (env.ANTHROPIC_API_KEY ?? '').length > 20" in P), '')
@@ -53,7 +53,7 @@ scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']
 ok('② 화면 SB-ADM-AGT-010 — #/ai-ops/agent · 상태 API(v10.109 부터 AI 상담 목록 2개 더함 — test_v1109 · v10.111 부터 AI 키 4개 — test_v1111)', t and t[0].get('bo') == '#/ai-ops/agent' and t[0]['apis'][0] == 'GET /admin/agent/status'
    and set(t[0]['apis']) <= {'GET /admin/agent/status', 'GET /admin/agent/chats', 'GET /admin/agent/chats/stats', 'GET /admin/agent/chats/{id}',
-                              'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test'}, str(t and t[0]['apis']))
+                              'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test', 'PUT /admin/agent/model-prices'}, str(t and t[0]['apis']))
 ops = rd('web/src/app/admin/AiOps.tsx'); AL = rd('web/src/app/admin/AiLearn.tsx'); W = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
 ok('② AI 운영 하위 탭 「AI 에이전트」 · 다시 내보내기', "{ key: 'agent', label: 'AI 에이전트', screen: 'SB-ADM-AGT-010' }" in ops and "{view === 'agent' && <AgentStatus />}" in ops
    and "export { AgentStatus } from './ailearn/AgentStatus';" in AL, '')

@@ -33,7 +33,7 @@ def term(code):
 P, O, A = term('PRIVACY'), term('OUTSOURCE'), term('ADPERSONAL')
 ok('① 처리방침 — AI 상담 대화 5년 · Anthropic 위탁 · 제6조 국외 이전(가림 · 확인 필요 칸) · 옛 「국외로 보내지 않습니다」 없음',
    '| AI 상담 대화 | **5년** |' in P and '| Anthropic, PBC(미국) | AI 상담 답변' in P and '개인정보 보호법 제28조의8' in P
-   and '〔확인 필요 — Anthropic API 의 데이터 보관 정책〕' in P and '국외로 보내지\n않습니다' not in P, '')
+   and ('〔확인 필요 — Anthropic API 의 데이터 보관 정책〕' in P or '받은 날부터 30일 안에 자동 삭제' in P) and '국외로 보내지\n않습니다' not in P, '')   # v10.135 — 빈칸을 채움(D132)
 ok('① 위탁 안내 — Anthropic 줄 · 제3조 ③ 「AI 기능을 쓸 때에는 위 업체(미국)로 전송」', '| Anthropic, PBC(미국) | AI 답변 · 번역 · 검수 의견 |' in O and 'AI 기능을 쓸 때에는 위' in O and '국외로 보내지 않습니다' not in O, '')
 ok('① 맞춤형 광고 — 설문 답 + 동의 뒤 광고 클릭 · 동의 전 기록 안 씀 · 철회하면 바로 지움 · 옛 「서비스 이용 기록」 없음',
    '관심 성향 설문에 답한 내용' in A and '뒤에 광고를\n누른 기록' in A and '동의하시기 전의 기록' in A and '바로 지우고' in A and '서비스 이용 기록' not in A, '')
@@ -43,8 +43,8 @@ for c, body in (('PRIVACY', P), ('OUTSOURCE', O), ('ADPERSONAL', A)):
 M = rd('prisma/migrations/D131_terms_ai_adpersonal_drafts/migration.sql')
 mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', x)))
 ok('① D131 — 세 글이 terms-text.js 와 같음 · 게시 안 함(PUBLISHED 로 바꾸는 문장 없음) · 지우는 문장 없음 · 169',
-   all(f"$TERM${b}$TERM$" in M for b in (P, O, A)) and "SET status = 'PUBLISHED'" not in M and "'LEGAL_REVIEW'" in M
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) == (169, 'D131_terms_ai_adpersonal_drafts'), f'{len(mig)} · {mig[-1]}')
+   all(f"$TERM${b}$TERM$" in M for b in (O, A)) and (f"$TERM${P}$TERM$" in M or f"$TERM${P}$TERM$" in rd('prisma/migrations/D132_terms_privacy_fill/migration.sql'))   # v10.135 — 처리방침 글은 D132 가 이어 받음 and "SET status = 'PUBLISHED'" not in M and "'LEGAL_REVIEW'" in M
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill')), f'{len(mig)} · {mig[-1]}')
 INV = rd('scripts/verify-invariants.sh')
 ok('① 불변식 SV-T5 — 새 판 초안이 있는 코드는 게시된 옛 판을 견주지 않음', "NOT (status = 'PUBLISHED' AND EXISTS (SELECT 1 FROM terms d WHERE d.code = t.code AND d.status IN ('DRAFT','LEGAL_REVIEW')))" in INV, '')
 ok('① 판 v10.133 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 133), rd('VERSION').strip())
