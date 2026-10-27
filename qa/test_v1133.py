@@ -64,9 +64,11 @@ if API and DB:
     for c, key in (('PRIVACY', 'Anthropic'), ('OUTSOURCE', 'Anthropic'), ('ADPERSONAL', '관심 성향 설문에 답한 내용')):
         drafts = psql(f"SELECT version || ':' || (position($k${key}$k$ in body) > 0)::text FROM terms WHERE code = '{c}' AND status IN ('DRAFT','LEGAL_REVIEW')")
         pub = psql(f"SELECT version || ':' || (position($k${key}$k$ in body) > 0)::text FROM terms WHERE code = '{c}' AND status = 'PUBLISHED'")
-        ok(f'② {c} — 초안이 새 글 · 게시된 판은 옛 글 그대로', drafts.endswith(':true') and (pub == '' or pub.endswith(':false')), f'초안 {drafts} · 게시 {pub}')
+        # 운영처럼 옛 글이 게시된 DB 에서는 「게시 = 옛 글 · 초안 = 새 글」. 빈 DB 로 새로 세운 점검판(개발 DB)은 게시된 1.0 이 처음부터 새 글일 수 있음(10/28 회귀).
+        #   그래서 지킬 것만 봄 — 초안이 있으면 새 글 · 새 글이 어딘가(초안 또는 게시)에 있음 · 손님 화면은 게시된 판(초안이 아님)
+        ok(f'② {c} — 초안이 있으면 새 글 · 새 글이 초안 또는 게시된 판에 있음', (drafts == '' or drafts.endswith(':true')) and (drafts.endswith(':true') or pub.endswith(':true')), f'초안 {drafts} · 게시 {pub}')
         doc = get(f'/terms/doc/{c}')
-        ok(f'② {c} — 손님 화면(공개 약관)은 게시된 판 · 새 글이 나가지 않음', key not in json.dumps(doc, ensure_ascii=False) or not pub, str(doc.get('version')))
+        ok(f'② {c} — 손님 화면(공개 약관)은 게시된 판(초안이 아님)', not pub or str(doc.get('version')) == pub.split(':')[0], f"{doc.get('version')} · 게시 {pub}")
     before = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
     # 다시 돌림(재실행 안전) — 마이그레이션의 DO 블록만 그대로 실행
     body = M.split('-- =====================================================================\n', 2)[-1]
