@@ -31,9 +31,14 @@ for f in ['en.json'] + sorted(os.listdir(os.path.join(M, 'en'))):
     E[f] = flat(json.load(open(os.path.join(M, f if f == 'en.json' else f'en/{f}'), encoding='utf-8')))
 PL = [(f, k, v) for f, d in E.items() for k, v in d.items() if 'plural' in v]
 SHAPE = re.compile(r'\{(\w+), plural, one \{\{\1\} ([A-Za-z]+)\} other \{\{\1\} ([A-Za-z]+)\}\}')
-bad = [(f, k) for f, k, v in PL if not SHAPE.search(v)]
+# v10.134 — 여러 낱말(「{n} unread notification」 · 「{n} required term needs」)도 허용 · 낱말마다 단수 · 복수 짝을 봄
+SHAPE2 = re.compile(r'\{(\w+), plural, one \{\{\1\} ([A-Za-z ]+)\} other \{\{\1\} ([A-Za-z ]+)\}\}')
+IRREG = {('person', 'people'), ('is', 'are'), ('needs', 'need'), ('contacts', 'contact')}
+bad = [(f, k) for f, k, v in PL if not (SHAPE.search(v) or SHAPE2.search(v))]
 ok('① 개수 문장 80곳 이상이 복수형 · 모양이 모두 맞음', len(PL) >= 80 and not bad, f'{len(PL)} · 어긋남 {bad[:3]}')
 pairs = {(m.group(2), m.group(3)) for _, _, v in PL for m in SHAPE.finditer(v)}
+pairs |= {(a, b) for _, _, v in PL for m in SHAPE2.finditer(v) for a, b in zip(m.group(2).split(), m.group(3).split()) if a != b}
+pairs -= IRREG
 wrong = [p for p in pairs if not (p[1] == p[0] + 's' or p[1] == p[0] + 'es' or (p[0].endswith('y') and p[1] == p[0][:-1] + 'ies'))]
 ok('① 단수 · 복수 낱말 짝이 맞음(inquiry · business · reply …)', not wrong, str(wrong))
 left = [(f, k, m.group(0)) for f, d in E.items() for k, v in d.items() if 'plural' not in v

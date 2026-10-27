@@ -1,0 +1,272 @@
+[
+ {
+  "ns": "partner",
+  "key": "biz.notesSrv.brand",
+  "ko": "소재는 서비스 노출 단위가 아니라 신뢰 표시 단위입니다.",
+  "en": "Brand materials are a trust display unit, not a service listing unit.",
+  "proposed": "Locations are a trust display unit, not a service listing unit.",
+  "kind": "WRONG",
+  "reason_ko": "여기서 소재는 등록 소재(지점·위치)인데 Brand materials(광고 소재)로 잘못 옮김"
+ },
+ {
+  "ns": "partner",
+  "key": "perf.consumerNote",
+  "ko": "<b>소비자 확인은 상담을 신청한 회원이 나의공간에서 합니다.</b> 확인 요청 알림이 갑니다 — 비회원 · 옛 신청은 확인 화면이 없어 「고객 확인 대기」로 남습니다.",
+  "en": "<b>The member who made the inquiry confirms it in My page.</b> They receive a confirmation alert — guest and older requests have no confirmation screen and stay “Awaiting customer confirmation”.",
+  "proposed": "<b>The member who made the inquiry confirms it in My Space.</b> They receive a confirmation alert — guest and older requests have no confirmation screen and stay “Awaiting customer confirmation”.",
+  "kind": "WRONG",
+  "reason_ko": "나의공간은 My Space 로 통일인데 My page 로 화면 이름이 다름"
+ },
+ {
+  "ns": "shop",
+  "key": "sec.many",
+  "ko": "많이 찾는 상품",
+  "en": "Most searched",
+  "proposed": "Most ordered",
+  "kind": "WRONG",
+  "reason_ko": "많이 찾는 상품의 기준이 주문 건수인데 Most searched(검색 많은)로 뜻이 달라짐"
+ },
+ {
+  "ns": "shop",
+  "key": "rank.tabs.many",
+  "ko": "많이 찾는 상품",
+  "en": "Most searched",
+  "proposed": "Most ordered",
+  "kind": "WRONG",
+  "reason_ko": "순위 근거가 최근 7일 주문 건수인데 Most searched(검색 많은)로 뜻이 달라짐"
+ },
+ {
+  "ns": "shop",
+  "key": "nav.guide",
+  "ko": "이용안내 · 청약철회",
+  "en": "How it works · Withdrawal",
+  "proposed": "How it works · Order withdrawal",
+  "kind": "AWKWARD",
+  "reason_ko": "청약철회를 Withdrawal 한 단어로 두어 회원 탈퇴·출금으로 오해될 수 있음"
+ },
+ {
+  "ns": "shop",
+  "key": "sec.lowLead",
+  "ko": "주요 성분별 가장 저렴한 상품을 확인해보세요. (30일 기준)",
+  "en": "See the cheapest product for each key ingredient. (per 30 days)",
+  "proposed": "See the cheapest product for each key ingredient. (based on a 30-day supply)",
+  "kind": "AWKWARD",
+  "reason_ko": "30일 기준은 30일 분량 환산 가격이라는 뜻인데 per 30 days 는 기간당 가격처럼 읽힘"
+ },
+ {
+  "ns": "partnerOps",
+  "key": "svcForm.step.MEDICAL.2",
+  "ko": "심의필 등록",
+  "en": "Register review approval",
+  "proposed": "Register approval number",
+  "kind": "AWKWARD",
+  "reason_ko": "「심의필」은 심의 통과 번호(필증)라 Register review approval 은 뜻이 흐림"
+ },
+ {
+  "ns": "order",
+  "key": "returnKind.CANCEL",
+  "ko": "주문 취소",
+  "en": "Cancel order",
+  "proposed": "Order cancellation",
+  "kind": "AWKWARD",
+  "reason_ko": "「{kind} 접수」「{kind} 신청」에 들어가 Submit Cancel order 처럼 어색해짐 — Return · Exchange 처럼 명사형으로"
+ },
+ {
+  "ns": "affiliate",
+  "key": "dash.apply.s2Desc",
+  "ko": "입점 신청과 같은 절차입니다. 한 번 신청하시면 됩니다.",
+  "en": "Same process as the join application. You only need to apply once.",
+  "proposed": "Same process as the seller (store) application. You only need to apply once.",
+  "kind": "AWKWARD",
+  "reason_ko": "입점 신청을 join application 으로 옮겨 뜻이 흐림 — 판매자 입점 신청으로 바꿈"
+ },
+ {
+  "ns": "affiliate",
+  "key": "orderState.PENDING",
+  "ko": "확인 중",
+  "en": "Checking",
+  "proposed": "Pending",
+  "kind": "AWKWARD",
+  "reason_ko": "주문 상태 「확인 중」에 Checking 은 어색함 — 상태 표시는 Pending"
+ },
+ {
+  "ns": "affiliate",
+  "key": "inqState.OPEN",
+  "ko": "확인 중",
+  "en": "Checking",
+  "proposed": "Pending",
+  "kind": "AWKWARD",
+  "reason_ko": "문의 상태 「확인 중」에 Checking 은 어색함 — 상태 표시는 Pending"
+ },
+ {
+  "ns": "affiliate",
+  "key": "settlements.notVerified",
+  "ko": "1원 인증 전",
+  "en": "Not yet verified (1 won)",
+  "proposed": "1-won verification pending",
+  "kind": "AWKWARD",
+  "reason_ko": "괄호 속 (1 won) 이 무슨 뜻인지 알기 어려움 — 1원 인증 전으로 바로 씀"
+ },
+ {
+  "ns": "affiliate",
+  "key": "account.verify.send",
+  "ko": "1원 받기",
+  "en": "Send 1 won",
+  "proposed": "Request 1 won",
+  "kind": "AWKWARD",
+  "reason_ko": "Send 1 won 은 회원이 1원을 보내는 것처럼 읽힘 — 회사가 보내 주는 것을 요청하는 단추"
+ },
+ {
+  "ns": "hlt",
+  "key": "product.sameTitle",
+  "ko": "{name} 의 다른 상품",
+  "en": "More with {name}",
+  "proposed": "Other products with {name}",
+  "kind": "AWKWARD",
+  "reason_ko": "More with {name} 은 무엇이 더 있는지 불분명함"
+ },
+ {
+  "ns": "partner",
+  "key": "shell.nav.cash",
+  "ko": "리드 이용료",
+  "en": "Lead credit",
+  "proposed": "Lead fees",
+  "kind": "MINOR",
+  "reason_ko": "리드 이용료는 다른 곳에서 lead fee 로 씀. credit 은 충전금으로 읽혀 용어 불일치"
+ },
+ {
+  "ns": "partner",
+  "key": "trust.badge.detail.beforeApproval",
+  "ko": "입점 승인 전",
+  "en": "Before store approval",
+  "proposed": "Before partner approval",
+  "kind": "MINOR",
+  "reason_ko": "입점 승인을 store approval 로 옮김. 다른 곳은 Apply to join·partner 로 통일"
+ },
+ {
+  "ns": "partner",
+  "key": "trust.labelNote",
+  "ko": "<b>업종별 라벨</b><br></br>「누적 ○○」 배지 이름은 승인된 서비스가 가장 많은 업종의 라벨을 따릅니다(라벨이 없는 업종이 많으면 「누적 성사」) — 태양광 전용 「누적 시공」 같은 라벨이 다른 업종에 섞여 붙지 않게 합니다.",
+  "en": "<b>Industry-specific labels</b><br></br>“Total ○○” badge names follow the label of the industry with the most approved services (if most industries have no label, “Total closed”) — so a solar-only label like “Total installs” never shows up on other industries.",
+  "proposed": "<b>Industry-specific labels</b><br></br>The ○○ in “N+ ○○ completed” badge names follows the label of the industry with the most approved services (if most industries have no label, “deals”) — so a solar-only label like “projects” never shows up on other industries.",
+  "kind": "MINOR",
+  "reason_ko": "배지 이름 실제 영어(‘{n}+ {label} completed’, projects·deals)와 설명 속 Total closed·Total installs 가 맞지 않음"
+ },
+ {
+  "ns": "partner",
+  "key": "perf.noteSrv",
+  "ko": "계약 성사형은 파트너가 이행을 보고하고 소비자가 확인해야 성사로 잡힙니다. 성사는 확인비용과 무관합니다.",
+  "en": "For contract-based services, a deal counts only after the partner reports fulfilment and the consumer confirms it. Deals are unrelated to view fees.",
+  "proposed": "For contract-closing services, a deal counts only after the partner reports fulfillment and the consumer confirms it. Deals are unrelated to view fees.",
+  "kind": "MINOR",
+  "reason_ko": "fulfilment 영국식 철자, contract-based 와 perf.sub 의 contract-closing 용어 불일치"
+ },
+ {
+  "ns": "partnerOps",
+  "key": "svcForm.form.CONTRACT",
+  "ko": "계약 성사형",
+  "en": "Contract-based",
+  "proposed": "Pay on contract",
+  "kind": "MINOR",
+  "reason_ko": "같은 「계약 성사형」이 form.CONTRACT 에서는 Pay on contract 로 되어 있어 용어를 맞춤"
+ },
+ {
+  "ns": "partnerOps",
+  "key": "services.mxEmpty",
+  "ko": "매트릭스 견적 서비스가 없습니다. 이사처럼 「이사유형 × 물량」으로 견적을 내는 업종은 등록 때 칸을 채웁니다.",
+  "en": "No matrix-quote service. Categories that quote by “move type × volume”, like moving, fill the cells at registration.",
+  "proposed": "No matrix-quote services. Categories that quote by “move type × volume”, like moving, fill the cells at registration.",
+  "kind": "MINOR",
+  "reason_ko": "「서비스가 없습니다」는 복수형이 자연스러움"
+ },
+ {
+  "ns": "order",
+  "key": "cart.priceChanged",
+  "ko": "가격이 변경되었습니다 — 담을 때 <s>{was}</s> → 현재 <b>{now}</b>",
+  "en": "Price changed — when added <s>{was}</s> → now <b>{now}</b>",
+  "proposed": "Price changed — was <s>{was}</s> when added → now <b>{now}</b>",
+  "kind": "MINOR",
+  "reason_ko": "「when added」가 앞에 떠 있어 읽기 어색함"
+ },
+ {
+  "ns": "order",
+  "key": "opt.unitName",
+  "ko": "월 {unit} × {months}개월 분 : {name}",
+  "en": "{unit}/month × {months, plural, one {{months} month} other {{months} months}} : {name}",
+  "proposed": "{unit}/month × {months, plural, one {{months} month} other {{months} months}}: {name}",
+  "kind": "MINOR",
+  "reason_ko": "영어에서는 콜론 앞에 띄어쓰기를 하지 않음"
+ },
+ {
+  "ns": "affiliate",
+  "key": "revenues.memo.return",
+  "ko": "소개몰 주문 {no} 반품 — 제휴수수료 회수",
+  "en": "SogaeMall order {no} returned — commission reclaimed",
+  "proposed": "Sogae Mall order {no} returned — commission reclaimed",
+  "kind": "MINOR",
+  "reason_ko": "다른 곳은 Sogae Mall 인데 여기만 SogaeMall — 이름 통일"
+ },
+ {
+  "ns": "affiliate",
+  "key": "revenues.memo.cancel",
+  "ko": "소개몰 주문 {no} 취소 — 제휴수수료 회수",
+  "en": "SogaeMall order {no} canceled — commission reclaimed",
+  "proposed": "Sogae Mall order {no} canceled — commission reclaimed",
+  "kind": "MINOR",
+  "reason_ko": "다른 곳은 Sogae Mall 인데 여기만 SogaeMall — 이름 통일"
+ },
+ {
+  "ns": "affiliate",
+  "key": "revenues.memo.pending",
+  "ko": "소개몰 주문 {no} 제휴수수료(확정 전)",
+  "en": "SogaeMall order {no} affiliate commission (not yet confirmed)",
+  "proposed": "Sogae Mall order {no} affiliate commission (not yet confirmed)",
+  "kind": "MINOR",
+  "reason_ko": "다른 곳은 Sogae Mall 인데 여기만 SogaeMall — 이름 통일"
+ },
+ {
+  "ns": "hlt",
+  "key": "card.tenant",
+  "ko": "입점",
+  "en": "Partner",
+  "proposed": "Third-party",
+  "kind": "MINOR",
+  "reason_ko": "입점(외부 판매자)을 Partner 로 쓰면 제휴 파트너와 헷갈림"
+ },
+ {
+  "ns": "hlt",
+  "key": "category.hint",
+  "ko": "카테고리는 <b>자격·심의를 거는 축</b>입니다. 무엇을 살지 고르실 때는 <ing>성분별</ing> · <con>고민별</con>이 빠릅니다.",
+  "en": "Categories are <b>used for license and review requirements</b>. To choose what to buy, <ing>By ingredient</ing> · <con>By concern</con> is faster.",
+  "proposed": "Categories are <b>used for license and review requirements</b>. To choose what to buy, browsing <ing>By ingredient</ing> or <con>By concern</con> is faster.",
+  "kind": "MINOR",
+  "reason_ko": "두 항목을 묶었는데 is faster 로 주어와 동사가 맞지 않음"
+ },
+ {
+  "ns": "hlt",
+  "key": "category.totalPage",
+  "ko": "전체 {n}개 · 한 쪽입니다.",
+  "en": "{n} total · single page.",
+  "proposed": "{n} total · all on one page.",
+  "kind": "MINOR",
+  "reason_ko": "single page. 만으로는 「한 쪽에 다 있음」 뜻이 약함"
+ },
+ {
+  "ns": "hlt",
+  "key": "product.exchangeFeeVal",
+  "ko": "왕복 {amt} (단순 변심 · 잘못 주문 시 신청 때 결제 · 하자 · 오배송은 무료)",
+  "en": "Round trip {amt} (paid when requesting, for change of mind or ordering mistakes · free for defects or wrong items)",
+  "proposed": "Round trip {amt} (for change of mind or ordering mistakes, paid when requesting · free for defects or wrong items)",
+  "kind": "MINOR",
+  "reason_ko": "쉼표 위치 때문에 「신청 때 결제」 조건이 흐리게 읽힘"
+ },
+ {
+  "ns": "hlt",
+  "key": "guide.preShipVal",
+  "ko": "내 주문에서 바로 접수됩니다",
+  "en": "Accepted immediately from My orders",
+  "proposed": "You can request it right away in My orders",
+  "kind": "MINOR",
+  "reason_ko": "Accepted immediately from 은 어색함 — 내 주문에서 바로 신청 가능"
+ }
+]

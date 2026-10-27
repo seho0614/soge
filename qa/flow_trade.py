@@ -340,15 +340,22 @@ def t2(b, prev):
         #   안내가 안 뜸(10/23 한 번 · 40/90). → 다 붙을 때까지 기다리고, 그래도 서버에 신청이 안 갔으면(DB 에 행 없음) 한 번만 다시 누름(기록에 남김).
         try: pg.wait_for_load_state('networkidle', timeout=20000)
         except Exception: pass
-        tries = 0
+        tries = 0; resp = ['-']
         def submit():
             pg.fill('main form.auth input[name=bizRegNo]', BRN); pg.fill('main form.auth input[name=companyName]', COMP); pg.fill('main form.auth input[name=ceoName]', NAME)
-            pg.click('main form.auth button.cta-primary')
-            return until(lambda: one(txt(pg, 'main .result .ok-note')) or one(txt(pg, 'main form.auth .form-error')), 25) or ''
+            # v10.134 — 안내는 신청 응답 뒤 화면 새로 고침(router.refresh · 전환)이 끝나야 그려짐. 점검판이 바쁘면 25초를 넘겨
+            #   신청은 들어갔는데 안내만 못 본 실패가 났음(10/23 · 10/27 · 40/90). → 서버 응답을 먼저 기다리고(60초) 안내는 60초까지.
+            try:
+                with pg.expect_response(lambda r: '/api/v1/businesses' in r.url and r.request.method == 'POST', timeout=60000) as ri:
+                    pg.click('main form.auth button.cta-primary')
+                resp[0] = ri.value.status
+            except Exception:
+                resp[0] = '응답 없음'
+            return until(lambda: one(txt(pg, 'main .result .ok-note')) or one(txt(pg, 'main form.auth .form-error')), 60) or ''
         msg = submit(); tries += 1
         if not msg and q(f"select count(*) from businesses where account_id='{S['aid']}'") == '0':
             msg = submit(); tries += 1
-        return '신청이 접수되었습니다' in msg, f'안내 「{msg[:50]}」 · 「{one(txt(pg, "main .result .stub-note"))[:44]}」 · 누른 횟수 {tries}(2 = 첫 번째는 화면 준비 전이라 서버에 안 감) · 사업장 주소는 비워 둠(「주소 검색」이 바깥 서비스(다음 우편번호)를 불러 누르지 않음 · 직접 입력 칸은 읽기 전용)'
+        return '신청이 접수되었습니다' in msg, f'안내 「{msg[:50]}」 · 서버 응답 {resp[0]} · 「{one(txt(pg, "main .result .stub-note"))[:44]}」 · 누른 횟수 {tries}(2 = 첫 번째는 화면 준비 전이라 서버에 안 감) · 사업장 주소는 비워 둠(「주소 검색」이 바깥 서비스(다음 우편번호)를 불러 누르지 않음 · 직접 입력 칸은 읽기 전용)'
     R.do('사업자등록번호 · 상호 · 대표자명을 채우고 「사업자 인증 신청」을 누름 → 「신청이 접수되었습니다」', '화면', s5)
 
     def s6():
