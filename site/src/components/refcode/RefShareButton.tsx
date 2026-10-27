@@ -19,8 +19,8 @@ import { useTranslations } from 'next-intl';
 import { CopyLink } from './CopyLink';
 import type { ApiErr, RefCode, RefQuota } from './types';
 import { useFmt } from '@/lib/useFmt';
+import { useTossClientKey } from '@/lib/useTossClientKey';
 
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 type TossPaymentsFn = (clientKey: string) => {
   requestPayment: (method: string, params: Record<string, unknown>) => Promise<unknown>;
@@ -73,6 +73,7 @@ type View =
 
 export function RefShareButton({ base, listingId }:
   { base: string; listingId?: string; identityVerified?: boolean }) {
+  const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const t = useTranslations('refcode');
   const f = useFmt();
   const won = (n: number) => f.won(n);
@@ -187,7 +188,7 @@ export function RefShareButton({ base, listingId }:
             <p className="rc-note">{t.rich('button.stubNote', { b: (c) => <b>{c}</b> })}</p>
           )}
           <div className="rc-act">
-            <button type="button" className="rc-btn" disabled={busy} onClick={() => void pay(view.q)} data-refshare-paybtn="1">
+            <button type="button" className="rc-btn" disabled={!keyReady || busy} onClick={() => void pay(view.q)} data-refshare-paybtn="1">
               {busy ? t('button.paying') : CLIENT_KEY ? t('button.payBtn', { price: won(view.q.extraCodePrice) }) : t('button.payBtnStub', { price: won(view.q.extraCodePrice) })}
             </button>
             <a className="rc-btn ghost" href="/my/subscription/upgrade">{t('button.plans')}</a>

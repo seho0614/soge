@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useFmt } from '@/lib/useFmt';
 import { ymdKst } from '@/lib/format';
 import type { SubDetail } from './SubscriptionManage';
+import { useTossClientKey } from '@/lib/useTossClientKey';
 
 /**
  * SB-MYP-SUB-010 요금제 고르기 · 구독 결제 (v10.27 · G-189 · 10/8 답 ③ 「3 맞음」)
@@ -18,7 +19,6 @@ import type { SubDetail } from './SubscriptionManage';
  */
 export interface PlanLite { code: string; name: string; nameKo?: string; monthlyPrice: number; lines?: { k: string; t: string }[]; note?: string }
 
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 type TossPaymentsFn = (clientKey: string) => { requestPayment: (m: string, p: Record<string, unknown>) => Promise<unknown> };
 declare global { interface Window { TossPayments?: TossPaymentsFn } }
@@ -40,6 +40,7 @@ const ro = (n: string) => { const c = n.charCodeAt(n.length - 1) - 0xac00; if (c
 type Kind = 'NEW' | 'UP' | 'DOWN';
 
 export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[]; detail: SubDetail | null; canSubscribe: boolean }) {
+  const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const router = useRouter();
   const t = useTranslations('billing.plan');
   const tc = useTranslations('billing.common');
@@ -160,7 +161,7 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
               <div className="note warn">{t.rich('refundWarn', { b: (c) => <b>{c}</b> })}</div>
               <label className="agree-line"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} data-plan-agree /> {t('agree')} <b className="warn-text">{t('required')}</b></label>
               <div className="invite-actions">
-                <button type="button" className="btn-primary" disabled={busy || !agree} onClick={() => void pay(to)} data-plan-pay>
+                <button type="button" className="btn-primary" disabled={!keyReady || busy || !agree} onClick={() => void pay(to)} data-plan-pay>
                   {busy ? t('paying') : t('payBtn', { amount: won(to.monthlyPrice) })}
                 </button>
                 <button type="button" className="btn ghost" onClick={() => setPick(null)}>{tc('close')}</button>

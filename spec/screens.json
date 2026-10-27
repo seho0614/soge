@@ -698,6 +698,7 @@
     "GET /me/referral-codes",
     "GET /me/referral-codes/quota",
     "POST /referral-codes",
+    "GET /site-settings/payment",
     "GET /site-settings/public",
     "GET /listings/{id}"
    ],
@@ -777,6 +778,7 @@
     "POST /attribution/touch",
     "GET /me/referral-codes/quota",
     "POST /referral-codes",
+    "GET /site-settings/payment",
     "GET /site-settings/public",
     "GET /subscription-plans",
     "GET /listings/{id}/reviews",
@@ -1028,6 +1030,7 @@
     "POST /me/subscription/resume",
     "POST /referral-codes",
     "POST /subscriptions",
+    "GET /site-settings/payment",
     "GET /me/subscription/refund-eligible",
     "POST /me/subscription/refund",
     "DELETE /subscriptions/reservation"
@@ -1048,7 +1051,8 @@
    "gates": [],
    "apis": [
     "GET /subscription-plans",
-    "POST /subscriptions"
+    "POST /subscriptions",
+    "GET /site-settings/payment"
    ],
    "nav": "SB-MYP-SUB-010",
    "new": true
@@ -1631,12 +1635,15 @@
     "PUT /admin/weather/key",
     "DELETE /admin/weather/key",
     "PATCH /admin/weather",
-    "POST /admin/weather/test"
+    "POST /admin/weather/test",
+    "GET /admin/integration-keys",
+    "PUT /admin/integration-keys/{code}/{name}",
+    "DELETE /admin/integration-keys/{code}/{name}"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
    "new": true,
-   "note": "발신 IP 심사 2~4주. 키 값은 Secrets Manager 에 두고 여기엔 등록 여부만"
+   "note": "발신 IP 심사 2~4주. 키는 「연동 키」 구역에서 암호화 저장(v10.128 · 끝 4자리만) — 이 화면 키가 먼저, 없으면 .env"
   },
   {
    "id": "SB-AIS-PRF-010",
@@ -2607,6 +2614,7 @@
    ],
    "apis": [
     "POST /health/orders/{no}/pay",
+    "GET /site-settings/payment",
     "POST /health/orders/{no}/pay/confirm",
     "POST /webhooks/toss"
    ],
@@ -2712,7 +2720,8 @@
     "GET /me/health/returns",
     "POST /me/health/returns",
     "POST /me/health/returns/{id}/fee/pay",
-    "POST /me/health/returns/{id}/fee/confirm"
+    "POST /me/health/returns/{id}/fee/confirm",
+    "GET /site-settings/payment"
    ],
    "nav": "SB-HLT-MYO-020"
   },
@@ -2730,7 +2739,8 @@
    "apis": [
     "GET /me/health/returns",
     "POST /me/health/returns/{id}/fee/pay",
-    "POST /me/health/returns/{id}/fee/confirm"
+    "POST /me/health/returns/{id}/fee/confirm",
+    "GET /site-settings/payment"
    ],
    "nav": "SB-MYP-DSH-010"
   },
@@ -3951,6 +3961,7 @@
     "GET /partner/fees",
     "GET /partner/cash",
     "POST /partner/cash/charges",
+    "GET /site-settings/payment",
     "POST /partner/cash/charges/confirm",
     "PUT /partner/cash/auto",
     "POST /partner/cash/refunds"

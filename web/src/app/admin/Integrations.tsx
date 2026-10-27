@@ -5,6 +5,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { codeList } from '../../lib/codes';
 import { MapKeys } from './MapKeys';
 import { WeatherKeys } from './WeatherKeys';
+import { IntegrationKeys } from './IntegrationKeys';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -26,8 +27,9 @@ interface Integration {
  * 6종 중 5종이 발신 IP 화이트리스트를 요구하고 심사에 2~4주 걸립니다.
  * 코드보다 IP 가 먼저 필요하므로, 여기서 IP 등록 상태를 추적합니다.
  *
- * ★ 키 값은 이 화면에서 다루지 않습니다. Secrets Manager 에 넣고
- *   "등록했다"만 체크합니다 — DB 에 키가 들어가면 백업에 전부 퍼집니다.
+ * ★ v10.128(D128 · docs/192) — 키는 아래 「연동 키」 구역에서 넣습니다(암호화 저장 · 끝 4자리만 · 이 화면 키가 먼저, 없으면 .env).
+ *   DB 에는 암호문만 — 열쇠(ENC_KEY)는 .env 에만 있어 백업 · 덤프에는 암호문만 남습니다.
+ *   「키 등록 완료」 체크는 비공개 키를 넣으면 저절로 켜집니다(.env 로 넣은 경우는 전처럼 손으로).
  */
 export function Integrations() {
   const [rows, setRows] = useState<Integration[]>([]);
@@ -90,7 +92,7 @@ export function Integrations() {
           </tr>
         ))}</tbody>
       </table></div>
-      <div className="ad-nt info"><b>키는 이 화면에 나오지 않습니다.</b> 환경변수로만 다루며, DB 에 넣으면 덤프 · 백업 · 로그를 따라 나갑니다. 여기서는 등록 여부만 봅니다. 카카오맵 키 2개 · 기상청 날씨 키 1개만 예외 — 맨 아래 「카카오맵 키」 · 「날씨 키」(암호화 저장 · 끝 4자리만 보임).</div>
+      <div className="ad-nt info"><b>키는 아래 「연동 키」에서 넣습니다.</b> 암호화해 저장하고 끝 4자리만 보입니다 — DB 백업에는 암호문만 남습니다. 이 화면 키가 먼저, 없으면 .env. 카카오맵 · 날씨 키는 맨 아래 각 구역.</div>
       <div className="ad-nt info"><b>IP 등록 2~4주가 가장 긴 항목입니다.</b> 계약을 먼저 걸어 두시는 편이 낫습니다.</div>
       <h2 className="ad-s2">연동별 설정 <em>{rows.length}</em> <small className="dim">개발에만 — 상태 · 사업자 · IP · 키 등록</small></h2>
 
@@ -178,10 +180,8 @@ export function Integrations() {
         ))}
       </ul>
 
-      <p className="hint">
-        <b>키 값은 여기서 다루지 않습니다.</b> Secrets Manager 에 넣은 뒤 체크만 하십시오 —
-        DB 에 키가 들어가면 백업·복제본에 전부 퍼집니다. (카카오맵 키 2개 · 기상청 날씨 키 1개만 예외 — 아래 구역 · 암호화 저장)
-      </p>
+      {/* v10.128 (D128 · docs/192) — 결제 · 계좌 · 국세청 · 중개사 · 세금계산서 · 메일 · 본인인증 · 전자계약 · 알림톡 · 안심번호 키(2026-10-27 대표 승인) */}
+      <IntegrationKeys />
 
       {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
       <MapKeys />

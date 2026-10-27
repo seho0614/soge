@@ -423,6 +423,13 @@ function LangList() {
   const a = useAct();
   const toggle = (l: Lang) => void a.run('l:' + l.code, () => api(`/admin/i18n/langs/${l.code}`, { method: 'POST', body: JSON.stringify({ isActive: !l.isActive }) }),
     r.reload, l.isActive ? '껐습니다.' : '켰습니다.');
+  /* v10.128 — 다국어 전체 스위치(i18n.enabled)를 이 화면에서 — 전에는 켜는 단추가 없어 언어를 켜도 손님 화면에 언어 단추가 나오지 않았음 */
+  const setAll = (on: boolean) => {
+    if (on && !window.confirm('다국어를 켤까요? 1분 안에 손님 화면 머리에 언어 단추가 나옵니다. 승인하지 않은 번역은 한국어 그대로 보입니다.')) return;
+    if (!on && !window.confirm('다국어를 끌까요? 1분 안에 손님 화면이 한국어만 보입니다.')) return;
+    void a.run('all', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'i18n.enabled', value: on ? 'on' : 'off' }) }),
+      r.reload, on ? '다국어를 켰습니다 — 손님 화면에 1분 안에 반영됩니다.' : '다국어를 껐습니다 — 손님 화면에 1분 안에 반영됩니다.');
+  };
   if (r.error) return <ErrorView error={r.error} onRetry={r.reload} />;
   if (!r.data) return <p className="muted">불러오는 중…</p>;
   const d = r.data;
@@ -435,7 +442,13 @@ function LangList() {
         <div><b>{d.items.filter((x) => x.isActive).length}</b><span>켜진 언어</span></div>
         <div><b>{n(d.items.reduce((s, x) => s + x.translations, 0))}</b><span>번역 줄</span></div>
       </div>
-      <p className="hint">다국어 전체 켜기는 정책(site_settings)의 i18n.enabled 입니다 — 오픈 뒤 켭니다(docs/148). 여기서 켠 언어만 손님이 고를 수 있습니다. 한국어(원문)는 끌 수 없습니다. 아랍어는 화면 좌우 반전 작업 뒤에 켭니다.</p>
+      <p data-i18n-all>
+        {d.enabled
+          ? <button className="btn-sm ghost" disabled={a.busy === 'all'} onClick={() => setAll(false)}>다국어 끄기</button>
+          : <button className="btn-sm" disabled={a.busy === 'all'} onClick={() => setAll(true)}>다국어 켜기</button>}
+        {' '}<span className="muted">{d.enabled ? '손님 화면 머리에 언어 단추가 나옵니다.' : '꺼져 있으면 아래에서 언어를 켜도 손님 화면은 한국어만 보입니다.'}</span>
+      </p>
+      <p className="hint">손님이 언어를 고르려면 <b>다국어 켜기</b>와 <b>그 언어 켜기</b>가 모두 필요합니다(반영 1분 안). 여기서 켠 언어만 손님이 고를 수 있습니다. 한국어(원문)는 끌 수 없습니다. 아랍어는 화면 좌우 반전 작업 뒤에 켭니다.</p>
       <Flash msg={a.msg} err={a.err} />
       <table className="tbl" data-i18n-langs>
         <thead><tr><th>코드</th><th>이름</th><th>그 언어로</th><th>번역 줄</th><th>상태</th><th></th></tr></thead>

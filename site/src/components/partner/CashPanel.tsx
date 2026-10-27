@@ -13,8 +13,8 @@ import { useRouter } from 'next/navigation';
 import { api } from './act';
 import { useTranslations } from 'next-intl';
 import { useFmt } from '@/lib/useFmt';
+import { useTossClientKey } from '@/lib/useTossClientKey';
 
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 type TossPaymentsFn = (clientKey: string) => { requestPayment: (m: string, p: Record<string, unknown>) => Promise<unknown> };
 let sdk: Promise<TossPaymentsFn> | null = null;
@@ -34,6 +34,7 @@ function loadToss(): Promise<TossPaymentsFn> {
 const useWon = () => { const fm = useFmt(); return (n: number | null | undefined) => fm.won(n ?? 0); };
 
 export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: number; max: number; room: number; bonusRate: number; canMoney: boolean }) {
+  const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const t = useTranslations('partnerOps.cashPanel');
   const won = useWon();
   const router = useRouter();
@@ -79,7 +80,7 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
           <input className="pt-input" type="number" inputMode="numeric" min={min} max={max} step={1000} value={amount}
                  onChange={(e) => setAmount(Math.floor(Number(e.target.value) || 0))} style={{ width: 140 }} />
         </label>
-        <button type="button" className="pt-bp" onClick={() => void charge()} disabled={busy || amount < min || amount > max || amount > room}>
+        <button type="button" className="pt-bp" onClick={() => void charge()} disabled={!keyReady || busy || amount < min || amount > max || amount > room}>
           {busy ? t('paying') : t('chargeBtn', { amt: won(amount) })}
         </button>
       </div>

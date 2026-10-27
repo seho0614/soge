@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { needsLogin } from './util';
 import { useFmt } from '@/lib/useFmt';
+import { useTossClientKey } from '@/lib/useTossClientKey';
 
 /** 토스 결제창 클라이언트 키 — PayForm 과 같은 값. 없으면 시험 결제(스텁)입니다 */
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 /** 교환 배송비는 카드 · 계좌이체만 받습니다(서버 FeePayDto · hlt_exchange_fees CHECK) — 가상계좌는 입금을 기다려야 해 받지 않습니다 */
 /* v10.99 — 화면 이름은 사전 order.payMethod.* · toss 는 결제창에 보내는 값이라 한국어 그대로 */
@@ -53,6 +53,7 @@ export async function confirmExchangeFee(id: string, paymentKey: string, amount:
  * 반려되거나 회사 사정으로 판정되면 서버가 돌려드립니다(PG 취소).
  */
 export function ExchangeFeePay({ returnId, amount, onPaid }: { returnId: string; amount: number; onPaid?: (note: string) => void }) {
+  const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const t = useTranslations('order');
   const f = useFmt();
   const tx: FeeTx = { server: t('common.confirmReqFail'), rejected: t('common.notApproved'), approved: t('fee.approved') };
@@ -123,7 +124,7 @@ export function ExchangeFeePay({ returnId, amount, onPaid }: { returnId: string;
         <p className="notice" role="note">{t.rich('common.stubNotice', { b: (c) => <b>{c}</b> })}</p>
       )}
       {err && <p className="form-error" role="alert">{err}</p>}
-      <button type="button" className="cta-primary" disabled={pending} onClick={pay}>
+      <button type="button" className="cta-primary" disabled={!keyReady || pending} onClick={pay}>
         {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: f.won(amount, '-') }) : t('common.stubBtn', { amount: f.won(amount, '-') })}
       </button>
       <p className="hint">{t('fee.note')}</p>

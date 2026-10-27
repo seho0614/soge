@@ -4,14 +4,15 @@ import { AssumeName } from './switches';
  * v10.44 (2026-10-15 · 외부 연동 틀 통일) — 외부 연동 목록표
  *
  * 연동 하나를 「어디서 · 무엇으로 · 어떻게 켜고 끄는지」 한 줄로 적습니다.
- * **실행 중에는 읽지 않습니다**(동작에 영향 없음). 읽는 곳은 둘입니다.
+ * 동작을 바꾸지 않습니다. 읽는 곳은 셋입니다.
  *   - 사람: 새 연동을 붙일 때 이 표부터 봅니다(docs/93 「새 연동 붙이는 법」).
  *   - 점검: scripts/check-integrations.ts 가 이 표 ↔ DB integrations 표 ↔ deploy/aws/env.production.example 을 대조합니다
  *           (통합 검정 verify-all.sh). 셋 중 하나만 바꾸면 검정이 알려 줍니다.
+ *   - 운영 화면: v10.128(D128) 「연동 키」 목록이 연동 이름 · 어댑터(REAL · STUB · NONE)를 이 표에서 씁니다(secret.service.ts).
  *
  * 칸
- *   code         integrations.code (DB 줄이 없는 연동은 dbRow: false — 메일은 notify.* 설정으로 켭니다)
- *   secretEnv    키 환경 변수 — integrations.secret_key_name 과 같아야 합니다(값은 .env 에만)
+ *   code         integrations.code (DB 줄이 없는 연동은 dbRow: false · v10.128 부터 메일도 DB 줄 — 켜는 것은 그대로 notify.* 설정)
+ *   secretEnv    키 환경 변수 — integrations.secret_key_name 과 같아야 합니다(값은 운영 화면 「연동 키」 → 없으면 .env · v10.128)
  *   otherEnv     그 밖의 환경 변수(주소 · 경로 · 제한 시간). 업체를 정할 때 채우는 것들
  *   assume       간주 스위치 assume.<이름> (없으면 null)
  *   adapter      REAL = 실제로 부르는 구현 있음 · STUB = 스텁만(업체 형식 미정) · NONE = 아직 없음
@@ -52,7 +53,7 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     assume: 'broker', adapter: 'REAL', files: ['src/modules/partner/broker-lookup.provider.ts'], doc: 'broker-lookup.provider.ts 머리말' },
   { code: 'ETAX', name: '전자세금계산서', dbRow: true, secretEnv: 'ETAX_KEY', otherEnv: ['ETAX_URL', 'ETAX_TIMEOUT_MS'], assume: 'etax', adapter: 'REAL',
     files: ['src/modules/etax/etax.adapter.ts', 'src/modules/etax/etax.http.ts', 'src/modules/etax/etax.assume.ts'], doc: 'docs/전자세금계산서_연동절차.md' },
-  { code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: false, secretEnv: 'SMTP_PASS',
+  { code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: true, secretEnv: 'SMTP_PASS',
     otherEnv: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'MAIL_FROM', 'MAIL_FROM_NAME', 'SMTP_TIMEOUT_MS'], assume: null, adapter: 'REAL',
     files: ['src/common/mail/smtp.ts', 'src/common/mail/mail.service.ts'], doc: 'docs/92 5 ~ 8절' },
   /* v10.46 (D099) — 키는 운영 화면(외부 연동 › 카카오맵 키)에서 넣어 암호화 저장이 먼저, 없으면 .env. 간주 스위치 대신 map.enabled(처음 off) */

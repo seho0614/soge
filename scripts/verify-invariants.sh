@@ -506,8 +506,9 @@ n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 #   v10.46(D099) 지도 · 주소 좌표(MAP · 카카오맵)를 더해 10종.
 #   v10.49(D103) 날씨(WEATHER · 기상청 단기예보)를 더해 11종.
 #   v10.111(D122) AI(AGENT · Anthropic — 키를 운영 화면에서)를 더해 12종.
+#   v10.128(D128) 메일(MAIL · SES SMTP — 키를 운영 화면에서 받으려고 줄을 둠)을 더해 13종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "12" ]; then echo "  ok   INTG  연동 12종 등록"; pass=$((pass+1));
+if [ "$n" = "13" ]; then echo "  ok   INTG  연동 13종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
 
 # v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장
@@ -521,11 +522,26 @@ run  "MAP-4 키는 암호문으로 저장 · 꺼내면 원래 값 · 다른 연�
     IF EXISTS (SELECT 1 FROM integration_secrets WHERE position(convert_to('invcheckJsKey', 'UTF8') IN value_enc) > 0) THEN RAISE EXCEPTION 'plaintext'; END IF;
     IF (SELECT last4 FROM integration_secrets WHERE integration_code='MAP' AND name='KAKAO_JS_KEY') <> '6789' THEN RAISE EXCEPTION 'last4'; END IF;
     BEGIN
-      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','TOSS_SECRET_KEY','\\x00','0000');
+      INSERT INTO integration_secrets(integration_code,name,value_enc,last4) VALUES ('PG','KAKAO_REST_KEY','\\x00','0000');   -- v10.128 TOSS_SECRET_KEY 는 받는 키가 됨 · 짝이 안 맞는 키로
       RAISE EXCEPTION 'other-key-accepted';
     EXCEPTION WHEN check_violation THEN NULL; END;
   END \$\$; ROLLBACK;"
 run  "MAP-5 키 형식이 아니면 거절(INTEG_SECRET_FORMAT)" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('MAP','KAKAO_REST_KEY','짧음', NULL); ROLLBACK;"
+# v10.128 (D128 · docs/192) — 외부 연동 키를 운영 화면에서: 결제 시크릿 키 형식 · 공개 키 표시 · 비공개 키를 넣으면 「키 등록」
+run  "KEY-1 결제 시크릿 키 자리에 클라이언트 키는 거절" FAIL "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef'; SELECT * FROM fn_integ_secret_set('PG','TOSS_SECRET_KEY','test_ck_invcheck0123456789', NULL); ROLLBACK;"
+run  "KEY-2 결제 키 저장 · 클라이언트 키는 공개 · 시크릿 키를 넣으면 키 등록" PASS "BEGIN; SET LOCAL app.enc_key='inv-check-enc-key-0123456789abcdef';
+  UPDATE integrations SET secret_registered=false WHERE code='PG';
+  SELECT * FROM fn_integ_secret_set('PG','TOSS_CLIENT_KEY','test_ck_invcheck0123456789', NULL);
+  DO \$\$ BEGIN
+    IF NOT (SELECT is_public FROM integration_secrets WHERE integration_code='PG' AND name='TOSS_CLIENT_KEY') THEN RAISE EXCEPTION 'public'; END IF;
+    IF (SELECT secret_registered FROM integrations WHERE code='PG') THEN RAISE EXCEPTION 'client-registers'; END IF;
+  END \$\$;
+  SELECT * FROM fn_integ_secret_set('PG','TOSS_SECRET_KEY','test_sk_invcheck0123456789', NULL);
+  DO \$\$ BEGIN
+    IF (SELECT is_public FROM integration_secrets WHERE integration_code='PG' AND name='TOSS_SECRET_KEY') THEN RAISE EXCEPTION 'secret-public'; END IF;
+    IF NOT (SELECT secret_registered FROM integrations WHERE code='PG') THEN RAISE EXCEPTION 'registered'; END IF;
+    IF fn_integ_secret_get('PG','TOSS_SECRET_KEY') <> 'test_sk_invcheck0123456789' THEN RAISE EXCEPTION 'roundtrip'; END IF;
+  END \$\$; ROLLBACK;"
 
 # v10.47 (D100 · docs/98) — 우리동네 맛집: 처음엔 「현재 위치로」 꺼짐 · 공개 보기에 작성자 · 연락처 칸 없음 · 맛집 글은 게시판을 바꿀 수 없음 · 맛집 글만 가게에 붙음
 eq   "FOOD-1 「현재 위치로」(map.food_geolocation) 처음 off"   "SELECT value FROM site_settings WHERE key='map.food_geolocation'" off

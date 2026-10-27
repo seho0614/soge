@@ -6,9 +6,9 @@ import { codeText, needsLogin, PAY_METHODS, serverPayMethod } from './util';
 import { afterConfirmUrl, confirmPay } from './PayConfirm';
 import type { HltPayment } from './types';
 import { useFmt } from '@/lib/useFmt';
+import { useTossClientKey } from '@/lib/useTossClientKey';
 
 /** 토스 결제창 클라이언트 키 — 빌드 때 들어갑니다. 없으면 시험 결제(스텁)로 진행합니다 */
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
 /** 토스페이먼츠 결제창 SDK v1 (공식) */
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 /** 우리 수단 코드 → 결제창 수단 이름 */
@@ -43,6 +43,7 @@ function loadToss(): Promise<TossPaymentsFn> {
  */
 export function PayForm({ orderNo, total, initialMethod, buyerName }:
   { orderNo: string; total: number; initialMethod: string; buyerName?: string }) {
+  const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const t = useTranslations('order');
   const f = useFmt();
   const router = useRouter();
@@ -122,7 +123,7 @@ export function PayForm({ orderNo, total, initialMethod, buyerName }:
         </p>
       )}
       {err && <p className="form-error" role="alert">{err}</p>}
-      <button type="button" className="cta-primary" disabled={pending} onClick={pay}>
+      <button type="button" className="cta-primary" disabled={!keyReady || pending} onClick={pay}>
         {pending ? t('common.requesting') : CLIENT_KEY ? t('common.payBtn', { amount: f.won(total, '-') }) : t('common.stubBtn', { amount: f.won(total, '-') })}
       </button>
     </>
