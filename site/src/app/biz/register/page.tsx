@@ -9,6 +9,7 @@ import { RegisterTabs } from '@/components/RegisterTabs';
 import { BackBar } from '@/components/common/BackBar';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('forms.bizPage'))('title') };
@@ -53,7 +54,7 @@ export default async function BizRegisterPage() {
           <h1>{t('h')}</h1>
           {/* v10.27 (G-201) — 무엇을 올리는 곳인지, 사업자 인증은 어디서 하는지 첫 줄에 적습니다(주소는 바꾸지 않음 — 이미 쓰는 링크 보존). */}
           <p data-biz-reg-note>
-            {t.rich('note', { name: gname, link: (c) => <Link href="/my/business">{c}</Link> })}
+            {withCodes(t.rich('note', { name: gname, link: (c) => <Link href="/my/business">{c}</Link> }))}
           </p>
         </div></div>
         <div className="gw-regwrap">

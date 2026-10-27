@@ -16,7 +16,7 @@ export const I18N_FIELDS: Record<string, string[]> = {
   UI_MESSAGE: ['message'], AD_PLACEMENT: ['title', 'body', 'cta'],
 };
 /** SETTING 대상으로 번역하는 설정 키 — DB 함수 fn_i18n_source(D125)와 같음 */
-export const I18N_SETTING_KEYS = ['legal.intermediary_notice', 'legal.direct_notice'];
+export const I18N_SETTING_KEYS = ['legal.intermediary_notice', 'legal.direct_notice', 'footer.company_name'];   // v10.132 (D130) 바닥줄 상호
 /** 손님 화면에 나가는 상태 — 승인 · 자동 승인 · 기계 번역(게시판 글 · 댓글만 · 3-3) */
 const LIVE = ['APPROVED', 'AUTO_APPROVED', 'MACHINE'];
 const liveOf = (type: string) => (['POST', 'COMMENT'].includes(type) ? LIVE : ['APPROVED', 'AUTO_APPROVED']);   // 운영 글 · 약관은 사람 · 자동 승인만

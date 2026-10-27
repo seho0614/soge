@@ -8,6 +8,7 @@
  */
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 /** v10.101 (2-5b) — 등록 · 수정 양식 사전(forms.*) */
 export type FormsT = ReturnType<typeof useTranslations<'forms'>>;
@@ -66,7 +67,7 @@ export function CategoryBlock({ gwans, cats, gwan, cat, onGwan, onCat, gradeLabe
           ))}
         </select>
       </Field>
-      <Field label={t('grade')} auto hint={<>{t.rich('gradeHint', { b: (c) => <b>{c}</b> })}</>}>
+      <Field label={t('grade')} auto hint={<>{withCodes(t.rich('gradeHint', { b: (c) => <b>{c}</b> }))}</>}>
         <div className={`w1-in gradebox${cur ? ' on' : ''}`} aria-live="polite">{cur ? (gradeLabels[cur.gradeCode] ?? cur.gradeCode) : t('gradeEmpty')}</div>
       </Field>
     </div>

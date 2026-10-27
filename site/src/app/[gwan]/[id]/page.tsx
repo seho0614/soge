@@ -19,6 +19,7 @@ import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import { getFmt } from '@/lib/getFmt';
 import { isGwanKey } from '@/i18n/keys';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -127,7 +128,7 @@ export default async function DetailPage({ params }: Props) {
               <div className="gw-dtsub">{item.summary ? <>{item.summary}<br /></> : null}{[reg, item.categoryName].filter(Boolean).join(' · ')}
                 {!realty && price && item.desiredFee != null && <><br />{t('feeValue', { v: mw(item.desiredFee) })}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</>}
                 {!realty && !price && item.feeBearerLabel && <><br />{t('feeValue', { v: item.feeBearerLabel })}</>}
-                {realty && <><br />{t('realtyNote')}</>}</div>
+                {realty && <><br />{withCodes(t('realtyNote'))}</>}</div>
               <div className="gw-dtmeta">
                 <span>{t('views', { n: item.viewCount.toLocaleString('ko-KR') })}</span>
                 <span>{t('likes', { n: item.likeCount.toLocaleString('ko-KR') })}</span>
@@ -164,7 +165,7 @@ export default async function DetailPage({ params }: Props) {
               <dt>{t('specCat')}</dt><dd>{item.categoryName}</dd>
               <dt>{t('specRegion')}</dt><dd>{reg || t('negotiable')}</dd>
               <dt>{t('specAmount')}</dt><dd>{item.dealAmount != null ? mw(item.dealAmount) : t('negotiableAmount')}</dd>
-              <dt>{t('specFee')}</dt><dd>{fee}</dd>
+              <dt>{t('specFee')}</dt><dd>{withCodes(fee)}</dd>
               <dt>{t('specRegistered')}</dt><dd suppressHydrationWarning>{when || '—'}</dd>
               <dt>{t('specStatus')}</dt><dd>{item.statusLabel}</dd>
             </dl>
@@ -227,8 +228,8 @@ export default async function DetailPage({ params }: Props) {
         )}
 
         {/* 관마다 다른 안내(시안 그대로) — 안심소개 부동산: 노출료(A-07) · 소개장터: 소개비 협의(A-12) */}
-        {realty && <div className="gw-nt gw-warn" data-msg="RE_EXPOSURE_A07">{msg.RE_EXPOSURE_A07 ? <AttrNote text={msg.RE_EXPOSURE_A07} /> : t.rich('realtyA07', { b: (c) => <b>{c}</b> })}</div>}
-        {code === 'MNY' && <div className="gw-nt gw-info" data-msg="FEE_A12_DETAIL">{msg.FEE_A12_DETAIL ? <AttrNote text={msg.FEE_A12_DETAIL} /> : t.rich('feeA12', { b: (c) => <b>{c}</b> })}</div>}
+        {realty && <div className="gw-nt gw-warn" data-msg="RE_EXPOSURE_A07">{msg.RE_EXPOSURE_A07 ? <AttrNote text={msg.RE_EXPOSURE_A07} /> : withCodes(t.rich('realtyA07', { b: (c) => <b>{c}</b> }))}</div>}
+        {code === 'MNY' && <div className="gw-nt gw-info" data-msg="FEE_A12_DETAIL">{msg.FEE_A12_DETAIL ? <AttrNote text={msg.FEE_A12_DETAIL} /> : withCodes(t.rich('feeA12', { b: (c) => <b>{c}</b> }))}</div>}
 
         {/* SB-MAL-DTL-010 「소개코드 공유」 (D010) — 안심소개 매물만. 시안의 「이 매물 소개하기」 칸 */}
         {code === 'MAL' && (
@@ -240,7 +241,7 @@ export default async function DetailPage({ params }: Props) {
 
         <div className="gw-nt gw-info" data-msg="CTA_ATTRIBUTION_NOTE">{msg.CTA_ATTRIBUTION_NOTE
           ? <AttrNote text={msg.CTA_ATTRIBUTION_NOTE} />
-          : t.rich('ctaAttr', { b: (c) => <b>{c}</b> })} <Link href="/safety/guide">{t('safetyGuide')}</Link></div>
+          : withCodes(t.rich('ctaAttr', { b: (c) => <b>{c}</b> }))} <Link href="/safety/guide">{t('safetyGuide')}</Link></div>
       </div>
     </div></Msgs><i hidden data-root-end="" /></>
   );

@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { dtKst, hmKst, ymdKst } from '@/lib/format';
 import { useFmt } from '@/lib/useFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 interface Message { id: number; senderId: string; body: string; createdAt: string; masked: boolean; mine?: boolean }
 export interface ConvSummary {
@@ -199,7 +200,7 @@ export function AskChat({ listingId, conversationId: initialConv, canDeal, listi
         </div>
         <div className="sp1"><div className="sh3">{t('feeTitle')}</div>
           <div className="fee2"><b>{(sum?.fee.amount ?? listingFee) ? f.won((sum?.fee.amount ?? listingFee)!) : t('feeNeg')}</b>
-            <span>{sum?.fee.agreed ? t('agreed') : t('desired')}{(sum?.fee.bearerLabel ?? bearerLabel) ? ` · ${sum?.fee.bearerLabel ?? bearerLabel}` : ''}{t('vat')}</span></div>
+            <span>{sum?.fee.agreed ? t('agreed') : t('desired')}{(sum?.fee.bearerLabel ?? bearerLabel) ? ` · ${sum?.fee.bearerLabel ?? bearerLabel}` : ''}{withCodes(t('vat'))}</span></div>
           <div className="nt2">{t.rich('feeNote', { b: (x) => <b>{x}</b> })}</div>
         </div>
         {canDeal ? (

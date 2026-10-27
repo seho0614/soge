@@ -7,6 +7,7 @@ import { Bg, Empty, Note, Pgh, S2, Tw, won } from '@/components/partner/ui';
 import { isGwanKey } from '@/i18n/keys';
 import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('billing.pricing'))('title') };
@@ -92,7 +93,7 @@ export default async function PricingPage() {
           )}
         </Tw>
       )}
-      <Note kind="info"><b>{f.srv(rw?.note, rw?.note ? t('noteSrv') : t('noteDefault'))}</b></Note>
+      <Note kind="info"><b>{withCodes(f.srv(rw?.note, rw?.note ? t('noteSrv') : t('noteDefault')))}</b></Note>
       <div className="pt-dact"><Link className="pt-bo" href="/partner/services">{t('toServices')}</Link></div>
     <i hidden data-root-end="" /></>
   );

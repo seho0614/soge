@@ -8,6 +8,7 @@ import type { AffRevenues } from '@/components/partners/types';
 
 import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('affiliate'))('revenues.title') };
@@ -72,7 +73,7 @@ export default async function PartnerRevenuesPage({ searchParams }: { searchPara
 
       <div className="notice">
         <b>{fm.srv(d?.note, d?.note ? t('revenues.noteSrv') : t('revenues.separate'))}</b><br />
-        {t.rich('revenues.separateDesc', { a: (c) => <Link href="/partners/settlements">{c}</Link> })}
+        {withCodes(t.rich('revenues.separateDesc', { a: (c) => <Link href="/partners/settlements">{c}</Link> }))}
       </div>
     </>
   );

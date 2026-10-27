@@ -8,6 +8,7 @@ import type { MyHome } from '@/components/my/MyFrame';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.home'))('title') };
@@ -87,7 +88,7 @@ export default async function MyPage() {
       {blocked && (
         <Note kind="warn" className="act" data-my-blocked={blocked}>
           <div>
-            <b>{NEXT[blocked].why}</b>
+            <b>{withCodes(NEXT[blocked].why)}</b>
             <p>{t('blocked')}</p>
           </div>
           <Link className="my-bp" href={NEXT[blocked].href}>{NEXT[blocked].label}</Link>

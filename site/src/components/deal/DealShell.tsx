@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useFmt } from '@/lib/useFmt';
 import { BackBar } from '@/components/common/BackBar';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export interface DealSummary {
   id: string; status: string; statusLabel: string | null; step: number; myRole: 'BUYER' | 'SELLER' | 'INTRODUCER';
@@ -30,14 +31,14 @@ export function DealShell({ d, step, title, sub, children }: { d: DealSummary; s
     <div className="w1 w1-wrap w1-deal" data-deal={d.id}>{/* v10.32 — 시안 .wrap.dealw 폭(가운데 좁은 폭 1000px 를 뺌) */}
       <BackBar href="/my/deals" label={t('common.backDeals')} wrap={false} />
       <div className="w1-pgh">
-        <div><h1>{title}</h1><p>{sub}</p></div>
+        <div><h1>{title}</h1><p>{withCodes(sub)}</p></div>
         <span className="w1-did">{dealNo(d.id)} · {d.statusLabel ?? d.status}</span>
       </div>
       <ol className="w1-steps">
         {STEPS.map((path, i) => (
           <li key={path} style={{ display: 'contents' }}>
             <Link className={`st${i === step ? ' on' : i < d.step ? ' done' : ''}`} href={`/deal/${d.id}/${path}`} aria-current={i === step ? 'step' : undefined}>
-              <span className="n">{i + 1}</span><b>{t(`shell.steps.${path}.t`)}</b><span className="sd">{t(`shell.steps.${path}.s`)}</span>
+              <span className="n">{i + 1}</span><b>{t(`shell.steps.${path}.t`)}</b><span className="sd">{withCodes(t(`shell.steps.${path}.s`))}</span>
             </Link>
           </li>
         ))}
@@ -58,7 +59,7 @@ export function DealSummaryTable({ d }: { d: DealSummary }) {
       <div className="dr"><span>{t('refCode')}</span><b>{d.refCode ? <><code>{d.refCode}</code> · tier {d.tier}</> : <i>{t('noCode')}</i>}</b></div>
       <div className="dr"><span>{t('parties')}</span><b>{d.buyer} ↔ {d.seller}</b></div>
       <div className="dr"><span>{t('amount')}</span><b>{d.amount != null ? f.won(d.amount) : <i>{t('amountPending')}</i>}</b></div>
-      <div className="dr"><span>{t('fee')}</span><b>{d.agreedFee != null ? <>{f.won(d.agreedFee)} <i>{t('feeAgreed')}</i></> : <i>{t('feePending')}</i>}</b></div>
+      <div className="dr"><span>{t('fee')}</span><b>{d.agreedFee != null ? <>{f.won(d.agreedFee)} <i>{withCodes(t('feeAgreed'))}</i></> : <i>{t('feePending')}</i>}</b></div>
       <div className="dr"><span>{t('bearer')}</span><b>{d.feeBearerLabel ?? <i>{t('bearerPending')}</i>}</b></div>
     </div>
   );

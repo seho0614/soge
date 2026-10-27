@@ -9,6 +9,7 @@ import { getSafety } from '@/lib/safety';
 import type { SafeTradeTerms, SafetyCases } from '@/components/market/types';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('gwan'))('qm.verified') };
@@ -108,7 +109,7 @@ export default async function Page({ searchParams }: Props) {
               <div className="gw-rul">{SAFETY_RULES.map((r, i) => <div key={r} className="gw-ru"><span className="gw-rn2">0{i + 1}</span><span className="gw-rx">{r}</span></div>)}</div>
             </div>
             <div className="gw-sfp" data-safe-trade="">
-              <div className="gw-hh"><b>{t('safeH')}</b><span>{t('safeSub', { amount: minTxt })}</span></div>
+              <div className="gw-hh"><b>{t('safeH')}</b><span>{withCodes(t('safeSub', { amount: minTxt }))}</span></div>
               <div className="gw-s4g">
                 {(terms?.items.map((x, n) => [SAFETY_PLATFORM[n]?.[0] ?? '•', x.title, x.body] as [string, string, string]) ?? SAFETY_PLATFORM).map(([i, h, d]) => (
                   <div key={h} className="gw-s4"><span className="gw-s4i">{i}</span><span><span className="gw-s4t">{h}</span><span className="gw-s4d">{d}</span></span></div>

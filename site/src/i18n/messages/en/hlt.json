@@ -237,7 +237,7 @@
     "postShip": "After shipping",
     "postShipVal": "Handled as a return, not a cancellation",
     "change": "Change of mind · ordering mistake",
-    "changeVal": "The customer pays round-trip shipping of {amt} — deducted from the refund on return. Cancelling before shipping is free",
+    "changeVal": "The customer pays round-trip shipping of {amt} — deducted from the refund on return. Canceling before shipping is free",
     "defect": "Damage · wrong item · not as described",
     "defectVal": "No cost — you can return it even if opened",
     "blocked": "Withdrawal limits",

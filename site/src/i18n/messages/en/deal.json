@@ -26,7 +26,7 @@
   "shell": {
     "steps": {
       "contract": { "t": "Contract", "s": "Both parties confirm the terms" },
-      "payment": { "t": "Payment", "s": "Paid directly between parties — only report the payment (INV-11)" },
+      "payment": { "t": "Payment", "s": "Paid directly between parties — you only report that payment was made (INV-11)" },
       "confirm": { "t": "Confirm deal", "s": "Each party must confirm to proceed (INV-4)" }
     },
     "target": "Related {kind}",
@@ -88,7 +88,7 @@
     "terms": "Contract terms",
     "thItem": "Item",
     "thContent": "Details",
-    "feeNote": "<b>Referral fees are not calculated from a rate table (A-12).</b> The amount above was agreed between the parties, and the platform has no say in it. Changing it after confirmation requires both parties to confirm again.",
+    "feeNote": "<b>Referral fees are not calculated from a rate table (A-12).</b> The amount above was agreed between the parties, and the platform is not involved in setting it. Changing it after confirmation requires both parties to confirm again.",
     "issueTitle": "Issue · Sign contract",
     "issueNote": "Issuing the contract <b>locks the agreed referral fee</b>. Later changes require a reason and renewed consent from both parties.",
     "next": "Next — Payment",
@@ -102,8 +102,8 @@
     "sub": "Payment is made directly between the parties. The platform does not hold or relay funds — here you only report that payment was made (INV-11).",
     "amount": "Deal amount",
     "amountPending": "Not yet agreed",
-    "over": "KRW 50M or more",
-    "under": "Under KRW 50M",
+    "over": "₩50M or more",
+    "under": "Under ₩50M",
     "transfer": "Payment method",
     "direct": "Directly between parties",
     "noEscrow": "No escrow",
@@ -138,7 +138,7 @@
     "tags": {
       "fast": "Responded quickly",
       "exact": "Explained the terms accurately",
-      "local": "Knows the field well",
+      "local": "Knows the area well",
       "noPush": "No pressure",
       "follow": "Followed up afterwards"
     },
@@ -274,7 +274,7 @@
     "thReason": "Reason",
     "thSev": "Severity",
     "idvDone": "<b>Identity verification required.</b> Anonymous reports could let competitors file repeated reports from new accounts, so only verified members can report — your account is verified.",
-    "hide3": "<b>{what} hidden once 3 different members report it.</b> It is not deleted; our team reviews it and restore or remove it (v10.27 · G-191).",
+    "hide3": "<b>{what} hidden once 3 different members report it.</b> It is not deleted; our team reviews it and either restores or removes it (v10.27 · G-191).",
     "whatComment": "A comment is",
     "whatPost": "A post is",
     "notAlone": "<b>Reports alone do not take a post down.</b> Our team reviews them once similar reports accumulate — this prevents groups from taking down others’ posts.",
@@ -327,7 +327,7 @@
       "log": "Your consent and its time are recorded",
       "stop": "You can leave the chat at any time"
     },
-    "contact": "<b>The requester does not know your contact details.</b> A chat opens only after you agree, and even then only the contact details you enter yourself are shared.",
+    "contact": "<b>The requester does not currently know your contact details.</b> A chat opens only after you agree, and even then only the contact details you enter yourself are shared.",
     "noPenalty": "<b>Declining has no consequences.</b> The referrer is only told that you declined, and no reason is asked. If you do not respond, it expires automatically at {until}.",
     "expired": "<b>This invitation has expired.</b> Ask the referrer to send it again.",
     "declined": "You have already declined this invitation.",
@@ -402,7 +402,7 @@
     "agreed": "Agreed by the parties",
     "desired": "Requested by the lister",
     "vat": " · VAT excluded (A-12)",
-    "feeNote": "Referral fees are not calculated from a rate table — the parties <b>agree on it in the chat</b> and write it into the contract.",
+    "feeNote": "Referral fees are not calculated from a rate table — the parties <b>agree on the fee in the chat</b> and write it into the contract.",
     "needId": "You can request a contract (open a deal) after <b>identity verification</b>. <link>Verify identity</link>",
     "formOnly": "The platform provides <b>only the contract template</b> and is not a party to the contract.",
     "catDefault": "Other",
@@ -422,7 +422,7 @@
       "trust": "What is the referral trust score?",
       "agent": "Talk to a support agent"
     },
-    "handReply": "Shall we pass you to an agent? Press “Talk to an agent” below and this conversation will be attached as is.",
+    "handReply": "Shall we pass you to an agent? Press “Talk to a support agent” below and this conversation will be attached as is.",
     "missReply": "We could not find an exact answer. Try rephrasing, or pass it to an agent.",
     "emailFormat": "Please check the email format.",
     "emailNeed": "Please enter an email for the reply.",

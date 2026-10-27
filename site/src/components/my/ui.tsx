@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { isGwanKey } from '@/i18n/keys';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 /** 화면 머리 — 시안 .pgh (제목 · 설명 · 오른쪽) */
 export function MyHead({ title, sub, right }: { title: ReactNode; sub?: ReactNode; right?: ReactNode }) {
@@ -13,7 +14,7 @@ export function MyHead({ title, sub, right }: { title: ReactNode; sub?: ReactNod
     <div className="my-pgh">
       <div>
         <h1>{title}</h1>
-        {sub && <p>{sub}</p>}
+        {sub && <p>{withCodes(sub)}</p>}
       </div>
       {right && <div className="my-pgh-r">{right}</div>}
     </div>

@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import { AddressInput, EMPTY_ADDRESS, type AddressValue } from '@/components/AddressInput';
 import { KakaoMap } from '@/components/map/KakaoMap';
 import { CategoryBlock, Field, ImagePicker, MoneyInput, type Cat, type Gwan, type Img } from '@/components/form/RegParts';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 /* v10.101 (2-5b) — 고르기 값(서버로 보내는 글자)은 한국어 그대로 · 보이는 글자는 사전 forms.reg.support · wish · handover · bearer */
 const SUPPORT = [['계약서 검토 지원', 'contract'], ['세무 · 회계 지원', 'tax'], ['인수 인계 지원', 'handover'], ['교육 지원', 'edu'], ['지원 없음', 'none']] as const;
@@ -131,7 +132,7 @@ export function RegisterForm({ gwans, cats, gradeLabels, initialGwan }: {
       <section className="w1-fsec"><h2 className="fh3">{t('reg.sec3')}</h2>
         <div className="w1-g3">
           <Field id="f-fee" label={t('reg.fee')} req unit={t('common.won')} miss={m('fee')}
-            hint={<>{t.rich('reg.feeHint', { b: (c) => <b>{c}</b> })}</>}>
+            hint={<>{withCodes(t.rich('reg.feeHint', { b: (c) => <b>{c}</b> }))}</>}>
             <MoneyInput id="f-fee" value={v.fee} onChange={set('fee')} placeholder={t('common.feePh')} />
           </Field>
           <Field id="f-support" label={t('reg.supportLabel')} req miss={m('support')} hint={<>{t.rich('reg.supportHint', { b: (c) => <b>{c}</b> })}</>}>

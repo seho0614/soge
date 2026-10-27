@@ -12,6 +12,7 @@ import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import { isGwanKey } from '@/i18n/keys';
 import '@/styles/proto-w1.css';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('deal.meta'))('chat') };
@@ -62,7 +63,7 @@ export default async function ChatPage({ params, searchParams }: Props) {
           <h2>{item.title}</h2>
           <div className="m">
             <span className={`w1-gt ${GCLS[item.gwanCode] ?? ''}`}>{gn(item.gwanCode)}</span>
-            <span className="fe">{item.desiredFee ? t('chat.fee', { fee: f.won(item.desiredFee) }) : t('chat.feeTbd')}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
+            <span className="fe">{item.desiredFee ? t('chat.fee', { fee: f.won(item.desiredFee) }) : withCodes(t('chat.feeTbd'))}{item.feeBearerLabel ? ` · ${item.feeBearerLabel}` : ''}</span>
           </div>
         </div>
         <Link className="lk" href={href}>{t('chat.viewListing')}</Link>

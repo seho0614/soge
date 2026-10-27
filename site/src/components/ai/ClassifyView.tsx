@@ -12,6 +12,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { isGwanKey } from '@/i18n/keys';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 /* 예문은 분류 서버(한국어 어휘집)로 보내는 값이라 한국어 그대로 둡니다(v10.101 다국어) */
 const SAMPLES = [
@@ -102,7 +103,7 @@ export function ClassifyView() {
           <div className="w1-nt warn" data-cls="blocked"><b>{t('blockedB')}</b><br />
             {t('blockedWords')}{(res.reasons ?? []).map((r, i) => <span key={i} className="w1-kwx no">{r.matched}</span>)}
             {(res.reasons ?? []).some((r) => r.reason) && <><br />{[...new Set((res.reasons ?? []).map((r) => r.reason).filter(Boolean))].join(' · ')}</>}</div>
-          <div className="w1-nt" style={{ marginTop: 8 }}>{t.rich('blockedNote', { b: (c) => <b>{c}</b> })}</div>
+          <div className="w1-nt" style={{ marginTop: 8 }}>{withCodes(t.rich('blockedNote', { b: (c) => <b>{c}</b> }))}</div>
         </>
       )}
       {res && !res.blocked && !cands.length && (

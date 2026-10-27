@@ -12,6 +12,7 @@ import { ymdKst } from '@/lib/format';
 import { getFmt } from '@/lib/getFmt';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('join.malBrokers'))('metaTitle') };
@@ -120,12 +121,12 @@ export default async function MalBrokersPage({ searchParams }: {
         {!opened ? (
           <>
             <div className="gw-nt gw-warn" data-broker-sync="closed">
-              {t.rich('closedWarn', { b: (c) => <b>{c}</b> })}
+              {withCodes(t.rich('closedWarn', { b: (c) => <b>{c}</b> }))}
             </div>
             <div className="gw-gapgate">
               <div className="gw-gapg1"><span className="gw-lb">{t('preLb')}</span>
                 <ol className="gw-safelist">
-                  <li>{t.rich('pre1', { b: (c) => <b>{c}</b> })}</li>
+                  <li>{withCodes(t.rich('pre1', { b: (c) => <b>{c}</b> }))}</li>
                   <li>{t.rich('pre2', { b: (c) => <b>{c}</b> })}</li>
                   <li>{t('pre3')}</li>
                 </ol></div>

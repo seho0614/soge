@@ -15,6 +15,7 @@ import { ProposalList, type Proposal } from '@/components/request/ProposalList';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('request'))('detail.title') };
@@ -161,15 +162,15 @@ export default async function RequestDetail({ params }: Props) {
           <div className="w1-panel" style={{ padding: 15 }}>
             <div style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 3 }}>{t('feeLabel')}</div>
             <div className="w1-bigfee">{r.offeredFee != null ? f.won(r.offeredFee) : t('negotiable')}</div>
-            <div className="w1-nt3" style={{ marginTop: 8 }}>{t.rich('feeNote', { b: (c) => <b>{c}</b>, br: () => <br /> })}</div>
+            <div className="w1-nt3" style={{ marginTop: 8 }}>{withCodes(t.rich('feeNote', { b: (c) => <b>{c}</b>, br: () => <br /> }))}</div>
           </div>
           <div className="w1-wrn" style={{ marginTop: 12 }}>
             <span className="ic" aria-hidden="true">!</span>
-            <span>{t.rich('attribution', { b: (c) => <b>{c}</b>, br: () => <br /> })}</span>
+            <span>{withCodes(t.rich('attribution', { b: (c) => <b>{c}</b>, br: () => <br /> }))}</span>
           </div>
           <div className="w1-panel" style={{ padding: 15, marginTop: 12 }}>
             <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 7 }}>{t('acceptedHead')}</div>
-            <div className="w1-nt3">{t.rich('acceptedSteps', { b: (c) => <b>{c}</b>, br: () => <br /> })}</div>
+            <div className="w1-nt3">{withCodes(t.rich('acceptedSteps', { b: (c) => <b>{c}</b>, br: () => <br /> }))}</div>
             {r.isOwner && <p style={{ marginTop: 10 }}><a className="w1-bo sm" href="#proposals">{t('viewProposals')}</a></p>}
           </div>
         </aside>

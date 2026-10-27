@@ -9,6 +9,7 @@ import { loadDeal } from '@/components/deal/load';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('deal.meta'))('confirm') };
@@ -47,7 +48,7 @@ export default async function ConfirmPage({ params }: { params: Promise<{ id: st
       </div>
       <div className="w1-nt warn" style={{ marginTop: 10 }}>{t.rich('confirm.autoNote', { b: (c) => <b>{c}</b> })}</div>
       {all
-        ? <div className="w1-nt ok" style={{ marginTop: 8 }}>{t.rich('confirm.allDone', { b: (c) => <b>{c}</b> })}{d.confirmedAt ? t('confirm.confirmedAt', { at: dtKst(d.confirmedAt) }) : ''}</div>
+        ? <div className="w1-nt ok" style={{ marginTop: 8 }}>{withCodes(t.rich('confirm.allDone', { b: (c) => <b>{c}</b> }))}{d.confirmedAt ? t('confirm.confirmedAt', { at: dtKst(d.confirmedAt) }) : ''}</div>
         : <div className="w1-nt" style={{ marginTop: 8 }}>{t.rich('confirm.notReady', { n: String(done), b: (c) => <b>{c}</b> })}</div>}
       {/* 거래 당사자에게는 늘 둡니다 — 확인한 뒤(mine 이 거짓)에도 같은 자리에 남아 결과 글이 지워지지 않음(단추만 빠짐) */}
       {d.myRole !== 'INTRODUCER' && <Msgs ns={['deal']}><DealConfirm dealId={d.id} done={!mine} /></Msgs>}

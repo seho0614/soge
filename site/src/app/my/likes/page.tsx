@@ -8,6 +8,7 @@ import type { ListingCardData } from '@/lib/types';
 import { MyHead, Note, Empty, Table, GwanTag, shortId } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.likes'))('title') };
@@ -51,7 +52,7 @@ export default async function LikesPage() {
       )}
       {/* 안내는 목록이 있든 없든 늘 보여야 합니다 — 계약으로 바로 가려다 소개비를 놓치는 일을 막는 문구입니다(시안 그대로). */}
       <Note kind="info">
-        {t.rich('note', { b: (c) => <b>{c}</b> })}
+        {withCodes(t.rich('note', { b: (c) => <b>{c}</b> }))}
       </Note>
     </>
   );

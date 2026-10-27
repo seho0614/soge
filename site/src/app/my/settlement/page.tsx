@@ -10,6 +10,7 @@ import { PaidMarkButton } from './PaidMarkButton';
 import { MyHead, Note, Empty, Table, shortId, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('stl.title') };
@@ -117,7 +118,7 @@ export default async function SettlementPage() {
               </div>
               <div className="my-calc">
                 <div className="my-cr"><span>{t('stl.dealAmount')}</span><b>{d.dealAmount != null ? f.won(d.dealAmount, '—') : <span className="my-ls">{t('stl.noCtrAmount')}</span>}</b></div>
-                <div className="my-cr"><span>{t.rich('stl.feeRow', { i: (c) => <i>{c}</i> })}</span><b>{f.won(d.amount, '—')}</b></div>
+                <div className="my-cr"><span>{withCodes(t.rich('stl.feeRow', { i: (c) => <i>{c}</i> }))}</span><b>{f.won(d.amount, '—')}</b></div>
                 <div className="my-cr"><span>{t('stl.deduct')}</span><b className="ok">{t('stl.zero')}</b></div>
                 <div className="my-cr tot"><span>{t('stl.net')}</span><b>{f.won(d.amount, '—')}</b></div>
                 {d.payeeAs === 'BUSINESS' && d.vat != null && <div className="my-cr sub"><span>{t('stl.vat')}</span><b>{f.won(d.vat, '—')}</b></div>}

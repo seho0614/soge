@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
 import { getFmt } from '@/lib/getFmt';
 import { useFmt } from '@/lib/useFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('forms.win'))('title') };
@@ -139,7 +140,7 @@ export default async function Page({ searchParams }: Props) {
   return (
     <><QuickFrame active="new" title={w('title')} sub={w('sub')}>
       {/* v10.32 — 시안 맨 위 빨간 띠(.wwarn). 시안의 견본 숫자 대신 실제 규칙을 적습니다 — 이 화면 집계에서 부동산은 소개 수익에 넣지 않음 */}
-      <div className="gw-wwarn" data-win-warn="">{w.rich('warn', { b: (c) => <b>{c}</b> })}</div>
+      <div className="gw-wwarn" data-win-warn="">{withCodes(w.rich('warn', { b: (c) => <b>{c}</b> }))}</div>
       <div className="gw-wtabs">
         {TABS.map((k) => <Link key={k} className={`gw-wt${tab === k ? ' gw-on' : ''}`} href={href({ tab: k })} aria-current={tab === k ? 'page' : undefined} data-wtab={k}>{w(`tabs.${k}`)}</Link>)}
         <span className="gw-rt">{w('asOf', { d: D?.asOf ?? '—' })}
@@ -215,7 +216,7 @@ export default async function Page({ searchParams }: Props) {
                 <tr key={c.name}><td className="gw-nm4">{c.name}</td><td><span className="gw-bwrap"><Bar v={c.count} mx={mxc} col={SCOL[i] ?? 'var(--s6)'} /></span></td>
                   <td className="gw-n">{cnt(c.count)}</td><td className="gw-n">{wonFmt(c.fee)}</td></tr>
               ))}</tbody></table>
-          <div className="gw-wnote">{w.rich('prdNote', { b: (c) => <b>{c}</b> })}</div></div>
+          <div className="gw-wnote">{withCodes(w.rich('prdNote', { b: (c) => <b>{c}</b> }))}</div></div>
       ) : (
         <div className="gw-wgrid" style={{ gridTemplateColumns: '1fr 1.1fr' }}>
           <div className="gw-wp"><div className="gw-wt2"><b>{w('regMap')}</b><span>{w('bySucc')}</span></div>

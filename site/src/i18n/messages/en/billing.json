@@ -16,7 +16,7 @@
     "failed": "Could not confirm the payment.",
     "reserved": "Your plan change has been scheduled.",
     "started": "Payment approved. Your subscription has started.",
-    "network": "Could not connect. Please refresh this page shortly — the same payment will never be charged twice.",
+    "network": "Could not connect. Please refresh this page shortly — the same payment will not be charged twice.",
     "back": "Back to Subscription · Referral codes"
   },
   "plan": {
@@ -35,7 +35,7 @@
     "pickNext": "Choose this plan (from next billing date)",
     "using": "Current",
     "perMonth": "/mo",
-    "needBiz": "Plans can be purchased with the <b>member's own account</b> (individual · business owner). Staff accounts cannot choose a plan.",
+    "needBiz": "Plans can be purchased with the <b>member's own account</b> (individual · business representative). Staff accounts cannot choose a plan.",
     "hNew": "Start {plan} subscription",
     "hUp": "Upgrade to {plan} — scheduled",
     "hDown": "Downgrade to {plan} — scheduled",
@@ -172,7 +172,7 @@
       "noForm": "No form type — entry blocked"
     },
     "cells": "{n, plural, one {{n} cell} other {{n} cells}} entered",
-    "topFee": "Top view fee",
+    "topFee": "Top lead view fee",
     "warnB": "The category determines the price form. Prices cannot be entered for categories without a form type.",
     "provisional": " Current base prices are introductory — they will be recalculated after 3 weeks of data, so do not estimate revenue from them.",
     "hRewards": "Referral fee table",

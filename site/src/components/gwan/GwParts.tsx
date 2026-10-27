@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import { SearchBox } from '@/components/search/SearchBox';
 import { FEATS, GRADES, GW, QM, qhref, type GwanCode } from './gw';
 import { RegionPanel } from './GwClient';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export interface GwCategory { id: string; name: string; gradeCode: string | null; gwanCode?: string }
 
@@ -161,7 +162,7 @@ export function GwSide({ code, cats, cat, extra, register, regions, region }: {
               </>
             )}
             {cats.length === 0 && <div className="gw-etcnote">{t('side.catFail')}</div>}
-            <div className="gw-etcnote">{t.rich('side.gradeNote', { b: (c) => <b>{c}</b> })}</div>
+            <div className="gw-etcnote">{withCodes(t.rich('side.gradeNote', { b: (c) => <b>{c}</b> }))}</div>
           </nav>
         </div>
       )}

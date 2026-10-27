@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type { ListingDetailData } from '@/lib/types';
 import { dtKst } from '@/lib/format';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export interface ReviewState {
   listingStatus: string; listingStatusLabel: string;
@@ -99,7 +100,7 @@ export function ListingEditForm({ item, review, draft }: { item: ListingDetailDa
       <div className="w1-fld"><label htmlFor="ed-f">{t('fee')}</label>
         <input id="ed-f" name="desiredFee" className="w1-in" inputMode="numeric" value={fee ? Number(fee.replace(/\D/g, '') || 0).toLocaleString('ko-KR') : ''}
           onChange={(e) => setFee(e.target.value.replace(/\D/g, ''))} placeholder={t('feePh')} />
-        <div className="w1-fh">{t('feeHint')}</div></div>
+        <div className="w1-fh">{withCodes(t('feeHint'))}</div></div>
       <div className="w1-fld"><label htmlFor="ed-b">{t('body')}</label>
         <textarea id="ed-b" name="body" className="w1-in" rows={8} value={body} maxLength={5000} onChange={(e) => setBody(e.target.value)} />
         <div className="w1-cnt">{body.length} / 5000</div></div>

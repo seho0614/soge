@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { dtKst } from '@/lib/format';   // v10.31 검정(G-222) — toLocaleString 대신
 import { useTranslations } from 'next-intl';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export interface Terms { amount: number; dueDate: string; special?: string; kind?: 'GOODS' | 'SERVICE'; place?: string; court?: string }
 interface Party { company: string; ceo: string; bizRegNo: string | null; phone: string | null; business: boolean; identityVerified: boolean }
@@ -126,7 +127,7 @@ export default function ContractForm(
           </div>
         </div>
       </div>
-      <p className="my-nt warn">{t.rich('form.svcWarn', { b: b_ })}</p>
+      <p className="my-nt warn">{withCodes(t.rich('form.svcWarn', { b: b_ }))}</p>
 
       {fee}
 

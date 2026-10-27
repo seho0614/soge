@@ -28,7 +28,7 @@
     "payReqFail": "Could not send the payment request. Please try again shortly.",
     "confirmReqFail": "Could not send the payment approval request. Please try again shortly.",
     "confirmReqFailRefresh": "Could not send the payment approval request. Refresh this page to check again — you will not be charged twice.",
-    "userCancel": "You cancelled the payment. Press the button to pay again.",
+    "userCancel": "You canceled the payment. Press the button to pay again.",
     "windowFail": "Could not open the payment window. Please try again shortly.",
     "stubNotice": "No payment gateway key is configured — proceeding with a <b>test payment (stub)</b>. No real money is charged.",
     "requesting": "Requesting payment…",
@@ -50,14 +50,14 @@
     "SHIPPED": "Shipped",
     "DELIVERED": "Delivered",
     "CONFIRMED": "Purchase confirmed",
-    "CANCELED": "Cancelled",
+    "CANCELED": "Canceled",
     "RETURNED": "Returned"
   },
   "payState": {
     "READY": "Awaiting payment",
     "PAID": "Paid",
     "FAILED": "Failed",
-    "CANCELED": "Cancelled (refunded)"
+    "CANCELED": "Canceled (refunded)"
   },
   "shipState": {
     "READY": "Ready to ship",
@@ -209,7 +209,7 @@
     "kindTitle": "Request type",
     "reasonTitle": "② Reason",
     "reasonPick": "Please choose a reason",
-    "cancelFree": "Cancelling before shipment is free of charge.",
+    "cancelFree": "Canceling before shipment is free of charge.",
     "sellerFree": "As this is the seller's fault, there is no return shipping fee.",
     "exchangeFee": "For an exchange due to a change of mind or ordering mistake, the round-trip shipping fee of {fee} is paid when you submit.",
     "returnDeduct": "For a return due to a change of mind or ordering mistake, we refund the amount minus the round-trip shipping fee of {fee}.",
@@ -264,7 +264,7 @@
     "title": "Payment",
     "noPending": "There is no payment in progress.",
     "notFound": "Order not found.",
-    "already": "This order has already been paid or cancelled.",
+    "already": "This order has already been paid or canceled.",
     "alreadyInfo": "Order no. {no} · Current status {state}",
     "cancelReq": "A cancellation has been requested for this order.",
     "cancelReqInfo": "Order no. {no} · You cannot pay until the cancellation is processed.",
@@ -310,11 +310,11 @@
     "hint": {
       "NOT_ON_SALE": "Some products are no longer on sale. Please remove them from your cart and order again.",
       "EMPTY": "You have no items. Please check your cart.",
-      "ALREADY": "This order has already been paid or cancelled. Please check its status in My orders.",
+      "ALREADY": "This order has already been paid or canceled. Please check its status in My orders.",
       "BAD_METHOD": "Please choose a payment method again.",
       "AMOUNT_MISMATCH": "The payment amount did not match the order amount, so it was not approved. No money was charged — please pay again.",
       "PAY_REJECTED": "The payment provider did not approve it. Please try another card or method.",
-      "PAY_PROCESS_CANCELED": "You cancelled the payment.",
+      "PAY_PROCESS_CANCELED": "You canceled the payment.",
       "PAY_PROCESS_ABORTED": "The payment was interrupted. Please try again.",
       "REJECT_CARD_COMPANY": "The card issuer did not approve it. Please try another card.",
       "VBANK_WAITING": "A virtual account has already been issued and is awaiting deposit. Please check the account in Order details.",

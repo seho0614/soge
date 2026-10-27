@@ -55,7 +55,7 @@
       "AGREED": "Waiting for signatures",
       "SIGNED": "Waiting for fulfillment",
       "FULFILLED": "Completed",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Canceled"
     },
     "buyerMe": "Buyer (me)",
     "sellerMe": "Seller (me)",
@@ -149,7 +149,7 @@
     "wait": "waiting",
     "changedWarn": "<b>Changing the terms cancels the other party’s agreement.</b> Otherwise one side could change the amount while the other’s consent remained — you will need their agreement again.",
     "draftOpened": "Opened with your saved draft terms · {at}",
-    "roCancelled": "<b>This contract has been cancelled.</b> Its content cannot be changed and is kept as a record.",
+    "roCancelled": "<b>This contract has been canceled.</b> Its content cannot be changed and is kept as a record.",
     "roDone": "<b>This contract is completed.</b> Its content cannot be changed and is kept as a record.",
     "roFee": " The referral fee has moved to pending settlement.",
     "sendTitleNeed": "Enter the contract amount and the delivery / performance date",
@@ -522,7 +522,7 @@
     "feeRefunded": "The exchange shipping fee you paid has been refunded",
     "feeNone": "None (paid by seller)",
     "refund": "Refund",
-    "beforePay": "Cancelled before payment — nothing was paid, so there is no refund",
+    "beforePay": "Canceled before payment — nothing was paid, so there is no refund",
     "tbd": "Not yet fixed",
     "deduct": " (round-trip shipping {v} deducted)",
     "refunded": " · refunded {d}",

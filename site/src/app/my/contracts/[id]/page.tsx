@@ -8,6 +8,7 @@ import { MyHead, Note, Empty, Table } from '@/components/my/ui';
 import { dtKst, ymdKst } from '@/lib/format';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('ctrD.title') };
@@ -112,7 +113,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <tr><td>{t('ctrD.code')}</td><td>{st.code ? <><span className="my-code">{st.code.code}</span>{st.code.issuedAt && <> · {t('ctrD.issued', { d: ymdKst(st.code.issuedAt) })}</>} · {t('ctrD.days90')}</> : <span className="my-ls">{t('ctrD.codeNone')}</span>}</td></tr>
             <tr><td>{t('ctrD.tax')}</td><td>{t('ctrD.taxV')}</td></tr>
           </Table>
-          <Note kind="ok">{t.rich('ctrD.a3Note', { b: b_, br })}</Note>
+          <Note kind="ok">{withCodes(t.rich('ctrD.a3Note', { b: b_, br }))}</Note>
 
           {/* ── 제4조 비당사자 ── */}
           <h2 className="my-st2">{t('ctrD.a4')}</h2>

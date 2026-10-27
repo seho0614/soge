@@ -10,6 +10,7 @@ import { loadDeal } from '@/components/deal/load';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import '@/styles/proto-w1.css';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('deal.meta'))('contract') };
@@ -43,8 +44,8 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
     <DealShell d={d} step={0} title={t('title')} sub={t('sub')}>
       <h2 className="w1-s2">{t('terms')}</h2>
       <table className="w1-tb"><thead><tr><th style={{ width: 140 }}>{t('thItem')}</th><th>{t('thContent')}</th></tr></thead>
-        <tbody>{rows.map(([k, v]) => <tr key={k}><td><b>{k}</b></td><td>{v}</td></tr>)}</tbody></table>
-      <div className="w1-nt" style={{ marginTop: 10 }}>{t.rich('feeNote', { b: (x) => <b>{x}</b> })}</div>
+        <tbody>{rows.map(([k, v]) => <tr key={k}><td><b>{k}</b></td><td>{withCodes(v)}</td></tr>)}</tbody></table>
+      <div className="w1-nt" style={{ marginTop: 10 }}>{withCodes(t.rich('feeNote', { b: (x) => <b>{x}</b> }))}</div>
 
       <h2 className="w1-s2">{t('issueTitle')}</h2>
       <p className="w1-ls" style={{ margin: '0 0 8px' }}>{t.rich('issueNote', { b: (x) => <b>{x}</b> })}</p>

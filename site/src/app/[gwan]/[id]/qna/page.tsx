@@ -9,6 +9,7 @@ import { MyHead, Note } from '@/components/my/ui';
 import { GwQnaBoard } from '@/components/gwan/GwQnaBoard';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -48,7 +49,7 @@ export default async function QnaPage({ params }: Props) {
           sub={<>{t('sub', { title: item.title })}</>} />
         <Msgs ns={['detail']}><GwQnaBoard listingId={item.id} detailHref={detailHref} canAsk={canAsk} canInquire={item.canInquire}
                     loggedIn={!!viewer} initial={questions} /></Msgs>
-        <Note kind="info">{t.rich('note', { b: (c) => <b>{c}</b> })}</Note>
+        <Note kind="info">{withCodes(t.rich('note', { b: (c) => <b>{c}</b> }))}</Note>
       </div></div>
     </div><i hidden data-root-end="" /></>
   );

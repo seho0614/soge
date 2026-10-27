@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
 import type { SafeTradeTerms } from '@/components/market/types';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('plaza'))('guide.title') };
@@ -71,7 +72,7 @@ export default async function SafetyGuidePage({ searchParams }: Props) {
 
           {/* v10.31 (w2) — 시안 사고예방 「안전거래 이용 안내(B-04)」 · 「안전거래 서비스 이용하기」가 오는 자리 */}
           <div className="gw-dsec" id="safe-trade" data-safe-trade="">
-            <h4>{t('safe.h')} <span className="gw-ls">{t('safe.sub', { amount: man })}</span></h4>
+            <h4>{t('safe.h')} <span className="gw-ls">{withCodes(t('safe.sub', { amount: man }))}</span></h4>
             <dl className="gw-spec">
               <dt>{t('safe.whatT')}</dt><dd>{t.rich('safe.what', { b: (c) => <b>{c}</b> })}</dd>
               <dt>{t('safe.whoT')}</dt><dd>{t.rich('safe.who', { b: (c) => <b>{c}</b>, amount: man })}</dd>

@@ -6,6 +6,7 @@ import { SearchBox } from '@/components/search/SearchBox';
 import { ReqCard, type ReqRow } from '@/components/request/ReqCard';
 import { getTranslations } from 'next-intl/server';
 import '@/styles/proto-w1.css';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('request'))('list.title') };
@@ -99,7 +100,7 @@ export default async function RequestList({ searchParams }: {
       <p className="w1-nt3" style={{ textAlign: 'center', margin: '16px 0 4px' }}>
         {t.rich('list.autoClose', { b: (c) => <b>{c}</b> })}
       </p>
-      <p className="w1-nt3" style={{ textAlign: 'center' }}>{t('list.feeNote')}</p>
+      <p className="w1-nt3" style={{ textAlign: 'center' }}>{withCodes(t('list.feeNote'))}</p>
     </div>
   );
 }

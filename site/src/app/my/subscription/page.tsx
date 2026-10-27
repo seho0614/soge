@@ -11,6 +11,7 @@ import { MyHead, Note, Table, Empty, type Tone } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import { getFmt } from '@/lib/getFmt';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.sub'))('title') };
@@ -107,7 +108,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
       )}
 
       <Note kind="info">
-        {t.rich('extraNote', { b: B, price: f.won(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000, '—') })}
+        {withCodes(t.rich('extraNote', { b: B, price: f.won(cur?.extraCodePrice ?? plans[0]?.extraCodePrice ?? 30000, '—') }))}
       </Note>
 
       {!p.businessVerifiedAt && (

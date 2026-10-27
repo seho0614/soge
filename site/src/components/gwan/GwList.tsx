@@ -26,6 +26,7 @@ import { GW, photoSrc, qhref, regionText, trustCls, type GwanCode } from './gw';
 import { Pager } from './GwParts';
 import { cardPrice } from './GwCard';
 import { GwFloatAd } from './GwAds';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 /* v10.97 — 이름은 사전 gwan.list.sort.{키} */
 const SORTS = ['fee', 'deadline', 'ratio', 'new', 'best', 'urgent', 'verified'] as const;
@@ -103,7 +104,7 @@ export async function GwList({ code, q }: { code: GwanCode; q: { sort?: string; 
           <div>
             <h1>{t('list.title', { name: gname })}</h1>
             {/* 시안 문구 — 정책문구차이 10/10 시안 기준(A-12) */}
-            <p data-msg="FEE_A12_LIST">{t('list.lead', { sect: t(`meta.${code}.sect`) })} {a12}{/[.)]$/.test(a12) ? '' : '.'} <span className="gw-ls">{t.rich('list.leadMain', { home: (c) => <Link href={`/${g.path}`}>{c}</Link> })}</span></p>
+            <p data-msg="FEE_A12_LIST">{t('list.lead', { sect: t(`meta.${code}.sect`) })} {withCodes(a12)}{/[.)]$/.test(a12) ? '' : '.'} <span className="gw-ls">{t.rich('list.leadMain', { home: (c) => <Link href={`/${g.path}`}>{c}</Link> })}</span></p>
           </div>
           {data?.total != null ? <span className="gw-did">{t('list.count', { n: data.total.toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US') })}</span>
             : gw && <span className="gw-did">{t('list.count', { n: gw.listingCount.toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US') })}</span>}

@@ -6,6 +6,7 @@ import { ReportForm } from '@/components/ReportForm';
 import { MyFrame } from '@/components/my/MyFrame';
 import { Msgs } from '@/i18n/Msgs';   // v10.99 — 나의공간 왼쪽 메뉴(MyShell)가 쓰는 사전 묶음(docs/157)
 import { getTranslations } from 'next-intl/server';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('deal.meta'))('report') };
@@ -85,7 +86,7 @@ export default async function ReportPage({ params }: Props) {
 
       {t === 'POST' || t === 'COMMENT' ? (
         <div className="note info">
-          {tr.rich('hide3', { what: t === 'COMMENT' ? tr('whatComment') : tr('whatPost'), b: (x) => <b>{x}</b> })}
+          {withCodes(tr.rich('hide3', { what: t === 'COMMENT' ? tr('whatComment') : tr('whatPost'), b: (x) => <b>{x}</b> }))}
         </div>
       ) : (
         <div className="note info">

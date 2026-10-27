@@ -45,7 +45,7 @@
       "CONFIRMED": "Deal confirmed",
       "SETTLED": "Settled",
       "DISPUTED": "Disputed",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Canceled"
     }
   },
   "dispute": {
@@ -215,7 +215,7 @@
     "status": {
       "ACTIVE": "Active",
       "PAST_DUE": "Payment failed",
-      "CANCELLED": "Cancelled",
+      "CANCELLED": "Canceled",
       "EXPIRED": "Expired"
     }
   },
@@ -224,7 +224,7 @@
       "BILLED": "Billed",
       "PAID": "Paid",
       "WAIVED": "Waived",
-      "CANCELLED": "Billing cancelled"
+      "CANCELLED": "Billing canceled"
     }
   }
 }

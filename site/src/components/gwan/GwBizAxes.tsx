@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { apiGetPersonal } from '@/lib/api';
 import type { AxisItem, QuickRow } from '@/components/market/types';
 import { AxisRequestButton, QuickMatchForm, QuickOfferButton, ReceivedRequests } from './GwBizClient';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export const AXKIND = {
   JOB: { path: '/biz/job/', up: '/biz?axis=jobs', ax: '인력', pre: 'J', lab: '공고번호', h: '공고 내용', cat: '소개창업 · 인력 · 공고' },
@@ -97,7 +98,7 @@ export async function AxisJob({ d, hot }: { d?: string; hot?: boolean }) {
           <div className="gw-axrows">
             {(list?.items ?? []).map((x) => dir === '지원'
               ? <AxRow key={x.id} it={x} badge={<span className="gw-axb gw-axok">{t('received')}</span>} ls={<>{x.cond} · {t('appliedLs', { state: x.myRequest?.status === 'ANSWERED' ? t('answered') : t('waiting') })}</>} right={x.price} btn={t('appliedBtn')} />
-              : <AxRow key={x.id} it={x} badge={<AxBadge it={x} />} ls={<>{x.cond} · {t('fee')}</>} right={x.price} btn={t('viewPost')} />)}
+              : <AxRow key={x.id} it={x} badge={<AxBadge it={x} />} ls={<>{x.cond} · {withCodes(t('fee'))}</>} right={x.price} btn={t('viewPost')} />)}
             {(list?.items ?? []).length === 0 && <div className="gw-axempty">{t.rich('jobsEmpty', { b: (c) => <b>{c}</b> })}</div>}
           </div>
         )}
@@ -134,7 +135,7 @@ export async function AxisInfo({ d }: { d?: string }) {
         <Link role="tab" aria-selected={!edu} className={`gw-axd${!edu ? ' gw-on' : ''}`} href="/biz?axis=info">{t('policy')}</Link>
         <Link role="tab" aria-selected={edu} className={`gw-axd${edu ? ' gw-on' : ''}`} href="/biz?axis=info&d=edu">{t('edu')}</Link>
       </div>
-      <div className="gw-axinv">{t.rich('infoInv', { b: (c) => <b>{c}</b> })}</div>
+      <div className="gw-axinv">{withCodes(t.rich('infoInv', { b: (c) => <b>{c}</b> }))}</div>
       <div className="gw-axrows">
         {list.items.map((x) => edu
           ? <AxRow key={x.id} it={x} badge={<AxBadge it={x} />} ls={<>{x.period} · {x.price}</>} right={x.headcount ? t('capacity', { n: String(x.headcount) }) : x.cond} btn={t('detail')} />
@@ -156,13 +157,13 @@ export function AxisDetail({ it }: { it: AxisItem }) {
   const t = useTranslations('gwan');
   let notes: React.ReactNode = null; let bar: React.ReactNode = null;
   if (it.kind === 'JOB') {
-    notes = <>{B2B}<div className="gw-axwarn">{t.rich('biz.payWarn', { b: (c) => <b>{c}</b> })}</div></>;
+    notes = <>{B2B}<div className="gw-axwarn">{withCodes(t.rich('biz.payWarn', { b: (c) => <b>{c}</b> }))}</div></>;
     bar = it.mine ? null : <AxisRequestButton no={it.no} kind="JOB" done={!!it.myRequest} />;
   } else if (it.kind === 'SVC') {
     notes = <div className="gw-axnote2">{t.rich('biz.svcNote', { b: (c) => <b>{c}</b> })}</div>;
     bar = it.mine ? null : <AxisRequestButton no={it.no} kind="SVC" done={!!it.myRequest} />;
   } else {
-    notes = <div className="gw-axinv">{t.rich('biz.detailInv', { b: (c) => <b>{c}</b> })}</div>;
+    notes = <div className="gw-axinv">{withCodes(t.rich('biz.detailInv', { b: (c) => <b>{c}</b> }))}</div>;
     bar = it.kind === 'POL'
       ? <Link className="gw-go" href={`/policy/${it.no}/source`}><span>{t('biz.source')}</span><small>{t('biz.sourceSub')}</small></Link>
       : <span className="gw-go gw-done" title={t('biz.enrollTitle')}><span>{t('biz.enroll')}</span><small>{t('biz.enrollSub')}</small></span>;

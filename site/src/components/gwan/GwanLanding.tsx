@@ -39,6 +39,7 @@ import { CatEmpty, Features, GwFrame, GwSide, Pager, QuickMenu, RoleTabs, Search
 import { GradeCat, SortSelect } from './GwClient';
 import { GwFloatAd } from './GwAds';
 import { AxisInfo, AxisJob, AxisSvc } from './GwBizAxes';
+import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 
 export interface GwQuery {
   sort?: string; cursor?: string; badge?: string; axis?: string; cat?: string; grade?: string; keyword?: string; p?: string;
@@ -202,7 +203,7 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                     <Link key={t.k} role="tab" aria-selected={t.k === ax.k} className={`gw-axt${t.k === ax.k ? ' gw-on' : ''}${t.gate && !t.open ? ' gw-gate' : ''}`}
                           href={axHref(t)} data-axis={t.k}>
                       <b>{t.nm}</b><span>{t.sub}</span>
-                      {t.gate && <i className={`gw-axg${t.open ? ' gw-ok' : ''}`}>{t.gate}</i>}
+                      {t.gate && <i className={`gw-axg${t.open ? ' gw-ok' : ''}`}>{withCodes(t.gate)}</i>}
                     </Link>
                   ))}
                 </div>
@@ -210,10 +211,10 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
                   <b>{ax.nm}</b> — {ax.judge} <span className="gw-ls">{ax.why ?? axDef.why}</span>
                   {ax.gate && (ax.open
                     ? <span className="gw-axw2 gw-ok">{t('landing.axOpen', { note: ax.openNote ?? ax.gate })}</span>
-                    : <span className="gw-axw2">{t('landing.axGated', { gate: ax.gate })}</span>)}
+                    : <span className="gw-axw2">{withCodes(t('landing.axGated', { gate: ax.gate }))}</span>)}
                   {code === 'MAL' && ax.catAxis === 'RE' && (
                     <span className="gw-axbrk"><b>{t('landing.brokerTitle')}</b>
-                      <span>{t('landing.brokerBody')}</span>
+                      <span>{withCodes(t('landing.brokerBody'))}</span>
                       <Link className="gw-bo gw-sm" href="/mal/brokers">{t('landing.brokerLink')}</Link></span>
                   )}
                 </div>
