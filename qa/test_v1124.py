@@ -74,7 +74,7 @@ ok('① 사전 — 배지 21 · 구독 안내 7 + 환불 7 · ko/en 같음 · �
    and {pk[f'trust.badge.state.{v}']: v for v in ST.values()} == ST and all(not re.search(r'[가-힣]', pe[k]) for k in bk) and all(not re.search(r'[가-힣]', me_[k]) for k in sk), f'{len(bk)} · {len(sk)}')
 ok('① 구독 안내 사전 한국어 = 서버 글(날짜 · 요금제 자리 빼고)', all(mk[f'sub.srv.notice.{c}'].split('{')[0] in RS for c in ('REFUND_OPEN', 'CHARGE_IN_FLIGHT', 'CANCELLED_UNPAID', 'PAST_DUE', 'NO_METHOD'))
    and all(mk[k] in rd('src/modules/billing/recurring-refund.service.ts') for k in ('sub.srv.refund.noteDone', 'sub.srv.refund.noteFailed', 'sub.srv.refund.noteChecking', 'sub.srv.refund.noteStub')), '')
-ok('① 판 v10.124', rd('VERSION').strip() == 'v10.124', rd('VERSION').strip())
+ok('① 판 v10.124 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 124), rd('VERSION').strip())
 
 if API and DB:
     TI = login('intro@x.com')
