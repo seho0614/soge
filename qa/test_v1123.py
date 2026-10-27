@@ -45,7 +45,7 @@ def call(m, p, b=None, t=None, h=None):
 # ① 코드
 M = rd('prisma/migrations/D126_i18n_db_text/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 164 · 마지막 D126', (len(mig), mig[-1]) == (164, 'D126_i18n_db_text'), f'{len(mig)} · {mig[-1]}')
+ok('① 마이그레이션 164 · 마지막 D126(v10.124 부터 D127 · 165)', (len(mig), mig[-1]) in ((164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes')), f'{len(mig)} · {mig[-1]}')
 ok('① D126 — 대상 7개 더함(옛 18개 그대로) · fn_i18n_source 에 7개 · 광고 소재 번호는 uuid 검사',
    "'NOTIFY_EVENT','REPORT_REASON','PLAN','INTRO_GRADE','GWAN_FORM','UI_MESSAGE','AD_PLACEMENT'" in M and "'FOOTER_LINK','SETTING','POLL','POLL_OPT','INGREDIENT','HLT_CONCERN'," in M
    and all(re.search(rf"WHEN '{t}'\s+THEN", M) for t in NEW + ['NOTICE', 'HLT_CONCERN', 'PROFILE_OPT']) and "'POLL_OPT','AD_PLACEMENT') AND p_id !~*" in M, '')
@@ -62,7 +62,7 @@ ok('① API 에서 얹음 — 알림 설정 · 신고 사유 · 내 신고 · �
    "'NOTIFY_EVENT', (r: any) => r.eventCode, { name: 'name', reason: 'legal_basis' }" in S['mn'] and S['ab'].count("'REPORT_REASON'") == 2
    and "'PLAN', (r) => r.code, { name: 'name', features: 'features' }" in S['bl'] and ".split('\\n')" in S['bl'] and S['in'].count("'INTRO_GRADE'") == 2
    and "'UI_MESSAGE', (r) => r.code" in S['pu'] and "'GWAN_FORM', (r) => `${gwanCode}:${r.role}`" in S['pu'] and S['ad'].count("'AD_PLACEMENT'") == 4, '')
-ok('① 판 v10.123', rd('VERSION').strip() == 'v10.123', rd('VERSION').strip())
+ok('① 판 v10.123 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 123), rd('VERSION').strip())
 
 if API and DB:
     TA = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': 'sgb-dev-1234'})['accessToken']

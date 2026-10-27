@@ -29,7 +29,7 @@ blk = S[S.find("case 'sla_alert': {"):]; blk = blk[:blk.find('break;')]
 ok('① sla_alert — 넘긴 건이 있으면 WARN REVIEW_SLA_BREACH', "if (r.n > 0) this.log.warn(`REVIEW_SLA_BREACH 검수 기한 넘김 ${r.n}건" in blk and 'SELECT fn_check_sla_alert() AS n' in blk, '')
 ok('① 로그 줄에 ERROR 낱말 없음(API 오류 필터와 겹치지 않음)', 'ERROR' not in re.sub(r'REVIEW_SLA_BREACH', '', blk[blk.find('this.log.warn'):]), '')
 mig = sorted(os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(K, 'prisma/migrations/*/migration.sql')))
-ok('① 마이그레이션 없음 · 152 · 마지막 D114(v10.93 부터 D115 · 153 — test_v1093)', (len(mig), mig[-1] if mig else '') in ((152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base'), (154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text')), f'{len(mig)}')
+ok('① 마이그레이션 없음 · 152 · 마지막 D114(v10.93 부터 D115 · 153 — test_v1093)', (len(mig), mig[-1] if mig else '') in ((152, 'D114_seed_ad_ends_extend'), (153, 'D115_i18n_base'), (154, 'D116_agent_base'), (155, 'D117_i18n_content_overlay'), (156, 'D118_i18n_auto_translate'), (157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes')), f'{len(mig)}')
 
 SH = os.path.join(K, 'deploy/aws/cloudwatch/setup.sh')
 s = rd('deploy/aws/cloudwatch/setup.sh')

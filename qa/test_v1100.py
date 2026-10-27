@@ -132,7 +132,7 @@ KEEP = {'app/partner/business/BizForms.tsx': SIDO, 'components/partner/RegionEdi
         'app/partners/revenues/page.tsx': ['/^소개몰 주문', "=== '취소'"],   # v10.122 DB 트리거가 정한 메모 모양 맞추기
         'components/partners/SettlementAccountForm.tsx': BANKS,
         'app/partner/page.tsx': ['(주\\)'],   # 상호 앞 (주) 떼기
-        'app/partner/tracks/page.tsx': ['const STAGE'], 'app/partner/trust/page.tsx': ['const BADGE_TONE'],   # 서버가 준 단계 · 배지 상태 글자에 색만 붙임
+        'app/partner/tracks/page.tsx': ['const STAGE'], 'app/partner/trust/page.tsx': ['const BADGE_TONE', 'const LABEL'],   # 서버가 준 단계 · 배지 상태 글자에 색만 붙임 · v10.124 업종 라벨(서버 값) → 사전 키
         'app/partners/orders/page.tsx': ['시간`', '일`'], 'app/partners/page.tsx': ['월 ${', '분 전'],   # 시각 표기(2-5c)
         'components/billing/PlanPicker.tsx': ['const ro = ', '구독료`'], 'components/billing/SubscriptionManage.tsx': ["reason: '회원 해지'"],   # 한국어 조사 · 결제 · API 값
         'components/partner/act.tsx': ["'처리하지 못했습니다. 잠시 뒤 다시 해 주십시오.'"],   # 서버가 사유를 주지 않을 때(여러 파일이 쓰는 일반 함수)
