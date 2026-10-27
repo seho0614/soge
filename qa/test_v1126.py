@@ -43,8 +43,8 @@ mb, ma = sorted(kb - set(D)), sorted(ka - set(D))
 ok(f'① 단계 B 모듈(partner · affiliate · health · lead)의 오류 · 안내 글 {len(kb)}종이 모두 사전에', kb and not mb, ' | '.join(mb[:3]))
 ok(f'① 단계 A 모듈 {len(ka)}종도 그대로 모두 사전에', ka and not ma, ' | '.join(ma[:3]))
 badp = [k for k, v in D.items() if sorted(re.findall(r'\{\d+\}', k)) != sorted(re.findall(r'\{\d+\}', v))]
-ok(f'① 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', len(D) >= 800 and not badp and not any(re.search('[가-힣]', v) for v in D.values()), ' | '.join(badp[:3]))
-ok('① 판 v10.126 · 마이그레이션 없음(165)', rd('VERSION').strip() == 'v10.126' and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) == 165, rd('VERSION').strip())
+ok(f'① 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', len(D) >= 800 and not badp and not any(re.search('[가-힣]', v.replace('심의필 제2026-0451호', '')) for v in D.values()), ' | '.join(badp[:3]))
+ok('① 판 v10.126 이상 · 마이그레이션 없음(165)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 126) and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) == 165, rd('VERSION').strip())
 SAMPLES = [   # 조각 글을 이어 붙인 실제 모양(health-return · lead-cash · partner-lead · lead · recurring) — 영어 결과에 한글이 남으면 안 됨
     '승인하고 왕복 배송비 3,000원을 빼고 12,000원을 환불했습니다(시험 결제 — 실제 돈 없음). 재고를 되돌렸습니다.',
     '승인했습니다. 결제 전 주문이라 환불할 것이 없습니다. 개봉 반품이라 재고로 되돌리지 않았습니다.',
@@ -60,10 +60,14 @@ try:
     js = "require('ts-node').register({transpileOnly:true});const {serverText}=require('/app/src/common/i18n/server-text');" \
          "process.stdout.write(JSON.stringify(JSON.parse(process.argv[1]).map(x=>serverText(x,'en'))))"
     out = json.loads(subprocess.run(['docker', 'exec', 'sgb-api', 'node', '-e', js, json.dumps(SAMPLES, ensure_ascii=False)], capture_output=True, text=True, timeout=120).stdout or 'null')
-except Exception as e:
+except Exception:
     out = None
-ok(f'① 조각 글을 이어 붙인 예문 {len(SAMPLES)}개 — 영어 결과에 한글 없음 · 빈칸 · 문장 부호 다듬음(점검판 API 에서 실행)',
-   out and len(out) == len(SAMPLES) and not any(re.search('[가-힣]', x) or '  ' in x or ' .' in x for x in out), ' | '.join(x[:50] for x in (out or []) if re.search('[가-힣]', x))[:200])
+import shutil
+if not shutil.which('docker'):
+    print('   건너뜀 — docker 가 없는 곳(시험 이미지 안)에서는 예문을 점검판 API 로 돌릴 수 없음 · 서버에서 python3 -I 로')
+else:
+  ok(f'① 조각 글을 이어 붙인 예문 {len(SAMPLES)}개 — 영어 결과에 한글 없음 · 빈칸 · 문장 부호 다듬음(점검판 API 에서 실행)',
+     out and len(out) == len(SAMPLES) and not any(re.search('[가-힣]', x) or '  ' in x or ' .' in x for x in out), ' | '.join(x[:50] for x in (out or []) if re.search('[가-힣]', x))[:200])
 left = {x['key'] for x in rows if han(x['key'])} - set(D)
 by = {}
 for x in rows:

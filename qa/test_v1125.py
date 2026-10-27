@@ -55,7 +55,7 @@ keys_a = {x['key'] for x in rows if x['module'] in A and re.search('[가-힣]', 
 miss = sorted(keys_a - set(D))
 ok(f'② 단계 A 모듈의 오류 · 안내 글 {len(keys_a)}종이 모두 사전에', keys_a and not miss, ' | '.join(miss[:3]))
 badp = [k for k, v in D.items() if sorted(re.findall(r'\{\d+\}', k)) != sorted(re.findall(r'\{\d+\}', v))]
-ok(f'② 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', D and not badp and not any(re.search('[가-힣]', v) for v in D.values()), ' | '.join(badp[:3]))
+ok(f'② 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', D and not badp and not any(re.search('[가-힣]', v.replace('심의필 제2026-0451호', '')) for v in D.values()), ' | '.join(badp[:3]))
 allk = {x['key'] for x in rows if re.search('[가-힣]', re.sub(r'\{\d+\}', '', x['key']))}
 left = allk - set(D)
 by = {}

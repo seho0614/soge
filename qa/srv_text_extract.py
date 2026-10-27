@@ -75,3 +75,40 @@ def extract(root):
 
 if __name__ == '__main__':
     json.dump(extract(sys.argv[1]), sys.stdout, ensure_ascii=False)
+
+
+# v10.127 — DB 트리거 · 함수가 던지는 오류(RAISE EXCEPTION '…') — DbErrorFilter 가 접두어를 떼고 보내는 글 모양으로
+_RAISE = re.compile(r"RAISE\s+EXCEPTION\s+'((?:[^']|'')*)'", re.I)
+_PFX = [re.compile(r'INV-\d+ violated:\s*(.*)', re.S), re.compile(r'A-14:\s*(.*)', re.S), re.compile(r'B-21 violated:\s*(.*)', re.S),
+        re.compile(r'view quota exceeded:\s*(.*)', re.S), re.compile(r'listing slot limit reached:\s*(.*)', re.S),
+        re.compile(r'^INV-\d+:\s*(.*)', re.S), re.compile(r'^RSK-\d+:\s*(.*)', re.S), re.compile(r'^([A-Z][A-Z0-9_-]{1,39}):\s*(.+)', re.S)]
+
+
+def db_message(raw):
+    """RAISE 글 → 사용자에게 가는 message(접두어 뗌 · % 자리는 {0} …) · 접두어가 없으면 None(500 으로 감춰짐)"""
+    for rx in _PFX:
+        m = rx.search(raw)
+        if m:
+            msg = m.group(m.lastindex).strip()
+            n = [0]
+            def rep(_):
+                k = '{%d}' % n[0]; n[0] += 1; return k
+            return re.sub(r'(?<!%)%(?!%)', rep, msg).replace('%%', '%')
+    return None
+
+
+def extract_db(root):
+    """마이그레이션 전부의 RAISE EXCEPTION 글 — 같은 함수가 여러 번 다시 만들어졌으면 마지막 것만 쓰이지만, 옛 글도 사전에 있어도 해가 없어 모두 모음"""
+    res = []
+    mdir = os.path.join(root, 'prisma', 'migrations')
+    for d in sorted(os.listdir(mdir)):
+        p = os.path.join(mdir, d, 'migration.sql')
+        if not os.path.exists(p): continue
+        s = open(p, encoding='utf-8').read()
+        for m in _RAISE.finditer(s):
+            raw = m.group(1).replace("''", "'")
+            if not re.search('[가-힣]', raw): continue
+            k = db_message(raw)
+            if k and re.search('[가-힣]', re.sub(r'\{\d+\}', '', k)) and not k.rstrip().endswith(('—', ':')):   # 「… —」처럼 뒤를 || 로 잇는 글은 실행 때 모양이 달라 뺌
+                res.append({'module': 'db', 'file': f'prisma/migrations/{d}', 'line': s.count('\n', 0, m.start()) + 1, 'key': k, 'kind': 'db'})
+    return res
