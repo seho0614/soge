@@ -49,7 +49,7 @@ export default async function IntroHome() {
 
   const [act, matchedRes, prof] = await Promise.all([
     apiGet<Act>('/me/introducer/activity', 0).catch(() => null),
-    apiGet<{ items?: Matched[]; answered?: Answered[]; note?: string | null } | Matched[]>('/me/introducer/matched', 0).catch(() => null),
+    apiGet<{ items?: Matched[]; answered?: Answered[]; note?: string | null; registered?: boolean } | Matched[]>('/me/introducer/matched', 0).catch(() => null),
     apiGet<Profile>('/me/introducer/profile', 0).catch(() => null),
   ]);
   const answered = !Array.isArray(matchedRes) ? (matchedRes?.answered ?? []) : [];
@@ -79,7 +79,7 @@ export default async function IntroHome() {
 
       <h2 className="my-s2">{t('intro.matchedH')} <em>{matched.length}</em></h2>
       {matched.length === 0 ? (
-        <Note kind="warn"><b>{t('intro.noMatch')}</b> {f.srv(note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, ''), note && !note.startsWith('지금은') ? t('intro.regToMatch') : t('intro.widen'))}</Note>
+        <Note kind="warn"><b>{t('intro.noMatch')}</b> {f.srv(note?.replace(/^지금은 맞는 요청이 없습니다\.\s*/, ''), !Array.isArray(matchedRes) && matchedRes?.registered === false ? t('intro.regToMatch') : t('intro.widen'))   /* v10.125 — 서버 글이 영어로 올 수 있어 글자 대신 registered 로 */}</Note>
       ) : (
         <div className="my-reqs">
           {matched.slice(0, 20).map((m) => {

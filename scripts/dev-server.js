@@ -15,6 +15,7 @@ const { NestFactory } = require('@nestjs/core');
 const { ValidationPipe } = require('@nestjs/common');
 const { AppModule } = require('../src/app.module');
 const { DbErrorFilter } = require('../src/common/db-error.filter');
+const { I18nService } = require('../src/modules/i18n/i18n.service');
 
 (async () => {
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'] });
@@ -23,7 +24,7 @@ const { DbErrorFilter } = require('../src/common/db-error.filter');
       // 쿼리스트링은 항상 문자열입니다. @IsInt() 를 쓰려면 변환이 필요합니다
       transformOptions: { enableImplicitConversion: true },
     }));
-  app.useGlobalFilters(new DbErrorFilter());
+  app.useGlobalFilters(new DbErrorFilter(app.get(I18nService)));   // v10.125 — 오류 글을 화면 언어로(main.ts 와 같게)
   app.enableShutdownHooks();
 
   /* API 문서 UI.

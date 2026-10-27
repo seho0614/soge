@@ -43,7 +43,11 @@ export class I18nService {
   private live: { at: number; enabled: boolean; langs: Set<string> } | null = null;
   /** 지금 요청의 화면 언어 — 다국어가 켜져 있고 그 언어가 켜져 있을 때만(아니면 null = 원문) · 설정은 30초 기억 */
   async activeLang(): Promise<string | null> {
-    const lang = RequestCtx.lang();
+    return this.langIfActive(RequestCtx.lang());
+  }
+
+  /** v10.125 — 그 언어가 지금 켜져 있으면 그대로, 아니면 null(오류 출구처럼 요청 문맥이 없을 수 있는 곳에서) */
+  async langIfActive(lang: string | null | undefined): Promise<string | null> {
     if (!lang) return null;
     if (!this.live || Date.now() - this.live.at > 30_000) {
       const enabled = (await this.setting('i18n.enabled')) === 'on';

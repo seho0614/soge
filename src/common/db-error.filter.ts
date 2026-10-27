@@ -1,7 +1,16 @@
 import {
   ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { serverText } from './i18n/server-text';
+
+/** v10.125 — 오류 글을 화면 언어로 옮길 때 그 언어가 켜져 있는지 묻는 곳(I18nService.langIfActive) */
+export type LangGate = { langIfActive(lang: string | null | undefined): Promise<string | null> };
+const langOf = (req: Request): string | undefined => {
+  const h = String(req.headers['x-lang'] ?? '').trim().toLowerCase();
+  const v = /^[a-z]{2}$/.test(h) ? h : /(?:^|;\s*)sgb_lang=([a-z]{2})(?:;|$)/.exec(String(req.headers.cookie ?? ''))?.[1];
+  return v && v !== 'ko' ? v : undefined;
+};
 
 /**
  * DB 계층이 불변식을 강제하므로, 트리거·CHECK 예외를 그대로 500으로 흘리면
@@ -197,12 +206,23 @@ function normalize(err: HttpException): unknown {
 @Catch()
 export class DbErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(DbErrorFilter.name);
+  constructor(private readonly gate?: LangGate) {}
 
   catch(err: unknown, host: ArgumentsHost) {
     const res = host.switchToHttp().getResponse<Response>();
+    const req = host.switchToHttp().getRequest<Request>();
+    /* v10.125 (docs/189) — 사용자 웹 영어 화면이면 오류 글(message)을 사전으로(운영 화면 /admin · 한국어 · 다국어 꺼짐은 그대로) */
+    const send = (status: number, body: any) => {
+      const lang = this.gate && !/^\/api\/v1\/admin(\/|\?|$)/.test(req?.originalUrl ?? '') ? langOf(req) : undefined;
+      if (!lang || !body || typeof body.message !== 'string') { res.status(status).json(body); return; }
+      this.gate!.langIfActive(lang)
+        .then((l) => (l ? { ...body, message: serverText(body.message, l) } : body), () => body)
+        .then((b) => { if (!res.headersSent) res.status(status).json(b); })   // 응답 머리를 이미 보낸 다운로드 등에서 두 번 보내지 않음
+        .catch((e) => this.logger.warn(`오류 응답을 보내지 못함: ${String(e?.message ?? e)}`));
+    };
 
     if (err instanceof HttpException) {
-      res.status(err.getStatus()).json(normalize(err));
+      send(err.getStatus(), normalize(err));
       return;
     }
 
@@ -211,7 +231,7 @@ export class DbErrorFilter implements ExceptionFilter {
       const m = raw.match(rule.test);
       if (m) {
         const mapped = rule.map(m);
-        res.status(mapped.status).json({
+        send(mapped.status, {
           code: mapped.code,
           message: mapped.message.trim(),
         });
@@ -220,6 +240,6 @@ export class DbErrorFilter implements ExceptionFilter {
     }
 
     this.logger.error(raw);
-    res.status(500).json({ code: 'INTERNAL_ERROR', message: '처리 중 오류가 발생했습니다.' });
+    send(500, { code: 'INTERNAL_ERROR', message: '처리 중 오류가 발생했습니다.' });
   }
 }
