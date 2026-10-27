@@ -1,5 +1,5 @@
 {
-  "svcForm": { "block": { "LOCATION": "Directions", "FAQ": "FAQ", "CASES": "Project examples", "PRICE": "Price list", "INTRO": "Service introduction", "HERO_IMAGE": "Main image"}, "step": { "PAYMENT": { "5": "Request review", "4": "Price · stock", "3": "Referral reward", "2": "Shipping · returns", "1": "Product information notice", "0": "Product definition"}, "MEDICAL": { "2": "Register review approval", "1": "Review submission materials", "0": "Procedures · materials"}, "RENTAL": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONSULT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONTRACT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "MATRIX": { "6": "Submit registration", "5": "Landing preview", "4": "Referral fee", "3": "Consultation view fee", "2": "Auto-quote ranges", "1": "Main target", "0": "Services offered"}}, "form": { "MEDICAL": "Medical review track", "PAYMENT": "Payment (legacy)", "RENTAL": "Monthly contract", "CONSULT": "Consultation", "CONTRACT": "Contract-based", "MATRIX": "Matrix quote"}},
+  "svcForm": { "block": { "LOCATION": "Directions", "FAQ": "FAQ", "CASES": "Project examples", "PRICE": "Price list", "INTRO": "Service introduction", "HERO_IMAGE": "Main image"}, "step": { "PAYMENT": { "5": "Request review", "4": "Price · stock", "3": "Referral reward", "2": "Shipping · returns", "1": "Product information notice", "0": "Product definition"}, "MEDICAL": { "2": "Register approval number", "1": "Review submission materials", "0": "Procedures · materials"}, "RENTAL": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONSULT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "CONTRACT": { "2": "Request review", "1": "Detail page", "0": "Intake method"}, "MATRIX": { "6": "Submit registration", "5": "Landing preview", "4": "Referral fee", "3": "Consultation view fee", "2": "Auto-quote ranges", "1": "Main target", "0": "Services offered"}}, "form": { "MEDICAL": "Medical review track", "PAYMENT": "Payment (legacy)", "RENTAL": "Monthly contract", "CONSULT": "Consultation", "CONTRACT": "Pay on contract", "MATRIX": "Matrix quote"}},
   "form": {
     "MATRIX": "Matrix quote",
     "CONTRACT": "Pay on contract",
@@ -315,7 +315,7 @@
     "detail": "Details",
     "mxH": "Auto-quote matrix",
     "mxOf": "Quote cells of “{title}” — edit them on the service details page.",
-    "mxEmpty": "No matrix-quote service. Categories that quote by “move type × volume”, like moving, fill the cells at registration.",
+    "mxEmpty": "No matrix-quote services. Categories that quote by “move type × volume”, like moving, fill the cells at registration.",
     "axisNote": "<b>Quote axes (move type, volume) are set in the category master.</b> SogaeBank adds or changes axes in the category master — changes apply without an app update.",
     "rejNote": "<b>If rejected, fix and resubmit instead of registering again.</b> A new submission puts the same item in the review queue twice. Listings with banned phrases (‘principal guaranteed’, ‘100% success’, etc.) are not accepted."
   },

@@ -318,7 +318,7 @@
     "lead": "You can review it even if you are not a SogaeBank member. Nothing happens unless you agree.",
     "who": "Referred by",
     "introducer": "Referrer",
-    "valid": "{n} valid connections",
+    "valid": "{n, plural, one {{n} valid connection} other {{n} valid connections}}",
     "what": "What is the request?",
     "effectsTitle": "If you agree",
     "effects": {

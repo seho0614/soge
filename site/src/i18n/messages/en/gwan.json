@@ -221,7 +221,7 @@
     "viewAll": "View all",
     "goSee": "Take a look ›",
     "quickWarn": "<b>We connect by subcontract only.</b> We don't hire workers for you; we connect you with <b>companies that take on the job</b>. SogaeBank is not involved in hiring, and working conditions and wages are <b>set by the company.</b>",
-    "headcount": "{n} people",
+    "headcount": "{n, plural, one {{n} person} other {{n} people}}",
     "offers": "{n, plural, one {{n} reply} other {{n} replies}}",
     "mineSuffix": " · My request",
     "quickEmpty": "<b>No open quick-match requests.</b> Post with the form above and verified members (staffing agencies, individuals) will reply.",

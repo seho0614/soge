@@ -11,7 +11,7 @@
     "browseListings": "Browse listings",
     "perListingLead": "Refer this listing to someone who needs it. Referral codes are <b>separate for each listing</b> — tapping again on the same listing gives the same code, and",
     "freeUnknown": "new listings this month are free up to your plan's included count.",
-    "freeN": "{n} new listings this month are free (free members · one account per verified person).",
+    "freeN": "{n, plural, one {{n} new listing this month is} other {{n} new listings this month are}} free (free members · one account per verified person).",
     "freeNone": "free members have no free codes and pay {extra} per code (paid plans include codes up to their plan limit).",
     "perListingTail": "If they open your referral link and inquire about this listing within 90 days, you are recorded as the referrer.",
     "allWithListing": "Refer this listing to someone who needs it. If they open your referral link and inquire within 90 days, you are recorded as the referrer.",

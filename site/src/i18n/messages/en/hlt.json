@@ -28,7 +28,7 @@
   "card": {
     "soldOut": "Sold out",
     "direct": "Direct",
-    "tenant": "Partner",
+    "tenant": "Third-party",
     "defaultSeller": "SogaeBank Direct",
     "unitFrom": "From <b>{amt}</b> <k>per month</k>",
     "soldHint": "Sold out — you can add it again once restocked",
@@ -143,7 +143,7 @@
     "returnFee": "Return shipping",
     "returnFeeVal": "Round trip {amt} (deducted from the refund for change of mind or ordering mistakes)",
     "exchangeFee": "Exchange shipping",
-    "exchangeFeeVal": "Round trip {amt} (paid when requesting, for change of mind or ordering mistakes · free for defects or wrong items)",
+    "exchangeFeeVal": "Round trip {amt} (for change of mind or ordering mistakes, paid when requesting · free for defects or wrong items)",
     "returnAddr": "Return address",
     "withdrawal": "Withdrawal",
     "withdrawalVal": "Within {days, plural, one {{days} day} other {{days} days}} of receipt (E-Commerce Act Art. 17)",
@@ -156,7 +156,7 @@
     "mfrTitle": "The manufacturer may differ even for the same ingredient",
     "mfrBody": "Sogae Mall sells by ingredient, so even with the same ingredient and amount, the manufacturer or packaging may vary between batches. Ingredients and amounts are exactly as labeled.",
     "noticeTitle": "Product information disclosure",
-    "sameTitle": "More with {name}",
+    "sameTitle": "Other products with {name}",
     "viewAll": "View all",
     "related": "Related concerns"
   },
@@ -179,13 +179,13 @@
   },
   "category": {
     "fallback": "Category",
-    "hint": "Categories are <b>used for license and review requirements</b>. To choose what to buy, <ing>By ingredient</ing> · <con>By concern</con> is faster.",
+    "hint": "Categories are <b>used for license and review requirements</b>. To choose what to buy, browsing <ing>By ingredient</ing> or <con>By concern</con> is faster.",
     "notSold": "We don’t sell medicines, medical services or medical devices — <link>What we don’t sell</link>",
     "openItems": "View available items",
     "missing": "This category does not exist.",
     "empty": "No products in {title} yet.",
     "total": "{n} total",
-    "totalPage": "{n} total · single page.",
+    "totalPage": "{n} total · all on one page.",
     "notSoldBy": {
       "HLT_PHARM": "Under Article 44 of the Pharmaceutical Affairs Act, only pharmacy operators may sell medicines, so we do not carry them.",
       "HLT_MEDICAL": "Under Article 27 of the Medical Service Act (no patient inducement or brokering), medical services are not sold here."
@@ -233,7 +233,7 @@
     "period": "Period",
     "periodVal": "Within {days, plural, one {{days} day} other {{days} days}} of receiving the product — no reason required",
     "preShip": "Cancel before shipping",
-    "preShipVal": "Accepted immediately from My orders",
+    "preShipVal": "You can request it right away in My orders",
     "postShip": "After shipping",
     "postShipVal": "Handled as a return, not a cancellation",
     "change": "Change of mind · ordering mistake",

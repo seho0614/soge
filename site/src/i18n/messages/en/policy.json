@@ -78,7 +78,7 @@
   },
   "agree": {
     "title": "Agree to terms",
-    "pendingN": "{n} required terms need your consent.",
+    "pendingN": "{n, plural, one {{n} required term needs} other {{n} required terms need}} your consent.",
     "allDone": "You have agreed to all required terms.",
     "changed": "Our terms have changed",
     "needed": "Your consent is required",

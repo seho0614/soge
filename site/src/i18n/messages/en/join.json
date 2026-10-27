@@ -439,7 +439,7 @@
     "freeTitle": "Free referral codes this month",
     "freeMember": "Free ({plan}) members",
     "monthly": "{n} per month",
-    "newListings": " ({n} new listings)",
+    "newListings": " ({n, plural, one {{n} new listing} other {{n} new listings}})",
     "monthlyTail": " · Granted on the 1st of each month; unused codes don't carry over · {n} per verified person.",
     "noFree": "No free referral codes · {price} each",
     "noFreeTail": " · Get one whenever you need it.",

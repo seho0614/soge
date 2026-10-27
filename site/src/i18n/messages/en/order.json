@@ -67,7 +67,7 @@
     "FAILED": "Delivery failed"
   },
   "returnKind": {
-    "CANCEL": "Cancel order",
+    "CANCEL": "Order cancellation",
     "RETURN": "Return",
     "EXCHANGE": "Exchange"
   },
@@ -119,7 +119,7 @@
     "empty": "Your cart is empty.",
     "browse": "Browse products",
     "directStore": "SogaeBank direct store",
-    "priceChanged": "Price changed — when added <s>{was}</s> → now <b>{now}</b>",
+    "priceChanged": "Price changed — was <s>{was}</s> when added → now <b>{now}</b>",
     "notOnSale": "This product is no longer on sale. Please remove it to continue.",
     "lowStock": "Not enough stock. {n} left",
     "fitQty": "Adjust quantity",
@@ -141,7 +141,7 @@
     "qty": "Quantity of {label}",
     "title": "Choose an option",
     "months": "(months of supply)",
-    "unitName": "{unit}/month × {months, plural, one {{months} month} other {{months} months}} : {name}",
+    "unitName": "{unit}/month × {months, plural, one {{months} month} other {{months} months}}: {name}",
     "soldout": "Sold out",
     "pay": "Pay {price}",
     "leftSep": " · {n} left",

@@ -193,8 +193,8 @@
     "newDot": "New",
     "settle": {
       "b": "The settlement menu opens after at least 1 closed deal.",
-      "open": "You have {n} closed deals, so it is open.",
-      "none": "You have {n} closed deals, so there is nothing to claim yet."
+      "open": "You have {n, plural, one {{n} closed deal} other {{n} closed deals}}, so it is open.",
+      "none": "You have {n, plural, one {{n} closed deal} other {{n} closed deals}}, so there is nothing to claim yet."
     }
   },
   "acc": {
@@ -320,7 +320,7 @@
     "personal": "Individual members can subscribe too. To receive referral fees as a business (tax invoice),",
     "toBiz": "Switch to business ›",
     "hPlans": "Plans",
-    "codesN": "{n} referral codes/mo",
+    "codesN": "{n, plural, one {{n} referral code} other {{n} referral codes}}/mo",
     "codesNone": "No referral codes",
     "view": "Request views {v}",
     "slots": "Listing slots {v}",
@@ -343,7 +343,7 @@
       "refunded": "Refunded",
       "skipped": "Skipped"
     },
-    "extraRow": "{n} extra referral codes",
+    "extraRow": "{n, plural, one {{n} extra referral code} other {{n} extra referral codes}}",
     "fee": "Subscription fee"
   },
   "subPay": {
@@ -409,7 +409,7 @@
       "refunded": "Refunded",
       "skipped": "Skipped"
     },
-    "extraRow": "{n} extra referral codes",
+    "extraRow": "{n, plural, one {{n} extra referral code} other {{n} extra referral codes}}",
     "attempts": " · {n, plural, one {{n} attempt} other {{n} attempts}}",
     "removeNote": "<b>Removing the payment method makes the next renewal fail.</b> To cancel, use <a>Cancel subscription</a> instead of removing the payment method — you can keep using the period already paid.",
     "nextCharge": "Next charge",

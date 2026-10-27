@@ -16,7 +16,7 @@
     "all": "All products",
     "ingredients": "By ingredient",
     "concerns": "By concern",
-    "guide": "How it works · Withdrawal",
+    "guide": "How it works · Order withdrawal",
     "orders": "My orders",
     "cart": "Cart"
   },
@@ -26,11 +26,11 @@
     "con": "Find by concern",
     "conLead": "Find products for your health concerns.",
     "low": "Lowest price by ingredient",
-    "lowLead": "See the cheapest product for each key ingredient. (per 30 days)",
+    "lowLead": "See the cheapest product for each key ingredient. (based on a 30-day supply)",
     "lowLeadPriced": "The lowest price among products available now, per ingredient.",
     "today": "Today's health picks",
     "todayLead": "See the most popular health products and live trends.",
-    "many": "Most searched",
+    "many": "Most ordered",
     "fresh": "New arrivals",
     "deal": "This week's special deals",
     "dealLead": "The hottest discounts right now."
@@ -50,7 +50,7 @@
     "tabs": {
       "hot": "Trending now",
       "fresh": "New arrivals",
-      "many": "Most searched"
+      "many": "Most ordered"
     },
     "basis": {
       "hot": "Units sold in the last 7 days · updated daily · excluding cancellations and returns · on-sale products only",

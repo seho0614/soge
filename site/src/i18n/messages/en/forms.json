@@ -7,7 +7,7 @@
     "hoursPh": "e.g. Weekdays 10:00 ~ 18:00",
     "feePh": "e.g. 500,000",
     "won": "KRW",
-    "missing": "{n} required field(s) still empty — {list}{more}",
+    "missing": "{n, plural, one {{n} required field} other {{n} required fields}} still empty — {list}{more}",
     "missingMore": " and {n} more",
     "blocked": "This category cannot be registered",
     "blockedMsg": "This category cannot be registered.",
@@ -104,7 +104,7 @@
     "etc": "Other support",
     "etcPh": "e.g. Sharing operating know-how",
     "sec5Note": "The fields here <b>vary by section and category</b>. For now, all three sections use the same fields.",
-    "filled": "<b>{n} field(s) filled so far.</b> When you submit, one item is added to <b>My listings</b> as pending review.",
+    "filled": "<b>{n, plural, one {{n} field} other {{n} fields}} filled so far.</b> When you submit, one item is added to <b>My listings</b> as pending review.",
     "n1": "Posted information is published after review (usually within 24 hours).",
     "n3": "You can edit it in My listings after posting — edits are reviewed again.",
     "cancel": "Cancel"
@@ -204,7 +204,7 @@
     "mapNote": "No map is drawn until coordinates are linked — only you and our team see the address details.",
     "n1": "Posted information is published after review.",
     "n3": "You can edit or delete it on the management page after posting.",
-    "filled": "{n} field(s) filled so far. It closes automatically 30 days after posting.",
+    "filled": "{n, plural, one {{n} field} other {{n} fields}} filled so far. It closes automatically 30 days after posting.",
     "reset": "Clear form"
   },
   "reqPage": {
