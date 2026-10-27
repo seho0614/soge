@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
-import { PolicyViolation, StateConflict } from '../../core/errors';
+import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 
 /**
@@ -275,6 +275,9 @@ export class AdminService {
   }
 
   async updateSetting(key: string, value: string) {
+    if (AdminService.isAiSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('AI_SETTING_SUPER', 'AI 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */
@@ -286,12 +289,42 @@ export class AdminService {
         `값의 형식이 맞지 않습니다${meta.example ? ` (예: ${meta.example})` : ''}.`);
     }
     await this.checkSwitch(key, value);
+    await this.checkAiSwitch(key, value);
     const [row] = await this.db.query(
       `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
         WHERE key = $1 RETURNING key, value`,
       [key, value, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     return row;
+  }
+
+  /** v10.129 (docs/194) — AI 스위치 · 상한 · 모델 · 한도(agent.* · AI 번역)는 최고 관리자만 — 비용 · 법무에 걸린 설정(대표 승인 2026-10-27) */
+  static isAiSetting(key: string): boolean {
+    return key.startsWith('agent.') || ['i18n.auto_translate.enabled', 'i18n.board_on_view', 'i18n.translate_model', 'i18n.auto_langs', 'i18n.engine'].includes(key);
+  }
+
+  /** v10.129 — AI 전체(agent.enabled)를 켜려면 엔진이 될 키(운영 화면 키 · .env CLAUDE 키 · 점검판 MOCK)와 월 상한 > 0 이 있어야 함.
+   *    없이 켜면 화면은 「켜짐」인데 아무것도 부르지 않아 헷갈림 · 상한 0 은 「부르지 않음」이라 켜도 뜻이 없음 */
+  private async checkAiSwitch(key: string, value: string) {
+    if (key !== 'agent.enabled' || (value ?? '').trim() !== 'on') return;
+    const env = process.env;
+    const envKey = env.AGENT_PROVIDER === 'MOCK' || (env.AGENT_PROVIDER === 'CLAUDE' && (env.ANTHROPIC_API_KEY ?? '').length > 20);
+    /* 운영 화면 키는 실제로 풀리는지까지 봄 — 열쇠(ENC_KEY)가 바뀌어 못 풀면 엔진이 없음(AgentService 와 같은 판단).
+     *   풀다가 오류가 나도 요청의 트랜잭션(멱등 키)을 깨지 않게 트랜잭션 밖 연결로(새 컨텍스트 · tx 없음) */
+    let adminKey = false;
+    try {
+      const [k] = await RequestCtx.run({ requestId: 'ai-key-check' }, () =>
+        this.db.query<{ v: string | null }>(`SELECT public.fn_integ_secret_get('AGENT', 'ANTHROPIC_API_KEY') AS v`));
+      adminKey = !!k?.v?.trim();
+    } catch { adminKey = false; }
+    const [r] = await this.db.query<{ cap: string | null; cost: string }>(
+      `SELECT (SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd') AS cap, fn_agent_month_cost()::text AS cost`);
+    const cap = Number(r?.cap ?? 0), cost = Number(r?.cost ?? 0);
+    const miss: string[] = [];
+    if (!adminKey && !envKey) miss.push('AI 키(위험감지 › AI 운영 › AI 에이전트 › 「AI 키」)를');
+    if (!(cap > 0)) miss.push('월 상한(0 보다 큰 달러)을');
+    else if (cost >= cap) miss.push(`이번 달 비용($${cost.toFixed(2)})보다 큰 월 상한을`);   // 상한에 닿아 저절로 꺼진 뒤 — 올리지 않고 켜면 「켜짐」인데 부르지 않음
+    if (miss.length) throw new PolicyViolation('SWITCH_PREREQ', `아직 AI 를 켤 수 없습니다 — 먼저 ${miss.join(' · ')} 넣어 주십시오.`);
   }
 
   private async checkSwitch(key: string, value: string) {

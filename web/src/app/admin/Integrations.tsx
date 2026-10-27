@@ -31,6 +31,13 @@ interface Integration {
  *   DB 에는 암호문만 — 열쇠(ENC_KEY)는 .env 에만 있어 백업 · 덤프에는 암호문만 남습니다.
  *   「키 등록 완료」 체크는 비공개 키를 넣으면 저절로 켜집니다(.env 로 넣은 경우는 전처럼 손으로).
  */
+/** v10.129 — 키를 이 화면 「연동 키」가 아닌 곳에서 넣는 연동 */
+const KEY_AT: Record<string, { label: string; href?: string; sel?: string }> = {
+  AGENT: { label: '위험감지 › AI 운영 › AI 에이전트 › 「AI 키」(최고 관리자)', href: '#/ai-ops/agent' },
+  MAP: { label: '이 화면 아래 「카카오맵 키」', sel: '[data-map-keys]' },
+  WEATHER: { label: '이 화면 아래 「날씨 키」', sel: '[data-weather-keys]' },
+};
+
 export function Integrations() {
   const [rows, setRows] = useState<Integration[]>([]);
   const [err, setErr] = useState<unknown>(null);
@@ -124,6 +131,13 @@ export function Integrations() {
 
             <p className="legal">{r.purpose}</p>
             {r.memo && <p className="block-msg">{r.memo}</p>}
+            {/* v10.129 — 키를 다른 구역에서 넣는 연동은 그곳으로 가는 길(AI 는 위험감지 › AI 운영 › AI 에이전트 · 카카오맵 · 날씨는 이 화면 아래) */}
+            {(() => {
+              const at = KEY_AT[r.code];
+              return at && <p className="hint" data-key-goto={r.code}>{at.href
+                ? <a href={at.href}>키 넣는 곳으로 가기 — {at.label}</a>
+                : <button type="button" className="btn-sm ghost" onClick={() => document.querySelector(at.sel ?? '')?.scrollIntoView({ behavior: 'smooth' })}>키 넣는 곳으로 가기 — {at.label}</button>}</p>;
+            })()}
 
             <div className="int-grid">
               <label>
