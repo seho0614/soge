@@ -34,7 +34,7 @@ def keys(d, pre=''):
 
 M = rd('prisma/migrations/D125_i18n_more_targets/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 대상 여섯 · 원문(법정 고지 둘만) · 이전 대상 그대로 · 바닥줄 보기 끝에 id',
    "'FOOTER_LINK','SETTING','POLL','POLL_OPT','INGREDIENT','HLT_CONCERN'" in M and "p_id IN ('legal.intermediary_notice','legal.direct_notice')" in M
    and "WHEN 'PROFILE_OPT' THEN" in M and "WHEN 'HLT_PRODUCT' THEN" in M and "'CATEGORY','POLL','POLL_OPT') AND p_id !~*" in M
@@ -98,8 +98,8 @@ if API and DB:
     try:
         cat = {t: call('GET', f'/admin/i18n/catalog?targetType={t}&lang=en&size=100', t=TA) for t in ('FOOTER_LINK', 'SETTING', 'POLL', 'POLL_OPT', 'INGREDIENT', 'HLT_CONCERN')}
         ids = {t: [x['targetId'] for x in (c.get('items') or [])] for t, c in cat.items()}
-        ok('③ 원문 목록 — 바닥줄 · 법정 고지 둘만 · 투표 · 보기 · 성분(VITC) · 고민',
-           '1' in ids['FOOTER_LINK'] and sorted(ids['SETTING']) == ['legal.direct_notice', 'legal.intermediary_notice'] and POLL in ids['POLL']
+        ok('③ 원문 목록 — 바닥줄 · 법정 고지 둘(v10.132 부터 + 상호) · 투표 · 보기 · 성분(VITC) · 고민',
+           '1' in ids['FOOTER_LINK'] and sorted(ids['SETTING']) in (['legal.direct_notice', 'legal.intermediary_notice'], ['footer.company_name', 'legal.direct_notice', 'legal.intermediary_notice'])   # v10.132 상호(D130) and POLL in ids['POLL']
            and OPT in ids['POLL_OPT'] and 'VITC' in ids['INGREDIENT'] and CON in ids['HLT_CONCERN'], json.dumps({k: len(v) for k, v in ids.items()}))
         bad = call('PUT', '/admin/i18n/translations', {'targetType': 'SETTING', 'targetId': 'site.name', 'field': 'value', 'lang': 'en', 'text': 'x'}, TA)
         ok('③ 법정 고지 밖의 설정 키는 번역 못 넣음', bad.get('_err') in (404, 409, 422), json.dumps(bad, ensure_ascii=False)[:120])

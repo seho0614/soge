@@ -29,7 +29,7 @@ ok('① CSS — 1200px 이상에서만 한 줄 · 칩 줄바꿈 없음 · 「…
    '@media (min-width: 1200px) {' in CSS and '.home-row1 .home-chips { margin-top: 0; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap;' in CSS
    and 'text-overflow: ellipsis' in CSS and '.home-row1 .home-qm a { padding: 9px 11px; gap: 5px; font-size: 13px; }' in CSS, '')
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]
-ok('① 판 v10.130 이상 · 마이그레이션 166 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 130) and len(mig) in (166, 167), f"{rd('VERSION').strip()} · {len(mig)}")
+ok('① 판 v10.130 이상 · 마이그레이션 166 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 130) and len(mig) in (166, 167, 168), f"{rd('VERSION').strip()} · {len(mig)}")
 
 if SITE:
     from playwright.sync_api import sync_playwright

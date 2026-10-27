@@ -55,7 +55,7 @@ def login(e):
 # ① 코드
 D = rd('prisma/migrations/D127_partner_badge_codes/migration.sql'); D78 = rd('prisma/migrations/D078_partner_badge_label_fix/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 165 · 마지막 D127', (len(mig), mig[-1]) in ((165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff')), f'{len(mig)} · {mig[-1]}')
+ok('① 마이그레이션 165 · 마지막 D127', (len(mig), mig[-1]) in ((165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name')), f'{len(mig)} · {mig[-1]}')
 keep = ["state := CASE WHEN v_deals >= r.threshold THEN '달성' ELSE '미달' END;", "detail := '지금 ' || v_deals || '건(소비자 확인 기준)';",
         "WHEN v_rcnt = 0 THEN '평가 없음' ELSE '미달' END;", "'부터 · 분쟁 ' || v_disp || '건' END;", "state := coalesce(v_qual, '미제출');"]
 ok('① D127 — DROP 뒤 다시 만듦 · 새 칸 8개 · 한국어 이름 · 상태 · 설명 식은 D078 과 같음 · 상태 코드 7개',

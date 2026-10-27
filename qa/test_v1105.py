@@ -26,7 +26,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D119_i18n_board_on_view/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 157 · 마지막 D119(v10.106 부터 D120 · 158 — test_v1106)', (len(mig), mig[-1] if mig else '') in ((157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 157 · 마지막 D119(v10.106 부터 D120 · 158 — test_v1106)', (len(mig), mig[-1] if mig else '') in ((157, 'D119_i18n_board_on_view'), (158, 'D120_ai_review_shadow'), (159, 'D121_agent_chat'), (160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 통로 BOARD(i18n.board_on_view) · 하루 횟수 표 · 한도 함수 · 회원 30 · 비회원 10', "WHEN 'BOARD' THEN 'i18n.board_on_view'" in M and 'board_translate_usage' in M
    and 'WHERE board_translate_usage.n < p_limit' in M and "('i18n.board_daily_member', '30'" in M and "('i18n.board_daily_guest', '10'" in M, '')
 B = rd('src/modules/i18n/board-translate.service.ts'); CS = rd('src/modules/community/community.service.ts')
