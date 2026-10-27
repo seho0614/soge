@@ -29,7 +29,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D122_agent_key_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 160 · 마지막 D122(v10.115 부터 D123 · 161 — test_v1115)', (len(mig), mig[-1] if mig else '') in ((160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 160 · 마지막 D122(v10.115 부터 D123 · 161 — test_v1115)', (len(mig), mig[-1] if mig else '') in ((160, 'D122_agent_key_admin'), (161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 외부 연동 AGENT 줄(오픈을 막지 않음 · 발신 IP 불필요) · 받는 키에 AGENT/ANTHROPIC_API_KEY 하나만 더함 · 결제 · 계좌 · 세금계산서 키 없음',
    "VALUES ('AGENT', 'AI(Anthropic Claude)'" in M and "'ANTHROPIC_API_KEY', NULL, false," in M
    and "('MAP','KAKAO_REST_KEY'), ('MAP','KAKAO_JS_KEY'), ('WEATHER','KMA_SERVICE_KEY'), ('AGENT','ANTHROPIC_API_KEY'))" in M
@@ -61,7 +61,7 @@ t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']
 REG = rd('src/common/integration/registry.ts'); ENVX = rd('deploy/aws/env.production.example'); INV = rd('scripts/verify-invariants.sh')
 ok('② 점검 — 외부 연동 목록표 AGENT · .env 예시 ANTHROPIC_API_KEY · 불변식 12종 · AIK-1 ~ 5',
    "code: 'AGENT', name: 'AI(Anthropic Claude)', dbRow: true, secretEnv: 'ANTHROPIC_API_KEY'" in REG and re.search(r'\bANTHROPIC_API_KEY=', ENVX)
-   and 'if [ "$n" = "12" ]' in INV and all(f'AIK-{i}' in INV for i in range(1, 6)), '')
+   and re.search(r'if \[ "\$n" = "1[23]" \]', INV) and all(f'AIK-{i}' in INV for i in range(1, 6)), '')
 ok('② 화면 목록 SB-ADM-AGT-010 에 키 API 4개', t and {'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test'} <= set(t[0]['apis']), str(t and t[0]['apis']))
 W = rd('web/src/app/admin/ailearn/AgentStatus.tsx'); WK = rd('web/src/app/admin/ailearn/AgentKey.tsx')
 ok('② 운영 화면 — 「AI 키」는 최고 관리자에게만 · 엔진 표시 · 비밀번호 칸(다시 안 보임) · 키 확인 · 지우기 확인 창',
