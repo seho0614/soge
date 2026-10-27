@@ -45,7 +45,7 @@ def call(m, p, b=None, t=None, h=None):
 # ① 코드
 M = rd('prisma/migrations/D126_i18n_db_text/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 164 · 마지막 D126(v10.124 부터 D127 · 165)', (len(mig), mig[-1]) in ((164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin')), f'{len(mig)} · {mig[-1]}')
+ok('① 마이그레이션 164 · 마지막 D126(v10.124 부터 D127 · 165)', (len(mig), mig[-1]) in ((164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff')), f'{len(mig)} · {mig[-1]}')
 ok('① D126 — 대상 7개 더함(옛 18개 그대로) · fn_i18n_source 에 7개 · 광고 소재 번호는 uuid 검사',
    "'NOTIFY_EVENT','REPORT_REASON','PLAN','INTRO_GRADE','GWAN_FORM','UI_MESSAGE','AD_PLACEMENT'" in M and "'FOOTER_LINK','SETTING','POLL','POLL_OPT','INGREDIENT','HLT_CONCERN'," in M
    and all(re.search(rf"WHEN '{t}'\s+THEN", M) for t in NEW + ['NOTICE', 'HLT_CONCERN', 'PROFILE_OPT']) and "'POLL_OPT','AD_PLACEMENT') AND p_id !~*" in M, '')

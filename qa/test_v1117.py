@@ -25,7 +25,7 @@ def rd(rel):
 
 
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 없음 — 161 · 마지막 D123(v10.118 부터 D124 · 162 — test_v1118)', (len(mig), mig[-1] if mig else '') in ((161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 없음 — 161 · 마지막 D123(v10.118 부터 D124 · 162 — test_v1118)', (len(mig), mig[-1] if mig else '') in ((161, 'D123_profile_consent_single'), (162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff')), f'{len(mig)} · {mig[-1] if mig else ""}')
 S = rd('src/modules/admin/admin-v31.service.ts'); C = rd('src/modules/admin/admin-v31.controller.ts'); W = rd('web/src/app/admin/ailearn/SegmentLearn.tsx')
 ok('② API — POST /admin/segments/log/:id/revert · 운영 · 최고 관리자(컨트롤러 기본) · 감사 SEGMENT_REVERT',
    "@Post('segments/log/:id/revert')" in C and "@Audit('SEGMENT_REVERT', 'SEGMENT')" in C and "@Roles('ADMIN', 'SUPER')" in C, '')

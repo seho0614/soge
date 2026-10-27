@@ -85,7 +85,7 @@ ok(f'③ 새 사전 키 {len(NEW)}개 ko/en 모두', not miss, ' · '.join(miss)
 srv_same = [(PC, '계약 성사형은 파트너가 이행을 보고하고 소비자가 확인해야 성사로 잡힙니다. 성사는 확인비용과 무관합니다.', flat(js(M + 'ko/partner.json')).get('perf.noteSrv')),
             (rd('src/modules/affiliate/affiliate.service.ts'), '정산 계좌를 등록하고 인증하셔야 지급됩니다.', flat(js(M + 'ko/affiliate.json')).get('settlements.noteSrv'))]
 ok('③ 사전 한국어가 서버 안내와 같은 글자(예 2개)', all(t in src and t == v for src, t, v in srv_same), '')
-ok('③ 판 v10.122 · 마이그레이션 없음(163)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 122) and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (163, 164, 165, 166), rd('VERSION').strip())
+ok('③ 판 v10.122 · 마이그레이션 없음(163)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 122) and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (163, 164, 165, 166, 167), rd('VERSION').strip())
 
 
 # ④ 사용자 웹
