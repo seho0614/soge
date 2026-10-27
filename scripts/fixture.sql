@@ -179,11 +179,30 @@ SET session_replication_role = origin;
 --   시험이 끝난 상태는 "약관이 발행된 평상시" 여야 합니다.
 --   v10.133 (D131) — 운영의 발행(publish-terms.sh)과 같이 **미확정 표시(〔시행일〕 말고 〔…〕)가 남은 판은 발행하지 않습니다**
 --   (법무 확인 전 초안 · 처리방침의 〔확인 필요〕). 그런 판은 검토 중(LEGAL_REVIEW)으로 둡니다.
+-- v10.133 — 빈 DB 에서 세우면 게시된 판이 없어 D131 이 1.0 초안 자체를 새 글(〔확인 필요〕)로 바꿉니다. 그대로 두면 처리방침이 게시되지 않아
+--   푸터 고지가 죽고(FOOT), 약관 발행 시험의 되돌리기가 그 1.0 을 게시로 돌려 미확정 표시가 게시됩니다(Y-02 · CQ-06 · realcheck 2차).
+--   운영과 같은 모양(게시된 1.0 + 법무 검토 초안 1.1)으로 맞춥니다: 새 글은 1.1 초안으로 옮기고, 1.0 의 미확정 칸만 검정용 글로 채워 게시합니다.
+INSERT INTO terms(code, version, title, body, is_required, effective_from, status, display_order, gwan_code, change_note, is_notice, audience)
+SELECT code, '1.1', title, body, is_required, 'infinity', 'LEGAL_REVIEW', display_order, gwan_code, change_note, is_notice, audience
+  FROM terms t
+ WHERE version = '1.0' AND status IN ('DRAFT','LEGAL_REVIEW')
+   AND code IN ('SERVICE','PRIVACY','REFUND','THIRDPARTY','OUTSOURCE','ADPERSONAL','HLT_SALE','MARKETING','MARKETING_NIGHT')
+   AND body ~ '〔(?!시행일〕)[^〕]*〕'
+   AND NOT EXISTS (SELECT 1 FROM terms d WHERE d.code = t.code AND d.version <> '1.0' AND d.status IN ('DRAFT','LEGAL_REVIEW'))
+ON CONFLICT (code, version) DO NOTHING;
+UPDATE terms SET body = regexp_replace(body, '〔(?!시행일〕)[^〕]*〕', '(검정 DB 채움)', 'g')
+ WHERE version = '1.0' AND status IN ('DRAFT','LEGAL_REVIEW')
+   AND code IN ('SERVICE','PRIVACY','REFUND','THIRDPARTY','OUTSOURCE','ADPERSONAL','HLT_SALE','MARKETING','MARKETING_NIGHT')
+   AND body ~ '〔(?!시행일〕)[^〕]*〕';
 UPDATE terms SET status = 'PUBLISHED', effective_from = '2026-11-11'
  WHERE version = '1.0'
    AND code IN ('SERVICE','PRIVACY','REFUND','THIRDPARTY','OUTSOURCE',
                 'ADPERSONAL','HLT_SALE','MARKETING','MARKETING_NIGHT')
    AND NOT EXISTS (SELECT 1 FROM regexp_matches(body, '〔[^〕]*〕', 'g') m WHERE m[1] <> '〔시행일〕');
+-- 게시하면 같은 약관의 다른 판(초안 포함)이 보관됩니다(fn_archive_prior_terms) — 위에서 옮긴 법무 검토 초안은 되살립니다.
+UPDATE terms SET status = 'LEGAL_REVIEW'
+ WHERE version <> '1.0' AND status = 'ARCHIVED' AND effective_from = 'infinity'
+   AND body ~ '〔(?!시행일〕)[^〕]*〕';
 
 -- v10.28 (G-223) — 「알림」 글인 판은 알림으로(D042 와 같은 기준 · 동의를 받지 않음). 판을 1.0 하나로 줄인 쓰던 검정 DB 에서도 맞게.
 UPDATE terms SET is_notice = true, title = '개인정보 처리업무 위탁 안내'

@@ -485,7 +485,11 @@ $PSQL -c "DELETE FROM terms WHERE version = '9.9';
           UPDATE terms SET status = CASE WHEN effective_from = 'infinity'
                                          THEN 'LEGAL_REVIEW' ELSE 'PUBLISHED' END
            WHERE version = '1.0' AND status = 'ARCHIVED'
-             AND code <> 'LOCATION';" >/dev/null 2>&1
+             AND code <> 'LOCATION';
+          -- v10.133 — 9.9 발행이 함께 보관한 법무 검토 초안(새 판 · 미확정 표시)도 되살립니다. 1.0 을 되돌린 뒤에 해야 다시 밀리지 않습니다.
+          UPDATE terms SET status = 'LEGAL_REVIEW'
+           WHERE version NOT IN ('1.0','9.9') AND status = 'ARCHIVED' AND effective_from = 'infinity'
+             AND body ~ '〔(?!시행일〕)[^〕]*〕';" >/dev/null 2>&1
 
 echo "== 금칙어 =="
 $PSQL -c "INSERT INTO banned_words(word,match_type,severity) VALUES ('시험차단어','CONTAINS','BLOCK'),('시험주의어','CONTAINS','WARN') ON CONFLICT DO NOTHING;" >/dev/null 2>&1
@@ -747,7 +751,10 @@ else echo "  FAIL TERM  소개비 조항 없음"; fail=$((fail+1)); fi
 # ★ 조건 없이 되돌리면 **실제 발행분까지 초안으로 만듭니다.**
 #   10월 1일 시행으로 발행한 이용약관이 검정 한 번에 사라졌습니다.
 #   시험이 만든 자리표시자 본문만 골라 되돌립니다.
-$PSQL -c "DELETE FROM terms WHERE version <> '1.0';
+# v10.133 — 법무 검토 초안(새 판 · 실제 본문 · D131)은 남김(fixture.sql 과 같은 기준).
+$PSQL -c "DELETE FROM terms WHERE version <> '1.0'
+             AND NOT (status IN ('DRAFT','LEGAL_REVIEW') AND version ~ '^[0-9]+\.[0-9]+$' AND split_part(version,'.',1)::int < 9
+                      AND body NOT LIKE '%본문입니다%' AND body NOT LIKE '%(생성 대기)%' AND length(body) > 200);
           UPDATE terms SET status='LEGAL_REVIEW', effective_from='infinity'
            WHERE body LIKE '%본문입니다%'
               OR body LIKE '%(생성 대기)%'
