@@ -120,6 +120,25 @@ export class AgentChatRowDto {
   @ApiProperty() turns!: number;
   @ApiPropertyOptional({ nullable: true, description: '첫 질문 앞부분(연락처는 가려 저장됨)' }) firstQuestion!: string | null;
 }
+/* v10.131 (D129 · docs/197) — AI 상담 「답 · 넘김 비율」 */
+export class AgentChatStatsDto {
+  @ApiProperty({ enum: [7, 14, 30] }) days!: number;
+  @ApiProperty({ description: '손님 질문 수' }) questions!: number;
+  @ApiProperty({ description: 'AI 답 수' }) answers!: number;
+  @ApiProperty({ description: '넘기기를 권하지 않고 답한 수' }) answered!: number;
+  @ApiProperty({ description: '담당자에게 넘기기를 권한 수(AI 판단 · 거절 · 잘림 · 모양 틀림 · 금칙어)' }) handoffSuggested!: number;
+  @ApiProperty({ description: '그중 AI 가 스스로 권함' }) byAi!: number;
+  @ApiProperty() refusal!: number;
+  @ApiProperty() cut!: number;
+  @ApiProperty() badShape!: number;
+  @ApiProperty() banned!: number;
+  @ApiProperty({ description: '넘김 여부 기록 전(v10.131 전 답)' }) unknown!: number;
+  @ApiProperty() conversations!: number;
+  @ApiProperty({ description: '손님이 실제로 담당자에게 넘긴 상담 수' }) handedOff!: number;
+  @ApiPropertyOptional({ nullable: true, description: '답 비율 %(기록된 답 중)' }) answeredPct!: number | null;
+  @ApiPropertyOptional({ nullable: true, description: '넘김 권함 비율 %' }) handoffPct!: number | null;
+  @ApiPropertyOptional({ nullable: true, description: '실제 넘긴 상담 비율 %' }) handedOffPct!: number | null;
+}
 export class AgentChatMessageDto {
   @ApiProperty({ enum: ['user', 'assistant', 'tool'] }) role!: string;
   @ApiProperty() body!: string;
@@ -164,6 +183,14 @@ export class AgentController {
   @ApiQuery({ name: 'status', required: false, enum: ['OPEN', 'HANDED_OFF', 'CLOSED'] })
   @ApiOkResponse({ type: [AgentChatRowDto] })
   chatList(@Query('status') status?: string) { return this.chats.adminList(status); }
+
+  @ApiBearerAuth()
+  @Get('admin/agent/chats/stats')   // ★ :id 보다 먼저(주소가 겹침)
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'AI 상담 답 · 넘김 비율 (운영 · v10.131)', description: '최근 7 · 14 · 30일 숫자만 — 글 · 손님 정보 없음. 운영 1주 결과 판단용(결정 기록 ai-agent #20).' })
+  @ApiQuery({ name: 'days', required: false, enum: [7, 14, 30] })
+  @ApiOkResponse({ type: AgentChatStatsDto })
+  chatStats(@Query('days') days?: string) { return this.chats.adminStats(Number(days) || 7); }
 
   @ApiBearerAuth()
   @Get('admin/agent/chats/:id')

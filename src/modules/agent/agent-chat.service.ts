@@ -146,9 +146,9 @@ export class AgentChatService {
         await this.db.query(
           `INSERT INTO agent_messages (conversation_id, role, body) VALUES ($1, 'user', $2)`, [cid, safe]);
         await this.db.query(
-          `INSERT INTO agent_messages (conversation_id, role, body, model, input_tokens, output_tokens, cache_read_tokens, stop_reason)
-           VALUES ($1, 'assistant', $2, $3, $4, $5, $6, $7)`,
-          [cid, out.answer, reply.model, inputBilled, reply.outputTokens, reply.cacheReadTokens, out.flag ?? reply.stopReason]);
+          `INSERT INTO agent_messages (conversation_id, role, body, model, input_tokens, output_tokens, cache_read_tokens, stop_reason, handoff)
+           VALUES ($1, 'assistant', $2, $3, $4, $5, $6, $7, $8)`,   // v10.131 handoff — 「답 · 넘김 비율」(adminStats)
+          [cid, out.answer, reply.model, inputBilled, reply.outputTokens, reply.cacheReadTokens, out.flag ?? reply.stopReason, out.handoff]);
         return cid;
       });
       const st = await this.status(visitorKey);
@@ -202,6 +202,32 @@ export class AgentChatService {
               (SELECT left(m.body, 80) FROM agent_messages m WHERE m.conversation_id = c.id AND m.role = 'user' ORDER BY m.id LIMIT 1) AS "firstQuestion"
          FROM agent_conversations c WHERE c.channel = 'SITE_CHAT' AND ($1::text IS NULL OR c.status = $1)
         ORDER BY c.created_at DESC LIMIT 100`, [status ?? null]);
+  }
+
+  /** v10.131 (D129 · docs/197) — AI 상담 「답 · 넘김 비율」. 최근 N일 · 숫자만(글 · 손님 정보 없음).
+   *    답 = AI 답(assistant) 줄 · 넘김 권함 = handoff true(이 칸이 생기기 전 줄은 거절 · 잘림 · 모양 틀림 · 금칙어면 넘김으로, 그 밖은 「기록 전」)
+   *    실제 넘김 = 손님이 「담당자에게 넘기기」를 눌러 1:1 문의가 된 상담(HANDED_OFF) */
+  async adminStats(days = 7) {
+    const d = [7, 14, 30].includes(days) ? days : 7;
+    const [r] = await this.db.query<Record<string, number>>(
+      `WITH m AS (
+         SELECT m.role, m.handoff, m.stop_reason FROM agent_messages m JOIN agent_conversations c ON c.id = m.conversation_id
+          WHERE c.channel = 'SITE_CHAT' AND m.created_at >= now() - make_interval(days => $1))
+       SELECT (SELECT count(*) FROM m WHERE role = 'user')::int AS questions,
+              (SELECT count(*) FROM m WHERE role = 'assistant')::int AS answers,
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND (handoff IS FALSE))::int AS answered,
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND (handoff IS TRUE OR (handoff IS NULL AND stop_reason IN ('refusal','max_tokens','bad_shape','banned'))))::int AS "handoffSuggested",
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND handoff IS TRUE AND coalesce(stop_reason, '') NOT IN ('refusal','max_tokens','bad_shape','banned'))::int AS "byAi",
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND stop_reason = 'refusal')::int AS refusal,
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND stop_reason = 'max_tokens')::int AS cut,
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND stop_reason = 'bad_shape')::int AS "badShape",
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND stop_reason = 'banned')::int AS banned,
+              (SELECT count(*) FROM m WHERE role = 'assistant' AND handoff IS NULL AND coalesce(stop_reason, '') NOT IN ('refusal','max_tokens','bad_shape','banned'))::int AS unknown,
+              (SELECT count(*) FROM agent_conversations c WHERE c.channel = 'SITE_CHAT' AND c.created_at >= now() - make_interval(days => $1))::int AS conversations,
+              (SELECT count(*) FROM agent_conversations c WHERE c.channel = 'SITE_CHAT' AND c.status = 'HANDED_OFF' AND c.created_at >= now() - make_interval(days => $1))::int AS "handedOff"`, [d]);
+    const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
+    const known = (r?.answered ?? 0) + (r?.handoffSuggested ?? 0);
+    return { days: d, ...r, answeredPct: pct(r?.answered ?? 0, known), handoffPct: pct(r?.handoffSuggested ?? 0, known), handedOffPct: pct(r?.handedOff ?? 0, r?.conversations ?? 0) };
   }
 
   async adminMessages(id: string) {

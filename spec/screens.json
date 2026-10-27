@@ -3699,6 +3699,7 @@
    "apis": [
     "GET /admin/agent/status",
     "GET /admin/agent/chats",
+    "GET /admin/agent/chats/stats",
     "GET /admin/agent/chats/{id}",
     "GET /admin/agent/key",
     "PUT /admin/agent/key",

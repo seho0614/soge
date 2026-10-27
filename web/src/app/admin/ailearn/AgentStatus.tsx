@@ -105,6 +105,38 @@ interface ChatMsg { role: string; body: string; model: string | null; stopReason
 const ST_KO: Record<string, string> = { OPEN: '진행', HANDED_OFF: '담당자에게 넘김', CLOSED: '끝남' };
 const when = (iso: string) => new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
 
+/* ── v10.131 (D129 · docs/197) AI 상담 「답 · 넘김 비율」 — 1주 운영 결과 판단용(결정 기록 ai-agent #20 · 기준 제안: 답할 문항 95%) ── */
+interface ChatStats {
+  days: number; questions: number; answers: number; answered: number; handoffSuggested: number; byAi: number;
+  refusal: number; cut: number; badShape: number; banned: number; unknown: number; conversations: number; handedOff: number;
+  answeredPct: number | null; handoffPct: number | null; handedOffPct: number | null;
+}
+const pct = (v: number | null) => (v === null ? '—' : `${v}%`);
+
+function AgentChatStats() {
+  const [days, setDays] = useState(7);
+  const r = useApi<ChatStats>(`/admin/agent/chats/stats?days=${days}`);
+  if (r.error) return <ErrorView error={r.error} onRetry={r.reload} />;
+  if (!r.data) return null;
+  const s = r.data;
+  return (
+    <div data-agent-chat-stats>
+      <div className="row" style={{ gap: 6, marginBottom: 8 }}>
+        {[7, 14, 30].map((d) => <button key={d} className={`btn-sm${days === d ? ' on' : ''}`} onClick={() => setDays(d)}>최근 {d}일</button>)}
+      </div>
+      <div className="kpi4">
+        <div><b>{n(s.questions)}</b><span>질문 · 상담 {n(s.conversations)}건</span></div>
+        <div><b className={s.answeredPct !== null && s.answeredPct >= 95 ? 'good' : ''} data-stat="answered">{pct(s.answeredPct)}</b><span>AI 가 답함({n(s.answered)})</span></div>
+        <div><b data-stat="handoff">{pct(s.handoffPct)}</b><span>담당자에게 넘기기 권함({n(s.handoffSuggested)})</span></div>
+        <div><b data-stat="handed">{pct(s.handedOffPct)}</b><span>손님이 실제로 넘김({n(s.handedOff)}건)</span></div>
+      </div>
+      <p className="hint">넘기기 권함의 내용 — AI 판단 {n(s.byAi)} · 거절 {n(s.refusal)} · 잘림 {n(s.cut)} · 답 모양 틀림 {n(s.badShape)} · 금칙어 {n(s.banned)}
+        {s.unknown > 0 && <> · 기록 전 답 {n(s.unknown)}(v10.131 전 — 비율에서 뺌)</>}.
+        기준(제안): 답할 수 있는 문항은 95% 이상 답함 · 돈 · 분쟁 · 개인 사정 문항은 모두 넘김 — 어느 쪽이 맞았는지는 아래 대화를 몇 건 열어 확인합니다.</p>
+    </div>
+  );
+}
+
 function AgentChats() {
   const [status, setStatus] = useState('');
   const r = useApi<ChatRow[]>(`/admin/agent/chats${status ? `?status=${status}` : ''}`);
@@ -118,6 +150,7 @@ function AgentChats() {
   return (
     <>
       <h3 className="sec">AI 상담(고객응대 안내)</h3>
+      <AgentChatStats />
       <div className="row" style={{ gap: 6, marginBottom: 8 }}>
         {['', 'OPEN', 'HANDED_OFF', 'CLOSED'].map((s) => (
           <button key={s || 'ALL'} className={`btn-sm${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>{s ? ST_KO[s] : '전체'}</button>
