@@ -356,6 +356,7 @@
     }
   },
   "inviteForm": {
+    "chNote": { "ALIMTALK": "Turned on after Kakao template pre-approval", "SMS": "Turned on after a contract with the SMS provider", "EMAIL": "Turned on after SPF/DKIM checks. Without authentication, emails go to spam", "INAPP": "Always available"},
     "name": {
       "SELF": "Send it myself",
       "SMS": "We send it by SMS",

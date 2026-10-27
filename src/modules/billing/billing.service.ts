@@ -5,6 +5,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolvePaymentProvider } from './payment.provider';
 import { confirmOrRecover } from './payment-recover';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 구독 · 소개코드 · 원장 (T7).
@@ -24,11 +25,11 @@ export interface ExtraPayment { paymentKey?: string; orderId?: string; amount?: 
 
 @Injectable()
 export class BillingService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId()!; }
 
-  plans() {
-    return this.db.query(
+  async plans() {
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT code, name, monthly_price AS "monthlyPrice",
               included_codes AS "includedCodes",
               request_views_per_month AS "requestViewsPerMonth",
@@ -38,6 +39,14 @@ export class BillingService {
               /* v10.31 — 시안 요금제 카드의 혜택 줄 · 소개 제안 월 한도(NULL = 무제한) */
               features, proposal_limit AS "proposalLimit"
          FROM subscription_plans WHERE is_active ORDER BY monthly_price`);
+    /* v10.123 (D126) — 이름 · 혜택 줄 번역. 혜택(features 배열)은 번역 칸이 줄바꿈으로 이은 글 하나라, 이어서 얹고 다시 나눕니다 */
+    const tmp = rows.map((r) => ({ code: r.code, name: r.name, features: Array.isArray(r.features) && r.features.length ? r.features.join('\n') : null }));
+    await this.i18n.overlay(tmp, 'PLAN', (r) => r.code, { name: 'name', features: 'features' });
+    rows.forEach((r, i) => {
+      r.name = tmp[i].name;
+      if (tmp[i].features != null && tmp[i].features !== r.features.join('\n')) r.features = String(tmp[i].features).split('\n');   // 번역이 얹혔을 때만(한국어는 원래 배열)
+    });
+    return rows;
   }
 
   /**

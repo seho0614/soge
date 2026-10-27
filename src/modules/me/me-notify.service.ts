@@ -4,13 +4,14 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { clampLimit } from '../../core/pagination';
 import { PolicyViolation, StateConflict } from '../../core/errors';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 마이페이지 — 알림 · 알림 설정 · 1:1 문의 · 분쟁 (v10.96 · me.service.ts 에서 함수 본문을 그대로 옮김).
  */
 @Injectable()
 export class MeNotifyService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   private get me() { return RequestCtx.actorId()!; }
   notifications(unreadOnly = false, limit?: number) {
     return this.db.query(
@@ -42,6 +43,7 @@ export class MeNotifyService {
          LEFT JOIN notification_preferences ia ON ia.account_id = $1 AND ia.event_code = p.event_code AND ia.channel = 'INAPP'
          LEFT JOIN notification_preferences em ON em.account_id = $1 AND em.event_code = p.event_code AND em.channel = 'EMAIL'
         ORDER BY p.optout_allowed, p.name`, [this.me]);
+    await this.i18n.overlay(rows, 'NOTIFY_EVENT', (r: any) => r.eventCode, { name: 'name', reason: 'legal_basis' });   // v10.123 · D126
     const [mail] = await this.db.query<{ ready: boolean }>(
       `SELECT coalesce((SELECT ready FROM v_notify_channels WHERE channel = 'EMAIL'), false) AS ready`);
     return { emailReady: !!mail?.ready, items: rows };

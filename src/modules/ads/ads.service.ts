@@ -223,7 +223,8 @@ export class AdsService {
           AND (($2::text IS NULL AND cardinality(segments) = 0) OR $2 = ANY(segments))
         ORDER BY random() LIMIT 1`, [slot, seg]);
 
-    if (hit) return { ...hit, label: '광고', matchedSegment: seg, empty: false };
+    const AD = { title: 'title', body: 'body', cta: 'cta' };   // v10.123 (D126) 광고 자리 소재 번역
+    if (hit) return { ...(await this.i18n.overlayOne(hit, 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: seg, empty: false };
 
     // 성향에 맞는 소재가 없으면 세그먼트 지정이 없는 기본 소재를 씁니다.
     const [fallback] = await this.db.query<any>(
@@ -233,7 +234,7 @@ export class AdsService {
         WHERE slot_code = $1 AND cardinality(segments) = 0
         ORDER BY random() LIMIT 1`, [slot]);
 
-    if (fallback) return { ...fallback, label: '광고', matchedSegment: null, empty: false };
+    if (fallback) return { ...(await this.i18n.overlayOne(fallback, 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: null, empty: false };
     return { empty: true, note: '이 슬롯에 나갈 소재가 없습니다. 자리를 비웁니다.' };
   }
 
@@ -247,6 +248,7 @@ export class AdsService {
       `SELECT id, creative_code AS "code", advertiser, title, body, cta, landing_route AS "landingRoute",
               slot_code AS "slot", category
          FROM v_ad_serving WHERE id = $1 LIMIT 1`, [id]);
+    if (c) await this.i18n.overlayOne(c, 'AD_PLACEMENT', (x: any) => x.id, { title: 'title', body: 'body', cta: 'cta' });   // v10.123 · D126
     return c ? { found: true, ...c, label: '광고' } : { found: false };
   }
 
@@ -406,6 +408,7 @@ export class AdsService {
           AND (p.starts_at IS NULL OR p.starts_at <= (now() AT TIME ZONE 'Asia/Seoul')::date)
           AND (p.ends_at   IS NULL OR p.ends_at   >= (now() AT TIME ZONE 'Asia/Seoul')::date)
         ORDER BY random() LIMIT $1`, [want]);
+    await this.i18n.overlay(rows, 'AD_PLACEMENT', (r: any) => r.id, { title: 'title', body: 'body' });   // v10.123 · D126
 
     return {
       every,

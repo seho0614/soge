@@ -11,6 +11,9 @@ export const I18N_FIELDS: Record<string, string[]> = {
   PROFILE_Q: ['question'], PROFILE_OPT: ['label'], AD_SEGMENT: ['name', 'description'],   // v10.118 · D124 관심 성향
   FOOTER_LINK: ['label'], SETTING: ['value'], POLL: ['title', 'description'], POLL_OPT: ['label', 'sub'],   // v10.119 · D125
   INGREDIENT: ['name'], HLT_CONCERN: ['name'],
+  NOTIFY_EVENT: ['name', 'legal_basis'], REPORT_REASON: ['label'], PLAN: ['name', 'features'],   // v10.123 · D126 DB 기준표 문구
+  INTRO_GRADE: ['name', 'criteria', 'benefit', 'next_hint'], GWAN_FORM: ['subject', 'title_hint', 'body_hint', 'notice'],
+  UI_MESSAGE: ['message'], AD_PLACEMENT: ['title', 'body', 'cta'],
 };
 /** SETTING 대상으로 번역하는 설정 키 — DB 함수 fn_i18n_source(D125)와 같음 */
 export const I18N_SETTING_KEYS = ['legal.intermediary_notice', 'legal.direct_notice'];
@@ -221,6 +224,14 @@ export class I18nService {
       POLL_OPT: { from: 'poll_options s', id: 's.id::text', label: "(SELECT p.title FROM polls p WHERE p.id = s.poll_id) || ' › ' || s.label", gwan: 'NULL::text', order: 's.poll_id, s.sort' },
       INGREDIENT: { from: '(SELECT * FROM ingredients WHERE NOT is_excipient) s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.sort, s.name' },
       HLT_CONCERN: { from: 'hlt_concerns s', id: 's.code', label: 's.name', gwan: "'HLT'", order: 's.sort, s.code' },
+      /* v10.123 (D126) — 알림 종류 · 신고 사유 · 요금제 · 소개자 등급 · 업무 등록 안내 · 화면 고정 문구 · 광고 자리 소재 */
+      NOTIFY_EVENT: { from: 'notification_event_policies s', id: 's.event_code', label: 's.name', gwan: 'NULL::text', order: 's.name' },
+      REPORT_REASON: { from: 'report_reasons s', id: 's.code', label: 's.label', gwan: 's.gwan_code', order: 's.gwan_code NULLS FIRST, s.sort_order' },
+      PLAN: { from: 'subscription_plans s', id: 's.code', label: 's.name', gwan: 'NULL::text', order: 's.monthly_price' },
+      INTRO_GRADE: { from: 'introducer_grades s', id: 's.code', label: 's.name', gwan: 'NULL::text', order: 's.sort_order' },
+      GWAN_FORM: { from: 'gwan_form_copy s', id: "s.gwan_code || ':' || s.role", label: "s.gwan_code || ' › ' || s.subject || ' (' || s.role || ')'", gwan: 's.gwan_code', order: 's.gwan_code, s.role DESC' },
+      UI_MESSAGE: { from: 'ui_messages s', id: 's.code', label: 's.message', gwan: 'NULL::text', order: 's.code' },
+      AD_PLACEMENT: { from: 'ad_placements s', id: 's.id::text', label: "coalesce(s.creative_code, s.slot_code) || ' › ' || coalesce(s.title, '')", gwan: 'NULL::text', order: 's.creative_code NULLS LAST, s.slot_code' },
     };
     const src = SRC[q.targetType];
     if (!src) throw new PolicyViolation('I18N_FIELD', `원문 목록이 없는 대상입니다 (${q.targetType}).`);

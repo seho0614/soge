@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useFmt } from '@/lib/useFmt';
 
 interface Channel { channel: string; ready: boolean; note: string }
 export interface ReqOpt { id: string; title: string }
@@ -31,6 +32,7 @@ export function InviteForm({ channels, requests = [], initialRequest = '' }: { c
   const [pending, start] = useTransition();
   const router = useRouter();
   const t = useTranslations('myDeal');
+  const fm = useFmt();   // v10.123 — 채널 안내(DB 뷰 v_notify_channels 의 고정 글)는 다른 언어에서 사전
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
   /* v10.29 — 서버 채널 목록(v_notify_channels)에 SELF 가 없어 기본값인 「직접 전달」 칸이 화면에 없었습니다. 늘 맨 앞에 둡니다(시안 순서). */
@@ -102,7 +104,7 @@ export function InviteForm({ channels, requests = [], initialRequest = '' }: { c
             data-chn={c.channel}
           >
             <b>{isName(c.channel) ? t(`inviteForm.name.${c.channel}`) : c.channel}</b>
-            <span className="my-ls">{c.note}</span>
+            <span className="my-ls">{t.has(`inviteForm.chNote.${c.channel}` as never) ? fm.srv(c.note, t(`inviteForm.chNote.${c.channel}` as never)) : c.note}</span>
             {!c.ready && <span><span className="my-bg wait">{t('inviteForm.soon')}</span></span>}
           </button>
         ))}

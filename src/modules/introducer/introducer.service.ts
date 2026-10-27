@@ -4,6 +4,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { I18nService } from '../i18n/i18n.service';
 import { normSido } from '../../common/region';
 
 const SIDO = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
@@ -24,7 +25,7 @@ const SIDO = ['서울','부산','대구','인천','광주','대전','울산','�
 @Injectable()
 export class IntroducerService {
   private readonly log = new Logger(IntroducerService.name);
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
   private get me() {
     const id = RequestCtx.actorId();
     if (!id) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
@@ -123,10 +124,11 @@ export class IntroducerService {
 
   /** v10.31 (시안 「활동 내역 › 등급」 표) — 등급 기준 · 혜택. 내 등급(now)을 표시합니다 */
   async grades() {
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT g.code, g.name, g.criteria, g.benefit, g.next_hint AS "nextHint",
               (g.code = (SELECT grade FROM introducer_profiles WHERE account_id = $1)) AS now
          FROM introducer_grades g ORDER BY g.sort_order`, [this.me]);
+    return this.i18n.overlay(rows, 'INTRO_GRADE', (r) => r.code, { name: 'name', criteria: 'criteria', benefit: 'benefit', nextHint: 'next_hint' });   // v10.123 · D126
   }
 
   /**
@@ -236,6 +238,7 @@ export class IntroducerService {
     /* v10.31 — 등급 이름 · 다음 등급 조건(시안 「유효 연결 3건이면 전문 소개자」) */
     const [g] = await this.db.query<{ name: string; next: string | null }>(
       `SELECT name, next_hint AS next FROM introducer_grades WHERE code = $1`, [card.grade]);
+    if (g) await this.i18n.overlayOne(g, 'INTRO_GRADE', () => card.grade, { name: 'name', next: 'next_hint' });   // v10.123 · D126
     return { registered: true, ...card, gradeLabel: g?.name ?? card.grade, nextGrade: g?.next ?? null };
   }
 

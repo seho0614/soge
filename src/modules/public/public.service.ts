@@ -120,19 +120,21 @@ export class PublicService {
   }
 
   /** 화면 고정 문구. 법적 근거가 있어 임의로 지우면 안 됩니다 */
-  uiMessages() {
-    return this.db.query(
-      `SELECT code, message, placement FROM ui_messages WHERE is_active ORDER BY code`)
-      .then((rows) => Object.fromEntries(
-        (rows as { code: string; message: string }[]).map((r) => [r.code, r.message])));
+  async uiMessages() {
+    const rows = await this.db.query<{ code: string; message: string }>(
+      `SELECT code, message, placement FROM ui_messages WHERE is_active ORDER BY code`);
+    await this.i18n.overlay(rows, 'UI_MESSAGE', (r) => r.code, { message: 'message' });   // v10.123 · D126
+    return Object.fromEntries(rows.map((r) => [r.code, r.message]));
   }
 
   /** 관별 등록 폼 문구. 관마다 무엇을 등록하는지가 다릅니다 */
-  formCopy(gwanCode: string) {
-    return this.db.query(
+  async formCopy(gwanCode: string) {
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT role, subject, title_hint AS "titleHint",
               body_hint AS "bodyHint", notice
          FROM gwan_form_copy WHERE gwan_code = $1 ORDER BY role DESC`, [gwanCode]);
+    return this.i18n.overlay(rows, 'GWAN_FORM', (r) => `${gwanCode}:${r.role}`,   // v10.123 · D126
+      { subject: 'subject', titleHint: 'title_hint', bodyHint: 'body_hint', notice: 'notice' });
   }
 
   async notices(gwanCode?: string) {

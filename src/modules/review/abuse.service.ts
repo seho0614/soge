@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { I18nService } from '../i18n/i18n.service';
 
 /**
  * 신고 접수 · 처리.
@@ -12,15 +13,16 @@ import { RequestCtx } from '../../core/request-context';
  */
 @Injectable()
 export class AbuseService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
 
   /** 신고 사유. 관 전용이 있으면 공통과 함께 옵니다. */
-  reasons(gwanCode?: string) {
-    return this.db.query(
+  async reasons(gwanCode?: string) {
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT code, label, severity, gwan_code AS "gwanCode"
          FROM report_reasons
         WHERE gwan_code IS NULL OR gwan_code = $1
         ORDER BY gwan_code NULLS FIRST, sort_order`, [gwanCode ?? null]);
+    return this.i18n.overlay(rows, 'REPORT_REASON', (r) => r.code, { label: 'label' });   // v10.123 · D126
   }
 
   /**
@@ -68,9 +70,9 @@ export class AbuseService {
   }
 
   /** 내가 한 신고. 결과를 알려 주지 않으면 다시 신고합니다. */
-  mine() {
+  async mine() {
     const me = RequestCtx.actorId()!;
-    return this.db.query(
+    const rows = await this.db.query<Record<string, any>>(
       `SELECT r.id, r.state, r.reason_code AS "reasonCode", rr.label AS "reasonLabel",
               r.target_type AS "targetType", r.resolution,
               r.created_at AS "createdAt", r.handled_at AS "handledAt"
@@ -78,6 +80,7 @@ export class AbuseService {
          LEFT JOIN report_reasons rr ON rr.code = r.reason_code
         WHERE r.reporter_id = $1
         ORDER BY r.created_at DESC LIMIT 50`, [me]);
+    return this.i18n.overlay(rows, 'REPORT_REASON', (r) => r.reasonCode, { reasonLabel: 'label' });   // v10.123 · D126
   }
 
   /** 처리 큐. 오래 방치된 것이 위로 옵니다. */
