@@ -129,6 +129,7 @@ if API and DB:
     Sx = lambda k, v: psql(f"UPDATE site_settings SET value = '{v}' WHERE key = '{k}';")
     HV = {'X-Visitor-Key': 'test1139-visitor-aaaa'}
     made_inq = []
+    made_order = []   # 점검판 새 DB 에는 buyer 의 진행 주문이 없음 — 시험이 만들고 끝나면 지움
     clean = lambda: psql(f"DELETE FROM agent_conversations WHERE channel = 'SITE_CHAT' AND (guest_key LIKE 'test1139%' OR account_id = '{BID}'); "
                          f"DELETE FROM agent_chat_usage WHERE who IN ('A:{BID}', 'V:test1139-visitor-aaaa', 'G:ALL') OR who LIKE 'I:%';")
     count = lambda: psql(f"SELECT (SELECT count(*) FROM inquiries WHERE account_id = '{BID}') || '/' || "
@@ -137,6 +138,9 @@ if API and DB:
         clean()
         tail = psql(f"SELECT right(order_no, 4) FROM hlt_orders WHERE account_id = '{BID}' AND status NOT IN ('CANCELED','RETURNED') "
                     f"GROUP BY 1 HAVING count(*) = 1 ORDER BY 1 LIMIT 1")
+        if not tail and psql("SELECT count(*) FROM hlt_orders WHERE right(order_no, 4) = 'Z7Q1'") == '0':
+            made_order.append(psql(f"INSERT INTO hlt_orders (order_no, account_id, goods_amount, total, status) VALUES ('HTV1139Z7Q1', '{BID}', 10000, 10000, 'PAID') RETURNING id").splitlines()[0])
+            tail = 'Z7Q1'
         order_no = psql(f"SELECT order_no FROM hlt_orders WHERE account_id = '{BID}' AND right(order_no, 4) = '{tail}' AND status NOT IN ('CANCELED','RETURNED')") if tail else ''
         none_tail = next((x for x in ('9Z9Z', 'Z0Z0', 'QQQQ') if psql(f"SELECT count(*) FROM hlt_orders WHERE account_id = '{BID}' AND right(order_no, 4) = '{x}'") == '0'), 'QQQQ')
         if prov != 'MOCK':
@@ -149,7 +153,7 @@ if API and DB:
                          ('agent.chat.member_lookup.enabled', 'on'), ('agent.chat.drafts.enabled', 'off')):
                 Sx(k, v)
             n0 = count()
-            Q_RET = f'주문 {tail} 반품 신청서 초안 만들어 주세요. 단순 변심이에요.'
+            Q_RET = f'주문 {tail} 취소 신청서 초안 만들어 주세요. 단순 변심이에요.'   # 시험 주문은 발송 전(PAID) — 취소
             r = call('POST', '/agent/chat', {'message': Q_RET}, t=BT)
             ok('② 초안 스위치 꺼짐 — 초안 없음(3단계 조회만)', r.get('drafts') == [] and psql(f"SELECT count(*) FROM agent_drafts WHERE account_id = '{BID}'") == '0', str(r)[:140])
             ra = call('PATCH', '/admin/site-settings', {'key': 'agent.chat.drafts.enabled', 'value': 'on'}, BT)
@@ -161,7 +165,7 @@ if API and DB:
             ok('② 반품 초안 — 카드 1개 · 본인 주문(끝 4자리로 찾음) · 신청 화면 주소', len(r.get('drafts') or []) == 1 and d.get('kind') == 'HLT_RETURN'
                and d.get('href', '').startswith('/my/health/returns/new?o=') and f'&draft={d.get("id")}' in d.get('href', '') and order_no in urllib.parse.unquote(d.get('href', '')), str(r)[:200])
             row = psql(f"SELECT kind || '|' || (fields->>'orderNo') || '|' || (fields->>'kind') || '|' || (fields->>'reason') FROM agent_drafts WHERE id = '{d.get('id')}'")
-            ok('② 초안 줄 — 종류 · 주문 · 신청 종류 · 사유', row == f'HLT_RETURN|{order_no}|RETURN|CHANGE_MIND', row)
+            ok('② 초안 줄 — 종류 · 주문 · 신청 종류 · 사유', row == f'HLT_RETURN|{order_no}|CANCEL|CHANGE_MIND', row)
             tc = psql(f"SELECT tool || ':' || rows_returned || ':' || array_to_string(fields, ',') FROM agent_tool_calls WHERE account_id = '{BID}' AND tool = 'draft_return'")
             ok('② 조회 기록에 초안 도구(전체 주문번호 칸 없음 · 끝 4자리만)', tc.startswith('draft_return:1:') and 'orderNo' not in tc and 'orderTail' in tc, tc)
             r2 = call('POST', '/agent/chat', {'message': f'주문 {none_tail} 교환 초안 부탁해요'}, t=BT)
@@ -201,7 +205,7 @@ if API and DB:
             if spoof.get('id'): made_inq.append(spoof['id'])
             ok('② 남의 초안 번호로 제출 — 접수는 되지만 그 초안은 「제출됨」이 아님', bool(spoof.get('id'))
                and psql(f"SELECT submitted_at IS NULL FROM agent_drafts WHERE id = '{d.get('id')}'") == 't', str(spoof)[:80])
-            rr = call('POST', '/me/health/returns', {'orderNo': order_no, 'kind': 'RETURN', 'reason': 'CHANGE_MIND', 'agentDraftId': d.get('id')}, t=BT)
+            rr = call('POST', '/me/health/returns', {'orderNo': order_no, 'kind': 'CANCEL', 'reason': 'CHANGE_MIND', 'agentDraftId': d.get('id')}, t=BT)
             sub2 = psql(f"SELECT (submitted_at IS NOT NULL)::text FROM agent_drafts WHERE id = '{d.get('id')}'")
             ok('② 화면에서 반품 제출 — 판정은 지금 그대로(통과면 접수 · 「제출됨」 / 막히면 422 · 초안 그대로)',
                (bool(rr.get('id')) and sub2 == 'true') or (rr.get('_err') in (409, 422) and sub2 == 'false'), f"{str(rr)[:100]} · 제출됨 {sub2}")
@@ -231,6 +235,8 @@ if API and DB:
             psql(f"UPDATE site_settings SET value = '{val}' WHERE key = '{k}';")
         for i in made_inq:
             psql(f"DELETE FROM inquiries WHERE id = '{i}';")
+        for o in made_order:
+            psql(f"DELETE FROM hlt_returns WHERE order_id = '{o}'; DELETE FROM hlt_orders WHERE id = '{o}';")
         clean()
 
 # ── ④ 운영 화면(브라우저) ──────────────────────────────────────────────
