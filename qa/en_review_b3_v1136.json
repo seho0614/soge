@@ -1,0 +1,353 @@
+[
+ {
+  "ns": "join",
+  "key": "done.failRetry",
+  "ko": "<a>나의공간 → 사업자 전환</a>에서 다시 신청해 주십시오.",
+  "en": "Please apply again from <a>My page → Switch to business</a>.",
+  "proposed": "Please apply again from <a>My space → Switch to business</a>.",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 나의공간은 My space 입니다(My page 아님)."
+ },
+ {
+  "ns": "join",
+  "key": "done.prefSaved",
+  "ko": "<b>{name}</b> ({segment})로 저장했습니다. 메인 광고를 고르는 데만 씁니다(맞춤형 광고 동의). <b>나의공간 → 관심 성향</b>(<a>다시 하기</a>)에서 언제든 다시 하거나 지울 수 있습니다.",
+  "en": "Saved as <b>{name}</b> ({segment}). It is used only to pick home ads (personalized ads consent). You can redo or delete it any time under <b>My page → Interests</b> (<a>Redo</a>).",
+  "proposed": "Saved as <b>{name}</b> ({segment}). It is used only to pick home ads (personalized ads consent). You can redo or delete it any time under <b>My space → Interests</b> (<a>Redo</a>).",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 나의공간은 My space 입니다(My page 아님)."
+ },
+ {
+  "ns": "join",
+  "key": "done.prefNone",
+  "ko": "성향을 넣지 않으셨습니다 — 성향을 쓰지 않는 광고만 나갑니다. 나중에 <b>나의공간 → 관심 성향</b>(<a>지금 넣기</a>)에서 넣을 수 있습니다.",
+  "en": "You didn't add a profile — only non-personalized ads are shown. You can add one later under <b>My page → Interests</b> (<a>Add now</a>).",
+  "proposed": "You didn't add a profile — only non-personalized ads are shown. You can add one later under <b>My space → Interests</b> (<a>Add now</a>).",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 나의공간은 My space 입니다(My page 아님)."
+ },
+ {
+  "ns": "join",
+  "key": "verify.more",
+  "ko": "인증이 완료된 시각이 <b>소개비 수령 자격의 기준일</b>입니다. 사업장 주소까지 한 번에 적으시려면 <a>사업자 정보 등록</a>(나의공간 › 사업자 전환)에서 신청하실 수 있습니다.",
+  "en": "The time verification completes is the <b>start date of your eligibility for referral fees</b>. To enter your business address as well, apply from <a>Business details</a> (My page › Switch to business).",
+  "proposed": "The time verification completes is the <b>start date of your eligibility for referral fees</b>. To enter your business address as well, apply from <a>Business details</a> (My space › Switch to business).",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 나의공간은 My space 입니다(My page 아님)."
+ },
+ {
+  "ns": "join",
+  "key": "ai.done.nextNote",
+  "ko": "<b>다음에 할 일</b> — 나의공간 → <b>관심 성향</b>에서 언제든 다시 하거나 지울 수 있습니다. 검색 결과 · 추천 순위는 성향으로 바뀌지 않습니다.",
+  "en": "<b>Next</b> — Redo or delete it any time under My page → <b>Interests</b>. Search results and recommendation order are not changed by your profile.",
+  "proposed": "<b>Next</b> — Redo or delete it any time under My space → <b>Interests</b>. Search results and recommendation order are not changed by your profile.",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 나의공간은 My space 입니다(My page 아님)."
+ },
+ {
+  "ns": "join",
+  "key": "malBrokers.own.SUBMITTED",
+  "ko": "확인 중",
+  "en": "Checking",
+  "proposed": "Pending",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 상태값 확인 중은 Pending 입니다."
+ },
+ {
+  "ns": "refcode",
+  "key": "button.allUsedIncluded",
+  "ko": "이번 달 {plan} 포함 소개코드({n}건)를 모두 받았습니다. 받은 코드는 「안심소개에서 소개하기」에서 다시 볼 수 있습니다.",
+  "en": "You have used all referral codes included in {plan} this month ({n}). You can see your codes again in \"Refer via Safe Referral\".",
+  "proposed": "You have used all referral codes included in {plan} this month ({n}). You can see your codes again in \"Refer on Safe Referral\".",
+  "kind": "MINOR",
+  "reason_ko": "같은 화면 이름이 다른 곳에서는 Refer on Safe Referral 로 되어 있어 통일합니다."
+ },
+ {
+  "ns": "refcode",
+  "key": "button.noFreePlan",
+  "ko": "{plan} 요금제에는 무료 소개코드가 없습니다 · 건당 {price}으로 받습니다. 받은 코드는 「안심소개에서 소개하기」에서 다시 볼 수 있습니다.",
+  "en": "The {plan} plan has no free referral codes · codes are {price} each. You can see your codes again in \"Refer via Safe Referral\".",
+  "proposed": "The {plan} plan has no free referral codes · codes are {price} each. You can see your codes again in \"Refer on Safe Referral\".",
+  "kind": "MINOR",
+  "reason_ko": "같은 화면 이름이 다른 곳에서는 Refer on Safe Referral 로 되어 있어 통일합니다."
+ },
+ {
+  "ns": "refcode",
+  "key": "button.giveLink",
+  "ko": "안심소개에서 소개하기",
+  "en": "Refer via Safe Referral",
+  "proposed": "Refer on Safe Referral",
+  "kind": "MINOR",
+  "reason_ko": "같은 화면 이름이 다른 곳에서는 Refer on Safe Referral 로 되어 있어 통일합니다."
+ },
+ {
+  "ns": "join",
+  "key": "give.touches",
+  "ko": "유입 <b>{n}</b>회",
+  "en": "<b>{n}</b> visits",
+  "proposed": "{n, plural, one {<b>{n}</b> visit} other {<b>{n}</b> visits}}",
+  "kind": "MINOR",
+  "reason_ko": "n 이 1일 때 visits 가 틀리므로 복수형 처리합니다."
+ },
+ {
+  "ns": "join",
+  "key": "axisApply.axes.SOLAR.need",
+  "ko": "본인인증 (발전사업 자격 필요 여부 확인 중)",
+  "en": "Identity verification (whether a power-generation license is required is being confirmed)",
+  "proposed": "Identity verification (power-generation license requirement under review)",
+  "kind": "AWKWARD",
+  "reason_ko": "괄호 안 문장이 길고 어색해 짧게 줄입니다."
+ },
+ {
+  "ns": "join",
+  "key": "directoryApply.ith.no",
+  "ko": "번호(승인번호) · 일자",
+  "en": "No. (approval) · Date",
+  "proposed": "Approval no. · Date",
+  "kind": "AWKWARD",
+  "reason_ko": "No. (approval) 는 어색하며 승인번호는 Approval no. 가 자연스럽습니다."
+ },
+ {
+  "ns": "join",
+  "key": "axisApply.th.check",
+  "ko": "본사 확인",
+  "en": "Our review",
+  "proposed": "SogaeBank review",
+  "kind": "MINOR",
+  "reason_ko": "용어집 기준 본사는 SogaeBank 로 표기합니다."
+ },
+ {
+  "ns": "safety",
+  "key": "guides.c5.how.h1",
+  "ko": "「원금 보장 · 고수익」을 내건 투자 권유",
+  "en": "Investment offers promising “guaranteed principal, high returns”",
+  "proposed": "Investment offers promising \"guaranteed principal, high returns\"",
+  "kind": "MINOR",
+  "reason_ko": "다른 문구는 곧은 따옴표를 쓰므로 둥근 따옴표를 통일합니다."
+ },
+ {
+  "ns": "safety",
+  "key": "guides.c5.stop.s3",
+  "ko": "의심되는 등록글 · 광고는 「신고」로 알려 주십시오",
+  "en": "Report suspicious posts or ads with “Report”",
+  "proposed": "Report suspicious posts or ads with \"Report\"",
+  "kind": "MINOR",
+  "reason_ko": "다른 문구는 곧은 따옴표를 쓰므로 둥근 따옴표를 통일합니다."
+ },
+ {
+  "ns": "myDeal",
+  "key": "ctr.feeTbd",
+  "ko": "(확정 전)",
+  "en": "(not yet fixed)",
+  "proposed": "(to be confirmed)",
+  "kind": "AWKWARD",
+  "reason_ko": "'not yet fixed'는 '고장'으로도 읽혀 어색하므로 '확정 전' 뜻을 분명히 함."
+ },
+ {
+  "ns": "myDeal",
+  "key": "hReturns.tbd",
+  "ko": "확정 전",
+  "en": "Not yet fixed",
+  "proposed": "To be confirmed",
+  "kind": "AWKWARD",
+  "reason_ko": "'Not yet fixed'는 어색하고 '고치다'로 오해될 수 있음."
+ },
+ {
+  "ns": "myDeal",
+  "key": "hNav.my",
+  "ko": "나의공간",
+  "en": "My page",
+  "proposed": "My space",
+  "kind": "MINOR",
+  "reason_ko": "용어집상 나의공간은 'My space'임."
+ },
+ {
+  "ns": "myDeal",
+  "key": "hOrder.due",
+  "ko": "{d}에 자동 확정(그 전에 직접 하실 수 있습니다)",
+  "en": "Auto-confirmed at {d} (you can confirm it yourself before then)",
+  "proposed": "Will be auto-confirmed on {d} (you can confirm it yourself before then)",
+  "kind": "MINOR",
+  "reason_ko": "'Auto-confirmed at'은 이미 확정된 것처럼 읽혀 예정임을 분명히 함."
+ },
+ {
+  "ns": "myDeal",
+  "key": "stl.flow",
+  "ko": "신청한 정산은 <b>승인 대기</b> → 운영이 정산서를 확인하면 <b>승인됨 · 지급 대기</b> → 소개비를 받으면 <b>받았음 표시</b>(지급 완료) 순서로 바뀝니다. 「받았음 표시」는 승인된 건에만 있습니다.",
+  "en": "A claimed settlement goes from <b>Awaiting approval</b> → <b>Approved · awaiting payment</b> once our team checks the statement → <b>Mark as received</b> (paid) when you receive the fee. “Mark as received” appears only for approved items.",
+  "proposed": "A claimed settlement goes from <b>Awaiting approval</b> → <b>Approved · awaiting payout</b> once our team checks the statement → <b>Mark as received</b> (paid) when you receive the fee. “Mark as received” appears only for approved items.",
+  "kind": "MINOR",
+  "reason_ko": "상태 코드 표기 'Approved · awaiting payout'과 용어를 맞춤."
+ },
+ {
+  "ns": "codes",
+  "key": "listing.grade.G1",
+  "ko": "골든",
+  "en": "Golden",
+  "proposed": "Gold",
+  "kind": "MINOR",
+  "reason_ko": "Silver·Bronze와 맞추려면 형용사 'Golden'이 아닌 'Gold'가 자연스러움."
+ },
+ {
+  "ns": "codes",
+  "key": "introducer.grade.SEED",
+  "ko": "새싹 소개자",
+  "en": "Sprout referrer",
+  "proposed": "New referrer",
+  "kind": "AWKWARD",
+  "reason_ko": "'Sprout referrer'는 직역이라 어색함, 초급 등급 뜻으로 고침."
+ },
+ {
+  "ns": "codes",
+  "key": "post.badge.INTRO_WANT",
+  "ko": "소개해주세요",
+  "en": "Please refer",
+  "proposed": "Referral wanted",
+  "kind": "AWKWARD",
+  "reason_ko": "배지 문구로 'Please refer'는 목적어가 없어 어색함, 'Wanted'와 같은 형식으로 맞춤."
+ },
+ {
+  "ns": "money",
+  "key": "main.verifiedDoc",
+  "ko": "서류 확인",
+  "en": "Docs verified",
+  "proposed": "Documents checked",
+  "kind": "MINOR",
+  "reason_ko": "같은 배지(서류 확인) 코드 표기 'Documents checked'와 맞춤."
+ },
+ {
+  "ns": "money",
+  "key": "reqTabs.goods",
+  "ko": "상품 구매",
+  "en": "Buy products",
+  "proposed": "Buy goods",
+  "kind": "MINOR",
+  "reason_ko": "같은 요청 종류 코드 표기 'Buy goods'와 맞춤."
+ },
+ {
+  "ns": "money",
+  "key": "reqTabs.used",
+  "ko": "중고 구하기",
+  "en": "Find used goods",
+  "proposed": "Find used items",
+  "kind": "MINOR",
+  "reason_ko": "같은 요청 종류 코드 표기 'Find used items'와 맞춤."
+ },
+ {
+  "ns": "codes",
+  "key": "broker.doc.LICENSE",
+  "ko": "공인중개사 자격증",
+  "en": "Licensed real estate agent certificate",
+  "proposed": "Real estate agent license",
+  "kind": "MINOR",
+  "reason_ko": "'Licensed ... certificate'는 중복된 표현이라 자격증 이름으로 간결히 함."
+ },
+ {
+  "ns": "plaza",
+  "key": "tabs.polls",
+  "ko": "이건 어때? 투표",
+  "en": "What do you think? Polls",
+  "proposed": "“What do you think?” polls",
+  "kind": "AWKWARD",
+  "reason_ko": "두 문장이 붙어 어색해 탭 이름으로 다듬음."
+ },
+ {
+  "ns": "plaza",
+  "key": "cases.newLogin",
+  "ko": "<b>로그인이 필요합니다.</b>본인인증을 마친 회원이 쓸 수 있습니다.",
+  "en": "<b>Login required.</b> Members who have completed identity verification can post.",
+  "proposed": "<b>Login required.</b> Only members who have completed identity verification can post.",
+  "kind": "MINOR",
+  "reason_ko": "자격 제한 의미가 드러나도록 Only 를 넣음."
+ },
+ {
+  "ns": "plaza",
+  "key": "urgent.cat.LIFE",
+  "ko": "생활/기타",
+  "en": "Living/other",
+  "proposed": "Lifestyle/other",
+  "kind": "AWKWARD",
+  "reason_ko": "Living 은 분류 이름으로 어색함."
+ },
+ {
+  "ns": "plaza",
+  "key": "urgent.addP",
+  "ko": "급하게 구인/판매를 원하신다면 빠르고 간편하게 등록하세요.",
+  "en": "Need to hire or sell fast? Post quickly and easily.",
+  "proposed": "Need to buy or sell fast? Post quickly and easily.",
+  "kind": "AWKWARD",
+  "reason_ko": "급구(급히 구함) 맥락이라 hire(채용)보다 buy 가 맞음(원문 구인은 오기로 보임)."
+ },
+ {
+  "ns": "plaza",
+  "key": "urgent.apply",
+  "ko": "내 매물에서 급구 · 급매 신청 ›",
+  "en": "Request urgent from My listings ›",
+  "proposed": "Request urgent status in My listings ›",
+  "kind": "AWKWARD",
+  "reason_ko": "Request urgent 만으로는 뜻이 불분명함."
+ },
+ {
+  "ns": "forms",
+  "key": "common.blocked",
+  "ko": "이 분야는 등록하실 수 없습니다",
+  "en": "This category cannot be registered",
+  "proposed": "Listings in this category are not allowed",
+  "kind": "AWKWARD",
+  "reason_ko": "분야를 등록한다는 직역이 어색함."
+ },
+ {
+  "ns": "forms",
+  "key": "common.blockedMsg",
+  "ko": "이 분야는 등록하실 수 없습니다.",
+  "en": "This category cannot be registered.",
+  "proposed": "Listings in this category are not allowed.",
+  "kind": "AWKWARD",
+  "reason_ko": "분야를 등록한다는 직역이 어색함."
+ },
+ {
+  "ns": "forms",
+  "key": "req.queued.my",
+  "ko": "나의공간",
+  "en": "My page",
+  "proposed": "My space",
+  "kind": "MINOR",
+  "reason_ko": "용어집상 나의공간은 My space."
+ },
+ {
+  "ns": "forms",
+  "key": "inq.mailHint",
+  "ko": "가입 시 등록한 이메일입니다. 나의공간 → 설정에서 바꿀 수 있습니다.",
+  "en": "This is the email you signed up with. You can change it in My page → Settings.",
+  "proposed": "This is the email you signed up with. You can change it in My space → Settings.",
+  "kind": "MINOR",
+  "reason_ko": "용어집상 나의공간은 My space."
+ },
+ {
+  "ns": "forms",
+  "key": "bizPage.note",
+  "ko": "소개창업은 가맹 · 신규 출점 · 점포 양수도를 다룹니다. 고정자산이 넘어가는지가 관을 가르는 기준입니다 (A-01).{name}에 소개할 매물(창업 · 가맹 · 양도 등)을 올리는 곳입니다. 사업자 인증은 여기가 아니라 <link>나의공간 › 사업자 전환</link>에서 합니다.",
+  "en": "Startups covers franchises, new store openings and store transfers. Whether fixed assets are transferred decides the section (A-01). This is where you post listings (startups · franchises · transfers, etc.) for {name}. Business verification is not done here but in <link>My page › Switch to business</link>.",
+  "proposed": "Startups covers franchises, new store openings and store transfers. Whether fixed assets are transferred decides the section (A-01). This is where you post listings (startups · franchises · transfers, etc.) for {name}. Business verification is not done here but in <link>My space › Switch to business</link>.",
+  "kind": "MINOR",
+  "reason_ko": "용어집상 나의공간은 My space."
+ },
+ {
+  "ns": "forms",
+  "key": "inq.dispBody",
+  "ko": "거래 당사자 간 <b>분쟁 조정</b>은 「분쟁 접수」로 신청해 주세요. 접수 즉시 해당 거래의 <b>정산이 보류</b>되며, 여기로 보내면 그 보호를 받지 못합니다.",
+  "en": "Please request <b>dispute mediation</b> between deal parties through Dispute filing. Filing immediately <b>puts the deal's settlement on hold</b>; sending it here does not give you that protection.",
+  "proposed": "Please request <b>dispute mediation</b> between deal parties through “File a dispute”. Filing immediately <b>puts the deal's settlement on hold</b>; sending it here does not give you that protection.",
+  "kind": "MINOR",
+  "reason_ko": "분쟁 접수 메뉴 이름을 다른 곳(File a dispute)과 맞춤."
+ },
+ {
+  "ns": "forms",
+  "key": "inq.dispGo",
+  "ko": "분쟁 접수로 이동",
+  "en": "Go to Dispute filing",
+  "proposed": "Go to File a dispute",
+  "kind": "MINOR",
+  "reason_ko": "분쟁 접수 메뉴 이름을 다른 곳(File a dispute)과 맞춤."
+ }
+]

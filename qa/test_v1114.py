@@ -34,7 +34,7 @@ ok('① 소개광장 — 「노출료 · 소개비 없음」', E['plaza']['best.
 ok('① 법률 · 세무 노출 — 수임은 「이긴 사건」이 아님', 'cases won' not in E['join']['directoryApply.lead'], E['join']['directoryApply.lead'][:80])
 ok('① 소개받기 목록 안내 — 「남의 회사 사정」', "other companies' business" not in E['request']['list.warn'], E['request']['list.warn'][:80])
 ok('① 정책 안내 — 인증이 필요한 「업종」', 'industries' in E['policy']['guide.intro'], E['policy']['guide.intro'][-90:])
-ok('① 소개광장 「구인」 문장은 원문 확인 전이라 그대로(hire)', 'hire' in E['plaza']['urgent.addP'], E['plaza']['urgent.addP'])
+ok('① 소개광장 급구 문장 — 원문 「구인」을 대표가 「구매」로 확인(v10.136) · 영어 buy (그 전에는 hire 그대로)', ('구매/판매' in KO['plaza']['urgent.addP'] and 'buy' in E['plaza']['urgent.addP']) or ('구인' in KO['plaza']['urgent.addP'] and 'hire' in E['plaza']['urgent.addP']), E['plaza']['urgent.addP'])
 allen = '\n'.join(v for d in E.values() for v in d.values())
 old = {t: len(re.findall(p, allen)) for t, p in (('Get referred', r'Get referred'), ('exposure fee', r'[Ee]xposure fee'), ('HQ', r'\bHQ\b'),
        ('Sign in/out', r'Sign (in|out)'), ('attribution', r'[Aa]ttribution'), ('proposal', r'\b[Pp]roposals?\b'), ('Customer center', r'Customer [Cc]enter|Help center'),

@@ -26,7 +26,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D129_agent_chat_handoff/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 167 · 마지막 D129 · 칸 하나 · 지우는 문장 없음', (len(mig), mig[-1]) in ((167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'))
+ok('① 마이그레이션 167 · 마지막 D129 · 칸 하나 · 지우는 문장 없음', (len(mig), mig[-1]) in ((167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'))
    and 'ALTER TABLE public.agent_messages ADD COLUMN IF NOT EXISTS handoff boolean;' in M and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|DROP COLUMN)\b', M), f'{len(mig)} · {mig[-1]}')
 S = rd('src/modules/agent/agent-chat.service.ts'); C = rd('src/modules/agent/agent.controller.ts'); W = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
 ok('① 코드 — 답 저장에 handoff · 통계(7 · 14 · 30일 · 숫자만) · 주소가 :id 보다 먼저 · ADMIN · SUPER',

@@ -29,7 +29,7 @@ def flat(d, p=''):
 E = {}
 for f in ['en.json'] + sorted(os.listdir(os.path.join(M, 'en'))):
     E[f] = flat(json.load(open(os.path.join(M, f if f == 'en.json' else f'en/{f}'), encoding='utf-8')))
-PL = [(f, k, v) for f, d in E.items() for k, v in d.items() if 'plural' in v]
+PL = [(f, k, re.sub(r'<b>(\{\w+\})</b>', r'\1', v)) for f, d in E.items() for k, v in d.items() if 'plural' in v]   # v10.136 — 굵게 쓴 숫자(<b>{n}</b>)도 같은 모양으로 봄
 SHAPE = re.compile(r'\{(\w+), plural, one \{\{\1\} ([A-Za-z]+)\} other \{\{\1\} ([A-Za-z]+)\}\}')
 # v10.134 — 여러 낱말(「{n} unread notification」 · 「{n} required term needs」)도 허용 · 낱말마다 단수 · 복수 짝을 봄
 SHAPE2 = re.compile(r'\{(\w+), plural, one \{\{\1\} ([A-Za-z ]+)\} other \{\{\1\} ([A-Za-z ]+)\}\}')

@@ -51,8 +51,9 @@ ok('① 처리방침 빈칸 2곳 채움 — 받는 곳 연락처 · 보관 기�
    '548 Market Street, PMB 90375, San Francisco, CA 94104, USA · legal@anthropic.com' in P and '받은 날부터 30일 안에 자동 삭제' in P
    and not re.search(r'〔(?!시행일〕)[^〕]*〕', P), '')
 ok('① D132 = terms-text.js 처리방침 · 게시 안 함 · 지우는 문장 없음 · docs/terms 같음 · 170',
-   f'$TERM${P}$TERM$' in D and "SET status = 'PUBLISHED'" not in D and "'LEGAL_REVIEW'" in D and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D)
-   and P.strip() in rd('docs/terms/PRIVACY.md') and (len(mig), mig[-1]) == (170, 'D132_terms_privacy_fill'), f'{len(mig)} · {mig[-1]}')
+   (f'$TERM${P}$TERM$' in D or f'$TERM${P}$TERM$' in rd('prisma/migrations/D133_agent_member_lookup/migration.sql')) and   # v10.137 — 처리방침 글은 D133 이 이어 받음
+   "SET status = 'PUBLISHED'" not in D and "'LEGAL_REVIEW'" in D and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D)
+   and P.strip() in rd('docs/terms/PRIVACY.md') and (len(mig), mig[-1]) in ((170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup')), f'{len(mig)} · {mig[-1]}')
 ok('① 판 v10.135 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 135), rd('VERSION').strip())
 
 

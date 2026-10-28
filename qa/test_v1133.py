@@ -43,8 +43,8 @@ for c, body in (('PRIVACY', P), ('OUTSOURCE', O), ('ADPERSONAL', A)):
 M = rd('prisma/migrations/D131_terms_ai_adpersonal_drafts/migration.sql')
 mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', x)))
 ok('① D131 — 세 글이 terms-text.js 와 같음 · 게시 안 함(PUBLISHED 로 바꾸는 문장 없음) · 지우는 문장 없음 · 169',
-   all(f"$TERM${b}$TERM$" in M for b in (O, A)) and (f"$TERM${P}$TERM$" in M or f"$TERM${P}$TERM$" in rd('prisma/migrations/D132_terms_privacy_fill/migration.sql'))   # v10.135 — 처리방침 글은 D132 가 이어 받음 and "SET status = 'PUBLISHED'" not in M and "'LEGAL_REVIEW'" in M
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill')), f'{len(mig)} · {mig[-1]}')
+   all(f"$TERM${b}$TERM$" in M for b in (O, A)) and (f"$TERM${P}$TERM$" in M or f"$TERM${P}$TERM$" in rd('prisma/migrations/D132_terms_privacy_fill/migration.sql') or f"$TERM${P}$TERM$" in rd('prisma/migrations/D133_agent_member_lookup/migration.sql'))   # v10.135 — 처리방침 글은 D132 가 이어 받음 and "SET status = 'PUBLISHED'" not in M and "'LEGAL_REVIEW'" in M
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup')), f'{len(mig)} · {mig[-1]}')
 INV = rd('scripts/verify-invariants.sh')
 ok('① 불변식 SV-T5 — 새 판 초안이 있는 코드는 게시된 옛 판을 견주지 않음', "NOT (status = 'PUBLISHED' AND EXISTS (SELECT 1 FROM terms d WHERE d.code = t.code AND d.status IN ('DRAFT','LEGAL_REVIEW')))" in INV, '')
 ok('① 판 v10.133 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 133), rd('VERSION').strip())
@@ -73,9 +73,9 @@ if API and DB:
     # 다시 돌림(재실행 안전) — 마이그레이션의 DO 블록만 그대로 실행
     body = M.split('-- =====================================================================\n', 2)[-1]
     # v10.135 — D132 가 처리방침 초안 글을 다시 바꿈. 운영처럼 D131 → D132 순서로 다시 돌려 마지막 글이 그대로인지 봄
-    M2 = rd('prisma/migrations/D132_terms_privacy_fill/migration.sql')
-    if M2:
-        body += '\n' + M2.split('-- =====================================================================\n', 2)[-1]
+    for M2 in (rd('prisma/migrations/D132_terms_privacy_fill/migration.sql'), rd('prisma/migrations/D133_agent_member_lookup/migration.sql')):   # v10.137 — D133 도
+        if M2:
+            body += '\n' + M2.split('-- =====================================================================\n')[-1]
     r = subprocess.run(['psql', DB, '-X', '-q', '-v', 'ON_ERROR_STOP=1'], input=body, capture_output=True, text=True)
     after = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
     ok('② 다시 돌려도 판 · 글이 늘거나 바뀌지 않음', r.returncode == 0 and before == after, r.stderr.strip()[:80])
