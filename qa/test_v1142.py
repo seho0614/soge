@@ -30,11 +30,11 @@ def rd(rel):
 # ── ① 코드 ────────────────────────────────────────────────────────────
 D = rd('prisma/migrations/D138_alimtalk/migration.sql')
 mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', x)))
-ok('① D138 — 템플릿 표(4줄 · 심의 상태) · 보낸 기록(끝 4자리) · 키 이름 발신 프로필 · 설정(NONE · 20) · SMS 채널 줄 · 지우는 문장 없음 · 176',
+ok('① D138 — 템플릿 표(4줄 · 심의 상태) · 보낸 기록(끝 4자리) · 키 이름 발신 프로필 · 설정(NONE · 20) · SMS 채널 줄 · 지우는 문장 없음 · 176 이상',
    'CREATE TABLE IF NOT EXISTS public.alimtalk_templates' in D and 'CREATE TABLE IF NOT EXISTS public.alimtalk_sends' in D and 'to_last4 text' in D
    and "('ALIMTALK','ALIMTALK_SENDER_KEY')" in D and "('alimtalk.provider', 'NONE'" in D and "('alimtalk.test_daily', '20'" in D
    and "'notify.alimtalk_ready'::text))), false) AS ready" in D and all(c in D for c in ("'CONSULT_OTP'", "'HANDOFF_ADMIN'", "'ORDER_STATUS'", "'NOTICE_GENERAL'"))
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|DROP COLUMN)\b', D) and (len(mig), mig[-1]) == (176, 'D138_alimtalk'), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|DROP COLUMN)\b', D) and len(mig) >= 176 and 'D138_alimtalk' in mig, f'{len(mig)} · {mig[-1]}')
 TP = rd('src/common/alimtalk/alimtalk.templates.ts'); AS = rd('src/common/alimtalk/alimtalk.service.ts')
 ok('① 템플릿 본문 4개 · #{자리} 채우기(줄바꿈 정리 · 길이 제한)', all(f'{c}: {{' in TP for c in ('CONSULT_OTP', 'HANDOFF_ADMIN', 'ORDER_STATUS', 'NOTICE_GENERAL'))
    and 'export function renderAlimtalk' in TP and '#{인증번호}' in TP, '')

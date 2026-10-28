@@ -49,7 +49,7 @@ ok('① 손님 글의 운영용 메모(「C-07 신고 대상 확정. 오픈 차�
 M = rd('prisma/migrations/D130_i18n_company_name/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
 ok('① D130 — 상호를 번역 대상(SETTING) · 영어 초안 DRAFT · 168 · 지우는 문장 없음',
-   (len(mig), mig[-1]) in ((168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk')) and "'footer.company_name') THEN" in M and "'DRAFT', 'MANUAL'" in M
+   (len(mig), mig[-1]) in ((168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk'), (177, 'D139_esign')) and "'footer.company_name') THEN" in M and "'DRAFT', 'MANUAL'" in M
    and 'Korea Biohealthcare Co., Ltd.' in M and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M), f'{len(mig)} · {mig[-1]}')
 ok('① API — I18N_SETTING_KEYS 에 상호', "'footer.company_name'];" in rd('src/modules/i18n/i18n.service.ts'), '')
 ok('① 판 v10.132 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 132), rd('VERSION').strip())

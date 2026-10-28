@@ -53,7 +53,7 @@ ok('① 처리방침 빈칸 2곳 채움 — 받는 곳 연락처 · 보관 기�
 ok('① D132 = terms-text.js 처리방침 · 게시 안 함 · 지우는 문장 없음 · docs/terms 같음 · 170',
    (f'$TERM${P}$TERM$' in D or f'$TERM${P}$TERM$' in rd('prisma/migrations/D133_agent_member_lookup/migration.sql')) and   # v10.137 — 처리방침 글은 D133 이 이어 받음
    "SET status = 'PUBLISHED'" not in D and "'LEGAL_REVIEW'" in D and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D)
-   and P.strip() in rd('docs/terms/PRIVACY.md') and (len(mig), mig[-1]) in ((170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk')), f'{len(mig)} · {mig[-1]}')
+   and P.strip() in rd('docs/terms/PRIVACY.md') and (len(mig), mig[-1]) in ((170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk'), (177, 'D139_esign')), f'{len(mig)} · {mig[-1]}')
 ok('① 판 v10.135 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 135), rd('VERSION').strip())
 
 
