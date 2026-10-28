@@ -196,6 +196,7 @@ if API and DB:
             except Exception:
                 sync_playwright = None
             if sync_playwright:
+                setv('identity.ci_duplicate', 'warn')
                 psql(f"UPDATE accounts SET identity_verified_at = NULL WHERE email = '{BUYER}'")
                 with sync_playwright() as p:
                     b = p.chromium.launch(); cx = b.new_context(viewport={'width': 1280, 'height': 900})
