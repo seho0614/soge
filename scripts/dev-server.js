@@ -18,7 +18,8 @@ const { DbErrorFilter } = require('../src/common/db-error.filter');
 const { I18nService } = require('../src/modules/i18n/i18n.service');
 
 (async () => {
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'] });
+  /* v10.143 (D139) — rawBody: 전자계약 웹훅 서명(HMAC)을 받은 본문 그대로 검사(main.ts 와 같게 — 빠지면 점검판에서 서명이 늘 틀림) */
+  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], rawBody: true });
   app.useGlobalPipes(new ValidationPipe({
       whitelist: true, transform: true,
       // 쿼리스트링은 항상 문자열입니다. @IsInt() 를 쓰려면 변환이 필요합니다

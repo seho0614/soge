@@ -592,7 +592,7 @@
     "cancelled": "E-signature request cancelled. You can edit the terms or request again.",
     "failed": "Could not process this. Please try again shortly.",
     "failedState": "The signature could not be completed because of a provider problem. Please request again.",
-    "hashMismatch": "The contract returned by the provider did not match the one we sent, so it was not concluded. An operator will check — please request again."
+    "hashMismatch": "The contract returned by the provider did not match the one we sent, so it was not concluded. Our team will check — please request again."
   },
   "esignMock": {
     "title": "Test e-signature",
