@@ -72,6 +72,8 @@ for ctl, prop, f2, c2, key in (('src/modules/affiliate/affiliate.controller.ts',
     ok(f'② {os.path.basename(ctl)} — 남은 호출은 원래 서비스의 공개 함수', all(x in m1 and not m1[x] for x in first), ' '.join(x for x in first if x not in m1))
     own = set(re.findall(r'^  (?:async )?(\w+)\(', t, re.M))
     ok(f'② {os.path.basename(ctl)} — 주입 이름 {prop} 이 컨트롤러 메서드 이름과 겹치지 않음(v10.86 leads · v10.92 contract)', prop not in own, '')
+    if key == 'deal':   # v10.143 (D139) — 전자서명 요청 · 상태 두 경로는 esign.controller.ts 로 옮김(같은 this.contracts.X 를 부름)
+        used2 = used2 | set(re.findall(r'this\.contracts\.(\w+)\(', rd('src/modules/deal/esign.controller.ts')))
     ok(f'② {os.path.basename(ctl)} — 옮긴 함수 수 = 컨트롤러가 새 서비스로 부르는 수', len(used2) == len([x for x in PLAN[key][4] if x not in ('contractOf', 'sideOf')]), str(len(used2)))
 t = rd('src/modules/partner/partner-center.controller.ts')
 adm = t[t.find('export class PartnerCenterAdminController'):]
