@@ -28,6 +28,9 @@ const SWITCHES: Sw[] = [
     confirm: 'AI 검수 보조를 켤까요? 개인정보처리방침에 「외부 AI 처리 위탁(Anthropic)」 고지를 반영했는지 먼저 확인하십시오(docs/165 §2).' },
   { key: 'agent.chat.enabled', label: 'AI 상담', what: '손님 화면에 「AI 상담」 단추가 생깁니다(하루 한도 · 연락처는 가려 저장 · 5년 보관).',
     confirm: 'AI 상담을 켤까요? 개인정보처리방침에 「AI 상담 대화 5년 보관 · 국외 이전(Anthropic) · AI 고지」를 반영했는지 먼저 확인하십시오(docs/170 §2).' },
+  /* v10.137 (D133 · docs/204) — AI 상담 3단계. AI 상담이 켜져 있어야 동작 · 로그인 회원에게만 */
+  { key: 'agent.chat.member_lookup.enabled', label: 'AI 상담 — 내 정보 조회', what: '로그인한 회원이 자기 주문 · 반품 · 검수 · 문의 · 구독 상태를 물으면 AI 가 본인 것만 읽어 답합니다(읽기만 · 바꾸지 않음 · 부른 기록은 상담 기록에).',
+    confirm: '내 정보 조회를 켤까요? ① 2단계를 1주 써 본 결과(답 비율 · 넘김) ② 개인정보처리방침 제6조 ④ 줄(내 정보 조회) 게시 — 둘 다 확인하셨습니까?(docs/204)' },
 ];
 
 export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {

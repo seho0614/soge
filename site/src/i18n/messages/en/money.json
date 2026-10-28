@@ -59,11 +59,11 @@
   },
   "reqTabs": {
     "all": "All",
-    "goods": "Buy products",
+    "goods": "Buy goods",
     "service": "Request a service",
     "expert": "Ask an expert",
     "company": "Find a company",
-    "used": "Find used goods"
+    "used": "Find used items"
   },
   "budget": {
     "nego": "Negotiable",
@@ -84,7 +84,7 @@
     "off": "<b>{name}</b> is <b>paused</b>. Only new listings and new inquiries are blocked; deals in progress will be completed. This page will return when it reopens.",
     "etcRegion": "Other regions",
     "urgent": "Urgent",
-    "verifiedDoc": "Docs verified",
+    "verifiedDoc": "Documents checked",
     "quoted": "“{kw}”",
     "popular": "Popular {sect} now",
     "tentative": "{name} (tentative)",

@@ -33,8 +33,8 @@
     },
     "quotaFail": "Could not load your referral code status. Please try again shortly.",
     "perListingGuide": "Referral codes are issued per listing. Open the listing you want to refer and tap \"Share referral code\".",
-    "allUsedIncluded": "You have used all referral codes included in {plan} this month ({n}). You can see your codes again in \"Refer via Safe Referral\".",
-    "noFreePlan": "The {plan} plan has no free referral codes · codes are {price} each. You can see your codes again in \"Refer via Safe Referral\".",
+    "allUsedIncluded": "You have used all referral codes included in {plan} this month ({n}). You can see your codes again in \"Refer on Safe Referral\".",
+    "noFreePlan": "The {plan} plan has no free referral codes · codes are {price} each. You can see your codes again in \"Refer on Safe Referral\".",
     "requestFail": "Could not send the request. Please try again shortly.",
     "payNotApproved": "The payment was not approved.",
     "payCanceled": "You canceled the payment.",
@@ -58,7 +58,7 @@
     "payBtn": "Pay {price} for 1 extra code",
     "payBtnStub": "Test-pay {price} for 1 extra code (stub)",
     "plans": "View plans",
-    "giveLink": "Refer via Safe Referral"
+    "giveLink": "Refer on Safe Referral"
   },
   "pay": {
     "requestFail": "Could not send the payment approval request. Refresh this page to check again — the code will not be issued twice.",

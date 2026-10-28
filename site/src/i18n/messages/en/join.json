@@ -23,10 +23,10 @@
     "personalLine2": "You've joined as an individual member. Complete <b>identity verification</b> to receive referral fees too.",
     "failLb": "Your business application was not received",
     "failAccount": "Your account has been created.",
-    "failRetry": "Please apply again from <a>My page → Switch to business</a>.",
+    "failRetry": "Please apply again from <a>My space → Switch to business</a>.",
     "prefLb": "Interest profile",
-    "prefSaved": "Saved as <b>{name}</b> ({segment}). It is used only to pick home ads (personalized ads consent). You can redo or delete it any time under <b>My page → Interests</b> (<a>Redo</a>).",
-    "prefNone": "You didn't add a profile — only non-personalized ads are shown. You can add one later under <b>My page → Interests</b> (<a>Add now</a>).",
+    "prefSaved": "Saved as <b>{name}</b> ({segment}). It is used only to pick home ads (personalized ads consent). You can redo or delete it any time under <b>My space → Interests</b> (<a>Redo</a>).",
+    "prefNone": "You didn't add a profile — only non-personalized ads are shown. You can add one later under <b>My space → Interests</b> (<a>Add now</a>).",
     "canBeforeLb": "What you can do before approval",
     "canNowLb": "What you can do now",
     "canNow": "<b>Browsing and searching</b> listings, posting requests and joining referrals are available now.",
@@ -61,7 +61,7 @@
     "pendingAt": " · applied {date}",
     "pendingTail": ". We'll notify you of the result.",
     "rejected": "Your last application was rejected — {reason}. Please correct it and apply again.",
-    "more": "The time verification completes is the <b>start date of your eligibility for referral fees</b>. To enter your business address as well, apply from <a>Business details</a> (My page › Switch to business).",
+    "more": "The time verification completes is the <b>start date of your eligibility for referral fees</b>. To enter your business address as well, apply from <a>Business details</a> (My space › Switch to business).",
     "continue": "Continue where you left off ›"
   },
   "verifyPanel": {
@@ -149,7 +149,7 @@
       },
       "SOLAR": {
         "name": "Solar",
-        "need": "Identity verification (whether a power-generation license is required is being confirmed)",
+        "need": "Identity verification (power-generation license requirement under review)",
         "check": "Partner approval · listing review"
       },
       "CONSULT": {
@@ -172,7 +172,7 @@
     "th": {
       "axis": "Category",
       "need": "Required qualification",
-      "check": "Our review",
+      "check": "SogaeBank review",
       "state": "Status",
       "apply": "Apply"
     },
@@ -241,7 +241,7 @@
       "vat": "VAT",
       "total": "Total",
       "state": "Status",
-      "no": "No. (approval) · Date"
+      "no": "Approval no. · Date"
     },
     "seq": "Round {n} ({kind})",
     "kindRenew": "renewal",
@@ -313,7 +313,7 @@
   "malBrokers": {
     "metaTitle": "Agent listings · Ownership check",
     "own": {
-      "SUBMITTED": "Checking",
+      "SUBMITTED": "Pending",
       "VERIFIED": "Confirmed",
       "REJECTED": "Rejected"
     },
@@ -471,7 +471,7 @@
     "revoked": "Revoked",
     "thisMonth": "This month",
     "issued": "Issued {date}",
-    "touches": "<b>{n}</b> visits",
+    "touches": "{n, plural, one {<b>{n}</b> visit} other {<b>{n}</b> visits}}",
     "guest": "Log in to see your referral codes and visit counts here. <login>Log in</login> · <signup>Sign up</signup>",
     "partnerApply": "Are you a business? Apply as a partner"
   },
@@ -592,7 +592,7 @@
       "slot": "{slot} slot",
       "adsNone": "No creatives are assigned, so non-personalized ads are shown.",
       "adsNote": "Your profile is <b>only used to pick ads</b> — it is never passed to advertisers.",
-      "nextNote": "<b>Next</b> — Redo or delete it any time under My page → <b>Interests</b>. Search results and recommendation order are not changed by your profile.",
+      "nextNote": "<b>Next</b> — Redo or delete it any time under My space → <b>Interests</b>. Search results and recommendation order are not changed by your profile.",
       "checkMain": "See it on the home page",
       "redo": "Retake"
     },

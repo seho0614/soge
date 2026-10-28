@@ -110,7 +110,7 @@ const when = (iso: string) => new Date(iso).toLocaleString('ko-KR', { dateStyle:
 /* ── v10.131 (D129 · docs/197) AI 상담 「답 · 넘김 비율」 — 1주 운영 결과 판단용(결정 기록 ai-agent #20 · 기준 제안: 답할 문항 95%) ── */
 interface ChatStats {
   days: number; questions: number; answers: number; answered: number; handoffSuggested: number; byAi: number;
-  refusal: number; cut: number; badShape: number; banned: number; unknown: number; conversations: number; handedOff: number;
+  refusal: number; cut: number; badShape: number; banned: number; unknown: number; conversations: number; handedOff: number; lookups?: number;
   answeredPct: number | null; handoffPct: number | null; handedOffPct: number | null;
 }
 const pct = (v: number | null) => (v === null ? '—' : `${v}%`);
@@ -134,6 +134,7 @@ function AgentChatStats() {
       </div>
       <p className="hint">넘기기 권함의 내용 — AI 판단 {n(s.byAi)} · 거절 {n(s.refusal)} · 잘림 {n(s.cut)} · 답 모양 틀림 {n(s.badShape)} · 금칙어 {n(s.banned)}
         {s.unknown > 0 && <> · 기록 전 답 {n(s.unknown)}(v10.131 전 — 비율에서 뺌)</>}.
+        {' '}내 정보 조회(3단계) <b data-stat="lookups">{n(s.lookups ?? 0)}</b>회.
         기준(제안): 답할 수 있는 문항은 95% 이상 답함 · 돈 · 분쟁 · 개인 사정 문항은 모두 넘김 — 어느 쪽이 맞았는지는 아래 대화를 몇 건 열어 확인합니다.</p>
     </div>
   );
@@ -172,7 +173,7 @@ function AgentChats() {
               {open === c.id && (
                 <tr><td colSpan={6}>
                   {!msgs ? <p className="muted">불러오는 중…</p> : msgs.map((m, i) => (
-                    <p key={i} style={{ margin: '4px 0', whiteSpace: 'pre-wrap' }}><b>{m.role === 'user' ? '손님' : 'AI'}</b> {m.body}
+                    <p key={i} style={{ margin: '4px 0', whiteSpace: 'pre-wrap' }}><b>{m.role === 'user' ? '손님' : m.role === 'tool' ? '조회' : 'AI'}</b> {m.role === 'tool' ? <span className="muted" data-agent-tool-call>{m.body}</span> : m.body}
                       {m.stopReason && m.role === 'assistant' && m.stopReason !== 'end_turn' ? <span className="muted"> ({m.stopReason})</span> : null}</p>
                   ))}
                   <p className="hint">보관 기한 {when(c.purgeAfter)} · 손님 글의 연락처 · 링크는 가려 저장됩니다.</p>

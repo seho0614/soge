@@ -67,14 +67,14 @@
       "name": "Other fraud",
       "sub": "False advertising, investment fraud, etc.",
       "how": {
-        "h1": "Investment offers promising “guaranteed principal, high returns”",
+        "h1": "Investment offers promising \"guaranteed principal, high returns\"",
         "h2": "Unregistered loan or financial advertising",
         "h3": "False advertising that does not match reality"
       },
       "stop": {
         "s1": "Check first with the Financial Supervisory Service that a financial product is registered",
         "s2": "Loan advertising cannot be posted on SogaeBank (restricted industry)",
-        "s3": "Report suspicious posts or ads with “Report”"
+        "s3": "Report suspicious posts or ads with \"Report\""
       }
     }
   },

@@ -9,8 +9,8 @@
     "won": "KRW",
     "missing": "{n, plural, one {{n} required field} other {{n} required fields}} still empty — {list}{more}",
     "missingMore": " and {n} more",
-    "blocked": "This category cannot be registered",
-    "blockedMsg": "This category cannot be registered.",
+    "blocked": "Listings in this category are not allowed",
+    "blockedMsg": "Listings in this category are not allowed.",
     "basis": "Basis: {basis}",
     "regFail": "Could not register.",
     "suspended": " — To register before the suspension ends, please contact the Help Center.",
@@ -164,7 +164,7 @@
       "title": "Your request has been received",
       "body": "Once reviewed, it will appear in the referral requests list. Review usually takes under 24 hours.<br></br>It closes automatically <b>30 days</b> after posting.",
       "list": "Referral requests",
-      "my": "My page"
+      "my": "My space"
     },
     "title": "Post a referral request",
     "sub": "Tell us the product/service you want. SogaeBank members will connect you.",
@@ -235,8 +235,8 @@
     "title": "Contact us",
     "typeLabel": "Inquiry type",
     "dispTitle": "Disputes are not handled here",
-    "dispBody": "Please request <b>dispute mediation</b> between deal parties through Dispute filing. Filing immediately <b>puts the deal's settlement on hold</b>; sending it here does not give you that protection.",
-    "dispGo": "Go to Dispute filing",
+    "dispBody": "Please request <b>dispute mediation</b> between deal parties through “File a dispute”. Filing immediately <b>puts the deal's settlement on hold</b>; sending it here does not give you that protection.",
+    "dispGo": "Go to File a dispute",
     "report": "Report",
     "deal": "Related deal",
     "dealNone": "None",
@@ -253,7 +253,7 @@
     "remove": "Remove",
     "attachGuest": "You can attach files after logging in (only you and staff can see them).",
     "mail": "Reply email",
-    "mailHint": "This is the email you signed up with. You can change it in My page → Settings.",
+    "mailHint": "This is the email you signed up with. You can change it in My space → Settings.",
     "mailHintGuest": "You are not logged in — we will send the reply to this email.",
     "submitting": "Submitting…",
     "submit": "Submit inquiry"
@@ -323,7 +323,7 @@
   "bizPage": {
     "title": "Register a Startups listing",
     "h": "Register a business opportunity",
-    "note": "Startups covers franchises, new store openings and store transfers. Whether fixed assets are transferred decides the section (A-01). This is where you post listings (startups · franchises · transfers, etc.) for {name}. Business verification is not done here but in <link>My page › Switch to business</link>.",
+    "note": "Startups covers franchises, new store openings and store transfers. Whether fixed assets are transferred decides the section (A-01). This is where you post listings (startups · franchises · transfers, etc.) for {name}. Business verification is not done here but in <link>My space › Switch to business</link>.",
     "sla": "<b>Listings go through review.</b> Reviews are completed within 24 hours on business days; if rejected, you get the reason and an editing guide.",
     "cancel": "Cancel"
   },

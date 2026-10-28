@@ -16,7 +16,7 @@
     "TRADE": "Industry talk",
     "QNA": "Questions",
     "NOTICE": "Notices",
-    "polls": "What do you think? Polls",
+    "polls": "“What do you think?” polls",
     "food": "Local eats"
   },
   "board": {
@@ -294,7 +294,7 @@
     "newTitle": "Write a fraud case",
     "newH": "Write a fraud case",
     "newLead": "Sharing what happened helps prevent the same harm. The author is not disclosed.",
-    "newLogin": "<b>Login required.</b> Members who have completed identity verification can post.",
+    "newLogin": "<b>Login required.</b> Only members who have completed identity verification can post.",
     "login": "Log in"
   },
   "ad": {
@@ -405,7 +405,7 @@
       "CAR": "Cars",
       "BIZ": "Startups/franchises",
       "MACHINE": "Machinery/equipment",
-      "LIFE": "Living/other"
+      "LIFE": "Lifestyle/other"
     },
     "sort": {
       "RECENT": "Newest",
@@ -425,9 +425,9 @@
     "recH": "Recommended urgent listings",
     "recNone": "No urgent listings to recommend yet.",
     "addH": "How to post urgent items",
-    "addP": "Need to hire or sell fast? Post quickly and easily.",
+    "addP": "Need to buy or sell fast? Post quickly and easily.",
     "register": "Post a listing",
-    "apply": "Request urgent from My listings ›"
+    "apply": "Request urgent status in My listings ›"
   },
   "verified": {
     "sub": "Safe deals start with prevention.",

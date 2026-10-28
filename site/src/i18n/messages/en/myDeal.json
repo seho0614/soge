@@ -39,7 +39,7 @@
     "nudgeSent": "You already sent a reminder today.",
     "nudgeYourTurn": "It is your turn now.",
     "nudgeSend": "Send the other party a reminder to check.",
-    "feeTbd": "(not yet fixed)",
+    "feeTbd": "(to be confirmed)",
     "feeNote": "The referral fee {fee} is paid to the referrer <b>after the deal is confirmed</b>. The parties pay each other directly; the platform does not hold any money."
   },
   "ctrD": {
@@ -199,7 +199,7 @@
     "pendingSum": "Pending claims <b>{n} · total fees {sum}</b>",
     "histH": "Settlements",
     "histEmpty": "No settlements yet.",
-    "flow": "A claimed settlement goes from <b>Awaiting approval</b> → <b>Approved · awaiting payment</b> once our team checks the statement → <b>Mark as received</b> (paid) when you receive the fee. “Mark as received” appears only for approved items.",
+    "flow": "A claimed settlement goes from <b>Awaiting approval</b> → <b>Approved · awaiting payout</b> once our team checks the statement → <b>Mark as received</b> (paid) when you receive the fee. “Mark as received” appears only for approved items.",
     "cols": {
       "no": "Settlement no.",
       "fee": "Referral fee",
@@ -409,7 +409,7 @@
   },
   "hNav": {
     "label": "My Sogae Mall",
-    "my": "My page",
+    "my": "My space",
     "orders": "My orders",
     "returns": "Cancellations · Returns",
     "addresses": "Shipping addresses",
@@ -461,7 +461,7 @@
     "auto": "auto-confirmed",
     "manual": "confirmed by you",
     "overdue": "The auto-confirm deadline {d} has passed — it will be confirmed in the next batch (daily at 04:00). You can also confirm it yourself now.",
-    "due": "Auto-confirmed at {d} (you can confirm it yourself before then)",
+    "due": "Will be auto-confirmed on {d} (you can confirm it yourself before then)",
     "shipMemo": "Delivery request",
     "timeOdd": "The shipping/delivery timestamps of this order do not match the order time (older record). The return deadline is calculated from the delivery time.",
     "items": "Items ordered",
@@ -523,7 +523,7 @@
     "feeNone": "None (paid by seller)",
     "refund": "Refund",
     "beforePay": "Canceled before payment — nothing was paid, so there is no refund",
-    "tbd": "Not yet fixed",
+    "tbd": "To be confirmed",
     "deduct": " (round-trip shipping {v} deducted)",
     "refunded": " · refunded {d}",
     "memo": "Processing note"

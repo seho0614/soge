@@ -16,18 +16,49 @@ export interface AgentReply {
   /** v10.109 — 프롬프트 캐시에 새로 쓴 토큰(입력의 약 1.25배 값) · 없으면 0 */
   cacheWriteTokens?: number;
   stopReason: string;
+  /** v10.137 — 도구를 주었을 때 모델이 고른 도구(stopReason 'tool_use') · 다음 호출에 그대로 되돌릴 답 조각 */
+  toolUses?: AgentToolUse[];
+  content?: AgentBlock[];
+}
+/** v10.137 (AI 상담 3단계 · docs/204) — 도구 사용(tool use). 모양은 Anthropic Messages API 와 같음 */
+export interface AgentTool { name: string; description: string; input_schema: Record<string, unknown> }
+export interface AgentToolUse { id: string; name: string; input: Record<string, unknown> }
+export type AgentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+  | { type: 'tool_result'; tool_use_id: string; content: string };
+export interface AgentMessage { role: 'user' | 'assistant'; content: string | AgentBlock[] }
+export interface AgentInput {
+  model: string; system: string; messages: AgentMessage[]; maxTokens: number;
+  /** effort — 생각 · 답 길이를 줄이는 정도(v10.104 · 번역은 low). 받지 않는 엔진은 무시 */
+  effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean;
+  /** v10.137 — 주면 모델이 도구를 고를 수 있음(없으면 지금처럼 글만) */
+  tools?: AgentTool[];
 }
 export interface AgentProvider {
   readonly name: 'MOCK' | 'CLAUDE' | 'N8N';
-  /** effort — 생각 · 답 길이를 줄이는 정도(v10.104 · 번역은 low). 받지 않는 엔진은 무시 */
-  complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply>;
+  complete(input: AgentInput): Promise<AgentReply>;
 }
+
+/** 시험 엔진의 도구 고르기 — 질문의 낱말로 정함(밖으로 나가지 않음 · 시험이 같은 결과를 얻게) */
+const MOCK_TOOL_WORDS: [RegExp, string][] = [
+  [/반품|교환|취소 신청/, 'my_returns'], [/주문|배송|택배/, 'my_orders'], [/검수|반려|안 올라/, 'my_reviews'],
+  [/문의/, 'my_inquiries'], [/구독|소개코드|요금제/, 'my_subscription'],
+];
 
 /** 시험용 — 밖으로 나가지 않습니다. 받은 마지막 말을 짧게 되돌리고 토큰 수는 글자 수로 어림합니다 */
 export class MockAgentProvider implements AgentProvider {
   readonly name = 'MOCK' as const;
-  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply> {
-    const last = input.messages[input.messages.length - 1]?.content ?? '';
+  async complete(input: AgentInput): Promise<AgentReply> {
+    const lastMsg = input.messages[input.messages.length - 1]?.content ?? '';
+    const last = typeof lastMsg === 'string' ? lastMsg : lastMsg.map((b) => (b.type === 'text' ? b.text : b.type === 'tool_result' ? b.content : '')).join(' ');
+    // v10.137 — 도구를 받았고 아직 도구 결과가 오지 않은 질문이면 낱말로 도구 하나를 고름
+    const tool = input.tools?.length && typeof lastMsg === 'string' ? MOCK_TOOL_WORDS.find(([re]) => re.test(lastMsg))?.[1] : undefined;
+    if (tool && input.tools!.some((t) => t.name === tool)) {
+      const id = `mock_${tool}`;
+      return { text: '', model: input.model, inputTokens: Math.ceil((input.system.length + last.length) / 2), outputTokens: 20, cacheReadTokens: 0,
+               stopReason: 'tool_use', toolUses: [{ id, name: tool, input: {} }], content: [{ type: 'tool_use', id, name: tool, input: {} }] };
+    }
     const text = `[시험 응답] ${last.slice(0, 80)}`;
     return { text, model: input.model, inputTokens: Math.ceil((input.system.length + last.length) / 2), outputTokens: Math.ceil(text.length / 2),
              cacheReadTokens: 0, stopReason: 'end_turn' };
@@ -44,9 +75,10 @@ export class ClaudeAgentProvider implements AgentProvider {
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey, maxRetries: 1, timeout: 45_000 });   // 배치 시간 예산(40초) 안에서 — 길게 매달리지 않음
   }
-  async complete(input: { model: string; system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens: number; effort?: 'low' | 'medium' | 'high'; cacheSystem?: boolean }): Promise<AgentReply> {
+  async complete(input: AgentInput): Promise<AgentReply> {
     const r = await this.client.messages.create({
-      model: input.model, max_tokens: input.maxTokens, messages: input.messages,
+      model: input.model, max_tokens: input.maxTokens, messages: input.messages as Anthropic.MessageParam[],
+      ...(input.tools?.length ? { tools: input.tools as Anthropic.Tool[] } : {}),
       // v10.109 — 긴 지시문(고객응대 지식 묶음)은 프롬프트 캐시에 — 같은 지시문이면 다음 호출부터 입력 값이 약 1/10
       system: input.cacheSystem ? [{ type: 'text', text: input.system, cache_control: { type: 'ephemeral' } }] : input.system,
       ...(input.effort ? { output_config: { effort: input.effort } } : {}),
@@ -54,7 +86,10 @@ export class ClaudeAgentProvider implements AgentProvider {
     const text = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
     return { text, model: r.model, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens,
              cacheReadTokens: r.usage.cache_read_input_tokens ?? 0, cacheWriteTokens: r.usage.cache_creation_input_tokens ?? 0,
-             stopReason: r.stop_reason ?? 'unknown' };
+             stopReason: r.stop_reason ?? 'unknown',
+             toolUses: r.content.flatMap((b) => (b.type === 'tool_use' ? [{ id: b.id, name: b.name, input: (b.input ?? {}) as Record<string, unknown> }] : [])),
+             content: r.content.flatMap((b): AgentBlock[] => (b.type === 'text' ? [{ type: 'text', text: b.text }]
+               : b.type === 'tool_use' ? [{ type: 'tool_use', id: b.id, name: b.name, input: (b.input ?? {}) as Record<string, unknown> }] : [])) };
   }
 }
 

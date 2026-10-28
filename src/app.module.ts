@@ -57,6 +57,7 @@ import { ConversationService } from './modules/deal/conversation.service';
 import { AffiliateAccountService } from './modules/affiliate/affiliate-account.service';
 import { ReviewShadowService } from './modules/agent/review-shadow.service';
 import { AgentChatService } from './modules/agent/agent-chat.service';
+import { AgentLookupService } from './modules/agent/agent-lookup.service';
 import { DealContractService } from './modules/deal/deal-contract.service';
 
 import { MeController } from './modules/me/me.controller';
@@ -332,6 +333,7 @@ import { LeadService } from './modules/lead/lead.service';
     AgentService,  // v10.94
     ReviewShadowService,   // v10.106 AI 검수 보조(병행 · D120)
     AgentChatService,      // v10.109 AI 상담 안내(D121)
+    AgentLookupService,    // v10.137 AI 상담 3단계 내 정보 조회(D133)
     MeService, MeActivityService, MeMoneyService, MeNotifyService,   // v10.96
     CommunityService,
     PollService,
