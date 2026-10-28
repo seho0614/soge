@@ -41,7 +41,7 @@ ok('① 운영 화면 — AI 에이전트에 「AI 스위치」(상한 · 5개 �
 ok('① 외부 연동 — AI · 카카오맵 · 날씨 줄에 「키 넣는 곳으로 가기」',
    "AGENT: { label: '위험감지 › AI 운영 › AI 에이전트 › 「AI 키」(최고 관리자)', href: '#/ai-ops/agent' }" in IN and "sel: '[data-map-keys]'" in IN and "sel: '[data-weather-keys]'" in IN, '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 판 v10.129 이상 · 마이그레이션 없음(166)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 129) and len(mig) in (166, 167, 168, 169, 170, 171, 172), f"{rd('VERSION').strip()} · {len(mig)}")
+ok('① 판 v10.129 이상 · 마이그레이션 없음(166)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 129) and len(mig) in (166, 167, 168, 169, 170, 171, 172, 173), f"{rd('VERSION').strip()} · {len(mig)}")
 
 
 def call(m, p, b=None, t=None):
@@ -141,7 +141,7 @@ if ADMIN_WEB and DB and API:
                     call('PUT', '/admin/agent/key', {'value': FAKE}, T_)
                 pg.goto(ADMIN_WEB + '/#/ai-ops/agent', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
                 box = pg.locator('[data-agent-switches]')
-                ok('③ 최고 관리자 — 「AI 스위치」 칸 · 상한 줄 · 5개 줄(v10.137 부터 6 — 내 정보 조회) · 단추', box.count() == 1 and box.locator('[data-agent-switch]').count() in (5, 6)
+                ok('③ 최고 관리자 — 「AI 스위치」 칸 · 상한 줄 · 5개 줄(v10.137 부터 6 — 내 정보 조회 · v10.139 부터 7 — 신청서 초안) · 단추', box.count() == 1 and box.locator('[data-agent-switch]').count() in (5, 6, 7)
                    and box.locator('button', has_text='켜기').count() >= 1, str(box.locator('[data-agent-switch]').count()))
                 cap = box.locator('[data-agent-cap]')
                 cap.locator('input').fill('7'); cap.locator('button', has_text='저장').click(); pg.wait_for_timeout(2000)
