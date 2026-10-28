@@ -28,6 +28,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'NTS', name: 'NTS_SERVICE_KEY', label: '공공데이터포털 인증키', env: 'NTS_SERVICE_KEY', envRead: 'NTS_SERVICE_KEY', isPublic: false },
   { code: 'BROKER', name: 'BROKER_LOOKUP_KEY', label: 'API 키', env: 'BROKER_LOOKUP_KEY', envRead: 'BROKER_LOOKUP_KEY', isPublic: false },
   { code: 'ETAX', name: 'ETAX_KEY', label: 'API 키', env: 'ETAX_KEY', envRead: 'ETAX_KEY', isPublic: false },
+  { code: 'MAIL', name: 'SMTP_USER', label: 'SMTP 사용자 이름', env: 'SMTP_USER', envRead: 'SMTP_USER', isPublic: false },   // v10.140 (D136)
   { code: 'MAIL', name: 'SMTP_PASS', label: 'SMTP 비밀번호', env: 'SMTP_PASS', envRead: 'SMTP_PASS', isPublic: false },
   { code: 'PASS', name: 'PASS_API_KEY', label: 'API 키', env: 'PASS_API_KEY', envRead: 'PASS_API_KEY', isPublic: false },
   { code: 'ESIGN', name: 'ESIGN_API_KEY', label: 'API 키', env: 'ESIGN_API_KEY', envRead: 'ESIGN_API_KEY', isPublic: false },

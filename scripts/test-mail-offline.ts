@@ -15,7 +15,7 @@
  */
 import * as net from 'net';
 import { buildMessage, SmtpConfig, smtpSend } from '../src/common/mail/smtp';
-import { MailService } from '../src/common/mail/mail.service';
+import { MailService, SES_SEOUL_HOST } from '../src/common/mail/mail.service';
 
 type Mode = 'ok' | 'badpass' | 'badrcpt' | 'silent';
 const PASS = 'S3cr3t-pass';
@@ -129,7 +129,8 @@ const b64dec = (s: string) => Buffer.from(s, 'base64').toString('utf8');
     const svc = new MailService(null as any);
     const full = { SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p', MAIL_FROM: 'no-reply@mail.sogaebank.com' } as any;
     ok('설정 넷 다 있으면 · 기본 포트 465 · 이름 소개뱅크', svc.config(full)?.port === 465 && svc.config(full)?.fromName === '소개뱅크');
-    ok('하나라도 빠지면 null', ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'].every((k) => svc.config({ ...full, [k]: '' }) === null));
+    ok('사용자 이름 · 비밀번호 · 보내는 주소 중 하나라도 빠지면 null', ['SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'].every((k) => svc.config({ ...full, [k]: '' }) === null));
+    ok('v10.140 — 주소(SMTP_HOST)가 비면 서울 SES 기본값', svc.config({ ...full, SMTP_HOST: '' })?.host === SES_SEOUL_HOST && SES_SEOUL_HOST === 'email-smtp.ap-northeast-2.amazonaws.com');
     ok('보내는 주소는 운영 설정(notify.mail_from)이 우선', svc.config(full, 'help@sogaebank.com')?.from === 'help@sogaebank.com');
     ok('운영 설정이 비면 MAIL_FROM', svc.config(full, '')?.from === 'no-reply@mail.sogaebank.com');
     ok('둘 다 비면 null', svc.config({ ...full, MAIL_FROM: '' }, '') === null);

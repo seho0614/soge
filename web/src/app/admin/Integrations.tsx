@@ -6,6 +6,7 @@ import { codeList } from '../../lib/codes';
 import { MapKeys } from './MapKeys';
 import { WeatherKeys } from './WeatherKeys';
 import { IntegrationKeys } from './IntegrationKeys';
+import { MailPanel } from './MailPanel';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -196,6 +197,9 @@ export function Integrations() {
 
       {/* v10.128 (D128 · docs/192) — 결제 · 계좌 · 국세청 · 중개사 · 세금계산서 · 메일 · 본인인증 · 전자계약 · 알림톡 · 안심번호 키(2026-10-27 대표 승인) */}
       <IntegrationKeys />
+
+      {/* v10.140 (D136 · docs/211) — 메일 준비 상태 · 연결 확인 · 시험 메일 · 발송 기록 */}
+      <MailPanel />
 
       {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
       <MapKeys />

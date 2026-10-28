@@ -1639,7 +1639,11 @@
     "POST /admin/weather/test",
     "GET /admin/integration-keys",
     "PUT /admin/integration-keys/{code}/{name}",
-    "DELETE /admin/integration-keys/{code}/{name}"
+    "DELETE /admin/integration-keys/{code}/{name}",
+    "GET /admin/mail/status",
+    "GET /admin/mail/deliveries",
+    "POST /admin/mail/connect",
+    "POST /admin/mail/test"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
