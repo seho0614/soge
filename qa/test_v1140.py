@@ -81,7 +81,9 @@ def psql(sql):
 
 if API and DB:
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': 'sgb-dev-1234'})['accessToken']
-    AT = call('POST', '/auth/login', {'email': 'seller@x.com', 'password': 'sgb-dev-1234'})['accessToken']   # 점검판 seller 는 ADMIN 역할도 가짐(test_v1129)
+    had_role = psql("SELECT count(*) FROM account_roles r JOIN accounts a ON a.id = r.account_id WHERE a.email = 'seller@x.com' AND r.role = 'ADMIN'") != '0'
+    psql("INSERT INTO account_roles(account_id, role) SELECT id, 'ADMIN' FROM accounts WHERE email = 'seller@x.com' ON CONFLICT DO NOTHING;")   # 운영(ADMIN) 시험용 · 끝나면 되돌림(test_v1129 방식)
+    AT = call('POST', '/auth/login', {'email': 'seller@x.com', 'password': 'sgb-dev-1234'})['accessToken']
     BT = call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': 'sgb-dev-1234'})['accessToken']
     had = psql("SELECT string_agg(name, ',') FROM integration_secrets WHERE integration_code = 'MAIL'")
     KEYS = ['notify.mail_from', 'notify.mail_test_daily', 'notify.email_verified']
@@ -134,6 +136,8 @@ if API and DB:
             ok('② 발송 기록 — 실패 수 · 까닭별 · 최근 실패 줄(받는 주소는 앞 2글자 · 도메인만)', dv.get('days') == 1 and dv.get('failed', 0) >= 1
                and any(x.get('reason') == 'REJECTED' for x in dv.get('reasons', [])) and mine and mine[0].get('to') == 'bu***@x.com', str(mine)[:120])
     finally:
+        if not had_role:
+            psql("DELETE FROM account_roles WHERE role = 'ADMIN' AND account_id = (SELECT id FROM accounts WHERE email = 'seller@x.com');")
         if not had:
             for n in ('SMTP_USER', 'SMTP_PASS'):
                 call('DELETE', f'/admin/integration-keys/MAIL/{n}', t=T_)

@@ -116,8 +116,8 @@ if API and DB:
         ok('③ 로그인 안 한 사람도 403/401', call('GET', '/admin/integration-keys').get('_err') in (401, 403), '')
         v0 = call('GET', '/admin/integration-keys', t=T_)
         pg0 = row(v0, 'PG', 'TOSS_SECRET_KEY')
-        ok('③ 목록 15줄 · 값 없음 · 처음 결제 시크릿 키는 운영 화면에 없음(점검판 .env 에도 없으면 NONE)',
-           isinstance(v0, list) and len(v0) == 15 and pg0.get('source') in ('NONE', 'ENV') and all('value' not in x for x in v0)
+        ok('③ 목록 15줄(v10.140 부터 16) · 값 없음 · 처음 결제 시크릿 키는 운영 화면에 없음(점검판 .env 에도 없으면 NONE)',
+           isinstance(v0, list) and len(v0) == 15 + len(EXTRA) and pg0.get('source') in ('NONE', 'ENV') and all('value' not in x for x in v0)
            and row(v0, 'MAIL', 'SMTP_PASS').get('integration') == '메일(Amazon SES SMTP)', str(pg0))
         pay0 = call('GET', '/site-settings/payment')
         ok('③ 공개 결제 키 — 로그인 없이 · 처음 null(시험 결제)', 'clientKey' in pay0 and pay0.get('clientKey') in (None, ''), str(pay0))
@@ -177,7 +177,7 @@ if ADMIN_WEB and DB and API:
                 pg.goto(ADMIN_WEB + '/#/integrations', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
                 box = pg.locator('[data-integration-keys]')
                 items = box.locator('[data-integ-key]')
-                ok('④ 최고 관리자 — 외부 연동 안 「연동 키」 11줄(카카오 · 날씨 · AI 는 각 구역)', box.count() == 1 and items.count() == 11, str(items.count()))
+                ok('④ 최고 관리자 — 외부 연동 안 「연동 키」 11줄(v10.140 부터 12 · 카카오 · 날씨 · AI 는 각 구역)', box.count() == 1 and items.count() == 11 + len(EXTRA), str(items.count()))
                 it = box.locator('[data-integ-key="BANK/BANK_VERIFY_KEY"]')
                 it.locator('input[type=password]').fill(FAKE_BANK); it.locator('button', has_text='저장').click(); pg.wait_for_timeout(2000)
                 txt = it.inner_text()
