@@ -6,6 +6,7 @@ import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
+import { EsignService } from '../modules/deal/esign.service';
 import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
@@ -23,7 +24,7 @@ export type JobName =
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry'
-  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge';
+  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll';
 
 export interface JobResult {
   job: JobName;
@@ -43,6 +44,7 @@ export class SchedulerService {
     private readonly geo: GeoService,
     private readonly mail: MailService,
     private readonly alimtalk: AlimtalkService,
+    private readonly esign: EsignService,
     private readonly translate: TranslateService,
     private readonly reviewShadow: ReviewShadowService,
     private readonly agentChat: AgentChatService,
@@ -468,6 +470,13 @@ export class SchedulerService {
       case 'review_shadow': {
         const r = await this.reviewShadow.runBatch(10);
         affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.143 (D139 · docs/217) — 전자계약: 만료일 지난 요청 닫기 · 10분 넘게 대기 중인 HTTP 요청을 업체에 물어 반영(웹훅이 빠져도) */
+      case 'esign_poll': {
+        const r = await this.esign.poll();
+        affected = r.expired + r.changed; detail = r;
         break;
       }
 

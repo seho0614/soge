@@ -9,6 +9,7 @@ import { IntegrationKeys } from './IntegrationKeys';
 import { MailPanel } from './MailPanel';
 import { IdentityPanel } from './IdentityPanel';
 import { AlimtalkPanel } from './AlimtalkPanel';
+import { EsignPanel } from './EsignPanel';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -208,6 +209,9 @@ export function Integrations() {
 
       {/* v10.142 (D138) — 알림톡 방식 · 키 · 템플릿 심의 · 시험 발송 · 보낸 기록 */}
       <AlimtalkPanel />
+
+      {/* v10.143 (D139) — 전자계약 방식 · 키 · 웹훅 주소 · 최근 30일 · 요청 목록 */}
+      <EsignPanel />
 
       {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
       <MapKeys />

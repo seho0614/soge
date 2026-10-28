@@ -49,8 +49,11 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     files: ['src/common/alimtalk/alimtalk.service.ts', 'src/common/alimtalk/alimtalk.templates.ts', 'src/modules/partner/consult.service.ts'], doc: 'docs/215 · 설계 docs/213 · docs/93 3절' },
   { code: 'SAFENUM', name: '050 안심번호', dbRow: true, secretEnv: 'SAFENUM_KEY', otherEnv: [], assume: null, adapter: 'NONE',
     files: [], doc: '업체 미정' },
-  { code: 'ESIGN', name: '전자계약', dbRow: true, secretEnv: 'ESIGN_API_KEY', otherEnv: [], assume: null, adapter: 'STUB',
-    files: ['src/modules/deal/esign.provider.ts'], doc: 'esign.provider.ts 머리말' },
+  /* v10.143 (D139 · docs/217) — 업체 공통 HTTP 틀 · 방식 esign.provider · 웹훅 /webhooks/esign(HMAC). 업체 미정 — 정해지면 칸 이름 확인 */
+  { code: 'ESIGN', name: '전자계약', dbRow: true, secretEnv: 'ESIGN_API_KEY',
+    otherEnv: ['ESIGN_WEBHOOK_SECRET', 'ESIGN_URL', 'ESIGN_CREATE_PATH', 'ESIGN_STATUS_PATH', 'ESIGN_CANCEL_PATH', 'ESIGN_AUTH_HEADER', 'ESIGN_AUTH_PREFIX', 'ESIGN_RESULT_ID_PATH', 'ESIGN_RESULT_SIGNERS_PATH', 'ESIGN_RESULT_STATE_PATH', 'ESIGN_RESULT_HASH_PATH', 'ESIGN_STATE_MAP', 'ESIGN_EVT_ID_PATH', 'ESIGN_EVT_DOC_PATH', 'ESIGN_EVT_TYPE_PATH', 'ESIGN_SIG_HEADER', 'ESIGN_TS_HEADER', 'ESIGN_TIMEOUT_MS'],
+    assume: null, adapter: 'STUB',
+    files: ['src/modules/deal/esign.provider.ts', 'src/modules/deal/esign.service.ts', 'src/modules/deal/esign.controller.ts'], doc: 'docs/217 · 설계 docs/216' },
   { code: 'BROKER', name: '국토부 중개사 자격 대조', dbRow: true, secretEnv: 'BROKER_LOOKUP_KEY',
     otherEnv: ['BROKER_LOOKUP_URL', 'BROKER_LOOKUP_METHOD', 'BROKER_LOOKUP_KEY_PARAM', 'BROKER_LOOKUP_AUTH_HEADER', 'BROKER_LOOKUP_RESULT_PATH', 'BROKER_LOOKUP_RESULT_OK', 'BROKER_LOOKUP_ITEMS_PATH', 'BROKER_LOOKUP_ACTIVE'],
     assume: 'broker', adapter: 'REAL', files: ['src/modules/partner/broker-lookup.provider.ts'], doc: 'broker-lookup.provider.ts 머리말' },

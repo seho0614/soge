@@ -567,5 +567,38 @@
     "default": "Default",
     "addr": "Address",
     "new": "New address"
+  },
+  "esign": {
+    "note": "This contract is signed electronically. When you press 'Request e-signature', the e-contract provider sends signing instructions to both parties and certifies who signed and when. Terms cannot be changed while a request is open.",
+    "noteMock": "This is a test e-signature (check board). Nothing is sent to a real provider and it has no legal effect.",
+    "state": "E-signature",
+    "st": {
+      "NOT_REQUESTED": "Not requested",
+      "PENDING": "Waiting for signatures",
+      "SIGNED": "Signed",
+      "REJECTED": "Declined — you can request again",
+      "EXPIRED": "Expired — you can request again",
+      "CANCELLED": "Cancelled — you can request again",
+      "FAILED": "Could not be completed"
+    },
+    "sides": "Buyer {b} · Seller {s}",
+    "expires": "Please sign by {at}.",
+    "hash": "Contract fingerprint {h}…",
+    "request": "Request e-signature",
+    "go": "Go to sign",
+    "cancel": "Cancel request",
+    "refresh": "Refresh status",
+    "requested": "E-signature requested. The contract is concluded once both parties sign.",
+    "cancelled": "E-signature request cancelled. You can edit the terms or request again.",
+    "failed": "Could not process this. Please try again shortly.",
+    "failedState": "The signature could not be completed because of a provider problem. Please request again.",
+    "hashMismatch": "The contract returned by the provider did not match the one we sent, so it was not concluded. An operator will check — please request again."
+  },
+  "esignMock": {
+    "title": "Test e-signature",
+    "note": "This is a test screen for the check board. It is not a real signature and does not open on the live server.",
+    "ok": "Sign",
+    "reject": "Decline",
+    "failed": "Could not process this."
   }
 }

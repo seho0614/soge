@@ -281,34 +281,7 @@ export class DealController {
   @ApiOkResponse({ type: Object })
   contractTemplate(@Param('code') code: string) { return this.contracts.contractTemplate(code); }
 
-  @Post('deals/:id/contract/esign')
-  @ApiBearerAuth()
-  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')
-  @ApiOperation({
-    summary: '전자계약 서명 요청',
-    description:
-      '표준계약서를 전자계약으로 보냅니다.\n\n' +
-      '**서명 시각과 서명자를 제공자가 증명합니다** — 우리가 직접 ' +
-      '타임스탬프를 찍으면 우리가 만든 기록이라 분쟁에서 약합니다.\n\n' +
-      '연동 전에는 `stub: true` 로 내려갑니다 — 법적 효력이 없습니다.',
-  })
-  @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiResponse({ status: 422, description: '계약 상태 불일치', type: ErrorDto })
-  @ApiOkResponse({ type: Object })
-  @Audit('CONTRACT_ESIGN', 'DEAL')
-  requestESign(@Param('id') id: string) { return this.contracts.requestESign(id); }
+  /* v10.143 (D139) — 전자서명 요청 · 상태 · 취소 · 가짜 서명 · 웹훅은 EsignController(esign.controller.ts)로 옮김 */
 
-  @Get('deals/:id/contract/esign')
-  @ApiBearerAuth()
-  /* 서명 상태는 **당사자만** 봅니다 — 남의 계약이 어디까지 갔는지
-     알 이유가 없습니다. */
-  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')
-  @ApiOperation({
-    summary: '전자계약 서명 상태',
-    description: '**스텁이면 그 사실을 함께 내려보냅니다** — 화면이 표시해야 합니다.',
-  })
-  @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ type: Object })
-  esignStatus(@Param('id') id: string) { return this.contracts.esignStatus(id); }
 
 }

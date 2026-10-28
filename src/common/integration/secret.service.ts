@@ -35,6 +35,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'PASS', name: 'NICE_CLIENT_SECRET', label: 'NICE 클라이언트 비밀값', env: 'NICE_CLIENT_SECRET', envRead: 'NICE_CLIENT_SECRET', isPublic: false },
   { code: 'PASS', name: 'NICE_PRODUCT_ID', label: 'NICE 상품 ID', env: 'NICE_PRODUCT_ID', envRead: 'NICE_PRODUCT_ID', isPublic: false },
   { code: 'ESIGN', name: 'ESIGN_API_KEY', label: 'API 키', env: 'ESIGN_API_KEY', envRead: 'ESIGN_API_KEY', isPublic: false },
+  { code: 'ESIGN', name: 'ESIGN_WEBHOOK_SECRET', label: '웹훅 비밀값', env: 'ESIGN_WEBHOOK_SECRET', envRead: 'ESIGN_WEBHOOK_SECRET', isPublic: false },   // v10.143 (D139)
   { code: 'ALIMTALK', name: 'ALIMTALK_KEY', label: 'API 키', env: 'ALIMTALK_KEY', envRead: 'ALIMTALK_KEY', isPublic: false },
   { code: 'ALIMTALK', name: 'ALIMTALK_SENDER_KEY', label: '발신 프로필 키', env: 'ALIMTALK_SENDER_KEY', envRead: 'ALIMTALK_SENDER_KEY', isPublic: false },   // v10.142 (D138)
   { code: 'SAFENUM', name: 'SAFENUM_KEY', label: 'API 키', env: 'SAFENUM_KEY', envRead: 'SAFENUM_KEY', isPublic: false },

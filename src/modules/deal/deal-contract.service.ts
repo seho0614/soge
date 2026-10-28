@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { resolveESignProvider } from './esign.provider';
 import { RequestCtx } from '../../core/request-context';
+import { EsignService } from './esign.service';
 
 /** v10.31 — 계약서 제1조 당사자 칸(가입 정보 자동 기입). 연락처는 뒤 4자리만, 사업자등록번호는 끝 3자리를 가립니다. */
 function PARTY_SQL(a: string, b: string) {
@@ -24,7 +25,7 @@ function PARTY_SQL(a: string, b: string) {
  */
 @Injectable()
 export class DealContractService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly esign: EsignService) {}   // v10.143 (D139) 전자계약
   /** v10.27 (G-213) — 거래 당사자(매수 · 매도)인지 확인합니다. 아니면 403.
    *  계약 상태 · 이력 · 전자서명 상태 · 계약서 발급이 거래 번호만 알면 누구나 열렸습니다(이력에는 당사자 실명이 들어 있음). */
   private async assertParty(dealId: string) {
@@ -71,6 +72,7 @@ export class DealContractService {
          LEFT JOIN businesses sb ON sb.account_id = asl.id AND sb.verified_at IS NOT NULL
         WHERE d.id = $1`, [dealId]);
     const mySide = c.buyer_account_id === me ? 'BUYER' : 'SELLER';
+    const esignMode = await this.esign.mode();
     return {
       id: c.id, state: c.state, terms: c.terms,
       templateCode: c.template_code,      // v10.27 (G-130) — 「양식 전문 보기」가 여는 양식
@@ -83,7 +85,8 @@ export class DealContractService {
       parties: { buyer: x?.buyer ?? null, seller: x?.seller ?? null },
       fee: x?.fee != null ? Number(x.fee) : null,
       code: x?.code ? { code: x.code, issuedAt: x.codeIssuedAt ?? x.attributedAt, expiresAt: x.codeExpiresAt ?? null } : null,
-      esign: { stub: !!c.esign_stub, docId: c.esign_doc_id ? true : false },
+      /* v10.143 — mode: STUB 이면 화면 안 「서명」 · MOCK · HTTP 면 「전자서명 요청」(GET …/contract/esign 이 자세히) */
+      esign: { stub: !!c.esign_stub, docId: c.esign_doc_id ? true : false, mode: esignMode, pending: esignMode !== 'STUB' && !!c.esign_doc_id && c.state === 'AGREED' },
       /* 임시 저장은 저장한 사람에게만 보입니다 */
       draft: c.draft_by === me ? { terms: c.draft_terms, savedAt: c.draft_at } : null,
       nudgedAt: c.nudged_at,
@@ -97,6 +100,7 @@ export class DealContractService {
     this.sideOf(c, me);
     if (['SIGNED', 'FULFILLED', 'CANCELLED'].includes(c.state))
       throw new StateConflict('ALREADY_SIGNED', '서명했거나 끝난 계약은 조건을 저장할 수 없습니다.');
+    await this.esign.assertNotInProgress(c.id);   // v10.143 — 전자서명 요청 중에는 조건이 잠김
     const [row] = await this.db.query(
       `UPDATE deal_contracts SET draft_terms = $2, draft_by = $3, draft_at = now()
         WHERE id = $1 RETURNING draft_at AS "savedAt"`, [c.id, JSON.stringify(terms ?? {}), me]);
@@ -140,6 +144,7 @@ export class DealContractService {
     const c = await this.contractOf(dealId);
     if (c.state === 'SIGNED' || c.state === 'FULFILLED')
       throw new StateConflict('ALREADY_SIGNED', '서명한 계약은 조건을 바꿀 수 없습니다.');
+    await this.esign.assertNotInProgress(c.id);   // v10.143
 
     const side = this.sideOf(c, me);
     const col = side === 'buyer' ? 'agreed_by_buyer_at' : 'agreed_by_seller_at';
@@ -192,6 +197,7 @@ export class DealContractService {
     this.sideOf(c, me);
     if (c.state === 'SIGNED' || c.state === 'FULFILLED')
       throw new StateConflict('ALREADY_SIGNED', '서명한 계약은 고칠 수 없습니다.');
+    await this.esign.assertNotInProgress(c.id);   // v10.143
 
     await this.db.query(
       `UPDATE deal_contracts
@@ -211,6 +217,7 @@ export class DealContractService {
     const c = await this.contractOf(dealId);
     if (c.state !== 'AGREED' && c.state !== 'SIGNED')
       throw new StateConflict('NOT_AGREED', '양측이 조건에 합의해야 서명할 수 있습니다.');
+    await this.esign.assertInAppSignAllowed();   // v10.143 — 전자계약이 켜져 있으면 화면 안 서명은 막힘(섞지 않음)
 
     const side = this.sideOf(c, me);
     const col = side === 'buyer' ? 'signed_by_buyer_at' : 'signed_by_seller_at';
@@ -257,6 +264,7 @@ export class DealContractService {
     const me = RequestCtx.actorId()!;
     const c = await this.contractOf(dealId);
     this.sideOf(c, me);
+    await this.esign.cancelForContract(c.id, me);   // v10.143 — 대기 중 전자서명 요청도 닫음(업체 취소 실패는 기록만)
     await this.db.query(
       `UPDATE deal_contracts SET state='CANCELLED', cancel_reason=$2,
               cancelled_at=now(), last_actor_id=$3 WHERE id=$1`, [c.id, reason, me]);

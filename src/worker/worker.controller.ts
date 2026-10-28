@@ -18,6 +18,7 @@ const JOBS = [
   'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */
   'review_shadow',      /* v10.106 (D120) AI 검수 보조(병행) — 의견만 저장 · 스위치 · 월 상한이 막으면 건너뜀 */
   'agent_chat_purge',   /* v10.109 (D121) AI 상담 대화 보관 기간(5년) 지난 것 정리 */
+  'esign_poll',         /* v10.143 (D139) 전자계약 만료 · 업체 상태 맞추기 */
 ] as const;
 
 export class RunJobDto {

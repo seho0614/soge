@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { dtKst } from '@/lib/format';   // v10.31 검정(G-222) — toLocaleString 대신
@@ -21,6 +21,8 @@ export interface ContractState {
   parties?: { buyer: Party | null; seller: Party | null };
   fee?: number | null; code?: { code: string; issuedAt: string | null; expiresAt: string | null } | null;
   draft?: { terms: Partial<Terms>; savedAt: string } | null;
+  /** v10.143 (D139) — STUB 이면 화면 안 「서명」 · MOCK · HTTP 면 전자서명 */
+  esign?: { stub: boolean; docId: boolean; mode?: 'STUB' | 'MOCK' | 'HTTP'; pending?: boolean };
 }
 
 /**
@@ -83,7 +85,9 @@ export default function ContractForm(
     } finally { setBusy(false); }
   }
 
-  const canSend = !readOnly && ['DRAFT', 'SENT', 'COUNTER', 'AGREED'].includes(state.state);
+  const esignOn = !!state.esign?.mode && state.esign.mode !== 'STUB';
+  const locked = esignOn && !!state.esign?.pending;   // 전자서명 요청 중 — 조건 잠김(서버도 ESIGN_IN_PROGRESS)
+  const canSend = !readOnly && !locked && ['DRAFT', 'SENT', 'COUNTER', 'AGREED'].includes(state.state);
   const canSign = state.state === 'AGREED';
   const canFulfil = state.state === 'SIGNED';
   const lock = readOnly || !canSend;
@@ -169,6 +173,8 @@ export default function ContractForm(
 
       {msg && <p className={`my-nt ${msg.ok ? 'info' : 'warn'}`} role="status">{msg.t}</p>}
 
+      {esignOn && !readOnly && ['AGREED', 'SIGNED'].includes(state.state) && <EsignBox dealId={dealId} contractState={state.state} />}
+
       {readOnly ? (
         <p className="my-nt ok">
           {t.rich(state.state === 'CANCELLED' ? 'form.roCancelled' : 'form.roDone', { b: b_ })}
@@ -190,17 +196,19 @@ export default function ContractForm(
           </div>
           {/* 개발에만 있던 단계 단추 — 서명 · 이행 확인 · 수정 요청(규칙 ③ 남김) */}
           <div className="my-ctra">
-            <button className="my-bo" disabled={busy || !canSign}
-                    title={canSign ? '' : t('form.signTitle')}
-                    onClick={() => call('sign')}>
-              {t('form.signBtn')}
-            </button>
+            {!esignOn && (
+              <button className="my-bo" disabled={busy || !canSign}
+                      title={canSign ? '' : t('form.signTitle')}
+                      onClick={() => call('sign')}>
+                {t('form.signBtn')}
+              </button>
+            )}
             <button className="my-bo" disabled={busy || !canFulfil}
                     title={canFulfil ? '' : t('form.fulfilTitle')}
                     onClick={() => call('fulfil')}>
               {t('form.fulfilBtn')}
             </button>
-            <button className="my-bo" disabled={busy || memo.trim().length < 5}
+            <button className="my-bo" disabled={busy || locked || memo.trim().length < 5}
                     title={memo.trim().length < 5 ? t('form.counterTitle') : ''}
                     onClick={() => call('counter', { memo })}>
               {t('form.counterBtn')}
@@ -216,5 +224,69 @@ export default function ContractForm(
         </>
       )}
     </section>
+  );
+}
+
+const ESIGN_STATES = ['NOT_REQUESTED', 'PENDING', 'SIGNED', 'REJECTED', 'EXPIRED', 'CANCELLED', 'FAILED'] as const;
+
+interface EsignView {
+  mode: string; contractState: string; state: string; docHash: string | null;
+  buyerSignedAt: string | null; sellerSignedAt: string | null; expiresAt: string | null;
+  errorKind: string | null; mySignUrl: string | null; mySide: 'BUYER' | 'SELLER';
+}
+
+/**
+ * v10.143 (D139 · docs/217) — 전자서명(방식 MOCK · HTTP). 합의(AGREED) 뒤 「전자서명 요청」 → 업체 서명 → 웹훅 · 조회로 SIGNED.
+ *   요청 중에는 조건이 잠김 · 「서명하러 가기」는 내 주소(나에게만) · 「요청 취소」로 합의 상태로 돌아감.
+ */
+function EsignBox({ dealId, contractState }: { dealId: string; contractState: string }) {
+  const t = useTranslations('myDeal');
+  const r = useRouter();
+  const [v, setV] = useState<EsignView | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+
+  async function load() {
+    try {
+      const res = await fetch(`/api/v1/deals/${dealId}/contract/esign`);
+      if (res.ok) setV(await res.json());
+    } catch { /* 상태를 못 읽으면 단추만 */ }
+  }
+  useEffect(() => { void load(); }, [dealId, contractState]);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function post(path: string) {
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch(`/api/v1/deals/${dealId}/contract/esign${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { setMsg({ ok: false, t: j.message ?? t('esign.failed') }); return; }
+      setV(j as EsignView); setMsg({ ok: true, t: path ? t('esign.cancelled') : t('esign.requested') });
+      r.refresh();
+    } catch { setMsg({ ok: false, t: t('netErr') }); } finally { setBusy(false); }
+  }
+
+  const st = v?.state ?? 'NOT_REQUESTED';
+  const pending = st === 'PENDING';
+  const canRequest = contractState === 'AGREED' && !pending;
+  const when = (x: string | null) => (x ? dtKst(x) : t('form.wait'));
+  return (
+    <div className="my-ctrp" data-esign-box="" data-esign-state={st}>
+      <p className="my-nt info">{t(v?.mode === 'MOCK' ? 'esign.noteMock' : 'esign.note')}</p>
+      <div className="my-cp"><span className="my-ls">{t('esign.state')}</span><b data-esign-label="">{t(`esign.st.${(ESIGN_STATES as readonly string[]).includes(st) ? (st as (typeof ESIGN_STATES)[number]) : 'NOT_REQUESTED'}`)}</b></div>
+      {v && st !== 'NOT_REQUESTED' && (
+        <div className="my-cp"><span className="my-ls">{t('ctrD.sign')}</span>
+          <b data-esign-sides="">{t('esign.sides', { b: when(v.buyerSignedAt), s: when(v.sellerSignedAt) })}</b></div>
+      )}
+      {pending && v?.expiresAt && <p className="my-ls">{t('esign.expires', { at: dtKst(v.expiresAt) })}</p>}
+      {v?.docHash && <p className="my-ls" data-esign-hash="">{t('esign.hash', { h: v.docHash.slice(0, 16) })}</p>}
+      {st === 'FAILED' && <p className="my-nt warn">{t(v?.errorKind === 'HASH_MISMATCH' ? 'esign.hashMismatch' : 'esign.failedState')}</p>}
+      {msg && <p className={`my-nt ${msg.ok ? 'info' : 'warn'}`} role="status">{msg.t}</p>}
+      <div className="my-ctra">
+        {canRequest && <button className="my-bp" disabled={busy} onClick={() => void post('')} data-esign-request="">{t('esign.request')}</button>}
+        {pending && v?.mySignUrl && <a className="my-bp" href={v.mySignUrl} data-esign-go="">{t('esign.go')}</a>}
+        {pending && <button className="my-bo" disabled={busy} onClick={() => void post('/cancel')} data-esign-cancel="">{t('esign.cancel')}</button>}
+        {pending && <button className="my-bo" disabled={busy} onClick={() => void load()} data-esign-refresh="">{t('esign.refresh')}</button>}
+      </div>
+    </div>
   );
 }

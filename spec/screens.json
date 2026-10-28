@@ -1652,7 +1652,9 @@
     "GET /admin/alimtalk/status",
     "GET /admin/alimtalk/sends",
     "PUT /admin/alimtalk/templates/{code}",
-    "POST /admin/alimtalk/test"
+    "POST /admin/alimtalk/test",
+    "GET /admin/esign/status",
+    "GET /admin/esign/documents"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
@@ -2190,6 +2192,9 @@
     "GET /contract-templates/{code}",
     "POST /deals/{id}/contract/esign",
     "GET /deals/{id}/contract/esign",
+    "POST /deals/{id}/contract/esign/cancel",
+    "POST /deals/{id}/contract/esign/mock-sign",
+    "POST /webhooks/esign",
     "POST /deals/{id}/contract/draft",
     "POST /deals/{id}/contract/nudge"
    ],
