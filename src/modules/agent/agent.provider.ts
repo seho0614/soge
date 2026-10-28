@@ -40,8 +40,13 @@ export interface AgentProvider {
   complete(input: AgentInput): Promise<AgentReply>;
 }
 
-/** 시험 엔진의 도구 고르기 — 질문의 낱말로 정함(밖으로 나가지 않음 · 시험이 같은 결과를 얻게) */
-const MOCK_TOOL_WORDS: [RegExp, string][] = [
+/** 시험 엔진의 도구 고르기 — 질문의 낱말로 정함(밖으로 나가지 않음 · 시험이 같은 결과를 얻게)
+ *   v10.139 — 「초안」이 들어가면 신청서 초안 도구(받았을 때만 · 아니면 아래 조회 도구로) · 끝 4자리는 질문의 「주문 XXXX」 */
+const MOCK_TOOL_WORDS: [RegExp, string, ((q: string) => Record<string, unknown>)?][] = [
+  [/초안.*(반품|교환|취소)|(반품|교환|취소).*초안/, 'draft_return', (q) => ({
+    orderTail: /주문\s*([A-Za-z0-9]{4})\b/.exec(q)?.[1] ?? '0000', kind: /교환/.test(q) ? 'EXCHANGE' : /취소/.test(q) ? 'CANCEL' : 'RETURN',
+    reason: /불량|파손|하자/.test(q) ? 'DEFECT' : 'CHANGE_MIND', detail: q.slice(0, 100) })],
+  [/초안.*문의|문의.*초안/, 'draft_inquiry', (q) => ({ category: /정산|소개비/.test(q) ? 'SETTLE' : 'ETC', title: q.slice(0, 30), body: q.slice(0, 300) })],
   [/반품|교환|취소 신청/, 'my_returns'], [/주문|배송|택배/, 'my_orders'], [/검수|반려|안 올라/, 'my_reviews'],
   [/문의/, 'my_inquiries'], [/구독|소개코드|요금제/, 'my_subscription'],
 ];
@@ -53,11 +58,14 @@ export class MockAgentProvider implements AgentProvider {
     const lastMsg = input.messages[input.messages.length - 1]?.content ?? '';
     const last = typeof lastMsg === 'string' ? lastMsg : lastMsg.map((b) => (b.type === 'text' ? b.text : b.type === 'tool_result' ? b.content : '')).join(' ');
     // v10.137 — 도구를 받았고 아직 도구 결과가 오지 않은 질문이면 낱말로 도구 하나를 고름
-    const tool = input.tools?.length && typeof lastMsg === 'string' ? MOCK_TOOL_WORDS.find(([re]) => re.test(lastMsg))?.[1] : undefined;
-    if (tool && input.tools!.some((t) => t.name === tool)) {
+    const hit = input.tools?.length && typeof lastMsg === 'string'
+      ? MOCK_TOOL_WORDS.find(([re, name]) => re.test(lastMsg) && input.tools!.some((t) => t.name === name)) : undefined;
+    if (hit && typeof lastMsg === 'string') {
+      const [, tool, make] = hit;
       const id = `mock_${tool}`;
+      const args = make ? make(lastMsg) : {};
       return { text: '', model: input.model, inputTokens: Math.ceil((input.system.length + last.length) / 2), outputTokens: 20, cacheReadTokens: 0,
-               stopReason: 'tool_use', toolUses: [{ id, name: tool, input: {} }], content: [{ type: 'tool_use', id, name: tool, input: {} }] };
+               stopReason: 'tool_use', toolUses: [{ id, name: tool, input: args }], content: [{ type: 'tool_use', id, name: tool, input: args }] };
     }
     const text = `[시험 응답] ${last.slice(0, 80)}`;
     return { text, model: input.model, inputTokens: Math.ceil((input.system.length + last.length) / 2), outputTokens: Math.ceil(text.length / 2),

@@ -6,6 +6,7 @@ import { RequestCtx } from '../../core/request-context';
 import { resolveBizStatusProvider } from '../identity/verification.provider';
 import { expandKeyword } from '../../core/search-expand';
 import { I18N_SETTING_KEYS, I18nService } from '../i18n/i18n.service';
+import { AgentDraftService } from '../agent/agent-draft.service';
 
 /**
  * 사용자 공개 API.
@@ -14,7 +15,7 @@ import { I18N_SETTING_KEYS, I18nService } from '../i18n/i18n.service';
  */
 @Injectable()
 export class PublicService {
-  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly drafts: AgentDraftService) {}
   private get me() { return RequestCtx.actorId()!; }
 
   /**
@@ -150,7 +151,7 @@ export class PublicService {
   }
 
   async createInquiry(input: {
-    category: string; title: string; body: string; email?: string; dealId?: string; channel?: string; attachmentKeys?: string[];
+    category: string; title: string; body: string; email?: string; dealId?: string; channel?: string; attachmentKeys?: string[]; agentDraftId?: string;
   }) {
     const me = RequestCtx.actorId();
     /* 첨부는 로그인한 사람이 올린 READY 파일만(남의 파일 id 를 붙이지 못하게) */
@@ -173,6 +174,7 @@ export class PublicService {
     /* 시안 접수 완료 화면(SB-HOM-ETC-031): 접수번호 · 유형 · 답변 예정 시각(영업일 1일 — 주말이면 다음 월요일) */
     const [meta] = await this.db.query<{ label: string | null }>(
       `SELECT label FROM code_labels WHERE domain = 'inquiry.category' AND code = $1`, [row.category]);
+    await this.drafts.markSubmitted(input.agentDraftId, 'INQUIRY', row.id);   // v10.139 — AI 초안으로 낸 문의(숫자용 · 실패해도 접수는 그대로)
     return { id: row.id, status: row.status, no: inquiryNo(row.id, row.createdAt), categoryLabel: meta?.label ?? row.category,
              dueAt: businessDayAfter(row.createdAt).toISOString() };
   }

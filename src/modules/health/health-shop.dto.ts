@@ -72,6 +72,8 @@ export class ReturnCreateDto {
   /* D006 — 고객이 적는 개봉 여부. **참고용**이고 판정은 운영이 승인할 때 합니다. 취소에는 쓰지 않습니다 */
   @ApiPropertyOptional({ description: '포장을 여셨는지 (반품 · 교환만, 참고용 — 판정은 운영)' })
   @IsOptional() @StrictBoolean() opened?: boolean;
+  /* v10.139 (D135) — AI 상담 초안으로 채운 화면에서 낸 신청이면 그 초안 번호(본인 초안이면 「제출됨」만 적음 · 판정은 그대로) */
+  @ApiPropertyOptional({ format: 'uuid', description: 'AI 상담 신청서 초안 번호(v10.139)' }) @IsOptional() @IsUUID('all') agentDraftId?: string;
 }
 
 export class ReturnDecideDto {

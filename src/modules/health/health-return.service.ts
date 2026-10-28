@@ -5,6 +5,7 @@ import { RequestCtx } from '../../core/request-context';
 import { PaymentResult, RefundReceiveAccount, resolvePaymentProvider } from '../billing/payment.provider';
 import { HLT_EXCHANGE_WAIT_DAYS, exchangeFee, returnShipDeduction } from './health-policy';
 import { FEE_STATE_SQL } from './health-shop.shared';
+import { AgentDraftService } from '../agent/agent-draft.service';
 
 /**
  * 건강몰 — 반품 · 교환 · 교환 배송비 · 환불.
@@ -12,7 +13,7 @@ import { FEE_STATE_SQL } from './health-shop.shared';
  */
 @Injectable()
 export class HealthReturnService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly drafts: AgentDraftService) {}
   /**
    * 취소 · 반품 신청.
    *
@@ -51,6 +52,7 @@ export class HealthReturnService {
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING id, kind, state, customer_opened AS "customerOpened", created_at AS "createdAt", exchange_fee AS "exchangeFee"`,
       [o.id, d.kind, d.reason, d.detail ?? null, customerOpened, fee]);
+    await this.drafts.markSubmitted(d.agentDraftId, 'HLT_RETURN', String(r.id));   // v10.139 — AI 초안으로 낸 신청(숫자용 · 실패해도 접수는 그대로)
     if (d.kind === 'EXCHANGE') {
       return { ...r, feeState: fee > 0 ? 'UNPAID' : 'NONE', deadline: j.deadline,
         note: fee > 0

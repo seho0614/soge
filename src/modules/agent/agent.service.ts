@@ -187,6 +187,7 @@ export class AgentService {
       switches: {
         reviewShadow: s['agent.review_shadow.enabled'] === 'on', chat: s['agent.chat.enabled'] === 'on',
         memberLookup: s['agent.chat.member_lookup.enabled'] === 'on',
+        drafts: s['agent.chat.drafts.enabled'] === 'on',   // v10.139 신청서 초안(D135)
         translate: s['i18n.auto_translate.enabled'] === 'on',   // v10.104 등록 글 자동 번역(D118)
         board: s['i18n.board_on_view'] === 'on',   // v10.105 소개광장 볼 때 번역(D119)
       },

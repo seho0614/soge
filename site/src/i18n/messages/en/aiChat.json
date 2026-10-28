@@ -26,5 +26,9 @@
   "goSupport": "Help Center 1:1 inquiry",
   "fail": "Please try again in a moment.",
   "you": "You",
-  "ai": "AI"
+  "ai": "AI",
+  "draftInquiry": "Draft 1:1 inquiry",
+  "draftReturn": "Draft cancel / return / exchange request",
+  "draftNote": "This draft was prepared by AI and has not been submitted. Open it, check the details, and submit it yourself.",
+  "draftOpen": "Open the form"
 }

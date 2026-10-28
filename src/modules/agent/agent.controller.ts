@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query } from 
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { AgentChatService } from './agent-chat.service';
+import { AgentDraftService } from './agent-draft.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { AgentService } from './agent.service';
 import { Roles } from '../../core/auth';
@@ -12,6 +13,7 @@ export class AgentSwitchesDto {
   @ApiProperty({ description: 'agent.review_shadow.enabled' }) reviewShadow!: boolean;
   @ApiProperty({ description: 'agent.chat.enabled' }) chat!: boolean;
   @ApiProperty({ description: 'agent.chat.member_lookup.enabled' }) memberLookup!: boolean;
+  @ApiProperty({ description: 'agent.chat.drafts.enabled — AI 상담 신청서 초안(v10.139 · D135)' }) drafts!: boolean;
   @ApiProperty({ description: 'i18n.auto_translate.enabled — 등록 글 자동 번역(v10.104 · D118)' }) translate!: boolean;
   @ApiProperty({ description: 'i18n.board_on_view — 소개광장 볼 때 번역(v10.105 · D119)' }) board!: boolean;
 }
@@ -109,12 +111,25 @@ export class ChatSourceDto {
   @ApiProperty() question!: string;
   @ApiPropertyOptional({ nullable: true }) linkHref!: string | null;
 }
+/* v10.139 (D135 · docs/209) — AI 상담 4단계 신청서 초안 카드 · 신청 화면이 읽는 초안 */
+export class ChatDraftDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ enum: ['INQUIRY', 'HLT_RETURN'] }) kind!: string;
+  @ApiProperty({ description: '카드 제목(문의 제목 · 주문 끝 4자리와 종류)' }) title!: string;
+  @ApiProperty({ description: '신청서 열기 — 지금 쓰는 신청 화면 주소(초안 번호 붙음)' }) href!: string;
+}
+export class AgentDraftViewDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ enum: ['INQUIRY', 'HLT_RETURN'] }) kind!: string;
+  @ApiProperty({ type: Object, description: '문의: category · title · body / 반품: orderNo · kind · reason · detail' }) fields!: Record<string, unknown>;
+}
 export class ChatAnswerDto {
   @ApiProperty() conversationId!: string;
   @ApiProperty({ description: '답(근거 밖이면 「모름」 + 넘기기 권함)' }) answer!: string;
   @ApiProperty({ description: '담당자에게 넘기기를 권하는가' }) handoff!: boolean;
   @ApiProperty({ type: [ChatSourceDto], description: '근거로 쓴 자주 묻는 질문(최대 3)' }) sources!: ChatSourceDto[];
   @ApiPropertyOptional({ nullable: true }) remaining!: number | null;
+  @ApiProperty({ type: [ChatDraftDto], description: 'v10.139 — 이번 답에서 만든 신청서 초안(접수 아님 · 회원이 화면에서 제출)' }) drafts!: ChatDraftDto[];
 }
 export class ChatHandoffDto {
   @ApiPropertyOptional({ description: '비회원은 필수 — 회신받을 이메일' }) @IsOptional() @IsString() @MaxLength(200) email?: string;
@@ -145,6 +160,10 @@ export class AgentChatStatsDto {
   @ApiProperty({ description: '넘김 여부 기록 전(v10.131 전 답)' }) unknown!: number;
   @ApiProperty() conversations!: number;
   @ApiProperty({ description: '손님이 실제로 담당자에게 넘긴 상담 수' }) handedOff!: number;
+  @ApiProperty({ description: 'v10.137 내 정보 조회 횟수' }) lookups!: number;
+  @ApiProperty({ description: 'v10.139 신청서 초안 수' }) drafts!: number;
+  @ApiProperty({ description: 'v10.139 그중 회원이 연 수' }) draftsOpened!: number;
+  @ApiProperty({ description: 'v10.139 그중 회원이 화면에서 제출한 수' }) draftsSubmitted!: number;
   @ApiPropertyOptional({ nullable: true, description: '답 비율 %(기록된 답 중)' }) answeredPct!: number | null;
   @ApiPropertyOptional({ nullable: true, description: '넘김 권함 비율 %' }) handoffPct!: number | null;
   @ApiPropertyOptional({ nullable: true, description: '실제 넘긴 상담 비율 %' }) handedOffPct!: number | null;
@@ -164,7 +183,7 @@ export class ChatHandoffOkDto {
 @ApiTags('AGENT')
 @Controller('api/v1')
 export class AgentController {
-  constructor(private readonly svc: AgentService, private readonly chats: AgentChatService) {}
+  constructor(private readonly svc: AgentService, private readonly chats: AgentChatService, private readonly drafts: AgentDraftService) {}
 
   @Get('agent/chat/status')
   @ApiOperation({ summary: 'AI 상담 단추 상태 (v10.109)', description: '꺼져 있으면 enabled false — 사이트는 단추를 그리지 않습니다.' })
@@ -185,6 +204,15 @@ export class AgentController {
   @ApiOkResponse({ type: ChatHandoffOkDto })
   @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto }) @ApiResponse({ status: 422, type: ErrorDto })
   handoff(@Param('id') id: string, @Body() dto: ChatHandoffDto, @Headers('x-visitor-key') visitorKey?: string) { return this.chats.handoff(id, dto, visitorKey); }
+
+  @Get('me/agent/drafts/:id')
+  /* ★ 본인 것만 — 로그인 여부를 봅니다(표시가 없으면 토큰 없이도 200). v10.139 (D135 · docs/209) */
+  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'AI 상담 신청서 초안 읽기 (v10.139)', description: '신청 화면(/support/new · /my/health/returns/new)이 칸을 채우려고 읽습니다. 본인 초안 · 7일 안 · 아직 제출 전만 — 처음 읽으면 「열어 봄」을 적습니다. 접수하지 않습니다.' })
+  @ApiOkResponse({ type: AgentDraftViewDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND — 없음 · 남의 것 · 만료 · 이미 제출', type: ErrorDto })
+  myDraft(@Param('id') id: string) { return this.drafts.mine(id); }
 
   @ApiBearerAuth()
   @Get('admin/agent/chats')

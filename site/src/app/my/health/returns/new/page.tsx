@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export const dynamic = 'force-dynamic';
 
-type Props = { searchParams: Promise<{ o?: string }> };
+type Props = { searchParams: Promise<{ o?: string; draft?: string }> };
 
 type Judge =
   | { ok: true; kinds: string[]; sellerOnly: boolean; note: string | null }
@@ -51,7 +51,14 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
   const t = await getTranslations('myDeal');
   const f = await getFmt();
   const to = await getTranslations('order');
-  const no = (await searchParams).o;
+  const sp = await searchParams;
+  const no = sp.o;
+  /* v10.139 (AI 상담 4단계 · docs/209) — ?draft= 면 본인 초안(같은 주문일 때만)으로 종류 · 사유 · 상세를 채움 · 판정 · 제출은 지금 그대로 */
+  const draft = no && sp.draft && /^[0-9a-f-]{36}$/i.test(sp.draft)
+    ? await apiGetPersonal<{ id: string; kind: string; fields: { orderNo?: string; kind?: string; reason?: string; detail?: string } }>(`/me/agent/drafts/${sp.draft}`).catch(() => null)
+    : null;
+  const aiDraft = draft?.kind === 'HLT_RETURN' && draft.fields.orderNo === no
+    ? { id: draft.id, kind: draft.fields.kind, reason: draft.fields.reason, detail: draft.fields.detail } : undefined;
 
   /* ── 주문을 고르지 않고 들어온 경우 — 대상 주문 목록 ── */
   if (!no) {
@@ -152,7 +159,7 @@ export default async function MyHltReturnNew({ searchParams }: Props) {
           <div className="notice">
             {t.rich('hRetNew.foodNote', { b: (c) => <b>{c}</b> })}
           </div>
-          <ReturnForm orderNo={o.orderNo} kinds={j.kinds} sellerOnly={j.sellerOnly} ship={o.returnShip} exchangeFee={o.exchangeFee} items={itemsBox} returnAddr={retAddr} />
+          <ReturnForm orderNo={o.orderNo} kinds={j.kinds} sellerOnly={j.sellerOnly} ship={o.returnShip} exchangeFee={o.exchangeFee} items={itemsBox} returnAddr={retAddr} draft={aiDraft} />
         </>
       )}
     </div><i hidden data-root-end="" /></>

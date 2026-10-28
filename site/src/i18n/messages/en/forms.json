@@ -256,7 +256,8 @@
     "mailHint": "This is the email you signed up with. You can change it in My space → Settings.",
     "mailHintGuest": "You are not logged in — we will send the reply to this email.",
     "submitting": "Submitting…",
-    "submit": "Submit inquiry"
+    "submit": "Submit inquiry",
+    "aiDraft": "This form was filled from a draft prepared in AI chat. It has not been submitted — check and edit it, then press submit."
   },
   "editPage": {
     "title": "Edit listing",

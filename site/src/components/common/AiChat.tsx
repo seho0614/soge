@@ -13,8 +13,10 @@ import { useTranslations } from 'next-intl';
  *   첫 줄 AI 고지는 닫을 수 없습니다(법무 회신 2026-10-25 — AI 고지 · 대화 5년 보관).
  *   상담 번호는 브라우저 세션에만 기억합니다(새로고침해도 이어 묻기 · 지난 대화는 다시 그리지 않음).
  *   파트너센터(/partner — 전용 상단바)에는 그리지 않습니다.
+ *   v10.139 (4단계 · docs/209) — 답에 신청서 초안이 있으면 카드 · 「신청서 열기」는 지금 쓰는 신청 화면으로(접수는 회원이 그 화면에서 직접).
  */
-type Msg = { role: 'user' | 'ai'; text: string; sources?: { question: string; linkHref: string | null }[]; handoff?: boolean };
+type Draft = { id: string; kind: 'INQUIRY' | 'HLT_RETURN'; title: string; href: string };
+type Msg = { role: 'user' | 'ai'; text: string; sources?: { question: string; linkHref: string | null }[]; handoff?: boolean; drafts?: Draft[] };
 const MAX = 500;
 const CONV_KEY = 'sgb_ai_chat_conv';
 const OFF_KEY = 'sgb_ai_chat_off';   // 꺼짐을 1분 기억(화면마다 상태를 다시 묻지 않게)
@@ -95,7 +97,7 @@ export function AiChat() {
     setBusy(true); setErr(null); setDone(null);
     setMsgs((m) => [...m, { role: 'user', text: q }]); setText('');
     try {
-      const { ok, status, data } = await call<{ conversationId: string; answer: string; handoff: boolean; sources: Msg['sources']; remaining: number | null }>(
+      const { ok, status, data } = await call<{ conversationId: string; answer: string; handoff: boolean; sources: Msg['sources']; remaining: number | null; drafts?: Draft[] }>(
         '/agent/chat', { message: q, ...(conv ? { conversationId: conv } : {}) });
       if (!ok || !data.conversationId) {
         if (conv && staleConv(status, data.code)) { setConv(null); store.set(CONV_KEY, null); }   // 다음에 보내면 새 상담
@@ -104,7 +106,7 @@ export function AiChat() {
       }
       setConv(data.conversationId); store.set(CONV_KEY, data.conversationId);
       setRemaining(data.remaining ?? null);
-      setMsgs((m) => [...m, { role: 'ai', text: data.answer, sources: data.sources, handoff: data.handoff }]);
+      setMsgs((m) => [...m, { role: 'ai', text: data.answer, sources: data.sources, handoff: data.handoff, drafts: (data.drafts ?? []).filter((d) => internal(d.href)) }]);
     } catch {
       setErr(t('fail'));
     } finally {
@@ -161,6 +163,14 @@ export function AiChat() {
                     {m.sources.map((s, j) => <li key={j}>{internal(s.linkHref) ? <Link href={s.linkHref as string}>{s.question}</Link> : s.question}</li>)}
                   </ul>
                 ) : null}
+                {m.drafts?.map((d) => (
+                  <div key={d.id} className="ai-draft" data-ai-draft={d.kind}>
+                    <b>{t(d.kind === 'INQUIRY' ? 'draftInquiry' : 'draftReturn')}</b>
+                    <span>{d.title}</span>
+                    <small>{t('draftNote')}</small>
+                    <Link className="ai-send" href={d.href} data-ai-draft-open>{t('draftOpen')}</Link>
+                  </div>
+                ))}
               </div>
             ))}
             {busy && !form && <p className="ai-msg ai ai-wait">{t('sending')}</p>}

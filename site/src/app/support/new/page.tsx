@@ -18,14 +18,18 @@ export async function generateMetadata(): Promise<Metadata> {
  * SB-HOM-ETC-030 고객센터 · 문의하기 — v10.31 시안 scCs 그대로:
  *   「고객센터」 머리 · 「바로 물어보기 — 1:1 문의」 띠(→ /support 챗봇) · 자주 묻는 질문 접기(서버 FAQ — CS · FAQ) · 운영 안내 · 문의하기 폼.
  */
-export default async function NewInquiryPage({ searchParams }: { searchParams: Promise<{ type?: string; deal?: string }> }) {
+export default async function NewInquiryPage({ searchParams }: { searchParams: Promise<{ type?: string; deal?: string; draft?: string }> }) {
   const sp = await searchParams;
   const user = await me().catch(() => null);
-  const [cs, base, sum, deals] = await Promise.all([
+  /* v10.139 (AI 상담 4단계 · docs/209) — ?draft= 면 본인 초안으로 칸을 채움(없음 · 만료 · 남의 것이면 빈 화면) · 제출은 회원이 */
+  const draftId = user && sp.draft && /^[0-9a-f-]{36}$/i.test(sp.draft) ? sp.draft : null;
+  const [cs, base, sum, deals, draft] = await Promise.all([
     faqs(undefined, 'CS'), faqs(),
     user ? apiGetPersonal<{ email?: string | null }>('/me/summary').catch(() => null) : Promise.resolve(null),
     user ? apiGetPersonal<MyDeal[]>('/me/deals?limit=30').catch(() => [] as MyDeal[]) : Promise.resolve([] as MyDeal[]),
+    draftId ? apiGetPersonal<{ id: string; kind: string; fields: { category?: string; title?: string; body?: string } }>(`/me/agent/drafts/${draftId}`).catch(() => null) : Promise.resolve(null),
   ]);
+  const aiDraft = draft?.kind === 'INQUIRY' ? { id: draft.id, ...draft.fields } : undefined;
   const t = await getTranslations('deal');
   const list = [...cs, ...base.filter((f) => !cs.some((c) => c.question === f.question))];
   return (
@@ -61,7 +65,7 @@ export default async function NewInquiryPage({ searchParams }: { searchParams: P
           <p className="w1-ls" style={{ marginTop: 10 }}>{t.rich('support.newFoot', { guide: (x) => <Link href="/safety/guide">{x}</Link>, hist: (x) => <Link href="/support/history">{x}</Link> })}</p>
         </aside>
       </div>
-      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={sp.type} initialDeal={sp.deal} /></Msgs>
+      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={aiDraft?.category ?? sp.type} initialDeal={sp.deal} draft={aiDraft} /></Msgs>
     </div>
   );
 }

@@ -241,7 +241,8 @@
     "submitting": "Submitting…",
     "submit": "Submit {kind}",
     "ctaNote": "We will let you know the result within 3 business days. Refunds are made within 3 business days of receiving the returned item.",
-    "doneAlone": "Request submitted."
+    "doneAlone": "Request submitted.",
+    "aiDraft": "The type and reason were filled from a draft prepared in AI chat. It has not been submitted — read the notices below, check them, and submit it yourself."
   },
   "cartPage": {
     "title": "Cart"

@@ -44,6 +44,8 @@ export class CreateInquiryDto {
   @ApiPropertyOptional({ enum: ['FORM', 'BOT'], default: 'FORM' }) @IsOptional() @IsIn(['FORM', 'BOT']) channel?: string;
   /* v10.31 — 시안 「첨부파일 — 이미지 · PDF 10MB까지 (최대 3개)」 — POST /files(INQUIRY_ATTACHMENT)로 올린 내 파일 id */
   @ApiPropertyOptional({ type: [String], maxItems: 3 }) @IsOptional() @IsArray() @ArrayMaxSize(3) @IsString({ each: true }) attachmentKeys?: string[];
+  /* v10.139 (D135) — AI 상담 초안으로 채운 화면에서 낸 문의면 그 초안 번호(본인 초안이면 「제출됨」만 적음 · 접수 검사는 그대로) */
+  @ApiPropertyOptional({ format: 'uuid', description: 'AI 상담 신청서 초안 번호(v10.139)' }) @IsOptional() @IsUUID('all') agentDraftId?: string;
 }
 
 export class FaqDto {

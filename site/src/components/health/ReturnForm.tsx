@@ -16,8 +16,10 @@ import { useFmt } from '@/lib/useFmt';
  * (전자상거래법 17조 3항 — 표시·광고와 다르거나 계약과 다르게 이행된 경우).
  * ★ 판정은 서버가 합니다(D002). 이 제한은 안내일 뿐이고, 서버가 422 로 막으면 그 사유를 그대로 보여 드립니다.
  */
-export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeFee = RETURN_SHIP_ROUND_TRIP, items, returnAddr }: {
+export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeFee = RETURN_SHIP_ROUND_TRIP, items, returnAddr, draft }: {
   orderNo: string; kinds: string[]; sellerOnly?: boolean;
+  /** v10.139 — AI 상담 초안(받을 수 있는 종류 · 사유일 때만 채움 · 제출은 회원이 · 접수 때 agentDraftId) */
+  draft?: { id: string; kind?: string; reason?: string; detail?: string };
   /** v10.32 — 시안 순서대로 「신청 종류」 아래에 그리는 ① 항목 칸(페이지가 만든 것) */
   items?: React.ReactNode;
   /** v10.32 — 시안 「반품 주소」 띠(판매자 반품 주소 · 서버 값). 없으면 띠를 그리지 않음 */
@@ -32,9 +34,9 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
   const kindText = (k: string) => codeText(t, 'returnKind', k, RETURN_KIND[k] ?? k);
   const router = useRouter();
   const reasons = RETURN_REASONS.filter((r) => !sellerOnly || r.party === 'SELLER');
-  const [kind, setKind] = useState<string>(kinds[0] ?? 'CANCEL');
-  const [reason, setReason] = useState(reasons[0]?.code ?? '');
-  const [detail, setDetail] = useState('');
+  const [kind, setKind] = useState<string>(draft?.kind && kinds.includes(draft.kind) ? draft.kind : kinds[0] ?? 'CANCEL');
+  const [reason, setReason] = useState(draft?.reason && reasons.some((r) => r.code === draft.reason) ? draft.reason : reasons[0]?.code ?? '');
+  const [detail, setDetail] = useState(draft?.detail ?? '');
   /* D006 — 포장을 여셨는지 (반품·교환만). 참고용이고 판정은 운영이 합니다. 고르지 않으면 보내지 않습니다 */
   const [opened, setOpened] = useState<boolean | null>(null);
   const [pending, start] = useTransition();
@@ -53,7 +55,7 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
       const r = await fetch('/api/v1/me/health/returns', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderNo, kind, reason, detail: detail.trim() || undefined,
-          opened: kind !== 'CANCEL' && opened !== null ? opened : undefined }),
+          opened: kind !== 'CANCEL' && opened !== null ? opened : undefined, ...(draft ? { agentDraftId: draft.id } : {}) }),
       });
       const d = await r.json().catch(() => null);
       if (!r.ok) {
@@ -83,6 +85,7 @@ export function ReturnForm({ orderNo, kinds, sellerOnly = false, ship, exchangeF
 
   return (
     <form className="auth hlt-form hlt-ret32" onSubmit={submit}>
+      {draft && <p className="hint" data-ai-draft-filled>{t('ret.aiDraft')}</p>}
       {/* v10.32 — 시안 순서: 신청 종류 → ① 항목 → ② 사유(+ 상세 사유) → 포장 여부 → ③ 환불 예상(고객 귀책 강조 상자) → 반품 주소 띠 → 접수 */}
       {kinds.length > 1 && (
         <div className="hlt-box fld">

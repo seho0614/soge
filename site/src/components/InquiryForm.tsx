@@ -14,16 +14,17 @@ import { useTranslations } from 'next-intl';
 const TYPES = ['DEAL', 'SETTLE', 'ACCOUNT', 'DISPUTE', 'ETC'] as const;
 export interface MyDeal { id: string; title: string | null; statusLabel?: string | null }
 
-/* v10.31 — ?type=DISPUTE · ?deal= 로 들어오면(1:1 문의 화면의 「신고」) 그 유형 · 거래를 고른 채로 엽니다 */
-export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string }) {
+/* v10.31 — ?type=DISPUTE · ?deal= 로 들어오면(1:1 문의 화면의 「신고」) 그 유형 · 거래를 고른 채로 엽니다
+ * v10.139 — draft: AI 상담 초안(제목 · 내용을 채워 둠 · 제출은 회원이 · 접수 때 agentDraftId 를 붙여 「제출됨」만 적음) */
+export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, draft }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string; draft?: { id: string; title?: string; body?: string } }) {
   const router = useRouter();
   const ft = useTranslations('forms');
   const t = useTranslations('forms.inq');
   const [pending, start] = useTransition();
   const [type, setType] = useState<string>(TYPES.some((v) => v === initialType) ? initialType! : 'DEAL');
   const [dealId, setDealId] = useState(initialDeal && deals.some((d) => d.id === initialDeal) ? initialDeal : '');
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
+  const [title, setTitle] = useState(draft?.title ?? '');
+  const [body, setBody] = useState(draft?.body ?? '');
   const [mail, setMail] = useState(email ?? '');
   const [err, setErr] = useState<string | null>(null);
   /* 시안 「첨부파일 — 이미지 · PDF 10MB까지 (최대 3개)」 — 고르면 바로 올리고(INQUIRY_ATTACHMENT) 접수 때 파일 id 를 붙입니다(로그인한 경우만) */
@@ -52,6 +53,7 @@ export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal }
           category: type, title: title.trim(), body: body.trim(),
           email: loggedIn ? undefined : mail.trim(), dealId: (type === 'DEAL' || type === 'SETTLE') && dealId ? dealId : undefined,
           ...(files.length ? { attachmentKeys: files.map((f) => f.id) } : {}),
+          ...(draft ? { agentDraftId: draft.id } : {}),
         }),
       });
       const d = await r.json().catch(() => null);
@@ -64,6 +66,7 @@ export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal }
   return (
     <form className="w1-jp" onSubmit={submit} noValidate id="inquiry">
       <div className="w1-jt">{t('title')}</div>
+      {draft && <div className="w1-nt" style={{ marginBottom: 14 }} data-ai-draft-filled>{t('aiDraft')}</div>}
       <div className="w1-fld"><span className="lb">{t('typeLabel')} <i>*</i></span>
         <div className="w1-cst" role="radiogroup" aria-label={t('typeLabel')}>
           {TYPES.map((v) => <button key={v} type="button" role="radio" aria-checked={type === v} className={`w1-ct${type === v ? ' on' : ''}`} onClick={() => setType(v)}>{t(`type.${v}`)}</button>)}

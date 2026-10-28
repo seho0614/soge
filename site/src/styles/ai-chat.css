@@ -64,3 +64,7 @@ body:has(.gw-adfloat) .ai-panel { max-height: calc(100dvh - 216px); }   /* 올�
 .ai-send { padding: 8px 16px; border: 0; border-radius: var(--sgb-r-pill); background: var(--sgb-action); color: var(--sgb-ink); font-weight: 800; cursor: pointer; }
 .ai-send:disabled { opacity: .5; cursor: default; }
 .ai-link { border: 0; background: transparent; padding: 4px 0; color: var(--sgb-link); font: inherit; font-size: 12px; cursor: pointer; }
+/* v10.139 (AI 상담 4단계 · docs/209) — 신청서 초안 카드 · 접수 아님(회원이 신청 화면에서 제출) */
+.ai-draft { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 10px; border: 1px dashed var(--sgb-line); border-radius: var(--sgb-r-md); background: var(--sgb-cream); }
+.ai-draft small { color: var(--sgb-ink-3); }
+.ai-draft .ai-send { align-self: flex-start; text-decoration: none; }
