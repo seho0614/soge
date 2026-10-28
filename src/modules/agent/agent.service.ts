@@ -176,6 +176,10 @@ export class AgentService {
               as_of::text AS "asOf", note FROM agent_model_prices ORDER BY input_per_m`);
     const agreement = await this.db.query(
       `SELECT model, decided::int, agreed::int, unsure::int, agree_pct::text AS "agreePct" FROM v_ai_review_agreement ORDER BY model`);
+    /* v10.138 (D134) — 관(업종 묶음)별 일치율 · AI 의견 참고 결정 수 — 어느 업종에서 AI 가 자주 틀리는지 */
+    const agreementByGwan = await this.db.query(
+      `SELECT gwan_code AS "gwanCode", decided::int, agreed::int, unsure::int, referenced::int, agree_pct::text AS "agreePct"
+         FROM v_ai_review_agreement_gwan ORDER BY decided DESC, gwan_code`).catch(() => []);
     const eng = await this.resolve();
     const channels = await Promise.all((['REVIEW_SHADOW', 'SITE_CHAT', 'TRANSLATE', 'BOARD'] as AgentChannel[]).map(async (c) => ({ channel: c, ...(await this.allowed(c)) })));
     return {
@@ -190,7 +194,7 @@ export class AgentService {
       reviewModel: s['agent.review_model'] ?? null, chatModel: s['agent.chat_model'] ?? null, translateModel: s['i18n.translate_model'] ?? null,
       limits: { guestDaily: Number(s['agent.guest_daily_limit'] ?? 0), memberDaily: Number(s['agent.member_daily_limit'] ?? 0) },
       engine: eng.prov?.name ?? null, keySource: eng.source,   // v10.111 — 지금 엔진 · 키가 어디서 왔나(값은 없음)
-      channels, usage, prices, agreement,
+      channels, usage, prices, agreement, agreementByGwan,
       note: '0단계(틀) — 모델 연결은 1단계(API 키 · 월 상한 · 법무 검토 뒤). 상한이 0 이면 아무것도 부르지 않습니다.',
     };
   }

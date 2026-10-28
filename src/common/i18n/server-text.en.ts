@@ -975,6 +975,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "이미 진행 중인 분쟁이 있습니다.": "There is already a dispute in progress.",
   "이미 처리됐거나 없는 신고입니다.": "This report has already been processed or does not exist.",
   "이미 처리된 검수 건입니다.": "This review item has already been processed.",
+  "AI 의견과 다른 결정입니다 — 「AI 의견과 같게 확인」 없이 결정해 주십시오.": "This decision differs from the AI opinion — decide without \"Confirm as AI suggested\".",
   "이미 처리된 경보입니다.": "This alert has already been handled.",
   "이미 처리된 변경 요청입니다": "This change request has already been processed",
   "이미 처리된 신청입니다.": "This request has already been processed.",

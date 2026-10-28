@@ -28,7 +28,7 @@ export class ReviewRepository {
    * 큐 조회. 부분 인덱스 idx_review_queue 를 그대로 탑니다.
    * 정렬은 SLA 마감 순 — 오래 기다린 건이 먼저입니다.
    */
-  queue(params: { gwanCode?: string; cursor?: string; limit: number; status?: string }) {
+  queue(params: { gwanCode?: string; cursor?: string; limit: number; status?: string; byAi?: boolean }) {
     /* v10.31 (10/10 시안 기준) — 시안 줄마다 「매물 제목 · 등록자」, 「반려」 탭.
      *   status=REJECTED 면 최근 30일 반려 건(반려 시각 순 · 최근 것이 위). 그 밖에는 대기 건(SLA 마감 순 — 전과 같음). */
     const rejected = params.status === 'REJECTED';
@@ -40,7 +40,7 @@ export class ReviewRepository {
               ri.reject_reason_code AS "rejectReasonCode", ri.reject_memo AS "rejectMemo",
               rc.label AS "rejectReasonLabel",
               ri.decided_at AS "decidedAt", ri.decision_mode AS "decisionMode",
-              ri.manual_reasons AS "manualReasons",
+              ri.manual_reasons AS "manualReasons", ri.ai_referenced AS "aiReferenced",
               coalesce(l.title, rq.title, bl.title, bz.company_name) AS "targetTitle",
               coalesce(c.name, c2.name) AS "categoryName",
               coalesce(sb.company_name, sa.name) AS "submitterName",
@@ -65,7 +65,11 @@ export class ReviewRepository {
           : `ri.status IN ('QUEUED','IN_PROGRESS')
              AND ($2::timestamptz IS NULL OR (ri.sla_due_at, ri.id) > ($2::timestamptz, coalesce($4::uuid, '00000000-0000-0000-0000-000000000000'::uuid)))`}
           AND ($1::text IS NULL OR ri.gwan_code = $1)
-        ORDER BY ${rejected ? 'ri.decided_at DESC, ri.id DESC' : 'ri.sla_due_at ASC, ri.id ASC'}
+        ORDER BY ${rejected ? 'ri.decided_at DESC, ri.id DESC'
+          : params.byAi   // v10.138 — AI 승인 · 사유 없음 → 승인(사유 있음) → 모름 → 반려 → 의견 없음 · 같은 칸은 SLA 순
+            ? `CASE ai.suggestion WHEN 'APPROVE' THEN (CASE WHEN coalesce(cardinality(ai.reason_codes), 0) = 0 THEN 0 ELSE 1 END)
+                                  WHEN 'UNSURE' THEN 2 WHEN 'REJECT' THEN 3 ELSE 4 END, ri.sla_due_at ASC, ri.id ASC`
+            : 'ri.sla_due_at ASC, ri.id ASC'}
         LIMIT $3`,
       [params.gwanCode ?? null, params.cursor ? params.cursor.split('|')[0] : null, params.limit,
        params.cursor && params.cursor.includes('|') ? params.cursor.split('|')[1] : null],
@@ -90,16 +94,17 @@ export class ReviewRepository {
     decision: 'APPROVED' | 'REJECTED',
     reasonCode?: string,
     memo?: string,
+    aiReferenced = false,
   ) {
     // CHECK (status <> 'REJECTED' OR reject_reason_code IS NOT NULL) 가 DB 에 있으므로
     // 사유 없는 반려는 여기서 통과해도 DB 가 막습니다.
     const [row] = await this.db.query<ReviewItem>(
       `UPDATE review_items
           SET status = $2, decision_by = $3, decided_at = now(),
-              reject_reason_code = $4, reject_memo = $5
+              reject_reason_code = $4, reject_memo = $5, ai_referenced = $6
         WHERE id = $1 AND status IN ('QUEUED','IN_PROGRESS')
         RETURNING id, target_type AS "targetType", target_id AS "targetId", status`,
-      [id, decision, actorId, reasonCode ?? null, memo ?? null],
+      [id, decision, actorId, reasonCode ?? null, memo ?? null, aiReferenced],   // v10.138 「AI 의견 참고」(결정은 사람)
     );
     if (!row) return null; // 이미 처리됨 → 서비스에서 409
 

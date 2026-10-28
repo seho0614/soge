@@ -34,6 +34,9 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
   const [memo, setMemo] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  /* v10.138 (D134 · docs/206) — AI 가 반려를 제안하면 사유 코드만 미리 채움 · 반려는 검수자가 「사유를 확인했습니다」를 누른 뒤 */
+  const [aiFilled, setAiFilled] = useState('');
+  const [aiConfirm, setAiConfirm] = useState(false);
 
   useEffect(() => {
     api<{ code: string; label: string; category?: string }[]>('/admin/review-reasons')
@@ -41,12 +44,17 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
       .catch(() => setReasons(codeList('review.reason').map((c) => ({ code: c.code, label: c.label }))));
     api<Item>(`/admin/reviews/${id}`).then(setItem).catch(() => setItem(null));
   }, [id]);
+  useEffect(() => {
+    const c = item?.aiOpinion?.suggestion === 'REJECT' ? item.aiOpinion.reasonCodes?.find((x) => reasons.some((r) => r.code === x)) : undefined;
+    if (c && !reasonCode) { setReasonCode(c); setAiFilled(c); }
+  }, [item, reasons]);
+  const aiReject = !!aiFilled && reasonCode === aiFilled;   // AI 가 채운 사유 그대로 반려하면 「AI 의견 참고」
 
-  const decide = (decision: 'APPROVED' | 'REJECTED') => {
+  const decide = (decision: 'APPROVED' | 'REJECTED', aiAgreed = false) => {
     setBusy(true); setError(null);
     api(`/admin/reviews/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ decision, reasonCode: reasonCode || undefined, memo: memo || undefined }),
+      body: JSON.stringify({ decision, reasonCode: reasonCode || undefined, memo: memo || undefined, ...(aiAgreed ? { aiAgreed: true } : {}) }),
     })
       .then(onDone)
       .catch(setError)
@@ -129,6 +137,13 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
             {reasons.map((x) => <option key={x.code} value={x.code}>{x.label}</option>)}
           </select>
 
+          {aiReject && (
+            <label className="ad-nt warn" style={{ display: 'flex', gap: 8, marginTop: 8 }} data-ai-reason-filled={aiFilled}>
+              <input type="checkbox" checked={aiConfirm} onChange={(e) => setAiConfirm(e.target.checked)} data-ai-reason-confirm />
+              <span><b>AI 가 고른 사유로 미리 채웠습니다.</b> 글을 읽고 사유가 맞는지 확인하셨으면 표시하십시오(다르면 사유를 바꾸십시오).</span>
+            </label>
+          )}
+
           <label style={{ display: 'grid', gap: 4, marginTop: 12 }}>
             <span className="dim">메모 (선택)</span>
             <textarea value={memo} onChange={(e) => setMemo(e.target.value)} rows={3}
@@ -136,13 +151,19 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
           </label>
 
           <div className="rvact">
-            <button className="btn-no" disabled={busy || !reasonCode} onClick={() => decide('REJECTED')}
-                    title={!reasonCode ? '반려하려면 사유를 선택하십시오' : undefined}>
+            <button className="btn-no" disabled={busy || !reasonCode || (aiReject && !aiConfirm)} onClick={() => decide('REJECTED', aiReject)}
+                    title={!reasonCode ? '반려하려면 사유를 선택하십시오' : aiReject && !aiConfirm ? 'AI 가 채운 사유를 확인했다고 표시하십시오' : undefined}>
               반려
             </button>
             <button className="btn-ok" disabled={busy} onClick={() => decide('APPROVED')}>
               승인
             </button>
+            {item?.aiOpinion?.suggestion === 'APPROVE' && (
+              <button className="btn-sm" disabled={busy} data-ai-agree-detail title="AI 승인 제안과 같게 — 승인은 검수자가 합니다"
+                      onClick={() => { if (window.confirm('AI 의견(승인 제안)과 같게 승인할까요? 결정 · 책임은 검수자에게 있습니다.')) decide('APPROVED', true); }}>
+                AI 의견과 같게 확인
+              </button>
+            )}
           </div>
           {!reasonCode && (
             <div className="ad-nt info"><b>사유를 고르기 전에는 반려할 수 없습니다.</b> “등록에 실패했습니다” 같은 뭉갠 문구를 보내지 않기 위해서입니다.</div>

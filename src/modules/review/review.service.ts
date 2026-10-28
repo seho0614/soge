@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, UnprocessableEntityException } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { ReviewRepository } from './review.repository';
 import { DecideReviewDto } from './review.dto';
@@ -15,15 +15,17 @@ export class ReviewService {
    * 전에는 목록(배열)을 그대로 내보내, items 를 읽는 운영 화면 「검수 큐」가 늘 「대기 건이 없습니다」로 보였습니다.
    * 다음 쪽 열쇠는 마지막 건의 SLA 마감 시각입니다(저장소 조회의 cursor 와 같은 값). 한 쪽(50건)이 안 차면 null.
    */
-  async queue(gwanCode?: string, cursor?: string, status?: string) {
-    const limit = 50;
+  async queue(gwanCode?: string, cursor?: string, status?: string, sort?: 'sla' | 'ai') {
+    /* v10.138 — AI 의견 순(대기 건만) · 순서가 SLA 가 아니라 다음 쪽 열쇠를 쓰지 않고 한 번에 200건 */
+    const byAi = sort === 'ai' && status !== 'REJECTED';
+    const limit = byAi ? 200 : 50;
     /* v10.28 (G-220) — 열쇠 = 「마감 시각(마이크로초)|id」. 옛 열쇠(시각만)도 받습니다(같은 시각 줄은 처음부터). 형식이 틀리면 400 */
     if (cursor && !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?(\|[0-9a-f-]{36})?$/i.test(cursor)) {
       throw new BadRequestException({ code: 'BAD_CURSOR', message: '다음 쪽 열쇠의 형식이 맞지 않습니다.' });
     }
-    const rows = await this.repo.queue({ gwanCode, cursor, limit, status });
+    const rows = await this.repo.queue({ gwanCode, cursor: byAi ? undefined : cursor, limit, status, byAi });
     const last = rows[rows.length - 1] as { cursorKey?: string } | undefined;
-    const nextCursor = rows.length === limit && last?.cursorKey ? last.cursorKey : null;
+    const nextCursor = !byAi && rows.length === limit && last?.cursorKey ? last.cursorKey : null;
     const items = rows.map(({ cursorKey: _k, ...r }: any) => r);
     return { items, nextCursor };
   }
@@ -43,8 +45,18 @@ export class ReviewService {
    */
   async decide(id: string, actorId: string, dto: DecideReviewDto) {
     return this.db.transaction(async () => {
+      /* v10.138 (D134) — 「AI 의견과 같게 확인」은 AI 의 최근 의견과 같은 결정일 때만 · 결정 · 책임은 사람(#7 · #15) */
+      const aiAgreed = dto.aiAgreed === true;
+      if (aiAgreed) {
+        const [o] = await this.db.query<{ suggestion: string }>(
+          `SELECT suggestion FROM ai_review_opinions WHERE review_item_id = $1 AND note IS DISTINCT FROM '[처리 중]' ORDER BY created_at DESC LIMIT 1`, [id]);
+        const want = dto.decision === 'APPROVED' ? 'APPROVE' : 'REJECT';
+        if (!o || o.suggestion !== want) {
+          throw new UnprocessableEntityException({ code: 'AI_NOT_MATCH', message: 'AI 의견과 다른 결정입니다 — 「AI 의견과 같게 확인」 없이 결정해 주십시오.' });
+        }
+      }
       const item = await this.repo.decide(
-        id, actorId, dto.decision, dto.reasonCode, dto.memo,
+        id, actorId, dto.decision, dto.reasonCode, dto.memo, aiAgreed,
       );
       if (!item) {
         throw new ConflictException({
@@ -78,7 +90,7 @@ export class ReviewService {
         `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data)
          VALUES ($1, 'REVIEWER', $2, $3, $4, $5::jsonb)`,
         [actorId, `REVIEW_${dto.decision}`, item.targetType, item.targetId,
-         JSON.stringify({ reasonCode: dto.reasonCode ?? null })],
+         JSON.stringify({ reasonCode: dto.reasonCode ?? null, aiReferenced: aiAgreed })],   // v10.138 「AI 의견 참고」 표시
       );
 
       return { id: item.id, status: item.status, targetStatus: nextStatus };

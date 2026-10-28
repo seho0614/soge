@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 const TARGET_TYPES = ['LISTING','REQUEST','LEAD_SERVICE','MEDICAL','BUSINESS','CATEGORY','LISTING_BADGE'] as const;
 const REVIEW_STATUS = ['QUEUED','IN_PROGRESS','APPROVED','REJECTED'] as const;
@@ -33,6 +33,10 @@ export class DecideReviewDto {
   @ApiPropertyOptional({ maxLength: 1000, description: '검수자 메모. 선택' })
   @IsOptional() @IsString() @MaxLength(1000)
   memo?: string;
+
+  @ApiPropertyOptional({ description: 'v10.138 — 「AI 의견과 같게 확인」(AI 의견과 같은 결정일 때만 · 결정은 사람). 다르면 422 AI_NOT_MATCH' })
+  @IsOptional() @IsBoolean()
+  aiAgreed?: boolean;
 }
 
 export class ReviewQueueQueryDto {
@@ -47,6 +51,10 @@ export class ReviewQueueQueryDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString()
   cursor?: string;
+
+  @ApiPropertyOptional({ enum: ['sla', 'ai'], description: 'v10.138 — ai: AI 승인 · 사유 없음 → 승인(사유 있음) → 모름 → 반려 → 의견 없음 순(대기 건만 · 한 번에 200건 · 다음 쪽 없음)' })
+  @IsOptional() @IsIn(['sla', 'ai'])
+  sort?: 'sla' | 'ai';
 }
 
 export class ReviewItemDto {
@@ -74,6 +82,7 @@ export class ReviewItemDto {
   /* v10.106 (D120) — AI 검수 보조 의견(참고만 · 결정은 사람) */
   @ApiPropertyOptional({ enum: ['APPROVE', 'REJECT', 'UNSURE'], nullable: true, description: 'AI 제안(참고 · AI 는 결정하지 않음)' }) aiSuggestion?: string | null;
   @ApiPropertyOptional({ isArray: true, type: String, nullable: true, description: 'AI 가 고른 반려 사유 코드(review_reason_codes 안)' }) aiReasonCodes?: string[] | null;
+  @ApiPropertyOptional({ description: 'v10.138 — 검수자가 「AI 의견과 같게 확인」으로 결정함(결정은 사람)' }) aiReferenced?: boolean;
   @ApiPropertyOptional({ nullable: true, description: 'AI 설명(짧게)' }) aiNote?: string | null;
   @ApiPropertyOptional({ nullable: true }) aiModel?: string | null;
 }

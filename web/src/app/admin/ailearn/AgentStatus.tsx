@@ -18,6 +18,8 @@ interface Status {
   usage: { channel: string; model: string; requests: number; inputTokens: string; outputTokens: string; costUsd: string }[];
   prices: { model: string; inputPerM: string; outputPerM: string; cacheReadPerM: string; asOf: string; note: string | null }[];
   agreement: { model: string; decided: number; agreed: number; unsure: number; agreePct: string | null }[];
+  /** v10.138 (D134) — 관별 일치율 · AI 의견 참고 결정 수 */
+  agreementByGwan?: { gwanCode: string; decided: number; agreed: number; unsure: number; referenced: number; agreePct: string | null }[];
   engine: 'CLAUDE' | 'MOCK' | null; keySource: 'ADMIN' | 'ENV' | 'MOCK' | 'NONE';   // v10.111
   note: string;
 }
@@ -81,6 +83,15 @@ export function AgentStatus() {
           <tbody>{d.agreement.map((a) => (
             <tr key={a.model}><td>{a.model}</td><td className="num-cell">{n(a.decided)}</td><td className="num-cell">{n(a.agreed)}</td>
               <td className="num-cell">{n(a.unsure)}</td><td className="num-cell">{a.agreePct ?? '—'}%</td></tr>
+          ))}</tbody>
+        </table>
+      )}
+      {(d.agreementByGwan?.length ?? 0) > 0 && (
+        <table className="tbl" data-agent-agreement-gwan>
+          <thead><tr><th>관(최근 14일)</th><th>사람이 결정</th><th>일치</th><th>모름</th><th>일치율</th><th>AI 의견 참고 결정</th></tr></thead>
+          <tbody>{d.agreementByGwan!.map((a) => (
+            <tr key={a.gwanCode} data-agreement-gwan={a.gwanCode}><td>{a.gwanCode}</td><td className="num-cell">{n(a.decided)}</td><td className="num-cell">{n(a.agreed)}</td>
+              <td className="num-cell">{n(a.unsure)}</td><td className="num-cell">{a.agreePct ?? '—'}%</td><td className="num-cell">{n(a.referenced)}</td></tr>
           ))}</tbody>
         </table>
       )}

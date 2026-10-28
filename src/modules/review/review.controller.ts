@@ -40,7 +40,7 @@ export class ReviewController {
     },
   })
   queue(@Query() q: ReviewQueueQueryDto) {
-    return this.service.queue(q.gwanCode, q.cursor, q.status);
+    return this.service.queue(q.gwanCode, q.cursor, q.status, q.sort);
   }
 
   @Get('counts')
@@ -73,7 +73,8 @@ export class ReviewController {
     summary: '검수 승인 · 반려',
     description:
       '승인 시 대상의 상태가 같은 트랜잭션에서 전이됩니다. ' +
-      '반려는 reasonCode 가 필수이며 DB CHECK 가 강제합니다.',
+      '반려는 reasonCode 가 필수이며 DB CHECK 가 강제합니다. ' +
+      'v10.138 — aiAgreed: 「AI 의견과 같게 확인」(AI 의견과 같은 결정일 때만 · 아니면 422 AI_NOT_MATCH · 결정은 사람).',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: ReviewDecisionResultDto })

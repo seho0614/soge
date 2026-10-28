@@ -47,6 +47,8 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /* v10.138 (D134 · docs/206) — AI 의견 순 정렬(대기 건만 · 기본은 SLA 순). AI 의견이 하나도 없으면 단추를 그리지 않음 */
+  const [byAi, setByAi] = useState(false);
   /* v10.27 (G-201) — 거르개가 관 이름 대신 코드(MNY …)로 보였습니다(label('gwan.code') 자료가 없음).
    * 관 목록 · 이름을 서버(/gwans)에서 받습니다. 못 받으면 예전처럼 코드 4개로 그립니다. */
   const [gwans, setGwans] = useState<{ code: string; name: string }[]>([]);
@@ -65,6 +67,7 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
     const qs = new URLSearchParams();
     if (gwan) qs.set('gwanCode', gwan);
     if (st === 'rejected') qs.set('status', 'REJECTED');
+    else if (byAi) qs.set('sort', 'ai');
     Promise.all([
       api<{ items: ReviewItem[] }>(`/admin/reviews${qs.toString() ? `?${qs}` : ''}`),
       api<Throughput[]>('/admin/reviews/throughput'),
@@ -74,13 +77,14 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
       .catch(setError)
       .finally(() => setLoading(false));
   };
-  useEffect(load, [gwan, st === 'rejected']);
+  useEffect(load, [gwan, st === 'rejected', byAi]);
 
   /* v10.31 (10/10 시안 기준 — 정책 문구 「목록에서 바로 승인」) — 줄의 보라 「승인」. 반려는 사유를 골라야 하므로 「열기」에서만 */
-  const approve = (id: string) => {
+  /* v10.138 — aiAgreed: 「AI 의견과 같게 확인」(AI 가 승인 제안한 건만 · 승인은 검수자가 함 · 감사 기록에 「AI 의견 참고」) */
+  const approve = (id: string, aiAgreed = false) => {
     setBusyId(id); setMsg(null);
-    api(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify({ decision: 'APPROVED' }) })
-      .then(() => { setMsg('승인했습니다 — 바로 노출됩니다.'); load(); })
+    api(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify(aiAgreed ? { decision: 'APPROVED', aiAgreed: true } : { decision: 'APPROVED' }) })
+      .then(() => { setMsg(aiAgreed ? 'AI 의견과 같게 승인했습니다(결정은 검수자 · 감사 기록에 「AI 의견 참고」) — 바로 노출됩니다.' : '승인했습니다 — 바로 노출됩니다.'); load(); })
       .catch((e: { body?: { message?: string } }) => setMsg(e?.body?.message ?? '승인하지 못했습니다.'))
       .finally(() => setBusyId(null));
   };
@@ -119,6 +123,14 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
                   className={gwan === g ? 'on' : ''} data-rq-gwan={g || 'all'}>{g ? gname(g) : '전체'}</button>
         ))}
       </div>
+
+      {st !== 'rejected' && (byAi || items.some((x) => x.aiSuggestion)) && (
+        <div className="ad-flt sm" aria-label="정렬">
+          <button className={!byAi ? 'on' : ''} onClick={() => setByAi(false)} data-rq-sort="sla">SLA 순</button>
+          <button className={byAi ? 'on' : ''} onClick={() => setByAi(true)} data-rq-sort="ai"
+                  title="AI 승인 제안(사유 없음) → 승인 제안 → 모름 → 반려 제안 → 의견 없음 · 결정은 검수자">AI 의견 순</button>
+        </div>
+      )}
 
       {loading && <p className="muted">불러오는 중…</p>}
       {msg && <div className="form-ok" role="status">{msg}</div>}
@@ -163,6 +175,10 @@ export function ReviewQueue({ onOpen }: { onOpen: (id: string) => void }) {
               {it.status !== 'REJECTED' && (
                 <button className="btn-ok btn-sm" disabled={busyId === it.id} data-rq-approve={it.id}
                         onClick={(e) => { e.stopPropagation(); approve(it.id); }}>승인</button>
+              )}
+              {it.status !== 'REJECTED' && it.aiSuggestion === 'APPROVE' && (
+                <button className="btn-sm" disabled={busyId === it.id} data-ai-agree={it.id} title="AI 승인 제안과 같게 — 승인은 검수자가 합니다"
+                        onClick={(e) => { e.stopPropagation(); if (window.confirm('AI 의견(승인 제안)과 같게 승인할까요? 결정 · 책임은 검수자에게 있습니다.')) approve(it.id, true); }}>AI 의견과 같게 확인</button>
               )}
             </div>
           </article>
