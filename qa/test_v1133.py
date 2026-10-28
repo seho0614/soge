@@ -69,16 +69,21 @@ if API and DB:
         ok(f'② {c} — 초안이 있으면 새 글 · 새 글이 초안 또는 게시된 판에 있음', (drafts == '' or drafts.endswith(':true')) and (drafts.endswith(':true') or pub.endswith(':true')), f'초안 {drafts} · 게시 {pub}')
         doc = get(f'/terms/doc/{c}')
         ok(f'② {c} — 손님 화면(공개 약관)은 게시된 판(초안이 아님)', not pub or str(doc.get('version')) == pub.split(':')[0], f"{doc.get('version')} · 게시 {pub}")
-    before = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
-    # 다시 돌림(재실행 안전) — 마이그레이션의 DO 블록만 그대로 실행
+    # 다시 돌림(재실행 안전) — 마이그레이션의 DO 블록만 D131 → D132 → D133 순서로(운영과 같은 순서) 한 거래 안에서 두 번 돌리고 되돌림.
+    #   v10.137 — 빈 DB 로 새로 세운 점검판은 게시된 1.0 이 이미 마지막 글이라, 중간 판(D131)만 다시 돌리면 초안이 새로 생김(10/28 회귀).
+    #   그래서 지킬 것만 봄: ① 줄을 두 번 돌려도 첫 번째와 같음(판 · 글이 늘거나 바뀌지 않음) ② 게시된 판은 그대로 ③ 게시하지 않음
     body = M.split('-- =====================================================================\n', 2)[-1]
-    # v10.135 — D132 가 처리방침 초안 글을 다시 바꿈. 운영처럼 D131 → D132 순서로 다시 돌려 마지막 글이 그대로인지 봄
-    for M2 in (rd('prisma/migrations/D132_terms_privacy_fill/migration.sql'), rd('prisma/migrations/D133_agent_member_lookup/migration.sql')):   # v10.137 — D133 도
+    for M2 in (rd('prisma/migrations/D132_terms_privacy_fill/migration.sql'), rd('prisma/migrations/D133_agent_member_lookup/migration.sql')):
         if M2:
             body += '\n' + M2.split('-- =====================================================================\n')[-1]
-    r = subprocess.run(['psql', DB, '-X', '-q', '-v', 'ON_ERROR_STOP=1'], input=body, capture_output=True, text=True)
-    after = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
-    ok('② 다시 돌려도 판 · 글이 늘거나 바뀌지 않음', r.returncode == 0 and before == after, r.stderr.strip()[:80])
+    SNAP = "SELECT 'S:' || coalesce(string_agg(code || version || status || md5(body), ',' ORDER BY code, version), '') FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL');"
+    PUBQ = "SELECT 'P:' || coalesce(string_agg(code || version || md5(body), ',' ORDER BY code, version), '') FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL') AND status = 'PUBLISHED';"
+    pub0 = psql(PUBQ)
+    r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1'], input='BEGIN;\n' + body + '\n' + SNAP + '\n' + PUBQ + '\n' + body + '\n' + SNAP + '\nROLLBACK;\n',
+                       capture_output=True, text=True)
+    snaps = [x for x in r.stdout.splitlines() if x.startswith('S:')]; pubs = [x for x in r.stdout.splitlines() if x.startswith('P:')]
+    ok('② 다시 돌려도 판 · 글이 늘거나 바뀌지 않음(D131 → D133 두 번 · 같은 결과 · 게시된 판 그대로)',
+       r.returncode == 0 and len(snaps) == 2 and snaps[0] == snaps[1] and pubs == [pub0], (r.stderr.strip() or str(len(snaps)))[:80])
 
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
