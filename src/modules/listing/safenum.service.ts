@@ -133,10 +133,12 @@ export class SafenumService {
     const endedRaw = p('SAFENUM_EVT_ENDED_PATH', 'endedAt');
     const ended = endedRaw && !Number.isNaN(Date.parse(String(endedRaw))) ? new Date(String(endedRaw)).toISOString() : null;
     const caller = String(p('SAFENUM_EVT_CALLER_PATH', 'callerNumber') ?? '').replace(/\D/g, '');
-    /* 통화가 그 번호를 쓰던 때 것인지 — 돌려준 뒤 다른 사람이 받은 같은 번호와 섞이지 않게(통화 시각 기준) */
+    /* 통화가 그 번호를 쓰던 때 것인지 — 돌려준 뒤 다른 사람이 받은 같은 번호와 섞이지 않게(통화 시각 기준)
+       업체 시각은 초 단위 · 시계가 조금 어긋날 수 있어 받은 시각보다 2분 이르게 와도 받음 — 통화 시각 전에 받은 번호를 먼저 고름 */
     const [sn] = vno ? await this.db.query<{ id: string }>(
-      `SELECT id FROM safe_numbers WHERE virtual_no = $1 AND provider = $2 AND issued_at <= coalesce($3::timestamptz, now())
-          AND coalesce(released_at, expires_at) >= coalesce($3::timestamptz, now()) - interval '1 hour' ORDER BY issued_at DESC LIMIT 1`, [vno, mode, ended]) : [];
+      `SELECT id FROM safe_numbers WHERE virtual_no = $1 AND provider = $2 AND issued_at <= coalesce($3::timestamptz, now()) + interval '2 minutes'
+          AND coalesce(released_at, expires_at) >= coalesce($3::timestamptz, now()) - interval '1 hour'
+        ORDER BY (issued_at <= coalesce($3::timestamptz, now())) DESC, issued_at DESC LIMIT 1`, [vno, mode, ended]) : [];
     const result = !sn ? 'UNKNOWN_NUMBER' : await this.logCall(mode, sn, caller, Number.isFinite(dur) && dur >= 0 ? Math.round(dur) : null, ended, eventId);
     await this.db.query(`INSERT INTO safenum_events (provider, event_id, sig_ok, duplicate, result) VALUES ($1, $2, true, $3, $4)`,
       [mode, eventId, result === 'DUPLICATE', result]);
