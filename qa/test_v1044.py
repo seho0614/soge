@@ -64,7 +64,7 @@ ok('목록표의 키 이름이 모두 운영 .env 예시에', not miss, ' · '.j
 
 # ⑤
 cs = rd('src/modules/partner/consult.service.ts')
-ok('알림톡 — 키 없으면 준비 안 됨', "if (!process.env.ALIMTALK_KEY?.trim()) return false;" in cs and "return integrationLive(this.db, 'ALIMTALK');" in cs, '')
+ok('알림톡 — 키 없으면 준비 안 됨(v10.142 부터 AlimtalkService.ready — 방식 · 키 · 승인 템플릿 · 켜기 · test_v1142)', ("if (!process.env.ALIMTALK_KEY?.trim()) return false;" in cs and "return integrationLive(this.db, 'ALIMTALK');" in cs) or "return this.alimtalk.ready('CONSULT_OTP');" in cs, '')
 
 _v = tuple(int(x) for x in re.findall(r'\d+', rd('VERSION')))
 ok('VERSION v10.44 이상', _v >= (10, 44), '.'.join(map(str, _v)))

@@ -31,7 +31,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D128_integ_keys_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'),), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk'),), f'{len(mig)} · {mig[-1] if mig else ""}')
 PAIRS = re.findall(r"\('([A-Z]+)','([A-Z_]+)'\)", M.split('ADD CONSTRAINT ck_integ_secret_name')[1].split(';')[0]) if 'ADD CONSTRAINT ck_integ_secret_name' in M else []
 ok('① 받는 키 15(전부터 4 + 새 11) · MAIL 줄(오픈을 막지 않음 · 발신 IP 불필요) · ON CONFLICT DO NOTHING',
    len(PAIRS) == 15 and ('PG', 'TOSS_SECRET_KEY') in PAIRS and ('MAIL', 'SMTP_PASS') in PAIRS and ('AGENT', 'ANTHROPIC_API_KEY') in PAIRS
@@ -44,7 +44,9 @@ ok('① 형식 — 토스 시크릿(sk) · 클라이언트(ck) · SES 비밀번�
 S = rd('src/common/integration/secret.service.ts'); C = rd('src/modules/site/integration-keys.controller.ts'); AM = rd('src/app.module.ts')
 svc_pairs = set(re.findall(r"\{ code: '([A-Z]+)', name: '([A-Z_]+)'", S))
 EXTRA = {('MAIL', 'SMTP_USER')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D136_mail_admin')) else set()   # v10.140 SMTP 사용자 이름(test_v1140)
-ok('② 서비스 키 목록 = DB 받는 키 15(v10.140 부터 16)', svc_pairs == set(PAIRS) | EXTRA, str(sorted((set(PAIRS) | EXTRA) ^ svc_pairs)))
+EXTRA |= {('PASS', 'NICE_CLIENT_ID'), ('PASS', 'NICE_CLIENT_SECRET'), ('PASS', 'NICE_PRODUCT_ID')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D137_identity_nice')) else set()   # v10.141 NICE 키 3개(test_v1141)
+EXTRA |= {('ALIMTALK', 'ALIMTALK_SENDER_KEY')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D138_alimtalk')) else set()   # v10.142 발신 프로필 키(test_v1142)
+ok('② 서비스 키 목록 = DB 받는 키 15(v10.140 16 · v10.142 20)', svc_pairs == set(PAIRS) | EXTRA, str(sorted((set(PAIRS) | EXTRA) ^ svc_pairs)))
 ok('② process.env 에 얹음 — 띄울 때(못 읽으면 다시) · 1분 · 저장 · 지운 직후 · 한 줄로(겹침 없음) · 지우면 띄울 때 .env 값으로 · 실패하면 이전 값 · 키 값은 로그에 없음',
    'EVERY_MS = 60_000' in S and 'process.env[env] = r.v' in S and 'this.envAtBoot.get(env)' in S and 'delete process.env[env]' in S
    and S.count('this.refresh()') >= 4 and 'this.chain = run.then(() => undefined);' in S and "e?.code ?? e?.name ?? 'error'" in S and 'r.v}' not in S, '')
@@ -116,7 +118,7 @@ if API and DB:
         ok('③ 로그인 안 한 사람도 403/401', call('GET', '/admin/integration-keys').get('_err') in (401, 403), '')
         v0 = call('GET', '/admin/integration-keys', t=T_)
         pg0 = row(v0, 'PG', 'TOSS_SECRET_KEY')
-        ok('③ 목록 15줄(v10.140 부터 16) · 값 없음 · 처음 결제 시크릿 키는 운영 화면에 없음(점검판 .env 에도 없으면 NONE)',
+        ok('③ 목록 15줄(v10.140 16 · v10.142 20) · 값 없음 · 처음 결제 시크릿 키는 운영 화면에 없음(점검판 .env 에도 없으면 NONE)',
            isinstance(v0, list) and len(v0) == 15 + len(EXTRA) and pg0.get('source') in ('NONE', 'ENV') and all('value' not in x for x in v0)
            and row(v0, 'MAIL', 'SMTP_PASS').get('integration') == '메일(Amazon SES SMTP)', str(pg0))
         pay0 = call('GET', '/site-settings/payment')
@@ -177,7 +179,7 @@ if ADMIN_WEB and DB and API:
                 pg.goto(ADMIN_WEB + '/#/integrations', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
                 box = pg.locator('[data-integration-keys]')
                 items = box.locator('[data-integ-key]')
-                ok('④ 최고 관리자 — 외부 연동 안 「연동 키」 11줄(v10.140 부터 12 · 카카오 · 날씨 · AI 는 각 구역)', box.count() == 1 and items.count() == 11 + len(EXTRA), str(items.count()))
+                ok('④ 최고 관리자 — 외부 연동 안 「연동 키」 11줄(v10.140 12 · v10.142 16 · 카카오 · 날씨 · AI 는 각 구역)', box.count() == 1 and items.count() == 11 + len(EXTRA), str(items.count()))
                 it = box.locator('[data-integ-key="BANK/BANK_VERIFY_KEY"]')
                 it.locator('input[type=password]').fill(FAKE_BANK); it.locator('button', has_text='저장').click(); pg.wait_for_timeout(2000)
                 txt = it.inner_text()

@@ -77,7 +77,7 @@ LINE4 = '④ 로그인한 회원이 AI 상담에서 본인의 주문 · 교환 �
 ok('① D133 — 조회 기록 표(값 칸 없음 · 대화와 함께 지움) · 처리방침 ④ 줄 = terms-text.js = docs/terms · 게시 안 함 · 지우는 문장 없음 · 171',
    'CREATE TABLE IF NOT EXISTS public.agent_tool_calls' in D and 'ON DELETE CASCADE' in D and LINE4 in PV and f'$TERM${PV}$TERM$' in D
    and PV.strip() in rd('docs/terms/PRIVACY.md') and "SET status = 'PUBLISHED'" not in D and "'LEGAL_REVIEW'" in D
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) in ((171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin')), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) in ((171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk')), f'{len(mig)} · {mig[-1]}')
 SW = rd('web/src/app/admin/ailearn/AgentSwitches.tsx'); STX = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
 ok('① 운영 화면 — 「AI 상담 — 내 정보 조회」 스위치(켜기 전 확인 문장) · 대화에 「조회」 줄 · 비율 칸에 조회 수',
    "key: 'agent.chat.member_lookup.enabled'" in SW and 'docs/204' in SW and 'data-agent-tool-call' in STX and 'data-stat="lookups"' in STX, '')
