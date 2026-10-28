@@ -37,6 +37,9 @@ ok('① D141 — 번호 칸(회원 · 방식 · 업체 id) · 통화 기록 칸(
    and 'CREATE TABLE IF NOT EXISTS public.safenum_events' in D and "('SAFENUM','SAFENUM_WEBHOOK_SECRET')" in D and "'ESIGN_WEBHOOK_SECRET', 'SAFENUM_WEBHOOK_SECRET') THEN" in D
    and "('safenum.provider', 'NONE'" in D and "('safenum.hours', '24'" in D and "('safenum.daily', '10'" in D and "VALUES ('safenum_release', 60," in D
    and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|DROP COLUMN)\b', D) and len(mig) >= 179 and 'D141_safenum' in mig, f'{len(mig)} · {mig[-1]}')
+ok('① 통화 → 소개 기록 — 같은 회원 · 코드가 24시간 안에 다시 걸면 소개 기록은 건너뜀(ATTR_DUP 로 통화 기록 · 웹훅이 실패하지 않게)',
+   'CREATE OR REPLACE FUNCTION public.fn_attribute_call()' in D and "e.code = sn.code AND e.visitor_key = vk AND e.source = 'INTRO'" in D
+   and "NEW.occurred_at - interval '24 hours'" in D and "'CALL', NEW.occurred_at, NEW.occurred_at + interval '90 days'" in D)
 SV = rd('src/modules/listing/safenum.service.ts')
 ok('① 번호 받기 — 꺼짐 409 SAFENUM_OFF(지금 글) · 본인 · 업종 · 휴대폰 · 하루 한도 · 같은 회원 · 매물 다시 씀 · 소개코드 묶음 · 업체 실패 502',
    all(f"'{c}'" in SV for c in ('SAFENUM_OFF', 'OWN_TARGET', 'SAFENUM_NOT_ALLOWED', 'SAFENUM_NO_PHONE', 'SAFENUM_DAILY_LIMIT', 'SAFENUM_FAILED'))

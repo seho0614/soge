@@ -854,7 +854,7 @@ def t7(b):
         bo = box['bo']; row = bo.locator('.bo-main table.tbl tbody tr', has_text=TAG).first
         row.locator('button.btn-sm', has_text='처리').click(); bo.wait_for_timeout(500)
         bo.fill('.bo-main table.tbl textarea', RES); bo.locator('.bo-main table.tbl button', has_text='아닙니다 (기각)').click()
-        ok = until(lambda: q(f"select state from reports where id='{S['rpid']}'") == 'DISMISSED', 12)
+        ok = until(lambda: q(f"select state from reports where id='{S['rpid']}'") == 'DISMISSED', 30)   # 점검판이 바쁠 때 12초를 넘기는 일이 있음(10/28)
         msg = one(' '.join(bo.locator('.bo-main table.tbl p.dim').all_inner_texts())); bad = [a for _, _, as_ in WATCH for a in as_ if '/admin/reports/' in a]
         now = q(f"select state from reports where id='{S['rpid']}'")
         resp = re.sub(r'[0-9a-f]{8}-[0-9a-f-]{27}', '{id}', bad[-1]) if bad else '정상'
