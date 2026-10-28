@@ -111,3 +111,26 @@ VALUES ('safenum_release', 60, NULL, NULL, NULL, true, '안심번호 돌려주�
 ON CONFLICT (job) DO NOTHING;
 
 COMMENT ON TABLE public.safenum_events IS '050 안심번호 업체 통화 알림(웹훅) 받은 기록(D141 · docs/221) — 서명 검사 · 중복 · 결과만(본문 · 전화번호 저장 안 함).';
+
+-- 통화 → 소개 기록(B075 fn_attribute_call 고침) — 같은 회원이 24시간 안에 다시 걸면 소개 기록은 이미 있으므로 건너뜀.
+-- 고치기 전에는 24시간 중복 막기(fn_attr_dedupe_24h · ATTR_DUP)에 걸려 통화 기록 · 웹훅까지 실패했다(업체가 같은 알림을 계속 다시 보냄).
+CREATE OR REPLACE FUNCTION public.fn_attribute_call() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE sn record; vk text;
+BEGIN
+  SELECT * INTO sn FROM safe_numbers WHERE id = NEW.safe_number_id;
+  IF sn.code IS NOT NULL THEN
+    vk := coalesce(sn.visitor_key, NEW.caller_hash);
+    IF NOT EXISTS (
+         SELECT 1 FROM attribution_events e
+          WHERE e.code = sn.code AND e.visitor_key = vk AND e.source = 'INTRO'
+            AND e.occurred_at > NEW.occurred_at - interval '24 hours'
+            AND e.occurred_at < NEW.occurred_at + interval '24 hours') THEN
+      INSERT INTO attribution_events(code, visitor_key, channel, occurred_at, expires_at, raw)
+      VALUES (sn.code, vk, 'CALL', NEW.occurred_at, NEW.occurred_at + interval '90 days',
+              jsonb_build_object('safe_number_id', sn.id, 'duration_sec', NEW.duration_sec));
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
