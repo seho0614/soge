@@ -762,7 +762,10 @@
     "DELETE /me/favorites/{targetId}",
     "GET /listings/{id}/images/{n}",
     "GET /listings/{id}/photos/{n}",
-    "GET /site-settings/map"
+    "GET /site-settings/map",
+    "POST /listings/{id}/safe-number",
+    "POST /listings/{id}/safe-number/mock-call",
+    "POST /webhooks/safenum"
    ],
    "nav": "SB-MNY-MAIN-010",
    "state": "listing.status",
@@ -792,7 +795,10 @@
     "DELETE /me/favorites/{targetId}",
     "GET /listings/{id}/images/{n}",
     "GET /listings/{id}/photos/{n}",
-    "GET /site-settings/map"
+    "GET /site-settings/map",
+    "POST /listings/{id}/safe-number",
+    "POST /listings/{id}/safe-number/mock-call",
+    "POST /webhooks/safenum"
    ],
    "nav": "SB-MAL-MAIN-010",
    "state": "listing.status",
@@ -816,7 +822,10 @@
     "DELETE /me/favorites/{targetId}",
     "GET /listings/{id}/images/{n}",
     "GET /listings/{id}/photos/{n}",
-    "GET /site-settings/map"
+    "GET /site-settings/map",
+    "POST /listings/{id}/safe-number",
+    "POST /listings/{id}/safe-number/mock-call",
+    "POST /webhooks/safenum"
    ],
    "nav": "SB-BIZ-MAIN-010",
    "state": "listing.status",
@@ -1654,7 +1663,13 @@
     "PUT /admin/alimtalk/templates/{code}",
     "POST /admin/alimtalk/test",
     "GET /admin/esign/status",
-    "GET /admin/esign/documents"
+    "GET /admin/esign/documents",
+    "GET /admin/integ-tests",
+    "POST /admin/integ-tests/pg-check",
+    "POST /admin/integ-tests/bank-send",
+    "POST /admin/integ-tests/bank-confirm",
+    "GET /admin/safenum/status",
+    "GET /admin/safenum/calls"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",

@@ -10,6 +10,8 @@ import { MailPanel } from './MailPanel';
 import { IdentityPanel } from './IdentityPanel';
 import { AlimtalkPanel } from './AlimtalkPanel';
 import { EsignPanel } from './EsignPanel';
+import { IntegTestPanel } from './IntegTestPanel';
+import { SafenumPanel } from './SafenumPanel';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -212,6 +214,12 @@ export function Integrations() {
 
       {/* v10.143 (D139) — 전자계약 방식 · 키 · 웹훅 주소 · 최근 30일 · 요청 목록 */}
       <EsignPanel />
+
+      {/* v10.144 (D140) — 결제 키 확인 · 1원 계좌인증 시험 · LIVE 근거 */}
+      <IntegTestPanel />
+
+      {/* v10.145 (D141) — 050 안심번호 방식 · 키 · 웹훅 주소 · 30일 · 통화 기록 */}
+      <SafenumPanel />
 
       {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
       <MapKeys />

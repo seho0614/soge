@@ -146,7 +146,7 @@ export default async function DetailPage({ params }: Props) {
               <div className="gw-nm">{o.companyName}{o.verified && <span className="gw-vbdg">{t('verified')}</span>}</div>
               <div className="gw-mt2">{reg && <>{t('activeRegion')} &nbsp; {reg} &nbsp;&nbsp; </>}{t('joined')} &nbsp; {ym(o.joinedAt)}</div>
             </div>
-            <GwProfileActions />
+            <GwProfileActions id={item.id} loggedIn={!!viewer} />
           </div>
 
           <div className="gw-sth">{t('statsHead')} <span title={t('statsTip')}>?</span></div>

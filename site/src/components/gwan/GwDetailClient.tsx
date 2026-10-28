@@ -10,7 +10,7 @@ import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ago } from '@/lib/format';
+import { ago, dtKst } from '@/lib/format';
 import { useFmt } from '@/lib/useFmt';
 
 /* v10.98 — 글은 사전 detail.bar.*(키만 둡니다) */
@@ -86,17 +86,47 @@ export function GwDetailBar({ id, path, loggedIn, liked, canInquire, blockReason
   );
 }
 
-export function GwProfileActions() {
+/**
+ * v10.145 (D141 · docs/221) — 「📞 전화하기」 = 050 안심번호(POST /listings/{id}/safe-number). 방식이 꺼져 있으면(NONE) 서버가 409 SAFENUM_OFF 와
+ *   지금과 같은 「준비 중」 글을 돌려줌. 번호를 받으면 누르면 거는 링크(tel:) · 쓰는 시간 · 시험(MOCK)이면 가짜 통화 단추.
+ */
+export function GwProfileActions({ id, loggedIn }: { id?: string; loggedIn?: boolean }) {
   const t = useTranslations('detail.profile');
   const [msg, setMsg] = useState<string | null>(null);
+  const [num, setNum] = useState<{ number: string; expiresAt: string; mode: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function call() {
+    if (!id) { setMsg(t('callMsg')); return; }
+    if (!loggedIn) { setMsg(t('callLogin')); return; }
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/v1/listings/${id}/safe-number`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setMsg(d.message ?? t('callMsg')); return; }
+      setNum(d);
+    } catch { setMsg(t('callMsg')); } finally { setBusy(false); }
+  }
+  async function mockCall() {
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/v1/listings/${id}/safe-number/mock-call`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      setMsg(r.ok ? t('mockCalled') : ((await r.json().catch(() => ({}))).message ?? t('callMsg')));
+    } finally { setBusy(false); }
+  }
+  const until = num ? dtKst(num.expiresAt) : '';
   return (
     <>
       <a className="gw-bq" href="#qna">{t('ask')}</a>
-      <button type="button" className="gw-bcall"
-              onClick={() => setMsg(t('callMsg'))}>
-        {t('call')}
-      </button>
-      {msg && <p className="gw-profmsg" role="status">{msg}</p>}
+      {num ? (
+        <a className="gw-bcall" href={`tel:${num.number.replace(/\D/g, '')}`} data-safenum-number={num.number}>{t('callNumber', { n: num.number })}</a>
+      ) : (
+        <button type="button" className="gw-bcall" disabled={busy} onClick={() => void call()} data-safenum-call="">
+          {t('call')}
+        </button>
+      )}
+      {num && <p className="gw-profmsg" role="status" data-safenum-note="">{t('callNote', { at: until })}{num.mode === 'MOCK' && <> · <button type="button" className="gw-bq" disabled={busy} onClick={() => void mockCall()} data-safenum-mockcall="">{t('mockCall')}</button></>}</p>}
+      {msg && <p className="gw-profmsg" role="status" data-safenum-msg="">{msg}</p>}
     </>
   );
 }

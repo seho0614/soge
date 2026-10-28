@@ -77,6 +77,11 @@
   "profile": {
     "ask": "💬 Ask a question",
     "callMsg": "Phone calls are coming soon. Please start with a 1:1 inquiry for now — the referral is recorded when the chat starts.",
+    "callLogin": "Log in to get a call number.",
+    "callNumber": "📞 {n}",
+    "callNote": "A safe number that connects you to the lister (until {at}). Neither side sees the real number.",
+    "mockCall": "Test call",
+    "mockCalled": "Test call recorded.",
     "call": "📞 Call"
   },
   "qna": {

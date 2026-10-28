@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
+import { IntegTestService } from './integ-test.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 
@@ -11,7 +12,7 @@ import { RequestCtx } from '../../core/request-context';
  */
 @Injectable()
 export class SiteService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly integTests: IntegTestService) {}   // v10.144 (D140) LIVE 조건
 
   gwans() {
     return this.db.query(
@@ -226,6 +227,11 @@ export class SiteService {
     ipRequestedAt?: string; ipApprovedAt?: string;
     secretRegistered?: boolean; memo?: string;
   }) {
+    /* v10.144 (D140) — PG · BANK 를 LIVE 로 올릴 때만 최근 7일 성공 시험을 봄(내리기 · 다른 연동은 그대로) */
+    if (input.status === 'LIVE') {
+      const [cur] = await this.db.query<{ status: string }>(`SELECT status FROM integrations WHERE code = $1`, [code]);
+      if (cur && cur.status !== 'LIVE') await this.integTests.assertLiveAllowed(code);
+    }
     const [row] = await this.db.query(
       `UPDATE integrations
           SET status = coalesce($2, status),

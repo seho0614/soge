@@ -192,6 +192,10 @@ import { AlimtalkService } from './common/alimtalk/alimtalk.service';   /* v10.1
 import { AlimtalkAdminController } from './modules/site/alimtalk-admin.controller';
 import { EsignService } from './modules/deal/esign.service';   /* v10.143 (D139) 전자계약 */
 import { EsignController, EsignAdminController } from './modules/deal/esign.controller';
+import { IntegTestService } from './modules/site/integ-test.service';   /* v10.144 (D140) 결제 · 계좌 연결 확인 */
+import { IntegTestController } from './modules/site/integ-test.controller';
+import { SafenumService } from './modules/listing/safenum.service';   /* v10.145 (D141) 050 안심번호 */
+import { SafenumController, SafenumAdminController } from './modules/listing/safenum.controller';
 import { AccountSecurityController } from './modules/identity/account-security.controller';  /* v10.48 비밀번호 재설정 · 변경 · 탈퇴 · 잠금 */
 import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
@@ -298,6 +302,8 @@ import { LeadService } from './modules/lead/lead.service';
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
     AlimtalkAdminController,   // v10.142 (D138) 운영 화면 › 외부 연동 › 알림톡
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
+    IntegTestController,   // v10.144 (D140) 운영 화면 › 외부 연동 › 결제 · 계좌 연결 확인
+    SafenumController, SafenumAdminController,   // v10.145 (D141) 전화하기 · 통화 웹훅 · 운영 화면 「안심번호」
     PaymentClientKeyController,   // v10.128 (D128) 외부 연동 키
   ],
   providers: [
@@ -375,6 +381,8 @@ import { LeadService } from './modules/lead/lead.service';
     IdentityVerifyService,
     AlimtalkService,
     EsignService,
+    IntegTestService,
+    SafenumService,
     MarketService, SafetyService, BizAxisService,   // v10.31 (w2)
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

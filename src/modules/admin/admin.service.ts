@@ -4,6 +4,7 @@ import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { IdentityVerifyService } from '../identity/identity-verify.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
+import { SafenumService } from '../listing/safenum.service';   // v10.145 (D141)
 import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
 
 /**
@@ -313,7 +314,7 @@ export class AdminService {
   }
 
   /** v10.141 (docs/214) — 본인인증 · 알림톡 방식(identity.* · alimtalk.*)은 최고 관리자만 — 회원 확인 · 바깥 발송에 걸린 설정 */
-  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.'); }   // v10.143 전자계약
+  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.') || key.startsWith('safenum.'); }   // v10.143 전자계약 · v10.145 안심번호
 
   /** v10.141 — identity.provider: MOCK 은 운영 서버(production)에서 못 고름 · NICE 는 키 3개가 있어야 함(없이 바꾸면 회원이 인증을 못 함)
    *  v10.142 — alimtalk.provider: MOCK 은 운영 서버에서 못 고름 · HTTP 는 키 2개 · ALIMTALK_URL 이 있어야 함
@@ -345,6 +346,14 @@ export class AdminService {
       }
       const [p] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM esign_documents WHERE state = 'PENDING' AND provider <> $1`, [v]);
       if (p.n) throw new PolicyViolation('ESIGN_PENDING_EXISTS', `다른 방식으로 대기 중인 전자서명 요청이 ${p.n}건 있습니다 — 끝나거나 취소된 뒤 바꾸십시오(외부 연동 › 전자계약).`);
+    }
+    /* v10.145 (D141) — safenum.provider: MOCK 은 운영 서버에서 못 고름 · HTTP 는 키 · 웹훅 비밀값 · SAFENUM_URL 이 있어야 함 */
+    if (key === 'safenum.provider') {
+      if (v === 'MOCK' && prod) throw new PolicyViolation('MOCK_NOT_ALLOWED', '가짜 번호(MOCK)는 운영 서버에서 고를 수 없습니다 — 점검판 전용입니다.');
+      if (v === 'HTTP') {
+        const miss = SafenumService.httpMissing();
+        if (miss.length) throw new PolicyViolation('SAFENUM_KEYS_MISSING', `안심번호 설정이 없습니다 — ${miss.join(' · ')} 를 넣은 뒤 바꾸십시오(키 · 웹훅 비밀값은 외부 연동 › 연동 키 · 주소는 .env).`);
+      }
     }
     if (key === 'notify.alimtalk_ready' && v.toLowerCase() === 'on') {
       const [p] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'alimtalk.provider'`);

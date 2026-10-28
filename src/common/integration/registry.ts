@@ -47,8 +47,11 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   { code: 'ALIMTALK', name: '알림톡 · SMS', dbRow: true, secretEnv: 'ALIMTALK_KEY',
     otherEnv: ['ALIMTALK_SENDER_KEY', 'ALIMTALK_URL', 'ALIMTALK_AUTH_HEADER', 'ALIMTALK_AUTH_PREFIX', 'ALIMTALK_RESULT_ID_PATH', 'ALIMTALK_TIMEOUT_MS', 'ALIMTALK_FALLBACK_SMS'], assume: null, adapter: 'STUB',
     files: ['src/common/alimtalk/alimtalk.service.ts', 'src/common/alimtalk/alimtalk.templates.ts', 'src/modules/partner/consult.service.ts'], doc: 'docs/215 · 설계 docs/213 · docs/93 3절' },
-  { code: 'SAFENUM', name: '050 안심번호', dbRow: true, secretEnv: 'SAFENUM_KEY', otherEnv: [], assume: null, adapter: 'NONE',
-    files: [], doc: '업체 미정' },
+  /* v10.145 (D141 · docs/221) — 업체 공통 HTTP 틀 · 방식 safenum.provider · 웹훅 /webhooks/safenum(HMAC). 업체 미정 — 정해지면 칸 이름 확인 */
+  { code: 'SAFENUM', name: '050 안심번호', dbRow: true, secretEnv: 'SAFENUM_KEY',
+    otherEnv: ['SAFENUM_WEBHOOK_SECRET', 'SAFENUM_URL', 'SAFENUM_ALLOC_PATH', 'SAFENUM_RELEASE_PATH', 'SAFENUM_AUTH_HEADER', 'SAFENUM_AUTH_PREFIX', 'SAFENUM_RESULT_ID_PATH', 'SAFENUM_RESULT_NUMBER_PATH', 'SAFENUM_EVT_ID_PATH', 'SAFENUM_EVT_NUMBER_PATH', 'SAFENUM_EVT_DURATION_PATH', 'SAFENUM_EVT_ENDED_PATH', 'SAFENUM_EVT_CALLER_PATH', 'SAFENUM_SIG_HEADER', 'SAFENUM_TS_HEADER', 'SAFENUM_TIMEOUT_MS'],
+    assume: null, adapter: 'STUB',
+    files: ['src/modules/listing/safenum.service.ts', 'src/modules/listing/safenum.controller.ts'], doc: 'docs/221 · 설계 docs/218' },
   /* v10.143 (D139 · docs/217) — 업체 공통 HTTP 틀 · 방식 esign.provider · 웹훅 /webhooks/esign(HMAC). 업체 미정 — 정해지면 칸 이름 확인 */
   { code: 'ESIGN', name: '전자계약', dbRow: true, secretEnv: 'ESIGN_API_KEY',
     otherEnv: ['ESIGN_WEBHOOK_SECRET', 'ESIGN_URL', 'ESIGN_CREATE_PATH', 'ESIGN_STATUS_PATH', 'ESIGN_CANCEL_PATH', 'ESIGN_AUTH_HEADER', 'ESIGN_AUTH_PREFIX', 'ESIGN_RESULT_ID_PATH', 'ESIGN_RESULT_SIGNERS_PATH', 'ESIGN_RESULT_STATE_PATH', 'ESIGN_RESULT_HASH_PATH', 'ESIGN_STATE_MAP', 'ESIGN_EVT_ID_PATH', 'ESIGN_EVT_DOC_PATH', 'ESIGN_EVT_TYPE_PATH', 'ESIGN_SIG_HEADER', 'ESIGN_TS_HEADER', 'ESIGN_TIMEOUT_MS'],

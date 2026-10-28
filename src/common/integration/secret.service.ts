@@ -39,6 +39,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'ALIMTALK', name: 'ALIMTALK_KEY', label: 'API 키', env: 'ALIMTALK_KEY', envRead: 'ALIMTALK_KEY', isPublic: false },
   { code: 'ALIMTALK', name: 'ALIMTALK_SENDER_KEY', label: '발신 프로필 키', env: 'ALIMTALK_SENDER_KEY', envRead: 'ALIMTALK_SENDER_KEY', isPublic: false },   // v10.142 (D138)
   { code: 'SAFENUM', name: 'SAFENUM_KEY', label: 'API 키', env: 'SAFENUM_KEY', envRead: 'SAFENUM_KEY', isPublic: false },
+  { code: 'SAFENUM', name: 'SAFENUM_WEBHOOK_SECRET', label: '웹훅 비밀값', env: 'SAFENUM_WEBHOOK_SECRET', envRead: 'SAFENUM_WEBHOOK_SECRET', isPublic: false },   // v10.145 (D141)
   /* 전부터 운영 화면에서 넣던 키 — 그 서비스가 DB 를 먼저 읽음(얹지 않음) · 이 화면에서도 같은 함수로 넣고 지움 */
   { code: 'MAP', name: 'KAKAO_REST_KEY', label: 'REST API 키', env: null, envRead: 'KAKAO_REST_KEY', isPublic: false },
   { code: 'MAP', name: 'KAKAO_JS_KEY', label: 'JavaScript 키(공개)', env: null, envRead: 'NEXT_PUBLIC_KAKAO_JS_KEY', isPublic: true },
