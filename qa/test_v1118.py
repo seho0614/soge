@@ -26,7 +26,7 @@ def rd(rel):
 
 M = rd('prisma/migrations/D124_i18n_profile/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 162 · 마지막 D124(v10.119 부터 D125 · 163 — test_v1119)', (len(mig), mig[-1] if mig else '') in ((162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts')), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 162 · 마지막 D124(v10.119 부터 D125 · 163 — test_v1119)', (len(mig), mig[-1] if mig else '') in ((162, 'D124_i18n_profile'), (163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin')), f'{len(mig)} · {mig[-1] if mig else ""}')
 ok('① 대상 셋 · 원문(문항 · 「문항:보기」 · 세그먼트 이름 · 설명) · 이전 대상 그대로',
    "'PROFILE_Q','PROFILE_OPT','AD_SEGMENT'" in M and "WHEN 'PROFILE_Q' THEN IF p_field = 'question'" in M and "split_part(p_id, ':', 2)" in M
    and "WHEN 'AD_SEGMENT' THEN IF p_field IN ('name','description')" in M and "WHEN 'HLT_PRODUCT' THEN" in M and "WHEN 'CATEGORY' THEN" in M, '')

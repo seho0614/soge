@@ -62,7 +62,7 @@ mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.p
 ok('① D135 — agent_drafts(대화와 함께 지움 · 7일) · 조회 기록 도구 7개 · 스위치 꺼짐 · 지우는 문장 없음 · 173',
    'CREATE TABLE IF NOT EXISTS public.agent_drafts' in D and 'ON DELETE CASCADE' in D and "interval '7 days'" in D
    and "'draft_inquiry','draft_return'" in D and "('agent.chat.drafts.enabled', 'off'" in D and 'ON CONFLICT (key) DO NOTHING' in D
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) == (173, 'D135_agent_chat_drafts'), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) in ((173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin')), f'{len(mig)} · {mig[-1]}')
 CT = rd('src/modules/agent/agent.controller.ts')
 ok('① 초안 읽기 API — 로그인 회원 · 본인 · 7일 · 제출 전 · 처음 열면 「열어 봄」',
    "@Get('me/agent/drafts/:id')" in CT and "@Roles('MEMBER'" in CT.split("@Get('me/agent/drafts/:id')")[1][:400]

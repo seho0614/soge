@@ -34,7 +34,7 @@ def keys(d, pre=''):
 
 
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 없음 — 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'),), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 없음 — 163 · 마지막 D125', (len(mig), mig[-1] if mig else '') in ((163, 'D125_i18n_more_targets'), (164, 'D126_i18n_db_text'), (165, 'D127_partner_badge_codes'), (166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'),), f'{len(mig)} · {mig[-1] if mig else ""}')
 PG = rd('site/src/app/ai/profile/page.tsx'); PS = rd('site/src/components/ProfileSurvey.tsx'); DR = rd('site/src/lib/profileDraft.ts')
 SW = rd('site/src/components/auth/SignupWizard.tsx'); SP = rd('site/src/components/auth/signup/StepProfile.tsx')
 ok('① 성향 화면 — 손님을 로그인으로 보내지 않음 · 손님은 공개 문항 · guest',

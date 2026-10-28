@@ -31,7 +31,7 @@ def rd(rel):
 # ── ① 마이그레이션 ─────────────────────────────────────────────────────
 M = rd('prisma/migrations/D128_integ_keys_admin/migration.sql')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'),), f'{len(mig)} · {mig[-1] if mig else ""}')
+ok('① 마이그레이션 166 · 마지막 D128', (len(mig), mig[-1] if mig else '') in ((166, 'D128_integ_keys_admin'), (167, 'D129_agent_chat_handoff'), (168, 'D130_i18n_company_name'), (169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'),), f'{len(mig)} · {mig[-1] if mig else ""}')
 PAIRS = re.findall(r"\('([A-Z]+)','([A-Z_]+)'\)", M.split('ADD CONSTRAINT ck_integ_secret_name')[1].split(';')[0]) if 'ADD CONSTRAINT ck_integ_secret_name' in M else []
 ok('① 받는 키 15(전부터 4 + 새 11) · MAIL 줄(오픈을 막지 않음 · 발신 IP 불필요) · ON CONFLICT DO NOTHING',
    len(PAIRS) == 15 and ('PG', 'TOSS_SECRET_KEY') in PAIRS and ('MAIL', 'SMTP_PASS') in PAIRS and ('AGENT', 'ANTHROPIC_API_KEY') in PAIRS
@@ -43,7 +43,8 @@ ok('① 형식 — 토스 시크릿(sk) · 클라이언트(ck) · SES 비밀번�
 # ── ② 코드 ─────────────────────────────────────────────────────────────
 S = rd('src/common/integration/secret.service.ts'); C = rd('src/modules/site/integration-keys.controller.ts'); AM = rd('src/app.module.ts')
 svc_pairs = set(re.findall(r"\{ code: '([A-Z]+)', name: '([A-Z_]+)'", S))
-ok('② 서비스 키 목록 = DB 받는 키 15', svc_pairs == set(PAIRS), str(sorted(set(PAIRS) ^ svc_pairs)))
+EXTRA = {('MAIL', 'SMTP_USER')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D136_mail_admin')) else set()   # v10.140 SMTP 사용자 이름(test_v1140)
+ok('② 서비스 키 목록 = DB 받는 키 15(v10.140 부터 16)', svc_pairs == set(PAIRS) | EXTRA, str(sorted((set(PAIRS) | EXTRA) ^ svc_pairs)))
 ok('② process.env 에 얹음 — 띄울 때(못 읽으면 다시) · 1분 · 저장 · 지운 직후 · 한 줄로(겹침 없음) · 지우면 띄울 때 .env 값으로 · 실패하면 이전 값 · 키 값은 로그에 없음',
    'EVERY_MS = 60_000' in S and 'process.env[env] = r.v' in S and 'this.envAtBoot.get(env)' in S and 'delete process.env[env]' in S
    and S.count('this.refresh()') >= 4 and 'this.chain = run.then(() => undefined);' in S and "e?.code ?? e?.name ?? 'error'" in S and 'r.v}' not in S, '')

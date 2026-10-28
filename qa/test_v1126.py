@@ -44,7 +44,7 @@ ok(f'① 단계 B 모듈(partner · affiliate · health · lead)의 오류 · �
 ok(f'① 단계 A 모듈 {len(ka)}종도 그대로 모두 사전에', ka and not ma, ' | '.join(ma[:3]))
 badp = [k for k, v in D.items() if sorted(re.findall(r'\{\d+\}', k)) != sorted(re.findall(r'\{\d+\}', v))]
 ok(f'① 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', len(D) >= 800 and not badp and not any(re.search('[가-힣]', v.replace('심의필 제2026-0451호', '')) for v in D.values()), ' | '.join(badp[:3]))
-ok('① 판 v10.126 이상 · 마이그레이션 없음(165)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 126) and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (165, 166, 167, 168, 169, 170, 171, 172, 173), rd('VERSION').strip())
+ok('① 판 v10.126 이상 · 마이그레이션 없음(165)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 126) and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (165, 166, 167, 168, 169, 170, 171, 172, 173, 174), rd('VERSION').strip())
 SAMPLES = [   # 조각 글을 이어 붙인 실제 모양(health-return · lead-cash · partner-lead · lead · recurring) — 영어 결과에 한글이 남으면 안 됨
     '승인하고 왕복 배송비 3,000원을 빼고 12,000원을 환불했습니다(시험 결제 — 실제 돈 없음). 재고를 되돌렸습니다.',
     '승인했습니다. 결제 전 주문이라 환불할 것이 없습니다. 개봉 반품이라 재고로 되돌리지 않았습니다.',

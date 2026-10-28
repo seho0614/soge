@@ -44,7 +44,7 @@ M = rd('prisma/migrations/D131_terms_ai_adpersonal_drafts/migration.sql')
 mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', x)))
 ok('① D131 — 세 글이 terms-text.js 와 같음 · 게시 안 함(PUBLISHED 로 바꾸는 문장 없음) · 지우는 문장 없음 · 169',
    all(f"$TERM${b}$TERM$" in M for b in (O, A)) and (f"$TERM${P}$TERM$" in M or f"$TERM${P}$TERM$" in rd('prisma/migrations/D132_terms_privacy_fill/migration.sql') or f"$TERM${P}$TERM$" in rd('prisma/migrations/D133_agent_member_lookup/migration.sql'))   # v10.135 — 처리방침 글은 D132 가 이어 받음 and "SET status = 'PUBLISHED'" not in M and "'LEGAL_REVIEW'" in M
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts')), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((169, 'D131_terms_ai_adpersonal_drafts'), (170, 'D132_terms_privacy_fill'), (171, 'D133_agent_member_lookup'), (172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin')), f'{len(mig)} · {mig[-1]}')
 INV = rd('scripts/verify-invariants.sh')
 ok('① 불변식 SV-T5 — 새 판 초안이 있는 코드는 게시된 옛 판을 견주지 않음', "NOT (status = 'PUBLISHED' AND EXISTS (SELECT 1 FROM terms d WHERE d.code = t.code AND d.status IN ('DRAFT','LEGAL_REVIEW')))" in INV, '')
 ok('① 판 v10.133 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 133), rd('VERSION').strip())
