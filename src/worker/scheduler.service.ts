@@ -5,6 +5,7 @@ import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
+import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
@@ -41,6 +42,7 @@ export class SchedulerService {
     private readonly leadCash: LeadCashService,
     private readonly geo: GeoService,
     private readonly mail: MailService,
+    private readonly alimtalk: AlimtalkService,
     private readonly translate: TranslateService,
     private readonly reviewShadow: ReviewShadowService,
     private readonly agentChat: AgentChatService,
@@ -323,9 +325,12 @@ export class SchedulerService {
         }
         /* v10.85 — 대기(QUEUED) 메일을 실제로 보냄(메일 설정 + notify.email_verified 가 모두 있을 때만 · src/common/mail/notify-mail.ts) */
         const mailed = await new NotifyMailSender(this.db, this.mail).run();
+        /* v10.142 (D138) — 대기(QUEUED) SMS 를 알림톡 일반 템플릿으로(방식 · 키 · 승인 · 알림톡 켜기가 모두 있을 때만 · 오류는 기록 남기고 다음 줄) */
+        let talked: Awaited<ReturnType<AlimtalkService['runNotify']>> | { error: string };
+        try { talked = await this.alimtalk.runNotify(); } catch (e) { talked = { error: String((e as Error)?.message ?? e).slice(0, 200) }; }
         affected = sent;
-        detail = { sent, skipped, stuck: stuck.length, ready: [...ready], mail: mailed,
-                   note: mailed.ready ? '메일은 SES 로 보냄 · 문자(SMS)는 어댑터 연동 후' : '메일 설정 전 — 대기열에만 남김(SMTP_* · notify.email_verified)' };
+        detail = { sent, skipped, stuck: stuck.length, ready: [...ready], mail: mailed, alimtalk: talked,
+                   note: mailed.ready ? '메일은 SES 로 보냄 · 문자(SMS)는 알림톡이 준비되면 알림톡으로' : '메일 설정 전 — 대기열에만 남김(SMTP_* · notify.email_verified)' };
         break;
       }
 

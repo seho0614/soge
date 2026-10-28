@@ -6,7 +6,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { normSido } from '../../common/region';
 import { MailService } from '../../common/mail/mail.service';
-import { integrationLive } from '../../common/integration/switches';
+import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
 import { I18nService } from '../i18n/i18n.service';
 
 /**
@@ -48,7 +48,7 @@ export interface ConsultCreate {
 @Injectable()
 export class ConsultService {
   constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService,
-              private readonly mail: MailService, private readonly i18n: I18nService) {}
+              private readonly mail: MailService, private readonly i18n: I18nService, private readonly alimtalk: AlimtalkService) {}
   private get me() { return RequestCtx.actorId(); }
 
   private static normPhone(p: string) { return (p ?? '').replace(/[^0-9]/g, ''); }
@@ -60,11 +60,11 @@ export class ConsultService {
    * 알림톡으로 보낼 수 있는가 — v10.44: **키(ALIMTALK_KEY)가 있고** integrations.ALIMTALK = LIVE 일 때만.
    *   전에는 상태만 봤습니다. 발송 어댑터가 아직 없는데 운영 화면에서 LIVE 로 바꾸면
    *   휴대폰으로 아무것도 가지 않는데 「보냈습니다」가 나갔습니다(대표 결정 「알림톡 수정」 · 2026-10-15).
-   *   알림톡 대행사를 정해 어댑터를 붙이는 판에서 이 판단을 그 어댑터의 configured 로 바꿉니다(docs/93).
+   * v10.142 (D138 · docs/215) — 어댑터가 생겨 판단을 AlimtalkService.ready('CONSULT_OTP') 로 바꿈
+   *   (방식 MOCK · HTTP + 키 · 주소 + 상담 인증번호 템플릿 승인 + 알림톡 켜기 notify.alimtalk_ready).
    */
-  private async notifyReady(): Promise<boolean> {
-    if (!process.env.ALIMTALK_KEY?.trim()) return false;
-    return integrationLive(this.db, 'ALIMTALK');
+  private notifyReady(): Promise<boolean> {
+    return this.alimtalk.ready('CONSULT_OTP');
   }
 
   /** 상담 업종 목록 — 공개 · 준비 중 상태까지 내려 화면이 "준비 중"을 그대로 보이게 합니다 */
@@ -200,8 +200,17 @@ export class ConsultService {
     await this.db.query(`UPDATE consult_requests SET otp_hash = $2 WHERE id = $1`,
       [row.id, ConsultService.sha(row.id + ':' + code)]);
 
-    /* 알림톡 연동 후: 알림톡이면 여기서 발송 어댑터를 부릅니다(연동 7건 중 알림톡). */
-    let note = alimtalk ? '인증번호를 보냈습니다.' : '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.';
+    /* v10.142 — 알림톡이 준비되면 휴대폰으로(실패해도 메일이 가면 그대로 · 둘 다 못 보내면 신청을 지우고 OTP_SEND_FAILED) */
+    let atOk = false;
+    if (alimtalk) {
+      const r = await this.alimtalk.send({ to: phone, template: 'CONSULT_OTP', vars: { 인증번호: code, 분: OTP_TTL_MIN }, purpose: 'CONSULT_OTP' });
+      atOk = r.ok;
+    }
+    let note = atOk ? '휴대폰(알림톡)으로 인증번호를 보냈습니다.' : '알림톡 연동 전입니다 — 개발 환경에서만 인증번호를 응답에 싣습니다.';
+    if (alimtalk && !atOk && !byMail) {
+      await this.db.query(`DELETE FROM consult_requests WHERE id = $1 AND lead_id IS NULL`, [row.id]);
+      throw new PolicyViolation('OTP_SEND_FAILED', '인증번호를 보내지 못했습니다. 휴대폰 번호를 확인하신 뒤 다시 시도해 주십시오.');
+    }
     if (byMail) {
       const sent = await this.mail.send({
         to: email,
@@ -211,13 +220,13 @@ export class ConsultService {
             + `직접 신청하지 않으셨다면 이 메일을 무시하십시오 — 확인하지 않은 신청은 업체에 가지 않습니다.\n\n`
             + `본 메일은 발신 전용입니다.\n(주)한국바이오헬스케어 소개뱅크 사업부`,
       });
-      if (!sent.ok && !alimtalk) {
+      if (!sent.ok && !atOk) {
         await this.db.query(`DELETE FROM consult_requests WHERE id = $1 AND lead_id IS NULL`, [row.id]);
         throw new PolicyViolation('OTP_SEND_FAILED', '인증번호 메일을 보내지 못했습니다. 이메일 주소를 확인하신 뒤 다시 시도해 주십시오.');
       }
       const where = ConsultService.maskEmail(email);
       if (sent.ok) {
-        note = alimtalk
+        note = atOk
           ? `휴대폰(알림톡)과 이메일 ${where} 로 같은 인증번호를 보냈습니다. 둘 중 하나로 받은 번호를 넣어 주십시오.`
           : `${where} 로 인증번호를 보냈습니다(메일). 받은편지함에 없으면 스팸함을 확인해 주십시오.`;
       }

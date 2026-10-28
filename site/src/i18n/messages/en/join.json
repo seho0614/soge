@@ -69,7 +69,31 @@
     "noServer": "Couldn't connect to the verification server.",
     "working": "Verifying…",
     "submit": "Verify with PASS",
-    "stub": "Integration in progress — <strong>no real check was performed.</strong>"
+    "stub": "Integration in progress — <strong>no real check was performed.</strong>",
+    "submitWindow": "Verify with your phone",
+    "windowNote": "Finish carrier, name, date of birth and text verification in the NICE window and you'll return here.",
+    "mockNote": "Test environment — a mock verification window will open (not a real check)."
+  },
+  "verifyReturn": {
+    "title": "Verification result",
+    "working": "Checking your verification result…",
+    "done": "Identity verification is complete.",
+    "failed": "Identity verification wasn't completed.",
+    "noServer": "Couldn't connect to the verification server.",
+    "missing": "No verification result. Please start again.",
+    "nameDiff": "The verified name differs from your member name — please check your member name.",
+    "continue": "Continue where you left off ›",
+    "back": "Back to identity and business verification"
+  },
+  "verifyMock": {
+    "title": "Mock verification window (test)",
+    "note": "Test-only screen — this is not a real identity check.",
+    "name": "Name",
+    "birth": "Date of birth (8 digits)",
+    "need": "Enter your name and 8-digit date of birth.",
+    "failed": "Couldn't process this.",
+    "ok": "Verify",
+    "cancel": "Cancel"
   },
   "bizVerify": {
     "need10": "Please enter the 10-digit business registration number.",

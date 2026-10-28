@@ -186,6 +186,10 @@ import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세�
 import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발송(SES SMTP) · 상담 인증번호 */
 import { MailAdminService } from './common/mail/mail-admin.service';   /* v10.140 (D136) 운영 화면 「메일」 */
 import { MailAdminController } from './modules/site/mail-admin.controller';
+import { IdentityVerifyService } from './modules/identity/identity-verify.service';   /* v10.141 (D137) 본인인증 표준창 */
+import { IdentityVerifyController } from './modules/identity/identity-verify.controller';
+import { AlimtalkService } from './common/alimtalk/alimtalk.service';   /* v10.142 (D138) 알림톡 */
+import { AlimtalkAdminController } from './modules/site/alimtalk-admin.controller';
 import { AccountSecurityController } from './modules/identity/account-security.controller';  /* v10.48 비밀번호 재설정 · 변경 · 탈퇴 · 잠금 */
 import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
@@ -289,6 +293,8 @@ import { LeadService } from './modules/lead/lead.service';
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
+    IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
+    AlimtalkAdminController,   // v10.142 (D138) 운영 화면 › 외부 연동 › 알림톡
     PaymentClientKeyController,   // v10.128 (D128) 외부 연동 키
   ],
   providers: [
@@ -363,6 +369,8 @@ import { LeadService } from './modules/lead/lead.service';
     EtaxService,
     MailService,
     MailAdminService,
+    IdentityVerifyService,
+    AlimtalkService,
     MarketService, SafetyService, BizAxisService,   // v10.31 (w2)
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

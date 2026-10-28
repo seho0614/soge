@@ -66,7 +66,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
           ) : (
             <>
               <div className="my-nt info">{t.rich('idNote', { b: (c) => <b>{c}</b> })}</div>
-              <Msgs ns={['join']}><VerifyPanel /></Msgs>
+              <Msgs ns={['join']}><VerifyPanel next={next} /></Msgs>
             </>
           )}
         </li>

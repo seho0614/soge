@@ -18,26 +18,7 @@ export class PublicService {
   constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly drafts: AgentDraftService) {}
   private get me() { return RequestCtx.actorId()!; }
 
-  /**
-   * 본인인증 (INV-7 게이트의 전제).
-   *
-   * PASS 계약 전까지 스텁입니다. stub: true 를 그대로 실어 보내 화면이 표시하게 합니다 —
-   * "클릭 즉시 통과"가 실동작처럼 보이면 안 됩니다.
-   */
-  async verifyIdentity(provider = 'PASS') {
-    const stub = !process.env.PASS_API_KEY;
-    return this.db.transaction(async () => {
-      await this.db.query(
-        `INSERT INTO identity_verifications
-           (account_id, provider, result, ci_hash, completed_at, raw)
-         VALUES ($1,$2,'SUCCESS',$3,now(),$4::jsonb)`,
-        [this.me, provider, stub ? 'stub-ci' : null, JSON.stringify({ stub })]);
-      const [row] = await this.db.query<{ identity_verified_at: Date }>(
-        `UPDATE accounts SET identity_verified_at = now()
-          WHERE id = $1 RETURNING identity_verified_at`, [this.me]);
-      return { success: true, stub, verifiedAt: row.identity_verified_at };
-    });
-  }
+  /* 본인인증은 v10.141 부터 IdentityVerifyService(modules/identity · 표준창 · 옛 단추 STUB) */
 
   /** 통합 검색. 매물과 요청을 함께 봅니다 */
   async search(q: string, limit = 20) {

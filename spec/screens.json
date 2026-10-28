@@ -198,7 +198,11 @@
    "gates": [],
    "apis": [
     "POST /verifications/identity",
-    "POST /businesses"
+    "POST /businesses",
+    "GET /verifications/identity/mode",
+    "POST /verifications/identity/start",
+    "POST /verifications/identity/complete",
+    "POST /verifications/identity/mock-sign"
    ],
    "nav": "SB-MYP-DSH-010",
    "state": "business.status"
@@ -1643,7 +1647,12 @@
     "GET /admin/mail/status",
     "GET /admin/mail/deliveries",
     "POST /admin/mail/connect",
-    "POST /admin/mail/test"
+    "POST /admin/mail/test",
+    "GET /admin/identity/status",
+    "GET /admin/alimtalk/status",
+    "GET /admin/alimtalk/sends",
+    "PUT /admin/alimtalk/templates/{code}",
+    "POST /admin/alimtalk/test"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PublicService } from './public.service';
+import { IdentityVerifyService } from '../identity/identity-verify.service';
 import {
   CreateDisputeDto, CreateInquiryDto, CreateReviewDto, FaqDto,
   IdentityResultDto, IdentityVerifyDto, RequestSettlementDto, SearchResultDto,
@@ -16,21 +17,22 @@ import { Audit } from '../../core/audit.interceptor';
 @Controller('api/v1')
 @ApiResponse({ status: 400, description: '형식 오류', type: ErrorDto })
 export class PublicController {
-  constructor(private readonly svc: PublicService) {}
+  constructor(private readonly svc: PublicService, private readonly idv: IdentityVerifyService) {}
 
   @Post('verifications/identity')
   @ApiBearerAuth()
   @Roles('MEMBER')
   @ApiOperation({
-    summary: '본인인증',
+    summary: '본인인증(시험용 STUB)',
     description:
-      'PASS 계약 전까지 스텁입니다. 응답의 stub 이 true 면 **실제 확인이 이루어지지 않았습니다** — ' +
-      '화면에 그대로 표시하십시오.',
+      '본인인증 방식(identity.provider)이 STUB 일 때만 — 바로 통과하고 stub: true(**실제 확인이 이루어지지 않았습니다** — 화면에 표시). ' +
+      'MOCK · NICE 이면 409 USE_STANDARD_WINDOW → POST /verifications/identity/start (v10.141).',
   })
   @ApiOkResponse({ type: IdentityResultDto })
+  @ApiResponse({ status: 409, description: 'USE_STANDARD_WINDOW', type: ErrorDto })
   @Audit('IDENTITY_VERIFY', 'ACCOUNT')
   verify(@Body() dto: IdentityVerifyDto) {
-    return this.svc.verifyIdentity(dto.provider ?? 'PASS');
+    return this.idv.stubVerify(dto.provider ?? 'PASS');
   }
 
   @Get('search')

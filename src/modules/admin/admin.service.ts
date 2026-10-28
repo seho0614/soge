@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { IdentityVerifyService } from '../identity/identity-verify.service';
+import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
 
 /**
  * 백오피스 조회·처리.
@@ -278,6 +280,9 @@ export class AdminService {
     if (AdminService.isAiSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('AI_SETTING_SUPER', 'AI 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    if (AdminService.isIntegSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('INTEG_SETTING_SUPER', '본인인증 · 알림톡 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */
@@ -291,6 +296,7 @@ export class AdminService {
     await this.checkSwitch(key, value);
     await this.checkAiSwitch(key, value);
     await this.checkAiModel(key, value);
+    await this.checkIntegProvider(key, value);
     const [row] = await this.db.query(
       `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
         WHERE key = $1 RETURNING key, value`,
@@ -303,6 +309,38 @@ export class AdminService {
   static isAiSetting(key: string): boolean {
     return key.startsWith('agent.') || ['i18n.auto_translate.enabled', 'i18n.board_on_view', 'i18n.translate_model', 'i18n.auto_langs', 'i18n.engine',
       'i18n.board_daily_member', 'i18n.board_daily_guest', 'i18n.board_daily_guest_total'].includes(key);   // v10.135 — 볼 때 번역 하루 횟수도 AI 한도
+  }
+
+  /** v10.141 (docs/214) — 본인인증 · 알림톡 방식(identity.* · alimtalk.*)은 최고 관리자만 — 회원 확인 · 바깥 발송에 걸린 설정 */
+  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.'); }
+
+  /** v10.141 — identity.provider: MOCK 은 운영 서버(production)에서 못 고름 · NICE 는 키 3개가 있어야 함(없이 바꾸면 회원이 인증을 못 함)
+   *  v10.142 — alimtalk.provider: MOCK 은 운영 서버에서 못 고름 · HTTP 는 키 2개 · ALIMTALK_URL 이 있어야 함
+   *            notify.alimtalk_ready = on: 방식 · 키가 갖춰지고 승인된 템플릿이 하나는 있어야 함(없이 켜면 회원에게 「보냈습니다」인데 안 감) */
+  private async checkIntegProvider(key: string, value: string) {
+    const v = (value ?? '').trim();
+    const prod = (process.env.NODE_ENV ?? 'development') === 'production';
+    if (key === 'identity.provider') {
+      if (v === 'MOCK' && prod) throw new PolicyViolation('MOCK_NOT_ALLOWED', '가짜 표준창(MOCK)은 운영 서버에서 고를 수 없습니다 — 점검판 전용입니다.');
+      if (v === 'NICE') {
+        const miss = IdentityVerifyService.keysMissing();
+        if (miss.length) throw new PolicyViolation('IDENTITY_KEYS_MISSING', `NICE 키가 없습니다 — 외부 연동 › 연동 키에 ${miss.join(' · ')} 를 넣은 뒤 바꾸십시오.`);
+      }
+    }
+    if (key === 'alimtalk.provider') {
+      if (v === 'MOCK' && prod) throw new PolicyViolation('MOCK_NOT_ALLOWED', '시험 발송(MOCK)은 운영 서버에서 고를 수 없습니다 — 점검판 전용입니다.');
+      if (v === 'HTTP') {
+        const miss = AlimtalkService.httpMissing();
+        if (miss.length) throw new PolicyViolation('ALIMTALK_KEYS_MISSING', `알림톡 설정이 없습니다 — ${miss.join(' · ')} 를 넣은 뒤 바꾸십시오(키는 외부 연동 › 연동 키 · 주소는 .env).`);
+      }
+    }
+    if (key === 'notify.alimtalk_ready' && v.toLowerCase() === 'on') {
+      const [p] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'alimtalk.provider'`);
+      const [t] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM alimtalk_templates WHERE review_state = 'APPROVED' AND vendor_code IS NOT NULL`);
+      if (!AlimtalkService.configuredFor(AlimtalkService.readMode(p?.v ?? 'NONE')) || !t.n) {
+        throw new PolicyViolation('ALIMTALK_NOT_READY', '알림톡이 준비되지 않았습니다 — 방식 · 키를 갖추고 승인된 템플릿이 하나는 있어야 켤 수 있습니다(외부 연동 › 알림톡).');
+      }
+    }
   }
 
   /** v10.135 (docs/202) — AI 모델은 요금표(agent_model_prices)에 있는 것만 — 요금을 모르면 월 상한을 셀 수 없음(각 통로도 요금표에 없으면 부르지 않음) */

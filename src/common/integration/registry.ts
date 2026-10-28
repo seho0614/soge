@@ -33,8 +33,9 @@ export interface IntegrationEntry {
 }
 
 export const INTEGRATIONS: IntegrationEntry[] = [
-  { code: 'PASS', name: '본인인증', dbRow: true, secretEnv: 'PASS_API_KEY', otherEnv: [], assume: null, adapter: 'STUB',
-    files: ['src/modules/identity/verification.provider.ts'], doc: 'docs/93 3절 · NICE 묶음 안(decisions/open-blockers #4)' },
+  /* v10.141 (D137 · docs/214) — NICE 표준창 틀(키 NICE_CLIENT_ID · NICE_CLIENT_SECRET · NICE_PRODUCT_ID · 방식 identity.provider). 공개 자료 기준 — 계약 뒤 안내서로 확인 */
+  { code: 'PASS', name: '본인인증', dbRow: true, secretEnv: 'PASS_API_KEY', otherEnv: ['NICE_CLIENT_ID', 'NICE_CLIENT_SECRET', 'NICE_PRODUCT_ID', 'NICE_API_BASE', 'NICE_WINDOW_URL', 'NICE_TIMEOUT_MS'], assume: null, adapter: 'STUB',
+    files: ['src/modules/identity/verification.provider.ts', 'src/modules/identity/identity-verify.service.ts', 'src/modules/identity/nice-identity.adapter.ts'], doc: 'docs/214 · 설계 docs/213 · NICE 묶음 안(decisions/open-blockers #4)' },
   { code: 'BANK', name: '1원 계좌인증', dbRow: true, secretEnv: 'BANK_VERIFY_KEY',
     otherEnv: ['BANK_VERIFY_URL', 'BANK_VERIFY_SEND_PATH', 'BANK_VERIFY_CONFIRM_PATH', 'BANK_VERIFY_AUTH_HEADER', 'BANK_VERIFY_AUTH_PREFIX', 'BANK_VERIFY_CODE_MODE'],
     assume: 'bank', adapter: 'REAL', files: ['src/modules/billing/bank-verify.provider.ts'], doc: 'bank-verify.provider.ts 머리말' },
@@ -42,8 +43,10 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     files: ['src/modules/identity/verification.provider.ts'], doc: 'verification.provider.ts 머리말' },
   { code: 'PG', name: '전자결제(토스페이먼츠)', dbRow: true, secretEnv: 'TOSS_SECRET_KEY', otherEnv: ['TOSS_API_BASE', 'NEXT_PUBLIC_TOSS_CLIENT_KEY'], assume: 'payment', adapter: 'REAL',
     files: ['src/modules/billing/payment.provider.ts'], doc: 'docs/62 9절' },
-  { code: 'ALIMTALK', name: '알림톡 · SMS', dbRow: true, secretEnv: 'ALIMTALK_KEY', otherEnv: [], assume: null, adapter: 'NONE',
-    files: ['src/modules/partner/consult.service.ts'], doc: 'docs/93 3절(새 연동 붙이는 법의 예)' },
+  /* v10.142 (D138 · docs/215) — 대행사 공통 HTTP 틀 · 방식 alimtalk.provider · 켜기 notify.alimtalk_ready. 대행사 미정 — 정해지면 칸 이름 확인 */
+  { code: 'ALIMTALK', name: '알림톡 · SMS', dbRow: true, secretEnv: 'ALIMTALK_KEY',
+    otherEnv: ['ALIMTALK_SENDER_KEY', 'ALIMTALK_URL', 'ALIMTALK_AUTH_HEADER', 'ALIMTALK_AUTH_PREFIX', 'ALIMTALK_RESULT_ID_PATH', 'ALIMTALK_TIMEOUT_MS', 'ALIMTALK_FALLBACK_SMS'], assume: null, adapter: 'STUB',
+    files: ['src/common/alimtalk/alimtalk.service.ts', 'src/common/alimtalk/alimtalk.templates.ts', 'src/modules/partner/consult.service.ts'], doc: 'docs/215 · 설계 docs/213 · docs/93 3절' },
   { code: 'SAFENUM', name: '050 안심번호', dbRow: true, secretEnv: 'SAFENUM_KEY', otherEnv: [], assume: null, adapter: 'NONE',
     files: [], doc: '업체 미정' },
   { code: 'ESIGN', name: '전자계약', dbRow: true, secretEnv: 'ESIGN_API_KEY', otherEnv: [], assume: null, adapter: 'STUB',

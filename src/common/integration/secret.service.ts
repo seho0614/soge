@@ -31,8 +31,12 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'MAIL', name: 'SMTP_USER', label: 'SMTP 사용자 이름', env: 'SMTP_USER', envRead: 'SMTP_USER', isPublic: false },   // v10.140 (D136)
   { code: 'MAIL', name: 'SMTP_PASS', label: 'SMTP 비밀번호', env: 'SMTP_PASS', envRead: 'SMTP_PASS', isPublic: false },
   { code: 'PASS', name: 'PASS_API_KEY', label: 'API 키', env: 'PASS_API_KEY', envRead: 'PASS_API_KEY', isPublic: false },
+  { code: 'PASS', name: 'NICE_CLIENT_ID', label: 'NICE 클라이언트 ID', env: 'NICE_CLIENT_ID', envRead: 'NICE_CLIENT_ID', isPublic: false },   // v10.141 (D137)
+  { code: 'PASS', name: 'NICE_CLIENT_SECRET', label: 'NICE 클라이언트 비밀값', env: 'NICE_CLIENT_SECRET', envRead: 'NICE_CLIENT_SECRET', isPublic: false },
+  { code: 'PASS', name: 'NICE_PRODUCT_ID', label: 'NICE 상품 ID', env: 'NICE_PRODUCT_ID', envRead: 'NICE_PRODUCT_ID', isPublic: false },
   { code: 'ESIGN', name: 'ESIGN_API_KEY', label: 'API 키', env: 'ESIGN_API_KEY', envRead: 'ESIGN_API_KEY', isPublic: false },
   { code: 'ALIMTALK', name: 'ALIMTALK_KEY', label: 'API 키', env: 'ALIMTALK_KEY', envRead: 'ALIMTALK_KEY', isPublic: false },
+  { code: 'ALIMTALK', name: 'ALIMTALK_SENDER_KEY', label: '발신 프로필 키', env: 'ALIMTALK_SENDER_KEY', envRead: 'ALIMTALK_SENDER_KEY', isPublic: false },   // v10.142 (D138)
   { code: 'SAFENUM', name: 'SAFENUM_KEY', label: 'API 키', env: 'SAFENUM_KEY', envRead: 'SAFENUM_KEY', isPublic: false },
   /* 전부터 운영 화면에서 넣던 키 — 그 서비스가 DB 를 먼저 읽음(얹지 않음) · 이 화면에서도 같은 함수로 넣고 지움 */
   { code: 'MAP', name: 'KAKAO_REST_KEY', label: 'REST API 키', env: null, envRead: 'KAKAO_REST_KEY', isPublic: false },

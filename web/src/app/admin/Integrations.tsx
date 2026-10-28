@@ -7,6 +7,8 @@ import { MapKeys } from './MapKeys';
 import { WeatherKeys } from './WeatherKeys';
 import { IntegrationKeys } from './IntegrationKeys';
 import { MailPanel } from './MailPanel';
+import { IdentityPanel } from './IdentityPanel';
+import { AlimtalkPanel } from './AlimtalkPanel';
 
 interface Integration {
   code: string; name: string; purpose: string; provider: string | null;
@@ -200,6 +202,12 @@ export function Integrations() {
 
       {/* v10.140 (D136 · docs/211) — 메일 준비 상태 · 연결 확인 · 시험 메일 · 발송 기록 */}
       <MailPanel />
+
+      {/* v10.141 (D137) — 본인인증(NICE 표준창) 방식 · 키 · 최근 30일 */}
+      <IdentityPanel />
+
+      {/* v10.142 (D138) — 알림톡 방식 · 키 · 템플릿 심의 · 시험 발송 · 보낸 기록 */}
+      <AlimtalkPanel />
 
       {/* v10.46 (D099 · docs/96) — 카카오맵 키(이 두 키만 화면에서 넣음 · 2026-10-17 대표 결정) */}
       <MapKeys />
