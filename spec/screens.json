@@ -607,7 +607,8 @@
    ],
    "gates": [],
    "apis": [
-    "POST /inquiries"
+    "POST /inquiries",
+    "GET /me/agent/drafts/{id}"
    ],
    "nav": "SB-HOM-CSB-010"
   },
@@ -2721,7 +2722,8 @@
     "POST /me/health/returns",
     "POST /me/health/returns/{id}/fee/pay",
     "POST /me/health/returns/{id}/fee/confirm",
-    "GET /site-settings/payment"
+    "GET /site-settings/payment",
+    "GET /me/agent/drafts/{id}"
    ],
    "nav": "SB-HLT-MYO-020"
   },
