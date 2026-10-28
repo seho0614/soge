@@ -54,7 +54,7 @@ ok('② 키 확인은 모델 목록(토큰 안 씀 · 비용 없음 · 다시 �
    and "this.log.warn(`AI 키 확인 실패 — ${kind}" in S, '')
 ok('② 키 API 4개 — 모두 SUPER · 넣기 · 지우기는 감사 기록(응답에는 끝 4자리만)',
    all(x in C for x in ("@Get('admin/agent/key')", "@Put('admin/agent/key')", "@Delete('admin/agent/key')", "@Post('admin/agent/key/test')"))
-   and C.split("@Get('admin/agent/key')")[1].count("@Roles('SUPER')") == 4
+   and C.split("@Get('admin/agent/key')")[1].split("@Put('admin/agent/model-prices')")[0].count("@Roles('SUPER')") == 4   # v10.135 — 요금표 API(SUPER)는 키 API 뒤라 빼고 셈
    and "@Audit('AGENT_KEY_SET', 'INTEGRATION')" in C and "@Audit('AGENT_KEY_CLEAR', 'INTEGRATION')" in C, '')
 scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']

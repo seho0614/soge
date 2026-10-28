@@ -72,6 +72,10 @@ if API and DB:
     before = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
     # 다시 돌림(재실행 안전) — 마이그레이션의 DO 블록만 그대로 실행
     body = M.split('-- =====================================================================\n', 2)[-1]
+    # v10.135 — D132 가 처리방침 초안 글을 다시 바꿈. 운영처럼 D131 → D132 순서로 다시 돌려 마지막 글이 그대로인지 봄
+    M2 = rd('prisma/migrations/D132_terms_privacy_fill/migration.sql')
+    if M2:
+        body += '\n' + M2.split('-- =====================================================================\n', 2)[-1]
     r = subprocess.run(['psql', DB, '-X', '-q', '-v', 'ON_ERROR_STOP=1'], input=body, capture_output=True, text=True)
     after = psql("SELECT string_agg(code || version || md5(body), ',' ORDER BY code, version) FROM terms WHERE code IN ('PRIVACY','OUTSOURCE','ADPERSONAL')")
     ok('② 다시 돌려도 판 · 글이 늘거나 바뀌지 않음', r.returncode == 0 and before == after, r.stderr.strip()[:80])
