@@ -113,7 +113,7 @@ export class TermsService {
     const d = (date ?? '').trim();
     if (d) {
       const [chk] = await this.db.query<{ past: boolean; valid: boolean }>(
-        `SELECT to_char($1::date, 'YYYY-MM-DD') = $1 AS valid, $1::date < (now() AT TIME ZONE 'Asia/Seoul')::date AS past`, [d])
+        `SELECT to_char($1::date, 'YYYY-MM-DD') = $2::text AS valid, $1::date < (now() AT TIME ZONE 'Asia/Seoul')::date AS past`, [d, d])
         .catch(() => [{ valid: false, past: false }]);
       if (!chk.valid) throw new PolicyViolation('OPEN_DATE_INVALID', '없는 날짜입니다.');
       if (chk.past) throw new PolicyViolation('OPEN_DATE_PAST', '오픈일은 오늘 이후여야 합니다.');
