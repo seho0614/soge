@@ -62,6 +62,13 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
     if (!window.confirm(on ? `${s.label}을(를) 끌까요? 바로 AI 를 부르지 않습니다.` : warn + ask)) return;
     save(s.key, on ? 'off' : 'on', `${s.label} — ${on ? '껐습니다' : '켰습니다'}.`);
   };
+  const gate = val('agent.require_privacy') !== 'off';   // 값이 없으면 켜짐으로 봄(서버와 같음)
+  const flipGate = () => {
+    if (!window.confirm(gate
+      ? 'AI 켜기 전 처리방침 확인을 끌까요?\n\n끄면 개인정보처리방침 1.1 이 게시되기 전에도 AI 전체를 켤 수 있습니다(경고만). 법무 고지 없이 켜지 않도록 주의하십시오.'
+      : 'AI 켜기 전 처리방침 확인을 켤까요? 처리방침 1.1 게시 전에는 AI 전체를 켤 수 없게 됩니다(이미 켜진 AI 는 그대로).')) return;
+    save('agent.require_privacy', gate ? 'off' : 'on', `AI 켜기 전 처리방침 확인 — ${gate ? '껐습니다(경고만)' : '켰습니다(막음)'}.`);
+  };
   const saveCap = () => {
     const v = (cap ?? capNow).trim();
     if (!/^[0-9]{1,6}(\.[0-9]{1,2})?$/.test(v)) { a.setErr('월 상한은 달러 숫자로 넣으십시오(예: 10 · 0 이면 아무것도 부르지 않음).'); return; }
@@ -83,6 +90,12 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
               <input value={cap ?? capNow} onChange={(e) => setCap(e.target.value)} size={7} inputMode="decimal" aria-label="월 상한(달러)" />{' '}
               <button className="btn-sm" disabled={a.busy === 'agent.monthly_cap_usd'} onClick={saveCap}>저장</button>
             </>}</td>
+          </tr>
+          {/* v10.151 (D145 · docs/231) — 대표 「서버에서 결정 관리자결정」: 켜져 있으면 처리방침 1.1 게시 전 AI 전체 켜기를 서버가 거절 */}
+          <tr data-agent-privacy-gate={gate ? 'on' : 'off'}>
+            <td><b>AI 켜기 전 처리방침 확인</b></td><td>{gate ? <span className="good">켜짐(막음)</span> : '꺼짐(경고만)'}</td>
+            <td className="muted">켜져 있으면 개인정보처리방침 1.1(AI 고지 · 국외 이전)이 게시되기 전에는 서버가 「AI 전체」 켜기를 거절합니다. 끄면 경고만 하고 켤 수 있습니다. 이미 켜진 AI 는 끄지 않습니다.</td>
+            <td>{isSuper && <button className={gate ? 'btn-sm ghost' : 'btn-sm'} disabled={a.busy === 'agent.require_privacy'} onClick={flipGate}>{gate ? '끄기' : '켜기'}</button>}</td>
           </tr>
           {SWITCHES.map((s) => {
             const on = val(s.key) === 'on';

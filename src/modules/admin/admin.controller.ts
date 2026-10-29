@@ -105,7 +105,7 @@ export class AdminController {
   @ApiOperation({ summary: '설정 변경', description: '푸터 법정 고지가 여기서 채워집니다.' })
   @ApiResponse({ status: 409, description: '없는 키', type: ErrorDto })
   @ApiResponse({ status: 403, description: 'AI_SETTING_SUPER — AI 설정(agent.* · AI 번역)은 최고 관리자만(v10.129)', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'SETTING_FORMAT · SWITCH_PREREQ(AI 전체는 AI 키 · 월 상한 > 0 이 먼저) · MODEL_UNPRICED(요금표에 없는 모델 · v10.135)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'SETTING_FORMAT · SWITCH_PREREQ(AI 전체는 AI 키 · 월 상한 > 0 이 먼저) · MODEL_UNPRICED(요금표에 없는 모델 · v10.135) · PRIVACY_FIRST(처리방침 1.1 게시 전 AI 전체 · agent.require_privacy on · v10.151)', type: ErrorDto })
   @Audit('SITE_SETTING_UPDATE', 'SITE_SETTING')
   update(@Body() dto: UpdateSettingDto) { return this.admin.updateSetting(dto.key, dto.value); }
 

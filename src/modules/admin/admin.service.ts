@@ -394,6 +394,18 @@ export class AdminService {
     if (!(cap > 0)) miss.push('월 상한(0 보다 큰 달러)을');
     else if (cost >= cap) miss.push(`이번 달 비용($${cost.toFixed(2)})보다 큰 월 상한을`);   // 상한에 닿아 저절로 꺼진 뒤 — 올리지 않고 켜면 「켜짐」인데 부르지 않음
     if (miss.length) throw new PolicyViolation('SWITCH_PREREQ', `아직 AI 를 켤 수 없습니다 — 먼저 ${miss.join(' · ')} 넣어 주십시오.`);
+    /* v10.151 (D145 · docs/231) — 처리방침 확인 스위치(agent.require_privacy · 처음 on · SUPER 가 정함)가 켜져 있으면
+     *   개인정보처리방침 1.1 이상(AI 고지 · 국외 이전 · docs/176)이 게시되기 전에는 거절. 안내판(rollout) TERMS 와 같은 판단 */
+    const [g] = await this.db.query<{ req: string | null; ok: boolean; ver: string | null }>(
+      `SELECT (SELECT value FROM site_settings WHERE key = 'agent.require_privacy') AS req,
+              EXISTS (SELECT 1 FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'
+                        AND string_to_array(version, '.')::int[] >= ARRAY[1,1]) AS ok,
+              (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS ver`);
+    if ((g?.req ?? 'on').trim() !== 'off' && !g?.ok) {
+      throw new PolicyViolation('PRIVACY_FIRST',
+        `아직 AI 를 켤 수 없습니다 — 개인정보처리방침 1.1(AI 고지 · 국외 이전)이 먼저 게시되어야 합니다(지금 게시 ${g?.ver ?? '없음'}). ` +
+        '최고 관리자가 「AI 켜기 전 처리방침 확인」을 끄면 경고만 하고 켤 수 있습니다.');
+    }
   }
 
   private async checkSwitch(key: string, value: string) {
