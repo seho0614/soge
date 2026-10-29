@@ -9,6 +9,7 @@
   ③ (사용자 웹) 간주 끈 결제 수단 화면 — 단추 누르면 등록됨 · /my/payment/card 계정이 다르면 안내 · ?card=fail 안내
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+from consent_ok import agree   # 새로 만든 점검판이면 필수 약관 동의 전 — 동의 화면으로 넘어가지 않게
 
 K = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002') + '/sgb'
 API = os.environ.get('API'); SITE = os.environ.get('SITE'); DB = os.environ.get('DB')
@@ -74,6 +75,7 @@ def psql(sql):
 U = 'seller@x.com'
 if API and DB:
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW})['accessToken']
+    agree(U, PW)   # 실행 순서와 상관없이(흐름 시험보다 먼저 돌아도) 결제 수단 화면이 열리게
     UT = call('POST', '/auth/login', {'email': U, 'password': PW})['accessToken']
     acc = psql(f"SELECT id FROM accounts WHERE email = '{U}'")
     before = psql("SELECT value FROM site_settings WHERE key = 'assume.payment'")
