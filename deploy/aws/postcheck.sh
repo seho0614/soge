@@ -145,6 +145,42 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   info "사회관계망 주소: $(qn "select replace(key,'sns.','')||'='||case when coalesce(btrim(value),'')='' then '비어 있음' else '있음' end from site_settings where key like 'sns.%' order by 1" | tr '\n' ' ')"
 fi
 
+say ""; say "[10] 이번 판에서 바뀐 것 (v10.152 · docs/232 5절 — 화면 대신 DB 로 · 읽기만)"
+if db -c "SELECT 1" >/dev/null 2>&1; then
+  has() { [ "$(q "SELECT to_regclass('$1') IS NOT NULL")" = "t" ]; }
+  # 연동 키 칸(22) — DB 제약에 든 이름 수
+  k=$(q "SELECT (length(d) - length(replace(d, '(integration_code = ', ''))) / length('(integration_code = ') FROM (SELECT pg_get_constraintdef(oid) d FROM pg_constraint WHERE conname = 'ck_integ_secret_name') x")
+  [ "${k:-0}" -ge 22 ] 2>/dev/null && ok "연동 키 칸 ${k}개(5절 13)" || warn "연동 키 칸 ${k:-?}개" "22 가 기대 — D141 이 안 들어갔을 수 있음"
+  # 방식 · 스위치 — 반영만으로는 바뀌지 않아야 함(바꾼 적이 있으면 그 값이 맞는지 판단)
+  for kv in identity.provider=STUB alimtalk.provider=NONE notify.alimtalk_ready=off esign.provider=STUB safenum.provider=NONE feature.referral_fee=off agent.enabled=off; do
+    k=${kv%%=*}; want=${kv#*=}; v=$(q "SELECT value FROM site_settings WHERE key = '$k'")
+    [ "$v" = "$want" ] && ok "$k = $v (처음 값 그대로)" || warn "$k = ${v:-없음}" "반영만으로는 $want 여야 함 — 일부러 바꾼 것이 아니면 알려 주십시오"
+  done
+  has public.alimtalk_templates && { n=$(q "SELECT count(*) FROM alimtalk_templates"); [ "$n" = "4" ] && ok "알림톡 템플릿 4개(5절 16)" || warn "알림톡 템플릿 ${n}개" "4 가 기대"; }
+  # 오픈 준비 점검(5절 22)
+  if has public.v_open_readiness; then
+    r=$(q "SELECT count(*) || '/' || count(*) FILTER (WHERE required) FROM v_open_readiness")
+    [ "$r" = "9/4" ] && ok "오픈 준비 점검 9줄 · 꼭 4(5절 22)" || warn "오픈 준비 점검 $r" "9/4 가 기대"
+  else warn "오픈 준비 점검 보기 없음" "D142 · D144 가 안 들어갔을 수 있음"; fi
+  # 새 설정 · 처리방침(5절 26 · 27 · 29)
+  v=$(q "SELECT value FROM site_settings WHERE key = 'agent.require_privacy'")
+  [ "$v" = "on" ] && ok "AI 켜기 전 처리방침 확인 = on(5절 27)" || warn "agent.require_privacy = ${v:-없음}" "on 이 처음 값 — D145"
+  v=$(q "SELECT coalesce(nullif(value, ''), '(빈 값)') FROM site_settings WHERE key = 'service.open_date'")
+  [ -n "$v" ] && ok "오픈일 칸 있음 — $v(5절 29)" || warn "service.open_date 없음" "D144"
+  pv=$(q "SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
+  p11=$(q "SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]")
+  [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 1.1 이상(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "1.1 이상이 게시되기 전에는 AI 전체를 켤 수 없음(D145)"
+  # 약관(5절 30) — 게시된 판 · 새로 생긴 법무 검토 · 초안
+  info "게시된 약관: $(qn "SELECT code || ' ' || version || '(' || to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') || ')' FROM terms t WHERE status = 'PUBLISHED' AND NOT EXISTS (SELECT 1 FROM terms u WHERE u.code = t.code AND u.status = 'PUBLISHED' AND u.effective_from > t.effective_from) ORDER BY code" | tr '\n' ' ')"
+  # terms 에는 만든 시각이 없음 → 「게시된 판보다 번호가 높은 초안 · 법무 검토」 = D131 ~ D133 이 새로 만든 것
+  nd=$(qn "SELECT d.code || ' ' || d.version || ' ' || d.status FROM terms d WHERE d.status IN ('DRAFT', 'LEGAL_REVIEW') AND EXISTS (SELECT 1 FROM terms p WHERE p.code = d.code AND p.status = 'PUBLISHED' AND string_to_array(p.version, '.')::int[] < string_to_array(d.version, '.')::int[]) ORDER BY 1" | tr '\n' ' ')
+  [ -z "$nd" ] && ok "게시된 판보다 새 번호의 약관 초안 없음(5절 30)" || warn "게시된 판보다 새 번호의 약관 초안: $nd" "게시된 글과 개발 원문이 달라 생긴 법무 검토 판 — 게시하지 말고 알려 주십시오(5절 30)"
+  # 파일 저장(5절 28) · 파일 행 지킴(D143)
+  info "파일 저장 기록: $(qn "SELECT storage_provider || ' ' || count(*) FROM files WHERE status <> 'DELETED' GROUP BY 1 ORDER BY 1" | tr '\n' ' ')· 새 파일은 $([ -n "${S3_BUCKET:-}" ] && echo "S3($S3_BUCKET)" || echo "서버 디스크")"
+  g=$(q "SELECT prosrc LIKE '%sgb.files_move%' FROM pg_proc WHERE proname = 'fn_files_guard'")
+  [ "$g" = "t" ] && ok "파일 행 지킴 — 저장 위치는 옮기는 거래에서만(D143)" || warn "파일 행 지킴이 옛 모양" "D143 이 안 들어갔을 수 있음"
+fi
+
 say ""
 say "적용 후 확인 — 통과 $PASS · 실패 $FAIL · 확인 $WARN"
 [ "$FAIL" = "0" ] && say "→ 「실패」 0. 「확인」 줄은 절차서 7부의 표대로 판단하십시오." || say "→ 「실패」 줄을 먼저 고치십시오 (절차서 8부 「막혔을 때」)."
