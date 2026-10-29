@@ -243,6 +243,8 @@ if SITE:
     GUEST = [u for u in ('/health/c/ALL', prod, ing, '/health/concerns', '/health/ingredients', '/health/guide', '/health/search', '/health/direct', '/health/order/fail') if u]
     ok('④ 살펴볼 주소를 찾음(상품 · 성분)', prod and ing, f'{prod} {ing}')
     ME = os.environ.get('MEMBER', 'person@x.com')
+    if API:   # v10.152 — 새 점검판(기능 점검 전)이면 필수 약관 동의 화면으로 넘어감 → 먼저 동의(실행 순서와 상관없이)
+        import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from consent_ok import agree; agree(ME, 'sgb-dev-1234')
     ck = ('sgb_at=' + login(ME)) if API else ''
     MINE = ['/my', '/my/account', '/my/subscription', '/my/payment', '/my/notifications', '/my/deals', '/my/contracts', '/my/settlement', '/my/intro', '/my/intro/activity',
             '/my/health/orders', '/my/health/returns', '/my/health/addresses', '/health/cart'] if ck else []

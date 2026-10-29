@@ -220,6 +220,8 @@ if SITE:
     GUEST = [u for u in ('/supplier', sup, '/partner/apply') if u]
     ok('④ 살펴볼 주소를 찾음(공급사)', sup, sup)
     ME = os.environ.get('MEMBER', 'intro@x.com')   # 파트너 · 제휴 화면이 다 열리는 시험 계정
+    if API:   # v10.152 — 새 점검판(기능 점검 전)이면 필수 약관 동의 화면으로 넘어감 → 먼저 동의(실행 순서와 상관없이)
+        import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from consent_ok import agree; agree(ME, 'sgb-dev-1234')
     ck = ('sgb_at=' + login(ME)) if API else ''
     MINE = ['/partner', '/partner/apply', '/partner/business', '/partner/cash', '/partner/leads', '/partner/leads-rejects', '/partner/listings', '/partner/notices', '/partner/performance',
             '/partner/pricing', '/partner/regions', '/partner/reviews', '/partner/services', '/partner/services/new', '/partner/settlement', '/partner/stats', '/partner/tracks', '/partner/trust',
