@@ -1427,4 +1427,12 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "휴대폰 번호를 확인해 주십시오.": "Please check the mobile number.",
   "휴대폰 확인 전에는 업체에 전달하지 않습니다": "It is not delivered to companies before the mobile number is verified",
   "휴업 · 폐업 사업자는 가입할 수 없습니다{0}.": "Businesses that are suspended or closed cannot sign up{0}.",
+  /* v10.147 · v10.150 — 재설정 링크(SUPER) · 오픈일 */
+  "{0}분 동안 한 번만 쓸 수 있습니다. 본인 확인을 마친 회원에게만 직접 전달하고, 이 화면을 닫으면 다시 볼 수 없습니다.": "Can be used once within {0} minutes. Give it only to the member whose identity you have confirmed — it cannot be shown again after this screen is closed.",
+  "날짜는 YYYY-MM-DD 형식입니다.": "Dates must be in YYYY-MM-DD format.",
+  "본인 확인 방법과 까닭을 5자 이상 적어 주십시오.": "Enter how you verified the member and why (at least 5 characters).",
+  "쓸 수 있는 회원이 아닙니다(없음 · 정지 · 탈퇴).": "This member account is not usable (not found, suspended or withdrawn).",
+  "없는 날짜입니다.": "That date does not exist.",
+  "오픈일은 오늘 이후여야 합니다.": "The launch date must be today or later.",
+  "운영진 계정에는 재설정 링크를 만들지 않습니다. 본인이 비밀번호 찾기를 쓰십시오.": "Reset links are not created for staff accounts. Staff should use Forgot password themselves.",
 };
