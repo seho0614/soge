@@ -41,7 +41,7 @@ ok('① 운영 화면 — AI 에이전트에 「AI 스위치」(상한 · 5개 �
 ok('① 외부 연동 — AI · 카카오맵 · 날씨 줄에 「키 넣는 곳으로 가기」',
    "AGENT: { label: '위험감지 › AI 운영 › AI 에이전트 › 「AI 키」(최고 관리자)', href: '#/ai-ops/agent' }" in IN and "sel: '[data-map-keys]'" in IN and "sel: '[data-weather-keys]'" in IN, '')
 mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d)))
-ok('① 판 v10.129 이상 · 마이그레이션 없음(166)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 129) and len(mig) in (166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182), f"{rd('VERSION').strip()} · {len(mig)}")
+ok('① 판 v10.129 이상 · 마이그레이션 없음(166)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 129) and len(mig) in (166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183), f"{rd('VERSION').strip()} · {len(mig)}")
 
 
 def call(m, p, b=None, t=None):
@@ -63,9 +63,12 @@ def psql(sql):
 
 
 KEYS = ('agent.enabled', 'agent.monthly_cap_usd', 'agent.chat.enabled', 'agent.review_shadow.enabled', 'i18n.auto_translate.enabled', 'i18n.board_on_view')
+GATE = 'agent.require_privacy'   # v10.151(D145) — 점검판에는 처리방침 1.1 게시가 없음 → 이 시험 동안만 끔(처리방침 막음은 test_v1151)
 SELLER = 'seller@x.com'
 if API and DB:
     was = {k: psql(f"SELECT value FROM site_settings WHERE key = '{k}'") for k in KEYS}
+    gate_was = psql(f"SELECT value FROM site_settings WHERE key = '{GATE}'")
+    if gate_was: psql(f"UPDATE site_settings SET value = 'off' WHERE key = '{GATE}';")
     had_key = psql("SELECT count(*) FROM integration_secrets WHERE integration_code = 'AGENT'") != '0'
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': 'sgb-dev-1234'})['accessToken']
     psql(f"INSERT INTO account_roles(account_id, role) SELECT id, 'ADMIN' FROM accounts WHERE email = '{SELLER}' ON CONFLICT DO NOTHING;")
@@ -169,6 +172,9 @@ if ADMIN_WEB and DB and API:
             if not had_key:
                 psql("DELETE FROM integration_secrets WHERE integration_code = 'AGENT'; UPDATE integrations SET secret_registered = false WHERE code = 'AGENT';")
             psql(f"DELETE FROM account_roles WHERE role = 'ADMIN' AND account_id = (SELECT id FROM accounts WHERE email = '{SELLER}');")
+
+if API and DB and gate_was:   # v10.151 — 처리방침 확인 스위치 되돌림(② · ③ 끝난 뒤)
+    psql(f"UPDATE site_settings SET value = '{gate_was}' WHERE key = '{GATE}';")
 
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')

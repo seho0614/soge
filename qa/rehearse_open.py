@@ -23,7 +23,7 @@ LOG = []
 # 오픈 날 바꾸는 설정(되돌릴 목록)
 KEYS = ['assume.payment', 'assume.broker', 'assume.bank', 'assume.etax', 'company.bank_name', 'company.bank_account', 'company.bank_holder',
         'identity.provider', 'alimtalk.provider', 'notify.alimtalk_ready', 'esign.provider', 'safenum.provider', 'notify.email_verified',
-        'notify.mail_from', 'feature.referral_fee', 'agent.monthly_cap_usd', 'agent.enabled', 'agent.review_shadow.enabled', 'agent.chat.enabled',
+        'notify.mail_from', 'feature.referral_fee', 'agent.require_privacy', 'agent.monthly_cap_usd', 'agent.enabled', 'agent.review_shadow.enabled', 'agent.chat.enabled',
         'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled']
 INTEG = ['PASS', 'BANK', 'PG', 'BROKER', 'ETAX', 'ALIMTALK', 'ESIGN', 'SAFENUM', 'MAIL', 'AGENT']
 
@@ -97,7 +97,12 @@ def on():
     # 4. 메일 — SES 인증 뒤 켜는 스위치(점검판은 SMTP 키 없음 → 개발 방식 대체가 동작)
     step('4-mail', '메일 발송 인증 켜기', sv('notify.email_verified', 'on'))
     # 5. AI — 처리방침 → 키(점검판 AGENT_PROVIDER=MOCK) · 월 상한 → AI 전체 → 단계
+    # v10.151(D145) — 처리방침 1.1 게시 전에는 AI 전체가 거절되는지 먼저 보고, 점검판에는 게시가 없으니 확인 스위치를 끄고 이어 감
     step('5-cap', 'AI 월 상한', sv('agent.monthly_cap_usd', '10'))
+    if psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]") == '0':
+        r = sv('agent.enabled', 'on')
+        step('5-gate', 'AI 전체 — 처리방침 1.1 게시 전 거절(PRIVACY_FIRST 기대)', {} if (isinstance(r, dict) and r.get('code') == 'PRIVACY_FIRST') else {'_err': 'not blocked', 'code': r.get('code') if isinstance(r, dict) else None})
+        step('5-gate-off', 'AI 켜기 전 처리방침 확인 끄기(점검판 — 게시 없음)', sv('agent.require_privacy', 'off'))
     for k in ('agent.enabled', 'agent.review_shadow.enabled', 'agent.chat.enabled', 'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled'):
         step('5-' + k.split('.', 1)[1], f'AI 스위치 {k}', sv(k, 'on'))
     # 6. 소개비 — PASS · BANK LIVE 전에는 막혀야 함(막히는 게 맞음)
