@@ -170,7 +170,7 @@ FILES = [
 ]
 # 남기기로 한 한글 — 그 줄에 이 표시가 있으면 뺌 · docs/159 §2
 MONEY = ['원`', "원'", '}원', "'원'", '만원', "toLocaleString('ko-KR')", '년 ${', "'억'"]   # 금액 · 시각 표기(2-5c)
-KEEP_ALL = MONEY + ["requestPayment('카드'", '.test(']   # 토스 결제수단 값 · 서버 글자 맞추기
+KEEP_ALL = MONEY + ["requestPayment('카드'", "requestBillingAuth('카드'", '.test(']   # 토스 결제수단 값(결제 · v10.148 카드 등록) · 서버 글자 맞추기
 KEEP = {'components/ReviewForm.tsx': ["'fast']", "'noPush']"],   # 후기 칩 — 서버로 보내는 tags 값
         'components/ai/ClassifyView.tsx': ['에 태양광 발전소', '3PL 풀필먼트', '일수 대출'],   # 분류 API 로 보내는 예문
         'components/community/poll.ts': ["pick: '보기를", "login: '로그인한"],   # 메인 투표 칸 기본 문구(2-5c · main 묶음)
