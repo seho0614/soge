@@ -302,7 +302,14 @@
     "busy": "Processing…",
     "change": "Change card",
     "register": "Register card",
-    "remove": "Delete"
+    "remove": "Delete",
+    "cardTitle": "Register card",
+    "cardSub": "Back from the card company window — finishing registration",
+    "cardChecking": "Registering your card…",
+    "cardOk": "Your card is registered. Future charges will use this card.",
+    "cardBack": "Back to payment methods",
+    "cardBad": "This return address does not match. Please register again from <a>Payment methods</a>.",
+    "cardFail": "Card registration was not completed (cancelled or declined by the card company). Please try again."
   },
   "archive": {
     "fail": "Could not take it down.",

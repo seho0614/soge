@@ -39,10 +39,12 @@ const INV: Record<string, ['paid' | 'failed' | 'pending' | 'refunded' | 'skipped
  * v10.29 — 시안(scMyPayMethod) 배치: 오른쪽 위 「계정당 결제 수단 1개」 → 등록된 카드 · 다음 청구 한 줄(카드 변경)
  *   → 카드번호 저장 안 함 안내 → 청구 내역 표(GET /me/subscription/invoices) → 「결제 수단을 지우면 다음 갱신이 실패」 안내.
  */
-export default async function PaymentPage() {
+export default async function PaymentPage({ searchParams }: { searchParams: Promise<{ card?: string }> }) {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('my.pay');
+  const tc = await getTranslations('deal.payMethod');
+  const cardFail = (await searchParams).card === 'fail';   // v10.148 — 카드 등록 창 실패 · 취소로 돌아옴
   const f = await getFmt();
   const B = (c: React.ReactNode) => <b>{c}</b>;
 
@@ -64,6 +66,8 @@ export default async function PaymentPage() {
         sub={t('sub')}
         right={<span className="my-ls">{t('onePerAccount')}</span>} />
 
+      {cardFail && <Note kind="warn"><span data-card-fail="">{tc('cardFail')}</span></Note>}
+
       {assumed && (
         <Note kind="warn">
           <b>{t('assumedB')}</b> {t('assumedText')}
@@ -82,7 +86,7 @@ export default async function PaymentPage() {
             <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
             <span className="my-ls">{d?.subscribed ? `${f.won(d.nextChargeAmount ?? d.monthlyPrice ?? null, '—')} · ${d.planName ?? ''}` : t('noSub')}</span>
           </div>
-          <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
+          <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} customerKey={p.accountId} /></Msgs>
         </div>
       ) : (
         <>
@@ -98,7 +102,7 @@ export default async function PaymentPage() {
               <b className="big">{d?.subscribed && d.nextChargeAt ? ymdKst(d.nextChargeAt) : '—'}</b>
               <span className="my-ls">{d?.subscribed ? `${f.won(d.nextChargeAmount ?? d.monthlyPrice ?? null, '—')} · ${d.planName ?? ''}` : t('noSub')}</span>
             </div>
-            <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} /></Msgs>
+            <Msgs ns={['deal']}><PayMethod registered={registered} assumed={assumed} customerKey={p.accountId} /></Msgs>
           </div>
           <Note kind="warn">
             <b>{t('noCardB')}</b> {d?.subscribed ? t('noCardSub', { period: grace ? t('days', { n: String(grace) }) : t('grace') }) : t('noCardFree')}
