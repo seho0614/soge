@@ -35,10 +35,12 @@ const JSON_POST = { method: 'POST', headers: { 'Content-Type': 'application/json
  * v10.31 (w2 · 시안 CSL-030) — 한 장의 신청서: 휴대폰 칸 옆 「인증번호 받기」 → 같은 자리에 인증번호 칸 → 맨 아래 「상담 신청」(확인하고 전달).
  *   서버가 인증번호를 보낼 때 신청서를 함께 받으므로 「인증번호 받기」 전에 나머지 필수 칸(이메일 · 지역 · 동의)을 먼저 확인합니다.
  *
+ * v10.147 — ready=false(인증번호를 보낼 알림톡 · 메일이 없음 · GET /consult/ready)면 칸을 채우기 전에 「준비 중」을 알리고 단추를 막습니다.
+ *
  * fixed 를 주면 그 업종으로 고정합니다(/mal/consult/{code}/apply — v10.24 에 주소가 옮겨졌습니다). 없으면 업종을 고를 수 있습니다(/consult).
  */
-export function ConsultForm({ categories, initialId, fixed }: {
-  categories: ConsultCategory[]; initialId?: string; fixed?: boolean;
+export function ConsultForm({ categories, initialId, fixed, ready = true }: {
+  categories: ConsultCategory[]; initialId?: string; fixed?: boolean; ready?: boolean;
 }) {
   const t = useTranslations('consult');
   const tr = useTranslations('region');   // v10.119 시 · 도 이름(값은 한국어 그대로)
@@ -118,6 +120,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
   return (
     <form onSubmit={sent ? verify : (e) => { e.preventDefault(); setErr(t('form.errVerifyFirst')); }}
           className="mal-form cslf" noValidate data-consult-verify={sent ? req!.id : undefined}>
+      {!ready && <p className="notice warn" role="status" data-consult-not-ready="">{t('form.notReady')}</p>}
       {fixed ? (
         <input type="hidden" name="categoryId" value={f.categoryId} />
       ) : (
@@ -139,7 +142,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
         <label className="fld"><span>{t('form.phone')}</span>
           <span className="inl">
             <input name="phone" value={f.phone} onChange={set('phone')} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" />
-            <button className="mal-btn ghost sm" type="button" onClick={submit} disabled={busy || sent || open.length === 0} data-csl-otp="">
+            <button className="mal-btn ghost sm" type="button" onClick={submit} disabled={busy || sent || open.length === 0 || !ready} data-csl-otp="">
               {sent ? t('form.sent') : busy ? t('form.sending') : t('form.getCode')}</button>
           </span></label>
         {/* v10.43 (10/15 대표 결정 A) — 휴대폰(알림톡) · 이메일 둘 다로 같은 번호를 보내고, 둘 중 하나로 확인 */}
@@ -182,7 +185,7 @@ export function ConsultForm({ categories, initialId, fixed }: {
         {sent && <button className="mal-btn ghost" type="button" disabled={busy}
                          onClick={() => { setStep('form'); setReq(null); setErr(null); setCode(''); }}>{t('form.rewrite')}</button>}
         <a className="mal-btn ghost" href="/consult">{t('form.repick')}</a>
-        <button className="mal-btn" type="submit" disabled={busy || pending || open.length === 0} data-csl-submit="">
+        <button className="mal-btn" type="submit" disabled={busy || pending || open.length === 0 || !ready} data-csl-submit="">
           {busy && sent ? t('form.verifying') : t('common.apply')}</button>
       </div>
     </form>

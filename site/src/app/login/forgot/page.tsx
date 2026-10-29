@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { forgotPassword } from '@/lib/session';
+import { apiGet } from '@/lib/api';
 import { ForgotForm } from '@/components/auth/PasswordForms';
 import '@/styles/proto-w1.css';
 import { getTranslations } from 'next-intl/server';
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function ForgotPage() {
   const t = await getTranslations('forgot');
+  const ready = await apiGet<{ ready: boolean }>('/auth/password/forgot/ready', 30).then((r) => r.ready).catch(() => true);   // v10.147
   async function doForgot(email: string) {
     'use server';
     return forgotPassword(email);
@@ -26,7 +28,7 @@ export default async function ForgotPage() {
       <div className="w1-lgc">
         <div className="w1-lgh"><h1>{t('title')}</h1>
           <p>{t.rich('lead', { b: (c) => <b>{c}</b> })}</p></div>
-        <ForgotForm action={doForgot} />
+        <ForgotForm action={doForgot} ready={ready} />
         <div className="w1-jc w" style={{ marginTop: 16 }}><span className="lb">{t('noMailLb')}</span>
           {t('noMailBody')}
           <div style={{ marginTop: 8 }}><Link className="w1-bo sm" href="/support/new#inquiry">{t('support')}</Link></div></div>

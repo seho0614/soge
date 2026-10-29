@@ -171,6 +171,7 @@
     "otp": "6-digit code",
     "rewrite": "Edit again",
     "repick": "Choose another category",
-    "verifying": "Verifying…"
+    "verifying": "Verifying…",
+    "notReady": "We are still setting up the messages that deliver verification codes, so consultation requests are paused for now. You can apply here as soon as it is ready."
   }
 }

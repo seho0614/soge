@@ -3,6 +3,7 @@
  * v10.48 (D102) — SB-HOM-AUT-040 비밀번호 찾기 · SB-HOM-AUT-041 비밀번호 재설정 폼
  *   찾기: 가입 이메일 → 재설정 링크(30분 · 1회). 계정이 있든 없든 같은 안내가 나옵니다(서버가 같은 답).
  *         메일 발송 준비 전(운영)에는 서버가 MAIL_NOT_READY — 고객센터 「계정」 문의로 잇습니다.
+ *         v10.147 — ready=false(GET /auth/password/forgot/ready)면 입력 전에 같은 안내 · 단추를 막습니다.
  *         개발 PC 에서는 서버가 devLink 를 주므로 그 링크를 화면에 보입니다(운영에서는 나오지 않음).
  *   재설정: 새 비밀번호 두 번 → 바꾸면 모든 기기의 로그인이 풀리고 로그인 화면으로.
  */
@@ -21,7 +22,7 @@ export function weakPassword(pw: string): 'weak' | null {
   return null;
 }
 
-export function ForgotForm({ action }: { action: (email: string) => Promise<Act> }) {
+export function ForgotForm({ action, ready = true }: { action: (email: string) => Promise<Act>; ready?: boolean }) {
   const [pending, start] = useTransition();
   const [err, setErr] = useState<{ msg: string; code: string } | null>(null);
   const [done, setDone] = useState<{ note: string; devLink?: string } | null>(null);
@@ -41,6 +42,10 @@ export function ForgotForm({ action }: { action: (email: string) => Promise<Act>
 
   return (
     <form className="auth w1-lgf" onSubmit={submit} noValidate data-forgot-form="">
+      {!ready && (
+        <p className="w1-err form-error" role="status" data-forgot-not-ready="">{t('notReady')}
+          {' '}<Link className="w1-lnk2" href="/support/new#inquiry">{t('support')}</Link></p>
+      )}
       <div className="w1-fld"><label htmlFor="fg-mail">{t('joinedEmail')}</label>
         <input className="w1-in" id="fg-mail" type="email" name="email" autoComplete="username" placeholder={t('emailPh')} maxLength={120} /></div>
       {err && (
@@ -58,7 +63,7 @@ export function ForgotForm({ action }: { action: (email: string) => Promise<Act>
           )}
         </div>
       )}
-      <button className="w1-bp w1-lgb cta-primary" disabled={pending}>{pending ? t('sending') : t('sendLink')}</button>
+      <button className="w1-bp w1-lgb cta-primary" disabled={pending || !ready}>{pending ? t('sending') : t('sendLink')}</button>
     </form>
   );
 }

@@ -55,6 +55,10 @@ export class OkNoteDto {
   @ApiProperty({ description: '화면에 그대로 보일 안내' }) note!: string;
 }
 
+export class ForgotReadyDto {
+  @ApiProperty({ description: '재설정 메일을 보낼 수 있음(메일 설정 + notify.email_verified · 개발 환경은 늘 true)' }) ready!: boolean;
+}
+
 export class ForgotResultDto extends OkNoteDto {
   @ApiPropertyOptional({ description: '개발 환경(NODE_ENV=development) · 메일 설정 전에만 — /login/reset?token=…' }) devLink?: string;
 }
@@ -111,6 +115,13 @@ export class LoginUnlockResultDto {
 @Controller('api/v1')
 export class AccountSecurityController {
   constructor(private readonly svc: AccountSecurityService) {}
+
+  @Get('auth/password/forgot/ready')
+  @ApiOperation({ summary: '비밀번호 재설정 메일을 보낼 수 있는가 (v10.147)', description: '메일 발송 준비 전이면 ready=false — 화면이 입력 전에 고객센터 「계정」 문의로 안내합니다. 계정과 상관없는 값입니다.' })
+  @ApiOkResponse({ type: ForgotReadyDto })
+  forgotReady() {
+    return this.svc.forgotReady();
+  }
 
   @Post('auth/password/forgot')
   @HttpCode(200)

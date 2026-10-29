@@ -31,6 +31,7 @@ export default async function ConsultApplyPage({ params }: Props) {
   if (c.status === 'APPROVED' && c.consultMode === 'LISTING_FEE') redirect(detail);
 
   const open = consultOpen(c);
+  const ready = await apiGet<{ ready: boolean }>('/consult/ready', 30).then((r) => r.ready).catch(() => true);   // v10.147
   const t = await getTranslations('consult');
   return (
     <><div className="mal mal-proto mal-csl33" data-consult-code={c.code}>{/* v10.32 (추가) — 시안 malcsl: 넓은 카드(1140) · 반폭 입력칸(560) · 제목 아래 설명 · 「상담 신청」 보라 왼쪽 */}
@@ -48,7 +49,7 @@ export default async function ConsultApplyPage({ params }: Props) {
             <b id="csl-form-h">{t('common.formHeadPicked', { name: c.name })}</b>
             <span className="mal-ls">{t('apply.formNote')}</span>
           </div>
-          <ConsultForm categories={cats} initialId={c.id} fixed />
+          <ConsultForm categories={cats} initialId={c.id} fixed ready={ready} />
         </section>
       ) : (
         <>

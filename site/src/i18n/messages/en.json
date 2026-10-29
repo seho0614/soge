@@ -214,7 +214,8 @@
     "newPw2Ph": "Re-enter your password",
     "requestAgain": "Request again",
     "changing": "Changing…",
-    "change": "Change password"
+    "change": "Change password",
+    "notReady": "Email delivery is still being set up, so we cannot send reset links right now. Please contact Customer Support (Account) and our team will help you after checking."
   },
   "signup": {
     "title": "Sign up",

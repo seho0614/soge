@@ -56,6 +56,12 @@ export class ConsultCreatedDto {
   @ApiPropertyOptional({ description: '**개발 환경 · 알림톡 연동 전에만** 내려갑니다. 운영에서는 오지 않습니다' })
   devCode?: string;
 }
+export class ConsultReadyDto {
+  @ApiProperty({ description: '신청을 받는가 — 인증번호를 휴대폰(알림톡) · 메일 중 하나로 보낼 수 있음(개발 환경은 늘 받음)' }) ready!: boolean;
+  @ApiProperty({ description: '알림톡으로 보낼 수 있음' }) byPhone!: boolean;
+  @ApiProperty({ description: '메일로 보낼 수 있음(notify.email_verified)' }) byMail!: boolean;
+}
+
 export class ConsultVerifyDto {
   @ApiProperty({ example: '123456' }) @IsString() @Matches(/^[0-9]{6}$/) code!: string;
 }
@@ -103,6 +109,11 @@ export class ConsultController {
   @ApiOkResponse({ type: ConsultCategoryDetailDto })
   @ApiResponse({ status: 404, description: 'NOT_FOUND — 없는 업종 · 보관한 업종 · 상담 축이 아닌 분류', type: ErrorDto })
   category(@Param('code') code: string) { return this.svc.category(code); }
+
+  @Get('ready')
+  @ApiOperation({ summary: '상담 신청을 받는가 (v10.147)', description: '인증번호를 보낼 길(알림톡 · 메일)이 하나도 없으면 ready=false — 화면이 칸을 채우기 전에 「준비 중」을 알립니다. 신청(POST requests)과 같은 기준.' })
+  @ApiOkResponse({ type: ConsultReadyDto })
+  ready() { return this.svc.readiness(); }
 
   @Post('requests')
   @ApiOperation({ summary: '상담 신청', description: '인증번호를 보냅니다. 확인 전에는 업체에 아무것도 가지 않습니다. 같은 번호 하루 한도(lead.intake.daily_limit) · 같은 번호 같은 업종 24시간 중복을 막습니다.' })

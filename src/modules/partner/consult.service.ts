@@ -67,6 +67,14 @@ export class ConsultService {
     return this.alimtalk.ready('CONSULT_OTP');
   }
 
+  /** v10.147 — 신청을 받을 수 있는가(인증번호를 휴대폰 · 메일 중 하나로 보낼 수 있는가) — 화면이 칸을 채우기 전에 안내하려고. createRequest 와 같은 기준 */
+  async readiness() {
+    const byPhone = await this.notifyReady();
+    const byMail = await this.mail.ready();
+    const devMode = (process.env.NODE_ENV ?? 'development') === 'development';
+    return { ready: byPhone || byMail || devMode, byPhone, byMail };
+  }
+
   /** 상담 업종 목록 — 공개 · 준비 중 상태까지 내려 화면이 "준비 중"을 그대로 보이게 합니다 */
   /* v10.119 — 업종 이름 번역(CATEGORY)을 얹음. 정렬은 원문(한국어) 이름 그대로 */
   async categories() {

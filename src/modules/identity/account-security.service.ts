@@ -45,6 +45,11 @@ export class AccountSecurityService {
     return (process.env.NODE_ENV ?? 'development') === 'development';
   }
 
+  /** v10.147 — 재설정 메일을 보낼 수 있는가 · 화면이 입력 전에 고객센터로 안내하려고(forgot 과 같은 기준) */
+  async forgotReady() {
+    return { ready: (await this.mail.ready()) || AccountSecurityService.devMode() };
+  }
+
   /* ── 재설정 메일 ─────────────────────────────────────────────── */
   async forgot(emailRaw: string) {
     const email = String(emailRaw ?? '').trim();

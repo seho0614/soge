@@ -48,6 +48,7 @@ export default async function ConsultPage({ searchParams }: Props) {
   const t = await getTranslations('consult');
 
   const cats = await apiGet<ConsultCategory[]>('/consult/categories', 60).catch(() => [] as ConsultCategory[]);
+  const ready = await apiGet<{ ready: boolean }>('/consult/ready', 30).then((r) => r.ready).catch(() => true);   // v10.147 — 못 읽으면 막지 않음(신청 때 서버가 다시 봄)
   const mine = p ? await apiGetPersonal<MyConsult[]>('/me/consult-requests').catch(() => [] as MyConsult[]) : [];
   const picked = cats.find((c) => c.code === cat);
   /* 법률 · 세무(월 정액 노출형)는 신청서가 없습니다 — 사무소 목록으로 보냅니다 */
@@ -91,7 +92,7 @@ export default async function ConsultPage({ searchParams }: Props) {
         {picked?.publishMode === 'GATED' && pickedOpen && (
           <div className="mal-warn ok">{t.rich('common.gatedBox', { b: (c) => <b>{c}</b> })}</div>
         )}
-        <ConsultForm key={picked?.id ?? 'any'} categories={cats} initialId={pickedOpen ? picked?.id : undefined} />
+        <ConsultForm key={picked?.id ?? 'any'} categories={cats} initialId={pickedOpen ? picked?.id : undefined} ready={ready} />
         {!p && (
           <p className="mal-ls" data-guest="1">
             {t.rich('page.guest', { a: (c) => <a href="/login">{c}</a> })}

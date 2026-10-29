@@ -218,6 +218,7 @@
    ],
    "gates": [],
    "apis": [
+    "GET /auth/password/forgot/ready",
     "POST /auth/password/forgot"
    ],
    "nav": "SB-HOM-AUT-010",
@@ -4230,6 +4231,7 @@
    ],
    "gates": [],
    "apis": [
+    "GET /consult/ready",
     "GET /consult/categories",
     "POST /consult/requests",
     "POST /consult/requests/{id}/verify",
@@ -4291,6 +4293,7 @@
    ],
    "gates": [],
    "apis": [
+    "GET /consult/ready",
     "GET /consult/categories",
     "POST /consult/requests",
     "POST /consult/requests/{id}/verify"
