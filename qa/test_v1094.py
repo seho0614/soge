@@ -41,7 +41,7 @@ C = rd('src/modules/agent/agent.controller.ts'); S = rd('src/modules/agent/agent
 _routes = re.findall(r"@(Get|Post|Put|Patch|Delete)\('([^']+)'\)", C)
 ok('② API — GET admin/agent/status · 운영(v10.109 부터 AI 상담 5개 더함 — test_v1109 · v10.111 부터 AI 키 4개 — test_v1111)', ('Get', 'admin/agent/status') in _routes
    and set(_routes) <= {('Get', 'admin/agent/status'), ('Get', 'agent/chat/status'), ('Post', 'agent/chat'), ('Post', 'agent/chat/:id/handoff'), ('Get', 'admin/agent/chats'), ('Get', 'admin/agent/chats/stats'), ('Get', 'admin/agent/chats/:id'),   # v10.131 비율
-                     ('Get', 'admin/agent/key'), ('Put', 'admin/agent/key'), ('Delete', 'admin/agent/key'), ('Post', 'admin/agent/key/test'), ('Put', 'admin/agent/model-prices'), ('Get', 'me/agent/drafts/:id')}   # v10.135 요금표 · v10.139 신청서 초안(test_v1139)
+                     ('Get', 'admin/agent/key'), ('Put', 'admin/agent/key'), ('Delete', 'admin/agent/key'), ('Post', 'admin/agent/key/test'), ('Put', 'admin/agent/model-prices'), ('Get', 'me/agent/drafts/:id'), ('Get', 'admin/agent/rollout')}   # v10.135 요금표 · v10.139 신청서 초안(test_v1139) · v10.147 AI 켜기 단계(test_v1147)
    and "@Roles('ADMIN', 'SUPER')" in C, str(_routes))
 ok('② 어댑터 — MOCK · 환경 값 없으면 null(v10.104 부터 CLAUDE 는 키가 있을 때만 — test_v1104)', "env.AGENT_PROVIDER === 'MOCK'" in P and 'return null;' in P
    and ('import Anthropic' not in P or "env.AGENT_PROVIDER === 'CLAUDE' && (env.ANTHROPIC_API_KEY ?? '').length > 20" in P), '')
@@ -53,7 +53,7 @@ scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']
 ok('② 화면 SB-ADM-AGT-010 — #/ai-ops/agent · 상태 API(v10.109 부터 AI 상담 목록 2개 더함 — test_v1109 · v10.111 부터 AI 키 4개 — test_v1111)', t and t[0].get('bo') == '#/ai-ops/agent' and t[0]['apis'][0] == 'GET /admin/agent/status'
    and set(t[0]['apis']) <= {'GET /admin/agent/status', 'GET /admin/agent/chats', 'GET /admin/agent/chats/stats', 'GET /admin/agent/chats/{id}',
-                              'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test', 'PUT /admin/agent/model-prices'}, str(t and t[0]['apis']))
+                              'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test', 'PUT /admin/agent/model-prices', 'GET /admin/agent/rollout'}, str(t and t[0]['apis']))   # v10.147 AI 켜기 단계
 ops = rd('web/src/app/admin/AiOps.tsx'); AL = rd('web/src/app/admin/AiLearn.tsx'); W = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
 ok('② AI 운영 하위 탭 「AI 에이전트」 · 다시 내보내기', "{ key: 'agent', label: 'AI 에이전트', screen: 'SB-ADM-AGT-010' }" in ops and "{view === 'agent' && <AgentStatus />}" in ops
    and "export { AgentStatus } from './ailearn/AgentStatus';" in AL, '')
