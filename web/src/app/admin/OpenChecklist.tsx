@@ -10,6 +10,10 @@ interface Res { code: string; name: string; isActive: boolean; passed: number; t
 interface Gwan { code: string; name: string; isActive: boolean; isHub: boolean }
 /* v10.146 (D142 · docs/225) — 오픈 준비 점검 한 줄 */
 interface Ready { code: string; label: string; required: boolean; ok: boolean; nowValue: string; todo: string; go: string | null }
+/* v10.150 (D144 · docs/230) — 오픈일과 맞춘 날짜들 */
+interface OpenDate { openDate: string | null; promoEndsOn: string | null; termsPublishBy: string | null; termsUnfavorableBy: string | null; daysLeft: number | null; termsOtherDate: number }
+/* v10.149 (docs/229) — 파일 저장 위치 */
+interface Storage { kind: 'S3' | 'LOCAL'; bucket: string | null; localFiles: number; s3Files: number; readyBytes: number; pendingMove: boolean }
 
 const KIND_LABEL: Record<string, string> = {
   SETTING: '사이트 설정', TERM: '약관', FOOTER: '푸터 링크',
@@ -30,6 +34,7 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
   const gwans = useApi<Gwan[]>('/admin/gwans/manage');
   const blockers = useApi<Blocker[]>('/admin/open-blockers');
   const ready = useApi<Ready[]>('/admin/open-readiness');
+  const store = useApi<Storage>('/admin/storage-status');
   const [code, setCode] = useState<string>('');
   const [r, setR] = useState<Res | null>(null);
   const [msg, setMsg] = useState<[boolean, string] | null>(null);
@@ -106,6 +111,19 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
         </table></div>
       )}
 
+      <OpenDateBox onSaved={ready.reload} />
+
+      {/* v10.149 (docs/229) — 파일 저장 위치: 서버 디스크 / S3 · 바꾸기는 사람이 .env S3_BUCKET + files-to-s3.sh (화면은 읽기만) */}
+      {store.data && (
+        <p className="dim" data-storage={store.data.kind} data-storage-pending={store.data.pendingMove ? '1' : '0'}>
+          파일 저장 위치: <b>{store.data.kind === 'S3' ? `S3 (${store.data.bucket})` : '서버 디스크'}</b>
+          {' · '}디스크 기록 {store.data.localFiles.toLocaleString()}개 · S3 기록 {store.data.s3Files.toLocaleString()}개
+          {' · '}쓰는 파일 {(store.data.readyBytes / 1048576).toFixed(1)}MB
+          {store.data.pendingMove && <> · <span className="ad-bg wait">옮기기 덜 끝남 — files-to-s3.sh verify · apply</span></>}
+          {store.data.kind === 'LOCAL' && <> · S3 로 바꾸는 순서는 docs/229</>}
+        </p>
+      )}
+
       <h2 className="ad-s2">서비스 오픈을 막는 항목 <em>{data.length}</em> <small className="dim">개발에만 — 간주 모드 · 외부 연동 · 설정</small></h2>
       {blockers.error ? <ErrorView error={blockers.error} /> : data.length === 0
         ? <p className="ok-note">오픈 차단 항목이 없습니다. 배포 점검을 통과합니다.</p>
@@ -118,3 +136,43 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
     </>
   );
 }
+
+/** v10.150 (D144 · docs/230) — 오픈일 한 칸: 넣으면 홍보 기간 종료일(오픈 + 3개월)이 함께 정해짐 · 약관 시행일은 법정 고지 화면에서 이 날로 게시 */
+function OpenDateBox({ onSaved }: { onSaved: () => void }) {
+  const r = useApi<OpenDate>('/admin/open-date');
+  const [d, setD] = useState('');
+  const [msg, setMsg] = useState<[boolean, string] | null>(null);
+  useEffect(() => { if (r.data) setD(r.data.openDate ?? ''); }, [r.data]);
+  const save = async () => {
+    const promo = d ? ` 홍보 기간 종료일도 오픈 + 3개월로 바뀝니다(이날부터 요청 열람 한도 자동 적용).` : '';
+    if (!window.confirm(`오픈일을 ${d || '비움'} 으로 저장합니다.${promo}`)) return;
+    try { await api('/admin/open-date', { method: 'PUT', body: JSON.stringify({ date: d }) }); setMsg([true, '저장했습니다.']); r.reload(); onSaved(); }
+    catch (e) { setMsg([false, e instanceof ApiFailure ? e.body.message : '저장하지 못했습니다.']); }
+  };
+  const x = r.data;
+  return (
+    <>
+      <h2 className="ad-s2">오픈일 <small className="dim">넣으면 홍보 기간 종료일 · 약관 게시 마감이 맞춰짐</small></h2>
+      {r.error ? <ErrorView error={r.error} /> : (
+        <div className="card" data-open-date>
+          <p>
+            <input type="date" value={d} onChange={(e) => setD(e.target.value)} data-open-date-input />{' '}
+            <button className="btn" onClick={save} disabled={d === (x?.openDate ?? '')} data-open-date-save>저장</button>
+            {msg && <span className={`ad-bg ${msg[0] ? 'ok' : 'no'}`} style={{ marginLeft: 8 }}>{msg[1]}</span>}
+          </p>
+          {x?.openDate ? (
+            <table className="tbl"><tbody>
+              <tr><th>오픈일</th><td><b>{x.openDate}</b> {x.daysLeft != null && <span className="dim">({x.daysLeft >= 0 ? `${x.daysLeft}일 남음` : `${-x.daysLeft}일 지남`})</span>}</td></tr>
+              <tr><th>홍보 기간 종료일</th><td data-promo-end>{x.promoEndsOn ?? '—'} <span className="dim">이날부터 요청 열람 한도 자동 적용</span></td></tr>
+              <tr><th>약관 게시 마감</th><td>{x.termsPublishBy} <span className="dim">시행 7일 전 · 불리한 변경이 있으면 {x.termsUnfavorableBy}(30일 전)</span></td></tr>
+              <tr><th>약관 시행일</th><td>{x.termsOtherDate === 0
+                ? <span className="ad-bg ok">게시된 약관 모두 오픈일</span>
+                : <span className="ad-bg wait" data-terms-other={x.termsOtherDate}>시행일이 오픈일과 다른 약관 {x.termsOtherDate}개 — 법정 고지에서 오픈일로 게시</span>}</td></tr>
+            </tbody></table>
+          ) : <p className="dim">오픈일 미정 — 업종 정정 · 본인인증 연동 일정이 나오면 넣으십시오.</p>}
+        </div>
+      )}
+    </>
+  );
+}
+

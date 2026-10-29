@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
-  OpenBlockerDto, OpenReadinessDto, PublishTermDto, TermDetailDto,
+  OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, SetOpenDateDto, TermDetailDto,
   TermPublishResultDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -82,4 +82,24 @@ export class TermsController {
   })
   @ApiOkResponse({ type: OpenReadinessDto, isArray: true })
   readiness() { return this.terms.readiness(); }
+
+  @Get('open-date')
+  @ApiOperation({
+    summary: '오픈일 (v10.150)',
+    description: '오픈일 · 홍보 기간 종료일(오픈 + 3개월 · 이날부터 요청 열람 한도 자동 적용) · 약관 게시 마감(시행 7일 전 · 불리한 변경 30일 전) · 남은 날.',
+  })
+  @ApiOkResponse({ type: OpenDateDto })
+  openDate() { return this.terms.openDate(); }
+
+  @Put('open-date')
+  @ApiOperation({
+    summary: '오픈일 넣기 (v10.150)',
+    description: '오픈일을 넣으면 홍보 기간 종료일(request.view.limit_from)을 오픈 + 3개월로 함께 넣습니다. ' +
+      '빈 문자열이면 오픈일만 지웁니다. 약관 시행일은 바꾸지 않습니다(게시는 법정 고지 화면에서).',
+  })
+  @ApiOkResponse({ type: OpenDateDto })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'OPEN_DATE_PAST 지난 날짜 · OPEN_DATE_INVALID 없는 날짜' })
+  @Audit('OPEN_DATE_SET', 'SETTING')
+  setOpenDate(@Body() dto: SetOpenDateDto) { return this.terms.setOpenDate(dto.date); }
 }
+

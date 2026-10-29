@@ -1461,6 +1461,9 @@
    "apis": [
     "GET /admin/open-blockers",
     "GET /admin/open-readiness",
+    "GET /admin/storage-status",
+    "GET /admin/open-date",
+    "PUT /admin/open-date",
     "GET /admin/gwans/{code}/open-check",
     "POST /admin/gwans/{code}/open"
    ],

@@ -90,4 +90,42 @@ export class TermsService {
     return this.db.query(
       `SELECT code, label, required, ok, now_value AS "nowValue", todo, go FROM v_open_readiness ORDER BY sort`);
   }
+
+  /** v10.150 (D144 · docs/230) — 오픈일 · 홍보 기간 종료일 · 약관 게시 마감(한국 시간) */
+  async openDate() {
+    const [r] = await this.db.query<Record<string, any>>(
+      `WITH v AS (
+         SELECT nullif(btrim((SELECT value FROM site_settings WHERE key = 'service.open_date')), '')::date AS od,
+                nullif(btrim((SELECT value FROM site_settings WHERE key = 'request.view.limit_from')), '') AS pe,
+                (now() AT TIME ZONE 'Asia/Seoul')::date AS today)
+       SELECT to_char(od, 'YYYY-MM-DD') AS "openDate", pe AS "promoEndsOn",
+              to_char(od - 7, 'YYYY-MM-DD') AS "termsPublishBy", to_char(od - 30, 'YYYY-MM-DD') AS "termsUnfavorableBy",
+              (od - today) AS "daysLeft",
+              CASE WHEN od IS NULL THEN 0 ELSE (SELECT count(*) FROM (SELECT DISTINCT ON (code) effective_from FROM terms
+                WHERE status = 'PUBLISHED' ORDER BY code, effective_from DESC) t
+                WHERE (t.effective_from AT TIME ZONE 'Asia/Seoul')::date <> od) END::int AS "termsOtherDate"
+         FROM v`);
+    return r;
+  }
+
+  /** v10.150 — 오픈일 넣기(SUPER). 날짜를 넣으면 홍보 기간 종료일 = 오픈 + 3개월 을 함께 넣음 · 빈 값이면 오픈일만 지움 */
+  async setOpenDate(date: string) {
+    const d = (date ?? '').trim();
+    if (d) {
+      const [chk] = await this.db.query<{ past: boolean; valid: boolean }>(
+        `SELECT to_char($1::date, 'YYYY-MM-DD') = $1 AS valid, $1::date < (now() AT TIME ZONE 'Asia/Seoul')::date AS past`, [d])
+        .catch(() => [{ valid: false, past: false }]);
+      if (!chk.valid) throw new PolicyViolation('OPEN_DATE_INVALID', '없는 날짜입니다.');
+      if (chk.past) throw new PolicyViolation('OPEN_DATE_PAST', '오픈일은 오늘 이후여야 합니다.');
+    }
+    await this.db.transaction(async () => {
+      await this.db.query(`UPDATE site_settings SET value = $1 WHERE key = 'service.open_date'`, [d]);
+      if (d) {
+        await this.db.query(
+          `UPDATE site_settings SET value = to_char($1::date + interval '3 months', 'YYYY-MM-DD') WHERE key = 'request.view.limit_from'`, [d]);
+      }
+    });
+    return this.openDate();
+  }
 }
+
