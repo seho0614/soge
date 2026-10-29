@@ -53,6 +53,20 @@ export class FileService {
 
   constructor(private readonly db: DatabaseService) {}
 
+  /** v10.149 — 저장 위치 · 파일 수(읽기만) · S3 로 바꾼 뒤 디스크 기록이 남았으면 pendingMove */
+  async storageStatus() {
+    const [r] = await this.db.query<{ local: number; s3: number; bytes: string }>(
+      `SELECT count(*) FILTER (WHERE storage_provider = 'LOCAL')::int AS local,
+              count(*) FILTER (WHERE storage_provider = 'S3')::int AS s3,
+              coalesce(sum(size_bytes) FILTER (WHERE status = 'READY'), 0)::text AS bytes
+         FROM files WHERE status <> 'DELETED'`);
+    const kind = this.storage.kind;
+    return {
+      kind, bucket: kind === 'S3' ? (process.env.S3_BUCKET ?? null) : null,
+      localFiles: r.local, s3Files: r.s3, readyBytes: Number(r.bytes), pendingMove: kind === 'S3' && r.local > 0,
+    };
+  }
+
   private async row(id: string): Promise<FileRow | null> {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
     const [f] = await this.db.query<FileRow>(`SELECT * FROM files WHERE id = $1`, [id]);

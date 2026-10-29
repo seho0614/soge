@@ -6,7 +6,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { FileService } from './file.service';
-import { CreateFileDto, FILE_PURPOSES, FileOpenQueryDto } from './file.dto';
+import { CreateFileDto, FILE_PURPOSES, FileOpenQueryDto, StorageStatusDto } from './file.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { Forbidden } from '../../core/errors';
@@ -28,6 +28,18 @@ const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 
 @Controller('api/v1')
 export class FileController {
   constructor(private readonly svc: FileService) {}
+
+  @Get('admin/storage-status')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({
+    summary: '파일 저장 위치 (v10.149)',
+    description: '새 파일이 서버 디스크(LOCAL)로 가는지 S3 로 가는지 · 저장 위치별 파일 수. 읽기만 합니다. ' +
+      'S3 로 바꾸는 순서는 sgb-core docs/229 · deploy/aws/files-to-s3.sh.',
+  })
+  @ApiOkResponse({ type: StorageStatusDto })
+  storageStatus() {
+    return this.svc.storageStatus();
+  }
 
   @Post('files')
   @Roles(...ALL)

@@ -32,3 +32,14 @@ export class FileOpenQueryDto {
   @IsOptional() @IsIn(['attachment', 'inline'])
   disposition?: string;
 }
+
+/** v10.149 — 파일 저장 위치(운영 화면 · 오픈 체크리스트). 버킷 이름만 · 키 · 경로 값은 보내지 않음 */
+export class StorageStatusDto {
+  @ApiProperty({ enum: ['S3', 'LOCAL'], description: '지금 새 파일이 가는 곳(.env S3_BUCKET 이 있으면 S3)' }) kind!: string;
+  @ApiPropertyOptional({ nullable: true, description: 'S3 버킷 이름(S3 일 때만)' }) bucket!: string | null;
+  @ApiProperty({ description: '저장 위치가 서버 디스크(LOCAL)로 적힌 파일 수(지운 것 빼고)' }) localFiles!: number;
+  @ApiProperty({ description: 'S3 로 적힌 파일 수(지운 것 빼고)' }) s3Files!: number;
+  @ApiProperty({ description: '쓰는 파일(READY) 합계 바이트' }) readyBytes!: number;
+  @ApiProperty({ description: 'S3 인데 디스크 기록 파일이 남음 = 옮기기(files-to-s3.sh)가 덜 끝남' }) pendingMove!: boolean;
+}
+
