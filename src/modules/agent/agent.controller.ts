@@ -145,6 +145,19 @@ export class AgentChatRowDto {
   @ApiProperty() turns!: number;
   @ApiPropertyOptional({ nullable: true, description: '첫 질문 앞부분(연락처는 가려 저장됨)' }) firstQuestion!: string | null;
 }
+/* v10.147 — AI 켜기 단계 안내판 */
+export class AgentRolloutStepDto {
+  @ApiProperty({ description: '순서 1 ~ 6' }) step!: number;
+  @ApiProperty({ enum: ['TERMS', 'KEY', 'REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'] }) code!: string;
+  @ApiProperty() label!: string;
+  @ApiProperty({ type: String, nullable: true, description: '이 단계를 켜는 스위치(site_settings 키) · 게시 단계는 없음' }) switchKey!: string | null;
+  @ApiProperty() on!: boolean;
+  @ApiProperty({ enum: ['DONE', 'RUN', 'READY', 'WAIT'], description: 'DONE 기준 넘음 · RUN 켜고 보는 중 · READY 켜도 됨 · WAIT 앞 단계 먼저' }) state!: string;
+  @ApiProperty({ description: '앞 단계 기준을 넘기 전에 켜져 있음' }) early!: boolean;
+  @ApiProperty({ description: '지금 숫자' }) now!: string;
+  @ApiProperty({ description: '넘어가는 기준 · 할 일' }) need!: string;
+}
+
 /* v10.131 (D129 · docs/197) — AI 상담 「답 · 넘김 비율」 */
 export class AgentChatStatsDto {
   @ApiProperty({ enum: [7, 14, 30] }) days!: number;
@@ -237,6 +250,13 @@ export class AgentController {
   @ApiOkResponse({ type: [AgentChatMessageDto] })
   @ApiResponse({ status: 404, type: ErrorDto })
   chatMessages(@Param('id') id: string) { return this.chats.adminMessages(id); }
+
+  @ApiBearerAuth()
+  @Get('admin/agent/rollout')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'AI 켜기 단계 안내판 (운영 · v10.147)', description: '처리방침 게시 → 키 · 상한 → 검수 보조 2주 → AI 상담 1주 → 내 정보 조회 → 신청서 초안. 단계마다 지금 숫자 · 기준 · 상태. 막지는 않음(스위치 화면이 경고).' })
+  @ApiOkResponse({ type: [AgentRolloutStepDto] })
+  rollout() { return this.svc.rollout(); }
 
   @ApiBearerAuth()
   @Get('admin/agent/status')

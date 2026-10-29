@@ -199,4 +199,77 @@ export class AgentService {
       note: '0단계(틀) — 모델 연결은 1단계(API 키 · 월 상한 · 법무 검토 뒤). 상한이 0 이면 아무것도 부르지 않습니다.',
     };
   }
+
+  /**
+   * v10.147 — AI 켜기 단계 안내판(docs/176 순서 · ai-agent #15 · #20 · #23 · #25 의 기준을 숫자로).
+   *   ① 처리방침 AI 고지 게시 → ② 키 · 월 상한 · AI 전체 → ③ 검수 보조 2주(100건 · 90%) → ④ AI 상담 1주(답 95%)
+   *   → ⑤ 내 정보 조회 며칠(3일) → ⑥ 신청서 초안. 막지는 않음 — 스위치 화면이 앞 단계 미달이면 확인 창에 경고(SUPER 판단).
+   *   「넘겨야 할 문항 100%」는 숫자로 셀 수 없어(사람이 상담 기록을 보고 판단) 할 일 칸에 적기만 합니다.
+   */
+  async rollout() {
+    const [r] = await this.db.query<Record<string, any>>(
+      `SELECT
+         EXISTS (SELECT 1 FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'
+                   AND string_to_array(version, '.')::int[] >= ARRAY[1,1]) AS privacy,
+         (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS "privacyVer",
+         (SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd') AS cap,
+         (SELECT (now() AT TIME ZONE 'Asia/Seoul')::date - min(day) FROM agent_usage_daily WHERE channel = 'REVIEW_SHADOW' AND requests > 0) AS "reviewDays",
+         a.decided, a.agree_pct::float AS "agreePct",
+         (SELECT (now() AT TIME ZONE 'Asia/Seoul')::date - min(day) FROM agent_usage_daily WHERE channel = 'SITE_CHAT' AND requests > 0) AS "chatDays",
+         (SELECT count(*) FROM agent_messages m JOIN agent_conversations c ON c.id = m.conversation_id
+           WHERE c.channel = 'SITE_CHAT' AND m.role = 'assistant' AND m.created_at >= now() - interval '7 days'
+             AND m.handoff IS FALSE)::int AS answered,
+         (SELECT count(*) FROM agent_messages m JOIN agent_conversations c ON c.id = m.conversation_id
+           WHERE c.channel = 'SITE_CHAT' AND m.role = 'assistant' AND m.created_at >= now() - interval '7 days'
+             AND (m.handoff IS TRUE OR (m.handoff IS NULL AND m.stop_reason IN ('refusal','max_tokens','bad_shape','banned'))))::int AS suggested,
+         (SELECT extract(day FROM now() - min(called_at))::int FROM agent_tool_calls WHERE tool LIKE 'my\\_%') AS "lookupDays"
+         FROM (SELECT count(*) FILTER (WHERE r.status IN ('APPROVED','REJECTED'))::int AS decided,   -- 일치율은 v_ai_review_agreement 와 같은 셈(14일 · 모델 합침)
+                      round(100.0 * count(*) FILTER (WHERE (o.suggestion = 'APPROVE' AND r.status = 'APPROVED') OR (o.suggestion = 'REJECT' AND r.status = 'REJECTED'))
+                            / nullif(count(*) FILTER (WHERE r.status IN ('APPROVED','REJECTED') AND o.suggestion <> 'UNSURE'), 0), 1) AS agree_pct
+                 FROM ai_review_opinions o JOIN review_items r ON r.id = o.review_item_id
+                WHERE o.created_at > now() - interval '14 days') a`);
+    const sw = Object.fromEntries((await this.db.query<{ key: string; value: string | null }>(
+      `SELECT key, value FROM site_settings WHERE key IN ('agent.enabled','agent.review_shadow.enabled','agent.chat.enabled',
+         'agent.chat.member_lookup.enabled','agent.chat.drafts.enabled')`)).map((x) => [x.key, x.value === 'on']));
+    const keyOk = (await this.resolve()).source !== 'NONE';
+    const cap = Number(r?.cap ?? 0);
+    const known = (r?.answered ?? 0) + (r?.suggested ?? 0);
+    const answeredPct = known > 0 ? Math.round((1000 * r.answered) / known) / 10 : null;
+    const d = (n: number | null) => (n == null ? '아직 안 씀' : `${n}일째`);
+
+    const pass = {
+      terms: !!r?.privacy,
+      key: keyOk && cap > 0 && !!sw['agent.enabled'],
+      review: (r?.reviewDays ?? 0) >= 14 && (r?.decided ?? 0) >= 100 && (r?.agreePct ?? 0) >= 90,
+      chat: (r?.chatDays ?? 0) >= 7 && (answeredPct ?? 0) >= 95,
+      lookup: (r?.lookupDays ?? 0) >= 3,
+    };
+    type Step = { code: string; label: string; switchKey: string | null; on: boolean; prereq: boolean; passed: boolean; now: string; need: string };
+    const steps: Step[] = [
+      { code: 'TERMS', label: '처리방침 AI 고지 게시', switchKey: null, on: pass.terms, prereq: true, passed: pass.terms,
+        now: r?.privacyVer ? `처리방침 ${r.privacyVer} 게시` : '처리방침 게시 없음',
+        need: '법무 검토 → 운영 화면 › 약관에서 처리방침 1.1(AI 위탁 · 국외 이전 · 상담 5년 · 제6조 ④ 내 정보 조회) 게시(docs/176 · 199)' },
+      { code: 'KEY', label: 'AI 키 · 월 상한 · AI 전체', switchKey: 'agent.enabled', on: !!sw['agent.enabled'], prereq: pass.terms, passed: pass.key,
+        now: `키 ${keyOk ? '있음' : '없음'} · 월 상한 $${cap} · AI 전체 ${sw['agent.enabled'] ? '켜짐' : '꺼짐'}`,
+        need: 'AI 키 → 월 상한(0 보다 큰 달러) → AI 전체 켜기(docs/173 · 194)' },
+      { code: 'REVIEW', label: 'AI 검수 보조 — 2주', switchKey: 'agent.review_shadow.enabled', on: !!sw['agent.review_shadow.enabled'], prereq: pass.key, passed: pass.review,
+        now: `${d(r?.reviewDays ?? null)} · 사람 결정 ${r?.decided ?? 0}건 · 일치율 ${r?.agreePct ?? '—'}%`,
+        need: '2주 · 100건 · 일치율 90% — 통과해도 자동 승인 없음(ai-agent #15)' },
+      { code: 'CHAT', label: 'AI 상담 2단계(안내) — 1주', switchKey: 'agent.chat.enabled', on: !!sw['agent.chat.enabled'], prereq: pass.key && (r?.reviewDays ?? 0) >= 7, passed: pass.chat,
+        now: `${d(r?.chatDays ?? null)} · 최근 7일 답 ${answeredPct ?? '—'}%(${r?.answered ?? 0} / ${known})`,
+        need: '1주 · 답할 문항 95% · 넘겨야 할 문항 100%(상담 기록을 사람이 보고 판단) — 검수 보조를 1주 본 뒤 켬(docs/176 · 170 §2)' },
+      { code: 'LOOKUP', label: 'AI 상담 3단계(내 정보 조회) — 며칠', switchKey: 'agent.chat.member_lookup.enabled', on: !!sw['agent.chat.member_lookup.enabled'], prereq: pass.chat && pass.terms, passed: pass.lookup,
+        now: `${d(r?.lookupDays ?? null)}`,
+        need: 'AI 상담 1주 기준 통과 + 처리방침 ④ 줄 게시 뒤 켬 · 3일쯤 상담 기록의 「조회」 줄 확인(ai-agent #23 · docs/204)' },
+      { code: 'DRAFTS', label: 'AI 상담 4단계(신청서 초안)', switchKey: 'agent.chat.drafts.enabled', on: !!sw['agent.chat.drafts.enabled'], prereq: pass.lookup, passed: !!sw['agent.chat.drafts.enabled'],
+        now: sw['agent.chat.drafts.enabled'] ? '켜짐' : '꺼짐',
+        need: '내 정보 조회를 며칠 쓴 뒤 + 법무 고지 확인 뒤 켬(ai-agent #25 · docs/209)' },
+    ];
+    return steps.map((s, i) => {
+      const state = s.on ? (s.passed ? 'DONE' : 'RUN') : (s.prereq ? 'READY' : 'WAIT');
+      return { step: i + 1, code: s.code, label: s.label, switchKey: s.switchKey, on: s.on, state,
+               early: s.on && !s.prereq, now: s.now, need: s.need };
+    });
+  }
+
 }

@@ -6,6 +6,7 @@ import { ErrorView } from '../../../components/ErrorView';
 import { AgentKey } from './AgentKey';
 import { AgentSwitches } from './AgentSwitches';
 import { AgentLimits } from './AgentLimits';
+import { AgentRollout } from './AgentRollout';
 
 /* ── SB-ADM-AGT-010 AI 에이전트 — v10.94 0단계 틀(D116 · docs/149 · docs/151) ─────────
  * 스위치 · 월 상한 · 이번 달 비용 · 통로별 사용량 · 요금표 · AI 검수 일치율을 봅니다.
@@ -33,6 +34,7 @@ const KEY_FROM: Record<Status['keySource'], string> = { ADMIN: '운영 화면 �
 
 export function AgentStatus() {
   const r = useApi<Status>('/admin/agent/status');
+  const [tick, setTick] = useState(0);   // v10.147 — 스위치를 바꾸면 「AI 켜기 단계」도 다시 읽음
   if (r.error) return <ErrorView error={r.error} onRetry={r.reload} />;
   if (!r.data) return <p className="muted">불러오는 중…</p>;
   const d = r.data;
@@ -48,7 +50,8 @@ export function AgentStatus() {
       <p className="card">{d.note} 월 상한에 닿으면 전체가 저절로 꺼지고 운영 경보가 뜹니다. AI 의견은 따로 쌓일 뿐 검수 상태를 바꾸지 않습니다.</p>
       <p className="hint" data-agent-engine>엔진 <b>{d.engine ?? '없음'}</b> · {KEY_FROM[d.keySource] ?? d.keySource}</p>
       {tokenRoles().includes('SUPER') && <AgentKey onChanged={r.reload} />}
-      <AgentSwitches onChanged={r.reload} />
+      <AgentRollout key={tick} />
+      <AgentSwitches onChanged={() => { r.reload(); setTick((t) => t + 1); }} />
       <AgentLimits onChanged={r.reload} />
 
       <h3 className="sec">통로</h3>

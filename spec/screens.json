@@ -3736,6 +3736,7 @@
    "bo": "#/ai-ops/agent",
    "apis": [
     "GET /admin/agent/status",
+    "GET /admin/agent/rollout",
     "GET /admin/agent/chats",
     "GET /admin/agent/chats/stats",
     "GET /admin/agent/chats/{id}",

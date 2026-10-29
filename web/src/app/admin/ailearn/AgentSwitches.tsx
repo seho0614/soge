@@ -4,6 +4,7 @@ import { api, tokenRoles } from '../../../lib/api';
 import { useAct } from '../../../lib/act';
 import { Flash } from '../../../components/Flash';
 import { ErrorView } from '../../../components/ErrorView';
+import type { RolloutStep } from './AgentRollout';
 
 /**
  * v10.129 (docs/194) — AI 운영 › AI 에이전트 › 「AI 스위치」 (SB-ADM-AGT-010 안의 한 구역)
@@ -38,6 +39,7 @@ const SWITCHES: Sw[] = [
 
 export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
   const r = useApi<Setting[]>('/admin/site-settings');
+  const ro = useApi<RolloutStep[]>('/admin/agent/rollout');   // v10.147 — 앞 단계 기준 전이면 켤 때 경고(막지는 않음)
   const a = useAct();
   const [cap, setCap] = useState<string | null>(null);
   const isSuper = tokenRoles().includes('SUPER');
@@ -47,7 +49,7 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
   const capNow = val('agent.monthly_cap_usd') || '0';
   const save = (key: string, value: string, ok: string, after?: () => void) =>
     void a.run(key, () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key, value }) }),
-      () => { after?.(); r.reload(); onChanged?.(); }, ok);
+      () => { after?.(); r.reload(); ro.reload(); onChanged?.(); }, ok);
   const flip = (s: Sw) => {
     const on = val(s.key) === 'on';
     /* AI 전체를 켤 때 이미 켜져 있는 기능을 알림 — 상한에 닿아 저절로 꺼진 뒤라면 켜는 즉시 그 기능들이 다시 부름 */
@@ -55,7 +57,9 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
     const ask = s.key === 'agent.enabled' && !on
       ? `${s.confirm}\n\n지금 켜져 있는 기능: ${already.length ? already.join(' · ') + ' — 켜는 즉시 AI 를 부릅니다.' : '없음'}`
       : s.confirm;
-    if (!window.confirm(on ? `${s.label}을(를) 끌까요? 바로 AI 를 부르지 않습니다.` : ask)) return;
+    const wait = ro.data?.find((x) => x.switchKey === s.key && x.state === 'WAIT');
+    const warn = wait ? `⚠ 아직 앞 단계 기준을 넘지 않았습니다(AI 켜기 단계 ${wait.step - 1}번까지 확인). 그래도 켤까요?\n\n` : '';
+    if (!window.confirm(on ? `${s.label}을(를) 끌까요? 바로 AI 를 부르지 않습니다.` : warn + ask)) return;
     save(s.key, on ? 'off' : 'on', `${s.label} — ${on ? '껐습니다' : '켰습니다'}.`);
   };
   const saveCap = () => {
