@@ -33,7 +33,7 @@ LIM = ['agent.member_daily_limit', 'agent.guest_daily_limit', 'agent.guest_daily
 MOD = ['agent.chat_model', 'agent.review_model', 'i18n.translate_model']
 ok('① 「AI 한도 · 모델」 구역 — 하루 횟수 7 · 모델 3 · 요금표 넣기 · SUPER 만 입력 · AI 스위치 아래',
    all(f"'{k}'" in L for k in LIM + MOD) and "'/admin/agent/model-prices'" in L and "tokenRoles().includes('SUPER')" in L
-   and '<AgentSwitches onChanged={r.reload} />\n      <AgentLimits onChanged={r.reload} />' in ST, '')
+   and re.search(r'<AgentSwitches onChanged=\{[^\n]*r\.reload[^\n]*\} />\n      <AgentLimits onChanged=\{r\.reload\} />', ST), '')
 A = rd('src/modules/admin/admin.service.ts')
 ok('① 서버 — 모델은 요금표에 있는 것만(MODEL_UNPRICED) · 볼 때 번역 횟수도 AI 설정(SUPER)',
    "PolicyViolation('MODEL_UNPRICED'" in A and 'await this.checkAiModel(key, value);' in A

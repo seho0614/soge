@@ -35,7 +35,7 @@ ok('① 서버 — AI 설정(agent.* · AI 번역 4개)은 SUPER 만 · AI 전�
    and "env.AGENT_PROVIDER === 'MOCK'" in AS and 'AI_SETTING_SUPER' in AC and 'SWITCH_PREREQ(AI 전체는' in AC, '')
 SW = rd('web/src/app/admin/ailearn/AgentSwitches.tsx'); ST = rd('web/src/app/admin/ailearn/AgentStatus.tsx'); IN = rd('web/src/app/admin/Integrations.tsx')
 ok('① 운영 화면 — AI 에이전트에 「AI 스위치」(상한 · 5개 · 확인 창 · SUPER 만 단추) · 처리방침 확인 문구(검수 보조 · 상담)',
-   '<AgentSwitches onChanged={r.reload} />' in ST and 'data-agent-switches' in SW and 'data-agent-cap' in SW
+   re.search(r'<AgentSwitches onChanged=\{[^\n]*r\.reload[^\n]*\} />', ST) and 'data-agent-switches' in SW and 'data-agent-cap' in SW
    and all(f"key: '{k}'" in SW for k in ('agent.enabled', 'i18n.auto_translate.enabled', 'i18n.board_on_view', 'agent.review_shadow.enabled', 'agent.chat.enabled'))
    and 'window.confirm(' in SW and "tokenRoles().includes('SUPER')" in SW and 'docs/165 §2' in SW and 'docs/170 §2' in SW, '')
 ok('① 외부 연동 — AI · 카카오맵 · 날씨 줄에 「키 넣는 곳으로 가기」',
