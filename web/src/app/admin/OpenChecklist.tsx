@@ -8,11 +8,15 @@ interface Blocker { kind: string; item: string; reason: string }
 interface Check { key: string; label: string; ok: boolean; detail: string; go: string | null }
 interface Res { code: string; name: string; isActive: boolean; passed: number; total: number; canOpen: boolean; checks: Check[] }
 interface Gwan { code: string; name: string; isActive: boolean; isHub: boolean }
+/* v10.146 (D142 · docs/225) — 오픈 준비 점검 한 줄 */
+interface Ready { code: string; label: string; required: boolean; ok: boolean; nowValue: string; todo: string; go: string | null }
 
 const KIND_LABEL: Record<string, string> = {
   SETTING: '사이트 설정', TERM: '약관', FOOTER: '푸터 링크',
   /* v10.27 (G-176) — 외부 연동 · 간주 모드(연동 전이라 확인 없이 통과시키는 중) */
   INTEGRATION: '외부 연동', ASSUME: '간주 모드 켜짐',
+  /* v10.146 (D142) — 방식 설정 · 메일 · 가짜(MOCK) · 소개비 순서 */
+  READY: '오픈 준비',
 };
 
 /**
@@ -25,6 +29,7 @@ const KIND_LABEL: Record<string, string> = {
 export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
   const gwans = useApi<Gwan[]>('/admin/gwans/manage');
   const blockers = useApi<Blocker[]>('/admin/open-blockers');
+  const ready = useApi<Ready[]>('/admin/open-readiness');
   const [code, setCode] = useState<string>('');
   const [r, setR] = useState<Res | null>(null);
   const [msg, setMsg] = useState<[boolean, string] | null>(null);
@@ -82,6 +87,24 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
 
       {/* v10.65 (docs/121) — 간주 모드 · 소개비 스위치를 운영 화면에서 */}
       <Switches />
+
+      {/* v10.146 (D142 · docs/225) — 오픈 준비 점검: 꼭(안 되면 아래 「오픈 준비」 차단) · 권장(꺼져 있어도 오픈은 됨) */}
+      <h2 className="ad-s2">오픈 준비 점검 <em>{(ready.data ?? []).filter((x) => x.required && !x.ok).length}</em> <small className="dim">꼭 4 · 권장 4 — 지금 값 · 할 일</small></h2>
+      {ready.error ? <ErrorView error={ready.error} /> : (
+        <div className="ad-tw"><table className="tbl" data-open-ready>
+          <thead><tr><th>항목</th><th>구분</th><th>지금 값</th><th>할 일</th><th style={{ width: 90 }}>상태</th><th style={{ width: 90 }}></th></tr></thead>
+          <tbody>{(ready.data ?? []).map((x) => (
+            <tr key={x.code} data-ready={x.code} className={x.ok || !x.required ? undefined : 'bad'}>
+              <td><b>{x.label}</b></td>
+              <td>{x.required ? <span className="pill pill-danger">꼭</span> : <span className="pill pill-muted">권장</span>}</td>
+              <td><code>{x.nowValue}</code></td>
+              <td>{x.todo}</td>
+              <td>{x.ok ? <span className="ad-bg ok">됨</span> : <span className={`ad-bg ${x.required ? 'no' : 'wait'}`}>{x.required ? '미통과' : '꺼짐'}</span>}</td>
+              <td>{!x.ok && x.go && onGo && <button className="btn-plain" onClick={() => onGo(x.go!)}>고칠 곳</button>}</td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      )}
 
       <h2 className="ad-s2">서비스 오픈을 막는 항목 <em>{data.length}</em> <small className="dim">개발에만 — 간주 모드 · 외부 연동 · 설정</small></h2>
       {blockers.error ? <ErrorView error={blockers.error} /> : data.length === 0

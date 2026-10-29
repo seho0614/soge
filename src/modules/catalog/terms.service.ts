@@ -84,4 +84,10 @@ export class TermsService {
   blockers() {
     return this.db.query(`SELECT kind, item, reason FROM v_open_blockers`);
   }
+
+  /** v10.146 (D142) — 오픈 준비 점검 8줄(꼭 4 · 권장 4). 설정 값만 읽습니다. */
+  readiness() {
+    return this.db.query(
+      `SELECT code, label, required, ok, now_value AS "nowValue", todo, go FROM v_open_readiness ORDER BY sort`);
+  }
 }

@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
-  OpenBlockerDto, PublishTermDto, TermDetailDto,
+  OpenBlockerDto, OpenReadinessDto, PublishTermDto, TermDetailDto,
   TermPublishResultDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -72,4 +72,14 @@ export class TermsController {
   })
   @ApiOkResponse({ type: OpenBlockerDto, isArray: true })
   blockers() { return this.terms.blockers(); }
+
+  @Get('open-readiness')
+  @ApiOperation({
+    summary: '오픈 준비 점검 (v10.146)',
+    description:
+      '본인인증 · 메일 · 가짜(MOCK) 방식 · 소개비 순서(꼭) 와 알림톡 · 전자계약 · 안심번호 · AI(권장)의 ' +
+      '지금 값 · 할 일 · 고칠 화면. 꼭 줄이 안 되면 open-blockers 에 READY 로도 나옵니다.',
+  })
+  @ApiOkResponse({ type: OpenReadinessDto, isArray: true })
+  readiness() { return this.terms.readiness(); }
 }

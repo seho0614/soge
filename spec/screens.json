@@ -1459,6 +1459,7 @@
    "gates": [],
    "apis": [
     "GET /admin/open-blockers",
+    "GET /admin/open-readiness",
     "GET /admin/gwans/{code}/open-check",
     "POST /admin/gwans/{code}/open"
    ],

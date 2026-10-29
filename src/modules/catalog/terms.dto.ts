@@ -59,7 +59,18 @@ export class TermPublishResultDto {
 }
 
 export class OpenBlockerDto {
-  @ApiProperty({ enum: ['SETTING', 'TERM', 'FOOTER'] }) kind!: string;
+  @ApiProperty({ enum: ['SETTING', 'TERM', 'FOOTER', 'INTEGRATION', 'ASSUME', 'READY'] }) kind!: string;
   @ApiProperty() item!: string;
   @ApiProperty() reason!: string;
+}
+
+/** v10.146 (D142 · docs/225) — 오픈 준비 점검 한 줄. required 이고 ok 가 아니면 오픈 차단(READY)에도 올라갑니다. */
+export class OpenReadinessDto {
+  @ApiProperty({ example: 'IDENTITY' }) code!: string;
+  @ApiProperty({ example: '본인인증 방식' }) label!: string;
+  @ApiProperty({ description: 'true 꼭(오픈 차단) · false 권장(꺼져 있어도 오픈은 됨)' }) required!: boolean;
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ example: 'identity.provider = STUB' }) nowValue!: string;
+  @ApiProperty({ example: 'NICE 계약 → 키 3개 → 방식 NICE (docs/214)' }) todo!: string;
+  @ApiProperty({ nullable: true, description: '고칠 운영 화면 탭', example: 'integrations' }) go!: string | null;
 }
