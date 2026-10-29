@@ -3,6 +3,59 @@
 > 대표 「CodeCommit 내용을 GitHub 에 백업하는 절차」 · 「백업을 GitHub 에 저장하려고 한다. 절차서 만들어줘」. 결정 기록 deploy-cicd #8(「GitHub 연동으로 작업 백업 — 미정」)을 채우는 안.
 > **원본은 계속 CodeCommit.** GitHub 은 **읽기 전용 사본(백업)** — GitHub 에서 고치거나 풀 리퀘스트를 받지 않는다. 운영 배포 · 점검 흐름(docs/222 · CLAUDE.md)은 바뀌지 않는다.
 > 저장소 백업만 다룬다. 서버 · DB · 개발 작업 · Claude 작업 백업은 docs/222.
+> **2026-10-29 실제 설정은 0절 — 저장소 4개가 아니라 GitHub 비공개 저장소 하나(`seho0614/soge`)에 담음(대표 선택).** 0절과 2 ~ 6절이 다르면 0절을 따른다.
+
+## 0. 실제 설정 (2026-10-29 · 한 저장소 방식)
+
+| 항목 | 값 |
+|---|---|
+| GitHub 저장소 | `seho0614/soge` · 비공개(바깥에서 404) · 처음 만들 때 생긴 `main` 은 그대로 둠 |
+| 담는 방식 | 갈래 이름 앞에 저장소 이름: `sgb-core/main` · `sgb-core/feature/…` · `sgb-infra/…` · `sgb-adx/main` · `sgb-docs/…` (태그도 `sgb-core/…` 처럼) |
+| 열쇠 | 배포 키 1개 — 서버 `~/.ssh/gh_soge` · 별칭 `gh-soge` · 쓰기 허용 · GitHub 이름 `sgbdev-backup` |
+| 보내는 사본 | `~/mirror/<저장소>.git` (CodeCommit `--mirror` · 작업 폴더와 따로) |
+| 보내는 스크립트 | `~/mirror/push-github.sh` — 받아오기 → `refs/heads/*:refs/heads/<저장소>/*` 보내기 · 강제 · 지우기 없음 · 결과 한 줄 `~/mirror/last.txt` (4절 자동화 때 `sgb-infra/tools/` 로 옮김) |
+| GitHub 설정 | Actions 끔 · 배포 키 쓰기 허용 (대표 확인 10/29) · 기본 갈래 `sgb-core/main` (대표 할 일) |
+
+**평소 보내기 (손으로 · 자동화 전)**
+
+```bash
+~/mirror/push-github.sh          # 기대: 「<저장소> 보냄 · main <커밋>」 4줄
+```
+
+**대조**
+
+```bash
+export PATH=$HOME/.local/bin:$PATH; G=$(git ls-remote gh-soge:seho0614/soge.git)
+for r in sgb-core sgb-infra sgb-adx sgb-docs; do
+  a=$(git ls-remote codecommit::ap-northeast-2://$r refs/heads/main | cut -c1-7)
+  b=$(echo "$G" | grep -P "\trefs/heads/$r/main$" | cut -c1-7)
+  echo "$r CodeCommit $a · GitHub $b $([ "$a" = "$b" ] && echo 같음 || echo 다름)"
+done
+```
+
+**되살리기 (한 저장소 방식)**
+
+```bash
+# 저장소 하나를 작업 폴더로
+git clone -b sgb-core/main git@github.com:seho0614/soge.git sgb-core
+# 저장소 하나의 모든 갈래를 새 CodeCommit 으로 (앞머리 떼고)
+git init --bare sgb-core.git && cd sgb-core.git
+git fetch git@github.com:seho0614/soge.git 'refs/heads/sgb-core/*:refs/heads/*' 'refs/tags/sgb-core/*:refs/tags/*'
+git push codecommit::ap-northeast-2://sgb-core 'refs/heads/*:refs/heads/*' --tags
+```
+
+**2026-10-29 첫 보내기 기록**
+
+| 저장소 | CodeCommit main | GitHub `<저장소>/main` | 갈래 CodeCommit / GitHub |
+|---|---|---|---|
+| sgb-core | `54feb67` | `54feb67` 같음 | 146 / 146 |
+| sgb-infra | `489b7ec` | `489b7ec` 같음 | 109 / 109 |
+| sgb-adx | `5363cf4` | `5363cf4` 같음 | 1 / 1 |
+| sgb-docs | `e04390b` | `e04390b` 같음 | 84 / 84 |
+
+- GitHub 전체 342개(갈래 340 + 처음 `main` + HEAD) · 100MB 넘는 파일 0(가장 큰 것 8.5MB) · 보내기 전 5절 비밀값 검사 결과 그대로(가짜 값 3곳뿐).
+- 되살리기 시험(10/29): `clone -b sgb-core/main` → `54feb67` · 앞머리 떼고 받기(sgb-adx) → `main 5363cf4` — 둘 다 됨.
+- 배포 키 하나가 네 저장소를 모두 담으므로, 서버를 잃으면 GitHub 화면에서 그 키 하나만 지운다.
 
 ## 1. 한눈에
 
@@ -151,10 +204,10 @@ done
 
 | # | 할 일 |
 |---|---|
-| 1 | `sgb-infra/tools/backup-github.sh` — 2-5 아래 반쪽 + 2-6 비교 · 결과 한 줄을 `~/backup/github-last.txt` |
-| 2 | sgbdev 예약 작업(cron) 매일 03:30 KST — `30 18 * * * bash ~/sogaebank/sgb-infra/tools/backup-github.sh` |
+| 1 | `sgb-infra/tools/backup-github.sh` — 0절 방식(한 저장소 · 앞머리) · 결과 한 줄을 `~/backup/github-last.txt` — **10/29 만듦 · 손으로 돌려 rc=0** |
+| 2 | sgbdev 예약 작업(cron) 매일 03:30 KST — `30 18 * * * $HOME/bin/backup-github.sh` (등록 명령은 docs/222 4절 · 사람이 등록) |
 | 3 | 실패하면 다음 대화 시작 점검에서 `github-last.txt` 를 먼저 봄 · 메일을 켠 뒤(docs/167)에는 실패 때 메일 |
-| 4 | 결정 기록 deploy-cicd #8 을 「GitHub 비공개 저장소 4개 · 매일 · 배포 키」로 고침 |
+| 4 | 결정 기록 deploy-cicd #8 을 「GitHub 비공개 저장소 하나(seho0614/soge) · 매일 · 배포 키」로 고침 |
 
 ## 5. 비밀값 미리 검사 (보내기 전에 한 번 · 2026-10-28 결과)
 
@@ -192,6 +245,6 @@ git -C sgb-core.git push --mirror codecommit::ap-northeast-2://sgb-core
 
 | 무엇 | 까닭 |
 |---|---|
-| GitHub 계정 · 조직 이름 · 요금제 | 대표 계정 — 2-1 에서 정함 |
+| GitHub 요금제 | 계정 `seho0614` 는 10/29 정함 — 요금제는 GitHub 화면에서 확인 |
 | 비공개 저장소 비밀값 검사(Secret scanning) 사용 가능 여부 · GitHub 요금 | 요금제 · 정책이 바뀔 수 있음 — 설정 때 GitHub 화면에서 확인 |
-| 개발 서버에서 github.com 22번 포트로 나갈 수 있는지 | 보안 그룹 · 방화벽 — 2-5 의 `ssh -T` 로 확인. 막히면 `ssh.github.com` 443 포트(`Hostname ssh.github.com` · `Port 443`) |
+| ~~개발 서버에서 github.com 22번 포트로 나갈 수 있는지~~ | 10/29 확인 — `ssh -T gh-soge` 성공 · 22번 포트 나감 |
