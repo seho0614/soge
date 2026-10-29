@@ -5,6 +5,7 @@
 
   ① 코드 — API 2개(공개 · 신청과 같은 기준) · DTO · 화면 3곳(안내 · 단추 막기 · 못 읽으면 막지 않음) · 사전 ko/en · 화면 목록 · 문서 · 판
   ② (API) 로그인 없이 200 · 모양(ready · byPhone · byMail) · 점검판(개발 환경)은 ready=true
+     AI 켜기 단계 — 6줄 순서 · 손님 403 · 앞 단계 전에 켠 스위치는 early · 되돌림
      재설정 링크(SUPER) — 손님 403 · 까닭 없으면 422 · 만들기 · 다시 만들면 앞 링크 무효 · 새 링크로 재설정 · 운영진 계정 403 · 감사 기록에 링크 없음
   ③ (사용자 웹) 점검판에서는 안내가 없고 단추가 살아 있음 — /consult · /login/forgot
 """
@@ -74,6 +75,17 @@ ok('① 재설정 링크 — SUPER 만 · @Audit 안 씀(응답에 링크) · �
 MB = rd('web/src/app/admin/Members.tsx')
 ok('① 운영 화면 — 회원 상세에 SUPER 만 「재설정 링크」', "tokenRoles().includes('SUPER') && <ResetLink" in MB and 'data-reset-link-make' in MB
    and 'POST /admin/accounts/{id}/password-reset-link' in scr.get('SB-ADM-MBR-020', {}).get('apis', []), '')
+AS2 = rd('src/modules/agent/agent.service.ts'); AC2 = rd('src/modules/agent/agent.controller.ts')
+RO = rd('web/src/app/admin/ailearn/AgentRollout.tsx'); SW = rd('web/src/app/admin/ailearn/AgentSwitches.tsx'); ST = rd('web/src/app/admin/ailearn/AgentStatus.tsx')
+ok('① AI 켜기 단계 — API(ADMIN · SUPER · 읽기만) · 기준 숫자(14일 · 100건 · 90% · 7일 · 95% · 3일) · DTO 가 컨트롤러 앞',
+   "@Get('admin/agent/rollout')" in AC2 and 'async rollout()' in AS2 and 'class AgentRolloutStepDto' in AC2
+   and AC2.index('class AgentRolloutStepDto') < AC2.index('export class AgentController')
+   and all(x in AS2 for x in ('>= 14', '>= 100', '>= 90', '>= 7', '>= 95', '>= 3', "source !== 'NONE'"))
+   and not re.search(r'UPDATE |INSERT ', AS2[AS2.index('async rollout()'):]), '')
+ok('① 운영 화면 — 「AI 켜기 단계」 표 · 스위치 위 · 앞 단계 전이면 확인 창 경고 · 스위치 바꾸면 다시 읽음',
+   'data-agent-rollout' in RO and 'data-rollout-early' in RO and '<AgentRollout key={tick} />' in ST
+   and ST.index('<AgentRollout') < ST.index('<AgentSwitches') and "x.state === 'WAIT'" in SW and 'ro.reload()' in SW
+   and 'GET /admin/agent/rollout' in scr.get('SB-ADM-AGT-010', {}).get('apis', []), '')
 ok('① 판 v10.147 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 147), rd('VERSION').strip())
 
 
@@ -130,6 +142,23 @@ if API and DB:
     ok('② 새 링크로 재설정 · 다시 로그인', x.get('ok') is True and 'accessToken' in call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}), str(x)[:80])
     x = call('POST', f'/admin/accounts/{aid}/password-reset-link', {'reason': R}, T_)
     ok('② 운영진 계정 403 STAFF_ACCOUNT', x.get('_err') == 403 and x.get('code') == 'STAFF_ACCOUNT', str(x))
+    # AI 켜기 단계
+    ro = call('GET', '/admin/agent/rollout', t=T_)
+    codes = [x.get('code') for x in ro] if isinstance(ro, list) else []
+    ok('② AI 켜기 단계 — 6줄 순서 · 상태 값', codes == ['TERMS', 'KEY', 'REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS']
+       and all(x['state'] in ('DONE', 'RUN', 'READY', 'WAIT') and isinstance(x['early'], bool) and x['now'] and x['need'] for x in ro), ' '.join(f"{x['code']}:{x['state']}" for x in ro) if codes else str(ro))
+    ok('② AI 켜기 단계 — 손님 403', call('GET', '/admin/agent/rollout', t=BT).get('_err') == 403, '')
+    k = 'agent.chat.drafts.enabled'; was = psql(f"SELECT value FROM site_settings WHERE key = '{k}'")
+    try:
+        psql(f"UPDATE site_settings SET value = 'on' WHERE key = '{k}'")
+        ro2 = {x['code']: x for x in call('GET', '/admin/agent/rollout', t=T_)}
+        lk = ro2['LOOKUP']['state'] == 'DONE'
+        ok('② 신청서 초안을 앞 단계 전에 켜면 early · 상태 RUN/DONE', ro2['DRAFTS']['on'] and (ro2['DRAFTS']['early'] is (not lk))
+           and ro2['DRAFTS']['state'] in ('DONE', 'RUN'), f"LOOKUP {ro2['LOOKUP']['state']} · DRAFTS early {ro2['DRAFTS']['early']}")
+    finally:
+        psql(f"UPDATE site_settings SET value = '{was}' WHERE key = '{k}'")
+    ok('② 되돌림 — 신청서 초안 스위치', psql(f"SELECT value FROM site_settings WHERE key = '{k}'") == was, was)
+
     a = psql(f"SELECT after_data::text FROM audit.audit_logs WHERE action = 'PASSWORD_RESET_LINK' AND target_id = '{bid}' ORDER BY occurred_at DESC LIMIT 1")
     ok('② 감사 기록 — 까닭은 있고 링크 · 증표는 없음', R in a and 'token' not in a and tk(r2) not in a, a[:120])
 
