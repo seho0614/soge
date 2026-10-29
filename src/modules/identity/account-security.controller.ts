@@ -101,6 +101,17 @@ export class LoginLockStateDto {
   @ApiPropertyOptional({ nullable: true, format: 'date-time' }) lastFailAt!: string | null;
 }
 
+export class ResetLinkDto {
+  @ApiProperty({ description: '본인 확인 방법과 까닭(5 ~ 200자) — 감사 기록에 남음', example: '고객센터 전화 · 가입 휴대폰 뒤 4자리와 최근 거래로 본인 확인' })
+  @IsString() @MaxLength(200) reason!: string;
+}
+
+export class ResetLinkResultDto {
+  @ApiProperty({ description: '1회용 재설정 링크 — 이 응답에서만 보임(감사 기록에 남기지 않음)' }) url!: string;
+  @ApiProperty() expiresInMinutes!: number;
+  @ApiProperty() note!: string;
+}
+
 export class LoginUnlockResultDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty({ description: '지운 잠금 · 실패 기록이 있었는가' }) cleared!: boolean;
@@ -206,5 +217,20 @@ export class AccountSecurityController {
   @ApiOkResponse({ type: LoginUnlockResultDto })
   unlock(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.unlock(id);
+  }
+
+  @Post('admin/accounts/:id/password-reset-link')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @Roles('SUPER')
+  @ApiOperation({
+    summary: '비밀번호 재설정 링크 만들기 (v10.147 · SUPER)',
+    description: '메일을 보낼 수 없을 때 고객센터에서 **본인 확인을 마친 회원**에게 직접 전달할 1회용 링크(30분). 새로 만들면 앞 링크는 무효. 운영진 계정에는 만들지 않음. 감사 기록 PASSWORD_RESET_LINK(까닭만 · 링크는 남기지 않음).',
+  })
+  @ApiResponse({ status: 403, description: 'STAFF_ACCOUNT', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED · NOT_FOUND', type: ErrorDto })
+  @ApiOkResponse({ type: ResetLinkResultDto })
+  resetLink(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ResetLinkDto) {
+    return this.svc.adminResetLink(id, dto.reason);
   }
 }

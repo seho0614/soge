@@ -2985,7 +2985,8 @@
     "PATCH /admin/accounts/{id}/status",
     "PATCH /admin/accounts/{id}/posting-suspension/lift",
     "GET /admin/accounts/{id}/login-lock",
-    "DELETE /admin/accounts/{id}/login-lock"
+    "DELETE /admin/accounts/{id}/login-lock",
+    "POST /admin/accounts/{id}/password-reset-link"
    ]
   },
   {

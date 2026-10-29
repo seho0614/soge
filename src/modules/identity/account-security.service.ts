@@ -20,6 +20,7 @@ import {
  *   변경     PATCH /me/password          → 현재 비밀번호 확인(틀리면 로그인 실패와 같이 셈) · 새 증표를 돌려줌
  *   탈퇴     GET  /me/withdraw/check · POST /me/withdraw → 막는 항목은 DB 함수 fn_withdraw_blockers 한 곳(약관 제13조 ②)
  *   운영     GET/DELETE /admin/accounts/:id/login-lock
+ *            POST /admin/accounts/:id/password-reset-link (v10.147 · SUPER) — 메일 준비 전 고객센터용 1회 링크
  * ------------------------------------------------------------------- */
 
 export const WITHDRAW_REASONS: Record<string, string> = {
@@ -228,6 +229,42 @@ export class AccountSecurityService {
     if (!a) throw new PolicyViolation('NOT_FOUND', '회원이 없습니다.');
     const [r] = await this.db.query<{ n: number }>(`SELECT fn_login_clear($1) AS n`, [a.email]);
     return { ok: true, cleared: Number(r?.n ?? 0) > 0 };
+  }
+
+  /**
+   * v10.147 — 고객센터용 재설정 링크(SUPER). 메일을 보낼 수 없을 때 본인 확인을 마친 회원에게 운영진이 직접 전달합니다.
+   *   · 링크는 비밀번호 찾기와 같은 1회용 증표(30분 · DB 에는 sha256) — 새로 만들면 앞 링크는 무효
+   *   · 운영진 계정(ADMIN · SUPER · REVIEWER · PAYOUT)에는 만들지 않음 — 운영 권한을 링크로 넘기지 않게
+   *   · 감사 기록 PASSWORD_RESET_LINK — 까닭 · 만든 사람만(증표 원문은 남기지 않음 · 응답은 @Audit 를 쓰지 않음)
+   */
+  async adminResetLink(accountId: string, reasonRaw: string) {
+    const reason = String(reasonRaw ?? '').trim();
+    if (reason.length < 5 || reason.length > 200) {
+      throw new PolicyViolation('REASON_REQUIRED', '본인 확인 방법과 까닭을 5자 이상 적어 주십시오.');
+    }
+    const [acc] = await this.db.query<{ id: string; email: string; staff: boolean }>(
+      `SELECT a.id, a.email,
+              EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role IN ('ADMIN','SUPER','REVIEWER','PAYOUT')) AS staff
+         FROM accounts a WHERE a.id = $1 AND a.status = 'ACTIVE' AND a.withdrawn_at IS NULL`, [accountId]);
+    if (!acc) throw new PolicyViolation('NOT_FOUND', '쓸 수 있는 회원이 아닙니다(없음 · 정지 · 탈퇴).');
+    if (acc.staff) throw new Forbidden('STAFF_ACCOUNT', '운영진 계정에는 재설정 링크를 만들지 않습니다. 본인이 비밀번호 찾기를 쓰십시오.');
+    const token = randomBytes(32).toString('base64url');
+    const [mins] = await this.db.query<{ v: number }>(`SELECT fn_setting_int('auth.reset.ttl_minutes', 30) AS v`);
+    const ttl = Math.min(60, Number(mins?.v ?? 30));
+    const c = RequestCtx.get();
+    await this.db.transaction(async () => {
+      await this.db.query(`SELECT fn_password_reset_issue($1, $2, $3)`, [acc.id, tokenHash(token), clientIpKey()]);
+      await this.db.query(
+        `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
+         VALUES ($1, $2, 'PASSWORD_RESET_LINK', 'ACCOUNT', $3, $4::jsonb, $5, $6)`,
+        [c?.actorId ?? null, c?.actorRole ?? 'SUPER', acc.id, JSON.stringify({ reason, ttlMinutes: ttl }), c?.ip ?? null, c?.userAgent ?? null]);
+    });
+    const [b] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'site.base_url'`);
+    const base = (b?.v || 'https://sogaebank.com').replace(/\/+$/, '');
+    return {
+      url: `${base}/login/reset?token=${token}`, expiresInMinutes: ttl,
+      note: `${ttl}분 동안 한 번만 쓸 수 있습니다. 본인 확인을 마친 회원에게만 직접 전달하고, 이 화면을 닫으면 다시 볼 수 없습니다.`,
+    };
   }
 
   /* ── 안쪽 ───────────────────────────────────────────────────── */

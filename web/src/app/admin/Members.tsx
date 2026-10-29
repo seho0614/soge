@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, ApiFailure } from '../../lib/api';
+import { api, ApiFailure, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -220,6 +220,7 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
       )}
 
       <LoginLock id={a.id} />
+      {tokenRoles().includes('SUPER') && <ResetLink id={a.id} />}
 
       <StatusChange id={a.id} status={a.status} suspended={!!d.postingSuspension} onDone={load} onBack={onBack} />
     </>
@@ -308,6 +309,44 @@ function LoginLock({ id }: { id: string }) {
         <div className="ad-dact">
           <button className="btn-plain" disabled={busy} onClick={unlock} data-login-unlock>잠금 풀기</button>
           <span className="muted">본인 확인을 마친 뒤에만 푸십시오. 30분이 지나면 저절로 풀립니다.</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * v10.147 — 비밀번호 재설정 링크(SUPER). 메일 발송 준비 전, 고객센터에서 본인 확인을 마친 회원에게 직접 전달합니다.
+ *   30분 · 1번 · 새로 만들면 앞 링크 무효 · 운영진 계정은 서버가 막음 · 감사 기록 PASSWORD_RESET_LINK(까닭만)
+ *   링크는 이 화면에만 한 번 보입니다(다시 볼 수 없음).
+ */
+function ResetLink({ id }: { id: string }) {
+  const [reason, setReason] = useState('');
+  const [link, setLink] = useState<{ url: string; note: string } | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const make = () => {
+    if (!confirm('본인 확인을 마쳤습니까? 앞서 만든 재설정 링크는 쓸 수 없게 됩니다.')) return;
+    setBusy(true); setMsg(null); setLink(null);
+    api<{ url: string; note: string }>(`/admin/accounts/${id}/password-reset-link`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then((r) => { setLink(r); setReason(''); })
+      .catch((e) => setMsg(e instanceof ApiFailure ? e.body.message : '만들지 못했습니다.'))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <>
+      <h3 className="ad-s2">비밀번호 재설정 링크</h3>
+      <p className="muted">메일 발송 준비 전에 고객센터에서 씁니다. <b>본인 확인을 마친 회원</b>에게만 전화 · 문의 답변으로 직접 전달하십시오. 30분 · 한 번만 쓸 수 있습니다.</p>
+      <div className="ad-dact" data-reset-link-form>
+        <input style={{ minWidth: 360 }} value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)}
+               placeholder="본인 확인 방법과 까닭(예: 문의 #123 · 가입 휴대폰 뒤 4자리 확인)" />
+        <button className="btn-plain" disabled={busy || reason.trim().length < 5} onClick={make} data-reset-link-make>링크 만들기</button>
+      </div>
+      {msg && <p className="form-error" role="alert">{msg}</p>}
+      {link && (
+        <div className="ad-tw" data-reset-link>
+          <p className="form-ok" role="status">{link.note}</p>
+          <code style={{ wordBreak: 'break-all' }}>{link.url}</code>
         </div>
       )}
     </>
