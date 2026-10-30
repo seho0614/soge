@@ -47,8 +47,8 @@ ok('① LIVE 조건 — PG · BANK 를 LIVE 로 올릴 때만 · 최근 7일 성
    and "'INTEG_TEST_REQUIRED'" in SV and "if (input.status === 'LIVE')" in SS and "if (cur && cur.status !== 'LIVE') await this.integTests.assertLiveAllowed(code);" in SS, '')
 CT = rd('src/modules/site/integ-test.controller.ts')
 routes = re.findall(r"@(Get|Post)\(('[^']*')?\)\n  @Roles\(([^)]*)\)", CT)
-ok('① API 4개 — 보기 ADMIN · SUPER / 시험 SUPER · 감사', sorted(routes) == sorted([('Get', '', "'ADMIN', 'SUPER'"), ('Post', "'pg-check'", "'SUPER'"),
-   ('Post', "'bank-send'", "'SUPER'"), ('Post', "'bank-confirm'", "'SUPER'")]) and "@Audit('INTEG_TEST_PG', 'INTEGRATION')" in CT and CT.count("@Audit('INTEG_TEST_BANK', 'INTEGRATION')") == 2, str(routes))
+R4 = [('Get', '', "'ADMIN', 'SUPER'"), ('Post', "'pg-check'", "'SUPER'"), ('Post', "'bank-send'", "'SUPER'"), ('Post', "'bank-confirm'", "'SUPER'")]
+ok('① API 4개 — 보기 ADMIN · SUPER / 시험 SUPER · 감사(v10.155 부터 세금계산서 etax-test SUPER 하나 더)', sorted(routes) in (sorted(R4), sorted(R4 + [('Post', "'etax-test'", "'SUPER'")])) and "@Audit('INTEG_TEST_PG', 'INTEGRATION')" in CT and CT.count("@Audit('INTEG_TEST_BANK', 'INTEGRATION')") == 2, str(routes))
 SC = json.loads(rd('spec/screens.json') or '{"screens":[]}')
 sit = next((s for s in SC['screens'] if s['id'] == 'SB-ADM-SIT-080'), {})
 ok('① 화면 목록 — 외부 연동에 API 4개', all(a in sit.get('apis', []) for a in ['GET /admin/integ-tests', 'POST /admin/integ-tests/pg-check',
@@ -148,7 +148,7 @@ if ADMIN_WEB:
             pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(1500)
             pg.goto(ADMIN_WEB + '/#/integrations', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
             box = pg.locator('[data-integtest-panel]')
-            ok('③ 외부 연동 › 「결제 · 계좌 연결 확인」 — 다섯 줄 · 결제 키 확인 · 1원 칸', box.count() == 1 and box.locator('[data-integtest-row]').count() == 5
+            ok('③ 외부 연동 › 「결제 · 계좌 연결 확인」 — 다섯 줄(v10.155 부터 세금계산서 4줄 더해 아홉) · 결제 키 확인 · 1원 칸', box.count() == 1 and box.locator('[data-integtest-row]').count() in (5, 9)
                and box.locator('[data-integtest-pg]').count() == 1 and box.locator('[data-integtest-send]').count() == 1, box.inner_text()[:120] if box.count() else '없음')
             if box.count(): box.scroll_into_view_if_needed()
             pg.screenshot(path=os.path.join(HERE, 'v1144_integtest_panel.png'), full_page=False)
