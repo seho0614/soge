@@ -36,7 +36,7 @@ ok('① D145 — 설정 agent.require_privacy 처음 on · on/off 형식 · 지�
    and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|UPDATE )\b', D) and len(mig) >= 183 and 'D145_agent_privacy_gate' in mig, f'{len(mig)} · {mig[-1]}')
 AS = rd('src/modules/admin/admin.service.ts')
 ok('① 서버 — AI 전체 켤 때 처리방침 1.1 확인 · 값 없으면 on · PRIVACY_FIRST', "new PolicyViolation('PRIVACY_FIRST'" in AS
-   and "string_to_array(version, '.')::int[] >= ARRAY[1,1]" in AS.split('private async checkAiSwitch')[1] and "(g?.req ?? 'on').trim() !== 'off'" in AS, '')
+   and any(x in AS.split('private async checkAiSwitch')[1] for x in ("string_to_array(version, '.')::int[] >= ARRAY[1,1]", 'public.fn_privacy_ai_ready() AS ok')) and "(g?.req ?? 'on').trim() !== 'off'" in AS, '')
 SW = rd('web/src/app/admin/ailearn/AgentSwitches.tsx')
 ok('① 운영 화면 — 「AI 켜기 전 처리방침 확인」 줄 · 확인 창 · SUPER 만 단추 · 처음 켜짐', 'data-agent-privacy-gate' in SW and 'AI 켜기 전 처리방침 확인' in SW
    and "val('agent.require_privacy') !== 'off'" in SW and 'flipGate' in SW and 'window.confirm(gate' in SW, '')
@@ -76,7 +76,8 @@ if API and DB:
     sv = lambda k, v, t=T_: call('PATCH', '/admin/site-settings', {'key': k, 'value': v}, t)
     get = lambda k: psql(f"SELECT value FROM site_settings WHERE key = '{k}'")
     pv = psql("SELECT coalesce(max(version), '') FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
-    has11 = psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]") != '0'
+    has11 = (psql("SELECT public.fn_privacy_ai_ready()") == 't') if psql("SELECT to_regproc('public.fn_privacy_ai_ready') IS NOT NULL") == 't' \
+        else psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]") != '0'   # v10.156 (D149)
     mock = call('GET', '/admin/agent/status', t=T_).get('keySource') == 'MOCK'
     try:
         ok('② 점검판 — AI 엔진 MOCK · 처리방침 1.1 게시 없음(이 시험의 전제)', mock and not has11, f'게시 판 {pv or "없음"}')
