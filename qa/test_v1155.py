@@ -85,6 +85,12 @@ ok('① 설정 예시 · 연동 등록부 — ETAX_TEST_URL · ETAX_TEST_KEY', '
 D235 = next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('235_')), '')
 ok('① docs/235 — 오류 코드 · 처음 on · 시험 주소로만 · 같은 주소 막음 · 순서표 6 · 8 · 하지 말 것',
    all(x in D235 for x in ('ALIMTALK_TEST_FIRST', 'ETAX_TEST_FIRST', 'alimtalk.require_test', 'ETAX_TEST_URL', 'SAME_URL', '6 세금계산서', '8 알림톡', '하지 말 것')), '')
+F236 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('236_')), '')
+D236 = rd('docs/' + F236) if F236 else ''
+ok('① docs/236 — 운영 적용 v10.128 → v10.155 한 번 · 20 · 186 · 스냅샷 v10-155 · 킷 ~/kits/release · 잠금 4개 화면 32 ~ 35 · 하지 말 것 · docs/232 대신',
+   'v10.155' in F236 and '`적용됨 166 · 새 킷의 파일 186 · 올릴 것 20 · 바뀐 파일 0`' in D236 and '`적용 20 · 기존 166 · 변경감지 0`' in D236 and '186 / 186' in D236
+   and 'sgb-before-v10-155' in D236 and '~/kits/release/' in D236 and 'v10_152' not in D236 and all(f'| {n} |' in D236 for n in (32, 33, 34, 35))
+   and '잠금 4개 끄기' in D236 and 'ETAX_TEST_URL' in D236 and 'docs/236(v10.128 → v10.155)이 이 문서를 대신합니다' in next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('232_')), ''), F236)
 RO = rd('rehearse_open.py', HERE)
 ok('① 리허설 — 알림톡 켜기 전 시험 발송(MOCK) 단계', "step('3-alimtalk-test'" in RO and RO.index("step('3-alimtalk-test'") < RO.index("step('3-alimtalk-ready'"), '')
 ok('① 판 v10.155 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 155), rd('VERSION').strip())
