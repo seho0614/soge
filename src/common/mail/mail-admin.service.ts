@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as tls from 'tls';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation } from '../../core/errors';
+import { RequestCtx } from '../../core/request-context';
 import { MailService, SES_SEOUL_HOST } from './mail.service';
 
 /* ---------------------------------------------------------------------
@@ -11,6 +12,8 @@ import { MailService, SES_SEOUL_HOST } from './mail.service';
  *   연결 확인 — SES 에 TLS 로 붙어 첫 인사(220)만 받고 끊음(메일 안 보냄 · 로그인 안 함)
  *   시험 메일 — SUPER 가 넣은 주소로 한 통 · **스위치와 따로**(꺼져 있어도 보냄 — 회원 알림은 그대로 안 나감) · 하루 notify.mail_test_daily(20)
  *   발송 기록 — 최근 N일 알림 메일 보냄 · 실패 · 대기 수 · 실패 까닭별 · 최근 실패 50줄(받는 주소는 앞 2글자 · 도메인만)
+ *   v10.154 (D147 · docs/234) — 시험 메일 결과를 integration_tests(MAIL · MAIL_TEST)에 남김 · notify.require_mail_test = on 이면
+ *     메일 스위치를 켜는 근거(최근 7일 성공 — AdminService.checkIntegProvider) · 설정 빠짐은 missing()
  * ------------------------------------------------------------------- */
 
 const EMAIL_RE = /^[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+$/;
@@ -38,6 +41,10 @@ export class MailAdminService {
       configured: !!cfg,
       ready: st.verified && !!cfg,
       test: { limit, used, left: Math.max(limit - used, 0) },
+      requireTest: (await this.settingVal('notify.require_mail_test', 'on')) !== 'off', lastTestOkAt: await MailAdminService.lastTestOk(this.db),
+      lastTest: (await this.db.query<{ ok: boolean; errorKind: string | null; detail: string | null; at: Date }>(
+        `SELECT ok, error_kind AS "errorKind", detail, created_at AS at FROM integration_tests
+          WHERE integration_code = 'MAIL' AND kind = 'MAIL_TEST' ORDER BY created_at DESC LIMIT 1`))[0] ?? null,
     };
   }
 
@@ -74,7 +81,34 @@ export class MailAdminService {
       to: addr, subject: '[소개뱅크] 시험 메일',
       text: `소개뱅크 운영 화면에서 보낸 시험 메일입니다(${at} UTC).\n\n이 메일이 받은편지함(스팸함 아님)에 왔다면 메일 설정이 맞습니다.\n원본 보기에서 spf=pass · dkim=pass · dmarc=pass 를 확인한 뒤 알림 메일 스위치(notify.email_verified)를 켜 주십시오(docs/167 7단계).`,
     });
+    await this.db.query(
+      `INSERT INTO integration_tests (integration_code, kind, ok, stub, error_kind, detail, actor_id) VALUES ('MAIL', 'MAIL_TEST', $1, false, $2, $3, $4)`,
+      [r.ok, r.ok ? null : (r.errorKind ?? 'UNKNOWN'), `${maskMail(addr)}${r.ok ? '' : ` — ${String(r.error ?? '').slice(0, 120)}`}`, RequestCtx.actorId()]);
     return { ok: r.ok, to: maskMail(addr), messageId: r.messageId ?? null, errorKind: r.errorKind ?? null, error: r.error ?? null, left: Math.max(s.test.left - 1, 0) };
+  }
+
+  /** v10.154 (D147) — 최근 7일 안 성공한 시험 메일(스텁 아님) 시각 · 없으면 null */
+  static async lastTestOk(db: DatabaseService): Promise<Date | null> {
+    const [r] = await db.query<{ at: Date | null }>(
+      `SELECT max(created_at) AS at FROM integration_tests
+        WHERE integration_code = 'MAIL' AND kind = 'MAIL_TEST' AND ok AND NOT stub AND created_at > now() - interval '7 days'`);
+    return r?.at ?? null;
+  }
+
+  /** v10.154 (D147) — 메일을 보내는 데 빠진 설정 이름(MailService.config 와 같은 판단 · 주소는 기본값이 있어 보지 않음) */
+  static async missing(db: DatabaseService): Promise<string[]> {
+    const env = process.env;
+    const [f] = await db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'notify.mail_from'`);
+    const miss: string[] = [];
+    if (!env.SMTP_USER?.trim()) miss.push('SMTP_USER');
+    if (!env.SMTP_PASS) miss.push('SMTP_PASS');
+    if (!(f?.v?.trim() || env.MAIL_FROM?.trim())) miss.push('보내는 주소(notify.mail_from)');
+    return miss;
+  }
+
+  private async settingVal(key: string, dflt: string) {
+    const [r] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = $1`, [key]);
+    return (r?.v ?? '').trim() || dflt;
   }
 
   /** 알림 메일 발송 기록 — 숫자 · 까닭 · 최근 실패(주소 가림) */

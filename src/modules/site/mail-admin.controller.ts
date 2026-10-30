@@ -35,6 +35,12 @@ export class MailTestQuotaDto {
   @ApiProperty() used!: number;
   @ApiProperty() left!: number;
 }
+export class MailLastTestDto {   // v10.154 (D147) — MailStatusDto 보다 먼저(ts-node 는 선언 순서대로 읽음)
+  @ApiProperty() ok!: boolean;
+  @ApiPropertyOptional({ nullable: true, description: '실패 까닭(SMTP 결과 종류)' }) errorKind!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '받는 주소(가림) · 실패면 까닭 앞부분' }) detail!: string | null;
+  @ApiProperty({ format: 'date-time' }) at!: string;
+}
 export class MailStatusDto {
   @ApiProperty({ type: MailHostDto }) host!: MailHostDto;
   @ApiProperty({ type: MailKeyStateDto }) user!: MailKeyStateDto;
@@ -44,6 +50,9 @@ export class MailStatusDto {
   @ApiProperty({ description: '설정이 다 있음(시험 메일을 보낼 수 있음)' }) configured!: boolean;
   @ApiProperty({ description: '설정 + 스위치 — 회원에게 실제로 나감' }) ready!: boolean;
   @ApiProperty({ type: MailTestQuotaDto }) test!: MailTestQuotaDto;
+  @ApiProperty({ description: 'notify.require_mail_test — 켜져 있으면 7일 안 시험 메일 성공 · 설정이 있어야 메일 스위치를 켬(v10.154 · D147)' }) requireTest!: boolean;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: '최근 7일 안 성공한 시험 메일' }) lastTestOkAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: MailLastTestDto }) lastTest!: MailLastTestDto | null;
 }
 export class MailConnectDto {
   @ApiProperty() ok!: boolean;

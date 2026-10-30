@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { IdentityVerifyService } from '../identity/identity-verify.service';
+import { MailAdminService } from '../../common/mail/mail-admin.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
 import { SafenumService } from '../listing/safenum.service';   // v10.145 (D141)
 import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
@@ -314,7 +315,7 @@ export class AdminService {
   }
 
   /** v10.141 (docs/214) — 본인인증 · 알림톡 방식(identity.* · alimtalk.*)은 최고 관리자만 — 회원 확인 · 바깥 발송에 걸린 설정 */
-  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.') || key.startsWith('safenum.') || key === 'etax.require_config'; }   // v10.143 전자계약 · v10.145 안심번호 · v10.153 간주 끄기 전 설정 확인
+  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.') || key.startsWith('safenum.') || key === 'etax.require_config' || key === 'notify.require_mail_test'; }   // v10.143 전자계약 · v10.145 안심번호 · v10.153 간주 끄기 전 설정 확인 · v10.154 메일 켜기 전 시험 메일 확인
 
   /** v10.141 — identity.provider: MOCK 은 운영 서버(production)에서 못 고름 · NICE 는 키 3개가 있어야 함(없이 바꾸면 회원이 인증을 못 함)
    *  v10.142 — alimtalk.provider: MOCK 은 운영 서버에서 못 고름 · HTTP 는 키 2개 · ALIMTALK_URL 이 있어야 함
@@ -335,6 +336,17 @@ export class AdminService {
             '최고 관리자가 「NICE 바꾸기 전 키 확인」을 끄면 키 3개만 보고 바꿀 수 있습니다.');
         }
       }
+    }
+    /* v10.154 (D147 · docs/234 · 리허설 docs/228 발견 4) — 설정 없이(또는 도착 확인 없이) 메일 스위치를 켜면 회원 화면은 「보냈습니다」인데 메일이 안 나감.
+     *   notify.require_mail_test 가 on(처음 값)이면 SMTP_USER · SMTP_PASS · 보내는 주소 + 최근 7일 안 시험 메일 성공이 있어야 켬 · off 면 그대로 · 끄기는 언제나 */
+    if (key === 'notify.email_verified' && v === 'on' && (await this.settingVal('notify.require_mail_test', 'on')) !== 'off') {
+      const miss = await MailAdminService.missing(this.db);
+      if (miss.length) throw new PolicyViolation('MAIL_CONFIG_FIRST',
+        `아직 메일을 켤 수 없습니다 — 메일 설정(${miss.join(' · ')})이 없습니다(없이 켜면 회원에게 「보냈습니다」인데 메일이 안 나갑니다). ` +
+        '외부 연동 › 연동 키 · 메일에서 넣으십시오. 최고 관리자가 「메일 켜기 전 시험 메일 확인」을 끄면 그대로 켤 수 있습니다.');
+      if (!(await MailAdminService.lastTestOk(this.db))) throw new PolicyViolation('MAIL_TEST_FIRST',
+        '아직 메일을 켤 수 없습니다 — 외부 연동 › 메일에서 「시험 메일」이 최근 7일 안에 성공해야 합니다(받은편지함 도착 · spf · dkim · dmarc 확인은 사람이). ' +
+        '최고 관리자가 「메일 켜기 전 시험 메일 확인」을 끄면 그대로 켤 수 있습니다.');
     }
     if (key === 'alimtalk.provider') {
       if (v === 'MOCK' && prod) throw new PolicyViolation('MOCK_NOT_ALLOWED', '시험 발송(MOCK)은 운영 서버에서 고를 수 없습니다 — 점검판 전용입니다.');

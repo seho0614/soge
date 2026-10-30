@@ -8,6 +8,7 @@ import { ymdKst } from '../../lib/format';
  *   ① 준비 상태 다섯 줄 — 주소 · 사용자 이름 · 비밀번호 · 보내는 주소 · 스위치(notify.email_verified). 값은 보이지 않음(어디서 왔는지만)
  *   ② 「연결 확인」 — SES 에 붙어 첫 인사만(메일 안 보냄) · ③ 「시험 메일」 — 스위치가 꺼져 있어도 보냄(회원 알림은 그대로 안 나감 · 하루 한도)
  *   ④ 발송 기록 — 알림 메일 보냄 · 실패 · 대기 · 실패 까닭 · 최근 실패(주소 가림)
+ *   ⑤ v10.154 (D147 · docs/234) — 「메일 켜기 전 시험 메일 확인」 줄(SUPER 가 바꿈) · 마지막 시험 메일 결과 — 켜져 있으면 7일 안 성공이 있어야 스위치를 켬
  *   사용자 이름 · 비밀번호는 위 「연동 키」(메일 줄)에서 넣습니다 — 운영 .env 수정 · 재시작 없이. 순서는 docs/167(절차서 v1.3).
  */
 
@@ -16,6 +17,7 @@ interface Status {
   host: { value: string; source: 'ENV' | 'DEFAULT'; port: number }; user: KeyState; pass: KeyState;
   from: { set: boolean; value: string | null; source: 'SETTING' | 'ENV' | 'NONE' };
   switchOn: boolean; configured: boolean; ready: boolean; test: { limit: number; used: number; left: number };
+  requireTest: boolean; lastTestOkAt: string | null; lastTest: { ok: boolean; errorKind: string | null; detail: string | null; at: string } | null;
 }
 interface Deliveries { days: number; sent: number; failed: number; queued: number; reasons: { reason: string; n: number }[]; recent: { at: string; event: string; reason: string | null; to: string | null }[] }
 type Result = { ok: boolean; text: string } | null;
@@ -63,6 +65,17 @@ export function MailPanel() {
     finally { setBusy(null); }
   }
 
+  async function flipRequire() {
+    const next = st?.requireTest ? 'off' : 'on';
+    if (next === 'off' && !window.confirm('「메일 켜기 전 시험 메일 확인」을 끌까요? 시험 메일 없이 메일 스위치를 켤 수 있게 됩니다(설정이 틀리면 회원에게 「보냈습니다」인데 메일이 안 나갑니다).')) return;
+    setBusy('require'); setRes(null);
+    try {
+      await api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'notify.require_mail_test', value: next }) });
+      setRes({ ok: true, text: next === 'on' ? '시험 메일 확인을 켰습니다.' : '시험 메일 확인을 껐습니다 — 감사 기록에 남습니다.' }); void load();
+    } catch (e) { setRes({ ok: false, text: (e as Error)?.message ?? '바꾸지 못했습니다.' }); }
+    finally { setBusy(null); }
+  }
+
   if (err) return <div data-mail-panel><h2 className="ad-s2">메일</h2><p className="warn-text" role="alert">{err}</p></div>;
   if (!st) return null;
   const row = (key: string, label: string, ok: boolean, now: string, fix: string) => (
@@ -84,6 +97,15 @@ export function MailPanel() {
           {row('switch', '알림 메일 스위치', st.switchOn, st.switchOn ? '켜짐' : '꺼짐(회원에게 안 나감)', '시험 메일 확인 · 샌드박스 해제 뒤 사이트 설정 notify.email_verified = on')}
         </tbody>
       </table>
+      <p className="hint" data-mail-check={st.lastTestOkAt ? 'ok' : 'none'}>
+        마지막 시험 메일: {st.lastTest ? `${ymdKst(st.lastTest.at)} ${st.lastTest.ok ? '성공' : `실패(${st.lastTest.errorKind ?? ''})`} — ${st.lastTest.detail ?? ''}` : '없음'}
+        {st.lastTestOkAt ? ` · 7일 안 성공 있음(${ymdKst(st.lastTestOkAt)})` : ' · 7일 안 성공 없음'}
+      </p>
+      <p className="hint" data-mail-require-test={st.requireTest ? 'on' : 'off'}>
+        메일 켜기 전 시험 메일 확인 — <b>{st.requireTest ? '켜짐' : '꺼짐'}</b>
+        {st.requireTest ? ' (설정 · 7일 안 시험 메일 성공이 있어야 알림 메일 스위치를 켤 수 있음)' : ' (설정 · 시험 없이 스위치를 켤 수 있음)'}
+        {isSuper && <>{' '}<button className="btn-sm" disabled={busy === 'require'} onClick={() => void flipRequire()} data-mail-require-flip>{st.requireTest ? '끄기' : '켜기'}</button></>}
+      </p>
       {isSuper && (
         <div className="row-actions" style={{ marginTop: 10 }}>
           <button className="btn-sm" disabled={busy === 'connect'} onClick={() => void connect()} data-mail-connect>연결 확인</button>
