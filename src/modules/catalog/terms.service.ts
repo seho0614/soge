@@ -58,14 +58,26 @@ export class TermsService {
         'EFFECTIVE_DATE_IN_PAST',
         '시행일을 과거로 지정할 수 없습니다. 동의 이력의 기준이 되는 날짜입니다.');
     }
+    /* v10.156 (docs/237) — 운영 화면 「약관」 게시 단추가 부름. scripts/publish-terms.sh 와 같은 규칙:
+     *   〔시행일〕 말고 〔…〕(미확정 표시)가 남아 있으면 거절(이용자에게 그 표시가 그대로 보임) · 본문의 〔시행일〕은 시행일로 채움 · 보관된 판은 게시하지 않음 */
+    const [cur] = await this.db.query<{ body: string | null; status: string }>(
+      `SELECT body, status FROM terms WHERE code = $1 AND version = $2`, [code, dto.version]);
+    if (!cur) throw new NotFound('해당 버전의 약관이 없습니다.');
+    if (cur.status === 'ARCHIVED') throw new PolicyViolation('TERM_ARCHIVED', '보관된 판은 게시할 수 없습니다 — 새 판을 만들어 게시하십시오.');
+    const holes = TermsService.holes(cur.body);
+    if (holes.length) {
+      throw new PolicyViolation('TERM_HOLES',
+        `미확정 표시 ${holes.length}곳이 남아 있습니다(${holes.slice(0, 3).join(' · ')}${holes.length > 3 ? ' …' : ''}) — 법무 확인 뒤 채운 다음 게시하십시오.`);
+    }
+    const day = String(dto.effectiveFrom).slice(0, 10);
 
     return this.db.transaction(async () => {
       const [row] = await this.db.query<{ code: string; version: string; status: string }>(
         `UPDATE terms
-            SET status = 'PUBLISHED', effective_from = $3, blocked_by = NULL
+            SET status = 'PUBLISHED', effective_from = $3, blocked_by = NULL, body = replace(body, '〔시행일〕', $4)
           WHERE code = $1 AND version = $2
         RETURNING code, version, status`,
-        [code, dto.version, dto.effectiveFrom]);
+        [code, dto.version, dto.effectiveFrom, day]);
       if (!row) throw new NotFound('해당 버전의 약관이 없습니다.');
 
       // 이전 버전은 보관 처리. 삭제하지 않습니다 — 동의 이력이 참조합니다.
@@ -78,6 +90,11 @@ export class TermsService {
         `SELECT count(*) AS c FROM v_open_blockers`);
       return { ...row, remainingBlockers: Number(n.c) };
     });
+  }
+
+  /** v10.156 — 본문의 미확정 표시(〔…〕 · 〔시행일〕 은 게시가 채우므로 뺌) */
+  static holes(body: string | null | undefined): string[] {
+    return (String(body ?? '').match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
   }
 
   /** 오픈 차단 항목. 설정·약관·푸터를 함께 봅니다. */

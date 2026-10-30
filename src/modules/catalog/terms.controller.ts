@@ -49,7 +49,8 @@ export class TermsController {
     description:
       '이 시점부터 가입 화면과 푸터에 나타나고, 푸터 링크의 available 이 true 가 됩니다. ' +
       '내용이 비었거나 시행일이 없으면 DB 가 거부합니다. ' +
-      '이전 버전은 ARCHIVED 로 남습니다 — 동의 이력이 참조하므로 삭제하지 않습니다.',
+      '이전 버전은 ARCHIVED 로 남습니다 — 동의 이력이 참조하므로 삭제하지 않습니다. ' +
+      'v10.156 — 〔시행일〕 말고 〔…〕 표시가 남아 있으면 거절하고, 본문의 〔시행일〕은 시행일로 채웁니다(scripts/publish-terms.sh 와 같은 규칙).',
   })
   @ApiParam({ name: 'code', example: 'SERVICE' })
   @ApiOkResponse({ type: TermPublishResultDto })
@@ -57,7 +58,7 @@ export class TermsController {
     status: 422, type: ErrorDto,
     description:
       'TERM_BODY_EMPTY 내용 없음 · TERM_EFFECTIVE_DATE_REQUIRED 시행일 없음 · ' +
-      'EFFECTIVE_DATE_IN_PAST 과거 날짜',
+      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판',
   })
   @Audit('TERM_PUBLISH', 'TERM')
   publish(@Param('code') code: string, @Body() dto: PublishTermDto) {

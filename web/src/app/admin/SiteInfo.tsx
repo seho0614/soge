@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { searchAddress } from '../../lib/postcode';
 import { siteHref } from '../../lib/siteUrl';
+import { TermsPanel } from './TermsPanel';   // v10.156 — 약관 목록 · 게시(명세 SB-ADM-SIT-070)
 
 interface Setting {
   key: string; value: string | null; description: string; isRequiredForOpen: boolean;
@@ -31,6 +32,7 @@ const LEGAL: [string, string][] = [
  * 요청 열람 한도 · 소개코드 범위 · 사회관계망 주소 → 「주소 반영 · 저장 · 오픈 체크리스트로」.
  * 개발에만 있는 그 밖의 오픈 필수 설정(수금 계좌 · 약관 고지 등)은 아래 표로 남깁니다.
  * 결함 고침 — 내부 API 키 · 수금 계좌번호가 입력 칸에 그대로 보이던 것: 서버가 가린 값만 주고, 바꿀 때만 새 값을 입력합니다.
+ * v10.156 (docs/237) — 맨 아래 「약관」 구역(TermsPanel) — 목록 · 본문 · 〔미확정〕 · 시행일 · 게시. 전에는 서버 스크립트로만 게시했음.
  */
 export function SiteInfo({ onGo }: { onGo?: (tab: string) => void }) {
   const { data, error, loading, reload } = useApi<Setting[]>('/admin/site-settings');
@@ -304,6 +306,8 @@ export function SiteInfo({ onGo }: { onGo?: (tab: string) => void }) {
           </div>
         </>
       )}
+
+      <TermsPanel />
 
       <div className="ad-dact">
         <button className="btn-ok" onClick={() => saveLegal('footer.address')} data-addr-apply>주소 반영</button>

@@ -209,8 +209,7 @@ export class AgentService {
   async rollout() {
     const [r] = await this.db.query<Record<string, any>>(
       `SELECT
-         EXISTS (SELECT 1 FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'
-                   AND string_to_array(version, '.')::int[] >= ARRAY[1,1]) AS privacy,
+         public.fn_privacy_ai_ready() AS privacy,   -- v10.156 (D149) — 판 번호 대신 국외 이전 조항
          (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS "privacyVer",
          (SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd') AS cap,
          (SELECT (now() AT TIME ZONE 'Asia/Seoul')::date - min(day) FROM agent_usage_daily WHERE channel = 'REVIEW_SHADOW' AND requests > 0) AS "reviewDays",
@@ -247,8 +246,8 @@ export class AgentService {
     type Step = { code: string; label: string; switchKey: string | null; on: boolean; prereq: boolean; passed: boolean; now: string; need: string };
     const steps: Step[] = [
       { code: 'TERMS', label: '처리방침 AI 고지 게시', switchKey: null, on: pass.terms, prereq: true, passed: pass.terms,
-        now: r?.privacyVer ? `처리방침 ${r.privacyVer} 게시` : '처리방침 게시 없음',
-        need: '법무 검토 → 운영 화면 › 약관에서 처리방침 1.1(AI 위탁 · 국외 이전 · 상담 5년 · 제6조 ④ 내 정보 조회) 게시(docs/176 · 199)' },
+        now: r?.privacyVer ? `처리방침 ${r.privacyVer} 게시${r?.privacy ? ' · 국외 이전 조항 있음' : ' · 국외 이전 조항 없음'}` : '처리방침 게시 없음',
+        need: '법무 검토 → 운영 화면 › 사이트 기본 정보 · 법정 고지 › 약관에서 국외 이전 조항(AI 위탁 · 상담 5년 · 제6조 ④ 내 정보 조회)이 든 처리방침 게시(docs/176 · 199 · 237)' },
       { code: 'KEY', label: 'AI 키 · 월 상한 · AI 전체', switchKey: 'agent.enabled', on: !!sw['agent.enabled'], prereq: pass.terms, passed: pass.key,
         now: `키 ${keyOk ? '있음' : '없음'} · 월 상한 $${cap} · AI 전체 ${sw['agent.enabled'] ? '켜짐' : '꺼짐'}`,
         need: 'AI 키 → 월 상한(0 보다 큰 달러) → AI 전체 켜기(docs/173 · 194)' },

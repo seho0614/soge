@@ -422,15 +422,15 @@ export class AdminService {
     else if (cost >= cap) miss.push(`이번 달 비용($${cost.toFixed(2)})보다 큰 월 상한을`);   // 상한에 닿아 저절로 꺼진 뒤 — 올리지 않고 켜면 「켜짐」인데 부르지 않음
     if (miss.length) throw new PolicyViolation('SWITCH_PREREQ', `아직 AI 를 켤 수 없습니다 — 먼저 ${miss.join(' · ')} 넣어 주십시오.`);
     /* v10.151 (D145 · docs/231) — 처리방침 확인 스위치(agent.require_privacy · 처음 on · SUPER 가 정함)가 켜져 있으면
-     *   개인정보처리방침 1.1 이상(AI 고지 · 국외 이전 · docs/176)이 게시되기 전에는 거절. 안내판(rollout) TERMS 와 같은 판단 */
+     *   개인정보처리방침 1.1 이상(AI 고지 · 국외 이전 · docs/176)이 게시되기 전에는 거절. 안내판(rollout) TERMS 와 같은 판단
+     *   v10.156 (D149 · docs/237) — 판 번호 대신 fn_privacy_ai_ready()(게시된 처리방침에 국외 이전 조항) — 운영은 1.0 초안에 이미 AI 고지가 들어 있음 */
     const [g] = await this.db.query<{ req: string | null; ok: boolean; ver: string | null }>(
       `SELECT (SELECT value FROM site_settings WHERE key = 'agent.require_privacy') AS req,
-              EXISTS (SELECT 1 FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'
-                        AND string_to_array(version, '.')::int[] >= ARRAY[1,1]) AS ok,
+              public.fn_privacy_ai_ready() AS ok,
               (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS ver`);
     if ((g?.req ?? 'on').trim() !== 'off' && !g?.ok) {
       throw new PolicyViolation('PRIVACY_FIRST',
-        `아직 AI 를 켤 수 없습니다 — 개인정보처리방침 1.1(AI 고지 · 국외 이전)이 먼저 게시되어야 합니다(지금 게시 ${g?.ver ?? '없음'}). ` +
+        `아직 AI 를 켤 수 없습니다 — 국외 이전 조항(AI 고지)이 든 개인정보처리방침이 먼저 게시되어야 합니다(지금 게시 ${g?.ver ?? '없음'}). ` +
         '최고 관리자가 「AI 켜기 전 처리방침 확인」을 끄면 경고만 하고 켤 수 있습니다.');
     }
   }

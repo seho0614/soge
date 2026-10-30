@@ -65,8 +65,8 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
   const gate = val('agent.require_privacy') !== 'off';   // 값이 없으면 켜짐으로 봄(서버와 같음)
   const flipGate = () => {
     if (!window.confirm(gate
-      ? 'AI 켜기 전 처리방침 확인을 끌까요?\n\n끄면 개인정보처리방침 1.1 이 게시되기 전에도 AI 전체를 켤 수 있습니다(경고만). 법무 고지 없이 켜지 않도록 주의하십시오.'
-      : 'AI 켜기 전 처리방침 확인을 켤까요? 처리방침 1.1 게시 전에는 AI 전체를 켤 수 없게 됩니다(이미 켜진 AI 는 그대로).')) return;
+      ? 'AI 켜기 전 처리방침 확인을 끌까요?\n\n끄면 국외 이전 조항(AI 고지)이 든 개인정보처리방침이 게시되기 전에도 AI 전체를 켤 수 있습니다(경고만). 법무 고지 없이 켜지 않도록 주의하십시오.'
+      : 'AI 켜기 전 처리방침 확인을 켤까요? 국외 이전 조항이 든 처리방침 게시 전에는 AI 전체를 켤 수 없게 됩니다(이미 켜진 AI 는 그대로).')) return;
     save('agent.require_privacy', gate ? 'off' : 'on', `AI 켜기 전 처리방침 확인 — ${gate ? '껐습니다(경고만)' : '켰습니다(막음)'}.`);
   };
   const saveCap = () => {
@@ -94,7 +94,7 @@ export function AgentSwitches({ onChanged }: { onChanged?: () => void }) {
           {/* v10.151 (D145 · docs/231) — 대표 「서버에서 결정 관리자결정」: 켜져 있으면 처리방침 1.1 게시 전 AI 전체 켜기를 서버가 거절 */}
           <tr data-agent-privacy-gate={gate ? 'on' : 'off'}>
             <td><b>AI 켜기 전 처리방침 확인</b></td><td>{gate ? <span className="good">켜짐(막음)</span> : '꺼짐(경고만)'}</td>
-            <td className="muted">켜져 있으면 개인정보처리방침 1.1(AI 고지 · 국외 이전)이 게시되기 전에는 서버가 「AI 전체」 켜기를 거절합니다. 끄면 경고만 하고 켤 수 있습니다. 이미 켜진 AI 는 끄지 않습니다.</td>
+            <td className="muted">켜져 있으면 국외 이전 조항(AI 고지 · 제6조)이 든 개인정보처리방침이 게시되기 전에는 서버가 「AI 전체」 켜기를 거절합니다(판 번호와 상관없음 · v10.156). 끄면 경고만 하고 켤 수 있습니다. 이미 켜진 AI 는 끄지 않습니다.</td>
             <td>{isSuper && <button className={gate ? 'btn-sm ghost' : 'btn-sm'} disabled={a.busy === 'agent.require_privacy'} onClick={flipGate}>{gate ? '끄기' : '켜기'}</button>}</td>
           </tr>
           {SWITCHES.map((s) => {

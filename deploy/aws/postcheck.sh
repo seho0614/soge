@@ -173,8 +173,9 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   elif [ -z "$v" ]; then warn "잠금 설정 줄 없음" "v10.153(D146) 이전 판이면 정상"
   else warn "잠금 — $v" "4개 모두 on 이 처음 값 — D146 · D147 · D148 · SUPER 가 끈 것이면 정상"; fi
   pv=$(q "SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
-  p11=$(q "SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]")
-  [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 1.1 이상(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "1.1 이상이 게시되기 전에는 AI 전체를 켤 수 없음(D145)"
+  # v10.156 (D149) — 판 번호 대신 「국외 이전 조항이 든 처리방침이 게시됨」(서버 잠금 · 안내판과 같은 함수)
+  p11=$(q "SELECT public.fn_privacy_ai_ready()::int")
+  [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 국외 이전 조항 있음(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "국외 이전 조항(AI 고지)이 든 처리방침이 게시되기 전에는 AI 전체를 켤 수 없음(D145 · D149)"
   # 약관(5절 30) — 게시된 판 · 새로 생긴 법무 검토 · 초안
   info "게시된 약관: $(qn "SELECT code || ' ' || version || '(' || to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') || ')' FROM terms t WHERE status = 'PUBLISHED' AND NOT EXISTS (SELECT 1 FROM terms u WHERE u.code = t.code AND u.status = 'PUBLISHED' AND u.effective_from > t.effective_from) ORDER BY code" | tr '\n' ' ')"
   # terms 에는 만든 시각이 없음 → 「게시된 판보다 번호가 높은 초안 · 법무 검토」 = D131 ~ D133 이 새로 만든 것
