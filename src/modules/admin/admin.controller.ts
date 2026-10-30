@@ -105,7 +105,7 @@ export class AdminController {
   @ApiOperation({ summary: '설정 변경', description: '푸터 법정 고지가 여기서 채워집니다.' })
   @ApiResponse({ status: 409, description: '없는 키', type: ErrorDto })
   @ApiResponse({ status: 403, description: 'AI_SETTING_SUPER — AI 설정(agent.* · AI 번역)은 최고 관리자만(v10.129)', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'SETTING_FORMAT · SWITCH_PREREQ(AI 전체는 AI 키 · 월 상한 > 0 이 먼저) · MODEL_UNPRICED(요금표에 없는 모델 · v10.135) · PRIVACY_FIRST(처리방침 1.1 게시 전 AI 전체 · agent.require_privacy on · v10.151) · IDENTITY_CHECK_FIRST(NICE 키 확인 7일 안 성공 전 NICE · identity.require_check on · v10.153) · ETAX_CONFIG_FIRST(ETAX_URL · ETAX_KEY 없이 간주 끄기 · etax.require_config on · v10.153) · MAIL_CONFIG_FIRST · MAIL_TEST_FIRST(메일 설정 · 7일 안 시험 메일 성공 없이 notify.email_verified 켜기 · notify.require_mail_test on · v10.154)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'SETTING_FORMAT · SWITCH_PREREQ(AI 전체는 AI 키 · 월 상한 > 0 이 먼저) · MODEL_UNPRICED(요금표에 없는 모델 · v10.135) · PRIVACY_FIRST(처리방침 1.1 게시 전 AI 전체 · agent.require_privacy on · v10.151) · IDENTITY_CHECK_FIRST(NICE 키 확인 7일 안 성공 전 NICE · identity.require_check on · v10.153) · ETAX_CONFIG_FIRST(ETAX_URL · ETAX_KEY 없이 간주 끄기 · etax.require_config on · v10.153) · MAIL_CONFIG_FIRST · MAIL_TEST_FIRST(메일 설정 · 7일 안 시험 메일 성공 없이 notify.email_verified 켜기 · notify.require_mail_test on · v10.154) · ALIMTALK_TEST_FIRST(7일 안 지금 방식 시험 발송 성공 없이 notify.alimtalk_ready 켜기 · alimtalk.require_test on · v10.155) · ETAX_TEST_FIRST(7일 안 세금계산서 키 확인 · 시험 발행 성공 없이 간주 끄기 · etax.require_config on · v10.155)', type: ErrorDto })
   @Audit('SITE_SETTING_UPDATE', 'SITE_SETTING')
   update(@Body() dto: UpdateSettingDto) { return this.admin.updateSetting(dto.key, dto.value); }
 

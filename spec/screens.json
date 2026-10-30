@@ -1672,6 +1672,7 @@
     "GET /admin/esign/documents",
     "GET /admin/integ-tests",
     "POST /admin/integ-tests/pg-check",
+    "POST /admin/integ-tests/etax-test",
     "POST /admin/integ-tests/bank-send",
     "POST /admin/integ-tests/bank-confirm",
     "GET /admin/safenum/status",

@@ -60,7 +60,7 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   { code: 'BROKER', name: '국토부 중개사 자격 대조', dbRow: true, secretEnv: 'BROKER_LOOKUP_KEY',
     otherEnv: ['BROKER_LOOKUP_URL', 'BROKER_LOOKUP_METHOD', 'BROKER_LOOKUP_KEY_PARAM', 'BROKER_LOOKUP_AUTH_HEADER', 'BROKER_LOOKUP_RESULT_PATH', 'BROKER_LOOKUP_RESULT_OK', 'BROKER_LOOKUP_ITEMS_PATH', 'BROKER_LOOKUP_ACTIVE'],
     assume: 'broker', adapter: 'REAL', files: ['src/modules/partner/broker-lookup.provider.ts'], doc: 'broker-lookup.provider.ts 머리말' },
-  { code: 'ETAX', name: '전자세금계산서', dbRow: true, secretEnv: 'ETAX_KEY', otherEnv: ['ETAX_URL', 'ETAX_TIMEOUT_MS'], assume: 'etax', adapter: 'REAL',
+  { code: 'ETAX', name: '전자세금계산서', dbRow: true, secretEnv: 'ETAX_KEY', otherEnv: ['ETAX_URL', 'ETAX_TIMEOUT_MS', 'ETAX_TEST_URL', 'ETAX_TEST_KEY'], assume: 'etax', adapter: 'REAL',
     files: ['src/modules/etax/etax.adapter.ts', 'src/modules/etax/etax.http.ts', 'src/modules/etax/etax.assume.ts'], doc: 'docs/전자세금계산서_연동절차.md' },
   { code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: true, secretEnv: 'SMTP_PASS',
     otherEnv: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'MAIL_FROM', 'MAIL_FROM_NAME', 'SMTP_TIMEOUT_MS'], assume: null, adapter: 'REAL',

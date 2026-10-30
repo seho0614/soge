@@ -8,6 +8,7 @@ import { ymdKst } from '../../lib/format';
  *   ① 준비 — 방식(NONE · MOCK · HTTP) · 키 2개(위 「연동 키」 › 알림톡) · 발송 주소(.env ALIMTALK_URL) · 켜기(notify.alimtalk_ready)
  *   ② 템플릿 4개 — 대행사 · 카카오 심의에 등록할 글 · 대행사 템플릿 코드 · 심의 상태(승인된 것만 회원에게 보냄)
  *   ③ 시험 발송(SUPER · 하루 alimtalk.test_daily) · ④ 보낸 기록(받는 번호는 끝 4자리만)
+ *   ⑤ v10.155 (D148 · docs/235) — 「알림톡 켜기 전 시험 발송 확인」 줄(SUPER 가 바꿈) · 마지막 시험 발송 — 켜져 있으면 7일 안 지금 방식 시험 성공이 있어야 켬
  *   저장 — 방식 · 켜기는 PATCH /admin/site-settings(서버가 SUPER · 키 · 템플릿을 다시 검사) · 템플릿은 PUT /admin/alimtalk/templates/{code}
  */
 
@@ -16,6 +17,8 @@ interface Tpl { code: string; name: string; body: string; vars: string[]; vendor
 interface Status {
   provider: 'NONE' | 'MOCK' | 'HTTP'; setting: string; mockAllowed: boolean; url: { set: boolean }; keys: KeyState[]; missing: string[];
   configured: boolean; switchOn: boolean; templates: Tpl[]; test: { limit: number; used: number; left: number };
+  requireTest: boolean; lastTestOkAt: string | null;
+  lastTest: { ok: boolean; provider: string; template: string; toLast4: string | null; errorKind: string | null; at: string } | null;
 }
 interface Sends { days: number; sent: number; failed: number; reasons: { reason: string; n: number }[]; recent: { at: string; purpose: string; template: string; toLast4: string | null; status: string; errorKind: string | null }[] }
 
@@ -54,6 +57,12 @@ export function AlimtalkPanel() {
     method: 'PUT', body: JSON.stringify({ vendorCode: (edit[t.code] ?? t.vendorCode ?? '').trim() || null, reviewState }),
   }), `${t.name} — ${STATE[reviewState] ?? reviewState}로 저장했습니다.`);
 
+  function flipRequire() {
+    const next = st?.requireTest ? 'off' : 'on';
+    if (next === 'off' && !window.confirm('「알림톡 켜기 전 시험 발송 확인」을 끌까요? 시험 발송 없이 알림톡을 켤 수 있게 됩니다(대행사 · 카카오 설정이 틀리면 회원에게 「보냈습니다」인데 안 갑니다).')) return;
+    void setting('alimtalk.require_test', next, next === 'on' ? '시험 발송 확인을 켰습니다.' : '시험 발송 확인을 껐습니다 — 감사 기록에 남습니다.');
+  }
+
   async function test() {
     if (!/^01[016789]\d{7,8}$/.test(to.replace(/\D/g, ''))) { setRes({ ok: false, text: '받을 휴대폰 번호를 넣으십시오.' }); return; }
     if (!window.confirm(`${to} 로 알림톡 시험 발송을 한 통 보낼까요? 회원 알림은 보내지 않습니다.`)) return;
@@ -90,6 +99,15 @@ export function AlimtalkPanel() {
           {row('switch', '알림톡 켜기', st.switchOn, st.switchOn ? '켜짐' : '꺼짐(회원에게 안 나감)', '시험 발송 확인 뒤 아래 「알림톡 켜기」')}
         </tbody>
       </table>
+      <p className="hint" data-alimtalk-check={st.lastTestOkAt ? 'ok' : 'none'}>
+        마지막 시험 발송: {st.lastTest ? `${ymdKst(st.lastTest.at)} ${MODE[st.lastTest.provider] ?? st.lastTest.provider} ${st.lastTest.ok ? '보냄' : `실패(${KIND[st.lastTest.errorKind ?? ''] ?? st.lastTest.errorKind ?? ''})`}${st.lastTest.toLast4 ? ` — ***${st.lastTest.toLast4}` : ''}` : '없음'}
+        {st.lastTestOkAt ? ` · 지금 방식으로 7일 안 성공 있음(${ymdKst(st.lastTestOkAt)})` : ' · 지금 방식으로 7일 안 성공 없음'}
+      </p>
+      <p className="hint" data-alimtalk-require-test={st.requireTest ? 'on' : 'off'}>
+        알림톡 켜기 전 시험 발송 확인 — <b>{st.requireTest ? '켜짐' : '꺼짐'}</b>
+        {st.requireTest ? ' (지금 방식으로 7일 안 시험 발송이 성공해야 「알림톡 켜기」가 됨)' : ' (방식 · 키 · 승인 템플릿만 보고 켤 수 있음)'}
+        {isSuper && <>{' '}<button className="btn-sm" disabled={busy} onClick={() => void flipRequire()} data-alimtalk-require-flip>{st.requireTest ? '끄기' : '켜기'}</button></>}
+      </p>
       {isSuper && (
         <div className="row-actions" style={{ marginTop: 10 }}>
           {(['NONE', 'MOCK', 'HTTP'] as const).filter((m) => m !== 'MOCK' || st.mockAllowed).map((m) => (

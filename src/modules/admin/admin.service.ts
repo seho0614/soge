@@ -7,6 +7,7 @@ import { MailAdminService } from '../../common/mail/mail-admin.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
 import { SafenumService } from '../listing/safenum.service';   // v10.145 (D141)
 import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
+import { IntegTestService } from '../site/integ-test.service';   // v10.155 — 세금계산서 간주 끄기 전 시험(정적 검사만)
 
 /**
  * 백오피스 조회·처리.
@@ -380,6 +381,13 @@ export class AdminService {
       if (!AlimtalkService.configuredFor(AlimtalkService.readMode(p?.v ?? 'NONE')) || !t.n) {
         throw new PolicyViolation('ALIMTALK_NOT_READY', '알림톡이 준비되지 않았습니다 — 방식 · 키를 갖추고 승인된 템플릿이 하나는 있어야 켤 수 있습니다(외부 연동 › 알림톡).');
       }
+      /* v10.155 (D148 · docs/235 · 순서표 docs/228 5절 8) — 시험 발송 없이 켜면 대행사 · 카카오 쪽이 틀려도 회원 화면은 「보냈습니다」.
+       *   alimtalk.require_test 가 on(처음 값)이면 최근 7일 안 지금 방식으로 성공한 시험 발송이 있어야 켬 · off 면 그대로 · 끄기는 언제나 */
+      if ((await this.settingVal('alimtalk.require_test', 'on')) !== 'off' && !(await AlimtalkService.lastTestOk(this.db, AlimtalkService.readMode(p?.v ?? 'NONE')))) {
+        throw new PolicyViolation('ALIMTALK_TEST_FIRST',
+          '아직 알림톡을 켤 수 없습니다 — 외부 연동 › 알림톡에서 지금 방식으로 「시험 발송」이 최근 7일 안에 성공해야 합니다(휴대폰 도착 확인은 사람이). ' +
+          '최고 관리자가 「알림톡 켜기 전 시험 발송 확인」을 끄면 그대로 켤 수 있습니다.');
+      }
     }
   }
 
@@ -451,6 +459,11 @@ export class AdminService {
       if (miss.length) throw new PolicyViolation('ETAX_CONFIG_FIRST',
         `아직 간주를 끌 수 없습니다 — 전자세금계산서 업체 설정(${miss.join(' · ')})이 없습니다(없이 끄면 발행이 멈춥니다). ` +
         '키는 외부 연동 › 연동 키 · 주소는 .env 에 넣으십시오. 최고 관리자가 「간주 끄기 전 설정 확인」을 끄면 연동 상태만 보고 끌 수 있습니다.');
+      /* v10.155 (D148 · docs/235 · 순서표 docs/228 5절 6) — 키 · 주소가 있어도 틀리면 발행이 멈춤. 최근 7일 안 「세금계산서 키 확인」 · 「시험 발행」이 모두 성공해야 끔 */
+      const miss2 = await IntegTestService.etaxTestMissing(this.db);
+      if (miss2.length) throw new PolicyViolation('ETAX_TEST_FIRST',
+        `아직 간주를 끌 수 없습니다 — 최근 7일 안 ${miss2.join(' · ')} 성공이 없습니다(외부 연동 › 결제 · 계좌 연결 확인 › 세금계산서). ` +
+        '시험 발행은 업체 시험 주소(ETAX_TEST_URL)로만 보냅니다. 최고 관리자가 「간주 끄기 전 설정 확인」을 끄면 연동 상태만 보고 끌 수 있습니다.');
     }
     if (rule.bank) {
       const [r] = await this.db.query<{ ready: boolean }>(

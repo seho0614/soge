@@ -14,6 +14,7 @@ import { Audit } from '../../core/audit.interceptor';
  *   SUPER          PUT  /admin/alimtalk/templates/{code}  대행사 템플릿 코드 · 심의 상태
  *   SUPER          POST /admin/alimtalk/test              시험 발송 한 통(하루 alimtalk.test_daily · 감사 ALIMTALK_TEST)
  *   방식은 사이트 설정 alimtalk.provider(SUPER) · 켜기는 notify.alimtalk_ready(준비돼야 켜짐)
+ *   v10.155 (D148 · docs/235) — alimtalk.require_test(SUPER · 처음 on) 이면 7일 안 지금 방식 시험 발송 성공도 있어야 켬 · 상태에 마지막 시험
  * ------------------------------------------------------------------- */
 
 export class AlimtalkKeyStateDto {
@@ -38,6 +39,14 @@ export class AlimtalkQuotaDto {
   @ApiProperty() used!: number;
   @ApiProperty() left!: number;
 }
+export class AlimtalkLastTestDto {   // v10.155 (D148) — AlimtalkStatusDto 보다 먼저(ts-node 선언 순서)
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ enum: ['NONE', 'MOCK', 'HTTP'] }) provider!: string;
+  @ApiProperty() template!: string;
+  @ApiPropertyOptional({ nullable: true, example: '5678' }) toLast4!: string | null;
+  @ApiPropertyOptional({ nullable: true }) errorKind!: string | null;
+  @ApiProperty({ format: 'date-time' }) at!: string;
+}
 export class AlimtalkStatusDto {
   @ApiProperty({ enum: ['NONE', 'MOCK', 'HTTP'], description: '실제로 쓰는 방식' }) provider!: string;
   @ApiProperty({ description: '설정 값(alimtalk.provider)' }) setting!: string;
@@ -49,6 +58,9 @@ export class AlimtalkStatusDto {
   @ApiProperty({ description: 'notify.alimtalk_ready — 켜야 회원에게 나감' }) switchOn!: boolean;
   @ApiProperty({ type: [AlimtalkTemplateDto] }) templates!: AlimtalkTemplateDto[];
   @ApiProperty({ type: AlimtalkQuotaDto }) test!: AlimtalkQuotaDto;
+  @ApiProperty({ description: 'alimtalk.require_test — 켜져 있으면 7일 안 지금 방식 시험 발송 성공이 있어야 켬(v10.155 · D148)' }) requireTest!: boolean;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: '최근 7일 안 지금 방식으로 성공한 시험 발송' }) lastTestOkAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: AlimtalkLastTestDto }) lastTest!: AlimtalkLastTestDto | null;
 }
 export class AlimtalkTemplateSetDto {
   @ApiPropertyOptional({ nullable: true, description: '대행사 템플릿 코드(비우면 지움)' }) @IsOptional() @IsString() @MaxLength(60) vendorCode?: string | null;

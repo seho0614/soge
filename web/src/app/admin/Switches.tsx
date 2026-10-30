@@ -36,6 +36,7 @@ const SWITCHES: Sw[] = [
  *   · 값 저장은 전과 같은 PATCH /admin/site-settings — 바꾼 사람 · 시각이 감사 기록 SITE_SETTING_UPDATE 로 남습니다.
  *   · 「실제로 돌리는 쪽」으로 바꿀 때는 한 번 더 누르게 하고(확인 칸), 서버도 조건을 봅니다(SWITCH_PREREQ). 되돌리는 쪽은 바로 됩니다.
  *   · v10.153 (D146 · docs/233) — 「간주 끄기 전 설정 확인」(etax.require_config · SUPER) 켜져 있으면 ETAX_URL · ETAX_KEY 없이 세금계산서 간주를 못 끔(ETAX_CONFIG_FIRST)
+ *     v10.155 (D148 · docs/235) — 같은 잠금이 7일 안 「세금계산서 키 확인 · 시험 발행」 성공도 봄(ETAX_TEST_FIRST · 외부 연동 › 결제 · 계좌 연결 확인)
  */
 export function Switches() {
   const settings = useApi<Setting[]>('/admin/site-settings');
@@ -86,7 +87,7 @@ export function Switches() {
         })}</tbody>
       </table></div>
       <p className="hint" style={{ marginTop: 6 }} data-etax-require-config={val('etax.require_config') === 'off' ? 'off' : 'on'}>
-        간주 끄기 전 설정 확인(전자세금계산서): <b>{val('etax.require_config') === 'off' ? '꺼짐 — 연동 상태만 봄(주소 · 키가 없으면 발행이 멈출 수 있음)' : '켜짐 — 업체 주소 · 키(ETAX_URL · ETAX_KEY)가 있어야 끔'}</b>
+        간주 끄기 전 설정 확인(전자세금계산서): <b>{val('etax.require_config') === 'off' ? '꺼짐 — 연동 상태만 봄(주소 · 키가 없으면 발행이 멈출 수 있음)' : '켜짐 — 업체 주소 · 키(ETAX_URL · ETAX_KEY) + 7일 안 키 확인 · 시험 발행 성공이 있어야 끔'}</b>
         {isSuper && <>{' '}<button className="btn-plain" disabled={a.busy === 'etax.require_config'} data-etax-require-flip
           onClick={() => { const on = val('etax.require_config') !== 'off'; if (!on || window.confirm('「간주 끄기 전 설정 확인」을 끌까요? 업체 주소 · 키 없이 간주를 끄면 세금계산서 발행이 멈춥니다.'))
             void a.run('etax.require_config', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'etax.require_config', value: on ? 'off' : 'on' }) }),

@@ -13,6 +13,7 @@ import { IntegTestService } from './integ-test.service';
  *   SUPER          POST /admin/integ-tests/pg-check       토스 키 확인(돈 안 나감 · 감사 INTEG_TEST_PG)
  *   SUPER          POST /admin/integ-tests/bank-send      1원 보내기(본인 계좌 · 하루 integ.bank_test_daily · 감사 INTEG_TEST_BANK)
  *   SUPER          POST /admin/integ-tests/bank-confirm   통장 코드 확인(30분 · 다섯 번)
+ *   SUPER          POST /admin/integ-tests/etax-test      세금계산서 키 확인(발행 없음) + 업체 시험 주소로 시험 발행 1건(v10.155 · 하루 integ.etax_test_daily · 감사 INTEG_TEST_ETAX)
  *   ★ DTO 는 쓰는 곳보다 위에(ts-node strict 끔 — 선언 순서)
  * ------------------------------------------------------------------- */
 
@@ -36,10 +37,21 @@ export class IntegBankStateDto {
   @ApiPropertyOptional({ nullable: true, format: 'date-time' }) lastOkAt!: string | null;
   @ApiProperty({ type: IntegBankQuotaDto }) test!: IntegBankQuotaDto;
 }
+export class IntegEtaxStateDto {   // v10.155 (D148) — IntegTestStatusDto 보다 먼저(ts-node 선언 순서)
+  @ApiPropertyOptional({ nullable: true }) status!: string | null;
+  @ApiProperty({ description: 'ETAX_URL(.env) 있음' }) url!: boolean;
+  @ApiProperty({ description: 'ETAX_KEY 있음' }) key!: boolean;
+  @ApiProperty({ description: 'ETAX_TEST_URL(.env · 업체 시험 주소) 있음' }) testUrl!: boolean;
+  @ApiPropertyOptional({ nullable: true, enum: ['ETAX_TEST_KEY', 'ETAX_KEY'], description: '시험 발행에 쓰는 키 이름' }) testKey!: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time' }) lastKeyOkAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time' }) lastIssueOkAt!: string | null;
+  @ApiProperty({ description: 'etax.require_config — 켜져 있으면 7일 안 키 확인 · 시험 발행 성공이 있어야 간주를 끔' }) requireTest!: boolean;
+  @ApiProperty({ type: IntegBankQuotaDto }) test!: IntegBankQuotaDto;
+}
 export class IntegTestRowDto {
   @ApiProperty() id!: string;
-  @ApiProperty({ enum: ['PG', 'BANK'] }) code!: string;
-  @ApiProperty({ enum: ['PG_KEY', 'BANK_SEND', 'BANK_CONFIRM'] }) kind!: string;
+  @ApiProperty({ enum: ['PG', 'BANK', 'ETAX'] }) code!: string;
+  @ApiProperty({ enum: ['PG_KEY', 'BANK_SEND', 'BANK_CONFIRM', 'ETAX_KEY', 'ETAX_TEST_ISSUE'] }) kind!: string;
   @ApiProperty() ok!: boolean;
   @ApiProperty() stub!: boolean;
   @ApiPropertyOptional({ nullable: true }) errorKind!: string | null;
@@ -52,6 +64,7 @@ export class IntegTestRowDto {
 export class IntegTestStatusDto {
   @ApiProperty({ type: IntegPgStateDto }) pg!: IntegPgStateDto;
   @ApiProperty({ type: IntegBankStateDto }) bank!: IntegBankStateDto;
+  @ApiProperty({ type: IntegEtaxStateDto }) etax!: IntegEtaxStateDto;
   @ApiProperty({ type: [IntegTestRowDto] }) recent!: IntegTestRowDto[];
 }
 export class IntegPgCheckDto {
@@ -61,6 +74,20 @@ export class IntegPgCheckDto {
   @ApiPropertyOptional({ nullable: true }) clientKey!: string | null;
   @ApiProperty() pair!: boolean;
   @ApiProperty() detail!: string;
+}
+export class IntegEtaxPartDto {
+  @ApiProperty() ok!: boolean;
+  @ApiPropertyOptional({ nullable: true, enum: ['NOT_CONFIGURED', 'SAME_URL', 'SUPPLIER', 'PENDING', 'AUTH', 'TIMEOUT', 'NETWORK', 'UPSTREAM', 'HTTP_4XX', 'BAD_RESPONSE'] }) errorKind!: string | null;
+  @ApiProperty() detail!: string;
+}
+export class IntegEtaxIssueDto extends IntegEtaxPartDto {
+  @ApiPropertyOptional({ nullable: true, example: '20261030-00000000-00000001', description: '시험 발행 승인번호(8-8-8)' }) approvalNo!: string | null;
+}
+export class IntegEtaxTestDto {
+  @ApiProperty({ description: '키 확인 · 시험 발행 둘 다 성공' }) ok!: boolean;
+  @ApiProperty({ type: IntegEtaxPartDto }) key!: IntegEtaxPartDto;
+  @ApiProperty({ type: IntegEtaxIssueDto }) issue!: IntegEtaxIssueDto;
+  @ApiProperty() left!: number;
 }
 export class IntegBankSendDto {
   @ApiProperty({ example: '004', description: '은행 코드(숫자 3자리)' }) @IsString() @Matches(/^\d{3}$/) bankCode!: string;
@@ -124,4 +151,12 @@ export class IntegTestController {
   @ApiOkResponse({ type: IntegBankConfirmResultDto })
   @Audit('INTEG_TEST_BANK', 'INTEGRATION')
   bankConfirm(@Body() dto: IntegBankConfirmDto) { return this.svc.bankConfirm(dto.testId, dto.code); }
+
+  @Post('etax-test')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '세금계산서 키 확인 · 시험 발행 (v10.155)', description: '① 운영 주소(ETAX_URL)에 없는 문서를 조회해 404 면 키가 맞음(발행 없음) ② 업체 **시험 주소(ETAX_TEST_URL)** 로 1,000원 시험 발행 1건 — 승인번호 24자리면 성공. 시험 주소가 없거나 운영 주소와 같으면 보내지 않음. 둘 다 7일 안 성공이 간주(assume.etax)를 끄는 근거(etax.require_config on).' })
+  @ApiResponse({ status: 422, description: 'ETAX_TEST_LIMIT', type: ErrorDto })
+  @ApiOkResponse({ type: IntegEtaxTestDto })
+  @Audit('INTEG_TEST_ETAX', 'INTEGRATION')
+  etaxTest() { return this.svc.etaxTest(); }
 }

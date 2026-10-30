@@ -12,6 +12,7 @@ import { ALIMTALK_TEMPLATES, AlimtalkTemplateCode, renderAlimtalk } from './alim
  *   HTTP 는 대행사 공통 모양 — 주소 ALIMTALK_URL · 인증 머리글 ALIMTALK_AUTH_HEADER(Authorization) + ALIMTALK_AUTH_PREFIX(Bearer ) + 키
  *     본문 { senderKey, templateCode, recipientNo, content, variables, fallbackSms } — 대행사가 정해지면 칸 이름을 맞추거나 전용 파일 하나
  *   켜기  notify.alimtalk_ready = on — 켜려면 「준비됨」(방식 · 키 · 승인된 템플릿)이어야 함(AdminService 가 검사)
+ *         v10.155 (D148 · docs/235) — alimtalk.require_test = on(처음 값)이면 최근 7일 안 지금 방식으로 성공한 시험 발송도 있어야 함(lastTestOk)
  *   보내는 곳  ① 상담 신청 인증번호(CONSULT_OTP) ② 알림 발송 SMS 채널 QUEUED(NOTICE_GENERAL · 3번 재시도) ③ 운영 화면 시험 발송
  *
  * 오류 처리 — 받는 번호 형식 · 템플릿 미승인 · 키 없음은 보내기 전에 막고(FAILED · 까닭) · 연결 · 시간 초과 · 대행사 5xx 는 「잠시 실패」(알림은 재시도)
@@ -176,7 +177,21 @@ export class AlimtalkService {
       missing: mode === 'HTTP' ? AlimtalkService.httpMissing() : [], configured: AlimtalkService.configuredFor(mode), switchOn,
       templates: tpls.map((t) => ({ ...t, name: ALIMTALK_TEMPLATES[t.code]?.name ?? t.code, body: ALIMTALK_TEMPLATES[t.code]?.body ?? '', vars: ALIMTALK_TEMPLATES[t.code]?.vars ?? [] })),
       test: { limit, used, left: Math.max(limit - used, 0) },
+      requireTest: (await this.setting('alimtalk.require_test', 'on')).toLowerCase() !== 'off', lastTestOkAt: await AlimtalkService.lastTestOk(this.db, mode),
+      lastTest: (await this.db.query<{ ok: boolean; provider: string; template: string; toLast4: string | null; errorKind: string | null; at: Date }>(
+        `SELECT status = 'SENT' AS ok, provider, template_code AS template, to_last4 AS "toLast4", error_kind AS "errorKind", created_at AS at
+           FROM alimtalk_sends WHERE purpose = 'TEST' ORDER BY id DESC LIMIT 1`))[0] ?? null,
     };
+  }
+
+  /** v10.155 (D148) — 최근 7일 안 지금 방식(MOCK · HTTP)으로 성공한 시험 발송 시각 · 없으면 null.
+   *    방식을 바꾸면 그 방식으로 다시 시험해야 함(점검판 MOCK 성공이 대행사 HTTP 근거가 되지 않게) */
+  static async lastTestOk(db: DatabaseService, mode: AlimtalkMode): Promise<Date | null> {
+    if (mode === 'NONE') return null;
+    const [r] = await db.query<{ at: Date | null }>(
+      `SELECT max(created_at) AS at FROM alimtalk_sends
+        WHERE purpose = 'TEST' AND status = 'SENT' AND provider = $1 AND created_at > now() - interval '7 days'`, [mode]);
+    return r?.at ?? null;
   }
 
   private async testUsedToday() {
