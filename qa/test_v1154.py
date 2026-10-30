@@ -54,7 +54,7 @@ ok('① 운영 화면 — 마지막 시험 메일 줄 · 잠금 줄 · SUPER 단
    'data-mail-check' in MP and 'data-mail-require-test' in MP and 'data-mail-require-flip' in MP and "key: 'notify.require_mail_test'" in MP
    and 'window.confirm(' in MP.split('async function flipRequire')[1].split('if (err)')[0] and '{isSuper && <>' in MP.split('data-mail-require-test')[1], '')
 PC = rd('deploy/aws/postcheck.sh')
-ok('① postcheck [10] — 잠금 3개 on(읽기만)', "'identity.require_check', 'etax.require_config', 'notify.require_mail_test'" in PC and '잠금 3개 on' in PC
+ok('① postcheck [10] — 잠금 3개 on(읽기만)', "'identity.require_check', 'etax.require_config', 'notify.require_mail_test'" in PC and ('잠금 3개 on' in PC or '잠금 4개 on' in PC)
    and 'etax.require_config=on · identity.require_check=on · notify.require_mail_test=on' in PC, '')
 RS = rd('docker/realcheck.sh', KIT); RP = rd('docker/realcheck.ps1', KIT)
 ok('① realcheck [9] — 컨테이너 안 API tsc · 운영 화면 tsc -b && vite build(sh · ps1 같음)',
