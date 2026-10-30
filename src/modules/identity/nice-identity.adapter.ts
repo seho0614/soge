@@ -99,6 +99,9 @@ async function orgToken(clientId: string, secret: string) {
   return v;
 }
 
+/** v10.153 — 키 확인 전에 보관한 기관 토큰을 버림 */
+export function resetNiceToken() { accessToken = null; }
+
 /** ② 암호화 토큰 (NICE) */
 export async function niceCryptoToken(reqNo: string, dtim: string) {
   const clientId = process.env.NICE_CLIENT_ID?.trim() ?? ''; const secret = process.env.NICE_CLIENT_SECRET?.trim() ?? '';

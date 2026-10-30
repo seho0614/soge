@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -13,7 +13,7 @@ interface Sw { key: string; label: string; go: 'on' | 'off'; goLabel: string; ba
 
 const SWITCHES: Sw[] = [
   { key: 'assume.etax', label: '전자세금계산서 간주', go: 'off', goLabel: '간주 끄기(국세청 실제 전송)', backLabel: '간주 다시 켜기',
-    integ: ['ETAX'], need: ['TESTING', 'LIVE'], why: '전자세금계산서 연동이 시험 중이거나 연결됨',
+    integ: ['ETAX'], need: ['TESTING', 'LIVE'], why: '전자세금계산서 연동이 시험 중이거나 연결됨 · 업체 주소 · 키(ETAX_URL · ETAX_KEY — 아래 「간주 끄기 전 설정 확인」이 켜져 있으면 서버가 봄)',
     warn: '끄면 「발행」이 국세청으로 실제 전송됩니다. 업체 시험 주소로 1건 전송 · 조회 · 취소를 먼저 확인하십시오(docs/111 6-3).' },
   { key: 'assume.broker', label: '중개사 인증 간주', go: 'off', goLabel: '간주 끄기(국토부 실제 대조)', backLabel: '간주 다시 켜기',
     integ: ['BROKER'], need: ['TESTING', 'LIVE'], why: '국토부 중개사 대조가 시험 중이거나 연결됨',
@@ -35,12 +35,14 @@ const SWITCHES: Sw[] = [
  * 간주 모드 4종과 소개비 스위치를 운영 화면에서 켜고 끕니다. 전에는 운영 화면에 단추가 없어 관리자 API 를 손으로 불러야 했습니다(docs/111 6-2).
  *   · 값 저장은 전과 같은 PATCH /admin/site-settings — 바꾼 사람 · 시각이 감사 기록 SITE_SETTING_UPDATE 로 남습니다.
  *   · 「실제로 돌리는 쪽」으로 바꿀 때는 한 번 더 누르게 하고(확인 칸), 서버도 조건을 봅니다(SWITCH_PREREQ). 되돌리는 쪽은 바로 됩니다.
+ *   · v10.153 (D146 · docs/233) — 「간주 끄기 전 설정 확인」(etax.require_config · SUPER) 켜져 있으면 ETAX_URL · ETAX_KEY 없이 세금계산서 간주를 못 끔(ETAX_CONFIG_FIRST)
  */
 export function Switches() {
   const settings = useApi<Setting[]>('/admin/site-settings');
   const integ = useApi<Integration[]>('/admin/integrations');
   const a = useAct();
   const [ask, setAsk] = useState<string | null>(null);
+  const isSuper = tokenRoles().includes('SUPER');
 
   if (settings.error) return <ErrorView error={settings.error} />;
   const val = (k: string) => (settings.data ?? []).find((s) => s.key === k)?.value?.trim() ?? '';
@@ -83,6 +85,13 @@ export function Switches() {
           );
         })}</tbody>
       </table></div>
+      <p className="hint" style={{ marginTop: 6 }} data-etax-require-config={val('etax.require_config') === 'off' ? 'off' : 'on'}>
+        간주 끄기 전 설정 확인(전자세금계산서): <b>{val('etax.require_config') === 'off' ? '꺼짐 — 연동 상태만 봄(주소 · 키가 없으면 발행이 멈출 수 있음)' : '켜짐 — 업체 주소 · 키(ETAX_URL · ETAX_KEY)가 있어야 끔'}</b>
+        {isSuper && <>{' '}<button className="btn-plain" disabled={a.busy === 'etax.require_config'} data-etax-require-flip
+          onClick={() => { const on = val('etax.require_config') !== 'off'; if (!on || window.confirm('「간주 끄기 전 설정 확인」을 끌까요? 업체 주소 · 키 없이 간주를 끄면 세금계산서 발행이 멈춥니다.'))
+            void a.run('etax.require_config', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'etax.require_config', value: on ? 'off' : 'on' }) }),
+              () => settings.reload(), on ? '간주 끄기 전 설정 확인을 껐습니다.' : '간주 끄기 전 설정 확인을 켰습니다.'); }}>{val('etax.require_config') === 'off' ? '켜기' : '끄기'}</button></>}
+      </p>
       <p className="dim" style={{ marginTop: 6 }}>간주 모드를 하나라도 남긴 채 사용자 웹 접근 제한을 풀지 마십시오. 다 끈 뒤 오픈 점검(open:check)의 「간주 모드」가 0 인지 확인합니다.</p>
     </section>
   );

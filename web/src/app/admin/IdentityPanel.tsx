@@ -8,6 +8,8 @@ import { api, tokenRoles } from '../../lib/api';
  *   키 3개 — 위 「연동 키」 › 본인인증에서 넣음(값은 보이지 않음 · 어디서 왔는지만)
  *   최근 30일 — 성공 · 실패(까닭별) · 시험용 통과 · 다른 계정에서도 인증한 사람
  *   저장은 PATCH /admin/site-settings(identity.provider · identity.ci_duplicate) — 서버가 SUPER · 키 · MOCK 을 다시 검사.
+ *   v10.153 (D146 · docs/233) — 「NICE 키 확인」(POST /admin/identity/nice-check · 토큰만 · 비용 없음) · 「NICE 바꾸기 전 키 확인」(identity.require_check)
+ *     켜져 있으면 최근 7일 안 키 확인 성공이 있어야 NICE 로 바꿈(서버 IDENTITY_CHECK_FIRST) — 틀린 키로 바꾸면 모든 가입이 막힘(리허설 docs/228 발견 5)
  */
 
 interface KeyState { name: string; set: boolean; source: 'ADMIN' | 'ENV' | 'NONE' }
@@ -15,6 +17,7 @@ interface Status {
   provider: 'STUB' | 'MOCK' | 'NICE'; setting: string; mockAllowed: boolean; keys: KeyState[]; keysMissing: string[];
   ciDuplicate: 'warn' | 'block'; minAge: number;
   last30: { success: number; fail: number; stub: number; pending: number; duplicate: number; reasons: { reason: string; n: number }[] };
+  requireCheck: boolean; lastCheckOkAt: string | null; lastCheck: { ok: boolean; errorKind: string | null; detail: string | null; at: string } | null;
 }
 
 const MODE: Record<string, string> = { STUB: '시험용(바로 통과)', MOCK: '가짜 표준창(점검판)', NICE: 'NICE 표준창' };
@@ -44,9 +47,19 @@ export function IdentityPanel() {
     finally { setBusy(false); }
   }
 
+  async niceCheck() {
+    setBusy(true); setRes(null);
+    try {
+      const r = await api<{ ok: boolean; detail: string }>('/admin/identity/nice-check', { method: 'POST', body: '{}' });
+      setRes({ ok: r.ok, text: r.detail }); void load();
+    } catch (e) { setRes({ ok: false, text: (e as Error)?.message ?? '확인하지 못했습니다.' }); }
+    finally { setBusy(false); }
+  }
+
   if (err) return <div data-identity-panel><h2 className="ad-s2">본인인증</h2><p className="warn-text" role="alert">{err}</p></div>;
   if (!st) return null;
   const l = st.last30;
+  const needCheck = st.requireCheck && !st.lastCheckOkAt;
   return (
     <div data-identity-panel>
       <h2 className="ad-s2">본인인증 <small className="dim">휴대폰 본인확인(NICE 표준창) — 순서는 docs/214</small></h2>
@@ -64,8 +77,8 @@ export function IdentityPanel() {
       {isSuper && (
         <div className="row-actions" style={{ marginTop: 10 }}>
           {(['STUB', 'MOCK', 'NICE'] as const).filter((m) => m !== 'MOCK' || st.mockAllowed).map((m) => (
-            <button key={m} className={`btn-sm${st.provider === m ? ' on' : ''}`} aria-pressed={st.provider === m} disabled={busy || st.provider === m || (m === 'NICE' && st.keysMissing.length > 0)}
-              title={m === 'NICE' && st.keysMissing.length ? `키가 없습니다: ${st.keysMissing.join(' · ')}` : ''}
+            <button key={m} className={`btn-sm${st.provider === m ? ' on' : ''}`} aria-pressed={st.provider === m} disabled={busy || st.provider === m || (m === 'NICE' && (st.keysMissing.length > 0 || needCheck))}
+              title={m === 'NICE' && st.keysMissing.length ? `키가 없습니다: ${st.keysMissing.join(' · ')}` : m === 'NICE' && needCheck ? '「NICE 키 확인」이 최근 7일 안에 성공해야 합니다' : ''}
               onClick={() => void save('identity.provider', m, `본인인증 방식을 ${MODE[m]} 로 바꿨습니다.`)} data-identity-set={m}>{MODE[m]}</button>
           ))}
           <span className="muted">같은 사람 다른 계정:</span>
@@ -75,6 +88,17 @@ export function IdentityPanel() {
           ))}
         </div>
       )}
+      <p className="hint" data-identity-check={st.lastCheckOkAt ? 'ok' : 'none'} style={{ marginTop: 10 }}>
+        NICE 키 확인(토큰만 받아 봄 · 표준창 · 비용 없음): {st.lastCheckOkAt ? <b>최근 7일 안 성공 — {new Date(st.lastCheckOkAt).toLocaleString('ko-KR')}</b> : <b>최근 7일 안 성공 없음</b>}
+        {st.lastCheck && !st.lastCheck.ok && <> · 마지막 확인 실패({st.lastCheck.errorKind}) — {st.lastCheck.detail}</>}
+        {isSuper && <>{' '}<button className="btn-sm" disabled={busy} onClick={() => void niceCheck()} data-identity-nice-check>NICE 키 확인</button></>}
+      </p>
+      <p className="hint" data-identity-require-check={st.requireCheck ? 'on' : 'off'}>
+        NICE 바꾸기 전 키 확인: <b>{st.requireCheck ? '켜짐 — 키 확인이 성공해야 NICE 로 바꿈' : '꺼짐 — 키 3개만 보고 바꿈(틀린 키면 가입이 막힐 수 있음)'}</b>
+        {isSuper && <>{' '}<button className="btn-sm" disabled={busy}
+          onClick={() => { if (!st.requireCheck || window.confirm('「NICE 바꾸기 전 키 확인」을 끌까요? 키가 틀려도 NICE 로 바꿀 수 있게 되어, 틀리면 모든 가입 · 본인인증이 막힙니다.')) void save('identity.require_check', st.requireCheck ? 'off' : 'on', st.requireCheck ? 'NICE 바꾸기 전 키 확인을 껐습니다.' : 'NICE 바꾸기 전 키 확인을 켰습니다.'); }}
+          data-identity-require-flip>{st.requireCheck ? '끄기' : '켜기'}</button></>}
+      </p>
       {res && <p className={res.ok ? 'form-ok' : 'warn-text'} role="status" data-identity-result={res.ok ? 'ok' : 'fail'}>{res.text}</p>}
       <p data-identity-stats>
         최근 30일 — 성공 <b data-identity-stat="success">{l.success}</b> · 실패 <b data-identity-stat="fail">{l.fail}</b> · 시험용 통과 <b data-identity-stat="stub">{l.stub}</b>

@@ -153,7 +153,7 @@ export class IntegTestService {
     const recent = await this.db.query<any>(
       `SELECT id::text, integration_code AS code, kind, ok, stub, error_kind AS "errorKind", detail, key_mode AS "keyMode",
               account_last4 AS "accountLast4", pending, created_at AS "at"
-         FROM integration_tests ORDER BY created_at DESC LIMIT 30`);
+         FROM integration_tests WHERE integration_code IN ('PG', 'BANK') ORDER BY created_at DESC LIMIT 30`);   // v10.153 — 본인인증(PASS) 키 확인은 본인인증 구역에
     const limit = Number(await this.setting('integ.bank_test_daily', '3')) || 0;
     const used = await this.bankUsedToday();
     const lastOk = (c: string) => last.find((x) => x.code === c)?.at ?? null;

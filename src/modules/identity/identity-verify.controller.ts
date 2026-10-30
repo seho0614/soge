@@ -14,6 +14,7 @@ import { Audit } from '../../core/audit.interceptor';
  *   MEMBER  POST /verifications/identity/complete   돌아온 값 확인 → 본인인증 끝
  *   MEMBER  POST /verifications/identity/mock-sign  가짜 표준창(MOCK 일 때만 · 운영 서버에서는 403)
  *   ADMIN · SUPER  GET /admin/identity/status       운영 화면 › 외부 연동 › 「본인인증」
+ *   SUPER  POST /admin/identity/nice-check          NICE 키 확인(v10.153 · 토큰만 · 표준창 · 비용 없음 · NICE 로 바꾸는 근거)
  *   방식 바꾸기는 사이트 설정 identity.provider(PATCH /admin/site-settings · SUPER · NICE 는 키 3개 · MOCK 은 운영 서버에서 못 고름)
  * ------------------------------------------------------------------- */
 
@@ -73,6 +74,17 @@ export class IdentityLast30Dto {
   @ApiProperty({ description: '다른 계정에서도 인증한 사람' }) duplicate!: number;
   @ApiProperty({ type: [IdentityReasonDto] }) reasons!: IdentityReasonDto[];
 }
+export class IdentityNiceCheckDto {
+  @ApiProperty() ok!: boolean;
+  @ApiPropertyOptional({ nullable: true, enum: ['NOT_CONFIGURED', 'AUTH', 'TIMEOUT', 'NETWORK', 'UPSTREAM', 'HTTP_4XX', 'BAD_RESPONSE'] }) errorKind!: string | null;
+  @ApiProperty() detail!: string;
+}
+export class IdentityLastCheckDto {
+  @ApiProperty() ok!: boolean;
+  @ApiPropertyOptional({ nullable: true }) errorKind!: string | null;
+  @ApiPropertyOptional({ nullable: true }) detail!: string | null;
+  @ApiProperty({ format: 'date-time' }) at!: string;
+}
 export class IdentityAdminStatusDto {
   @ApiProperty({ enum: ['STUB', 'MOCK', 'NICE'], description: '실제로 쓰는 방식' }) provider!: string;
   @ApiProperty({ description: '설정 값(identity.provider)' }) setting!: string;
@@ -82,6 +94,9 @@ export class IdentityAdminStatusDto {
   @ApiProperty({ enum: ['warn', 'block'] }) ciDuplicate!: string;
   @ApiProperty() minAge!: number;
   @ApiProperty({ type: IdentityLast30Dto }) last30!: IdentityLast30Dto;
+  @ApiProperty({ description: 'v10.153 — identity.require_check(NICE 로 바꾸기 전 키 확인 필요)' }) requireCheck!: boolean;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: '최근 7일 안 성공한 NICE 키 확인' }) lastCheckOkAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: IdentityLastCheckDto }) lastCheck!: IdentityLastCheckDto | null;
 }
 
 @ApiTags('HOM')
@@ -127,4 +142,11 @@ export class IdentityVerifyController {
   @ApiOperation({ summary: '본인인증 상태 (v10.141)', description: '방식 · 키 3개(값 없이 어디서 왔는지) · 최근 30일 성공 · 실패(까닭별) · 다른 계정 중복.' })
   @ApiOkResponse({ type: IdentityAdminStatusDto })
   status() { return this.svc.adminStatus(); }
+
+  @Post('admin/identity/nice-check')
+  @Roles('SUPER')
+  @ApiOperation({ summary: 'NICE 키 확인 (v10.153)', description: '기관 토큰 · 암호화 토큰만 받아 봄 — **표준창을 띄우지 않아 비용 · 회원과 상관없음.** 결과는 시험 기록에 남고, identity.require_check 가 on 이면 NICE 로 바꾸는 근거(최근 7일 성공)가 됩니다.' })
+  @ApiOkResponse({ type: IdentityNiceCheckDto })
+  @Audit('INTEG_TEST_NICE', 'INTEGRATION')
+  niceCheck() { return this.svc.niceCheck(); }
 }

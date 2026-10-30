@@ -314,7 +314,7 @@ export class AdminService {
   }
 
   /** v10.141 (docs/214) — 본인인증 · 알림톡 방식(identity.* · alimtalk.*)은 최고 관리자만 — 회원 확인 · 바깥 발송에 걸린 설정 */
-  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.') || key.startsWith('safenum.'); }   // v10.143 전자계약 · v10.145 안심번호
+  static isIntegSetting(key: string): boolean { return key.startsWith('identity.') || key.startsWith('alimtalk.') || key.startsWith('esign.') || key.startsWith('safenum.') || key === 'etax.require_config'; }   // v10.143 전자계약 · v10.145 안심번호 · v10.153 간주 끄기 전 설정 확인
 
   /** v10.141 — identity.provider: MOCK 은 운영 서버(production)에서 못 고름 · NICE 는 키 3개가 있어야 함(없이 바꾸면 회원이 인증을 못 함)
    *  v10.142 — alimtalk.provider: MOCK 은 운영 서버에서 못 고름 · HTTP 는 키 2개 · ALIMTALK_URL 이 있어야 함
@@ -327,6 +327,13 @@ export class AdminService {
       if (v === 'NICE') {
         const miss = IdentityVerifyService.keysMissing();
         if (miss.length) throw new PolicyViolation('IDENTITY_KEYS_MISSING', `NICE 키가 없습니다 — 외부 연동 › 연동 키에 ${miss.join(' · ')} 를 넣은 뒤 바꾸십시오.`);
+        /* v10.153 (D146 · docs/233 · 리허설 docs/228 발견 5) — 틀린 키로 바꾸면 모든 가입 · 본인인증이 막힘(IDENTITY_UNAVAILABLE).
+         *   identity.require_check 가 on(처음 값)이면 최근 7일 안 「NICE 키 확인」 성공이 있어야 함 · off 면 키 3개만 봄 */
+        if ((await this.settingVal('identity.require_check', 'on')) !== 'off' && !(await IdentityVerifyService.lastCheckOk(this.db))) {
+          throw new PolicyViolation('IDENTITY_CHECK_FIRST',
+            '아직 NICE 로 바꿀 수 없습니다 — 외부 연동 › 본인인증에서 「NICE 키 확인」이 최근 7일 안에 성공해야 합니다(틀린 키로 바꾸면 모든 가입이 막힙니다). ' +
+            '최고 관리자가 「NICE 바꾸기 전 키 확인」을 끄면 키 3개만 보고 바꿀 수 있습니다.');
+        }
       }
     }
     if (key === 'alimtalk.provider') {
@@ -408,6 +415,11 @@ export class AdminService {
     }
   }
 
+  private async settingVal(key: string, dflt: string) {
+    const [r] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = $1`, [key]);
+    return (r?.v ?? '').trim() || dflt;
+  }
+
   private async checkSwitch(key: string, value: string) {
     const rule = AdminService.SWITCH_RULES[key];
     if (!rule || (value ?? '').trim() !== rule.to) return;
@@ -419,6 +431,14 @@ export class AdminService {
         const now = rule.integ.map((c) => `${c} ${rows.find((r) => r.code === c)?.status ?? '없음'}`).join(' · ');
         throw new PolicyViolation('SWITCH_PREREQ', `아직 바꿀 수 없습니다 — 조건: ${rule.why}. 지금: ${now}. 외부 연동 탭에서 상태를 먼저 바꿔 주십시오.`);
       }
+    }
+    /* v10.153 (D146 · docs/233 · 리허설 docs/228 발견 2) — 업체 주소 · 키 없이 간주를 끄면 발행이 ETAX_NOT_CONFIGURED 로 멈춤.
+     *   etax.require_config 가 on(처음 값)이면 ETAX_URL · ETAX_KEY 가 있어야 끌 수 있음(EtaxService.httpAdapter 와 같은 판단) · off 면 연동 상태만 봄 */
+    if (key === 'assume.etax' && (await this.settingVal('etax.require_config', 'on')) !== 'off') {
+      const miss = ['ETAX_URL', 'ETAX_KEY'].filter((k) => !(process.env[k] ?? '').trim());
+      if (miss.length) throw new PolicyViolation('ETAX_CONFIG_FIRST',
+        `아직 간주를 끌 수 없습니다 — 전자세금계산서 업체 설정(${miss.join(' · ')})이 없습니다(없이 끄면 발행이 멈춥니다). ` +
+        '키는 외부 연동 › 연동 키 · 주소는 .env 에 넣으십시오. 최고 관리자가 「간주 끄기 전 설정 확인」을 끄면 연동 상태만 보고 끌 수 있습니다.');
     }
     if (rule.bank) {
       const [r] = await this.db.query<{ ready: boolean }>(

@@ -4,7 +4,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import {
-  NICE_WINDOW_URL, NiceSession, decrypt, deriveKeys, encrypt, mockCryptoToken, newReqNo, niceCryptoToken, parseResult, reqDtim, requestData,
+  NICE_WINDOW_URL, NiceSession, decrypt, deriveKeys, encrypt, mockCryptoToken, newReqNo, niceCryptoToken, parseResult, reqDtim, requestData, resetNiceToken,
 } from './nice-identity.adapter';
 
 /* ---------------------------------------------------------------------
@@ -214,7 +214,51 @@ export class IdentityVerifyService {
       provider: mode, setting: setVal, mockAllowed: !isProd(), keys, keysMissing: IdentityVerifyService.keysMissing(),
       ciDuplicate: await this.setting('identity.ci_duplicate', 'warn'), minAge: Number(await this.setting('identity.min_age', '14')) || 14,
       last30: { success: c.ok, fail: c.fail, stub: c.stub, pending: c.pending, duplicate: c.dup, reasons },
+      requireCheck: (await this.setting('identity.require_check', 'on')) !== 'off', lastCheckOkAt: await IdentityVerifyService.lastCheckOk(this.db),
+      lastCheck: (await this.db.query<{ ok: boolean; errorKind: string | null; detail: string | null; at: Date }>(
+        `SELECT ok, error_kind AS "errorKind", detail, created_at AS at FROM integration_tests
+          WHERE integration_code = 'PASS' AND kind = 'NICE_TOKEN' ORDER BY created_at DESC LIMIT 1`))[0] ?? null,
     };
+  }
+
+  /* ── v10.153 (D146 · docs/233) — NICE 키 확인 ─────────────────────
+   *   기관 토큰 · 암호화 토큰만 받아 봄(①②) — 표준창을 띄우지 않아 회원 · 요금과 상관없음. 결과는 integration_tests(PASS · NICE_TOKEN)에 남고
+   *   identity.require_check = on 이면 NICE 로 바꾸는 근거(최근 7일 · 스텁 아님 — AdminService.checkIntegProvider)가 됨 */
+  async niceCheck() {
+    const miss = IdentityVerifyService.keysMissing();
+    let r: { ok: boolean; errorKind: string | null; detail: string };
+    if (miss.length) r = { ok: false, errorKind: 'NOT_CONFIGURED', detail: `NICE 키가 없습니다 — 외부 연동 › 연동 키에 ${miss.join(' · ')} 를 넣은 뒤 다시 확인하십시오.` };
+    else {
+      try {
+        resetNiceToken();   // 보관한 기관 토큰이 아니라 지금 키로 새로 받음(비밀값만 바꾼 경우)
+        await niceCryptoToken(newReqNo(), reqDtim());
+        r = { ok: true, errorKind: null, detail: 'NICE 키 확인됨(기관 토큰 · 암호화 토큰 받음)' };
+      } catch (e) { r = IdentityVerifyService.classifyNice(e); }
+    }
+    await this.db.query(
+      `INSERT INTO integration_tests (integration_code, kind, ok, stub, error_kind, detail, actor_id) VALUES ('PASS', 'NICE_TOKEN', $1, false, $2, $3, $4)`,
+      [r.ok, r.errorKind, r.detail.slice(0, 200), RequestCtx.actorId()]);
+    if (!r.ok) this.log.warn(`NICE 키 확인 실패 — ${r.errorKind}`);
+    return r;
+  }
+
+  /** 오류 → 까닭(키 값은 말하지 않음) — 401 · 403 = 키 틀림 · 시간 초과 · 연결 실패 · 그 밖 */
+  static classifyNice(e: unknown): { ok: false; errorKind: string; detail: string } {
+    const m = String((e as Error)?.message ?? ''); const n = (e as Error)?.name;
+    if (/NICE 40[13]/.test(m)) return { ok: false, errorKind: 'AUTH', detail: `NICE 키가 맞지 않습니다(${m.slice(5, 8)}) — 클라이언트 ID · 비밀값을 확인하십시오.` };
+    if (n === 'AbortError') return { ok: false, errorKind: 'TIMEOUT', detail: 'NICE 응답 지연 — 잠시 뒤 다시 확인하십시오.' };
+    if (/NICE 5\d\d/.test(m)) return { ok: false, errorKind: 'UPSTREAM', detail: `NICE 서버 오류(${m.slice(5, 8)})` };
+    if (/토큰/.test(m)) return { ok: false, errorKind: 'BAD_RESPONSE', detail: 'NICE 토큰을 받지 못함 — 상품 ID(NICE_PRODUCT_ID) · 계약 상태를 확인하십시오.' };
+    if (/NICE \d{3}/.test(m)) return { ok: false, errorKind: 'HTTP_4XX', detail: `NICE 가 받지 않음(${m.slice(5, 8)})` };
+    return { ok: false, errorKind: 'NETWORK', detail: 'NICE 서버에 연결하지 못함 — 발신 IP 등록 · 주소(NICE_API_BASE)를 확인하십시오.' };
+  }
+
+  /** 최근 7일 안 성공한(스텁 아닌) NICE 키 확인 시각 — 없으면 null */
+  static async lastCheckOk(db: DatabaseService): Promise<Date | null> {
+    const [r] = await db.query<{ at: Date | null }>(
+      `SELECT max(created_at) AS at FROM integration_tests
+        WHERE integration_code = 'PASS' AND kind = 'NICE_TOKEN' AND ok AND NOT stub AND created_at > now() - interval '7 days'`);
+    return r?.at ?? null;
   }
 }
 

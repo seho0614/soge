@@ -1663,6 +1663,7 @@
     "POST /admin/mail/connect",
     "POST /admin/mail/test",
     "GET /admin/identity/status",
+    "POST /admin/identity/nice-check",
     "GET /admin/alimtalk/status",
     "GET /admin/alimtalk/sends",
     "PUT /admin/alimtalk/templates/{code}",

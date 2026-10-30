@@ -167,6 +167,11 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$v" = "on" ] && ok "AI 켜기 전 처리방침 확인 = on(5절 27)" || warn "agent.require_privacy = ${v:-없음}" "on 이 처음 값 — D145"
   v=$(q "SELECT coalesce(nullif(value, ''), '(빈 값)') FROM site_settings WHERE key = 'service.open_date'")
   [ -n "$v" ] && ok "오픈일 칸 있음 — $v(5절 29)" || warn "service.open_date 없음" "D144"
+  # v10.153 (D146 · docs/233) — 오픈 날 사고 막는 잠금 2개(처음 값 on · 바꾸면 경고만)
+  v=$(q "SELECT string_agg(key || '=' || value, ' · ' ORDER BY key) FROM site_settings WHERE key IN ('identity.require_check', 'etax.require_config')")
+  if [ "$v" = "etax.require_config=on · identity.require_check=on" ]; then ok "잠금 2개 on — NICE 바꾸기 전 키 확인 · 세금계산서 간주 끄기 전 설정 확인"
+  elif [ -z "$v" ]; then warn "잠금 2개 설정 줄 없음" "v10.153(D146) 이전 판이면 정상"
+  else warn "잠금 2개 — $v" "on 이 처음 값 — D146 · SUPER 가 끈 것이면 정상"; fi
   pv=$(q "SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
   p11=$(q "SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]")
   [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 1.1 이상(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "1.1 이상이 게시되기 전에는 AI 전체를 켤 수 없음(D145)"
