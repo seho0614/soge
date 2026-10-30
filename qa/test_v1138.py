@@ -47,7 +47,7 @@ D = rd('prisma/migrations/D134_review_ai_assist/migration.sql')
 mig = sorted(x for x in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', x)))
 ok('① D134 — ai_referenced 칸(기본 false) · 관별 일치율 보기 · 지우는 문장 없음 · 172',
    'ADD COLUMN IF NOT EXISTS ai_referenced boolean NOT NULL DEFAULT false' in D and 'CREATE OR REPLACE VIEW public.v_ai_review_agreement_gwan' in D
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) in ((172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk'), (177, 'D139_esign'), (178, 'D140_integ_tests'), (179, 'D141_safenum'), (180, 'D142_open_ready'), (181, 'D143_files_move'), (182, 'D144_open_date'), (183, 'D145_agent_privacy_gate')), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D) and (len(mig), mig[-1]) in ((172, 'D134_review_ai_assist'), (173, 'D135_agent_chat_drafts'), (174, 'D136_mail_admin'), (175, 'D137_identity_nice'), (176, 'D138_alimtalk'), (177, 'D139_esign'), (178, 'D140_integ_tests'), (179, 'D141_safenum'), (180, 'D142_open_ready'), (181, 'D143_files_move'), (182, 'D144_open_date'), (183, 'D145_agent_privacy_gate'), (184, 'D146_switch_locks')), f'{len(mig)} · {mig[-1]}')
 ok('① 자동 승인 없음 — AI 가 결정하는 길이 없음(#7 · #15)', "SET status = 'APPROVED'" not in rd('src/modules/agent/review-shadow.service.ts')
    and 'decision_mode' not in D, '')
 ok('① 서버 안내 영어(AI_NOT_MATCH)', '"AI 의견과 다른 결정입니다 — 「AI 의견과 같게 확인」 없이 결정해 주십시오.":' in rd('src/common/i18n/server-text.en.ts'), '')

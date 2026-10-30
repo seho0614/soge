@@ -55,7 +55,7 @@ ok('① 방식 바꾸기 — identity.* 는 SUPER(INTEG_SETTING_SUPER) · MOCK �
 IC = rd('src/modules/identity/identity-verify.controller.ts')
 routes = re.findall(r"@(Get|Post)\('([^']+)'\)\n  @Roles\(([^)]*)\)", IC)
 ok('① API 5개 — 회원 4 · 운영 상태 ADMIN · SUPER · 완료는 감사 IDENTITY_VERIFY',
-   sorted(routes) == sorted([('Get', 'verifications/identity/mode', "'MEMBER'"), ('Post', 'verifications/identity/start', "'MEMBER'"),
+   sorted(r for r in routes if r[1] != 'admin/identity/nice-check') == sorted([('Get', 'verifications/identity/mode', "'MEMBER'"), ('Post', 'verifications/identity/start', "'MEMBER'"),   # v10.153 NICE 키 확인(SUPER)은 test_v1153
                              ('Post', 'verifications/identity/complete', "'MEMBER'"), ('Post', 'verifications/identity/mock-sign', "'MEMBER'"),
                              ('Get', 'admin/identity/status', "'ADMIN', 'SUPER'")]) and "@Audit('IDENTITY_VERIFY', 'ACCOUNT')" in IC, str(routes))
 SC = json.loads(rd('spec/screens.json') or '{"screens":[]}')

@@ -223,7 +223,10 @@ try:
 
     # ── C. 간주를 끄고 업체 연동이 없을 때 ────────────────────────────
     print('== C. 간주 끄기 · 연동 없음 ==', file=sys.stderr)
+    lock0 = q("select value from site_settings where key='etax.require_config'")   # v10.153 (D146) — 잠금이 켜져 있으면 ETAX_URL 없이 끄기 422 ETAX_CONFIG_FIRST
+    if lock0: call('PATCH', '/admin/site-settings', ADM, {'key': 'etax.require_config', 'value': 'off'})   # SUPER 만
     st, _ = setting('assume.etax', 'off')
+    if lock0: call('PATCH', '/admin/site-settings', ADM, {'key': 'etax.require_config', 'value': lock0})
     st1, s = call('GET', '/admin/etax/status', OPS)
     st2, j = call('POST', INV('lead-cash', L['NOCFG'], 'send'), OPS)
     rec('C-1 assume.etax off · ETAX_URL 없는 서버 → 상태 어댑터 없음 · 「발행」 422 ETAX_NOT_CONFIGURED · 줄 그대로(조용히 간주로 돌지 않음)',

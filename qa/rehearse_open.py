@@ -24,7 +24,7 @@ LOG = []
 KEYS = ['assume.payment', 'assume.broker', 'assume.bank', 'assume.etax', 'company.bank_name', 'company.bank_account', 'company.bank_holder',
         'identity.provider', 'alimtalk.provider', 'notify.alimtalk_ready', 'esign.provider', 'safenum.provider', 'notify.email_verified',
         'notify.mail_from', 'feature.referral_fee', 'agent.require_privacy', 'agent.monthly_cap_usd', 'agent.enabled', 'agent.review_shadow.enabled', 'agent.chat.enabled',
-        'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled']
+        'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled', 'etax.require_config']
 INTEG = ['PASS', 'BANK', 'PG', 'BROKER', 'ETAX', 'ALIMTALK', 'ESIGN', 'SAFENUM', 'MAIL', 'AGENT']
 
 
@@ -83,6 +83,8 @@ def on():
     # 2. 업체 상태를 시험(TESTING)으로 → 간주 끄기 (docs/111 6절 순서 etax → broker → payment)
     for c in ('BROKER', 'ETAX', 'PASS', 'BANK'):
         step('2-' + c, f'연동 {c} → TESTING', ig(c, 'TESTING'))
+    # v10.153 (D146) — 점검판엔 업체 주소 · 키(ETAX_URL · ETAX_KEY)가 없어 잠금이 막음 → 리허설에서만 잠금을 끄고 끔(운영은 주소 · 키를 넣고 잠금 그대로)
+    step('2-etax-lock', '간주 끄기 전 설정 확인 off(점검판만 — ETAX_URL 없음)', sv('etax.require_config', 'off'))
     step('2-etax', '간주 끄기 assume.etax', sv('assume.etax', 'off'))
     step('2-broker', '간주 끄기 assume.broker', sv('assume.broker', 'off'))
     step('2-payment', '간주 끄기 assume.payment', sv('assume.payment', 'off'))
