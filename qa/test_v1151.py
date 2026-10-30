@@ -76,6 +76,9 @@ if API and DB:
     sv = lambda k, v, t=T_: call('PATCH', '/admin/site-settings', {'key': k, 'value': v}, t)
     get = lambda k: psql(f"SELECT value FROM site_settings WHERE key = '{k}'")
     pv = psql("SELECT coalesce(max(version), '') FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
+    # v10.156 (D149) — 조건이 「국외 이전 조항이 든 처리방침 게시」로 바뀜 → 점검판에 게시된 처리방침의 그 제목을 잠시 가림(끝에 그대로 되돌림)
+    TOK = '국외_T1151_'
+    psql(f"UPDATE terms SET body = replace(body, '국외 이전', '{TOK}') WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
     has11 = (psql("SELECT public.fn_privacy_ai_ready()") == 't') if psql("SELECT to_regproc('public.fn_privacy_ai_ready') IS NOT NULL") == 't' \
         else psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND string_to_array(version, '.')::int[] >= ARRAY[1,1]") != '0'   # v10.156 (D149)
     mock = call('GET', '/admin/agent/status', t=T_).get('keySource') == 'MOCK'
@@ -92,8 +95,9 @@ if API and DB:
         ok('② 형식 오류(ON) 거절', sv('agent.require_privacy', 'ON').get('_err') in (400, 422) and get('agent.require_privacy') == 'on', '')
         aud = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'SITE_SETTING_UPDATE' AND after_data::text LIKE '%agent.require_privacy%' AND occurred_at > now() - interval '5 minutes'")
         ok('② 감사 기록 — 확인 스위치 바꿈', aud not in ('', '0'), aud)
-        # 1.1 게시 흉내 — 게시된 처리방침이 있으면 그 판 번호만 잠시 1.1 로(없으면 건너뜀)
+        # 1.1 게시 흉내 — 게시된 처리방침이 있으면 그 판 번호만 잠시 1.1 로(없으면 건너뜀) · v10.156 부터는 가린 국외 이전 조항을 되살려 흉내
         pid = psql("SELECT id FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' ORDER BY effective_from DESC LIMIT 1")
+        psql(f"UPDATE terms SET body = replace(body, '{TOK}', '국외 이전') WHERE code = 'PRIVACY'")
         if pid:
             ver0 = psql(f"SELECT version FROM terms WHERE id = '{pid}'")
             moved = psql(f"UPDATE terms SET version = '1.1' WHERE id = '{pid}' RETURNING 1")
@@ -109,7 +113,8 @@ if API and DB:
         for k, v in was.items():
             psql(f"UPDATE site_settings SET value = '{v}' WHERE key = '{k}';")
         psql(f"DELETE FROM account_roles WHERE role = 'ADMIN' AND account_id = (SELECT id FROM accounts WHERE email = '{SELLER}');")
-    ok('② 되돌림', all(get(k) == v for k, v in was.items()), str(was))
+        psql(f"UPDATE terms SET body = replace(body, '{TOK}', '국외 이전') WHERE code = 'PRIVACY'")
+    ok('② 되돌림', all(get(k) == v for k, v in was.items()) and psql(f"SELECT count(*) FROM terms WHERE body LIKE '%{TOK}%'") == '0', str(was))
 
 # ── ③ 운영 화면 ───────────────────────────────────────────────────────
 if ADMIN_WEB:
