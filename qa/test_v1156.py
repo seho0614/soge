@@ -54,6 +54,12 @@ D237 = next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.s
 D236 = next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('236_')), '')
 ok('① docs/237 · docs/236 sha256', all(x in D237 for x in ('fn_privacy_ai_ready', 'TERM_HOLES', '국외 이전', '하지 말 것', 'PRIVACY|1.0|t|3528'))
    and '34e48ee7a914ea764e6ee2511fa1634c26a1b7c5fee3866a3920975892c62ed7' in D236 and '3eca3ae44e4f84db5150aa4841ba9fe2c8775c2a25d158ed32011fd9d785b5fa' in D236, '')
+F238 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('238_')), '')
+D238 = rd('docs/' + F238) if F238 else ''
+ok('① docs/238 — 운영 적용 v10.155 → v10.156 · 1 · 187 · 스냅샷 v10-156 · 킷 ~/kits/release · sha256 · 약관 화면 · 하지 말 것',
+   not F238 or ('v10.156' in F238 and '`적용됨 186 · 새 킷의 파일 187 · 올릴 것 1 · 바뀐 파일 0`' in D238 and '`적용 1 · 기존 186 · 변경감지 0`' in D238
+   and '187 / 187' in D238 and 'sgb-before-v10-156' in D238 and '~/kits/release/' in D238 and '58f57b53f54ad06b1373c91cbb48f3982dabfc08d026ed321546f25b9917c508' in D238
+   and '「약관」' in D238 and '하지 말 것' in D238), F238 or '(킷에 아직 없음)')
 ok('① 판 v10.156 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 156), rd('VERSION').strip())
 
 
