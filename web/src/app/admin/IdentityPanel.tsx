@@ -47,7 +47,7 @@ export function IdentityPanel() {
     finally { setBusy(false); }
   }
 
-  async niceCheck() {
+  async function niceCheck() {
     setBusy(true); setRes(null);
     try {
       const r = await api<{ ok: boolean; detail: string }>('/admin/identity/nice-check', { method: 'POST', body: '{}' });
