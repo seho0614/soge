@@ -24,7 +24,7 @@ LOG = []
 KEYS = ['assume.payment', 'assume.broker', 'assume.bank', 'assume.etax', 'company.bank_name', 'company.bank_account', 'company.bank_holder',
         'identity.provider', 'alimtalk.provider', 'notify.alimtalk_ready', 'esign.provider', 'safenum.provider', 'notify.email_verified',
         'notify.mail_from', 'feature.referral_fee', 'agent.require_privacy', 'agent.monthly_cap_usd', 'agent.enabled', 'agent.review_shadow.enabled', 'agent.chat.enabled',
-        'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled', 'etax.require_config']
+        'agent.chat.member_lookup.enabled', 'agent.chat.drafts.enabled', 'etax.require_config', 'notify.require_mail_test']
 INTEG = ['PASS', 'BANK', 'PG', 'BROKER', 'ETAX', 'ALIMTALK', 'ESIGN', 'SAFENUM', 'MAIL', 'AGENT']
 
 
@@ -97,6 +97,8 @@ def on():
     psql("UPDATE alimtalk_templates SET vendor_code = 'REH-' || code, review_state = 'APPROVED'")
     step('3-alimtalk-ready', '알림톡 준비 켜기(템플릿 승인 뒤)', sv('notify.alimtalk_ready', 'on'))
     # 4. 메일 — SES 인증 뒤 켜는 스위치(점검판은 SMTP 키 없음 → 개발 방식 대체가 동작)
+    # v10.154 (D147) — 점검판엔 SMTP 키 · 시험 메일 성공이 없어 잠금이 막음 → 리허설에서만 잠금을 끄고 켬(운영은 시험 메일 성공 뒤 잠금 그대로)
+    step('4-mail-lock', '메일 켜기 전 시험 메일 확인 off(점검판만 — SMTP 키 없음)', sv('notify.require_mail_test', 'off'))
     step('4-mail', '메일 발송 인증 켜기', sv('notify.email_verified', 'on'))
     # 5. AI — 처리방침 → 키(점검판 AGENT_PROVIDER=MOCK) · 월 상한 → AI 전체 → 단계
     # v10.151(D145) — 처리방침 1.1 게시 전에는 AI 전체가 거절되는지 먼저 보고, 점검판에는 게시가 없으니 확인 스위치를 끄고 이어 감

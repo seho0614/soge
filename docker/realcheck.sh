@@ -15,6 +15,7 @@
 #   6. 마이그레이션 수 = 파일 수 · 컨테이너 안 버전
 #   7. 통합 검정 컨테이너                                             (sgb_check 에서 — 개발 데이터를 건드리지 않음)
 #   8. 주소 6곳이 열리는지 · 메인에 나가는 투표 3건
+#   9. 운영 적용과 같은 빌드 — API tsc · 운영 화면 tsc -b && vite build (컨테이너 안 · 운영 apply.sh 의 「빌드」 단계를 미리)
 #   결과는 화면과 realcheck_날짜_시각.txt 에 남습니다 — 그 파일을 보내 주시면 됩니다.
 #
 #   ./dev.sh realcheck          개발 데이터 유지 (권장)
@@ -113,5 +114,16 @@ probe "안심소개"             "http://localhost:${SITE_PORT}/mall"
 [ -n "$PROTO" ] && probe "시안" "http://localhost:${SITE_PORT}/proto/${PROTO}"
 kinds=$(curl -s --max-time 60 "http://localhost:${API_PORT}/api/v1/community/polls?scope=home" 2>/dev/null | grep -o '"kind":"[A-Z]*"' | cut -d'"' -f4 | tr '\n' ' ' | sed 's/ $//')
 [ "$kinds" = "VS ASK USED" ]; chk $? "메인에 나가는 투표 3건(비교해요 · 궁금해요 · 써본 의견)" "${kinds:-없음}"
+
+# 2026-10-30 — 점검판은 API 를 ts-node(형식 검사 느슨) · 운영 화면을 vite 개발 서버로 돌려 운영 apply.sh 의 빌드 오류를 못 봄
+#   (v10.153 운영 화면 문법 오류가 realcheck 21/21 을 통과함). 같은 빌드를 컨테이너 안에서 돌림 — 결과물은 컨테이너의 /tmp 에만
+say ""; say "[9] 운영 적용과 같은 빌드 (컨테이너 안 · 1분쯤)"
+build() {   # 이름 · 서비스 · 명령
+  local log; log=$(docker compose exec -T "$2" sh -c "$3" 2>&1); local rc=$?
+  chk "$rc" "$1" "종료 코드 $rc"
+  [ "$rc" = "0" ] || echo "$log" | grep -aE "error|Error" | head -20 | sed 's/^/        /' | tee -a "$OUT"
+}
+build "API 빌드(tsc)"                       api 'npx tsc -p tsconfig.json --noEmit'
+build "운영 화면 빌드(tsc -b · vite build)"  web 'npx tsc -b && npx vite build --outDir /tmp/rc-web --emptyOutDir --logLevel error'
 
 finish

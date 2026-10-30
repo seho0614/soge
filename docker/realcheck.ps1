@@ -15,6 +15,7 @@
 #   6. 마이그레이션 수 = 파일 수 · 컨테이너 안 버전
 #   7. 통합 검정 컨테이너                                             (sgb_check 에서 — 개발 데이터를 건드리지 않음)
 #   8. 주소 6곳이 열리는지 · 메인에 나가는 투표 3건
+#   9. 운영 적용과 같은 빌드 — API tsc · 운영 화면 tsc -b && vite build (컨테이너 안)
 #   결과는 화면과 realcheck_날짜_시각.txt 에 남습니다 — 그 파일을 보내 주시면 됩니다.
 #
 #   .\dev.ps1 realcheck          개발 데이터 유지 (권장)
@@ -235,5 +236,16 @@ try {
 } catch { $kinds = "" }
 $kd = $kinds; if (-not $kd) { $kd = "없음" }
 Chk ($kinds -eq "VS ASK USED") "메인에 나가는 투표 3건(비교해요 · 궁금해요 · 써본 의견)" $kd
+
+# 2026-10-30 — 운영 apply.sh 의 빌드 단계를 미리(점검판은 ts-node · vite 개발 서버라 빌드 오류를 못 봄) · realcheck.sh [9] 와 같음
+Say ""; Say "[9] 운영 적용과 같은 빌드 (컨테이너 안 · 1분쯤)"
+function Build([string]$name, [string]$svc, [string]$cmd) {
+  $out = @(DkGet @("compose", "exec", "-T", $svc, "sh", "-c", $cmd))
+  $rc = $LASTEXITCODE
+  Chk ($rc -eq 0) $name ("종료 코드 " + $rc)
+  if ($rc -ne 0) { foreach ($l in @($out | Where-Object { "$_" -match "error|Error" } | Select-Object -First 20)) { $script:lines.Add("        " + "$l".Trim()) } }
+}
+Build "API 빌드(tsc)"                      "api" "npx tsc -p tsconfig.json --noEmit"
+Build "운영 화면 빌드(tsc -b · vite build)" "web" "npx tsc -b && npx vite build --outDir /tmp/rc-web --emptyOutDir --logLevel error"
 
 Finish

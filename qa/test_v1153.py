@@ -54,7 +54,7 @@ ok('① 운영 화면 — 본인인증 키 확인 단추 · 잠금 줄 · 끌 �
 SP = json.loads(rd('spec/screens.json') or '{}')
 ok('① 화면 명세에 새 API(POST /admin/identity/nice-check)', 'POST /admin/identity/nice-check' in json.dumps(SP, ensure_ascii=False), '')
 PC = rd('deploy/aws/postcheck.sh')
-ok('① postcheck [10] — 잠금 2개 on 확인(읽기만)', "WHERE key IN ('identity.require_check', 'etax.require_config')" in PC and '잠금 2개 on' in PC, '')
+ok('① postcheck [10] — 잠금 2개 on 확인(읽기만 · v10.154 부터 메일 잠금과 함께 3개)', "WHERE key IN ('identity.require_check', 'etax.require_config'" in PC and ('잠금 2개 on' in PC or '잠금 3개 on' in PC), '')
 D233 = next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('233_')), '')
 ok('① docs/233 — 발견 5 · 2 · 처음 on · SUPER · 오류 코드 · 되돌리는 쪽 언제나', all(x in D233 for x in ('IDENTITY_CHECK_FIRST', 'ETAX_CONFIG_FIRST', 'identity.require_check', 'etax.require_config', '발견 5', '발견 2', '되돌리는 쪽')), '')
 ok('① 판 v10.153 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 153), rd('VERSION').strip())
