@@ -109,6 +109,7 @@ if API and DB:
         ok('② 가짜 NICE 키 3개 넣음(점검판 · 밖으로 안 보냄)', all('_err' not in x for x in put), str([x.get('code') for x in put if '_err' in x]))
         r = sv('identity.provider', 'NICE')
         ok('② 키 확인 성공 없이 NICE → 422 IDENTITY_CHECK_FIRST · 그대로 STUB', r.get('_err') == 422 and r.get('code') == 'IDENTITY_CHECK_FIRST' and get('identity.provider') in ('STUB', ''), str(r)[:120])
+        psql("DELETE FROM integration_tests WHERE integration_code = 'PASS'")   # 방금 남긴 NOT_CONFIGURED 줄(지금 시각)이 「마지막 확인」이 되지 않게
         fake('8 days')
         ok('② 8일 전 성공은 근거 아님(7일)', sv('identity.provider', 'NICE').get('code') == 'IDENTITY_CHECK_FIRST', '')
         fake('1 minute', stub=True)
@@ -128,7 +129,7 @@ if API and DB:
         sv('identity.provider', 'STUB'); sv('identity.require_check', 'on')
 
         # ── ③ 세금계산서 ──
-        ok('③ 전제 — 점검판 ETAX_URL 없음(etax 상태 어댑터 없음)', call('GET', '/admin/etax/status', t=T_).get('adapter') is None, '')
+        ok('③ 전제 — 점검판 ETAX_URL · ETAX_KEY 없음(etax 상태 configured 거짓)', call('GET', '/admin/etax/status', t=T_).get('configured') is False, '')
         call('PATCH', '/admin/integrations/ETAX', {'status': 'TESTING'}, T_)
         r = sv('assume.etax', 'off')
         ok('③ 연동 TESTING 이어도 주소 · 키 없으면 간주 끄기 422 ETAX_CONFIG_FIRST · 그대로 on', r.get('_err') == 422 and r.get('code') == 'ETAX_CONFIG_FIRST' and get('assume.etax') == 'on'
