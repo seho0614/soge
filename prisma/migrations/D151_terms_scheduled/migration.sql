@@ -34,9 +34,9 @@ CREATE OR REPLACE VIEW public.v_terms_upcoming AS
  SELECT t.*
    FROM public.terms t
   WHERE t.status = 'PUBLISHED' AND t.effective_from > now() AND t.effective_from <> 'infinity'
-    AND NOT EXISTS (SELECT 1 FROM public.v_terms_current c WHERE c.code = t.code AND c.version = t.version);
+    AND EXISTS (SELECT 1 FROM public.v_terms_current c WHERE c.code = t.code AND c.effective_from < t.effective_from);
 
-COMMENT ON VIEW public.v_terms_upcoming IS '시행 예정 판 — 게시됐지만 시행 전이고 지금 시행 중인 판이 따로 있음(D151 · v10.161)';
+COMMENT ON VIEW public.v_terms_upcoming IS '시행 예정 판 — 게시됐지만 시행 전이고 지금 판보다 시행일이 뒤(지금 판 · 그 앞 판은 빠짐 · D151 · v10.161)';
 
 CREATE OR REPLACE FUNCTION public.fn_terms_archive_due() RETURNS integer
     LANGUAGE plpgsql

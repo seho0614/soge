@@ -127,7 +127,7 @@ export class TermsService {
    */
   async unschedule(code: string, version: string) {
     const [t] = await this.db.query<{ status: string; future: boolean; day: string; agreed: string }>(
-      `SELECT status, effective_from > now() AS future, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
+      `SELECT status, EXISTS (SELECT 1 FROM v_terms_upcoming u WHERE u.code = t.code AND u.version = t.version) AS future, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
               (SELECT count(*) FROM term_agreements a WHERE a.term_code = t.code AND a.term_version = t.version) AS agreed
          FROM terms t WHERE code = $1 AND version = $2`, [code, version]);
     if (!t) throw new NotFound('해당 버전의 약관이 없습니다.');
