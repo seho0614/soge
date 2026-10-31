@@ -210,7 +210,7 @@ export class AgentService {
     const [r] = await this.db.query<Record<string, any>>(
       `SELECT
          public.fn_privacy_ai_ready() AS privacy,   -- v10.156 (D149) — 판 번호 대신 국외 이전 조항
-         (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS "privacyVer",
+         (SELECT version FROM v_terms_current WHERE code = 'PRIVACY')   /* v10.161 (D151) — 지금 시행 중인 판 */ AS "privacyVer",
          (SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd') AS cap,
          (SELECT (now() AT TIME ZONE 'Asia/Seoul')::date - min(day) FROM agent_usage_daily WHERE channel = 'REVIEW_SHADOW' AND requests > 0) AS "reviewDays",
          a.decided, a.agree_pct::float AS "agreePct",

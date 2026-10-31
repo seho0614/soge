@@ -287,6 +287,10 @@ export class AdminService {
     if (AdminService.isIntegSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('INTEG_SETTING_SUPER', '본인인증 · 알림톡 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.161 (D151) — 약관 재동의 시점(terms.reconsent_before_effective)은 약관 게시와 같이 SUPER 만 */
+    if (key.startsWith('terms.') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('TERMS_SETTING_SUPER', '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */
@@ -427,7 +431,7 @@ export class AdminService {
     const [g] = await this.db.query<{ req: string | null; ok: boolean; ver: string | null }>(
       `SELECT (SELECT value FROM site_settings WHERE key = 'agent.require_privacy') AS req,
               public.fn_privacy_ai_ready() AS ok,
-              (SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED') AS ver`);
+              (SELECT version FROM v_terms_current WHERE code = 'PRIVACY')   /* v10.161 (D151) — 지금 시행 중인 판 */ AS ver`);
     if ((g?.req ?? 'on').trim() !== 'off' && !g?.ok) {
       throw new PolicyViolation('PRIVACY_FIRST',
         `아직 AI 를 켤 수 없습니다 — 국외 이전 조항(AI 고지)이 든 개인정보처리방침이 먼저 게시되어야 합니다(지금 게시 ${g?.ver ?? '없음'}). ` +

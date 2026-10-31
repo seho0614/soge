@@ -15,17 +15,25 @@ import { ErrorView } from '../../components/ErrorView';
  *
  * v10.157 (docs/239) — 줄마다 「고치기」: 법무가 〔미확정〕을 채운 글을 화면에서 저장(PUT /admin/terms/{code} · 감사 TERM_DRAFT)
  *   초안 · 법무 검토 판은 그 판에 · 게시 · 보관 판은 새 번호로만(서버 422 TERM_LOCKED · DB D150) · 「바뀐 곳 보기」 줄 비교 · 남은 〔미확정〕 목록
+ *
+ * v10.161 (docs/246 · D151) — 시행일 지키기: 시행일이 미래면 「시행 예정」(앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터)
+ *   · 줄마다 「예정 취소」(시행일 전 · 동의 기록 없을 때 · PATCH /admin/terms/{code}/unschedule · 감사 TERM_UNSCHEDULE)
+ *   · 게시 확인 창에 이용약관 제14조(7일 전 · 불리한 변경 30일 전) 경고 · 운영 화면 메뉴 「관 관리 › 약관」 에서도 엶
  */
 
 interface Term {
   code: string; version: string; title: string; body: string; status: string;
   isRequired: boolean; blockedBy: string | null; effectiveFrom: string | null; changeNote?: string | null;
+  /** v10.161 — 시행 예정(게시됐지만 시행일 전 · 앞 판이 아직 시행 중) */ scheduled?: boolean;
 }
 
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
 const holes = (b: string) => (b.match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
 const editable = (st: string) => st === 'DRAFT' || st === 'LEGAL_REVIEW';
+const todayKst = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+/** v10.161 — 시행일이 아직 오지 않은 게시 판(시행 예정 · 처음 게시한 판 포함) */
+const future = (t: Term) => t.status === 'PUBLISHED' && !!t.effectiveFrom && Date.parse(t.effectiveFrom) > Date.now();
 const verNum = (v: string) => v.split('.').map((x) => Number(x) || 0);
 const verCmp = (a: string, b: string) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0) - (y[i] ?? 0); if (d) return d; } return 0; };
 /** 게시 · 보관 판을 고치면 그 약관의 가장 높은 번호 다음(1.0 · 1.1 → 1.2) */
@@ -54,6 +62,9 @@ interface Edit { key: string; code: string; from: string; version: string; title
 
 export function TermsPanel() {
   const { data, error, reload } = useApi<Term[]>('/admin/terms');
+  /* v10.161 — 재동의 시점 스위치(terms.reconsent_before_effective · 기본 off = 시행일부터 · 법무 판단 뒤에만 on) */
+  const st = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');
+  const early = st.data?.find((s) => s.key === 'terms.reconsent_before_effective')?.value === 'on';
   const [open, setOpen] = useState<string | null>(null);
   const [day, setDay] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -83,25 +94,64 @@ export function TermsPanel() {
     } finally { setBusy(null); }
   }
 
-  async function publish(t: Term) {
+  async function publish(t: Term, all: Term[]) {
     if (!day) { setRes({ ok: false, text: '시행일을 먼저 넣으십시오.' }); return; }
-    if (!window.confirm(`「${t.title}」 ${t.version} 을 시행일 ${day} 로 게시할까요?\n\n`
-      + '게시하면 이용자와의 계약 조건이 되고, 되돌려도 이미 받은 동의 기록은 남습니다.\n법무 확인을 마친 글입니까?')) return;
+    /* v10.161 — 앞 판이 있으면 시행일까지 그대로 시행 · 재동의는 시행일부터. 이용약관 제14조 고지 기간 경고 */
+    const prev = all.find((u) => u.code === t.code && u.status === 'PUBLISHED' && !u.scheduled);
+    const lead = Math.round((Date.parse(day) - Date.parse(todayKst())) / 86_400_000);
+    const lines = [`「${t.title}」 ${t.version} 을 시행일 ${day} 로 게시할까요?`, ''];
+    if (prev && lead > 0) lines.push(`지금 시행 중인 ${prev.version} 은 ${day} 전날까지 그대로 시행되고, 회원 재동의는 ${day} 부터 받습니다. 그동안 사용자 웹에 「바뀔 약관」 알림이 나갑니다.`, '');
+    if (prev && lead < 7) lines.push(`⚠ 시행일까지 ${lead}일 — 이용약관 제14조는 시행 7일 전 고지(회원에게 불리한 변경은 30일 전)입니다.`, '');
+    else if (prev && lead < 30) lines.push(`회원에게 불리한 변경이면 30일 전 고지가 필요합니다(지금 ${lead}일 전).`, '');
+    lines.push('게시하면 이용자와의 계약 조건이 되고, 되돌려도 이미 받은 동의 기록은 남습니다.', '법무 확인을 마친 글입니까?');
+    if (!window.confirm(lines.join('\n'))) return;
     const key = `${t.code}:${t.version}`;
     setBusy(key); setRes(null);
     try {
-      const r = await api<{ code: string; version: string; remainingBlockers: number }>(`/admin/terms/${t.code}/publish`,
+      const r = await api<{ code: string; version: string; remainingBlockers: number; scheduled?: boolean }>(`/admin/terms/${t.code}/publish`,
         { method: 'PATCH', body: JSON.stringify({ version: t.version, effectiveFrom: day }) });
-      setRes({ ok: true, text: `${t.title} ${r.version} 을 게시했습니다(시행 ${day}). 남은 오픈 차단 ${r.remainingBlockers}건.` });
+      setRes({ ok: true, text: r.scheduled
+        ? `${t.title} ${r.version} 을 시행 예정으로 게시했습니다(시행 ${day} · 그때까지 앞 판 시행 · 재동의는 ${day} 부터). 남은 오픈 차단 ${r.remainingBlockers}건.`
+        : `${t.title} ${r.version} 을 게시했습니다(시행 ${day}). 남은 오픈 차단 ${r.remainingBlockers}건.` });
       reload();
     } catch (e) {
       setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '게시하지 못했습니다.' });
     } finally { setBusy(null); }
   }
 
+  async function flipEarly() {
+    const to = early ? 'off' : 'on';
+    if (!window.confirm(to === 'on'
+      ? '재동의를 「게시 즉시」로 바꿀까요?\n\n시행일 전이라도 새 판을 게시하는 순간 회원에게 재동의 화면이 뜹니다. 이용약관 제14조(시행일부터 적용)와 어긋날 수 있어 법무 판단 뒤에만 바꾸십시오.'
+      : '재동의를 「시행일부터」(기본 · 이용약관 제14조)로 되돌릴까요?')) return;
+    setBusy('early'); setRes(null);
+    try {
+      await api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'terms.reconsent_before_effective', value: to }) });
+      setRes({ ok: true, text: `재동의 시점을 「${to === 'on' ? '게시 즉시' : '시행일부터'}」로 바꿨습니다.` });
+      st.reload(); reload();
+    } catch (e) {
+      setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '바꾸지 못했습니다.' });
+    } finally { setBusy(null); }
+  }
+
+  /** v10.161 — 시행 예정 판 게시 취소(시행일 전 · 동의 기록 없을 때 · 서버가 다시 검사) */
+  async function unschedule(t: Term) {
+    if (!window.confirm(`「${t.title}」 ${t.version} 의 시행 예정(${t.effectiveFrom ? ymdKst(t.effectiveFrom) : ''})을 취소할까요?\n\n`
+      + '법무 검토 판으로 돌아가고, 본문의 시행일은 〔시행일〕로 되돌립니다. 지금 시행 중인 판은 그대로입니다.')) return;
+    const key = `${t.code}:${t.version}`;
+    setBusy(key); setRes(null);
+    try {
+      await api(`/admin/terms/${t.code}/unschedule`, { method: 'PATCH', body: JSON.stringify({ version: t.version }) });
+      setRes({ ok: true, text: `${t.title} ${t.version} 의 시행 예정을 취소했습니다(법무 검토 판으로).` });
+      reload();
+    } catch (e) {
+      setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '취소하지 못했습니다.' });
+    } finally { setBusy(null); }
+  }
+
   if (error) return <div data-terms-panel><h2 className="ad-s2">약관</h2><ErrorView error={error} /></div>;
   if (!data) return null;
-  const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);   // 한국 날짜 — 과거는 서버가 거절
+  const today = todayKst();   // 한국 날짜 — 과거는 서버가 거절
   return (
     <div data-terms-panel style={{ marginTop: 16 }}>
       <h2 className="ad-s2">약관 <small className="dim">법무 확인을 마친 글만 게시 — 게시하면 가입 · 바닥줄에 나가고 오픈 차단(약관)이 줄어듭니다</small></h2>
@@ -109,6 +159,12 @@ export function TermsPanel() {
         <label>시행일 <input type="date" min={today} value={day} onChange={(e) => setDay(e.target.value)} aria-label="시행일" data-terms-date /></label>
         <span className="muted">오늘 이후 · 오픈일에 맞추는 것을 권함(오픈 체크리스트 › 오픈일)</span>
       </div>
+      {st.data && (
+        <p className={early ? 'warn-text' : 'muted'} data-terms-reconsent={early ? 'early' : 'effective'}>
+          새 판 재동의: <b>{early ? '게시 즉시(시행일 전에도)' : '시행일부터 — 그전에는 사용자 웹에 「바뀔 약관」 알림(이용약관 제14조)'}</b>{' '}
+          <button className="btn-sm ghost" disabled={busy === 'early'} onClick={() => void flipEarly()} data-terms-reconsent-flip>{early ? '시행일부터로 되돌리기' : '게시 즉시로 바꾸기(법무 판단 뒤)'}</button>
+        </p>
+      )}
       {res && <p className={res.ok ? 'form-ok' : 'warn-text'} role="status" data-terms-result={res.ok ? 'ok' : 'fail'}>{res.text}</p>}
       <div className="ad-tw">
         <table className="tbl">
@@ -119,10 +175,10 @@ export function TermsPanel() {
               const h = holes(t.body);
               const can = (t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && h.length === 0 && !!t.body.trim();
               return [
-                <tr key={key} data-term-row={key} data-status={t.status} data-holes={h.length}>
+                <tr key={key} data-term-row={key} data-status={t.status} data-holes={h.length} data-scheduled={t.scheduled ? 'y' : undefined}>
                   <td><b>{t.title}</b><span className="ad-ls mono">{t.code}{t.isRequired ? ' · 필수' : ''}</span></td>
                   <td>{t.version}</td>
-                  <td>{STATUS[t.status] ?? t.status}</td>
+                  <td>{t.scheduled ? <b data-term-scheduled>시행 예정</b> : (STATUS[t.status] ?? t.status)}{future(t) && !t.scheduled && <span className="ad-ls">시행일 전(첫 판)</span>}</td>
                   <td>{t.effectiveFrom && t.status !== 'DRAFT' && t.status !== 'LEGAL_REVIEW' ? ymdKst(t.effectiveFrom) : '-'}</td>
                   <td>
                     {h.length > 0 ? <span className="warn-text" data-term-holes>〔미확정〕 {h.length}곳</span> : <span className="muted">미확정 없음</span>}
@@ -135,8 +191,12 @@ export function TermsPanel() {
                     <button className="btn-sm" onClick={() => (ed?.key === key ? setEd(null) : startEdit(t, data))} data-term-edit
                             title={editable(t.status) ? '이 초안을 고쳐 저장' : '게시 · 보관된 판은 고칠 수 없어 새 판 번호로 저장'}>{ed?.key === key ? '고치기 닫기' : '고치기'}</button>
                     {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (
-                      <button className="btn-ok btn-sm" disabled={!can || !day || busy === key} onClick={() => void publish(t)} data-term-publish
+                      <button className="btn-ok btn-sm" disabled={!can || !day || busy === key} onClick={() => void publish(t, data)} data-term-publish
                               title={h.length ? '〔미확정〕 표시를 먼저 채우십시오' : !day ? '시행일을 먼저 넣으십시오' : '게시'}>게시</button>
+                    )}
+                    {future(t) && (
+                      <button className="btn-sm" disabled={busy === key} onClick={() => void unschedule(t)} data-term-unschedule
+                              title="시행일 전 · 동의 기록이 없을 때만 — 법무 검토 판으로 되돌림">예정 취소</button>
                     )}
                   </td>
                 </tr>,

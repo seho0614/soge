@@ -143,7 +143,7 @@ export class AdsService {
         '맞춤형 광고에 동의해야 등록됩니다. 동의하지 않아도 서비스는 그대로 이용할 수 있습니다.');
     }
     const { segment, scores } = await this.score(answers);
-    const [pub] = await this.db.query(`SELECT 1 FROM terms WHERE code = 'ADPERSONAL' AND status = 'PUBLISHED'`);
+    const [pub] = await this.db.query(`SELECT 1 FROM v_terms_current WHERE code = 'ADPERSONAL'`);
     if (!pub) {
       throw new PolicyViolation('CONSENT_UNAVAILABLE',
         '맞춤형 광고 약관을 준비하고 있어 지금은 등록할 수 없습니다. 진단 결과는 저장하지 않고 보여 드립니다.');
@@ -196,7 +196,7 @@ export class AdsService {
     if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
     return this.db.transaction(async () => {
       const [had] = await this.db.query('SELECT 1 FROM member_ad_profiles WHERE account_id = $1', [this.me]);
-      const [pub] = await this.db.query(`SELECT 1 FROM terms WHERE code = 'ADPERSONAL' AND status = 'PUBLISHED'`);
+      const [pub] = await this.db.query(`SELECT 1 FROM v_terms_current WHERE code = 'ADPERSONAL'`);
       if (pub && (await this.consentOn(this.me))) await this.compliance.agree([{ code: 'ADPERSONAL', agreed: false }]);
       await this.db.query('DELETE FROM member_ad_profiles WHERE account_id = $1', [this.me]);
       return { deleted: !!had,

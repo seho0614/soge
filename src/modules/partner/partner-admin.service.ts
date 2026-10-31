@@ -80,7 +80,7 @@ export class PartnerAdminService {
                 (SELECT a.agreed_at FROM term_agreements a
                   WHERE a.account_id = $1 AND a.term_code = t.code AND a.term_version = t.version AND a.agreed
                   ORDER BY a.agreed_at DESC LIMIT 1) AS "agreedAt"
-           FROM terms t WHERE t.audience = 'PARTNER' AND t.status = 'PUBLISHED'
+           FROM v_terms_current t WHERE t.audience = 'PARTNER'   /* v10.161 (D151) — 지금 시행 중인 판 */
           ORDER BY t.display_order, t.code`, [p.accountId]),
       this.db.query<any>(
         `SELECT q.category_code AS "code", r.category_name AS "name", q.state, q.decided_at AS "decidedAt", q.created_at AS "createdAt"

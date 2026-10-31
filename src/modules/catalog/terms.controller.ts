@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiT
 import { TermsService } from './terms.service';
 import {
   OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, SetOpenDateDto, TermDetailDto,
-  TermPublishResultDto, UpsertTermDto,
+  TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -52,7 +52,8 @@ export class TermsController {
       '이 시점부터 가입 화면과 푸터에 나타나고, 푸터 링크의 available 이 true 가 됩니다. ' +
       '내용이 비었거나 시행일이 없으면 DB 가 거부합니다. ' +
       '이전 버전은 ARCHIVED 로 남습니다 — 동의 이력이 참조하므로 삭제하지 않습니다. ' +
-      'v10.156 — 〔시행일〕 말고 〔…〕 표시가 남아 있으면 거절하고, 본문의 〔시행일〕은 시행일로 채웁니다(scripts/publish-terms.sh 와 같은 규칙).',
+      'v10.156 — 〔시행일〕 말고 〔…〕 표시가 남아 있으면 거절하고, 본문의 〔시행일〕은 시행일로 채웁니다(scripts/publish-terms.sh 와 같은 규칙). ' +
+      'v10.161 (D151) — 시행일이 미래면 **시행 예정**(scheduled=true): 앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터 · 시행 예정 판은 약관마다 하나(422 TERM_SCHEDULED_EXISTS).',
   })
   @ApiParam({ name: 'code', example: 'SERVICE' })
   @ApiOkResponse({ type: TermPublishResultDto })
@@ -60,11 +61,24 @@ export class TermsController {
     status: 422, type: ErrorDto,
     description:
       'TERM_BODY_EMPTY 내용 없음 · TERM_EFFECTIVE_DATE_REQUIRED 시행일 없음 · ' +
-      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판',
+      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판 · TERM_SCHEDULED_EXISTS 시행 예정 판이 이미 있음 · TERM_PUBLISHED 이미 게시된 판(v10.161)',
   })
   @Audit('TERM_PUBLISH', 'TERM')
   publish(@Param('code') code: string, @Body() dto: PublishTermDto) {
     return this.terms.publish(code, dto);
+  }
+
+  @Patch('terms/:code/unschedule')
+  @ApiOperation({
+    summary: '시행 예정 판 게시 취소 (v10.161)',
+    description: '시행일 전이고 그 판에 받은 동의가 없을 때만. 법무 검토로 되돌리고(시행일 없음) 본문의 시행일 날짜는 〔시행일〕로 되돌립니다. 앞 판은 그대로 시행 중.',
+  })
+  @ApiParam({ name: 'code', example: 'SERVICE' })
+  @ApiOkResponse({ type: TermPublishResultDto })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TERM_NOT_SCHEDULED 시행 예정 판이 아님 · TERM_HAS_CONSENT 이미 동의 기록이 있음' })
+  @Audit('TERM_UNSCHEDULE', 'TERM')
+  unschedule(@Param('code') code: string, @Body() dto: UnscheduleTermDto) {
+    return this.terms.unschedule(code, dto.version);
   }
 
   @Get('open-blockers')

@@ -222,7 +222,7 @@ export class AdminV31Service {
               (SELECT value FROM site_settings WHERE key = 'footer.biz_reg_no') AS biz_no,
               (SELECT value FROM site_settings WHERE key = 'footer.mail_order_no') AS mail_no,
               (SELECT count(*) FROM terms WHERE status = 'DRAFT') AS terms_draft,
-              (SELECT count(*) FROM terms WHERE status = 'PUBLISHED' AND (gwan_code IS NULL OR gwan_code = $1)) AS terms_pub,
+              (SELECT count(*) FROM v_terms_current WHERE (gwan_code IS NULL OR gwan_code = $1)) AS terms_pub,   /* v10.161 (D151) — 약관마다 하나 */
               (SELECT to_char(max(effective_from) FILTER (WHERE effective_from <> 'infinity'), 'YYYY-MM-DD') FROM terms WHERE status = 'PUBLISHED') AS terms_from,
               (SELECT count(DISTINCT r.account_id) FROM account_roles r JOIN accounts a ON a.id = r.account_id
                 WHERE r.role IN ('REVIEWER') AND a.status = 'ACTIVE') AS reviewers`, [code]);

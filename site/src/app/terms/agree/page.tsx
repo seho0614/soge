@@ -5,6 +5,7 @@ import { apiGetPersonal } from '@/lib/api';
 import { AgreeForm } from './AgreeForm';
 import { OptionalConsents } from './OptionalConsents';
 import { NoticeTerms } from '@/components/NoticeTerms';
+import { UpcomingTerms } from '@/components/UpcomingTerms';
 import '@/styles/proto-w1.css';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
@@ -63,6 +64,8 @@ export default async function AgreePage({ searchParams }: Props) {
         </p>
       </div>
 
+      {/* v10.161 (D151) — 시행 예정 약관(시행일부터 다시 동의) */}
+      <UpcomingTerms />
       {pending.length > 0 && (
         <div className="notice notice-act" data-reconsent>
           <div>

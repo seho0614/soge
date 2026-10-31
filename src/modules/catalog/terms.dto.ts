@@ -21,6 +21,8 @@ export class TermDetailDto {
   effectiveFrom!: string | null;
   @ApiPropertyOptional({ nullable: true, description: '이 판에서 바뀐 점(재동의 화면) — v10.159' })
   changeNote?: string | null;
+  @ApiPropertyOptional({ description: '시행 예정 — 게시됐지만 시행일 전이고 앞 판이 아직 시행 중(v10.161 · D151)' })
+  scheduled?: boolean;
 }
 
 /** 법무 회신 반영. 초안 저장과 발행을 나눕니다. */
@@ -52,10 +54,18 @@ export class PublishTermDto {
   @IsDateString() effectiveFrom!: string;
 }
 
+/** v10.161 (D151) — 시행 예정 판 게시 취소 */
+export class UnscheduleTermDto {
+  @ApiProperty({ example: '1.1' })
+  @IsString() version!: string;
+}
+
 export class TermPublishResultDto {
   @ApiProperty() code!: string;
   @ApiProperty() version!: string;
   @ApiProperty({ enum: TERM_STATUS }) status!: string;
+  @ApiPropertyOptional({ description: '시행 예정으로 게시됨 — 앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터(v10.161)' }) scheduled?: boolean;
+  @ApiPropertyOptional({ description: '이번에 보관으로 바뀐 앞 판 수(시행일이 지난 경우 · v10.161)' }) archived?: number;
   @ApiProperty({
     example: 12,
     description: '발행 후 남은 오픈 차단 항목 수. 0 이 되면 이 관문은 통과입니다',

@@ -40,6 +40,7 @@ export const TABS = [
   ['checklist', '오픈 체크리스트'],
   ['policy', '정책'],
   ['siteinfo', '법정 고지'],
+  ['terms', '약관'],   /* v10.161 — 법정 고지 맨 아래 「약관」 구역을 메뉴 하나로도(같은 화면 부품 · SB-ADM-SIT-070) */
   ['i18n', '번역'],   /* v10.93 다국어 1단계(D115 · docs/150) */
   ['integrations', '외부 연동'],
   ['mainops', '메인 운영'],
@@ -78,7 +79,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'codes'] },
-  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'i18n', 'hlt-products'] },
+  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'i18n', 'hlt-products'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
   { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'report-queue', 'ai-ops', 'gov-audit'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
@@ -142,6 +143,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   hub:           { title: '통합 메인 관리', sub: '통합 메인은 관이 아닙니다 — 관으로 보내는 허브입니다.', screen: 'SB-ADM-SIT-050' },
   checklist:     { title: '오픈 체크리스트', sub: '하나라도 미충족이면 오픈 버튼이 열리지 않습니다. 무엇이 막고 있는지 여기서 봅니다.', screen: 'SB-ADM-SIT-040' },
   siteinfo:      { title: '사이트 기본 정보 · 법정 고지', sub: '푸터 법정 고지의 원본입니다.', screen: 'SB-ADM-SIT-070' },
+  terms:         { title: '약관', sub: '법무가 확인한 글을 고치고 시행일을 정해 게시합니다. 시행일 전에는 앞 판이 그대로 시행되고, 재동의는 시행일부터 받습니다.', screen: 'SB-ADM-SIT-070' },
   i18n:          { title: '번역', sub: '다국어 — 번역을 넣고 승인합니다. 승인한 번역만, 다국어를 켠 뒤 손님 화면에 나갑니다.', screen: 'SB-ADM-TRN-010' },
   'hlt-products':{ title: '소개몰 상품', sub: '상품 · 옵션(묶음 개수) · 재고 · 그림 · 고시를 넣고 고칩니다.', screen: 'SB-ADM-HPR-010' },
   ads:           { title: '광고 관리', sub: '메인 광고 자리에 어떤 소재를 누구에게 내보낼지 정합니다. 소재 · 슬롯 · 세그먼트 세 가지가 전부입니다.', screen: 'SB-ADM-ADS-010' },

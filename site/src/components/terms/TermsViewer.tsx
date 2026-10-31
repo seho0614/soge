@@ -34,7 +34,7 @@ export function termState(t: TermIndex, tr: PolicyT, f: Fmt): string {
  *   배치는 시안처럼 칩 아래 **한 카드**(약관 이름 · 판 · 시행일 → 조 목록 → 본문). 전: 왼쪽 조 목차 칸 + 오른쪽 본문 카드 두 칸.
  *   본문 · 판 · 시행일 · 조 목록 이동(개발 기능)은 그대로 둡니다. 폭도 시안 wrap(1240)으로.
  */
-export function TermsViewer({ list, doc, code, index = false }: { list: TermIndex[]; doc: TermDoc | null; code: string; index?: boolean }) {
+export function TermsViewer({ list, doc, code, index = false, top }: { list: TermIndex[]; doc: TermDoc | null; code: string; index?: boolean; /** v10.161 — 시행 예정 약관 알림 */ top?: React.ReactNode }) {
   const tr = useTranslations('policy');
   const f = useFmt();
   const terms = sortTerms(list);
@@ -43,6 +43,7 @@ export function TermsViewer({ list, doc, code, index = false }: { list: TermInde
   return (
     <div className="w1 w1-wrap" data-screen={index ? 'SB-HOM-ETC-020' : 'SB-HOM-ETC-021'}>
       <BackBar href="/guide" label={tr('viewer.back')} wrap={false} />
+      {top}
       <div className="w1-aih" style={{ marginTop: 10 }}>
         <h1>{index ? tr('viewer.titleIndex') : tr('viewer.titleDoc')}</h1>
         <p>{index ? tr('viewer.leadIndex') : ''}{tr('viewer.lead')}</p>

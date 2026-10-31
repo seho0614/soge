@@ -19,6 +19,7 @@ import { Settlements } from './app/admin/Settlements';
 import { Billing } from './app/admin/Billing';
 import { OpenChecklist } from './app/admin/OpenChecklist';
 import { SiteInfo } from './app/admin/SiteInfo';
+import { TermsPanel } from './app/admin/TermsPanel';
 import { Partners } from './app/admin/Partners';
 import { PartnerAxes } from './app/admin/PartnerAxes';
 import { DirectoryAdmin } from './app/admin/DirectoryAdmin';
@@ -67,7 +68,7 @@ import { siteUrl } from './lib/siteUrl';
  * 'mainops' · 'integrations' 는 레지스트리가 ADMIN · SUPER 이지만 서버가 SUPER 만 받아 그대로 둡니다. */
 /* v10.31 (10/10 결함) — 「자동검수 규칙」(REV-030) · 「메인 운영」(MAIN-010)은 matrix 대로 ADMIN|SUPER.
  *   서버도 같이 열었습니다(정책 읽기 · 자동검수 값 · 금칙어 · 배너 · 공지). 메인 운영 안의 관 노출 · 화면 구성 · 콘텐츠(MAIN-020~040)는 SUPER 만(MainOps.tsx). */
-const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ'];
+const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms'];   /* v10.161 terms — 약관 API 는 SUPER 만 */
 const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   home: ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
   /* 2026-10-01 결정 Q1 — 지급 담당의 작업 화면. 확정은 운영, 지급은 지급 담당 */
@@ -247,6 +248,7 @@ function Console() {
         {tab === 'checklist' && <OpenChecklist onGo={go} />}
         {tab === 'policy' && <Policies />}
         {tab === 'siteinfo' && <SiteInfo onGo={visible('checklist') ? go : undefined} />}
+        {tab === 'terms' && <TermsPanel />}
         {tab === 'integrations' && <Integrations />}
         {tab === 'mainops' && <MainOps onGo={go} />}
       {tab === 'gwans' && <Gwans onGo={go} />}

@@ -146,5 +146,14 @@
     "register": "Register a startup plan",
     "toPolicy": "Go to policy details",
     "toPolicySub": "Support limit · application deadline"
+  },
+  "upcoming": {
+    "title": "Our terms are changing",
+    "body": "The terms below will change from their effective date. Until then the current terms still apply, and we will ask you to agree to required terms again from the effective date.",
+    "row": "{title} {version} — effective {date}",
+    "now": "now {version}",
+    "change": "What changes",
+    "bar": "Upcoming terms changes:",
+    "more": "Details"
   }
 }

@@ -59,7 +59,9 @@ export class PartnerCompanyService {
          FROM terms t
          LEFT JOIN LATERAL (SELECT agreed, agreed_at, term_version FROM term_agreements x
                              WHERE x.account_id = $1 AND x.term_code = t.code ORDER BY agreed_at DESC NULLS LAST LIMIT 1) a ON true
-        WHERE (t.status = 'PUBLISHED' AND NOT t.is_notice) OR (t.code = 'PARTNER' AND t.status <> 'ARCHIVED')
+        /* v10.161 (D151) — 게시 판은 지금 시행 중인 판만(시행 예정 판과 앞 판이 함께 게시돼 있는 동안 두 줄이 되지 않게) */
+        WHERE (t.status = 'PUBLISHED' AND NOT t.is_notice AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = t.code AND c.version = t.version))
+           OR (t.code = 'PARTNER' AND t.status IN ('DRAFT','LEGAL_REVIEW'))
         ORDER BY t.display_order, t.code`, [p.ownerId]);
     const [brand] = await this.db.query<any>(
       `SELECT brand_name AS "brandName", logo_file_id AS "logoFileId", intro, updated_at AS "updatedAt"

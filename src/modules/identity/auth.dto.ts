@@ -152,3 +152,15 @@ export class TermDto {
   @ApiPropertyOptional({ description: 'v10.28 (G-218) — 알림(동의를 받지 않는 안내 · 예: 개인정보 처리 위탁)' }) isNotice?: boolean;
   @ApiPropertyOptional({ description: 'v10.103 — 참고용 번역이 얹혔는지(효력은 한국어 원문 · 한국어 화면에는 없음)' }) translated?: boolean;
 }
+
+/** v10.161 (D151) — 시행 예정 약관(바뀔 글 · 시행일 · 바뀐 점) */
+export class UpcomingTermDto {
+  @ApiProperty({ example: 'SERVICE' }) code!: string;
+  @ApiProperty({ example: '1.1' }) version!: string;
+  @ApiProperty() title!: string;
+  @ApiProperty({ description: '시행 예정 판의 전문' }) body!: string;
+  @ApiProperty({ format: 'date-time' }) effectiveFrom!: string;
+  @ApiPropertyOptional({ nullable: true, description: '이 판에서 바뀐 점' }) changeNote?: string | null;
+  @ApiProperty({ example: '1.0', nullable: true, description: '지금 시행 중인 판' }) currentVersion!: string | null;
+  @ApiPropertyOptional({ description: '알림(동의를 받지 않는 안내)' }) isNotice?: boolean;
+}

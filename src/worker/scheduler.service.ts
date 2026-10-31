@@ -121,10 +121,12 @@ export class SchedulerService {
         break;
       }
 
-      /** 매시간. 급구 배지 만료 */
+      /** 매시간. 급구 배지 만료 · v10.161 (D151) 새 판이 시행된 약관의 앞 판 보관(시행 예정 판은 시행일까지 앞 판이 게시 그대로) */
       case 'expire_badges': {
         const [r] = await this.db.query<{ n: number }>(`SELECT fn_expire_badges() AS n`);
-        affected = r.n;
+        const [t] = await this.db.query<{ n: number }>(`SELECT fn_terms_archive_due() AS n`);
+        affected = r.n + t.n;
+        detail = { badges: r.n, termsArchived: t.n };
         break;
       }
 

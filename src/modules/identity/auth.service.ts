@@ -101,7 +101,8 @@ export class AuthService {
       /* v10.28 (G-218 · D042) — 알림(개인정보 처리 위탁 등)은 동의 항목이 아니라 기록하지 않고, 동의로 보내면 422 NOTICE_ONLY */
       const all = await this.db.query<{ code: string; version: string; is_required: boolean; is_notice: boolean }>(
         /* v10.31 (합침 · D090) — 가입 때는 전체 대상 약관만(파트너 이용약관은 입점한 뒤 그 회원에게 받습니다) */
-        `SELECT code, version, is_required, is_notice FROM terms WHERE status = 'PUBLISHED' AND audience = 'ALL' ORDER BY display_order`);
+        /* v10.161 (D151) — 가입 동의는 지금 시행 중인 판(시행 예정 판은 시행일부터) */
+        `SELECT code, version, is_required, is_notice FROM v_terms_current WHERE audience = 'ALL' ORDER BY display_order`);
       const notice = [...agreed].filter((c) => all.some((t) => t.code === c && t.is_notice));
       if (notice.length) {
         throw new PolicyViolation('NOTICE_ONLY',
@@ -234,6 +235,16 @@ export class AuthService {
         ORDER BY code, (status = 'PUBLISHED' AND effective_from <= now()) DESC, (status = 'PUBLISHED') DESC, effective_from DESC`);
     /* v10.103 (3-1) — 제목만 참고용 번역 */
     return this.i18n.overlay(rows, 'TERM', (r) => `${r.code}@${r.version}`, { title: 'title' }, 'translated');
+  }
+
+  /** v10.161 (D151 · docs/246) — 시행 예정 약관(전체 회원 대상 · 알림 포함). 사용자 웹 알림 띠 · 약관 화면 */
+  termsUpcoming() {
+    return this.db.query(
+      `SELECT u.code, u.version, u.title, coalesce(u.body, '') AS body, u.effective_from AS "effectiveFrom", u.change_note AS "changeNote",
+              c.version AS "currentVersion", u.is_notice AS "isNotice"
+         FROM v_terms_upcoming u LEFT JOIN v_terms_current c ON c.code = u.code
+        WHERE u.audience = 'ALL'
+        ORDER BY u.effective_from, u.display_order`);
   }
 
   async terms() {

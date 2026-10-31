@@ -596,7 +596,8 @@
     "GET /terms/required",
     "GET /ui-messages",
     "POST /terms/agree",
-    "GET /terms/index"
+    "GET /terms/index",
+    "GET /terms/upcoming"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "약관 5종은 B-12 법무 대기로 미발행. v_footer_links.available=false 로 점선 표시"
@@ -1517,7 +1518,8 @@
     "PATCH /admin/site-settings",
     "GET /admin/terms",
     "PUT /admin/terms/{code}",
-    "PATCH /admin/terms/{code}/publish"
+    "PATCH /admin/terms/{code}/publish",
+    "PATCH /admin/terms/{code}/unschedule"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "법무 회신 반영 지점. 초안 저장과 발행을 나눕니다"
@@ -4548,7 +4550,8 @@
    "gates": [],
    "apis": [
     "GET /terms/required",
-    "POST /terms/agree"
+    "POST /terms/agree",
+    "GET /terms/upcoming"
    ],
    "nav": "SB-HOM-ETC-020",
    "new": true

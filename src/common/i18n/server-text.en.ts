@@ -1436,8 +1436,13 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "{0}분 동안 한 번만 쓸 수 있습니다. 본인 확인을 마친 회원에게만 직접 전달하고, 이 화면을 닫으면 다시 볼 수 없습니다.": "Can be used once within {0} minutes. Give it only to the member whose identity you have confirmed — it cannot be shown again after this screen is closed.",
   "날짜는 YYYY-MM-DD 형식입니다.": "Dates must be in YYYY-MM-DD format.",
   "본인 확인 방법과 까닭을 5자 이상 적어 주십시오.": "Enter how you verified the member and why (at least 5 characters).",
+  "시행 예정인 게시 판만 취소할 수 있습니다 — 이미 시행된 판은 새 판으로 바꾸십시오.": "Only a published version that has not yet taken effect can be cancelled — replace a version already in effect with a new version.",
+  "시행 예정인 판({0})이 이미 있습니다 — 먼저 그 판의 「예정 취소」를 하십시오.": "A version scheduled to take effect ({0}) already exists — first use “Cancel schedule” on that version.",
   "쓸 수 있는 회원이 아닙니다(없음 · 정지 · 탈퇴).": "This member account is not usable (not found, suspended or withdrawn).",
   "없는 날짜입니다.": "That date does not exist.",
   "오픈일은 오늘 이후여야 합니다.": "The launch date must be today or later.",
   "운영진 계정에는 재설정 링크를 만들지 않습니다. 본인이 비밀번호 찾기를 쓰십시오.": "Reset links are not created for staff accounts. Staff should use Forgot password themselves.",
+  "이미 게시된 판입니다 — 시행일을 바꾸려면 「예정 취소」 뒤 다시 게시하십시오.": "This version is already published — to change the effective date, use “Cancel schedule” and publish again.",
+  "약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super administrator (SUPER) can change terms settings.",
+  "이 판에 이미 동의한 기록이 {0}건 있어 취소할 수 없습니다 — 새 판으로 바꾸십시오.": "This version already has {0} consent records, so it cannot be cancelled — replace it with a new version.",
 };

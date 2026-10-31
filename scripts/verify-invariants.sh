@@ -454,6 +454,7 @@ else echo "  FAIL TERM  초안 상태 $v"; fail=$((fail+1)); fi
 # ★ 필수 약관이 모두 발행된 뒤에는 PRIVACY 하나로 차단이 줄지 않습니다.
 #   그래서 차단 항목이 남아 있는 다른 것(설정·연동)을 기준으로 삼지 않고,
 #   **이 판본이 실제로 PUBLISHED 가 됐는지**를 봅니다.
+p0=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='1.0';")
 $PSQL -c "UPDATE terms SET status='PUBLISHED', effective_from='$FUT', blocked_by=NULL WHERE code='PRIVACY' AND version='9.9';" >/dev/null 2>&1
 b1=$($PSQL -t -A -c "SELECT count(*) FROM v_open_blockers;")
 v9=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='9.9';" 2>/dev/null | tr -d '[:space:]')
@@ -461,9 +462,12 @@ if [ "$b1" -lt "$b0" ] || [ "$v9" = "PUBLISHED" ]; then
   echo "  ok   TERM  발행 반영 (차단 $b0 → $b1)"; pass=$((pass+1));
 else echo "  FAIL TERM  발행이 반영되지 않음 ($b0 → $b1, 상태 $v9)"; fail=$((fail+1)); fi
 
+# v10.161 (D151) — 시행 예정(시행일 7일 뒤)이면 게시돼 있던 1.0 은 시행일까지 게시 그대로 → 9.9 시행일이 지나면 보관(삭제 아님)
+va=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='1.0';")
+$PSQL -c "UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code='PRIVACY' AND version='9.9'; SELECT fn_terms_archive_due();" >/dev/null 2>&1
 v=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='1.0';")
-if [ "$v" = "ARCHIVED" ]; then echo "  ok   TERM  이전 버전 자동 보관 (삭제 아님)"; pass=$((pass+1));
-else echo "  FAIL TERM  이전 버전 $v"; fail=$((fail+1)); fi
+if [ "$v" = "ARCHIVED" ] && { [ "$p0" != "PUBLISHED" ] || [ "$va" = "PUBLISHED" ]; }; then echo "  ok   TERM  이전 버전 자동 보관 (시행일이 지난 뒤 · 삭제 아님 · 게시 판은 시행 예정 동안 그대로)"; pass=$((pass+1));
+else echo "  FAIL TERM  이전 버전 $p0 → 예정 중 $va → 시행 뒤 $v"; fail=$((fail+1)); fi
 
 v=$($PSQL -t -A -c "SELECT available FROM v_footer_links WHERE label='개인정보처리방침';")
 if [ "$v" = "t" ]; then echo "  ok   FOOT  발행하면 푸터 링크 활성화"; pass=$((pass+1));

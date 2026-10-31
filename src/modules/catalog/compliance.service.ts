@@ -92,9 +92,10 @@ export class ComplianceService {
               /* v10.28 (재동의) — 마지막으로 동의한 판 · 이 판에서 바뀐 점(D041 change_note) */
               CASE WHEN c.agreed THEN c.term_version END AS "agreedVersion",
               t.change_note AS "changeNote"
-         FROM terms t
+         /* v10.161 (D151 · docs/246) — 지금 시행 중인 판. 시행 예정 판은 시행일부터 재동의(그전에는 GET /terms/upcoming 알림) */
+         FROM v_terms_current t
          LEFT JOIN v_term_consent_current c ON c.account_id = $1 AND c.term_code = t.code
-        WHERE t.status = 'PUBLISHED'
+        WHERE true
           /* v10.28 (G-218 · D042) — 알림(개인정보 처리 위탁 등)은 동의를 받는 항목이 아니라 여기 나오지 않습니다(약관 목록 · 전문에는 「알림」으로) */
           AND NOT t.is_notice
           /* v10.31 (합침 · D090) — 대상이 정해진 약관(파트너 이용약관 audience=PARTNER)은 그 회원에게만. 로그인 전(가입 화면)은 전체 대상만 */
@@ -119,8 +120,8 @@ export class ComplianceService {
       const saved: string[] = [], unchanged: string[] = [];
       for (const it of items) {
         const [t] = await this.db.query<any>(
-          `SELECT version, is_required, is_notice, title, fn_term_applies($2::uuid, audience) AS applies FROM terms
-            WHERE code = $1 AND status = 'PUBLISHED'`, [it.code, me]);
+          `SELECT version, is_required, is_notice, title, fn_term_applies($2::uuid, audience) AS applies FROM v_terms_current
+            WHERE code = $1`, [it.code, me]);
         if (!t) {
           throw new PolicyViolation('NOT_PUBLISHED',
             `${it.code} 는 아직 발행되지 않았습니다. 초안에는 동의할 수 없습니다.`);

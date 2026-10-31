@@ -5,7 +5,7 @@ import { PrincipalService } from './principal.service';
 import { BusinessService } from './business.service';
 import {
   SignupBizCheckDto, BizCheckResultDto, BusinessResultDto, CreateBusinessDto, LoginDto, MeSummaryDto,
-  RefreshDto, SignupDto, TermDto, TokenDto,
+  RefreshDto, SignupDto, TermDto, TokenDto, UpcomingTermDto,
 } from './auth.dto';
 import { MeService } from '../me/me.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -100,6 +100,15 @@ export class AuthController {
   @Get('terms/index')
   @ApiOperation({ summary: '약관 전체 목록', description: '유효 · 시행 예정 · 폐기 모두(상태 · 시행일). 본문 없음 — 전문은 GET /terms/doc/{code}.' })
   termsIndex() { return this.auth.termsIndex(); }
+
+  /* v10.161 (D151 · docs/246) — 시행 예정 약관(이용약관 제14조 고지) */
+  @Get('terms/upcoming')
+  @ApiOperation({
+    summary: '시행 예정 약관',
+    description: '게시됐지만 시행일 전인 새 판(앞 판이 아직 시행 중) — 바뀔 글 · 시행일 · 바뀐 점. 전체 회원 대상만. 재동의는 시행일부터 GET /terms/required 에 나옵니다.',
+  })
+  @ApiOkResponse({ type: UpcomingTermDto, isArray: true })
+  termsUpcoming() { return this.auth.termsUpcoming(); }
 
   /* 'terms/:code' 로 두면 terms/required · terms/agreements 를 가립니다(등록 순서에 따라) — 한 단계 더 둡니다 */
   @Get('terms/doc/:code')

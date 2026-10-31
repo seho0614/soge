@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { apiGet } from '@/lib/api';
 import { TermsViewer, type TermDoc, type TermIndex } from '@/components/terms/TermsViewer';
+import { UpcomingTerms } from '@/components/UpcomingTerms';
 import '@/styles/proto-w1.css';
 import { getTranslations } from 'next-intl/server';
 
@@ -15,5 +16,6 @@ export default async function TermsIndex() {
     apiGet<TermDoc>('/terms/doc/SERVICE', 300).catch(() => null),
   ]);
   // v10.32 (추가) — 시안 terms 제목 「약관 · 법정 고지」(index)
-  return <TermsViewer list={list} doc={doc} code="SERVICE" index />;
+  /* v10.161 (D151) — 시행 예정 약관 알림(바닥줄의 「자세히」가 여기로) */
+  return <TermsViewer list={list} doc={doc} code="SERVICE" index top={<UpcomingTerms />} />;
 }

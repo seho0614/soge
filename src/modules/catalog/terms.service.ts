@@ -15,13 +15,17 @@ export class TermsService {
   constructor(private readonly db: DatabaseService) {}
 
   /** 관리자용. 미발행 약관도 보입니다. */
-  listAll() {
+  async listAll() {
+    /* v10.161 (D151) — 새 판이 시행된 약관의 앞 판을 먼저 보관으로(매시간 작업이 늦어도 화면은 지금 상태) */
+    await this.db.query(`SELECT fn_terms_archive_due()`);
     return this.db.query(
-      `SELECT code, version, title, coalesce(body,'') AS body, status,
-              is_required AS "isRequired", blocked_by AS "blockedBy", change_note AS "changeNote",
-              CASE WHEN effective_from = 'infinity' THEN NULL
-                   ELSE effective_from END AS "effectiveFrom"
-         FROM terms ORDER BY display_order, code, effective_from DESC`);
+      `SELECT t.code, t.version, t.title, coalesce(t.body,'') AS body, t.status,
+              t.is_required AS "isRequired", t.blocked_by AS "blockedBy", t.change_note AS "changeNote",
+              CASE WHEN t.effective_from = 'infinity' THEN NULL
+                   ELSE t.effective_from END AS "effectiveFrom",
+              /* v10.161 — 시행 예정(게시됐지만 시행 전 · 앞 판이 아직 시행 중) */
+              EXISTS (SELECT 1 FROM v_terms_upcoming u WHERE u.code = t.code AND u.version = t.version) AS scheduled
+         FROM terms t ORDER BY t.display_order, t.code, t.effective_from DESC`);
   }
 
   /**
@@ -78,12 +82,18 @@ export class TermsService {
       `SELECT body, status FROM terms WHERE code = $1 AND version = $2`, [code, dto.version]);
     if (!cur) throw new NotFound('해당 버전의 약관이 없습니다.');
     if (cur.status === 'ARCHIVED') throw new PolicyViolation('TERM_ARCHIVED', '보관된 판은 게시할 수 없습니다 — 새 판을 만들어 게시하십시오.');
+    /* v10.161 — 게시된 판을 다시 게시하면 시행일이 덮임(동의 기록의 기준 날짜가 바뀜) → 시행 예정이면 「예정 취소」 뒤 다시 */
+    if (cur.status === 'PUBLISHED') throw new PolicyViolation('TERM_PUBLISHED', '이미 게시된 판입니다 — 시행일을 바꾸려면 「예정 취소」 뒤 다시 게시하십시오.');
     const holes = TermsService.holes(cur.body);
     if (holes.length) {
       throw new PolicyViolation('TERM_HOLES',
         `미확정 표시 ${holes.length}곳이 남아 있습니다(${holes.slice(0, 3).join(' · ')}${holes.length > 3 ? ' …' : ''}) — 법무 확인 뒤 채운 다음 게시하십시오.`);
     }
     const day = String(dto.effectiveFrom).slice(0, 10);
+    /* v10.161 (D151 · docs/246) — 시행 예정 판은 약관마다 하나. 둘이면 어느 글이 언제 시행되는지 회원이 알 수 없음 */
+    const [dup] = await this.db.query<{ version: string }>(
+      `SELECT version FROM v_terms_upcoming WHERE code = $1 AND version <> $2`, [code, dto.version]);
+    if (dup) throw new PolicyViolation('TERM_SCHEDULED_EXISTS', `시행 예정인 판(${dup.version})이 이미 있습니다 — 먼저 그 판의 「예정 취소」를 하십시오.`);
 
     return this.db.transaction(async () => {
       const [row] = await this.db.query<{ code: string; version: string; status: string }>(
@@ -94,15 +104,35 @@ export class TermsService {
         [code, dto.version, dto.effectiveFrom, day]);
       if (!row) throw new NotFound('해당 버전의 약관이 없습니다.');
 
-      // 이전 버전은 보관 처리. 삭제하지 않습니다 — 동의 이력이 참조합니다.
-      await this.db.query(
-        `UPDATE terms SET status = 'ARCHIVED'
-          WHERE code = $1 AND version <> $2 AND status = 'PUBLISHED'`,
-        [code, dto.version]);
+      /* 앞 판은 보관 처리 — 삭제하지 않습니다(동의 이력이 참조). v10.161 (D151): 시행일이 지난 판만 지금, 시행 예정이면 앞 판은
+       *   시행일까지 게시 그대로(그동안 회원은 앞 판 기준 · 재동의는 시행일부터) — 시행일이 되면 매시간 작업이 보관으로 바꿈 */
+      const [a] = await this.db.query<{ n: number }>(`SELECT fn_terms_archive_due() AS n`);
+      const [sc] = await this.db.query<{ scheduled: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM v_terms_upcoming WHERE code = $1 AND version = $2) AS scheduled`, [code, dto.version]);
 
       const [n] = await this.db.query<{ c: string }>(
         `SELECT count(*) AS c FROM v_open_blockers`);
-      return { ...row, remainingBlockers: Number(n.c) };
+      return { ...row, scheduled: sc.scheduled, archived: a.n, remainingBlockers: Number(n.c) };
+    });
+  }
+
+  /**
+   * v10.161 (D151 · docs/246) — 시행 예정 판 게시 취소(SUPER · 감사 TERM_UNSCHEDULE).
+   *   시행일 전이고 그 판에 받은 동의가 없을 때만. 법무 검토로 되돌리고(시행일 없음) 본문의 시행일 날짜는 〔시행일〕로 되돌림 — 다시 게시할 때 새 날짜로 채움
+   */
+  async unschedule(code: string, version: string) {
+    const [t] = await this.db.query<{ status: string; future: boolean; day: string; agreed: string }>(
+      `SELECT status, effective_from > now() AS future, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
+              (SELECT count(*) FROM term_agreements a WHERE a.term_code = t.code AND a.term_version = t.version) AS agreed
+         FROM terms t WHERE code = $1 AND version = $2`, [code, version]);
+    if (!t) throw new NotFound('해당 버전의 약관이 없습니다.');
+    if (t.status !== 'PUBLISHED' || !t.future) throw new PolicyViolation('TERM_NOT_SCHEDULED', '시행 예정인 게시 판만 취소할 수 있습니다 — 이미 시행된 판은 새 판으로 바꾸십시오.');
+    if (Number(t.agreed) > 0) throw new PolicyViolation('TERM_HAS_CONSENT', `이 판에 이미 동의한 기록이 ${t.agreed}건 있어 취소할 수 없습니다 — 새 판으로 바꾸십시오.`);
+    return this.db.transaction(async () => {
+      /* 상태 먼저(게시 판은 글을 못 고침 · D150) → 법무 검토가 된 뒤 글의 날짜를 되돌림 */
+      await this.db.query(`UPDATE terms SET status = 'LEGAL_REVIEW', effective_from = 'infinity' WHERE code = $1 AND version = $2`, [code, version]);
+      await this.db.query(`UPDATE terms SET body = replace(body, $3, '〔시행일〕') WHERE code = $1 AND version = $2`, [code, version, t.day]);
+      return { code, version, status: 'LEGAL_REVIEW' };
     });
   }
 

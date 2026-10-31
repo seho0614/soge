@@ -5,6 +5,7 @@ import { apiGet } from '@/lib/api';
 import type { FooterLink, Gwan } from '@/lib/types';
 import { GLOBAL_NS, pick } from '@/i18n/messages';
 import { Footer } from '@/components/Footer';
+import { UpcomingTermsBar } from '@/components/UpcomingTerms';
 import { SiteHeader } from '@/components/common/SiteHeader';
 import { B2Tone, BaseFooter, BaseHeader, MainWrap, OnlySkin } from '@/components/Chrome';
 import { B2Footer, B2Header } from '@/components/b2/Frame';
@@ -63,7 +64,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <OnlySkin skin="b2"><B2Tone><B2Header gwans={gwans} /></B2Tone></OnlySkin>
 
         <MainWrap>{children}</MainWrap>
-        <BaseFooter><Footer links={links} settings={settings} /></BaseFooter>
+        {/* v10.161 (D151) — 시행 예정 약관이 있으면 바닥줄 위 한 줄(없으면 그리지 않음) */}
+        <BaseFooter><UpcomingTermsBar /><Footer links={links} settings={settings} /></BaseFooter>
         <OnlySkin skin="b2"><B2Footer links={links} settings={settings} year={new Date().getFullYear()} /></OnlySkin>
         {/* v10.110 (docs/171) — AI 상담 단추 · 창. 서버가 꺼짐이면 아무것도 그리지 않음 · 파트너센터 제외 */}
         <AiChat />
