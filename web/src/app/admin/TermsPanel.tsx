@@ -31,20 +31,21 @@ const verCmp = (a: string, b: string) => { const x = verNum(a), y = verNum(b); f
 /** 게시 · 보관 판을 고치면 그 약관의 가장 높은 번호 다음(1.0 · 1.1 → 1.2) */
 function nextVersion(all: Term[], code: string) {
   const top = all.filter((t) => t.code === code).map((t) => t.version).sort(verCmp).pop() ?? '1.0';
-  const n = verNum(top); if (n.length < 2) n.push(0); n[n.length - 1] += 1; return n.join('.');
+  const n = verNum(top); if (n.length < 2) n.push(0); n[n.length - 1] = (n[n.length - 1] ?? 0) + 1; return n.join('.');
 }
 /** 줄 단위 비교(LCS) — 바뀐 줄만 돌려줌 */
 function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[] {
   const x = a.split('\n'), y = b.split('\n');
   if (x.length * y.length > 4_000_000) return [{ t: '+', n: 0, s: '(글이 너무 길어 비교하지 않습니다)' }];
-  const L = Array.from({ length: x.length + 1 }, () => new Uint32Array(y.length + 1));
-  for (let i = x.length - 1; i >= 0; i--) for (let j = y.length - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const W = y.length + 1, L = new Uint32Array((x.length + 1) * W);
+  const g = (i: number, j: number) => L[i * W + j] ?? 0;
+  for (let i = x.length - 1; i >= 0; i--) for (let j = y.length - 1; j >= 0; j--) L[i * W + j] = x[i] === y[j] ? g(i + 1, j + 1) + 1 : Math.max(g(i + 1, j), g(i, j + 1));
   const out: { t: '+' | '-'; n: number; s: string }[] = [];
   let i = 0, j = 0;
   while (i < x.length || j < y.length) {
     if (i < x.length && j < y.length && x[i] === y[j]) { i++; j++; }
-    else if (j < y.length && (i >= x.length || L[i][j + 1] >= L[i + 1][j])) { out.push({ t: '+', n: j + 1, s: y[j] }); j++; }
-    else { out.push({ t: '-', n: i + 1, s: x[i] }); i++; }
+    else if (j < y.length && (i >= x.length || g(i, j + 1) >= g(i + 1, j))) { out.push({ t: '+', n: j + 1, s: y[j] ?? '' }); j++; }
+    else { out.push({ t: '-', n: i + 1, s: x[i] ?? '' }); i++; }
   }
   return out;
 }
