@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 
 const TERM_STATUS = ['DRAFT', 'LEGAL_REVIEW', 'PUBLISHED', 'ARCHIVED'] as const;
@@ -19,6 +19,8 @@ export class TermDetailDto {
   blockedBy!: string | null;
   @ApiProperty({ nullable: true, format: 'date-time', description: '미발행이면 infinity' })
   effectiveFrom!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '이 판에서 바뀐 점(재동의 화면) — v10.159' })
+  changeNote?: string | null;
 }
 
 /** 법무 회신 반영. 초안 저장과 발행을 나눕니다. */
@@ -34,6 +36,9 @@ export class UpsertTermDto {
 
   @ApiPropertyOptional({ description: '필수 동의 여부. 미지정이면 기존 값 유지' })
   @IsOptional() @StrictBoolean() isRequired?: boolean;
+
+  @ApiPropertyOptional({ maxLength: 300, description: '이 판에서 바뀐 점 — 재동의 화면 「바뀐 점」에 보임(v10.159). 비우면 그대로' })
+  @IsOptional() @IsString() @MaxLength(300) changeNote?: string;
 }
 
 export class PublishTermDto {

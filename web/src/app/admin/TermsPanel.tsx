@@ -19,7 +19,7 @@ import { ErrorView } from '../../components/ErrorView';
 
 interface Term {
   code: string; version: string; title: string; body: string; status: string;
-  isRequired: boolean; blockedBy: string | null; effectiveFrom: string | null;
+  isRequired: boolean; blockedBy: string | null; effectiveFrom: string | null; changeNote?: string | null;
 }
 
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
@@ -50,7 +50,7 @@ function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[
   return out;
 }
 
-interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean }
+interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string }
 
 export function TermsPanel() {
   const { data, error, reload } = useApi<Term[]>('/admin/terms');
@@ -63,7 +63,9 @@ export function TermsPanel() {
   function startEdit(t: Term, all: Term[]) {
     setOpen(null); setRes(null);
     setEd({ key: `${t.code}:${t.version}`, code: t.code, from: t.version, version: editable(t.status) ? t.version : nextVersion(all, t.code),
-            title: t.title, body: t.body, orig: t.body, diff: false });
+            title: t.title, body: t.body, orig: t.body, diff: false,
+            /* v10.159 — 새 판이면 바뀐 점을 새로 적음(재동의 화면 「바뀐 점」) · 초안을 고칠 때는 적어 둔 것 */
+            note: editable(t.status) ? (t.changeNote ?? '') : '', origNote: editable(t.status) ? (t.changeNote ?? '') : '' });
   }
 
   async function save(e: Edit) {
@@ -73,7 +75,7 @@ export function TermsPanel() {
     setBusy(e.key); setRes(null);
     try {
       const r = await api<{ code: string; version: string; holes: number }>(`/admin/terms/${e.code}`,
-        { method: 'PUT', body: JSON.stringify({ version: e.version, title: e.title, body: e.body }) });
+        { method: 'PUT', body: JSON.stringify({ version: e.version, title: e.title, body: e.body, ...(e.note.trim() ? { changeNote: e.note.trim() } : {}) }) });
       setRes({ ok: true, text: `${e.title} ${r.version} 을 저장했습니다(법무 검토 · 게시 전). ${r.holes ? `〔미확정〕 ${r.holes}곳 남음 — 채워야 게시할 수 있습니다.` : '〔미확정〕 없음 — 시행일을 넣고 게시할 수 있습니다.'}` });
       setEd(null); reload();
     } catch (err) {
@@ -145,7 +147,7 @@ export function TermsPanel() {
                 ),
                 ed?.key === key && (() => {
                   const eh = holes(ed.body);
-                  const changed = ed.body !== ed.orig || ed.title !== t.title;
+                  const changed = ed.body !== ed.orig || ed.title !== t.title || ed.note !== ed.origNote;
                   const d = ed.diff ? lineDiff(ed.orig, ed.body) : [];
                   const clash = ed.version !== ed.from && data.some((u) => u.code === ed.code && u.version === ed.version);
                   return (
@@ -157,6 +159,10 @@ export function TermsPanel() {
                           <span className="muted">{editable(t.status) && ed.version === ed.from ? `${ed.from} 초안을 고침` : `${ed.from} 은 그대로 두고 새 판 ${ed.version} 으로`}</span>
                         </div>
                         <textarea value={ed.body} onChange={(e) => setEd({ ...ed, body: e.target.value })} rows={18} style={{ width: '100%', fontSize: 13, fontFamily: 'inherit' }} aria-label="약관 본문" data-term-text />
+                        <label style={{ display: 'block', margin: '6px 0' }}>바뀐 점(회원 재동의 화면에 보임 · 300자)
+                          <input className="sel" style={{ width: '100%' }} maxLength={300} value={ed.note} placeholder="예: 제6조 국외 이전 — AI 상담 질문을 받는 곳 · 보관 기간을 적음"
+                                 onChange={(e) => setEd({ ...ed, note: e.target.value })} aria-label="바뀐 점" data-term-note /></label>
+                        {ed.version !== ed.from && !ed.note.trim() && <p className="warn-text" data-term-note-warn>바뀐 점을 적지 않으면 회원 재동의 화면의 「바뀐 점」이 「—」로 나옵니다.</p>}
                         <p className={eh.length ? 'warn-text' : 'muted'} data-term-edit-holes={eh.length}>
                           {eh.length ? `〔미확정〕 ${eh.length}곳 남음: ${eh.slice(0, 8).join(' · ')}${eh.length > 8 ? ' …' : ''} — 법무가 정한 글로 바꾸십시오(〔시행일〕은 게시할 때 채워짐)` : '〔미확정〕 없음'}
                         </p>
@@ -169,7 +175,7 @@ export function TermsPanel() {
                         </div>
                         {ed.diff && (
                           <div style={{ maxHeight: 320, overflow: 'auto', marginTop: 8, fontSize: 13 }} data-term-diff={d.length}>
-                            {d.length === 0 ? <p className="muted">본문은 같습니다(제목만 바뀜)</p> : d.map((x, i) => (
+                            {d.length === 0 ? <p className="muted">본문은 같습니다(제목 · 바뀐 점만 바뀜)</p> : d.map((x, i) => (
                               <div key={i} style={{ whiteSpace: 'pre-wrap', color: x.t === '+' ? 'var(--ok)' : 'var(--danger)' }} data-diff-line={x.t}>
                                 <span className="mono">{x.t} {x.n}</span> {x.s || ' '}
                               </div>

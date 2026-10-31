@@ -18,7 +18,7 @@ export class TermsService {
   listAll() {
     return this.db.query(
       `SELECT code, version, title, coalesce(body,'') AS body, status,
-              is_required AS "isRequired", blocked_by AS "blockedBy",
+              is_required AS "isRequired", blocked_by AS "blockedBy", change_note AS "changeNote",
               CASE WHEN effective_from = 'infinity' THEN NULL
                    ELSE effective_from END AS "effectiveFrom"
          FROM terms ORDER BY display_order, code, effective_from DESC`);
@@ -29,10 +29,13 @@ export class TermsService {
    * 이미 동의받은 문서를 고치면 동의 이력의 근거가 사라집니다.
    */
   async upsertDraft(code: string, dto: {
-    version: string; title: string; body: string; isRequired?: boolean;
+    version: string; title: string; body: string; isRequired?: boolean; changeNote?: string;
   }) {
-    const [base] = await this.db.query<{ is_required: boolean; display_order: number }>(
-      `SELECT is_required, display_order FROM terms WHERE code = $1 LIMIT 1`, [code]);
+    /* v10.159 (docs/243) — 새 판은 앞 판의 알림 여부(is_notice) · 대상(audience)을 이어받음.
+     *   전에는 기본값(동의 항목 · 전체 회원)으로 만들어, 파트너 이용약관 새 판을 게시하면 모든 회원에게 동의를 받고 위탁 안내가 동의 항목이 될 수 있었음 */
+    const [base] = await this.db.query<{ is_required: boolean; display_order: number; is_notice: boolean; audience: string }>(
+      `SELECT is_required, display_order, is_notice, audience FROM terms WHERE code = $1
+        ORDER BY (status = 'PUBLISHED') DESC, effective_from DESC LIMIT 1`, [code]);
     if (!base) throw new NotFound('약관 코드를 찾을 수 없습니다.');
     /* v10.157 (docs/239 · D150) — 운영 화면 「약관」 › 「고치기」가 부름.
      *   게시 · 보관된 판은 동의 기록의 근거라 같은 번호로 덮지 않음(전에는 ON CONFLICT 로 덮었음) → 새 번호로만. DB 트리거도 막음 */
@@ -47,14 +50,15 @@ export class TermsService {
 
     const [row] = await this.db.query(
       `INSERT INTO terms (code, version, title, body, is_required,
-                          effective_from, status, display_order)
-       VALUES ($1,$2,$3,$4,$5,'infinity','LEGAL_REVIEW',$6)
+                          effective_from, status, display_order, is_notice, audience, change_note)
+       VALUES ($1,$2,$3,$4,$5,'infinity','LEGAL_REVIEW',$6,$7,$8,$9)
        ON CONFLICT (code, version) DO UPDATE
          SET title = EXCLUDED.title, body = EXCLUDED.body,
-             is_required = EXCLUDED.is_required
+             is_required = EXCLUDED.is_required, change_note = coalesce(EXCLUDED.change_note, terms.change_note)
        RETURNING code, version, status`,
       [code, dto.version, dto.title, dto.body,
-       dto.isRequired ?? base.is_required, base.display_order]);
+       dto.isRequired ?? base.is_required, base.display_order, base.is_notice, base.audience,
+       /* 재동의 화면 「바뀐 점」(D041) */ dto.changeNote?.trim() || null]);
     return { ...row, holes: TermsService.holes(dto.body).length };
   }
 
