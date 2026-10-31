@@ -33,7 +33,7 @@ M = rd('prisma/migrations/D153_role_change_reason/migration.sql')
 ok('① D153 — fn_role_audit 가 INSERT 때 사유(app.role_reason) · 처리자(app.actor_id · uuid 모양만) · 수정 금지 트리거는 건드리지 않음 · 지우는 문장 없음 · 191',
    'CREATE OR REPLACE FUNCTION public.fn_role_audit()' in M and "current_setting('app.role_reason', true)" in M and "current_setting('app.actor_id', true)" in M
    and 'INSERT INTO role_changes(account_id, role, action, reason, changed_by)' in M and 'fn_role_change_ro' not in M
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|DROP TRIGGER|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((191, 'D153_role_change_reason'),), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|DROP TRIGGER|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((191, 'D153_role_change_reason'), (192, 'D154_town_verify')), f'{len(mig)} · {mig[-1]}')
 RS = rd('src/modules/site/report.service.ts')
 sr = RS.split('async setRole(')[1][:2500] if 'async setRole(' in RS else ''
 ok('① 서버 setRole — 거래 안에서 set_config(app.role_reason · app.actor_id) 를 역할 바꾸기보다 먼저 · role_changes UPDATE 없음 · docs/252 · 판 v10.163 이상',
