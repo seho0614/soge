@@ -10,6 +10,7 @@
   ③ (운영 화면) AI 스위치 「AI 켜기 전 처리방침 확인」 줄
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+os.environ['PGOPTIONS'] = (os.environ.get('PGOPTIONS', '') + ' -c sgb.terms_fix=on').strip()   # v10.157 D150 — 이 시험은 점검판의 게시된 처리방침을 잠시 고쳤다 되돌림
 
 K = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002') + '/sgb'
 API = os.environ.get('API'); DB = os.environ.get('DB'); ADMIN_WEB = os.environ.get('ADMIN_WEB')

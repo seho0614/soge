@@ -11,6 +11,7 @@
   ⑤ (운영 화면) 법정 고지 › 약관 — 줄 · 처리방침 국외 이전 조항 · 본문 보기 · 시행일 · 게시 단추
 """
 import datetime, json, os, re, subprocess, urllib.error, urllib.request
+os.environ['PGOPTIONS'] = (os.environ.get('PGOPTIONS', '') + ' -c sgb.terms_fix=on').strip()   # v10.157 D150 — 이 시험은 점검판의 게시된 처리방침을 잠시 고쳤다 되돌림
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'
