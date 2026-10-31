@@ -53,7 +53,8 @@ export class TermsController {
       '내용이 비었거나 시행일이 없으면 DB 가 거부합니다. ' +
       '이전 버전은 ARCHIVED 로 남습니다 — 동의 이력이 참조하므로 삭제하지 않습니다. ' +
       'v10.156 — 〔시행일〕 말고 〔…〕 표시가 남아 있으면 거절하고, 본문의 〔시행일〕은 시행일로 채웁니다(scripts/publish-terms.sh 와 같은 규칙). ' +
-      'v10.161 (D151) — 시행일이 미래면 **시행 예정**(scheduled=true): 앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터 · 시행 예정 판은 약관마다 하나(422 TERM_SCHEDULED_EXISTS).',
+      'v10.161 (D151) — 시행일이 미래면 **시행 예정**(scheduled=true): 앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터 · 시행 예정 판은 약관마다 하나(422 TERM_SCHEDULED_EXISTS). ' +
+      'v10.162 (D152) — 시행 예정이면 회원마다 「약관 변경 안내」 알림(notified · 전체 회원 대상 약관 · 설정 terms.notify_members) · adverse=true(불리한 변경)면 시행일 30일 뒤 이후.',
   })
   @ApiParam({ name: 'code', example: 'SERVICE' })
   @ApiOkResponse({ type: TermPublishResultDto })
@@ -61,7 +62,7 @@ export class TermsController {
     status: 422, type: ErrorDto,
     description:
       'TERM_BODY_EMPTY 내용 없음 · TERM_EFFECTIVE_DATE_REQUIRED 시행일 없음 · ' +
-      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판 · TERM_SCHEDULED_EXISTS 시행 예정 판이 이미 있음 · TERM_PUBLISHED 이미 게시된 판 · TERM_DATE_BEFORE_CURRENT 지금 판 시행일보다 앞(v10.161)',
+      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판 · TERM_SCHEDULED_EXISTS 시행 예정 판이 이미 있음 · TERM_PUBLISHED 이미 게시된 판 · TERM_DATE_BEFORE_CURRENT 지금 판 시행일보다 앞(v10.161) · TERM_ADVERSE_30D 불리한 변경인데 30일 안(v10.162)',
   })
   @Audit('TERM_PUBLISH', 'TERM')
   publish(@Param('code') code: string, @Body() dto: PublishTermDto) {

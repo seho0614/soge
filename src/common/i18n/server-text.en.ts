@@ -1445,5 +1445,6 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "이미 게시된 판입니다 — 시행일을 바꾸려면 「예정 취소」 뒤 다시 게시하십시오.": "This version is already published — to change the effective date, use “Cancel schedule” and publish again.",
   "약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super administrator (SUPER) can change terms settings.",
   "지금 판({0})의 시행일({1})보다 뒤의 날짜로 게시하십시오.": "Publish with a date later than the effective date ({1}) of the current version ({0}).",
+  "회원에게 불리한 변경은 시행일을 오늘부터 30일 뒤 이후로 정하십시오(이용약관 제14조).": "For a change unfavorable to members, set the effective date at least 30 days from today (Terms of Service, Article 14).",
   "이 판에 이미 동의한 기록이 {0}건 있어 취소할 수 없습니다 — 새 판으로 바꾸십시오.": "This version already has {0} consent records, so it cannot be cancelled — replace it with a new version.",
 };

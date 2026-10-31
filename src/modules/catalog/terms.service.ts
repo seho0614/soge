@@ -24,7 +24,9 @@ export class TermsService {
               CASE WHEN t.effective_from = 'infinity' THEN NULL
                    ELSE t.effective_from END AS "effectiveFrom",
               /* v10.161 — 시행 예정(게시됐지만 시행 전 · 앞 판이 아직 시행 중) */
-              EXISTS (SELECT 1 FROM v_terms_upcoming u WHERE u.code = t.code AND u.version = t.version) AS scheduled
+              EXISTS (SELECT 1 FROM v_terms_upcoming u WHERE u.code = t.code AND u.version = t.version) AS scheduled,
+              /* v10.162 (D152) — 대상(제휴 약관은 회원 알림 없음) · 게시한 때 · 불리한 변경 */
+              t.audience, t.published_at AS "publishedAt", t.is_adverse AS "isAdverse"
          FROM terms t ORDER BY t.display_order, t.code, t.effective_from DESC`);
   }
 
@@ -70,7 +72,7 @@ export class TermsService {
    * 발행. 이 시점부터 가입 화면과 푸터에 나타납니다.
    * 내용이 비었거나 시행일이 없으면 DB 가 거부합니다.
    */
-  async publish(code: string, dto: { version: string; effectiveFrom: string }) {
+  async publish(code: string, dto: { version: string; effectiveFrom: string; adverse?: boolean }) {
     if (new Date(dto.effectiveFrom) < new Date(Date.now() - 86_400_000)) {
       throw new PolicyViolation(
         'EFFECTIVE_DATE_IN_PAST',
@@ -95,6 +97,10 @@ export class TermsService {
       `SELECT version, effective_from >= $3::timestamptz AS later, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day
          FROM v_terms_current WHERE code = $1 AND version <> $2`, [code, dto.version, dto.effectiveFrom]);
     if (now_?.later) throw new PolicyViolation('TERM_DATE_BEFORE_CURRENT', `지금 판(${now_.version})의 시행일(${now_.day})보다 뒤의 날짜로 게시하십시오.`);
+    /* v10.162 (D152 · docs/248) — 회원에게 불리한 변경은 시행 30일 전 고지(이용약관 제14조) · 앞 판이 있을 때만(처음 게시는 바꾸는 것이 아님) */
+    if (dto.adverse && now_ && new Date(dto.effectiveFrom).getTime() < Date.now() + 30 * 86_400_000) {
+      throw new PolicyViolation('TERM_ADVERSE_30D', '회원에게 불리한 변경은 시행일을 오늘부터 30일 뒤 이후로 정하십시오(이용약관 제14조).');
+    }
     /* v10.161 (D151 · docs/246) — 시행 예정 판은 약관마다 하나. 둘이면 어느 글이 언제 시행되는지 회원이 알 수 없음 */
     const [dup] = await this.db.query<{ version: string }>(
       `SELECT version FROM v_terms_upcoming WHERE code = $1 AND version <> $2`, [code, dto.version]);
@@ -103,10 +109,11 @@ export class TermsService {
     return this.db.transaction(async () => {
       const [row] = await this.db.query<{ code: string; version: string; status: string }>(
         `UPDATE terms
-            SET status = 'PUBLISHED', effective_from = $3, blocked_by = NULL, body = replace(body, '〔시행일〕', $4)
+            SET status = 'PUBLISHED', effective_from = $3, blocked_by = NULL, body = replace(body, '〔시행일〕', $4),
+                published_at = now(), is_adverse = $5
           WHERE code = $1 AND version = $2
         RETURNING code, version, status`,
-        [code, dto.version, dto.effectiveFrom, day]);
+        [code, dto.version, dto.effectiveFrom, day, !!dto.adverse]);
       if (!row) throw new NotFound('해당 버전의 약관이 없습니다.');
 
       /* 앞 판은 보관 처리 — 삭제하지 않습니다(동의 이력이 참조). v10.161 (D151): 시행일이 지난 판만 지금, 시행 예정이면 앞 판은
@@ -115,9 +122,11 @@ export class TermsService {
       const [sc] = await this.db.query<{ scheduled: boolean }>(
         `SELECT EXISTS (SELECT 1 FROM v_terms_upcoming WHERE code = $1 AND version = $2) AS scheduled`, [code, dto.version]);
 
+      const notified = sc.scheduled ? await this.notifyMembers(code, dto.version, day, now_?.version ?? null) : 0;
+
       const [n] = await this.db.query<{ c: string }>(
         `SELECT count(*) AS c FROM v_open_blockers`);
-      return { ...row, scheduled: sc.scheduled, archived: a.n, remainingBlockers: Number(n.c) };
+      return { ...row, scheduled: sc.scheduled, archived: a.n, notified, remainingBlockers: Number(n.c) };
     });
   }
 
@@ -135,10 +144,47 @@ export class TermsService {
     if (Number(t.agreed) > 0) throw new PolicyViolation('TERM_HAS_CONSENT', `이 판에 이미 동의한 기록이 ${t.agreed}건 있어 취소할 수 없습니다 — 새 판으로 바꾸십시오.`);
     return this.db.transaction(async () => {
       /* 상태 먼저(게시 판은 글을 못 고침 · D150) → 법무 검토가 된 뒤 글의 날짜를 되돌림 */
-      await this.db.query(`UPDATE terms SET status = 'LEGAL_REVIEW', effective_from = 'infinity' WHERE code = $1 AND version = $2`, [code, version]);
+      await this.db.query(`UPDATE terms SET status = 'LEGAL_REVIEW', effective_from = 'infinity', published_at = NULL, is_adverse = false WHERE code = $1 AND version = $2`, [code, version]);
       await this.db.query(`UPDATE terms SET body = replace(body, $3, '〔시행일〕') WHERE code = $1 AND version = $2`, [code, version, t.day]);
-      return { code, version, status: 'LEGAL_REVIEW' };
+      /* v10.162 (D152) — 변경 안내를 받은 회원에게 취소 안내 */
+      const notified = await this.notifyMembers(code, version, t.day, null, true);
+      return { code, version, status: 'LEGAL_REVIEW', notified };
     });
+  }
+
+  /**
+   * v10.162 (D152 · docs/248) — 시행 예정 게시 · 예정 취소 때 회원마다 「약관 변경 안내」 알림 1건(사이트 안).
+   *   전체 회원 대상 약관만(제휴 약관은 빼고) · 설정 terms.notify_members = off 면 만들지 않음 · 메일 · 알림톡은 그 채널이 켜진 뒤 notify_dispatch 가 보냄.
+   *   template_code 'TERM:{code}:{version}' — 예정 취소 안내는 그 알림을 받은 회원에게만. 만든 수를 돌려줌
+   */
+  private async notifyMembers(code: string, version: string, day: string, prev: string | null, cancel = false) {
+    const [t] = await this.db.query<{ title: string; is_required: boolean; change_note: string | null; audience: string; notify_on: boolean }>(
+      `SELECT title, is_required, change_note, audience,
+              coalesce((SELECT value FROM site_settings WHERE key = 'terms.notify_members'), 'on') = 'on' AS notify_on
+         FROM terms WHERE code = $1 AND version = $2`, [code, version]);
+    if (!t || !t.notify_on || t.audience !== 'ALL') return 0;
+    const tpl = `TERM:${code}:${version}`;
+    /* 알림 본문의 {영문} 은 DB 가 「치환 안 된 변수」로 거절(fn_assert_no_unresolved_vars) — 바뀐 점 글의 중괄호는 괄호로 */
+    const note = (t.change_note ?? '').replace(/\{([a-zA-Z]+)\}/g, '($1)').trim();
+    const title = cancel ? `[약관 변경 취소] ${t.title}` : `[약관 변경 안내] ${t.title} ${version}`;
+    const body = cancel
+      ? `${day} 시행 예정이던 ${t.title} ${version} 변경이 취소되었습니다. 지금 약관이 그대로 적용됩니다.`
+      : [`${t.title}이(가) ${day}부터 바뀝니다${prev ? `(지금 판 ${prev} → ${version})` : ''}.`,
+         note ? `바뀐 점: ${note.slice(0, 300)}` : '바뀐 점은 약관 화면에서 확인하십시오.',
+         t.is_required ? '시행일 전까지는 지금 약관이 적용되고, 시행일부터 다시 동의를 받습니다.' : '시행일 전까지는 지금 약관이 적용됩니다.'].join(' ');
+    const rows = await this.db.query(
+      cancel
+        ? `INSERT INTO notifications (account_id, event_code, template_code, title, body, link_url)
+           SELECT DISTINCT n.account_id, 'TERM_CHANGE_NOTICE', $1 || ':CANCEL', $2, $3, '/terms'
+             FROM notifications n JOIN accounts a ON a.id = n.account_id
+            WHERE n.template_code = $1 AND a.status = 'ACTIVE' AND a.withdrawn_at IS NULL
+           RETURNING id`
+        : `INSERT INTO notifications (account_id, event_code, template_code, title, body, link_url)
+           SELECT a.id, 'TERM_CHANGE_NOTICE', $1, $2, $3, '/terms#upcoming-terms'
+             FROM accounts a WHERE a.status = 'ACTIVE' AND a.withdrawn_at IS NULL
+           RETURNING id`,
+      [tpl, title, body]);
+    return rows.length;
   }
 
   /** v10.156 — 본문의 미확정 표시(〔…〕 · 〔시행일〕 은 게시가 채우므로 뺌) */

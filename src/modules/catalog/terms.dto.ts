@@ -23,6 +23,12 @@ export class TermDetailDto {
   changeNote?: string | null;
   @ApiPropertyOptional({ description: '시행 예정 — 게시됐지만 시행일 전이고 앞 판이 아직 시행 중(v10.161 · D151)' })
   scheduled?: boolean;
+  @ApiPropertyOptional({ enum: ['ALL', 'PARTNER'], description: '대상 — 제휴(PARTNER) 약관은 회원 알림 없음(v10.162)' })
+  audience?: string;
+  @ApiPropertyOptional({ format: 'date-time', nullable: true, description: '게시한 때(v10.162 · D152) — v10.162 전 게시 판은 비어 있음' })
+  publishedAt?: string | null;
+  @ApiPropertyOptional({ description: '회원에게 불리한 변경으로 게시(v10.162 · D152)' })
+  isAdverse?: boolean;
 }
 
 /** 법무 회신 반영. 초안 저장과 발행을 나눕니다. */
@@ -52,6 +58,9 @@ export class PublishTermDto {
     description: '시행일. 과거로 넣지 마십시오 — 동의 이력의 기준이 됩니다',
   })
   @IsDateString() effectiveFrom!: string;
+
+  @ApiPropertyOptional({ description: '회원에게 불리한 변경(v10.162 · D152) — 앞 판이 있으면 시행일은 30일 뒤 이후(422 TERM_ADVERSE_30D · 이용약관 제14조)' })
+  @IsOptional() @StrictBoolean() adverse?: boolean;
 }
 
 /** v10.161 (D151) — 시행 예정 판 게시 취소 */
@@ -66,6 +75,7 @@ export class TermPublishResultDto {
   @ApiProperty({ enum: TERM_STATUS }) status!: string;
   @ApiPropertyOptional({ description: '시행 예정으로 게시됨 — 앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터(v10.161)' }) scheduled?: boolean;
   @ApiPropertyOptional({ description: '이번에 보관으로 바뀐 앞 판 수(시행일이 지난 경우 · v10.161)' }) archived?: number;
+  @ApiPropertyOptional({ description: '「약관 변경 안내」 알림을 만든 회원 수(시행 예정일 때 · 설정 terms.notify_members · v10.162)' }) notified?: number;
   @ApiProperty({
     example: 12,
     description: '발행 후 남은 오픈 차단 항목 수. 0 이 되면 이 관문은 통과입니다',
