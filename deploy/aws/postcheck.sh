@@ -69,6 +69,13 @@ http_is "소개광장 투표"      "$SITE/community/polls" 200
 http_is "안심소개"           "$SITE/mall" 200
 http_is "로그인 화면"        "$SITE/login" 200
 http_is "사이트를 거친 API"  "$SITE/api/v1/health" 200
+# v10.158 (docs/240) — 「관리자 페이지」 단추(/go/admin)가 운영 화면 주소로 가는지(10/30 localhost:5173 사고)
+read -r gc gl < <(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 15 "$SITE/go/admin" 2>/dev/null)
+case "$gc|$gl" in
+  30?\|https://*localhost*|30?\|https://*127.0.0.1*|30?\|http://*) bad "「관리자 페이지」 단추가 운영 화면이 아닌 곳으로 감" "$gl — .env BO_URL=https://admin.sogaebank.com 뒤 pm2 restart sgb-site";;
+  30?\|https://?*) ok "「관리자 페이지」 단추 → $gl";;
+  *) bad "「관리자 페이지」 단추(/go/admin) → ${gc:-000}" ".env 에 BO_URL=https://admin.sogaebank.com 을 넣고 pm2 restart sgb-site";;
+esac
 home=$(curl -s --max-time 60 "$SITE/")
 if echo "$home" | grep -q '디자인 예시입니다'; then warn "메인이 그림의 예시 내용으로 떠 있음 (HOME_CONTENT 가 live 가 아님)" "손님에게 열기 전에 .env 에서 HOME_CONTENT 줄을 지우거나 live 로 — 예시 평점 · 후기 수가 실제처럼 보입니다"
 else ok "메인이 실제 자료로 떠 있음 (HOME_CONTENT=live)"; fi

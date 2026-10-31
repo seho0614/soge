@@ -89,6 +89,13 @@ if [ -f "$ENVF" ]; then
   if grep -Eq '^[[:space:]]*S3_(UPLOAD|PUBLIC)_BUCKET' "$ENVF"; then
     warn ".env 의 S3_UPLOAD_BUCKET · S3_PUBLIC_BUCKET 은 지금 코드가 읽지 않습니다" "S3 를 쓰려면 S3_BUCKET=버킷이름 으로 적으십시오 (절차서 9부)"
   fi
+  # v10.158 (docs/240) — 머리줄 「관리자 페이지」 단추의 목적지. 없으면 운영에서 localhost:5173 으로 갔음(10/30)
+  bo=$(grep -E '^[[:space:]]*BO_URL[[:space:]]*=' "$ENVF" | tail -1 | cut -d= -f2- | tr -d " \"'")
+  case "$bo" in
+    https://*localhost*|https://*127.0.0.1*|http://*) warn ".env BO_URL 이 운영 주소가 아님" "$bo — https://admin.sogaebank.com 처럼 운영 화면 주소로";;
+    https://?*) ok ".env BO_URL" "$bo";;
+    *) warn ".env 에 BO_URL 이 없음" "사용자 웹 「관리자 페이지」 단추가 동작하지 않습니다 — BO_URL=https://admin.sogaebank.com 을 넣으십시오";;
+  esac
   if grep -Eq 'dev-only-|docker-dev-|docker-test-|sgb-dev-1234' "$ENVF"; then bad ".env 에 개발용 값이 남아 있음" "JWT_SECRET · ENC_KEY · JOB_TOKEN 을 서버에서 새로 만든 값으로 바꾸십시오"
   else ok ".env 에 개발용 값 없음"; fi
   load_env "$ENVF"
