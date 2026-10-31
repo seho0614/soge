@@ -233,6 +233,14 @@ if API and DB:
 else:
     print('  (API · DB 없음 — ② · ③ 건너뜀)')
 
+# ── ①' docs/247(운영 적용 절차서 · 킷에 있을 때만) ───────────────────────
+F247 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('247_')), '')
+D247 = rd('docs/' + F247) if F247 else ''
+ok("①' docs/247 — 운영 적용 v10.158 → v10.161 · D151 · 188 → 189 · 스냅샷 v10-161 · 킷 ~/kits/release · sha256 · 화면 확인 · 하지 말 것",
+   not F247 or ('v10.161' in F247 and '`적용됨 188 · 새 킷의 파일 189 · 올릴 것 1 · 바뀐 파일 0`' in D247 and '`적용 1 · 기존 188 · 변경감지 0`' in D247
+   and '189 / 189' in D247 and 'sgb-before-v10-161' in D247 and '~/kits/release/' in D247 and '9a51d27e4d5fa0e682bd3218ea2480eefc3d2c7392ca0217f661e46ba2a98e5d' in D247
+   and 'D151_terms_scheduled' in D247 and '관 관리 › 약관' in D247 and '하지 말 것' in D247), F247 or '(킷에 아직 없음)')
+
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
 raise SystemExit(0 if passed == len(RES) else 1)
