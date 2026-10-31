@@ -47,7 +47,7 @@ AS = rd('src/modules/identity/auth.service.ts'); AC = rd('src/modules/identity/a
 ADS = rd('src/modules/admin/admin.service.ts'); EN = rd('src/common/i18n/server-text.en.ts')
 pub = TS.split('async publish(')[1][:4000] if 'async publish(' in TS else ''
 ok('① 서버 게시 — 앞 판은 시행된 뒤 보관(fn_terms_archive_due) · scheduled · 예정 판 하나(TERM_SCHEDULED_EXISTS) · 게시 판 다시 게시 막음(TERM_PUBLISHED) · 옛 「바로 보관」 문장 없음',
-   'SELECT fn_terms_archive_due() AS n' in pub and 'scheduled: sc.scheduled' in pub and "'TERM_SCHEDULED_EXISTS'" in pub and "'TERM_PUBLISHED'" in pub
+   'SELECT fn_terms_archive_due() AS n' in pub and 'scheduled: sc.scheduled' in pub and "'TERM_SCHEDULED_EXISTS'" in pub and "'TERM_PUBLISHED'" in pub and "'TERM_DATE_BEFORE_CURRENT'" in pub
    and "version <> $2 AND status = 'PUBLISHED'" not in pub, '')
 uns = TS.split('async unschedule(')[1][:2500] if 'async unschedule(' in TS else ''
 ok('① 예정 취소 — 시행일 전 · 동의 0 · 법무 검토 · 시행일 없음 · 본문 날짜 → 〔시행일〕(상태 먼저) · PATCH unschedule · SUPER · 감사 TERM_UNSCHEDULE',
@@ -68,8 +68,8 @@ ok('① 시행 예정 목록 GET /terms/upcoming(전체 회원 대상) · 매시
    and 'await this.db.query(`SELECT fn_terms_archive_due()`)' in TS and 'FROM v_terms_upcoming u WHERE u.code = t.code' in TS, '')
 NEW_TXT = ('시행 예정인 판({0})이 이미 있습니다 — 먼저 그 판의 「예정 취소」를 하십시오.', '시행 예정인 게시 판만 취소할 수 있습니다 — 이미 시행된 판은 새 판으로 바꾸십시오.',
            '이 판에 이미 동의한 기록이 {0}건 있어 취소할 수 없습니다 — 새 판으로 바꾸십시오.', '이미 게시된 판입니다 — 시행일을 바꾸려면 「예정 취소」 뒤 다시 게시하십시오.',
-           '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.')
-ok('① 새 서버 문구 5개 영어 사전', all(json.dumps(x, ensure_ascii=False) + ':' in EN for x in NEW_TXT), '')
+           '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.', '지금 판({0})의 시행일({1})보다 뒤의 날짜로 게시하십시오.')
+ok('① 새 서버 문구 6개 영어 사전', all(json.dumps(x, ensure_ascii=False) + ':' in EN for x in NEW_TXT), '')
 
 TP = rd('web/src/app/admin/TermsPanel.tsx'); MN = rd('web/src/lib/adminMenu.ts'); APP = rd('web/src/App.tsx')
 ok('① 운영 화면 — 시행 예정 표시 · 예정 취소 · 제14조 경고(7일 · 30일) · 재동의 시점 스위치 · 결과 글 · 관 관리 › 약관 메뉴(SUPER · SB-ADM-SIT-070)',
@@ -131,7 +131,8 @@ if API and DB:
         T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
         psql(f"INSERT INTO account_roles(account_id, role) SELECT id, 'ADMIN' FROM accounts WHERE email = '{SELLER}' ON CONFLICT DO NOTHING;")
         TA = call('POST', '/auth/login', {'email': SELLER, 'password': PW}).get('accessToken')
-        day = (datetime.date.today() + datetime.timedelta(days=10)).isoformat()
+        # 새 판 시행일은 지금 판 시행일보다 뒤(TERM_DATE_BEFORE_CURRENT) · 점검 자료의 앞 판은 2026-11-11 시행일 수 있음
+        day = (max(datetime.date.fromisoformat(e0[:10]), datetime.date.today()) + datetime.timedelta(days=10)).isoformat()
         try:
             title = psql(f"SELECT title FROM terms WHERE code = '{CODE}' AND version = '{v0}'")
             body = re.sub(r'〔(?!시행일)[^〕]*〕', '', psql(f"SELECT body FROM terms WHERE code = '{CODE}' AND version = '{v0}'")) + '\n\n부칙 이 판(시험 T1161)은 〔시행일〕부터 시행합니다.'
@@ -152,6 +153,9 @@ if API and DB:
             ok('② 다른 판 게시 → 422 TERM_SCHEDULED_EXISTS · 게시된 앞 판 다시 게시 → 422 TERM_PUBLISHED(시행일 그대로)',
                r3.get('code') == 'TERM_SCHEDULED_EXISTS' and r4.get('code') == 'TERM_PUBLISHED'
                and psql(f"SELECT effective_from::text FROM terms WHERE code = '{CODE}' AND version = '{v0}'") == e0, f"{r2.get('status')} · {r3.get('code')} · {r4.get('code')}")
+            e0d = datetime.date.fromisoformat(e0[:10])
+            rb = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NV2, 'effectiveFrom': (e0d - datetime.timedelta(days=1)).isoformat()}, T_) if e0d - datetime.timedelta(days=1) > datetime.date.today() else None
+            ok('② 지금 판 시행일보다 앞 날짜로 게시 → 422 TERM_DATE_BEFORE_CURRENT(앞 판 시행일이 2일 넘게 남았을 때만)', rb is None or rb.get('code') == 'TERM_DATE_BEFORE_CURRENT', str(rb)[:100] if rb else f'건너뜀(앞 판 시행 {e0[:10]})')
             psql(f"DELETE FROM terms WHERE code = '{CODE}' AND version = '{NV2}' AND status IN ('DRAFT', 'LEGAL_REVIEW')")
 
             ra = call('PATCH', f'/admin/terms/{CODE}/unschedule', {'version': NV}, TA)
@@ -213,7 +217,7 @@ if API and DB:
                f"{rs.get('code')} · on {on_cur}/{on_req}/{len(on_up)} · off {cur()}")
 
             # 시행일이 온 것으로 → 매시간 작업과 같은 함수 → 앞 판 보관 · 지금 판 9.7
-            psql(f"UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code = '{CODE}' AND version = '{NV}'")
+            psql(f"UPDATE terms SET effective_from = now() - interval '2 days' WHERE code = '{CODE}' AND version = '{v0}'; UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code = '{CODE}' AND version = '{NV}'")
             n = psql("SELECT fn_terms_archive_due()")
             ok('② 시행일이 지나면 fn_terms_archive_due → 앞 판 보관 · 지금 판 9.7 · /terms/required 9.7', st() == f'{v0} ARCHIVED · {NV} PUBLISHED' and cur() == NV and req_ver(T_) == NV and n not in ('', '0'),
                f'{n} · {st()} · {cur()}')

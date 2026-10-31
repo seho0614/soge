@@ -104,7 +104,8 @@ if API and DB:
         body = re.sub(r'〔(?!시행일)[^〕]*〕', '', body)
         NOTE = '시험 — 제3조 소개비 문장을 고침'
         r0 = call('PUT', f'/admin/terms/{CODE}', {'version': NEW, 'title': title, 'body': body, 'changeNote': NOTE}, T_)
-        tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+        # v10.161 — 새 판 시행일은 지금 판 시행일보다 뒤(TERM_DATE_BEFORE_CURRENT) · 점검 자료의 앞 판은 2026-11-11 시행일 수 있음
+        tomorrow = (max(datetime.date.fromisoformat(e0[:10]), datetime.date.today()) + datetime.timedelta(days=2)).isoformat()
         r1 = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NEW, 'effectiveFrom': tomorrow}, T_)
         # v10.161 (D151) — 내일 시행이면 시행 예정: 앞 판은 시행일까지 게시 그대로 · 회원은 재동의 없이 앞 판 기준 · 바뀔 약관 알림
         sp = state(TM); up = call('GET', '/terms/upcoming')
@@ -114,7 +115,8 @@ if API and DB:
            and any(isinstance(u, dict) and u.get('code') == CODE and u.get('version') == NEW and u.get('currentVersion') == v0 and u.get('changeNote') == NOTE for u in (up if isinstance(up, list) else [])),
            f'{str(r1)[:80]} · {st} · {sp} · {str(up)[:120]}')
         # 시행일이 온 것으로(시행일을 1분 전으로) → 매시간 작업과 같은 함수 → 앞 판 보관 · 그때부터 재동의
-        psql(f"UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code = '{CODE}' AND version = '{NEW}'; SELECT fn_terms_archive_due();")
+        psql(f"UPDATE terms SET effective_from = now() - interval '2 days' WHERE code = '{CODE}' AND version = '{v0}'; "
+             f"UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code = '{CODE}' AND version = '{NEW}'; SELECT fn_terms_archive_due();")
         s1 = state(TM)
         st = psql(f"SELECT string_agg(version || ' ' || status, ' · ' ORDER BY version) FROM terms WHERE code = '{CODE}' AND version IN ('{v0}', '{NEW}')")
         ok('② 시행일이 지나면 앞 판 보관(fn_terms_archive_due)', st == f'{v0} ARCHIVED · {NEW} PUBLISHED', st)

@@ -142,7 +142,9 @@ if API and DB:
             print('  (점검판에 국외 이전 조항이 든 처리방침 게시가 없음 — 켜짐 확인 건너뜀 · ②가 함수로 확인)')
 
         # ④ 약관 게시 — 시험 판 9.9
-        tomorrow = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
+        # v10.161 — 새 판 시행일은 지금 판 시행일보다 뒤(TERM_DATE_BEFORE_CURRENT) · 점검 자료의 앞 판은 2026-11-11 시행일 수 있음
+        e0d = datetime.date.fromisoformat(t0.split('|')[2][:10]) if t0 else datetime.date.today()
+        tomorrow = (max(e0d, datetime.date.today()) + datetime.timedelta(days=2)).isoformat()
         title = psql(f"SELECT title FROM terms WHERE code = '{CODE}' LIMIT 1")
         body_h = '# 시험 약관\n\n제1조 이 약관은 시험용입니다. 〔확인 필요〕 칸이 남아 있습니다.\n\n부칙 이 약관은 〔시행일〕부터 시행합니다.'
         body_ok = body_h.replace('〔확인 필요〕 칸이 남아 있습니다', '빈칸은 없습니다')
