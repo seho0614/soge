@@ -155,7 +155,7 @@ export class TermsService {
   /**
    * v10.162 (D152 · docs/248) — 시행 예정 게시 · 예정 취소 때 회원마다 「약관 변경 안내」 알림 1건(사이트 안).
    *   전체 회원 대상 약관만(제휴 약관은 빼고) · 설정 terms.notify_members = off 면 만들지 않음 · 메일 · 알림톡은 그 채널이 켜진 뒤 notify_dispatch 가 보냄.
-   *   template_code 'TERM:{code}:{version}' — 예정 취소 안내는 그 알림을 받은 회원에게만. 만든 수를 돌려줌
+   *   알림 링크 /terms?notice={code}@{version}#upcoming-terms 가 판을 가리킴(template_code 는 알림 양식 표를 가리켜 쓰지 않음) — 예정 취소 안내는 그 링크로 알림을 받은 회원에게만. 만든 수를 돌려줌
    */
   private async notifyMembers(code: string, version: string, day: string, prev: string | null, cancel = false) {
     const [t] = await this.db.query<{ title: string; is_required: boolean; change_note: string | null; audience: string; notify_on: boolean }>(
@@ -163,7 +163,7 @@ export class TermsService {
               coalesce((SELECT value FROM site_settings WHERE key = 'terms.notify_members'), 'on') = 'on' AS notify_on
          FROM terms WHERE code = $1 AND version = $2`, [code, version]);
     if (!t || !t.notify_on || t.audience !== 'ALL') return 0;
-    const tpl = `TERM:${code}:${version}`;
+    const link = `/terms?notice=${code}@${version}`;   // 약관 코드 · 판 번호는 영문 대문자 · 숫자 · 점(TERM_VERSION)이라 그대로
     /* 알림 본문의 {영문} 은 DB 가 「치환 안 된 변수」로 거절(fn_assert_no_unresolved_vars) — 바뀐 점 글의 중괄호는 괄호로 */
     const note = (t.change_note ?? '').replace(/\{([a-zA-Z]+)\}/g, '($1)').trim();
     const title = cancel ? `[약관 변경 취소] ${t.title}` : `[약관 변경 안내] ${t.title} ${version}`;
@@ -175,15 +175,15 @@ export class TermsService {
     const rows = await this.db.query(
       cancel
         ? `INSERT INTO notifications (account_id, event_code, template_code, title, body, link_url)
-           SELECT DISTINCT n.account_id, 'TERM_CHANGE_NOTICE', $1 || ':CANCEL', $2, $3, '/terms'
+           SELECT DISTINCT n.account_id, 'TERM_CHANGE_NOTICE', NULL, $2, $3, $1::text || '&cancel=1'
              FROM notifications n JOIN accounts a ON a.id = n.account_id
-            WHERE n.template_code = $1 AND a.status = 'ACTIVE' AND a.withdrawn_at IS NULL
+            WHERE n.event_code = 'TERM_CHANGE_NOTICE' AND n.link_url = $1::text || '#upcoming-terms' AND a.status = 'ACTIVE' AND a.withdrawn_at IS NULL
            RETURNING id`
         : `INSERT INTO notifications (account_id, event_code, template_code, title, body, link_url)
-           SELECT a.id, 'TERM_CHANGE_NOTICE', $1, $2, $3, '/terms#upcoming-terms'
+           SELECT a.id, 'TERM_CHANGE_NOTICE', NULL, $2, $3, $1::text || '#upcoming-terms'
              FROM accounts a WHERE a.status = 'ACTIVE' AND a.withdrawn_at IS NULL
            RETURNING id`,
-      [tpl, title, body]);
+      [link, title, body]);
     return rows.length;
   }
 

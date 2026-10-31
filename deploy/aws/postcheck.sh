@@ -167,8 +167,9 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   # 오픈 준비 점검(5절 22)
   if has public.v_open_readiness; then
     r=$(q "SELECT count(*) || '/' || count(*) FILTER (WHERE required) FROM v_open_readiness")
-    [ "$r" = "9/4" ] && ok "오픈 준비 점검 9줄 · 꼭 4(5절 22)" || warn "오픈 준비 점검 $r" "9/4 가 기대"
-  else warn "오픈 준비 점검 보기 없음" "D142 · D144 가 안 들어갔을 수 있음"; fi
+    # v10.162 (D152) — 약관 시행일 · 고지 기간 권장 줄 2개를 더해 11줄(꼭 4 그대로)
+    [ "$r" = "11/4" ] && ok "오픈 준비 점검 11줄 · 꼭 4(5절 22 · D152)" || warn "오픈 준비 점검 $r" "11/4 가 기대(v10.162 · D152)"
+  else warn "오픈 준비 점검 보기 없음" "D142 · D144 · D152 가 안 들어갔을 수 있음"; fi
   # 새 설정 · 처리방침(5절 26 · 27 · 29)
   v=$(q "SELECT value FROM site_settings WHERE key = 'agent.require_privacy'")
   [ "$v" = "on" ] && ok "AI 켜기 전 처리방침 확인 = on(5절 27)" || warn "agent.require_privacy = ${v:-없음}" "on 이 처음 값 — D145"
