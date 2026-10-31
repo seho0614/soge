@@ -13,7 +13,10 @@
 # =====================================================================
 services:
   site:
-    command: ["sh", "-c", "npx next build && exec npx next start -H 0.0.0.0 -p 5174"]
+    # v10.159 — 빌드는 컨테이너를 새로 만들 때 한 번만. 시험이 `docker restart sgb-site` 로 캐시를 비울 때는 빌드하지 않고
+    #   데이터 캐시(.next/cache/fetch-cache)만 지우고 다시 띄웁니다(재시작 약 4.5분 → 몇 초 · 회귀 점검 시간 단축).
+    #   /tmp/sgb-site-built 는 컨테이너 안(묶은 폴더 밖)이라 갈래를 바꿔 다시 띄우면(up) 없어져 다시 빌드합니다.
+    command: ["sh", "-c", "[ -f /tmp/sgb-site-built ] || { npx next build && touch /tmp/sgb-site-built; } || exit 1; rm -rf .next/cache/fetch-cache; exec npx next start -H 0.0.0.0 -p 5174"]
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
     healthcheck:
