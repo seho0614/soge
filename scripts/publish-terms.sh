@@ -9,6 +9,15 @@
 #       이미 발행한 DB 에 새로 생긴 약관만 발행하려면 코드를 적습니다 — 예: v10.31 판 올린 뒤 `... publish-terms.sh PARTNER`
 set -uo pipefail
 cd "$(dirname "$0")/.."
+# v10.160 (docs/244) — 운영 서버에서는 쓰지 않습니다. 게시는 운영 화면 › 관 관리 › 법정 고지 › 「약관」(같은 규칙 · 감사 기록 TERM_PUBLISH).
+#   이 스크립트는 게시 전에 1.0 초안 본문을 킷의 docs/terms 로 덮어써서, 법무가 「고치기」로 고친 1.0 초안을 지웁니다(감사 기록도 없음).
+#   개발 · 점검판 · 리허설(NODE_ENV 가 production 이 아님)에서만 돕니다. 정말 필요하면 SGB_TERMS_SCRIPT_OK=yes (대표 승인 뒤).
+if { [ "${NODE_ENV:-}" = "production" ] || { [ -f .env ] && grep -qE '^[[:space:]]*NODE_ENV[[:space:]]*=[[:space:]]*"?production' .env; }; } && [ "${SGB_TERMS_SCRIPT_OK:-}" != "yes" ]; then
+  echo "!! 운영 서버(NODE_ENV=production)에서는 이 스크립트로 게시하지 않습니다."
+  echo "   운영 화면 › 관 관리 › 법정 고지 › 맨 아래 「약관」 에서 시행일을 넣고 「게시」 하십시오(SUPER)."
+  echo "   이 스크립트는 1.0 초안 본문을 킷 원문으로 덮어써 「고치기」로 고친 글을 지웁니다."
+  exit 1
+fi
 : "${DATABASE_URL:?DATABASE_URL 필요}"
 # 10/3 (v10.16) — psql 에 넘길 주소. 앱(Node)만 아는 SSL 표기(sslmode=no-verify · uselibpqcompat)를 psql 이 아는 표기로 바꿉니다.
 #   RDS 접속 주소를 앱에 맞춰 적으면 psql 이 「invalid sslmode value」로 거절해 이 스크립트가 전부 실패로 나왔습니다.

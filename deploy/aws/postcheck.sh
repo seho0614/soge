@@ -143,7 +143,7 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   b=$(q "select count(*) from v_open_blockers")
   [ "$b" = "0" ] && ok "오픈 차단 0건" || warn "오픈 차단 ${b}건" "$(q "select string_agg(kind||':'||c, ' ') from (select kind, count(*) c from v_open_blockers group by kind) x") — 여는 날까지 해소 (npm run open:check)"
   t=$(q "select count(*) from terms where status='PUBLISHED'"); dr=$(q "select count(*) from terms where status='DRAFT'")
-  [ "${dr:-0}" = "0" ] && ok "약관 — 발행 $t · 초안 0" || warn "약관 — 발행 $t · 초안 $dr" "법무 확인 뒤 EFFECTIVE_FROM=시행일 npm run terms:publish"
+  [ "${dr:-0}" = "0" ] && ok "약관 — 발행 $t · 초안 0" || warn "약관 — 발행 $t · 초안 $dr" "법무 확인 뒤 운영 화면 › 관 관리 › 법정 고지 › 「약관」 에서 시행일 · 게시(SUPER) — publish-terms.sh · npm run terms:publish 는 쓰지 않음(1.0 초안을 킷 원문으로 덮음)"
   e=$(q "select coalesce(nullif(btrim(value),''),'') from site_settings where key='infra.egress_ip'")
   [ -n "$e" ] && ok "발신 IP(infra.egress_ip)" "$e" || warn "발신 IP(infra.egress_ip)가 비어 있음" "외부 연동 신청서에 적는 고정 IP"
   pub=""; [ "${SKIP_EGRESS_CHECK:-0}" = "1" ] || pub=$(curl -s --max-time 5 https://checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')
