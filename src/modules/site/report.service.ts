@@ -113,6 +113,10 @@ export class ReportService {
     }
 
     return this.db.transaction(async () => {
+      /* v10.163 (D153 · docs/252) — 사유 · 처리자를 먼저 거래 설정으로 넘김 → 트리거가 기록을 만들 때 함께 씀.
+       *   전에는 기록을 만든 뒤 UPDATE 로 채웠는데, 권한 변경 기록은 수정 금지(trg_role_change_ro)라 늘 실패했음 */
+      await this.db.query(`SELECT set_config('app.role_reason', $1, true), set_config('app.actor_id', $2, true)`,
+        [reason.trim(), RequestCtx.actorId() ?? '']);
       if (grant) {
         await this.db.query(
           `INSERT INTO account_roles(account_id, role) VALUES ($1,$2)
@@ -123,12 +127,6 @@ export class ReportService {
           [accountId, role]);
         if (!gone) throw new StateConflict('NO_SUCH_ROLE', '가지고 있지 않은 역할입니다.');
       }
-      // 트리거가 남긴 최신 기록에 사유와 처리자를 채웁니다.
-      await this.db.query(
-        `UPDATE role_changes SET reason = $3, changed_by = $4
-          WHERE id = (SELECT max(id) FROM role_changes
-                       WHERE account_id = $1 AND role = $2)`,
-        [accountId, role, reason.trim(), RequestCtx.actorId()]);
       return { accountId, role, granted: grant };
     });
   }
