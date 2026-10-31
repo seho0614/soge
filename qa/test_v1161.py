@@ -39,7 +39,7 @@ ok('① D151 — v_terms_current(시행일 지난 최근 · 없으면 가장 이
                         'FUNCTION public.fn_archive_prior_terms()', "AND status IN ('LEGAL_REVIEW','DRAFT');", 'PERFORM public.fn_terms_archive_due();',
                         'CREATE OR REPLACE VIEW public.v_term_not_agreed', 'FROM public.v_terms_current', "('terms.reconsent_before_effective', 'off'",
                         "(sw.early OR t.effective_from <= now()) DESC", 'ON CONFLICT (key) DO NOTHING'))
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((189, 'D151_terms_scheduled'), (190, 'D152_terms_notice')),
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((189, 'D151_terms_scheduled'), (190, 'D152_terms_notice'), (191, 'D153_role_change_reason')),
    f'{len(mig)} · {mig[-1]}')
 
 TS = rd('src/modules/catalog/terms.service.ts'); TC = rd('src/modules/catalog/terms.controller.ts'); CS = rd('src/modules/catalog/compliance.service.ts')

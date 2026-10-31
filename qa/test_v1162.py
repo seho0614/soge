@@ -36,7 +36,7 @@ ok('① D152 — published_at · is_adverse · 알림 종류 TERM_CHANGE_NOTICE(
    all(x in M for x in ('ADD COLUMN IF NOT EXISTS published_at', 'ADD COLUMN IF NOT EXISTS is_adverse', "('TERM_CHANGE_NOTICE', '약관 변경 안내', false,",
                         "('terms.notify_members', 'on',", "('TERMS_EFFECTIVE', '약관 시행일', false,", "('TERMS_NOTICE', '약관 변경 고지 기간', false,", "'terms', 110)",
                         'CREATE OR REPLACE VIEW public.v_open_readiness'))
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((190, 'D152_terms_notice'),), f'{len(mig)} · {mig[-1]}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((190, 'D152_terms_notice'), (191, 'D153_role_change_reason')), f'{len(mig)} · {mig[-1]}')
 TS = rd('src/modules/catalog/terms.service.ts'); DTO = rd('src/modules/catalog/terms.dto.ts'); TC = rd('src/modules/catalog/terms.controller.ts')
 ok('① 서버 — 시행 예정이면 회원 알림(전체 회원 대상 · ACTIVE · 탈퇴 아님 · 설정) · 취소 안내(그 링크로 받은 회원만 · template_code 안 씀) · 불리한 변경 30일(앞 판 있을 때) · 게시한 때 · 응답 notified',
    "throw new PolicyViolation('TERM_ADVERSE_30D'" in TS and 'dto.adverse && now_ &&' in TS and 'published_at = now(), is_adverse = $5' in TS
