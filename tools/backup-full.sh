@@ -21,6 +21,8 @@ avail=$(df -BM --output=avail $HOME | tail -1 | tr -dc 0-9)
 
 T=$(date -u +%Y%m%d_%H%M)
 B=$BK/full_$T
+# Claude 대화 · 기억 폴더 이름은 작업 폴더 경로에서 나옴(/home/sgbdev/sogaebank → -home-sgbdev-sogaebank) — 계정을 바꿔도 맞게(docs/251 1-4)
+CP=$(echo "$HOME/sogaebank" | sed 's#/#-#g')
 mkdir -p $B/repos $B/claude $B/tools
 
 # 1. 저장소 4개
@@ -35,7 +37,7 @@ done
 cp $HOME/sgb-check.sh $HOME/make-kit.sh $HOME/import-kit.sh $HOME/start-claude.sh $HOME/step17.sh $B/tools/
 cp $HOME/sogaebank/sgb-infra/tools/backup-*.sh $B/tools/ 2>/dev/null
 cp $HOME/.claude/CLAUDE.md $HOME/.claude/settings.json $B/claude/
-cp -r $HOME/.claude/projects/-home-sgbdev-sogaebank/memory $B/claude/memory
+cp -r $HOME/.claude/projects/$CP/memory $B/claude/memory
 cp $HOME/sogaebank/CLAUDE.md $B/claude/project-CLAUDE.md
 cd $BK && tar -czf full_$T.tar.gz full_$T && rm -rf full_$T || fail "full 압축"
 
@@ -49,7 +51,7 @@ n=$(tar -tzf $BK/devhome_$T.tar.gz | grep -cE '(^|/)\.env$|\.pem$|\.key$')
 
 # 3. Claude 작업
 W=$(mktemp -d -p $BK); O=$W/claude_work_$T; mkdir -p $O/scratchpad
-SP=$(ls -td /tmp/claude-$(id -u)/-home-sgbdev-sogaebank/*/scratchpad 2>/dev/null | head -1)
+SP=$(ls -td /tmp/claude-$(id -u)/$CP/*/scratchpad 2>/dev/null | head -1)
 [ -n "$SP" ] && find $SP -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' -o -name '*.md' -o -name '*.sql' -o -name '*.txt' -o -name '*.json' \) -size -2M -exec cp {} $O/scratchpad/ \;
 cd $HOME/.claude && tar -cf - --warning=no-file-changed $(ls -d CLAUDE.md settings.json history.jsonl skills file-history plugins projects 2>/dev/null) | tar -xf - -C $O/
 cp $HOME/sogaebank/CLAUDE.md $O/project-CLAUDE.md
