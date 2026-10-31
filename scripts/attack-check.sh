@@ -2660,8 +2660,12 @@ echo "== BZ. 약관 상태 =================================="
 #   검정이 되돌리는 바람에 초안으로 되살아나 푸터에 링크가
 #   다시 붙을 뻔했습니다. 없는 서비스의 약관을 두면 신고 의무가
 #   따라붙습니다.
-eq "BZ-01 위치기반 약관은 폐기 상태" \
-  "SELECT count(*) FROM terms WHERE code='LOCATION' AND status='ARCHIVED';" "1"
+# v10.164 (D154 · decisions/community #17 · 10/31) — 소개광장 동네 인증을 정해 LOCATION 2.0 초안이 생김.
+#   9/18 폐기한 1.0 은 그대로 ARCHIVED · 새 판은 위치기반서비스사업 신고 · 법무 검토 전이라 **게시된 판이 없어야** 함
+#   (신고 · 게시를 마치면 이 검정을 「게시 1」로 바꿈). 다른 검정이 판을 게시하며 초안이 보관으로 바뀔 수 있어 ARCHIVED 수는 세지 않음
+eq "BZ-01 위치기반 약관 1.0 은 폐기 · 게시된 판 없음(신고 전)" \
+  "SELECT (count(*) FILTER (WHERE version='1.0' AND status='ARCHIVED') = 1
+           AND count(*) FILTER (WHERE status='PUBLISHED') = 0)::int FROM terms WHERE code='LOCATION';" "1"
 
 eq "BZ-02 폐기 약관은 푸터에 없음" \
   "SELECT count(*) FROM footer_links f
