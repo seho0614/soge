@@ -4,6 +4,7 @@
 
   ① 코드 — 사용자 웹 /go/admin(운영에서 BO_URL 없으면 503) · precheck · postcheck 의 BO_URL 줄 · 설정 예시 · docs/240 · 판 · 마이그레이션 없음
   ② precheck · postcheck 의 판단(case)을 떼어 가짜 값으로 돌림 — 운영 주소 통과 · localhost · http · 빈 값 · 503
+  ①' docs/241(운영 적용 절차서 · 킷에 있을 때만)
   ③ (점검판) /go/admin 은 그대로 302(개발 BO_URL)
 """
 import os, re, subprocess, urllib.error, urllib.request
@@ -35,6 +36,12 @@ D240 = next((rd('docs/' + f) for f in os.listdir(os.path.join(K, 'docs')) if f.s
 ok('① docs/240 · 판 v10.158 이상 · 마이그레이션 없음(188)', all(x in D240 for x in ('BO_URL', 'postcheck', 'precheck', '503', '하지 말 것'))
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 158) and len(mig) >= 188, f"{rd('VERSION').strip()} · {len(mig)}")
 
+F241 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('241_')), '')
+D241 = rd('docs/' + F241) if F241 else ''
+ok('① docs/241 — 운영 적용 v10.155 → v10.158 · 2 · 188 · 스냅샷 v10-158 · 킷 ~/kits/release · sha256 · BO_URL · 하지 말 것',
+   not F241 or ('v10.158' in F241 and '`적용됨 186 · 새 킷의 파일 188 · 올릴 것 2 · 바뀐 파일 0`' in D241 and '`적용 2 · 기존 186 · 변경감지 0`' in D241
+   and '188 / 188' in D241 and 'sgb-before-v10-158' in D241 and '~/kits/release/' in D241 and '0636f5f12bd5357b422939c6718ef743abb5958c4a07b0fbea6e35dcf2ffcc53' in D241
+   and 'BO_URL' in D241 and 'D150' in D241 and '하지 말 것' in D241), F241 or '(킷에 아직 없음)')
 
 # ── ② 판단 줄을 떼어 돌림 ─────────────────────────────────────────────
 def block(src, start):
