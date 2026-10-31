@@ -38,9 +38,9 @@ ok('① D152 — published_at · is_adverse · 알림 종류 TERM_CHANGE_NOTICE(
                         'CREATE OR REPLACE VIEW public.v_open_readiness'))
    and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((190, 'D152_terms_notice'),), f'{len(mig)} · {mig[-1]}')
 TS = rd('src/modules/catalog/terms.service.ts'); DTO = rd('src/modules/catalog/terms.dto.ts'); TC = rd('src/modules/catalog/terms.controller.ts')
-ok('① 서버 — 시행 예정이면 회원 알림(전체 회원 대상 · ACTIVE · 탈퇴 아님 · 설정) · 취소 안내(받은 회원만) · 불리한 변경 30일(앞 판 있을 때) · 게시한 때 · 응답 notified',
+ok('① 서버 — 시행 예정이면 회원 알림(전체 회원 대상 · ACTIVE · 탈퇴 아님 · 설정) · 취소 안내(그 링크로 받은 회원만 · template_code 안 씀) · 불리한 변경 30일(앞 판 있을 때) · 게시한 때 · 응답 notified',
    "throw new PolicyViolation('TERM_ADVERSE_30D'" in TS and 'dto.adverse && now_ &&' in TS and 'published_at = now(), is_adverse = $5' in TS
-   and "t.audience !== 'ALL'" in TS and "WHERE a.status = 'ACTIVE' AND a.withdrawn_at IS NULL" in TS and "WHERE n.template_code = $1" in TS
+   and "t.audience !== 'ALL'" in TS and "WHERE a.status = 'ACTIVE' AND a.withdrawn_at IS NULL" in TS and "n.link_url = $1::text || '#upcoming-terms'" in TS and "'TERM_CHANGE_NOTICE', NULL," in TS and 'template_code = ' not in TS.split('private async notifyMembers(')[-1][:3000]
    and "'TERM_CHANGE_NOTICE'" in TS and "published_at = NULL, is_adverse = false" in TS and 'notified, remainingBlockers' in TS
    and '@StrictBoolean() adverse?: boolean' in DTO and 'notified?: number' in DTO and 'TERM_ADVERSE_30D' in TC, '')
 PN = rd('web/src/app/admin/TermsPanel.tsx'); EN = rd('src/common/i18n/server-text.en.ts')
@@ -74,9 +74,10 @@ def psql(sql):
     return r.stdout.strip()
 
 
-CODE = 'MARKETING'; NV = '9.5'; SELLER = 'seller@x.com'; TPL = f'TERM:{CODE}:{NV}'
+CODE = 'MARKETING'; NV = '9.5'; SELLER = 'seller@x.com'; LINK = f'/terms?notice={CODE}@{NV}'
 NOTE = '시험 — 제3조 수신 시간을 고침(T1162)'
-nt = lambda tpl: psql(f"SELECT count(*) FROM notifications WHERE template_code = '{tpl}'")
+nt = lambda link: psql(f"SELECT count(*) FROM notifications WHERE event_code = 'TERM_CHANGE_NOTICE' AND link_url = '{link}'")
+NOTICE = LINK + '#upcoming-terms'; CANCEL = LINK + '&cancel=1'
 ready = lambda T: {x['code']: x for x in (call('GET', '/admin/open-readiness', t=T) or []) if isinstance(x, dict)}
 if API and DB:
     t0 = psql(f"SELECT version || '|' || effective_from::text FROM terms WHERE code = '{CODE}' AND status = 'PUBLISHED' ORDER BY effective_from DESC LIMIT 1")
@@ -99,16 +100,16 @@ if API and DB:
             call('PUT', f'/admin/terms/{CODE}', {'version': NV, 'title': title, 'body': body, 'changeNote': NOTE}, T_)
             psql("UPDATE site_settings SET value = 'on' WHERE key = 'terms.notify_members'")
             ra = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NV, 'effectiveFrom': day, 'adverse': True}, T_)
-            ok('② 불리한 변경 + 시행 30일 안 → 422 TERM_ADVERSE_30D(게시 안 됨 · 알림 없음)', ra.get('code') == 'TERM_ADVERSE_30D' and nt(TPL) == '0'
+            ok('② 불리한 변경 + 시행 30일 안 → 422 TERM_ADVERSE_30D(게시 안 됨 · 알림 없음)', ra.get('code') == 'TERM_ADVERSE_30D' and nt(NOTICE) == '0'
                and psql(f"SELECT status FROM terms WHERE code = '{CODE}' AND version = '{NV}'") == 'LEGAL_REVIEW', str(ra)[:100])
 
             r1 = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NV, 'effectiveFrom': day}, T_)
             one = psql(f"SELECT event_code || '|' || title || '|' || link_url || '|' || (body LIKE '%{day}부터 바뀝니다(지금 판 {v0} → {NV})%')::text || '|' || (body LIKE '%{NOTE}%')::text "
-                       f"FROM notifications WHERE template_code = '{TPL}' LIMIT 1")
+                       f"FROM notifications WHERE event_code = 'TERM_CHANGE_NOTICE' AND link_url = '{NOTICE}' LIMIT 1")
             pub = psql(f"SELECT (published_at > now() - interval '5 minutes')::text || '|' || is_adverse::text FROM terms WHERE code = '{CODE}' AND version = '{NV}'")
             ok('② 시행 예정 게시 → 알림 수 = ACTIVE 회원 수(종류 · 제목 · 링크 · 시행일 · 지금 판 → 새 판 · 바뀐 점) · 게시한 때 · 불리한 아님',
-               r1.get('scheduled') is True and str(r1.get('notified')) == n_act == nt(TPL) and n_act not in ('', '0')
-               and one == f'TERM_CHANGE_NOTICE|[약관 변경 안내] {title} {NV}|/terms#upcoming-terms|true|true' and pub == 'true|false',
+               r1.get('scheduled') is True and str(r1.get('notified')) == n_act == nt(NOTICE) and n_act not in ('', '0')
+               and one == f'TERM_CHANGE_NOTICE|[약관 변경 안내] {title} {NV}|{NOTICE}|true|true' and pub == 'true|false',
                f"{r1.get('notified')} / {n_act} · {one[:80]} · {pub}")
             R = ready(T_)
             ok('② 준비 점검 11줄 · TERMS_EFFECTIVE · TERMS_NOTICE 권장 · 고칠 곳 terms · 고지 기간 10일 → 부족 0',
@@ -124,8 +125,8 @@ if API and DB:
             r2 = call('PATCH', f'/admin/terms/{CODE}/unschedule', {'version': NV}, T_)
             cl = psql(f"SELECT (published_at IS NULL)::text || '|' || is_adverse::text FROM terms WHERE code = '{CODE}' AND version = '{NV}'")
             ok('② 예정 취소 → 받은 회원에게 「[약관 변경 취소]」 같은 수 · 게시한 때 비움',
-               r2.get('status') == 'LEGAL_REVIEW' and str(r2.get('notified')) == nt(TPL + ':CANCEL') == n_act and cl == 'true|false'
-               and psql(f"SELECT count(*) FROM notifications WHERE template_code = '{TPL}:CANCEL' AND title LIKE '[약관 변경 취소]%' AND link_url = '/terms'") == n_act,
+               r2.get('status') == 'LEGAL_REVIEW' and str(r2.get('notified')) == nt(CANCEL) == n_act and cl == 'true|false'
+               and psql(f"SELECT count(*) FROM notifications WHERE link_url = '{CANCEL}' AND title LIKE '[약관 변경 취소]%' AND template_code IS NULL") == n_act,
                f"{r2.get('notified')} · {cl}")
 
             rs = call('PATCH', '/admin/site-settings', {'key': 'terms.notify_members', 'value': 'off'}, TA)
@@ -133,7 +134,7 @@ if API and DB:
             r3 = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NV, 'effectiveFrom': day}, T_)
             r4 = call('PATCH', f'/admin/terms/{CODE}/unschedule', {'version': NV}, T_)
             ok('② 회원 알림 off(ADMIN 은 403 TERMS_SETTING_SUPER) → 게시 · 취소 알림 0(그 사이 알림 수 그대로)',
-               rs.get('code') == 'TERMS_SETTING_SUPER' and r3.get('scheduled') is True and r3.get('notified') == 0 and r4.get('notified') == 0 and nt(TPL) == n_act,
+               rs.get('code') == 'TERMS_SETTING_SUPER' and r3.get('scheduled') is True and r3.get('notified') == 0 and r4.get('notified') == 0 and nt(NOTICE) == n_act,
                f"{rs.get('code')} · {r3.get('notified')} · {r4.get('notified')}")
             call('PATCH', '/admin/site-settings', {'key': 'terms.notify_members', 'value': 'on'}, T_)
 
@@ -161,14 +162,14 @@ if API and DB:
                         box.scroll_into_view_if_needed(); pg.screenshot(path=os.path.join(HERE, 'v1162_admin_terms.png'), full_page=False)
                         b_.close()
         finally:
-            psql(f"SET session_replication_role = replica; DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE template_code LIKE 'TERM:{CODE}:{NV}%'); "
-                 f"DELETE FROM notifications WHERE template_code LIKE 'TERM:{CODE}:{NV}%'; "
+            psql(f"SET session_replication_role = replica; DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE link_url LIKE '{LINK}%'); "
+                 f"DELETE FROM notifications WHERE link_url LIKE '{LINK}%'; "
                  f"DELETE FROM term_agreements WHERE term_code = '{CODE}' AND term_version = '{NV}'; DELETE FROM terms WHERE code = '{CODE}' AND version = '{NV}'; "
                  f"UPDATE terms SET status = 'PUBLISHED', effective_from = '{e0}' WHERE code = '{CODE}' AND version = '{v0}'; "
                  f"UPDATE site_settings SET value = '{sw0 or 'on'}' WHERE key = 'terms.notify_members';")
             psql(f"DELETE FROM account_roles WHERE role = 'ADMIN' AND account_id = (SELECT id FROM accounts WHERE email = '{SELLER}');")
         t1 = psql(f"SELECT version || '|' || effective_from::text FROM terms WHERE code = '{CODE}' AND status = 'PUBLISHED' ORDER BY effective_from DESC LIMIT 1")
-        ok('끝 — 되돌림(9.5 · 그 알림 없음 · 앞 판 · 시행일 · 스위치 그대로)', t1 == t0 and nt(TPL) == '0' and nt(TPL + ':CANCEL') == '0'
+        ok('끝 — 되돌림(9.5 · 그 알림 없음 · 앞 판 · 시행일 · 스위치 그대로)', t1 == t0 and nt(NOTICE) == '0' and nt(CANCEL) == '0'
            and psql(f"SELECT count(*) FROM terms WHERE code = '{CODE}' AND version = '{NV}'") == '0', f'{t0} → {t1}')
 else:
     print('  (API · DB 없음 — ② · ③ 건너뜀)')

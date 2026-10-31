@@ -27,9 +27,9 @@ def rd(rel):
 # ── ① 코드 ────────────────────────────────────────────────────────────
 PC = rd('deploy/aws/postcheck.sh')
 blk = PC[PC.find('[10] 이번 판에서 바뀐 것'):PC.find('적용 후 확인 — 통과')]
-ok('① postcheck [10] — 키 칸 · 방식 7개 · 템플릿 · 9줄 · 처리방침 확인 · 오픈일 · 처리방침 판 · 새 초안 · 파일 저장 · 파일 행 지킴',
+ok('① postcheck [10] — 키 칸 · 방식 7개 · 템플릿 · 9줄(v10.162 부터 11줄) · 처리방침 확인 · 오픈일 · 처리방침 판 · 새 초안 · 파일 저장 · 파일 행 지킴',
    blk and "conname = 'ck_integ_secret_name'" in blk and all(k in blk for k in ('identity.provider=STUB', 'alimtalk.provider=NONE', 'esign.provider=STUB', 'safenum.provider=NONE', 'feature.referral_fee=off', 'agent.enabled=off'))
-   and 'alimtalk_templates' in blk and '"9/4"' in blk and "agent.require_privacy" in blk and "service.open_date" in blk
+   and 'alimtalk_templates' in blk and ('"9/4"' in blk or '"11/4"' in blk) and "agent.require_privacy" in blk and "service.open_date" in blk
    and ("ARRAY[1,1]" in blk or 'fn_privacy_ai_ready()' in blk) and "string_to_array(p.version, '.')::int[] < string_to_array(d.version, '.')::int[]" in blk and 'sgb.files_move' in blk, '')
 ok('① [10] 은 읽기만 — UPDATE · INSERT · DELETE · ALTER 없음 · 만든 시각 칸(created_at)을 쓰지 않음',
    blk and not re.search(r'\b(UPDATE|INSERT|DELETE|ALTER|DROP|TRUNCATE)\b', blk) and 'created_at' not in blk, '')
@@ -52,7 +52,7 @@ if DB and blk:
                                  env=dict(os.environ, DATABASE_URL=DB), capture_output=True, text=True, timeout=120)
     r = run(); out = r.stdout
     ok('② [10] 블록 — 오류 없이 끝 · 실패 0', r.returncode == 0 and 'FAIL=0' in out and 'ERROR' not in (r.stderr or ''), out.strip().splitlines()[-1] if out.strip() else r.stderr[:160])
-    ok('② 연동 키 칸 22 · 9줄 · 처리방침 확인 on · 파일 행 지킴 통과', all(x in out for x in ('통과  연동 키 칸 22개', '통과  오픈 준비 점검 9줄 · 꼭 4', '통과  AI 켜기 전 처리방침 확인 = on', '통과  파일 행 지킴')), '')
+    ok('② 연동 키 칸 22 · 11줄(v10.162) · 처리방침 확인 on · 파일 행 지킴 통과', all(x in out for x in ('통과  연동 키 칸 22개', '통과  오픈 준비 점검 11줄 · 꼭 4', '통과  AI 켜기 전 처리방침 확인 = on', '통과  파일 행 지킴')), '')
     ok('② 새 번호 초안 없음 → 통과', '통과  게시된 판보다 새 번호의 약관 초안 없음' in out, '')
     psql = lambda sql: subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True).stdout.strip()
     # 거래 안에서 처리방침 새 번호(9.9) 법무 검토 판을 넣고 같은 조회를 돌림 → 되돌림(ROLLBACK)

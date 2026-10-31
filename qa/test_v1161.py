@@ -224,8 +224,8 @@ if API and DB:
         finally:
             psql(f"SET session_replication_role = replica; DELETE FROM term_agreements WHERE term_code = '{CODE}' AND term_version IN ('{NV}', '{NV2}'); "
                  # v10.162 (D152) — 시행 예정 게시가 만든 「약관 변경 안내」 알림도 지움
-                 f"DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE template_code LIKE 'TERM:{CODE}:9.%'); "
-                 f"DELETE FROM notifications WHERE template_code LIKE 'TERM:{CODE}:9.%'; "
+                 f"DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@9.%'); "
+                 f"DELETE FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@9.%'; "
                  f"DELETE FROM terms WHERE code = '{CODE}' AND version IN ('{NV}', '{NV2}'); "
                  f"UPDATE terms SET status = 'PUBLISHED', effective_from = '{e0}' WHERE code = '{CODE}' AND version = '{v0}'; "
                  f"UPDATE site_settings SET value = '{sw0 or 'off'}' WHERE key = 'terms.reconsent_before_effective';")

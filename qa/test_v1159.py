@@ -166,6 +166,8 @@ if API and DB:
     finally:
         psql(f"DELETE FROM terms WHERE code IN ('PARTNER', 'OUTSOURCE') AND version = '{NEW}' AND status IN ('DRAFT', 'LEGAL_REVIEW')")
         psql(f"SET session_replication_role = replica; DELETE FROM term_agreements WHERE term_code = '{CODE}' AND term_version = '{NEW}'; "
+             f"DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@{NEW}%'); "
+             f"DELETE FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@{NEW}%'; "
              f"DELETE FROM terms WHERE code = '{CODE}' AND version = '{NEW}'; SET sgb.terms_fix = 'on'; "
              + (f"UPDATE terms SET status = 'PUBLISHED', effective_from = '{e0}' WHERE code = '{CODE}' AND version = '{v0}';" if v0 else ''))
     t1 = psql(f"SELECT version || '|' || effective_from::text FROM terms WHERE code = '{CODE}' AND status = 'PUBLISHED' ORDER BY effective_from DESC LIMIT 1")

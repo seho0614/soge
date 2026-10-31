@@ -170,6 +170,9 @@ if API and DB:
             psql(f"UPDATE site_settings SET value = '{v}' WHERE key = '{k}';")
         psql(f"UPDATE terms SET body = replace(body, '{TOK}', '국외 이전') WHERE code = 'PRIVACY'")
         psql(f"DELETE FROM terms WHERE code = '{CODE}' AND version = '9.9'")
+        # v10.162 (D152) — 시행 예정 게시가 만든 「약관 변경 안내」 알림도 지움(점검판 자료)
+        psql(f"DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@9.9%'); "
+             f"DELETE FROM notifications WHERE link_url LIKE '/terms?notice={CODE}@9.9%';")
         if t0:
             v0, _, e0 = t0.split('|')
             psql(f"UPDATE terms SET status = 'PUBLISHED', effective_from = '{e0}' WHERE code = '{CODE}' AND version = '{v0}'")
