@@ -1,10 +1,12 @@
 # 결정 기록 목록
 
+- ads-subscription.md
 - ai-agent.md
 - auto-review.md
 - automation-server-n8n.md
 - business-entity-operating-policy.md
 - community-sogae-gwangjang.md
+- conversation-audit-20261031.md
 - deploy-cicd.md
 - design-standard.md
 - domain-dns.md
@@ -17,6 +19,7 @@
 - multilingual-i18n.md
 - open-blockers.md
 - p2p-individual-access.md
+- partner-affiliate.md
 - partner-center-account-basis.md
 - subscription-referral-code.md
 - super-all-permissions.md
