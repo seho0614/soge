@@ -90,6 +90,11 @@ export class TermsService {
         `미확정 표시 ${holes.length}곳이 남아 있습니다(${holes.slice(0, 3).join(' · ')}${holes.length > 3 ? ' …' : ''}) — 법무 확인 뒤 채운 다음 게시하십시오.`);
     }
     const day = String(dto.effectiveFrom).slice(0, 10);
+    /* v10.161 (D151) — 새 판 시행일은 지금 시행 중인(또는 첫 판으로 예정된) 판보다 뒤. 앞이면 그 날짜가 지난 뒤 옛 판이 다시 「지금 판」이 됨 */
+    const [now_] = await this.db.query<{ version: string; later: boolean; day: string }>(
+      `SELECT version, effective_from >= $3::timestamptz AS later, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day
+         FROM v_terms_current WHERE code = $1 AND version <> $2`, [code, dto.version, dto.effectiveFrom]);
+    if (now_?.later) throw new PolicyViolation('TERM_DATE_BEFORE_CURRENT', `지금 판(${now_.version})의 시행일(${now_.day})보다 뒤의 날짜로 게시하십시오.`);
     /* v10.161 (D151 · docs/246) — 시행 예정 판은 약관마다 하나. 둘이면 어느 글이 언제 시행되는지 회원이 알 수 없음 */
     const [dup] = await this.db.query<{ version: string }>(
       `SELECT version FROM v_terms_upcoming WHERE code = $1 AND version <> $2`, [code, dto.version]);

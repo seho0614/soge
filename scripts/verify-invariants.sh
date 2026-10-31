@@ -439,7 +439,8 @@ else echo "  FAIL OPEN  차단 항목이 ${n}종류뿐"; fail=$((fail+1)); fi
 
 echo "== 약관 발행 흐름 (B-12 법무 회신 반영) =="
 BODY='제1조(목적) 본 약관은 서비스의 이용조건 및 절차에 관한 사항을 정함을 목적으로 합니다. 제2조(정의) 이하 생략.'
-FUT=$($PSQL -t -A -c "SELECT (now() + interval '7 days')::text;")
+# v10.161 (D151) — 새 판 시행일은 지금 판(1.0) 시행일보다 뒤여야 함(점검 자료 1.0 은 2026-11-11 시행 예정일 수 있음)
+FUT=$($PSQL -t -A -c "SELECT (greatest(now(), coalesce((SELECT effective_from FROM terms WHERE code='PRIVACY' AND version='1.0' AND effective_from <> 'infinity'), now())) + interval '7 days')::text;")
 b0=$($PSQL -t -A -c "SELECT count(*) FROM v_open_blockers;")
 
 $PSQL -c "INSERT INTO terms(code,version,title,body,is_required,effective_from,status,display_order)
@@ -464,8 +465,10 @@ else echo "  FAIL TERM  발행이 반영되지 않음 ($b0 → $b1, 상태 $v9)"
 
 # v10.161 (D151) — 시행 예정(시행일 7일 뒤)이면 게시돼 있던 1.0 은 시행일까지 게시 그대로 → 9.9 시행일이 지나면 보관(삭제 아님)
 va=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='1.0';")
-$PSQL -c "UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code='PRIVACY' AND version='9.9'; SELECT fn_terms_archive_due();" >/dev/null 2>&1
-v=$($PSQL -t -A -c "SELECT status FROM terms WHERE code='PRIVACY' AND version='1.0';")
+#   시행일이 지난 것으로는 거래 안에서만(1.0 · 9.9 시행일을 과거로 → 보관 함수 → 1.0 상태 → 되돌림)
+v=$($PSQL -t -A -c "BEGIN" -c "UPDATE terms SET effective_from = now() - interval '2 days' WHERE code='PRIVACY' AND version='1.0' AND status='PUBLISHED'" \
+      -c "UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code='PRIVACY' AND version='9.9'" -c "SELECT fn_terms_archive_due()" \
+      -c "SELECT 'ST=' || status FROM terms WHERE code='PRIVACY' AND version='1.0'" -c "ROLLBACK" 2>/dev/null | sed -n 's/^ST=//p')
 if [ "$v" = "ARCHIVED" ] && { [ "$p0" != "PUBLISHED" ] || [ "$va" = "PUBLISHED" ]; }; then echo "  ok   TERM  이전 버전 자동 보관 (시행일이 지난 뒤 · 삭제 아님 · 게시 판은 시행 예정 동안 그대로)"; pass=$((pass+1));
 else echo "  FAIL TERM  이전 버전 $p0 → 예정 중 $va → 시행 뒤 $v"; fail=$((fail+1)); fi
 

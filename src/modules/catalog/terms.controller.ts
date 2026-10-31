@@ -61,7 +61,7 @@ export class TermsController {
     status: 422, type: ErrorDto,
     description:
       'TERM_BODY_EMPTY 내용 없음 · TERM_EFFECTIVE_DATE_REQUIRED 시행일 없음 · ' +
-      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판 · TERM_SCHEDULED_EXISTS 시행 예정 판이 이미 있음 · TERM_PUBLISHED 이미 게시된 판(v10.161)',
+      'EFFECTIVE_DATE_IN_PAST 과거 날짜 · TERM_HOLES 〔미확정〕 표시가 남음(v10.156) · TERM_ARCHIVED 보관된 판 · TERM_SCHEDULED_EXISTS 시행 예정 판이 이미 있음 · TERM_PUBLISHED 이미 게시된 판 · TERM_DATE_BEFORE_CURRENT 지금 판 시행일보다 앞(v10.161)',
   })
   @Audit('TERM_PUBLISH', 'TERM')
   publish(@Param('code') code: string, @Body() dto: PublishTermDto) {
