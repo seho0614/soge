@@ -36,8 +36,8 @@ CS = rd('src/modules/catalog/compliance.service.ts'); TS = rd('src/modules/catal
 SS = rd('site/src/lib/session.ts'); MW = rd('site/src/middleware.ts'); AP = rd('site/src/app/terms/agree/page.tsx'); AF = rd('site/src/app/terms/agree/AgreeForm.tsx')
 B090 = rd('prisma/migrations/B090_triggers/migration.sql')
 req = CS.split('async required()')[1][:1500] if 'async required()' in CS else ''
-ok('① /terms/required — 게시된 판만 · 판이 같아야 동의 · 옛 판에 동의한 회원은 oldVersion · agreedVersion',
-   "WHERE t.status = 'PUBLISHED'" in req and 'c.agreed AND c.term_version = t.version' in req and '"oldVersion"' in req and '"agreedVersion"' in req, '')
+ok('① /terms/required — 지금 시행 중인 게시 판만(v10.161 v_terms_current) · 판이 같아야 동의 · 옛 판에 동의한 회원은 oldVersion · agreedVersion',
+   "FROM v_terms_current t" in req and 'c.agreed AND c.term_version = t.version' in req and '"oldVersion"' in req and '"agreedVersion"' in req, '')
 ok('① 사용자 웹 — 로그인 뒤 미동의면 동의 화면 · 로그인이 필요한 화면은 middleware 가 동의 화면으로 · 재동의 줄 · 동의 단추',
    "fetch(BASE + '/terms/required'" in SS and 'reconsent: await needsConsent' in SS and "'/terms/agree'" in MW
    and 'data-reconsent-row' in AP and 'data-agree-term' in AF and 'data-agree-submit' in AF, '')
@@ -48,8 +48,8 @@ ok('① (v10.159) 새 판이 is_notice · audience 를 이어받음 · 바뀐 �
    and '@MaxLength(300) changeNote?: string;' in TD and 'change_note AS "changeNote"' in TS and 'data-term-note' in TP and 'data-term-note-warn' in TP
    and 'changeNote: e.note.trim()' in TP and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 159), rd('VERSION').strip())
 pub = TS.split('async publish(')[1][:3000] if 'async publish(' in TS else ''
-ok('① 게시하면 앞 판 보관 · 동의 기록은 고치거나 지우지 못함(trg_term_agr_ro · trg_term_agree_ro)',
-   "SET status = 'ARCHIVED'" in pub and "version <> $2 AND status = 'PUBLISHED'" in pub
+ok('① 게시하면 앞 판 보관(v10.161 — 새 판이 시행된 뒤 fn_terms_archive_due) · 동의 기록은 고치거나 지우지 못함(trg_term_agr_ro · trg_term_agree_ro)',
+   "SELECT fn_terms_archive_due() AS n" in pub
    and 'trg_term_agr_ro BEFORE DELETE OR UPDATE ON public.term_agreements' in B090 and 'trg_term_agree_ro BEFORE DELETE ON public.term_agreements' in B090, '')
 
 
@@ -106,10 +106,18 @@ if API and DB:
         r0 = call('PUT', f'/admin/terms/{CODE}', {'version': NEW, 'title': title, 'body': body, 'changeNote': NOTE}, T_)
         tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
         r1 = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': NEW, 'effectiveFrom': tomorrow}, T_)
+        # v10.161 (D151) — 내일 시행이면 시행 예정: 앞 판은 시행일까지 게시 그대로 · 회원은 재동의 없이 앞 판 기준 · 바뀔 약관 알림
+        sp = state(TM); up = call('GET', '/terms/upcoming')
+        st = psql(f"SELECT string_agg(version || ' ' || status, ' · ' ORDER BY version) FROM terms WHERE code = '{CODE}' AND version IN ('{v0}', '{NEW}')")
+        ok('② 새 판 9.8 저장 · 게시(내일 시행) → 시행 예정 · 앞 판은 게시 그대로 · 회원 재동의 없음 · /terms/upcoming 에 9.8(v10.161)', r0.get('_status') is None and r1.get('status') == 'PUBLISHED'
+           and r1.get('scheduled') is True and st == f'{v0} PUBLISHED · {NEW} PUBLISHED' and sp.get('version') == v0 and sp.get('agreed') is True
+           and any(isinstance(u, dict) and u.get('code') == CODE and u.get('version') == NEW and u.get('currentVersion') == v0 and u.get('changeNote') == NOTE for u in (up if isinstance(up, list) else [])),
+           f'{str(r1)[:80]} · {st} · {sp} · {str(up)[:120]}')
+        # 시행일이 온 것으로(시행일을 1분 전으로) → 매시간 작업과 같은 함수 → 앞 판 보관 · 그때부터 재동의
+        psql(f"UPDATE terms SET effective_from = now() - interval '1 minute' WHERE code = '{CODE}' AND version = '{NEW}'; SELECT fn_terms_archive_due();")
         s1 = state(TM)
         st = psql(f"SELECT string_agg(version || ' ' || status, ' · ' ORDER BY version) FROM terms WHERE code = '{CODE}' AND version IN ('{v0}', '{NEW}')")
-        ok('② 새 판 9.8 저장 · 게시(내일 시행) → 앞 판 보관', r0.get('_status') is None and r1.get('status') == 'PUBLISHED'
-           and st == f'{v0} ARCHIVED · {NEW} PUBLISHED', f'{str(r0)[:80]} · {str(r1)[:80]} · {st}')
+        ok('② 시행일이 지나면 앞 판 보관(fn_terms_archive_due)', st == f'{v0} ARCHIVED · {NEW} PUBLISHED', st)
         ok('② 회원 — 이용약관 「동의 안 함 · 옛 판에 동의함」(oldVersion · agreedVersion=앞 판) · 바뀐 점',
            s1.get('version') == NEW and s1.get('agreed') is False and s1.get('oldVersion') is True and s1.get('agreedVersion') == v0 and s1.get('changeNote') == NOTE, str(s1))
         na = psql(f"SELECT count(*) FROM v_term_not_agreed v JOIN accounts a ON a.id = v.account_id WHERE a.email = '{em}' AND v.code = '{CODE}'")

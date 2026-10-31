@@ -158,10 +158,11 @@ if API and DB:
         row = psql(f"SELECT status || '|' || (body LIKE '%〔시행일〕%')::text || '|' || (body LIKE '%{tomorrow}부터%')::text FROM terms WHERE code = '{CODE}' AND version = '9.9'")
         old = psql(f"SELECT status FROM terms WHERE code = '{CODE}' AND version = '{t0.split('|')[0]}'") if t0 else ''
         aud = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'TERM_PUBLISH' AND occurred_at > now() - interval '5 minutes'")
-        ok('④ 게시 → 9.9 게시 · 본문 〔시행일〕이 날짜로 · 앞 판 보관 · 남은 오픈 차단 수 · 감사 TERM_PUBLISH', r2.get('status') == 'PUBLISHED' and 'remainingBlockers' in r2
-           and row == 'PUBLISHED|false|true' and old == 'ARCHIVED' and aud not in ('', '0'), f'{str(r2)[:80]} · {row} · 앞 판 {old} · 감사 {aud}')
+        # v10.161 (D151) — 시행일이 이틀 뒤라 시행 예정: 앞 판은 시행일까지 게시 그대로(전에는 그 자리에서 보관)
+        ok('④ 게시 → 9.9 시행 예정 · 본문 〔시행일〕이 날짜로 · 앞 판은 시행일까지 게시 그대로(v10.161) · 남은 오픈 차단 수 · 감사 TERM_PUBLISH', r2.get('status') == 'PUBLISHED' and 'remainingBlockers' in r2
+           and (r2.get('scheduled') is True or not t0) and row == 'PUBLISHED|false|true' and (old == 'PUBLISHED' or not t0) and aud not in ('', '0'), f'{str(r2)[:80]} · {row} · 앞 판 {old} · 감사 {aud}')
         r3 = call('PATCH', f'/admin/terms/{CODE}/publish', {'version': t0.split('|')[0], 'effectiveFrom': tomorrow}, T_) if t0 else {}
-        ok('④ 보관된 판 게시 → 422 TERM_ARCHIVED', r3.get('code') == 'TERM_ARCHIVED', str(r3)[:100])
+        ok('④ 이미 게시된 판 다시 게시 → 422 TERM_PUBLISHED(시행일 덮어쓰기 막음 · v10.161)', r3.get('code') == 'TERM_PUBLISHED' or not t0, str(r3)[:100])
     finally:
         for k, v in was.items():
             psql(f"UPDATE site_settings SET value = '{v}' WHERE key = '{k}';")
