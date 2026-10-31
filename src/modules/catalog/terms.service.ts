@@ -34,6 +34,16 @@ export class TermsService {
     const [base] = await this.db.query<{ is_required: boolean; display_order: number }>(
       `SELECT is_required, display_order FROM terms WHERE code = $1 LIMIT 1`, [code]);
     if (!base) throw new NotFound('약관 코드를 찾을 수 없습니다.');
+    /* v10.157 (docs/239 · D150) — 운영 화면 「약관」 › 「고치기」가 부름.
+     *   게시 · 보관된 판은 동의 기록의 근거라 같은 번호로 덮지 않음(전에는 ON CONFLICT 로 덮었음) → 새 번호로만. DB 트리거도 막음 */
+    if (!/^\d{1,3}(\.\d{1,3}){0,2}$/.test(dto.version)) {
+      throw new PolicyViolation('TERM_VERSION', '판 번호는 1.1 처럼 숫자와 점으로 적으십시오.');
+    }
+    const [same] = await this.db.query<{ status: string }>(
+      `SELECT status FROM terms WHERE code = $1 AND version = $2`, [code, dto.version]);
+    if (same && (same.status === 'PUBLISHED' || same.status === 'ARCHIVED')) {
+      throw new PolicyViolation('TERM_LOCKED', `게시되었거나 보관된 판(${dto.version})은 고칠 수 없습니다 — 새 판 번호로 저장하십시오.`);
+    }
 
     const [row] = await this.db.query(
       `INSERT INTO terms (code, version, title, body, is_required,
@@ -45,7 +55,7 @@ export class TermsService {
        RETURNING code, version, status`,
       [code, dto.version, dto.title, dto.body,
        dto.isRequired ?? base.is_required, base.display_order]);
-    return row;
+    return { ...row, holes: TermsService.holes(dto.body).length };
   }
 
   /**

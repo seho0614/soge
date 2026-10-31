@@ -5,6 +5,8 @@
 -- ⚠ append-only 테이블(fee_agreements 등)은 DELETE 트리거가 막으므로
 --   시험용 초기화 동안만 트리거를 끕니다. 운영 DB에서는 절대 사용 금지.
 SET session_replication_role = replica;
+-- v10.157 (D150) — 게시 · 보관된 약관 판의 글은 DB 가 막음. 검정 DB 를 맞추는 아래 약관 UPDATE(1.0 본문 옮기기 · 〔시행일〕 채우기)는 이 연결에서만 풂
+SET sgb.terms_fix = 'on';
 DELETE FROM deal_reviews;      DELETE FROM dispute_messages;   DELETE FROM disputes;
 DELETE FROM settlements;
 DELETE FROM deal_contracts;    DELETE FROM deal_confirmations; DELETE FROM fee_agreements;

@@ -33,11 +33,13 @@ export class TermsController {
     summary: '약관 초안 저장',
     description:
       '**기존 버전을 덮지 않고 새 버전을 만듭니다.** 이미 동의받은 문서를 고치면 ' +
-      '동의 이력의 근거가 사라집니다. 저장만으로는 노출되지 않습니다.',
+      '동의 이력의 근거가 사라집니다. 저장만으로는 노출되지 않습니다. ' +
+      'v10.157 — 같은 번호의 초안 · 법무 검토 판은 고쳐 저장하고, 게시 · 보관된 판 번호는 422 TERM_LOCKED(DB 도 막음 · D150). 응답 holes = 남은 〔미확정〕 수.',
   })
   @ApiParam({ name: 'code', example: 'SERVICE' })
   @ApiOkResponse({ type: TermDetailDto })
   @ApiResponse({ status: 404, description: '약관 코드 없음', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'TERM_LOCKED 게시 · 보관된 판 · TERM_VERSION 판 번호 형식(v10.157)', type: ErrorDto })
   @Audit('TERM_DRAFT', 'TERM')
   draft(@Param('code') code: string, @Body() dto: UpsertTermDto) {
     return this.terms.upsertDraft(code, dto);
