@@ -52,6 +52,17 @@ ok('① 운영 화면 — 불리한 변경 고르기 · 게시에 adverse · 확
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 162), rd('VERSION').strip())
 
 
+# ── ①' docs/249(운영 적용 절차서 · 킷에 있을 때만) · docs/136 체크리스트 ──────────
+F249 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('249_')), '')
+D249 = rd('docs/' + F249) if F249 else ''
+ok("①' docs/249 — 운영 적용 v10.158 → v10.162 · D151 · D152 · 188 → 190 · 스냅샷 v10-162 · 킷 ~/kits/release · sha256 · 준비 점검 11줄 · 하지 말 것",
+   not F249 or ('v10.162' in F249 and '`적용됨 188 · 새 킷의 파일 190 · 올릴 것 2 · 바뀐 파일 0`' in D249 and '`적용 2 · 기존 188 · 변경감지 0`' in D249
+   and '190 / 190' in D249 and 'sgb-before-v10-162' in D249 and '~/kits/release/' in D249 and 'a7c97c482586b4e95b00af5f1540ae7aadde937e857647adadd37b6cc064882a' in D249
+   and 'D152_terms_notice' in D249 and '오픈 준비 점검 11줄 · 꼭 4' in D249 and '하지 말 것' in D249), F249 or '(킷에 아직 없음)')
+D136 = rd('docs/136_오픈직전정리_open-prep_v10.82_20261023.md')
+ok("①' docs/136 오픈 직전 체크리스트 2번 — 운영 화면 게시 · 시행일 = 오픈일 · 7일 · 30일 · 준비 점검 약관 두 줄",
+   not F249 or all(x in D136 for x in ('운영 화면 › 관 관리 › 약관', '**시행일 = 오픈일**', '「약관 시행일」 · 「약관 변경 고지 기간」', 'docs/248')), '')
+
 # ── ② API ─────────────────────────────────────────────────────────────
 def call(m, p, b=None, t=None):
     hd = {'content-type': 'application/json'}
