@@ -46,7 +46,7 @@ ok(f'① 단계 A · B {len(kab)}종도 그대로 사전에', kab and not mab, '
 badp = [k for k, v in D.items() if sorted(re.findall(r'\{\d+\}', k)) != sorted(re.findall(r'\{\d+\}', v))]
 ok(f'① 사전 {len(D)}문장 — 자리 수 같음 · 영어에 한글 없음', len(D) >= 1300 and not badp and not any(re.search('[가-힣]', v.replace('심의필 제2026-0451호', '')) for v in D.values()), ' | '.join(badp[:3]))
 ok('① 판 v10.127 · 마이그레이션 없음(165)', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 127)
-   and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189), rd('VERSION').strip())
+   and len([d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]) in (165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190), rd('VERSION').strip())
 SAMPLES = [   # DbErrorFilter 가 접두어를 떼고 값을 채운 모양
     '이번 달 반려 신청 한도(수신 40건의 15%, 6건)를 넘었습니다',
     '재고가 부족합니다 — VITC-30 (남은 수량 0)',   # 상품 이름은 회원 자료(한국어 그대로)라 코드로

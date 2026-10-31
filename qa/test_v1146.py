@@ -87,7 +87,7 @@ if API and DB:
     try:
         setv('identity.provider', 'STUB'); setv('alimtalk.provider', 'NONE'); setv('notify.email_verified', 'off'); setv('feature.referral_fee', 'off')
         R = rows(); ri = ready_items()
-        ok('② 8줄(v10.150 부터 9 — 오픈일) · 꼭 4 · 권장 4 · 지금 값 · 할 일 · 고칠 곳', len(R) in (8, 9) and sum(1 for x in R.values() if x['required']) == 4
+        ok('② 8줄(v10.150 부터 9 — 오픈일 · v10.162 부터 11 — 약관 2) · 꼭 4 · 권장 4 · 지금 값 · 할 일 · 고칠 곳', len(R) in (8, 9, 11) and sum(1 for x in R.values() if x['required']) == 4
            and all(x.get('nowValue') and x.get('todo') for x in R.values()) and R.get('IDENTITY', {}).get('go') == 'integrations', ' · '.join(R)[:120])
         ok('② 손님 403', call('GET', '/admin/open-readiness', t=BT).get('_err') == 403, '')
         ok('② 꼭 줄 중 안 된 것 = 오픈 차단 READY(본인인증 STUB · 메일 꺼짐 → 2줄)',
@@ -130,7 +130,7 @@ if ADMIN_WEB:
             pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(1500)
             pg.goto(ADMIN_WEB + '/#/checklist', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
             box = pg.locator('[data-open-ready]')
-            ok('③ 오픈 체크리스트 › 「오픈 준비 점검」 8줄 · 꼭 4', box.count() == 1 and box.locator('[data-ready]').count() in (8, 9)
+            ok('③ 오픈 체크리스트 › 「오픈 준비 점검」 8줄 · 꼭 4', box.count() == 1 and box.locator('[data-ready]').count() in (8, 9, 11)
                and box.locator('.pill-danger').count() == 4, box.inner_text()[:120] if box.count() else '없음')
             if box.count(): box.scroll_into_view_if_needed()
             pg.screenshot(path=os.path.join(HERE, 'v1146_open_ready.png'), full_page=False)

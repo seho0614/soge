@@ -39,13 +39,13 @@ ok('① D151 — v_terms_current(시행일 지난 최근 · 없으면 가장 이
                         'FUNCTION public.fn_archive_prior_terms()', "AND status IN ('LEGAL_REVIEW','DRAFT');", 'PERFORM public.fn_terms_archive_due();',
                         'CREATE OR REPLACE VIEW public.v_term_not_agreed', 'FROM public.v_terms_current', "('terms.reconsent_before_effective', 'off'",
                         "(sw.early OR t.effective_from <= now()) DESC", 'ON CONFLICT (key) DO NOTHING'))
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((189, 'D151_terms_scheduled'),),
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and (len(mig), mig[-1]) in ((189, 'D151_terms_scheduled'), (190, 'D152_terms_notice')),
    f'{len(mig)} · {mig[-1]}')
 
 TS = rd('src/modules/catalog/terms.service.ts'); TC = rd('src/modules/catalog/terms.controller.ts'); CS = rd('src/modules/catalog/compliance.service.ts')
 AS = rd('src/modules/identity/auth.service.ts'); AC = rd('src/modules/identity/auth.controller.ts'); SC = rd('src/worker/scheduler.service.ts')
 ADS = rd('src/modules/admin/admin.service.ts'); EN = rd('src/common/i18n/server-text.en.ts')
-pub = TS.split('async publish(')[1][:4000] if 'async publish(' in TS else ''
+pub = TS.split('async publish(')[1][:6000] if 'async publish(' in TS else ''
 ok('① 서버 게시 — 앞 판은 시행된 뒤 보관(fn_terms_archive_due) · scheduled · 예정 판 하나(TERM_SCHEDULED_EXISTS) · 게시 판 다시 게시 막음(TERM_PUBLISHED) · 옛 「바로 보관」 문장 없음',
    'SELECT fn_terms_archive_due() AS n' in pub and 'scheduled: sc.scheduled' in pub and "'TERM_SCHEDULED_EXISTS'" in pub and "'TERM_PUBLISHED'" in pub and "'TERM_DATE_BEFORE_CURRENT'" in pub
    and "version <> $2 AND status = 'PUBLISHED'" not in pub, '')
@@ -223,6 +223,9 @@ if API and DB:
                f'{n} · {st()} · {cur()}')
         finally:
             psql(f"SET session_replication_role = replica; DELETE FROM term_agreements WHERE term_code = '{CODE}' AND term_version IN ('{NV}', '{NV2}'); "
+                 # v10.162 (D152) — 시행 예정 게시가 만든 「약관 변경 안내」 알림도 지움
+                 f"DELETE FROM notification_deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE template_code LIKE 'TERM:{CODE}:9.%'); "
+                 f"DELETE FROM notifications WHERE template_code LIKE 'TERM:{CODE}:9.%'; "
                  f"DELETE FROM terms WHERE code = '{CODE}' AND version IN ('{NV}', '{NV2}'); "
                  f"UPDATE terms SET status = 'PUBLISHED', effective_from = '{e0}' WHERE code = '{CODE}' AND version = '{v0}'; "
                  f"UPDATE site_settings SET value = '{sw0 or 'off'}' WHERE key = 'terms.reconsent_before_effective';")

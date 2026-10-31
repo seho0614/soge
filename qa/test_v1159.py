@@ -47,7 +47,7 @@ ok('① (v10.159) 새 판이 is_notice · audience 를 이어받음 · 바뀐 �
    'SELECT is_required, display_order, is_notice, audience FROM terms' in up and 'is_notice, audience, change_note)' in up and 'dto.changeNote?.trim() || null' in up
    and '@MaxLength(300) changeNote?: string;' in TD and 'change_note AS "changeNote"' in TS and 'data-term-note' in TP and 'data-term-note-warn' in TP
    and 'changeNote: e.note.trim()' in TP and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 159), rd('VERSION').strip())
-pub = TS.split('async publish(')[1][:3000] if 'async publish(' in TS else ''
+pub = TS.split('async publish(')[1][:6000] if 'async publish(' in TS else ''
 ok('① 게시하면 앞 판 보관(v10.161 — 새 판이 시행된 뒤 fn_terms_archive_due) · 동의 기록은 고치거나 지우지 못함(trg_term_agr_ro · trg_term_agree_ro)',
    "SELECT fn_terms_archive_due() AS n" in pub
    and 'trg_term_agr_ro BEFORE DELETE OR UPDATE ON public.term_agreements' in B090 and 'trg_term_agree_ro BEFORE DELETE ON public.term_agreements' in B090, '')

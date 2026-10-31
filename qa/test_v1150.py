@@ -99,7 +99,7 @@ if API and DB:
         ok('② 형식 오류 400 · 손님 403', call('PUT', '/admin/open-date', {'date': '12/15'}, T_).get('_err') == 400
            and call('PUT', '/admin/open-date', {'date': od.isoformat()}, BT).get('_err') == 403 and call('GET', '/admin/open-date', t=BT).get('_err') == 403, '')
         R = {x['code']: x for x in call('GET', '/admin/open-readiness', t=T_)}
-        ok('② 준비 점검 9줄 · 오픈일 줄 권장 · 됨 · 오픈 차단 수 그대로', len(R) == 9 and R['OPEN_DATE']['required'] is False and R['OPEN_DATE']['ok']
+        ok('② 준비 점검 9줄 · 오픈일 줄 권장 · 됨 · 오픈 차단 수 그대로', len(R) in (9, 11) and R['OPEN_DATE']['required'] is False and R['OPEN_DATE']['ok']
            and od.isoformat() in R['OPEN_DATE']['nowValue'] and psql("SELECT count(*) FROM v_open_blockers") == blk0, R.get('OPEN_DATE', {}).get('nowValue', ''))
         ok('② 감사 기록 OPEN_DATE_SET', psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'OPEN_DATE_SET' AND occurred_at > now() - interval '5 minutes'") not in ('', '0'), '')
         pe = psql("SELECT value FROM site_settings WHERE key = 'request.view.limit_from'")
@@ -126,7 +126,7 @@ if ADMIN_WEB:
             box = pg.locator('[data-open-date]')
             ok('③ 오픈 체크리스트 › 「오픈일」 칸 · 날짜 · 저장 · 준비 점검 9줄 · 파일 저장 위치',
                box.count() == 1 and box.locator('[data-open-date-input]').count() == 1 and box.locator('[data-open-date-save]').count() == 1
-               and pg.locator('[data-open-ready] [data-ready]').count() == 9 and pg.locator('[data-storage]').count() == 1,
+               and pg.locator('[data-open-ready] [data-ready]').count() in (9, 11) and pg.locator('[data-storage]').count() == 1,
                box.inner_text()[:120] if box.count() else '없음')
             if box.count(): box.scroll_into_view_if_needed()
             pg.screenshot(path=os.path.join(HERE, 'v1150_open_date.png'), full_page=False)
