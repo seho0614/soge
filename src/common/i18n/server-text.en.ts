@@ -885,6 +885,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "월 노출료를 0보다 크게 적어 주십시오.": "Please enter a monthly listing fee greater than 0.",
   "위험 경보 기록은 삭제할 수 없습니다": "Risk alert records cannot be deleted",
   "위험 경보의 내용은 변경할 수 없습니다 (처리 상태만 바뀝니다)": "The content of a risk alert cannot be changed (only its handling status changes)",
+  "위치정보 이용 확인 기록은 수정·삭제할 수 없습니다": "Location information use records cannot be edited or deleted",
   "유료 구독이 유지 중입니다. {0} 갱신 시 청구가 실패하며, 결제 수단을 다시 등록하지 않으면 구독이 만료됩니다.": "Your paid subscription continues. Billing at renewal on {0} will fail, and the subscription will expire unless you register a payment method again.",
   "유료 요금제는 결제 후 적용됩니다.": "Paid plans take effect after payment.",
   "유료직업소개사업 등록 대상 업종은 승인할 수 없습니다 ({0})": "Categories subject to fee-charging job placement registration cannot be approved ({0})",
