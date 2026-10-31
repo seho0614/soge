@@ -70,6 +70,14 @@ want = {'운영 .env': (1, '막음'), '운영 .env (따옴표 · 띄어쓰기)':
         '운영 + SGB_TERMS_SCRIPT_OK=yes': (1, '지나감'), '개발 .env': (1, '지나감'), '.env 없음': (1, '지나감')}
 ok('② 운영이면 막음 · SGB_TERMS_SCRIPT_OK=yes · 개발 · .env 없음은 지나감(DATABASE_URL 줄에서 멈춤)', got == want, str(got))
 
+# ── ①' docs/245(운영 적용 절차서 · 킷에 있을 때만) ───────────────────────
+F245 = next((f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('245_')), '')
+D245 = rd('docs/' + F245) if F245 else ''
+ok("①' docs/245 — 운영 적용 v10.158 → v10.160 · 마이그레이션 없음 · 188 · 스냅샷 v10-160 · 킷 ~/kits/release · sha256 · 하지 말 것",
+   not F245 or ('v10.160' in F245 and '`적용됨 188 · 새 킷의 파일 188 · 올릴 것 0 · 바뀐 파일 0`' in D245 and '`적용 0 · 기존 188 · 변경감지 0`' in D245
+   and '188 / 188' in D245 and 'sgb-before-v10-160' in D245 and '~/kits/release/' in D245 and '70f7e2bc6c2b6bd86d47382a3f26bbda4dcfbcaa52bd8ead0b15ae41afde9557' in D245
+   and 'SGB_TERMS_SCRIPT_OK=yes' in D245 and '하지 말 것' in D245), F245 or '(킷에 아직 없음)')
+
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
 raise SystemExit(0 if passed == len(RES) else 1)
