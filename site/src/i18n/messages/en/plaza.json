@@ -493,5 +493,23 @@
     "translate": "Translate",
     "busy": "Translating…",
     "fail": "Could not translate. Please try again later."
+  },
+  "town": {
+    "title": "Neighborhood check",
+    "help": "Confirm once with your phone location and your posts get a “verified” neighborhood tag (30 days).",
+    "privacy": "Your location (coordinates) is used once to find the neighborhood and is not stored — only the neighborhood name is kept.",
+    "go": "Verify my neighborhood",
+    "again": "Verify again",
+    "busy": "Checking…",
+    "login": "Log in to verify",
+    "terms": "Location-based service terms",
+    "mine": "{town} verified · until {date}",
+    "done": "Verified as {town}.",
+    "noGeo": "This browser does not provide location.",
+    "denied": "Allow location access to verify.",
+    "fail": "Could not confirm your neighborhood.",
+    "needConsent": "Agree to the location-based service terms first.",
+    "badge": "{town} verified",
+    "badgeTip": "Neighborhood verified (within 30 days)"
   }
 }

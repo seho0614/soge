@@ -3010,7 +3010,11 @@
    "nav": "root",
    "apis": [
     "GET /community/posts",
-    "GET /community/board"
+    "GET /community/board",
+    "GET /community/town/config",
+    "GET /me/town",
+    "POST /me/town/verify",
+    "DELETE /me/town"
    ]
   },
   {

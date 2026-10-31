@@ -4,6 +4,8 @@ import { apiGetPersonal, ApiFailure } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
 import { isBoard, type PostRow } from '@/components/community/types';
 import { BoardBadge, Pager, PlazaHero, PlazaTabs, PLAZA_TABS, dot, plazaHref } from '@/components/community/Plaza';
+import { TownBadge, TownVerify } from '@/components/community/TownVerify';
+import { me } from '@/lib/session';
 import '@/styles/plaza.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,6 +53,7 @@ export default async function CommunityPage({ searchParams }: {
       <div className="plz-body">
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
+        <TownVerify loggedIn={!!(await me())} />
         {q && b && (
           <p className="plz-found" role="status">
             {t.rich('list.found', { b: (c) => <b>{c}</b>, q, n: b.total.toLocaleString('ko-KR'), clear: (c) => <Link href={plazaHref({ board: cur })}>{c}</Link> })}
@@ -81,7 +84,7 @@ export default async function CommunityPage({ searchParams }: {
                       {p.pendingMine && <span className="state state-suspended">{t('pendingMine')}</span>}
                     </td>
                     <td><BoardBadge board={p.board} /></td>
-                    <td>{p.author}</td>
+                    <td>{p.author} <TownBadge town={p.authorTown} /></td>
                     <td>{dot(p.createdAt)}</td>
                     <td>{p.views.toLocaleString('ko-KR')}</td>
                   </tr>

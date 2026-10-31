@@ -84,3 +84,18 @@ export async function searchKeyword(key: string | null | undefined, keyword: str
   })).filter((p) => /^\d{1,20}$/.test(p.kakaoId) && p.name && Number.isFinite(p.lat) && inKorea(p.lat, p.lng));
   return { ok: true, places };
 }
+
+/** v10.164 (D154 · docs/253) — 좌표 → 행정동(소개광장 동네 인증). GET {base}/v2/local/geo/coord2regioncode.json?x=경도&y=위도
+ *  응답 documents 중 region_type 'H'(행정동)의 code(10자리) · address_name 만 돌려줌 — 좌표는 돌려주지 않고 어디에도 남기지 않음 */
+export type GeoRegion = { ok: true; code: string; name: string } | GeoFail;
+export async function coordToRegion(key: string | null | undefined, lat: number, lng: number, fetchFn?: FetchLike): Promise<GeoRegion> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inKorea(lat, lng)) return { ok: false, kind: 'NOT_FOUND', detail: '한국 밖 좌표' };
+  const r = await call(key, '/v2/local/geo/coord2regioncode.json', { x: String(lng), y: String(lat) }, fetchFn);
+  if (r.fail) return r.fail;
+  const docs = (getPath(r.body, 'documents') ?? []) as Record<string, string>[];
+  const h = docs.find((d) => d.region_type === 'H');
+  const code = h ? String(h.code ?? '') : '';
+  const name = h ? String(h.address_name ?? '').trim().slice(0, 80) : '';
+  if (!/^\d{10}$/.test(code) || name.length < 2) return { ok: false, kind: 'NOT_FOUND' };
+  return { ok: true, code, name };
+}

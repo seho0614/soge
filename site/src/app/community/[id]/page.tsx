@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { apiGetPersonal, ApiFailure } from '@/lib/api';
 import { getTranslations } from 'next-intl/server';
 import { me } from '@/lib/session';
+import { TownBadge } from '@/components/community/TownVerify';   // v10.164 (D154)
 import { Msgs } from '@/i18n/Msgs';
 import { TranslateButton } from '@/components/community/TranslateButton';
 import { type PostDetail, type PostComment } from '@/components/community/types';
@@ -121,7 +122,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
           <BoardBadge board={d.board} />
           <h1>{d.title}</h1>
           <p className="plz-meta">
-            <span>{d.author}</span><span>{dot(d.createdAt)}</span><span>{t('post.views', { n: (d.views ?? 0).toLocaleString('ko-KR') })}</span>
+            <span>{d.author} <TownBadge town={d.authorTown} /></span><span>{dot(d.createdAt)}</span><span>{t('post.views', { n: (d.views ?? 0).toLocaleString('ko-KR') })}</span>
             {d.state === 'PENDING' && <span className="state state-suspended">{t('pendingMine')}</span>}
             {d.state === 'HIDDEN' && <span className="state state-rejected">{t('post.hidden')}</span>}
           </p>

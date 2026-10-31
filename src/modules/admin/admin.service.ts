@@ -291,6 +291,10 @@ export class AdminService {
     if (key.startsWith('terms.') && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('TERMS_SETTING_SUPER', '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.164 (D154) — 동네 인증(휴대폰 위치)은 위치기반서비스사업 신고 · 약관 게시 뒤에만 켬 — SUPER 만 */
+    if (key === 'community.town_verify' && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('TOWN_SETTING_SUPER', '동네 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */

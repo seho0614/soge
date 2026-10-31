@@ -12,6 +12,7 @@ export const WRITABLE = ['REVIEW', 'TRADE', 'QNA'] as const;
 export interface PostRow {
   id: string; board: string; title: string; state: string; views: number;
   commentCount: number; isPinned: boolean; createdAt: string; author: string; pendingMine: boolean;
+  /** v10.164 (D154) — 쓴 사람의 동네 인증(행정동 끝 낱말 · 만료 전만) */ authorTown?: string | null;
 }
 
 export interface PostComment {
@@ -27,7 +28,7 @@ export interface PostDetail {
   ok: boolean; note?: string;
   id?: string; board?: string; title?: string; body?: string; state?: string; views?: number;
   classifiedBy?: string | null; classifyTerms?: string[] | null; hiddenReason?: string | null;
-  createdAt?: string; author?: string; mine?: boolean;
+  createdAt?: string; author?: string; mine?: boolean; authorTown?: string | null;
   hidden?: boolean; pending?: boolean; deleted?: boolean;
   comments?: PostComment[];
   /** v10.105 (3-3) — 기계 번역이 얹힘 · 「번역 보기」를 보여 줄지 */

@@ -57,6 +57,7 @@ export class CommunityService {
   constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly board3: BoardTranslateService) {}
   private get me() { return RequestCtx.actorId(); }
 
+  /* v10.164 (D154) — authorTown: 쓴 사람이 동네 인증(만료 전)을 했으면 행정동 이름의 끝 낱말(예: 역삼1동)만 · 시 · 구 · 좌표는 내보내지 않음 */
   async posts(board?: string, limit?: number) {
     const n = Math.min(Math.max(Number(limit) || 20, 1), 50);
     /* ★ 검수 대기 글은 **작성자 본인에게만** 보입니다.
@@ -67,6 +68,7 @@ export class CommunityService {
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (SELECT (regexp_match(t.adm_name, '(\\S+)$'))[1] FROM v_member_town_current t WHERE t.account_id = p.author_id) AS "authorTown",
               (p.state = 'PENDING') AS "pendingMine",
               (p.author_id = $2::uuid) AS _mine
          FROM posts p
@@ -117,6 +119,7 @@ export class CommunityService {
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (SELECT (regexp_match(t.adm_name, '(\\S+)$'))[1] FROM v_member_town_current t WHERE t.account_id = p.author_id) AS "authorTown",
               (p.state = 'PENDING') AS "pendingMine",
               (p.author_id = $2::uuid) AS _mine
          FROM posts p
@@ -139,6 +142,7 @@ export class CommunityService {
               a.name AS _name,
               EXISTS (SELECT 1 FROM account_roles ar
                        WHERE ar.account_id = a.id AND ar.role IN ('ADMIN','SUPER')) AS _staff,
+              (SELECT (regexp_match(t.adm_name, '(\\S+)$'))[1] FROM v_member_town_current t WHERE t.account_id = p.author_id) AS "authorTown",
               (p.author_id = $2::uuid) AS mine
          FROM posts p
          LEFT JOIN accounts a ON a.id = p.author_id
