@@ -106,7 +106,7 @@ if API and DB:
         c2 = call('GET', '/health/order-config')
         oid = psql(f"SELECT id || '|' || total FROM hlt_orders WHERE order_no = '{a1.get('orderNo')}'")
         o_id, tot = (oid.split('|') + ['0'])[:2]
-        psql(f"INSERT INTO hlt_payments (order_id, method, amount, state, approved_at, stub) VALUES ('{o_id}', 'CARD', {tot}, 'PAID', now(), true)")
+        psql(f"INSERT INTO hlt_payments (order_id, method, amount, state, approved_at, stub, payment_key) VALUES ('{o_id}', 'CARD', {tot}, 'PAID', now(), true, 'STUB-T1170-' || md5(random()::text))")
         w1 = call('GET', '/admin/launch-watch', t=T_)
         ok('② on 되돌림 · 시험 결제(stub) 결제 완료 주문 → 지켜보기 「시험 결제 주문」 · 목록 · 경고', c2.get('open') is True and int(w1.get('stubPaidOrders') or 0) >= 1
            and any(x.get('orderNo') == a1.get('orderNo') for x in w1.get('stubOrders') or []) and w1.get('warn'), f"{c2} · {w1.get('stubPaidOrders')}")
