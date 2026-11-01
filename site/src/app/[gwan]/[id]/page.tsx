@@ -20,6 +20,8 @@ import { Msgs } from '@/i18n/Msgs';
 import { getFmt } from '@/lib/getFmt';
 import { isGwanKey } from '@/i18n/keys';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
+import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
+import { siteOrigin } from '@/components/refcode/origin';
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -34,9 +36,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!item) return {};
   const t = await getTranslations('detail.meta');
   const f = await getFmt();
+  const desc = t('desc', { cat: item.categoryName, fee: f.won(item.desiredFee) });
+  /* v10.175 (docs/270) — 대표 주소(같은 매물이 ?ref= 등 여러 주소로 잡히지 않게) · 공유 미리보기 사진 · 공개 안 된 매물은 검색에 싣지 않음 */
   return {
     title: item.title,
-    description: t('desc', { cat: item.categoryName, fee: f.won(item.desiredFee) }),
+    description: desc,
+    alternates: { canonical: `/${gwan}/${id}` },
+    openGraph: { type: 'article', title: item.title, description: desc, ...(item.mediaUrls?.[0] ? { images: [item.mediaUrls[0]] } : {}) },
+    ...(item.status !== 'PUBLISHED' ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
@@ -101,8 +108,11 @@ export default async function DetailPage({ params }: Props) {
     : g.precision === 'REGION' ? { precision: 'REGION', lat: g.lat, lng: g.lng, radiusM: g.radiusM, label: g.label }
     : { precision: 'EXACT', lat: g.lat as number, lng: g.lng as number };
 
+  const [origin, tm] = await Promise.all([siteOrigin(), getTranslations('meta')]);
+
   return (
     <><Msgs ns={['detail']}><div className="gw" data-gw={code}>
+      {item.status === 'PUBLISHED' && <JsonLd data={breadcrumbLd(origin, [{ name: tm('title'), path: '/' }, { name: gwanName ?? gwan, path: `/${gwan}` }, { name: item.title, path: `/${gwan}/${id}` }])} />}
       <div className="gw-wrap" style={{ paddingTop: 16 }}>
         <BackBar href={`/${gwan}`} label={gwanName ?? t('list')} wrap={false} />
         <SearchBox variant="gwan" gwanCode={code === 'HLT' ? 'HLT' : (code as 'MNY' | 'MAL' | 'BIZ')} blue aside={<EarnPromo />} />

@@ -182,6 +182,13 @@ const RULES: Array<{ test: RegExp; map: (m: RegExpMatchArray) => Mapped }> = [
     map: (m) => ({ status: 400, code: 'VALIDATION_ERROR',
       message: `형식이 올바르지 않습니다 (${m[1]}).` }),
   },
+  {
+    /* v10.175 — 주소 · 검색어 · 본문에 빈 글자(%00 · \u0000)가 섞이면 PostgreSQL 이 받지 않습니다.
+     * 500 으로 나가면 로봇이 두드릴 때 「서버 오류 몰림 알림」(v10.174)이 헛울립니다 — 요청 형식 오류로 돌려줍니다. */
+    test: /invalid byte sequence for encoding "UTF8": 0x00|unsupported Unicode escape sequence/,
+    map: () => ({ status: 400, code: 'VALIDATION_ERROR',
+      message: '형식이 올바르지 않습니다 (0x00).' }),
+  },
 ];
 
 /**

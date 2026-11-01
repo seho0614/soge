@@ -12,6 +12,8 @@ import { RETURN_SHIP_ROUND_TRIP, RETURN_WINDOW_DAYS } from '@/components/health/
 import { QnaPanel, ReviewsPanel, stars } from '@/components/health/ReviewPanels';
 import { me } from '@/lib/session';
 import { getFmt } from '@/lib/getFmt';
+import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
+import { siteOrigin } from '@/components/refcode/origin';
 
 type Props = { params: Promise<{ code: string }>; searchParams?: Promise<{ tab?: string; rating?: string }> };
 
@@ -20,7 +22,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await apiGet<HltProductDetail>(`/health/products/${encodeURIComponent(decodeURIComponent(code))}`, 30)
     .catch(() => null);
   const t = await getTranslations('hlt');
-  return { title: t('meta.title', { title: p?.name ?? t('product.title') }) };
+  const title = t('meta.title', { title: p?.name ?? t('product.title') });
+  if (!p) return { title };
+  /* v10.175 (docs/270) — 대표 주소 · 공유 미리보기(상품 그림이 있으면) */
+  return {
+    title,
+    ...(p.summary ? { description: p.summary } : {}),
+    alternates: { canonical: `/health/p/${encodeURIComponent(p.code)}` },
+    openGraph: { title: p.name, ...(p.summary ? { description: p.summary } : {}), ...(p.imageUrl ? { images: [p.imageUrl] } : {}) },
+  };
 }
 
 /**
@@ -65,9 +75,22 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   const same = (p.sameIngredient ?? []).slice(0, 4);
   const days = p.withdrawalDays ?? RETURN_WINDOW_DAYS;
   const seller = p.sellerType === 'DIRECT' || !p.sellerType;
+  /* v10.175 (docs/270) — 검색 결과용 상품 정보. 가격 · 재고(offers)는 소개몰 「주문 받기」가 켜져 있을 때만(꺼져 있는데 「구매 가능」으로 싣지 않음) */
+  const [origin, st] = await Promise.all([siteOrigin(), apiGet<Record<string, string | null>>('/site-settings/public', 300).catch(() => ({} as Record<string, string | null>))]);
+  const path = `/health/p/${encodeURIComponent(p.code)}`;
+  const avg = p.ratingAvg != null ? Number(p.ratingAvg) : null;
+  const productLd: Record<string, unknown> = {
+    '@context': 'https://schema.org', '@type': 'Product', name: p.name, sku: p.code, url: `${origin}${path}`,
+    ...(p.summary ? { description: p.summary } : {}),
+    ...(p.imageUrl ? { image: [p.imageUrl.startsWith('/') ? `${origin}${p.imageUrl}` : p.imageUrl] } : {}),
+    ...(p.category ? { category: p.category } : {}),
+    ...(st['mall.order_open'] === 'on' ? { offers: { '@type': 'Offer', url: `${origin}${path}`, priceCurrency: 'KRW', price: p.price,
+      availability: p.soldOut || p.stock <= 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' } } : {}),
+    ...((p.reviewCount ?? 0) > 0 && avg != null && avg > 0 ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: avg, reviewCount: p.reviewCount } } : {}),
+  };
 
   return (
-    <><div className="hlt" data-screen="SB-HLT-PRD-010">
+    <><JsonLd data={productLd} /><JsonLd data={breadcrumbLd(origin, [{ name: tc('mall'), path: '/health' }, { name: p.name, path }])} /><div className="hlt" data-screen="SB-HLT-PRD-010">
       <HltNav back="/health" />
       <Crumb items={[
         ing ? { href: `/health/i/${encodeURIComponent(ing.code)}`, label: ing.name } : { href: '/health/c/ALL', label: tc('allProducts') },

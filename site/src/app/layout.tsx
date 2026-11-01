@@ -33,7 +33,10 @@ import '@/styles/ai-chat.css';   // v10.110 사이트 공통 AI 상담(docs/171)
 
 /* v10.95 — 제목 · 설명도 사전에서(한국어는 전과 같음) */
 export async function generateMetadata(): Promise<Metadata> {
-  const [t, locale] = await Promise.all([getTranslations('meta'), getLocale()]);
+  const [t, locale, st] = await Promise.all([getTranslations('meta'), getLocale(),
+    apiGet<Record<string, string | null>>('/site-settings/public', 300).catch(() => ({} as Record<string, string | null>))]);
+  /* v10.175 (D164 · docs/270) — 검색 사이트 소유 확인(HTML 태그 방식) · 운영 화면 설정 seo.verify_google · seo.verify_naver · 빈 값이면 태그 없음 */
+  const vg = st['seo.verify_google'] || undefined, vn = st['seo.verify_naver'] || undefined;
   return {
     title: { default: t('title'), template: `%s · ${t('title')}` },
     /* 2026-10-21 — B2B → P2P(10/13 결정 · 개인 회원도 모든 업무) */
@@ -42,6 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.SITE_ORIGIN || 'https://sogaebank.com'),
     openGraph: { type: 'website', siteName: t('title'), title: t('title'), description: t('description'), locale: locale === 'ko' ? 'ko_KR' : 'en_US' },
     twitter: { card: 'summary_large_image', title: t('title'), description: t('description') },
+    verification: { google: vg, other: vn ? { 'naver-site-verification': vn } : undefined },
   };
 }
 
