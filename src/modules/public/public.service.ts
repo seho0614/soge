@@ -88,14 +88,17 @@ export class PublicService {
 
   /**
    * v10.174 (docs/268) — 사이트 지도(sitemap.xml)에 넣을 공개 주소 재료. 누구나 볼 수 있는 것만:
-   *   매물 PUBLISHED(소개장터 · 소개몰 · 사업자관 — /[관]/[id]) · 소개광장 글 PUBLISHED(동네 맛집 FOOD 빼고) · 소개몰 상품 ON_SALE.
+   *   매물 PUBLISHED(켜진 관 · 소개몰 HLT 제외 — /[관]/[id]) · 소개광장 글 PUBLISHED(동네 맛집 FOOD 빼고) · 소개몰 상품 ON_SALE.
    *   제목 · 본문 · 작성자는 내보내지 않음(주소와 바뀐 시각만) · 갈래마다 최근 바뀐 순 5,000개까지.
    */
   async sitemapEntries() {
     const [listings, posts, products] = await Promise.all([
       this.db.query<{ id: string; gwan: string; at: Date }>(
-        `SELECT id, gwan_code AS gwan, updated_at AS at FROM listings
-          WHERE status = 'PUBLISHED' AND gwan_code IN ('MNY', 'MAL', 'BIZ') ORDER BY updated_at DESC LIMIT 5000`),
+        /* 관 코드는 박지 않고 gwans 에서(검정 ⑫) — 켜진 관 중 허브 제외 · 소개몰(HLT)은 매물 상세 화면이 없어 뺌 */
+        `SELECT l.id, l.gwan_code AS gwan, l.updated_at AS at FROM listings l
+          WHERE l.status = 'PUBLISHED' AND l.gwan_code <> 'HLT'
+            AND l.gwan_code IN (SELECT code FROM gwans WHERE is_active AND NOT is_hub)
+          ORDER BY l.updated_at DESC LIMIT 5000`),
       this.db.query<{ id: string; at: Date }>(
         `SELECT id, updated_at AS at FROM posts WHERE state = 'PUBLISHED' AND board <> 'FOOD' ORDER BY updated_at DESC LIMIT 5000`),
       this.db.query<{ code: string; at: Date }>(
