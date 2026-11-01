@@ -6,7 +6,7 @@
   ① 코드 — D163(ops.server_error_per_10min ADMIN · 지우는 문장 없음 · 201) · 5xx 세기 · 필터 · 실행기 알림 · 지켜보기 칸 · sitemap-entries ·
      robots · sitemap · 오류 화면 2 · 미리보기 그림 · 아이콘 · layout openGraph · 사전 ko · en · 명세 · docs/268 · 판
   ② (API) sitemap-entries — 공개 매물(켜진 관 · HLT 제외 · PUBLISHED)만 · 글(PUBLISHED · FOOD 아님)만 · 판매 중 상품만 · 제목 · 본문 없음
-  ③ (API) 서버 오류 5xx 를 기준 수만큼 → launch_watch → 운영 알림 SERVER_ERROR_SPIKE · 지켜보기 serverErrorsHour · 기준 되돌림
+  ③ (API) 서버 오류 5xx 를 기준 수만큼(점검판 DB 표 이름을 잠깐 바꿔 일으킴 · 곧바로 되돌림) → launch_watch → 운영 알림 SERVER_ERROR_SPIKE · 지켜보기 serverErrorsHour · 기준 되돌림
   ④ (사용자 웹) /robots.txt · /sitemap.xml · og:image 그림 · 아이콘
 """
 import json, os, re, subprocess, urllib.error, urllib.parse, urllib.request
@@ -102,11 +102,15 @@ if API and DB:
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
     old = psql("SELECT value FROM site_settings WHERE key = 'ops.server_error_per_10min'") or '20'
     psql("UPDATE site_settings SET value = '3' WHERE key = 'ops.server_error_per_10min'")
+    # v10.175 — 빈 글자(%00)는 이제 400 이라 서버 오류를 일으키지 못합니다. 점검판 DB 의 표 이름을 잠깐 바꿔 sitemap-entries 를 500 으로 만들고 곧바로 되돌립니다.
     trig = None
-    for p in ('/health/products/%00', '/gwans/%00', '/community/posts/%00', '/listings/%00'):
-        if call('GET', p).get('_err') == 500: trig = p; break
-    if trig:
-        for _ in range(3): call('GET', trig)
+    psql("ALTER TABLE hlt_products RENAME TO hlt_products_t1174")
+    try:
+        if call('GET', '/site/sitemap-entries').get('_err') == 500:
+            trig = '/site/sitemap-entries'
+            for _ in range(2): call('GET', trig)
+    finally:
+        psql("ALTER TABLE hlt_products_t1174 RENAME TO hlt_products")
     j = call('POST', '/admin/jobs', {'job': 'launch_watch'}, T_)
     n10 = (j.get('detail') or {}).get('serverErrors10m', -1)
     al = psql("SELECT count(*) FROM ops_alerts WHERE alert_code = 'SERVER_ERROR_SPIKE' AND raised_at > now() - interval '1 hour'")
