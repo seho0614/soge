@@ -58,3 +58,7 @@ export function sellerShipFee(seller: { type: string; ship_fee?: number | string
   if (over != null && goods >= over) return 0;
   return Math.max(0, Number(seller.ship_fee ?? 0));
 }
+
+/** v10.170 (D159 · docs/262) — 소개몰 「주문 받기」 스위치(mall.order_open). off 면 주문 · 결제를 막음(보기 · 담기는 됨) */
+export const ORDER_OPEN_SQL = `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') = 'on' AS "open"`;
+export const ORDERS_CLOSED_MSG = '지금은 소개몰 주문을 받지 않습니다 — 상품 보기와 장바구니 담기는 됩니다.';

@@ -42,6 +42,9 @@ export class SellerRejectDto {
 export class TenantConfigDto {
   @ApiProperty({ description: '입점 신청 켜짐(mall.tenant)' }) enabled!: boolean;
 }
+export class OrderConfigDto {
+  @ApiProperty({ description: '주문 받기 켜짐(mall.order_open)' }) open!: boolean;
+}
 export class MySellerDto {
   @ApiProperty() enabled!: boolean;
   @ApiProperty({ description: '본인확인 마침' }) identityVerified!: boolean;
@@ -64,6 +67,11 @@ export class HealthTenantController {
   @ApiOperation({ summary: '소개몰 입점 — 켜짐', description: '꺼져 있으면 사용자 웹에 「입점 신청」이 나오지 않습니다(v10.165).' })
   @ApiOkResponse({ type: TenantConfigDto })
   config() { return this.svc.config(); }
+
+  @Get('health/order-config')
+  @ApiOperation({ summary: '소개몰 주문 받기', description: '꺼져 있으면 상품 보기 · 장바구니 담기는 되고 주문 · 결제는 막힙니다(v10.170 · 설정 mall.order_open).' })
+  @ApiOkResponse({ type: OrderConfigDto })
+  orderConfig() { return this.svc.orderConfig(); }
 
   @ApiBearerAuth()
   @Get('me/health/seller')

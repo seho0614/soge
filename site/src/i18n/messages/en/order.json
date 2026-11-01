@@ -133,7 +133,8 @@
     "order": "Place order",
     "note": "Your cart <b>does not reserve stock</b> — stock, price and availability are checked again when you order. We never change prices silently, since a difference between the price you saw and the price you pay leads to disputes.",
     "bySeller": "Products from different sellers are ordered separately (shipping and return fees differ by seller).",
-    "orderSeller": "Order this seller's items"
+    "orderSeller": "Order this seller's items",
+    "closed": "Sogae Mall is not taking orders right now — you can still browse and add items to your cart. We will let you know when ordering opens."
   },
   "opt": {
     "errAdd": "Could not add to cart. Please try again shortly.",

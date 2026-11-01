@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction, sellerShipFee } from './health-policy';
+import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, ORDER_OPEN_SQL, ORDERS_CLOSED_MSG, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction, sellerShipFee } from './health-policy';
 import { FEE_STATE_SQL, PAY_COLS } from './health-shop.shared';
 
 /**
@@ -23,6 +23,9 @@ export class HealthCheckoutService {
   async order(d: any, visitorKey?: string) {
     const me = RequestCtx.actorId()!;
     if (!d.items?.length) throw new PolicyViolation('EMPTY', '담으신 상품이 없습니다.');
+    /* v10.170 (D159) — 「주문 받기」 스위치가 꺼져 있으면 주문을 받지 않습니다(결제대행사 연결 전 · 시험 결제 주문 방지) */
+    const [oo] = await this.db.query<{ open: boolean }>(ORDER_OPEN_SQL);
+    if (!oo?.open) throw new PolicyViolation('ORDERS_CLOSED', ORDERS_CLOSED_MSG);
 
     /* 배송지는 본인 것 · 지우지 않은 것만 — 전에는 남의 배송지 id 도 받았습니다 */
     const [addr] = await this.db.query<any>(

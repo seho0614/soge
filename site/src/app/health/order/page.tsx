@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { apiGetPersonal } from '@/lib/api';
+import { apiGet, apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
 import type { HltAddress, HltCart } from '@/components/health/types';
 import { HltEmpty, HltNav, HltSteps } from '@/components/health/HltParts';
@@ -28,6 +28,8 @@ export default async function HltOrderPage({ searchParams }: Props) {
   const t = await getTranslations('order');
 
   const allowed = p.roles.some((r) => ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'].includes(r));
+  /* v10.170 — 「주문 받기」 꺼짐이면 주문서를 열지 않음 */
+  const orderOpen = (await apiGet<{ open: boolean }>('/health/order-config', 15).catch(() => ({ open: true }))).open;
   const [cart0, addresses] = await Promise.all([
     apiGetPersonal<HltCart>('/me/health/cart').catch(() => null),
     apiGetPersonal<HltAddress[]>('/me/health/addresses').catch(() => [] as HltAddress[]),
@@ -49,7 +51,9 @@ export default async function HltOrderPage({ searchParams }: Props) {
       <div className="page-head"><h1>{t('orderPage.title')}</h1></div>
       <HltSteps at={1} />
 
-      {!allowed ? (
+      {!orderOpen ? (
+        <div className="notice" data-orders-closed="">{t('cart.closed')}</div>
+      ) : !allowed ? (
         <div className="notice">{t('orderPage.memberOnly')}</div>
       ) : !p.identityVerifiedAt ? (
         <div className="notice notice-act">

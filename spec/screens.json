@@ -1182,7 +1182,9 @@
     "POST /admin/jobs/tick",
     "GET /admin/finance/runway",
     "GET /admin/finance/costs",
-    "PUT /admin/finance/costs"
+    "PUT /admin/finance/costs",
+    "GET /admin/launch-watch",
+    "PATCH /admin/site-settings"
    ],
    "nav": "SB-HOM-MAIN-010"
   },
@@ -2620,7 +2622,8 @@
     "POST /me/health/cart",
     "PATCH /me/health/cart/{code}",
     "PATCH /me/health/cart/lines/{optionId}",
-    "POST /me/health/cart/ack-prices"
+    "POST /me/health/cart/ack-prices",
+    "GET /health/order-config"
    ],
    "nav": "SB-HLT-PRD-010"
   },
@@ -2638,7 +2641,8 @@
     "IDENTITY_VERIFIED"
    ],
    "apis": [
-    "POST /health/orders"
+    "POST /health/orders",
+    "GET /health/order-config"
    ],
    "nav": "SB-HLT-CRT-010"
   },

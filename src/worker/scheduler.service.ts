@@ -11,6 +11,7 @@ import { SafenumService } from '../modules/listing/safenum.service';
 import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
+import { LaunchWatchService } from '../modules/admin/launch-watch.service';
 
 /**
  * 배치 실행기.
@@ -24,7 +25,7 @@ export type JobName =
   | 'deal_auto_confirm' | 'settlement_audit' | 'attribution_archive' | 'pii_purge'
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
-  | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'lead_cash_auto' | 'directory_expiry'
+  | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release';
 
 export interface JobResult {
@@ -50,6 +51,7 @@ export class SchedulerService {
     private readonly translate: TranslateService,
     private readonly reviewShadow: ReviewShadowService,
     private readonly agentChat: AgentChatService,
+    private readonly launchWatch: LaunchWatchService,
   ) {}
 
   /**
@@ -430,6 +432,16 @@ export class SchedulerService {
       case 'hlt_auto_confirm': {
         const [r] = await this.db.query<{ n: number }>(`SELECT fn_hlt_auto_confirm() AS n`);
         affected = r.n; detail = { confirmed: r.n };
+        break;
+      }
+
+      /* v10.170 (D159 · docs/262) — 공개 직후 지켜보기: 시험 결제(stub)로 결제 완료된 소개몰 주문이 새로 생기면 운영 알림 */
+      case 'launch_watch': {
+        const r = await this.launchWatch.recentStubOrders();
+        affected = r.n; detail = r;
+        if (r.n > 0) {
+          await this.alert('STUB_PAYMENT_ORDER', 'WARN', `시험 결제로 결제 완료된 소개몰 주문 ${r.n}건 — 돈을 받지 않은 주문입니다`, r);
+        }
         break;
       }
 

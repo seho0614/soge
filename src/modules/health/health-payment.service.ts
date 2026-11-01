@@ -4,6 +4,7 @@ import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { PaymentLookup, PaymentResult, resolvePaymentProvider } from '../billing/payment.provider';
 import { PAY_COLS } from './health-shop.shared';
+import { ORDER_OPEN_SQL, ORDERS_CLOSED_MSG } from './health-policy';
 
 /** 토스 결제 수단 원문 → 우리 코드(hlt_payments.method CHECK). 모르는 것은 준비 때 고른 수단을 그대로 둡니다 */
 const TOSS_METHOD: Record<string, string> = {
@@ -39,6 +40,9 @@ export class HealthPaymentService {
    */
   async pay(no: string, method: string) {
     const me = RequestCtx.actorId()!;
+    /* v10.170 (D159) — 「주문 받기」가 꺼져 있으면 이미 만든 주문의 결제도 시작하지 않습니다 */
+    const [oo] = await this.db.query<{ open: boolean }>(ORDER_OPEN_SQL);
+    if (!oo?.open) throw new PolicyViolation('ORDERS_CLOSED', ORDERS_CLOSED_MSG);
     const [o] = await this.db.query<any>(
       `SELECT id, total, status FROM hlt_orders
         WHERE order_no = $1 AND account_id = $2`, [no, me]);

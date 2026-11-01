@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { ORDER_OPEN_SQL } from './health-policy';
 
 /* ---------------------------------------------------------------------
  * v10.165 (D155 · docs/256) — 소개몰 입점 1단계: 입점 신청 · 서류 · 운영 심사
@@ -34,6 +35,12 @@ export class HealthTenantService {
   /** 공개 — 켜짐 (사용자 웹이 「입점 신청」 단추를 보일지) */
   async config() {
     return { enabled: await this.on() };
+  }
+
+  /** v10.170 (D159) — 공개 · 소개몰 「주문 받기」(사용자 웹이 주문 단추를 보일지) */
+  async orderConfig() {
+    const [r] = await this.db.query<{ open: boolean }>(ORDER_OPEN_SQL);
+    return { open: !!r?.open };
   }
 
   private async consented() {

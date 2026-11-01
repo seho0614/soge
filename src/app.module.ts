@@ -107,6 +107,8 @@ import { HealthTenantController } from './modules/health/health-tenant.controlle
 import { HealthTenantService } from './modules/health/health-tenant.service';
 import { HealthSellerController } from './modules/health/health-seller.controller';   // v10.166 (D156) 소개몰 판매자센터 · 상품 검수
 import { HealthSellerService } from './modules/health/health-seller.service';
+import { LaunchWatchController } from './modules/admin/launch-watch.controller';   // v10.170 (D159) 공개 직후 지켜보기
+import { LaunchWatchService } from './modules/admin/launch-watch.service';
 import { SiteService } from './modules/site/site.service';
 import { BillingController } from './modules/billing/billing.controller';
 import { BillingService } from './modules/billing/billing.service';
@@ -306,6 +308,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownVerifyController,   // v10.164 (D154) 동네 인증
     HealthTenantController,   // v10.165 (D155) 소개몰 입점
     HealthSellerController,   // v10.166 (D156) 판매자센터
+    LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
@@ -323,6 +326,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
+    LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */

@@ -14,7 +14,7 @@ import { useFmt } from '@/lib/useFmt';
  * 합계와 배송비는 **서버가 계산해** 내려보낸 값만 씁니다 — 화면에서 더하면
  * 화면과 주문서가 갈립니다. PATCH 응답이 새 장바구니 전체라 그대로 바꿔 끼웁니다.
  */
-export function CartView({ initial }: { initial: HltCart }) {
+export function CartView({ initial, orderOpen = true }: { initial: HltCart; orderOpen?: boolean }) {
   const t = useTranslations('order');
   const f = useFmt();
   const router = useRouter();
@@ -129,7 +129,10 @@ export function CartView({ initial }: { initial: HltCart }) {
             <span>{t.rich('cart.ack', { b: (c) => <b>{c}</b> })}</span>
           </label>
         )}
-        {(cart.sellers?.length ?? 0) > 1 ? (
+        {!orderOpen ? (
+          /* v10.170 (D159) — 「주문 받기」 꺼짐: 주문 단추 대신 안내 */
+          <p className="notice" data-orders-closed="">{t('cart.closed')}</p>
+        ) : (cart.sellers?.length ?? 0) > 1 ? (
           /* v10.167 — 판매자가 둘 이상이면 판매자마다 주문(배송비 · 반품비 · 결제가 판매자마다 다름) */
           <div className="hlt-sellers" data-cart-sellers={cart.sellers!.length}>
             <p className="hint">{t('cart.bySeller')}</p>

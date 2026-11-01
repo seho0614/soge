@@ -1502,4 +1502,6 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "확정된 정산서만 지급을 요청합니다.": "Only confirmed settlements can request payout.",
   "하위가맹점 번호가 없는 판매자입니다 — 먼저 등록해 주십시오.": "This seller has no sub-merchant number — register one first.",
   "결제대행사 지급대행 연동 전입니다 — 간주 모드에서만 시험할 수 있습니다.": "Payout integration with the payment provider is not ready — it can only be tested in assumed mode.",
+  "지금은 소개몰 주문을 받지 않습니다 — 상품 보기와 장바구니 담기는 됩니다.": "Sogae Mall is not taking orders right now — you can still browse and add items to your cart.",
+  "시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.": "There are orders marked paid by test payment — no money was received. Turn off Sogae Mall ordering or stop direct-sale products.",
 };
