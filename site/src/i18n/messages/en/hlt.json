@@ -302,7 +302,7 @@
       "COSMETIC": "Cosmetics distribution business",
       "BRAND_RIGHT": "Proof of brand rights"
     },
-    "money": "The payment provider pays sales proceeds directly to the seller; SoGaeBank only receives the sales commission.",
+    "money": "The payment provider pays sales proceeds directly to the seller; SogaeBank only receives the sales commission.",
     "submit": "Apply",
     "resubmit": "Fix and apply again",
     "saving": "Sending…",
@@ -396,7 +396,7 @@
     "reject": "Reject",
     "approved": "Approved.",
     "rejected": "Rejected.",
-    "rejectAsk": "Rejection reason — the member sees it as written. If the member objects, an operator mediates.",
+    "rejectAsk": "Rejection reason — the member sees it as written. If the member objects, our team mediates.",
     "openedAsk": "Was the returned item opened? (OK = opened, not restocked / Cancel = unopened)",
     "kind": {
       "CANCEL": "Cancellation",
@@ -424,7 +424,7 @@
     "status": "Status",
     "carried": "carried over {amt}",
     "invoice": "invoice {no}",
-    "detail": "{n} lines",
+    "detail": "Details ({n})",
     "close": "Close",
     "order": "Order",
     "kind": "Type",
@@ -441,7 +441,7 @@
     "payout": {
       "READY": "Payout requested",
       "DONE": "Payout requested from provider",
-      "FAILED": "Payout request failed — operators will retry"
+      "FAILED": "Payout request failed — our team will retry"
     }
   }
 }
