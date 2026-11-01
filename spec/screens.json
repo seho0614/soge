@@ -2713,7 +2713,9 @@
     "POST /me/health/seller/orders/{no}/tracking",
     "POST /me/health/seller/orders/{no}/advance",
     "GET /me/health/seller/returns",
-    "POST /me/health/seller/returns/{id}/decide"
+    "POST /me/health/seller/returns/{id}/decide",
+    "GET /me/health/seller/settlements",
+    "GET /me/health/seller/settlements/{id}"
    ],
    "nav": "SB-HLT-SEL-010"
   },
@@ -2975,7 +2977,12 @@
     "POST /admin/health/sellers/{id}/approve",
     "POST /admin/health/sellers/{id}/reject",
     "GET /admin/health/product-reviews",
-    "POST /admin/health/product-reviews/{code}"
+    "POST /admin/health/product-reviews/{code}",
+    "POST /admin/health/settlements/{id}/invoice",
+    "PATCH /admin/health/commission-rates/{categoryCode}",
+    "POST /admin/health/sellers/{id}/submerchant",
+    "POST /admin/health/settlements/{id}/confirm",
+    "POST /admin/health/settlements/{id}/payout"
    ],
    "nav": "SB-ADM-DSH-010"
   },

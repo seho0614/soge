@@ -8,11 +8,17 @@ import { HealthTenantApply } from './HealthTenantApply';
 import { HealthProductReviews } from './HealthProductReviews';
 
 interface Seller {
+  /* v10.169 (D158) — 하위가맹점 등록 */
+  id: string; submerchantId?: string | null;
   code: string; name: string; type: string; status: string;
   commissionRate: number | string; payable: boolean;
   onSale: number | string; expiredLicenses: number | string;
 }
 interface SettleRow {
+  /* v10.168 (D157) — 판매수수료 세금계산서 */
+  id: string; invoiceState?: 'NOT_NEEDED' | 'REQUESTED' | 'ISSUED'; invoiceNo?: string | null;
+  /* v10.169 (D158) — 확정 · 지급 요청(입점만) */
+  sellerType?: string; payable?: boolean; payoutState?: 'READY' | 'DONE' | 'FAILED' | null;
   from: string; to: string; seller: string; sellerName: string;
   gross: number | string; commission: number | string; refund: number | string;
   carriedIn: number | string; net: number | string; carriedOut: number | string; status: string;
@@ -258,6 +264,34 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
     }), settle.reload, (r) => `${r.note} 정산서 ${r.created}건 · 이월 ${r.carried}건.`);
   };
 
+  /* v10.168 (D157) — 판매수수료 세금계산서 발행 번호(국세청 연동 전 · 방향은 설정 mall.invoice_direction) · 갈래 수수료율(결정 B) */
+  const invoice = (r: SettleRow) => {
+    const no = prompt(`${r.sellerName} ${ymd(r.from)} 주 판매수수료 ${n(r.commission)}원 — 발행한 세금계산서 승인번호`) ?? '';
+    if (!no.trim()) return;
+    void a.run(r.id, () => api(`/admin/health/settlements/${r.id}/invoice`, { method: 'POST', body: JSON.stringify({ invoiceNo: no.trim() }) }), settle.reload, '발행 번호를 적었습니다.');
+  };
+  /* v10.169 (D158) — 하위가맹점 · 확정 · 지급 요청. 결제대행사 지급대행 연동 전이라 간주 모드에서만 시험으로 「지급됨」(돈은 움직이지 않음) */
+  const submerchant = (x: Seller) => {
+    const id = prompt(`${x.name} — 결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 · 연동 전이라 간주 모드에서만 시험 번호)`, x.submerchantId ?? '');
+    if (id === null) return;
+    void a.run(`sub:${x.id}`, () => api(`/admin/health/sellers/${x.id}/submerchant`, { method: 'POST', body: JSON.stringify(id.trim() ? { submerchantId: id.trim() } : {}) }), sellers.reload, '하위가맹점 번호를 저장했습니다.');
+  };
+  const confirmS = (r: SettleRow) => {
+    if (!confirm(`${r.sellerName} ${ymd(r.from)} 주 정산서(지급액 ${n(r.net)}원)를 확정합니다. 판매자가 정산서를 본 뒤에 확정하십시오.`)) return;
+    void a.run(r.id, () => api(`/admin/health/settlements/${r.id}/confirm`, { method: 'POST' }), settle.reload, '확정했습니다.');
+  };
+  const payout = (r: SettleRow) => {
+    if (!confirm(`${r.sellerName} 에게 ${n(r.net)}원 지급을 결제대행사에 요청합니다(판매자 하위가맹점으로 · 회사는 돈을 보관하지 않음).`)) return;
+    void a.run(r.id, () => api(`/admin/health/settlements/${r.id}/payout`, { method: 'POST' }), settle.reload, '지급을 요청했습니다.');
+  };
+  const setRate = (r: Rate) => {
+    const raw = prompt(`${r.categoryCode === '*' ? '기본' : r.categoryCode} 판매수수료율(%) — 0 ~ 50 · 바꾼 뒤 주문부터 적용`, String(r.rate));
+    if (raw === null || raw.trim() === '') return;
+    const rate = Number(raw);
+    if (!(rate >= 0 && rate <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
+    void a.run(`rate:${r.categoryCode}`, () => api(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate }) }), rates.reload, '수수료율을 바꿨습니다.');
+  };
+
   if (sellers.error) return <ErrorView error={sellers.error} onRetry={sellers.reload} />;
   if (settle.error) return <ErrorView error={settle.error} onRetry={settle.reload} />;
 
@@ -280,7 +314,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       {sellers.data && sellers.data.length === 0 && <p className="muted">등록된 판매자가 없습니다.</p>}
       {(sellers.data ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>코드</th><th>이름</th><th>구분</th><th>상태</th><th>판매중</th><th>지급</th><th>수수료율</th><th>만료 인허가</th></tr></thead>
+          <thead><tr><th>코드</th><th>이름</th><th>구분</th><th>상태</th><th>판매중</th><th>지급</th><th>수수료율</th><th>만료 인허가</th><th /></tr></thead>
           <tbody>
             {(sellers.data ?? []).map((x) => (
               <tr key={x.code}>
@@ -292,6 +326,8 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
                   : x.payable ? <span className="st ok">가능</span> : <span className="st no">불가</span>}</td>
                 <td className="num-cell">{x.type === 'DIRECT' ? '—' : `${x.commissionRate}%`}</td>
                 <td className="num-cell">{Number(x.expiredLicenses) > 0 ? <b className="warn-text">{n(x.expiredLicenses)}</b> : 0}</td>
+                <td>{x.type !== 'DIRECT' && x.status === 'ACTIVE' && (
+                  <button className="btn-plain" disabled={a.busy === `sub:${x.id}`} onClick={() => submerchant(x)} data-submerchant={x.code}>{x.payable ? '하위가맹점 바꾸기' : '하위가맹점 등록'}</button>)}</td>
               </tr>
             ))}
           </tbody>
@@ -324,7 +360,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       {s && s.items.length === 0 && <p className="muted">아직 마감한 정산이 없습니다.</p>}
       {(s?.items ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>기간</th><th>판매자</th><th>매출</th><th>수수료</th><th>환불</th><th>이월</th><th>지급액</th><th>상태</th></tr></thead>
+          <thead><tr><th>기간</th><th>판매자</th><th>매출</th><th>수수료</th><th>환불</th><th>이월</th><th>지급액</th><th>상태</th><th>지급</th><th>계산서</th></tr></thead>
           <tbody>
             {s!.items.map((r) => (
               <tr key={r.seller + r.from}>
@@ -336,6 +372,13 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
                 <td className="num-cell">{n(r.carriedIn)}</td>
                 <td className="num-cell">{Number(r.net) < 0 ? <b className="warn-text">{n(r.net)}</b> : <b>{n(r.net)}</b>}</td>
                 <td>{SST[r.status] ?? r.status}</td>
+                <td data-payout={r.payoutState ?? ''}>{r.sellerType && r.sellerType !== 'DIRECT' && (
+                  r.status === 'DRAFT' && Number(r.net) > 0 ? <button className="btn-plain" disabled={a.busy === r.id} onClick={() => confirmS(r)}>확정</button>
+                  : r.status === 'CONFIRMED' ? <button className="btn-ok" disabled={a.busy === r.id || !r.payable} onClick={() => payout(r)}>지급 요청</button>
+                  : r.payoutState === 'DONE' ? <span className="st ok">지급됨</span> : null)}</td>
+                <td data-invoice={r.invoiceState}>{r.invoiceState === 'REQUESTED'
+                  ? <button className="btn-plain" disabled={a.busy === r.id} onClick={() => invoice(r)}>발행 번호 적기</button>
+                  : r.invoiceState === 'ISSUED' ? <span className="mono">{r.invoiceNo}</span> : <span className="dim">—</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -345,7 +388,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       <h3 className="sec">수수료율</h3>
       {rates.error ? <ErrorView error={rates.error} onRetry={rates.reload} /> : null}
       <table className="tbl">
-        <thead><tr><th>카테고리</th><th>요율</th><th>소개자 몫</th><th>메모</th><th>변경 이력</th></tr></thead>
+        <thead><tr><th>카테고리</th><th>요율</th><th>소개자 몫</th><th>메모</th><th>변경 이력</th><th /></tr></thead>
         <tbody>
           {(rates.data ?? []).map((r) => (
             <tr key={r.categoryCode}>
@@ -354,6 +397,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
               <td className="num-cell">{r.referralPct}%</td>
               <td className="muted">{r.note}</td>
               <td className="num-cell">{r.changes ? `${r.changes}건` : '—'}</td>
+              <td><button className="btn-plain" disabled={a.busy === `rate:${r.categoryCode}`} onClick={() => setRate(r)}>바꾸기</button></td>
             </tr>
           ))}
         </tbody>

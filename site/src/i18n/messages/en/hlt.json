@@ -410,5 +410,38 @@
       "REFUNDED": "Refunded"
     },
     "retHelp": "For change-of-mind returns, the refund excludes the round-trip return fee you set. Seller-fault returns (damage, wrong item, not as described) are refunded in full."
+  },
+  "ssettle": {
+    "title": "Settlement",
+    "help": "Every Monday we close the previous week (orders delivered more than 7 days ago). The payment provider pays your account. Orders refunded after settlement are deducted in the next cycle.",
+    "empty": "No closed settlements yet.",
+    "errLoad": "Could not load the details.",
+    "period": "Period",
+    "gross": "Sales",
+    "commission": "Commission",
+    "refund": "Refund adjustment",
+    "net": "Payout",
+    "status": "Status",
+    "carried": "carried over {amt}",
+    "invoice": "invoice {no}",
+    "detail": "{n} lines",
+    "close": "Close",
+    "order": "Order",
+    "kind": "Type",
+    "st": {
+      "DRAFT": "Closed",
+      "CONFIRMED": "Confirmed",
+      "PAID": "Paid",
+      "CARRIED": "Carried to next week"
+    },
+    "k": {
+      "SALE": "Sale",
+      "REFUND": "Refund adjustment"
+    },
+    "payout": {
+      "READY": "Payout requested",
+      "DONE": "Payout requested from provider",
+      "FAILED": "Payout request failed — operators will retry"
+    }
   }
 }

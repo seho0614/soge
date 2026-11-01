@@ -6,6 +6,7 @@ import { me } from '@/lib/session';
 import { Crumb, HltNav, HltEmpty } from '@/components/health/HltParts';
 import { SellerCenter, type SellerCenterInfo, type SellerProduct } from '@/components/health/SellerCenter';
 import { SellerOrdersView, type SellerOrders, type SellerReturnRow } from '@/components/health/SellerOrders';
+import { SellerSettlements, type SellerSettlement } from '@/components/health/SellerSettlements';
 import type { HltSaleCategory } from '@/components/health/types';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
@@ -41,16 +42,18 @@ export default async function HltSellerCenterPage() {
       </div><i hidden data-root-end="" /></>
     );
   }
-  const [items, cats, orders, returns] = await Promise.all([
+  const [items, cats, orders, returns, settles] = await Promise.all([
     apiGetPersonal<SellerProduct[]>('/me/health/seller/products').catch(() => [] as SellerProduct[]),
     apiGet<HltSaleCategory[]>('/health/categories', 60).catch(() => [] as HltSaleCategory[]),
     /* v10.167 — 주문 · 발송 · 반품 */
     apiGetPersonal<SellerOrders>('/me/health/seller/orders').catch(() => ({ counts: { toShip: 0, shipping: 0, delivered: 0, confirmed: 0 }, carriers: [], items: [] }) as SellerOrders),
     apiGetPersonal<SellerReturnRow[]>('/me/health/seller/returns').catch(() => [] as SellerReturnRow[]),
+    /* v10.168 — 정산서 */
+    apiGetPersonal<SellerSettlement[]>('/me/health/seller/settlements').catch(() => [] as SellerSettlement[]),
   ]);
   return (
     <><div className="hlt">{head}
-      <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerCenter info={info} items={items} cats={cats} /></Msgs>
+      <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerSettlements rows={settles} /><SellerCenter info={info} items={items} cats={cats} /></Msgs>
     </div><i hidden data-root-end="" /></>
   );
 }

@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { HealthSellerService } from './health-seller.service';
+import { HealthSettleService } from './health-settle.service';
 import { OptionInputDto, OptionPatchDto, ProductCreateDto, ProductPatchDto } from './health-admin.controller';
 import { AdvanceDto, ShipDto } from './health-orders.controller';
 import { ReturnDecideDto } from './health-shop.dto';
@@ -19,6 +20,17 @@ export class SellerShippingDto {
 export class SellerStatusDto {
   @ApiProperty({ enum: ['ON_SALE', 'STOPPED', 'SOLD_OUT'] }) @IsIn(['ON_SALE', 'STOPPED', 'SOLD_OUT']) status!: string;
 }
+export class InvoiceDto {
+  @ApiProperty({ description: '세금계산서 승인번호(국세청 연동 전 · 운영이 적음)' }) @IsString() @MaxLength(40) invoiceNo!: string;
+}
+export class CommissionRateDto {
+  @ApiProperty({ description: '판매수수료율(%) — 0 ~ 50', minimum: 0, maximum: 50 }) @IsNumber() @Min(0) @Max(50) rate!: number;
+  @ApiPropertyOptional({ description: '바꾼 까닭' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
+}
+export class SubmerchantDto {
+  @ApiPropertyOptional({ description: '결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 — 연동 전이라 간주 모드에서만 시험 번호)' })
+  @IsOptional() @IsString() @MaxLength(60) submerchantId?: string;
+}
 export class ProductReviewDto {
   @ApiProperty({ enum: ['APPROVE', 'REJECT'] }) @IsIn(['APPROVE', 'REJECT']) decision!: string;
   @ApiPropertyOptional({ description: '반려 사유(반려면 꼭) — 판매자에게 그대로 보임' }) @IsOptional() @IsString() @MaxLength(500) note?: string;
@@ -29,7 +41,7 @@ export class ProductReviewDto {
 @Controller('api/v1')
 @ApiResponse({ status: 400, description: '형식 오류', type: ErrorDto })
 export class HealthSellerController {
-  constructor(private readonly svc: HealthSellerService) {}
+  constructor(private readonly svc: HealthSellerService, private readonly settle: HealthSettleService) {}
 
   @Get('me/health/seller/center')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
@@ -157,6 +169,68 @@ export class HealthSellerController {
   decideReturn(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReturnDecideDto) {
     return this.svc.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault);
   }
+
+  /* ── v10.168 (docs/259) 정산 ── */
+
+  @Get('me/health/seller/settlements')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '내 정산서', description: '주 1회 마감(월요일) · 매출 · 수수료 · 환불 조정 · 이월 · 지급액 · 세금계산서 상태. 지급은 결제대행사가 합니다.' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  settlements() { return this.svc.settlements(); }
+
+  @Get('me/health/seller/settlements/:id')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '정산 명세', description: '주문별 매출 · 수수료 · 지급액 · 환불 조정(입점 약관 제19조).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  settlement(@Param('id', ParseUUIDPipe) id: string) { return this.svc.settlement(id); }
+
+  @Post('admin/health/settlements/:id/invoice')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '판매수수료 세금계산서 발행 기록', description: '국세청 연동 전이라 발행한 승인번호를 적습니다. 방향은 설정 mall.invoice_direction(세무사 확인 뒤).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NOT_REQUESTED', type: ErrorDto })
+  @Audit('HLT_SETTLE_INVOICE', 'HLT_SETTLEMENT')
+  invoice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InvoiceDto) { return this.settle.markInvoice(id, dto.invoiceNo); }
+
+  @Patch('admin/health/commission-rates/:categoryCode')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '갈래 판매수수료율', description: '갈래 기본값(판매자 개별 요율이 있으면 그것이 먼저). 바꾼 기록은 DB 가 남기고, 바꾼 뒤 주문부터 적용됩니다(주문 때 요율을 박음).' })
+  @ApiParam({ name: 'categoryCode', description: '갈래 코드 · 전체 기본값은 *' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  @Audit('HLT_COMMISSION_RATE', 'HLT_COMMISSION')
+  rate(@Param('categoryCode') categoryCode: string, @Body() dto: CommissionRateDto) { return this.settle.setCommissionRate(categoryCode, dto.rate, dto.note); }
+
+  /* ── v10.169 (docs/260) 하위가맹점 · 확정 · 지급 요청(간주 모드) ── */
+
+  @Post('admin/health/sellers/:id/submerchant')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '하위가맹점 번호', description: '결제대행사 화면에서 받은 번호를 적거나, 비우면 결제대행사에 등록합니다(연동 전이라 간주 모드에서만 시험 번호).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'PG_SUBMERCHANT_NOT_READY', type: ErrorDto })
+  @Audit('HLT_SELLER_SUBMERCHANT', 'HLT_SELLER')
+  submerchant(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SubmerchantDto) { return this.settle.registerSubmerchant(id, dto.submerchantId); }
+
+  @Post('admin/health/settlements/:id/confirm')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '정산서 확정', description: '판매자가 정산서를 볼 시간을 둔 뒤 확정합니다(마감 → 확정). 지급액이 0 보다 커야 합니다.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NOT_CONFIRMABLE', type: ErrorDto })
+  @Audit('HLT_SETTLE_CONFIRM', 'HLT_SETTLEMENT')
+  confirm(@Param('id', ParseUUIDPipe) id: string) { return this.settle.confirmSettlement(id); }
+
+  @Post('admin/health/settlements/:id/payout')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '지급 요청', description: '확정된 입점 정산서를 결제대행사에 판매자 하위가맹점으로 지급하도록 요청합니다. 회사는 돈을 보관하지 않습니다. 연동 전이라 간주 모드에서만 시험으로 「지급됨」.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NOT_CONFIRMED · DIRECT_NO_PAYOUT', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_SUBMERCHANT · PG_PAYOUT_NOT_READY', type: ErrorDto })
+  @Audit('HLT_SETTLE_PAYOUT', 'HLT_SETTLEMENT')
+  payout(@Param('id', ParseUUIDPipe) id: string) { return this.settle.payout(id); }
 
   /* ── 운영 ── */
 

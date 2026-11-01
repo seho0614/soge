@@ -24,7 +24,7 @@ export type JobName =
   | 'deal_auto_confirm' | 'settlement_audit' | 'attribution_archive' | 'pii_purge'
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
-  | 'hlt_auto_confirm' | 'hlt_rank' | 'lead_cash_auto' | 'directory_expiry'
+  | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release';
 
 export interface JobResult {
@@ -430,6 +430,14 @@ export class SchedulerService {
       case 'hlt_auto_confirm': {
         const [r] = await this.db.query<{ n: number }>(`SELECT fn_hlt_auto_confirm() AS n`);
         affected = r.n; detail = { confirmed: r.n };
+        break;
+      }
+
+      /* v10.168 (D157 · docs/259) — 소개몰 주 정산 마감(월요일 03:20 · 지난주 월요일부터 7일). 같은 판매자 · 같은 주는 한 번만(DB 함수) */
+      case 'hlt_settle_weekly': {
+        const [r] = await this.db.query<{ created: number; carried: number }>(
+          `SELECT * FROM fn_hlt_settle_close((date_trunc('week', now() AT TIME ZONE 'Asia/Seoul'))::date - 7)`);
+        affected = Number(r?.created ?? 0); detail = { created: Number(r?.created ?? 0), carried: Number(r?.carried ?? 0) };
         break;
       }
 

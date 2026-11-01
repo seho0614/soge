@@ -199,6 +199,31 @@ export class HealthSellerService {
     return this.returns_.decideReturn(id, state, note, opened, sellerFault);
   }
 
+  /* ── v10.168 (D157 · docs/259) 정산 ─────────────────────────────── */
+
+  /** 내 정산서 — 주 1회 마감 · 매출 · 수수료 · 환불 조정 · 이월 · 지급액 · 계산서 상태 */
+  async settlements() {
+    const s = await this.seller();
+    return this.db.query(
+      `SELECT st.id, st.period_from AS "from", st.period_to AS "to", st.gross_amount AS gross, st.commission, st.refund_amount AS refund,
+              st.carried_in AS "carriedIn", st.net_amount AS net, st.carried_out AS "carriedOut", st.status,
+              st.invoice_state AS "invoiceState", st.invoice_no AS "invoiceNo", st.confirmed_at AS "confirmedAt", st.paid_at AS "paidAt",
+              (SELECT count(*)::int FROM hlt_settlement_items i WHERE i.settlement_id = st.id) AS "items",
+              (SELECT pr.state FROM hlt_payout_requests pr WHERE pr.settlement_id = st.id) AS "payoutState",
+              (SELECT pr.ref FROM hlt_payout_requests pr WHERE pr.settlement_id = st.id) AS "payoutRef"
+         FROM hlt_settlements st WHERE st.seller_id = $1 ORDER BY st.period_from DESC LIMIT 104`, [s.id]);
+  }
+
+  /** 정산서 하나의 주문별 명세(입점 약관 제19조 ④) */
+  async settlement(id: string) {
+    const s = await this.seller();
+    const [st] = await this.db.query<{ id: string }>(`SELECT id FROM hlt_settlements WHERE id::text = $1 AND seller_id = $2`, [id, s.id]);
+    if (!st) throw new NotFound('내 정산서를 찾을 수 없습니다.');
+    return this.db.query(
+      `SELECT i.kind, o.order_no AS "orderNo", i.goods_amount AS "goodsAmount", i.commission, i.net_amount AS net, o.delivered_at AS "deliveredAt"
+         FROM hlt_settlement_items i JOIN hlt_orders o ON o.id = i.order_id WHERE i.settlement_id = $1 ORDER BY i.kind DESC, o.order_no`, [st.id]);
+  }
+
   /* ── 운영 ─────────────────────────────────────────────────────────── */
 
   /** 입점 상품 검수 대기 — 오래된 것부터 */
