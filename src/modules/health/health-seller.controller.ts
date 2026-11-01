@@ -20,7 +20,7 @@ export class SellerShippingDto {
 export class SellerStatusDto {
   @ApiProperty({ enum: ['ON_SALE', 'STOPPED', 'SOLD_OUT'] }) @IsIn(['ON_SALE', 'STOPPED', 'SOLD_OUT']) status!: string;
 }
-export class InvoiceDto {
+export class HltSettleInvoiceDto {
   @ApiProperty({ description: '세금계산서 승인번호(국세청 연동 전 · 운영이 적음)' }) @IsString() @MaxLength(40) invoiceNo!: string;
 }
 export class CommissionRateDto {
@@ -192,7 +192,7 @@ export class HealthSellerController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, description: 'NOT_REQUESTED', type: ErrorDto })
   @Audit('HLT_SETTLE_INVOICE', 'HLT_SETTLEMENT')
-  invoice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InvoiceDto) { return this.settle.markInvoice(id, dto.invoiceNo); }
+  invoice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: HltSettleInvoiceDto) { return this.settle.markInvoice(id, dto.invoiceNo); }
 
   @Patch('admin/health/commission-rates/:categoryCode')
   @Roles('ADMIN', 'SUPER')
