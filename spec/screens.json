@@ -1185,6 +1185,7 @@
     "GET /admin/finance/costs",
     "PUT /admin/finance/costs",
     "GET /admin/launch-watch",
+    "GET /admin/launch-watch/digest",
     "PATCH /admin/site-settings"
    ],
    "nav": "SB-HOM-MAIN-010"
