@@ -2684,6 +2684,34 @@
    "nav": "SB-HLT-ETC-010"
   },
   {
+   "id": "SB-HLT-SEL-020",
+   "name": "판매자센터",
+   "group": "HLT",
+   "url": "/health/seller/center",
+   "p": "P1",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "apis": [
+    "GET /me/health/seller/center",
+    "PATCH /me/health/seller/shipping",
+    "GET /me/health/seller/products",
+    "POST /me/health/seller/products",
+    "GET /me/health/seller/products/{code}",
+    "PATCH /me/health/seller/products/{code}",
+    "POST /me/health/seller/products/{code}/submit",
+    "POST /me/health/seller/products/{code}/status",
+    "POST /me/health/seller/products/{code}/options",
+    "PATCH /me/health/seller/products/{code}/options/{optionId}",
+    "GET /health/categories"
+   ],
+   "nav": "SB-HLT-SEL-010"
+  },
+  {
    "id": "SB-HLT-ORD-030",
    "name": "주문 완료",
    "group": "HLT",
@@ -2939,7 +2967,9 @@
     "POST /admin/health/returns/{id}/fee-refund",
     "GET /admin/health/sellers/applications",
     "POST /admin/health/sellers/{id}/approve",
-    "POST /admin/health/sellers/{id}/reject"
+    "POST /admin/health/sellers/{id}/reject",
+    "GET /admin/health/product-reviews",
+    "POST /admin/health/product-reviews/{code}"
    ],
    "nav": "SB-ADM-DSH-010"
   },

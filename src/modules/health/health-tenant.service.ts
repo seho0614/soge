@@ -77,7 +77,7 @@ export class HealthTenantService {
       throw new StateConflict('SELLER_EXISTS', '이미 입점한 판매자입니다 — 정보 변경은 판매자센터에서 합니다.');
     }
     if (cur?.status === 'BLOCKED') throw new StateConflict('SELLER_BLOCKED', '이용이 제한된 판매자는 다시 신청할 수 없습니다 — 고객센터로 문의해 주십시오.');
-    if (!m.consent) throw new PolicyViolation('TENANT_CONSENT_REQUIRED', '소개뱅크몰 입점(판매자) 이용약관에 동의한 뒤 신청할 수 있습니다.');
+    if (!m.consent) throw new PolicyViolation('TENANT_CONSENT_REQUIRED', '소개몰 입점(판매자) 이용약관에 동의한 뒤 신청할 수 있습니다.');
     const biz = d.personal ? null : (d.bizRegNo ?? '').trim();
     if (!d.personal && !biz) throw new PolicyViolation('BIZ_REG_REQUIRED', '사업자 판매자는 사업자등록번호를 적어 주십시오.');
     const lic = d.licenses ?? [];

@@ -34,7 +34,7 @@ export function SellerApply({ initial }: { initial: MySeller }) {
   const [err, setErr] = useState<string | null>(null);
 
   if (s && (s.status === 'ACTIVE' || s.status === 'PAUSED')) {
-    return <div className="hlt-box" data-tenant-state={s.status}><h3>{t('activeTitle', { name: s.name })}</h3><p>{t('activeBody')}</p></div>;
+    return <div className="hlt-box" data-tenant-state={s.status}><h3>{t('activeTitle', { name: s.name })}</h3><p>{t('activeBody')}</p><Link className="cta-primary" href="/health/seller/center" data-tenant-center="">{t('toCenter')}</Link></div>;
   }
   if (s?.status === 'BLOCKED') return <div className="hlt-box" data-tenant-state="BLOCKED"><p>{t('blocked')}</p></div>;
 

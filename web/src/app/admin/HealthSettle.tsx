@@ -5,6 +5,7 @@ import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { HealthTenantApply } from './HealthTenantApply';
+import { HealthProductReviews } from './HealthProductReviews';
 
 interface Seller {
   code: string; name: string; type: string; status: string;
@@ -271,6 +272,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       <Flash msg={a.msg} err={a.err} />
 
       <HealthTenantApply />
+      <HealthProductReviews />
 
       <HealthReturns />
 
