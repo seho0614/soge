@@ -5,7 +5,7 @@
 
   ① 코드 — D163(ops.server_error_per_10min ADMIN · 지우는 문장 없음 · 201) · 5xx 세기 · 필터 · 실행기 알림 · 지켜보기 칸 · sitemap-entries ·
      robots · sitemap · 오류 화면 2 · 미리보기 그림 · 아이콘 · layout openGraph · 사전 ko · en · 명세 · docs/268 · 판
-  ② (API) sitemap-entries — 공개 매물(MNY · MAL · BIZ · PUBLISHED)만 · 글(PUBLISHED · FOOD 아님)만 · 판매 중 상품만 · 제목 · 본문 없음
+  ② (API) sitemap-entries — 공개 매물(켜진 관 · HLT 제외 · PUBLISHED)만 · 글(PUBLISHED · FOOD 아님)만 · 판매 중 상품만 · 제목 · 본문 없음
   ③ (API) 서버 오류 5xx 를 기준 수만큼 → launch_watch → 운영 알림 SERVER_ERROR_SPIKE · 지켜보기 serverErrorsHour · 기준 되돌림
   ④ (사용자 웹) /robots.txt · /sitemap.xml · og:image 그림 · 아이콘
 """
@@ -42,7 +42,7 @@ ok('① 서버 — 5xx 세기(1시간 · 2,000건) · 필터에서 기록 · 10�
    'export function recordServerError' in CNT and 'export function serverErrorsSince' in CNT and 'if (status >= 500) recordServerError(' in FL
    and 'async serverErrorSpike()' in LS and "alert_code = 'SERVER_ERROR_SPIKE' AND raised_at > now() - interval '1 hour'" in LS and 'serverErrorsHour' in LS
    and "'SERVER_ERROR_SPIKE'" in SH and 'serverErrorsHour' in WL and "@Get('sitemap-entries')" in PC and 'async sitemapEntries()' in PS
-   and "status = 'PUBLISHED' AND gwan_code IN ('MNY', 'MAL', 'BIZ')" in PS and "board <> 'FOOD'" in PS, '')
+   and "l.status = 'PUBLISHED' AND l.gwan_code <> 'HLT'" in PS and 'FROM gwans WHERE is_active AND NOT is_hub' in PS and "'MNY'" not in PS and "board <> 'FOOD'" in PS, '')
 RB = rd('site/src/app/robots.ts'); SM = rd('site/src/app/sitemap.ts'); ER = rd('site/src/app/error.tsx'); GE = rd('site/src/app/global-error.tsx')
 OG = rd('site/src/app/opengraph-image.tsx'); IC = rd('site/src/app/icon.tsx'); LY = rd('site/src/app/layout.tsx')
 ko = json.loads(rd('site/src/i18n/messages/ko.json') or '{}').get('errorPage', {}); en = json.loads(rd('site/src/i18n/messages/en.json') or '{}').get('errorPage', {})
@@ -90,10 +90,10 @@ if API and DB:
     ids = "','".join(x['id'] for x in L) or '00000000-0000-0000-0000-000000000000'
     pids = "','".join(x['id'] for x in P) or '00000000-0000-0000-0000-000000000000'
     codes = "','".join(x['code'].replace("'", "''") for x in H) or '-'
-    bad_l = psql(f"SELECT count(*) FROM listings WHERE id IN ('{ids}') AND (status <> 'PUBLISHED' OR gwan_code NOT IN ('MNY','MAL','BIZ'))")
+    bad_l = psql(f"SELECT count(*) FROM listings WHERE id IN ('{ids}') AND (status <> 'PUBLISHED' OR gwan_code = 'HLT' OR gwan_code NOT IN (SELECT code FROM gwans WHERE is_active AND NOT is_hub))")
     bad_p = psql(f"SELECT count(*) FROM posts WHERE id IN ('{pids}') AND (state <> 'PUBLISHED' OR board = 'FOOD')")
     bad_h = psql(f"SELECT count(*) FROM hlt_products WHERE code IN ('{codes}') AND status <> 'ON_SALE'")
-    want_l = psql("SELECT count(*) FROM (SELECT 1 FROM listings WHERE status = 'PUBLISHED' AND gwan_code IN ('MNY','MAL','BIZ') LIMIT 5000) x")
+    want_l = psql("SELECT count(*) FROM (SELECT 1 FROM listings WHERE status = 'PUBLISHED' AND gwan_code <> 'HLT' AND gwan_code IN (SELECT code FROM gwans WHERE is_active AND NOT is_hub) LIMIT 5000) x")
     leak = any(k in x for x in L + P + H for k in ('title', 'body', 'name', 'author', 'ownerAccountId'))
     ok('② sitemap-entries — 공개 매물 · 글 · 판매 중 상품만 · 제목 · 본문 · 작성자 없음 · 공개 매물 수와 같음',
        isinstance(e.get('listings'), list) and bad_l == '0' and bad_p == '0' and bad_h == '0' and not leak and str(len(L)) == want_l,
