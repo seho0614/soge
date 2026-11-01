@@ -87,7 +87,7 @@ P2 = P1 + datetime.timedelta(days=7); P3 = P2 + datetime.timedelta(days=7)
 if API and DB:
     s0 = setting(); mid = psql(f"SELECT id FROM accounts WHERE email = '{MEM}'"); bid = psql(f"SELECT id FROM accounts WHERE email = '{BUY}'")
     biv0 = psql(f"SELECT coalesce(identity_verified_at::text, '') FROM accounts WHERE id = '{bid}'")
-    rate0 = psql("SELECT coalesce((SELECT rate::text FROM hlt_commission_rates WHERE category_code = '*'), '')")
+    rate0 = psql("SELECT coalesce((SELECT rate::text FROM hlt_commission_rates WHERE category_code = 'HLT_FOOD'), '')")
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
     TM = call('POST', '/auth/login', {'email': MEM, 'password': PW}).get('accessToken')
     TB = call('POST', '/auth/login', {'email': BUY, 'password': PW}).get('accessToken')
@@ -135,11 +135,11 @@ if API and DB:
         iv1 = call('POST', f'/admin/health/settlements/{sid1}/invoice', {'invoiceNo': '20261101-T1168'}, T_)
         iv2 = call('POST', f'/admin/health/settlements/{sid1}/invoice', {'invoiceNo': '20261101-T1168'}, T_)
         ok('② 계산서 발행 번호 → ISSUED · 두 번째 409 NOT_REQUESTED', iv1.get('invoiceState') == 'ISSUED' and iv2.get('code') == 'NOT_REQUESTED', f"{iv1} · {iv2.get('code')}")
-        ch0 = psql("SELECT count(*) FROM hlt_commission_changes WHERE target = '*'")
-        r1 = call('PATCH', '/admin/health/commission-rates/*', {'rate': 11, 'note': '시험'}, T_)
-        rbad = call('PATCH', '/admin/health/commission-rates/*', {'rate': 51}, T_)
-        ok('② 수수료율 — 기본 11% 로 바꿈 · 기록 남음(트리거 2개가 각각 남김) · 51 은 400', any(x.get('categoryCode') == '*' and float(x.get('rate')) == 11 for x in (r1 if isinstance(r1, list) else []))
-           and int(psql("SELECT count(*) FROM hlt_commission_changes WHERE target = '*'")) > int(ch0) and rbad.get('_err') == 400, f"{str(r1)[:120]} · {rbad.get('_err')}")
+        ch0 = psql("SELECT count(*) FROM hlt_commission_changes WHERE target = 'HLT_FOOD'")
+        r1 = call('PATCH', '/admin/health/commission-rates/HLT_FOOD', {'rate': 11, 'note': '시험'}, T_)
+        rbad = call('PATCH', '/admin/health/commission-rates/HLT_FOOD', {'rate': 51}, T_)
+        ok('② 수수료율 — 식품 갈래 11% 로 바꿈 · 기록 남음(트리거 2개가 각각 남김) · 51 은 400', any(x.get('categoryCode') == 'HLT_FOOD' and float(x.get('rate')) == 11 for x in (r1 if isinstance(r1, list) else []))
+           and int(psql("SELECT count(*) FROM hlt_commission_changes WHERE target = 'HLT_FOOD'")) > int(ch0) and rbad.get('_err') == 400, f"{str(r1)[:120]} · {rbad.get('_err')}")
         if SITE:
             try:
                 from playwright.sync_api import sync_playwright
@@ -157,7 +157,7 @@ if API and DB:
                     b_.close()
                 ok('③ 사용자 웹 판매자센터 「정산」 — 정산서 2줄 · 오류 없음', box == 1 and rws == 2 and not errs, f'{box} · {rws} · {errs[:2]}')
     finally:
-        if rate0: psql(f"UPDATE hlt_commission_rates SET rate = {rate0} WHERE category_code = '*'")
+        if rate0: psql(f"UPDATE hlt_commission_rates SET rate = {rate0} WHERE category_code = 'HLT_FOOD'")
         # 20주 전 세 주에 만든 정산서는 모두(직판 포함) 지움 — 다른 시험의 정산 대상이 줄지 않게
         psql(f"DELETE FROM hlt_settlement_items WHERE settlement_id IN (SELECT id FROM hlt_settlements WHERE period_from IN ('{P1}', '{P2}', '{P3}'))")
         psql(f"DELETE FROM hlt_settlements WHERE period_from IN ('{P1}', '{P2}', '{P3}')")
