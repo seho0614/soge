@@ -69,9 +69,9 @@ if API and DB:
        and g.get('day') == psql("SELECT ((now() AT TIME ZONE 'Asia/Seoul')::date - 1)::text") and n0 == n1, f"{g.get('day')} · 알림 {n0} → {n1}")
     mt = call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken')
     ok('② 회원은 요약 보기 403', call('GET', '/admin/launch-watch/digest', t=mt).get('_err') == 403, '')
-    dr = psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status IN ('DRAFT','LEGAL_REVIEW') AND body LIKE '%" + MAIL + "%'")
-    pb = psql("SELECT count(*) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED' AND body LIKE '%privacy@sogaebank.com%'")
-    ok('② 처리방침 초안(검토 중)에 메일 줄 · 게시된 처리방침 글은 그대로', dr == '1' and pb == '0', f'초안 {dr} · 게시 {pb}')
+    # 앞 시험(약관 게시 시험)이 초안을 게시했을 수 있어 상태와 상관없이 가장 새 처리방침 글을 봄 — 게시하지 않는 것은 ①(D161 문장)에서 확인
+    lb = psql("SELECT (body LIKE '%" + MAIL + "%')::text || ' ' || status FROM terms WHERE code = 'PRIVACY' AND status <> 'ARCHIVED' ORDER BY split_part(version, '.', 1)::int DESC, split_part(version, '.', 2)::int DESC LIMIT 1")
+    ok('② 가장 새 처리방침 글(초안 또는 시험이 게시한 판)에 메일 줄', lb.startswith('true'), lb)
 else:
     print('  (API · DB 없음 — ② 건너뜀)')
 
