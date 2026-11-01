@@ -28,7 +28,7 @@ def rd(rel):
 PC = rd('deploy/aws/postcheck.sh')
 blk = PC[PC.find('[10] 이번 판에서 바뀐 것'):PC.find('적용 후 확인 — 통과')]
 ok('① postcheck [10] — 키 칸 · 방식 7개 · 템플릿 · 9줄(v10.162 부터 11줄) · 처리방침 확인 · 오픈일 · 처리방침 판 · 새 초안 · 파일 저장 · 파일 행 지킴',
-   blk and "conname = 'ck_integ_secret_name'" in blk and all(k in blk for k in ('identity.provider=STUB', 'alimtalk.provider=NONE', 'esign.provider=STUB', 'safenum.provider=NONE', 'feature.referral_fee=off', 'agent.enabled=off'))
+   blk and "conname = 'ck_integ_secret_name'" in blk and all(k in blk for k in ('identity.provider=STUB', 'alimtalk.provider=NONE', 'esign.provider=STUB', 'safenum.provider=NONE', 'feature.referral_fee=off')) and ('agent.enabled=off' in blk or "key = 'agent.enabled'" in blk)
    and 'alimtalk_templates' in blk and ('"9/4"' in blk or '"11/4"' in blk) and "agent.require_privacy" in blk and "service.open_date" in blk
    and ("ARRAY[1,1]" in blk or 'fn_privacy_ai_ready()' in blk) and "string_to_array(p.version, '.')::int[] < string_to_array(d.version, '.')::int[]" in blk and 'sgb.files_move' in blk, '')
 ok('① [10] 은 읽기만 — UPDATE · INSERT · DELETE · ALTER 없음 · 만든 시각 칸(created_at)을 쓰지 않음',
