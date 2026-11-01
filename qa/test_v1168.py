@@ -107,7 +107,7 @@ if API and DB:
         addr = call('GET', '/me/health/addresses', t=TB)
         aid = (addr[0] if isinstance(addr, list) and addr else {}).get('id') or call('POST', '/me/health/addresses', {'receiver': '구매자', 'phone': '010-1234-5678', 'zipcode': '06236', 'addr1': '서울 강남구 테헤란로 1'}, TB).get('id')
         o1 = call('POST', '/health/orders', {'addressId': aid, 'items': [{'productCode': code, 'qty': 2}]}, TB); ono = o1.get('orderNo')
-        psql(f"UPDATE hlt_orders SET status = 'DELIVERED', paid_at = now() - interval '12 days', delivered_at = now() - interval '9 days' WHERE order_no = '{ono}'")
+        psql(f"UPDATE hlt_orders SET status = 'DELIVERED', created_at = now() - interval '13 days', paid_at = now() - interval '12 days', shipped_at = now() - interval '10 days', delivered_at = now() - interval '9 days' WHERE order_no = '{ono}'")
         bad = call('POST', '/admin/health/settlements/close', {'periodFrom': str(P1 + datetime.timedelta(days=2))}, T_)
         c1 = call('POST', '/admin/health/settlements/close', {'periodFrom': str(P1)}, T_)
         st1 = psql(f"SELECT gross_amount || '|' || commission || '|' || net_amount || '|' || invoice_state || '|' || (SELECT count(*) FROM hlt_settlement_items i WHERE i.settlement_id = s.id AND i.kind = 'SALE') "
