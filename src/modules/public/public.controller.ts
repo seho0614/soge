@@ -62,7 +62,7 @@ export class PublicController {
   })
   settings() { return this.svc.publicSettings(); }
 
-  @Get('sitemap-entries')
+  @Get('site/sitemap-entries')
   @ApiOperation({
     summary: '사이트 지도 재료(v10.174)',
     description: '사용자 웹 sitemap.xml 이 씁니다 — 공개 매물(MNY · MAL · BIZ) · 소개광장 글(FOOD 제외) · 판매 중 소개몰 상품의 주소 조각과 바뀐 시각만. 갈래마다 5,000개까지.',
