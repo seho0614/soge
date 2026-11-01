@@ -107,3 +107,50 @@ prune_releases() {
   if [ "$n" -gt 0 ]; then info "옛 판 ${n}개 정리 · 약 $((kb / 1024))MB —$names (남김: ${cur##*/}${prev:+ · ${prev##*/}})"
   else info "정리할 옛 판 없음 (남김: ${cur##*/}${prev:+ · ${prev##*/}})"; fi
 }
+
+# ── v10.171 (docs/264) Nginx 실제 설정 읽기 ─────────────────────────────
+#   11/1 사고: 고친 파일이 /etc/nginx/sites-available/sgb 였는데 Nginx 는 sites-enabled/sgb(바로가기가 아닌 따로 있는 파일)를 읽어
+#   사용자 웹이 계속 허용 IP + 비밀번호 창이었음. 점검이 「실제로 읽는 파일」과 「사용자 웹 · 운영 화면이 열렸는지」를 직접 보여 줍니다.
+
+# 서버 블록 하나씩 보고 상태를 냄 — 입력: 주석을 뺀 설정 글 · 출력: 「user <상태>」 · 「admin <상태>」 줄
+#   user  = 사용자 웹(127.0.0.1:5174 로 넘기는 블록) · admin = 운영 화면(web/dist 를 내보내는 블록)
+#   상태  = open(누구나) · ip(허용 IP 만) · pw(비밀번호 창만) · ip+pw(허용 IP 또는 비밀번호 — satisfy any)
+nginx_block_states() {
+  awk '
+    function flush() {
+      if (blk == "") return
+      kind = ""
+      if (blk ~ /127\.0\.0\.1:5174|localhost:5174/) kind = "user"
+      else if (blk ~ /web\/dist/) kind = "admin"
+      if (kind != "") {
+        ip = (blk ~ /deny[ \t]+all[ \t]*;/); pw = (blk ~ /auth_basic[ \t]+"[^"]*"/)
+        st = ip && pw ? "ip+pw" : ip ? "ip" : pw ? "pw" : "open"
+        print kind, st
+      }
+      blk = ""
+    }
+    {
+      line = $0
+      if (depth == 0 && line ~ /^[ \t]*server[ \t]*\{/) blk = ""
+      blk = blk "\n" line
+      o = gsub(/\{/, "{", line); c = gsub(/\}/, "}", line); depth += o - c
+      if (depth == 0) flush()
+    }'
+}
+
+# sites-enabled 의 파일마다 「바로가기 → 대상」 또는 「따로 있는 파일」 · 같은 이름의 sites-available 와 내용이 다르면 알림
+nginx_enabled_files() {
+  local d="${1:-/etc/nginx/sites-enabled}" a="${2:-/etc/nginx/sites-available}" f n
+  for f in "$d"/*; do
+    [ -e "$f" ] || continue
+    n=$(basename "$f")
+    if [ -L "$f" ]; then echo "$n 바로가기 → $(readlink -f "$f")"
+    elif [ -f "$a/$n" ] && ! cmp -s "$f" "$a/$n" 2>/dev/null; then echo "$n 따로 있는 파일 · sites-available/$n 와 내용이 다름(그 파일은 쓰이지 않음 — 고칠 때는 sites-enabled/$n)"
+    else echo "$n 따로 있는 파일"; fi
+  done
+}
+
+# 상태를 사람이 읽는 말로
+nginx_state_ko() {
+  case "$1" in open) echo "누구나 열림";; ip) echo "허용 IP 만";; pw) echo "비밀번호 창";; ip+pw) echo "허용 IP + 밖은 비밀번호 창";; *) echo "알 수 없음";; esac
+}

@@ -614,7 +614,8 @@
    "gates": [],
    "apis": [
     "POST /inquiries",
-    "GET /me/agent/drafts/{id}"
+    "GET /me/agent/drafts/{id}",
+    "GET /site-settings/public"
    ],
    "nav": "SB-HOM-CSB-010"
   },

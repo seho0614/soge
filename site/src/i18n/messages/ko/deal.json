@@ -472,6 +472,13 @@
     }
   },
   "support": {
+    "contact": "연락처 · 신고",
+    "contactPhone": "대표 전화",
+    "contactPrivacy": "개인정보 문의",
+    "contactDispute": "거래 분쟁",
+    "contactDisputeGo": "분쟁 조정 신청",
+    "contactScam": "사기 · 피해",
+    "contactScamGo": "안전 거래 수칙 · 사기 유형",
     "backCs": "고객센터",
     "title": "1:1 문의",
     "lead": "먼저 챗봇이 답하고, 사람이 판단할 일은 상담원에게 넘깁니다.",

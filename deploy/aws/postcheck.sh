@@ -77,7 +77,8 @@ case "$gc|$gl" in
   *) bad "「관리자 페이지」 단추(/go/admin) → ${gc:-000}" ".env 에 BO_URL=https://admin.sogaebank.com 을 넣고 pm2 restart sgb-site";;
 esac
 home=$(curl -s --max-time 60 "$SITE/")
-if echo "$home" | grep -q '디자인 예시입니다'; then warn "메인이 그림의 예시 내용으로 떠 있음 (HOME_CONTENT 가 live 가 아님)" "손님에게 열기 전에 .env 에서 HOME_CONTENT 줄을 지우거나 live 로 — 예시 평점 · 후기 수가 실제처럼 보입니다"
+# v10.171 — 화면에 **그려진** 안내 문장만 봄(사전 글은 HTML 에 통째로 실려 와서 「디자인 예시입니다」가 live 에서도 보임 — 11/1 잘못 걸린 경고)
+if echo "$home" | grep -o 'home-artnote">[^<]*' | grep -q '디자인 예시입니다'; then warn "메인이 그림의 예시 내용으로 떠 있음 (HOME_CONTENT 가 live 가 아님)" "손님에게 열기 전에 .env 에서 HOME_CONTENT 줄을 지우거나 live 로 — 예시 평점 · 후기 수가 실제처럼 보입니다"
 else ok "메인이 실제 자료로 떠 있음 (HOME_CONTENT=live)"; fi
 PROTO=$(ls "$APP/site/public/proto/" 2>/dev/null | grep -E '^SGB_Prototype_.*\.html$' | head -1)
 [ -n "$PROTO" ] && http_is "시안" "$SITE/proto/$PROTO" 200
@@ -120,6 +121,12 @@ if command -v nginx >/dev/null 2>&1; then
   echo "$CONF" | grep -q "web/dist" && ok "Nginx 가 운영 화면(web/dist)을 내보냄" || warn "Nginx 설정에 운영 화면(web/dist)이 없음" "절차서 6부"
   echo "$CONF" | grep -Eq 'X-Forwarded-For[[:space:]]+\$remote_addr' && ok "접속자 IP 를 Nginx 가 덮어씀 (X-Forwarded-For \$remote_addr)" \
     || warn "X-Forwarded-For 를 \$remote_addr 로 덮어쓰는 줄이 없음" "비로그인 투표의 IP 하루 한도가 헤더 조작으로 뚫리거나, 모두 같은 IP 로 묶입니다 — 절차서 6부 예시대로"
+  # v10.171 — 실제로 읽는 파일 · 사용자 웹 · 운영 화면이 열렸는지(11/1 sites-available 만 고쳐 공개가 안 됐던 일)
+  nginx_enabled_files | while read -r l; do info "켜진 설정: $l"; done
+  NG=$(echo "$CONF" | nginx_block_states)
+  US=$(echo "$NG" | awk '$1=="user"{print $2; exit}'); AS=$(echo "$NG" | awk '$1=="admin"{print $2; exit}')
+  info "사용자 웹(sogaebank.com) — $(nginx_state_ko "${US:-?}") · 운영 화면 — $(nginx_state_ko "${AS:-?}")"
+  case "${AS:-}" in ip|ip+pw) ok "운영 화면은 허용 IP 만";; *) bad "운영 화면이 허용 IP 로 막혀 있지 않음(${AS:-없음})" "운영 화면 블록(web/dist · /api/)에 allow … ; deny all; — 절차서 6-2";; esac
   if echo "$CONF" | grep -q 'ssl_certificate'; then ok "HTTPS 인증서 설정 있음"
   else warn "HTTPS 가 아직 없음" "사용자 웹 로그인은 https(또는 localhost)에서만 유지됩니다 — 절차서 6-3"; fi
   if [ -n "$DOM" ]; then
@@ -136,9 +143,14 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   a=$(qn "select key from v_assumed_on" | tr '\n' ' ')
   if [ -n "$a" ]; then
     warn "간주 모드가 켜져 있음: $a" "실제 결제 · 중개사 대조 · 실계좌 · 국세청 전자세금계산서 전송 없이 통과합니다(assume.etax 켜짐이면 「발행(간주)」은 실제 세금계산서가 아님 — 홈택스에서 발행 후 번호 넣기) — 연동 뒤 끄기 전에는 손님에게 열지 마십시오"
-    if command -v nginx >/dev/null 2>&1 && ! cat /etc/nginx/sites-enabled/* 2>/dev/null | sed 's/#.*//' | grep -Eq 'deny[[:space:]]+all|auth_basic[[:space:]]'; then
-      bad "간주 모드가 켜진 채 접근 제한이 없음" "Nginx 에 사무실 IP 만 허용(allow … ; deny all;)을 거십시오 — 지금은 주소를 아는 누구나 가입 · 결제 간주가 됩니다 (절차서 6-2)"
-    else ok "접근 제한(allow/deny 또는 암호)이 걸려 있음"; fi
+    # v10.171 — 사용자 웹을 공개했으면(11/1 대표 결정 · domain-dns #11) 소개몰 「주문 받기」가 꺼져 있어야 함(간주 결제로 돈 받지 않은 주문)
+    us=$(cat /etc/nginx/sites-enabled/* 2>/dev/null | sed 's/#.*//' | nginx_block_states | awk '$1=="user"{print $2; exit}')
+    oo=$(q "select coalesce((select value from site_settings where key='mall.order_open'),'on')")
+    if [ "${us:-}" = "open" ]; then
+      if [ "$a" != "${a/assume.payment/}" ] && [ "$oo" != "off" ]; then
+        bad "사용자 웹 공개 · 간주 결제 켜짐인데 소개몰 「주문 받기」가 켜짐" "돈을 받지 않은 「결제 완료」 주문이 생깁니다 — 운영 화면 첫 화면 「공개 직후 지켜보기」 › 「주문 받기 끄기」"
+      else warn "사용자 웹이 누구나 열림 · 간주 모드 켜짐" "대표 결정(11/1 · domain-dns #11) · 소개몰 주문 받기 $oo — 연동 뒤 간주 모드를 끄십시오"; fi
+    else ok "사용자 웹 접근 제한 — $(nginx_state_ko "${us:-?}")"; fi
   else ok "간주 모드 꺼짐"; fi
   b=$(q "select count(*) from v_open_blockers")
   [ "$b" = "0" ] && ok "오픈 차단 0건" || warn "오픈 차단 ${b}건" "$(q "select string_agg(kind||':'||c, ' ') from (select kind, count(*) c from v_open_blockers group by kind) x") — 여는 날까지 해소 (npm run open:check)"
@@ -159,10 +171,13 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   k=$(q "SELECT (length(d) - length(replace(d, '(integration_code = ', ''))) / length('(integration_code = ') FROM (SELECT pg_get_constraintdef(oid) d FROM pg_constraint WHERE conname = 'ck_integ_secret_name') x")
   [ "${k:-0}" -ge 22 ] 2>/dev/null && ok "연동 키 칸 ${k}개(5절 13)" || warn "연동 키 칸 ${k:-?}개" "22 가 기대 — D141 이 안 들어갔을 수 있음"
   # 방식 · 스위치 — 반영만으로는 바뀌지 않아야 함(바꾼 적이 있으면 그 값이 맞는지 판단)
-  for kv in identity.provider=STUB alimtalk.provider=NONE notify.alimtalk_ready=off esign.provider=STUB safenum.provider=NONE feature.referral_fee=off agent.enabled=off; do
+  for kv in identity.provider=STUB alimtalk.provider=NONE notify.alimtalk_ready=off esign.provider=STUB safenum.provider=NONE feature.referral_fee=off; do
     k=${kv%%=*}; want=${kv#*=}; v=$(q "SELECT value FROM site_settings WHERE key = '$k'")
     [ "$v" = "$want" ] && ok "$k = $v (처음 값 그대로)" || warn "$k = ${v:-없음}" "반영만으로는 $want 여야 함 — 일부러 바꾼 것이 아니면 알려 주십시오"
   done
+  # v10.171 — AI 상담 스위치는 대표 결정(11/1 · ai-agent #29)으로 켜 둘 수 있음 — 처리방침 게시 전에는 잠금(D145 · D149)이라 동작하지 않음
+  v=$(q "SELECT value FROM site_settings WHERE key = 'agent.enabled'")
+  [ "$v" = "on" ] && info "agent.enabled = on — 대표 결정으로 켜 둠(ai-agent #29) · 처리방침(국외 이전 · AI 고지) 게시 순간 AI 상담 동작" || ok "agent.enabled = ${v:-없음}"
   has public.alimtalk_templates && { n=$(q "SELECT count(*) FROM alimtalk_templates"); [ "$n" = "4" ] && ok "알림톡 템플릿 4개(5절 16)" || warn "알림톡 템플릿 ${n}개" "4 가 기대"; }
   # 오픈 준비 점검(5절 22)
   if has public.v_open_readiness; then

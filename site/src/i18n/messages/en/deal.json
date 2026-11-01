@@ -463,6 +463,13 @@
     }
   },
   "support": {
+    "contact": "Contact and reports",
+    "contactPhone": "Main phone",
+    "contactPrivacy": "Privacy inquiries",
+    "contactDispute": "Transaction disputes",
+    "contactDisputeGo": "Request dispute mediation",
+    "contactScam": "Fraud and damage",
+    "contactScamGo": "Safe trading tips and fraud types",
     "backCs": "Help Center",
     "title": "1:1 inquiry",
     "lead": "The chatbot answers first, and matters needing human judgment go to an agent.",

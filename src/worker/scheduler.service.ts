@@ -25,7 +25,7 @@ export type JobName =
   | 'deal_auto_confirm' | 'settlement_audit' | 'attribution_archive' | 'pii_purge'
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
-  | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'lead_cash_auto' | 'directory_expiry'
+  | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release';
 
 export interface JobResult {
@@ -442,6 +442,23 @@ export class SchedulerService {
         if (r.n > 0) {
           await this.alert('STUB_PAYMENT_ORDER', 'WARN', `시험 결제로 결제 완료된 소개몰 주문 ${r.n}건 — 돈을 받지 않은 주문입니다`, r);
         }
+        /* v10.171 (D160) — 1시간 가입 급증(자동 가입 · 광고 유입) · 1시간에 한 번 */
+        const sp = await this.launchWatch.signupSpike();
+        if (sp.alert) await this.alert('SIGNUP_SPIKE', 'WARN', `지난 1시간 가입 ${sp.n}명 — 기준 ${sp.limit}명 이상`, sp);
+        detail = { ...r, signupHour: sp.n };
+        break;
+      }
+
+      /* v10.171 (D160 · docs/264) — 운영 하루 요약(매일 09:00): 운영 알림 DAILY_DIGEST · 메일이 준비됐으면 ops.digest_to 로도 */
+      case 'launch_digest': {
+        const d = await this.launchWatch.digest();
+        let mailed = false;
+        if (d.to && (await this.mail.ready())) {
+          const m = await this.mail.send({ to: d.to, subject: `[소개뱅크] 운영 하루 요약 ${d.day}`, text: d.text });
+          mailed = !!m.ok;
+        }
+        await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed });
+        affected = 1; detail = { day: d.day, mailed };
         break;
       }
 

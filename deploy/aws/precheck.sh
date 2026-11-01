@@ -131,6 +131,10 @@ if command -v nginx >/dev/null 2>&1; then
   ls /etc/nginx/sites-enabled/ 2>/dev/null | sed 's/^/        켜진 설정: /' | tee -a "$OUT"
   CONF=$(cat /etc/nginx/sites-enabled/* 2>/dev/null | sed 's/#.*//')        # 주석 줄은 빼고 봅니다
   echo "$CONF" | grep -oE 'server_name[^;]*;|proxy_pass[^;]*;|listen[^;]*;|root[^;]*;|ssl_certificate [^;]*;|allow[^;]*;|deny[^;]*;' | sort | uniq -c | sed 's/^/        /' | tee -a "$OUT"
+  # v10.171 — 실제로 읽는 파일 · 사용자 웹 · 운영 화면이 열렸는지
+  nginx_enabled_files | while read -r l; do info "파일: $l"; done
+  NG=$(echo "$CONF" | nginx_block_states)
+  info "사용자 웹 — $(nginx_state_ko "$(echo "$NG" | awk '$1=="user"{print $2; exit}')") · 운영 화면 — $(nginx_state_ko "$(echo "$NG" | awk '$1=="admin"{print $2; exit}')")"
   if echo "$CONF" | grep -q 'ssl_certificate'; then info "HTTPS 인증서 설정 있음"; else info "HTTPS 인증서 설정 없음 (https 가 없으면 사용자 웹 로그인이 유지되지 않습니다 — 절차서 6-3)"; fi
 fi
 

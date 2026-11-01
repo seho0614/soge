@@ -53,6 +53,8 @@ export function Footer({ links, settings }: {
           {t('address')} {v('footer.address', t('tipNeeded'))}
           {' · '}{t('phone')} {v('footer.phone', t('tipNeeded'))}
           {' · '}{t('privacyOfficer')} {v('footer.privacy_officer', t('tipNeeded'))}
+          {/* v10.171 — 개인정보 문의 메일(대표 결정 11/1 privacy@ · mail-ses #9) */}
+          {settings['footer.privacy_email'] && <>{' · '}{t('privacyEmail')} <a href={`mailto:${settings['footer.privacy_email']}`} data-privacy-email="">{settings['footer.privacy_email']}</a></>}
           {' · '}{t('hosting')} {v('footer.hosting', t('tipNeeded'))}
         </div>
 

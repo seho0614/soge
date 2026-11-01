@@ -27,6 +27,7 @@ export class LaunchWatchService {
               (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'off') AS "assumePayment",
+              coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "digestTo",
               (SELECT count(*)::int FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.status = 'ON_SALE' AND s.type = 'DIRECT') AS "directOnSale"`);
     const stubOrders = await this.db.query(
       `SELECT o.order_no AS "orderNo", o.total, o.status, coalesce(p.approved_at, p.created_at) AS "paidAt"
@@ -35,6 +36,45 @@ export class LaunchWatchService {
         ORDER BY coalesce(p.approved_at, p.created_at) DESC LIMIT 10`);
     return { ...c, stubOrders,
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
+  }
+
+  /* ── v10.171 (D160 · docs/264) 하루 요약 · 가입 급증 ─────────────────── */
+
+  /** 어제(한국 날짜) 요약 — 정기 작업 launch_digest(매일 09:00)가 운영 알림 · 메일로 */
+  async digest() {
+    const Y = `((now() AT TIME ZONE 'Asia/Seoul')::date - 1)`;
+    const D = (col: string) => `(${col} AT TIME ZONE 'Asia/Seoul')::date = ${Y}`;
+    const [c] = await this.db.query<any>(
+      `SELECT ${Y}::text AS day,
+              (SELECT count(*)::int FROM accounts WHERE ${D('created_at')}) AS signups,
+              (SELECT count(*)::int FROM posts WHERE ${D('created_at')}) AS posts,
+              (SELECT count(*)::int FROM listings WHERE ${D('created_at')}) AS listings,
+              (SELECT count(*)::int FROM hlt_orders WHERE ${D('created_at')}) AS orders,
+              (SELECT count(DISTINCT p.order_id)::int FROM hlt_payments p WHERE p.stub AND p.state = 'PAID' AND ${D('coalesce(p.approved_at, p.created_at)')}) AS "stubPaidOrders",
+              (SELECT count(*)::int FROM ops_alerts WHERE ${D('raised_at')} AND severity IN ('WARN', 'CRITICAL')) AS alerts,
+              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
+              coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
+              coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
+    const text = [
+      `소개뱅크 운영 하루 요약 — ${c.day}(한국 날짜)`,
+      '',
+      `가입 ${c.signups} · 소개광장 글 ${c.posts} · 매물 ${c.listings} · 소개몰 주문 ${c.orders}`,
+      `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
+      `운영 알림(경고 이상) 어제 ${c.alerts} · 확인 안 한 것 ${c.openAlerts}`,
+      `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
+      '',
+      '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
+    ].join('\n');
+    return { ...c, text };
+  }
+
+  /** 지난 1시간 가입이 기준(ops.signup_spike_per_hour) 이상이고, 지난 1시간 안에 같은 알림이 없으면 알릴 것 */
+  async signupSpike(): Promise<{ n: number; limit: number; alert: boolean }> {
+    const [r] = await this.db.query<{ n: number; lim: number; recent: boolean }>(
+      `SELECT (SELECT count(*)::int FROM accounts WHERE created_at > now() - interval '1 hour') AS n,
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.signup_spike_per_hour'), 30) AS lim,
+              EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'SIGNUP_SPIKE' AND raised_at > now() - interval '1 hour') AS recent`);
+    return { n: r.n, limit: r.lim, alert: r.lim > 0 && r.n >= r.lim && !r.recent };
   }
 
   /** 정기 작업 launch_watch — 지난 15분 안에 시험 결제로 결제 완료된 소개몰 주문 수 */
