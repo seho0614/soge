@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { HealthTenantApply } from './HealthTenantApply';
 
 interface Seller {
   code: string; name: string; type: string; status: string;
@@ -220,7 +221,9 @@ function refundText(r: { kind: string; reason: string; payAmount: number | strin
     ? `결제 ${n(paid)}원에서 왕복 배송비 ${n(RETURN_SHIP_ROUND_TRIP)}원을 빼고 ${n(Math.max(0, paid - RETURN_SHIP_ROUND_TRIP))}원을 환불합니다`
     : `결제 ${n(paid)}원을 환불합니다`;
 }
-const TYPE: Record<string, string> = { DIRECT: '직판', BRAND: '입점(브랜드)', GENERAL: '입점(일반)' };
+const TYPE: Record<string, string> = { DIRECT: '직판', BRAND: '입점(브랜드)', GENERAL: '입점(일반)', TENANT: '입점(일반)' };
+/* v10.165 — 입점 신청 상태(D155) */
+const STATUS: Record<string, string> = { PENDING: '심사 대기', ACTIVE: '판매 중', PAUSED: '멈춤', BLOCKED: '제한', REJECTED: '반려' };
 const SST: Record<string, string> = { DRAFT: '마감 대기', CONFIRMED: '확정', PAID: '지급', CARRIED: '다음 주 이월' };
 
 /** 지난주 월요일 (정산 시작일 기본값) */
@@ -267,18 +270,21 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       </p>
       <Flash msg={a.msg} err={a.err} />
 
+      <HealthTenantApply />
+
       <HealthReturns />
 
       <h3 className="sec">판매자 <em>{(sellers.data ?? []).length}</em></h3>
       {sellers.data && sellers.data.length === 0 && <p className="muted">등록된 판매자가 없습니다.</p>}
       {(sellers.data ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>코드</th><th>이름</th><th>구분</th><th>판매중</th><th>지급</th><th>수수료율</th><th>만료 인허가</th></tr></thead>
+          <thead><tr><th>코드</th><th>이름</th><th>구분</th><th>상태</th><th>판매중</th><th>지급</th><th>수수료율</th><th>만료 인허가</th></tr></thead>
           <tbody>
             {(sellers.data ?? []).map((x) => (
               <tr key={x.code}>
                 <td className="mono">{x.code}</td><td><b>{x.name}</b></td>
                 <td>{TYPE[x.type] ?? x.type}</td>
+                <td>{STATUS[x.status] ?? x.status}</td>
                 <td className="num-cell">{n(x.onSale)}</td>
                 <td>{x.type === 'DIRECT' ? <span className="dim">해당 없음</span>
                   : x.payable ? <span className="st ok">가능</span> : <span className="st no">불가</span>}</td>

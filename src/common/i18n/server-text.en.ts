@@ -1454,4 +1454,13 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "동네 인증 준비가 끝나지 않았습니다 — 잠시 뒤 다시 해 주십시오.": "Neighborhood check is not ready yet — please try again later.",
   "이 위치의 동네를 찾지 못했습니다 — 국내에서 다시 해 주십시오.": "Could not find a neighborhood for this location — please try again within Korea.",
   "동네를 확인하지 못했습니다 — 잠시 뒤 다시 해 주십시오.": "Could not confirm your neighborhood — please try again later.",
+  "소개몰 입점 신청이 아직 열리지 않았습니다.": "Seller applications for the mall are not open yet.",
+  "본인확인을 마친 뒤 입점을 신청할 수 있습니다.": "Verify your identity before applying as a seller.",
+  "소개뱅크몰 입점(판매자) 이용약관에 동의한 뒤 신청할 수 있습니다.": "Agree to the SoGaeBank Mall seller terms before applying.",
+  "이미 입점한 판매자입니다 — 정보 변경은 판매자센터에서 합니다.": "You are already a seller — change your details in the seller center.",
+  "이용이 제한된 판매자는 다시 신청할 수 없습니다 — 고객센터로 문의해 주십시오.": "A restricted seller cannot apply again — please contact customer support.",
+  "사업자 판매자는 사업자등록번호를 적어 주십시오.": "Business sellers must enter a business registration number.",
+  "브랜드 직영관은 브랜드 권리 증빙을 함께 내야 합니다.": "A brand store must include proof of brand rights.",
+  "입점 신청을 찾을 수 없습니다.": "Seller application not found.",
+  "반려 사유를 적어 주십시오 — 신청자에게 그대로 보입니다.": "Enter a rejection reason — the applicant sees it as written.",
 };

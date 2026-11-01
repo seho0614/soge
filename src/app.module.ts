@@ -103,6 +103,8 @@ import { TownFoodAdminController, TownFoodController } from './modules/community
 import { TownFoodService } from './modules/community/town-food.service';
 import { TownVerifyController } from './modules/community/town-verify.controller';   // v10.164 (D154) 소개광장 동네 인증
 import { TownVerifyService } from './modules/community/town-verify.service';
+import { HealthTenantController } from './modules/health/health-tenant.controller';   // v10.165 (D155) 소개몰 입점 신청 · 심사
+import { HealthTenantService } from './modules/health/health-tenant.service';
 import { SiteService } from './modules/site/site.service';
 import { BillingController } from './modules/billing/billing.controller';
 import { BillingService } from './modules/billing/billing.service';
@@ -300,6 +302,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownFoodController,
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     TownVerifyController,   // v10.164 (D154) 동네 인증
+    HealthTenantController,   // v10.165 (D155) 소개몰 입점
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
@@ -315,6 +318,7 @@ import { LeadService } from './modules/lead/lead.service';
     WeatherService,   /* v10.49 (D103) 오늘의 날씨 */
     TownFoodService,   /* v10.47 (D100) 우리동네 맛집 */
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
+    HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */
