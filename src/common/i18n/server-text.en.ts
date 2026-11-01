@@ -1381,6 +1381,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "해지한 구독은 새로 청구할 수 없습니다": "A canceled subscription cannot be billed again",
   "해지할 구독이 없습니다.": "There is no subscription to cancel.",
   "협의할 수 있는 상태가 아닙니다.": "It is not in a state where negotiation is possible.",
+  "형식이 올바르지 않습니다 (0x00).": "The format is not valid (0x00).",
   "형식이 올바르지 않습니다 ({0}).": "The format is not valid ({0}).",
   "형태는 렌탈(RENTAL) · 판매(SALE)입니다.": "The type is rental (RENTAL) · sale (SALE).",
   "확인 대기 상태가 아닙니다.": "It is not awaiting checking.",
