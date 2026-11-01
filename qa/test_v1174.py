@@ -41,18 +41,18 @@ PS = rd('src/modules/public/public.service.ts'); PC = rd('src/modules/public/pub
 ok('① 서버 — 5xx 세기(1시간 · 2,000건) · 필터에서 기록 · 10분 기준 · 1시간에 한 번 · 실행기 알림 · 지켜보기 칸 · sitemap-entries(주소 · 시각만)',
    'export function recordServerError' in CNT and 'export function serverErrorsSince' in CNT and 'if (status >= 500) recordServerError(' in FL
    and 'async serverErrorSpike()' in LS and "alert_code = 'SERVER_ERROR_SPIKE' AND raised_at > now() - interval '1 hour'" in LS and 'serverErrorsHour' in LS
-   and "'SERVER_ERROR_SPIKE'" in SH and 'serverErrorsHour' in WL and "@Get('sitemap-entries')" in PC and 'async sitemapEntries()' in PS
+   and "'SERVER_ERROR_SPIKE'" in SH and 'serverErrorsHour' in WL and "@Get('site/sitemap-entries')" in PC and 'async sitemapEntries()' in PS
    and "l.status = 'PUBLISHED' AND l.gwan_code <> 'HLT'" in PS and 'FROM gwans WHERE is_active AND NOT is_hub' in PS and "'MNY'" not in PS and "board <> 'FOOD'" in PS, '')
 RB = rd('site/src/app/robots.ts'); SM = rd('site/src/app/sitemap.ts'); ER = rd('site/src/app/error.tsx'); GE = rd('site/src/app/global-error.tsx')
 OG = rd('site/src/app/opengraph-image.tsx'); IC = rd('site/src/app/icon.tsx'); LY = rd('site/src/app/layout.tsx')
 ko = json.loads(rd('site/src/i18n/messages/ko.json') or '{}').get('errorPage', {}); en = json.loads(rd('site/src/i18n/messages/en.json') or '{}').get('errorPage', {})
 ok('① 사용자 웹 — robots(개인 화면 빼기 · 사이트 지도) · sitemap(고정 + 공개 주소 · API 실패에도 응답) · 오류 화면 2 · 미리보기 그림 1200×630 · 아이콘 · openGraph · 사전',
-   "'/my'" in RB and "'/api/'" in RB and 'sitemap: `${o}/sitemap.xml`' in RB and "'/sitemap-entries'" in SM and '.catch(() =>' in SM
+   "'/my'" in RB and "'/api/'" in RB and 'sitemap: `${o}/sitemap.xml`' in RB and "'/site/sitemap-entries'" in SM and '.catch(() =>' in SM
    and "useTranslations('errorPage')" in ER and "'use client'" in ER and 'reset()' in ER and '<html' in GE and 'width: 1200, height: 630' in OG
    and 'ImageResponse' in IC and 'openGraph:' in LY and 'metadataBase:' in LY
    and all(k in ko and k in en for k in ('title', 'body', 'retry', 'home', 'support', 'code')), '')
 SPEC = rd('spec/screens.json')
-ok('① 명세 · 문서 · 판 — GET /sitemap-entries · docs/268 · v10.174', '"GET /sitemap-entries"' in SPEC
+ok('① 명세 · 문서 · 판 — GET /site/sitemap-entries · docs/268 · v10.174', '"GET /site/sitemap-entries"' in SPEC
    and any(f.startswith('268_') for f in os.listdir(os.path.join(K, 'docs'))) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 174), rd('VERSION').strip())
 
 
@@ -85,7 +85,7 @@ def fetch(url, timeout=120):
 
 
 if API and DB:
-    e = call('GET', '/sitemap-entries')
+    e = call('GET', '/site/sitemap-entries')
     L, P, H = e.get('listings') or [], e.get('posts') or [], e.get('products') or []
     ids = "','".join(x['id'] for x in L) or '00000000-0000-0000-0000-000000000000'
     pids = "','".join(x['id'] for x in P) or '00000000-0000-0000-0000-000000000000'
