@@ -110,12 +110,12 @@ if API and DB:
     j = call('POST', '/admin/jobs', {'job': 'launch_watch'}, T_)
     n10 = (j.get('detail') or {}).get('serverErrors10m', -1)
     al = psql("SELECT count(*) FROM ops_alerts WHERE alert_code = 'SERVER_ERROR_SPIKE' AND raised_at > now() - interval '1 hour'")
-    w = call('GET', '/admin/launch-watch', T_)
+    w = call('GET', '/admin/launch-watch', t=T_)
     psql(f"UPDATE site_settings SET value = '{old}' WHERE key = 'ops.server_error_per_10min'")
     ok('③ 서버 오류 몰림 — 5xx 를 일으킴 · launch_watch 지난 10분 건수 ≥ 기준(3) · 운영 알림 SERVER_ERROR_SPIKE(1시간 안) · 지켜보기 1시간 칸',
        trig and n10 >= 3 and al not in ('', '0') and (w.get('serverErrorsHour') or 0) >= 3, f'일으킨 곳 {trig} · 10분 {n10} · 알림 {al} · 1시간 {w.get("serverErrorsHour")}')
     ok('③ 기준 되돌림 · 회원은 지켜보기 403', psql("SELECT value FROM site_settings WHERE key = 'ops.server_error_per_10min'") == old
-       and call('GET', '/admin/launch-watch', call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken')).get('_err') == 403, old)
+       and call('GET', '/admin/launch-watch', t=call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken')).get('_err') == 403, old)
 
     # ── ④ 사용자 웹 ───────────────────────────────────────────────────
     if SITE:
