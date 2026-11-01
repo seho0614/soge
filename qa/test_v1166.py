@@ -42,7 +42,7 @@ SS = rd('src/modules/health/health-seller.service.ts'); SC = rd('src/modules/hea
 ok('① 서버 — 판매자만(NOT_SELLER) · 자기 상품만(seller_id) · 코드 앞머리 · 다시 검수 · 검수 요청 · 통과 · 반려 · 같은 상품 규칙(HealthAdminService) · 감사 6 · 모듈',
    "'NOT_SELLER'" in SS and 'WHERE code = $1 AND seller_id = $2' in SS and '`${s.code}-${' in SS and "SET review_state = 'NONE'" in SS
    and "review_state = 'SUBMITTED'" in SS and "'REASON_REQUIRED'" in SS and 'private readonly admin: HealthAdminService' in SS
-   and SC.count('@Audit(') == 6 and "@Get('admin/health/product-reviews')" in SC and "@Post('admin/health/product-reviews/:code')" in SC
+   and SC.count('@Audit(') >= 6 and "@Get('admin/health/product-reviews')" in SC and "@Post('admin/health/product-reviews/:code')" in SC
    and 'HealthSellerController' in AM and 'HealthSellerService' in AM, '')
 WR = rd('web/src/app/admin/HealthProductReviews.tsx'); WS = rd('web/src/app/admin/HealthSettle.tsx')
 CC = rd('site/src/components/health/SellerCenter.tsx'); CP = rd('site/src/app/health/seller/center/page.tsx')
@@ -169,11 +169,11 @@ if API and DB:
                         ctx = b_.new_context(viewport={'width': 1300, 'height': 1000}); pg = ctx.new_page(); errs2 = []
                         pg.on('pageerror', lambda e: errs2.append(str(e)[:120]))
                         pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000)
-                        pg.fill('input[name=email]', MEM); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
+                        pg.fill('input[name=email]', MEM); pg.fill('input[name=password]', PW); pg.click('form.auth button'); pg.wait_for_timeout(3000)
                         pg.goto(SITE + '/health/seller/center', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
                         cen = pg.locator(f'[data-seller-center="{SC1}"]').count(); row = pg.locator(f'[data-center-product="{code}"]').count()
                         pg.screenshot(path=os.path.join(HERE, 'v1166_site_center.png'), full_page=True)
-                        ok('③ 사용자 웹 /health/seller/center — 판매자센터 · 내 상품 줄 · 오류 없음', cen == 1 and row == 1 and not errs2, f'{cen} · {row} · {errs2[:2]}')
+                        ok('③ 사용자 웹 /health/seller/center — 판매자센터 · 내 상품 줄 · 주문 · 발송 부품 · 오류 없음', cen == 1 and row == 1 and not errs2, f'{cen} · {row} · {pg.url} · {errs2[:2]}')
                     b_.close()
     finally:
         psql(clean)

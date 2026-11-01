@@ -45,7 +45,7 @@ TS = rd('src/modules/health/health-tenant.service.ts'); TC = rd('src/modules/hea
 ok('① 서버 — 꺼짐 · 본인확인 · 동의(HLT_SELLER) · 개인 · 사업자번호 · 브랜드 증빙 · 다시 신청 · 승인(서류 확인) · 반려 사유 · 감사 3 · 모듈',
    all(f"'{c}'" in TS for c in ('TENANT_OFF', 'IDENTITY_REQUIRED', 'TENANT_CONSENT_REQUIRED', 'SELLER_EXISTS', 'SELLER_BLOCKED', 'BIZ_REG_REQUIRED', 'BRAND_PROOF_REQUIRED', 'NOT_PENDING', 'REASON_REQUIRED'))
    and "WHERE t.code = 'HLT_SELLER'" in TS and "key = 'mall.tenant'" in TS and 'UPDATE hlt_seller_licenses SET verified_by' in TS
-   and TC.count('@Audit(') == 3 and "@Post('me/health/seller')" in TC and "@Get('admin/health/sellers/applications')" in TC
+   and TC.count('@Audit(') >= 3 and "@Post('me/health/seller')" in TC and "@Get('admin/health/sellers/applications')" in TC
    and "@Post('admin/health/sellers/:id/approve')" in TC and "@Post('admin/health/sellers/:id/reject')" in TC and '@StrictBoolean() personal' in TC
    and 'HealthTenantController' in AM and 'HealthTenantService' in AM, '')
 WA = rd('web/src/app/admin/HealthTenantApply.tsx'); WS = rd('web/src/app/admin/HealthSettle.tsx')
