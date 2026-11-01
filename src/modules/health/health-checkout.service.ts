@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, HLT_SHIP_FEE, exchangeFee, returnShipDeduction } from './health-policy';
+import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction, sellerShipFee } from './health-policy';
 import { FEE_STATE_SQL, PAY_COLS } from './health-shop.shared';
 
 /**
@@ -35,8 +35,15 @@ export class HealthCheckoutService {
     let goods = 0;
     for (const l of lines) goods += Number(l.price) * l.qty;
 
-    /* 배송비는 받지 않습니다 — 전 상품 무료(2026-10-08 · health-policy.ts). 전에는 3만원 이상만 무료였습니다. */
-    const ship = HLT_SHIP_FEE;
+    /* v10.167 — 한 주문은 한 판매자(INV-H9 · DB 도 막음). 판매자가 섞이면 DB 오류 대신 판매자별로 주문하라고 알립니다 */
+    const sellers = await this.db.query<{ id: string; type: string; ship_fee: number; free_ship_over: number | null }>(
+      `SELECT DISTINCT s.id, s.type, s.ship_fee, s.free_ship_over FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.id = ANY($1::uuid[])`,
+      [lines.map((l) => l.productId)]);
+    if (sellers.length > 1) {
+      throw new PolicyViolation('MIXED_SELLERS', '판매자가 다른 상품은 따로 주문해 주십시오 — 장바구니에서 판매자별로 주문할 수 있습니다.');
+    }
+    /* 배송비 — 직판은 받지 않습니다(전 상품 무료 · 2026-10-08 · health-policy.ts). 입점 판매자는 그 판매자의 배송비 · 무료 기준(v10.167) */
+    const ship = sellerShipFee(sellers[0], goods);
 
     /* 20261002 — 한 트랜잭션으로 묶습니다. 전에는 재고 트리거가 422 로 막아도
      * 주문 머리 행이 남아 **품목 없는 주문**이 생기고 그 주문에 결제까지 걸 수 있었습니다(실측). */
@@ -114,7 +121,7 @@ export class HealthCheckoutService {
         [o.id, touch, me, lines.map((l) => l.code), AFF_WINDOW_HOURS]);
     }
 
-    return { ...o, shipFee: ship, note: '배송비는 없습니다(전 상품 무료).' };
+    return { ...o, shipFee: ship, note: ship === 0 ? '배송비는 없습니다(전 상품 무료).' : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비).` };
     });
   }
 
@@ -237,13 +244,16 @@ export class HealthCheckoutService {
                OR EXISTS (SELECT 1 FROM hlt_payments WHERE order_id = $1 AND approved_at IS NOT NULL)) AS paid`, [o.id]);
     const paid = !!pp?.paid;
     const paidAmount = !paid ? 0 : payment?.state === 'PAID' ? Number(payment.amount) : Number(o.total);
+    /* v10.167 — 입점 판매자 주문은 그 판매자의 왕복 반품비(6,000원 상한) */
+    const [rt] = await this.db.query<{ fee: number | string }>(ORDER_ROUND_TRIP_SQL, [o.id]);
+    const roundTrip = rt?.fee == null ? HLT_RETURN_SHIP_ROUND_TRIP : Number(rt.fee);
     const returnShip = {
-      customerReasons: HLT_CUSTOMER_REASONS, roundTripFee: HLT_RETURN_SHIP_ROUND_TRIP,
+      customerReasons: HLT_CUSTOMER_REASONS, roundTripFee: roundTrip,
       /** v10.27 (G-184) — 결제했는가. false 면 환불 표 대신 「결제 전 취소 — 환불할 금액이 없습니다」 */
       paid,
       /** v10.25 — 환불 예상 표(결제 금액 · 반품 배송비 · 환불 예정액)의 기준 금액. 화면이 따로 계산하지 않게 내립니다 */
       paidAmount,
-      customerRefundEstimate: Math.max(0, paidAmount - returnShipDeduction('RETURN', 'CHANGE_MIND', paidAmount)),
+      customerRefundEstimate: Math.max(0, paidAmount - returnShipDeduction('RETURN', 'CHANGE_MIND', paidAmount, roundTrip)),
     };
     /* v10.26 — 진행 중인 교환(가장 최근 신청) · 교환 배송비 결제 상태. 주문 상태 값은 늘리지 않고 신청으로 보입니다(「교환 접수」) */
     const [exchange] = await this.db.query<any>(
@@ -362,7 +372,10 @@ export class HealthCheckoutService {
               (SELECT json_build_object('code', g.code, 'name', g.name, 'amount', pi.amount)
                  FROM hlt_product_ingredients pi JOIN ingredients g ON g.code = pi.ingredient_code
                 WHERE pi.product_id = p.id AND pi.is_main) AS "mainIngredient",
-              s.type AS "sellerType"
+              s.type AS "sellerType",
+              /* v10.167 — 판매자별 묶음(배송비 · 주문은 판매자마다) */
+              s.code AS "sellerCode", s.name AS "sellerName", s.ship_fee AS "_shipFee", s.free_ship_over AS "_freeShipOver",
+              CASE WHEN s.type = 'DIRECT' THEN ${HLT_RETURN_SHIP_ROUND_TRIP} ELSE s.return_ship_fee END AS "_returnShipFee"
          FROM hlt_cart_items ci
          JOIN hlt_products p ON p.id = ci.product_id
          JOIN hlt_product_options o ON o.id = ci.option_id
@@ -374,15 +387,30 @@ export class HealthCheckoutService {
       `SELECT lines, items, goods, ship_fee AS "shipFee", total,
               has_problem AS "hasProblem", price_changed AS "priceChanged"
          FROM v_hlt_cart WHERE account_id = $1`, [me]);
+    /* v10.167 — 판매자별 묶음. 직판만 담긴 장바구니는 앞 판과 같은 값(배송비 0 · 묶음 하나) */
+    const groups = new Map<string, { sellerCode: string; sellerName: string; sellerType: string; goods: number; shipFee: number; returnShipFee: number; optionIds: string[];
+      _ship: number; _over: number | null }>();
+    for (const it of items as any[]) {
+      const k = String(it.sellerCode ?? '');
+      const g = groups.get(k) ?? { sellerCode: k, sellerName: it.sellerName, sellerType: it.sellerType, goods: 0, shipFee: 0, returnShipFee: Number(it._returnShipFee ?? HLT_RETURN_SHIP_ROUND_TRIP),
+        optionIds: [] as string[], _ship: Number(it._shipFee ?? 0), _over: it._freeShipOver == null ? null : Number(it._freeShipOver) };
+      if (!it.notOnSale) g.goods += Number(it.amount);
+      g.optionIds.push(it.optionId);
+      groups.set(k, g);
+      delete it._shipFee; delete it._freeShipOver; delete it._returnShipFee;
+    }
+    const sellers = [...groups.values()].map(({ _ship, _over, ...g }) => ({ ...g, shipFee: sellerShipFee({ type: g.sellerType, ship_fee: _ship, free_ship_over: _over }, g.goods) }));
+    const tenantShip = sellers.reduce((a, g) => a + (g.sellerType === 'DIRECT' ? 0 : g.shipFee), 0);
     return {
       items,
+      sellers,
       lines: Number(sum?.lines ?? 0),
       goods: Number(sum?.goods ?? 0),
-      shipFee: Number(sum?.shipFee ?? 0),
-      total: Number(sum?.total ?? 0),
+      shipFee: Number(sum?.shipFee ?? 0) + tenantShip,
+      total: Number(sum?.total ?? 0) + tenantShip,
       hasProblem: sum?.hasProblem ?? false,
       priceChanged: sum?.priceChanged ?? false,
-      note: '배송비는 없습니다(전 상품 무료).',
+      note: tenantShip ? '입점 판매자 상품은 판매자 배송비가 붙고, 판매자마다 따로 주문합니다.' : '배송비는 없습니다(전 상품 무료).',
     };
   }
 

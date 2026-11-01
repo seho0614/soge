@@ -112,8 +112,11 @@ export default async function HltProductPage({ params, searchParams }: Props) {
             <h3>{t('shipTitle')}</h3>
             <table className="tbl hlt-tbl">
               <tbody>
-                <tr><th>{t('shipFee')}</th><td>{t('shipFeeVal')}</td></tr>
-                <tr><th>{t('returnFee')}</th><td>{t('returnFeeVal', { amt: f.won(RETURN_SHIP_ROUND_TRIP, '-') })}</td></tr>
+                {/* v10.167 — 입점 판매자 상품은 그 판매자의 배송비 · 무료 기준 · 반품비(6,000원 상한) */}
+                <tr data-ship-fee={p.sellerShipFee ?? 0}><th>{t('shipFee')}</th><td>{(p.sellerShipFee ?? 0) > 0
+                  ? (p.freeShipOver ? t('shipFeeSellerOver', { amt: f.won(p.sellerShipFee!, '-'), over: f.won(p.freeShipOver, '-') }) : t('shipFeeSeller', { amt: f.won(p.sellerShipFee!, '-') }))
+                  : t('shipFeeVal')}</td></tr>
+                <tr data-return-fee={p.returnShipFee ?? RETURN_SHIP_ROUND_TRIP}><th>{t('returnFee')}</th><td>{t('returnFeeVal', { amt: f.won(p.returnShipFee ?? RETURN_SHIP_ROUND_TRIP, '-') })}</td></tr>
                 {/* v10.26 — 시안의 「교환 배송비」 줄. 회원 사정(단순 변심 · 잘못 주문) 교환만 · 신청 때 결제(약관 제3조) */}
                 <tr data-exchange-fee={p.exchangeFee}><th>{t('exchangeFee')}</th><td>{t('exchangeFeeVal', { amt: f.won(p.exchangeFee, '-') })}</td></tr>
                 {p.returnAddr && <tr><th>{t('returnAddr')}</th><td>{p.returnAddr}</td></tr>}

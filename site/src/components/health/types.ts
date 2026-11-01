@@ -60,6 +60,8 @@ export interface HltProductDetail extends HltProduct {
   /** 「의약품이 아닙니다」 고지를 보일지(식품 · 건강기능식품) */
   notMedicine: boolean;
   exchangeFee: number;
+  /** v10.167 — 판매자의 왕복 반품비(직판 6,000원) · 배송비(직판 0) · 무료 기준(입점만) */
+  returnShipFee?: number; sellerShipFee?: number; freeShipOver?: number | null;
   returnAddr: string | null;
   csTel: string | null;
   sameIngredient: HltProduct[];
@@ -136,8 +138,14 @@ export interface HltCartItem {
   art?: { form: string | null; tone: string | null } | null; imageUrl?: string | null;
   mainIngredient?: { code: string; name: string; amount: string | null } | null; sellerType?: string | null;
 }
+/** v10.167 — 장바구니의 판매자별 묶음(주문 · 배송비는 판매자마다) */
+export interface HltCartSeller {
+  sellerCode: string; sellerName: string; sellerType: string; goods: number; shipFee: number; returnShipFee: number; optionIds: string[];
+}
 export interface HltCart {
   items: HltCartItem[];
+  /** v10.167 — 판매자별 묶음. 둘 이상이면 판매자마다 따로 주문 */
+  sellers?: HltCartSeller[];
   lines: number; goods: number; shipFee: number; total: number;
   hasProblem: boolean; note: string | null;
   /** v10.26 — 담은 뒤 값이 바뀐 줄이 있음(「확인했습니다」를 받아야 주문) */

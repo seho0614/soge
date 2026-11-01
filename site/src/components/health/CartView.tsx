@@ -129,7 +129,20 @@ export function CartView({ initial }: { initial: HltCart }) {
             <span>{t.rich('cart.ack', { b: (c) => <b>{c}</b> })}</span>
           </label>
         )}
-        {cart.hasProblem || cart.priceChanged
+        {(cart.sellers?.length ?? 0) > 1 ? (
+          /* v10.167 — 판매자가 둘 이상이면 판매자마다 주문(배송비 · 반품비 · 결제가 판매자마다 다름) */
+          <div className="hlt-sellers" data-cart-sellers={cart.sellers!.length}>
+            <p className="hint">{t('cart.bySeller')}</p>
+            {cart.sellers!.map((g) => (
+              <div key={g.sellerCode} className="hlt-sum" data-cart-seller={g.sellerCode}>
+                <span><b>{g.sellerName}</b> · {f.won(g.goods, '-')} · {t('common.shipFee')} {g.shipFee === 0 ? t('common.free') : f.won(g.shipFee, '-')}</span>
+                {cart.hasProblem || cart.priceChanged
+                  ? <button type="button" className="hlt-btn sm" disabled>{t('cart.orderSeller')}</button>
+                  : <Link className="hlt-btn sm" href={`/health/order?seller=${encodeURIComponent(g.sellerCode)}`}>{t('cart.orderSeller')}</Link>}
+              </div>
+            ))}
+          </div>
+        ) : cart.hasProblem || cart.priceChanged
           ? <button type="button" className="cta-primary" disabled>{t('cart.order')}</button>
           : <Link className="cta-primary as-link" href="/health/order">{t('cart.order')}</Link>}
       </section>

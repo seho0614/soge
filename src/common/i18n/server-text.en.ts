@@ -1479,4 +1479,9 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "입점 상품을 찾을 수 없습니다.": "Seller product not found.",
   "검수를 기다리는 상품이 아닙니다.": "This product is not awaiting review.",
   "초안으로 등록했습니다. 「검수 요청」을 하면 운영이 확인합니다.": "Saved as a draft. Request review and an operator will check it.",
+  "판매자가 다른 상품은 따로 주문해 주십시오 — 장바구니에서 판매자별로 주문할 수 있습니다.": "Order products from different sellers separately — you can order by seller from the cart.",
+  "입점 판매자 상품은 판매자 배송비가 붙고, 판매자마다 따로 주문합니다.": "Seller products include the seller's shipping fee and are ordered separately by seller.",
+  "배송비 {0}원이 포함되어 있습니다(판매자 배송비).": "Includes a shipping fee of KRW {0} (seller shipping fee).",
+  "내 주문을 찾을 수 없습니다.": "Order not found among your orders.",
+  "내 주문의 신청을 찾을 수 없습니다.": "Request not found among your orders.",
 };

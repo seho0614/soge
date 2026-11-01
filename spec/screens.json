@@ -2707,7 +2707,13 @@
     "POST /me/health/seller/products/{code}/status",
     "POST /me/health/seller/products/{code}/options",
     "PATCH /me/health/seller/products/{code}/options/{optionId}",
-    "GET /health/categories"
+    "GET /health/categories",
+    "GET /me/health/seller/orders",
+    "POST /me/health/seller/orders/{no}/ship",
+    "POST /me/health/seller/orders/{no}/tracking",
+    "POST /me/health/seller/orders/{no}/advance",
+    "GET /me/health/seller/returns",
+    "POST /me/health/seller/returns/{id}/decide"
    ],
    "nav": "SB-HLT-SEL-010"
   },

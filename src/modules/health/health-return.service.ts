@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { PaymentResult, RefundReceiveAccount, resolvePaymentProvider } from '../billing/payment.provider';
-import { HLT_EXCHANGE_WAIT_DAYS, exchangeFee, returnShipDeduction } from './health-policy';
+import { HLT_EXCHANGE_WAIT_DAYS, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction } from './health-policy';
 import { FEE_STATE_SQL } from './health-shop.shared';
 import { AgentDraftService } from '../agent/agent-draft.service';
 
@@ -46,7 +46,7 @@ export class HealthReturnService {
      * 발송 전 취소는 개봉일 수 없어 받지 않습니다. */
     const customerOpened = d.kind === 'CANCEL' ? null : (typeof d.opened === 'boolean' ? d.opened : null);
     /* v10.26 — 회원 사정 교환은 왕복 배송비(6,000원)를 신청 때 결제합니다(약관 제3조 · A-1 ①). 회사 사정 교환은 0원 */
-    const fee = exchangeFee(d.kind, d.reason);
+    const fee = exchangeFee(d.kind, d.reason, await this.roundTrip(o.id));   // v10.167 — 입점 판매자 주문은 그 판매자의 왕복 반품비
     const [r] = await this.db.query<any>(
       `INSERT INTO hlt_returns (order_id, kind, reason, detail, customer_opened, exchange_fee)
        VALUES ($1,$2,$3,$4,$5,$6)
@@ -401,10 +401,16 @@ export class HealthReturnService {
    * 금액 · 대상은 health-policy.ts 한 곳에서 정하고, 약관 초안(HLT_SALE §2)에 같은 값이 적힙니다.
    * DB 제약(ck_hlt_returns_ship_deduction)이 다른 사유 · 취소에서의 차감을 막습니다.
    */
-  private refundDeduction(r: { kind: string; reason: string; converted_from?: string | null }, paid: number): number {
+  private refundDeduction(r: { kind: string; reason: string; converted_from?: string | null }, paid: number, roundTrip?: number): number {
     /* v10.26 (10/8 답 「빼지 않음」 · 판매 약관 1.2 제3조 ③) — 재고가 없어 교환에서 바꾼 반품은 회사 사정이라 전액 환불합니다 */
     if (r.converted_from) return 0;
-    return returnShipDeduction(r.kind, r.reason, paid);
+    return returnShipDeduction(r.kind, r.reason, paid, roundTrip);
+  }
+
+  /** v10.167 — 주문의 왕복 반품비(입점 판매자가 정한 값 · 6,000원 상한 · 직판 6,000원) */
+  private async roundTrip(orderId: string): Promise<number> {
+    const [x] = await this.db.query<{ fee: number | string }>(ORDER_ROUND_TRIP_SQL, [orderId]);
+    return x?.fee == null ? 6000 : Number(x.fee);
   }
 
   /**
@@ -440,7 +446,7 @@ export class HealthReturnService {
           WHERE order_id = $1 AND state = 'PAID' FOR UPDATE`, [r.order_id]);
       if (!pay) throw new StateConflict('NOT_PAID', '결제되지 않은 주문이라 환불할 것이 없습니다.');
 
-      const deduct = this.refundDeduction(r, Number(pay.amount));
+      const deduct = this.refundDeduction(r, Number(pay.amount), await this.roundTrip(r.order_id));
       const amount = Number(pay.amount) - deduct;
       if (amount <= 0) {
         throw new StateConflict('NOTHING_TO_REFUND', '왕복 배송비를 빼면 환불할 금액이 없습니다 — 운영 확인이 필요합니다.');

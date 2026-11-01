@@ -131,7 +131,9 @@
     "hasProblem": "Some items cannot be ordered. Please fix them above to continue.",
     "ack": "Some prices have changed — <b>I have reviewed</b> the new prices",
     "order": "Place order",
-    "note": "Your cart <b>does not reserve stock</b> — stock, price and availability are checked again when you order. We never change prices silently, since a difference between the price you saw and the price you pay leads to disputes."
+    "note": "Your cart <b>does not reserve stock</b> — stock, price and availability are checked again when you order. We never change prices silently, since a difference between the price you saw and the price you pay leads to disputes.",
+    "bySeller": "Products from different sellers are ordered separately (shipping and return fees differ by seller).",
+    "orderSeller": "Order this seller's items"
   },
   "opt": {
     "errAdd": "Could not add to cart. Please try again shortly.",
@@ -259,7 +261,8 @@
     "memberOnly": "Only member accounts can place orders. Admin accounts cannot place orders.",
     "needVerify": "Identity verification is required to order.",
     "verifyWhy": "SogaeBank sells health products directly, so we need to verify the buyer.",
-    "noItems": "There are no items to order."
+    "noItems": "There are no items to order.",
+    "oneSeller": "Ordering only {name}'s items — {n} other seller group(s) stay in your cart."
   },
   "payPage": {
     "title": "Payment",

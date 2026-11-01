@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { StateConflict } from '../../core/errors';
-import { HLT_EXCHANGE_SHIP_ROUND_TRIP, exchangeFee } from './health-policy';
+import { HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, exchangeFee } from './health-policy';
 import { CARD_COLS, CARD_FROM, OPTION_COLS, SEARCH_BODY } from './health-catalog.sql';
 import { storageFromEnv } from '../file/storage';
 import { expandKeyword } from '../../core/search-expand';
@@ -57,7 +57,11 @@ export class HealthCatalogService {
               coalesce(ng.caution_title, '사용상 주의사항') AS "cautionTitle", coalesce(ng.not_medicine, false) AS "notMedicine",
               ng.notice_group AS "noticeGroup",
               coalesce(nullif(btrim(s.return_addr), ''), (SELECT value FROM site_settings WHERE key = 'footer.address')) AS "returnAddr",
-              coalesce(nullif(btrim(s.cs_tel), ''), (SELECT value FROM site_settings WHERE key = 'footer.phone')) AS "csTel"
+              coalesce(nullif(btrim(s.cs_tel), ''), (SELECT value FROM site_settings WHERE key = 'footer.phone')) AS "csTel",
+              /* v10.167 — 입점 판매자 상품은 그 판매자의 배송비 · 무료 기준 · 왕복 반품비(6,000원 상한 · 결정 C · 상품 화면에 표시). 직판은 무료 · 6,000원 */
+              CASE WHEN s.type = 'DIRECT' OR s.id IS NULL THEN ${HLT_RETURN_SHIP_ROUND_TRIP} ELSE s.return_ship_fee END AS "returnShipFee",
+              CASE WHEN s.type = 'DIRECT' OR s.id IS NULL THEN 0 ELSE s.ship_fee END AS "sellerShipFee",
+              CASE WHEN s.type <> 'DIRECT' THEN s.free_ship_over END AS "freeShipOver"
          FROM ${CARD_FROM}
          LEFT JOIN withdrawal_rules w ON w.code = p.withdrawal_code
          LEFT JOIN hlt_notice_groups ng ON ng.category_code = c.code
@@ -102,7 +106,7 @@ export class HealthCatalogService {
     await this.i18n.overlay(concerns as any[], 'HLT_CONCERN', (r: any) => r.code, { name: 'name' });
     return {
       ...view, ingredients, options, notice, sameIngredient: same,
-      exchangeFee: HLT_EXCHANGE_SHIP_ROUND_TRIP,
+      exchangeFee: Math.min(HLT_EXCHANGE_SHIP_ROUND_TRIP, Number((view as any).returnShipFee ?? HLT_EXCHANGE_SHIP_ROUND_TRIP)),
       concerns: concerns.map(({ sort, ...c }: any) => c),
     };
   }

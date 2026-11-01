@@ -35,12 +35,26 @@ export const HLT_CUSTOMER_REASONS = ['CHANGE_MIND', 'WRONG_ORDER'] as const;
 export const HLT_EXCHANGE_SHIP_ROUND_TRIP = 6000;
 /** 교환할 상품이 없을 때 입고를 기다리는 날 — 지나면 운영이 반품으로 바꿉니다(약관 제3조 · 10/8 답 「14일」) */
 export const HLT_EXCHANGE_WAIT_DAYS = 14;
-export function exchangeFee(kind: string, reason: string): number {
-  return kind === 'EXCHANGE' && (HLT_CUSTOMER_REASONS as readonly string[]).includes(reason) ? HLT_EXCHANGE_SHIP_ROUND_TRIP : 0;
+/* v10.167 — 입점 판매자 주문은 그 판매자가 정한 왕복 반품비(hlt_sellers.return_ship_fee · 6,000원 상한 · 결정 C)를 씁니다.
+ *   직판은 그대로 6,000원 — roundTrip 을 주지 않으면 6,000원입니다(앞 판과 같음). */
+export function exchangeFee(kind: string, reason: string, roundTrip: number = HLT_EXCHANGE_SHIP_ROUND_TRIP): number {
+  return kind === 'EXCHANGE' && (HLT_CUSTOMER_REASONS as readonly string[]).includes(reason) ? Math.min(HLT_EXCHANGE_SHIP_ROUND_TRIP, Math.max(0, roundTrip)) : 0;
 }
 
-export function returnShipDeduction(kind: string, reason: string, paid: number): number {
+export function returnShipDeduction(kind: string, reason: string, paid: number, roundTrip: number = HLT_RETURN_SHIP_ROUND_TRIP): number {
   if (kind !== 'RETURN') return 0;
   if (!(HLT_CUSTOMER_REASONS as readonly string[]).includes(reason)) return 0;
-  return Math.min(HLT_RETURN_SHIP_ROUND_TRIP, Math.max(0, paid));
+  return Math.min(Math.min(HLT_RETURN_SHIP_ROUND_TRIP, Math.max(0, roundTrip)), Math.max(0, paid));
+}
+
+/** v10.167 — 주문의 왕복 반품비 · 배송비 규칙을 DB 에서 읽는 SQL(판매자 기준 · 직판은 6,000원) */
+export const ORDER_ROUND_TRIP_SQL = `SELECT CASE WHEN s.type = 'DIRECT' OR s.id IS NULL THEN ${HLT_RETURN_SHIP_ROUND_TRIP} ELSE s.return_ship_fee END AS fee
+  FROM hlt_orders o LEFT JOIN hlt_sellers s ON s.id = o.seller_id WHERE o.id = $1`;
+
+/** v10.167 — 입점 판매자 주문 배송비: 기본 배송비 · 무료 기준 이상이면 0. 직판은 HLT_SHIP_FEE(전 상품 무료) */
+export function sellerShipFee(seller: { type: string; ship_fee?: number | string | null; free_ship_over?: number | string | null } | null | undefined, goods: number): number {
+  if (!seller || seller.type === 'DIRECT') return HLT_SHIP_FEE;
+  const over = seller.free_ship_over == null ? null : Number(seller.free_ship_over);
+  if (over != null && goods >= over) return 0;
+  return Math.max(0, Number(seller.ship_fee ?? 0));
 }

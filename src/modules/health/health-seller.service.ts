@@ -3,6 +3,8 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { HealthAdminService } from './health-admin.service';
+import { CARRIERS, HealthOrdersService } from './health-orders.service';
+import { HealthReturnService } from './health-return.service';
 
 /* ---------------------------------------------------------------------
  * v10.166 (D156 · docs/257) — 소개몰 판매자센터: 상품 등록 → 운영 검수 · 배송비 · 반품비
@@ -19,7 +21,8 @@ const CONTENT_KEYS = ['name', 'summary', 'caution', 'notice', 'adCopy', 'categor
 
 @Injectable()
 export class HealthSellerService {
-  constructor(private readonly db: DatabaseService, private readonly admin: HealthAdminService) {}
+  constructor(private readonly db: DatabaseService, private readonly admin: HealthAdminService,
+              private readonly orders_: HealthOrdersService, private readonly returns_: HealthReturnService) {}
   private get me() { return RequestCtx.actorId(); }
 
   /** 내 판매자(입점 승인된 것) — 없으면 403 */
@@ -133,6 +136,68 @@ export class HealthSellerService {
 
   async addOption(code: string, o: any) { await this.own(code); return this.admin.addOption(code, o); }
   async updateOption(code: string, optionId: string, d: any) { await this.own(code); return this.admin.updateOption(code, optionId, d); }
+
+  /* ── v10.167 (docs/258) 주문 · 발송 · 반품 ──────────────────── */
+
+  /** 내 판매자의 주문인지 — 아니면 404 */
+  private async ownOrder(no: string) {
+    const s = await this.seller();
+    const [o] = await this.db.query<{ id: string }>(`SELECT id FROM hlt_orders WHERE order_no = $1 AND seller_id = $2`, [no, s.id]);
+    if (!o) throw new NotFound('내 주문을 찾을 수 없습니다.');
+    return { s, o };
+  }
+
+  /** 내 주문 — 발송할 것 먼저 · 배송에 필요한 받는 분 정보(입점 약관 제22조 — 배송 · 반품 · 응대 목적으로만) */
+  async orders(status?: string) {
+    const s = await this.seller();
+    const st = status && ['PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].includes(status) ? status : null;
+    const items = await this.db.query(
+      `SELECT o.order_no AS "orderNo", o.status, o.goods_amount AS "goodsAmount", o.ship_fee AS "shipFee", o.total,
+              o.paid_at AS "paidAt", o.shipped_at AS "shippedAt", o.delivered_at AS "deliveredAt", o.confirmed_at AS "confirmedAt",
+              o.ship_memo AS "shipMemo",
+              (SELECT string_agg(p.name || ' ' || coalesce(i.option_label, '') || ' × ' || i.qty, ' · ' ORDER BY i.id)
+                 FROM hlt_order_items i JOIN hlt_products p ON p.id = i.product_id WHERE i.order_id = o.id) AS items,
+              CASE WHEN o.status IN ('PAID','PREPARING','SHIPPED') THEN a.receiver END AS receiver,
+              CASE WHEN o.status IN ('PAID','PREPARING','SHIPPED') THEN a.phone END AS phone,
+              CASE WHEN o.status IN ('PAID','PREPARING','SHIPPED') THEN concat_ws(' ', '(' || a.zipcode || ')', a.addr1, a.addr2) END AS address,
+              x.carrier, x.tracking_no AS "trackingNo", x.state AS "shipState",
+              EXISTS (SELECT 1 FROM hlt_returns r WHERE r.order_id = o.id AND r.state IN ('REQUESTED','APPROVED')) AS "openReturn"
+         FROM hlt_orders o
+         LEFT JOIN hlt_addresses a ON a.id = o.address_id
+         LEFT JOIN LATERAL (SELECT carrier, tracking_no, state FROM hlt_shipments y WHERE y.order_id = o.id ORDER BY y.happened_at DESC, y.id DESC LIMIT 1) x ON true
+        WHERE o.seller_id = $1 AND o.status IN ('PAID','PREPARING','SHIPPED','DELIVERED','CONFIRMED','RETURNED','CANCELED')
+          AND ($2::text IS NULL OR o.status = $2 OR ($2 = 'PAID' AND o.status = 'PREPARING'))
+        ORDER BY (o.status IN ('PAID','PREPARING')) DESC, (o.status = 'SHIPPED') DESC, coalesce(o.paid_at, o.created_at) DESC LIMIT 200`, [s.id, st]);
+    const [counts] = await this.db.query(
+      `SELECT count(*) FILTER (WHERE status IN ('PAID','PREPARING'))::int AS "toShip", count(*) FILTER (WHERE status = 'SHIPPED')::int AS shipping,
+              count(*) FILTER (WHERE status = 'DELIVERED')::int AS delivered, count(*) FILTER (WHERE status = 'CONFIRMED')::int AS confirmed
+         FROM hlt_orders WHERE seller_id = $1`, [s.id]);
+    return { counts, carriers: CARRIERS, items };
+  }
+
+  async ship(no: string, carrier: string, trackingNo: string) { await this.ownOrder(no); return this.orders_.ship(no, carrier, trackingNo); }
+  async fixTracking(no: string, carrier: string, trackingNo: string) { await this.ownOrder(no); return this.orders_.fixTracking(no, carrier, trackingNo); }
+  async advance(no: string, state: 'IN_TRANSIT' | 'DELIVERED') { await this.ownOrder(no); return this.orders_.advance(no, state); }
+
+  /** 내 주문의 취소 · 반품 · 교환 신청 — 접수(REQUESTED) 먼저 */
+  async returns() {
+    const s = await this.seller();
+    return this.db.query(
+      `SELECT r.id, r.kind, r.reason, r.detail, r.state, r.customer_opened AS "customerOpened", r.exchange_fee AS "exchangeFee",
+              r.decide_note AS "decideNote", r.created_at AS "createdAt", r.decided_at AS "decidedAt",
+              o.order_no AS "orderNo", o.status AS "orderStatus", o.total, r.ship_deduction AS "shipDeduction", r.refund_amount AS "refundAmount"
+         FROM hlt_returns r JOIN hlt_orders o ON o.id = r.order_id
+        WHERE o.seller_id = $1 ORDER BY (r.state = 'REQUESTED') DESC, r.created_at DESC LIMIT 200`, [s.id]);
+  }
+
+  /** 반품 · 취소 승인 · 반려 — 운영과 같은 규칙(재고 · 환불 · 반품비 · 교환 배송비). 반려에 회원이 이의를 내면 운영이 중재(입점 약관 제16조) */
+  async decideReturn(id: string, state: string, note?: string, opened?: boolean, sellerFault?: boolean) {
+    const s = await this.seller();
+    const [r] = await this.db.query<{ id: string }>(
+      `SELECT r.id FROM hlt_returns r JOIN hlt_orders o ON o.id = r.order_id WHERE r.id::text = $1 AND o.seller_id = $2`, [id, s.id]);
+    if (!r) throw new NotFound('내 주문의 신청을 찾을 수 없습니다.');
+    return this.returns_.decideReturn(id, state, note, opened, sellerFault);
+  }
 
   /* ── 운영 ─────────────────────────────────────────────────────────── */
 

@@ -158,7 +158,9 @@
     "noticeTitle": "Product information disclosure",
     "sameTitle": "Other products with {name}",
     "viewAll": "View all",
-    "related": "Related concerns"
+    "related": "Related concerns",
+    "shipFeeSeller": "{amt} (seller shipping fee)",
+    "shipFeeSellerOver": "{amt} · free from {over} (seller shipping fee)"
   },
   "ingredient": {
     "title": "Ingredient details",
@@ -364,5 +366,49 @@
     "noticePh": "One item per line as Item: value — e.g. Manufacturer: OO Foods",
     "create": "Save as draft",
     "created": "Saved as a draft. Press Request review."
+  },
+  "sorders": {
+    "title": "Orders and shipping",
+    "counts": "To ship {toShip} · in transit {shipping} · delivered {delivered}",
+    "privacy": "Use recipient details only for shipping, returns and customer service, and never share them (seller terms Art. 22). They are hidden after delivery.",
+    "empty": "No orders yet.",
+    "openReturn": "There is a cancellation or return request — please handle it below.",
+    "trackingPh": "Tracking number (digits)",
+    "ship": "Mark as shipped",
+    "fix": "Fix tracking number",
+    "delivered": "Mark as delivered",
+    "shipped": "Marked as shipped.",
+    "fixed": "Tracking number fixed.",
+    "deliveredDone": "Marked as delivered.",
+    "errSave": "Could not process — please try again shortly.",
+    "status": {
+      "PAID": "Paid",
+      "PREPARING": "Preparing",
+      "SHIPPED": "In transit",
+      "DELIVERED": "Delivered",
+      "CONFIRMED": "Purchase confirmed",
+      "RETURNED": "Returned",
+      "CANCELED": "Canceled"
+    },
+    "retTitle": "Cancellation, return and exchange requests",
+    "retEmpty": "No requests.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Approved.",
+    "rejected": "Rejected.",
+    "rejectAsk": "Rejection reason — the member sees it as written. If the member objects, an operator mediates.",
+    "openedAsk": "Was the returned item opened? (OK = opened, not restocked / Cancel = unopened)",
+    "kind": {
+      "CANCEL": "Cancellation",
+      "RETURN": "Return",
+      "EXCHANGE": "Exchange"
+    },
+    "rstate": {
+      "REQUESTED": "Received",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "REFUNDED": "Refunded"
+    },
+    "retHelp": "For change-of-mind returns, the refund excludes the round-trip return fee you set. Seller-fault returns (damage, wrong item, not as described) are refunded in full."
   }
 }

@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { HealthSellerService } from './health-seller.service';
 import { OptionInputDto, OptionPatchDto, ProductCreateDto, ProductPatchDto } from './health-admin.controller';
+import { AdvanceDto, ShipDto } from './health-orders.controller';
+import { ReturnDecideDto } from './health-shop.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -102,6 +104,58 @@ export class HealthSellerController {
   @ApiOkResponse({ type: Object })
   updateOption(@Param('code') code: string, @Param('optionId', ParseUUIDPipe) optionId: string, @Body() dto: OptionPatchDto) {
     return this.svc.updateOption(code, optionId, dto);
+  }
+
+  /* ── v10.167 (docs/258) 주문 · 발송 · 반품 ── */
+
+  @Get('me/health/seller/orders')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '내 주문', description: '발송할 것 먼저. 받는 분 정보는 발송 전 · 배송 중에만 보입니다(배송 · 반품 · 응대 목적으로만 — 입점 약관 제22조).' })
+  @ApiQuery({ name: 'status', required: false, enum: ['PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'] })
+  @ApiOkResponse({ type: Object })
+  orders(@Query('status') status?: string) { return this.svc.orders(status); }
+
+  @Post('me/health/seller/orders/:no/ship')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '발송 처리', description: '택배사 · 송장번호 → 「배송중」. 내 판매자의 주문만.' })
+  @ApiParam({ name: 'no' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NOT_SHIPPABLE · CANCEL_REQUESTED', type: ErrorDto })
+  @Audit('HLT_SELLER_ORDER_SHIP', 'HLT_ORDER')
+  ship(@Param('no') no: string, @Body() dto: ShipDto) { return this.svc.ship(no, dto.carrier, dto.trackingNo); }
+
+  @Post('me/health/seller/orders/:no/tracking')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '송장 고치기', description: '배송중일 때만(전 기록은 남음).' })
+  @ApiParam({ name: 'no' })
+  @ApiOkResponse({ type: Object })
+  @Audit('HLT_SELLER_ORDER_TRACKING', 'HLT_ORDER')
+  fixTracking(@Param('no') no: string, @Body() dto: ShipDto) { return this.svc.fixTracking(no, dto.carrier, dto.trackingNo); }
+
+  @Post('me/health/seller/orders/:no/advance')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '배송 단계', description: '간선 이동 · 배송 완료(구매확정 · 반품 기한의 기준).' })
+  @ApiParam({ name: 'no' })
+  @ApiOkResponse({ type: Object })
+  @Audit('HLT_SELLER_ORDER_ADVANCE', 'HLT_ORDER')
+  advance(@Param('no') no: string, @Body() dto: AdvanceDto) { return this.svc.advance(no, dto.state); }
+
+  @Get('me/health/seller/returns')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '내 주문의 취소 · 반품 · 교환 신청', description: '접수된 것 먼저.' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  returns() { return this.svc.returns(); }
+
+  @Post('me/health/seller/returns/:id/decide')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '취소 · 반품 승인 · 반려', description: '운영과 같은 규칙 — 재고 · 환불 · 판매자 반품비 · 교환 배송비. 반려 사유는 회원에게 보이고, 회원이 이의를 내면 운영이 중재합니다.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'ALREADY_DECIDED · ALREADY_SHIPPED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NOTE_REQUIRED · OPENED_REQUIRED · CANCEL_NOT_OPENED', type: ErrorDto })
+  @Audit('HLT_SELLER_RETURN_DECIDE', 'HLT_RETURN')
+  decideReturn(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReturnDecideDto) {
+    return this.svc.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault);
   }
 
   /* ── 운영 ── */
