@@ -140,7 +140,9 @@ export class HealthSettleService {
   /** v10.168 (D157) — 갈래 기본 판매수수료율(결정 B · 오픈 전에 정함) — 바꾼 기록은 DB 가 남김(hlt_commission_changes) */
   async setCommissionRate(categoryCode: string, rate: number, note?: string) {
     const [c] = await this.db.query<{ code: string }>(
-      `SELECT code FROM categories WHERE gwan_code = 'HLT' AND code = $1 UNION ALL SELECT '*' WHERE $1 = '*'`, [categoryCode]);
+      `SELECT code FROM categories WHERE gwan_code = 'HLT' AND code = $1`, [categoryCode]);
+    /* 전체 기본값(*) 줄은 받지 않음 — 변경 기록 트리거(fn_hlt_rate_log)가 범위 'DEFAULT' 를 쓰는데 기록 표의 규칙(hlt_chg_scope_check)이 CATEGORY · SELLER 만 받아
+     *   바꾸면 늘 422(v10.168 시험이 찾음 · 옛 결함). 기본값은 fn_hlt_rate_for 의 10% — 갈래마다 정하면 됨 */
     if (!c) throw new PolicyViolation('BAD_CATEGORY', '소개몰 갈래를 골라 주십시오.');
     await this.db.query(
       `INSERT INTO hlt_commission_rates (category_code, rate, note, updated_by, updated_at) VALUES ($1, $2, $3, $4, now())

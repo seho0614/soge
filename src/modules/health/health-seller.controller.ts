@@ -197,7 +197,7 @@ export class HealthSellerController {
   @Patch('admin/health/commission-rates/:categoryCode')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '갈래 판매수수료율', description: '갈래 기본값(판매자 개별 요율이 있으면 그것이 먼저). 바꾼 기록은 DB 가 남기고, 바꾼 뒤 주문부터 적용됩니다(주문 때 요율을 박음).' })
-  @ApiParam({ name: 'categoryCode', description: '갈래 코드 · 전체 기본값은 *' })
+  @ApiParam({ name: 'categoryCode', description: '소개몰 갈래 코드(HLT_FOOD …)' })
   @ApiOkResponse({ type: Object, isArray: true })
   @Audit('HLT_COMMISSION_RATE', 'HLT_COMMISSION')
   rate(@Param('categoryCode') categoryCode: string, @Body() dto: CommissionRateDto) { return this.settle.setCommissionRate(categoryCode, dto.rate, dto.note); }

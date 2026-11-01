@@ -397,7 +397,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
               <td className="num-cell">{r.referralPct}%</td>
               <td className="muted">{r.note}</td>
               <td className="num-cell">{r.changes ? `${r.changes}건` : '—'}</td>
-              <td><button className="btn-plain" disabled={a.busy === `rate:${r.categoryCode}`} onClick={() => setRate(r)}>바꾸기</button></td>
+              <td>{r.categoryCode !== '*' && <button className="btn-plain" disabled={a.busy === `rate:${r.categoryCode}`} onClick={() => setRate(r)}>바꾸기</button>}</td>
             </tr>
           ))}
         </tbody>
