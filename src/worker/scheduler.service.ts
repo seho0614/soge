@@ -445,7 +445,10 @@ export class SchedulerService {
         /* v10.171 (D160) — 1시간 가입 급증(자동 가입 · 광고 유입) · 1시간에 한 번 */
         const sp = await this.launchWatch.signupSpike();
         if (sp.alert) await this.alert('SIGNUP_SPIKE', 'WARN', `지난 1시간 가입 ${sp.n}명 — 기준 ${sp.limit}명 이상`, sp);
-        detail = { ...r, signupHour: sp.n };
+        /* v10.174 (D163) — 지난 10분 API 서버 오류(5xx) 몰림 · 1시간에 한 번 */
+        const se = await this.launchWatch.serverErrorSpike();
+        if (se.alert) await this.alert('SERVER_ERROR_SPIKE', 'WARN', `지난 10분 서버 오류 ${se.n}건 — 기준 ${se.limit}건 이상 · 많이 난 곳 ${se.top.map((t) => `${t.path} ${t.n}`).join(', ')}`, se);
+        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n };
         break;
       }
 

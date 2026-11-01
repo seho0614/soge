@@ -33,11 +33,15 @@ import '@/styles/ai-chat.css';   // v10.110 사이트 공통 AI 상담(docs/171)
 
 /* v10.95 — 제목 · 설명도 사전에서(한국어는 전과 같음) */
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('meta');
+  const [t, locale] = await Promise.all([getTranslations('meta'), getLocale()]);
   return {
     title: { default: t('title'), template: `%s · ${t('title')}` },
     /* 2026-10-21 — B2B → P2P(10/13 결정 · 개인 회원도 모든 업무) */
     description: t('description'),
+    /* v10.174 (docs/268) — 공유 미리보기(카카오톡 · 문자 · 사회관계망). 그림은 app/opengraph-image.tsx · 주소의 앞부분은 SITE_ORIGIN(없으면 운영 도메인) */
+    metadataBase: new URL(process.env.SITE_ORIGIN || 'https://sogaebank.com'),
+    openGraph: { type: 'website', siteName: t('title'), title: t('title'), description: t('description'), locale: locale === 'ko' ? 'ko_KR' : 'en_US' },
+    twitter: { card: 'summary_large_image', title: t('title'), description: t('description') },
   };
 }
 

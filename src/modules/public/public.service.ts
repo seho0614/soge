@@ -86,6 +86,24 @@ export class PublicService {
     return Object.fromEntries(rows.map((r) => [r.key, r.value]));
   }
 
+  /**
+   * v10.174 (docs/268) — 사이트 지도(sitemap.xml)에 넣을 공개 주소 재료. 누구나 볼 수 있는 것만:
+   *   매물 PUBLISHED(소개장터 · 소개몰 · 사업자관 — /[관]/[id]) · 소개광장 글 PUBLISHED(동네 맛집 FOOD 빼고) · 소개몰 상품 ON_SALE.
+   *   제목 · 본문 · 작성자는 내보내지 않음(주소와 바뀐 시각만) · 갈래마다 최근 바뀐 순 5,000개까지.
+   */
+  async sitemapEntries() {
+    const [listings, posts, products] = await Promise.all([
+      this.db.query<{ id: string; gwan: string; at: Date }>(
+        `SELECT id, gwan_code AS gwan, updated_at AS at FROM listings
+          WHERE status = 'PUBLISHED' AND gwan_code IN ('MNY', 'MAL', 'BIZ') ORDER BY updated_at DESC LIMIT 5000`),
+      this.db.query<{ id: string; at: Date }>(
+        `SELECT id, updated_at AS at FROM posts WHERE state = 'PUBLISHED' AND board <> 'FOOD' ORDER BY updated_at DESC LIMIT 5000`),
+      this.db.query<{ code: string; at: Date }>(
+        `SELECT code, updated_at AS at FROM hlt_products WHERE status = 'ON_SALE' ORDER BY updated_at DESC LIMIT 5000`),
+    ]);
+    return { listings, posts, products };
+  }
+
   /** FAQ 는 데이터입니다. 관리자가 바꿀 때 배포가 필요하면 안 됩니다 */
   /* v10.31 — channel(FAQ 기본 · CS · GUIDE · BOT)으로 고릅니다. 챗봇 낱말 · 「…에서 보기」 · 상담원 연결 여부도 함께(D048) */
   async faq(gwanCode?: string, channel?: string) {

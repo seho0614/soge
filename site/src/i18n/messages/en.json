@@ -4,6 +4,14 @@
     "title": "SogaeBank",
     "description": "A P2P referral platform where anyone — individuals or businesses — can refer clients, listings and startup opportunities and earn referral fees"
   },
+  "errorPage": {
+    "title": "Something went wrong",
+    "body": "An error occurred while loading this page. Please try again shortly. If it keeps happening, let our help center know.",
+    "retry": "Try again",
+    "home": "Home",
+    "support": "Help center",
+    "code": "Error ID"
+  },
   "common": {
     "skipToMain": "Skip to main content",
     "backTo": "← Back to {label}"

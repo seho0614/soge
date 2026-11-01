@@ -104,6 +104,7 @@
     "POST /ads/{id}/click",
     "GET /footer-links",
     "GET /site-settings/public",
+    "GET /sitemap-entries",
     "GET /community/posts",
     "GET /community/polls",
     "POST /community/polls/{id}/vote",

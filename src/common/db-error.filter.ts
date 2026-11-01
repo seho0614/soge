@@ -3,6 +3,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { serverText } from './i18n/server-text';
+import { recordServerError } from './server-error-count';
 
 /** v10.125 — 오류 글을 화면 언어로 옮길 때 그 언어가 켜져 있는지 묻는 곳(I18nService.langIfActive) */
 export type LangGate = { langIfActive(lang: string | null | undefined): Promise<string | null> };
@@ -213,6 +214,7 @@ export class DbErrorFilter implements ExceptionFilter {
     const req = host.switchToHttp().getRequest<Request>();
     /* v10.125 (docs/189) — 사용자 웹 영어 화면이면 오류 글(message)을 사전으로(운영 화면 /admin · 한국어 · 다국어 꺼짐은 그대로) */
     const send = (status: number, body: any) => {
+      if (status >= 500) recordServerError(req?.originalUrl);   // v10.174 (D163) — 서버 오류 몰림 알림(launch_watch)
       const lang = this.gate && !/^\/api\/v1\/admin(\/|\?|$)/.test(req?.originalUrl ?? '') ? langOf(req) : undefined;
       if (!lang || !body || typeof body.message !== 'string') { res.status(status).json(body); return; }
       this.gate!.langIfActive(lang)

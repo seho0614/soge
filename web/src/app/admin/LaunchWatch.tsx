@@ -8,6 +8,7 @@ interface Watch {
   signups: number; logins: number; posts: number; listings: number; orders: number; paidOrders: number; stubPaidOrders: number;
   openAlerts: number; orderOpen: 'on' | 'off'; assumePayment: 'on' | 'off'; directOnSale: number; warn?: string; digestTo?: string;
   signupOpen?: 'on' | 'off'; noticeBar?: string;
+  serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
 }
 
@@ -60,6 +61,7 @@ export function LaunchWatch() {
   const tiles: Array<[string, number, boolean?]> = [
     ['오늘 가입', d.signups], ['오늘 로그인', d.logins], ['소개광장 글', d.posts], ['매물', d.listings],
     ['소개몰 주문', d.orders], ['결제 완료', d.paidOrders], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0],
+    ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0],
   ];
   return (
     <section className="card pad" data-launch-watch="">
@@ -76,7 +78,7 @@ export function LaunchWatch() {
         <button className={d.orderOpen === 'on' ? 'btn-no' : 'btn-ok'} disabled={a.busy === 'order'} onClick={toggle} data-order-toggle="">{d.orderOpen === 'on' ? '주문 받기 끄기' : '주문 받기 켜기'}</button>
       </p>
       {/* v10.171 (D160) — 매일 09:00 어제 요약(운영 알림 · 메일이 준비됐으면 이 주소로) · 1시간 가입 급증 알림 */}
-      <p className="hint" data-digest-to={d.digestTo ?? ''}>하루 요약: 매일 09:00 운영 알림{d.digestTo ? ` · 메일 ${d.digestTo}(메일 발송이 준비된 뒤)` : ''} · 1시간 가입 급증 알림(사이트 설정 ops.signup_spike_per_hour){' '}
+      <p className="hint" data-digest-to={d.digestTo ?? ''}>하루 요약: 매일 09:00 운영 알림{d.digestTo ? ` · 메일 ${d.digestTo}(메일 발송이 준비된 뒤)` : ''} · 1시간 가입 급증 알림(사이트 설정 ops.signup_spike_per_hour) · 10분 서버 오류 몰림 알림(ops.server_error_per_10min){' '}
         {/* v10.172 — 어제 요약을 지금 보기(알림 · 메일은 남기지 않음) */}
         <button className="btn-plain" disabled={a.busy === 'digest'} onClick={showDigest} data-digest-show="">{digest !== null ? '요약 닫기' : '어제 요약 보기'}</button></p>
       {digest !== null && <pre className="card pad" data-digest-text="">{digest}</pre>}
