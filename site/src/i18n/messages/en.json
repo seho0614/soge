@@ -6,10 +6,10 @@
   },
   "errorPage": {
     "title": "Something went wrong",
-    "body": "An error occurred while loading this page. Please try again shortly. If it keeps happening, let our help center know.",
+    "body": "An error occurred while loading this page. Please try again shortly. If it keeps happening, let our Help Center know.",
     "retry": "Try again",
     "home": "Home",
-    "support": "Help center",
+    "support": "Help Center",
     "code": "Error ID"
   },
   "common": {
