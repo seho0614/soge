@@ -182,6 +182,7 @@
     "GET /signup/types",
     "POST /signup/biz-check",
     "GET /signup/profile-questions",
+    "GET /site-settings/public",
     "POST /signup/profile-analyze"
    ],
    "nav": "SB-HOM-AUT-010"
@@ -1186,6 +1187,7 @@
     "PUT /admin/finance/costs",
     "GET /admin/launch-watch",
     "GET /admin/launch-watch/digest",
+    "POST /admin/launch-watch/stub-orders/cancel",
     "PATCH /admin/site-settings"
    ],
    "nav": "SB-HOM-MAIN-010"

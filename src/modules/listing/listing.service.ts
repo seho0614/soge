@@ -10,6 +10,7 @@ import { clampLimit, decodeCursor, encodeCursor } from '../../core/pagination';
 import { expandKeyword } from '../../core/search-expand';
 import { GeoService } from '../../common/geo/geo.service';
 import { I18nService } from '../i18n/i18n.service';
+import { assertNewMemberListingQuota } from '../identity/abuse-guard';
 
 /** v10.31 (합침) — 한 매물 사진 한도. DB(fn_listing_media_guard · w2 D050)와 같은 10장. 등록 화면(w1)은 화면에서 6장까지만 받습니다. */
 const LISTING_MAX_PHOTOS = 10;
@@ -40,6 +41,7 @@ export class ListingService {
     /* v10.31 (w2) — 시안 등록 칸: 거래(희망) 금액 · 시군구 */
     dealAmount?: number; regionDetail?: string;
   }) {
+    await assertNewMemberListingQuota(this.db, input.ownerAccountId);   /* v10.173 (D162) — 가입 24시간 안 회원의 하루 매물 상한 */
     /* v10.31 — 대표 · 상세 이미지: 내가 올린 READY LISTING_IMAGE 만(checkOwnImages) */
     const media = input.mediaKeys !== undefined
       ? await checkOwnImages(this.db, input.ownerAccountId, input.mediaKeys, 'LISTING_IMAGE', LISTING_MAX_PHOTOS) : undefined;

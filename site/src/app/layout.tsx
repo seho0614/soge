@@ -5,6 +5,7 @@ import { apiGet } from '@/lib/api';
 import type { FooterLink, Gwan } from '@/lib/types';
 import { GLOBAL_NS, pick } from '@/i18n/messages';
 import { Footer } from '@/components/Footer';
+import { NoticeBar } from '@/components/NoticeBar';
 import { UpcomingTermsBar } from '@/components/UpcomingTerms';
 import { SiteHeader } from '@/components/common/SiteHeader';
 import { B2Tone, BaseFooter, BaseHeader, MainWrap, OnlySkin } from '@/components/Chrome';
@@ -56,6 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NextIntlClientProvider locale={locale} messages={pick(messages, GLOBAL_NS)} /* v10.97 — 화면 전용 묶음은 그 화면의 <Msgs> 가 */>
         {/* v10.31 — 시안 .skip 「본문으로 건너뛰기」(키보드 · 화면 읽기) */}
         <a className="skip-main" href="#main">{t('skipToMain')}</a>
+        {/* v10.173 (D162) — 운영이 켠 안내 한 줄(site.notice_bar · 비면 그리지 않음) */}
+        <NoticeBar settings={settings} locale={locale} />
         {/* 20261002 (v10.13) — 메인(/)은 제 머리 · 바닥을 따로 그립니다(components/home). 다른 화면은 아래 그대로 */}
         {/* v10.29 — 시안 일반 머리줄(components/common/SiteHeader). 메인(/) · 소개광장 · 소개몰은 제 머리줄을 그립니다. /partner/** 는 전용 상단바(Chrome.tsx OWN_HEADER_PATHS) */}
         <BaseHeader><SiteHeader gwans={gwans} /></BaseHeader>

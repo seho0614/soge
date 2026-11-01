@@ -7,6 +7,7 @@ import { Flash } from '../../components/Flash';
 interface Watch {
   signups: number; logins: number; posts: number; listings: number; orders: number; paidOrders: number; stubPaidOrders: number;
   openAlerts: number; orderOpen: 'on' | 'off'; assumePayment: 'on' | 'off'; directOnSale: number; warn?: string; digestTo?: string;
+  signupOpen?: 'on' | 'off'; noticeBar?: string;
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
 }
 
@@ -16,6 +17,8 @@ interface Watch {
  * 사용자 웹을 전체 공개(11/1)한 뒤 오늘 들어온 것 · **시험 결제(stub)로 결제 완료된 주문**(돈을 받지 않은 주문) · 확인 안 한 운영 알림.
  * 「주문 받기」(mall.order_open)를 여기서 바로 끄고 켭니다(SUPER — 사이트 설정과 같은 API · 감사 기록).
  */
+const NOTICE_DEFAULT = '시범 운영 중입니다 — 소개몰 결제 등 일부 기능은 시험 모드로 동작합니다.';
+
 export function LaunchWatch() {
   const w = useApi<Watch>('/admin/launch-watch');
   const a = useAct();
@@ -27,6 +30,28 @@ export function LaunchWatch() {
     if (!confirm(to === 'off' ? '소개몰 주문 · 결제를 막습니다(상품 보기 · 담기는 됨). 결제대행사 연결 전 시험 결제 주문을 막으려면 끄십시오.' : '소개몰 주문 · 결제를 엽니다. 결제대행사가 연결되지 않았으면 시험 결제 주문이 생깁니다.')) return;
     void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: to }) }), w.reload,
       to === 'off' ? '주문 받기를 껐습니다.' : '주문 받기를 켰습니다.');
+  };
+  /* v10.173 (D162 · docs/266) — 가입 잠시 막기 · 사용자 웹 안내 띠 · 시험 결제 주문 정리 */
+  const setting = (key: string, value: string, done: string) =>
+    a.run(key, () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key, value }) }), w.reload, done);
+  const toggleSignup = () => {
+    const to = d.signupOpen === 'off' ? 'on' : 'off';
+    if (!confirm(to === 'off' ? '새 가입을 잠시 막습니다(가입 화면에 안내 · 기존 회원 로그인은 그대로).' : '새 가입을 다시 받습니다.')) return;
+    void setting('signup.open', to, to === 'off' ? '새 가입을 잠시 막았습니다.' : '새 가입을 다시 받습니다.');
+  };
+  const toggleNotice = () => {
+    if (d.noticeBar) {
+      if (!confirm('사용자 웹 맨 위 안내 띠를 내립니다.')) return;
+      void setting('site.notice_bar', '', '안내 띠를 내렸습니다.');
+      return;
+    }
+    const text = prompt('사용자 웹 맨 위에 보일 안내(200자 안 · 영어 화면 글은 사이트 설정 site.notice_bar_en)', NOTICE_DEFAULT);
+    if (!text?.trim()) return;
+    void setting('site.notice_bar', text.trim(), '안내 띠를 올렸습니다.');
+  };
+  const cancelStub = () => {
+    if (!confirm('시험 결제로 결제 완료된 주문 중 발송 전 주문을 모두 취소하고, 주문한 분께 알림을 보냅니다. 돈은 받지 않았으므로 환불은 없습니다.')) return;
+    void a.run('stub', () => api<{ ok: boolean; note: string }>('/admin/launch-watch/stub-orders/cancel', { method: 'POST', body: '{}' }), w.reload);
   };
   const showDigest = () => {
     if (digest !== null) { setDigest(null); return; }
@@ -55,6 +80,16 @@ export function LaunchWatch() {
         {/* v10.172 — 어제 요약을 지금 보기(알림 · 메일은 남기지 않음) */}
         <button className="btn-plain" disabled={a.busy === 'digest'} onClick={showDigest} data-digest-show="">{digest !== null ? '요약 닫기' : '어제 요약 보기'}</button></p>
       {digest !== null && <pre className="card pad" data-digest-text="">{digest}</pre>}
+      <p data-abuse-tools="">
+        새 가입 <b data-signup-open={d.signupOpen ?? 'on'}>{d.signupOpen === 'off' ? '막힘' : '받는 중'}</b>{' '}
+        <button className={d.signupOpen === 'off' ? 'btn-ok' : 'btn-no'} disabled={a.busy === 'signup.open'} onClick={toggleSignup} data-signup-toggle="">{d.signupOpen === 'off' ? '가입 다시 받기' : '가입 잠시 막기'}</button>
+        {' · '}사용자 웹 안내 띠 <b data-notice-on={d.noticeBar ? 'on' : 'off'}>{d.noticeBar ? '보임' : '없음'}</b>{' '}
+        <button className="btn-plain" disabled={a.busy === 'site.notice_bar'} onClick={toggleNotice} data-notice-toggle="">{d.noticeBar ? '안내 띠 내리기' : '안내 띠 올리기'}</button>
+      </p>
+      {d.noticeBar && <p className="hint" data-notice-text="">안내 띠: {d.noticeBar}</p>}
+      {d.stubOrders.length > 0 && (
+        <p><button className="btn-no" disabled={a.busy === 'stub'} onClick={cancelStub} data-stub-cancel="">시험 결제 주문 정리(발송 전 취소 · 알림)</button></p>
+      )}
       {d.stubOrders.length > 0 && (
         <table className="tbl">
           <thead><tr><th>시험 결제 주문</th><th>금액</th><th>상태</th><th>결제 시각</th></tr></thead>

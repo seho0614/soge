@@ -221,6 +221,7 @@
   "signup": {
     "title": "Sign up",
     "lead": "<b>Individuals can sign up too.</b> Individuals can post requests and take part in referrals, and receive referral fees after identity verification. Once verified you can do everything; only industries that require a license (real estate, insurance, medical, etc.) need that license before posting.",
+    "closed": "We are not accepting new sign-ups for a moment. Please come back later. Existing members can still log in.",
     "types": {
       "PERSONAL": {
         "label": "Individual",

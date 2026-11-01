@@ -5,6 +5,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PrincipalService } from './principal.service';
 import { AppError, Forbidden, PolicyViolation, NotFound } from '../../core/errors';
 import { AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText } from './auth-throttle';
+import { clientIpRaw, isInternalIp, settingInt } from './abuse-guard';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
@@ -84,6 +85,21 @@ export class AuthService {
   }) {
     /* v10.31 — 시안 가입 3단계 「영문 · 숫자 · 특수문자 조합 10자 이상」(전: 10자 이상만) */
     assertStrongPassword(input.password);   /* v10.48 — 변경 · 재설정과 같은 규칙(auth-throttle.ts) */
+    /* v10.173 (D162 · docs/266) — 가입 잠시 막기(signup.open) · 같은 접속 IP 의 하루 가입 상한(abuse.signup_per_ip_day · 내부 IP 는 세지 않음) */
+    const [gate] = await this.db.query<{ open: string }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS open`);
+    if (gate?.open === 'off') {
+      throw new PolicyViolation('SIGNUP_CLOSED', '지금은 새 가입을 잠시 받지 않습니다. 잠시 뒤 다시 시도해 주십시오.');
+    }
+    const signupIpKey = isInternalIp(clientIpRaw()) ? null : clientIpKey();
+    const signupIpMax = signupIpKey ? await settingInt(this.db, 'abuse.signup_per_ip_day', 20) : 0;
+    if (signupIpKey && signupIpMax > 0) {
+      const [h] = await this.db.query<{ hits: number }>(
+        `SELECT hits FROM auth_throttle WHERE key_kind = 'SIGNUP_IP' AND key_hash = $1`, [signupIpKey]);
+      if ((h?.hits ?? 0) >= signupIpMax) {
+        throw new TooManyAttempts('SIGNUP_IP_LIMIT', '같은 곳에서 오늘 가입이 너무 많습니다. 내일 다시 시도해 주십시오.');
+      }
+    }
     /* v10.27 (G-188) — 가입 때 약관 동의를 받습니다(시안 가입 4단계 「전체 · 필수 · 선택」).
      *   전에는 DTO 에 agreedTerms 가 있었지만 **서비스가 읽지 않아** 동의 기록이 남지 않았습니다.
      *   agreedTerms 를 보내면: 발행된 필수 약관이 모두 들어 있어야 하고(아니면 422 REQUIRED_TERM),
@@ -128,6 +144,11 @@ export class AuthService {
       await this.db.query(
         `INSERT INTO account_roles (account_id, role) VALUES ($1,'MEMBER')`, [acc.id],
       );
+      if (signupIpKey && signupIpMax > 0) {   /* v10.173 — 가입 IP 횟수(키에 한국 날짜가 섞여 날마다 새로 셈) */
+        await this.db.query(
+          `INSERT INTO auth_throttle AS t (key_kind, key_hash, window_start, hits, last_at) VALUES ('SIGNUP_IP', $1, now(), 1, now())
+           ON CONFLICT (key_kind, key_hash) DO UPDATE SET hits = t.hits + 1, last_at = now()`, [signupIpKey]);
+      }
       for (const t of terms ?? []) {
         await this.db.query(
           `INSERT INTO term_agreements (account_id, term_code, term_version, agreed, ip, user_agent)

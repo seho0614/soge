@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignupPage() {
   if (await me()) redirect('/');
   const [t, locale] = await Promise.all([getTranslations('signup'), getLocale()]);
-  const [terms, all, types, qs] = await Promise.all([
+  const [terms, all, types, qs, settings] = await Promise.all([
     apiGet<JoinTerm[]>('/terms/required', 60).catch(() => [] as JoinTerm[]),
     apiGet<Array<{ code: string; title: string; isNotice?: boolean }>>('/terms', 60).catch(() => []),
     apiGet<SignupType[]>('/signup/types', 300).catch(() => [
@@ -30,7 +30,10 @@ export default async function SignupPage() {
       { code: 'CORP', label: t('types.CORP.label'), sub: t('types.CORP.sub'), needsBiz: true, needsCorp: true },
     ] as SignupType[]),
     apiGet<{ questions: Q[] }>('/signup/profile-questions', 300).catch(() => ({ questions: [] as Q[] })),
+    apiGet<Record<string, string | null>>('/site-settings/public', 30).catch(() => ({} as Record<string, string | null>)),
   ]);
+  /* v10.173 (D162 · docs/266) — 운영이 「가입 잠시 막기」(signup.open off)를 하면 가입 칸 대신 안내만(서버도 422 SIGNUP_CLOSED) */
+  const closed = settings['signup.open'] === 'off';
 
   async function doSignup(email: string, password: string, name: string, agreed: string[], jobTitle: string) {
     'use server';
@@ -43,10 +46,10 @@ export default async function SignupPage() {
         <h1>{t('title')}</h1>
         <p>{t.rich('lead', { b: (c) => <b>{c}</b> })}</p>
       </div>
-      <SignupWizard types={locale === 'ko' ? types : types.map((x) => (isSignupTypeKey(x.code) ? { ...x, label: t(`types.${x.code}.label`), sub: t(`types.${x.code}.sub`) } : x))} action={doSignup}
+      {closed ? <p className="notice" data-signup-closed="">{t('closed')}</p> : <SignupWizard types={locale === 'ko' ? types : types.map((x) => (isSignupTypeKey(x.code) ? { ...x, label: t(`types.${x.code}.label`), sub: t(`types.${x.code}.sub`) } : x))} action={doSignup}
         terms={terms.map((t) => ({ code: t.code, title: t.title, isRequired: t.isRequired }))}
         notices={all.filter((t) => t.isNotice).map((t) => ({ code: t.code, title: t.title }))}
-        questions={qs.questions ?? []} />
+        questions={qs.questions ?? []} />}
     </div>
   );
 }

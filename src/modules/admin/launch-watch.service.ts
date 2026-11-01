@@ -28,6 +28,8 @@ export class LaunchWatchService {
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'off') AS "assumePayment",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "digestTo",
+              coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS "signupOpen",
+              coalesce((SELECT value FROM site_settings WHERE key = 'site.notice_bar'), '') AS "noticeBar",
               (SELECT count(*)::int FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.status = 'ON_SALE' AND s.type = 'DIRECT') AS "directOnSale"`);
     const stubOrders = await this.db.query(
       `SELECT o.order_no AS "orderNo", o.total, o.status, coalesce(p.approved_at, p.created_at) AS "paidAt"
@@ -83,5 +85,38 @@ export class LaunchWatchService {
       `SELECT DISTINCT o.order_no FROM hlt_payments p JOIN hlt_orders o ON o.id = p.order_id
         WHERE p.stub AND p.state = 'PAID' AND coalesce(p.approved_at, p.created_at) > now() - interval '15 minutes' ORDER BY 1 LIMIT 20`);
     return { n: rows.length, orders: rows.map((r) => r.order_no) };
+  }
+
+  /* ── v10.173 (D162 · docs/266) 시험 결제 주문 정리 ─────────────────── */
+
+  /**
+   * 시험 결제(stub)로 결제 완료된 소개몰 주문 중 **발송 전(PAID · PREPARING)** 을 한 번에 취소하고 주문한 분에게 알림.
+   *   결제 기록을 CANCELED 로 바꾸면 fn_hlt_pay_apply 가 주문을 취소로 옮깁니다(PG 취소 반영과 같은 길 · 재고도 거기서).
+   *   발송한 주문은 건드리지 않고 「손으로 확인」 목록으로 돌려줌. 돈은 처음부터 받지 않았으므로 환불할 것이 없습니다.
+   */
+  async cancelStubOrders(orderNos?: string[]): Promise<{ ok: boolean; canceled: string[]; manual: string[]; note: string }> {
+    return this.db.transaction(async () => {
+      const rows = await this.db.query<{ pay_id: string; order_no: string; status: string; account_id: string }>(
+        `SELECT p.id AS pay_id, o.order_no, o.status, o.account_id
+           FROM hlt_payments p JOIN hlt_orders o ON o.id = p.order_id
+          WHERE p.stub AND p.state = 'PAID' AND ($1::text[] IS NULL OR o.order_no = ANY($1))
+          ORDER BY coalesce(p.approved_at, p.created_at) FOR UPDATE OF p, o`, [orderNos?.length ? orderNos : null]);
+      const canceled: string[] = []; const manual: string[] = [];
+      for (const r of rows) {
+        if (!['PAID', 'PREPARING'].includes(r.status)) { manual.push(r.order_no); continue; }
+        await this.db.query(
+          `UPDATE hlt_payments SET state = 'CANCELED', pg_status = 'STUB_CLEANUP', canceled_at = now(), canceled_amount = amount,
+                  fail_reason = '시험 결제 주문 정리(운영 · v10.173)' WHERE id = $1`, [r.pay_id]);
+        await this.db.query(
+          `INSERT INTO notifications (account_id, event_code, title, body, link_url) VALUES ($1, 'HLT_STUB_ORDER_CANCELED', $2, $3, $4)`,
+          [r.account_id, '소개몰 주문이 취소되었습니다',
+           `주문 ${r.order_no} 은 시험 결제(실제 돈이 오가지 않음)로 접수되어 취소했습니다. 결제된 돈은 없습니다. 정식 결제가 열리면 다시 주문해 주십시오.`,
+           '/my/health/orders']);
+        canceled.push(r.order_no);
+      }
+      const note = rows.length === 0 ? '정리할 시험 결제 주문이 없습니다.'
+        : `시험 결제 주문 ${canceled.length}건을 취소하고 주문한 분께 알렸습니다.${manual.length ? ` 발송한 주문 ${manual.length}건은 손으로 확인하십시오.` : ''}`;
+      return { ok: true, canceled, manual, note };
+    });
   }
 }

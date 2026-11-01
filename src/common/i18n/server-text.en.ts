@@ -1504,4 +1504,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "결제대행사 지급대행 연동 전입니다 — 간주 모드에서만 시험할 수 있습니다.": "Payout integration with the payment provider is not ready — it can only be tested in assumed mode.",
   "지금은 소개몰 주문을 받지 않습니다 — 상품 보기와 장바구니 담기는 됩니다.": "Sogae Mall is not taking orders right now — you can still browse and add items to your cart.",
   "시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.": "There are orders marked paid by test payment — no money was received. Turn off Sogae Mall ordering or stop direct-sale products.",
+  "지금은 새 가입을 잠시 받지 않습니다. 잠시 뒤 다시 시도해 주십시오.": "We are not accepting new sign-ups for a moment. Please try again later.",
+  "같은 곳에서 오늘 가입이 너무 많습니다. 내일 다시 시도해 주십시오.": "Too many sign-ups from the same place today. Please try again tomorrow.",
+  "가입한 지 하루가 지나지 않은 회원은 하루 {0}개까지 매물을 등록할 수 있습니다. 내일 다시 시도해 주십시오.": "Members who joined less than a day ago can register up to {0} listings a day. Please try again tomorrow.",
 };
