@@ -9,6 +9,7 @@ interface Watch {
   openAlerts: number; orderOpen: 'on' | 'off'; assumePayment: 'on' | 'off'; directOnSale: number; warn?: string; digestTo?: string;
   signupOpen?: 'on' | 'off'; noticeBar?: string;
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
+  rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
 }
 
@@ -62,6 +63,7 @@ export function LaunchWatch() {
     ['오늘 가입', d.signups], ['오늘 로그인', d.logins], ['소개광장 글', d.posts], ['매물', d.listings],
     ['소개몰 주문', d.orders], ['결제 완료', d.paidOrders], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0],
     ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0],
+    ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
   ];
   return (
     <section className="card pad" data-launch-watch="">

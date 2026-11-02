@@ -23,6 +23,7 @@
 ~/sgb                      → ~/sgb-releases/<판>_<시각>   (바로가기 — 이것만 바꾸면 판이 바뀝니다)
 ~/sgb-releases/            판 보관 (전 판 포함 — 최근 2개만 남기고 지워도 됩니다)
 ~/sgb-data/uploads/        올린 파일 (S3 를 안 쓸 때) — 판과 무관
+~/sgb-data/backup/uploads/ 올린 파일 하루 묶음 7개 (uploads-backup.sh · v10.176 · 같은 디스크 — docs/273)
 ~/sgb-data/logs/           precheck · apply · postcheck 기록
 ```
 

@@ -18,6 +18,7 @@ import { AuthService } from './modules/identity/auth.service';
 import { PrincipalService } from './modules/identity/principal.service';
 import { BusinessService } from './modules/identity/business.service';
 import { AuthMiddleware } from './modules/identity/auth.middleware';
+import { ApiRateLimitMiddleware } from './common/api-rate-limit';
 
 import { CatalogController } from './modules/catalog/catalog.controller';
 import { CatalogService } from './modules/catalog/catalog.service';
@@ -411,6 +412,7 @@ import { LeadService } from './modules/lead/lead.service';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // 순서가 중요합니다. 컨텍스트가 먼저 열려야 인증이 actor 를 담을 수 있습니다.
-    consumer.apply(ContextMiddleware, AuthMiddleware).forRoutes('*');
+    // v10.176 (D165) — 요청 한도는 인증 뒤(로그인한 운영자는 세지 않으려고)
+    consumer.apply(ContextMiddleware, AuthMiddleware, ApiRateLimitMiddleware).forRoutes('*');
   }
 }

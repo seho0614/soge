@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { serverErrorsSince } from '../../common/server-error-count';
+import { rateLimitedSince } from '../../common/api-rate-limit';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -38,6 +39,7 @@ export class LaunchWatchService {
         WHERE p.stub AND p.state = 'PAID' AND coalesce(p.approved_at, p.created_at) > now() - interval '7 days'
         ORDER BY coalesce(p.approved_at, p.created_at) DESC LIMIT 10`);
     return { ...c, stubOrders, serverErrorsHour: serverErrorsSince(60).n,   // v10.174 (D163) — 이 API 프로세스가 지난 1시간 보낸 5xx
+      rateLimitedHour: rateLimitedSince(60),   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }
 

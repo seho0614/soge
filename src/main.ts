@@ -10,6 +10,16 @@ async function bootstrap() {
   const config = loadConfig();          // 부팅 즉시 검증. 실패하면 뜨지 않습니다
   /* v10.143 (D139) — rawBody: 전자계약 웹훅 서명(HMAC)을 받은 본문 그대로 검사(다시 직렬화하면 글자가 달라질 수 있음) */
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  /* v10.176 (D165 · docs/273) — 보안 머리글. API 는 JSON 만 내보내므로 남의 화면에 끼워 보이기 · 파일 종류 추측을 모두 막습니다.
+   * HSTS 는 HTTPS 로 받았을 때만 브라우저가 따릅니다(점검판 http 에서는 무시됨). X-Powered-By(express) 는 숨김 */
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
+  app.use((_req: unknown, res: { setHeader(k: string, v: string): void }, next: () => void) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    next();
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

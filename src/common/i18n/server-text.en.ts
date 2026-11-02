@@ -1508,4 +1508,5 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "지금은 새 가입을 잠시 받지 않습니다. 잠시 뒤 다시 시도해 주십시오.": "We are not accepting new sign-ups for a moment. Please try again later.",
   "같은 곳에서 오늘 가입이 너무 많습니다. 내일 다시 시도해 주십시오.": "Too many sign-ups from the same place today. Please try again tomorrow.",
   "가입한 지 하루가 지나지 않은 회원은 하루 {0}개까지 매물을 등록할 수 있습니다. 내일 다시 시도해 주십시오.": "Members who joined less than a day ago can register up to {0} listings a day. Please try again tomorrow.",
+  "요청이 너무 많습니다. 잠시 뒤 다시 시도해 주십시오.": "Too many requests. Please try again in a moment.",
 };

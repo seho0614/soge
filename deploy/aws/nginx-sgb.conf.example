@@ -54,6 +54,13 @@ server {
   root __APP__/web/dist;
   index index.html;
 
+  # v10.176 (docs/273) — 운영 화면 파일(web/dist)에 보안 머리글. API(/api/) 응답은 API 가 직접 붙입니다.
+  #   ★ location 안에 add_header 가 하나라도 있으면 여기 줄은 그 location 에 물려지지 않습니다(nginx 규칙) — /assets/ 에 다시 적음
+  add_header X-Frame-Options "DENY" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Strict-Transport-Security "max-age=31536000" always;
+
   # API — 운영 화면은 토큰을 직접 헤더에 실어 보냅니다
   location /api/ {
     allow __OFFICE_IP__;
@@ -81,6 +88,10 @@ server {
 
     expires 7d;
     add_header Cache-Control "public, immutable";
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
     try_files $uri =404;
   }
 }
