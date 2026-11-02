@@ -3,7 +3,7 @@
 --   대표 「투표생성 기능?」 → 「모두」(11/2) — D021 「만들기는 운영만」에 회원 갈래를 더함(운영 갈래는 그대로)
 --
 --   ① 설정 poll.member_create(기본 off · 공개) · poll.member_daily_limit(3) · poll.member_min_age_hours(24)
---   ② polls.source(ADMIN · MEMBER) · polls.report_count — 옛 투표는 전부 ADMIN
+--   ② polls.source(ADMIN · MEMBER) · polls.report_n(불변식 SV-P18 — 투표 표에 count 이름 칸 금지) — 옛 투표는 전부 ADMIN
 --   ③ fn_poll_member_guard — 회원 투표는 스위치 on · 가입 뒤 시간 · 24시간 건수 · 궁금해요 · 써본 의견만 ·
 --      그림 없음 · 메인에 안 나감 · 마감 1시간 ~ 14일 · 링크 없음 · 금칙어(BLOCK) 거절 · 출처(source)는 바꿀 수 없음
 --   ④ fn_poll_option_member_guard — 회원 투표의 보기도 링크 · 금칙어 · 그림 없음
@@ -28,11 +28,11 @@ ON CONFLICT (key) DO NOTHING;
 
 -- 2. 칸 -----------------------------------------------------------------
 ALTER TABLE public.polls ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'ADMIN';
-ALTER TABLE public.polls ADD COLUMN IF NOT EXISTS report_count integer NOT NULL DEFAULT 0;
+ALTER TABLE public.polls ADD COLUMN IF NOT EXISTS report_n integer NOT NULL DEFAULT 0;
 ALTER TABLE public.polls DROP CONSTRAINT IF EXISTS ck_polls_source;
 ALTER TABLE public.polls ADD CONSTRAINT ck_polls_source CHECK (source IN ('ADMIN','MEMBER'));
 COMMENT ON COLUMN public.polls.source IS '누가 만들었나(D166) — ADMIN 운영 화면 · MEMBER 회원(사용자 웹). 바꿀 수 없습니다.';
-COMMENT ON COLUMN public.polls.report_count IS '서로 다른 신고자 수(D166 · 회원 투표만 신고 가능). 3명이면 감춥니다(fn_report_escalate).';
+COMMENT ON COLUMN public.polls.report_n IS '서로 다른 신고자 수(D166 · 회원 투표만 신고 가능). 3명이면 감춥니다(fn_report_escalate).';
 CREATE INDEX IF NOT EXISTS ix_polls_member ON public.polls (created_by, created_at) WHERE source = 'MEMBER';
 
 -- 3. 회원 투표 규칙 -------------------------------------------------------
@@ -93,7 +93,7 @@ BEGIN
   NEW.image := NULL;
   NEW.show_on_home := false;
   NEW.sort := 0;
-  NEW.report_count := 0;
+  NEW.report_n := 0;
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trg_poll_member_guard ON public.polls;
@@ -188,7 +188,7 @@ BEGIN
   ELSIF NEW.target_type = 'POLL' THEN
     SELECT count(DISTINCT reporter_id) INTO v_posters
       FROM reports WHERE target_type = 'POLL' AND target_id = NEW.target_id AND state IN ('OPEN','QUEUED','UPHELD');
-    UPDATE polls SET report_count = v_posters,
+    UPDATE polls SET report_n = v_posters,
                      state = CASE WHEN v_posters >= 3 AND state IN ('OPEN','CLOSED') THEN 'HIDDEN' ELSE state END,
                      hidden_reason = CASE WHEN v_posters >= 3 AND state IN ('OPEN','CLOSED') THEN '신고 3건 — 운영 확인 대기' ELSE hidden_reason END
      WHERE id = NEW.target_id;

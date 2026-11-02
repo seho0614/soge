@@ -157,7 +157,7 @@ export class PollService {
   async adminList() {
     const rows = await this.db.query<PollRow>(
       `SELECT ${PollService.COLS}, p.show_on_home AS "showOnHome", p.sort, p.hidden_reason AS "hiddenReason",
-              p.created_at AS "createdAt", (h.id IS NOT NULL) AS "onHome", p.report_count AS "reportCount",
+              p.created_at AS "createdAt", (h.id IS NOT NULL) AS "onHome", p.report_n AS "reportCount",
               CASE WHEN p.source = 'MEMBER' THEN (SELECT a.name FROM accounts a WHERE a.id = p.created_by) END AS "authorName"
          FROM polls p LEFT JOIN v_poll_home h ON h.id = p.id
         ORDER BY CASE p.state WHEN 'OPEN' THEN 1 WHEN 'DRAFT' THEN 2 WHEN 'CLOSED' THEN 3 ELSE 4 END, p.sort, p.created_at DESC
@@ -215,7 +215,7 @@ export class PollService {
        *   신고 수 트리거는 OPEN · QUEUED · UPHELD 만 세므로, 다시 보인 뒤에는 **새 신고 3건**이 쌓여야 다시 가려집니다 */
       let dismissed = 0;
       if (cur.source === 'MEMBER' && cur.state === 'HIDDEN' && (dto.state === 'OPEN' || dto.state === 'CLOSED')) {
-        await this.db.query(`UPDATE polls SET report_count = 0 WHERE id = $1`, [id]);
+        await this.db.query(`UPDATE polls SET report_n = 0 WHERE id = $1`, [id]);
         const closed = await this.db.query<{ reporter_id: string | null }>(
           `UPDATE reports
               SET state = 'DISMISSED', resolution = $2, handled_by = $3, handled_at = now()
@@ -276,7 +276,7 @@ export class PollService {
   async myPolls() {
     const rows = await this.db.query<PollRow & { reportHidden: boolean }>(
       `SELECT ${PollService.COLS}, p.created_at AS "createdAt",
-              (p.state = 'HIDDEN' AND p.report_count >= 3) AS "reportHidden"
+              (p.state = 'HIDDEN' AND p.report_n >= 3) AS "reportHidden"
          FROM polls p
         WHERE p.created_by = $1 AND p.source = 'MEMBER'
         ORDER BY p.created_at DESC LIMIT 50`, [this.me]);
