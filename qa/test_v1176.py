@@ -4,7 +4,7 @@
       -e SITE=http://localhost:15174 -e DB=postgresql://sgb:sgb@localhost:15432/sgb sgb-qa:v1 python3 test_v1176.py
 
   ① 코드 — D165(abuse.api_per_ip_min ADMIN 600 · 지우는 문장 없음 · 203) · 한도 미들웨어(인증 뒤 · 내부 IP · 운영자 빠짐 · 429 API_RATE_LIMIT)
-     · API 머리글 · 사용자 웹 머리글(/api 빼고) · 영어 사전 · 지켜보기 「한도 걸림」 칸 · 백업 스크립트(bash -n) · docs/273 · 판
+     · API 머리글(운영 main.ts · 점검판 dev-server.js 둘 다) · 사용자 웹 머리글(/api 빼고) · 영어 사전 · 지켜보기 「한도 걸림」 칸 · 백업 스크립트(bash -n) · docs/273 · 판
   ② (API) 머리글 nosniff · DENY · X-Powered-By 없음 · 같은 공인 IP 가 1분에 600 넘으면 429 + Retry-After ·
      같은 IP 라도 운영자 증표면 통과 · 다른 IP · 내부(머리 없음)는 통과 · 지켜보기 「한도 걸림(1시간)」 늘어남
   ③ (사용자 웹) 화면에 HSTS · SAMEORIGIN · frame-ancestors · Permissions-Policy · X-Powered-By 없음 / /api 는 API 머리글 하나만
@@ -36,11 +36,12 @@ M = rd('prisma/migrations/D165_api_rate_limit/migration.sql')
 ok('① D165 — abuse.api_per_ip_min(ADMIN · 600 · 숫자 형식) · 지우는 문장 없음 · 203 이상',
    "('abuse.api_per_ip_min', '600', 'ADMIN'," in M and "'^[0-9]{1,5}$'" in M and 'ON CONFLICT (key) DO NOTHING' in M
    and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and len(mig) >= 203 and 'D165_api_rate_limit' in mig, f'{len(mig)} · {mig[-1]}')
-RL = rd('src/common/api-rate-limit.ts'); AM = rd('src/app.module.ts'); MN = rd('src/main.ts'); NC = rd('site/next.config.js')
+RL = rd('src/common/api-rate-limit.ts'); AM = rd('src/app.module.ts'); MN = rd('src/main.ts'); SH = rd('src/common/security-headers.ts'); NC = rd('site/next.config.js')
 ok('① 한도 · 머리글 — 인증 뒤 미들웨어 · 내부 IP · 운영자 빠짐 · 429 API_RATE_LIMIT · Retry-After · API 머리글 · 사용자 웹 머리글(/api 빼고) · 영어 사전',
    'consumer.apply(ContextMiddleware, AuthMiddleware, ApiRateLimitMiddleware)' in AM and "settingInt(this.db, 'abuse.api_per_ip_min', 600)" in RL
    and 'isInternalIp(clientIpRaw())' in RL and "'ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'" in RL and "'API_RATE_LIMIT'" in RL and "'Retry-After'" in RL
-   and "disable('x-powered-by')" in MN and "'X-Frame-Options', 'DENY'" in MN and "'X-Content-Type-Options', 'nosniff'" in MN
+   and 'applySecurityHeaders(app)' in MN and 'applySecurityHeaders(app)' in rd('scripts/dev-server.js')
+   and "disable('x-powered-by')" in SH and "'X-Frame-Options', 'DENY'" in SH and "'X-Content-Type-Options', 'nosniff'" in SH
    and 'poweredByHeader: false' in NC and "source: '/((?!api/).*)'" in NC and "frame-ancestors 'self'" in NC and 'geolocation=(self)' in NC
    and '"요청이 너무 많습니다. 잠시 뒤 다시 시도해 주십시오.": "Too many requests. Please try again in a moment."' in rd('src/common/i18n/server-text.en.ts'), '')
 BS = os.path.join(K, 'deploy/aws/uploads-backup.sh')
