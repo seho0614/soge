@@ -75,8 +75,10 @@ if API and DB:
 
     # ── ② 운영 알림 ──────────────────────────────────────────────────
     psql("DELETE FROM ops_alerts WHERE alert_code = 'TEST_V1179'")
-    psql("""INSERT INTO ops_alerts (alert_code, severity, title, detail) VALUES
-            ('TEST_V1179', 'WARN', '시험 알림 1', '{"n": 1}'), ('TEST_V1179', 'WARN', '시험 알림 2', '{"n": 2}'), ('TEST_V1179', 'INFO', '시험 알림 3', NULL)""")
+    # ops_alerts 는 (alert_code, raised_at) 가 겹치면 안 됨 — 시각을 1분씩 다르게(3 이 가장 최근)
+    psql("""INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at) VALUES
+            ('TEST_V1179', 'WARN', '시험 알림 1', '{"n": 1}', now() - interval '3 minutes'), ('TEST_V1179', 'WARN', '시험 알림 2', '{"n": 2}', now() - interval '2 minutes'),
+            ('TEST_V1179', 'INFO', '시험 알림 3', NULL, now() - interval '1 minute')""")
     s1, l1 = call('GET', '/admin/ops-alerts?code=TEST_V1179', TA)
     cd = {c.get('code'): c for c in l1.get('codes', [])}.get('TEST_V1179', {})
     first = (l1.get('items') or [{}])[0]
@@ -144,8 +146,8 @@ if API and DB:
     w = call('GET', '/admin/launch-watch', TA)[1]
     ss = w.get('slowSql') or {}
     hit = [x for x in ss.get('top', []) if 'polls' in (x.get('sql') or '')]
-    ok('④ 느린 조회 — 표를 잠가 300ms 넘긴 조회가 slowSql 에 · 모양(빈칸 줄임 · 값 없음) · 가장 느림 ≥ 300',
-       (ss.get('n') or 0) >= 1 and ss.get('thresholdMs') == 300 and hit and hit[0].get('maxMs', 0) >= 300 and '\n' not in hit[0].get('sql', ''),
+    ok('④ 느린 조회 — 표를 잠가 300ms 넘긴 조회가 slowSql 에 · 모양(빈칸 줄임 · 값 없음 · 긴 칸 목록은 SELECT … 로 표 이름 보임) · 가장 느림 ≥ 300',
+       (ss.get('n') or 0) >= 1 and ss.get('thresholdMs') == 300 and hit and hit[0].get('maxMs', 0) >= 300 and '\n' not in hit[0].get('sql', '') and 'FROM polls' in hit[0].get('sql', ''),
        f"n {ss.get('n')} · {[(x.get('maxMs'), x.get('sql', '')[:50]) for x in ss.get('top', [])][:2]}")
 else:
     print('  (API · DB 없음 — ②③④ 건너뜀)')

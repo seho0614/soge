@@ -75,7 +75,7 @@ TP = rd('web/src/app/admin/TermsPanel.tsx'); MN = rd('web/src/lib/adminMenu.ts')
 ok('① 운영 화면 — 시행 예정 표시 · 예정 취소 · 제14조 경고(7일 · 30일) · 재동의 시점 스위치 · 결과 글 · 관 관리 › 약관 메뉴(SUPER · SB-ADM-SIT-070)',
    all(x in TP for x in ('data-term-scheduled', 'data-term-unschedule', '/unschedule`', 'lead < 7', 'lead < 30', '제14조', 'data-terms-reconsent', "key: 'terms.reconsent_before_effective'", 'r.scheduled'))
    and "['terms', '약관']" in MN and "'siteinfo', 'terms', 'i18n'" in MN and "terms:         { title: '약관'" in MN
-   and "{tab === 'terms' && <TermsPanel />}" in APP and "'integ', 'terms']" in APP, '')
+   and "{tab === 'terms' && <TermsPanel />}" in APP and "'integ', 'terms'" in APP, '')
 UT = rd('site/src/components/UpcomingTerms.tsx'); LY = rd('site/src/app/layout.tsx')
 ko = json.loads(rd('site/src/i18n/messages/ko/policy.json') or '{}').get('upcoming', {}); en = json.loads(rd('site/src/i18n/messages/en/policy.json') or '{}').get('upcoming', {})
 ok('① 사용자 웹 — 알림(/terms/upcoming · 60초) · 바닥줄 위 한 줄 · 약관 화면 · 동의 화면 · 사전 ko · en 같은 칸',
