@@ -101,6 +101,8 @@ def setting(k, v):
 made = []
 if API and DB:
     TA, TB, TI, TS, TP = (login(e) for e in ('admin@x.com', 'buyer@x.com', 'intro@x.com', 'seller@x.com', 'person@x.com'))
+    # 정책 보고 길의 본문 읽기가 Nest 의 JSON 본문 읽기를 가리면 모든 POST 가 400(v10.177 점검에서 한 번 남) — 로그인으로 확인
+    ok('② 본문 읽기 — 로그인 5명 모두 토큰(정책 보고 길이 API 의 JSON 본문 읽기를 가리지 않음)', all((TA, TB, TI, TS, TP)), '')
     psql("DELETE FROM polls p WHERE p.source = 'MEMBER' AND NOT EXISTS (SELECT 1 FROM poll_votes v WHERE v.poll_id = p.id)")   # 다시 돌릴 때
     psql("UPDATE polls SET state = 'HIDDEN', hidden_reason = '시험 정리(test_v1177)' WHERE source = 'MEMBER' AND state <> 'HIDDEN'")
     psql("UPDATE polls SET created_at = created_at - interval '2 days' WHERE source = 'MEMBER' AND created_at > now() - interval '1 day'")   # 24시간 건수에서 빼기
