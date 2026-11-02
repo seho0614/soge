@@ -80,9 +80,13 @@ export function cspReportsDay(now = Date.now()) {
 /** 시험용 — 비우기 */
 export function resetCspReports() { rows.clear(); hits.length = 0; }
 
-/** express 길 — 운영(main.ts)과 점검판(dev-server.js)이 applySecurityHeaders 안에서 같이 붙입니다 */
+const parseReport = express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '16kb' });
+
+/** express 길 — 운영(main.ts)과 점검판(dev-server.js)이 applySecurityHeaders 안에서 같이 붙입니다
+ *  ★ express.json() 을 그대로 넣으면 함수 이름이 jsonParser 라, Nest 가 「본문 읽기가 이미 붙어 있다」고 보고
+ *    **전체 API 의 JSON 본문 읽기를 건너뜁니다**(로그인 등 모든 POST 가 400 — v10.177 점검에서 발견). 이름이 다른 함수로 감쌉니다 */
 export const cspReportRoute = [
-  express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '16kb' }),
+  function cspReportBody(req: Request, res: Response, next: NextFunction) { parseReport(req, res, next); },
   (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'POST') return next();
     try { recordCspReport(req.body); } catch { /* 모양이 다른 보고는 버림 */ }
