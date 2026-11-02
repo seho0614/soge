@@ -24,6 +24,8 @@ import { Partners } from './app/admin/Partners';
 import { PartnerAxes } from './app/admin/PartnerAxes';
 import { DirectoryAdmin } from './app/admin/DirectoryAdmin';
 import { RiskAlerts } from './app/admin/RiskAlerts';
+import { OpsAlerts } from './app/admin/OpsAlerts';   // v10.179 (D168)
+import { PiiReview } from './app/admin/PiiReview';   // v10.179 (D168)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
 import { MainOps } from './app/admin/MainOps';
@@ -68,7 +70,7 @@ import { siteUrl } from './lib/siteUrl';
  * 'mainops' · 'integrations' 는 레지스트리가 ADMIN · SUPER 이지만 서버가 SUPER 만 받아 그대로 둡니다. */
 /* v10.31 (10/10 결함) — 「자동검수 규칙」(REV-030) · 「메인 운영」(MAIN-010)은 matrix 대로 ADMIN|SUPER.
  *   서버도 같이 열었습니다(정책 읽기 · 자동검수 값 · 금칙어 · 배너 · 공지). 메인 운영 안의 관 노출 · 화면 구성 · 콘텐츠(MAIN-020~040)는 SUPER 만(MainOps.tsx). */
-const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms'];   /* v10.161 terms — 약관 API 는 SUPER 만 */
+const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms', 'pii-review'];   /* v10.179 pii-review — 개인정보 접속기록 점검은 SUPER 만 */   /* v10.161 terms — 약관 API 는 SUPER 만 */
 const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   home: ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
   /* 2026-10-01 결정 Q1 — 지급 담당의 작업 화면. 확정은 운영, 지급은 지급 담당 */
@@ -258,6 +260,8 @@ function Console() {
       {tab === 'directory' && <DirectoryAdmin />}
       {tab === 'quals' && <Qualifications onGo={go} />}
       {tab === 'risk' && <RiskAlerts />}
+      {tab === 'ops-alerts' && <OpsAlerts />}
+      {tab === 'pii-review' && <PiiReview />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}
       {tab === 'integ' && <Integ />}

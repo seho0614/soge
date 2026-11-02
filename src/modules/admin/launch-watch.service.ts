@@ -4,6 +4,7 @@ import { serverErrorsSince } from '../../common/server-error-count';
 import { rateLimitedSince } from '../../common/api-rate-limit';
 import { cspReportsDay } from '../../common/csp-report';
 import { slowSince } from '../../common/response-time';
+import { slowSqlSince } from '../../common/slow-sql';
 import { uploadsBackupState } from '../../common/uploads-backup-state';
 
 /* ---------------------------------------------------------------------
@@ -46,6 +47,7 @@ export class LaunchWatchService {
       rateLimitedHour: rateLimitedSince(60),   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
       cspDay: cspReportsDay(),                 // v10.177 — 보안 정책 「보고만 하기」 지난 24시간(건수 · 많이 걸린 출처 10)
       uploadsBackup: uploadsBackupState(),     // v10.177 — 올린 파일 백업 묶음(가장 최근 · 몇 시간 전 · 개수)
+      slowSql: slowSqlSince(60),               // v10.179 — 300ms 넘은 DB 조회(모양 · 건수 · 가장 느림)
       slowHour: slowSince(60),                 // v10.178 (D167) — 지난 1시간 API 요청 수 · p95(ms) · 느린 주소 5곳
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }

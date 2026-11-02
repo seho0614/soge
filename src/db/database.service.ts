@@ -15,6 +15,7 @@ import { Pool, PoolClient, types } from 'pg';
 types.setTypeParser(types.builtins.NUMERIC, (v) => (v === null ? null : Number(v)));
 types.setTypeParser(types.builtins.INT8, (v) => (v === null ? null : Number(v)));
 import { RequestCtx } from '../core/request-context';
+import { recordSql } from '../common/slow-sql';
 
 /**
  * DB 접근층.
@@ -61,8 +62,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   /** 트랜잭션 중이면 그 커넥션, 아니면 풀. 호출자는 구분할 필요가 없습니다. */
   async query<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
     const tx = RequestCtx.get()?.tx;
-    const res = tx ? await tx.query(sql, params) : await this.pool.query(sql, params);
-    return res.rows as T[];
+    const t0 = performance.now();   // v10.179 (docs/279) — 300ms 넘는 조회는 모양만 메모리에(느린 조회 지켜보기)
+    try {
+      const res = tx ? await tx.query(sql, params) : await this.pool.query(sql, params);
+      return res.rows as T[];
+    } finally {
+      recordSql(sql, performance.now() - t0);
+    }
   }
 
   /**
@@ -99,5 +105,5 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 export const APPEND_ONLY_TABLES = [
   'attribution_events', 'fee_agreements', 'ledger_entries', 'term_agreements',
   'review_events', 'call_logs', 'visitor_identities',
-  'audit.audit_logs', 'audit.pii_access_logs',
+  'audit.audit_logs', 'audit.pii_access_logs', 'audit.pii_reviews',
 ] as const;

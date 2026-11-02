@@ -52,6 +52,8 @@ export const TABS = [
   ['affiliates', '제휴'],
   ['quals', '자격 심사'],
   ['risk', '위험감지'],
+  ['ops-alerts', '운영 알림'],   /* v10.179 (D168) */
+  ['pii-review', '개인정보 접속기록'],   /* v10.179 (D168) — SUPER */
   ['ads', '광고'],
   ['roles', '권한 관리'],
   ['gov-audit', '감사'],
@@ -81,7 +83,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'codes'] },
   { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'i18n', 'hlt-products'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
-  { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'report-queue', 'ai-ops', 'gov-audit'] },
+  { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
   { key: 'admcmu',  label: '소개광장',  tabs: ['community', 'polls', 'events'] },
   { key: 'affapl',  label: '제휴',      tabs: ['affiliates'] },
@@ -148,6 +150,8 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'hlt-products':{ title: '소개몰 상품', sub: '상품 · 옵션(묶음 개수) · 재고 · 그림 · 고시를 넣고 고칩니다.', screen: 'SB-ADM-HPR-010' },
   ads:           { title: '광고 관리', sub: '메인 광고 자리에 어떤 소재를 누구에게 내보낼지 정합니다. 소재 · 슬롯 · 세그먼트 세 가지가 전부입니다.', screen: 'SB-ADM-ADS-010' },
   'ad-billing':  { title: '광고 과금 · 정산', sub: '광고주 · 청구 · 입금 · 미수금. 광고비는 우리가 받는 돈이라 소개비와 따로 답니다.', screen: 'SB-ADM-ADB-010' },
+  'ops-alerts':  { title: '운영 알림', sub: '정기 작업 · 스크립트가 남긴 알림을 보고 확인합니다. 확인은 한 번만 — 누가 · 언제 · 메모가 남습니다.', screen: 'SB-ADM-OPS-010' },
+  'pii-review':  { title: '개인정보 접속기록 점검', sub: '운영자가 개인정보를 본 기록을 달마다 점검하고 기록을 남깁니다(SUPER).', screen: 'SB-ADM-PII-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },
   'report-queue':{ title: '신고 처리', sub: '오래된 것이 위로 옵니다 — 신고해 놓고 답이 없으면 다음부터 신고를 안 합니다.', screen: 'SB-ADM-RPT-010' },
   'ai-ops':      { title: 'AI 운영', sub: '분류 · 검색 · 성향 · 위험감지의 품질을 보고 학습을 고칩니다.', screen: 'SB-ADM-AIS-010' },

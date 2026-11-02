@@ -11,6 +11,7 @@ interface Watch {
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
   cspDay?: { n: number; top: Array<{ directive: string; blocked: string; n: number; page: string }> };   // v10.177 — 보안 정책 「보고만 하기」 24시간
+  slowSql?: { n: number; thresholdMs: number; top: Array<{ sql: string; n: number; maxMs: number }> };   // v10.179 — 300ms 넘은 DB 조회(1시간)
   slowHour?: { n: number; p95: number; top: Array<{ path: string; p95: number; n: number }> }; slowLimitMs?: number;   // v10.178 (D167) — 지난 1시간 API 응답 p95(ms)
   uploadsBackup?: { count: number; last: string | null; lastAt: string | null; lastKB: number | null; ageHours: number | null; stale: boolean };   // v10.177
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
@@ -80,6 +81,17 @@ export function LaunchWatch() {
           <div key={k} className={`ad-tile${warn ? ' warn' : ''}`} data-watch={k}><span className="tl">{k}</span><b>{n(v)}</b></div>
         ))}
       </div>
+      {/* v10.179 (D168) — 운영 알림 목록 · 확인 화면 */}
+      <p className="hint"><a href="#/ops-alerts" data-ops-alerts-link="">운영 알림 보기 · 확인 →</a>{(d.slowSql?.n ?? 0) > 0 && <> · 느린 조회(300ms 넘음 · 1시간) <b data-slow-sql={d.slowSql!.n}>{n(d.slowSql!.n)}건</b></>}</p>
+      {(d.slowSql?.top.length ?? 0) > 0 && (
+        <details data-slow-sql-top="">
+          <summary>느린 조회 5개(SQL 모양 · 넘긴 값은 담지 않음)</summary>
+          <table className="tbl">
+            <thead><tr><th>SQL 모양</th><th>건수</th><th>가장 느림(ms)</th></tr></thead>
+            <tbody>{d.slowSql!.top.map((r) => <tr key={r.sql}><td className="mono" style={{ fontSize: 12 }}>{r.sql}</td><td className="num-cell">{n(r.n)}</td><td className="num-cell">{n(r.maxMs)}</td></tr>)}</tbody>
+          </table>
+        </details>
+      )}
       {d.warn && <p className="card warn" data-watch-warn="">{d.warn}</p>}
       <p>
         소개몰 주문 받기 <b data-order-open={d.orderOpen}>{d.orderOpen === 'on' ? '켜짐' : '꺼짐'}</b> · 간주 결제 {d.assumePayment === 'on' ? '켜짐(시험 결제)' : '꺼짐'} · 판매 중 직판 상품 {n(d.directOnSale)}개{' '}

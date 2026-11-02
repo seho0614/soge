@@ -1818,6 +1818,43 @@
    "note": "규칙 원문과 오탐 가능성을 함께 노출합니다. 경보 기록은 변조·삭제되지 않습니다"
   },
   {
+   "id": "SB-ADM-OPS-010",
+   "name": "운영 알림",
+   "group": "ADM",
+   "url": "/admin/ops-alerts",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/ops-alerts",
+    "POST /admin/ops-alerts/{id}/ack",
+    "POST /admin/ops-alerts/ack-code"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.179 D168 — 운영 알림(ops_alerts) 목록 · 종류별 확인 안 한 수 · 확인(한 번만 · 누가 · 언제 · 메모 · 되돌릴 수 없음) · 같은 종류 한꺼번에 확인."
+  },
+  {
+   "id": "SB-ADM-PII-010",
+   "name": "개인정보 접속기록 점검",
+   "group": "ADM",
+   "url": "/admin/pii-review",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/pii-review",
+    "GET /admin/pii-review/{month}",
+    "POST /admin/pii-review"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.179 D168 — 운영자의 개인정보 조회 기록(pii_access_logs · 회원 상세 · 리드 보기) 월 요약 · 살펴볼 것(하루 최다 · 밤 조회) · 끝난 달 점검 완료(한 번 · 고칠 수 없음) · 5일부터 PII_REVIEW_DUE."
+  },
+  {
    "id": "SB-MYP-PAY-010",
    "name": "결제 수단 관리",
    "group": "MYP",

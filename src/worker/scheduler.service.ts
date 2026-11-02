@@ -13,6 +13,7 @@ import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
 import { LaunchWatchService } from '../modules/admin/launch-watch.service';
 import { uploadsBackupState } from '../common/uploads-backup-state';
+import { PiiReviewService } from '../modules/admin/pii-review.service';
 
 /**
  * 배치 실행기.
@@ -53,6 +54,7 @@ export class SchedulerService {
     private readonly reviewShadow: ReviewShadowService,
     private readonly agentChat: AgentChatService,
     private readonly launchWatch: LaunchWatchService,
+    private readonly piiReview: PiiReviewService,   // v10.179 (D168) 개인정보 접속기록 점검 알림
   ) {}
 
   /**
@@ -472,7 +474,10 @@ export class SchedulerService {
         /* v10.177 (docs/275) — 올린 파일 백업 묶음이 36시간 넘게 새로 생기지 않으면(묶음이 하나라도 있을 때만 — 예약 전에는 조용) */
         const ub = uploadsBackupState();
         if (ub.stale) await this.alert('UPLOADS_BACKUP_STALE', 'WARN', `올린 파일 백업이 ${ub.ageHours}시간째 새로 생기지 않았습니다 — 마지막 ${ub.last} · cron · 디스크를 확인하십시오`, ub);
-        affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours };
+        /* v10.179 (D168 · docs/279) — 매달 5일부터 지난달 개인정보 접속기록 점검이 없으면(그달 한 번) */
+        const pr = await this.piiReview.due();
+        if (pr.alert) await this.alert('PII_REVIEW_DUE', 'WARN', `${pr.month} 개인정보 접속기록 점검이 아직 없습니다 — 운영 화면 위험감지 › 개인정보 접속기록에서 점검 완료를 남기십시오(SUPER)`, { month: pr.month });
+        affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours, piiReviewDue: pr.alert ? pr.month : null };
         break;
       }
 

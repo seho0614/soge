@@ -1526,4 +1526,17 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "표가 들어온 투표는 지울 수 없습니다 — 마감하십시오.": "A poll that has votes cannot be deleted — please close it instead.",
   "투표를 지웠습니다.": "The poll has been deleted.",
   "운영 확인 결과 규칙에 어긋나지 않는 투표로 보고 다시 보이게 했습니다.": "After review, we found the poll does not break the rules and made it visible again.",
+  /* v10.179 (D168 · docs/279) — 운영 알림 확인 · 개인정보 접속기록 점검 */
+  "이미 확인한 알림입니다 — 확인 기록은 바꿀 수 없습니다": "This alert was already acknowledged — the acknowledgement cannot be changed",
+  "알림 내용은 바꿀 수 없습니다 — 확인만 됩니다": "Alert contents cannot be changed — they can only be acknowledged",
+  "없는 알림입니다.": "Alert not found.",
+  "이미 확인한 알림입니다.": "This alert was already acknowledged.",
+  "확인했습니다.": "Acknowledged.",
+  "{0}건을 확인했습니다.": "Acknowledged {0} alerts.",
+  "확인할 알림이 없습니다.": "There are no alerts to acknowledge.",
+  "달은 YYYY-MM 으로 적어 주십시오.": "Please enter the month as YYYY-MM.",
+  "끝난 달만 점검 완료로 남길 수 있습니다 — 이번 달은 다음 달에 점검하십시오.": "Only finished months can be marked as reviewed — review this month next month.",
+  "이미 점검한 달입니다 — 점검 기록은 고칠 수 없습니다.": "This month was already reviewed — the review record cannot be changed.",
+  "{0} 점검을 남겼습니다.": "Saved the review for {0}.",
+  "알림 종류 형식이 맞지 않습니다.": "The alert type format is not valid.",
 };

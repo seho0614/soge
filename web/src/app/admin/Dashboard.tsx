@@ -131,7 +131,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
 
   /* 확인이 필요한 것 — 서버 값으로만 만듭니다. 없으면 「없음」 한 줄 */
   const alerts: { tone: 'warn' | 'info'; title: string; text: string; go?: string }[] = [];
-  if (data.criticalAlerts > 0) alerts.push({ tone: 'warn', title: `확인하지 않은 CRITICAL 경보 ${data.criticalAlerts}건`, text: '배포가 막힙니다. 경보를 확인하십시오.', go: 'risk' });
+  if (data.criticalAlerts > 0) alerts.push({ tone: 'warn', title: `확인하지 않은 CRITICAL 경보 ${data.criticalAlerts}건`, text: '배포가 막힙니다. 경보를 확인하십시오.', go: 'ops-alerts' });   // v10.179 — ops_alerts 를 세므로 운영 알림 화면으로
   if (sla > 0) alerts.push({ tone: 'warn', title: `SLA 24시간 초과 ${sla}건`, text: '검수 큐에서 24시간을 넘긴 건이 있습니다.', go: 'queue' });
   if (data.openBlockers > 0) alerts.push({ tone: 'warn', title: `오픈 차단 ${data.openBlockers}건`, text: '오픈을 막는 항목(외부 연동 · 고정 IP 등)이 남아 있습니다.', go: 'checklist' });
   if (data.disputesOpen > 0) alerts.push({ tone: 'warn', title: `진행 중인 분쟁 ${data.disputesOpen}건`, text: '분쟁이 걸린 거래는 정산이 보류됩니다.', go: 'disputes' });
