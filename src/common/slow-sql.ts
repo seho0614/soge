@@ -2,7 +2,7 @@
  * v10.179 (docs/279) — 느린 DB 조회 지켜보기
  *
  *   DatabaseService.query 가 300ms 이상 걸린 SQL 만 이 프로세스 메모리에 1시간(최대 5,000건) 기억합니다.
- *   SQL 은 모양만(빈칸을 줄이고 앞 160자 · 숫자 · 따옴표 글자는 ? 로) — 넘긴 값($1 …)은 담지 않습니다(개인정보 없음).
+ *   SQL 은 모양만(빈칸을 줄이고 앞 200자 · 긴 칸 목록은 「SELECT …」 · 숫자 · 따옴표 글자는 ? 로) — 넘긴 값($1 …)은 담지 않습니다(개인정보 없음).
  *   운영 화면 「지켜보기」의 「느린 조회(1시간)」 칸 · 느린 조회 5개(모양마다 건수 · 가장 느린 시간). 알림은 아직 없음(느린 응답 SLOW_API 가 먼저 울림).
  * ------------------------------------------------------------------- */
 export const SLOW_SQL_MS = 300;
@@ -11,7 +11,21 @@ const KEEP_MS = 60 * 60 * 1000;
 const rows: Array<{ at: number; ms: number; sql: string }> = [];
 
 export function sqlShape(sql: string): string {
-  return sql.replace(/\s+/g, ' ').replace(/'(?:[^']|'')*'/g, '?').replace(/\b\d+\b/g, '?').trim().slice(0, 160);
+  const s = sql.replace(/\s+/g, ' ').replace(/'(?:[^']|'')*'/g, '?').replace(/\b\d+\b/g, '?').trim();
+  /* 칸 목록이 길면 표 이름이 잘려 보이지 않음 — 괄호 밖 첫 FROM 앞의 칸 목록을 「SELECT …」로 줄임 */
+  if (/^SELECT /i.test(s)) {
+    let depth = 0;
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === '(') depth++;
+      else if (c === ')') depth--;
+      else if (depth === 0 && c === ' ' && /^ FROM /i.test(s.slice(i, i + 6))) {
+        if (i > 60) return ('SELECT … ' + s.slice(i + 1)).slice(0, 200);
+        break;
+      }
+    }
+  }
+  return s.slice(0, 200);
 }
 
 export function recordSql(sql: string, ms: number, now = Date.now()) {
