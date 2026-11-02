@@ -21,6 +21,8 @@ function Card({ p }: { p: Poll }) {
     <article className={`poll-card${h.poll.open ? '' : ' closed'}`} data-poll={h.poll.id} data-kind={h.poll.kind} data-voted={h.voted ? '1' : '0'}>
       <div className="poll-top">
         <span className="poll-kind">{k.label}</span>
+        {/* v10.177 (D166) — 회원이 만든 투표는 표시 · 신고(로그인 · 본인인증은 신고 화면이 봄) */}
+        {h.poll.source === 'MEMBER' && <span className="poll-by" data-poll-member="">{t('polls.memberBy', { author: h.poll.author ?? '' })}</span>}
         <span className="poll-state">{h.poll.open ? (h.poll.endsAt ? t('poll.endsAt', { date: ymdKst(h.poll.endsAt) }) : t('poll.ongoing')) : t('poll.ended')}</span>
       </div>
       <h2>{h.poll.title}</h2>
@@ -49,6 +51,7 @@ function Card({ p }: { p: Poll }) {
           ? <button type="button" className="btn-primary" onClick={h.vote} disabled={h.busy} data-vote>{h.busy ? t('poll.sending') : k.cta}</button>
           : <span className="poll-done" data-done>{h.voted ? t('poll.voted') : t('poll.closed')}</span>}
         <span className="poll-total" data-total={h.poll.total}>{t('poll.people', { n: h.poll.total.toLocaleString('ko-KR') })}</span>
+        {h.poll.source === 'MEMBER' && <Link className="poll-report" href={`/report/poll/${h.poll.id}`} data-poll-report="">{t('polls.report')}</Link>}
       </div>
       {h.msg && (
         <p className={`poll-msg ${h.msg.kind}`} role={h.msg.kind === 'ok' ? 'status' : 'alert'}>

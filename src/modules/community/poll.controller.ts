@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Headers, HttpCode, Ip, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Ip, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PollService } from './poll.service';
-import { CreatePollDto, PollAdminListDto, PollDto, PollVoteDto, PollVoteResultDto, PollWriteResultDto, UpdatePollDto } from './poll.dto';
+import {
+  CreateMemberPollDto, CreatePollDto, MemberPollDeleteDto, MemberPollReadyDto, MyPollDto, PollAdminListDto, PollDto, PollVoteDto, PollVoteResultDto,
+  PollWriteResultDto, UpdatePollDto,
+} from './poll.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -13,6 +16,8 @@ import { ErrorDto } from '../../common/dto/common.dto';
  * 회원은 1인 1표, 비로그인은 방문자(기기) 1표입니다. 비로그인 투표를 끄려면 설정 poll.guest_vote 를 off 로 둡니다.
  * 참여 수는 **실제 표 수**만 나갑니다 — 화면이 숫자를 꾸며 넣지 않습니다.
  * 만들기 · 열기 · 마감 · 감추기는 운영만 합니다.
+ * v10.177 (D166 · docs/275) — 회원도 「궁금해요」 · 「써본 의견」 투표를 만들 수 있습니다(설정 poll.member_create · 기본 꺼짐).
+ *   회원 투표는 만들자마자 열리고 메인에는 나가지 않으며, 신고 3건이면 감춰집니다.
  */
 @ApiTags('COMMUNITY')
 @Controller('api/v1')
@@ -68,6 +73,56 @@ export class PollController {
   ) {
     return this.svc.vote(id, dto.optionId, { visitorKey, ua, ip: (xff?.split(',')[0]?.trim() || ip) ?? undefined });
   }
+
+  /* ── v10.177 (D166) 회원이 만드는 투표 ─────────────────────────── */
+
+  @Get('community/my-polls/ready')
+  @ApiOperation({
+    summary: '회원 투표 — 지금 만들 수 있는지',
+    description: '로그인 전에도 부릅니다. 스위치(poll.member_create) · 로그인 · 가입 뒤 시간(poll.member_min_age_hours) · 24시간 건수(poll.member_daily_limit).',
+  })
+  @ApiOkResponse({ type: MemberPollReadyDto })
+  memberReady() { return this.svc.memberReady(); }
+
+  @ApiBearerAuth()
+  @Get('community/my-polls')
+  @Roles('MEMBER')
+  @ApiOperation({ summary: '내가 만든 투표', description: '감춘 것까지 · 최근 50건.' })
+  @ApiOkResponse({ type: MyPollDto, isArray: true })
+  myPolls() { return this.svc.myPolls(); }
+
+  @ApiBearerAuth()
+  @Post('community/my-polls')
+  @Roles('MEMBER')
+  @ApiOperation({
+    summary: '회원 투표 만들기',
+    description:
+      '만들자마자 열립니다. 궁금해요(보기 2 ~ 8개) · 써본 의견(2 ~ 5개)만 · 그림 없음 · 메인에 안 나감 · 마감 1 ~ 14일.\n\n' +
+      '· 꺼짐 → 422 POLL_MEMBER_OFF\n· 가입 직후 → 422 POLL_MEMBER_NEW\n· 24시간 건수 초과 → 422 POLL_MEMBER_LIMIT\n' +
+      '· 링크 → 422 POLL_MEMBER_LINK\n· 금칙어 → 422 BANNED_WORD\n· 보기 수 → 422 POLL_OPTIONS',
+  })
+  @ApiCreatedResponse({ type: PollWriteResultDto })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'POLL_MEMBER_OFF · POLL_MEMBER_NEW · POLL_MEMBER_LIMIT · POLL_MEMBER_KIND · POLL_MEMBER_LINK · BANNED_WORD · POLL_OPTIONS · POLL_ENDS_AT' })
+  @Audit('POLL_MEMBER_CREATE', 'POLL')
+  memberCreate(@Body() dto: CreateMemberPollDto) { return this.svc.memberCreate(dto); }
+
+  @ApiBearerAuth()
+  @Post('community/my-polls/:id/close')
+  @HttpCode(200)
+  @Roles('MEMBER')
+  @ApiOperation({ summary: '내 투표 일찍 마감' })
+  @ApiOkResponse({ type: PollWriteResultDto })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'POLL_NOT_OPEN' })
+  memberClose(@Param('id') id: string) { return this.svc.memberClose(id); }
+
+  @ApiBearerAuth()
+  @Delete('community/my-polls/:id')
+  @Roles('MEMBER')
+  @ApiOperation({ summary: '내 투표 지우기', description: '표가 하나도 없을 때만 — 표가 들어온 뒤에는 마감만(422 POLL_HAS_VOTES).' })
+  @ApiOkResponse({ type: MemberPollDeleteDto })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'POLL_HAS_VOTES' })
+  @Audit('POLL_MEMBER_DELETE', 'POLL')
+  memberDelete(@Param('id') id: string) { return this.svc.memberDelete(id); }
 
   /* ── 운영 BO ──────────────────────────────────────────────── */
 

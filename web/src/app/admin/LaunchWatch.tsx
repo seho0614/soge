@@ -10,6 +10,8 @@ interface Watch {
   signupOpen?: 'on' | 'off'; noticeBar?: string;
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
+  cspDay?: { n: number; top: Array<{ directive: string; blocked: string; n: number; page: string }> };   // v10.177 — 보안 정책 「보고만 하기」 24시간
+  uploadsBackup?: { count: number; last: string | null; lastAt: string | null; lastKB: number | null; ageHours: number | null; stale: boolean };   // v10.177
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
 }
 
@@ -64,7 +66,9 @@ export function LaunchWatch() {
     ['소개몰 주문', d.orders], ['결제 완료', d.paidOrders], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0],
     ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0],
     ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
+    ['정책 보고(24시간)', d.cspDay?.n ?? 0],
   ];
+  const ub = d.uploadsBackup;
   return (
     <section className="card pad" data-launch-watch="">
       <h3 className="sec">공개 직후 지켜보기 <small className="dim">오늘 · 한국 시간</small></h3>
@@ -91,6 +95,20 @@ export function LaunchWatch() {
         <button className="btn-plain" disabled={a.busy === 'site.notice_bar'} onClick={toggleNotice} data-notice-toggle="">{d.noticeBar ? '안내 띠 내리기' : '안내 띠 올리기'}</button>
       </p>
       {d.noticeBar && <p className="hint" data-notice-text="">안내 띠: {d.noticeBar}</p>}
+      {/* v10.177 (docs/275) — 올린 파일 백업(uploads-backup.sh 묶음) · 36시간 넘게 새 묶음이 없으면 경고(하루 요약 때 운영 알림 UPLOADS_BACKUP_STALE) */}
+      <p className={ub?.stale ? 'card warn' : 'hint'} data-uploads-backup={ub ? (ub.count === 0 ? 'none' : ub.stale ? 'stale' : 'ok') : 'none'}>
+        올린 파일 백업: {!ub || ub.count === 0 ? '아직 묶음 없음 — 예약(cron)을 걸었는지 확인(docs/273 4절)' : `마지막 ${ub.last} · ${ub.ageHours}시간 전 · ${n(ub.lastKB ?? 0)}KB · 남은 묶음 ${ub.count}개${ub.stale ? ' — 36시간 넘게 새 묶음이 없습니다. cron · 디스크를 확인하십시오' : ''}`}
+      </p>
+      {/* v10.177 — 보안 정책 「보고만 하기」: 화면은 막지 않고 브라우저 보고만 모음(메모리 24시간). 1 ~ 2주 본 뒤 정책을 걸지 판단 */}
+      {(d.cspDay?.top.length ?? 0) > 0 && (
+        <details data-csp-top="">
+          <summary>정책 보고 많이 걸린 출처(24시간 · 화면은 막지 않음)</summary>
+          <table className="tbl">
+            <thead><tr><th>규칙</th><th>출처</th><th>건수</th><th>최근 화면</th></tr></thead>
+            <tbody>{d.cspDay!.top.map((r) => <tr key={`${r.directive}|${r.blocked}`}><td className="mono">{r.directive}</td><td className="mono">{r.blocked}</td><td className="num-cell">{n(r.n)}</td><td className="muted">{r.page}</td></tr>)}</tbody>
+          </table>
+        </details>
+      )}
       {d.stubOrders.length > 0 && (
         <p><button className="btn-no" disabled={a.busy === 'stub'} onClick={cancelStub} data-stub-cancel="">시험 결제 주문 정리(발송 전 취소 · 알림)</button></p>
       )}

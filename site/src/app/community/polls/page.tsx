@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { apiGetVisitor } from '@/lib/api';
+import { apiGetPersonal, apiGetVisitor } from '@/lib/api';
 import { Msgs } from '@/i18n/Msgs';
 import type { Poll } from '@/components/community/poll';
 import { PollList } from '@/components/community/PollList';
@@ -19,9 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
  * 메인 「이건 어때?」의 「전체보기」가 여기로 옵니다. 열린 투표가 먼저, 마감된 투표가 뒤에 나옵니다.
  * ★ apiGetVisitor 입니다 — 「내가 고른 보기」가 사람(계정 · 방문자 쿠키)마다 달라 캐시하면 안 됩니다.
  * 비로그인도 투표합니다(사장님 결정 2026-10-02). 투표를 만드는 것은 운영 화면 「투표 관리」에서 합니다.
+ * v10.177 (D166) — 회원 투표 만들기가 켜져 있으면(poll.member_create) 「투표 만들기」 · 로그인했으면 「내 투표」 단추.
  */
+interface Ready { open: boolean; login: boolean }
 export default async function PollsPage() {
-  const polls = await apiGetVisitor<Poll[]>('/community/polls').catch(() => null);
+  const [polls, ready] = await Promise.all([
+    apiGetVisitor<Poll[]>('/community/polls').catch(() => null),
+    apiGetPersonal<Ready>('/community/my-polls/ready').catch(() => null),
+  ]);
   const open = polls?.filter((p) => p.open).length ?? 0;
   const t = await getTranslations('plaza.polls');
 
@@ -32,7 +37,11 @@ export default async function PollsPage() {
       <PlazaTabs cur="polls" />
       <div className="page-head">
         <h1>{t('h')}</h1>
-        <Link href="/community">{t('toPlaza')}</Link>
+        <span className="poll-head-acts">
+          {ready?.login && <Link href="/community/polls/mine" data-poll-mine="">{t('mine')}</Link>}
+          {ready?.open && <Link className="btn-primary" href="/community/polls/new" data-poll-create="">{t('create')}</Link>}
+          <Link href="/community">{t('toPlaza')}</Link>
+        </span>
       </div>
       <p className="lead">{t('lead')}</p>
       <div className="notice">

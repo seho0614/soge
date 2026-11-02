@@ -267,7 +267,8 @@
       "SERVICE": "서비스",
       "PROFILE": "프로필",
       "POST": "소개광장 글",
-      "COMMENT": "소개광장 댓글"
+      "COMMENT": "소개광장 댓글",
+      "POLL": "회원 투표"
     },
     "typeDefault": "글",
     "sev": {

@@ -258,7 +258,8 @@
       "SERVICE": "service",
       "PROFILE": "profile",
       "POST": "Community post",
-      "COMMENT": "Community comment"
+      "COMMENT": "Community comment",
+      "POLL": "member poll"
     },
     "typeDefault": "post",
     "sev": {

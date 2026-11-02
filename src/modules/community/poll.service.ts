@@ -4,6 +4,10 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { AppError, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { I18nService } from '../i18n/i18n.service';
+import { publicAuthor } from './community.service';
+
+/** v10.177 (D166) — 회원 투표를 운영이 다시 보이게 할 때 처리 전 신고를 닫는 문구 — 신고한 사람에게 그대로 보입니다 */
+const POLL_UNHIDE_RESOLUTION = '운영 확인 결과 규칙에 어긋나지 않는 투표로 보고 다시 보이게 했습니다.';
 
 /** 미리보기 로봇 · 스크립트는 사람이 아닙니다 — 표로 세지 않습니다 */
 const BOT_UA = /bot|crawl|spider|slurp|preview|scrap|facebookexternalhit|embedly|headless|curl\/|wget|python-requests/i;
@@ -14,7 +18,7 @@ export interface Voter { visitorKey?: string; ua?: string; ip?: string }
 interface PollRow {
   id: string; kind: string; title: string; description: string | null; image: string | null;
   state: string; open: boolean; endsAt: string | null; showOnHome?: boolean; sort?: number;
-  hiddenReason?: string | null; createdAt?: string;
+  hiddenReason?: string | null; createdAt?: string; source?: string; _name?: string | null;
 }
 interface OptRow { pollId: string; id: string; sort: number; label: string; sub: string | null; image: string | null; votes: number }
 
@@ -43,7 +47,8 @@ export class PollService {
   private static readonly COLS =
     `p.id, p.kind, p.title, p.description, p.image, p.state,
      (p.state = 'OPEN' AND (p.ends_at IS NULL OR p.ends_at > now())) AS open,
-     p.ends_at AS "endsAt"`;
+     p.ends_at AS "endsAt", p.source,
+     CASE WHEN p.source = 'MEMBER' THEN (SELECT a.name FROM accounts a WHERE a.id = p.created_by) END AS "_name"`;
 
   private async attach(rows: PollRow[], voter?: Voter) {
     if (!rows.length) return [];
@@ -64,10 +69,12 @@ export class PollService {
             `SELECT v.poll_id AS "pollId", v.option_id AS "optionId"
                FROM poll_votes v WHERE v.poll_id = ANY($1::uuid[]) AND v.account_id IS NULL AND v.visitor_key = $2`, [ids, vk])
         : [];
-    return rows.map((p) => {
+    return rows.map(({ _name, ...p }) => {
       const options = opts.filter((o) => o.pollId === p.id).map(({ pollId: _p, ...o }) => o);
       return {
         ...p,
+        /* v10.177 (D166) — 회원 투표는 만든 사람을 첫 글자만(김OO · 소개광장 글과 같은 표기) · 운영 투표는 null */
+        author: p.source === 'MEMBER' ? publicAuthor(_name) : null,
         total: options.reduce((s, o) => s + o.votes, 0),
         options,
         myOptionId: mine.find((m) => m.pollId === p.id)?.optionId ?? null,
@@ -150,15 +157,17 @@ export class PollService {
   async adminList() {
     const rows = await this.db.query<PollRow>(
       `SELECT ${PollService.COLS}, p.show_on_home AS "showOnHome", p.sort, p.hidden_reason AS "hiddenReason",
-              p.created_at AS "createdAt", (h.id IS NOT NULL) AS "onHome"
+              p.created_at AS "createdAt", (h.id IS NOT NULL) AS "onHome", p.report_count AS "reportCount",
+              CASE WHEN p.source = 'MEMBER' THEN (SELECT a.name FROM accounts a WHERE a.id = p.created_by) END AS "authorName"
          FROM polls p LEFT JOIN v_poll_home h ON h.id = p.id
         ORDER BY CASE p.state WHEN 'OPEN' THEN 1 WHEN 'DRAFT' THEN 2 WHEN 'CLOSED' THEN 3 ELSE 4 END, p.sort, p.created_at DESC
         LIMIT 200`);
     const items = await this.attach(rows);
     const settings = await this.db.query<{ key: string; value: string | null }>(
-      `SELECT key, value FROM site_settings WHERE key IN ('poll.guest_vote', 'poll.guest_ip_daily_limit')`);
+      `SELECT key, value FROM site_settings WHERE key IN ('poll.guest_vote', 'poll.guest_ip_daily_limit', 'poll.member_create')`);
     return {
       items,
+      memberCreate: (settings.find((s) => s.key === 'poll.member_create')?.value ?? 'off') === 'on',   // v10.177 (D166)
       guestVote: (settings.find((s) => s.key === 'poll.guest_vote')?.value ?? 'on') === 'on',
       guestIpDailyLimit: Number(settings.find((s) => s.key === 'poll.guest_ip_daily_limit')?.value ?? 5),
     };
@@ -199,8 +208,29 @@ export class PollService {
       throw new PolicyViolation('POLL_HIDE_REASON', '감추는 사유를 5자 이상 적어 주십시오.');
     }
     return this.db.transaction(async () => {
-      const [cur] = await this.db.query<{ id: string }>(`SELECT id FROM polls WHERE id = $1 FOR UPDATE`, [id]);
+      const [cur] = await this.db.query<{ id: string; state: string; source: string }>(
+        `SELECT id, state, source FROM polls WHERE id = $1 FOR UPDATE`, [id]);
       if (!cur) throw new NotFound('없는 투표입니다.');
+      /* v10.177 (D166) — 신고로 가려진 회원 투표를 다시 보이게 하면 처리 전 신고를 기각으로 닫고 신고한 분께 알림(소개광장 글 되살리기와 같은 방식).
+       *   신고 수 트리거는 OPEN · QUEUED · UPHELD 만 세므로, 다시 보인 뒤에는 **새 신고 3건**이 쌓여야 다시 가려집니다 */
+      let dismissed = 0;
+      if (cur.source === 'MEMBER' && cur.state === 'HIDDEN' && (dto.state === 'OPEN' || dto.state === 'CLOSED')) {
+        await this.db.query(`UPDATE polls SET report_count = 0 WHERE id = $1`, [id]);
+        const closed = await this.db.query<{ reporter_id: string | null }>(
+          `UPDATE reports
+              SET state = 'DISMISSED', resolution = $2, handled_by = $3, handled_at = now()
+            WHERE target_type = 'POLL' AND target_id = $1 AND state IN ('OPEN','QUEUED')
+            RETURNING reporter_id`, [id, POLL_UNHIDE_RESOLUTION, this.me ?? null]);
+        const reporters = [...new Set(closed.map((c) => c.reporter_id).filter((x): x is string => !!x))];
+        if (reporters.length) {
+          await this.db.query(
+            `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+             SELECT x, 'REPORT_RESOLVED', '신고 처리 결과를 알려 드립니다', $2, '/my/reports'
+               FROM unnest($1::uuid[]) AS x
+             ON CONFLICT DO NOTHING`, [reporters, POLL_UNHIDE_RESOLUTION]);
+        }
+        dismissed = closed.length;
+      }
       if (dto.options) await this.putOptions(id, dto.options);
       const [r] = await this.db.query<{ id: string; state: string }>(
         `UPDATE polls SET
@@ -215,7 +245,73 @@ export class PollService {
           WHERE id = $1 RETURNING id, state`,
         [id, dto.title?.trim() ?? null, dto.description ?? null, dto.image ?? null, dto.state ?? null,
          dto.hiddenReason?.trim() ?? null, dto.showOnHome ?? null, dto.sort ?? null, dto.endsAt ?? null]);
-      return { ok: true, id: r!.id, state: r!.state };
+      return { ok: true, id: r!.id, state: r!.state, ...(dismissed ? { dismissed } : {}) };
     });
+  }
+
+  /* ── v10.177 (D166 · docs/275) 회원이 만드는 투표 ─────────────────────────
+   *   막는 것은 DB(fn_poll_member_guard · fn_poll_option_member_guard)입니다 — 스위치 · 가입 뒤 시간 · 24시간 건수 · 종류 · 마감 · 링크 · 금칙어.
+   *   여기서는 만들기 화면이 먼저 알 수 있게 「지금 만들 수 있는지」를 돌려주고, 만든 뒤 바로 엽니다(준비 중 단계 없음).
+   *   메인에는 나가지 않습니다(운영만 정함). 신고 3건이면 DB 가 감춥니다(fn_report_escalate). */
+
+  /** 지금 만들 수 있는지 — 로그인 전에도 부름(스위치가 꺼졌으면 단추를 감춤) */
+  async memberReady() {
+    const [r] = await this.db.query<{ open: boolean; lim: number; age: number; joined: string | null; made: number }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'poll.member_create'), 'off') = 'on' AS open,
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'poll.member_daily_limit'), 3) AS lim,
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'poll.member_min_age_hours'), 24) AS age,
+              (SELECT a.created_at FROM accounts a WHERE a.id = $1::uuid) AS joined,
+              (SELECT count(*)::int FROM polls p WHERE p.created_by = $1::uuid AND p.source = 'MEMBER' AND p.created_at > now() - interval '1 day') AS made`,
+      [this.me ?? null]);
+    const login = !!this.me;
+    const newUntil = r!.joined ? new Date(new Date(r!.joined).getTime() + r!.age * 3600_000) : null;
+    const tooNew = !!newUntil && newUntil.getTime() > Date.now();
+    const left = Math.max(0, r!.lim - r!.made);
+    const reason = !r!.open ? 'OFF' : !login ? 'LOGIN' : tooNew ? 'NEW' : left === 0 ? 'LIMIT' : null;
+    return { open: r!.open, login, ready: reason === null, reason, dailyLimit: r!.lim, left: login ? left : null,
+             minAgeHours: r!.age, newUntil: tooNew ? newUntil!.toISOString() : null, maxDays: 14 };
+  }
+
+  /** 내가 만든 투표 — 감춘 것까지(감춘 까닭은 운영 사유 대신 「신고 · 운영 확인」만) */
+  async myPolls() {
+    const rows = await this.db.query<PollRow & { reportHidden: boolean }>(
+      `SELECT ${PollService.COLS}, p.created_at AS "createdAt",
+              (p.state = 'HIDDEN' AND p.report_count >= 3) AS "reportHidden"
+         FROM polls p
+        WHERE p.created_by = $1 AND p.source = 'MEMBER'
+        ORDER BY p.created_at DESC LIMIT 50`, [this.me]);
+    return this.attach(rows);
+  }
+
+  memberCreate(dto: { kind: string; title: string; description?: string; options: { label: string }[]; days: number }) {
+    return this.db.transaction(async () => {
+      const [r] = await this.db.query<{ id: string }>(
+        `INSERT INTO polls (kind, title, description, source, created_by, ends_at)
+         VALUES ($1, $2, $3, 'MEMBER', $4, now() + make_interval(days => $5::int)) RETURNING id`,
+        [dto.kind, dto.title.trim(), dto.description?.trim() || null, this.me, dto.days]);
+      await this.putOptions(r!.id, dto.options.map((o) => ({ label: o.label })));
+      await this.db.query(`UPDATE polls SET state = 'OPEN' WHERE id = $1`, [r!.id]);
+      return { ok: true, id: r!.id, state: 'OPEN', note: '투표를 올렸습니다. 마감 전에 「마감하기」로 일찍 닫을 수 있습니다.' };
+    });
+  }
+
+  async memberClose(id: string) {
+    const [r] = await this.db.query<{ id: string }>(
+      `UPDATE polls SET state = 'CLOSED' WHERE id = $1 AND created_by = $2 AND source = 'MEMBER' AND state = 'OPEN' RETURNING id`, [id, this.me]);
+    if (!r) throw new StateConflict('POLL_NOT_OPEN', '열려 있는 내 투표가 아닙니다.');
+    return { ok: true, id, state: 'CLOSED', note: '투표를 마감했습니다.' };
+  }
+
+  /** 표가 하나도 없을 때만 지움(표가 들어온 뒤에는 마감만 — 결과가 남아야 합니다) */
+  async memberDelete(id: string) {
+    const [p] = await this.db.query<{ votes: number }>(
+      `SELECT (SELECT count(*)::int FROM poll_votes v WHERE v.poll_id = p.id) AS votes
+         FROM polls p WHERE p.id = $1 AND p.created_by = $2 AND p.source = 'MEMBER'`, [id, this.me]);
+    if (!p) throw new NotFound('없는 투표입니다.');
+    if (p.votes > 0) throw new PolicyViolation('POLL_HAS_VOTES', '표가 들어온 투표는 지울 수 없습니다 — 마감하십시오.');
+    await this.db.query(
+      `DELETE FROM polls p WHERE p.id = $1 AND p.created_by = $2 AND p.source = 'MEMBER'
+          AND NOT EXISTS (SELECT 1 FROM poll_votes v WHERE v.poll_id = p.id)`, [id, this.me]);
+    return { ok: true, id, note: '투표를 지웠습니다.' };
   }
 }

@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { cspReportRoute } from './csp-report';
 
 /**
  * v10.176 (D165 · docs/273) — API 보안 머리글. 운영(main.ts)과 점검판(scripts/dev-server.js)이 같이 부릅니다.
@@ -14,4 +15,6 @@ export function applySecurityHeaders(app: INestApplication): void {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     next();
   });
+  /* v10.177 (docs/275) — 사용자 웹의 보안 정책 「보고만 하기」 보고 받기(Nest 앞 · 로그인 · 요청 한도 없음 · 메모리 24시간만) */
+  app.use('/api/v1/csp-report', ...cspReportRoute);
 }

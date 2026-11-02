@@ -24,6 +24,7 @@
 ~/sgb-releases/            판 보관 (전 판 포함 — 최근 2개만 남기고 지워도 됩니다)
 ~/sgb-data/uploads/        올린 파일 (S3 를 안 쓸 때) — 판과 무관
 ~/sgb-data/backup/uploads/ 올린 파일 하루 묶음 7개 (uploads-backup.sh · v10.176 · 같은 디스크 — docs/273)
+~/sgb-data/restore/        되살리기로 통째로 푼 곳 (uploads-restore.sh extract · v10.177 · 올린 파일 폴더는 건드리지 않음 — docs/275)
 ~/sgb-data/logs/           precheck · apply · postcheck 기록
 ```
 

@@ -10,8 +10,9 @@ interface Poll {
   id: string; kind: string; title: string; description: string | null; image: string | null; state: string; open: boolean;
   endsAt: string | null; total: number; options: Opt[]; showOnHome: boolean; sort: number; hiddenReason: string | null;
   createdAt: string; onHome: boolean;
+  source?: 'ADMIN' | 'MEMBER'; reportCount?: number; authorName?: string | null;   // v10.177 (D166) — 회원 투표
 }
-interface Data { items: Poll[]; guestVote: boolean; guestIpDailyLimit: number }
+interface Data { items: Poll[]; guestVote: boolean; guestIpDailyLimit: number; memberCreate?: boolean }
 
 const KIND: Record<string, string> = { VS: '비교해요', ASK: '궁금해요', USED: '써본 의견이 필요해요' };
 const KIND_HELP: Record<string, string> = { VS: '보기 정확히 2개', ASK: '보기 2 ~ 8개', USED: '보기 2 ~ 5개' };
@@ -66,8 +67,9 @@ export function Polls() {
 
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
-  const { items, guestVote, guestIpDailyLimit } = q.data;
+  const { items, guestVote, guestIpDailyLimit, memberCreate } = q.data;
   const onHome = items.filter((p) => p.onHome);
+  const members = items.filter((p) => p.source === 'MEMBER');
 
   return (
     <section data-polls-admin>
@@ -98,6 +100,18 @@ export function Polls() {
         <p className="muted" style={{ marginTop: 6 }}>
           비로그인 투표는 쿠키를 지우면 다시 할 수 있어 표가 부풀 수 있습니다 — 위 한도가 그것을 줄입니다. 주소는 날짜를 섞은 해시로만 남깁니다.
         </p>
+      </section>
+
+      {/* v10.177 (D166 · docs/275) — 회원이 만드는 투표(궁금해요 · 써본 의견 · 메인에 안 나감 · 신고 3건이면 감춤) */}
+      <section className="card" data-member-create={memberCreate ? 'on' : 'off'}>
+        <h3 style={{ display: 'flex', justifyContent: 'space-between' }}>회원이 투표 만들기 <small className="dim">설정 poll.member_create · poll.member_daily_limit · poll.member_min_age_hours</small></h3>
+        <p style={{ margin: '0 0 6px', fontWeight: 700 }}>지금: {memberCreate ? '받는 중' : '꺼짐 — 운영만 만듦'} · 회원 투표 {members.length}건 · 신고 3건으로 감춘 것 {members.filter((p) => p.state === 'HIDDEN' && (p.reportCount ?? 0) >= 3).length}건{' '}
+          <button className={memberCreate ? 'btn-no' : 'btn-ok'} disabled={a.busy === 'poll.member_create'} data-member-toggle
+            onClick={() => {
+              if (!confirm(memberCreate ? '회원 투표 만들기를 끕니다(이미 올라온 회원 투표는 그대로).' : '회원이 「궁금해요」 · 「써본 의견」 투표를 만들 수 있게 합니다. 만들자마자 열리고, 신고 3건이면 감춰집니다.')) return;
+              void setting('poll.member_create', memberCreate ? 'off' : 'on', memberCreate ? '회원 투표 만들기를 껐습니다.' : '회원 투표 만들기를 켰습니다.');
+            }}>{memberCreate ? '끄기' : '켜기'}</button></p>
+        <p className="muted">가입 뒤 시간 · 24시간 건수는 사이트 설정에서 바꿉니다. 링크 · 금칙어(BLOCK)는 DB 가 거절합니다. 신고로 감춘 투표를 「열기」하면 처리 전 신고는 기각으로 닫고 신고한 분께 알립니다.</p>
       </section>
 
       <section className="card">
@@ -142,16 +156,17 @@ export function Polls() {
                 <td>{KIND[p.kind] ?? p.kind}</td>
                 <td>
                   <b>{p.title}</b>
+                  {p.source === 'MEMBER' && <span className="dim" data-poll-source="MEMBER"> · 회원 {p.authorName ?? '(탈퇴)'}{(p.reportCount ?? 0) > 0 && <b className="warn-text"> · 신고 {p.reportCount}</b>}</span>}
                   <div className="muted">{p.options.map((o) => `${o.label} ${o.votes}표(${pct(o.votes, p.total)}%)`).join(' · ')}</div>
                   {p.state === 'HIDDEN' && p.hiddenReason && <div className="warn-text">감춘 사유: {p.hiddenReason}</div>}
                 </td>
                 <td>{STATE[p.state] ?? p.state}{p.state === 'OPEN' && !p.open && ' (기한 지남)'}</td>
                 <td className="num-cell">{p.total.toLocaleString('ko-KR')}</td>
                 <td>
-                  {/* v10.31 — 시안 단추(메인에서 빼기 · 메인에 내기) */}
-                  <button className="btn-sm" disabled={a.busy === p.id} data-poll-home={p.showOnHome ? 'on' : 'off'}
+                  {/* v10.31 — 시안 단추(메인에서 빼기 · 메인에 내기) · v10.177 회원 투표는 메인에 낼 수 없음 */}
+                  {p.source !== 'MEMBER' && <button className="btn-sm" disabled={a.busy === p.id} data-poll-home={p.showOnHome ? 'on' : 'off'}
                     onClick={() => void patch(p.id, { showOnHome: !p.showOnHome }, p.showOnHome ? '메인에서 뺐습니다.' : '메인에 내도록 했습니다.')}>
-                    {p.showOnHome ? '메인에서 빼기' : '메인에 내기'}</button>
+                    {p.showOnHome ? '메인에서 빼기' : '메인에 내기'}</button>}
                   {p.onHome ? <span className="dim"> 나가는 중</span> : ''}
                 </td>
                 <td><input type="number" min={0} max={9999} defaultValue={p.sort} style={{ width: 60 }} aria-label="순서"

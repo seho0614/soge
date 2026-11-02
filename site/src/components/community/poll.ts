@@ -11,6 +11,7 @@ export interface PollOption { id: string; sort: number; label: string; sub: stri
 export interface Poll {
   id: string; kind: 'VS' | 'ASK' | 'USED' | string; title: string; description: string | null; image: string | null;
   state: string; open: boolean; endsAt: string | null; total: number; options: PollOption[]; myOptionId: string | null;
+  source?: 'ADMIN' | 'MEMBER' | string; author?: string | null;   // v10.177 (D166) — 회원 투표는 만든 사람 첫 글자(김OO)
 }
 
 /* v10.101 2-5b — 글자는 사전 키(plaza.poll.kind.* · plaza.poll.*) — 투표 목록(PollList)이 그릴 때 옮깁니다 */

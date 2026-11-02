@@ -1,6 +1,14 @@
 /* v10.95 — 다국어(next-intl · src/i18n/request.ts) */
 const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 
+/* v10.177 (docs/275) — 보고만 하기 정책. 그림 · 영상은 https 어디서나(상품 그림 등) · 그 밖(스크립트 · 연결 · 끼워 넣기)은 우리 사이트만 → 밖은 보고됨 */
+const CSP_REPORT_ONLY = [
+  "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:", "media-src 'self' blob: https:", "font-src 'self' data:",
+  "connect-src 'self'", "frame-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+  'report-uri /api/v1/csp-report',
+].join('; ');
+
 /** @type {import('next').NextConfig} */
 module.exports = withNextIntl({
   reactStrictMode: true,
@@ -17,6 +25,9 @@ module.exports = withNextIntl({
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+        /* v10.177 (docs/275) — 스크립트 출처 제한은 「보고만 하기」로 먼저(화면을 막지 않음). 브라우저가 정책 밖 출처를 /api/v1/csp-report 로 알리면
+         * 운영 화면 「지켜보기」의 「정책 보고」에 모입니다. 1 ~ 2주 본 뒤 필요한 출처를 넣고 막는 정책으로 바꿀지 판단 */
+        { key: 'Content-Security-Policy-Report-Only', value: CSP_REPORT_ONLY },
       ],
     }];
   },

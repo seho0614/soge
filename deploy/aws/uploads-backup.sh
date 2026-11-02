@@ -51,6 +51,9 @@ FREE_KB=$(df -Pk "$BK" | awk 'NR==2{print $4}')
 NEED_KB=$((USED_KB + 1048576))
 say "   파일 ${N}개 · $((USED_KB / 1024))MB · 디스크 여유 $((FREE_KB / 1024))MB(필요 $((NEED_KB / 1024))MB)"
 say "   남은 묶음: $(ls -1 "$BK"/uploads_*.tar.gz 2>/dev/null | wc -l)개 $(ls -1 "$BK"/uploads_*.tar.gz 2>/dev/null | tail -1 | xargs -r basename)"
+LAST="$(ls -1t "$BK"/uploads_*.tar.gz 2>/dev/null | head -1)"   # v10.177 — 가장 최근 묶음이 몇 시간 전인지(36시간 넘으면 운영 알림 UPLOADS_BACKUP_STALE · 하루 요약 때)
+[ -n "$LAST" ] && say "   가장 최근: $(basename "$LAST") · $(( ($(date +%s) - $(stat -c %Y "$LAST")) / 3600 ))시간 전 · 되살리기는 uploads-restore.sh"
+
 [ "$MODE" = check ] && exit 0
 
 if [ -f "$DEST" ]; then say "   오늘 묶음이 이미 있습니다 — $DEST"; exit 0; fi

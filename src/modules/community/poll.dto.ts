@@ -121,6 +121,8 @@ export class PollDto {
   @ApiProperty({ type: [PollOptionDto] }) options!: PollOptionDto[];
   @ApiPropertyOptional({ nullable: true, description: '내가 고른 보기(회원은 계정, 비로그인은 방문자 키 기준). 아직이면 null' })
   myOptionId!: string | null;
+  @ApiProperty({ enum: ['ADMIN', 'MEMBER'], description: 'v10.177 (D166) — 누가 만들었나' }) source!: string;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.177 — 회원 투표는 만든 사람 첫 글자(김OO) · 운영 투표는 null' }) author!: string | null;
 }
 
 export class PollVoteResultDto {
@@ -135,12 +137,70 @@ export class PollAdminDto extends PollDto {
   @ApiPropertyOptional({ nullable: true, description: '감춘 사유' }) hiddenReason!: string | null;
   @ApiProperty() createdAt!: string;
   @ApiProperty({ description: '지금 메인 카드에 나가는 중인가 — 종류마다 1건' }) onHome!: boolean;
+  @ApiProperty({ description: 'v10.177 — 서로 다른 신고자 수(회원 투표만 신고 가능 · 3명이면 감춤)' }) reportCount!: number;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.177 — 회원 투표를 만든 사람 이름(운영 화면에서만)' }) authorName!: string | null;
 }
 
 export class PollAdminListDto {
   @ApiProperty({ type: [PollAdminDto] }) items!: PollAdminDto[];
   @ApiProperty({ description: '비로그인도 투표할 수 있는가 (설정 poll.guest_vote)' }) guestVote!: boolean;
   @ApiProperty({ description: '같은 인터넷 주소에서 비로그인으로 하루에 넣을 수 있는 표 — 투표 1건당 (설정 poll.guest_ip_daily_limit)' }) guestIpDailyLimit!: number;
+  @ApiProperty({ description: 'v10.177 — 회원이 투표를 만들 수 있는가 (설정 poll.member_create)' }) memberCreate!: boolean;
+}
+
+/* ── v10.177 (D166 · docs/275) 회원이 만드는 투표 ───────────────────────── */
+
+export const MEMBER_POLL_KINDS = ['ASK', 'USED'] as const;
+
+export class MemberPollOptionInputDto {
+  @ApiProperty({ example: '가격' })
+  @IsString() @Length(1, 40)
+  label!: string;
+}
+
+export class CreateMemberPollDto {
+  @ApiProperty({ enum: MEMBER_POLL_KINDS, description: 'ASK 궁금해요(보기 2 ~ 8개) · USED 써본 의견(2 ~ 5개) — 비교해요(VS)는 운영만' })
+  @IsIn(MEMBER_POLL_KINDS as unknown as string[])
+  kind!: string;
+
+  @ApiProperty({ example: '소개받아 살 때 가장 먼저 보는 것은?' })
+  @IsString() @Length(4, 80)
+  title!: string;
+
+  @ApiPropertyOptional({ example: '여러분의 기준이 궁금해요.' })
+  @IsOptional() @IsString() @Length(0, 200)
+  description?: string;
+
+  @ApiProperty({ type: [MemberPollOptionInputDto] })
+  @IsArray() @ArrayMinSize(2) @ArrayMaxSize(8) @ValidateNested({ each: true }) @Type(() => MemberPollOptionInputDto)
+  options!: MemberPollOptionInputDto[];
+
+  @ApiProperty({ example: 7, description: '며칠 뒤 마감할지(1 ~ 14일)' })
+  @IsInt() @Min(1) @Max(14)
+  days!: number;
+}
+
+export class MemberPollReadyDto {
+  @ApiProperty({ description: '회원 투표 만들기가 켜져 있는가(설정 poll.member_create)' }) open!: boolean;
+  @ApiProperty() login!: boolean;
+  @ApiProperty({ description: '지금 만들 수 있는가' }) ready!: boolean;
+  @ApiPropertyOptional({ nullable: true, enum: ['OFF', 'LOGIN', 'NEW', 'LIMIT'], description: '못 만드는 까닭' }) reason!: string | null;
+  @ApiProperty({ description: '24시간에 만들 수 있는 수' }) dailyLimit!: number;
+  @ApiPropertyOptional({ nullable: true, description: '오늘 더 만들 수 있는 수(로그인했을 때)' }) left!: number | null;
+  @ApiProperty() minAgeHours!: number;
+  @ApiPropertyOptional({ nullable: true, description: '가입 뒤 시간이 모자라면 만들 수 있게 되는 때' }) newUntil!: string | null;
+  @ApiProperty({ example: 14 }) maxDays!: number;
+}
+
+export class MemberPollDeleteDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty() id!: string;
+  @ApiProperty({ example: '투표를 지웠습니다.' }) note!: string;
+}
+
+export class MyPollDto extends PollDto {
+  @ApiProperty() createdAt!: string;
+  @ApiProperty({ description: '신고 3건으로 가려졌는가(운영 확인 대기)' }) reportHidden!: boolean;
 }
 
 export class PollWriteResultDto {

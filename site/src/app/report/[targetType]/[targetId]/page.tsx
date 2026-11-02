@@ -19,9 +19,10 @@ const TYPE: Record<string, string> = {
   listing: 'LISTING', request: 'REQUEST', service: 'SERVICE', profile: 'PROFILE',
   post: 'POST',      // v10.27 (G-191) — 소개광장 글
   comment: 'COMMENT', // v10.80 (D110) — 소개광장 댓글
+  poll: 'POLL',       // v10.177 (D166) — 회원 투표
 };
 /* v10.101 — 대상 이름은 사전 키(deal.report.type.*) */
-const LABEL = ['LISTING', 'REQUEST', 'SERVICE', 'PROFILE', 'POST', 'COMMENT'] as const;
+const LABEL = ['LISTING', 'REQUEST', 'SERVICE', 'PROFILE', 'POST', 'COMMENT', 'POLL'] as const;
 const isLabel = (c: string): c is (typeof LABEL)[number] => (LABEL as readonly string[]).includes(c);
 
 /**

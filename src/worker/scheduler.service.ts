@@ -12,6 +12,7 @@ import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
 import { LaunchWatchService } from '../modules/admin/launch-watch.service';
+import { uploadsBackupState } from '../common/uploads-backup-state';
 
 /**
  * 배치 실행기.
@@ -461,7 +462,10 @@ export class SchedulerService {
           mailed = !!m.ok;
         }
         await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed });
-        affected = 1; detail = { day: d.day, mailed };
+        /* v10.177 (docs/275) — 올린 파일 백업 묶음이 36시간 넘게 새로 생기지 않으면(묶음이 하나라도 있을 때만 — 예약 전에는 조용) */
+        const ub = uploadsBackupState();
+        if (ub.stale) await this.alert('UPLOADS_BACKUP_STALE', 'WARN', `올린 파일 백업이 ${ub.ageHours}시간째 새로 생기지 않았습니다 — 마지막 ${ub.last} · cron · 디스크를 확인하십시오`, ub);
+        affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours };
         break;
       }
 

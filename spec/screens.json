@@ -3143,9 +3143,45 @@
    "apis": [
     "GET /community/polls",
     "GET /community/polls/{id}",
-    "POST /community/polls/{id}/vote"
+    "POST /community/polls/{id}/vote",
+    "GET /community/my-polls/ready"
    ],
-   "note": "2026-10-02 v10.14 D021 — 진행 중 · 마감 투표 목록과 참여. 회원은 계정당 1표, 비로그인은 기기(방문자 쿠키)당 1표 · 같은 인터넷 주소 하루 한도(poll.guest_ip_daily_limit). 표는 바꾸거나 지울 수 없습니다. 비로그인 투표는 poll.guest_vote 로 끌 수 있습니다."
+   "note": "2026-10-02 v10.14 D021 — 진행 중 · 마감 투표 목록과 참여. 회원은 계정당 1표, 비로그인은 기기(방문자 쿠키)당 1표 · 같은 인터넷 주소 하루 한도(poll.guest_ip_daily_limit). 표는 바꾸거나 지울 수 없습니다. 비로그인 투표는 poll.guest_vote 로 끌 수 있습니다. · v10.177 D166 — 회원 투표 만들기가 켜져 있으면(poll.member_create) 「투표 만들기」 · 로그인했으면 「내 투표」 단추 · 회원 투표는 「회원 투표 · 김OO」 표시와 신고 링크(/report/poll/{id})."
+  },
+  {
+   "id": "SB-HOM-CMU-041",
+   "name": "소개광장 투표 만들기",
+   "group": "HOM",
+   "url": "/community/polls/new",
+   "p": "홈",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CMU-040",
+   "apis": [
+    "GET /community/my-polls/ready",
+    "POST /community/my-polls"
+   ],
+   "note": "2026-11-02 v10.177 D166 — 회원이 궁금해요(보기 2 ~ 8) · 써본 의견(2 ~ 5) 투표를 만듦 · 기본 꺼짐(poll.member_create) · 가입 뒤 24시간 · 24시간에 3건 · 마감 1 ~ 14일 · 링크 · 금칙어 거절 · 만들자마자 열림 · 메인에 안 나감 · 신고 3건이면 감춤."
+  },
+  {
+   "id": "SB-HOM-CMU-042",
+   "name": "소개광장 내 투표",
+   "group": "HOM",
+   "url": "/community/polls/mine",
+   "p": "홈",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CMU-040",
+   "apis": [
+    "GET /community/my-polls",
+    "POST /community/my-polls/{id}/close",
+    "DELETE /community/my-polls/{id}"
+   ],
+   "note": "2026-11-02 v10.177 D166 — 내가 만든 투표(감춘 것까지) · 마감하기 · 표가 없을 때만 지우기."
   },
   {
    "id": "SB-HOM-CMU-050",

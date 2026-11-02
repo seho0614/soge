@@ -210,6 +210,16 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$g" = "t" ] && ok "파일 행 지킴 — 저장 위치는 옮기는 거래에서만(D143)" || warn "파일 행 지킴이 옛 모양" "D143 이 안 들어갔을 수 있음"
 fi
 
+# v10.177 (docs/275) — 올린 파일 백업 묶음(uploads-backup.sh) · 없으면 「확인」(예약 전) · 36시간 넘게 새 묶음이 없어도 「확인」
+BKD="${BACKUP_DIR:-$HOME/sgb-data/backup/uploads}"
+last=$(ls -1t "$BKD"/uploads_*.tar.gz 2>/dev/null | head -1)
+if [ -z "$last" ]; then warn "올린 파일 백업 묶음 없음 — $BKD" "docs/273 4절 2: uploads-backup.sh 첫 묶음 · cron 한 줄(등록 전이면 정상)"
+else
+  age=$(( ($(date +%s) - $(stat -c %Y "$last")) / 3600 ))
+  [ "$age" -le 36 ] && ok "올린 파일 백업 — $(basename "$last") · ${age}시간 전 · 묶음 $(ls -1 "$BKD"/uploads_*.tar.gz | wc -l)개" \
+    || warn "올린 파일 백업이 ${age}시간 전 것 — $(basename "$last")" "cron · 디스크 확인: bash ~/sgb/deploy/aws/uploads-backup.sh check"
+fi
+
 say ""
 say "적용 후 확인 — 통과 $PASS · 실패 $FAIL · 확인 $WARN"
 [ "$FAIL" = "0" ] && say "→ 「실패」 0. 「확인」 줄은 절차서 7부의 표대로 판단하십시오." || say "→ 「실패」 줄을 먼저 고치십시오 (절차서 8부 「막혔을 때」)."

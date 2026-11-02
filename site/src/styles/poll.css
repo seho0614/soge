@@ -25,3 +25,14 @@ button.poll-opt { cursor: pointer; } button.poll-opt:disabled { cursor: default;
 .poll-done { font-weight: 700; color: var(--accent); }
 .poll-msg { margin: 0; font-size: var(--fs-sm); color: var(--tone-success); }
 .poll-msg.err, .poll-msg.login { color: var(--danger); }
+
+/* v10.177 (D166) — 회원 투표 표시 · 신고 · 만들기 · 내 투표 */
+.poll-by { font-size: var(--fs-xs); color: var(--ink-3); }
+.poll-report { font-size: var(--fs-xs); color: var(--ink-3); margin-left: var(--sp-2); }
+.poll-head-acts { display: inline-flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.poll-form { display: grid; gap: var(--sp-4); max-width: 640px; }
+.poll-form .opt-row { display: flex; gap: var(--sp-2); align-items: center; }
+.poll-form .opt-row .inp { flex: 1; }
+.poll-mine { display: grid; gap: var(--sp-3); }
+.poll-mine article { border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); padding: var(--sp-3) var(--sp-4); background: var(--surface, #fff); }
+.poll-mine .acts { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
