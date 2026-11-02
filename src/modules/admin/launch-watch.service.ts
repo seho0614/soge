@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { serverErrorsSince } from '../../common/server-error-count';
 import { rateLimitedSince } from '../../common/api-rate-limit';
 import { cspReportsDay } from '../../common/csp-report';
+import { slowSince } from '../../common/response-time';
 import { uploadsBackupState } from '../../common/uploads-backup-state';
 
 /* ---------------------------------------------------------------------
@@ -34,6 +35,7 @@ export class LaunchWatchService {
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "digestTo",
               coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS "signupOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'site.notice_bar'), '') AS "noticeBar",
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.slow_p95_ms'), 1500) AS "slowLimitMs",
               (SELECT count(*)::int FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.status = 'ON_SALE' AND s.type = 'DIRECT') AS "directOnSale"`);
     const stubOrders = await this.db.query(
       `SELECT o.order_no AS "orderNo", o.total, o.status, coalesce(p.approved_at, p.created_at) AS "paidAt"
@@ -44,6 +46,7 @@ export class LaunchWatchService {
       rateLimitedHour: rateLimitedSince(60),   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
       cspDay: cspReportsDay(),                 // v10.177 — 보안 정책 「보고만 하기」 지난 24시간(건수 · 많이 걸린 출처 10)
       uploadsBackup: uploadsBackupState(),     // v10.177 — 올린 파일 백업 묶음(가장 최근 · 몇 시간 전 · 개수)
+      slowHour: slowSince(60),                 // v10.178 (D167) — 지난 1시간 API 요청 수 · p95(ms) · 느린 주소 5곳
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }
 
@@ -93,6 +96,24 @@ export class LaunchWatchService {
       `SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.server_error_per_10min'), 20) AS lim,
               EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'SERVER_ERROR_SPIKE' AND raised_at > now() - interval '1 hour') AS recent`);
     return { n, limit: r.lim, alert: r.lim > 0 && n >= r.lim && !r.recent, top };
+  }
+
+  /** v10.178 (D167 · docs/277) — 지난 10분 API p95 가 기준(ops.slow_p95_ms · 0 = 끔) 이상 · 요청 50건 이상 · 지난 1시간 같은 알림 없음이면 알릴 것 */
+  async slowApi(): Promise<{ n: number; p95: number; limit: number; alert: boolean; top: Array<{ path: string; p95: number; n: number }> }> {
+    const { n, p95, top } = slowSince(10);
+    const [r] = await this.db.query<{ lim: number; recent: boolean }>(
+      `SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.slow_p95_ms'), 1500) AS lim,
+              EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'SLOW_API' AND raised_at > now() - interval '1 hour') AS recent`);
+    return { n, p95, limit: r.lim, alert: r.lim > 0 && n >= 50 && p95 >= r.lim && !r.recent, top };
+  }
+
+  /** v10.178 (docs/277) — 신고 3건으로 감춰진 회원 투표 중 아직 운영 알림을 남기지 않은 것(지난 하루 · 투표마다 한 번) */
+  async pollsHiddenByReports(): Promise<Array<{ id: string; title: string; reports: number }>> {
+    return this.db.query(
+      `SELECT p.id, p.title, p.report_n AS reports FROM polls p
+        WHERE p.source = 'MEMBER' AND p.state = 'HIDDEN' AND p.report_n >= 3 AND p.updated_at > now() - interval '1 day'
+          AND NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = 'POLL_HIDDEN_BY_REPORTS' AND a.detail->>'pollId' = p.id::text)
+        ORDER BY p.updated_at LIMIT 20`);
   }
 
   /** 정기 작업 launch_watch — 지난 15분 안에 시험 결제로 결제 완료된 소개몰 주문 수 */

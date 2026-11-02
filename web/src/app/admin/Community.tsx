@@ -22,7 +22,11 @@ interface FoundList { items: Found[]; total: number; page: number; size: number;
 interface ReportedComment {
   id: string; postId: string; postTitle: string; body: string; state: string; reportCount: number; hiddenAt: string | null; author: string;
 }
-interface Queue { pending: Pending[]; reported: Reported[]; reportedComments?: ReportedComment[]; lateCount: number; note: string | null }
+/* v10.178 (docs/277) — 신고된 회원 투표(D166) */
+interface ReportedPoll {
+  id: string; kind: string; title: string; state: string; reportCount: number; endsAt: string | null; hiddenReason: string | null; ended: boolean; author: string;
+}
+interface Queue { pending: Pending[]; reported: Reported[]; reportedComments?: ReportedComment[]; reportedPolls?: ReportedPoll[]; lateCount: number; note: string | null }
 
 /**
  * SB-ADM-CMU-010 소개광장 검수 큐
@@ -65,10 +69,23 @@ export function Community() {
     }), q.reload);
   };
 
+  /* v10.178 — 신고된 회원 투표: 다시 보이기(마감 지났으면 「마감」으로 — 처리 전 신고는 서버가 기각 · 알림) · 감추기(사유 5자 이상) */
+  const pollAct = (p: ReportedPoll, kind: 'show' | 'hide') => {
+    if (kind === 'show') {
+      if (!confirm(`'${p.title}' 투표를 다시 보이게 합니다. 처리 전 신고는 기각으로 닫히고 신고한 분께 알림이 갑니다.`)) return;
+      void a.run(p.id, () => api(`/admin/community/polls/${p.id}`, { method: 'PATCH', body: JSON.stringify({ state: p.ended ? 'CLOSED' : 'OPEN' }) }), q.reload, '다시 보이게 했습니다.');
+      return;
+    }
+    const reason = prompt(`'${p.title}' 투표를 감춥니다.\n사유(5자 이상) — 기록에 남습니다`) ?? '';
+    if (reason.trim().length < 5) { a.setErr('감추실 때는 사유를 5자 이상 적으십시오.'); return; }
+    void a.run(p.id, () => api(`/admin/community/polls/${p.id}`, { method: 'PATCH', body: JSON.stringify({ state: 'HIDDEN', hiddenReason: reason.trim() }) }), q.reload, '감췄습니다.');
+  };
+
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const { pending, reported, lateCount, note } = q.data;
   const reportedComments = q.data.reportedComments ?? [];
+  const reportedPolls = q.data.reportedPolls ?? [];
 
   return (
     <section>
@@ -134,6 +151,27 @@ export function Community() {
                 <td>
                   {c.state === 'HIDDEN' && <button className="btn-sm" disabled={a.busy === c.id} onClick={() => commentAct(c, 'unhide')}>되살리기</button>}
                   {c.state === 'PUBLISHED' && <button className="btn-no" disabled={a.busy === c.id} onClick={() => commentAct(c, 'hide')}>감추기</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <h3 className="sec">신고된 회원 투표 <em>{reportedPolls.length}</em> <small className="dim">신고 1건부터 · 3건이면 자동으로 감춤 · 감춰지면 운영 알림 POLL_HIDDEN_BY_REPORTS</small></h3>
+      {reportedPolls.length === 0 && <p className="muted">신고가 들어온 회원 투표가 없습니다.</p>}
+      {reportedPolls.length > 0 && (
+        <table className="tbl" data-reported-polls="">
+          <thead><tr><th>투표</th><th>만든 회원</th><th>신고</th><th>상태</th><th>처리</th></tr></thead>
+          <tbody>
+            {reportedPolls.map((p) => (
+              <tr key={p.id} data-reported-poll={p.id}>
+                <td>{p.title}{p.hiddenReason && <div className="muted">{p.hiddenReason}</div>}</td><td>{p.author}</td>
+                <td className="num-cell"><b className="warn-text">{p.reportCount}</b></td>
+                <td className="muted">{p.state === 'HIDDEN' ? '감춤' : p.state === 'OPEN' && !p.ended ? '진행 중' : '마감'}</td>
+                <td>
+                  {p.state === 'HIDDEN'
+                    ? <button className="btn-sm" disabled={a.busy === p.id} onClick={() => pollAct(p, 'show')} data-poll-show="">다시 보이기</button>
+                    : <button className="btn-no" disabled={a.busy === p.id} onClick={() => pollAct(p, 'hide')} data-poll-hide="">감추기</button>}
                 </td>
               </tr>
             ))}

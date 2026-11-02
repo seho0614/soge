@@ -11,6 +11,7 @@ interface Watch {
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
   cspDay?: { n: number; top: Array<{ directive: string; blocked: string; n: number; page: string }> };   // v10.177 — 보안 정책 「보고만 하기」 24시간
+  slowHour?: { n: number; p95: number; top: Array<{ path: string; p95: number; n: number }> }; slowLimitMs?: number;   // v10.178 (D167) — 지난 1시간 API 응답 p95(ms)
   uploadsBackup?: { count: number; last: string | null; lastAt: string | null; lastKB: number | null; ageHours: number | null; stale: boolean };   // v10.177
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
 }
@@ -67,6 +68,7 @@ export function LaunchWatch() {
     ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0],
     ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
     ['정책 보고(24시간)', d.cspDay?.n ?? 0],
+    ['느린 응답 p95 ms(1시간)', d.slowHour?.p95 ?? 0, !!d.slowLimitMs && (d.slowHour?.p95 ?? 0) >= d.slowLimitMs],
   ];
   const ub = d.uploadsBackup;
   return (
@@ -99,6 +101,16 @@ export function LaunchWatch() {
       <p className={ub?.stale ? 'card warn' : 'hint'} data-uploads-backup={ub ? (ub.count === 0 ? 'none' : ub.stale ? 'stale' : 'ok') : 'none'}>
         올린 파일 백업: {!ub || ub.count === 0 ? '아직 묶음 없음 — 예약(cron)을 걸었는지 확인(docs/273 4절)' : `마지막 ${ub.last} · ${ub.ageHours}시간 전 · ${n(ub.lastKB ?? 0)}KB · 남은 묶음 ${ub.count}개${ub.stale ? ' — 36시간 넘게 새 묶음이 없습니다. cron · 디스크를 확인하십시오' : ''}`}
       </p>
+      {/* v10.178 (D167) — 느린 응답: 지난 1시간 요청 수 · 느린 주소 5곳(주소별 p95) · 기준 ops.slow_p95_ms(10분 p95 가 넘으면 운영 알림 SLOW_API) */}
+      {(d.slowHour?.top.length ?? 0) > 0 && (
+        <details data-slow-top="">
+          <summary>느린 주소(1시간 · 요청 {n(d.slowHour!.n)}건 · 기준 {n(d.slowLimitMs ?? 0)}ms)</summary>
+          <table className="tbl">
+            <thead><tr><th>주소</th><th>p95(ms)</th><th>요청</th></tr></thead>
+            <tbody>{d.slowHour!.top.map((r) => <tr key={r.path}><td className="mono">{r.path}</td><td className="num-cell">{n(r.p95)}</td><td className="num-cell">{n(r.n)}</td></tr>)}</tbody>
+          </table>
+        </details>
+      )}
       {/* v10.177 — 보안 정책 「보고만 하기」: 화면은 막지 않고 브라우저 보고만 모음(메모리 24시간). 1 ~ 2주 본 뒤 정책을 걸지 판단 */}
       {(d.cspDay?.top.length ?? 0) > 0 && (
         <details data-csp-top="">

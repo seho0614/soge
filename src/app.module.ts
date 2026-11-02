@@ -19,6 +19,7 @@ import { PrincipalService } from './modules/identity/principal.service';
 import { BusinessService } from './modules/identity/business.service';
 import { AuthMiddleware } from './modules/identity/auth.middleware';
 import { ApiRateLimitMiddleware } from './common/api-rate-limit';
+import { ResponseTimeMiddleware } from './common/response-time';
 
 import { CatalogController } from './modules/catalog/catalog.controller';
 import { CatalogService } from './modules/catalog/catalog.service';
@@ -413,6 +414,8 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // 순서가 중요합니다. 컨텍스트가 먼저 열려야 인증이 actor 를 담을 수 있습니다.
     // v10.176 (D165) — 요청 한도는 인증 뒤(로그인한 운영자는 세지 않으려고)
+    // v10.178 (D167) — 응답 시간은 맨 앞에서 따로(한도에 걸린 429 까지 끝난 시간으로 셈)
+    consumer.apply(ResponseTimeMiddleware).forRoutes('*');
     consumer.apply(ContextMiddleware, AuthMiddleware, ApiRateLimitMiddleware).forRoutes('*');
   }
 }

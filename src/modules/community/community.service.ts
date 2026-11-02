@@ -298,10 +298,18 @@ export class CommunityService {
         WHERE c.report_count >= 3 AND c.state <> 'DELETED'
         ORDER BY c.report_count DESC, c.created_at DESC
         LIMIT 100`);
+    /* v10.178 (docs/277) — 신고된 회원 투표(D166 · 신고 1건부터 · 3건이면 자동으로 감춰짐) — 다시 보이기 · 감추기는 투표 관리 API(PATCH /admin/community/polls/{id}) */
+    const reportedPolls = await this.db.query(
+      `SELECT p.id, p.kind, p.title, p.state, p.report_n AS "reportCount", p.ends_at AS "endsAt", p.hidden_reason AS "hiddenReason",
+              (p.ends_at IS NOT NULL AND p.ends_at <= now()) AS ended, coalesce(a.name,'(탈퇴)') AS author
+         FROM polls p LEFT JOIN accounts a ON a.id = p.created_by
+        WHERE p.source = 'MEMBER' AND p.report_n >= 1
+        ORDER BY (p.state = 'HIDDEN') DESC, p.report_n DESC, p.updated_at DESC
+        LIMIT 100`);
     const [late] = await this.db.query(
       `SELECT count(*)::int AS n FROM v_post_pending_long`);
     return {
-      pending, reported, reportedComments,
+      pending, reported, reportedComments, reportedPolls,
       lateCount: late?.n ?? 0,
       note: (late?.n ?? 0) > 0
         ? '2일 넘게 밀린 글이 있습니다 — 새 회원이 "글이 안 올라간다" 고 합니다.'

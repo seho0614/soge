@@ -125,7 +125,7 @@ export class CommunityController {
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({
     summary: '검수 큐',
-    description: '첫 글과 신고 3건 이상인 글 · 신고 3건 이상인 댓글(v10.80 · reportedComments)입니다. **2일 넘게 밀리면 위에 뜹니다.**',
+    description: '첫 글과 신고 3건 이상인 글 · 신고 3건 이상인 댓글(v10.80 · reportedComments) · 신고 1건 이상인 회원 투표(v10.178 · reportedPolls)입니다. **2일 넘게 밀리면 위에 뜹니다.**',
   })
   queue() { return this.svc.queue(); }
 

@@ -449,7 +449,14 @@ export class SchedulerService {
         /* v10.174 (D163) — 지난 10분 API 서버 오류(5xx) 몰림 · 1시간에 한 번 */
         const se = await this.launchWatch.serverErrorSpike();
         if (se.alert) await this.alert('SERVER_ERROR_SPIKE', 'WARN', `지난 10분 서버 오류 ${se.n}건 — 기준 ${se.limit}건 이상 · 많이 난 곳 ${se.top.map((t) => `${t.path} ${t.n}`).join(', ')}`, se);
-        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n };
+        /* v10.178 (D167) — 지난 10분 API 느린 응답(p95) · 1시간에 한 번 */
+        const sl = await this.launchWatch.slowApi();
+        if (sl.alert) await this.alert('SLOW_API', 'WARN', `지난 10분 API 응답이 느립니다 — 느린 쪽 5% 기준 ${sl.p95}ms(기준 ${sl.limit}ms · 요청 ${sl.n}건) · 느린 곳 ${sl.top.map((t) => `${t.path} ${t.p95}ms`).join(', ')}`, sl);
+        /* v10.178 — 신고 3건으로 감춰진 회원 투표(투표마다 한 번 · 운영 화면 소개광장 검수 「신고된 투표」) */
+        for (const p of await this.launchWatch.pollsHiddenByReports()) {
+          await this.alert('POLL_HIDDEN_BY_REPORTS', 'WARN', `회원 투표가 신고 ${p.reports}건으로 감춰졌습니다 — 「${p.title}」 · 운영 화면 소개광장 검수에서 확인`, { pollId: p.id, title: p.title, reports: p.reports });
+        }
+        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95 };
         break;
       }
 

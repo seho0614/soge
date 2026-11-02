@@ -42,6 +42,12 @@ say ""; say "[2] API"
 h=$(curl -s --max-time 10 "$API/api/v1/health")
 echo "$h" | grep -q '"db":true' && ok "상태 주소" "$h" || bad "상태 주소" "${h:-응답 없음}"
 http_is "API 문서(/docs)는 운영에서 닫혀 있음" "$API/docs" 404
+# v10.178 (docs/277) — API 가 JSON 본문을 읽는지(읽지 못하면 로그인 · 글쓰기 · 투표 등 모든 저장이 400 — v10.177 점검에서 한 번 남 · realcheck 는 못 잡음)
+#   소개광장 「게시판 추천」(로그인 없음 · 저장 없음)에 제목 하나를 보내 200 · confident 칸이 오는지 봄
+b=$(curl -s --max-time 15 -X POST -H 'Content-Type: application/json' -d '{"title":"postcheck 본문 읽기 확인"}' "$API/api/v1/community/classify")
+case "$b" in *'"confident"'*) ok "API 본문 읽기 — POST 저장 길 정상(게시판 추천 응답)";;
+  *VALIDATION_ERROR*) bad "API 가 JSON 본문을 읽지 못함 — 로그인 · 저장이 모두 막힘" "바로 rollback.sh(절차서 5절) 뒤 알려 주십시오";;
+  *) bad "API 본문 읽기 확인 실패" "${b:-응답 없음}";; esac
 [ "${NODE_ENV:-}" = "production" ] && ok ".env NODE_ENV=production" || bad ".env 의 NODE_ENV 가 production 이 아님" "${NODE_ENV:-없음}"
 case "$(pm2 logs sgb --lines 200 --nostream 2>/dev/null)" in *"Nest application successfully started"*) ok "기동 로그 정상";; *) info "기동 로그에서 시작 문구를 찾지 못함 (로그가 넘어갔을 수 있음)";; esac
 
