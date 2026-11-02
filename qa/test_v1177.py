@@ -3,7 +3,7 @@
   docker run --rm --network host -v <qa>:/w -v $K:/core:ro -w /w -e KIT=/core -e API=http://localhost:13000/api/v1 \
       -e SITE=http://localhost:15174 -e DB=postgresql://sgb:sgb@localhost:15432/sgb sgb-qa:v1 python3 test_v1177.py
 
-  ① 코드 — D166(설정 3 · source · report_count · 회원 규칙 · 보기 규칙 · 신고 POLL · 지우는 문장 없음 · 204) · API 5개 · 화면 2개 · 신고 화면 poll
+  ① 코드 — D166(설정 3 · source · report_n · 회원 규칙 · 보기 규칙 · 신고 POLL · 지우는 문장 없음 · 204) · API 5개 · 화면 2개 · 신고 화면 poll
      · 영어 사전 · screens.json · 정책 보고 길(main.ts · dev-server.js 둘 다) · 사용자 웹 Report-Only · 지켜보기 칸 · 하루 요약 경고 · 되살리기 스크립트 · postcheck · docs/275 · 판
   ② (API · DB) 꺼짐 → POLL_MEMBER_OFF · 가입 직후 → POLL_MEMBER_NEW · 만들기(바로 열림 · 김OO · 메인 안 나감) · 링크 · 금칙어 · 보기 수 · VS(DB) ·
      24시간 건수 · 준비 상태 · 메인 내기 거절 · 남의 투표 마감 거절 · 표 있으면 지우기 거절 · 마감 · 지우기 ·
@@ -35,9 +35,9 @@ def rd(rel):
 MD = os.path.join(K, 'prisma/migrations')
 mig = sorted(d for d in os.listdir(MD) if os.path.isdir(os.path.join(MD, d)))
 M = rd('prisma/migrations/D166_member_polls/migration.sql')
-ok('① D166 — 설정 3(member_create off GLOBAL · daily 3 · age 24) · source · report_count · 회원 규칙 · 보기 규칙 · 신고 POLL · 지우는 문장 없음 · 204 이상',
+ok('① D166 — 설정 3(member_create off GLOBAL · daily 3 · age 24) · source · report_n · 회원 규칙 · 보기 규칙 · 신고 POLL · 지우는 문장 없음 · 204 이상',
    "('poll.member_create', 'off', 'GLOBAL'," in M and "('poll.member_daily_limit', '3', 'ADMIN'," in M and "('poll.member_min_age_hours', '24', 'ADMIN'," in M
-   and 'ADD COLUMN IF NOT EXISTS source' in M and 'ADD COLUMN IF NOT EXISTS report_count' in M
+   and 'ADD COLUMN IF NOT EXISTS source' in M and 'ADD COLUMN IF NOT EXISTS report_n' in M
    and 'CREATE TRIGGER trg_poll_member_guard' in M and 'CREATE TRIGGER trg_poll_option_member_guard' in M
    and "'POST','COMMENT','POLL'" in M and "ELSIF NEW.target_type = 'POLL' THEN" in M and "NEW.target_type IN ('POST','COMMENT','POLL')" in M
    and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and len(mig) >= 204 and 'D166_member_polls' in mig, f'{len(mig)} · {mig[-1]}')
@@ -162,7 +162,7 @@ if API and DB:
         _, eself = psql(f"INSERT INTO reports (target_type, target_id, reason_code, reporter_id, state) SELECT 'POLL', '{p5}', '{rc}', id, 'OPEN' FROM accounts WHERE email = 'buyer@x.com'")
         for e in ('intro@x.com', 'seller@x.com', 'person@x.com'):
             psql(f"INSERT INTO reports (target_type, target_id, reason_code, reporter_id, state) SELECT 'POLL', '{p5}', '{rc}', id, 'OPEN' FROM accounts WHERE email = '{e}'")
-        st5 = psql(f"SELECT state || '|' || report_count || '|' || coalesce(hidden_reason, '') FROM polls WHERE id = '{p5}'")[0]
+        st5 = psql(f"SELECT state || '|' || report_n || '|' || coalesce(hidden_reason, '') FROM polls WHERE id = '{p5}'")[0]
         pub2 = call('GET', '/community/polls')[1]
         my2 = {p.get('id'): p for p in call('GET', '/community/my-polls', TB)[1]}
         adm = {p.get('id'): p for p in call('GET', '/admin/community/polls', TA)[1].get('items', [])}
@@ -173,7 +173,7 @@ if API and DB:
            and adm.get(p5, {}).get('reportCount') == 3 and adm.get(p5, {}).get('source') == 'MEMBER' and adm.get(p5, {}).get('authorName') and 'REPORT' in eadm,
            f'{eself[:30]} · {st5} · {adm.get(p5, {}).get("reportCount")} · {eadm[:30]}')
         su, ju = call('PATCH', f'/admin/community/polls/{p5}', TA, {'state': 'OPEN'})
-        after = psql(f"SELECT state || '|' || report_count FROM polls WHERE id = '{p5}'")[0]
+        after = psql(f"SELECT state || '|' || report_n FROM polls WHERE id = '{p5}'")[0]
         dis = psql(f"SELECT count(*) FROM reports WHERE target_type = 'POLL' AND target_id = '{p5}' AND state = 'DISMISSED'")[0]
         nt = psql("SELECT count(*) FROM notifications WHERE event_code = 'REPORT_RESOLVED' AND body LIKE '%규칙에 어긋나지 않는 투표%' AND created_at > now() - interval '5 minutes'")[0]
         ok('② 다시 열기 — OPEN · 신고 수 0 · 처리 전 신고 3건 기각 · 신고한 3명에게 알림', su == 200 and ju.get('dismissed') == 3 and after == 'OPEN|0' and dis == '3' and int(nt or 0) >= 3, f'{su} · {ju.get("dismissed")} · {after} · {dis} · 알림 {nt}')
