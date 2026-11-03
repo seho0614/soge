@@ -90,22 +90,48 @@ mem_total_mb() { awk '/MemTotal|SwapTotal/ {s+=$2} END {printf "%d", s/1024}' /p
 # 옛 판 정리(v10.91 · docs/146) — 판 보관 폴더에서 지금 판 · 직전 판만 남기고 나머지 판 폴더를 지웁니다.
 #   prune_releases <판 보관 폴더> <지금 판> <직전 판>   — apply.sh 가 새 판이 뜬 것을 확인한 뒤에만 부릅니다.
 #   지우는 것: 판 보관 폴더 **바로 아래**의 v*_* · prev_* 폴더(바로가기 · 파일은 건드리지 않음). KEEP_OLD_RELEASES=1 이면 아무것도 지우지 않습니다.
+#   v10.186 (docs/292) — 지금 판 말고 **판 번호가 가장 큰 판**도 남깁니다(「가장 최근 정상 판」). 11/4 운영: 되돌린 상태(직전 = v10.173)에서
+#   적용해 v10.181 판 폴더가 지워져, 되돌리기가 v10.173 으로만 가게 된 일.
 prune_releases() {
-  local root cur prev d n=0 kb=0 names=""
+  local root cur prev best d n=0 kb=0 names=""
   root=$(readlink -f "$1" 2>/dev/null) || return 0
   cur=$(readlink -f "$2" 2>/dev/null); prev=""
   [ -n "${3:-}" ] && [ -d "$3" ] && prev=$(readlink -f "$3")
   [ -n "$root" ] && [ -d "$root" ] && [ -n "$cur" ] && [ -d "$cur" ] || return 0
   case "$cur" in "$root"/*) ;; *) return 0;; esac
   if [ "${KEEP_OLD_RELEASES:-0}" = "1" ]; then info "옛 판 정리 건너뜀 (KEEP_OLD_RELEASES=1)"; return 0; fi
+  best=$(newest_release "$root" "$cur")
   for d in "$root"/v*_* "$root"/prev_*; do
     [ -d "$d" ] && [ ! -L "$d" ] || continue
-    [ "$d" = "$cur" ] || [ "$d" = "$prev" ] && continue
+    [ "$d" = "$cur" ] || [ "$d" = "$prev" ] || [ "$d" = "$best" ] && continue
     kb=$((kb + $(du -sk "$d" 2>/dev/null | cut -f1)))
     rm -rf -- "$d" && { n=$((n+1)); names="$names ${d##*/}"; }
   done
-  if [ "$n" -gt 0 ]; then info "옛 판 ${n}개 정리 · 약 $((kb / 1024))MB —$names (남김: ${cur##*/}${prev:+ · ${prev##*/}})"
-  else info "정리할 옛 판 없음 (남김: ${cur##*/}${prev:+ · ${prev##*/}})"; fi
+  [ "$best" = "$prev" ] && best=""
+  if [ "$n" -gt 0 ]; then info "옛 판 ${n}개 정리 · 약 $((kb / 1024))MB —$names (남김: ${cur##*/}${prev:+ · ${prev##*/}}${best:+ · ${best##*/}})"
+  else info "정리할 옛 판 없음 (남김: ${cur##*/}${prev:+ · ${prev##*/}}${best:+ · ${best##*/}})"; fi
+}
+
+# v10.186 (docs/292) — 판 보관 폴더에서 판 번호가 가장 큰 판 폴더(같은 번호면 늦게 놓은 것) · 둘째 인자 폴더는 뺌
+#   폴더 이름은 apply 가 만드는 「v10.185_20261103_152252」 꼴 — sort -V 로 판 번호 · 시각 순
+newest_release() {
+  local root d skip
+  root=$(readlink -f "$1" 2>/dev/null) || return 0
+  skip=$(readlink -f "${2:-/nonexistent}" 2>/dev/null || true)
+  for d in "$root"/v*_*; do
+    [ -d "$d" ] && [ ! -L "$d" ] && [ "$d" != "$skip" ] && echo "${d##*/}"
+  done | sort -V | tail -1 | sed "s@^.@$root/&@"
+}
+
+# v10.186 — 되돌린 상태인가: 지금 판이 보관 폴더의 가장 큰 판이 아니면 그 판 폴더를 출력(아니면 빈 값)
+rolled_back_from() {
+  local root cur best
+  root=$(readlink -f "$1" 2>/dev/null) || return 0
+  cur=$(readlink -f "$2" 2>/dev/null) || return 0
+  case "$cur" in "$root"/v*_*) ;; *) return 0;; esac
+  best=$(newest_release "$root")
+  [ -n "$best" ] && [ "$best" != "$cur" ] && echo "$best"
+  return 0
 }
 
 # ── v10.171 (docs/264) Nginx 실제 설정 읽기 ─────────────────────────────

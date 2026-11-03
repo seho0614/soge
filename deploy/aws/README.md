@@ -7,7 +7,8 @@
 | `precheck.sh` | 적용 전 — 서버의 지금 상태(프로그램 · 메모리 · pm2 · .env 키 · DB · 마이그레이션 · Nginx) | 없음(읽기만) |
 | `apply.sh` | 새 판 올리기 — 설치 · 빌드 → 마이그레이션(스냅샷 확인 뒤) → 배포 점검 → 교체 → 기동 확인 → 적용 후 확인 | DB 구조 · `~/sgb` · pm2 |
 | `postcheck.sh` | 적용 후 확인 — 프로세스 · API · DB · 사용자 웹 · 운영 화면 · 배치 · 파일 저장 · Nginx · 열기 전 상태 | 없음(읽기만) |
-| `rollback.sh` | 전 판으로(코드만 — DB 는 그대로) | `~/sgb` · pm2 |
+| `rollback.sh` | 전 판으로(코드만 — DB 는 그대로) · v10.186 부터 사람이 칠 때 yes 를 물음 · 한 번 더 실행하면 다시 앞 판으로 | `~/sgb` · pm2 |
+| `cleanup.sh` | v10.186 — 디스크 정리. 기본은 읽기만(지울 수 있는 것 · 많이 차지하는 곳) · `--apply` 는 yes 뒤 푼 킷(지금 판 이하) · 30일 넘은 기록 · npm 캐시 · 50MB 넘는 pm2 로그만(docs/292) | 집 폴더의 그 파일만 |
 | `run-api.sh` · `run-site.sh` · `run-jobs.sh` | pm2 가 부르는 실행 스크립트 (`sgb` · `sgb-site` · `sgb-jobs`). `.env` 를 직접 읽습니다 | — |
 | `nginx-sgb.conf.example` · `nginx-render.sh` | Nginx 설정 예시와, 주소 · 사무실 IP 를 채워 찍어 주는 도우미 | 없음(화면에 찍기만) |
 | `psql.sh` | `.env` 의 접속 주소로 운영 DB 에 psql | — |
@@ -21,7 +22,7 @@
 
 ```
 ~/sgb                      → ~/sgb-releases/<판>_<시각>   (바로가기 — 이것만 바꾸면 판이 바뀝니다)
-~/sgb-releases/            판 보관 (전 판 포함 — 최근 2개만 남기고 지워도 됩니다)
+~/sgb-releases/            판 보관 (apply 가 지금 · 직전 · 판 번호가 가장 큰 판만 남김 — v10.186 · 되돌린 상태면 apply 가 멈춤)
 ~/sgb-data/uploads/        올린 파일 (S3 를 안 쓸 때) — 판과 무관
 ~/sgb-data/backup/uploads/ 올린 파일 하루 묶음 7개 (uploads-backup.sh · v10.176 · 같은 디스크 — docs/273)
 ~/sgb-data/restore/        되살리기로 통째로 푼 곳 (uploads-restore.sh extract · v10.177 · 올린 파일 폴더는 건드리지 않음 — docs/275)

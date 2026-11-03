@@ -1,5 +1,6 @@
 import { existsSync, lstatSync, readFileSync, readdirSync, statfsSync } from 'node:fs';
-import { freemem, totalmem } from 'node:os';
+import { execFile } from 'node:child_process';
+import { freemem, homedir, totalmem } from 'node:os';
 import { join, resolve } from 'node:path';
 import { uploadsBackupDir } from './uploads-backup-state';
 
@@ -17,7 +18,47 @@ export interface ServerHealth {
   mem: { totalMB: number; availMB: number; usedPct: number };
   uploads: { path: string; MB: number; files: number; partial: boolean } | null;
   backup: { path: string; MB: number; files: number; partial: boolean } | null;
+  top: DiskTop | null;   // v10.186 — 많이 차지하는 폴더 5개(1시간마다)
 }
+
+/* v10.186 (docs/292) — 디스크를 많이 차지하는 폴더 5개
+ *   집 폴더 바로 아래 · 시스템 몇 곳을 du(-x 같은 디스크만)로 잽니다. 무거우므로 1시간에 한 번 · 30초에서 멈춤 · 따로 돌려 API 를 막지 않음.
+ *   읽기만 — 지우는 일은 사람이 deploy/aws/cleanup.sh 로(먼저 목록 보기). 권한이 없는 곳은 읽힌 만큼만(대략). */
+export interface DiskTop { at: string; items: Array<{ path: string; GB: number; hint: string }>; partial: boolean }
+let topCache: DiskTop | null = null;
+
+const HINTS: Array<[RegExp, string]> = [
+  [/\/sgb-releases$/, '판 폴더 — apply 가 지금 · 직전 판만 남김'],
+  [/\/sgb-data$/, '올린 파일 · 백업 묶음 · 기록 — 기록은 cleanup.sh'],
+  [/\/\.npm$/, 'npm 캐시 — cleanup.sh'],
+  [/\/\.pm2$/, 'pm2 로그 — cleanup.sh'],
+  [/\/\.cache$/, '프로그램 캐시 — cleanup.sh'],
+  [/\/SGB_DevDocker_[^/]*$/, '푼 킷 — 적용 뒤 지워도 됨(cleanup.sh)'],
+  [/^\/var\/log$/, '시스템 기록 — journalctl --vacuum(sudo)'],
+  [/^\/var\/lib\/snapd$/, 'snap 옛 판 — sudo 필요'],
+];
+const hintOf = (p: string) => HINTS.find(([re]) => re.test(p))?.[1] ?? '';
+
+/** du 출력(「KB<탭>경로」 줄)을 큰 것 5개로 */
+export function parseDuTop(out: string): DiskTop['items'] {
+  return out.split('\n').map((l) => l.split('\t')).filter((a) => a.length === 2 && /^\d+$/.test(a[0]))
+    .map(([kb, path]) => ({ path, GB: Math.round((Number(kb) / 1024 ** 2) * 10) / 10, hint: hintOf(path) }))
+    .sort((a, b) => b.GB - a.GB).slice(0, 5);
+}
+
+export function measureDiskTop(home = homedir(), extra = ['/var/log', '/var/cache', '/var/lib/snapd', '/usr', '/opt', '/tmp']): Promise<DiskTop | null> {
+  let names: string[] = [];
+  try { names = readdirSync(home).map((n) => join(home, n)); } catch { return Promise.resolve(null); }
+  const paths = [...names, ...extra.filter((p) => existsSync(p))];
+  return new Promise((done) => {
+    execFile('du', ['-skx', ...paths], { encoding: 'utf8', timeout: 30_000, maxBuffer: 4 * 1024 * 1024 }, (err, stdout) => {
+      // 권한이 없는 곳이 있으면 du 가 1 로 끝나도 읽힌 줄은 씁니다(partial)
+      if (err && !stdout) return done(null);
+      done({ at: new Date().toISOString(), items: parseDuTop(String(stdout || '')), partial: !!err });
+    });
+  });
+}
+let topBusy = false;
 
 let cache: ServerHealth | null = null;
 
@@ -76,7 +117,12 @@ export function measureServerHealth(): ServerHealth {
     mem: memNow(),
     uploads: folderSize(up),
     backup: folderSize(uploadsBackupDir()),
+    top: topCache,
   };
+  if (!topBusy && (!topCache || Date.now() - Date.parse(topCache.at) > 60 * 60_000)) {
+    topBusy = true;
+    measureDiskTop().then((t) => { topCache = t ?? topCache; if (cache) cache.top = topCache; }).catch(() => undefined).finally(() => { topBusy = false; });
+  }
   return cache;
 }
 

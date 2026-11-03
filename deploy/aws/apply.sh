@@ -19,6 +19,7 @@
 #   KEEP_OLD_RELEASES=1   새 판이 뜬 뒤 옛 판(지금 · 직전 판 말고)을 지우지 않음 — 기본은 지움(v10.91)
 #   DATA_DIR   판과 무관한 자료     기본 ~/sgb-data  (uploads · logs)
 #   SKIP_JOBS=1   배치 호출기를 띄우지 않음 (EventBridge 를 쓰는 서버)
+#   ALLOW_FROM_ROLLBACK=1  되돌린 상태(지금 판이 가장 새 판이 아님)에서도 적용 — 기본은 멈춤(v10.186)
 #   ASSUME_YES=1  물음을 건너뜀 — **리허설 전용**. 운영에서는 쓰지 마십시오(스냅샷 확인을 건너뜁니다)
 # =====================================================================
 set -uo pipefail
@@ -43,6 +44,12 @@ say "새 킷 $NEW  →  앱 폴더 $APP_LINK"
 step 0 "전제 확인"
 [ "$(readlink -f "$NEW")" != "$(readlink -f "$APP_LINK" 2>/dev/null)" ] || stop "지금 돌고 있는 앱 폴더 안에서 실행했습니다" "새로 푼 킷 폴더의 apply.sh 를 실행하십시오."
 case "$(readlink -f "$NEW")" in "$(readlink -f "$REL_ROOT")"/*) stop "판 보관 폴더 안의 apply.sh 입니다" "새로 푼 킷 폴더의 apply.sh 를 실행하십시오.";; esac
+# v10.186 (docs/292) — 되돌린 상태에서 적용하지 않음(11/4 운영: 되돌린 채 적용 → 정상 판 폴더가 정리됨). 일부러면 ALLOW_FROM_ROLLBACK=1
+RB=$(rolled_back_from "$REL_ROOT" "$APP_LINK")
+if [ -n "$RB" ] && [ "${ALLOW_FROM_ROLLBACK:-0}" != "1" ]; then
+  stop "지금 판($(readlink -f "$APP_LINK" | sed 's@.*/@@'))이 보관 폴더의 가장 새 판(${RB##*/})보다 옛 판입니다 — 되돌린 상태입니다" \
+       "되돌린 것이 실수였다면 bash ~/sgb/deploy/aws/rollback.sh 를 한 번 더 실행해 ${RB##*/} 로 돌린 뒤(cat ~/sgb/VERSION 확인) 다시 적용하십시오. 일부러 옛 판에서 올리는 것이면 ALLOW_FROM_ROLLBACK=1 bash …/apply.sh"
+fi
 for c in node npm pm2 psql curl sha256sum; do command -v $c >/dev/null 2>&1 || stop "$c 가 없습니다" "절차서 v2.5 6-1 의 설치를 먼저 하십시오."; done
 nv=$(node -v)
 case "$nv" in
@@ -196,7 +203,7 @@ else
   say "  실패  새 판이 뜨지 않습니다 — 전 판으로 되돌립니다"
   pm2 logs sgb --lines 15 --nostream 2>/dev/null | tail -20 | tee -a "$OUT"
   pm2 logs sgb-site --lines 10 --nostream 2>/dev/null | tail -12 | tee -a "$OUT"
-  bash "$HERE/rollback.sh" 2>&1 | tee -a "$OUT"
+  ROLLBACK_YES=1 bash "$HERE/rollback.sh" 2>&1 | tee -a "$OUT"
   say "!! 적용 실패 — 전 판으로 되돌렸습니다(DB 는 새 구조 그대로). 위 로그와 $OUT 을 보내 주십시오."
   exit 1
 fi

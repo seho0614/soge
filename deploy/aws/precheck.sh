@@ -74,6 +74,9 @@ if [ -L "$APP_LINK" ]; then info "$APP_LINK 는 바로가기 → $(readlink -f "
 elif [ -d "$APP_LINK" ]; then info "$APP_LINK 는 폴더 (처음 적용 — apply 가 보관 폴더로 옮기고 바로가기로 바꿉니다)"
 else bad "$APP_LINK 가 없음" "처음 세우는 서버라면 절차서 v2.5 7부(.env 작성)까지 먼저 하십시오"; fi
 [ -f "$APP_LINK/VERSION" ] && info "지금 판 $(cat "$APP_LINK/VERSION")" || info "지금 판 표시 없음 (v10.15 이전 킷)"
+RB=$(rolled_back_from "${REL_ROOT:-$HOME/sgb-releases}" "$APP_LINK")   # v10.186 (docs/292)
+if [ -n "$RB" ]; then warn "되돌린 상태 — 지금 판이 보관 폴더의 가장 새 판(${RB##*/})보다 옛 판" "실수였다면 apply 전에 rollback.sh 를 한 번 더 실행해 ${RB##*/} 로 돌리십시오(apply 는 이 상태면 멈춥니다)"
+else info "판 보관 폴더: $(ls -d "${REL_ROOT:-$HOME/sgb-releases}"/v*_* 2>/dev/null | sed 's@.*/@@' | sort -V | paste -sd' ')"; fi
 ENVF="$APP_LINK/.env"
 if [ -f "$ENVF" ]; then
   for k in DATABASE_URL JWT_SECRET; do env_has "$ENVF" $k && ok ".env $k" "있음" || bad ".env 에 $k 가 없음"; done

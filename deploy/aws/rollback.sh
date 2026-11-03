@@ -18,6 +18,12 @@ CUR="$(readlink -f "$APP_LINK" 2>/dev/null || true)"
 [ "$PREV" != "$CUR" ] || { echo "!! 이미 전 판입니다 ($PREV)"; exit 1; }
 
 echo "되돌리기: $CUR → $PREV"
+# v10.186 (docs/292) — 사람이 칠 때는 한 번 묻습니다(11/4 운영: 적용 안내에 함께 적힌 이 명령이 적용 대신 실행됨). apply 의 자동 복귀는 ROLLBACK_YES=1
+if [ -t 0 ] && [ "${ROLLBACK_YES:-0}" != "1" ]; then
+  echo "   ★ 서비스가 ${PREV##*/} 코드로 바뀝니다(DB 는 그대로). 적용 중이었다면 이 명령이 아니라 새 킷의 apply.sh 입니다."
+  read -r -p "   정말 되돌립니까? 되돌리려면 yes: " yn
+  [ "$yn" = "yes" ] || { echo "되돌리지 않았습니다."; exit 1; }
+fi
 ln -sfn "$PREV" "$APP_LINK" || { echo "!! 바로가기를 바꾸지 못했습니다"; exit 1; }
 echo "$CUR" > "$DATA_DIR/previous"; echo "$PREV" > "$DATA_DIR/current"
 load_env "$APP_LINK/.env"
@@ -37,7 +43,7 @@ else
 fi
 pm2 save >/dev/null 2>&1
 for i in $(seq 1 30); do
-  [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:${PORT:-3000}/api/v1/health")" = "200" ] && { echo "되돌림 완료 — API 가 떴습니다 ($PREV)"; exit 0; }
+  [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:${PORT:-3000}/api/v1/health")" = "200" ] && { echo "되돌림 완료 — API 가 떴습니다 ($PREV)"; echo "   다시 ${CUR##*/} 로 가려면 이 명령을 한 번 더 실행하십시오."; exit 0; }
   sleep 2
 done
 echo "!! 되돌린 판의 API 가 뜨지 않습니다 — pm2 logs sgb --lines 50 을 보십시오"

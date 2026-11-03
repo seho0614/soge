@@ -19,6 +19,7 @@ interface Watch {
   server?: {
     at: string; disk: { path: string; totalGB: number; freeGB: number; usedPct: number } | null; mem: { totalMB: number; availMB: number; usedPct: number };
     uploads: { MB: number; files: number; partial: boolean } | null; backup: { MB: number; files: number; partial: boolean } | null;
+    top?: { at: string; items: Array<{ path: string; GB: number; hint: string }>; partial: boolean } | null;   // v10.186 — 많이 차지하는 폴더 5개
   };
   diskWarnPct?: number;
 }
@@ -91,7 +92,7 @@ export function LaunchWatch() {
       {d.server && (() => {
         const sv = d.server; const dk = sv.disk; const lim = d.diskWarnPct ?? 85;
         const mb = (x: { MB: number; partial: boolean } | null) => (x ? `${x.MB >= 1024 ? `${(x.MB / 1024).toFixed(1)}GB` : `${n(x.MB)}MB`}${x.partial ? '(대략)' : ''}` : '없음');
-        return (
+        return (<>
           <p className={dk && lim > 0 && dk.usedPct >= lim ? 'card warn' : 'hint'} data-server-health={dk ? String(dk.usedPct) : 'none'}>
             서버 디스크 {dk ? <><b>{dk.usedPct}%</b> 사용 · 남은 <b>{dk.freeGB}GB</b> / {dk.totalGB}GB</> : '잴 수 없음'}
             {' · '}메모리 {sv.mem.usedPct}%(쓸 수 있는 {n(sv.mem.availMB)}MB)
@@ -99,7 +100,17 @@ export function LaunchWatch() {
             <small className="dim"> · {ymdhm(sv.at)} 잼 · 기준 {lim}%(ops.disk_warn_pct) 넘으면 운영 알림 DISK_LOW</small>
             {dk && lim > 0 && dk.usedPct >= lim && <> — 옛 판 · 오래된 백업 묶음을 정리하거나 디스크(EBS)를 늘리십시오.</>}
           </p>
-        );
+          {(sv.top?.items.length ?? 0) > 0 && (   /* v10.186 (docs/292) — 많이 차지하는 폴더 5개 · 지우기는 사람이 cleanup.sh 로 */
+            <details data-disk-top={sv.top!.items.length}>
+              <summary>디스크를 많이 차지하는 폴더 5개{sv.top!.partial ? '(권한 없는 곳은 대략)' : ''} · {ymdhm(sv.top!.at)} 잼(1시간마다)</summary>
+              <table className="tbl">
+                <thead><tr><th>폴더</th><th>크기</th><th>줄이는 길</th></tr></thead>
+                <tbody>{sv.top!.items.map((t) => <tr key={t.path}><td><code>{t.path}</code></td><td>{t.GB}GB</td><td>{t.hint || '-'}</td></tr>)}</tbody>
+              </table>
+              <p className="hint">정리는 서버에서 <code>bash ~/sgb/deploy/aws/cleanup.sh</code>(목록만 보기) → 맞으면 <code>--apply</code>. 올린 파일 · DB 는 지우지 않습니다.</p>
+            </details>
+          )}
+        </>);
       })()}
       {/* v10.179 (D168) — 운영 알림 목록 · 확인 화면 · v10.182 — 최근 서버 오류 */}
       <p className="hint"><a href="#/ops-alerts" data-ops-alerts-link="">운영 알림 보기 · 확인 →</a> · <a href="#/server-errors" data-server-errors-link="">최근 서버 오류 →</a>{(d.slowSql?.n ?? 0) > 0 && <> · 느린 조회(300ms 넘음 · 1시간) <b data-slow-sql={d.slowSql!.n}>{n(d.slowSql!.n)}건</b></>}</p>
