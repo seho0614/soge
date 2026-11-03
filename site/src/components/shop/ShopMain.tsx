@@ -27,6 +27,7 @@ import type { HltConcern, HltIngredient, HltProduct } from '@/components/health/
 import { getFmt } from '@/lib/getFmt';
 import { ProductArt } from '@/components/health/ProductArt';
 import { ShopPic } from './Pic';
+import { ShopIcon, hasShopIcon } from './ShopIcon';   // v10.183 — 받은 그림에 없는 아이콘 5개
 import { ShopRankBox } from './ShopRankBox';
 
 /* 그림의 아이콘 20개 — 성분 10 · 고민 10. 서버의 코드에 맞는 것이 있으면 그 그림을, 없으면 글자(성분) · 서버의 이모지(고민)를 씁니다 */
@@ -127,7 +128,7 @@ export async function ShopMain() {
                 const pic = ingPic(g.code);
                 return (
                   <Link key={g.code} className="shop-tile" href={`/health/i/${encodeURIComponent(g.code)}`} data-code={g.code}>
-                    {pic ? <ShopPic name={pic} /> : <span className="ini">{g.name.slice(0, 1)}</span>}
+                    {pic ? <ShopPic name={pic} /> : hasShopIcon(g.code) ? <ShopIcon code={g.code} /> : <span className="ini">{g.name.slice(0, 1)}</span>}
                     <b>{g.name}</b>
                   </Link>
                 );
@@ -144,7 +145,7 @@ export async function ShopMain() {
                 const pic = CON_PIC[c.code];
                 return (
                   <Link key={c.code} className="shop-tile" href={`/health/w/${encodeURIComponent(c.code)}`} data-code={c.code}>
-                    {pic ? <ShopPic name={pic} /> : <span className="emo" aria-hidden>{c.icon ?? '•'}</span>}
+                    {pic ? <ShopPic name={pic} /> : hasShopIcon(c.code) ? <ShopIcon code={c.code} /> : <span className="emo" aria-hidden>{c.icon ?? '•'}</span>}
                     <b>{c.name}</b>
                   </Link>
                 );

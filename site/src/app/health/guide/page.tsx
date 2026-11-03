@@ -34,7 +34,7 @@ export default async function HltGuide() {
   const f = await getFmt();
 
   return (
-    <><div className="hlt">
+    <><div className="hlt hlt-guide">
       <HltNav on="guide" />
       <Crumb items={[{ label: t('title') }]} />
       <div className="page-head"><h1>{t('title')}</h1></div>

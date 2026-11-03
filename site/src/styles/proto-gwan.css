@@ -78,8 +78,9 @@
              background:var(--g50);white-space:nowrap}
 .gw-fgrp select{flex:1;min-width:0;border:0;background:transparent;padding:12px 13px;
                font-size:13px;color:var(--ink);font-family:inherit}
-.gw-fgo{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bl);
-       color:#fff;border-radius:var(--sgb-r-sm, 7px);padding:13px;font-size:14px;font-weight:800}
+/* v10.183 (docs/286) — 소개장터 「소개상품 찾기」 검색 단추가 파랑(링크색) → 시트 주요 단추(남색 · 흰 글자) */
+.gw-fgo{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--sgb-btn-bg, #00245a);
+       color:var(--sgb-btn-fg, #fff);border-radius:var(--sgb-r-sm, 7px);padding:13px;font-size:14px;font-weight:800}
 .gw-fnote{display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;color:var(--ink3)}
 .gw-fnote .gw-rd{width:11px;height:11px;border-radius:50%;border:2px solid var(--g300);flex:none}
 .gw-gwl{--gc:var(--bl)}
@@ -489,7 +490,7 @@
 .gw-clg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-bottom:6px}
 .gw-clg i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
 .gw-cvs{width:100%;display:block;overflow:visible}
-.gw-cvs text{font-size:12px;fill:var(--axis);font-family:var(--m)}
+.gw-cvs text{font-size:12px;fill:var(--axis);font-family:var(--sgb-font-body)}  /* v10.183 — 사용자 웹 그림 숫자도 본문 글꼴(IBM Plex Mono 는 운영 화면 전용) */
 .gw-cvs .gw-gl{stroke:var(--gridln);stroke-width:1}
 .gw-dnl{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;font-size:12px}
 .gw-dnl div{display:flex;align-items:center;gap:7px}

@@ -87,7 +87,8 @@
 /* ── 4. 분야 고르기 ── */
 .mny-cat { margin-top: 30px; border-radius: var(--sgb-r-lg, 16px); border: 1px solid var(--sgb-line); background: #fff; box-shadow: var(--mny-shadow); padding: 14px 38px 22.5px 38.5px; }
 .mny-cat-h { display: flex; align-items: center; gap: 28px; padding-left: 5px; }
-.mny-cat-h h2 { font-family: var(--sgb-font-title); font-size: 36.5px; font-weight: 700; line-height: 50px; color: var(--sgb-navy); white-space: nowrap; }
+.mny-cat-h h2 { font-family: var(--sgb-font-title); font-size: var(--sgb-fs-title-2, 24px); font-weight: 700; line-height: 31px;   /* v10.183 — 옛 36.5 → 시트 제목 2단계(결정 #12 · 머리 제목만 예외) */
+  color: var(--sgb-navy); white-space: nowrap; }
 .mny-cat-h p { font-size: 18px; font-weight: 700; color: var(--sgb-ink-3); padding-bottom: 3px; }
 .mny-more { margin-left: auto; display: inline-flex; align-items: center; gap: 1.5px; padding-right: 2.5px; font-size: 18px; font-weight: 700; color: var(--sgb-ink-3); white-space: nowrap; align-self: center; }
 .mny-more .mny-chev { color: var(--sgb-ink-2); }
@@ -128,7 +129,8 @@
 .mny-panel { border-radius: var(--sgb-r-lg, 16px); background: #fff; box-shadow: var(--mny-shadow); padding: 22px 40px 27.5px 30px; }
 .mny-ph { display: flex; align-items: center; height: 31px; }
 .mny-ph img { width: 33px; height: 33px; flex: none; margin: 0 10px 0 -1px; }
-.mny-ph h2 { font-family: var(--sgb-font-title); font-size: 31.3px; font-weight: 700; line-height: 31px; padding-bottom: 6px; color: var(--sgb-navy); white-space: nowrap; }
+.mny-ph h2 { font-family: var(--sgb-font-title); font-size: var(--sgb-fs-title-2, 24px); font-weight: 700; line-height: 31px;   /* v10.183 — 옛 31.3 → 시트 제목 2단계 */
+  padding-bottom: 6px; color: var(--sgb-navy); white-space: nowrap; }
 
 /* ── 6. 서비스 업체 추천 · AI 추천 맞춤 공급자 — 카드 4장 ── */
 .mny-cards { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19.5px; margin-right: -7.5px; }
@@ -320,7 +322,7 @@
   .mny-side-b > hr { display: none; }
   .mny-sg + .mny-sg { margin-top: 0; }
   .mny-cat-h { flex-wrap: wrap; gap: 2px 16px; }
-  .mny-cat-h h2 { font-size: 30px; line-height: 38px; white-space: normal; }
+  .mny-cat-h h2 { white-space: normal; }   /* v10.183 — 크기는 위 시트 값(24px) 그대로 */
   .mny-case-l { grid-template-columns: 1fr; gap: 14px; }
   .mny-band { margin-right: 0; }
   .main-mny ~ .b2-ft .b2-ftl, [data-b2-tone=money] .b2-ft .b2-ftl { margin-left: 24px; gap: 8px 22px; }

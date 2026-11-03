@@ -102,8 +102,8 @@ function Donut({ cats, total }: { cats: SuccessStats['categories']; total: numbe
         acc += len;
         return el;
       })}
-      <text x="78" y="72" textAnchor="middle" style={{ fill: 'var(--ink3)', fontSize: 10 }}>{w('total')}</text>
-      <text x="78" y="90" textAnchor="middle" style={{ fill: 'var(--ink)', fontSize: 15, fontWeight: 800 }}>{w('cnt', { n: total.toLocaleString('ko-KR') })}</text>
+      <text x="78" y="72" textAnchor="middle" style={{ fill: 'var(--ink3)', fontSize: 12 }}>{w('total')}</text>
+      <text x="78" y="90" textAnchor="middle" style={{ fill: 'var(--ink)', fontSize: 16, fontWeight: 800 }}>{w('cnt', { n: total.toLocaleString('ko-KR') })}</text>
     </svg>
   );
 }

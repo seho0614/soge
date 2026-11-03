@@ -9,7 +9,7 @@
   --h-fg: var(--ink); --h-fg2: var(--ink-2); --h-fg3: var(--ink-3);
   --h-line: var(--line); --h-line2: #d0d5de;
   --h-pri: var(--accent); --h-pri-weak: var(--accent-w); --h-danger: var(--danger); --h-warn: #9a6700;
-  --h-unit: #e8710a; --h-radius: 10px; --h-direct: var(--accent);
+  --h-unit: #e8710a; --h-radius: var(--sgb-card-r, 8px);   /* v10.183 — 시트 카드 모서리(10px → 8px) */ --h-direct: var(--accent);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .hlt { --h-bg3: #232830; --h-line2: #39414d; --h-unit: #ffa94d; --h-warn: #e2b341; }
@@ -121,3 +121,5 @@
 .hlt .hlt-fault > span { display: block; color: var(--h-fg2, #6B7280); font-size: 12px; }
 .hlt .hlt-fault > b { display: block; font-weight: 800; }
 .hlt .hlt-retaddr { border: 1px solid var(--h-line); border-left: 3px solid var(--h-warn); background: var(--h-bg2); border-radius: var(--sgb-r-sm, 7px); padding: 12px 15px; margin: 0 0 12px; font-size: 13px; color: var(--h-fg2, #4B5563); }
+/* v10.183 (docs/286) — 이용안내 · 청약철회 조항 제목 16.4px → 시트 제목 3단계 18px */
+.hlt.hlt-guide .hlt-box h3 { font-size: var(--sgb-fs-title-3, 18px); }

@@ -746,4 +746,5 @@
 .lang-pick select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--sgb-line, #d5dbe6); border-radius: 6px; background: #fff; color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 /* v10.132 (docs/198) — 규칙 코드 「(A-07)」를 본문보다 작고 옅게(lib/ruleCodes.tsx · 대표 「작게 남김」) */
-.rule-code { font-size: .78em; font-weight: 400; color: var(--sgb-ink-3, #8a94a6); white-space: nowrap; }
+.rule-code { font-size: max(var(--sgb-fs-micro, 12px), .78em);   /* v10.183 — 본문보다 작게(.78em)이되 시트 가장 작은 글자 12px 아래로는 안 내려감(9.4px 이던 곳) */
+   font-weight: 400; color: var(--sgb-ink-3, #8a94a6); white-space: nowrap; }

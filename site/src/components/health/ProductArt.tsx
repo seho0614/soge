@@ -62,6 +62,22 @@ function Seals({ x, y, ink }: { x: number; y: number; ink: string }) {
   );
 }
 
+/**
+ * v10.183 (docs/286) — 성분이 없는 상품의 이름표: 앞 8글자를 자르면 「도라지 배즙 1」 · 「실내 자전거 접」처럼 잘려 보여
+ *   낱말 단위로 6글자까지만(숫자 · 단위로 시작하는 낱말에서 멈춤). 한 낱말이 길면 그 낱말만 6글자.
+ */
+export function shortLabel(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  let out = '';
+  for (const w of words) {
+    if (/^[0-9]/.test(w)) break;
+    const next = out ? `${out} ${w}` : w;
+    if (next.length > 6) break;
+    out = next;
+  }
+  return out || (words[0] ?? '').slice(0, 6);
+}
+
 export function ProductArt({ p, size = 100, className }: { p: ArtInput; size?: number; className?: string }) {
   const t = useTranslations('shop');
   if (p.imageUrl) {
@@ -70,7 +86,7 @@ export function ProductArt({ p, size = 100, className }: { p: ArtInput; size?: n
   }
   const k = skin(p.code, p.art?.tone);
   const u = `ar-${p.code.replace(/[^A-Za-z0-9_-]/g, '')}-${size}`;
-  const nm = String(p.mainIngredient?.name ?? p.name ?? '').slice(0, 8);
+  const nm = p.mainIngredient?.name ? String(p.mainIngredient.name).slice(0, 8) : shortLabel(p.name ?? '');
   const am = String(p.mainIngredient?.amount ?? '');
   const form = p.art?.form || 'BOTTLE';
   let body;
