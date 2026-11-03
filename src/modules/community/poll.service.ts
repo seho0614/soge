@@ -164,9 +164,17 @@ export class PollService {
         LIMIT 200`);
     const items = await this.attach(rows);
     const settings = await this.db.query<{ key: string; value: string | null }>(
-      `SELECT key, value FROM site_settings WHERE key IN ('poll.guest_vote', 'poll.guest_ip_daily_limit', 'poll.member_create')`);
+      `SELECT key, value FROM site_settings WHERE key IN ('poll.guest_vote', 'poll.guest_ip_daily_limit', 'poll.member_create', 'poll.home_autofill')`);
+    /* v10.182 (D171 · docs/285) — 메인 3자리(비교해요 · 궁금해요 · 써본 의견): 고른 것 · 자동으로 채운 것 · 비어 있음 */
+    const home = await this.db.query<{ kind: string; id: string | null; title: string | null; picked: boolean | null }>(
+      `SELECT k.kind, h.id, h.title, p.show_on_home AS picked
+         FROM (VALUES ('VS', 1), ('ASK', 2), ('USED', 3)) k(kind, o)
+         LEFT JOIN v_poll_home h ON h.kind = k.kind LEFT JOIN polls p ON p.id = h.id
+        ORDER BY k.o`);
     return {
       items,
+      homeSlots: home.map((h) => ({ kind: h.kind, id: h.id, title: h.title, state: !h.id ? 'EMPTY' : h.picked ? 'PICKED' : 'AUTO' })),
+      homeAutofill: (settings.find((s) => s.key === 'poll.home_autofill')?.value ?? 'on') === 'on',
       memberCreate: (settings.find((s) => s.key === 'poll.member_create')?.value ?? 'off') === 'on',   // v10.177 (D166)
       guestVote: (settings.find((s) => s.key === 'poll.guest_vote')?.value ?? 'on') === 'on',
       guestIpDailyLimit: Number(settings.find((s) => s.key === 'poll.guest_ip_daily_limit')?.value ?? 5),

@@ -16,6 +16,7 @@ import { uploadsBackupState } from '../common/uploads-backup-state';
 import { PiiReviewService } from '../modules/admin/pii-review.service';
 import { RoleReviewService } from '../modules/admin/role-review.service';
 import { PrivacyService } from '../modules/identity/privacy.service';
+import { measureServerHealth } from '../common/server-health';
 
 /**
  * 배치 실행기.
@@ -462,7 +463,11 @@ export class SchedulerService {
         for (const p of await this.launchWatch.pollsHiddenByReports()) {
           await this.alert('POLL_HIDDEN_BY_REPORTS', 'WARN', `회원 투표가 신고 ${p.reports}건으로 감춰졌습니다 — 「${p.title}」 · 운영 화면 소개광장 검수에서 확인`, { pollId: p.id, title: p.title, reports: p.reports });
         }
-        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95 };
+        /* v10.182 (D171) — 디스크 · 메모리 재기 · 디스크 85%(ops.disk_warn_pct) WARN · 95% CRITICAL(등급마다 하루 한 번) */
+        measureServerHealth();
+        const dk = await this.launchWatch.diskAlert();
+        if (dk.alert && dk.level) await this.alert('DISK_LOW', dk.level, `서버 디스크 ${dk.usedPct}% 사용 · 남은 ${dk.freeGB}GB — 옛 판 · 백업 묶음을 정리하거나 디스크를 늘리십시오(기준 ${dk.limit}%)`, dk);
+        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct };
         break;
       }
 

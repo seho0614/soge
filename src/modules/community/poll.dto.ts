@@ -141,11 +141,21 @@ export class PollAdminDto extends PollDto {
   @ApiPropertyOptional({ nullable: true, description: 'v10.177 — 회원 투표를 만든 사람 이름(운영 화면에서만)' }) authorName!: string | null;
 }
 
+/* v10.182 (D171 · docs/285) — 메인 「이건 어때?」 자리 */
+export class PollHomeSlotDto {
+  @ApiProperty({ enum: ['VS', 'ASK', 'USED'] }) kind!: string;
+  @ApiPropertyOptional({ nullable: true }) id!: string | null;
+  @ApiPropertyOptional({ nullable: true }) title!: string | null;
+  @ApiProperty({ enum: ['PICKED', 'AUTO', 'EMPTY'] }) state!: string;
+}
+
 export class PollAdminListDto {
   @ApiProperty({ type: [PollAdminDto] }) items!: PollAdminDto[];
   @ApiProperty({ description: '비로그인도 투표할 수 있는가 (설정 poll.guest_vote)' }) guestVote!: boolean;
   @ApiProperty({ description: '같은 인터넷 주소에서 비로그인으로 하루에 넣을 수 있는 표 — 투표 1건당 (설정 poll.guest_ip_daily_limit)' }) guestIpDailyLimit!: number;
   @ApiProperty({ description: 'v10.177 — 회원이 투표를 만들 수 있는가 (설정 poll.member_create)' }) memberCreate!: boolean;
+  @ApiProperty({ type: () => [PollHomeSlotDto], description: 'v10.182 — 메인 3자리(VS · ASK · USED): PICKED 고름 · AUTO 자동으로 채움 · EMPTY 비어 있음' }) homeSlots!: PollHomeSlotDto[];
+  @ApiProperty({ description: 'v10.182 — 고른 투표가 없을 때 운영이 만든 최근 열린 투표로 채우는가 (설정 poll.home_autofill)' }) homeAutofill!: boolean;
 }
 
 /* ── v10.177 (D166 · docs/275) 회원이 만드는 투표 ───────────────────────── */

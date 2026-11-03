@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
-import { serverErrorsSince } from '../../common/server-error-count';
+import { recentServerErrors, serverErrorsSince } from '../../common/server-error-count';
+import { serverHealth } from '../../common/server-health';
 import { rateLimitedSince } from '../../common/api-rate-limit';
 import { cspReportsDay } from '../../common/csp-report';
 import { slowSince } from '../../common/response-time';
@@ -16,6 +17,9 @@ import { uploadsBackupState } from '../../common/uploads-backup-state';
  * ------------------------------------------------------------------- */
 const TODAY = `(now() AT TIME ZONE 'Asia/Seoul')::date`;
 const KST = (col: string) => `(${col} AT TIME ZONE 'Asia/Seoul')::date = ${TODAY}`;
+const diskLine = (h: ReturnType<typeof serverHealth>) => (h.disk
+  ? `서버 디스크 ${h.disk.usedPct}% 사용 · 남은 ${h.disk.freeGB}GB${h.disk.usedPct >= 85 ? ' — 정리 · 늘리기 필요' : ''} · 메모리 ${h.mem.usedPct}%`
+  : '서버 디스크 — 잴 수 없음');
 
 @Injectable()
 export class LaunchWatchService {
@@ -37,6 +41,7 @@ export class LaunchWatchService {
               coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS "signupOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'site.notice_bar'), '') AS "noticeBar",
               coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.slow_p95_ms'), 1500) AS "slowLimitMs",
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.disk_warn_pct'), 85) AS "diskWarnPct",
               (SELECT count(*)::int FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.status = 'ON_SALE' AND s.type = 'DIRECT') AS "directOnSale"`);
     const stubOrders = await this.db.query(
       `SELECT o.order_no AS "orderNo", o.total, o.status, coalesce(p.approved_at, p.created_at) AS "paidAt"
@@ -49,6 +54,8 @@ export class LaunchWatchService {
       uploadsBackup: uploadsBackupState(),     // v10.177 — 올린 파일 백업 묶음(가장 최근 · 몇 시간 전 · 개수)
       slowSql: slowSqlSince(60),               // v10.179 — 300ms 넘은 DB 조회(모양 · 건수 · 가장 느림)
       slowHour: slowSince(60),                 // v10.178 (D167) — 지난 1시간 API 요청 수 · p95(ms) · 느린 주소 5곳
+      server: serverHealth(),                  // v10.182 (D171) — 디스크 · 메모리 · 올린 파일 · 백업 폴더(10분마다 잰 값)
+      diskWarnPct: c.diskWarnPct,
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }
 
@@ -76,10 +83,11 @@ export class LaunchWatchService {
       `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
       `운영 알림(경고 이상) 어제 ${c.alerts} · 확인 안 한 것 ${c.openAlerts}`,
       `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
+      diskLine(serverHealth()),
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');
-    return { ...c, text };
+    return { ...c, disk: serverHealth().disk, text };
   }
 
   /** 지난 1시간 가입이 기준(ops.signup_spike_per_hour) 이상이고, 지난 1시간 안에 같은 알림이 없으면 알릴 것 */
@@ -116,6 +124,30 @@ export class LaunchWatchService {
         WHERE p.source = 'MEMBER' AND p.state = 'HIDDEN' AND p.report_n >= 3 AND p.updated_at > now() - interval '1 day'
           AND NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = 'POLL_HIDDEN_BY_REPORTS' AND a.detail->>'pollId' = p.id::text)
         ORDER BY p.updated_at LIMIT 20`);
+  }
+
+  /**
+   * v10.182 (D171 · docs/285) — 디스크가 ops.disk_warn_pct(85 · 0 = 끔) 이상이면 WARN · 95 이상이면 CRITICAL.
+   *   같은 등급은 하루(한국 날짜) 한 번 — 등급이 오르면(WARN → CRITICAL) 그날 다시 알림.
+   */
+  async diskAlert(): Promise<{ alert: boolean; level: 'WARN' | 'CRITICAL' | null; usedPct: number | null; freeGB: number | null; limit: number }> {
+    const d = serverHealth().disk;
+    const [r] = await this.db.query<{ lim: number; warn: boolean; crit: boolean }>(
+      `SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'ops.disk_warn_pct'), 85) AS lim,
+              EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'DISK_LOW' AND detail->>'level' = 'WARN' AND ${KST('raised_at')}) AS warn,
+              EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'DISK_LOW' AND detail->>'level' = 'CRITICAL' AND ${KST('raised_at')}) AS crit`);
+    const lim = Number(r?.lim ?? 85);
+    if (!d || lim <= 0) return { alert: false, level: null, usedPct: d?.usedPct ?? null, freeGB: d?.freeGB ?? null, limit: lim };
+    const level = d.usedPct >= 95 ? 'CRITICAL' : d.usedPct >= lim ? 'WARN' : null;
+    const alert = level === 'CRITICAL' ? !r.crit : level === 'WARN' ? !r.warn && !r.crit : false;
+    return { alert, level, usedPct: d.usedPct, freeGB: d.freeGB, limit: lim };
+  }
+
+  /** v10.182 (D171) — 최근 서버 오류 50건(이 API 프로세스 메모리 · 1시간) · 운영 화면 위험감지 › 서버 오류 */
+  serverErrors() {
+    const items = recentServerErrors();
+    const { n, top } = serverErrorsSince(60);
+    return { items, hour: n, top, note: 'API 를 다시 띄우면 지워집니다 · 요청 내용 · 개인정보는 남기지 않습니다.' };
   }
 
   /** 정기 작업 launch_watch — 지난 15분 안에 시험 결제로 결제 완료된 소개몰 주문 수 */

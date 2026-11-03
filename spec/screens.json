@@ -4833,6 +4833,23 @@
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "2026-11-03 v10.181 D170 — 열린 요청 기한 순 · 처리 완료 · 거절(고칠 수 없음) · 연장 한 번 · 기한 2일 안이면 하루 요약 때 PRIVACY_REQUEST_DUE."
+  },
+  {
+   "id": "SB-ADM-ERR-010",
+   "name": "최근 서버 오류",
+   "group": "ADM",
+   "url": "/admin/server-errors",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/launch-watch/server-errors"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.182 D171 — API 가 지난 1시간 보낸 5xx 최근 50건(시각 · 방법 · 주소 · 응답 · 오류 종류 · 요청 번호 · 가린 설명) · 요청 내용 · 개인정보 없음 · 다시 띄우면 지워짐."
   }
  ],
  "deferred": [

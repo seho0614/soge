@@ -12,7 +12,8 @@ interface Poll {
   createdAt: string; onHome: boolean;
   source?: 'ADMIN' | 'MEMBER'; reportCount?: number; authorName?: string | null;   // v10.177 (D166) — 회원 투표
 }
-interface Data { items: Poll[]; guestVote: boolean; guestIpDailyLimit: number; memberCreate?: boolean }
+interface HomeSlot { kind: string; id: string | null; title: string | null; state: 'PICKED' | 'AUTO' | 'EMPTY' }
+interface Data { items: Poll[]; guestVote: boolean; guestIpDailyLimit: number; memberCreate?: boolean; homeSlots?: HomeSlot[]; homeAutofill?: boolean }
 
 const KIND: Record<string, string> = { VS: '비교해요', ASK: '궁금해요', USED: '써본 의견이 필요해요' };
 const KIND_HELP: Record<string, string> = { VS: '보기 정확히 2개', ASK: '보기 2 ~ 8개', USED: '보기 2 ~ 5개' };
@@ -67,7 +68,7 @@ export function Polls() {
 
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
-  const { items, guestVote, guestIpDailyLimit, memberCreate } = q.data;
+  const { items, guestVote, guestIpDailyLimit, memberCreate, homeSlots = [], homeAutofill = true } = q.data;
   const onHome = items.filter((p) => p.onHome);
   const members = items.filter((p) => p.source === 'MEMBER');
 
@@ -116,10 +117,23 @@ export function Polls() {
 
       <section className="card">
         <h3>메인에 나가는 투표 <em>{onHome.length}</em> / 3</h3>
-        {onHome.length === 0
-          ? <p className="muted">메인에 낼 열린 투표가 없습니다 — 메인의 세 장이 「준비 중」으로 보입니다.</p>
-          : <p>{onHome.map((p) => <span key={p.id} style={{ marginRight: 12 }}><b>{KIND[p.kind]}</b> {p.title}</span>)}</p>}
-        <p className="muted">종류(비교해요 · 궁금해요 · 써본 의견)마다 「메인에 내기」를 켠 열린 투표 가운데 순서가 가장 앞선 1건이 나옵니다.</p>
+        {/* v10.182 (D171 · docs/285) — 자리마다 고른 것 · 자동으로 채운 것 · 비어 있음 */}
+        <table className="tbl" data-home-slots="">
+          <tbody>{homeSlots.map((h) => (
+            <tr key={h.kind} data-home-slot={h.kind} data-home-state={h.state}>
+              <td><b>{KIND[h.kind] ?? h.kind}</b></td>
+              <td>{h.state === 'EMPTY'
+                ? <span className="warn-text">비어 있음 — 이 종류의 열린 투표가 없어 메인에 「준비 중」으로 보입니다. 아래 「새 투표」로 만들어 여십시오.</span>
+                : <>{h.title} <small className="dim">{h.state === 'PICKED' ? '고름(메인에 내기)' : '자동으로 채움 — 최근 열린 투표'}</small></>}</td>
+            </tr>))}</tbody>
+        </table>
+        <p className="muted">
+          종류(비교해요 · 궁금해요 · 써본 의견)마다 「메인에 내기」를 켠 열린 투표 가운데 순서가 가장 앞선 1건이 나옵니다.
+          고른 것이 없으면 {homeAutofill ? '운영이 만든 최근 열린 투표로 자동으로 채웁니다(회원 투표는 쓰지 않음).' : '그 자리는 비어 「준비 중」으로 보입니다.'}{' '}
+          <button className="btn-plain btn-sm" disabled={a.busy === 'poll.home_autofill'} data-home-autofill={homeAutofill ? 'on' : 'off'}
+            onClick={() => void setting('poll.home_autofill', homeAutofill ? 'off' : 'on', homeAutofill ? '자동 채우기를 껐습니다.' : '자동 채우기를 켰습니다.')}>
+            {homeAutofill ? '자동 채우기 끄기' : '자동 채우기 켜기'}</button>
+        </p>
       </section>
 
       <section className="card" data-poll-create>

@@ -32,6 +32,12 @@ export class LaunchWatchController {
   @ApiOkResponse({ type: Object })
   digest() { return this.svc.digest(); }
 
+  /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
+  @Get('server-errors')
+  @ApiOperation({ summary: '최근 서버 오류', description: '이 API 프로세스가 지난 1시간 보낸 5xx 최근 50건 — 시각 · 방법 · 주소(물음표 뒤 없음) · 응답 번호 · 오류 종류 · 요청 번호 · 가린 설명. 요청 내용 · 개인정보 없음 · 다시 띄우면 지워짐.' })
+  @ApiOkResponse({ type: Object })
+  serverErrors() { return this.svc.serverErrors(); }
+
   /* v10.173 (D162 · docs/266) — 시험 결제 주문 정리(발송 전만 취소 · 주문한 분께 알림 · 감사 기록) */
   @Post('stub-orders/cancel')
   @Roles('SUPER')

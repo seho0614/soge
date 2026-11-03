@@ -30,6 +30,7 @@ import { PiiReview } from './app/admin/PiiReview';   // v10.179 (D168)
 import { RoleReview } from './app/admin/RoleReview';   // v10.180 (D169)
 import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
 import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
+import { ServerErrors } from './app/admin/ServerErrors';   // v10.182 (D171)
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
@@ -279,6 +280,7 @@ function Console() {
       {tab === 'role-review' && <RoleReview />}
       {tab === 'purge-log' && <PurgeLog />}
       {tab === 'privacy-requests' && <PrivacyRequests />}
+      {tab === 'server-errors' && <ServerErrors />}
       {tab === 'my-mfa' && <MyMfa />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

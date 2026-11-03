@@ -15,6 +15,12 @@ interface Watch {
   slowHour?: { n: number; p95: number; top: Array<{ path: string; p95: number; n: number }> }; slowLimitMs?: number;   // v10.178 (D167) — 지난 1시간 API 응답 p95(ms)
   uploadsBackup?: { count: number; last: string | null; lastAt: string | null; lastKB: number | null; ageHours: number | null; stale: boolean };   // v10.177
   stubOrders: Array<{ orderNo: string; total: number | string; status: string; paidAt: string }>;
+  /* v10.182 (D171 · docs/285) — 서버 디스크 · 메모리 · 올린 파일 · 백업 폴더(10분마다 잰 값) */
+  server?: {
+    at: string; disk: { path: string; totalGB: number; freeGB: number; usedPct: number } | null; mem: { totalMB: number; availMB: number; usedPct: number };
+    uploads: { MB: number; files: number; partial: boolean } | null; backup: { MB: number; files: number; partial: boolean } | null;
+  };
+  diskWarnPct?: number;
 }
 
 /**
@@ -81,8 +87,22 @@ export function LaunchWatch() {
           <div key={k} className={`ad-tile${warn ? ' warn' : ''}`} data-watch={k}><span className="tl">{k}</span><b>{n(v)}</b></div>
         ))}
       </div>
-      {/* v10.179 (D168) — 운영 알림 목록 · 확인 화면 */}
-      <p className="hint"><a href="#/ops-alerts" data-ops-alerts-link="">운영 알림 보기 · 확인 →</a>{(d.slowSql?.n ?? 0) > 0 && <> · 느린 조회(300ms 넘음 · 1시간) <b data-slow-sql={d.slowSql!.n}>{n(d.slowSql!.n)}건</b></>}</p>
+      {/* v10.182 (D171) — 서버 디스크 · 메모리 */}
+      {d.server && (() => {
+        const sv = d.server; const dk = sv.disk; const lim = d.diskWarnPct ?? 85;
+        const mb = (x: { MB: number; partial: boolean } | null) => (x ? `${x.MB >= 1024 ? `${(x.MB / 1024).toFixed(1)}GB` : `${n(x.MB)}MB`}${x.partial ? '(대략)' : ''}` : '없음');
+        return (
+          <p className={dk && lim > 0 && dk.usedPct >= lim ? 'card warn' : 'hint'} data-server-health={dk ? String(dk.usedPct) : 'none'}>
+            서버 디스크 {dk ? <><b>{dk.usedPct}%</b> 사용 · 남은 <b>{dk.freeGB}GB</b> / {dk.totalGB}GB</> : '잴 수 없음'}
+            {' · '}메모리 {sv.mem.usedPct}%(쓸 수 있는 {n(sv.mem.availMB)}MB)
+            {' · '}올린 파일 {mb(sv.uploads)} · 백업 묶음 {mb(sv.backup)}
+            <small className="dim"> · {ymdhm(sv.at)} 잼 · 기준 {lim}%(ops.disk_warn_pct) 넘으면 운영 알림 DISK_LOW</small>
+            {dk && lim > 0 && dk.usedPct >= lim && <> — 옛 판 · 오래된 백업 묶음을 정리하거나 디스크(EBS)를 늘리십시오.</>}
+          </p>
+        );
+      })()}
+      {/* v10.179 (D168) — 운영 알림 목록 · 확인 화면 · v10.182 — 최근 서버 오류 */}
+      <p className="hint"><a href="#/ops-alerts" data-ops-alerts-link="">운영 알림 보기 · 확인 →</a> · <a href="#/server-errors" data-server-errors-link="">최근 서버 오류 →</a>{(d.slowSql?.n ?? 0) > 0 && <> · 느린 조회(300ms 넘음 · 1시간) <b data-slow-sql={d.slowSql!.n}>{n(d.slowSql!.n)}건</b></>}</p>
       {(d.slowSql?.top.length ?? 0) > 0 && (
         <details data-slow-sql-top="">
           <summary>느린 조회 5개(SQL 모양 · 넘긴 값은 담지 않음)</summary>
