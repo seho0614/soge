@@ -167,7 +167,7 @@
 /* ── 7. 지금 올라온 소개 요청 ── */
 .mny-tabs { margin-top: 12.5px; display: flex; flex-wrap: wrap; gap: 6px; }
 .mny-tab { width: 106.5px; height: 40.5px; border-radius: var(--sgb-r-sm, 7px); border: 1px solid var(--sgb-line); background: #fff; font-size: 16px; font-weight: 700; color: var(--sgb-ink-3); white-space: nowrap; }
-.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: #fff; }
+.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: var(--sgb-navy, #00245a); }   /* v10.185 — 주황 위 흰 글자(대비 2.0) → 남색(결정 #4) */
 .mny-tab:hover { border-color: var(--sgb-action); }
 .mny-reqs { margin-top: 8px; display: flex; flex-direction: column; gap: 9.2px; margin-bottom: -6px; }
 .mny-req { display: grid; grid-template-columns: 97.5px minmax(0, 1fr) 147px 141.5px 95.5px 106.5px; align-items: center; height: 49px; }

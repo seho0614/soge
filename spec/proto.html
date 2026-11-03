@@ -457,6 +457,11 @@
   .gwl .catl .g1+.gi::before,.gwl .catl .gi.i1::before{color:#B45309}
   .catl .gi::before{content:"→";font-size:12px}
   .gwl .mylist{background:transparent;border-color:var(--gc);color:var(--gc)}
+  /* v10.185 (docs/290) — 소개장터 검색 단추 시트 주요 단추 · 소개창업 주황 바탕 위 글자 남색(결정 #4) · 주황 글자 진한 주황 · 파란 작은 글자 진한 값 */
+  .gwl:not(.mal):not(.biz) .fgo{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff)}
+  .gwl.biz .fgo,.gwl.biz .cathd,.gwl.biz .tab.on,.gwl.biz .pager .on,.gwl.biz .sb.blue .sg{color:var(--sgb-navy, #00245a)}
+  .gwl.biz .mylist{color:#c2410c}
+  .gwl:not(.mal):not(.biz) .mylist{color:var(--bl-d)}
   .catl .gd{display:flex;align-items:center;gap:7px;padding:11px 13px 6px;font-size:13px;
             font-weight:900;letter-spacing:-.03em;border-top:1px solid var(--line2)}
   .catl .gd:first-child{border-top:0}
@@ -1728,7 +1733,7 @@ html.is-mobile #screen{max-width:430px;margin:0 auto;box-shadow:0 0 0 1px var(--
   margin:6px 0 18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .pgh h1{margin:0;font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--ink)}
 .pgh p{margin:6px 0 0;font-size:13px;color:var(--ink3);line-height:1.6;max-width:62ch}
-.did{font:600 12px/1 ui-monospace,monospace;color:var(--ink3);background:var(--g50);
+.did{font:600 12px/1 var(--sgb-font-body, inherit);font-variant-numeric:tabular-nums;color:var(--ink3);background:var(--g50);
   border:1px solid var(--line);border-radius:var(--sgb-r-sm, 7px);padding:6px 9px;white-space:nowrap}
 .s2{margin:26px 0 10px;font-size:14px;font-weight:800;color:var(--ink)}
 .ls{font-size:12px;color:var(--ink3)}
@@ -2875,7 +2880,7 @@ button.busy::after{content:"…";margin-left:5px}
 .brkstat .lb{font-size:12px;color:var(--g500);font-weight:600}
 .brkstat h2{margin:4px 0 2px;font-size:20px}
 .brkstat p{margin:0;font-size:14px;color:var(--g500)}
-.brkno2{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--ink);
+.brkno2{font-family:inherit;font-variant-numeric:tabular-nums;font-size:14px;color:var(--ink);
   padding:8px 14px;border-radius:var(--sgb-r-sm, 7px);background:var(--bg);border:1px solid var(--line)}
 
 .brkstep{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
@@ -3856,7 +3861,7 @@ a.bo.sm, a.bp.sm{display:inline-flex;align-items:center;justify-content:center;g
 /* ── 7. 지금 올라온 소개 요청 ── */
 .mny-tabs { margin-top: 12.5px; display: flex; flex-wrap: wrap; gap: 6px; }
 .mny-tab { width: 106.5px; height: 40.5px; border-radius: var(--sgb-r-sm, 7px); border: 1px solid var(--sgb-line); background: #fff; font-size: 16px; font-weight: 700; color: var(--sgb-ink-3); white-space: nowrap; }
-.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: #fff; }
+.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: var(--sgb-navy, #00245a); }
 .mny-tab:hover { border-color: var(--sgb-action); }
 .mny-reqs { margin-top: 8px; display: flex; flex-direction: column; gap: 9.2px; margin-bottom: -6px; }
 .mny-req { display: grid; grid-template-columns: 97.5px minmax(0, 1fr) 147px 141.5px 95.5px 106.5px; align-items: center; height: 49px; }

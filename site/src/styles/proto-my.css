@@ -355,4 +355,4 @@
 .my-plans-w .plan .plan-btn [data-plan-current] { display: block; width: 100%; text-align: left; background: #ECFDF5; border: 1px solid #A7F3D0; color: #0F6B4F; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 800; }
 /* v10.32 (추가) — 분쟁 접수(SB-HOM-ETC-010) 유형 칩: 시안 .v31w .opt(13px · 7px 13px) · 고른 칩은 진한 보라 채움 · 흰 글자 */
 .my-opts.my-opts-fill .my-opt { padding: 7px 13px; color: var(--mink2); border-color: var(--g200, #E5E7EB); }
-.my-opts.my-opts-fill .my-opt.on { background: #7C3AED; border-color: #7C3AED; color: #fff; }
+.my-opts.my-opts-fill .my-opt.on { background: var(--sgb-btn-bg, #00245a); border-color: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); }   /* v10.185 — 보라 → 시트 주요 단추 */

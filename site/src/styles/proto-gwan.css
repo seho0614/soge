@@ -689,11 +689,11 @@ dl.gw-spec dd{margin:0;padding:4px 0;font-weight:500}
   margin:6px 0 18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .gw-pgh h1{margin:0;font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--ink)}
 .gw-pgh p{margin:6px 0 0;font-size:13px;color:var(--ink3);line-height:1.6;max-width:62ch}
-.gw-did{font:600 12px/1 ui-monospace,monospace;color:var(--ink3);background:var(--g50);
+.gw-did{font:600 12px/1 var(--sgb-font-body);font-variant-numeric:tabular-nums;color:var(--ink3);background:var(--g50);
   border:1px solid var(--line);border-radius:var(--sgb-r-sm, 7px);padding:6px 9px;white-space:nowrap}
 .gw-s2{margin:26px 0 10px;font-size:14px;font-weight:800;color:var(--ink)}
 .gw-ls{font-size:12px;color:var(--ink3)}
-.gw-code{font-family:ui-monospace,monospace;font-size:12px}
+.gw-code{font-family:var(--sgb-font-body);font-variant-numeric:tabular-nums;font-size:12px}
 .gw-tabs2{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
 .gw-tabs2 .gw-tb{font:inherit;font-size:13px;font-weight:700;color:var(--ink2);background:#fff;
   border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;
@@ -801,7 +801,7 @@ dl.gw-spec dd{margin:0;padding:4px 0;font-weight:500}
 .gw-fld > textarea.gw-in{display:block}
 .gw-fld input.gw-in::placeholder, .gw-fld textarea.gw-in::placeholder{color:var(--g400)}
 .gw-fld select.gw-in{appearance:auto;-webkit-appearance:menulist;cursor:pointer}
-.gw-code{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.gw-code{font-family:var(--sgb-font-body);font-variant-numeric:tabular-nums;font-size:12px}
 .gw-axw{padding:14px 0 0}
 .gw-axbar{display:flex;gap:8px;flex-wrap:wrap}
 .gw-axt{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:150px;
@@ -870,7 +870,7 @@ dl.gw-spec dd{margin:0;padding:4px 0;font-weight:500}
 .gw-brkstat .gw-lb{font-size:12px;color:var(--g500);font-weight:600}
 .gw-brkstat h2{margin:4px 0 2px;font-size:20px}
 .gw-brkstat p{margin:0;font-size:14px;color:var(--g500)}
-.gw-brkno2{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--ink);
+.gw-brkno2{font-family:var(--sgb-font-body);font-variant-numeric:tabular-nums;font-size:14px;color:var(--ink);
   padding:8px 14px;border-radius:var(--sgb-r-sm, 7px);background:var(--bg);border:1px solid var(--line)}
 .gw-brkstep{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
 .gw-bsi{flex:1 1 120px;display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--sgb-r-md, 11px);
@@ -1223,3 +1223,16 @@ a.gw-bo.gw-sm, a.gw-bp.gw-sm{display:inline-flex;align-items:center;justify-cont
 .gw .gw-regfull form.auth > .gw-regact{margin:4px 0 6px}
 .gw .gw-regfull .gw-regact .cta-primary{width:auto;display:inline-flex;align-items:center;padding:8px 18px;font-size:13px;border-radius:var(--sgb-btn-r, 7px);margin:0;line-height:18px}
 .gw .gw-regfull .gw-regact .gw-bo{padding:7px 16px;font-size:13px;border-radius:var(--sgb-btn-r, 7px);line-height:18px}
+/* v10.185 (docs/290) — 디자인 검토 반영
+   ① 소개장터 관 목록 · 메인의 「검색」 단추: 관 색 규칙(.gw-gwl .gw-fgo)이 v10.183 의 남색을 덮던 것 → 시트 주요 단추(소개몰 초록은 v10.183 #12 대로 그대로)
+   ② 소개창업(주황) 바탕 위 글자는 남색(결정 #4) · 주황 글자는 진한 주황(#c2410c · 결정 #14 ②)
+   ③ 작은 글자 대비 4.5 미만 → 같은 색의 진한 값 */
+.gw-gwl:not(.gw-mal):not(.gw-biz) .gw-fgo{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff)}
+.gw-gwl.gw-biz .gw-fgo,.gw-gwl.gw-biz .gw-cathd,.gw-gwl.gw-biz .gw-tab.gw-on,.gw-gwl.gw-biz .gw-pager .gw-on,
+.gw-gwl.gw-biz .gw-ufilt .gw-uf.gw-on,.gw-gwl.gw-biz .gw-bdt .gw-bt4.gw-on,.gw-gwl.gw-biz .gw-wtabs .gw-wt.gw-on,
+.gw-gwl.gw-biz .pc-sb.blue .sg{color:var(--sgb-navy, #00245a)}
+.gw-gwl.gw-biz .gw-mylist{color:#c2410c}
+.gw-gwl:not(.gw-mal):not(.gw-biz) .gw-mylist,.gw .gw-ls a,.gw .gw-nt a,.gw-uadd .gw-uah,
+.gw-rcall .gw-rck,.gw-rcall .gw-rcn,.gw-ru .gw-rn2{color:var(--bl-d)}
+.gw-c3a span{color:#93A2C2}
+.gw .gw-regwrap .role-tabs button.on span{color:var(--ink2)}

@@ -177,7 +177,7 @@ textarea.w1-in { resize: vertical; min-height: 88px; line-height: 1.65; }
 .w1-pgh { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 10px 0 16px; }
 .w1-pgh h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -.5px; }
 .w1-pgh p { margin: 6px 0 0; font-size: 13px; color: var(--ink-3); line-height: 1.6; max-width: 70ch; }
-.w1-did { font: 600 12px/1 ui-monospace, monospace; color: var(--ink-3); background: var(--g50); border: 1px solid var(--line); border-radius: var(--sgb-r-sm, 7px); padding: 6px 9px; white-space: nowrap; }
+.w1-did { font: 600 12px/1 var(--sgb-font-body); font-variant-numeric: tabular-nums; color: var(--ink-3); background: var(--g50); border: 1px solid var(--line); border-radius: var(--sgb-r-sm, 7px); padding: 6px 9px; white-space: nowrap; }
 .w1-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
 .w1-steps .st { border: 1px solid var(--line); border-radius: var(--sgb-r-md, 11px); background: #fff; padding: 13px; display: flex; flex-direction: column; gap: 3px; text-decoration: none; color: inherit; }
 .w1-steps .st.on { border-color: var(--pp); background: #EEF2FF; }

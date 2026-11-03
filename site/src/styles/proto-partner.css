@@ -106,7 +106,7 @@ body:has(.pt-root) main.main { max-width: none; padding: 0; }
 .pt-ck { font-size: 12px; color: var(--pt-ink3); background: var(--pt-g50); border: 1px solid var(--pt-line);
   border-radius: var(--sgb-r-sm, 7px); padding: 3px 7px; white-space: nowrap; }
 .pt-ls { font-size: 12px; color: var(--pt-ink3); }
-.pt-code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.pt-code { font-family: var(--sgb-font-body); font-variant-numeric: tabular-nums; font-size: 12px; }   /* v10.185 — 고정폭 → 본문 글꼴 */
 .pt-wn { margin-top: 5px; font-size: 12px; color: #B42318; font-weight: 700; }
 .pt-no { color: #B42318; }
 .pt-ok2 { color: #0F6B4F; font-weight: 800; }
@@ -202,7 +202,7 @@ a.pt-tile:hover { border-color: var(--pt-pp); box-shadow: var(--sgb-shadow, 4px 
 .pt-nsteps > li.on { border-color: var(--pt-pp); background: #EEF2FF; }
 .pt-nsteps > li.done .n { background: #0F6B4F; color: #fff; }
 .pt-nsteps .n { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--pt-line);
-  color: var(--pt-ink3); display: grid; place-items: center; font-size: 12px; font-weight: 800; }
+  color: var(--sgb-ink-2, #4B5563); display: grid; place-items: center; font-size: 12px; font-weight: 800; }   /* v10.185 — 회색 칸 위 대비 3.6 → 4.5 이상 */
 .pt-nsteps > li.on .n { background: var(--pt-pp); color: #fff; }
 .pt-nsteps > li > div { flex: 1; min-width: 0; }
 .pt-nsteps b { font-size: 14px; font-weight: 800; color: var(--pt-ink); margin-right: 6px; }
