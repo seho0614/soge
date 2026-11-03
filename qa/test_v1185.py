@@ -2,8 +2,8 @@
 
   docker run --rm --network host -v <qa>:/w -v $K:/core:ro -w /w -e KIT=/core -e API=http://localhost:13000/api/v1 -e SITE=http://localhost:15174 sgb-qa:v1 python3 test_v1185.py
 
-  ① 코드 — 제휴 메뉴 밝은 글자 · 설명 글 링크색 아님 · 보라 → 남색 · 소개창업 주황 위 남색 · 소개장터 검색 단추 남색 · 고른 탭 남색 글자 · 고정폭 없음 · 대비 · 시안 · docs/290 · 판
-  ② (사용자 웹) 제휴 메뉴 글자 밝음 · 칸 설명 회색 · 소개장터 검색 단추 남색 · 소개창업 검색 글자 남색
+  ① 코드 — 제휴 메뉴 밝은 글자 · 설명 글 링크색 아님 · 보라 → 남색 · 소개창업 주황 위 남색 · 소개장터 검색 단추 시트 주요 단추 · 고른 탭 남색 글자 · 고정폭 없음 · 대비 · 시안 · docs/290 · 판
+  ② (사용자 웹) 제휴 메뉴 글자 밝음 · 칸 설명 회색 · 소개장터 검색 단추 시트 주요 단추 · 소개창업 검색 글자 남색
   ③ (사용자 웹) 손님 · 구매자 · 파트너로 주요 화면을 돌며 보이는 글에 내부 화면 번호(SB-XXX-XXX-000) 없음
 """
 import json, os, re, sys, urllib.request
@@ -36,7 +36,7 @@ ok('① 제휴 파트너센터 — 남색 메뉴 밝은 글자 · 설명 글이 
 ok('① 분쟁 접수 고르기 — 보라 → 시트 주요 단추',
    '.my-opts.my-opts-fill .my-opt.on { background: var(--sgb-btn-bg, #00245a);' in MY and '#7C3AED' not in MY, '')
 
-ok('① 소개창업 주황 위 남색 글자 · 소개장터 검색 단추 남색 · 고른 탭 남색 글자',
+ok('① 소개창업 주황 위 남색 글자 · 소개장터 검색 단추 시트 주요 단추 · 고른 탭 남색 글자',
    '.gw-gwl:not(.gw-mal):not(.gw-biz) .gw-fgo{background:var(--sgb-btn-bg, #00245a);color:var(--sgb-btn-fg, #fff)}' in GW
    and '.gw-gwl.gw-biz .gw-fgo,.gw-gwl.gw-biz .gw-cathd' in GW and '.gw-gwl.gw-biz .gw-mylist{color:#c2410c}' in GW
    and '.mny-tab[aria-selected=true] { border-color: var(--sgb-action); background: var(--sgb-action); color: var(--sgb-navy, #00245a); }' in MNY, '')
@@ -93,7 +93,7 @@ if SITE and API:
           return [m ? getComputedStyle(m).color : null, k ? getComputedStyle(k).color : null] }""")
         ok('② 제휴 파트너센터 — 메뉴 글자 밝음(#C3CCE3) · 칸 이름 흐린 회색(#646f8c)', r == ['rgb(195, 204, 227)', 'rgb(100, 111, 140)'], str(r))
         r = css(CB, '/money', "() => { const e = document.querySelector('.gw-fgo'); return e ? [getComputedStyle(e).backgroundColor, getComputedStyle(e).color] : null }")
-        ok('② 소개장터 검색 단추 — 남색 바탕 · 흰 글자', r == ['rgb(0, 36, 90)', 'rgb(255, 255, 255)'], str(r))
+        ok('② 소개장터 검색 단추 — 시트 주요 단추(소개장터 관 = 주황 바탕 · 남색 글자, 파랑 아님)', r == ['rgb(255, 160, 62)', 'rgb(0, 36, 90)'], str(r))
         r = css(CB, '/biz', "() => { const e = document.querySelector('.gw-fgo'); return e ? getComputedStyle(e).color : null }")
         ok('② 소개창업 검색 단추 — 주황 위 남색 글자', r == 'rgb(0, 36, 90)', str(r))
 
