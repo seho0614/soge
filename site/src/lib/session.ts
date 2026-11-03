@@ -56,8 +56,12 @@ type AuthResult = { ok: true; reconsent?: boolean } | { ok: false; code: string;
 async function fwdHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
   const h: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
   try {
-    const xff = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim();
+    const hh = await headers();
+    const xff = hh.get('x-forwarded-for')?.split(',')[0]?.trim();
     if (xff) h['X-Forwarded-For'] = xff;
+    /* v10.181 (D170) — 로그인 기록의 브라우저 종류 · 약관 동의 기록이 서버(node)가 아니라 손님 브라우저가 되게 */
+    const ua = hh.get('user-agent');
+    if (ua) h['User-Agent'] = ua.slice(0, 300);
   } catch { /* 요청 밖에서 불림 — 넘길 것 없음 */ }
   return h;
 }
@@ -163,6 +167,33 @@ export async function withdrawAccount(password: string, reason: string, memo?: s
   const r = await call('POST', '/me/withdraw', { password, reason, ...(memo ? { memo } : {}) }, true);
   if (r.status >= 400) return fail(r.data, '탈퇴를 처리하지 못했습니다.');
   await logout();
+  return { ok: true, note: r.data?.note };
+}
+
+/* ── v10.181 (D170 · docs/283) 내 정보 내려받기 · 모든 기기 로그아웃 · 개인정보 권리 요청 ─────────── */
+
+export type ExportResult = { ok: true; fileName: string; json: string } | { ok: false; code: string; message: string; details?: unknown };
+
+/** SB-MYP-DAT-010 — 비밀번호 확인 뒤 내 정보(JSON). 화면이 파일로 저장합니다 */
+export async function exportMyData(password: string): Promise<ExportResult> {
+  const r = await call('POST', '/me/data-export', { password }, true);
+  if (r.status >= 400 || !r.data) return fail(r.data, '내 정보를 내려받지 못했습니다.') as ExportResult;
+  return { ok: true, fileName: String(r.data.fileName ?? 'sogaebank_my_data.json'), json: JSON.stringify(r.data, null, 2) };
+}
+
+/** SB-MYP-SEC-010 — 다른 기기의 로그인을 모두 풀고 이 기기는 새 증표로 */
+export async function logoutAllDevices(password: string): Promise<ActResult> {
+  const r = await call('POST', '/me/logout-all', { password }, true);
+  if (r.status >= 400) return fail(r.data, '로그아웃하지 못했습니다.');
+  const jar = await cookies();
+  if (r.data?.accessToken && r.data?.refreshToken) await saveTokens(r.data.accessToken, r.data.refreshToken, jar.get('sgb_keep')?.value !== '0');
+  return { ok: true, note: r.data?.note };
+}
+
+/** SB-MYP-PRV-010 — 열람 · 정정 · 삭제 · 처리정지 요청 */
+export async function createPrivacyRequest(kind: string, body: string): Promise<ActResult> {
+  const r = await call('POST', '/me/privacy-requests', { kind, body }, true);
+  if (r.status >= 400) return fail(r.data, '요청을 보내지 못했습니다.');
   return { ok: true, note: r.data?.note };
 }
 

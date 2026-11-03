@@ -29,6 +29,7 @@ import { OpsAlerts } from './app/admin/OpsAlerts';   // v10.179 (D168)
 import { PiiReview } from './app/admin/PiiReview';   // v10.179 (D168)
 import { RoleReview } from './app/admin/RoleReview';   // v10.180 (D169)
 import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
+import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
@@ -277,6 +278,7 @@ function Console() {
       {tab === 'pii-review' && <PiiReview />}
       {tab === 'role-review' && <RoleReview />}
       {tab === 'purge-log' && <PurgeLog />}
+      {tab === 'privacy-requests' && <PrivacyRequests />}
       {tab === 'my-mfa' && <MyMfa />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

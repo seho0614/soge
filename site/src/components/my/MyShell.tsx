@@ -93,6 +93,8 @@ export function MyShell({ counts, children, active }: { counts: MyCounts | null;
           {/* v10.31 (시안 결함 X2) — 시안에는 화면만 있고 들어갈 길이 없던 두 화면(내 신고 내역 · 내 이벤트 참여) */}
           <Link href="/my/reports" className={under(p, '/my/reports') ? 'on' : undefined} aria-current={under(p, '/my/reports') ? 'page' : undefined} data-my-nav-item="myrpt">{t('reports')}</Link>
           <Link href="/my/events" className={under(p, '/my/events') ? 'on' : undefined} aria-current={under(p, '/my/events') ? 'page' : undefined} data-my-nav-item="myevt">{t('events')}</Link>
+          {/* v10.181 (D170) — 개인정보 · 보안(로그인 기록 · 모든 기기 로그아웃 · 내 정보 내려받기 · 권리 요청은 그 화면에서) */}
+          <Link href="/my/account/security" className={under(p, '/my/account/security') ? 'on' : undefined} aria-current={under(p, '/my/account/security') ? 'page' : undefined} data-my-nav-item="myprv">{t('privacy')}</Link>
         </aside>
         <div className="my-main">{children}</div>
       </div>

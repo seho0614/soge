@@ -56,6 +56,7 @@ export const TABS = [
   ['pii-review', '개인정보 접속기록'],   /* v10.179 (D168) — SUPER */
   ['role-review', '운영자 권한'],   /* v10.180 (D169) — SUPER */
   ['purge-log', '파기 기록'],   /* v10.180 (D169) */
+  ['privacy-requests', '권리 요청'],   /* v10.181 (D170) */
   ['my-mfa', '내 2단계 인증'],   /* v10.180 (D169) — 운영 역할 모두 */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -86,7 +87,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'codes'] },
   { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'i18n', 'hlt-products'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
-  { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log'] },
+  { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log', 'privacy-requests'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
   { key: 'admcmu',  label: '소개광장',  tabs: ['community', 'polls', 'events'] },
   { key: 'affapl',  label: '제휴',      tabs: ['affiliates'] },
@@ -157,6 +158,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'pii-review':  { title: '개인정보 접속기록 점검', sub: '운영자가 개인정보를 본 기록을 달마다 점검하고 기록을 남깁니다(SUPER).', screen: 'SB-ADM-PII-010' },
   'role-review': { title: '운영자 권한 점검', sub: '운영자별 역할 · 마지막 로그인 · 2단계 등록을 보고 분기마다 점검 기록을 남깁니다(SUPER).', screen: 'SB-ADM-ROLE-010' },
   'purge-log':   { title: '파기 실행 기록', sub: '매일 03:00 개인정보 파기 작업이 지운 건수를 날짜별 · 달별로 봅니다.', screen: 'SB-ADM-PRG-010' },
+  'privacy-requests': { title: '개인정보 권리 요청', sub: '회원의 열람 · 정정 · 삭제 · 처리정지 요청을 기한 안에 처리하고 결과를 남깁니다.', screen: 'SB-ADM-PRQ-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },
   'report-queue':{ title: '신고 처리', sub: '오래된 것이 위로 옵니다 — 신고해 놓고 답이 없으면 다음부터 신고를 안 합니다.', screen: 'SB-ADM-RPT-010' },

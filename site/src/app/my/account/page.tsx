@@ -126,6 +126,17 @@ export default async function MyAccountPage() {
         </>
       )}
 
+      {/* v10.181 (D170) — 내 정보 내려받기 · 로그인 기록 · 권리 요청 */}
+      <h2 className="my-st2">{t('hPrivacy')}</h2>
+      <Note kind="plain" className="act" data-privacy-entry="">
+        <div><b>{t('privacyB')}</b><p>{t('privacyText')}</p></div>
+        <div className="my-btns">
+          <Link className="my-bo" href="/my/account/data">{t('toData')}</Link>
+          <Link className="my-bo" href="/my/account/security">{t('toSecurity')}</Link>
+          <Link className="my-bo" href="/my/account/privacy">{t('toPrivacy')}</Link>
+        </div>
+      </Note>
+
       <h2 className="my-st2">{t('hWithdraw')}</h2>
       <Note kind="plain" className="act" data-withdraw-entry="">
         <div><b>{t('withdrawB')}</b><p>{t('withdrawText')}</p></div>

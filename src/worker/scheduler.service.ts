@@ -15,6 +15,7 @@ import { LaunchWatchService } from '../modules/admin/launch-watch.service';
 import { uploadsBackupState } from '../common/uploads-backup-state';
 import { PiiReviewService } from '../modules/admin/pii-review.service';
 import { RoleReviewService } from '../modules/admin/role-review.service';
+import { PrivacyService } from '../modules/identity/privacy.service';
 
 /**
  * 배치 실행기.
@@ -57,6 +58,7 @@ export class SchedulerService {
     private readonly launchWatch: LaunchWatchService,
     private readonly piiReview: PiiReviewService,   // v10.179 (D168) 개인정보 접속기록 점검 알림
     private readonly roleReview: RoleReviewService,   // v10.180 (D169) 운영자 권한 점검 · 파기 실행 알림
+    private readonly privacy: PrivacyService,   // v10.181 (D170) 개인정보 권리 요청 기한 알림
   ) {}
 
   /**
@@ -485,8 +487,17 @@ export class SchedulerService {
         const ph = await this.roleReview.purgeHealth();
         if (ph.failedRun) await this.alert('PII_PURGE_FAILED', 'CRITICAL', `개인정보 파기 작업이 실패했습니다(${ph.failedRun.at}) — 운영 화면 위험감지 › 파기 기록에서 오류를 확인하십시오`, { runId: ph.failedRun.id, at: ph.failedRun.at, error: ph.failedRun.error });
         if (ph.missedHours !== null) await this.alert('PII_PURGE_MISSED', 'WARN', ph.missedHours < 0 ? '개인정보 파기 작업이 한 번도 돌지 않았습니다 — 정기 작업(scheduler)을 확인하십시오' : `개인정보 파기 작업이 ${ph.missedHours}시간째 돌지 않았습니다 — 정기 작업(scheduler)을 확인하십시오`, { hours: ph.missedHours });
+        /* v10.181 (D170 · docs/283) — 개인정보 권리 요청 처리 기한 2일 안(넘긴 것 포함) · 요청 · 기한마다 한 번 */
+        const pq = await this.privacy.dueAlerts();
+        if (pq.length) {
+          const late = pq.filter((x) => x.daysLeft < 0).length;
+          await this.alert('PRIVACY_REQUEST_DUE', late ? 'CRITICAL' : 'WARN',
+            `개인정보 권리 요청 ${pq.length}건 처리 기한이 2일 안입니다${late ? `(기한 넘김 ${late}건)` : ''} — 운영 화면 위험감지 › 권리 요청에서 처리하십시오`,
+            { keys: pq.map((x) => `${x.id}:${x.dueOn}`), items: pq });
+        }
         affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours, piiReviewDue: pr.alert ? pr.month : null,
-          roleReviewDue: rr.alert ? rr.quarter : null, purgeFailed: ph.failedRun?.id ?? null, purgeMissedHours: ph.missedHours };
+          roleReviewDue: rr.alert ? rr.quarter : null, purgeFailed: ph.failedRun?.id ?? null, purgeMissedHours: ph.missedHours,
+          privacyDue: pq.length };
         break;
       }
 

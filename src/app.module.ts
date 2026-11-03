@@ -117,6 +117,8 @@ import { PiiReviewService } from './modules/admin/pii-review.service';
 import { RoleReviewService } from './modules/admin/role-review.service';   // v10.180 (D169) 운영자 권한 점검 · 파기 기록
 import { MfaService } from './modules/identity/mfa.service';   // v10.180 (D169) 운영자 2단계 인증
 import { MfaController } from './modules/identity/mfa.controller';
+import { PrivacyService } from './modules/identity/privacy.service';   // v10.181 (D170) 회원 개인정보 스스로 관리
+import { PrivacyController } from './modules/identity/privacy.controller';
 import { SiteService } from './modules/site/site.service';
 import { BillingController } from './modules/billing/billing.controller';
 import { BillingService } from './modules/billing/billing.service';
@@ -319,6 +321,7 @@ import { LeadService } from './modules/lead/lead.service';
     LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
     OpsReviewController,     // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
     MfaController,           // v10.180 (D169) 운영자 2단계 인증
+    PrivacyController,       // v10.181 (D170) 내 정보 내려받기 · 로그인 기록 · 권리 요청
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
@@ -339,6 +342,7 @@ import { LeadService } from './modules/lead/lead.service';
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
     RoleReviewService, MfaService,   /* v10.180 (D169) */
+    PrivacyService,   /* v10.181 (D170) */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */
     ConversationSummaryService,   /* v10.31 w1 */

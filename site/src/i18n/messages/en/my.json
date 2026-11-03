@@ -5,7 +5,7 @@
     "profile": "Profile · Business info",
     "settings": "Settings · Notifications",
     "reports": "My reports",
-    "events": "My event entries",
+    "events": "My event entries", "privacy": "Privacy · security",
     "menu": {
       "my": "My page",
       "main": "Home",
@@ -233,7 +233,7 @@
     "bizReverify": "Re-verify business info",
     "hWithdraw": "Delete account",
     "withdrawB": "If you want to stop using SogaeBank",
-    "withdrawText": "You can delete your account only when there are no ongoing deals · settlements · orders. The deletion page checks this first."
+    "withdrawText": "You can delete your account only when there are no ongoing deals · settlements · orders. The deletion page checks this first.", "hPrivacy": "Privacy · security", "privacyB": "Manage your data and logins yourself", "privacyText": "Download my data · login history · sign out of all devices · privacy requests (access · correction · deletion · suspension).", "toData": "Download my data", "toSecurity": "Login history · security", "toPrivacy": "Privacy requests"
   },
   "accForm": {
     "relogin": "You have been logged out. Please log in again.",
@@ -717,5 +717,8 @@
     "newApplyOff": "You cannot apply again while an application is in progress",
     "reviewer": "Open reviewer screen",
     "brokers": "Broker listing integration"
-  }
+  },
+  "data": {"title": "Download my data", "sub": "Get the data SoGaeBank keeps about you in one file.", "backProfile": "Back to profile", "whatB": "Included:", "whatText": "profile · terms agreements · listings · requests · referral codes · success fees · plaza posts · comments · votes · likes · town · mall orders · returns · addresses · points · notifications · inquiries · privacy requests · login history.", "notIncluded": "Other members' names and contacts, internal staff notes and your password are not included. The file (JSON) opens in a text editor or Excel (Data › Get Data › From JSON).", "loadFail": "Could not load the information. Please refresh in a moment.", "left": "You can download {left} more time(s) today ({limit} per day).", "limitReached": "No more downloads today ({limit} per day). Please try again tomorrow.", "privacyLink": "To correct, delete or suspend processing,", "privacyLinkGo": "make a privacy request", "password": "Current password (identity check)", "errPw": "Please enter your current password to confirm it's you.", "submit": "Download my data", "working": "Collecting…", "done": "Saved {file}. Please keep it somewhere safe."},
+  "security": {"title": "Login history · security", "sub": "Check recent logins and sign out other devices.", "backProfile": "Back to profile", "loadFail": "Could not load login history. Please refresh in a moment.", "failsB": "Wrong password {n} time(s) in the last 7 days.", "failsText": "If it wasn't you, change your password and press “Sign out of all devices” below.", "hHistory": "Last 30 logins", "empty": "No login history yet.", "thAt": "When", "thResult": "Result", "thIp": "IP (first two parts)", "thBrowser": "Browser · device", "ok": "Logged in", "fail": "Wrong password", "keep": "Login history is kept for {days} days, then deleted. Only the first two parts of the IP and the browser type are kept.", "hLogoutAll": "Sign out of all devices", "logoutAllText": "Signs out every other phone or computer. You stay signed in on this device.", "password": "Current password (identity check)", "errPw": "Please enter your current password to confirm it's you.", "confirm": "Sign out of all other devices?", "submit": "Sign out of all devices", "done": "Signed out of all other devices."},
+  "privacy": {"title": "Privacy requests", "sub": "Request access to, correction, deletion or suspension of your personal data.", "backProfile": "Back to profile", "selfB": "You can do these right away:", "selfText": "access with “Download my data”, correct your name or contact in your profile, and delete everything by closing your account.", "toData": "Download my data", "toProfile": "Profile", "toWithdraw": "Close account", "loadFail": "Could not load your requests. Please refresh in a moment.", "hNew": "New request", "due": "We handle requests within {days} days of receipt and notify you of the result. If needed we may extend once and tell you why.", "kindLabel": "Request type", "choose": "Please choose", "bodyLabel": "Details", "bodyPh": "Describe what you would like us to do (5–1,000 characters). Do not enter resident registration numbers or passwords.", "errKind": "Please choose a request type.", "errBody": "Please enter at least 5 characters.", "submit": "Send request", "done": "Request received.", "hMine": "My requests", "empty": "No requests yet.", "thAt": "Sent", "thKind": "Type", "thBody": "Details", "thDue": "Due", "thStatus": "Status · result", "extendReason": "Extension reason", "kind": {"ACCESS": "Access", "CORRECT": "Correction", "DELETE": "Deletion", "SUSPEND": "Suspension"}, "status": {"OPEN": "Received", "EXTENDED": "Extended", "DONE": "Done", "REJECTED": "Declined"}}
 }

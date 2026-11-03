@@ -4764,6 +4764,75 @@
    ],
    "nav": "SB-HOM-ETC-020",
    "new": true
+  },
+  {
+   "id": "SB-MYP-DAT-010",
+   "name": "내 정보 내려받기",
+   "group": "MYP",
+   "url": "/my/account/data",
+   "p": "마이페이지",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/data-export",
+    "POST /me/data-export"
+   ],
+   "nav": "SB-MYP-ACC-010",
+   "note": "2026-11-03 v10.181 D170 — 비밀번호 확인 뒤 본인 정보 JSON 하나(다른 회원 정보 · 운영 메모 · 비밀값 없음) · 하루 privacy.export_daily(3)번 · 감사 MY_DATA_EXPORT(건수만)."
+  },
+  {
+   "id": "SB-MYP-SEC-010",
+   "name": "로그인 기록 · 모든 기기 로그아웃",
+   "group": "MYP",
+   "url": "/my/account/security",
+   "p": "마이페이지",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/login-history",
+    "POST /me/logout-all"
+   ],
+   "nav": "SB-MYP-ACC-010",
+   "note": "2026-11-03 v10.181 D170 — 최근 30건(IP 앞 두 마디 · 브라우저 종류) · 보관 privacy.login_history_days(180) · 모든 기기 로그아웃 = token_version + 1(이 기기는 새 증표)."
+  },
+  {
+   "id": "SB-MYP-PRV-010",
+   "name": "개인정보 권리 요청",
+   "group": "MYP",
+   "url": "/my/account/privacy",
+   "p": "마이페이지",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/privacy-requests",
+    "POST /me/privacy-requests"
+   ],
+   "nav": "SB-MYP-ACC-010",
+   "note": "2026-11-03 v10.181 D170 — 열람 · 정정 · 삭제 · 처리정지 · 기한 privacy.request_due_days(10)일 · 처리 결과는 알림."
+  },
+  {
+   "id": "SB-ADM-PRQ-010",
+   "name": "개인정보 권리 요청 처리",
+   "group": "ADM",
+   "url": "/admin/privacy-requests",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/privacy-requests",
+    "POST /admin/privacy-requests/{id}/decide"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.181 D170 — 열린 요청 기한 순 · 처리 완료 · 거절(고칠 수 없음) · 연장 한 번 · 기한 2일 안이면 하루 요약 때 PRIVACY_REQUEST_DUE."
   }
  ],
  "deferred": [

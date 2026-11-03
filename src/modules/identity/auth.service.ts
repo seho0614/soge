@@ -9,6 +9,7 @@ import { clientIpRaw, isInternalIp, settingInt } from './abuse-guard';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
+import { recordLogin } from './login-history';
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -41,6 +42,7 @@ export class AuthService {
     );
     // 계정 없음과 비밀번호 불일치를 구분하지 않습니다 — 계정 존재 여부가 새면 안 됩니다
     if (!acc || !acc.password_hash || !(await bcrypt.compare(password, acc.password_hash))) {
+      if (acc) await recordLogin(this.db, acc.id, false);   // v10.181 — 가입된 계정만(없는 이메일은 남기지 않음)
       const [f] = await this.db.query<{ fails: number; locked_until: Date | null }>(
         `SELECT fails, locked_until FROM fn_login_fail($1, $2)`, [email, ipKey]);
       if (f && f.locked_until) {
@@ -68,6 +70,7 @@ export class AuthService {
     }
 
     await this.db.query(`UPDATE accounts SET last_login_at = now() WHERE id = $1`, [acc.id]);
+    await recordLogin(this.db, acc.id, true);
     return this.issue(acc.id);
   }
 
