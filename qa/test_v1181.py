@@ -88,11 +88,16 @@ def psql(sql):
     return (r.stdout.strip(), r.stderr.strip())
 
 
+def clr():
+    """일부러 틀린 비밀번호가 같은 IP 1분 5회 한도(TOO_MANY_ATTEMPTS)에 닿지 않게 · 끝난 뒤 다음 시험(srv_poll 로그인)이 막히지 않게"""
+    psql("DELETE FROM auth_throttle")
+
+
 CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
 
 if API and DB:
     bid = psql("SELECT id FROM accounts WHERE email = 'buyer@x.com'")[0]
-    psql("SELECT fn_login_clear('buyer@x.com')")
+    clr()
     TA = call('POST', '/auth/login', None, {'email': 'admin@x.com', 'password': PW})[1].get('accessToken')
 
     # ── ② 로그인 기록 · 모든 기기 로그아웃 ─────────────────────────────────
@@ -110,6 +115,7 @@ if API and DB:
        and top[0].get('uaKind') == 'Chrome · Windows' and jh.get('keepDays') == 180 and jh.get('recentFails', 0) >= 1,
        f'{f1} {s1} · {n1 - n0} · {h} · {top} · {jh.get("keepDays")} {jh.get("recentFails")}')
 
+    clr()
     w, jw = call('POST', '/me/logout-all', TB, {'password': 'wrong-password-2'})
     lo, jl = call('POST', '/me/logout-all', TB, {'password': PW})
     T2 = jl.get('accessToken')
@@ -121,7 +127,7 @@ if API and DB:
        w == 422 and jw.get('code') == 'CURRENT_PASSWORD_WRONG' and lo == 200 and T2 and jl.get('refreshToken') and o1 in (401, 403) and o2 == 200
        and o3 in (401, 403) and la not in ('', '0'), f'{w} {jw.get("code")} · {lo} · {o1} · {o2} · {o3} · {la}')
     TB = T2
-    psql("SELECT fn_login_clear('buyer@x.com')")
+    clr()
 
     psql(f"INSERT INTO login_history (account_id, at, ok, ip_masked, ua_kind) VALUES ('{bid}', now() - interval '181 days', true, '10.0.*.*', 'v1181-old')")
     pg, _ = psql('SELECT fn_purge_auth_records()')
@@ -135,8 +141,8 @@ if API and DB:
     try:
         g0, jg0 = call('GET', '/me/data-export', TB)
         x0, jx0 = call('POST', '/me/data-export', TB, {'password': 'wrong-password-3'})
+        clr()
         x1, jx1 = call('POST', '/me/data-export', TB, {'password': PW})
-        psql("SELECT fn_login_clear('buyer@x.com')")
         data = jx1.get('data') or {}
         SECT = ['profile', 'termAgreements', 'listings', 'requests', 'referralCodes', 'successFees', 'posts', 'comments', 'pollVotes', 'favorites',
                 'town', 'healthOrders', 'healthReturns', 'addresses', 'points', 'notifications', 'inquiries', 'privacyRequests', 'loginHistory']
@@ -159,7 +165,7 @@ if API and DB:
            f'{au[:80]} · {used} · {x2} {jx2.get("code")} · {g2.get("left")}')
     finally:
         psql("UPDATE site_settings SET value = '3' WHERE key = 'privacy.export_daily'")
-        psql("SELECT fn_login_clear('buyer@x.com')")
+        clr()
 
     # ── ④ 권리 요청 ───────────────────────────────────────────────────────
     BODY = '시험 v1181 — 소개광장 글의 휴대폰 번호를 지워 주십시오 010-0000-0000'
@@ -218,6 +224,7 @@ if API and DB:
     for x in made + [i for i in psql(f"SELECT string_agg(id::text, ' ') FROM privacy_requests WHERE account_id = '{bid}' AND status IN ('OPEN','EXTENDED')")[0].split() if i not in made]:
         call('POST', f'/admin/privacy-requests/{x}/decide', TA, {'action': 'DONE', 'note': '시험 v1181 — 정리용 처리 완료'})
     psql("DELETE FROM ops_alerts WHERE alert_code = 'PRIVACY_REQUEST_DUE' AND raised_at > now() - interval '10 minutes'")
+    clr()
 else:
     print('  (API · DB 없음 — ②③④⑤ 건너뜀)')
 
