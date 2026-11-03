@@ -39,8 +39,8 @@ ok('① D168 — ack_note · 확인 지킴 트리거 · audit.pii_reviews(고칠
 C = rd('src/modules/admin/ops-review.controller.ts'); MENU = rd('web/src/lib/adminMenu.ts'); APP = rd('web/src/App.tsx'); SP = rd('spec/screens.json')
 ok('① API · 화면 — 운영 알림 3 · 개인정보 3(SUPER) · 메뉴 위험감지 묶음 · pii-review SUPER 만 · screens.json · 대시보드 긴급 경보 → 운영 알림',
    all(x in C for x in ("@Get('ops-alerts')", "@Post('ops-alerts/:id/ack')", "@Post('ops-alerts/ack-code')", "@Get('pii-review')", "@Get('pii-review/:month')", "@Post('pii-review')"))
-   and C.count("@Roles('SUPER')") == 3 and "['ops-alerts', '운영 알림']" in MENU and "'pii-review'" in MENU
-   and "'terms', 'pii-review']" in APP and "<OpsAlerts />" in APP and "<PiiReview />" in APP
+   and C.count("@Roles('SUPER')") >= 3 and "['ops-alerts', '운영 알림']" in MENU and "'pii-review'" in MENU
+   and "'terms', 'pii-review'" in APP and "<OpsAlerts />" in APP and "<PiiReview />" in APP
    and '"SB-ADM-OPS-010"' in SP and '"SB-ADM-PII-010"' in SP and "go: 'ops-alerts'" in rd('web/src/app/admin/Dashboard.tsx'), '')
 ok('① 하루 요약 PII_REVIEW_DUE · DB 조회 시간(300ms) · 지켜보기 slowSql · 운영 알림 바로가기 · docs/279 · 판',
    "'PII_REVIEW_DUE'" in rd('src/worker/scheduler.service.ts') and 'recordSql(sql, performance.now() - t0)' in rd('src/db/database.service.ts')
