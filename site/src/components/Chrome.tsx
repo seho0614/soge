@@ -53,6 +53,11 @@ export const OWN_HEADER_PATHS = ['/partner'];
 export const OWN_FOOTER_PATHS: string[] = [];
 const under = (p: string | null, list: string[]) => !!p && list.some((b) => p === b || p.startsWith(b + '/'));
 
+/** v10.188 (docs/294) — 공통 머리줄(UniHeader) 하나 — 메인 · 두 관 · 일반 화면 모두. 전용 상단바 주소(OWN_HEADER_PATHS)만 뺍니다 */
+export function AnyHeader({ children }: { children: React.ReactNode }) {
+  return under(usePathname(), OWN_HEADER_PATHS) ? null : <>{children}</>;
+}
+
 /** 일반 머리줄 — base 화면 중 OWN_HEADER_PATHS 를 뺀 곳에서만 */
 export function BaseHeader({ children }: { children: React.ReactNode }) {
   const p = usePathname();

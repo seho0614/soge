@@ -16,6 +16,7 @@
  * 조회는 여기서 한 번에 합니다. API 하나가 실패해도 그 칸만 비웁니다(.catch).
  *   늘        GET /gwans · /footer-links · /site-settings/public · /ads/serve?slot=HERO(성향 광고) · /me/summary(로그인) · /community/polls?scope=home(투표)
  *             · /weather/today?region=(v10.49 오늘의 날씨 · 10분 캐시 · 지역은 쿠키 sgb_wx · 없으면 운영이 정한 처음 지역)
+ *             · /agent/chat/status(v10.188 「소뱅AI」 문구를 켤지) · /search/keywords?limit=4(v10.188 추천 칩)
  *   live 만   GET /listings · /requests · /health/products · /community/posts
  */
 import { cookies } from 'next/headers';
@@ -54,7 +55,7 @@ export default async function Home() {
   const wxPick = (await cookies()).get(WX_COOKIE)?.value ?? '';
   const wxRegion = WX_REGION_RE.test(wxPick) ? wxPick : '';
 
-  const [gwans, links, settings, ad, summary, polls, weather] = await Promise.all([
+  const [gwans, links, settings, ad, summary, polls, weather, aiStat, hotKw] = await Promise.all([
     apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]),
     apiGet<FooterLink[]>('/footer-links', 300).catch(() => [] as FooterLink[]),
     /* 60초 — 운영이 넣은 사회관계망 주소 · 법정 표시가 1분 안에 메인에 반영됩니다(v10.14 · 전에는 5분) */
@@ -65,7 +66,13 @@ export default async function Home() {
     apiGetVisitor<Poll[]>('/community/polls?scope=home').catch(() => [] as Poll[]),
     /* v10.49 (D103) 오늘의 날씨 — 기상청 자료는 API 가 발표마다 한 번만 받습니다. 실패하면 띠를 그리지 않습니다 */
     apiGet<WeatherToday>(`/weather/today${wxRegion ? `?region=${wxRegion}` : ''}`, 600).catch(() => null),
+    /* v10.188 (docs/294 · Hero ②) — AI 상담이 켜졌을 때만 「소뱅AI」 문구(꺼져 있으면 「통합 검색」 — 실제 기능보다 크게 말하지 않게) */
+    apiGet<{ enabled?: boolean }>('/agent/chat/status', 60).catch(() => null),
+    /* v10.188 (Hero ③) — 추천 칩은 실제로 결과가 나온 인기 검색어(제한업종 낱말 뺌 · 검색 팝업과 같은 규칙). 3개 미만이면 사전의 예시 칩 */
+    apiGet<{ items?: { term: string }[] }>('/search/keywords?limit=4', 300).catch(() => null),
   ]);
+  const aiOn = aiStat?.enabled === true;
+  const hot = (hotKw?.items ?? []).map((k) => k.term).filter(Boolean);
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
   const on = (c: string) => live.includes(c);
 
@@ -98,7 +105,7 @@ export default async function Home() {
   return (
     <Msgs ns={['main']}>
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
-        live={live} ad={heroAd} slides={slides} start={start} chips={CHIPS.map((k) => t(`hero.chips.${k}`))} year={new Date().getFullYear()} polls={polls}
+        live={live} ad={heroAd} slides={slides} start={start} chips={hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
         weather={weather} />
     </Msgs>
   );

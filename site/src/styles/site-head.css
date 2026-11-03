@@ -1,0 +1,53 @@
+/* v10.188 (docs/294) — 사이트 공통 머리줄(components/common/UniHeader.tsx) · 모든 화면에서 불러옵니다(app/layout.tsx).
+ * 모양은 메인 머리줄(styles/home.css 의 .home-hd · v10.13 그림 · v10.56 시트 색)과 같습니다 — 이름만 sh- 로 따로 두어 다른 화면 규칙에 닿지 않게 합니다.
+ * 지금 있는 관은 주황 밑줄(전 소개광장 · 소개몰 머리줄 방식) · 가입 단추는 어느 관이든 시트 주요 단추(남색) */
+.sh-hd {
+  position: sticky; top: 0; z-index: 40; background: rgba(255, 255, 255, .95);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px);
+  border-radius: 0 0 var(--sgb-r-lg, 16px) var(--sgb-r-lg, 16px); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10));
+  font-family: var(--sgb-font-body); color: var(--sgb-ink); font-size: 14px; line-height: 1.5;
+  --sgb-btn-bg: var(--sgb-navy, #00245a); --sgb-btn-fg: #fff;   /* 관 표시(data-sgb-gwan) 안에 있어도 가입 단추는 남색 */
+}
+.sh-hd *, .sh-hd *::before, .sh-hd *::after { box-sizing: border-box; }
+.sh-hd a { color: inherit; text-decoration: none; }
+.sh-hd img { display: block; max-width: 100%; }
+.sh-hd a:focus-visible, .sh-hd button:focus-visible { outline: 3px solid #bfc8d6; outline-offset: 2px; }
+.sh-in { max-width: 1248px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; gap: 36px; height: 68px; }
+.sh-logo { display: inline-flex; align-items: center; flex: 0 0 auto; }
+.sh-nav { display: flex; gap: 28px; font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; }
+.sh-nav a { padding: 6px 0; }
+.sh-nav a:hover { color: var(--sgb-navy, #00245a); }
+.sh-nav a.on { color: var(--sgb-navy, #00245a); font-weight: 800; box-shadow: inset 0 -3px 0 var(--sgb-orange, #ffa03e); }
+.sh-hdr { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.sh-icbtn { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-tile, #f2f4f7); border: 0; display: grid; place-items: center; color: var(--sgb-ink); cursor: pointer; }
+.sh-icbtn:hover { background: #ebeef2; color: var(--sgb-navy, #00245a); }
+.sh-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; }
+.sh-txt:hover { color: var(--sgb-navy, #00245a); }
+.sh-pill {
+  height: var(--sgb-btn-h, 40px); padding: 0 var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); border: 1px solid var(--sgb-btn2-line, #dbdbdb); background: var(--sgb-btn2-bg, #fff);
+  font: var(--sgb-btn-fw, 700) var(--sgb-btn-fs, 14px)/1 var(--sgb-font-body); color: var(--sgb-ink); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; cursor: pointer;
+}
+.sh-pill.p { background: var(--sgb-btn-bg); color: var(--sgb-btn-fg); border-color: var(--sgb-btn-bg); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); }
+.sh-pill.p:hover { filter: brightness(.94); }
+.sh-bell, .sh-cart { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; font-size: 20px; color: var(--sgb-ink); }
+.sh-num { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sgb-navy, #00245a); color: #fff; font: 700 11px/18px var(--sgb-font-body); text-align: center; }
+@media (max-width: 1240px) {
+  .sh-in { gap: 20px; }
+  .sh-nav { gap: 18px; }
+}
+@media (max-width: 1100px) {
+  .sh-txt { display: none; }   /* 좁은 PC 에서 머리줄이 넘치지 않게 — 파트너센터는 바닥줄 · 나의공간에서도 갑니다 */
+}
+/* ── 휴대폰 — 두 줄(로고 · 단추 / 옆으로 미는 메뉴) ───────────────────────── */
+@media (max-width: 640px) {
+  .sh-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding: 10px 16px 8px; }
+  .sh-logo img { height: 34px; width: auto; }
+  .sh-hdr { gap: 6px; }
+  .sh-icbtn { width: 36px; height: 36px; }
+  .sh-pill { height: 36px; padding: 0 13px; font-size: 14px; }
+  .sh-txt { display: inline; margin-right: 0; }
+  .sh-txt.pc-only { display: none; }
+  .sh-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
+  .sh-nav::-webkit-scrollbar { display: none; }
+  .sh-bell, .sh-cart { width: 34px; height: 34px; }
+}

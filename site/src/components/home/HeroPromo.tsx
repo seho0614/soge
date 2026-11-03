@@ -40,25 +40,38 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
   const n = slides.length + (ad ? 1 : 0);
   const [i, setI] = useState(start < slides.length + (ad ? 1 : 0) ? start : 0);
   const [hold, setHold] = useState(false);
+  /* v10.188 (docs/294 · Hero ①) — 멈춤 단추로 멈춘 것(휴대폰은 올려 둘 수 없어 멈출 길이 없었음 · 접근성 WCAG 2.2.2) */
+  const [paused, setPaused] = useState(false);
+  const box = useRef<HTMLElement | null>(null);
+  const [seen, setSeen] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const sent = useRef(false);
   const onAd = !!ad && i === 0;
 
-  /* 노출 기록 — 광고 장이 보일 때 한 번만 */
+  /* v10.188 — 카드가 화면에 실제로 보이는지(절반 이상). 내려가 있으면 노출로 세지 않습니다(과금 근거) */
   useEffect(() => {
-    if (!onAd || sent.current || !ad?.id) return;
+    const el = box.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setSeen(true); return; }
+    const io = new IntersectionObserver(([e]) => setSeen(!!e?.isIntersecting), { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  /* 노출 기록 — 광고 장이 화면에 보일 때 한 번만 */
+  useEffect(() => {
+    if (!onAd || !seen || sent.current || !ad?.id) return;
     sent.current = true;
     fetch(`/api/v1/ads/${encodeURIComponent(ad.id)}/impression?slot=HERO`, { method: 'POST' }).catch(() => {});
-  }, [onAd, ad?.id]);
+  }, [onAd, seen, ad?.id]);
 
   /* 7초마다 다음 장 — 올려 두었거나(hold) 「움직임 줄이기」를 켠 사람에게는 넘기지 않습니다 */
   useEffect(() => {
-    if (n < 2 || hold) return;
+    if (n < 2 || hold || paused) return;
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const t = window.setInterval(() => setI((x) => (x + 1) % n), 7000);
     return () => window.clearInterval(t);
-  }, [n, hold]);
+  }, [n, hold, paused]);
 
   async function onAdCta() {
     if (!ad?.id || busy) return;
@@ -75,7 +88,7 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
   const s = ad ? slides[i - 1] : slides[i];
 
   return (
-    <aside className="home-promo" aria-label={t('promo.aria')} aria-roledescription="carousel"
+    <aside ref={box} className="home-promo" aria-label={t('promo.aria')} aria-roledescription="carousel"
       onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)}
       onFocus={() => setHold(true)} onBlur={() => setHold(false)}>
       <div className={`home-ps${onAd ? ' ad' : ''}`} data-slide={onAd ? 'ad' : s?.k} {...(onAd ? { 'data-adbox': 'HERO' } : {})}>
@@ -83,8 +96,16 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
           <span className="home-ptag">{onAd ? (ad!.label ?? t('promo.adLabel')) : s!.tag}</span>
           {n > 1 && (
             <span className="home-pnav">
+              {/* v10.188 (Hero ①) — 이전 · 멈춤/다시 · 다음 */}
+              <button type="button" className="home-pnext prev" aria-label={t('promo.prev')} data-promo="prev" onClick={() => { setI((x) => (x - 1 + n) % n); setMsg(''); }}>
+                <Line name="chev" size={16} w={2.6} />
+              </button>
               <span className="home-pno" aria-live="polite">{i + 1} / {n}</span>
-              <button type="button" className="home-pnext" aria-label={t('promo.next')} onClick={() => { setI((x) => (x + 1) % n); setMsg(''); }}>
+              <button type="button" className="home-pnext pp" aria-label={paused ? t('promo.play') : t('promo.pause')} aria-pressed={paused} data-promo="pause"
+                onClick={() => setPaused((x) => !x)}>
+                {paused ? <span aria-hidden>▶</span> : <span aria-hidden>❚❚</span>}
+              </button>
+              <button type="button" className="home-pnext" aria-label={t('promo.next')} data-promo="next" onClick={() => { setI((x) => (x + 1) % n); setMsg(''); }}>
                 <Line name="chev" size={16} w={2.6} />
               </button>
             </span>

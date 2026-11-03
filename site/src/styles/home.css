@@ -45,6 +45,9 @@
 /* v10.187 (docs/293) — 머리줄 「파트너센터」 글자 링크(관 머리줄 오른쪽 글자 링크와 같은 무게) */
 .home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; }
 .home-txt:hover { color: var(--hv); }
+/* v10.188 (docs/294 · Hero ①) — 안내 카드 이전 · 멈춤 단추 */
+.home-pnext.prev svg { transform: rotate(180deg); }
+.home-pnext.pp { font-size: 10px; font-weight: 800; letter-spacing: -1px; }
 
 /* 꼬리표 */
 .home-bdg { display: inline-flex; align-items: center; font-size: 12px; font-weight: 800; border-radius: var(--sgb-r-md, 11px); padding: 3px 11px; color: #fff; white-space: nowrap; }

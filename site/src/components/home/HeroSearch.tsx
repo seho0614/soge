@@ -15,6 +15,7 @@
  *   창업         소개창업                                           → /search?q=&gwanCode=BIZ
  *   동네정보     소개광장 글                                        → /search?q=&tab=CMU
  *   사람/전문가  소개자 + 안심소개(전문 업종)                        → /search?q=&gwanCode=MAL
+ * v10.188 (docs/294) — AI 상담이 꺼져 있으면 첫 탭 이름은 「통합 검색」(같은 범위 · 실제로는 단어 검색이라).
  * 아래 추천 칩(HomeView)을 누르면 그 말로 팝업이 열립니다(시안 .mh-chip — 검색창에 넣고 input 을 쏨).
  * 자바스크립트가 없으면 폼 GET 으로 그 탭의 결과 화면에 갑니다. 빈 검색어만 여기서 막습니다(시안 toast 문구).
  */
@@ -40,7 +41,7 @@ const TABS: Tab[] = [
   { k: 'pro', action: '/search', gwan: 'MAL' },
 ];
 
-export function HeroSearch({ live }: { live: string[] }) {
+export function HeroSearch({ live, ai = false }: { live: string[]; ai?: boolean }) {
   const tr = useTranslations('main');
   const tabs = TABS.filter((t) => !t.gwan || live.includes(t.gwan));
   const [tab, setTab] = useState<SearchScope>('ai');
@@ -72,7 +73,7 @@ export function HeroSearch({ live }: { live: string[] }) {
       <div className="home-stabs" role="tablist" aria-label={tr('heroSearch.tabsAria')}>
         {tabs.map((t) => (
           <button key={t.k} type="button" role="tab" aria-selected={t.k === cur.k} data-stab={t.k}
-            className={`home-stab${t.k === cur.k ? ' on' : ''}`} onClick={() => { setTab(t.k); setMsg(''); }}>{tr(`heroSearch.tabs.${t.k}.t`)}</button>
+            className={`home-stab${t.k === cur.k ? ' on' : ''}`} onClick={() => { setTab(t.k); setMsg(''); }}>{tr(t.k === 'ai' && !ai ? 'heroSearch.tabs.ai.tOff' : `heroSearch.tabs.${t.k}.t`)}</button>
         ))}
       </div>
       <form className="home-sb" role="search" action={cur.action} method="get" data-scope={cur.k} noValidate

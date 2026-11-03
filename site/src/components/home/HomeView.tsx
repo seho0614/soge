@@ -24,7 +24,7 @@ import type { AdServe, MeSummary, WeatherToday } from './types';
 import type { Poll as PollData } from '../community/poll';
 import { HERO_SEARCH_EVENT, HeroSearch } from './HeroSearch';
 import { HeroPromo, type PromoSlide } from './HeroPromo';
-import { DemoBar, HomeFooter, HomeHeader } from './Frame';
+import { DemoBar, HomeFooter } from './Frame';
 import { isOps } from '@/components/common/links';
 import { Line, Pic } from './Icons';
 import { Core, ForMe, Needs, Picks, Poll, Startup, Strip, Today, Town, Trust } from './Sections';
@@ -50,24 +50,26 @@ export interface HomeViewProps {
   polls: PollData[];
   /** v10.49 (D103) 오늘의 날씨 — 없거나 available=false 면 띠를 그리지 않습니다 */
   weather: WeatherToday | null;
+  /** v10.188 (docs/294) — AI 상담이 켜졌는가. 꺼져 있으면 「소뱅AI」 대신 「통합 검색」 문구 */
+  ai?: boolean;
 }
 
-export function HomeView({ c, gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather }: HomeViewProps) {
+export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false }: HomeViewProps) {
   const t = useTranslations('main');
   const tq = useTranslations('gwan.qm');
   const on = (code: string) => live.includes(code);
   return (
     <div className="home" data-content={c.mode}>
-      <HomeHeader gwans={gwans} loggedIn={loggedIn} summary={summary} />
+      {/* v10.188 (docs/294) — 머리줄은 layout 의 공통 머리줄(UniHeader · 이 머리줄 모양 그대로)이 그립니다 */}
 
       <section className="home-hero" aria-labelledby="home-h1">
         <div className="home-in">
           <div className="home-heroin">
             <div className="home-herol">
-              <span className="home-aibdg"><Pic name="spark-s" h={19} /> {t('hero.aiBadge')}</span>
-              <h1 id="home-h1">{t('hero.titleA')}<br />{t.rich('hero.titleB', { em: (x) => <em>{x}</em> })}</h1>
+              <span className="home-aibdg" data-hero-ai={ai ? 'on' : 'off'}><Pic name="spark-s" h={19} /> {t(ai ? 'hero.aiBadge' : 'hero.aiBadgeOff')}</span>
+              <h1 id="home-h1">{t('hero.titleA')}<br />{t.rich(ai ? 'hero.titleB' : 'hero.titleBOff', { em: (x) => <em>{x}</em> })}</h1>
               <p className="home-lead">{t('hero.leadA')}{' '}<br />{t('hero.leadB')}</p>
-              <HeroSearch live={live} />
+              <HeroSearch live={live} ai={ai} />
             </div>
             <HeroPromo ad={ad} slides={slides} start={start} />
           </div>

@@ -4835,6 +4835,11 @@ h1{font-size:20px} h2{font-size:16px} h3{font-size:14px}
 
 .home-nav a:hover { color: var(--hv); }
 .home-hdr { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+/* v10.188 (docs/294) — 공통 머리줄: 메인(.home) 밖에서도 같은 색 · 글꼴 · 지금 관 주황 밑줄 · 가입 단추는 남색 */
+.sh-uni { --hv: var(--sgb-navy, #00245a); --hk: var(--sgb-ink, #0d1b33); --hv-w: #ebeef2; --hv-l: #bfc8d6; font-family: var(--sgb-font-body); color: var(--sgb-ink); --sgb-btn-bg: var(--sgb-navy, #00245a); --sgb-btn-fg: #fff; }
+.sh-uni a { color: inherit; text-decoration: none; }
+.sh-uni .gnb { display: flex; gap: 28px; font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; }
+.sh-uni .gnb a.on { color: var(--sgb-navy, #00245a); font-weight: 800; box-shadow: inset 0 -3px 0 var(--sgb-orange, #ffa03e); padding-bottom: 6px; }
 .home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; background: none; border: 0; cursor: pointer; font-family: inherit; }
 .home-icbtn { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-tile); display: grid; place-items: center; color: var(--hk); }
 .home-icbtn:hover { background: var(--hv-w); color: var(--hv); }
@@ -5844,6 +5849,8 @@ function header(o){
     var menu=liveGwan().map(function(g){ return {t:(HDNAME[g.code]||g.name), go:GDEST[g.code], code:g.code}; })
       .concat(fixed.map(function(m){
         return {t:m, tip:m+" — 담을 내용이 아직 정해지지 않았습니다(목적지 미정)."}; }));
+    /* v10.188 (docs/294) — 공통 머리줄(메인 머리줄 모양)로 · 지금 관은 o.on 이 가리키는 메뉴 */
+    if (window.__mxHeader) { var cm = menu[o.on]; return window.__mxHeader(cm ? (cm.code || NAVFIX[cm.t] || "") : ""); }
     return '<header class="hd"><div class="wrap hdin">'+logo()+
       '<nav class="gnb">'+menu.map(function(m,i){
         /* 관은 진짜 주소를 답니다 — 눌러도 가고, 새 탭으로 열어도 가고,
@@ -6552,17 +6559,21 @@ function header(o){
       '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(MHX_LINE[n]||"")+'</svg>'; }
   function mxBadge(t, tone, bw){ return '<span class="home-bdg '+tone+(bw?' fit" style="width:'+bw+'%':'')+'">'+esc(t)+'</span>'; }
   function mxLogo(){ return '<a class="home-logo" href="'+AUTH.homeHref()+'" aria-label="소개뱅크 메인으로">'+mxPic("logo",48,"소개뱅크")+'</a>'; }
+  window.__mxHeader = function(cur){ return mxHeader(cur); };   /* v10.188 — 다른 화면 머리줄도 이것 */
   function mxGwanHref(code){ return code==="HLT" ? "#/health" : AUTH.gwanHref(code); }
   function mxGwanOn(code){ return liveGwan().some(function(g){ return g.code===code; }); }
 
   /* 메인 전용 헤더 — 관 메뉴(관 이름 그대로) + 소개광장 + 이용안내 · 검색 · 로그인 · 무료 회원가입 */
-  function mxHeader(){
+  /* v10.188 (docs/294 · 대표 「머리줄 통일」) — 이 머리줄이 사이트 공통 머리줄입니다. 일반 화면 header() · 두 관 b2Header() · 소개몰 header() 가
+     window.__mxHeader(지금 관) 를 부릅니다. cur = 관 코드(MNY · MAL · BIZ · HLT) · "commu" · "guide" — 그 메뉴에 주황 밑줄 */
+  function mxHeader(cur){
     var inn = AUTH.isLoggedIn();
     var nm = (AUTH.user && AUTH.user() && AUTH.user().name) || "소개하니";
-    return '<header class="home-hd"><div class="home-in">'+mxLogo()+
+    var on = function(k){ return k === cur ? ' class="on" aria-current="page"' : ''; };
+    return '<header class="home-hd sh-uni"><div class="home-in">'+mxLogo()+
       '<nav class="gnb">'+liveGwan().map(function(g){
-        return '<a href="'+esc(mxGwanHref(g.code))+'">'+esc(g.name)+'</a>'; }).join("")+
-        '<a href="#" data-go="commu">소개광장</a><a href="#" data-go="guide">이용안내</a></nav>'+
+        return '<a href="'+esc(mxGwanHref(g.code))+'"'+on(g.code)+'>'+esc(g.name)+'</a>'; }).join("")+
+        '<a href="#" data-go="commu"'+on("commu")+'>소개광장</a><a href="#" data-go="guide"'+on("guide")+'>이용안내</a></nav>'+
       '<div class="home-hdr">'+
         '<button type="button" class="home-icbtn" data-mhx="search" aria-label="검색">'+mxLn("search",22,2.4)+'</button>'+
         /* v10.187 (docs/293 · 대표 「B안으로」) — 「파트너센터」 글자 링크 · 휴대폰 비로그인은 숨김 */
@@ -6903,6 +6914,7 @@ function header(o){
   }
   /* 두 관 전용 머리줄 — cur: "cmu"(소개광장) · "hlt"(소개몰 · v10.24) */
   function b2Header(cur){
+    if (window.__mxHeader) return window.__mxHeader(cur === "cmu" ? "commu" : cur === "hlt" ? "HLT" : cur === "mny" ? "MNY" : "");   /* v10.188 공통 머리줄 */
     var inn = AUTH.isLoggedIn(), nm = (AUTH.user && AUTH.user() && AUTH.user().name) || "소개하니";
     var lc = (S && S.lang) || "ko", n = 0;
     try { n = (window.__hltCartCount && window.__hltCartCount()) || 0; } catch (_) {}

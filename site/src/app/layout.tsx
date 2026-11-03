@@ -7,9 +7,10 @@ import { GLOBAL_NS, pick } from '@/i18n/messages';
 import { Footer } from '@/components/Footer';
 import { NoticeBar } from '@/components/NoticeBar';
 import { UpcomingTermsBar } from '@/components/UpcomingTerms';
-import { SiteHeader } from '@/components/common/SiteHeader';
-import { B2Tone, BaseFooter, BaseHeader, MainWrap, OnlySkin } from '@/components/Chrome';
-import { B2Footer, B2Header } from '@/components/b2/Frame';
+import { UniHeader } from '@/components/common/UniHeader';
+import { LangPick } from '@/i18n/LangPick';
+import { AnyHeader, BaseFooter, MainWrap, OnlySkin } from '@/components/Chrome';
+import { B2Footer } from '@/components/b2/Frame';
 import { AiChat } from '@/components/common/AiChat';
 import '@/styles/noto-sans-kr.css';   /* v10.31 (w1 · 공유) — F-11 */
 import '@/styles/tokens.css';
@@ -29,6 +30,7 @@ import '@/styles/proto-common.css';
 import '@/styles/proto-gwan.css';
 import '@/styles/proto-my.css';
 import '@/styles/proto-partner.css';
+import '@/styles/site-head.css';   // v10.188 공통 머리줄(docs/294)
 import '@/styles/ai-chat.css';   // v10.110 사이트 공통 AI 상담(docs/171)
 
 /* v10.95 — 제목 · 설명도 사전에서(한국어는 전과 같음) */
@@ -67,13 +69,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="skip-main" href="#main">{t('skipToMain')}</a>
         {/* v10.173 (D162) — 운영이 켠 안내 한 줄(site.notice_bar · 비면 그리지 않음) */}
         <NoticeBar settings={settings} locale={locale} />
-        {/* 20261002 (v10.13) — 메인(/)은 제 머리 · 바닥을 따로 그립니다(components/home). 다른 화면은 아래 그대로 */}
-        {/* v10.29 — 시안 일반 머리줄(components/common/SiteHeader). 메인(/) · 소개광장 · 소개몰은 제 머리줄을 그립니다. /partner/** 는 전용 상단바(Chrome.tsx OWN_HEADER_PATHS) */}
-        <BaseHeader><SiteHeader gwans={gwans} /></BaseHeader>
-        {/* 20261007 (v10.23) — 소개광장은 제시 디자인의 머리줄 · 바닥줄을 씁니다(components/b2). 소개몰(쇼핑몰)은 v10.25 에서 들어왔습니다 — 같은 머리줄에 「무료 회원가입」만 초록(B2Tone)
-            20261009 (v10.29) — 소개장터 메인(/money)도 이 머리줄 · 바닥줄을 씁니다(색조 money — 글꼴 · 치수 · 그림을 그 디자인대로) */}
-        <OnlySkin skin="b2"><B2Tone><B2Header gwans={gwans} /></B2Tone></OnlySkin>
-
+        {/* v10.188 (docs/294 · 대표 「머리줄 통일」) — 메인 · 관 · 일반 화면이 같은 머리줄(UniHeader · 메인 머리줄 모양).
+            전: 메인(home/Frame) · 소개광장 · 소개몰 · 소개장터 메인(b2/Frame) · 그 밖(common/SiteHeader) 세 가지. /partner/** 는 전용 상단바(Chrome.tsx OWN_HEADER_PATHS) */}
+        <AnyHeader><UniHeader gwans={gwans} lang={<LangPick />} /></AnyHeader>
         <MainWrap>{children}</MainWrap>
         {/* v10.161 (D151) — 시행 예정 약관이 있으면 바닥줄 위 한 줄(없으면 그리지 않음) */}
         <BaseFooter><UpcomingTermsBar /><Footer links={links} settings={settings} /></BaseFooter>

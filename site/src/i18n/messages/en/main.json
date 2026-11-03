@@ -1,6 +1,8 @@
 {
   "hero": {
     "aiBadge": "SogaeBank AI match",
+    "aiBadgeOff": "SogaeBank search",
+    "titleBOff": "<em>We connect the right referral</em> for you.",
     "titleA": "What are you looking for?",
     "titleB": "<em>SogaeBank AI finds the right referral</em> for you.",
     "leadA": "People, products, services, startups and local info —",
@@ -17,6 +19,9 @@
     "aria": "SogaeBank highlights",
     "adLabel": "Ad",
     "next": "Next slide",
+    "prev": "Previous slide",
+    "pause": "Pause slides",
+    "play": "Play slides",
     "whyMatched": "This ad matches your interests. ",
     "whyAll": "You’ll see general ads until you set up your interest profile. ",
     "profileChange": "Edit interests",
@@ -35,7 +40,7 @@
     "submitAria": "Search",
     "empty": "Tell us what you’d like a referral for.",
     "tabs": {
-      "ai": { "t": "AI search", "ph": "e.g. Recommend a Korean restaurant in Pangyo for my parents" },
+      "ai": { "t": "AI search", "tOff": "All search", "ph": "e.g. Recommend a Korean restaurant in Pangyo for my parents" },
       "product": { "t": "Products", "ph": "e.g. Food waste disposer, air purifier" },
       "service": { "t": "Services", "ph": "e.g. Office interior design, moving · cleaning" },
       "company": { "t": "Businesses", "ph": "e.g. Interior design businesses near me" },
