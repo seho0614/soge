@@ -73,9 +73,17 @@ if SITE and API:
             if not (m['uni'] and m['n'] == 1 and m['h'] < 100): mbad.append(f'{u} h={m["h"]} n={m["n"]}')
         ok(f'② PC {len(PAGES)}화면 — 머리줄 하나 · 큰 로고 · 지금 관 주황 밑줄 · 가입 남색 · 옛 머리줄 없음', not bad, str(bad[:3]))
         ok(f'② 휴대폰 {len(PAGES)}화면 — 머리줄 하나 · 100px 미만', not mbad, str(mbad[:3]))
-        pg = pc.new_page(); pg.goto(SITE + '/partners', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(400)
-        kp = pg.evaluate("() => ({ uni: !!document.querySelector('header[data-uni-header]'), old: !!document.querySelector('header.pc-hd') })"); pg.close()
-        ok('② 제휴 파트너센터(/partners) — 전 머리줄 그대로 · 공통 머리줄 없음', kp == {'uni': False, 'old': True}, str(kp))
+        # 제휴 파트너센터는 로그인해야 열림(비로그인은 로그인 화면으로) — 시험 파트너로
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import consent_ok
+        consent_ok.agree('intro@x.com', 'sgb-dev-1234')
+        rq = urllib.request.Request(API.rstrip('/') + '/auth/login', data=json.dumps({'email': 'intro@x.com', 'password': 'sgb-dev-1234'}).encode(),
+                                    headers={'content-type': 'application/json'}, method='POST')
+        ti = json.load(urllib.request.urlopen(rq, timeout=60)).get('accessToken', '')
+        ci = b.new_context(viewport={'width': 1280, 'height': 900}); ci.add_cookies([{'name': 'sgb_at', 'value': ti, 'url': SITE}])
+        pg = ci.new_page(); pg.goto(SITE + '/partners', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(400)
+        kp = pg.evaluate("() => ({ path: location.pathname, uni: !!document.querySelector('header[data-uni-header]'), old: !!document.querySelector('header.pc-hd') })"); ci.close()
+        ok('② 제휴 파트너센터(/partners · 시험 파트너) — 전 머리줄 그대로 · 공통 머리줄 없음', kp == {'path': '/partners', 'uni': False, 'old': True}, str(kp))
 
         st = json.load(urllib.request.urlopen(API.rstrip('/') + '/agent/chat/status', timeout=60))
         kw = json.load(urllib.request.urlopen(API.rstrip('/') + '/search/keywords?limit=4', timeout=60)).get('items') or []

@@ -65,8 +65,13 @@ if SITE and API:
            f'{pc} · {nav}')
         m0, _ = look(390, True, '')
         ok('② 휴대폰 비로그인 — 숨김 · 머리줄 두 줄 높이(100px 미만)', m0 and not m0['vis'] and m0['hdH'] < 100, str(m0))
-        m1, _ = look(390, True, TOK)
-        ok('② 휴대폰 로그인 — 보임', m1 and m1['vis'], str(m1))
+        # v10.188 — 휴대폰 로그인은 단추 줄이 넘치지 않게 메뉴 줄 끝(.sh-nav .m-only)에
+        c = b.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True); c.add_cookies([{'name': 'sgb_at', 'value': TOK, 'url': SITE}])
+        pg = c.new_page(); pg.goto(SITE + '/', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1200)
+        m1 = pg.evaluate("() => { const a = document.querySelector('.sh-nav .m-only'); const hd = document.querySelector('header[data-uni-header]');"
+                         " return a ? { vis: getComputedStyle(a).display !== 'none', href: a.getAttribute('href'), hdH: Math.round(hd.getBoundingClientRect().height) } : null }")
+        c.close()
+        ok('② 휴대폰 로그인 — 메뉴 줄 끝에 보임 · /partners · 머리줄 100px 미만', m1 and m1['vis'] and m1['href'] == '/partners' and m1['hdH'] < 100, str(m1))
         b.close()
 else:
     print('  (SITE · API 없음 — ② 건너뜀)')
