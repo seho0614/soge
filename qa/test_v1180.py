@@ -64,7 +64,7 @@ ok('① API · 화면 — 2단계 5 · 권한 점검 2(SUPER) · 파기 기록 1
    and all(x in OC for x in ("@Get('role-review')", "@Post('role-review')", "@Get('purge-log')"))
    and "['role-review', '운영자 권한']" in MENU and "['purge-log', '파기 기록']" in MENU and "['my-mfa', '내 2단계 인증']" in MENU
    and "'pii-review', 'role-review']" in APP and '<MfaGate status={mfa} onDone={checkMfa} />' in APP and 'data-mfa-reset' in rd('web/src/app/admin/Members.tsx')
-   and all(f'"{x}"' in SP for x in ('SB-ADM-MFA-010', 'SB-ADM-ROLE-010', 'SB-ADM-PURGE-010')), '')
+   and all(f'"{x}"' in SP for x in ('SB-ADM-MFA-010', 'SB-ADM-ROLE-010', 'SB-ADM-PRG-010')), '')
 SH = rd('deploy/aws/mfa-reset.sh')
 ok('① 비상 초기화 mfa-reset.sh(목록 · 이메일 · off · yes 확인 · 감사 기록) · 하루 요약 ROLE_REVIEW_DUE · PII_PURGE_FAILED · PII_PURGE_MISSED · docs/281 · 판',
    'DELETE FROM account_mfa' in SH and "'MFA_RESET_SERVER'" in SH and "'MFA_OFF_SERVER'" in SH and SH.count('[ "$a" = "yes" ]') == 2
