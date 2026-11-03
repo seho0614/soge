@@ -40,7 +40,7 @@ ok('① UniHeader — 관 이름 규칙 · 지금 관 aria-current · 파트너�
    and "fetch('/cart-count'" in UH and 'clearDraft();' in UH and '{shop && (' in UH, '')
 ok('① 모양 — 주황 밑줄 · 가입 남색(관 표시 안에서도) · 휴대폰 두 줄 · 비로그인 휴대폰 파트너센터 숨김',
    'box-shadow: inset 0 -3px 0 var(--sgb-orange, #ffa03e)' in CSS and '--sgb-btn-bg: var(--sgb-navy, #00245a)' in CSS
-   and '.sh-txt.pc-only { display: none; }' in CSS and '.sh-nav { order: 3; width: 100%; overflow-x: auto;' in CSS, '')
+   and '.sh-txt { display: none; }' in CSS and '.sh-nav .m-only { display: inline; }' in CSS and '@media (max-width: 900px)' in CSS and '.sh-nav { order: 3; width: 100%; overflow-x: auto;' in CSS, '')
 ok('① Hero — ① 이전 · 멈춤 · 화면에 보일 때만 노출 ② AI 켜짐일 때만 「소뱅AI」 ③ 인기 검색어 칩 · 사전 ko · en',
    "data-promo=\"prev\"" in HP and "data-promo=\"pause\"" in HP and 'IntersectionObserver' in HP and '!onAd || !seen' in HP and 'hold || paused' in HP
    and "/agent/chat/status" in PG and "/search/keywords?limit=4" in PG and 'hot.length >= 3 ? hot' in PG
