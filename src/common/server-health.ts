@@ -43,6 +43,7 @@ const hintOf = (p: string) => HINTS.find(([re]) => re.test(p))?.[1] ?? '';
 export function parseDuTop(out: string): DiskTop['items'] {
   return out.split('\n').map((l) => l.split('\t')).filter((a) => a.length === 2 && /^\d+$/.test(a[0]))
     .map(([kb, path]) => ({ path, GB: Math.round((Number(kb) / 1024 ** 2) * 10) / 10, hint: hintOf(path) }))
+    .filter((x) => x.GB >= 0.1)   /* v10.188 — 0.1GB 안 되는 것(작은 설정 파일 등)은 「많이 차지하는」 목록에서 뺌 */
     .sort((a, b) => b.GB - a.GB).slice(0, 5);
 }
 
