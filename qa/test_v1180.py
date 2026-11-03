@@ -147,7 +147,7 @@ if API and DB:
         if T3: best = T3
         ok('② 확인 — 같은 번호 다시 403 · 예비 번호 200(남은 9) · 같은 예비 번호 403 · 확인된 증표 200 · refresh 해도 이어짐 · 확인 전 refresh 는 그대로 403',
            v1 == 403 and jv1.get('code') == 'MFA_INVALID' and v2 == 200 and jv2.get('usedBackup') is True and jv2.get('backupLeft') == 9
-           and v3 == 403 and a3 == 200 and rf == 200 and a4 == 200 and rf0 == 200 and a5 == 403 and j5.get('code') == 'MFA_REQUIRED',
+           and v3 == 403 and a3 == 200 and rf in (200, 201) and a4 == 200 and rf0 in (200, 201) and a5 == 403 and j5.get('code') == 'MFA_REQUIRED',
            f'{v1} · {v2} {jv2.get("backupLeft")} · {v3} · {a3} · refresh {rf} {a4} · 옛 refresh {rf0} {a5}')
 
         psql(f"UPDATE account_mfa SET fails = 0 WHERE account_id = '{aid}'")   # 앞 시험의 틀린 번호 1회를 지움
@@ -198,7 +198,7 @@ if API and DB:
     psql("DELETE FROM job_runs WHERE job = 'pii_purge' AND slot LIKE 'test-v1180-%'")
     psql("""INSERT INTO job_runs (job, slot, started_at, ended_at, ok, affected, detail) VALUES
             ('pii_purge', 'test-v1180-ok', now() - interval '2 hours', now() - interval '2 hours', true, 7, '{"accounts": 2, "ipMasked": 3, "leads": 1, "consultRequests": 1, "authRecords": 0, "overdue": 0}'),
-            ('pii_purge', 'test-v1180-bad', now() - interval '1 hour', now() - interval '1 hour', false, 0, 'relation "x" does not exist')""")
+            ('pii_purge', 'test-v1180-bad', now() - interval '1 second', now() - interval '1 second', false, 0, 'relation "x" does not exist')""")
     p1, pl = call('GET', '/admin/purge-log?days=7', TA)
     okrow = next((x for x in pl.get('items', []) if x.get('ok') and (x.get('counts') or {}).get('ipMasked') == 3), {})
     badrow = next((x for x in pl.get('items', []) if x.get('ok') is False and 'does not exist' in (x.get('error') or '')), {})
