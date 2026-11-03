@@ -4,7 +4,7 @@ import { RequestCtx } from '../../core/request-context';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
- * v10.180 (D169 · docs/281) — 운영자 권한 정기 점검(SB-ADM-ROLE-010 · SUPER) · 파기 실행 기록(SB-ADM-PURGE-010)
+ * v10.180 (D169 · docs/281) — 운영자 권한 정기 점검(SB-ADM-ROLE-010 · SUPER) · 파기 실행 기록(SB-ADM-PRG-010)
  *
  *   ① 운영자 권한 — 운영 역할(검수 · 운영 · 지급 · 최고)이 있는 계정마다 역할 · 받은 날 · 마지막 로그인 · 2단계 등록 ·
  *      ops.role_idle_days(90)일 넘게 안 쓴 계정 「정지 권함」(자동 정지 없음) · 최근 권한 변경(role_changes).

@@ -11,7 +11,7 @@ const COLS: Array<[keyof Counts, string]> = [
 ];
 
 /**
- * SB-ADM-PURGE-010 파기 실행 기록 (v10.180 · D169 · docs/281)
+ * SB-ADM-PRG-010 파기 실행 기록 (v10.180 · D169 · docs/281)
  *
  * 매일 03:00 개인정보 파기 작업(pii_purge)이 지운 건수를 날짜별 · 달별로 봅니다(job_runs 그대로 · 건수만 · 개인정보 없음).
  * 작업이 실패하면 운영 알림 PII_PURGE_FAILED, 30시간 넘게 돌지 않으면 PII_PURGE_MISSED(하루 요약 때).

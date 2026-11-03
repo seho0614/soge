@@ -89,7 +89,7 @@ export class OpsReviewController {
   @ApiResponse({ status: 409, type: ErrorDto, description: 'PII_REVIEW_DONE' }) @ApiResponse({ status: 422, type: ErrorDto, description: 'PII_REVIEW_OPEN_MONTH · PII_REVIEW_MONTH' })
   piiReview(@Body() dto: PiiReviewDto) { return this.pii.review(dto.month, dto.note); }
 
-  /* ── v10.180 (D169 · docs/281) — 운영자 권한 점검(SB-ADM-ROLE-010 · SUPER) · 파기 기록(SB-ADM-PURGE-010) ── */
+  /* ── v10.180 (D169 · docs/281) — 운영자 권한 점검(SB-ADM-ROLE-010 · SUPER) · 파기 기록(SB-ADM-PRG-010) ── */
 
   @Get('role-review')
   @Roles('SUPER')
