@@ -221,6 +221,7 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
 
       <LoginLock id={a.id} />
       {tokenRoles().includes('SUPER') && <ResetLink id={a.id} />}
+      {tokenRoles().includes('SUPER') && <MfaReset id={a.id} />}
 
       <StatusChange id={a.id} status={a.status} suspended={!!d.postingSuspension} onDone={load} onBack={onBack} />
     </>
@@ -349,6 +350,36 @@ function ResetLink({ id }: { id: string }) {
           <code style={{ wordBreak: 'break-all' }}>{link.url}</code>
         </div>
       )}
+    </>
+  );
+}
+
+/**
+ * v10.180 (D169 · docs/281) — 운영자 2단계 인증 초기화(SUPER). 휴대폰 분실 · 교체 때 등록을 지워 다시 등록하게 합니다.
+ *   본인 것은 안 됨 · 사유 필수 · 감사 기록 MFA_RESET. 등록하지 않은 계정이면 404 MFA_NOT_ENROLLED.
+ */
+function MfaReset({ id }: { id: string }) {
+  const [reason, setReason] = useState('');
+  const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const reset = () => {
+    if (!confirm('이 운영자의 2단계 인증 등록을 지웁니다. 본인 확인을 마쳤습니까?')) return;
+    setBusy(true); setMsg(null);
+    api(`/admin/accounts/${id}/mfa-reset`, { method: 'POST', body: JSON.stringify({ reason: reason.trim() }) })
+      .then(() => { setReason(''); setMsg({ ok: true, t: '초기화했습니다 — 다음 로그인 때 다시 등록합니다.' }); })
+      .catch((e) => setMsg({ ok: false, t: e instanceof ApiFailure ? e.body.message : '초기화하지 못했습니다.' }))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <>
+      <h3 className="ad-s2">2단계 인증 초기화</h3>
+      <p className="muted">운영자가 휴대폰을 잃어버리거나 바꿨을 때만 씁니다. <b>본인 확인을 마친 뒤</b> 누르십시오.</p>
+      <div className="ad-dact" data-mfa-reset-form>
+        <input style={{ minWidth: 360 }} value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)}
+               placeholder="본인 확인 방법과 까닭(예: 휴대폰 분실 · 사무실에서 얼굴 확인)" />
+        <button className="btn-plain" disabled={busy || reason.trim().length < 5} onClick={reset} data-mfa-reset>2단계 초기화</button>
+      </div>
+      {msg && <p className={msg.ok ? 'form-ok' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.t}</p>}
     </>
   );
 }

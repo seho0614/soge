@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOpt
 import { IsOptional, IsString, Length, Matches } from 'class-validator';
 import { OpsAlertsService } from './ops-alerts.service';
 import { PiiReviewService } from './pii-review.service';
+import { RoleReviewService } from './role-review.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -25,6 +26,14 @@ export class PiiReviewDto {
   @IsString() @Length(5, 1000) note!: string;
 }
 
+export class RoleReviewDto {
+  @ApiProperty({ example: '2026-Q4', description: '점검한 분기(이번 분기 또는 지난 분기)' })
+  @IsString() @Matches(/^\d{4}-Q[1-4]$/, { message: '분기는 2026-Q4 처럼 적어 주십시오.' }) quarter!: string;
+
+  @ApiProperty({ example: '운영자 3명 · 오래 안 쓴 계정 없음 · 2단계 모두 등록', description: '점검 메모(5 ~ 1000자)' })
+  @IsString() @Length(5, 1000) note!: string;
+}
+
 /* ---------------------------------------------------------------------
  * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인(SB-ADM-OPS-010) · 개인정보 접속기록 월 점검(SB-ADM-PII-010 · SUPER)
  * ------------------------------------------------------------------- */
@@ -33,7 +42,7 @@ export class PiiReviewDto {
 @Controller('api/v1/admin')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class OpsReviewController {
-  constructor(private readonly alerts: OpsAlertsService, private readonly pii: PiiReviewService) {}
+  constructor(private readonly alerts: OpsAlertsService, private readonly pii: PiiReviewService, private readonly roles: RoleReviewService) {}
 
   @Get('ops-alerts')
   @Roles('ADMIN', 'SUPER')
@@ -79,4 +88,30 @@ export class OpsReviewController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'PII_REVIEW_DONE' }) @ApiResponse({ status: 422, type: ErrorDto, description: 'PII_REVIEW_OPEN_MONTH · PII_REVIEW_MONTH' })
   piiReview(@Body() dto: PiiReviewDto) { return this.pii.review(dto.month, dto.note); }
+
+  /* ── v10.180 (D169 · docs/281) — 운영자 권한 점검(SB-ADM-ROLE-010 · SUPER) · 파기 기록(SB-ADM-PURGE-010) ── */
+
+  @Get('role-review')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '운영자 권한 — 운영자 · 최근 권한 변경 · 분기 점검', description: '운영 역할 계정마다 역할 · 받은 날 · 마지막 로그인 · 2단계 등록 · 오래 안 씀(ops.role_idle_days) · 최근 권한 변경 50건 · 지난 4분기 점검 여부.' })
+  @ApiOkResponse({ type: Object })
+  async roleReview() {
+    const [operators, changes, quarters] = await Promise.all([this.roles.operators(), this.roles.changes(), this.roles.quarters()]);
+    return { ...operators, changes, quarters };
+  }
+
+  @Post('role-review')
+  @Roles('SUPER')
+  @Audit('ROLE_REVIEW', 'ROLE')
+  @ApiOperation({ summary: '운영자 권한 점검 완료', description: '이번 분기 또는 지난 분기 · 분기에 한 번 · 그때 요약을 함께 남김 · 고칠 수 없음.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ROLE_REVIEW_DONE' }) @ApiResponse({ status: 422, type: ErrorDto, description: 'ROLE_REVIEW_QUARTER_RANGE · ROLE_REVIEW_NOTE' })
+  roleReviewDone(@Body() dto: RoleReviewDto) { return this.roles.review(dto.quarter, dto.note); }
+
+  @Get('purge-log')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '파기 실행 기록', description: '매일 03:00 개인정보 파기(pii_purge)가 지운 건수 — 날짜별 · 달별 · 마지막 실행 · 지금 기한 넘긴 건수. 건수만(개인정보 없음).' })
+  @ApiQuery({ name: 'days', required: false, description: '기본 60 · 최대 400' })
+  @ApiOkResponse({ type: Object })
+  purgeLog(@Query('days') days?: string) { return this.roles.purges(Number(days) || 60); }
 }

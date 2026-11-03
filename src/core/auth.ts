@@ -35,7 +35,14 @@ export interface Principal {
   hasActiveSubscription: boolean;
   /** v10.48 (D102) — accounts.token_version. 로그인 증표의 tv 와 다르면 그 증표는 무효입니다 */
   tokenVersion?: number;
+  /** v10.180 (D169) — 설정상 2단계가 필요한데 아직 확인되지 않음(AuthMiddleware 가 채움) → 운영 역할만 요구하는 API 는 403 MFA_REQUIRED */
+  mfaPending?: boolean;
+  /** v10.180 — 증표의 2단계 확인 시각(초) */
+  mfaAt?: number;
 }
+
+/** v10.180 — 운영 역할(2단계 인증 대상) */
+const MFA_OPS = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER'];
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -56,6 +63,10 @@ export class AuthGuard implements CanActivate {
       if (!principal) throw new Forbidden('UNAUTHENTICATED', '로그인이 필요합니다.');
       if (!hasRole(principal.roles, ...required)) {
         throw new Forbidden('FORBIDDEN', '권한이 없습니다.');
+      }
+      /* v10.180 (D169 · docs/281) — 운영 역할만 요구하는 API(회원 역할이 섞이면 보지 않음)는 2단계 확인 뒤에만 */
+      if (principal.mfaPending && required.every((r) => MFA_OPS.includes(r))) {
+        throw new Forbidden('MFA_REQUIRED', '2단계 인증 번호를 넣어 주십시오.');
       }
     }
 

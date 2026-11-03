@@ -164,7 +164,7 @@ export class AuthService {
   }
 
   /** 로그인 증표 발급. v10.48 — 비밀번호 변경 뒤 새 증표를 주려고 공개합니다(AccountSecurityService). tv = accounts.token_version */
-  async issue(accountId: string) {
+  async issue(accountId: string, mfaAt?: number) {
     const principal = await this.principals.load(accountId);
     if (!principal) throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
     const tv = principal.tokenVersion ?? 0;
@@ -178,24 +178,26 @@ export class AuthService {
         bv: !!principal.businessVerifiedAt,
         sub_active: principal.hasActiveSubscription,
         tv,
+        /* v10.180 (D169) — 운영자 2단계 확인 시각(초) · refresh 로 다시 받아도 이어짐 · 유효 시간은 서버가 admin.mfa_hours 로 판단 */
+        ...(mfaAt ? { ma: mfaAt } : {}),
       },
       secret,
       { expiresIn: ACCESS_TTL },
     );
-    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv }, secret, {
+    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv, ...(mfaAt ? { ma: mfaAt } : {}) }, secret, {
       expiresIn: `${REFRESH_TTL_DAYS}d`,
     });
     return { accessToken, refreshToken, principal };
   }
 
   /** access 토큰 검증. refresh 토큰은 여기서 거부합니다 — 14일짜리가 access 로 쓰이면 만료가 무의미해집니다. */
-  verify(token: string): { sub: string; tv: number } {
+  verify(token: string): { sub: string; tv: number; ma?: number } {
     const payload = this.decode(token);
     if (payload.typ === 'refresh') {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
     /* v10.48 — 판 번호가 없는 증표(이 판 전에 발급)는 0 으로 봅니다. 계정 판 번호도 처음 0 이라 그대로 통합니다 */
-    return { sub: payload.sub, tv: Number(payload.tv ?? 0) };
+    return { sub: payload.sub, tv: Number(payload.tv ?? 0), ma: payload.ma ? Number(payload.ma) : undefined };
   }
 
   /** refresh 토큰으로 재발급. principal 을 DB 에서 다시 조립하므로 정지·만료가 즉시 반영됩니다. */
@@ -209,12 +211,12 @@ export class AuthService {
     if (!p || (p.tokenVersion ?? 0) !== Number(payload.tv ?? 0)) {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
-    return this.issue(payload.sub);
+    return this.issue(payload.sub, payload.ma ? Number(payload.ma) : undefined);
   }
 
-  private decode(token: string): { sub: string; typ?: string; tv?: number } {
+  private decode(token: string): { sub: string; typ?: string; tv?: number; ma?: number } {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string; tv?: number };
+      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string; tv?: number; ma?: number };
     } catch {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }

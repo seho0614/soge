@@ -105,5 +105,5 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 export const APPEND_ONLY_TABLES = [
   'attribution_events', 'fee_agreements', 'ledger_entries', 'term_agreements',
   'review_events', 'call_logs', 'visitor_identities',
-  'audit.audit_logs', 'audit.pii_access_logs', 'audit.pii_reviews',
+  'audit.audit_logs', 'audit.pii_access_logs', 'audit.pii_reviews', 'audit.role_reviews',
 ] as const;

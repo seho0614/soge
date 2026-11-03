@@ -1855,6 +1855,63 @@
    "note": "2026-11-03 v10.179 D168 — 운영자의 개인정보 조회 기록(pii_access_logs · 회원 상세 · 리드 보기) 월 요약 · 살펴볼 것(하루 최다 · 밤 조회) · 끝난 달 점검 완료(한 번 · 고칠 수 없음) · 5일부터 PII_REVIEW_DUE."
   },
   {
+   "id": "SB-ADM-MFA-010",
+   "name": "내 2단계 인증",
+   "group": "ADM",
+   "url": "/admin/my-mfa",
+   "p": "P1",
+   "roles": [
+    "REVIEWER",
+    "ADMIN",
+    "PAYOUT",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /auth/mfa",
+    "POST /auth/mfa/setup",
+    "POST /auth/mfa/enable",
+    "POST /auth/mfa/verify",
+    "POST /admin/accounts/{id}/mfa-reset"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.180 D169 — 운영자 2단계 인증(휴대폰 인증 앱 6자리 · RFC 6238) 등록 · 예비 번호 10개 · 로그인 뒤 번호 넣기 화면(admin.mfa_required 켜졌을 때) · SUPER 가 회원 상세에서 초기화. 기본 꺼짐."
+  },
+  {
+   "id": "SB-ADM-ROLE-010",
+   "name": "운영자 권한 점검",
+   "group": "ADM",
+   "url": "/admin/role-review",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/role-review",
+    "POST /admin/role-review"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.180 D169 — 운영자별 역할 · 받은 날 · 마지막 로그인 · 2단계 등록 · 오래 안 씀(ops.role_idle_days) · 최근 권한 변경 · 분기 점검 완료(audit.role_reviews · 고칠 수 없음)."
+  },
+  {
+   "id": "SB-ADM-PURGE-010",
+   "name": "파기 실행 기록",
+   "group": "ADM",
+   "url": "/admin/purge-log",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/purge-log"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-03 v10.180 D169 — 매일 03:00 pii_purge 가 지운 건수(job_runs) 날짜별 · 달별 · 마지막 실행 · 기한 넘김. 실패 PII_PURGE_FAILED · 30시간 안 돎 PII_PURGE_MISSED."
+  },
+  {
    "id": "SB-MYP-PAY-010",
    "name": "결제 수단 관리",
    "group": "MYP",

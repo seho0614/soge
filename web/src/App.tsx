@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { loadCodes } from './lib/codes';
-import { api, hasToken, onAuthChange, setToken, tokenRoles } from './lib/api';
+import { api, hasToken, onAuthChange, onMfaNeeded, setToken, tokenRoles } from './lib/api';
 import { Login } from './components/Login';
+import { MfaGate, type MfaStatus } from './components/MfaGate';
 import { Dashboard } from './app/admin/Dashboard';
 import { ReviewQueue } from './app/admin/ReviewQueue';
 import { ReviewDecide } from './app/admin/ReviewDecide';
@@ -26,6 +27,9 @@ import { DirectoryAdmin } from './app/admin/DirectoryAdmin';
 import { RiskAlerts } from './app/admin/RiskAlerts';
 import { OpsAlerts } from './app/admin/OpsAlerts';   // v10.179 (D168)
 import { PiiReview } from './app/admin/PiiReview';   // v10.179 (D168)
+import { RoleReview } from './app/admin/RoleReview';   // v10.180 (D169)
+import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
+import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
 import { MainOps } from './app/admin/MainOps';
@@ -70,7 +74,7 @@ import { siteUrl } from './lib/siteUrl';
  * 'mainops' · 'integrations' 는 레지스트리가 ADMIN · SUPER 이지만 서버가 SUPER 만 받아 그대로 둡니다. */
 /* v10.31 (10/10 결함) — 「자동검수 규칙」(REV-030) · 「메인 운영」(MAIN-010)은 matrix 대로 ADMIN|SUPER.
  *   서버도 같이 열었습니다(정책 읽기 · 자동검수 값 · 금칙어 · 배너 · 공지). 메인 운영 안의 관 노출 · 화면 구성 · 콘텐츠(MAIN-020~040)는 SUPER 만(MainOps.tsx). */
-const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms', 'pii-review'];   /* v10.179 pii-review — 개인정보 접속기록 점검은 SUPER 만 */   /* v10.161 terms — 약관 API 는 SUPER 만 */
+const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms', 'pii-review', 'role-review'];   /* v10.180 role-review — 운영자 권한 점검은 SUPER 만 */   /* v10.179 pii-review — 개인정보 접속기록 점검은 SUPER 만 */   /* v10.161 terms — 약관 API 는 SUPER 만 */
 const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   home: ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
   /* 2026-10-01 결정 Q1 — 지급 담당의 작업 화면. 확정은 운영, 지급은 지급 담당 */
@@ -80,6 +84,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   queue: ['ADMIN', 'SUPER', 'REVIEWER'],
   badges: ['ADMIN', 'SUPER', 'REVIEWER'],
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
+  /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
+  'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -95,8 +101,15 @@ const canSee = (t: Tab, roles: string[]) =>
 export function App() {
   /* 20260930 — 로그인 전에는 로그인 화면만. 전에는 로그인 없이 전 화면이 403 이었습니다. */
   const [authed, setAuthed] = useState(hasToken());
+  /* v10.180 (D169 · docs/281) — 운영자 2단계 인증: 설정상 필요한데 확인 안 됐으면 번호 넣기(등록 안 했으면 등록) 화면만 */
+  const [mfa, setMfa] = useState<MfaStatus | null | 'loading'>('loading');
+  const checkMfa = () => { api<MfaStatus>('/auth/mfa').then(setMfa).catch(() => setMfa(null)); };
   useEffect(() => onAuthChange(setAuthed), []);
+  useEffect(() => { if (authed) checkMfa(); else setMfa('loading'); }, [authed]);
+  useEffect(() => onMfaNeeded(checkMfa), []);
   if (!authed) return <Login />;
+  if (mfa === 'loading') return <p className="muted" style={{ padding: 24 }}>불러오는 중…</p>;
+  if (mfa && mfa.required && !mfa.verified) return <MfaGate status={mfa} onDone={checkMfa} />;
   return <Console />;
 }
 
@@ -262,6 +275,9 @@ function Console() {
       {tab === 'risk' && <RiskAlerts />}
       {tab === 'ops-alerts' && <OpsAlerts />}
       {tab === 'pii-review' && <PiiReview />}
+      {tab === 'role-review' && <RoleReview />}
+      {tab === 'purge-log' && <PurgeLog />}
+      {tab === 'my-mfa' && <MyMfa />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}
       {tab === 'integ' && <Integ />}

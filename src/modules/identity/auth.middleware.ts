@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { PrincipalService } from './principal.service';
+import { MfaService } from './mfa.service';
 import { RequestCtx } from '../../core/request-context';
 
 /**
@@ -16,16 +17,20 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(
     private readonly auth: AuthService,
     private readonly principals: PrincipalService,
+    private readonly mfa: MfaService,
   ) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
     const header = req.headers.authorization;
     if (header?.startsWith('Bearer ')) {
       try {
-        const { sub, tv } = this.auth.verify(header.slice(7));
+        const { sub, tv, ma } = this.auth.verify(header.slice(7));
         const principal = await this.principals.load(sub);
         /* v10.48 (D102) — 비밀번호 변경 · 재설정 · 탈퇴 뒤에는 그 전 증표의 판 번호(tv)가 맞지 않아 비로그인으로 봅니다 */
         if (principal && (principal.tokenVersion ?? 0) === tv) {
+          /* v10.180 (D169) — 운영자 2단계 인증: 확인 시각 · 아직 필요한지(운영 역할일 때만 설정을 봄) */
+          principal.mfaAt = ma;
+          principal.mfaPending = await this.mfa.pending(principal, ma).catch(() => false);
           (req as any).principal = principal;
           const c = RequestCtx.get();
           if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; }

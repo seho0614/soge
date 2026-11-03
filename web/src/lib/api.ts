@@ -43,6 +43,9 @@ let refreshToken: string | null = ss.get(RT_KEY);
 const listeners = new Set<(on: boolean) => void>();
 export const onAuthChange = (f: (on: boolean) => void) => { listeners.add(f); return () => { listeners.delete(f); }; };
 export const hasToken = () => !!accessToken;
+/** v10.180 (D169) — 서버가 403 MFA_REQUIRED(2단계 확인 필요 · 12시간 지남)를 주면 App 이 번호 넣기 화면을 다시 띄움 */
+const mfaListeners = new Set<() => void>();
+export const onMfaNeeded = (f: () => void) => { mfaListeners.add(f); return () => { mfaListeners.delete(f); }; };
 export const setToken = (t: string | null, rt?: string | null) => {
   accessToken = t; ss.set(AT_KEY, t);
   if (rt !== undefined) { refreshToken = rt; ss.set(RT_KEY, rt); }
@@ -106,6 +109,7 @@ export async function api<T>(
       && !(init as { _retried?: boolean })._retried) {
     if (await tryRefresh()) return api<T>(path, { ...init, _retried: true } as typeof init);
   }
+  if (res.status === 403 && (body as ApiError).code === 'MFA_REQUIRED') mfaListeners.forEach((f) => f());
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
   return body as T;
 }

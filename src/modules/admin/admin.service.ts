@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { resetMfaSettingCache } from '../identity/mfa.service';
 import { IdentityVerifyService } from '../identity/identity-verify.service';
 import { MailAdminService } from '../../common/mail/mail-admin.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
@@ -295,6 +296,20 @@ export class AdminService {
     if (key === 'community.town_verify' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('TOWN_SETTING_SUPER', '동네 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.180 (D169) — 운영자 2단계 인증 설정은 SUPER 만 · 켜는 사람이 먼저 등록해야 함(등록 없이 켜서 스스로 잠기는 일 막음) */
+    if (key.startsWith('admin.mfa_')) {
+      if (RequestCtx.get()?.actorRole !== 'SUPER') {
+        throw new Forbidden('MFA_SETTING_SUPER', '2단계 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+      }
+      if (key === 'admin.mfa_required' && value !== 'off') {
+        const [m] = await this.db.query<{ ok: boolean }>(
+          `SELECT EXISTS (SELECT 1 FROM account_mfa WHERE account_id = $1 AND enabled_at IS NOT NULL) AS ok`, [RequestCtx.actorId()]);
+        if (!m?.ok) {
+          throw new PolicyViolation('MFA_ENROLL_FIRST',
+            '먼저 「내 2단계 인증」을 등록한 뒤 켜십시오 — 등록하지 않고 켜면 운영 화면에 들어오지 못할 수 있습니다.');
+        }
+      }
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */
@@ -314,6 +329,7 @@ export class AdminService {
         WHERE key = $1 RETURNING key, value`,
       [key, value, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
+    if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로
     return row;
   }
 

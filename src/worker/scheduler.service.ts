@@ -14,6 +14,7 @@ import { AgentChatService } from '../modules/agent/agent-chat.service';
 import { LaunchWatchService } from '../modules/admin/launch-watch.service';
 import { uploadsBackupState } from '../common/uploads-backup-state';
 import { PiiReviewService } from '../modules/admin/pii-review.service';
+import { RoleReviewService } from '../modules/admin/role-review.service';
 
 /**
  * 배치 실행기.
@@ -55,6 +56,7 @@ export class SchedulerService {
     private readonly agentChat: AgentChatService,
     private readonly launchWatch: LaunchWatchService,
     private readonly piiReview: PiiReviewService,   // v10.179 (D168) 개인정보 접속기록 점검 알림
+    private readonly roleReview: RoleReviewService,   // v10.180 (D169) 운영자 권한 점검 · 파기 실행 알림
   ) {}
 
   /**
@@ -477,7 +479,14 @@ export class SchedulerService {
         /* v10.179 (D168 · docs/279) — 매달 5일부터 지난달 개인정보 접속기록 점검이 없으면(그달 한 번) */
         const pr = await this.piiReview.due();
         if (pr.alert) await this.alert('PII_REVIEW_DUE', 'WARN', `${pr.month} 개인정보 접속기록 점검이 아직 없습니다 — 운영 화면 위험감지 › 개인정보 접속기록에서 점검 완료를 남기십시오(SUPER)`, { month: pr.month });
-        affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours, piiReviewDue: pr.alert ? pr.month : null };
+        /* v10.180 (D169 · docs/281) — 분기 15일째부터 지난 분기 운영자 권한 점검이 없으면(그 분기 한 번) · 파기 작업 실패 · 30시간 넘게 안 돎 */
+        const rr = await this.roleReview.due();
+        if (rr.alert) await this.alert('ROLE_REVIEW_DUE', 'WARN', `${rr.quarter} 운영자 권한 점검이 아직 없습니다 — 운영 화면 위험감지 › 운영자 권한에서 점검 완료를 남기십시오(SUPER)`, { quarter: rr.quarter });
+        const ph = await this.roleReview.purgeHealth();
+        if (ph.failedRun) await this.alert('PII_PURGE_FAILED', 'CRITICAL', `개인정보 파기 작업이 실패했습니다(${ph.failedRun.at}) — 운영 화면 위험감지 › 파기 기록에서 오류를 확인하십시오`, { runId: ph.failedRun.id, at: ph.failedRun.at, error: ph.failedRun.error });
+        if (ph.missedHours !== null) await this.alert('PII_PURGE_MISSED', 'WARN', ph.missedHours < 0 ? '개인정보 파기 작업이 한 번도 돌지 않았습니다 — 정기 작업(scheduler)을 확인하십시오' : `개인정보 파기 작업이 ${ph.missedHours}시간째 돌지 않았습니다 — 정기 작업(scheduler)을 확인하십시오`, { hours: ph.missedHours });
+        affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours, piiReviewDue: pr.alert ? pr.month : null,
+          roleReviewDue: rr.alert ? rr.quarter : null, purgeFailed: ph.failedRun?.id ?? null, purgeMissedHours: ph.missedHours };
         break;
       }
 
