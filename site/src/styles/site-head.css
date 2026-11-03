@@ -30,6 +30,7 @@
 .sh-pill.p { background: var(--sgb-btn-bg); color: var(--sgb-btn-fg); border-color: var(--sgb-btn-bg); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); }
 .sh-pill.p:hover { filter: brightness(.94); }
 .sh-bell, .sh-cart { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; font-size: 20px; color: var(--sgb-ink); }
+.sh-nav .m-only { display: none; }
 .sh-num { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sgb-navy, #00245a); color: #fff; font: 700 11px/18px var(--sgb-font-body); text-align: center; }
 @media (max-width: 1240px) {
   .sh-in { gap: 20px; }
@@ -40,14 +41,15 @@
 }
 /* ── 휴대폰 — 두 줄(로고 · 단추 / 옆으로 미는 메뉴) ───────────────────────── */
 @media (max-width: 640px) {
-  .sh-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding: 10px 16px 8px; }
-  .sh-logo img { height: 34px; width: auto; }
-  .sh-hdr { gap: 6px; }
-  .sh-icbtn { width: 36px; height: 36px; }
-  .sh-pill { height: 36px; padding: 0 13px; font-size: 14px; }
-  .sh-txt { display: inline; margin-right: 0; }
-  .sh-txt.pc-only { display: none; }
+  /* 첫 줄(로고 · 단추)이 390px 에 들어가게 — 소개몰 장바구니 · 로그인 뒤 단추까지 */
+  .sh-in { flex-wrap: wrap; height: auto; gap: 8px 8px; padding: 10px 14px 8px; }
+  .sh-logo img { height: 30px; width: auto; }
+  .sh-hdr { gap: 4px; }
+  .sh-icbtn { width: 34px; height: 34px; }
+  .sh-pill { height: 34px; padding: 0 10px; font-size: 13px; }
+  .sh-txt { display: none; }   /* 휴대폰은 「파트너센터」를 메뉴 줄 끝(.m-only · 로그인한 사람만)에 */
+  .sh-nav .m-only { display: inline; }
   .sh-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
   .sh-nav::-webkit-scrollbar { display: none; }
-  .sh-bell, .sh-cart { width: 34px; height: 34px; }
+  .sh-bell, .sh-cart { width: 30px; height: 34px; font-size: 18px; }
 }

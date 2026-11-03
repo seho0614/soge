@@ -76,6 +76,8 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
           {menu.map((m) => (
             <Link key={m.href} href={m.href} className={m.href === cur ? 'on' : undefined} aria-current={m.href === cur ? 'page' : undefined}>{m.label}</Link>
           ))}
+          {/* 휴대폰 — 단추 줄이 넘치지 않게 로그인한 사람의 「파트너센터」는 메뉴 줄 끝에(.m-only · PC 는 오른쪽 글자 링크) */}
+          {st.in && <Link className="m-only" href="/partners">{h('partners')}</Link>}
         </nav>
         <div className="sh-hdr">
           {/* 메인은 히어로 검색칸(#home-q)으로 가서 그 팝업을 엽니다(HeroSearch) · 다른 화면은 같은 검색 팝업 */}
