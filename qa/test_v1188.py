@@ -31,9 +31,10 @@ HV = rd(S + 'components/home/HomeView.tsx'); HP = rd(S + 'components/home/HeroPr
 PROTO = rd('spec/proto.html')
 ko = json.loads(rd(S + 'i18n/messages/ko/main.json') or '{}'); en = json.loads(rd(S + 'i18n/messages/en/main.json') or '{}')
 
-ok('① 머리줄 — layout 은 UniHeader 하나 · 옛 머리줄(SiteHeader · B2Header · HomeHeader) 부르지 않음 · /partner 만 뺌',
-   '<AnyHeader><UniHeader gwans={gwans} lang={<LangPick />} /></AnyHeader>' in LAY and '<SiteHeader' not in LAY and '<B2Header' not in LAY
-   and '<HomeHeader' not in HV and 'export function AnyHeader' in CH and "import '@/styles/site-head.css'" in LAY, '')
+ok('① 머리줄 — layout 은 UniHeader 하나 · /partner 전용 상단바 · /partners 는 전 머리줄 그대로(대표 「3개는 제외」)',
+   '<AnyHeader><UniHeader gwans={gwans} lang={<LangPick />} /></AnyHeader>' in LAY and LAY.count('<SiteHeader') == 1 and '<B2Header' not in LAY
+   and '<HomeHeader' not in HV and 'export function AnyHeader' in CH and "import '@/styles/site-head.css'" in LAY
+   and "KEEP_OLD_HEADER_PATHS = ['/partners']" in CH and '<OldHeader><SiteHeader gwans={gwans} /></OldHeader>' in LAY, '')
 ok('① UniHeader — 관 이름 규칙 · 지금 관 aria-current · 파트너센터 · /cart-count · 로그아웃 clearDraft · 소개몰만 장바구니',
    "locale !== 'ko' && isGwanKey(g.code)" in UH and "aria-current={m.href === cur ? 'page' : undefined}" in UH and 'href="/partners"' in UH
    and "fetch('/cart-count'" in UH and 'clearDraft();' in UH and '{shop && (' in UH, '')
@@ -47,7 +48,7 @@ ok('① Hero — ① 이전 · 멈춤 · 화면에 보일 때만 노출 ② AI �
    and ko.get('hero', {}).get('aiBadgeOff') == '소개뱅크 통합 검색' and bool(en.get('hero', {}).get('aiBadgeOff'))
    and ko.get('promo', {}).get('pause') and en.get('promo', {}).get('prev') and ko.get('heroSearch', {}).get('tabs', {}).get('ai', {}).get('tOff') == '통합 검색', '')
 ok('① 시안 — 일반 · 두 관 머리줄이 메인 머리줄(window.__mxHeader) · 주황 밑줄',
-   'window.__mxHeader = function(cur)' in PROTO and PROTO.count('if (window.__mxHeader)') >= 2 and '.sh-uni .gnb a.on' in PROTO, '')
+   'window.__mxHeader = function(cur)' in PROTO and '!/^p2/.test(' in PROTO and PROTO.count('if (window.__mxHeader') >= 2 and '.sh-uni .gnb a.on' in PROTO, '')
 ok('① 문서 · 판 — docs/294 · v10.188 이상', any(f.startswith('294_') for f in os.listdir(os.path.join(K, 'docs')))
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 188), rd('VERSION').strip())
 
@@ -72,6 +73,9 @@ if SITE and API:
             if not (m['uni'] and m['n'] == 1 and m['h'] < 100): mbad.append(f'{u} h={m["h"]} n={m["n"]}')
         ok(f'② PC {len(PAGES)}화면 — 머리줄 하나 · 큰 로고 · 지금 관 주황 밑줄 · 가입 남색 · 옛 머리줄 없음', not bad, str(bad[:3]))
         ok(f'② 휴대폰 {len(PAGES)}화면 — 머리줄 하나 · 100px 미만', not mbad, str(mbad[:3]))
+        pg = pc.new_page(); pg.goto(SITE + '/partners', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(400)
+        kp = pg.evaluate("() => ({ uni: !!document.querySelector('header[data-uni-header]'), old: !!document.querySelector('header.pc-hd') })"); pg.close()
+        ok('② 제휴 파트너센터(/partners) — 전 머리줄 그대로 · 공통 머리줄 없음', kp == {'uni': False, 'old': True}, str(kp))
 
         st = json.load(urllib.request.urlopen(API.rstrip('/') + '/agent/chat/status', timeout=60))
         kw = json.load(urllib.request.urlopen(API.rstrip('/') + '/search/keywords?limit=4', timeout=60)).get('items') or []
