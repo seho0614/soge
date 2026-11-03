@@ -43,8 +43,8 @@ if SITE and API:
                                  headers={'content-type': 'application/json'}, method='POST')
     TOK = json.load(urllib.request.urlopen(req, timeout=60)).get('accessToken', '')
     from playwright.sync_api import sync_playwright
-    PROBE = """() => { const a = document.querySelector('.home-hd [data-home-partners]'); const hd = document.querySelector('.home-hd');
-      if (!a) return null; const r = a.getBoundingClientRect(); const lg = [...document.querySelectorAll('.home-hdr a')].find(x => x.getAttribute('href') === '/login');
+    PROBE = """() => { const a = document.querySelector('header [data-home-partners]'); const hd = document.querySelector('header[data-uni-header], .home-hd');   /* v10.188 — 공통 머리줄 */
+      if (!a) return null; const r = a.getBoundingClientRect(); const lg = [...document.querySelectorAll('.sh-hdr a, .home-hdr a')].find(x => x.getAttribute('href') === '/login');
       return { vis: getComputedStyle(a).display !== 'none' && r.width > 0, href: a.getAttribute('href'), before: lg ? !!(a.compareDocumentPosition(lg) & 4) : null,
                text: a.textContent.trim(), hdH: Math.round(hd.getBoundingClientRect().height) } }"""
     with sync_playwright() as p:
@@ -57,7 +57,7 @@ if SITE and API:
             r = pg.evaluate(PROBE)
             nav = None
             if r and r['vis'] and not mob and not tok:
-                pg.click('.home-hd [data-home-partners]'); pg.wait_for_timeout(1500); nav = pg.url.replace(SITE, '')
+                pg.click('header [data-home-partners]'); pg.wait_for_timeout(1500); nav = pg.url.replace(SITE, '')
             c.close(); return r, nav
         pc, nav = look(1280, False, '')
         ok('② PC 비로그인 — 보임 · 「파트너센터」 · 로그인 단추 앞 · 누르면 /partners 길(로그인 화면으로 넘어가도 됨)',
