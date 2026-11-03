@@ -30,7 +30,7 @@ export default async function DataExportPage() {
 
   return (
     <><div data-my-data-export="">
-      <MyHead title={t('title')} sub={<>{t('sub')} <b>SB-MYP-DAT-010</b></>}
+      <MyHead title={t('title')} sub={t('sub')}
         right={<Link className="my-bo" href="/my/account">{t('backProfile')}</Link>} />
       <Note kind="info"><b>{t('whatB')}</b> {t('whatText')}</Note>
       <Note kind="plain">{t('notIncluded')}</Note>

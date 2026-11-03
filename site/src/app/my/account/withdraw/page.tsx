@@ -50,7 +50,7 @@ export default async function WithdrawPage() {
 
   return (
     <><div data-my-withdraw="">
-      <MyHead title={t('title')} sub={<>{t('sub')} <b>SB-MYP-ACC-020</b></>}
+      <MyHead title={t('title')} sub={t('sub')}
         right={<Link className="my-bo" href="/my/account">{t('backProfile')}</Link>} />
       {!c ? (
         <Note kind="warn" role="alert">{t('loadFail')}</Note>

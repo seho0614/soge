@@ -34,7 +34,7 @@ export default async function PrivacyPage() {
 
   return (
     <><div data-my-privacy="">
-      <MyHead title={t('title')} sub={<>{t('sub')} <b>SB-MYP-PRV-010</b></>}
+      <MyHead title={t('title')} sub={t('sub')}
         right={<Link className="my-bo" href="/my/account">{t('backProfile')}</Link>} />
       <Note kind="info"><b>{t('selfB')}</b> {t('selfText')} <Link href="/my/account/data">{t('toData')}</Link> · <Link href="/my/account">{t('toProfile')}</Link> · <Link href="/my/account/withdraw">{t('toWithdraw')}</Link></Note>
       {!d ? <Note kind="warn" role="alert">{t('loadFail')}</Note> : (

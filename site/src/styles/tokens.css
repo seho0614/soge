@@ -107,6 +107,9 @@ body {
   background: var(--surface);
 }
 
+/* v10.184 — 단추 · 입력칸은 브라우저가 글꼴을 물려주지 않아 Arial(한글은 기기 글꼴)로 나왔습니다 → 본문 글꼴 */
+button, input, select, textarea { font-family: inherit; }
+
 /* 금액은 자릿수가 흔들리면 비교가 안 됩니다 */
 .money {
   font-variant-numeric: tabular-nums;

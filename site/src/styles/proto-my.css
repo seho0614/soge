@@ -44,7 +44,7 @@
 .my-s2 em { font-style: italic; color: var(--mink); margin-left: 4px; }
 .my-ls { font-size: 12px; color: var(--mink3); }
 .my-ls.blk { display: block; margin-top: 3px; }
-.my-code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.my-code { font-family: var(--sgb-font-body); font-variant-numeric: tabular-nums; font-size: 12px; }   /* v10.184 — 고정폭 글꼴은 운영 화면 전용(결정 #16) */
 .my-num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ── 탭 (시안 tabs() → .tabs2) ── */

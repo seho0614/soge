@@ -334,7 +334,7 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-prfcta { margin-top: 18px; border: 1px solid var(--pp); background: var(--pp-l); border-radius: var(--sgb-r-lg, 16px); padding: 15px; }
 .w1-prfcta .pch { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .w1-prfcta .pch b { font-size: 14px; font-weight: 900; color: var(--pp-d); }
-.w1-prfcta .pch span { font-size: 12px; color: var(--ink-3); }
+.w1-prfcta .pch span { font-size: 12px; color: var(--ink-2); }   /* v10.184 — 대비 4.26 → 4.5 이상 */
 .w1-prfcta p { margin: 0 0 11px; font-size: 13px; color: var(--ink-2); line-height: 1.62; }
 
 /* 회원가입 5단계 · 가입 완료(시안 .jw · .jh · .jst · .js · .jp · .jt · .jrow · .fl · .fh · .jin · .jvb · .jops · .jop · .jc · .jfail · .agall · .agl · .ag · .cb · .rq2 · .jnav · .jb · .done · .dst · .d1) */
@@ -349,7 +349,7 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-js .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 800; background: var(--g100); color: var(--sgb-ink-3); }
 .w1-js.on .n { background: var(--bl); color: #fff; } .w1-js.dn .n { background: var(--gr); color: #fff; }
 .w1-js .t b { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); letter-spacing: -.3px; }
-.w1-js.on .t b { color: var(--bl); } .w1-js.dn .t b { color: var(--sgb-gr-text); }
+.w1-js.on .t b { color: var(--bl-d); } .w1-js.dn .t b { color: var(--sgb-gr-text); }
 .w1-js .t em { display: block; font-style: normal; font-size: 12px; color: var(--sgb-ink-3); margin-top: 1px; }
 .w1-jp { background: #fff; border: 1px solid var(--g200); border-radius: var(--sgb-r-lg, 16px); padding: 20px 22px; }
 @media (max-width: 640px) { .w1-jp { padding: 15px 14px; } }
@@ -373,10 +373,11 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1-jop.on { border-color: var(--bl); background: #F5F9FF; box-shadow: inset 0 0 0 1px var(--bl); }
 .w1-jop .rd { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--g200); margin-top: 3px; box-sizing: border-box; }
 .w1-jop.on .rd { border-color: var(--bl); border-width: 5px; }
-.w1-jop b { display: block; font-size: 14px; font-weight: 800; letter-spacing: -.3px; }
+.w1-jop > span > b { display: block; font-size: 14px; font-weight: 800; letter-spacing: -.3px; }
+.w1-jop > span > span b { font-weight: 700; color: var(--ink-2); }   /* v10.184 — 설명 속 굵은 말은 문장 안에(전에는 위 규칙이 걸려 따로 한 줄을 차지) */
 .w1-jop > span > span { display: block; font-size: 12px; color: var(--ink-3); line-height: 1.65; margin-top: 3px; }
 .w1-jc.e { background: #FEF2F2; border: 1px solid #FECACA; } .w1-jc.e .lb { color: #DC2626; }
-.w1-jc.i .lb { color: var(--bl); } .w1-jc.s .lb { color: var(--sgb-gr-text); } .w1-jc.w .lb { color: #B45309; }
+.w1-jc.i .lb { color: var(--bl-d); } .w1-jc.s .lb { color: var(--sgb-gr-text); } .w1-jc.w .lb { color: #B45309; }
 .w1-jc b { color: var(--ink); }
 .w1-jfail { background: var(--g50); border: 1px solid var(--g200); border-radius: var(--sgb-r-md, 11px); padding: 12px 15px; font-size: 12px; color: var(--ink-3); }
 .w1-jfail b { display: block; color: var(--ink); font-size: 13px; margin-bottom: 5px; }
@@ -397,8 +398,8 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 .w1 .cb.on { background: var(--bl); border-color: var(--bl); } .w1 .cb.on i { color: #fff; }
 .w1-jnav { display: flex; justify-content: space-between; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--g100); }
 .w1-jb { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--g200); background: #fff; color: var(--ink); border-radius: var(--sgb-r-sm, 7px); padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; font-family: inherit; }
-.w1-jb.p { background: var(--bl); border-color: var(--bl); color: #fff; }
-.w1-jb.a { background: var(--or); border-color: var(--or); color: #fff; }
+.w1-jb.p { background: var(--sgb-btn-bg, #00245a); border-color: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); }   /* v10.184 — 시트 주요 단추(로그인 단추와 같게) */
+.w1-jb.a { background: var(--or); border-color: var(--or); color: var(--sgb-navy, #00245a); }   /* v10.184 — 주황 위 흰 글자 대비 2.8 → 남색 글자 */
 .w1-jb.o:hover { border-color: var(--g300); }
 .w1-jb:disabled { opacity: .4; cursor: not-allowed; }
 .w1-prfq.compact { gap: 8px; margin-bottom: 12px; }

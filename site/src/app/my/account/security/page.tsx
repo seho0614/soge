@@ -32,7 +32,7 @@ export default async function SecurityPage() {
 
   return (
     <><div data-my-security="">
-      <MyHead title={t('title')} sub={<>{t('sub')} <b>SB-MYP-SEC-010</b></>}
+      <MyHead title={t('title')} sub={t('sub')}
         right={<Link className="my-bo" href="/my/account">{t('backProfile')}</Link>} />
       <div className="my-btns" data-security-links="">
         <Link className="my-bo" href="/my/account/data">{tp('toData')}</Link>

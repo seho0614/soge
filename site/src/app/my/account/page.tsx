@@ -67,7 +67,7 @@ export default async function MyAccountPage() {
 
   return (
     <><div data-my-account="">
-      <MyHead title={t('title')} sub={<>{t('sub')} <b>SB-MYP-ACC-010</b></>} />
+      <MyHead title={t('title')} sub={t('sub')} />
       <Note kind="info">
         {t.rich('locked', { b: B })}
       </Note>
