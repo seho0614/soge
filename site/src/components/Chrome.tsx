@@ -53,9 +53,17 @@ export const OWN_HEADER_PATHS = ['/partner'];
 export const OWN_FOOTER_PATHS: string[] = [];
 const under = (p: string | null, list: string[]) => !!p && list.some((b) => p === b || p.startsWith(b + '/'));
 
-/** v10.188 (docs/294) — 공통 머리줄(UniHeader) 하나 — 메인 · 두 관 · 일반 화면 모두. 전용 상단바 주소(OWN_HEADER_PATHS)만 뺍니다 */
+/** v10.188 (docs/294) — 공통 머리줄(UniHeader) 하나 — 메인 · 관 · 일반 화면. 전용 상단바 주소(OWN_HEADER_PATHS)와 옛 머리줄을 두는 주소(KEEP_OLD_HEADER_PATHS)는 뺍니다 */
 export function AnyHeader({ children }: { children: React.ReactNode }) {
-  return under(usePathname(), OWN_HEADER_PATHS) ? null : <>{children}</>;
+  const p = usePathname();
+  return under(p, OWN_HEADER_PATHS) || under(p, KEEP_OLD_HEADER_PATHS) ? null : <>{children}</>;
+}
+
+/** v10.188 — 대표 「3개는 제외 — 관리자 · 파트너 · 안심소개 파트너는 변경하지 않는다」(2026-11-04):
+ *   관리자(운영 화면 · 따로 만든 앱)와 /partner(전용 상단바)는 원래 대상이 아니고, 제휴 파트너센터(/partners)는 전의 일반 머리줄(SiteHeader) 그대로 */
+export const KEEP_OLD_HEADER_PATHS = ['/partners'];
+export function OldHeader({ children }: { children: React.ReactNode }) {
+  return under(usePathname(), KEEP_OLD_HEADER_PATHS) ? <>{children}</> : null;
 }
 
 /** 일반 머리줄 — base 화면 중 OWN_HEADER_PATHS 를 뺀 곳에서만 */

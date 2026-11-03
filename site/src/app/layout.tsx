@@ -8,8 +8,9 @@ import { Footer } from '@/components/Footer';
 import { NoticeBar } from '@/components/NoticeBar';
 import { UpcomingTermsBar } from '@/components/UpcomingTerms';
 import { UniHeader } from '@/components/common/UniHeader';
+import { SiteHeader } from '@/components/common/SiteHeader';
 import { LangPick } from '@/i18n/LangPick';
-import { AnyHeader, BaseFooter, MainWrap, OnlySkin } from '@/components/Chrome';
+import { AnyHeader, BaseFooter, MainWrap, OldHeader, OnlySkin } from '@/components/Chrome';
 import { B2Footer } from '@/components/b2/Frame';
 import { AiChat } from '@/components/common/AiChat';
 import '@/styles/noto-sans-kr.css';   /* v10.31 (w1 · 공유) — F-11 */
@@ -72,6 +73,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* v10.188 (docs/294 · 대표 「머리줄 통일」) — 메인 · 관 · 일반 화면이 같은 머리줄(UniHeader · 메인 머리줄 모양).
             전: 메인(home/Frame) · 소개광장 · 소개몰 · 소개장터 메인(b2/Frame) · 그 밖(common/SiteHeader) 세 가지. /partner/** 는 전용 상단바(Chrome.tsx OWN_HEADER_PATHS) */}
         <AnyHeader><UniHeader gwans={gwans} lang={<LangPick />} /></AnyHeader>
+        {/* v10.188 — 제휴 파트너센터(/partners)는 대표 「변경하지 않는다」 — 전 일반 머리줄 그대로 */}
+        <OldHeader><SiteHeader gwans={gwans} /></OldHeader>
         <MainWrap>{children}</MainWrap>
         {/* v10.161 (D151) — 시행 예정 약관이 있으면 바닥줄 위 한 줄(없으면 그리지 않음) */}
         <BaseFooter><UpcomingTermsBar /><Footer links={links} settings={settings} /></BaseFooter>

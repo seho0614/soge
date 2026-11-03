@@ -5850,7 +5850,8 @@ function header(o){
       .concat(fixed.map(function(m){
         return {t:m, tip:m+" — 담을 내용이 아직 정해지지 않았습니다(목적지 미정)."}; }));
     /* v10.188 (docs/294) — 공통 머리줄(메인 머리줄 모양)로 · 지금 관은 o.on 이 가리키는 메뉴 */
-    if (window.__mxHeader) { var cm = menu[o.on]; return window.__mxHeader(cm ? (cm.code || NAVFIX[cm.t] || "") : ""); }
+    /* 제휴 파트너센터(p2…) 화면은 대표 「변경하지 않는다」 — 전 머리줄 그대로 */
+    if (window.__mxHeader && !/^p2/.test((S && S.screen) || "")) { var cm = menu[o.on]; return window.__mxHeader(cm ? (cm.code || NAVFIX[cm.t] || "") : ""); }
     return '<header class="hd"><div class="wrap hdin">'+logo()+
       '<nav class="gnb">'+menu.map(function(m,i){
         /* 관은 진짜 주소를 답니다 — 눌러도 가고, 새 탭으로 열어도 가고,
