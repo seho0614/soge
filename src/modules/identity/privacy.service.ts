@@ -205,7 +205,7 @@ export class PrivacyService {
 
   /** 운영 — 열린 요청 먼저(기한 가까운 순) · 끝난 것 최근 50건 */
   async adminList(status?: string) {
-    const st = status === 'closed' ? `status IN ('DONE','REJECTED')` : status === 'all' ? 'true' : `status IN ('OPEN','EXTENDED')`;
+    const st = status === 'closed' ? `r.status IN ('DONE','REJECTED')` : status === 'all' ? 'true' : `r.status IN ('OPEN','EXTENDED')`;   // accounts 에도 status 가 있어 r. 을 붙임
     const items = await this.db.query(
       `SELECT r.id, r.kind, r.status, to_char(r.due_on, 'YYYY-MM-DD') AS "dueOn",
               (r.due_on - (now() AT TIME ZONE 'Asia/Seoul')::date) AS "daysLeft",

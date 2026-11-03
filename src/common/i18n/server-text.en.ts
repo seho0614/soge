@@ -1572,4 +1572,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "요청 내용은 바꿀 수 없습니다.": "The request cannot be changed.",
   "끝난 요청은 고칠 수 없습니다.": "A closed request cannot be changed.",
   "연장한 요청을 되돌릴 수 없습니다.": "An extended request cannot be reverted.",
+  "{0} 요청을 받았습니다. {1}까지 처리 결과를 알림으로 알려 드립니다.": "Your {0} request was received. We will notify you of the result by {1}.",
+  "다른 기기의 로그인을 모두 풀었습니다. 이 기기는 그대로 쓰실 수 있습니다.": "All other devices have been logged out. You can keep using this device.",
+  "소개뱅크가 보관한 회원님의 정보입니다. 다른 회원의 정보 · 운영 내부 메모 · 비밀번호는 들어 있지 않습니다. 파일을 안전한 곳에 보관해 주십시오.": "This is the data SogaeBank keeps about you. Other members' data, internal staff notes and passwords are not included. Please keep the file somewhere safe.",
 };
