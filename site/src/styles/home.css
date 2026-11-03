@@ -42,6 +42,9 @@
 .home-pill:hover { border-color: var(--sgb-btn2-line, #dbdbdb); }
 .home-pill.p { background: var(--sgb-btn-bg, #00245a); color: var(--sgb-btn-fg, #fff); border-color: var(--sgb-btn-bg, #00245a); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10)); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); font-size: var(--sgb-btn-fs, 14px)}
 .home-pill.p:hover { background: var(--sgb-btn-bg, #00245a); filter: brightness(.94)}
+/* v10.187 (docs/293) — 머리줄 「파트너센터」 글자 링크(관 머리줄 오른쪽 글자 링크와 같은 무게) */
+.home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; }
+.home-txt:hover { color: var(--hv); }
 
 /* 꼬리표 */
 .home-bdg { display: inline-flex; align-items: center; font-size: 12px; font-weight: 800; border-radius: var(--sgb-r-md, 11px); padding: 3px 11px; color: #fff; white-space: nowrap; }
@@ -481,6 +484,8 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-hdr { gap: 6px; }
   .home-icbtn { width: 36px; height: 36px; }
   .home-hd .home-pill { height: 36px; padding: 0 13px; font-size: 14px; }
+  .home-hdr .home-txt.pc-only { display: none; }   /* v10.187 — 휴대폰 비로그인은 머리줄이 한 줄 늘지 않게 숨김 */
+  .home-txt { margin-right: 0; }
   .home-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
   .home-nav::-webkit-scrollbar { display: none; }
   .home-hero { margin-top: -16px; padding: 44px 0 22px; }

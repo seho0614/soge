@@ -56,6 +56,8 @@ export function HomeHeader({ gwans, loggedIn, summary }: { gwans: Gwan[]; logged
           {/* v10.40 — 시안: 머리줄 돋보기는 히어로 검색칸으로 가서 검색 팝업을 엽니다(HeroSearch 가 #home-q 를 받음 · 전: 결과 화면 링크) */}
           <LangAuto />
           <Link className="home-icbtn" href="#home-q" aria-label={h('search')}><Line name="search" size={22} w={2.4} /></Link>
+          {/* v10.187 (docs/293 · 대표 「B안으로」) — 「파트너센터」 글자 링크(관 머리줄과 같은 자리 · /partners). 휴대폰은 로그인한 사람에게만(.pc-only) */}
+          <Link className={`home-txt${loggedIn ? '' : ' pc-only'}`} href="/partners" data-home-partners="">{h('partners')}</Link>
           {loggedIn ? (
             <>
               <span className="home-who" title={name ?? undefined}>👤 {name ? (name.length > 10 ? name.slice(0, 10) + '…' : name) : h('member')}</span>

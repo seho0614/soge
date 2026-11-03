@@ -4835,6 +4835,7 @@ h1{font-size:20px} h2{font-size:16px} h3{font-size:14px}
 
 .home-nav a:hover { color: var(--hv); }
 .home-hdr { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; background: none; border: 0; cursor: pointer; font-family: inherit; }
 .home-icbtn { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-tile); display: grid; place-items: center; color: var(--hk); }
 .home-icbtn:hover { background: var(--hv-w); color: var(--hv); }
 
@@ -5236,6 +5237,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-hd .home-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding-top: 10px; padding-bottom: 8px; }
   .home-hd .home-logo img { height: 34px; width: auto; }
   .home-hdr { gap: 6px; }
+  .home-hdr .home-txt.pc-only { display: none; }
   .home-icbtn { width: 36px; height: 36px; }
   .home-hd .home-pill { height: 36px; padding: 0 13px; font-size: 14px; }
   .home-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
@@ -6563,6 +6565,8 @@ function header(o){
         '<a href="#" data-go="commu">소개광장</a><a href="#" data-go="guide">이용안내</a></nav>'+
       '<div class="home-hdr">'+
         '<button type="button" class="home-icbtn" data-mhx="search" aria-label="검색">'+mxLn("search",22,2.4)+'</button>'+
+        /* v10.187 (docs/293 · 대표 「B안으로」) — 「파트너센터」 글자 링크 · 휴대폰 비로그인은 숨김 */
+        '<button type="button" class="home-txt'+(inn ? '' : ' pc-only')+'" data-go="p2dsh">파트너센터</button>'+
         (inn
           ? '<span class="home-user">👤 '+esc(nm)+'</span>'+
             '<button type="button" class="home-pill" data-go="my">나의공간</button>'+
