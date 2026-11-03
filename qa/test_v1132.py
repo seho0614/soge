@@ -29,7 +29,7 @@ def rd(rel):
 H = rd('site/src/lib/ruleCodes.tsx'); CSS = rd('site/src/styles/site.css')
 ok('① withCodes — 괄호째(코드뿐) · 코드 낱말 · 요소 안까지 · CSS 작게 · 옅게',
    'export function withCodes(node: ReactNode' in H and '<small key={`${k}-${i++}`} className="rule-code">' in H and 'cloneElement(el' in H
-   and '.rule-code { font-size: .78em; font-weight: 400; color: var(--sgb-ink-3' in CSS, '')
+   and ('.rule-code { font-size: .78em; font-weight: 400; color: var(--sgb-ink-3' in CSS or '.rule-code { font-size: max(var(--sgb-fs-micro, 12px), .78em);' in CSS), '')   # v10.183 — 12px 아래로 안 내려감
 SRC = 'site/src'
 users = []
 for root, _, files in os.walk(os.path.join(K, SRC)):
