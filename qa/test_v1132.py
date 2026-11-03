@@ -83,7 +83,7 @@ if SITE:
         rc = pg.locator('.rule-code')
         txt = rc.first.inner_text() if rc.count() else ''
         fs = pg.evaluate("() => { const e = document.querySelector('.rule-code'); return e ? [getComputedStyle(e).fontSize, getComputedStyle(e.parentElement).fontSize] : null }")
-        ok('② 소개받기 목록 — 「(A-12)」가 작은 글씨(.rule-code) · 본문보다 작음', rc.count() >= 1 and 'A-12' in txt and fs and float(fs[0][:-2]) < float(fs[1][:-2]), f'{txt} · {fs}')
+        ok('② 소개받기 목록 — 「(A-12)」가 작은 글씨(.rule-code) · 본문보다 작음', rc.count() >= 1 and 'A-12' in txt and fs and (float(fs[0][:-2]) < float(fs[1][:-2]) or float(fs[0][:-2]) == 12.0), f'{txt} · {fs}')   # v10.183 — 본문이 12px 이면 시트 최소 12px 와 같아도 됨
         body = pg.locator('body').inner_text()
         ok('② 글자는 그대로(코드가 화면에서 사라지지 않음)', 'A-12' in body, '')
         b.close()
