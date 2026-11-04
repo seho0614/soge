@@ -6563,7 +6563,7 @@ function header(o){
     return '<svg class="home-ln" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||2)+
       '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(MHX_LINE[n]||"")+'</svg>'; }
   function mxBadge(t, tone, bw){ return '<span class="home-bdg '+tone+(bw?' fit" style="width:'+bw+'%':'')+'">'+esc(t)+'</span>'; }
-  function mxLogo(){ return '<a class="home-logo" href="'+AUTH.homeHref()+'" aria-label="소개뱅크 메인으로">'+mxPic("logo",48,"소개뱅크")+'</a>'; }
+  function mxLogo(){ return '<a class="home-logo" href="'+AUTH.homeHref()+'" aria-label="소개뱅크 메인으로">'+mxPic("logo",40,"소개뱅크")+'</a>'; }
   window.__mxHeader = function(cur){ return mxHeader(cur); };   /* v10.188 — 다른 화면 머리줄도 이것 */
   function mxGwanHref(code){ return code==="HLT" ? "#/health" : AUTH.gwanHref(code); }
   function mxGwanOn(code){ return liveGwan().some(function(g){ return g.code===code; }); }
