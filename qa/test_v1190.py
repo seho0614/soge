@@ -3,7 +3,7 @@
   docker run --rm --network host -v <qa>:/w -v $K:/core:ro -w /w -e KIT=/core -e API=http://localhost:13000/api/v1 \
       -e SITE=http://localhost:15174 -e DB=postgresql://sgb:sgb@localhost:15432/sgb sgb-qa:v1 python3 test_v1190.py
 
-  ① 코드 — .sh-in 최대 폭 없음 · .sh-nav 어느 폭에서나 옆으로 밂 · 시안 · docs/297 · v10.190
+  ① 코드 — 로고 40px · .sh-in 최대 폭 없음 · .sh-nav 어느 폭에서나 옆으로 밂 · 시안 · docs/297 · v10.190
   ② (화면 · 다국어 켜짐) 로그아웃 · 회원 · 운영 계정 × 1920 ~ 390px — 메뉴가 오른쪽 단추 묶음과 겹치지 않음 · 페이지 가로 넘침 없음 ·
      1920px 머리줄 전체 폭 · 1600px 이상은 메뉴가 다 보임 · 끝나면 다국어 설정 되돌림
 """
@@ -31,6 +31,7 @@ HC = rd('site/src/styles/site-head.css'); PR = rd('spec/proto.html')
 ok('① 머리줄 — .sh-in 최대 폭 없음(전체 폭) · .sh-nav 어느 폭에서나 넘치면 옆으로 밂',
    '.sh-in { max-width: none; margin: 0 auto; padding: 0 28px;' in HC and 'max-width: 1248px' not in HC
    and '\n.sh-nav { overflow-x: auto; scrollbar-width: none; }' in HC, '')
+ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
 ok('① 시안 — 공통 머리줄 전체 폭 · 메뉴 옆으로 밂', '.sh-uni > .home-in { max-width: none; }' in PR
    and '.sh-uni .gnb { min-width: 0; overflow-x: auto; scrollbar-width: none; }' in PR, '')
 ok('① 문서 · 판 — docs/297 · v10.190 이상', any(f.startswith('297_') for f in os.listdir(os.path.join(K, 'docs')))
