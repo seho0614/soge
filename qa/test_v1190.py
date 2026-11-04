@@ -33,11 +33,14 @@ ok('① 머리줄 — .sh-in 최대 폭 없음(전체 폭) · .sh-nav 어느 폭
    and '\n.sh-nav { overflow-x: auto; scrollbar-width: none; }' in HC, '')
 ok('① 로그인 1440px 아래 — 파트너센터 메뉴 줄 끝(.sh-hd.in)', "className={`sh-hd${st.in ? ' in' : ''}`}" in rd('site/src/components/common/UniHeader.tsx')
    and '@media (max-width: 1440px) {\n  .sh-hd.in .sh-txt { display: none; }\n  .sh-hd.in .sh-nav .m-only { display: inline; }' in HC, '')
-ok('① 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메뉴 줄 끝(.m-lang)',
+ok('① 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메뉴 줄 끝(.m-lang) · 운영 계정 관리자 단추 메뉴 줄 끝 · 641 ~ 1440px 언어 🌐 단추',
    '@media (min-width: 1241px) and (max-width: 1440px) {\n  .sh-hd.in .sh-nav { gap: 20px; }' in HC
    and '.sh-hdr .lang-pick { display: none; }' in HC and '.sh-nav .m-lang { display: inline-flex; }' in HC
    and '{lang && <span className="m-lang">{lang}</span>}' in rd('site/src/components/common/UniHeader.tsx')
-   and '@media (min-width: 1241px) and (max-width: 1440px) { .sh-uni.in .gnb { gap: 20px; } }' in PR, '')
+   and '@media (min-width: 1241px) and (max-width: 1440px) { .sh-uni.in .gnb { gap: 20px; } }' in PR
+   and '.sh-hd.in .sh-hdr .sh-adm { display: none; }' in HC
+   and '@media (min-width: 641px) and (max-width: 1440px) {\n  .sh-hdr .lang-pick { position: relative; width: 44px;' in HC
+   and '{st.ops && <a className="m-only" href="/go/admin">{h(\'admin\')}</a>}' in rd('site/src/components/common/UniHeader.tsx'), '')
 ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
 ok('① 시안 — 로그인 메뉴 줄 끝 파트너센터 · 1440px 아래', "'<a href=\"#\" class=\"m-only\" data-go=\"p2dsh\">파트너센터</a>'" in PR
    and '.sh-uni.in .home-hdr .home-txt { display: none; } .sh-uni.in .gnb .m-only { display: inline; }' in PR and "home-hd sh-uni'+(inn ? ' in' : '')" in PR, '')
@@ -69,6 +72,8 @@ HD = """() => {
            ox: document.documentElement.scrollWidth > innerWidth + 1, lang: !!h.querySelector('select'),
            admin: !!h.querySelector('a[href="/go/admin"]'), out: !!h.querySelector('a[href="/login"]'),
            hh: Math.round(h.getBoundingClientRect().height),
+           langW: (() => { const e = h.querySelector('.sh-hdr .lang-pick'); return e && e.offsetParent ? Math.round(e.getBoundingClientRect().width) : 0; })(),
+           admAt: [...h.querySelectorAll('a[href="/go/admin"]')].filter((e) => e.offsetParent).map((e) => e.closest('.sh-nav') ? 'nav' : 'hdr').join(','),
            langAt: [...h.querySelectorAll('select')].filter((e) => e.offsetParent).map((e) => e.closest('.sh-nav') ? 'nav' : 'hdr').join(',') };
 }"""
 
@@ -104,11 +109,15 @@ if SITE and API and DB:
                         seen.setdefault(who, set()).add((r['lang'], r['admin'], r['out']))
                         if r['navHdr'] or r['navLogo'] or r['ox']:
                             bad.append(f'{who} {w} {u} {r}')
-                        if w >= 1280 and not r['full']:
+                        if r['lang'] and 640 < w <= 1440 and r['langW'] != 44:
+                            bad.append(f'{who} {w} {u} 언어 단추 폭 {r["langW"]}')
+                        if w >= (1440 if who == '운영' else 1280) and not r['full']:
                             bad.append(f'{who} {w} {u} 메뉴 다 안 보임')
                         if r['lang'] and r['langAt'] != ('nav' if w <= 640 else 'hdr'):
                             bad.append(f'{who} {w} {u} 언어 칸 자리 {r["langAt"]}')
-                        if w == 390 and who != '운영' and r['hh'] >= 100:
+                        if r['admin'] and r['admAt'] != ('nav' if w <= 1440 else 'hdr'):
+                            bad.append(f'{who} {w} {u} 관리자 단추 자리 {r["admAt"]}')
+                        if w == 390 and r['hh'] >= 100:
                             bad.append(f'{who} {w} {u} 휴대폰 머리줄 {r["hh"]}px')
                         if w == 1920 and u == '/':
                             info.append(f'{who} 1920 안쪽 {r["inW"]}')
