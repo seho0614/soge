@@ -4842,6 +4842,8 @@ h1{font-size:20px} h2{font-size:16px} h3{font-size:14px}
 /* v10.190 (docs/297) — 공통 머리줄은 화면 전체 폭 · 메뉴는 넘치면 옆으로 밂 */
 .sh-uni > .home-in { max-width: none; }
 .sh-uni .gnb { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.sh-uni .gnb .m-only { display: none; }
+@media (max-width: 1440px) { .sh-uni.in .home-hdr .home-txt { display: none; } .sh-uni.in .gnb .m-only { display: inline; } }
 .sh-uni .gnb { display: flex; gap: 28px; font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; }
 .sh-uni .gnb a.on { color: var(--sgb-navy, #00245a); font-weight: 800; box-shadow: inset 0 -3px 0 var(--sgb-orange, #ffa03e); padding-bottom: 6px; }
 .home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; background: none; border: 0; cursor: pointer; font-family: inherit; }
@@ -6575,10 +6577,12 @@ function header(o){
     var inn = AUTH.isLoggedIn();
     var nm = (AUTH.user && AUTH.user() && AUTH.user().name) || "소개하니";
     var on = function(k){ return k === cur ? ' class="on" aria-current="page"' : ''; };
-    return '<header class="home-hd sh-uni"><div class="home-in">'+mxLogo()+
+    return '<header class="home-hd sh-uni'+(inn ? ' in' : '')+'"><div class="home-in">'+mxLogo()+
       '<nav class="gnb">'+liveGwan().map(function(g){
         return '<a href="'+esc(mxGwanHref(g.code))+'"'+on(g.code)+'>'+esc(g.name)+'</a>'; }).join("")+
-        '<a href="#" data-go="commu"'+on("commu")+'>소개광장</a><a href="#" data-go="guide"'+on("guide")+'>이용안내</a></nav>'+
+        '<a href="#" data-go="commu"'+on("commu")+'>소개광장</a><a href="#" data-go="guide"'+on("guide")+'>이용안내</a>'+
+        /* v10.190 (docs/297) — 로그인한 사람은 1440px 아래(휴대폰 포함)에서 「파트너센터」를 메뉴 줄 끝에 · 실제 웹 UniHeader 와 같음 */
+        (inn ? '<a href="#" class="m-only" data-go="p2dsh">파트너센터</a>' : '')+'</nav>'+
       '<div class="home-hdr">'+
         '<button type="button" class="home-icbtn" data-mhx="search" aria-label="검색">'+mxLn("search",22,2.4)+'</button>'+
         /* v10.187 (docs/293 · 대표 「B안으로」) — 「파트너센터」 글자 링크 · 휴대폰 비로그인은 숨김 */
