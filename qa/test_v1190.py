@@ -102,7 +102,10 @@ if SITE and API and DB:
                     if who != '로그아웃':
                         cx.add_cookies([{'name': 'sgb_at', 'value': toks[who], 'url': SITE}])
                     for u in ('/', '/money'):
-                        pg = cx.new_page(); pg.goto(SITE + u, wait_until='networkidle', timeout=120000); pg.wait_for_timeout(300)
+                        pg = cx.new_page(); pg.goto(SITE + u, wait_until='load', timeout=120000)
+                        if who != '로그아웃':
+                            pg.wait_for_selector('header.sh-hd.in', timeout=30000)
+                        pg.wait_for_timeout(1500)
                         r = pg.evaluate(HD); pg.close()
                         if r is None:
                             bad.append(f'{who} {w} {u} 머리줄 없음'); continue
