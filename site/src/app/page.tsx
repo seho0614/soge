@@ -16,7 +16,7 @@
  * 조회는 여기서 한 번에 합니다. API 하나가 실패해도 그 칸만 비웁니다(.catch).
  *   늘        GET /gwans · /footer-links · /site-settings/public · /ads/serve?slot=HERO(성향 광고) · /me/summary(로그인) · /community/polls?scope=home(투표)
  *             · /weather/today?region=(v10.49 오늘의 날씨 · 10분 캐시 · 지역은 쿠키 sgb_wx · 없으면 운영이 정한 처음 지역)
- *             · /agent/chat/status(v10.188 「소뱅AI」 문구를 켤지) · /search/keywords?limit=4(v10.188 추천 칩)
+ *             · /agent/chat/status(v10.188 「소뱅AI」 문구를 켤지) · /search/keywords?limit=4&place=hero(v10.188 추천 칩 · v10.189 운영이 고른 칩)
  *   live 만   GET /listings · /requests · /health/products · /community/posts
  */
 import { cookies } from 'next/headers';
@@ -68,8 +68,9 @@ export default async function Home() {
     apiGet<WeatherToday>(`/weather/today${wxRegion ? `?region=${wxRegion}` : ''}`, 600).catch(() => null),
     /* v10.188 (docs/294 · Hero ②) — AI 상담이 켜졌을 때만 「소뱅AI」 문구(꺼져 있으면 「통합 검색」 — 실제 기능보다 크게 말하지 않게) */
     apiGet<{ enabled?: boolean }>('/agent/chat/status', 60).catch(() => null),
-    /* v10.188 (Hero ③) — 추천 칩은 실제로 결과가 나온 인기 검색어(제한업종 낱말 뺌 · 검색 팝업과 같은 규칙). 3개 미만이면 사전의 예시 칩 */
-    apiGet<{ items?: { term: string }[] }>('/search/keywords?limit=4', 300).catch(() => null),
+    /* v10.188 (Hero ③) — 추천 칩은 실제로 결과가 나온 인기 검색어(제한업종 낱말 뺌 · 검색 팝업과 같은 규칙). 3개 미만이면 사전의 예시 칩
+     * v10.189 (D172 · docs/296) — place=hero: 운영이 고른 말(설정 home.hero_chips)이 있으면 그 말(source pick · 1분 안에 반영) */
+    apiGet<{ items?: { term: string }[]; source?: string }>('/search/keywords?limit=4&place=hero', 60).catch(() => null),
   ]);
   const aiOn = aiStat?.enabled === true;
   const hot = (hotKw?.items ?? []).map((k) => k.term).filter(Boolean);
@@ -105,7 +106,7 @@ export default async function Home() {
   return (
     <Msgs ns={['main']}>
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
-        live={live} ad={heroAd} slides={slides} start={start} chips={hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
+        live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
         weather={weather} />
     </Msgs>
   );

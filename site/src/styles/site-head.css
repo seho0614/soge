@@ -64,3 +64,6 @@
   .sh-nav::-webkit-scrollbar { display: none; }
   .sh-bell, .sh-cart { width: 30px; height: 34px; font-size: 18px; }
 }
+/* v10.189 (docs/296) — 휴대폰 누름 영역 44px: 로고 · 🔔 는 보이는 크기 그대로 두고 누르는 자리만 넓힘(머리줄 높이 그대로) */
+.sh-logo { position: relative; }
+.sh-logo::after, .sh-bell::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%); }

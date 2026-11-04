@@ -692,3 +692,6 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 /* v10.32 (추가) — 인증 화면은 나의공간 틀(.mys) 밖이라 my- 부품이 쓰는 토큰(--mink · --mline · --card)을 여기서도 정의 */
 /* 2026-10-21 디자인 통일 2단계 A(docs/106) — 시트 값 이름으로 */
 .w1-vfy { --mink: var(--sgb-ink); --mink2: var(--sgb-ink-2); --mink3: var(--sgb-ink-3); --mline: var(--sgb-line); --mline2: var(--sgb-line-soft); --card: #FFFFFF; }
+/* v10.189 (docs/296) — 휴대폰 화면 검토 반영: 주황 · 노랑 바탕 위 글자는 남색(결정 #4 · 흰 글자 대비 2.80 · 2.15) */
+.w1-bprop { color: var(--sgb-navy, #00245a) !important; }
+.w1-wrn .ic { color: var(--sgb-navy, #00245a); }

@@ -55,7 +55,7 @@
 .my-tb:hover { border-color: var(--pp); color: var(--pp); }
 .my-tb.on { background: var(--pp); border-color: var(--pp); color: #fff; }
 .my-tb i { font-style: normal; font-size: 12px; font-weight: 800; opacity: .75; }
-.my-tb .my-dot { background: #e5484d; color: #fff; border-radius: 999px; font-size: 12px; padding: 1px 6px; font-style: normal; }
+.my-tb .my-dot { background: #b91c1c; color: #fff; border-radius: 999px; font-size: 12px; padding: 1px 6px; font-style: normal; }
 
 /* ── 안내 상자 · 빈 상태 ── */
 .my-nt { margin: 14px 0; padding: 12px 14px; border-radius: var(--sgb-r-sm, 7px); font-size: 13px; line-height: 1.65;
@@ -136,7 +136,7 @@
 .my-mcard:hover { border-color: var(--pp); }
 .my-mcard b { font-size: 14px; font-weight: 800; color: var(--mink); }
 .my-mcard b i { font-style: normal; font-size: 12px; color: var(--pp); }
-.my-mcard b .my-dot { font-style: normal; font-size: 12px; background: #e5484d; color: #fff; border-radius: 999px; padding: 1px 6px; margin-left: 4px; }
+.my-mcard b .my-dot { font-style: normal; font-size: 12px; background: #b91c1c; color: #fff; border-radius: 999px; padding: 1px 6px; margin-left: 4px; }
 .my-mcard span { font-size: 12px; color: var(--mink3); line-height: 1.55; }
 
 /* ── 내 등록 리스팅 행 (시안 .lrow) ── */

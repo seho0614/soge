@@ -50,8 +50,11 @@ export class MarketController {
       'gwanCode 를 주면 그 관의 게시 매물에 실제로 걸리는 말만. 검색 팝업 추천 칩(GET /search/suggest keywords)과 같은 규칙 · 쌓는 곳은 POST /search/log.',
   })
   @ApiQuery({ name: 'gwanCode', required: false, enum: GWANS }) @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'place', required: false, enum: ['hero'], description: 'v10.189 — hero 면 운영이 고른 메인 추천 칩(설정 home.hero_chips)이 있을 때 그 말(source pick)' })
   @ApiOkResponse(OBJ)
-  keywords(@Query('gwanCode') g?: string, @Query('limit') limit?: string) { return this.svc.keywords(gw(g), Number(limit) || 5); }
+  keywords(@Query('gwanCode') g?: string, @Query('limit') limit?: string, @Query('place') place?: string) {
+    return this.svc.keywords(gw(g), Number(limit) || 5, place === 'hero' ? 'hero' : undefined);
+  }
 
   @Get('market/requests')
   @ApiOperation({ summary: '지금 올라온 소개 요청 — 종류 · 지역 · 사진', description: '시안 소개장터 메인의 요청 구역(종류 탭 6). 지역은 요청에 넣은 시 · 도, 없으면 요청자의 인증 사업장 주소.' })

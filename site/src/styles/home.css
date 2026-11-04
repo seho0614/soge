@@ -604,3 +604,6 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-nav { order: 3; width: 100%; }
   .home-hdr { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
 }
+/* v10.189 (docs/296) — Hero 안내 카드 「‹ · ❚❚ · ›」 누르는 자리 44px(보이는 단추 30px 그대로) */
+.home-pnext { position: relative; }
+.home-pnext::after { content: ""; position: absolute; inset: -7px -5px; }   /* 옆 단추와 사이 10px — 겹치지 않게 가로는 5px */

@@ -11,7 +11,7 @@
 /* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 초록은 소개몰 관 색(<main data-sgb-gwan="shop">)의 글자 · 단추용 #12883e(흰 글자 대비 4.5 이상) ·
  * 흐린 글자 #8A8F9C → 시트 #6b7694 · 글꼴은 나눔스퀘어 네오. 할인 빨강 · 구역 바탕(크림 · 회색) · 사진 띠의 밝은 초록 #22C55E(어두운 바탕 위)는 그대로 */
 .shop, .shop-sub {
-  --shop-navy: var(--sgb-navy); --shop-green: var(--sgb-point-text); --shop-orange: var(--sgb-accent); --shop-red: #E5362F; --shop-dim: var(--sgb-ink-3); --shop-ink: var(--sgb-ink);
+  --shop-navy: var(--sgb-navy); --shop-green: var(--sgb-point-text); --shop-orange: var(--sgb-accent); --shop-red: #b91c1c;   /* v10.189 — 할인율 · 품절 글자 대비 4.5 이상(시트 #14 ② 진한 빨강 · 전 #E5362F 4.29) */ --shop-dim: var(--sgb-ink-3); --shop-ink: var(--sgb-ink);
   font-family: var(--sgb-font-body);
 }
 .shop { background: #fff; color: var(--shop-ink); padding-bottom: 8px; }

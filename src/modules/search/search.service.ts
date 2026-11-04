@@ -159,6 +159,21 @@ export class SearchService {
   }
 
   /**
+   * v10.189 (D172 · docs/296) — 운영이 고른 메인 Hero 추천 칩(설정 home.hero_chips · 쉼표로 최대 4개).
+   *   인기 검색어와 같은 규칙으로 제한업종 낱말이 든 말은 뺍니다. 비어 있으면 빈 목록(부르는 쪽이 인기 검색어로).
+   */
+  async heroPicks(): Promise<string[]> {
+    const [row] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'home.hero_chips'`);
+    const picks = [...new Set((row?.v ?? '').split(',').map((x) => x.trim().replace(/\s+/g, ' ')).filter((x) => x.length >= 2 && x.length <= 20))].slice(0, 4);
+    if (!picks.length) return [];
+    const blockRows = await this.db.query<{ t: string }>(
+      `SELECT lower(term) AS t FROM restrict_vocab
+        UNION SELECT lower(name) FROM restricted_industries WHERE is_active AND mode IN ('BLOCK','AD_ONLY')`);
+    const blocked = blockRows.map((r) => r.t).filter(Boolean);
+    return picks.filter((x) => !blocked.some((b) => x.toLowerCase().includes(b)));
+  }
+
+  /**
    * v10.29 — 검색 팝업의 읽기 전용 재료 (시안 SPOP · sugPool).  GET /api/v1/search/suggest?q=
    *
    *   keywords     인기 검색어(search_term_stats) — 결과가 나온 말만, **제한업종 낱말은 빼고**(시안 kwSafe · M-08)

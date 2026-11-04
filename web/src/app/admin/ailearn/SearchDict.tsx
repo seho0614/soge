@@ -14,10 +14,14 @@ interface TermStat { term: string; hits: number; zeroHits: number; hidden?: bool
 
 interface Terms { synonyms: Syn[]; intents: Intent[]; top: TermStat[]; zeroHit: TermStat[] }
 
+interface Setting { key: string; value: string | null }
+
 const KIND: Record<string, string> = { GWAN: '관', CATEGORY: '분류', REGION: '지역', STATE: '상태', ITEM: '품목' };
 
 export function SearchDict() {
   const r = useApi<Terms>('/admin/search/terms');
+  const st = useApi<Setting[]>('/admin/site-settings');
+  const [chips, setChips] = useState<string | null>(null);
   const [f, setF] = useState({ term: '', canonical: '', kind: 'CATEGORY', weight: '5' });
   const [q, setQ] = useState('');
   const a = useAct();
@@ -33,6 +37,13 @@ export function SearchDict() {
     void a.run('t:' + t.term, () => api('/admin/search/terms/hide', {
       method: 'POST', body: JSON.stringify({ term: t.term, hidden }),
     }), r.reload);
+  };
+  /* v10.189 (D172 · docs/296) — 메인 Hero 추천 칩을 운영이 고름(설정 home.hero_chips · 쉼표로 최대 4개). 비우면 인기 검색어 */
+  const saveChips = (v: string) => {
+    const words = v.split(',').map((x) => x.trim()).filter(Boolean);
+    if (words.length > 4 || words.some((x) => x.length < 2 || x.length > 20 || x.includes(','))) { a.setErr('쉼표로 최대 4개 · 낱말마다 2 ~ 20자로 적으십시오.'); return; }
+    void a.run('chips', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'home.hero_chips', value: words.join(',') }) }),
+      () => { setChips(null); st.reload(); }, words.length ? '저장했습니다. 1분 안에 메인에 나옵니다.' : '비웠습니다. 메인은 인기 검색어(3개 이상일 때) · 아니면 예시 칩으로 돌아갑니다.');
   };
   const del = (s: Syn) => {
     if (!confirm(`'${s.term} → ${s.canonical}' 을(를) 지웁니다.`)) return;
@@ -74,6 +85,24 @@ export function SearchDict() {
           </table>
         </>
       )}
+
+      {(() => {
+        const saved = st.data?.find((x) => x.key === 'home.hero_chips');
+        if (!saved) return null;   // D172 전 DB — 칸을 그리지 않음
+        const cur = chips ?? saved.value ?? '';
+        return (
+          <section data-hero-chips="">
+            <h3 className="sec">메인 Hero 추천 칩</h3>
+            <p className="hint">메인 검색칸 아래 칩 — 쉼표로 최대 4개(예: 인테리어,세무,청소,간판). <b>비워 두면</b> 아래 「많이 찾은 말」 중 보이는 것 4개(3개 이상일 때) · 아니면 예시 칩. 제한업종 낱말이 든 말은 나가지 않습니다.</p>
+            <div className="row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input id="hero-chips" aria-label="메인 Hero 추천 칩" value={cur} maxLength={90} placeholder="비어 있음 — 인기 검색어" onChange={(e) => setChips(e.target.value)} style={{ minWidth: 280 }} />
+              <button className="btn-sm" disabled={a.busy === 'chips' || cur === (saved.value ?? '')} onClick={() => saveChips(cur)}>저장</button>
+              {saved.value ? <button className="btn-no" disabled={a.busy === 'chips'} onClick={() => saveChips('')}>비우기</button> : null}
+              <span className="muted">지금: {saved.value ? saved.value.split(',').join(' · ') : '인기 검색어'}</span>
+            </div>
+          </section>
+        );
+      })()}
 
       <h3 className="sec">많이 찾은 말 · 추천 검색어 <em>{d.top.length}</em></h3>
       <p className="hint">검색 팝업 · 관 화면의 추천 검색어는 여기서 나옵니다(결과가 나온 말 · 제한업종 제외). 시험 꼬리표 같은 말은 「숨기기」 — 통계는 그대로 쌓입니다.</p>

@@ -54,10 +54,18 @@ export class MarketService {
    * 제한업종 낱말은 빼고(검색 팝업 kwSafe 와 같은 규칙), gwanCode 를 주면 그 관의 게시 매물에서 실제로 걸리는 말만 둡니다.
    * 합침(v10.31): 검색 팝업 칩(GET /search/suggest)과 같은 함수(SearchService.popularKeywords) — 쓰기는 w1 POST /search/log.
    */
-  async keywords(gwanCode?: string, limit = 5) {
+  async keywords(gwanCode?: string, limit = 5, place?: string) {
+    /* v10.189 (D172 · docs/296) — 메인 Hero(place=hero)는 운영이 고른 말(설정 home.hero_chips)이 있으면 그 말 */
+    if (place === 'hero' && !gwanCode) {
+      const picks = await this.search.heroPicks();
+      if (picks.length) {
+        return { items: picks.map((term) => ({ term, hits: null })), source: 'pick',
+          basis: '운영이 고른 말(설정 home.hero_chips). 제한 업종 낱말은 뺍니다.' };
+      }
+    }
     /* 합침(v10.31) — 규칙은 검색 모듈 한 곳(SearchService.popularKeywords · 쓰기는 POST /search/log) */
     const items = await this.search.popularKeywords({ gwanCode: gwanCode ?? null, limit });
-    return { items: items.map((r) => ({ term: r.term, hits: r.hits })),
+    return { items: items.map((r) => ({ term: r.term, hits: r.hits })), source: 'auto',
       basis: '검색어 통계(정규화된 말 · 결과가 나온 검색만). 제한 업종 낱말은 뺍니다.' };
   }
 

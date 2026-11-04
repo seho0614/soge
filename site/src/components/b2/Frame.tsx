@@ -23,20 +23,12 @@
  *   · 글꼴 · 치수 · 주황은 styles/money.css 의 [data-b2-tone=money] 가 그림대로 바꿉니다. 소개광장 · 소개몰의 머리줄은 그대로입니다.
  */
 import Link from 'next/link';
-import type { FooterLink, Gwan } from '@/lib/types';
-import { GWAN_PATH } from '@/lib/format';
-import { AuthArea } from './AuthArea';
-import { NavLink } from './NavLink';
+import type { FooterLink } from '@/lib/types';
 import { B2Notice } from './Notice';
 import { TonePic } from './TonePic';
 import { MnyPic } from '@/components/money/pics';
 import { footerHref } from '@/components/common/links';
-import { FindButton } from '@/components/search/FindButton';
-import { useLocale, useTranslations } from 'next-intl';
-import { getLocale, getTranslations } from 'next-intl/server';
-import { langInfo } from '@/i18n/request';
-import { LangSwitch } from '@/i18n/LangSwitch';
-import { isGwanKey } from '@/i18n/keys';
+import { useTranslations } from 'next-intl';
 
 /** 잘라 낸 그림 — [파일, 원래 가로, 원래 세로]. 화면에는 h 높이에 맞춰 같은 비율로 넣습니다. */
 const PIC = {
@@ -53,65 +45,7 @@ function Pic({ name, h, alt = '' }: { name: keyof typeof PIC; h: number; alt?: s
   return <img src={src} width={Math.round((w0 * h) / h0)} height={h} alt={alt} aria-hidden={alt ? undefined : true} />;
 }
 
-const ICON = {
-  search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></>,
-  chev: <path d="m6 9 6 6 6-6" />,
-  cart: <><path d="M3 4h2.5l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 7H6.6" /><circle cx="9.5" cy="19" r="1.3" /><circle cx="17" cy="19" r="1.3" /></>,
-  /* 알림 종 — 소개장터 메인. 그림의 종(남색 선 · 둥근 몸통 · 아래 추)과 같은 모양으로 그렸습니다 */
-  bell: <><path d="M12 3.2v1.3" /><path d="M5.2 17.2c1.3-1.2 1.9-2.6 1.9-4.6v-2a4.9 4.9 0 0 1 9.8 0v2c0 2 .6 3.4 1.9 4.6z" /><path d="M10.2 19.6a1.9 1.9 0 0 0 3.6 0" /></>,
-};
-function Ic({ name, size = 22, w = 1.8 }: { name: keyof typeof ICON; size?: number; w?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      {ICON[name]}
-    </svg>
-  );
-}
-
-/** v10.95 — 언어 자리: 다국어가 꺼져 있으면 전처럼 「KR · 다른 언어는 준비 중」, 켜져 있고 언어가 둘 이상이면 언어 단추 */
-async function B2Lang({ chev }: { chev: React.ReactNode }) {
-  const info = await langInfo();
-  const t = await getTranslations('b2');
-  if (info.enabled && info.items.length > 1) {
-    return <LangSwitch items={info.items.map(({ code, name }) => ({ code, name }))} locale={await getLocale()} />;
-  }
-  return (
-    <details className="b2-lang">
-      <summary aria-label={t('langNow')}>KR {chev}</summary>
-      <div className="b2-langm" role="group" aria-label={t('langPick')}>
-        <span className="on" aria-current="true">{t('langKo')}</span>
-        <small>{t('langSoon')}</small>
-      </div>
-    </details>
-  );
-}
-
-export function B2Header({ gwans }: { gwans: Gwan[] }) {
-  const h = useTranslations('header');
-  const locale = useLocale();
-  return (
-    <header className="b2-hd">
-      <div className="b2-in">
-        <Link href="/" className="b2-logo" aria-label={h('logoHome')}><TonePic base={<Pic name="logo" h={52} alt={h('brand')} />} money={<MnyPic name="logo" alt={h('brand')} />} /></Link>
-        <nav className="b2-nav" aria-label={h('mainMenu')}>
-          {/* 주소가 없는 관(허브 EARN 등)과 중지된 관은 뺍니다 — 공통 머리줄 · 메인 머리줄과 같은 규칙 */}
-          {gwans.filter((g) => g.isActive !== false && GWAN_PATH[g.code]).map((g) => (
-            <NavLink key={g.code} href={`/${GWAN_PATH[g.code]}`}>{locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name}</NavLink>
-          ))}
-          <NavLink href="/community">{h('community')}</NavLink>
-          <NavLink href="/guide">{h('guide')}</NavLink>
-        </nav>
-        <div className="b2-hdr">
-          {/* v10.40 — 시안 SPOP: 머리줄 돋보기는 검색 팝업을 엽니다(전: 결과 화면 링크) */}
-          <FindButton className="b2-find"><Ic name="search" /></FindButton>
-          <B2Lang chev={<Ic name="chev" size={20} w={2} />} />
-          {/* 로그인 · 무료 회원가입(로그인했으면 나의공간 · 로그아웃) · 장바구니 숫자 — 사람마다 달라 브라우저에서 받습니다(AuthArea) */}
-          <AuthArea cartIcon={<Ic name="cart" size={30} w={1.5} />} bellIcon={<Ic name="bell" size={36} w={1.25} />} />
-        </div>
-      </div>
-    </header>
-  );
-}
+/* v10.189 — 두 관 · 소개장터 메인 머리줄(B2Header · B2Lang · AuthArea)은 지웠습니다 — v10.188 부터 공통 머리줄(components/common/UniHeader.tsx). 바닥줄은 그대로 씁니다. */
 
 /* 사회관계망 — [이름, 그림, 설정 키]. 주소는 운영 화면 「사이트 기본 정보」에서 넣습니다(D021 · 설정 sns.*) — 메인 바닥줄과 같은 규칙입니다.
  * 주소가 있으면 새 창으로 그 계정에, 비어 있으면 「준비 중」(누를 수 없음)입니다. https 주소만 받습니다. 그림에는 세 개(엑스 없음)입니다. */

@@ -13,15 +13,10 @@
  *      (v10.14 — 「이건 어때?」의 참여 수는 예시가 아니라 실제 표 수입니다. 사회관계망 아이콘은 운영이 넣은 주소로 연결됩니다.)
  */
 import Link from 'next/link';
-import type { FooterLink, Gwan } from '@/lib/types';
-import { GWAN_PATH } from '@/lib/format';
-import { Line, Pic } from './Icons';
-import { footerHref, isOps } from '@/components/common/links';
-import { HomeLogout } from './HomeLogout';
-import type { MeSummary } from './types';
-import { useLocale, useTranslations } from 'next-intl';
-import { LangAuto } from '@/i18n/LangAuto';
-import { isGwanKey } from '@/i18n/keys';
+import type { FooterLink } from '@/lib/types';
+import { Pic } from './Icons';
+import { footerHref } from '@/components/common/links';
+import { useTranslations } from 'next-intl';
 
 export function Logo() {
   const h = useTranslations('header');
@@ -32,51 +27,8 @@ export function Logo() {
   );
 }
 
-/**
- * v10.31 — 로그인 뒤 오른쪽: 시안 「🔍 · 👤 이름 · 나의공간 · 로그아웃 · 관리자 페이지(운영 역할만)」.
- *   개발에만 있던 「소개받기」 단추는 남겨 둡니다(지시 ③ — 시안 모양 안에 · 옅게).
- */
-export function HomeHeader({ gwans, loggedIn, summary }: { gwans: Gwan[]; loggedIn: boolean; summary?: MeSummary | null }) {
-  const name = summary?.displayName?.trim() || null;
-  const h = useTranslations('header');
-  const locale = useLocale();
-  return (
-    <header className="home-hd">
-      <div className="home-in">
-        <Logo />
-        <nav className="home-nav" aria-label={h('mainMenu')}>
-          {/* 주소가 없는 관(허브 EARN 등)과 중지된 관은 뺍니다 — 공통 헤더와 같은 규칙 */}
-          {gwans.filter((g) => g.isActive !== false && GWAN_PATH[g.code]).map((g) => (
-            <Link key={g.code} href={`/${GWAN_PATH[g.code]}`}>{locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name}</Link>
-          ))}
-          <Link href="/community">{h('community')}</Link>
-          <Link href="/guide">{h('guide')}</Link>
-        </nav>
-        <div className="home-hdr">
-          {/* v10.40 — 시안: 머리줄 돋보기는 히어로 검색칸으로 가서 검색 팝업을 엽니다(HeroSearch 가 #home-q 를 받음 · 전: 결과 화면 링크) */}
-          <LangAuto />
-          <Link className="home-icbtn" href="#home-q" aria-label={h('search')}><Line name="search" size={22} w={2.4} /></Link>
-          {/* v10.187 (docs/293 · 대표 「B안으로」) — 「파트너센터」 글자 링크(관 머리줄과 같은 자리 · /partners). 휴대폰은 로그인한 사람에게만(.pc-only) */}
-          <Link className={`home-txt${loggedIn ? '' : ' pc-only'}`} href="/partners" data-home-partners="">{h('partners')}</Link>
-          {loggedIn ? (
-            <>
-              <span className="home-who" title={name ?? undefined}>👤 {name ? (name.length > 10 ? name.slice(0, 10) + '…' : name) : h('member')}</span>
-              <Link className="home-pill" href="/my">{h('my')}</Link>
-              <Link className="home-pill dev" href="/request">{h('request')}</Link>
-              <HomeLogout />
-              {isOps(summary?.principal?.roles) && <a className="home-pill p" href="/go/admin">{h('admin')}</a>}
-            </>
-          ) : (
-            <>
-              <Link className="home-pill" href="/login">{h('login')}</Link>
-              <Link className="home-pill p" href="/signup">{h('signup')}</Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
+/* v10.189 — 메인 머리줄(HomeHeader)은 지웠습니다 — v10.188 부터 모든 화면이 공통 머리줄(components/common/UniHeader.tsx)을 씁니다.
+ *   Logo 는 /partners 의 전 머리줄(common/SiteHeader)이 계속 씁니다. */
 
 /* 사회관계망 계정은 아직 정해지지 않았습니다 — 목적지 없는 링크는 숨기지 않고 「준비 중」으로 보입니다(푸터 규칙). 아이콘은 그림 그대로 */
 /* 사회관계망 — [이름, 그림, 설정 키]. 주소는 운영 화면 「사이트 기본 정보」에서 넣습니다(D021 · 설정 sns.*).

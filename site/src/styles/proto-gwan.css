@@ -527,7 +527,7 @@
 .gw-wnote b{color:var(--ink2)}
 .gw-tabs{display:flex;gap:8px;padding-top:16px}
 .gw-tab{padding:9px 26px;border-radius:var(--sgb-r-sm, 7px);font-size:14px;font-weight:700;border:1px solid var(--bl);
-       background:var(--card);color:var(--bl)}
+       background:var(--card);color:var(--bl-d)}   /* v10.189 — 고르지 않은 탭 글자 대비 4.5 이상(진한 링크색) */
 .gw-tab.gw-on{background:var(--bl);color:#fff}
 .gw-tabnote{font-size:12px;color:var(--ink3);margin-top:8px}
 .gw-body2{padding:16px 0 0}
@@ -1236,3 +1236,8 @@ a.gw-bo.gw-sm, a.gw-bp.gw-sm{display:inline-flex;align-items:center;justify-cont
 .gw-rcall .gw-rck,.gw-rcall .gw-rcn,.gw-ru .gw-rn2{color:var(--bl-d)}
 .gw-c3a span{color:#93A2C2}
 .gw .gw-regwrap .role-tabs button.on span{color:var(--ink2)}
+/* v10.189 (docs/296) — 휴대폰 화면 검토(30화면 · 390px) 반영
+   ① 주황 바탕 위 글자는 남색(결정 #4) — 매물 상세 「전화하기」 · 사진 위 「노출 중」(흰 글자 대비 2.80)
+   ② 안심소개 관 색 초록을 진한 값으로(#059669 → #047857 · 시트 #14 ② · 흰 글자 3.77 → 5.5) — 검색 단추 · 고른 탭 · 고른 수 */
+.gw .gw-bcall,.gw a.gw-bcall,.gw-dtimg .gw-st2{color:var(--sgb-navy, #00245a)}
+.gw-gwl.gw-mal{--gc:#047857}
