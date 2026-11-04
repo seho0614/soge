@@ -79,6 +79,8 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
           ))}
           {/* 휴대폰 — 단추 줄이 넘치지 않게 로그인한 사람의 「파트너센터」는 메뉴 줄 끝에(.m-only · PC 는 오른쪽 글자 링크) */}
           {st.in && <Link className="m-only" href="/partners">{h('partners')}</Link>}
+          {/* v10.190 (docs/297) — 휴대폰은 언어 칸도 메뉴 줄 끝에(첫 줄이 넘쳐 머리줄이 세 줄이 되던 것 · PC 는 오른쪽 그대로) */}
+          {lang && <span className="m-lang">{lang}</span>}
         </nav>
         <div className="sh-hdr">
           {/* 메인은 히어로 검색칸(#home-q)으로 가서 그 팝업을 엽니다(HeroSearch) · 다른 화면은 같은 검색 팝업 */}

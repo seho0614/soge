@@ -31,6 +31,7 @@
 .sh-pill.p:hover { filter: brightness(.94); }
 .sh-bell, .sh-cart { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; font-size: 20px; color: var(--sgb-ink); }
 .sh-nav .m-only { display: none; }
+.sh-nav .m-lang { display: none; align-items: center; }
 .sh-num { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sgb-navy, #00245a); color: #fff; font: 700 11px/18px var(--sgb-font-body); text-align: center; }
 /* 중간 폭(태블릿 · 좁은 PC) — 전 메인 머리줄(home.css v10.31 w1)과 같은 규칙: 메뉴는 옆으로 밀고, 900px 아래는 메뉴를 둘째 줄로 */
 .sh-in, .sh-nav { min-width: 0; }
@@ -48,6 +49,10 @@
 @media (max-width: 1440px) {
   .sh-hd.in .sh-txt { display: none; }
   .sh-hd.in .sh-nav .m-only { display: inline; }
+}
+/* v10.190 (docs/297) — 로그인 · 1241 ~ 1440px 메뉴 간격 20px(운영 계정 1280px 에서 메뉴가 57px 모자라던 것 · 1240px 아래는 위 18px 그대로) */
+@media (min-width: 1241px) and (max-width: 1440px) {
+  .sh-hd.in .sh-nav { gap: 20px; }
 }
 @media (max-width: 1100px) {
   .sh-txt { display: none; }   /* 좁은 PC 에서 머리줄이 넘치지 않게 — 파트너센터는 바닥줄 · 나의공간에서도 갑니다 */
@@ -68,6 +73,10 @@
   .sh-pill { height: 34px; padding: 0 10px; font-size: 13px; }
   .sh-txt { display: none; }   /* 휴대폰은 「파트너센터」를 메뉴 줄 끝(.m-only · 로그인한 사람만)에 */
   .sh-nav .m-only { display: inline; }
+  /* v10.190 (docs/297) — 다국어가 켜지면 언어 칸이 첫 줄에 들어가지 않아 머리줄이 세 줄(137px)이 되던 것 — 휴대폰은 언어 칸도 메뉴 줄 끝에 */
+  .sh-hdr .lang-pick { display: none; }
+  .sh-nav .m-lang { display: inline-flex; }
+  .sh-nav .m-lang .lang-pick { margin-right: 0; }
   .sh-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
   .sh-nav::-webkit-scrollbar { display: none; }
   .sh-bell, .sh-cart { width: 30px; height: 34px; font-size: 18px; }
