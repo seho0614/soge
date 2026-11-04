@@ -3,7 +3,7 @@
   docker run --rm --network host -v <qa>:/w -v $K:/core:ro -w /w -e KIT=/core -e API=http://localhost:13000/api/v1 \
       -e SITE=http://localhost:15174 -e DB=postgresql://sgb:sgb@localhost:15432/sgb sgb-qa:v1 python3 test_v1190.py
 
-  ① 코드 — 로고 40px · .sh-in 최대 폭 없음 · .sh-nav 어느 폭에서나 옆으로 밂 · 시안 · docs/297 · v10.190
+  ① 코드 — 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메뉴 줄 끝 · 로고 40px · .sh-in 최대 폭 없음 · .sh-nav 어느 폭에서나 옆으로 밂 · 시안 · docs/297 · v10.190
   ② (화면 · 다국어 켜짐) 로그아웃 · 회원 · 운영 계정 × 1920 ~ 390px — 메뉴가 오른쪽 단추 묶음과 겹치지 않음 · 페이지 가로 넘침 없음 ·
      1920px 머리줄 전체 폭 · 1280px 이상은 메뉴가 다 보임 · 끝나면 다국어 설정 되돌림
 """
@@ -33,6 +33,11 @@ ok('① 머리줄 — .sh-in 최대 폭 없음(전체 폭) · .sh-nav 어느 폭
    and '\n.sh-nav { overflow-x: auto; scrollbar-width: none; }' in HC, '')
 ok('① 로그인 1440px 아래 — 파트너센터 메뉴 줄 끝(.sh-hd.in)', "className={`sh-hd${st.in ? ' in' : ''}`}" in rd('site/src/components/common/UniHeader.tsx')
    and '@media (max-width: 1440px) {\n  .sh-hd.in .sh-txt { display: none; }\n  .sh-hd.in .sh-nav .m-only { display: inline; }' in HC, '')
+ok('① 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메뉴 줄 끝(.m-lang)',
+   '@media (min-width: 1241px) and (max-width: 1440px) {\n  .sh-hd.in .sh-nav { gap: 20px; }' in HC
+   and '.sh-hdr .lang-pick { display: none; }' in HC and '.sh-nav .m-lang { display: inline-flex; }' in HC
+   and '{lang && <span className="m-lang">{lang}</span>}' in rd('site/src/components/common/UniHeader.tsx')
+   and '@media (min-width: 1241px) and (max-width: 1440px) { .sh-uni.in .gnb { gap: 20px; } }' in PR, '')
 ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
 ok('① 시안 — 로그인 메뉴 줄 끝 파트너센터 · 1440px 아래', "'<a href=\"#\" class=\"m-only\" data-go=\"p2dsh\">파트너센터</a>'" in PR
    and '.sh-uni.in .home-hdr .home-txt { display: none; } .sh-uni.in .gnb .m-only { display: inline; }' in PR and "home-hd sh-uni'+(inn ? ' in' : '')" in PR, '')
@@ -62,7 +67,9 @@ HD = """() => {
   return { navHdr: cross(n, d), navLogo: cross(n, g), full: nav ? nav.scrollWidth <= nav.clientWidth + 1 : false,
            inW: Math.round(h.querySelector('.sh-in').getBoundingClientRect().width), vw: innerWidth,
            ox: document.documentElement.scrollWidth > innerWidth + 1, lang: !!h.querySelector('select'),
-           admin: !!h.querySelector('a[href="/go/admin"]'), out: !!h.querySelector('a[href="/login"]') };
+           admin: !!h.querySelector('a[href="/go/admin"]'), out: !!h.querySelector('a[href="/login"]'),
+           hh: Math.round(h.getBoundingClientRect().height),
+           langAt: [...h.querySelectorAll('select')].filter((e) => e.offsetParent).map((e) => e.closest('.sh-nav') ? 'nav' : 'hdr').join(',') };
 }"""
 
 # ── ② 화면 ────────────────────────────────────────────────────────────
@@ -99,6 +106,10 @@ if SITE and API and DB:
                             bad.append(f'{who} {w} {u} {r}')
                         if w >= 1280 and not r['full']:
                             bad.append(f'{who} {w} {u} 메뉴 다 안 보임')
+                        if r['lang'] and r['langAt'] != ('nav' if w <= 640 else 'hdr'):
+                            bad.append(f'{who} {w} {u} 언어 칸 자리 {r["langAt"]}')
+                        if w == 390 and who != '운영' and r['hh'] >= 100:
+                            bad.append(f'{who} {w} {u} 휴대폰 머리줄 {r["hh"]}px')
                         if w == 1920 and u == '/':
                             info.append(f'{who} 1920 안쪽 {r["inW"]}')
                         if w == 1920 and r['inW'] < w - 60:
@@ -109,7 +120,7 @@ if SITE and API and DB:
         good_state = all(any(x[0] for x in seen.get(k, ())) for k in ('로그아웃', '회원', '운영')) \
             and any(x[1] for x in seen.get('운영', ())) and any(x[2] for x in seen.get('로그아웃', ()))
         ok('② 다국어 켜짐 — 세 상태 모두 언어 칸 · 운영 계정은 관리자 페이지 단추 · 로그아웃은 로그인 단추', good_state, str(state))
-        ok(f'② 메뉴 겹침 없음 · 가로 넘침 없음 · 1280px 이상 메뉴 다 보임 · 1920px 전체 폭 — 3상태 × {len(WIDTHS)}폭 × 2화면',
+        ok(f'② 메뉴 겹침 없음 · 가로 넘침 없음 · 1280px 이상 메뉴 다 보임 · 1920px 전체 폭 · 언어 칸 하나(휴대폰 메뉴 줄 끝) · 휴대폰 머리줄 100px 미만 — 3상태 × {len(WIDTHS)}폭 × 2화면',
            not bad, f'{bad[:3]} · {info}')
     finally:
         en_on, en_act = (before.split(',') + ['off', 'f'])[:2]
