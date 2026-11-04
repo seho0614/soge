@@ -34,6 +34,8 @@ ok('① 머리줄 — .sh-in 최대 폭 없음(전체 폭) · .sh-nav 어느 폭
 ok('① 로그인 1440px 아래 — 파트너센터 메뉴 줄 끝(.sh-hd.in)', "className={`sh-hd${st.in ? ' in' : ''}`}" in rd('site/src/components/common/UniHeader.tsx')
    and '@media (max-width: 1440px) {\n  .sh-hd.in .sh-txt { display: none; }\n  .sh-hd.in .sh-nav .m-only { display: inline; }' in HC, '')
 ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
+ok('① 시안 — 로그인 메뉴 줄 끝 파트너센터 · 1440px 아래', "'<a href=\"#\" class=\"m-only\" data-go=\"p2dsh\">파트너센터</a>'" in PR
+   and '.sh-uni.in .home-hdr .home-txt { display: none; } .sh-uni.in .gnb .m-only { display: inline; }' in PR and "home-hd sh-uni'+(inn ? ' in' : '')" in PR, '')
 ok('① 시안 — 공통 머리줄 전체 폭 · 메뉴 옆으로 밂', '.sh-uni > .home-in { max-width: none; }' in PR
    and '.sh-uni .gnb { min-width: 0; overflow-x: auto; scrollbar-width: none; }' in PR, '')
 ok('① 문서 · 판 — docs/297 · v10.190 이상', any(f.startswith('297_') for f in os.listdir(os.path.join(K, 'docs')))
