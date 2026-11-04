@@ -46,8 +46,8 @@ ok('① 많이 차지하는 폴더 — du -skx · 1시간 · 30초 · 따로 돌
    "execFile('du', ['-skx'" in H and '60 * 60_000' in H and 'timeout: 30_000' in H and 'spawnSync' not in H and 'execSync' not in H
    and 'data-disk-top' in LWT and 'cleanup.sh' in LWT and not re.search(r"from '(?!node:|\.)", H), '')
 
-ok('① 문서 · 판 · 마이그레이션 그대로 — docs/292 · v10.186 이상 · 209',
-   any(f.startswith('292_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) == 209
+ok('① 문서 · 판 · 마이그레이션 그대로 — docs/292 · v10.186 이상 · 209(v10.189 부터 D172 · 210)',
+   any(f.startswith('292_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) in (209, 210)
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 186), f"{rd('VERSION').strip()} · {len(mig)}")
 
 # ── ② lib.sh 함수 — 가짜 판 폴더 ─────────────────────────────────────

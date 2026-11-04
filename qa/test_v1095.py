@@ -53,8 +53,9 @@ bt = [k for k in fk if fk[k].count('<b>') != fe.get(k, '').count('<b>') or fe.ge
 ok('② 굵게(<b>) 짝이 같음', not bt, ' '.join(bt[:5]))
 ok('② 영어 사전에 한글 없음', not [k for k, v in fe.items() if re.search('[가-힣]', v)], '')
 FILES = ['site/src/components/common/SiteHeader.tsx', 'site/src/components/common/HdNav.tsx', 'site/src/components/HdAuth.tsx', 'site/src/components/Footer.tsx',
-         'site/src/components/b2/Frame.tsx', 'site/src/components/b2/AuthArea.tsx', 'site/src/components/b2/Notice.tsx', 'site/src/components/home/Frame.tsx',
-         'site/src/components/home/HomeLogout.tsx', 'site/src/app/login/page.tsx', 'site/src/app/login/forgot/page.tsx', 'site/src/app/login/reset/page.tsx',
+         'site/src/components/b2/Frame.tsx', 'site/src/components/b2/Notice.tsx', 'site/src/components/home/Frame.tsx',
+         'site/src/components/common/UniHeader.tsx',   # v10.189 — 옛 머리줄(AuthArea · HomeLogout)을 지우고 공통 머리줄
+         'site/src/app/login/page.tsx', 'site/src/app/login/forgot/page.tsx', 'site/src/app/login/reset/page.tsx',
          'site/src/components/auth/LoginForm.tsx', 'site/src/components/auth/PasswordForms.tsx', 'site/src/app/signup/page.tsx', 'site/src/components/auth/SignupWizard.tsx',
          'site/src/components/auth/signup/StepType.tsx', 'site/src/components/auth/signup/StepBiz.tsx', 'site/src/components/auth/signup/StepPerson.tsx',
          'site/src/components/auth/signup/StepTerms.tsx', 'site/src/components/auth/signup/StepProfile.tsx', 'site/src/components/auth/signup/rules.ts',
@@ -70,9 +71,9 @@ def strip_comments(t):
 left = {f: re.findall(r'[가-힣][^\n]{0,30}', strip_comments(rd(f))) for f in FILES}
 left = {f: v for f, v in left.items() if v}
 ok(f'② 옮긴 파일 {len(FILES)}개에 한글 문자열 없음(주석 제외)', not left and all(rd(f) for f in FILES), ' | '.join(f'{os.path.basename(f)}: {v[0]}' for f, v in list(left.items())[:3]))
-ok('② 한국어일 때 관 이름은 서버 이름(다른 언어만 사전)', all("locale !== 'ko' && isGwanKey(g.code)" in rd(f) for f in ('site/src/components/common/SiteHeader.tsx', 'site/src/components/b2/Frame.tsx', 'site/src/components/home/Frame.tsx')), '')
-ok('② 언어 단추 — 꺼짐이면 그리지 않음(LangPick · LangAuto) · b2 는 꺼짐이면 옛 「KR · 준비 중」 그대로', "if (!info.enabled || info.items.length < 2) return null;" in rd('site/src/i18n/LangPick.tsx')
-   and 'j?.enabled && Array.isArray(j.items) && j.items.length > 1' in rd('site/src/i18n/LangAuto.tsx') and "<summary aria-label={t('langNow')}>KR {chev}</summary>" in rd('site/src/components/b2/Frame.tsx'), '')
+ok('② 한국어일 때 관 이름은 서버 이름(다른 언어만 사전)', all("locale !== 'ko' && isGwanKey(g.code)" in rd(f) for f in ('site/src/components/common/SiteHeader.tsx', 'site/src/components/common/UniHeader.tsx')), '')   # v10.189 — 옛 b2 · 메인 머리줄 지움
+ok('② 언어 단추 — 꺼짐이면 그리지 않음(LangPick · v10.189 공통 머리줄 lang 자리 하나 · LangAuto · b2 「KR」 지움)', "if (!info.enabled || info.items.length < 2) return null;" in rd('site/src/i18n/LangPick.tsx')
+   and 'lang={<LangPick />}' in rd('site/src/app/layout.tsx') and '{lang}' in rd('site/src/components/common/UniHeader.tsx'), '')
 
 C = rd('src/modules/i18n/i18n.controller.ts'); S = rd('src/modules/i18n/i18n.service.ts')
 ok('③ GET i18n/langs(공개) · PUT me/lang(회원)', "@Get('i18n/langs')" in C and "@Put('me/lang')" in C and 'LANG_NOT_ACTIVE' in S and "items.filter((x) => x.code === 'ko')" in S, '')

@@ -23,11 +23,12 @@ def rd(rel):
     return open(p, encoding='utf-8-sig').read() if os.path.exists(p) else ''
 
 
-FR = rd('site/src/components/home/Frame.tsx'); CSS = rd('site/src/styles/home.css'); PROTO = rd('spec/proto.html')
+# v10.189 — 메인 머리줄(HomeHeader)을 지우고 공통 머리줄(v10.188 UniHeader)
+FR = rd('site/src/components/common/UniHeader.tsx'); CSS = rd('site/src/styles/home.css'); PROTO = rd('spec/proto.html')
 i_s = FR.find('href="#home-q"'); i_p = FR.find('href="/partners" data-home-partners'); i_l = FR.find('href="/login"')
 ko = json.loads(rd('site/src/i18n/messages/ko.json') or '{}'); en = json.loads(rd('site/src/i18n/messages/en.json') or '{}')
 ok('① 메인 머리줄 — 검색 다음 · 로그인 앞 · /partners · 사전 · 휴대폰 비로그인 숨김',
-   0 < i_s < i_p < i_l and "h('partners')" in FR and "loggedIn ? '' : ' pc-only'" in FR
+   0 < i_s < i_p < i_l and "h('partners')" in FR and "st.in ? '' : ' pc-only'" in FR
    and ko.get('header', {}).get('partners') == '파트너센터' and en.get('header', {}).get('partners') == 'Partner Center'
    and '.home-hdr .home-txt.pc-only { display: none; }' in CSS and '.home-txt { font-size: 14px;' in CSS, f'{i_s} {i_p} {i_l}')
 ok('① 시안 — 같은 자리(data-go="p2dsh") · 휴대폰 비로그인 숨김',
