@@ -49,10 +49,17 @@
 @media (max-width: 1440px) {
   .sh-hd.in .sh-txt { display: none; }
   .sh-hd.in .sh-nav .m-only { display: inline; }
+  .sh-hd.in .sh-hdr .sh-adm { display: none; }
 }
 /* v10.190 (docs/297) — 로그인 · 1241 ~ 1440px 메뉴 간격 20px(운영 계정 1280px 에서 메뉴가 57px 모자라던 것 · 1240px 아래는 위 18px 그대로) */
 @media (min-width: 1241px) and (max-width: 1440px) {
   .sh-hd.in .sh-nav { gap: 20px; }
+}
+/* v10.190 (docs/297) — 641 ~ 1440px 는 언어 칸을 🌐 동그란 단추로(오른쪽 단추 묶음을 줄임) · 고르기 칸은 투명하게 위에 덮어 그대로 누름 · 휴대폰은 메뉴 줄 끝 */
+@media (min-width: 641px) and (max-width: 1440px) {
+  .sh-hdr .lang-pick { position: relative; width: 44px; height: 44px; margin-right: 0; border-radius: 50%; background: var(--sgb-tile, #f2f4f7); flex: 0 0 auto; }
+  .sh-hdr .lang-pick::before { content: "🌐"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; pointer-events: none; }
+  .sh-hdr .lang-pick select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 }
 @media (max-width: 1100px) {
   .sh-txt { display: none; }   /* 좁은 PC 에서 머리줄이 넘치지 않게 — 파트너센터는 바닥줄 · 나의공간에서도 갑니다 */

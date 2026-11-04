@@ -80,6 +80,8 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
           {/* 휴대폰 — 단추 줄이 넘치지 않게 로그인한 사람의 「파트너센터」는 메뉴 줄 끝에(.m-only · PC 는 오른쪽 글자 링크) */}
           {st.in && <Link className="m-only" href="/partners">{h('partners')}</Link>}
           {/* v10.190 (docs/297) — 휴대폰은 언어 칸도 메뉴 줄 끝에(첫 줄이 넘쳐 머리줄이 세 줄이 되던 것 · PC 는 오른쪽 그대로) */}
+          {/* v10.190 (docs/297) — 운영 계정은 1440px 아래에서 「관리자 페이지」도 메뉴 줄 끝에(1280px 에서 메뉴가 밀리던 것 · 휴대폰 셋째 줄) */}
+          {st.ops && <a className="m-only" href="/go/admin">{h('admin')}</a>}
           {lang && <span className="m-lang">{lang}</span>}
         </nav>
         <div className="sh-hdr">
@@ -96,7 +98,7 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
                 <span aria-hidden>🔔</span>{st.bell > 0 && <span className="sh-num" aria-hidden>{st.bell > 99 ? '99+' : st.bell}</span>}
               </Link>
               <button type="button" className="sh-pill" onClick={out} disabled={busy}>{busy ? h('loggingOut') : h('logout')}</button>
-              {st.ops && <a className="sh-pill p" href="/go/admin">{h('admin')}</a>}
+              {st.ops && <a className="sh-pill p sh-adm" href="/go/admin">{h('admin')}</a>}
             </>
           ) : (
             <>
