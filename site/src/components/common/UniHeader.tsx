@@ -69,7 +69,7 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
   const cur = menu.find((m) => under(p, m.href))?.href;
 
   return (
-    <header className="sh-hd" data-uni-header="">
+    <header className={`sh-hd${st.in ? ' in' : ''}`} data-uni-header="">
       <div className="sh-in">
         {/* v10.190 (docs/297 · 대표 「로고 크기 줄이기」) — 높이 48 → 40px(휴대폰은 site-head.css 30px 그대로) */}
         <Link href="/" className="sh-logo" aria-label={h('logoHome')}><Pic name="logo" h={40} alt={h('brand')} /></Link>
