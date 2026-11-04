@@ -4839,6 +4839,9 @@ h1{font-size:20px} h2{font-size:16px} h3{font-size:14px}
 /* v10.188 (docs/294) — 공통 머리줄: 메인(.home) 밖에서도 같은 색 · 글꼴 · 지금 관 주황 밑줄 · 가입 단추는 남색 */
 .sh-uni { --hv: var(--sgb-navy, #00245a); --hk: var(--sgb-ink, #0d1b33); --hv-w: #ebeef2; --hv-l: #bfc8d6; font-family: var(--sgb-font-body); color: var(--sgb-ink); --sgb-btn-bg: var(--sgb-navy, #00245a); --sgb-btn-fg: #fff; }
 .sh-uni a { color: inherit; text-decoration: none; }
+/* v10.190 (docs/297) — 공통 머리줄은 화면 전체 폭 · 메뉴는 넘치면 옆으로 밂 */
+.sh-uni > .home-in { max-width: none; }
+.sh-uni .gnb { min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .sh-uni .gnb { display: flex; gap: 28px; font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; }
 .sh-uni .gnb a.on { color: var(--sgb-navy, #00245a); font-weight: 800; box-shadow: inset 0 -3px 0 var(--sgb-orange, #ffa03e); padding-bottom: 6px; }
 .home-txt { font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; margin-right: 4px; background: none; border: 0; cursor: pointer; font-family: inherit; }
