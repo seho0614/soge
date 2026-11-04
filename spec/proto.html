@@ -4916,6 +4916,10 @@ h1{font-size:20px} h2{font-size:16px} h3{font-size:14px}
 .home-ps.ad .home-ptag { background: #FBF6E6; color: #8A6A00; }
 .home-pnav { display: inline-flex; align-items: center; gap: 10px; }
 .home-pno { background: var(--sgb-ink-3); color: #fff; font-size: 13px; font-weight: 700; padding: 4px 14px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+/* v10.191 (docs/299) — 휴대폰에서 단추 묶음이 줄어 쪽 번호 「1 / 4」가 두 줄로 꺾이고 ❚❚ 단추가 길쭉해지던 것 — 단추 묶음은 줄지 않고 이름표 쪽이 줄어 꺾임 */
+.home-pnav { flex: 0 0 auto; }
+.home-pno { white-space: nowrap; }
+.home-ptag { min-width: 0; }
 .home-pnext { width: 30px; height: 30px; border-radius: 50%; background: var(--sgb-ink-3); color: #fff; border: 0; cursor: pointer; display: grid; place-items: center; }
 .home-pnext:hover { background: var(--hv); }
 .home-pbody { position: relative; }
