@@ -76,6 +76,7 @@
   /* v10.190 (docs/297) — 다국어가 켜지면 언어 칸이 첫 줄에 들어가지 않아 머리줄이 세 줄(137px)이 되던 것 — 휴대폰은 언어 칸도 메뉴 줄 끝에 */
   .sh-hdr .lang-pick { display: none; }
   .sh-nav .m-lang { display: inline-flex; }
+  .sh-nav .m-lang { position: relative; }   /* 언어 칸의 화면 읽기 전용 글자(.sr-only · absolute)가 머리줄 기준으로 놓여 페이지가 가로로 넘치던 것 — 메뉴 줄 안에 가둠 */
   .sh-nav .m-lang .lang-pick { margin-right: 0; }
   .sh-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
   .sh-nav::-webkit-scrollbar { display: none; }
