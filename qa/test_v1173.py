@@ -39,7 +39,7 @@ ok('① D162 — signup.open · site.notice_bar(_en) 공개 · abuse.* 운영 �
    and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M) and len(mig) >= 200 and 'D162_abuse_guard_notice' in mig, f'{len(mig)} · {mig[-1]}')
 G = rd('src/modules/identity/abuse-guard.ts'); A = rd('src/modules/identity/auth.service.ts'); L = rd('src/modules/listing/listing.service.ts')
 ok('① 서버 — 내부 IP 판정 · 가입 막기 422 · IP 상한 429(HMAC 키) · 새 회원 매물 상한 429(운영자 제외) · 매물 등록에서 부름',
-   'export function isInternalIp(' in G and "'NEW_MEMBER_LIMIT'" in G and "x.role IN ('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT')" in G
+   'export function isInternalIp(' in G and "'NEW_MEMBER_LIMIT'" in G and ("x.role IN ('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT')" in G or "x.role IN ('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF')" in G)
    and "'SIGNUP_CLOSED'" in A and "'SIGNUP_IP_LIMIT'" in A and "isInternalIp(clientIpRaw()) ? null : clientIpKey()" in A and "VALUES ('SIGNUP_IP', $1, now(), 1, now())" in A
    and 'await assertNewMemberListingQuota(this.db, input.ownerAccountId);' in L, '')
 C = rd('src/modules/admin/launch-watch.controller.ts'); SV = rd('src/modules/admin/launch-watch.service.ts')

@@ -30,7 +30,9 @@ def en(ns):
 
 
 R = json.load(open(os.path.join(HERE, 'en_review_b2_v1134.json'), encoding='utf-8'))
-miss = [r['key'] for r in R if get(en(r['ns']), r['key']) != r['proposed']]
+# v10.194 (D173 · docs/304) — 제휴 신청이 안심소개 입점 신청과 따로가 되어 s2Desc 뜻을 바꿈(그 판의 글이면 통과)
+V194 = {('affiliate', 'dash.apply.s2Desc'): 'The affiliate partner application is separate from the Safe Referral store application. You only need to apply once.'}
+miss = [r['key'] for r in R if get(en(r['ns']), r['key']) != r['proposed'] and get(en(r['ns']), r['key']) != V194.get((r['ns'], r['key']))]
 ok('① 2묶음 30건이 사전에 들어감', len(R) == 30 and not miss, f'{len(R)} · 빠짐 {miss[:3]}')
 ph = [r['key'] for r in R if sorted(re.findall(r'\{\w+\}|<\w+>', r['en'])) != sorted(re.findall(r'\{\w+\}|<\w+>', r['proposed']))]
 ok('① 고친 글의 자리({n} · <b> …)가 옛 글과 같음', not ph, str(ph))

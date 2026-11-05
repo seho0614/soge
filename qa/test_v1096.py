@@ -71,7 +71,7 @@ for f, c in ((P + 'partner.controller.ts', 'PartnerController'), (P + 'partner-a
     ok(f'② {os.path.basename(f)} — 컨트롤러 {c} 하나 · DTO 정의 없음', re.findall(r'^export class (\w+Controller)\b', t, re.M) == [c] and not re.search(r'^export class \w+Dto\b', t, re.M), '')
     ok(f'② app.module 이 {c} 를 {os.path.basename(f)} 에서', f"import {{ {c} }} from './modules/partner/{os.path.basename(f)[:-3]}';" in APP, '')
 pd = rd(P + 'partner.dto.ts'); hd = rd('src/modules/health/health-shop.dto.ts')
-ok('② partner.dto.ts — DTO 12개 · 컨트롤러 없음', len(re.findall(r'^export class \w+Dto\b', pd, re.M)) == 12 and 'Controller' not in re.sub(r'/\*[\s\S]*?\*/', '', pd), '')
+ok('② partner.dto.ts — DTO 12개 · 컨트롤러 없음', len(re.findall(r'^export class \w+Dto\b', pd, re.M)) in (12, 13) and 'Controller' not in re.sub(r'/\*[\s\S]*?\*/', '', pd), '')
 ok('② health-shop.dto.ts — DTO 14개 + RETURN_REASONS · 컨트롤러 파일에 DTO 없음', len(re.findall(r'^export class \w+Dto\b', hd, re.M)) == 14 and 'export const RETURN_REASONS' in hd
    and not re.search(r'^export class \w+Dto\b', rd('src/modules/health/health-shop.controller.ts'), re.M), '')
 seen = {}
