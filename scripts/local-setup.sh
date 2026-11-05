@@ -106,14 +106,20 @@ SELECT 'MNY', a.id, '사무실 인테리어 업체를 찾습니다',
 -- ★ approved_by 를 채웁니다.
 --   승인자 없이 ACTIVE 면 "누가 들여보냈는가" 를 답할 수 없습니다.
 --   파트너는 미수금 한도를 갖는 자리라 더 그렇습니다.
-INSERT INTO partners (business_id, status, approved_at, approved_by)
+-- v10.194 (D173) — 제휴 자격(aff_*)도 따로 채웁니다. 안 채우면 제휴 파트너센터가 신청 화면으로만 보입니다.
+INSERT INTO partners (business_id, status, approved_at, approved_by,
+                      aff_status, aff_applied_at, aff_approved_at, aff_approved_by)
 SELECT b.id, 'ACTIVE', now(),
+       (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1),
+       'ACTIVE', now(), now(),
        (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1)
   FROM businesses b
   JOIN accounts a ON a.id = b.account_id WHERE a.email = 'intro@x.com'
 ON CONFLICT (business_id) DO UPDATE
   SET status = 'ACTIVE', approved_at = now(),
-      approved_by = (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1);
+      approved_by = (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1),
+      aff_status = 'ACTIVE', aff_applied_at = COALESCE(partners.aff_applied_at, now()), aff_approved_at = now(),
+      aff_approved_by = (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1);
 
 INSERT INTO partner_services (partner_id, title, body, status)
 SELECT p.id, '사무실 인테리어 시공', '40평 이하 사무실 리모델링 전문', 'APPROVED'
