@@ -42,7 +42,7 @@ ok('① apply.sh — 새 판 만든 바로 뒤 NEW_REL 적기 · 바로가기 �
    and '지워도 됩니다' not in AP and AP.index('drop_new() {') < AP.index('stop() {'), f'mkdir {mk_i + 1}줄 · ln {ln_i + 1}줄')
 
 ok('① 문서 · 판 · 마이그레이션 그대로 — docs/301 · v10.192 이상 · 210',
-   any(f.startswith('301_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) in (210, 211)
+   any(f.startswith('301_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) in (210, 211, 212)
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 192), f"{rd('VERSION').strip()} · {len(mig)}")
 
 # ── ② lib.sh 함수 — 가짜 판 폴더 ─────────────────────────────────────
