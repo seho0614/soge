@@ -98,6 +98,9 @@ ok('① 사용자 웹 — 제휴 신청 주소 · 단계는 affStatus(정지 · 
    "fetch('/api/v1/partner/affiliate/apply'" in rd('site/src/components/partners/AffiliateApply.tsx') and 'd.affStatus' in SP
    and "tr('dash.apply.suspendedDesc'" in SP and "tr('dash.apply.rejectedDesc'" in SP
    and all(k in ko.get('dash', {}).get('apply', {}) and k in en.get('dash', {}).get('apply', {}) for k in ('suspended', 'suspendedDesc', 'rejected', 'rejectedDesc')), '')
+ok('① 개발 시드 — 시험 파트너(intro@x.com)는 제휴 자격도 ACTIVE(aff_status · 승인자) — 없으면 제휴 파트너센터가 신청 화면(test_v1185)',
+   "'ACTIVE', now(), now(),\n       (SELECT id FROM accounts WHERE email = 'admin@x.com' LIMIT 1)" in rd('scripts/local-setup.sh')
+   and "aff_status = 'ACTIVE'" in rd('scripts/local-setup.sh'), '')
 SC = json.loads(rd('spec/screens.json') or '{"screens":[]}')
 sid = {s['id']: s for s in SC['screens']}
 ok('① 화면 목록 — 새 API 7개 · 안심 화면 PARTNER_MAL · 제휴 화면 PARTNER_AFF(정산 화면은 그대로)',
