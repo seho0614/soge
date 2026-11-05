@@ -62,8 +62,10 @@ mk = next((i for i, l in enumerate(L) if 'make-kit.sh' in l and not l.startswith
 ok('② 정리 블록 — 결과 20개 · 이름 없는 이미지 · 볼륨 · 빌드 캐시 4GB · 85% 주의 · 결과 폴더 만들기 · kit 만들기 앞',
    blk and 'tail -n +20 | xargs -r rm -rf' in blk and 'docker image prune -f' in blk and 'docker volume prune -f' in blk
    and 'docker builder prune -f --max-used-space 4gb' in blk and '-lt 85 ]' in blk and 0 < b < ts < mk, f'{a} {b} {ts} {mk}')
-ok('② 운영 킷 · 기준 이미지는 안 건드림(~/kits/release · image prune -a 없음)',
-   'kits/release' not in blk.replace('운영 킷(~/kits/release)은 건드리지 않음', '') and 'prune -a' not in blk and 'prune -af' not in blk
+# v10.197 (docs/310) — 킷은 판 번호가 큰 3판만 남김(kits-keep 칸 · test_v1197) — 그 칸 밖에서는 ~/kits/release 를 건드리지 않음
+_kb = re.sub(r'# kits-keep-begin.*?# kits-keep-end', '', blk, flags=re.S)
+ok('② 운영 킷 · 기준 이미지는 안 건드림(~/kits/release 는 3판 남기기 칸만 · image prune -a 없음)',
+   'kits/release' not in _kb.replace('# v10.197 (docs/310) — 킷은 판 번호가 큰 3판만 남김(~/kits/out · ~/kits/release', '') and 'prune -a' not in blk and 'prune -af' not in blk
    and subprocess.run(['bash', '-n', os.path.join(HERE, 'sgb-check.sh')]).returncode == 0, '')
 
 T = tempfile.mkdtemp()

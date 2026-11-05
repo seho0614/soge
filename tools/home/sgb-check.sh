@@ -8,12 +8,20 @@ export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
 RUN=~/kits/run/current
 if [ "$MODE" = down ]; then (cd "$RUN"/*/ 2>/dev/null && bash dev.sh down); exit; fi
 # v10.193 (docs/302) — 점검 전에 개발 쪽 디스크 자동 정리(개발 · 운영이 같은 디스크). SGB_NO_CLEAN=1 이면 건너뜀
-#   지우는 것: 점검 결과 최근 20개 밖 · 이름 없는 도커 이미지 · 매이지 않은 이름 없는 볼륨 · 빌드 캐시 4GB 넘는 부분. 운영 킷(~/kits/release)은 건드리지 않음
+#   지우는 것: 점검 결과 최근 20개 밖 · 이름 없는 도커 이미지 · 매이지 않은 이름 없는 볼륨 · 빌드 캐시 4GB 넘는 부분 · 킷은 최근 3판만(v10.197)
 if [ "${SGB_NO_CLEAN:-0}" != 1 ]; then
   ls -1dt ~/check-results/*/ 2>/dev/null | tail -n +20 | xargs -r rm -rf
   docker image prune -f >/dev/null 2>&1
   docker volume prune -f >/dev/null 2>&1
   docker builder prune -f --max-used-space 4gb >/dev/null 2>&1
+  # v10.197 (docs/310) — 킷은 판 번호가 큰 3판만 남김(~/kits/out · ~/kits/release · zip 과 tar.gz 함께). 운영 되돌리기는 운영 서버의 판 보관 폴더라 옛 킷이 필요 없음
+  # kits-keep-begin
+  for kd in ~/kits/out ~/kits/release; do
+    ls -1 "$kd" 2>/dev/null | sed -n 's/^SGB_DevDocker_Integrated_[0-9]*_\(v[0-9]*_[0-9]*\)\.\(zip\|tar\.gz\)$/\1/p' | sort -uV | head -n -3 | while read -r v; do
+      rm -f -- "$kd"/SGB_DevDocker_Integrated_*_"$v".zip "$kd"/SGB_DevDocker_Integrated_*_"$v".tar.gz && echo "== 옛 킷 지움 — $(basename "$kd")/$v"
+    done
+  done
+  # kits-keep-end
   USE=$(df --output=pcent / | tail -1 | tr -dc 0-9)
   echo "== 디스크 정리 뒤 사용 ${USE}%"
   [ "${USE:-0}" -lt 85 ] || echo "[주의] 디스크 ${USE}% — 85% 이상입니다. 운영 쪽 cleanup.sh 확인이 필요합니다"
