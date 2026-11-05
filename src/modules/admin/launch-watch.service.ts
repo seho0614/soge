@@ -161,6 +161,23 @@ export class LaunchWatchService {
     return { n: rows.length, orders: rows.map((r) => r.order_no) };
   }
 
+  /**
+   * v10.197 (D175 · docs/310) — 메일로 보낼 급한 운영 알림(CRITICAL · 중요 설정 바뀜 · 24시간 안 · 종류마다 1시간에 1통)과 받는 주소.
+   *   고르는 기준은 DB 함수 fn_ops_alert_mail_pending 하나 — 보내고 나서 markMailed 로 시각을 적음.
+   */
+  async alertMailPending(): Promise<{ to: string; items: { id: string; code: string; severity: string; title: string; raisedAt: string }[] }> {
+    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string }>(
+      `SELECT id::text AS id, alert_code AS code, severity, title,
+              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt"
+         FROM fn_ops_alert_mail_pending()`);
+    const [c] = await this.db.query<{ to: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
+    return { to: (c?.to ?? '').trim(), items };
+  }
+
+  async markMailed(ids: string[]): Promise<void> {
+    if (ids.length) await this.db.query(`UPDATE ops_alerts SET mailed_at = now() WHERE id = ANY($1::bigint[]) AND mailed_at IS NULL`, [ids]);
+  }
+
   /* ── v10.173 (D162 · docs/266) 시험 결제 주문 정리 ─────────────────── */
 
   /**

@@ -8,6 +8,7 @@ import { Flash } from '../../components/Flash';
 interface Alert {
   id: string; code: string; severity: 'INFO' | 'WARN' | 'CRITICAL'; title: string; detail: unknown; raisedAt: string;
   acknowledgedAt: string | null; acknowledgedBy: string | null; ackNote: string | null;
+  mailedAt?: string | null;   /* v10.197 (D175) 급한 알림을 메일로 보낸 시각 */
 }
 interface Code { code: string; open: number; last7d: number; lastAt: string; openSeverity: string | null }
 interface Data { items: Alert[]; total: number; page: number; size: number; pages: number; codes: Code[] }
@@ -78,7 +79,7 @@ export function OpsAlerts() {
           <thead><tr><th>때</th><th>등급</th><th>종류</th><th>내용</th><th>확인</th></tr></thead>
           <tbody>{d.items.map((x) => (
             <tr key={x.id} data-alert={x.id} data-acked={x.acknowledgedAt ? '1' : '0'}>
-              <td className="muted">{ymdhm(x.raisedAt)}</td>
+              <td className="muted">{ymdhm(x.raisedAt)}{x.mailedAt && <><br /><span data-mailed="">메일 보냄 {ymdhm(x.mailedAt)}</span></>}</td>
               <td>{x.severity === 'INFO' ? SEV[x.severity] : <b className="warn-text">{SEV[x.severity]}</b>}</td>
               <td>{NAME[x.code] ?? x.code}</td>
               <td>
@@ -93,7 +94,7 @@ export function OpsAlerts() {
         </table>
       )}
       {d.pages > 1 && <p><button className="btn-plain" disabled={page <= 1} onClick={() => setPage(page - 1)}>앞</button> {page} / {d.pages} <button className="btn-plain" disabled={page >= d.pages} onClick={() => setPage(page + 1)}>뒤</button></p>}
-      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다.</div>
+      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통).</div>
     </section>
   );
 }

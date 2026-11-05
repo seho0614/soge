@@ -230,7 +230,14 @@ if [ -z "$last" ]; then warn "올린 파일 백업 묶음 없음 — $BKD" "docs
 else
   age=$(( ($(date +%s) - $(stat -c %Y "$last")) / 3600 ))
   [ "$age" -le 36 ] && ok "올린 파일 백업 — $(basename "$last") · ${age}시간 전 · 묶음 $(ls -1 "$BKD"/uploads_*.tar.gz | wc -l)개" \
-    || warn "올린 파일 백업이 ${age}시간 전 것 — $(basename "$last")" "cron · 디스크 확인: bash ~/sgb/deploy/aws/uploads-backup.sh check"
+    || warn "올린 파일 백업이 ${age}시간 전 것 — $(basename "$last")" "배치 호출기(pm2 logs sgb-jobs) · 디스크 확인: bash ~/sgb/deploy/aws/uploads-backup.sh check"
+fi
+# v10.197 (docs/310) — 디스크 밖(S3) 한 벌 · 보여 주기만(통과 · 확인 수에 넣지 않음)
+if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
+  ls3=$(ls -1t "$BKD"/uploads_*.tar.gz.s3 2>/dev/null | head -1)
+  info "올린 파일 백업 디스크 밖(S3) — 켜짐 · 마지막 올린 묶음 $([ -n "$ls3" ] && basename "$ls3" .s3 || echo '없음')"
+else
+  info "올린 파일 백업 디스크 밖(S3) — 꺼짐(.env BACKUP_S3_BUCKET 없음 · docs/310)"
 fi
 
 say ""

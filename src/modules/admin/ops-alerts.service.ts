@@ -24,7 +24,7 @@ export class OpsAlertsService {
     const page = Math.max(1, Number(q.page) || 1);
     const items = await this.db.query(
       `SELECT o.id::text AS id, o.alert_code AS code, o.severity, o.title, o.detail, o.raised_at AS "raisedAt",
-              o.acknowledged_at AS "acknowledgedAt", o.ack_note AS "ackNote", a.name AS "acknowledgedBy"
+              o.acknowledged_at AS "acknowledgedAt", o.ack_note AS "ackNote", a.name AS "acknowledgedBy", o.mailed_at AS "mailedAt"
          FROM ops_alerts o LEFT JOIN accounts a ON a.id = o.acknowledged_by
         WHERE ($1::boolean IS FALSE OR o.acknowledged_at IS NULL)
           AND ($2::text IS NULL OR o.alert_code = $2) AND ($3::text IS NULL OR o.severity = $3)
