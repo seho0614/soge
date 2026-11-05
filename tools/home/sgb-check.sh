@@ -7,6 +7,17 @@ BR="${1:-main}"; MODE="${2:-realcheck}"
 export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
 RUN=~/kits/run/current
 if [ "$MODE" = down ]; then (cd "$RUN"/*/ 2>/dev/null && bash dev.sh down); exit; fi
+# v10.193 (docs/302) — 점검 전에 개발 쪽 디스크 자동 정리(개발 · 운영이 같은 디스크). SGB_NO_CLEAN=1 이면 건너뜀
+#   지우는 것: 점검 결과 최근 20개 밖 · 이름 없는 도커 이미지 · 매이지 않은 이름 없는 볼륨 · 빌드 캐시 4GB 넘는 부분. 운영 킷(~/kits/release)은 건드리지 않음
+if [ "${SGB_NO_CLEAN:-0}" != 1 ]; then
+  ls -1dt ~/check-results/*/ 2>/dev/null | tail -n +20 | xargs -r rm -rf
+  docker image prune -f >/dev/null 2>&1
+  docker volume prune -f >/dev/null 2>&1
+  docker builder prune -f --max-used-space 4gb >/dev/null 2>&1
+  USE=$(df --output=pcent / | tail -1 | tr -dc 0-9)
+  echo "== 디스크 정리 뒤 사용 ${USE}%"
+  [ "${USE:-0}" -lt 85 ] || echo "[주의] 디스크 ${USE}% — 85% 이상입니다. 운영 쪽 cleanup.sh 확인이 필요합니다"
+fi
 TS=$(date +%Y%m%d_%H%M); RES=~/check-results/${TS}_${BR//\//_}; mkdir -p "$RES"
 bash ~/make-kit.sh "$BR" >/dev/null || { echo "[중단] kit 만들기 실패"; exit 1; }
 T=$(ls -t ~/kits/out/*.tar.gz | head -1)

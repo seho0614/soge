@@ -25,12 +25,14 @@ def rd(rel):
 
 # v10.189 — 메인 머리줄(HomeHeader)을 지우고 공통 머리줄(v10.188 UniHeader)
 FR = rd('site/src/components/common/UniHeader.tsx'); CSS = rd('site/src/styles/home.css'); PROTO = rd('spec/proto.html')
+# v10.193 — 옛 머리줄 CSS(.home-hd · .home-hdr)를 지움(docs/302) · 휴대폰 숨김은 공통 머리줄 site-head.css 의 .sh-txt 가 맡음
+V193 = tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 193)
 i_s = FR.find('href="#home-q"'); i_p = FR.find('href="/partners" data-home-partners'); i_l = FR.find('href="/login"')
 ko = json.loads(rd('site/src/i18n/messages/ko.json') or '{}'); en = json.loads(rd('site/src/i18n/messages/en.json') or '{}')
 ok('① 메인 머리줄 — 검색 다음 · 로그인 앞 · /partners · 사전 · 휴대폰 비로그인 숨김',
    0 < i_s < i_p < i_l and "h('partners')" in FR and "st.in ? '' : ' pc-only'" in FR
    and ko.get('header', {}).get('partners') == '파트너센터' and en.get('header', {}).get('partners') == 'Partner Center'
-   and '.home-hdr .home-txt.pc-only { display: none; }' in CSS and '.home-txt { font-size: 14px;' in CSS, f'{i_s} {i_p} {i_l}')
+   and (V193 or '.home-hdr .home-txt.pc-only { display: none; }' in CSS) and '.home-txt { font-size: 14px;' in CSS, f'{i_s} {i_p} {i_l}')
 ok('① 시안 — 같은 자리(data-go="p2dsh") · 휴대폰 비로그인 숨김',
    'data-go="p2dsh">파트너센터</button>' in PROTO and '.home-hdr .home-txt.pc-only { display: none; }' in PROTO, '')
 ok('① 문서 · 판 — docs/293 · v10.187 이상', any(f.startswith('293_') for f in os.listdir(os.path.join(K, 'docs')))
