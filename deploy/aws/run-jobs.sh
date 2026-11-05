@@ -19,4 +19,6 @@ if [ "${#JOB_TOKEN}" -lt 32 ]; then
 fi
 export API_ORIGIN="http://127.0.0.1:${PORT:-3000}"       # 배치는 늘 이 서버의 API 를 부릅니다
 export SCHEDULER_HEARTBEAT="${SCHEDULER_HEARTBEAT:-/tmp/sgb-jobs.ok}"
+# v10.196 (docs/308) — 매일 이 시각(한국 시간) 뒤 한 번 올린 파일 백업(uploads-backup.sh) · cron 필요 없음 · 끄려면 .env 에 UPLOADS_BACKUP_DAILY=off
+export UPLOADS_BACKUP_DAILY="${UPLOADS_BACKUP_DAILY:-04:30}"
 exec node scripts/scheduler-daemon.js

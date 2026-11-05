@@ -715,3 +715,11 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
 .bo-login-foot { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--sgb-line-soft); text-align: center; font-size: var(--sgb-fs-micro); color: var(--sgb-ink-3); }
 .bo-login-foot a { color: var(--sgb-link); font-weight: var(--sgb-fw-bold); text-decoration: none; }
 .bo-login-foot a:hover { text-decoration: underline; }
+
+/* v10.196 — 「주문 받기 켜짐」 띠(간주 결제 상태) · 운영 화면 모든 쪽 머리줄 아래 */
+.bo-order-live {
+  padding: var(--sp-3) var(--sp-4); background: var(--danger-w); color: var(--danger);
+  border-bottom: 1px solid var(--danger); font-size: var(--fs-sm); text-align: center; line-height: 1.6;
+}
+.bo-order-live a { color: var(--danger); font-weight: 700; text-decoration: underline; }
+

@@ -25,8 +25,10 @@ fi
 
 if [ "$1" = "off" ]; then
   read -r -p "운영자 2단계 인증을 끕니다(off). 계속하려면 yes: " a; [ "$a" = "yes" ] || { echo "그만둠"; exit 1; }
+  # v10.196 — updated_by 를 비워야 중요 설정 바뀜 알림(D174)이 「via DB」로 남음(그대로 두면 전에 운영 화면에서 바꾼 사람 · APP 으로 보임)
   db -v ON_ERROR_STOP=1 -q -c "BEGIN;
-    UPDATE site_settings SET value = 'off', updated_at = now() WHERE key = 'admin.mfa_required';
+    SET LOCAL app.setting_reason = 'mfa-reset.sh off (서버에서 비상 끄기)';
+    UPDATE site_settings SET value = 'off', updated_by = NULL, updated_at = now() WHERE key = 'admin.mfa_required';
     INSERT INTO audit.audit_logs (action, target_type, after_data) VALUES ('MFA_OFF_SERVER', 'SETTING', '{\"by\": \"mfa-reset.sh\"}');
     COMMIT;" && echo "== 껐습니다 — 1분 안에 반영. 다시 켜기는 운영 화면 설정에서(SUPER · 먼저 등록)"
   exit $?

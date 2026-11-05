@@ -55,6 +55,9 @@ async function tick() {
   }
 }
 
-console.log(`배치 스케줄러 시작 · ${API} · ${EVERY_MS / 1000}초 주기`);
-tick();
-setInterval(tick, EVERY_MS);
+/* v10.196 (docs/308) — 올린 파일 백업을 cron 없이(UPLOADS_BACKUP_DAILY 가 있을 때만 · 운영 run-jobs.sh 가 04:30) */
+const daily = require('./uploads-backup-daily').createDailyBackup();
+
+console.log(`배치 스케줄러 시작 · ${API} · ${EVERY_MS / 1000}초 주기${daily.enabled ? ` · 올린 파일 백업 매일 ${daily.at}(한국 시간)` : ''}`);
+tick(); daily.check();
+setInterval(() => { tick(); daily.check(); }, EVERY_MS);

@@ -5,7 +5,8 @@
 #   bash ~/sgb/deploy/aws/uploads-backup.sh            # 오늘 묶음 만들기(이미 있으면 건너뜀 · 다시 돌려도 안전)
 #   bash ~/sgb/deploy/aws/uploads-backup.sh check      # 읽기만 — 파일 수 · 크기 · 디스크 여유 · 남은 묶음
 #
-#   cron 예(매일 04:30 KST · 서버 시간대가 UTC 면 19:30):
+#   v10.196 (docs/308) — **cron 필요 없음**: 배치 호출기(pm2 sgb-jobs)가 매일 04:30(한국 시간 · .env UPLOADS_BACKUP_DAILY) 뒤 한 번 부릅니다.
+#     cron 을 이미 등록했어도 해 없음(오늘 묶음이 있으면 건너뜀). 옛 cron 예(매일 04:30 KST · 서버 시간대가 UTC 면 19:30):
 #     30 19 * * * bash /home/ubuntu/sgb/deploy/aws/uploads-backup.sh >/dev/null 2>&1
 #
 #   왜: RDS 스냅샷에는 DB 만 들어가고 **올린 파일(사진 · 영상)은 빠집니다**.

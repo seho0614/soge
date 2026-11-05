@@ -42,16 +42,18 @@ export function LaunchWatch() {
   const [openConfirm, setOpenConfirm] = useState('');
   if (w.error || !w.data) return null;
   const d = w.data;
+  /* v10.196 — 주문 받기를 바꾸면 모든 화면 위 띠(App.tsx)도 바로 다시 읽게 */
+  const reloadAll = () => { w.reload(); window.dispatchEvent(new Event('bo-settings')); };
   const toggle = () => {
     const to = d.orderOpen === 'on' ? 'off' : 'on';
     if (to === 'on' && d.assumePayment === 'on') { setOpenForm((v) => !v); return; }
     if (!confirm(to === 'off' ? '소개몰 주문 · 결제를 막습니다(상품 보기 · 담기는 됨). 결제대행사 연결 전 시험 결제 주문을 막으려면 끄십시오.' : '소개몰 주문 · 결제를 엽니다. 결제대행사가 연결되지 않았으면 시험 결제 주문이 생깁니다.')) return;
-    void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: to }) }), w.reload,
+    void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: to }) }), reloadAll,
       to === 'off' ? '주문 받기를 껐습니다.' : '주문 받기를 켰습니다.');
   };
   const openWithReason = () => {
     void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: 'on', reason: openReason, confirm: openConfirm }) }),
-      () => { setOpenForm(false); setOpenReason(''); setOpenConfirm(''); w.reload(); }, '주문 받기를 켰습니다 — 운영 알림에 사유가 남았습니다.');
+      () => { setOpenForm(false); setOpenReason(''); setOpenConfirm(''); reloadAll(); }, '주문 받기를 켰습니다 — 운영 알림에 사유가 남았습니다.');
   };
   /* v10.173 (D162 · docs/266) — 가입 잠시 막기 · 사용자 웹 안내 띠 · 시험 결제 주문 정리 */
   const setting = (key: string, value: string, done: string) =>

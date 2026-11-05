@@ -153,6 +153,15 @@ function Console() {
       .catch((e: Error) => setErr(e.message));
   }, []);
 
+  /* v10.196 — 「주문 받기 켜짐」 띠용: 공개 설정을 1분마다 · 첫 화면에서 스위치를 바꾸면(bo-settings) 바로 다시 읽음.
+   * 11/5 운영에서 켜진 것을 4시간 넘게 아무도 몰랐음 — 어느 화면에 있든 보이게 */
+  useEffect(() => {
+    const load = () => { api<Record<string, string | null>>('/site-settings/public').then(setSettings).catch(() => { /* 다음 분에 다시 */ }); };
+    const t = window.setInterval(load, 60_000);
+    window.addEventListener('bo-settings', load);
+    return () => { window.clearInterval(t); window.removeEventListener('bo-settings', load); };
+  }, []);
+
   /* v10.32 — 지금 하위 화면(#/탭/하위). SUB_PAGE 에 있으면 제목 줄을 그 화면 제목으로 */
   const [sub, setSub] = useState<string | null>(() => hashSub());
   /* 뒤로 가기 · 주소창에서 바꾼 탭을 따라갑니다 */
@@ -184,6 +193,8 @@ function Console() {
   const label = (t: Tab) => TABS.find(([k]) => k === t)?.[1] ?? t;
   const page = (sub && SUB_PAGE[`${tab}/${sub}`]) || PAGE[tab];
   const roleText = roles.filter((r) => ROLE_NAME[r]).map((r) => ROLE_NAME[r]).join(' · ');
+  /* v10.196 — 간주 결제가 켜진 채 주문 받기가 켜짐 = 손님 주문이 돈 없이 결제 완료됨. 설정을 못 읽었으면(키 없음) 띄우지 않음 */
+  const orderLive = 'mall.order_open' in settings && (settings['mall.order_open'] ?? 'on') !== 'off' && (settings['assume.payment'] ?? 'on') === 'on';
 
   return (
     <div className="bo">
@@ -212,6 +223,13 @@ function Console() {
           </div>
         </div>
       </header>
+
+      {orderLive && (
+        <div className="bo-order-live" role="alert" data-order-live-bar="">
+          <b>소개몰 「주문 받기」가 켜져 있습니다</b> — 간주 결제(시험 결제) 상태라 손님 주문이 실제 돈 없이 결제 완료됩니다.{' '}
+          <a href="#/home" onClick={(e) => { e.preventDefault(); go('home'); }}>첫 화면 「공개 직후 지켜보기」에서 끄기</a>
+        </div>
+      )}
 
       <main className="bo-main" data-tab={tab}>
         {page && (
