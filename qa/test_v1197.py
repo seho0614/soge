@@ -93,8 +93,8 @@ if API and DB:
           ('TEST_V1197_T',  'CRITICAL', '시험 같은 종류 새 것(미룸)', '{{"test":"v1197"}}', now() - interval '3 minutes', NULL, NULL),
           ('TEST_V1197_H',  'CRITICAL', '시험 2시간 전에 보냄',  '{{"test":"v1197"}}', now() - interval '3 hours',  now(), now() - interval '2 hours'),
           ('TEST_V1197_H',  'CRITICAL', '시험 같은 종류 새 것(보냄)', '{{"test":"v1197"}}', now() - interval '2 minutes', NULL, NULL)""")
-        # 다른 시험이 남긴 급한 알림이 50건을 넘으면 LIMIT 50 에 밀리므로, 한 묶음 안에서 잠시 보낸 것으로 두고 되돌림
-        got = psql(f"BEGIN; UPDATE ops_alerts SET mailed_at = now() WHERE mailed_at IS NULL AND coalesce(detail->>'test', '') <> 'v1197'; "
+        # 다른 시험이 남긴 급한 알림이 50건을 넘으면 LIMIT 50 에 밀리므로, 한 묶음 안에서 잠시 2시간 전에 보낸 것으로 두고(1시간 미룸에 안 걸리게) 되돌림
+        got = psql(f"BEGIN; UPDATE ops_alerts SET mailed_at = now() - interval '2 hours' WHERE mailed_at IS NULL AND coalesce(detail->>'test', '') <> 'v1197'; "
                    f"SELECT coalesce(string_agg(p.title, '|' ORDER BY p.id), '') FROM fn_ops_alert_mail_pending() p JOIN ops_alerts o ON o.id = p.id WHERE o.{MARK}; ROLLBACK;")
         ok('② 고르기 — 긴급 · 설정 바뀜 · 1시간 지난 종류의 새 것만(경고 · 확인함 · 24시간 넘음 · 1시간 안에 보낸 종류는 빠짐)',
            not r0.startswith('!') and got == '시험 긴급|시험 설정 바뀜|시험 같은 종류 새 것(보냄)', got or r0)
