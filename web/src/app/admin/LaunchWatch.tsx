@@ -36,13 +36,22 @@ export function LaunchWatch() {
   const w = useApi<Watch>('/admin/launch-watch');
   const a = useAct();
   const [digest, setDigest] = useState<string | null>(null);
+  /* v10.195 (D174 · docs/306) — 간주 결제가 켜져 있을 때 주문 받기 켜기는 사유 · 확인 문구(서버가 검사 · SUPER 만) */
+  const [openForm, setOpenForm] = useState(false);
+  const [openReason, setOpenReason] = useState('');
+  const [openConfirm, setOpenConfirm] = useState('');
   if (w.error || !w.data) return null;
   const d = w.data;
   const toggle = () => {
     const to = d.orderOpen === 'on' ? 'off' : 'on';
+    if (to === 'on' && d.assumePayment === 'on') { setOpenForm((v) => !v); return; }
     if (!confirm(to === 'off' ? '소개몰 주문 · 결제를 막습니다(상품 보기 · 담기는 됨). 결제대행사 연결 전 시험 결제 주문을 막으려면 끄십시오.' : '소개몰 주문 · 결제를 엽니다. 결제대행사가 연결되지 않았으면 시험 결제 주문이 생깁니다.')) return;
     void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: to }) }), w.reload,
       to === 'off' ? '주문 받기를 껐습니다.' : '주문 받기를 켰습니다.');
+  };
+  const openWithReason = () => {
+    void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: 'on', reason: openReason, confirm: openConfirm }) }),
+      () => { setOpenForm(false); setOpenReason(''); setOpenConfirm(''); w.reload(); }, '주문 받기를 켰습니다 — 운영 알림에 사유가 남았습니다.');
   };
   /* v10.173 (D162 · docs/266) — 가입 잠시 막기 · 사용자 웹 안내 띠 · 시험 결제 주문 정리 */
   const setting = (key: string, value: string, done: string) =>
@@ -128,6 +137,15 @@ export function LaunchWatch() {
         소개몰 주문 받기 <b data-order-open={d.orderOpen}>{d.orderOpen === 'on' ? '켜짐' : '꺼짐'}</b> · 간주 결제 {d.assumePayment === 'on' ? '켜짐(시험 결제)' : '꺼짐'} · 판매 중 직판 상품 {n(d.directOnSale)}개{' '}
         <button className={d.orderOpen === 'on' ? 'btn-no' : 'btn-ok'} disabled={a.busy === 'order'} onClick={toggle} data-order-toggle="">{d.orderOpen === 'on' ? '주문 받기 끄기' : '주문 받기 켜기'}</button>
       </p>
+      {openForm && d.orderOpen !== 'on' && (
+        <div className="card warn" data-order-open-form="">
+          <p>간주 결제가 켜져 있어 <b>돈을 받지 않은 「결제 완료」 주문</b>이 생깁니다. 결제대행사 연결 전에는 켜지 않는 것이 원칙입니다. 시연 · 시험 주문이 꼭 필요하면 최고 관리자(SUPER)가 사유와 확인 문구를 넣으십시오 — 운영 알림에 남습니다.</p>
+          <label>사유(10자 이상) <input value={openReason} maxLength={300} onChange={(e) => setOpenReason(e.target.value)} data-order-open-reason="" /></label>{' '}
+          <label>확인 문구 「시험 결제 주문을 받습니다」 <input value={openConfirm} maxLength={50} onChange={(e) => setOpenConfirm(e.target.value)} data-order-open-confirm="" /></label>{' '}
+          <button className="btn-no" disabled={a.busy === 'order' || openReason.trim().length < 10 || openConfirm.trim() !== '시험 결제 주문을 받습니다'} onClick={openWithReason} data-order-open-submit="">그래도 켜기</button>{' '}
+          <button className="btn-plain" onClick={() => setOpenForm(false)}>그만두기</button>
+        </div>
+      )}
       {/* v10.171 (D160) — 매일 09:00 어제 요약(운영 알림 · 메일이 준비됐으면 이 주소로) · 1시간 가입 급증 알림 */}
       <p className="hint" data-digest-to={d.digestTo ?? ''}>하루 요약: 매일 09:00 운영 알림{d.digestTo ? ` · 메일 ${d.digestTo}(메일 발송이 준비된 뒤)` : ''} · 1시간 가입 급증 알림(사이트 설정 ops.signup_spike_per_hour) · 10분 서버 오류 몰림 알림(ops.server_error_per_10min){' '}
         {/* v10.172 — 어제 요약을 지금 보기(알림 · 메일은 남기지 않음) */}

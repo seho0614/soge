@@ -281,7 +281,27 @@ export class AdminService {
       : { ...r, secret: false, hasValue: !!r.value?.trim() });
   }
 
-  async updateSetting(key: string, value: string) {
+  /** v10.195 (D174 · docs/306) — 간주 결제가 켜져 있을 때 주문 받기를 켜려면 이 문구를 그대로 */
+  static readonly ORDER_OPEN_CONFIRM = '시험 결제 주문을 받습니다';
+
+  async updateSetting(key: string, value: string, reason?: string, confirm?: string) {
+    /* v10.195 (D174 · docs/306) — 11/5 13:24 운영 화면에서 주문 받기가 켜져 4시간 넘게 아무도 몰랐음(주문 0건).
+     *   켜기는 SUPER 만(전에는 화면 설명만 SUPER · 서버는 ADMIN 도 통과) · 끄기는 ADMIN 도 바로.
+     *   간주 결제가 켜져 있으면 켜기에 확인 문구 · 사유 10자 — 돈을 받지 않은 「결제 완료」 주문이 생기기 때문 */
+    if (key === 'mall.order_open' && (value ?? '').trim() !== 'off') {
+      if (RequestCtx.get()?.actorRole !== 'SUPER') {
+        throw new Forbidden('ORDER_SETTING_SUPER', '소개몰 주문 받기를 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
+      }
+      if ((await this.settingVal('assume.payment', 'on')) === 'on') {
+        if ((confirm ?? '').trim() !== AdminService.ORDER_OPEN_CONFIRM) {
+          throw new PolicyViolation('ORDER_OPEN_CONFIRM',
+            `간주 결제가 켜져 있어 돈을 받지 않은 「결제 완료」 주문이 생깁니다. 그래도 켜려면 확인 문구 「${AdminService.ORDER_OPEN_CONFIRM}」를 그대로 입력하십시오.`);
+        }
+        if ((reason ?? '').trim().length < 10) {
+          throw new PolicyViolation('ORDER_OPEN_REASON', '간주 결제가 켜진 채 주문 받기를 켜는 사유를 10자 이상 적어 주십시오(운영 알림에 남습니다).');
+        }
+      }
+    }
     if (AdminService.isAiSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('AI_SETTING_SUPER', 'AI 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
@@ -324,10 +344,14 @@ export class AdminService {
     await this.checkAiSwitch(key, value);
     await this.checkAiModel(key, value);
     await this.checkIntegProvider(key, value);
-    const [row] = await this.db.query(
-      `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
-        WHERE key = $1 RETURNING key, value`,
-      [key, value, RequestCtx.actorId()]);
+    /* v10.195 (D174) — 사유를 거래 설정으로 넘김 → trg_setting_watch 가 운영 알림(SETTING_CHANGED)에 함께 씀 */
+    const [row] = await this.db.transaction(async () => {
+      await this.db.query(`SELECT set_config('app.setting_reason', $1, true)`, [(reason ?? '').trim()]);
+      return this.db.query(
+        `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
+          WHERE key = $1 RETURNING key, value`,
+        [key, value, RequestCtx.actorId()]);
+    });
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로
     return row;

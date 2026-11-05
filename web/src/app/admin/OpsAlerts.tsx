@@ -18,6 +18,7 @@ const NAME: Record<string, string> = {
   SERVER_ERROR_SPIKE: '서버 오류 몰림', SLOW_API: '느린 응답', UPLOADS_BACKUP_STALE: '올린 파일 백업 멈춤', UPLOADS_BACKUP_SKIPPED: '올린 파일 백업 건너뜀',
   POLL_HIDDEN_BY_REPORTS: '회원 투표 신고 감춤', DAILY_DIGEST: '하루 요약', STUB_PAYMENT_ORDER: '시험 결제 주문', SIGNUP_SPIKE: '가입 급증',
   PII_REVIEW_DUE: '개인정보 접속기록 점검',
+  SETTING_CHANGED: '중요 설정 바뀜',   // v10.195 (D174) — 주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치
 };
 
 /**

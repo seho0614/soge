@@ -65,6 +65,13 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   n=$(q "SELECT count(*) FROM ops_alerts WHERE severity='CRITICAL' AND acknowledged_at IS NULL")
   [ "$n" = "0" ] && ok "미확인 CRITICAL 경보 0건" || bad "미확인 CRITICAL 경보 ${n}건" "운영 화면 → 경보에서 확인"
   info "계정 $(q "select count(*) from accounts")명 · 관리자 $(q "select count(distinct account_id) from account_roles where role in ('ADMIN','SUPER')")명"
+  # v10.195 (docs/306) — D173 이 기존 파트너 상태를 제휴 자격(aff_status)으로 복사할 때 규칙에 걸려 건너뛴 줄(적용 출력에는 NOTICE 가 안 보임)
+  #   D173 전에 승인된 활동 중 안심 파트너인데 제휴 자격이 빈 곳만 셈 — D173 뒤 안심만 신청해 승인된 곳은 비어 있는 것이 정상
+  n=$(q "SELECT count(*) FROM partners p WHERE p.status = 'ACTIVE' AND p.aff_status IS NULL AND p.approved_at < (SELECT applied_at FROM schema_migrations WHERE name = 'D173_partner_roles_aff_status')")
+  if [ -z "$n" ]; then info "파트너 제휴 자격 — D173 전 판이라 건너뜀"
+  elif [ "$n" = "0" ]; then ok "파트너 제휴 자격 — D173 전 활동 중 파트너 모두 복사됨"
+  else warn "D173 전 활동 중 안심 파트너 ${n}곳의 제휴 자격이 비어 있음" "그 파트너의 제휴 파트너센터가 신청 화면으로 보입니다 — 운영 화면 › 제휴 › 입점 심사에서 승인하거나 Claude 에게 알려 주십시오(docs/306)"
+  fi
 else
   bad "DB 접속 실패"
 fi

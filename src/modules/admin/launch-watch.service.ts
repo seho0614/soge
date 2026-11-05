@@ -75,7 +75,8 @@ export class LaunchWatchService {
               (SELECT count(*)::int FROM ops_alerts WHERE ${D('raised_at')} AND severity IN ('WARN', 'CRITICAL')) AS alerts,
               (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
-              coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
+              coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to",
+              coalesce((SELECT string_agg(title, E'\n' ORDER BY raised_at) FROM ops_alerts WHERE alert_code = 'SETTING_CHANGED' AND ${D('raised_at')}), '') AS "settingChanges"`);
     const text = [
       `소개뱅크 운영 하루 요약 — ${c.day}(한국 날짜)`,
       '',
@@ -83,6 +84,8 @@ export class LaunchWatchService {
       `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
       `운영 알림(경고 이상) 어제 ${c.alerts} · 확인 안 한 것 ${c.openAlerts}`,
       `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
+      /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */
+      ...(c.settingChanges ? ['어제 바뀐 중요 설정:', ...String(c.settingChanges).split('\n').map((t: string) => `  - ${t.replace('중요 설정 바뀜 — ', '')}`)] : []),
       diskLine(serverHealth()),
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',

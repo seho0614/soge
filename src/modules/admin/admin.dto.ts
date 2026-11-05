@@ -166,6 +166,12 @@ export class ReviewReasonDto {
 export class UpdateSettingDto {
   @ApiProperty() @IsString() key!: string;
   @ApiProperty() @IsString() value!: string;
+  /** v10.195 (D174) — 중요 설정 사유(운영 알림에 남음) · 간주 결제 켜짐에 주문 받기 켜기는 10자 이상 필수 */
+  @ApiPropertyOptional({ description: '바꾸는 사유(운영 알림 SETTING_CHANGED 에 남음 · 간주 결제 켜짐에 주문 받기 켜기는 10자 이상 필수)' })
+  @IsOptional() @IsString() @MaxLength(300) reason?: string;
+  /** v10.195 — 간주 결제 켜짐에 주문 받기 켜기: 확인 문구 「시험 결제 주문을 받습니다」 그대로 */
+  @ApiPropertyOptional({ description: '간주 결제가 켜져 있을 때 주문 받기를 켜려면 「시험 결제 주문을 받습니다」 그대로' })
+  @IsOptional() @IsString() @MaxLength(50) confirm?: string;
 }
 
 export class UpdateSiteSettingDto {
