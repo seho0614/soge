@@ -34,7 +34,10 @@ VER="$(cat "$NEW/VERSION" 2>/dev/null || echo unknown)"
 mkdir -p "$REL_ROOT" "$DATA_DIR/logs"
 OUT="$DATA_DIR/logs/apply_${STAMP}.txt"; : > "$OUT"
 BUILD_LOG="$DATA_DIR/logs/apply_${STAMP}_build.log"
-stop() { say ""; say "!! 멈춥니다 — $1"; say "   돌던 서비스는 건드리지 않았습니다.${2:+ $2}"; say "   기록: $OUT"; exit 1; }
+# v10.192 (docs/301) — 바로가기를 바꾸기 전에 멈추면 쓰지 않은 새 판 폴더를 지움(남으면 다음 적용이 「되돌린 상태」로 멈춤)
+NEW_REL=""
+drop_new() { local d; d=$(drop_unused_release "$NEW_REL" "$REL_ROOT" "$APP_LINK"); [ -z "$d" ] || say "   쓰지 않은 새 판 폴더를 지웠습니다 — ${d##*/} (다시 실행하면 처음부터 빌드합니다)"; }
+stop() { say ""; say "!! 멈춥니다 — $1"; say "   돌던 서비스는 건드리지 않았습니다.${2:+ $2}"; drop_new; say "   기록: $OUT"; exit 1; }
 step() { say ""; say "[$1] $2"; }
 
 say "소개뱅크 AWS 적용 — $VER ($(date '+%Y-%m-%d %H:%M:%S %Z'))"
@@ -80,6 +83,7 @@ ok "마이그레이션 — 적용됨 $DONE · 올릴 것 $PEND · 바뀐 파일 
 step 1 "새 판 놓기"
 REL="$REL_ROOT/${VER}_${STAMP}"
 mkdir -p "$REL"
+NEW_REL="$REL"
 ( cd "$NEW" && tar cf - --exclude=./node_modules --exclude=./site/node_modules --exclude=./web/node_modules \
      --exclude=./site/.next --exclude=./web/dist --exclude=./dist --exclude=./uploads --exclude=./.env . ) | ( cd "$REL" && tar xf - ) \
   || stop "새 판을 복사하지 못했습니다"
@@ -107,13 +111,13 @@ run() { # 이름 · 폴더 · 명령…  — NODE_ENV=production 이면 npm 이 
   local name="$1" dir="$2"; shift 2
   local t0=$SECONDS
   echo "=== $name ($dir) $*" >> "$BUILD_LOG"
-  ( cd "$dir" && "$@" ) >> "$BUILD_LOG" 2>&1 || { tail -15 "$BUILD_LOG" | tee -a "$OUT"; stop "$name 실패" "위 출력과 $BUILD_LOG 를 보십시오. 새 판 폴더($REL)는 지워도 됩니다."; }
+  ( cd "$dir" && "$@" ) >> "$BUILD_LOG" 2>&1 || { tail -15 "$BUILD_LOG" | tee -a "$OUT"; stop "$name 실패" "위 출력과 $BUILD_LOG 를 보십시오. 새 판 폴더는 지웁니다."; }
   ok "$name" "$((SECONDS - t0))초"
 }
 run "API 설치"        "$REL"      env -u NODE_ENV npm ci --include=dev --no-audit --no-fund
 # 앱(Node 드라이버)으로도 DB 에 붙는지 — psql 은 붙는데 앱은 못 붙는 접속 주소가 있습니다(SSL 표기 차이 · lib.sh psql_url)
 ms=$(cd "$REL" && node scripts/migrate.js --status 2>&1 | tail -1)
-case "$ms" in 적용*) ok "앱 방식(Node)으로 DB 접속" "$ms";; *) stop "앱 방식(Node)으로 DB 에 붙지 못했습니다 — $ms" "접속 주소의 SSL 표기를 확인하십시오 (deploy/aws/env.production.example). 새 판 폴더($REL)는 지워도 됩니다.";; esac
+case "$ms" in 적용*) ok "앱 방식(Node)으로 DB 접속" "$ms";; *) stop "앱 방식(Node)으로 DB 에 붙지 못했습니다 — $ms" "접속 주소의 SSL 표기를 확인하십시오 (deploy/aws/env.production.example). 새 판 폴더는 지웁니다.";; esac
 run "API 빌드"        "$REL"      npm run build
 run "사용자 웹 설치"   "$REL/site" env -u NODE_ENV npm ci --include=dev --no-audit --no-fund
 SITE_API="${API_ORIGIN:-http://127.0.0.1:${PORT:-3000}}"
@@ -144,7 +148,7 @@ else
     else
       read -r -p "        RDS 스냅샷을 방금 만들었습니까? 만들었으면 yes 를 입력: " yn
     fi
-    [ "$yn" = "yes" ] || stop "스냅샷 확인이 없어 DB 를 건드리지 않았습니다" "RDS → sgb-db → 작업 → 스냅샷 생성 뒤 다시 실행하십시오. 빌드한 새 판($REL)은 지워도 됩니다."
+    [ "$yn" = "yes" ] || stop "스냅샷 확인이 없어 DB 를 건드리지 않았습니다" "RDS → sgb-db → 작업 → 스냅샷 생성 뒤 다시 실행하십시오. 빌드한 새 판 폴더는 지웁니다."
   else
     info "ASSUME_YES=1 — 스냅샷 확인을 건너뜁니다 (리허설)"
   fi
@@ -173,6 +177,7 @@ elif [ -d "$APP_LINK" ]; then
   info "전 판을 $PREV 로 옮겼습니다"
 else PREV=""; fi
 ln -sfn "$REL" "$APP_LINK" || stop "바로가기를 만들지 못했습니다"
+NEW_REL=""
 echo "$PREV" > "$DATA_DIR/previous"; echo "$REL" > "$DATA_DIR/current"
 ok "$APP_LINK → $REL"
 pm2_up() {

@@ -134,6 +134,20 @@ rolled_back_from() {
   return 0
 }
 
+# v10.192 (docs/301) — 적용이 바로가기를 바꾸기 전에 멈추면 방금 만든 새 판 폴더를 지움
+#   11/5 운영: 스냅샷 물음에 「ye」 → 멈춤 → 남은 새 판 때문에 다음 적용이 「되돌린 상태」로 멈춤
+#   쓰는 법: drop_unused_release 새판폴더 판보관폴더 앱바로가기 — 지운 폴더를 출력. 보관 폴더 밖 · 지금 판이면 지우지 않음
+drop_unused_release() {
+  local rel root cur
+  [ -n "${1:-}" ] && [ -d "$1" ] || return 0
+  rel=$(readlink -f "$1"); root=$(readlink -f "$2" 2>/dev/null) || return 0
+  cur=$(readlink -f "$3" 2>/dev/null || true)
+  case "$rel" in "$root"/v*_*) ;; *) return 0;; esac
+  [ "$rel" != "$cur" ] || return 0
+  rm -rf "$rel" && echo "$rel"
+  return 0
+}
+
 # ── v10.171 (docs/264) Nginx 실제 설정 읽기 ─────────────────────────────
 #   11/1 사고: 고친 파일이 /etc/nginx/sites-available/sgb 였는데 Nginx 는 sites-enabled/sgb(바로가기가 아닌 따로 있는 파일)를 읽어
 #   사용자 웹이 계속 허용 IP + 비밀번호 창이었음. 점검이 「실제로 읽는 파일」과 「사용자 웹 · 운영 화면이 열렸는지」를 직접 보여 줍니다.
