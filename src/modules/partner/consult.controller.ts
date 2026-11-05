@@ -157,7 +157,7 @@ export class PartnerAxisController {
 @ApiTags('ADM')
 @ApiBearerAuth()
 @Controller('api/v1/admin/partner-axes')
-@Roles('ADMIN', 'SUPER')
+@Roles('ADMIN', 'SUPER', 'PARTNER_MAL')   // v10.194 (D173) — 안심 파트너 담당도. 돈을 움직이는 API 는 아래에서 ADMIN 만
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class PartnerAxisAdminController {
   constructor(private readonly svc: ConsultService) {}

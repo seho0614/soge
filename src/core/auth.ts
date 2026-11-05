@@ -9,7 +9,9 @@ export type Role =
   | 'GUEST' | 'MEMBER' | 'BIZ_OWNER' | 'BIZ_STAFF'
   /* ★ PAYOUT — 지급 전담. ADMIN 과 함께 가질 수 없습니다(C710).
    *   승인하는 사람과 돈을 보내는 사람을 나눕니다. */
-  | 'REVIEWER' | 'ADMIN' | 'PAYOUT' | 'SUPER';
+  | 'REVIEWER' | 'ADMIN' | 'PAYOUT' | 'SUPER'
+  /* v10.194 (D173 · docs/304) — 안심 파트너 담당 · 제휴 파트너 담당. PAYOUT 과 함께 가질 수 없습니다 */
+  | 'PARTNER_MAL' | 'PARTNER_AFF';
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
@@ -42,7 +44,7 @@ export interface Principal {
 }
 
 /** v10.180 — 운영 역할(2단계 인증 대상) */
-const MFA_OPS = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER'];
+const MFA_OPS = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];
 
 @Injectable()
 export class AuthGuard implements CanActivate {

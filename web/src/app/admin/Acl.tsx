@@ -18,7 +18,7 @@ const GATES: Array<[string, string]> = [
 /**
  * SB-ADM-ACL-010 권한 계층
  *
- * 역할 8종과 가진 사람 수. **PAYOUT 과 ADMIN 은 함께 가질 수 없습니다** —
+ * 역할 10종과 가진 사람 수(v10.194 — 안심 · 제휴 파트너 담당 더함). **PAYOUT 과 ADMIN 은 함께 가질 수 없습니다** —
  * 승인하는 사람과 돈을 보내는 사람을 나눕니다(C710). 한 사람이 둘 다 하면 아무도 못 막습니다.
  */
 export function Acl() {

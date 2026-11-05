@@ -15,7 +15,7 @@ import { clientIpRaw, isInternalIp, settingInt } from '../modules/identity/abuse
  *   넘으면 429 API_RATE_LIMIT + Retry-After. 걸린 횟수는 운영 화면 「지켜보기」 카드(한도 걸림 1시간)에.
  * ------------------------------------------------------------------- */
 
-const STAFF = new Set(['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT']);
+const STAFF = new Set(['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF']);
 const MAX_KEYS = 50_000;
 const KEEP_MS = 60 * 60 * 1000;
 

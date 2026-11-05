@@ -17,7 +17,7 @@ export class AffiliateAccountService {
   private get me() { return RequestCtx.actorId()!; }
   /** 로그인한 사람의 파트너 id. 없으면 null. */
   private async partnerId(): Promise<string | null> {
-    return this.actors.ownedId(this.me!, true);   // v10.39 — 조회는 PartnerActorService 한 곳(대표 계정 · 활동 중)
+    return this.actors.affiliateActiveId(this.me!);   // v10.194 (D173) — 제휴 자격(aff_status)으로 ·   // v10.39 — 조회는 PartnerActorService 한 곳(대표 계정 · 활동 중)
   }
 
   async setAccount(dto: { bankCode: string; bankName: string; accountNo: string; holderName: string }) {

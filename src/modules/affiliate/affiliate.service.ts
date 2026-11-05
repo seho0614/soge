@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PartnerActorService } from '../partner/partner-actor.service';
 import { RequestCtx } from '../../core/request-context';
-import { AppError } from '../../core/errors';
+import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { createHash, createHmac, randomBytes } from 'crypto';
 
 
@@ -45,14 +45,40 @@ export class AffiliateService {
   private get me() { return RequestCtx.actorId()!; }
   /** 로그인한 사람의 파트너 id. 없으면 null. */
   private async partnerId(): Promise<string | null> {
-    return this.actors.ownedId(this.me!, true);   // v10.39 — 조회는 PartnerActorService 한 곳(대표 계정 · 활동 중)
+    return this.actors.affiliateActiveId(this.me!);   // v10.194 (D173) — 제휴 자격(aff_status)으로 ·   // v10.39 — 조회는 PartnerActorService 한 곳(대표 계정 · 활동 중)
   }
 
   /* ── 파트너 화면 ──────────────────────────────────────────── */
 
+  /**
+   * v10.194 (D173 · docs/304) — 제휴 파트너 신청. 안심소개 입점 신청(POST /partner/apply)과 따로입니다.
+   * 계정 기준(D096) — 사업자 인증 사업자는 그 사업자로, 본인인증 개인은 개인 활동 정보로. 반려된 신청은 다시 냅니다.
+   */
+  async apply() {
+    const a = await this.actors.actor(this.me, true);
+    if (!a) {
+      throw new PolicyViolation('IDENTITY_REQUIRED',
+        '본인인증이 먼저입니다. 본인인증을 하면 개인으로 바로 제휴 파트너 신청을 하실 수 있습니다(사업자 인증은 선택).');
+    }
+    const [row] = await this.db.query<{ id: string; affStatus: string; affAppliedAt: Date }>(
+      `INSERT INTO partners(business_id, status, aff_status, aff_applied_at) VALUES ($1, 'NONE', 'APPLIED', now())
+       ON CONFLICT (business_id) DO UPDATE
+          SET aff_status = 'APPLIED', aff_applied_at = now(), aff_reason = NULL, aff_approved_at = NULL, aff_approved_by = NULL
+        WHERE partners.aff_status IS NULL OR partners.aff_status = 'REJECTED'
+       RETURNING id, aff_status AS "affStatus", aff_applied_at AS "affAppliedAt"`, [a.id]);
+    if (!row) throw new StateConflict('ALREADY_APPLIED', '이미 제휴 파트너 신청을 하셨습니다.');
+    return { ...row,
+      note: a.ok ? '심사 후 승인됩니다. 승인되면 제휴상품 링크를 발급할 수 있습니다.'
+                 : '사업자 인증(또는 본인인증)이 확인되면 심사가 진행됩니다.' };
+  }
+
   async dashboard() {
     const pid = await this.partnerId();
-    if (!pid) return { ok: false, note: '파트너로 승인된 계정이 아닙니다.' };
+    if (!pid) {
+      /* v10.194 — 제휴 자격 상태를 함께 줌(신청 전 · 심사 중 · 정지 · 반려 — 화면이 단계를 그림) */
+      const p = await this.actors.affiliate(this.me);
+      return { ok: false, affStatus: p?.affStatus ?? null, affReason: p?.affReason ?? null, note: '파트너로 승인된 계정이 아닙니다.' };
+    }
 
     const [sum] = await this.db.query(
       `SELECT

@@ -1961,7 +1961,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -1979,7 +1980,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2002,7 +2004,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2038,7 +2041,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2058,7 +2062,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2079,7 +2084,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2372,7 +2378,8 @@
    "url": "/admin/qualifications",
    "p": "P2",
    "roles": [
-    "ADMIN"
+    "ADMIN",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -2388,7 +2395,8 @@
    "url": "/admin/qualifications/{id}",
    "p": "P2",
    "roles": [
-    "ADMIN"
+    "ADMIN",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -3573,7 +3581,8 @@
    "gates": [],
    "nav": "global",
    "apis": [
-    "GET /partner/affiliate/dashboard"
+    "GET /partner/affiliate/dashboard",
+    "POST /partner/affiliate/apply"
    ]
   },
   {
@@ -3747,13 +3756,17 @@
    "p": "운영",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_AFF"
    ],
    "gates": [],
    "nav": "SB-ADM-DSH-010",
    "apis": [
     "GET /admin/affiliates/applications",
-    "POST /admin/affiliates/applications/{id}/decide"
+    "POST /admin/affiliates/applications/{id}/decide",
+    "GET /admin/affiliates/partners",
+    "POST /admin/affiliates/partners/{id}/suspend",
+    "POST /admin/affiliates/partners/{id}/resume"
    ]
   },
   {
@@ -3764,7 +3777,8 @@
    "p": "운영",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_AFF"
    ],
    "gates": [],
    "nav": "SB-ADM-DSH-010",
@@ -3782,7 +3796,8 @@
    "p": "운영",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_AFF"
    ],
    "gates": [],
    "nav": "SB-ADM-DSH-010",
@@ -3799,7 +3814,8 @@
    "p": "운영",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_AFF"
    ],
    "gates": [],
    "nav": "SB-ADM-DSH-010",
@@ -4622,7 +4638,8 @@
    "p": "P1",
    "roles": [
     "ADMIN",
-    "SUPER"
+    "SUPER",
+    "PARTNER_MAL"
    ],
    "gates": [],
    "apis": [
@@ -4630,7 +4647,9 @@
     "GET /admin/partner-center/change-requests",
     "POST /admin/partner-center/change-requests/{id}/decide",
     "GET /admin/partners/cards",
-    "GET /admin/partners/{id}/docs"
+    "GET /admin/partners/{id}/docs",
+    "POST /admin/partners/{id}/suspend",
+    "POST /admin/partners/{id}/resume"
    ],
    "nav": "SB-ADM-PTN-010",
    "note": "사업자 · 등급 · 상태 · 서비스 · 지역 · 리드 이용료(v10.27 · G-130)"

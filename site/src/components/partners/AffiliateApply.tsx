@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 /**
- * 파트너 신청 — POST /partner/apply
+ * 제휴 파트너 신청 — POST /partner/affiliate/apply
  *
- * ★ 제휴 파트너도 같은 partners 테이블을 씁니다(affiliate.service partnerId()).
- *   따로 된 제휴 신청 API 는 없습니다(2026-10-02 확인) — 입점 신청이 곧 파트너 신청입니다.
+ * v10.194 (D173 · docs/304) — 제휴 자격(partners.aff_status)은 안심소개 입점 신청(POST /partner/apply · status)과 따로입니다.
+ *   전에는 입점 신청이 곧 제휴 신청이라 한쪽을 승인하면 두 센터가 함께 열렸습니다.
  *   422 IDENTITY_REQUIRED(본인인증 · 사업자 정보 둘 다 없음 — v10.38) · 409 ALREADY_APPLIED 를 사람 말로 보여 드립니다.
  */
 export function AffiliateApply() {
@@ -21,7 +21,7 @@ export function AffiliateApply() {
   function apply() {
     setErr(null); setOk(null);
     start(async () => {
-      const r = await fetch('/api/v1/partner/apply', {
+      const r = await fetch('/api/v1/partner/affiliate/apply', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
       });
       const d = await r.json().catch(() => null) as { code?: string; message?: string; note?: string } | null;

@@ -158,7 +158,7 @@ export class AccountSecurityService {
               EXISTS (SELECT 1 FROM subscriptions s JOIN subscription_plans p ON p.code = s.plan_code
                        WHERE s.account_id = $1 AND s.status IN ('ACTIVE','PAST_DUE') AND p.monthly_price > 0) AS paid_sub,
               EXISTS (SELECT 1 FROM partners p JOIN businesses b ON b.id = p.business_id
-                       WHERE b.account_id = $1 AND p.status IN ('APPLIED','ACTIVE')) AS partner`, [me]);
+                       WHERE b.account_id = $1 AND (p.status IN ('APPLIED','ACTIVE') OR p.aff_status IN ('APPLIED','ACTIVE'))) AS partner`, [me]);
     return {
       canWithdraw: blockers.length === 0,
       blockers,
@@ -244,7 +244,7 @@ export class AccountSecurityService {
     }
     const [acc] = await this.db.query<{ id: string; email: string; staff: boolean }>(
       `SELECT a.id, a.email,
-              EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role IN ('ADMIN','SUPER','REVIEWER','PAYOUT')) AS staff
+              EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role IN ('ADMIN','SUPER','REVIEWER','PAYOUT','PARTNER_MAL','PARTNER_AFF')) AS staff
          FROM accounts a WHERE a.id = $1 AND a.status = 'ACTIVE' AND a.withdrawn_at IS NULL`, [accountId]);
     if (!acc) throw new PolicyViolation('NOT_FOUND', '쓸 수 있는 회원이 아닙니다(없음 · 정지 · 탈퇴).');
     if (acc.staff) throw new Forbidden('STAFF_ACCOUNT', '운영진 계정에는 재설정 링크를 만들지 않습니다. 본인이 비밀번호 찾기를 쓰십시오.');

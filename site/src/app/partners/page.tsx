@@ -16,7 +16,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('affiliate'))('dash.title') };
 }
 
-interface LeadDash { applied: boolean; status?: string; note?: string }
 
 /**
  * SB-AFC-DSH-010 대시보드
@@ -48,10 +47,11 @@ export default async function PartnersDashboard() {
 
   /* ── 파트너가 아닌 계정: 신청 방법 ─────────────────────────── */
   if (!d.ok) {
-    const lead = await apiGetPersonal<LeadDash>('/partner/dashboard').catch(() => null);
     /* v10.38 (D096 · P2P) — 본인인증 개인도 파트너가 됩니다(사업자 인증은 선택) */
     const actorOk = !!(p.identityVerifiedAt || p.businessVerifiedAt);
-    const applied = !!lead?.applied;
+    /* v10.194 (D173) — 제휴 자격(affStatus)으로 단계를 그림 · 안심소개 입점(/partner/dashboard)과 따로. 반려되면 다시 신청 */
+    const st = d.affStatus ?? null;
+    const applied = !!st && st !== 'REJECTED' && st !== 'WITHDRAWN';
     return (
       <div className="p2body">
         <div className="page-head"><h1>{tr('dash.title')}</h1></div>
@@ -68,12 +68,14 @@ export default async function PartnersDashboard() {
           <li className={applied ? 'done' : actorOk ? 'now' : ''}>
             <strong>{tr('dash.apply.s2')}</strong> <span className="dim">{applied ? tr('dash.apply.applied') : tr('dash.apply.waiting')}</span>
             <p>{tr('dash.apply.s2Desc')}</p>
+            {st === 'REJECTED' && <p className="form-error" role="alert">{tr('dash.apply.rejectedDesc', { reason: d.affReason ?? '—' })}</p>}
             {actorOk && !applied && <AffiliateApply />}
           </li>
           <li className={applied ? 'now' : ''}>
             <strong>{tr('dash.apply.s3')}</strong>{' '}
-            <span className="dim">{applied ? (lead?.status === 'ACTIVE' ? tr('dash.apply.approved') : tr('dash.apply.reviewing')) : tr('dash.apply.waiting')}</span>
+            <span className="dim">{st === 'SUSPENDED' ? tr('dash.apply.suspended') : st === 'REJECTED' ? tr('dash.apply.rejected') : applied ? tr('dash.apply.reviewing') : tr('dash.apply.waiting')}</span>
             <p>{tr('dash.apply.s3Desc')}</p>
+            {st === 'SUSPENDED' && <p className="form-error" role="alert">{tr('dash.apply.suspendedDesc', { reason: d.affReason ?? '—' })}</p>}
           </li>
         </ol>
         <p className="hint">{tr.rich('dash.apply.hint', { a: (c) => <Link href="/partners/guides">{c}</Link> })}</p>

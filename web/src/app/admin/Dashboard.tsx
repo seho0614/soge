@@ -46,6 +46,22 @@ export function Dashboard({ onGo, canGo }: { onGo: (tab: string) => void; canGo?
    * 대시보드가 늘 403 오류였습니다. 그 역할에게는 할 일로 가는 안내만 보여 줍니다. */
   const roles = tokenRoles();
   if (!roles.includes('ADMIN') && !roles.includes('SUPER')) {
+    /* v10.194 (D173 · docs/304) — 안심 파트너 담당 · 제휴 파트너 담당은 그 쪽 화면으로 */
+    const mal = roles.includes('PARTNER_MAL'), aff = roles.includes('PARTNER_AFF');
+    if (mal || aff) {
+      return (
+        <>
+          <div className="ad-nt info" data-partner-role="">
+            <b>{mal && aff ? '안심 · 제휴 파트너 담당 계정입니다.' : mal ? '안심 파트너 담당 계정입니다.' : '제휴 파트너 담당 계정입니다.'}</b>{' '}
+            {mal && '안심소개 입점 · 공인중개사 인증 · 자격 심사 · 정액 노출을 처리합니다. '}
+            {aff && '제휴 신청 · 제휴상품 · 목표 · 홍보 자료 · 안내를 처리합니다. '}
+            돈을 움직이는 일은 운영(ADMIN)이 합니다.
+          </div>
+          {mal && <button className="btn-ok" onClick={() => onGo('partners')}>파트너사로</button>}{' '}
+          {aff && <button className="btn-ok" onClick={() => onGo('affiliates')}>제휴로</button>}
+        </>
+      );
+    }
     const payout = roles.includes('PAYOUT');
     return (
       <>

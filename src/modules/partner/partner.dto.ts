@@ -108,3 +108,10 @@ export class PartnerOkDto {
   @ApiPropertyOptional() status?: string;
   @ApiPropertyOptional() note?: string;
 }
+
+/* v10.194 (D173 · docs/304) — 안심소개 자격 정지 · 다시 열기 */
+export class PartnerStatusDto {
+  @ApiProperty({ example: '허위 리드 응대 반복', description: '사유(2 ~ 300자) — 기록에 남고 정지면 파트너에게 보입니다' })
+  @IsString() @MinLength(2) @MaxLength(300)
+  reason!: string;
+}

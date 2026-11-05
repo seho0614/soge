@@ -6,7 +6,7 @@ import { AffiliateAdminService } from './affiliate-admin.service';
 import {
   CreateLinkDto, CreateProductDto, UpdateProductDto, SetGoalDto,
   ReviewMaterialDto, SettleRunDto, AffiliatePayoutAccountDto, AffiliateInquiryDto,
-  VerifySettlementAccountDto, CreateMaterialDto, CreateGuideDto, UpdateGuideDto,
+  VerifySettlementAccountDto, CreateMaterialDto, CreateGuideDto, UpdateGuideDto, AffStatusDto,
 } from './affiliate.dto';
 import { Roles, RequireGate } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -34,6 +34,16 @@ export class AffiliateController {
               private readonly account: AffiliateAccountService) {}   // v10.108 — 정산 계좌 · 1원 인증은 AffiliateAccountService(docs/168)   // v10.92 — 운영 화면은 AffiliateAdminService
 
   /* ── 파트너 ───────────────────────────────────────────────── */
+
+  @Post('partner/affiliate/apply')
+  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')
+  @ApiOperation({
+    summary: '제휴 파트너 신청',
+    description: 'v10.194 (D173 · docs/304) — 안심소개 입점 신청(POST /partner/apply)과 따로입니다. 계정 기준(D096): 사업자 인증 사업자는 그 사업자로, 본인인증 개인은 개인 활동 정보로. ' +
+      '반려된 신청은 다시 낼 수 있습니다. 422 IDENTITY_REQUIRED · 409 ALREADY_APPLIED.',
+  })
+  @Audit('PARTNER_AFF_APPLY', 'PARTNER')
+  apply() { return this.svc.apply(); }
 
   @Get('partner/affiliate/dashboard')
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')
@@ -196,7 +206,7 @@ export class AffiliateController {
   /* ── 운영 BO ──────────────────────────────────────────────── */
 
   @Get('admin/affiliates/applications')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '파트너 입점 심사',
     description: '신청 목록과 사업자 정보. **사업자 인증을 마친 곳만** 승인하십시오.',
@@ -204,20 +214,37 @@ export class AffiliateController {
   applications() { return this.admin.applications(); }
 
   @Post('admin/affiliates/applications/:id/decide')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '입점 승인 · 반려', description: '반려면 사유를 적으십시오.' })
   @Audit('PARTNER_APPROVE', 'PARTNER')
   decide(@Param('id') id: string, @Body() dto: ReviewMaterialDto) {
     return this.admin.decideApplication(id, dto);
   }
 
+  @Get('admin/affiliates/partners')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
+  @ApiOperation({ summary: '제휴 파트너 목록', description: 'v10.194 (D173) — 제휴 자격(aff_status)이 있는 파트너. status 로 거름(APPLIED · ACTIVE · SUSPENDED · WITHDRAWN · REJECTED). 안심소개 자격은 따로 봅니다.' })
+  affPartners(@Query('status') status?: string) { return this.admin.affPartners(status); }
+
+  @Post('admin/affiliates/partners/:id/suspend')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
+  @ApiOperation({ summary: '제휴 자격 정지', description: 'v10.194 (D173) — 제휴만 정지합니다(안심소개 자격 그대로). 사유 필수 · 링크 클릭은 PARTNER_INACTIVE.' })
+  @Audit('PARTNER_AFF_SUSPEND', 'PARTNER')
+  affSuspend(@Param('id') id: string, @Body() dto: AffStatusDto) { return this.admin.affSetStatus(id, 'SUSPENDED', dto.reason); }
+
+  @Post('admin/affiliates/partners/:id/resume')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
+  @ApiOperation({ summary: '제휴 자격 다시 열기', description: 'v10.194 (D173) — 정지한 제휴 자격을 다시 활동으로. 사유 필수(기록).' })
+  @Audit('PARTNER_AFF_RESUME', 'PARTNER')
+  affResume(@Param('id') id: string, @Body() dto: AffStatusDto) { return this.admin.affSetStatus(id, 'ACTIVE', dto.reason); }
+
   @Get('admin/affiliates/products')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '제휴상품 목록' })
   adminProducts() { return this.admin.adminProducts(); }
 
   @Post('admin/affiliates/products')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '제휴상품 등록',
     description: '**건당 정액**입니다. 비율이 아닌 것은 거래액을 우리가 못 보기 때문입니다.',
@@ -226,7 +253,7 @@ export class AffiliateController {
   createProduct(@Body() dto: CreateProductDto) { return this.admin.createProduct(dto); }
 
   @Patch('admin/affiliates/products/:id')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '단가 · 상태 변경',
     description:
@@ -239,12 +266,12 @@ export class AffiliateController {
   }
 
   @Get('admin/affiliates/goals')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '목표 현황', description: '**개인별 설정이 등급 일괄보다 우선합니다.**' })
   goals(@Query('ym') ym?: string) { return this.admin.goals(ym); }
 
   @Post('admin/affiliates/goals')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '목표 설정' })
   @Audit('PARTNER_GOAL_SET', 'PARTNER')
   setGoal(@Body() dto: SetGoalDto) { return this.admin.setGoal(dto); }
@@ -269,7 +296,7 @@ export class AffiliateController {
   /* ── 마케팅자료 · 파트너가이드 등록 (D007) ─────────────────── */
 
   @Post('admin/affiliates/materials')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '마케팅자료 등록',
     description:
@@ -284,7 +311,7 @@ export class AffiliateController {
   createMaterial(@Body() dto: CreateMaterialDto) { return this.admin.createMaterial(dto); }
 
   @Get('admin/affiliates/guides')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '파트너가이드 전체', description: '꺼진 것까지 모두.' })
   @ApiOkResponse({ schema: { type: 'array', items: { type: 'object', properties: {
     id: { type: 'string', format: 'uuid' }, title: { type: 'string' }, body: { type: 'string' }, sortOrder: { type: 'integer' },
@@ -294,7 +321,7 @@ export class AffiliateController {
   adminGuides() { return this.admin.adminGuides(); }
 
   @Post('admin/affiliates/guides')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '파트너가이드 등록',
     description: '바로 파트너가이드에 보입니다. 첨부는 POST /files(purpose=PARTNER_GUIDE) 로 올린 READY 파일.',
@@ -305,7 +332,7 @@ export class AffiliateController {
   createGuide(@Body() dto: CreateGuideDto) { return this.admin.createGuide(dto); }
 
   @Patch('admin/affiliates/guides/:id')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '파트너가이드 고치기 · 끄기', description: '끄면 파트너에게 안 보이고 첨부도 내려받을 수 없습니다.' })
   @ApiOkResponse({ schema: { type: 'object', properties: {
     ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, isActive: { type: 'boolean' }, note: { type: 'string' } } } })
@@ -313,12 +340,12 @@ export class AffiliateController {
   updateGuide(@Param('id') id: string, @Body() dto: UpdateGuideDto) { return this.admin.updateGuide(id, dto); }
 
   @Get('admin/affiliates/materials/queue')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '마케팅자료 심의 큐' })
   materialQueue() { return this.admin.materialQueue(); }
 
   @Post('admin/affiliates/materials/:id/review')
-  @Roles('ADMIN', 'SUPER')
+  @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '자료 심의',
     description: '**반려 사유를 적으십시오** — 안 적으면 같은 자료가 다시 올라옵니다.',

@@ -10,7 +10,7 @@ interface Change { id: string; role: string; action: 'GRANT' | 'REVOKE'; reason:
 interface Quarter { quarter: string; reviewedAt: string | null; reviewedBy: string | null; note: string | null; current: boolean }
 interface Data { idleDays: number; items: Op[]; total: number; idleCount: number; noMfa: number; changes: Change[]; quarters: Quarter[] }
 
-const ROLE_NAME: Record<string, string> = { SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당' };
+const ROLE_NAME: Record<string, string> = { SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당', PARTNER_MAL: '안심 파트너 담당', PARTNER_AFF: '제휴 파트너 담당' };
 
 /**
  * SB-ADM-ROLE-010 운영자 권한 정기 점검 (v10.180 · D169 · docs/281 · SUPER)

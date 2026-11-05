@@ -4,13 +4,13 @@ import { PartnerAdminService } from './partner-admin.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
-import { ServiceReviewDto, VoidFeeDto, PartnerRejectDto, VoidAcceptDto, VoidDismissDto, PartnerOkDto } from './partner.dto';
+import { ServiceReviewDto, VoidFeeDto, PartnerRejectDto, VoidAcceptDto, VoidDismissDto, PartnerOkDto, PartnerStatusDto } from './partner.dto';
 
 /** SB-ADM-PTN-* 파트너 운영 */
 @ApiTags('ADM')
 @ApiBearerAuth()
 @Controller('api/v1/admin/partners')
-@Roles('ADMIN', 'SUPER')
+@Roles('ADMIN', 'SUPER', 'PARTNER_MAL')   // v10.194 (D173) — 안심 파트너 담당도. 돈을 움직이는 API 는 아래에서 ADMIN 만
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class PartnerAdminController {
   constructor(private readonly svc: PartnerAdminService) {}   // v10.45 — 운영용 서비스를 나눔
@@ -28,6 +28,16 @@ export class PartnerAdminController {
   @ApiParam({ name: 'id' })
   @Audit('PARTNER_APPROVE', 'PARTNER')
   approve(@Param('id') id: string) { return this.svc.admApprove(id); }
+
+  @Post(':id/suspend')
+  @ApiOperation({ summary: '안심소개 자격 정지', description: 'v10.194 (D173 · docs/304) — 안심소개만 정지(제휴 자격 그대로). 사유 필수 · 리드가 가지 않음.' })
+  @Audit('PARTNER_SUSPEND', 'PARTNER')
+  suspend(@Param('id') id: string, @Body() dto: PartnerStatusDto) { return this.svc.admSetStatus(id, 'SUSPENDED', dto.reason); }
+
+  @Post(':id/resume')
+  @ApiOperation({ summary: '안심소개 자격 다시 열기', description: 'v10.194 (D173) — 정지한 안심소개 자격을 다시 활동으로. 사유 필수(기록).' })
+  @Audit('PARTNER_RESUME', 'PARTNER')
+  resume(@Param('id') id: string, @Body() dto: PartnerStatusDto) { return this.svc.admSetStatus(id, 'ACTIVE', dto.reason); }
 
   @Post(':id/reject')
   @ApiOperation({
@@ -67,6 +77,7 @@ export class PartnerAdminController {
   voidRequests(@Query('state') state?: string) { return this.svc.admVoidRequests(state); }
 
   @Post('fees/void-requests/:id/accept')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({
     summary: '리드 반려 인정',
     description: '이용료가 무효가 됩니다(트리거가 같이 맞춤). **위험감지 규칙 근거가 필요합니다.**',
@@ -109,6 +120,7 @@ export class PartnerAdminController {
   }
 
   @Post('fees/:id/void')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({
     summary: '이용료 무효',
     description:

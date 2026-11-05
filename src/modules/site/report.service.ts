@@ -99,7 +99,7 @@ export class ReportService {
    * 사유를 남기게 하는 것은 나중에 "누가 왜 줬는가"를 답하기 위해서입니다.
    */
   async setRole(accountId: string, role: string, grant: boolean, reason: string) {
-    const OK = ['REVIEWER', 'ADMIN', 'SUPER'];
+    const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 (D173) — 안심 · 제휴 파트너 담당
     if (!OK.includes(role)) {
       throw new PolicyViolation('BAD_ROLE', '부여할 수 없는 역할입니다.');
     }

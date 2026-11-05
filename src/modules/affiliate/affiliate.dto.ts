@@ -189,3 +189,10 @@ export class UpdateGuideDto {
   @ApiPropertyOptional({ description: 'true 면 첨부를 뗍니다' }) @IsOptional() @StrictBoolean()
   removeFile?: boolean;
 }
+
+/* ── v10.194 (D173 · docs/304) — 제휴 자격 정지 · 다시 열기 ────────── */
+export class AffStatusDto {
+  @ApiProperty({ example: '홍보 글에 금지 표현 반복', description: '사유(2 ~ 300자) — 기록에 남고 정지면 파트너에게 보입니다' })
+  @IsString() @Length(2, 300)
+  reason!: string;
+}

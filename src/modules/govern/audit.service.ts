@@ -80,8 +80,8 @@ export class AuditService {
         WHERE l.occurred_at >= now() - ($2 || ' days')::interval
           AND ($1::text IS NULL OR l.action = $1)
           AND ($3::text IS NULL
-               OR ($3 = 'OPS' AND l.actor_role IN ('ADMIN','SUPER','REVIEWER','PAYOUT'))
-               OR ($3 = 'MEMBER' AND coalesce(l.actor_role, '') NOT IN ('ADMIN','SUPER','REVIEWER','PAYOUT'))
+               OR ($3 = 'OPS' AND l.actor_role IN ('ADMIN','SUPER','REVIEWER','PAYOUT','PARTNER_MAL','PARTNER_AFF'))
+               OR ($3 = 'MEMBER' AND coalesce(l.actor_role, '') NOT IN ('ADMIN','SUPER','REVIEWER','PAYOUT','PARTNER_MAL','PARTNER_AFF'))
                OR ($3 = 'PII' AND (l.action LIKE 'PII%' OR l.action IN ('ACCOUNT_VIEW','ACCOUNT_LIST') OR l.action LIKE '%_VIEW')))
         ORDER BY l.occurred_at DESC LIMIT 200`, [action ?? null, d, k]);
   }

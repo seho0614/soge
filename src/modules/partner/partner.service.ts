@@ -57,7 +57,7 @@ export class PartnerService {
       `INSERT INTO partners(business_id) VALUES ($1)
        ON CONFLICT (business_id) DO UPDATE
           SET status = 'APPLIED', applied_at = now(), suspended_reason = NULL
-        WHERE partners.status = 'REJECTED'
+        WHERE partners.status IN ('REJECTED', 'NONE')   -- v10.194 (D173) — 제휴만 신청한 줄(NONE)도 안심소개 신청을 냄
        RETURNING id, status, applied_at AS "appliedAt"`, [biz.id]);
     if (!row) throw new StateConflict('ALREADY_APPLIED', '이미 신청하셨습니다.');
 

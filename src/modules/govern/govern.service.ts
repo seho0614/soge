@@ -63,12 +63,12 @@ export class GovernService {
         GROUP BY r.role ORDER BY r.role`);
 
     /* ★ PAYOUT 과 ADMIN 을 함께 가진 사람이 있으면 안 됩니다.
-     *   승인한 사람이 돈까지 보내면 아무도 못 막습니다(C710). */
+     *   승인한 사람이 돈까지 보내면 아무도 못 막습니다(C710). v10.194 (D173) — 파트너 담당(PARTNER_MAL · PARTNER_AFF)도 승인하는 쪽 */
     const conflict = await this.db.query(
       `SELECT a.id, a.name, a.email
          FROM accounts a
         WHERE EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id=a.id AND r.role='PAYOUT')
-          AND EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id=a.id AND r.role='ADMIN')
+          AND EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id=a.id AND r.role IN ('ADMIN','PARTNER_MAL','PARTNER_AFF'))
           AND a.withdrawn_at IS NULL`);
 
     const DESC: Record<string, string> = {
@@ -78,8 +78,10 @@ export class GovernService {
       BIZ_STAFF: '사업자 직원',
       REVIEWER: '검수 담당',
       ADMIN: '운영',
-      PAYOUT: '지급 전담 — ADMIN 과 겸직 불가',
+      PAYOUT: '지급 전담 — ADMIN · 파트너 담당과 겸직 불가',
       SUPER: '최고 운영',
+      PARTNER_MAL: '안심 파트너 담당 — 안심소개 입점 · 공인중개사 인증 · 자격 심사 · 정액 노출(돈을 움직이는 일은 ADMIN)',
+      PARTNER_AFF: '제휴 파트너 담당 — 제휴 신청 · 제휴상품 · 목표 · 홍보 자료 · 안내(정산 실행은 ADMIN)',
     };
     const all = Object.keys(DESC).map((role) => ({
       role,
@@ -91,7 +93,7 @@ export class GovernService {
       roles: all,
       conflict,
       note: conflict.length
-        ? '★ PAYOUT 과 ADMIN 을 함께 가진 사람이 있습니다. 승인한 사람이 돈까지 보내면 아무도 못 막습니다.'
+        ? '★ PAYOUT 과 승인 역할(ADMIN · 파트너 담당)을 함께 가진 사람이 있습니다. 승인한 사람이 돈까지 보내면 아무도 못 막습니다.'
         : null,
     };
   }

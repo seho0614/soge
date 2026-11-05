@@ -12,7 +12,7 @@ import { Audit } from '../../core/audit.interceptor';
 import { Forbidden } from '../../core/errors';
 import { verifyToken } from './storage';
 
-const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER'] as const;
+const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
 
 /**
  * 파일 (D007) — 등기사항증명서 · 마케팅자료 · 파트너가이드.

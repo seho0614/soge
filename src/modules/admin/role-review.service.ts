@@ -16,7 +16,7 @@ import { PolicyViolation, StateConflict } from '../../core/errors';
  *   ★ 권한 점검 주기 · 파기 기록 보관 기간은 최신 고시 확인이 필요합니다(docs/281 5절).
  * ------------------------------------------------------------------- */
 const QUARTER = /^\d{4}-Q[1-4]$/;
-const OPS = `('REVIEWER','ADMIN','PAYOUT','SUPER')`;
+const OPS = `('REVIEWER','ADMIN','PAYOUT','SUPER','PARTNER_MAL','PARTNER_AFF')`;   // v10.194 — 파트너 담당도 점검
 const KST_NOW = `(now() AT TIME ZONE 'Asia/Seoul')`;
 
 @Injectable()
@@ -36,7 +36,7 @@ export class RoleReviewService {
     const idle = Number(s?.idle ?? 90);
     const rows = await this.db.query<{ idle: boolean; mfa: boolean; status: string }>(
       `SELECT a.id, a.name, a.email, a.status,
-              array_agg(r.role ORDER BY array_position(ARRAY['SUPER','ADMIN','REVIEWER','PAYOUT'], r.role)) AS roles,
+              array_agg(r.role ORDER BY array_position(ARRAY['SUPER','ADMIN','PARTNER_MAL','PARTNER_AFF','REVIEWER','PAYOUT'], r.role)) AS roles,
               min(r.granted_at) AS "grantedAt", a.last_login_at AS "lastLoginAt",
               (m.enabled_at IS NOT NULL) AS mfa,
               (a.status = 'ACTIVE' AND (a.last_login_at IS NULL OR a.last_login_at < now() - make_interval(days => $1))) AS idle

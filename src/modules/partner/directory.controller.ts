@@ -160,7 +160,7 @@ export class PartnerDirectoryController {
 @ApiTags('ADM')
 @ApiBearerAuth()
 @Controller('api/v1/admin/directory')
-@Roles('ADMIN', 'SUPER')
+@Roles('ADMIN', 'SUPER', 'PARTNER_MAL')   // v10.194 (D173) — 안심 파트너 담당도. 돈을 움직이는 API 는 아래에서 ADMIN 만
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class DirectoryAdminController {
   constructor(private readonly svc: DirectoryService) {}
@@ -178,6 +178,7 @@ export class DirectoryAdminController {
   invoices(@Query('state') state?: string) { return this.svc.admInvoices(state); }
 
   @Post('invoices/:id/issue')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '세금계산서 발행 표시(손으로 번호 · 연동 전 임시)', description: '발행 번호 · 발행일을 넣으면 「발행됨」(v10.34 etax_mode MANUAL — 간주 · 업체 전송과 구분). 한 번만 · 금액은 고칠 수 없습니다(DB). 국세청 전송을 시작한 줄은 409 ETAX_IN_PROGRESS.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 409, description: 'NOT_REQUESTED · INVOICE_NO_TAKEN · ETAX_IN_PROGRESS', type: ErrorDto })

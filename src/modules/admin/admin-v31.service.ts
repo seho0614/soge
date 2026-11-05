@@ -365,7 +365,7 @@ export class AdminV31Service {
       ['LED', 'LED', 'partner.'], ['ADS', '—', 'ads.'], ['GWAN_VAR', '—', '—'],
     ];
     const protectedOf = (r: { roles: string[]; gated: boolean }) => r.roles.length > 0 || r.gated;
-    const opsOnly = (r: { roles: string[] }) => r.roles.length > 0 && r.roles.every((x) => ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'].includes(x));
+    const opsOnly = (r: { roles: string[] }) => r.roles.length > 0 && r.roles.every((x) => ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'].includes(x));
     const systems = SYS.map(([code, gwan, sub]) => {
       const rs = routes.filter((r) => sys(r.path) === code);
       return { code, gwan, subdomain: sub, routes: rs.length, protected: rs.filter(protectedOf).length,
@@ -400,10 +400,10 @@ export class AdminV31Service {
        UNION ALL
        SELECT 'OPS_LEAK', '운영권한 누출 (정지 · 탈퇴 계정이 운영 역할을 가짐)',
               (SELECT count(*) FROM account_roles r JOIN accounts a ON a.id = r.account_id
-                WHERE r.role IN ('ADMIN','SUPER','REVIEWER','PAYOUT') AND a.status <> 'ACTIVE')
+                WHERE r.role IN ('ADMIN','SUPER','REVIEWER','PAYOUT','PARTNER_MAL','PARTNER_AFF') AND a.status <> 'ACTIVE')
        UNION ALL
        SELECT 'PAYOUT_SPLIT', '지급 담당이 운영 역할도 가짐 (승인 · 집행 분리)',
-              (SELECT count(*) FROM account_roles p JOIN account_roles o ON o.account_id = p.account_id AND o.role IN ('ADMIN','SUPER')
+              (SELECT count(*) FROM account_roles p JOIN account_roles o ON o.account_id = p.account_id AND o.role IN ('ADMIN','SUPER','PARTNER_MAL','PARTNER_AFF')
                 WHERE p.role = 'PAYOUT')`);
     const gate = await this.setting('adx.payout_gate');
     const gvar = systems.find((s) => s.code === 'GWAN_VAR')!.routes;

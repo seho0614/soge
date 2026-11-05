@@ -59,12 +59,16 @@
       "s2": "2. Apply as a partner",
       "applied": "Applied",
       "waiting": "Waiting",
-      "s2Desc": "Same process as the seller (store) application. You only need to apply once.",
+      "s2Desc": "The affiliate partner application is separate from the Safe Referral store application. You only need to apply once.",
       "s3": "3. Approval",
       "approved": "Approved",
       "reviewing": "Under review",
       "s3Desc": "A person reviews it — there is no automatic approval. Once approved, your earnings appear on this screen.",
-      "hint": "New here? Read the <a>Partner guide</a> first."
+      "hint": "New here? Read the <a>Partner guide</a> first.",
+      "suspended": "Suspended",
+      "suspendedDesc": "Operations suspended your affiliate status — reason: {reason}. Contact us via 1:1 inquiry if you have questions.",
+      "rejected": "Rejected",
+      "rejectedDesc": "Your application was rejected — reason: {reason}. You can fix it and apply again."
     },
     "kpi": {
       "todayEarned": "Today's referral earnings",

@@ -16,7 +16,7 @@ export class AffiliateAdminService {
   async applications() {
     /* ★ 입점 심사는 **관리자가 합니다**(결정 2026-09-22). */
     const items = await this.db.query(
-      `SELECT p.id, p.grade, p.status, p.applied_at AS "appliedAt",
+      `SELECT p.id, p.grade, p.aff_status AS "status", p.aff_applied_at AS "appliedAt",
               b.company_name AS "companyName", b.ceo_name AS "ceoName",
               b.biz_reg_no AS "bizRegNo",
               (b.verified_at IS NOT NULL) AS "bizVerified",
@@ -24,8 +24,8 @@ export class AffiliateAdminService {
               (b.kind = 'PERSON') AS "personal", fn_actor_ok(b.id) AS "actorOk"
          FROM partners p
          JOIN businesses b ON b.id = p.business_id
-        WHERE p.status = 'APPLIED'   /* 20261002 — 표의 대기 상태는 APPLIED 입니다(전: 'PENDING' → 늘 빈 목록) */
-        ORDER BY p.applied_at`);
+        WHERE p.aff_status = 'APPLIED'   /* v10.194 (D173) — 제휴 자격(aff_status) · 안심소개 입점 심사(status)와 따로 */
+        ORDER BY p.aff_applied_at`);
     return {
       items,
       note: items.length
@@ -38,14 +38,15 @@ export class AffiliateAdminService {
     if (dto.state === 'REJECTED' && !dto.reason?.trim()) {
       return { ok: false, note: '거절 사유를 적으십시오. 안 적으면 같은 신청이 다시 올라옵니다.' };
     }
+    /* v10.194 (D173) — 제휴 자격 칸만 바꿈(안심소개 자격 status 는 그대로) */
     const [r] = await this.db.query(
       `UPDATE partners SET
-          status = $2,
-          approved_at = CASE WHEN $2 = 'ACTIVE' THEN now() ELSE NULL END,
-          approved_by = CASE WHEN $2 = 'ACTIVE' THEN $3::uuid ELSE NULL END,
-          suspended_reason = CASE WHEN $2 <> 'ACTIVE' THEN $4 ELSE NULL END
-        WHERE id = $1 AND status = 'APPLIED'
-      RETURNING id, status`,
+          aff_status = $2,
+          aff_approved_at = CASE WHEN $2 = 'ACTIVE' THEN now() ELSE NULL END,
+          aff_approved_by = CASE WHEN $2 = 'ACTIVE' THEN $3::uuid ELSE NULL END,
+          aff_reason = CASE WHEN $2 <> 'ACTIVE' THEN $4 ELSE NULL END
+        WHERE id = $1 AND aff_status = 'APPLIED'
+      RETURNING id, aff_status AS "status"`,
       [id, dto.state === 'APPROVED' ? 'ACTIVE' : 'REJECTED', this.me, dto.reason ?? null]);
     if (!r) return { ok: false, note: '심사 대기 상태가 아닙니다.' };
     return {
@@ -54,6 +55,36 @@ export class AffiliateAdminService {
         ? '승인했습니다. 파트너가 링크를 발급할 수 있습니다.'
         : '거절했습니다. 사유가 신청자에게 보입니다.',
     };
+  }
+
+  /** v10.194 (D173 · docs/304) — 제휴 자격이 있는 파트너(안심소개 자격은 칸만 보여 줌) */
+  affPartners(status?: string) {
+    const st = status && ['APPLIED', 'ACTIVE', 'SUSPENDED', 'WITHDRAWN', 'REJECTED'].includes(status) ? status : null;
+    return this.db.query(
+      `SELECT p.id, b.company_name AS "companyName", (b.kind = 'PERSON') AS "personal", fn_actor_ok(b.id) AS "actorOk",
+              p.aff_status AS "affStatus", p.aff_applied_at AS "affAppliedAt", p.aff_approved_at AS "affApprovedAt",
+              p.aff_reason AS "affReason", p.status AS "malStatus",
+              (SELECT count(*)::int FROM partner_links l WHERE l.partner_id = p.id AND l.is_active) AS "links"
+         FROM partners p JOIN businesses b ON b.id = p.business_id
+        WHERE p.aff_status IS NOT NULL AND ($1::text IS NULL OR p.aff_status = $1)
+        ORDER BY p.aff_applied_at DESC NULLS LAST LIMIT 500`, [st]);
+  }
+
+  /** v10.194 — 제휴 자격만 정지(ACTIVE → SUSPENDED) · 다시 열기(SUSPENDED → ACTIVE). 사유 필수 · 안심소개 자격 그대로 */
+  async affSetStatus(id: string, to: 'ACTIVE' | 'SUSPENDED', reasonRaw: string) {
+    const reason = String(reasonRaw ?? '').trim();
+    if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '사유를 적어 주십시오 — 기록에 남습니다.');
+    const from = to === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+    const [r] = await this.db.query<{ id: string; affStatus: string }>(
+      `UPDATE partners SET aff_status = $2,
+              aff_reason = CASE WHEN $2 = 'SUSPENDED' THEN $4 ELSE NULL END,
+              aff_approved_at = CASE WHEN $2 = 'ACTIVE' THEN now() ELSE aff_approved_at END,
+              aff_approved_by = CASE WHEN $2 = 'ACTIVE' THEN $5::uuid ELSE aff_approved_by END
+        WHERE id = $1 AND aff_status = $3
+      RETURNING id, aff_status AS "affStatus"`, [id, to, from, reason, this.me]);
+    if (!r) throw new PolicyViolation('BAD_STATE', to === 'SUSPENDED' ? '제휴 활동 중인 파트너가 아닙니다.' : '제휴 정지된 파트너가 아닙니다.');
+    return { ok: true, ...r, reason,
+      note: to === 'SUSPENDED' ? '제휴 자격을 정지했습니다. 안심소개 자격은 그대로입니다.' : '제휴 자격을 다시 열었습니다.' };
   }
 
   adminProducts() {

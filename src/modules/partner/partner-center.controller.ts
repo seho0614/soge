@@ -319,7 +319,7 @@ export class MeFulfillmentController {
 @ApiTags('ADM')
 @ApiBearerAuth()
 @Controller('api/v1/admin/partner-center')
-@Roles('ADMIN', 'SUPER')
+@Roles('ADMIN', 'SUPER', 'PARTNER_MAL')   // v10.194 (D173) — 안심 파트너 담당도. 돈을 움직이는 API 는 아래에서 ADMIN 만
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class PartnerCenterAdminController {
   constructor(private readonly cash: LeadCashService, private readonly svc: PartnerCenterAdminService) {}   // v10.92 — adm* 는 PartnerCenterAdminService
@@ -329,6 +329,7 @@ export class PartnerCenterAdminController {
   wallets() { return this.cash.admWallets(); }
 
   @Post('cash/auto-run')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '자동 청구 한 번 돌리기', description: '자동 청구가 켜져 있고 잔액이 기준 미만인 파트너 전부' })
   @Audit('LEAD_CASH_AUTO_RUN', 'PARTNER')
   autoRun() { return this.cash.runAutoAll(); }
@@ -339,6 +340,7 @@ export class PartnerCenterAdminController {
   ledger(@Param('partnerId') id: string) { return this.cash.admLedger(id); }
 
   @Post('cash/:partnerId/adjust')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '잔액 조정(반대 기입)', description: '사유 필수 · 원장에 그대로 남음 · 0 아래로는 못 내림' })
   @ApiParam({ name: 'partnerId' })
   @Audit('LEAD_CASH_ADJUST', 'PARTNER')
@@ -367,11 +369,13 @@ export class PartnerCenterAdminController {
   invoices(@Query('ym') ym?: string) { return this.svc.admInvoices(ym); }
 
   @Post('lead-cash-invoices/run')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '한 달 치 발행 요청 만들기', description: '그 달 유상 잔액 실사용액(차감 − 환급)' })
   @Audit('LEAD_CASH_INVOICE_RUN', 'PARTNER')
   runInvoices(@Body() dto: InvoiceRunDto) { return this.svc.admRunInvoices(dto.ym); }
 
   @Post('lead-cash-invoices/:id/issue')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '발행 표시(손으로 번호 · 연동 전 임시)', description: '국세청 전송 연동 전 — 발행 번호 · 발행일을 적습니다(v10.34 etax_mode MANUAL). 국세청 전송을 시작한 줄은 409 ETAX_IN_PROGRESS — 전송은 POST /admin/etax/lead-cash/{id}/send' })
   @ApiParam({ name: 'id' })
   @Audit('LEAD_CASH_INVOICE_ISSUE', 'PARTNER')
@@ -382,12 +386,14 @@ export class PartnerCenterAdminController {
   rules() { return this.svc.admRules(); }
 
   @Put('rules/bonus-rates/:grade')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '등급 할인(보너스) 비율' })
   @ApiParam({ name: 'grade' })
   @Audit('LEAD_CASH_BONUS_RATE', 'PARTNER')
   bonusRate(@Param('grade') grade: string, @Body() dto: RateDto) { return this.svc.admSetBonusRate(grade, dto.rate); }
 
   @Put('rules/grades/:grade')
+  @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '파트너 등급 기준(이번 달 확정 제휴수수료)' })
   @ApiParam({ name: 'grade' })
   @Audit('PARTNER_GRADE_RULE', 'PARTNER')

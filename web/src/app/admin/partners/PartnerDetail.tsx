@@ -1,16 +1,21 @@
+import { api } from '../../../lib/api';
 import { useApi } from '../../../lib/useApi';
-import { n } from '../../../lib/act';
+import { n, useAct } from '../../../lib/act';
+import { Flash } from '../../../components/Flash';
 import { ErrorView } from '../../../components/ErrorView';
 import { bizNo, type Partner, type Tab2, type PartnerCard, PST, NTS, ymd, partnerWarn } from './shared';
 
 interface PartnerDetailRes extends Omit<Partner, 'services'> {
   ceoName: string | null; ntsStatus: string | null; approvedAt: string | null; suspendedReason: string | null; stopped: boolean;
+  /* v10.194 (D173) — 제휴 자격(따로 관리 · 운영 화면 › 제휴) */
+  affStatus: string | null; affReason: string | null; affApprovedAt: string | null;
   services: Array<{ id: string; title: string; category: string; gwanCode: string; status: string; rejectReason: string | null; createdAt: string }>;
   regions: Array<{ sido: string; sigungu: string | null }>;
   fees: Array<{ state: string; count: number; amount: number }>;
 }
 
 const FEE_STATE: Record<string, string> = { PENDING: '미청구', BILLED: '청구됨', PAID: '결제됨', VOID: '무효' };
+const AFF_ST: Record<string, string> = { APPLIED: '심사 대기', ACTIVE: '활동', SUSPENDED: '정지', WITHDRAWN: '탈퇴', REJECTED: '반려' };
 
 interface PartnerDocs {
   status: string;
@@ -25,6 +30,13 @@ export function PartnerDetail({ id, onClose, onGo }: { id: string; onClose: () =
   const d = useApi<PartnerDetailRes>(`/admin/partners/${id}`);
   const docs = useApi<PartnerDocs>(`/admin/partners/${id}/docs`);
   const cards = useApi<PartnerCard[]>('/admin/partners/cards');
+  const a = useAct();
+  /* v10.194 (D173 · docs/304) — 안심소개 자격만 정지 · 다시 열기(제휴 자격은 운영 화면 › 제휴에서 따로) */
+  const change = (to: 'suspend' | 'resume') => {
+    const reason = prompt(to === 'suspend' ? '안심소개 자격을 정지합니다 — 리드가 가지 않습니다. 사유(파트너에게 보입니다)' : '안심소개 자격을 다시 엽니다. 사유') ?? '';
+    if (reason.trim().length < 2) { a.setErr('사유를 적어 주십시오.'); return; }
+    void a.run(id, () => api(`/admin/partners/${id}/${to}`, { method: 'POST', body: JSON.stringify({ reason: reason.trim() }) }), d.reload);
+  };
   if (d.error) return <ErrorView error={d.error} onRetry={d.reload} />;
   if (!d.data) return <p className="muted">불러오는 중…</p>;
   const p = d.data;
@@ -65,6 +77,19 @@ export function PartnerDetail({ id, onClose, onGo }: { id: string; onClose: () =
         <div><span className="kv">{c ? `${n(c.cash)}원` : '—'}</span><span className="kl">리드 이용료 잔액</span></div>
         <div><span className={`kv${p.stopped ? ' bad' : ''}`}>{p.stopped ? '수신 멈춤' : '수신 중'}</span><span className="kl">리드 수신</span></div>
       </div>
+      <h3 className="ad-s2">자격</h3>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="ad-tw"><table className="tbl" data-ptn-quals2="">
+        <thead><tr><th>센터</th><th>상태</th><th>처리</th></tr></thead>
+        <tbody>
+          <tr><td>안심소개 파트너센터</td><td><span className={`ad-bg ${stc}`}>{stl}</span>{p.status === 'SUSPENDED' && p.suspendedReason ? <span className="muted"> {p.suspendedReason}</span> : ''}</td>
+            <td>{p.status === 'ACTIVE' && <button className="btn-no" disabled={a.busy === id} onClick={() => change('suspend')}>안심소개 정지</button>}
+                {p.status === 'SUSPENDED' && <button className="btn-sm" disabled={a.busy === id} onClick={() => change('resume')}>다시 열기</button>}</td></tr>
+          <tr><td>제휴 파트너센터</td><td>{p.affStatus ? <span className={`ad-bg ${p.affStatus === 'ACTIVE' ? 'ok' : 'no'}`}>{AFF_ST[p.affStatus] ?? p.affStatus}</span> : <span className="muted">신청 없음</span>}
+            {p.affReason && (p.affStatus === 'SUSPENDED' || p.affStatus === 'REJECTED') ? <span className="muted"> {p.affReason}</span> : ''}</td>
+            <td className="muted">운영 화면 › 제휴에서 처리</td></tr>
+        </tbody>
+      </table></div>
       <h3 className="ad-s2">계약 · 서류</h3>
       {docs.error ? <ErrorView error={docs.error} onRetry={docs.reload} /> : !docs.data ? <p className="muted">불러오는 중…</p> : (
         <div className="ad-tw"><table className="tbl" data-ptn-docs>

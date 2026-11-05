@@ -8,6 +8,9 @@
 export interface AffDashboard {
   ok: boolean;
   note?: string | null;
+  /** v10.194 (D173) — ok:false 일 때 제휴 자격 상태(null = 신청 전 · APPLIED · SUSPENDED · REJECTED · WITHDRAWN) · 정지 · 반려 사유 */
+  affStatus?: string | null;
+  affReason?: string | null;
   month?: { clicks: number; orders: number; earned: number | string; payable: number | string;
     /* v10.31 (W5) */ lastMonthEarned?: number; lastMonthSamePeriod?: number; deltaPct?: number | null };
   goal?: { target: number | string; reward: number | string | null; source: string; rate: number | null } | null;

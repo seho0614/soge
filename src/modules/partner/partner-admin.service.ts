@@ -36,8 +36,10 @@ export class PartnerAdminService {
               p.unpaid_cap AS "unpaidCap",
               p.applied_at AS "appliedAt",
               (b.verified_at IS NOT NULL) AS "bizVerified", (b.kind = 'PERSON') AS "personal", fn_actor_ok(b.id) AS "actorOk",
-              CASE WHEN p.status = 'REJECTED' THEN p.suspended_reason END AS "rejectReason"
+              CASE WHEN p.status = 'REJECTED' THEN p.suspended_reason END AS "rejectReason",
+              p.aff_status AS "affStatus"   -- v10.194 (D173) — 제휴 자격(따로 관리 · 운영 화면 › 제휴)
          FROM partners p JOIN businesses b ON b.id = p.business_id
+        WHERE p.status <> 'NONE'   -- v10.194 — 제휴만 신청한 줄은 안심소개 목록에 안 나옴
         ORDER BY p.applied_at DESC`);
   }
 
@@ -107,6 +109,7 @@ export class PartnerAdminService {
               p.grade, p.status, p.unpaid_cap AS "unpaidCap",
               p.applied_at AS "appliedAt", p.approved_at AS "approvedAt",
               p.suspended_reason AS "suspendedReason",
+              p.aff_status AS "affStatus", p.aff_reason AS "affReason", p.aff_approved_at AS "affApprovedAt",   -- v10.194 (D173)
               coalesce((SELECT sum(f.amount) FROM lead_fees f
                  WHERE f.partner_id = p.id AND f.state='PENDING'),0) AS "unpaid"
          FROM partners p JOIN businesses b ON b.id = p.business_id
@@ -136,6 +139,26 @@ export class PartnerAdminService {
       [partnerId, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('NOT_APPLIED', '심사 대기 중인 파트너가 아닙니다.');
     return row;
+  }
+
+  /**
+   * v10.194 (D173 · docs/304) — 안심소개 자격만 정지(ACTIVE → SUSPENDED) · 다시 열기(SUSPENDED → ACTIVE).
+   * 사유 필수(정지 사유는 DB 도 막음 · fn_partner_approve_guard) · 제휴 자격(aff_status)은 그대로.
+   */
+  async admSetStatus(partnerId: string, to: 'ACTIVE' | 'SUSPENDED', reasonRaw: string) {
+    const reason = String(reasonRaw ?? '').trim();
+    if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '사유를 적어 주십시오 — 기록에 남습니다.');
+    const from = to === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+    const [row] = await this.db.query<any>(
+      `UPDATE partners SET status = $2,
+              suspended_reason = CASE WHEN $2 = 'SUSPENDED' THEN $4 ELSE NULL END,
+              approved_at = CASE WHEN $2 = 'ACTIVE' THEN now() ELSE approved_at END,
+              approved_by = CASE WHEN $2 = 'ACTIVE' THEN $5::uuid ELSE approved_by END
+        WHERE id = $1 AND status = $3
+      RETURNING id, status`, [partnerId, to, from, reason, RequestCtx.actorId()]);
+    if (!row) throw new StateConflict('BAD_STATE', to === 'SUSPENDED' ? '안심소개 활동 중인 파트너가 아닙니다.' : '안심소개 정지된 파트너가 아닙니다.');
+    return { ...row, reason,
+      note: to === 'SUSPENDED' ? '안심소개 자격을 정지했습니다. 리드가 가지 않습니다. 제휴 자격은 그대로입니다.' : '안심소개 자격을 다시 열었습니다.' };
   }
 
   /**
@@ -331,6 +354,7 @@ export class PartnerAdminService {
          FROM partners p
          JOIN businesses b ON b.id = p.business_id
          LEFT JOIN lead_fees f ON f.partner_id = p.id
+        WHERE p.status <> 'NONE'
         GROUP BY p.id, b.company_name, p.grade, p.unpaid_cap
         ORDER BY 4 DESC`);
   }

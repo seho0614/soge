@@ -50,7 +50,7 @@ export class PartnerActorService {
          FROM partners p JOIN businesses b ON b.id = p.business_id
          LEFT JOIN business_members m ON m.business_id = b.id AND m.account_id = $1
                                      AND m.joined_at IS NOT NULL AND m.removed_at IS NULL
-        WHERE b.account_id = $1 OR m.account_id IS NOT NULL
+        WHERE (b.account_id = $1 OR m.account_id IS NOT NULL) AND p.status <> 'NONE'   -- v10.194 (D173) — 제휴만 신청한 줄은 안심소개 파트너가 아님
         ORDER BY (b.account_id = $1) DESC LIMIT 1`, [accountId]);
     return p ?? null;
   }
@@ -59,9 +59,29 @@ export class PartnerActorService {
   async ownedId(accountId: string, activeOnly = false): Promise<string | null> {
     const [p] = await this.db.query<{ id: string }>(
       `SELECT p.id FROM partners p JOIN businesses b ON b.id = p.business_id
-        WHERE b.account_id = $1 AND (NOT $2::boolean OR p.status = 'ACTIVE')
+        WHERE b.account_id = $1 AND p.status <> 'NONE' AND (NOT $2::boolean OR p.status = 'ACTIVE')
         ORDER BY p.approved_at DESC NULLS LAST LIMIT 1`, [accountId, activeOnly]);
     return p?.id ?? null;
+  }
+
+  /**
+   * v10.194 (D173 · docs/304) — 제휴 파트너 줄(대표 계정 본인 · 제휴 자격 aff_status).
+   * 안심소개 자격(status)과 따로 봅니다 — 한쪽을 승인 · 정지해도 다른 쪽은 그대로.
+   */
+  async affiliate(accountId: string): Promise<{ id: string; affStatus: string | null; affReason: string | null } | null> {
+    const [p] = await this.db.query<{ id: string; affStatus: string | null; affReason: string | null }>(
+      `SELECT p.id, p.aff_status AS "affStatus",
+              CASE WHEN p.aff_status IN ('REJECTED','SUSPENDED') THEN p.aff_reason END AS "affReason"
+         FROM partners p JOIN businesses b ON b.id = p.business_id
+        WHERE b.account_id = $1
+        ORDER BY (p.aff_status = 'ACTIVE') DESC NULLS LAST, p.aff_approved_at DESC NULLS LAST LIMIT 1`, [accountId]);
+    return p ?? null;
+  }
+
+  /** v10.194 — 제휴 활동 중(aff_status = ACTIVE)인 대표 계정의 파트너 번호. 없으면 null */
+  async affiliateActiveId(accountId: string): Promise<string | null> {
+    const p = await this.affiliate(accountId);
+    return p?.affStatus === 'ACTIVE' ? p.id : null;
   }
 
   /**

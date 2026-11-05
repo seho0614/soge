@@ -10,7 +10,7 @@ import { Audit } from '../../core/audit.interceptor';
 
 export class RoleSetDto {
   @ApiProperty() @IsString() accountId!: string;
-  @ApiProperty({ enum: ['REVIEWER', 'ADMIN', 'SUPER'] }) @IsString() role!: string;
+  @ApiProperty({ enum: ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'] }) @IsString() role!: string;
   @ApiProperty({ description: 'true 부여 · false 회수' }) @StrictBoolean() grant!: boolean;
   @ApiProperty({ description: '사고가 나면 첫 질문이 "누가 왜 줬는가"입니다' })
   @IsString() reason!: string;

@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
  *   확인된 지 admin.mfa_hours(12) 안의 증표가 아니면 403 MFA_REQUIRED(AuthGuard).
  *   회원 기능(MEMBER · BIZ_*)은 보지 않습니다. 설정은 30초 동안 메모리에 둡니다.
  * ------------------------------------------------------------------- */
-export const OPS_ROLES: readonly Role[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER'];
+export const OPS_ROLES: readonly Role[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 — 파트너 담당도 운영 역할
 const MAX_FAILS = 5;
 const LOCK_MIN = 15;
 const CACHE_MS = 30_000;

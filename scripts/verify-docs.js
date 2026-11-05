@@ -110,7 +110,7 @@ ok(guestWithGate.length===0,'GUEST 화면에 게이트 없음',guestWithGate.map
    SB-AFF-* 는 관리자 화면인데 SB-ADM 이 아니라 잘못 걸렸습니다.
    제휴(/partner/affiliate) 정산은 개인 제휴자도 받으므로 INV-10(사업자 정산) 대상이 아닙니다 —
    대신 본인인증 게이트가 없다는 점을 결정 대기로 올렸습니다(D-AFC-01). */
-const OPS=['ADMIN','SUPER','REVIEWER','PAYOUT'];
+const OPS=['ADMIN','SUPER','REVIEWER','PAYOUT','PARTNER_MAL','PARTNER_AFF'];   // v10.194 (D173) — 파트너 담당도 운영 역할
 const settle=S.screens.filter(s=>s.apis.some(a=>a.includes('settlement')&&!a.includes('/partner/affiliate/'))
   &&!s.roles.every(r=>OPS.includes(r)));
 /* v10.28 (지시서 5절 · D040) — 소개비 정산은 본인인증 회원(개인 · 사업자)이 받습니다. 사업자는 사업자로(INV-10), 개인은 확인된 받을 계좌로(INV-10R) — DB 규칙이 막습니다. */

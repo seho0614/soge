@@ -78,7 +78,13 @@ import { siteUrl } from './lib/siteUrl';
  *   서버도 같이 열었습니다(정책 읽기 · 자동검수 값 · 금칙어 · 배너 · 공지). 메인 운영 안의 관 노출 · 화면 구성 · 콘텐츠(MAIN-020~040)는 SUPER 만(MainOps.tsx). */
 const SUPER_ONLY = ['checklist', 'policy', 'integrations', 'hub', 'codes', 'integ', 'terms', 'pii-review', 'role-review'];   /* v10.180 role-review — 운영자 권한 점검은 SUPER 만 */   /* v10.179 pii-review — 개인정보 접속기록 점검은 SUPER 만 */   /* v10.161 terms — 약관 API 는 SUPER 만 */
 const TAB_ROLES: Partial<Record<Tab, string[]>> = {
-  home: ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
+  home: ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
+  /* v10.194 (D173 · docs/304) — 안심 파트너 담당 · 제휴 파트너 담당은 그 쪽 화면만(돈을 움직이는 API 는 서버가 ADMIN 만) */
+  partners: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
+  'partner-axes': ['ADMIN', 'SUPER', 'PARTNER_MAL'],
+  directory: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
+  quals: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
+  affiliates: ['ADMIN', 'SUPER', 'PARTNER_AFF'],
   /* 2026-10-01 결정 Q1 — 지급 담당의 작업 화면. 확정은 운영, 지급은 지급 담당 */
   payouts: ['ADMIN', 'SUPER', 'PAYOUT'],
   /* v10.31 — 퍼블리셔 지급: 신청 · 승인은 운영, 집행은 지급 담당 */
@@ -87,7 +93,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   badges: ['ADMIN', 'SUPER', 'REVIEWER'],
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
-  'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'],
+  'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -125,7 +131,7 @@ const tabFromHash = (): Tab | null => {
 /* v10.32 — 제목 위 「← 운영 홈」을 그리는 탭(시안 shell() 을 쓰는 화면) */
 const BACK_HOME: Tab[] = ['integ', 'adx', 'adx-payout'];
 
-const ROLE_NAME: Record<string, string> = { SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당' };
+const ROLE_NAME: Record<string, string> = { SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당', PARTNER_MAL: '안심 파트너 담당', PARTNER_AFF: '제휴 파트너 담당' };
 
 function Console() {
   const roles = tokenRoles();

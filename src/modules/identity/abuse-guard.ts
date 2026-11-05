@@ -43,7 +43,7 @@ export async function assertNewMemberListingQuota(db: DatabaseService, accountId
   if (lim <= 0) return;
   const [r] = await db.query<{ fresh: boolean; staff: boolean; used: number }>(
     `SELECT a.created_at > now() - interval '24 hours' AS fresh,
-            EXISTS (SELECT 1 FROM account_roles x WHERE x.account_id = a.id AND x.role IN ('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT')) AS staff,
+            EXISTS (SELECT 1 FROM account_roles x WHERE x.account_id = a.id AND x.role IN ('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF')) AS staff,
             (SELECT count(*)::int FROM listings l WHERE l.owner_account_id = a.id AND l.created_at > now() - interval '24 hours') AS used
        FROM accounts a WHERE a.id = $1`, [accountId]);
   if (!r || !r.fresh || r.staff || r.used < lim) return;

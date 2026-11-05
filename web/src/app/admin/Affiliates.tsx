@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
 import { siteHref } from '../../lib/siteUrl';
-import { Applications } from './affiliates/Applications';
+import { Applications, AffPartners } from './affiliates/Applications';
+import { tokenRoles } from '../../lib/api';
 import { Products } from './affiliates/Products';
 import { Goals } from './affiliates/Goals';
 import { Materials } from './affiliates/Materials';
@@ -31,15 +32,18 @@ const TABS: SubTab<View>[] = [
  */
 export function Affiliates({ onGo }: { onGo?: (tab: string) => void }) {
   const [view, setView] = useState<View>('apply');
+  /* v10.194 (D173 · docs/304) — 제휴 파트너 담당(PARTNER_AFF)은 정산 배치를 보지 않음(정산 실행 · 조회는 운영 · 지급 담당) */
+  const roles = tokenRoles();
+  const tabs = roles.includes('ADMIN') || roles.includes('SUPER') ? TABS : TABS.filter((t) => t.key !== 'settle');
   return (
     <section>
-      <SubTabs tabs={TABS} value={view} onChange={setView} />
+      <SubTabs tabs={tabs} value={view} onChange={setView} />
       {/* v10.31 — 시안 「파트너가 보는 화면 열기」(사용자 웹 제휴 파트너스 화면 · 새 창) */}
       <div className="ad-dact end" style={{ marginTop: 0 }}>
         <a className="btn-plain btn-sm" href={siteHref('/partners')} target="_blank" rel="noreferrer" data-open-partner-view>파트너가 보는 화면 열기</a>
       </div>
       <p className="hint"><b>제휴수수료는 회사가 파트너에게 주는 마케팅비입니다.</b> 소개비(당사자끼리 직접 · 공제 0원)와 섞지 않습니다.</p>
-      {view === 'apply' && <Applications />}
+      {view === 'apply' && <><Applications /><AffPartners /></>}
       {view === 'products' && <Products />}
       {view === 'goals' && <Goals />}
       {view === 'materials' && <><Materials /><Guides /></>}

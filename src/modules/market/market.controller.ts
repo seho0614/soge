@@ -12,7 +12,7 @@ import { ErrorDto } from '../../common/dto/common.dto';
 import { RequireGate, Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 
-const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER'] as const;
+const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
 const GWANS = ['MNY', 'MAL', 'BIZ', 'HLT'];
 const gw = (g?: string) => (g && GWANS.includes(g) ? g : undefined);
 const OBJ = { schema: { type: 'object' } };
