@@ -206,13 +206,16 @@ if API and DB:
     badrow = next((x for x in pl.get('items', []) if x.get('ok') is False and 'does not exist' in (x.get('error') or '')), {})
     d1 = call('POST', '/admin/jobs', TA, {'job': 'launch_digest'})[1].get('detail') or {}
     d2 = call('POST', '/admin/jobs', TA, {'job': 'launch_digest'})[1].get('detail') or {}
-    na = psql("SELECT count(*) FROM ops_alerts WHERE alert_code = 'PII_PURGE_FAILED' AND detail->>'error' LIKE '%does not exist%' AND raised_at > now() - interval '10 minutes'")[0]
+    bid = psql(f"SELECT id::text FROM job_runs WHERE job = 'pii_purge' AND slot = 'test-v1180-bad-{sfx}'")[0]
+    na = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'PII_PURGE_FAILED' AND detail->>'runId' = '{bid}'")[0]   # 이 실행의 실패 줄 알림만
     pm, _ = call('GET', '/admin/purge-log', TB)
     ok('④ 파기 기록 — 날짜별 건수 · 실패 표시(오류) · 마지막 실행 · 하루 요약 PII_PURGE_FAILED 한 번(두 번째는 없음) · 회원 403',
        p1 == 200 and okrow.get('counts', {}).get('accounts') == 2 and badrow and pl.get('last') and pl.get('hoursSinceLast') is not None
        and d1.get('purgeFailed') and d2.get('purgeFailed') is None and na == '1' and 'roleReviewDue' in d1 and pm == 403,
        f"{p1} · {okrow.get('counts')} · {bool(badrow)} · {pl.get('last')} · {d1.get('purgeFailed')} → {d2.get('purgeFailed')} · {na} · {pm}")
     psql("DELETE FROM ops_alerts WHERE alert_code IN ('PII_PURGE_FAILED', 'PII_PURGE_MISSED') AND raised_at > now() - interval '10 minutes'")
+    # 실패 줄은 지울 수 없음 — 성공 줄을 가장 최근으로 남겨, 뒤 시험의 하루 요약이 이 줄로 CRITICAL 알림(배포 점검을 막음)을 만들지 않게
+    psql(f"INSERT INTO job_runs (job, slot, started_at, ended_at, ok, affected, detail) VALUES ('pii_purge', 'test-v1180-end-{sfx}', now(), now(), true, 0, '{{}}')")
 else:
     print('  (API · DB 없음 — ②③④ 건너뜀)')
 
