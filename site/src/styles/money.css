@@ -27,13 +27,10 @@
 .mny-chev { display: inline-block; width: 9px; height: 9px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); flex: none; }
 
 /* ── 1. 머리줄 (높이 75) — 두 관 전용 머리줄을 그림의 색 · 글꼴 · 치수로 ── */
-[data-b2-tone=money] .b2-hd { --b2-orange: var(--sgb-orange); font-family: var(--sgb-font-body); }
-[data-b2-tone=money] .b2-hd .b2-in { max-width: 1500px; padding: 0 32px 0 85px; gap: 0; }
 [data-b2-tone=money] .b2-nav { gap: 28.5px; margin-left: 53px; }
 [data-b2-tone=money] .b2-nav a { font-size: 18px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; padding: 11.5px 0 10.5px; color: #000; }
 [data-b2-tone=money] .b2-nav a[aria-current=page] { color: #000; }
 [data-b2-tone=money] .b2-nav a::after { left: 3px; right: 3.5px; bottom: 7px; height: 1.5px; }
-[data-b2-tone=money] .b2-hdr { gap: 7.5px; }
 [data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join,
 [data-b2-tone=money] .b2-lang > summary, [data-b2-tone=money] .b2-lngb { height: 49px; border-radius: 999px; font-size: 18px; font-weight: 800; font-family: inherit; }
 [data-b2-tone=money] .b2-join { border-radius: var(--sgb-btn-r, 7px); --sgb-v1062: 1; }
@@ -212,7 +209,6 @@
 .mny-cta a { margin-top: 13px; width: 216.5px; height: 52.5px; border-radius: 999px; background: var(--sgb-action); color: #fff; font-size: 18px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap; }
 .mny-cta a:hover { filter: brightness(.97); }
 
-
 /* ── 실제 웹의 광고 칸 — 소재가 글자뿐이라(GET /ads/serve?slot=GHERO) 사진 대신 남색 바탕에 같은 자리 · 같은 크기로 놓습니다 ── */
 .mny-ad.is-text { background: linear-gradient(135deg, #00245a 0%, #0a3a80 100%); color: #fff; min-height: 342.5px; padding: 28px 36px 34px; display: flex; flex-direction: column; }
 .mny-ad-tag { align-self: flex-start; height: 23px; padding: 0 10px; border-radius: var(--sgb-r-md, 11px); background: rgba(0, 0, 0, .45); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; }
@@ -273,7 +269,6 @@
 
 /* ── 좁은 화면 — 받은 그림은 1500px 한 장입니다. 아래는 같은 색 · 모양으로 줄여 놓은 것입니다 ── */
 @media (max-width: 1460px) {
-  [data-b2-tone=money] .b2-hd .b2-in { padding: 0 24px; }
   [data-b2-tone=money] .b2-nav { gap: 22px; margin-left: 28px; }
   .mny-hero-in { padding: 28px 45px; }
   .mny-ad { width: 40%; max-width: 520.5px; }
@@ -301,8 +296,6 @@
 }
 @media (max-width: 1240px) {
   /* 머리줄 — 로고 · 메뉴 6 · 알약 단추 4 · 종이 한 줄에 들어가지 않는 폭입니다. 메뉴를 둘째 줄로 내립니다(두 관 전용 머리줄의 좁은 화면 모양과 같게 · 옆으로 밀어 봄) */
-  [data-b2-tone=money] .b2-hd { height: auto; }
-  [data-b2-tone=money] .b2-hd .b2-in { height: auto; flex-wrap: wrap; gap: 6px 10px; padding: 8px 24px 6px; }
   [data-b2-tone=money] .b2-nav { order: 3; width: 100%; margin-left: 0; gap: 20px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   [data-b2-tone=money] .b2-nav::-webkit-scrollbar { display: none; }
   [data-b2-tone=money] .b2-nav a { font-size: 16px; padding: 6px 0; }
@@ -329,11 +322,9 @@
 }
 @media (max-width: 900px) {
   /* 머리줄 — 단추를 더 줄입니다(「KR」은 두 관 전용 머리줄과 같이 이 폭부터 감춥니다 — 실제 웹) */
-  [data-b2-tone=money] .b2-hd .b2-in { padding: 8px 16px 6px; }
   [data-b2-tone=money] .b2-nav { gap: 16px; }
   [data-b2-tone=money] .b2-nav a { font-size: 16px; }
   [data-b2-tone=money] .b2-logo img { height: 40px; width: auto; }
-  [data-b2-tone=money] .b2-hdr { gap: 4px; }
   [data-b2-tone=money] .b2-find, [data-b2-tone=money] .b2-login, [data-b2-tone=money] .b2-join, [data-b2-tone=money] .b2-lngb { height: 36px; font-size: 14px; }
   [data-b2-tone=money] .b2-find { width: 36px; }
   [data-b2-tone=money] .b2-lngb { width: auto; padding: 0 10px; gap: 2px; }

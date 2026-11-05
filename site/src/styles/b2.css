@@ -8,15 +8,13 @@
 .main.main-b2 { max-width: none; padding: 0; background: #fff; }
 
 /* 2026-10-21 디자인 통일 2단계 B(docs/107) — 디자인 시트 값 이름으로. 남색 · 주황 · 글자 · 줄은 시트와 같은 값, 흐린 글자는 #838CA5 → 시트 #6b7694(대비 4.5) · 글꼴은 나눔스퀘어 네오 */
-.b2-hd, .b2-ft, .main-b2 {
+.b2-ft, .main-b2 {
   --b2-navy: var(--sgb-navy); --b2-orange: var(--sgb-accent); --b2-ink: var(--sgb-ink); --b2-dim: var(--sgb-ink-3); --b2-line: var(--sgb-line); --b2-w: 1380px;
   font-family: var(--sgb-font-body);
 }
 .b2-in { max-width: calc(var(--b2-w) + 48px); margin: 0 auto; padding: 0 24px; }
 
 /* ── 머리줄 ── */
-.b2-hd { background: #fff; height: 75px; position: relative; z-index: 30; }
-.b2-hd .b2-in { height: 75px; display: flex; align-items: center; gap: 28px; }
 .b2-logo { display: inline-flex; align-items: center; flex: none; }
 .b2-logo img { display: block; }
 .b2-nav { display: flex; align-items: center; gap: 30px; margin-left: 24px; }
@@ -25,7 +23,6 @@
 .b2-nav a[aria-current=page] { color: var(--b2-navy); }
 .b2-nav a::after { content: ""; position: absolute; left: -6px; right: -6px; bottom: -2px; height: 2px; background-color: transparent; }
 .b2-nav a[aria-current=page]::after { background-color: var(--b2-orange); }
-.b2-hdr { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .b2-find, .b2-login, .b2-join, .b2-lang > summary {
   height: 46px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; text-decoration: none;
   font-size: 18px; font-weight: 700; color: var(--b2-ink); white-space: nowrap; box-sizing: border-box;
@@ -75,11 +72,8 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 /* ── 좁은 화면 ──
  * v10.31 (F-9) — 1280 ~ 1326px · 901 ~ 1124px 에서 머리줄이 가로로 넘치던 것: 폭을 세 단계로 줄입니다(로고 · 메뉴 글자 · 단추 여백 · 언어 칸).
  *   어느 폭에서도 머리줄 안의 것들이 줄어들 수 있게(min-width:0) · 끝까지 모자라면 메뉴 줄만 안에서 옆으로 밀립니다(전체 쪽은 가로로 밀리지 않음). */
-:is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hd .b2-in { min-width: 0; }
 :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { min-width: 0; }
-:is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hdr { flex: none; }
 @media (max-width: 1360px) {
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hd .b2-in { gap: 18px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-logo img { height: 44px; width: auto; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { gap: 22px; margin-left: 8px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 16px; }
@@ -98,13 +92,11 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   .b2-find { width: 40px; }
 }
 @media (max-width: 1240px) {
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hd .b2-in { gap: 12px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-logo img { height: 38px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav { gap: 14px; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav::-webkit-scrollbar { display: none; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-nav a { font-size: 14px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-lang { display: none; }
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hdr { gap: 5px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-find, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-login, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-join { height: 38px; font-size: 14px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-find { width: 38px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-login { padding: 0 12px; }
@@ -113,13 +105,10 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-cart, :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-ntf { width: 36px; height: 38px; }
 }
 @media (max-width: 900px) {
-  .b2-hd { height: auto; }
-  .b2-hd .b2-in { height: auto; flex-wrap: wrap; gap: 6px 10px; padding-top: 8px; padding-bottom: 6px; }
   .b2-logo img { height: 36px; width: auto; }
   .b2-nav { order: 3; width: 100%; margin-left: 0; gap: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .b2-nav::-webkit-scrollbar { display: none; }
   .b2-nav a { font-size: 14px; }
-  .b2-hdr { gap: 4px; }
   .b2-lang { display: none; }
   .b2-find, .b2-login, .b2-join { height: 34px; font-size: 13px; }
   .b2-find { width: 34px; } .b2-login { padding: 0 10px; } .b2-join { padding: var(--sgb-btn-py, 10px) var(--sgb-btn-px, 18px); border-radius: var(--sgb-btn-r, 7px); font-weight: var(--sgb-btn-fw, 700); font-size: var(--sgb-btn-fs, 14px)}
@@ -130,6 +119,5 @@ button.b2-login:disabled { opacity: .6; cursor: default; }
 }
 /* v10.31 (w1) — 좁은 화면에서 로그인 뒤 단추(나의공간 · 로그아웃 · 🔔 · 관리자 페이지 · 장바구니)가 넘치지 않게 오른쪽 묶음을 줄바꿈 */
 @media (max-width: 900px) {
-  :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-hdr { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
   :is([data-b2-tone=plaza], [data-b2-tone=shop]) .b2-adm { height: 34px; font-size: 12px; padding: 0 9px; }
 }

@@ -59,18 +59,11 @@
 .home-ex, .home-exs { font-size: 12px; color: var(--sgb-ink-3); background: #fff; border: 1px dashed var(--hv-l); border-radius: var(--sgb-r-md, 11px); padding: 1px 8px; white-space: nowrap; }
 
 /* ── 헤더 (메인 전용) ───────────────────────────────────────────────── */
-.home-hd {
-  position: sticky; top: 0; z-index: 30; background: rgba(255, 255, 255, .95);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px);
-  border-radius: 0 0 var(--sgb-r-lg, 16px) var(--sgb-r-lg, 16px); box-shadow: var(--sgb-shadow-up, 0 6px 22px rgba(0, 36, 90, .10));
-}
-.home-hd .home-in { display: flex; align-items: center; gap: 36px; height: 68px; }
 .home-logo { display: inline-flex; align-items: center; }
 .home-logo img { mix-blend-mode: normal; }
 .home-nav { display: flex; gap: 28px; font-size: 14px; font-weight: 600; color: var(--sgb-ink-2); white-space: nowrap; }
 
 .home-nav a:hover { color: var(--hv); }
-.home-hdr { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .home-icbtn { width: 44px; height: 44px; border-radius: 50%; background: var(--sgb-tile); display: grid; place-items: center; color: var(--hk); }
 .home-icbtn:hover { background: var(--hv-w); color: var(--hv); }
 
@@ -462,7 +455,6 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
   .home-chips { justify-content: flex-start; }
 }
 @media (max-width: 1240px) {
-  .home-hd .home-in { gap: 20px; }
   .home-nav { gap: 18px; font-size: 14px; }
   .home-heroin { grid-template-columns: minmax(0, 1fr); gap: 34px; }
   .home-promo { max-width: 520px; }
@@ -485,13 +477,7 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 /* ── 720px 이하 (휴대폰) ─────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .home-in { padding: 0 16px; }
-  .home-hd { border-radius: 0 0 var(--sgb-r-lg, 16px) var(--sgb-r-lg, 16px); }
-  .home-hd .home-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding-top: 10px; padding-bottom: 8px; }
-  .home-hd .home-logo img { height: 34px; width: auto; }
-  .home-hdr { gap: 6px; }
   .home-icbtn { width: 36px; height: 36px; }
-  .home-hd .home-pill { height: 36px; padding: 0 13px; font-size: 14px; }
-  .home-hdr .home-txt.pc-only { display: none; }   /* v10.187 — 휴대폰 비로그인은 머리줄이 한 줄 늘지 않게 숨김 */
   .home-txt { margin-right: 0; }
   .home-nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; gap: 18px; padding: 2px 0 4px; }
   .home-nav::-webkit-scrollbar { display: none; }
@@ -571,9 +557,6 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 }
 
 /* v10.31 (w1) — 로그인 뒤 머리줄: 👤 이름 · 개발에만 있는 「소개받기」는 옅게 */
-.home-hd .home-who { font-size: 14px; font-weight: 700; color: var(--sgb-ink-2); white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
-.home-hd .home-pill.dev { color: var(--sgb-btn2-fg, #00245a); }
-.home-hd button.home-pill { font: inherit; cursor: pointer; background: var(--sgb-btn2-bg, #fff); }
 /* v10.31 (w1) — 시안 demoBar 「AI 시연」 */
 .home-demo { padding: 8px 0 26px; }
 .home-demob { background: #fff; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-lg, 16px); padding: 16px; }
@@ -588,25 +571,16 @@ button.home-vbtn:disabled { opacity: .7; cursor: default; }
 .home-demob .dbs { font-size: 12px; color: var(--sgb-ink-2); line-height: 1.45; display: block; }
 @media (max-width: 900px) { .home-demob .dbg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* v10.31 (w1) — 로그인 뒤 머리줄 단추가 늘어 좁은 폭에서 넘치지 않게(👤 이름 · 나의공간 · 소개받기 · 로그아웃 · 관리자 페이지) */
-.home-hd .home-in { min-width: 0; }
 .home-nav { min-width: 0; }
 @media (max-width: 1280px) {
-  .home-hd .home-in { gap: 22px; }
   .home-nav { gap: 20px; }
-  .home-hdr { gap: 8px; }
-  .home-hd .home-pill { padding: 0 14px; }
-  .home-hd .home-who { max-width: 110px; }
 }
 @media (max-width: 1240px) {
   .home-nav { overflow-x: auto; scrollbar-width: none; }
   .home-nav::-webkit-scrollbar { display: none; }
-  .home-hd .home-pill.dev { display: none; }
-  .home-hd .home-pill { padding: 0 11px; font-size: 14px; }
 }
 @media (max-width: 900px) {
-  .home-hd .home-in { flex-wrap: wrap; height: auto; gap: 8px 10px; padding-top: 10px; padding-bottom: 8px; }
   .home-nav { order: 3; width: 100%; }
-  .home-hdr { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
 }
 /* v10.189 (docs/296) — Hero 안내 카드 「‹ · ❚❚ · ›」 누르는 자리 44px(보이는 단추 30px 그대로) */
 .home-pnext { position: relative; }
