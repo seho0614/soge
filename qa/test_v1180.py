@@ -195,10 +195,12 @@ if API and DB:
        f"{s1} · {me.get('roles')} · {len(qs)} {curq} · {s2} · {s3} · {s4} {j4.get('code')} · {e1[:30]} · {sm}")
 
     # ── ④ 파기 기록 ───────────────────────────────────────────────────
-    psql("DELETE FROM job_runs WHERE job = 'pii_purge' AND slot LIKE 'test-v1180-%'")
-    psql("""INSERT INTO job_runs (job, slot, started_at, ended_at, ok, affected, detail) VALUES
-            ('pii_purge', 'test-v1180-ok', now() - interval '2 hours', now() - interval '2 hours', true, 7, '{"accounts": 2, "ipMasked": 3, "leads": 1, "consultRequests": 1, "authRecords": 0, "overdue": 0}'),
-            ('pii_purge', 'test-v1180-bad', now() - interval '1 second', now() - interval '1 second', false, 0, 'relation "x" does not exist')""")
+    # v10.196 — job_runs 는 지울 수 없고(trg_job_run_ro) (job, slot) 이 하나뿐이라, 같은 DB 에서 다시 돌면 같은 slot 넣기가 실패해
+    #   옛 줄을 보게 됨(회귀에서 그사이 진짜 파기 작업이 돌아 실패) — 실행마다 새 slot
+    sfx = str(int(time.time()))
+    psql(f"""INSERT INTO job_runs (job, slot, started_at, ended_at, ok, affected, detail) VALUES
+            ('pii_purge', 'test-v1180-ok-{sfx}', now() - interval '2 hours', now() - interval '2 hours', true, 7, '{{"accounts": 2, "ipMasked": 3, "leads": 1, "consultRequests": 1, "authRecords": 0, "overdue": 0}}'),
+            ('pii_purge', 'test-v1180-bad-{sfx}', now() - interval '1 second', now() - interval '1 second', false, 0, 'relation "x" does not exist')""")
     p1, pl = call('GET', '/admin/purge-log?days=7', TA)
     okrow = next((x for x in pl.get('items', []) if x.get('ok') and (x.get('counts') or {}).get('ipMasked') == 3), {})
     badrow = next((x for x in pl.get('items', []) if x.get('ok') is False and 'does not exist' in (x.get('error') or '')), {})
@@ -210,7 +212,6 @@ if API and DB:
        p1 == 200 and okrow.get('counts', {}).get('accounts') == 2 and badrow and pl.get('last') and pl.get('hoursSinceLast') is not None
        and d1.get('purgeFailed') and d2.get('purgeFailed') is None and na == '1' and 'roleReviewDue' in d1 and pm == 403,
        f"{p1} · {okrow.get('counts')} · {bool(badrow)} · {pl.get('last')} · {d1.get('purgeFailed')} → {d2.get('purgeFailed')} · {na} · {pm}")
-    psql("DELETE FROM job_runs WHERE job = 'pii_purge' AND slot LIKE 'test-v1180-%'")
     psql("DELETE FROM ops_alerts WHERE alert_code IN ('PII_PURGE_FAILED', 'PII_PURGE_MISSED') AND raised_at > now() - interval '10 minutes'")
 else:
     print('  (API · DB 없음 — ②③④ 건너뜀)')
