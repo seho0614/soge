@@ -42,6 +42,10 @@ export class AffiliateController {
     description: 'v10.194 (D173 · docs/304) — 안심소개 입점 신청(POST /partner/apply)과 따로입니다. 계정 기준(D096): 사업자 인증 사업자는 그 사업자로, 본인인증 개인은 개인 활동 정보로. ' +
       '반려된 신청은 다시 낼 수 있습니다. 422 IDENTITY_REQUIRED · 409 ALREADY_APPLIED.',
   })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    id: { type: 'string', format: 'uuid' }, affStatus: { type: 'string', example: 'APPLIED' },
+    affAppliedAt: { type: 'string', format: 'date-time' }, note: { type: 'string' } } } })
+  @ApiResponse({ status: 409, description: 'ALREADY_APPLIED' })
   @Audit('PARTNER_AFF_APPLY', 'PARTNER')
   apply() { return this.svc.apply(); }
 
@@ -224,17 +228,26 @@ export class AffiliateController {
   @Get('admin/affiliates/partners')
   @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '제휴 파트너 목록', description: 'v10.194 (D173) — 제휴 자격(aff_status)이 있는 파트너. status 로 거름(APPLIED · ACTIVE · SUSPENDED · WITHDRAWN · REJECTED). 안심소개 자격은 따로 봅니다.' })
+  @ApiOkResponse({ schema: { type: 'array', items: { type: 'object', properties: {
+    id: { type: 'string', format: 'uuid' }, companyName: { type: 'string' }, personal: { type: 'boolean' }, actorOk: { type: 'boolean' },
+    affStatus: { type: 'string', example: 'ACTIVE' }, affAppliedAt: { type: 'string', format: 'date-time', nullable: true },
+    affApprovedAt: { type: 'string', format: 'date-time', nullable: true }, affReason: { type: 'string', nullable: true },
+    malStatus: { type: 'string', example: 'NONE' }, links: { type: 'integer' } } } } })
   affPartners(@Query('status') status?: string) { return this.admin.affPartners(status); }
 
   @Post('admin/affiliates/partners/:id/suspend')
   @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '제휴 자격 정지', description: 'v10.194 (D173) — 제휴만 정지합니다(안심소개 자격 그대로). 사유 필수 · 링크 클릭은 PARTNER_INACTIVE.' })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, affStatus: { type: 'string' }, reason: { type: 'string' }, note: { type: 'string' } } } })
   @Audit('PARTNER_AFF_SUSPEND', 'PARTNER')
   affSuspend(@Param('id') id: string, @Body() dto: AffStatusDto) { return this.admin.affSetStatus(id, 'SUSPENDED', dto.reason); }
 
   @Post('admin/affiliates/partners/:id/resume')
   @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({ summary: '제휴 자격 다시 열기', description: 'v10.194 (D173) — 정지한 제휴 자격을 다시 활동으로. 사유 필수(기록).' })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    ok: { type: 'boolean' }, id: { type: 'string', format: 'uuid' }, affStatus: { type: 'string' }, reason: { type: 'string' }, note: { type: 'string' } } } })
   @Audit('PARTNER_AFF_RESUME', 'PARTNER')
   affResume(@Param('id') id: string, @Body() dto: AffStatusDto) { return this.admin.affSetStatus(id, 'ACTIVE', dto.reason); }
 

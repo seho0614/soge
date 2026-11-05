@@ -31,11 +31,13 @@ export class PartnerAdminController {
 
   @Post(':id/suspend')
   @ApiOperation({ summary: '안심소개 자격 정지', description: 'v10.194 (D173 · docs/304) — 안심소개만 정지(제휴 자격 그대로). 사유 필수 · 리드가 가지 않음.' })
+  @ApiOkResponse({ type: PartnerOkDto })
   @Audit('PARTNER_SUSPEND', 'PARTNER')
   suspend(@Param('id') id: string, @Body() dto: PartnerStatusDto) { return this.svc.admSetStatus(id, 'SUSPENDED', dto.reason); }
 
   @Post(':id/resume')
   @ApiOperation({ summary: '안심소개 자격 다시 열기', description: 'v10.194 (D173) — 정지한 안심소개 자격을 다시 활동으로. 사유 필수(기록).' })
+  @ApiOkResponse({ type: PartnerOkDto })
   @Audit('PARTNER_RESUME', 'PARTNER')
   resume(@Param('id') id: string, @Body() dto: PartnerStatusDto) { return this.svc.admSetStatus(id, 'ACTIVE', dto.reason); }
 
