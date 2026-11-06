@@ -52,6 +52,14 @@ export class TokenDto {
   @ApiProperty({ type: PrincipalDto }) principal!: PrincipalDto;
 }
 
+/** v10.202 (docs/319) — 머리줄 아이콘 자격(역할 이름은 내보내지 않음) */
+export class MeBadgesDto {
+  @ApiProperty({ description: '안심소개 파트너(대표 · 합류한 직원 · 심사 중 포함)' }) malPartner!: boolean;
+  @ApiProperty({ description: '제휴 파트너 활동 중(aff_status ACTIVE)' }) affPartner!: boolean;
+  @ApiProperty({ description: '소개몰 입점 판매자(활동 · 쉬는 중)' }) seller!: boolean;
+  @ApiProperty({ description: '소개몰 입점 신청 받는 중(mall.tenant)' }) tenantOn!: boolean;
+}
+
 export class MeSummaryDto {
   @ApiProperty({ type: PrincipalDto }) principal!: PrincipalDto;
   @ApiProperty({ example: 3 }) unreadNotifications!: number;
@@ -65,6 +73,7 @@ export class MeSummaryDto {
   /* v10.31 — 머리줄 「👤 이름」(인증 사업자면 회사명) · 문의 답변 이메일(본인 것) */
   @ApiProperty({ nullable: true, example: '(주)소개하니컴퍼니' }) displayName!: string | null;
   @ApiProperty({ nullable: true, example: 'biz@example.com' }) email!: string | null;
+  @ApiProperty({ type: MeBadgesDto }) badges!: MeBadgesDto;
 }
 
 export class CreateBusinessDto {

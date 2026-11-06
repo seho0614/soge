@@ -1,4 +1,4 @@
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -22,10 +22,20 @@ const KIND: Record<string, string> = {
  *
  * 개인 · 사업자 모두 신청합니다(P2P). 승인하면 판매자센터가 열리지만, **판매(결제)는 하위가맹점 ID 를 채운 뒤**입니다 —
  * 판매대금은 결제대행사가 판매자에게 직접 보냅니다(decisions/mall-return-refund #15).
+ *
+ * v10.202 (docs/319) — 위에 「입점 신청 받기」 줄: 켜짐 / 꺼짐(설정 mall.tenant) · SUPER 켜기(확인 창 · 입점 약관 HLT_SELLER 게시 뒤에만 — 서버 422 TENANT_TERMS_FIRST) · 끄기.
+ *   켜면 사용자 웹 머리줄에 「소개몰 입점」 아이콘이 나오고 신청을 받습니다. 판매 · 지급은 결제대행사 하위가맹점 계약 뒤.
  */
 export function HealthTenantApply() {
   const list = useApi<Application[]>('/admin/health/sellers/applications');
+  const cfg = useApi<{ enabled: boolean }>('/health/tenant/config');
   const a = useAct();
+  const isSuper = tokenRoles().includes('SUPER');
+  const flipTenant = (on: boolean) => {
+    if (!on && !confirm('소개몰 입점 신청을 켭니다.\n\n사용자 웹 머리줄에 「소개몰 입점」 아이콘이 나오고 본인확인을 마친 회원이 신청할 수 있습니다.\n판매 · 판매대금 지급은 결제대행사 하위가맹점 계약 뒤에 열립니다.')) return;
+    void a.run('tenant', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.tenant', value: on ? 'off' : 'on' }) }),
+      cfg.reload, on ? '소개몰 입점 신청을 껐습니다(이미 받은 신청 · 판매자는 그대로).' : '소개몰 입점 신청을 켰습니다.');
+  };
   if (list.error) return <ErrorView error={list.error} onRetry={list.reload} />;
   if (!list.data) return <p className="muted">불러오는 중…</p>;
   const rows = list.data.filter((x) => x.status === 'PENDING');
@@ -49,6 +59,13 @@ export function HealthTenantApply() {
     <>
       <h3 className="sec" data-tenant-apply="">입점 신청 <em>{rows.length}</em></h3>
       <Flash msg={a.msg} err={a.err} />
+      {cfg.data && (
+        <p className="card pad" data-tenant-switch={cfg.data.enabled ? 'on' : 'off'}>
+          <b>입점 신청 받기</b> {cfg.data.enabled ? <b>켜짐</b> : <b className="warn-text">꺼짐</b>}
+          {(isSuper || cfg.data.enabled) && <>{' '}<button className="btn-sm" disabled={a.busy === 'tenant'} onClick={() => flipTenant(cfg.data!.enabled)} data-tenant-flip="">{cfg.data.enabled ? '끄기' : '켜기'}</button></>}
+          <small className="dim"> 켜기는 최고 관리자 · 입점 약관(HLT_SELLER)을 게시한 뒤에만. 켜면 사용자 웹 머리줄에 「소개몰 입점」 아이콘. 판매 · 지급은 결제대행사 하위가맹점 계약 뒤</small>
+        </p>
+      )}
       {rows.length === 0 && <p className="muted">대기 중인 입점 신청이 없습니다.</p>}
       {rows.map((x) => (
         <div key={x.id} className="card row" data-tenant={x.id}>

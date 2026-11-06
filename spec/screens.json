@@ -3091,6 +3091,8 @@
     "POST /admin/health/returns/{id}/convert",
     "POST /admin/health/returns/{id}/fee-refund",
     "GET /admin/health/sellers/applications",
+    "GET /health/tenant/config",
+    "PATCH /admin/site-settings",
     "POST /admin/health/sellers/{id}/approve",
     "POST /admin/health/sellers/{id}/reject",
     "GET /admin/health/product-reviews",

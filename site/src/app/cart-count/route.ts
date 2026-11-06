@@ -23,6 +23,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const at = (await cookies()).get('sgb_at')?.value;
   let n = 0, loggedIn = false, ops = false, bell2 = 0;
+  let badges = { mal: false, aff: false, seller: false, tenant: false };   // v10.202 (docs/319) — 머리줄 아이콘 자격
   if (new URL(req.url).searchParams.get('bell') === '1') {
     let bell = 0;
     if (at) {
@@ -53,13 +54,16 @@ export async function GET(req: Request) {
       try {
         const r = await fetch(BASE + '/me/summary', { headers: { Authorization: `Bearer ${at}` }, cache: 'no-store' });
         if (r.ok) {
-          const j = (await r.json()) as { unreadNotifications?: number; principal?: { roles?: string[] } };
+          const j = (await r.json()) as { unreadNotifications?: number; principal?: { roles?: string[] };
+            badges?: { malPartner?: boolean; affPartner?: boolean; seller?: boolean; tenantOn?: boolean } };
           const u = Number(j?.unreadNotifications);
           bell2 = Number.isFinite(u) && u >= 0 ? Math.floor(u) : 0;
           ops = isOps(j?.principal?.roles);
+          const b = j?.badges ?? {};
+          badges = { mal: b.malPartner === true, aff: b.affPartner === true, seller: b.seller === true, tenant: b.tenantOn === true };
         }
       } catch { /* 없어도 됩니다 */ }
     }
   }
-  return NextResponse.json({ n, in: loggedIn, bell: bell2, ops }, { headers: { 'Cache-Control': 'private, no-store' } });
+  return NextResponse.json({ n, in: loggedIn, bell: bell2, ops, ...badges }, { headers: { 'Cache-Control': 'private, no-store' } });
 }

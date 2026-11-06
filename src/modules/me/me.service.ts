@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
+import { PartnerActorService } from '../partner/partner-actor.service';
 
 /**
  * 마이페이지 조회.
@@ -12,7 +13,7 @@ import { RequestCtx } from '../../core/request-context';
  */
 @Injectable()
 export class MeService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly actors: PartnerActorService) {}
   private get me() { return RequestCtx.actorId()!; }
   /** 구독 현황. 한도 소진을 함께 보여 줘야 업그레이드 판단이 됩니다 */
   async subscription() {
@@ -43,7 +44,8 @@ export class MeService {
   }
 
   async summary() {
-    const [n] = await this.db.query<{ unread: string; listings: string; deals: string; name: string | null; company: string | null; email: string | null }>(
+    const [n] = await this.db.query<{ unread: string; listings: string; deals: string; name: string | null; company: string | null; email: string | null;
+      seller: boolean; tenant: boolean }>(
       `SELECT
          /* v10.31 — 머리줄 「👤 이름」(시안 「👤 소개하니」) · 문의 화면 「답변받을 이메일」 — 본인 것만 */
          (SELECT name FROM accounts WHERE id=$1) AS name,
@@ -53,13 +55,19 @@ export class MeService {
          (SELECT count(*) FROM listings WHERE owner_account_id=$1 AND status='PUBLISHED') AS listings,
          (SELECT count(*) FROM deals
            WHERE $1 IN (buyer_account_id, seller_account_id, introducer_account_id)
-             AND status NOT IN ('SETTLED','CANCELLED')) AS deals`, [this.me]);
+             AND status NOT IN ('SETTLED','CANCELLED')) AS deals,
+         /* v10.202 (docs/319) — 머리줄 아이콘 자격: 소개몰 판매자 · 입점 신청 받는 중(안심 · 제휴 파트너는 아래 PartnerActorService — 파트너 찾기는 한 곳) */
+         EXISTS (SELECT 1 FROM hlt_sellers WHERE account_id = $1 AND type IN ('TENANT', 'BRAND') AND status IN ('ACTIVE', 'PAUSED')) AS seller,
+         coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on' AS tenant`, [this.me]);
+    /* 안심소개 파트너(대표 · 합류한 직원 · 심사 중 포함 — 제휴만 신청한 줄 빼고) · 제휴 활동 중 */
+    const [mal, aff] = await Promise.all([this.actors.forMember(this.me!), this.actors.affiliate(this.me!)]);
     return {
       unreadNotifications: Number(n.unread),
       publishedListings: Number(n.listings),
       openDeals: Number(n.deals),
       displayName: n.company ?? n.name ?? null,
       email: n.email ?? null,
+      badges: { malPartner: !!mal, affPartner: aff?.affStatus === 'ACTIVE', seller: n.seller === true, tenantOn: n.tenant === true },
     };
   }
 
