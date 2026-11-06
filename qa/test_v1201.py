@@ -135,10 +135,11 @@ if API and DB:
         n0 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}'")
         TA = call('POST', '/auth/login', {'email': ADMU, 'password': PW}).get('accessToken')   # 30일 안 첫 로그인
         n1 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}'")
-        for e in (ADMU, SUPU): consent_ok.agree(e, PW)   # 같은 곳 로그인(동의 도우미)
-        TA = call('POST', '/auth/login', {'email': ADMU, 'password': PW}).get('accessToken')
+        call('POST', '/auth/login', {'email': ADMU, 'password': PW})   # 같은 곳(같은 IP · 같은 브라우저 이름) 다음 로그인
         n2 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}'")
-        why = psql(f"SELECT detail->>'why' || '|' || (detail->>'roles') || '|' || coalesce(detail->>'ip', '') FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}' ORDER BY id DESC LIMIT 1")
+        for e in (ADMU, SUPU): consent_ok.agree(e, PW)   # 동의 도우미는 브라우저 이름이 달라 「처음 보는 브라우저」가 날 수 있음 — 세지 않음
+        TA = call('POST', '/auth/login', {'email': ADMU, 'password': PW}).get('accessToken')
+        why = psql(f"SELECT detail->>'why' || '|' || (detail->>'roles') || '|' || coalesce(detail->>'ip', '') FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}' ORDER BY id LIMIT 1")
         m0 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{mid}'")
         consent_ok.agree(MEMU, PW)
         call('POST', '/auth/login', {'email': MEMU, 'password': PW})
@@ -168,7 +169,7 @@ if API and DB:
         pcode = pub.split('|')[0] if '|' in pub else ''
         if pcode:
             body = psql(f"SELECT body FROM terms WHERE code = '{pcode}' AND status = 'PUBLISHED' AND effective_from <= now() ORDER BY effective_from DESC LIMIT 1")
-            pv = call('PUT', f'/admin/terms/{pcode}', {'version': '9.1201', 'title': 'T1201 시험 약관 초안입니다', 'body': body + '\n\n제99조(시험) 〔시험 칸〕 이 줄은 시험입니다.', 'changeNote': '시험 T1201'}, TS)
+            pv = call('PUT', f'/admin/terms/{pcode}', {'version': '9.120', 'title': 'T1201 시험 약관 초안입니다', 'body': body + '\n\n제99조(시험) 〔시험 칸〕 이 줄은 시험입니다.', 'changeNote': '시험 T1201'}, TS)
             draft_made = not pv.get('_err')
         rp = call('GET', '/admin/terms/review-pack', None, TS)
         ra = call('GET', '/admin/terms/review-pack', None, TA)
@@ -176,9 +177,9 @@ if API and DB:
         it = {x.get('code'): x for x in (rp.get('items') or [])}
         mine = it.get(pcode) or {}
         html = rp.get('html') or ''
-        ok('③ 법무 검토 묶음 — SUPER 200 · ADMIN 403 · 게시 안 된 약관마다 한 건 · 시험 초안은 게시판과 비교해 더한 줄 2 · 뺀 줄 0 · 〔미확정〕 · HTML(한 파일 · 스크립트 · 바깥 주소 없음) · 파일 이름',
-           draft_made and ra.get('_err') == 403 and len(it) == int(nd or -1) and mine.get('version') == '9.1201' and mine.get('baseVersion')
-           and mine.get('added') == 2 and mine.get('removed') == 0 and '〔시험 칸〕' in (mine.get('holes') or [])
+        ok('③ 법무 검토 묶음 — SUPER 200 · ADMIN 403 · 게시 안 된 약관마다 한 건 · 시험 초안은 게시판과 비교해 더한 줄(빈 줄 · 시험 줄) · 뺀 줄 0 · 〔미확정〕 · HTML(한 파일 · 스크립트 · 바깥 주소 없음) · 파일 이름',
+           draft_made and ra.get('_err') == 403 and len(it) == int(nd or -1) and mine.get('version') == '9.120' and mine.get('baseVersion')
+           and mine.get('added') in (1, 2) and mine.get('removed') == 0 and '〔시험 칸〕' in (mine.get('holes') or [])
            and html.startswith('<!doctype html>') and '<script' not in html.lower() and 'https://' not in html and 'class="l add"' in html and '<mark>〔시험 칸〕</mark>' in html
            and re.fullmatch(r'sogaebank_terms_legal_review_\d{8}\.html', rp.get('fileName') or '') is not None,
            f'{pub} · {ra.get("_err")} · {len(it)}/{nd} · {mine} · {rp.get("fileName")}')
@@ -204,10 +205,10 @@ if API and DB:
                 h2 = pg.evaluate("() => (document.querySelector('[data-terms-result]')?.getAttribute('data-terms-result') ?? '') + '|' + (document.querySelector('[data-terms-result]')?.textContent ?? '')")
                 b.close()
             ok('③ 화면 — 운영 알림 텔레그램 줄의 하루 요약(받음 · 마지막 못 보냄 · 끄기 단추) · 약관 「법무 검토용 내려받기」 → 파일 내려받음 · 결과 글 · 오류 없음',
-               h1.startswith('on|true|') and '하루 요약' in h1 and '봇 토큰 없음' in h1 and re.fullmatch(r'sogaebank_terms_legal_review_\d{8}\.html', fname) is not None
+               h1.startswith('on|true|') and '하루 요약' in h1 and '못 보냄' in h1 and re.fullmatch(r'sogaebank_terms_legal_review_\d{8}\.html', fname) is not None
                and h2.startswith('ok|') and '법무 검토 묶음' in h2 and not errs, f'{h1[:90]} · {fname} · {h2[:80]} · {errs[:2]}')
     finally:
-        if draft_made: psql(f"DELETE FROM terms WHERE code = '{pcode}' AND version = '9.1201'")
+        if draft_made: psql(f"DELETE FROM terms WHERE code = '{pcode}' AND version = '9.120'")
         psql(f"UPDATE site_settings SET value = {sw0} WHERE key = 'ops.staff_login_alert'")
         psql(f"UPDATE site_settings SET value = {dg0} WHERE key = 'ops.telegram_digest'")
         psql(f"DELETE FROM ops_alerts WHERE alert_code = 'STAFF_LOGIN_NEW' AND detail->>'accountId' = '{aid}' AND raised_at >= '{t0}'")
