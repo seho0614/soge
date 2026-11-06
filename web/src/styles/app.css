@@ -336,6 +336,9 @@ a.ad-tile .go { font-size: 12px; color: var(--ink-3); font-weight: 700; }
 a.ad-tile:hover .go { color: var(--pp); }
 .ad-tile.static { cursor: default; }
 .ad-tile.static:hover { border-color: var(--line); box-shadow: none; }
+/* v10.200 (docs/316) — 오픈 차단 「누가」 요약 */
+.ad-own { font-size: var(--fs-xs); font-weight: 700; padding: 1px var(--sp-2); border-radius: var(--r-sm); background: var(--surface); color: var(--ink-2); }
+.block-sec li small[data-blocker-how] { display: block; }
 .kpi4 { gap: 10px; margin: 14px 0; }
 .kpi4 > div { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 14px; gap: 2px; }
 .kpi4 b { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }

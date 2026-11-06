@@ -4,7 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { Switches } from './Switches';
 
-interface Blocker { kind: string; item: string; reason: string }
+interface Blocker { kind: string; item: string; reason: string; owner?: string; how?: string }   // v10.200 — 누가 · 풀리는 방법
 interface Check { key: string; label: string; ok: boolean; detail: string; go: string | null }
 interface Res { code: string; name: string; isActive: boolean; passed: number; total: number; canOpen: boolean; checks: Check[] }
 interface Gwan { code: string; name: string; isActive: boolean; isHub: boolean }
@@ -22,6 +22,9 @@ const KIND_LABEL: Record<string, string> = {
   /* v10.146 (D142) — 방식 설정 · 메일 · 가짜(MOCK) · 소개비 순서 */
   READY: '오픈 준비',
 };
+/* v10.200 (docs/316) — 누가 할 일인지(서버 open-blocker-owner.ts 와 같은 이름) */
+const OWNER_LABEL: Record<string, string> = { CEO: '대표 결정 · 법무', VENDOR: '업체 대기', SCREEN: '운영 화면에서 바로', DATE: '날짜만 정하면 됨' };
+const OWNERS = ['CEO', 'VENDOR', 'SCREEN', 'DATE'];
 
 /**
  * SB-ADM-SIT-040 오픈 체크리스트
@@ -39,6 +42,7 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
   const [r, setR] = useState<Res | null>(null);
   const [msg, setMsg] = useState<[boolean, string] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [view, setView] = useState<'owner' | 'kind'>('owner');   // v10.200 — 기본은 누가별
 
   const list = (gwans.data ?? []).filter((g) => !g.isHub);
   useEffect(() => {
@@ -60,6 +64,10 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
   const fail = r ? r.checks.filter((c) => !c.ok) : [];
   const data = blockers.data ?? [];
   const byKind = data.reduce<Record<string, Blocker[]>>((a, b) => { (a[b.kind] ??= []).push(b); return a; }, {});
+  const byOwner = data.reduce<Record<string, Blocker[]>>((a, b) => { (a[b.owner ?? 'CEO'] ??= []).push(b); return a; }, {});
+  const groups = view === 'owner'
+    ? OWNERS.filter((o) => byOwner[o]).map((o) => [o, OWNER_LABEL[o] ?? o, byOwner[o]!] as const)
+    : Object.entries(byKind).map(([k, l]) => [k, KIND_LABEL[k] ?? k, l] as const);
 
   return (
     <>
@@ -125,12 +133,18 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
       )}
 
       <h2 className="ad-s2">서비스 오픈을 막는 항목 <em>{data.length}</em> <small className="dim">개발에만 — 간주 모드 · 외부 연동 · 설정</small></h2>
+      {data.length > 0 && (   /* v10.200 (docs/316) — 누가 할 일인지 요약 · 보기 바꾸기 */
+        <p className="ad-chk" data-blocker-owners="">
+          {OWNERS.filter((o) => byOwner[o]).map((o) => <span key={o} className="ad-own" data-owner={o}>{OWNER_LABEL[o]} <b>{byOwner[o]!.length}</b></span>)}
+          {' '}<button className="btn-sm" onClick={() => setView(view === 'owner' ? 'kind' : 'owner')} data-blocker-view={view}>{view === 'owner' ? '종류별로 보기' : '누가별로 보기'}</button>
+        </p>
+      )}
       {blockers.error ? <ErrorView error={blockers.error} /> : data.length === 0
         ? <p className="ok-note">오픈 차단 항목이 없습니다. 배포 점검을 통과합니다.</p>
-        : Object.entries(byKind).map(([kind, l]) => (
-          <section key={kind} className="card block-sec">
-            <h3>{KIND_LABEL[kind] ?? kind} <em>{l.length}</em></h3>
-            <ul>{l.map((b) => <li key={b.item}><strong>{b.item}</strong><span>{b.reason}</span></li>)}</ul>
+        : groups.map(([key, label, l]) => (
+          <section key={key} className="card block-sec" data-blocker-group={key}>
+            <h3>{label} <em>{l.length}</em></h3>
+            <ul>{l.map((b) => <li key={`${b.kind}:${b.item}`}><strong>{view === 'owner' ? `${KIND_LABEL[b.kind] ?? b.kind} · ${b.item}` : b.item}</strong><span>{b.reason}</span>{b.how && <small className="dim" data-blocker-how=""> → {b.how}</small>}</li>)}</ul>
           </section>
         ))}
     </>

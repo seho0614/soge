@@ -4,6 +4,7 @@ import { RecurringBatchService } from '../modules/billing/recurring-batch.servic
 import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
+import { TelegramService } from '../common/telegram/telegram.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -60,6 +61,7 @@ export class SchedulerService {
     private readonly piiReview: PiiReviewService,   // v10.179 (D168) 개인정보 접속기록 점검 알림
     private readonly roleReview: RoleReviewService,   // v10.180 (D169) 운영자 권한 점검 · 파기 실행 알림
     private readonly privacy: PrivacyService,   // v10.181 (D170) 개인정보 권리 요청 기한 알림
+    private readonly telegram: TelegramService,   // v10.200 (D178) 급한 운영 알림 텔레그램
   ) {}
 
   /**
@@ -475,7 +477,8 @@ export class SchedulerService {
         const rs = await this.launchWatch.resolveAlerts(dk.usedPct, dk.limit);
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
-        detail = { alertMail: am, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
+        detail = { alertMail: am, alertPush: ap, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -648,6 +651,28 @@ export class SchedulerService {
     if (!m.ok) return { pending: p.items.length, mailed: 0, reason: `SEND_${m.errorKind ?? 'FAILED'}` };
     await this.launchWatch.markMailed(p.items.filter((x) => !x.again).map((x) => x.id), p.items.filter((x) => x.again).map((x) => x.id));
     return { pending: 0, mailed: p.items.length, reason: null };
+  }
+
+  /** v10.200 (D178 · docs/316) — 급한 알림 텔레그램 한 통(메일과 같은 알림 · 같은 기준 · 기록은 pushed_at · repushed_at).
+   *  준비 안 됨(토큰 · 대화방 없음)이면 보내지 않고 까닭만 — 보낸 것으로 적지 않음 */
+  private async alertPush(): Promise<{ pending: number; pushed: number; reason: string | null }> {
+    const items = await this.launchWatch.alertPushPending();
+    if (!items.length) return { pending: 0, pushed: 0, reason: null };
+    const st = await this.telegram.status();
+    if (!st.ready) return { pending: items.length, pushed: 0, reason: st.reason };
+    const crit = items.filter((x) => x.severity === 'CRITICAL').length;
+    const again = items.filter((x) => x.again).length;
+    const text = [
+      `[소개뱅크] 급한 운영 알림 ${items.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}`,
+      '',
+      ...items.map((x) => `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${x.title}`),
+      '',
+      '운영 화면 › 운영 알림에서 보고 「확인」을 누르십시오.',
+    ].join('\n');
+    const r = await this.telegram.send(text);
+    if (!r.ok) return { pending: items.length, pushed: 0, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
+    await this.launchWatch.markPushed(items.filter((x) => !x.again).map((x) => x.id), items.filter((x) => x.again).map((x) => x.id));
+    return { pending: 0, pushed: items.length, reason: null };
   }
 
   /* 심각도는 DB 제약(ops_alerts_severity_check)이 받는 셋뿐입니다.

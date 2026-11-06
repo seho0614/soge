@@ -38,6 +38,7 @@ export class LaunchWatchService {
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'off') AS "assumePayment",
               (SELECT nullif(value, '') FROM site_settings WHERE key = 'mall.order_open_until') AS "orderOpenUntil",
+              (SELECT count(DISTINCT kind)::int FROM v_poll_home) AS "homePolls",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "digestTo",
               coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS "signupOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'site.notice_bar'), '') AS "noticeBar",
@@ -78,6 +79,7 @@ export class LaunchWatchService {
               (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND resolved_at IS NULL AND severity = 'CRITICAL') AS "openCritical",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to",
+              (SELECT count(DISTINCT kind)::int FROM v_poll_home) AS "homePolls",
               coalesce((SELECT string_agg(title, E'\n' ORDER BY raised_at) FROM ops_alerts WHERE alert_code = 'SETTING_CHANGED' AND ${D('raised_at')}), '') AS "settingChanges"`);
     const text = [
       `소개뱅크 운영 하루 요약 — ${c.day}(한국 날짜)`,
@@ -88,6 +90,8 @@ export class LaunchWatchService {
       `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
       `운영 알림(경고 이상) 어제 ${c.alerts} · 확인 안 한 것 ${c.openAlerts}`,
       `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
+      /* v10.200 (docs/316) — 메인 투표 빈 자리(사용자 웹 메인에 「준비 중」 카드) */
+      ...(c.homePolls < 3 ? [`메인 투표 ${c.homePolls} / 3 — 빈 자리는 사용자 웹 메인에 「준비 중」으로 보입니다(운영 화면 › 투표 관리 「확정 질문으로 빈 자리 채우기」)`] : []),
       /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */
       ...(c.settingChanges ? ['어제 바뀐 중요 설정:', ...String(c.settingChanges).split('\n').map((t: string) => `  - ${t.replace('중요 설정 바뀜 — ', '')}`)] : []),
       diskLine(serverHealth()),
@@ -234,6 +238,23 @@ export class LaunchWatchService {
          FROM fn_ops_alert_remail_pending()`);
     const [c] = await this.db.query<{ to: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
     return { to: (c?.to ?? '').trim(), items };
+  }
+
+  /** v10.200 (D178 · docs/316) — 텔레그램으로 보낼 것 · 다시 보낼 것(메일과 같은 기준 · 칸은 pushed_at · repushed_at) */
+  async alertPushPending(): Promise<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[]> {
+    return this.db.query(
+      `SELECT id::text AS id, alert_code AS code, severity, title,
+              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
+         FROM fn_ops_alert_push_pending()
+       UNION ALL
+       SELECT id::text, alert_code, severity, title,
+              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI'), true
+         FROM fn_ops_alert_repush_pending()`);
+  }
+
+  async markPushed(ids: string[], againIds: string[] = []): Promise<void> {
+    if (ids.length) await this.db.query(`UPDATE ops_alerts SET pushed_at = now() WHERE id = ANY($1::bigint[]) AND pushed_at IS NULL`, [ids]);
+    if (againIds.length) await this.db.query(`UPDATE ops_alerts SET repushed_at = now() WHERE id = ANY($1::bigint[]) AND repushed_at IS NULL`, [againIds]);
   }
 
   async markMailed(ids: string[], againIds: string[] = []): Promise<void> {

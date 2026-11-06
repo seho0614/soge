@@ -8,6 +8,7 @@ interface Watch {
   signups: number; logins: number; posts: number; listings: number; orders: number; paidOrders: number; stubPaidOrders: number;
   openAlerts: number; orderOpen: 'on' | 'off'; assumePayment: 'on' | 'off'; directOnSale: number; warn?: string; digestTo?: string;
   orderOpenUntil?: string | null;   // v10.199 (D177) — 간주 결제 켜짐에 주문 받기를 켜면 저절로 꺼질 시각
+  homePolls?: number;   // v10.200 (docs/316) — 메인 투표 세 자리 중 찬 자리
   signupOpen?: 'on' | 'off'; noticeBar?: string;
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
@@ -34,7 +35,7 @@ interface Watch {
  */
 const NOTICE_DEFAULT = '시범 운영 중입니다 — 소개몰 결제 등 일부 기능은 시험 모드로 동작합니다.';
 /* v10.199 (docs/314) — 칸을 누르면 갈 화면(탭 · 이 카드는 ADMIN · SUPER 만 보고 갈 화면도 모두 ADMIN 이 봄) · 같은 쪽 아래 상세(data 이름)는 펼쳐서 그 자리로 */
-const GO: Record<string, string> = { members: '회원', community: '글 검수', queue: '검수 큐', 'hlt-orders': '소개몰 주문', 'ops-alerts': '운영 알림', 'server-errors': '서버 오류' };
+const GO: Record<string, string> = { members: '회원', community: '글 검수', queue: '검수 큐', 'hlt-orders': '소개몰 주문', 'ops-alerts': '운영 알림', 'server-errors': '서버 오류', polls: '투표 관리' };
 const ORDER_HOURS = [1, 2, 4, 8, 24];   // 서버 AdminService.ORDER_OPEN_HOURS 와 같게
 const openDetail = (sel: string) => {
   const el = document.querySelector<HTMLDetailsElement>(`[${sel}]`);
@@ -97,6 +98,7 @@ export function LaunchWatch() {
     ['오늘 가입', d.signups, false, 'members'], ['오늘 로그인', d.logins, false, 'members'], ['소개광장 글', d.posts, false, 'community'], ['매물', d.listings, false, 'queue'],
     ['소개몰 주문', d.orders, false, 'hlt-orders'], ['결제 완료', d.paidOrders, false, 'hlt-orders'], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0, 'hlt-orders'], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0, 'ops-alerts'],
     ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0, 'server-errors'],
+    ['메인 투표(3자리 중)', d.homePolls ?? 3, (d.homePolls ?? 3) < 3, 'polls'],   // v10.200 — 빈 자리는 사용자 웹 메인에 「준비 중」
     ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
     ['정책 보고(24시간)', d.cspDay?.n ?? 0, false, (d.cspDay?.top.length ?? 0) > 0 ? '@data-csp-top' : undefined],
     ['느린 응답 p95 ms(1시간)', d.slowHour?.p95 ?? 0, !!d.slowLimitMs && (d.slowHour?.p95 ?? 0) >= d.slowLimitMs, (d.slowHour?.top.length ?? 0) > 0 ? '@data-slow-top' : undefined],

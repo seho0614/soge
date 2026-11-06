@@ -181,6 +181,44 @@ export class PollService {
     };
   }
 
+  /* ── v10.200 (docs/316) 메인 빈 자리를 확정 질문으로 ───────────────────
+   *  2026-10-03 확정 질문(scripts/seed-polls.sql · v10.15 — 카드 그림과 짝)으로 **비어 있는 종류만** 만들고 바로 엶(표 0 에서 시작).
+   *  고른 것 · 자동으로 채운 것이 있는 종류는 건드리지 않음. 같은 제목의 투표가 이미 있으면(마감 · 감춤 포함) 만들지 않고 알려 줌. */
+  static readonly HOME_SEED: Record<string, { title: string; description?: string; image?: string; options: { label: string; sub?: string; image?: string }[] }> = {
+    VS: { title: '로봇청소기를 산다면, 어느 쪽을 고르시겠어요?', options: [
+      { label: '흡입력 우선', sub: '값이 더 나가도 잘 빨아들이는 쪽', image: '/home/d/vs-a.png' },
+      { label: '가성비 우선', sub: '기본 기능에 값이 싼 쪽', image: '/home/d/vs-b.png' }] },
+    ASK: { title: '소개받아 살 때 가장 먼저 보는 것은?', image: '/home/d/poll-bags.png', options: [
+      { label: '가격' }, { label: '써 본 사람의 후기' }, { label: '소개한 사람에 대한 믿음' }, { label: '사후관리(A/S)' }, { label: '브랜드' }] },
+    USED: { title: '공기청정기를 써 보신 분들의 의견을 들려주세요!', description: '필터 값 · 소음 · 전기료 — 솔직한 의견을 기다려요.', image: '/home/d/poll-purifier.png', options: [
+      { label: '사용 중이에요' }, { label: '사용해봤어요' }, { label: '아직 안 써봤어요' }] },
+  };
+
+  fillHome() {
+    return this.db.transaction(async () => {
+      const empty = await this.db.query<{ kind: string; o: number }>(
+        `SELECT k.kind, k.o FROM (VALUES ('VS', 1), ('ASK', 2), ('USED', 3)) k(kind, o)
+          WHERE NOT EXISTS (SELECT 1 FROM v_poll_home h WHERE h.kind = k.kind) ORDER BY k.o`);
+      const made: string[] = []; const skipped: Array<{ kind: string; why: string }> = [];
+      for (const e of empty) {
+        const s = PollService.HOME_SEED[e.kind]!;
+        const [dup] = await this.db.query<{ state: string }>(`SELECT state FROM polls WHERE title = $1 LIMIT 1`, [s.title]);
+        if (dup) { skipped.push({ kind: e.kind, why: `같은 질문이 이미 있음(${dup.state}) — 투표 관리에서 열거나 메인에 고르십시오` }); continue; }
+        const [r] = await this.db.query<{ id: string }>(
+          `INSERT INTO polls (kind, title, description, image, show_on_home, sort, created_by)
+           VALUES ($1, $2, $3, $4, true, $5, $6) RETURNING id`,
+          [e.kind, s.title, s.description ?? null, s.image ?? null, e.o, this.me ?? null]);
+        await this.putOptions(r!.id, s.options);
+        await this.db.query(`UPDATE polls SET state = 'OPEN' WHERE id = $1`, [r!.id]);
+        made.push(e.kind);
+      }
+      const note = !empty.length ? '메인 세 자리가 이미 다 차 있습니다 — 만든 것이 없습니다.'
+        : made.length ? `확정 질문으로 ${made.length}건을 만들어 열었습니다(${made.join(' · ')})${skipped.length ? ` · 못 만든 것 ${skipped.length}건` : ''}.`
+        : '만들지 못했습니다 — 같은 질문이 이미 있습니다.';
+      return { ok: made.length > 0 || !empty.length, made, skipped, note };
+    });
+  }
+
   private async putOptions(pollId: string, options: { label: string; sub?: string; image?: string }[]) {
     await this.db.query(`DELETE FROM poll_options WHERE poll_id = $1`, [pollId]);
     for (let i = 0; i < options.length; i++) {

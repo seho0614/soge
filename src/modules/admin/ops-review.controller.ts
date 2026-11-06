@@ -86,6 +86,24 @@ export class OpsReviewController {
   @ApiResponse({ status: 409, type: ErrorDto, description: 'MAIL_TEST_WAIT' })
   mailTest() { return this.alerts.mailTest(); }
 
+  /* ── v10.200 (D178 · docs/316) — 급한 알림 텔레그램 시험 · 대화방 찾기(준비 상태는 mail-status 의 push) ── */
+
+  @Post('ops-alerts/push-test')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('OPS_PUSH_TEST', 'OPS_ALERT')
+  @ApiOperation({ summary: '급한 알림 텔레그램 — 시험 메시지', description: '급한 알림과 같은 길(봇 토큰 TELEGRAM_BOT_TOKEN · 대화방 ops.telegram_chat)로 한 통 · 1분에 한 번 · 못 보내도 200 으로 까닭(NO_TOKEN · NO_CHAT · SEND_*) · 감사 기록 OPS_PUSH_TEST.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PUSH_TEST_WAIT' })
+  pushTest() { return this.alerts.pushTest(); }
+
+  @Post('ops-alerts/push-find-chat')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @ApiOperation({ summary: '급한 알림 텔레그램 — 대화방 찾기', description: '봇에게 최근 말을 건 대화방(최대 10곳 · 번호 · 종류 · 이름)을 돌려줌. 고른 번호는 설정 ops.telegram_chat 에 넣음(사이트 설정 API). 봇 토큰이 없으면 reason NO_TOKEN.' })
+  @ApiOkResponse({ type: Object })
+  pushFindChat() { return this.alerts.pushFindChat(); }
+
   @Get('pii-review')
   @Roles('SUPER')
   @ApiOperation({ summary: '개인정보 접속기록 — 지난 12달', description: '달마다 조회 수 · 점검 여부 · 끝난 달인지.' })

@@ -87,6 +87,8 @@ export class OpenBlockerDto {
   @ApiProperty({ enum: ['SETTING', 'TERM', 'FOOTER', 'INTEGRATION', 'ASSUME', 'READY'] }) kind!: string;
   @ApiProperty() item!: string;
   @ApiProperty() reason!: string;
+  @ApiProperty({ enum: ['CEO', 'VENDOR', 'SCREEN', 'DATE'], description: 'v10.200 — 누가: 대표 결정 · 업체 대기 · 운영 화면에서 바로 · 날짜만' }) owner!: string;
+  @ApiProperty({ description: 'v10.200 — 풀리는 방법 한 줄' }) how!: string;
 }
 
 /** v10.146 (D142 · docs/225) — 오픈 준비 점검 한 줄. required 이고 ok 가 아니면 오픈 차단(READY)에도 올라갑니다. */

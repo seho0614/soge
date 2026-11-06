@@ -30,6 +30,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'ETAX', name: 'ETAX_KEY', label: 'API 키', env: 'ETAX_KEY', envRead: 'ETAX_KEY', isPublic: false },
   { code: 'MAIL', name: 'SMTP_USER', label: 'SMTP 사용자 이름', env: 'SMTP_USER', envRead: 'SMTP_USER', isPublic: false },   // v10.140 (D136)
   { code: 'MAIL', name: 'SMTP_PASS', label: 'SMTP 비밀번호', env: 'SMTP_PASS', envRead: 'SMTP_PASS', isPublic: false },
+  { code: 'MAIL', name: 'TELEGRAM_BOT_TOKEN', label: '텔레그램 봇 토큰(급한 운영 알림)', env: 'TELEGRAM_BOT_TOKEN', envRead: 'TELEGRAM_BOT_TOKEN', isPublic: false },   // v10.200 (D178) — 메일 「키 등록」 표시와 무관
   { code: 'PASS', name: 'PASS_API_KEY', label: 'API 키', env: 'PASS_API_KEY', envRead: 'PASS_API_KEY', isPublic: false },
   { code: 'PASS', name: 'NICE_CLIENT_ID', label: 'NICE 클라이언트 ID', env: 'NICE_CLIENT_ID', envRead: 'NICE_CLIENT_ID', isPublic: false },   // v10.141 (D137)
   { code: 'PASS', name: 'NICE_CLIENT_SECRET', label: 'NICE 클라이언트 비밀값', env: 'NICE_CLIENT_SECRET', envRead: 'NICE_CLIENT_SECRET', isPublic: false },
@@ -138,7 +139,7 @@ export class IntegrationSecretService implements OnApplicationBootstrap, OnModul
   async clear(code: string, name: string) {
     const k = this.def(code, name);
     await this.db.query(`DELETE FROM integration_secrets WHERE integration_code = $1 AND name = $2`, [code, name]);
-    if (!k.isPublic && !this.envAtBoot.get(k.envRead)?.trim()) {
+    if (!k.isPublic && k.name !== 'TELEGRAM_BOT_TOKEN' && !this.envAtBoot.get(k.envRead)?.trim()) {
       /* 비공개 키를 지웠고 .env 에도 없으면 「키 등록」 표시를 내림(.env 에 있으면 그대로 — 전과 같은 수동 표시) */
       await this.db.query(`UPDATE integrations SET secret_registered = false WHERE code = $1`, [code]);
     }

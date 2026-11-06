@@ -202,6 +202,7 @@ import { DirectoryService } from './modules/partner/directory.service';
 import { DirectoryController, PartnerDirectoryController, DirectoryAdminController } from './modules/partner/directory.controller';
 import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세금계산서 어댑터 · 간주 (D093) */
 import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발송(SES SMTP) · 상담 인증번호 */
+import { TelegramService } from './common/telegram/telegram.service';  /* v10.200 (D178) 급한 운영 알림 텔레그램 */
 import { MailAdminService } from './common/mail/mail-admin.service';   /* v10.140 (D136) 운영 화면 「메일」 */
 import { MailAdminController } from './modules/site/mail-admin.controller';
 import { IdentityVerifyService } from './modules/identity/identity-verify.service';   /* v10.141 (D137) 본인인증 표준창 */
@@ -409,6 +410,7 @@ import { LeadService } from './modules/lead/lead.service';
     DirectoryService,
     EtaxService,
     MailService,
+    TelegramService,
     MailAdminService,
     IdentityVerifyService,
     AlimtalkService,

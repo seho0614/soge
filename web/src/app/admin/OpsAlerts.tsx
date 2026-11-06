@@ -19,10 +19,17 @@ interface MailStatus {
   ready: boolean; reason: 'NO_SMTP' | 'NOT_VERIFIED' | 'NO_FROM' | null; to: string | null;
   lastJob: { at: string; pending: number; mailed: number; reason: string | null } | null;
   lastTest: { at: string; ok: boolean; reason: string | null } | null;
+  /* v10.200 (D178 · docs/316) — 텔레그램 */
+  push?: { ready: boolean; reason: 'NO_TOKEN' | 'NO_CHAT' | null; chat: string | null;
+           lastJob: { at: string; pending: number; pushed: number; reason: string | null } | null;
+           lastTest: { at: string; ok: boolean; reason: string | null } | null };
 }
+interface Chat { id: string; type: string; title: string }
 const WHY: Record<string, string> = {
   NO_SMTP: '메일 설정 없음(SMTP 사용자 이름 · 비밀번호)', NOT_VERIFIED: '메일 스위치 꺼짐(외부 연동 › 메일)', NO_FROM: '보내는 주소 없음',
   NO_TO: '받는 주소 없음', MAIL_NOT_READY: '메일 준비 안 됨',
+  NO_TOKEN: '봇 토큰 없음(외부 연동 › 연동 키 › 메일 칸)', NO_CHAT: '받을 대화방 없음(대화방 찾기)',   // v10.200 (D178)
+  SEND_AUTH: '봇 토큰이 맞지 않음', SEND_NETWORK: '텔레그램으로 나가는 길 막힘', SEND_TIMEOUT: '텔레그램 응답 없음', SEND_REJECTED: '텔레그램이 거절(대화방 번호 확인)',
 };
 const why = (r: string | null) => (r ? WHY[r] ?? WHY[r.replace(/^MAIL_NOT_READY_/, '')] ?? r : '');
 
@@ -54,6 +61,16 @@ export function OpsAlerts() {
   const ms = useApi<MailStatus>('/admin/ops-alerts/mail-status');
   const isSuper = tokenRoles().includes('SUPER');
   const mailTest = () => void a.run('mail-test', () => api('/admin/ops-alerts/mail-test', { method: 'POST', body: '{}' })).then(ms.reload);
+  /* v10.200 (D178) — 텔레그램 시험 · 대화방 찾기(고르면 사이트 설정 ops.telegram_chat) */
+  const [chats, setChats] = useState<Chat[] | null>(null);
+  const pushTest = () => void a.run('push-test', () => api('/admin/ops-alerts/push-test', { method: 'POST', body: '{}' })).then(ms.reload);
+  const findChat = () => void a.run('push-find', async () => {
+    const r = await api<{ ok: boolean; chats: Chat[]; note: string }>('/admin/ops-alerts/push-find-chat', { method: 'POST', body: '{}' });
+    setChats(r.ok ? r.chats : null);
+    return r;
+  });
+  const pickChat = (c: Chat) => void a.run('push-pick', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'ops.telegram_chat', value: c.id }) }),
+    () => { setChats(null); ms.reload(); }, `받을 대화방을 「${c.title || c.id}」(으)로 정했습니다 — 「시험 메시지」로 확인하십시오.`);
 
   const ack = (x: Alert) => {
     const note = prompt(`「${x.title.slice(0, 40)}」을(를) 확인합니다.\n메모(선택 · 200자) — 무엇을 했는지`, '') ;
@@ -82,6 +99,25 @@ export function OpsAlerts() {
           {isSuper && <>{' '}<button className="btn-sm" disabled={a.busy === 'mail-test'} onClick={mailTest} data-mail-test="">시험 메일 보내기</button></>}
         </p>
       )}
+      {ms.data?.push && ((p: NonNullable<MailStatus['push']>) => {
+        return (
+          <div className="card pad" data-push-status={p.ready ? 'ready' : 'not-ready'}>
+            <b>급한 알림 텔레그램</b>{' '}
+            {p.ready ? <b>준비됨</b> : <b className="warn-text">준비 안 됨 — {why(p.reason)}</b>}
+            {p.chat && <> · 대화방 <span className="mono">{p.chat}</span></>}
+            {p.lastJob && <span data-push-last-job=""> · 마지막 정기 작업 {ymdhm(p.lastJob.at)} — 보냄 {n(p.lastJob.pushed)} · 남음 {n(p.lastJob.pending)}{p.lastJob.reason ? ` · ${why(p.lastJob.reason)}` : ''}</span>}
+            {p.lastTest && <span data-push-last-test=""> · 마지막 시험 {ymdhm(p.lastTest.at)} {p.lastTest.ok ? '보냄' : `못 보냄(${why(p.lastTest.reason)})`}</span>}
+            {isSuper && <>{' '}<button className="btn-sm" disabled={a.busy === 'push-find'} onClick={findChat} data-push-find="">대화방 찾기</button>
+              {' '}<button className="btn-sm" disabled={a.busy === 'push-test'} onClick={pushTest} data-push-test="">시험 메시지 보내기</button></>}
+            {chats && chats.length > 0 && (
+              <ul data-push-chats={chats.length}>
+                {chats.map((c) => <li key={c.id}><button className="btn-plain" onClick={() => pickChat(c)} data-push-chat={c.id}>{c.title || '(이름 없음)'} · {c.type} · <span className="mono">{c.id}</span></button></li>)}
+              </ul>
+            )}
+            <small className="dim"> 메일과 같은 알림(긴급 · 중요 설정 바뀜 · 주문 받기 저절로 꺼짐 · 백업 실패)을 같은 기준으로 보냅니다 — 메일이 준비 안 돼도 갑니다. 알림 내용은 보내지 않고 제목만.</small>
+          </div>
+        );
+      })(ms.data.push)}
       <section className="card pad">
         <h3 className="sec">종류별 <small className="dim">확인 안 한 수 · 지난 7일</small></h3>
         {d.codes.length === 0 ? <p className="muted">확인할 알림이 없습니다.</p> : (

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
+import { blockerOwner } from './open-blocker-owner';
 import { NotFound, PolicyViolation } from '../../core/errors';
 
 /**
@@ -192,9 +193,10 @@ export class TermsService {
     return (String(body ?? '').match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
   }
 
-  /** 오픈 차단 항목. 설정·약관·푸터를 함께 봅니다. */
-  blockers() {
-    return this.db.query(`SELECT kind, item, reason FROM v_open_blockers`);
+  /** 오픈 차단 항목. 설정·약관·푸터를 함께 봅니다. v10.200 — 줄마다 누가(owner) · 풀리는 방법(how) */
+  async blockers() {
+    const rows = await this.db.query<{ kind: string; item: string; reason: string }>(`SELECT kind, item, reason FROM v_open_blockers`);
+    return rows.map((r) => ({ ...r, ...blockerOwner(r.kind, r.item) }));
   }
 
   /** v10.146 (D142) — 오픈 준비 점검 8줄(꼭 4 · 권장 4). 설정 값만 읽습니다. */

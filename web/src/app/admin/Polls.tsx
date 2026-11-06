@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -127,6 +127,17 @@ export function Polls() {
                 : <>{h.title} <small className="dim">{h.state === 'PICKED' ? '고름(메인에 내기)' : '자동으로 채움 — 최근 열린 투표'}</small></>}</td>
             </tr>))}</tbody>
         </table>
+        {/* v10.200 (docs/316) — 빈 자리를 2026-10-03 확정 질문으로(SUPER · 비어 있는 종류만 · 바로 엶) */}
+        {tokenRoles().includes('SUPER') && homeSlots.some((h) => h.state === 'EMPTY') && (
+          <p data-home-fill="">
+            <button className="btn-sm" disabled={a.busy === 'fill-home'} data-home-fill-btn=""
+              onClick={() => {
+                if (!confirm(`비어 있는 ${homeSlots.filter((h) => h.state === 'EMPTY').map((h) => KIND[h.kind] ?? h.kind).join(' · ')} 자리를 2026-10-03 확정 질문으로 만들고 바로 엽니다(표 0 에서 시작).`)) return;
+                void a.run('fill-home', () => api('/admin/community/polls/fill-home', { method: 'POST', body: '{}' }), q.reload);
+              }}>확정 질문으로 빈 자리 채우기</button>
+            <small className="dim"> 로봇청소기(비교해요) · 먼저 보는 것(궁금해요) · 공기청정기(써본 의견) — 카드 그림과 짝인 질문</small>
+          </p>
+        )}
         <p className="muted">
           종류(비교해요 · 궁금해요 · 써본 의견)마다 「메인에 내기」를 켠 열린 투표 가운데 순서가 가장 앞선 1건이 나옵니다.
           고른 것이 없으면 {homeAutofill ? '운영이 만든 최근 열린 투표로 자동으로 채웁니다(회원 투표는 쓰지 않음).' : '그 자리는 비어 「준비 중」으로 보입니다.'}{' '}

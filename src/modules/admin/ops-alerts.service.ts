@@ -4,6 +4,7 @@ import { RequestCtx } from '../../core/request-context';
 import { NotFound, StateConflict } from '../../core/errors';
 import { MailService } from '../../common/mail/mail.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
+import { TelegramService } from '../../common/telegram/telegram.service';
 
 /* ---------------------------------------------------------------------
  * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인
@@ -15,11 +16,13 @@ import { maskMail } from '../../common/mail/mail-admin.service';
  *
  *   v10.198 (D176 · docs/312) — 메일 준비 상태(mailStatus) · 시험 메일(mailTest · SUPER · 1분에 1번 · 감사 기록 OPS_MAIL_TEST)
  *   v10.199 (D177 · docs/314) — 「풀림」(resolved_at · 정기 작업이 적음) — 확인 안 한 목록 · 종류별 수에서 기본으로 뺌(resolved=show 면 같이)
+ *   v10.200 (D178 · docs/316) — 텔레그램 준비 상태(mailStatus 의 push) · 시험 메시지(pushTest · SUPER · 1분에 1번 · OPS_PUSH_TEST) · 대화방 찾기
  * ------------------------------------------------------------------- */
 @Injectable()
 export class OpsAlertsService {
-  constructor(private readonly db: DatabaseService, private readonly mail: MailService) {}
+  constructor(private readonly db: DatabaseService, private readonly mail: MailService, private readonly telegram: TelegramService) {}
   private static lastTestAt = 0;
+  private static lastPushTestAt = 0;
   private get me() { return RequestCtx.actorId(); }
 
   async list(q: { state?: unknown; code?: unknown; severity?: unknown; page?: unknown; size?: unknown; resolved?: unknown }) {
@@ -95,9 +98,20 @@ export class OpsAlertsService {
     }
     const [t] = await this.db.query<{ at: string; result: any }>(
       `SELECT occurred_at AS at, after_data AS result FROM audit.audit_logs WHERE action = 'OPS_MAIL_TEST' ORDER BY occurred_at DESC LIMIT 1`);
+    /* v10.200 (D178) — 텔레그램 줄 */
+    const ps = await this.telegram.status();
+    let pushJob: { at: string; pending: number; pushed: number; reason: string | null } | null = null;
+    const pm = /"alertPush":(\{[^}]*\})/.exec(j?.detail ?? '');
+    if (j && pm) {
+      try { const a = JSON.parse(pm[1]); pushJob = { at: j.at, pending: Number(a.pending) || 0, pushed: Number(a.pushed) || 0, reason: a.reason ?? null }; } catch { /* 잘린 기록 */ }
+    }
+    const [pt] = await this.db.query<{ at: string; result: any }>(
+      `SELECT occurred_at AS at, after_data AS result FROM audit.audit_logs WHERE action = 'OPS_PUSH_TEST' ORDER BY occurred_at DESC LIMIT 1`);
     return {
       ready: st.ready, reason: st.reason, to: to ? maskMail(to) : null, lastJob,
       lastTest: t ? { at: t.at, ok: !!t.result?.ok, reason: t.result?.reason ?? null } : null,
+      push: { ready: ps.ready, reason: ps.reason, chat: ps.chat, lastJob: pushJob,
+              lastTest: pt ? { at: pt.at, ok: !!pt.result?.ok, reason: pt.result?.reason ?? null } : null },
     };
   }
 
@@ -119,5 +133,32 @@ export class OpsAlertsService {
     return r.ok
       ? { ok: true, reason: null, to: maskMail(to), note: '시험 메일을 보냈습니다 — 받은 편지함(스팸함 포함)을 확인하십시오.' }
       : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, to: maskMail(to), note: '보내지 못했습니다.' };
+  }
+
+  /* ── v10.200 (D178 · docs/316) 텔레그램 시험 · 대화방 찾기 ─────────────── */
+
+  /** 시험 메시지 한 통(SUPER · 1분에 1번) — 급한 알림과 같은 길(토큰 · ops.telegram_chat). 못 보내도 200 + 까닭(감사 기록 OPS_PUSH_TEST) */
+  async pushTest(): Promise<{ ok: boolean; reason: string | null; chat: string | null; note: string }> {
+    const [w] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM audit.audit_logs WHERE action = 'OPS_PUSH_TEST' AND occurred_at > now() - interval '1 minute'`);
+    if (Date.now() - OpsAlertsService.lastPushTestAt < 60_000 || (w?.n ?? 0) > 0) throw new StateConflict('PUSH_TEST_WAIT', '시험 메시지는 1분에 한 번만 보낼 수 있습니다.');
+    OpsAlertsService.lastPushTestAt = Date.now();
+    const st = await this.telegram.status();
+    if (!st.ready) return { ok: false, reason: st.reason, chat: st.chat,
+      note: st.reason === 'NO_TOKEN' ? '텔레그램 봇 토큰이 없습니다 — 외부 연동 › 연동 키 › 메일 칸 「텔레그램 봇 토큰」에 넣으십시오.' : '받을 대화방이 없습니다 — 「대화방 찾기」로 고르십시오.' };
+    const r = await this.telegram.send(['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 대화방으로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n'));
+    return r.ok
+      ? { ok: true, reason: null, chat: st.chat, note: '시험 메시지를 보냈습니다 — 텔레그램 대화방을 확인하십시오.' }
+      : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, chat: st.chat,
+          note: r.errorKind === 'AUTH' ? '보내지 못했습니다 — 봇 토큰이 맞지 않습니다.' : r.errorKind === 'NETWORK' || r.errorKind === 'TIMEOUT' ? '보내지 못했습니다 — 서버에서 텔레그램(api.telegram.org)으로 나가는 길을 확인하십시오.' : '보내지 못했습니다 — 대화방 번호 · 봇이 그 대화방에 있는지 확인하십시오.' };
+  }
+
+  /** 봇에게 최근 말을 건 대화방 — 고르면 화면이 사이트 설정 ops.telegram_chat 에 넣음 */
+  async pushFindChat(): Promise<{ ok: boolean; reason: string | null; chats: Array<{ id: string; type: string; title: string }>; note: string }> {
+    const { r, chats } = await this.telegram.findChats();
+    if (!r.ok) return { ok: false, reason: r.error === 'NO_TOKEN' ? 'NO_TOKEN' : `SEND_${r.errorKind ?? 'FAILED'}`, chats: [],
+      note: r.error === 'NO_TOKEN' ? '텔레그램 봇 토큰이 없습니다 — 외부 연동 › 연동 키 › 메일 칸에 넣으십시오.' : '텔레그램에서 대화방을 읽지 못했습니다.' };
+    return { ok: true, reason: null, chats,
+      note: chats.length ? '받을 대화방을 고르십시오.' : '찾은 대화방이 없습니다 — 텔레그램에서 봇에게 아무 말이나 한 번 보낸 뒤 다시 누르십시오.' };
   }
 }

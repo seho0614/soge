@@ -157,4 +157,14 @@ export class PollController {
   @ApiResponse({ status: 422, type: ErrorDto, description: 'POLL_LOCKED · POLL_OPTIONS · POLL_ENDS_AT · POLL_HIDE_REASON' })
   @Audit('POLL_UPDATE', 'POLL')
   update(@Param('id') id: string, @Body() dto: UpdatePollDto) { return this.svc.update(id, dto); }
+
+  /* v10.200 (docs/316) — 메인 빈 자리를 2026-10-03 확정 질문으로(SUPER) */
+  @ApiBearerAuth()
+  @Post('admin/community/polls/fill-home')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @ApiOperation({ summary: '메인 투표 빈 자리 채우기', description: '메인 세 자리(비교해요 · 궁금해요 · 써본 의견) 중 **비어 있는 종류만** 2026-10-03 확정 질문으로 만들고 엶(표 0). 이미 있는 종류는 그대로 · 같은 질문이 있으면 만들지 않고 skipped 로 알려 줌.' })
+  @ApiOkResponse({ type: Object })
+  @Audit('POLL_FILL_HOME', 'POLL')
+  fillHome() { return this.svc.fillHome(); }
 }
