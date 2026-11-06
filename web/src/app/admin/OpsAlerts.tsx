@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, n, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -9,9 +9,21 @@ interface Alert {
   id: string; code: string; severity: 'INFO' | 'WARN' | 'CRITICAL'; title: string; detail: unknown; raisedAt: string;
   acknowledgedAt: string | null; acknowledgedBy: string | null; ackNote: string | null;
   mailedAt?: string | null;   /* v10.197 (D175) 급한 알림을 메일로 보낸 시각 */
+  remailedAt?: string | null; /* v10.198 (D176) 12시간 넘게 확인 안 해 다시 보낸 시각 */
 }
 interface Code { code: string; open: number; last7d: number; lastAt: string; openSeverity: string | null }
 interface Data { items: Alert[]; total: number; page: number; size: number; pages: number; codes: Code[] }
+/* v10.198 (D176 · docs/312) — 급한 알림 메일 준비 상태 */
+interface MailStatus {
+  ready: boolean; reason: 'NO_SMTP' | 'NOT_VERIFIED' | 'NO_FROM' | null; to: string | null;
+  lastJob: { at: string; pending: number; mailed: number; reason: string | null } | null;
+  lastTest: { at: string; ok: boolean; reason: string | null } | null;
+}
+const WHY: Record<string, string> = {
+  NO_SMTP: '메일 설정 없음(SMTP 사용자 이름 · 비밀번호)', NOT_VERIFIED: '메일 스위치 꺼짐(외부 연동 › 메일)', NO_FROM: '보내는 주소 없음',
+  NO_TO: '받는 주소 없음', MAIL_NOT_READY: '메일 준비 안 됨',
+};
+const why = (r: string | null) => (r ? WHY[r] ?? WHY[r.replace(/^MAIL_NOT_READY_/, '')] ?? r : '');
 
 const SEV: Record<string, string> = { CRITICAL: '긴급', WARN: '경고', INFO: '안내' };
 /* 알림 종류 이름 — 모르는 종류는 코드 그대로 */
@@ -20,6 +32,7 @@ const NAME: Record<string, string> = {
   POLL_HIDDEN_BY_REPORTS: '회원 투표 신고 감춤', DAILY_DIGEST: '하루 요약', STUB_PAYMENT_ORDER: '시험 결제 주문', SIGNUP_SPIKE: '가입 급증',
   PII_REVIEW_DUE: '개인정보 접속기록 점검',
   SETTING_CHANGED: '중요 설정 바뀜',   // v10.195 (D174) — 주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치
+  UPLOADS_BACKUP_OFFSITE_FAILED: '백업 디스크 밖 올리기 실패', UPLOADS_BACKUP_FAILED: '올린 파일 백업 실패', UPLOADS_BACKUP_BAD: '올린 파일 백업 묶음 깨짐',   // v10.197 · v10.198
 };
 
 /**
@@ -35,6 +48,9 @@ export function OpsAlerts() {
   const [open, setOpen] = useState<string | null>(null);
   const q = useApi<Data>(`/admin/ops-alerts?state=${state}${code ? `&code=${code}` : ''}&page=${page}`);
   const a = useAct();
+  const ms = useApi<MailStatus>('/admin/ops-alerts/mail-status');
+  const isSuper = tokenRoles().includes('SUPER');
+  const mailTest = () => void a.run('mail-test', () => api('/admin/ops-alerts/mail-test', { method: 'POST', body: '{}' })).then(ms.reload);
 
   const ack = (x: Alert) => {
     const note = prompt(`「${x.title.slice(0, 40)}」을(를) 확인합니다.\n메모(선택 · 200자) — 무엇을 했는지`, '') ;
@@ -53,6 +69,16 @@ export function OpsAlerts() {
   return (
     <section data-ops-alerts="">
       <Flash msg={a.msg} err={a.err} />
+      {ms.data && (
+        <p className="card pad" data-mail-status={ms.data.ready ? 'ready' : 'not-ready'}>
+          <b>급한 알림 메일</b>{' '}
+          {ms.data.ready ? <b>준비됨</b> : <b className="warn-text">준비 안 됨 — {why(ms.data.reason)}</b>}
+          {' · '}받는 주소 {ms.data.to ? <span className="mono">{ms.data.to}</span> : <b className="warn-text">없음(하루 요약 받는 주소)</b>}
+          {ms.data.lastJob && <span data-mail-last-job=""> · 마지막 정기 작업 {ymdhm(ms.data.lastJob.at)} — 보냄 {n(ms.data.lastJob.mailed)} · 남음 {n(ms.data.lastJob.pending)}{ms.data.lastJob.reason ? ` · ${why(ms.data.lastJob.reason)}` : ''}</span>}
+          {ms.data.lastTest && <span data-mail-last-test=""> · 마지막 시험 메일 {ymdhm(ms.data.lastTest.at)} {ms.data.lastTest.ok ? '보냄' : `못 보냄(${why(ms.data.lastTest.reason)})`}</span>}
+          {isSuper && <>{' '}<button className="btn-sm" disabled={a.busy === 'mail-test'} onClick={mailTest} data-mail-test="">시험 메일 보내기</button></>}
+        </p>
+      )}
       <section className="card pad">
         <h3 className="sec">종류별 <small className="dim">확인 안 한 수 · 지난 7일</small></h3>
         {d.codes.length === 0 ? <p className="muted">확인할 알림이 없습니다.</p> : (
@@ -79,7 +105,7 @@ export function OpsAlerts() {
           <thead><tr><th>때</th><th>등급</th><th>종류</th><th>내용</th><th>확인</th></tr></thead>
           <tbody>{d.items.map((x) => (
             <tr key={x.id} data-alert={x.id} data-acked={x.acknowledgedAt ? '1' : '0'}>
-              <td className="muted">{ymdhm(x.raisedAt)}{x.mailedAt && <><br /><span data-mailed="">메일 보냄 {ymdhm(x.mailedAt)}</span></>}</td>
+              <td className="muted">{ymdhm(x.raisedAt)}{x.mailedAt && <><br /><span data-mailed="">메일 보냄 {ymdhm(x.mailedAt)}</span></>}{x.remailedAt && <><br /><span data-remailed="">다시 보냄 {ymdhm(x.remailedAt)}</span></>}</td>
               <td>{x.severity === 'INFO' ? SEV[x.severity] : <b className="warn-text">{SEV[x.severity]}</b>}</td>
               <td>{NAME[x.code] ?? x.code}</td>
               <td>
@@ -94,7 +120,7 @@ export function OpsAlerts() {
         </table>
       )}
       {d.pages > 1 && <p><button className="btn-plain" disabled={page <= 1} onClick={() => setPage(page - 1)}>앞</button> {page} / {d.pages} <button className="btn-plain" disabled={page >= d.pages} onClick={() => setPage(page + 1)}>뒤</button></p>}
-      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통).</div>
+      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통). 올린 파일 백업 실패 · 묶음 깨짐도 메일이 가고, 긴급을 12시간 넘게 확인하지 않으면 한 번 더 갑니다.</div>
     </section>
   );
 }

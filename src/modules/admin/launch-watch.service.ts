@@ -74,11 +74,14 @@ export class LaunchWatchService {
               (SELECT count(DISTINCT p.order_id)::int FROM hlt_payments p WHERE p.stub AND p.state = 'PAID' AND ${D('coalesce(p.approved_at, p.created_at)')}) AS "stubPaidOrders",
               (SELECT count(*)::int FROM ops_alerts WHERE ${D('raised_at')} AND severity IN ('WARN', 'CRITICAL')) AS alerts,
               (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
+              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity = 'CRITICAL') AS "openCritical",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to",
               coalesce((SELECT string_agg(title, E'\n' ORDER BY raised_at) FROM ops_alerts WHERE alert_code = 'SETTING_CHANGED' AND ${D('raised_at')}), '') AS "settingChanges"`);
     const text = [
       `소개뱅크 운영 하루 요약 — ${c.day}(한국 날짜)`,
+      /* v10.198 (docs/312) — 확인 안 한 긴급이 있으면 맨 위에 */
+      ...(c.openCritical > 0 ? [`!! 확인 안 한 긴급 알림 ${c.openCritical}건 — 운영 화면 › 운영 알림에서 보고 「확인」을 누르십시오`] : []),
       '',
       `가입 ${c.signups} · 소개광장 글 ${c.posts} · 매물 ${c.listings} · 소개몰 주문 ${c.orders}`,
       `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
@@ -164,18 +167,25 @@ export class LaunchWatchService {
   /**
    * v10.197 (D175 · docs/310) — 메일로 보낼 급한 운영 알림(CRITICAL · 중요 설정 바뀜 · 24시간 안 · 종류마다 1시간에 1통)과 받는 주소.
    *   고르는 기준은 DB 함수 fn_ops_alert_mail_pending 하나 — 보내고 나서 markMailed 로 시각을 적음.
+   *   v10.198 (D176 · docs/312) — 확인 안 한 CRITICAL 을 보낸 지 12시간 뒤 한 번 더(fn_ops_alert_remail_pending · again = true) ·
+   *   올린 파일 백업 실패 · 묶음 깨짐도 처음 보낼 종류에 들어감(DB 함수).
    */
-  async alertMailPending(): Promise<{ to: string; items: { id: string; code: string; severity: string; title: string; raisedAt: string }[] }> {
-    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string }>(
+  async alertMailPending(): Promise<{ to: string; items: { id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[] }> {
+    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
       `SELECT id::text AS id, alert_code AS code, severity, title,
-              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt"
-         FROM fn_ops_alert_mail_pending()`);
+              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
+         FROM fn_ops_alert_mail_pending()
+       UNION ALL
+       SELECT id::text, alert_code, severity, title,
+              to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI'), true
+         FROM fn_ops_alert_remail_pending()`);
     const [c] = await this.db.query<{ to: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
     return { to: (c?.to ?? '').trim(), items };
   }
 
-  async markMailed(ids: string[]): Promise<void> {
+  async markMailed(ids: string[], againIds: string[] = []): Promise<void> {
     if (ids.length) await this.db.query(`UPDATE ops_alerts SET mailed_at = now() WHERE id = ANY($1::bigint[]) AND mailed_at IS NULL`, [ids]);
+    if (againIds.length) await this.db.query(`UPDATE ops_alerts SET remailed_at = now() WHERE id = ANY($1::bigint[]) AND remailed_at IS NULL`, [againIds]);
   }
 
   /* ── v10.173 (D162 · docs/266) 시험 결제 주문 정리 ─────────────────── */

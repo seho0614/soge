@@ -63,6 +63,15 @@ export class MailService {
     return st.verified && !!this.config(process.env, st.from);
   }
 
+  /** v10.198 (docs/312) — 준비 안 된 까닭까지(운영 알림 화면 「메일」 줄). NO_SMTP · NOT_VERIFIED · NO_FROM */
+  async status(): Promise<{ ready: boolean; reason: 'NO_SMTP' | 'NOT_VERIFIED' | 'NO_FROM' | null }> {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return { ready: false, reason: 'NO_SMTP' };
+    const st = await this.settings();
+    if (!st.verified) return { ready: false, reason: 'NOT_VERIFIED' };
+    if (!this.config(process.env, st.from)) return { ready: false, reason: 'NO_FROM' };
+    return { ready: true, reason: null };
+  }
+
   /** 한 통 보내기. 받는 주소는 로그에 앞 2글자만 남깁니다 */
   async send(m: MailMessage): Promise<SmtpResult> {
     const cfg = this.config(process.env, (await this.settings()).from);

@@ -239,6 +239,8 @@ if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
 else
   info "올린 파일 백업 디스크 밖(S3) — 꺼짐(.env BACKUP_S3_BUCKET 없음 · docs/310)"
 fi
+# v10.198 (docs/312) — 7일마다 묶음 압축 검사 결과 · 보여 주기만(통과 · 확인 수에 넣지 않음)
+info "올린 파일 백업 묶음 검사(7일마다 gzip -t) — $([ -f "$BKD/.verified" ] && cat "$BKD/.verified" || echo '아직 없음(다음 백업 때 처음 검사)')"
 
 say ""
 say "적용 후 확인 — 통과 $PASS · 실패 $FAIL · 확인 $WARN"

@@ -1831,7 +1831,9 @@
    "apis": [
     "GET /admin/ops-alerts",
     "POST /admin/ops-alerts/{id}/ack",
-    "POST /admin/ops-alerts/ack-code"
+    "POST /admin/ops-alerts/ack-code",
+    "GET /admin/ops-alerts/mail-status",
+    "POST /admin/ops-alerts/mail-test"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "2026-11-03 v10.179 D168 — 운영 알림(ops_alerts) 목록 · 종류별 확인 안 한 수 · 확인(한 번만 · 누가 · 언제 · 메모 · 되돌릴 수 없음) · 같은 종류 한꺼번에 확인."

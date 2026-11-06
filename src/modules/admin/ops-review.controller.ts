@@ -35,7 +35,7 @@ export class RoleReviewDto {
 }
 
 /* ---------------------------------------------------------------------
- * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인(SB-ADM-OPS-010) · 개인정보 접속기록 월 점검(SB-ADM-PII-010 · SUPER)
+ * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인(SB-ADM-OPS-010 · v10.198 메일 준비 상태 · 시험 메일) · 개인정보 접속기록 월 점검(SB-ADM-PII-010 · SUPER)
  * ------------------------------------------------------------------- */
 @ApiTags('ADM')
 @ApiBearerAuth()
@@ -67,6 +67,23 @@ export class OpsReviewController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto }) @ApiResponse({ status: 409, type: ErrorDto, description: 'ALERT_ACKED' })
   ack(@Param('id') id: string, @Body() dto: OpsAlertAckDto) { return this.alerts.ack(id, dto.note); }
+
+  /* ── v10.198 (D176 · docs/312) — 급한 알림 메일 준비 상태 · 시험 메일 ── */
+
+  @Get('ops-alerts/mail-status')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '급한 알림 메일 — 준비 상태', description: '메일 준비 여부 · 안 된 까닭(NO_SMTP · NOT_VERIFIED · NO_FROM) · 받는 주소(ops.digest_to · 가림) · 마지막 정기 작업(launch_watch) 메일 결과 · 마지막 시험 메일.' })
+  @ApiOkResponse({ type: Object })
+  mailStatus() { return this.alerts.mailStatus(); }
+
+  @Post('ops-alerts/mail-test')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('OPS_MAIL_TEST', 'OPS_ALERT')
+  @ApiOperation({ summary: '급한 알림 메일 — 시험 메일', description: '급한 알림 메일과 같은 길(받는 주소 ops.digest_to · 메일 준비)로 한 통 · 1분에 한 번 · 못 보내도 200 으로 까닭(NO_TO · MAIL_NOT_READY_* · SEND_*) · 감사 기록 OPS_MAIL_TEST.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'MAIL_TEST_WAIT' })
+  mailTest() { return this.alerts.mailTest(); }
 
   @Get('pii-review')
   @Roles('SUPER')

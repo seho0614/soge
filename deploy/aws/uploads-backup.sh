@@ -15,6 +15,11 @@
 #     실패하면 운영 알림 UPLOADS_BACKUP_OFFSITE_FAILED(WARN · 하루 한 번) · 종료 값 3(디스크 안 묶음은 그대로 성공). 값이 없으면 지금과 같음(꺼짐).
 #     S3 쪽 오래된 묶음 지우기는 버킷 보관 규칙(수명 주기)으로 — 이 스크립트는 S3 에서 지우지 않음.
 #
+#   v10.198 (docs/312) — **실패를 바로 알림**: 묶기 · 묶음 확인이 실패하면 운영 알림 UPLOADS_BACKUP_FAILED(WARN · 하루 한 번 · 메일 대상)
+#     — 전에는 36시간 뒤 「멈춤」(UPLOADS_BACKUP_STALE)으로만 알았음.
+#     **7일에 한 번 남은 묶음 전부를 압축 검사(gzip -t)** — 디스크를 더 쓰지 않음 · 깨진 묶음이 있으면 UPLOADS_BACKUP_BAD(WARN · 하루 한 번 · 메일 대상)
+#     · 결과는 $BACKUP_DIR/.verified 한 줄(check · postcheck 가 보여 줌). 종료 값은 그대로(알림으로 알림).
+#
 #   왜: RDS 스냅샷에는 DB 만 들어가고 **올린 파일(사진 · 영상)은 빠집니다**.
 #   무엇: UPLOAD_DIR(.env · 기본 ~/sgb-data/uploads) → BACKUP_DIR(기본 ~/sgb-data/backup/uploads)/uploads_YYYYMMDD.tar.gz
 #         KEEP 개(기본 7)만 남기고 그보다 오래된 「uploads_*.tar.gz」만 지웁니다(다른 파일은 건드리지 않음).
@@ -51,6 +56,31 @@ alert() {   # 운영 알림 한 줄(DB 가 안 되면 기록만) — 같은 날 
       WHERE NOT EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'UPLOADS_BACKUP_SKIPPED' AND detail->>'day' = '$DAY')" >/dev/null
 }
 
+note() {   # v10.198 — 운영 알림 한 줄(종류 · 제목 · detail jsonb 식) — 같은 종류 · 같은 날 한 번
+  [ -n "${DATABASE_URL:-}" ] || return 0
+  q "INSERT INTO ops_alerts (alert_code, severity, title, detail)
+     SELECT '$1', 'WARN', '$2', $3
+      WHERE NOT EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = '$1' AND detail->>'day' = '$DAY')" >/dev/null
+}
+
+# v10.198 — 7일에 한 번 남은 묶음 전부 압축 검사(gzip -t · 읽기만). 깨진 것이 있으면 UPLOADS_BACKUP_BAD
+VER="$BK/.verified"
+verify_weekly() {
+  [ -f "$VER" ] && [ -z "$(find "$VER" -mtime +6 2>/dev/null)" ] && return 0
+  local all=0 bad=() f
+  for f in "$BK"/uploads_*.tar.gz; do
+    [ -f "$f" ] || continue; all=$((all + 1))
+    gzip -t "$f" 2>>"$OUT" || bad+=("$(basename "$f")")
+  done
+  echo "$(date '+%Y-%m-%d %H:%M') 묶음 ${all}개 · 깨짐 ${#bad[@]}${bad[*]:+ (${bad[*]})}" > "$VER"
+  if [ "${#bad[@]}" -gt 0 ]; then
+    say "!! 묶음 검사 — 깨진 묶음 ${#bad[@]}개: ${bad[*]}(운영 알림 UPLOADS_BACKUP_BAD)"
+    note UPLOADS_BACKUP_BAD '올린 파일 백업 묶음이 깨짐 — 되살리기에 쓸 수 없음 · 디스크를 확인' "jsonb_build_object('day', '$DAY', 'bad', '${bad[*]}', 'all', $all)"
+  else
+    say "   묶음 검사 — ${all}개 모두 정상(gzip -t · 다음 검사 7일 뒤)"
+  fi
+}
+
 # v10.197 — 디스크 밖(S3) 한 벌. 이미 올렸으면(표시 파일) 건너뜀. 실패 = 운영 알림(하루 한 번) · 종료 값 3
 offsite() {
   [ -n "$S3B" ] || return 0
@@ -85,21 +115,24 @@ if [ -n "$S3B" ]; then
 else
   say "   디스크 밖(S3): 꺼짐(.env BACKUP_S3_BUCKET 없음)"
 fi
+say "   묶음 검사(7일마다 gzip -t): $([ -f "$VER" ] && cat "$VER" || echo '아직 없음')"
 
 [ "$MODE" = check ] && exit 0
 
-if [ -f "$DEST" ]; then say "   오늘 묶음이 이미 있습니다 — $DEST"; offsite; exit $?; fi
+if [ -f "$DEST" ]; then say "   오늘 묶음이 이미 있습니다 — $DEST"; verify_weekly; offsite; exit $?; fi
 if [ "$FREE_KB" -lt "$NEED_KB" ]; then
   say "!! 디스크 여유 부족 — 만들지 않음(운영 알림 UPLOADS_BACKUP_SKIPPED)"; alert "$NEED_KB" "$FREE_KB"; exit 2
 fi
 
 TMP="$DEST.part"
 if ! tar -czf "$TMP" -C "$(dirname "$UP")" "$(basename "$UP")" 2>>"$OUT"; then
-  rm -f "$TMP"; say "!! 묶기 실패 — $OUT"; exit 1
+  rm -f "$TMP"; say "!! 묶기 실패 — $OUT(운영 알림 UPLOADS_BACKUP_FAILED)"
+  note UPLOADS_BACKUP_FAILED '올린 파일 백업 실패 — 묶기 실패 · 서버 로그 확인' "jsonb_build_object('day', '$DAY', 'step', 'tar')"; exit 1
 fi
 IN_TAR=$(tar -tzf "$TMP" 2>/dev/null | grep -vc '/$')
 if [ "$IN_TAR" -lt "$N" ]; then
-  rm -f "$TMP"; say "!! 묶음 확인 실패 — 묶음 ${IN_TAR}개 < 원본 ${N}개"; exit 1
+  rm -f "$TMP"; say "!! 묶음 확인 실패 — 묶음 ${IN_TAR}개 < 원본 ${N}개(운영 알림 UPLOADS_BACKUP_FAILED)"
+  note UPLOADS_BACKUP_FAILED '올린 파일 백업 실패 — 묶음 파일 수가 원본보다 적음' "jsonb_build_object('day', '$DAY', 'step', 'verify', 'inTar', $IN_TAR, 'files', $N)"; exit 1
 fi
 mv "$TMP" "$DEST"
 say "   만듦 — $DEST ($(du -k "$DEST" | cut -f1 | awk '{printf "%d", $1/1024}')MB · 파일 ${IN_TAR}개)"
@@ -107,4 +140,5 @@ say "   만듦 — $DEST ($(du -k "$DEST" | cut -f1 | awk '{printf "%d", $1/1024
 ls -1t "$BK"/uploads_*.tar.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | while read -r old; do
   rm -f -- "$old" "$old.s3"; say "   오래된 묶음 지움 — $(basename "$old")"
 done
+verify_weekly
 offsite; exit $?

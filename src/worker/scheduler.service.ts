@@ -469,7 +469,7 @@ export class SchedulerService {
         if (dk.alert && dk.level) await this.alert('DISK_LOW', dk.level, `서버 디스크 ${dk.usedPct}% 사용 · 남은 ${dk.freeGB}GB — 옛 판 · 백업 묶음을 정리하거나 디스크를 늘리십시오(기준 ${dk.limit}%)`, dk);
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
-        detail = { ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, alertMail: am };
+        detail = { alertMail: am, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -622,23 +622,25 @@ export class SchedulerService {
     return { job, affected, detail, ms };
   }
 
-  /** v10.197 (D175) — 급한 알림 메일 한 통(여러 건을 줄로). 결과: 보낸 수 · 남은 수 · 못 보낸 까닭 */
+  /** v10.197 (D175) — 급한 알림 메일 한 통(여러 건을 줄로). 결과: 보낸 수 · 남은 수 · 못 보낸 까닭
+   *  v10.198 (D176) — 12시간 넘게 확인 안 한 CRITICAL 은 「[다시]」로 한 번 더(같은 메일에 묶음) */
   private async alertMail(): Promise<{ pending: number; mailed: number; reason: string | null }> {
     const p = await this.launchWatch.alertMailPending();
     if (!p.items.length) return { pending: 0, mailed: 0, reason: null };
     if (!p.to) return { pending: p.items.length, mailed: 0, reason: 'NO_TO' };
     if (!(await this.mail.ready())) return { pending: p.items.length, mailed: 0, reason: 'MAIL_NOT_READY' };
     const crit = p.items.filter((x) => x.severity === 'CRITICAL').length;
+    const again = p.items.filter((x) => x.again).length;
     const text = [
-      `소개뱅크 급한 운영 알림 ${p.items.length}건${crit ? `(CRITICAL ${crit})` : ''}`,
+      `소개뱅크 급한 운영 알림 ${p.items.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}`,
       '',
-      ...p.items.map((x) => `- [${x.severity}] ${x.raisedAt} ${x.title}`),
+      ...p.items.map((x) => `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${x.title}`),
       '',
       '운영 화면 › 운영 알림에서 내용을 보고 「확인」을 누르십시오. 같은 종류는 1시간에 한 통으로 묶어 보냅니다.',
     ].join('\n');
-    const m = await this.mail.send({ to: p.to, subject: `[소개뱅크] 급한 운영 알림 ${p.items.length}건 — ${p.items[0].title}`.slice(0, 150), text });
+    const m = await this.mail.send({ to: p.to, subject: `[소개뱅크] 급한 운영 알림 ${p.items.length}건 — ${p.items[0].again ? '[다시] ' : ''}${p.items[0].title}`.slice(0, 150), text });
     if (!m.ok) return { pending: p.items.length, mailed: 0, reason: `SEND_${m.errorKind ?? 'FAILED'}` };
-    await this.launchWatch.markMailed(p.items.map((x) => x.id));
+    await this.launchWatch.markMailed(p.items.filter((x) => !x.again).map((x) => x.id), p.items.filter((x) => x.again).map((x) => x.id));
     return { pending: 0, mailed: p.items.length, reason: null };
   }
 
