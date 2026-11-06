@@ -38,9 +38,10 @@ ok('① 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메�
    and '.sh-hdr .lang-pick { display: none; }' in HC and '.sh-nav .m-lang { display: inline-flex; }' in HC
    and '{lang && <span className="m-lang">{lang}</span>}' in rd('site/src/components/common/UniHeader.tsx')
    and '@media (min-width: 1241px) and (max-width: 1440px) { .sh-uni.in .gnb { gap: 20px; } }' in PR
-   and '.sh-hd.in .sh-hdr .sh-adm { display: none; }' in HC
+   and ('.sh-hd.in .sh-hdr .sh-adm { display: none; }' in HC or '.sh-hdr .sh-role { display: none; }' in HC)   # v10.202 — 관리자 페이지는 641px 이상 아이콘(docs/319)
    and '@media (min-width: 641px) {\n  .sh-hdr .lang-pick { position: relative; width: 44px;' in HC   # v10.199 — 1441px 이상도 🌐 단추
-   and '{st.ops && <a className="m-only" href="/go/admin">{h(\'admin\')}</a>}' in rd('site/src/components/common/UniHeader.tsx'), '')
+   and ('{st.ops && <a className="m-only" href="/go/admin">{h(\'admin\')}</a>}' in rd('site/src/components/common/UniHeader.tsx')
+        or '{st.ops && <a className="m-only m-role" href="/go/admin">{h(\'admin\')}</a>}' in rd('site/src/components/common/UniHeader.tsx')), '')   # v10.202 — .m-role(휴대폰만)
 ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
 ok('① 시안 — 로그인 메뉴 줄 끝 파트너센터 · 1440px 아래', "'<a href=\"#\" class=\"m-only\" data-go=\"p2dsh\">파트너센터</a>'" in PR
    and '.sh-uni.in .home-hdr .home-txt { display: none; } .sh-uni.in .gnb .m-only { display: inline; }' in PR and "home-hd sh-uni'+(inn ? ' in' : '')" in PR, '')
@@ -118,7 +119,7 @@ if SITE and API and DB:
                             bad.append(f'{who} {w} {u} 메뉴 다 안 보임')
                         if r['lang'] and r['langAt'] != ('nav' if w <= 640 else 'hdr'):
                             bad.append(f'{who} {w} {u} 언어 칸 자리 {r["langAt"]}')
-                        if r['admin'] and r['admAt'] != ('nav' if w <= 1440 else 'hdr'):
+                        if r['admin'] and r['admAt'] != ('nav' if w <= 640 else 'hdr'):   # v10.202 — 641px 이상은 머리줄 오른쪽 아이콘(docs/319)
                             bad.append(f'{who} {w} {u} 관리자 단추 자리 {r["admAt"]}')
                         if w == 390 and r['hh'] >= 100:
                             bad.append(f'{who} {w} {u} 휴대폰 머리줄 {r["hh"]}px')
