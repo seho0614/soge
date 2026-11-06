@@ -108,7 +108,7 @@ export class AdminService {
         (SELECT count(*) FROM settlements WHERE status='REQUESTED') AS settlement_pending,
         (SELECT count(*) FROM disputes WHERE status IN ('OPEN','IN_REVIEW')) AS disputes_open,
         (SELECT count(*) FROM ops_alerts
-          WHERE severity='CRITICAL' AND acknowledged_at IS NULL) AS critical,
+          WHERE severity='CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL) AS critical,   /* v10.199 (D177) — 풀린 것은 뺌 */
         (SELECT count(*) FROM v_open_blockers) AS blockers,
         (SELECT k FROM v_k_value WHERE cohort_month = date_trunc('month', now())::date) AS k,
         /* v10.31 (10/10 시안 기준) — 시안 칸 「정산 승인 대기 · 합계」 「신규 가입 승인 · 오늘」 · 검수 처리 한계(설정) · 오늘 처리 */
@@ -284,7 +284,15 @@ export class AdminService {
   /** v10.195 (D174 · docs/306) — 간주 결제가 켜져 있을 때 주문 받기를 켜려면 이 문구를 그대로 */
   static readonly ORDER_OPEN_CONFIRM = '시험 결제 주문을 받습니다';
 
-  async updateSetting(key: string, value: string, reason?: string, confirm?: string) {
+  /** v10.199 (D177 · docs/314) — 간주 결제가 켜진 채 주문 받기를 켤 때 꺼질 시각(시간) — 고를 수 있는 값 · 안 보내면 2시간 */
+  static readonly ORDER_OPEN_HOURS = [1, 2, 4, 8, 24];
+
+  async updateSetting(key: string, value: string, reason?: string, confirm?: string, hours?: number) {
+    /* v10.199 (D177) — 꺼질 시각은 주문 받기를 켤 때 서버가 적음 · 직접 고치면 저절로 끄기를 피해 갈 수 있어 막음 */
+    if (key === 'mall.order_open_until') {
+      throw new PolicyViolation('ORDER_UNTIL_AUTO', '꺼질 시각은 「주문 받기 켜기」에서 고릅니다 — 직접 고칠 수 없습니다.');
+    }
+    let until: number | null = null;   // 간주 결제 켜짐에 주문 받기 켜기 — 꺼질 시각까지 몇 시간
     /* v10.195 (D174 · docs/306) — 11/5 13:24 운영 화면에서 주문 받기가 켜져 4시간 넘게 아무도 몰랐음(주문 0건).
      *   켜기는 SUPER 만(전에는 화면 설명만 SUPER · 서버는 ADMIN 도 통과) · 끄기는 ADMIN 도 바로.
      *   간주 결제가 켜져 있으면 켜기에 확인 문구 · 사유 10자 — 돈을 받지 않은 「결제 완료」 주문이 생기기 때문 */
@@ -299,6 +307,11 @@ export class AdminService {
         }
         if ((reason ?? '').trim().length < 10) {
           throw new PolicyViolation('ORDER_OPEN_REASON', '간주 결제가 켜진 채 주문 받기를 켜는 사유를 10자 이상 적어 주십시오(운영 알림에 남습니다).');
+        }
+        /* v10.199 (D177 · docs/314) — 11/5 · 11/6 두 번 켜진 채 잊힘 → 꺼질 시각(1 · 2 · 4 · 8 · 24시간)을 함께 · 정기 작업이 지나면 끔 */
+        until = hours ?? 2;
+        if (!AdminService.ORDER_OPEN_HOURS.includes(until)) {
+          throw new PolicyViolation('ORDER_OPEN_HOURS', `꺼질 시각은 ${AdminService.ORDER_OPEN_HOURS.join(' · ')}시간 중에서 고르십시오(최대 24시간).`);
         }
       }
     }
@@ -347,10 +360,18 @@ export class AdminService {
     /* v10.195 (D174) — 사유를 거래 설정으로 넘김 → trg_setting_watch 가 운영 알림(SETTING_CHANGED)에 함께 씀 */
     const [row] = await this.db.transaction(async () => {
       await this.db.query(`SELECT set_config('app.setting_reason', $1, true)`, [(reason ?? '').trim()]);
-      return this.db.query(
+      const r = await this.db.query(
         `UPDATE site_settings SET value = $2, updated_by = $3, updated_at = now()
           WHERE key = $1 RETURNING key, value`,
         [key, value, RequestCtx.actorId()]);
+      /* v10.199 (D177) — 주문 받기를 바꾸면 꺼질 시각도 같은 거래에서(켤 때 간주 결제면 지금 + N시간 · 그 밖에는 비움) */
+      if (key === 'mall.order_open' && r.length) {
+        await this.db.query(
+          `UPDATE site_settings SET value = CASE WHEN $1::int IS NULL THEN NULL ELSE to_char((now() + make_interval(hours => $1::int)) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') END,
+                  updated_by = $2, updated_at = now()
+            WHERE key = 'mall.order_open_until'`, [until, RequestCtx.actorId()]);
+      }
+      return r;
     });
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로

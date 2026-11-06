@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -33,4 +33,13 @@ export function uploadsBackupState(dir = uploadsBackupDir(), now = Date.now()) {
     ageHours,
     stale: ageHours !== null && ageHours > UPLOADS_BACKUP_STALE_HOURS,
   };
+}
+
+/** v10.199 (D177 · docs/314) — 7일마다 묶음 검사 결과(uploads-backup.sh 가 쓰는 $BACKUP_DIR/.verified 한 줄) · 없으면 null */
+export function uploadsBackupVerified(dir = uploadsBackupDir()): { at: string; bad: number } | null {
+  try {
+    const f = join(dir, '.verified');
+    const m = /깨짐 (\d+)/.exec(readFileSync(f, 'utf8'));
+    return m ? { at: new Date(statSync(f).mtimeMs).toISOString(), bad: Number(m[1]) } : null;
+  } catch { return null; }
 }

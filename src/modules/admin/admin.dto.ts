@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class BadgeRequestDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
@@ -172,6 +172,9 @@ export class UpdateSettingDto {
   /** v10.195 — 간주 결제 켜짐에 주문 받기 켜기: 확인 문구 「시험 결제 주문을 받습니다」 그대로 */
   @ApiPropertyOptional({ description: '간주 결제가 켜져 있을 때 주문 받기를 켜려면 「시험 결제 주문을 받습니다」 그대로' })
   @IsOptional() @IsString() @MaxLength(50) confirm?: string;
+  /** v10.199 (D177) — 간주 결제 켜짐에 주문 받기 켜기: 꺼질 시각까지 몇 시간(1 · 2 · 4 · 8 · 24 · 안 보내면 2) */
+  @ApiPropertyOptional({ description: '간주 결제가 켜져 있을 때 주문 받기를 켜면 몇 시간 뒤 저절로 끌지(1 · 2 · 4 · 8 · 24 · 안 보내면 2)', enum: [1, 2, 4, 8, 24] })
+  @IsOptional() @IsInt() @Min(1) @Max(24) hours?: number;
 }
 
 export class UpdateSiteSettingDto {

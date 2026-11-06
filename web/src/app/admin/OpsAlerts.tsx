@@ -10,9 +10,10 @@ interface Alert {
   acknowledgedAt: string | null; acknowledgedBy: string | null; ackNote: string | null;
   mailedAt?: string | null;   /* v10.197 (D175) 급한 알림을 메일로 보낸 시각 */
   remailedAt?: string | null; /* v10.198 (D176) 12시간 넘게 확인 안 해 다시 보낸 시각 */
+  resolvedAt?: string | null; resolveNote?: string | null;   /* v10.199 (D177) 원인이 없어져 정기 작업이 적은 「풀림」 */
 }
-interface Code { code: string; open: number; last7d: number; lastAt: string; openSeverity: string | null }
-interface Data { items: Alert[]; total: number; page: number; size: number; pages: number; codes: Code[] }
+interface Code { code: string; open: number; resolved?: number; last7d: number; lastAt: string; openSeverity: string | null }
+interface Data { items: Alert[]; total: number; resolvedHidden?: number; page: number; size: number; pages: number; codes: Code[] }
 /* v10.198 (D176 · docs/312) — 급한 알림 메일 준비 상태 */
 interface MailStatus {
   ready: boolean; reason: 'NO_SMTP' | 'NOT_VERIFIED' | 'NO_FROM' | null; to: string | null;
@@ -33,6 +34,7 @@ const NAME: Record<string, string> = {
   PII_REVIEW_DUE: '개인정보 접속기록 점검',
   SETTING_CHANGED: '중요 설정 바뀜',   // v10.195 (D174) — 주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치
   UPLOADS_BACKUP_OFFSITE_FAILED: '백업 디스크 밖 올리기 실패', UPLOADS_BACKUP_FAILED: '올린 파일 백업 실패', UPLOADS_BACKUP_BAD: '올린 파일 백업 묶음 깨짐',   // v10.197 · v10.198
+  ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
 };
 
 /**
@@ -46,7 +48,8 @@ export function OpsAlerts() {
   const [code, setCode] = useState('');
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
-  const q = useApi<Data>(`/admin/ops-alerts?state=${state}${code ? `&code=${code}` : ''}&page=${page}`);
+  const [showResolved, setShowResolved] = useState(false);   /* v10.199 (D177) — 풀린 알림도 보기 */
+  const q = useApi<Data>(`/admin/ops-alerts?state=${state}${code ? `&code=${code}` : ''}&page=${page}${showResolved ? '&resolved=show' : ''}`);
   const a = useAct();
   const ms = useApi<MailStatus>('/admin/ops-alerts/mail-status');
   const isSuper = tokenRoles().includes('SUPER');
@@ -58,7 +61,7 @@ export function OpsAlerts() {
     void a.run(x.id, () => api(`/admin/ops-alerts/${x.id}/ack`, { method: 'POST', body: JSON.stringify({ note: note.trim() || undefined }) }), q.reload, '확인했습니다.');
   };
   const ackCode = (c: Code) => {
-    const note = prompt(`${NAME[c.code] ?? c.code} 확인 안 한 알림 ${c.open}건을 모두 확인합니다.\n메모(선택 · 200자)`, '');
+    const note = prompt(`${NAME[c.code] ?? c.code} 확인 안 한 알림 ${c.open + (c.resolved ?? 0)}건(풀린 것 ${c.resolved ?? 0}건 포함)을 모두 확인합니다.\n메모(선택 · 200자)`, '');
     if (note === null) return;
     void a.run(`code:${c.code}`, () => api<{ note: string }>('/admin/ops-alerts/ack-code', { method: 'POST', body: JSON.stringify({ code: c.code, note: note.trim() || undefined }) }), q.reload);
   };
@@ -83,13 +86,14 @@ export function OpsAlerts() {
         <h3 className="sec">종류별 <small className="dim">확인 안 한 수 · 지난 7일</small></h3>
         {d.codes.length === 0 ? <p className="muted">확인할 알림이 없습니다.</p> : (
           <table className="tbl" data-alert-codes="">
-            <thead><tr><th>종류</th><th>확인 안 함</th><th>지난 7일</th><th>가장 최근</th><th>처리</th></tr></thead>
+            <thead><tr><th>종류</th><th>확인 안 함</th><th>풀림</th><th>지난 7일</th><th>가장 최근</th><th>처리</th></tr></thead>
             <tbody>{d.codes.map((c) => (
               <tr key={c.code} data-alert-code={c.code}>
                 <td><button className="btn-plain" onClick={() => { setCode(code === c.code ? '' : c.code); setPage(1); }}>{NAME[c.code] ?? c.code}</button> <small className="dim mono">{c.code}</small></td>
                 <td className="num-cell">{c.open > 0 ? <b className={c.openSeverity === 'INFO' ? '' : 'warn-text'}>{n(c.open)}</b> : 0}</td>
+                <td className="num-cell muted" data-code-resolved={c.resolved ?? 0}>{n(c.resolved ?? 0)}</td>
                 <td className="num-cell">{n(c.last7d)}</td><td className="muted">{ymdhm(c.lastAt)}</td>
-                <td>{c.open > 0 && <button className="btn-sm" disabled={a.busy === `code:${c.code}`} onClick={() => ackCode(c)} data-ack-code="">모두 확인</button>}</td>
+                <td>{(c.open > 0 || (c.resolved ?? 0) > 0) && <button className="btn-sm" disabled={a.busy === `code:${c.code}`} onClick={() => ackCode(c)} data-ack-code="">모두 확인</button>}</td>
               </tr>))}</tbody>
           </table>
         )}
@@ -99,13 +103,14 @@ export function OpsAlerts() {
         <label><input type="radio" name="alert-state" checked={state === 'all'} onChange={() => { setState('all'); setPage(1); }} /> 전부</label>
         {code && <> · 종류 <b>{NAME[code] ?? code}</b> <button className="btn-plain" onClick={() => setCode('')}>모든 종류</button></>}
         {' '}<span className="dim">{n(d.total)}건</span>
+        {state === 'open' && <>{' · '}<label data-show-resolved=""><input type="checkbox" checked={showResolved} onChange={(e) => { setShowResolved(e.target.checked); setPage(1); }} /> 풀린 것도 보기{!showResolved && (d.resolvedHidden ?? 0) > 0 ? `(${n(d.resolvedHidden ?? 0)}건 숨김)` : ''}</label></>}
       </p>
       {d.items.length === 0 ? <p className="muted">알림이 없습니다.</p> : (
         <table className="tbl" data-alert-list="">
           <thead><tr><th>때</th><th>등급</th><th>종류</th><th>내용</th><th>확인</th></tr></thead>
           <tbody>{d.items.map((x) => (
             <tr key={x.id} data-alert={x.id} data-acked={x.acknowledgedAt ? '1' : '0'}>
-              <td className="muted">{ymdhm(x.raisedAt)}{x.mailedAt && <><br /><span data-mailed="">메일 보냄 {ymdhm(x.mailedAt)}</span></>}{x.remailedAt && <><br /><span data-remailed="">다시 보냄 {ymdhm(x.remailedAt)}</span></>}</td>
+              <td className="muted">{ymdhm(x.raisedAt)}{x.mailedAt && <><br /><span data-mailed="">메일 보냄 {ymdhm(x.mailedAt)}</span></>}{x.remailedAt && <><br /><span data-remailed="">다시 보냄 {ymdhm(x.remailedAt)}</span></>}{x.resolvedAt && <><br /><span className="muted" data-resolved="" title={x.resolveNote ?? ''}>풀림 {ymdhm(x.resolvedAt)}{x.resolveNote ? ` · ${x.resolveNote}` : ''}</span></>}</td>
               <td>{x.severity === 'INFO' ? SEV[x.severity] : <b className="warn-text">{SEV[x.severity]}</b>}</td>
               <td>{NAME[x.code] ?? x.code}</td>
               <td>
@@ -120,7 +125,7 @@ export function OpsAlerts() {
         </table>
       )}
       {d.pages > 1 && <p><button className="btn-plain" disabled={page <= 1} onClick={() => setPage(page - 1)}>앞</button> {page} / {d.pages} <button className="btn-plain" disabled={page >= d.pages} onClick={() => setPage(page + 1)}>뒤</button></p>}
-      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통). 올린 파일 백업 실패 · 묶음 깨짐도 메일이 가고, 긴급을 12시간 넘게 확인하지 않으면 한 번 더 갑니다.</div>
+      <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통). 올린 파일 백업 실패 · 묶음 깨짐도 메일이 가고, 긴급을 12시간 넘게 확인하지 않으면 한 번 더 갑니다. 원인이 없어진 알림(백업 멈춤 → 새 묶음 · 검수 기한 넘김 → 0건 · 디스크 → 기준 아래 · 주문 받기 → 꺼짐)은 정기 작업이 「풀림」을 적어 확인 안 한 수 · 메일 · 배포 점검에서 빠집니다(확인 기록은 따로).</div>
     </section>
   );
 }

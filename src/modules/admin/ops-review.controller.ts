@@ -46,8 +46,9 @@ export class OpsReviewController {
 
   @Get('ops-alerts')
   @Roles('ADMIN', 'SUPER')
-  @ApiOperation({ summary: '운영 알림 목록', description: '기본은 확인 안 한 것(state=all 이면 전부) · 종류(code) · 등급(severity) 거르기 · 종류별 확인 안 한 수 · 지난 7일 수(codes).' })
+  @ApiOperation({ summary: '운영 알림 목록', description: '기본은 확인 안 한 것(state=all 이면 전부) · 종류(code) · 등급(severity) 거르기 · 종류별 확인 안 한 수 · 지난 7일 수(codes). v10.199 — 확인 안 한 것만 볼 때 원인이 없어진(풀린) 알림은 기본으로 뺌(resolved=show 면 같이 · resolvedHidden = 뺀 수).' })
   @ApiQuery({ name: 'state', required: false, enum: ['open', 'all'] })
+  @ApiQuery({ name: 'resolved', required: false, enum: ['hide', 'show'] })
   @ApiQuery({ name: 'code', required: false }) @ApiQuery({ name: 'severity', required: false, enum: ['INFO', 'WARN', 'CRITICAL'] })
   @ApiQuery({ name: 'page', required: false }) @ApiQuery({ name: 'size', required: false })
   @ApiOkResponse({ type: Object })

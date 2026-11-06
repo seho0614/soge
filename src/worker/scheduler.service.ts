@@ -467,9 +467,15 @@ export class SchedulerService {
         measureServerHealth();
         const dk = await this.launchWatch.diskAlert();
         if (dk.alert && dk.level) await this.alert('DISK_LOW', dk.level, `서버 디스크 ${dk.usedPct}% 사용 · 남은 ${dk.freeGB}GB — 옛 판 · 백업 묶음을 정리하거나 디스크를 늘리십시오(기준 ${dk.limit}%)`, dk);
+        /* v10.199 (D177 · docs/314) — 간주 결제 켜짐에 「주문 받기」: 꺼질 시각이 지나면 끔 · 꺼질 시각 없이 1시간 넘게 켜져 있으면 CRITICAL(풀리기 전 한 번) */
+        const og = await this.launchWatch.orderOpenGuard();
+        if (og.expired) await this.alert('ORDER_OPEN_EXPIRED', 'WARN', `소개몰 주문 받기를 저절로 껐습니다 — 꺼질 시각 ${og.expired} 이 지남(간주 결제 켜짐 · 시험 결제 주문 막음)`, { until: og.expired });
+        if (og.noEnd) await this.alert('ORDER_OPEN_NO_END', 'CRITICAL', `소개몰 주문 받기가 꺼질 시각 없이 ${og.sinceMin}분째 켜져 있습니다 — 간주 결제(돈을 받지 않은 주문) · 운영 화면 첫 화면에서 끄십시오`, { sinceMin: og.sinceMin });
+        /* v10.199 (D177) — 원인이 없어진 알림에 「풀림」(백업 멈춤 · 백업 실패 · 묶음 깨짐 · 디스크) — 확인 안 한 수 · 메일에서 빠짐 */
+        const rs = await this.launchWatch.resolveAlerts(dk.usedPct, dk.limit);
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
-        detail = { alertMail: am, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 

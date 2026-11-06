@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loadCodes } from './lib/codes';
+import { ymdhm } from './lib/act';   // v10.199 — 「주문 받기」 띠의 꺼질 시각
 import { api, hasToken, onAuthChange, onMfaNeeded, setToken, tokenRoles } from './lib/api';
 import { Login } from './components/Login';
 import { MfaGate, type MfaStatus } from './components/MfaGate';
@@ -226,7 +227,7 @@ function Console() {
 
       {orderLive && (
         <div className="bo-order-live" role="alert" data-order-live-bar="">
-          <b>소개몰 「주문 받기」가 켜져 있습니다</b> — 간주 결제(시험 결제) 상태라 손님 주문이 실제 돈 없이 결제 완료됩니다.{' '}
+          <b>소개몰 「주문 받기」가 켜져 있습니다</b>{settings['mall.order_open_until'] ? <> · <span data-order-live-until="">{ymdhm(settings['mall.order_open_until'])} 에 저절로 꺼짐</span></> : <> · <span data-order-live-until="">꺼질 시각 없음</span></>} — 간주 결제(시험 결제) 상태라 손님 주문이 실제 돈 없이 결제 완료됩니다.{' '}
           <a href="#/home" onClick={(e) => { e.preventDefault(); go('home'); }}>첫 화면 「공개 직후 지켜보기」에서 끄기</a>
         </div>
       )}

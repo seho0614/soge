@@ -6,7 +6,7 @@ import { rateLimitedSince } from '../../common/api-rate-limit';
 import { cspReportsDay } from '../../common/csp-report';
 import { slowSince } from '../../common/response-time';
 import { slowSqlSince } from '../../common/slow-sql';
-import { uploadsBackupState } from '../../common/uploads-backup-state';
+import { uploadsBackupState, uploadsBackupVerified } from '../../common/uploads-backup-state';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -34,9 +34,10 @@ export class LaunchWatchService {
               (SELECT count(*)::int FROM hlt_orders WHERE ${KST('created_at')}) AS orders,
               (SELECT count(*)::int FROM hlt_orders WHERE paid_at IS NOT NULL AND ${KST('paid_at')}) AS "paidOrders",
               (SELECT count(DISTINCT p.order_id)::int FROM hlt_payments p WHERE p.stub AND p.state = 'PAID' AND ${KST('coalesce(p.approved_at, p.created_at)')}) AS "stubPaidOrders",
-              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
+              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND resolved_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'off') AS "assumePayment",
+              (SELECT nullif(value, '') FROM site_settings WHERE key = 'mall.order_open_until') AS "orderOpenUntil",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "digestTo",
               coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS "signupOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'site.notice_bar'), '') AS "noticeBar",
@@ -73,8 +74,8 @@ export class LaunchWatchService {
               (SELECT count(*)::int FROM hlt_orders WHERE ${D('created_at')}) AS orders,
               (SELECT count(DISTINCT p.order_id)::int FROM hlt_payments p WHERE p.stub AND p.state = 'PAID' AND ${D('coalesce(p.approved_at, p.created_at)')}) AS "stubPaidOrders",
               (SELECT count(*)::int FROM ops_alerts WHERE ${D('raised_at')} AND severity IN ('WARN', 'CRITICAL')) AS alerts,
-              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
-              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND severity = 'CRITICAL') AS "openCritical",
+              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND resolved_at IS NULL AND severity IN ('WARN', 'CRITICAL')) AS "openAlerts",
+              (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND resolved_at IS NULL AND severity = 'CRITICAL') AS "openCritical",
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') AS "orderOpen",
               coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to",
               coalesce((SELECT string_agg(title, E'\n' ORDER BY raised_at) FROM ops_alerts WHERE alert_code = 'SETTING_CHANGED' AND ${D('raised_at')}), '') AS "settingChanges"`);
@@ -162,6 +163,58 @@ export class LaunchWatchService {
       `SELECT DISTINCT o.order_no FROM hlt_payments p JOIN hlt_orders o ON o.id = p.order_id
         WHERE p.stub AND p.state = 'PAID' AND coalesce(p.approved_at, p.created_at) > now() - interval '15 minutes' ORDER BY 1 LIMIT 20`);
     return { n: rows.length, orders: rows.map((r) => r.order_no) };
+  }
+
+  /**
+   * v10.199 (D177 · docs/314) — 간주 결제가 켜진 채 「주문 받기」가 켜져 있으면:
+   *   ① 꺼질 시각(mall.order_open_until)이 지났으면 끔(사유 「꺼질 시각이 지나 저절로 끔」 → 중요 설정 바뀜 알림 via DB) → expired
+   *   ② 꺼질 시각 없이 켜진 지 1시간이 넘었으면(DB 직접 수정 · 옛 길) noEnd — 부르는 쪽이 CRITICAL ORDER_OPEN_NO_END(풀리기 전 한 번)
+   *   켜진 때 = 주문 받기 줄의 updated_at(운영 화면은 늘 고침 · DB 로 직접 켜 updated_at 이 옛것이면 1시간을 기다리지 않고 바로 — 가장 위험한 길)
+   *   주문 받기가 꺼졌거나 간주 결제가 꺼졌으면 ORDER_OPEN_NO_END 를 「풀림」
+   */
+  async orderOpenGuard(): Promise<{ open: boolean; expired: string | null; noEnd: boolean; sinceMin: number | null }> {
+    const [g] = await this.db.query<{ open: boolean; until: string | null; overdue: boolean; since_min: number | null; alerted: boolean }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.order_open'), 'on') <> 'off'
+                AND coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'on') = 'on' AS open,
+              (SELECT nullif(value, '') FROM site_settings WHERE key = 'mall.order_open_until') AS until,
+              coalesce((SELECT nullif(value, '')::timestamptz < now() FROM site_settings WHERE key = 'mall.order_open_until'), false) AS overdue,
+              (SELECT floor(extract(epoch FROM now() - updated_at) / 60)::int FROM site_settings WHERE key = 'mall.order_open') AS since_min,
+              EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'ORDER_OPEN_NO_END' AND resolved_at IS NULL) AS alerted`);
+    if (!g.open) {
+      await this.db.query(`UPDATE ops_alerts SET resolved_at = now(), resolve_note = '주문 받기가 꺼짐(또는 간주 결제 꺼짐)'
+                            WHERE alert_code = 'ORDER_OPEN_NO_END' AND resolved_at IS NULL`);
+      return { open: false, expired: null, noEnd: false, sinceMin: null };
+    }
+    if (g.until && g.overdue) {
+      await this.db.transaction(async () => {
+        await this.db.query(`SELECT set_config('app.setting_reason', $1, true)`, [`꺼질 시각(${g.until})이 지나 저절로 끔 — 정기 작업 launch_watch · v10.199`]);
+        await this.db.query(`UPDATE site_settings SET value = 'off', updated_by = NULL, updated_at = now() WHERE key = 'mall.order_open'`);
+        await this.db.query(`UPDATE site_settings SET value = NULL, updated_by = NULL, updated_at = now() WHERE key = 'mall.order_open_until'`);
+      });
+      return { open: false, expired: g.until, noEnd: false, sinceMin: g.since_min };
+    }
+    return { open: true, expired: null, noEnd: !g.until && (g.since_min ?? 0) >= 60 && !g.alerted, sinceMin: g.since_min };
+  }
+
+  /**
+   * v10.199 (D177 · docs/314) — 원인이 없어진 운영 알림에 「풀림」(사람의 확인 기록과 따로 · 확인 안 한 수 · 메일에서 빠짐).
+   *   백업 멈춤 → 새 묶음 · 백업 실패 → 그 뒤 새 묶음 · 묶음 깨짐 → 그 뒤 검사 깨짐 0 · 디스크 → 기준 아래.
+   *   검수 기한 넘김(REVIEW_SLA_BREACH)은 DB 함수 fn_check_sla_alert 가 같은 방식으로 풂(sla_alert 작업).
+   */
+  async resolveAlerts(diskPct: number | null, diskLimit: number): Promise<number> {
+    const ub = uploadsBackupState();
+    const vf = uploadsBackupVerified();
+    let n = 0;
+    const run = async (code: string, note: string, extra = '', params: unknown[] = []) => {
+      const r = await this.db.query(
+        `UPDATE ops_alerts SET resolved_at = now(), resolve_note = $1 WHERE alert_code = '${code}' AND resolved_at IS NULL ${extra} RETURNING id`, [note, ...params]);
+      n += r.length;
+    };
+    if (ub.count > 0 && !ub.stale) await run('UPLOADS_BACKUP_STALE', `새 묶음 ${ub.last} 이 생김`);
+    if (ub.lastAt) await run('UPLOADS_BACKUP_FAILED', `그 뒤 새 묶음 ${ub.last} 이 생김`, 'AND raised_at < $2::timestamptz', [ub.lastAt]);
+    if (vf && vf.bad === 0) await run('UPLOADS_BACKUP_BAD', '그 뒤 묶음 검사에서 깨짐 0', 'AND raised_at < $2::timestamptz', [vf.at]);
+    if (diskPct !== null && diskLimit > 0 && diskPct < diskLimit) await run('DISK_LOW', `디스크 ${diskPct}% — 기준 ${diskLimit}% 아래로`);
+    return n;
   }
 
   /**

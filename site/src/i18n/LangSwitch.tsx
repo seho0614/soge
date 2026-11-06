@@ -17,8 +17,9 @@ export function LangSwitch({ items, locale }: { items: { code: string; name: str
       body: JSON.stringify({ lang: code }) }).catch(() => null);
     router.refresh();
   });
+  /* v10.199 (docs/314) — 641px 이상 모든 PC 폭이 🌐 단추라 마우스를 올리면 지금 언어 이름(title) */
   return (
-    <label className="lang-pick" data-lang-pick="">
+    <label className="lang-pick" data-lang-pick="" title={items.find((l) => l.code === locale)?.name}>
       <span className="sr-only">{t('label')}</span>
       <select value={locale} disabled={busy} onChange={(e) => pick(e.target.value)} aria-label={t('label')}>
         {items.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}

@@ -55,8 +55,9 @@
 @media (min-width: 1241px) and (max-width: 1440px) {
   .sh-hd.in .sh-nav { gap: 20px; }
 }
-/* v10.190 (docs/297) — 641 ~ 1440px 는 언어 칸을 🌐 동그란 단추로(오른쪽 단추 묶음을 줄임) · 고르기 칸은 투명하게 위에 덮어 그대로 누름 · 휴대폰은 메뉴 줄 끝 */
-@media (min-width: 641px) and (max-width: 1440px) {
+/* v10.190 (docs/297) — 641 ~ 1440px 는 언어 칸을 🌐 동그란 단추로(오른쪽 단추 묶음을 줄임) · 고르기 칸은 투명하게 위에 덮어 그대로 누름 · 휴대폰은 메뉴 줄 끝
+ * v10.199 (docs/314 · 대표 11/6 「다국어 아이콘으로 변경 안 되었음」) — 1441px 이상 큰 화면도 🌐 단추(폭마다 모양이 바뀌지 않게) */
+@media (min-width: 641px) {
   .sh-hdr .lang-pick { position: relative; width: 44px; height: 44px; margin-right: 0; border-radius: 50%; background: var(--sgb-tile, #f2f4f7); flex: 0 0 auto; }
   .sh-hdr .lang-pick::before { content: "🌐"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; pointer-events: none; }
   .sh-hdr .lang-pick select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }

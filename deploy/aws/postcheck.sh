@@ -62,7 +62,8 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$n" = "0" ] && ok "개발 계정(@x.com) 없음" || bad "개발 계정(@x.com) ${n}명" "비밀번호가 알려진 계정입니다 — 운영 DB 에 있으면 안 됩니다"
   n=$(q "select count(*) from v_enc_key_missing")
   [ "$n" = "0" ] && ok "열쇠 없이 저장된 자료 0건" || bad "열쇠 없이 저장된 자료 ${n}건" "ENC_KEY 가 걸리지 않은 채 저장됐습니다"
-  n=$(q "SELECT count(*) FROM ops_alerts WHERE severity='CRITICAL' AND acknowledged_at IS NULL")
+  # v10.199 (D177 · docs/314) — 원인이 없어져 정기 작업이 「풀림」을 적은 알림은 뺌
+  n=$(q "SELECT count(*) FROM ops_alerts WHERE severity='CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL")
   [ "$n" = "0" ] && ok "미확인 CRITICAL 경보 0건" || bad "미확인 CRITICAL 경보 ${n}건" "운영 화면 → 경보에서 확인"
   info "계정 $(q "select count(*) from accounts")명 · 관리자 $(q "select count(distinct account_id) from account_roles where role in ('ADMIN','SUPER')")명"
   # v10.195 (docs/306) — D173 이 기존 파트너 상태를 제휴 자격(aff_status)으로 복사할 때 규칙에 걸려 건너뛴 줄(적용 출력에는 NOTICE 가 안 보임)

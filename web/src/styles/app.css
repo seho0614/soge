@@ -330,6 +330,12 @@
 .ad-tile .ts { font-size: 12px; color: var(--ad); margin-top: 4px; }
 .ad-tile .ts.ok { color: var(--ink-3); }
 .ad-tile.warn, .stat.warn { border-color: #FDE68A; background: #FFFBEB; }
+/* v10.199 (docs/314) — 「공개 직후 지켜보기」 칸을 누르면 그 화면으로(링크 칸) · 갈 곳이 없는 칸은 누르는 모양을 빼고 */
+a.ad-tile { text-decoration: none; }
+a.ad-tile .go { font-size: 12px; color: var(--ink-3); font-weight: 700; }
+a.ad-tile:hover .go { color: var(--pp); }
+.ad-tile.static { cursor: default; }
+.ad-tile.static:hover { border-color: var(--line); box-shadow: none; }
 .kpi4 { gap: 10px; margin: 14px 0; }
 .kpi4 > div { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 14px; gap: 2px; }
 .kpi4 b { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }

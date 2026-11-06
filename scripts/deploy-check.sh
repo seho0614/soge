@@ -53,7 +53,8 @@ fi
 
 echo
 echo "── 6. 운영 경보 ──"
-c=$($PSQL "SELECT count(*) FROM ops_alerts WHERE severity='CRITICAL' AND acknowledged_at IS NULL;" 2>/dev/null || echo 0)
+# v10.199 (D177 · docs/314) — 원인이 없어져 「풀림」이 적힌 알림은 뺌
+c=$($PSQL "SELECT count(*) FROM ops_alerts WHERE severity='CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL;" 2>/dev/null || echo 0)
 [ "$c" = "0" ] && ok "미확인 CRITICAL 경보 없음" || no "미확인 CRITICAL $c건" "먼저 처리하십시오"
 
 echo

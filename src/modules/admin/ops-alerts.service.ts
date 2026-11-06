@@ -14,6 +14,7 @@ import { maskMail } from '../../common/mail/mail-admin.service';
  *   알림 내용 자체는 바꾸거나 지우지 않습니다.
  *
  *   v10.198 (D176 · docs/312) — 메일 준비 상태(mailStatus) · 시험 메일(mailTest · SUPER · 1분에 1번 · 감사 기록 OPS_MAIL_TEST)
+ *   v10.199 (D177 · docs/314) — 「풀림」(resolved_at · 정기 작업이 적음) — 확인 안 한 목록 · 종류별 수에서 기본으로 뺌(resolved=show 면 같이)
  * ------------------------------------------------------------------- */
 @Injectable()
 export class OpsAlertsService {
@@ -21,8 +22,10 @@ export class OpsAlertsService {
   private static lastTestAt = 0;
   private get me() { return RequestCtx.actorId(); }
 
-  async list(q: { state?: unknown; code?: unknown; severity?: unknown; page?: unknown; size?: unknown }) {
+  async list(q: { state?: unknown; code?: unknown; severity?: unknown; page?: unknown; size?: unknown; resolved?: unknown }) {
     const open = q.state !== 'all';
+    /* v10.199 (D177 · docs/314) — 확인 안 한 것만 볼 때는 원인이 없어진(풀린) 알림을 기본으로 뺌 · resolved=show 면 같이 */
+    const hideResolved = open && q.resolved !== 'show';
     const code = typeof q.code === 'string' && /^[A-Z][A-Z0-9_]{1,59}$/.test(q.code) ? q.code : null;
     const sev = typeof q.severity === 'string' && ['INFO', 'WARN', 'CRITICAL'].includes(q.severity) ? q.severity : null;
     const size = Math.min(100, Math.max(1, Number(q.size) || 30));
@@ -30,25 +33,28 @@ export class OpsAlertsService {
     const items = await this.db.query(
       `SELECT o.id::text AS id, o.alert_code AS code, o.severity, o.title, o.detail, o.raised_at AS "raisedAt",
               o.acknowledged_at AS "acknowledgedAt", o.ack_note AS "ackNote", a.name AS "acknowledgedBy", o.mailed_at AS "mailedAt",
-              o.remailed_at AS "remailedAt"
+              o.remailed_at AS "remailedAt", o.resolved_at AS "resolvedAt", o.resolve_note AS "resolveNote"
          FROM ops_alerts o LEFT JOIN accounts a ON a.id = o.acknowledged_by
-        WHERE ($1::boolean IS FALSE OR o.acknowledged_at IS NULL)
+        WHERE ($1::boolean IS FALSE OR o.acknowledged_at IS NULL) AND ($6::boolean IS FALSE OR o.resolved_at IS NULL)
           AND ($2::text IS NULL OR o.alert_code = $2) AND ($3::text IS NULL OR o.severity = $3)
         ORDER BY o.raised_at DESC, o.id DESC
-        LIMIT $4 OFFSET $5`, [open, code, sev, size, (page - 1) * size]);
-    const [t] = await this.db.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM ops_alerts o
+        LIMIT $4 OFFSET $5`, [open, code, sev, size, (page - 1) * size, hideResolved]);
+    const [t] = await this.db.query<{ n: number; resolved: number }>(
+      `SELECT count(*) FILTER (WHERE $4::boolean IS FALSE OR o.resolved_at IS NULL)::int AS n,
+              count(*) FILTER (WHERE o.resolved_at IS NOT NULL)::int AS resolved
+         FROM ops_alerts o
         WHERE ($1::boolean IS FALSE OR o.acknowledged_at IS NULL)
-          AND ($2::text IS NULL OR o.alert_code = $2) AND ($3::text IS NULL OR o.severity = $3)`, [open, code, sev]);
+          AND ($2::text IS NULL OR o.alert_code = $2) AND ($3::text IS NULL OR o.severity = $3)`, [open, code, sev, hideResolved]);
     /* 종류별 — 확인 안 한 수 · 지난 7일 수 · 가장 최근(목록 위 묶음 칸) */
     const codes = await this.db.query(
-      `SELECT alert_code AS code, count(*) FILTER (WHERE acknowledged_at IS NULL)::int AS open,
+      `SELECT alert_code AS code, count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL)::int AS open,
+              count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NOT NULL)::int AS resolved,
               count(*) FILTER (WHERE raised_at > now() - interval '7 days')::int AS "last7d", max(raised_at) AS "lastAt",
-              (array_agg(severity ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'WARN' THEN 2 ELSE 3 END) FILTER (WHERE acknowledged_at IS NULL))[1] AS "openSeverity"
+              (array_agg(severity ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'WARN' THEN 2 ELSE 3 END) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL))[1] AS "openSeverity"
          FROM ops_alerts GROUP BY alert_code
         HAVING count(*) FILTER (WHERE acknowledged_at IS NULL) > 0 OR max(raised_at) > now() - interval '7 days'
-        ORDER BY count(*) FILTER (WHERE acknowledged_at IS NULL) DESC, max(raised_at) DESC`);
-    return { items, total: t?.n ?? 0, page, size, pages: Math.max(1, Math.ceil((t?.n ?? 0) / size)), codes };
+        ORDER BY count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL) DESC, max(raised_at) DESC`);
+    return { items, total: t?.n ?? 0, resolvedHidden: hideResolved ? t?.resolved ?? 0 : 0, page, size, pages: Math.max(1, Math.ceil((t?.n ?? 0) / size)), codes };
   }
 
   async ack(id: string, note?: string) {

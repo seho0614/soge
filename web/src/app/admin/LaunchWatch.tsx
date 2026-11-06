@@ -7,6 +7,7 @@ import { Flash } from '../../components/Flash';
 interface Watch {
   signups: number; logins: number; posts: number; listings: number; orders: number; paidOrders: number; stubPaidOrders: number;
   openAlerts: number; orderOpen: 'on' | 'off'; assumePayment: 'on' | 'off'; directOnSale: number; warn?: string; digestTo?: string;
+  orderOpenUntil?: string | null;   // v10.199 (D177) — 간주 결제 켜짐에 주문 받기를 켜면 저절로 꺼질 시각
   signupOpen?: 'on' | 'off'; noticeBar?: string;
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
@@ -29,8 +30,17 @@ interface Watch {
  *
  * 사용자 웹을 전체 공개(11/1)한 뒤 오늘 들어온 것 · **시험 결제(stub)로 결제 완료된 주문**(돈을 받지 않은 주문) · 확인 안 한 운영 알림.
  * 「주문 받기」(mall.order_open)를 여기서 바로 끄고 켭니다(SUPER — 사이트 설정과 같은 API · 감사 기록).
+ * v10.199 (D177 · docs/314) — 칸을 누르면 그 화면으로 · 간주 결제 켜짐에 주문 받기 켜기는 꺼질 시각(1 ~ 24시간)을 함께.
  */
 const NOTICE_DEFAULT = '시범 운영 중입니다 — 소개몰 결제 등 일부 기능은 시험 모드로 동작합니다.';
+/* v10.199 (docs/314) — 칸을 누르면 갈 화면(탭 · 이 카드는 ADMIN · SUPER 만 보고 갈 화면도 모두 ADMIN 이 봄) · 같은 쪽 아래 상세(data 이름)는 펼쳐서 그 자리로 */
+const GO: Record<string, string> = { members: '회원', community: '글 검수', queue: '검수 큐', 'hlt-orders': '소개몰 주문', 'ops-alerts': '운영 알림', 'server-errors': '서버 오류' };
+const ORDER_HOURS = [1, 2, 4, 8, 24];   // 서버 AdminService.ORDER_OPEN_HOURS 와 같게
+const openDetail = (sel: string) => {
+  const el = document.querySelector<HTMLDetailsElement>(`[${sel}]`);
+  if (!el) return;
+  el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
 
 export function LaunchWatch() {
   const w = useApi<Watch>('/admin/launch-watch');
@@ -40,6 +50,7 @@ export function LaunchWatch() {
   const [openForm, setOpenForm] = useState(false);
   const [openReason, setOpenReason] = useState('');
   const [openConfirm, setOpenConfirm] = useState('');
+  const [openHours, setOpenHours] = useState(2);   // v10.199 (D177) — 꺼질 시각(시간 · 기본 2)
   if (w.error || !w.data) return null;
   const d = w.data;
   /* v10.196 — 주문 받기를 바꾸면 모든 화면 위 띠(App.tsx)도 바로 다시 읽게 */
@@ -52,8 +63,8 @@ export function LaunchWatch() {
       to === 'off' ? '주문 받기를 껐습니다.' : '주문 받기를 켰습니다.');
   };
   const openWithReason = () => {
-    void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: 'on', reason: openReason, confirm: openConfirm }) }),
-      () => { setOpenForm(false); setOpenReason(''); setOpenConfirm(''); reloadAll(); }, '주문 받기를 켰습니다 — 운영 알림에 사유가 남았습니다.');
+    void a.run('order', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'mall.order_open', value: 'on', reason: openReason, confirm: openConfirm, hours: openHours }) }),
+      () => { setOpenForm(false); setOpenReason(''); setOpenConfirm(''); reloadAll(); }, `주문 받기를 켰습니다 — ${openHours}시간 뒤 저절로 꺼집니다 · 운영 알림에 사유가 남았습니다.`);
   };
   /* v10.173 (D162 · docs/266) — 가입 잠시 막기 · 사용자 웹 안내 띠 · 시험 결제 주문 정리 */
   const setting = (key: string, value: string, done: string) =>
@@ -81,23 +92,30 @@ export function LaunchWatch() {
     if (digest !== null) { setDigest(null); return; }
     void a.run('digest', async () => { setDigest((await api<{ text: string }>('/admin/launch-watch/digest')).text); }, undefined, '어제 요약을 지금 계산했습니다(알림 · 메일은 남기지 않음).');
   };
-  const tiles: Array<[string, number, boolean?]> = [
-    ['오늘 가입', d.signups], ['오늘 로그인', d.logins], ['소개광장 글', d.posts], ['매물', d.listings],
-    ['소개몰 주문', d.orders], ['결제 완료', d.paidOrders], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0],
-    ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0],
+  /* [이름, 숫자, 노란 칸, 갈 곳(탭) 또는 '@같은 쪽 상세 data 이름'] — 갈 곳이 없으면 숫자만 */
+  const tiles: Array<[string, number, boolean, string?]> = [
+    ['오늘 가입', d.signups, false, 'members'], ['오늘 로그인', d.logins, false, 'members'], ['소개광장 글', d.posts, false, 'community'], ['매물', d.listings, false, 'queue'],
+    ['소개몰 주문', d.orders, false, 'hlt-orders'], ['결제 완료', d.paidOrders, false, 'hlt-orders'], ['시험 결제 주문', d.stubPaidOrders, d.stubPaidOrders > 0, 'hlt-orders'], ['확인 안 한 알림', d.openAlerts, d.openAlerts > 0, 'ops-alerts'],
+    ['서버 오류(1시간)', d.serverErrorsHour ?? 0, (d.serverErrorsHour ?? 0) > 0, 'server-errors'],
     ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
-    ['정책 보고(24시간)', d.cspDay?.n ?? 0],
-    ['느린 응답 p95 ms(1시간)', d.slowHour?.p95 ?? 0, !!d.slowLimitMs && (d.slowHour?.p95 ?? 0) >= d.slowLimitMs],
+    ['정책 보고(24시간)', d.cspDay?.n ?? 0, false, (d.cspDay?.top.length ?? 0) > 0 ? '@data-csp-top' : undefined],
+    ['느린 응답 p95 ms(1시간)', d.slowHour?.p95 ?? 0, !!d.slowLimitMs && (d.slowHour?.p95 ?? 0) >= d.slowLimitMs, (d.slowHour?.top.length ?? 0) > 0 ? '@data-slow-top' : undefined],
   ];
+  const until = d.orderOpen === 'on' && d.orderOpenUntil ? ymdhm(d.orderOpenUntil) : null;
   const ub = d.uploadsBackup;
   return (
     <section className="card pad" data-launch-watch="">
       <h3 className="sec">공개 직후 지켜보기 <small className="dim">오늘 · 한국 시간</small></h3>
       <Flash msg={a.msg} err={a.err} />
       <div className="ad-tiles">
-        {tiles.map(([k, v, warn]) => (
-          <div key={k} className={`ad-tile${warn ? ' warn' : ''}`} data-watch={k}><span className="tl">{k}</span><b>{n(v)}</b></div>
-        ))}
+        {tiles.map(([k, v, warn, go]) => {
+          const cls = `ad-tile${warn ? ' warn' : ''}`;
+          if (!go) return <div key={k} className={`${cls} static`} data-watch={k}><span className="tl">{k}</span><b>{n(v)}</b></div>;
+          if (go.startsWith('@')) return (
+            <a key={k} href="#" className={cls} data-watch={k} data-go={go.slice(1)} title="아래 상세 보기"
+               onClick={(e) => { e.preventDefault(); openDetail(go.slice(1)); }}><span className="tl">{k}</span><b>{n(v)}</b><span className="go">아래 상세 ↓</span></a>);
+          return <a key={k} href={`#/${go}`} className={cls} data-watch={k} data-go={go} title={`${GO[go]} 화면으로`}><span className="tl">{k}</span><b>{n(v)}</b><span className="go">→ {GO[go]}</span></a>;
+        })}
       </div>
       {/* v10.182 (D171) — 서버 디스크 · 메모리 */}
       {d.server && (() => {
@@ -136,7 +154,9 @@ export function LaunchWatch() {
       )}
       {d.warn && <p className="card warn" data-watch-warn="">{d.warn}</p>}
       <p>
-        소개몰 주문 받기 <b data-order-open={d.orderOpen}>{d.orderOpen === 'on' ? '켜짐' : '꺼짐'}</b> · 간주 결제 {d.assumePayment === 'on' ? '켜짐(시험 결제)' : '꺼짐'} · 판매 중 직판 상품 {n(d.directOnSale)}개{' '}
+        소개몰 주문 받기 <b data-order-open={d.orderOpen}>{d.orderOpen === 'on' ? '켜짐' : '꺼짐'}</b>
+        {until && <> <b className="warn-text" data-order-until={d.orderOpenUntil ?? ''}>({until} 에 저절로 꺼짐)</b></>}
+        {d.orderOpen === 'on' && d.assumePayment === 'on' && !d.orderOpenUntil && <> <b className="warn-text" data-order-until="">(꺼질 시각 없음 — 끄십시오)</b></>} · 간주 결제 {d.assumePayment === 'on' ? '켜짐(시험 결제)' : '꺼짐'} · 판매 중 직판 상품 {n(d.directOnSale)}개{' '}
         <button className={d.orderOpen === 'on' ? 'btn-no' : 'btn-ok'} disabled={a.busy === 'order'} onClick={toggle} data-order-toggle="">{d.orderOpen === 'on' ? '주문 받기 끄기' : '주문 받기 켜기'}</button>
       </p>
       {openForm && d.orderOpen !== 'on' && (
@@ -144,6 +164,10 @@ export function LaunchWatch() {
           <p>간주 결제가 켜져 있어 <b>돈을 받지 않은 「결제 완료」 주문</b>이 생깁니다. 결제대행사 연결 전에는 켜지 않는 것이 원칙입니다. 시연 · 시험 주문이 꼭 필요하면 최고 관리자(SUPER)가 사유와 확인 문구를 넣으십시오 — 운영 알림에 남습니다.</p>
           <label>사유(10자 이상) <input value={openReason} maxLength={300} onChange={(e) => setOpenReason(e.target.value)} data-order-open-reason="" /></label>{' '}
           <label>확인 문구 「시험 결제 주문을 받습니다」 <input value={openConfirm} maxLength={50} onChange={(e) => setOpenConfirm(e.target.value)} data-order-open-confirm="" /></label>{' '}
+          {/* v10.199 (D177) — 꺼질 시각 · 정기 작업(10분마다)이 지나면 끄고 운영 알림 「주문 받기 저절로 꺼짐」 */}
+          <label>저절로 끄기 <select value={openHours} onChange={(e) => setOpenHours(Number(e.target.value))} data-order-open-hours="">
+            {ORDER_HOURS.map((h) => <option key={h} value={h}>{h}시간 뒤</option>)}
+          </select></label>{' '}
           <button className="btn-no" disabled={a.busy === 'order' || openReason.trim().length < 10 || openConfirm.trim() !== '시험 결제 주문을 받습니다'} onClick={openWithReason} data-order-open-submit="">그래도 켜기</button>{' '}
           <button className="btn-plain" onClick={() => setOpenForm(false)}>그만두기</button>
         </div>
