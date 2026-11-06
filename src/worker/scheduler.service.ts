@@ -477,12 +477,15 @@ export class SchedulerService {
         const aw = await this.launchWatch.agentWatch();
         if (aw.live) await this.alert('AGENT_LIVE', aw.live.severity, aw.live.title, aw.live.detail);
         if (aw.gap) await this.alert('AGENT_READY_GAP', 'WARN', aw.gap.title, aw.gap.detail);
+        /* v10.205 (docs/328) — AI 켜기 다음 단계가 「할 차례」(앞 단계 기준 넘음)면 단계마다 한 번 */
+        const sr = await this.launchWatch.agentStepReady();
+        for (const x of sr) await this.alert('AGENT_STEP_READY', 'INFO', x.title, x.detail);
         /* v10.199 (D177) — 원인이 없어진 알림에 「풀림」(백업 멈춤 · 백업 실패 · 묶음 깨짐 · 디스크) — 확인 안 한 수 · 메일에서 빠짐 */
         const rs = await this.launchWatch.resolveAlerts(dk.usedPct, dk.limit);
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
         const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
-        detail = { alertMail: am, alertPush: ap, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step) };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 

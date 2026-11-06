@@ -19,6 +19,9 @@ import { ErrorView } from '../../components/ErrorView';
  * v10.161 (docs/246 · D151) — 시행일 지키기: 시행일이 미래면 「시행 예정」(앞 판은 시행일까지 게시 그대로 · 재동의는 시행일부터)
  *   · 줄마다 「예정 취소」(시행일 전 · 동의 기록 없을 때 · PATCH /admin/terms/{code}/unschedule · 감사 TERM_UNSCHEDULE)
  *   · 게시 확인 창에 이용약관 제14조(7일 전 · 불리한 변경 30일 전) 경고 · 운영 화면 메뉴 「관 관리 › 약관」 에서도 엶
+ *
+ * v10.205 (docs/328) — 처음 게시하는 약관(앞 판 없음)은 시행일이 미래여도 게시하는 순간 시행 — 확인 창에 경고 · 재동의 대상 수 ·
+ *   처리방침이면 AI 잠금 풀림과 빠진 것(GET /admin/terms/{code}/publish-preview · 게시 규칙은 그대로)
  */
 
 interface Term {
@@ -29,6 +32,8 @@ interface Term {
   /** v10.204 (D181) — 필수 약관 지금 판의 동의 현황(활동 중 계정) */ consent?: { target: number; agreed: number; missing: number } | null;
 }
 
+/** v10.205 (docs/328) — GET /admin/terms/{code}/publish-preview */
+interface Preview { first: boolean; current: string | null; required: boolean; target: number; aiUnlock: boolean; aiGaps: string[]; aiSwitches: string }
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
 const holes = (b: string) => (b.match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
@@ -105,6 +110,15 @@ export function TermsPanel() {
     const prev = all.find((u) => u.code === t.code && u.status === 'PUBLISHED' && !u.scheduled);
     const lead = Math.round((Date.parse(day) - Date.parse(todayKst())) / 86_400_000);
     const lines = [`「${t.title}」 ${t.version} 을 시행일 ${day} 로 게시할까요?`, ''];
+    /* v10.205 (docs/328) — 앞 판이 없으면 시행일이 미래여도 게시하는 순간 시행(D151) · 재동의 대상 · 처리방침이면 AI 잠금 풀림 */
+    const pv = await api<Preview>(`/admin/terms/${t.code}/publish-preview?version=${encodeURIComponent(t.version)}`).catch(() => null);
+    if (pv?.first) {
+      lines.push(`⚠ 처음 게시하는 약관입니다 — ${lead > 0 ? `시행일을 ${day} 로 넣어도 ` : ''}게시하는 순간 바로 시행됩니다(「시행 예정」 · 7일 전 고지는 이미 게시된 판을 바꿀 때만).`);
+      if (pv.required) lines.push(`· 활동 계정 ${pv.target.toLocaleString('ko-KR')}명 모두 다음 로그인 때 이 약관에 동의해야 합니다.`);
+      if (lead > 0) lines.push(`· ${day} 에 시행하려면 그날 게시하십시오.`);
+      lines.push('');
+    }
+    if (pv?.aiUnlock) lines.push(`⚠ AI 잠금이 ${pv.first || lead <= 0 ? '바로' : `${day} 에`} 풀립니다(국외 이전 조항) — ${pv.aiGaps.length ? `빠진 것: ${pv.aiGaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${pv.aiSwitches}`, '');
     if (prev && lead > 0) lines.push(`지금 시행 중인 ${prev.version} 은 ${day} 전날까지 그대로 시행되고, 회원 재동의는 ${day} 부터 받습니다. 그동안 사용자 웹에 「바뀔 약관」 알림이 나갑니다.`, '');
     if (prev && lead < 7) lines.push(`⚠ 시행일까지 ${lead}일 — 이용약관 제14조는 시행 7일 전 고지(회원에게 불리한 변경은 30일 전)입니다.`, '');
     else if (prev && lead < 30 && !adverse) lines.push(`회원에게 불리한 변경이면 30일 전 고지가 필요합니다(지금 ${lead}일 전) — 불리하면 「회원에게 불리한 변경」을 고르십시오.`, '');
@@ -119,7 +133,7 @@ export function TermsPanel() {
         { method: 'PATCH', body: JSON.stringify({ version: t.version, effectiveFrom: day, adverse }) });
       setRes({ ok: true, text: r.scheduled
         ? `${t.title} ${r.version} 을 시행 예정으로 게시했습니다(시행 ${day} · 그때까지 앞 판 시행 · 재동의는 ${day} 부터 · 회원 알림 ${r.notified ?? 0}건). 남은 오픈 차단 ${r.remainingBlockers}건.`
-        : `${t.title} ${r.version} 을 게시했습니다(시행 ${day}). 남은 오픈 차단 ${r.remainingBlockers}건.` });
+        : `${t.title} ${r.version} 을 게시했습니다(시행 ${day}${pv?.first && lead > 0 ? ' · 앞 판이 없어 지금부터 시행 중' : ''}). 남은 오픈 차단 ${r.remainingBlockers}건.` });
       reload();
     } catch (e) {
       setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '게시하지 못했습니다.' });

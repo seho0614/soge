@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Put, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
   OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
-  TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
+  TermPublishPreviewDto, TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -53,6 +53,22 @@ export class TermsController {
   @Audit('TERM_DRAFT', 'TERM')
   draft(@Param('code') code: string, @Body() dto: UpsertTermDto) {
     return this.terms.upsertDraft(code, dto);
+  }
+
+  @Get('terms/:code/publish-preview')
+  @ApiOperation({
+    summary: '게시 전 영향 보기 (v10.205)',
+    description:
+      '게시 확인 창이 부릅니다(읽기만). first=true 면 앞 판이 없어 **시행일을 미래로 넣어도 게시하는 순간 시행**(D151) — 필수 약관이면 target 명이 다음 로그인 때 동의. ' +
+      '처리방침에 국외 이전 조항이 있고 지금 AI 가 잠겨 있으면 aiUnlock=true 와 빠진 것(aiGaps).',
+  })
+  @ApiParam({ name: 'code', example: 'PRIVACY' })
+  @ApiQuery({ name: 'version', example: '1.0' })
+  @ApiOkResponse({ type: TermPublishPreviewDto })
+  @ApiResponse({ status: 404, description: '해당 버전의 약관 없음', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'TERM_PUBLISHED 이미 게시된 판 · TERM_ARCHIVED 보관된 판', type: ErrorDto })
+  publishPreview(@Param('code') code: string, @Query('version') version: string) {
+    return this.terms.publishPreview(code, String(version ?? ''));
   }
 
   @Patch('terms/:code/publish')

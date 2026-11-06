@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { blockerOwner } from './open-blocker-owner';
 import { buildReviewPack, PackTerm } from './terms-review-pack';
 import { NotFound, PolicyViolation } from '../../core/errors';
+import { AgentService } from '../agent/agent.service';
 
 /**
  * 약관 관리 (B-12).
@@ -14,7 +15,7 @@ import { NotFound, PolicyViolation } from '../../core/errors';
  */
 @Injectable()
 export class TermsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
 
   /** 관리자용. 미발행 약관도 보입니다. */
   async listAll() {
@@ -75,6 +76,37 @@ export class TermsService {
        dto.isRequired ?? base.is_required, base.display_order, base.is_notice, base.audience,
        /* 재동의 화면 「바뀐 점」(D041) */ dto.changeNote?.trim() || null]);
     return { ...row, holes: TermsService.holes(dto.body).length };
+  }
+
+  /**
+   * v10.205 (docs/328) — 게시 전 영향. 앞 판이 없으면(처음 게시) 시행일을 미래로 넣어도 게시하는 순간 「지금 판」(D151 v_terms_current) —
+   *   필수 약관이면 활동 중 계정 모두 다음 로그인 때 동의 · 국외 이전 조항이 든 처리방침이면 AI 잠금이 바로 풀림. 게시 규칙은 바꾸지 않음(보여 주기만).
+   */
+  async publishPreview(code: string, version: string) {
+    const [t] = await this.db.query<{ title: string; required: boolean; body: string; status: string }>(
+      `SELECT title, is_required AS required, coalesce(body, '') AS body, status FROM terms WHERE code = $1 AND version = $2`, [code, version]);
+    if (!t) throw new NotFound('해당 버전의 약관이 없습니다.');
+    /* 게시(publish)와 같은 글(영어 사전에 있음) */
+    if (t.status === 'PUBLISHED') throw new PolicyViolation('TERM_PUBLISHED', '이미 게시된 판입니다 — 시행일을 바꾸려면 「예정 취소」 뒤 다시 게시하십시오.');
+    if (t.status === 'ARCHIVED') throw new PolicyViolation('TERM_ARCHIVED', '보관된 판은 게시할 수 없습니다 — 새 판을 만들어 게시하십시오.');
+    const [r] = await this.db.query<{ current: string | null; target: number; ready: boolean; cap: string; enabled: boolean; review: boolean; chat: boolean }>(
+      `SELECT (SELECT version FROM v_terms_current WHERE code = $1 AND version <> $2) AS current,
+              (SELECT count(*)::int FROM accounts WHERE status = 'ACTIVE') AS target,
+              public.fn_privacy_ai_ready() AS ready,
+              coalesce(nullif((SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd'), ''), '0') AS cap,
+              coalesce((SELECT value FROM site_settings WHERE key = 'agent.enabled'), 'off') = 'on' AS enabled,
+              coalesce((SELECT value FROM site_settings WHERE key = 'agent.review_shadow.enabled'), 'off') = 'on' AS review,
+              coalesce((SELECT value FROM site_settings WHERE key = 'agent.chat.enabled'), 'off') = 'on' AS chat`, [code, version]);
+    /* 국외 이전 조항 = fn_privacy_ai_ready 와 같은 규칙(제목 줄) */
+    const aiUnlock = code === 'PRIVACY' && !r.ready && /(^|\n)#{1,4}[^\n]*국외 이전/.test(t.body);
+    const aiGaps = aiUnlock
+      ? [(await this.agent.keySource()) === 'NONE' ? 'AI 키 없음' : null, Number(r.cap) > 0 ? null : '월 상한 0', r.enabled ? null : 'AI 전체 꺼짐']
+          .filter((x): x is string => !!x)
+      : [];
+    return {
+      code, version, title: t.title, first: !r.current, current: r.current, required: t.required, target: t.required ? r.target : 0,
+      aiUnlock, aiGaps, aiSwitches: aiUnlock ? `검수 보조 ${r.review ? '켜짐' : '꺼짐'} · AI 상담 ${r.chat ? '켜짐' : '꺼짐'}` : '',
+    };
   }
 
   /**

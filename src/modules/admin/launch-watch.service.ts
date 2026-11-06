@@ -39,6 +39,17 @@ export const agentLines = (a: AgentDay, label: string): string[] => {
 export type Reconsent = { code: string; title: string; version: string; target: number; agreed: number; missing: number };
 export const reconsentLines = (rows: Reconsent[]): string[] => rows.filter((r) => r.missing > 0).map((r) =>
   `재동의 — ${r.title} ${r.version}: ${r.agreed} / ${r.target} (${r.target ? Math.floor((100 * r.agreed) / r.target) : 0}%) · 남음 ${r.missing}`);
+/* v10.205 (docs/328) — AI 켜기 단계(GET /admin/agent/rollout 과 같은 셈) 한 줄 · 처리방침 시행 전이면 줄 없음(위 「AI — 잠김」) */
+export type AgentStep = { step: number; code: string; label: string; on: boolean; state: string; now: string };
+export const agentStepLine = (steps: AgentStep[]): string[] => {
+  if (!steps.length || steps[0].state !== 'DONE') return [];
+  const cur = [...steps].reverse().find((x) => x.on) ?? steps[0];
+  const next = steps.find((x) => x.step > cur.step && !x.on);
+  if (!next) return [`AI 켜기 단계 — 모두 켜짐 · 마지막 ${cur.step} ${cur.label}: ${cur.now}`];
+  return [`AI 켜기 단계 — 지금 ${cur.step} ${cur.label}: ${cur.now} · 다음 ${next.step} ${next.label}: ${next.state === 'READY' ? '할 차례' : '앞 단계 기준 전'}`];
+};
+/** 「할 차례」 알림을 보내는 단계 — 처리방침 · 키 단계는 AGENT_LIVE 가 알림 */
+const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 
 @Injectable()
 export class LaunchWatchService {
@@ -79,6 +90,7 @@ export class LaunchWatchService {
       diskWarnPct: c.diskWarnPct,
       ai: agentLines(await this.agentDay('today'), '오늘'),   // v10.204 (D181) — AI 상담 · 검수 보조 · 비용 · 상한
       reconsent: reconsentLines(await this.reconsent()),     // v10.204 — 필수 약관 동의 안 한 회원
+      aiStep: agentStepLine(await this.agentSteps()),        // v10.205 (docs/328) — AI 켜기 단계 지금 · 다음
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }
 
@@ -117,6 +129,7 @@ export class LaunchWatchService {
       ...(c.settingChanges ? ['어제 바뀐 중요 설정:', ...String(c.settingChanges).split('\n').map((t: string) => `  - ${t.replace('중요 설정 바뀜 — ', '')}`)] : []),
       /* v10.204 (D181 · docs/326) — AI 상담 · 비용 · 상한 / 필수 약관 재동의 진행 */
       ...agentLines(await this.agentDay('yesterday'), '어제'),
+      ...agentStepLine(await this.agentSteps()),   // v10.205 (docs/328) — AI 켜기 단계
       ...reconsentLines(await this.reconsent()),
       diskLine(serverHealth()),
       '',
@@ -185,6 +198,30 @@ export class LaunchWatchService {
       detail: { ...detail, version: r.upcoming_ver, day: r.upcoming_day },
     } : null;
     return { live, gap };
+  }
+
+  /** v10.205 (docs/328) — AI 켜기 단계 */
+  async agentSteps(): Promise<AgentStep[]> {
+    return (await this.agent.rollout()) as AgentStep[];
+  }
+
+  /**
+   * v10.205 — 다음 단계가 「할 차례」(앞 단계 기준을 넘음 · 아직 꺼짐)가 되면 단계마다 한 번 AGENT_STEP_READY(정보 · 급한 알림 메일 · 텔레그램).
+   *   켜는 것은 대표(AI 스위치 · SUPER). 예: 검수 보조 7일 → 「AI 상담 2단계」 할 차례.
+   */
+  async agentStepReady(steps?: AgentStep[]): Promise<{ title: string; detail: Record<string, unknown> }[]> {
+    const all = steps ?? await this.agentSteps();
+    const ready = all.filter((x) => STEP_ALERT.includes(x.code) && x.state === 'READY');
+    if (!ready.length) return [];
+    const sent = new Set((await this.db.query<{ step: string }>(
+      `SELECT DISTINCT detail->>'step' AS step FROM ops_alerts WHERE alert_code = 'AGENT_STEP_READY'`)).map((x) => x.step));
+    return ready.filter((x) => !sent.has(x.code)).map((x) => {
+      const prev = all.find((p) => p.step === x.step - 1);
+      return {
+        title: `AI 다음 단계 켤 수 있음 — ${x.step} ${x.label}${prev ? ` · 앞 단계 ${prev.label}: ${prev.now}` : ''} · 운영 화면 › AI 에이전트 › AI 켜기 단계에서 보고 켜십시오(켜기는 최고 관리자)`,
+        detail: { step: x.code, label: x.label, prev: prev?.now ?? null },
+      };
+    });
   }
 
   /** 지난 1시간 가입이 기준(ops.signup_spike_per_hour) 이상이고, 지난 1시간 안에 같은 알림이 없으면 알릴 것 */

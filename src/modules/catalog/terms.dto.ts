@@ -92,6 +92,20 @@ export class TermPublishResultDto {
   remainingBlockers!: number;
 }
 
+/** v10.205 (docs/328) — 게시 전에 보는 영향(처음 게시는 시행일이 미래여도 게시하는 순간 시행 · D151) */
+export class TermPublishPreviewDto {
+  @ApiProperty({ example: 'PRIVACY' }) code!: string;
+  @ApiProperty({ example: '1.0' }) version!: string;
+  @ApiProperty({ example: '개인정보처리방침' }) title!: string;
+  @ApiProperty({ description: '지금 시행 중인(또는 첫 판으로 예정된) 판이 없음 — 시행일을 미래로 넣어도 게시하는 순간 「지금 판」' }) first!: boolean;
+  @ApiPropertyOptional({ nullable: true, example: null, description: '지금 시행 중인 판 번호(없으면 null)' }) current!: string | null;
+  @ApiProperty({ description: '필수 약관(동의 항목)' }) required!: boolean;
+  @ApiProperty({ example: 300, description: '필수 약관이면 동의해야 하는 활동 중(ACTIVE) 계정 수(v_term_not_agreed 와 같은 대상) · 아니면 0' }) target!: number;
+  @ApiProperty({ description: '처리방침이고 국외 이전 조항이 있으며 지금은 AI 가 잠겨 있음 — 이 판이 시행되면 AI 잠금이 풀림' }) aiUnlock!: boolean;
+  @ApiProperty({ type: [String], example: ['AI 키 없음', '월 상한 0'], description: 'aiUnlock 일 때 빠진 것(AI 키 없음 · 월 상한 0 · AI 전체 꺼짐) · 아니면 빈 목록' }) aiGaps!: string[];
+  @ApiProperty({ example: '검수 보조 꺼짐 · AI 상담 꺼짐', description: 'aiUnlock 일 때 스위치 상태 · 아니면 빈 문자열' }) aiSwitches!: string;
+}
+
 export class OpenBlockerDto {
   @ApiProperty({ enum: ['SETTING', 'TERM', 'FOOTER', 'INTEGRATION', 'ASSUME', 'READY'] }) kind!: string;
   @ApiProperty() item!: string;

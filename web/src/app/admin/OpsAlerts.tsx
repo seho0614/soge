@@ -46,7 +46,7 @@ const NAME: Record<string, string> = {
   UPLOADS_BACKUP_OFFSITE_FAILED: '백업 디스크 밖 올리기 실패', UPLOADS_BACKUP_FAILED: '올린 파일 백업 실패', UPLOADS_BACKUP_BAD: '올린 파일 백업 묶음 깨짐',   // v10.197 · v10.198
   ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
-  AGENT_LIVE: 'AI 사용 가능해짐', AGENT_READY_GAP: 'AI 준비 덜 됨', AGENT_CAP_NEAR: 'AI 월 상한 가까움',   // v10.204 (D181 · docs/326)
+  AGENT_LIVE: 'AI 사용 가능해짐', AGENT_READY_GAP: 'AI 준비 덜 됨', AGENT_CAP_NEAR: 'AI 월 상한 가까움', AGENT_STEP_READY: 'AI 다음 단계 켤 수 있음',   // v10.204 (D181 · docs/326) · v10.205 (D182 · docs/328)
   /* v10.203 (docs/322 4절) — 화면에 영어 코드로만 보이던 21종 */
   AGENT_CAP_REACHED: 'AI 월 상한 닿음', AGENT_CHAT_HANDOFF: 'AI 상담 담당자 연결', K_VALUE_BREACH: '검수 부담(k값) 경보',
   LEAD_ASSIGN_FAILED: '리드 배정 오류', LEAD_CASH_AUTO_FAILED: '리드 이용료 자동 충전 실패', LEAD_UNMATCHED: '보낼 업체 없는 상담 신청',
