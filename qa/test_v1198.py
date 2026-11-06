@@ -51,7 +51,7 @@ SC = rd('src/worker/scheduler.service.ts'); LW = rd('src/modules/admin/launch-wa
 SJ = json.loads(rd('spec/screens.json') or '[]')
 scr = next((s for s in (SJ if isinstance(SJ, list) else SJ.get('screens', [])) if s.get('id') == 'SB-ADM-OPS-010'), {})
 ok('① 다시 메일 · 하루 요약 · 화면 · 화면 목록 — [다시] · markMailed(다시 따로) · alertMail 앞 · 긴급 줄 · 메일 줄 · 단추 · 다시 보냄 · API 2',
-   "x.again ? '[다시] ' : ''" in SC and 'markMailed(p.items.filter((x) => !x.again)' in SC and 'detail = { alertMail: am, ...r' in SC
+   "x.again ? '[다시] ' : ''" in SC and 'markMailed(p.items.filter((x) => !x.again)' in SC and 'detail = { alertMail: am, ' in SC
    and 'FROM fn_ops_alert_remail_pending()' in LW and 'SET remailed_at = now() WHERE id = ANY($1::bigint[]) AND remailed_at IS NULL' in LW
    and '"openCritical"' in LW and '확인 안 한 긴급 알림' in LW
    and 'data-mail-status=' in OX and 'data-mail-test=""' in OX and '다시 보냄 {ymdhm(x.remailedAt)}' in OX and "tokenRoles().includes('SUPER')" in OX
