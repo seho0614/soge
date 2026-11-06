@@ -39,7 +39,7 @@ ok('① 로그인 1241 ~ 1440px 메뉴 간격 20px · 휴대폰 언어 칸 메�
    and '{lang && <span className="m-lang">{lang}</span>}' in rd('site/src/components/common/UniHeader.tsx')
    and '@media (min-width: 1241px) and (max-width: 1440px) { .sh-uni.in .gnb { gap: 20px; } }' in PR
    and '.sh-hd.in .sh-hdr .sh-adm { display: none; }' in HC
-   and '@media (min-width: 641px) and (max-width: 1440px) {\n  .sh-hdr .lang-pick { position: relative; width: 44px;' in HC
+   and '@media (min-width: 641px) {\n  .sh-hdr .lang-pick { position: relative; width: 44px;' in HC   # v10.199 — 1441px 이상도 🌐 단추
    and '{st.ops && <a className="m-only" href="/go/admin">{h(\'admin\')}</a>}' in rd('site/src/components/common/UniHeader.tsx'), '')
 ok('① 로고 높이 40px(사이트 · 시안)', '<Pic name="logo" h={40}' in rd('site/src/components/common/UniHeader.tsx') and 'mxPic("logo",40,' in PR, '')
 ok('① 시안 — 로그인 메뉴 줄 끝 파트너센터 · 1440px 아래', "'<a href=\"#\" class=\"m-only\" data-go=\"p2dsh\">파트너센터</a>'" in PR
@@ -112,7 +112,7 @@ if SITE and API and DB:
                         seen.setdefault(who, set()).add((r['lang'], r['admin'], r['out']))
                         if r['navHdr'] or r['navLogo'] or r['ox']:
                             bad.append(f'{who} {w} {u} {r}')
-                        if r['lang'] and 640 < w <= 1440 and r['langW'] != 44:
+                        if r['lang'] and 640 < w and r['langW'] != 44:   # v10.199 — 641px 이상 모든 폭 🌐 단추
                             bad.append(f'{who} {w} {u} 언어 단추 폭 {r["langW"]}')
                         if w >= (1440 if who == '운영' else 1280) and not r['full']:
                             bad.append(f'{who} {w} {u} 메뉴 다 안 보임')

@@ -47,7 +47,7 @@ ok('① 서버 — 주문 받기 켜기는 SUPER · 간주 결제 켜짐이면 �
    and "static readonly ORDER_OPEN_CONFIRM = '시험 결제 주문을 받습니다';" in AS and "new PolicyViolation('ORDER_OPEN_CONFIRM'" in AS
    and "(reason ?? '').trim().length < 10" in AS and "new PolicyViolation('ORDER_OPEN_REASON'" in AS
    and "SELECT set_config('app.setting_reason', $1, true)" in AS and 'await this.db.transaction(async () => {' in AS
-   and 'this.admin.updateSetting(dto.key, dto.value, dto.reason, dto.confirm)' in AC and 'ORDER_OPEN_CONFIRM · ORDER_OPEN_REASON' in AC
+   and 'this.admin.updateSetting(dto.key, dto.value, dto.reason, dto.confirm' in AC and 'ORDER_OPEN_CONFIRM · ORDER_OPEN_REASON' in AC
    and '@IsOptional() @IsString() @MaxLength(300) reason?: string;' in AD and '@IsOptional() @IsString() @MaxLength(50) confirm?: string;' in AD, '')
 LW = rd('web/src/app/admin/LaunchWatch.tsx'); OA = rd('web/src/app/admin/OpsAlerts.tsx'); WS = rd('src/modules/admin/launch-watch.service.ts')
 ok('① 운영 화면 — 간주 결제 켜짐에 켜기 칸(사유 · 확인 문구 · 그래도 켜기) · 알림 이름 · 하루 요약 「어제 바뀐 중요 설정」',

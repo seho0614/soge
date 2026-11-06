@@ -57,7 +57,7 @@ SH = rd('src/common/security-headers.ts'); NC = rd('site/next.config.js'); RS = 
 syn = subprocess.run(['bash', '-n', RS], capture_output=True, text=True).returncode if os.path.exists(RS) else -1
 ok('① 정책 보고 · 백업 — 보고 길(보안 머리글 함수 = main.ts · dev-server.js) · Report-Only · 지켜보기 칸 · 하루 요약 경고 · 되살리기(문법 · 실행 권한) · postcheck · docs/275 · 판',
    "app.use('/api/v1/csp-report', ...cspReportRoute)" in SH and 'Content-Security-Policy-Report-Only' in NC and 'report-uri /api/v1/csp-report' in NC
-   and "['정책 보고(24시간)', d.cspDay?.n ?? 0]" in rd('web/src/app/admin/LaunchWatch.tsx') and 'cspDay: cspReportsDay()' in rd('src/modules/admin/launch-watch.service.ts')
+   and "['정책 보고(24시간)', d.cspDay?.n ?? 0" in rd('web/src/app/admin/LaunchWatch.tsx')   # v10.199 — 뒤에 갈 곳(칸 링크) and 'cspDay: cspReportsDay()' in rd('src/modules/admin/launch-watch.service.ts')
    and "'UPLOADS_BACKUP_STALE'" in rd('src/worker/scheduler.service.ts') and syn == 0 and os.access(RS, os.X_OK)
    and '올린 파일 백업 묶음 없음' in rd('deploy/aws/postcheck.sh') and any(f.startswith('275_') for f in os.listdir(os.path.join(K, 'docs')))
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 177), f"bash -n {syn} · {rd('VERSION').strip()}")
