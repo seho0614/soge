@@ -11,7 +11,7 @@
      대시보드 「메인 투표」 칸 · 투표 관리 단추 · 운영 알림 텔레그램 줄 · 오픈 체크리스트 「누가」 요약
   실제 텔레그램 보내기 · 대화방 찾기는 test_v1200_push(서버에서 · 가짜 텔레그램 서버)
 """
-import json, os, re, subprocess, urllib.error, urllib.request
+import json, os, re, subprocess, time, urllib.error, urllib.request
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'
@@ -157,6 +157,9 @@ if API and DB:
         # 준비 안 됨 — 토큰 없음(점검판 .env 에 없음) · 대화방 없음 · 시험 1분 한 번 · 권한
         psql("UPDATE site_settings SET value = NULL WHERE key = 'ops.telegram_chat'")
         st0 = (call('GET', '/admin/ops-alerts/mail-status', None, TS) or {}).get('push') or {}
+        # 바로 앞 시험(test_v1200_push)이 1분 안에 시험 메시지를 보냈으면 그 1분이 지나기를 기다림
+        ago = psql("SELECT coalesce(extract(epoch FROM now() - max(occurred_at))::int, 999) FROM audit.audit_logs WHERE action = 'OPS_PUSH_TEST'")
+        if ago.isdigit() and int(ago) < 62: time.sleep(62 - int(ago))
         r1 = call('POST', '/admin/ops-alerts/push-test', None, TS)
         r2 = call('POST', '/admin/ops-alerts/push-test', None, TS)
         f1 = call('POST', '/admin/ops-alerts/push-find-chat', None, TS)

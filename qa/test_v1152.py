@@ -52,7 +52,8 @@ if DB and blk:
                                  env=dict(os.environ, DATABASE_URL=DB), capture_output=True, text=True, timeout=120)
     r = run(); out = r.stdout
     ok('② [10] 블록 — 오류 없이 끝 · 실패 0', r.returncode == 0 and 'FAIL=0' in out and 'ERROR' not in (r.stderr or ''), out.strip().splitlines()[-1] if out.strip() else r.stderr[:160])
-    ok('② 연동 키 칸 22 · 11줄(v10.162) · 처리방침 확인 on · 파일 행 지킴 통과', all(x in out for x in ('통과  연동 키 칸 22개', '통과  오픈 준비 점검 11줄 · 꼭 4', '통과  AI 켜기 전 처리방침 확인 = on', '통과  파일 행 지킴')), '')
+    # 연동 키 칸은 22 이상(v10.200 D178 텔레그램 봇 토큰으로 23)
+    ok('② 연동 키 칸 22 이상 · 11줄(v10.162) · 처리방침 확인 on · 파일 행 지킴 통과', re.search(r'통과  연동 키 칸 2[2-9]개', out) is not None and all(x in out for x in ('통과  오픈 준비 점검 11줄 · 꼭 4', '통과  AI 켜기 전 처리방침 확인 = on', '통과  파일 행 지킴')), '')
     ok('② 새 번호 초안 없음 → 통과', '통과  게시된 판보다 새 번호의 약관 초안 없음' in out, '')
     psql = lambda sql: subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True).stdout.strip()
     # 거래 안에서 처리방침 새 번호(9.9) 법무 검토 판을 넣고 같은 조회를 돌림 → 되돌림(ROLLBACK)

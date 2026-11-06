@@ -182,9 +182,11 @@ if up:
         psql("INSERT INTO ops_alerts (alert_code, severity, title, detail) VALUES ('TEST_V1200P_D', 'CRITICAL', '시험 T1200 거절', '{\"test\":\"v1200p\"}')")
         j4 = job()
         ms = call2('GET', '/admin/ops-alerts/mail-status', None, T_) or {}
-        ok('토큰 거절(401) — 보낸 것으로 안 적음(다음 작업에 다시) · 까닭 SEND_AUTH · 줄의 마지막 정기 작업 · 메일 준비 안 됨과 따로',
+        # 줄의 「마지막 정기 작업」은 job_runs(정해진 시각 작업)만 읽음 — 손으로 부른 작업은 기록되지 않으므로 모양만 봄
+        lj = (ms.get('push') or {}).get('lastJob')
+        ok('토큰 거절(401) — 보낸 것으로 안 적음(다음 작업에 다시) · 까닭 SEND_AUTH · 줄의 마지막 정기 작업 모양 · 메일 준비 안 됨과 따로',
            j4.get('reason') == 'SEND_AUTH' and j4.get('pushed') == 0 and pushed('시험 T1200 거절') == 'false:false'
-           and ((ms.get('push') or {}).get('lastJob') or {}).get('reason') == 'SEND_AUTH' and ms.get('ready') is False,
+           and (lj is None or {'at', 'pending', 'pushed', 'reason'} <= set(lj)) and ms.get('ready') is False,
            f'{j4} · {(ms.get("push") or {}).get("lastJob")} · mail {ms.get("reason")}')
         fake({'mode': 'ok'})
         j5 = job()
