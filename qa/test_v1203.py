@@ -221,9 +221,10 @@ if API and DB:
         lo = call('POST', '/me/logout-all', {'password': PW}, tok[ADMU])
         old_t = call('GET', '/admin/help/manual', None, tok[ADMU])
         new_t = call('GET', '/admin/help/manual', None, lo.get('accessToken'))
-        ok('② 운영 전용 계정(ADMIN 만) 모든 기기 로그아웃 — 200 · 새 증표로는 됨 · 옛 증표는 401',
-           roles == 'ADMIN' and lo.get('ok') is True and lo.get('accessToken') and old_t.get('_err') == 401 and not new_t.get('_err'),
-           f"{roles} · {lo.get('ok')} · {old_t.get('_err')} · {new_t.get('_err')}")
+        # 옛 증표는 판 번호가 달라 비로그인으로 봄 → 가드가 403 UNAUTHENTICATED(core/auth.ts)
+        ok('② 운영 전용 계정(ADMIN 만) 모든 기기 로그아웃 — 200 · 새 증표로는 됨 · 옛 증표는 비로그인(403 UNAUTHENTICATED)',
+           roles == 'ADMIN' and lo.get('ok') is True and lo.get('accessToken') and old_t.get('_err') == 403 and old_t.get('code') == 'UNAUTHENTICATED' and not new_t.get('_err'),
+           f"{roles} · {lo.get('ok')} · {old_t.get('_err')} · {old_t.get('code')} · {new_t.get('_err')}")
     finally:
         psql(f"UPDATE site_settings SET value = {ten0} WHERE key = 'mall.tenant'")
         psql(f"UPDATE site_settings SET value = {dig0} WHERE key = 'ops.telegram_digest'")
