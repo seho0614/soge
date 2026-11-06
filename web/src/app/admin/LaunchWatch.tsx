@@ -24,6 +24,8 @@ interface Watch {
     top?: { at: string; items: Array<{ path: string; GB: number; hint: string }>; partial: boolean } | null;   // v10.186 — 많이 차지하는 폴더 5개
   };
   diskWarnPct?: number;
+  ai?: string[];          // v10.204 (D181 · docs/326) — 오늘 AI 상담 · 검수 보조 · 비용 · 상한(하루 요약과 같은 글)
+  reconsent?: string[];   // v10.204 — 필수 약관 동의 안 한 회원(있을 때만)
 }
 
 /**
@@ -143,6 +145,9 @@ export function LaunchWatch() {
           )}
         </>);
       })()}
+      {/* v10.204 (D181 · docs/326) — AI 가동 · 약관 재동의 */}
+      {(d.ai?.length ?? 0) > 0 && <p className="hint" data-watch-ai="">{d.ai!.map((t, i) => <span key={i}>{i > 0 && <br />}{t.trim()}</span>)} · <a href="#/ai-ops/agent">AI 에이전트 →</a></p>}
+      {(d.reconsent?.length ?? 0) > 0 && <p className="hint" data-watch-reconsent={d.reconsent!.length}>{d.reconsent!.map((t, i) => <span key={i}>{i > 0 && <br />}{t}</span>)}</p>}
       {/* v10.179 (D168) — 운영 알림 목록 · 확인 화면 · v10.182 — 최근 서버 오류 */}
       <p className="hint"><a href="#/ops-alerts" data-ops-alerts-link="">운영 알림 보기 · 확인 →</a> · <a href="#/server-errors" data-server-errors-link="">최근 서버 오류 →</a>{(d.slowSql?.n ?? 0) > 0 && <> · 느린 조회(300ms 넘음 · 1시간) <b data-slow-sql={d.slowSql!.n}>{n(d.slowSql!.n)}건</b></>}</p>
       {(d.slowSql?.top.length ?? 0) > 0 && (

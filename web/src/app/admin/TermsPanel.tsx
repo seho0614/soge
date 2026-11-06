@@ -26,6 +26,7 @@ interface Term {
   isRequired: boolean; blockedBy: string | null; effectiveFrom: string | null; changeNote?: string | null;
   /** v10.161 — 시행 예정(게시됐지만 시행일 전 · 앞 판이 아직 시행 중) */ scheduled?: boolean;
   /** v10.162 — 대상 · 불리한 변경 */ audience?: string; isAdverse?: boolean;
+  /** v10.204 (D181) — 필수 약관 지금 판의 동의 현황(활동 중 계정) */ consent?: { target: number; agreed: number; missing: number } | null;
 }
 
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
@@ -228,7 +229,9 @@ export function TermsPanel() {
                 <tr key={key} data-term-row={key} data-status={t.status} data-holes={h.length} data-scheduled={t.scheduled ? 'y' : undefined}>
                   <td><b>{t.title}</b><span className="ad-ls mono">{t.code}{t.isRequired ? ' · 필수' : ''}</span></td>
                   <td>{t.version}</td>
-                  <td>{t.scheduled ? <b data-term-scheduled>시행 예정</b> : (STATUS[t.status] ?? t.status)}{future(t) && !t.scheduled && <span className="ad-ls">시행일 전(첫 판)</span>}</td>
+                  <td>{t.scheduled ? <b data-term-scheduled>시행 예정</b> : (STATUS[t.status] ?? t.status)}{future(t) && !t.scheduled && <span className="ad-ls">시행일 전(첫 판)</span>}
+                    {t.consent && <span className="ad-ls" data-term-consent={`${t.consent.agreed}/${t.consent.target}`}
+                      title="활동 중 계정 기준 · 남은 회원은 다음 로그인 때 동의 화면">동의 {t.consent.agreed} / {t.consent.target}{t.consent.target ? ` (${Math.floor((100 * t.consent.agreed) / t.consent.target)}%)` : ''} · 남음 {t.consent.missing > 0 ? <b className="warn-text">{t.consent.missing}</b> : 0}</span>}</td>
                   <td>{t.effectiveFrom && t.status !== 'DRAFT' && t.status !== 'LEGAL_REVIEW' ? ymdKst(t.effectiveFrom) : '-'}</td>
                   <td>
                     {h.length > 0 ? <span className="warn-text" data-term-holes>〔미확정〕 {h.length}곳</span> : <span className="muted">미확정 없음</span>}

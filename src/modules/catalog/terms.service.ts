@@ -28,7 +28,14 @@ export class TermsService {
               /* v10.161 — 시행 예정(게시됐지만 시행 전 · 앞 판이 아직 시행 중) */
               EXISTS (SELECT 1 FROM v_terms_upcoming u WHERE u.code = t.code AND u.version = t.version) AS scheduled,
               /* v10.162 (D152) — 대상(제휴 약관은 회원 알림 없음) · 게시한 때 · 불리한 변경 */
-              t.audience, t.published_at AS "publishedAt", t.is_adverse AS "isAdverse"
+              t.audience, t.published_at AS "publishedAt", t.is_adverse AS "isAdverse",
+              /* v10.204 (D181 · docs/326) — 필수 약관 지금 시행 중인 판의 동의 현황(활동 중 계정 · v_term_not_agreed 와 같은 셈) */
+              CASE WHEN t.is_required AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = t.code AND c.version = t.version) THEN json_build_object(
+                'target', (SELECT count(*)::int FROM accounts WHERE status = 'ACTIVE'),
+                'agreed', (SELECT count(*)::int FROM accounts a WHERE a.status = 'ACTIVE'
+                             AND EXISTS (SELECT 1 FROM v_term_consent_current g
+                                          WHERE g.account_id = a.id AND g.term_code = t.code AND g.term_version = t.version AND g.agreed)),
+                'missing', (SELECT count(*)::int FROM v_term_not_agreed n WHERE n.code = t.code)) END AS consent
          FROM terms t ORDER BY t.display_order, t.code, t.effective_from DESC`);
   }
 

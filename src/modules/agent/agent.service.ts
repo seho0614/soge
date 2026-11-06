@@ -35,6 +35,8 @@ export class AgentService {
    * 키는 서버만 씁니다 — 화면 · 응답 · 로그 · 감사 기록에 내보내지 않습니다(끝 4자리만). 부를지 말지는 여전히 allowed()(스위치 · 월 상한).
    */
   async provider(): Promise<AgentProvider | null> { return (await this.resolve()).prov; }
+  /** v10.204 (D181) — 키가 어디서 왔나만(값 없음) · 정기 작업 「AI 사용 가능해짐 · 준비 덜 됨」 알림이 봄 */
+  async keySource(): Promise<AgentKeySource> { return (await this.resolve()).source; }
 
   private async resolve() {
     if (this.engine && Date.now() - this.engine.at < ENGINE_TTL_MS) return this.engine;

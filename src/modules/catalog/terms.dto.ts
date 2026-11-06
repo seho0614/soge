@@ -4,6 +4,13 @@ import { StrictBoolean } from '../../common/strict-boolean';
 
 const TERM_STATUS = ['DRAFT', 'LEGAL_REVIEW', 'PUBLISHED', 'ARCHIVED'] as const;
 
+/** v10.204 (D181 · docs/326) — 필수 약관 지금 시행 중인 판의 동의 현황(활동 중 계정 기준 · v_term_not_agreed 와 같은 셈) */
+export class TermConsentDto {
+  @ApiProperty({ example: 300, description: '대상 — 활동 중(ACTIVE) 계정 수' }) target!: number;
+  @ApiProperty({ example: 120, description: '이 판에 동의한 활동 중 계정' }) agreed!: number;
+  @ApiProperty({ example: 180, description: '아직 동의 안 함 — 다음 로그인 때 동의 화면' }) missing!: number;
+}
+
 export class TermDetailDto {
   @ApiProperty({ example: 'SERVICE' }) code!: string;
   @ApiProperty({ example: '1.0' }) version!: string;
@@ -29,6 +36,8 @@ export class TermDetailDto {
   publishedAt?: string | null;
   @ApiPropertyOptional({ description: '회원에게 불리한 변경으로 게시(v10.162 · D152)' })
   isAdverse?: boolean;
+  @ApiPropertyOptional({ type: TermConsentDto, nullable: true, description: '필수 약관의 지금 시행 중인 판만 — 동의 현황(v10.204)' })
+  consent?: TermConsentDto | null;
 }
 
 /** 법무 회신 반영. 초안 저장과 발행을 나눕니다. */

@@ -7,6 +7,7 @@ import { cspReportsDay } from '../../common/csp-report';
 import { slowSince } from '../../common/response-time';
 import { slowSqlSince } from '../../common/slow-sql';
 import { uploadsBackupState, uploadsBackupVerified } from '../../common/uploads-backup-state';
+import { AgentService } from '../agent/agent.service';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -21,9 +22,27 @@ const diskLine = (h: ReturnType<typeof serverHealth>) => (h.disk
   ? `서버 디스크 ${h.disk.usedPct}% 사용 · 남은 ${h.disk.freeGB}GB${h.disk.usedPct >= 85 ? ' — 정리 · 늘리기 필요' : ''} · 메모리 ${h.mem.usedPct}%`
   : '서버 디스크 — 잴 수 없음');
 
+
+/* v10.204 (D181 · docs/326) — 하루 요약 · 공개 직후 지켜보기의 AI 줄 */
+export type AgentDay = { enabled: boolean; unlocked: boolean; chats: number; answers: number; handoffs: number; reviews: number;
+  requests: number; cost: string; month: string; cap: string };
+export const agentLines = (a: AgentDay, label: string): string[] => {
+  if (!a.unlocked && a.requests === 0) return ['AI — 잠김(국외 이전 조항이 든 처리방침이 시행되기 전)'];
+  if (!a.enabled && a.requests === 0) return ['AI — 꺼짐'];
+  const cap = Number(a.cap);
+  return [
+    `AI — ${label} 상담 대화 ${a.chats} · 답 ${a.answers} · 사람에게 넘김 ${a.handoffs} · 검수 보조 ${a.reviews}건 · 비용 $${a.cost}${a.enabled ? '' : ' · 지금 꺼짐'}`,
+    `     이번 달 $${a.month} / 상한 $${a.cap}${cap > 0 ? ` (${Math.floor((100 * Number(a.month)) / cap)}%)` : ' — 상한 0 이면 부르지 않음'}`,
+  ];
+};
+/* v10.204 — 필수 약관(지금 시행 중인 판)마다 동의 안 한 활동 중 계정이 있으면 한 줄씩 */
+export type Reconsent = { code: string; title: string; version: string; target: number; agreed: number; missing: number };
+export const reconsentLines = (rows: Reconsent[]): string[] => rows.filter((r) => r.missing > 0).map((r) =>
+  `재동의 — ${r.title} ${r.version}: ${r.agreed} / ${r.target} (${r.target ? Math.floor((100 * r.agreed) / r.target) : 0}%) · 남음 ${r.missing}`);
+
 @Injectable()
 export class LaunchWatchService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
 
   async today() {
     const [c] = await this.db.query<any>(
@@ -58,6 +77,8 @@ export class LaunchWatchService {
       slowHour: slowSince(60),                 // v10.178 (D167) — 지난 1시간 API 요청 수 · p95(ms) · 느린 주소 5곳
       server: serverHealth(),                  // v10.182 (D171) — 디스크 · 메모리 · 올린 파일 · 백업 폴더(10분마다 잰 값)
       diskWarnPct: c.diskWarnPct,
+      ai: agentLines(await this.agentDay('today'), '오늘'),   // v10.204 (D181) — AI 상담 · 검수 보조 · 비용 · 상한
+      reconsent: reconsentLines(await this.reconsent()),     // v10.204 — 필수 약관 동의 안 한 회원
       warn: c.stubPaidOrders > 0 ? '시험 결제로 결제 완료된 주문이 있습니다 — 돈을 받지 않은 주문입니다. 소개몰 「주문 받기」를 끄거나 직판 상품을 판매 중지하십시오.' : undefined };
   }
 
@@ -94,11 +115,76 @@ export class LaunchWatchService {
       ...(c.homePolls < 3 ? [`메인 투표 ${c.homePolls} / 3 — 빈 자리는 사용자 웹 메인에 「준비 중」으로 보입니다(운영 화면 › 투표 관리 「확정 질문으로 빈 자리 채우기」)`] : []),
       /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */
       ...(c.settingChanges ? ['어제 바뀐 중요 설정:', ...String(c.settingChanges).split('\n').map((t: string) => `  - ${t.replace('중요 설정 바뀜 — ', '')}`)] : []),
+      /* v10.204 (D181 · docs/326) — AI 상담 · 비용 · 상한 / 필수 약관 재동의 진행 */
+      ...agentLines(await this.agentDay('yesterday'), '어제'),
+      ...reconsentLines(await this.reconsent()),
       diskLine(serverHealth()),
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');
     return { ...c, disk: serverHealth().disk, text };
+  }
+
+  /* ── v10.204 (D181 · docs/326) AI 가동 지켜보기 · 재동의 ────────────────── */
+
+  /** AI 숫자(한국 날짜 하루) — 하루 요약은 어제 · 공개 직후 지켜보기는 오늘 */
+  async agentDay(which: 'today' | 'yesterday'): Promise<AgentDay> {
+    const X = which === 'today' ? TODAY : `(${TODAY} - 1)`;
+    const on = (col: string) => `(${col} AT TIME ZONE 'Asia/Seoul')::date = ${X}`;
+    const chatMsg = `FROM agent_messages m JOIN agent_conversations c ON c.id = m.conversation_id
+                      WHERE c.channel = 'SITE_CHAT' AND m.role = 'assistant' AND ${on('m.created_at')}`;
+    const [a] = await this.db.query<AgentDay>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'agent.enabled'), 'off') = 'on' AS enabled,
+              public.fn_privacy_ai_ready() AS unlocked,
+              (SELECT count(*)::int FROM agent_conversations WHERE channel = 'SITE_CHAT' AND ${on('created_at')}) AS chats,
+              (SELECT count(*)::int ${chatMsg}) AS answers,
+              (SELECT count(*)::int ${chatMsg} AND m.handoff IS TRUE) AS handoffs,
+              (SELECT count(*)::int FROM ai_review_opinions WHERE ${on('created_at')}) AS reviews,
+              (SELECT coalesce(sum(requests), 0)::int FROM agent_usage_daily WHERE day = ${X}) AS requests,
+              (SELECT round(coalesce(sum(cost_usd), 0), 2)::text FROM agent_usage_daily WHERE day = ${X}) AS cost,
+              round(public.fn_agent_month_cost(), 2)::text AS month,
+              coalesce(nullif((SELECT value FROM site_settings WHERE key = 'agent.monthly_cap_usd'), ''), '0') AS cap`);
+    return a;
+  }
+
+  /** 필수 약관(지금 시행 중인 판)마다 대상(활동 중 계정) · 동의 · 남음 — v_term_not_agreed 와 같은 셈 */
+  async reconsent(): Promise<Reconsent[]> {
+    return this.db.query<Reconsent>(
+      `SELECT t.code, t.title, t.version,
+              (SELECT count(*)::int FROM accounts WHERE status = 'ACTIVE') AS target,
+              (SELECT count(*)::int FROM accounts a WHERE a.status = 'ACTIVE'
+                  AND EXISTS (SELECT 1 FROM v_term_consent_current g
+                               WHERE g.account_id = a.id AND g.term_code = t.code AND g.term_version = t.version AND g.agreed)) AS agreed,
+              (SELECT count(*)::int FROM v_term_not_agreed n WHERE n.code = t.code) AS missing
+         FROM v_terms_current t WHERE t.is_required ORDER BY t.display_order, t.code`);
+  }
+
+  /**
+   * AI 잠금이 풀린 때(처리방침 국외 이전 조항 시행) 한 번 · 3일 안 시행 예정 처리방침이 있는데 준비가 덜 됐을 때 판마다 한 번.
+   *   빠진 것: AI 키 · 월 상한 0 · AI 전체 꺼짐. 회원에게 답하는 것은 상담 스위치(agent.chat.enabled)까지 켜져야 함 — 상태만 적음.
+   */
+  async agentWatch(): Promise<{ live: { severity: 'INFO' | 'WARN'; title: string; detail: Record<string, unknown> } | null;
+                               gap: { title: string; detail: Record<string, unknown> } | null }> {
+    const [r] = await this.db.query<{ unlocked: boolean; privacy_ver: string | null; live_sent: boolean; upcoming_ver: string | null; upcoming_day: string | null;
+                                      gap_sent: boolean; cap: string; enabled: boolean; review: boolean; chat: boolean }>(`SELECT * FROM fn_agent_watch_state()`);
+    const needLive = r.unlocked && !r.live_sent;
+    const needGap = !r.unlocked && !!r.upcoming_ver && !r.gap_sent;
+    if (!needLive && !needGap) return { live: null, gap: null };
+    const keySource = await this.agent.keySource();
+    const gaps = [keySource === 'NONE' ? 'AI 키 없음' : null, Number(r.cap) > 0 ? null : '월 상한 0', r.enabled ? null : 'AI 전체 꺼짐']
+      .filter((x): x is string => !!x);
+    const sw = `검수 보조 ${r.review ? '켜짐' : '꺼짐'} · AI 상담 ${r.chat ? '켜짐' : '꺼짐'}`;
+    const detail = { keySource, cap: r.cap, enabled: r.enabled, review: r.review, chat: r.chat, gaps };
+    const live = needLive ? {
+      severity: (gaps.length ? 'WARN' : 'INFO') as 'INFO' | 'WARN',
+      title: `AI 사용 가능해짐 — 처리방침 ${r.privacy_ver} 시행(국외 이전 조항) · ${gaps.length ? `빠진 것: ${gaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${sw}`,
+      detail: { ...detail, privacyVer: r.privacy_ver },
+    } : null;
+    const gap = needGap && gaps.length ? {
+      title: `AI 준비 덜 됨 — 처리방침 ${r.upcoming_ver} 이 ${r.upcoming_day} 시행 예정인데 ${gaps.join(' · ')} · ${sw} — 운영 화면 › AI 에이전트에서 준비하십시오`,
+      detail: { ...detail, version: r.upcoming_ver, day: r.upcoming_day },
+    } : null;
+    return { live, gap };
   }
 
   /** 지난 1시간 가입이 기준(ops.signup_spike_per_hour) 이상이고, 지난 1시간 안에 같은 알림이 없으면 알릴 것 */
