@@ -22,13 +22,16 @@ interface MailStatus {
   /* v10.200 (D178 · docs/316) — 텔레그램 */
   push?: { ready: boolean; reason: 'NO_TOKEN' | 'NO_CHAT' | null; chat: string | null;
            lastJob: { at: string; pending: number; pushed: number; reason: string | null } | null;
-           lastTest: { at: string; ok: boolean; reason: string | null } | null };
+           lastTest: { at: string; ok: boolean; reason: string | null } | null;
+           /* v10.201 (D179) — 하루 요약 텔레그램 */
+           digest?: { on: boolean; last: { at: string; pushed: boolean; reason: string | null } | null } };
 }
 interface Chat { id: string; type: string; title: string }
 const WHY: Record<string, string> = {
   NO_SMTP: '메일 설정 없음(SMTP 사용자 이름 · 비밀번호)', NOT_VERIFIED: '메일 스위치 꺼짐(외부 연동 › 메일)', NO_FROM: '보내는 주소 없음',
   NO_TO: '받는 주소 없음', MAIL_NOT_READY: '메일 준비 안 됨',
   NO_TOKEN: '봇 토큰 없음(외부 연동 › 연동 키 › 메일 칸)', NO_CHAT: '받을 대화방 없음(대화방 찾기)',   // v10.200 (D178)
+  OFF: '하루 요약 텔레그램 꺼짐',   // v10.201 (D179)
   SEND_AUTH: '봇 토큰이 맞지 않음', SEND_NETWORK: '텔레그램으로 나가는 길 막힘', SEND_TIMEOUT: '텔레그램 응답 없음', SEND_REJECTED: '텔레그램이 거절(대화방 번호 확인)',
 };
 const why = (r: string | null) => (r ? WHY[r] ?? WHY[r.replace(/^MAIL_NOT_READY_/, '')] ?? r : '');
@@ -42,6 +45,7 @@ const NAME: Record<string, string> = {
   SETTING_CHANGED: '중요 설정 바뀜',   // v10.195 (D174) — 주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치
   UPLOADS_BACKUP_OFFSITE_FAILED: '백업 디스크 밖 올리기 실패', UPLOADS_BACKUP_FAILED: '올린 파일 백업 실패', UPLOADS_BACKUP_BAD: '올린 파일 백업 묶음 깨짐',   // v10.197 · v10.198
   ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
+  STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
 };
 
 /**
@@ -71,6 +75,9 @@ export function OpsAlerts() {
   });
   const pickChat = (c: Chat) => void a.run('push-pick', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'ops.telegram_chat', value: c.id }) }),
     () => { setChats(null); ms.reload(); }, `받을 대화방을 「${c.title || c.id}」(으)로 정했습니다 — 「시험 메시지」로 확인하십시오.`);
+  /* v10.201 (D179) — 하루 요약도 텔레그램으로(설정 ops.telegram_digest) */
+  const flipDigest = (on: boolean) => void a.run('push-digest', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'ops.telegram_digest', value: on ? 'off' : 'on' }) }),
+    ms.reload, on ? '하루 요약은 텔레그램으로 보내지 않습니다.' : '하루 요약도 텔레그램으로 보냅니다(매일 아침 하루 요약 작업 때).');
 
   const ack = (x: Alert) => {
     const note = prompt(`「${x.title.slice(0, 40)}」을(를) 확인합니다.\n메모(선택 · 200자) — 무엇을 했는지`, '') ;
@@ -114,7 +121,13 @@ export function OpsAlerts() {
                 {chats.map((c) => <li key={c.id}><button className="btn-plain" onClick={() => pickChat(c)} data-push-chat={c.id}>{c.title || '(이름 없음)'} · {c.type} · <span className="mono">{c.id}</span></button></li>)}
               </ul>
             )}
-            <small className="dim"> 메일과 같은 알림(긴급 · 중요 설정 바뀜 · 주문 받기 저절로 꺼짐 · 백업 실패)을 같은 기준으로 보냅니다 — 메일이 준비 안 돼도 갑니다. 알림 내용은 보내지 않고 제목만.</small>
+            {p.digest && (
+              <span data-push-digest={p.digest.on ? 'on' : 'off'}> · 하루 요약 {p.digest.on ? <b>받음</b> : '안 받음'}
+                {p.digest.last && <span data-push-digest-last=""> (마지막 {ymdhm(p.digest.last.at)} {p.digest.last.pushed ? '보냄' : `못 보냄 — ${why(p.digest.last.reason)}`})</span>}
+                {isSuper && <>{' '}<button className="btn-sm ghost" disabled={a.busy === 'push-digest'} onClick={() => flipDigest(p.digest!.on)} data-push-digest-flip="">{p.digest.on ? '하루 요약 끄기' : '하루 요약도 받기'}</button></>}
+              </span>
+            )}
+            <small className="dim"> 메일과 같은 알림(긴급 · 중요 설정 바뀜 · 주문 받기 저절로 꺼짐 · 백업 실패 · 운영자 낯선 로그인)을 같은 기준으로 보냅니다 — 메일이 준비 안 돼도 갑니다. 알림 내용은 보내지 않고 제목만.</small>
           </div>
         );
       })(ms.data.push)}

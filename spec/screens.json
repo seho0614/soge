@@ -1526,7 +1526,8 @@
     "GET /admin/terms",
     "PUT /admin/terms/{code}",
     "PATCH /admin/terms/{code}/publish",
-    "PATCH /admin/terms/{code}/unschedule"
+    "PATCH /admin/terms/{code}/unschedule",
+    "GET /admin/terms/review-pack"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "법무 회신 반영 지점. 초안 저장과 발행을 나눕니다"

@@ -107,11 +107,17 @@ export class OpsAlertsService {
     }
     const [pt] = await this.db.query<{ at: string; result: any }>(
       `SELECT occurred_at AS at, after_data AS result FROM audit.audit_logs WHERE action = 'OPS_PUSH_TEST' ORDER BY occurred_at DESC LIMIT 1`);
+    /* v10.201 (D179) — 하루 요약 텔레그램(설정 · 마지막 하루 요약을 보냈는지) */
+    const [dg] = await this.db.query<{ sw: string; at: string | null; pushed: boolean | null; reason: string | null }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.telegram_digest'), 'on') AS sw,
+              d.raised_at AS at, (d.detail->>'pushed')::boolean AS pushed, d.detail->>'pushReason' AS reason
+         FROM (SELECT 1) x LEFT JOIN LATERAL (SELECT raised_at, detail FROM ops_alerts WHERE alert_code = 'DAILY_DIGEST' ORDER BY id DESC LIMIT 1) d ON true`);
     return {
       ready: st.ready, reason: st.reason, to: to ? maskMail(to) : null, lastJob,
       lastTest: t ? { at: t.at, ok: !!t.result?.ok, reason: t.result?.reason ?? null } : null,
       push: { ready: ps.ready, reason: ps.reason, chat: ps.chat, lastJob: pushJob,
-              lastTest: pt ? { at: pt.at, ok: !!pt.result?.ok, reason: pt.result?.reason ?? null } : null },
+              lastTest: pt ? { at: pt.at, ok: !!pt.result?.ok, reason: pt.result?.reason ?? null } : null,
+              digest: { on: dg?.sw === 'on', last: dg?.at ? { at: dg.at, pushed: !!dg.pushed, reason: dg.reason ?? null } : null } },
     };
   }
 

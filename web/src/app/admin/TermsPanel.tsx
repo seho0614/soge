@@ -173,10 +173,31 @@ export function TermsPanel() {
 
   if (error) return <div data-terms-panel><h2 className="ad-s2">약관</h2><ErrorView error={error} /></div>;
   if (!data) return null;
+  /* v10.201 (docs/318) — 법무 검토 묶음: 게시 안 된 초안 전부를 HTML 한 파일로 내려받음(읽기만 · 지금 게시판과 바뀐 줄 · 〔미확정〕) */
+  const downloadPack = async () => {
+    setBusy('pack'); setRes(null);
+    try {
+      const r = await api<{ fileName: string; html: string; items: Array<{ holes: string[] }> }>('/admin/terms/review-pack');
+      const url = URL.createObjectURL(new Blob([r.html], { type: 'text/html;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = r.fileName;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      const h = r.items.reduce((acc, x) => acc + x.holes.length, 0);
+      setRes({ ok: true, text: `법무 검토 묶음을 내려받았습니다(${r.fileName}) — 게시 안 된 초안 ${r.items.length}건 · 남은 〔미확정〕 ${h}곳. 브라우저로 열어 PDF 로 인쇄해 보낼 수 있습니다.` });
+    } catch (e) {
+      setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '내려받지 못했습니다.' });
+    } finally { setBusy(null); }
+  };
+
   const today = todayKst();   // 한국 날짜 — 과거는 서버가 거절
   return (
     <div data-terms-panel style={{ marginTop: 16 }}>
       <h2 className="ad-s2">약관 <small className="dim">법무 확인을 마친 글만 게시 — 게시하면 가입 · 바닥줄에 나가고 오픈 차단(약관)이 줄어듭니다</small></h2>
+      <p className="muted" data-terms-pack="">
+        <button className="btn-sm" disabled={busy === 'pack'} onClick={() => void downloadPack()} data-terms-pack-btn="">법무 검토용 내려받기</button>
+        {' '}게시 안 된 초안 전부를 한 파일로 — 지금 게시판과 바뀐 줄 · 남은 〔미확정〕 · 확인 칸(검토를 돕는 자료 · 법적 판단은 법무)
+      </p>
       <div className="row-actions" style={{ marginBottom: 8 }}>
         <label>시행일 <input type="date" min={today} value={day} onChange={(e) => setDay(e.target.value)} aria-label="시행일" data-terms-date /></label>
         <span className="muted">오늘 이후 · 오픈일에 맞추는 것을 권함(오픈 체크리스트 › 오픈일)</span>

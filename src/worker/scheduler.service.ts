@@ -490,7 +490,8 @@ export class SchedulerService {
           const m = await this.mail.send({ to: d.to, subject: `[소개뱅크] 운영 하루 요약 ${d.day}`, text: d.text });
           mailed = !!m.ok;
         }
-        await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed });
+        const dp = await this.digestPush(d.text);   /* v10.201 (D179) — 메일과 따로 텔레그램으로도(메일이 준비 안 돼도 감) */
+        await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed, pushed: dp.pushed, pushReason: dp.reason });
         /* v10.177 (docs/275) — 올린 파일 백업 묶음이 36시간 넘게 새로 생기지 않으면(묶음이 하나라도 있을 때만 — 예약 전에는 조용) */
         const ub = uploadsBackupState();
         if (ub.stale) await this.alert('UPLOADS_BACKUP_STALE', 'WARN', `올린 파일 백업이 ${ub.ageHours}시간째 새로 생기지 않았습니다 — 마지막 ${ub.last} · cron · 디스크를 확인하십시오`, ub);
@@ -673,6 +674,20 @@ export class SchedulerService {
     if (!r.ok) return { pending: items.length, pushed: 0, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
     await this.launchWatch.markPushed(items.filter((x) => !x.again).map((x) => x.id), items.filter((x) => x.again).map((x) => x.id));
     return { pending: 0, pushed: items.length, reason: null };
+  }
+
+  /**
+   * v10.201 (D179 · docs/318) — 하루 요약을 텔레그램으로도(설정 ops.telegram_digest · 급한 알림과 같은 대화방).
+   *   꺼짐 · 준비 안 됨 · 실패는 까닭만 돌려줌(DAILY_DIGEST 알림 detail 의 pushReason) — 다시 보내지 않음(다음 날 새 요약).
+   */
+  private async digestPush(text: string): Promise<{ pushed: boolean; reason: string | null }> {
+    const [o] = await this.db.query<{ v: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.telegram_digest'), 'on') AS v`);
+    if ((o?.v ?? 'on') !== 'on') return { pushed: false, reason: 'OFF' };
+    const st = await this.telegram.status();
+    if (!st.ready) return { pushed: false, reason: st.reason };
+    const [b] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM v_open_blockers`);
+    const r = await this.telegram.send(`[소개뱅크] ${text}\n오픈 차단 ${b?.n ?? 0}건(운영 화면 › 오픈 체크리스트)`);
+    return r.ok ? { pushed: true, reason: null } : { pushed: false, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
   }
 
   /* 심각도는 DB 제약(ops_alerts_severity_check)이 받는 셋뿐입니다.

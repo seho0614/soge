@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { blockerOwner } from './open-blocker-owner';
+import { buildReviewPack, PackTerm } from './terms-review-pack';
 import { NotFound, PolicyViolation } from '../../core/errors';
 
 /**
@@ -191,6 +192,29 @@ export class TermsService {
   /** v10.156 — 본문의 미확정 표시(〔…〕 · 〔시행일〕 은 게시가 채우므로 뺌) */
   static holes(body: string | null | undefined): string[] {
     return (String(body ?? '').match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
+  }
+
+  /**
+   * v10.201 (docs/318) — 법무 검토 묶음: 약관마다 가장 높은 번호의 게시 안 된 판(초안 · 법무 검토)을 지금 시행 중인 게시판과 비교해
+   *   HTML 한 파일로(읽기만). 화면이 받아서 파일로 내려받게 함 — fileName · html · items(요약)
+   */
+  async reviewPack() {
+    const rows = await this.db.query<{ code: string; title: string; version: string; status: string; body: string; blockedBy: string | null; changeNote: string | null; baseVersion: string | null; baseBody: string | null; day: string }>(
+      `SELECT d.code, d.title, d.version, d.status, coalesce(d.body, '') AS body, d.blocked_by AS "blockedBy", d.change_note AS "changeNote",
+              p.version AS "baseVersion", p.body AS "baseBody", to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day
+         FROM (SELECT DISTINCT ON (code) * FROM terms WHERE status IN ('DRAFT', 'LEGAL_REVIEW')
+                ORDER BY code, string_to_array(regexp_replace(version, '[^0-9.]', '', 'g'), '.')::int[] DESC, effective_from DESC) d
+         LEFT JOIN LATERAL (SELECT t.version, coalesce(t.body, '') AS body FROM terms t
+                             WHERE t.code = d.code AND t.status = 'PUBLISHED'
+                             ORDER BY (t.effective_from <= now()) DESC, t.effective_from DESC LIMIT 1) p ON true
+        ORDER BY d.display_order, d.code`);
+    const [{ day }] = rows.length ? rows : await this.db.query<{ day: string }>(`SELECT to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day`);
+    const terms: PackTerm[] = rows.map((r) => ({
+      code: r.code, title: r.title, version: r.version, status: r.status, body: r.body, blockedBy: r.blockedBy, changeNote: r.changeNote,
+      base: r.baseVersion ? { version: r.baseVersion, body: r.baseBody ?? '' } : null,
+    }));
+    const { items, html } = buildReviewPack(terms, day);
+    return { fileName: `sogaebank_terms_legal_review_${day.replace(/-/g, '')}.html`, day, items, html };
   }
 
   /** 오픈 차단 항목. 설정·약관·푸터를 함께 봅니다. v10.200 — 줄마다 누가(owner) · 풀리는 방법(how) */

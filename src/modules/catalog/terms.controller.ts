@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
-  OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, SetOpenDateDto, TermDetailDto,
+  OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
   TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -27,6 +27,16 @@ export class TermsController {
   })
   @ApiOkResponse({ type: TermDetailDto, isArray: true })
   list() { return this.terms.listAll(); }
+
+  @Get('terms/review-pack')
+  @ApiOperation({
+    summary: '약관 법무 검토 묶음 (v10.201)',
+    description:
+      '약관마다 가장 높은 번호의 게시 안 된 판(초안 · 법무 검토)을 지금 게시판과 줄 단위로 비교하고 남은 〔미확정〕을 표시한 HTML 한 파일. ' +
+      '읽기만 — 화면이 html 을 fileName 으로 내려받게 합니다. 검토를 돕는 자료일 뿐 법적 적정성 판단은 아닙니다.',
+  })
+  @ApiOkResponse({ type: ReviewPackDto })
+  reviewPack() { return this.terms.reviewPack(); }
 
   @Put('terms/:code')
   @ApiOperation({

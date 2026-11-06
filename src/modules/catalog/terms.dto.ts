@@ -119,3 +119,24 @@ export class OpenDateDto {
   @ApiProperty({ description: '게시된 약관 중 시행일이 오픈일과 다른 것 수(오픈일이 있을 때만)' }) termsOtherDate!: number;
 }
 
+
+/** v10.201 (docs/318) — 법무 검토 묶음 한 약관 요약 */
+export class ReviewPackItemDto {
+  @ApiProperty({ example: 'SERVICE' }) code!: string;
+  @ApiProperty() title!: string;
+  @ApiProperty({ example: '1.1' }) version!: string;
+  @ApiProperty({ enum: ['DRAFT', 'LEGAL_REVIEW'] }) status!: string;
+  @ApiProperty({ nullable: true, description: '비교 기준(지금 게시판) · 없으면 처음 게시' }) baseVersion!: string | null;
+  @ApiProperty({ type: [String], description: '남은 〔미확정〕 표시' }) holes!: string[];
+  @ApiProperty({ description: '게시판에 더한 줄 수(처음 게시면 0)' }) added!: number;
+  @ApiProperty({ description: '게시판에서 뺀 줄 수' }) removed!: number;
+  @ApiProperty({ nullable: true }) blockedBy!: string | null;
+}
+
+/** v10.201 (docs/318) — 법무 검토 묶음(게시 안 된 초안 전부 · HTML 한 파일 · 읽기만) */
+export class ReviewPackDto {
+  @ApiProperty({ example: 'sogaebank_terms_legal_review_20261106.html' }) fileName!: string;
+  @ApiProperty({ example: '2026-11-06', description: '한국 날짜' }) day!: string;
+  @ApiProperty({ type: [ReviewPackItemDto] }) items!: ReviewPackItemDto[];
+  @ApiProperty({ description: '내려받을 HTML 문서 전체(바깥 글꼴 · 그림 · 스크립트 없음)' }) html!: string;
+}
