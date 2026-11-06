@@ -101,6 +101,8 @@ import { IntegrationSecretService } from './common/integration/secret.service';
 import { IntegrationKeysController, PaymentClientKeyController } from './modules/site/integration-keys.controller';   // v10.128 (D128) 외부 연동 키를 운영 화면에서
 import { WeatherAdminController, WeatherPublicController } from './modules/weather/weather.controller';   // v10.49 (D103) 오늘의 날씨
 import { WeatherService } from './modules/weather/weather.service';
+import { HelpAdminController, HelpPublicController } from './modules/help/help.controller';   // v10.203 (D180) 사용자 설명서
+import { HelpService } from './modules/help/help.service';
 import { TownFoodAdminController, TownFoodController } from './modules/community/town-food.controller';   // v10.47 (D100) 우리동네 맛집
 import { TownFoodService } from './modules/community/town-food.service';
 import { TownVerifyController } from './modules/community/town-verify.controller';   // v10.164 (D154) 소개광장 동네 인증
@@ -314,6 +316,8 @@ import { LeadService } from './modules/lead/lead.service';
     GeoReviewController,   // v10.46 (D099) 카카오맵
     WeatherPublicController,
     WeatherAdminController,   // v10.49 (D103) 오늘의 날씨
+    HelpPublicController,
+    HelpAdminController,      // v10.203 (D180) 사용자 설명서
     TownFoodController,
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     TownVerifyController,   // v10.164 (D154) 동네 인증
@@ -336,6 +340,7 @@ import { LeadService } from './modules/lead/lead.service';
     GeoService,   /* v10.46 (D099) 카카오맵 */
     IntegrationSecretService,   /* v10.128 (D128) 외부 연동 키 — process.env 에 얹음 */
     WeatherService,   /* v10.49 (D103) 오늘의 날씨 */
+    HelpService,      /* v10.203 (D180) 사용자 설명서 · AI 상담 자료 */
     TownFoodService,   /* v10.47 (D100) 우리동네 맛집 */
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */

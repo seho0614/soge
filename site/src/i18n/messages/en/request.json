@@ -85,7 +85,7 @@
     "errRelation": "Please choose your relationship with the company.",
     "errMsg": "Please write at least 10 characters in your offer — explain specifically why it's a good fit.",
     "err401": "Log in to make an offer.",
-    "err403": "Only business members (identity verified) can make offers.",
+    "err403": "Only signed-in members who have verified their identity can make offers.",
     "errSend": "Couldn't send the offer.",
     "errNetwork": "Connection lost. Please try again shortly.",
     "done": "Offer sent — the chat opens when the requester accepts.",

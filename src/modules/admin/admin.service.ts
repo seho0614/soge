@@ -337,6 +337,10 @@ export class AdminService {
     if (key === 'community.town_verify' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('TOWN_SETTING_SUPER', '동네 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.203 (docs/324) — 급한 알림 텔레그램 대화방 · 하루 요약 텔레그램 · 운영자 낯선 로그인 알림은 SUPER 만(전에는 화면 단추만 SUPER · 서버는 ADMIN 도 통과) */
+    if (AdminService.OPS_PUSH_KEYS.includes(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('OPS_PUSH_SETTING_SUPER', '운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.180 (D169) — 운영자 2단계 인증 설정은 SUPER 만 · 켜는 사람이 먼저 등록해야 함(등록 없이 켜서 스스로 잠기는 일 막음) */
     if (key.startsWith('admin.mfa_')) {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {
@@ -385,6 +389,9 @@ export class AdminService {
     if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로
     return row;
   }
+
+  /** v10.203 (docs/324) — 운영 알림 텔레그램 · 낯선 로그인 알림 설정(SUPER 만) */
+  static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert'];
 
   /** v10.129 (docs/194) — AI 스위치 · 상한 · 모델 · 한도(agent.* · AI 번역)는 최고 관리자만 — 비용 · 법무에 걸린 설정(대표 승인 2026-10-27) */
   static isAiSetting(key: string): boolean {

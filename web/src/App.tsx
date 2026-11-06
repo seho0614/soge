@@ -33,6 +33,7 @@ import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
 import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
 import { ServerErrors } from './app/admin/ServerErrors';   // v10.182 (D171)
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
+import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
 import { MainOps } from './app/admin/MainOps';
@@ -291,6 +292,7 @@ function Console() {
         {tab === 'policy' && <Policies />}
         {tab === 'siteinfo' && <SiteInfo onGo={visible('checklist') ? go : undefined} />}
         {tab === 'terms' && <TermsPanel />}
+        {tab === 'manual' && <HelpManual />}
         {tab === 'integrations' && <Integrations />}
         {tab === 'mainops' && <MainOps onGo={go} />}
       {tab === 'gwans' && <Gwans onGo={go} />}

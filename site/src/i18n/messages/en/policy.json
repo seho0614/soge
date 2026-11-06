@@ -5,7 +5,8 @@
     "agree": "Agree to terms",
     "policy": "Policy details",
     "source": "Original notice",
-    "guide": "How it works"
+    "guide": "How it works",
+    "manual": "User manual"
   },
   "state": {
     "archivedLocation": "Retired · device location not collected",
@@ -74,7 +75,8 @@
     "colDoc": "Document",
     "colState": "Status",
     "note": "<b>Click a document name to open its full text.</b> The published version is shown as is — with its effective date and version number.",
-    "more": "Have more questions? Ask via <ask>1:1 inquiry</ask> · <cs>Help Center</cs>."
+    "more": "Have more questions? Ask via <ask>1:1 inquiry</ask> · <cs>Help Center</cs>.",
+    "manualLink": "Full user manual — how to use each menu · FAQ"
   },
   "agree": {
     "title": "Agree to terms",
@@ -155,5 +157,14 @@
     "change": "What changes",
     "bar": "Upcoming terms changes:",
     "more": "Details"
+  },
+  "manual": {
+    "back": "Guide",
+    "title": "User manual",
+    "updated": "Version {version} · updated {date}",
+    "toc": "Contents",
+    "koOnly": "This manual is currently available in Korean only.",
+    "ai": "The AI help chat answers from this manual too. For anything about your own account or deals, please contact the help center.",
+    "empty": "Could not load the manual. Please try again shortly."
   }
 }

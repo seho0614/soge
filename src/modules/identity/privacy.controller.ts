@@ -37,6 +37,8 @@ export class TokensNoteDto {
 }
 
 const MEMBER = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'] as const;
+/** v10.203 (docs/324) — 모든 기기 로그아웃은 운영 역할도(운영 전용 계정이 「운영자 낯선 로그인」 뒤 쓸 수 있게 · 운영 화면 「내 2단계 인증」) */
+const ANY_SIGNED_IN = [...MEMBER, 'ADMIN', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
 
 /**
  * v10.181 (D170 · docs/283) — SB-MYP-DAT-010 내 정보 내려받기 · SB-MYP-SEC-010 로그인 기록 · 모든 기기 로그아웃 ·
@@ -74,8 +76,8 @@ export class PrivacyController {
 
   @Post('me/logout-all')
   @HttpCode(200)
-  @Roles(...MEMBER)
-  @ApiOperation({ summary: '모든 기기에서 로그아웃', description: '비밀번호 확인 · 증표 판 번호 + 1 — 다른 기기의 로그인이 모두 풀리고 이 기기는 새 증표로 이어 감. 감사 기록 LOGOUT_ALL.' })
+  @Roles(...ANY_SIGNED_IN)
+  @ApiOperation({ summary: '모든 기기에서 로그아웃(회원 · 운영 역할)', description: '비밀번호 확인 · 증표 판 번호 + 1 — 다른 기기의 로그인이 모두 풀리고 이 기기는 새 증표로 이어 감. 감사 기록 LOGOUT_ALL.' })
   @ApiOkResponse({ type: TokensNoteDto })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'CURRENT_PASSWORD_WRONG' })
   @ApiResponse({ status: 423, type: ErrorDto, description: 'ACCOUNT_LOCKED' })

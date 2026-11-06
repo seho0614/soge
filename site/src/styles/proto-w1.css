@@ -695,3 +695,14 @@ a.w1-lgb.o, .w1-bo.w1-lgb { background: #fff; }
 /* v10.189 (docs/296) — 휴대폰 화면 검토 반영: 주황 · 노랑 바탕 위 글자는 남색(결정 #4 · 흰 글자 대비 2.80 · 2.15) */
 .w1-bprop { color: var(--sgb-navy, #00245a) !important; }
 .w1-wrn .ic { color: var(--sgb-navy, #00245a); }
+/* v10.203 (D180 · docs/324) — 사용자 설명서(/guide/manual) — 글 읽기 폭 · 절 제목 · 목차 */
+.w1-manual { font-size: 14px; line-height: 1.75; color: var(--ink-2); }
+.w1-manual p { margin: 6px 0 10px; }
+.w1-manual ul, .w1-manual ol { margin: 4px 0 12px; padding-left: 20px; font-size: 14px; color: var(--ink-2); }
+.w1-manual li { margin: 3px 0; }
+.w1-manual code { font-size: 12.5px; padding: 1px 5px; border-radius: 6px; background: var(--sgb-line-soft, #F1F5F9); color: var(--ink); }
+.w1-manual hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
+.w1-manual .w1-tb { margin: 6px 0 14px; }
+.w1-s3 { margin: 18px 0 6px; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.w1-toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 4px; font-size: 13px; }
+.w1-toc a { color: var(--ink-2); text-decoration: none; } .w1-toc a:hover { text-decoration: underline; }

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useApi } from '../../lib/useApi';
-import { ymdhm } from '../../lib/act';
+import { api, setToken, tokenRoles } from '../../lib/api';
+import { useAct, ymdhm } from '../../lib/act';
+import { Flash } from '../../components/Flash';
 import { ErrorView } from '../../components/ErrorView';
 import { MfaSetup, type MfaStatus } from '../../components/MfaGate';
 
@@ -11,10 +13,16 @@ const MODE: Record<string, string> = { off: '쓰지 않음', SUPER: '최고 관�
  *
  * 설정이 꺼져 있어도 미리 등록할 수 있습니다(켜기 전 SUPER 가 먼저 등록해야 켜짐 — MFA_ENROLL_FIRST).
  * 다시 등록(휴대폰 바꿈 · 분실)은 최고 관리자가 회원 상세 「2단계 초기화」로 지운 뒤.
+ * v10.203 (docs/324) — SUPER 는 여기서 설정(admin.mfa_required)을 바꿈(전에는 운영 화면 칸이 없어 서버 mfa-reset.sh 만) ·
+ *   모든 운영 역할은 「모든 기기에서 로그아웃」(「운영자 낯선 로그인」이 본인이 아닐 때 — 비밀번호를 바꾼 뒤).
  */
 export function MyMfa() {
   const q = useApi<MfaStatus>('/auth/mfa');
   const [setup, setSetup] = useState(false);
+  const [mode, setMode] = useState('');
+  const [pw, setPw] = useState('');
+  const a = useAct();
+  const isSuper = tokenRoles().includes('SUPER');
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const s = q.data;
@@ -30,6 +38,37 @@ export function MyMfa() {
         ? <div className="card pad" style={{ maxWidth: 520 }}><MfaSetup onDone={() => { setSetup(false); q.reload(); }} /></div>
         : <p><button className="btn-ok" onClick={() => setSetup(true)} data-mfa-start="">2단계 인증 등록</button></p>)}
       {s.enrolled && (s.backupLeft ?? 0) <= 3 && <p className="warn-text">예비 번호가 {s.backupLeft ?? 0}개 남았습니다 — 최고 관리자에게 초기화를 요청해 다시 등록하면 새 예비 번호 10개를 받습니다.</p>}
+      {isSuper && (
+        <p data-mfa-setting="">
+          <label>설정 바꾸기(최고 관리자){' '}
+            <select name="mfa-mode" value={mode || s.mode} onChange={(e) => setMode(e.target.value)}>
+              {Object.entries(MODE).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+            </select>
+          </label>{' '}
+          <button className="btn-sm" disabled={a.busy === 'mode' || !mode || mode === s.mode} data-mfa-save=""
+            onClick={() => {
+              if (!confirm(`운영자 2단계 인증을 「${MODE[mode] ?? mode}」로 바꿉니다. 켜면 해당 운영자는 다음 요청부터 번호를 넣어야 운영 화면을 씁니다.`)) return;
+              void a.run('mode', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'admin.mfa_required', value: mode }) }), () => { setMode(''); q.reload(); });
+            }}>저장</button>
+          <small className="dim"> 켜려면 먼저 내 등록이 있어야 합니다 · 바꾸면 운영 알림 「중요 설정 바뀜」</small>
+        </p>
+      )}
+      <h3 className="sec">모든 기기에서 로그아웃</h3>
+      <p data-logout-all="">
+        <input type="password" name="logout-all-pw" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="지금 비밀번호" autoComplete="current-password" />{' '}
+        <button className="btn-no" disabled={a.busy === 'logout-all' || pw.length < 1} data-logout-all-btn=""
+          onClick={() => {
+            if (!confirm('이 계정의 다른 기기 로그인을 모두 풉니다. 이 브라우저는 그대로 씁니다.')) return;
+            void a.run('logout-all', async () => {
+              const r = await api<{ ok: boolean; note: string; accessToken: string; refreshToken: string }>('/me/logout-all', { method: 'POST', body: JSON.stringify({ password: pw }) });
+              setToken(r.accessToken, r.refreshToken);
+              setPw('');
+              return r;
+            });
+          }}>모든 기기에서 로그아웃</button>
+        <small className="dim"> 「운영자 낯선 로그인」이 본인이 아니면 비밀번호를 바꾼 뒤 누릅니다.</small>
+      </p>
+      <Flash msg={a.msg} err={a.err} />
       <div className="ad-nt info">휴대폰을 바꾸거나 잃어버렸으면 최고 관리자가 회원 상세 「2단계 초기화」로 지운 뒤 다시 등록합니다. 아무도 들어오지 못할 때는 서버에서 deploy/aws/mfa-reset.sh(docs/281).</div>
     </section>
   );

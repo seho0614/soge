@@ -46,6 +46,13 @@ const NAME: Record<string, string> = {
   UPLOADS_BACKUP_OFFSITE_FAILED: '백업 디스크 밖 올리기 실패', UPLOADS_BACKUP_FAILED: '올린 파일 백업 실패', UPLOADS_BACKUP_BAD: '올린 파일 백업 묶음 깨짐',   // v10.197 · v10.198
   ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
+  /* v10.203 (docs/322 4절) — 화면에 영어 코드로만 보이던 21종 */
+  AGENT_CAP_REACHED: 'AI 월 상한 닿음', AGENT_CHAT_HANDOFF: 'AI 상담 담당자 연결', K_VALUE_BREACH: '검수 부담(k값) 경보',
+  LEAD_ASSIGN_FAILED: '리드 배정 오류', LEAD_CASH_AUTO_FAILED: '리드 이용료 자동 충전 실패', LEAD_UNMATCHED: '보낼 업체 없는 상담 신청',
+  NOTIFY_STUCK: '회원 알림 못 나감', PII_PURGE_FAILED: '개인정보 파기 실패', PII_PURGE_MISSED: '개인정보 파기 안 돎', PII_PURGE_OVERDUE: '파기 기한 넘긴 개인정보',
+  POSTING_SUSPENDED: '등록 잠시 막음(반려 3회)', PRIVACY_REQUEST_DUE: '개인정보 권리 요청 기한', PROMO_EXPIRY_UNNOTIFIED: '프로모션 만료 안내 못 함',
+  RESTRICTION_ENFORCED: '제한업종 노출 중단', RISK_DETECTED: '위험 탐지', RISK_RULE_BROKEN: '위험 탐지 규칙 고장', ROLE_REVIEW_DUE: '운영자 권한 점검',
+  SETTLEMENT_AUDIT_FAILED: '정산 점검 이상', SUBSCRIPTION_BILLING_FAILED: '정기결제 실패', SUBSCRIPTION_BILLING_REVIEW: '정기결제 확인 필요', SUBSCRIPTION_CARD_UNUSABLE: '구독 카드 교체 필요',
 };
 
 /**

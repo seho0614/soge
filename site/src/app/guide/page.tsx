@@ -36,6 +36,8 @@ export default async function GuidePage() {
         <h1>{tr('guide.title')}</h1>
         <p>{tr('guide.intro')}</p>
       </div>
+      {/* v10.203 (D180 · docs/324) — 자세한 사용 설명서(운영 화면에서 고침 · AI 상담이 읽는 글) */}
+      <div className="w1-nt" style={{ marginTop: 12 }}><Link href="/guide/manual" data-guide-manual=""><b>{tr('guide.manualLink')} →</b></Link></div>
       <h2 className="w1-s2">{tr('guide.flowH')}</h2>
       <ol className="w1-flow">
         {FLOW.map(([n, k]) => <li key={n}><span className="n">{n}</span><div><b>{tr(`guide.flow.${k}.t`)}</b><p>{tr(`guide.flow.${k}.d`)}</p></div></li>)}

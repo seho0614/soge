@@ -635,6 +635,22 @@
    "nav": "SB-HOM-ETC-030"
   },
   {
+   "id": "SB-HOM-ETC-040",
+   "name": "사용자 설명서",
+   "group": "HOM",
+   "url": "/guide/manual",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /help/manual"
+   ],
+   "nav": "SB-HOM-ETC-010",
+   "note": "2026-11-06 v10.203 D180 — 이용안내 「자세한 사용 설명서」 · 절마다 #m번호(AI 상담 답의 출처 링크와 같음)."
+  },
+  {
    "id": "SB-MNY-MAIN-010",
    "name": "소개장터 랜딩 · 목록",
    "group": "MNY",
@@ -1694,6 +1710,25 @@
    "note": "발신 IP 심사 2~4주. 키는 「연동 키」 구역에서 암호화 저장(v10.128 · 끝 4자리만) — 이 화면 키가 먼저, 없으면 .env"
   },
   {
+   "id": "SB-ADM-SIT-090",
+   "name": "사용자 설명서",
+   "group": "ADM",
+   "url": "/admin/manual",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/help/manual",
+    "GET /admin/help/manual/versions/{v}",
+    "POST /admin/help/manual"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-06 v10.203 D180 — 회원용 사용자 설명서(AI 상담 참고 자료 · /guide/manual). 판을 쌓기만 함(옛 판 보기) · 저장은 SUPER · 2만 자 · ### 절이 AI 답 출처."
+  },
+  {
    "id": "SB-AIS-PRF-010",
    "name": "관심 성향 분석",
    "group": "AI",
@@ -1878,10 +1913,12 @@
     "POST /auth/mfa/setup",
     "POST /auth/mfa/enable",
     "POST /auth/mfa/verify",
-    "POST /admin/accounts/{id}/mfa-reset"
+    "POST /admin/accounts/{id}/mfa-reset",
+    "PATCH /admin/site-settings",
+    "POST /me/logout-all"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-11-03 v10.180 D169 — 운영자 2단계 인증(휴대폰 인증 앱 6자리 · RFC 6238) 등록 · 예비 번호 10개 · 로그인 뒤 번호 넣기 화면(admin.mfa_required 켜졌을 때) · SUPER 가 회원 상세에서 초기화. 기본 꺼짐."
+   "note": "2026-11-03 v10.180 D169 — 운영자 2단계 인증(휴대폰 인증 앱 6자리 · RFC 6238) 등록 · 예비 번호 10개 · 로그인 뒤 번호 넣기 화면(admin.mfa_required 켜졌을 때) · SUPER 가 회원 상세에서 초기화. 기본 꺼짐. · 2026-11-06 v10.203 — SUPER 가 이 화면에서 설정(admin.mfa_required)을 바꿈 · 운영 역할 모두 「모든 기기에서 로그아웃」."
   },
   {
    "id": "SB-ADM-ROLE-010",

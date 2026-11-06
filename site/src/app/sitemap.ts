@@ -16,7 +16,7 @@ type Entries = {
 };
 const STATIC: Array<[string, MetadataRoute.Sitemap[number]['changeFrequency'], number]> = [
   ['/', 'daily', 1], ['/money', 'daily', 0.9], ['/mall', 'daily', 0.9], ['/biz', 'daily', 0.9], ['/health', 'daily', 0.9],
-  ['/listings', 'daily', 0.8], ['/community', 'daily', 0.8], ['/request', 'daily', 0.7], ['/guide', 'monthly', 0.5],
+  ['/listings', 'daily', 0.8], ['/community', 'daily', 0.8], ['/request', 'daily', 0.7], ['/guide', 'monthly', 0.5], ['/guide/manual', 'monthly', 0.4],
   ['/safety/guide', 'monthly', 0.5], ['/support/new', 'monthly', 0.3], ['/terms', 'monthly', 0.3],
 ];
 

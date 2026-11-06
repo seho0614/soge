@@ -1597,4 +1597,9 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   /* v10.202 (docs/319) — 소개몰 입점 신청 켜기 */
   "소개몰 입점 신청을 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.": "Only a super administrator (SUPER) can turn on mall seller applications.",
   "입점 약관(HLT_SELLER)이 아직 게시되지 않아 신청자가 동의할 수 없습니다 — 법무 확인 뒤 약관 화면에서 먼저 게시하십시오.": "The mall seller terms (HLT_SELLER) are not published yet, so applicants cannot agree to them — publish them on the terms screen first after legal review.",
+  /* v10.203 (docs/324) — 운영 알림 텔레그램 · 낯선 로그인 알림 설정 */
+  "운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super administrator (SUPER) can change the ops alert Telegram and unfamiliar sign-in alert settings.",
+  /* v10.203 (D180) — 사용자 설명서 */
+  "설명서 판은 고치거나 지울 수 없습니다 — 새 판으로 저장하십시오.": "A manual version cannot be edited or deleted — save it as a new version.",
+  "사용자 설명서가 아직 없습니다.": "The user manual is not available yet.",
 };

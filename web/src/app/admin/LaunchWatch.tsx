@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, n, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
@@ -210,7 +210,8 @@ export function LaunchWatch() {
           </table>
         </details>
       )}
-      {d.stubOrders.length > 0 && (
+      {/* v10.203 (docs/324) — 정리는 서버가 SUPER 만 받음(전에는 ADMIN 에게도 단추가 보여 눌러도 403) */}
+      {d.stubOrders.length > 0 && tokenRoles().includes('SUPER') && (
         <p><button className="btn-no" disabled={a.busy === 'stub'} onClick={cancelStub} data-stub-cancel="">시험 결제 주문 정리(발송 전 취소 · 알림)</button></p>
       )}
       {d.stubOrders.length > 0 && (
