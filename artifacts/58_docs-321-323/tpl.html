@@ -1,0 +1,115 @@
+<title>소개뱅크 운영 문서 3종</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Sans+Mono:wght@400&display=swap">
+<style>
+/* 왼쪽: 문서 고르기 + 목차 · 오른쪽: 본문(65자 폭). 휴대폰은 위 탭 + 접는 목차 */
+:root{
+  --navy:#00245a; --accent:#f5a008; --bg:#f5f7fa; --paper:#ffffff; --ink:#111522; --ink2:#404a66; --ink3:#646f8c;
+  --line:#dbdfe7; --soft:#eef1f6; --code:#f0f2f6; --warn:#b91c1c; --ok:#047857;
+  --f-title:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"Noto Sans Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --navy:#9cc0ff; --accent:#ffb84d; --bg:#0d1320; --paper:#141b2b; --ink:#e8ecf4; --ink2:#b4bdd0; --ink3:#8d97ad;
+  --line:#2a3448; --soft:#1b2436; --code:#1d2638; --warn:#f87171; --ok:#34d399; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#9cc0ff; --accent:#ffb84d; --bg:#0d1320; --paper:#141b2b; --ink:#e8ecf4; --ink2:#b4bdd0; --ink3:#8d97ad;
+  --line:#2a3448; --soft:#1b2436; --code:#1d2638; --warn:#f87171; --ok:#34d399; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px;align-items:start}
+header.top{max-width:1180px;margin:0 auto 18px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+header.top h1{font-family:var(--f-title);font-weight:800;font-size:22px;margin:0;color:var(--navy);text-wrap:balance}
+header.top .meta{color:var(--ink3);font-size:13px}
+nav.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto;display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;flex-direction:column;gap:6px}
+.tab{all:unset;cursor:pointer;display:block;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper)}
+.tab b{display:block;font-family:var(--f-title);font-weight:800;font-size:15px;color:var(--ink)}
+.tab span{font-size:12px;color:var(--ink3)}
+.tab[aria-selected="true"]{border-color:var(--navy);box-shadow:inset 3px 0 0 var(--accent)}
+.tab:focus-visible,.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toc{font-size:13px;display:flex;flex-direction:column;gap:2px}
+.toc .lbl{font-size:11px;letter-spacing:.08em;color:var(--ink3);margin-bottom:4px}
+.toc a{color:var(--ink2);text-decoration:none;padding:3px 8px;border-radius:5px;display:block}
+.toc a.h3{padding-left:20px;font-size:12.5px;color:var(--ink3)}
+.toc a:hover{background:var(--soft);color:var(--ink)}
+.filter{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+main{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:28px clamp(16px,4vw,44px);min-width:0}
+.doc{max-width:72ch}
+.doc .file{font-family:var(--f-mono);font-size:12px;color:var(--ink3);margin-bottom:6px;word-break:break-all}
+.doc h1{font-family:var(--f-title);font-weight:800;font-size:26px;line-height:1.35;color:var(--navy);margin:0 0 14px;text-wrap:balance}
+.doc h2{font-family:var(--f-title);font-weight:800;font-size:20px;line-height:1.4;margin:36px 0 10px;padding-top:12px;border-top:1px solid var(--line);color:var(--ink);text-wrap:balance;scroll-margin-top:16px}
+.doc h3{font-family:var(--f-title);font-weight:600;font-size:16.5px;margin:24px 0 6px;color:var(--ink);scroll-margin-top:16px}
+.doc h4{font-size:15px;margin:18px 0 4px}
+.doc p,.doc li{color:var(--ink)}
+.doc blockquote{margin:12px 0;padding:8px 14px;border-left:3px solid var(--accent);background:var(--soft);color:var(--ink2);border-radius:0 6px 6px 0}
+.doc blockquote p{margin:4px 0}
+.doc code{font-family:var(--f-mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px;word-break:break-word}
+.doc pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;line-height:1.55}
+.doc pre code{background:none;padding:0;font-size:13px;word-break:normal}
+.tbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px}
+.doc table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.55}
+.doc th{background:var(--soft);text-align:left;font-weight:600;color:var(--ink2);white-space:nowrap}
+.doc th,.doc td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.doc tr:last-child td{border-bottom:0}
+.doc strong{color:var(--ink);font-weight:800}
+.doc hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.doc a{color:var(--navy)}
+mark{background:color-mix(in srgb,var(--accent) 40%,transparent);color:inherit;border-radius:2px}
+.none{color:var(--ink3);font-size:13px;padding:4px 8px}
+@media (max-width:860px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:14px}
+  nav.side{position:static;max-height:none}
+  .tabs{flex-direction:row;overflow-x:auto}
+  .tab{flex:1 0 auto}
+  details.tocbox>summary{cursor:pointer;color:var(--ink2);font-size:13px}
+}
+@media (min-width:861px){details.tocbox>summary{display:none}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<header class="top"><h1>소개뱅크 운영 문서</h1><span class="meta">sgb-core docs/321 · 322 · 323 · __VER__ 기준 · 2026-11-07</span></header>
+<div class="wrap">
+  <nav class="side" aria-label="문서와 목차">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <input class="filter" id="flt" type="search" placeholder="목차에서 찾기 (예: 스냅샷, 정산)" aria-label="목차에서 찾기">
+    <details class="tocbox" id="tocbox" open><summary>목차 열기 · 닫기</summary><div class="toc" id="toc"></div></details>
+  </nav>
+  <main><article class="doc" id="doc"></article></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+const DOCS=/*__DATA__*/[];
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let cur=null, heads=[];
+function render(id){
+  const d=DOCS.find(x=>x.id===id)||DOCS[0]; cur=d.id;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.id===d.id?'true':'false'));
+  const html=window.marked?marked.parse(d.md,{gfm:true}):'<pre>'+esc(d.md)+'</pre>';
+  const el=$('#doc'); el.innerHTML='<div class="file">'+esc(d.file)+'</div>'+html;
+  el.querySelectorAll('table').forEach(t=>{const w=document.createElement('div');w.className='tbl';t.replaceWith(w);w.appendChild(t)});
+  heads=[]; let n=0;
+  el.querySelectorAll('h2,h3').forEach(h=>{h.id=d.id+'-'+(++n);heads.push({id:h.id,lv:h.tagName.toLowerCase(),t:h.textContent})});
+  drawToc(); try{localStorage.setItem('sgbdoc',d.id)}catch(e){}
+  if(location.hash.slice(1)!==d.id){try{history.replaceState(null,'','#'+d.id)}catch(e){}}
+  window.scrollTo(0,0);
+}
+function drawToc(){
+  const q=$('#flt').value.trim(); const box=$('#toc');
+  const list=heads.filter(h=>!q||h.t.includes(q));
+  box.innerHTML='<div class="lbl">목차 · '+list.length+'</div>'+(list.length?list.map(h=>{
+    let t=esc(h.t); if(q){t=t.split(esc(q)).join('<mark>'+esc(q)+'</mark>')}
+    return '<a class="'+h.lv+'" href="#'+h.id+'" data-go="'+h.id+'">'+t+'</a>'}).join(''):'<div class="none">맞는 제목이 없습니다</div>');
+}
+$('#toc').addEventListener('click',e=>{const a=e.target.closest('a[data-go]');if(!a)return;e.preventDefault();
+  const h=document.getElementById(a.dataset.go); if(h)h.scrollIntoView({behavior:'smooth',block:'start'});
+  if(matchMedia('(max-width:860px)').matches)$('#tocbox').open=false;});
+$('#flt').addEventListener('input',drawToc);
+$('#tabs').innerHTML=DOCS.map(d=>'<button class="tab" role="tab" data-id="'+d.id+'"><b>'+esc(d.name)+'</b><span>'+esc(d.who)+'</span></button>').join('');
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b){$('#flt').value='';render(b.dataset.id)}});
+let start=location.hash.slice(1); if(!DOCS.some(d=>d.id===start)){try{start=localStorage.getItem('sgbdoc')||''}catch(e){start=''}}
+render(DOCS.some(d=>d.id===start)?start:DOCS[0].id);
+</script>
