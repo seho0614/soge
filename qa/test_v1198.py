@@ -132,7 +132,9 @@ if API and DB:
            and (m0.get('lastJob') is None or {'at', 'pending', 'mailed', 'reason'} <= set(m0['lastJob'])) and sa == 200,
            f'{s0} · {m0.get("reason")} · {m0.get("to")} · {m0.get("lastJob")} · {sa}')
         # 받는 주소를 잠시 비웠다가(NO_TO) · 넣고(MAIL_NOT_READY_NO_SMTP) — 1분 제한 때문에 두 번째는 61초 뒤
-        psql("UPDATE site_settings SET value = '' WHERE key = 'ops.digest_to'")
+        # 형식 검사(value_pattern) 트리거가 '' 을 막음 — NULL 은 통과(코드는 coalesce 로 빈 주소)
+        u0 = psql("UPDATE site_settings SET value = NULL WHERE key = 'ops.digest_to'")
+        assert not u0.startswith('!'), u0
         n0 = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'OPS_MAIL_TEST'")
         t1, j1 = call('POST', '/admin/ops-alerts/mail-test', TS, {})
         t2, j2 = call('POST', '/admin/ops-alerts/mail-test', TS, {})
