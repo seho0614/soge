@@ -126,6 +126,7 @@ if API and DB:
                 pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                 pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
                 pg.goto(ADMIN_WEB + '/#/ops-alerts', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
+                pg.locator('tr', has_text='TEST_V1197_C').locator('button.btn-plain').first.click(); pg.wait_for_timeout(1500)
                 n = pg.evaluate("() => [...document.querySelectorAll('[data-mailed]')].filter(e => e.textContent.includes('메일 보냄')).length")
                 note = pg.evaluate("() => document.body.innerText.includes('10분 안에 하루 요약 받는 주소로 메일')")
                 b.close()

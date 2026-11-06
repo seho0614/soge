@@ -98,6 +98,7 @@ if API and DB:
         out = psql(
             "BEGIN; UPDATE site_settings SET value = 'on' WHERE key = 'agent.enabled'; "
             "DELETE FROM ops_alerts WHERE alert_code IN ('AGENT_CAP_NEAR', 'AGENT_CAP_REACHED'); "
+            "UPDATE ops_alerts SET mailed_at = coalesce(mailed_at, now() - interval '2 hours'), pushed_at = coalesce(pushed_at, now() - interval '2 hours'); "
             f"SELECT 'X:' || (fn_agent_record_usage('SITE_CHAT', '{model}', 10000000, 0, 0) > 0)::text; "
             "UPDATE site_settings SET value = round(fn_agent_month_cost() / 0.85, 2)::text WHERE key = 'agent.monthly_cap_usd'; "
             f"SELECT 'Y:' || fn_agent_record_usage('SITE_CHAT', '{model}', 1000, 0, 0)::text; "
