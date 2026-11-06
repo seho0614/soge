@@ -38,8 +38,8 @@ ok('① D180 — help_docs(2만 자 · 판 유일 · 고치기 · 지우기 막�
    and "AND answer = '계약서에 양측이 서명하면 성사가 확정되고 정산이 자동으로 신청됩니다. 승인 후 매주 수요일 배치로 지급됩니다.'" in MIG
    and "'admin.mfa_required', 'mall.tenant')" in MIG and 'DROP ' not in MIG.replace('DROP TRIGGER IF EXISTS', ''), '')
 HS = rd('src/modules/help/help.service.ts'); HC = rd('src/modules/help/help.controller.ts'); AM = rd('src/app.module.ts')
-ok('① 설명서 API — 공개 GET /help/manual · 운영 GET(ADMIN · SUPER) · 옛 판 · 저장 POST(SUPER · 감사 HELP_MANUAL_SAVE · 2만 자 · ### 절 · 같은 글은 판 안 만듦 · 판 번호 잠금) · 모듈 등록',
-   "@Get('help/manual')" in HC and "@Controller('api/v1/admin/help')" in HC and "@Roles('SUPER')\n  @Audit('HELP_MANUAL_SAVE', 'SITE')" in HC
+ok('① 설명서 API — 공개 GET /site/manual · 운영 GET(ADMIN · SUPER) · 옛 판 · 저장 POST(SUPER · 감사 HELP_MANUAL_SAVE · 2만 자 · ### 절 · 같은 글은 판 안 만듦 · 판 번호 잠금) · 모듈 등록',
+   "@Get('site/manual')" in HC and "@Controller('api/v1/admin/help')" in HC and "@Roles('SUPER')\n  @Audit('HELP_MANUAL_SAVE', 'SITE')" in HC
    and "@Get('manual/versions/:v')" in HC and 'HelpSectionRefDto' in HC and HC.index('class HelpSectionRefDto') < HC.index('class HelpManualDto')
    and "new PolicyViolation('HELP_TOO_LONG'" in HS and "new PolicyViolation('HELP_NO_SECTION'" in HS and 'pg_advisory_xact_lock' in HS
    and '바뀐 내용이 없어 새 판을 만들지 않았습니다.' in HS and 'export const HELP_MAX_CHARS = 20000;' in HS
@@ -52,7 +52,7 @@ ok('① AI 상담 — 지식 묶음에 사용자 설명서(FAQ · 공지 · 약�
 PG = rd('site/src/app/guide/manual/page.tsx'); MB = rd('site/src/components/guide/ManualBody.tsx'); GP = rd('site/src/app/guide/page.tsx'); SM = rd('site/src/app/sitemap.ts')
 KO = json.loads(rd('site/src/i18n/messages/ko/policy.json') or '{}'); EN = json.loads(rd('site/src/i18n/messages/en/policy.json') or '{}')
 ok('① 사용자 웹 — /guide/manual(SB-HOM-ETC-040 · 목차 · 절 #m번호 · HTML 을 넣지 않음) · 이용안내 링크 · 사이트 지도 · 사전 ko · en 같은 열쇠',
-   'data-screen="SB-HOM-ETC-040"' in PG and "apiGet<Manual>('/help/manual'" in PG and 'dangerouslySetInnerHTML' not in MB + PG
+   'data-screen="SB-HOM-ETC-040"' in PG and "apiGet<Manual>('/site/manual'" in PG and 'dangerouslySetInnerHTML' not in MB + PG
    and 'id={`m${sec}`}' in MB and 'export const manualChapters' in MB and 'href="/guide/manual" data-guide-manual=""' in GP and "'/guide/manual'" in SM
    and set(KO.get('manual', {})) == set(EN.get('manual', {})) == {'back', 'title', 'updated', 'toc', 'koOnly', 'ai', 'empty'}
    and KO.get('meta', {}).get('manual') and EN.get('meta', {}).get('manual') and KO.get('guide', {}).get('manualLink') and EN.get('guide', {}).get('manualLink'), '')
@@ -78,7 +78,7 @@ docs = os.listdir(os.path.join(K, 'docs')) if os.path.isdir(os.path.join(K, 'doc
 ok('① 제안 403 문구(사업자 회원만 → 본인인증 회원) · 화면 목록(설명서 2 · 내 2단계 인증 API) · 문서 321 ~ 324 · VERSION v10.203 이상',
    '사업자' not in json.dumps(RJ, ensure_ascii=False).split('"err403"')[1][:60] and 'business' not in json.dumps(RE_).split('"err403"')[1][:80]
    and SCR.get('SB-ADM-SIT-090', {}).get('apis') == ['GET /admin/help/manual', 'GET /admin/help/manual/versions/{v}', 'POST /admin/help/manual']
-   and SCR.get('SB-HOM-ETC-040', {}).get('apis') == ['GET /help/manual'] and 'POST /me/logout-all' in SCR.get('SB-ADM-MFA-010', {}).get('apis', [])
+   and SCR.get('SB-HOM-ETC-040', {}).get('apis') == ['GET /site/manual'] and 'POST /me/logout-all' in SCR.get('SB-ADM-MFA-010', {}).get('apis', [])
    and all(any(f.startswith(f'{n}_') for f in docs) for n in (321, 322, 323, 324))
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 203), rd('VERSION').strip())
 
@@ -122,10 +122,10 @@ if API and DB:
         tok = {e: call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken') for e in (ADMU, SUPU)}
 
         # ② 공개 설명서 = DB 지금 판
-        pub = call('GET', '/help/manual')
+        pub = call('GET', '/site/manual')
         cur = psql("SELECT version || '|' || (SELECT count(*) FROM regexp_matches(body, '^###\\s', 'gn')) FROM v_help_doc_current WHERE code = 'USER_MANUAL'")
         orig = pub.get('body')
-        ok('② 공개 GET /help/manual — 지금 판 · 본문 · ### 절 목차가 DB 와 같음(m1 부터) · 15,000자 안팎 · 「준비 중」 표시 있음',
+        ok('② 공개 GET /site/manual — 지금 판 · 본문 · ### 절 목차가 DB 와 같음(m1 부터) · 15,000자 안팎 · 「준비 중」 표시 있음',
            cur == f"{pub.get('version')}|{len(pub.get('sections') or [])}" and (pub.get('sections') or [{}])[0].get('id') == 'm1'
            and 10000 < len(orig or '') <= 20000 and '준비 중' in (orig or ''), f"{cur} · {pub.get('version')} {len(pub.get('sections') or [])} · {len(orig or '')}")
 
@@ -137,10 +137,10 @@ if API and DB:
         s4 = call('POST', '/admin/help/manual', {'body': orig}, tok[SUPU])
         v0 = pub.get('version') or 0
         s5 = call('POST', '/admin/help/manual', {'body': orig + '\n### 시험 절 T1203\n- 시험으로 더한 줄입니다.\n', 'note': '시험 T1203'}, tok[SUPU])
-        pub2 = call('GET', '/help/manual')
+        pub2 = call('GET', '/site/manual')
         old = call('GET', f'/admin/help/manual/versions/{v0}', None, tok[ADMU])
         s6 = call('POST', '/admin/help/manual', {'body': orig, 'note': '시험 T1203 되돌림'}, tok[SUPU])
-        pub3 = call('GET', '/help/manual')
+        pub3 = call('GET', '/site/manual')
         ok('② 저장 — ADMIN 읽기 됨 · 저장 403 · 2만 자 넘음 422 HELP_TOO_LONG · 절 없음 422 HELP_NO_SECTION · 같은 글은 판 안 만듦 · 새 판 → 공개에 바로 · 옛 판 보기 · 원래 글로 새 판',
            (am.get('current') or {}).get('version') == v0 and am.get('maxChars') == 20000 and s1.get('_err') == 403
            and s2.get('_err') == 422 and s2.get('code') == 'HELP_TOO_LONG' and s3.get('_err') == 422 and s3.get('code') == 'HELP_NO_SECTION'
