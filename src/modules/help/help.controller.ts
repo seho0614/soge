@@ -9,8 +9,8 @@ import { HELP_MAX_CHARS, HelpService } from './help.service';
 /* ---------------------------------------------------------------------
  * v10.203 (D180 · docs/324) — 사용자 설명서
  *
- *   공개         GET  /help/manual                      지금 판 본문 · 절 목차(SB-HOM-ETC-020 /guide/manual)
- *   ADMIN·SUPER  GET  /admin/help/manual                지금 판 · 판 목록(SB-ADM-SIT-140)
+ *   공개         GET  /site/manual                      지금 판(공개 구역 site — check-acl) 본문 · 절 목차(SB-HOM-ETC-020 /guide/manual)
+ *   ADMIN·SUPER  GET  /admin/help/manual                지금 판 · 판 목록(SB-ADM-SIT-090)
  *                GET  /admin/help/manual/versions/:v    옛 판 본문
  *   SUPER        POST /admin/help/manual                새 판 저장(2만 자까지 · ### 절이 하나 이상)
  * ------------------------------------------------------------------- */
@@ -44,7 +44,7 @@ export class HelpSaveResultDto {
 export class HelpPublicController {
   constructor(private readonly help: HelpService) {}
 
-  @Get('help/manual')
+  @Get('site/manual')
   @ApiOperation({ summary: '사용자 설명서(공개)', description: '지금 판 본문과 ### 절 목차. AI 상담이 읽는 것과 같은 글입니다.' })
   @ApiOkResponse({ type: HelpManualDto })
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 설명서가 아직 없음' })

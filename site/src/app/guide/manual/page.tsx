@@ -13,12 +13,12 @@ interface Manual { title: string; version: number; updatedAt: string; body: stri
 
 /**
  * SB-HOM-ETC-040 사용자 설명서 (v10.203 · D180 · docs/324)
- *   운영 화면 「사용자 설명서」의 지금 판(GET /help/manual) — AI 상담이 읽는 것과 같은 글.
+ *   운영 화면 「사용자 설명서」의 지금 판(GET /site/manual) — AI 상담이 읽는 것과 같은 글.
  *   절 제목마다 #m번호(AI 상담 답의 출처 링크) · 장마다 #c번호(위 목차).
  */
 export default async function ManualPage() {
   const [tr, locale] = await Promise.all([getTranslations('policy'), getLocale()]);
-  const m = await apiGet<Manual>('/help/manual', 60).catch(() => null);
+  const m = await apiGet<Manual>('/site/manual', 60).catch(() => null);
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-ETC-040" style={{ maxWidth: 860 }}>
       <BackBar href="/guide" label={tr('manual.back')} wrap={false} />

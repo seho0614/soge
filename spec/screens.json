@@ -645,7 +645,7 @@
    ],
    "gates": [],
    "apis": [
-    "GET /help/manual"
+    "GET /site/manual"
    ],
    "nav": "SB-HOM-ETC-010",
    "note": "2026-11-06 v10.203 D180 — 이용안내 「자세한 사용 설명서」 · 절마다 #m번호(AI 상담 답의 출처 링크와 같음)."
