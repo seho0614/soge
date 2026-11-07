@@ -96,9 +96,11 @@ if API and DB:
         rd_ = call('GET', '/admin/community/town-verify/readiness', None, TS)
         mb = call('GET', '/admin/community/town-verify/readiness', None, TB)
         holes = ((rd_.get('terms') or {}).get('draft') or {}).get('holes') or []
+        # 점검판 시드(fixture.sql)는 LOCATION 을 모두 ARCHIVED 로 둠 → 초안이 없으면 빈칸 표시도 없음(그때는 초안 없음이 맞음)
+        no_draft = (rd_.get('terms') or {}).get('draft') is None
         ok('③ SUPER 켜기 → 422 INVALID_SETTING · 준비 상태(꺼짐 · 약관 없음 · 초안 2.0 빈칸 · 신고번호 없음 · 켤 수 없음) · 회원 403',
            sw.get('_err') == 422 and sw.get('code') == 'INVALID_SETTING' and rd_.get('switchOn') is False and (rd_.get('terms') or {}).get('published') is False
-           and '〔보관 기간〕' in holes and rd_.get('reportNo') == {'set': False} and rd_.get('canTurnOn') is False and rd_.get('ready') is False and mb.get('_err') == 403,
+           and ('〔보관 기간〕' in holes or no_draft) and rd_.get('reportNo') == {'set': False} and rd_.get('canTurnOn') is False and rd_.get('ready') is False and mb.get('_err') == 403,
            f'{sw.get("_err")} {sw.get("code")} · {str(rd_)[:160]} · {mb.get("_err")}')
 
         errs, seen = [], {}
@@ -117,7 +119,7 @@ if API and DB:
         except Exception as ex:
             errs.append(str(ex)[:120])
         ok('④ 화면 — 소개광장 「동네 인증 준비 상태」 · 약관 ✗ · 신고번호 ✗ · 초안 빈칸 · 오류 없음',
-           '동네 인증 준비 상태' in seen.get('h', '') and 'terms:n' in seen.get('rows', '') and 'report:n' in seen.get('rows', '') and seen.get('holes', '') not in ('', '0') and not errs,
+           '동네 인증 준비 상태' in seen.get('h', '') and 'terms:n' in seen.get('rows', '') and 'report:n' in seen.get('rows', '') and (no_draft or seen.get('holes', '') not in ('', '0')) and not errs,
            f'{seen} · {errs[:2]}')
     finally:
         if s0 and not s0.startswith('!') and s0 != 'on': psql(f"UPDATE site_settings SET value = '{s0}' WHERE key = 'community.town_verify'")

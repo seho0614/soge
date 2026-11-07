@@ -87,6 +87,7 @@ MEM = 'seller@x.com'; ADM = 'buyer@x.com'; CODE10 = '1168064000'; NAME = '서울
 setting = lambda: psql("SELECT value FROM site_settings WHERE key = 'community.town_verify'")
 if API and DB:
     s0 = setting(); mid = psql(f"SELECT id FROM accounts WHERE email = '{MEM}'")
+    t0 = psql("SELECT now()")   # 같은 DB 에서 두 번 돌아도 — 이용 기록은 지울 수 없으므로 이 시험이 남긴 것만 셈
     post = psql("SELECT p.id || '|' || p.author_id FROM posts p WHERE p.state = 'PUBLISHED' AND p.board <> 'FOOD' AND p.author_id IS NOT NULL ORDER BY p.created_at DESC LIMIT 1")
     pid, pauth = (post.split('|') + [''])[:2]
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
@@ -107,7 +108,7 @@ if API and DB:
         r2 = call('POST', '/me/town/verify', {'lat': 51.5, 'lng': -0.12}, TM)
         loc = psql("SELECT count(*) FROM v_terms_current WHERE code = 'LOCATION'")
         ok('② 켬 + 위치기반 약관 미게시 → 422 TOWN_CONSENT_REQUIRED(카카오 부르지 않음) · 한국 밖 좌표 400 · 이용 기록 없음',
-           loc == '0' and r1.get('code') == 'TOWN_CONSENT_REQUIRED' and r2.get('_err') == 400 and psql(f"SELECT count(*) FROM town_verify_logs WHERE account_id = '{mid}'") == '0',
+           loc == '0' and r1.get('code') == 'TOWN_CONSENT_REQUIRED' and r2.get('_err') == 400 and psql(f"SELECT count(*) FROM town_verify_logs WHERE account_id = '{mid}' AND at >= '{t0}'") == '0',
            f"{r1.get('code')} · {r2.get('_err')} · LOCATION 지금 판 {loc}")
         psql(f"INSERT INTO member_towns (account_id, adm_code, adm_name, expires_at) VALUES ('{mid}', '{CODE10}', '{NAME}', now() + interval '30 days') ON CONFLICT (account_id) DO UPDATE SET expires_at = EXCLUDED.expires_at")
         if pauth and pauth != mid:

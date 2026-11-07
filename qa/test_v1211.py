@@ -80,8 +80,15 @@ if API and DB:
         mig = psql("SELECT count(*) FROM schema_migrations WHERE name = 'D188_town_pick_ai'")
         ch = psql("SELECT coalesce(reason, 'OK') FROM fn_agent_allowed('TOWN_PICK')")
         sw = psql("SELECT value FROM site_settings WHERE key = 'agent.town_pick.enabled'")
-        posts = psql("SELECT string_agg(id::text, ',') FROM (SELECT id FROM posts WHERE state = 'PUBLISHED' AND board <> 'NOTICE' "
-                     "AND NOT EXISTS (SELECT 1 FROM town_pick_candidates c WHERE c.post_id = posts.id) ORDER BY created_at DESC LIMIT 2) x").split(',')
+        # 시험 글 2개를 직접 만듦(점검판 DB 에 공개 글이 모자랄 수 있음 · 첫 글 검수 대기를 거친 것으로 공개)
+        posts = []
+        for i in (1, 2):
+            # 두 번 돌아도 — 「하루 5개」 · 「방금 쓴 글과 같음」 규칙에 걸리지 않게 이틀 전 글 · 본문에 시각
+            pid = psql(f"INSERT INTO posts (board, author_id, title, body, state, created_at) SELECT 'QNA', id, '시험 1211 동네픽 글 {i}', "
+                       f"'시험 1211 동네픽 본문입니다 {i} ' || clock_timestamp()::text, 'PUBLISHED', now() - interval '2 days' FROM accounts WHERE email = '{BUY}' RETURNING id")
+            if re.match(r'^[0-9a-f-]{36}$', pid):
+                psql(f"UPDATE posts SET state = 'PUBLISHED' WHERE id = '{pid}'")
+                posts.append(pid)
         cands = []
         for i, pid in enumerate(p for p in posts if p):
             cands.append(psql(f"INSERT INTO town_pick_candidates (post_id, source, region, headline, summary, engine, model) "
@@ -114,7 +121,7 @@ if API and DB:
         au = psql("SELECT count(*) FROM audit.audit_logs WHERE action IN ('TOWN_PICK_APPROVE', 'TOWN_PICK_REJECT') AND occurred_at > now() - interval '10 minutes'")
         ok('③ 승인(고친 제목) · 짧은 사유 400/422 · 거절 · 다시 처리 422 · 공개 — 내 지역 1개(고친 제목) · 거절 안 보임 · 지역 없으면 전국 · 감사',
            a1.get('state') == 'APPROVED' and e1.get('_err') in (400, 422) and r1.get('state') == 'REJECTED' and a2.get('code') == 'TOWN_PICK_DECIDED'
-           and pub.get('region') == REG and [x.get('headline') for x in pub.get('items') or []] == ['고친 시험 동네픽']
+           and pub.get('region') == REG and [x.get('headline') for x in pub.get('items') or [] if x.get('id') in cands] == ['고친 시험 동네픽']
            and pall.get('region') is None and any(x.get('id') == cands[0] for x in pall.get('items') or []) and not any(x.get('id') == cands[1] for x in pall.get('items') or [])
            and au.isdigit() and int(au) >= 2,
            f'{a1} · {e1.get("_err")} · {r1} · {a2.get("code")} · {pub} · 감사 {au}')

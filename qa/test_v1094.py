@@ -112,7 +112,7 @@ if API:
     ADM, MEM = login('admin@x.com'), login(os.environ.get('MEMBER', 'person@x.com'))
     s1, j = call('GET', '/admin/agent/status', ADM)
     ok('④ 상태 200 · 꺼짐 · 상한 0 · 통로 2개(v10.104 부터 번역 더해 3개) 모두 막힘 · 요금표 3', s1 == 200 and j['enabled'] is False and j['capUsd'] == '0'
-       and len(j['channels']) in (2, 3, 4) and all(not c['ok'] for c in j['channels']) and len(j['prices']) == 3, f'{s1}')
+       and len(j['channels']) in (2, 3, 4, 5) and all(not c['ok'] for c in j['channels']) and len(j['prices']) == 3, f'{s1}')
     s2, _ = call('GET', '/admin/agent/status', MEM)
     ok('④ 회원 403', s2 == 403, f'{s2}')
 

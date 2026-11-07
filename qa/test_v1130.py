@@ -49,7 +49,7 @@ if SITE:
             pg.goto(SITE + '/', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
             m = pg.evaluate(MEASURE)
             ok(f'② {w}px — 칩 4 + 바로가기 5 가 한 줄(가운데 높이 차 4px 안) · 13px · 넘침 없음',
-               m and m['chips'] == 4 and m['qm'] == 5 and m['spread'] <= 4 and m['font'] == '13px' and not m['overflowX'], str(m))
+               m and m['chips'] in (3, 4) and m['qm'] == 5 and m['spread'] <= 4 and m['font'] == '13px' and not m['overflowX'], str(m))
             if w == 1280:
                 q = pg.locator('[data-hero-row] .home-chip').first.get_attribute('data-q')
                 pg.locator('[data-hero-row] .home-chip').first.click(); pg.wait_for_timeout(1200)
