@@ -49,7 +49,8 @@ BEGIN
      OR NEW.return_id <> OLD.return_id OR NEW.order_item_id <> OLD.order_item_id THEN
     RAISE EXCEPTION 'HLTOS: 개봉 반품 재고의 상품 · 수량은 바꿀 수 없습니다.';
   END IF;
-  IF NEW.state IS DISTINCT FROM OLD.state AND NOT (OLD.state = 'HOLD' AND NEW.state = 'DISCARDED') THEN
+  -- 처리 끝난 줄(폐기 · 반송)은 다시 고치지 않음 — 다시 폐기해 사유 · 처리 시각을 덮어쓰는 것도 막음
+  IF OLD.state <> 'HOLD' OR (NEW.state IS DISTINCT FROM OLD.state AND NEW.state <> 'DISCARDED') THEN
     RAISE EXCEPTION 'HLTOS: 보관 중인 것만 폐기로 옮길 수 있습니다 — 식품 · 화장품 개봉품은 다시 팔 수 없습니다.';
   END IF;
   RETURN NEW;
