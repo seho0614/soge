@@ -9,6 +9,7 @@ import { ymdKst } from '../../lib/format';
  *   ② 「연결 확인」 — SES 에 붙어 첫 인사만(메일 안 보냄) · ③ 「시험 메일」 — 스위치가 꺼져 있어도 보냄(회원 알림은 그대로 안 나감 · 하루 한도)
  *   ④ 발송 기록 — 알림 메일 보냄 · 실패 · 대기 · 실패 까닭 · 최근 실패(주소 가림)
  *   ⑤ v10.154 (D147 · docs/234) — 「메일 켜기 전 시험 메일 확인」 줄(SUPER 가 바꿈) · 마지막 시험 메일 결과 — 켜져 있으면 7일 안 성공이 있어야 스위치를 켬
+ *   ⑥ v10.209 (D186 · docs/334) — 반송 · 수신 거부 주소(받기 스위치 · SNS 주제 · 막힌 주소 가림 · 풀기 SUPER · 사유)
  *   사용자 이름 · 비밀번호는 위 「연동 키」(메일 줄)에서 넣습니다 — 운영 .env 수정 · 재시작 없이. 순서는 docs/167(절차서 v1.3).
  */
 
@@ -21,6 +22,12 @@ interface Status {
 }
 interface Deliveries { days: number; sent: number; failed: number; queued: number; reasons: { reason: string; n: number }[]; recent: { at: string; event: string; reason: string | null; to: string | null }[] }
 type Result = { ok: boolean; text: string } | null;
+interface Suppressions {
+  feedback: { switchOn: boolean; topicSet: boolean; lastAt: string | null };
+  counts: { active: number; bounce: number; complaint: number; released: number };
+  week: { bounce: number; complaint: number; delivery: number };
+  items: { id: string; email: string; reason: 'BOUNCE' | 'COMPLAINT'; detail: string | null; hits: number; firstAt: string; lastAt: string; releasedAt: string | null; releaseNote: string | null }[];
+}
 
 const SRC: Record<string, string> = { ADMIN: '연동 키(이 화면)', ENV: '.env', NONE: '없음', DEFAULT: '기본값(서울 SES)', SETTING: '사이트 설정 notify.mail_from' };
 const KIND: Record<string, string> = {
@@ -39,10 +46,25 @@ export function MailPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [res, setRes] = useState<Result>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [sp, setSp] = useState<Suppressions | null>(null);
+  const [spState, setSpState] = useState<'active' | 'released'>('active');
 
   const load = () => api<Status>('/admin/mail/status').then(setSt).catch((e) => setErr(e?.message ?? '불러오지 못했습니다.'));
   useEffect(() => { void load(); }, []);
   useEffect(() => { api<Deliveries>(`/admin/mail/deliveries?days=${days}`).then(setDv).catch(() => setDv(null)); }, [days]);
+  const loadSp = () => api<Suppressions>(`/admin/mail/suppressions?state=${spState}`).then(setSp).catch(() => setSp(null));
+  useEffect(() => { void loadSp(); }, [spState]);
+
+  async function release(id: string, email: string) {
+    const note = window.prompt(`${email} 를 풀까요? 다시 알림 메일이 나갑니다(다시 반송되면 다시 막힘). 푸는 사유를 적어 주십시오(2 ~ 300자).`);
+    if (note === null) return;
+    setBusy(`rel-${id}`); setRes(null);
+    try {
+      await api(`/admin/mail/suppressions/${id}/release`, { method: 'POST', body: JSON.stringify({ note }) });
+      setRes({ ok: true, text: `${email} 를 풀었습니다 — 감사 기록에 남습니다.` }); void loadSp();
+    } catch (e) { setRes({ ok: false, text: (e as Error)?.message ?? '풀지 못했습니다.' }); }
+    finally { setBusy(null); }
+  }
 
   async function connect() {
     setBusy('connect'); setRes(null);
@@ -126,6 +148,30 @@ export function MailPanel() {
               <tbody>{dv.recent.map((r, i) => <tr key={i} data-mail-fail><td>{ymdKst(r.at)}</td><td>{r.event}</td><td>{r.to ?? '-'}</td><td>{r.reason ?? '-'}</td></tr>)}</tbody></table>
           )}
           <p className="hint">특정 회원에게만 안 가는데 기록이 「보냄」이면 SES 억제 목록에 그 주소가 있는지 보십시오(docs/167 4절).</p>
+        </div>
+      )}
+      {sp && (
+        <div data-mail-suppress style={{ marginTop: 12 }}>
+          <h3 className="sec">반송 · 수신 거부 주소{' '}
+            {(['active', 'released'] as const).map((k) => <button key={k} className={`btn-sm${k === spState ? ' on' : ''}`} onClick={() => setSpState(k)} aria-pressed={k === spState}>{k === 'active' ? '막힘' : '푼 주소'}</button>)}</h3>
+          <p className="hint" data-mail-feedback={sp.feedback.switchOn && sp.feedback.topicSet ? 'on' : 'off'}>
+            받기 — <b>{sp.feedback.switchOn ? '켜짐' : '꺼짐'}</b> · SNS 주제 {sp.feedback.topicSet ? '있음' : '없음'}
+            {sp.feedback.lastAt ? ` · 마지막 알림 ${ymdKst(sp.feedback.lastAt)}` : ' · 받은 알림 없음'}
+            {!(sp.feedback.switchOn && sp.feedback.topicSet) && ' — SES 에서 SNS 주제를 만들고 사이트 설정 notify.ses_topic_arn 을 넣은 뒤 notify.ses_feedback 을 켜십시오(docs/334).'}
+          </p>
+          <p>막힌 주소 <b data-mail-suppress-stat="active">{sp.counts.active}</b>(영구 반송 {sp.counts.bounce} · 수신 거부 {sp.counts.complaint}) · 푼 주소 {sp.counts.released}
+            {' '}— 최근 7일 받은 알림: 반송 {sp.week.bounce} · 수신 거부 {sp.week.complaint}</p>
+          {sp.items.length > 0 ? (
+            <table className="tbl"><thead><tr><th>주소</th><th>까닭</th><th>횟수</th><th>마지막</th><th>{spState === 'active' ? '' : '푼 사유'}</th></tr></thead>
+              <tbody>{sp.items.map((r) => (
+                <tr key={r.id} data-mail-suppress-row={r.reason}>
+                  <td>{r.email}</td><td>{r.reason === 'BOUNCE' ? '영구 반송' : '수신 거부'}{r.detail ? ` · ${r.detail}` : ''}</td><td>{r.hits}</td><td>{ymdKst(r.lastAt)}</td>
+                  <td>{spState === 'active'
+                    ? (isSuper && <button className="btn-sm" disabled={busy === `rel-${r.id}`} onClick={() => void release(r.id, r.email)} data-mail-suppress-release>풀기</button>)
+                    : <span className="muted">{r.releaseNote ?? ''}</span>}</td>
+                </tr>))}</tbody></table>
+          ) : <p className="muted">{spState === 'active' ? '막힌 주소가 없습니다.' : '푼 주소가 없습니다.'}</p>}
+          <p className="hint">막힌 주소에는 알림 메일을 보내지 않고 발송 기록에 「SUPPRESSED」로 남깁니다. 수신 거부는 회원이 스팸 신고를 한 것이라 함부로 풀지 마십시오.</p>
         </div>
       )}
     </div>

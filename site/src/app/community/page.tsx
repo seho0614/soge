@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { isBoard, type PostRow } from '@/components/community/types';
 import { BoardBadge, Pager, PlazaHero, PlazaTabs, PLAZA_TABS, dot, plazaHref } from '@/components/community/Plaza';
 import { TownBadge, TownVerify } from '@/components/community/TownVerify';
+import { TownPicks } from '@/components/community/TownPicks';
 import { me } from '@/lib/session';
 import '@/styles/plaza.css';
 
@@ -53,6 +54,7 @@ export default async function CommunityPage({ searchParams }: {
       <div className="plz-body">
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
+        {!q && <TownPicks loggedIn={!!(await me())} />}
         <TownVerify loggedIn={!!(await me())} />
         {q && b && (
           <p className="plz-found" role="status">

@@ -11,6 +11,7 @@ import { EsignService } from '../modules/deal/esign.service';
 import { SafenumService } from '../modules/listing/safenum.service';
 import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
+import { TownPickService } from '../modules/community/town-pick.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
 import { LaunchWatchService } from '../modules/admin/launch-watch.service';
 import { uploadsBackupState } from '../common/uploads-backup-state';
@@ -32,7 +33,7 @@ export type JobName =
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
-  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release';
+  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily';
 
 export interface JobResult {
   job: JobName;
@@ -56,6 +57,7 @@ export class SchedulerService {
     private readonly safenum: SafenumService,
     private readonly translate: TranslateService,
     private readonly reviewShadow: ReviewShadowService,
+    private readonly townPick: TownPickService,
     private readonly agentChat: AgentChatService,
     private readonly launchWatch: LaunchWatchService,
     private readonly piiReview: PiiReviewService,   // v10.179 (D168) 개인정보 접속기록 점검 알림
@@ -573,6 +575,13 @@ export class SchedulerService {
       /* v10.106 (D120 · docs/165) — AI 검수 보조(병행): 의견만 저장 · 검수 상태는 바꾸지 않음 · 스위치 · AI 전체 · 월 상한이 막으면 아무것도 부르지 않음 */
       case 'review_shadow': {
         const r = await this.reviewShadow.runBatch(10);
+        affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.211 (D188 · docs/336) — 동네픽 AI 후보: 시군구별 최근 회원 글 · 맛집 글에서 고름(승인 전 비공개) · 스위치 · AI 전체 · 월 상한이 막으면 아무것도 부르지 않음 */
+      case 'town_pick_daily': {
+        const r = await this.townPick.runBatch();
         affected = r.affected; detail = r.detail;
         break;
       }

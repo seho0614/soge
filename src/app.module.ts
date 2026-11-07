@@ -113,6 +113,8 @@ import { TownFoodAdminController, TownFoodController } from './modules/community
 import { TownFoodService } from './modules/community/town-food.service';
 import { TownVerifyController } from './modules/community/town-verify.controller';   // v10.164 (D154) 소개광장 동네 인증
 import { TownVerifyService } from './modules/community/town-verify.service';
+import { TownPickController } from './modules/community/town-pick.controller';   // v10.211 (D188) 동네픽 AI
+import { TownPickService } from './modules/community/town-pick.service';
 import { HealthTenantController } from './modules/health/health-tenant.controller';   // v10.165 (D155) 소개몰 입점 신청 · 심사
 import { HealthTenantService } from './modules/health/health-tenant.service';
 import { HealthSellerController } from './modules/health/health-seller.controller';   // v10.166 (D156) 소개몰 판매자센터 · 상품 검수
@@ -213,6 +215,8 @@ import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발�
 import { TelegramService } from './common/telegram/telegram.service';  /* v10.200 (D178) 급한 운영 알림 텔레그램 */
 import { MailAdminService } from './common/mail/mail-admin.service';   /* v10.140 (D136) 운영 화면 「메일」 */
 import { MailAdminController } from './modules/site/mail-admin.controller';
+import { MailSuppressionService } from './common/mail/mail-suppression.service';   /* v10.209 (D186) 메일 반송 · 수신 거부 */
+import { MailFeedbackController } from './modules/site/mail-feedback.controller';
 import { IdentityVerifyService } from './modules/identity/identity-verify.service';   /* v10.141 (D137) 본인인증 표준창 */
 import { IdentityVerifyController } from './modules/identity/identity-verify.controller';
 import { AlimtalkService } from './common/alimtalk/alimtalk.service';   /* v10.142 (D138) 알림톡 */
@@ -330,6 +334,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownFoodController,
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     TownVerifyController,   // v10.164 (D154) 동네 인증
+    TownPickController,   // v10.211 (D188) 동네픽 AI
     HealthTenantController,   // v10.165 (D155) 소개몰 입점
     HealthSellerController,   // v10.166 (D156) 판매자센터
     LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
@@ -338,6 +343,7 @@ import { LeadService } from './modules/lead/lead.service';
     PrivacyController,       // v10.181 (D170) 내 정보 내려받기 · 로그인 기록 · 권리 요청
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
+    MailFeedbackController,   // v10.209 (D186) 반송 · 수신 거부(SNS 웹훅 · 운영 화면)
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
     AlimtalkAdminController,   // v10.142 (D138) 운영 화면 › 외부 연동 › 알림톡
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
@@ -355,6 +361,7 @@ import { LeadService } from './modules/lead/lead.service';
     HealthOpenStockService, /* v10.208 (D185) 개봉 반품 재고 */
     TownFoodService,   /* v10.47 (D100) 우리동네 맛집 */
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
+    TownPickService,   /* v10.211 (D188) 동네픽 AI */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
@@ -429,6 +436,7 @@ import { LeadService } from './modules/lead/lead.service';
     MailService,
     TelegramService,
     MailAdminService,
+    MailSuppressionService,
     IdentityVerifyService,
     AlimtalkService,
     EsignService,

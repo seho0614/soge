@@ -1707,7 +1707,10 @@
     "POST /admin/integ-tests/bank-send",
     "POST /admin/integ-tests/bank-confirm",
     "GET /admin/safenum/status",
-    "GET /admin/safenum/calls"
+    "GET /admin/safenum/calls",
+    "GET /admin/mail/suppressions",
+    "POST /admin/mail/suppressions/{id}/release",
+    "POST /webhooks/ses"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
@@ -3243,7 +3246,8 @@
     "GET /community/town/config",
     "GET /me/town",
     "POST /me/town/verify",
-    "DELETE /me/town"
+    "DELETE /me/town",
+    "GET /community/town-picks"
    ]
   },
   {
@@ -3414,7 +3418,12 @@
     "GET /admin/safety/cases",
     "POST /admin/safety/cases/{no}/hide",
     "GET /admin/community/food/places",
-    "PATCH /admin/community/food/places/{id}"
+    "PATCH /admin/community/food/places/{id}",
+    "GET /admin/community/town-verify/readiness",
+    "GET /admin/community/town-picks",
+    "POST /admin/community/town-picks/{id}/approve",
+    "POST /admin/community/town-picks/{id}/reject",
+    "POST /admin/community/town-picks/run"
    ]
   },
   {

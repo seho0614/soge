@@ -5,7 +5,7 @@ import { RequestCtx } from '../../core/request-context';
 import { PolicyViolation } from '../../core/errors';
 import { AgentProvider, ClaudeAgentProvider, MockAgentProvider, resolveAgentProvider } from './agent.provider';
 
-export type AgentChannel = 'SITE_CHAT' | 'REVIEW_SHADOW' | 'AUDIT' | 'SETTLE' | 'TRANSLATE' | 'BOARD';   // v10.104 TRANSLATE(D118) · v10.105 BOARD(D119)
+export type AgentChannel = 'SITE_CHAT' | 'REVIEW_SHADOW' | 'AUDIT' | 'SETTLE' | 'TRANSLATE' | 'BOARD' | 'TOWN_PICK';   // v10.104 TRANSLATE(D118) · v10.105 BOARD(D119) · v10.211 TOWN_PICK(D188)
 /** v10.111 — 엔진의 키가 어디서 왔나: 운영 화면 · .env · 시험 엔진(.env AGENT_PROVIDER=MOCK) · 없음 */
 export type AgentKeySource = 'ADMIN' | 'ENV' | 'MOCK' | 'NONE';
 
@@ -183,7 +183,7 @@ export class AgentService {
       `SELECT gwan_code AS "gwanCode", decided::int, agreed::int, unsure::int, referenced::int, agree_pct::text AS "agreePct"
          FROM v_ai_review_agreement_gwan ORDER BY decided DESC, gwan_code`).catch(() => []);
     const eng = await this.resolve();
-    const channels = await Promise.all((['REVIEW_SHADOW', 'SITE_CHAT', 'TRANSLATE', 'BOARD'] as AgentChannel[]).map(async (c) => ({ channel: c, ...(await this.allowed(c)) })));
+    const channels = await Promise.all((['REVIEW_SHADOW', 'SITE_CHAT', 'TRANSLATE', 'BOARD', 'TOWN_PICK'] as AgentChannel[]).map(async (c) => ({ channel: c, ...(await this.allowed(c)) })));
     return {
       enabled: s['agent.enabled'] === 'on',
       switches: {
@@ -192,6 +192,7 @@ export class AgentService {
         drafts: s['agent.chat.drafts.enabled'] === 'on',   // v10.139 신청서 초안(D135)
         translate: s['i18n.auto_translate.enabled'] === 'on',   // v10.104 등록 글 자동 번역(D118)
         board: s['i18n.board_on_view'] === 'on',   // v10.105 소개광장 볼 때 번역(D119)
+        townPick: s['agent.town_pick.enabled'] === 'on',   // v10.211 동네픽 AI(D188)
       },
       capUsd: s['agent.monthly_cap_usd'] ?? '0', monthCostUsd: m?.cost ?? '0',
       reviewModel: s['agent.review_model'] ?? null, chatModel: s['agent.chat_model'] ?? null, translateModel: s['i18n.translate_model'] ?? null,

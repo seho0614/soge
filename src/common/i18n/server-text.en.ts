@@ -1626,4 +1626,24 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "직판 상품의 개봉 반품은 보관 또는 폐기로 시작합니다.": "Opened returns of directly sold items start as held or discarded.",
   "개봉 반품 재고의 상품 · 수량은 바꿀 수 없습니다.": "The product and quantity of an opened-return item cannot be changed.",
   "보관 중인 것만 폐기로 옮길 수 있습니다 — 식품 · 화장품 개봉품은 다시 팔 수 없습니다.": "Only held items can be moved to discarded — opened food and cosmetics cannot be resold.",
+  /* v10.209 (D186) — 메일 반송 · 수신 거부 */
+  "알 수 없는 SNS 알림 종류입니다.": "Unknown SNS message type.",
+  "SNS 알림 형식이 아닙니다.": "Not an SNS message.",
+  "받기로 한 SNS 주제가 아닙니다.": "This is not the SNS topic we accept.",
+  "AWS SNS 에 연결하지 못했습니다.": "Could not reach AWS SNS.",
+  "푸는 사유를 2 ~ 300자로 적어 주십시오.": "Enter a reason of 2 to 300 characters for releasing the address.",
+  "없는 반송 주소 기록입니다.": "No such suppressed address.",
+  "이미 푼 주소입니다.": "This address has already been released.",
+  "반송 주소 기록은 지울 수 없습니다 — 풀기를 쓰십시오.": "Suppressed address records cannot be deleted — release the address instead.",
+  /* v10.210 (D187) — 동네 인증 켜기 전 안전장치 */
+  "동네 인증은 위치기반서비스 이용약관(LOCATION)을 게시해 시행된 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service terms (LOCATION) are published and in effect.",
+  "동네 인증은 위치기반서비스사업 신고번호(community.lbs_report_no)를 넣은 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service business report number (community.lbs_report_no) is entered.",
+  /* v10.211 (D188) — 동네픽 AI */
+  "없는 동네픽 후보입니다.": "No such neighborhood pick candidate.",
+  "이미 처리한 동네픽 후보입니다.": "This neighborhood pick candidate has already been handled.",
+  "제목은 2 ~ 60자, 소개는 2 ~ 300자로 적어 주십시오.": "Use 2 to 60 characters for the headline and 2 to 300 for the summary.",
+  "거절 사유를 2 ~ 300자로 적어 주십시오.": "Enter a rejection reason of 2 to 300 characters.",
+  "동네픽 후보 기록은 지울 수 없습니다.": "Neighborhood pick records cannot be deleted.",
+  "동네픽 후보는 대기로 시작합니다.": "Neighborhood pick candidates start as pending.",
+  "동네픽 후보의 원글 · 지역은 바꿀 수 없습니다.": "The source post and region of a neighborhood pick cannot be changed.",
 };

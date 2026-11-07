@@ -79,6 +79,11 @@ const RULES: Array<{ test: RegExp; map: (m: RegExpMatchArray) => Mapped }> = [
     map: (m) => ({ status: 422, code: 'OPEN_STOCK_RULE', message: m[1] }),
   },
   {
+    /* v10.211 (D188) — 동네픽 후보 규칙(대기로 시작 · 한 번 처리 · 원글 · 지역 못 바꿈 · 지우지 못함) */
+    test: /^TOWNPICK:\s*(.*)/,
+    map: (m) => ({ status: 422, code: 'TOWN_PICK_RULE', message: m[1] }),
+  },
+  {
     /* v10.207 (D184) — 요금제 금액 · 한도 규칙(무료 ↔ 유료 · 음수 · 사유 · 변경 기록 지우지 못함) */
     test: /^PLAN:\s*(.*)/,
     map: (m) => ({ status: 422, code: 'PLAN_RULE', message: m[1] }),

@@ -16,6 +16,7 @@ export class AgentSwitchesDto {
   @ApiProperty({ description: 'agent.chat.drafts.enabled — AI 상담 신청서 초안(v10.139 · D135)' }) drafts!: boolean;
   @ApiProperty({ description: 'i18n.auto_translate.enabled — 등록 글 자동 번역(v10.104 · D118)' }) translate!: boolean;
   @ApiProperty({ description: 'i18n.board_on_view — 소개광장 볼 때 번역(v10.105 · D119)' }) board!: boolean;
+  @ApiProperty({ description: 'agent.town_pick.enabled — 동네픽 AI 큐레이션(v10.211 · D188)' }) townPick!: boolean;
 }
 export class AgentLimitsDto {
   @ApiProperty() guestDaily!: number;

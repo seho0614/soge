@@ -75,6 +75,29 @@ export class TownVerifyService {
     });
   }
 
+  /** v10.210 (D187 · docs/335) — 운영 화면 준비 상태: 켜려면 ① 위치 약관 게시 · 시행 ② 신고번호 ③ 카카오 REST 키 — ①② 는 DB 가 켜기를 막음 */
+  async readiness() {
+    const [t] = await this.db.query<{ version: string | null; effectiveFrom: Date | null; draftVersion: string | null; draftStatus: string | null; draftBody: string | null }>(
+      `SELECT (SELECT version FROM terms WHERE code = 'LOCATION' AND status = 'PUBLISHED' AND effective_from <= now() ORDER BY effective_from DESC LIMIT 1) AS version,
+              (SELECT effective_from FROM terms WHERE code = 'LOCATION' AND status = 'PUBLISHED' AND effective_from <= now() ORDER BY effective_from DESC LIMIT 1) AS "effectiveFrom",
+              d.version AS "draftVersion", d.status AS "draftStatus", d.body AS "draftBody"
+         FROM (SELECT 1) x
+         LEFT JOIN LATERAL (SELECT version, status, body FROM terms WHERE code = 'LOCATION' AND status IN ('DRAFT', 'LEGAL_REVIEW')
+                             ORDER BY length(version) DESC, version DESC LIMIT 1) d ON true`);
+    const [s] = await this.db.query<{ reportNo: string | null }>(`SELECT value AS "reportNo" FROM site_settings WHERE key = 'community.lbs_report_no'`);
+    const holes = [...new Set((t?.draftBody ?? '').match(/〔[^〕]*〕/g) ?? [])];
+    const terms = !!t?.version, report = !!s?.reportNo?.trim(), kakao = !!(await this.geo.restKey());
+    return {
+      switchOn: await this.on(),
+      terms: { published: terms, version: t?.version ?? null, effectiveFrom: t?.effectiveFrom ?? null,
+               draft: t?.draftVersion ? { version: t.draftVersion, status: t.draftStatus as string, holes } : null },
+      reportNo: { set: report },
+      kakao: { set: kakao },
+      canTurnOn: terms && report,
+      ready: terms && report && kakao,
+    };
+  }
+
   /** 인증 지우기 — 회원이 언제든(동의 철회와 함께) */
   async remove() {
     const rows = await this.db.query(`DELETE FROM member_towns WHERE account_id = $1 RETURNING account_id`, [this.me]);

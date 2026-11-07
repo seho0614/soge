@@ -6,6 +6,8 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { SafetyCases } from './MarketOps';
 import { FoodPlaces } from './FoodPlaces';
+import { TownReadiness } from './TownReadiness';
+import { TownPicks } from './TownPicks';
 import { ymdKst } from '../../lib/format';
 
 interface Pending { id: string; board: string; title: string; createdAt: string; author: string; daysWaiting: number }
@@ -95,6 +97,8 @@ export function Community() {
         {note && <> {note}</>}
       </p>
       <Flash msg={a.msg} err={a.err} />
+      <TownReadiness />
+      <TownPicks />
 
       <h3 className="sec">첫 글 검수 <em>{pending.length}</em></h3>
       {pending.length === 0 && <p className="muted">검수를 기다리는 글이 없습니다.</p>}

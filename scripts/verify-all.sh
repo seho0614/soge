@@ -52,6 +52,12 @@ npx ts-node -P tsconfig.scripts.json scripts/test-mail-offline.ts | tail -1 || F
 step "알림 메일 발송 (v10.85 · 거래 안에서 되돌림)"
 npx ts-node -P tsconfig.scripts.json scripts/test-notify-mail.ts | tail -1 || FAIL=1
 
+step "메일 반송 · 수신 거부 받기 (v10.209 · 거래 안에서 되돌림)"
+npx ts-node -P tsconfig.scripts.json scripts/test-ses-feedback.ts | tail -1 || FAIL=1
+
+step "동네픽 AI 큐레이션 (v10.211 · 거래 안에서 되돌림)"
+npx ts-node -P tsconfig.scripts.json scripts/test-town-pick.ts | tail -1 || FAIL=1
+
 step "외부 연동 목록 대조 (v10.44)"
 npx ts-node -P tsconfig.scripts.json scripts/check-integrations.ts | tail -1 || FAIL=1
 

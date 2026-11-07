@@ -561,5 +561,14 @@
     "closed": "Closed",
     "votes": "{n} people voted",
     "made": "Created {date}"
+  },
+  "picks": {
+    "title": "Neighborhood picks",
+    "mine": "Picks for {region}",
+    "all": "Recent neighborhood picks",
+    "help": "Chosen by SogaeBank's team from neighbors' posts (AI-assisted, reviewed by staff).",
+    "food": "Restaurant",
+    "plaza": "Plaza",
+    "read": "Read post"
   }
 }

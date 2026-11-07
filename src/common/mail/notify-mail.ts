@@ -13,6 +13,7 @@ import type { SmtpResult } from './smtp';
  *   · 보내지 않고 FAILED 로 닫는 것: 회원이 그 알림의 메일을 끔(알림 정책이 끄기를 허락할 때) · 쓰지 않는 계정 · 3일 넘은 알림.
  *   · 링크는 사이트 안 주소(/…)만 붙입니다 — 바깥 주소는 붙이지 않음. 제목의 줄바꿈은 빈칸으로(머리줄 끼워 넣기 방지).
  *   · 받는 주소는 기록에 남기지 않습니다(발송기 로그는 앞 2글자만).
+ *   · v10.209 (D186) — 영구 반송 · 수신 거부된 주소(mail_suppressions · 풀지 않은 것)는 보내지 않고 FAILED(SUPPRESSED)로 닫음.
  * ------------------------------------------------------------------- */
 
 export interface NotifyMailDb { query<T = any>(sql: string, params?: unknown[]): Promise<T[]> }
@@ -27,7 +28,7 @@ const TEMP = new Set(['NETWORK', 'TIMEOUT']);
 
 interface Row {
   id: string; title: string | null; body: string; linkUrl: string | null; email: string | null;
-  failedReason: string | null; optedOut: boolean; active: boolean; old: boolean; baseUrl: string | null;
+  failedReason: string | null; optedOut: boolean; active: boolean; old: boolean; baseUrl: string | null; suppressed: boolean;
 }
 
 /** 메일 한 통의 제목 · 본문 — 시험에서도 씁니다 */
@@ -54,6 +55,7 @@ export class NotifyMailSender {
                AND coalesce(pol.optout_allowed, true)) AS "optedOut",
               (a.status = 'ACTIVE') AS active,
               (n.created_at < now() - interval '3 days') AS old,
+              EXISTS (SELECT 1 FROM mail_suppressions s WHERE s.email = a.email AND s.released_at IS NULL) AS suppressed,
               (SELECT value FROM site_settings WHERE key = 'site.base_url') AS "baseUrl"
          FROM notification_deliveries d
          JOIN notifications n ON n.id = d.notification_id
@@ -64,7 +66,8 @@ export class NotifyMailSender {
         LIMIT $1`, [limit]);
     for (const r of rows) {
       const close = !r.email ? 'NO_EMAIL: 받는 주소 없음' : !r.active ? 'ACCOUNT_INACTIVE: 쓰지 않는 계정'
-        : r.optedOut ? 'OPTED_OUT: 회원이 이 알림 메일을 끔' : r.old ? 'EXPIRED: 3일 넘은 알림은 보내지 않음' : null;
+        : r.optedOut ? 'OPTED_OUT: 회원이 이 알림 메일을 끔' : r.old ? 'EXPIRED: 3일 넘은 알림은 보내지 않음'
+        : r.suppressed ? 'SUPPRESSED: 반송 · 수신 거부된 주소' : null;
       if (close) {
         await this.db.query(
           `UPDATE notification_deliveries SET status = 'FAILED', failed_reason = $2 WHERE id = $1::bigint AND status = 'QUEUED'`, [r.id, close]);
