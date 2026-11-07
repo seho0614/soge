@@ -71,7 +71,7 @@ BEGIN;
 SELECT 'A:' || ok || ':' || coalesce(reason,'') FROM fn_agent_allowed('REVIEW_SHADOW');
 UPDATE site_settings SET value = 'on' WHERE key IN ('agent.enabled', 'agent.review_shadow.enabled');
 SELECT 'B:' || ok || ':' || coalesce(reason,'') FROM fn_agent_allowed('REVIEW_SHADOW');
-UPDATE site_settings SET value = '0.01' WHERE key = 'agent.monthly_cap_usd';
+UPDATE site_settings SET value = (ceil((fn_agent_month_cost() + 0.0001) * 100) / 100)::numeric(10,2)::text WHERE key = 'agent.monthly_cap_usd';   -- 앞선 시험이 이달 비용을 남겨도(두 번째 실행) 상한은 그 바로 위(소수 2자리 · value_pattern)
 SELECT 'C:' || ok || ':' || coalesce(reason,'') FROM fn_agent_allowed('REVIEW_SHADOW');
 SELECT 'D:' || round(fn_agent_record_usage('REVIEW_SHADOW', 'claude-sonnet-5-5', 3000, 500, 0), 4);
 SELECT 'E:' || value FROM site_settings WHERE key = 'agent.enabled';

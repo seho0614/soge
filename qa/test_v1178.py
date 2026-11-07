@@ -9,7 +9,7 @@
   ③ (API) 느린 응답 — 지켜보기 slowHour(요청 수 · p95 · 느린 주소) · 기준을 1ms 로 낮추면 launch_watch 가 SLOW_API(1시간에 한 번) · 기준 되돌림
   ④ (API · DB) 회원 투표 — 신고 3건으로 감춰지면 launch_watch 가 POLL_HIDDEN_BY_REPORTS 한 번(두 번 돌려도) · 검수 큐 reportedPolls · 다시 보이기
 """
-import json, os, re, subprocess, urllib.error, urllib.request
+import json, os, re, subprocess, time, urllib.error, urllib.request
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'
@@ -75,14 +75,14 @@ if API and DB:
     # ── ② 본문 읽기 · 저장 한 바퀴 ──────────────────────────────────────
     sc, jc = call('POST', '/community/classify', None, {'title': 'postcheck 본문 읽기 확인'})
     TA, TB = login('admin@x.com'), login('buyer@x.com')
-    sp, jp = call('POST', '/me/community/posts', TB, {'board': 'QNA', 'title': '시험 v1178 — 저장 길 확인', 'body': '본문 읽기 · 저장이 되는지 확인하는 시험 글입니다.'})
+    sp, jp = call('POST', '/me/community/posts', TB, {'board': 'QNA', 'title': '시험 v1178 — 저장 길 확인', 'body': f'본문 읽기 · 저장이 되는지 확인하는 시험 글입니다({time.time_ns()}).'})
     pid = jp.get('id')
     hp = call('GET', '/community/polls?scope=home')[1]
     hp = hp if isinstance(hp, list) else []
     sv, jv = (call('POST', f"/community/polls/{hp[0]['id']}/vote", TB, {'optionId': hp[0]['options'][0]['id']}) if hp and hp[0].get('options') else (0, {}))
     ok('② 본문 읽기 · 저장 — 게시판 추천 200 · confident · 로그인 토큰 · 글 저장 201 · 투표 201 또는 409(이미) — 어느 것도 400 아님',
        sc in (200, 201) and 'confident' in jc and TA and TB and sp == 201 and pid and sv in (201, 409), f'추천 {sc} · 글 {sp} {jp.get("code")} · 투표 {sv} {jv.get("code")}')
-    if pid: psql(f"UPDATE posts SET state = 'DELETED' WHERE id = '{pid}'")
+    if pid: psql(f"UPDATE posts SET state = 'DELETED', created_at = now() - interval '2 days' WHERE id = '{pid}'")
 
     # ── ③ 느린 응답 ──────────────────────────────────────────────────
     for _ in range(60): call('GET', '/health')

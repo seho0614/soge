@@ -136,9 +136,10 @@ if API and DB:
         mc = call('POST', f'/listings/{LID}/safe-number/mock-call', {'durationSec': 65}, BT)
         ok('② 가짜 통화 → 통화 기록 1행(건 번호 해시 · 65초)', mc.get('result') == 'LOGGED'
            and psql(f"SELECT duration_sec || '|' || (caller_hash ~ '^[0-9a-f]{{64}}$') FROM call_logs cl JOIN safe_numbers sn ON sn.id = cl.safe_number_id WHERE sn.virtual_no = '{vno}'") == '65|true', str(mc))
-        bad = hook({'eventId': 'sn-bad', 'virtualNumber': vno, 'durationSec': 10}, secret='wrong')
+        bad_id = f'sn-bad-{int(time.time())}'
+        bad = hook({'eventId': bad_id, 'virtualNumber': vno, 'durationSec': 10}, secret='wrong')
         ok('② 웹훅 서명 틀림 401 SAFENUM_BAD_SIGNATURE · 기록', bad.get('code') == 'SAFENUM_BAD_SIGNATURE'
-           and psql(f"SELECT count(*) FROM safenum_events WHERE event_id = 'sn-bad' AND NOT sig_ok") == '1', str(bad))
+           and psql(f"SELECT count(*) FROM safenum_events WHERE event_id = '{bad_id}' AND NOT sig_ok") == '1', str(bad))
         ev = f'sn-{int(time.time())}'
         w1 = hook({'eventId': ev, 'virtualNumber': vno, 'callerNumber': '01099998888', 'durationSec': 120, 'endedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})
         w2 = hook({'eventId': ev, 'virtualNumber': vno, 'callerNumber': '01099998888', 'durationSec': 120})
