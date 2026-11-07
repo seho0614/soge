@@ -54,7 +54,7 @@ ok('① 운영 화면 — 개봉 반품 재고 탭(보관 · 폐기 · 반송 ·
    "useApi<List>(`/admin/health/open-stock" in HO and 'data-open-discard' in HO and '다시 팔 수 없습니다' in HO and '할인' not in HO
    and "'hlt-open'" in MN and '<HealthOpenStock />' in APP and "openAction: openAct[r.id] ?? 'HOLD'" in HS and 'data-open-action' in HS, '')
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('333_')] if os.path.isdir(os.path.join(K, 'docs')) else []
-ok('① 문서 333 · 판 v10.208', bool(DOC) and rd('VERSION').strip() == 'v10.208', f'{DOC} · {rd("VERSION").strip()}')
+ok('① 문서 333 · 판 v10.208 이상', bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 208), f'{DOC} · {rd("VERSION").strip()}')
 
 
 # ── ② · ③ · ④ ─────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ if API and DB:
     try:
         # ② DB
         mig = psql("SELECT count(*) || '|' || max(name) FROM schema_migrations")
-        ok('② 마이그레이션 223 · 끝 D185', mig.startswith('223|') and mig.endswith('D185_hlt_open_stock'), mig)
+        ok('② 마이그레이션 223 · 끝 D185(v10.209 ~ 211 부터 226 · D188 — test_v1209 ~ 1211)', mig in ('223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai'), mig)
 
         consent_ok.agree(SUPU, PW); consent_ok.agree(BUY, PW)
         TS = call('POST', '/auth/login', {'email': SUPU, 'password': PW}).get('accessToken')
