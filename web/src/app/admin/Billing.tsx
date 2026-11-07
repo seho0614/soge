@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
+import { PlanPanel } from './PlanPanel';
 
 interface Policy {
   key: string; stored: string; effective: number; meaning: string;
@@ -303,6 +304,9 @@ export function Billing() {
           </tbody>
         </table>
       )}
+
+      {/* v10.207 (D184) — 요금제 금액 · 한도(고치기 SUPER · 올린 금액은 새 구독부터) */}
+      <PlanPanel />
     </>
   );
 }

@@ -10,6 +10,7 @@ import { useFmt } from '@/lib/useFmt';
 export interface SubDetail {
   subscribed: boolean;
   planName?: string; monthlyPrice?: number; status?: 'ACTIVE' | 'PAST_DUE';
+  listPrice?: number; priceLocked?: boolean;   // v10.207 (D184) — 요금제 금액을 올린 뒤에도 원래 금액으로 결제되는 구독
   periodStart?: string; periodEnd?: string; cancelAt?: string | null;
   autoRenew?: boolean; nextChargeAt?: string | null; chargeInFlight?: boolean;
   /* v10.27 (G-189) — 요금제 예약(다음 결제일부터) */
@@ -102,7 +103,8 @@ export function SubscriptionManage({ detail, eligible }: { detail: SubDetail | n
       {detail.subscribed ? (
         <table className="tbl">
           <tbody>
-            <tr><th>{t('thPlan')}</th><td>{detail.planName} <span className="dim">{paid ? tc('monthly', { price: won(detail.monthlyPrice) }) : tc('free')}</span></td></tr>
+            <tr><th>{t('thPlan')}</th><td>{detail.planName} <span className="dim">{paid ? tc('monthly', { price: won(detail.monthlyPrice) }) : tc('free')}</span>
+              {detail.priceLocked && <><br /><span className="dim" data-sub-price-locked="">{t('priceLocked', { price: won(detail.listPrice) })}</span></>}</td></tr>
             <tr>
               <th>{t('thStatus')}</th>
               <td data-sub-status={detail.status}>

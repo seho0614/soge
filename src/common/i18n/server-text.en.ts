@@ -1606,4 +1606,15 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "날짜는 YYYY-MM-DD 로 넣으십시오.": "Enter the date as YYYY-MM-DD.",
   "이름은 1 ~ 40자로 넣으십시오.": "Enter a name of 1 to 40 characters.",
   "그 날짜는 공휴일 목록에 없습니다.": "That date is not in the holiday list.",
+  /* v10.207 (D184) — 요금제 금액 · 한도 */
+  "바꾸는 사유를 2 ~ 200자로 적어 주십시오.": "Enter a reason of 2 to 200 characters.",
+  "비울 수 없는 칸입니다 — 무제한(빈칸)은 소개 제안 · 열람 · 매물 슬롯만 됩니다.": "This field cannot be empty — only proposals, views and listing slots can be unlimited (empty).",
+  "금액 · 건수는 0 이상의 정수로 넣으십시오.": "Enter amounts and counts as whole numbers of 0 or more.",
+  "바꿀 칸이 없습니다.": "There is nothing to change.",
+  "바꾸는 사유를 적어 주십시오.": "Enter a reason.",
+  "월 요금은 0 이상이어야 합니다.": "The monthly price must be 0 or more.",
+  "무료 요금제와 유료 요금제를 서로 바꿀 수 없습니다.": "A free plan cannot become a paid plan, or the other way round.",
+  "무료 요금제의 열람 한도는 운영 설정 request.view.free_monthly 를 따릅니다.": "The free plan's view limit follows the request.view.free_monthly setting.",
+  "건수 · 금액은 0 이상이어야 합니다.": "Counts and amounts must be 0 or more.",
+  "요금제 변경 기록은 고치거나 지울 수 없습니다.": "Plan change records cannot be edited or deleted.",
 };

@@ -98,7 +98,8 @@
     "cantRefund": "지금은 환불할 수 없습니다.",
     "refundBusy": "결제사에 확인하는 중…",
     "refundBtn": "환불 신청",
-    "why": "환불: {reason}"
+    "why": "환불: {reason}",
+    "priceLocked": "지금 요금 {price} — 구독 중에는 원래 금액으로 결제됩니다"
   },
   "supplier": {
     "title": "서비스 업체",

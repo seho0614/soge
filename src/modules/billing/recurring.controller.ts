@@ -95,6 +95,8 @@ export class SubscriptionDetailDto {
   @ApiPropertyOptional({ description: '해지 예약이면 이 날짜까지 이용하실 수 있습니다' })
   periodEnd?: string;
   @ApiPropertyOptional() cancelAtPeriodEnd?: boolean;
+  @ApiPropertyOptional({ description: 'v10.207 (D184) — 요금제의 지금 금액(원래 금액이 묶였으면 monthlyPrice 보다 큼)' }) listPrice?: number;
+  @ApiPropertyOptional({ description: 'v10.207 (D184) — 요금제 금액을 올린 뒤에도 원래 금액으로 결제되는 구독인가' }) priceLocked?: boolean;
   @ApiPropertyOptional({ description: '정기결제 결과를 결제사에서 확인하는 중인가' }) chargeInFlight?: boolean;
   @ApiPropertyOptional({ type: RefundResultDto, description: '가장 최근 환불 요청의 상태 — 환불 완료 · 환불 결과 확인 중 · 환불 실패. 구독이 환불로 끝난 뒤에도 나옵니다' })
   refund?: RefundResultDto;

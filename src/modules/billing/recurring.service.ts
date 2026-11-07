@@ -111,7 +111,8 @@ export class RecurringBillingService {
     if (!this.me) throw new PolicyViolation('UNAUTHORIZED', '로그인이 필요합니다.');
     const [row] = await this.db.query<any>(
       `SELECT s.id, s.plan_code AS "planCode", p.name AS "planName",
-              p.monthly_price AS "monthlyPrice", s.status,
+              fn_sub_price(s.locked_price, s.locked_plan_code, s.plan_code, p.monthly_price) AS "monthlyPrice",   -- v10.207 (D184) 묶인 금액이면 그 값
+              p.monthly_price AS "listPrice", (s.locked_plan_code = s.plan_code AND s.locked_price < p.monthly_price) AS "priceLocked", s.status,
               s.current_period_start AS "periodStart",
               s.current_period_end   AS "periodEnd",
               s.cancel_at            AS "cancelAt",

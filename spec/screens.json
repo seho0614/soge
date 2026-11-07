@@ -1996,7 +1996,9 @@
     "GET /admin/billing/notice-missing",
     "GET /admin/billing/review",
     "POST /admin/billing/charge-due",
-    "POST /admin/billing/reconcile"
+    "POST /admin/billing/reconcile",
+    "GET /admin/billing/plans",
+    "PUT /admin/billing/plans/{code}"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "정책(유예·재시도)을 화면에서 바꿉니다 — 배포 없이 즉시 반영. 안내 미도달 건이 최상단에 뜹니다: 이용자가 모른 채 만료되는 것을 막습니다."

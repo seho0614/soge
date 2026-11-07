@@ -98,7 +98,8 @@
     "cantRefund": "A refund is not available right now.",
     "refundBusy": "Checking with the payment provider…",
     "refundBtn": "Request refund",
-    "why": "Refund: {reason}"
+    "why": "Refund: {reason}",
+    "priceLocked": "Current price {price} — you keep your original price while subscribed"
   },
   "supplier": {
     "title": "Businesses",

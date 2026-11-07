@@ -147,6 +147,7 @@ export class BillingService {
                     current_period_start = now(),
                     current_period_end = now() + interval '30 days',
                     next_plan_code = NULL, next_plan_at = NULL,
+                    locked_price = NULL, locked_plan_code = NULL, locked_at = NULL,   -- v10.207 (D184) 다시 구독 = 지금 금액 · 묶음 풂
                     cancel_at = CASE WHEN $3::boolean THEN NULL ELSE cancel_at END
               WHERE id = $1
             RETURNING id, plan_code AS "planCode", status,
