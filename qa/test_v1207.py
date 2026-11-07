@@ -66,7 +66,7 @@ ok('① 기능 점검 고침 — flow_trade 로그아웃 · 돋보기가 새 머
 r = subprocess.run(['bash', '-n', os.path.join(Q, 'func_check.sh')], capture_output=True, text=True)
 ok('① 셸 문법 — func_check.sh', r.returncode == 0, r.stderr[:100])
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('332_')] if os.path.isdir(os.path.join(K, 'docs')) else []
-ok('① 문서 332 · 판 v10.207', bool(DOC) and rd('VERSION').strip() == 'v10.207', f'{DOC} · {rd("VERSION").strip()}')
+ok('① 문서 332 · 판 v10.207 이상', bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 207), f'{DOC} · {rd("VERSION").strip()}')
 
 
 # ── ② · ③ · ④ ─────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ if API and DB:
     try:
         # ② DB
         mig = psql("SELECT count(*) || '|' || max(name) FROM schema_migrations")
-        ok('② 마이그레이션 222 · 끝 D184', mig.startswith('222|') and mig.endswith('D184_plan_admin_price_lock'), mig)
+        ok('② 마이그레이션 222 · 끝 D184(v10.208 부터 223 · D185 — test_v1208)', mig in ('222|D184_plan_admin_price_lock', '223|D185_hlt_open_stock'), mig)
         sel = ', '.join(f"coalesce({x.strip()}::text, 'N')" for x in COLS.split(','))
         for c in ('BASIC', 'STANDARD', 'PRO'):
             orig[c] = psql(f"SELECT concat_ws('|', {sel}) FROM subscription_plans WHERE code = '{c}'")
