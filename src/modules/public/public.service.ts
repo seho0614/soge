@@ -177,8 +177,10 @@ export class PublicService {
     const [meta] = await this.db.query<{ label: string | null }>(
       `SELECT label FROM code_labels WHERE domain = 'inquiry.category' AND code = $1`, [row.category]);
     await this.drafts.markSubmitted(input.agentDraftId, 'INQUIRY', row.id);   // v10.139 — AI 초안으로 낸 문의(숫자용 · 실패해도 접수는 그대로)
+    /* v10.206 (D183) — 영업일은 DB 가 셈(토 · 일 · 공휴일 표 public_holidays 를 건너뜀 · 전에는 여기서 주말만) */
+    const [due] = await this.db.query<{ at: Date }>(`SELECT fn_business_day_after($1::timestamptz) AS at`, [row.createdAt]);
     return { id: row.id, status: row.status, no: inquiryNo(row.id, row.createdAt), categoryLabel: meta?.label ?? row.category,
-             dueAt: businessDayAfter(row.createdAt).toISOString() };
+             dueAt: new Date(due.at).toISOString() };
   }
 
   /** 분쟁 접수. 정산 보류는 트리거가 겁니다 (B-11) */
@@ -323,13 +325,5 @@ export function inquiryNo(id: string, at: Date | string): string {
   const d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
     .format(new Date(at)).replace(/-/g, '');
   return `Q-${d}-${id.replace(/-/g, '').slice(0, 4).toUpperCase()}`;
-}
-/** 영업일 1일 뒤(토 · 일은 건너뜀). 공휴일 표는 없어 주말만 봅니다 — 시안 「영업일 기준 1일 이내에 답변」 */
-export function businessDayAfter(at: Date | string): Date {
-  const d = new Date(at);
-  const kst = (x: Date) => new Date(x.getTime() + 9 * 3600_000).getUTCDay();
-  d.setTime(d.getTime() + 24 * 3600_000);
-  while ([0, 6].includes(kst(d))) d.setTime(d.getTime() + 24 * 3600_000);
-  return d;
 }
 

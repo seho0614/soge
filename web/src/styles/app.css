@@ -732,3 +732,9 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
 }
 .bo-order-live a { color: var(--danger); font-weight: 700; text-decoration: underline; }
 
+
+/* v10.206 (docs/330) — 쓰고 있는데 정의가 없던 클래스(check-guards ⑥) · 혼자 쓰인 btn · link · ghost 는 btn-plain · linkbtn 으로 바꿈
+   ghost = 「btn-sm ghost」 끄기 · 반려 같은 버금 단추(배경 없이 테두리만 · 마우스를 올리면 btn-sm 과 같음) — 「단추 3종」 밖이라 .btn- 로 시작하지 않게 씀(test_v1068) */
+.ghost.btn-sm { background: transparent; }
+.plain { list-style: none; padding-left: 0; margin: 4px 0; }
+.block { display: block; }

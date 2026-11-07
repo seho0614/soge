@@ -41,6 +41,11 @@ else warn "재부팅 뒤 자동 기동이 꺼져 있거나 확인할 수 없음"
 say ""; say "[2] API"
 h=$(curl -s --max-time 10 "$API/api/v1/health")
 echo "$h" | grep -q '"db":true' && ok "상태 주소" "$h" || bad "상태 주소" "${h:-응답 없음}"
+# v10.206 (docs/330) — 돌고 있는 API 판(/health version) = 올린 판(~/sgb/VERSION) — 다르면 pm2 가 옛 판을 띄우고 있음(재시작 안 됨 · 링크 잘못)
+hv=$(echo "$h" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
+if [ -z "$hv" ] || [ "$hv" = "?" ]; then warn "돌고 있는 API 판을 알 수 없음(상태 주소에 version 없음)" "API 가 VERSION 파일을 못 읽음 — 화면 확인 뒤 알려 주십시오"
+elif [ "$hv" = "$VER" ]; then ok "돌고 있는 API 판 = 올린 판 ($VER)"
+else bad "돌고 있는 API 판 $hv ≠ 올린 판 $VER" "pm2 restart sgb sgb-site sgb-jobs 뒤 postcheck 를 다시 — 그래도 다르면 멈추고 알려 주십시오"; fi
 http_is "API 문서(/docs)는 운영에서 닫혀 있음" "$API/docs" 404
 # v10.178 (docs/277) — API 가 JSON 본문을 읽는지(읽지 못하면 로그인 · 글쓰기 · 투표 등 모든 저장이 400 — v10.177 점검에서 한 번 남 · realcheck 는 못 잡음)
 #   소개광장 「게시판 추천」(로그인 없음 · 저장 없음)에 제목 하나를 보내 200 · confident 칸이 오는지 봄

@@ -20,6 +20,7 @@ import { ErrorView } from '../../components/ErrorView';
  *   · 줄마다 「예정 취소」(시행일 전 · 동의 기록 없을 때 · PATCH /admin/terms/{code}/unschedule · 감사 TERM_UNSCHEDULE)
  *   · 게시 확인 창에 이용약관 제14조(7일 전 · 불리한 변경 30일 전) 경고 · 운영 화면 메뉴 「관 관리 › 약관」 에서도 엶
  *
+ * v10.206 (docs/330) — 맨 위 「위탁 목록 점검」(쓰는 외부 서비스가 처리를 맡기는 곳 표에 있나) · 게시 확인 창에 빠진 서비스 경고
  * v10.205 (docs/328) — 처음 게시하는 약관(앞 판 없음)은 시행일이 미래여도 게시하는 순간 시행 — 확인 창에 경고 · 재동의 대상 수 ·
  *   처리방침이면 AI 잠금 풀림과 빠진 것(GET /admin/terms/{code}/publish-preview · 게시 규칙은 그대로)
  */
@@ -33,7 +34,10 @@ interface Term {
 }
 
 /** v10.205 (docs/328) — GET /admin/terms/{code}/publish-preview */
-interface Preview { first: boolean; current: string | null; required: boolean; target: number; aiUnlock: boolean; aiGaps: string[]; aiSwitches: string }
+interface Preview { first: boolean; current: string | null; required: boolean; target: number; aiUnlock: boolean; aiGaps: string[]; aiSwitches: string;
+  /** v10.206 (docs/330) — 지금 쓰는 외부 서비스 중 이 판의 위탁 목록에 없는 것 */ outsourceGaps?: string[] }
+/** v10.206 (docs/330) — GET /admin/terms/outsource-check */
+interface OutsourceCheck { lines: string[]; pending: string[] }
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
 const holes = (b: string) => (b.match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
@@ -71,6 +75,7 @@ export function TermsPanel() {
   const { data, error, reload } = useApi<Term[]>('/admin/terms');
   /* v10.161 — 재동의 시점 스위치(terms.reconsent_before_effective · 기본 off = 시행일부터 · 법무 판단 뒤에만 on) */
   const st = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');
+  const oc = useApi<OutsourceCheck>('/admin/terms/outsource-check');   // v10.206 (docs/330) — 위탁 목록 점검
   const early = st.data?.find((s) => s.key === 'terms.reconsent_before_effective')?.value === 'on';
   /* v10.162 (D152) — 시행 예정 게시 때 회원 알림(terms.notify_members · 기본 on) */
   const notifyOn = (st.data?.find((s) => s.key === 'terms.notify_members')?.value ?? 'on') === 'on';
@@ -118,6 +123,7 @@ export function TermsPanel() {
       if (lead > 0) lines.push(`· ${day} 에 시행하려면 그날 게시하십시오.`);
       lines.push('');
     }
+    if (pv?.outsourceGaps?.length) lines.push(`⚠ 지금 쓰는 외부 서비스가 이 판의 「처리를 맡기는 곳」 표에 없습니다 — ${pv.outsourceGaps.join(' · ')}. 법무 확인 뒤 「고치기」로 더하십시오.`, '');
     if (pv?.aiUnlock) lines.push(`⚠ AI 잠금이 ${pv.first || lead <= 0 ? '바로' : `${day} 에`} 풀립니다(국외 이전 조항) — ${pv.aiGaps.length ? `빠진 것: ${pv.aiGaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${pv.aiSwitches}`, '');
     if (prev && lead > 0) lines.push(`지금 시행 중인 ${prev.version} 은 ${day} 전날까지 그대로 시행되고, 회원 재동의는 ${day} 부터 받습니다. 그동안 사용자 웹에 「바뀔 약관」 알림이 나갑니다.`, '');
     if (prev && lead < 7) lines.push(`⚠ 시행일까지 ${lead}일 — 이용약관 제14조는 시행 7일 전 고지(회원에게 불리한 변경은 30일 전)입니다.`, '');
@@ -213,6 +219,15 @@ export function TermsPanel() {
         <button className="btn-sm" disabled={busy === 'pack'} onClick={() => void downloadPack()} data-terms-pack-btn="">법무 검토용 내려받기</button>
         {' '}게시 안 된 초안 전부를 한 파일로 — 지금 게시판과 바뀐 줄 · 남은 〔미확정〕 · 확인 칸(검토를 돕는 자료 · 법적 판단은 법무)
       </p>
+      {oc.data && (oc.data.lines.length > 0 || oc.data.pending.length > 0) && (
+        <div className="card" data-terms-outsource="">
+          <b>위탁 목록 점검</b> <small className="dim">지금 쓰는 외부 서비스가 처리방침 · 위탁 안내의 「처리를 맡기는 곳」 표에 있는지</small>
+          <ul>
+            {oc.data.lines.map((l) => <li key={l} className="form-error" data-terms-outsource-gap="">{l}</li>)}
+            {oc.data.pending.map((l) => <li key={l} data-terms-outsource-pending="">{l}</li>)}
+          </ul>
+        </div>
+      )}
       <div className="row-actions" style={{ marginBottom: 8 }}>
         <label>시행일 <input type="date" min={today} value={day} onChange={(e) => setDay(e.target.value)} aria-label="시행일" data-terms-date /></label>
         <span className="muted">오늘 이후 · 오픈일에 맞추는 것을 권함(오픈 체크리스트 › 오픈일)</span>

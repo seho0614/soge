@@ -4,6 +4,7 @@ import { blockerOwner } from './open-blocker-owner';
 import { buildReviewPack, PackTerm } from './terms-review-pack';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { AgentService } from '../agent/agent.service';
+import { GeoService } from '../../common/geo/geo.service';
 
 /**
  * 약관 관리 (B-12).
@@ -13,9 +14,12 @@ import { AgentService } from '../agent/agent.service';
  *
  * 발행 조건은 DB 트리거(fn_assert_term_publish)가 강제합니다.
  */
+/** v10.206 — 위탁 목록이 있는 글(처리방침 제5조 · 위탁 안내 제2조) */
+const OUTSOURCE_CODES = ['PRIVACY', 'OUTSOURCE'];
+
 @Injectable()
 export class TermsService {
-  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly geo: GeoService) {}
 
   /** 관리자용. 미발행 약관도 보입니다. */
   async listAll() {
@@ -103,10 +107,53 @@ export class TermsService {
       ? [(await this.agent.keySource()) === 'NONE' ? 'AI 키 없음' : null, Number(r.cap) > 0 ? null : '월 상한 0', r.enabled ? null : 'AI 전체 꺼짐']
           .filter((x): x is string => !!x)
       : [];
+    /* v10.206 (docs/330) — 처리방침 · 위탁 안내를 게시할 때 지금 쓰는 외부 서비스가 이 판의 위탁 목록에 없으면 */
+    const outsourceGaps = OUTSOURCE_CODES.includes(code)
+      ? (await this.outsourceUsed()).filter((x) => x.used && !x.re.test(t.body)).map((x) => `${x.name}(${x.why})`)
+      : [];
     return {
       code, version, title: t.title, first: !r.current, current: r.current, required: t.required, target: t.required ? r.target : 0,
       aiUnlock, aiGaps, aiSwitches: aiUnlock ? `검수 보조 ${r.review ? '켜짐' : '꺼짐'} · AI 상담 ${r.chat ? '켜짐' : '꺼짐'}` : '',
+      outsourceGaps,
     };
+  }
+
+  /** v10.206 (docs/330) — 지금 쓰는 외부 서비스(처리를 맡기는 곳) · re = 위탁 표의 그 줄 */
+  private async outsourceUsed() {
+    const [mapOn, kakaoKey, aiKey] = await Promise.all([this.geo.enabled(), this.geo.restKey(), this.agent.keySource()]);
+    return [
+      { name: 'Amazon Web Services', used: true, why: '서버 · 저장소 · 메일', re: /Amazon Web Services/ },
+      { name: 'Anthropic', used: aiKey !== 'NONE', why: aiKey !== 'NONE' ? 'AI 키 있음' : 'AI 키 없음', re: /\|\s*Anthropic/ },
+      { name: '카카오', used: mapOn || !!kakaoKey, why: mapOn ? '지도 켜짐' : kakaoKey ? '카카오 키 있음' : '키 없음 · 지도 꺼짐', re: /\|\s*카카오\s*\|/ },
+    ];
+  }
+
+  /**
+   * v10.206 (docs/330) — 위탁 목록 점검(운영 화면 › 약관 맨 위). 지금 쓰는 외부 서비스가
+   *   시행 중인 처리방침 · 위탁 안내(v_terms_current)의 표에 있나 · 없으면 게시 전 초안(DRAFT · LEGAL_REVIEW 가장 높은 판)에는 있나.
+   *   글은 고치지 않음(법무) — 보여 주기만.
+   */
+  async outsourceCheck() {
+    const docs = await this.db.query<{ code: string; title: string; current: string | null; curBody: string | null; draft: string | null; draftBody: string | null }>(
+      `SELECT x.code, coalesce(c.title, d.title, x.code) AS title, c.version AS current, c.body AS "curBody", d.version AS draft, d.body AS "draftBody"
+         FROM unnest($1::text[]) AS x(code)
+         LEFT JOIN v_terms_current c ON c.code = x.code
+         LEFT JOIN LATERAL (SELECT version, title, body FROM terms t WHERE t.code = x.code AND t.status IN ('DRAFT','LEGAL_REVIEW')
+                             ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1) d ON true`, [OUTSOURCE_CODES]);
+    const used = await this.outsourceUsed();
+    const where = (re: RegExp, d: (typeof docs)[number]) =>
+      d.curBody != null && re.test(d.curBody) ? 'CURRENT' : d.draftBody != null && re.test(d.draftBody) ? 'DRAFT' : 'NONE';
+    const services = used.map((u) => ({ name: u.name, used: u.used, why: u.why,
+      docs: docs.map((d) => ({ code: d.code, title: d.title, current: d.current, draft: d.draft, state: where(u.re, d) })) }));
+    const lines: string[] = [];
+    const pending: string[] = [];
+    for (const s of services.filter((x) => x.used)) {
+      for (const d of s.docs) {
+        if (d.state === 'NONE') lines.push(`${s.name} — 쓰는 중(${s.why}) · ${d.title}에 없음${d.draft ? `(초안 ${d.draft} 에도 없음)` : ''}`);
+        else if (d.state === 'DRAFT') pending.push(`${s.name} — ${d.title} 초안 ${d.draft} 에만 있음(게시하면 해소)`);
+      }
+    }
+    return { services, lines, pending };
   }
 
   /**

@@ -221,7 +221,7 @@ export function DirectoryAdmin() {
                       {r.paidFrom ? <><br /><span className="hint">{ymdKst(r.paidFrom)} ~ {ymdKst(r.paidTo)}{r.rounds ? ` · ${r.rounds}회차` : ''}</span></> : null}
                       {r.monthlyFee != null ? <><br />{money(r)}</> : null}
                       {r.reason ? <span className="hint"> — {r.reason}</span> : null}
-                      {r.rounds > 0 ? <><br /><button className="link" data-act="history" onClick={() => void toggleHistory(r.id)}>{h ? '이력 닫기' : '회차 이력'}</button></> : null}
+                      {r.rounds > 0 ? <><br /><button className="linkbtn" data-act="history" onClick={() => void toggleHistory(r.id)}>{h ? '이력 닫기' : '회차 이력'}</button></> : null}
                       {h ? (
                         <div data-dir-history={r.id} className="hint">
                           {h.periods.map((p) => <div key={p.id}>{p.seq}회차 {KIND[p.kind] ?? p.kind} · {ymdKst(p.from)} ~ {ymdKst(p.to)}{p.totalAmount != null ? ` · 합계 ${n(p.totalAmount)}원(공급가액 ${n(p.supplyAmount)} + 부가세 ${n(p.vatAmount)})` : p.monthlyFee != null ? ` · 월 ${n(p.monthlyFee)}원(이전 기록)` : ''}</div>)}

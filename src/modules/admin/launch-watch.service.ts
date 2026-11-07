@@ -48,6 +48,13 @@ export const agentStepLine = (steps: AgentStep[]): string[] => {
   if (!next) return [`AI 켜기 단계 — 모두 켜짐 · 마지막 ${cur.step} ${cur.label}: ${cur.now}`];
   return [`AI 켜기 단계 — 지금 ${cur.step} ${cur.label}: ${cur.now} · 다음 ${next.step} ${next.label}: ${next.state === 'READY' ? '할 차례' : '앞 단계 기준 전'}`];
 };
+/* v10.206 (D183 · docs/330) — AI 첫 주 보고(GET /admin/agent/week) 7일 합 한 줄 · 7일 동안 쓴 것이 없으면 줄 없음 */
+export type AgentWeekTotal = { used: boolean; below: string[]; total: { answeredPct: number | null; agreePct: number | null; costUsd: number; chats: number; opinions: number } };
+export const agentWeekLine = (w: AgentWeekTotal): string[] => {
+  if (!w.used) return [];
+  const t = w.total;
+  return [`AI 7일 — 상담 대화 ${t.chats} · 답 ${t.answeredPct ?? '—'}% · 검수 의견 ${t.opinions} · 일치율 ${t.agreePct ?? '—'}% · 비용 $${t.costUsd}${w.below.length ? ` · 기준 미달: ${w.below.join(' · ')}` : ''}`];
+};
 /** 「할 차례」 알림을 보내는 단계 — 처리방침 · 키 단계는 AGENT_LIVE 가 알림 */
 const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 
@@ -130,6 +137,7 @@ export class LaunchWatchService {
       /* v10.204 (D181 · docs/326) — AI 상담 · 비용 · 상한 / 필수 약관 재동의 진행 */
       ...agentLines(await this.agentDay('yesterday'), '어제'),
       ...agentStepLine(await this.agentSteps()),   // v10.205 (docs/328) — AI 켜기 단계
+      ...agentWeekLine(await this.agent.week()),   // v10.206 (docs/330) — AI 7일
       ...reconsentLines(await this.reconsent()),
       diskLine(serverHealth()),
       '',

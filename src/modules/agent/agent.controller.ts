@@ -159,6 +159,25 @@ export class AgentRolloutStepDto {
 }
 
 /* v10.131 (D129 · docs/197) — AI 상담 「답 · 넘김 비율」 */
+/* v10.206 (D183 · docs/330) — AI 첫 주 보고(v_agent_week) */
+export class AgentWeekDayDto {
+  @ApiProperty({ example: '2026-11-12' }) day!: string;
+  @ApiProperty({ description: 'AI 상담 대화 수' }) chats!: number;
+  @ApiProperty({ description: 'AI 가 답한 수' }) answers!: number;
+  @ApiProperty({ description: '사람에게 넘긴 수(넘김 · 거절 · 잘림)' }) handoffs!: number;
+  @ApiPropertyOptional({ nullable: true, description: '답 % — 답 / (답 + 넘김) · 없으면 null' }) answeredPct!: number | null;
+  @ApiProperty({ description: 'AI 검수 의견 수' }) opinions!: number;
+  @ApiProperty({ description: '그 의견 중 사람이 정한 수' }) decided!: number;
+  @ApiPropertyOptional({ nullable: true, description: '일치율 %(모름 제외) · 없으면 null' }) agreePct!: number | null;
+  @ApiProperty() requests!: number;
+  @ApiProperty({ description: '비용(달러)' }) costUsd!: number;
+}
+export class AgentWeekDto {
+  @ApiProperty({ type: [AgentWeekDayDto], description: '오래된 날부터 오늘까지 7줄' }) days!: AgentWeekDayDto[];
+  @ApiProperty({ type: AgentWeekDayDto, description: '7일 합(답 % · 일치율은 7일 합으로 다시 셈 · day = 「7일」)' }) total!: AgentWeekDayDto;
+  @ApiProperty({ type: [String], description: 'AI 켜기 단계 기준에 못 미친 것(답 95% · 일치율 90%) — 쓴 것이 있을 때만' }) below!: string[];
+  @ApiProperty({ description: '7일 동안 AI 를 쓴 적이 있나' }) used!: boolean;
+}
 export class AgentChatStatsDto {
   @ApiProperty({ enum: [7, 14, 30] }) days!: number;
   @ApiProperty({ description: '손님 질문 수' }) questions!: number;
@@ -257,6 +276,13 @@ export class AgentController {
   @ApiOperation({ summary: 'AI 켜기 단계 안내판 (운영 · v10.147)', description: '처리방침 게시 → 키 · 상한 → 검수 보조 2주 → AI 상담 1주 → 내 정보 조회 → 신청서 초안. 단계마다 지금 숫자 · 기준 · 상태. 막지는 않음(스위치 화면이 경고).' })
   @ApiOkResponse({ type: [AgentRolloutStepDto] })
   rollout() { return this.svc.rollout(); }
+
+  @ApiBearerAuth()
+  @Get('admin/agent/week')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'AI 첫 주 보고 (운영 · v10.206)', description: '최근 7일 날짜별 AI 상담(대화 · 답 · 넘김 · 답 %) · 검수 보조(의견 · 사람 결정 · 일치율) · 비용. 숫자만 — 글 · 손님 정보 없음. 기준은 AI 켜기 단계와 같음(답 95% · 일치율 90%).' })
+  @ApiOkResponse({ type: AgentWeekDto })
+  week() { return this.svc.week(); }
 
   @ApiBearerAuth()
   @Get('admin/agent/status')

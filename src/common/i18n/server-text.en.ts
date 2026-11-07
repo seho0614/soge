@@ -1602,4 +1602,8 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   /* v10.203 (D180) — 사용자 설명서 */
   "설명서 판은 고치거나 지울 수 없습니다 — 새 판으로 저장하십시오.": "A manual version cannot be edited or deleted — save it as a new version.",
   "사용자 설명서가 아직 없습니다.": "The user manual is not available yet.",
+  /* v10.206 (D183) — 공휴일 */
+  "날짜는 YYYY-MM-DD 로 넣으십시오.": "Enter the date as YYYY-MM-DD.",
+  "이름은 1 ~ 40자로 넣으십시오.": "Enter a name of 1 to 40 characters.",
+  "그 날짜는 공휴일 목록에 없습니다.": "That date is not in the holiday list.",
 };

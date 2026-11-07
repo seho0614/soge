@@ -273,4 +273,29 @@ export class AgentService {
     });
   }
 
+  /** v10.206 (D183 · docs/330) — AI 첫 주 보고 · 기준은 rollout() 과 같음(답 95% · 일치율 90%) */
+  async week() {
+    const rows = await this.db.query<Record<string, any>>(
+      `SELECT to_char(day, 'YYYY-MM-DD') AS day, chats, answers, handoffs, answered_pct AS "answeredPct", opinions, decided,
+              agree_pct AS "agreePct", requests, cost_usd AS "costUsd"
+         FROM v_agent_week ORDER BY day`);
+    const sum = (k: string) => rows.reduce((a, r) => a + Number(r[k] ?? 0), 0);
+    const [ag] = await this.db.query<{ pct: number | null }>(
+      `SELECT round(100.0 * count(*) FILTER (WHERE (o.suggestion = 'APPROVE' AND r.status = 'APPROVED') OR (o.suggestion = 'REJECT' AND r.status = 'REJECTED'))
+              / nullif(count(*) FILTER (WHERE r.status IN ('APPROVED','REJECTED') AND o.suggestion <> 'UNSURE'), 0), 1)::float AS pct
+         FROM ai_review_opinions o JOIN review_items r ON r.id = o.review_item_id
+        WHERE o.created_at >= ((now() AT TIME ZONE 'Asia/Seoul')::date - 6) AT TIME ZONE 'Asia/Seoul'`);
+    const answers = sum('answers'); const handoffs = sum('handoffs');
+    const total = {
+      day: '7일', chats: sum('chats'), answers, handoffs,
+      answeredPct: answers + handoffs > 0 ? Math.round((1000 * answers) / (answers + handoffs)) / 10 : null,
+      opinions: sum('opinions'), decided: sum('decided'), agreePct: ag?.pct ?? null,
+      requests: sum('requests'), costUsd: Math.round(sum('costUsd') * 10000) / 10000,
+    };
+    const below: string[] = [];
+    if (total.answeredPct != null && total.answeredPct < 95) below.push(`AI 상담 답 ${total.answeredPct}% — 기준 95%`);
+    if (total.agreePct != null && total.agreePct < 90) below.push(`검수 보조 일치율 ${total.agreePct}% — 기준 90%`);
+    return { days: rows, total, below, used: total.requests > 0 || total.chats > 0 || total.opinions > 0 };
+  }
+
 }

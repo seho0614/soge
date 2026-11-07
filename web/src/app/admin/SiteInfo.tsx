@@ -5,6 +5,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { searchAddress } from '../../lib/postcode';
 import { siteHref } from '../../lib/siteUrl';
 import { TermsPanel } from './TermsPanel';   // v10.156 — 약관 목록 · 게시(명세 SB-ADM-SIT-070)
+import { HolidayPanel } from './HolidayPanel';   // v10.206 (D183) — 공휴일 · 운영 값 확인
 
 interface Setting {
   key: string; value: string | null; description: string; isRequiredForOpen: boolean;
@@ -308,6 +309,7 @@ export function SiteInfo({ onGo }: { onGo?: (tab: string) => void }) {
       )}
 
       <TermsPanel />
+      <HolidayPanel />
 
       <div className="ad-dact">
         <button className="btn-ok" onClick={() => saveLegal('footer.address')} data-addr-apply>주소 반영</button>

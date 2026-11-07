@@ -171,7 +171,7 @@ function OpenDateBox({ onSaved }: { onSaved: () => void }) {
         <div className="card" data-open-date>
           <p>
             <input type="date" value={d} onChange={(e) => setD(e.target.value)} data-open-date-input />{' '}
-            <button className="btn" onClick={save} disabled={d === (x?.openDate ?? '')} data-open-date-save>저장</button>
+            <button className="btn-plain" onClick={save} disabled={d === (x?.openDate ?? '')} data-open-date-save>저장</button>
             {msg && <span className={`ad-bg ${msg[0] ? 'ok' : 'no'}`} style={{ marginLeft: 8 }}>{msg[1]}</span>}
           </p>
           {x?.openDate ? (

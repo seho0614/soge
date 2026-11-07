@@ -7,6 +7,7 @@ import { AgentKey } from './AgentKey';
 import { AgentSwitches } from './AgentSwitches';
 import { AgentLimits } from './AgentLimits';
 import { AgentRollout } from './AgentRollout';
+import { AgentWeek } from './AgentWeek';   // v10.206 (docs/330) — AI 첫 주 보고
 
 /* ── SB-ADM-AGT-010 AI 에이전트 — v10.94 0단계 틀(D116 · docs/149 · docs/151) ─────────
  * 스위치 · 월 상한 · 이번 달 비용 · 통로별 사용량 · 요금표 · AI 검수 일치율을 봅니다.
@@ -51,6 +52,7 @@ export function AgentStatus() {
       <p className="hint" data-agent-engine>엔진 <b>{d.engine ?? '없음'}</b> · {KEY_FROM[d.keySource] ?? d.keySource}</p>
       {tokenRoles().includes('SUPER') && <AgentKey onChanged={r.reload} />}
       <AgentRollout key={tick} />
+      <AgentWeek key={`w${tick}`} />
       <AgentSwitches onChanged={() => { r.reload(); setTick((t) => t + 1); }} />
       <AgentLimits onChanged={r.reload} />
 

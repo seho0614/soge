@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Put, Query } from '@nestjs/common'
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
-  OpenBlockerDto, OpenDateDto, OpenReadinessDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
+  OpenBlockerDto, OpenDateDto, OpenReadinessDto, OutsourceCheckDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
   TermPublishPreviewDto, TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -27,6 +27,16 @@ export class TermsController {
   })
   @ApiOkResponse({ type: TermDetailDto, isArray: true })
   list() { return this.terms.listAll(); }
+
+  @Get('terms/outsource-check')
+  @ApiOperation({
+    summary: '위탁 목록 점검 (v10.206)',
+    description:
+      '지금 쓰는 외부 서비스(AWS · AI 키가 있으면 Anthropic · 카카오 키가 있거나 지도가 켜져 있으면 카카오)가 시행 중인 처리방침 제5조 · 위탁 안내 제2조 표에 있는지. ' +
+      '없으면 게시 전 초안에는 있는지. 읽기만 — 글을 고치는 일은 법무 확인 뒤 운영 화면 「고치기」.',
+  })
+  @ApiOkResponse({ type: OutsourceCheckDto })
+  outsourceCheck() { return this.terms.outsourceCheck(); }
 
   @Get('terms/review-pack')
   @ApiOperation({

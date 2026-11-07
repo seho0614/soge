@@ -104,6 +104,27 @@ export class TermPublishPreviewDto {
   @ApiProperty({ description: '처리방침이고 국외 이전 조항이 있으며 지금은 AI 가 잠겨 있음 — 이 판이 시행되면 AI 잠금이 풀림' }) aiUnlock!: boolean;
   @ApiProperty({ type: [String], example: ['AI 키 없음', '월 상한 0'], description: 'aiUnlock 일 때 빠진 것(AI 키 없음 · 월 상한 0 · AI 전체 꺼짐) · 아니면 빈 목록' }) aiGaps!: string[];
   @ApiProperty({ example: '검수 보조 꺼짐 · AI 상담 꺼짐', description: 'aiUnlock 일 때 스위치 상태 · 아니면 빈 문자열' }) aiSwitches!: string;
+  @ApiProperty({ type: [String], example: ['카카오(카카오 키 있음)'], description: 'v10.206 — 처리방침 · 위탁 안내일 때 지금 쓰는 외부 서비스 중 이 판의 위탁 목록에 없는 것 · 아니면 빈 목록' }) outsourceGaps!: string[];
+}
+
+/* v10.206 (docs/330) — 위탁 목록 점검 */
+export class OutsourceDocStateDto {
+  @ApiProperty({ example: 'PRIVACY' }) code!: string;
+  @ApiProperty({ example: '개인정보처리방침' }) title!: string;
+  @ApiPropertyOptional({ nullable: true, description: '시행 중인 판' }) current!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '게시 전 초안(가장 높은 판)' }) draft!: string | null;
+  @ApiProperty({ enum: ['CURRENT', 'DRAFT', 'NONE'], description: '시행 중인 판에 있음 · 초안에만 있음 · 둘 다 없음' }) state!: string;
+}
+export class OutsourceServiceDto {
+  @ApiProperty({ example: '카카오' }) name!: string;
+  @ApiProperty({ description: '지금 쓰는가' }) used!: boolean;
+  @ApiProperty({ example: '카카오 키 있음' }) why!: string;
+  @ApiProperty({ type: [OutsourceDocStateDto] }) docs!: OutsourceDocStateDto[];
+}
+export class OutsourceCheckDto {
+  @ApiProperty({ type: [OutsourceServiceDto] }) services!: OutsourceServiceDto[];
+  @ApiProperty({ type: [String], description: '쓰는 중인데 위탁 목록에 없음(초안에도 없음)' }) lines!: string[];
+  @ApiProperty({ type: [String], description: '게시 전 초안에만 있음 — 게시하면 해소' }) pending!: string[];
 }
 
 export class OpenBlockerDto {

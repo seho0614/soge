@@ -68,8 +68,8 @@ export function PrivacyRequests() {
                         onChange={(e) => setNotes((m) => ({ ...m, [r.id]: e.target.value }))}
                         placeholder="처리 결과 또는 연장 사유(5자 이상 · 회원에게 알림)" />
                       <button className="btn-ok" disabled={a.busy === `d-${r.id}`} onClick={() => decide(r, 'DONE')} data-privacy-done="">처리 완료</button>{' '}
-                      <button className="btn" disabled={a.busy === `d-${r.id}`} onClick={() => decide(r, 'REJECT')} data-privacy-reject="">거절</button>{' '}
-                      {r.status === 'OPEN' && <button className="btn" disabled={a.busy === `d-${r.id}`} onClick={() => decide(r, 'EXTEND')} data-privacy-extend="">기한 연장</button>}
+                      <button className="btn-plain" disabled={a.busy === `d-${r.id}`} onClick={() => decide(r, 'REJECT')} data-privacy-reject="">거절</button>{' '}
+                      {r.status === 'OPEN' && <button className="btn-plain" disabled={a.busy === `d-${r.id}`} onClick={() => decide(r, 'EXTEND')} data-privacy-extend="">기한 연장</button>}
                     </div>
                   )}
                 </td>

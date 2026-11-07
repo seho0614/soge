@@ -1544,7 +1544,11 @@
     "PATCH /admin/terms/{code}/publish",
     "PATCH /admin/terms/{code}/unschedule",
     "GET /admin/terms/review-pack",
-    "GET /admin/terms/{code}/publish-preview"
+    "GET /admin/terms/{code}/publish-preview",
+    "GET /admin/terms/outsource-check",
+    "GET /admin/holidays",
+    "PUT /admin/holidays",
+    "DELETE /admin/holidays/{day}"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "법무 회신 반영 지점. 초안 저장과 발행을 나눕니다"
@@ -4016,6 +4020,7 @@
    "apis": [
     "GET /admin/agent/status",
     "GET /admin/agent/rollout",
+    "GET /admin/agent/week",
     "GET /admin/agent/chats",
     "GET /admin/agent/chats/stats",
     "GET /admin/agent/chats/{id}",
@@ -4025,7 +4030,7 @@
     "POST /admin/agent/key/test",
     "PUT /admin/agent/model-prices"
    ],
-   "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0 · v10.111 「AI 키」(SUPER · D122 · docs/173 — 넣기 · 지우기 · 끝 4자리 · 키 확인) · v10.135 「AI 한도 · 모델」(하루 횟수 7 · 기능별 모델 · 모델 요금표 넣기 · 고치기 · SUPER · docs/202)"
+   "note": "v10.94 AI 에이전트 0단계 틀(D116 · docs/149 · docs/151) — 스위치 · 월 상한 · 사용량 · 요금표 · AI 검수 일치율. 모든 스위치 꺼짐 · 상한 0 · v10.111 「AI 키」(SUPER · D122 · docs/173 — 넣기 · 지우기 · 끝 4자리 · 키 확인) · v10.135 「AI 한도 · 모델」(하루 횟수 7 · 기능별 모델 · 모델 요금표 넣기 · 고치기 · SUPER · docs/202) · v10.206 「AI 첫 주 보고」(최근 7일 · docs/330)"
   },
   {
    "id": "SB-ADM-CLS-020",

@@ -413,7 +413,7 @@ function NewOne({ prefill, onDone }: { prefill: Partial<Row> | null; onDone: () 
       <p><button className="btn-sm ghost" disabled={!f.targetId.trim() || a.busy === 'src'} onClick={load}>원문 불러오기</button></p>
       {src !== null && <div className="card wrap"><b>원문</b><br />{src}</div>}
       <label className="block">번역<textarea rows={6} value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></label>
-      <p><button disabled={a.busy === 'save'} onClick={save}>넣기</button> <button className="ghost" onClick={onDone}>취소</button></p>
+      <p><button disabled={a.busy === 'save'} onClick={save}>넣기</button> <button className="btn-plain" onClick={onDone}>취소</button></p>
     </>
   );
 }
