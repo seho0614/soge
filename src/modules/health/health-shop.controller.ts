@@ -477,7 +477,7 @@ export class HealthShopController {
   @ApiOkResponse({ type: Object })
   @Audit('HLT_RETURN_DECIDE', 'HLT_RETURN')
   decideReturn(@Param('id') id: string, @Body() dto: ReturnDecideDto) {
-    return this.returns.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault);
+    return this.returns.decideReturn(id, dto.state, dto.note, dto.opened, dto.sellerFault, dto.openAction);
   }
 
   @Post('admin/health/returns/:id/convert')

@@ -87,6 +87,9 @@ export class ReturnDecideDto {
   /* v10.26 — 교환 승인에서 「회사 사정으로 판정」: 교환 배송비를 0 으로 하고 낸 돈을 돌려드립니다 */
   @ApiPropertyOptional({ description: '(교환) 회사 사정으로 판정 — 교환 배송비를 받지 않고 낸 돈을 돌려드립니다' })
   @IsOptional() @StrictBoolean() sellerFault?: boolean;
+  /* v10.208 (D185) — 개봉 반품 처리: 보관(HOLD · 기본 — 운영 화면에서 할인 판매로 옮길 수 있음) · 폐기(DISCARDED). 입점 상품은 판매자에게 반송 */
+  @ApiPropertyOptional({ enum: ['HOLD', 'DISCARDED'], description: '(개봉 반품) 보관 · 폐기 — 안 보내면 보관 · 입점 상품은 판매자에게 반송' })
+  @IsOptional() @IsIn(['HOLD', 'DISCARDED']) openAction?: string;
 }
 
 export class PayConfirmDto {

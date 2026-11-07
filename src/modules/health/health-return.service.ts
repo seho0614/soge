@@ -271,7 +271,7 @@ export class HealthReturnService {
    *    순서: 주문을 먼저 닫고(이 트랜잭션) → 결제를 CANCELED 로(환불 트랜잭션).
    *    닫힌 주문은 fn_hlt_pay_apply 가 건드리지 않아 반품이 취소로 바뀌지 않습니다.
    */
-  async decideReturn(id: string, state: string, note?: string, opened?: boolean, sellerFault?: boolean) {
+  async decideReturn(id: string, state: string, note?: string, opened?: boolean, sellerFault?: boolean, openAction?: string) {
     const me = RequestCtx.actorId()!;
     const decided = await this.db.transaction(async () => {
       const [r] = await this.db.query<any>(
@@ -342,6 +342,21 @@ export class HealthReturnService {
         `UPDATE hlt_returns SET state = $2, decide_note = $3, decided_by = $4, decided_at = now(), opened = $5, exchange_fee = $6
           WHERE id = $1`,
         [r.id, state, note?.trim() || null, me, r.kind === 'CANCEL' ? false : (typeof opened === 'boolean' ? opened : null), fee]);
+      /* v10.208 (D185 · docs/333) — 개봉 반품은 개봉 반품 재고 대장에 주문 줄마다 남김.
+       *   입점 상품은 판매자에게 반송(TO_SELLER) · 직판은 보관(HOLD · 기본) 또는 폐기(DISCARDED). 보관한 것은 운영 화면에서 할인 판매로 옮김 */
+      if (state === 'APPROVED' && r.kind === 'RETURN' && opened === true && orderStatus === 'RETURNED') {
+        if (openAction !== undefined && !['HOLD', 'DISCARDED'].includes(openAction)) {
+          throw new PolicyViolation('OPEN_ACTION', '개봉 반품 처리는 보관(HOLD) 또는 폐기(DISCARDED)만 고를 수 있습니다 — 입점 상품은 판매자에게 돌려보냅니다.');
+        }
+        await this.db.query(
+          `INSERT INTO hlt_open_stock (return_id, order_id, order_item_id, product_id, option_id, qty, state, decided_at, decided_by)
+           SELECT $1, i.order_id, i.id, i.product_id, i.option_id, i.qty,
+                  CASE WHEN s.type = 'TENANT' THEN 'TO_SELLER' ELSE $3 END,
+                  CASE WHEN s.type = 'TENANT' OR $3 = 'DISCARDED' THEN now() END, CASE WHEN s.type = 'TENANT' OR $3 = 'DISCARDED' THEN $4::uuid END
+             FROM hlt_order_items i JOIN hlt_products p ON p.id = i.product_id LEFT JOIN hlt_sellers s ON s.id = p.seller_id
+            WHERE i.order_id = $2
+           ON CONFLICT (order_item_id) DO NOTHING`, [r.id, r.order_id, openAction ?? 'HOLD', me]);
+      }
       return { r, vbankKeys, refundable: state === 'APPROVED' && orderStatus !== r.status,
         feeBack: r.kind === 'EXCHANGE' && (state === 'REJECTED' || (state === 'APPROVED' && fee === 0 && Number(r.exchange_fee) > 0)) };
     });

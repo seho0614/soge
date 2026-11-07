@@ -52,6 +52,10 @@ export interface HltOption {
 
 /** GET /health/products/{code} — 청약철회 조건이 함께 옵니다 */
 export interface HltProductDetail extends HltProduct {
+  /* v10.208 (D185) — 개봉 반품 할인 판매 상품이면 true · 원래 상품 · 상태 메모 · 유통기한 / 원래 상품이면 판매 중인 개봉 반품 상품 */
+  openReturn?: boolean; openNote?: string | null; openExpiresOn?: string | null;
+  openFrom?: { code: string; name: string; listPrice: number | null } | null;
+  openOffers?: Array<{ code: string; price: number; stock: number; optionLabel: string | null; note: string | null; expiresOn: string | null }>;
   /* v10.26 */
   options: HltOption[];
   notice: { label: string; value: string }[];

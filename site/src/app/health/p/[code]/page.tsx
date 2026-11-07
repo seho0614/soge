@@ -116,6 +116,26 @@ export default async function HltProductPage({ params, searchParams }: Props) {
           {(p.reviewCount ?? 0) > 0 && <Link className="hlt-rvline" href={`/health/p/${encodeURIComponent(code)}?tab=reviews#reviews`} data-rating-line>
             <span className="hlt-stars">{stars(Number(p.ratingAvg ?? 0))}</span> {t('ratingLine', { avg: Number(p.ratingAvg ?? 0).toFixed(1), n: String(p.reviewCount) })}</Link>}
           {p.summary && <p className="hlt-mut hlt-sm">{p.summary}</p>}
+          {/* v10.208 (D185 · docs/333) — 개봉 반품 할인 판매 상품: 무엇인지 · 상태 · 유통기한 · 원래 상품 · 반품 제한 안내 */}
+          {p.openReturn && (
+            <section className="hlt-box" data-open-return style={{ marginTop: 10 }}>
+              <h3>{t('openTitle')}</h3>
+              <p className="hlt-sm">{t('openWhat', { name: p.openFrom?.name ?? '', price: f.won(p.openFrom?.listPrice ?? null, '-') })}
+                {p.openFrom && <> <Link href={`/health/p/${encodeURIComponent(p.openFrom.code)}`}>{p.openFrom.name}</Link></>}</p>
+              {p.openNote && <p className="hlt-sm">{t('openNote', { note: p.openNote })}</p>}
+              {p.openExpiresOn && <p className="hlt-sm" data-open-expires>{t('openExpires', { date: p.openExpiresOn })}</p>}
+              <p className="hlt-sm hlt-mut">{t('openLaw')}</p>
+            </section>
+          )}
+          {!p.openReturn && (p.openOffers ?? []).length > 0 && (
+            <section className="hlt-box" data-open-offers style={{ marginTop: 10 }}>
+              <h3>{t('openOffersTitle')}</h3>
+              {(p.openOffers ?? []).map((o) => (
+                <p key={o.code} className="hlt-sm"><Link href={`/health/p/${encodeURIComponent(o.code)}`} data-open-offer={o.code}>
+                  {t('openOfferRow', { option: o.optionLabel ?? '', price: f.won(o.price, '-'), n: String(o.stock) })}</Link></p>
+              ))}
+            </section>
+          )}
 
           <div className="hlt-p26" style={{ margin: '14px 0 2px' }}>{p.offPct ? <span className="was">{f.won(p.listPrice, '-')}</span> : null}</div>
           <div className="hlt-p26">

@@ -160,7 +160,14 @@
     "viewAll": "전체 보기",
     "related": "관련 고민",
     "shipFeeSeller": "{amt}(판매자 배송비)",
-    "shipFeeSellerOver": "{amt} · {over} 이상 무료(판매자 배송비)"
+    "shipFeeSellerOver": "{amt} · {over} 이상 무료(판매자 배송비)",
+    "openTitle": "개봉 반품 상품",
+    "openWhat": "반품으로 돌아온 개봉 상품을 할인해 파는 것입니다. 원래 상품({name} · {price})과 같은 상품입니다.",
+    "openNote": "상태: {note}",
+    "openExpires": "유통기한: {date}",
+    "openLaw": "개봉 상품이라 단순 변심 반품이 제한될 수 있습니다 — 상품 하자 · 표시와 다름은 반품할 수 있습니다.",
+    "openOffersTitle": "개봉 반품 할인 상품",
+    "openOfferRow": "{option} · {price} · 남은 {n}개"
   },
   "ingredient": {
     "title": "성분 상세",

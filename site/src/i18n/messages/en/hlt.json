@@ -160,7 +160,14 @@
     "viewAll": "View all",
     "related": "Related concerns",
     "shipFeeSeller": "{amt} (seller shipping fee)",
-    "shipFeeSellerOver": "{amt} · free from {over} (seller shipping fee)"
+    "shipFeeSellerOver": "{amt} · free from {over} (seller shipping fee)",
+    "openTitle": "Opened return item",
+    "openWhat": "An opened item that came back as a return, sold at a discount. Same product as the original ({name} · {price}).",
+    "openNote": "Condition: {note}",
+    "openExpires": "Best before: {date}",
+    "openLaw": "Because it has been opened, returns for change of mind may be limited — defects or items not as described can still be returned.",
+    "openOffersTitle": "Opened returns at a discount",
+    "openOfferRow": "{option} · {price} · {n} left"
   },
   "ingredient": {
     "title": "Ingredient details",

@@ -78,6 +78,8 @@ function HealthReturns() {
   const a = useAct();
   /* 반품별 개봉 판정 — 고르기 전에는 승인 버튼이 잠깁니다 */
   const [opened, setOpened] = useState<Record<string, boolean>>({});
+  /* v10.208 (D185) — 개봉 반품 처리: 보관(기본 · 「개봉 반품 재고」 탭에서 할인 판매로 옮김) · 폐기. 입점 상품은 서버가 판매자 반송으로 */
+  const [openAct, setOpenAct] = useState<Record<string, 'HOLD' | 'DISCARDED'>>({});
 
   /* v10.26 — 교환: 회사 사정으로 판정해 승인(교환 배송비를 받지 않고 낸 돈을 돌려드림) · 반품으로 바꾸기(교환할 상품 없음) · 교환 배송비 환불 다시 시도 */
   const sellerFault = (r: ReturnRow) => {
@@ -101,13 +103,13 @@ function HealthReturns() {
     const op = r.kind === 'RETURN' ? opened[r.id] : undefined;
     if (ok && r.kind === 'RETURN' && op === undefined) return;
     const stock = r.kind === 'EXCHANGE' ? '교환은 주문 상태를 바꾸지 않습니다.'
-      : op ? '개봉 반품 — 주문은 반품 완료가 되지만 재고로 되돌리지 않습니다.'
+      : op ? `개봉 반품 — 주문은 반품 완료가 되지만 재고로 되돌리지 않습니다. 개봉 반품 재고에 「${openAct[r.id] === 'DISCARDED' ? '폐기' : '보관'}」으로 남깁니다(입점 상품은 판매자 반송).`
         : '주문이 닫히고 재고가 되돌아갑니다.';
     const money = r.kind !== 'EXCHANGE' && r.payState === 'PAID'
       ? `\n${refundText(r)}${r.payStub ? '(시험 결제)' : ''}.` : '';
     if (ok && !confirm(`${r.orderNo} ${RKIND[r.kind] ?? r.kind} 을(를) 승인합니다.\n${stock}${money}`)) return;
     void a.run(r.id, () => api<{ note: string; ok?: boolean }>(`/admin/health/returns/${r.id}/decide`, {
-      method: 'POST', body: JSON.stringify({ state: ok ? 'APPROVED' : 'REJECTED', note, ...(op !== undefined ? { opened: op } : {}) }),
+      method: 'POST', body: JSON.stringify({ state: ok ? 'APPROVED' : 'REJECTED', note, ...(op !== undefined ? { opened: op } : {}), ...(op === true ? { openAction: openAct[r.id] ?? 'HOLD' } : {}) }),
     }).finally(list.reload));
   };
 
@@ -171,7 +173,15 @@ function HealthReturns() {
                           <label><input type="radio" name={`op-${r.id}`} checked={opened[r.id] === false}
                             onChange={() => setOpened({ ...opened, [r.id]: false })} /> 미개봉 — 재고로 되돌림</label><br />
                           <label><input type="radio" name={`op-${r.id}`} checked={opened[r.id] === true}
-                            onChange={() => setOpened({ ...opened, [r.id]: true })} /> 개봉됨 — 재판매 불가, 재고로 되돌리지 않음</label>
+                            onChange={() => setOpened({ ...opened, [r.id]: true })} /> 개봉됨 — 재고로 되돌리지 않음</label>
+                          {opened[r.id] === true && (
+                            <div style={{ marginLeft: 18 }} data-open-action>
+                              <label><input type="radio" name={`oa-${r.id}`} checked={(openAct[r.id] ?? 'HOLD') === 'HOLD'}
+                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'HOLD' })} /> 보관 — 개봉 반품 재고(할인 판매 가능)</label><br />
+                              <label><input type="radio" name={`oa-${r.id}`} checked={openAct[r.id] === 'DISCARDED'}
+                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'DISCARDED' })} /> 폐기</label>
+                            </div>
+                          )}
                         </fieldset>
                       )}
                       {r.kind === 'RETURN' && r.convertedFrom && r.payState === 'PAID' && (

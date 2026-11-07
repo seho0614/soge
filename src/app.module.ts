@@ -107,6 +107,8 @@ import { HolidayController } from './modules/holiday/holiday.controller';   // v
 import { HolidayService } from './modules/holiday/holiday.service';
 import { PlanAdminController } from './modules/billing/plan-admin.controller';   // v10.207 (D184) 요금제 금액 · 한도
 import { PlanAdminService } from './modules/billing/plan-admin.service';
+import { HealthOpenStockController } from './modules/health/health-open-stock.controller';   // v10.208 (D185) 개봉 반품 재고
+import { HealthOpenStockService } from './modules/health/health-open-stock.service';
 import { TownFoodAdminController, TownFoodController } from './modules/community/town-food.controller';   // v10.47 (D100) 우리동네 맛집
 import { TownFoodService } from './modules/community/town-food.service';
 import { TownVerifyController } from './modules/community/town-verify.controller';   // v10.164 (D154) 소개광장 동네 인증
@@ -324,6 +326,7 @@ import { LeadService } from './modules/lead/lead.service';
     HelpAdminController,      // v10.203 (D180) 사용자 설명서
     HolidayController,        // v10.206 (D183) 공휴일
     PlanAdminController,      // v10.207 (D184) 요금제 금액 · 한도
+    HealthOpenStockController, // v10.208 (D185) 개봉 반품 재고
     TownFoodController,
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     TownVerifyController,   // v10.164 (D154) 동네 인증
@@ -349,6 +352,7 @@ import { LeadService } from './modules/lead/lead.service';
     HelpService,      /* v10.203 (D180) 사용자 설명서 · AI 상담 자료 */
     HolidayService,   /* v10.206 (D183) 공휴일 · 영업일 */
     PlanAdminService, /* v10.207 (D184) 요금제 금액 · 한도 */
+    HealthOpenStockService, /* v10.208 (D185) 개봉 반품 재고 */
     TownFoodService,   /* v10.47 (D100) 우리동네 맛집 */
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */

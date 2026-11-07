@@ -296,6 +296,10 @@ export class AdminService {
     /* v10.195 (D174 · docs/306) — 11/5 13:24 운영 화면에서 주문 받기가 켜져 4시간 넘게 아무도 몰랐음(주문 0건).
      *   켜기는 SUPER 만(전에는 화면 설명만 SUPER · 서버는 ADMIN 도 통과) · 끄기는 ADMIN 도 바로.
      *   간주 결제가 켜져 있으면 켜기에 확인 문구 · 사유 10자 — 돈을 받지 않은 「결제 완료」 주문이 생기기 때문 */
+    /* v10.208 (D185 · docs/333) — 개봉 반품 할인 판매 켜기는 SUPER 만(끄기는 ADMIN 도) · 법적 허용 범위 확인 뒤 켬 */
+    if (key === 'hlt.open_stock_sale' && (value ?? '').trim() === 'on' && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('OPEN_STOCK_SETTING_SUPER', '개봉 반품 할인 판매를 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
+    }
     if (key === 'mall.order_open' && (value ?? '').trim() !== 'off') {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {
         throw new Forbidden('ORDER_SETTING_SUPER', '소개몰 주문 받기를 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.');

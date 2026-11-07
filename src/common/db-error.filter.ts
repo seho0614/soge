@@ -74,6 +74,16 @@ const RULES: Array<{ test: RegExp; map: (m: RegExpMatchArray) => Mapped }> = [
     map: (m) => ({ status: 422, code: 'INVALID_SETTING', message: m[1] }),
   },
   {
+    /* v10.208 (D185) — 소개몰 개봉 반품 재고 · 할인 판매 규칙(보관만 옮김 · 스위치 꺼짐에 판매 막음 · 기록 지우지 못함) */
+    test: /^HLTOS:\s*(.*)/,
+    map: (m) => ({ status: 422, code: 'OPEN_STOCK_RULE', message: m[1] }),
+  },
+  {
+    /* v10.207 (D184) — 요금제 금액 · 한도 규칙(무료 ↔ 유료 · 음수 · 사유 · 변경 기록 지우지 못함) */
+    test: /^PLAN:\s*(.*)/,
+    map: (m) => ({ status: 422, code: 'PLAN_RULE', message: m[1] }),
+  },
+  {
     test: /^BILLING:\s*(.*)/,
     map: (m) => ({ status: 422, code: 'BILLING_RULE', message: m[1] }),
   },

@@ -4799,6 +4799,26 @@
    "new": true
   },
   {
+   "id": "SB-ADM-HOS-010",
+   "name": "소개몰 개봉 반품 재고 — 보관 · 할인 판매 · 폐기 · 판매자 반송",
+   "group": "ADM",
+   "url": "/admin/health/open-stock",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/health/open-stock",
+    "POST /admin/health/open-stock/sell",
+    "POST /admin/health/open-stock/{id}/discard"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "v10.208 (D185) — 할인 판매 스위치 hlt.open_stock_sale 처음 꺼짐 · 켜기 SUPER(사이트 설정)",
+   "new": true
+  },
+  {
    "id": "SB-ADM-HRV-010",
    "name": "소개몰 리뷰 · 문의 — 금칙어 리뷰 확인 · 문의 답하기",
    "group": "ADM",
