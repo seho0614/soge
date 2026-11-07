@@ -257,16 +257,18 @@ def t1(b):
     R.do('나의공간의 「프로필 · 사업자 정보 수정」 카드를 누르면 이름 칸에 내 이름이 들어 있음', '화면', s9, need=False)
 
     def s10():
-        goto(pg, '/my'); n_my = pg.locator('header button, .hd button', has_text='로그아웃').count() + pg.locator('header a, .hd a', has_text='로그아웃').count()
-        hd = one(txt(pg, 'header.pc-hd .pc-hr'))   # v10.29 — 공통 머리줄 header.hd → header.pc-hd(오른쪽 .hd-right → .pc-hr)
-        goto(pg, '/community')
-        btn = until(lambda: pg.locator('button.b2-out').count(), 20)
-        if not btn: return False, f'소개광장 머리줄에 「로그아웃」이 나타나지 않음 · /my 머리줄 「{hd}」'
-        pg.locator('button.b2-out').first.click()
+        # v10.207 — v10.188 머리줄 통일(UniHeader · header.sh-hd) 뒤 옛 이름표(header.pc-hd · button.b2-out · .b2-login)를 찾아 이 단계가 늘 실패하고
+        #           뒤 단계 68칸이 건너뛰어졌음 → 나의공간(/my) 머리줄의 「로그아웃」(button.sh-pill)을 바로 누름
+        goto(pg, '/my')
+        LO = 'header[data-uni-header] button.sh-pill'
+        btn = until(lambda: pg.locator(LO, has_text='로그아웃').count(), 20)
+        hd = one(txt(pg, 'header[data-uni-header] .sh-hdr'))
+        if not btn: return False, f'나의공간(/my) 머리줄에 「로그아웃」이 나타나지 않음 · 머리줄 글 「{hd}」'
+        pg.locator(LO, has_text='로그아웃').first.click()
         out = until(lambda: not has_login(ctx), 20)
-        hdr = until(lambda: '로그인' in one(' '.join(pg.locator('.b2-login, .b2-join').all_inner_texts())), 10)
-        return bool(out and hdr), f'/my 머리줄의 로그아웃 단추 {n_my}개(머리줄 글 「{hd}」 — 로그인해도 「로그인 · 회원가입」 그대로) → 소개광장 머리줄 「로그아웃」 누름 → 쿠키 {"지워짐" if out else "남음"} · 머리줄 「{one(" ".join(pg.locator(".b2-login, .b2-join").all_inner_texts()))}」'
-    R.do('로그아웃 — 나의공간 · 소개장터 머리줄에는 「로그아웃」 단추가 없어 소개광장(/community) 머리줄의 「로그아웃」을 누름 → 로그인 전 모양으로 바뀜', '화면', s10)
+        hdr = until(lambda: pg.locator('header[data-uni-header] a.sh-pill[href="/login"]').count() > 0, 10)
+        return bool(out and hdr), f'/my 머리줄 「로그아웃」 누름(머리줄 글 「{hd}」) → 쿠키 {"지워짐" if out else "남음"} · 머리줄 「{one(txt(pg, "header[data-uni-header] .sh-hdr"))}」'
+    R.do('로그아웃 — 나의공간(/my) 머리줄의 「로그아웃」을 누름 → 로그인 쿠키가 지워지고 머리줄이 「로그인 · 회원가입」으로 바뀜', '화면', s10)
 
     def s11():
         goto(pg, '/my')
@@ -502,9 +504,10 @@ def t3(b, prev):
         goto(apg, '/money/list'); word = f'인테리어 소개 {TAG}'
         # v10.31 (w1 시안) — 머리줄 검색은 돋보기 단추(.pc-hsch) → 검색 팝업(#spopq)
         # v10.40 (대표 지시 2026-10-14) — 결과는 팝업에서 보고(결과 화면으로 가지 않음) · 결과 줄을 누르면 그 자리(매물 상세)로
+        # v10.207 — v10.188 머리줄 통일 뒤 돋보기는 header[data-uni-header] 의 button.sh-icbtn(검색 팝업을 여는 단추) — 옛 .pc-hsch 를 찾아 늘 실패했음
         def find():
             goto(apg, '/money/list')
-            apg.locator('header .pc-hsch').first.click(); apg.wait_for_selector('#spopq', timeout=10000)
+            apg.locator('header[data-uni-header] button.sh-icbtn[aria-haspopup="dialog"]').first.click(); apg.wait_for_selector('#spopq', timeout=10000)
             apg.fill('#spopq', word); apg.wait_for_timeout(1500)
             row = apg.locator('.pc-spop #spopbd button.it', has_text=TITLE)
             return row.first if row.count() else None

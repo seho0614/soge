@@ -11,6 +11,7 @@
 # · 시험 이미지 sgb-qa:v1 이 없으면 qa-image/Dockerfile 로 만듭니다.
 # · 결과: ~/check-results/<시각>_func/summary.txt (시험마다 한 줄) · log_<시험>.txt · *.json
 set -u
+BAD=
 export DOCKER_HOST=${DOCKER_HOST:-unix:///run/user/$(id -u)/docker.sock}
 QA=$(cd "$(dirname "$0")" && pwd)
 KIT=$(dirname "$(find ~/kits/run/current -maxdepth 3 -path '*/sgb/VERSION' 2>/dev/null | head -1)")
@@ -38,6 +39,10 @@ for s in $ONLY; do
     flow_*) last=$(grep -E '^통과 [0-9]+ / [0-9]+' "$RES/log_$s.txt" | tail -1 | cut -c1-200); [ -n "$last" ] || last=$(tail -1 "$RES/log_$s.txt" | cut -c1-200) ;;   # v10.79 — 흐름 요약이 섞여 찍혀도 전체 줄
     *) last=$(tail -1 "$RES/log_$s.txt" | cut -c1-200) ;; esac
   echo "$s | rc=$rc · $(( $(date +%s) - t0 ))s · $last" | tee -a "$RES/summary.txt"
+  # v10.207 — 흐름 시험은 칸이 실패해도 rc=0 이라 「정상」으로 보였음(flow_trade 로그아웃 단계 실패로 68칸 건너뜀을 몇 판 동안 놓침)
+  #           → 시험이 멈췄거나(rc≠0) 요약 줄에 「실패 n」이 있으면 끝에 모아 보이고 종료 코드 1
+  nf=$(printf '%s' "$last" | grep -oE '실패 [0-9]+' | head -1 | grep -oE '[0-9]+'); nf=${nf:-0}
+  [ "$rc" -ne 0 ] || [ "$nf" -gt 0 ] && BAD="${BAD:-}${BAD:+ · }$s(rc=$rc · 실패 $nf)"
 done
 # 이번에 새로 쓴 결과만 (qa 폴더에 남아 있던 옛 결과는 빼고)
 find "$RES/w" -maxdepth 2 -name '*.json' -newer "$RES/.start" -exec cp {} "$RES/" \;
@@ -62,4 +67,6 @@ if os.path.exists(p):
     t = json.load(open(p)).get('tabs') or []
     print(f'운영 화면 | 탭 {len(t)} · 오류 {sum(1 for x in t if x.get("errors") or x.get("api_fail") or x.get("errview"))}')
 PY
+if [ -n "${BAD:-}" ]; then echo "기능 점검 집계 | 실패 있음 — $BAD" | tee -a "$RES/summary.txt"; else echo "기능 점검 집계 | 실패 없음" | tee -a "$RES/summary.txt"; fi
 echo "끝 | $(date)" | tee -a "$RES/summary.txt"
+[ -z "${BAD:-}" ]
