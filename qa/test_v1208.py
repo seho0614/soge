@@ -33,7 +33,7 @@ M = rd('prisma/migrations/D185_hlt_open_stock/migration.sql')
 ok('① D185 — 대장(HOLD · DISCARDED · TO_SELLER · 주문 줄마다 한 행) · 판매 상태 없음 · 지우지 못함 · 보관 → 폐기만 · 입점은 반송 · 지우는 문장 없음',
    'CREATE TABLE IF NOT EXISTS public.hlt_open_stock' in M and "CHECK (state IN ('HOLD', 'DISCARDED', 'TO_SELLER'))" in M
    and 'CONSTRAINT ux_hlt_open_stock_item UNIQUE (order_item_id)' in M and "'HLTOS: 개봉 반품 재고 기록은 지울 수 없습니다.'" in M
-   and "NOT (OLD.state = 'HOLD' AND NEW.state = 'DISCARDED')" in M and "v_type = 'TENANT' AND NEW.state <> 'TO_SELLER'" in M
+   and "IF OLD.state <> 'HOLD' OR (NEW.state IS DISTINCT FROM OLD.state AND NEW.state <> 'DISCARDED')" in M and "v_type = 'TENANT' AND NEW.state <> 'TO_SELLER'" in M
    and 'FOR_SALE' not in M and 'open_stock_sale' not in M and 'hlt_products ADD COLUMN' not in M
    and not re.search(r'\b(DELETE FROM|DROP TABLE|DROP VIEW|DROP FUNCTION|TRUNCATE)\b', M), '')
 RS = rd('src/modules/health/health-return.service.ts'); DTO = rd('src/modules/health/health-shop.dto.ts'); SHC = rd('src/modules/health/health-shop.controller.ts')
