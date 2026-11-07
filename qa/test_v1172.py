@@ -35,10 +35,11 @@ ok('① 요약 보기 — GET digest(정기 작업과 같은 digest() · 알림 
    and scr and 'GET /admin/launch-watch/digest' in scr[0]['apis'], '')
 T = rd('scripts/terms-text.js'); D = rd('prisma/migrations/D161_privacy_contact_mail/migration.sql')
 m = re.search(r"\n  PRIVACY: `((?:\\.|[^`\\])*)`", T, re.S); P = m.group(1).replace('\\`', '`').replace('\\\\', '\\') if m else ''
+P0 = re.sub(r'\n\| 카카오 \|[^\n]*', '', P)   # v10.206 (D183) — 카카오 위탁 줄은 D183 이 한 줄만 넣음(앞 마이그레이션의 글에는 없음)
 MD = os.path.join(K, 'prisma/migrations')
 mig = sorted(d for d in os.listdir(MD) if os.path.isdir(os.path.join(MD, d)))
 ok('① D161 — 처리방침 제12조 메일 줄 = terms-text.js = docs/terms · 게시 없음 · 지우는 문장 없음 · 199 이상',
-   MAIL in P and P.count('privacy@sogaebank.com') == 1 and f'$TERM${P}$TERM$' in D and P.strip() in rd('docs/terms/PRIVACY.md')
+   MAIL in P and P.count('privacy@sogaebank.com') == 1 and f'$TERM${P0}$TERM$' in D and P.strip() in rd('docs/terms/PRIVACY.md')
    and "SET status = 'PUBLISHED'" not in D and "'LEGAL_REVIEW'" in D and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', D)
    and len(mig) >= 199 and 'D161_privacy_contact_mail' in mig, f'{len(mig)} · {mig[-1]}')
 ok('① docs/265 · 판', any(f.startswith('265_') for f in os.listdir(os.path.join(K, 'docs'))) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 172), rd('VERSION').strip())
