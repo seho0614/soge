@@ -8,14 +8,7 @@
  */
 
 /** FROM 에 이것을 쓰면 아래 CARD_COLS 를 쓸 수 있습니다 */
-/** v10.208 (D185) — 개봉 반품 할인 판매 상품(open_from_product_id)까지 모두 — 상품 상세 · 운영 화면 */
-export const CARD_FROM_ALL = `hlt_products p
-  LEFT JOIN categories c ON c.id = p.category_id
-  LEFT JOIN hlt_sellers s ON s.id = p.seller_id
-  LEFT JOIN files f ON f.id = p.image_file_id AND f.status = 'READY' AND f.purpose = 'PRODUCT_IMAGE'`;
-
-/** 목록 · 검색 · 같은 성분 · 순위 — v10.208 (D185) 개봉 반품 할인 판매 상품은 빼고(원래 상품 화면에서 안내) */
-export const CARD_FROM = `(SELECT * FROM hlt_products WHERE open_from_product_id IS NULL) p
+export const CARD_FROM = `hlt_products p
   LEFT JOIN categories c ON c.id = p.category_id
   LEFT JOIN hlt_sellers s ON s.id = p.seller_id
   LEFT JOIN files f ON f.id = p.image_file_id AND f.status = 'READY' AND f.purpose = 'PRODUCT_IMAGE'`;

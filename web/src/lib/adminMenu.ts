@@ -141,7 +141,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   billing:       { title: '청구 현황', sub: '구독료가 매출의 전부입니다. 이 화면이 곧 매출 감시입니다. 유예 일수와 재시도 횟수는 코드가 아니라 설정에 있어 여기서 바꾸면 즉시 반영됩니다.', screen: 'SB-ADM-BIL-010' },
   deals:         { title: '거래 감독', sub: '진행 중인 거래와 분쟁 건을 봅니다. 7일간 양측 확인이 안 된 건은 여기로 자동 승격됩니다. 관리자도 임의로 성사를 확정할 수 없습니다 (INV-4).', screen: 'SB-ADM-DEL-010' },
   disputes:      { title: '분쟁 처리', sub: '접수된 분쟁을 처리합니다. 분쟁이 걸린 거래는 정산이 보류됩니다.', screen: 'SB-ADM-DSP-010' },
-  'hlt-open':    { title: '개봉 반품 재고', sub: '반품 승인 때 개봉으로 판정한 상품 — 보관 · 할인 판매 · 폐기 · 판매자 반송. 할인 판매는 스위치(처음 꺼짐)를 켜야 손님에게 보입니다.', screen: 'SB-ADM-HOS-010' },
+  'hlt-open':    { title: '개봉 반품 재고', sub: '반품 승인 때 개봉으로 판정한 상품 — 보관(폐기 대기) · 폐기 · 판매자 반송. 식품 · 화장품 개봉품은 다시 팔 수 없습니다.', screen: 'SB-ADM-HOS-010' },
   'hlt-orders':  { title: '소개몰 주문', sub: '결제 완료 주문의 발송을 처리합니다 — 택배사 · 송장번호를 넣으면 배송중, 「배송 완료로」를 누르면 배송 완료.', screen: 'SB-ADM-HOR-010' },
   members:       { title: '회원 목록', sub: '이름 · 이메일 · 연락처로 찾습니다.', screen: 'SB-ADM-MBR-010' },
   users:         { title: '회원 관리', sub: '사업자 신청을 승인 · 반려하고 회원을 정지합니다. 승인 시각이 소개비 수령 자격의 기준일입니다 (INV-10).', screen: 'SB-ADM-USR-010' },

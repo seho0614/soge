@@ -343,7 +343,7 @@ export class HealthReturnService {
           WHERE id = $1`,
         [r.id, state, note?.trim() || null, me, r.kind === 'CANCEL' ? false : (typeof opened === 'boolean' ? opened : null), fee]);
       /* v10.208 (D185 · docs/333) — 개봉 반품은 개봉 반품 재고 대장에 주문 줄마다 남김.
-       *   입점 상품은 판매자에게 반송(TO_SELLER) · 직판은 보관(HOLD · 기본) 또는 폐기(DISCARDED). 보관한 것은 운영 화면에서 할인 판매로 옮김 */
+       *   입점 상품은 판매자에게 반송(TO_SELLER) · 직판은 보관(HOLD · 기본 · 폐기 대기) 또는 폐기(DISCARDED). 식품 · 화장품 개봉품은 재판매 금지(법무 11/7) */
       if (state === 'APPROVED' && r.kind === 'RETURN' && opened === true && orderStatus === 'RETURNED') {
         if (openAction !== undefined && !['HOLD', 'DISCARDED'].includes(openAction)) {
           throw new PolicyViolation('OPEN_ACTION', '개봉 반품 처리는 보관(HOLD) 또는 폐기(DISCARDED)만 고를 수 있습니다 — 입점 상품은 판매자에게 돌려보냅니다.');

@@ -4,11 +4,10 @@ import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation } from '../../core/errors';
 
 /**
- * v10.208 (D185 · docs/333) — 소개몰 개봉 반품 재고 · 할인 판매(스위치 hlt.open_stock_sale · 처음 off)
+ * v10.208 (D185 · docs/333) — 소개몰 개봉 반품 재고 대장(보관 · 폐기 · 판매자 반송)
  *
- *   반품 승인(개봉)마다 주문 줄별로 대장에 남음(health-return.service) — 직판은 보관 · 폐기, 입점은 판매자에게 반송.
- *   보관한 것을 할인 판매로 옮기면 원래 상품을 복제한 「[개봉 반품] …」 상품이 생김(fn_hlt_open_stock_sell) —
- *   장바구니 · 주문 · 결제 · 환불은 지금 흐름 그대로. 스위치가 꺼져 있으면 멈춘 채로 두고, 켜면 판매 중.
+ *   반품 승인(개봉)마다 주문 줄별로 대장에 남음(health-return.service) — 직판은 보관 · 폐기, 입점은 판매자 반송.
+ *   식품 · 화장품 개봉품은 재판매 금지(법무 11/7) — 보관한 것은 폐기로만 옮김.
  */
 @Injectable()
 export class HealthOpenStockService {
@@ -22,41 +21,25 @@ export class HealthOpenStockService {
   }
 
   async list(state?: string) {
-    const st = ['HOLD', 'FOR_SALE', 'DISCARDED', 'TO_SELLER'].includes(state ?? '') ? state : null;
+    const st = ['HOLD', 'DISCARDED', 'TO_SELLER'].includes(state ?? '') ? state : null;
     const items = await this.db.query<any>(
-      `SELECT k.id, k.state, k.qty, k.note, to_char(k.expires_on, 'YYYY-MM-DD') AS "expiresOn",
+      `SELECT k.id, k.state, k.qty, k.note,
               to_char(k.created_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "createdAt",
               o.order_no AS "orderNo", p.code AS "productCode", p.name AS "productName",
               fn_hlt_option_label(op.months, op.tag) AS "optionLabel", op.price::float8 AS "optionPrice", k.option_id AS "optionId",
-              coalesce(s.type, 'DIRECT') AS "sellerType",
-              sp.code AS "saleCode", sp.status AS "saleStatus", sp.stock AS "saleStock", sp.price::float8 AS "salePrice"
+              coalesce(s.type, 'DIRECT') AS "sellerType"
          FROM hlt_open_stock k
          JOIN hlt_orders o ON o.id = k.order_id
          JOIN hlt_products p ON p.id = k.product_id
          LEFT JOIN hlt_product_options op ON op.id = k.option_id
          LEFT JOIN hlt_sellers s ON s.id = p.seller_id
-         LEFT JOIN hlt_products sp ON sp.id = k.sale_product_id
         WHERE ($1::text IS NULL OR k.state = $1)
         ORDER BY k.created_at DESC LIMIT 200`, [st]);
     const [c] = await this.db.query<any>(
-      `SELECT count(*) FILTER (WHERE state = 'HOLD')::int AS hold, count(*) FILTER (WHERE state = 'FOR_SALE')::int AS "forSale",
-              count(*) FILTER (WHERE state = 'DISCARDED')::int AS discarded, count(*) FILTER (WHERE state = 'TO_SELLER')::int AS "toSeller",
-              fn_hlt_open_sale_on() AS "saleOn"
+      `SELECT count(*) FILTER (WHERE state = 'HOLD')::int AS hold,
+              count(*) FILTER (WHERE state = 'DISCARDED')::int AS discarded, count(*) FILTER (WHERE state = 'TO_SELLER')::int AS "toSeller"
          FROM hlt_open_stock`);
-    return { items, counts: { hold: c.hold, forSale: c.forSale, discarded: c.discarded, toSeller: c.toSeller }, saleOn: c.saleOn };
-  }
-
-  async sell(ids: string[], price: number, note?: string, expiresOn?: string) {
-    if (!Array.isArray(ids) || !ids.length || ids.length > 50) throw new PolicyViolation('OPEN_STOCK_IDS', '옮길 개봉 반품 재고를 1 ~ 50개 골라 주십시오.');
-    if (!Number.isInteger(price) || price <= 0) throw new PolicyViolation('OPEN_STOCK_PRICE', '할인 판매 값을 원 단위 정수로 넣으십시오.');
-    if (expiresOn && !/^20\d{2}-\d{2}-\d{2}$/.test(expiresOn)) throw new PolicyViolation('OPEN_STOCK_EXPIRES', '유통기한은 YYYY-MM-DD 로 넣으십시오.');
-    try {
-      const [r] = await this.db.query<{ code: string }>(
-        `SELECT fn_hlt_open_stock_sell($1::uuid[], $2, $3, $4::date, $5) AS code`,
-        [ids, price, (note ?? '').trim() || null, expiresOn || null, RequestCtx.actorId() ?? null]);
-      const [p] = await this.db.query<any>(`SELECT code, status, stock FROM hlt_products WHERE code = $1`, [r.code]);
-      return { ok: true, code: p.code, status: p.status, stock: p.stock };
-    } catch (e) { this.rethrow(e); }
+    return { items, counts: { hold: c.hold, discarded: c.discarded, toSeller: c.toSeller } };
   }
 
   async discard(id: string, note: string) {

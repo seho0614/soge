@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { StateConflict } from '../../core/errors';
 import { HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, exchangeFee } from './health-policy';
-import { CARD_COLS, CARD_FROM, CARD_FROM_ALL, OPTION_COLS, SEARCH_BODY } from './health-catalog.sql';
+import { CARD_COLS, CARD_FROM, OPTION_COLS, SEARCH_BODY } from './health-catalog.sql';
 import { storageFromEnv } from '../file/storage';
 import { expandKeyword } from '../../core/search-expand';
 import { I18nService } from '../i18n/i18n.service';
@@ -61,10 +61,8 @@ export class HealthCatalogService {
               /* v10.167 — 입점 판매자 상품은 그 판매자의 배송비 · 무료 기준 · 왕복 반품비(6,000원 상한 · 결정 C · 상품 화면에 표시). 직판은 무료 · 6,000원 */
               CASE WHEN s.type = 'DIRECT' OR s.id IS NULL THEN ${HLT_RETURN_SHIP_ROUND_TRIP} ELSE s.return_ship_fee END AS "returnShipFee",
               CASE WHEN s.type = 'DIRECT' OR s.id IS NULL THEN 0 ELSE s.ship_fee END AS "sellerShipFee",
-              CASE WHEN s.type <> 'DIRECT' THEN s.free_ship_over END AS "freeShipOver",
-              /* v10.208 (D185) — 개봉 반품 할인 판매 상품이면 원래 상품 · 상태 메모 · 유통기한 */
-              p.open_from_product_id AS "_openFrom", p.open_note AS "openNote", to_char(p.open_expires_on, 'YYYY-MM-DD') AS "openExpiresOn"
-         FROM ${CARD_FROM_ALL}
+              CASE WHEN s.type <> 'DIRECT' THEN s.free_ship_over END AS "freeShipOver"
+         FROM ${CARD_FROM}
          LEFT JOIN withdrawal_rules w ON w.code = p.withdrawal_code
          LEFT JOIN hlt_notice_groups ng ON ng.category_code = c.code
         WHERE p.code = $1 AND p.status IN ('ON_SALE','SOLD_OUT')`, [code]);
@@ -99,19 +97,7 @@ export class HealthCatalogService {
       const v = (vals[it.label] ?? '').trim() || auto || '상세 설명 참조';
       return { label: it.label, value: v };
     });
-    /* v10.208 (D185) — 개봉 반품: 할인 판매 상품이면 원래 상품(이름 · 코드 · 원래 값) / 원래 상품이면 판매 중인 개봉 반품 상품 */
-    const [openFrom] = p._openFrom
-      ? await this.db.query<any>(
-          `SELECT s.code, s.name, (SELECT o.price::float8 FROM hlt_product_options o WHERE o.id = x.open_from_option_id) AS "listPrice"
-             FROM hlt_products x JOIN hlt_products s ON s.id = x.open_from_product_id WHERE x.id = $1`, [p.id])
-      : [null];
-    const openOffers = p._openFrom ? [] : await this.db.query<any>(
-      `SELECT x.code, x.price::float8 AS price, x.stock, fn_hlt_option_label(o.months, NULL) AS "optionLabel", x.open_note AS note,
-              to_char(x.open_expires_on, 'YYYY-MM-DD') AS "expiresOn"
-         FROM hlt_products x LEFT JOIN hlt_product_options o ON o.id = x.open_from_option_id
-        WHERE x.open_from_product_id = $1 AND x.status = 'ON_SALE' AND x.stock > 0 AND fn_hlt_open_sale_on()
-        ORDER BY o.months NULLS FIRST`, [p.id]);
-    const { id, seller_id, noticeValues, noticeGroup, _openFrom, ...view } = p;
+    const { id, seller_id, noticeValues, noticeGroup, ...view } = p;
     /* v10.103 (3-1) — 상품 이름 · 한 줄 설명만 화면 언어로(같은 성분 상품까지 한 번에). 상품정보제공고시(notice)는 위에서 원문으로 만듦 */
     await this.i18n.overlay([view, ...same], 'HLT_PRODUCT', (r: any) => r.code, { name: 'name', summary: 'summary' });
     /* v10.119 (D125) — 성분 · 고민 이름 번역 */
@@ -120,7 +106,6 @@ export class HealthCatalogService {
     await this.i18n.overlay(concerns as any[], 'HLT_CONCERN', (r: any) => r.code, { name: 'name' });
     return {
       ...view, ingredients, options, notice, sameIngredient: same,
-      openReturn: !!_openFrom, openFrom: openFrom ?? null, openOffers,
       exchangeFee: Math.min(HLT_EXCHANGE_SHIP_ROUND_TRIP, Number((view as any).returnShipFee ?? HLT_EXCHANGE_SHIP_ROUND_TRIP)),
       concerns: concerns.map(({ sort, ...c }: any) => c),
     };

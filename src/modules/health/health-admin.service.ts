@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { CARD_COLS, CARD_FROM_ALL as CARD_FROM, OPTION_COLS } from './health-catalog.sql';   // v10.208 — 운영 화면은 개봉 반품 상품까지
+import { CARD_COLS, CARD_FROM, OPTION_COLS } from './health-catalog.sql';
 
 /* ★ 입력 객체(DTO)는 보내지 않은 항목도 키가 있고 값이 undefined 입니다(클래스 필드) — 「키가 있는가」(k in d)로 보면
  *   보내지 않은 개월 수가 null(단품)로, 켬/끔이 false 로 바뀝니다(10/8 시험이 잡음). 늘 「값이 undefined 가 아닌가」로 봅니다. */

@@ -78,7 +78,7 @@ function HealthReturns() {
   const a = useAct();
   /* 반품별 개봉 판정 — 고르기 전에는 승인 버튼이 잠깁니다 */
   const [opened, setOpened] = useState<Record<string, boolean>>({});
-  /* v10.208 (D185) — 개봉 반품 처리: 보관(기본 · 「개봉 반품 재고」 탭에서 할인 판매로 옮김) · 폐기. 입점 상품은 서버가 판매자 반송으로 */
+  /* v10.208 (D185) — 개봉 반품 처리: 보관(기본 · 폐기 대기 · 「개봉 반품 재고」 탭) · 바로 폐기. 입점 상품은 서버가 판매자 반송으로 · 재판매 없음 */
   const [openAct, setOpenAct] = useState<Record<string, 'HOLD' | 'DISCARDED'>>({});
 
   /* v10.26 — 교환: 회사 사정으로 판정해 승인(교환 배송비를 받지 않고 낸 돈을 돌려드림) · 반품으로 바꾸기(교환할 상품 없음) · 교환 배송비 환불 다시 시도 */
@@ -177,9 +177,9 @@ function HealthReturns() {
                           {opened[r.id] === true && (
                             <div style={{ marginLeft: 18 }} data-open-action>
                               <label><input type="radio" name={`oa-${r.id}`} checked={(openAct[r.id] ?? 'HOLD') === 'HOLD'}
-                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'HOLD' })} /> 보관 — 개봉 반품 재고(할인 판매 가능)</label><br />
+                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'HOLD' })} /> 보관 — 개봉 반품 재고(폐기 대기)</label><br />
                               <label><input type="radio" name={`oa-${r.id}`} checked={openAct[r.id] === 'DISCARDED'}
-                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'DISCARDED' })} /> 폐기</label>
+                                onChange={() => setOpenAct({ ...openAct, [r.id]: 'DISCARDED' })} /> 바로 폐기</label>
                             </div>
                           )}
                         </fieldset>

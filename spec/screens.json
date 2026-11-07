@@ -4800,7 +4800,7 @@
   },
   {
    "id": "SB-ADM-HOS-010",
-   "name": "소개몰 개봉 반품 재고 — 보관 · 할인 판매 · 폐기 · 판매자 반송",
+   "name": "소개몰 개봉 반품 재고 — 보관 · 폐기 · 판매자 반송",
    "group": "ADM",
    "url": "/admin/health/open-stock",
    "p": "P2",
@@ -4811,11 +4811,10 @@
    "gates": [],
    "apis": [
     "GET /admin/health/open-stock",
-    "POST /admin/health/open-stock/sell",
     "POST /admin/health/open-stock/{id}/discard"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "v10.208 (D185) — 할인 판매 스위치 hlt.open_stock_sale 처음 꺼짐 · 켜기 SUPER(사이트 설정)",
+   "note": "v10.208 (D185) — 식품 · 화장품 개봉품은 재판매 금지(법무 11/7) · 보관 → 폐기만",
    "new": true
   },
   {
