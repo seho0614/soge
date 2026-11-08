@@ -85,7 +85,8 @@ export class TownVerifyService {
          LEFT JOIN LATERAL (SELECT version, status, body FROM terms WHERE code = 'LOCATION' AND status IN ('DRAFT', 'LEGAL_REVIEW')
                              ORDER BY length(version) DESC, version DESC LIMIT 1) d ON true`);
     const [s] = await this.db.query<{ reportNo: string | null }>(`SELECT value AS "reportNo" FROM site_settings WHERE key = 'community.lbs_report_no'`);
-    const holes = [...new Set((t?.draftBody ?? '').match(/〔[^〕]*〕/g) ?? [])];
+    /* v10.212 — 〔시행일〕은 게시 때 시행일로 채워짐(약관 표와 같은 셈 · 게시를 막지 않음) */
+    const holes = [...new Set((t?.draftBody ?? '').match(/〔[^〕]*〕/g) ?? [])].filter((h) => h !== '〔시행일〕');
     const terms = !!t?.version, report = !!s?.reportNo?.trim(), kakao = !!(await this.geo.restKey());
     return {
       switchOn: await this.on(),

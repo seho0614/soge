@@ -121,6 +121,7 @@ import { HealthSellerController } from './modules/health/health-seller.controlle
 import { HealthSellerService } from './modules/health/health-seller.service';
 import { LaunchWatchController } from './modules/admin/launch-watch.controller';   // v10.170 (D159) 공개 직후 지켜보기
 import { LaunchWatchService } from './modules/admin/launch-watch.service';
+import { StateCheckService } from './modules/admin/state-check.service';   // v10.212 운영 상태 한눈에
 import { OpsReviewController } from './modules/admin/ops-review.controller';   // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
 import { OpsAlertsService } from './modules/admin/ops-alerts.service';
 import { PiiReviewService } from './modules/admin/pii-review.service';
@@ -365,6 +366,7 @@ import { LeadService } from './modules/lead/lead.service';
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
+    StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
     RoleReviewService, MfaService,   /* v10.180 (D169) */
     PrivacyService,   /* v10.181 (D170) */

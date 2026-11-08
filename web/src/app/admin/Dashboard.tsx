@@ -3,6 +3,7 @@ import { api, tokenRoles } from '../../lib/api';
 import { won } from '../../lib/format';
 import { ErrorView } from '../../components/ErrorView';
 import { LaunchWatch } from './LaunchWatch';
+import { StateCheck } from './StateCheck';   // v10.212 (docs/340) 운영 상태 한눈에
 
 /* v10.29 — 서버(/admin/summary)가 보내는 이름은 slaBreached · settlementPending 입니다.
  * 화면은 reviewSlaBreached · settlementRequested 를 읽어 두 칸이 늘 빈칸이었습니다(10/9 비교 그림). 둘 다 받습니다. */
@@ -170,6 +171,8 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
     <>
       {/* v10.170 (D159) — 사용자 웹 전체 공개(11/1) 뒤 첫 화면 맨 위 */}
       <LaunchWatch />
+      {/* v10.212 (docs/340) — 운영 적용 뒤 화면 확인을 한 표로 */}
+      <StateCheck onGo={onGo} canGo={canGo} />
       <div className="ad-tiles" data-dash-tiles>
         {tiles.map((t) => (
           <button key={t.label} className={`ad-tile${t.warn ? ' warn' : ''}`} onClick={() => onGo(t.k)}

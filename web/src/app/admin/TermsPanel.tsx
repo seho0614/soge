@@ -10,6 +10,7 @@ import { ErrorView } from '../../components/ErrorView';
  *   명세에는 있던 약관 목록 · 게시(GET /admin/terms · PATCH /admin/terms/{code}/publish)를 화면에 붙임 — 전에는 서버 스크립트로만 게시.
  *   ① 약관별 판 · 상태 · 시행일 · 필수 · 〔미확정〕 표시 수 · 처리방침은 「국외 이전 조항」(AI 켜기 조건 · D149) 있음 / 없음
  *   ② 「본문 보기」 — 법무가 읽고 확인하는 글 그대로
+ *   v10.212 — 같은 약관은 높은 판이 위 · 더 새 초안이 있는 옛 판은 「고치기」 대신 「2.0 초안 고치기」(옛 판에서 새 판을 또 만들지 않음)
  *   ③ 시행일 한 칸 + 줄마다 「게시」 — 〔미확정〕이 남았거나 이미 게시 · 보관된 판은 단추가 잠김 · 확인 창(법무 확인 · 되돌릴 수 없음) · 감사 TERM_PUBLISH
  *   서버가 다시 검사합니다(TERM_HOLES · EFFECTIVE_DATE_IN_PAST · TERM_ARCHIVED). 본문의 〔시행일〕은 서버가 시행일로 채웁니다.
  *
@@ -51,6 +52,16 @@ const verCmp = (a: string, b: string) => { const x = verNum(a), y = verNum(b); f
 function nextVersion(all: Term[], code: string) {
   const top = all.filter((t) => t.code === code).map((t) => t.version).sort(verCmp).pop() ?? '1.0';
   const n = verNum(top); if (n.length < 2) n.push(0); n[n.length - 1] = (n[n.length - 1] ?? 0) + 1; return n.join('.');
+}
+/** v10.212 — 같은 약관에 이 판보다 높은 번호의 초안 · 법무 검토 판이 있으면 그 판(옛 판 「고치기」 대신 그 줄로) */
+function newerDraft(all: Term[], t: Term) {
+  return all.filter((u) => u.code === t.code && editable(u.status) && verCmp(u.version, t.version) > 0).sort((a, b) => verCmp(b.version, a.version))[0];
+}
+/** v10.212 — 같은 약관끼리는 높은 판이 위(서버 순서는 시행일이라 초안 · 보관이 모두 「무한」이면 옛 판이 먼저 나올 수 있음) */
+function byCodeNewest(all: Term[]) {
+  const first = new Map<string, number>();
+  all.forEach((t, i) => { if (!first.has(t.code)) first.set(t.code, i); });
+  return all.map((t, i) => ({ t, i })).sort((a, b) => (first.get(a.t.code)! - first.get(b.t.code)!) || verCmp(b.t.version, a.t.version) || a.i - b.i).map((x) => x.t);
 }
 /** 줄 단위 비교(LCS) — 바뀐 줄만 돌려줌 */
 function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[] {
@@ -250,9 +261,10 @@ export function TermsPanel() {
         <table className="tbl">
           <thead><tr><th>약관</th><th>판</th><th>상태</th><th>시행일</th><th>확인</th><th></th></tr></thead>
           <tbody>
-            {data.map((t) => {
+            {byCodeNewest(data).map((t) => {
               const key = `${t.code}:${t.version}`;
               const h = holes(t.body);
+              const nd = editable(t.status) ? undefined : newerDraft(data, t);
               const can = (t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && h.length === 0 && !!t.body.trim();
               return [
                 <tr key={key} data-term-row={key} data-status={t.status} data-holes={h.length} data-scheduled={t.scheduled ? 'y' : undefined}>
@@ -267,11 +279,18 @@ export function TermsPanel() {
                     {t.code === 'PRIVACY' && <><br /><span className={aiClause(t.body) ? 'muted' : 'warn-text'} data-term-ai={aiClause(t.body) ? 'y' : 'n'}>
                       국외 이전 조항 {aiClause(t.body) ? '있음(AI 켜기 조건)' : '없음'}</span></>}
                     {t.blockedBy && <><br /><span className="ad-ls">{t.blockedBy}</span></>}
+                    {nd && <><br /><span className="ad-ls" data-term-newer={nd.version}>새 판 {nd.version} {STATUS[nd.status]}이 있음 — 그 판을 고치십시오</span></>}
                   </td>
                   <td className="row-actions">
                     <button className="btn-sm" onClick={() => setOpen(open === key ? null : key)} data-term-view>{open === key ? '본문 닫기' : '본문 보기'}</button>
+                    {nd && ed?.key !== key ? (
+                      /* v10.212 — 더 새 초안이 있으면 옛 판에서 새 판을 또 만들지 않고 그 초안을 엶 */
+                      <button className="btn-sm" onClick={() => { startEdit(nd, data); setTimeout(() => document.querySelector(`[data-term-row="${nd.code}:${nd.version}"]`)?.scrollIntoView({ block: 'center' }), 50); }}
+                              data-term-go-draft={`${nd.code}:${nd.version}`} title={`이 판 대신 ${nd.version} ${STATUS[nd.status]} 을 고칩니다`}>{nd.version} {STATUS[nd.status]} 고치기</button>
+                    ) : (
                     <button className="btn-sm" onClick={() => (ed?.key === key ? setEd(null) : startEdit(t, data))} data-term-edit
                             title={editable(t.status) ? '이 초안을 고쳐 저장' : '게시 · 보관된 판은 고칠 수 없어 새 판 번호로 저장'}>{ed?.key === key ? '고치기 닫기' : '고치기'}</button>
+                    )}
                     {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (
                       <button className="btn-ok btn-sm" disabled={!can || !day || busy === key} onClick={() => void publish(t, data)} data-term-publish
                               title={h.length ? '〔미확정〕 표시를 먼저 채우십시오' : !day ? '시행일을 먼저 넣으십시오' : '게시'}>게시</button>

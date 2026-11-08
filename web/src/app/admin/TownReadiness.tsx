@@ -7,6 +7,7 @@ import { ymdKst } from '../../lib/format';
  *   켜려면 ① 위치기반서비스 이용약관(LOCATION) 게시 · 시행 ② 위치기반서비스사업 신고번호 ③ 카카오 REST 키.
  *   ①② 가 없으면 DB 가 스위치(community.town_verify) 켜기를 막음 · ③ 이 없으면 켜도 인증이 「준비 중」.
  *   약관 초안에 남은 〔…〕 칸은 법무에 넘길 목록 — 남아 있으면 게시가 막힘(TERM_HOLES).
+ *   v10.212 — 〔시행일〕은 세지 않음(게시 때 채워짐 · 약관 표 〔미확정〕과 같은 수).
  */
 interface Readiness {
   switchOn: boolean;
@@ -38,7 +39,7 @@ export function TownReadiness() {
         </tbody>
       </table>
       {r.terms.draft && r.terms.draft.holes.length > 0 && (
-        <p className="hint" data-town-holes={r.terms.draft.holes.length}>약관 초안 {r.terms.draft.version}에 채우지 않은 칸 {r.terms.draft.holes.length}개 — {r.terms.draft.holes.join(' · ')}</p>
+        <p className="hint" data-town-holes={r.terms.draft.holes.length}>약관 초안 {r.terms.draft.version}에 채우지 않은 칸 {r.terms.draft.holes.length}개 — {r.terms.draft.holes.join(' · ')} <span className="dim">(〔시행일〕은 게시 때 정한 날로 채워져 세지 않음 · 약관 표의 〔미확정〕과 같은 수)</span></p>
       )}
     </div>
   );
