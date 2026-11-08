@@ -224,7 +224,7 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   pv=$(q "SELECT max(version) FROM terms WHERE code = 'PRIVACY' AND status = 'PUBLISHED'")
   # v10.156 (D149) — 판 번호 대신 「국외 이전 조항이 든 처리방침이 게시됨」(서버 잠금 · 안내판과 같은 함수)
   p11=$(q "SELECT public.fn_privacy_ai_ready()::int")
-  [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 국외 이전 조항 있음(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "국외 이전 조항(AI 고지)이 든 처리방침이 게시되기 전에는 AI 전체를 켤 수 없음(D145 · D149)"
+  [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 국외 이전 조항 있음(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "국외 이전 조항(AI 고지)이 든 처리방침이 지금 판이 되기 전(첫 판은 게시 · 새 판은 시행일부터)에는 AI 전체를 켤 수 없음(D145 · D149 · D151)"
   # 약관(5절 30) — 게시된 판 · 새로 생긴 법무 검토 · 초안
   info "게시된 약관: $(qn "SELECT code || ' ' || version || '(' || to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') || ')' FROM terms t WHERE status = 'PUBLISHED' AND NOT EXISTS (SELECT 1 FROM terms u WHERE u.code = t.code AND u.status = 'PUBLISHED' AND u.effective_from > t.effective_from) ORDER BY code" | tr '\n' ' ')"
   # terms 에는 만든 시각이 없음 → 「게시된 판보다 번호가 높은 초안 · 법무 검토」 = D131 ~ D133 이 새로 만든 것

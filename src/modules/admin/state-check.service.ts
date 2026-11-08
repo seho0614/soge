@@ -12,6 +12,7 @@ import { TownVerifyService } from '../community/town-verify.service';
  *   go 는 운영 화면 탭 이름(누르면 그 화면).
  *   v10.214 (docs/344) — 「약관 시행 예정」 줄(날짜별 · 며칠 뒤) · AI 줄은 「게시」 기준이라 「시행 중」 대신 「게시됨」.
  *     새 판 시행 예정(v_terms_upcoming — 그날 앞 판이 바뀜)과 첫 판 · 적힌 시행일 전(v_terms_current — 게시 순간부터 지금 판 · 동의 기준)을 나눔.
+ *   v10.215 (docs/345) — AI 줄 바로잡음: 잠금은 「지금 판」(fn_privacy_ai_ready = v_terms_current · D151) 기준 — 첫 판은 게시 순간 · 새 판은 시행일부터.
  * ------------------------------------------------------------------- */
 export type StateRow = { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string };
 const HOLE = /〔[^〕]*〕/g;
@@ -52,8 +53,8 @@ export class StateCheckService {
     const rows: StateRow[] = [
       { key: 'ai', label: 'AI 잠금', go: 'ai-ops',
         state: ai.ready ? 'ok' : 'todo',
-        now: ai.ready ? `풀림 — 국외 이전 조항 처리방침 게시됨 · AI 스위치 ${ai.enabled === 'on' ? '켜짐' : '꺼짐'}`
-                      : `잠김 — 국외 이전 조항이 든 처리방침이 게시되기 전(AI 스위치 ${ai.enabled === 'on' ? '켜짐 · 게시 순간 동작' : '꺼짐'})` },
+        now: ai.ready ? `풀림 — 국외 이전 조항이 든 처리방침이 지금 판(첫 판은 게시 순간부터) · AI 스위치 ${ai.enabled === 'on' ? '켜짐' : '꺼짐'}`
+                      : `잠김 — 국외 이전 조항이 든 처리방침이 지금 판이 되기 전(첫 판은 게시 · 새 판은 시행일부터 · AI 스위치 ${ai.enabled === 'on' ? '켜짐 · 그때 바로 동작' : '꺼짐'})` },
       { key: 'terms', label: '약관 초안 빈칸', go: 'terms',
         state: holed.length ? 'todo' : 'ok',
         now: holed.length ? holed.map((d) => `${d.title} ${d.version} 〔미확정〕 ${d.n}곳`).join(' · ') : `초안 ${drafts.length}개 · 빈칸 없음` },

@@ -23,11 +23,12 @@ const diskLine = (h: ReturnType<typeof serverHealth>) => (h.disk
   : '서버 디스크 — 잴 수 없음');
 
 
-/* v10.204 (D181 · docs/326) — 하루 요약 · 공개 직후 지켜보기의 AI 줄 */
+/* v10.204 (D181 · docs/326) — 하루 요약 · 공개 직후 지켜보기의 AI 줄
+ *   v10.215 (docs/345) — 잠금 글을 「지금 판」 기준으로(첫 판은 게시 · 새 판은 시행일부터 · 운영 상태 한눈에 AI 줄과 같음) */
 export type AgentDay = { enabled: boolean; unlocked: boolean; chats: number; answers: number; handoffs: number; reviews: number;
   requests: number; cost: string; month: string; cap: string };
 export const agentLines = (a: AgentDay, label: string): string[] => {
-  if (!a.unlocked && a.requests === 0) return ['AI — 잠김(국외 이전 조항이 든 처리방침이 시행되기 전)'];
+  if (!a.unlocked && a.requests === 0) return ['AI — 잠김(국외 이전 조항이 든 처리방침이 지금 판이 되기 전 — 첫 판은 게시 · 새 판은 시행일부터)'];
   if (!a.enabled && a.requests === 0) return ['AI — 꺼짐'];
   const cap = Number(a.cap);
   return [

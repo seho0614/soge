@@ -507,14 +507,15 @@ export class AdminService {
     if (miss.length) throw new PolicyViolation('SWITCH_PREREQ', `아직 AI 를 켤 수 없습니다 — 먼저 ${miss.join(' · ')} 넣어 주십시오.`);
     /* v10.151 (D145 · docs/231) — 처리방침 확인 스위치(agent.require_privacy · 처음 on · SUPER 가 정함)가 켜져 있으면
      *   개인정보처리방침 1.1 이상(AI 고지 · 국외 이전 · docs/176)이 게시되기 전에는 거절. 안내판(rollout) TERMS 와 같은 판단
-     *   v10.156 (D149 · docs/237) — 판 번호 대신 fn_privacy_ai_ready()(게시된 처리방침에 국외 이전 조항) — 운영은 1.0 초안에 이미 AI 고지가 들어 있음 */
+     *   v10.156 (D149 · docs/237) — 판 번호 대신 fn_privacy_ai_ready()(게시된 처리방침에 국외 이전 조항) — 운영은 1.0 초안에 이미 AI 고지가 들어 있음
+     *   v10.215 (docs/345) — 글을 「지금 판」 기준으로(D151 부터 fn_privacy_ai_ready 는 v_terms_current · 첫 판은 게시 · 새 판은 시행일부터) */
     const [g] = await this.db.query<{ req: string | null; ok: boolean; ver: string | null }>(
       `SELECT (SELECT value FROM site_settings WHERE key = 'agent.require_privacy') AS req,
               public.fn_privacy_ai_ready() AS ok,
               (SELECT version FROM v_terms_current WHERE code = 'PRIVACY')   /* v10.161 (D151) — 지금 시행 중인 판 */ AS ver`);
     if ((g?.req ?? 'on').trim() !== 'off' && !g?.ok) {
       throw new PolicyViolation('PRIVACY_FIRST',
-        `아직 AI 를 켤 수 없습니다 — 국외 이전 조항(AI 고지)이 든 개인정보처리방침이 먼저 게시되어야 합니다(지금 게시 ${g?.ver ?? '없음'}). ` +
+        `아직 AI 를 켤 수 없습니다 — 국외 이전 조항(AI 고지)이 든 개인정보처리방침이 지금 판이어야 합니다(첫 판은 게시 순간 · 새 판은 시행일부터 · 지금 판 ${g?.ver ?? '없음'}). ` +
         '최고 관리자가 「AI 켜기 전 처리방침 확인」을 끄면 경고만 하고 켤 수 있습니다.');
     }
   }
