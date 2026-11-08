@@ -11,6 +11,7 @@ import { ErrorView } from '../../components/ErrorView';
  *   ① 약관별 판 · 상태 · 시행일 · 필수 · 〔미확정〕 표시 수 · 처리방침은 「국외 이전 조항」(AI 켜기 조건 · D149) 있음 / 없음
  *   ② 「본문 보기」 — 법무가 읽고 확인하는 글 그대로
  *   v10.212 — 같은 약관은 높은 판이 위 · 더 새 초안이 있는 옛 판은 「고치기」 대신 「2.0 초안 고치기」(옛 판에서 새 판을 또 만들지 않음)
+ *   v10.213 — 「게시」가 막히면 까닭을 단추 옆 글자로 · 빈칸은 같은 것을 한 번만 셈(docs/342)
  *   ③ 시행일 한 칸 + 줄마다 「게시」 — 〔미확정〕이 남았거나 이미 게시 · 보관된 판은 단추가 잠김 · 확인 창(법무 확인 · 되돌릴 수 없음) · 감사 TERM_PUBLISH
  *   서버가 다시 검사합니다(TERM_HOLES · EFFECTIVE_DATE_IN_PAST · TERM_ARCHIVED). 본문의 〔시행일〕은 서버가 시행일로 채웁니다.
  *
@@ -40,7 +41,8 @@ interface Preview { first: boolean; current: string | null; required: boolean; t
 /** v10.206 (docs/330) — GET /admin/terms/outsource-check */
 interface OutsourceCheck { lines: string[]; pending: string[] }
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
-const holes = (b: string) => (b.match(/〔[^〕]*〕/g) ?? []).filter((m) => m !== '〔시행일〕');
+/* v10.213 — 같은 빈칸은 한 번만 셈(운영 상태 표 · 동네 인증 준비 상태와 같은 수) */
+const holes = (b: string) => [...new Set(b.match(/〔[^〕]*〕/g) ?? [])].filter((m) => m !== '〔시행일〕');
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
 const editable = (st: string) => st === 'DRAFT' || st === 'LEGAL_REVIEW';
 const todayKst = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -294,6 +296,12 @@ export function TermsPanel() {
                     {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (
                       <button className="btn-ok btn-sm" disabled={!can || !day || busy === key} onClick={() => void publish(t, data)} data-term-publish
                               title={h.length ? '〔미확정〕 표시를 먼저 채우십시오' : !day ? '시행일을 먼저 넣으십시오' : '게시'}>게시</button>
+                    )}
+                    {/* v10.213 — 「게시」가 막힌 까닭을 단추 옆 글자로(마우스를 올리지 않아도) */}
+                    {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (!can || !day) && (
+                      <span className="ad-ls warn-text" data-term-publish-why={h.length ? 'holes' : !t.body.trim() ? 'empty' : 'day'}>
+                        {h.length ? `게시 막힘 — 〔미확정〕 ${h.length}곳을 먼저 채우십시오` : !t.body.trim() ? '게시 막힘 — 본문이 비어 있음' : '게시하려면 표 위 「시행일」을 먼저 넣으십시오'}
+                      </span>
                     )}
                     {future(t) && (
                       <button className="btn-sm" disabled={busy === key} onClick={() => void unschedule(t)} data-term-unschedule
