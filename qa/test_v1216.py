@@ -41,7 +41,7 @@ except Exception:
     ko, en = {}, {}
 ok('① 약관 firstEarly — 서비스 두 곳(v_terms_current 같은 판) · 화면 상태 · 전문 판 줄 · 사전 ko · en',
    AS.count('AS "firstEarly"') == 2 and AS.count('EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = terms.code AND c.version = terms.version)') == 2
-   and "if (t.firstEarly) return tr('state.firstEarly', { when });" in TV and "tr(doc.firstEarly ? 'viewer.firstEarly'" in TV
+   and ("if (t.firstEarly) return tr('state.firstEarly', { when });" in TV or "tr('state.firstEarlyPub', { when, pub:" in TV)   # v10.217 게시일 붙음 and "tr(doc.firstEarly ? 'viewer.firstEarly'" in TV
    and '지금 적용 중(첫 판)' in ko.get('state', {}).get('firstEarly', '') and '{when}' in ko.get('state', {}).get('firstEarly', '')
    and '{date}' in ko.get('viewer', {}).get('firstEarly', '') and 'first version' in en.get('state', {}).get('firstEarly', '')
    and '{date}' in en.get('viewer', {}).get('firstEarly', ''), '')
