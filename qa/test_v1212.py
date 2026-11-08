@@ -13,6 +13,7 @@ API = os.environ.get('API'); DB = os.environ.get('DB'); ADMIN_WEB = os.environ.g
 RES = []
 PW = 'sgb-dev-1234'
 KEYS = ['ai', 'terms', 'outsource', 'holidays', 'plans', 'open-stock', 'mail', 'town', 'town-pick', 'alerts']
+V214 = 'terms-upcoming'  # v10.214 에 더해진 줄(test_v1214 가 봄) — 이 시험은 v10.212 의 10줄만 셈
 
 
 def ok(name, cond, detail=''):
@@ -78,7 +79,7 @@ if API and DB:
         mb = call('GET', '/admin/launch-watch/state', None, TB)
         rows = st if isinstance(st, list) else []
         ok('② 상태 10줄 — 키 · state(ok · todo · warn · info) · go · 지금 값 · 회원 403',
-           [r.get('key') for r in rows] == KEYS and all(r.get('state') in ('ok', 'todo', 'warn', 'info') and r.get('go') and r.get('now') for r in rows)
+           [r.get('key') for r in rows if r.get('key') != V214] == KEYS and all(r.get('state') in ('ok', 'todo', 'warn', 'info') and r.get('go') and r.get('now') for r in rows)
            and mb.get('_err') == 403, f'{[(r.get("key"), r.get("state")) for r in rows]} · {mb.get("_err")}')
         town = next((r for r in rows if r.get('key') == 'town'), {})
         trm = next((r for r in rows if r.get('key') == 'terms'), {})
@@ -116,7 +117,7 @@ if API and DB:
                         b.close()
                 except Exception as ex:
                     errs.append(str(ex)[:160])
-            ok('③ 첫 화면 「운영 상태 한눈에」 10줄', seen.get('state') == ','.join(KEYS) and not errs, f"{seen.get('state')} · {errs[:2]}")
+            ok('③ 첫 화면 「운영 상태 한눈에」 10줄', ','.join(k for k in (seen.get('state') or '').split(',') if k != V214) == ','.join(KEYS) and not errs, f"{seen.get('state')} · {errs[:2]}")
             ok('③ 약관 — 2.0 초안이 1.0 위 · 1.0 줄 「고치기」 없음 · 「새 판 2.0」 표시 · 누르면 2.0 편집 칸(판 2.0 · 새 본문)',
                seen.get('order') == 'LOCATION:2.0,LOCATION:1.0' and seen.get('oldEdit') == 0 and seen.get('newer') == '2.0'
                and seen.get('editor') == 1 and seen.get('ver') == '2.0' and seen.get('body') and not errs, f'{seen} · {errs[:2]}')
