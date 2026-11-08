@@ -10,7 +10,8 @@ import { TownVerifyService } from '../community/town-verify.service';
  *   AI 잠금 · 약관 빈칸 · 위탁 목록 · 공휴일 · 요금제 금액 · 개봉 반품 재고 · 메일 반송 · 동네 인증 · 동네픽 · 운영 알림.
  *   state: ok(할 일 없음) · todo(대표 · 법무가 할 일 남음 — 오픈 전에는 정상) · warn(바로 볼 것) · info(값만).
  *   go 는 운영 화면 탭 이름(누르면 그 화면).
- *   v10.214 (docs/344) — 「약관 시행 예정」 줄(게시했지만 시행일 전 · 날짜별 · 며칠 뒤) · AI 줄은 「게시」 기준이라 「시행 중」 대신 「게시됨」.
+ *   v10.214 (docs/344) — 「약관 시행 예정」 줄(날짜별 · 며칠 뒤) · AI 줄은 「게시」 기준이라 「시행 중」 대신 「게시됨」.
+ *     새 판 시행 예정(v_terms_upcoming — 그날 앞 판이 바뀜)과 첫 판 · 적힌 시행일 전(v_terms_current — 게시 순간부터 지금 판 · 동의 기준)을 나눔.
  * ------------------------------------------------------------------- */
 export type StateRow = { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string };
 const HOLE = /〔[^〕]*〕/g;
@@ -38,12 +39,14 @@ export class StateCheckService {
       q<{ on: string | null; pending: number }>(`SELECT (SELECT value FROM site_settings WHERE key = 'agent.town_pick.enabled') AS on,
                 (SELECT count(*)::int FROM town_pick_candidates WHERE state = 'PENDING') AS pending`),
       q<{ open: number; critical: number }>(`SELECT count(*)::int AS open, count(*) FILTER (WHERE severity = 'CRITICAL')::int AS critical FROM ops_alerts WHERE acknowledged_at IS NULL`),
-      this.db.query<{ day: string; d: number; n: number; titles: string }>(
-        `SELECT to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
+      this.db.query<{ first: boolean; day: string; d: number; n: number; titles: string }>(
+        `SELECT first, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
                 ((effective_from AT TIME ZONE 'Asia/Seoul')::date - (now() AT TIME ZONE 'Asia/Seoul')::date)::int AS d,
                 count(*)::int AS n, string_agg(title || ' ' || version, ' · ' ORDER BY display_order, code) AS titles
-           FROM terms WHERE status = 'PUBLISHED' AND effective_from > now() AND effective_from <> 'infinity'
-          GROUP BY 1, 2 ORDER BY 1`),
+           FROM (SELECT false AS first, effective_from, title, version, display_order, code FROM v_terms_upcoming
+                 UNION ALL
+                 SELECT true, effective_from, title, version, display_order, code FROM v_terms_current WHERE effective_from > now()) x
+          GROUP BY 1, 2, 3 ORDER BY 1, 2`),
     ]);
     const holed = drafts.map((d) => ({ ...d, n: [...new Set(d.body.match(HOLE) ?? [])].filter((h) => h !== '〔시행일〕').length })).filter((d) => d.n > 0);
     const rows: StateRow[] = [
@@ -54,9 +57,16 @@ export class StateCheckService {
       { key: 'terms', label: '약관 초안 빈칸', go: 'terms',
         state: holed.length ? 'todo' : 'ok',
         now: holed.length ? holed.map((d) => `${d.title} ${d.version} 〔미확정〕 ${d.n}곳`).join(' · ') : `초안 ${drafts.length}개 · 빈칸 없음` },
-      /* v10.214 — 게시했지만 시행일 전인 판(시행일에 바뀜 · 3종 넘으면 수만) */
+      /* v10.214 — 새 판 시행 예정(그날 앞 판이 바뀜) · 첫 판 적힌 시행일 전(이미 동의 기준) · 그날 3종 넘으면 수만 */
       { key: 'terms-upcoming', label: '약관 시행 예정', go: 'terms', state: 'info',
-        now: upcoming.length ? upcoming.map((u) => `${u.day}(${u.d}일 뒤) ${u.n > 3 ? `${u.n}종` : u.titles}`).join(' · ') : '시행 예정 판 없음' },
+        now: [
+          upcoming.some((u) => !u.first)
+            ? '새 판 ' + upcoming.filter((u) => !u.first).map((u) => `${u.day}(${u.d}일 뒤) ${u.n > 3 ? `${u.n}종` : u.titles}`).join(' · ') + ' — 그날 앞 판이 바뀜'
+            : '새 판 시행 예정 없음',
+          ...(upcoming.some((u) => u.first)
+            ? ['첫 판 ' + upcoming.filter((u) => u.first).map((u) => `${u.day}(${u.d}일 뒤) ${u.n > 3 ? `${u.n}종` : u.titles}`).join(' · ') + ' — 적힌 시행일 전이지만 게시 때부터 동의 기준']
+            : []),
+        ].join(' / ') },
       { key: 'outsource', label: '위탁 목록', go: 'terms',
         state: oc.lines.length ? 'warn' : oc.pending.length ? 'todo' : 'ok',
         now: oc.lines.length ? oc.lines.join(' · ') : oc.pending.length ? `초안에만 있음 ${oc.pending.length}줄(게시하면 해소)` : '쓰는 외부 서비스가 모두 시행 중인 글에 있음' },

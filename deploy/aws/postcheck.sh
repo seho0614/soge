@@ -177,9 +177,10 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$b" = "0" ] || qn "select kind || ' ' || item from v_open_blockers order by kind, item" | while IFS= read -r l; do info "오픈 차단 · $l"; done
   t=$(q "select count(*) from terms where status='PUBLISHED'"); dr=$(q "select count(*) from terms where status='DRAFT'")
   tn=$(q "select count(*) from terms where status='PUBLISHED' and effective_from <= now()")
-  tf=$(q "select count(*) || coalesce(' · 가장 빠른 ' || to_char(min(effective_from) AT TIME ZONE 'Asia/Seoul', 'MM-DD'), '') from terms where status='PUBLISHED' and effective_from > now() and effective_from <> 'infinity'")
+  # 새 판 시행 예정 = v_terms_upcoming(그날 앞 판이 바뀜) · 첫 판 시행일 전 = v_terms_current 인데 적힌 시행일이 앞(게시 순간부터 동의 기준)
+  tf=$(q "select count(*) filter (where not f) || ' · 첫 판 시행일 전 ' || count(*) filter (where f) || coalesce(' · 가장 빠른 ' || to_char(min(e) AT TIME ZONE 'Asia/Seoul', 'MM-DD'), '') from (select effective_from e, false f from v_terms_upcoming union all select effective_from, true from v_terms_current where effective_from > now()) x")
   dn=$(q "select coalesce(' (' || string_agg(title || ' ' || version, ' · ' order by display_order, code) || ')', '') from terms where status='DRAFT'")
-  t="$t(시행 중 $tn · 시행 예정 $tf)"
+  t="$t(시행 중 $tn · 새 판 시행 예정 $tf)"
   [ "${dr:-0}" = "0" ] && ok "약관 — 게시 $t · 초안 0" || warn "약관 — 게시 $t · 초안 $dr$dn" "법무 확인 뒤 운영 화면 › 관 관리 › 법정 고지 › 「약관」 에서 시행일 · 게시(SUPER) — publish-terms.sh · npm run terms:publish 는 쓰지 않음(1.0 초안을 킷 원문으로 덮음)"
   e=$(q "select coalesce(nullif(btrim(value),''),'') from site_settings where key='infra.egress_ip'")
   [ -n "$e" ] && ok "발신 IP(infra.egress_ip)" "$e" || warn "발신 IP(infra.egress_ip)가 비어 있음" "외부 연동 신청서에 적는 고정 IP"

@@ -127,7 +127,7 @@ if [ -n "${DATABASE_URL:-}" ] && db -c "SELECT 1" >/dev/null 2>&1; then
   info "오픈 차단 $(q "select count(*) from v_open_blockers")건 [$(q "select string_agg(kind||':'||c, ' ') from (select kind, count(*) c from v_open_blockers group by kind) x")]"
   # v10.214 (docs/344) — 오픈 차단 항목 이름 · 약관 게시(시행 중 · 시행 예정) — 지난 적용 때와 숫자가 다르면 무엇이 바뀌었는지
   qn "select kind || ' ' || item from v_open_blockers order by kind, item" | while IFS= read -r l; do info "  · $l"; done
-  info "약관: 게시 $(q "select count(*) from terms where status='PUBLISHED'")(시행 중 $(q "select count(*) from terms where status='PUBLISHED' and effective_from <= now()") · 시행 예정 $(q "select count(*) from terms where status='PUBLISHED' and effective_from > now() and effective_from <> 'infinity'")) · 초안 $(q "select count(*) from terms where status in ('DRAFT','LEGAL_REVIEW')")"
+  info "약관: 게시 $(q "select count(*) from terms where status='PUBLISHED'")(시행 중 $(q "select count(*) from terms where status='PUBLISHED' and effective_from <= now()") · 새 판 시행 예정 $(q "select count(*) from v_terms_upcoming") · 첫 판 시행일 전 $(q "select count(*) from v_terms_current where effective_from > now()")) · 초안 $(q "select count(*) from terms where status in ('DRAFT','LEGAL_REVIEW')")"
 else
   bad "DB 접속 실패" "DATABASE_URL · 보안 그룹(sgb-db ← sgb-web) · sslmode 를 확인하십시오"
 fi
