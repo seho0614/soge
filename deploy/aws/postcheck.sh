@@ -40,7 +40,10 @@ else warn "재부팅 뒤 자동 기동이 꺼져 있거나 확인할 수 없음"
 
 say ""; say "[2] API"
 h=$(curl -s --max-time 10 "$API/api/v1/health")
-echo "$h" | grep -q '"db":true' && ok "상태 주소" "$h" || bad "상태 주소" "${h:-응답 없음}"
+# v10.217 (docs/349) — pm2 restart 바로 뒤에는 API 가 뜨는 중이라 응답이 없음(11/9 운영 적용 때 헛실패) → 3초마다 30초까지 다시 물은 뒤 판정
+hw=0; while ! echo "$h" | grep -q '"db":true' && [ "$hw" -lt "${HEALTH_WAIT:-30}" ]; do sleep 3; hw=$((hw + 3)); h=$(curl -s --max-time 10 "$API/api/v1/health"); done
+[ "$hw" -gt 0 ] && echo "$h" | grep -q '"db":true' && info "상태 주소 — ${hw}초 기다림(API 가 뜨는 중이었음)"
+echo "$h" | grep -q '"db":true' && ok "상태 주소" "$h" || bad "상태 주소" "${h:-응답 없음} (${hw}초 기다림)"
 # v10.206 (docs/330) — 돌고 있는 API 판(/health version) = 올린 판(~/sgb/VERSION) — 다르면 pm2 가 옛 판을 띄우고 있음(재시작 안 됨 · 링크 잘못)
 hv=$(echo "$h" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
 if [ -z "$hv" ] || [ "$hv" = "?" ]; then warn "돌고 있는 API 판을 알 수 없음(상태 주소에 version 없음)" "API 가 VERSION 파일을 못 읽음 — 화면 확인 뒤 알려 주십시오"
@@ -226,7 +229,7 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   p11=$(q "SELECT public.fn_privacy_ai_ready()::int")
   [ "${p11:-0}" != "0" ] && ok "처리방침 게시 판 $pv — 국외 이전 조항 있음(AI 켜기 조건 충족 · 5절 26)" || warn "처리방침 게시 판 ${pv:-없음}" "국외 이전 조항(AI 고지)이 든 처리방침이 지금 판이 되기 전(첫 판은 게시 · 새 판은 시행일부터)에는 AI 전체를 켤 수 없음(D145 · D149 · D151)"
   # 약관(5절 30) — 게시된 판 · 새로 생긴 법무 검토 · 초안
-  info "게시된 약관: $(qn "SELECT code || ' ' || version || '(' || to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') || ')' FROM terms t WHERE status = 'PUBLISHED' AND NOT EXISTS (SELECT 1 FROM terms u WHERE u.code = t.code AND u.status = 'PUBLISHED' AND u.effective_from > t.effective_from) ORDER BY code" | tr '\n' ' ')"
+  info "게시된 약관: $(qn "SELECT code || ' ' || version || '(' || to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') || coalesce(' · 게시 ' || to_char(published_at AT TIME ZONE 'Asia/Seoul', 'MM-DD'), '') || ')' FROM terms t WHERE status = 'PUBLISHED' AND NOT EXISTS (SELECT 1 FROM terms u WHERE u.code = t.code AND u.status = 'PUBLISHED' AND u.effective_from > t.effective_from) ORDER BY code" | tr '\n' ' ')"
   # terms 에는 만든 시각이 없음 → 「게시된 판보다 번호가 높은 초안 · 법무 검토」 = D131 ~ D133 이 새로 만든 것
   nd=$(qn "SELECT d.code || ' ' || d.version || ' ' || d.status FROM terms d WHERE d.status IN ('DRAFT', 'LEGAL_REVIEW') AND EXISTS (SELECT 1 FROM terms p WHERE p.code = d.code AND p.status = 'PUBLISHED' AND string_to_array(p.version, '.')::int[] < string_to_array(d.version, '.')::int[]) ORDER BY 1" | tr '\n' ' ')
   [ -z "$nd" ] && ok "게시된 판보다 새 번호의 약관 초안 없음(5절 30)" || warn "게시된 판보다 새 번호의 약관 초안: $nd" "게시된 글과 개발 원문이 달라 생긴 법무 검토 판 — 게시하지 말고 알려 주십시오(5절 30)"

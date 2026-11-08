@@ -7,6 +7,7 @@
 #   1. 새 판 놓기     ~/sgb-releases/<판>_<시각>/ 에 복사 · 지금 .env(· start.sh) 를 가져옴
 #   2. 설치 · 빌드    API(tsc) · 사용자 웹(next build) · 운영 화면(vite build)        ← 여기까지 서비스 무중단
 #   3. DB             올릴 마이그레이션을 보여 주고, **스냅샷을 만들었는지 물은 뒤** 적용
+#                     v10.217 — 올릴 것이 없어도 스냅샷 이름(또는 skip)을 한 번 묻고 적어 둠(멈추지는 않음 · docs/349)
 #   4. 배포 점검      scripts/deploy-check.sh (오픈 차단 항목은 경고만 — 열기 전 단계)
 #   5. 교체           ~/sgb 를 새 판으로 돌리고 pm2 에 sgb · sgb-site · sgb-jobs 를 다시 등록
 #   6. 기동 확인      API · 사이트가 안 뜨면 **전 판으로 자동 복귀**
@@ -131,6 +132,26 @@ run "운영 화면 빌드"   "$REL/web"  npm run build
 step 3 "DB 마이그레이션"
 if [ "$PEND" = "0" ]; then
   ok "올릴 것이 없습니다 (적용됨 $DONE)"
+  # v10.217 (docs/349) — 마이그레이션이 없어도 스냅샷을 한 번 묻고 기록에 남김(11/9 운영 적용 때 precheck → apply 18초 · 스냅샷 없이 지나감).
+  #   DB 가 바뀌지 않아 대답과 상관없이 진행(되돌리기는 rollback.sh 로 코드만) · 셈에는 안 들어감(info)
+  if [ "${ASSUME_YES:-0}" != "1" ]; then
+    sn=""
+    if [ -t 0 ]; then
+      while read -r -t 0.2 -n 10000 _junk; do :; done
+      for _try in 1 2 3; do
+        read -r -p "        RDS 스냅샷 이름을 입력(이번 판은 DB 를 바꾸지 않아 꼭은 아님 · 안 만들었으면 skip): " sn
+        [ -n "$sn" ] && break
+      done
+    else
+      read -r -p "        RDS 스냅샷 이름을 입력(안 만들었으면 skip): " sn || sn=""
+    fi
+    case "$sn" in
+      ""|skip|SKIP|Skip) info "RDS 스냅샷 — 만들지 않음(${sn:-대답 없음}) · 마이그레이션이 없어 되돌리기는 rollback.sh(코드만)로 충분";;
+      *) info "RDS 스냅샷 — $sn (적어 둠)";;
+    esac
+  else
+    info "ASSUME_YES=1 — 스냅샷 이름 물음을 건너뜁니다 (리허설)"
+  fi
 else
   echo "$ST" | grep '^올릴것' | awk '{print $2}' | paste -sd' ' | fold -s -w 110 | sed 's/^/        올릴 것: /' | tee -a "$OUT"
   say "        ★ 마이그레이션은 되돌릴 수 없습니다(전진 전용). 되돌리는 길은 **RDS 스냅샷 복원**뿐입니다."

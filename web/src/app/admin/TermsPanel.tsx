@@ -32,6 +32,7 @@ interface Term {
   isRequired: boolean; blockedBy: string | null; effectiveFrom: string | null; changeNote?: string | null;
   /** v10.161 — 시행 예정(게시됐지만 시행일 전 · 앞 판이 아직 시행 중) */ scheduled?: boolean;
   /** v10.162 — 대상 · 불리한 변경 */ audience?: string; isAdverse?: boolean;
+  /** v10.217 (docs/349) — 게시한 때(D152 · v10.162 전 게시 판은 비어 있음) */ publishedAt?: string | null;
   /** v10.204 (D181) — 필수 약관 지금 판의 동의 현황(활동 중 계정) */ consent?: { target: number; agreed: number; missing: number } | null;
 }
 
@@ -47,6 +48,8 @@ const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
 const editable = (st: string) => st === 'DRAFT' || st === 'LEGAL_REVIEW';
 const todayKst = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 /** v10.161 — 시행일이 아직 오지 않은 게시 판(시행 예정 · 처음 게시한 판 포함) */
+/** v10.217 (docs/349) — 게시한 때 「YYYY-MM-DD HH:mm」(한국 시간) */
+const pubKst = (iso: string) => `${ymdKst(iso)} ${new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false })}`;
 const future = (t: Term) => t.status === 'PUBLISHED' && !!t.effectiveFrom && Date.parse(t.effectiveFrom) > Date.now();
 const verNum = (v: string) => v.split('.').map((x) => Number(x) || 0);
 const verCmp = (a: string, b: string) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0) - (y[i] ?? 0); if (d) return d; } return 0; };
@@ -275,7 +278,9 @@ export function TermsPanel() {
                   <td>{t.scheduled ? <b data-term-scheduled>시행 예정</b> : (STATUS[t.status] ?? t.status)}{future(t) && !t.scheduled && <span className="ad-ls">시행일 전(첫 판)</span>}
                     {t.consent && <span className="ad-ls" data-term-consent={`${t.consent.agreed}/${t.consent.target}`}
                       title="활동 중 계정 기준 · 남은 회원은 다음 로그인 때 동의 화면">동의 {t.consent.agreed} / {t.consent.target}{t.consent.target ? ` (${Math.floor((100 * t.consent.agreed) / t.consent.target)}%)` : ''} · 남음 {t.consent.missing > 0 ? <b className="warn-text">{t.consent.missing}</b> : 0}</span>}</td>
-                  <td>{t.effectiveFrom && t.status !== 'DRAFT' && t.status !== 'LEGAL_REVIEW' ? ymdKst(t.effectiveFrom) : '-'}</td>
+                  <td>{t.effectiveFrom && t.status !== 'DRAFT' && t.status !== 'LEGAL_REVIEW' ? ymdKst(t.effectiveFrom) : '-'}
+                    {/* v10.217 (docs/349) — 게시한 때(첫 판은 이때부터 지금 판 · D151) */}
+                    {t.publishedAt && t.status !== 'DRAFT' && t.status !== 'LEGAL_REVIEW' && <span className="ad-ls" data-term-published={t.publishedAt}>게시 {pubKst(t.publishedAt)}</span>}</td>
                   <td>
                     {h.length > 0 ? <span className="warn-text" data-term-holes>〔미확정〕 {h.length}곳</span> : <span className="muted">미확정 없음</span>}
                     {t.code === 'PRIVACY' && <><br /><span className={aiClause(t.body) ? 'muted' : 'warn-text'} data-term-ai={aiClause(t.body) ? 'y' : 'n'}>

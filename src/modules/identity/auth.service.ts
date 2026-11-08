@@ -232,12 +232,14 @@ export class AuthService {
    * 동의 화면은 시행 예정 약관(예: 마케팅 수신)도 미리 동의받는데, 전문 링크가
    * 유효본만 보는 목록에서 찾느라 404 였습니다(10/2 전 페이지 링크 점검 실측).
    * v10.216 (docs/347) — firstEarly: 그 약관의 첫 판이라 적힌 시행일 전이어도 게시 순간부터 지금 판(v_terms_current · D151 · 동의 기준).
+   * v10.217 (docs/349) — publishedAt: 게시한 때(terms.published_at · D152 · v10.162 전 게시 판은 비어 있음).
    */
   async term(code: string) {
     const [t] = await this.db.query(
       `SELECT code, version, title, body, is_required AS "isRequired", is_notice AS "isNotice",
               effective_from AS "effectiveFrom", (effective_from > now()) AS scheduled,
-              (effective_from > now() AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = terms.code AND c.version = terms.version)) AS "firstEarly"
+              (effective_from > now() AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = terms.code AND c.version = terms.version)) AS "firstEarly",
+              published_at AS "publishedAt"
          FROM terms
         WHERE upper(code) = upper($1) AND status = 'PUBLISHED' AND effective_from <> 'infinity'
         ORDER BY (effective_from <= now()) DESC,
@@ -254,6 +256,7 @@ export class AuthService {
    * v10.31 — 약관 전체 목록(시안 이용안내 「약관 · 정책」 표 · 약관 전문 탭 10종). 지금 유효한 판 · 시행 예정 발행본 · 폐기된 것까지
    *   상태 글(발행 · 2026-10-01 시행 / 시행 예정 / 폐기)과 함께. 본문은 싣지 않습니다(전문은 /terms/doc/{code}).
    *   v10.216 (docs/347) — firstEarly(첫 판 · 적힌 시행일 전 · 이미 지금 판)는 「시행 예정」 대신 「지금 적용 중」으로 보이게.
+   *   v10.217 (docs/349) — publishedAt(게시한 때)도 내려 첫 판 상태 글에 게시일을 붙임.
    */
   async termsIndex() {
     const rows = await this.db.query<Record<string, any>>(
@@ -261,7 +264,8 @@ export class AuthService {
               CASE WHEN effective_from = 'infinity' THEN NULL ELSE effective_from END AS "effectiveFrom",
               (effective_from > now() AND status = 'PUBLISHED') AS scheduled,
               (effective_from > now() AND status = 'PUBLISHED'
-                 AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = terms.code AND c.version = terms.version)) AS "firstEarly"
+                 AND EXISTS (SELECT 1 FROM v_terms_current c WHERE c.code = terms.code AND c.version = terms.version)) AS "firstEarly",
+              published_at AS "publishedAt"
          FROM terms WHERE status IN ('PUBLISHED','ARCHIVED')
         ORDER BY code, (status = 'PUBLISHED' AND effective_from <= now()) DESC, (status = 'PUBLISHED') DESC, effective_from DESC`);
     /* v10.103 (3-1) — 제목만 참고용 번역 */
