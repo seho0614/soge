@@ -5,6 +5,7 @@ import { useApi } from '../../lib/useApi';
  *
  *   운영 적용 뒤 화면 확인(절차서 4-1)을 이 표 하나로 — 줄을 누르면 그 화면.
  *   ✓ 할 일 없음 · ○ 할 일 남음(오픈 전에는 정상) · ⚠ 바로 볼 것 · – 값만.
+ *   v10.214 (docs/344) — 「약관 시행 예정」 줄이 더해짐(11줄 · 줄은 서버가 정함 · 이 화면은 그대로 그림).
  */
 interface Row { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string }
 const MARK: Record<Row['state'], string> = { ok: '✓', todo: '○', warn: '⚠', info: '–' };
