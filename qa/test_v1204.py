@@ -45,7 +45,7 @@ ok('① 정기 작업 launch_watch — AI 사용 가능해짐(한 번 · 빠진 
    and 'private readonly agent: AgentService' in LW, '')
 ok('① 하루 요약 · 지켜보기 — AI 줄(어제 · 오늘 · 잠김 · 꺼짐 · 이번 달 / 상한 %) · 재동의 줄(남은 것만) · v_term_not_agreed 와 같은 셈',
    "...agentLines(await this.agentDay('yesterday'), '어제')," in LW and '...reconsentLines(await this.reconsent()),' in LW
-   and "ai: agentLines(await this.agentDay('today'), '오늘')" in LW and "'AI — 잠김(국외 이전 조항이 든 처리방침이 시행되기 전)'" in LW and "['AI — 꺼짐']" in LW
+   and "ai: agentLines(await this.agentDay('today'), '오늘')" in LW and "'AI — 잠김(국외 이전 조항이 든 처리방침이 " in LW and "['AI — 꺼짐']" in LW
    and '`재동의 — ${r.title} ${r.version}: ${r.agreed} / ${r.target}' in LW and 'FROM v_term_not_agreed n WHERE n.code = t.code' in LW
    and LW.index("...agentLines(await this.agentDay('yesterday')") < LW.index('diskLine(serverHealth()),\n      \'\','), '')
 TS_ = rd('src/modules/catalog/terms.service.ts'); TD = rd('src/modules/catalog/terms.dto.ts')

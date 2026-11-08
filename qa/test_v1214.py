@@ -30,7 +30,8 @@ ok('① 서비스 — 「약관 시행 예정」 줄(terms-upcoming · 약관 �
    "key: 'terms-upcoming', label: '약관 시행 예정', go: 'terms', state: 'info'" in SV
    and 'FROM v_terms_upcoming' in SV and 'FROM v_terms_current WHERE effective_from > now()' in SV and '게시 때부터 동의 기준' in SV
    and SV.index("key: 'terms',") < SV.index("key: 'terms-upcoming'") < SV.index("key: 'outsource'")
-   and '처리방침 게시됨 · AI' in SV and '처리방침이 게시되기 전(AI' in SV and '처리방침 시행 중' not in SV, '')
+   and (('처리방침 게시됨 · AI' in SV and '처리방침이 게시되기 전(AI' in SV) or ('처리방침이 지금 판(' in SV and '처리방침이 지금 판이 되기 전(' in SV))   # v10.215 지금 판 기준
+   and '처리방침 시행 중' not in SV, '')
 ok('① postcheck — 오픈 차단 항목 줄 · 약관 「게시 n(시행 중 · 시행 예정 · 가장 빠른)」 · 초안 이름',
    '''qn "select kind || ' ' || item from v_open_blockers order by kind, item" | while IFS= read -r l; do info "오픈 차단 · $l"; done''' in POST
    and 't="$t(시행 중 $tn · 새 판 시행 예정 $tf)"' in POST and "' · 첫 판 시행일 전 '" in POST and 'warn "약관 — 게시 $t · 초안 $dr$dn"' in POST and '약관 — 발행' not in POST, '')
@@ -105,8 +106,8 @@ if API and DB:
            nw.startswith('새 판 ') and (f'(5일 뒤) {TITLE} {VER}' in nw or ('(5일 뒤) ' in nw and '종' in nw)) and nw.endswith('그날 앞 판이 바뀜')
            and fs.startswith('첫 판 ') and (f'(6일 뒤) {TITLE2} {VER2}' in fs or ('(6일 뒤) ' in fs and '종' in fs)) and '게시 때부터 동의 기준' in fs
            and VER2 not in nw and VER not in fs, f'{un} · {r0[:80]}')
-        ok('② AI 줄 — 「처리방침 게시됨」 · 「게시되기 전」 중 하나(「시행 중」 아님)',
-           ('처리방침 게시됨' in (ai.get('now') or '') or '게시되기 전' in (ai.get('now') or '')) and '시행 중' not in (ai.get('now') or ''), f"{ai.get('now')}")
+        ok('② AI 줄 — 「처리방침 게시됨」 · 「게시되기 전」 · (v10.215) 「지금 판」 중 하나(「시행 중」 아님)',
+           any(w in (ai.get('now') or '') for w in ('처리방침 게시됨', '게시되기 전', '지금 판')) and '시행 중' not in (ai.get('now') or ''), f"{ai.get('now')}")
 
         if ADMIN_WEB:
             try:
