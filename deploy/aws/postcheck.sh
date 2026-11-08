@@ -255,6 +255,29 @@ fi
 # v10.198 (docs/312) — 7일마다 묶음 압축 검사 결과 · 보여 주기만(통과 · 확인 수에 넣지 않음)
 info "올린 파일 백업 묶음 검사(7일마다 gzip -t) — $([ -f "$BKD/.verified" ] && cat "$BKD/.verified" || echo '아직 없음(다음 백업 때 처음 검사)')"
 
+# v10.216 (docs/347) — 적용 전과 비교 · 보여 주기만(통과 · 확인 수에 넣지 않음)
+#   precheck 가 24시간 안에 적어 둔 숫자와 지금 숫자를 견줌 — 절차서 기대 숫자와 다를 때 「그 사이 무엇이 바뀌었나」를 바로 봄
+say ""; say "[11] 적용 전과 비교 (precheck 숫자 ↔ 지금 · 보여 주기만)"
+SF="$DATA_DIR/logs/precheck_state.txt"
+if [ ! -f "$SF" ]; then info "적용 전 기록 없음 — precheck.sh 를 먼저 돌리면 다음부터 견줍니다"
+else
+  read -r _ sts sday stime sver < "$SF"
+  sage=$(( ($(date +%s) - ${sts:-0}) / 3600 ))
+  if [ "$sage" -gt 24 ]; then info "적용 전 기록이 ${sage}시간 전 것(${sday:-?} ${stime:-?} · ${sver:-?}) — 비교하지 않음(이번 적용 전 precheck 를 다시 돌리십시오)"
+  else
+    now_l=$(state_lines); same=0; diffs=""
+    while IFS= read -r l; do
+      [ -z "$l" ] && continue; k="${l%%=*}"; v="${l#*=}"
+      was=$(grep -m1 "^$k=" "$SF" | cut -d= -f2-)
+      if [ "$was" = "$v" ]; then same=$((same+1)); else diffs="$diffs$k|${was:-없음}|$v"$'\n'; fi
+    done <<< "$now_l"
+    nd=$(printf '%s' "$diffs" | grep -c '|')
+    info "precheck ${sday} ${stime}(${sver}) 와 비교 — 같음 ${same}개 · 바뀜 ${nd}개"
+    printf '%s' "$diffs" | while IFS='|' read -r k a b; do [ -n "$k" ] && info "  바뀜 · $k $a → $b"; done
+    [ "$nd" = "0" ] || info "  → 「마이그레이션 적용」은 이번에 올린 것이면 정상 · 나머지는 그 사이 운영 화면에서 바꾼 것(절차서 기대 숫자와 다르면 이 줄로 까닭 확인)"
+  fi
+fi
+
 say ""
 say "적용 후 확인 — 통과 $PASS · 실패 $FAIL · 확인 $WARN"
 [ "$FAIL" = "0" ] && say "→ 「실패」 0. 「확인」 줄은 절차서 7부의 표대로 판단하십시오." || say "→ 「실패」 줄을 먼저 고치십시오 (절차서 8부 「막혔을 때」)."

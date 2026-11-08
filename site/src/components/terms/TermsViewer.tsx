@@ -10,8 +10,8 @@ import { ymdKst } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { Markdown, toc } from './Markdown';
 
-export interface TermIndex { code: string; version: string; title: string; status: string; isRequired: boolean; isNotice: boolean; effectiveFrom: string | null; scheduled: boolean }
-export interface TermDoc { code: string; version: string; title: string; body: string; isRequired: boolean; effectiveFrom?: string; scheduled?: boolean; isNotice?: boolean; translated?: boolean }
+export interface TermIndex { code: string; version: string; title: string; status: string; isRequired: boolean; isNotice: boolean; effectiveFrom: string | null; scheduled: boolean; /** v10.216 — 첫 판 · 적힌 시행일 전 · 이미 지금 판 */ firstEarly?: boolean }
+export interface TermDoc { code: string; version: string; title: string; body: string; isRequired: boolean; effectiveFrom?: string; scheduled?: boolean; firstEarly?: boolean; isNotice?: boolean; translated?: boolean }
 
 /* 시안 이용안내 표의 순서 */
 const ORDER = ['SERVICE', 'PRIVACY', 'REFUND', 'THIRDPARTY', 'OUTSOURCE', 'HLT_SALE', 'ADPERSONAL', 'MARKETING', 'MARKETING_NIGHT', 'LOCATION'];
@@ -23,6 +23,7 @@ export type PolicyT = ReturnType<typeof useTranslations<'policy'>>;
 export function termState(t: TermIndex, tr: PolicyT, f: Fmt): string {
   if (t.status === 'ARCHIVED') return t.code === 'LOCATION' ? tr('state.archivedLocation') : tr('state.archived');
   const when = t.effectiveFrom ? f.ymd(t.effectiveFrom, ymdKst(t.effectiveFrom)) : '';
+  if (t.firstEarly) return tr('state.firstEarly', { when });   // v10.216 (docs/347) — 첫 판은 게시 순간부터 적용(D151)
   if (t.scheduled) return tr('state.scheduled', { when });
   if (t.isNotice) return tr('state.notice');
   if (t.code === 'HLT_SALE') return tr('state.direct');
@@ -64,7 +65,7 @@ export function TermsViewer({ list, doc, code, index = false, top }: { list: Ter
         <section className="w1-tcard">
           <b>{doc.title}</b>
           <span className="doc-meta">{tr('viewer.version', { v: doc.version })}{doc.isRequired ? tr('viewer.required') : ''}{doc.isNotice ? <> · <span data-term-notice="">{tr('viewer.noticeMeta')}</span></> : ''}
-            {doc.effectiveFrom ? tr(doc.scheduled ? 'viewer.scheduled' : 'viewer.effective', { date: f.ymd(doc.effectiveFrom, ymdKst(doc.effectiveFrom)) }) : ''}</span>
+            {doc.effectiveFrom ? tr(doc.firstEarly ? 'viewer.firstEarly' : doc.scheduled ? 'viewer.scheduled' : 'viewer.effective', { date: f.ymd(doc.effectiveFrom, ymdKst(doc.effectiveFrom)) }) : ''}</span>
           {items.length > 0 && <ol className="w1-tjo">{items.map((x) => <li key={x.id}><a href={`#${x.id}`}>{x.text}</a></li>)}</ol>}
           {/* v10.102 — 다른 언어 화면에는 「한국어판이 우선」 한 줄 · v10.103(3-1) 승인된 번역이 얹히면 「참고용 번역」(결정 #11) */}
           {!f.ko && <p className="w1-ls" data-terms-lang={doc.translated ? 'ref' : ''}>{tr(doc.translated ? 'viewer.refTranslation' : 'viewer.koOnly')}</p>}

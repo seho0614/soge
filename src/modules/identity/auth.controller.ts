@@ -98,7 +98,7 @@ export class AuthController {
 
   /* v10.31 — 약관 전체 목록(이용안내 표 · 약관 전문 탭) */
   @Get('terms/index')
-  @ApiOperation({ summary: '약관 전체 목록', description: '유효 · 시행 예정 · 폐기 모두(상태 · 시행일). 본문 없음 — 전문은 GET /terms/doc/{code}.' })
+  @ApiOperation({ summary: '약관 전체 목록', description: '유효 · 시행 예정 · 폐기 모두(상태 · 시행일). 본문 없음 — 전문은 GET /terms/doc/{code}. firstEarly=true 면 첫 판이라 적힌 시행일 전이어도 지금 적용 중(v10.216).' })
   termsIndex() { return this.auth.termsIndex(); }
 
   /* v10.161 (D151 · docs/246) — 시행 예정 약관(이용약관 제14조 고지) */
@@ -114,7 +114,7 @@ export class AuthController {
   @Get('terms/doc/:code')
   @ApiOperation({
     summary: '약관 한 건 (전문)',
-    description: '유효본이 없으면 시행 예정 발행본을 돌려줍니다(scheduled=true) — 동의 화면이 미리 동의받는 약관의 전문 링크용.',
+    description: '유효본이 없으면 시행 예정 발행본을 돌려줍니다(scheduled=true) — 동의 화면이 미리 동의받는 약관의 전문 링크용. 그 판이 첫 판이면 firstEarly=true(게시 순간부터 지금 판 · v10.216).',
   })
   @ApiParam({ name: 'code', example: 'MARKETING' })
   @ApiResponse({ status: 404, description: '발행된 약관이 아님', type: ErrorDto })

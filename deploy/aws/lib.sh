@@ -47,6 +47,27 @@ db() { psql "$(psql_url "$DATABASE_URL")" -X "$@"; }
 q() { db -t -A -c "$1" 2>/dev/null | head -1 | tr -d '\r'; }
 qn() { db -t -A -c "$1" 2>/dev/null | tr -d '\r'; }
 
+# v10.216 (docs/347) — 적용 전후 비교: 사람이 운영 화면에서 바꿀 수 있는 숫자를 「이름=값」 줄로.
+#   precheck 가 $DATA_DIR/logs/precheck_state.txt 에 적어 두고, postcheck 가 지금 값과 견줘 바뀐 줄만 보여 줌(절차서 기대 숫자와 달라도 까닭이 바로 보이게).
+#   DB 에 못 붙거나 뷰가 없으면 빈 출력(비교 안 함).
+state_lines() {
+  qn "select k || '=' || coalesce(v, '없음') from (values
+    (1,  '약관 게시',            (select count(*)::text from terms where status = 'PUBLISHED')),
+    (2,  '약관 초안 · 법무 검토', (select count(*)::text from terms where status in ('DRAFT', 'LEGAL_REVIEW'))),
+    (3,  '약관 시행 중',          (select count(*)::text from terms where status = 'PUBLISHED' and effective_from <= now())),
+    (4,  '약관 새 판 시행 예정',  (select count(*)::text from v_terms_upcoming)),
+    (5,  '약관 첫 판 시행일 전',  (select count(*)::text from v_terms_current where effective_from > now())),
+    (6,  '처리방침 AI 조건',      (select case when public.fn_privacy_ai_ready() then '충족' else '미달' end)),
+    (7,  '오픈 차단',             (select coalesce(sum(c), 0) || coalesce(' [' || string_agg(kind || ':' || c, ' ' order by kind) || ']', '') from (select kind, count(*) c from v_open_blockers group by kind) x)),
+    (8,  'AI 전체',               (select value from site_settings where key = 'agent.enabled')),
+    (9,  'AI 상담',               (select value from site_settings where key = 'agent.chat.enabled')),
+    (10, '주문 받기',             (select value from site_settings where key = 'mall.order_open')),
+    (11, '간주 모드',             (select string_agg(replace(key, 'assume.', '') || ':' || value, ' ' order by key) from site_settings where key like 'assume.%')),
+    (12, '확인 안 한 운영 알림',  (select count(*)::text from ops_alerts where acknowledged_at is null and resolved_at is null)),
+    (13, '마이그레이션 적용',     (select count(*)::text from schema_migrations))
+  ) t(n, k, v) order by n"
+}
+
 # 마이그레이션 현황 — psql 만으로 봅니다(새 킷에는 설치 전이라 node_modules 가 없습니다).
 #   scripts/migrate.js 와 같은 규칙: 파일 sha256 의 앞 16자를 schema_migrations.checksum 과 비교.
 #   줄마다 「적용됨 이름」 · 「올릴것 이름」 · 「바뀜 이름」

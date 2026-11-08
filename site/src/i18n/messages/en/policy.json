@@ -12,6 +12,7 @@
     "archivedLocation": "Retired · device location not collected",
     "archived": "Retired",
     "scheduled": "Published · takes effect {when}",
+    "firstEarly": "Published · in force now (first version) · stated effective date {when}",
     "notice": "Published · notice (no consent required)",
     "direct": "Published · direct sales (mail-order seller)",
     "effective": "Published · effective {when}",
@@ -34,6 +35,7 @@
     "noticeMeta": "Notice (no consent required)",
     "effective": " · effective {date}",
     "scheduled": " · takes effect {date}",
+    "firstEarly": " · in force now (first version · stated effective date {date})",
     "empty": "Not written yet.",
     "koOnly": "This document is provided in Korean. The Korean version prevails.",
     "refTranslation": "This is a reference translation. The Korean version prevails."

@@ -12,6 +12,7 @@
     "archivedLocation": "폐기 · 단말기 위치 미수집",
     "archived": "폐기",
     "scheduled": "발행 · {when} 시행 예정",
+    "firstEarly": "발행 · 지금 적용 중(첫 판) · 본문 시행일 {when}",
     "notice": "발행 · 알림(동의 받지 않음)",
     "direct": "발행 · 직판(통신판매업자)",
     "effective": "발행 · {when} 시행",
@@ -34,6 +35,7 @@
     "noticeMeta": "알림(동의를 받지 않는 안내)",
     "effective": " · {date} 시행",
     "scheduled": " · {date} 시행 예정",
+    "firstEarly": " · 지금 적용 중(첫 판 · 본문 시행일 {date})",
     "empty": "아직 작성되지 않았습니다.",
     "koOnly": "이 문서는 한국어로 제공됩니다. 한국어판이 우선합니다.",
     "refTranslation": "참고용 번역입니다. 한국어판이 우선합니다."

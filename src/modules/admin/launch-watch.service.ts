@@ -184,6 +184,7 @@ export class LaunchWatchService {
   /**
    * AI 잠금이 풀린 때(처리방침 국외 이전 조항 시행) 한 번 · 3일 안 시행 예정 처리방침이 있는데 준비가 덜 됐을 때 판마다 한 번.
    *   빠진 것: AI 키 · 월 상한 0 · AI 전체 꺼짐. 회원에게 답하는 것은 상담 스위치(agent.chat.enabled)까지 켜져야 함 — 상태만 적음.
+   *   v10.216 (docs/347) — 제목: 지금 판이 첫 판이고 적힌 시행일 전이면 「게시(첫 판 · 적힌 시행일 MM-DD)」 · 아니면 「시행」(D151 · v10.215 「지금 판」 글과 같음).
    */
   async agentWatch(): Promise<{ live: { severity: 'INFO' | 'WARN'; title: string; detail: Record<string, unknown> } | null;
                                gap: { title: string; detail: Record<string, unknown> } | null }> {
@@ -197,10 +198,13 @@ export class LaunchWatchService {
       .filter((x): x is string => !!x);
     const sw = `검수 보조 ${r.review ? '켜짐' : '꺼짐'} · AI 상담 ${r.chat ? '켜짐' : '꺼짐'}`;
     const detail = { keySource, cap: r.cap, enabled: r.enabled, review: r.review, chat: r.chat, gaps };
+    const [pv] = needLive ? await this.db.query<{ early: boolean; day: string }>(
+      `SELECT effective_from > now() AS early, to_char(effective_from AT TIME ZONE 'Asia/Seoul', 'MM-DD') AS day FROM v_terms_current WHERE code = 'PRIVACY'`) : [];
+    const how = pv?.early ? `게시(첫 판 · 적힌 시행일 ${pv.day})` : '시행';
     const live = needLive ? {
       severity: (gaps.length ? 'WARN' : 'INFO') as 'INFO' | 'WARN',
-      title: `AI 사용 가능해짐 — 처리방침 ${r.privacy_ver} 시행(국외 이전 조항) · ${gaps.length ? `빠진 것: ${gaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${sw}`,
-      detail: { ...detail, privacyVer: r.privacy_ver },
+      title: `AI 사용 가능해짐 — 처리방침 ${r.privacy_ver} ${how}(국외 이전 조항) · ${gaps.length ? `빠진 것: ${gaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${sw}`,
+      detail: { ...detail, privacyVer: r.privacy_ver, firstEarly: !!pv?.early },
     } : null;
     const gap = needGap && gaps.length ? {
       title: `AI 준비 덜 됨 — 처리방침 ${r.upcoming_ver} 이 ${r.upcoming_day} 시행 예정인데 ${gaps.join(' · ')} · ${sw} — 운영 화면 › AI 에이전트에서 준비하십시오`,

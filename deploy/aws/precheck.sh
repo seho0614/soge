@@ -128,6 +128,10 @@ if [ -n "${DATABASE_URL:-}" ] && db -c "SELECT 1" >/dev/null 2>&1; then
   # v10.214 (docs/344) — 오픈 차단 항목 이름 · 약관 게시(시행 중 · 시행 예정) — 지난 적용 때와 숫자가 다르면 무엇이 바뀌었는지
   qn "select kind || ' ' || item from v_open_blockers order by kind, item" | while IFS= read -r l; do info "  · $l"; done
   info "약관: 게시 $(q "select count(*) from terms where status='PUBLISHED'")(시행 중 $(q "select count(*) from terms where status='PUBLISHED' and effective_from <= now()") · 새 판 시행 예정 $(q "select count(*) from v_terms_upcoming") · 첫 판 시행일 전 $(q "select count(*) from v_terms_current where effective_from > now()")) · 초안 $(q "select count(*) from terms where status in ('DRAFT','LEGAL_REVIEW')")"
+  # v10.216 (docs/347) — 적용 전 숫자를 적어 둠 → postcheck 끝 「적용 전과 비교」가 견줌(읽기만 · 이 파일 하나만 씀)
+  sl=$(state_lines)
+  if [ -n "$sl" ]; then { echo "# $(date +%s) $(date '+%Y-%m-%d %H:%M') $NEWVER"; echo "$sl"; } > "$DATA_DIR/logs/precheck_state.txt"
+    info "적용 전 숫자 $(echo "$sl" | wc -l | tr -d ' ')개를 적어 둠 — postcheck 가 적용 뒤 숫자와 견줍니다($DATA_DIR/logs/precheck_state.txt)"; fi
 else
   bad "DB 접속 실패" "DATABASE_URL · 보안 그룹(sgb-db ← sgb-web) · sslmode 를 확인하십시오"
 fi
