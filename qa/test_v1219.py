@@ -5,7 +5,9 @@
      최소 미만 · 잔액 초과 · 확인 안 된 계좌 · 남의 계좌 막힘 · 신청(12,345 → 세금 1,080 · 받는 금액 11,265) · 또 신청 막힘 · 취소 ·
      다시 신청 → SUPER 확정 → SUPER 지급 422 PAYOUT_RULE(2인) → 지급 담당 지급 · ADMIN 지급 403 · 반려(사유) · 잔액 돌아옴 ·
      끝난 줄 고치기 · 지우기 막힘 · INV-9 · INV-11 0 · 회원이 반려 403
-  ③ (화면) 나의공간 소개 활동 「포인트 출금」 · 운영 화면 지급 데스크 「포인트 출금 기준」
+     · 주민등록번호 받기 켜기는 처리방침 먼저(422) · 켜지면 등록 없이 신청 막힘 · 등록(가린 값만) · 신고 자료(지급 담당 · 소득세 · 지방소득세 ·
+     주민등록번호 · ADMIN 403 · 감사 기록에 원문 없음 · 개인정보 접속기록 EXPORT)
+  ③ (화면) 나의공간 소개 활동 「포인트 출금」(주민등록번호 칸) · 운영 화면 지급 데스크 「포인트 출금 기준」 · 신고 자료
   시험 회원은 매번 새 이메일(두 번 돌아도 통과) · 원천징수율은 원래대로.
 """
 import json, os, re, subprocess, time, urllib.error, urllib.request
@@ -42,7 +44,8 @@ ok('① D190 — 출금 표(계좌번호 없음) · 잔액 함수 · 신청 트�
    'CREATE TABLE IF NOT EXISTS public.point_cashouts' in M and 'fn_point_cashable(p_account uuid)' in M
    and 'trg_point_cashout_new BEFORE INSERT ON public.point_cashouts' in M and 'trg_point_cashout_flow BEFORE UPDATE OR DELETE ON public.point_cashouts' in M
    and 'EXECUTE FUNCTION public.fn_payout_two_person()' in M and "SELECT 'POINT', c.id, 'MEMBER', ac.name," in M
-   and "OR p_table ~ '^(point_cashouts)$'" in M and 'floor(NEW.points * NEW.tax_rate / 1000) * 10' in M
+   and "OR p_table ~ '^(point_cashouts)$'" in M and 'floor(NEW.points * NEW.tax_rate / 1.1 / 1000) * 10' in M and 'CREATE TABLE IF NOT EXISTS public.account_tax_ids' in M
+   and "('point.cashout_tax_id', 'off'" in M and 'CHECK (income_tax + local_tax = withholding)' in M
    and "UPDATE public.point_rules SET needs_valid = false WHERE code = 'REFERRAL_DIRECT'" in M and "v_rule.points, true, 'invitee '" in M
    and "('point.cashout_min', '10000'" in M and "('point.cashout_tax_rate', '3.3'" in M and 'ux_point_cashouts_open' in M
    and not re.search(r'point_cashouts[^;]*\b(account_no|bank_code)\b', M) and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M)
@@ -56,13 +59,15 @@ ok('① API — 회원 3개(내 정보 · 신청 · 취소) · 지급 데스크 
    and "POINT:   { table: 'point_cashouts',      col: 'status' }" in PS and "POINT: 'REQUESTED'" in PS and 'async reject(' in PS and 'pointSetting' in PS
    and "@Post(':kind/:id/reject')" in PC and "@Roles('ADMIN', 'PAYOUT')" in PC and "@Audit('PAYOUT_REJECT', 'SETTLEMENT')" in PC
    and "key.startsWith('point.cashout_')" in AS and "'POINT_SETTING_SUPER'" in AS
-   and "code: 'POINT_RULE'" in FL and "code: 'PAYOUT_RULE'" in FL and 'PointCashoutController,' in AM and 'PointCashoutService,' in AM, '')
+   and "'TAX_ID_PRIVACY_FIRST'" in AS and "@Get('point-report')" in PC and 'audit.pii_access_logs' in PS and "@Put('tax-id')" in CT
+   and 'pgp_sym_encrypt($2, fn_enc_key())' in SV and "code: 'POINT_RULE'" in FL and "code: 'PAYOUT_RULE'" in FL and 'PointCashoutController,' in AM and 'PointCashoutService,' in AM, '')
 
 CB, AP, PY = rd('site/src/app/my/intro/activity/CashoutBox.tsx'), rd('site/src/app/my/intro/activity/page.tsx'), rd('web/src/app/admin/Payouts.tsx')
 ok('① 화면 — 나의공간 출금 상자(미리 보기 10원 버림 · 취소) · 지급 데스크 POINT · 반려 · 출금 기준(SUPER)',
-   'data-cashout-box=""' in CB and "'/api/v1/me/points/cashout'" in CB and 'Math.floor((points * rate) / 1000) * 10' in CB
+   'data-cashout-box=""' in CB and "'/api/v1/me/points/cashout'" in CB and 'Math.floor(Math.round((points * rate * 10) / 1.1) / 10000) * 10' in CB and 'data-cashout-taxid=' in CB
    and "apiGetPersonal<Cashout>('/me/points/cashout')" in AP and '<CashoutBox c={cashout} />' in AP
-   and "POINT: '포인트 출금'" in PY and '/admin/payouts/point/${r.id}/reject' in PY and 'data-point-setting=' in PY and "key: 'point.cashout_tax_rate'" in PY, '')
+   and "POINT: '포인트 출금'" in PY and '/admin/payouts/point/${r.id}/reject' in PY and 'data-point-setting=' in PY and "key: 'point.cashout_tax_rate'" in PY
+   and '/admin/payouts/point-report?month=' in PY and 'data-point-taxid=' in PY, '')
 
 SCR = js('spec/screens.json').get('screens', [])
 sid = {s['id']: s for s in SCR}
@@ -72,6 +77,7 @@ EN = rd('src/common/i18n/server-text.en.ts')
 ok('① screens.json · 사전 — API 연결 · ko · en 칸 같음 · 서버 글 영어',
    all(a in sid.get('SB-MYP-INT-030', {}).get('apis', []) for a in ('GET /me/points/cashout', 'POST /me/points/cashout', 'POST /me/points/cashout/{id}/cancel'))
    and 'POST /admin/payouts/{kind}/{id}/reject' in sid.get('SB-ADM-PAY-010', {}).get('apis', [])
+   and 'GET /admin/payouts/point-report' in sid.get('SB-ADM-PAY-010', {}).get('apis', []) and 'PUT /me/points/cashout/tax-id' in sid.get('SB-MYP-INT-030', {}).get('apis', [])
    and ko and flat(ko) == flat(en) and all(f'"{s}"' in EN for s in ('최소 출금 금액은 {0}원입니다.', '출금할 수 있는 포인트({0})보다 많습니다.', '포인트 출금 기준은 최고 관리자(SUPER)만 바꿀 수 있습니다.')),
    f'{sorted(flat(ko) ^ flat(en))[:4]}')
 
@@ -109,6 +115,7 @@ if API and DB:
     import consent_ok
     stamp = str(int(time.time()))[-7:]
     tax0 = psql("SELECT coalesce(value, '<NULL>') FROM site_settings WHERE key = 'point.cashout_tax_rate'")
+    tid0 = psql("SELECT coalesce(value, 'off') FROM site_settings WHERE key = 'point.cashout_tax_id'")
     me_email, other_email = f'cash-m-{stamp}@t.local', f'cash-o-{stamp}@t.local'
     try:
         ST, OT, YT = login('admin@x.com', PW), login('ops@t.local', RPW), login('payout@t.local', RPW)
@@ -151,8 +158,8 @@ if API and DB:
         dup = call('POST', '/me/points/cashout', {'points': 10000, 'payoutAccountId': acc_ok}, t=MT)
         x1 = call('POST', f"/me/points/cashout/{c1.get('id')}/cancel", t=MT)
         x2 = call('POST', f"/me/points/cashout/{c1.get('id')}/cancel", t=MT)
-        ok('② 신청 12,345 → 원천징수 1,080(10원 미만 버림) · 받는 금액 11,265 · 처리 중 또 신청 422 · 취소 · 다시 취소 422',
-           c1.get('withholding') == 1080 and c1.get('netAmount') == 11265 and c1.get('taxRate') == '8.8' and c1.get('status') == 'REQUESTED'
+        ok('② 신청 12,345(8.8%) → 소득세 980 + 지방소득세 90 = 원천징수 1,070(10원 미만 버림) · 받는 금액 11,275 · 처리 중 또 신청 422 · 취소 · 다시 취소 422',
+           c1.get('withholding') == 1070 and c1.get('incomeTax') == 980 and c1.get('localTax') == 90 and c1.get('netAmount') == 11275 and c1.get('taxRate') == '8.8' and c1.get('status') == 'REQUESTED'
            and dup.get('_err') == 422 and x1.get('status') == 'CANCELED' and x2.get('_err') == 422 and x2.get('code') == 'NOT_CANCELABLE',
            f"{c1.get('withholding')} · {c1.get('netAmount')} · {dup.get('code')} · {x1.get('status')} · {x2.get('code')}")
 
@@ -162,13 +169,13 @@ if API and DB:
         in_drafts = any(r.get('kind') == 'POINT' and r.get('id') == cid for r in desk0.get('drafts', []))
         cf = call('POST', f'/admin/payouts/point/{cid}/confirm', t=ST)
         desk1 = call('GET', '/admin/payouts', t=YT)
-        in_queue = any(r.get('kind') == 'POINT' and r.get('id') == cid and r.get('ready') and r.get('last4') == '1219' and int(r.get('amount') or 0) == 11265 for r in desk1.get('queue', []))
+        in_queue = any(r.get('kind') == 'POINT' and r.get('id') == cid and r.get('ready') and r.get('last4') == '1219' and int(r.get('amount') or 0) == 11275 for r in desk1.get('queue', []))
         p_same = call('POST', f'/admin/payouts/point/{cid}/pay', {'ref': 'KB-1219-same'}, t=ST)
         p_admin = call('POST', f'/admin/payouts/point/{cid}/pay', {'ref': 'KB-1219-ops'}, t=OT)
         p_ok = call('POST', f'/admin/payouts/point/{cid}/pay', {'ref': f'KB-1219-{stamp}'}, t=YT)
         g2 = call('GET', '/me/points/cashout', t=MT)
         paid_row = next((r for r in g2.get('requests', []) if r.get('id') == cid), {})
-        ok('② 운영 — 확정 전에 신청 · SUPER 확정 → 지급 대기(계좌 뒤 4자리 · 11,265) · 확정한 사람 지급 422 PAYOUT_RULE(2인) · ADMIN 지급 403 · 지급 담당 지급 → 회원 화면 「지급됨」 · 잔액 17,655',
+        ok('② 운영 — 확정 전에 신청 · SUPER 확정 → 지급 대기(계좌 뒤 4자리 · 11,275) · 확정한 사람 지급 422 PAYOUT_RULE(2인) · ADMIN 지급 403 · 지급 담당 지급 → 회원 화면 「지급됨」 · 잔액 17,655',
            in_drafts and cf.get('status') == 'CONFIRMED' and in_queue and p_same.get('_err') == 422 and p_same.get('code') == 'PAYOUT_RULE'
            and p_admin.get('_err') == 403 and p_ok.get('status') == 'PAID' and paid_row.get('status') == 'PAID' and g2.get('cashable') == 17655
            and desk1.get('pointSetting', {}).get('taxRate') == '8.8',
@@ -185,6 +192,34 @@ if API and DB:
            rj_mem.get('_err') == 403 and rj_short.get('_err') == 400 and rj.get('status') == 'REJECTED' and rj_pt.get('_err') == 422
            and rrow.get('status') == 'REJECTED' and '예금주' in (rrow.get('closedReason') or '') and g3.get('cashable') == 17655 and g3.get('blocker') is None,
            f"{rj_mem.get('_err')} · {rj_short.get('_err')} · {rj.get('status')} · {rj_pt.get('code')} · {g3.get('cashable')}")
+
+        tx0 = call('PUT', '/me/points/cashout/tax-id', {'taxId': '900101-1234567'}, t=MT)
+        sw = call('PATCH', '/admin/site-settings', {'key': 'point.cashout_tax_id', 'value': 'on', 'reason': 'test_v1219'}, t=ST)
+        psql("UPDATE site_settings SET value = 'on' WHERE key = 'point.cashout_tax_id'")   # 처리방침 게시를 건너뛰고 시험용으로 켬(끝에서 되돌림)
+        g4 = call('GET', '/me/points/cashout', t=MT)
+        r4 = call('POST', '/me/points/cashout', {'points': 10000, 'payoutAccountId': acc_ok}, t=MT)
+        tx1 = call('PUT', '/me/points/cashout/tax-id', {'taxId': '901301-1234567'}, t=MT)
+        tx2 = call('PUT', '/me/points/cashout/tax-id', {'taxId': '900101-1234567'}, t=MT)
+        g5 = call('GET', '/me/points/cashout', t=MT)
+        enc = psql(f"SELECT (position('9001011234567' in encode(tax_id_enc, 'escape')) = 0)::text || '|' || tax_id_mask FROM account_tax_ids WHERE account_id = '{mid}'")
+        ok('② 주민등록번호 — 꺼져 있으면 등록 422 · 처리방침 없이 켜기 422 TAX_ID_PRIVACY_FIRST · 켜지면 TAX_ID 막힘 · 신청 422 · 날짜 틀림 422 · 등록 → 가린 값만 · 원문은 암호화',
+           tx0.get('code') == 'TAX_ID_OFF' and sw.get('_err') == 422 and sw.get('code') == 'TAX_ID_PRIVACY_FIRST' and g4.get('blocker') == 'TAX_ID'
+           and r4.get('_err') == 422 and tx1.get('code') == 'TAX_ID_FORMAT' and tx2.get('taxIdMask') == '900101-1******' and '1234567' not in json.dumps(tx2)
+           and g5.get('taxIdMask') == '900101-1******' and g5.get('blocker') is None and enc == 'true|900101-1******',
+           f"{tx0.get('code')} · {sw.get('code')} · {g4.get('blocker')} · {r4.get('code')} · {tx1.get('code')} · {tx2.get('taxIdMask')} · {enc}")
+
+        mon = psql("SELECT to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM')")
+        rp = call('GET', f'/admin/payouts/point-report?month={mon}', t=YT)
+        rp_admin = call('GET', f'/admin/payouts/point-report?month={mon}', t=OT)
+        rp_bad = call('GET', '/admin/payouts/point-report?month=2026-13', t=YT)
+        line = next((l for l in (rp.get('csv') or '').split('\r\n') if me_email in l), '')
+        aud = psql("SELECT (after_data::text NOT LIKE '%9001011234567%')::text || '|' || (after_data->>'month') FROM audit.audit_logs WHERE action = 'PAYOUT_TAX_REPORT' ORDER BY occurred_at DESC LIMIT 1")
+        pii = psql(f"SELECT count(*) FROM audit.pii_access_logs WHERE access_type = 'EXPORT' AND target_account_id = '{mid}' AND reason LIKE '포인트 출금 신고 자료%'")
+        ok('② 신고 자료 — 지급 담당 CSV(엑셀용 BOM · 머리줄 · 이 회원 줄: 주민등록번호 · 12345 · 3.3/8.8 · 소득세 980 · 지방소득세 90 · 11275 · 합계 줄) · ADMIN 403 · 달 틀림 422 · 감사 기록에 원문 없음 · 개인정보 접속기록 EXPORT',
+           (rp.get('csv') or '').startswith('\ufeff지급일,이름,이메일,주민등록번호,지급액') and '9001011234567,12345,8.8,980,90,1070,11275' in line
+           and '\r\n합계,' in (rp.get('csv') or '') and rp.get('filename') == f'point-withholding-{mon}.csv' and rp.get('total', {}).get('count', 0) >= 1
+           and rp_admin.get('_err') == 403 and rp_bad.get('_err') == 422 and aud == f'true|{mon}' and int(pii or 0) >= 1,
+           f"{line[:90]} · {rp.get('total')} · {rp_admin.get('_err')} · {rp_bad.get('code')} · {aud} · {pii}")
 
         u1 = psql(f"UPDATE point_cashouts SET paid_ref = 'x' WHERE id = '{cid}'")
         u2 = psql(f"DELETE FROM point_cashouts WHERE id = '{c3.get('id')}'")
@@ -212,14 +247,15 @@ if API and DB:
                     seen['form'] = pg.locator('[data-cashout-form]').count()
                     seen['rows'] = pg.locator('[data-cashout-list] tr[data-cashout-row]').count()
                     seen['paid'] = pg.locator('tr[data-cashout-row="PAID"]').count()
+                    seen['taxid'] = pg.locator('[data-cashout-taxid]').get_attribute('data-cashout-taxid') if pg.locator('[data-cashout-taxid]').count() else None
                     if seen['form']:
                         pg.fill('[data-cashout-points]', '12345'); pg.wait_for_timeout(300)
                         seen['preview'] = pg.locator('[data-cashout-preview]').get_attribute('data-cashout-preview')
                     b.close()
             except Exception as ex:
                 errs.append(str(ex)[:160])
-            ok('③ 나의공간 소개 활동 「포인트 출금」 — 상자 · 신청 칸 · 내 신청 3줄(지급됨 1) · 미리 보기 1080|11265',
-               seen.get('box') == 1 and seen.get('form') == 1 and seen.get('rows', 0) >= 3 and seen.get('paid') == 1 and seen.get('preview') == '1080|11265' and not errs,
+            ok('③ 나의공간 소개 활동 「포인트 출금」 — 상자 · 주민등록번호 등록됨 · 신청 칸 · 내 신청 3줄(지급됨 1) · 미리 보기 1070|11275',
+               seen.get('box') == 1 and seen.get('taxid') == 'set' and seen.get('form') == 1 and seen.get('rows', 0) >= 3 and seen.get('paid') == 1 and seen.get('preview') == '1070|11275' and not errs,
                f'{seen} · {errs[:2]}')
         if sync_playwright and ADMIN_WEB:
             seen, errs = {}, []
@@ -236,14 +272,18 @@ if API and DB:
                     seen['setting'] = loc.get_attribute('data-point-setting') if loc.count() else None
                     seen['edit'] = pg.locator('[data-point-setting] button', has_text='바꾸기').count()
                     seen['paid'] = pg.locator('table.tbl td', has_text='포인트 출금').count()
+                    seen['taxid'] = pg.locator('[data-point-taxid]').get_attribute('data-point-taxid') if pg.locator('[data-point-taxid]').count() else None
+                    seen['report'] = pg.locator('[data-point-report]').count()
                     b.close()
             except Exception as ex:
                 errs.append(str(ex)[:160])
-            ok('③ 운영 화면 지급 데스크 — 「포인트 출금 기준」 8.8 · 바꾸기(SUPER) · 최근 지급에 포인트 출금',
-               seen.get('setting') == '8.8' and seen.get('edit') == 1 and seen.get('paid', 0) >= 1 and not errs, f'{seen} · {errs[:2]}')
+            ok('③ 운영 화면 지급 데스크 — 「포인트 출금 기준」 8.8 · 바꾸기(SUPER) · 주민등록번호 받기 켜짐 · 신고 자료 내려받기 · 최근 지급에 포인트 출금',
+               seen.get('setting') == '8.8' and seen.get('edit') == 1 and seen.get('taxid') == 'on' and seen.get('report') == 1 and seen.get('paid', 0) >= 1 and not errs, f'{seen} · {errs[:2]}')
     finally:
         psql("UPDATE site_settings SET value = " + ("NULL" if tax0 in ('<NULL>', '') else f"'{tax0}'") + " WHERE key = 'point.cashout_tax_rate'")
-    ok('되돌림 — 원천징수율 원래대로', psql("SELECT coalesce(value, '<NULL>') FROM site_settings WHERE key = 'point.cashout_tax_rate'") == tax0, tax0)
+        psql(f"UPDATE site_settings SET value = '{tid0 if tid0 in ('on', 'off') else 'off'}' WHERE key = 'point.cashout_tax_id'")
+    ok('되돌림 — 원천징수율 · 주민등록번호 받기 원래대로', psql("SELECT coalesce(value, '<NULL>') FROM site_settings WHERE key = 'point.cashout_tax_rate'") == tax0
+       and psql("SELECT coalesce(value, 'off') FROM site_settings WHERE key = 'point.cashout_tax_id'") == tid0, f'{tax0} · {tid0}')
 
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
