@@ -2316,7 +2316,8 @@
     "GET /me/points",
     "GET /me/points/cashout",
     "POST /me/points/cashout",
-    "POST /me/points/cashout/{id}/cancel"
+    "POST /me/points/cashout/{id}/cancel",
+    "PUT /me/points/cashout/tax-id"
    ],
    "nav": "SB-MYP-INT-010",
    "note": "적립과 사용 가능을 나눠 보여줍니다. 유효 연결 확인 전에는 현금화되지 않습니다. v10.219 — 포인트 출금 신청(확인된 본인 계좌 · 최소 금액 · 원천징수 · D190)"
@@ -4531,6 +4532,7 @@
     "POST /admin/payouts/{kind}/{id}/confirm",
     "POST /admin/payouts/{kind}/{id}/pay",
     "POST /admin/payouts/{kind}/{id}/reject",
+    "GET /admin/payouts/point-report",
     "PATCH /admin/site-settings",
     "GET /admin/ad-receivables",
     "POST /admin/ad-invoices/{id}/payments"

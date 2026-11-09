@@ -1686,4 +1686,11 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "지급한 사람과 이체 참조를 남겨야 합니다.": "The person who paid and the transfer reference must be recorded.",
   "반려한 사람과 사유(2자 이상)를 남겨야 합니다.": "The person who rejected and the reason (at least 2 characters) must be recorded.",
   "{0} 에서 {1} 로 바꿀 수 없습니다.": "It cannot change from {0} to {1}.",
+  "지금은 주민등록번호를 받지 않습니다.": "Resident registration numbers are not being collected right now.",
+  "주민등록번호 13자리를 확인해 주십시오.": "Please check the 13-digit resident registration number.",
+  "주민등록번호를 등록했습니다. 원천징수 · 지급명세서 제출에만 쓰고 암호화해 보관합니다.": "Your resident registration number has been registered. It is used only for withholding tax and filing the payment statement, and is stored encrypted.",
+  "주민등록번호가 없는 지급이 {0}건 있습니다 — 신고 전에 따로 받아 채워 주십시오.": "There are {0} payments without a resident registration number — collect and fill them in separately before filing.",
+  "{0} 지급 {1}건을 내려받았습니다.": "Downloaded {1} payments for {0}.",
+  "처리방침(지금 판)에 「주민등록번호(암호화)」 수집 줄이 게시된 뒤에 켤 수 있습니다 — 법무 확인 뒤 약관 화면에서 처리방침을 먼저 게시하십시오.": "This can be turned on only after the current privacy policy publishes a line on collecting “resident registration number (encrypted)” — publish the privacy policy on the terms screen first after legal review.",
+  "출금하려면 주민등록번호를 먼저 등록해 주십시오(원천징수 · 지급명세서).": "To withdraw, please register your resident registration number first (withholding tax · payment statement).",
 };

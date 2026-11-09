@@ -76,9 +76,10 @@ export class PayoutService {
         WHERE c.status = 'PAID'
         ORDER BY 5 DESC NULLS LAST LIMIT 50`);
     /* v10.219 (D190) — 포인트 출금 기준(최소 · 원천징수율 · 비어 있으면 신청 막힘) — 바꾸기는 SUPER(운영 설정 point.cashout_*) */
-    const [pointSetting] = await this.db.query<{ min: number; taxRate: string | null }>(
+    const [pointSetting] = await this.db.query<{ min: number; taxRate: string | null; taxIdOn: boolean }>(
       `SELECT coalesce(nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_min'), '')::int, 10000) AS min,
-              nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_rate'), '') AS "taxRate"`);
+              nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_rate'), '') AS "taxRate",
+              coalesce((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_id'), 'off') = 'on' AS "taxIdOn"`);
     const readyAmt = (queue as Array<{ ready: boolean; amount: number }>)
       .filter((q) => q.ready).reduce((a, q) => a + Number(q.amount), 0);
     return {
@@ -122,5 +123,49 @@ export class PayoutService {
         WHERE id = $1 AND status IN ('REQUESTED', 'CONFIRMED') RETURNING id`, [id, this.me, reason.trim()]);
     if (!rows.length) throw new PolicyViolation('NOT_OPEN', '반려할 수 있는 출금 신청이 아닙니다 (신청 · 확정 상태만).');
     return { ok: true, id, status: 'REJECTED', note: '반려했습니다. 포인트는 회원의 출금 가능 잔액으로 돌아갑니다.' };
+  }
+
+  /**
+   * v10.219 (D190) — 포인트 출금 신고 자료(그달 한국 시각에 지급된 것) · CSV(엑셀용 BOM) · 소득세 · 지방소득세 따로 · 주민등록번호(등록된 경우).
+   * ★ 주민등록번호 원문이 들어 있어 @Audit(응답 전체를 남김)을 쓰지 않음 — 감사 기록에는 달 · 건수만,
+   *   개인정보 접속기록(audit.pii_access_logs)에 받는 사람마다 EXPORT 한 줄(월 점검 「내려받기」에 잡힘).
+   */
+  async pointReport(month: string) {
+    if (typeof month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      throw new PolicyViolation('REPORT_MONTH', '달은 YYYY-MM 으로 적어 주십시오.');
+    }
+    const rows = await this.db.query<{
+      accountId: string; paidAt: string; name: string; email: string; taxId: string | null; points: number; taxRate: string;
+      incomeTax: number; localTax: number; withholding: number; netAmount: number; bankName: string; last4: string | null; ref: string | null;
+    }>(
+      `SELECT c.account_id AS "accountId", to_char(c.paid_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "paidAt", a.name, a.email,
+              CASE WHEN t.tax_id_enc IS NULL THEN NULL ELSE pgp_sym_decrypt(t.tax_id_enc, fn_enc_key()) END AS "taxId",
+              c.points, c.tax_rate::text AS "taxRate", c.income_tax AS "incomeTax", c.local_tax AS "localTax", c.withholding,
+              c.net_amount AS "netAmount", c.bank_name AS "bankName", c.account_last4 AS last4, c.paid_ref AS ref
+         FROM point_cashouts c JOIN accounts a ON a.id = c.account_id
+         LEFT JOIN account_tax_ids t ON t.account_id = c.account_id
+        WHERE c.status = 'PAID'
+          AND (c.paid_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (c.paid_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month'
+        ORDER BY c.paid_at, a.name`, [`${month}-01`]);
+    const sum = (k: 'points' | 'incomeTax' | 'localTax' | 'withholding' | 'netAmount') => rows.reduce((a, r) => a + Number(r[k]), 0);
+    const total = { count: rows.length, points: sum('points'), incomeTax: sum('incomeTax'), localTax: sum('localTax'),
+                    withholding: sum('withholding'), netAmount: sum('netAmount'), missingTaxId: rows.filter((r) => !r.taxId).length };
+    const q = (v: unknown) => { const t = v == null ? '' : String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const head = ['지급일', '이름', '이메일', '주민등록번호', '지급액', '원천징수율(%)', '소득세', '지방소득세', '원천징수 합계', '실지급액', '은행', '계좌 뒤 4자리', '이체 참조'];
+    const lines = rows.map((r) => [r.paidAt, r.name, r.email, r.taxId ?? '', r.points, r.taxRate, r.incomeTax, r.localTax, r.withholding, r.netAmount, r.bankName, r.last4 ?? '', r.ref ?? ''].map(q).join(','));
+    lines.push(['합계', `${total.count}건`, '', '', total.points, '', total.incomeTax, total.localTax, total.withholding, total.netAmount, '', '', ''].map(q).join(','));
+    const csv = '\uFEFF' + [head.join(','), ...lines].join('\r\n') + '\r\n';
+    await this.db.query(
+      `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
+       VALUES ($1, $2, 'PAYOUT_TAX_REPORT', 'POINT_CASHOUT', NULL, $3::jsonb, $4, $5)`,
+      [this.me, RequestCtx.get()?.actorRole ?? null, JSON.stringify({ month, ...total }), RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
+    for (const id of [...new Set(rows.map((r) => r.accountId))]) {
+      await this.db.query(
+        `INSERT INTO audit.pii_access_logs (actor_account_id, access_type, reason, ip, target_account_id, target_type)
+         VALUES ($1, 'EXPORT', $2, $3, $4, 'ACCOUNT')`,
+        [this.me, `포인트 출금 신고 자료 ${month}`, RequestCtx.get()?.ip ?? null, id]);
+    }
+    return { month, total, filename: `point-withholding-${month}.csv`, csv,
+      note: total.missingTaxId ? `주민등록번호가 없는 지급이 ${total.missingTaxId}건 있습니다 — 신고 전에 따로 받아 채워 주십시오.` : `${month} 지급 ${total.count}건을 내려받았습니다.` };
   }
 }

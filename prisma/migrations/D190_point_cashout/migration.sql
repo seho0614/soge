@@ -13,6 +13,9 @@
 --   ④ DB 가 막는 것 — 잔액보다 많이 · 최소 미만 · 처리 중인 신청이 있는데 또 · 확인 안 된 계좌 · 남의 계좌 · 본인인증 전 ·
 --      원천징수율 비어 있음 · 상태 건너뛰기 · 확정한 사람이 지급(2인 원칙 fn_payout_two_person) · 끝난 줄 고치기 · 지우기.
 --   ⑤ 지급 데스크 대기열(v_payout_queue)에 POINT.
+--   ⑥ 신고 자료(대표 11/9 「신고 자료 내려받기 · 모두」) — 원천징수를 소득세(10원 미만 버림) + 지방소득세(소득세의 10% · 10원 미만 버림)로 나눠 남김 ·
+--      주민등록번호(account_tax_ids · 암호화 · 가린 값만 화면) — 스위치 point.cashout_tax_id(꺼진 채). 지금 처리방침에 주민등록번호 수집 줄이 없어
+--      처리방침에 「주민등록번호(암호화)」가 게시된 뒤에만 SUPER 가 켬(API 가 막음) · 켜지면 등록 없이 출금 신청을 DB 가 막음.
 -- =====================================================================
 
 -- ① 추천 보상 현금화 ----------------------------------------------------------
@@ -47,7 +50,10 @@ VALUES ('point.cashout_min', '10000', 'GLOBAL',
         false, '^[1-9][0-9]{3,6}$', '10000'),
        ('point.cashout_tax_rate', '3.3', 'GLOBAL',
         '포인트 출금 원천징수율(% · 0 ~ 50 · 소수 한 자리 · v10.219 · D190 · 처음 값 3.3 — 대표 11/9) — 비어 있으면 출금 신청을 받지 않음. 바꾸기 SUPER. 신청 때 값이 그 신청에 남음.',
-        false, '^(50(\.0)?|[1-4]?[0-9](\.[0-9])?)$', '8.8')
+        false, '^(50(\.0)?|[1-4]?[0-9](\.[0-9])?)$', '8.8'),
+       ('point.cashout_tax_id', 'off', 'GLOBAL',
+        '포인트 출금 때 주민등록번호 받기(지급명세서 · v10.219 · D190) — on 이면 등록하지 않은 회원은 출금 신청을 못 함. 켜기는 SUPER · 처리방침에 「주민등록번호(암호화)」 수집 줄이 게시된 뒤에만.',
+        false, '^(on|off)$', 'off')
 ON CONFLICT (key) DO NOTHING;
 
 -- ③ INV-9 예외 — 회사가 내는 돈(소개비 아님) ----------------------------------------
@@ -70,6 +76,8 @@ CREATE TABLE IF NOT EXISTS public.point_cashouts (
   points            integer NOT NULL CHECK (points > 0),
   tax_rate          numeric(3,1) NOT NULL CHECK (tax_rate >= 0 AND tax_rate <= 50),
   withholding       integer NOT NULL CHECK (withholding >= 0),
+  income_tax        integer NOT NULL DEFAULT 0 CHECK (income_tax >= 0),
+  local_tax         integer NOT NULL DEFAULT 0 CHECK (local_tax >= 0),
   net_amount        integer NOT NULL CHECK (net_amount > 0),
   payout_account_id uuid NOT NULL REFERENCES public.payout_accounts(id),
   bank_name         text NOT NULL,
@@ -86,13 +94,25 @@ CREATE TABLE IF NOT EXISTS public.point_cashouts (
   closed_by         uuid REFERENCES public.accounts(id),
   closed_at         timestamptz,
   closed_reason     text,
-  CHECK (withholding + net_amount = points)
+  CHECK (withholding + net_amount = points),
+  CHECK (income_tax + local_tax = withholding)
 );
 CREATE INDEX IF NOT EXISTS ix_point_cashouts_account ON public.point_cashouts (account_id, requested_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_point_cashouts_open ON public.point_cashouts (account_id)
   WHERE status IN ('REQUESTED', 'CONFIRMED');
 COMMENT ON TABLE public.point_cashouts IS
   '포인트 출금 신청(D190) — 회사가 자기 돈으로 보내는 현금 지급(소개비 아님). REQUESTED → CONFIRMED(ADMIN) → PAID(PAYOUT · 다른 사람) · 반려 · 취소. 계좌번호 없음(payout_accounts 참조 · 뒤 4자리만 남김) · 지울 수 없음';
+
+-- ⑥ 주민등록번호(지급명세서) — 암호화(pgp_sym_encrypt · fn_enc_key) · 화면에는 가린 값(900101-1******)만 ----------------
+CREATE TABLE IF NOT EXISTS public.account_tax_ids (
+  account_id  uuid PRIMARY KEY REFERENCES public.accounts(id),
+  tax_id_enc  bytea NOT NULL,
+  tax_id_mask text NOT NULL CHECK (tax_id_mask ~ '^[0-9]{6}-[1-8]\*{6}$'),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+COMMENT ON TABLE public.account_tax_ids IS
+  '주민등록번호(D190) — 포인트 출금 원천징수 · 지급명세서 제출(소득세법)에만 씀. 암호화 보관 · 화면은 가린 값만 · 받기는 point.cashout_tax_id 가 on 일 때만(처리방침 게시 뒤)';
 
 /* 현금으로 바꿀 수 있는 포인트 — 현금화 가능 줄 합계 − 신청 · 확정 · 지급된 출금 */
 CREATE OR REPLACE FUNCTION public.fn_point_cashable(p_account uuid) RETURNS integer LANGUAGE sql STABLE AS $$
@@ -127,13 +147,19 @@ BEGIN
   SELECT * INTO v_acc FROM payout_accounts WHERE id = NEW.payout_account_id AND account_id = NEW.account_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'POINT: 본인의 받을 계좌가 아닙니다.'; END IF;
   IF NOT v_acc.verified THEN RAISE EXCEPTION 'POINT: 확인을 마친 계좌로만 받을 수 있습니다.'; END IF;
+  IF coalesce((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_id'), 'off') = 'on'
+     AND NOT EXISTS (SELECT 1 FROM account_tax_ids WHERE account_id = NEW.account_id) THEN
+    RAISE EXCEPTION 'POINT: 출금하려면 주민등록번호를 먼저 등록해 주십시오(원천징수 · 지급명세서).';
+  END IF;
 
   NEW.status := 'REQUESTED'; NEW.requested_at := now();
   NEW.confirmed_by := NULL; NEW.confirmed_at := NULL; NEW.paid_by := NULL; NEW.paid_at := NULL; NEW.paid_ref := NULL;
   NEW.closed_by := NULL; NEW.closed_at := NULL; NEW.closed_reason := NULL;
   NEW.tax_rate := v_rate::numeric;
-  /* 원천징수 세액은 10원 미만 버림 */
-  NEW.withholding := (floor(NEW.points * NEW.tax_rate / 1000) * 10)::int;
+  /* 원천징수 = 소득세(비율의 10/11 · 10원 미만 버림) + 지방소득세(소득세의 10% · 10원 미만 버림) — 3.3 = 3 + 0.3 · 8.8 = 8 + 0.8 */
+  NEW.income_tax := (floor(NEW.points * NEW.tax_rate / 1.1 / 1000) * 10)::int;
+  NEW.local_tax := (floor(NEW.income_tax / 100.0) * 10)::int;
+  NEW.withholding := NEW.income_tax + NEW.local_tax;
   NEW.net_amount := NEW.points - NEW.withholding;
   NEW.bank_name := v_acc.bank_name; NEW.account_last4 := v_acc.account_last4; NEW.holder_name := v_acc.holder_name;
   RETURN NEW;
@@ -148,10 +174,10 @@ BEGIN
   IF OLD.status IN ('PAID', 'REJECTED', 'CANCELED') THEN
     RAISE EXCEPTION 'POINT: 끝난 출금 신청은 고칠 수 없습니다.';
   END IF;
-  IF (NEW.account_id, NEW.points, NEW.tax_rate, NEW.withholding, NEW.net_amount, NEW.payout_account_id,
+  IF (NEW.account_id, NEW.points, NEW.tax_rate, NEW.withholding, NEW.income_tax, NEW.local_tax, NEW.net_amount, NEW.payout_account_id,
       NEW.bank_name, NEW.account_last4, NEW.holder_name, NEW.requested_at)
      IS DISTINCT FROM
-     (OLD.account_id, OLD.points, OLD.tax_rate, OLD.withholding, OLD.net_amount, OLD.payout_account_id,
+     (OLD.account_id, OLD.points, OLD.tax_rate, OLD.withholding, OLD.income_tax, OLD.local_tax, OLD.net_amount, OLD.payout_account_id,
       OLD.bank_name, OLD.account_last4, OLD.holder_name, OLD.requested_at) THEN
     RAISE EXCEPTION 'POINT: 신청한 금액 · 계좌는 바꿀 수 없습니다. 취소하고 다시 신청해 주십시오.';
   END IF;

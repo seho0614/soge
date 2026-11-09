@@ -53,6 +53,11 @@ const EXPORT_SECTIONS: Array<[string, string]> = [
   ['addresses', `SELECT label, receiver, phone, zipcode, addr1, addr2, is_default AS "isDefault"
                    FROM hlt_addresses WHERE account_id = $1 AND deleted_at IS NULL ORDER BY created_at`],
   ['points', `SELECT rule_code AS "ruleCode", points, earned_at AS "earnedAt" FROM point_ledger WHERE account_id = $1 ORDER BY earned_at`],
+  /* v10.219 (D190) — 포인트 출금 · 주민등록번호는 가린 값만 */
+  ['pointCashouts', `SELECT points, tax_rate::text AS "taxRate", income_tax AS "incomeTax", local_tax AS "localTax", net_amount AS "netAmount", status,
+                            bank_name AS "bankName", account_last4 AS last4, requested_at AS "requestedAt", paid_at AS "paidAt"
+                       FROM point_cashouts WHERE account_id = $1 ORDER BY requested_at`],
+  ['taxId', `SELECT tax_id_mask AS "taxIdMask", updated_at AS "updatedAt" FROM account_tax_ids WHERE account_id = $1`],
   ['notifications', `SELECT event_code AS "eventCode", title, body, link_url AS "linkUrl", read_at AS "readAt", created_at AS "createdAt"
                        FROM notifications WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1000`],
   ['inquiries', `SELECT category, title, body, status, answer, answered_at AS "answeredAt", created_at AS "createdAt"

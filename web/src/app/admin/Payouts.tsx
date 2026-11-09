@@ -12,7 +12,7 @@ interface Row {
 }
 interface Desk {
   queue: Row[]; drafts: Row[]; paid: Row[];
-  pointSetting: { min: number; taxRate: string | null };
+  pointSetting: { min: number; taxRate: string | null; taxIdOn: boolean };
   summary: { waiting: number; ready: number; readyAmount: number; drafts: number };
   note: string;
 }
@@ -48,6 +48,7 @@ export function Payouts() {
   const [inAmt, setInAmt] = useState<Record<string, string>>({});
   const [why, setWhy] = useState<Record<string, string>>({});
   const [ps, setPs] = useState<{ min: string; rate: string; reason: string } | null>(null);
+  const [month, setMonth] = useState(() => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 7));
 
   async function act(key: string, fn: () => Promise<{ note?: string }>, reload: () => void) {
     setBusy(key); setErr(null); setMsg(null);
@@ -81,6 +82,16 @@ export function Payouts() {
       return { note: '포인트 출금 기준을 저장했습니다. 이미 들어온 신청은 신청 때 원천징수율 그대로입니다.' };
     }, desk.reload);
   };
+  /* 신고 자료 — 주민등록번호 원문이 들어 있는 파일이라 지급 담당 · SUPER 만(서버도 막음) · 받은 기록은 개인정보 접속기록에 남음 */
+  const download = () => act('report', async () => {
+    const r = await api<{ csv: string; filename: string; note: string }>(`/admin/payouts/point-report?month=${encodeURIComponent(month)}`);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r.csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = r.filename; a.click(); URL.revokeObjectURL(a.href);
+    return { note: r.note };
+  }, () => undefined);
+  const toggleTaxId = (on: boolean) => act('taxid', () => api('/admin/site-settings', {
+    method: 'PATCH', body: JSON.stringify({ key: 'point.cashout_tax_id', value: on ? 'on' : 'off', reason: on ? '처리방침 게시 확인 — 주민등록번호 받기 켬' : '주민등록번호 받기 끔' }),
+  }).then(() => ({ note: on ? '주민등록번호 받기를 켰습니다 — 등록하지 않은 회원은 출금 신청을 못 합니다.' : '주민등록번호 받기를 껐습니다.' })), desk.reload);
   const recordIn = (v: Recv) => {
     const amount = Number(inAmt[v.id] ?? v.unpaid);
     if (!amount || amount < 1) { setErr('입금액을 적어 주십시오.'); return; }
@@ -113,7 +124,18 @@ export function Payouts() {
       <div className="card pad" data-point-setting={pointSetting.taxRate ?? ''}>
         <b>포인트 출금 기준</b> 최소 {won(pointSetting.min)} · 원천징수율 {pointSetting.taxRate == null
           ? <span className="st warn">비어 있음 — 출금 신청을 받지 않음</span> : <b>{pointSetting.taxRate}%</b>}
-        <div className="hint">원천징수 세액은 10원 미만을 버립니다. 비율은 세무 확인 뒤 넣으십시오 — 신청할 때의 비율이 그 신청에 남습니다.</div>
+        <div className="hint">원천징수 = 소득세(10원 미만 버림) + 지방소득세(소득세의 10% · 10원 미만 버림). 신청할 때의 비율이 그 신청에 남습니다.</div>
+        <div data-point-taxid={pointSetting.taxIdOn ? 'on' : 'off'}>주민등록번호 받기 {pointSetting.taxIdOn ? <span className="st ok">켜짐</span> : <span className="st">꺼짐</span>}
+          <span className="hint"> — 처리방침에 「주민등록번호(암호화)」 수집 줄이 게시돼야 켤 수 있습니다. 켜면 등록하지 않은 회원은 출금 신청을 못 합니다.</span>
+          {isSuper && <> <button className="btn-sm" disabled={busy === 'taxid'} onClick={() => void toggleTaxId(!pointSetting.taxIdOn)}>{pointSetting.taxIdOn ? '끄기' : '켜기'} (SUPER)</button></>}
+        </div>
+        {isPayout && (
+          <div className="search-row" data-point-report="">
+            <b>신고 자료 내려받기</b> <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="신고 달" />
+            <button className="btn-plain" disabled={busy === 'report' || !/^\d{4}-\d{2}$/.test(month)} onClick={() => void download()}>CSV 내려받기</button>
+            <span className="hint">그달 지급된 포인트 출금 · 소득세 · 지방소득세 · 주민등록번호 — 개인정보가 들어 있어 받은 기록이 남습니다.</span>
+          </div>
+        )}
         {isSuper && !ps && <button className="btn-sm" onClick={() => setPs({ min: String(pointSetting.min), rate: pointSetting.taxRate ?? '', reason: '' })}>바꾸기 (SUPER)</button>}
         {isSuper && ps && (
           <div className="form-grid" style={{ marginTop: 8 }}>

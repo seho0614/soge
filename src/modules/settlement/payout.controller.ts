@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional,
-         ApiResponse, ApiTags } from '@nestjs/swagger';
+         ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsOptional, IsString, Length } from 'class-validator';
 import { PayoutService } from './payout.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -38,6 +38,7 @@ export class PayoutSummaryDto {
 export class PointCashoutSettingDto {
   @ApiProperty({ example: 10000 }) min!: number;
   @ApiProperty({ nullable: true, example: '8.8', description: '원천징수율(%) · 비어 있으면 출금 신청을 받지 않음' }) taxRate!: string | null;
+  @ApiProperty({ description: '주민등록번호 받기(point.cashout_tax_id) — 켜기는 SUPER · 처리방침 게시 뒤' }) taxIdOn!: boolean;
 }
 export class PayoutDeskDto {
   @ApiProperty({ type: [PayoutRowDto], description: '확정 · 지급 대기' }) queue!: PayoutRowDto[];
@@ -73,6 +74,21 @@ export class PayoutController {
   @ApiOperation({ summary: '지급 데스크', description: '지급 대기 · 확정 전 · 최근 지급. 지급 못 하는 건은 이유(blocker)를 적습니다.' })
   @ApiOkResponse({ type: PayoutDeskDto })
   desk() { return this.svc.desk(); }
+
+  @Get('point-report')
+  @Roles('PAYOUT')   // SUPER 는 AuthGuard 가 통과 — 주민등록번호 원문이 들어 있어 ADMIN 은 안 됨
+  @ApiOperation({
+    summary: '포인트 출금 신고 자료 (지급 담당 · SUPER)',
+    description: 'v10.219 (D190) — 그달(한국 시각)에 지급된 포인트 출금 · 소득세 · 지방소득세 · 주민등록번호(등록된 경우) · CSV(엑셀용). ' +
+      '감사 기록에는 달 · 건수만 남고, 개인정보 접속기록에 받는 사람마다 EXPORT 가 남습니다.',
+  })
+  @ApiQuery({ name: 'month', example: '2026-11' })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    month: { type: 'string' }, filename: { type: 'string' }, csv: { type: 'string' }, note: { type: 'string' },
+    total: { type: 'object', properties: { count: { type: 'integer' }, points: { type: 'integer' }, incomeTax: { type: 'integer' },
+      localTax: { type: 'integer' }, withholding: { type: 'integer' }, netAmount: { type: 'integer' }, missingTaxId: { type: 'integer' } } } } } })
+  @ApiResponse({ status: 422, description: 'REPORT_MONTH', type: ErrorDto })
+  pointReport(@Query('month') month: string) { return this.svc.pointReport(month); }
 
   @Post(':kind/:id/confirm')
   @Roles('ADMIN', 'SUPER')

@@ -609,7 +609,8 @@
       "IDENTITY": "You can request after completing identity verification.",
       "OPEN": "You have a request in progress. You can request again after it is finished.",
       "ACCOUNT": "You need a verified payout account — add and verify one in My Space › Settlement.",
-      "BELOW_MIN": "Your withdrawable points are less than the minimum amount."
+      "BELOW_MIN": "Your withdrawable points are less than the minimum amount.",
+      "TAX_ID": "You need to register your resident registration number before requesting (withholding tax · payment statement)."
     },
     "points": "Points to withdraw",
     "account": "Payout account",
@@ -631,6 +632,13 @@
       "REJECTED": "Rejected",
       "CANCELED": "Cancelled"
     },
-    "note": "1 point = 1 won. It changes to “Paid” once the operations team confirms and the payout staff transfers it. Rejected or cancelled points can be withdrawn again."
+    "note": "1 point = 1 won. It changes to “Paid” once the operations team confirms and the payout staff transfers it. Rejected or cancelled points can be withdrawn again.",
+    "taxId": "Resident registration number",
+    "taxIdNone": "not registered",
+    "taxIdEdit": "Enter again",
+    "taxIdLabel": "Resident registration number (13 digits)",
+    "taxIdSave": "Register",
+    "taxIdSaved": "Your resident registration number has been registered.",
+    "taxIdNotice": "Used only for withholding tax and filing the payment statement under the Income Tax Act. It is stored encrypted and only a masked number is shown."
   }
 }

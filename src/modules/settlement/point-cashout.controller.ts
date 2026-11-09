@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsInt, IsUUID, Max, Min } from 'class-validator';
+import { IsInt, IsString, IsUUID, Length, Max, Min } from 'class-validator';
 import { PointCashoutService } from './point-cashout.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -13,10 +13,15 @@ export class CashoutRequestDto {
   @IsUUID() payoutAccountId!: string;
 }
 
+export class TaxIdDto {
+  @ApiProperty({ example: '900101-1234567', description: '주민등록번호 13자리(- 있어도 됨) — 원천징수 · 지급명세서 제출에만 씀 · 암호화 보관' })
+  @IsString() @Length(13, 16) taxId!: string;
+}
+
 const REQ = {
   type: 'object', properties: {
     id: { type: 'string', format: 'uuid' }, points: { type: 'integer' }, taxRate: { type: 'string' },
-    withholding: { type: 'integer' }, netAmount: { type: 'integer' },
+    withholding: { type: 'integer' }, incomeTax: { type: 'integer' }, localTax: { type: 'integer' }, netAmount: { type: 'integer' },
     status: { type: 'string', enum: ['REQUESTED', 'CONFIRMED', 'PAID', 'REJECTED', 'CANCELED'] },
     bankName: { type: 'string' }, last4: { type: 'string', nullable: true },
     requestedAt: { type: 'string' }, paidAt: { type: 'string', nullable: true }, closedReason: { type: 'string', nullable: true },
@@ -38,11 +43,12 @@ export class PointCashoutController {
   @ApiOperation({
     summary: '포인트 출금 — 내 정보',
     description: '출금할 수 있는 포인트 · 최소 금액 · 원천징수율(비어 있으면 신청을 받지 않음) · 확인된 받을 계좌 · 내 신청 20건 · ' +
-      '신청을 못 하는 까닭(blocker: TAX_UNSET · IDENTITY · OPEN · ACCOUNT · BELOW_MIN).',
+      '신청을 못 하는 까닭(blocker: TAX_UNSET · IDENTITY · OPEN · ACCOUNT · TAX_ID · BELOW_MIN) · 주민등록번호 받기 켜짐 · 등록한 번호(가린 값).',
   })
   @ApiOkResponse({ schema: { type: 'object', properties: {
     cashable: { type: 'integer' }, min: { type: 'integer' }, taxRate: { type: 'string', nullable: true },
     identityVerified: { type: 'boolean' }, open: { type: 'boolean' }, blocker: { type: 'string', nullable: true },
+    taxIdOn: { type: 'boolean' }, taxIdMask: { type: 'string', nullable: true, example: '900101-1******' },
     accounts: { type: 'array', items: { type: 'object', properties: {
       id: { type: 'string', format: 'uuid' }, bankName: { type: 'string' }, last4: { type: 'string' }, holderName: { type: 'string' }, isStub: { type: 'boolean' } } } },
     requests: { type: 'array', items: REQ } } } })
@@ -58,6 +64,17 @@ export class PointCashoutController {
   @ApiResponse({ status: 422, description: 'POINT_RULE · INVALID_POINTS', type: ErrorDto })
   @Audit('POINT_CASHOUT_REQUEST', 'POINT_CASHOUT')
   request(@Body() dto: CashoutRequestDto) { return this.svc.request(dto.points, dto.payoutAccountId); }
+
+  @Put('tax-id')
+  @ApiOperation({
+    summary: '주민등록번호 등록 · 고치기 (포인트 출금 · 지급명세서)',
+    description: '운영이 「주민등록번호 받기」를 켰을 때만(처리방침 게시 뒤). 암호화해 보관하고 돌려주는 것은 가린 값(900101-1******)만. 422 TAX_ID_OFF · TAX_ID_FORMAT.',
+  })
+  @ApiOkResponse({ schema: { type: 'object', properties: { ok: { type: 'boolean' }, taxIdMask: { type: 'string' }, note: { type: 'string' } } } })
+  @ApiResponse({ status: 422, description: 'TAX_ID_OFF · TAX_ID_FORMAT', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'IMMUTABLE_RECORD', type: ErrorDto })
+  @Audit('POINT_TAX_ID_SET', 'ACCOUNT')
+  setTaxId(@Body() dto: TaxIdDto) { return this.svc.setTaxId(dto.taxId); }
 
   @Post(':id/cancel')
   @ApiOperation({ summary: '포인트 출금 신청 취소', description: '운영이 확정하기 전(신청 상태)에만. 포인트는 그대로 남습니다.' })

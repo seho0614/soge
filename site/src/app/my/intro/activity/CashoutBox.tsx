@@ -7,14 +7,18 @@ import { ymdKst } from '@/lib/format';
 
 export interface Cashout {
   cashable: number; min: number; taxRate: string | null; identityVerified: boolean; open: boolean;
-  blocker: 'TAX_UNSET' | 'IDENTITY' | 'OPEN' | 'ACCOUNT' | 'BELOW_MIN' | null;
+  taxIdOn: boolean; taxIdMask: string | null;
+  blocker: 'TAX_UNSET' | 'IDENTITY' | 'OPEN' | 'ACCOUNT' | 'TAX_ID' | 'BELOW_MIN' | null;
   accounts: Array<{ id: string; bankName: string; last4: string | null; holderName: string; isStub: boolean }>;
   requests: Array<{ id: string; points: number; withholding: number; netAmount: number; status: 'REQUESTED' | 'CONFIRMED' | 'PAID' | 'REJECTED' | 'CANCELED';
     bankName: string; last4: string | null; requestedAt: string; paidAt: string | null; closedReason: string | null }>;
 }
 
-/* 서버(fn_point_cashout_new)와 같은 셈 — 원천징수 세액 10원 미만 버림 */
-const taxOf = (points: number, rate: number) => Math.floor((points * rate) / 1000) * 10;
+/* 서버(fn_point_cashout_new)와 같은 셈 — 소득세(비율의 10/11 · 10원 미만 버림) + 지방소득세(소득세의 10% · 10원 미만 버림) */
+const taxOf = (points: number, rate: number) => {
+  const income = Math.floor(Math.round((points * rate * 10) / 1.1) / 10000) * 10;
+  return income + Math.floor(income / 100) * 10;
+};
 
 /**
  * v10.219 (D190 · docs/352) — 포인트 출금 신청. GET/POST /me/points/cashout · POST …/:id/cancel
@@ -28,6 +32,8 @@ export function CashoutBox({ c }: { c: Cashout }) {
   const [acc, setAcc] = useState(c.accounts[0]?.id ?? '');
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [tid, setTid] = useState('');
+  const [tidOpen, setTidOpen] = useState(!c.taxIdMask);
   const rate = c.taxRate == null ? null : Number(c.taxRate);
   const n = Math.floor(Number(pts) || 0);
   const tax = rate == null ? 0 : taxOf(n, rate);
@@ -46,6 +52,17 @@ export function CashoutBox({ c }: { c: Cashout }) {
       setInfo(d?.note ?? t('sent')); router.refresh();
     });
   }
+  function saveTaxId(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr(null); setInfo(null);
+    start(async () => {
+      const r = await fetch('/api/v1/me/points/cashout/tax-id', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taxId: tid }) });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) { setErr(d?.message ?? t('fail')); return; }
+      setTid(''); setTidOpen(false); setInfo(d?.note ?? t('taxIdSaved')); router.refresh();
+    });
+  }
   function cancel(id: string) {
     setErr(null); setInfo(null);
     start(async () => {
@@ -60,6 +77,20 @@ export function CashoutBox({ c }: { c: Cashout }) {
     <section className="my-card" data-cashout-box="" data-cashout-blocker={c.blocker ?? ''}>
       <h2 className="my-s2">{t('title')}</h2>
       <p className="my-ls">{t('lead', { v: fmt(c.cashable), min: fmt(c.min), rate: rate == null ? '—' : `${c.taxRate}%` })}</p>
+      {c.taxIdOn && (
+        <div data-cashout-taxid={c.taxIdMask ? 'set' : 'none'}>
+          <p className="my-ls">{t('taxId')} {c.taxIdMask ? <b>{c.taxIdMask}</b> : t('taxIdNone')}
+            {c.taxIdMask && !tidOpen && <> <button type="button" className="my-bo" onClick={() => setTidOpen(true)}>{t('taxIdEdit')}</button></>}</p>
+          {tidOpen && (
+            <form onSubmit={saveTaxId} className="p2form" data-cashout-taxid-form="">
+              <label className="fld"><span>{t('taxIdLabel')}</span>
+                <input inputMode="numeric" autoComplete="off" maxLength={14} placeholder="000000-0000000" value={tid} onChange={(e) => setTid(e.target.value)} /></label>
+              <p className="my-ls">{t('taxIdNotice')}</p>
+              <div className="my-btns"><button type="submit" className="my-bp" disabled={pending || tid.replace(/\D/g, '').length !== 13}>{t('taxIdSave')}</button></div>
+            </form>
+          )}
+        </div>
+      )}
       {c.blocker && <p className="my-ls" data-cashout-why="">{t(`why.${c.blocker}`)}</p>}
       {!c.blocker && (
         <form onSubmit={send} className="p2form" data-cashout-form="">
