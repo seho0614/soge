@@ -33,7 +33,7 @@ def rd(rel):
 
 # ── ① 코드 ────────────────────────────────────────────────────────────
 CS = rd('src/modules/catalog/compliance.service.ts'); TS = rd('src/modules/catalog/terms.service.ts')
-SS = rd('site/src/lib/session.ts'); MW = rd('site/src/middleware.ts'); AP = rd('site/src/app/terms/agree/page.tsx'); AF = rd('site/src/app/terms/agree/AgreeForm.tsx')
+SS = rd('site/src/lib/session.ts'); MW = (rd('site/src/proxy.ts') or rd('site/src/middleware.ts')); AP = rd('site/src/app/terms/agree/page.tsx'); AF = rd('site/src/app/terms/agree/AgreeForm.tsx')
 B090 = rd('prisma/migrations/B090_triggers/migration.sql')
 req = CS.split('async required()')[1][:1500] if 'async required()' in CS else ''
 ok('① /terms/required — 지금 시행 중인 게시 판만(v10.161 v_terms_current) · 판이 같아야 동의 · 옛 판에 동의한 회원은 oldVersion · agreedVersion',

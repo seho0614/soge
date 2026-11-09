@@ -60,7 +60,7 @@ ok('① API — 서비스 · 컨트롤러 7개(코드 확인 1분 20번 · 내 �
    and 'RecommendController,' in AM and 'RecommendService,' in AM and "code: 'RECOMMEND_RULE'" in FL, '')
 
 SW, SP, SPG = rd('site/src/components/auth/SignupWizard.tsx'), rd('site/src/components/auth/signup/StepPerson.tsx'), rd('site/src/app/signup/page.tsx')
-MW, SS, PF = rd('site/src/middleware.ts'), rd('site/src/lib/session.ts'), rd('site/src/components/partner/P2Frame.tsx')
+MW, SS, PF = (rd('site/src/proxy.ts') or rd('site/src/middleware.ts')), rd('site/src/lib/session.ts'), rd('site/src/components/partner/P2Frame.tsx')
 PR, MY, AD, AFT = rd('site/src/app/partners/recommend/page.tsx'), rd('site/src/app/my/page.tsx'), rd('web/src/app/admin/affiliates/Recommend.tsx'), rd('web/src/app/admin/Affiliates.tsx')
 ok('① 화면 — 가입 3단계 추천 코드(?rc= · 쿠키 sgb_rcm 30일 · 칠 때 확인) · 나의공간 내 추천 코드 · 파트너센터 메뉴 · SB-AFC-RCM-010 · 운영 화면 탭 SB-AFF-RCM-010',
    'data-recommend=""' in SP and "fetch(`/api/v1/auth/recommend-code/${c}`)" in SW and "r.code === 'RECOMMEND_CODE_UNKNOWN'" in SW
