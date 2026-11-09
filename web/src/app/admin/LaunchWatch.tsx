@@ -13,6 +13,9 @@ interface Watch {
   serverErrorsHour?: number;   // v10.174 (D163) — API 가 지난 1시간 보낸 서버 오류(5xx)
   rateLimitedHour?: { n: number; ips: number };   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
   cspDay?: { n: number; top: Array<{ directive: string; blocked: string; n: number; page: string }> };   // v10.177 — 보안 정책 「보고만 하기」 24시간
+  /* v10.221 (D191) — 같은 보고를 DB 에 30일 · 출처마다 처음 · 마지막 본 날 · 7일 안 새 출처 · 막기 판단 준비 */
+  csp30?: { since: string | null; n: number; origins: number; new7: number; ready: boolean;
+    top: Array<{ directive: string; blocked: string; n: number; firstDay: string; lastDay: string; page: string | null }> };
   slowSql?: { n: number; thresholdMs: number; top: Array<{ sql: string; n: number; maxMs: number }> };   // v10.179 — 300ms 넘은 DB 조회(1시간)
   slowHour?: { n: number; p95: number; top: Array<{ path: string; p95: number; n: number }> }; slowLimitMs?: number;   // v10.178 (D167) — 지난 1시간 API 응답 p95(ms)
   uploadsBackup?: { count: number; last: string | null; lastAt: string | null; lastKB: number | null; ageHours: number | null; stale: boolean };   // v10.177
@@ -104,6 +107,7 @@ export function LaunchWatch() {
     ['메인 투표(3자리 중)', d.homePolls ?? 3, (d.homePolls ?? 3) < 3, 'polls'],   // v10.200 — 빈 자리는 사용자 웹 메인에 「준비 중」
     ['한도 걸림(1시간)', d.rateLimitedHour?.n ?? 0, (d.rateLimitedHour?.n ?? 0) > 0],
     ['정책 보고(24시간)', d.cspDay?.n ?? 0, false, (d.cspDay?.top.length ?? 0) > 0 ? '@data-csp-top' : undefined],
+    ['정책 보고 출처(30일)', d.csp30?.origins ?? 0, (d.csp30?.new7 ?? 0) > 0, d.csp30?.since ? '@data-csp-30' : undefined],   // v10.221 — 7일 안 새 출처가 있으면 노란 칸
     ['느린 응답 p95 ms(1시간)', d.slowHour?.p95 ?? 0, !!d.slowLimitMs && (d.slowHour?.p95 ?? 0) >= d.slowLimitMs, (d.slowHour?.top.length ?? 0) > 0 ? '@data-slow-top' : undefined],
   ];
   const until = d.orderOpen === 'on' && d.orderOpenUntil ? ymdhm(d.orderOpenUntil) : null;
@@ -214,6 +218,21 @@ export function LaunchWatch() {
           <table className="tbl">
             <thead><tr><th>규칙</th><th>출처</th><th>건수</th><th>최근 화면</th></tr></thead>
             <tbody>{d.cspDay!.top.map((r) => <tr key={`${r.directive}|${r.blocked}`}><td className="mono">{r.directive}</td><td className="mono">{r.blocked}</td><td className="num-cell">{n(r.n)}</td><td className="muted">{r.page}</td></tr>)}</tbody>
+          </table>
+        </details>
+      )}
+      {/* v10.221 (D191 · docs/356) — 30일 쌓은 보고(운영 적용 때도 남음). 막는 정책으로 바꿀지는 판단 줄을 보고 따로 정함 */}
+      {d.csp30?.since && (
+        <details data-csp-30="">
+          <summary>정책 보고 30일 — {d.csp30.since}부터 {n(d.csp30.n)}건 · 출처 {n(d.csp30.origins)}개 · 지난 7일 새 출처 {n(d.csp30.new7)}개</summary>
+          <p className={d.csp30.ready ? 'good' : 'muted'} data-csp-ready={d.csp30.ready ? 'yes' : 'no'}>
+            {d.csp30.ready
+              ? '막기 판단 준비 됨 — 7일 넘게 모았고 지난 7일 새 출처가 없습니다. 아래 출처 중 필요한 것을 정책에 넣고 막는 정책으로 바꿀지 정하십시오(사용자 웹 코드 변경).'
+              : d.csp30.new7 > 0 ? '아직 — 지난 7일 안에 처음 보인 출처가 있습니다. 새 출처가 7일 동안 없을 때까지 지켜봅니다.' : '아직 — 모은 지 7일이 안 됐습니다.'}
+          </p>
+          <table className="tbl">
+            <thead><tr><th>규칙</th><th>출처</th><th>건수</th><th>처음</th><th>마지막</th><th>최근 화면</th></tr></thead>
+            <tbody>{d.csp30.top.map((r) => <tr key={`${r.directive}|${r.blocked}`}><td className="mono">{r.directive}</td><td className="mono">{r.blocked}</td><td className="num-cell">{n(r.n)}</td><td>{r.firstDay}</td><td>{r.lastDay}</td><td className="muted">{r.page ?? ''}</td></tr>)}</tbody>
           </table>
         </details>
       )}

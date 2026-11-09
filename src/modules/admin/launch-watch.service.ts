@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { recentServerErrors, serverErrorsSince } from '../../common/server-error-count';
 import { serverHealth } from '../../common/server-health';
 import { rateLimitedSince } from '../../common/api-rate-limit';
-import { cspReportsDay } from '../../common/csp-report';
+import { cspReportsDay, restoreCspPending, takeCspPending } from '../../common/csp-report';
 import { slowSince } from '../../common/response-time';
 import { slowSqlSince } from '../../common/slow-sql';
 import { uploadsBackupState, uploadsBackupVerified } from '../../common/uploads-backup-state';
@@ -91,6 +91,7 @@ export class LaunchWatchService {
     return { ...c, stubOrders, serverErrorsHour: serverErrorsSince(60).n,   // v10.174 (D163) — 이 API 프로세스가 지난 1시간 보낸 5xx
       rateLimitedHour: rateLimitedSince(60),   // v10.176 (D165) — 지난 1시간 요청 한도(429)에 걸린 요청 · IP 수
       cspDay: cspReportsDay(),                 // v10.177 — 보안 정책 「보고만 하기」 지난 24시간(건수 · 많이 걸린 출처 10)
+      csp30: await this.csp30(),               // v10.221 (D191) — 같은 보고를 DB 에 30일(출처마다 처음 · 마지막 본 날 · 막기 판단 줄)
       uploadsBackup: uploadsBackupState(),     // v10.177 — 올린 파일 백업 묶음(가장 최근 · 몇 시간 전 · 개수)
       slowSql: slowSqlSince(60),               // v10.179 — 300ms 넘은 DB 조회(모양 · 건수 · 가장 느림)
       slowHour: slowSince(60),                 // v10.178 (D167) — 지난 1시간 API 요청 수 · p95(ms) · 느린 주소 5곳
@@ -295,6 +296,49 @@ export class LaunchWatchService {
     const items = recentServerErrors();
     const { n, top } = serverErrorsSince(60);
     return { items, hour: n, top, note: 'API 를 다시 띄우면 지워집니다 · 요청 내용 · 개인정보는 남기지 않습니다.' };
+  }
+
+  /* ── v10.221 (D191 · docs/356) 보안 정책 보고 30일 ─────────────────── */
+
+  /** 정기 작업 launch_watch — 메모리에 쌓인 보고 건수를 csp_report_days 에 더하고 30일 지난 줄을 지움.
+   *  넣지 못하면 건수를 되돌려 다음 10분에 다시(정기 작업의 다른 일은 그대로 이어 감) */
+  async flushCsp(): Promise<{ added: number; purged: number; error?: string }> {
+    const list = takeCspPending();
+    let added = 0, error: string | undefined;
+    if (list.length) {
+      try {
+        await this.db.query(
+          `INSERT INTO csp_report_days (day, directive, blocked, page, n)
+           SELECT d, left(r, 40), left(b, 200), left(p, 80), n FROM unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::int[]) AS x(d, r, b, p, n)
+           ON CONFLICT (day, directive, blocked) DO UPDATE SET n = csp_report_days.n + EXCLUDED.n, page = EXCLUDED.page, last_at = now()`,
+          [list.map((x) => x.day), list.map((x) => x.directive), list.map((x) => x.blocked), list.map((x) => x.page), list.map((x) => x.n)]);
+        added = list.reduce((t, x) => t + x.n, 0);
+      } catch (e) {
+        restoreCspPending(list);
+        error = String((e as Error).message ?? e).slice(0, 120);
+      }
+    }
+    const gone = await this.db.query(
+      `DELETE FROM csp_report_days WHERE day <= (now() AT TIME ZONE 'Asia/Seoul')::date - 30 RETURNING 1`).catch(() => []);
+    return { added, purged: gone.length, ...(error ? { error } : {}) };
+  }
+
+  /** 지난 30일 — 모두 몇 건 · 출처(규칙 · 출처)마다 건수 · 처음 · 마지막 본 날 · 마지막 화면 · 7일 안 처음 보인 출처 수 ·
+   *  「막기 판단 준비」 = 쌓은 지 7일이 넘었고 지난 7일 새 출처 없음(실제로 막는 정책은 판단 뒤 따로 바꿈) */
+  async csp30() {
+    const rows = await this.db.query<{ directive: string; blocked: string; n: number; firstDay: string; lastDay: string; page: string | null }>(
+      `SELECT directive, blocked, sum(n)::int AS n, min(day)::text AS "firstDay", max(day)::text AS "lastDay",
+              (array_agg(page ORDER BY last_at DESC))[1] AS page
+         FROM csp_report_days WHERE day > ${TODAY} - 30
+        GROUP BY directive, blocked ORDER BY sum(n) DESC, directive, blocked`).catch(() => []);
+    const [d] = await this.db.query<{ since: string | null; today: string; week: string }>(
+      `SELECT (SELECT min(day)::text FROM csp_report_days WHERE day > ${TODAY} - 30) AS since, ${TODAY}::text AS today, (${TODAY} - 7)::text AS week`);
+    const since = d?.since ?? null;
+    const fresh = rows.filter((r) => r.firstDay > d.week).length;
+    const ready = !!since && since <= d.week && fresh === 0;
+    let total = 0;
+    for (const r of rows) total += r.n;
+    return { since, n: total, origins: rows.length, new7: fresh, ready, top: rows.slice(0, 30) };
   }
 
   /** 정기 작업 launch_watch — 지난 15분 안에 시험 결제로 결제 완료된 소개몰 주문 수 */

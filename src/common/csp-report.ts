@@ -10,6 +10,10 @@ import type { NextFunction, Request, Response } from 'express';
  *   남기는 것: 어긴 규칙(script-src 등) · 막혔을 출처(주소의 앞부분 https://host 만 · 경로 · 물음표 뒤는 버림) · 화면 경로(물음표 뒤 버림).
  *   남기지 않는 것: IP · 쿠키 · 회원. 이 API 프로세스 메모리에서만 24시간(DB 에 남기지 않음 · 다시 띄우면 비워짐).
  *   Nest 를 거치지 않는 express 길입니다(로그인 · 요청 한도 · 감사와 상관없음) — 본문 16KB · 한 시간 5,000건 넘으면 버림.
+ *
+ *   v10.221 (D191 · docs/356) — 메모리 24시간은 운영 적용(다시 띄움) 때마다 비어 1 ~ 2주 모으지 못했습니다.
+ *   그래서 아직 DB 에 안 넣은 건수(pending · 날짜(한국) · 규칙 · 출처별)를 따로 세어 두고, 정기 작업 launch_watch(10분)가
+ *   takeCspPending() 으로 가져가 csp_report_days 에 더합니다(넣지 못하면 restoreCspPending 으로 되돌림).
  * ------------------------------------------------------------------- */
 
 const KEEP_MS = 24 * 60 * 60 * 1000;
@@ -18,6 +22,10 @@ const MAX_PER_HOUR = 5000;
 
 interface Row { directive: string; blocked: string; page: string; n: number; last: number }
 const rows = new Map<string, Row>();
+/* v10.221 — DB(csp_report_days)에 아직 안 넣은 건수 · 키 = 날짜|규칙|출처 */
+interface Pending { day: string; directive: string; blocked: string; page: string; n: number }
+const pending = new Map<string, Pending>();
+const kstDay = (ms: number) => new Date(ms + 9 * 3600_000).toISOString().slice(0, 10);
 const hits: number[] = [];
 
 /** 주소를 출처(https://host)만 남기고 줄임 — inline · eval · data 같은 낱말은 그대로 */
@@ -58,6 +66,10 @@ export function recordCspReport(body: unknown, now = Date.now()): number {
       if (rows.size >= MAX_KEYS) for (const [k, v] of rows) if (v.last < now - KEEP_MS) rows.delete(k);
       if (rows.size < MAX_KEYS) rows.set(key, { ...row, n: 1, last: now });
     }
+    const pk = `${kstDay(now)}|${row.directive}|${row.blocked}`;
+    const pc = pending.get(pk);
+    if (pc) { pc.n += 1; pc.page = row.page; }
+    else if (pending.size < MAX_KEYS) pending.set(pk, { day: kstDay(now), ...row, n: 1 });
     n += 1;
   }
   return n;
@@ -77,8 +89,24 @@ export function cspReportsDay(now = Date.now()) {
   return { n: live.reduce((s, r) => s + r.n, 0), top };
 }
 
+/** v10.221 — DB 에 넣을 건수를 가져가며 비움(정기 작업 launch_watch) */
+export function takeCspPending(): Pending[] {
+  const out = [...pending.values()];
+  pending.clear();
+  return out;
+}
+
+/** v10.221 — DB 에 넣지 못한 건수를 되돌림(다음 10분에 다시) */
+export function restoreCspPending(list: Pending[]) {
+  for (const r of list) {
+    const k = `${r.day}|${r.directive}|${r.blocked}`;
+    const cur = pending.get(k);
+    if (cur) cur.n += r.n; else if (pending.size < MAX_KEYS) pending.set(k, { ...r });
+  }
+}
+
 /** 시험용 — 비우기 */
-export function resetCspReports() { rows.clear(); hits.length = 0; }
+export function resetCspReports() { rows.clear(); hits.length = 0; pending.clear(); }
 
 const parseReport = express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '16kb' });
 

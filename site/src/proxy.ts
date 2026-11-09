@@ -121,7 +121,8 @@ async function withRef(req: NextRequest, res: NextResponse, at?: string): Promis
   return res;
 }
 
-export async function middleware(req: NextRequest) {
+/* v10.221 — next 16 에서 middleware → proxy 로 이름이 바뀜(파일 · 함수 이름만 · 하는 일은 같음) */
+export async function proxy(req: NextRequest) {
   let at = req.cookies.get(AT)?.value;
   const rt = req.cookies.get(RT)?.value;
 

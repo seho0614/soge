@@ -35,6 +35,7 @@
     {"code":"INQUIRY_ANSWERED","name":"문의 답변","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":true,"trigger":"inquiries.answered_at","screen":"SB-HOM-CSB-020"},
     {"code":"PASSWORD_CHANGED","name":"비밀번호 변경","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"accounts.password_changed_at 설정 (변경 · 재설정 · v10.48 D102)","screen":"SB-MYP-ACC-010"},
     {"code":"LOGIN_LOCKED","name":"로그인 잠금","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"auth_throttle.locked_until 설정 (5회 연속 실패 · v10.48 D102)","screen":"SB-HOM-AUT-040"},
+    {"code":"LOGIN_NEW_DEVICE","name":"낯선 기기 로그인","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"로그인 성공 · 90일 안에 없던 (IP 앞 두 마디 + 브라우저 종류) · 하루 3번까지 · 설정 account.login_alert (v10.221 D191)","screen":"SB-MYP-SEC-010"},
     {"code":"NOTICE_PUBLISHED","name":"공지 등록","actor":"ALL","channels":["INAPP"],"optout":true,"trigger":"notices.published_at","screen":"SB-MNY-EVT-010"}
   ],
   "admin_alerts": [

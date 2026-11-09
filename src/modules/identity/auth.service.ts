@@ -9,7 +9,7 @@ import { clientIpRaw, isInternalIp, settingInt } from './abuse-guard';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
-import { recordLogin } from './login-history';
+import { notifyNewDevice, recordLogin } from './login-history';
 import { RecommendService } from '../affiliate/recommend.service';
 
 const ACCESS_TTL = '15m';
@@ -72,6 +72,7 @@ export class AuthService {
     }
 
     await this.db.query(`UPDATE accounts SET last_login_at = now() WHERE id = $1`, [acc.id]);
+    await notifyNewDevice(this.db, acc.id);   // v10.221 (D191) — 이번 로그인을 남기기 전에 90일 기록과 견줌
     await recordLogin(this.db, acc.id, true);
     return this.issue(acc.id);
   }
