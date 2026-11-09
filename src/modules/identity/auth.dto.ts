@@ -26,6 +26,10 @@ export class SignupDto extends LoginDto {
   /* v10.31 — 시안 가입 3단계 「부서 · 직위」(선택) */
   @ApiPropertyOptional({ maxLength: 60, example: '사업개발팀 팀장' })
   @IsOptional() @IsString() @MaxLength(60) jobTitle?: string;
+
+  /* v10.218 (D189) — 가입 3단계 「추천 코드」(선택) · 링크 ?rc= 로 들어오면 채워짐 */
+  @ApiPropertyOptional({ example: 'K7MZ3Q', description: '추천한 회원의 추천 코드(6자). 없는 코드면 422 RECOMMEND_CODE_UNKNOWN' })
+  @IsOptional() @IsString() @MaxLength(20) recommendCode?: string;
 }
 
 export class RefreshDto {

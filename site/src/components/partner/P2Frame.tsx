@@ -23,6 +23,8 @@ const ICON: Record<string, React.ReactNode> = {
   ntc: <path d="M3 11l18-8-8 18-2-8-8-2z" />,
   qna: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
   gde: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>,
+  /* v10.218 (D189) — 추천 관계도(위 하나에서 갈라지는 줄) */
+  rcm: <><circle cx="12" cy="4" r="2" /><circle cx="5" cy="19" r="2" /><circle cx="19" cy="19" r="2" /><path d="M12 6v5M5 17v-3h14v3" /></>,
 };
 
 /* 시안 PTC2NAV 순서 그대로 — 화면마다 메뉴 자리가 같아야 찾지 않습니다. v10.100 (다국어 2-5a) — 이름은 사전 partner.p2.menu.<아이콘 키> */
@@ -30,6 +32,7 @@ const MENU = [
   ['/partners', 'dsh'],
   ['/partners/products', 'rec'],
   ['/partners/links', 'lnk'],
+  ['/partners/recommend', 'rcm'],   // v10.218 (D189) — SB-AFC-RCM-010
   ['/partners/revenues', 'rev'],
   ['/partners/orders', 'ord'],
   ['/partners/settlements', 'stl'],

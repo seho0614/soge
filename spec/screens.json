@@ -184,7 +184,8 @@
     "POST /signup/biz-check",
     "GET /signup/profile-questions",
     "GET /site-settings/public",
-    "POST /signup/profile-analyze"
+    "POST /signup/profile-analyze",
+    "GET /auth/recommend-code/{code}"
    ],
    "nav": "SB-HOM-AUT-010"
   },
@@ -979,7 +980,8 @@
    "apis": [
     "GET /me/summary",
     "GET /me/notifications",
-    "GET /me/home"
+    "GET /me/home",
+    "GET /me/recommend"
    ],
    "nav": "SB-HOM-MAIN-010"
   },
@@ -3668,6 +3670,24 @@
    ]
   },
   {
+   "id": "SB-AFC-RCM-010",
+   "name": "추천 관계도",
+   "group": "AFC",
+   "url": "/partners/recommend",
+   "p": "파트너센터",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "nav": "SB-AFC-DSH-010",
+   "apis": [
+    "GET /partner/affiliate/recommend-tree",
+    "GET /me/recommend"
+   ]
+  },
+  {
    "id": "SB-AFC-ORD-010",
    "name": "주문/고객현황",
    "group": "AFC",
@@ -3912,6 +3932,27 @@
    "apis": [
     "GET /admin/affiliates/settlements",
     "POST /admin/affiliates/settlements/run"
+   ]
+  },
+  {
+   "id": "SB-AFF-RCM-010",
+   "name": "추천 관계도 · 추천 보상",
+   "group": "ADM",
+   "url": "/admin/affiliates/recommend",
+   "p": "운영",
+   "roles": [
+    "ADMIN",
+    "SUPER",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/affiliates/recommend",
+    "GET /admin/affiliates/recommend/{id}",
+    "PATCH /admin/affiliates/recommend/{id}",
+    "GET /admin/affiliates/recommend-reward",
+    "PUT /admin/affiliates/recommend-reward"
    ]
   },
   {

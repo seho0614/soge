@@ -78,7 +78,13 @@ const REF = 'sgb_ref';
 const REF_RE = /^[A-Za-z0-9]{3,16}$/;
 const VISITOR_RE = /^[A-Za-z0-9-]{8,64}$/;
 
+/* v10.218 (D189) — 회원 추천 링크 ?rc=코드 → sgb_rcm 쿠키(30일). 가입 화면 「추천 코드」 칸만 채움 · 기록 · 귀속은 없음(소개코드 ?ref= · sgb_ref 와 따로) */
+const RCM = 'sgb_rcm';
+const RCM_RE = /^[A-HJ-NP-Z2-9]{6}$/;
+
 async function withRef(req: NextRequest, res: NextResponse, at?: string): Promise<NextResponse> {
+  const rc = (req.nextUrl.searchParams.get('rc') ?? '').toUpperCase();
+  if (rc && RCM_RE.test(rc) && req.method === 'GET') res.cookies.set(RCM, rc, { sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 });
   const raw = req.nextUrl.searchParams.get('ref');
   if (!raw || !REF_RE.test(raw) || req.method !== 'GET') return res;
   const code = raw.toUpperCase();

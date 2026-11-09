@@ -8,14 +8,16 @@ import { Goals } from './affiliates/Goals';
 import { Materials } from './affiliates/Materials';
 import { Guides } from './affiliates/Guides';
 import { Settlements } from './affiliates/Settlements';
+import { Recommend } from './affiliates/Recommend';
 
-type View = 'apply' | 'products' | 'goals' | 'materials' | 'settle';
+type View = 'apply' | 'products' | 'goals' | 'materials' | 'recommend' | 'settle';
 
 const TABS: SubTab<View>[] = [
   { key: 'apply', label: '입점 심사', screen: 'SB-AFF-APL-010' },
   { key: 'products', label: '제휴상품 · 단가', screen: 'SB-AFF-PRD-010' },
   { key: 'goals', label: '목표 설정', screen: 'SB-AFF-GOL-010' },
   { key: 'materials', label: '마케팅자료 · 가이드', screen: 'SB-AFF-MTR-010' },
+  { key: 'recommend', label: '추천 관계도', screen: 'SB-AFF-RCM-010' },   // v10.218 (D189)
   { key: 'settle', label: '트랙별 정산', screen: 'SB-AFF-STL-010' },
 ];
 
@@ -25,6 +27,7 @@ const TABS: SubTab<View>[] = [
  * SB-AFF-GOL-010 목표 설정 · 지급
  * SB-AFF-MTR-010 마케팅자료 심의 · 등록 · 파트너가이드 등록 (D007 — 파일 올리기)
  * SB-AFF-STL-010 트랙별 정산 배치
+ * SB-AFF-RCM-010 추천 관계도 · 추천인 고치기 · 추천 보상 규칙 (v10.218 · D189)
  *
  * 파트너는 제휴상품 링크를 뿌리고 **건당 정액 수수료**를 받습니다.
  * 소개비(당사자끼리 직접 · 플랫폼 공제 0원, INV-9)와 달리 제휴수수료는
@@ -47,6 +50,7 @@ export function Affiliates({ onGo }: { onGo?: (tab: string) => void }) {
       {view === 'products' && <Products />}
       {view === 'goals' && <Goals />}
       {view === 'materials' && <><Materials /><Guides /></>}
+      {view === 'recommend' && <Recommend />}
       {view === 'settle' && <Settlements onGo={onGo} />}
     </section>
   );

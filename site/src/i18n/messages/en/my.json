@@ -73,6 +73,11 @@
     "close": "Close"
   },
   "home": {
+    "recommend": {
+      "b": "My invite code",
+      "count": "{n, plural, one {{n} member} other {{n} members}} you invited",
+      "by": "Invited by {name}"
+    },
     "title": "My page",
     "sub": "This is where referrers check their own activity. Ongoing referrals and pending settlements at a glance.",
     "next": {

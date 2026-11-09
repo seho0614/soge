@@ -62,7 +62,7 @@ export class AuthController {
   })
   @ApiOkResponse({ type: TokenDto })
   @ApiResponse({ status: 409, description: 'DUPLICATE — 이미 가입된 이메일', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'WEAK_PASSWORD · 필수 약관 미동의 · NOTICE_ONLY(알림에 동의를 보냄 · v10.28 G-218)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'WEAK_PASSWORD · 필수 약관 미동의 · NOTICE_ONLY(알림에 동의를 보냄 · v10.28 G-218) · RECOMMEND_CODE_UNKNOWN(없는 추천 코드 · v10.218)', type: ErrorDto })
   @Audit('ACCOUNT_SIGNUP', 'ACCOUNT')
   signup(@Body() dto: SignupDto) {
     return this.auth.signup({ ...dto });

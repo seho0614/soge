@@ -69,6 +69,8 @@ import { SearchService } from './modules/search/search.service';
 import { AffiliateController } from './modules/affiliate/affiliate.controller';
 import { AffiliateService } from './modules/affiliate/affiliate.service';
 import { AffiliateAdminService } from './modules/affiliate/affiliate-admin.service';
+import { RecommendController } from './modules/affiliate/recommend.controller';   // v10.218 (D189) — 추천인 · 추천 관계도
+import { RecommendService } from './modules/affiliate/recommend.service';
 import { RiskLearnController } from './modules/govern/risklearn.controller';
 import { RiskLearnService } from './modules/govern/risklearn.service';
 import { SearchAdminController } from './modules/search/search-admin.controller';
@@ -255,6 +257,7 @@ import { LeadService } from './modules/lead/lead.service';
     LearnController,
     RiskLearnController,
     AffiliateController,
+    RecommendController,
     SearchController,
     SearchAdminController,
     PayoutController,
@@ -424,6 +427,7 @@ import { LeadService } from './modules/lead/lead.service';
     SearchAdminService,
     PayoutService,
     AffiliateService, AffiliateAdminService, AffiliateAccountService,   // v10.92 · v10.108
+    RecommendService,   // v10.218
     SearchService,
     PublicService,
     SiteService,

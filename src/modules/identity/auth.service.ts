@@ -10,6 +10,7 @@ import { AttributionEngine } from '../../engines/attribution/attribution.engine'
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
 import { recordLogin } from './login-history';
+import { RecommendService } from '../affiliate/recommend.service';
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly principals: PrincipalService,
     private readonly attribution: AttributionEngine,
     private readonly i18n: I18nService,
+    private readonly recommend: RecommendService,   // v10.218 (D189)
   ) {}
 
   async login(email: string, password: string, visitorKey?: string) {
@@ -84,7 +86,7 @@ export class AuthService {
   }
 
   async signup(input: {
-    email: string; password: string; name: string; visitorKey?: string; agreedTerms?: unknown; jobTitle?: string;
+    email: string; password: string; name: string; visitorKey?: string; agreedTerms?: unknown; jobTitle?: string; recommendCode?: string;
   }) {
     /* v10.31 — 시안 가입 3단계 「영문 · 숫자 · 특수문자 조합 10자 이상」(전: 10자 이상만) */
     assertStrongPassword(input.password);   /* v10.48 — 변경 · 재설정과 같은 규칙(auth-throttle.ts) */
@@ -137,6 +139,14 @@ export class AuthService {
         throw new PolicyViolation('REQUIRED_TERM', '필수 약관에 모두 동의해 주십시오.');
       }
     }
+    /* v10.218 (D189 · docs/351) — 추천 코드(선택). 비우면 추천인 없이 가입 · 있으면 활동 중 회원의 코드여야 함 */
+    let recommender: string | null = null;
+    if (typeof input.recommendCode === 'string' && input.recommendCode.trim() !== '') {
+      const code = RecommendService.normalize(input.recommendCode);
+      const owner = code ? await this.recommend.ownerOf(code) : null;
+      if (!owner) throw new PolicyViolation('RECOMMEND_CODE_UNKNOWN', '없는 추천 코드입니다. 코드를 다시 확인해 주십시오.');
+      recommender = owner.id;
+    }
     return this.db.transaction(async () => {
       const hash = await bcrypt.hash(input.password, 12);
       const [acc] = await this.db.query<{ id: string }>(
@@ -161,6 +171,9 @@ export class AuthService {
       }
       if (input.visitorKey) {
         await this.attribution.link(input.visitorKey, acc.id, 'SIGNUP');
+      }
+      if (recommender) {   /* v10.218 — 추천 관계(introducer_referrals · 한 사람에 한 번) · 보상은 이 분이 본인인증할 때 DB 가 */
+        await this.db.query(`INSERT INTO introducer_referrals (inviter_id, invitee_id) VALUES ($1, $2)`, [recommender, acc.id]);
       }
       return this.issue(acc.id);
     });

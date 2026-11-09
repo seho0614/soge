@@ -102,11 +102,12 @@ export async function login(email: string, password: string, keep = true): Promi
 }
 
 export async function signup(
-  email: string, password: string, name: string, agreedTerms?: string[], jobTitle?: string,
+  email: string, password: string, name: string, agreedTerms?: string[], jobTitle?: string, recommendCode?: string,
 ): Promise<AuthResult> {
   const visitorKey = await ensureVisitor();
   return post('/auth/signup', {
     email, password, name, visitorKey, ...(agreedTerms ? { agreedTerms } : {}), ...(jobTitle ? { jobTitle } : {}),
+    ...(recommendCode ? { recommendCode } : {}),   // v10.218 (D189) — 추천 코드(선택)
   });
 }
 

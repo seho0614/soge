@@ -4,6 +4,7 @@
  *   1 가입 유형(개인 회원 · 개인 사업자 · 법인 사업자) → 2 기업 인증(사업자등록번호 「인증하기」 · 법인등록번호) →
  *   3 담당자 정보(담당자명 · 휴대폰 본인확인 · 이메일 · 부서 · 직위 · 비밀번호 · 확인) → 4 약관 동의(전체 · 필수 · 선택 · 보기 ›) →
  *   5 관심 성향(선택 · 건너뛰어도 가입) → 「가입 신청하기」 → /signup/done.
+ *   v10.218 (D189) — 3단계에 「추천 코드」(선택 · 링크 ?rc= 로 채움 · 칠 때 GET /auth/recommend-code 로 가린 이름 확인).
  *
  * 서버와 맞춘 것
  *   · 「인증하기」 = POST /signup/biz-check — 국세청 상태 · 이미 가입된 번호. 휴업 · 폐업 · 중복이면 다음으로 못 갑니다.
@@ -32,9 +33,10 @@ import { clearDraft, loadDraft } from '@/lib/profileDraft';
 
 export type { SignupType, JoinTerm } from './signup/rules';
 
-export function SignupWizard({ types, terms, notices, questions, action }: {
+export function SignupWizard({ types, terms, notices, questions, action, initialCode = '' }: {
   types: SignupType[]; terms: JoinTerm[]; notices: Array<{ code: string; title: string }>; questions: Q[];
-  action: (email: string, password: string, name: string, agreed: string[], jobTitle: string) => Promise<AuthResult>;
+  action: (email: string, password: string, name: string, agreed: string[], jobTitle: string, recommendCode: string) => Promise<AuthResult>;
+  initialCode?: string;
 }) {
   const router = useRouter();
   const t = useTranslations('signup');
@@ -59,6 +61,9 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
   const [job, setJob] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  /* v10.218 (D189) — 추천 코드(선택) · 칠 때마다 확인(가린 이름) */
+  const [rc, setRc] = useState(initialCode);
+  const [rcInfo, setRcInfo] = useState<{ state: '' | 'ok' | 'no'; name?: string }>({ state: '' });
   /* 4 약관 — 시안: 필수는 켜진 채로 시작하지 않습니다(직접 고름) */
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   /* 5 성향 */
@@ -79,6 +84,21 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
   const required = terms.filter((t) => t.isRequired);
   const allOn = terms.length > 0 && terms.every((t) => agreed.has(t.code));
   const reqOn = required.every((t) => agreed.has(t.code));
+
+  useEffect(() => {
+    const c = rc.trim().toUpperCase();
+    if (!c) { setRcInfo({ state: '' }); return; }
+    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(c)) { setRcInfo({ state: c.length >= 6 ? 'no' : '' }); return; }
+    let live = true;
+    const tm = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/v1/auth/recommend-code/${c}`);
+        const j = await r.json().catch(() => ({}));
+        if (live) setRcInfo(r.ok ? { state: 'ok', name: j.name } : r.status === 404 ? { state: 'no' } : { state: '' });
+      } catch { if (live) setRcInfo({ state: '' }); }
+    }, 300);
+    return () => { live = false; clearTimeout(tm); };
+  }, [rc]);
 
   /* 유형을 바꾸면 인증 결과는 버립니다(법인 ↔ 개인 사업자 칸이 다름) */
   useEffect(() => { setChk(null); }, [type]);
@@ -131,6 +151,7 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return t('err.email');
       if (!PW_OK(pw)) return t('err.weakPw');
       if (pw !== pw2) return t('err.pwMismatch');
+      if (rc.trim() && rcInfo.state === 'no') return t('err.rcCode');
     }
     if (s === 4 && !reqOn) return t('err.requiredTerms');
     return null;
@@ -166,10 +187,10 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
     for (let s = 1; s < 5; s++) { const b = blocker(s); if (b) { setErr(b); setStep(s === 2 && !needsBiz ? 3 : s); return; } }
     setErr(null);
     start(async () => {
-      const r = await action(email.trim(), pw, name.trim(), [...agreed], job.trim());
+      const r = await action(email.trim(), pw, name.trim(), [...agreed], job.trim(), rc.trim().toUpperCase());
       if (!r.ok) {
         setErr(r.message);
-        if (r.code === 'DUPLICATE' || r.code === 'WEAK_PASSWORD') setStep(3);
+        if (r.code === 'DUPLICATE' || r.code === 'WEAK_PASSWORD' || r.code === 'RECOMMEND_CODE_UNKNOWN') setStep(3);
         if (r.code === 'REQUIRED_TERM') setStep(4);
         return;
       }
@@ -225,7 +246,7 @@ export function SignupWizard({ types, terms, notices, questions, action }: {
             bizType={bizType} setBizType={setBizType} bizItem={bizItem} setBizItem={setBizItem} />
         )}
 
-        {step === 3 && <StepPerson name={name} setName={setName} email={email} setEmail={setEmail} job={job} setJob={setJob} pw={pw} setPw={setPw} pw2={pw2} setPw2={setPw2} />}
+        {step === 3 && <StepPerson name={name} setName={setName} email={email} setEmail={setEmail} job={job} setJob={setJob} pw={pw} setPw={setPw} pw2={pw2} setPw2={setPw2} rc={rc} setRc={setRc} rcInfo={rcInfo} />}
 
         {step === 4 && <StepTerms terms={terms} notices={notices} needsBiz={needsBiz} agreed={agreed} allOn={allOn} setAgreed={setAgreed} setErr={setErr} toggle={toggle} />}
 

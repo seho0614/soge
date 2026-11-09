@@ -293,3 +293,9 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .p2mine summary { cursor: pointer; font-weight: 700; }
 /* v10.185 (docs/290) — v10.63 에서 잘못 바뀐 색 되돌림: 남색 메뉴 글자 밝게(#C3CCE3 · 글귀 #93A2C2) · 회색 설명 글이 링크색(파랑)이던 것 → 시트 흐린 글자 ·
    남색 띠 「함께, 더 멀리!」는 남색 위 밝은 파랑 · 고른 탭 보라 → 시트 주요 단추 */
+
+/* v10.218 (D189) — SB-AFC-RCM-010 추천 관계도(접고 펴는 줄) */
+.rcm-ul { list-style: none; margin: 4px 0 0; padding-left: 18px; border-left: 1px dashed var(--sgb-line); }
+.rcm-ul li { margin: 4px 0; }
+.rcm-ul summary { cursor: pointer; }
+.rcm-leaf { display: inline-block; padding-left: 14px; }

@@ -9,6 +9,7 @@ import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
+import { siteOrigin } from '@/components/refcode/origin';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.home'))('title') };
@@ -28,6 +29,7 @@ const bizNo = (s: string | null) => (s && /^\d{10}$/.test(s) ? `${s.slice(0, 3)}
  *   초대 동의율 · 성사 · 거래 후기 · 인정된 신고 · 0~99)의 ×10, 활동지역 = 소개자 프로필 지역 → 없으면 내 매물 등록 지역. 지역이 없으면 「소개 활동」에서 등록하라고 잇습니다.
  *   바로가기는 시안 14칸(9 + 덧붙인 5) 순서 그대로, 그 뒤에 개발에만 있던 4칸(프로필 수정 · 소개몰 주문 · 취소 · 반품 · 배송지)을 남겨 둡니다.
  *   「지금 막혀 있는 단계」 안내(본인인증 → 사업자 → 구독)는 개발에만 있어 시안 안내 상자 모양으로 맨 위에 남깁니다.
+ *   v10.218 (D189) — 프로필 아래 「내 추천 코드」 상자(GET /me/recommend · 코드 · 가입 링크 · 직접 추천한 분 수).
  */
 export default async function MyPage() {
   const p = await me();
@@ -35,6 +37,11 @@ export default async function MyPage() {
   const t = await getTranslations('my.home');
   const f = await getFmt();   // v10.107 — 누적 수익: 한국어 「원」 · 다른 언어 「₩1,200,000」
   const h = await apiGetPersonal<Home>('/me/home').catch(() => null);
+  /* v10.218 (D189) — 내 추천 코드 · 가입 링크 · 내가 직접 추천한 분 수 · 나를 추천한 분(가린 이름) */
+  const [rcm, origin] = await Promise.all([
+    apiGetPersonal<{ code: string | null; link: string | null; directCount: number; recommender: string | null }>('/me/recommend').catch(() => null),
+    siteOrigin(),
+  ]);
 
   /* v10.37 (D095 · P2P) — 사업자 인증은 막힌 단계가 아닙니다(사업자로 소개비를 받을 때만) */
   const blocked: 'IDENTITY' | 'BUSINESS' | 'SUBSCRIPTION' | null = !p.identityVerifiedAt ? 'IDENTITY'
@@ -112,6 +119,14 @@ export default async function MyPage() {
           </div>
           <Link className="my-bo" href="/my/account">{t('editProfile')}</Link>
         </div>
+      )}
+
+      {rcm?.code && (
+        <Note kind="info" data-my-recommend="">
+          <b>{t('recommend.b')}</b> <code className="mono" data-testid="my-rcm-code">{rcm.code}</code>{' '}
+          {rcm.link && <span className="mono" data-testid="my-rcm-link">{origin + rcm.link}</span>}
+          <p>{t('recommend.count', { n: rcm.directCount })}{rcm.recommender ? ` · ${t('recommend.by', { name: rcm.recommender })}` : ''}</p>
+        </Note>
       )}
 
       {zero ? (

@@ -291,7 +291,8 @@
       "email": "Please check your email address.",
       "weakPw": "Your password must be at least 10 characters and mix letters, numbers and symbols.",
       "pwMismatch": "The password confirmation does not match.",
-      "requiredTerms": "Agree to all required items to continue."
+      "requiredTerms": "Agree to all required items to continue.",
+      "rcCode": "Please check the invite code. If it does not exist, leave it empty to join."
     },
     "typeSameLb": "Individuals and businesses can do the same things",
     "typeSameBody": "<b>Individuals</b> can post requests and take part in referrals, and <b>receive referral fees after identity verification</b>. Only industries that require a license (real estate, insurance, medical, etc.) need that license before posting. To receive fees as a business (tax invoice), switch to a business account later in My page.",
@@ -359,7 +360,12 @@
       "pwWeak": "At least 10 characters mixing letters, numbers and symbols",
       "pw2": "Confirm password",
       "pw2Ph": "Enter it once more",
-      "pw2Diff": "Does not match the password above"
+      "pw2Diff": "Does not match the password above",
+      "rc": "Invite code",
+      "rcPh": "e.g. K7MZ3Q · leave empty if none",
+      "rcOk": "Invite code of {name}",
+      "rcNo": "This invite code does not exist — you can leave it empty",
+      "rcNotice": "If you enter an invite code, the member who invited you sees that you joined and your masked name (e.g. K**). It cannot be changed after you join (contact support)."
     },
     "terms": {
       "title": "4. Terms",
