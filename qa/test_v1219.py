@@ -45,10 +45,11 @@ ok('① D190 — 출금 표(계좌번호 없음) · 잔액 함수 · 신청 트�
    and 'trg_point_cashout_new BEFORE INSERT ON public.point_cashouts' in M and 'trg_point_cashout_flow BEFORE UPDATE OR DELETE ON public.point_cashouts' in M
    and 'EXECUTE FUNCTION public.fn_payout_two_person()' in M and "SELECT 'POINT', c.id, 'MEMBER', ac.name," in M
    and "OR p_table ~ '^(point_cashouts)$'" in M and 'floor(NEW.points * NEW.tax_rate / 1.1 / 1000) * 10' in M and 'CREATE TABLE IF NOT EXISTS public.account_tax_ids' in M
-   and "('point.cashout_tax_id', 'off'" in M and 'CHECK (income_tax + local_tax = withholding)' in M
+   and "('point.cashout_tax_id', 'off'" in M and 'CREATE OR REPLACE FUNCTION public.fn_purge_tax_ids()' in M
+   and "('privacy.tax_id_retention_years', '5'" in M and 'SELECT fn_purge_tax_ids() AS n' in rd('src/worker/scheduler.service.ts') and 'CHECK (income_tax + local_tax = withholding)' in M
    and "UPDATE public.point_rules SET needs_valid = false WHERE code = 'REFERRAL_DIRECT'" in M and "v_rule.points, true, 'invitee '" in M
    and "('point.cashout_min', '10000'" in M and "('point.cashout_tax_rate', '3.3'" in M and 'ux_point_cashouts_open' in M
-   and not re.search(r'point_cashouts[^;]*\b(account_no|bank_code)\b', M) and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M)
+   and not re.search(r'point_cashouts[^;]*\b(account_no|bank_code)\b', M) and not re.search(r'\b(DELETE FROM (?!account_tax_ids t)|DROP TABLE|TRUNCATE)', M)   # 지우는 것은 5년 지난 주민등록번호 파기만
    and 'D190_point_cashout' in mig, f'{len(mig)} · {mig[-1] if mig else ""}')
 
 SV, CT = rd('src/modules/settlement/point-cashout.service.ts'), rd('src/modules/settlement/point-cashout.controller.ts')
@@ -207,6 +208,14 @@ if API and DB:
            and r4.get('_err') == 422 and tx1.get('code') == 'TAX_ID_FORMAT' and tx2.get('taxIdMask') == '900101-1******' and '1234567' not in json.dumps(tx2)
            and g5.get('taxIdMask') == '900101-1******' and g5.get('blocker') is None and enc == 'true|900101-1******',
            f"{tx0.get('code')} · {sw.get('code')} · {g4.get('blocker')} · {r4.get('code')} · {tx1.get('code')} · {tx2.get('taxIdMask')} · {enc}")
+
+        psql(f"INSERT INTO account_tax_ids (account_id, tax_id_enc, tax_id_mask, updated_at) VALUES ('{oid}', '\\x00', '800101-1******', '2019-03-01') ON CONFLICT (account_id) DO UPDATE SET updated_at = '2019-03-01'")
+        due = psql(f"SELECT purge_on::text FROM v_tax_id_purge_due WHERE account_id = '{mid}'")
+        want = psql("SELECT make_date(extract(year FROM now() AT TIME ZONE 'Asia/Seoul')::int + 6, 1, 1)::text")
+        purged = psql('SELECT fn_purge_tax_ids()')
+        left = psql(f"SELECT (SELECT count(*) FROM account_tax_ids WHERE account_id = '{oid}') || '|' || (SELECT count(*) FROM account_tax_ids WHERE account_id = '{mid}')")
+        ok('② 주민등록번호 파기 — 이 회원은 올해 지급 → 다음 해 1월 1일 + 5년 · 옛 등록(2019 · 지급 없음)은 지움 · 이 회원은 남음',
+           due == want and int(purged or 0) >= 1 and left == '0|1', f'{due} · {want} · {purged} · {left}')
 
         mon = psql("SELECT to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM')")
         rp = call('GET', f'/admin/payouts/point-report?month={mon}', t=YT)
