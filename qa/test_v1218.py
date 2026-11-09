@@ -199,7 +199,11 @@ if API and DB:
 
         if SITE:
             h = page(SITE + f'/signup?rc={acode}')
-            ok('③ 가입 화면 ?rc= — 추천 코드 칸에 코드 · 안내 글', f'value="{acode}"' in h and 'data-recommend' in h and '가려진 이름' in h, 'value' if f'value="{acode}"' in h else h[:80])
+            # 추천 코드 칸은 3단계(브라우저에서 넘어감)라 첫 HTML 에는 없음 — 형식이 맞는 코드가 initialCode 로 넘어가는지 봄(있는 코드인지는 브라우저가 확인) · 형식이 틀린 코드(0 · O 들어감)는 안 넘어감
+            hb = page(SITE + '/signup?rc=O0O0O0')
+            want, bad = '\\"initialCode\\":\\"' + acode + '\\"', '\\"initialCode\\":\\"\\"'
+            ok('③ 가입 화면 ?rc= — 형식 맞는 코드는 가입 마법사 initialCode 로 넘어감 · 형식 틀린 코드는 빈 칸',
+               want in h and bad in hb, f'{want in h} · {bad in hb}')
         try:
             from playwright.sync_api import sync_playwright
         except Exception:
