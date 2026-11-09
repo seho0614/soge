@@ -43,7 +43,7 @@ import { GWAN_PATH, ago, won } from '@/lib/format';
 import { won as fwon, agoEn } from '@/lib/fmt';
 import { sugMatch, type SugItem } from './sug';
 import type { SearchGwan } from './SearchBox';
-import { type HitListing, type HitRequest, type Suggest, type HitProduct, type HitPost, type Row, type SearchScope, SCOPES, logSearch, type Group, srcToks, srcScore, manwon, SRC_GN, GW_ORDER, GRADE, getJson } from './search-data';
+import { type HitListing, type HitRequest, type Suggest, type HitProduct, type HitPost, type Row, type SearchScope, SCOPES, NONE_HREF, logSearch, type Group, srcToks, srcScore, manwon, SRC_GN, GW_ORDER, GRADE, getJson } from './search-data';
 
 /* v10.86 (리팩토링) — 자료 형식 · 범위 표 · 도우미는 search-data.ts 로 옮겼습니다. 밖에서 쓰던 이름은 여기서 그대로 냅니다 */
 export { SCOPES, logSearch, searchHref, type SearchScope } from './search-data';
@@ -215,7 +215,13 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
   const [need, setNeed] = useState(false);
   useEffect(() => { if (t) setNeed(false); }, [t]);
   /* 고른 줄 없이 Enter: 맨 위 결과의 자리로(대표 지시 — 결과 화면으로 가지 않음) · 결과가 없으면 그대로 · 빈 칸이면 「무엇을 소개받고 싶은지 적어 주세요.」(시안) */
-  const submit = useCallback(() => { if (!t) { setNeed(true); return; } if (rows[0]) go(rows[0].href); }, [t, rows, go]);
+  /* v10.220 (docs/354) — 결과 0건이면 다음 길(요청 올리기 · 소개몰 전체 · 소개광장 묻기)로 · Enter 도 같은 곳(11/9 대표 「승인」 — 운영에 자료가 적어 「검색이 안 된다」로 보임) */
+  const none = sc?.none ?? 'request';
+  const noResult = !!t && hit.q === t && !loading && !rows.length;
+  const submit = useCallback(() => {
+    if (!t) { setNeed(true); return; }
+    if (rows[0]) go(rows[0].href); else if (noResult) go(NONE_HREF[none]);
+  }, [t, rows, go, noResult, none]);
 
   /* 키보드 — ESC 닫기 · ↑↓ 이동 · Enter 열기(고른 줄이 없으면 맨 위 결과) */
   useEffect(() => {
@@ -297,6 +303,12 @@ export function SearchPopup({ seed, gwanCode, scope, onClose }: {
           {empty && (
             <div className="empty">{tr('empty')}<br />
               <span style={{ fontSize: '12px' }}>{tr('emptyHint')}</span>
+            </div>
+          )}
+          {noResult && (
+            <div className="empty none" data-spop-none={none}>
+              <span style={{ fontSize: '12px' }}>{tr(`none.${none}.hint`)}</span><br />
+              <button type="button" className="pc-bo sm" data-spop-none-go="" onClick={() => go(NONE_HREF[none])}>{tr(`none.${none}.go`, { q: t })}</button>
             </div>
           )}
           {groups.map((g) => (

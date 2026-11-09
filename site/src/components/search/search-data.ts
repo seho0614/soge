@@ -33,16 +33,22 @@ interface ScopeDef {
   intro: boolean; products: boolean; posts: boolean;
   /** 제출하면 갈 곳 */
   href: (q: string) => string;
+  /** v10.220 (docs/354) — 결과가 0건일 때 단추 · Enter 가 가는 곳(사전 키 searchPop.none.*) */
+  none: NoneWay;
 }
 
+export type NoneWay = 'request' | 'product' | 'town';
+/** v10.220 — 결과 0건일 때 갈 곳. 범위가 없는 팝업(머리줄 · 관 화면 검색칸)은 요청 올리기 */
+export const NONE_HREF: Record<NoneWay, string> = { request: '/request/new', product: '/health/c/ALL', town: '/community/write' };
+
 export const SCOPES: Record<SearchScope, ScopeDef> = {
-  ai: { label: 'scope.ai', gwans: ['MNY', 'MAL', 'BIZ', 'HLT'], intro: true, products: false, posts: false, href: (q) => searchHref(q) },
-  product: { label: 'scope.product', gwans: [], intro: false, products: true, posts: false, href: (q) => `/health/search?${new URLSearchParams({ q: q.trim() })}` },
-  service: { label: 'scope.service', gwans: ['MNY'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MNY') },
-  company: { label: 'scope.company', gwans: ['MAL'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
-  biz: { label: 'scope.biz', gwans: ['BIZ'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'BIZ') },
-  town: { label: 'scope.town', gwans: [], intro: false, products: false, posts: true, href: (q) => `/search?${new URLSearchParams({ q: q.trim(), tab: 'CMU' })}` },
-  pro: { label: 'scope.pro', gwans: ['MAL'], intro: true, products: false, posts: false, href: (q) => searchHref(q, 'MAL') },
+  ai: { label: 'scope.ai', gwans: ['MNY', 'MAL', 'BIZ', 'HLT'], intro: true, products: false, posts: false, href: (q) => searchHref(q), none: 'request' },
+  product: { label: 'scope.product', gwans: [], intro: false, products: true, posts: false, href: (q) => `/health/search?${new URLSearchParams({ q: q.trim() })}`, none: 'product' },
+  service: { label: 'scope.service', gwans: ['MNY'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MNY'), none: 'request' },
+  company: { label: 'scope.company', gwans: ['MAL'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'MAL'), none: 'request' },
+  biz: { label: 'scope.biz', gwans: ['BIZ'], intro: false, products: false, posts: false, href: (q) => searchHref(q, 'BIZ'), none: 'request' },
+  town: { label: 'scope.town', gwans: [], intro: false, products: false, posts: true, href: (q) => `/search?${new URLSearchParams({ q: q.trim(), tab: 'CMU' })}`, none: 'town' },
+  pro: { label: 'scope.pro', gwans: ['MAL'], intro: true, products: false, posts: false, href: (q) => searchHref(q, 'MAL'), none: 'request' },
 };
 
 /** 검색어 집계 — 제출 · 고를 때만(글자마다 부르지 않음). 쿠키 없이 · 실패해도 화면은 그대로 */

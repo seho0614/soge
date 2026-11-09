@@ -9,6 +9,7 @@
   "need": "Tell us what you’d like a referral for.",
   "empty": "Nothing found.",
   "emptyHint": "Try different words or tap a suggested keyword above.",
+  "none": { "request": {"hint": "Nothing listed yet. Post a request and introducers will find it for you.", "go": "Post a request for ‘{q}’"}, "product": {"hint": "No matching product yet. Browse all products instead.", "go": "See all Sogae Mall products"}, "town": {"hint": "No posts mention this yet. Ask on the Sogae Plaza.", "go": "Ask on the Sogae Plaza"}},
   "sec": {
     "requests": "{gwan} requests",
     "listings": "Popular listings",
