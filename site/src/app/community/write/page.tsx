@@ -28,9 +28,10 @@ const DONE = new Set(['CONFIRMED', 'FULFILLED', 'CLOSED']);
  */
 export default async function CommunityWritePage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const p = await me();
-  if (!p) redirect('/login');
-
   const { edit } = await searchParams;
+  /* v10.220 — 로그인 뒤 글쓰기(고치던 글)로 돌아옵니다(검색 「소개광장에 물어보기」) */
+  if (!p) redirect(`/login?next=${encodeURIComponent(edit ? `/community/write?edit=${edit}` : '/community/write')}`);
+
   const t = await getTranslations('plaza');
   let initial: { id: string; title: string; body: string; board: string } | undefined;
   let editErr: string | null = null;
