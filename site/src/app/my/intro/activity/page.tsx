@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiGetPersonal } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { MyHead, Note } from '@/components/my/ui';
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
+import { CashoutBox, type Cashout } from './CashoutBox';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('myDeal'))('act.title') };
@@ -32,6 +33,7 @@ interface Grade { code: string; name: string; criteria: string; benefit: string;
  *   → 적립 · 사용 가능 한 줄 → 안내 → 적립 내역 표 → 등급(현재 등급 · 수락률 · 평균 평가) → 다단계 아님 안내.
  *   v10.31 — 포인트 단위를 시안대로 「원」(1포인트 = 1원) · 시안의 등급 기준표(새싹 ~ 지역 파트너 · 기준 · 혜택 · 현재 표시)를
  *   GET /me/introducer/grades 로 그립니다. 개발의 수락률 · 평균 평가 줄은 표 아래 한 줄로 남깁니다.
+ * v10.219 (D190 · docs/352) — 적립 내역 아래 「포인트 출금」(GET/POST /me/points/cashout) · 현금화 가능 포인트를 확인된 본인 계좌로.
  */
 export default async function ActivityPage() {
   const p = await me();
@@ -42,10 +44,11 @@ export default async function ActivityPage() {
   const pt = (n: number | null | undefined) => f.won(n ?? 0);
   const b_ = (c: React.ReactNode) => <b>{c}</b>;
 
-  const [card, points, grades] = await Promise.all([
+  const [card, points, grades, cashout] = await Promise.all([
     apiGet<Card>('/me/introducer/activity', 0).catch(() => null),
     apiGet<Points>('/me/points', 0).catch(() => null),
     apiGet<Grade[]>('/me/introducer/grades', 0).catch(() => [] as Grade[]),
+    apiGetPersonal<Cashout>('/me/points/cashout').catch(() => null),
   ]);
   const reg = card && card.registered !== false;
 
@@ -89,6 +92,8 @@ export default async function ActivityPage() {
           </table>
         </div>
       )}
+
+      {cashout && <CashoutBox c={cashout} />}
 
       <h2 className="my-s2">{t('intro.grade')}</h2>
       <div className="my-tbl-w" data-intro-grades="">

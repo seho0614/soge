@@ -77,6 +77,8 @@ import { SearchAdminController } from './modules/search/search-admin.controller'
 import { SearchAdminService } from './modules/search/search-admin.service';
 import { PayoutController } from './modules/settlement/payout.controller';
 import { PayoutService } from './modules/settlement/payout.service';
+import { PointCashoutController } from './modules/settlement/point-cashout.controller';
+import { PointCashoutService } from './modules/settlement/point-cashout.service';
 import { LearnController } from './modules/ai/learn.controller';
 import { LearnService } from './modules/ai/learn.service';
 import { AuditController } from './modules/govern/audit.controller';
@@ -261,6 +263,7 @@ import { LeadService } from './modules/lead/lead.service';
     SearchController,
     SearchAdminController,
     PayoutController,
+    PointCashoutController,
     CatalogController,
     TermsController,
     ListingController,
@@ -426,6 +429,7 @@ import { LeadService } from './modules/lead/lead.service';
     RiskLearnService,
     SearchAdminService,
     PayoutService,
+    PointCashoutService,
     AffiliateService, AffiliateAdminService, AffiliateAccountService,   // v10.92 · v10.108
     RecommendService,   // v10.218
     SearchService,

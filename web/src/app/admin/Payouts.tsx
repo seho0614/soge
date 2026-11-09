@@ -5,13 +5,14 @@ import { ErrorView } from '../../components/ErrorView';
 import { won } from '../../lib/format';
 
 interface Row {
-  kind: 'PARTNER' | 'HEALTH'; id: string; sub?: string; payee: string;
+  kind: 'PARTNER' | 'HEALTH' | 'POINT'; id: string; sub?: string; payee: string;
   from?: string; to?: string; amount: number; status?: string;
   ready?: boolean; blocker?: string | null; bankName?: string | null; last4?: string | null; holder?: string | null;
   paidAt?: string; ref?: string; paidBy?: string;
 }
 interface Desk {
   queue: Row[]; drafts: Row[]; paid: Row[];
+  pointSetting: { min: number; taxRate: string | null };
   summary: { waiting: number; ready: number; readyAmount: number; drafts: number };
   note: string;
 }
@@ -20,7 +21,7 @@ interface Recv {
   dueDate: string; overdueDays: number; status: string;
 }
 
-const KIND = { PARTNER: '제휴 수수료', HEALTH: '소개몰 판매자' } as const;
+const KIND = { PARTNER: '제휴 수수료', HEALTH: '소개몰 판매자', POINT: '포인트 출금' } as const;
 const d = (s?: string) => (s ? new Date(s).toLocaleDateString('ko-KR') : '—');
 
 /**
@@ -29,6 +30,8 @@ const d = (s?: string) => (s ? new Date(s).toLocaleDateString('ko-KR') : '—');
  * 확정은 운영(ADMIN · SUPER), 지급 기록은 지급 담당(PAYOUT)이 합니다.
  * 같은 사람이 둘 다 할 수 없습니다 — 서버와 DB 가 막고, 화면은 버튼을 역할에 맞게만 보여 줍니다.
  * 소개비는 여기 없습니다. 당사자끼리 직접 지급합니다(INV-11).
+ * v10.219 (D190 · docs/352) — 회원 포인트 출금(POINT): 회원 신청 → 확정(ADMIN) 또는 반려(사유) → 지급(PAYOUT · 다른 사람).
+ *   출금 기준(최소 금액 · 원천징수율 — 비어 있으면 신청을 받지 않음)은 맨 위 칸 · 바꾸기는 SUPER(운영 설정 point.cashout_*).
  */
 export function Payouts() {
   const roles = tokenRoles();
@@ -43,6 +46,8 @@ export function Payouts() {
   const [msg, setMsg] = useState<string | null>(null);
   const [refs, setRefs] = useState<Record<string, string>>({});
   const [inAmt, setInAmt] = useState<Record<string, string>>({});
+  const [why, setWhy] = useState<Record<string, string>>({});
+  const [ps, setPs] = useState<{ min: string; rate: string; reason: string } | null>(null);
 
   async function act(key: string, fn: () => Promise<{ note?: string }>, reload: () => void) {
     setBusy(key); setErr(null); setMsg(null);
@@ -59,6 +64,23 @@ export function Payouts() {
     return act(r.id, () => api(`/admin/payouts/${r.kind.toLowerCase()}/${r.id}/pay`,
       { method: 'POST', body: JSON.stringify({ ref }) }), desk.reload);
   };
+  const rejectRow = (r: Row) => {
+    const reason = (why[r.id] ?? '').trim();
+    if (reason.length < 2) { setErr('반려 사유를 2자 이상 적어 주십시오.'); return; }
+    return act(r.id, () => api(`/admin/payouts/point/${r.id}/reject`,
+      { method: 'POST', body: JSON.stringify({ reason }) }), desk.reload);
+  };
+  const savePoint = () => {
+    if (!ps || !desk.data) return;
+    const cur = desk.data.pointSetting;
+    const reason = ps.reason.trim() || undefined;
+    return act('pset', async () => {
+      if (ps.min.trim() !== String(cur.min)) await api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'point.cashout_min', value: ps.min.trim(), reason }) });
+      if (ps.rate.trim() !== (cur.taxRate ?? '')) await api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'point.cashout_tax_rate', value: ps.rate.trim(), reason }) });
+      setPs(null);
+      return { note: '포인트 출금 기준을 저장했습니다. 이미 들어온 신청은 신청 때 원천징수율 그대로입니다.' };
+    }, desk.reload);
+  };
   const recordIn = (v: Recv) => {
     const amount = Number(inAmt[v.id] ?? v.unpaid);
     if (!amount || amount < 1) { setErr('입금액을 적어 주십시오.'); return; }
@@ -68,7 +90,8 @@ export function Payouts() {
 
   if (desk.error) return <ErrorView error={desk.error} onRetry={desk.reload} />;
   if (desk.loading || !desk.data) return <p className="muted">불러오는 중…</p>;
-  const { queue, drafts, paid, summary, note } = desk.data;
+  const { queue, drafts, paid, summary, note, pointSetting } = desk.data;
+  const period = (r: Row) => (r.kind === 'POINT' ? `신청 ${d(r.from)}` : `${d(r.from)} ~ ${d(r.to)}`);
 
   return (
     <>
@@ -87,13 +110,28 @@ export function Payouts() {
       {err && <p className="form-error" role="alert">{err}</p>}
       {msg && <p className="notice">{msg}</p>}
 
+      <div className="card pad" data-point-setting={pointSetting.taxRate ?? ''}>
+        <b>포인트 출금 기준</b> 최소 {won(pointSetting.min)} · 원천징수율 {pointSetting.taxRate == null
+          ? <span className="st warn">비어 있음 — 출금 신청을 받지 않음</span> : <b>{pointSetting.taxRate}%</b>}
+        <div className="hint">원천징수 세액은 10원 미만을 버립니다. 비율은 세무 확인 뒤 넣으십시오 — 신청할 때의 비율이 그 신청에 남습니다.</div>
+        {isSuper && !ps && <button className="btn-sm" onClick={() => setPs({ min: String(pointSetting.min), rate: pointSetting.taxRate ?? '', reason: '' })}>바꾸기 (SUPER)</button>}
+        {isSuper && ps && (
+          <div className="form-grid" style={{ marginTop: 8 }}>
+            <label><span>최소 출금(원)</span><input type="number" min={1000} value={ps.min} onChange={(e) => setPs({ ...ps, min: e.target.value })} /></label>
+            <label><span>원천징수율(% · 0 ~ 50)</span><input value={ps.rate} placeholder="예: 8.8" onChange={(e) => setPs({ ...ps, rate: e.target.value })} /></label>
+            <label><span>사유(운영 알림에 남음)</span><input value={ps.reason} maxLength={300} onChange={(e) => setPs({ ...ps, reason: e.target.value })} /></label>
+            <div className="acts"><button className="btn-ok" disabled={busy === 'pset'} onClick={() => void savePoint()}>저장</button> <button className="btn-plain" onClick={() => setPs(null)}>그만두기</button></div>
+          </div>
+        )}
+      </div>
+
       <h3 className="sec">지급 대기 (확정됨) <em>{queue.length}</em></h3>
       {queue.length === 0 && <p className="muted">확정된 지급이 없습니다.</p>}
       {queue.map((r) => (
         <div key={r.id} className="card row">
           <div className="row-main">
             <span className="money">{won(r.amount)}</span>
-            <span className="dim"> {KIND[r.kind]} · {r.payee} · {d(r.from)} ~ {d(r.to)}</span>
+            <span className="dim"> {KIND[r.kind]} · {r.payee} · {period(r)}</span>
             {r.bankName && <span className="dim"> · {r.bankName} ****{r.last4} ({r.holder})</span>}
             {!r.ready && <div className="form-error">지급 불가 — {r.blocker}</div>}
           </div>
@@ -105,22 +143,24 @@ export function Payouts() {
                 <button className="btn-ok" disabled={!r.ready || busy === r.id} onClick={() => void payRow(r)}>지급 기록</button>
               </>
             ) : <span className="dim">지급은 지급 담당이 합니다</span>}
+            {r.kind === 'POINT' && (isPayout || canConfirm) && <RejectBox r={r} why={why} setWhy={setWhy} busy={busy} onReject={rejectRow} />}
           </div>
         </div>
       ))}
 
-      <h3 className="sec">확정 전 (DRAFT) <em>{drafts.length}</em></h3>
+      <h3 className="sec">확정 전 (DRAFT · 포인트 출금 신청) <em>{drafts.length}</em></h3>
       {drafts.length === 0 && <p className="muted">확정할 정산이 없습니다.</p>}
       {drafts.map((r) => (
         <div key={r.id} className="card row">
           <div className="row-main">
             <span className="money">{won(r.amount)}</span>
-            <span className="dim"> {KIND[r.kind]} · {r.payee} · {d(r.from)} ~ {d(r.to)}</span>
+            <span className="dim"> {KIND[r.kind]} · {r.payee} · {period(r)}</span>
           </div>
           <div className="row-act">
             {canConfirm
               ? <button className="btn-ok" disabled={busy === r.id} onClick={() => void confirmRow(r)}>확정</button>
               : <span className="dim">확정은 운영이 합니다</span>}
+            {r.kind === 'POINT' && canConfirm && <RejectBox r={r} why={why} setWhy={setWhy} busy={busy} onReject={rejectRow} />}
           </div>
         </div>
       ))}
@@ -162,5 +202,17 @@ export function Payouts() {
       </table>
       <div className="ad-nt warn"><b>지급 기록은 되돌릴 수 없습니다.</b> 은행에서 실제로 보낸 뒤, 그 거래번호(이체 참조)를 적어 기록하십시오. 계좌 인증이 끝나지 않은 곳은 「지급 불가」로 잠깁니다.</div>
     </>
+  );
+}
+
+/** 포인트 출금 반려 — 사유 필수 · 포인트는 회원의 출금 가능 잔액으로 돌아감 */
+function RejectBox({ r, why, setWhy, busy, onReject }: {
+  r: Row; why: Record<string, string>; setWhy: (v: Record<string, string>) => void; busy: string | null; onReject: (r: Row) => void;
+}) {
+  return (
+    <span data-point-reject={r.id}>
+      <input placeholder="반려 사유" value={why[r.id] ?? ''} maxLength={300} onChange={(e) => setWhy({ ...why, [r.id]: e.target.value })} />
+      <button className="btn-plain" disabled={busy === r.id} onClick={() => onReject(r)}>반려</button>
+    </span>
   );
 }

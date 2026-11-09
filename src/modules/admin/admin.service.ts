@@ -329,6 +329,10 @@ export class AdminService {
     if (AdminService.isIntegSetting(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('INTEG_SETTING_SUPER', '본인인증 · 알림톡 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.219 (D190 · docs/352) — 포인트 출금 기준(최소 금액 · 원천징수율)은 돈이 나가는 기준이라 SUPER 만 */
+    if (key.startsWith('point.cashout_') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('POINT_SETTING_SUPER', '포인트 출금 기준은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.161 (D151) — 약관 재동의 시점(terms.reconsent_before_effective)은 약관 게시와 같이 SUPER 만 */
     if (key.startsWith('terms.') && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('TERMS_SETTING_SUPER', '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

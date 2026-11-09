@@ -84,6 +84,16 @@ const RULES: Array<{ test: RegExp; map: (m: RegExpMatchArray) => Mapped }> = [
     map: (m) => ({ status: 422, code: 'RECOMMEND_RULE', message: m[1] }),
   },
   {
+    /* v10.219 (D190) — 포인트 출금 규칙(잔액 · 최소 · 처리 중 · 확인된 본인 계좌 · 원천징수율 · 상태 순서 · 2인 원칙 · 지우지 못함) · 현금화 전 유효 연결 */
+    test: /^POINT:\s*(.*)/,
+    map: (m) => ({ status: 422, code: 'POINT_RULE', message: m[1] }),
+  },
+  {
+    /* v10.219 — 지급 2인 원칙(fn_payout_two_person · 확정한 사람이 지급 못 함 · 지급자 남김) · 전에는 잡지 않아 500 으로 나갔음 */
+    test: /^PAYOUT:\s*(.*)/,
+    map: (m) => ({ status: 422, code: 'PAYOUT_RULE', message: m[1] }),
+  },
+  {
     /* v10.211 (D188) — 동네픽 후보 규칙(대기로 시작 · 한 번 처리 · 원글 · 지역 못 바꿈 · 지우지 못함) */
     test: /^TOWNPICK:\s*(.*)/,
     map: (m) => ({ status: 422, code: 'TOWN_PICK_RULE', message: m[1] }),

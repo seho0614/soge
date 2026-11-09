@@ -13,8 +13,12 @@ export class PayDto {
   @ApiPropertyOptional({ description: '메모 (소개몰 정산만 저장)' })
   @IsOptional() @IsString() @Length(0, 300) memo?: string;
 }
+export class RejectDto {
+  @ApiProperty({ minLength: 2, maxLength: 300, example: '예금주 이름이 회원 이름과 다름 — 계좌를 다시 확인해 주십시오' })
+  @IsString() @Length(2, 300) reason!: string;
+}
 export class PayoutRowDto {
-  @ApiProperty({ enum: ['PARTNER', 'HEALTH'] }) kind!: string;
+  @ApiProperty({ enum: ['PARTNER', 'HEALTH', 'POINT'] }) kind!: string;
   @ApiProperty() id!: string;
   @ApiPropertyOptional() sub?: string;
   @ApiProperty() payee!: string;
@@ -31,10 +35,15 @@ export class PayoutSummaryDto {
   @ApiProperty() readyAmount!: number;
   @ApiProperty() drafts!: number;
 }
+export class PointCashoutSettingDto {
+  @ApiProperty({ example: 10000 }) min!: number;
+  @ApiProperty({ nullable: true, example: '8.8', description: '원천징수율(%) · 비어 있으면 출금 신청을 받지 않음' }) taxRate!: string | null;
+}
 export class PayoutDeskDto {
   @ApiProperty({ type: [PayoutRowDto], description: '확정 · 지급 대기' }) queue!: PayoutRowDto[];
   @ApiProperty({ type: [PayoutRowDto], description: '확정 전(DRAFT) — 운영이 확정' }) drafts!: PayoutRowDto[];
   @ApiProperty({ type: [PayoutRowDto], description: '최근 지급 50건' }) paid!: PayoutRowDto[];
+  @ApiProperty({ type: PointCashoutSettingDto, description: 'v10.219 포인트 출금 기준(바꾸기는 SUPER · 운영 설정 point.cashout_*)' }) pointSetting!: PointCashoutSettingDto;
   @ApiProperty({ type: PayoutSummaryDto }) summary!: PayoutSummaryDto;
   @ApiProperty() note!: string;
 }
@@ -67,8 +76,8 @@ export class PayoutController {
 
   @Post(':kind/:id/confirm')
   @Roles('ADMIN', 'SUPER')
-  @ApiOperation({ summary: '정산 확정 (운영)', description: 'DRAFT → CONFIRMED. 확정자가 기록되고, 그 사람은 지급할 수 없습니다.' })
-  @ApiParam({ name: 'kind', enum: ['partner', 'health'] })
+  @ApiOperation({ summary: '정산 확정 (운영)', description: 'DRAFT → CONFIRMED(포인트 출금은 REQUESTED → CONFIRMED). 확정자가 기록되고, 그 사람은 지급할 수 없습니다.' })
+  @ApiParam({ name: 'kind', enum: ['partner', 'health', 'point'] })
   @ApiOkResponse({ type: PayoutActionDto })
   @ApiResponse({ status: 422, type: ErrorDto })
   @Audit('PAYOUT_CONFIRM', 'SETTLEMENT')
@@ -83,11 +92,22 @@ export class PayoutController {
     description: 'CONFIRMED → PAID. **이체 참조가 필수**이고 되돌릴 수 없습니다. ' +
       '인증된 계좌가 없거나(제휴) 하위가맹점 ID 가 없으면(소개몰) DB 가 막습니다.',
   })
-  @ApiParam({ name: 'kind', enum: ['partner', 'health'] })
+  @ApiParam({ name: 'kind', enum: ['partner', 'health', 'point'] })
   @ApiOkResponse({ type: PayoutActionDto })
   @ApiResponse({ status: 422, type: ErrorDto })
   @Audit('PAYOUT_PAY', 'SETTLEMENT')
   pay(@Param('kind') kind: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: PayDto) {
     return this.svc.pay(kind, id, dto.ref, dto.memo);
+  }
+
+  @Post(':kind/:id/reject')
+  @Roles('ADMIN', 'PAYOUT')
+  @ApiOperation({ summary: '포인트 출금 반려 (운영 · 지급 담당)', description: 'v10.219 (D190) — 신청 · 확정 상태의 포인트 출금을 사유와 함께 반려. 포인트는 출금 가능 잔액으로 돌아갑니다. kind 는 point 만.' })
+  @ApiParam({ name: 'kind', enum: ['point'] })
+  @ApiOkResponse({ type: PayoutActionDto })
+  @ApiResponse({ status: 422, description: 'REJECT_POINT_ONLY · REASON_REQUIRED · NOT_OPEN', type: ErrorDto })
+  @Audit('PAYOUT_REJECT', 'SETTLEMENT')
+  reject(@Param('kind') kind: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: RejectDto) {
+    return this.svc.reject(kind, id, dto.reason);
   }
 }

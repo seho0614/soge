@@ -2313,10 +2313,13 @@
    "gates": [],
    "apis": [
     "GET /me/introducer/activity",
-    "GET /me/points"
+    "GET /me/points",
+    "GET /me/points/cashout",
+    "POST /me/points/cashout",
+    "POST /me/points/cashout/{id}/cancel"
    ],
    "nav": "SB-MYP-INT-010",
-   "note": "적립과 사용 가능을 나눠 보여줍니다. 유효 연결 확인 전에는 현금화되지 않습니다"
+   "note": "적립과 사용 가능을 나눠 보여줍니다. 유효 연결 확인 전에는 현금화되지 않습니다. v10.219 — 포인트 출금 신청(확인된 본인 계좌 · 최소 금액 · 원천징수 · D190)"
   },
   {
    "id": "SB-HOM-INV-010",
@@ -4527,11 +4530,13 @@
     "GET /admin/payouts",
     "POST /admin/payouts/{kind}/{id}/confirm",
     "POST /admin/payouts/{kind}/{id}/pay",
+    "POST /admin/payouts/{kind}/{id}/reject",
+    "PATCH /admin/site-settings",
     "GET /admin/ad-receivables",
     "POST /admin/ad-invoices/{id}/payments"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-10-01 결정 Q1 — 지급 담당(PAYOUT) 작업 화면. 확정은 운영, 지급은 지급 담당(2인 원칙)."
+   "note": "2026-10-01 결정 Q1 — 지급 담당(PAYOUT) 작업 화면. 확정은 운영, 지급은 지급 담당(2인 원칙). v10.219 — 포인트 출금(POINT · 반려 · 출금 기준 SUPER · D190)."
   },
   {
    "id": "SB-ADM-PTN-090",

@@ -600,5 +600,37 @@
     "ok": "Sign",
     "reject": "Decline",
     "failed": "Could not process this."
+  },
+  "cashout": {
+    "title": "Point withdrawal",
+    "lead": "Withdrawable points {v} · minimum {min} · withholding tax {rate}",
+    "why": {
+      "TAX_UNSET": "Requests are not accepted yet while the withdrawal setting (withholding tax rate) is being decided.",
+      "IDENTITY": "You can request after completing identity verification.",
+      "OPEN": "You have a request in progress. You can request again after it is finished.",
+      "ACCOUNT": "You need a verified payout account — add and verify one in My Space › Settlement.",
+      "BELOW_MIN": "Your withdrawable points are less than the minimum amount."
+    },
+    "points": "Points to withdraw",
+    "account": "Payout account",
+    "preview": "Withholding tax {tax} · amount you receive {net}",
+    "submit": "Request withdrawal",
+    "cancel": "Cancel request",
+    "sent": "Your withdrawal request has been made.",
+    "canceled": "Your withdrawal request has been cancelled.",
+    "fail": "It could not be processed. Please try again shortly.",
+    "colDate": "Requested",
+    "colPoints": "Points",
+    "colTax": "Withholding tax",
+    "colNet": "Amount received",
+    "colState": "Status",
+    "st": {
+      "REQUESTED": "Requested",
+      "CONFIRMED": "Confirmed · awaiting transfer",
+      "PAID": "Paid",
+      "REJECTED": "Rejected",
+      "CANCELED": "Cancelled"
+    },
+    "note": "1 point = 1 won. It changes to “Paid” once the operations team confirms and the payout staff transfers it. Rejected or cancelled points can be withdrawn again."
   }
 }
