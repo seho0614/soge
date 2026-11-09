@@ -87,7 +87,7 @@ if API and DB:
     try:
         # ② DB
         mig = psql("SELECT count(*) || '|' || max(name) FROM schema_migrations")
-        ok('② 마이그레이션 223 · 끝 D185(v10.209 ~ 211 부터 226 · D188 — test_v1209 ~ 1211)', mig in ('223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend'), mig)
+        ok('② 마이그레이션 223 · 끝 D185(v10.209 ~ 211 부터 226 · D188 — test_v1209 ~ 1211)', mig in ('223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend', '228|D190_point_cashout'), mig)
 
         consent_ok.agree(SUPU, PW); consent_ok.agree(BUY, PW)
         TS = call('POST', '/auth/login', {'email': SUPU, 'password': PW}).get('accessToken')

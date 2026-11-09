@@ -128,7 +128,7 @@ if API and DB:
         mig = psql("SELECT count(*) || '|' || max(name) FROM schema_migrations")
         hol = psql("SELECT count(*) FROM public_holidays WHERE day IN ('2026-12-25','2027-01-01','2027-02-07','2027-02-09','2027-05-13','2027-09-15','2027-10-11','2027-12-27')")
         ok('② 마이그레이션 221 · 끝 D183(v10.207 부터 222 · D184 — test_v1207) · 공휴일 처음 값(설날 · 대체공휴일 · 부처님오신날 · 추석 · 성탄절 대체 8곳 확인)',
-           mig in ('221|D183_ai_week_holidays_kakao', '222|D184_plan_admin_price_lock', '223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend') and hol == '8', f'{mig} · {hol}')
+           mig in ('221|D183_ai_week_holidays_kakao', '222|D184_plan_admin_price_lock', '223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend', '228|D190_point_cashout') and hol == '8', f'{mig} · {hol}')
         bd = psql("SELECT to_char(fn_business_day_after('2027-02-05 10:00+09') AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') || '|' || "
                   "to_char(fn_review_sla_due('2027-02-05 10:00+09', 24) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') || '|' || "
                   "to_char(fn_business_day_after('2026-11-06 10:00+09') AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') || '|' || "
