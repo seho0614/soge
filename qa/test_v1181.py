@@ -5,7 +5,7 @@
 
   ① 코드 — D170(login_history · privacy_requests 잠금 트리거 · 파기 함수 · 설정 3 · 표 지우는 문장 없음 · 208) · API · 화면 4 · 사용자 웹 화면 3 · 운영 탭 · 영어 · docs/283 · 판
   ② (API · DB) 로그인 기록 — 성공 · 비밀번호 틀림 기록(IP 앞 두 마디 · 브라우저 종류) · 모든 기기 로그아웃(틀린 비밀번호 422 · 옛 증표 무효 · 새 증표 200) · 보관 기간 파기
-  ③ (API · DB) 내 정보 내려받기 — 칸 19개 · 본인 것 · 비밀값 없음 · 틀린 비밀번호 422 · 하루 한도 429 · 감사 기록은 건수만
+  ③ (API · DB) 내 정보 내려받기 — 칸 21개 · 본인 것 · 비밀값 없음 · 틀린 비밀번호 422 · 하루 한도 429 · 감사 기록은 건수만
   ④ (API · DB) 권리 요청 — 접수(기한 · 내용 암호화) · 운영 목록 · 회원 403 · 연장 한 번 · 처리 완료 · 끝난 요청 409 · DB 고치기 · 지우기 거절 · 회원 알림 · 처리 중 5건 한도
   ⑤ (API · DB) 하루 요약 — 기한 2일 안이면 PRIVACY_REQUEST_DUE(요청 · 기한마다 한 번)
 """
@@ -145,11 +145,12 @@ if API and DB:
         x1, jx1 = call('POST', '/me/data-export', TB, {'password': PW})
         data = jx1.get('data') or {}
         SECT = ['profile', 'termAgreements', 'listings', 'requests', 'referralCodes', 'successFees', 'posts', 'comments', 'pollVotes', 'favorites',
-                'town', 'healthOrders', 'healthReturns', 'addresses', 'points', 'notifications', 'inquiries', 'privacyRequests', 'loginHistory']
+                'town', 'healthOrders', 'healthReturns', 'addresses', 'points', 'notifications', 'inquiries', 'privacyRequests', 'loginHistory',
+                'pointCashouts', 'taxId']
         txt = json.dumps(jx1, ensure_ascii=False)
         missing = [k for k in SECT if k not in data]
-        ok('③ 내려받기 — 오늘 횟수 · 틀린 비밀번호 422 · 200 · 칸 19개 모두 · 본인 이메일 · 파일 이름 · 비밀번호 해시 · 증표 없음 · 로그인 기록 들어감',
-           g0 == 200 and jg0.get('limit') == 20 and len(jg0.get('sections') or []) == 19 and x0 == 422 and x1 == 200 and not missing
+        ok('③ 내려받기 — 오늘 횟수 · 틀린 비밀번호 422 · 200 · 칸 21개 모두(v10.219 포인트 출금 · 주민등록번호 가린 값 더함) · 본인 이메일 · 파일 이름 · 비밀번호 해시 · 증표 없음 · 로그인 기록 들어감',
+           g0 == 200 and jg0.get('limit') == 20 and len(jg0.get('sections') or []) == len(SECT) and x0 == 422 and x1 == 200 and not missing
            and (data.get('profile') or {}).get('email') == 'buyer@x.com' and re.fullmatch(r'sogaebank_my_data_\d{8}\.json', jx1.get('fileName') or '')
            and 'password_hash' not in txt and 'passwordHash' not in txt and 'secret_enc' not in txt and '$2a$' not in txt and '$2b$' not in txt and 'accessToken' not in txt
            and len(data.get('loginHistory') or []) >= 2,
