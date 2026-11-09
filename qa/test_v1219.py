@@ -44,7 +44,7 @@ ok('① D190 — 출금 표(계좌번호 없음) · 잔액 함수 · 신청 트�
    and 'EXECUTE FUNCTION public.fn_payout_two_person()' in M and "SELECT 'POINT', c.id, 'MEMBER', ac.name," in M
    and "OR p_table ~ '^(point_cashouts)$'" in M and 'floor(NEW.points * NEW.tax_rate / 1000) * 10' in M
    and "UPDATE public.point_rules SET needs_valid = false WHERE code = 'REFERRAL_DIRECT'" in M and "v_rule.points, true, 'invitee '" in M
-   and "('point.cashout_min', '10000'" in M and "('point.cashout_tax_rate', NULL" in M and 'ux_point_cashouts_open' in M
+   and "('point.cashout_min', '10000'" in M and "('point.cashout_tax_rate', '3.3'" in M and 'ux_point_cashouts_open' in M
    and not re.search(r'point_cashouts[^;]*\b(account_no|bank_code)\b', M) and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M)
    and 'D190_point_cashout' in mig, f'{len(mig)} · {mig[-1] if mig else ""}')
 
