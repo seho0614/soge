@@ -118,7 +118,7 @@ export class RoleReviewService {
               ended_at AS "endedAt", ok, affected, detail
          FROM job_runs WHERE job = 'pii_purge' AND started_at >= now() - make_interval(days => $1)
         ORDER BY started_at DESC`, [d]);
-    const KEYS = ['accounts', 'ipMasked', 'leads', 'consultRequests', 'authRecords', 'overdue'] as const;
+    const KEYS = ['accounts', 'ipMasked', 'leads', 'consultRequests', 'authRecords', 'taxIds', 'overdue'] as const;   // v10.219 taxIds — 주민등록번호(D190)
     const items = runs.map((r: any) => {
       let c: Record<string, number> = {};
       if (r.ok) { try { c = JSON.parse(r.detail ?? '{}'); } catch { c = {}; } }

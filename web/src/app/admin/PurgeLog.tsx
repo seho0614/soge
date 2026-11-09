@@ -2,12 +2,12 @@ import { useApi } from '../../lib/useApi';
 import { n } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 
-type Counts = { accounts: number; ipMasked: number; leads: number; consultRequests: number; authRecords: number; overdue: number };
+type Counts = { accounts: number; ipMasked: number; leads: number; consultRequests: number; authRecords: number; taxIds: number; overdue: number };
 interface Run { id: string; startedAt: string; endedAt: string | null; ok: boolean | null; affected: number | null; counts: Counts; error: string | null }
 interface Data { days: number; items: Run[]; months: Record<string, Omit<Counts, 'overdue'> & { overdue: number }>; last: string | null; hoursSinceLast: number | null; overdueNow: number }
 
 const COLS: Array<[keyof Counts, string]> = [
-  ['accounts', '탈퇴 계정'], ['ipMasked', 'IP 가리기'], ['leads', '리드 연락처'], ['consultRequests', '상담 신청'], ['authRecords', '인증 기록'],
+  ['accounts', '탈퇴 계정'], ['ipMasked', 'IP 가리기'], ['leads', '리드 연락처'], ['consultRequests', '상담 신청'], ['authRecords', '인증 기록'], ['taxIds', '주민등록번호'],
 ];
 
 /**

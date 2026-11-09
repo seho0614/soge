@@ -16,6 +16,8 @@
 --   ⑥ 신고 자료(대표 11/9 「신고 자료 내려받기 · 모두」) — 원천징수를 소득세(10원 미만 버림) + 지방소득세(소득세의 10% · 10원 미만 버림)로 나눠 남김 ·
 --      주민등록번호(account_tax_ids · 암호화 · 가린 값만 화면) — 스위치 point.cashout_tax_id(꺼진 채). 지금 처리방침에 주민등록번호 수집 줄이 없어
 --      처리방침에 「주민등록번호(암호화)」가 게시된 뒤에만 SUPER 가 켬(API 가 막음) · 켜지면 등록 없이 출금 신청을 DB 가 막음.
+--   ⑦ 주민등록번호 파기(대표 11/9 「보관기간 5년 삭제기능」) — 마지막 지급(지급이 없으면 등록 · 고친 날)이 있는 해의 다음 해 1월 1일부터
+--      privacy.tax_id_retention_years(5 · 5 ~ 10)년이 지나면 매일 03:00 개인정보 파기 작업(pii_purge)이 지움 · 처리 중 신청이 있으면 남김.
 -- =====================================================================
 
 -- ① 추천 보상 현금화 ----------------------------------------------------------
@@ -111,6 +113,34 @@ CREATE TABLE IF NOT EXISTS public.account_tax_ids (
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
+INSERT INTO public.site_settings (key, value, scope, description, is_required_for_open, value_pattern, value_example)
+VALUES ('privacy.tax_id_retention_years', '5', 'ADMIN',
+        '주민등록번호(포인트 출금 · 지급명세서) 보관 햇수(v10.219 · D190) — 마지막 지급한 해의 다음 해 1월 1일부터 이 햇수가 지나면 매일 03:00 파기. 5 ~ 10(국세기본법 장부 보존 5년 — 법무 · 세무 확인 필요).',
+        false, '^([5-9]|10)$', '5')
+ON CONFLICT (key) DO NOTHING;
+
+/* 파기 날짜 — 마지막 지급(없으면 등록 · 고친 날)이 있는 해(한국 시각)의 다음 해 1월 1일 + 보관 햇수 · 처리 중 신청 여부 */
+CREATE OR REPLACE VIEW public.v_tax_id_purge_due AS
+SELECT t.account_id,
+       make_date(extract(year FROM (greatest(t.updated_at, coalesce(p.last_paid, t.updated_at)) AT TIME ZONE 'Asia/Seoul'))::int + 1
+                 + greatest(coalesce(nullif((SELECT value FROM public.site_settings WHERE key = 'privacy.tax_id_retention_years'), '')::int, 5), 5), 1, 1) AS purge_on,
+       p.last_paid,
+       EXISTS (SELECT 1 FROM public.point_cashouts c WHERE c.account_id = t.account_id AND c.status IN ('REQUESTED', 'CONFIRMED')) AS has_open
+  FROM public.account_tax_ids t
+  LEFT JOIN LATERAL (SELECT max(c.paid_at) AS last_paid FROM public.point_cashouts c WHERE c.account_id = t.account_id AND c.status = 'PAID') p ON true;
+COMMENT ON VIEW public.v_tax_id_purge_due IS '주민등록번호 파기 날짜(D190) — purge_on 이 지나고 처리 중 신청이 없으면 fn_purge_tax_ids 가 지움';
+
+CREATE OR REPLACE FUNCTION public.fn_purge_tax_ids() RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE n int;
+BEGIN
+  DELETE FROM account_tax_ids t
+   USING v_tax_id_purge_due d
+   WHERE d.account_id = t.account_id AND NOT d.has_open
+     AND d.purge_on <= (now() AT TIME ZONE 'Asia/Seoul')::date;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  RETURN n;
+END $$;
+
 COMMENT ON TABLE public.account_tax_ids IS
   '주민등록번호(D190) — 포인트 출금 원천징수 · 지급명세서 제출(소득세법)에만 씀. 암호화 보관 · 화면은 가린 값만 · 받기는 point.cashout_tax_id 가 on 일 때만(처리방침 게시 뒤)';
 

@@ -628,6 +628,8 @@ export class SchedulerService {
         const [consult] = await this.db.query<{ n: number }>(`SELECT fn_consult_purge() AS n`);
         /* v10.48 (D102) — 7일 지난 비밀번호 재설정 증표 · 2일 지난 로그인 실패 기록 */
         const [authRec] = await this.db.query<{ n: number }>(`SELECT fn_purge_auth_records() AS n`);
+        /* v10.219 (D190) — 주민등록번호(포인트 출금 · 지급명세서): 마지막 지급한 해의 다음 해 1월 1일부터 5년(privacy.tax_id_retention_years) 지나면 */
+        const [taxIds] = await this.db.query<{ n: number }>(`SELECT fn_purge_tax_ids() AS n`);
 
         // 파기 기한을 넘긴 건이 남아 있으면 경보 — 법정 기한 초과입니다
         const [over] = await this.db.query<{ n: string }>(
@@ -637,8 +639,8 @@ export class SchedulerService {
             '파기 기한을 넘긴 개인정보가 있습니다', { count: Number(over.n) });
         }
 
-        affected = acc.n + leads.length + consult.n + authRec.n;
-        detail = { accounts: acc.n, ipMasked: ip.n, leads: leads.length, consultRequests: consult.n, authRecords: authRec.n, overdue: Number(over.n) };
+        affected = acc.n + leads.length + consult.n + authRec.n + taxIds.n;
+        detail = { accounts: acc.n, ipMasked: ip.n, leads: leads.length, consultRequests: consult.n, authRecords: authRec.n, taxIds: taxIds.n, overdue: Number(over.n) };
         break;
       }
     }
