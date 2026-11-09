@@ -1,7 +1,7 @@
 """v10.220 (docs/354) — 검색 결과가 없을 때 다음 길(요청 올리기 · 소개몰 전체 · 소개광장 묻기)
 
   ① (코드) 범위마다 none(request · product · town) · NONE_HREF 세 곳 · 팝업 빈 결과 단추 · Enter 도 같은 곳 · 결과가 있으면 맨 위 결과 그대로 · 사전 ko · en · 문서 354 · 판
-  ② (화면) 메인 통합 · 상품 · 동네정보 탭, 관 화면(소개장터) 검색칸, 머리줄 돋보기 — 없는 말: 안내 · 단추 → Enter 로 그 길(로그인 전이면 로그인 화면)
+  ② (화면) 메인 통합 · 상품(/health/c/ALL 은 상품 있는 첫 분류로 넘어감) · 동네정보(로그인 화면 next) 탭, 관 화면(소개장터) 검색칸, 머리줄 돋보기 — 없는 말: 안내 · 단추 → Enter 로 그 길(로그인 전이면 로그인 화면)
      있는 말(공장): 단추 없음 · Enter 는 맨 위 결과 상세로(10/14 지시 그대로)
   자료를 만들지 않음(두 번 돌려도 같음)
 """
@@ -41,6 +41,7 @@ ok('① 사전 ko · en — none.request · product · town 의 hint · go · �
    all(ko.get('none', {}).get(w, {}).get(f) and en.get('none', {}).get(w, {}).get(f) for w in ('request', 'product', 'town') for f in ('hint', 'go'))
    and '{q}' in ko['none']['request']['go'] and '{q}' in en['none']['request']['go'], '')
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('354_')] if os.path.isdir(os.path.join(K, 'docs')) else []
+ok('① 글쓰기 — 로그인 전이면 돌아올 주소(next)를 붙여 로그인으로', "redirect(`/login?next=${encodeURIComponent(edit ? `/community/write?edit=${edit}` : '/community/write')}`)" in rd('site/src/app/community/write/page.tsx'), '')
 ok('① 문서 354 · 판 v10.220 이상', bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 220), f'{DOC} · {rd("VERSION").strip()}')
 
 # ── ② 화면 ──────────────────────────────────────────────────────────────
@@ -100,8 +101,8 @@ else:
         a, pr, tw, mn, hd, ht = (seen.get(f'{k}{w}', (None, '', '')) for k in ('ai', 'product', 'town', 'money', 'hdr', 'hit'))
         ok(f'② {w}px 통합 탭 · 없는 말 — 「요청 올리기」(친 말) · Enter → 요청 올리기(로그인 전이라 로그인 화면)',
            a[0] == 'request' and MISS in a[1] and login(a[2], '/request/new'), str(a))
-        ok(f'② {w}px 상품 탭 → 소개몰 전체 · 동네정보 탭 → 소개광장 글쓰기(로그인 화면)',
-           pr[0] == 'product' and pr[2].startswith('/health/c/ALL') and tw[0] == 'town' and (tw[2].startswith('/community/write') or login(tw[2], '/community/write')),
+        ok(f'② {w}px 상품 탭 → 소개몰 전체(첫 분류로 넘어감) · 동네정보 탭 → 소개광장 글쓰기(로그인 뒤 돌아옴)',
+           pr[0] == 'product' and pr[2].startswith('/health/c/') and tw[0] == 'town' and (tw[2].startswith('/community/write') or login(tw[2], '/community/write')),
            f'{pr} · {tw}')
         ok(f'② {w}px 소개장터 검색칸 · 머리줄 돋보기(범위 없음) → 요청 올리기',
            mn[0] == 'request' and login(mn[2], '/request/new') and hd[0] == 'request' and login(hd[2], '/request/new'), f'{mn} · {hd}')
