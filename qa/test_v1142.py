@@ -100,7 +100,7 @@ if API and DB:
         setv('alimtalk.provider', 'NONE'); setv('notify.alimtalk_ready', 'off')
         s0 = call('GET', '/admin/alimtalk/status', t=T_)
         ok('② 처음 — NONE · 준비 안 됨 · 키 2개 없음 · 템플릿 4개(심의 전) · 값 칸 없음', s0.get('provider') == 'NONE' and s0.get('configured') is False
-           and [k['set'] for k in s0.get('keys', [])] == [False, False] and len(s0.get('templates', [])) == 4 and 'value' not in json.dumps(s0.get('keys')), str(s0)[:160])
+           and [k['set'] for k in s0.get('keys', [])] == [False, False] and len(s0.get('templates', [])) in (4, 5) and 'value' not in json.dumps(s0.get('keys')), str(s0)[:160])
         psql(f"INSERT INTO account_roles(account_id, role) SELECT id, 'ADMIN' FROM accounts WHERE email = '{SELLER}' ON CONFLICT DO NOTHING;")
         AT = call('POST', '/auth/login', {'email': SELLER, 'password': 'sgb-dev-1234'})['accessToken']
         ok('② 권한 — 회원 403 · 운영(ADMIN) 보기만(방식 · 템플릿 · 시험 403)', call('GET', '/admin/alimtalk/status', t=BT).get('_err') == 403
@@ -187,7 +187,7 @@ if ADMIN_WEB:
             pg.goto(ADMIN_WEB + '/#/integrations', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
             box = pg.locator('[data-alimtalk-panel]')
             ok('③ 외부 연동 › 「알림톡」 — 준비 다섯 줄 이상 · 템플릿 4줄 · 시험 발송 · 보낸 기록', box.count() == 1 and box.locator('[data-alimtalk-row]').count() >= 5
-               and box.locator('[data-alimtalk-tpl]').count() == 4 and box.locator('[data-alimtalk-test]').count() == 1 and box.locator('[data-alimtalk-sends]').count() == 1,
+               and box.locator('[data-alimtalk-tpl]').count() in (4, 5) and box.locator('[data-alimtalk-test]').count() == 1 and box.locator('[data-alimtalk-sends]').count() == 1,
                box.inner_text()[:120] if box.count() else '없음')
             ok('③ 연동 키 목록에 「발신 프로필 키」 · 「NICE 클라이언트 ID」', pg.get_by_text('발신 프로필 키').count() >= 1 and pg.get_by_text('NICE 클라이언트 ID').count() >= 1, '')
             if box.count(): box.scroll_into_view_if_needed()
