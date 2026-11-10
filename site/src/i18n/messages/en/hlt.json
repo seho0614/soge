@@ -261,6 +261,21 @@
     "termsFail": "Could not load the terms. Please try again shortly.",
     "termsNone": "The health product sales terms have not been published yet."
   },
+  "band": {
+    "aria": "Health mall notice",
+    "orderOff": "The health mall is not taking orders right now — you can still browse products and add them to your cart. We will let you know when orders open.",
+    "saleOff": "Seller sales are not open yet — you can register products and have them reviewed, but customers cannot buy them yet.",
+    "paused": "Your sales are paused (reason: {reason}) — your products are not sold while paused.",
+    "blocked": "Your seller account is restricted (reason: {reason}).",
+    "closed": "Your store is closed (reason: {reason}) — to sell again, please submit a new seller application.",
+    "pending": "We are reviewing your seller application.",
+    "applyOn": "We are accepting seller applications — you can sell your own products in the health mall.",
+    "applyOff": "Seller applications (product registration) are not open yet.",
+    "center": "Seller center",
+    "apply": "Apply",
+    "view": "Details",
+    "dismiss": "Close notice"
+  },
   "tenant": {
     "title": "Apply as a mall seller",
     "lead": "Both individuals and businesses can apply. The seller center opens after review.",

@@ -9,6 +9,7 @@ import { PATH_GWAN, safeSort } from '@/lib/format';
 import { SecHead, ShopMain } from '@/components/shop/ShopMain';
 import { GwanLanding } from '@/components/gwan/GwanLanding';
 import { MoneyMain } from '@/components/money/MoneyMain';
+import { HltBand } from '@/components/health/HltParts';
 import '@/styles/mal.css';
 
 type Props = {
@@ -58,6 +59,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
   if (code === 'HLT') {
     return (
       <><div className="shop">
+        <HltBand />
         <ShopMain />
         <div className="shop-in">
           <section className="shop-sec" data-shop-listings="1">

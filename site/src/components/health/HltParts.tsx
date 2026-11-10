@@ -11,6 +11,7 @@ import { Msgs } from '@/i18n/Msgs';
 import type { HltProduct } from './types';
 import { CartAdd } from './CartAdd';
 import { ProductArt, Rosette } from './ProductArt';
+import { HltNoticeBand, type BandText } from './HltNoticeBand';
 import { useFmt } from '@/lib/useFmt';
 
 /**
@@ -24,10 +25,22 @@ import { useFmt } from '@/lib/useFmt';
 export function HltNav({ back = '/health' }: { on?: string; back?: string }) {
   const t = useTranslations('hlt.common');
   return (
-    <div className="hlt-backrow">
-      <Link className="hlt-btn sm" href={back} data-back>{t('back')}</Link>
-    </div>
+    <>
+      <HltBand />
+      <div className="hlt-backrow">
+        <Link className="hlt-btn sm" href={back} data-back>{t('back')}</Link>
+      </div>
+    </>
   );
+}
+
+const BAND_KEYS = ['orderOff', 'saleOff', 'paused', 'blocked', 'closed', 'pending', 'applyOn', 'applyOff', 'center', 'apply', 'view', 'dismiss', 'aria'] as const;
+
+/** v10.225 (docs/361) — 소개몰 안내 띠(판매 중지 · 입점 판매 · 입점 신청). 소개몰 첫 화면(ShopMain 위)과 HltNav 가 씁니다. */
+export function HltBand() {
+  const t = useTranslations('hlt.band');
+  const text = Object.fromEntries(BAND_KEYS.map((k) => [k, t.raw(k) as string])) as BandText;
+  return <HltNoticeBand text={text} />;
 }
 
 export function Crumb({ items }: { items: { href?: string; label: string }[] }) {

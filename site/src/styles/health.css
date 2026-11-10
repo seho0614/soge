@@ -216,3 +216,17 @@
 .hlt-legal-md ul { padding-left: 18px; }
 .hlt-legal-md.doc-body { white-space: normal; }
 .hlt-legal-md.doc-body pre { white-space: pre-wrap; }
+
+/* ── v10.225 (docs/361) 안내 띠 — 판매 중지 · 입점 판매 · 입점 신청 ── */
+.hlt-bands { display: flex; flex-direction: column; gap: var(--sp-1); margin: 0 0 var(--sp-2); }
+.hlt-band {
+  display: flex; align-items: center; gap: var(--sp-2) var(--sp-3); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); border: 1px solid var(--line);
+  font-size: var(--fs-sm); line-height: 1.5; word-break: keep-all;
+}
+.hlt-band span { flex: 1 1 16em; min-width: 0; }
+.hlt-band a { font-weight: 700; white-space: nowrap; color: inherit; min-height: 44px; display: inline-flex; align-items: center; }
+.hlt-band.warn { background: var(--ad-w); color: var(--ad); border-color: var(--ad); }
+.hlt-band.info { background: var(--accent-w); color: var(--accent); border-color: var(--accent); }
+.hlt-band.muted { background: var(--surface); color: var(--ink-2); }
+.hlt-band-x { background: none; border: 0; color: inherit; font-size: 1.25em; line-height: 1; cursor: pointer; min-width: 44px; min-height: 44px; }
