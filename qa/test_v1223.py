@@ -225,7 +225,7 @@ if API and DB:
            j1.get('job') == 'seller_license_watch' and w1.startswith('1|') and '통신판매업' in w1 and soon in w1 and w2.startswith('1|') and w3.startswith('2|') and al == '1' and st == 'ACTIVE',
            f'{w1[:50]} · {w2[:3]} · {w3[:3]} · {al} · {st} · {j3.get("detail")}')
 
-        psql(f"INSERT INTO hlt_settlements (seller_id, period_from, period_to, net_amount) VALUES ('{sid_}', current_date - 14, current_date - 7, 12000)")
+        psql(f"INSERT INTO hlt_settlements (seller_id, period_from, period_to, gross_amount, net_amount) VALUES ('{sid_}', current_date - 14, current_date - 7, 12000, 12000)")
         acc2 = call('GET', '/me/health/seller/account', None, TL)
         cl0 = call('POST', '/me/health/seller/close', {'reason': '그만둠'}, TL)
         psql(f"UPDATE hlt_settlements SET status = 'CARRIED' WHERE seller_id = '{sid_}'")

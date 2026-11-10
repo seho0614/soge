@@ -100,9 +100,9 @@ if API and DB:
         f0 = psql(f"SELECT fn_term_applies('{ids[AFF]}', 'PARTNER')")
         a1 = call('POST', '/partner/affiliate/apply', {}, TA)
         pid = psql(f"SELECT p.id FROM partners p JOIN businesses b ON b.id = p.business_id WHERE b.account_id = '{ids[AFF]}'")
-        f1 = psql(f"SELECT fn_term_applies('{ids[AFF]}', 'PARTNER') || '|' || (SELECT status FROM partners WHERE id = '{pid}')")
+        f1 = psql(f"SELECT fn_term_applies('{ids[AFF]}', 'PARTNER')::text || '|' || (SELECT status FROM partners WHERE id = '{pid}')")
         ok('② 제휴만 신청한 회원(안심 NONE) — 파트너 이용약관 대상이 됨(전: 아님) · 신청 전은 대상 아님',
-           a1.get('affStatus') == 'APPLIED' and f0 == 'f' and f1 == 't|NONE', f'{f0} · {f1}')
+           a1.get('affStatus') == 'APPLIED' and f0 == 'f' and f1 == 'true|NONE', f'{f0} · {f1}')
         d1 = call('POST', f'/admin/affiliates/applications/{pid}/decide', {'state': 'REJECTED', 'reason': '활동 계획을 적어 주십시오'}, TS)
         n1 = nt(AFF, 'AFF_REJECTED')
         call('POST', '/partner/affiliate/apply', {}, TA)
