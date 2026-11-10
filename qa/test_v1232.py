@@ -77,15 +77,16 @@ if API and DB:
     TB = call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken')
     tag = f't1232-{int(time.time())}'
     t0 = psql("SELECT now()")
-    # 시험 알림: 풀린 WARN · 풀린 CRITICAL · 30시간 전 INFO · 30시간 전 WARN · 30시간 전 CRITICAL · 방금 WARN · 30시간 전 이미 확인한 WARN
-    psql("INSERT INTO ops_alerts (alert_code, severity, raised_at, title, resolved_at, acknowledged_at) VALUES "
+    # 시험 알림(ops_alerts 는 (alert_code, raised_at) 고유 — 같은 종류는 시각을 1초씩 달리): 풀린 WARN · 풀린 CRITICAL · 30시간 전 INFO · 30시간 전 WARN · 30시간 전 CRITICAL · 방금 WARN · 30시간 전 이미 확인한 WARN
+    ins = psql("INSERT INTO ops_alerts (alert_code, severity, raised_at, title, resolved_at, acknowledged_at) VALUES "
          f"('T1232_RES', 'WARN', now() - interval '1 hour', '{tag} res-warn', now(), NULL), "
-         f"('T1232_RES', 'CRITICAL', now() - interval '1 hour', '{tag} res-crit', now(), NULL), "
+         f"('T1232_RES', 'CRITICAL', now() - interval '1 hour' - interval '1 second', '{tag} res-crit', now(), NULL), "
          f"('T1232_OLD', 'INFO', now() - interval '30 hours', '{tag} old-info', NULL, NULL), "
-         f"('T1232_OLD', 'WARN', now() - interval '30 hours', '{tag} old-warn', NULL, NULL), "
-         f"('T1232_OLD', 'CRITICAL', now() - interval '30 hours', '{tag} old-crit', NULL, NULL), "
+         f"('T1232_OLD', 'WARN', now() - interval '30 hours' - interval '1 second', '{tag} old-warn', NULL, NULL), "
+         f"('T1232_OLD', 'CRITICAL', now() - interval '30 hours' - interval '2 seconds', '{tag} old-crit', NULL, NULL), "
          f"('T1232_NEW', 'WARN', now(), '{tag} new-warn', NULL, NULL), "
-         f"('T1232_OLD', 'WARN', now() - interval '30 hours', '{tag} old-acked', NULL, now() - interval '29 hours')")
+         f"('T1232_OLD', 'WARN', now() - interval '30 hours' - interval '3 seconds', '{tag} old-acked', NULL, now() - interval '29 hours')")
+    ok('② 시험 알림 7건 넣음(같은 종류는 시각을 1초씩 달리 — ops_alerts 고유 (alert_code, raised_at))', not ins.startswith('!'), ins[:160])
     st = lambda: psql(f"SELECT string_agg(split_part(title, ' ', 2) || '=' || (acknowledged_at IS NOT NULL)::text, ',' ORDER BY id) FROM ops_alerts WHERE title LIKE '{tag} %'")
     try:
         rb = call('POST', '/admin/ops-alerts/ack-bulk', {'scope': 'resolved'}, TB)
