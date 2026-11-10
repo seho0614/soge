@@ -15,6 +15,8 @@ export class HealthSettleService {
     return this.db.query(
       `SELECT s.id, s.code, s.name, s.type, s.status, s.submerchant_id AS "submerchantId",
               s.commission_rate AS "commissionRate",
+              s.status_reason AS "statusReason", s.status_at AS "statusAt",   -- v10.223 (D193)
+              (SELECT count(*)::int FROM hlt_seller_change_requests c WHERE c.seller_id = s.id AND c.state = 'PENDING') AS "changePending",
               (coalesce(btrim(s.submerchant_id),'') <> '') AS "payable",
               (SELECT count(*) FROM hlt_products p
                 WHERE p.seller_id = s.id AND p.status = 'ON_SALE') AS "onSale",

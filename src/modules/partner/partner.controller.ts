@@ -17,7 +17,7 @@ import { BrokerStateDto, BrokerApplyDto, ServiceCreateDto, RegionsDto, FeeDisput
 @ApiTags('PTC')
 @ApiBearerAuth()
 @Controller('api/v1/partner')
-/* ★ 파트너센터는 **입점 사업자 본인 것만** 보이는 자리입니다.
+/* ★ 파트너센터는 **입점한 파트너(사업자 또는 본인인증 개인 · P2P) 본인 것만** 보이는 자리입니다.
  *   리드 · 정산 · 통계가 다 들어 있어, 표시가 없으면 토큰 없이도
  *   남의 리드를 볼 수 있습니다.
  *

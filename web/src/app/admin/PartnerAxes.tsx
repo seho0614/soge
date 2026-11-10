@@ -33,13 +33,21 @@ export function PartnerAxes() {
       method: 'POST', body: JSON.stringify(approve ? { approve: true } : { approve: false, reason: why }),
     }), list.reload, approve ? `${r.company} — ${AXIS[r.axis]} 축을 승인했습니다.` : `${r.company} — ${AXIS[r.axis]} 축을 반려했습니다.`);
   }
+  /* v10.224 (D194) — 승인된 축 해지(사유 5자 이상 · 업체에게 알림 · 게시 중인 글 수를 알려 줌) */
+  async function revoke(r: AxisRow) {
+    const why = (reason[r.id] ?? '').trim();
+    if (why.length < 5) { a.setErr('해지 사유를 5자 이상 적어 주십시오 — 업체에게 그대로 보입니다.'); return; }
+    if (!confirm(`${r.company} — ${AXIS[r.axis]} 축 입점을 해지합니다. 이 축에는 새 글을 올릴 수 없게 됩니다.`)) return;
+    await a.run(r.id, () => api<{ note: string }>(`/admin/partner-axes/${r.id}/revoke`, { method: 'POST', body: JSON.stringify({ reason: why }) }),
+      list.reload, (d) => `${r.company} — ${AXIS[r.axis]} 축: ${d.note}`);
+  }
 
   return (
     <section data-partner-axes="1">
       {/* v10.29 — 화면 제목 · 설명은 위 공통 제목 줄(App · adminMenu PAGE)이 그립니다 */}
       <p className="lead">부동산은 개업공인중개사 인증이 있어야 승인됩니다. 일괄 이관으로 들어온 건은 경위가 「일괄 이관」으로 남습니다.</p>
       <div className="row">
-        {([['PENDING', '심사 대기'], ['APPROVED', '승인'], ['REJECTED', '반려']] as const).map(([k, t]) => (
+        {([['PENDING', '심사 대기'], ['APPROVED', '승인'], ['REJECTED', '반려'], ['REVOKED', '해지']] as const).map(([k, t]) => (
           <button key={k} className={state === k ? 'on' : ''} data-axes-state={k} onClick={() => setState(k)}>{t}</button>
         ))}
       </div>
@@ -69,7 +77,14 @@ export function PartnerAxes() {
                              value={reason[r.id] ?? ''} onChange={(e) => setReason({ ...reason, [r.id]: e.target.value })} />
                       <button disabled={a.busy === r.id} data-act="reject" onClick={() => void decide(r, false)}>반려</button>
                     </>
-                  ) : (r.state === 'APPROVED' ? '승인됨' : '반려됨')}
+                  ) : r.state === 'APPROVED' ? (
+                    <>
+                      승인됨{' '}
+                      <input aria-label="해지 사유" placeholder="해지 사유 (5자 이상)"
+                             value={reason[r.id] ?? ''} onChange={(e) => setReason({ ...reason, [r.id]: e.target.value })} />
+                      <button disabled={a.busy === r.id} data-act="revoke" onClick={() => void revoke(r)}>해지</button>
+                    </>
+                  ) : (r.state === 'REVOKED' ? '해지됨' : '반려됨')}
                 </td>
               </tr>
             ))}

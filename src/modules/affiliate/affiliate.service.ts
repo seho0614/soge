@@ -64,7 +64,7 @@ export class AffiliateService {
       `INSERT INTO partners(business_id, status, aff_status, aff_applied_at) VALUES ($1, 'NONE', 'APPLIED', now())
        ON CONFLICT (business_id) DO UPDATE
           SET aff_status = 'APPLIED', aff_applied_at = now(), aff_reason = NULL, aff_approved_at = NULL, aff_approved_by = NULL
-        WHERE partners.aff_status IS NULL OR partners.aff_status = 'REJECTED'
+        WHERE partners.aff_status IS NULL OR partners.aff_status IN ('REJECTED', 'WITHDRAWN')   -- v10.224 (D194) 탈퇴 뒤 다시 신청
        RETURNING id, aff_status AS "affStatus", aff_applied_at AS "affAppliedAt"`, [a.id]);
     if (!row) throw new StateConflict('ALREADY_APPLIED', '이미 제휴 파트너 신청을 하셨습니다.');
     return { ...row,

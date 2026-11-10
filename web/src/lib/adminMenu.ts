@@ -32,6 +32,7 @@ export const TABS = [
   ['deals', '거래 모니터링'],
   ['settlement', '정산'],
   ['payouts', '지급'],
+  ['hlt-sellers', '소개몰 판매자'],   // v10.224 (D194) — 입점 심사 · 판매자 관리(정산에서 나눔 · ADMIN · SUPER)
   ['hlt-settle', '소개몰 정산'],
   ['hlt-products', '소개몰 상품'],
   ['hlt-orders', '소개몰 주문'],
@@ -80,15 +81,17 @@ export const tabLabel = (t: Tab) => TABS.find(([k]) => k === t)?.[1] ?? t;
 export interface MenuGroup { key: string; label: string; tabs: Tab[] }
 export const GROUPS: MenuGroup[] = [
   { key: 'adm',     label: '대시보드',  tabs: ['home'] },
-  { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges', 'hlt-reviews'] },
+  { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
-  { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'hlt-settle', 'billing'] },
-  { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes', 'hlt-orders', 'hlt-open'] },
+  { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
+  { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
+  /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
+  { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
   { key: 'admusr',  label: '회원',      tabs: ['members', 'users'] },
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'codes'] },
-  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'manual', 'i18n', 'hlt-products'] },
+  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'manual', 'i18n'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
   { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log', 'privacy-requests', 'server-errors'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
@@ -137,6 +140,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   directory:     { title: '법률 · 세무 정액 노출', sub: '법률 · 세무 전문가의 정액 노출을 관리합니다.' },
   settlement:    { title: '정산 승인', sub: '신청 → 승인 → 지급 실행. 소개비에서 떼는 금액은 없습니다 (INV-9). 지급은 당사자가 직접 합니다 (INV-11).', screen: 'SB-ADM-STL-010' },
   payouts:       { title: '지급 데스크', sub: '확정된 지급을 보내고 기록합니다. 확정은 운영, 지급 기록은 지급 담당이 합니다.', screen: 'SB-ADM-PAY-010' },
+  'hlt-sellers': { title: '소개몰 판매자', sub: '입점 신청 심사 · 판매자 정지 · 다시 열기 · 이용 제한 · 폐점 · 수수료율 · 하위가맹점 · 정보 변경 요청. 사유는 판매자에게 그대로 보입니다.', screen: 'SB-ADM-HSL-010' },
   'hlt-settle':  { title: '소개몰 정산', sub: '주 단위로 마감합니다. 배송 완료 후 7일(청약철회 기간)이 지난 건만 집계합니다.', screen: 'SB-ADM-HST-010' },
   billing:       { title: '청구 현황', sub: '구독료가 매출의 전부입니다. 이 화면이 곧 매출 감시입니다. 유예 일수와 재시도 횟수는 코드가 아니라 설정에 있어 여기서 바꾸면 즉시 반영됩니다.', screen: 'SB-ADM-BIL-010' },
   deals:         { title: '거래 감독', sub: '진행 중인 거래와 분쟁 건을 봅니다. 7일간 양측 확인이 안 된 건은 여기로 자동 승격됩니다. 관리자도 임의로 성사를 확정할 수 없습니다 (INV-4).', screen: 'SB-ADM-DEL-010' },

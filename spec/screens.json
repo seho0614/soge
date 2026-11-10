@@ -2047,7 +2047,8 @@
     "GET /admin/partner-axes",
     "POST /admin/partner-axes/{id}/decide",
     "GET /admin/partner-center/change-requests",
-    "POST /admin/partner-center/change-requests/{id}/decide"
+    "POST /admin/partner-center/change-requests/{id}/decide",
+    "POST /admin/partner-axes/{id}/revoke"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "입점 신청 승인(T-01). 국세청 키 미발급 · PASS 스텁이라 두 값은 판단 근거로 쓰지 않습니다. · ★ 2026-10-02 안심소개 축별 입점 심사(D018 — 관리자 「안심소개 입점 심사」 탭)를 이 화면에 잇습니다."
@@ -2850,7 +2851,8 @@
    "apis": [
     "GET /health/tenant/config",
     "GET /me/health/seller",
-    "POST /me/health/seller"
+    "POST /me/health/seller",
+    "POST /terms/agree"
    ],
    "nav": "SB-HLT-ETC-010"
   },
@@ -2886,7 +2888,11 @@
     "GET /me/health/seller/returns",
     "POST /me/health/seller/returns/{id}/decide",
     "GET /me/health/seller/settlements",
-    "GET /me/health/seller/settlements/{id}"
+    "GET /me/health/seller/settlements/{id}",
+    "GET /me/health/seller/account",
+    "POST /me/health/seller/change-request",
+    "POST /me/health/seller/change-request/cancel",
+    "POST /me/health/seller/close"
    ],
    "nav": "SB-HLT-SEL-010"
   },
@@ -3742,7 +3748,9 @@
     "GET /partner/affiliate/settlements",
     "POST /partner/affiliate/settlement-account",
     "POST /partner/affiliate/settlement-account/verify/request",
-    "POST /partner/affiliate/settlement-account/verify"
+    "POST /partner/affiliate/settlement-account/verify",
+    "GET /partner/withdraw",
+    "POST /partner/withdraw"
    ]
   },
   {
@@ -4449,7 +4457,9 @@
     "POST /partner/staff/invitations/{businessId}/accept",
     "PUT /partner/company/brand",
     "POST /partner/company/sites",
-    "DELETE /partner/company/sites/{id}"
+    "DELETE /partner/company/sites/{id}",
+    "GET /partner/withdraw",
+    "POST /partner/withdraw"
    ],
    "nav": "SB-PTC-DSH-010",
    "note": "20260930 등록 — site/src/app 에 구현돼 있었으나 레지스트리에 없던 화면(서비스 파트너센터)."
@@ -4854,6 +4864,35 @@
     "POST /admin/health/orders/{no}/advance"
    ],
    "nav": "SB-ADM-DSH-010",
+   "new": true
+  },
+  {
+   "id": "SB-ADM-HSL-010",
+   "name": "소개몰 판매자 — 입점 심사 · 정지 · 다시 열기 · 이용 제한 · 폐점 · 수수료율 · 정보 변경 요청",
+   "group": "ADM",
+   "url": "/admin/health/sellers",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/health/sellers",
+    "GET /admin/health/sellers/applications",
+    "GET /health/tenant/config",
+    "PATCH /admin/site-settings",
+    "POST /admin/health/sellers/{id}/approve",
+    "POST /admin/health/sellers/{id}/reject",
+    "POST /admin/health/sellers/{id}/submerchant",
+    "GET /admin/health/sellers/change-requests",
+    "POST /admin/health/sellers/change-requests/{id}/decide",
+    "GET /admin/health/sellers/{id}/history",
+    "POST /admin/health/sellers/{id}/status",
+    "POST /admin/health/sellers/{id}/commission"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "v10.224 (D194) — 소개몰 정산에서 나눈 탭 · 판매자 관리는 v10.223 (D193)",
    "new": true
   },
   {

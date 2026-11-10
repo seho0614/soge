@@ -317,13 +317,13 @@ export class ConsultService {
       throw new PolicyViolation('AXIS_INVALID', '축은 EQUIP · RE · SOLAR · CONSULT 중에서 고르십시오.');
     }
     const b = await this.myBusiness();
-    /* 반려된 축만 다시 낼 수 있습니다. 심사 중 · 승인 · 해지는 그대로 둡니다. */
+    /* 반려 · 해지(v10.224)된 축만 다시 낼 수 있습니다. 심사 중 · 승인은 그대로 둡니다. */
     await this.db.query(
       `INSERT INTO mal_partner_axes (business_id, axis)
        SELECT $1, unnest($2::text[])
        ON CONFLICT ON CONSTRAINT mal_partner_axes_business_id_axis_key DO UPDATE
           SET state = 'PENDING', reason = NULL, decided_at = NULL, decided_by = NULL, source = 'APPLY'
-        WHERE mal_partner_axes.state = 'REJECTED'`, [b.id, list]);
+        WHERE mal_partner_axes.state IN ('REJECTED', 'REVOKED')`, [b.id, list]);
     return this.myAxes();
   }
 
@@ -365,5 +365,32 @@ export class ConsultService {
       [id, approve ? '안심소개 입점이 승인되었습니다' : '안심소개 입점이 반려되었습니다',
        approve ? `${AXIS_KO[r.axis] ?? r.axis} 축에 게시할 수 있습니다.` : `사유: ${r.reason}`]);
     return r;
+  }
+
+  /**
+   * v10.224 (D194 · docs/359) — 승인된 축 해지(APPROVED → REVOKED). 사유 5자 이상 · 신청자에게 알림 · 감사 기록.
+   *   해지된 축에는 새 글을 올리거나 검수로 올릴 수 없습니다(mal.partner_only 가 켜져 있을 때 DB 가 막음 · D005).
+   *   이미 게시 중인 글 수를 함께 알려 드립니다 — 내릴지는 운영이 「등록물」 화면에서 따로 봅니다. 해지된 축은 다시 신청할 수 있습니다.
+   */
+  async admRevoke(id: string, reasonRaw: string) {
+    if (!UUID.test(id)) throw new NotFound('입점 신청이 없습니다.');
+    const reason = String(reasonRaw ?? '').trim();
+    if (reason.length < 5) throw new PolicyViolation('REASON_REQUIRED', '해지 사유를 5자 이상 적어 주십시오 — 업체에게 그대로 보입니다.');
+    const [r] = await this.db.query<{ id: string; axis: string; state: string; business_id: string }>(
+      `UPDATE mal_partner_axes SET state = 'REVOKED', reason = $2, decided_at = now(), decided_by = $3
+        WHERE id = $1 AND state = 'APPROVED'
+        RETURNING id, axis, state, business_id`, [id, reason, this.me ?? null]);
+    if (!r) throw new StateConflict('NOT_APPROVED', '승인된 축이 아닙니다.');
+    const AXIS_KO: Record<string, string> = { EQUIP: '기계·설비·시설', RE: '부동산', SOLAR: '태양광', CONSULT: '생활·금융 상담' };
+    await this.db.query(
+      `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+       SELECT account_id, 'PARTNER_AXIS_REVOKED', '안심소개 축 입점이 해지되었습니다', $2, '/partner/apply'
+         FROM businesses WHERE id = $1`,
+      [r.business_id, `${AXIS_KO[r.axis] ?? r.axis} 축 — 사유: ${reason}. 이 축에는 새 글을 올릴 수 없습니다. 고친 뒤 다시 신청하실 수 있습니다.`]);
+    const [l] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM listings l JOIN categories c ON c.id = l.category_id JOIN businesses b ON b.account_id = l.owner_account_id
+        WHERE b.id = $1 AND l.gwan_code = 'MAL' AND c.axis = $2 AND l.status IN ('IN_REVIEW','PUBLISHED')`, [r.business_id, r.axis]);
+    return { id: r.id, axis: r.axis, state: r.state, reason, openListings: l?.n ?? 0,
+      note: `해지했습니다.${(l?.n ?? 0) > 0 ? ` 이 축에 게시 · 검수 중인 글 ${l!.n}건은 그대로입니다 — 「등록물」 화면에서 확인하십시오.` : ''}` };
   }
 }

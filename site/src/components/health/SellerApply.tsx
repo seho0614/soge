@@ -11,6 +11,7 @@ export interface MySeller {
     id: string; code: string; name: string; type: string; status: string; personal: boolean;
     bizRegNo: string | null; ceoName: string | null; ecomRegNo: string | null; csTel: string | null;
     returnAddr: string | null; addr: string | null; rejectReason: string | null; appliedAt: string | null;
+    statusReason?: string | null;   /* v10.223 (D193) — 정지 · 이용 제한 · 폐점 사유 */
     licenses: Array<{ kind: string; licenseNo: string; expiresAt: string | null }>;
   };
 }
@@ -32,11 +33,35 @@ export function SellerApply({ initial }: { initial: MySeller }) {
     : [{ kind: 'ECOM_REG', licenseNo: '', expiresAt: '' }]);
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const [agreeChk, setAgreeChk] = useState(false);
+  const [agreeErr, setAgreeErr] = useState<string | null>(null);
 
   if (s && (s.status === 'ACTIVE' || s.status === 'PAUSED')) {
-    return <div className="hlt-box" data-tenant-state={s.status}><h3>{t('activeTitle', { name: s.name })}</h3><p>{t('activeBody')}</p><Link className="cta-primary" href="/health/seller/center" data-tenant-center="">{t('toCenter')}</Link></div>;
+    return <div className="hlt-box" data-tenant-state={s.status}><h3>{t('activeTitle', { name: s.name })}</h3><p>{t('activeBody')}</p>
+      {s.status === 'PAUSED' && s.statusReason && <p className="form-error" data-tenant-paused="">{t('pausedNote', { reason: s.statusReason })}</p>}
+      <Link className="cta-primary" href="/health/seller/center" data-tenant-center="">{t('toCenter')}</Link></div>;
   }
-  if (s?.status === 'BLOCKED') return <div className="hlt-box" data-tenant-state="BLOCKED"><p>{t('blocked')}</p></div>;
+  if (s?.status === 'BLOCKED') return <div className="hlt-box" data-tenant-state="BLOCKED"><p>{s.statusReason ? t('blockedReason', { reason: s.statusReason }) : t('blocked')}</p></div>;
+
+  /* v10.222 — 입점 약관 동의를 이 화면에서 바로(전에는 약관 보기 링크만 있고 동의할 곳이 없었음) · POST /terms/agree 뒤 내 입점을 다시 읽음 */
+  function agree() {
+    setAgreeErr(null);
+    start(async () => {
+      const r = await fetch('/api/v1/terms/agree', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ code: 'HLT_SELLER', agreed: true }] }),
+      });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) {
+        if (needsLogin(r.status, d?.code)) { router.push('/login?next=%2Fhealth%2Fseller'); return; }
+        setAgreeErr(r.status >= 500 ? t('errSave') : d?.message ?? t('errSave'));
+        return;
+      }
+      const m = await fetch('/api/v1/me/health/seller').then((x) => (x.ok ? x.json() : null)).catch(() => null);
+      if (m) setMine(m as MySeller);
+      router.refresh();
+    });
+  }
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,8 +94,16 @@ export function SellerApply({ initial }: { initial: MySeller }) {
     <>
       {s?.status === 'PENDING' && <p className="notice" data-tenant-state="PENDING">{t('pending')}</p>}
       {s?.status === 'REJECTED' && <p className="form-error" data-tenant-state="REJECTED">{t('rejected', { reason: s.rejectReason ?? '' })}</p>}
+      {s?.status === 'CLOSED' && <p className="notice" data-tenant-state="CLOSED">{t('closedState', { reason: s.statusReason ?? '' })}</p>}
       {!mine.identityVerified && <p className="notice" data-tenant-need="identity">{t('needIdentity')} <Link className="hlt-btn sm" href="/verify">{t('verify')}</Link></p>}
-      {!mine.consent && <p className="notice" data-tenant-need="consent">{t('needConsent')} <Link className="hlt-btn sm" href="/terms/HLT_SELLER">{t('terms')}</Link></p>}
+      {!mine.consent && (
+        <div className="notice" data-tenant-need="consent">
+          <p>{t('needConsent')} <Link className="hlt-btn sm" href="/terms/HLT_SELLER" target="_blank">{t('termsRead')}</Link></p>
+          <label className="hlt-chk"><input type="checkbox" checked={agreeChk} onChange={(e) => setAgreeChk(e.target.checked)} data-tenant-agree-chk="" /> <span>{t('agreeChk')}</span></label>
+          <button type="button" className="hlt-btn sm" disabled={pending || !agreeChk} onClick={agree} data-tenant-agree="">{t('agreeBtn')}</button>
+          {agreeErr && <p className="form-error" role="alert">{agreeErr}</p>}
+        </div>
+      )}
       <form className="auth hlt-form" onSubmit={submit} data-tenant-form="">
         <label className="fld"><span>{t('type')}</span>
           <select name="type" defaultValue={s?.type ?? 'TENANT'}><option value="TENANT">{t('typeTenant')}</option><option value="BRAND">{t('typeBrand')}</option></select></label>

@@ -52,12 +52,12 @@ export class PartnerService {
     }
 
     /* 반려된 신청은 다시 낼 수 있습니다 — 사유를 고쳐 다시 오라는 것이 반려입니다.
-     * 그 밖의 상태(심사 중 · 활동 · 정지 · 탈퇴)는 그대로 둡니다. */
+     * v10.224 (D194) — 본인 탈퇴(WITHDRAWN)도 다시 신청할 수 있습니다(심사부터). 심사 중 · 활동 · 정지는 그대로 둡니다. */
     const [row] = await this.db.query<any>(
       `INSERT INTO partners(business_id) VALUES ($1)
        ON CONFLICT (business_id) DO UPDATE
           SET status = 'APPLIED', applied_at = now(), suspended_reason = NULL
-        WHERE partners.status IN ('REJECTED', 'NONE')   -- v10.194 (D173) — 제휴만 신청한 줄(NONE)도 안심소개 신청을 냄
+        WHERE partners.status IN ('REJECTED', 'NONE', 'WITHDRAWN')   -- v10.194 (D173) — 제휴만 신청한 줄(NONE)도 안심소개 신청을 냄 · v10.224 탈퇴 뒤 다시
        RETURNING id, status, applied_at AS "appliedAt"`, [biz.id]);
     if (!row) throw new StateConflict('ALREADY_APPLIED', '이미 신청하셨습니다.');
 
@@ -87,7 +87,12 @@ export class PartnerService {
 
     // 막힌 것을 이유와 함께 냅니다. "왜 리드가 안 오나"를 묻지 않게.
     const blocked: any[] = [];
-    if (p.status !== 'ACTIVE') {
+    /* v10.222 — 「입점 심사」는 심사 대기(APPLIED)일 때만. 정지 · 탈퇴는 그 사유로 */
+    if (p.status === 'SUSPENDED') {
+      blocked.push({ what: '안심소개 자격 정지', why: `${p.suspendReason ? `사유: ${p.suspendReason} — ` : ''}정지 중에는 리드가 오지 않습니다. 고객센터로 문의해 주십시오.` });
+    } else if (p.status === 'WITHDRAWN') {
+      blocked.push({ what: '안심소개 탈퇴', why: '탈퇴한 파트너에게는 리드가 오지 않습니다.' });
+    } else if (p.status !== 'ACTIVE') {
       blocked.push({ what: '입점 심사', why: '승인 전에는 리드가 오지 않습니다.' });
     }
     if (Number(svc?.approved ?? 0) === 0) {

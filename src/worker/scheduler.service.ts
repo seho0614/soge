@@ -33,7 +33,8 @@ export type JobName =
   | 'subscription_billing' | 'risk_scan' | 'notify_dispatch'
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
-  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily';
+  | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
+  | 'seller_license_watch';
 
 export interface JobResult {
   job: JobName;
@@ -548,6 +549,13 @@ export class SchedulerService {
           await this.alert('LEAD_CASH_AUTO_FAILED', 'WARN', '리드 이용료 자동 충전이 일부 실패했습니다',
             { failed: by('FAILED'), unknown: by('UNKNOWN') });
         }
+        break;
+      }
+
+      /* v10.223 (D193 · docs/358) — 입점 서류 만료: 30일 · 7일 전 판매자 알림 · 만료일에 운영 알림 한 번(자동 정지 없음 · 대표 「알림만」) */
+      case 'seller_license_watch': {
+        const [r] = await this.db.query<{ notified: number; expired: number }>(`SELECT * FROM fn_hlt_license_watch()`);
+        affected = Number(r?.notified ?? 0); detail = { notified: Number(r?.notified ?? 0), expired: Number(r?.expired ?? 0) };
         break;
       }
 

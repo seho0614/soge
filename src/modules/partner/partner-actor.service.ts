@@ -10,6 +10,7 @@ export interface MemberPartner {
   company: string;
   bizRegNo: string | null;
   rejectReason: string | null;
+  suspendReason: string | null;
   businessId: string;
   ownerId: string;
   approvedAt: Date | null;
@@ -44,6 +45,7 @@ export class PartnerActorService {
       `SELECT p.id, p.grade, p.status, p.unpaid_cap AS "unpaidCap",
               b.company_name AS "company", b.biz_reg_no AS "bizRegNo",
               CASE WHEN p.status = 'REJECTED' THEN p.suspended_reason END AS "rejectReason",
+              CASE WHEN p.status = 'SUSPENDED' THEN p.suspended_reason END AS "suspendReason",   -- v10.222 — 정지 사유도 파트너에게
               p.business_id AS "businessId", b.account_id AS "ownerId", p.approved_at AS "approvedAt",
               (b.account_id = $1) AS "isOwner",
               (b.account_id = $1 OR coalesce(m.can_settle, false)) AS "canMoney"

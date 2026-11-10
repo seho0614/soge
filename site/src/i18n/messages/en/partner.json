@@ -176,6 +176,11 @@
     "rejTitle": "Your application was rejected.",
     "rejReason": "Reason: {reason}",
     "rejFix": "You can apply again after fixing the issue.",
+    "suspended": "Suspended",
+    "withdrawn": "Withdrawn",
+    "susTitle": "Your partner status has been suspended.",
+    "susFix": "You will not receive leads while suspended. Please contact customer support with any questions.",
+    "wdNote": "You have withdrawn from the partner program.",
     "s3": "3. SogaeBank approval",
     "approved": "Approved",
     "reviewing": "Under review",
@@ -516,5 +521,17 @@
     "count": "Receiving leads in {n, plural, one {{n} area} other {{n} areas}}.",
     "addrNote": "<b>We do not use detailed addresses.</b> Matching only goes down to city/county/district — neighborhood and unit numbers can identify a specific person, so we never store them.",
     "freeNote": "<b>Turning on areas with few leads costs nothing.</b> No fee is charged unless you view a lead — receiving is free."
+  },
+  "withdraw": {
+    "titleMal": "Leave the safe-referral partner program",
+    "titleAff": "Leave the affiliate program",
+    "helpMal": "After leaving you will not receive leads and your category approvals are revoked. Bonus balance is forfeited. Your affiliate status stays; to return, apply again.",
+    "helpAff": "After leaving all your links are turned off. Your safe-referral status stays; to return, apply again.",
+    "blocked": "You cannot leave now — {why}",
+    "reason": "Reason (optional)",
+    "chk": "I have read the above and want to leave.",
+    "go": "Leave",
+    "done": "You have left.",
+    "fail": "Could not process. Please try again shortly."
   }
 }

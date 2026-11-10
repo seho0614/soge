@@ -7,7 +7,7 @@ import { ORDER_OPEN_SQL } from './health-policy';
 /* ---------------------------------------------------------------------
  * v10.165 (D155 · docs/256) — 소개몰 입점 1단계: 입점 신청 · 서류 · 운영 심사
  *
- *   켜짐   설정 mall.tenant(처음 off) — 입점 약관(HLT_SELLER) 게시 · 결제대행사 하위가맹점 계약 뒤 SUPER 가 켬
+ *   켜짐   설정 mall.tenant_apply(신청 받기 · v10.223 에서 mall.tenant 에서 나눔 · 처음 off) — 입점 약관(HLT_SELLER) 게시 뒤 SUPER 가 켬
  *   누구   본인확인을 마친 회원이면 개인 · 사업자 모두(P2P · 「사업자만」 제한 없음) — 사업자면 사업자등록번호
  *   동의   지금 시행 중인 입점 약관(HLT_SELLER · v_terms_current)에 동의한 회원만
  *   심사   PENDING → 운영 승인 ACTIVE / 반려 REJECTED(사유 · 신청자에게 보임 · 고쳐서 다시 신청)
@@ -26,15 +26,18 @@ export class HealthTenantService {
   constructor(private readonly db: DatabaseService) {}
   private get me() { return RequestCtx.actorId(); }
 
+  /** v10.223 (D193) — 신청 받기는 mall.tenant_apply · 입점 판매 열기는 mall.tenant(DB 판매 문 fn_hlt_tenant_sale_guard)로 나눔 */
   private async on() {
     const [r] = await this.db.query<{ is_on: boolean }>(
-      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on' AS is_on`);
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant_apply'), 'off') = 'on' AS is_on`);
     return !!r?.is_on;
   }
 
-  /** 공개 — 켜짐 (사용자 웹이 「입점 신청」 단추를 보일지) */
+  /** 공개 — 켜짐 (사용자 웹이 「입점 신청」 단추를 보일지) · 입점 판매 열림 */
   async config() {
-    return { enabled: await this.on() };
+    const [r] = await this.db.query<{ sale: boolean }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on' AS sale`);
+    return { enabled: await this.on(), saleOpen: !!r?.sale };
   }
 
   /** v10.170 (D159) — 공개 · 소개몰 「주문 받기」(사용자 웹이 주문 단추를 보일지) */
@@ -59,6 +62,7 @@ export class HealthTenantService {
               s.commission_rate AS "commissionRate",
               (coalesce(btrim(s.submerchant_id), '') <> '') AS "payable",
               s.applied_at AS "appliedAt", s.reviewed_at AS "reviewedAt", s.reject_reason AS "rejectReason",
+              s.status_reason AS "statusReason", s.status_at AS "statusAt",   -- v10.223 (D193) 정지 · 제한 · 폐점 사유
               coalesce((SELECT json_agg(json_build_object(
                          'kind', l.kind, 'licenseNo', l.license_no, 'issuedAt', l.issued_at, 'expiresAt', l.expires_at,
                          'verified', l.verified_at IS NOT NULL) ORDER BY l.kind, l.created_at)
@@ -100,7 +104,7 @@ export class HealthTenantService {
         await this.db.query(
           `UPDATE hlt_sellers SET type = $2, name = $3, personal = $4, biz_reg_no = $5, ceo_name = $6, ecom_reg_no = $7,
                   cs_tel = $8, return_addr = $9, addr = $10, status = 'PENDING', applied_at = now(),
-                  reject_reason = NULL, reviewed_by = NULL, reviewed_at = NULL, updated_at = now()
+                  reject_reason = NULL, reviewed_by = NULL, reviewed_at = NULL, status_reason = NULL, updated_at = now()
             WHERE id = $1`, [id, ...vals]);
         await this.db.query(`DELETE FROM hlt_seller_licenses WHERE seller_id = $1`, [id]);
       } else {
@@ -135,6 +139,13 @@ export class HealthTenantService {
     return rows.slice(0, 200).map((r: any) => ({ ...r, ...(by.get(r.id) ?? {}) }));
   }
 
+  /** v10.222 (D192) — 입점 심사 결과를 신청자에게 알림(사이트 안 · 메일은 notify_dispatch 가) */
+  private async notifySeller(id: string, code: string, title: string, body: string, link: string) {
+    await this.db.query(
+      `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+       SELECT account_id, $2, $3, $4, $5 FROM hlt_sellers WHERE id = $1`, [id, code, title, body, link]);
+  }
+
   private async pending(id: string) {
     const [s] = await this.db.query<{ status: string; type: string }>(
       `SELECT status, type FROM hlt_sellers WHERE id = $1 FOR UPDATE`, [id]);
@@ -152,6 +163,8 @@ export class HealthTenantService {
         [id, this.me, commissionRate ?? null]);
       await this.db.query(
         `UPDATE hlt_seller_licenses SET verified_by = $2, verified_at = now() WHERE seller_id = $1 AND verified_at IS NULL`, [id, this.me]);
+      await this.notifySeller(id, 'SELLER_APPROVED', '소개몰 입점이 승인되었습니다',
+        '판매자센터에서 배송 · 상품을 등록할 수 있습니다.', '/health/seller/center');
       return { ok: true, status: 'ACTIVE' };
     });
   }
@@ -165,6 +178,8 @@ export class HealthTenantService {
       await this.db.query(
         `UPDATE hlt_sellers SET status = 'REJECTED', reviewed_by = $2, reviewed_at = now(), reject_reason = $3, updated_at = now()
           WHERE id = $1`, [id, this.me, why]);
+      await this.notifySeller(id, 'SELLER_REJECTED', '소개몰 입점 신청이 반려되었습니다',
+        `사유: ${why} — 고쳐서 다시 신청하실 수 있습니다.`, '/health/seller');
       return { ok: true, status: 'REJECTED' };
     });
   }

@@ -58,7 +58,7 @@ export class MeService {
              AND status NOT IN ('SETTLED','CANCELLED')) AS deals,
          /* v10.202 (docs/319) — 머리줄 아이콘 자격: 소개몰 판매자 · 입점 신청 받는 중(안심 · 제휴 파트너는 아래 PartnerActorService — 파트너 찾기는 한 곳) */
          EXISTS (SELECT 1 FROM hlt_sellers WHERE account_id = $1 AND type IN ('TENANT', 'BRAND') AND status IN ('ACTIVE', 'PAUSED')) AS seller,
-         coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on' AS tenant`, [this.me]);
+         coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant_apply'), 'off') = 'on' AS tenant`, [this.me]);   // v10.223 (D193) tenant = 신청 받기 스위치 mall.tenant_apply
     /* 안심소개 파트너(대표 · 합류한 직원 · 심사 중 포함 — 제휴만 신청한 줄 빼고) · 제휴 활동 중 */
     const [mal, aff] = await Promise.all([this.actors.forMember(this.me!), this.actors.affiliate(this.me!)]);
     return {

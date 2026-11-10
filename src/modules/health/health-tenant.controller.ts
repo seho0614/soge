@@ -40,7 +40,8 @@ export class SellerRejectDto {
   @ApiProperty({ description: '반려 사유 — 신청자에게 그대로 보임' }) @IsString() @MinLength(2) @MaxLength(500) reason!: string;
 }
 export class TenantConfigDto {
-  @ApiProperty({ description: '입점 신청 켜짐(mall.tenant)' }) enabled!: boolean;
+  @ApiProperty({ description: '입점 신청 받기 켜짐(mall.tenant_apply · v10.223 에서 나눔)' }) enabled!: boolean;
+  @ApiProperty({ description: '입점 판매 열림(mall.tenant · v10.223)' }) saleOpen!: boolean;
 }
 export class OrderConfigDto {
   @ApiProperty({ description: '주문 받기 켜짐(mall.order_open)' }) open!: boolean;
@@ -49,7 +50,7 @@ export class MySellerDto {
   @ApiProperty() enabled!: boolean;
   @ApiProperty({ description: '본인확인 마침' }) identityVerified!: boolean;
   @ApiProperty({ description: '지금 시행 중인 입점 약관(HLT_SELLER)에 동의함' }) consent!: boolean;
-  @ApiPropertyOptional({ type: Object, nullable: true, description: '신청 · 판매자 정보(없으면 null) — status PENDING · ACTIVE · PAUSED · BLOCKED · REJECTED' })
+  @ApiPropertyOptional({ type: Object, nullable: true, description: '신청 · 판매자 정보(없으면 null) — status PENDING · ACTIVE · PAUSED · BLOCKED · REJECTED · CLOSED(폐점 · v10.223) · statusReason 정지 · 제한 · 폐점 사유' })
   seller!: Record<string, unknown> | null;
 }
 export class SellerDecisionDto {

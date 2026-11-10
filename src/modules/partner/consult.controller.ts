@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty,
          ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsIn, IsNotEmpty, IsOptional, IsString,
-         IsUUID, Matches, MaxLength } from 'class-validator';
+         IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { ConsultService } from './consult.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -79,6 +79,17 @@ export class AxisStateDto {
   @ApiProperty({ enum: ['PENDING', 'APPROVED', 'REJECTED', 'REVOKED'] }) state!: string;
   @ApiProperty({ enum: ['APPLY', 'BULK_MIGRATION', 'ADMIN'] }) source!: string;
   @ApiPropertyOptional({ description: '반려 사유 · 일괄 이관 사유' }) reason?: string;
+}
+export class AxisRevokeDto {
+  @ApiProperty({ description: '해지 사유(5자 이상) — 업체에게 그대로 보입니다' }) @IsString() @MinLength(5) @MaxLength(500) reason!: string;
+}
+export class AxisRevokeResultDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() axis!: string;
+  @ApiProperty({ enum: ['REVOKED'] }) state!: string;
+  @ApiProperty() reason!: string;
+  @ApiProperty({ description: '이 축에 게시 · 검수 중인 글 수(그대로 둠)' }) openListings!: number;
+  @ApiProperty() note!: string;
 }
 export class AxisDecideDto {
   @ApiProperty() @StrictBoolean() approve!: boolean;
@@ -173,4 +184,13 @@ export class PartnerAxisAdminController {
   @ApiResponse({ status: 409, description: 'NOT_PENDING', type: ErrorDto })
   @Audit('PARTNER_AXIS_DECIDE', 'PARTNER')
   decide(@Param('id') id: string, @Body() dto: AxisDecideDto) { return this.svc.admDecide(id, dto.approve, dto.reason); }
+
+  @Post(':id/revoke')
+  @ApiOperation({ summary: '승인된 축 해지', description: 'v10.224 (D194) — 사유 5자 이상 · 업체에게 알림. 해지된 축에는 새 글을 올릴 수 없고(안심소개 입점 업체만 게시가 켜져 있을 때), 업체는 다시 신청할 수 있습니다. 게시 중인 글 수를 함께 냅니다.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: AxisRevokeResultDto })
+  @ApiResponse({ status: 409, description: 'NOT_APPROVED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED', type: ErrorDto })
+  @Audit('PARTNER_AXIS_REVOKE', 'PARTNER')
+  revoke(@Param('id') id: string, @Body() dto: AxisRevokeDto) { return this.svc.admRevoke(id, dto.reason); }
 }

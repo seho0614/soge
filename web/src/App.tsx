@@ -52,6 +52,7 @@ import { Community } from './app/admin/Community';
 import { Polls } from './app/admin/Polls';
 import { Ownership } from './app/admin/Ownership';
 import { HealthSettle } from './app/admin/HealthSettle';
+import { HealthSellerTab } from './app/admin/HealthSellerTab';
 import { HealthOpenStock } from './app/admin/HealthOpenStock';   // v10.208 (D185)
 import { HealthProducts } from './app/admin/HealthProducts';
 import { Translations } from './app/admin/Translations';
@@ -265,6 +266,7 @@ function Console() {
         {tab === 'community' && <Community />}
         {tab === 'polls' && <Polls />}
         {tab === 'ownership' && <Ownership />}
+        {tab === 'hlt-sellers' && <HealthSellerTab />}
         {tab === 'hlt-settle' && <HealthSettle onGo={go} />}
         {tab === 'hlt-products' && <HealthProducts />}
         {tab === 'i18n' && <Translations />}

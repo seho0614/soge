@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * 소개몰 입점 신청 — GET /health/tenant/config · GET /me/health/seller · POST /me/health/seller.
- * 설정 mall.tenant 가 꺼져 있으면 「아직 열리지 않음」만 보입니다(입점 약관 게시 · 결제대행사 계약 전).
+ * 설정 mall.tenant_apply(v10.223 — 전 mall.tenant)가 꺼져 있으면 「아직 열리지 않음」만 보입니다(입점 약관 게시 · 결제대행사 계약 전).
  */
 export default async function HltSellerPage() {
   const t = await getTranslations('hlt.tenant');

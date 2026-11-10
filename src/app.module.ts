@@ -121,6 +121,8 @@ import { TownPickController } from './modules/community/town-pick.controller';  
 import { TownPickService } from './modules/community/town-pick.service';
 import { HealthTenantController } from './modules/health/health-tenant.controller';   // v10.165 (D155) 소개몰 입점 신청 · 심사
 import { HealthTenantService } from './modules/health/health-tenant.service';
+import { HealthSellerManageController } from './modules/health/health-seller-manage.controller';   // v10.223 (D193) 소개몰 판매자 관리
+import { HealthSellerManageService } from './modules/health/health-seller-manage.service';
 import { HealthSellerController } from './modules/health/health-seller.controller';   // v10.166 (D156) 소개몰 판매자센터 · 상품 검수
 import { HealthSellerService } from './modules/health/health-seller.service';
 import { LaunchWatchController } from './modules/admin/launch-watch.controller';   // v10.170 (D159) 공개 직후 지켜보기
@@ -213,6 +215,8 @@ import { FileService } from './modules/file/file.service';
 import { MyConsultController, LeadAdminController } from './modules/lead/lead.controller';
 import { ConsultController, PartnerAxisController, PartnerAxisAdminController } from './modules/partner/consult.controller';
 import { ConsultService } from './modules/partner/consult.service';
+import { PartnerWithdrawController } from './modules/partner/partner-withdraw.controller';   // v10.224 (D194) 파트너 본인 해지
+import { PartnerWithdrawService } from './modules/partner/partner-withdraw.service';
 import { DirectoryService } from './modules/partner/directory.service';
 import { DirectoryController, PartnerDirectoryController, DirectoryAdminController } from './modules/partner/directory.controller';
 import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세금계산서 어댑터 · 간주 (D093) */
@@ -321,6 +325,7 @@ import { LeadService } from './modules/lead/lead.service';
     ConsultController,
     MyConsultController,
     PartnerAxisController,
+    PartnerWithdrawController,   // v10.224 (D194)
     PartnerAxisAdminController,
     PartnerDirectoryController,
     DirectoryAdminController,
@@ -343,6 +348,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownVerifyController,   // v10.164 (D154) 동네 인증
     TownPickController,   // v10.211 (D188) 동네픽 AI
     HealthTenantController,   // v10.165 (D155) 소개몰 입점
+    HealthSellerManageController,   // v10.223 (D193) 소개몰 판매자 관리
     HealthSellerController,   // v10.166 (D156) 판매자센터
     LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
     OpsReviewController,     // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
@@ -370,6 +376,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownVerifyService,   /* v10.164 (D154) 동네 인증 */
     TownPickService,   /* v10.211 (D188) 동네픽 AI */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
+    HealthSellerManageService,   /* v10.223 (D193) 소개몰 판매자 관리 */
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
@@ -441,6 +448,7 @@ import { LeadService } from './modules/lead/lead.service';
     AdminService, AdminMemberService, AdminReviewService,   // v10.96
     LeadService,
     ConsultService,
+    PartnerWithdrawService,   // v10.224 (D194)
     DirectoryService,
     EtaxService,
     MailService,

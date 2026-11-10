@@ -162,7 +162,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
     ['mainops/layout', '메인 운영 · 화면 구성'], ['mainops/content', '메인 운영 · 콘텐츠'],
     ['rules', '자동검수 규칙'], ['audit', '표본 감사'], ['integrations', '외부 연동 관리'], ['codes', '코드 라벨'],
     ['badges', '배지 신청 검수'], ['billing', '청구 현황'], ['hlt-orders', '소개몰 주문 · 발송'],
-    ['hlt-reviews', '소개몰 리뷰 · 문의'], ['hlt-settle', '소개몰 정산'], ['hlt-products', '소개몰 상품'],
+    ['hlt-reviews', '소개몰 리뷰 · 문의'], ['hlt-settle', '소개몰 정산'], ['hlt-products', '소개몰 상품'], ['hlt-sellers', '소개몰 판매자'],
     ['reports', '경영 지표'],
   ] as [string, string][]).filter(([k]) => canGo(k.split('/')[0]!) && (!k.startsWith('mainops/') || k === 'mainops/banner' || isSuper));
   const wonN = (v: number) => `${v.toLocaleString('ko-KR')}원`;

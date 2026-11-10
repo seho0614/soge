@@ -213,14 +213,16 @@ export class AffiliateController {
   @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
   @ApiOperation({
     summary: '파트너 입점 심사',
-    description: '신청 목록과 사업자 정보. **사업자 인증을 마친 곳만** 승인하십시오.',
+    description: '신청 목록과 활동 정보. **활동 자격(사업자는 사업자 인증 · 개인은 본인인증 — P2P · D096)을 마친 곳만** 승인하십시오(v10.224 — 옛 「사업자 인증을 마친 곳만」 문구 고침 · 승인은 DB 도 막음).',
   })
   applications() { return this.admin.applications(); }
 
   @Post('admin/affiliates/applications/:id/decide')
   @Roles('ADMIN', 'SUPER', 'PARTNER_AFF')   // v10.194 (D173) — 제휴 파트너 담당도
-  @ApiOperation({ summary: '입점 승인 · 반려', description: '반려면 사유를 적으십시오.' })
-  @Audit('PARTNER_APPROVE', 'PARTNER')
+  @ApiOperation({ summary: '입점 승인 · 반려', description: '반려면 사유를 적으십시오. v10.224 — 사유 없는 반려 422 REASON_REQUIRED · 심사 대기가 아니면 409 NOT_APPLIED(전에는 200 { ok:false }).' })
+  @ApiResponse({ status: 409, description: 'NOT_APPLIED' })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED' })
+  @Audit('AFF_DECIDE', 'PARTNER')   // v10.224 (D194) — 안심소개 승인(PARTNER_APPROVE)과 따로 · 승인 · 반려는 기록의 status(ACTIVE · REJECTED)로
   decide(@Param('id') id: string, @Body() dto: ReviewMaterialDto) {
     return this.admin.decideApplication(id, dto);
   }

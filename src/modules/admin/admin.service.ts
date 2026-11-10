@@ -315,10 +315,11 @@ export class AdminService {
         }
       }
     }
-    /* v10.202 (docs/319) — 소개몰 입점 신청(mall.tenant) 켜기는 SUPER 만 · 입점 약관(HLT_SELLER)이 시행 중이어야(신청이 약관 동의를 요구) · 끄기는 ADMIN 도 */
-    if (key === 'mall.tenant' && (value ?? '').trim() === 'on') {
+    /* v10.202 (docs/319) — 소개몰 입점 신청(v10.223 부터 mall.tenant_apply · 판매 mall.tenant) 켜기는 SUPER 만 · 입점 약관(HLT_SELLER)이 시행 중이어야(신청이 약관 동의를 요구) · 끄기는 ADMIN 도 */
+    /* v10.223 (D193) — 신청 받기(mall.tenant_apply) · 입점 판매 열기(mall.tenant) 둘 다 같은 규칙 */
+    if ((key === 'mall.tenant' || key === 'mall.tenant_apply') && (value ?? '').trim() === 'on') {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {
-        throw new Forbidden('TENANT_SETTING_SUPER', '소개몰 입점 신청을 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
+        throw new Forbidden('TENANT_SETTING_SUPER', key === 'mall.tenant' ? '소개몰 입점 판매를 여는 것은 최고 관리자(SUPER)만 할 수 있습니다.' : '소개몰 입점 신청을 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
       }
       const [t] = await this.db.query<{ ok: boolean }>(`SELECT EXISTS (SELECT 1 FROM v_terms_current WHERE code = 'HLT_SELLER') AS ok`);
       if (!t?.ok) throw new PolicyViolation('TENANT_TERMS_FIRST', '입점 약관(HLT_SELLER)이 아직 게시되지 않아 신청자가 동의할 수 없습니다 — 법무 확인 뒤 약관 화면에서 먼저 게시하십시오.');

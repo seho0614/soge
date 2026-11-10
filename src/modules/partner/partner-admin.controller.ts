@@ -23,7 +23,7 @@ export class PartnerAdminController {
   @Post(':id/approve')
   @ApiOperation({
     summary: '입점 승인',
-    description: '인증되지 않은 사업자는 DB 가 막습니다. 휴업·폐업이면 승인하지 마십시오.',
+    description: '활동 자격(사업자는 사업자 인증 · 개인은 본인인증 — P2P · D096)이 없으면 DB 가 막습니다. 사업자가 휴업·폐업이면 승인하지 마십시오. v10.222 — 승인하면 신청자에게 알림(PARTNER_APPROVED).',
   })
   @ApiParam({ name: 'id' })
   @Audit('PARTNER_APPROVE', 'PARTNER')

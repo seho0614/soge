@@ -21,7 +21,7 @@ interface Acc {
 const maskPhone = (v: string | null) => (v ? v.replace(/^(\d{3})-?(\d{3,4})-?(\d{4})$/, '$1-****-$3') : null);
 const maskEmail = (e: string) => e.replace(/^(.{3})[^@]*/, '$1****');
 
-interface Dash { applied: boolean; status?: string; company?: string; note?: string; rejectReason?: string | null }
+interface Dash { applied: boolean; status?: string; company?: string; note?: string; rejectReason?: string | null; suspendReason?: string | null }
 
 /**
  * SB-PTC-CTR-100 입점 신청 — v10.29 시안 scPtnApply 배치(.nsteps 3단계 → .fset 「입점할 축」 → 단추 줄)
@@ -51,6 +51,10 @@ export default async function ApplyPage() {
   const rejected = d?.status === 'REJECTED';
   const applied = !!d?.applied && !rejected;
   const active = d?.status === 'ACTIVE';
+  /* v10.222 — 정지 · 탈퇴는 「심사 중」이 아님(전에는 승인 아닌 것을 모두 심사 중으로 보였음) */
+  const suspended = d?.status === 'SUSPENDED';
+  const withdrawn = d?.status === 'WITHDRAWN';
+  const reviewing = applied && d?.status === 'APPLIED';
   const cls = (done: boolean, now: boolean) => (done ? 'done' : now ? 'on' : undefined);
 
   return (
@@ -82,16 +86,24 @@ export default async function ApplyPage() {
           </div>
         </li>
 
-        <li className={cls(active, applied && !active)}>
+        <li className={cls(active, reviewing)}>
           <span className="n">3</span>
           <div>
-            <b>{t('s3')}</b><Bg tone={active ? 'ok' : applied ? 'wait' : 'off'}>{active ? t('approved') : applied ? t('reviewing') : t('waiting')}</Bg>
+            <b>{t('s3')}</b><Bg tone={active ? 'ok' : suspended ? 'no' : reviewing ? 'wait' : 'off'}>{active ? t('approved') : suspended ? t('suspended') : withdrawn ? t('withdrawn') : reviewing ? t('reviewing') : t('waiting')}</Bg>
             <p>
               {t.rich('s3P', { strong: (c) => <strong>{c}</strong> })}
             </p>
-            {applied && !active ? (
+            {reviewing ? (
               <div className="note info">{t('s3Wait')}</div>
             ) : null}
+            {suspended ? (
+              <div className="note warn" id="partner-suspended" data-partner-state="SUSPENDED">
+                <b>{t('susTitle')}</b>
+                {d?.suspendReason ? <><br />{t('rejReason', { reason: d.suspendReason })}</> : null}
+                <br />{t('susFix')}
+              </div>
+            ) : null}
+            {withdrawn ? <div className="note info" data-partner-state="WITHDRAWN">{t('wdNote')}</div> : null}
           </div>
         </li>
       </ol>

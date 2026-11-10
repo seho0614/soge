@@ -7,6 +7,7 @@ import { Crumb, HltNav, HltEmpty } from '@/components/health/HltParts';
 import { SellerCenter, type SellerCenterInfo, type SellerProduct } from '@/components/health/SellerCenter';
 import { SellerOrdersView, type SellerOrders, type SellerReturnRow } from '@/components/health/SellerOrders';
 import { SellerSettlements, type SellerSettlement } from '@/components/health/SellerSettlements';
+import { SellerAccount, type SellerAccountInfo } from '@/components/health/SellerAccount';
 import type { HltSaleCategory } from '@/components/health/types';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
@@ -42,7 +43,7 @@ export default async function HltSellerCenterPage() {
       </div><i hidden data-root-end="" /></>
     );
   }
-  const [items, cats, orders, returns, settles] = await Promise.all([
+  const [items, cats, orders, returns, settles, account] = await Promise.all([
     apiGetPersonal<SellerProduct[]>('/me/health/seller/products').catch(() => [] as SellerProduct[]),
     apiGet<HltSaleCategory[]>('/health/categories', 60).catch(() => [] as HltSaleCategory[]),
     /* v10.167 — 주문 · 발송 · 반품 */
@@ -50,10 +51,12 @@ export default async function HltSellerCenterPage() {
     apiGetPersonal<SellerReturnRow[]>('/me/health/seller/returns').catch(() => [] as SellerReturnRow[]),
     /* v10.168 — 정산서 */
     apiGetPersonal<SellerSettlement[]>('/me/health/seller/settlements').catch(() => [] as SellerSettlement[]),
+    /* v10.223 (D193) — 정지 사유 · 정보 변경 요청 · 폐점 */
+    apiGetPersonal<SellerAccountInfo>('/me/health/seller/account').catch(() => null),
   ]);
   return (
     <><div className="hlt">{head}
-      <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerSettlements rows={settles} /><SellerCenter info={info} items={items} cats={cats} /></Msgs>
+      <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerSettlements rows={settles} /><SellerCenter info={info} items={items} cats={cats} />{account && <SellerAccount info={account} />}</Msgs>
     </div><i hidden data-root-end="" /></>
   );
 }

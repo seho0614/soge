@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
-import { NotFound, PolicyViolation } from '../../core/errors';
+import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /**
  * 파트너 제휴수수료 — 운영 화면(신청 심사 · 상품 · 목표 · 홍보 자료 · 안내 · 정산 실행).
@@ -13,6 +13,15 @@ import { NotFound, PolicyViolation } from '../../core/errors';
 export class AffiliateAdminService {
   constructor(private readonly db: DatabaseService) {}
   private get me() { return RequestCtx.actorId()!; }
+
+  /** v10.222 (D192) — 제휴 자격 판정을 신청자(대표 계정)에게 알림. 사이트 안 · 메일은 notify_dispatch 가 */
+  private async notifyAff(partnerId: string, code: string, title: string, body: string) {
+    await this.db.query(
+      `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+       SELECT b.account_id, $2, $3, $4, '/partners'
+         FROM partners p JOIN businesses b ON b.id = p.business_id WHERE p.id = $1`,
+      [partnerId, code, title, body]);
+  }
   async applications() {
     /* ★ 입점 심사는 **관리자가 합니다**(결정 2026-09-22). */
     const items = await this.db.query(
@@ -35,8 +44,9 @@ export class AffiliateAdminService {
   }
 
   async decideApplication(id: string, dto: { state: string; reason?: string }) {
+    /* v10.224 (D194) — 막힌 판정은 200 { ok:false } 대신 422 · 409(감사 기록에 「승인」으로 남던 것도 막음) */
     if (dto.state === 'REJECTED' && !dto.reason?.trim()) {
-      return { ok: false, note: '거절 사유를 적으십시오. 안 적으면 같은 신청이 다시 올라옵니다.' };
+      throw new PolicyViolation('REASON_REQUIRED', '거절 사유를 적으십시오. 안 적으면 같은 신청이 다시 올라옵니다.');
     }
     /* v10.194 (D173) — 제휴 자격 칸만 바꿈(안심소개 자격 status 는 그대로) */
     const [r] = await this.db.query(
@@ -48,7 +58,13 @@ export class AffiliateAdminService {
         WHERE id = $1 AND aff_status = 'APPLIED'
       RETURNING id, aff_status AS "status"`,
       [id, dto.state === 'APPROVED' ? 'ACTIVE' : 'REJECTED', this.me, dto.reason ?? null]);
-    if (!r) return { ok: false, note: '심사 대기 상태가 아닙니다.' };
+    if (!r) throw new StateConflict('NOT_APPLIED', '심사 대기 상태가 아닙니다.');
+    if (dto.state === 'APPROVED') {
+      await this.notifyAff(id, 'AFF_APPROVED', '제휴 파트너로 승인되었습니다', '파트너센터에서 링크를 발급해 활동을 시작할 수 있습니다.');
+    } else {
+      await this.notifyAff(id, 'AFF_REJECTED', '제휴 파트너 신청이 반려되었습니다',
+        `사유: ${String(dto.reason ?? '').trim()} — 고쳐서 다시 신청하실 수 있습니다.`);
+    }
     return {
       ok: true, ...r,
       note: dto.state === 'APPROVED'
@@ -83,6 +99,12 @@ export class AffiliateAdminService {
         WHERE id = $1 AND aff_status = $3
       RETURNING id, aff_status AS "affStatus"`, [id, to, from, reason, this.me]);
     if (!r) throw new PolicyViolation('BAD_STATE', to === 'SUSPENDED' ? '제휴 활동 중인 파트너가 아닙니다.' : '제휴 정지된 파트너가 아닙니다.');
+    if (to === 'SUSPENDED') {
+      await this.notifyAff(id, 'AFF_SUSPENDED', '제휴 파트너 자격이 정지되었습니다',
+        `사유: ${reason} — 정지 중에는 제휴 활동을 할 수 없습니다. 궁금한 점은 고객센터로 문의해 주십시오.`);
+    } else {
+      await this.notifyAff(id, 'AFF_RESUMED', '제휴 파트너 자격이 다시 열렸습니다', `사유: ${reason} — 제휴 활동을 다시 하실 수 있습니다.`);
+    }
     return { ok: true, ...r, reason,
       note: to === 'SUSPENDED' ? '제휴 자격을 정지했습니다. 안심소개 자격은 그대로입니다.' : '제휴 자격을 다시 열었습니다.' };
   }

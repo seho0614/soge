@@ -138,6 +138,9 @@ export class PartnerAdminService {
         WHERE id=$1 AND status='APPLIED' RETURNING id, status`,
       [partnerId, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('NOT_APPLIED', '심사 대기 중인 파트너가 아닙니다.');
+    /* v10.222 (D192) — 승인도 알림(전에는 반려만 알렸음) */
+    await this.notifyPartner(partnerId, 'PARTNER_APPROVED', '안심소개 파트너로 승인되었습니다',
+      '서비스 등록 · 활동 지역 · 리드 이용료 충전을 마치면 리드를 받기 시작합니다.', '/partner');
     return row;
   }
 
@@ -157,6 +160,14 @@ export class PartnerAdminService {
         WHERE id = $1 AND status = $3
       RETURNING id, status`, [partnerId, to, from, reason, RequestCtx.actorId()]);
     if (!row) throw new StateConflict('BAD_STATE', to === 'SUSPENDED' ? '안심소개 활동 중인 파트너가 아닙니다.' : '안심소개 정지된 파트너가 아닙니다.');
+    /* v10.222 (D192) — 정지 · 다시 열기를 파트너에게 알림(정지 사유는 파트너 화면에도 보임) */
+    if (to === 'SUSPENDED') {
+      await this.notifyPartner(partnerId, 'PARTNER_SUSPENDED', '안심소개 파트너 자격이 정지되었습니다',
+        `사유: ${reason} — 정지 중에는 리드가 가지 않습니다. 궁금한 점은 고객센터로 문의해 주십시오.`, '/partner/apply');
+    } else {
+      await this.notifyPartner(partnerId, 'PARTNER_RESUMED', '안심소개 파트너 자격이 다시 열렸습니다',
+        `사유: ${reason} — 리드를 다시 받을 수 있습니다.`, '/partner');
+    }
     return { ...row, reason,
       note: to === 'SUSPENDED' ? '안심소개 자격을 정지했습니다. 리드가 가지 않습니다. 제휴 자격은 그대로입니다.' : '안심소개 자격을 다시 열었습니다.' };
   }

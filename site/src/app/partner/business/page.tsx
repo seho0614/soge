@@ -8,6 +8,7 @@ import { Bg, bizNo, Empty, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, Tabs, Tw, wo
 import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
 import { BrandForm, ChangeRequestForm, InviteAccept, SiteForm, SiteRemove, StaffInviteForm, StaffRemove } from './BizForms';
+import { PartnerWithdraw } from '@/components/partner/PartnerWithdraw';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('business') };
@@ -128,6 +129,8 @@ export default async function BusinessPage({ searchParams }: { searchParams: Pro
           </Tw>
           {c.isOwner ? <StaffInviteForm /> : null}
           <Note kind="warn"><b>{f.srv(c.notes.staff, t('notesSrv.staff'))}</b></Note>
+          {/* v10.224 (D194) — 안심소개 파트너 본인 해지(대표 계정만) */}
+          {c.isOwner ? <PartnerWithdraw track="MAL" /> : null}
         </>
       ) : <Empty>{tp('common.notPartner')}</Empty>)}
 

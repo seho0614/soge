@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
 import { SettlementAccountForm } from '@/components/partners/SettlementAccountForm';
+import { PartnerWithdraw } from '@/components/partner/PartnerWithdraw';
 import { ymd, SETTLE_STATE, codeText } from '@/components/partners/fmt';
 import type { AffSettlements } from '@/components/partners/types';
 
@@ -78,6 +79,8 @@ export default async function PartnerSettlementsPage() {
         </table>
       ) : <p className="empty">{t('settlements.noAccount')}</p>}
       <SettlementAccountForm hasAccount={!!acc} identityVerified={!!p.identityVerifiedAt} account={acc} />
+      {/* v10.224 (D194) — 제휴 파트너 본인 해지 */}
+      <PartnerWithdraw track="AFF" />
     </>
   );
 }
