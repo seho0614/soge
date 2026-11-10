@@ -335,6 +335,10 @@ export class AdminService {
     if (key.startsWith('point.cashout_') && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('POINT_SETTING_SUPER', '포인트 출금 기준은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.231 (D199 · docs/370) — 업종 정정신고 기록은 판매 열기 준비 판단에 들어가므로 SUPER 만(운영 화면 「입점 열기 준비」의 「적기」와 같은 권한) */
+    if (key.startsWith('mall.biz_report_') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('BIZ_REPORT_SETTING_SUPER', '업종 정정신고 기록은 최고 관리자(SUPER)만 적을 수 있습니다.');
+    }
     /* 주민등록번호 받기는 처리방침(지금 판)에 「주민등록번호(암호화)」 수집 줄이 있어야 켬 — 지금 처리방침에는 없음(docs/352) */
     if (key === 'point.cashout_tax_id' && (value ?? '').trim() === 'on') {
       const [pv] = await this.db.query<{ ok: boolean }>(

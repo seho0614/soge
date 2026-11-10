@@ -76,6 +76,7 @@ export function OpsAlerts() {
   const mailTest = () => void a.run('mail-test', () => api('/admin/ops-alerts/mail-test', { method: 'POST', body: '{}' })).then(ms.reload);
   /* v10.200 (D178) — 텔레그램 시험 · 대화방 찾기(고르면 사이트 설정 ops.telegram_chat) */
   const [chats, setChats] = useState<Chat[] | null>(null);
+  const [bulkHours, setBulkHours] = useState(24);   /* v10.232 — 한꺼번에 확인 기준 시간 */
   const pushTest = () => void a.run('push-test', () => api('/admin/ops-alerts/push-test', { method: 'POST', body: '{}' })).then(ms.reload);
   const findChat = () => void a.run('push-find', async () => {
     const r = await api<{ ok: boolean; chats: Chat[]; note: string }>('/admin/ops-alerts/push-find-chat', { method: 'POST', body: '{}' });
@@ -97,6 +98,19 @@ export function OpsAlerts() {
     const note = prompt(`${NAME[c.code] ?? c.code} 확인 안 한 알림 ${c.open + (c.resolved ?? 0)}건(풀린 것 ${c.resolved ?? 0}건 포함)을 모두 확인합니다.\n메모(선택 · 200자)`, '');
     if (note === null) return;
     void a.run(`code:${c.code}`, () => api<{ note: string }>('/admin/ops-alerts/ack-code', { method: 'POST', body: JSON.stringify({ code: c.code, note: note.trim() || undefined }) }), q.reload);
+  };
+
+  /* v10.232 (docs/371) — 한꺼번에 확인: 몇 건인지 먼저 보이고 메모 하나 · CRITICAL 은 서버가 뺌 */
+  const ackBulk = async (scope: 'resolved' | 'older') => {
+    const qs = scope === 'older' ? `scope=older&hours=${bulkHours}` : 'scope=resolved';
+    const pv = await api<{ count: number }>(`/admin/ops-alerts/ack-bulk/preview?${qs}`).catch(() => null);
+    if (!pv) return void a.run('bulk', () => api(`/admin/ops-alerts/ack-bulk/preview?${qs}`));
+    if (pv.count === 0) return void a.run('bulk', async () => ({ ok: false, note: '확인할 알림이 없습니다(CRITICAL 은 빼고 셈).' }));
+    const what = scope === 'older' ? `${bulkHours}시간 넘은 INFO · WARN` : '풀린 알림';
+    const note = prompt(`${what} ${pv.count}건을 모두 확인합니다(CRITICAL 은 빼고).\n메모(선택 · 200자)`, '');
+    if (note === null) return;
+    void a.run('bulk', () => api<{ note: string }>('/admin/ops-alerts/ack-bulk', { method: 'POST', body: JSON.stringify({ scope, hours: scope === 'older' ? bulkHours : undefined, note: note.trim() || undefined }) }), q.reload,
+      (r) => r.note);
   };
 
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
@@ -142,6 +156,15 @@ export function OpsAlerts() {
       })(ms.data.push)}
       <section className="card pad">
         <h3 className="sec">종류별 <small className="dim">확인 안 한 수 · 지난 7일</small></h3>
+        <p data-ack-bulk="">
+          <b>한꺼번에 확인</b>{' '}
+          <button className="btn-sm" disabled={a.busy === 'bulk'} onClick={() => void ackBulk('resolved')} data-ack-bulk-resolved="">풀린 것 모두 확인</button>{' '}
+          <select value={bulkHours} onChange={(e) => setBulkHours(Number(e.target.value))} aria-label="몇 시간 넘은 것" data-ack-bulk-hours="">
+            {[6, 24, 72].map((h) => <option key={h} value={h}>{h}시간</option>)}
+          </select>{' '}
+          <button className="btn-sm" disabled={a.busy === 'bulk'} onClick={() => void ackBulk('older')} data-ack-bulk-older="">넘은 INFO · WARN 모두 확인</button>
+          <small className="dim"> CRITICAL 은 빼고 확인합니다 — CRITICAL 은 아래에서 하나씩 · 종류별로. 텔레그램을 켜기 전에 쌓인 알림을 정리할 때 씁니다.</small>
+        </p>
         {d.codes.length === 0 ? <p className="muted">확인할 알림이 없습니다.</p> : (
           <table className="tbl" data-alert-codes="">
             <thead><tr><th>종류</th><th>확인 안 함</th><th>풀림</th><th>지난 7일</th><th>가장 최근</th><th>처리</th></tr></thead>

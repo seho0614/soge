@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 import { OpsAlertsService } from './ops-alerts.service';
 import { PiiReviewService } from './pii-review.service';
 import { RoleReviewService } from './role-review.service';
@@ -16,6 +16,20 @@ export class OpsAlertAckDto {
 export class OpsAlertAckCodeDto extends OpsAlertAckDto {
   @ApiProperty({ example: 'SLOW_API', description: '이 종류의 확인 안 한 알림을 모두 확인' })
   @IsString() @Matches(/^[A-Z][A-Z0-9_]{1,59}$/, { message: '알림 종류 형식이 맞지 않습니다.' }) code!: string;
+}
+
+export class OpsAlertAckBulkDto extends OpsAlertAckDto {
+  @ApiProperty({ enum: ['resolved', 'older'], description: 'resolved 풀린 것 모두 · older 정한 시간보다 오래된 INFO · WARN 모두(둘 다 CRITICAL 은 뺌)' })
+  @IsIn(['resolved', 'older']) scope!: string;
+  @ApiPropertyOptional({ enum: [6, 24, 72], description: 'older 일 때 — 몇 시간 넘은 것' })
+  @IsOptional() @IsIn([6, 24, 72]) hours?: number;
+}
+export class OpsAlertAckBulkResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ enum: ['resolved', 'older'] }) scope!: string;
+  @ApiPropertyOptional({ nullable: true }) hours!: number | null;
+  @ApiProperty({ description: '확인한 수(미리 보기면 확인할 수)' }) count!: number;
+  @ApiProperty() note!: string;
 }
 
 export class PiiReviewDto {
@@ -60,6 +74,24 @@ export class OpsReviewController {
   @ApiOperation({ summary: '같은 종류 한꺼번에 확인', description: '이 종류의 확인 안 한 알림을 모두 확인(누가 · 언제 · 메모). 알림 내용은 바뀌지 않음.' })
   @ApiOkResponse({ type: Object })
   ackCode(@Body() dto: OpsAlertAckCodeDto) { return this.alerts.ackCode(dto.code, dto.note); }
+
+  /* v10.232 (docs/371) — 종류를 가리지 않고 한꺼번에 확인(CRITICAL 은 빼고 · 미리 보기는 읽기만) */
+  @Get('ops-alerts/ack-bulk/preview')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '한꺼번에 확인 — 몇 건인지 미리 보기', description: 'scope=resolved 풀린 것 · scope=older&hours=6|24|72 그보다 오래된 INFO · WARN. 확인 안 한 것만 · CRITICAL 은 뺌 · 읽기만(v10.232).' })
+  @ApiQuery({ name: 'scope', enum: ['resolved', 'older'] }) @ApiQuery({ name: 'hours', required: false, enum: [6, 24, 72] })
+  @ApiOkResponse({ type: OpsAlertAckBulkResultDto })
+  @ApiResponse({ status: 422, description: 'ACK_BULK_SCOPE', type: ErrorDto })
+  ackBulkPreview(@Query('scope') scope: string, @Query('hours') hours?: string) { return this.alerts.ackBulk(scope, hours === undefined ? undefined : Number(hours), undefined, true); }
+
+  @Post('ops-alerts/ack-bulk')
+  @HttpCode(200)
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '한꺼번에 확인', description: '풀린 것 모두 또는 정한 시간보다 오래된 INFO · WARN 모두를 확인(누가 · 언제 · 메모 하나). CRITICAL 은 빼서 하나씩 · 종류별로 확인. 알림 내용은 바뀌지 않음 · 감사 기록 OPS_ALERT_ACK_BULK(v10.232).' })
+  @ApiOkResponse({ type: OpsAlertAckBulkResultDto })
+  @ApiResponse({ status: 422, description: 'ACK_BULK_SCOPE', type: ErrorDto })
+  @Audit('OPS_ALERT_ACK_BULK', 'OPS_ALERT')
+  ackBulk(@Body() dto: OpsAlertAckBulkDto) { return this.alerts.ackBulk(dto.scope, dto.hours, dto.note, false); }
 
   @Post('ops-alerts/:id/ack')
   @HttpCode(200)

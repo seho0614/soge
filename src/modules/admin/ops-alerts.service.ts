@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
-import { NotFound, StateConflict } from '../../core/errors';
+import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { MailService } from '../../common/mail/mail.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { TelegramService } from '../../common/telegram/telegram.service';
@@ -17,6 +17,7 @@ import { TelegramService } from '../../common/telegram/telegram.service';
  *   v10.198 (D176 · docs/312) — 메일 준비 상태(mailStatus) · 시험 메일(mailTest · SUPER · 1분에 1번 · 감사 기록 OPS_MAIL_TEST)
  *   v10.199 (D177 · docs/314) — 「풀림」(resolved_at · 정기 작업이 적음) — 확인 안 한 목록 · 종류별 수에서 기본으로 뺌(resolved=show 면 같이)
  *   v10.200 (D178 · docs/316) — 텔레그램 준비 상태(mailStatus 의 push) · 시험 메시지(pushTest · SUPER · 1분에 1번 · OPS_PUSH_TEST) · 대화방 찾기
+ *   v10.232 (docs/371) — 한꺼번에 확인(ackBulk · 풀린 것 모두 · 6 · 24 · 72시간 넘은 INFO · WARN 모두 · CRITICAL 은 뺌)
  * ------------------------------------------------------------------- */
 @Injectable()
 export class OpsAlertsService {
@@ -77,6 +78,26 @@ export class OpsAlertsService {
       `UPDATE ops_alerts SET acknowledged_at = now(), acknowledged_by = $2, ack_note = $3
         WHERE alert_code = $1 AND acknowledged_at IS NULL RETURNING id::text AS id`, [code, this.me, note?.trim() || null]);
     return { ok: true, code, acknowledged: rows.length, note: rows.length ? `${rows.length}건을 확인했습니다.` : '확인할 알림이 없습니다.' };
+  }
+
+  /**
+   * v10.232 (docs/371) — 종류를 가리지 않고 한꺼번에 확인. CRITICAL 은 늘 뺌(하나씩 · 종류별로).
+   *   resolved 원인이 없어진(풀린) 것 모두 · older 정한 시간(6 · 24 · 72)보다 먼저 생긴 INFO · WARN 모두. preview 면 세기만.
+   */
+  async ackBulk(scope: string, hours?: number, note?: string, preview = false) {
+    if (scope !== 'resolved' && !(scope === 'older' && [6, 24, 72].includes(hours ?? -1)))
+      throw new PolicyViolation('ACK_BULK_SCOPE', '풀린 것(resolved) 또는 6 · 24 · 72시간 넘은 것(older)만 고를 수 있습니다.');
+    const h = scope === 'older' ? hours! : null;
+    const where = `acknowledged_at IS NULL AND severity <> 'CRITICAL' AND ${scope === 'resolved' ? 'resolved_at IS NOT NULL' : `raised_at < now() - make_interval(hours => $1::int)`}`;
+    const args: unknown[] = scope === 'older' ? [h] : [];
+    if (preview) {
+      const [c] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM ops_alerts WHERE ${where}`, args);
+      return { ok: true, scope, hours: h, count: c?.n ?? 0, note: `${c?.n ?? 0}건을 확인하게 됩니다(CRITICAL 은 빼고).` };
+    }
+    const rows = await this.db.query<{ id: string }>(
+      `UPDATE ops_alerts SET acknowledged_at = now(), acknowledged_by = $${args.length + 1}, ack_note = $${args.length + 2}
+        WHERE ${where} RETURNING id::text AS id`, [...args, this.me, note?.trim() || null]);
+    return { ok: true, scope, hours: h, count: rows.length, note: rows.length ? `${rows.length}건을 확인했습니다.` : '확인할 알림이 없습니다.' };
   }
 
   /* ── v10.198 (D176 · docs/312) 메일 준비 상태 · 시험 메일 ─────────────── */

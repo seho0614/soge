@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsIn, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
@@ -60,11 +60,22 @@ export class TenantReadyRowDto {
   @ApiProperty({ enum: ['ok', 'todo', 'info'], description: 'ok 준비됨 · todo 막힘(대표 · 법무 · 외부 차례) · info 값만' }) state!: string;
   @ApiProperty() now!: string;
 }
+export class TenantBizReportDto {
+  @ApiPropertyOptional({ nullable: true, description: '업종 정정신고 접수번호(mall.biz_report_no)' }) reportNo!: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date', description: '신고 날짜(mall.biz_report_at)' }) reportedAt!: string | null;
+}
+export class TenantBizReportSetDto {
+  @ApiPropertyOptional({ nullable: true, example: '2026-서울강남-01234', description: '접수번호 — 신고 날짜와 함께 적거나 함께 비움' })
+  @IsOptional() @IsString() @MaxLength(40) @Matches(/^$|^[0-9A-Za-z가-힣()_./ -]{2,40}$/) reportNo?: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date', example: '2026-11-20' })
+  @IsOptional() @Matches(/^$|^\d{4}-\d{2}-\d{2}$/) reportedAt?: string | null;
+}
 export class TenantReadinessDto {
   @ApiProperty({ description: '신청 받기 준비됨(입점 약관 지금 판)' }) applyReady!: boolean;
-  @ApiProperty({ description: '판매 열기 준비됨(업종 정정신고 대표 확인 줄 빼고 모두 준비)' }) saleReady!: boolean;
+  @ApiProperty({ description: '판매 열기 준비됨(업종 정정신고 기록까지 모두 준비 · v10.231)' }) saleReady!: boolean;
   @ApiProperty() applyOn!: boolean;
   @ApiProperty() saleOn!: boolean;
+  @ApiProperty({ type: TenantBizReportDto, description: '업종 정정신고 기록(v10.231)' }) bizReport!: TenantBizReportDto;
   @ApiProperty({ type: TenantReadyRowDto, isArray: true }) rows!: TenantReadyRowDto[];
 }
 export class SellerDecisionDto {
@@ -113,6 +124,16 @@ export class HealthTenantController {
   @ApiOperation({ summary: '소개몰 입점 열기 준비 점검', description: '신청 받기 · 판매 열기 전에 필요한 것을 준비됨 / 막힘으로(읽기만 · v10.229).' })
   @ApiOkResponse({ type: TenantReadinessDto })
   readiness() { return this.svc.readiness(); }
+
+  @ApiBearerAuth()
+  @Post('admin/health/tenant/biz-report')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @ApiOperation({ summary: '업종 정정신고 기록', description: '통신판매중개 업종 정정신고의 신고 날짜 · 접수번호를 적음(둘 다 적거나 둘 다 비움 · 적은 값을 그대로 믿음 · 감사 기록 HLT_BIZ_REPORT · v10.231). 돌려주는 값은 입점 열기 준비 점검.' })
+  @ApiOkResponse({ type: TenantReadinessDto })
+  @ApiResponse({ status: 422, description: 'BIZ_REPORT_BOTH · BIZ_REPORT_DATE', type: ErrorDto })
+  @Audit('HLT_BIZ_REPORT', 'SITE_SETTING')
+  setBizReport(@Body() dto: TenantBizReportSetDto) { return this.svc.setBizReport(dto.reportNo, dto.reportedAt); }
 
   @ApiBearerAuth()
   @Get('admin/health/sellers/applications')

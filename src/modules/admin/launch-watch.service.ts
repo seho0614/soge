@@ -432,6 +432,12 @@ export class LaunchWatchService {
          FROM fn_ops_alert_repush_pending()`);
   }
 
+  /** v10.230 (D198 · docs/369) — 같은 기준의 전체 수(대기 목록은 CRITICAL 먼저 · 최근 순 50건) — 「보내지 못한 알림 n건 더」 줄에 씀 */
+  async alertBacklog(kind: 'mail' | 'push'): Promise<number> {
+    const [r] = await this.db.query<{ n: number }>(kind === 'mail' ? `SELECT fn_ops_alert_mail_backlog() AS n` : `SELECT fn_ops_alert_push_backlog() AS n`);
+    return Number(r?.n ?? 0);
+  }
+
   async markPushed(ids: string[], againIds: string[] = []): Promise<void> {
     if (ids.length) await this.db.query(`UPDATE ops_alerts SET pushed_at = now() WHERE id = ANY($1::bigint[]) AND pushed_at IS NULL`, [ids]);
     if (againIds.length) await this.db.query(`UPDATE ops_alerts SET repushed_at = now() WHERE id = ANY($1::bigint[]) AND repushed_at IS NULL`, [againIds]);

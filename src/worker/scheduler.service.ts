@@ -660,7 +660,8 @@ export class SchedulerService {
   }
 
   /** v10.197 (D175) — 급한 알림 메일 한 통(여러 건을 줄로). 결과: 보낸 수 · 남은 수 · 못 보낸 까닭
-   *  v10.198 (D176) — 12시간 넘게 확인 안 한 CRITICAL 은 「[다시]」로 한 번 더(같은 메일에 묶음) */
+   *  v10.198 (D176) — 12시간 넘게 확인 안 한 CRITICAL 은 「[다시]」로 한 번 더(같은 메일에 묶음)
+   *  v10.230 (D198) — 대기 목록은 CRITICAL 먼저 · 최근 순 50건 · 남은 수를 「보내지 못한 알림 n건 더」 줄로 */
   private async alertMail(): Promise<{ pending: number; mailed: number; reason: string | null }> {
     const p = await this.launchWatch.alertMailPending();
     if (!p.items.length) return { pending: 0, mailed: 0, reason: null };
@@ -668,10 +669,12 @@ export class SchedulerService {
     if (!(await this.mail.ready())) return { pending: p.items.length, mailed: 0, reason: 'MAIL_NOT_READY' };
     const crit = p.items.filter((x) => x.severity === 'CRITICAL').length;
     const again = p.items.filter((x) => x.again).length;
+    const more = Math.max(0, (await this.launchWatch.alertBacklog('mail')) - (p.items.length - again));
     const text = [
       `소개뱅크 급한 운영 알림 ${p.items.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}`,
       '',
       ...p.items.map((x) => `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${x.title}`),
+      ...(more ? ['', `보내지 못한 알림 ${more}건 더 — 다음 차례에 이어서 보냅니다(운영 화면 › 운영 알림에서 모두 볼 수 있음).`] : []),
       '',
       '운영 화면 › 운영 알림에서 내용을 보고 「확인」을 누르십시오. 같은 종류는 1시간에 한 통으로 묶어 보냅니다.',
     ].join('\n');
@@ -690,10 +693,12 @@ export class SchedulerService {
     if (!st.ready) return { pending: items.length, pushed: 0, reason: st.reason };
     const crit = items.filter((x) => x.severity === 'CRITICAL').length;
     const again = items.filter((x) => x.again).length;
+    const more = Math.max(0, (await this.launchWatch.alertBacklog('push')) - (items.length - again));
     const text = [
       `[소개뱅크] 급한 운영 알림 ${items.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}`,
       '',
       ...items.map((x) => `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${x.title}`),
+      ...(more ? ['', `보내지 못한 알림 ${more}건 더 — 다음 차례에 이어서 보냅니다(운영 화면 › 운영 알림에서 모두 볼 수 있음).`] : []),
       '',
       '운영 화면 › 운영 알림에서 보고 「확인」을 누르십시오.',
     ].join('\n');

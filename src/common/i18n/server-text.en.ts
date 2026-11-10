@@ -1750,4 +1750,9 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "운영 계정만 휴대폰을 등록합니다.": "Only staff accounts register a mobile phone.",
   "인증번호를 받을 곳이 없는 운영자가 {0}명 있습니다({1}) — 각자 휴대폰을 확인(접속 인증 탭)하거나 텔레그램 받을 곳을 정한 뒤 켜십시오.": "{0} staff members have nowhere to receive codes ({1}) — have each verify a mobile phone (Access verification tab) or set a Telegram destination before turning this on.",
   "휴대폰 번호(010 으로 시작하는 숫자)를 넣으십시오.": "Enter a mobile number (digits starting with 010).",
+  "신고 날짜와 접수번호를 함께 적거나 함께 비우십시오.": "Enter both the report date and the receipt number, or clear both.",
+  "신고 날짜는 2020-01-01 부터 오늘(한국 날짜)까지만 적을 수 있습니다.": "The report date must be between 2020-01-01 and today (Korea date).",
+  "업종 정정신고 기록은 최고 관리자(SUPER)만 적을 수 있습니다.": "Only the super administrator (SUPER) can record the business-type amendment report.",
+  "풀린 것(resolved) 또는 6 · 24 · 72시간 넘은 것(older)만 고를 수 있습니다.": "Choose either resolved alerts or alerts older than 6, 24 or 72 hours.",
+  "{0}건을 확인하게 됩니다(CRITICAL 은 빼고).": "{0} alerts will be acknowledged (CRITICAL excluded).",
 };

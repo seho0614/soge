@@ -192,11 +192,12 @@ export class HealthTenantService {
   /**
    * v10.229 (docs/367) — 운영 「소개몰 판매자」 탭 맨 위 입점 열기 준비 점검(읽기만 · 스위치를 막는 규칙은 그대로 — 약관 먼저 하나)
    *   신청 받기(mall.tenant_apply): 입점 약관(HLT_SELLER)이 지금 판인지 · 초안 빈칸
-   *   판매 열기(mall.tenant): 결제 실연동(결제 키 · 간주 모드 꺼짐) · 하위가맹점 · 지급대행 연동 · 주문 받기 · 승인 판매자 · 하위가맹점 번호 · 업종 정정신고(대표 확인)
+   *   판매 열기(mall.tenant): 결제 실연동(결제 키 · 간주 모드 꺼짐) · 하위가맹점 · 지급대행 연동 · 주문 받기 · 승인 판매자 · 하위가맹점 번호 · 업종 정정신고
+   *   v10.231 (D199) — 업종 정정신고는 설정 mall.biz_report_no · mall.biz_report_at 둘 다 있으면 준비됨 · 판매 열기 판단에 다시 넣음
    */
   async readiness() {
     const [r] = await this.db.query<{ apply: string; sale: string; order: boolean; assume: boolean; cur: string | null;
-      drafts: Array<{ version: string; body: string }> | null; active: number; withSub: number; pending: number }>(
+      drafts: Array<{ version: string; body: string }> | null; active: number; withSub: number; pending: number; bizNo: string | null; bizAt: string | null }>(
       `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant_apply'), 'off') AS apply,
               coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') AS sale,
               (${ORDER_OPEN_SQL}) AS "order",
@@ -207,7 +208,9 @@ export class HealthTenantService {
               (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'ACTIVE') AS active,
               (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'ACTIVE' AND submerchant_id IS NOT NULL
                   AND submerchant_id NOT LIKE 'STUB-%') AS "withSub",
-              (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'PENDING') AS pending`);
+              (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'PENDING') AS pending,
+              (SELECT value FROM site_settings WHERE key = 'mall.biz_report_no') AS "bizNo",
+              (SELECT value FROM site_settings WHERE key = 'mall.biz_report_at') AS "bizAt"`);
     const draft = r?.drafts?.[0];
     const holes = draft ? [...new Set(draft.body.match(HOLE) ?? [])].filter((h) => h !== '〔시행일〕').length : 0;
     const termsOk = !!r?.cur;
@@ -215,6 +218,7 @@ export class HealthTenantService {
     const payOk = payKey && !r?.assume;
     const sub = resolveSubmerchantProvider(!!r?.assume);
     const subOk = !!sub && !sub.stub;
+    const bizOk = !!r?.bizNo && !!r?.bizAt;
     const rows: TenantReadyRow[] = [
       { key: 'terms', group: 'apply', label: '입점 약관(HLT_SELLER)', state: termsOk ? 'ok' : 'todo',
         now: termsOk ? `${r?.cur} 지금 판 — 신청자가 동의할 수 있음`
@@ -230,12 +234,33 @@ export class HealthTenantService {
         now: r?.order ? '켜짐' : '꺼짐 — 결제 실연동 뒤 「주문 받기 켜기」(SUPER)' },
       { key: 'sellers', group: 'sale', label: '승인된 판매자', state: (r?.active ?? 0) > 0 ? 'ok' : 'todo',
         now: `${r?.active ?? 0}명 · 하위가맹점 번호 있음 ${r?.withSub ?? 0}명(시험 번호 뺌)` },
-      { key: 'biz-report', group: 'sale', label: '업종 정정신고(통신판매중개)', state: 'todo',
-        now: '대표 확인 — 기록할 곳이 없어 늘 확인 줄로 보임' },
+      { key: 'biz-report', group: 'sale', label: '업종 정정신고(통신판매중개)', state: bizOk ? 'ok' : 'todo',
+        now: bizOk ? `${r?.bizAt} 신고 · 접수번호 ${r?.bizNo}` : '기록 없음 — 신고한 뒤 신고 날짜 · 접수번호를 적기(SUPER)' },
       { key: 'sale-switch', group: 'sale', label: '판매 열기 스위치', state: 'info', now: r?.sale === 'on' ? '켜짐' : '꺼짐' },
     ];
-    const ready = (g: 'apply' | 'sale') => rows.filter((x) => (g === 'apply' ? x.group === 'apply' : true) && x.state === 'todo' && x.key !== 'biz-report').length === 0;
-    return { applyReady: ready('apply'), saleReady: ready('sale'), applyOn: r?.apply === 'on', saleOn: r?.sale === 'on', rows };
+    const ready = (g: 'apply' | 'sale') => rows.filter((x) => (g === 'apply' ? x.group === 'apply' : true) && x.state === 'todo').length === 0;
+    return { applyReady: ready('apply'), saleReady: ready('sale'), applyOn: r?.apply === 'on', saleOn: r?.sale === 'on',
+             bizReport: { reportNo: r?.bizNo ?? null, reportedAt: r?.bizAt ?? null }, rows };
+  }
+
+  /**
+   * v10.231 (D199 · docs/370) — 업종 정정신고(통신판매중개) 신고 날짜 · 접수번호 적기(SUPER · 감사 HLT_BIZ_REPORT).
+   *   둘 다 적거나 둘 다 비움(잘못 적었을 때) · 날짜는 2020-01-01 ~ 오늘(한국 날짜) · 적은 값을 그대로 믿음(신고 처리 여부는 확인하지 않음)
+   */
+  async setBizReport(reportNo?: string | null, reportedAt?: string | null) {
+    const no = (reportNo ?? '').trim() || null;
+    const at = (reportedAt ?? '').trim() || null;
+    if (!!no !== !!at) throw new PolicyViolation('BIZ_REPORT_BOTH', '신고 날짜와 접수번호를 함께 적거나 함께 비우십시오.');
+    if (at) {
+      const [d] = await this.db.query<{ ok: boolean }>(
+        `SELECT ($1::date BETWEEN DATE '2020-01-01' AND (now() AT TIME ZONE 'Asia/Seoul')::date) AS ok`, [at]);
+      if (!d?.ok) throw new PolicyViolation('BIZ_REPORT_DATE', '신고 날짜는 2020-01-01 부터 오늘(한국 날짜)까지만 적을 수 있습니다.');
+    }
+    await this.db.transaction(async () => {
+      await this.db.query(`UPDATE site_settings SET value = $1, updated_by = $2, updated_at = now() WHERE key = 'mall.biz_report_no'`, [no, this.me]);
+      await this.db.query(`UPDATE site_settings SET value = $1, updated_by = $2, updated_at = now() WHERE key = 'mall.biz_report_at'`, [at, this.me]);
+    });
+    return this.readiness();
   }
 
 }
