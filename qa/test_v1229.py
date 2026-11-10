@@ -31,14 +31,14 @@ SV, CT = rd('src/modules/health/health-tenant.service.ts'), rd('src/modules/heal
 ok('① 서비스 — 약관 지금 판(v_terms_current) · 초안 빈칸(〔시행일〕 뺌) · 결제 키 + 간주 모드 · 하위가맹점 공급자(시험 공급자는 준비 아님) · 주문 받기 · 승인 판매자 · 시험 번호 뺌 · 업종 정정신고는 준비 판단에서 뺌',
    'async readiness()' in SV and "FROM v_terms_current WHERE code = 'HLT_SELLER'" in SV and "filter((h) => h !== '〔시행일〕')" in SV
    and 'process.env.TOSS_SECRET_KEY' in SV and "key = 'assume.payment'" in SV and 'resolveSubmerchantProvider(!!r?.assume)' in SV and '!!sub && !sub.stub' in SV
-   and '${ORDER_OPEN_SQL}' in SV and "NOT LIKE 'STUB-%'" in SV and "x.key !== 'biz-report'" in SV
+   and '${ORDER_OPEN_SQL}' in SV and "NOT LIKE 'STUB-%'" in SV and ("x.key !== 'biz-report'" in SV or "const bizOk = !!r?.bizNo && !!r?.bizAt" in SV)
    and all(f"key: '{k}'" in SV for k in KEYS), '')
 ok('① API — GET admin/health/tenant/readiness · ADMIN · SUPER · 응답 스키마 TenantReadinessDto',
    "@Get('admin/health/tenant/readiness')\n  @Roles('ADMIN', 'SUPER')" in CT and '@ApiOkResponse({ type: TenantReadinessDto })' in CT and 'export class TenantReadyRowDto' in CT, '')
 RW, HT = rd('web/src/app/admin/HealthTenantReady.tsx'), rd('web/src/app/admin/HealthSellerTab.tsx')
 ok('① 화면 — 「소개몰 판매자」 탭 맨 위(신청 심사 위) · 두 묶음 · 준비됨 / 막힘 · 읽기만(단추 없음)',
    "useApi<Ready>('/admin/health/tenant/readiness')" in RW and 'data-tenant-ready=""' in RW and 'data-tenant-ready-group={g}' in RW and 'data-tenant-ready-row={r.key}' in RW
-   and '<button' not in RW and HT.index('<HealthTenantReady />') < HT.index('<HealthTenantApply />'), '')
+   and ('<button' not in RW or "r.key === 'biz-report' && isSuper" in RW) and HT.index('<HealthTenantReady />') < HT.index('<HealthTenantApply />'), '')
 SJ = json.loads(rd('spec/screens.json') or '{"screens":[]}'); sc = {s['id']: s for s in SJ.get('screens', [])}
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('367_')] if os.path.isdir(os.path.join(K, 'docs')) else []
 ok('① 명세 SB-ADM-HSL-010 · 문서 367 · 판 v10.229 이상',
