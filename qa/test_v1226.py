@@ -164,7 +164,8 @@ if API and DB:
                 gate = (pg.locator('[data-ip-gate]').count(), pg.locator('[data-ip-noready]').count(), '203.0.*.*' in (pg.locator('[data-ip-gate]').inner_text() if pg.locator('[data-ip-gate]').count() else ''))
                 pg.screenshot(path=os.path.join(HERE, 'v1226_ip_gate.png'), full_page=False)
                 psql(f"INSERT INTO staff_ip_allow (ip, memo) VALUES ('{FAR}', '시험 1226 화면')")
-                pg.goto(ADMIN_WEB + '/#/staff-access', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
+                pg.goto(ADMIN_WEB + '/#/staff-access', wait_until='networkidle', timeout=120000)
+                pg.reload(wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
                 tab = (pg.locator('[data-ip-gate]').count(), pg.locator('[data-staff-access]').count(), pg.locator(f'[data-ip-allow-row="{FAR}"]').count(),
                        pg.locator(f'[data-ip-staff-row="{STF}"]').count(), pg.locator('[data-ip-on="1"]').count())
                 pg.screenshot(path=os.path.join(HERE, 'v1226_staff_access.png'), full_page=True)

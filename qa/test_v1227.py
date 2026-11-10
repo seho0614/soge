@@ -140,7 +140,7 @@ if up:
     q = lambda k: psql(f"SELECT CASE WHEN value IS NULL THEN 'NULL' ELSE quote_literal(value) END FROM site_settings WHERE key = '{k}'")
     S0 = {k: q(k) for k in ('admin.ip_verify', 'admin.ip_verify_channel', 'alimtalk.provider', 'notify.alimtalk_ready', 'ops.telegram_chat')}
     T0 = psql("SELECT coalesce(quote_literal(vendor_code), 'NULL') || '|' || review_state FROM alimtalk_templates WHERE code = 'STAFF_IP_OTP'")
-    A0 = psql(f"SELECT count(*) FROM staff_access WHERE account_id = '{aid}'")
+    NEED = [x for x in psql(f"SELECT coalesce(string_agg(a.id::text || ':' || (s.account_id IS NOT NULL)::text, ','), '') FROM accounts a LEFT JOIN staff_access s ON s.account_id = a.id WHERE a.status = 'ACTIVE' AND a.id <> '{sid}' AND coalesce(s.phone_verified_at IS NULL, true) AND EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'))").split(',') if x]
     secrets = psql("SELECT count(*) FROM integration_secrets WHERE name IN ('ALIMTALK_KEY', 'ALIMTALK_SENDER_KEY', 'TELEGRAM_BOT_TOKEN')")
     t0 = psql('SELECT now()')
     TS = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
@@ -185,10 +185,11 @@ if up:
            and v2.get('verified') is True and v2.get('phoneLast4') == '0001' and PH1 not in au and '0001' in au and snd == 'STAFF_OTP:STAFF_IP_OTP:0001',
            f"{p0.get('code')} · {p1.get('code')} · {p2} · {w2.get('code')} · {v2} · {snd} · {au[:80]}")
 
-        # 길 SMS → 켜기: 휴대폰 없는 운영자(admin) → 422 · admin 휴대폰(DB) → 켜짐
+        # 길 SMS → 켜기: 휴대폰 없는 운영자(admin 등) → 422 · 휴대폰 없던 운영자 모두 휴대폰(DB) → 켜짐 · 끝에 되돌림
         g1 = call2('PATCH', '/admin/site-settings', {'key': 'admin.ip_verify_channel', 'value': 'SMS'}, TS)
         n1 = call2('PATCH', '/admin/site-settings', {'key': 'admin.ip_verify', 'value': 'on'}, TS)
-        psql(f"INSERT INTO staff_access (account_id, phone, phone_verified_at) VALUES ('{aid}', '{PH2}', now()) ON CONFLICT (account_id) DO UPDATE SET phone = EXCLUDED.phone, phone_verified_at = now()")
+        for x in NEED:
+            psql(f"INSERT INTO staff_access (account_id, phone, phone_verified_at) VALUES ('{x.split(':')[0]}', '{PH2}', now()) ON CONFLICT (account_id) DO UPDATE SET phone = EXCLUDED.phone, phone_verified_at = now()")
         n2 = call2('PATCH', '/admin/site-settings', {'key': 'admin.ip_verify', 'value': 'on'}, TS)
         ok('② 길 SMS(꺼진 동안은 검사 없이) · 켜기 — 휴대폰 없는 운영자 있으면 422 IP_VERIFY_NO_RECEIVER(휴대폰 안내) · 모두 있으면 켜짐',
            g1.get('_err') is None and n1.get('code') == 'IP_VERIFY_NO_RECEIVER' and 'admin@x.com' in (n1.get('message') or '') and '휴대폰' in (n1.get('message') or '') and n2.get('_err') is None,
@@ -245,8 +246,10 @@ if up:
             psql(f"UPDATE site_settings SET value = {v} WHERE key = '{k}'")
         vc, rs = (T0.split('|') + ['NONE'])[:2]
         psql(f"UPDATE alimtalk_templates SET vendor_code = {vc}, review_state = '{rs}' WHERE code = 'STAFF_IP_OTP'")
-        if A0 == '0': psql(f"DELETE FROM staff_access WHERE account_id = '{aid}'")
-        else: psql(f"UPDATE staff_access SET phone = NULL, phone_verified_at = NULL WHERE account_id = '{aid}' AND phone = '{PH2}'")
+        for x in NEED:
+            i, had = x.split(':')
+            if had == 'false': psql(f"DELETE FROM staff_access WHERE account_id = '{i}'")
+            else: psql(f"UPDATE staff_access SET phone = NULL, phone_verified_at = NULL WHERE account_id = '{i}' AND phone = '{PH2}'")
         psql(f"BEGIN; SELECT set_config('app.role_reason', '시험 T1227 정리', true); DELETE FROM account_roles WHERE account_id = '{sid}' AND role = 'ADMIN'; COMMIT;")
         for f in ('api_1227', 'fake_1227'):
             subprocess.run(['docker', 'exec', C, 'sh', '-c', f'[ -f /tmp/{f}.pid ] && kill $(cat /tmp/{f}.pid) 2>/dev/null; rm -f /tmp/{f}.pid'], capture_output=True)
@@ -255,7 +258,7 @@ if up:
     ok('끝 — 두 API 모두 끔 · 허용 밖도 운영 API 그대로 · 설정 · 템플릿 · admin 휴대폰 · 시험 허용 IP 되돌림',
        f8.get('_err') is None and f9.get('_err') is None and g9.get('_err') is None and all(q(k) == v for k, v in S0.items())
        and psql("SELECT count(*) FROM staff_ip_allow WHERE memo LIKE '시험 1227%'") == '0'
-       and psql(f"SELECT count(*) FROM staff_access WHERE account_id = '{aid}' AND phone = '{PH2}'") == '0', f"{f8.get('_err')} {f8.get('code')} · {f9.get('_err')} {f9.get('code')} · {g9.get('_err')}")
+       and psql(f"SELECT count(*) FROM staff_access WHERE phone = '{PH2}'") == '0', f"{f8.get('_err')} {f8.get('code')} · {f9.get('_err')} {f9.get('code')} · {g9.get('_err')}")
 
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
