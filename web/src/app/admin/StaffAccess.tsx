@@ -140,6 +140,7 @@ export function StaffAccess() {
         </tbody></table>
 
         <h3 className="sec">최근 14일 기록</h3>
+        <p className="dim" data-ip-alert-note="">처음 보는 대역에서 통과 · 번호 5번 틀림 · 하루 10번 닿음은 운영 알림(급한 알림 메일 · 텔레그램)으로도 갑니다.</p>
         <table className="tbl" data-ip-recent=""><thead><tr><th>때</th><th>일</th><th>운영자</th><th>주소</th><th>받은 곳</th></tr></thead><tbody>
           {d.recent.length === 0 && <tr><td colSpan={5} className="dim">없음</td></tr>}
           {d.recent.map((r, i) => <tr key={i}><td>{ymdhm(r.at)}</td><td className={r.kind === 'LOCKED' ? 'warn-text' : ''}>{KIND[r.kind] ?? r.kind}</td><td>{r.email}</td><td>{r.ip ?? '-'}</td><td>{CH[r.channel] ?? r.channel}</td></tr>)}
