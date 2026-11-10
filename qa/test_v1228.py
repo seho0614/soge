@@ -54,8 +54,8 @@ if DB:
     code_row = f"INSERT INTO staff_ip_codes (account_id, ip, code_hash, channel, expires_at) VALUES ('{A}', '203.0.113.40', repeat('a', 64), 'SMS', now() + interval '5 minutes'); "
     sql = (
         "BEGIN; "
-        "UPDATE ops_alerts SET mailed_at = mailed_at - interval '2 hours' WHERE alert_code LIKE 'STAFF_IP_%' AND mailed_at > now() - interval '1 hour'; "
-        "UPDATE ops_alerts SET pushed_at = pushed_at - interval '2 hours' WHERE alert_code LIKE 'STAFF_IP_%' AND pushed_at > now() - interval '1 hour'; "
+        "UPDATE ops_alerts SET mailed_at = now() - interval '3 hours' WHERE mailed_at IS NULL OR mailed_at > now() - interval '1 hour'; "
+        "UPDATE ops_alerts SET pushed_at = now() - interval '3 hours' WHERE pushed_at IS NULL OR pushed_at > now() - interval '1 hour'; "
         f"INSERT INTO accounts (id, email, name, password_hash) VALUES ('{A}', 't1228a@x.com', '시험1228', 'x'), ('{B}', 't1228b@x.com', '시험1228b', 'x'); "
         + ins_pass(A, '203.0.113.40', 1)
         + f"SELECT 'P1:' || {cnt('STAFF_IP_PASS_NEW', A)}; "
@@ -76,8 +76,8 @@ if DB:
         + f"UPDATE staff_ip_codes SET tries = 5 WHERE id = (SELECT min(id) FROM staff_ip_codes WHERE account_id = '{A}'); "
         + f"SELECT 'L5:' || {cnt('STAFF_IP_LOCKED', A)}; "
         + f"SELECT 'LT:' || title FROM ops_alerts WHERE alert_code = 'STAFF_IP_LOCKED' AND detail->>'accountId' = '{A}'; "
-        + "SELECT 'M:' || coalesce((SELECT string_agg(DISTINCT alert_code, ',' ORDER BY alert_code) FROM fn_ops_alert_mail_pending() WHERE alert_code LIKE 'STAFF_IP_%'), '') "
-        + "|| '|' || coalesce((SELECT string_agg(DISTINCT alert_code, ',' ORDER BY alert_code) FROM fn_ops_alert_push_pending() WHERE alert_code LIKE 'STAFF_IP_%'), ''); "
+        + f"SELECT 'M:' || coalesce((SELECT string_agg(DISTINCT f.alert_code, ',' ORDER BY f.alert_code) FROM fn_ops_alert_mail_pending() f JOIN ops_alerts o ON o.id = f.id WHERE o.detail->>'accountId' = '{A}'), '') "
+        + f"|| '|' || coalesce((SELECT string_agg(DISTINCT f.alert_code, ',' ORDER BY f.alert_code) FROM fn_ops_alert_push_pending() f JOIN ops_alerts o ON o.id = f.id WHERE o.detail->>'accountId' = '{A}'), ''); "
         + "ROLLBACK;")
     out = psql(sql)
     v = dict(x.split(':', 1) for x in out.splitlines() if ':' in x and not x.startswith('!'))
