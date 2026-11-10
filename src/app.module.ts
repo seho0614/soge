@@ -134,6 +134,8 @@ import { PiiReviewService } from './modules/admin/pii-review.service';
 import { RoleReviewService } from './modules/admin/role-review.service';   // v10.180 (D169) 운영자 권한 점검 · 파기 기록
 import { MfaService } from './modules/identity/mfa.service';   // v10.180 (D169) 운영자 2단계 인증
 import { MfaController } from './modules/identity/mfa.controller';
+import { StaffIpService } from './modules/identity/staff-ip.service';   // v10.226 (D195) 운영 화면 접속 인증
+import { StaffIpController } from './modules/identity/staff-ip.controller';
 import { PrivacyService } from './modules/identity/privacy.service';   // v10.181 (D170) 회원 개인정보 스스로 관리
 import { PrivacyController } from './modules/identity/privacy.controller';
 import { SiteService } from './modules/site/site.service';
@@ -353,6 +355,7 @@ import { LeadService } from './modules/lead/lead.service';
     LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
     OpsReviewController,     // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
     MfaController,           // v10.180 (D169) 운영자 2단계 인증
+    StaffIpController,       // v10.226 (D195) 운영 화면 접속 인증
     PrivacyController,       // v10.181 (D170) 내 정보 내려받기 · 로그인 기록 · 권리 요청
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
@@ -382,6 +385,7 @@ import { LeadService } from './modules/lead/lead.service';
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
     RoleReviewService, MfaService,   /* v10.180 (D169) */
+    StaffIpService,   /* v10.226 (D195) */
     PrivacyService,   /* v10.181 (D170) */
     ListingEditService,   /* v10.31 w1 */
     DealSummaryService,   /* v10.31 w1 */

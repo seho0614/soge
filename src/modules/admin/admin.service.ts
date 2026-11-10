@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resetMfaSettingCache } from '../identity/mfa.service';
+import { assertStaffIpCanTurnOn, resetStaffIpCache } from '../identity/staff-ip.service';
 import { IdentityVerifyService } from '../identity/identity-verify.service';
 import { MailAdminService } from '../../common/mail/mail-admin.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
@@ -366,6 +367,13 @@ export class AdminService {
         }
       }
     }
+    /* v10.226 (D195 · docs/363) — 운영 화면 접속 인증은 SUPER 만 · 켜기는 텔레그램 봇 토큰 · 모든 운영자의 받을 곳이 있어야(켜는 순간 잠기는 일 막음) */
+    if (key === 'admin.ip_verify') {
+      if (RequestCtx.get()?.actorRole !== 'SUPER') {
+        throw new Forbidden('IP_VERIFY_SETTING_SUPER', '운영 화면 접속 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+      }
+      if ((value ?? '').trim() === 'on') await assertStaffIpCanTurnOn(this.db);
+    }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
      *   필수 고지 항목(is_required_for_open)은 전처럼 저장하고 오픈 차단 목록이 형식 오류를 알려 줍니다. */
@@ -398,6 +406,7 @@ export class AdminService {
     });
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로
+    if (key === 'admin.ip_verify') resetStaffIpCache();   // v10.226 — 30초 기다리지 않고 바로
     return row;
   }
 

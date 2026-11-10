@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { PrincipalService } from './principal.service';
 import { MfaService } from './mfa.service';
+import { StaffIpService } from './staff-ip.service';
 import { RequestCtx } from '../../core/request-context';
 
 /**
@@ -18,6 +19,7 @@ export class AuthMiddleware implements NestMiddleware {
     private readonly auth: AuthService,
     private readonly principals: PrincipalService,
     private readonly mfa: MfaService,
+    private readonly staffIp: StaffIpService,
   ) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
@@ -31,6 +33,8 @@ export class AuthMiddleware implements NestMiddleware {
           /* v10.180 (D169) — 운영자 2단계 인증: 확인 시각 · 아직 필요한지(운영 역할일 때만 설정을 봄) */
           principal.mfaAt = ma;
           principal.mfaPending = await this.mfa.pending(principal, ma).catch(() => false);
+          /* v10.226 (D195) — 운영 화면 접속 인증: 허용 IP 밖이면 그날 인증했는지(운영 역할 · 켜짐일 때만 DB 를 봄) */
+          principal.ipPending = await this.staffIp.pending(principal).catch(() => false);
           (req as any).principal = principal;
           const c = RequestCtx.get();
           if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; }

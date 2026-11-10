@@ -1932,6 +1932,34 @@
    "note": "2026-11-03 v10.180 D169 — 운영자 2단계 인증(휴대폰 인증 앱 6자리 · RFC 6238) 등록 · 예비 번호 10개 · 로그인 뒤 번호 넣기 화면(admin.mfa_required 켜졌을 때) · SUPER 가 회원 상세에서 초기화. 기본 꺼짐. · 2026-11-06 v10.203 — SUPER 가 이 화면에서 설정(admin.mfa_required)을 바꿈 · 운영 역할 모두 「모든 기기에서 로그아웃」."
   },
   {
+   "id": "SB-ADM-SIP-010",
+   "name": "접속 인증",
+   "group": "ADM",
+   "url": "/admin/staff-access",
+   "p": "P1",
+   "roles": [
+    "REVIEWER",
+    "ADMIN",
+    "PAYOUT",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /auth/ip-verify",
+    "POST /auth/ip-verify/send",
+    "POST /auth/ip-verify/confirm",
+    "PUT /me/staff/telegram",
+    "GET /admin/staff-access",
+    "POST /admin/staff-access/allow",
+    "DELETE /admin/staff-access/allow/{id}",
+    "PUT /admin/staff-access/{id}/telegram",
+    "POST /admin/staff-access/{id}/test",
+    "PATCH /admin/site-settings"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음)."
+  },
+  {
    "id": "SB-ADM-ROLE-010",
    "name": "운영자 권한 점검",
    "group": "ADM",

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { loadCodes } from './lib/codes';
 import { ymdhm } from './lib/act';   // v10.199 — 「주문 받기」 띠의 꺼질 시각
-import { api, hasToken, onAuthChange, onMfaNeeded, setToken, tokenRoles } from './lib/api';
+import { api, hasToken, onAuthChange, onIpVerifyNeeded, onMfaNeeded, setToken, tokenRoles } from './lib/api';
 import { Login } from './components/Login';
 import { MfaGate, type MfaStatus } from './components/MfaGate';
+import { IpGate, type IpStatus } from './components/IpGate';
 import { Dashboard } from './app/admin/Dashboard';
 import { ReviewQueue } from './app/admin/ReviewQueue';
 import { ReviewDecide } from './app/admin/ReviewDecide';
@@ -33,6 +34,7 @@ import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
 import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
 import { ServerErrors } from './app/admin/ServerErrors';   // v10.182 (D171)
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
+import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
@@ -98,6 +100,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
+  /* v10.226 (D195) — 접속 인증: 내 받을 곳은 운영 역할 모두 · 관리 칸은 화면이 ADMIN · SUPER 만 */
+  'staff-access': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -119,9 +123,15 @@ export function App() {
   useEffect(() => onAuthChange(setAuthed), []);
   useEffect(() => { if (authed) checkMfa(); else setMfa('loading'); }, [authed]);
   useEffect(() => onMfaNeeded(checkMfa), []);
+  /* v10.226 (D195 · docs/363) — 운영 화면 접속 인증: 켜져 있고 허용 IP 밖에서 오늘 처음이면 인증번호 화면만(2단계 인증 다음) */
+  const [ipv, setIpv] = useState<IpStatus | null | 'loading'>('loading');
+  const checkIp = () => { api<IpStatus>('/auth/ip-verify').then(setIpv).catch(() => setIpv(null)); };
+  useEffect(() => { if (authed) checkIp(); else setIpv('loading'); }, [authed]);
+  useEffect(() => onIpVerifyNeeded(checkIp), []);
   if (!authed) return <Login />;
-  if (mfa === 'loading') return <p className="muted" style={{ padding: 24 }}>불러오는 중…</p>;
+  if (mfa === 'loading' || ipv === 'loading') return <p className="muted" style={{ padding: 24 }}>불러오는 중…</p>;
   if (mfa && mfa.required && !mfa.verified) return <MfaGate status={mfa} onDone={checkMfa} />;
+  if (ipv && ipv.required && !ipv.verified) return <IpGate status={ipv} onDone={checkIp} />;
   return <Console />;
 }
 
@@ -313,6 +323,7 @@ function Console() {
       {tab === 'privacy-requests' && <PrivacyRequests />}
       {tab === 'server-errors' && <ServerErrors />}
       {tab === 'my-mfa' && <MyMfa />}
+      {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}
       {tab === 'integ' && <Integ />}

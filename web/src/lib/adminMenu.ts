@@ -62,6 +62,7 @@ export const TABS = [
   ['privacy-requests', '권리 요청'],   /* v10.181 (D170) */
   ['server-errors', '서버 오류'],   /* v10.182 (D171) */
   ['my-mfa', '내 2단계 인증'],   /* v10.180 (D169) — 운영 역할 모두 */
+  ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
   ['gov-audit', '감사'],
@@ -98,7 +99,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcmu',  label: '소개광장',  tabs: ['community', 'polls', 'events'] },
   { key: 'affapl',  label: '제휴',      tabs: ['affiliates'] },
   { key: 'integ',   label: '통합 현황', tabs: ['integ', 'integrations', 'reports', 'collect'] },
-  { key: 'acl',     label: '권한 계층', tabs: ['roles', 'my-mfa'] },
+  { key: 'acl',     label: '권한 계층', tabs: ['roles', 'my-mfa', 'staff-access'] },
   { key: 'invreg',  label: '불변식',    tabs: ['invariants'] },
 ];
 
@@ -170,6 +171,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'privacy-requests': { title: '개인정보 권리 요청', sub: '회원의 열람 · 정정 · 삭제 · 처리정지 요청을 기한 안에 처리하고 결과를 남깁니다.', screen: 'SB-ADM-PRQ-010' },
   'server-errors': { title: '최근 서버 오류', sub: 'API 가 지난 1시간 보낸 서버 오류(5xx) 최근 50건 — 요청 내용 · 개인정보는 남기지 않습니다.', screen: 'SB-ADM-ERR-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
+  'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록.', screen: 'SB-ADM-SIP-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },
   'report-queue':{ title: '신고 처리', sub: '오래된 것이 위로 옵니다 — 신고해 놓고 답이 없으면 다음부터 신고를 안 합니다.', screen: 'SB-ADM-RPT-010' },
   'ai-ops':      { title: 'AI 운영', sub: '분류 · 검색 · 성향 · 위험감지의 품질을 보고 학습을 고칩니다.', screen: 'SB-ADM-AIS-010' },

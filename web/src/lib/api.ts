@@ -46,6 +46,9 @@ export const hasToken = () => !!accessToken;
 /** v10.180 (D169) — 서버가 403 MFA_REQUIRED(2단계 확인 필요 · 12시간 지남)를 주면 App 이 번호 넣기 화면을 다시 띄움 */
 const mfaListeners = new Set<() => void>();
 export const onMfaNeeded = (f: () => void) => { mfaListeners.add(f); return () => { mfaListeners.delete(f); }; };
+/** v10.226 (D195) — 서버가 403 IP_VERIFY_REQUIRED(허용 IP 밖 · 오늘 인증 안 함)를 주면 App 이 접속 인증 화면을 띄움 */
+const ipListeners = new Set<() => void>();
+export const onIpVerifyNeeded = (f: () => void) => { ipListeners.add(f); return () => { ipListeners.delete(f); }; };
 export const setToken = (t: string | null, rt?: string | null) => {
   accessToken = t; ss.set(AT_KEY, t);
   if (rt !== undefined) { refreshToken = rt; ss.set(RT_KEY, rt); }
@@ -110,6 +113,7 @@ export async function api<T>(
     if (await tryRefresh()) return api<T>(path, { ...init, _retried: true } as typeof init);
   }
   if (res.status === 403 && (body as ApiError).code === 'MFA_REQUIRED') mfaListeners.forEach((f) => f());
+  if (res.status === 403 && (body as ApiError).code === 'IP_VERIFY_REQUIRED') ipListeners.forEach((f) => f());
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
   return body as T;
 }
