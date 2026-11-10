@@ -186,8 +186,9 @@ BEGIN
   IF NEW.updated_at IS DISTINCT FROM OLD.updated_at THEN
     v_by := NEW.updated_by;
   END IF;
-  INSERT INTO public.ops_alerts (alert_code, severity, title, detail)
-  VALUES ('SETTING_CHANGED', 'WARN',
+  /* raised_at 은 clock_timestamp — (alert_code, raised_at) 가 유일이라 한 문장으로 두 키를 바꿀 때 now() 로 겹치지 않게(D179 와 같음) */
+  INSERT INTO public.ops_alerts (alert_code, severity, raised_at, title, detail)
+  VALUES ('SETTING_CHANGED', 'WARN', clock_timestamp(),
           format('중요 설정 바뀜 — %s: %s → %s', NEW.key, coalesce(nullif(v_old, ''), '(빈 값)'), coalesce(nullif(NEW.value, ''), '(빈 값)')),
           jsonb_build_object('key', NEW.key, 'from', v_old, 'to', NEW.value,
                              'by', v_by, 'via', CASE WHEN v_by IS NULL THEN 'DB' ELSE 'APP' END,
