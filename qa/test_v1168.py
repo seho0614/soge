@@ -169,7 +169,7 @@ if API and DB:
             psql(f"DELETE FROM hlt_payments WHERE order_id IN (SELECT id FROM hlt_orders WHERE seller_id = '{sid}')")
             psql(f"DELETE FROM hlt_orders WHERE seller_id = '{sid}'")
             psql(f"UPDATE hlt_products SET status = 'STOPPED' WHERE seller_id = '{sid}'")
-            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', account_id = NULL WHERE id = '{sid}'")
+            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', status_reason = '시험 정리', account_id = NULL WHERE id = '{sid}'")
         psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0) + '::timestamptz')} WHERE id = '{bid}'")
     ok('끝 — 되돌림(설정 · 기본 수수료율 · 시험 정산서 · 주문 없음 · 판매자 막음)', setting() == (s0 or 'off')

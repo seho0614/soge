@@ -160,7 +160,7 @@ if API and DB:
         psql(f"DELETE FROM hlt_cart_items WHERE account_id = '{bid}'")
         if sid:
             psql(f"UPDATE hlt_products SET status = 'STOPPED' WHERE seller_id = '{sid}'")
-            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', account_id = NULL WHERE id = '{sid}'")   # 주문 · 배송 기록은 지울 수 없어 판매자 · 상품만 막아 둠
+            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', status_reason = '시험 정리', account_id = NULL WHERE id = '{sid}'")   # 주문 · 배송 기록은 지울 수 없어 판매자 · 상품만 막아 둠
         psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0) + '::timestamptz')} WHERE id = '{bid}'")
     ok('끝 — 되돌림(설정 처음 값 · 시험 판매자 막음 · 회원 연결 끊음 · 본인확인 처음 값)', setting() == (s0 or 'off')

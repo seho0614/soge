@@ -142,7 +142,7 @@ if API and DB:
         psql(f"DELETE FROM hlt_settlements s WHERE s.period_from = '{P1}' AND NOT EXISTS (SELECT 1 FROM hlt_payout_requests r WHERE r.settlement_id = s.id)")
         if sid:
             psql(f"UPDATE hlt_products SET status = 'STOPPED' WHERE seller_id = '{sid}'")
-            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', account_id = NULL WHERE id = '{sid}'")   # 지급 기록은 지울 수 없어 판매자 · 상품만 막아 둠
+            psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', status_reason = '시험 정리', account_id = NULL WHERE id = '{sid}'")   # 지급 기록은 지울 수 없어 판매자 · 상품만 막아 둠
         psql(f"UPDATE site_settings SET value = '{t0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         if a0: psql(f"UPDATE site_settings SET value = '{a0}' WHERE key = 'assume.payment'")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0) + '::timestamptz')} WHERE id = '{bid}'")
