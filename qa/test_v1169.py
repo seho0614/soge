@@ -40,7 +40,7 @@ ok('① 공급자 · 서버 — 시험 공급자만 · 간주 아니면 null · 
    'class StubSubmerchantProvider' in PV and 'return assumeOn ? new StubSubmerchantProvider() : null;' in PV and not re.search(r'fetch\(|https?://', PV)
    and "'PG_SUBMERCHANT_NOT_READY'" in ST and "'PG_PAYOUT_NOT_READY'" in ST and "'NOT_CONFIRMED'" in ST and "'DIRECT_NO_PAYOUT'" in ST and "'NO_SUBMERCHANT'" in ST
    and "key = 'assume.payment'" in ST and sum(SC.count(f"@Audit('{a}'") for a in ('HLT_SELLER_SUBMERCHANT', 'HLT_SETTLE_CONFIRM', 'HLT_SETTLE_PAYOUT')) == 3, '')
-WS = rd('web/src/app/admin/HealthSettle.tsx'); SE = rd('site/src/components/health/SellerSettlements.tsx')
+WS = rd('web/src/app/admin/HealthSettle.tsx') + rd('web/src/app/admin/HealthSellers.tsx'); SE = rd('site/src/components/health/SellerSettlements.tsx')   # v10.223 — 판매자 표(하위가맹점)는 HealthSellers 로
 ko = json.loads(rd('site/src/i18n/messages/ko/hlt.json') or '{}'); en = json.loads(rd('site/src/i18n/messages/en/hlt.json') or '{}')
 SPEC = json.load(open(os.path.join(K, 'spec/screens.json'), encoding='utf-8')).get('screens') or []
 apis = next((x.get('apis', []) for x in SPEC if x.get('id') == 'SB-ADM-HST-010'), [])
@@ -95,7 +95,7 @@ if API and DB:
         psql(f"DELETE FROM hlt_seller_licenses WHERE seller_id IN (SELECT id FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND'))")
         psql(f"DELETE FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND') AND NOT EXISTS (SELECT 1 FROM hlt_orders o WHERE o.seller_id = hlt_sellers.id)")
         psql(f"UPDATE hlt_sellers SET account_id = NULL WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')")
-        psql("UPDATE site_settings SET value = 'on' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'on' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql("UPDATE site_settings SET value = 'off' WHERE key = 'assume.payment'")
         psql(f"UPDATE accounts SET identity_verified_at = now() WHERE id = '{bid}'")
         sid = psql(f"INSERT INTO hlt_sellers (code, account_id, type, name, personal, status, applied_at, reviewed_at, commission_rate) "
@@ -143,7 +143,7 @@ if API and DB:
         if sid:
             psql(f"UPDATE hlt_products SET status = 'STOPPED' WHERE seller_id = '{sid}'")
             psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', account_id = NULL WHERE id = '{sid}'")   # 지급 기록은 지울 수 없어 판매자 · 상품만 막아 둠
-        psql(f"UPDATE site_settings SET value = '{t0 or 'off'}' WHERE key = 'mall.tenant'")
+        psql(f"UPDATE site_settings SET value = '{t0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         if a0: psql(f"UPDATE site_settings SET value = '{a0}' WHERE key = 'assume.payment'")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0) + '::timestamptz')} WHERE id = '{bid}'")
     ok('끝 — 되돌림(입점 · 간주 설정 처음 값 · 판매자 막음 · 회원 연결 끊음)', sv('mall.tenant') == (t0 or 'off') and sv('assume.payment') == a0

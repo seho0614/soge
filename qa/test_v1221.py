@@ -66,7 +66,7 @@ mig = sorted(d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.p
 ok('① D191 — csp_report_days(날짜 · 규칙 · 출처 · 화면 · 건수 · IP 칸 없음) · 알림 LOGIN_NEW_DEVICE(수신 거부 불가 · 조용한 시간 무시) · 설정 account.login_alert on · 지우는 문장 없음',
    'CREATE TABLE IF NOT EXISTS public.csp_report_days' in M and 'PRIMARY KEY (day, directive, blocked)' in M and not re.search(r'\bip\b', M.split('CREATE TABLE')[1].split(');')[0], re.I)
    and "('LOGIN_NEW_DEVICE', '낯선 기기 로그인', false, true," in M and "VALUES ('account.login_alert', 'on', 'GLOBAL'," in M
-   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and mig and mig[-1] == 'D191_security_watch', f'{len(mig)} · {mig[-1] if mig else ""}')
+   and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE)\b', M) and mig and 'D191_security_watch' in mig and mig[-1] >= 'D191_security_watch', f'{len(mig)} · {mig[-1] if mig else ""}')
 CR, LW, SC, LT = rd('src/common/csp-report.ts'), rd('src/modules/admin/launch-watch.service.ts'), rd('src/worker/scheduler.service.ts'), rd('web/src/app/admin/LaunchWatch.tsx')
 ok('① 보고 30일 — 메모리 pending(날짜 · 규칙 · 출처) · launch_watch 가 flushCsp(더함 · 못 넣으면 되돌림 · 30일 지난 줄 지움) · 지켜보기 csp30(처음 · 마지막 · 7일 새 출처 · 막기 판단 준비) · 운영 화면 칸 · 상세',
    'export function takeCspPending()' in CR and 'export function restoreCspPending(' in CR and 'pending.clear();' in CR

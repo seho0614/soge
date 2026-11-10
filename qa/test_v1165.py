@@ -48,7 +48,7 @@ ok('① 서버 — 꺼짐 · 본인확인 · 동의(HLT_SELLER) · 개인 · 사
    and TC.count('@Audit(') >= 3 and "@Post('me/health/seller')" in TC and "@Get('admin/health/sellers/applications')" in TC
    and "@Post('admin/health/sellers/:id/approve')" in TC and "@Post('admin/health/sellers/:id/reject')" in TC and '@StrictBoolean() personal' in TC
    and 'HealthTenantController' in AM and 'HealthTenantService' in AM, '')
-WA = rd('web/src/app/admin/HealthTenantApply.tsx'); WS = rd('web/src/app/admin/HealthSettle.tsx')
+WA = rd('web/src/app/admin/HealthTenantApply.tsx'); WS = rd('web/src/app/admin/HealthSettle.tsx') + rd('web/src/app/admin/HealthSellerTab.tsx')   # v10.224 — 입점 심사는 「소개몰 판매자」 탭
 SA = rd('site/src/components/health/SellerApply.tsx'); SP = rd('site/src/app/health/seller/page.tsx')
 ko = json.loads(rd('site/src/i18n/messages/ko/hlt.json') or '{}').get('tenant', {}); en = json.loads(rd('site/src/i18n/messages/en/hlt.json') or '{}').get('tenant', {})
 SPEC = json.load(open(os.path.join(K, 'spec/screens.json'), encoding='utf-8')).get('screens') or []
@@ -103,10 +103,10 @@ if API and DB:
     try:
         psql(f"DELETE FROM hlt_seller_licenses WHERE seller_id IN (SELECT id FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND'))")
         psql(f"DELETE FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')")
-        psql("UPDATE site_settings SET value = 'off' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'off' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         c0 = call('GET', '/health/tenant/config'); r0 = call('POST', '/me/health/seller', APPLY, TM)
         ok('② 처음 꺼짐 — config enabled=false · 신청 422 TENANT_OFF', c0.get('enabled') is False and r0.get('code') == 'TENANT_OFF', f"{c0} · {r0.get('code')}")
-        psql("UPDATE site_settings SET value = 'on' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'on' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = now() WHERE id = '{mid}'")
         r1 = call('POST', '/me/health/seller', APPLY, TM)
         r2 = call('POST', '/me/health/seller', {**APPLY, 'personal': False, 'bizRegNo': '1234567890'}, TM)
@@ -154,13 +154,13 @@ if API and DB:
                         pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
                         pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                         pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(1500)
-                        pg.goto(ADMIN_WEB + '/#/hlt-settle', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
+                        pg.goto(ADMIN_WEB + ('/#/hlt-sellers' if os.path.exists(os.path.join(K, 'web/src/app/admin/HealthSellerTab.tsx')) else '/#/hlt-settle'), wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)   # v10.224 탭 옮김
                         box = pg.locator('[data-tenant-apply]').count(); card = pg.locator(f'[data-tenant="{sid}"]').count()
                         if card: pg.locator(f'[data-tenant="{sid}"]').scroll_into_view_if_needed()
                         pg.screenshot(path=os.path.join(HERE, 'v1165_admin_tenant.png'), full_page=False)
                         ok('③ 운영 화면 #/hlt-settle — 「입점 신청」 부품 · 시험 신청 카드(승인 · 반려) · 오류 없음', box == 1 and card == 1 and not errs, f'{box} · {card} · {errs[:2]}')
                     if SITE:
-                        psql("UPDATE site_settings SET value = 'off' WHERE key = 'mall.tenant'")
+                        psql("UPDATE site_settings SET value = 'off' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
                         pg = b_.new_page(viewport={'width': 1300, 'height': 900})
                         pg.goto(SITE + '/health/seller', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1200)
                         off = pg.locator('[data-tenant-off]').count()
@@ -170,7 +170,7 @@ if API and DB:
     finally:
         psql(f"DELETE FROM hlt_seller_licenses WHERE seller_id IN (SELECT id FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND'))")
         psql(f"DELETE FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')")
-        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = 'mall.tenant'")
+        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not iv0 else repr(iv0) + '::timestamptz')} WHERE id = '{mid}'")
     ok('끝 — 되돌림(설정 처음 값 · 시험 판매자 없음 · 본인확인 처음 값)', setting() == (s0 or 'off')
        and psql(f"SELECT count(*) FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')") == '0'

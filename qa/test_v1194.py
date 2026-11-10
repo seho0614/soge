@@ -78,10 +78,10 @@ PA = rd(P + 'partner-actor.service.ts'); AS = rd('src/modules/affiliate/affiliat
 PD = rd(P + 'partner-admin.service.ts')
 ok('① 서버 — 제휴는 aff_status(찾기 · 대시보드 · 심사 · 목록 · 정지) · 제휴 신청 따로(NONE 줄) · 안심 찾기 · 목록에서 NONE 뺌 · 안심 정지 · 다시 열기',
    "p.status <> 'NONE'" in PA and 'async affiliateActiveId(' in PA and 'this.actors.affiliateActiveId(this.me!)' in AS
-   and "VALUES ($1, 'NONE', 'APPLIED', now())" in AS and "WHERE partners.aff_status IS NULL OR partners.aff_status = 'REJECTED'" in AS
+   and "VALUES ($1, 'NONE', 'APPLIED', now())" in AS and ("WHERE partners.aff_status IS NULL OR partners.aff_status = 'REJECTED'" in AS or "WHERE partners.aff_status IS NULL OR partners.aff_status IN ('REJECTED', 'WITHDRAWN')" in AS)   # v10.224 탈퇴 뒤 다시
    and "WHERE p.aff_status = 'APPLIED'" in AD and "WHERE id = $1 AND aff_status = 'APPLIED'" in AD and 'async affSetStatus(' in AD
    and "WHERE p.status <> 'NONE'" in PD and 'async admSetStatus(' in PD
-   and "WHERE partners.status IN ('REJECTED', 'NONE')" in rd(P + 'partner.service.ts')
+   and ("WHERE partners.status IN ('REJECTED', 'NONE')" in rd(P + 'partner.service.ts') or "WHERE partners.status IN ('REJECTED', 'NONE', 'WITHDRAWN')" in rd(P + 'partner.service.ts'))   # v10.224
    and "@Post('partner/affiliate/apply')" in AC, '')
 
 APP = rd('web/src/App.tsx'); RA = rd('web/src/app/admin/RoleAdmin.tsx')

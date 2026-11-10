@@ -100,7 +100,7 @@ if API and DB:
                 DELETE FROM hlt_sellers WHERE account_id IN ('{mid}', '{oid}') AND type IN ('TENANT','BRAND');"""
     try:
         psql(clean)
-        psql("UPDATE site_settings SET value = 'off' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'off' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         n0 = call('GET', '/me/health/seller/center', t=TM)
         ok('② 판매자 아님 → 403 NOT_SELLER', n0.get('_err') == 403 and n0.get('code') == 'NOT_SELLER', str(n0.get('code')))
         sid = psql(f"INSERT INTO hlt_sellers (code, account_id, type, name, personal, status, applied_at, reviewed_at) VALUES ('{SC1}', '{mid}', 'TENANT', '시험 판매자', true, 'ACTIVE', now(), now()) RETURNING id").splitlines()[0]
@@ -130,7 +130,7 @@ if API and DB:
         call('POST', f'/me/health/seller/products/{code}/submit', t=TM)
         ap = call('POST', f'/admin/health/product-reviews/{code}', {'decision': 'APPROVE'}, T_)
         st_off = call('POST', f'/me/health/seller/products/{code}/status', {'status': 'ON_SALE'}, TM)
-        psql("UPDATE site_settings SET value = 'on' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'on' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         st_pay = call('POST', f'/me/health/seller/products/{code}/status', {'status': 'ON_SALE'}, TM)
         psql(f"UPDATE hlt_sellers SET submerchant_id = 'SUB-T1166' WHERE id = '{sid}'")
         st_ok = call('POST', f'/me/health/seller/products/{code}/status', {'status': 'ON_SALE'}, TM)
@@ -177,7 +177,7 @@ if API and DB:
                     b_.close()
     finally:
         psql(clean)
-        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = 'mall.tenant'")
+        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
     ok('끝 — 되돌림(설정 처음 값 · 시험 판매자 · 상품 없음)', setting() == (s0 or 'off')
        and psql(f"SELECT count(*) FROM hlt_sellers WHERE code IN ('{SC1}', '{SC2}')") == '0', setting())
 else:

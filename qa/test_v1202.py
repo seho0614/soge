@@ -31,7 +31,7 @@ def rd(rel):
 MS = rd('src/modules/me/me.service.ts'); AD = rd('src/modules/identity/auth.dto.ts'); CC = rd('site/src/app/cart-count/route.ts')
 ok('① 서버 — /me/summary badges(안심 · 제휴 파트너는 PartnerActorService 한 곳 · 판매자 ACTIVE · PAUSED · mall.tenant) · DTO · /cart-count 가 mal · aff · seller · tenant 로 넘김(역할 이름은 안 넘김)',
    'this.actors.forMember(this.me!), this.actors.affiliate(this.me!)' in MS and "affPartner: aff?.affStatus === 'ACTIVE'" in MS
-   and "status IN ('ACTIVE', 'PAUSED')) AS seller" in MS and "key = 'mall.tenant'), 'off') = 'on' AS tenant" in MS
+   and "status IN ('ACTIVE', 'PAUSED')) AS seller" in MS and ("key = 'mall.tenant'), 'off') = 'on' AS tenant" in MS or "key = 'mall.tenant_apply'), 'off') = 'on' AS tenant" in MS)   # v10.223 신청 받기 스위치
    and 'badges: { malPartner: !!mal, ' in MS
    and 'export class MeBadgesDto' in AD and AD.index('export class MeBadgesDto') < AD.index('export class MeSummaryDto') and '@ApiProperty({ type: MeBadgesDto }) badges!: MeBadgesDto;' in AD
    and 'ops, ...badges }' in CC and 'tenant: b.tenantOn === true' in CC, '')
@@ -44,7 +44,7 @@ ok('① 머리줄 — 아이콘 4(data-role-icon admin · mal · aff · shop · 
    and all(KO.get(k) and EN.get(k) for k in ('malPartner', 'seller', 'sellerCenter')), f'{KO.get("malPartner")} · {EN.get("seller")}')
 AS_ = rd('src/modules/admin/admin.service.ts'); TA_ = rd('web/src/app/admin/HealthTenantApply.tsx'); SJ = rd('spec/screens.json'); EX = rd('src/common/i18n/server-text.en.ts')
 ok('① 입점 스위치 — mall.tenant 켜기 SUPER 만(403 TENANT_SETTING_SUPER) · 입점 약관 시행 중이어야(422 TENANT_TERMS_FIRST) · 끄기는 ADMIN 도 · 운영 화면 입점 신청 줄 · 화면 목록 · 영어 문장',
-   "key === 'mall.tenant' && (value ?? '').trim() === 'on'" in AS_ and "new Forbidden('TENANT_SETTING_SUPER'" in AS_ and "new PolicyViolation('TENANT_TERMS_FIRST'" in AS_
+   ("key === 'mall.tenant' && (value ?? '').trim() === 'on'" in AS_ or "(key === 'mall.tenant' || key === 'mall.tenant_apply') && (value ?? '').trim() === 'on'" in AS_) and "new Forbidden('TENANT_SETTING_SUPER'" in AS_ and "new PolicyViolation('TENANT_TERMS_FIRST'" in AS_
    and "FROM v_terms_current WHERE code = 'HLT_SELLER'" in AS_ and 'data-tenant-switch=' in TA_ and "key: 'mall.tenant'" in TA_ and "'/health/tenant/config'" in TA_
    and '"GET /health/tenant/config",\n    "PATCH /admin/site-settings",\n    "POST /admin/health/sellers/{id}/approve"' in SJ
    and '"소개몰 입점 신청을 켜는 것은 최고 관리자(SUPER)만 할 수 있습니다.":' in EX, '')
@@ -108,7 +108,7 @@ if API and DB:
         tok = {e: call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken') for e in (ADMU, SUPU, PARU, MEMU)}
 
         # ② badges = DB
-        psql("UPDATE site_settings SET value = 'off' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'off' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         sp = call('GET', '/me/summary', None, tok[PARU]).get('badges') or {}
         sm = call('GET', '/me/summary', None, tok[MEMU]).get('badges') or {}
         tp, tm = truth(PARU), truth(MEMU)
@@ -129,7 +129,7 @@ if API and DB:
            and not s3.get('_err'), f'{s1.get("code")} · {hlt} {s2.get("_err")} {s2.get("code")} · {s3.get("_err")}')
 
         # ③ 화면 — 입점 켜짐(DB 로) · 운영 계정 · 시험 파트너 · 회원 × 폭 3
-        psql("UPDATE site_settings SET value = 'on' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'on' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         if SITE:
             from playwright.sync_api import sync_playwright
             host = re.sub(r'^https?://', '', SITE).split('/')[0].split(':')[0]
@@ -171,13 +171,13 @@ if API and DB:
                 pg.on('pageerror', lambda e: errs2.append(str(e)[:120]))
                 pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                 pg.fill('input[name=email]', SUPU); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(3000)
-                pg.goto(ADMIN_WEB + '/#/hlt-settle', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(3000)
+                pg.goto(ADMIN_WEB + ('/#/hlt-sellers' if os.path.exists(os.path.join(K, 'web/src/app/admin/HealthSellerTab.tsx')) else '/#/hlt-settle'), wait_until='networkidle', timeout=120000); pg.wait_for_timeout(3000)   # v10.224 탭 옮김
                 tabs = pg.evaluate("() => !!document.querySelector('[data-tenant-apply]')")
                 h1 = pg.evaluate("() => (document.querySelector('[data-tenant-switch]')?.getAttribute('data-tenant-switch') ?? '') + '|' + !!document.querySelector('[data-tenant-flip]') + '|' + location.hash")
                 b.close()
             ok('③ 운영 화면 — 소개몰 정산 › 입점 신청 위 「입점 신청 받기 켜짐」 줄 · SUPER 끄기 단추 · 오류 없음', h1.startswith('on|true|') and not errs2, f'{tabs} · {h1} · {errs2[:2]}')
     finally:
-        psql(f"UPDATE site_settings SET value = {ten0} WHERE key = 'mall.tenant'")
+        psql(f"UPDATE site_settings SET value = {ten0} WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
 
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')

@@ -91,7 +91,7 @@ if API and DB:
         psql(f"DELETE FROM hlt_seller_licenses WHERE seller_id IN (SELECT id FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND'))")
         psql(f"DELETE FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND') AND NOT EXISTS (SELECT 1 FROM hlt_orders o WHERE o.seller_id = hlt_sellers.id)")
         psql(f"UPDATE hlt_sellers SET account_id = NULL WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')")
-        psql("UPDATE site_settings SET value = 'on' WHERE key = 'mall.tenant'")
+        psql("UPDATE site_settings SET value = 'on' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = now() WHERE id = '{bid}'")
         sid = psql(f"INSERT INTO hlt_sellers (code, account_id, type, name, personal, status, applied_at, reviewed_at, submerchant_id, ship_fee, free_ship_over, return_ship_fee) "
                    f"VALUES ('{SC1}-' || to_char(now(), 'HH24MISS'), '{mid}', 'TENANT', '시험 판매자 3', true, 'ACTIVE', now(), now(), 'SUB-T1167', 3000, 50000, 4000) RETURNING id").splitlines()[0]
@@ -161,7 +161,7 @@ if API and DB:
         if sid:
             psql(f"UPDATE hlt_products SET status = 'STOPPED' WHERE seller_id = '{sid}'")
             psql(f"UPDATE hlt_sellers SET status = 'BLOCKED', account_id = NULL WHERE id = '{sid}'")   # 주문 · 배송 기록은 지울 수 없어 판매자 · 상품만 막아 둠
-        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = 'mall.tenant'")
+        psql(f"UPDATE site_settings SET value = '{s0 or 'off'}' WHERE key = ANY(ARRAY['mall.tenant', 'mall.tenant_apply'])")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0) + '::timestamptz')} WHERE id = '{bid}'")
     ok('끝 — 되돌림(설정 처음 값 · 시험 판매자 막음 · 회원 연결 끊음 · 본인확인 처음 값)', setting() == (s0 or 'off')
        and psql(f"SELECT count(*) FROM hlt_sellers WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')") == '0'
