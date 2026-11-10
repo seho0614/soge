@@ -7,9 +7,9 @@ import { ApiFailure, api, setToken } from '../lib/api';
  *   설정(admin.ip_verify)이 켜졌고 허용 IP 밖에서 오늘 처음 들어오면 이 화면만 — 텔레그램으로 6자리를 받아 넣음.
  *   맞으면 그 IP 는 한국 시간 그날 자정까지. 2단계 인증(MfaGate)을 마친 뒤에 나옵니다.
  */
-export interface IpStatus { on: boolean; required: boolean; verified: boolean; ip: string | null; channel: string | null; ready: boolean }
+export interface IpStatus { on: boolean; required: boolean; verified: boolean; ip: string | null; channel: string | null; ready: boolean; mode?: string }
 
-const CH: Record<string, string> = { TELEGRAM_ME: '내 텔레그램', TELEGRAM_OPS: '운영 텔레그램 대화방' };
+const CH: Record<string, string> = { TELEGRAM_ME: '내 텔레그램', TELEGRAM_OPS: '운영 텔레그램 대화방', SMS: '내 휴대폰 문자' };
 const msgOf = (e: unknown, f: string) => (e instanceof ApiFailure ? e.body.message : f);
 
 export function IpGate({ status, onDone }: { status: IpStatus; onDone: () => void }) {
@@ -21,8 +21,8 @@ export function IpGate({ status, onDone }: { status: IpStatus; onDone: () => voi
   async function send() {
     setBusy(true); setMsg(null);
     try {
-      const r = await api<{ channel: string; minutes: number }>('/auth/ip-verify/send', { method: 'POST' });
-      setSent(true); setNote(`${CH[r.channel] ?? r.channel}(으)로 보냈습니다 — ${r.minutes}분 안에 넣으십시오.`);
+      const r = await api<{ channel: string; minutes: number; phoneLast4?: string }>('/auth/ip-verify/send', { method: 'POST' });
+      setSent(true); setNote(`${CH[r.channel] ?? r.channel}${r.phoneLast4 ? `(끝 ${r.phoneLast4})` : ''}(으)로 보냈습니다 — ${r.minutes}분 안에 넣으십시오.`);
     } catch (e) { setMsg(msgOf(e, '보내지 못했습니다.')); } finally { setBusy(false); }
   }
   async function confirm(e: React.FormEvent) {

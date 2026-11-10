@@ -69,7 +69,7 @@ export class AlimtalkService {
    * 한 통 보내기 — 오류를 던지지 않고 결과로 돌려줌(부르는 쪽이 재시도 · 다른 길을 고름). 기록은 늘 남김.
    * opts.allowUnapproved — 시험 발송만(대행사 코드는 있어야 함 · 심의 중 시험을 대행사가 허락하는 경우)
    */
-  async send(m: { to: string; template: AlimtalkTemplateCode; vars: Record<string, string | number>; purpose: 'CONSULT_OTP' | 'NOTIFY' | 'TEST' },
+  async send(m: { to: string; template: AlimtalkTemplateCode; vars: Record<string, string | number>; purpose: 'CONSULT_OTP' | 'NOTIFY' | 'TEST' | 'STAFF_OTP' },
     opts: { allowUnapproved?: boolean } = {}): Promise<AlimtalkResult> {
     const mode = await this.mode();
     const to = String(m.to ?? '').replace(/\D/g, '');
@@ -225,6 +225,7 @@ export class AlimtalkService {
     const sample: Record<AlimtalkTemplateCode, Record<string, string>> = {
       CONSULT_OTP: { 인증번호: '123456', 분: '10' }, HANDOFF_ADMIN: { 건수: '1' },
       ORDER_STATUS: { 제목: '시험 발송', 내용: '운영 화면 시험 발송입니다.' }, NOTICE_GENERAL: { 제목: '시험 발송', 내용: '운영 화면 시험 발송입니다.' },
+      STAFF_IP_OTP: { 인증번호: '123456', 분: '5' },
     };
     const r = await this.send({ to: phone, template: code, vars: sample[code], purpose: 'TEST' }, { allowUnapproved: true });
     return { ok: r.ok, to: `***${last4(phone)}`, msgId: r.msgId ?? null, errorKind: r.errorKind ?? null, error: r.error ?? null,

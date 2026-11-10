@@ -6,11 +6,12 @@ import { Flash } from '../../components/Flash';
 import type { IpStatus } from '../../components/IpGate';
 
 type Allow = { id: string; ip: string; memo: string; createdAt: string; createdBy: string | null };
-type Staff = { id: string; email: string; name: string | null; roles: string[]; personalChat: boolean; receive: string | null; todayPasses: number; lastVerifiedAt: string | null };
+type Staff = { id: string; email: string; name: string | null; roles: string[]; personalChat: boolean; phoneLast4: string | null; receive: string | null; todayPasses: number; lastVerifiedAt: string | null };
 type Row = { at: string; kind: string; email: string; ip: string | null; channel: string };
-type Overview = { on: boolean; telegram: { ready: boolean; reason: string | null; opsChat: string | null }; allow: Allow[]; staff: Staff[]; recent: Row[]; myIp: string | null; myIpFull: string | null };
+type Overview = { on: boolean; mode: string; sms: { ready: boolean }; telegram: { ready: boolean; reason: string | null; opsChat: string | null }; allow: Allow[]; staff: Staff[]; recent: Row[]; myIp: string | null; myIpFull: string | null };
 
 const CH: Record<string, string> = { TELEGRAM_ME: '개인 텔레그램', TELEGRAM_OPS: '운영 대화방', SMS: '문자' };
+const MODE: Record<string, string> = { TELEGRAM: '텔레그램', SMS: '문자(휴대폰)', SMS_THEN_TELEGRAM: '문자 · 안 되면 텔레그램' };
 const KIND: Record<string, string> = { VERIFIED: '인증함', SENT: '번호 보냄', USED: '번호 씀', EXPIRED: '번호 만료', LOCKED: '5번 틀려 막힘' };
 
 /**
@@ -31,6 +32,10 @@ export function StaffAccess() {
   const [ip, setIp] = useState('');
   const [memo, setMemo] = useState('');
   const [chats, setChats] = useState<Record<string, string>>({});
+  const [phone, setPhone] = useState('');
+  const [pcode, setPcode] = useState('');
+  const [psent, setPsent] = useState(false);
+  const [mode, setMode] = useState('');
   const reload = () => { me.reload(); ov.reload(); };
   const d = ov.data;
   return (
@@ -50,6 +55,21 @@ export function StaffAccess() {
           onClick={() => void a.run('my-chat', () => api('/me/staff/telegram', { method: 'PUT', body: JSON.stringify({ chat: myChat || null }) }), () => { setMyChat(''); reload(); }, '저장했습니다.')}>저장</button>
         <small className="dim"> 봇에게 먼저 아무 말이나 보낸 뒤, 최고 관리자가 「외부 연동 › 텔레그램 대화방 찾기」로 번호를 알려 줍니다.</small>
       </p>
+      {/* v10.227 (D196) — 내 휴대폰: 그 번호로 받은 확인 번호를 넣어야 등록 */}
+      <p data-my-phone="">
+        <label>내 휴대폰{' '}
+          <input name="my-phone" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9-]/g, ''))} placeholder="010-0000-0000" inputMode="tel" maxLength={13} />
+        </label>{' '}
+        <button className="btn-sm" disabled={a.busy === 'phone' || phone.replace(/\D/g, '').length < 10} data-my-phone-send=""
+          onClick={() => void a.run('phone', () => api<{ phoneLast4: string; minutes: number }>('/me/staff/phone', { method: 'POST', body: JSON.stringify({ phone }) }), () => setPsent(true),
+            (r) => `끝 ${r.phoneLast4} 휴대폰으로 확인 번호를 보냈습니다 — ${r.minutes}분 안에 넣으십시오.`)}>확인 번호 받기</button>
+        {psent && <>{' '}
+          <input name="my-phone-code" value={pcode} onChange={(e) => setPcode(e.target.value.replace(/\D/g, ''))} placeholder="6자리" inputMode="numeric" maxLength={6} style={{ width: 90 }} />{' '}
+          <button className="btn-ok" disabled={a.busy === 'pconfirm' || pcode.length !== 6} data-my-phone-confirm=""
+            onClick={() => void a.run('pconfirm', () => api('/me/staff/phone/confirm', { method: 'POST', body: JSON.stringify({ code: pcode }) }), () => { setPsent(false); setPcode(''); setPhone(''); reload(); }, '휴대폰을 등록했습니다.')}>확인</button>
+        </>}
+        <small className="dim"> 문자 길(알림톡)이 준비돼야 받습니다 · 기록에는 끝 4자리만</small>
+      </p>
 
       {canSee && d && (<>
         <h3 className="sec">스위치</h3>
@@ -66,6 +86,17 @@ export function StaffAccess() {
               }}>{d.on ? '끄기' : '켜기'}</button>
           )}
           <small className="dim"> 켜기는 최고 관리자 · 봇 토큰과 모든 운영자의 받을 곳이 있어야 켜짐 · 바꾸면 운영 알림 「중요 설정 바뀜」</small>
+        </p>
+        <p data-ip-mode={d.mode}>
+          보내는 길 <b>{MODE[d.mode] ?? d.mode}</b> · 문자 {d.sms.ready ? '준비됨' : '준비 안 됨(알림톡 방식 · 키 · 템플릿 승인 · 켜기)'}{' '}
+          {isSuper && <>
+            <select name="ip-mode" value={mode || d.mode} onChange={(e) => setMode(e.target.value)}>
+              {Object.entries(MODE).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+            </select>{' '}
+            <button className="btn-sm" disabled={a.busy === 'mode' || !mode || mode === d.mode} data-ip-mode-save=""
+              onClick={() => void a.run('mode', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'admin.ip_verify_channel', value: mode }) }), () => { setMode(''); reload(); })}>바꾸기</button>
+          </>}
+          <small className="dim"> 켜진 채 바꾸면 새 길로 모든 운영자가 받을 수 있어야 바뀜</small>
         </p>
 
         <h3 className="sec">허용 IP <small className="dim">— 여기서는 인증 없이</small></h3>
@@ -89,11 +120,13 @@ export function StaffAccess() {
         )}
 
         <h3 className="sec">운영자별 받을 곳 · 오늘 인증</h3>
-        <table className="tbl" data-ip-staff=""><thead><tr><th>운영자</th><th>역할</th><th>받을 곳</th><th>오늘</th><th>마지막 인증</th>{isSuper && <th>개인 대화 번호(SUPER)</th>}</tr></thead><tbody>
+        <table className="tbl" data-ip-staff=""><thead><tr><th>운영자</th><th>역할</th><th>받을 곳</th><th>휴대폰</th><th>오늘</th><th>마지막 인증</th>{isSuper && <th>개인 대화 번호(SUPER)</th>}</tr></thead><tbody>
           {d.staff.map((s) => (
             <tr key={s.id} data-ip-staff-row={s.email}>
               <td>{s.email}</td><td>{s.roles.join(' · ')}</td>
               <td className={s.receive ? '' : 'warn-text'}>{s.receive ? CH[s.receive] : '없음'}</td>
+              <td data-ip-staff-phone={s.phoneLast4 ?? ''}>{s.phoneLast4 ? `끝 ${s.phoneLast4}` : '-'}{isSuper && s.phoneLast4 && <>{' '}<button className="btn-sm" disabled={a.busy === `p${s.id}`}
+                onClick={() => { if (confirm(`${s.email} 의 휴대폰(끝 ${s.phoneLast4})을 지웁니다.`)) void a.run(`p${s.id}`, () => api(`/admin/staff-access/${s.id}/phone`, { method: 'DELETE' }), reload); }}>지우기</button></>}</td>
               <td>{s.todayPasses}</td><td>{s.lastVerifiedAt ? ymdhm(s.lastVerifiedAt) : '-'}</td>
               {isSuper && <td>
                 <input name={`chat-${s.id}`} value={chats[s.id] ?? ''} onChange={(e) => setChats({ ...chats, [s.id]: e.target.value.trim() })} placeholder={s.personalChat ? '등록됨 · 바꾸려면 입력' : '비우면 운영 대화방'} maxLength={21} style={{ width: 150 }} />{' '}

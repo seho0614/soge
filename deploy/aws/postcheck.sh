@@ -207,7 +207,7 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   # v10.171 — AI 상담 스위치는 대표 결정(11/1 · ai-agent #29)으로 켜 둘 수 있음 — 처리방침 게시 전에는 잠금(D145 · D149)이라 동작하지 않음
   v=$(q "SELECT value FROM site_settings WHERE key = 'agent.enabled'")
   [ "$v" = "on" ] && info "agent.enabled = on — 대표 결정으로 켜 둠(ai-agent #29) · 처리방침(국외 이전 · AI 고지) 게시 순간 AI 상담 동작" || ok "agent.enabled = ${v:-없음}"
-  has public.alimtalk_templates && { n=$(q "SELECT count(*) FROM alimtalk_templates"); [ "$n" = "4" ] && ok "알림톡 템플릿 4개(5절 16)" || warn "알림톡 템플릿 ${n}개" "4 가 기대"; }
+  has public.alimtalk_templates && { n=$(q "SELECT count(*) FROM alimtalk_templates"); [ "$n" = "5" ] && ok "알림톡 템플릿 5개(5절 16 · v10.227 운영 화면 접속 인증번호)" || warn "알림톡 템플릿 ${n}개" "5 가 기대"; }
   # 오픈 준비 점검(5절 22)
   if has public.v_open_readiness; then
     r=$(q "SELECT count(*) || '/' || count(*) FILTER (WHERE required) FROM v_open_readiness")

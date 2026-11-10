@@ -25,6 +25,11 @@ export class StaffTelegramDto {
   @IsOptional() @IsString() @Length(0, 21) chat?: string | null;
 }
 
+export class StaffPhoneDto {
+  @ApiProperty({ example: '01012345678', description: '운영자 휴대폰(숫자 · - 있어도 됨)' })
+  @IsString() @Length(10, 13) phone!: string;
+}
+
 export class StaffIpStatusDto {
   @ApiProperty({ description: '설정 admin.ip_verify 가 켜졌는지' }) on!: boolean;
   @ApiProperty({ description: '나에게 필요한지(운영 역할 · 켜짐)' }) required!: boolean;
@@ -32,11 +37,12 @@ export class StaffIpStatusDto {
   @ApiPropertyOptional({ description: '지금 접속 주소(가림)' }) ip?: string | null;
   @ApiPropertyOptional({ description: '받을 곳 TELEGRAM_ME · TELEGRAM_OPS · 없음' }) channel?: string | null;
   @ApiProperty({ description: '번호를 보낼 수 있는지' }) ready!: boolean;
+  @ApiPropertyOptional({ description: '보내는 길 설정 TELEGRAM · SMS · SMS_THEN_TELEGRAM(v10.227)' }) mode?: string;
 }
 
 export class StaffIpSendDto {
   @ApiProperty() sent!: boolean;
-  @ApiProperty({ description: 'TELEGRAM_ME · TELEGRAM_OPS' }) channel!: string;
+  @ApiProperty({ description: 'TELEGRAM_ME · TELEGRAM_OPS · SMS' }) channel!: string;
   @ApiProperty({ description: '유효 시간(분)' }) minutes!: number;
   @ApiPropertyOptional() ip?: string | null;
 }
@@ -94,6 +100,23 @@ export class StaffIpController {
   @ApiOkResponse({ type: Object })
   myTelegram(@Req() req: Request, @Body() dto: StaffTelegramDto) { return this.svc.setTelegram(this.me(req).accountId, dto.chat ?? null); }
 
+  /* v10.227 (D196 · docs/364) — 내 휴대폰(문자 길) — 접속 인증을 마친 뒤에만(@Roles) · 감사는 서비스가 끝 4자리만(@Audit 은 본문을 남김) */
+  @Post('me/staff/phone')
+  @HttpCode(200)
+  @Roles('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF')
+  @ApiOperation({ summary: '내 휴대폰 확인 번호 받기', description: '알림톡(실패하면 문자) 6자리 · 5분 · 1분에 한 번 · 하루 5번. 알림톡이 준비돼야 함(422 SMS_NOT_READY).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'PHONE_FORMAT · SMS_NOT_READY', type: ErrorDto })
+  phoneSend(@Req() req: Request, @Body() dto: StaffPhoneDto) { return this.svc.phoneSend(this.me(req), dto.phone); }
+
+  @Post('me/staff/phone/confirm')
+  @HttpCode(200)
+  @Roles('ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF')
+  @ApiOperation({ summary: '내 휴대폰 확인', description: '맞으면 그 번호가 접속 인증 문자 받을 곳. 5번 틀리면 423.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 403, description: 'IP_VERIFY_INVALID', type: ErrorDto })
+  phoneConfirm(@Req() req: Request, @Body() dto: StaffIpCodeDto) { return this.svc.phoneConfirm(this.me(req), dto.code); }
+
   /* ── 운영 화면 「접속 인증」 ── */
 
   @Get('admin/staff-access')
@@ -123,6 +146,12 @@ export class StaffIpController {
   @ApiOperation({ summary: '운영자 받을 곳 정하기(SUPER)', description: '개인 텔레그램 대화 번호 · 비우면 운영 대화방.' })
   @ApiOkResponse({ type: Object })
   setTelegram(@Param('id', ParseUUIDPipe) id: string, @Body() dto: StaffTelegramDto) { return this.svc.setTelegram(id, dto.chat ?? null); }
+
+  @Delete('admin/staff-access/:id/phone')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '운영자 휴대폰 지우기(SUPER)', description: '분실 · 퇴사 — 지우면 문자 길로는 받지 못함(감사 STAFF_PHONE_REMOVED · 끝 4자리).' })
+  @ApiOkResponse({ type: Object })
+  removePhone(@Param('id', ParseUUIDPipe) id: string) { return this.svc.removePhone(id); }
 
   @Post('admin/staff-access/:id/test')
   @HttpCode(200)

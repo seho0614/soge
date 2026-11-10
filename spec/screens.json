@@ -1954,7 +1954,10 @@
     "DELETE /admin/staff-access/allow/{id}",
     "PUT /admin/staff-access/{id}/telegram",
     "POST /admin/staff-access/{id}/test",
-    "PATCH /admin/site-settings"
+    "PATCH /admin/site-settings",
+    "POST /me/staff/phone",
+    "POST /me/staff/phone/confirm",
+    "DELETE /admin/staff-access/{id}/phone"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음)."

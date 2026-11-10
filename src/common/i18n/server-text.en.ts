@@ -1743,4 +1743,11 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "텔레그램 봇 토큰이 없어 인증번호를 보낼 수 없습니다 — 외부 연동 › 연동 키에서 먼저 넣으십시오.": "There is no Telegram bot token, so codes cannot be sent — add it first under Integrations › Keys.",
   "허용 목록에 없는 줄입니다.": "This entry is not on the allow list.",
   "운영 화면 접속 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super administrator (SUPER) can change admin access verification settings.",
+  "등록된 휴대폰이 없습니다.": "There is no registered mobile phone.",
+  "알림톡(문자)도 텔레그램도 준비되지 않았습니다.": "Neither KakaoTalk/SMS nor Telegram is ready.",
+  "알림톡(문자)이 아직 준비되지 않아 휴대폰을 확인할 수 없습니다.": "KakaoTalk/SMS is not ready yet, so the phone cannot be verified.",
+  "알림톡(문자)이 준비되지 않았습니다 — 외부 연동 › 알림톡에서 방식 · 키 · 「운영 화면 접속 인증번호」 템플릿 승인 · 켜기를 먼저 하십시오.": "KakaoTalk/SMS is not ready — first set the method, keys, approve the \"admin access code\" template and turn it on under Integrations › KakaoTalk.",
+  "운영 계정만 휴대폰을 등록합니다.": "Only staff accounts register a mobile phone.",
+  "인증번호를 받을 곳이 없는 운영자가 {0}명 있습니다({1}) — 각자 휴대폰을 확인(접속 인증 탭)하거나 텔레그램 받을 곳을 정한 뒤 켜십시오.": "{0} staff members have nowhere to receive codes ({1}) — have each verify a mobile phone (Access verification tab) or set a Telegram destination before turning this on.",
+  "휴대폰 번호(010 으로 시작하는 숫자)를 넣으십시오.": "Enter a mobile number (digits starting with 010).",
 };

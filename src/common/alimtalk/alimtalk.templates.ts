@@ -5,7 +5,7 @@
  *   운영 화면 › 외부 연동 › 「알림톡」이 이 글을 보여 주고, 대행사 템플릿 코드 · 심의 상태를 alimtalk_templates 에 넣습니다.
  * ------------------------------------------------------------------- */
 
-export type AlimtalkTemplateCode = 'CONSULT_OTP' | 'HANDOFF_ADMIN' | 'ORDER_STATUS' | 'NOTICE_GENERAL';
+export type AlimtalkTemplateCode = 'CONSULT_OTP' | 'HANDOFF_ADMIN' | 'ORDER_STATUS' | 'NOTICE_GENERAL' | 'STAFF_IP_OTP';
 
 export const ALIMTALK_TEMPLATES: Record<AlimtalkTemplateCode, { name: string; vars: string[]; body: string }> = {
   CONSULT_OTP: {
@@ -23,6 +23,11 @@ export const ALIMTALK_TEMPLATES: Record<AlimtalkTemplateCode, { name: string; va
   NOTICE_GENERAL: {
     name: '알림 일반', vars: ['제목', '내용'],
     body: '[소개뱅크] #{제목}\n#{내용}\n알림 보기 · 설정: 소개뱅크 › 나의공간 › 알림',
+  },
+  /* v10.227 (D196 · docs/364) — 운영 화면 접속 인증 · 운영자 휴대폰 확인 */
+  STAFF_IP_OTP: {
+    name: '운영 화면 접속 인증번호', vars: ['인증번호', '분'],
+    body: '[소개뱅크 운영] 운영 화면 접속 인증번호는 #{인증번호} 입니다.\n#{분}분 안에 넣어 주십시오. 직접 요청하지 않았다면 최고 관리자에게 알리십시오.',
   },
 };
 

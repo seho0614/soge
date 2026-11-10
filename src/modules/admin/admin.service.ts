@@ -368,11 +368,13 @@ export class AdminService {
       }
     }
     /* v10.226 (D195 · docs/363) — 운영 화면 접속 인증은 SUPER 만 · 켜기는 텔레그램 봇 토큰 · 모든 운영자의 받을 곳이 있어야(켜는 순간 잠기는 일 막음) */
-    if (key === 'admin.ip_verify') {
+    if (key === 'admin.ip_verify' || key === 'admin.ip_verify_channel') {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {
         throw new Forbidden('IP_VERIFY_SETTING_SUPER', '운영 화면 접속 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
       }
-      if ((value ?? '').trim() === 'on') await assertStaffIpCanTurnOn(this.db);
+      if (key === 'admin.ip_verify' && (value ?? '').trim() === 'on') await assertStaffIpCanTurnOn(this.db);
+      /* v10.227 (D196) — 켜진 채 길을 바꾸면 새 길로 모두 받을 수 있어야 */
+      if (key === 'admin.ip_verify_channel' && (await this.settingVal('admin.ip_verify', 'off')) === 'on') await assertStaffIpCanTurnOn(this.db, (value ?? '').trim());
     }
     /* D011 (10/2) — 운영 스위치 · 한도(필수 고지 항목이 아닌 것)는 형식이 틀리면 저장하지 않습니다.
      *   예: request.view.limit 에 'ON' 을 넣으면 조용히 off 로 읽혀 한도가 안 걸립니다 — 그런 값을 막습니다.
@@ -406,7 +408,7 @@ export class AdminService {
     });
     if (!row) throw new StateConflict('NOT_FOUND', '없는 키입니다.');
     if (key.startsWith('admin.mfa_')) resetMfaSettingCache();   // v10.180 — 30초 기다리지 않고 바로
-    if (key === 'admin.ip_verify') resetStaffIpCache();   // v10.226 — 30초 기다리지 않고 바로
+    if (key === 'admin.ip_verify' || key === 'admin.ip_verify_channel') resetStaffIpCache();   // v10.226 — 30초 기다리지 않고 바로
     return row;
   }
 
