@@ -53,6 +53,20 @@ export class MySellerDto {
   @ApiPropertyOptional({ type: Object, nullable: true, description: '신청 · 판매자 정보(없으면 null) — status PENDING · ACTIVE · PAUSED · BLOCKED · REJECTED · CLOSED(폐점 · v10.223) · statusReason 정지 · 제한 · 폐점 사유' })
   seller!: Record<string, unknown> | null;
 }
+export class TenantReadyRowDto {
+  @ApiProperty() key!: string;
+  @ApiProperty({ enum: ['apply', 'sale'], description: 'apply 신청 받기 · sale 판매 열기' }) group!: string;
+  @ApiProperty() label!: string;
+  @ApiProperty({ enum: ['ok', 'todo', 'info'], description: 'ok 준비됨 · todo 막힘(대표 · 법무 · 외부 차례) · info 값만' }) state!: string;
+  @ApiProperty() now!: string;
+}
+export class TenantReadinessDto {
+  @ApiProperty({ description: '신청 받기 준비됨(입점 약관 지금 판)' }) applyReady!: boolean;
+  @ApiProperty({ description: '판매 열기 준비됨(업종 정정신고 대표 확인 줄 빼고 모두 준비)' }) saleReady!: boolean;
+  @ApiProperty() applyOn!: boolean;
+  @ApiProperty() saleOn!: boolean;
+  @ApiProperty({ type: TenantReadyRowDto, isArray: true }) rows!: TenantReadyRowDto[];
+}
 export class SellerDecisionDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty({ enum: ['ACTIVE', 'REJECTED'] }) status!: string;
@@ -92,6 +106,13 @@ export class HealthTenantController {
   apply(@Body() dto: SellerApplyDto) { return this.svc.apply(dto); }
 
   /* ── 운영 ── */
+
+  @ApiBearerAuth()
+  @Get('admin/health/tenant/readiness')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '소개몰 입점 열기 준비 점검', description: '신청 받기 · 판매 열기 전에 필요한 것을 준비됨 / 막힘으로(읽기만 · v10.229).' })
+  @ApiOkResponse({ type: TenantReadinessDto })
+  readiness() { return this.svc.readiness(); }
 
   @ApiBearerAuth()
   @Get('admin/health/sellers/applications')

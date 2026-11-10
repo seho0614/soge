@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { ORDER_OPEN_SQL } from './health-policy';
+import { resolveSubmerchantProvider } from './submerchant.provider';
 
 /* ---------------------------------------------------------------------
  * v10.165 (D155 · docs/256) — 소개몰 입점 1단계: 입점 신청 · 서류 · 운영 심사
@@ -14,6 +15,10 @@ import { ORDER_OPEN_SQL } from './health-policy';
  *   돈     판매대금은 판매자에게 직접 귀속(결제대행사 하위가맹점 · decisions/mall-return-refund #15) — 이 판은 돈을 다루지 않음
  * ------------------------------------------------------------------- */
 export const SELLER_LICENSE_KINDS = ['BIZ_REG', 'ECOM_REG', 'FOOD_SALE', 'HEALTH_FUNC', 'MED_DEVICE', 'COSMETIC', 'BRAND_RIGHT'] as const;
+
+/** v10.229 (docs/367) — 입점 열기 준비 점검 한 줄 · ok 준비됨 · todo 막힘(대표 · 법무 · 외부 차례 — 오픈 전에는 정상) · info 값만 */
+export type TenantReadyRow = { key: string; group: 'apply' | 'sale'; label: string; state: 'ok' | 'todo' | 'info'; now: string };
+const HOLE = /〔[^〕]*〕/g;
 
 export interface SellerApply {
   type: string; name: string; personal: boolean; bizRegNo?: string | null; ceoName: string;
@@ -183,4 +188,54 @@ export class HealthTenantService {
       return { ok: true, status: 'REJECTED' };
     });
   }
+
+  /**
+   * v10.229 (docs/367) — 운영 「소개몰 판매자」 탭 맨 위 입점 열기 준비 점검(읽기만 · 스위치를 막는 규칙은 그대로 — 약관 먼저 하나)
+   *   신청 받기(mall.tenant_apply): 입점 약관(HLT_SELLER)이 지금 판인지 · 초안 빈칸
+   *   판매 열기(mall.tenant): 결제 실연동(결제 키 · 간주 모드 꺼짐) · 하위가맹점 · 지급대행 연동 · 주문 받기 · 승인 판매자 · 하위가맹점 번호 · 업종 정정신고(대표 확인)
+   */
+  async readiness() {
+    const [r] = await this.db.query<{ apply: string; sale: string; order: boolean; assume: boolean; cur: string | null;
+      drafts: Array<{ version: string; body: string }> | null; active: number; withSub: number; pending: number }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant_apply'), 'off') AS apply,
+              coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') AS sale,
+              (${ORDER_OPEN_SQL}) AS "order",
+              coalesce((SELECT value FROM site_settings WHERE key = 'assume.payment'), 'off') = 'on' AS assume,
+              (SELECT version FROM v_terms_current WHERE code = 'HLT_SELLER' LIMIT 1) AS cur,
+              (SELECT json_agg(json_build_object('version', version, 'body', coalesce(body, '')) ORDER BY version DESC)
+                 FROM terms WHERE code = 'HLT_SELLER' AND status IN ('DRAFT', 'LEGAL_REVIEW')) AS drafts,
+              (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'ACTIVE') AS active,
+              (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'ACTIVE' AND submerchant_id IS NOT NULL
+                  AND submerchant_id NOT LIKE 'STUB-%') AS "withSub",
+              (SELECT count(*)::int FROM hlt_sellers WHERE type IN ('TENANT', 'BRAND') AND status = 'PENDING') AS pending`);
+    const draft = r?.drafts?.[0];
+    const holes = draft ? [...new Set(draft.body.match(HOLE) ?? [])].filter((h) => h !== '〔시행일〕').length : 0;
+    const termsOk = !!r?.cur;
+    const payKey = !!process.env.TOSS_SECRET_KEY;
+    const payOk = payKey && !r?.assume;
+    const sub = resolveSubmerchantProvider(!!r?.assume);
+    const subOk = !!sub && !sub.stub;
+    const rows: TenantReadyRow[] = [
+      { key: 'terms', group: 'apply', label: '입점 약관(HLT_SELLER)', state: termsOk ? 'ok' : 'todo',
+        now: termsOk ? `${r?.cur} 지금 판 — 신청자가 동의할 수 있음`
+          : draft ? `${draft.version} 초안 · 빈칸 ${holes}곳 — 법무 확인 · 빈칸 채운 뒤 약관 화면에서 게시` : '약관 없음 — 약관 화면에서 만들고 게시' },
+      { key: 'apply-switch', group: 'apply', label: '신청 받기 스위치', state: 'info',
+        now: `${r?.apply === 'on' ? '켜짐' : '꺼짐'} · 심사 기다림 ${r?.pending ?? 0}건` },
+      { key: 'payment', group: 'sale', label: '결제 실연동', state: payOk ? 'ok' : 'todo',
+        now: payOk ? '결제대행사 키 있음 · 간주 모드 꺼짐'
+          : `${payKey ? '결제대행사 키 있음' : '결제대행사 키 없음(시험 결제)'} · 간주 모드 ${r?.assume ? '켜짐 — 끄려면 외부 연동 마친 뒤' : '꺼짐'}` },
+      { key: 'submerchant', group: 'sale', label: '하위가맹점 · 지급대행 연동', state: subOk ? 'ok' : 'todo',
+        now: subOk ? `${sub!.name} 연동됨` : sub?.stub ? '시험 공급자(간주 모드) — 돈은 움직이지 않음 · 결제대행사 계약 뒤 연동 개발' : '연동 전 — 결제대행사 하위가맹점 · 지급대행 계약 뒤 연동 개발' },
+      { key: 'order', group: 'sale', label: '주문 받기', state: r?.order ? 'ok' : 'todo',
+        now: r?.order ? '켜짐' : '꺼짐 — 결제 실연동 뒤 「주문 받기 켜기」(SUPER)' },
+      { key: 'sellers', group: 'sale', label: '승인된 판매자', state: (r?.active ?? 0) > 0 ? 'ok' : 'todo',
+        now: `${r?.active ?? 0}명 · 하위가맹점 번호 있음 ${r?.withSub ?? 0}명(시험 번호 뺌)` },
+      { key: 'biz-report', group: 'sale', label: '업종 정정신고(통신판매중개)', state: 'todo',
+        now: '대표 확인 — 기록할 곳이 없어 늘 확인 줄로 보임' },
+      { key: 'sale-switch', group: 'sale', label: '판매 열기 스위치', state: 'info', now: r?.sale === 'on' ? '켜짐' : '꺼짐' },
+    ];
+    const ready = (g: 'apply' | 'sale') => rows.filter((x) => (g === 'apply' ? x.group === 'apply' : true) && x.state === 'todo' && x.key !== 'biz-report').length === 0;
+    return { applyReady: ready('apply'), saleReady: ready('sale'), applyOn: r?.apply === 'on', saleOn: r?.sale === 'on', rows };
+  }
+
 }

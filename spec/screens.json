@@ -4920,7 +4920,8 @@
     "POST /admin/health/sellers/change-requests/{id}/decide",
     "GET /admin/health/sellers/{id}/history",
     "POST /admin/health/sellers/{id}/status",
-    "POST /admin/health/sellers/{id}/commission"
+    "POST /admin/health/sellers/{id}/commission",
+    "GET /admin/health/tenant/readiness"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "v10.224 (D194) — 소개몰 정산에서 나눈 탭 · 판매자 관리는 v10.223 (D193)",
