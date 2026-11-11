@@ -49,6 +49,7 @@ EXTRA |= {('ALIMTALK', 'ALIMTALK_SENDER_KEY')} if os.path.isdir(os.path.join(K, 
 EXTRA |= {('ESIGN', 'ESIGN_WEBHOOK_SECRET')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D139_esign')) else set()   # v10.143 전자계약 웹훅 비밀값(test_v1143)
 EXTRA |= {('SAFENUM', 'SAFENUM_WEBHOOK_SECRET')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D141_safenum')) else set()   # v10.145 안심번호 웹훅 비밀값(test_v1145)
 EXTRA |= {('MAIL', 'TELEGRAM_BOT_TOKEN')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D178_ops_alert_telegram')) else set()   # v10.200 텔레그램 봇 토큰(test_v1200)
+EXTRA |= {('MAIL', 'SLACK_WEBHOOK_URL')} if os.path.isdir(os.path.join(K, 'prisma/migrations/D200_ops_alert_slack')) else set()   # v10.237 슬랙 웹훅 주소(test_v1237)
 ok('② 서비스 키 목록 = DB 받는 키 15(v10.140 16 · v10.142 20 · v10.143 21 · v10.145 22)', svc_pairs == set(PAIRS) | EXTRA, str(sorted((set(PAIRS) | EXTRA) ^ svc_pairs)))
 ok('② process.env 에 얹음 — 띄울 때(못 읽으면 다시) · 1분 · 저장 · 지운 직후 · 한 줄로(겹침 없음) · 지우면 띄울 때 .env 값으로 · 실패하면 이전 값 · 키 값은 로그에 없음',
    'EVERY_MS = 60_000' in S and 'process.env[env] = r.v' in S and 'this.envAtBoot.get(env)' in S and 'delete process.env[env]' in S

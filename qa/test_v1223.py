@@ -213,7 +213,7 @@ if API and DB:
         ok('② 정보 변경 승인 — 전화 바뀜 · 서류 새 목록(유효기간 · 확인함) · 알림 · 다시 승인 409', da.get('state') == 'APPROVED' and row == f'02-111-2222|L-1223-NEW:{exp}:true'
            and n4.startswith('1|') and call('POST', f"/admin/health/sellers/change-requests/{mine.get('id')}/decide", {'approve': True}, TS).get('code') == 'NOT_PENDING', f'{row} · {n4[:20]}')
 
-        soon = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+        soon = psql("SELECT ((now() AT TIME ZONE 'Asia/Seoul')::date + 5)::text")   # 서울 날짜 기준(서버 UTC 15시 뒤면 하루 다름)
         psql(f"UPDATE hlt_seller_licenses SET expires_at = (now() AT TIME ZONE 'Asia/Seoul')::date + 5 WHERE seller_id = '{sid_}'")
         j1 = call('POST', '/admin/jobs', {'job': 'seller_license_watch'}, TS); w1 = nt('SELLER_LICENSE_EXPIRING')
         call('POST', '/admin/jobs', {'job': 'seller_license_watch'}, TS); w2 = nt('SELLER_LICENSE_EXPIRING')

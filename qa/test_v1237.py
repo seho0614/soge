@@ -214,6 +214,9 @@ if up:
         ok('③ 다시 열리면 나머지 · 40건 모두 「보냄」 · 텔레그램 기록(pushed_at)은 건드리지 않음',
            nslack('B') == '40:40' and marks(s4) == 40 - sent3 and j4.get('reason') is None and push0 == push1 == '0', f'{len(s4)}통 · {nslack("B")} · 텔레그램 {push0}/{push1}')
 
+        for _ in range(14):   # 감사 기록은 지울 수 없음 — 앞선 실행의 시험 메시지가 1분 안이면 기다림(두 번 돌려도 통과)
+            if psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'OPS_SLACK_TEST' AND occurred_at > now() - interval '1 minute'") == '0': break
+            time.sleep(5)
         n5 = len(sends())
         tt = call2('POST', '/admin/ops-alerts/slack-test', {}, T_)
         tt2 = call2('POST', '/admin/ops-alerts/slack-test', {}, T_)
@@ -225,8 +228,6 @@ if up:
             subprocess.run(['docker', 'exec', C, 'sh', '-c', f'[ -f /tmp/{f}.pid ] && kill $(cat /tmp/{f}.pid) 2>/dev/null; rm -f /tmp/{f}.pid'], capture_output=True)
         subprocess.run(['docker', 'exec', C, 'sh', '-c', "for d in /proc/[0-9]*; do grep -qa -e 'SLACK_WEBHOOK_URL=http://127.0.0.1:1823[7]' -e 'fake_sl_[1]237' $d/environ $d/cmdline 2>/dev/null && kill ${d#/proc/} 2>/dev/null; done; true"], capture_output=True)
         psql("DELETE FROM ops_alerts WHERE detail->>'test' = 'v1237'")
-        if not t0.startswith('!'):
-            psql(f"DELETE FROM audit.audit_logs WHERE action = 'OPS_SLACK_TEST' AND occurred_at >= '{t0}'")
 
     # ── ④ 화면 ──
     try:

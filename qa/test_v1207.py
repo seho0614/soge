@@ -100,7 +100,7 @@ if API and DB:
     try:
         # ② DB
         mig = psql("SELECT count(*) || '|' || max(name) FROM schema_migrations")
-        ok('② 마이그레이션 222 · 끝 D184(v10.208 부터 223 · D185 — test_v1208)', mig in ('222|D184_plan_admin_price_lock', '223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend', '228|D190_point_cashout', '229|D191_security_watch', '230|D192_partner_notice', '231|D193_seller_manage', '232|D194_partner_withdraw', '233|D195_staff_ip_verify', '234|D196_staff_sms', '235|D197_staff_ip_alert', '236|D198_ops_alert_pending_recent', '237|D199_mall_biz_report'), mig)
+        ok('② 마이그레이션 222 · 끝 D184(v10.208 부터 223 · D185 — test_v1208)', mig in ('222|D184_plan_admin_price_lock', '223|D185_hlt_open_stock', '224|D186_mail_suppression', '225|D187_town_verify_guard', '226|D188_town_pick_ai', '227|D189_member_recommend', '228|D190_point_cashout', '229|D191_security_watch', '230|D192_partner_notice', '231|D193_seller_manage', '232|D194_partner_withdraw', '233|D195_staff_ip_verify', '234|D196_staff_sms', '235|D197_staff_ip_alert', '236|D198_ops_alert_pending_recent', '237|D199_mall_biz_report', '238|D200_ops_alert_slack'), mig)
         sel = ', '.join(f"coalesce({x.strip()}::text, 'N')" for x in COLS.split(','))
         for c in ('BASIC', 'STANDARD', 'PRO'):
             orig[c] = psql(f"SELECT concat_ws('|', {sel}) FROM subscription_plans WHERE code = '{c}'")
