@@ -98,7 +98,7 @@ if API and DB:
         up = next((r for r in rows if r.get('key') == 'terms-upcoming'), {})
         ai = next((r for r in rows if r.get('key') == 'ai'), {})
         ok('② API — 11줄 · 「약관 시행 예정」이 약관 초안 빈칸 바로 아래 · 값만(info) · 보러 가기 약관 · 회원 403',
-           len(rows) == 11 and 'terms' in keys and keys.index('terms-upcoming') == keys.index('terms') + 1
+           len(rows) == (12 if 'alert-channels' in keys else 11) and 'terms' in keys and keys.index('terms-upcoming') == keys.index('terms') + 1
            and up.get('state') == 'info' and up.get('go') == 'terms' and mb.get('_err') == 403, f'{keys} · {mb.get("_err")} · {r0[:80]}')
         un = up.get('now') or ''
         nw, fs = (un.split(' / ') + ['', ''])[:2]

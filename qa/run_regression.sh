@@ -14,7 +14,7 @@ Q=$(cd "$(dirname "$0")" && pwd)
 K=$(ls -d ~/kits/run/current/SGB_* | tail -1)
 D="$LOG.d"; mkdir -p "$D"; : > "$LOG"
 API=http://localhost:13000/api/v1; SITE=http://localhost:15174; DB=postgresql://sgb:sgb@localhost:15432/sgb; BO=http://localhost:15173
-HOST="test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
+HOST="test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py test_v1238.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
 
 head -1 "$K/KIT_COMMITS.txt" | tee -a "$LOG"
 # AI 를 부르는 시험은 MOCK 공급자로(실제 외부 호출 없음)
