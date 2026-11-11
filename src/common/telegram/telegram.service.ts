@@ -12,7 +12,10 @@ import { DatabaseService } from '../../db/database.service';
  *   ★ 보내는 글은 알림 제목 · 등급 · 시각뿐 — 알림 내용(detail)은 넣지 않습니다.
  * ------------------------------------------------------------------- */
 export type TelegramReason = 'NO_TOKEN' | 'NO_CHAT';
-export interface TelegramResult { ok: boolean; errorKind?: 'AUTH' | 'REJECTED' | 'SERVER' | 'TIMEOUT' | 'NETWORK'; status?: number; error?: string }
+export interface TelegramResult { ok: boolean; errorKind?: 'AUTH' | 'REJECTED' | 'SERVER' | 'TIMEOUT' | 'NETWORK'; status?: number; error?: string; truncated?: boolean }
+
+/** v10.233 — 한 통 글자 한도(텔레그램 4,096 · 여유 두고 4,000). 넘는 글은 send() 가 자르므로 여러 줄 글은 packLines 로 미리 나눔 */
+export const TG_MAX = 4000;
 
 @Injectable()
 export class TelegramService {
@@ -59,13 +62,16 @@ export class TelegramService {
     } finally { clearTimeout(timer); }
   }
 
-  /** 한 통(4,000자에서 자름). 준비 안 됐으면 보내지 않음 — 부르는 쪽이 status() 로 먼저 봄 */
+  /** 한 통(4,000자에서 자름). 준비 안 됐으면 보내지 않음 — 부르는 쪽이 status() 로 먼저 봄
+   *  v10.233 — 잘렸으면 결과에 truncated · 로그 한 줄(급한 알림은 packLines 로 나눠 보내므로 잘리지 않음) */
   async send(text: string, chatId?: string): Promise<TelegramResult> {
     const chat = chatId ?? (await this.chat());
     if (!this.token() || !chat) return { ok: false, errorKind: 'REJECTED', error: 'NOT_READY' };
-    const { r } = await this.call('sendMessage', { chat_id: chat, text: text.slice(0, 4000), disable_web_page_preview: true });
+    const truncated = text.length > TG_MAX;
+    if (truncated) this.log.warn(`텔레그램 글이 ${text.length}자라 ${TG_MAX}자에서 자름`);
+    const { r } = await this.call('sendMessage', { chat_id: chat, text: text.slice(0, TG_MAX), disable_web_page_preview: true });
     if (!r.ok) this.log.warn(`텔레그램 보내기 실패 ${r.errorKind} ${r.status ?? ''}`);
-    return r;
+    return truncated ? { ...r, truncated } : r;
   }
 
   /** 봇에게 최근 말을 건 대화방(getUpdates · 최근 100건) — 「대화방 찾기」. 토큰만 있으면 됨 */
@@ -82,6 +88,24 @@ export class TelegramService {
     }
     return { r, chats: [...seen.values()].slice(-10) };
   }
+}
+
+/** v10.233 — 줄들을 앞에서부터 한 통(줄바꿈 포함 budget 자 이하)씩 묶음 · 최대 maxParts 통 · 넘는 줄은 빠짐(부르는 쪽이 남은 수로 셈)
+ *  한 줄이 budget 보다 길면 그 줄에서 멈춤(부르는 쪽이 줄 길이를 먼저 줄임) */
+export function packLines(lines: string[], budget: number, maxParts: number): string[][] {
+  const parts: string[][] = [];
+  let cur: string[] = []; let len = 0;
+  for (const l of lines) {
+    if (l.length > budget) break;
+    const add = cur.length ? l.length + 1 : l.length;
+    if (len + add > budget) {
+      parts.push(cur);
+      if (parts.length >= maxParts) return parts;
+      cur = [l]; len = l.length;
+    } else { cur.push(l); len += add; }
+  }
+  if (cur.length) parts.push(cur);
+  return parts;
 }
 
 /** 대화방 번호 가운데 가림(-1001234567890 → -100…7890) */

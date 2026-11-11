@@ -4,7 +4,7 @@ import { RecurringBatchService } from '../modules/billing/recurring-batch.servic
 import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
-import { TelegramService } from '../common/telegram/telegram.service';
+import { TelegramService, TG_MAX, packLines } from '../common/telegram/telegram.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -685,27 +685,45 @@ export class SchedulerService {
   }
 
   /** v10.200 (D178 · docs/316) — 급한 알림 텔레그램 한 통(메일과 같은 알림 · 같은 기준 · 기록은 pushed_at · repushed_at).
-   *  준비 안 됨(토큰 · 대화방 없음)이면 보내지 않고 까닭만 — 보낸 것으로 적지 않음 */
-  private async alertPush(): Promise<{ pending: number; pushed: number; reason: string | null }> {
+   *  준비 안 됨(토큰 · 대화방 없음)이면 보내지 않고 까닭만 — 보낸 것으로 적지 않음
+   *  v10.233 — 한 통 4,000자(TG_MAX)를 넘으면 최대 3통으로 나눔 · 제목 200자 · 보내진 통의 알림만 「보냄」 · 3통에 못 든 알림은 「n건 더」로 세고 다음 차례에 */
+  private async alertPush(): Promise<{ pending: number; pushed: number; reason: string | null; parts?: number }> {
     const items = await this.launchWatch.alertPushPending();
     if (!items.length) return { pending: 0, pushed: 0, reason: null };
     const st = await this.telegram.status();
     if (!st.ready) return { pending: items.length, pushed: 0, reason: st.reason };
-    const crit = items.filter((x) => x.severity === 'CRITICAL').length;
-    const again = items.filter((x) => x.again).length;
-    const more = Math.max(0, (await this.launchWatch.alertBacklog('push')) - (items.length - again));
-    const text = [
-      `[소개뱅크] 급한 운영 알림 ${items.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}`,
-      '',
-      ...items.map((x) => `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${x.title}`),
+    const PARTS = 3, TITLE_MAX = 200;
+    const backlog = await this.launchWatch.alertBacklog('push');
+    const head = (list: typeof items, k: number, of: number) => {
+      const crit = list.filter((x) => x.severity === 'CRITICAL').length;
+      const again = list.filter((x) => x.again).length;
+      return `[소개뱅크] 급한 운영 알림 ${list.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}${of > 1 ? ` (${k}/${of})` : ''}`;
+    };
+    const tail = (more: number) => [
       ...(more ? ['', `보내지 못한 알림 ${more}건 더 — 다음 차례에 이어서 보냅니다(운영 화면 › 운영 알림에서 모두 볼 수 있음).`] : []),
       '',
       '운영 화면 › 운영 알림에서 보고 「확인」을 누르십시오.',
     ].join('\n');
-    const r = await this.telegram.send(text);
-    if (!r.ok) return { pending: items.length, pushed: 0, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
-    await this.launchWatch.markPushed(items.filter((x) => !x.again).map((x) => x.id), items.filter((x) => x.again).map((x) => x.id));
-    return { pending: 0, pushed: items.length, reason: null };
+    const line = (x: (typeof items)[number]) => {
+      const t = x.title.length > TITLE_MAX ? `${x.title.slice(0, TITLE_MAX - 1)}…` : x.title;
+      return `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${t}`;
+    };
+    /* 머리 · 끝 줄은 가장 길 때(모든 알림 · 남은 수 = backlog)로 자리를 잡고 남은 칸에 알림 줄을 채움 */
+    const budget = TG_MAX - head(items, PARTS, PARTS).length - 2 - tail(Math.max(backlog, items.length)).length - 1;
+    const groups = packLines(items.map(line), budget, PARTS);
+    const inc = items.slice(0, groups.reduce((n, g) => n + g.length, 0));
+    const more = Math.max(0, backlog - inc.filter((x) => !x.again).length);
+    let at = 0, pushed = 0, parts = 0;
+    for (const [i, g] of groups.entries()) {
+      const list = inc.slice(at, at + g.length);
+      const last = i === groups.length - 1;
+      const text = [head(inc, i + 1, groups.length), '', ...g].join('\n') + (last ? `\n${tail(more)}` : '');
+      const r = await this.telegram.send(text);
+      if (!r.ok) return { pending: items.length - pushed, pushed, reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts };
+      await this.launchWatch.markPushed(list.filter((x) => !x.again).map((x) => x.id), list.filter((x) => x.again).map((x) => x.id));
+      at += g.length; pushed += g.length; parts++;
+    }
+    return { pending: items.length - pushed, pushed, reason: null, parts };
   }
 
   /**
