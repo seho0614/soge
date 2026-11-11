@@ -65,6 +65,7 @@ const NAME: Record<string, string> = {
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
   STAFF_IP_PASS_NEW: '접속 인증 처음 보는 대역', STAFF_IP_LOCKED: '접속 인증번호 5번 틀림', STAFF_IP_DAY_LIMIT: '접속 인증번호 하루 한도',   // v10.228 (D197)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
+  ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)
   AGENT_LIVE: 'AI 사용 가능해짐', AGENT_READY_GAP: 'AI 준비 덜 됨', AGENT_CAP_NEAR: 'AI 월 상한 가까움', AGENT_STEP_READY: 'AI 다음 단계 켤 수 있음',   // v10.204 (D181 · docs/326) · v10.205 (D182 · docs/328)
   /* v10.203 (docs/322 4절) — 화면에 영어 코드로만 보이던 21종 */
   AGENT_CAP_REACHED: 'AI 월 상한 닿음', AGENT_CHAT_HANDOFF: 'AI 상담 담당자 연결', K_VALUE_BREACH: '검수 부담(k값) 경보',

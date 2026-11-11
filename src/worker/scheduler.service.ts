@@ -7,6 +7,7 @@ import { MailService } from '../common/mail/mail.service';
 import { TelegramService } from '../common/telegram/telegram.service';
 import { buildAlertPush } from '../common/telegram/alert-push';
 import { SlackService } from '../common/slack/slack.service';
+import { AlertChannelsService } from '../modules/admin/alert-channels.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -68,6 +69,7 @@ export class SchedulerService {
     private readonly privacy: PrivacyService,   // v10.181 (D170) 개인정보 권리 요청 기한 알림
     private readonly telegram: TelegramService,   // v10.200 (D178) 급한 운영 알림 텔레그램
     private readonly slack: SlackService,   // v10.237 (D200) 급한 운영 알림 슬랙
+    private readonly channels: AlertChannelsService,   // v10.239 (docs/379) 알림 길 연속 실패 경보
   ) {}
 
   /**
@@ -492,8 +494,10 @@ export class SchedulerService {
         const am = await this.alertMail();
         const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
         const as = await this.alertSlack();   /* v10.237 (D200) — 텔레그램 · 메일과 따로 */
+        /* v10.239 (docs/379) — 켜 둔 길이 60분 넘게 보내기 실패면 ALERT_CHANNEL_FAIL(CRITICAL · 다음 차례에 다른 길로) · 다시 되거나 꺼지면 풀림 */
+        const cf = await this.channels.failWatch({ mail: am, telegram: ap, slack: as });
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step) };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 

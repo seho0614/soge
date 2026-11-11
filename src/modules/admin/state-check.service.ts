@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { TermsService } from '../catalog/terms.service';
 import { TownVerifyService } from '../community/town-verify.service';
+import { AlertChannelsService } from './alert-channels.service';
 
 /* ---------------------------------------------------------------------
  * v10.212 (docs/340) — 운영 상태 한눈에(운영 화면 첫 화면 카드 · 읽기만)
@@ -12,6 +13,7 @@ import { TownVerifyService } from '../community/town-verify.service';
  *   go 는 운영 화면 탭 이름(누르면 그 화면).
  *   v10.214 (docs/344) — 「약관 시행 예정」 줄(날짜별 · 며칠 뒤) · AI 줄은 「게시」 기준이라 「시행 중」 대신 「게시됨」.
  *     새 판 시행 예정(v_terms_upcoming — 그날 앞 판이 바뀜)과 첫 판 · 적힌 시행일 전(v_terms_current — 게시 순간부터 지금 판 · 동의 기준)을 나눔.
+ *   v10.238 (docs/379) — 「급한 알림 받는 길」 줄(메일 · 텔레그램 · 슬랙) — 하나라도 준비되면 ok · 없으면 todo · 없는데 확인 안 한 CRITICAL 까지 있으면 warn.
  *   v10.215 (docs/345) — AI 줄 바로잡음: 잠금은 「지금 판」(fn_privacy_ai_ready = v_terms_current · D151) 기준 — 첫 판은 게시 순간 · 새 판은 시행일부터.
  * ------------------------------------------------------------------- */
 export type StateRow = { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string };
@@ -20,11 +22,12 @@ const won = (v: number) => `${v.toLocaleString('ko-KR')}원`;
 
 @Injectable()
 export class StateCheckService {
-  constructor(private readonly db: DatabaseService, private readonly terms: TermsService, private readonly town: TownVerifyService) {}
+  constructor(private readonly db: DatabaseService, private readonly terms: TermsService, private readonly town: TownVerifyService,
+              private readonly channels: AlertChannelsService) {}
 
   async rows(): Promise<StateRow[]> {
     const q = async <T>(sql: string) => (await this.db.query<T>(sql))[0] as T;
-    const [ai, drafts, oc, hol, plans, stock, mail, town, pick, alerts, upcoming] = await Promise.all([
+    const [ai, drafts, oc, hol, plans, stock, mail, town, pick, alerts, upcoming, ch] = await Promise.all([
       q<{ ready: boolean; enabled: string | null }>(`SELECT fn_privacy_ai_ready() AS ready, (SELECT value FROM site_settings WHERE key = 'agent.enabled') AS enabled`),
       this.db.query<{ code: string; title: string; version: string; body: string }>(
         `SELECT code, title, version, coalesce(body, '') AS body FROM terms WHERE status IN ('DRAFT', 'LEGAL_REVIEW') ORDER BY display_order, code`),
@@ -48,6 +51,7 @@ export class StateCheckService {
                  UNION ALL
                  SELECT true, effective_from, title, version, display_order, code FROM v_terms_current WHERE effective_from > now()) x
           GROUP BY 1, 2, 3 ORDER BY 1, 2`),
+      this.channels.channels(),
     ]);
     const holed = drafts.map((d) => ({ ...d, n: [...new Set(d.body.match(HOLE) ?? [])].filter((h) => h !== '〔시행일〕').length })).filter((d) => d.n > 0);
     const rows: StateRow[] = [
@@ -89,6 +93,9 @@ export class StateCheckService {
       { key: 'alerts', label: '운영 알림', go: 'ops-alerts',
         state: alerts.critical > 0 ? 'warn' : alerts.open > 0 ? 'todo' : 'ok',
         now: alerts.open > 0 ? `확인 안 한 알림 ${alerts.open}건(CRITICAL ${alerts.critical})` : '확인 안 한 알림 없음' },
+      { key: 'alert-channels', label: '급한 알림 받는 길', go: 'ops-alerts',
+        state: ch.ready > 0 ? 'ok' : alerts.critical > 0 ? 'warn' : 'todo',
+        now: `${ch.ready} / 3 — ${AlertChannelsService.line(ch.list)}${ch.ready ? '' : ' · 급한 알림이 운영 화면 밖으로 나가지 않음'}` },
     ];
     return rows;
   }

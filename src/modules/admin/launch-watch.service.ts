@@ -8,6 +8,7 @@ import { slowSince } from '../../common/response-time';
 import { slowSqlSince } from '../../common/slow-sql';
 import { uploadsBackupState, uploadsBackupVerified } from '../../common/uploads-backup-state';
 import { AgentService } from '../agent/agent.service';
+import { AlertChannelsService, ChannelState } from './alert-channels.service';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -22,6 +23,11 @@ const diskLine = (h: ReturnType<typeof serverHealth>) => (h.disk
   ? `서버 디스크 ${h.disk.usedPct}% 사용 · 남은 ${h.disk.freeGB}GB${h.disk.usedPct >= 85 ? ' — 정리 · 늘리기 필요' : ''} · 메모리 ${h.mem.usedPct}%`
   : '서버 디스크 — 잴 수 없음');
 
+
+/* v10.238 (docs/379) — 하루 요약 「급한 알림 받는 길」 한 줄 · 하나도 없으면 그 뜻까지 */
+function channelLine(c: { list: ChannelState[]; ready: number }): string {
+  return `급한 알림 받는 길 ${c.ready} / 3: ${AlertChannelsService.line(c.list)}${c.ready ? '' : ' — 하나도 없어 급한 알림이 운영 화면 밖으로 나가지 않습니다'}`;
+}
 
 /* v10.204 (D181 · docs/326) — 하루 요약 · 공개 직후 지켜보기의 AI 줄
  *   v10.215 (docs/345) — 잠금 글을 「지금 판」 기준으로(첫 판은 게시 · 새 판은 시행일부터 · 운영 상태 한눈에 AI 줄과 같음) */
@@ -61,7 +67,7 @@ const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 
 @Injectable()
 export class LaunchWatchService {
-  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService) {}
 
   async today() {
     const [c] = await this.db.query<any>(
@@ -132,6 +138,8 @@ export class LaunchWatchService {
       `시험 결제(돈을 받지 않은) 주문 ${c.stubPaidOrders}${c.stubPaidOrders > 0 ? ' — 확인 필요' : ''}`,
       `운영 알림(경고 이상) 어제 ${c.alerts} · 확인 안 한 것 ${c.openAlerts}`,
       `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
+      /* v10.238 (docs/379) — 급한 알림 받는 길(메일 · 텔레그램 · 슬랙) */
+      channelLine(await this.channels.channels()),
       /* v10.200 (docs/316) — 메인 투표 빈 자리(사용자 웹 메인에 「준비 중」 카드) */
       ...(c.homePolls < 3 ? [`메인 투표 ${c.homePolls} / 3 — 빈 자리는 사용자 웹 메인에 「준비 중」으로 보입니다(운영 화면 › 투표 관리 「확정 질문으로 빈 자리 채우기」)`] : []),
       /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */

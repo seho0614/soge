@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiPropertyOptional, ApiRes
 import { ArrayMaxSize, IsArray, IsOptional, IsString } from 'class-validator';
 import { LaunchWatchService } from './launch-watch.service';
 import { StateCheckService } from './state-check.service';
+import { OwnerTodoService } from './owner-todo.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -20,7 +21,7 @@ export class LaunchStubCancelDto {
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class LaunchWatchController {
-  constructor(private readonly svc: LaunchWatchService, private readonly state: StateCheckService) {}
+  constructor(private readonly svc: LaunchWatchService, private readonly state: StateCheckService, private readonly todo: OwnerTodoService) {}
 
   @Get()
   @ApiOperation({ summary: '공개 직후 지켜보기', description: '오늘(한국 날짜) 가입 · 로그인 · 글 · 매물 · 소개몰 주문 · 시험 결제 주문 · 확인 안 한 운영 알림 · 주문 받기 · 간주 결제 스위치 · 판매 중 직판 상품 수.' })
@@ -38,6 +39,12 @@ export class LaunchWatchController {
   @ApiOperation({ summary: '운영 상태 한눈에', description: 'AI 잠금 · 약관 초안 빈칸 · 위탁 목록 · 공휴일 · 요금제 금액 · 개봉 반품 재고 · 메일 반송 · 동네 인증 · 동네픽 후보 · 운영 알림을 한 줄씩. state 는 ok · todo(할 일 남음) · warn(바로 볼 것) · info(값만) · go 는 운영 화면 탭. 읽기만.' })
   @ApiOkResponse({ type: Object })
   stateRows() { return this.state.rows(); }
+
+  /* v10.240 (docs/379) — 대표 할 일 자동 점검표(첫 화면 카드 · DB 로 확인되는 것은 저절로 「됨」) */
+  @Get('owner-todo')
+  @ApiOperation({ summary: '대표 할 일 자동 점검표', description: '급한 알림 받는 길 · 확인 안 한 CRITICAL · 접속 인증 · 운영자 2단계 인증 · 외부 연동 신청일 · 업종 정정신고 · 입점 약관 · 검색 사이트 소유 확인 · 위치기반 신고번호는 DB 로 done(true · false), 요금제 금액 · 법무 · 세무 · EBS 스냅샷 예약은 done null(직접 확인). done · total 은 자동 항목만 셈. 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  ownerTodo() { return this.todo.rows(); }
 
   /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
   @Get('server-errors')

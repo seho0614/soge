@@ -128,6 +128,8 @@ import { HealthSellerService } from './modules/health/health-seller.service';
 import { LaunchWatchController } from './modules/admin/launch-watch.controller';   // v10.170 (D159) 공개 직후 지켜보기
 import { LaunchWatchService } from './modules/admin/launch-watch.service';
 import { StateCheckService } from './modules/admin/state-check.service';   // v10.212 운영 상태 한눈에
+import { AlertChannelsService } from './modules/admin/alert-channels.service';   // v10.238 · 239 급한 알림 받는 길 · 연속 실패 경보
+import { OwnerTodoService } from './modules/admin/owner-todo.service';   // v10.240 대표 할 일 자동 점검표
 import { OpsReviewController } from './modules/admin/ops-review.controller';   // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
 import { OpsAlertsService } from './modules/admin/ops-alerts.service';
 import { PiiReviewService } from './modules/admin/pii-review.service';
@@ -384,6 +386,7 @@ import { LeadService } from './modules/lead/lead.service';
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
+    AlertChannelsService, OwnerTodoService,   /* v10.238 ~ 240 (docs/379) */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
     RoleReviewService, MfaService,   /* v10.180 (D169) */
     StaffIpService,   /* v10.226 (D195) */

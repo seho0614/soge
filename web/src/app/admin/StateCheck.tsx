@@ -6,6 +6,7 @@ import { useApi } from '../../lib/useApi';
  *   운영 적용 뒤 화면 확인(절차서 4-1)을 이 표 하나로 — 줄을 누르면 그 화면.
  *   ✓ 할 일 없음 · ○ 할 일 남음(오픈 전에는 정상) · ⚠ 바로 볼 것 · – 값만.
  *   v10.214 (docs/344) — 「약관 시행 예정」 줄이 더해짐(11줄 · 줄은 서버가 정함 · 이 화면은 그대로 그림).
+ *   v10.238 (docs/379) — 「급한 알림 받는 길」 줄(12줄).
  */
 interface Row { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string }
 const MARK: Record<Row['state'], string> = { ok: '✓', todo: '○', warn: '⚠', info: '–' };
@@ -27,6 +28,35 @@ export function StateCheck({ onGo, canGo }: { onGo: (tab: string) => void; canGo
               <td className={r.state === 'warn' ? 'warn-text' : r.state === 'todo' ? '' : 'muted'}>{MARK[r.state]}</td>
               <td>{r.now}</td>
               <td>{canGo(r.go) && <button className="linkbtn" onClick={() => onGo(r.go)} data-state-go={r.go}>보러 가기</button>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * v10.240 (docs/379) — 대표 할 일 자동 점검표(첫 화면 · 운영 상태 한눈에 아래 · 읽기만)
+ *   DB 로 확인되는 일은 저절로 ✓ 됨 · ○ 아직, DB 로 알 수 없는 일은 「직접 확인」. 끝난 수 / 전체는 자동 항목만.
+ */
+interface TodoRow { key: string; label: string; done: boolean | null; now: string; go: string }
+export function OwnerTodo({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab: string) => boolean }) {
+  const q = useApi<{ rows: TodoRow[]; done: number; total: number }>('/admin/launch-watch/owner-todo', []);
+  const d = q.data;
+  if (!d) return null;
+  return (
+    <div className="card" data-owner-todo data-owner-done={d.done} data-owner-total={d.total}>
+      <h3 className="sec">대표 할 일 <small className="dim">끝남 {d.done} / {d.total} · 저절로 확인되는 것만 셈 · 「직접 확인」은 화면 밖 일</small></h3>
+      <table className="tbl">
+        <thead><tr><th>할 일</th><th></th><th>지금</th><th></th></tr></thead>
+        <tbody>
+          {d.rows.map((r) => (
+            <tr key={r.key} data-owner-row={r.key} data-owner-state={r.done === null ? 'manual' : r.done ? 'done' : 'todo'}>
+              <td>{r.label}</td>
+              <td className={r.done === null ? 'muted' : ''}>{r.done === null ? '직접 확인' : r.done ? '✓ 됨' : '○ 아직'}</td>
+              <td>{r.now}</td>
+              <td>{canGo(r.go) && <button className="linkbtn" onClick={() => onGo(r.go)} data-owner-go={r.go}>보러 가기</button>}</td>
             </tr>
           ))}
         </tbody>
