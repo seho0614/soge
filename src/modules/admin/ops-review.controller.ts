@@ -120,6 +120,12 @@ export class OpsReviewController {
 
   /* ── v10.200 (D178 · docs/316) — 급한 알림 텔레그램 시험 · 대화방 찾기(준비 상태는 mail-status 의 push) ── */
 
+  @Get('ops-alerts/push-preview')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '급한 알림 텔레그램 — 첫 차례 미리보기', description: 'v10.234 — 지금 켜면 다음 정기 작업이 보낼 글(최대 3통 · 통마다 알림 수 · 글자 수 · 글 그대로) · 대기 수 · CRITICAL · 다시 알림 · 남는 수(다음 차례). 읽기만 — 보내지 않고 「보냄」도 적지 않음. 준비 안 됨이어도 글은 보여 줌(ready · reason).' })
+  @ApiOkResponse({ type: Object })
+  pushPreview() { return this.alerts.pushPreview(); }
+
   @Post('ops-alerts/push-test')
   @HttpCode(200)
   @Roles('SUPER')

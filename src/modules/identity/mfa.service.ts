@@ -5,6 +5,7 @@ import { Principal, Role, isSuper } from '../../core/auth';
 import { RequestCtx } from '../../core/request-context';
 import { backupHash, newBackupCodes, newTotpSecret, otpauthUri, totpMatch } from '../../common/totp';
 import { AuthService } from './auth.service';
+import { maskMail } from '../../common/mail/mail-admin.service';
 
 /* ---------------------------------------------------------------------
  * v10.180 (D169 · docs/281) — 운영자 2단계 인증
@@ -13,6 +14,8 @@ import { AuthService } from './auth.service';
  *   설정 admin.mfa_required(off · SUPER · ALL)가 켜져 있으면 운영 역할만 요구하는 API 는
  *   확인된 지 admin.mfa_hours(12) 안의 증표가 아니면 403 MFA_REQUIRED(AuthGuard).
  *   회원 기능(MEMBER · BIZ_*)은 보지 않습니다. 설정은 30초 동안 메모리에 둡니다.
+ *   v10.236 (docs/375) — 켜기 전 점검(turnOnPreview · SUPER): 고른 설정에서 번호를 넣어야 하는 운영자 · 아직 등록 안 한 사람(이메일 가림).
+ *     막지는 않음 — 등록 안 한 사람도 다음 로그인 때 /auth/mfa/* 로 등록하고 들어옴(그 사이 운영 화면은 쓰지 못함).
  * ------------------------------------------------------------------- */
 export const OPS_ROLES: readonly Role[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 — 파트너 담당도 운영 역할
 const MAX_FAILS = 5;
@@ -184,6 +187,31 @@ export class MfaService {
     const [gone] = await this.db.query(`DELETE FROM account_mfa WHERE account_id = $1 RETURNING account_id`, [targetId]);
     if (!gone) throw new AppError(404, { code: 'MFA_NOT_ENROLLED', message: '2단계 인증을 등록하지 않은 계정입니다.' });
     return { accountId: targetId, reset: true };
+  }
+
+  /** v10.236 (docs/375) — 켜기 전 점검: mode(SUPER · ALL)로 바꾸면 번호를 넣어야 하는 운영자(정상 계정만) · 등록 안 한 사람 */
+  async turnOnPreview(mode: string) {
+    if (!['SUPER', 'ALL'].includes(mode)) throw new PolicyViolation('MFA_MODE_INVALID', 'SUPER 또는 ALL 만 미리 볼 수 있습니다.');
+    const rows = await this.db.query<{ id: string; name: string | null; email: string; roles: string[]; enrolled: boolean }>(
+      `SELECT a.id, a.name, a.email, array_agg(r.role ORDER BY r.role) AS roles, bool_or(m.enabled_at IS NOT NULL) AS enrolled
+         FROM accounts a
+         JOIN account_roles r ON r.account_id = a.id AND r.role = ANY($1::text[])
+         LEFT JOIN account_mfa m ON m.account_id = a.id
+        WHERE a.status = 'ACTIVE'
+        GROUP BY a.id
+        ORDER BY a.email`, [OPS_ROLES]);
+    const need = rows.filter((r) => MfaService.requiredFor(mode, r.roles));
+    const missing = need.filter((r) => !r.enrolled);
+    const me = this.me();
+    const meNeed = need.find((r) => r.id === me);
+    return {
+      mode, need: need.length, enrolled: need.length - missing.length,
+      notEnrolled: missing.map((r) => ({ name: r.name, email: maskMail(r.email), roles: r.roles, me: r.id === me })),
+      meEnrolled: !!rows.find((r) => r.id === me)?.enrolled,
+      note: !need.length ? '이 설정으로 번호를 넣어야 하는 운영자가 없습니다.'
+        : !missing.length ? `번호를 넣어야 하는 운영자 ${need.length}명 모두 등록했습니다.`
+        : `번호를 넣어야 하는 운영자 ${need.length}명 중 ${missing.length}명이 아직 등록하지 않았습니다 — 켜면 그 사람은 다음 로그인 때 등록부터 해야 운영 화면을 씁니다${meNeed && !meNeed.enrolled ? ' · 나도 등록하지 않아 켤 수 없습니다(MFA_ENROLL_FIRST)' : ''}.`,
+    };
   }
 
   /** 설정 저장 전(AdminService) — 켜는 사람이 먼저 등록했는지 */

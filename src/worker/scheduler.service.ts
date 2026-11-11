@@ -4,7 +4,8 @@ import { RecurringBatchService } from '../modules/billing/recurring-batch.servic
 import { LeadCashService } from '../modules/partner/lead-cash.service';
 import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
-import { TelegramService, TG_MAX, packLines } from '../common/telegram/telegram.service';
+import { TelegramService } from '../common/telegram/telegram.service';
+import { buildAlertPush } from '../common/telegram/alert-push';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -523,9 +524,18 @@ export class SchedulerService {
             `개인정보 권리 요청 ${pq.length}건 처리 기한이 2일 안입니다${late ? `(기한 넘김 ${late}건)` : ''} — 운영 화면 위험감지 › 권리 요청에서 처리하십시오`,
             { keys: pq.map((x) => `${x.id}:${x.dueOn}`), items: pq });
         }
+        /* v10.235 (docs/375) — 외부 연동 예상일(IP 신청일 + 기간) 지남 · LIVE 아님 — 하루 한 번 한 건에 모아서(풀림은 resolveAlerts) */
+        const io = await this.launchWatch.integrationOverdue();
+        if (io.length) {
+          const [today] = await this.db.query<{ n: number }>(
+            `SELECT count(*)::int AS n FROM ops_alerts WHERE alert_code = 'INTEGRATION_OVERDUE' AND (raised_at AT TIME ZONE 'Asia/Seoul')::date = (now() AT TIME ZONE 'Asia/Seoul')::date`);
+          if (!today?.n) await this.alert('INTEGRATION_OVERDUE', 'WARN',
+            `외부 연동 ${io.length}건이 예상일을 지났습니다 — ${io.slice(0, 5).map((x) => `${x.name}(${x.dueOn} · ${x.daysOver}일 지남)`).join(' · ')}${io.length > 5 ? ` 외 ${io.length - 5}건` : ''} — 운영 화면 › 외부 연동에서 진행을 확인하십시오`,
+            { items: io });
+        }
         affected = 1; detail = { day: d.day, mailed, uploadsBackupAgeHours: ub.ageHours, piiReviewDue: pr.alert ? pr.month : null,
           roleReviewDue: rr.alert ? rr.quarter : null, purgeFailed: ph.failedRun?.id ?? null, purgeMissedHours: ph.missedHours,
-          privacyDue: pq.length };
+          privacyDue: pq.length, integrationOverdue: io.length };
         break;
       }
 
@@ -686,42 +696,20 @@ export class SchedulerService {
 
   /** v10.200 (D178 · docs/316) — 급한 알림 텔레그램 한 통(메일과 같은 알림 · 같은 기준 · 기록은 pushed_at · repushed_at).
    *  준비 안 됨(토큰 · 대화방 없음)이면 보내지 않고 까닭만 — 보낸 것으로 적지 않음
-   *  v10.233 — 한 통 4,000자(TG_MAX)를 넘으면 최대 3통으로 나눔 · 제목 200자 · 보내진 통의 알림만 「보냄」 · 3통에 못 든 알림은 「n건 더」로 세고 다음 차례에 */
+   *  v10.233 — 한 통 4,000자(TG_MAX)를 넘으면 최대 3통으로 나눔 · 제목 200자 · 보내진 통의 알림만 「보냄」 · 3통에 못 든 알림은 「n건 더」로 세고 다음 차례에
+   *  v10.234 — 글 만들기는 buildAlertPush(운영 화면 미리보기와 같은 함수) */
   private async alertPush(): Promise<{ pending: number; pushed: number; reason: string | null; parts?: number }> {
     const items = await this.launchWatch.alertPushPending();
     if (!items.length) return { pending: 0, pushed: 0, reason: null };
     const st = await this.telegram.status();
     if (!st.ready) return { pending: items.length, pushed: 0, reason: st.reason };
-    const PARTS = 3, TITLE_MAX = 200;
-    const backlog = await this.launchWatch.alertBacklog('push');
-    const head = (list: typeof items, k: number, of: number) => {
-      const crit = list.filter((x) => x.severity === 'CRITICAL').length;
-      const again = list.filter((x) => x.again).length;
-      return `[소개뱅크] 급한 운영 알림 ${list.length}건${crit ? `(CRITICAL ${crit})` : ''}${again ? ` · 다시 알림 ${again}건(12시간 넘게 확인 안 함)` : ''}${of > 1 ? ` (${k}/${of})` : ''}`;
-    };
-    const tail = (more: number) => [
-      ...(more ? ['', `보내지 못한 알림 ${more}건 더 — 다음 차례에 이어서 보냅니다(운영 화면 › 운영 알림에서 모두 볼 수 있음).`] : []),
-      '',
-      '운영 화면 › 운영 알림에서 보고 「확인」을 누르십시오.',
-    ].join('\n');
-    const line = (x: (typeof items)[number]) => {
-      const t = x.title.length > TITLE_MAX ? `${x.title.slice(0, TITLE_MAX - 1)}…` : x.title;
-      return `- ${x.again ? '[다시] ' : ''}[${x.severity}] ${x.raisedAt} ${t}`;
-    };
-    /* 머리 · 끝 줄은 가장 길 때(모든 알림 · 남은 수 = backlog)로 자리를 잡고 남은 칸에 알림 줄을 채움 */
-    const budget = TG_MAX - head(items, PARTS, PARTS).length - 2 - tail(Math.max(backlog, items.length)).length - 1;
-    const groups = packLines(items.map(line), budget, PARTS);
-    const inc = items.slice(0, groups.reduce((n, g) => n + g.length, 0));
-    const more = Math.max(0, backlog - inc.filter((x) => !x.again).length);
-    let at = 0, pushed = 0, parts = 0;
-    for (const [i, g] of groups.entries()) {
-      const list = inc.slice(at, at + g.length);
-      const last = i === groups.length - 1;
-      const text = [head(inc, i + 1, groups.length), '', ...g].join('\n') + (last ? `\n${tail(more)}` : '');
-      const r = await this.telegram.send(text);
+    const plan = buildAlertPush(items, await this.launchWatch.alertBacklog('push'));
+    let pushed = 0, parts = 0;
+    for (const p of plan.parts) {
+      const r = await this.telegram.send(p.text);
       if (!r.ok) return { pending: items.length - pushed, pushed, reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts };
-      await this.launchWatch.markPushed(list.filter((x) => !x.again).map((x) => x.id), list.filter((x) => x.again).map((x) => x.id));
-      at += g.length; pushed += g.length; parts++;
+      await this.launchWatch.markPushed(p.items.filter((x) => !x.again).map((x) => x.id), p.items.filter((x) => x.again).map((x) => x.id));
+      pushed += p.items.length; parts++;
     }
     return { pending: items.length - pushed, pushed, reason: null, parts };
   }

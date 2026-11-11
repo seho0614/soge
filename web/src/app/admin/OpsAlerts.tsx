@@ -27,6 +27,11 @@ interface MailStatus {
            digest?: { on: boolean; last: { at: string; pushed: boolean; reason: string | null } | null } };
 }
 interface Chat { id: string; type: string; title: string }
+/* v10.234 (docs/375) — 텔레그램 첫 차례 미리보기 */
+interface Preview {
+  ready: boolean; reason: string | null; pending: number; critical: number; again: number; backlog: number;
+  parts: { n: number; chars: number; text: string }[]; included: number; more: number; maxParts: number; maxChars: number; note: string;
+}
 const WHY: Record<string, string> = {
   NO_SMTP: '메일 설정 없음(SMTP 사용자 이름 · 비밀번호)', NOT_VERIFIED: '메일 스위치 꺼짐(외부 연동 › 메일)', NO_FROM: '보내는 주소 없음',
   NO_TO: '받는 주소 없음', MAIL_NOT_READY: '메일 준비 안 됨',
@@ -47,6 +52,7 @@ const NAME: Record<string, string> = {
   ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
   STAFF_IP_PASS_NEW: '접속 인증 처음 보는 대역', STAFF_IP_LOCKED: '접속 인증번호 5번 틀림', STAFF_IP_DAY_LIMIT: '접속 인증번호 하루 한도',   // v10.228 (D197)
+  INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   AGENT_LIVE: 'AI 사용 가능해짐', AGENT_READY_GAP: 'AI 준비 덜 됨', AGENT_CAP_NEAR: 'AI 월 상한 가까움', AGENT_STEP_READY: 'AI 다음 단계 켤 수 있음',   // v10.204 (D181 · docs/326) · v10.205 (D182 · docs/328)
   /* v10.203 (docs/322 4절) — 화면에 영어 코드로만 보이던 21종 */
   AGENT_CAP_REACHED: 'AI 월 상한 닿음', AGENT_CHAT_HANDOFF: 'AI 상담 담당자 연결', K_VALUE_BREACH: '검수 부담(k값) 경보',
@@ -150,6 +156,7 @@ export function OpsAlerts() {
                 {isSuper && <>{' '}<button className="btn-sm ghost" disabled={a.busy === 'push-digest'} onClick={() => flipDigest(p.digest!.on)} data-push-digest-flip="">{p.digest.on ? '하루 요약 끄기' : '하루 요약도 받기'}</button></>}
               </span>
             )}
+            <PushPreview />
             <small className="dim"> 메일과 같은 알림(긴급 · 중요 설정 바뀜 · 주문 받기 저절로 꺼짐 · 백업 실패 · 운영자 낯선 로그인)을 같은 기준으로 보냅니다 — 메일이 준비 안 돼도 갑니다. 알림 내용은 보내지 않고 제목만.</small>
           </div>
         );
@@ -208,5 +215,40 @@ export function OpsAlerts() {
       {d.pages > 1 && <p><button className="btn-plain" disabled={page <= 1} onClick={() => setPage(page - 1)}>앞</button> {page} / {d.pages} <button className="btn-plain" disabled={page >= d.pages} onClick={() => setPage(page + 1)}>뒤</button></p>}
       <div className="ad-nt info">확인은 한 번만 됩니다 — 누가 · 언제 · 메모가 남고 되돌릴 수 없습니다. 알림 내용은 바뀌지 않습니다. 긴급(CRITICAL)이 확인 안 된 채 남아 있으면 배포 점검(postcheck)이 실패로 봅니다. 긴급 · 중요 설정 바뀜은 10분 안에 하루 요약 받는 주소로 메일이 갑니다(메일이 준비됐을 때 · 같은 종류는 1시간에 1통). 올린 파일 백업 실패 · 묶음 깨짐도 메일이 가고, 긴급을 12시간 넘게 확인하지 않으면 한 번 더 갑니다. 원인이 없어진 알림(백업 멈춤 → 새 묶음 · 검수 기한 넘김 → 0건 · 디스크 → 기준 아래 · 주문 받기 → 꺼짐)은 정기 작업이 「풀림」을 적어 확인 안 한 수 · 메일 · 배포 점검에서 빠집니다(확인 기록은 따로).</div>
     </section>
+  );
+}
+
+/**
+ * v10.234 (docs/375) — 「지금 켜면 첫 차례」 미리보기. 누를 때만 읽음(읽기만 — 보내지 않고 「보냄」도 적지 않음).
+ * 정기 작업과 같은 글 만들기라 켠 뒤 처음 오는 글과 같음(그 사이 새 알림이 생기면 달라짐).
+ */
+function PushPreview() {
+  const [d, setD] = useState<Preview | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () => {
+    setBusy(true); setErr(null);
+    api<Preview>('/admin/ops-alerts/push-preview').then(setD, (e) => setErr(String(e?.message ?? e))).finally(() => setBusy(false));
+  };
+  return (
+    <div data-push-preview={d ? d.parts.length : ''}>
+      <button className="btn-sm ghost" disabled={busy} onClick={load} data-push-preview-load="">{d ? '미리보기 새로' : '지금 켜면 첫 차례 미리보기'}</button>
+      {err && <small className="warn-text"> 읽지 못했습니다 — {err}</small>}
+      {d && (
+        <>
+          <p data-push-preview-note="">
+            {d.note}
+            {d.pending > 0 && <small className="dim"> 대기 {n(d.pending)}건(CRITICAL {n(d.critical)}{d.again ? ` · 다시 알림 ${n(d.again)}` : ''}) · 같은 기준 전체 {n(d.backlog)}건 · 한 차례 최대 {d.maxParts}통 · 한 통 {n(d.maxChars)}자</small>}
+            {!d.ready && d.pending > 0 && <small className="dim"> — 지금은 준비 안 됨이라 보내지 않습니다.</small>}
+          </p>
+          {d.parts.map((p, i) => (
+            <details key={i} data-push-preview-part={i + 1}>
+              <summary>{i + 1}/{d.parts.length}통 — 알림 {n(p.n)}건 · {n(p.chars)}자</summary>
+              <pre className="mono" style={{ whiteSpace: 'pre-wrap' }}>{p.text}</pre>
+            </details>
+          ))}
+        </>
+      )}
+    </div>
   );
 }

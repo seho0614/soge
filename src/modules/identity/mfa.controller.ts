@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsString, Length, Matches } from 'class-validator';
 import type { Request } from 'express';
@@ -63,6 +63,13 @@ export class MfaController {
   @ApiResponse({ status: 403, description: 'MFA_INVALID', type: ErrorDto })
   @ApiResponse({ status: 423, description: 'MFA_LOCKED', type: ErrorDto })
   verify(@Req() req: Request, @Body() dto: MfaCodeDto) { return this.mfa.verify(this.me(req), dto.code); }
+
+  @Get('admin/mfa/turn-on-preview')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '2단계 인증 켜기 전 점검(SUPER)', description: 'v10.236 — mode=SUPER · ALL 로 바꾸면 번호를 넣어야 하는 운영자 수 · 등록한 수 · 등록 안 한 사람(이름 · 가린 이메일 · 역할). 읽기만 · 막지 않음.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'MFA_MODE_INVALID', type: ErrorDto })
+  turnOnPreview(@Query('mode') mode: string) { return this.mfa.turnOnPreview(mode); }
 
   @Post('admin/accounts/:id/mfa-reset')
   @HttpCode(200)

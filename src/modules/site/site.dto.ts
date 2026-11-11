@@ -132,6 +132,8 @@ export class IntegrationDto {
   @ApiProperty({ description: 'true 면 LIVE 가 아닐 때 오픈이 막힙니다' }) blocksOpen!: boolean;
   @ApiProperty({ nullable: true }) memo!: string | null;
   @ApiProperty({ description: '남은 예상 기간(주)' }) estWeeksRemaining!: number;
+  @ApiProperty({ nullable: true, format: 'date', description: 'v10.235 — 예상일(IP 신청일 + 리드타임 · 한국 날짜). 신청일 · 리드타임이 없으면 null' }) dueOn!: string | null;
+  @ApiProperty({ description: 'v10.235 — 예상일이 지났는데 LIVE 가 아님' }) overdue!: boolean;
 }
 
 export class UpdateIntegrationDto {

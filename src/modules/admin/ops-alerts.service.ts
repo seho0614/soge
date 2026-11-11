@@ -4,7 +4,9 @@ import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { MailService } from '../../common/mail/mail.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
-import { TelegramService } from '../../common/telegram/telegram.service';
+import { TelegramService, TG_MAX } from '../../common/telegram/telegram.service';
+import { PUSH_PARTS, buildAlertPush } from '../../common/telegram/alert-push';
+import { LaunchWatchService } from './launch-watch.service';
 
 /* ---------------------------------------------------------------------
  * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인
@@ -18,10 +20,12 @@ import { TelegramService } from '../../common/telegram/telegram.service';
  *   v10.199 (D177 · docs/314) — 「풀림」(resolved_at · 정기 작업이 적음) — 확인 안 한 목록 · 종류별 수에서 기본으로 뺌(resolved=show 면 같이)
  *   v10.200 (D178 · docs/316) — 텔레그램 준비 상태(mailStatus 의 push) · 시험 메시지(pushTest · SUPER · 1분에 1번 · OPS_PUSH_TEST) · 대화방 찾기
  *   v10.232 (docs/371) — 한꺼번에 확인(ackBulk · 풀린 것 모두 · 6 · 24 · 72시간 넘은 INFO · WARN 모두 · CRITICAL 은 뺌)
+ *   v10.234 (docs/375) — 텔레그램 첫 차례 미리보기(pushPreview · 읽기만 · 정기 작업과 같은 글 만들기 buildAlertPush)
  * ------------------------------------------------------------------- */
 @Injectable()
 export class OpsAlertsService {
-  constructor(private readonly db: DatabaseService, private readonly mail: MailService, private readonly telegram: TelegramService) {}
+  constructor(private readonly db: DatabaseService, private readonly mail: MailService, private readonly telegram: TelegramService,
+              private readonly launchWatch: LaunchWatchService) {}
   private static lastTestAt = 0;
   private static lastPushTestAt = 0;
   private get me() { return RequestCtx.actorId(); }
@@ -178,6 +182,19 @@ export class OpsAlertsService {
       ? { ok: true, reason: null, chat: st.chat, note: '시험 메시지를 보냈습니다 — 텔레그램 대화방을 확인하십시오.' }
       : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, chat: st.chat,
           note: r.errorKind === 'AUTH' ? '보내지 못했습니다 — 봇 토큰이 맞지 않습니다.' : r.errorKind === 'NETWORK' || r.errorKind === 'TIMEOUT' ? '보내지 못했습니다 — 서버에서 텔레그램(api.telegram.org)으로 나가는 길을 확인하십시오.' : '보내지 못했습니다 — 대화방 번호 · 봇이 그 대화방에 있는지 확인하십시오.' };
+  }
+
+  /** v10.234 (docs/375) — 지금 텔레그램이 켜져 있다면 다음 정기 작업(10분마다)이 보낼 첫 차례 — 읽기만(보내지 않고 「보냄」도 적지 않음).
+   *  대기 목록 · 남은 수 · 글은 정기 작업(alertPush)과 같은 함수라 켠 뒤 처음 오는 글과 같음(그 사이 새 알림이 생기면 달라짐) */
+  async pushPreview(): Promise<{ ready: boolean; reason: string | null; pending: number; critical: number; again: number; backlog: number;
+    parts: { n: number; chars: number; text: string }[]; included: number; more: number; maxParts: number; maxChars: number; note: string }> {
+    const [st, items, backlog] = await Promise.all([this.telegram.status(), this.launchWatch.alertPushPending(), this.launchWatch.alertBacklog('push')]);
+    const plan = buildAlertPush(items, backlog);
+    const parts = plan.parts.map((p) => ({ n: p.items.length, chars: p.text.length, text: p.text }));
+    const note = !items.length ? '지금 보낼 급한 알림이 없습니다 — 켜도 바로 오는 글은 없습니다.'
+      : `켜면 다음 차례(10분 안)에 ${parts.length}통 · 알림 ${plan.included}건이 갑니다${plan.more ? ` — 남은 ${plan.more}건은 그다음 차례에 이어서` : ''}.`;
+    return { ready: st.ready, reason: st.reason, pending: items.length, critical: items.filter((x) => x.severity === 'CRITICAL').length,
+      again: items.filter((x) => x.again).length, backlog, parts, included: plan.included, more: plan.more, maxParts: PUSH_PARTS, maxChars: TG_MAX, note };
   }
 
   /** 봇에게 최근 말을 건 대화방 — 고르면 화면이 사이트 설정 ops.telegram_chat 에 넣음 */

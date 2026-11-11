@@ -382,7 +382,7 @@ export class LaunchWatchService {
 
   /**
    * v10.199 (D177 · docs/314) — 원인이 없어진 운영 알림에 「풀림」(사람의 확인 기록과 따로 · 확인 안 한 수 · 메일에서 빠짐).
-   *   백업 멈춤 → 새 묶음 · 백업 실패 → 그 뒤 새 묶음 · 묶음 깨짐 → 그 뒤 검사 깨짐 0 · 디스크 → 기준 아래.
+   *   백업 멈춤 → 새 묶음 · 백업 실패 → 그 뒤 새 묶음 · 묶음 깨짐 → 그 뒤 검사 깨짐 0 · 디스크 → 기준 아래 · v10.235 외부 연동 예상일 지남 → 지난 연동 0.
    *   검수 기한 넘김(REVIEW_SLA_BREACH)은 DB 함수 fn_check_sla_alert 가 같은 방식으로 풂(sla_alert 작업).
    */
   async resolveAlerts(diskPct: number | null, diskLimit: number): Promise<number> {
@@ -398,6 +398,8 @@ export class LaunchWatchService {
     if (ub.lastAt) await run('UPLOADS_BACKUP_FAILED', `그 뒤 새 묶음 ${ub.last} 이 생김`, 'AND raised_at < $2::timestamptz', [ub.lastAt]);
     if (vf && vf.bad === 0) await run('UPLOADS_BACKUP_BAD', '그 뒤 묶음 검사에서 깨짐 0', 'AND raised_at < $2::timestamptz', [vf.at]);
     if (diskPct !== null && diskLimit > 0 && diskPct < diskLimit) await run('DISK_LOW', `디스크 ${diskPct}% — 기준 ${diskLimit}% 아래로`);
+    /* v10.235 (docs/375) — 예상일 지난 외부 연동이 하나도 없으면(LIVE 가 됐거나 신청일 · 기간을 고침) */
+    if (!(await this.integrationOverdue()).length) await run('INTEGRATION_OVERDUE', '예상일 지난 외부 연동이 없어짐');
     return n;
   }
 
@@ -418,6 +420,21 @@ export class LaunchWatchService {
          FROM fn_ops_alert_remail_pending()`);
     const [c] = await this.db.query<{ to: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
     return { to: (c?.to ?? '').trim(), items };
+  }
+
+  /**
+   * v10.235 (docs/375) — 외부 연동 예상일 지남: 발신 IP 신청일(ip_requested_at) + 걸리는 기간(lead_time_weeks)이 지났는데 LIVE 가 아닌 연동.
+   *   신청일이나 기간이 비어 있는 연동은 셀 수 없어 뺌(운영 화면 외부 연동 표에서 신청일을 고쳐 넣으면 들어옴).
+   */
+  async integrationOverdue(): Promise<{ code: string; name: string; status: string; dueOn: string; daysOver: number }[]> {
+    return this.db.query(
+      `SELECT code, name, status,
+              to_char((ip_requested_at + make_interval(weeks => lead_time_weeks)) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "dueOn",
+              (now()::date - (ip_requested_at + make_interval(weeks => lead_time_weeks))::date)::int AS "daysOver"
+         FROM integrations
+        WHERE status <> 'LIVE' AND ip_requested_at IS NOT NULL AND lead_time_weeks IS NOT NULL
+          AND ip_requested_at + make_interval(weeks => lead_time_weeks) < now()
+        ORDER BY ip_requested_at + make_interval(weeks => lead_time_weeks), sort_order`);
   }
 
   /** v10.200 (D178 · docs/316) — 텔레그램으로 보낼 것 · 다시 보낼 것(메일과 같은 기준 · 칸은 pushed_at · repushed_at) */

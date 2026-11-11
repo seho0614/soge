@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApi } from '../../lib/useApi';
 import { api, setToken, tokenRoles } from '../../lib/api';
 import { useAct, ymdhm } from '../../lib/act';
@@ -7,6 +7,8 @@ import { ErrorView } from '../../components/ErrorView';
 import { MfaSetup, type MfaStatus } from '../../components/MfaGate';
 
 const MODE: Record<string, string> = { off: '쓰지 않음', SUPER: '최고 관리자만', ALL: '운영 역할 모두' };
+/* v10.236 (docs/375) — 켜기 전 점검 */
+interface TurnOn { mode: string; need: number; enrolled: number; notEnrolled: { name: string | null; email: string; roles: string[]; me: boolean }[]; meEnrolled: boolean; note: string }
 
 /**
  * SB-ADM-MFA-010 내 2단계 인증 (v10.180 · D169 · docs/281)
@@ -15,6 +17,7 @@ const MODE: Record<string, string> = { off: '쓰지 않음', SUPER: '최고 관�
  * 다시 등록(휴대폰 바꿈 · 분실)은 최고 관리자가 회원 상세 「2단계 초기화」로 지운 뒤.
  * v10.203 (docs/324) — SUPER 는 여기서 설정(admin.mfa_required)을 바꿈(전에는 운영 화면 칸이 없어 서버 mfa-reset.sh 만) ·
  *   모든 운영 역할은 「모든 기기에서 로그아웃」(「운영자 낯선 로그인」이 본인이 아닐 때 — 비밀번호를 바꾼 뒤).
+ * v10.236 (docs/375) — 설정에서 SUPER · ALL 을 고르면 저장 전에 「켜기 전 점검」(번호를 넣어야 하는 사람 · 등록 안 한 사람).
  */
 export function MyMfa() {
   const q = useApi<MfaStatus>('/auth/mfa');
@@ -23,6 +26,15 @@ export function MyMfa() {
   const [pw, setPw] = useState('');
   const a = useAct();
   const isSuper = tokenRoles().includes('SUPER');
+  const [pv, setPv] = useState<TurnOn | null>(null);
+  const pick = mode && mode !== 'off' && mode !== q.data?.mode ? mode : '';
+  useEffect(() => {
+    setPv(null);
+    if (!isSuper || !pick) return;
+    let live = true;
+    api<TurnOn>(`/admin/mfa/turn-on-preview?mode=${pick}`).then((r) => { if (live) setPv(r); }, () => { /* 점검만 못 보임 — 저장은 서버가 다시 봄 */ });
+    return () => { live = false; };
+  }, [pick, isSuper]);
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const s = q.data;
@@ -47,11 +59,22 @@ export function MyMfa() {
           </label>{' '}
           <button className="btn-sm" disabled={a.busy === 'mode' || !mode || mode === s.mode} data-mfa-save=""
             onClick={() => {
-              if (!confirm(`운영자 2단계 인증을 「${MODE[mode] ?? mode}」로 바꿉니다. 켜면 해당 운영자는 다음 요청부터 번호를 넣어야 운영 화면을 씁니다.`)) return;
+              if (!confirm(`운영자 2단계 인증을 「${MODE[mode] ?? mode}」로 바꿉니다. 켜면 해당 운영자는 다음 요청부터 번호를 넣어야 운영 화면을 씁니다.${pv && pv.mode === mode && pv.notEnrolled.length ? `\n아직 등록 안 한 운영자 ${pv.notEnrolled.length}명은 다음 로그인 때 등록부터 해야 합니다.` : ''}`)) return;
               void a.run('mode', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'admin.mfa_required', value: mode }) }), () => { setMode(''); q.reload(); });
             }}>저장</button>
           <small className="dim"> 켜려면 먼저 내 등록이 있어야 합니다 · 바꾸면 운영 알림 「중요 설정 바뀜」</small>
         </p>
+      )}
+      {isSuper && pv && pick === pv.mode && (
+        <div className={`ad-nt ${pv.notEnrolled.length ? 'warn' : 'info'}`} data-mfa-turnon={pv.notEnrolled.length}>
+          <b>켜기 전 점검 — 「{MODE[pv.mode]}」</b> {pv.note}
+          {pv.notEnrolled.length > 0 && (
+            <ul data-mfa-turnon-list="">
+              {pv.notEnrolled.map((x) => <li key={x.email}>{x.name ?? '(이름 없음)'} · <span className="mono">{x.email}</span> · {x.roles.join(' · ')}{x.me ? ' · 나' : ''}</li>)}
+            </ul>
+          )}
+          {pv.notEnrolled.length > 0 && <small className="dim">등록 안 한 사람에게 먼저 「내 2단계 인증」에서 등록하도록 알리면 켠 뒤 바로 들어올 수 있습니다.</small>}
+        </div>
       )}
       <h3 className="sec">모든 기기에서 로그아웃</h3>
       <p data-logout-all="">

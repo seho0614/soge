@@ -1881,6 +1881,7 @@
     "POST /admin/ops-alerts/ack-code", "GET /admin/ops-alerts/ack-bulk/preview", "POST /admin/ops-alerts/ack-bulk",
     "GET /admin/ops-alerts/mail-status",
     "POST /admin/ops-alerts/mail-test",
+    "GET /admin/ops-alerts/push-preview",
     "POST /admin/ops-alerts/push-test",
     "POST /admin/ops-alerts/push-find-chat",
     "PATCH /admin/site-settings"
@@ -1924,6 +1925,7 @@
     "POST /auth/mfa/setup",
     "POST /auth/mfa/enable",
     "POST /auth/mfa/verify",
+    "GET /admin/mfa/turn-on-preview",
     "POST /admin/accounts/{id}/mfa-reset",
     "PATCH /admin/site-settings",
     "POST /me/logout-all"

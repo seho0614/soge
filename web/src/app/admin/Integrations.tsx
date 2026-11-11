@@ -20,6 +20,7 @@ interface Integration {
   secretKeyName: string | null; secretRegistered: boolean;
   leadTimeWeeks: number | null; blocksOpen: boolean; memo: string | null;
   estWeeksRemaining: number;
+  dueOn?: string | null; overdue?: boolean;   /* v10.235 (docs/375) 예상일 = IP 신청일 + 걸리는 기간 · 지났는데 LIVE 아님 */
 }
 
 
@@ -94,18 +95,20 @@ export function Integrations() {
         </div>
       )}
       <div className="ad-tw"><table className="tbl" data-int-summary>
-        <thead><tr><th>연동</th><th>상태</th><th>오픈 차단</th><th>IP 등록</th><th>다음에 할 일</th></tr></thead>
+        <thead><tr><th>연동</th><th>상태</th><th>오픈 차단</th><th>IP 등록</th><th>예상일</th><th>다음에 할 일</th></tr></thead>
         <tbody>{rows.map((r) => (
           <tr key={r.code} className={r.blocksOpen && r.status !== 'LIVE' ? 'bad' : undefined}>
             <td><b>{r.name}</b><span className="ad-ls">{r.purpose}</span></td>
             <td className="mono">{r.status}<span className="ad-ls">{r.statusLabel}</span></td>
             <td>{r.blocksOpen ? '예' : '아니오'}</td>
             <td>{!r.requiresIp ? '불필요' : r.ipApprovedAt ? '승인됨' : r.ipRequestedAt ? '심사중' : `필요${r.leadTimeWeeks ? ` · ${r.leadTimeWeeks}주` : ''}`}</td>
+            <td data-int-due={r.code} data-overdue={r.overdue ? '1' : '0'}>{r.status === 'LIVE' || !r.dueOn ? '—' : r.overdue ? <b className="warn-text">{r.dueOn} 지남</b> : r.dueOn}</td>
             <td className="dim">{r.status === 'LIVE' ? '—' : r.memo ?? (r.requiresIp && !r.ipApprovedAt ? '계약 · 발신 IP 등록' : !r.secretRegistered ? '키 발급 · 등록' : '실제 호출 확인 후 LIVE')}</td>
           </tr>
         ))}</tbody>
       </table></div>
       <div className="ad-nt info"><b>키는 아래 「연동 키」에서 넣습니다.</b> 암호화해 저장하고 끝 4자리만 보입니다 — DB 백업에는 암호문만 남습니다. 이 화면 키가 먼저, 없으면 .env. 카카오맵 · 날씨 키는 맨 아래 각 구역.</div>
+      <div className="ad-nt info"><b>예상일은 「IP 신청일 + 걸리는 기간」입니다.</b> 지났는데 LIVE 가 아니면 빨갛게 보이고 하루 한 번 운영 알림(외부 연동 예상일 지남)이 남습니다 — 실제로 업체에 신청한 날로 아래 「IP 신청일」을 고치면 예상일도 바뀝니다.</div>
       <div className="ad-nt info"><b>IP 등록 2~4주가 가장 긴 항목입니다.</b> 계약을 먼저 걸어 두시는 편이 낫습니다.</div>
       <h2 className="ad-s2">연동별 설정 <em>{rows.length}</em> <small className="dim">개발에만 — 상태 · 사업자 · IP · 키 등록</small></h2>
 
@@ -166,6 +169,18 @@ export function Integrations() {
                     && patch(r.code, { provider: e.target.value })}
                 />
               </label>
+
+              {r.requiresIp && (
+                <label>
+                  <span>IP 신청일</span>
+                  <input
+                    type="date" data-int-requested={r.code}
+                    defaultValue={(ymdKst(r.ipRequestedAt) || '')}
+                    onChange={(e) => e.target.value
+                      && patch(r.code, { ipRequestedAt: e.target.value })}
+                  />
+                </label>
+              )}
 
               {r.requiresIp && (
                 <label>

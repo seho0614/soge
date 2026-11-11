@@ -215,7 +215,10 @@ export class SiteService {
               i.secret_key_name AS "secretKeyName",
               i.secret_registered AS "secretRegistered",
               i.lead_time_weeks AS "leadTimeWeeks", i.blocks_open AS "blocksOpen",
-              i.memo, v.est_weeks_remaining AS "estWeeksRemaining"
+              i.memo, v.est_weeks_remaining AS "estWeeksRemaining",
+              /* v10.235 (docs/375) — 예상일 = 발신 IP 신청일 + 걸리는 기간 · 지났는데 LIVE 가 아니면 overdue */
+              to_char((i.ip_requested_at + make_interval(weeks => i.lead_time_weeks)) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "dueOn",
+              (i.status <> 'LIVE' AND i.ip_requested_at + make_interval(weeks => i.lead_time_weeks) < now()) IS TRUE AS overdue
          FROM integrations i
          LEFT JOIN code_labels cl ON cl.domain='integration.status' AND cl.code=i.status
          LEFT JOIN v_integration_status v ON v.code = i.code

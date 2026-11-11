@@ -1755,4 +1755,10 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "업종 정정신고 기록은 최고 관리자(SUPER)만 적을 수 있습니다.": "Only the super administrator (SUPER) can record the business-type amendment report.",
   "풀린 것(resolved) 또는 6 · 24 · 72시간 넘은 것(older)만 고를 수 있습니다.": "Choose either resolved alerts or alerts older than 6, 24 or 72 hours.",
   "{0}건을 확인하게 됩니다(CRITICAL 은 빼고).": "{0} alerts will be acknowledged (CRITICAL excluded).",
+  /* v10.236 (docs/375) — 2단계 인증 켜기 전 점검 */
+  "SUPER 또는 ALL 만 미리 볼 수 있습니다.": "Only SUPER or ALL can be previewed.",
+  "이 설정으로 번호를 넣어야 하는 운영자가 없습니다.": "No operators would need to enter a code with this setting.",
+  "번호를 넣어야 하는 운영자 {0}명 모두 등록했습니다.": "All {0} operators who would need to enter a code have enrolled.",
+  "번호를 넣어야 하는 운영자 {0}명 중 {1}명이 아직 등록하지 않았습니다 — 켜면 그 사람은 다음 로그인 때 등록부터 해야 운영 화면을 씁니다{2}.": "{1} of the {0} operators who would need to enter a code have not enrolled yet — once it is on, they must enroll at their next login before using the admin screen{2}.",
+  " · 나도 등록하지 않아 켤 수 없습니다(MFA_ENROLL_FIRST)": " · you have not enrolled either, so you cannot turn it on (MFA_ENROLL_FIRST)",
 };
