@@ -36,10 +36,17 @@ TG, SC = rd('src/common/telegram/telegram.service.ts'), rd('src/worker/scheduler
 ok('① 텔레그램 — TG_MAX 4,000 · packLines(최대 통 수 · 줄바꿈 포함 길이) · 잘리면 truncated · 로그',
    'export const TG_MAX = 4000;' in TG and 'export function packLines(lines: string[], budget: number, maxParts: number): string[][]' in TG
    and 'text.slice(0, TG_MAX)' in TG and 'truncated ? { ...r, truncated } : r' in TG, '')
+# v10.234 (docs/375) — 글 만들기를 src/common/telegram/alert-push.ts(buildAlertPush)로 옮김 — 옛 모양(정기 작업 안) · 새 모양 둘 다 받음
+AP = rd('src/common/telegram/alert-push.ts')
+OLD = ('const PARTS = 3, TITLE_MAX = 200;' in SC and 'packLines(items.map(line), budget, PARTS)' in SC
+       and 'const budget = TG_MAX - head(items, PARTS, PARTS).length - 2 - tail(Math.max(backlog, items.length)).length - 1;' in SC
+       and SC.count('await this.launchWatch.markPushed(list.filter') == 1 and "reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts }" in SC)
+NEW = ('export const PUSH_PARTS = 3;' in AP and 'export const PUSH_TITLE_MAX = 200;' in AP and 'packLines(items.map(line), budget, PUSH_PARTS)' in AP
+       and 'const budget = TG_MAX - head(items, PUSH_PARTS, PUSH_PARTS).length - 2 - tail(Math.max(backlog, items.length)).length - 1;' in AP
+       and "buildAlertPush(items, await this.launchWatch.alertBacklog('push'))" in SC
+       and SC.count('await this.launchWatch.markPushed(p.items.filter') == 1 and "reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts }" in SC)
 ok('① 정기 작업 — 최대 3통 · 제목 200자 · 머리 · 끝 자리 먼저 · 보내진 통의 알림만 markPushed · 실패하면 그 자리에서 멈춤',
-   'const PARTS = 3, TITLE_MAX = 200;' in SC and 'packLines(items.map(line), budget, PARTS)' in SC
-   and 'const budget = TG_MAX - head(items, PARTS, PARTS).length - 2 - tail(Math.max(backlog, items.length)).length - 1;' in SC
-   and SC.count('await this.launchWatch.markPushed(list.filter') == 1 and "reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts }" in SC, '')
+   OLD or NEW, 'alert-push.ts' if NEW else '정기 작업 안')
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('373_')] if os.path.isdir(os.path.join(K, 'docs')) else []
 ok('① 문서 373 · 판 v10.233 이상', bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 233), f'{DOC} · {rd("VERSION").strip()}')
 
