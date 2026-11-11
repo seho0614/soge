@@ -438,26 +438,35 @@ export class LaunchWatchService {
   }
 
   /** v10.200 (D178 · docs/316) — 텔레그램으로 보낼 것 · 다시 보낼 것(메일과 같은 기준 · 칸은 pushed_at · repushed_at) */
-  async alertPushPending(): Promise<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[]> {
+  async alertPushPending(ch: 'push' | 'slack' = 'push'): Promise<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[]> {
+    /* v10.237 (D200) — 슬랙은 같은 기준 · 칸만 slack_pushed_at · slack_repushed_at */
+    const [p, rp] = ch === 'slack' ? ['FROM fn_ops_alert_slack_pending()', 'FROM fn_ops_alert_slack_repush_pending()'] : ['FROM fn_ops_alert_push_pending()', 'FROM fn_ops_alert_repush_pending()'];
     return this.db.query(
       `SELECT id::text AS id, alert_code AS code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
-         FROM fn_ops_alert_push_pending()
+         ${p}
        UNION ALL
        SELECT id::text, alert_code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI'), true
-         FROM fn_ops_alert_repush_pending()`);
+         ${rp}`);
   }
 
   /** v10.230 (D198 · docs/369) — 같은 기준의 전체 수(대기 목록은 CRITICAL 먼저 · 최근 순 50건) — 「보내지 못한 알림 n건 더」 줄에 씀 */
-  async alertBacklog(kind: 'mail' | 'push'): Promise<number> {
-    const [r] = await this.db.query<{ n: number }>(kind === 'mail' ? `SELECT fn_ops_alert_mail_backlog() AS n` : `SELECT fn_ops_alert_push_backlog() AS n`);
+  async alertBacklog(kind: 'mail' | 'push' | 'slack'): Promise<number> {
+    const fn = { mail: 'fn_ops_alert_mail_backlog()', push: 'fn_ops_alert_push_backlog()', slack: 'fn_ops_alert_slack_backlog()' }[kind];
+    const [r] = await this.db.query<{ n: number }>(`SELECT ${fn} AS n`);
     return Number(r?.n ?? 0);
   }
 
   async markPushed(ids: string[], againIds: string[] = []): Promise<void> {
     if (ids.length) await this.db.query(`UPDATE ops_alerts SET pushed_at = now() WHERE id = ANY($1::bigint[]) AND pushed_at IS NULL`, [ids]);
     if (againIds.length) await this.db.query(`UPDATE ops_alerts SET repushed_at = now() WHERE id = ANY($1::bigint[]) AND repushed_at IS NULL`, [againIds]);
+  }
+
+  /** v10.237 (D200) — 슬랙으로 보낸 시각(텔레그램 pushed_at 과 따로) */
+  async markSlacked(ids: string[], againIds: string[] = []): Promise<void> {
+    if (ids.length) await this.db.query(`UPDATE ops_alerts SET slack_pushed_at = now() WHERE id = ANY($1::bigint[]) AND slack_pushed_at IS NULL`, [ids]);
+    if (againIds.length) await this.db.query(`UPDATE ops_alerts SET slack_repushed_at = now() WHERE id = ANY($1::bigint[]) AND slack_repushed_at IS NULL`, [againIds]);
   }
 
   async markMailed(ids: string[], againIds: string[] = []): Promise<void> {

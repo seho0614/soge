@@ -1883,6 +1883,8 @@
     "POST /admin/ops-alerts/mail-test",
     "GET /admin/ops-alerts/push-preview",
     "POST /admin/ops-alerts/push-test",
+    "GET /admin/ops-alerts/slack-preview",
+    "POST /admin/ops-alerts/slack-test",
     "POST /admin/ops-alerts/push-find-chat",
     "PATCH /admin/site-settings"
    ],

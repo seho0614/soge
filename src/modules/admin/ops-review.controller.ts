@@ -142,6 +142,23 @@ export class OpsReviewController {
   @ApiOkResponse({ type: Object })
   pushFindChat() { return this.alerts.pushFindChat(); }
 
+  /* ── v10.237 (D200 · docs/377) — 급한 알림 슬랙 시험 · 첫 차례 미리보기(준비 상태는 mail-status 의 slack) ── */
+
+  @Get('ops-alerts/slack-preview')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '급한 알림 슬랙 — 첫 차례 미리보기', description: 'v10.237 — 지금 켜면 다음 정기 작업이 슬랙으로 보낼 글(텔레그램 미리보기와 같은 글 · 칸만 slack_pushed_at). 읽기만 — 보내지 않고 「보냄」도 적지 않음. 웹훅 주소가 없어도 글은 보여 줌(ready · reason).' })
+  @ApiOkResponse({ type: Object })
+  slackPreview() { return this.alerts.slackPreview(); }
+
+  @Post('ops-alerts/slack-test')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('OPS_SLACK_TEST', 'OPS_ALERT')
+  @ApiOperation({ summary: '급한 알림 슬랙 — 시험 메시지', description: '급한 알림과 같은 길(웹훅 주소 SLACK_WEBHOOK_URL)로 한 통 · 1분에 한 번 · 못 보내도 200 으로 까닭(NO_WEBHOOK · SEND_*) · 감사 기록 OPS_SLACK_TEST.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'SLACK_TEST_WAIT' })
+  slackTest() { return this.alerts.slackTest(); }
+
   @Get('pii-review')
   @Roles('SUPER')
   @ApiOperation({ summary: '개인정보 접속기록 — 지난 12달', description: '달마다 조회 수 · 점검 여부 · 끝난 달인지.' })

@@ -1320,6 +1320,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "키 형식이 아닙니다 — 업체에서 받은 키를 빈칸 없이 붙여 넣으십시오(8 ~ 512자).": "This is not a valid key format — paste the key you received from the provider without spaces (8–512 characters).",
   "키 형식이 아닙니다 — 카카오 콘솔 「앱 키」에서 복사한 값(영문 · 숫자 16 ~ 128자)을 붙여 넣으십시오.": "This is not a key format — paste the value copied from the Kakao console “App keys” (letters and numbers, 16–128 characters).",
   "키 형식이 아닙니다 — 텔레그램 BotFather 가 준 토큰(숫자:영문 · 숫자 — 예 123456789:AA…)을 붙여 넣으십시오.": "This is not a key format — paste the token BotFather gave you on Telegram (digits:letters and numbers — e.g. 123456789:AA…).",
+  "주소 형식이 아닙니다 — 슬랙 앱 › Incoming Webhooks 의 「Webhook URL」(https://hooks.slack.com/services/ 로 시작)을 붙여 넣으십시오.": "This is not a webhook address — paste the Webhook URL from Slack app › Incoming Webhooks (it starts with https://hooks.slack.com/services/).",
   "탈퇴 사유를 골라 주십시오.": "Please choose a reason for leaving.",
   "탈퇴할 수 없는 계정입니다": "This account cannot be closed",
   "탈퇴할 수 없는 계정입니다.": "This account cannot be closed.",

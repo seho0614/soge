@@ -417,7 +417,7 @@ export class AdminService {
   }
 
   /** v10.203 (docs/324) — 운영 알림 텔레그램 · 낯선 로그인 알림 설정(SUPER 만) */
-  static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert'];
+  static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert', 'ops.slack_digest'];   // v10.237 (D200) 슬랙 하루 요약
 
   /** v10.129 (docs/194) — AI 스위치 · 상한 · 모델 · 한도(agent.* · AI 번역)는 최고 관리자만 — 비용 · 법무에 걸린 설정(대표 승인 2026-10-27) */
   static isAiSetting(key: string): boolean {

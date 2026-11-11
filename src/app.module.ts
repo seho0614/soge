@@ -224,6 +224,7 @@ import { DirectoryController, PartnerDirectoryController, DirectoryAdminControll
 import { EtaxService } from './modules/etax/etax.service';  /* v10.34 전자세금계산서 어댑터 · 간주 (D093) */
 import { MailService } from './common/mail/mail.service';  /* v10.43 메일 발송(SES SMTP) · 상담 인증번호 */
 import { TelegramService } from './common/telegram/telegram.service';  /* v10.200 (D178) 급한 운영 알림 텔레그램 */
+import { SlackService } from './common/slack/slack.service';  /* v10.237 (D200) 급한 운영 알림 슬랙 */
 import { MailAdminService } from './common/mail/mail-admin.service';   /* v10.140 (D136) 운영 화면 「메일」 */
 import { MailAdminController } from './modules/site/mail-admin.controller';
 import { MailSuppressionService } from './common/mail/mail-suppression.service';   /* v10.209 (D186) 메일 반송 · 수신 거부 */
@@ -457,6 +458,7 @@ import { LeadService } from './modules/lead/lead.service';
     EtaxService,
     MailService,
     TelegramService,
+    SlackService,
     MailAdminService,
     MailSuppressionService,
     IdentityVerifyService,

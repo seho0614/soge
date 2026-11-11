@@ -25,6 +25,11 @@ interface MailStatus {
            lastTest: { at: string; ok: boolean; reason: string | null } | null;
            /* v10.201 (D179) — 하루 요약 텔레그램 */
            digest?: { on: boolean; last: { at: string; pushed: boolean; reason: string | null } | null } };
+  /* v10.237 (D200 · docs/377) — 슬랙(웹훅 주소 하나 = 채널 하나) */
+  slack?: { ready: boolean; reason: 'NO_WEBHOOK' | null; hook: string | null;
+            lastJob: { at: string; pending: number; pushed: number; reason: string | null } | null;
+            lastTest: { at: string; ok: boolean; reason: string | null } | null;
+            digest: { on: boolean; last: { at: string; pushed: boolean; reason: string | null } | null } };
 }
 interface Chat { id: string; type: string; title: string }
 /* v10.234 (docs/375) — 텔레그램 첫 차례 미리보기 */
@@ -40,6 +45,13 @@ const WHY: Record<string, string> = {
   SEND_AUTH: '봇 토큰이 맞지 않음', SEND_NETWORK: '텔레그램으로 나가는 길 막힘', SEND_TIMEOUT: '텔레그램 응답 없음', SEND_REJECTED: '텔레그램이 거절(대화방 번호 확인)',
 };
 const why = (r: string | null) => (r ? WHY[r] ?? WHY[r.replace(/^MAIL_NOT_READY_/, '')] ?? r : '');
+/* v10.237 (D200) — 슬랙 줄의 까닭(텔레그램과 글이 달라 따로) */
+const SLACK_WHY: Record<string, string> = {
+  NO_WEBHOOK: '웹훅 주소 없음(외부 연동 › 연동 키 › 메일 칸)', OFF: '하루 요약 슬랙 꺼짐',
+  SEND_AUTH: '웹훅 주소가 지워졌거나 채널이 보관됨', SEND_NETWORK: '슬랙으로 나가는 길 막힘', SEND_TIMEOUT: '슬랙 응답 없음',
+  SEND_REJECTED: '슬랙이 거절', SEND_SERVER: '슬랙 서버 오류',
+};
+const swhy = (r: string | null) => (r ? SLACK_WHY[r] ?? r : '');
 
 const SEV: Record<string, string> = { CRITICAL: '긴급', WARN: '경고', INFO: '안내' };
 /* 알림 종류 이름 — 모르는 종류는 코드 그대로 */
@@ -94,6 +106,10 @@ export function OpsAlerts() {
   /* v10.201 (D179) — 하루 요약도 텔레그램으로(설정 ops.telegram_digest) */
   const flipDigest = (on: boolean) => void a.run('push-digest', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'ops.telegram_digest', value: on ? 'off' : 'on' }) }),
     ms.reload, on ? '하루 요약은 텔레그램으로 보내지 않습니다.' : '하루 요약도 텔레그램으로 보냅니다(매일 아침 하루 요약 작업 때).');
+  /* v10.237 (D200) — 슬랙 시험 · 하루 요약(설정 ops.slack_digest) */
+  const slackTest = () => void a.run('slack-test', () => api('/admin/ops-alerts/slack-test', { method: 'POST', body: '{}' })).then(ms.reload);
+  const flipSlackDigest = (on: boolean) => void a.run('slack-digest', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'ops.slack_digest', value: on ? 'off' : 'on' }) }),
+    ms.reload, on ? '하루 요약은 슬랙으로 보내지 않습니다.' : '하루 요약도 슬랙으로 보냅니다(매일 아침 하루 요약 작업 때).');
 
   const ack = (x: Alert) => {
     const note = prompt(`「${x.title.slice(0, 40)}」을(를) 확인합니다.\n메모(선택 · 200자) — 무엇을 했는지`, '') ;
@@ -161,6 +177,22 @@ export function OpsAlerts() {
           </div>
         );
       })(ms.data.push)}
+      {ms.data?.slack && ((sl: NonNullable<MailStatus['slack']>) => (
+        <div className="card pad" data-slack-status={sl.ready ? 'ready' : 'not-ready'}>
+          <b>급한 알림 슬랙</b>{' '}
+          {sl.ready ? <b>준비됨</b> : <b className="warn-text">준비 안 됨 — {swhy(sl.reason)}</b>}
+          {sl.hook && <> · 웹훅 <span className="mono">{sl.hook}</span></>}
+          {sl.lastJob && <span data-slack-last-job=""> · 마지막 정기 작업 {ymdhm(sl.lastJob.at)} — 보냄 {n(sl.lastJob.pushed)} · 남음 {n(sl.lastJob.pending)}{sl.lastJob.reason ? ` · ${swhy(sl.lastJob.reason)}` : ''}</span>}
+          {sl.lastTest && <span data-slack-last-test=""> · 마지막 시험 {ymdhm(sl.lastTest.at)} {sl.lastTest.ok ? '보냄' : `못 보냄(${swhy(sl.lastTest.reason)})`}</span>}
+          {isSuper && <>{' '}<button className="btn-sm" disabled={a.busy === 'slack-test'} onClick={slackTest} data-slack-test="">시험 메시지 보내기</button></>}
+          <span data-slack-digest={sl.digest.on ? 'on' : 'off'}> · 하루 요약 {sl.digest.on ? <b>받음</b> : '안 받음'}
+            {sl.digest.last && <span data-slack-digest-last=""> (마지막 {ymdhm(sl.digest.last.at)} {sl.digest.last.pushed ? '보냄' : `못 보냄 — ${swhy(sl.digest.last.reason)}`})</span>}
+            {isSuper && <>{' '}<button className="btn-sm ghost" disabled={a.busy === 'slack-digest'} onClick={() => flipSlackDigest(sl.digest.on)} data-slack-digest-flip="">{sl.digest.on ? '하루 요약 끄기' : '하루 요약도 받기'}</button></>}
+          </span>
+          <SlackPreview />
+          <small className="dim"> 텔레그램과 같은 알림 · 같은 글을 슬랙 채널 한 곳(웹훅 주소를 만들 때 고른 채널)으로 보냅니다 — 텔레그램 · 메일과 따로 기록해 하나가 안 돼도 나머지는 갑니다. 운영 화면 접속 인증번호는 보내지 않습니다. 켜기: 슬랙 앱 › Incoming Webhooks 에서 주소를 만들어 외부 연동 › 연동 키 › 메일 칸 「슬랙 웹훅 주소」에 넣습니다.</small>
+        </div>
+      ))(ms.data.slack)}
       <section className="card pad">
         <h3 className="sec">종류별 <small className="dim">확인 안 한 수 · 지난 7일</small></h3>
         <p data-ack-bulk="">
@@ -243,6 +275,38 @@ function PushPreview() {
           </p>
           {d.parts.map((p, i) => (
             <details key={i} data-push-preview-part={i + 1}>
+              <summary>{i + 1}/{d.parts.length}통 — 알림 {n(p.n)}건 · {n(p.chars)}자</summary>
+              <pre className="mono" style={{ whiteSpace: 'pre-wrap' }}>{p.text}</pre>
+            </details>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** v10.237 (D200 · docs/377) — 슬랙 「지금 켜면 첫 차례」 미리보기(텔레그램 PushPreview 와 같은 글 · 칸만 slack_pushed_at · 읽기만) */
+function SlackPreview() {
+  const [d, setD] = useState<Preview | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () => {
+    setBusy(true); setErr(null);
+    api<Preview>('/admin/ops-alerts/slack-preview').then(setD, (e) => setErr(String(e?.message ?? e))).finally(() => setBusy(false));
+  };
+  return (
+    <div data-slack-preview={d ? d.parts.length : ''}>
+      <button className="btn-sm ghost" disabled={busy} onClick={load} data-slack-preview-load="">{d ? '미리보기 새로' : '지금 켜면 첫 차례 미리보기'}</button>
+      {err && <small className="warn-text"> 읽지 못했습니다 — {err}</small>}
+      {d && (
+        <>
+          <p data-slack-preview-note="">
+            {d.note}
+            {d.pending > 0 && <small className="dim"> 대기 {n(d.pending)}건(CRITICAL {n(d.critical)}{d.again ? ` · 다시 알림 ${n(d.again)}` : ''}) · 같은 기준 전체 {n(d.backlog)}건 · 한 차례 최대 {d.maxParts}통 · 한 통 {n(d.maxChars)}자</small>}
+            {!d.ready && d.pending > 0 && <small className="dim"> — 지금은 웹훅 주소가 없어 보내지 않습니다.</small>}
+          </p>
+          {d.parts.map((p, i) => (
+            <details key={i} data-slack-preview-part={i + 1}>
               <summary>{i + 1}/{d.parts.length}통 — 알림 {n(p.n)}건 · {n(p.chars)}자</summary>
               <pre className="mono" style={{ whiteSpace: 'pre-wrap' }}>{p.text}</pre>
             </details>

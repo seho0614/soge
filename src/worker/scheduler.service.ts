@@ -6,6 +6,7 @@ import { GeoService } from '../common/geo/geo.service';
 import { MailService } from '../common/mail/mail.service';
 import { TelegramService } from '../common/telegram/telegram.service';
 import { buildAlertPush } from '../common/telegram/alert-push';
+import { SlackService } from '../common/slack/slack.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -66,6 +67,7 @@ export class SchedulerService {
     private readonly roleReview: RoleReviewService,   // v10.180 (D169) 운영자 권한 점검 · 파기 실행 알림
     private readonly privacy: PrivacyService,   // v10.181 (D170) 개인정보 권리 요청 기한 알림
     private readonly telegram: TelegramService,   // v10.200 (D178) 급한 운영 알림 텔레그램
+    private readonly slack: SlackService,   // v10.237 (D200) 급한 운영 알림 슬랙
   ) {}
 
   /**
@@ -489,8 +491,9 @@ export class SchedulerService {
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
         const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
+        const as = await this.alertSlack();   /* v10.237 (D200) — 텔레그램 · 메일과 따로 */
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step) };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step) };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -503,7 +506,8 @@ export class SchedulerService {
           mailed = !!m.ok;
         }
         const dp = await this.digestPush(d.text);   /* v10.201 (D179) — 메일과 따로 텔레그램으로도(메일이 준비 안 돼도 감) */
-        await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed, pushed: dp.pushed, pushReason: dp.reason });
+        const ds = await this.digestSlack(d.text);   /* v10.237 (D200) — 슬랙으로도 */
+        await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed, pushed: dp.pushed, pushReason: dp.reason, slacked: ds.pushed, slackReason: ds.reason });
         /* v10.177 (docs/275) — 올린 파일 백업 묶음이 36시간 넘게 새로 생기지 않으면(묶음이 하나라도 있을 때만 — 예약 전에는 조용) */
         const ub = uploadsBackupState();
         if (ub.stale) await this.alert('UPLOADS_BACKUP_STALE', 'WARN', `올린 파일 백업이 ${ub.ageHours}시간째 새로 생기지 않았습니다 — 마지막 ${ub.last} · cron · 디스크를 확인하십시오`, ub);
@@ -725,6 +729,35 @@ export class SchedulerService {
     if (!st.ready) return { pushed: false, reason: st.reason };
     const [b] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM v_open_blockers`);
     const r = await this.telegram.send(`[소개뱅크] ${text}\n오픈 차단 ${b?.n ?? 0}건(운영 화면 › 오픈 체크리스트)`);
+    return r.ok ? { pushed: true, reason: null } : { pushed: false, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
+  }
+
+  /** v10.237 (D200 · docs/377) — 급한 알림 슬랙(텔레그램과 같은 알림 · 같은 기준 · 같은 글 · 기록은 slack_pushed_at · slack_repushed_at).
+   *  웹훅 주소가 없으면 보내지 않고 까닭만 · 보내진 통의 알림만 「보냄」 · 실패하면 그 자리에서 멈춤(남은 것은 다음 차례) */
+  private async alertSlack(): Promise<{ pending: number; pushed: number; reason: string | null; parts?: number }> {
+    const items = await this.launchWatch.alertPushPending('slack');
+    if (!items.length) return { pending: 0, pushed: 0, reason: null };
+    const st = this.slack.status();
+    if (!st.ready) return { pending: items.length, pushed: 0, reason: st.reason };
+    const plan = buildAlertPush(items, await this.launchWatch.alertBacklog('slack'));
+    let pushed = 0, parts = 0;
+    for (const p of plan.parts) {
+      const r = await this.slack.send(p.text);
+      if (!r.ok) return { pending: items.length - pushed, pushed, reason: `SEND_${r.errorKind ?? 'FAILED'}`, parts };
+      await this.launchWatch.markSlacked(p.items.filter((x) => !x.again).map((x) => x.id), p.items.filter((x) => x.again).map((x) => x.id));
+      pushed += p.items.length; parts++;
+    }
+    return { pending: items.length - pushed, pushed, reason: null, parts };
+  }
+
+  /** v10.237 (D200) — 하루 요약 슬랙(설정 ops.slack_digest · 급한 알림과 같은 채널) — 텔레그램 digestPush 와 같은 글 · 다시 보내지 않음 */
+  private async digestSlack(text: string): Promise<{ pushed: boolean; reason: string | null }> {
+    const [o] = await this.db.query<{ v: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.slack_digest'), 'on') AS v`);
+    if ((o?.v ?? 'on') !== 'on') return { pushed: false, reason: 'OFF' };
+    const st = this.slack.status();
+    if (!st.ready) return { pushed: false, reason: st.reason };
+    const [b] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM v_open_blockers`);
+    const r = await this.slack.send(`[소개뱅크] ${text}\n오픈 차단 ${b?.n ?? 0}건(운영 화면 › 오픈 체크리스트)`);
     return r.ok ? { pushed: true, reason: null } : { pushed: false, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
   }
 

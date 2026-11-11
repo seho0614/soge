@@ -7,6 +7,7 @@ import { maskMail } from '../../common/mail/mail-admin.service';
 import { TelegramService, TG_MAX } from '../../common/telegram/telegram.service';
 import { PUSH_PARTS, buildAlertPush } from '../../common/telegram/alert-push';
 import { LaunchWatchService } from './launch-watch.service';
+import { SlackService } from '../../common/slack/slack.service';
 
 /* ---------------------------------------------------------------------
  * v10.179 (D168 · docs/279) — 운영 알림 목록 · 확인
@@ -21,13 +22,15 @@ import { LaunchWatchService } from './launch-watch.service';
  *   v10.200 (D178 · docs/316) — 텔레그램 준비 상태(mailStatus 의 push) · 시험 메시지(pushTest · SUPER · 1분에 1번 · OPS_PUSH_TEST) · 대화방 찾기
  *   v10.232 (docs/371) — 한꺼번에 확인(ackBulk · 풀린 것 모두 · 6 · 24 · 72시간 넘은 INFO · WARN 모두 · CRITICAL 은 뺌)
  *   v10.234 (docs/375) — 텔레그램 첫 차례 미리보기(pushPreview · 읽기만 · 정기 작업과 같은 글 만들기 buildAlertPush)
+ *   v10.237 (D200 · docs/377) — 슬랙 준비 상태(mailStatus 의 slack) · 시험 메시지(slackTest · SUPER · 1분에 1번 · OPS_SLACK_TEST) · 첫 차례 미리보기(slackPreview)
  * ------------------------------------------------------------------- */
 @Injectable()
 export class OpsAlertsService {
   constructor(private readonly db: DatabaseService, private readonly mail: MailService, private readonly telegram: TelegramService,
-              private readonly launchWatch: LaunchWatchService) {}
+              private readonly launchWatch: LaunchWatchService, private readonly slack: SlackService) {}
   private static lastTestAt = 0;
   private static lastPushTestAt = 0;
+  private static lastSlackTestAt = 0;
   private get me() { return RequestCtx.actorId(); }
 
   async list(q: { state?: unknown; code?: unknown; severity?: unknown; page?: unknown; size?: unknown; resolved?: unknown }) {
@@ -143,6 +146,7 @@ export class OpsAlertsService {
       push: { ready: ps.ready, reason: ps.reason, chat: ps.chat, lastJob: pushJob,
               lastTest: pt ? { at: pt.at, ok: !!pt.result?.ok, reason: pt.result?.reason ?? null } : null,
               digest: { on: dg?.sw === 'on', last: dg?.at ? { at: dg.at, pushed: !!dg.pushed, reason: dg.reason ?? null } : null } },
+      slack: await this.slackStatus(j),
     };
   }
 
@@ -204,5 +208,55 @@ export class OpsAlertsService {
       note: r.error === 'NO_TOKEN' ? '텔레그램 봇 토큰이 없습니다 — 외부 연동 › 연동 키 › 메일 칸에 넣으십시오.' : '텔레그램에서 대화방을 읽지 못했습니다.' };
     return { ok: true, reason: null, chats,
       note: chats.length ? '받을 대화방을 고르십시오.' : '찾은 대화방이 없습니다 — 텔레그램에서 봇에게 아무 말이나 한 번 보낸 뒤 다시 누르십시오.' };
+  }
+
+  /* ── v10.237 (D200 · docs/377) 슬랙 준비 상태 · 시험 · 첫 차례 미리보기 ─────────────── */
+
+  /** 운영 알림 화면 「슬랙」 줄 — 준비 여부 · 주소 끝 4자 · 마지막 정기 작업(launch_watch detail.alertSlack) · 마지막 시험 · 하루 요약 */
+  private async slackStatus(j: { at: string; detail: string | null } | undefined) {
+    const st = this.slack.status();
+    let lastJob: { at: string; pending: number; pushed: number; reason: string | null } | null = null;
+    const m = /"alertSlack":(\{[^}]*\})/.exec(j?.detail ?? '');
+    if (j && m) {
+      try { const a = JSON.parse(m[1]); lastJob = { at: j.at, pending: Number(a.pending) || 0, pushed: Number(a.pushed) || 0, reason: a.reason ?? null }; } catch { /* 잘린 기록 */ }
+    }
+    const [t] = await this.db.query<{ at: string; result: any }>(
+      `SELECT occurred_at AS at, after_data AS result FROM audit.audit_logs WHERE action = 'OPS_SLACK_TEST' ORDER BY occurred_at DESC LIMIT 1`);
+    const [dg] = await this.db.query<{ sw: string; at: string | null; pushed: boolean | null; reason: string | null }>(
+      `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.slack_digest'), 'on') AS sw,
+              d.raised_at AS at, (d.detail->>'slacked')::boolean AS pushed, d.detail->>'slackReason' AS reason
+         FROM (SELECT 1) x LEFT JOIN LATERAL (SELECT raised_at, detail FROM ops_alerts WHERE alert_code = 'DAILY_DIGEST' ORDER BY id DESC LIMIT 1) d ON true`);
+    return { ready: st.ready, reason: st.reason, hook: st.hook, lastJob,
+             lastTest: t ? { at: t.at, ok: !!t.result?.ok, reason: t.result?.reason ?? null } : null,
+             digest: { on: dg?.sw === 'on', last: dg?.at ? { at: dg.at, pushed: !!dg.pushed, reason: dg.reason ?? null } : null } };
+  }
+
+  /** 시험 메시지 한 통(SUPER · 1분에 1번) — 급한 알림과 같은 길(웹훅 주소). 못 보내도 200 + 까닭(감사 기록 OPS_SLACK_TEST) */
+  async slackTest(): Promise<{ ok: boolean; reason: string | null; hook: string | null; note: string }> {
+    const [w] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM audit.audit_logs WHERE action = 'OPS_SLACK_TEST' AND occurred_at > now() - interval '1 minute'`);
+    if (Date.now() - OpsAlertsService.lastSlackTestAt < 60_000 || (w?.n ?? 0) > 0) throw new StateConflict('SLACK_TEST_WAIT', '시험 메시지는 1분에 한 번만 보낼 수 있습니다.');
+    OpsAlertsService.lastSlackTestAt = Date.now();
+    const st = this.slack.status();
+    if (!st.ready) return { ok: false, reason: st.reason, hook: null, note: '슬랙 웹훅 주소가 없습니다 — 외부 연동 › 연동 키 › 메일 칸 「슬랙 웹훅 주소」에 넣으십시오.' };
+    const r = await this.slack.send(['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 슬랙 채널로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n'));
+    return r.ok
+      ? { ok: true, reason: null, hook: st.hook, note: '시험 메시지를 보냈습니다 — 슬랙 채널을 확인하십시오.' }
+      : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, hook: st.hook,
+          note: r.errorKind === 'AUTH' ? '보내지 못했습니다 — 웹훅 주소가 지워졌거나 채널이 보관되었습니다. 슬랙 앱에서 주소를 다시 만드십시오.'
+            : r.errorKind === 'NETWORK' || r.errorKind === 'TIMEOUT' ? '보내지 못했습니다 — 서버에서 슬랙(hooks.slack.com)으로 나가는 길을 확인하십시오.' : '보내지 못했습니다 — 슬랙이 글을 받지 않았습니다.' };
+  }
+
+  /** 지금 슬랙이 켜져 있다면 다음 정기 작업(10분마다)이 보낼 첫 차례 — 읽기만(텔레그램 pushPreview 와 같은 글 · 칸만 slack_pushed_at) */
+  async slackPreview(): Promise<{ ready: boolean; reason: string | null; pending: number; critical: number; again: number; backlog: number;
+    parts: { n: number; chars: number; text: string }[]; included: number; more: number; maxParts: number; maxChars: number; note: string }> {
+    const st = this.slack.status();
+    const [items, backlog] = await Promise.all([this.launchWatch.alertPushPending('slack'), this.launchWatch.alertBacklog('slack')]);
+    const plan = buildAlertPush(items, backlog);
+    const parts = plan.parts.map((p) => ({ n: p.items.length, chars: p.text.length, text: p.text }));
+    const note = !items.length ? '지금 보낼 급한 알림이 없습니다 — 켜도 바로 오는 글은 없습니다.'
+      : `켜면 다음 차례(10분 안)에 ${parts.length}통 · 알림 ${plan.included}건이 갑니다${plan.more ? ` — 남은 ${plan.more}건은 그다음 차례에 이어서` : ''}.`;
+    return { ready: st.ready, reason: st.reason, pending: items.length, critical: items.filter((x) => x.severity === 'CRITICAL').length,
+      again: items.filter((x) => x.again).length, backlog, parts, included: plan.included, more: plan.more, maxParts: PUSH_PARTS, maxChars: TG_MAX, note };
   }
 }
