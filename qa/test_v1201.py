@@ -45,7 +45,7 @@ ok('① D179 — 설정 ops.staff_login_alert · ops.telegram_digest(on · ADMIN
 SC = rd('src/worker/scheduler.service.ts'); OS_ = rd('src/modules/admin/ops-alerts.service.ts')
 ok('① 하루 요약 텔레그램 — 메일 다음 따로 · 설정 꺼지면 OFF · 준비 안 되면 까닭 · 오픈 차단 줄 · DAILY_DIGEST 기록에 pushed · pushReason · mail-status push.digest',
    'const dp = await this.digestPush(d.text);' in SC and SC.index('mailed = !!m.ok;') < SC.index('const dp = await this.digestPush(d.text);')
-   and '{ ...d, mailed, pushed: dp.pushed, pushReason: dp.reason }' in SC and "key = 'ops.telegram_digest'" in SC
+   and ('{ ...d, mailed, pushed: dp.pushed, pushReason: dp.reason }' in SC or '{ ...d, mailed, pushed: dp.pushed, pushReason: dp.reason, slacked: ds.pushed, slackReason: ds.reason }' in SC) and "key = 'ops.telegram_digest'" in SC
    and "return { pushed: false, reason: 'OFF' };" in SC and 'if (!st.ready) return { pushed: false, reason: st.reason };' in SC
    and 'FROM v_open_blockers' in SC and "alert_code = 'DAILY_DIGEST' ORDER BY id DESC LIMIT 1" in OS_ and "digest: { on: dg?.sw === 'on'" in OS_, '')
 OX = rd('web/src/app/admin/OpsAlerts.tsx')

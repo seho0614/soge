@@ -34,7 +34,7 @@ ok('① D198 — 두 대기 함수 CRITICAL 먼저 · 최근 순 · 기준 그�
 SC, LW = rd('src/worker/scheduler.service.ts'), rd('src/modules/admin/launch-watch.service.ts')
 AP = rd('src/common/telegram/alert-push.ts')   # v10.234 — 텔레그램 글 만들기를 옮김(없으면 빈 글)
 ok('① 보내는 쪽 — 메일 · 텔레그램 모두 전체 수에서 남은 수 · 「보내지 못한 알림 n건 더」 줄',
-   "async alertBacklog(kind: 'mail' | 'push')" in LW and 'fn_ops_alert_mail_backlog()' in LW and 'fn_ops_alert_push_backlog()' in LW
+   ("async alertBacklog(kind: 'mail' | 'push')" in LW or "async alertBacklog(kind: 'mail' | 'push' | 'slack')" in LW) and 'fn_ops_alert_mail_backlog()' in LW and 'fn_ops_alert_push_backlog()' in LW
    and "this.launchWatch.alertBacklog('mail')" in SC and "this.launchWatch.alertBacklog('push')" in SC and (SC + AP).count('보내지 못한 알림 ${more}건 더') == 2, '')
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('369_')] if os.path.isdir(os.path.join(K, 'docs')) else []
 ok('① 문서 369 · 판 v10.230 이상', bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 230), f'{DOC} · {rd("VERSION").strip()}')

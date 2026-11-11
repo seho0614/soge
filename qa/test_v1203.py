@@ -59,7 +59,8 @@ ok('① 사용자 웹 — /guide/manual(SB-HOM-ETC-040 · 목차 · 절 #m번호
 AS_ = rd('src/modules/admin/admin.service.ts'); PC = rd('src/modules/identity/privacy.controller.ts'); EX = rd('src/common/i18n/server-text.en.ts')
 LW = rd('web/src/app/admin/LaunchWatch.tsx'); MM = rd('web/src/app/admin/MyMfa.tsx'); OA = rd('web/src/app/admin/OpsAlerts.tsx'); HM = rd('web/src/app/admin/HelpManual.tsx'); MN = rd('web/src/lib/adminMenu.ts'); APP = rd('web/src/App.tsx')
 ok('① 운영 권한 — 텔레그램 대화방 · 하루 요약 · 낯선 로그인 알림 설정 SUPER(403 OPS_PUSH_SETTING_SUPER · 영어 문장) · 모든 기기 로그아웃 운영 역할도 · 시험 결제 정리 단추 SUPER 만',
-   "static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert'];" in AS_ and "new Forbidden('OPS_PUSH_SETTING_SUPER'" in AS_
+   ("static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert'];" in AS_
+    or "static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert', 'ops.slack_digest'];" in AS_) and "new Forbidden('OPS_PUSH_SETTING_SUPER'" in AS_
    and '"운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.":' in EX
    and "const ANY_SIGNED_IN = [...MEMBER, 'ADMIN', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'] as const;" in PC
    and "@Post('me/logout-all')\n  @HttpCode(200)\n  @Roles(...ANY_SIGNED_IN)" in PC
