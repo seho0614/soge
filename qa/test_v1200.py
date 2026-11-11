@@ -47,7 +47,7 @@ ok('① D178 — 연동 키 TELEGRAM_BOT_TOKEN(메일 칸) · 형식 · 메일 �
 TG = rd('src/common/telegram/telegram.service.ts'); SS = rd('src/common/integration/secret.service.ts'); AM = rd('src/app.module.ts')
 ok('① 텔레그램 서비스 — 토큰은 연동 키(process.env) · 대화방 설정 · 주소 TELEGRAM_API_BASE · 오류에 주소(토큰) 안 남김 · 4,000자 · 대화방 찾기 · 등록 · 지워도 메일 「키 등록」 그대로',
    "process.env.TELEGRAM_BOT_TOKEN?.trim()" in TG and "key = 'ops.telegram_chat'" in TG and "process.env.TELEGRAM_API_BASE?.trim() || 'https://api.telegram.org'" in TG
-   and "String((e as Error)?.name ?? 'error')" in TG and 'text.slice(0, 4000)' in TG and "this.call('getUpdates'" in TG
+   and "String((e as Error)?.name ?? 'error')" in TG and ('text.slice(0, 4000)' in TG or 'text.slice(0, TG_MAX)' in TG) and "this.call('getUpdates'" in TG
    and "name: 'TELEGRAM_BOT_TOKEN', label: '텔레그램 봇 토큰(급한 운영 알림)', env: 'TELEGRAM_BOT_TOKEN'" in SS
    and "k.name !== 'TELEGRAM_BOT_TOKEN'" in SS and '    TelegramService,\n' in AM, '')
 SC = rd('src/worker/scheduler.service.ts'); LW = rd('src/modules/admin/launch-watch.service.ts')
