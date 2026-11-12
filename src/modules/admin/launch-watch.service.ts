@@ -11,6 +11,7 @@ import { AgentService } from '../agent/agent.service';
 import { AlertChannelsService, ChannelState } from './alert-channels.service';
 import { OwnerTodoService } from './owner-todo.service';
 import { ReleaseLogService } from './release-log.service';
+import { ServerTrendService } from './server-trend.service';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -85,7 +86,8 @@ const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 @Injectable()
 export class LaunchWatchService {
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService,
-              private readonly todo: OwnerTodoService, private readonly releases: ReleaseLogService) {}
+              private readonly todo: OwnerTodoService, private readonly releases: ReleaseLogService,
+              private readonly trend: ServerTrendService) {}
 
   async today() {
     const [c] = await this.db.query<any>(
@@ -172,6 +174,7 @@ export class LaunchWatchService {
       ...agentWeekLine(await this.agent.week()),   // v10.206 (docs/330) — AI 7일
       ...reconsentLines(await this.reconsent()),
       diskLine(serverHealth()),
+      await this.trend.digestLine().catch(() => '디스크 추세 — 읽지 못함'),   // v10.248 (D203 · docs/386)
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');

@@ -19,6 +19,16 @@ import { PolicyViolation } from '../../core/errors';
  * ------------------------------------------------------------------- */
 export type TodoMark = { done: boolean; note: string; at: string; by: string | null };
 export type TodoRow = { key: string; label: string; done: boolean | null; now: string; go: string; manual?: boolean; mark?: TodoMark | null };
+
+/** v10.249 (D203 · docs/386) — 주간 알림 글(아직인 줄만 · 줄마다 지금 상태) */
+export function ownerTodoWeeklyText(left: TodoRow[], done: number, total: number): string {
+  return [
+    `[소개뱅크] 대표 할 일 이번 주 — 아직 ${left.length}줄 (끝남 ${done} / ${total})`,
+    ...left.map((r) => `· ${r.label}${r.done === null ? '(직접 확인)' : ''} — ${String(r.now ?? '').slice(0, 120)}`),
+    '',
+    '운영 화면 첫 화면 「대표 할 일」에서 확인 · 이 알림 끄기: 설정 ops.owner_todo_weekly = off',
+  ].join('\n');
+}
 const HOLE = /〔[^〕]*〕/g;
 export const MANUAL_KEYS = ['plans', 'legal', 'ebs'] as const;
 const KST = `(now() AT TIME ZONE 'Asia/Seoul')`;

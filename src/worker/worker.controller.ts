@@ -16,6 +16,7 @@ const JOBS = [
   'hlt_settle_weekly',  /* v10.168 (D157) 소개몰 주 정산 마감 */
   'launch_watch',       /* v10.170 (D159) 시험 결제 주문 알림 */
   'launch_digest',      /* v10.171 (D160) 운영 하루 요약 */
+  'owner_todo_weekly',  /* v10.249 (D203) 대표 할 일 주간 알림 — 월요일 09:05 · 아직인 줄만 텔레그램 · 슬랙 */
   'directory_expiry',   /* v10.33 (D092) 정액 노출 만료 안내 · 자동 종료 */
   'seller_license_watch', /* v10.223 (D193) 입점 서류 만료 30 · 7일 전 알림 · 만료일 운영 알림 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */

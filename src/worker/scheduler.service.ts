@@ -8,6 +8,8 @@ import { TelegramService } from '../common/telegram/telegram.service';
 import { buildAlertPush } from '../common/telegram/alert-push';
 import { SlackService } from '../common/slack/slack.service';
 import { AlertChannelsService } from '../modules/admin/alert-channels.service';
+import { OwnerTodoService, ownerTodoWeeklyText } from '../modules/admin/owner-todo.service';
+import { ServerTrendService } from '../modules/admin/server-trend.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
 import { EsignService } from '../modules/deal/esign.service';
@@ -37,7 +39,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch';
+  | 'seller_license_watch' | 'owner_todo_weekly';
 
 export interface JobResult {
   job: JobName;
@@ -70,6 +72,8 @@ export class SchedulerService {
     private readonly telegram: TelegramService,   // v10.200 (D178) 급한 운영 알림 텔레그램
     private readonly slack: SlackService,   // v10.237 (D200) 급한 운영 알림 슬랙
     private readonly channels: AlertChannelsService,   // v10.239 (docs/379) 알림 길 연속 실패 경보
+    private readonly ownerTodo: OwnerTodoService,   // v10.249 (D203 · docs/386) 대표 할 일 주간 알림
+    private readonly trend: ServerTrendService,   // v10.248 (D203 · docs/386) 서버 자원 하루 기록
   ) {}
 
   /**
@@ -474,7 +478,8 @@ export class SchedulerService {
           await this.alert('POLL_HIDDEN_BY_REPORTS', 'WARN', `회원 투표가 신고 ${p.reports}건으로 감춰졌습니다 — 「${p.title}」 · 운영 화면 소개광장 검수에서 확인`, { pollId: p.id, title: p.title, reports: p.reports });
         }
         /* v10.182 (D171) — 디스크 · 메모리 재기 · 디스크 85%(ops.disk_warn_pct) WARN · 95% CRITICAL(등급마다 하루 한 번) */
-        measureServerHealth();
+        const sh = measureServerHealth();
+        const sd = await this.trend.record(sh).catch(() => false);   /* v10.248 (D203) — 그날 처음 잰 값 한 줄(같은 날은 안 넣음) */
         const dk = await this.launchWatch.diskAlert();
         if (dk.alert && dk.level) await this.alert('DISK_LOW', dk.level, `서버 디스크 ${dk.usedPct}% 사용 · 남은 ${dk.freeGB}GB — 옛 판 · 백업 묶음을 정리하거나 디스크를 늘리십시오(기준 ${dk.limit}%)`, dk);
         /* v10.199 (D177 · docs/314) — 간주 결제 켜짐에 「주문 받기」: 꺼질 시각이 지나면 끔 · 꺼질 시각 없이 1시간 넘게 켜져 있으면 CRITICAL(풀리기 전 한 번) */
@@ -497,7 +502,14 @@ export class SchedulerService {
         /* v10.239 (docs/379) — 켜 둔 길이 60분 넘게 보내기 실패면 ALERT_CHANNEL_FAIL(CRITICAL · 다음 차례에 다른 길로) · 다시 되거나 꺼지면 풀림 */
         const cf = await this.channels.failWatch({ mail: am, telegram: ap, slack: as });
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf, serverDaily: sd };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        break;
+      }
+
+      /* v10.249 (D203 · docs/386) — 대표 할 일 주간 알림(월요일 09:05): 아직인 줄만 텔레그램 · 슬랙(켜 둔 길만) · 모두 끝났으면 안 보냄 */
+      case 'owner_todo_weekly': {
+        const w = await this.ownerTodoWeekly();
+        affected = w.left; detail = w;
         break;
       }
 
@@ -738,6 +750,28 @@ export class SchedulerService {
     const [b] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM v_open_blockers`);
     const r = await this.telegram.send(`[소개뱅크] ${text}\n오픈 차단 ${b?.n ?? 0}건(운영 화면 › 오픈 체크리스트)`);
     return r.ok ? { pushed: true, reason: null } : { pushed: false, reason: `SEND_${r.errorKind ?? 'FAILED'}` };
+  }
+
+  /** v10.249 (D203 · docs/386) — 대표 할 일 중 아직인 줄만 한 통(텔레그램 · 슬랙 · 켜 둔 길만). 스위치 ops.owner_todo_weekly(on).
+   *  모두 끝났으면 보내지 않고 알림도 남기지 않음 · 보냈든 못 보냈든 운영 알림 OWNER_TODO_WEEKLY(INFO) 한 건 */
+  private async ownerTodoWeekly(): Promise<{ off?: true; left: number; total: number; telegram: string | null; slack: string | null }> {
+    const [o] = await this.db.query<{ v: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.owner_todo_weekly'), 'on') AS v`);
+    const d = await this.ownerTodo.rows();
+    const left = d.rows.filter((r) => r.done !== true);
+    if ((o?.v ?? 'on') !== 'on') return { off: true, left: left.length, total: d.total, telegram: null, slack: null };
+    if (!left.length) return { left: 0, total: d.total, telegram: null, slack: null };
+    const text = ownerTodoWeeklyText(left, d.done, d.total);
+    const tg = await this.telegram.status();
+    let telegram: string | null = tg.ready ? null : tg.reason;
+    if (tg.ready) { const r = await this.telegram.send(text); telegram = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const sk = this.slack.status();
+    let slack: string | null = sk.ready ? null : sk.reason;
+    if (sk.ready) { const r = await this.slack.send(text); slack = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const sent = [telegram === 'SENT' ? '텔레그램' : '', slack === 'SENT' ? '슬랙' : ''].filter(Boolean);
+    await this.alert('OWNER_TODO_WEEKLY', 'INFO',
+      `대표 할 일 아직 ${left.length}줄(끝남 ${d.done} / ${d.total}) — ${sent.length ? `${sent.join(' · ')}으로 보냄` : '보낸 길 없음(텔레그램 · 슬랙이 준비 안 됨)'}`,
+      { left: left.map((r) => r.key), done: d.done, total: d.total, telegram, slack });
+    return { left: left.length, total: d.total, telegram, slack };
   }
 
   /** v10.237 (D200 · docs/377) — 급한 알림 슬랙(텔레그램과 같은 알림 · 같은 기준 · 같은 글 · 기록은 slack_pushed_at · slack_repushed_at).

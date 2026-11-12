@@ -1770,4 +1770,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "다시 아직으로 적었습니다.": "Recorded as not done yet.",
   /* v10.246 (docs/383) — 직접 확인 줄 지난 기록 */
   "직접 확인 줄(요금제 · 법무 · EBS)만 볼 수 있습니다.": "Only the manual-check rows (plans, legal, EBS) can be viewed.",
+  /* v10.247 (docs/386) — 적용 결과 파일 보기 */
+  "적용 스크립트 결과 파일(precheck · postcheck · apply · cleanup · open-prep)만 열 수 있습니다.": "Only deploy script result files (precheck, postcheck, apply, cleanup, open-prep) can be opened.",
+  "그 결과 파일이 서버에 없습니다(지워졌을 수 있음).": "That result file is not on the server (it may have been deleted).",
 };

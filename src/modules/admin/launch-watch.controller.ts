@@ -5,6 +5,7 @@ import { LaunchWatchService } from './launch-watch.service';
 import { StateCheckService } from './state-check.service';
 import { OwnerTodoService } from './owner-todo.service';
 import { ReleaseLogService } from './release-log.service';
+import { ServerTrendService } from './server-trend.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -33,7 +34,7 @@ export class OwnerTodoMarkDto {
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class LaunchWatchController {
   constructor(private readonly svc: LaunchWatchService, private readonly state: StateCheckService, private readonly todo: OwnerTodoService,
-              private readonly releases: ReleaseLogService) {}
+              private readonly releases: ReleaseLogService, private readonly trend: ServerTrendService) {}
 
   @Get()
   @ApiOperation({ summary: '공개 직후 지켜보기', description: '오늘(한국 날짜) 가입 · 로그인 · 글 · 매물 · 소개몰 주문 · 시험 결제 주문 · 확인 안 한 운영 알림 · 주문 받기 · 간주 결제 스위치 · 판매 중 직판 상품 수.' })
@@ -79,6 +80,26 @@ export class LaunchWatchController {
   @ApiOperation({ summary: '지금 판 · 운영 적용 기록', description: 'now = 이 API 의 판(VERSION) · 뜬 시각, rows = ops_release_log 최근 10줄(API 가 뜰 때 판이 바뀌었으면 한 줄 · kind FIRST · UP · BACK · OTHER), postcheck = 서버에 남은 가장 최근 postcheck 결과 파일의 통과 · 실패 · 확인 · [11] 같음 · 바뀜(없으면 null). 읽기만.' })
   @ApiOkResponse({ type: Object })
   releaseLog() { return this.releases.list(); }
+
+  /* v10.247 (docs/386) — 적용 스크립트 결과 파일 최근 10개 · 본문(SUPER · 읽기만) */
+  @Get('releases/files')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '적용 결과 파일 목록', description: '서버 DATA_DIR(기본 ~/sgb-data)/logs 의 precheck · postcheck · apply · cleanup · open-prep 결과 파일(이름 형식 종류_YYYYMMDD_HHMMSS.txt) 최근 10개 — 이름 · 종류 · 시각(파일 이름 · 서버 시각) · 크기. 빌드 기록 · precheck_state.txt 는 뺌. SUPER · 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  releaseFiles() { return this.releases.files(); }
+
+  @Get('releases/file')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '적용 결과 파일 본문', description: 'name = 결과 파일 이름(목록의 name). 이름 형식이 맞는 것만 · 앞 200KB(넘으면 truncated true) · 다른 폴더 · 다른 파일은 열 수 없음. SUPER · 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'OPS_FILE_NAME · OPS_FILE_MISSING' })
+  releaseFile(@Query('name') name: string) { return this.releases.file(name); }
+
+  /* v10.248 (D203 · docs/386) — 서버 자원 추세(최근 30일 · 기준까지 남은 날 · 읽기만) */
+  @Get('server-trend')
+  @ApiOperation({ summary: '서버 자원 추세', description: 'rows = ops_server_daily 최근 30일(오래된 것부터 · day · disk % · freeGB · mem %), slope = 최근 14일 디스크 하루 증가 %p(3일 이상 기록일 때), daysToLimit = 이대로면 limit(ops.disk_warn_pct)까지 남은 날(늘지 않으면 null). 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  serverTrend() { return this.trend.trend(); }
 
   /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
   @Get('server-errors')

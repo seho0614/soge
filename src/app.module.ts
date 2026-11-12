@@ -131,6 +131,7 @@ import { StateCheckService } from './modules/admin/state-check.service';   // v1
 import { AlertChannelsService } from './modules/admin/alert-channels.service';   // v10.238 · 239 급한 알림 받는 길 · 연속 실패 경보
 import { OwnerTodoService } from './modules/admin/owner-todo.service';   // v10.240 대표 할 일 자동 점검표
 import { ReleaseLogService } from './modules/admin/release-log.service';   // v10.244 (D202) 운영 적용 기록
+import { ServerTrendService } from './modules/admin/server-trend.service';   // v10.248 (D203) 서버 자원 추세
 import { OpsReviewController } from './modules/admin/ops-review.controller';   // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
 import { OpsAlertsService } from './modules/admin/ops-alerts.service';
 import { PiiReviewService } from './modules/admin/pii-review.service';
@@ -389,6 +390,7 @@ import { LeadService } from './modules/lead/lead.service';
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
     AlertChannelsService, OwnerTodoService,   /* v10.238 ~ 240 (docs/379) */
     ReleaseLogService,   /* v10.244 (D202 · docs/383) 운영 적용 기록 */
+    ServerTrendService,   /* v10.248 (D203 · docs/386) 서버 자원 추세 */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
     RoleReviewService, MfaService,   /* v10.180 (D169) */
     StaffIpService,   /* v10.226 (D195) */

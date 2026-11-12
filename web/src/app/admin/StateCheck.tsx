@@ -11,6 +11,7 @@ import { Flash } from '../../components/Flash';
  *   ✓ 할 일 없음 · ○ 할 일 남음(오픈 전에는 정상) · ⚠ 바로 볼 것 · – 값만.
  *   v10.214 (docs/344) — 「약관 시행 예정」 줄이 더해짐(11줄 · 줄은 서버가 정함 · 이 화면은 그대로 그림).
  *   v10.238 (docs/379) — 「급한 알림 받는 길」 줄(12줄).
+ *   v10.247 ~ 249 (docs/386) — 지금 판 카드 「결과 파일」(SUPER · 읽기만) · 「서버 자원 추세」 카드(ServerTrend).
  */
 interface Row { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string }
 const MARK: Record<Row['state'], string> = { ok: '✓', todo: '○', warn: '⚠', info: '–' };
@@ -126,8 +127,49 @@ interface RelData {
   rows: { id: number; version: string; prev: string | null; kind: RelKind; host: string | null; at: string }[];
   postcheck: { file: string; at: string; version: string | null; pass: number; fail: number; warn: number; same: number | null; changed: number | null; ageHours: number } | null;
 }
+/* v10.247 (docs/386) — 적용 스크립트 결과 파일(SUPER · 읽기만 · 최근 10개 · 누르면 본문 앞 200KB) */
+interface OpsFile { name: string; kind: string; at: string; size: number }
+function OpsFileView({ name }: { name: string }) {
+  const q = useApi<{ name: string; size: number; truncated: boolean; text: string }>(`/admin/launch-watch/releases/file?name=${encodeURIComponent(name)}`, [name]);
+  if (q.error) return <p className="warn-text" data-ops-file-err={name}>열지 못함 — 파일이 지워졌거나 이름이 맞지 않습니다</p>;
+  const f = q.data;
+  if (!f) return <p className="muted">읽는 중…</p>;
+  return (
+    <div data-ops-file={f.name} data-ops-file-size={f.size}>
+      {f.truncated && <small className="warn-text">앞 200KB 만 보입니다(전체 {Math.round(f.size / 1024)}KB) — 나머지는 서버에서 직접</small>}
+      <pre data-ops-file-text style={{ maxHeight: 420, overflow: 'auto', whiteSpace: 'pre-wrap', fontSize: 12, margin: '6px 0' }}>{f.text}</pre>
+    </div>
+  );
+}
+function OpsFiles() {
+  const q = useApi<{ dir: string; files: OpsFile[] }>('/admin/launch-watch/releases/files', []);
+  const [open, setOpen] = useState<string | null>(null);
+  const d = q.data;
+  if (!d) return <p className="muted">읽는 중…</p>;
+  return (
+    <div data-ops-files={d.files.length}>
+      {d.files.length === 0 ? <p className="muted">결과 파일 없음 — {d.dir}</p> : (
+        <table className="tbl">
+          <thead><tr><th>시각(서버)</th><th>종류</th><th>크기</th><th></th></tr></thead>
+          <tbody>
+            {d.files.map((f) => (
+              <tr key={f.name} data-ops-file-row={f.kind}>
+                <td>{f.at}</td><td>{f.kind}</td><td className="muted">{f.size < 1024 ? `${f.size}B` : `${Math.round(f.size / 1024)}KB`}</td>
+                <td><button className="linkbtn" data-ops-file-open={f.name} onClick={() => setOpen(open === f.name ? null : f.name)}>{open === f.name ? '닫기' : '열기'}</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {open && <OpsFileView name={open} />}
+    </div>
+  );
+}
+
 export function ReleaseLog() {
   const q = useApi<RelData>('/admin/launch-watch/releases', []);
+  const [files, setFiles] = useState(false);
+  const isSuper = tokenRoles().includes('SUPER');
   const d = q.data;
   if (!d) return null;
   const pc = d.postcheck;
@@ -141,7 +183,9 @@ export function ReleaseLog() {
               {pc.same !== null && <> · 적용 전과 비교 같음 {pc.same} · 바뀜 {pc.changed}</>}
               {pc.version !== null && pc.version !== d.now.version && <> — 지금 판과 다름(그 뒤 postcheck 를 다시 돌리지 않음)</>}</>
           : <span className="muted">적용 후 확인(postcheck) 결과 파일 없음 — 운영 서버에서 apply 하면 생깁니다</span>}
+        {isSuper && <> <button className="linkbtn" data-release-files-btn onClick={() => setFiles(!files)}>{files ? '결과 파일 닫기' : '결과 파일'}</button></>}
       </p>
+      {isSuper && files && <OpsFiles />}
       {d.rows.length === 0 ? <p className="muted">적용 기록 없음 — 이 판(v10.244)부터 API 가 뜰 때 적습니다</p> : (
         <table className="tbl">
           <thead><tr><th>시각(한국)</th><th>판</th><th>무엇</th><th>앞 판</th></tr></thead>
@@ -156,6 +200,38 @@ export function ReleaseLog() {
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+/* v10.248 (D203 · docs/386) — 서버 자원 추세(하루 한 줄 · 최근 30일 · 기준까지 남은 날 · 읽기만) */
+interface TrendData { rows: Array<{ day: string; disk: number | null; freeGB: number | null; mem: number }>; limit: number; slope: number | null; daysToLimit: number | null; points: number; last: number | null }
+export function ServerTrend() {
+  const q = useApi<TrendData>('/admin/launch-watch/server-trend', []);
+  const d = q.data;
+  if (!d) return null;
+  const over = d.limit > 0 && d.last !== null && d.last >= d.limit;
+  const soon = d.daysToLimit !== null && d.daysToLimit <= 30;
+  return (
+    <div className={`card${over || soon ? ' warn' : ''}`} data-server-trend data-server-trend-points={d.rows.length}
+         data-server-trend-slope={d.slope ?? 'none'} data-server-trend-days={d.daysToLimit ?? 'none'}>
+      <h3 className="sec">서버 자원 추세 <small className="dim">하루 한 줄(그날 처음 잰 값) · 최근 30일 · 막대 = 디스크 % · 기준 {d.limit}%</small></h3>
+      <p className={over || soon ? 'warn-text' : ''}>
+        {d.slope === null ? `기록 ${d.points}일 — 3일부터 늘어나는 빠르기를 계산합니다`
+          : over ? `디스크 ${d.last}% — 이미 기준 ${d.limit}% 를 넘었습니다(옛 판 · 백업 묶음 정리 또는 디스크 늘리기)`
+          : d.daysToLimit !== null ? `최근 ${d.points}일 디스크가 하루 ${d.slope > 0 ? '+' : ''}${d.slope}%p — 이대로면 약 ${d.daysToLimit}일 뒤 ${d.limit}%`
+          : `최근 ${d.points}일 디스크가 하루 ${d.slope > 0 ? '+' : ''}${d.slope}%p — 늘지 않음`}
+      </p>
+      {d.rows.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80, borderBottom: '1px solid var(--line)' }}>
+          {d.rows.map((r) => (
+            <div key={r.day} data-server-trend-day={r.day} title={`${r.day} · 디스크 ${r.disk ?? '–'}% · 남은 ${r.freeGB ?? '–'}GB · 메모리 ${r.mem}%`}
+                 style={{ flex: 1, maxWidth: 18, height: `${Math.max(2, r.disk ?? 0) * 0.8}px`,
+                          background: r.disk !== null && d.limit > 0 && r.disk >= d.limit ? 'var(--danger)' : 'var(--accent)' }} />
+          ))}
+        </div>
+      )}
+      {d.rows.length > 0 && <small className="dim">{d.rows[0]!.day} ~ {d.rows[d.rows.length - 1]!.day} · 막대에 마우스를 올리면 그날 디스크 · 남은 GB · 메모리</small>}
     </div>
   );
 }

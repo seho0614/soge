@@ -1212,6 +1212,9 @@
     "POST /admin/launch-watch/owner-todo/mark",
     "GET /admin/launch-watch/owner-todo/marks",
     "GET /admin/launch-watch/releases",
+    "GET /admin/launch-watch/releases/files",
+    "GET /admin/launch-watch/releases/file",
+    "GET /admin/launch-watch/server-trend",
     "PATCH /admin/site-settings"
    ],
    "nav": "SB-HOM-MAIN-010"

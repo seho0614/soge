@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { closeSync, lstatSync, openSync, readSync, readdirSync, readFileSync, statSync } from 'fs';
 import { homedir, hostname } from 'os';
 import { join } from 'path';
 import { DatabaseService } from '../../db/database.service';
 import { APP_VERSION, PROCESS_STARTED_AT, versionCmp } from '../../common/app-version';
+import { PolicyViolation } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
  * v10.244 (D202 · docs/383) — 운영 적용 기록
@@ -21,6 +22,11 @@ export type PostcheckSummary = {
   same: number | null; changed: number | null; ageHours: number;
 };
 const PC_FILE = /^postcheck_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.txt$/;
+/* v10.247 (docs/386) — 운영 화면에서 열어 볼 수 있는 결과 파일(적용 스크립트가 남긴 것만 · 빌드 기록 · precheck_state.txt 는 뺌) */
+export const OPS_FILE = /^(precheck|postcheck|apply|cleanup|open-prep)_(\d{8})_(\d{6})\.txt$/;
+export const OPS_FILE_MAX = 200_000;
+const logsDir = () => join(process.env.DATA_DIR || join(homedir(), 'sgb-data'), 'logs');
+export type OpsFile = { name: string; kind: string; at: string; size: number };
 
 export function releaseKind(prev: string | null, now: string): ReleaseKind {
   if (!prev) return 'FIRST';
@@ -30,7 +36,7 @@ export function releaseKind(prev: string | null, now: string): ReleaseKind {
 }
 
 /** postcheck 결과 파일 한 개를 읽어 숫자만 뽑음(없거나 못 읽으면 null) */
-export function readPostcheck(dir = join(process.env.DATA_DIR || join(homedir(), 'sgb-data'), 'logs')): PostcheckSummary | null {
+export function readPostcheck(dir = logsDir()): PostcheckSummary | null {
   try {
     const name = readdirSync(dir).filter((f) => PC_FILE.test(f)).sort().pop();
     if (!name) return null;
@@ -103,5 +109,33 @@ export class ReleaseLogService implements OnApplicationBootstrap {
          FROM ops_release_log ORDER BY id DESC LIMIT 1`);
     const KO: Record<ReleaseKind, string> = { FIRST: '첫 기록', UP: '올림', BACK: '되돌림', OTHER: '바뀜' };
     return r ? `운영 판 ${APP_VERSION} · 마지막 바뀜 ${r.at}(${KO[r.kind]}${r.prev ? ` · 앞 판 ${r.prev}` : ''})` : `운영 판 ${APP_VERSION} · 적용 기록 없음`;
+  }
+
+  /** v10.247 — 결과 파일 최근 10개(파일 이름의 날짜 · 시각 순 · 읽기만) */
+  files(dir = logsDir()): { dir: string; files: OpsFile[] } {
+    let names: string[] = [];
+    try { names = readdirSync(dir).filter((f) => OPS_FILE.test(f)); } catch { return { dir, files: [] }; }
+    const stamp = (f: string) => { const m = f.match(OPS_FILE)!; return m[2]! + m[3]!; };
+    const files = names.sort((a, b) => stamp(b).localeCompare(stamp(a)) || a.localeCompare(b)).slice(0, 10).map((name) => {
+      const m = name.match(OPS_FILE)!; const d = m[2]!, h = m[3]!;
+      let size = 0; try { size = statSync(join(dir, name)).size; } catch { /* 지워진 파일 */ }
+      return { name, kind: m[1]!, at: `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)} ${h.slice(0, 2)}:${h.slice(2, 4)}:${h.slice(4, 6)}`, size };
+    });
+    return { dir, files };
+  }
+
+  /** v10.247 — 결과 파일 본문(이름 형식이 맞는 것만 · 앞 200KB · 읽기만) */
+  file(name: unknown, dir = logsDir()): { name: string; size: number; truncated: boolean; text: string } {
+    if (typeof name !== 'string' || !OPS_FILE.test(name)) throw new PolicyViolation('OPS_FILE_NAME', '적용 스크립트 결과 파일(precheck · postcheck · apply · cleanup · open-prep)만 열 수 있습니다.');
+    const p = join(dir, name);
+    let size: number;
+    try { const st = lstatSync(p); if (!st.isFile()) throw new Error('not file'); size = st.size; }
+    catch { throw new PolicyViolation('OPS_FILE_MISSING', '그 결과 파일이 서버에 없습니다(지워졌을 수 있음).'); }
+    const fd = openSync(p, 'r');
+    try {
+      const buf = Buffer.alloc(Math.min(size, OPS_FILE_MAX));
+      const n = readSync(fd, buf, 0, buf.length, 0);
+      return { name, size, truncated: size > OPS_FILE_MAX, text: buf.subarray(0, n).toString('utf8') };
+    } finally { closeSync(fd); }
   }
 }
