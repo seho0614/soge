@@ -15,6 +15,7 @@ import { PolicyViolation } from '../../core/errors';
  *   쌓기만) 가장 최근 줄이 상태 — 적은 줄도 done true · false 가 되어 끝남 수에 셈(manual: true 는 그대로 · 누가 언제는 mark).
  * v10.242 (docs/381) — 정기 점검 기한 줄 3개(지난달 개인정보 접속기록 · 지난 분기 운영자 권한 · 기한 2일 안 권리 요청).
  *   경보(PII_REVIEW_DUE · ROLE_REVIEW_DUE · PRIVACY_REQUEST_DUE)는 그대로 — 이 줄은 다음 기한을 보여 줄 뿐.
+ * v10.245 (docs/383) — 하루 요약 한 줄(digestLine) · v10.246 — 직접 확인 줄 지난 기록(marks · 최근 20줄).
  * ------------------------------------------------------------------- */
 export type TodoMark = { done: boolean; note: string; at: string; by: string | null };
 export type TodoRow = { key: string; label: string; done: boolean | null; now: string; go: string; manual?: boolean; mark?: TodoMark | null };
@@ -117,5 +118,28 @@ export class OwnerTodoService {
     await this.db.query(`INSERT INTO audit.owner_todo_marks (item_key, done, note, marked_by) VALUES ($1, $2, $3, $4)`,
       [key, done, n, RequestCtx.actorId()]);
     return { ok: true, key, done, note: done ? '끝남으로 적었습니다.' : '다시 아직으로 적었습니다.' };
+  }
+
+  /** v10.246 (docs/383) — 직접 확인 줄 지난 기록(최근 20줄 · 읽기만) · 줄마다 전체 수 */
+  async marks(key: unknown) {
+    if (typeof key !== 'string' || !(MANUAL_KEYS as readonly string[]).includes(key))
+      throw new PolicyViolation('OWNER_TODO_KEY', '직접 확인 줄(요금제 · 법무 · EBS)만 볼 수 있습니다.');
+    const [rows, [c]] = await Promise.all([
+      this.db.query<{ done: boolean; note: string; at: string; by: string | null }>(
+        `SELECT m.done, m.note, to_char(m.marked_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS at, a.name AS by
+           FROM audit.owner_todo_marks m LEFT JOIN accounts a ON a.id = m.marked_by
+          WHERE m.item_key = $1 ORDER BY m.marked_at DESC, m.id DESC LIMIT 20`, [key]),
+      this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM audit.owner_todo_marks WHERE item_key = $1`, [key]),
+    ]);
+    return { key, total: c?.n ?? 0, rows };
+  }
+
+  /** v10.245 (docs/383) — 하루 요약 한 줄 「대표 할 일 끝남 n / 15 · 아직: … (외 n)」 · 다 끝났으면 「모두 끝남」 */
+  async digestLine(): Promise<string> {
+    const d = await this.rows();
+    const left = d.rows.filter((r) => r.done !== true);
+    if (!left.length) return `대표 할 일 끝남 ${d.done} / ${d.total} — 모두 끝남`;
+    const names = left.slice(0, 5).map((r) => r.label + (r.done === null ? '(직접 확인)' : ''));
+    return `대표 할 일 끝남 ${d.done} / ${d.total} · 아직: ${names.join(' · ')}${left.length > 5 ? ` 외 ${left.length - 5}` : ''}`;
   }
 }

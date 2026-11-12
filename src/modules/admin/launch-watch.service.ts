@@ -9,6 +9,8 @@ import { slowSqlSince } from '../../common/slow-sql';
 import { uploadsBackupState, uploadsBackupVerified } from '../../common/uploads-backup-state';
 import { AgentService } from '../agent/agent.service';
 import { AlertChannelsService, ChannelState } from './alert-channels.service';
+import { OwnerTodoService } from './owner-todo.service';
+import { ReleaseLogService } from './release-log.service';
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -82,7 +84,8 @@ const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 
 @Injectable()
 export class LaunchWatchService {
-  constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService,
+              private readonly todo: OwnerTodoService, private readonly releases: ReleaseLogService) {}
 
   async today() {
     const [c] = await this.db.query<any>(
@@ -156,6 +159,9 @@ export class LaunchWatchService {
       /* v10.238 (docs/379) — 급한 알림 받는 길(메일 · 텔레그램 · 슬랙) */
       channelLine(await this.channels.channels()),
       ...termsLine(await this.termsSoon()),   // v10.243 (docs/381) — 시행일 3일 안 약관
+      /* v10.245 (docs/383) — 대표 할 일 남은 줄 · v10.244 — 운영 판 · 마지막 바뀜(실패해도 요약은 그대로) */
+      await this.todo.digestLine().catch(() => '대표 할 일 — 읽지 못함'),
+      await this.releases.digestLine().catch(() => '운영 판 — 읽지 못함'),
       /* v10.200 (docs/316) — 메인 투표 빈 자리(사용자 웹 메인에 「준비 중」 카드) */
       ...(c.homePolls < 3 ? [`메인 투표 ${c.homePolls} / 3 — 빈 자리는 사용자 웹 메인에 「준비 중」으로 보입니다(운영 화면 › 투표 관리 「확정 질문으로 빈 자리 채우기」)`] : []),
       /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */

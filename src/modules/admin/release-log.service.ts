@@ -1,0 +1,107 @@
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { readdirSync, readFileSync, statSync } from 'fs';
+import { homedir, hostname } from 'os';
+import { join } from 'path';
+import { DatabaseService } from '../../db/database.service';
+import { APP_VERSION, PROCESS_STARTED_AT, versionCmp } from '../../common/app-version';
+
+/* ---------------------------------------------------------------------
+ * v10.244 (D202 · docs/383) — 운영 적용 기록
+ *
+ *   ① API 가 뜰 때 VERSION 이 ops_release_log 가장 최근 줄과 다르면 한 줄(FIRST · UP · BACK · OTHER).
+ *      같은 판으로 다시 뜨면 적지 않음 · 실패해도 API 는 그대로 뜸(기록만 빠짐 · 로그 한 줄).
+ *   ② 운영 화면 첫 화면 「지금 판 · 적용 기록」 — 최근 10줄 + 서버에 남은 가장 최근 postcheck 결과 파일
+ *      (DATA_DIR(기본 ~/sgb-data)/logs/postcheck_YYYYMMDD_HHMMSS.txt)의 「통과 · 실패 · 확인」 · [11] 「같음 · 바뀜」.
+ *      postcheck.sh 는 그대로 읽기만 — 이 화면도 파일을 읽기만 합니다.
+ * ------------------------------------------------------------------- */
+export type ReleaseKind = 'FIRST' | 'UP' | 'BACK' | 'OTHER';
+export type ReleaseRow = { id: number; version: string; prev: string | null; kind: ReleaseKind; host: string | null; at: string };
+export type PostcheckSummary = {
+  file: string; at: string; version: string | null; pass: number; fail: number; warn: number;
+  same: number | null; changed: number | null; ageHours: number;
+};
+const PC_FILE = /^postcheck_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.txt$/;
+
+export function releaseKind(prev: string | null, now: string): ReleaseKind {
+  if (!prev) return 'FIRST';
+  if (!/\d/.test(prev) || !/\d/.test(now)) return 'OTHER';
+  const c = versionCmp(now, prev);
+  return c > 0 ? 'UP' : c < 0 ? 'BACK' : 'OTHER';
+}
+
+/** postcheck 결과 파일 한 개를 읽어 숫자만 뽑음(없거나 못 읽으면 null) */
+export function readPostcheck(dir = join(process.env.DATA_DIR || join(homedir(), 'sgb-data'), 'logs')): PostcheckSummary | null {
+  try {
+    const name = readdirSync(dir).filter((f) => PC_FILE.test(f)).sort().pop();
+    if (!name) return null;
+    const p = join(dir, name);
+    if (statSync(p).size > 2_000_000) return null;
+    const txt = readFileSync(p, 'utf8');
+    const sum = txt.match(/적용 후 확인 — 통과 (\d+) · 실패 (\d+) · 확인 (\d+)/);
+    if (!sum) return null;
+    const head = txt.split('\n', 1)[0] ?? '';
+    const ver = head.match(/— (v[\w.\-]{1,20})\s*$/);
+    const cmp = txt.match(/같음 (\d+)개 · 바뀜 (\d+)개/);
+    const m = name.match(PC_FILE)!;
+    return {
+      file: name, at: `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}`, version: ver ? ver[1]! : null,
+      pass: Number(sum[1]), fail: Number(sum[2]), warn: Number(sum[3]),
+      same: cmp ? Number(cmp[1]) : null, changed: cmp ? Number(cmp[2]) : null,
+      ageHours: Math.max(0, Math.floor((Date.now() - statSync(p).mtimeMs) / 3_600_000)),
+    };
+  } catch { return null; }
+}
+
+@Injectable()
+export class ReleaseLogService implements OnApplicationBootstrap {
+  private readonly log = new Logger(ReleaseLogService.name);
+  constructor(private readonly db: DatabaseService) {}
+
+  /* DB 연결(DatabaseService.onModuleInit)이 만들어진 뒤 · 띄울 때 DB 가 잠깐 끊기면 몇 번 다시 */
+  async onApplicationBootstrap() {
+    for (let i = 0; i < 3; i++) {
+      try { await this.record(); return; } catch (e) {
+        if (i === 2) this.log.warn(`운영 적용 기록을 적지 못함(API 는 그대로 뜸) — ${(e as Error).message?.slice(0, 120)}`);
+        else await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+  }
+
+  /** 판이 가장 최근 줄과 다르면 한 줄 — 적었으면 그 줄, 아니면 null */
+  async record(version = APP_VERSION): Promise<{ kind: ReleaseKind; prev: string | null } | null> {
+    if (!version || version === '?') return null;
+    const [last] = await this.db.query<{ version: string }>(`SELECT version FROM ops_release_log ORDER BY id DESC LIMIT 1`);
+    const prev = last?.version ?? null;
+    if (prev === version) return null;
+    const kind = releaseKind(prev, version);
+    /* 같은 판을 두 번 적지 않게 — 그 사이 다른 프로세스가 먼저 적었으면 넣지 않음 */
+    const ins = await this.db.query<{ id: number }>(
+      `INSERT INTO ops_release_log (version, prev_version, kind, host)
+       SELECT $1, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM (SELECT version FROM ops_release_log ORDER BY id DESC LIMIT 1) l WHERE l.version = $1)
+       RETURNING id`, [version, prev, kind, hostname().slice(0, 100)]);
+    if (!ins.length) return null;
+    this.log.log(`운영 적용 기록 — ${prev ?? '(처음)'} → ${version} (${kind})`);
+    return { kind, prev };
+  }
+
+  /** 운영 화면 첫 화면 카드 — 지금 판 · 최근 10줄 · 가장 최근 postcheck 결과(읽기만) */
+  async list() {
+    const rows = await this.db.query<ReleaseRow>(
+      `SELECT id::int, version, prev_version AS prev, kind, host,
+              to_char(booted_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS at
+         FROM ops_release_log ORDER BY booted_at DESC, id DESC LIMIT 10`);
+    return {
+      now: { version: APP_VERSION, startedAt: PROCESS_STARTED_AT.toISOString() },
+      rows, postcheck: readPostcheck(),
+    };
+  }
+
+  /** 하루 요약 한 줄 — 「운영 판 v10.244 · 마지막 바뀜 11-12 13:20(올림 · 앞 판 v10.243)」 */
+  async digestLine(): Promise<string> {
+    const [r] = await this.db.query<ReleaseRow>(
+      `SELECT version, prev_version AS prev, kind, to_char(booted_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS at
+         FROM ops_release_log ORDER BY id DESC LIMIT 1`);
+    const KO: Record<ReleaseKind, string> = { FIRST: '첫 기록', UP: '올림', BACK: '되돌림', OTHER: '바뀜' };
+    return r ? `운영 판 ${APP_VERSION} · 마지막 바뀜 ${r.at}(${KO[r.kind]}${r.prev ? ` · 앞 판 ${r.prev}` : ''})` : `운영 판 ${APP_VERSION} · 적용 기록 없음`;
+  }
+}

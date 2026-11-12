@@ -1768,4 +1768,6 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "메모를 5 ~ 500자로 적어 주십시오.": "Enter a note of 5 to 500 characters.",
   "끝남으로 적었습니다.": "Recorded as done.",
   "다시 아직으로 적었습니다.": "Recorded as not done yet.",
+  /* v10.246 (docs/383) — 직접 확인 줄 지난 기록 */
+  "직접 확인 줄(요금제 · 법무 · EBS)만 볼 수 있습니다.": "Only the manual-check rows (plans, legal, EBS) can be viewed.",
 };

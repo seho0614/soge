@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Length } from 'class-validator';
 import { LaunchWatchService } from './launch-watch.service';
 import { StateCheckService } from './state-check.service';
 import { OwnerTodoService } from './owner-todo.service';
+import { ReleaseLogService } from './release-log.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -31,7 +32,8 @@ export class OwnerTodoMarkDto {
 @Roles('ADMIN', 'SUPER')
 @ApiResponse({ status: 403, description: '권한 없음', type: ErrorDto })
 export class LaunchWatchController {
-  constructor(private readonly svc: LaunchWatchService, private readonly state: StateCheckService, private readonly todo: OwnerTodoService) {}
+  constructor(private readonly svc: LaunchWatchService, private readonly state: StateCheckService, private readonly todo: OwnerTodoService,
+              private readonly releases: ReleaseLogService) {}
 
   @Get()
   @ApiOperation({ summary: '공개 직후 지켜보기', description: '오늘(한국 날짜) 가입 · 로그인 · 글 · 매물 · 소개몰 주문 · 시험 결제 주문 · 확인 안 한 운영 알림 · 주문 받기 · 간주 결제 스위치 · 판매 중 직판 상품 수.' })
@@ -64,6 +66,19 @@ export class LaunchWatchController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'OWNER_TODO_KEY · OWNER_TODO_DONE · OWNER_TODO_NOTE' })
   ownerTodoMark(@Body() dto: OwnerTodoMarkDto) { return this.todo.mark(dto.key, dto.done, dto.note); }
+
+  /* v10.246 (docs/383) — 직접 확인 줄 지난 기록(최근 20줄 · 읽기만) */
+  @Get('owner-todo/marks')
+  @ApiOperation({ summary: '대표 할 일 직접 확인 줄 지난 기록', description: 'key = plans · legal · ebs. 그 줄에 적은 끝남 · 다시 아직 기록 최근 20줄(시각 · 누가 · done · 메모) · total 은 전체 수. 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'OWNER_TODO_KEY' })
+  ownerTodoMarks(@Query('key') key: string) { return this.todo.marks(key); }
+
+  /* v10.244 (D202 · docs/383) — 지금 판 · 운영 적용 기록(첫 화면 카드 · 읽기만) */
+  @Get('releases')
+  @ApiOperation({ summary: '지금 판 · 운영 적용 기록', description: 'now = 이 API 의 판(VERSION) · 뜬 시각, rows = ops_release_log 최근 10줄(API 가 뜰 때 판이 바뀌었으면 한 줄 · kind FIRST · UP · BACK · OTHER), postcheck = 서버에 남은 가장 최근 postcheck 결과 파일의 통과 · 실패 · 확인 · [11] 같음 · 바뀜(없으면 null). 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  releaseLog() { return this.releases.list(); }
 
   /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
   @Get('server-errors')
