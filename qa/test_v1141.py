@@ -148,7 +148,9 @@ if API and DB:
            and psql(f"SELECT (session_enc IS NOT NULL)::text || '|' || result FROM identity_verifications WHERE raw->>'tv' = '{f1.get('token_version_id')}'") == 'true|PENDING', str(s1)[:120])
         g1 = sign(f1, bname, '19900101')
         ok('② 가짜 창 — 돌아오는 주소 /verify/return · 같은 암호로 결과', g1.get('returnUrl') == '/verify/return' and (g1.get('fields') or {}).get('enc_data'), str(g1)[:100])
-        bad = dict(g1); bad['fields'] = dict(g1.get('fields') or {}); bad['fields']['integrity_value'] = 'A' + (bad['fields'].get('integrity_value') or '')[1:]
+        bad = dict(g1); bad['fields'] = dict(g1.get('fields') or {}); iv0 = bad['fields'].get('integrity_value') or ''
+        # v10.258 — 첫 글자가 이미 'A' 면 바뀌지 않아 성공해 버림(1/64 · 회귀 한 번 실패) → 늘 다른 글자로
+        bad['fields']['integrity_value'] = ('B' if iv0[:1] == 'A' else 'A') + iv0[1:]
         x1 = done(bad)
         ok('② 무결성 값을 바꾸면 422 IDENTITY_INTEGRITY · 실패 기록(INTEGRITY) · 세션 비움', x1.get('_err') == 422 and x1.get('code') == 'IDENTITY_INTEGRITY'
            and psql(f"SELECT result || '|' || fail_code || '|' || (session_enc IS NULL)::text FROM identity_verifications WHERE raw->>'tv' = '{f1.get('token_version_id')}'") == 'FAIL|INTEGRITY|true', str(x1)[:100])
