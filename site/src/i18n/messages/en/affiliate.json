@@ -412,6 +412,12 @@
     "noMatch": "No matching name",
     "found": "{n} found",
     "myLead": "See the people who joined with your invite code, and those who joined with theirs, as a picture or a list. Invite rewards only come from people you invited directly.",
-    "graphHint": "Tap a box to expand or collapse the people that person invited · drag empty space to move, Ctrl + wheel to zoom."
+    "graphHint": "Tap a box to expand or collapse the people that person invited · drag empty space to move, Ctrl + wheel to zoom.",
+    "rGot": "Reward {p}P",
+    "rWait": "Awaiting ID check",
+    "rNone": "No reward",
+    "rewardSum": "Invite rewards you received: {p}P · rewarded {a, plural, one {{a} member} other {{a} members}} · awaiting ID check {b, plural, one {{b} member} other {{b} members}}",
+    "rewardNote": "An invite reward is earned once, when a member you invited directly completes their first ID check. The points on a box are what you received, not that member's money. No reward comes from the members they invited.",
+    "rewardMore": "See details"
   }
 }

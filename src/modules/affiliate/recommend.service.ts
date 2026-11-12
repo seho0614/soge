@@ -4,6 +4,7 @@ import { PartnerActorService } from '../partner/partner-actor.service';
 import { RequestCtx } from '../../core/request-context';
 import { Forbidden, NotFound, PolicyViolation } from '../../core/errors';
 import { maskEmail, maskName } from '../../common/mask';
+import { directRewards, rewardSum, type DirectReward } from './referral-reward';
 
 /** 추천 코드 모양 — 6자 · 0 · O · 1 · I 없음(D189 ck_accounts_recommend_code 와 같음) */
 const CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/;
@@ -88,14 +89,19 @@ export class RecommendService {
       `SELECT name, recommend_code AS code FROM accounts WHERE id = $1`, [this.me]);
     const rows = await this.rows(this.me);
     const { keys, kids, truncated } = this.keyed(rows);
+    /* v10.258 (docs/390) — 직접 추천한 분(1번째 줄)에만 「내가 받은 추천 보상」 · 그 아래 줄은 없음 */
+    const rw = await directRewards(this.db, this.me);
+    const byId = new Map(rw.map((x) => [x.id, x]));
     return {
       root: { name: me?.name ?? '', code: me?.code ?? null },
       total: Math.min(rows.length, TREE_MAX), truncated, generations: this.gens(rows),
+      reward: rewardSum(rw),
       nodes: rows.slice(0, TREE_MAX).map((r) => ({
         k: keys.get(r.id)!, p: keys.get(r.up) ?? 0, gen: r.gen,
         name: r.withdrawn ? null : maskName(r.name),
         joined: r.gen === 1 ? ymd(r.created_at) : ymd(r.created_at).slice(0, 7),
         children: kids.get(r.id) ?? 0,
+        reward: r.gen === 1 ? RecommendService.rewardOf(byId.get(r.id)) : null,
       })),
     };
   }
@@ -137,7 +143,10 @@ export class RecommendService {
         WHERE c.invitee_id = $1 ORDER BY c.changed_at DESC LIMIT 20`, [id]);
     const rows = await this.rows(id);
     const { keys, kids, truncated } = this.keyed(rows);
+    const rw = await directRewards(this.db, id);   // v10.258 — 그 회원이 직접 추천한 분별로 받은 보상
+    const byId = new Map(rw.map((x) => [x.id, x]));
     return {
+      reward: rewardSum(rw),
       member: { id: m.id, name: m.name, email: maskEmail(m.email), code: m.code, status: m.status,
                 joinedAt: ymd(m.created_at), verified: !!m.verified },
       recommenders: up.map((u) => ({ id: u.id, name: u.name, code: u.code, gen: u.n })),
@@ -148,6 +157,7 @@ export class RecommendService {
         k: keys.get(r.id)!, p: keys.get(r.up) ?? 0, gen: r.gen, id: r.id, name: r.name, code: r.code,
         status: r.status, verified: !!r.verified, joined: ymd(r.created_at),
         children: kids.get(r.id) ?? 0,
+        reward: r.gen === 1 ? RecommendService.rewardOf(byId.get(r.id)) : null,
       })),
     };
   }
@@ -204,6 +214,11 @@ export class RecommendService {
   }
 
   /* ── 트리 공통 ───────────────────────────────────────────── */
+
+  /** v10.258 — 상자 하나의 보상 표시(받음 · 기다림 · 없음 · 포인트 · 받은 날) */
+  static rewardOf(x: DirectReward | undefined) {
+    return x ? { state: x.state, points: x.points, at: x.at ? ymd(x.at) : null } : null;
+  }
 
   private rows(root: string) {
     return this.db.query<TreeRow>(

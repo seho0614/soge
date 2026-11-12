@@ -18,6 +18,7 @@ interface Summary {
     ledger: Array<{ code: string; points: number; memo: string | null; at: string }>;
     cashout: { sums: Sum[]; paid: number; items: Array<{ id: string; points: number; netAmount: number; status: string; requestedAt: string; paidAt: string | null }> } };
   affiliate: { paid: number; items: Array<{ id: string; track: string; from: string; to: string; gross: number; withholding: number; net: number; state: string; paidAt: string | null }> } | null;
+  referral: { points: number; got: number; wait: number; none: number; items: Array<{ name: string | null; joined: string; state: 'GOT' | 'WAIT' | 'NONE'; points: number; at: string | null }> };
   seller: { paid: number; items: Array<{ id: string; seller: string; from: string; to: string; gross: number; commission: number; refund: number; net: number; status: string; paidAt: string | null }> } | null;
 }
 
@@ -26,6 +27,7 @@ interface Summary {
  *   대표 「정산내역 보기 추가」(11/12 · 내 것만) — GET /me/settlement-summary 하나로 소개비 정산 · 포인트(적립 · 출금) · 제휴 파트너 정산 · 소개몰 판매자 정산.
  *   보기만 — 신청 · 계좌 · 지급 표시는 각 화면(소개비 정산 · 활동 · 포인트 출금 · 파트너센터 정산 · 소개몰 판매자)에서 합니다.
  *   다른 회원(추천한 분 · 추천받은 분)의 금액은 없음(partner-affiliate #7).
+ *   v10.258 (docs/390) — 「추천 보상」 칸 · 표: 내가 직접 추천한 분별로 **내가 받은** 포인트(받음 · 기다림 · 없음 · 1단계만).
  */
 export default async function SettlementAllPage() {
   const p = await me();
@@ -45,6 +47,7 @@ export default async function SettlementAllPage() {
         <div className="my-tile" data-settle-tile="intro"><b>{f.won(s.intro.paid)}</b><span className="my-tl">{t('tIntroPaid')}</span><span className="my-tu">{t('tWaiting', { v: f.won(s.intro.waiting) })}</span></div>
         <div className="my-tile" data-settle-tile="points"><b>{f.num(s.points.total)}P</b><span className="my-tl">{t('tPoints')}</span><span className="my-tu">{t('tRedeemable', { v: f.num(s.points.redeemable) })}</span></div>
         <div className="my-tile" data-settle-tile="cashout"><b>{f.won(s.points.cashout.paid)}</b><span className="my-tl">{t('tCashout')}</span></div>
+        <div className="my-tile" data-settle-tile="referral"><b>{f.num(s.referral.points)}P</b><span className="my-tl">{t('tReferral')}</span><span className="my-tu">{t('tReferralSub', { a: s.referral.got, b: s.referral.wait })}</span></div>
         {s.affiliate && <div className="my-tile" data-settle-tile="affiliate"><b>{f.won(s.affiliate.paid)}</b><span className="my-tl">{t('tAffiliate')}</span></div>}
         {s.seller && <div className="my-tile" data-settle-tile="seller"><b>{f.won(s.seller.paid)}</b><span className="my-tl">{t('tSeller')}</span></div>}
       </div>
@@ -72,6 +75,17 @@ export default async function SettlementAllPage() {
           ))}
         </Table>
       )}
+
+      <h2 className="my-s2" id="referral">{t('hReferral')} <Link className="dim" href="/my/recommend">{t('goReferral')}</Link></h2>
+      {s.referral.items.length === 0 ? <Empty data-settle-empty="referral">{t('emptyReferral')}</Empty> : (
+        <Table head={[t('cWho'), t('cJoined'), t('cState'), t('cPoints'), t('cGot')]}>
+          {s.referral.items.map((x, i) => (
+            <tr key={i} data-settle-row="referral" data-settle-rstate={x.state}><td>{x.name ?? t('left')}</td><td>{day(x.joined)}</td>
+              <td>{t(`rs.${x.state}` as never)}</td><td>{x.points ? `${f.num(x.points)}P` : '—'}</td><td>{day(x.at)}</td></tr>
+          ))}
+        </Table>
+      )}
+      {s.referral.items.length > 0 && <p className="dim">{t('referralNote')}</p>}
 
       {s.affiliate && <>
         <h2 className="my-s2">{t('hAffiliate')} <Link className="dim" href="/partners/settlements">{t('goAffiliate')}</Link></h2>

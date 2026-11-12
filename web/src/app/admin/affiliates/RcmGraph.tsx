@@ -3,10 +3,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 /* ── v10.254 (docs/388) 운영 화면 추천 관계도 그림 ↔ 목록 ───────────────────────
  *   사용자 웹 RcmTree 와 같은 그리기(위 → 아래 상자 · 선 · 확대 · 축소 · 끌기 · 찾기 · 펴고 접기 · 모두 펴기).
  *   상자를 누르면 그 회원을 고름(onSelect) — 아래 칸에서 「이 회원 관계도」 · 「정산 내역」 · 펴기 / 접기.
- *   300명이 넘으면 목록으로 먼저. 계층 용어(하위 · 산하 · 직급)를 쓰지 않습니다. */
-export interface GNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number }
+ *   300명이 넘으면 목록으로 먼저. 계층 용어(하위 · 산하 · 직급)를 쓰지 않습니다.
+ *   v10.258 (docs/390) 직접 추천한 분 상자 셋째 줄 — 고른 회원이 그분 덕분에 받은 보상(받음 nP · 인증 기다림 · 보상 없음). */
+export interface GNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number; reward?: { state: 'GOT' | 'WAIT' | 'NONE'; points: number; at: string | null } | null }
 
-const W = 140, H = 50, GX = 16, GY = 46;
+const W = 140, H = 62, GX = 16, GY = 40;
+const RW = (r: NonNullable<GNode['reward']>) => (r.state === 'GOT' ? `보상 ${r.points.toLocaleString('ko-KR')}P` : r.state === 'WAIT' ? '인증 기다림' : '보상 없음');
 
 export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
   rootName: string; nodes: GNode[]; onSelect: (n: GNode) => void; listLabel: (n: GNode) => ReactNode;
@@ -112,6 +114,7 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
                     <rect width={W} height={H} rx={8} fill={k === 0 ? 'var(--accent)' : '#fff'} stroke={stroke} strokeWidth={hit.includes(k) || sel === k ? 2.5 : 1.2} />
                     <text x={W / 2} y={20} textAnchor="middle" fontSize={13} fontWeight={700} fill={k === 0 ? '#fff' : 'currentColor'}>{k === 0 ? rootName : n!.name}</text>
                     <text x={W / 2} y={37} textAnchor="middle" fontSize={11} fill={k === 0 ? '#fff' : 'var(--muted, #777)'}>{k === 0 ? '고른 회원' : `${n!.joined}${n!.verified ? ' · 인증' : ''}${n!.status !== 'ACTIVE' ? ` · ${n!.status}` : ''}`}</text>
+                    {n?.reward && <text x={W / 2} y={53} textAnchor="middle" fontSize={11} fontWeight={700} fill={n.reward.state === 'GOT' ? 'var(--ok)' : n.reward.state === 'WAIT' ? 'var(--sgb-or-text)' : 'var(--muted, #777)'} data-rcm-reward={n.reward.state}>{RW(n.reward)}</text>}
                     {n && n.children > 0 && (
                       <text x={W - 8} y={14} textAnchor="end" fontSize={12} fontWeight={700} fill="var(--accent)" onClick={(e) => { e.stopPropagation(); toggle(k); }} data-rcm-toggle={n.id}>{closed ? `+${n.children}` : '−'}</text>
                     )}

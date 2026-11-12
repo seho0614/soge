@@ -320,3 +320,14 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .rcm-nd .t3 { font-size: 11px; font-weight: 700; fill: var(--sgb-ink-2); }
 .rcm-hit > details > summary b, .rcm-hit > .rcm-leaf b { background: #fff3d6; }
 @media (max-width: 640px) { .rcm-canvas { height: 420px; } }
+/* v10.257 · 258 (docs/390) 첫 화면 작은 그림 · 내가 받은 추천 보상 */
+.rcm-box.sm .rcm-canvas { height: 260px; }
+@media (max-width: 640px) { .rcm-box.sm .rcm-canvas { height: 220px; } }
+.rcm-nd .t4 { font-size: 11px; font-weight: 700; fill: var(--sgb-ink-3); }
+.rcm-nd .t4.GOT { fill: var(--sgb-gr-text); }
+.rcm-nd .t4.WAIT { fill: var(--sgb-or-text); }
+.rcm-rw { font-size: var(--sgb-fs-micro, 12px); font-weight: 700; color: var(--sgb-ink-3); }
+.rcm-rw.GOT { color: var(--sgb-gr-text); }
+.rcm-rw.WAIT { color: var(--sgb-or-text); }
+.rcm-home { margin: 16px 0; }
+.rcm-home .rcm-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 8px; }

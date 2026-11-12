@@ -10,6 +10,8 @@ import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 import { siteOrigin } from '@/components/refcode/origin';
+import { RcmTree, type RcmNode } from '@/components/recommend/RcmTree';   // v10.257 첫 화면 작은 관계도
+import { rcmLabels } from '@/components/recommend/labels';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.home'))('title') };
@@ -30,6 +32,8 @@ const bizNo = (s: string | null) => (s && /^\d{10}$/.test(s) ? `${s.slice(0, 3)}
  *   바로가기는 시안 14칸(9 + 덧붙인 5) 순서 그대로, 그 뒤에 개발에만 있던 4칸(프로필 수정 · 소개몰 주문 · 취소 · 반품 · 배송지)을 남겨 둡니다.
  *   「지금 막혀 있는 단계」 안내(본인인증 → 사업자 → 구독)는 개발에만 있어 시안 안내 상자 모양으로 맨 위에 남깁니다.
  *   v10.218 (D189) — 프로필 아래 「내 추천 코드」 상자(GET /me/recommend · 코드 · 가입 링크 · 직접 추천한 분 수).
+ *   v10.257 (docs/390) — 대표 「나의공간에 관계도 표시」 → 그 아래 「내 추천 관계도」 작은 그림(GET /me/recommend/tree · 2번째 줄까지 · 전체 보기)
+ *     · v10.258 내가 받은 추천 보상 합계. 추천한 분이 없으면 그리지 않음.
  */
 export default async function MyPage() {
   const p = await me();
@@ -38,9 +42,11 @@ export default async function MyPage() {
   const f = await getFmt();   // v10.107 — 누적 수익: 한국어 「원」 · 다른 언어 「₩1,200,000」
   const h = await apiGetPersonal<Home>('/me/home').catch(() => null);
   /* v10.218 (D189) — 내 추천 코드 · 가입 링크 · 내가 직접 추천한 분 수 · 나를 추천한 분(가린 이름) */
-  const [rcm, origin] = await Promise.all([
+  const [rcm, origin, tree, ta] = await Promise.all([
     apiGetPersonal<{ code: string | null; link: string | null; directCount: number; recommender: string | null }>('/me/recommend').catch(() => null),
     siteOrigin(),
+    apiGetPersonal<{ root: { name: string }; total: number; generations: Array<{ gen: number; count: number }>; reward: { points: number; got: number; wait: number }; nodes: RcmNode[] }>('/me/recommend/tree').catch(() => null),
+    getTranslations('affiliate.recommend'),
   ]);
 
   /* v10.37 (D095 · P2P) — 사업자 인증은 막힌 단계가 아닙니다(사업자로 소개비를 받을 때만) */
@@ -128,6 +134,20 @@ export default async function MyPage() {
           <p>{t('recommend.count', { n: rcm.directCount })}{rcm.recommender ? ` · ${t('recommend.by', { name: rcm.recommender })}` : ''}
             {' '}<Link href="/my/recommend" data-my-rcm-view="">{t('recommend.view')}</Link></p>
         </Note>
+      )}
+
+      {tree && tree.total > 0 && (
+        <section className="rcm-home card p2pad" data-my-rcm-tree={tree.total}>
+          <div className="rcm-head">
+            <h2 className="my-s2" style={{ margin: 0 }}>{t('recommend.card')}</h2>
+            <Link href="/my/recommend" data-my-rcm-full="">{t('recommend.full')}</Link>
+          </div>
+          <p className="dim">
+            {t('recommend.sum', { n: tree.total, g: tree.generations.length })}
+            {' · '}<span data-my-rcm-reward={tree.reward.points}>{t('recommend.reward', { p: tree.reward.points.toLocaleString('ko-KR') })}</span>
+          </p>
+          <RcmTree compact rootName={tree.root.name} nodes={tree.nodes} L={rcmLabels(ta as unknown as Parameters<typeof rcmLabels>[0])} />
+        </section>
       )}
 
       {zero ? (

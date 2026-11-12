@@ -11,5 +11,6 @@ export function rcmLabels(t: T): RcmLabels {
     graph: t('graph'), list: t('list'), expandAll: t('expandAll'), collapseAll: t('collapseAll'), search: t('search'),
     zoomIn: t('zoomIn'), zoomOut: t('zoomOut'), fit: t('fit'), me: t('me'), left: t('left'), noMatch: t('noMatch'),
     joinedDay: t('joinedDay', { d: '{d}' }), joinedMonth: t('joinedMonth', { d: '{d}' }), theirs: t('theirs', { n: '{n}' }), found: t('found', { n: '{n}' }),
+    rGot: t('rGot', { p: '{p}' }), rWait: t('rWait'), rNone: t('rNone'),
   };
 }

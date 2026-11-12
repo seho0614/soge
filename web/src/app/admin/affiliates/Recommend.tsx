@@ -8,14 +8,17 @@ import { RcmGraph, type GNode } from './RcmGraph';
 import { SettlementSummary } from '../SettlementSummary';
 
 interface Member { id: string; name: string; email: string | null; code: string | null; status: string; joinedAt: string; directCount: number; recommender: string | null }
-interface TNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number }
+interface TNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number; reward?: { state: 'GOT' | 'WAIT' | 'NONE'; points: number; at: string | null } | null }
 interface Detail {
+  reward: { points: number; got: number; wait: number; none: number };
   member: { id: string; name: string; email: string | null; code: string | null; status: string; joinedAt: string; verified: boolean };
   recommenders: Array<{ id: string; name: string; code: string | null; gen: number }>;
   rewarded: boolean;
   changes: Array<{ at: string; old: string | null; new: string | null; reason: string }>;
   total: number; truncated: boolean; generations: Array<{ gen: number; count: number }>; nodes: TNode[];
 }
+/** v10.258 (docs/390) — 직접 추천한 분 줄: 그 회원(추천한 사람)이 받은 보상 */
+const rwText = (r: { state: string; points: number; at: string | null }) => (r.state === 'GOT' ? `보상 ${r.points.toLocaleString('ko-KR')}P${r.at ? ` · ${r.at}` : ''}` : r.state === 'WAIT' ? '본인인증 기다림' : '보상 없음');
 interface Rule { isActive: boolean; points: number; monthlyCap: number | null; given: number; givenPoints: number }
 
 /* ── SB-AFF-RCM-010 추천 관계도 · v10.218 (D189 · docs/351) ─────────────────────
@@ -112,6 +115,7 @@ export function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string
     <span className="mono dim">{x.code}</span> <span className="dim">{x.joined} 가입</span>{' '}
     {x.verified ? <span className="st ok">본인인증</span> : <span className="st">인증 전</span>}
     {x.status !== 'ACTIVE' && <> <span className="st warn">{x.status}</span></>}
+    {x.reward && <> <span className={x.reward.state === 'GOT' ? 'st ok' : x.reward.state === 'WAIT' ? 'st warn' : 'st'} data-rcm-reward={x.reward.state}>{rwText(x.reward)}</span></>}
   </>;
 
   if (d.error) return <ErrorView error={d.error} onRetry={d.reload} />;
@@ -125,6 +129,7 @@ export function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string
             ? d.data.recommenders.slice().reverse().map((u) => <span key={u.id}><button className="btn-plain btn-sm" onClick={() => onPick(u.id)}>{u.name}</button> → </span>)
             : '없음 · '}<b>{d.data.member.name}</b></p>
           <p>모두 {n(d.data.total)}명 {d.data.generations.map((g) => <span key={g.gen} className="st">{g.gen === 1 ? `직접 추천 ${g.count}명` : `${g.gen}번째 ${g.count}명`}</span>)}</p>
+          <p data-rcm-reward-sum={`${d.data.reward.points}|${d.data.reward.got}|${d.data.reward.wait}`}>이 회원이 받은 추천 보상 <b>{n(d.data.reward.points)}P</b> · 받음 {d.data.reward.got}명 · 본인인증 기다림 {d.data.reward.wait}명{d.data.reward.none ? ` · 보상 없음 ${d.data.reward.none}명` : ''} <span className="dim">(직접 추천한 분별 · 1단계만)</span></p>
           {d.data.truncated && <p className="hint">사람이 많아 처음 3,000명까지만 보입니다.</p>}
           {canEdit && <p><button className="btn-sm ghost" onClick={() => setMoney(money?.id === d.data!.member.id ? null : { id: d.data!.member.id, name: d.data!.member.name })} data-rcm-money={d.data.member.id}>
             {money?.id === d.data.member.id ? '정산 내역 닫기' : `${d.data.member.name} 정산 내역`}</button></p>}

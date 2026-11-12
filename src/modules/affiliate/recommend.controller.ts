@@ -26,11 +26,14 @@ const NODE = {
   type: 'object', properties: {
     k: { type: 'integer', description: '1부터 붙인 번호(회원 번호 아님)' }, p: { type: 'integer', description: '위 사람 번호 · 0 = 맨 위' },
     gen: { type: 'integer' }, name: { type: 'string', nullable: true }, joined: { type: 'string' }, children: { type: 'integer' },
+    reward: { type: 'object', nullable: true, description: 'v10.258 — 1번째 줄만 · 내가 받은 보상(state GOT · WAIT · NONE · points · at)' },
   },
 };
 const TREE = {
   type: 'object', properties: {
     total: { type: 'integer' }, truncated: { type: 'boolean' },
+    /* v10.258 (docs/390) 직접 추천한 분별로 받은 추천 보상 합계 · 상자(1번째 줄)의 reward */
+    reward: { type: 'object', properties: { points: { type: 'integer' }, got: { type: 'integer' }, wait: { type: 'integer' }, none: { type: 'integer' } } },
     generations: { type: 'array', items: { type: 'object', properties: { gen: { type: 'integer' }, count: { type: 'integer' } } } },
     nodes: { type: 'array', items: NODE },
   },

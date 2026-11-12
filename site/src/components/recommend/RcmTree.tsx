@@ -6,19 +6,23 @@
  *   목록: 들여쓰기 목록(접고 펴기). 휴대폰 폭 · 300명 넘으면 목록으로 먼저 보이고, 그림은 3번째 줄까지 펴 둠.
  *   새 프로그램 묶음 없이 SVG 로 직접 그립니다. 글자는 모두 서버 화면이 사전에서 넘겨 줌(L) — 이 파일에 한국어 없음.
  *   보이는 것은 서버가 준 것뿐(가린 이름 · 날짜 · 그분이 추천한 수) — 실적 · 금액 · 연락처 · 회원 번호 없음.
+ *   v10.257 (docs/390) compact — 나의공간 첫 화면 작은 그림(2번째 줄까지 · 화면에 맞춤 · 단추 없음 · 휴대폰도 그림).
+ *   v10.258 (docs/390) 직접 추천한 분(1번째 줄) 상자에 **내가 받은 추천 보상**(받음 nP · 본인인증 기다림 · 보상 없음) — 그분 금액이 아님.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-export interface RcmNode { k: number; p: number; gen: number; name: string | null; joined: string; children: number }
+export interface RcmReward { state: 'GOT' | 'WAIT' | 'NONE'; points: number; at: string | null }
+export interface RcmNode { k: number; p: number; gen: number; name: string | null; joined: string; children: number; reward?: RcmReward | null }
 export interface RcmLabels {
   graph: string; list: string; expandAll: string; collapseAll: string; search: string; zoomIn: string; zoomOut: string; fit: string;
   me: string; joinedDay: string; joinedMonth: string; theirs: string; left: string; noMatch: string; found: string;
+  rGot: string; rWait: string; rNone: string;
 }
 
-const W = 132, H = 48, GX = 16, GY = 46;
+const W = 132, H = 62, GX = 16, GY = 40;
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_m, k) => String(v[k] ?? ''));
 
-export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNode[]; L: RcmLabels }) {
+export function RcmTree({ rootName, nodes, L, compact = false }: { rootName: string; nodes: RcmNode[]; L: RcmLabels; compact?: boolean }) {
   const kids = useMemo(() => {
     const m = new Map<number, RcmNode[]>();
     for (const n of nodes) m.set(n.p, [...(m.get(n.p) ?? []), n]);
@@ -26,7 +30,7 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
   }, [nodes]);
   const byK = useMemo(() => new Map(nodes.map((n) => [n.k, n])), [nodes]);
   const [mode, setMode] = useState<'graph' | 'list'>('graph');
-  const [open, setOpen] = useState<Set<number>>(() => new Set([0, ...nodes.filter((n) => n.gen <= 2 && n.children > 0).map((n) => n.k)]));
+  const [open, setOpen] = useState<Set<number>>(() => new Set([0, ...nodes.filter((n) => n.gen <= (compact ? 1 : 2) && n.children > 0).map((n) => n.k)]));
   const [q, setQ] = useState('');
   const [hit, setHit] = useState<number[]>([]);
   const [view, setView] = useState({ x: 20, y: 20, s: 1 });
@@ -34,7 +38,7 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
   const box = useRef<HTMLDivElement>(null);
 
   /* 휴대폰 폭 · 사람이 많으면 목록으로 먼저 */
-  useEffect(() => { if (nodes.length > 300 || window.innerWidth < 640) setMode('list'); }, [nodes.length]);
+  useEffect(() => { if (!compact && (nodes.length > 300 || window.innerWidth < 640)) setMode('list'); }, [nodes.length, compact]);
 
   /* 그림 자리 — 펼친 것만 · 잎은 한 칸 · 부모는 자식 가운데 */
   const layout = useMemo(() => {
@@ -83,6 +87,10 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
     setTimeout(() => centerOn(hs[0]!), 0);
   };
   const label = (n: RcmNode) => fill(n.gen === 1 ? L.joinedDay : L.joinedMonth, { d: n.joined });
+  /* v10.258 — 내가 받은 추천 보상(직접 추천한 분만) */
+  const rw = (n: RcmNode) => (!n.reward ? '' : n.reward.state === 'GOT' ? fill(L.rGot, { p: n.reward.points.toLocaleString('ko-KR') }) : n.reward.state === 'WAIT' ? L.rWait : L.rNone);
+  /* 작은 그림 — 처음 그릴 때 화면에 맞춤 */
+  useEffect(() => { if (compact) fit(); }, [compact, layout.w, layout.h]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const branch = (pk: number) => {
     const list = kids.get(pk) ?? [];
@@ -93,11 +101,11 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
           <li key={n.k} data-rcm-gen={n.gen} className={hit.includes(n.k) ? 'rcm-hit' : undefined}>
             {n.children > 0 ? (
               <details open={open.has(n.k)} onToggle={(e) => { const o = (e.target as HTMLDetailsElement).open; if (o !== open.has(n.k)) toggle(n.k); }}>
-                <summary><b>{n.name ?? L.left}</b> <span className="dim">{label(n)}</span> <span className="state">{fill(L.theirs, { n: n.children })}</span></summary>
+                <summary><b>{n.name ?? L.left}</b> <span className="dim">{label(n)}</span> <span className="state">{fill(L.theirs, { n: n.children })}</span>{n.reward && <> <span className={`rcm-rw ${n.reward.state}`} data-rcm-reward={n.reward.state}>{rw(n)}</span></>}</summary>
                 {open.has(n.k) && branch(n.k)}
               </details>
             ) : (
-              <span className="rcm-leaf"><b>{n.name ?? L.left}</b> <span className="dim">{label(n)}</span></span>
+              <span className="rcm-leaf"><b>{n.name ?? L.left}</b> <span className="dim">{label(n)}</span>{n.reward && <> <span className={`rcm-rw ${n.reward.state}`} data-rcm-reward={n.reward.state}>{rw(n)}</span></>}</span>
             )}
           </li>
         ))}
@@ -113,8 +121,8 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
   }
 
   return (
-    <div className="rcm-box" data-rcm-tree={mode} data-rcm-nodes={nodes.length}>
-      <div className="rcm-bar">
+    <div className={`rcm-box${compact ? ' sm' : ''}`} data-rcm-tree={mode} data-rcm-nodes={nodes.length} data-rcm-compact={compact ? '' : undefined}>
+      {!compact && <div className="rcm-bar">
         <span className="rcm-seg">
           <button type="button" className={mode === 'graph' ? 'on' : undefined} onClick={() => setMode('graph')} data-rcm-mode="graph">{L.graph}</button>
           <button type="button" className={mode === 'list' ? 'on' : undefined} onClick={() => setMode('list')} data-rcm-mode="list">{L.list}</button>
@@ -129,7 +137,7 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
           <button type="button" onClick={() => setView((v) => ({ ...v, s: Math.max(0.2, v.s / 1.25) }))} aria-label={L.zoomOut} data-rcm-zoom="out">－</button>
           <button type="button" onClick={fit} data-rcm-fit="">{L.fit}</button>
         </>}
-      </div>
+      </div>}
 
       {mode === 'list' ? (
         <div className="card p2pad rcm-tree">
@@ -157,6 +165,7 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
                     <rect width={W} height={H} rx={9} />
                     <text x={W / 2} y={19} textAnchor="middle" className="t1">{k === 0 ? rootName : n!.name ?? L.left}</text>
                     <text x={W / 2} y={36} textAnchor="middle" className="t2">{k === 0 ? L.me : label(n!)}</text>
+                    {n?.reward && <text x={W / 2} y={53} textAnchor="middle" className={`t4 ${n.reward.state}`} data-rcm-reward={n.reward.state}>{rw(n)}</text>}
                     {n && n.children > 0 && <text x={W - 8} y={14} textAnchor="end" className="t3">{closed ? `+${n.children}` : '−'}</text>}
                   </g>
                 );
@@ -165,7 +174,7 @@ export function RcmTree({ rootName, nodes, L }: { rootName: string; nodes: RcmNo
           </svg>
           {/* 화면 읽기 프로그램용 — 그림과 같은 사람을 글로(보이지 않음) */}
           <ul className="sr-only" data-rcm-sr="">
-            {nodes.map((n) => <li key={n.k}>{n.name ?? L.left} · {label(n)}</li>)}
+            {nodes.map((n) => <li key={n.k}>{n.name ?? L.left} · {label(n)}{n.reward ? ` · ${rw(n)}` : ''}</li>)}
           </ul>
         </div>
       )}

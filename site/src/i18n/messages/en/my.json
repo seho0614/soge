@@ -118,7 +118,11 @@
       "b": "My invite code",
       "count": "{n, plural, one {{n} member} other {{n} members}} you invited",
       "by": "Invited by {name}",
-      "view": "View invite map"
+      "view": "View invite map",
+      "card": "My invite map",
+      "full": "View all",
+      "sum": "{n, plural, one {{n} member} other {{n} members}} in total · down to step {g}",
+      "reward": "Invite rewards received: {p}P"
     },
     "title": "My page",
     "sub": "This is where referrers check their own activity. Ongoing referrals and pending settlements at a glance.",
@@ -918,6 +922,21 @@
       "CANCELED": "Canceled",
       "DRAFT": "Draft",
       "CARRIED": "Carried over"
-    }
+    },
+    "tReferral": "Invite rewards",
+    "tReferralSub": "Rewarded {a, plural, one {{a} member} other {{a} members}} · awaiting {b, plural, one {{b} member} other {{b} members}}",
+    "hReferral": "Invite rewards — by member you invited",
+    "goReferral": "Invite map",
+    "emptyReferral": "No one has joined with your invite code yet.",
+    "cWho": "Invited member",
+    "cJoined": "Joined",
+    "cGot": "Received",
+    "left": "Withdrawn member",
+    "rs": {
+      "GOT": "Received",
+      "WAIT": "Awaiting ID check",
+      "NONE": "No reward"
+    },
+    "referralNote": "Points are the invite rewards you received (not that member's money). Rewards come only from members you invited directly, once each. \"No reward\" means rewards were off or the monthly cap was reached when they completed the ID check."
   }
 }

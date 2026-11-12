@@ -981,7 +981,8 @@
     "GET /me/summary",
     "GET /me/notifications",
     "GET /me/home",
-    "GET /me/recommend"
+    "GET /me/recommend",
+    "GET /me/recommend/tree"
    ],
    "nav": "SB-HOM-MAIN-010"
   },

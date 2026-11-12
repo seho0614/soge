@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound } from '../../core/errors';
+import { maskName } from '../../common/mask';
+import { directRewards, rewardSum } from '../affiliate/referral-reward';
 
 /* ---------------------------------------------------------------------
  * v10.255 (docs/388) — 정산 내역 한눈에(읽기만)
@@ -65,12 +67,19 @@ export class SettlementSummaryService {
          FROM hlt_settlements s JOIN hlt_sellers h ON h.id = s.seller_id
         WHERE h.account_id = $1 ORDER BY s.period_from DESC LIMIT ${RECENT}`, [accountId]);
 
+    /* ⑤ v10.258 (docs/390) 추천 보상 — 내가 직접 추천한 분별로 **내가 받은** 포인트(그분 금액 아님 · 1단계만) */
+    const rw = await directRewards(this.db, accountId);
+    const kst = (d: Date) => new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
+
     const total = (xs: Sum[], st: string[]) => xs.filter((x) => st.includes(x.status)).reduce((a, x) => a + Number(x.amount), 0);
     return {
       intro: { sums: introSum, paid: total(introSum, ['PAID']), waiting: total(introSum, ['REQUESTED', 'HELD']), items: intro },
       points: { total: pt?.total ?? 0, redeemable: pt?.redeemable ?? 0, byRule, ledger,
                 cashout: { sums: cashSum, paid: total(cashSum, ['PAID']), items: cashouts } },
       affiliate: aff.length ? { paid: aff.filter((x) => x.state === 'PAID').reduce((a, x) => a + x.net, 0), items: aff } : null,
+      referral: { ...rewardSum(rw), items: rw.map((x) => ({
+        name: x.withdrawn ? null : maskName(x.name), joined: kst(x.joined), state: x.state, points: x.points, at: x.at ? kst(x.at) : null,
+      })) },
       seller: seller.length ? { paid: seller.filter((x) => x.status === 'PAID').reduce((a, x) => a + x.net, 0), items: seller } : null,
       note: '다른 회원(추천한 분 · 추천받은 분)의 금액은 보이지 않습니다. 각 정산의 신청 · 계좌 · 지급은 해당 화면에서 합니다.',
     };
