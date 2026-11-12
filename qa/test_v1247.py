@@ -61,7 +61,7 @@ ok('① 서버 자원 — launch_watch 가 그날 처음 잰 값만(ON CONFLICT 
    'this.trend.record(sh)' in SC and 'ON CONFLICT (day) DO NOTHING' in TR and 'export function diskTrend' in TR and '.slice(-14)' in TR
    and 'pts.length < 3' in TR and 'await this.trend.digestLine().catch(' in LW and 'ServerTrendService,' in AM, '')
 ok('① 주간 알림 — 작업 owner_todo_weekly(실행 목록) · 스위치 · 아직인 줄만 · 모두 끝나면 안 보냄 · 텔레그램 · 슬랙 · OWNER_TODO_WEEKLY INFO',
-   "case 'owner_todo_weekly'" in SC and "'owner_todo_weekly'," in WK and "key = 'ops.owner_todo_weekly'" in SC and 'if (!left.length) return' in SC
+   "case 'owner_todo_weekly'" in SC and "'owner_todo_weekly'," in WK and "key = 'ops.owner_todo_weekly'" in SC and ('if (!left.length) return' in SC or 'if (!left.length && !aw.warnTotal) return' in SC)
    and 'this.telegram.send(text)' in SC and 'this.slack.send(text)' in SC and "this.alert('OWNER_TODO_WEEKLY', 'INFO'" in SC
    and 'export function ownerTodoWeeklyText' in OT, '')
 ok('① 화면 — 「결과 파일」(SUPER) · 본문 열기 · 서버 자원 추세 카드 · 첫 화면',
@@ -175,7 +175,8 @@ if API and DB:
            and d1.get('telegram') not in (None, 'SENT') and d1.get('slack') not in (None, 'SENT')
            and al.startswith('1|INFO|대표 할 일 아직 ') and '보낸 길 없음' in al, f'{d1} · {al[:120]}')
     else:
-        ok('④ 스위치 on — 모두 끝나 보내지 않음 · 알림 없음', d1.get('left') == 0 and al.startswith('0|'), f'{d1} · {al}')
+        ok('④ 스위치 on — 모두 끝나 보내지 않음 · 알림 없음(v10.252 부터는 지난 7일 경고 이상 알림이 있으면 보냄)',
+           d1.get('left') == 0 and (al.startswith('0|') or (d1.get('warn7') or 0) > 0), f'{d1} · {al}')
 
     # ── ⑤ 화면 ──
     try:
