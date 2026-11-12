@@ -4,7 +4,7 @@
 
   ① (코드) D201 audit.owner_todo_marks(쌓기만 · fn_block_write) · 서비스 mark(SUPER · 메모 5자) · API · 쌓기만 목록 · 정기 점검 3줄 ·
      termsSoon · termsAlerts · 정기 작업 TERMS_EFFECTIVE_SOON · _TODAY · 하루 요약 줄 · 화면 「적기」 · 명세 · 영어 · 문서 381 · 판 v10.243 이상
-  ② (API) 대표 할 일 15줄 · 직접 확인 3줄 manual · ADMIN 403 · 잘못된 줄 · 메모 짧음 422 · SUPER 끝남 → ✓ 끝남 · 다시 아직 → ○ · 고치기 · 지우기 막힘 · 감사 기록
+  ② (API) 대표 할 일 15줄 · 직접 확인 3줄 manual · ADMIN 403 · 잘못된 줄 · 메모 짧음 400 · SUPER 끝남 → ✓ 끝남 · 다시 아직 → ○ · 고치기 · 지우기 막힘 · 감사 기록
   ③ (API) 정기 점검 3줄이 DB(지난달 · 지난 분기 점검 · 열린 권리 요청)와 맞음
   ④ (정기 작업) 시험 약관 2개(첫 판 2일 뒤 · 새 판 오늘 · 판 번호 9.x — 1.0 게시 판은 DB 가 못 지우게 함) → 하루 요약 줄 · TERMS_EFFECTIVE_SOON 1 · _TODAY 1 · 다시 돌려도 그대로(판마다 한 번)
   ⑤ (화면) 대표 할 일 15줄 · 직접 확인 줄 「적기」 · 끝남으로
@@ -100,7 +100,7 @@ if API and DB:
     ra = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'plans', 'done': True, 'note': '시험 1241 금액 확정'}, TA)
     r1 = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'channels', 'done': True, 'note': '시험 1241 잘못된 줄'}, TS)
     r2 = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'plans', 'done': True, 'note': '짧음'}, TS)
-    ok('② 적기 — ADMIN 403 · 자동 줄 422 · 메모 4자 422', ra.get('_err') == 403 and r1.get('_err') == 422 and r2.get('_err') == 422,
+    ok('② 적기 — ADMIN 403 · 자동 줄 400 · 메모 4자 400(입력 검사 VALIDATION_ERROR)', ra.get('_err') == 403 and r1.get('_err') == 400 and r2.get('_err') == 400 and r1.get('code') == r2.get('code') == 'VALIDATION_ERROR',
        f"{ra.get('_err')} · {r1.get('_err')} {r1.get('code')} · {r2.get('_err')} {r2.get('code')}")
     r3 = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'plans', 'done': True, 'note': '시험 1241 요금제 금액 확정'}, TS)
     d1 = todo(); p1 = {r['key']: r for r in d1.get('rows', [])}.get('plans', {})
@@ -130,8 +130,8 @@ if API and DB:
     ro, rs = (pr.split('|') + ['', ''])[:2]
     a, b, c = rr.get('pii-review', {}), rr.get('role-review', {}), rr.get('privacy-due', {})
     ok('③ 정기 점검 3줄 — DB 와 맞음(지난달 · 지난 분기 점검 · 열린 권리 요청 · 기한 2일 안) · 기한 날짜 · 보러 가기 탭',
-       a.get('done') is (mdone == 't') and mon in a.get('now', '') and (a.get('done') or '기한 ' in a.get('now', '')) and a.get('go') == 'pii-review'
-       and b.get('done') is (pq == 't') and (b.get('done') or '기한 ' in b.get('now', '')) and b.get('go') == 'role-review'
+       a.get('done') is (mdone in ('t', 'true')) and mon in a.get('now', '') and (a.get('done') or '기한 ' in a.get('now', '')) and a.get('go') == 'pii-review'
+       and b.get('done') is (pq in ('t', 'true')) and (b.get('done') or '기한 ' in b.get('now', '')) and b.get('go') == 'role-review'
        and c.get('done') is (rs == '0') and (('열린 요청 없음' in c.get('now', '')) if ro == '0' else f'열린 요청 {ro}' in c.get('now', '')) and c.get('go') == 'privacy-requests',
        f"{a.get('now')} · {b.get('now')} · {c.get('now')} · DB {pm} {pq} {pr}")
 
