@@ -46,8 +46,9 @@ ok('① 연속 실패 경보 — SEND_ 만 실패 · 60분(ALERT_FAIL_MINUTES) �
    and 'this.channels.failWatch({ mail: am, telegram: ap, slack: as })' in SC and 'channelFail: cf' in SC, '')
 CT, ST = rd('src/modules/admin/launch-watch.controller.ts'), rd('web/src/app/admin/StateCheck.tsx')
 SJ = json.loads(rd('spec/screens.json') or '{"screens":[]}'); sc = {s['id']: s for s in SJ.get('screens', [])}
+V241 = 'MANUAL_KEYS' in OT   # v10.241 ~ 242(test_v1241) — 직접 확인 줄은 manual: true · 정기 점검 3줄 더해 15줄
 ok('① 대표 할 일 — 자동 9 · 직접 확인 3 · owner-todo API(읽기만) · 첫 화면 카드 · 명세',
-   OT.count("done: null") == 3 and "@Get('owner-todo')" in CT and 'data-owner-todo' in ST and '<OwnerTodo onGo={onGo} canGo={canGo} />' in rd('web/src/app/admin/Dashboard.tsx')
+   (OT.count("done: null") == 3 or (V241 and "manual: true" in OT)) and "@Get('owner-todo')" in CT and 'data-owner-todo' in ST and '<OwnerTodo onGo={onGo} canGo={canGo} />' in rd('web/src/app/admin/Dashboard.tsx')
    and any('GET /admin/launch-watch/owner-todo' in s.get('apis', []) for s in sc.values())
    and "ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패'" in rd('web/src/app/admin/OpsAlerts.tsx'), '')
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('379_')] if os.path.isdir(os.path.join(K, 'docs')) else []
@@ -135,10 +136,11 @@ if up:
            next((l for l in dg.splitlines() if '받는 길' in l), '')[:160])
         td = call('GET', '/admin/launch-watch/owner-todo', None, T_)
         tr = {r['key']: r for r in td.get('rows', [])}
-        man = [r['key'] for r in td.get('rows', []) if r.get('done') is None]
+        man = [r['key'] for r in td.get('rows', []) if (r.get('manual') if V241 else r.get('done') is None)]
         auto = [r for r in td.get('rows', []) if r.get('done') is not None]
+        NR, NT = (15, 15) if V241 else (12, 9)
         ok('② 대표 할 일 — 12줄(자동 9 · 직접 확인 3: 요금제 · 법무 · EBS) · 끝남 = 자동 중 됨 · 받는 길 · CRITICAL 아직',
-           len(tr) == 12 and td.get('total') == 9 and man == ['plans', 'legal', 'ebs'] and td.get('done') == sum(1 for r in auto if r['done'])
+           len(tr) == NR and td.get('total') == NT and man == ['plans', 'legal', 'ebs'] and td.get('done') == sum(1 for r in auto if r['done'])
            and tr.get('channels', {}).get('done') is False and tr.get('critical', {}).get('done') is False
            and all(r.get('go') for r in td.get('rows', [])), f"{td.get('done')} / {td.get('total')} · {[(k, v.get('done')) for k, v in tr.items()]}")
         rev = call('GET', '/admin/launch-watch/owner-todo', None, call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken'))
@@ -206,9 +208,9 @@ if up:
             pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
             pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(3000)
             seen = (pg.locator('[data-state-row="alert-channels"]').count(), pg.locator('[data-owner-todo]').count(),
-                    pg.locator('[data-owner-row]').count(), pg.locator('[data-owner-state="manual"]').count())
+                    pg.locator('[data-owner-row]').count(), pg.locator('[data-owner-row="plans"], [data-owner-row="legal"], [data-owner-row="ebs"]').count())
             b.close()
-        ok('④ 첫 화면 — 받는 길 줄 · 대표 할 일 카드 12줄(직접 확인 3) · 화면 오류 없음', seen == (1, 1, 12, 3) and not errs, f'{seen} · {errs[:2]}')
+        ok('④ 첫 화면 — 받는 길 줄 · 대표 할 일 카드 12줄(직접 확인 3) · 화면 오류 없음', seen == (1, 1, 15 if V241 else 12, 3) and not errs, f'{seen} · {errs[:2]}')
     else:
         print('  (운영 화면 · playwright 없음 — ④ 건너뜀)')
 
