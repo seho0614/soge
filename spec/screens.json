@@ -1169,7 +1169,9 @@
     "BIZ_OWNER",
     "BIZ_STAFF"
    ],
-   "gates": [],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
    "apis": [
     "GET /me/settlement-summary"
    ],
