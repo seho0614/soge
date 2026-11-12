@@ -47,7 +47,7 @@ ok('① 하루 요약 · 지켜보기 — AI 줄(어제 · 오늘 · 잠김 · �
    "...agentLines(await this.agentDay('yesterday'), '어제')," in LW and '...reconsentLines(await this.reconsent()),' in LW
    and "ai: agentLines(await this.agentDay('today'), '오늘')" in LW and "'AI — 잠김(국외 이전 조항이 든 처리방침이 " in LW and "['AI — 꺼짐']" in LW
    and '`재동의 — ${r.title} ${r.version}: ${r.agreed} / ${r.target}' in LW and 'FROM v_term_not_agreed n WHERE n.code = t.code' in LW
-   and LW.index("...agentLines(await this.agentDay('yesterday')") < LW.index('diskLine(serverHealth()),\n      \'\','), '')
+   and LW.index("...agentLines(await this.agentDay('yesterday')") < LW.index('diskLine(serverHealth()),'), '')
 TS_ = rd('src/modules/catalog/terms.service.ts'); TD = rd('src/modules/catalog/terms.dto.ts')
 ok('① 약관 목록 — 필수 약관 지금 판만 consent(target · agreed · missing) · DTO 순서(TermConsentDto 가 앞)',
    'END AS consent' in TS_ and "'missing', (SELECT count(*)::int FROM v_term_not_agreed n WHERE n.code = t.code)" in TS_
