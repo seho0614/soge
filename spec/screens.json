@@ -1887,6 +1887,7 @@
     "POST /admin/ops-alerts/{id}/ack",
     "POST /admin/ops-alerts/ack-code", "GET /admin/ops-alerts/ack-bulk/preview", "POST /admin/ops-alerts/ack-bulk",
     "GET /admin/ops-alerts/mail-status",
+    "GET /admin/launch-watch/alerts-week",
     "POST /admin/ops-alerts/mail-test",
     "GET /admin/ops-alerts/push-preview",
     "POST /admin/ops-alerts/push-test",

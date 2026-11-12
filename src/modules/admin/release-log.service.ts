@@ -27,6 +27,42 @@ export const OPS_FILE = /^(precheck|postcheck|apply|cleanup|open-prep)_(\d{8})_(
 export const OPS_FILE_MAX = 200_000;
 const logsDir = () => join(process.env.DATA_DIR || join(homedir(), 'sgb-data'), 'logs');
 export type OpsFile = { name: string; kind: string; at: string; size: number };
+/* v10.251 (docs/387) — 가장 최근 precheck 결과 파일 요약(읽기만) */
+const PRE_FILE = /^precheck_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.txt$/;
+export type PrecheckSummary = {
+  file: string; at: string; version: string | null; pass: number; fail: number; warn: number;
+  applied: number | null; files: number | null; pending: number | null; drift: number | null; pendingNames: string[];
+  rolledBack: boolean; blockers: number | null; termsPublished: number | null; termsDraft: number | null; ageHours: number;
+};
+
+/** precheck 결과 파일 한 개를 읽어 숫자만 뽑음(없거나 못 읽으면 null) */
+export function readPrecheck(dir = logsDir()): PrecheckSummary | null {
+  try {
+    const name = readdirSync(dir).filter((f) => PRE_FILE.test(f)).sort().pop();
+    if (!name) return null;
+    const p = join(dir, name);
+    const st = lstatSync(p);
+    if (!st.isFile() || st.size > 2_000_000) return null;
+    const txt = readFileSync(p, 'utf8');
+    const sum = txt.match(/적용 전 점검 — 통과 (\d+) · 실패 (\d+) · 확인 (\d+)/);
+    if (!sum) return null;
+    const num = (re: RegExp) => { const m = txt.match(re); return m ? Number(m[1]) : null; };
+    const mig = txt.match(/마이그레이션 — 적용됨 (\d+|\?) · 새 킷의 파일 (\d+) · 올릴 것 (\d+) · 바뀐 파일 (\d+)/);
+    const names = [...txt.matchAll(/^\s+올릴 것: (.+)$/gm)].flatMap((m) => m[1]!.trim().split(/\s+/)).filter(Boolean).slice(0, 30);
+    const head = txt.split('\n', 1)[0] ?? '';
+    const ver = head.match(/올릴 판 (v[\w.\-]{1,20})\s*$/);
+    const m = name.match(PRE_FILE)!;
+    return {
+      file: name, at: `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]}`, version: ver ? ver[1]! : null,
+      pass: Number(sum[1]), fail: Number(sum[2]), warn: Number(sum[3]),
+      applied: mig && mig[1] !== '?' ? Number(mig[1]) : null, files: mig ? Number(mig[2]) : null,
+      pending: mig ? Number(mig[3]) : null, drift: mig ? Number(mig[4]) : null, pendingNames: names,
+      rolledBack: /확인  되돌린 상태/.test(txt), blockers: num(/오픈 차단 (\d+)건/),
+      termsPublished: num(/약관: 게시 (\d+)\(/), termsDraft: num(/약관: 게시 \d+\(.*?\) · 초안 (\d+)/),
+      ageHours: Math.max(0, Math.floor((Date.now() - st.mtimeMs) / 3_600_000)),
+    };
+  } catch { return null; }
+}
 
 export function releaseKind(prev: string | null, now: string): ReleaseKind {
   if (!prev) return 'FIRST';
@@ -98,7 +134,7 @@ export class ReleaseLogService implements OnApplicationBootstrap {
          FROM ops_release_log ORDER BY booted_at DESC, id DESC LIMIT 10`);
     return {
       now: { version: APP_VERSION, startedAt: PROCESS_STARTED_AT.toISOString() },
-      rows, postcheck: readPostcheck(),
+      rows, postcheck: readPostcheck(), precheck: readPrecheck(),
     };
   }
 

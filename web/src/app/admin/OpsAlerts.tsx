@@ -84,6 +84,34 @@ const NAME: Record<string, string> = {
  * 정기 작업 · 스크립트가 남긴 운영 알림을 보고 「확인」합니다. 확인은 한 번만(누가 · 언제 · 메모가 남고 되돌릴 수 없음).
  * 알림 내용은 바꾸거나 지우지 않습니다. 「지켜보기」의 「확인 안 한 알림」 칸 · 대시보드 긴급 경보가 여기로 옵니다.
  */
+/* v10.252 (docs/387) — 지난 7일 운영 알림 종류별(급함 → 경고 → 정보 · 주간 알림과 같은 숫자 · 읽기만) */
+interface WeekRow { code: string; severity: 'INFO' | 'WARN' | 'CRITICAL'; n: number; open: number; lastAt: string; title: string }
+function AlertsWeek() {
+  const q = useApi<{ rows: WeekRow[]; warnTotal: number; warnOpen: number }>('/admin/launch-watch/alerts-week');
+  const [all, setAll] = useState(false);
+  const d = q.data;
+  if (!d) return null;
+  const rows = all ? d.rows : d.rows.filter((r) => r.severity !== 'INFO');
+  return (
+    <div className="card pad" data-alerts-week={d.warnTotal} data-alerts-week-open={d.warnOpen}>
+      <b>지난 7일</b> 경고 이상 <b className={d.warnOpen ? 'warn-text' : ''}>{n(d.warnTotal)}</b>건 · 확인 안 한 것 {n(d.warnOpen)}건
+      {' '}<button className="btn-plain btn-sm" onClick={() => setAll(!all)} data-alerts-week-all="">{all ? '경고 이상만' : '정보(INFO)도 보기'}</button>
+      {rows.length > 0 && (
+        <table className="tbl" style={{ marginTop: 6 }}>
+          <thead><tr><th>종류</th><th>등급</th><th>건수</th><th>확인 안 함</th><th>마지막</th></tr></thead>
+          <tbody>{rows.map((r) => (
+            <tr key={r.code} data-alerts-week-row={r.code}>
+              <td title={r.title}>{NAME[r.code] ?? r.code}</td>
+              <td className={r.severity === 'CRITICAL' ? 'warn-text' : ''}>{r.severity === 'CRITICAL' ? '급함' : r.severity === 'WARN' ? '경고' : '정보'}</td>
+              <td className="num-cell">{n(r.n)}</td><td className="num-cell">{r.open ? n(r.open) : '–'}</td>
+              <td className="muted">{ymdhm(r.lastAt)}</td>
+            </tr>))}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 export function OpsAlerts() {
   const [state, setState] = useState<'open' | 'all'>('open');
   const [code, setCode] = useState('');
@@ -144,6 +172,7 @@ export function OpsAlerts() {
   return (
     <section data-ops-alerts="">
       <Flash msg={a.msg} err={a.err} />
+      <AlertsWeek />
       {ms.data && (
         <p className="card pad" data-mail-status={ms.data.ready ? 'ready' : 'not-ready'}>
           <b>급한 알림 메일</b>{' '}

@@ -103,9 +103,15 @@ export class LaunchWatchController {
 
   /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
   @Get('server-errors')
-  @ApiOperation({ summary: '최근 서버 오류', description: '이 API 프로세스가 지난 1시간 보낸 5xx 최근 50건 — 시각 · 방법 · 주소(물음표 뒤 없음) · 응답 번호 · 오류 종류 · 요청 번호 · 가린 설명. 요청 내용 · 개인정보 없음 · 다시 띄우면 지워짐.' })
+  @ApiOperation({ summary: '최근 서버 오류', description: '이 API 프로세스가 지난 1시간 보낸 5xx 최근 50건 — 시각 · 방법 · 주소(물음표 뒤 없음) · 응답 번호 · 오류 종류 · 요청 번호 · 가린 설명. 요청 내용 · 개인정보 없음 · 다시 띄우면 지워짐. v10.250 (D204) — week = 최근 7일 날짜별 건수 · 많이 난 것 20줄(10분마다 DB 에 모음 · 30일 보관).' })
   @ApiOkResponse({ type: Object })
   serverErrors() { return this.svc.serverErrors(); }
+
+  /* v10.252 (docs/387) — 지난 7일 운영 알림 종류별(운영 알림 화면 위 표 · 주간 알림과 같은 숫자 · 읽기만) */
+  @Get('alerts-week')
+  @ApiOperation({ summary: '지난 7일 운영 알림 종류별', description: 'rows = 종류(alert_code)마다 건수 · 가장 높은 등급 · 확인 안 한 수(확인 · 풀림 아닌 것) · 마지막 시각 · 마지막 제목(급함 → 경고 → 정보 · 건수 순 · 40종류까지), warnTotal · warnOpen = 경고 이상 합계 · 확인 안 한 합계. 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  alertsWeek() { return this.svc.alertsWeek(); }
 
   /* v10.173 (D162 · docs/266) — 시험 결제 주문 정리(발송 전만 취소 · 주문한 분께 알림 · 감사 기록) */
   @Post('stub-orders/cancel')

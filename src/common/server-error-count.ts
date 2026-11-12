@@ -14,6 +14,22 @@ const LAST_MAX = 50;
 export interface ServerErrorRow { at: string; method: string; path: string; status: number; code: string; detail: string | null; requestId: string | null }
 const last: ServerErrorRow[] = [];
 
+/* v10.250 (D204 · docs/387) — DB(ops_server_error_days)에 아직 안 넣은 건수 · 키 = 날짜(한국)|방법|주소|종류|응답 번호.
+ *   정기 작업 launch_watch(10분)가 takeServerErrorPending() 으로 가져가 더함(넣지 못하면 restoreServerErrorPending 으로 되돌림).
+ *   다시 띄우면 아직 넣지 않은 몫(최대 10분)은 빠집니다. */
+export interface ServerErrorPending { day: string; method: string; path: string; code: string; status: number; n: number; detail: string | null; requestId: string | null; last: string }
+const PENDING_MAX = 500;
+const pending = new Map<string, ServerErrorPending>();
+const kstDay = (ms: number) => new Date(ms + 9 * 3600_000).toISOString().slice(0, 10);
+function addPending(r: ServerErrorPending) {
+  const k = `${r.day}|${r.method}|${r.path}|${r.code}|${r.status}`;
+  const cur = pending.get(k);
+  if (cur) { cur.n += r.n; if (r.last >= cur.last) { cur.last = r.last; cur.detail = r.detail; cur.requestId = r.requestId; } }
+  else if (pending.size < PENDING_MAX) pending.set(k, { ...r });
+}
+export function takeServerErrorPending(): ServerErrorPending[] { const out = [...pending.values()]; pending.clear(); return out; }
+export function restoreServerErrorPending(list: ServerErrorPending[]) { for (const r of list) addPending(r); }
+
 /** 따옴표 안 값 가리기 — 표 · 칸 이름(영문 · 숫자 · _ · .)은 그대로, 나머지(입력값 · 이메일 · 숫자 섞인 값)는 「…」 */
 export function maskDetail(msg: string | null | undefined): string | null {
   if (!msg) return null;
@@ -35,6 +51,9 @@ export function recordServerError(url: string | undefined, now = Date.now(),
   last.unshift({ at: new Date(now).toISOString(), method: (info?.method ?? '').slice(0, 8), path, status: info?.status ?? 500,
     code: (info?.code ?? 'INTERNAL_ERROR').slice(0, 60), detail: maskDetail(info?.detail), requestId: info?.requestId ? String(info.requestId).slice(0, 64) : null });
   if (last.length > LAST_MAX) last.length = LAST_MAX;
+  const r0 = last[0]!;
+  addPending({ day: kstDay(now), method: r0.method, path: r0.path, code: r0.code || 'INTERNAL_ERROR', status: Math.min(599, Math.max(500, r0.status)), n: 1,
+    detail: r0.detail, requestId: r0.requestId, last: r0.at });
 }
 
 /** v10.182 — 최근 서버 오류(새것부터 · 최대 50 · 1시간 안) */

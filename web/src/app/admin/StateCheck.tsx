@@ -12,6 +12,7 @@ import { Flash } from '../../components/Flash';
  *   v10.214 (docs/344) — 「약관 시행 예정」 줄이 더해짐(11줄 · 줄은 서버가 정함 · 이 화면은 그대로 그림).
  *   v10.238 (docs/379) — 「급한 알림 받는 길」 줄(12줄).
  *   v10.247 ~ 249 (docs/386) — 지금 판 카드 「결과 파일」(SUPER · 읽기만) · 「서버 자원 추세」 카드(ServerTrend).
+ *   v10.251 (docs/387) — 지금 판 카드에 가장 최근 precheck 요약 한 줄(실패 · 바뀐 파일 · 되돌린 상태면 노란 카드).
  */
 interface Row { key: string; label: string; state: 'ok' | 'todo' | 'warn' | 'info'; now: string; go: string }
 const MARK: Record<Row['state'], string> = { ok: '✓', todo: '○', warn: '⚠', info: '–' };
@@ -126,6 +127,9 @@ interface RelData {
   now: { version: string; startedAt: string };
   rows: { id: number; version: string; prev: string | null; kind: RelKind; host: string | null; at: string }[];
   postcheck: { file: string; at: string; version: string | null; pass: number; fail: number; warn: number; same: number | null; changed: number | null; ageHours: number } | null;
+  /* v10.251 (docs/387) — 가장 최근 precheck 결과 파일 요약 */
+  precheck?: { file: string; at: string; version: string | null; pass: number; fail: number; warn: number; applied: number | null; files: number | null;
+    pending: number | null; drift: number | null; pendingNames: string[]; rolledBack: boolean; blockers: number | null; termsPublished: number | null; termsDraft: number | null; ageHours: number } | null;
 }
 /* v10.247 (docs/386) — 적용 스크립트 결과 파일(SUPER · 읽기만 · 최근 10개 · 누르면 본문 앞 200KB) */
 interface OpsFile { name: string; kind: string; at: string; size: number }
@@ -173,7 +177,9 @@ export function ReleaseLog() {
   const d = q.data;
   if (!d) return null;
   const pc = d.postcheck;
-  const bad = !!pc && (pc.fail > 0 || (pc.version !== null && pc.version !== d.now.version));
+  const pre = d.precheck ?? null;
+  const preBad = !!pre && (pre.fail > 0 || (pre.drift ?? 0) > 0 || pre.rolledBack);
+  const bad = (!!pc && (pc.fail > 0 || (pc.version !== null && pc.version !== d.now.version))) || preBad;
   return (
     <div className={`card${bad ? ' warn' : ''}`} data-release-log data-release-now={d.now.version} data-release-rows={d.rows.length}>
       <h3 className="sec">지금 판 {d.now.version} <small className="dim">운영 적용 기록 · API 가 뜰 때 판이 바뀌면 한 줄(올림 · 되돌림) · 뜬 시각 {new Date(d.now.startedAt).toLocaleString('ko-KR')}</small></h3>
@@ -184,6 +190,15 @@ export function ReleaseLog() {
               {pc.version !== null && pc.version !== d.now.version && <> — 지금 판과 다름(그 뒤 postcheck 를 다시 돌리지 않음)</>}</>
           : <span className="muted">적용 후 확인(postcheck) 결과 파일 없음 — 운영 서버에서 apply 하면 생깁니다</span>}
         {isSuper && <> <button className="linkbtn" data-release-files-btn onClick={() => setFiles(!files)}>{files ? '결과 파일 닫기' : '결과 파일'}</button></>}
+      </p>
+      <p data-release-precheck={pre ? `${pre.pass}|${pre.fail}|${pre.warn}|${pre.pending ?? '-'}|${pre.drift ?? '-'}|${pre.rolledBack ? 1 : 0}` : 'none'} className={preBad ? 'warn-text' : ''}>
+        {pre
+          ? <>마지막 적용 전 점검(precheck) {pre.at}(서버 시각 · {pre.ageHours}시간 전){pre.version ? ` · 올릴 판 ${pre.version}` : ''} — 통과 {pre.pass} · 실패 {pre.fail} · 확인 {pre.warn}
+              {pre.applied !== null && <> · 마이그레이션 적용됨 {pre.applied} · 새 킷 {pre.files} · 올릴 것 {pre.pending}{pre.pendingNames.length > 0 && <>({pre.pendingNames.join(' ')})</>} · 바뀐 파일 {pre.drift}</>}
+              {pre.rolledBack && <> · <b>되돌린 상태</b></>}
+              {pre.blockers !== null && <> · 오픈 차단 {pre.blockers}</>}
+              {pre.termsPublished !== null && <> · 약관 게시 {pre.termsPublished}{pre.termsDraft !== null && ` · 초안 ${pre.termsDraft}`}</>}</>
+          : <span className="muted">적용 전 점검(precheck) 결과 파일 없음</span>}
       </p>
       {isSuper && files && <OpsFiles />}
       {d.rows.length === 0 ? <p className="muted">적용 기록 없음 — 이 판(v10.244)부터 API 가 뜰 때 적습니다</p> : (

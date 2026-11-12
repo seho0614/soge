@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
-import { recentServerErrors, serverErrorsSince } from '../../common/server-error-count';
+import { recentServerErrors, restoreServerErrorPending, serverErrorsSince, takeServerErrorPending } from '../../common/server-error-count';
 import { serverHealth } from '../../common/server-health';
 import { rateLimitedSince } from '../../common/api-rate-limit';
 import { cspReportsDay, restoreCspPending, takeCspPending } from '../../common/csp-report';
@@ -30,6 +30,15 @@ const diskLine = (h: ReturnType<typeof serverHealth>) => (h.disk
 /* v10.238 (docs/379) — 하루 요약 「급한 알림 받는 길」 한 줄 · 하나도 없으면 그 뜻까지 */
 function channelLine(c: { list: ChannelState[]; ready: number }): string {
   return `급한 알림 받는 길 ${c.ready} / 3: ${AlertChannelsService.line(c.list)}${c.ready ? '' : ' — 하나도 없어 급한 알림이 운영 화면 밖으로 나가지 않습니다'}`;
+}
+
+/* v10.252 (docs/387) — 주간 알림 글의 「지난 7일 운영 알림」 칸(경고 이상만 · 많이 난 종류 5개) */
+export function alertsWeekText(aw: { rows: Array<{ code: string; severity: string; n: number; open: number }>; warnTotal: number; warnOpen: number }): string {
+  const w = aw.rows.filter((r) => r.severity !== 'INFO');
+  if (!w.length) return '지난 7일 운영 알림 — 경고 이상 0건';
+  return [`지난 7일 운영 알림 — 경고 이상 ${aw.warnTotal}건 · 확인 안 한 것 ${aw.warnOpen}건`,
+    ...w.slice(0, 5).map((r) => `· ${r.code}(${r.severity === 'CRITICAL' ? '급함' : '경고'}) ${r.n}건${r.open ? ` · 확인 안 함 ${r.open}` : ''}`),
+    ...(w.length > 5 ? [`· 외 ${w.length - 5}종류`] : []), '운영 화면 › 운영 알림에서 확인'].join('\n');
 }
 
 /* v10.243 (docs/381) — 시행일 3일 안 약관(오늘 포함) — 하루 요약 한 줄 · 운영 알림 TERMS_EFFECTIVE_SOON · _TODAY */
@@ -175,6 +184,7 @@ export class LaunchWatchService {
       ...reconsentLines(await this.reconsent()),
       diskLine(serverHealth()),
       await this.trend.digestLine().catch(() => '디스크 추세 — 읽지 못함'),   // v10.248 (D203 · docs/386)
+      await this.serverErrorDigestLine().catch(() => '어제 서버 오류 — 읽지 못함'),   // v10.250 (D204 · docs/387)
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');
@@ -325,10 +335,79 @@ export class LaunchWatchService {
   }
 
   /** v10.182 (D171) — 최근 서버 오류 50건(이 API 프로세스 메모리 · 1시간) · 운영 화면 위험감지 › 서버 오류 */
-  serverErrors() {
+  async serverErrors() {
     const items = recentServerErrors();
     const { n, top } = serverErrorsSince(60);
-    return { items, hour: n, top, note: 'API 를 다시 띄우면 지워집니다 · 요청 내용 · 개인정보는 남기지 않습니다.' };
+    const week = await this.serverErrorWeek().catch(() => null);
+    return { items, hour: n, top, week,
+      note: '「지난 1시간」은 API 를 다시 띄우면 지워집니다 · 「최근 7일」은 10분마다 DB 에 모아 30일 보관(v10.250) · 요청 내용 · 개인정보는 남기지 않습니다.' };
+  }
+
+  /* ── v10.250 (D204 · docs/387) 서버 오류 30일 ─────────────────────── */
+
+  /** 정기 작업 launch_watch — 메모리에 쌓인 서버 오류 건수를 ops_server_error_days 에 더하고 30일 지난 줄을 지움(넣지 못하면 되돌림) */
+  async flushServerErrors(): Promise<{ added: number; purged: number; error?: string }> {
+    const list = takeServerErrorPending();
+    let added = 0, error: string | undefined;
+    if (list.length) {
+      try {
+        await this.db.query(
+          `INSERT INTO ops_server_error_days (day, method, path, code, status, n, last_detail, last_request_id, last_at)
+           SELECT d, left(m, 8), left(p, 120), left(c, 60), s, n, left(dt, 200), left(rq, 64), la
+             FROM unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::int[], $6::int[], $7::text[], $8::text[], $9::timestamptz[]) AS x(d, m, p, c, s, n, dt, rq, la)
+           ON CONFLICT (day, method, path, code, status) DO UPDATE SET n = ops_server_error_days.n + EXCLUDED.n,
+             last_detail = CASE WHEN EXCLUDED.last_at >= ops_server_error_days.last_at THEN EXCLUDED.last_detail ELSE ops_server_error_days.last_detail END,
+             last_request_id = CASE WHEN EXCLUDED.last_at >= ops_server_error_days.last_at THEN EXCLUDED.last_request_id ELSE ops_server_error_days.last_request_id END,
+             last_at = greatest(ops_server_error_days.last_at, EXCLUDED.last_at)`,
+          [list.map((x) => x.day), list.map((x) => x.method), list.map((x) => x.path), list.map((x) => x.code), list.map((x) => x.status),
+           list.map((x) => x.n), list.map((x) => x.detail), list.map((x) => x.requestId), list.map((x) => x.last)]);
+        added = list.reduce((a, x) => a + x.n, 0);
+      } catch (e) {
+        restoreServerErrorPending(list);
+        error = String((e as Error).message ?? e).slice(0, 120);
+      }
+    }
+    const gone = await this.db.query(
+      `DELETE FROM ops_server_error_days WHERE day <= ${TODAY} - 30 RETURNING 1`).catch(() => []);
+    return { added, purged: gone.length, ...(error ? { error } : {}) };
+  }
+
+  /** 최근 7일(오늘 포함) — 날짜별 건수 · 많이 난 것 20줄(방법 · 주소 · 종류 · 응답 번호 · 건수 · 마지막 시각 · 가린 설명 · 요청 번호) */
+  async serverErrorWeek() {
+    const days = await this.db.query<{ day: string; n: number }>(
+      `SELECT g::date::text AS day, coalesce((SELECT sum(n)::int FROM ops_server_error_days e WHERE e.day = g::date), 0) AS n
+         FROM generate_series(${TODAY} - 6, ${TODAY}, interval '1 day') g ORDER BY g`);
+    const top = await this.db.query<{ method: string; path: string; code: string; status: number; n: number; lastAt: string; detail: string | null; requestId: string | null }>(
+      `SELECT method, path, code, status, sum(n)::int AS n, max(last_at) AS "lastAt",
+              (array_agg(last_detail ORDER BY last_at DESC))[1] AS detail, (array_agg(last_request_id ORDER BY last_at DESC))[1] AS "requestId"
+         FROM ops_server_error_days WHERE day > ${TODAY} - 7
+        GROUP BY method, path, code, status ORDER BY sum(n) DESC, max(last_at) DESC LIMIT 20`);
+    return { days, total: days.reduce((a, d) => a + d.n, 0), top };
+  }
+
+  /** 하루 요약 한 줄 — 「어제 서버 오류 n건 · 많이 난 곳 …」 */
+  async serverErrorDigestLine(): Promise<string> {
+    const rows = await this.db.query<{ path: string; n: number }>(
+      `SELECT method || ' ' || path AS path, sum(n)::int AS n FROM ops_server_error_days WHERE day = ${TODAY} - 1
+        GROUP BY method, path ORDER BY sum(n) DESC LIMIT 3`);
+    const [s] = await this.db.query<{ n: number }>(`SELECT coalesce(sum(n), 0)::int AS n FROM ops_server_error_days WHERE day = ${TODAY} - 1`);
+    const n = s?.n ?? 0;
+    return n ? `어제 서버 오류 ${n}건 · 많이 난 곳 ${rows.map((r) => `${r.path} ${r.n}`).join(' · ')}` : '어제 서버 오류 0건';
+  }
+
+  /* ── v10.252 (docs/387) 운영 알림 7일 ─────────────────────────────── */
+
+  /** 지난 7일 운영 알림 — 종류마다 건수 · 가장 높은 등급 · 확인 안 한 수 · 마지막 시각 / 경고 이상 합계 · 확인 안 한 합계 */
+  async alertsWeek() {
+    const rows = await this.db.query<{ code: string; severity: string; n: number; open: number; lastAt: string; title: string }>(
+      `SELECT alert_code AS code,
+              CASE WHEN bool_or(severity = 'CRITICAL') THEN 'CRITICAL' WHEN bool_or(severity = 'WARN') THEN 'WARN' ELSE 'INFO' END AS severity,
+              count(*)::int AS n, count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL)::int AS open,
+              max(raised_at) AS "lastAt", (array_agg(title ORDER BY raised_at DESC))[1] AS title
+         FROM ops_alerts WHERE raised_at > now() - interval '7 days'
+        GROUP BY alert_code ORDER BY max(CASE severity WHEN 'CRITICAL' THEN 2 WHEN 'WARN' THEN 1 ELSE 0 END) DESC, count(*) DESC, max(raised_at) DESC LIMIT 40`);
+    const warn = rows.filter((r) => r.severity !== 'INFO');
+    return { rows, warnTotal: warn.reduce((a, r) => a + r.n, 0), warnOpen: warn.reduce((a, r) => a + r.open, 0) };
   }
 
   /* ── v10.221 (D191 · docs/356) 보안 정책 보고 30일 ─────────────────── */
