@@ -79,6 +79,11 @@ export class RecommendService {
     if (!(await this.actors.affiliateActiveId(this.me))) {
       throw new Forbidden('AFF_REQUIRED', '활동 중인 제휴 파트너만 볼 수 있습니다.');
     }
+    return this.memberTree();
+  }
+
+  /** v10.253 (docs/388) — 모든 회원: 나의공간 「추천 관계도」 — 파트너센터와 같은 모양(가린 이름 · 날짜만 · 실적 · 금액 · 연락처 · 회원 번호 없음) */
+  async memberTree() {
     const [me] = await this.db.query<{ name: string; code: string | null }>(
       `SELECT name, recommend_code AS code FROM accounts WHERE id = $1`, [this.me]);
     const rows = await this.rows(this.me);

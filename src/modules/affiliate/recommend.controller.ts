@@ -79,6 +79,17 @@ export class RecommendController {
     recommender: { type: 'string', nullable: true }, rewardPoints: { type: 'integer' }, rewardOn: { type: 'boolean' } } } })
   mine() { return this.svc.mine(); }
 
+  /* v10.253 (docs/388) — 모든 회원이 자기 아래 관계도를 봄(나의공간 「추천 관계도」 · 파트너센터와 같은 모양) */
+  @Get('me/recommend/tree')
+  @ApiBearerAuth()
+  @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')
+  @ApiOperation({
+    summary: '내 추천 관계도',
+    description: '내가 추천한 분과 그분들이 추천한 분 전체(30대 · 3,000명까지). 이름 첫 글자 · 가입일(직접 추천) · 가입 월(그 아래)만 — 실적 · 금액 · 연락처 · 회원 번호 없음. 제휴 파트너가 아니어도 봄.',
+  })
+  @ApiOkResponse({ schema: TREE })
+  memberTree() { return this.svc.memberTree(); }
+
   @Get('partner/affiliate/recommend-tree')
   @ApiBearerAuth()
   @Roles('MEMBER', 'BIZ_OWNER', 'BIZ_STAFF')

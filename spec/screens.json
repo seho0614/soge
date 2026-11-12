@@ -1159,6 +1159,41 @@
    "state": "settlement.status"
   },
   {
+   "id": "SB-MYP-STL-030",
+   "name": "정산 내역 한눈에",
+   "group": "MYP",
+   "url": "/my/settlement/all",
+   "p": "P1",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/settlement-summary"
+   ],
+   "nav": "SB-MYP-DSH-010"
+  },
+  {
+   "id": "SB-MYP-RCM-010",
+   "name": "추천 관계도(나의공간)",
+   "group": "MYP",
+   "url": "/my/recommend",
+   "p": "P1",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /me/recommend/tree",
+    "GET /me/recommend"
+   ],
+   "nav": "SB-MYP-DSH-010"
+  },
+  {
    "id": "SB-MYP-NTF-010",
    "name": "알림 센터",
    "group": "MYP",
@@ -3277,6 +3312,7 @@
    "nav": "SB-ADM-MBR-010",
    "apis": [
     "GET /admin/accounts/{id}",
+    "GET /admin/accounts/{id}/settlement-summary",
     "PATCH /admin/accounts/{id}/status",
     "PATCH /admin/accounts/{id}/posting-suspension/lift",
     "GET /admin/accounts/{id}/login-lock",

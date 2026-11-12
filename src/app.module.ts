@@ -79,6 +79,8 @@ import { PayoutController } from './modules/settlement/payout.controller';
 import { PayoutService } from './modules/settlement/payout.service';
 import { PointCashoutController } from './modules/settlement/point-cashout.controller';
 import { PointCashoutService } from './modules/settlement/point-cashout.service';
+import { SettlementSummaryController } from './modules/settlement/settlement-summary.controller';   // v10.255 정산 내역 한눈에
+import { SettlementSummaryService } from './modules/settlement/settlement-summary.service';
 import { LearnController } from './modules/ai/learn.controller';
 import { LearnService } from './modules/ai/learn.service';
 import { AuditController } from './modules/govern/audit.controller';
@@ -275,6 +277,7 @@ import { LeadService } from './modules/lead/lead.service';
     SearchAdminController,
     PayoutController,
     PointCashoutController,
+    SettlementSummaryController,   /* v10.255 (docs/388) */
     CatalogController,
     TermsController,
     ListingController,
@@ -449,6 +452,7 @@ import { LeadService } from './modules/lead/lead.service';
     SearchAdminService,
     PayoutService,
     PointCashoutService,
+    SettlementSummaryService,   /* v10.255 (docs/388) */
     AffiliateService, AffiliateAdminService, AffiliateAccountService,   // v10.92 · v10.108
     RecommendService,   // v10.218
     SearchService,

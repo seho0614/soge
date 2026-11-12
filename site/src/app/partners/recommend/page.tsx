@@ -5,6 +5,8 @@ import { ApiFailure, apiGetPersonal } from '@/lib/api';
 import { CopyButton } from '@/components/partners/CopyButton';
 import { siteOrigin } from '@/components/refcode/origin';
 import { getTranslations } from 'next-intl/server';
+import { RcmTree } from '@/components/recommend/RcmTree';
+import { rcmLabels } from '@/components/recommend/labels';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('affiliate'))('recommend.metaTitle') };
@@ -18,7 +20,7 @@ interface Mine { code: string | null; link: string | null; directCount: number }
  * SB-AFC-RCM-010 추천 관계도 — v10.218 (D189 · docs/351)
  *   GET /partner/affiliate/recommend-tree(활동 중 제휴 파트너 본인 아래 전체) · GET /me/recommend(내 코드 · 링크).
  *   내가 추천한 분은 가린 이름 + 가입일, 그분들이 추천한 분은 가린 이름 + 가입 월만 — 실적 · 연락처 · 회원 번호 없음.
- *   계층 용어(하위 · 산하 · 직급)를 쓰지 않습니다. 접고 펴기는 <details>(자바스크립트 없이).
+ *   계층 용어(하위 · 산하 · 직급)를 쓰지 않습니다. v10.254 (docs/388) — 그림 ↔ 목록(RcmTree · 나의공간과 같은 부품).
  */
 export default async function PartnerRecommendPage() {
   const p = await me();
@@ -32,31 +34,6 @@ export default async function PartnerRecommendPage() {
     siteOrigin(),
   ]);
   const link = mine?.link ? origin + mine.link : null;
-
-  const kids = new Map<number, Node[]>();
-  for (const n of tree?.nodes ?? []) kids.set(n.p, [...(kids.get(n.p) ?? []), n]);
-
-  const branch = (pk: number) => {
-    const list = kids.get(pk) ?? [];
-    if (!list.length) return null;
-    return (
-      <ul className="rcm-ul">
-        {list.map((n) => (
-          <li key={n.k} data-rcm-gen={n.gen}>
-            {n.children > 0 ? (
-              <details open={n.gen === 1 && list.length <= 30}>
-                <summary><b>{n.name ?? t('left')}</b> <span className="dim">{t(n.gen === 1 ? 'joinedDay' : 'joinedMonth', { d: n.joined })}</span>{' '}
-                  <span className="state">{t('theirs', { n: n.children })}</span></summary>
-                {branch(n.k)}
-              </details>
-            ) : (
-              <span className="rcm-leaf"><b>{n.name ?? t('left')}</b> <span className="dim">{t(n.gen === 1 ? 'joinedDay' : 'joinedMonth', { d: n.joined })}</span></span>
-            )}
-          </li>
-        ))}
-      </ul>
-    );
-  };
 
   return (
     <div data-screen="SB-AFC-RCM-010">
@@ -84,10 +61,8 @@ export default async function PartnerRecommendPage() {
             {tree.generations.map((g) => <span key={g.gen} className="state" data-rcm-g={g.gen}>{t(g.gen === 1 ? 'genMine' : 'genN', { g: g.gen, n: g.count })}</span>)}
           </p>
           {tree.truncated && <p className="notice">{t('truncated')}</p>}
-          <div className="card p2pad rcm-tree">
-            <div><b>{tree.root.name}</b> <span className="dim">({t('me')})</span></div>
-            {branch(0)}
-          </div>
+          <p className="dim">{t('graphHint')}</p>
+          <RcmTree rootName={tree.root.name} nodes={tree.nodes} L={rcmLabels(t as unknown as Parameters<typeof rcmLabels>[0])} />
           <p className="dim" style={{ marginTop: 12 }}>{t('note')}</p>
         </>
       )}

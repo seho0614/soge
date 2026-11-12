@@ -125,7 +125,8 @@ export default async function MyPage() {
         <Note kind="info" data-my-recommend="">
           <b>{t('recommend.b')}</b> <code className="mono" data-testid="my-rcm-code">{rcm.code}</code>{' '}
           {rcm.link && <span className="mono" data-testid="my-rcm-link">{origin + rcm.link}</span>}
-          <p>{t('recommend.count', { n: rcm.directCount })}{rcm.recommender ? ` · ${t('recommend.by', { name: rcm.recommender })}` : ''}</p>
+          <p>{t('recommend.count', { n: rcm.directCount })}{rcm.recommender ? ` · ${t('recommend.by', { name: rcm.recommender })}` : ''}
+            {' '}<Link href="/my/recommend" data-my-rcm-view="">{t('recommend.view')}</Link></p>
         </Note>
       )}
 

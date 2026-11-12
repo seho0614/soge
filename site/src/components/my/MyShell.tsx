@@ -16,6 +16,7 @@
  * 레이아웃(app/my/layout.tsx)은 주소를 모르므로 여기(usePathname)서 고릅니다.
  */
 import Link from 'next/link';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BackBar } from '@/components/common/BackBar';
 import { useTranslations } from 'next-intl';
@@ -23,30 +24,68 @@ import type { KO } from '@/i18n/messages';
 
 /** v10.99 — 메뉴 · 돌아가기 이름은 사전 키(my.shell.menu.*)로 둡니다(docs/157) */
 type MenuKey = keyof typeof KO.my.shell.menu;
+type GroupKey = keyof typeof KO.my.shell.groups;
+type SubKey = keyof typeof KO.my.shell.sub;
 
 export type MyCounts = Partial<Record<'listings' | 'allDeals' | 'contracts' | 'conversations' | 'settlePending' | 'favorites', number | null>>;
 
-interface Item { key: string; label: MenuKey; href: string; count?: keyof MyCounts; match?: (p: string) => boolean }
+interface Sub { label: SubKey; href: string; match?: (p: string, h: string) => boolean }
+interface Item { key: string; label: MenuKey; href: string; count?: keyof MyCounts; match?: (p: string) => boolean; subs?: Sub[] }
+interface Group { key: string; label: GroupKey; items: Item[] }
 
 const under = (p: string, base: string) => p === base || p.startsWith(base + '/');
+const exact = (p: string, h: string) => p === (h.split('#')[0] ?? h);
 
-/** 시안 순서 그대로 (D.my.menu → counts() 의 push 5개) */
-export const MY_MENU: Item[] = [
-  { key: 'mylst',  label: 'listings', href: '/my/listings',      count: 'listings' },
-  { key: 'mydeal', label: 'deals',      href: '/my/deals',         count: 'allDeals' },
-  { key: 'myctr',  label: 'contracts',      href: '/my/contracts',     count: 'contracts', match: (p) => under(p, '/my/contracts') || under(p, '/contracts/templates') },
-  { key: 'ask',    label: 'inquiries',    href: '/my/inquiries',     count: 'conversations' },
-  { key: 'mystl',  label: 'settlement',    href: '/my/settlement',    count: 'settlePending' },
-  { key: 'mylik',  label: 'likes',      href: '/my/likes',         count: 'favorites' },
-  { key: 'mysub',  label: 'subscription', href: '/my/subscription', match: (p) => p === '/my/subscription' || under(p, '/my/subscription/pay') },
-  { key: 'aiprf',  label: 'aiProfile',      href: '/ai/profile' },
-  { key: 'brkmy',  label: 'broker',    href: '/my/broker' },
-  { key: 'mypaym', label: 'payment',      href: '/my/payment' },
-  { key: 'myntf',  label: 'notifications',           href: '/my/notifications' },
-  { key: 'mysubup', label: 'upgrade', href: '/my/subscription/upgrade' },
-  { key: 'mybiz2', label: 'business',    href: '/my/business' },
-  { key: 'introhome', label: 'intro',   href: '/my/intro' },
+/**
+ * v10.256 (docs/388) — 나의공간 메뉴 3단계(대표 「같은 기능은 하나로 · 3단계 정도」 11/12)
+ *   1단 대분류 5개 → 2단 메뉴 13개 → 3단 세부(그 메뉴를 열면 아래에 보임). 주소는 그대로 · data-my-nav-item 이름도 그대로.
+ *   겹치던 것 — 「알림」 + 「설정 · 알림」 · 「구독 · 소개코드」 + 「한도 안내 · 요금제」 · 「소개 내역」 + 「소개 활동」 · 프로필 + 사업자 전환 + 중개사 인증.
+ *   메뉴 밖이던 것 — 이행 보고 확인(/my/fulfillments) · 소개몰 주문 · 반품 · 배송지 · 추천 관계도(v10.253) · 정산 내역 한눈에(v10.255).
+ */
+export const MY_GROUPS: Group[] = [
+  { key: 'deal', label: 'deal', items: [
+    { key: 'mylst',  label: 'listings', href: '/my/listings', count: 'listings' },
+    { key: 'mydeal', label: 'deals', href: '/my/deals', count: 'allDeals',
+      match: (p) => under(p, '/my/deals') || (under(p, '/my/intro') && !under(p, '/my/intro/activity')) || under(p, '/my/fulfillments'),
+      subs: [{ label: 'deals', href: '/my/deals' }, { label: 'intro', href: '/my/intro', match: exact }, { label: 'fulfill', href: '/my/fulfillments' }] },
+    { key: 'myctr',  label: 'contracts', href: '/my/contracts', count: 'contracts', match: (p) => under(p, '/my/contracts') || under(p, '/contracts/templates'),
+      subs: [{ label: 'myContracts', href: '/my/contracts' }, { label: 'templates', href: '/contracts/templates' }] },
+    { key: 'ask',    label: 'inquiries', href: '/my/inquiries', count: 'conversations' },
+    { key: 'mylik',  label: 'likes', href: '/my/likes', count: 'favorites' },
+  ] },
+  { key: 'money', label: 'money', items: [
+    { key: 'mystl',  label: 'settlement', href: '/my/settlement/all', count: 'settlePending', match: (p) => under(p, '/my/settlement') || under(p, '/my/intro/activity'),
+      subs: [{ label: 'settleAll', href: '/my/settlement/all' }, { label: 'settleIntro', href: '/my/settlement', match: exact },
+             { label: 'settleHistory', href: '/my/settlement/history' }, { label: 'points', href: '/my/intro/activity' }] },
+    { key: 'mysub',  label: 'subscription', href: '/my/subscription', match: (p) => under(p, '/my/subscription'),
+      subs: [{ label: 'mySub', href: '/my/subscription', match: (p) => p === '/my/subscription' || under(p, '/my/subscription/pay') },
+             { label: 'upgrade', href: '/my/subscription/upgrade' }] },
+    { key: 'mypaym', label: 'payment', href: '/my/payment' },
+  ] },
+  { key: 'mall', label: 'mall', items: [
+    { key: 'myhlt',  label: 'mallOrders', href: '/my/health/orders', match: (p) => under(p, '/my/health'),
+      subs: [{ label: 'orders', href: '/my/health/orders' }, { label: 'returns', href: '/my/health/returns' }, { label: 'addresses', href: '/my/health/addresses' }] },
+  ] },
+  { key: 'rec', label: 'rec', items: [
+    { key: 'myrcm',  label: 'recommend', href: '/my/recommend' },
+  ] },
+  { key: 'me', label: 'me', items: [
+    { key: 'myacc',  label: 'profile', href: '/my/account',
+      match: (p) => p === '/my/account' || under(p, '/my/business') || under(p, '/my/broker'),
+      subs: [{ label: 'profile', href: '/my/account', match: exact }, { label: 'business', href: '/my/business' }, { label: 'broker', href: '/my/broker' }] },
+    { key: 'myntf',  label: 'notifications', href: '/my/notifications', match: (p) => under(p, '/my/notifications') || under(p, '/ai/profile'),
+      subs: [{ label: 'notifications', href: '/my/notifications', match: exact }, { label: 'prefs', href: '/my/notifications#prefs', match: () => false },
+             { label: 'aiProfile', href: '/ai/profile' }] },
+    { key: 'myprv',  label: 'privacy', href: '/my/account/security',
+      match: (p) => under(p, '/my/account/security') || under(p, '/my/account/data') || under(p, '/my/account/privacy') || under(p, '/my/account/withdraw'),
+      subs: [{ label: 'security', href: '/my/account/security' }, { label: 'data', href: '/my/account/data' },
+             { label: 'privacyReq', href: '/my/account/privacy' }, { label: 'withdraw', href: '/my/account/withdraw' }] },
+    { key: 'myrec',  label: 'records', href: '/my/reports', match: (p) => under(p, '/my/reports') || under(p, '/my/events'),
+      subs: [{ label: 'reports', href: '/my/reports' }, { label: 'events', href: '/my/events' }] },
+  ] },
 ];
+/** 옛 이름(다른 화면이 import) — 2단 메뉴를 한 줄로 */
+export const MY_MENU: Item[] = MY_GROUPS.flatMap((g) => g.items);
 
 /** 이 주소들은 공통 틀을 씌우지 않습니다 */
 const NO_SHELL = ['/my/health', '/my/broker'];
@@ -54,7 +93,7 @@ const NO_SHELL = ['/my/health', '/my/broker'];
 /** 돌아가기 줄 — 시안은 이력의 직전 화면, 실제 웹은 정해 둔 윗 화면(BackBar 방식) */
 function backOf(p: string): { href: string; label: MenuKey } {
   if (p === '/my') return { href: '/', label: 'main' };
-  if (under(p, '/my/settlement/history')) return { href: '/my/settlement', label: 'settlement' };
+  if (under(p, '/my/settlement/history') || p === '/my/settlement') return { href: '/my/settlement/all', label: 'settlement' };
   if (p.startsWith('/my/intro/')) return { href: '/my/intro', label: 'intro' };
   if (p.startsWith('/my/contracts/')) return { href: '/my/contracts', label: 'contracts' };
   if (under(p, '/contracts/templates')) return { href: '/my/contracts', label: 'contracts' };
@@ -65,9 +104,11 @@ function backOf(p: string): { href: string; label: MenuKey } {
 
 export function MyShell({ counts, children, active }: { counts: MyCounts | null; children: React.ReactNode; active?: string }) {
   const p = usePathname() ?? '/my';
+  const [openG, setOpenG] = useState<string | null>(null);
   const t = useTranslations('my.shell');
   if (NO_SHELL.some((b) => under(p, b))) return <>{children}</>;
   const back = backOf(p);
+  /* 좁은 화면 — 대분류를 누르면 펼침(넓은 화면은 모두 펼쳐 둠 · CSS) */
   /* v10.32 (추가) — 넘겨받은 active(메뉴 key)가 있으면 그 항목을 켭니다(주소가 /my 밖인 화면 — 분쟁 접수 등) */
   const on = (m: Item) => (active ? active === m.key : m.match ? m.match(p) : under(p, m.href));
   const n = (m: Item) => {
@@ -75,26 +116,38 @@ export function MyShell({ counts, children, active }: { counts: MyCounts | null;
     return v ? <i>{Number(v).toLocaleString('ko-KR')}</i> : null;
   };
 
+  const groupOn = (g: Group) => g.items.some(on);
   return (
     <div className="mys" data-my-shell="">
       <BackBar href={back.href} label={t(`menu.${back.label}`)} />
       <div className="my-lay">
-        <aside className="my-nav" aria-label={t('navAria')} data-my-nav="">
+        <aside className="my-nav my-nav3" aria-label={t('navAria')} data-my-nav="">
           <div className="my-mh">{t('menu.my')}</div>
-          {MY_MENU.map((m) => (
-            <Link key={m.key} href={m.href} className={on(m) ? 'on' : undefined} aria-current={on(m) ? 'page' : undefined} data-my-nav-item={m.key}>
-              {t(`menu.${m.label}`)}{n(m)}
-            </Link>
-          ))}
-          <div className="my-mh2">{t('account')}</div>
-          <Link href="/my/account" className={under(p, '/my/account') ? 'on' : undefined} data-my-nav-item="myacc">{t('profile')}</Link>
-          {/* 시안 v10.27 G-196 — 「설정 · 알림」은 알림 화면(수신 설정이 그 안에 있음) */}
-          <Link href="/my/notifications#prefs" data-my-nav-item="myset">{t('settings')}</Link>
-          {/* v10.31 (시안 결함 X2) — 시안에는 화면만 있고 들어갈 길이 없던 두 화면(내 신고 내역 · 내 이벤트 참여) */}
-          <Link href="/my/reports" className={under(p, '/my/reports') ? 'on' : undefined} aria-current={under(p, '/my/reports') ? 'page' : undefined} data-my-nav-item="myrpt">{t('reports')}</Link>
-          <Link href="/my/events" className={under(p, '/my/events') ? 'on' : undefined} aria-current={under(p, '/my/events') ? 'page' : undefined} data-my-nav-item="myevt">{t('events')}</Link>
-          {/* v10.181 (D170) — 개인정보 · 보안(로그인 기록 · 모든 기기 로그아웃 · 내 정보 내려받기 · 권리 요청은 그 화면에서) */}
-          <Link href="/my/account/security" className={under(p, '/my/account/security') ? 'on' : undefined} aria-current={under(p, '/my/account/security') ? 'page' : undefined} data-my-nav-item="myprv">{t('privacy')}</Link>
+          {MY_GROUPS.map((g) => {
+            const gOn = groupOn(g);
+            return (
+              <div key={g.key} className={`my-g${gOn ? ' on' : ''}${openG === g.key ? ' open' : ''}`} data-my-nav-group={g.key}>
+                <button type="button" className="my-gh" aria-expanded={gOn || openG === g.key} onClick={() => setOpenG(openG === g.key ? null : g.key)}>{t(`groups.${g.label}`)}</button>
+                <div className="my-gi">
+                  {g.items.map((m) => (
+                    <div key={m.key} className="my-it">
+                      <Link href={m.href} className={on(m) ? 'on' : undefined} aria-current={on(m) ? 'page' : undefined} data-my-nav-item={m.key}>
+                        {t(`menu.${m.label}`)}{n(m)}
+                      </Link>
+                      {m.subs && on(m) && (
+                        <div className="my-sub" data-my-nav-sub={m.key}>
+                          {m.subs.map((s) => {
+                            const sOn = s.match ? s.match(p, s.href) : under(p, s.href.split('#')[0] ?? s.href);
+                            return <Link key={s.href} href={s.href} className={sOn ? 'on' : undefined} aria-current={sOn ? 'page' : undefined} data-my-nav-subitem={s.label}>{t(`sub.${s.label}`)}</Link>;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </aside>
         <div className="my-main">{children}</div>
       </div>

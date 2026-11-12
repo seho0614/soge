@@ -266,7 +266,11 @@
     "priceLock": "<b>Rate changes do not affect existing orders.</b> The rate is fixed at the time the order is placed."
   },
   "revenues": {
-    "memo": { "return": "Sogae Mall order {no} returned — commission reclaimed", "cancel": "Sogae Mall order {no} canceled — commission reclaimed", "pending": "Sogae Mall order {no} affiliate commission (not yet confirmed)"},
+    "memo": {
+      "return": "Sogae Mall order {no} returned — commission reclaimed",
+      "cancel": "Sogae Mall order {no} canceled — commission reclaimed",
+      "pending": "Sogae Mall order {no} affiliate commission (not yet confirmed)"
+    },
     "noteSrv": "Referral fees and affiliate commissions are different in nature, so they are settled and invoiced separately.",
     "title": "Earnings",
     "lead": "Your monthly earnings.",
@@ -396,6 +400,18 @@
     "joinedDay": "joined {d}",
     "joinedMonth": "joined {d}",
     "theirs": "{n, plural, one {{n} member} other {{n} members}} they invited",
-    "note": "Only the first letter of each name is shown — no contact details, activity or sales. Invites are set at sign-up; contact support to change one."
+    "note": "Only the first letter of each name is shown — no contact details, activity or sales. Invites are set at sign-up; contact support to change one.",
+    "graph": "Picture",
+    "list": "List",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "search": "Find a name",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit to screen",
+    "noMatch": "No matching name",
+    "found": "{n} found",
+    "myLead": "See the people who joined with your invite code, and those who joined with theirs, as a picture or a list. Invite rewards only come from people you invited directly.",
+    "graphHint": "Tap a box to expand or collapse the people that person invited · drag empty space to move, Ctrl + wheel to zoom."
   }
 }

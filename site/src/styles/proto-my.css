@@ -34,6 +34,15 @@
 .my-nav a i { font-style: normal; font-size: 12px; font-weight: 800; opacity: .7; }
 .my-main { min-width: 0; }
 
+/* ── v10.256 (docs/388) 메뉴 3단계 — 대분류(.my-gh) → 메뉴(a) → 세부(.my-sub a · 연 메뉴 아래) ── */
+.my-nav3 .my-g + .my-g { border-top: 1px solid var(--mline2); margin-top: 4px; padding-top: 4px; }
+.my-nav3 .my-gh { display: block; width: 100%; text-align: left; background: none; border: 0; cursor: default;
+  font-size: 12px; font-weight: 800; color: var(--mink3); padding: 8px 10px 4px; }
+.my-nav3 .my-gi { display: flex; flex-direction: column; gap: 1px; }
+.my-nav3 .my-sub { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 4px 12px; padding-left: 8px; border-left: 2px solid var(--mline2); }
+.my-nav3 .my-sub a { font-size: 12px; font-weight: 600; padding: 6px 8px; }
+.my-nav3 .my-sub a.on { background: var(--g50); color: var(--pp); }
+
 /* ── 화면 머리 (시안 page() → .pgh) ── */
 .my-pgh { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
   margin: 6px 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--mline); }
@@ -288,6 +297,14 @@
   .my-lay { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .my-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
   .my-nav .my-mh, .my-nav .my-mh2 { display: none; }
+  /* v10.256 — 좁은 화면: 대분류 줄을 누르면 그 묶음만 펼침(지금 화면이 있는 묶음은 늘 펼침) */
+  .my-nav.my-nav3 { flex-direction: column; flex-wrap: nowrap; }
+  .my-nav3 .my-gh { cursor: pointer; font-size: 13px; padding: 9px 10px; }
+  .my-nav3 .my-gh::after { content: '▾'; float: right; opacity: .5; }
+  .my-nav3 .my-g:not(.on):not(.open) .my-gi { display: none; }
+  .my-nav3 .my-gi { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .my-nav3 .my-it { display: contents; }
+  .my-nav3 .my-sub { flex-basis: 100%; flex-direction: row; flex-wrap: wrap; margin: 2px 0 4px; border-left: 0; padding-left: 0; gap: 4px; }
   .my-nav a { padding: 7px 9px; font-size: 12px; border: 1px solid var(--mline2); }
   .my-subnow, .my-subnow.two { grid-template-columns: 1fr; }
   .my-lrow { grid-template-columns: minmax(0, 1fr); gap: 9px; }

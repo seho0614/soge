@@ -4,6 +4,8 @@ import { useApi } from '../../lib/useApi';
 import { ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
+import { RecommendDetail } from './affiliates/Recommend';   // v10.253 (docs/388) 회원 상세에서 추천 관계도
+import { SettlementSummary } from './SettlementSummary';   // v10.255 (docs/388) 회원 정산 내역
 
 interface Row {
   id: string; email: string; name: string; phone: string | null;
@@ -219,6 +221,8 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
         </>
       )}
 
+      <MemberMore id={a.id} name={a.name} />
+
       <LoginLock id={a.id} />
       {tokenRoles().includes('SUPER') && <ResetLink id={a.id} />}
       {tokenRoles().includes('SUPER') && <MfaReset id={a.id} />}
@@ -380,6 +384,24 @@ function MfaReset({ id }: { id: string }) {
         <button className="btn-plain" disabled={busy || reason.trim().length < 5} onClick={reset} data-mfa-reset>2단계 초기화</button>
       </div>
       {msg && <p className={msg.ok ? 'form-ok' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.t}</p>}
+    </>
+  );
+}
+
+/** v10.253 · 255 (docs/388) — 회원 상세에서 그 회원의 추천 관계도 · 정산 내역(누를 때만 불러옴 · 정산 내역은 감사 로그) */
+function MemberMore({ id, name }: { id: string; name: string }) {
+  const [show, setShow] = useState<'rcm' | 'money' | null>(null);
+  const [cur, setCur] = useState(id);
+  return (
+    <>
+      <h3 className="ad-s2">추천 관계도 · 정산 내역</h3>
+      <p>
+        <button className={show === 'rcm' ? 'btn-sm' : 'btn-sm ghost'} onClick={() => { setCur(id); setShow(show === 'rcm' ? null : 'rcm'); }} data-member-rcm={id}>추천 관계도</button>{' '}
+        <button className={show === 'money' ? 'btn-sm' : 'btn-sm ghost'} onClick={() => setShow(show === 'money' ? null : 'money')} data-member-money={id}>정산 내역</button>
+        <span className="dim"> · 정산 내역을 연 기록은 감사 로그에 남습니다</span>
+      </p>
+      {show === 'rcm' && <RecommendDetail key={cur} id={cur} canEdit onPick={setCur} onChanged={() => undefined} />}
+      {show === 'money' && <SettlementSummary id={id} name={name} />}
     </>
   );
 }

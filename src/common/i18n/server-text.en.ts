@@ -1773,4 +1773,6 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   /* v10.247 (docs/386) — 적용 결과 파일 보기 */
   "적용 스크립트 결과 파일(precheck · postcheck · apply · cleanup · open-prep)만 열 수 있습니다.": "Only deploy script result files (precheck, postcheck, apply, cleanup, open-prep) can be opened.",
   "그 결과 파일이 서버에 없습니다(지워졌을 수 있음).": "That result file is not on the server (it may have been deleted).",
+  /* v10.255 (docs/388) — 정산 내역 한눈에 */
+  "다른 회원(추천한 분 · 추천받은 분)의 금액은 보이지 않습니다. 각 정산의 신청 · 계좌 · 지급은 해당 화면에서 합니다.": "Amounts of other members (who invited you or whom you invited) are not shown. Requests, accounts and payouts for each settlement are handled on their own screens.",
 };

@@ -299,3 +299,24 @@ body:has(.p2wrap) main.main { max-width: none; padding: 0; }
 .rcm-ul li { margin: 4px 0; }
 .rcm-ul summary { cursor: pointer; }
 .rcm-leaf { display: inline-block; padding-left: 14px; }
+
+/* v10.254 (docs/388) — 추천 관계도 그림 ↔ 목록(RcmTree · 나의공간 · 파트너센터) */
+.rcm-box { margin-top: 8px; }
+.rcm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.rcm-bar button { font-size: 13px; padding: 6px 10px; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-sm, 7px); background: #fff; color: var(--sgb-ink-2); cursor: pointer; min-height: 36px; }
+.rcm-bar input { font-size: 13px; padding: 6px 10px; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-sm, 7px); min-width: 140px; min-height: 36px; }
+.rcm-seg { display: inline-flex; }
+.rcm-seg button + button { margin-left: -1px; }
+.rcm-seg button.on { background: var(--sgb-navy); color: #fff; border-color: var(--sgb-navy); }
+.rcm-canvas { position: relative; height: 520px; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-md, 11px); background: var(--sgb-bg); overflow: hidden; touch-action: none; cursor: grab; }
+.rcm-canvas svg { display: block; }
+.rcm-ln { fill: none; stroke: var(--sgb-ink-3); stroke-width: 1.2; opacity: .55; }
+.rcm-nd rect { fill: #fff; stroke: var(--sgb-line); stroke-width: 1.2; }
+.rcm-nd.me rect { fill: var(--sgb-navy); stroke: var(--sgb-navy); }
+.rcm-nd.me text { fill: #fff; }
+.rcm-nd.hit rect { stroke: var(--sgb-accent); stroke-width: 2.5; }
+.rcm-nd .t1 { font-size: 13px; font-weight: 700; fill: var(--sgb-ink); }
+.rcm-nd .t2 { font-size: 11px; fill: var(--sgb-ink-3); }
+.rcm-nd .t3 { font-size: 11px; font-weight: 700; fill: var(--sgb-ink-2); }
+.rcm-hit > details > summary b, .rcm-hit > .rcm-leaf b { background: #fff3d6; }
+@media (max-width: 640px) { .rcm-canvas { height: 420px; } }

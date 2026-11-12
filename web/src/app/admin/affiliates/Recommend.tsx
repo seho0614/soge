@@ -4,6 +4,8 @@ import { useApi } from '../../../lib/useApi';
 import { useAct, n } from '../../../lib/act';
 import { ErrorView } from '../../../components/ErrorView';
 import { Flash } from '../../../components/Flash';
+import { RcmGraph, type GNode } from './RcmGraph';
+import { SettlementSummary } from '../SettlementSummary';
 
 interface Member { id: string; name: string; email: string | null; code: string | null; status: string; joinedAt: string; directCount: number; recommender: string | null }
 interface TNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number }
@@ -92,10 +94,12 @@ export function Recommend() {
   );
 }
 
-/** 한 회원 — 위로 추천인 줄 · 아래 전체 트리 · 추천인 고치기 · 변경 기록 */
-function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string; canEdit: boolean; onPick: (id: string) => void; onChanged: () => void }) {
+/** 한 회원 — 위로 추천인 줄 · 아래 전체 트리(v10.254 그림 ↔ 목록) · 고른 회원 · 정산 내역(v10.255 · ADMIN) · 추천인 고치기 · 변경 기록 */
+export function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string; canEdit: boolean; onPick: (id: string) => void; onChanged: () => void }) {
   const d = useApi<Detail>(`/admin/affiliates/recommend/${id}`);
   const [fix, setFix] = useState({ code: '', reason: '' });
+  const [picked, setPicked] = useState<GNode | null>(null);
+  const [money, setMoney] = useState<{ id: string; name: string } | null>(null);
   const a = useAct();
   const saveFix = () => {
     if (fix.reason.trim().length < 2) { a.setErr('사유를 2자 이상 적으십시오.'); return; }
@@ -103,31 +107,12 @@ function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string; canEd
       method: 'PATCH', body: JSON.stringify({ recommendCode: fix.code.trim() || null, reason: fix.reason.trim() }),
     }), () => { setFix({ code: '', reason: '' }); d.reload(); onChanged(); });
   };
-  const kids = new Map<number, TNode[]>();
-  for (const x of d.data?.nodes ?? []) kids.set(x.p, [...(kids.get(x.p) ?? []), x]);
-  const branch = (pk: number): ReactNode => {
-    const xs = kids.get(pk) ?? [];
-    if (!xs.length) return null;
-    return (
-      <ul className="rcm-ul" style={{ listStyle: 'none', paddingLeft: 18, margin: '4px 0 0' }}>
-        {xs.map((x) => {
-          const label = <>
-            <button className="btn-plain btn-sm" onClick={() => onPick(x.id)} data-rcm-node={x.id}>{x.name}</button>{' '}
-            <span className="mono dim">{x.code}</span> <span className="dim">{x.joined} 가입</span>{' '}
-            {x.verified ? <span className="st ok">본인인증</span> : <span className="st">인증 전</span>}
-            {x.status !== 'ACTIVE' && <> <span className="st warn">{x.status}</span></>}
-          </>;
-          return (
-            <li key={x.k} data-rcm-gen={x.gen}>
-              {x.children > 0
-                ? <details open={x.gen === 1}><summary>{label} <span className="dim">· 그분이 추천한 분 {x.children}명</span></summary>{branch(x.k)}</details>
-                : label}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
+  const listLabel = (x: TNode) => <>
+    <button className="btn-plain btn-sm" onClick={() => onPick(x.id)} data-rcm-node={x.id}>{x.name}</button>{' '}
+    <span className="mono dim">{x.code}</span> <span className="dim">{x.joined} 가입</span>{' '}
+    {x.verified ? <span className="st ok">본인인증</span> : <span className="st">인증 전</span>}
+    {x.status !== 'ACTIVE' && <> <span className="st warn">{x.status}</span></>}
+  </>;
 
   if (d.error) return <ErrorView error={d.error} onRetry={d.reload} />;
   return (
@@ -141,7 +126,17 @@ function RecommendDetail({ id, canEdit, onPick, onChanged }: { id: string; canEd
             : '없음 · '}<b>{d.data.member.name}</b></p>
           <p>모두 {n(d.data.total)}명 {d.data.generations.map((g) => <span key={g.gen} className="st">{g.gen === 1 ? `직접 추천 ${g.count}명` : `${g.gen}번째 ${g.count}명`}</span>)}</p>
           {d.data.truncated && <p className="hint">사람이 많아 처음 3,000명까지만 보입니다.</p>}
-          {d.data.total > 0 && <div className="rcm-tree">{branch(0)}</div>}
+          {canEdit && <p><button className="btn-sm ghost" onClick={() => setMoney(money?.id === d.data!.member.id ? null : { id: d.data!.member.id, name: d.data!.member.name })} data-rcm-money={d.data.member.id}>
+            {money?.id === d.data.member.id ? '정산 내역 닫기' : `${d.data.member.name} 정산 내역`}</button></p>}
+          {d.data.total > 0 && <RcmGraph rootName={d.data.member.name} nodes={d.data.nodes} onSelect={setPicked} listLabel={listLabel as (n: GNode) => ReactNode} />}
+          {picked && (
+            <div className="card pad" data-rcm-picked={picked.id}>
+              <b>{picked.name}</b> <span className="mono dim">{picked.code}</span> · {picked.joined} 가입 · {picked.verified ? '본인인증' : '인증 전'}{picked.status !== 'ACTIVE' ? ` · ${picked.status}` : ''}
+              {' '}<button className="btn-sm" onClick={() => onPick(picked.id)} data-rcm-goto={picked.id}>이 회원 관계도</button>
+              {canEdit && <>{' '}<button className="btn-sm ghost" onClick={() => setMoney({ id: picked.id, name: picked.name })} data-rcm-money={picked.id}>정산 내역</button></>}
+            </div>
+          )}
+          {money && <SettlementSummary key={money.id} id={money.id} name={money.name} />}
 
           {canEdit && (
             <>
