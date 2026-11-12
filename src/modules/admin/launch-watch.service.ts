@@ -399,15 +399,20 @@ export class LaunchWatchService {
 
   /** 지난 7일 운영 알림 — 종류마다 건수 · 가장 높은 등급 · 확인 안 한 수 · 마지막 시각 / 경고 이상 합계 · 확인 안 한 합계 */
   async alertsWeek() {
-    const rows = await this.db.query<{ code: string; severity: string; n: number; open: number; lastAt: string; title: string }>(
+    const rows = await this.db.query<{ code: string; severity: string; n: number; open: number; nw: number; ow: number; lastAt: string; title: string }>(
       `SELECT alert_code AS code,
               CASE WHEN bool_or(severity = 'CRITICAL') THEN 'CRITICAL' WHEN bool_or(severity = 'WARN') THEN 'WARN' ELSE 'INFO' END AS severity,
               count(*)::int AS n, count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL)::int AS open,
+              count(*) FILTER (WHERE severity IN ('WARN', 'CRITICAL'))::int AS nw,
+              count(*) FILTER (WHERE severity IN ('WARN', 'CRITICAL') AND acknowledged_at IS NULL AND resolved_at IS NULL)::int AS ow,
               max(raised_at) AS "lastAt", (array_agg(title ORDER BY raised_at DESC))[1] AS title
          FROM ops_alerts WHERE raised_at > now() - interval '7 days'
         GROUP BY alert_code ORDER BY max(CASE severity WHEN 'CRITICAL' THEN 2 WHEN 'WARN' THEN 1 ELSE 0 END) DESC, count(*) DESC, max(raised_at) DESC LIMIT 40`);
-    const warn = rows.filter((r) => r.severity !== 'INFO');
-    return { rows, warnTotal: warn.reduce((a, r) => a + r.n, 0), warnOpen: warn.reduce((a, r) => a + r.open, 0) };
+    /* v10.258 — 경고 이상 합계는 줄마다 등급으로 셈(같은 종류에 INFO 가 섞이면 전에는 INFO 줄까지 셈 · 회귀 test_v1250 ③) */
+    return {
+      rows: rows.map(({ nw: _nw, ow: _ow, ...r }) => r),
+      warnTotal: rows.reduce((a, r) => a + r.nw, 0), warnOpen: rows.reduce((a, r) => a + r.ow, 0),
+    };
   }
 
   /* ── v10.221 (D191 · docs/356) 보안 정책 보고 30일 ─────────────────── */
