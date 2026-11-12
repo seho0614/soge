@@ -130,11 +130,17 @@ if API and DB:
     rl = call('GET', '/admin/launch-watch/releases', None, TS)
     ok('③ 지금 판 — 점검판엔 precheck 결과 파일 없음 → precheck null', 'precheck' in rl and rl.get('precheck') is None, str(rl.get('precheck'))[:100])
     aw = call('GET', '/admin/launch-watch/alerts-week', None, TS)
-    db_w = psql("SELECT count(*) || '|' || count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL) FROM ops_alerts WHERE raised_at > now() - interval '7 days' AND severity IN ('WARN', 'CRITICAL')")
+    # 7일 경계는 API 와 DB 조회 사이에 움직임(회귀에서 1건 차이) — 2분 넓힌 창까지 허용
+    db_w = psql("SELECT count(*) FILTER (WHERE raised_at > now() - interval '7 days') || '|' || count(*) FILTER (WHERE raised_at > now() - interval '7 days' AND acknowledged_at IS NULL AND resolved_at IS NULL) || '|' || count(*) || '|' || count(*) FILTER (WHERE acknowledged_at IS NULL AND resolved_at IS NULL) FROM ops_alerts WHERE raised_at > now() - interval '7 days 2 minutes' AND severity IN ('WARN', 'CRITICAL')")
+    try:
+        lo_t, lo_o, hi_t, hi_o = [int(x) for x in db_w.split('|')]
+        w_ok = lo_t <= int(aw.get('warnTotal')) <= hi_t and lo_o <= int(aw.get('warnOpen')) <= hi_o
+    except Exception:
+        w_ok = False
     codes = [r.get('code') for r in aw.get('rows') or []]
     sev = [{'CRITICAL': 2, 'WARN': 1, 'INFO': 0}[r.get('severity')] for r in aw.get('rows') or []]
     ok('③ alerts-week — 경고 이상 합계 · 확인 안 한 합계가 DB 와 맞음 · 종류 겹치지 않음 · 급함 → 경고 → 정보 순',
-       aw.get('_err') is None and f"{aw.get('warnTotal')}|{aw.get('warnOpen')}" == db_w and len(codes) == len(set(codes)) and sev == sorted(sev, reverse=True),
+       aw.get('_err') is None and w_ok and len(codes) == len(set(codes)) and sev == sorted(sev, reverse=True),
        f"{aw.get('warnTotal')}|{aw.get('warnOpen')} · DB {db_w} · {len(codes)}종류")
     ok('③ alerts-week — ADMIN 봄 · 회원 403', call('GET', '/admin/launch-watch/alerts-week', None, TA).get('_err') is None
        and call('GET', '/admin/launch-watch/alerts-week', None, TB).get('_err') == 403, '')

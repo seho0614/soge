@@ -153,7 +153,7 @@ if API and DB:
        and int((s.get('intro') or {}).get('paid') or 0) == int(paid or 0) and 'cashout' in (s.get('points') or {}) and len((s.get('intro') or {}).get('items') or []) <= 20,
        f"pt {(s.get('points') or {}).get('total')}/{pt} · paid {(s.get('intro') or {}).get('paid')}/{paid}")
     sa = call('GET', f'/admin/accounts/{bid}/settlement-summary', None, TA)
-    au = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'ACCOUNT_SETTLEMENT_VIEW' AND target_id::text = '{bid}' AND created_at >= '{t0}'")
+    au = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'ACCOUNT_SETTLEMENT_VIEW' AND target_id::text = '{bid}' AND occurred_at >= '{t0}'")
     nf = call('GET', '/admin/accounts/00000000-0000-0000-0000-000000000000/settlement-summary', None, TS)
     mb = call('GET', f'/admin/accounts/{bid}/settlement-summary', None, TB)
     ok('③ 운영 — ADMIN 이 그 회원 정산 내역(내 것과 같은 숫자) · 감사 기록 ACCOUNT_SETTLEMENT_VIEW · 없는 회원 404 · 회원은 403',
