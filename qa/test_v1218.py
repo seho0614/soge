@@ -161,7 +161,7 @@ if API and DB:
         mine_n = [x for x in nodes if x.get('name') in ('추***',)]
         ok('② 파트너 트리 — 1 · 2 · 3번째가 하나씩 늘어남 · 가린 이름 · 직접은 가입일 · 그 아래는 가입 월 · 회원 번호 · 이메일 · 코드 없음',
            all(g1.get(k, 0) == g0.get(k, 0) + 1 for k in (1, 2, 3)) and len(mine_n) >= 3
-           and all(set(x) == {'k', 'p', 'gen', 'name', 'joined', 'children'} for x in nodes)
+           and all(set(x) - {'reward'} == {'k', 'p', 'gen', 'name', 'joined', 'children'} for x in nodes)  # v10.258 보상 칸(1번째 줄만 · test_v1257)
            and all((len(x['joined']) == 10) == (x['gen'] == 1) for x in nodes) and '@' not in json.dumps(after),
            f'{g0} → {g1} · {len(nodes)}')
         na = call('GET', '/partner/affiliate/recommend-tree', t=A.get('accessToken'))
