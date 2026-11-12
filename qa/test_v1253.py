@@ -82,7 +82,7 @@ ok('① 사전 — 대분류 · 세부 · 메뉴 · 정산 내역 · 관계도 �
 rt_ko = [ln.strip() for ln in strip_comments(RT + LB + SA + MR).splitlines() if re.search('[가-힣]', ln)]
 ok('① 그림 부품 RcmTree — 위 → 아래 상자 · 선 · 확대 · 끌기 · 찾기 · 모두 펴기 · 300명 / 휴대폰은 목록 · 화면 읽기 목록 · 새 묶음 없음 · 한국어 글자 없음(새 화면 3개 포함)',
    'export function RcmTree' in RT and '<svg' in RT and 'nodes.length > 300 || window.innerWidth < 640' in RT and 'data-rcm-sr=' in RT and 'setPointerCapture' in RT
-   and 'n.gen <= 2' in RT and '<RcmTree' in MR and '<RcmTree' in PR and 'rcmLabels(' in LB and not rt_ko, str(rt_ko[:2]))
+   and ('n.gen <= 2' in RT or 'n.gen <= (compact ? 1 : 2)' in RT) and '<RcmTree' in MR and '<RcmTree' in PR and 'rcmLabels(' in LB and not rt_ko, str(rt_ko[:2]))
 ok('① 운영 화면 — 관계도 그림(RcmGraph) · 고른 회원 · 정산 내역(SettlementSummary) · 회원 상세 「추천 관계도 · 정산 내역」',
    'export function RcmGraph' in RG and '<RcmGraph' in AR and 'data-rcm-picked=' in AR and 'export function SettlementSummary' in SM
    and '/admin/accounts/${id}/settlement-summary' in SM and 'function MemberMore' in MB and '<RecommendDetail' in MB and '<SettlementSummary' in MB, '')
@@ -141,8 +141,8 @@ if API and DB:
        A.get('_err') is None and B.get('_err') is None and t2.get('_err') is None and (t2.get('total') or 0) == n1 + 2 and a_ is not None and b_ is not None
        and re.match(r'^\d{4}-\d{2}$', b_.get('joined') or '') is not None and (t2.get('root') or {}).get('code') == bcode,
        f"{n1} → {t2.get('total')} · {a_} · {b_}")
-    ok('② 관계도 줄에는 번호 · 이메일 · 코드 · 금액 없음(k · p · gen · name · joined · children 만) · 파트너 화면은 그대로 403 AFF_REQUIRED',
-       keys <= {'k', 'p', 'gen', 'name', 'joined', 'children'} and call('GET', '/partner/affiliate/recommend-tree', None, TB).get('code') == 'AFF_REQUIRED', str(sorted(keys)))
+    ok('② 관계도 줄에는 번호 · 이메일 · 코드 · 금액 없음(k · p · gen · name · joined · children · v10.258 내가 받은 보상 reward 만) · 파트너 화면은 그대로 403 AFF_REQUIRED',
+       keys <= {'k', 'p', 'gen', 'name', 'joined', 'children', 'reward'} and call('GET', '/partner/affiliate/recommend-tree', None, TB).get('code') == 'AFF_REQUIRED', str(sorted(keys)))
 
     # ── ③ 정산 내역 ──
     s = call('GET', '/me/settlement-summary', None, TB)
