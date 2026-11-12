@@ -29,6 +29,21 @@ function channelLine(c: { list: ChannelState[]; ready: number }): string {
   return `급한 알림 받는 길 ${c.ready} / 3: ${AlertChannelsService.line(c.list)}${c.ready ? '' : ' — 하나도 없어 급한 알림이 운영 화면 밖으로 나가지 않습니다'}`;
 }
 
+/* v10.243 (docs/381) — 시행일 3일 안 약관(오늘 포함) — 하루 요약 한 줄 · 운영 알림 TERMS_EFFECTIVE_SOON · _TODAY */
+export type TermsSoon = { code: string; version: string; title: string; day: string; d: number; first: boolean };
+const termsWhat = (t: TermsSoon) => `${t.title} ${t.version}`;
+export function termsLine(list: TermsSoon[]): string[] {
+  if (!list.length) return [];
+  const one = (t: TermsSoon) => `${termsWhat(t)} ${t.day}(${t.d === 0 ? '오늘' : `${t.d}일 뒤`}${t.first ? ' · 첫 판 — 본문 시행일' : ' · 새 판 — 그날 앞 판이 바뀜'})`;
+  return [`약관 시행 예정(3일 안): ${list.length > 4 ? `${list.length}종 — ${list.slice(0, 3).map(one).join(' · ')} 외` : list.map(one).join(' · ')}`];
+}
+export function termsAlertTitle(list: TermsSoon[], today: boolean): string {
+  const names = list.length > 3 ? `${list.slice(0, 3).map(termsWhat).join(' · ')} 외 ${list.length - 3}종` : list.map(termsWhat).join(' · ');
+  const first = list.every((t) => t.first);
+  const tail = first ? '첫 판이라 동의 기준은 그대로 · 본문에 적힌 시행일' : '새 판은 그날부터 지금 판(동의 · 재동의 기준이 바뀜)';
+  return today ? `오늘 시행 — 약관 ${names} · ${tail}` : `${list[0]!.day} 시행(${list[0]!.d}일 뒤) — 약관 ${names} · ${tail} · 운영 화면 › 법정 고지 › 약관`;
+}
+
 /* v10.204 (D181 · docs/326) — 하루 요약 · 공개 직후 지켜보기의 AI 줄
  *   v10.215 (docs/345) — 잠금 글을 「지금 판」 기준으로(첫 판은 게시 · 새 판은 시행일부터 · 운영 상태 한눈에 AI 줄과 같음) */
 export type AgentDay = { enabled: boolean; unlocked: boolean; chats: number; answers: number; handoffs: number; reviews: number;
@@ -140,6 +155,7 @@ export class LaunchWatchService {
       `소개몰 주문 받기: ${c.orderOpen === 'on' ? '켜짐' : '꺼짐'}`,
       /* v10.238 (docs/379) — 급한 알림 받는 길(메일 · 텔레그램 · 슬랙) */
       channelLine(await this.channels.channels()),
+      ...termsLine(await this.termsSoon()),   // v10.243 (docs/381) — 시행일 3일 안 약관
       /* v10.200 (docs/316) — 메인 투표 빈 자리(사용자 웹 메인에 「준비 중」 카드) */
       ...(c.homePolls < 3 ? [`메인 투표 ${c.homePolls} / 3 — 빈 자리는 사용자 웹 메인에 「준비 중」으로 보입니다(운영 화면 › 투표 관리 「확정 질문으로 빈 자리 채우기」)`] : []),
       /* v10.195 (D174) — 어제 바뀐 중요 설정(주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치) */
@@ -443,6 +459,32 @@ export class LaunchWatchService {
         WHERE status <> 'LIVE' AND ip_requested_at IS NOT NULL AND lead_time_weeks IS NOT NULL
           AND ip_requested_at + make_interval(weeks => lead_time_weeks) < now()
         ORDER BY ip_requested_at + make_interval(weeks => lead_time_weeks), sort_order`);
+  }
+
+  /**
+   * v10.243 (docs/381) — 시행일(한국 날짜)이 오늘 ~ 3일 뒤인 게시 약관. first = 같은 약관에 시행일이 더 이른 게시 · 지난 판이 없음
+   *   (첫 판은 게시 순간부터 지금 판 · 적힌 날은 본문 시행일 / 새 판은 그날부터 지금 판).
+   */
+  async termsSoon(): Promise<TermsSoon[]> {
+    return this.db.query(
+      `SELECT t.code, t.version, t.title, to_char(t.effective_from AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS day,
+              ((t.effective_from AT TIME ZONE 'Asia/Seoul')::date - ${TODAY})::int AS d,
+              NOT EXISTS (SELECT 1 FROM terms o WHERE o.code = t.code AND o.version <> t.version
+                             AND o.status IN ('PUBLISHED', 'ARCHIVED') AND o.effective_from < t.effective_from) AS first
+         FROM terms t
+        WHERE t.status = 'PUBLISHED' AND t.effective_from <> 'infinity'
+          AND ((t.effective_from AT TIME ZONE 'Asia/Seoul')::date - ${TODAY}) BETWEEN 0 AND 3
+        ORDER BY t.effective_from, t.display_order, t.code`);
+  }
+
+  /** v10.243 — 하루 요약 때: 3 ~ 1일 전 SOON · 당일 TODAY 를 약관 · 판마다 한 번(이미 알린 「코드:판」은 detail.keys 로 뺌) */
+  async termsAlerts(): Promise<{ soon: TermsSoon[]; today: TermsSoon[] }> {
+    const list = await this.termsSoon();
+    const sent = await this.db.query<{ code: string; key: string }>(
+      `SELECT o.alert_code AS code, k AS key FROM ops_alerts o, jsonb_array_elements_text(coalesce(o.detail->'keys', '[]'::jsonb)) k
+        WHERE o.alert_code IN ('TERMS_EFFECTIVE_SOON', 'TERMS_EFFECTIVE_TODAY') AND o.raised_at > now() - interval '30 days'`);
+    const has = (code: string, t: TermsSoon) => sent.some((x) => x.code === code && x.key === `${t.code}:${t.version}`);
+    return { soon: list.filter((t) => t.d > 0 && !has('TERMS_EFFECTIVE_SOON', t)), today: list.filter((t) => t.d === 0 && !has('TERMS_EFFECTIVE_TODAY', t)) };
   }
 
   /** v10.200 (D178 · docs/316) — 텔레그램으로 보낼 것 · 다시 보낼 것(메일과 같은 기준 · 칸은 pushed_at · repushed_at) */

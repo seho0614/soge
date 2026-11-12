@@ -16,7 +16,7 @@ import { TranslateService } from '../modules/i18n/translate.service';
 import { ReviewShadowService } from '../modules/agent/review-shadow.service';
 import { TownPickService } from '../modules/community/town-pick.service';
 import { AgentChatService } from '../modules/agent/agent-chat.service';
-import { LaunchWatchService } from '../modules/admin/launch-watch.service';
+import { LaunchWatchService, termsAlertTitle } from '../modules/admin/launch-watch.service';
 import { uploadsBackupState } from '../common/uploads-backup-state';
 import { PiiReviewService } from '../modules/admin/pii-review.service';
 import { RoleReviewService } from '../modules/admin/role-review.service';
@@ -532,6 +532,10 @@ export class SchedulerService {
             `개인정보 권리 요청 ${pq.length}건 처리 기한이 2일 안입니다${late ? `(기한 넘김 ${late}건)` : ''} — 운영 화면 위험감지 › 권리 요청에서 처리하십시오`,
             { keys: pq.map((x) => `${x.id}:${x.dueOn}`), items: pq });
         }
+        /* v10.243 (docs/381) — 시행일 3 ~ 1일 전 · 당일 약관(약관 · 판마다 한 번 · INFO) */
+        const ta = await this.launchWatch.termsAlerts();
+        if (ta.soon.length) await this.alert('TERMS_EFFECTIVE_SOON', 'INFO', termsAlertTitle(ta.soon, false), { keys: ta.soon.map((t) => `${t.code}:${t.version}`), items: ta.soon });
+        if (ta.today.length) await this.alert('TERMS_EFFECTIVE_TODAY', 'INFO', termsAlertTitle(ta.today, true), { keys: ta.today.map((t) => `${t.code}:${t.version}`), items: ta.today });
         /* v10.235 (docs/375) — 외부 연동 예상일(IP 신청일 + 기간) 지남 · LIVE 아님 — 하루 한 번 한 건에 모아서(풀림은 resolveAlerts) */
         const io = await this.launchWatch.integrationOverdue();
         if (io.length) {

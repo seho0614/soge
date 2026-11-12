@@ -106,4 +106,5 @@ export const APPEND_ONLY_TABLES = [
   'attribution_events', 'fee_agreements', 'ledger_entries', 'term_agreements',
   'review_events', 'call_logs', 'visitor_identities',
   'audit.audit_logs', 'audit.pii_access_logs', 'audit.pii_reviews', 'audit.role_reviews',
+  'audit.owner_todo_marks',   // v10.241 (D201)
 ] as const;

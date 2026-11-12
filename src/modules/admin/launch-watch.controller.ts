@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsOptional, IsString } from 'class-validator';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Length } from 'class-validator';
 import { LaunchWatchService } from './launch-watch.service';
 import { StateCheckService } from './state-check.service';
 import { OwnerTodoService } from './owner-todo.service';
@@ -12,6 +12,16 @@ import { Audit } from '../../core/audit.interceptor';
 export class LaunchStubCancelDto {
   @ApiPropertyOptional({ type: [String], description: '정리할 주문번호(없으면 시험 결제 주문 전부)' })
   @IsOptional() @IsArray() @ArrayMaxSize(500) @IsString({ each: true }) orderNos?: string[];
+}
+
+/* v10.241 (D201 · docs/381) — 대표 할 일 직접 확인 줄 끝남 · 다시 아직 적기 */
+export class OwnerTodoMarkDto {
+  @ApiProperty({ enum: ['plans', 'legal', 'ebs'], description: '직접 확인 줄 — plans 요금제 금액 · legal 법무 · 세무 · ebs EBS 스냅샷 예약' })
+  @IsString() @IsIn(['plans', 'legal', 'ebs']) key!: string;
+  @ApiProperty({ description: 'true 끝남 · false 다시 아직' })
+  @IsBoolean() done!: boolean;
+  @ApiProperty({ description: '메모 5 ~ 500자(무엇을 언제 했는지)' })
+  @IsString() @Length(5, 500) note!: string;
 }
 
 /* v10.170 (D159 · docs/262) — 공개 직후 지켜보기(운영 화면 첫 화면 카드) */
@@ -42,9 +52,18 @@ export class LaunchWatchController {
 
   /* v10.240 (docs/379) — 대표 할 일 자동 점검표(첫 화면 카드 · DB 로 확인되는 것은 저절로 「됨」) */
   @Get('owner-todo')
-  @ApiOperation({ summary: '대표 할 일 자동 점검표', description: '급한 알림 받는 길 · 확인 안 한 CRITICAL · 접속 인증 · 운영자 2단계 인증 · 외부 연동 신청일 · 업종 정정신고 · 입점 약관 · 검색 사이트 소유 확인 · 위치기반 신고번호는 DB 로 done(true · false), 요금제 금액 · 법무 · 세무 · EBS 스냅샷 예약은 done null(직접 확인). done · total 은 자동 항목만 셈. 읽기만.' })
+  @ApiOperation({ summary: '대표 할 일 자동 점검표', description: '급한 알림 받는 길 · 확인 안 한 CRITICAL · 접속 인증 · 운영자 2단계 인증 · 외부 연동 신청일 · 업종 정정신고 · 입점 약관 · 검색 사이트 소유 확인 · 위치기반 신고번호는 DB 로 done(true · false), 지난달 개인정보 접속기록 점검 · 지난 분기 운영자 권한 점검 · 기한 2일 안 권리 요청(v10.242)도 DB 로. 요금제 금액 · 법무 · 세무 · EBS 스냅샷 예약은 manual — 적은 기록(mark)이 없으면 done null(직접 확인 · v10.241). total 은 모든 줄 · done 은 ✓ 인 줄. 읽기만.' })
   @ApiOkResponse({ type: Object })
   ownerTodo() { return this.todo.rows(); }
+
+  /* v10.241 (D201 · docs/381) — 직접 확인 줄(요금제 · 법무 · EBS) 끝남 · 다시 아직(쌓기만 · 가장 최근 줄이 상태) */
+  @Post('owner-todo/mark')
+  @Roles('SUPER')
+  @Audit('OWNER_TODO_MARK', 'OWNER_TODO')
+  @ApiOperation({ summary: '대표 할 일 직접 확인 줄 적기', description: '요금제 금액 확정 · 법무 · 세무 확인 · EBS 스냅샷 예약 줄에 끝남(done true) · 다시 아직(false)을 메모와 함께 적음. audit.owner_todo_marks 에 쌓기만(고치거나 지울 수 없음) · 가장 최근 줄이 그 줄 상태. SUPER.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'OWNER_TODO_KEY · OWNER_TODO_DONE · OWNER_TODO_NOTE' })
+  ownerTodoMark(@Body() dto: OwnerTodoMarkDto) { return this.todo.mark(dto.key, dto.done, dto.note); }
 
   /* v10.182 (D171 · docs/285) — 최근 서버 오류 50건(SB-ADM-ERR-010) */
   @Get('server-errors')

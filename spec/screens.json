@@ -1209,6 +1209,7 @@
     "POST /admin/launch-watch/stub-orders/cancel",
     "GET /admin/launch-watch/state",
     "GET /admin/launch-watch/owner-todo",
+    "POST /admin/launch-watch/owner-todo/mark",
     "PATCH /admin/site-settings"
    ],
    "nav": "SB-HOM-MAIN-010"

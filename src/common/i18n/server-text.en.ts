@@ -1762,4 +1762,10 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "번호를 넣어야 하는 운영자 {0}명 모두 등록했습니다.": "All {0} operators who would need to enter a code have enrolled.",
   "번호를 넣어야 하는 운영자 {0}명 중 {1}명이 아직 등록하지 않았습니다 — 켜면 그 사람은 다음 로그인 때 등록부터 해야 운영 화면을 씁니다{2}.": "{1} of the {0} operators who would need to enter a code have not enrolled yet — once it is on, they must enroll at their next login before using the admin screen{2}.",
   " · 나도 등록하지 않아 켤 수 없습니다(MFA_ENROLL_FIRST)": " · you have not enrolled either, so you cannot turn it on (MFA_ENROLL_FIRST)",
+  /* v10.241 (docs/381) — 대표 할 일 직접 확인 줄 적기 */
+  "직접 확인 줄(요금제 · 법무 · EBS)만 적을 수 있습니다.": "Only the manual-check rows (plans, legal, EBS) can be recorded.",
+  "끝남인지 다시 아직인지 골라 주십시오.": "Choose whether it is done or not done yet.",
+  "메모를 5 ~ 500자로 적어 주십시오.": "Enter a note of 5 to 500 characters.",
+  "끝남으로 적었습니다.": "Recorded as done.",
+  "다시 아직으로 적었습니다.": "Recorded as not done yet.",
 };
