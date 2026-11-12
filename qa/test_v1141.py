@@ -200,6 +200,8 @@ if API and DB:
             if sync_playwright:
                 setv('identity.ci_duplicate', 'warn')
                 psql(f"UPDATE accounts SET identity_verified_at = NULL WHERE email = '{BUYER}'")
+                # v10.258 — 이 시험만 새 DB 에서 돌려도 필수 약관 동의 화면으로 가지 않게(앞 시험 · 기능 점검에 기대지 않음)
+                __import__('consent_ok').agree(BUYER, 'sgb-dev-1234')
                 with sync_playwright() as p:
                     b = p.chromium.launch(); cx = b.new_context(viewport={'width': 1280, 'height': 900})
                     host = re.sub(r'^https?://', '', SITE).split(':')[0]
