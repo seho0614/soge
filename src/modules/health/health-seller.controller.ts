@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { HealthSellerService } from './health-seller.service';
 import { HealthSettleService } from './health-settle.service';
+import { HealthRateScheduleService } from './health-rate-schedule.service';
 import { OptionInputDto, OptionPatchDto, ProductCreateDto, ProductPatchDto } from './health-admin.controller';
 import { AdvanceDto, ShipDto } from './health-orders.controller';
 import { ReturnDecideDto } from './health-shop.dto';
@@ -26,12 +27,21 @@ export class HltSettleInvoiceDto {
 export class CommissionRateDto {
   @ApiProperty({ description: '판매수수료율(%) — 0 ~ 50', minimum: 0, maximum: 50 }) @IsNumber() @Min(0) @Max(50) rate!: number;
   @ApiPropertyOptional({ description: '바꾼 까닭' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
+  @ApiPropertyOptional({ description: 'v10.275 (D208) 예약 사유(2자 이상 · 판매자에게 보임) — 없으면 note' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
+  @ApiPropertyOptional({ description: 'v10.275 (D208) 시행일(YYYY-MM-DD · 한국) — 올리는데 영향받는 판매자가 있으면 꼭(오늘 + 31일 이후)' })
+  @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) effectiveDate?: string;
 }
 /** v10.272 (D206) — 입점 유형 요율 · null 이면 비움(갈래 요율) */
 export class TypeRateDto {
   @ApiPropertyOptional({ nullable: true, minimum: 0, maximum: 50, description: '입점 유형 판매수수료율(%) — 비우면(null) 갈래 요율' })
   @IsOptional() @IsNumber() @Min(0) @Max(50) rate?: number | null;
   @ApiProperty({ description: '바꾸는 사유(2자 이상) — 기록에 남음' }) @IsString() @MaxLength(300) reason!: string;
+  @ApiPropertyOptional({ description: 'v10.275 (D208) 시행일(YYYY-MM-DD · 한국) — 올리는데 영향받는 판매자가 있으면 꼭(오늘 + 31일 이후)' })
+  @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) effectiveDate?: string;
+}
+/** v10.275 (D208) — 요율 예약 취소 */
+export class RateScheduleCancelDto {
+  @ApiProperty({ description: '취소 사유(2자 이상) — 판매자에게 알림' }) @IsString() @MaxLength(300) reason!: string;
 }
 export class SubmerchantDto {
   @ApiPropertyOptional({ description: '결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 — 연동 전이라 간주 모드에서만 시험 번호)' })
@@ -47,7 +57,7 @@ export class ProductReviewDto {
 @Controller('api/v1')
 @ApiResponse({ status: 400, description: '형식 오류', type: ErrorDto })
 export class HealthSellerController {
-  constructor(private readonly svc: HealthSellerService, private readonly settle: HealthSettleService) {}
+  constructor(private readonly svc: HealthSellerService, private readonly settle: HealthSettleService, private readonly rates: HealthRateScheduleService) {}
 
   @Get('me/health/seller/center')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
@@ -205,8 +215,10 @@ export class HealthSellerController {
   @ApiOperation({ summary: '갈래 판매수수료율', description: '갈래 기본값(판매자 개별 요율이 있으면 그것이 먼저). 바꾼 기록은 DB 가 남기고, 바꾼 뒤 주문부터 적용됩니다(주문 때 요율을 박음).' })
   @ApiParam({ name: 'categoryCode', description: '소개몰 갈래 코드(HLT_FOOD …)' })
   @ApiOkResponse({ type: Object, isArray: true })
+  @ApiResponse({ status: 409, description: 'RATE_SCHEDULED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'BAD_CATEGORY · NOTICE_REQUIRED · NOTICE_TOO_SHORT · REASON_REQUIRED(v10.275 올리면 예약)', type: ErrorDto })
   @Audit('HLT_COMMISSION_RATE', 'HLT_COMMISSION')
-  rate(@Param('categoryCode') categoryCode: string, @Body() dto: CommissionRateDto) { return this.settle.setCommissionRate(categoryCode, dto.rate, dto.note); }
+  rate(@Param('categoryCode') categoryCode: string, @Body() dto: CommissionRateDto) { return this.settle.setCommissionRate(categoryCode, dto.rate, dto.note, dto.effectiveDate, dto.reason); }
 
   @Get('admin/health/type-rates')
   @Roles('ADMIN', 'SUPER')
@@ -219,12 +231,29 @@ export class HealthSellerController {
   @ApiOperation({ summary: '입점 유형 판매수수료율 바꾸기', description: 'v10.272 (D206) 사유 필수 · 바꾼 기록(hlt_type_rate_changes) · 새 주문부터(주문 때 요율을 박음) · null 이면 비움.' })
   @ApiParam({ name: 'sellerType', enum: ['BRAND', 'TENANT'] })
   @ApiOkResponse({ type: Object })
-  @ApiResponse({ status: 409, description: 'SAME_RATE', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'BAD_TYPE · REASON_REQUIRED · BAD_RATE', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'SAME_RATE · RATE_SCHEDULED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'BAD_TYPE · REASON_REQUIRED · BAD_RATE · NOTICE_REQUIRED · NOTICE_TOO_SHORT', type: ErrorDto })
   @Audit('HLT_TYPE_RATE', 'HLT_COMMISSION')
   setTypeRate(@Param('sellerType') sellerType: string, @Body() dto: TypeRateDto) {
-    return this.settle.setTypeRate(sellerType, dto.rate === undefined ? null : dto.rate, dto.reason);
+    return this.settle.setTypeRate(sellerType, dto.rate === undefined ? null : dto.rate, dto.reason, dto.effectiveDate);
   }
+
+  @Get('admin/health/rate-schedules')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 변경 예정 목록', description: 'v10.275 (D208) 판매자 · 입점 유형 · 갈래 요율 인상 예약(예정 먼저 · 최근 50) — 약관 제17조 4항(30일 전 알림 · 시행일 뒤 주문부터).' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  rateSchedules() { return this.rates.list(); }
+
+  @Post('admin/health/rate-schedules/:id/cancel')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 예약 취소', description: 'v10.275 (D208) 시행 전에만 · 사유 필수 · 영향받는 판매자에게 알림 · 기록은 남음(고칠 수 없음).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'SCHEDULE_CLOSED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED', type: ErrorDto })
+  @Audit('HLT_RATE_SCHEDULE_CANCEL', 'HLT_COMMISSION')
+  cancelRateSchedule(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RateScheduleCancelDto) { return this.rates.cancel(id, dto.reason); }
 
   @Get('admin/health/rate-impact')
   @Roles('ADMIN', 'SUPER')

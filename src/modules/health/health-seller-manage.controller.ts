@@ -20,6 +20,8 @@ export class SellerRateDto {
   @ApiPropertyOptional({ nullable: true, minimum: 0, maximum: 50, description: '이 판매자만의 판매수수료율(%) — 비우면(null) 갈래 기본값' })
   @IsOptional() @IsNumber() @Min(0) @Max(50) rate?: number | null;
   @ApiProperty({ description: '바꾸는 사유 — 판매자에게 알림' }) @IsString() @MinLength(2) @MaxLength(300) reason!: string;
+  @ApiPropertyOptional({ description: 'v10.275 (D208) 시행일(YYYY-MM-DD · 한국) — 올리는데 영향받는 판매자가 있으면 꼭(오늘 + 31일 이후)' })
+  @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) effectiveDate?: string;
 }
 export class SellerChangeDecideDto {
   @ApiProperty({ description: 'true 승인(그대로 반영) · false 반려' }) @StrictBoolean() approve!: boolean;
@@ -135,7 +137,8 @@ export class HealthSellerManageController {
   @ApiOperation({ summary: '판매자 수수료율 바꾸기', description: '사유 필수 · 판매자에게 알림 · 기록. 수수료는 주문 때 박히므로 새 주문부터 적용됩니다.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: SellerManageResultDto })
-  @ApiResponse({ status: 409, description: 'BAD_STATE · SAME_RATE', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'BAD_STATE · SAME_RATE · RATE_SCHEDULED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NOTICE_REQUIRED · NOTICE_TOO_SHORT(v10.275 올리면 예약)', type: ErrorDto })
   @Audit('HLT_SELLER_RATE', 'HLT_SELLER')
-  setRate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SellerRateDto) { return this.svc.setRate(id, dto.rate ?? null, dto.reason); }
+  setRate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SellerRateDto) { return this.svc.setRate(id, dto.rate ?? null, dto.reason, dto.effectiveDate); }
 }

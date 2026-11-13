@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { SELLER_LICENSE_KINDS } from './health-tenant.service';
+import { HealthRateScheduleService } from './health-rate-schedule.service';
 
 /* ---------------------------------------------------------------------
  * v10.223 (D193 · docs/358) — 소개몰 판매자 관리
@@ -28,7 +29,7 @@ type License = { kind: string; licenseNo: string; issuedAt?: string | null; expi
 
 @Injectable()
 export class HealthSellerManageService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly rates: HealthRateScheduleService) {}
   private get me() { return RequestCtx.actorId(); }
 
   private notify(sellerId: string, code: string, title: string, body: string, link: string) {
@@ -89,7 +90,7 @@ export class HealthSellerManageService {
   }
 
   /** 운영 — 이 판매자만의 수수료율(null 이면 갈래 기본값) · 사유 · 새 주문부터 */
-  async setRate(id: string, rate: number | null, reasonRaw: string) {
+  async setRate(id: string, rate: number | null, reasonRaw: string, effectiveDate?: string | null) {
     const reason = String(reasonRaw ?? '').trim();
     if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '바꾸는 사유를 적어 주십시오 — 판매자에게 알리고 기록에 남습니다.');
     if (rate !== null && !(rate >= 0 && rate <= 50)) throw new PolicyViolation('BAD_RATE', '수수료율은 0 ~ 50% 사이로 적어 주십시오.');
@@ -100,6 +101,9 @@ export class HealthSellerManageService {
       if (!['ACTIVE', 'PAUSED'].includes(s.status)) throw new StateConflict('BAD_STATE', '판매 중이거나 정지된 판매자만 수수료율을 바꿉니다.');
       const from = s.rate === null ? null : Number(s.rate);
       if (from === rate) throw new StateConflict('SAME_RATE', '지금과 같은 수수료율입니다.');
+      /* v10.275 (D208) — 올라가면 예약(약관 제17조 4항 · 시행일 30일 전 알림) · 내리면 바로 */
+      const sch = await this.rates.guard('SELLER', id, from, rate, reason, effectiveDate);
+      if (sch) return sch;
       await this.db.query(`UPDATE hlt_sellers SET commission_rate = $2, updated_at = now() WHERE id = $1`, [id, rate]);
       await this.db.query(
         `INSERT INTO hlt_seller_rate_changes (seller_id, from_rate, to_rate, reason, changed_by) VALUES ($1, $2, $3, $4, $5)`,

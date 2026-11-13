@@ -125,6 +125,7 @@ import { HealthTenantController } from './modules/health/health-tenant.controlle
 import { HealthTenantService } from './modules/health/health-tenant.service';
 import { HealthSellerManageController } from './modules/health/health-seller-manage.controller';   // v10.223 (D193) 소개몰 판매자 관리
 import { HealthSellerManageService } from './modules/health/health-seller-manage.service';
+import { HealthRateScheduleService } from './modules/health/health-rate-schedule.service';
 import { HealthSellerController } from './modules/health/health-seller.controller';   // v10.166 (D156) 소개몰 판매자센터 · 상품 검수
 import { HealthSellerService } from './modules/health/health-seller.service';
 import { LaunchWatchController } from './modules/admin/launch-watch.controller';   // v10.170 (D159) 공개 직후 지켜보기
@@ -388,6 +389,7 @@ import { LeadService } from './modules/lead/lead.service';
     TownPickService,   /* v10.211 (D188) 동네픽 AI */
     HealthTenantService,   /* v10.165 (D155) 소개몰 입점 */
     HealthSellerManageService,   /* v10.223 (D193) 소개몰 판매자 관리 */
+    HealthRateScheduleService,   /* v10.275 (D208) 수수료율 인상 예약 */
     HealthSellerService,   /* v10.166 (D156) 판매자센터 */
     LaunchWatchService,   /* v10.170 (D159) 공개 직후 지켜보기 */
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */

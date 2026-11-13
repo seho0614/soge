@@ -5,6 +5,7 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
 import { HealthAdminService } from './health-admin.service';
 import { CARRIERS, HealthOrdersService } from './health-orders.service';
 import { HealthReturnService } from './health-return.service';
+import { HealthRateScheduleService } from './health-rate-schedule.service';
 
 /* ---------------------------------------------------------------------
  * v10.166 (D156 · docs/257) — 소개몰 판매자센터: 상품 등록 → 운영 검수 · 배송비 · 반품비
@@ -22,7 +23,7 @@ const CONTENT_KEYS = ['name', 'summary', 'caution', 'notice', 'adCopy', 'categor
 @Injectable()
 export class HealthSellerService {
   constructor(private readonly db: DatabaseService, private readonly admin: HealthAdminService,
-              private readonly orders_: HealthOrdersService, private readonly returns_: HealthReturnService) {}
+              private readonly orders_: HealthOrdersService, private readonly returns_: HealthReturnService, private readonly rateSched: HealthRateScheduleService) {}
   private get me() { return RequestCtx.actorId(); }
 
   /** 내 판매자(입점 승인된 것) — 없으면 403 */
@@ -54,7 +55,7 @@ export class HealthSellerService {
               (SELECT count(*)::int FROM hlt_products p WHERE p.seller_id = s.id AND p.review_state = 'SUBMITTED') AS "inReview",
               (SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on') AS "tenantOn"
          FROM hlt_sellers s WHERE s.id = $1`, [s.id]);
-    return r;
+    return { ...r, rateSchedules: await this.rateSched.forSeller(s.id) };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
   }
 
   /** 배송비 · 반품비 — 반품비는 6,000원을 넘을 수 없음(DB 도 막음) */

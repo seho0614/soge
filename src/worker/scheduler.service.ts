@@ -39,7 +39,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule';
 
 export interface JobResult {
   job: JobName;
@@ -588,6 +588,13 @@ export class SchedulerService {
       }
 
       /* v10.223 (D193 · docs/358) — 입점 서류 만료: 30일 · 7일 전 판매자 알림 · 만료일에 운영 알림 한 번(자동 정지 없음 · 대표 「알림만」) */
+      /* v10.275 (D208 · docs/406) — 수수료율 인상 예약 시행: 시행 시각이 지난 예약을 기본 표로 · 바꾼 기록 · 판매자 알림(요율 계산은 시행 시각부터 이미 새 값) */
+      case 'hlt_rate_schedule': {
+        const [r] = await this.db.query<{ n: number }>(`SELECT fn_hlt_rate_sched_apply() AS n`);
+        affected = Number(r?.n ?? 0); detail = { applied: affected };
+        break;
+      }
+
       case 'seller_license_watch': {
         const [r] = await this.db.query<{ notified: number; expired: number }>(`SELECT * FROM fn_hlt_license_watch()`);
         affected = Number(r?.notified ?? 0); detail = { notified: Number(r?.notified ?? 0), expired: Number(r?.expired ?? 0) };

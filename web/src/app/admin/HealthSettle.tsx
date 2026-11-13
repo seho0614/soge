@@ -5,7 +5,7 @@ import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { HealthProductReviews } from './HealthProductReviews';
-import { HealthTypeRates, previewImpact } from './HealthTypeRates';   // v10.272 · 274 (docs/404)
+import { HealthRateSchedules, HealthTypeRates, previewImpact } from './HealthTypeRates';   // v10.272 · 274 (docs/404) · v10.276 예약(docs/406)
 
 interface SettleRow {
   /* v10.168 (D157) — 판매수수료 세금계산서 */
@@ -254,6 +254,7 @@ function lastMonday() {
 export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
   const settle = useApi<Settle>('/admin/health/settlements');
   const rates = useApi<Rate[]>('/admin/health/commission-rates');
+  const [schKey, setSchKey] = useState(0);   // v10.276 — 예약이 생기면 「요율 변경 예정」 다시 읽기
   const [from, setFrom] = useState(lastMonday());
   const a = useAct();
 
@@ -284,8 +285,12 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
     if (raw === null || raw.trim() === '') return;
     const rate = Number(raw);
     if (!(rate >= 0 && rate <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
-    if (!(await previewImpact('CATEGORY', r.categoryCode, rate, `갈래 ${r.categoryCode}`))) return;   // v10.274 — 최근 30일 영향 먼저
-    void a.run(`rate:${r.categoryCode}`, () => api(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate }) }), rates.reload, '수수료율을 바꿨습니다.');
+    const p = await previewImpact('CATEGORY', r.categoryCode, rate, `갈래 ${r.categoryCode}`);   // v10.274 — 최근 30일 영향 먼저 · v10.276 올리면 예약
+    if (!p) return;
+    let reason = '';
+    if (p.effectiveDate) { reason = (prompt('바꾸는 사유(2자 이상) — 판매자에게 알림으로 보이고 기록에 남습니다') ?? '').trim(); if (reason.length < 2) return; }
+    void a.run(`rate:${r.categoryCode}`, () => api<{ note?: string }>(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate, ...p, ...(reason ? { reason } : {}) }) }),
+      () => { rates.reload(); setSchKey((k) => k + 1); }, (x) => (x && !Array.isArray(x) && x.note) || '수수료율을 바꿨습니다.');
   };
 
   if (settle.error) return <ErrorView error={settle.error} onRetry={settle.reload} />;
@@ -358,7 +363,8 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       )}
 
       <h3 className="sec">수수료율</h3>
-      <HealthTypeRates />
+      <HealthTypeRates onChanged={() => setSchKey((k) => k + 1)} />
+      <HealthRateSchedules key={schKey} onChanged={() => rates.reload()} />
       {rates.error ? <ErrorView error={rates.error} onRetry={rates.reload} /> : null}
       <table className="tbl">
         <thead><tr><th>카테고리</th><th>요율</th><th>소개자 몫</th><th>메모</th><th>변경 이력</th><th /></tr></thead>

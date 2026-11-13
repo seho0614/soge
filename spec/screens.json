@@ -3244,6 +3244,8 @@
     "GET /admin/health/type-rates",
     "PATCH /admin/health/type-rates/{sellerType}",
     "GET /admin/health/rate-impact",
+    "GET /admin/health/rate-schedules",
+    "POST /admin/health/rate-schedules/{id}/cancel",
     "POST /admin/health/sellers/{id}/submerchant",
     "POST /admin/health/settlements/{id}/confirm",
     "POST /admin/health/settlements/{id}/payout"

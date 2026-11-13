@@ -9,6 +9,8 @@ export interface SellerCenterInfo {
   code: string; name: string; type: string; status: string; commissionRate: number | string | null; payable: boolean;
   shipFee: number; freeShipOver: number | null; returnShipFee: number;
   products: number; onSale: number; inReview: number; tenantOn: boolean;
+  /** v10.277 (D208 · docs/406) 예정된 수수료율 변경 — 입점 약관 제17조 4항(30일 전 공지) */
+  rateSchedules?: { scope: 'SELLER' | 'TYPE' | 'CATEGORY'; effectiveDate: string; fromRate: number | string | null; toRate: number | string | null; reason: string; categoryName: string | null }[];
 }
 export interface SellerProduct {
   code: string; name: string; status: string; reviewState: 'NONE' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'; reviewNote: string | null;
@@ -79,6 +81,11 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
         <h3>{info.name} <small className="dim">{info.code}</small></h3>
         <p>{t('summary', { products: String(info.products), onSale: String(info.onSale), inReview: String(info.inReview) })}</p>
         {!info.tenantOn && <p className="notice" data-center-warn="off">{t('tenantOff')}</p>}
+        {(info.rateSchedules ?? []).map((r, i) => {
+          const rt = (v: number | string | null) => (v === null ? t('rateNext') : `${Number(v)}%`);
+          const what = r.scope === 'SELLER' ? t('rateSchedSeller') : r.scope === 'TYPE' ? t('rateSchedType') : t('rateSchedCategory', { name: r.categoryName ?? '' });
+          return <p key={i} className="notice" data-rate-schedule-notice={r.effectiveDate}>{t('rateSched', { what, from: rt(r.fromRate), to: rt(r.toRate), date: r.effectiveDate, reason: r.reason })}</p>;
+        })}
         {!info.payable && <p className="notice" data-center-warn="payable">{t('notPayable')}</p>}
         {info.status === 'PAUSED' && <p className="notice">{t('paused')}</p>}
       </section>

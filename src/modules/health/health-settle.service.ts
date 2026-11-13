@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { resolveSubmerchantProvider } from './submerchant.provider';
+import { HealthRateScheduleService } from './health-rate-schedule.service';
 
 /**
  * 건강몰 — 판매자 · 정산 · 수수료율(운영 화면).
@@ -10,7 +11,7 @@ import { resolveSubmerchantProvider } from './submerchant.provider';
  */
 @Injectable()
 export class HealthSettleService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly rates: HealthRateScheduleService) {}
   hltSellers() {
     return this.db.query(
       `SELECT s.id, s.code, s.name, s.type, s.status, s.submerchant_id AS "submerchantId",
@@ -140,12 +141,17 @@ export class HealthSettleService {
   }
 
   /** v10.168 (D157) — 갈래 기본 판매수수료율(결정 B · 오픈 전에 정함) — 바꾼 기록은 DB 가 남김(hlt_commission_changes) */
-  async setCommissionRate(categoryCode: string, rate: number, note?: string) {
-    const [c] = await this.db.query<{ code: string }>(
-      `SELECT code FROM categories WHERE gwan_code = 'HLT' AND code = $1`, [categoryCode]);
+  async setCommissionRate(categoryCode: string, rate: number, note?: string, effectiveDate?: string | null, reasonRaw?: string) {
+    const [c] = await this.db.query<{ code: string; name: string }>(
+      `SELECT code, name FROM categories WHERE gwan_code = 'HLT' AND code = $1`, [categoryCode]);
     /* 전체 기본값(*) 줄은 받지 않음 — 변경 기록 트리거(fn_hlt_rate_log)가 범위 'DEFAULT' 를 쓰는데 기록 표의 규칙(hlt_chg_scope_check)이 CATEGORY · SELLER 만 받아
      *   바꾸면 늘 422(v10.168 시험이 찾음 · 옛 결함). 기본값은 fn_hlt_rate_for 의 10% — 갈래마다 정하면 됨 */
     if (!c) throw new PolicyViolation('BAD_CATEGORY', '소개몰 갈래를 골라 주십시오.');
+    /* v10.275 (D208) — 올라가고 그 갈래 요율이 쓰이는 판매자가 있으면 예약(약관 제17조 4항) · 내리면 바로 */
+    const [cur] = await this.db.query<{ rate: string | null }>(`SELECT rate FROM hlt_commission_rates WHERE category_code = $1`, [categoryCode]);
+    const sch = await this.rates.guard('CATEGORY', categoryCode, cur ? Number(cur.rate) : null, rate,
+      String(reasonRaw ?? note ?? '').trim(), effectiveDate, `「${c.name}」 갈래`);
+    if (sch) return sch;
     await this.db.query(
       `INSERT INTO hlt_commission_rates (category_code, rate, note, updated_by, updated_at) VALUES ($1, $2, $3, $4, now())
        ON CONFLICT (category_code) DO UPDATE SET rate = EXCLUDED.rate, note = coalesce(EXCLUDED.note, hlt_commission_rates.note),
@@ -165,7 +171,7 @@ export class HealthSettleService {
          FROM hlt_seller_type_rates t ORDER BY t.seller_type`);
   }
 
-  async setTypeRate(sellerType: string, rate: number | null, reasonRaw: string) {
+  async setTypeRate(sellerType: string, rate: number | null, reasonRaw: string, effectiveDate?: string | null) {
     const reason = String(reasonRaw ?? '').trim();
     if (!['BRAND', 'TENANT'].includes(sellerType)) throw new PolicyViolation('BAD_TYPE', '입점 유형은 브랜드 직영관(BRAND) · 일반 입점(TENANT) 둘 중 하나입니다.');
     if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '바꾸는 사유를 적어 주십시오 — 기록에 남습니다.');
@@ -176,6 +182,9 @@ export class HealthSettleService {
       if (!t) throw new PolicyViolation('BAD_TYPE', '입점 유형 줄이 없습니다(D206 적용 전).');
       const from = t.rate === null ? null : Number(t.rate);
       if (from === rate) throw new StateConflict('SAME_RATE', '지금과 같은 수수료율입니다.');
+      const sch = await this.rates.guard('TYPE', sellerType, from, rate, reason, effectiveDate,
+        sellerType === 'BRAND' ? '브랜드 직영관' : '일반 입점');   // v10.275 (D208) — 올라가면 예약
+      if (sch) return sch;
       await this.db.query(`UPDATE hlt_seller_type_rates SET rate = $2, updated_by = $3, updated_at = now() WHERE seller_type = $1`,
         [sellerType, rate, RequestCtx.actorId()]);
       await this.db.query(
@@ -223,8 +232,10 @@ export class HealthSettleService {
               coalesce(sum(floor(l.amount * ${w.next} / 100)), 0)::bigint AS "newFee"
          FROM l WHERE ${w.where}`, [key, rate]);
     const nowFee = Number(r?.nowFee ?? 0), newFee = Number(r?.newFee ?? 0);
+    const nt = await this.rates.notice(scope as 'SELLER' | 'TYPE' | 'CATEGORY', key, rate);   // v10.275 (D208) 예약이 필요한지
     return {
       scope, key, rate, days: 30,
+      increase: nt.increase, affected: nt.affected, needsNotice: nt.needsNotice, earliest: nt.earliest, scheduled: nt.scheduled,
       lines: Number(r?.lines ?? 0), orders: Number(r?.orders ?? 0), sales: Number(r?.sales ?? 0), recorded: Number(r?.recorded ?? 0),
       nowFee, newFee, diff: newFee - nowFee,
       note: '최근 30일 결제된 주문 줄로 셈 · 이미 받은 주문의 수수료는 바뀌지 않음(주문 때 박힘) · 앞으로 같은 판매가 있다고 본 어림',

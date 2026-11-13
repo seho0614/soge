@@ -64,11 +64,12 @@ export function HealthSellers() {
     if (raw === null) return;
     const v = raw.trim() === '' ? null : Number(raw);
     if (v !== null && !(v >= 0 && v <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
-    if (!(await previewImpact('SELLER', x.id, v, x.name))) return;   // v10.274 (docs/404) — 최근 30일 영향 먼저
+    const p = await previewImpact('SELLER', x.id, v, x.name);   // v10.274 (docs/404) — 최근 30일 영향 먼저 · v10.276 올리면 예약
+    if (!p) return;
     const reason = prompt('바꾸는 사유 — 판매자에게 알림이 갑니다') ?? '';
     if (reason.trim().length < 2) return;
-    void a.run(`rate:${x.id}`, () => api(`/admin/health/sellers/${x.id}/commission`, { method: 'POST', body: JSON.stringify({ rate: v, reason: reason.trim() }) }),
-      sellers.reload, '수수료율을 바꿨습니다. 새 주문부터 적용합니다.');
+    void a.run(`rate:${x.id}`, () => api<{ note?: string }>(`/admin/health/sellers/${x.id}/commission`, { method: 'POST', body: JSON.stringify({ rate: v, reason: reason.trim(), ...p }) }),
+      sellers.reload, (r) => r.note || '수수료율을 바꿨습니다. 새 주문부터 적용합니다.');
   };
   const submerchant = (x: Seller) => {
     const id = prompt(`${x.name} — 결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 · 연동 전이라 간주 모드에서만 시험 번호)`, x.submerchantId ?? '');
