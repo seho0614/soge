@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
  *   사용자 웹 RcmTree 와 같은 그리기(위 → 아래 상자 · 선 · 확대 · 축소 · 끌기 · 찾기 · 펴고 접기 · 모두 펴기).
  *   상자를 누르면 그 회원을 고름(onSelect) — 아래 칸에서 「이 회원 관계도」 · 「정산 내역」 · 펴기 / 접기.
  *   300명이 넘으면 목록으로 먼저. 계층 용어(하위 · 산하 · 직급)를 쓰지 않습니다.
- *   v10.258 (docs/390) 직접 추천한 분 상자 셋째 줄 — 고른 회원이 그분 덕분에 받은 보상(받음 nP · 인증 기다림 · 보상 없음). */
+ *   v10.258 (docs/390) 직접 추천한 분 상자 셋째 줄 — 고른 회원이 그분 덕분에 받은 보상(받음 nP · 인증 기다림 · 보상 없음).
+ *   v10.271 (docs/402) 사용자 웹(v10.267)과 같은 **세로 가지** — 한 사람 한 줄(위 → 아래) · 몇 번째 추천인지만큼 오른쪽으로 들임. */
 export interface GNode { k: number; p: number; gen: number; id: string; name: string; code: string | null; status: string; verified: boolean; joined: string; children: number; reward?: { state: 'GOT' | 'WAIT' | 'NONE'; points: number; at: string | null } | null }
 
-const W = 140, H = 62, GX = 16, GY = 40;
+const W = 140, H = 62, IX = 40, GY = 12;   // v10.271 — IX 한 줄 들임 · GY 위아래 틈
 const RW = (r: NonNullable<GNode['reward']>) => (r.state === 'GOT' ? `보상 ${r.points.toLocaleString('ko-KR')}P` : r.state === 'WAIT' ? '인증 기다림' : '보상 없음');
 
 export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
@@ -25,26 +26,24 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => { setMode(nodes.length > 300 ? 'list' : 'graph'); }, [nodes.length]);
 
+  /* v10.271 세로 가지 — 펼친 것만 · 한 사람 한 줄 · 몇 번째 추천인지만큼 들임 */
   const layout = useMemo(() => {
     const pos = new Map<number, { x: number; y: number }>();
-    let col = 0;
-    const walk = (k: number, d: number): number => {
-      const cs = open.has(k) ? kids.get(k) ?? [] : [];
-      let x: number;
-      if (!cs.length) { x = col * (W + GX); col += 1; } else { const xs = cs.map((c) => walk(c.k, d + 1)); x = (xs[0]! + xs[xs.length - 1]!) / 2; }
-      pos.set(k, { x, y: d * (H + GY) });
-      return x;
+    let row = 0, maxD = 0;
+    const walk = (k: number, d: number) => {
+      pos.set(k, { x: d * IX, y: row * (H + GY) });
+      row += 1; maxD = Math.max(maxD, d);
+      for (const c of open.has(k) ? kids.get(k) ?? [] : []) walk(c.k, d + 1);
     };
     walk(0, 0);
-    let maxY = 0; for (const v of pos.values()) maxY = Math.max(maxY, v.y);
-    return { pos, w: Math.max(1, col) * (W + GX), h: maxY + H };
+    return { pos, w: maxD * IX + W, h: Math.max(1, row) * (H + GY) - GY };
   }, [open, kids]);
 
   const toggle = (k: number) => setOpen((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const all = (on: boolean) => setOpen(on ? new Set([0, ...nodes.filter((n) => n.children > 0).map((n) => n.k)]) : new Set([0]));
   const fit = () => {
     const el = box.current; if (!el) return;
-    setView({ x: 20, y: 20, s: Math.min(1, Math.max(0.2, Math.min((el.clientWidth - 40) / layout.w, (el.clientHeight - 40) / layout.h))) });
+    setView({ x: 20, y: 20, s: Math.min(1, Math.max(0.6, Math.min((el.clientWidth - 40) / layout.w, (el.clientHeight - 40) / layout.h))) });   // v10.271 — 세로로 길어지면 0.6 까지만 줄이고 끌어서 봄
   };
   const find = () => {
     const t = q.trim(); if (!t) { setHit([]); return; }
@@ -76,10 +75,10 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
   };
 
   const lines: Array<[number, number, number, number]> = [];
-  for (const [k, p] of layout.pos) { if (k === 0) continue; const n = byK.get(k), pp = n ? layout.pos.get(n.p) : null; if (pp) lines.push([pp.x + W / 2, pp.y + H, p.x + W / 2, p.y]); }
+  for (const [k, p] of layout.pos) { if (k === 0) continue; const n = byK.get(k), pp = n ? layout.pos.get(n.p) : null; if (pp) lines.push([pp.x + IX / 2, pp.y + H, p.x, p.y + H / 2]); }
 
   return (
-    <div data-rcm-graph={mode}>
+    <div data-rcm-graph={mode} data-rcm-layout="vertical">
       <div className="search-row" style={{ flexWrap: 'wrap', gap: 6 }}>
         <button className={mode === 'graph' ? 'btn-sm' : 'btn-sm ghost'} onClick={() => setMode('graph')} data-rcm-mode="graph">그림</button>
         <button className={mode === 'list' ? 'btn-sm' : 'btn-sm ghost'} onClick={() => setMode('list')} data-rcm-mode="list">목록</button>
@@ -103,7 +102,7 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
              onWheel={(e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); setView((v) => ({ ...v, s: Math.min(2, Math.max(0.2, v.s * (e.deltaY < 0 ? 1.1 : 0.9))) })); }}>
           <svg width="100%" height="100%" role="img" aria-label="추천 관계도 그림">
             <g transform={`translate(${view.x},${view.y}) scale(${view.s})`}>
-              {lines.map(([x1, y1, x2, y2], i) => { const my = (y1 + y2) / 2; return <path key={i} d={`M${x1},${y1} V${my} H${x2} V${y2}`} fill="none" stroke="var(--muted, #888)" strokeOpacity={0.6} />; })}
+              {lines.map(([x1, y1, x2, y2], i) => { return <path key={i} d={`M${x1},${y1} V${y2} H${x2}`} fill="none" stroke="var(--muted, #888)" strokeOpacity={0.6} />; })}
               {[...layout.pos].map(([k, p]) => {
                 const n = k === 0 ? null : byK.get(k)!;
                 const closed = !!n && n.children > 0 && !open.has(k);
