@@ -97,10 +97,20 @@ if SITE and API:
         pressed = pg.get_attribute('[data-promo="pause"]', 'aria-pressed')
         pg.click('[data-promo="prev"]'); pg.wait_for_timeout(300); no2 = pg.locator('.home-pno').inner_text().strip()
         ok('③ Hero ① — 멈추면 8초 뒤에도 같은 장 · aria-pressed · 이전 단추로 바뀜', no0 == no1 and pressed == 'true' and no2 != no1, f'{no0} → {no1} → {no2} · {pressed}')
-        chips = [c.strip() for c in pg.locator('.home-chip .home-chipt').all_inner_texts()]
-        terms = [k['term'] for k in kw]
-        ok('③ Hero ③ — 인기 검색어 3개 이상이면 그 말 · 아니면 예시 칩 4개',
-           (chips == terms) if len(terms) >= 3 else (len(chips) == 4), f'{terms} · {chips}')
+        # v10.260 — 메인과 같은 주소(place=hero · 운영이 고른 칩이면 source pick)로 보고, 메인은 1분 동안 같은 값을 들고 있어
+        #   앞 시험(test_v1189 칩 고르기 → 되돌림)이 바로 앞에 돌면 잠깐 옛 칩이 보임(회귀를 거꾸로 돌릴 때 드러남) → 75초까지 다시 봄
+        def hero_want():
+            hk = json.load(urllib.request.urlopen(API.rstrip('/') + '/search/keywords?limit=4&place=hero', timeout=60))
+            tt = [k['term'] for k in hk.get('items') or []]
+            return tt, ((hk.get('source') == 'pick' and len(tt) > 0) or len(tt) >= 3)
+        for _ in range(9):
+            chips = [c.strip() for c in pg.locator('.home-chip .home-chipt').all_inner_texts()]
+            terms, use = hero_want()
+            if (chips == terms) if use else (len(chips) == 4):
+                break
+            pg.wait_for_timeout(9000); pg.reload(wait_until='networkidle', timeout=120000); pg.wait_for_timeout(500)
+        ok('③ Hero ③ — 운영이 고른 칩 또는 인기 검색어 3개 이상이면 그 말 · 아니면 예시 칩 4개',
+           (chips == terms) if use else (len(chips) == 4), f'{terms} · {chips}')
         pg.close(); b.close()
 else:
     print('  (SITE · API 없음 — ② ③ 건너뜀)')
