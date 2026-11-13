@@ -105,6 +105,18 @@ if API and DB:
     except Exception:
         sync_playwright = None
     # ── ③ 사용자 웹 — 세로 가지 ──
+    # 혼자 돌면(새 DB) buyer 에게 추천한 분이 없어 관계도가 없음(11/13 처음 돌 때 상자 0) → 2줄(buyer → A → B)이 없을 때만 가입으로 만듦
+    if SITE and sync_playwright and TB:
+        tr0 = call('GET', '/me/recommend/tree', None, TB)
+        if not any((n_.get('gen') or 0) >= 2 for n_ in tr0.get('nodes') or []):
+            import time
+            stamp = str(int(time.time()))[-7:]
+            bcode = subprocess.run(['psql', DB, '-X', '-At', '-c', "SELECT recommend_code FROM accounts WHERE email = 'buyer@x.com'"], capture_output=True, text=True).stdout.strip()
+            call('POST', '/auth/signup', {'email': f'rcm67-a-{stamp}@t.local', 'password': 'Sgb-test-1267!', 'name': '세로가나', 'recommendCode': bcode})
+            acode = subprocess.run(['psql', DB, '-X', '-At', '-c', f"SELECT recommend_code FROM accounts WHERE email = 'rcm67-a-{stamp}@t.local'"], capture_output=True, text=True).stdout.strip()
+            call('POST', '/auth/signup', {'email': f'rcm67-b-{stamp}@t.local', 'password': 'Sgb-test-1267!', 'name': '세로다라', 'recommendCode': acode})
+        tr1 = call('GET', '/me/recommend/tree', None, TB)
+        ok('③ 준비 — buyer 의 추천 관계도 2줄 이상(없으면 가입으로 만듦)', any((n_.get('gen') or 0) >= 2 for n_ in tr1.get('nodes') or []), f"{tr1.get('total')}")
     if SITE and sync_playwright:
         seen, errs = {}, []
         try:
