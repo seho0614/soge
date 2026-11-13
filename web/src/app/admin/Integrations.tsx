@@ -20,7 +20,45 @@ interface Integration {
   secretKeyName: string | null; secretRegistered: boolean;
   leadTimeWeeks: number | null; blocksOpen: boolean; memo: string | null;
   estWeeksRemaining: number;
+  appliedAt?: string | null; keyAt?: string | null; testedAt?: string | null; liveAt?: string | null;   /* v10.260 (D205) */
   dueOn?: string | null; overdue?: boolean;   /* v10.235 (docs/375) 예상일 = IP 신청일 + 걸리는 기간 · 지났는데 LIVE 아님 */
+}
+
+/* v10.260 (D205 · docs/392) — 외부 연동 신청 진행표 */
+interface Progress {
+  bizReportAt: string | null;
+  summary: { total: number; live: number; applied: number; blocking: number; overdue: number };
+  rows: Array<{ code: string; name: string; status: string; provider: string | null; blocksOpen: boolean; requiresIp: boolean; dueOn: string | null; overdue: boolean;
+    steps: Array<{ key: string; at: string | null; done: boolean }>; now: string; next: string; doneSteps: number; totalSteps: number }>;
+}
+const STEP_COLS: Array<[string, string]> = [['BIZ', '업종 정정'], ['APPLY', '신청'], ['IP_REQ', 'IP 신청'], ['IP_OK', 'IP 승인'], ['KEY', '키'], ['TEST', '시험'], ['LIVE', 'LIVE']];
+
+/** 한 줄에 한 연동 · 칸마다 날짜(없으면 「—」 · IP 가 필요 없으면 「해당 없음」) · 지금 단계는 굵게 */
+function ProgressTable({ p }: { p: Progress }) {
+  return (
+    <div data-int-progress={`${p.summary.applied}|${p.summary.live}|${p.summary.total}`}>
+      <h2 className="ad-s2">신청 진행표 <em>신청 {p.summary.applied} · LIVE {p.summary.live} / {p.summary.total}</em>
+        {p.summary.overdue > 0 && <small className="warn-text"> 예상일 지남 {p.summary.overdue}</small>}</h2>
+      {!p.bizReportAt && <div className="ad-nt warn" data-int-biz="none"><b>업종 정정신고가 먼저입니다.</b> 새 사업자등록증이 본인인증 · 계좌인증 · 결제 신청서의 첨부입니다 — 신고하면 「소개몰 판매자」 탭 맨 위 「입점 열기 준비」에서 날짜 · 접수번호를 적으십시오(SUPER).</div>}
+      <div className="ad-tw"><table className="tbl">
+        <thead><tr><th>연동</th>{STEP_COLS.map(([, l]) => <th key={l}>{l}</th>)}<th>다음에 할 일</th></tr></thead>
+        <tbody>{p.rows.map((r) => (
+          <tr key={r.code} data-int-row={r.code} data-int-now={r.now} className={r.blocksOpen && r.now !== 'DONE' ? 'bad' : undefined}>
+            <td><b>{r.name}</b>{r.blocksOpen && <span className="ad-ls">오픈 차단</span>}</td>
+            {STEP_COLS.map(([k]) => {
+              const st = r.steps.find((x) => x.key === k);
+              if (!st) return <td key={k} className="dim">해당 없음</td>;
+              return <td key={k} data-int-step={k} data-done={st.done ? '1' : '0'}>
+                {st.done ? <span className="st ok">{st.at ?? '됨'}</span> : r.now === k ? <b>지금</b> : <span className="dim">—</span>}
+              </td>;
+            })}
+            <td className="dim">{r.next}{r.overdue && r.dueOn ? <> · <b className="warn-text">예상일 {r.dueOn} 지남</b></> : null}</td>
+          </tr>
+        ))}</tbody>
+      </table></div>
+      <div className="ad-nt info">날짜는 아래 「연동별 설정」에서 적습니다(업체에 확인하지 않고 적은 날짜를 그대로 보여 줌). 상태를 LIVE 로 바꾸면 LIVE 날짜는 저절로 오늘이 됩니다.</div>
+    </div>
+  );
 }
 
 
@@ -52,8 +90,9 @@ export function Integrations() {
   const [ip, setIp] = useState('');
   const [ipMsg, setIpMsg] = useState<string | null>(null);
 
-  const load = () => api<Integration[]>('/admin/integrations').then((r) => {
-    setRows(r);
+  const [prog, setProg] = useState<Progress | null>(null);
+  const load = () => Promise.all([api<Integration[]>('/admin/integrations'), api<Progress>('/admin/integrations/progress')]).then(([r, p]) => {
+    setRows(r); setProg(p);
     setIp(r.find((x) => x.egressIp)?.egressIp ?? '');
   }).catch(setErr);
   useEffect(() => { void load(); }, []);
@@ -107,6 +146,7 @@ export function Integrations() {
           </tr>
         ))}</tbody>
       </table></div>
+      {prog && <ProgressTable p={prog} />}
       <div className="ad-nt info"><b>키는 아래 「연동 키」에서 넣습니다.</b> 암호화해 저장하고 끝 4자리만 보입니다 — DB 백업에는 암호문만 남습니다. 이 화면 키가 먼저, 없으면 .env. 카카오맵 · 날씨 키는 맨 아래 각 구역.</div>
       <div className="ad-nt info"><b>예상일은 「(IP) 신청일 + 걸리는 기간」입니다.</b> 지났는데 LIVE 가 아니면 빨갛게 보이고 하루 한 번 운영 알림(외부 연동 예상일 지남)이 남습니다 — 실제로 업체에 신청한 날로 아래 「IP 신청일」(IP 가 필요 없는 연동은 「신청일」)을 고치면 예상일도 바뀝니다.</div>
       <div className="ad-nt info"><b>IP 등록 2~4주가 가장 긴 항목입니다.</b> 계약을 먼저 걸어 두시는 편이 낫습니다.</div>
@@ -192,6 +232,25 @@ export function Integrations() {
                   />
                 </label>
               )}
+
+              {/* v10.260 (D205) — 진행표 날짜: IP 가 필요한 연동은 업체 신청일을 따로(IP 신청일과 다를 수 있음) · 키 받은 날 · 시험 성공일 */}
+              {r.requiresIp && (
+                <label>
+                  <span>업체 신청일</span>
+                  <input type="date" data-int-applied={r.code} defaultValue={ymdKst(r.appliedAt) || ''}
+                    onChange={(e) => e.target.value && patch(r.code, { appliedAt: e.target.value })} />
+                </label>
+              )}
+              <label>
+                <span>키 받은 날</span>
+                <input type="date" data-int-keyat={r.code} defaultValue={ymdKst(r.keyAt) || ''}
+                  onChange={(e) => e.target.value && patch(r.code, { keyAt: e.target.value })} />
+              </label>
+              <label>
+                <span>시험 성공일</span>
+                <input type="date" data-int-tested={r.code} defaultValue={ymdKst(r.testedAt) || ''}
+                  onChange={(e) => e.target.value && patch(r.code, { testedAt: e.target.value })} />
+              </label>
 
               <label className="chk">
                 <input

@@ -200,6 +200,65 @@ export class RecommendService {
     return { isActive: r?.is_on ?? false, points: r?.points ?? 0, monthlyCap: r?.cap ?? null, given: n?.n ?? 0, givenPoints: n?.pts ?? 0 };
   }
 
+  /* ---------------------------------------------------------------------
+   * v10.259 (docs/392) — 추천 보상 켜기 전 점검(읽기만 · 막지 않음)
+   *   대표 할 일 「추천 보상 점수 · 켜기」 전에 볼 것: 점수 · 한 달 상한 · 본인인증 방식 · 같은 사람 여러 계정 ·
+   *   처리방침(게시 · 「추천」 줄) · 출금(원천징수율 · 주민등록번호 받기) + 켜면 생길 포인트 어림.
+   *   level: OK 됨 · WARN 알고 켜면 됨 · NO 켜면 사고가 날 수 있음(그래도 막지 않음 — 켜기는 SUPER 판단)
+   * ------------------------------------------------------------------- */
+  async turnOnCheck() {
+    const rule = await this.rewardRule();
+    const [st] = await this.db.query<{ provider: string | null; dup: string | null; tax_rate: string | null; tax_id: string | null; priv_ver: string | null; priv_ref: boolean | null }>(
+      `SELECT (SELECT value FROM site_settings WHERE key = 'identity.provider') AS provider,
+              (SELECT value FROM site_settings WHERE key = 'identity.ci_duplicate') AS dup,
+              nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_rate'), '') AS tax_rate,
+              (SELECT value FROM site_settings WHERE key = 'point.cashout_tax_id') AS tax_id,
+              (SELECT version FROM v_terms_current WHERE code = 'PRIVACY') AS priv_ver,
+              (SELECT body ILIKE '%추천%' FROM v_terms_current WHERE code = 'PRIVACY') AS priv_ref`);
+    const provider = (st?.provider || 'STUB').toUpperCase();
+    const dup = (st?.dup || 'warn').toLowerCase();
+    type Lv = 'OK' | 'WARN' | 'NO';
+    const items: Array<{ key: string; level: Lv; value: string; hint: string }> = [
+      { key: 'POINTS', level: rule.points === 1000 ? 'WARN' : 'OK', value: `${rule.points.toLocaleString('ko-KR')}점`,
+        hint: rule.points === 1000 ? '처음 넣어 둔 값(1,000점) 그대로입니다 — 정한 점수인지 확인하십시오.' : '정한 점수입니다.' },
+      { key: 'CAP', level: rule.monthlyCap == null ? 'WARN' : 'OK', value: rule.monthlyCap == null ? '없음' : `한 달 ${rule.monthlyCap}건`,
+        hint: rule.monthlyCap == null ? '한 사람이 한 달에 받을 수 있는 보상 수에 제한이 없습니다 — 처음에는 상한을 두기를 권합니다.' : '한 사람이 한 달에 받는 보상 수를 이 안으로 막습니다.' },
+      { key: 'IDENTITY', level: provider === 'NICE' ? 'OK' : 'NO', value: provider,
+        hint: provider === 'NICE' ? '실제 휴대폰 본인확인(NICE)입니다.'
+          : '시험용 본인인증이라 실제 확인 없이 인증됩니다 — 가짜 계정을 만들어 보상을 받을 수 있습니다. NICE 연동 뒤 켜기를 권합니다.' },
+      { key: 'CI_DUPLICATE', level: dup === 'block' ? 'OK' : 'WARN', value: dup,
+        hint: dup === 'block' ? '같은 사람이 다른 계정으로 본인인증하면 막습니다.' : '같은 사람이 다른 계정으로 본인인증해도 통과합니다 — 한 사람이 계정을 여러 개 만들어 보상을 여러 번 받을 수 있습니다(외부 연동 › 본인인증에서 block).' },
+      { key: 'PRIVACY', level: !st?.priv_ver ? 'NO' : st.priv_ref ? 'OK' : 'WARN', value: st?.priv_ver ? `지금 판 ${st.priv_ver}` : '게시 없음',
+        hint: !st?.priv_ver ? '게시된 개인정보처리방침이 없습니다.' : st.priv_ref ? '처리방침에 「추천」 줄이 있습니다.' : '처리방침에 「추천」이라는 글이 없습니다 — 추천 관계 · 보상 줄을 법무와 확인하십시오(docs/388 · 392).' },
+      { key: 'CASHOUT_TAX', level: st?.tax_rate ? 'OK' : 'WARN', value: st?.tax_rate ? `${st.tax_rate}%` : '비어 있음',
+        hint: st?.tax_rate ? '받은 보상을 출금할 때 이 비율로 원천징수합니다.' : '원천징수율이 비어 있어 출금 신청이 막힙니다 — 보상은 쌓이지만 출금은 못 합니다.' },
+      { key: 'CASHOUT_TAX_ID', level: st?.tax_id === 'on' ? 'OK' : 'WARN', value: st?.tax_id === 'on' ? '켜짐' : '꺼짐',
+        hint: st?.tax_id === 'on' ? '출금 때 주민등록번호를 받습니다(신고 자료).' : '주민등록번호 받기가 꺼져 있습니다 — 지급 신고에 필요하면 처리방침 줄 게시 뒤 켜십시오.' },
+    ];
+    const cap = rule.monthlyCap;
+    const capped = (rows: Array<{ n: number }>) => rows.reduce((a, r) => a + (cap == null ? r.n : Math.min(r.n, cap)), 0);
+    const wait = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM introducer_referrals r JOIN accounts a ON a.id = r.invitee_id
+        WHERE r.rewarded_at IS NULL AND a.identity_verified_at IS NULL GROUP BY r.inviter_id`);
+    const recent = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM introducer_referrals WHERE created_at > now() - interval '30 days' GROUP BY inviter_id`);
+    const [none] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM introducer_referrals r JOIN accounts a ON a.id = r.invitee_id
+        WHERE r.rewarded_at IS NULL AND a.identity_verified_at IS NOT NULL`);
+    const waitN = wait.reduce((a, r) => a + r.n, 0), recentN = recent.reduce((a, r) => a + r.n, 0);
+    return {
+      isActive: rule.isActive, points: rule.points, monthlyCap: cap,
+      ready: !items.some((x) => x.level === 'NO'),
+      counts: { ok: items.filter((x) => x.level === 'OK').length, warn: items.filter((x) => x.level === 'WARN').length, no: items.filter((x) => x.level === 'NO').length },
+      items,
+      estimate: {
+        waiting: waitN, waitingPoints: capped(wait) * rule.points,
+        recent30: recentN, recent30Points: capped(recent) * rule.points,
+        verifiedNoReward: none?.n ?? 0,
+      },
+    };
+  }
+
   async setRewardRule(isActive: boolean, points: number, monthlyCap: number | null) {
     if (!Number.isInteger(points) || points < 1 || points > 100000) {
       throw new PolicyViolation('INVALID_POINTS', '점수는 1 ~ 100,000 사이 정수로 적어 주십시오.');

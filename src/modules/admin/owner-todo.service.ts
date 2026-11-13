@@ -46,8 +46,9 @@ export class OwnerTodoService {
                 ${set('admin.ip_verify')} AS "ipVerify", coalesce(${set('admin.mfa_required')}, 'off') AS mfa,
                 ${set('mall.biz_report_no')} AS "bizNo", ${set('mall.biz_report_at')} AS "bizAt",
                 ${set('seo.verify_google')} AS google, ${set('seo.verify_naver')} AS naver, ${set('community.lbs_report_no')} AS lbs`),
-      this.db.query<{ open: number; noDate: number; overdue: number }>(
+      this.db.query<{ open: number; noDate: number; overdue: number; applied: number }>(
         `SELECT count(*)::int AS open, count(*) FILTER (WHERE ip_requested_at IS NULL)::int AS "noDate",
+                count(*) FILTER (WHERE applied_at IS NOT NULL OR (NOT requires_ip AND ip_requested_at IS NOT NULL))::int AS applied,
                 count(*) FILTER (WHERE ip_requested_at IS NOT NULL AND lead_time_weeks IS NOT NULL
                                    AND ip_requested_at + make_interval(weeks => lead_time_weeks) < now())::int AS overdue
            FROM integrations WHERE status <> 'LIVE'`),
@@ -89,7 +90,7 @@ export class OwnerTodoService {
       { key: 'mfa', label: '운영자 2단계 인증', go: 'my-mfa', done: s.mfa !== 'off',
         now: s.mfa !== 'off' ? `켜짐(${s.mfa})` : '꺼짐 — 「내 2단계 인증」에서 본인 등록 뒤 설정(켜기 전 점검)' },
       { key: 'integ-dates', label: '외부 연동 IP 신청일 · 예상일', go: 'integrations', done: ig.noDate === 0 && ig.overdue === 0,
-        now: `LIVE 아닌 연동 ${ig.open} · 신청일 비어 있음 ${ig.noDate} · 예상일 지남 ${ig.overdue}` },
+        now: `LIVE 아닌 연동 ${ig.open} · 업체 신청 ${ig.applied} · 신청일 비어 있음 ${ig.noDate} · 예상일 지남 ${ig.overdue} — 「신청 진행표」` },
       { key: 'biz-report', label: '업종 정정신고(통신판매중개) 기록', go: 'hlt-sellers', done: !!(s.bizNo && s.bizAt),
         now: s.bizNo && s.bizAt ? `${s.bizAt} · 접수번호 있음` : '기록 없음 — 신고 뒤 「입점 열기 준비」 › 「적기」(SUPER)' },
       { key: 'seller-terms', label: '입점 약관(HLT_SELLER) 게시', go: 'terms', done: !!sl?.cur,

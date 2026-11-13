@@ -207,6 +207,24 @@ export class SiteController {
   @ApiOkResponse({ type: IntegrationDto, isArray: true })
   integrations() { return this.svc.integrations(); }
 
+  @Get('integrations/progress')
+  @ApiOperation({
+    summary: '외부 연동 신청 진행표',
+    description: 'v10.260 (D205 · docs/392) — 연동마다 업종 정정(mall.biz_report_at) → 신청 → IP 신청 · 승인(IP 필요한 연동만) → 키 → 시험 → LIVE 날짜 · 지금 단계 · 다음에 할 일 · 요약. 읽기만.',
+  })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    bizReportAt: { type: 'string', nullable: true },
+    summary: { type: 'object', properties: { total: { type: 'integer' }, live: { type: 'integer' }, applied: { type: 'integer' }, blocking: { type: 'integer' }, overdue: { type: 'integer' } } },
+    rows: { type: 'array', items: { type: 'object', properties: {
+      code: { type: 'string' }, name: { type: 'string' }, status: { type: 'string' }, provider: { type: 'string', nullable: true },
+      blocksOpen: { type: 'boolean' }, requiresIp: { type: 'boolean' }, leadTimeWeeks: { type: 'integer', nullable: true },
+      dueOn: { type: 'string', nullable: true }, overdue: { type: 'boolean' },
+      steps: { type: 'array', items: { type: 'object', properties: { key: { type: 'string', enum: ['BIZ', 'APPLY', 'IP_REQ', 'IP_OK', 'KEY', 'TEST', 'LIVE'] }, at: { type: 'string', nullable: true }, done: { type: 'boolean' } } } },
+      now: { type: 'string' }, next: { type: 'string' }, doneSteps: { type: 'integer' }, totalSteps: { type: 'integer' },
+    } } },
+  } } })
+  integrationProgress() { return this.svc.integrationProgress(); }
+
   @Patch('integrations/egress-ip')
   @ApiOperation({
     summary: '발신 IP 일괄 등록',

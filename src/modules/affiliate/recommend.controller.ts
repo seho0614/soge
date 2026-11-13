@@ -45,6 +45,15 @@ const RULE = {
   },
 };
 
+const CHECK = {
+  type: 'object', properties: {
+    isActive: { type: 'boolean' }, points: { type: 'integer' }, monthlyCap: { type: 'integer', nullable: true }, ready: { type: 'boolean' },
+    counts: { type: 'object', properties: { ok: { type: 'integer' }, warn: { type: 'integer' }, no: { type: 'integer' } } },
+    items: { type: 'array', items: { type: 'object', properties: { key: { type: 'string' }, level: { type: 'string', enum: ['OK', 'WARN', 'NO'] }, value: { type: 'string' }, hint: { type: 'string' } } } },
+    estimate: { type: 'object', properties: { waiting: { type: 'integer' }, waitingPoints: { type: 'integer' }, recent30: { type: 'integer' }, recent30Points: { type: 'integer' }, verifiedNoReward: { type: 'integer' } } },
+  },
+};
+
 /** 가입 화면 코드 확인 — 로그인 전이라 IP 마다 1분 20번(코드 훑기 방지 · signup/biz-check 와 같은 방식) */
 const CHECK_HITS = new Map<string, number[]>();
 
@@ -144,6 +153,13 @@ export class RecommendController {
   @ApiOperation({ summary: '추천 보상 규칙', description: '직접 추천 1단계만 · 가입한 분 첫 본인인증 때 한 번 · 켜짐 · 점수 · 한 달 상한 · 지금까지 준 수.' })
   @ApiOkResponse({ schema: RULE })
   rewardRule() { return this.svc.rewardRule(); }
+
+  @Get('admin/affiliates/recommend-reward/check')
+  @ApiBearerAuth()
+  @Roles('ADMIN', 'PARTNER_AFF')
+  @ApiOperation({ summary: '추천 보상 켜기 전 점검', description: 'v10.259 — 점수 · 한 달 상한 · 본인인증 방식 · 같은 사람 여러 계정 · 처리방침 「추천」 줄 · 출금 준비(원천징수율 · 주민등록번호) · 켜면 생길 포인트 어림. 읽기만 · 막지 않음(OK · WARN · NO).' })
+  @ApiOkResponse({ schema: CHECK })
+  rewardCheck() { return this.svc.turnOnCheck(); }
 
   @Put('admin/affiliates/recommend-reward')
   @ApiBearerAuth()

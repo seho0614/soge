@@ -20,6 +20,54 @@ interface Detail {
 /** v10.258 (docs/390) — 직접 추천한 분 줄: 그 회원(추천한 사람)이 받은 보상 */
 const rwText = (r: { state: string; points: number; at: string | null }) => (r.state === 'GOT' ? `보상 ${r.points.toLocaleString('ko-KR')}P${r.at ? ` · ${r.at}` : ''}` : r.state === 'WAIT' ? '본인인증 기다림' : '보상 없음');
 interface Rule { isActive: boolean; points: number; monthlyCap: number | null; given: number; givenPoints: number }
+/** v10.259 (docs/392) — 추천 보상 켜기 전 점검(읽기만) */
+interface Check {
+  isActive: boolean; ready: boolean; counts: { ok: number; warn: number; no: number };
+  items: Array<{ key: string; level: 'OK' | 'WARN' | 'NO'; value: string; hint: string }>;
+  estimate: { waiting: number; waitingPoints: number; recent30: number; recent30Points: number; verifiedNoReward: number };
+}
+const CHECK_NAME: Record<string, string> = {
+  POINTS: '보상 점수', CAP: '한 달 상한', IDENTITY: '본인인증 방식', CI_DUPLICATE: '같은 사람 여러 계정',
+  PRIVACY: '처리방침 「추천」 줄', CASHOUT_TAX: '출금 원천징수율', CASHOUT_TAX_ID: '주민등록번호 받기',
+};
+const CHECK_ST: Record<string, [string, string]> = { OK: ['st ok', '됨'], WARN: ['st warn', '확인'], NO: ['st no', '위험'] };
+
+/** 켜기 전 점검 상자 — 꺼져 있을 때는 펼쳐 두고, 켜져 있으면 접어 둠 */
+function RewardCheck({ on }: { on: boolean }) {
+  const c = useApi<Check>('/admin/affiliates/recommend-reward/check');
+  const [open, setOpen] = useState(!on);
+  if (c.error) return <ErrorView error={c.error} onRetry={c.reload} />;
+  const d = c.data;
+  if (!d) return null;
+  return (
+    <div className="card pad" data-rcm-check={d.ready ? 'ready' : 'risk'} data-rcm-check-counts={`${d.counts.ok}|${d.counts.warn}|${d.counts.no}`}>
+      <b>{on ? '추천 보상 점검' : '켜기 전 점검'}</b>{' '}
+      {d.counts.no ? <span className="st no">위험 {d.counts.no}</span> : <span className="st ok">위험 없음</span>}{' '}
+      <span className="dim">됨 {d.counts.ok} · 확인 {d.counts.warn}</span>{' '}
+      <button className="btn-plain btn-sm" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? '접기' : '펼치기'}</button>
+      {open && <>
+        <table className="tbl" style={{ marginTop: 8 }}>
+          <tbody>
+            {d.items.map((x) => (
+              <tr key={x.key} data-rcm-check-item={x.key} data-level={x.level}>
+                <td>{CHECK_NAME[x.key] ?? x.key}</td>
+                <td><span className={(CHECK_ST[x.level] ?? ['st', x.level])[0]}>{(CHECK_ST[x.level] ?? ['st', x.level])[1]}</span></td>
+                <td className="mono">{x.value}</td>
+                <td className="dim">{x.hint}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p data-rcm-estimate={`${d.estimate.waiting}|${d.estimate.waitingPoints}|${d.estimate.recent30}|${d.estimate.recent30Points}|${d.estimate.verifiedNoReward}`}>
+          {on ? '지금 규칙으로' : '지금 켜면'} — 본인인증을 기다리는 추천 <b>{n(d.estimate.waiting)}명</b>(모두 인증하면 최대 {n(d.estimate.waitingPoints)}점) ·
+          지난 30일 새 추천 가입 {n(d.estimate.recent30)}명(같은 속도면 한 달 최대 {n(d.estimate.recent30Points)}점)
+          {d.estimate.verifiedNoReward ? <> · 이미 인증해 <b>보상 없음</b> {n(d.estimate.verifiedNoReward)}명(소급 안 됨)</> : null}
+        </p>
+        <div className="hint">읽기만 합니다 — 켜기를 막지 않습니다. 한 달 상한이 있으면 한 사람 몫을 상한까지만 셉니다. 1점 = 1원으로 출금됩니다(원천징수 뒤).</div>
+      </>}
+    </div>
+  );
+}
 
 /* ── SB-AFF-RCM-010 추천 관계도 · v10.218 (D189 · docs/351) ─────────────────────
  *   회원 찾기(코드 · 이메일 · 이름) → 위로 추천인 줄 · 아래 전체 트리(접고 펴기) · 추천인 고치기(ADMIN · 사유 · 기록)
@@ -68,6 +116,8 @@ export function Recommend() {
           )}
         </div>
       )}
+
+      {r && <RewardCheck key={String(r.isActive)} on={r.isActive} />}
 
       <div className="search-row">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="추천 코드 · 이메일 · 이름" aria-label="회원 찾기"

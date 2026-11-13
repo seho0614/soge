@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 
 export class GwanAdminDto {
@@ -130,6 +130,10 @@ export class IntegrationDto {
   secretRegistered!: boolean;
   @ApiProperty({ nullable: true, description: '리드타임(주)' }) leadTimeWeeks!: number | null;
   @ApiProperty({ description: 'true 면 LIVE 가 아닐 때 오픈이 막힙니다' }) blocksOpen!: boolean;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.260 업체 신청일' }) appliedAt?: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.260 키 받은 날' }) keyAt?: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.260 시험 성공일' }) testedAt?: string | null;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.260 LIVE 된 날' }) liveAt?: string | null;
   @ApiProperty({ nullable: true }) memo!: string | null;
   @ApiProperty({ description: '남은 예상 기간(주)' }) estWeeksRemaining!: number;
   @ApiProperty({ nullable: true, format: 'date', description: 'v10.235 — 예상일(IP 신청일 + 리드타임 · 한국 날짜). 신청일 · 리드타임이 없으면 null' }) dueOn!: string | null;
@@ -152,6 +156,11 @@ export class UpdateIntegrationDto {
   })
   @IsOptional() @StrictBoolean() secretRegistered?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() memo?: string;
+  /* v10.260 (D205) — 신청 진행표 날짜(YYYY-MM-DD) */
+  @ApiPropertyOptional({ description: '업체 신청일(v10.260)' }) @IsOptional() @IsDateString() appliedAt?: string;
+  @ApiPropertyOptional({ description: '키 받은 날(v10.260 · 키 값은 보내지 마십시오)' }) @IsOptional() @IsDateString() keyAt?: string;
+  @ApiPropertyOptional({ description: '시험 성공일(v10.260)' }) @IsOptional() @IsDateString() testedAt?: string;
+  @ApiPropertyOptional({ description: 'LIVE 된 날(v10.260 · 비우면 LIVE 로 바꿀 때 오늘)' }) @IsOptional() @IsDateString() liveAt?: string;
 }
 
 export class BannedWordDto {

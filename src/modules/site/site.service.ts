@@ -216,6 +216,7 @@ export class SiteService {
               i.secret_registered AS "secretRegistered",
               i.lead_time_weeks AS "leadTimeWeeks", i.blocks_open AS "blocksOpen",
               i.memo, v.est_weeks_remaining AS "estWeeksRemaining",
+              i.applied_at AS "appliedAt", i.key_at AS "keyAt", i.tested_at AS "testedAt", i.live_at AS "liveAt",
               /* v10.235 (docs/375) — 예상일 = 발신 IP 신청일 + 걸리는 기간 · 지났는데 LIVE 가 아니면 overdue */
               to_char((i.ip_requested_at + make_interval(weeks => i.lead_time_weeks)) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "dueOn",
               (i.status <> 'LIVE' AND i.ip_requested_at + make_interval(weeks => i.lead_time_weeks) < now()) IS TRUE AS overdue
@@ -225,10 +226,60 @@ export class SiteService {
         ORDER BY i.sort_order`);
   }
 
+  /* ---------------------------------------------------------------------
+   * v10.260 (D205 · docs/392) — 외부 연동 신청 진행표
+   *   업종 정정(mall.biz_report_at · 모든 연동 공통) → 신청 → IP 신청 → IP 승인(IP 가 필요한 연동만) → 키 → 시험 → LIVE.
+   *   단계마다 날짜(없으면 null) · 지금 단계 · 다음에 할 일. 적은 날짜를 그대로 믿습니다(업체에 확인하지 않음).
+   * ------------------------------------------------------------------- */
+  async integrationProgress() {
+    const [b] = await this.db.query<{ biz: string | null }>(
+      `SELECT nullif(trim(coalesce((SELECT value FROM site_settings WHERE key = 'mall.biz_report_at'), '')), '') AS biz`);
+    const rows = await this.db.query<{
+      code: string; name: string; status: string; requires_ip: boolean; blocks_open: boolean; lead: number | null; provider: string | null;
+      applied: string | null; ip_req: string | null; ip_ok: string | null; key_at: string | null; reg: boolean; tested: string | null; live: string | null; due: string | null; overdue: boolean;
+    }>(
+      `SELECT i.code, i.name, i.status, i.requires_ip, i.blocks_open, i.lead_time_weeks AS lead, i.provider,
+              to_char(coalesce(i.applied_at, CASE WHEN NOT i.requires_ip THEN i.ip_requested_at END) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS applied,
+              to_char(i.ip_requested_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS ip_req,
+              to_char(i.ip_approved_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS ip_ok,
+              to_char(i.key_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS key_at, i.secret_registered AS reg,
+              to_char(i.tested_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS tested,
+              to_char(i.live_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS live,
+              to_char((i.ip_requested_at + make_interval(weeks => i.lead_time_weeks)) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS due,
+              (i.status <> 'LIVE' AND i.ip_requested_at + make_interval(weeks => i.lead_time_weeks) < now()) IS TRUE AS overdue
+         FROM integrations i ORDER BY i.sort_order`);
+    const NEXT: Record<string, string> = {
+      BIZ: '업종 정정신고 — 새 등록증이 신청서 첨부(docs/227 1절)', APPLY: '업체에 신청(docs/227 3절 신청표)',
+      IP_REQ: '업체에 발신 IP 3.37.95.217 등록 신청', IP_OK: '업체 IP 승인 기다림', KEY: '키 받기 → 「연동 키」에 넣기',
+      TEST: '운영 화면에서 시험(성공 기록)', LIVE: '방식을 실제로 · 상태 LIVE', DONE: '운영 중',
+    };
+    const out = rows.map((r) => {
+      const steps = [
+        { key: 'BIZ', at: b?.biz ?? null, done: !!b?.biz },
+        { key: 'APPLY', at: r.applied, done: !!r.applied },
+        ...(r.requires_ip ? [{ key: 'IP_REQ', at: r.ip_req, done: !!r.ip_req }, { key: 'IP_OK', at: r.ip_ok, done: !!r.ip_ok }] : []),
+        { key: 'KEY', at: r.key_at, done: !!r.key_at || r.reg },
+        { key: 'TEST', at: r.tested, done: !!r.tested || r.status === 'LIVE' },
+        { key: 'LIVE', at: r.live, done: r.status === 'LIVE' },
+      ];
+      const now = r.status === 'LIVE' ? 'DONE' : (steps.find((x) => !x.done)?.key ?? 'LIVE');
+      return { code: r.code, name: r.name, status: r.status, provider: r.provider, blocksOpen: r.blocks_open, requiresIp: r.requires_ip,
+               leadTimeWeeks: r.lead, dueOn: r.due, overdue: r.overdue, steps, now, next: NEXT[now],
+               doneSteps: steps.filter((x) => x.done).length, totalSteps: steps.length };
+    });
+    return {
+      bizReportAt: b?.biz ?? null,
+      summary: { total: out.length, live: out.filter((x) => x.now === 'DONE').length, applied: out.filter((x) => x.steps[1].done).length,
+                 blocking: out.filter((x) => x.blocksOpen && x.now !== 'DONE').length, overdue: out.filter((x) => x.overdue).length },
+      rows: out,
+    };
+  }
+
   async updateIntegration(code: string, input: {
     status?: string; provider?: string; egressIp?: string;
     ipRequestedAt?: string; ipApprovedAt?: string;
     secretRegistered?: boolean; memo?: string;
+    appliedAt?: string; keyAt?: string; testedAt?: string; liveAt?: string;
   }) {
     /* v10.144 (D140) — PG · BANK 를 LIVE 로 올릴 때만 최근 7일 성공 시험을 봄(내리기 · 다른 연동은 그대로) */
     if (input.status === 'LIVE') {
@@ -244,12 +295,18 @@ export class SiteService {
               ip_approved_at = coalesce($6::timestamptz, ip_approved_at),
               secret_registered = coalesce($7, secret_registered),
               memo = coalesce($8, memo),
+              /* v10.260 (D205) 진행표 날짜 · LIVE 로 바꾸면 live_at 이 비어 있을 때 오늘 */
+              applied_at = coalesce($10::timestamptz, applied_at),
+              key_at = coalesce($11::timestamptz, key_at),
+              tested_at = coalesce($12::timestamptz, tested_at),
+              live_at = coalesce($13::timestamptz, live_at, CASE WHEN $2 = 'LIVE' THEN now() END),
               updated_by = $9, updated_at = now()
         WHERE code = $1
       RETURNING code, name, status, egress_ip AS "egressIp"`,
       [code, input.status ?? null, input.provider ?? null, input.egressIp ?? null,
        input.ipRequestedAt ?? null, input.ipApprovedAt ?? null,
-       input.secretRegistered ?? null, input.memo ?? null, RequestCtx.actorId()]);
+       input.secretRegistered ?? null, input.memo ?? null, RequestCtx.actorId(),
+       input.appliedAt ?? null, input.keyAt ?? null, input.testedAt ?? null, input.liveAt ?? null]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 연동입니다.');
     return row;
   }

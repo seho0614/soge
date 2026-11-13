@@ -1722,6 +1722,7 @@
    "gates": [],
    "apis": [
     "GET /admin/integrations",
+    "GET /admin/integrations/progress",
     "PATCH /admin/integrations/{code}",
     "PATCH /admin/integrations/egress-ip",
     "GET /admin/map",
@@ -3581,6 +3582,7 @@
    "nav": "admin-root",
    "apis": [
     "GET /admin/integrations",
+    "GET /admin/integrations/progress",
     "PATCH /admin/integrations/{code}",
     "PATCH /admin/integrations/egress-ip",
     "GET /admin/integration-status"
@@ -4046,6 +4048,7 @@
     "GET /admin/affiliates/recommend/{id}",
     "PATCH /admin/affiliates/recommend/{id}",
     "GET /admin/affiliates/recommend-reward",
+    "GET /admin/affiliates/recommend-reward/check",
     "PUT /admin/affiliates/recommend-reward"
    ]
   },
