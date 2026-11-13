@@ -82,8 +82,8 @@ ok('① 사전 — ko/en 같은 키(관계도 보상 · 첫 화면 카드 · 정
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isfile(os.path.join(K, 'prisma/migrations', d, 'migration.sql'))] if os.path.isdir(os.path.join(K, 'prisma/migrations')) else []
 all_text = strip_comments(RT + MR + SA + HM) + json.dumps(KA.get('recommend', {}), ensure_ascii=False) + json.dumps(KO.get('settleAll', {}), ensure_ascii=False) + json.dumps(KO['home']['recommend'], ensure_ascii=False)
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('390_')] if os.path.isdir(os.path.join(K, 'docs')) else []
-ok('① 계층 용어 없음 · 마이그레이션 없음(242) · 여러 단계 보상 없음 · 문서 390 · 판 v10.258 이상',
-   not any(w in all_text for w in WORDS) and len(mig) == 242 and bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 258),
+ok('① 계층 용어 없음 · 마이그레이션 없음(242 · v10.260 부터 243) · 여러 단계 보상 없음 · 문서 390 · 판 v10.258 이상',
+   not any(w in all_text for w in WORDS) and len(mig) in (242, 243) and bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 258),
    f'{len(mig)} · {DOC} · {VER}')
 
 

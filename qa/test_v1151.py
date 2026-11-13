@@ -10,6 +10,8 @@
   ③ (운영 화면) AI 스위치 「AI 켜기 전 처리방침 확인」 줄
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+# v10.260 — 혼자 돌려도(새 DB) 시험 회원이 약관 동의 화면으로 가지 않게 · 실패해도 멈추지 않음(consent_ok)
+__import__('consent_ok').agree_seed()
 os.environ['PGOPTIONS'] = (os.environ.get('PGOPTIONS', '') + ' -c sgb.terms_fix=on').strip()   # v10.157 D150 — 이 시험은 점검판의 게시된 처리방침을 잠시 고쳤다 되돌림
 
 K = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002') + '/sgb'

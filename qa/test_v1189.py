@@ -8,6 +8,8 @@
   ③ (API · DB · 화면) 추천 칩 — 비어 있으면 auto · 고르면 pick(제한업종 낱말 든 말은 빠짐) · 형식 틀리면 저장 안 됨 · 메인에 1분 안에 · 운영 화면 칸 · 되돌림
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+# v10.260 — 혼자 돌려도(새 DB) 시험 회원이 약관 동의 화면으로 가지 않게 · 실패해도 멈추지 않음(consent_ok)
+__import__('consent_ok').agree_seed()
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'

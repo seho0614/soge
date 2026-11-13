@@ -28,3 +28,10 @@ def agree(email, password):
         return [i['code'] for i in items]
     except Exception:
         return []
+
+SEED_MEMBERS = ('buyer@x.com', 'seller@x.com', 'intro@x.com', 'person@x.com')
+
+def agree_seed(password='sgb-dev-1234'):
+    """v10.260 (docs/392) — 시험 회원 넷의 필수 약관 동의를 먼저(앞 시험 · 기능 점검에 기대지 않고 혼자 돌려도 화면 단계가 동의 화면으로 가지 않게).
+    쓰는 법(파일 맨 위 import 바로 뒤):  __import__('consent_ok').agree_seed()"""
+    return {e: agree(e, password) for e in SEED_MEMBERS}

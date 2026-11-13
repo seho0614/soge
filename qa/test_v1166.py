@@ -9,6 +9,8 @@
   ③ (화면) 사용자 웹 /health/seller/center · 운영 화면 「입점 상품 검수」 · 오류 없음
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+# v10.260 — 혼자 돌려도(새 DB) 시험 회원이 약관 동의 화면으로 가지 않게 · 실패해도 멈추지 않음(consent_ok)
+__import__('consent_ok').agree_seed()
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'

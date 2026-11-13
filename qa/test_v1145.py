@@ -10,6 +10,8 @@
   ③ (사용자 웹) 매물 상세 「전화하기」 → 050 번호 / (운영 화면) 외부 연동 › 「안심번호」
 """
 import hashlib, hmac, json, os, re, subprocess, time, urllib.error, urllib.request
+# v10.260 — 혼자 돌려도(새 DB) 시험 회원이 약관 동의 화면으로 가지 않게 · 실패해도 멈추지 않음(consent_ok)
+__import__('consent_ok').agree_seed()
 
 K = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002') + '/sgb'
 API = os.environ.get('API'); DB = os.environ.get('DB'); ADMIN_WEB = os.environ.get('ADMIN_WEB'); SITE = os.environ.get('SITE')
