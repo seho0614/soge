@@ -64,10 +64,10 @@ ok('① D207 — 입점 초안은 D155 처음 본문(md5)일 때만 · 처리방
 ok('① API 3개(유형 요율 보기 · 바꾸기(사유 · 기록 · 감사) · 영향 미리보기(읽기만 · 30일 · 쓰이는 줄만)) · 화면(상자 · 미리보기 3곳) · 명세 · 문서 404 · 마이그레이션 245 · 판 v10.274 이상',
    "@Get('admin/health/type-rates')" in CT and "@Patch('admin/health/type-rates/:sellerType')" in CT and "@Audit('HLT_TYPE_RATE'" in CT and "@Get('admin/health/rate-impact')" in CT
    and 'async rateImpact(' in SV and "interval '30 days'" in SV and 'l.srate IS NULL AND l.trate IS NULL' in SV and 'INSERT INTO hlt_type_rate_changes' in SV
-   and 'export function HealthTypeRates()' in TR and 'export async function previewImpact(' in TR and '<HealthTypeRates />' in HS
+   and 'export function HealthTypeRates(' in TR and 'export async function previewImpact(' in TR and '<HealthTypeRates ' in HS   # v10.276 onChanged 받음
    and "previewImpact('CATEGORY'" in HS and "previewImpact('SELLER'" in HL and "previewImpact('TYPE'" in TR
    and all(f'"{a}"' in SCR for a in ('GET /admin/health/type-rates', 'PATCH /admin/health/type-rates/{sellerType}', 'GET /admin/health/rate-impact'))
-   and bool(D404) and len(mig) == 245 and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 274), f'{len(mig)} · {VER}')
+   and bool(D404) and len(mig) in (245, 246) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 274), f'{len(mig)} · {VER}')
 
 
 def call(m_, p, b=None, t=None):
@@ -146,18 +146,23 @@ ROLLBACK;""")
     noreason = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': 9, 'reason': ' '}, TS)
     direct = call('PATCH', '/admin/health/type-rates/DIRECT', {'rate': 9, 'reason': '시험 1272'}, TS)
     n0 = psql("SELECT count(*) FROM hlt_type_rate_changes WHERE seller_type = 'BRAND'")
-    s1 = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': 9, 'reason': '시험 1272 바꿈'}, TS)
-    same = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': 9, 'reason': '시험 1272 같음'}, TS)
+    # v10.275 (D208) — 올리면(영향받는 판매자가 있으면) 30일 뒤 예약 → 여기서는 모든 갈래(8% 이상)보다 낮은 7%(바로 바뀌는 내림)
+    s1 = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': 7, 'reason': '시험 1272 바꿈'}, TS)
+    same = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': 7, 'reason': '시험 1272 같음'}, TS)
     tr1 = call('GET', '/admin/health/type-rates', None, TS)
     s2 = call('PATCH', '/admin/health/type-rates/BRAND', {'rate': None, 'reason': '시험 1272 비움'}, TS)
+    if s2.get('code') == 'NOTICE_REQUIRED':   # 비우면 갈래 요율(8 ~ 12%)로 오름 — 다른 시험이 만든 브랜드 판매자가 있으면 예약이 맞음 → 그대로 되돌림
+        s2 = {'ok': True, 'notice': True}
+        psql("UPDATE hlt_seller_type_rates SET rate = NULL WHERE seller_type = 'BRAND'")
+        psql("INSERT INTO hlt_type_rate_changes (seller_type, from_rate, to_rate, reason) VALUES ('BRAND', 7, NULL, '시험 1272 비움(되돌림)')")
     n1 = psql("SELECT count(*) FROM hlt_type_rate_changes WHERE seller_type = 'BRAND'")
     last = psql("SELECT coalesce(from_rate::text, '-') || '>' || coalesce(to_rate::text, '-') FROM hlt_type_rate_changes WHERE seller_type = 'BRAND' ORDER BY changed_at DESC LIMIT 1")
     b1 = [x for x in tr1 if isinstance(tr1, list) and x.get('sellerType') == 'BRAND'] if isinstance(tr1, list) else []
-    ok('④ 유형 요율 API — ADMIN 봄(BRAND · TENANT · 처음 비어 있음) · 회원 403 · 사유 없음 422 · DIRECT 422 · 9% 바꿈 → 기록 · 같은 값 409 · 비우기 → 기록 2줄',
+    ok('④ 유형 요율 API — ADMIN 봄(BRAND · TENANT · 처음 비어 있음) · 회원 403 · 사유 없음 422 · DIRECT 422 · 7% 바꿈 → 기록 · 같은 값 409 · 비우기 → 기록 2줄(오르면 예약 — test_v1275)',
        isinstance(tr, list) and sorted(x.get('sellerType') for x in tr) == ['BRAND', 'TENANT'] and all(x.get('rate') is None for x in tr)
        and t403 == 403 and noreason.get('_err') == 422 and noreason.get('code') == 'REASON_REQUIRED' and direct.get('_err') == 422
-       and s1.get('ok') is True and same.get('_err') == 409 and b1 and float(b1[0].get('rate') or 0) == 9 and s2.get('ok') is True
-       and int(n1) - int(n0) == 2 and last == '9.00>-',
+       and s1.get('ok') is True and same.get('_err') == 409 and b1 and float(b1[0].get('rate') or 0) == 7 and s2.get('ok') is True
+       and int(n1) - int(n0) == 2 and last == '7.00>-',
        f"{[(x.get('sellerType'), x.get('rate')) for x in tr] if isinstance(tr, list) else tr} · {t403} · {noreason} · {direct.get('_err')} · {same} · {n0}->{n1} · {last}")
 
     cur = psql("SELECT rate FROM hlt_commission_rates WHERE category_code = 'HLT_FOOD'") or '10'

@@ -138,9 +138,10 @@ if API and DB:
         iv2 = call('POST', f'/admin/health/settlements/{sid1}/invoice', {'invoiceNo': '20261101-T1168'}, T_)
         ok('② 계산서 발행 번호 → ISSUED · 두 번째 409 NOT_REQUESTED', iv1.get('invoiceState') == 'ISSUED' and iv2.get('code') == 'NOT_REQUESTED', f"{iv1} · {iv2.get('code')}")
         ch0 = psql("SELECT count(*) FROM hlt_commission_changes WHERE target = 'HLT_FOOD'")
-        r1 = call('PATCH', '/admin/health/commission-rates/HLT_FOOD', {'rate': 11, 'note': '시험'}, T_)
+        dn = max(0.0, float(rate0 or 10) - 1)   # v10.275 (D208) — 올리면 예약(영향받는 판매자가 있으면) · 바로 바뀌는 내림으로 봄
+        r1 = call('PATCH', '/admin/health/commission-rates/HLT_FOOD', {'rate': dn, 'note': '시험'}, T_)
         rbad = call('PATCH', '/admin/health/commission-rates/HLT_FOOD', {'rate': 51}, T_)
-        ok('② 수수료율 — 식품 갈래 11% 로 바꿈 · 기록 남음(트리거 2개가 각각 남김) · 51 은 400', any(x.get('categoryCode') == 'HLT_FOOD' and float(x.get('rate')) == 11 for x in (r1 if isinstance(r1, list) else []))
+        ok('② 수수료율 — 식품 갈래 1%p 내림(바로 바뀜) · 기록 남음(트리거 2개가 각각 남김) · 51 은 400', any(x.get('categoryCode') == 'HLT_FOOD' and float(x.get('rate')) == dn for x in (r1 if isinstance(r1, list) else []))
            and int(psql("SELECT count(*) FROM hlt_commission_changes WHERE target = 'HLT_FOOD'")) > int(ch0) and rbad.get('_err') == 400, f"{str(r1)[:120]} · {rbad.get('_err')}")
         if SITE:
             try:

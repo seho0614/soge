@@ -138,13 +138,14 @@ if API and DB:
         db0 = psql(f"UPDATE hlt_sellers SET status = 'PAUSED', status_reason = NULL WHERE id = '{sid_}'")
         ok('② DB — 사유 없는 정지 막음(앱을 거치지 않아도)', db0.startswith('!') and '사유가 필요합니다' in db0, db0[:80])
 
-        r1 = call('POST', f'/admin/health/sellers/{sid_}/commission', {'rate': 15, 'reason': '협의 1223'}, TS)
-        r2 = call('POST', f'/admin/health/sellers/{sid_}/commission', {'rate': 15, 'reason': '협의 1223'}, TS)
+        # v10.275 (D208) — 올리면 30일 뒤 예약 · 여기서는 바로 바뀌는 내림(기본 → 5%)
+        r1 = call('POST', f'/admin/health/sellers/{sid_}/commission', {'rate': 5, 'reason': '협의 1223'}, TS)
+        r2 = call('POST', f'/admin/health/sellers/{sid_}/commission', {'rate': 5, 'reason': '협의 1223'}, TS)
         hs = call('GET', f'/admin/health/sellers/{sid_}/history', None, TS)
         n3 = nt('SELLER_RATE_CHANGED')
-        ok('② 수수료율 — 기본 → 15% · 기록(사유 · 바꾼 사람) · 알림(새 주문부터) · 같은 값 409 SAME_RATE',
-           r1.get('ok') is True and r1.get('to') == 15 and r1.get('from') is None and r2.get('code') == 'SAME_RATE'
-           and psql(f"SELECT commission_rate FROM hlt_sellers WHERE id = '{sid_}'") == '15.00' and (hs.get('rates') or [{}])[0].get('reason') == '협의 1223'
+        ok('② 수수료율 — 기본 → 5%(내림 · 바로) · 기록(사유 · 바꾼 사람) · 알림(새 주문부터) · 같은 값 409 SAME_RATE',
+           r1.get('ok') is True and r1.get('to') == 5 and r1.get('from') is None and r2.get('code') == 'SAME_RATE'
+           and psql(f"SELECT commission_rate FROM hlt_sellers WHERE id = '{sid_}'") == '5.00' and (hs.get('rates') or [{}])[0].get('reason') == '협의 1223'
            and n3.startswith('1|') and '들어오는 주문부터' in n3, f'{r1} · {r2.get("code")} · {n3[:60]}')
 
         exp = (datetime.date.today() + datetime.timedelta(days=200)).isoformat()

@@ -29,7 +29,7 @@ ok('① CSS — 1200px 이상에서만 한 줄 · 칩 줄바꿈 없음 · 「…
    '@media (min-width: 1200px) {' in CSS and '.home-row1 .home-chips { margin-top: 0; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap;' in CSS
    and 'text-overflow: ellipsis' in CSS and '.home-row1 .home-qm a { padding: 9px 11px; gap: 5px; font-size: 13px; }' in CSS, '')
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isdir(os.path.join(K, 'prisma/migrations', d))]
-ok('① 판 v10.130 이상 · 마이그레이션 166 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 130) and len(mig) in (166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245), f"{rd('VERSION').strip()} · {len(mig)}")
+ok('① 판 v10.130 이상 · 마이그레이션 166 이상', tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 130) and len(mig) in (166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246), f"{rd('VERSION').strip()} · {len(mig)}")
 
 if SITE:
     from playwright.sync_api import sync_playwright
