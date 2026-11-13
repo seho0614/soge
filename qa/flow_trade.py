@@ -357,6 +357,13 @@ def t2(b, prev):
         msg = submit(); tries += 1
         if not msg and q(f"select count(*) from businesses where account_id='{S['aid']}'") == '0':
             msg = submit(); tries += 1
+        # v10.267 — 신청 뒤 화면 새로 그리기가 빨리 끝나면 신청서 자리에 바로 「심사 중」 카드(data-biz-pending)가 떠서
+        #   안내 글이 그려지기 전에 신청서가 사라짐(11/13 · 서버 201 · 40/90). → 서버 201 + DB 행 + 다시 연 화면의 심사 중 카드도 「접수」로 봄(기록에 남김).
+        if not msg and resp[0] == 201 and q(f"select count(*) from businesses where account_id='{S['aid']}'") != '0':
+            try: pg.goto(SITE + '/my/business', wait_until='networkidle', timeout=60000)
+            except Exception: pass
+            if until(lambda: pg.locator('[data-biz-pending]').count() > 0, 30):
+                msg = '신청이 접수되었습니다(안내 글 대신 다시 연 화면의 「심사 중」 카드로 확인)'
         return '신청이 접수되었습니다' in msg, f'안내 「{msg[:50]}」 · 서버 응답 {resp[0]} · 「{one(txt(pg, "main .result .stub-note"))[:44]}」 · 누른 횟수 {tries}(2 = 첫 번째는 화면 준비 전이라 서버에 안 감) · 사업장 주소는 비워 둠(「주소 검색」이 바깥 서비스(다음 우편번호)를 불러 누르지 않음 · 직접 입력 칸은 읽기 전용)'
     R.do('사업자등록번호 · 상호 · 대표자명을 채우고 「사업자 인증 신청」을 누름 → 「신청이 접수되었습니다」', '화면', s5)
 

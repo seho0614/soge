@@ -81,7 +81,7 @@ ok('① 사전 — 대분류 · 세부 · 메뉴 · 정산 내역 · 관계도 �
    and KO.get('home', {}).get('recommend', {}).get('view') and EN.get('home', {}).get('recommend', {}).get('view'), '')
 rt_ko = [ln.strip() for ln in strip_comments(RT + LB + SA + MR).splitlines() if re.search('[가-힣]', ln)]
 ok('① 그림 부품 RcmTree — 위 → 아래 상자 · 선 · 확대 · 끌기 · 찾기 · 모두 펴기 · 300명 / 휴대폰은 목록 · 화면 읽기 목록 · 새 묶음 없음 · 한국어 글자 없음(새 화면 3개 포함)',
-   'export function RcmTree' in RT and '<svg' in RT and 'nodes.length > 300 || window.innerWidth < 640' in RT and 'data-rcm-sr=' in RT and 'setPointerCapture' in RT
+   'export function RcmTree' in RT and '<svg' in RT and ('nodes.length > 300 || window.innerWidth < 640' in RT or 'if (!compact && nodes.length > 300)' in RT) and 'data-rcm-sr=' in RT and 'setPointerCapture' in RT
    and ('n.gen <= 2' in RT or 'n.gen <= (compact ? 1 : 2)' in RT) and '<RcmTree' in MR and '<RcmTree' in PR and 'rcmLabels(' in LB and not rt_ko, str(rt_ko[:2]))
 ok('① 운영 화면 — 관계도 그림(RcmGraph) · 고른 회원 · 정산 내역(SettlementSummary) · 회원 상세 「추천 관계도 · 정산 내역」',
    'export function RcmGraph' in RG and '<RcmGraph' in AR and 'data-rcm-picked=' in AR and 'export function SettlementSummary' in SM
