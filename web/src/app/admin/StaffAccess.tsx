@@ -20,6 +20,7 @@ const KIND: Record<string, string> = { VERIFIED: '인증함', SENT: '번호 보�
  *   모든 운영 역할 — 내 상태 · 내 인증번호 받을 곳(개인 텔레그램 대화 번호).
  *   ADMIN · SUPER — 스위치(켜기 SUPER) · 허용 IP(SUPER) · 운영자별 받을 곳(SUPER) · 오늘 인증 · 최근 14일 기록.
  *   운영 Nginx 의 IP 제한은 그대로(대표 11/10 — 문자 연동 뒤 풂 · docs/363 5절).
+ *   v10.268 (docs/397) 맨 위 「켜는 순서」 상자 — ① 허용 IP ② 보내는 길 ③ 운영자별 받을 곳 ④ 켜기 · 보여 주기만(켜기는 아래 「스위치」).
  */
 export function StaffAccess() {
   const me = useApi<IpStatus>('/auth/ip-verify');
@@ -72,6 +73,7 @@ export function StaffAccess() {
       </p>
 
       {canSee && d && (<>
+        <AccessFlow d={d} />
         <h3 className="sec">스위치</h3>
         <p data-ip-switch="">
           <b>{d.on ? '켜짐' : '꺼짐'}</b> · 텔레그램 {d.telegram.ready ? `준비됨(운영 대화방 ${d.telegram.opsChat})` : d.telegram.reason === 'NO_TOKEN' ? '봇 토큰 없음' : '운영 대화방 없음(개인 대화만)'}{' '}
@@ -149,5 +151,41 @@ export function StaffAccess() {
       <Flash msg={a.msg} err={a.err} />
       <div className="ad-nt info">운영 서버 Nginx 의 IP 제한(집 IP 하나)은 그대로입니다 — 문자 인증을 붙인 뒤 풉니다(docs/363). 그 전에도 사용자 웹 주소를 거친 운영 API 는 이 인증이 막습니다.</div>
     </section>
+  );
+}
+
+/** v10.268 (docs/397) — 접속 인증 켜는 순서 · 받아 온 상태로만 판단(새 API 없음) */
+function accessSteps(d: Overview) {
+  const mine = !!d.myIpFull && d.allow.some((x) => x.ip === d.myIpFull);
+  const tg = d.telegram.reason !== 'NO_TOKEN';
+  const way = d.mode === 'SMS' ? d.sms.ready : d.mode === 'TELEGRAM' ? tg : d.sms.ready || tg;
+  const missing = d.staff.filter((s) => !s.receive).length;
+  const s1 = d.allow.length === 0 ? 'NO' : mine ? 'OK' : 'WARN';
+  const s2 = way ? 'OK' : 'NO';
+  const s3 = d.staff.length > 0 && missing === 0 ? 'OK' : 'NO';
+  const s4 = d.on ? 'OK' : s1 !== 'NO' && s2 === 'OK' && s3 === 'OK' ? 'READY' : 'WAIT';
+  return { mine, way, missing, steps: [s1, s2, s3, s4] as const };
+}
+
+function AccessFlow({ d }: { d: Overview }) {
+  const { mine, missing, steps } = accessSteps(d);
+  const ST: Record<string, [string, string]> = { OK: ['st ok', '됨'], WARN: ['st warn', '확인'], NO: ['st warn', '위험'], READY: ['st', '켤 수 있음'], WAIT: ['dim', '앞 단계 먼저'] };
+  const rows: Array<[string, string]> = [
+    ['허용 IP', d.allow.length === 0 ? '없음 — 켜면 모든 곳에서 인증. 집 · 사무실 IP 를 아래 「허용 IP」에 더하십시오'
+      : `${d.allow.length}곳(${d.allow.map((x) => x.memo).join(' · ')})${mine ? ' · 지금 접속 주소 들어 있음' : ` · 지금 접속 주소(${d.myIp ?? '모름'})는 없음 — 켜면 나도 인증번호를 넣음`}`],
+    ['보내는 길', `${MODE[d.mode] ?? d.mode} — 텔레그램 ${d.telegram.reason === 'NO_TOKEN' ? '봇 토큰 없음(외부 연동 › 연동 키)' : '준비됨'} · 문자 ${d.sms.ready ? '준비됨' : '준비 안 됨(알림톡 승인 뒤)'}`],
+    ['운영자마다 받을 곳', missing === 0 ? `${d.staff.length}명 모두 있음 — 줄마다 「시험」으로 받는지 확인` : `${missing}명 없음 — 아래 「운영자별 받을 곳」에서 개인 대화 번호 · 휴대폰 등록`],
+    ['켜기', d.on ? '켜짐' : '아래 「스위치」의 「켜기」(최고 관리자 · 확인 창)'],
+  ];
+  return (
+    <div className="card pad" data-ip-flow={steps.join('|')} style={{ marginBottom: 10 }}>
+      <b>켜는 순서</b> <span className="dim">— 보여 주기만 · 바꾸기는 아래 각 자리에서</span>
+      <ol style={{ margin: '6px 0 0', paddingLeft: 20 }}>
+        {rows.map(([t, txt], i) => {
+          const [c, w] = ST[steps[i]!]!;
+          return <li key={t} data-ip-flow-step={i + 1} data-ip-flow-st={steps[i]}><b>{t}</b> <span className={c}>{w}</span> <span className="dim">{txt}</span></li>;
+        })}
+      </ol>
+    </div>
   );
 }

@@ -8,6 +8,8 @@
  *   보이는 것은 서버가 준 것뿐(가린 이름 · 날짜 · 그분이 추천한 수) — 실적 · 금액 · 연락처 · 회원 번호 없음.
  *   v10.257 (docs/390) compact — 나의공간 첫 화면 작은 그림(2번째 줄까지 · 화면에 맞춤 · 단추 없음 · 휴대폰도 그림).
  *   v10.258 (docs/390) 직접 추천한 분(1번째 줄) 상자에 **내가 받은 추천 보상**(받음 nP · 본인인증 기다림 · 보상 없음) — 그분 금액이 아님.
+ *   v10.267 (docs/397) **세로 가지** — 상자를 위에서 아래로 한 줄씩 쌓고 몇 번째 추천인지는 오른쪽으로 한 칸 들임(선으로 이음).
+ *     옆으로 넓어지지 않아 휴대폰에서도 그림으로 봄(목록으로 먼저 여는 것은 300명 넘을 때만).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,7 +21,7 @@ export interface RcmLabels {
   rGot: string; rWait: string; rNone: string;
 }
 
-const W = 132, H = 62, GX = 16, GY = 40;
+const W = 132, H = 62, IX = 40, GY = 12;   // v10.267 — IX 한 줄 들임 · GY 위아래 틈
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_m, k) => String(v[k] ?? ''));
 
 export function RcmTree({ rootName, nodes, L, compact = false }: { rootName: string; nodes: RcmNode[]; L: RcmLabels; compact?: boolean }) {
@@ -37,31 +39,27 @@ export function RcmTree({ rootName, nodes, L, compact = false }: { rootName: str
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
 
-  /* 휴대폰 폭 · 사람이 많으면 목록으로 먼저 */
-  useEffect(() => { if (!compact && (nodes.length > 300 || window.innerWidth < 640)) setMode('list'); }, [nodes.length, compact]);
+  /* 사람이 많으면 목록으로 먼저(v10.267 — 세로 가지라 휴대폰도 그림) */
+  useEffect(() => { if (!compact && nodes.length > 300) setMode('list'); }, [nodes.length, compact]);
 
-  /* 그림 자리 — 펼친 것만 · 잎은 한 칸 · 부모는 자식 가운데 */
+  /* 그림 자리(v10.267 세로 가지) — 펼친 것만 · 한 사람 한 줄(위 → 아래) · 몇 번째 추천인지만큼 오른쪽으로 들임 */
   const layout = useMemo(() => {
     const pos = new Map<number, { x: number; y: number }>();
-    let col = 0;
-    const walk = (k: number, d: number): number => {
-      const cs = open.has(k) ? kids.get(k) ?? [] : [];
-      let x: number;
-      if (!cs.length) { x = col * (W + GX); col += 1; }
-      else { const xs = cs.map((c) => walk(c.k, d + 1)); x = (xs[0]! + xs[xs.length - 1]!) / 2; }
-      pos.set(k, { x, y: d * (H + GY) });
-      return x;
+    let row = 0, maxD = 0;
+    const walk = (k: number, d: number) => {
+      pos.set(k, { x: d * IX, y: row * (H + GY) });
+      row += 1; maxD = Math.max(maxD, d);
+      for (const c of open.has(k) ? kids.get(k) ?? [] : []) walk(c.k, d + 1);
     };
     walk(0, 0);
-    let maxY = 0;
-    for (const v of pos.values()) maxY = Math.max(maxY, v.y);
-    return { pos, w: Math.max(1, col) * (W + GX), h: maxY + H };
+    return { pos, w: maxD * IX + W, h: Math.max(1, row) * (H + GY) - GY };
   }, [open, kids]);
 
   const fit = () => {
     const el = box.current;
     if (!el) return;
-    const s = Math.min(1, Math.max(0.2, Math.min((el.clientWidth - 40) / layout.w, (el.clientHeight - 40) / layout.h)));
+    /* v10.267 — 세로 가지는 길어지므로 큰 그림은 글자가 읽힐 만큼(0.6)까지만 줄이고 나머지는 끌어서 봄 · 작은 그림은 모두 보이게 */
+    const s = Math.min(1, Math.max(compact ? 0.2 : 0.6, Math.min((el.clientWidth - 40) / layout.w, (el.clientHeight - 40) / layout.h)));
     setView({ x: 20, y: 20, s });
   };
   const centerOn = (k: number) => {
@@ -117,11 +115,11 @@ export function RcmTree({ rootName, nodes, L, compact = false }: { rootName: str
   for (const [k, p] of layout.pos) {
     if (k === 0) continue;
     const n = byK.get(k), pp = n ? layout.pos.get(n.p) : null;
-    if (pp) lines.push([pp.x + W / 2, pp.y + H, p.x + W / 2, p.y]);
+    if (pp) lines.push([pp.x + IX / 2, pp.y + H, p.x, p.y + H / 2]);   // v10.267 — 부모 상자 아래에서 내려와 오른쪽 상자 옆으로
   }
 
   return (
-    <div className={`rcm-box${compact ? ' sm' : ''}`} data-rcm-tree={mode} data-rcm-nodes={nodes.length} data-rcm-compact={compact ? '' : undefined}>
+    <div className={`rcm-box${compact ? ' sm' : ''}`} data-rcm-tree={mode} data-rcm-layout="vertical" data-rcm-nodes={nodes.length} data-rcm-compact={compact ? '' : undefined}>
       {!compact && <div className="rcm-bar">
         <span className="rcm-seg">
           <button type="button" className={mode === 'graph' ? 'on' : undefined} onClick={() => setMode('graph')} data-rcm-mode="graph">{L.graph}</button>
@@ -152,10 +150,7 @@ export function RcmTree({ rootName, nodes, L, compact = false }: { rootName: str
              onWheel={(e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); setView((v) => ({ ...v, s: Math.min(2, Math.max(0.2, v.s * (e.deltaY < 0 ? 1.1 : 0.9))) })); }}>
           <svg width="100%" height="100%" role="img" aria-label={L.graph}>
             <g transform={`translate(${view.x},${view.y}) scale(${view.s})`}>
-              {lines.map(([x1, y1, x2, y2], i) => {
-                const my = (y1 + y2) / 2;
-                return <path key={i} d={`M${x1},${y1} V${my} H${x2} V${y2}`} className="rcm-ln" />;
-              })}
+              {lines.map(([x1, y1, x2, y2], i) => <path key={i} d={`M${x1},${y1} V${y2} H${x2}`} className="rcm-ln" />)}
               {[...layout.pos].map(([k, p]) => {
                 const n = k === 0 ? null : byK.get(k)!;
                 const closed = !!n && n.children > 0 && !open.has(k);

@@ -8,6 +8,8 @@ import { ErrorView } from '../../components/ErrorView';
  *   금액은 오픈 전에 대표가 정함(subscription-referral-code #13). 고치기는 SUPER · 사유 필수 · 감사 PLAN_SAVE.
  *   올리면 이용 중인 구독은 원래 금액으로 계속 결제(새 구독부터 새 금액) · 내리면 모두 다음 결제부터.
  *   무료 ↔ 유료 전환은 서버가 막음 · 무료 요금제 열람 한도는 운영 설정 request.view.free_monthly 를 따름.
+ *   v10.269 (docs/397) 아래 「요금제 금액 시뮬레이션」 — 지금 금액을 불러와 가정(구독자 수 · 요금제별 비율 · 금액 · 기간 · 달마다 늚)으로
+ *     한 달 · 기간 매출 · 부가세 포함 금액이면 공급가액 · 부가세. **계산만 — 저장하지 않음**.
  */
 interface Plan {
   code: string; name: string; monthlyPrice: number; includedCodes: number; extraCodePrice: number;
@@ -107,6 +109,7 @@ export function PlanPanel() {
         </div>
       )}
       {res && <p className={res.ok ? 'hint' : 'form-error'} data-plan-res>{res.text}</p>}
+      <PlanSim plans={d.plans} />
       {d.changes.length > 0 && (
         <>
           <h4>최근 변경</h4>
@@ -124,6 +127,60 @@ export function PlanPanel() {
           </table>
         </>
       )}
+    </div>
+  );
+}
+
+/** v10.269 (docs/397) — 요금제 금액 시뮬레이션 · 계산만(서버에 보내지 않음) */
+function planSim(n: number, rows: Array<{ pct: number; price: number }>, months: number, grow: number) {
+  const per = rows.map((r) => { const subs = Math.floor((n * r.pct) / 100); return { subs, amt: subs * r.price }; });
+  const month = per.reduce((a, x) => a + x.amt, 0);
+  let period = 0;
+  for (let m = 0; m < months; m += 1) period += Math.floor(month * Math.pow(1 + grow / 100, m));
+  const supply = Math.floor(month / 1.1);
+  return { per, month, period, supply, vat: month - supply };
+}
+
+function PlanSim({ plans }: { plans: Plan[] }) {
+  const paid = plans.filter((p) => p.monthlyPrice > 0).length;
+  const [n, setN] = useState('100');
+  const [months, setMonths] = useState('12');
+  const [grow, setGrow] = useState('0');
+  const [pct, setPct] = useState<Record<string, string>>(() => Object.fromEntries(plans.map((p) => [p.code, p.monthlyPrice > 0 ? String(paid ? Math.floor(30 / paid) : 0) : '70'])));
+  const [price, setPrice] = useState<Record<string, string>>(() => Object.fromEntries(plans.map((p) => [p.code, String(p.monthlyPrice)])));
+  const num = (v: string | undefined) => Math.max(0, Number((v ?? '').replace(/[^0-9.]/g, '')) || 0);
+  const r = planSim(Math.floor(num(n)), plans.map((p) => ({ pct: num(pct[p.code]), price: Math.floor(num(price[p.code])) })), Math.min(60, Math.floor(num(months))), num(grow));
+  const sumPct = plans.reduce((a, p) => a + num(pct[p.code]), 0);
+  const won = (v: number) => `${v.toLocaleString('ko-KR')}원`;
+  return (
+    <div className="card pad" data-plan-sim={`${r.month}|${r.period}`} style={{ marginTop: 10 }}>
+      <b>요금제 금액 시뮬레이션</b> <span className="dim">— 계산만 · 저장하지 않음 · 금액은 위 표에서 불러옴(바꿔 넣어 볼 수 있음)</span>
+      <p style={{ margin: '6px 0' }}>
+        <label>구독하는 회원 수 <input value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" style={{ width: 80 }} data-plan-sim-in="n" /></label>{' '}
+        <label>기간(달) <input value={months} onChange={(e) => setMonths(e.target.value)} inputMode="numeric" style={{ width: 50 }} data-plan-sim-in="months" /></label>{' '}
+        <label>달마다 늚(%) <input value={grow} onChange={(e) => setGrow(e.target.value)} inputMode="decimal" style={{ width: 50 }} data-plan-sim-in="grow" /></label>
+      </p>
+      <table className="tbl">
+        <thead><tr><th>요금제</th><th>비율(%)</th><th>월 금액</th><th>구독자</th><th>한 달 매출</th></tr></thead>
+        <tbody>
+          {plans.map((p, i) => (
+            <tr key={p.code} data-plan-sim-row={p.code}>
+              <td>{p.name}</td>
+              <td><input value={pct[p.code] ?? ''} onChange={(e) => setPct((x) => ({ ...x, [p.code]: e.target.value }))} inputMode="decimal" style={{ width: 60 }} data-plan-sim-pct={p.code} /></td>
+              <td><input value={price[p.code] ?? ''} onChange={(e) => setPrice((x) => ({ ...x, [p.code]: e.target.value }))} inputMode="numeric" style={{ width: 90 }} data-plan-sim-price={p.code} /></td>
+              <td>{r.per[i]!.subs.toLocaleString('ko-KR')}명</td>
+              <td>{won(r.per[i]!.amt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {sumPct !== 100 && <p className="warn-text" data-plan-sim-pctwarn={sumPct}>비율 합계 {sumPct}% — 100% 가 되게 맞추십시오</p>}
+      <table className="tbl" style={{ marginTop: 6 }}><tbody>
+        <tr><th>한 달 매출</th><td data-plan-sim-out="month"><b>{won(r.month)}</b></td></tr>
+        <tr><th>기간 합계({Math.min(60, Math.floor(num(months)))}달)</th><td data-plan-sim-out="period"><b>{won(r.period)}</b></td></tr>
+        <tr><th>금액이 부가세 포함이면</th><td data-plan-sim-out="vat">한 달 공급가액 {won(r.supply)} · 부가세 {won(r.vat)}</td></tr>
+      </tbody></table>
+      <p className="dim" style={{ marginTop: 4 }}>추가 소개코드 · 성사 수수료 · 결제 수수료 · 환불은 넣지 않은 어림입니다. 요금제 금액에 부가세가 들어 있는지는 세무 확인이 필요합니다.</p>
     </div>
   );
 }
