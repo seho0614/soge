@@ -173,6 +173,7 @@ export function OpsAlerts() {
     <section data-ops-alerts="">
       <Flash msg={a.msg} err={a.err} />
       <AlertsWeek />
+      {ms.data && <ChannelGuide ms={ms.data} isSuper={isSuper} busy={a.busy} onTest={{ mail: mailTest, telegram: pushTest, slack: slackTest }} />}
       {ms.data && (
         <p className="card pad" data-mail-status={ms.data.ready ? 'ready' : 'not-ready'}>
           <b>급한 알림 메일</b>{' '}
@@ -286,6 +287,50 @@ export function OpsAlerts() {
  * v10.234 (docs/375) — 「지금 켜면 첫 차례」 미리보기. 누를 때만 읽음(읽기만 — 보내지 않고 「보냄」도 적지 않음).
  * 정기 작업과 같은 글 만들기라 켠 뒤 처음 오는 글과 같음(그 사이 새 알림이 생기면 달라짐).
  */
+/* ---------------------------------------------------------------------
+ * v10.264 (docs/395) — 알림 길 켜기 도우미: 길마다 ① 값 있음(준비) → ② 시험 성공(마지막 시험) → ③ 받는 중.
+ *   값은 지금처럼 각 자리에서 넣음(메일: 외부 연동 › 메일 + 설정 ops.digest_to · 텔레그램: 연동 키 TELEGRAM_BOT_TOKEN + 아래 「대화방 찾기」 ·
+ *   슬랙: 연동 키 SLACK_WEBHOOK_URL). 시험 단추는 아래 줄과 같은 API(SUPER · 1분에 한 번). 두 길 이상 권함(한 길이 끊겨도 다른 길로).
+ * ------------------------------------------------------------------- */
+type Ch = 'mail' | 'telegram' | 'slack';
+const CH_HINT: Record<Ch, string> = {
+  mail: '외부 연동 › 메일(SMTP)을 준비하고, 받는 주소는 운영 설정 ops.digest_to',
+  telegram: '외부 연동 › 연동 키 TELEGRAM_BOT_TOKEN · 봇에게 말을 건 뒤 아래 「대화방 찾기」로 대화방 고르기',
+  slack: '외부 연동 › 연동 키 SLACK_WEBHOOK_URL(슬랙 앱 Incoming Webhook 주소)',
+};
+function ChannelGuide({ ms, isSuper, busy, onTest }: { ms: MailStatus; isSuper: boolean; busy: string | null; onTest: Record<Ch, () => void> }) {
+  const rows: Array<{ k: Ch; name: string; ready: boolean; reason: string | null; test: { at: string; ok: boolean; reason: string | null } | null; busyKey: string }> = [
+    { k: 'mail', name: '메일', ready: ms.ready && !!ms.to, reason: !ms.ready ? why(ms.reason) : !ms.to ? '받는 주소 없음' : null, test: ms.lastTest, busyKey: 'mail-test' },
+    { k: 'telegram', name: '텔레그램', ready: !!ms.push?.ready, reason: ms.push?.ready ? null : (ms.push?.reason === 'NO_CHAT' ? '대화방 없음' : '봇 토큰 없음'), test: ms.push?.lastTest ?? null, busyKey: 'push-test' },
+    { k: 'slack', name: '슬랙', ready: !!ms.slack?.ready, reason: ms.slack?.ready ? null : '웹훅 주소 없음', test: ms.slack?.lastTest ?? null, busyKey: 'slack-test' },
+  ];
+  const on = rows.filter((r) => r.ready && r.test?.ok).length;
+  const ST = (done: boolean, now: boolean) => (done ? <span className="st ok">됨</span> : now ? <b>지금</b> : <span className="dim">—</span>);
+  return (
+    <div className="card pad" data-channel-guide={on}>
+      <b>알림 길 켜기 도우미</b> <span className={on >= 2 ? 'st ok' : 'st warn'}>받는 길 {on} / 3</span>{' '}
+      <span className="dim">{on >= 2 ? '두 길 이상 — 한 길이 끊겨도 다른 길로 갑니다' : '두 길 이상 켜기를 권합니다(한 길이 끊기면 경보가 운영 화면에만 남음)'}</span>
+      <table className="tbl" style={{ marginTop: 6 }}>
+        <thead><tr><th>길</th><th>① 값</th><th>② 시험 성공</th><th>③ 받는 중</th><th>할 일</th></tr></thead>
+        <tbody>{rows.map((r) => {
+          const tested = !!r.test?.ok;
+          return (
+            <tr key={r.k} data-channel-row={r.k} data-channel-step={`${r.ready ? 1 : 0}${tested ? 1 : 0}`}>
+              <td>{r.name}</td>
+              <td>{ST(r.ready, !r.ready)}</td>
+              <td>{ST(tested, r.ready && !tested)}{r.test && !r.test.ok && <span className="warn-text"> 마지막 시험 실패{r.test.reason ? `(${r.test.reason})` : ''}</span>}</td>
+              <td>{ST(r.ready && tested, false)}</td>
+              <td className="dim">{!r.ready ? <>{r.reason} — {CH_HINT[r.k]}</>
+                : !tested ? <>시험을 보내 받는지 확인{isSuper && <> <button className="btn-sm" disabled={busy === r.busyKey} onClick={onTest[r.k]} data-channel-test={r.k}>시험 보내기</button></>}</>
+                : '급한 알림 · 주간 알림이 이 길로 갑니다'}</td>
+            </tr>
+          );
+        })}</tbody>
+      </table>
+    </div>
+  );
+}
+
 function PushPreview() {
   const [d, setD] = useState<Preview | null>(null);
   const [err, setErr] = useState<string | null>(null);

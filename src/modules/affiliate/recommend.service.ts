@@ -208,8 +208,9 @@ export class RecommendService {
    * ------------------------------------------------------------------- */
   async turnOnCheck() {
     const rule = await this.rewardRule();
-    const [st] = await this.db.query<{ provider: string | null; dup: string | null; tax_rate: string | null; tax_id: string | null; priv_ver: string | null; priv_ref: boolean | null }>(
+    const [st] = await this.db.query<{ provider: string | null; dup: string | null; tax_rate: string | null; tax_id: string | null; priv_ver: string | null; priv_ref: boolean | null; min: number }>(
       `SELECT (SELECT value FROM site_settings WHERE key = 'identity.provider') AS provider,
+              coalesce(nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_min'), '')::int, 10000) AS min,
               (SELECT value FROM site_settings WHERE key = 'identity.ci_duplicate') AS dup,
               nullif((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_rate'), '') AS tax_rate,
               (SELECT value FROM site_settings WHERE key = 'point.cashout_tax_id') AS tax_id,
@@ -248,6 +249,8 @@ export class RecommendService {
     const waitN = wait.reduce((a, r) => a + r.n, 0), recentN = recent.reduce((a, r) => a + r.n, 0);
     return {
       isActive: rule.isActive, points: rule.points, monthlyCap: cap,
+      /* v10.261 (docs/395) — 시뮬레이터가 쓰는 출금 기준 */
+      taxRate: st?.tax_rate ?? null, cashoutMin: st?.min ?? 10000,
       ready: !items.some((x) => x.level === 'NO'),
       counts: { ok: items.filter((x) => x.level === 'OK').length, warn: items.filter((x) => x.level === 'WARN').length, no: items.filter((x) => x.level === 'NO').length },
       items,

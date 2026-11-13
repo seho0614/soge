@@ -107,6 +107,7 @@ export function Payouts() {
   return (
     <>
       <p className="lead">{note} <strong>소개비는 여기 없습니다</strong> — 당사자끼리 직접 지급합니다.</p>
+      <PointReadiness />
       <div className="kpis">
         <div className="kpi"><div className="k">지급 대기</div><div className="v">{summary.waiting}</div></div>
         <div className="kpi"><div className="k">바로 보낼 수 있음</div><div className="v">{summary.ready}</div>
@@ -236,5 +237,39 @@ function RejectBox({ r, why, setWhy, busy, onReject }: {
       <input placeholder="반려 사유" value={why[r.id] ?? ''} maxLength={300} onChange={(e) => setWhy({ ...why, [r.id]: e.target.value })} />
       <button className="btn-plain" disabled={busy === r.id} onClick={() => onReject(r)}>반려</button>
     </span>
+  );
+}
+
+/* ---------------------------------------------------------------------
+ * v10.262 (docs/395) — 포인트 출금 준비 점검(읽기만) · 위험이 있으면 펼쳐 둠
+ * ------------------------------------------------------------------- */
+interface Ready { ready: boolean; counts: { ok: number; warn: number; no: number }; items: Array<{ key: string; level: 'OK' | 'WARN' | 'NO'; value: string; hint: string }>; open: { requested: number; confirmed: number } }
+const READY_NAME: Record<string, string> = { TAX_RATE: '원천징수율', MIN: '최소 금액', TWO_PEOPLE: '확정 · 지급 다른 사람', TAX_ID: '주민등록번호 받기', PRIVACY: '처리방침 출금 줄' };
+const READY_ST: Record<string, [string, string]> = { OK: ['st ok', '됨'], WARN: ['st warn', '확인'], NO: ['st no', '위험'] };
+function PointReadiness() {
+  const r = useApi<Ready>('/admin/payouts/point-readiness');
+  const [open, setOpen] = useState<boolean | null>(null);
+  if (r.error || !r.data) return null;
+  const d = r.data;
+  const show = open ?? d.counts.no > 0;
+  return (
+    <div className="card pad" data-point-ready={d.ready ? 'ready' : 'risk'} data-point-ready-counts={`${d.counts.ok}|${d.counts.warn}|${d.counts.no}`}>
+      <b>포인트 출금 준비 점검</b>{' '}
+      {d.counts.no ? <span className="st no">위험 {d.counts.no}</span> : <span className="st ok">위험 없음</span>}{' '}
+      <span className="dim">됨 {d.counts.ok} · 확인 {d.counts.warn} · 처리 중 신청 — 확정 기다림 {d.open.requested} · 지급 기다림 {d.open.confirmed}</span>{' '}
+      <button className="btn-plain btn-sm" onClick={() => setOpen(!show)} aria-expanded={show}>{show ? '접기' : '펼치기'}</button>
+      {show && (
+        <table className="tbl" style={{ marginTop: 6 }}><tbody>
+          {d.items.map((x) => {
+            const st = READY_ST[x.level] ?? ['st', x.level];
+            return (
+              <tr key={x.key} data-point-ready-item={x.key} data-level={x.level}>
+                <td>{READY_NAME[x.key] ?? x.key}</td><td><span className={st[0]}>{st[1]}</span></td><td className="mono">{x.value}</td><td className="dim">{x.hint}</td>
+              </tr>
+            );
+          })}
+        </tbody></table>
+      )}
+    </div>
   );
 }

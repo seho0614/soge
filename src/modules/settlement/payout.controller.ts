@@ -75,6 +75,17 @@ export class PayoutController {
   @ApiOkResponse({ type: PayoutDeskDto })
   desk() { return this.svc.desk(); }
 
+  @Get('point-readiness')
+  @Roles('ADMIN', 'SUPER', 'PAYOUT')
+  @ApiOperation({ summary: '포인트 출금 준비 점검', description: 'v10.262 (docs/395) — 원천징수율 · 최소 금액 · 확정과 지급을 서로 다른 사람이 할 수 있는지 · 주민등록번호 받기 · 처리방침 출금 주민등록번호 줄 · 처리 중 신청 수. 읽기만(OK · WARN · NO).' })
+  @ApiOkResponse({ schema: { type: 'object', properties: {
+    ready: { type: 'boolean' },
+    counts: { type: 'object', properties: { ok: { type: 'integer' }, warn: { type: 'integer' }, no: { type: 'integer' } } },
+    items: { type: 'array', items: { type: 'object', properties: { key: { type: 'string', enum: ['TAX_RATE', 'MIN', 'TWO_PEOPLE', 'TAX_ID', 'PRIVACY'] }, level: { type: 'string', enum: ['OK', 'WARN', 'NO'] }, value: { type: 'string' }, hint: { type: 'string' } } } },
+    open: { type: 'object', properties: { requested: { type: 'integer' }, confirmed: { type: 'integer' } } },
+  } } })
+  pointReadiness() { return this.svc.pointReadiness(); }
+
   @Get('point-report')
   @Roles('PAYOUT')   // SUPER 는 AuthGuard 가 통과 — 주민등록번호 원문이 들어 있어 ADMIN 은 안 됨
   @ApiOperation({

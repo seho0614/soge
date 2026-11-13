@@ -38,8 +38,28 @@ export function MyMfa() {
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const s = q.data;
+  /* v10.266 (docs/395) — 켜기 흐름: ① 내 등록 → ② 켜기 전 점검(먼저 「최고 관리자만」) → ③ 켜기. 이미 켜져 있으면 「모두」로 넓히기 안내 */
+  const step1 = s.enrolled;
+  const target = s.mode === 'off' ? 'SUPER' : s.mode === 'SUPER' ? 'ALL' : '';
+  const step2 = !!pv && pv.mode === target && pv.notEnrolled.length === 0;
+  const step3 = target === '' || (target === 'SUPER' ? s.mode !== 'off' : s.mode === 'ALL');
+  const STEP = (done: boolean, now: boolean) => (done ? <span className="st ok">됨</span> : now ? <b>지금</b> : <span className="dim">—</span>);
   return (
     <section data-my-mfa="">
+      {isSuper && target && (
+        <div className="card pad" data-mfa-flow={`${step1 ? 1 : 0}${step2 ? 1 : 0}${step3 ? 1 : 0}`} data-mfa-target={target}>
+          <b>{target === 'SUPER' ? '2단계 인증 켜는 순서' : '「운영 역할 모두」로 넓히는 순서'}</b>
+          <table className="tbl" style={{ marginTop: 6 }}><tbody>
+            <tr data-mfa-flow-step="1"><td>① 내 등록</td><td>{STEP(step1, !step1)}</td>
+              <td className="dim">{step1 ? '등록함' : <>인증 앱으로 등록 — 켜려면 내 등록이 먼저입니다(MFA_ENROLL_FIRST) <button className="btn-sm" onClick={() => setSetup(true)} data-mfa-flow-enroll="">등록 시작</button></>}</td></tr>
+            <tr data-mfa-flow-step="2"><td>② 켜기 전 점검</td><td>{STEP(step2, step1 && !step2)}</td>
+              <td className="dim">{pv && pv.mode === target ? (pv.notEnrolled.length ? `등록 안 한 사람 ${pv.notEnrolled.length}명 — 아래 목록 · 먼저 등록하도록 알리기` : `번호를 넣을 사람 ${pv.need}명 모두 등록함`)
+                : <>「{MODE[target]}」로 켤 때 번호를 넣어야 할 사람 보기 <button className="btn-sm" disabled={!step1} onClick={() => setMode(target)} data-mfa-flow-check="">점검 보기</button></>}</td></tr>
+            <tr data-mfa-flow-step="3"><td>③ 켜기</td><td>{STEP(step3, step1 && step2 && !step3)}</td>
+              <td className="dim">아래 「설정 바꾸기」에서 「{MODE[target]}」 → 저장(운영 알림 「중요 설정 바뀜」이 남음){target === 'SUPER' ? ' · 익숙해지면 「운영 역할 모두」로 넓힘' : ''}</td></tr>
+          </tbody></table>
+        </div>
+      )}
       <table className="tbl"><tbody>
         <tr><th>지금 설정</th><td data-mfa-mode={s.mode}>{MODE[s.mode] ?? s.mode} · 번호를 넣으면 {s.hours}시간 동안 다시 묻지 않음</td></tr>
         <tr><th>나에게 필요</th><td>{s.required ? '예' : '아니오'}</td></tr>

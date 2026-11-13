@@ -214,6 +214,9 @@ export class SiteController {
   })
   @ApiOkResponse({ schema: { type: 'object', properties: {
     bizReportAt: { type: 'string', nullable: true },
+    apply: { type: 'object', description: 'v10.265 신청서 공통 값(운영 설정 footer.* · site.base_url · infra.egress_ip)', properties: {
+      company: { type: 'string', nullable: true }, bizNo: { type: 'string', nullable: true }, ceo: { type: 'string', nullable: true },
+      address: { type: 'string', nullable: true }, baseUrl: { type: 'string', nullable: true }, egressIp: { type: 'string', nullable: true } } },
     summary: { type: 'object', properties: { total: { type: 'integer' }, live: { type: 'integer' }, applied: { type: 'integer' }, blocking: { type: 'integer' }, overdue: { type: 'integer' } } },
     rows: { type: 'array', items: { type: 'object', properties: {
       code: { type: 'string' }, name: { type: 'string' }, status: { type: 'string' }, provider: { type: 'string', nullable: true },

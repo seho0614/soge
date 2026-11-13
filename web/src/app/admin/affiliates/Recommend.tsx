@@ -22,7 +22,7 @@ const rwText = (r: { state: string; points: number; at: string | null }) => (r.s
 interface Rule { isActive: boolean; points: number; monthlyCap: number | null; given: number; givenPoints: number }
 /** v10.259 (docs/392) — 추천 보상 켜기 전 점검(읽기만) */
 interface Check {
-  isActive: boolean; ready: boolean; counts: { ok: number; warn: number; no: number };
+  isActive: boolean; ready: boolean; points: number; monthlyCap: number | null; taxRate: string | null; cashoutMin: number; counts: { ok: number; warn: number; no: number };
   items: Array<{ key: string; level: 'OK' | 'WARN' | 'NO'; value: string; hint: string }>;
   estimate: { waiting: number; waitingPoints: number; recent30: number; recent30Points: number; verifiedNoReward: number };
 }
@@ -31,6 +31,52 @@ const CHECK_NAME: Record<string, string> = {
   PRIVACY: '처리방침 「추천」 줄', CASHOUT_TAX: '출금 원천징수율', CASHOUT_TAX_ID: '주민등록번호 받기',
 };
 const CHECK_ST: Record<string, [string, string]> = { OK: ['st ok', '됨'], WARN: ['st warn', '확인'], NO: ['st no', '위험'] };
+
+/* ---------------------------------------------------------------------
+ * v10.261 (docs/395) — 추천 보상 시뮬레이션(계산만 · DB 에 쓰지 않음)
+ *   지금 규칙(점수 · 한 달 상한)과 출금 기준(원천징수율 · 최소 출금)을 불러와, 적은 가정으로 한 달 · 여러 달 지급을 어림.
+ *   원천징수: 소득세(율 ÷ 1.1 · 10원 아래 버림) + 지방소득세(소득세의 10% · 10원 아래 버림) — 신청 1건을 한 사람 한 달 몫으로 보고 셈.
+ *   점수를 바꿔 보려면 「점수」 칸만 고침(규칙은 그대로 · 저장은 위 「바꾸기」).
+ * ------------------------------------------------------------------- */
+function RewardSim() {
+  const c = useApi<Check>('/admin/affiliates/recommend-reward/check');
+  const [f, setF] = useState({ inviters: '20', perMonth: '3', verifyPct: '60', months: '6', points: '', cap: '' });
+  if (!c.data) return null;
+  const d = c.data;
+  const num = (v: string, dflt: number) => (v.trim() === '' || !Number.isFinite(Number(v)) ? dflt : Math.max(0, Number(v)));
+  const pts = num(f.points, d.points), cap = f.cap.trim() === '' ? d.monthlyCap : num(f.cap, 0);
+  const rate = d.taxRate ? Number(d.taxRate) : null;
+  const inviters = Math.floor(num(f.inviters, 0)), months = Math.min(60, Math.floor(num(f.months, 1)));
+  const verified = num(f.perMonth, 0) * Math.min(100, num(f.verifyPct, 0)) / 100;   // 한 사람이 한 달에 인증까지 마치게 하는 수(평균)
+  const perPersonCount = cap == null ? verified : Math.min(verified, cap);
+  const perPersonPts = Math.round(perPersonCount * pts);
+  const monthPts = perPersonPts * inviters;
+  const tax = (amt: number) => { if (rate == null) return { inc: 0, loc: 0 }; const inc = Math.floor(amt * (rate / 1.1) / 100 / 10) * 10; return { inc, loc: Math.floor(inc * 0.1 / 10) * 10 }; };
+  const t1 = tax(perPersonPts);
+  const cashMonths = perPersonPts > 0 ? Math.ceil(d.cashoutMin / perPersonPts) : null;
+  const fmt = (v: number) => v.toLocaleString('ko-KR');
+  const box = (k: keyof typeof f, label: string, ph?: string) => (
+    <label key={k}><span>{label}</span><input type="number" min={0} value={f[k]} placeholder={ph} onChange={(e) => setF({ ...f, [k]: e.target.value })} data-rcm-sim-in={k} /></label>
+  );
+  return (
+    <div className="card pad" data-rcm-sim={`${monthPts}|${monthPts * months}|${perPersonPts}`}>
+      <b>보상 시뮬레이션</b> <span className="dim">계산만 합니다 — 규칙 · DB 는 바뀌지 않습니다 · 1점 = 1원</span>
+      <div className="form-grid" style={{ marginTop: 8 }}>
+        {box('inviters', '추천하는 회원 수')}{box('perMonth', '한 사람이 한 달에 추천하는 수')}{box('verifyPct', '그중 본인인증까지 마치는 비율(%)')}{box('months', '기간(달)')}
+        {box('points', '점수(비우면 지금 규칙)', String(d.points))}{box('cap', '한 달 상한(비우면 지금 규칙)', d.monthlyCap == null ? '없음' : String(d.monthlyCap))}
+      </div>
+      <table className="tbl" style={{ marginTop: 8 }}><tbody>
+        <tr><td>한 사람이 한 달에 받는 보상</td><td className="num-cell" data-rcm-sim-person={perPersonPts}>{fmt(perPersonPts)}점{cap != null && verified > cap ? ` (상한 ${cap}건에 걸림)` : ''}</td></tr>
+        <tr><td>회사가 한 달에 주는 포인트</td><td className="num-cell" data-rcm-sim-month={monthPts}><b>{fmt(monthPts)}점</b></td></tr>
+        <tr><td>{months}달 동안</td><td className="num-cell" data-rcm-sim-total={monthPts * months}>{fmt(monthPts * months)}점</td></tr>
+        <tr><td>한 사람 한 달 몫을 출금하면</td><td className="num-cell">{rate == null ? <span className="warn-text">원천징수율이 비어 있어 출금 신청이 막힘</span>
+          : <>소득세 {fmt(t1.inc)}원 · 지방소득세 {fmt(t1.loc)}원 → 실제 받는 금액 <b>{fmt(perPersonPts - t1.inc - t1.loc)}원</b> (원천징수 {rate}%)</>}</td></tr>
+        <tr><td>최소 출금 {fmt(d.cashoutMin)}점까지</td><td className="num-cell" data-rcm-sim-cashmonths={cashMonths ?? ''}>{cashMonths == null ? '보상이 없어 출금할 수 없음' : `한 사람 약 ${cashMonths}달`}</td></tr>
+      </tbody></table>
+      <div className="hint">가정은 평균입니다 — 실제로는 몇 사람에게 몰립니다. 원천징수는 받는 사람 몫에서 빼서 회사가 신고 · 납부하므로 회사 비용은 「주는 포인트」와 같습니다. 세율 · 신고 방법은 세무 확인이 필요합니다.</div>
+    </div>
+  );
+}
 
 /** 켜기 전 점검 상자 — 꺼져 있을 때는 펼쳐 두고, 켜져 있으면 접어 둠 */
 function RewardCheck({ on }: { on: boolean }) {
@@ -118,6 +164,7 @@ export function Recommend() {
       )}
 
       {r && <RewardCheck key={String(r.isActive)} on={r.isActive} />}
+      {r && <RewardSim />}
 
       <div className="search-row">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="추천 코드 · 이메일 · 이름" aria-label="회원 찾기"

@@ -48,6 +48,7 @@ const RULE = {
 const CHECK = {
   type: 'object', properties: {
     isActive: { type: 'boolean' }, points: { type: 'integer' }, monthlyCap: { type: 'integer', nullable: true }, ready: { type: 'boolean' },
+    taxRate: { type: 'string', nullable: true, description: 'v10.261 출금 원천징수율(%)' }, cashoutMin: { type: 'integer', description: 'v10.261 최소 출금 점수' },
     counts: { type: 'object', properties: { ok: { type: 'integer' }, warn: { type: 'integer' }, no: { type: 'integer' } } },
     items: { type: 'array', items: { type: 'object', properties: { key: { type: 'string' }, level: { type: 'string', enum: ['OK', 'WARN', 'NO'] }, value: { type: 'string' }, hint: { type: 'string' } } } },
     estimate: { type: 'object', properties: { waiting: { type: 'integer' }, waitingPoints: { type: 'integer' }, recent30: { type: 'integer' }, recent30Points: { type: 'integer' }, verifiedNoReward: { type: 'integer' } } },

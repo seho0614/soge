@@ -85,7 +85,13 @@ function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[
   return out;
 }
 
-interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string }
+interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string;
+  /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) */ base?: 'orig' | 'current' }
+
+/** v10.263 — 그 약관의 지금 시행 중인 판(게시 · 시행 예정 아님 · 가장 높은 판) */
+function inForce(all: Term[], code: string): Term | undefined {
+  return all.filter((u) => u.code === code && u.status === 'PUBLISHED' && !u.scheduled).sort((a, b) => verCmp(b.version, a.version))[0];
+}
 
 export function TermsPanel() {
   const { data, error, reload } = useApi<Term[]>('/admin/terms');
@@ -322,7 +328,11 @@ export function TermsPanel() {
                 ed?.key === key && (() => {
                   const eh = holes(ed.body);
                   const changed = ed.body !== ed.orig || ed.title !== t.title || ed.note !== ed.origNote;
-                  const d = ed.diff ? lineDiff(ed.orig, ed.body) : [];
+                  const cur = inForce(data, ed.code);
+                  const useCur = ed.base === 'current' && !!cur;
+                  const baseBody = useCur ? cur!.body : ed.orig;
+                  const d = ed.diff ? lineDiff(baseBody, ed.body) : [];
+                  const dMinus = d.filter((x) => x.t === '-'), dPlus = d.filter((x) => x.t === '+');
                   const clash = ed.version !== ed.from && data.some((u) => u.code === ed.code && u.version === ed.version);
                   return (
                     <tr key={key + ':edit'} data-term-editor={key}>
@@ -342,18 +352,36 @@ export function TermsPanel() {
                         </p>
                         {clash && <p className="warn-text" data-term-clash>{ed.version} 판이 이미 있습니다 — 다른 번호를 적으십시오.</p>}
                         <div className="row-actions">
-                          <button className="btn-sm" disabled={!changed} onClick={() => setEd({ ...ed, diff: !ed.diff })} data-term-diff-btn>{ed.diff ? '비교 닫기' : '바뀐 곳 보기'}</button>
+                          <button className="btn-sm" disabled={!changed && !(cur && cur.body !== ed.body)} onClick={() => setEd({ ...ed, diff: !ed.diff, base: ed.base ?? (cur && cur.version !== ed.from ? 'current' : 'orig') })} data-term-diff-btn>{ed.diff ? '비교 닫기' : '바뀐 곳 보기'}</button>
                           <button className="btn-ok btn-sm" disabled={!changed || clash || !ed.version || ed.body.trim().length < 50 || busy === key} onClick={() => void save(ed)} data-term-save>저장(게시 아님)</button>
                           <button className="btn-sm" onClick={() => setEd(null)}>취소</button>
                           {!changed && <span className="muted">고친 곳이 없습니다</span>}
                         </div>
                         {ed.diff && (
-                          <div style={{ maxHeight: 320, overflow: 'auto', marginTop: 8, fontSize: 13 }} data-term-diff={d.length}>
-                            {d.length === 0 ? <p className="muted">본문은 같습니다(제목 · 바뀐 점만 바뀜)</p> : d.map((x, i) => (
-                              <div key={i} style={{ whiteSpace: 'pre-wrap', color: x.t === '+' ? 'var(--ok)' : 'var(--danger)' }} data-diff-line={x.t}>
-                                <span className="mono">{x.t} {x.n}</span> {x.s || ' '}
+                          <div style={{ marginTop: 8, fontSize: 13 }} data-term-diff={d.length} data-term-diff-base={useCur ? `current:${cur!.version}` : 'orig'}>
+                            {/* v10.263 (docs/395) — 비교 기준을 고름 · 뺀 줄 ↔ 더한 줄을 나란히 */}
+                            <div className="row-actions" style={{ marginBottom: 6 }}>
+                              <span className="muted">비교 기준</span>
+                              <button className={`btn-sm${!useCur ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'orig' })} data-term-diff-orig>고치기 시작한 글({ed.from})</button>
+                              {cur && <button className={`btn-sm${useCur ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'current' })} data-term-diff-current>지금 시행 중 {cur.version}</button>}
+                              <span className="muted" data-term-diff-count={`${dMinus.length}|${dPlus.length}`}>뺀 줄 {dMinus.length} · 더한 줄 {dPlus.length}</span>
+                            </div>
+                            {d.length === 0 ? <p className="muted">본문은 같습니다{useCur ? `(지금 시행 중 ${cur!.version} 과 같음)` : '(제목 · 바뀐 점만 바뀜)'}</p> : (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 8, maxHeight: 360, overflow: 'auto' }}>
+                                <div data-term-diff-col="minus">
+                                  <b className="muted">{useCur ? `${cur!.version} 에서 빠지는 줄` : '빠지는 줄'}</b>
+                                  {dMinus.length === 0 ? <p className="muted">없음</p> : dMinus.map((x, i) => (
+                                    <div key={i} style={{ whiteSpace: 'pre-wrap', color: 'var(--danger)' }} data-diff-line="-"><span className="mono">- {x.n}</span> {x.s || ' '}</div>
+                                  ))}
+                                </div>
+                                <div data-term-diff-col="plus">
+                                  <b className="muted">{`새 글(${ed.version})에 더해지는 줄`}</b>
+                                  {dPlus.length === 0 ? <p className="muted">없음</p> : dPlus.map((x, i) => (
+                                    <div key={i} style={{ whiteSpace: 'pre-wrap', color: 'var(--ok)' }} data-diff-line="+"><span className="mono">+ {x.n}</span> {x.s || ' '}</div>
+                                  ))}
+                                </div>
                               </div>
-                            ))}
+                            )}
                           </div>
                         )}
                       </td>

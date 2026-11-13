@@ -27,14 +27,59 @@ interface Integration {
 /* v10.260 (D205 · docs/392) — 외부 연동 신청 진행표 */
 interface Progress {
   bizReportAt: string | null;
+  apply?: { company: string | null; bizNo: string | null; ceo: string | null; address: string | null; baseUrl: string | null; egressIp: string | null };
   summary: { total: number; live: number; applied: number; blocking: number; overdue: number };
   rows: Array<{ code: string; name: string; status: string; provider: string | null; blocksOpen: boolean; requiresIp: boolean; dueOn: string | null; overdue: boolean;
     steps: Array<{ key: string; at: string | null; done: boolean }>; now: string; next: string; doneSteps: number; totalSteps: number }>;
 }
 const STEP_COLS: Array<[string, string]> = [['BIZ', '업종 정정'], ['APPLY', '신청'], ['IP_REQ', 'IP 신청'], ['IP_OK', 'IP 승인'], ['KEY', '키'], ['TEST', '시험'], ['LIVE', 'LIVE']];
 
+/* ---------------------------------------------------------------------
+ * v10.265 (docs/395) — 신청서 묶음: 연동마다 업체 신청서에 적을 값(docs/227 3절) · 복사 단추.
+ *   공통 값은 운영 설정(footer.* · site.base_url · infra.egress_ip)에서 · 받는 주소 · 받아 올 키 이름은 아래 표(코드가 쓰는 이름 그대로).
+ *   키 값은 여기 없음 — 받으면 「연동 키」에 넣음.
+ * ------------------------------------------------------------------- */
+const APPLY_INFO: Record<string, { vendor: string; weeks: string; returnPath?: string; keys: string[]; env?: string[]; note?: string }> = {
+  PASS: { vendor: 'NICE평가정보(표준창) — 1원 계좌인증과 한 번에', weeks: '약 6주', returnPath: '/verify/return', keys: ['NICE_CLIENT_ID', 'NICE_CLIENT_SECRET', 'NICE_PRODUCT_ID'], env: ['NICE_API_BASE', 'NICE_WINDOW_URL'] },
+  BANK: { vendor: 'NICE평가정보 — 본인인증과 한 번에', weeks: '약 4주', keys: ['BANK_VERIFY_KEY'], env: ['BANK_VERIFY_URL'] },
+  PG: { vendor: '토스페이먼츠(결제만)', weeks: '약 5주', returnPath: '/api/v1/webhooks/toss', keys: ['TOSS_SECRET_KEY', 'TOSS_CLIENT_KEY'], note: '결제 알림(웹훅) 주소로 등록' },
+  ALIMTALK: { vendor: '알림톡 대행사(업체 확인 필요)', weeks: '약 8주(템플릿 심사 포함)', keys: ['ALIMTALK_KEY', 'ALIMTALK_SENDER_KEY'], env: ['ALIMTALK_URL'], note: '템플릿 문구는 운영 화면 › 알림톡' },
+  ESIGN: { vendor: '전자계약 업체(업체 확인 필요)', weeks: '약 2주', returnPath: '/api/v1/webhooks/esign', keys: ['ESIGN_API_KEY', 'ESIGN_WEBHOOK_SECRET'], env: ['ESIGN_URL'] },
+  SAFENUM: { vendor: '050 안심번호 업체(업체 확인 필요)', weeks: '업체 확인 필요', returnPath: '/api/v1/webhooks/safenum', keys: ['SAFENUM_KEY', 'SAFENUM_WEBHOOK_SECRET'], env: ['SAFENUM_URL'] },
+  NTS: { vendor: '공공데이터포털(국세청 사업자 상태)', weeks: '1 ~ 2주', keys: ['NTS_SERVICE_KEY'] },
+};
+function copyText(v: string, e: { currentTarget: HTMLButtonElement }) {
+  const b = e.currentTarget;
+  navigator.clipboard?.writeText(v).then(() => { b.textContent = '복사됨'; }, () => { b.textContent = '복사 못 함 — 글을 끌어 고르십시오'; });
+}
+function ApplyValues({ code, p, requiresIp }: { code: string; p: Progress; requiresIp: boolean }) {
+  const info = APPLY_INFO[code];
+  const ap = p.apply;
+  const base = (ap?.baseUrl ?? 'https://sogaebank.com').replace(/\/$/, '');
+  const rows: Array<[string, string | null]> = [
+    ['상호 · 운영 주체', ap?.company ?? null], ['사업자등록번호', ap?.bizNo ?? null], ['대표자', ap?.ceo ?? null], ['사업장 주소', ap?.address ?? null],
+    ['서비스 주소', base], ...(requiresIp ? [['허용 IP(서버 발신)', ap?.egressIp ?? null] as [string, string | null]] : []),
+    ...(info?.returnPath ? [['받는 주소(업체에 등록)', base + info.returnPath] as [string, string | null]] : []),
+    ['업종', '전자상거래 소매업(525101) + 중개 — 정정 뒤 새 등록증 기준'],
+  ];
+  return (
+    <div data-int-apply={code} style={{ padding: '6px 0' }}>
+      {info && <p className="dim">업체(안) {info.vendor} · 걸리는 기간 {info.weeks}{info.note ? ` · ${info.note}` : ''}</p>}
+      <table className="tbl"><tbody>
+        {rows.map(([k, v]) => (
+          <tr key={k} data-int-apply-row={k}><td>{k}</td><td className="mono">{v ?? <span className="warn-text">운영 설정에 없음</span>}</td>
+            <td>{v && <button type="button" className="btn-sm ghost" onClick={(e) => copyText(v, e)} data-int-copy="">복사</button>}</td></tr>
+        ))}
+        {info && <tr data-int-apply-row="keys"><td>받아 올 키 이름</td><td className="mono">{info.keys.join(' · ')}{info.env?.length ? ` (주소: ${info.env.join(' · ')} — 운영 .env)` : ''}</td><td /></tr>}
+      </tbody></table>
+      <p className="dim">키를 받으면 아래 「연동 키」에 넣고(값은 채팅 · 메일에 붙이지 않음) Claude 에게는 넣은 키 이름 · 업체 개발 문서만 넘깁니다(docs/227 4절).</p>
+    </div>
+  );
+}
+
 /** 한 줄에 한 연동 · 칸마다 날짜(없으면 「—」 · IP 가 필요 없으면 「해당 없음」) · 지금 단계는 굵게 */
 function ProgressTable({ p }: { p: Progress }) {
+  const [openCode, setOpenCode] = useState<string | null>(null);
   return (
     <div data-int-progress={`${p.summary.applied}|${p.summary.live}|${p.summary.total}`}>
       <h2 className="ad-s2">신청 진행표 <em>신청 {p.summary.applied} · LIVE {p.summary.live} / {p.summary.total}</em>
@@ -42,7 +87,7 @@ function ProgressTable({ p }: { p: Progress }) {
       {!p.bizReportAt && <div className="ad-nt warn" data-int-biz="none"><b>업종 정정신고가 먼저입니다.</b> 새 사업자등록증이 본인인증 · 계좌인증 · 결제 신청서의 첨부입니다 — 신고하면 「소개몰 판매자」 탭 맨 위 「입점 열기 준비」에서 날짜 · 접수번호를 적으십시오(SUPER).</div>}
       <div className="ad-tw"><table className="tbl">
         <thead><tr><th>연동</th>{STEP_COLS.map(([, l]) => <th key={l}>{l}</th>)}<th>다음에 할 일</th></tr></thead>
-        <tbody>{p.rows.map((r) => (
+        <tbody>{p.rows.flatMap((r) => [
           <tr key={r.code} data-int-row={r.code} data-int-now={r.now} className={r.blocksOpen && r.now !== 'DONE' ? 'bad' : undefined}>
             <td><b>{r.name}</b>{r.blocksOpen && <span className="ad-ls">오픈 차단</span>}</td>
             {STEP_COLS.map(([k]) => {
@@ -52,9 +97,11 @@ function ProgressTable({ p }: { p: Progress }) {
                 {st.done ? <span className="st ok">{st.at ?? '됨'}</span> : r.now === k ? <b>지금</b> : <span className="dim">—</span>}
               </td>;
             })}
-            <td className="dim">{r.next}{r.overdue && r.dueOn ? <> · <b className="warn-text">예상일 {r.dueOn} 지남</b></> : null}</td>
-          </tr>
-        ))}</tbody>
+            <td className="dim">{r.next}{r.overdue && r.dueOn ? <> · <b className="warn-text">예상일 {r.dueOn} 지남</b></> : null}
+              {r.now !== 'DONE' && <> <button type="button" className="btn-sm ghost" onClick={() => setOpenCode(openCode === r.code ? null : r.code)} aria-expanded={openCode === r.code} data-int-apply-btn={r.code}>{openCode === r.code ? '신청서 값 닫기' : '신청서 값'}</button></>}</td>
+          </tr>,
+          openCode === r.code && <tr key={r.code + ':apply'}><td colSpan={STEP_COLS.length + 2}><ApplyValues code={r.code} p={p} requiresIp={r.requiresIp} /></td></tr>,
+        ])}</tbody>
       </table></div>
       <div className="ad-nt info">날짜는 아래 「연동별 설정」에서 적습니다(업체에 확인하지 않고 적은 날짜를 그대로 보여 줌). 상태를 LIVE 로 바꾸면 LIVE 날짜는 저절로 오늘이 됩니다.</div>
     </div>

@@ -267,7 +267,13 @@ export class SiteService {
                leadTimeWeeks: r.lead, dueOn: r.due, overdue: r.overdue, steps, now, next: NEXT[now],
                doneSteps: steps.filter((x) => x.done).length, totalSteps: steps.length };
     });
+    /* v10.265 (docs/395) — 신청서에 공통으로 적는 값(운영 설정에서 · 비어 있으면 null) */
+    const [ap] = await this.db.query<{ company: string | null; biz_no: string | null; ceo: string | null; address: string | null; base_url: string | null; egress_ip: string | null }>(
+      `SELECT ${['footer.company_name:company', 'footer.biz_reg_no:biz_no', 'footer.ceo_name:ceo', 'footer.address:address', 'site.base_url:base_url', 'infra.egress_ip:egress_ip']
+        .map((x) => { const [k, a] = x.split(':'); return `nullif(trim(coalesce((SELECT value FROM site_settings WHERE key = '${k}'), '')), '') AS ${a}`; }).join(', ')}`);
     return {
+      apply: { company: ap?.company ?? null, bizNo: ap?.biz_no ?? null, ceo: ap?.ceo ?? null, address: ap?.address ?? null,
+               baseUrl: ap?.base_url ?? null, egressIp: ap?.egress_ip ?? null },
       bizReportAt: b?.biz ?? null,
       summary: { total: out.length, live: out.filter((x) => x.now === 'DONE').length, applied: out.filter((x) => x.steps[1].done).length,
                  blocking: out.filter((x) => x.blocksOpen && x.now !== 'DONE').length, overdue: out.filter((x) => x.overdue).length },
