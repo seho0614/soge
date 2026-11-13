@@ -155,6 +155,82 @@ export class HealthSettleService {
     return this.commissionRates();
   }
 
+  /** v10.272 (D206 · docs/404) — 입점 유형별 기본 판매수수료율(약관 제17조) · 비어 있으면 갈래 요율 · 순서 판매자 → 유형 → 갈래 */
+  typeRates() {
+    return this.db.query(
+      `SELECT t.seller_type AS "sellerType", t.rate, t.note, t.updated_at AS "updatedAt",
+              (SELECT count(*) FROM hlt_sellers s WHERE s.type = t.seller_type AND s.status IN ('ACTIVE', 'PAUSED'))::int AS sellers,
+              (SELECT count(*) FROM hlt_sellers s WHERE s.type = t.seller_type AND s.status IN ('ACTIVE', 'PAUSED') AND s.commission_rate IS NOT NULL)::int AS "ownRate",
+              (SELECT count(*) FROM hlt_type_rate_changes c WHERE c.seller_type = t.seller_type)::int AS changes
+         FROM hlt_seller_type_rates t ORDER BY t.seller_type`);
+  }
+
+  async setTypeRate(sellerType: string, rate: number | null, reasonRaw: string) {
+    const reason = String(reasonRaw ?? '').trim();
+    if (!['BRAND', 'TENANT'].includes(sellerType)) throw new PolicyViolation('BAD_TYPE', '입점 유형은 브랜드 직영관(BRAND) · 일반 입점(TENANT) 둘 중 하나입니다.');
+    if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '바꾸는 사유를 적어 주십시오 — 기록에 남습니다.');
+    if (rate !== null && !(rate >= 0 && rate <= 50)) throw new PolicyViolation('BAD_RATE', '수수료율은 0 ~ 50% 사이로 적어 주십시오.');
+    return this.db.transaction(async () => {
+      const [t] = await this.db.query<{ rate: string | null }>(
+        `SELECT rate FROM hlt_seller_type_rates WHERE seller_type = $1 FOR UPDATE`, [sellerType]);
+      if (!t) throw new PolicyViolation('BAD_TYPE', '입점 유형 줄이 없습니다(D206 적용 전).');
+      const from = t.rate === null ? null : Number(t.rate);
+      if (from === rate) throw new StateConflict('SAME_RATE', '지금과 같은 수수료율입니다.');
+      await this.db.query(`UPDATE hlt_seller_type_rates SET rate = $2, updated_by = $3, updated_at = now() WHERE seller_type = $1`,
+        [sellerType, rate, RequestCtx.actorId()]);
+      await this.db.query(
+        `INSERT INTO hlt_type_rate_changes (seller_type, from_rate, to_rate, reason, changed_by) VALUES ($1, $2, $3, $4, $5)`,
+        [sellerType, from, rate, reason, RequestCtx.actorId()]);
+      return { ok: true, from, to: rate, note: rate === null ? '입점 유형 요율을 비웠습니다 — 갈래 요율을 씁니다(새 주문부터).' : '입점 유형 요율을 바꿨습니다. 새 주문부터 적용합니다.' };
+    });
+  }
+
+  /**
+   * v10.274 (docs/404) — 요율을 바꾸기 전 영향 미리보기 · **읽기만**
+   *   최근 30일 결제된 주문 줄(대기 · 취소 뺌)을 지금 설정 요율과 새 요율로 각각 셈(줄마다 판매액 × 요율 ÷ 100 버림 · DB 와 같은 식).
+   *   순서(판매자 → 유형 → 갈래 → * → 10%)상 **바꾸는 칸이 실제로 쓰이는 줄만** 셈 — 판매자 요율이 있는 판매자는 유형 · 갈래를 바꿔도 그대로.
+   *   rate 가 null 이면 「비움」(다음 순서 요율로).
+   */
+  async rateImpact(scope: string, key: string, rate: number | null) {
+    if (rate !== null && !(rate >= 0 && rate <= 50)) throw new PolicyViolation('BAD_RATE', '수수료율은 0 ~ 50% 사이로 적어 주십시오.');
+    const W: Record<string, { where: string; next: string }> = {
+      SELLER:   { where: `l.seller_id::text = $1`,                                  next: `coalesce($2::numeric, l.trate, l.crate)` },
+      TYPE:     { where: `l.stype = $1 AND l.srate IS NULL`,                        next: `coalesce($2::numeric, l.crate)` },
+      CATEGORY: { where: `l.cat = $1 AND l.srate IS NULL AND l.trate IS NULL`,      next: `coalesce($2::numeric, l.drate)` },
+    };
+    const w = W[scope];
+    if (!w) throw new PolicyViolation('BAD_SCOPE', '범위는 SELLER · TYPE · CATEGORY 중 하나입니다.');
+    if (scope === 'CATEGORY' && key === '*') throw new PolicyViolation('BAD_CATEGORY', '소개몰 갈래를 골라 주십시오.');
+    const [r] = await this.db.query<Record<string, string | number>>(
+      `WITH d AS (SELECT coalesce((SELECT rate FROM hlt_commission_rates WHERE category_code = '*'), 10.00) AS drate),
+       l AS (
+         SELECT i.amount, coalesce(i.commission_amount, 0) AS recorded, i.order_id, s.id AS seller_id, s.type AS stype, s.commission_rate AS srate,
+                (SELECT t.rate FROM hlt_seller_type_rates t WHERE t.seller_type = s.type) AS trate,
+                c.code AS cat, d.drate,
+                coalesce((SELECT cr.rate FROM hlt_commission_rates cr WHERE cr.category_code = c.code), d.drate) AS crate
+           FROM hlt_order_items i
+           JOIN hlt_orders o ON o.id = i.order_id
+           JOIN hlt_products p ON p.id = i.product_id
+           JOIN hlt_sellers s ON s.id = p.seller_id
+           LEFT JOIN categories c ON c.id = p.category_id
+           CROSS JOIN d
+          WHERE o.paid_at >= now() - interval '30 days' AND o.status NOT IN ('PENDING', 'CANCELED')
+       )
+       SELECT count(*)::int AS lines, count(DISTINCT l.order_id)::int AS orders,
+              coalesce(sum(l.amount), 0)::bigint AS sales,
+              coalesce(sum(l.recorded), 0)::bigint AS recorded,
+              coalesce(sum(floor(l.amount * coalesce(l.srate, l.trate, l.crate) / 100)), 0)::bigint AS "nowFee",
+              coalesce(sum(floor(l.amount * ${w.next} / 100)), 0)::bigint AS "newFee"
+         FROM l WHERE ${w.where}`, [key, rate]);
+    const nowFee = Number(r?.nowFee ?? 0), newFee = Number(r?.newFee ?? 0);
+    return {
+      scope, key, rate, days: 30,
+      lines: Number(r?.lines ?? 0), orders: Number(r?.orders ?? 0), sales: Number(r?.sales ?? 0), recorded: Number(r?.recorded ?? 0),
+      nowFee, newFee, diff: newFee - nowFee,
+      note: '최근 30일 결제된 주문 줄로 셈 · 이미 받은 주문의 수수료는 바뀌지 않음(주문 때 박힘) · 앞으로 같은 판매가 있다고 본 어림',
+    };
+  }
+
   /* ── 취소 · 반품 처리 (운영, D002) ─────────────────────────────── */
 
   commissionRates() {

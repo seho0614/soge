@@ -3241,6 +3241,9 @@
     "POST /admin/health/product-reviews/{code}",
     "POST /admin/health/settlements/{id}/invoice",
     "PATCH /admin/health/commission-rates/{categoryCode}",
+    "GET /admin/health/type-rates",
+    "PATCH /admin/health/type-rates/{sellerType}",
+    "GET /admin/health/rate-impact",
     "POST /admin/health/sellers/{id}/submerchant",
     "POST /admin/health/settlements/{id}/confirm",
     "POST /admin/health/settlements/{id}/payout"
@@ -4976,6 +4979,7 @@
     "GET /admin/health/sellers/{id}/history",
     "POST /admin/health/sellers/{id}/status",
     "POST /admin/health/sellers/{id}/commission",
+    "GET /admin/health/rate-impact",
     "GET /admin/health/tenant/readiness", "POST /admin/health/tenant/biz-report"
    ],
    "nav": "SB-ADM-DSH-010",

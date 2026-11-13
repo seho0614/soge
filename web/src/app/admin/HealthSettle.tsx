@@ -5,6 +5,7 @@ import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { HealthProductReviews } from './HealthProductReviews';
+import { HealthTypeRates, previewImpact } from './HealthTypeRates';   // v10.272 · 274 (docs/404)
 
 interface SettleRow {
   /* v10.168 (D157) — 판매수수료 세금계산서 */
@@ -278,11 +279,12 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
     if (!confirm(`${r.sellerName} 에게 ${n(r.net)}원 지급을 결제대행사에 요청합니다(판매자 하위가맹점으로 · 회사는 돈을 보관하지 않음).`)) return;
     void a.run(r.id, () => api(`/admin/health/settlements/${r.id}/payout`, { method: 'POST' }), settle.reload, '지급을 요청했습니다.');
   };
-  const setRate = (r: Rate) => {
+  const setRate = async (r: Rate) => {
     const raw = prompt(`${r.categoryCode === '*' ? '기본' : r.categoryCode} 판매수수료율(%) — 0 ~ 50 · 바꾼 뒤 주문부터 적용`, String(r.rate));
     if (raw === null || raw.trim() === '') return;
     const rate = Number(raw);
     if (!(rate >= 0 && rate <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
+    if (!(await previewImpact('CATEGORY', r.categoryCode, rate, `갈래 ${r.categoryCode}`))) return;   // v10.274 — 최근 30일 영향 먼저
     void a.run(`rate:${r.categoryCode}`, () => api(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate }) }), rates.reload, '수수료율을 바꿨습니다.');
   };
 
@@ -356,6 +358,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       )}
 
       <h3 className="sec">수수료율</h3>
+      <HealthTypeRates />
       {rates.error ? <ErrorView error={rates.error} onRetry={rates.reload} /> : null}
       <table className="tbl">
         <thead><tr><th>카테고리</th><th>요율</th><th>소개자 몫</th><th>메모</th><th>변경 이력</th><th /></tr></thead>
@@ -367,7 +370,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
               <td className="num-cell">{r.referralPct}%</td>
               <td className="muted">{r.note}</td>
               <td className="num-cell">{r.changes ? `${r.changes}건` : '—'}</td>
-              <td>{r.categoryCode !== '*' && <button className="btn-plain" disabled={a.busy === `rate:${r.categoryCode}`} onClick={() => setRate(r)}>바꾸기</button>}</td>
+              <td>{r.categoryCode !== '*' && <button className="btn-plain" disabled={a.busy === `rate:${r.categoryCode}`} onClick={() => void setRate(r)}>바꾸기</button>}</td>
             </tr>
           ))}
         </tbody>

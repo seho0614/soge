@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { previewImpact } from './HealthTypeRates';   // v10.274 (docs/404)
 
 interface Seller {
   id: string; submerchantId?: string | null;
@@ -34,7 +35,7 @@ const ACT = {
   CLOSE:  { label: '폐점',       ask: '폐점 사유 — 진행 중 주문 · 취소 · 반품 · 정산이 남아 있으면 막힙니다. 판매자는 새로 신청할 수 있습니다.' },
 } as const;
 type Act = keyof typeof ACT;
-const rate = (v: number | string | null | undefined) => (v === null || v === undefined ? '기본' : `${v}%`);
+const rate = (v: number | string | null | undefined) => (v === null || v === undefined ? '기본(입점 유형 · 갈래)' : `${v}%`);
 const show = (v: unknown) => (Array.isArray(v)
   ? v.map((l: any) => `${l.kind} ${l.licenseNo}${l.expiresAt ? ` (~${String(l.expiresAt).slice(0, 10)})` : ''}`).join(' · ') || '없음'
   : v === null || v === undefined || v === '' ? '—' : String(v));
@@ -58,11 +59,12 @@ export function HealthSellers() {
     void a.run(`st:${x.id}`, () => api<{ note: string }>(`/admin/health/sellers/${x.id}/status`, { method: 'POST', body: JSON.stringify({ action: k, reason: reason.trim() }) }),
       sellers.reload, (r) => r.note);
   };
-  const setRate = (x: Seller) => {
-    const raw = prompt(`${x.name} 판매수수료율(%) — 0 ~ 50 · 비우면 갈래 기본값 · 새 주문부터 적용`, x.commissionRate === null ? '' : String(x.commissionRate));
+  const setRate = async (x: Seller) => {
+    const raw = prompt(`${x.name} 판매수수료율(%) — 0 ~ 50 · 비우면 입점 유형 · 갈래 요율 · 새 주문부터 적용`, x.commissionRate === null ? '' : String(x.commissionRate));
     if (raw === null) return;
     const v = raw.trim() === '' ? null : Number(raw);
     if (v !== null && !(v >= 0 && v <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
+    if (!(await previewImpact('SELLER', x.id, v, x.name))) return;   // v10.274 (docs/404) — 최근 30일 영향 먼저
     const reason = prompt('바꾸는 사유 — 판매자에게 알림이 갑니다') ?? '';
     if (reason.trim().length < 2) return;
     void a.run(`rate:${x.id}`, () => api(`/admin/health/sellers/${x.id}/commission`, { method: 'POST', body: JSON.stringify({ rate: v, reason: reason.trim() }) }),
@@ -113,7 +115,7 @@ export function HealthSellers() {
                   <td>
                     {tenant && x.status === 'ACTIVE' && (
                       <button className="btn-plain" disabled={a.busy === `sub:${x.id}`} onClick={() => submerchant(x)} data-submerchant={x.code}>{x.payable ? '하위가맹점 바꾸기' : '하위가맹점 등록'}</button>)}
-                    {tenant && ['ACTIVE', 'PAUSED'].includes(x.status) && <> <button className="btn-plain" disabled={busy} onClick={() => setRate(x)} data-seller-rate={x.code}>수수료율</button></>}
+                    {tenant && ['ACTIVE', 'PAUSED'].includes(x.status) && <> <button className="btn-plain" disabled={busy} onClick={() => void setRate(x)} data-seller-rate={x.code}>수수료율</button></>}
                     {tenant && x.status === 'ACTIVE' && <> <button className="btn-plain" disabled={busy} onClick={() => act(x, 'PAUSE')} data-seller-act="PAUSE">정지</button></>}
                     {tenant && x.status === 'PAUSED' && <> <button className="btn-plain" disabled={busy} onClick={() => act(x, 'RESUME')} data-seller-act="RESUME">다시 열기</button></>}
                     {tenant && ['ACTIVE', 'PAUSED'].includes(x.status) && <> <button className="btn-plain" disabled={busy} onClick={() => act(x, 'BLOCK')} data-seller-act="BLOCK">이용 제한</button></>}

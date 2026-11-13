@@ -27,6 +27,12 @@ export class CommissionRateDto {
   @ApiProperty({ description: '판매수수료율(%) — 0 ~ 50', minimum: 0, maximum: 50 }) @IsNumber() @Min(0) @Max(50) rate!: number;
   @ApiPropertyOptional({ description: '바꾼 까닭' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
 }
+/** v10.272 (D206) — 입점 유형 요율 · null 이면 비움(갈래 요율) */
+export class TypeRateDto {
+  @ApiPropertyOptional({ nullable: true, minimum: 0, maximum: 50, description: '입점 유형 판매수수료율(%) — 비우면(null) 갈래 요율' })
+  @IsOptional() @IsNumber() @Min(0) @Max(50) rate?: number | null;
+  @ApiProperty({ description: '바꾸는 사유(2자 이상) — 기록에 남음' }) @IsString() @MaxLength(300) reason!: string;
+}
 export class SubmerchantDto {
   @ApiPropertyOptional({ description: '결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 — 연동 전이라 간주 모드에서만 시험 번호)' })
   @IsOptional() @IsString() @MaxLength(60) submerchantId?: string;
@@ -201,6 +207,37 @@ export class HealthSellerController {
   @ApiOkResponse({ type: Object, isArray: true })
   @Audit('HLT_COMMISSION_RATE', 'HLT_COMMISSION')
   rate(@Param('categoryCode') categoryCode: string, @Body() dto: CommissionRateDto) { return this.settle.setCommissionRate(categoryCode, dto.rate, dto.note); }
+
+  @Get('admin/health/type-rates')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '입점 유형 판매수수료율', description: 'v10.272 (D206) 브랜드 직영관(BRAND) · 일반 입점(TENANT) 기본 요율 — 비어 있으면 갈래 요율. 순서: 판매자 지정 → 입점 유형 → 갈래 → 기본 → 10%.' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  typeRates() { return this.settle.typeRates(); }
+
+  @Patch('admin/health/type-rates/:sellerType')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '입점 유형 판매수수료율 바꾸기', description: 'v10.272 (D206) 사유 필수 · 바꾼 기록(hlt_type_rate_changes) · 새 주문부터(주문 때 요율을 박음) · null 이면 비움.' })
+  @ApiParam({ name: 'sellerType', enum: ['BRAND', 'TENANT'] })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'SAME_RATE', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'BAD_TYPE · REASON_REQUIRED · BAD_RATE', type: ErrorDto })
+  @Audit('HLT_TYPE_RATE', 'HLT_COMMISSION')
+  setTypeRate(@Param('sellerType') sellerType: string, @Body() dto: TypeRateDto) {
+    return this.settle.setTypeRate(sellerType, dto.rate === undefined ? null : dto.rate, dto.reason);
+  }
+
+  @Get('admin/health/rate-impact')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 바꾸기 영향 미리보기', description: 'v10.274 — 최근 30일 결제된 주문 줄을 지금 요율 · 새 요율로 셈(읽기만 · 저장 안 함). 순서상 그 칸이 실제로 쓰이는 줄만.' })
+  @ApiQuery({ name: 'scope', enum: ['SELLER', 'TYPE', 'CATEGORY'] })
+  @ApiQuery({ name: 'key', description: 'SELLER = 판매자 id · TYPE = BRAND · TENANT · CATEGORY = 갈래 코드' })
+  @ApiQuery({ name: 'rate', required: false, description: '새 요율(%) — 비우면 「비움」(다음 순서 요율)' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'BAD_SCOPE · BAD_RATE · BAD_CATEGORY', type: ErrorDto })
+  rateImpact(@Query('scope') scope: string, @Query('key') key: string, @Query('rate') rate?: string) {
+    const r = rate === undefined || String(rate).trim() === '' ? null : Number(rate);
+    return this.settle.rateImpact(String(scope ?? ''), String(key ?? ''), r !== null && Number.isNaN(r) ? -1 : r);
+  }
 
   /* ── v10.169 (docs/260) 하위가맹점 · 확정 · 지급 요청(간주 모드) ── */
 
