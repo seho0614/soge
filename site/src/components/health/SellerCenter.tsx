@@ -10,6 +10,8 @@ export interface SellerCenterInfo {
   shipFee: number; freeShipOver: number | null; returnShipFee: number;
   products: number; onSale: number; inReview: number; tenantOn: boolean;
   /** v10.277 (D208 · docs/406) 예정된 수수료율 변경 — 입점 약관 제17조 4항(30일 전 공지) */
+  /** v10.278 (D209) 소개몰 공지(게시된 것 · 최근 5) */
+  notices?: { id: string; title: string; body: string; publishedAt: string; isPinned: boolean }[];
   rateSchedules?: { scope: 'SELLER' | 'TYPE' | 'CATEGORY'; effectiveDate: string; fromRate: number | string | null; toRate: number | string | null; reason: string; categoryName: string | null }[];
 }
 export interface SellerProduct {
@@ -86,6 +88,17 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
           const what = r.scope === 'SELLER' ? t('rateSchedSeller') : r.scope === 'TYPE' ? t('rateSchedType') : t('rateSchedCategory', { name: r.categoryName ?? '' });
           return <p key={i} className="notice" data-rate-schedule-notice={r.effectiveDate}>{t('rateSched', { what, from: rt(r.fromRate), to: rt(r.toRate), date: r.effectiveDate, reason: r.reason })}</p>;
         })}
+        {(info.notices ?? []).length > 0 && (
+          <div className="card" data-seller-notices={(info.notices ?? []).length}>
+            <b>{t('notices')}</b>
+            {(info.notices ?? []).map((x) => (
+              <details key={x.id} data-seller-notice={x.id}>
+                <summary>{x.title} <span className="dim">{String(x.publishedAt).slice(0, 10)}</span></summary>
+                <p style={{ whiteSpace: 'pre-line' }}>{x.body}</p>
+              </details>
+            ))}
+          </div>
+        )}
         {!info.payable && <p className="notice" data-center-warn="payable">{t('notPayable')}</p>}
         {info.status === 'PAUSED' && <p className="notice">{t('paused')}</p>}
       </section>

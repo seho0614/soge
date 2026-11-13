@@ -55,7 +55,12 @@ export class HealthSellerService {
               (SELECT count(*)::int FROM hlt_products p WHERE p.seller_id = s.id AND p.review_state = 'SUBMITTED') AS "inReview",
               (SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on') AS "tenantOn"
          FROM hlt_sellers s WHERE s.id = $1`, [s.id]);
-    return { ...r, rateSchedules: await this.rateSched.forSeller(s.id) };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
+    /* v10.278 (D209 · docs/407) — 소개몰 공지(게시된 것 · 고정 먼저 · 최근 5) — 수수료율 변경 안내 등 */
+    const notices = await this.db.query(
+      `SELECT id, title, body, published_at AS "publishedAt", is_pinned AS "isPinned" FROM notices
+        WHERE gwan_code = 'HLT' AND published_at IS NOT NULL AND published_at <= now()
+        ORDER BY is_pinned DESC, published_at DESC LIMIT 5`);
+    return { ...r, rateSchedules: await this.rateSched.forSeller(s.id), notices };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
   }
 
   /** 배송비 · 반품비 — 반품비는 6,000원을 넘을 수 없음(DB 도 막음) */

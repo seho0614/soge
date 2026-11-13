@@ -1,6 +1,6 @@
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
-import { useAct, n, ymdhm } from '../../lib/act';
+import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 
@@ -20,6 +20,10 @@ interface RateSchedule {
   fromRate: string | number | null; toRate: string | number | null; effectiveDate: string; reason: string;
   status: 'SCHEDULED' | 'APPLIED' | 'CANCELED'; notified: number; affectedNow: number;
   createdAt: string; appliedAt: string | null; canceledAt: string | null; cancelReason: string | null; by: string | null;
+  /** v10.278 (D209) 별도 공지 — 예약 안내 · 취소 안내(초안 → 「공지 게시」) */
+  noticeId: string | null; noticeTitle: string | null; noticeBody: string | null; noticePublishedAt: string | null;
+  cancelNoticeId: string | null; cancelNoticeTitle: string | null; cancelNoticeBody: string | null; cancelNoticePublishedAt: string | null;
+  noticeLate: boolean;
 }
 const SCOPE_NAME: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
 const pct = (v: string | number | null) => (v === null ? '비움(다음 순서)' : `${Number(v)}%`);
@@ -59,6 +63,7 @@ export async function previewImpact(scope: 'SELLER' | 'TYPE' | 'CATEGORY', key: 
 /**
  * SB-ADM-HST-010 소개몰 정산 › 요율 변경 예정 (v10.276 · D208 · docs/406)
  *   판매자 · 입점 유형 · 갈래 요율 인상 예약 — 시행 전에만 취소(사유 · 판매자에게 알림). 시행일 0시부터 새 주문에 적용 · 매일 00:05 표에 옮김.
+ * v10.278 (D209 · docs/407) — 줄마다 별도 공지: 「공지 안 함」(빨강) · 「공지 게시」(본문 확인 뒤 · 게시한 날 + 31일 ≤ 시행일) · 취소 뒤 「변경 취소 안내」.
  */
 export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
   const q = useApi<RateSchedule[]>('/admin/health/rate-schedules');
@@ -72,15 +77,37 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
       () => { q.reload(); onChanged?.(); }, (x) => x.note);
   };
   const st: Record<string, string> = { SCHEDULED: '예정', APPLIED: '시행함', CANCELED: '취소' };
+  const publish = (r: RateSchedule, cancel: boolean) => {
+    const title = cancel ? r.cancelNoticeTitle : r.noticeTitle, body = cancel ? r.cancelNoticeBody : r.noticeBody;
+    if (!confirm(`아래 공지를 소개몰 공지(맨 위 고정)로 게시합니다 — 파트너센터 공지 · 판매자센터에 보입니다.\n\n[${title}]\n${body}\n\n게시할까요?`)) return;
+    void a.run(`ntc:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/notice`, { method: 'POST' }),
+      () => q.reload(), (x) => x.note);
+  };
+  const noticeCell = (r: RateSchedule) => {
+    if (r.status === 'CANCELED' && r.cancelNoticeId) {
+      return r.cancelNoticePublishedAt ? <span className="dim">취소 안내 게시 {ymd(r.cancelNoticePublishedAt)}</span>
+        : <button className="btn-plain" disabled={a.busy === `ntc:${r.id}`} onClick={() => publish(r, true)} data-rate-notice-publish={r.id}>취소 안내 게시</button>;
+    }
+    if (!r.noticeId) return <span className="dim">—</span>;
+    if (r.noticePublishedAt) return <span data-rate-notice="published">게시 {ymd(r.noticePublishedAt)}</span>;
+    if (r.status !== 'SCHEDULED') return <span className="dim">게시 안 함</span>;
+    return (
+      <>
+        <span className="badge badge-urgent" data-rate-notice="missing">공지 안 함</span>{' '}
+        {r.noticeLate ? <span className="dim">30일이 남지 않음 — 취소하고 다시 예약</span>
+          : <button className="btn-plain" disabled={a.busy === `ntc:${r.id}`} onClick={() => publish(r, false)} data-rate-notice-publish={r.id}>공지 게시</button>}
+      </>
+    );
+  };
   return (
     <div className="card pad" data-rate-schedules={open.length} style={{ margin: '10px 0' }}>
-      <b>요율 변경 예정</b> <span className="dim">— 입점 약관 제17조 4항 · 올리면 30일 전 알림 · 시행일 0시부터 새 주문에 적용 · 시행 전에만 취소</span>
+      <b>요율 변경 예정</b> <span className="dim">— 입점 약관 제17조 4항 · 올리면 30일 전 공지 · 개별 알림 · 시행일 0시부터 새 주문에 적용 · 시행 전에만 취소</span>
       <Flash msg={a.msg} err={a.err} />
       {q.error ? <ErrorView error={q.error} onRetry={q.reload} /> : rows.length === 0 ? (
         <p className="dim" style={{ marginTop: 6 }} data-rate-schedule-empty>예약한 요율 변경이 없습니다. 요율을 올릴 때 영향받는 판매자가 있으면 여기에 예약으로 쌓입니다.</p>
       ) : (
         <table className="tbl" style={{ marginTop: 6 }}>
-          <thead><tr><th>범위</th><th>대상</th><th>지금 → 새</th><th>시행일</th><th>상태</th><th>알린 판매자</th><th>사유</th><th /></tr></thead>
+          <thead><tr><th>범위</th><th>대상</th><th>지금 → 새</th><th>시행일</th><th>상태</th><th>알린 판매자</th><th>공지</th><th>사유</th><th /></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} data-rate-schedule={r.status}>
@@ -90,6 +117,7 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
                 <td className="mono">{r.effectiveDate}</td>
                 <td>{st[r.status]}{r.status === 'CANCELED' && r.cancelReason ? <span className="dim"> · {r.cancelReason}</span> : null}</td>
                 <td className="num-cell">{n(r.notified)}곳{r.status === 'SCHEDULED' ? <span className="dim"> (지금 {n(r.affectedNow)}곳)</span> : null}</td>
+                <td>{noticeCell(r)}</td>
                 <td className="dim">{r.reason}</td>
                 <td>{r.status === 'SCHEDULED' && <button className="btn-plain" disabled={a.busy === `sch:${r.id}`} onClick={() => cancel(r)} data-rate-schedule-cancel={r.id}>취소</button>}</td>
               </tr>

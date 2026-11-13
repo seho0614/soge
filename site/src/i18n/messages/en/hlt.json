@@ -342,6 +342,7 @@
     "rateSchedType": "Seller type rate",
     "rateSchedCategory": "Category rate ({name})",
     "rateNext": "next rate in order",
+    "notices": "Mall notices",
     "notPayable": "You can start sales once you register as a sub-merchant with the payment provider (the provider pays proceeds directly to you).",
     "paused": "Sales are paused for this seller — please contact customer support.",
     "saved": "Saved.",

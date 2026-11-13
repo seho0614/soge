@@ -11,6 +11,8 @@ export const NOTICE_DAYS = 31;   // 예약한 날을 빼고 꼬박 30일 — DB(
  *   올리거나 비워서 어느 갈래에서라도 오르고, 그 요율이 쓰이는 판매 중 · 정지 입점 판매자가 있으면 바로 바꾸지 않고 예약합니다.
  *   시행일 = 예약한 날(한국) + 31일 이후 0시 · 영향받는 판매자마다 알림 · 판매자센터에 예정 표시 · 시행 전에만 취소(사유).
  *   내리는 것 · 영향받는 판매자가 없는 바꿈은 지금처럼 바로 적용합니다. 판정은 DB(fn_hlt_rate_notice) 한 곳.
+ * v10.278 (D209 · docs/407) — 별도 공지사항(대표 결정 11/13): 예약하면 소개몰 공지 초안을 만들고, 운영자가 「공지 게시」(게시한 날 + 31일 ≤ 시행일).
+ *   예약 안내를 게시한 뒤 취소하면 「변경 취소 안내」 초안 · 같은 단추로 게시. 빠뜨림은 정기 작업이 운영 알림 RATE_NOTICE_MISSING.
  */
 @Injectable()
 export class HealthRateScheduleService {
@@ -61,9 +63,57 @@ export class HealthRateScheduleService {
     const show = (v: number | null) => (v === null ? '다음 순서 요율' : `${v}%`);
     const sent = await this.notifySellers(scope, target, 'SELLER_RATE_SCHEDULED', '판매 수수료율 변경 예정 안내',
       `${label ? `${label} ` : ''}판매 수수료율이 ${d} 부터 ${show(rate)} 로 바뀝니다 — 그날 0시 뒤 들어오는 주문부터 적용(이미 받은 주문은 그대로) · 사유: ${reason}`);
-    await this.db.query(`UPDATE hlt_rate_schedules SET notified = $2 WHERE id = $1`, [row.id, sent]);
-    return { ok: true, scheduled: true, id: row.id, effectiveDate: d, from, to: rate, notified: sent,
-      note: `${d} 부터 적용하도록 예약했습니다 — 판매자 ${sent}곳에 알렸습니다(약관 제17조 4항).` };
+    const noticeId = await this.draftNotice(`판매 수수료율 변경 안내(${d} 시행)`, [
+      `소개몰 입점 판매자 여러분께 알려 드립니다.`,
+      ``,
+      `- 대상: ${label ?? this.scopeLabel(scope)}`,
+      `- 판매 수수료율: ${show(from)} → ${show(rate)}`,
+      `- 시행일: ${d} 0시(한국 시간) 이후 들어오는 주문부터 적용 · 이미 받은 주문은 그대로입니다`,
+      `- 사유: ${reason}`,
+      ``,
+      `소개몰 입점(판매자) 이용약관 제17조 4항에 따라 시행일 30일 전에 공지하고, 해당 판매자께는 따로 알려 드렸습니다. 궁금한 점은 고객센터로 문의해 주십시오.`,
+    ].join('\n'));
+    await this.db.query(`UPDATE hlt_rate_schedules SET notified = $2, notice_id = $3 WHERE id = $1`, [row.id, sent, noticeId]);
+    return { ok: true, scheduled: true, id: row.id, effectiveDate: d, from, to: rate, notified: sent, noticeId,
+      note: `${d} 부터 적용하도록 예약했습니다 — 판매자 ${sent}곳에 알렸습니다(약관 제17조 4항). 「요율 변경 예정」에서 공지를 게시해 주십시오.` };
+  }
+
+  private scopeLabel(scope: string) { return scope === 'SELLER' ? '판매자 개별 요율' : scope === 'TYPE' ? '입점 유형 요율' : '갈래 요율'; }
+
+  /** v10.278 (D209) — 소개몰 공지 초안(게시 안 됨 · published_at 비움) */
+  private async draftNotice(title: string, body: string) {
+    const [n] = await this.db.query<{ id: string }>(
+      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id) VALUES ('HLT', $1, $2, true, NULL, $3) RETURNING id`,
+      [title, body, RequestCtx.actorId()]);
+    return n.id;
+  }
+
+  /**
+   * v10.278 (D209) — 「공지 게시」: 예정 예약이면 예약 안내(게시한 날 + 31일 ≤ 시행일일 때만) · 취소한 예약이면 취소 안내.
+   *   게시하면 사용자 웹 공지(파트너센터 공지 · 소개몰 판매자센터 공지)에 맨 위 고정으로 보임.
+   */
+  async publishNotice(id: string) {
+    return this.db.transaction(async () => {
+      const [r] = await this.db.query<{ status: string; notice: string | null; cnotice: string | null; npub: boolean; cpub: boolean; late: boolean; d: string; e: string }>(
+        `SELECT r.status, r.notice_id AS notice, r.cancel_notice_id AS cnotice,
+                (n.published_at IS NOT NULL) AS npub, (c.published_at IS NOT NULL) AS cpub,
+                ((now() AT TIME ZONE 'Asia/Seoul')::date + $2::int > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS late,
+                to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
+                to_char((r.effective_at AT TIME ZONE 'Asia/Seoul')::date - $2::int, 'YYYY-MM-DD') AS e
+           FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id LEFT JOIN notices c ON c.id = r.cancel_notice_id
+          WHERE r.id::text = $1 FOR UPDATE OF r`, [id, NOTICE_DAYS]);
+      if (!r) throw new NotFound('요율 예약을 찾을 수 없습니다.');
+      let target: string | null = null, kind = '';
+      if (r.status === 'SCHEDULED' && r.notice && !r.npub) {
+        if (r.late) throw new PolicyViolation('NOTICE_LATE', `시행일(${r.d})까지 30일이 남지 않아 공지할 수 없습니다(마지막 날 ${r.e}) — 예약을 취소하고 시행일을 다시 정해 예약하십시오.`);
+        target = r.notice; kind = 'SCHEDULE';
+      } else if (r.status === 'CANCELED' && r.cnotice && !r.cpub) {
+        target = r.cnotice; kind = 'CANCEL';
+      }
+      if (!target) throw new StateConflict('NOTICE_DONE', '게시할 공지가 없습니다 — 이미 게시했거나 공지 초안이 없는 예약입니다.');
+      await this.db.query(`UPDATE notices SET published_at = now(), is_pinned = true WHERE id = $1`, [target]);
+      return { ok: true, noticeId: target, kind, note: kind === 'SCHEDULE' ? '예약 안내 공지를 게시했습니다.' : '변경 취소 안내 공지를 게시했습니다.' };
+    });
   }
 
   private async notifySellers(scope: string, target: string, code: string, title: string, body: string) {
@@ -85,8 +135,12 @@ export class HealthRateScheduleService {
               CASE r.scope WHEN 'SELLER' THEN (SELECT s.name FROM hlt_sellers s WHERE s.id::text = r.target)
                            WHEN 'TYPE' THEN CASE r.target WHEN 'BRAND' THEN '브랜드 직영관' ELSE '일반 입점' END
                            ELSE coalesce((SELECT c.name FROM categories c WHERE c.gwan_code = 'HLT' AND c.code = r.target), r.target) END AS "label",
-              (SELECT count(*)::int FROM fn_hlt_rate_sched_sellers(r.scope, r.target)) AS "affectedNow"
+              (SELECT count(*)::int FROM fn_hlt_rate_sched_sellers(r.scope, r.target)) AS "affectedNow",
+              r.notice_id AS "noticeId", n.title AS "noticeTitle", n.body AS "noticeBody", n.published_at AS "noticePublishedAt",
+              r.cancel_notice_id AS "cancelNoticeId", c.title AS "cancelNoticeTitle", c.body AS "cancelNoticeBody", c.published_at AS "cancelNoticePublishedAt",
+              ((now() AT TIME ZONE 'Asia/Seoul')::date + ${NOTICE_DAYS} > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS "noticeLate"
          FROM hlt_rate_schedules r LEFT JOIN accounts a ON a.id = r.created_by
+         LEFT JOIN notices n ON n.id = r.notice_id LEFT JOIN notices c ON c.id = r.cancel_notice_id
         ORDER BY (r.status = 'SCHEDULED') DESC, r.effective_at DESC LIMIT 50`);
   }
 
@@ -95,9 +149,10 @@ export class HealthRateScheduleService {
     const reason = String(reasonRaw ?? '').trim();
     if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '취소 사유를 적어 주십시오 — 판매자에게 알리고 기록에 남습니다.');
     return this.db.transaction(async () => {
-      const [r] = await this.db.query<{ scope: string; target: string; status: string; due: boolean; d: string }>(
-        `SELECT scope, target, status, effective_at <= now() AS due, to_char(effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d
-           FROM hlt_rate_schedules WHERE id::text = $1 FOR UPDATE`, [id]);
+      const [r] = await this.db.query<{ scope: string; target: string; status: string; due: boolean; d: string; npub: boolean }>(
+        `SELECT r.scope, r.target, r.status, r.effective_at <= now() AS due, to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
+                (n.published_at IS NOT NULL) AS npub
+           FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id WHERE r.id::text = $1 FOR UPDATE OF r`, [id]);
       if (!r) throw new NotFound('요율 예약을 찾을 수 없습니다.');
       if (r.status !== 'SCHEDULED' || r.due) throw new StateConflict('SCHEDULE_CLOSED', '이미 시행했거나 취소한 예약입니다 — 시행 시각이 지나면 취소할 수 없습니다.');
       await this.db.query(
@@ -105,8 +160,30 @@ export class HealthRateScheduleService {
         [id, RequestCtx.actorId(), reason]);
       const sent = await this.notifySellers(r.scope, r.target, 'SELLER_RATE_SCHEDULE_CANCELED', '판매 수수료율 변경 예정이 취소되었습니다',
         `${r.d} 부터 바뀔 예정이던 판매 수수료율 변경을 취소했습니다 — 지금 요율 그대로입니다 · 사유: ${reason}`);
-      return { ok: true, status: 'CANCELED', notified: sent, note: `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다.` };
+      let cancelNoticeId: string | null = null;   // v10.278 — 예약 안내를 이미 게시했으면 취소 안내 초안
+      if (r.npub) {
+        cancelNoticeId = await this.draftNotice(`판매 수수료율 변경 취소 안내(${r.d} 시행 예정이던 변경)`, [
+          `${r.d} 부터 바뀔 예정이라고 공지한 판매 수수료율 변경을 취소합니다. 지금 요율 그대로입니다.`,
+          ``,
+          `- 사유: ${reason}`,
+          ``,
+          `해당 판매자께는 따로 알려 드렸습니다. 궁금한 점은 고객센터로 문의해 주십시오.`,
+        ].join('\n'));
+        await this.db.query(`UPDATE hlt_rate_schedules SET cancel_notice_id = $2 WHERE id::text = $1`, [id, cancelNoticeId]);
+      }
+      return { ok: true, status: 'CANCELED', notified: sent, cancelNoticeId,
+        note: cancelNoticeId ? `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다. 게시한 공지가 있어 「변경 취소 안내」 초안을 만들었습니다 — 「공지 게시」로 게시해 주십시오.`
+          : `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다.` };
     });
+  }
+
+  /** v10.278 (D209) — 예약한 지 하루가 지나도 예약 안내 공지를 게시하지 않은 예정 예약 */
+  noticeMissing() {
+    return this.db.query<{ id: string; effectiveDate: string; target: string; scope: string }>(
+      `SELECT r.id, r.scope, r.target, to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "effectiveDate"
+         FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id
+        WHERE r.status = 'SCHEDULED' AND r.effective_at > now() AND r.created_at < now() - interval '1 day' AND n.published_at IS NULL
+        ORDER BY r.effective_at`);
   }
 
   /** 정기 작업 hlt_rate_schedule — 시행 시각이 지난 예약을 표로 */

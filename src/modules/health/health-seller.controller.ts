@@ -255,6 +255,17 @@ export class HealthSellerController {
   @Audit('HLT_RATE_SCHEDULE_CANCEL', 'HLT_COMMISSION')
   cancelRateSchedule(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RateScheduleCancelDto) { return this.rates.cancel(id, dto.reason); }
 
+  @Post('admin/health/rate-schedules/:id/notice')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 예약 공지 게시', description: 'v10.278 (D209) 예약 때 만든 소개몰 공지 초안을 게시(맨 위 고정) — 예정 예약은 예약 안내(게시한 날 + 31일 ≤ 시행일일 때만) · 취소한 예약은 변경 취소 안내. 입점 약관 제17조 4항 「공지」.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'NOTICE_DONE', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NOTICE_LATE', type: ErrorDto })
+  @Audit('HLT_RATE_NOTICE_PUBLISH', 'NOTICE')
+  publishRateNotice(@Param('id', ParseUUIDPipe) id: string) { return this.rates.publishNotice(id); }
+
   @Get('admin/health/rate-impact')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '요율 바꾸기 영향 미리보기', description: 'v10.274 — 최근 30일 결제된 주문 줄을 지금 요율 · 새 요율로 셈(읽기만 · 저장 안 함). 순서상 그 칸이 실제로 쓰이는 줄만.' })

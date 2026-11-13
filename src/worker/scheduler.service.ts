@@ -591,7 +591,18 @@ export class SchedulerService {
       /* v10.275 (D208 · docs/406) — 수수료율 인상 예약 시행: 시행 시각이 지난 예약을 기본 표로 · 바꾼 기록 · 판매자 알림(요율 계산은 시행 시각부터 이미 새 값) */
       case 'hlt_rate_schedule': {
         const [r] = await this.db.query<{ n: number }>(`SELECT fn_hlt_rate_sched_apply() AS n`);
-        affected = Number(r?.n ?? 0); detail = { applied: affected };
+        affected = Number(r?.n ?? 0);
+        /* v10.278 (D209 · docs/407) — 예약한 지 하루가 지나도 예약 안내 공지를 게시하지 않은 것 → 운영 알림(약관 제17조 4항 「공지」 빠뜨림) */
+        const miss = await this.db.query<{ id: string; d: string }>(
+          `SELECT r.id, to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d
+             FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id
+            WHERE r.status = 'SCHEDULED' AND r.effective_at > now() AND r.created_at < now() - interval '1 day' AND n.published_at IS NULL
+            ORDER BY r.effective_at`);
+        if (miss.length) {
+          await this.alert('RATE_NOTICE_MISSING', 'WARN',
+            `수수료율 변경 예약 ${miss.length}건의 공지를 아직 게시하지 않았습니다 — 소개몰 › 소개몰 정산 › 「요율 변경 예정」에서 「공지 게시」(가장 빠른 시행일 ${miss[0].d})`, { items: miss });
+        }
+        detail = { applied: affected, noticeMissing: miss.length };
         break;
       }
 
