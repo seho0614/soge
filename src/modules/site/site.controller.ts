@@ -196,7 +196,7 @@ export class SiteController {
     summary: '공지 등록',
     description: 'publishedAt 을 비우면 초안입니다. 지정한 시각에 공개됩니다.',
   })
-  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279) · NOTIFY_NO_AUDIENCE · BAD_PERIOD(v10.281 · 282) · NOTIFY_CONFIRM_REQUIRED(v10.285)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279) · NOTIFY_NO_AUDIENCE · BAD_PERIOD(v10.281 · 282) · NOTIFY_CONFIRM_REQUIRED(v10.285) · TOO_MANY_FILES · FILE_INVALID(v10.295 첨부)', type: ErrorDto })
   @Audit('NOTICE_CREATE', 'NOTICE')
   createNotice(@Body() dto: CreateNoticeDto) { return this.svc.createNotice(dto); }
 
@@ -218,12 +218,12 @@ export class SiteController {
   }
 
   @Patch('notices/:id')
-  @ApiOperation({ summary: '공지 고치기', description: 'v10.280 (D211) 제목 · 본문 · 등급 · 고정 · 끝 시각 · 알림 — 게시 중이면 사유 필수 · 그 전 내용은 고친 기록에 · 게시한 수수료율 공지는 고정만.' })
+  @ApiOperation({ summary: '공지 고치기', description: 'v10.280 (D211) 제목 · 본문 · 등급 · 고정 · 끝 시각 · 알림 · v10.295 첨부(attachments · 통째로) — 게시 중이면 사유 필수 · 그 전 내용은 고친 기록에 · 게시한 수수료율 공지는 고정만.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   @ApiResponse({ status: 409, description: 'NOTICE_LOCKED', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'NO_CHANGE · REASON_REQUIRED · GRADE_INACTIVE · NOTIFY_NO_AUDIENCE · BAD_PERIOD · NOTIFY_CONFIRM_REQUIRED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_CHANGE · REASON_REQUIRED · GRADE_INACTIVE · NOTIFY_NO_AUDIENCE · BAD_PERIOD · NOTIFY_CONFIRM_REQUIRED · TOO_MANY_FILES · FILE_INVALID(v10.295 첨부)', type: ErrorDto })
   @Audit('NOTICE_UPDATE', 'NOTICE')
   updateNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateNoticeDto) { return this.svc.updateNotice(id, dto); }
 

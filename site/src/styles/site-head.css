@@ -33,6 +33,9 @@
 .sh-nav .m-only { display: none; }
 .sh-nav .m-lang { display: none; align-items: center; }
 .sh-dot { position: absolute; top: 7px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--sgb-point, #f26b1d); box-shadow: 0 0 0 2px #fff; }   /* v10.294 (docs/415) 공지 점 */
+.nt-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }   /* v10.295 공지 첨부 */
+.nt-files img { display: block; max-width: 100%; max-height: 360px; border-radius: 8px; border: 1px solid var(--sgb-line, #e3e6eb); }
+.nt-docs { flex-basis: 100%; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .nt-new { display: inline-block; padding: 0 6px; border-radius: 9px; background: var(--sgb-point, #f26b1d); color: #fff; font: 700 11px/18px var(--sgb-font-body); vertical-align: middle; }   /* v10.293 「새 글」 */
 .sh-num { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sgb-navy, #00245a); color: #fff; font: 700 11px/18px var(--sgb-font-body); text-align: center; }
 /* 중간 폭(태블릿 · 좁은 PC) — 전 메인 머리줄(home.css v10.31 w1)과 같은 규칙: 메뉴는 옆으로 밀고, 900px 아래는 메뉴를 둘째 줄로 */

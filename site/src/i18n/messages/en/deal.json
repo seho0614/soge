@@ -521,6 +521,7 @@
     "ntcFail": "Could not load notices. Please try again shortly.",
     "ntcPinned": "Pinned",
     "ntcNew": "New",
+    "ntcFiles": "Attachments",
     "ntcGo": "View notices",
     "th": {
       "no": "Inquiry no.",

@@ -5,6 +5,7 @@ import { apiGetPersonal } from '@/lib/api';   // v10.279 (D210) 공지는 보는
 import { ymd } from '@/components/partners/fmt';
 import type { Notice } from '@/components/partners/types';
 import { NoticeDetails } from '@/components/common/NoticeDetails';
+import { NoticeFiles } from '@/components/common/NoticeFiles';
 
 import { getTranslations } from 'next-intl/server';
 
@@ -44,6 +45,7 @@ export default async function PartnerNoticesPage() {
                   <span className="dim">{ymd(n.publishedAt)}</span>
                 </>}>
                 <p className="doc-body">{n.body}</p>
+                <NoticeFiles id={n.id} files={n.files} label={t('notices.files')} />
               </NoticeDetails>
             </li>
           ))}

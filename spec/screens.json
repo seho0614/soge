@@ -533,7 +533,8 @@
    "gates": [],
    "apis": [
     "GET /notices",
-    "POST /me/notices/{id}/read"
+    "POST /me/notices/{id}/read",
+    "GET /notices/{id}/files/{n}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "v10.279 (D210 · docs/408) 보는 사람의 공지 등급(fn_notice_grades)에 맞는 공지만 — 로그인 안 하면 전체 공개만 · 관리자 공지는 나오지 않음"
@@ -1694,7 +1695,10 @@
     "GET /admin/notices/audience",
     "PATCH /admin/notices/{id}",
     "POST /admin/notices/{id}/unpublish",
-    "GET /admin/notices/{id}/revisions"
+    "GET /admin/notices/{id}/revisions",
+    "POST /files",
+    "POST /files/{id}/complete",
+    "GET /files/{id}"
    ],
    "nav": "SB-ADM-MAIN-010"
   },
@@ -2980,6 +2984,7 @@
    "apis": [
     "GET /me/health/seller/center",
     "POST /me/health/seller/notices/{id}/read",
+    "GET /notices/{id}/files/{n}",
     "PATCH /me/health/seller/shipping",
     "GET /me/health/seller/products",
     "POST /me/health/seller/products",
@@ -3275,6 +3280,7 @@
     "POST /admin/health/rate-schedules/{id}/cancel",
     "POST /admin/health/rate-schedules/{id}/notice",
     "POST /admin/health/rate-schedules/{id}/remind",
+    "GET /admin/health/rate-schedules/{id}/send-status",
     "POST /admin/health/sellers/{id}/submerchant",
     "POST /admin/health/settlements/{id}/confirm",
     "POST /admin/health/settlements/{id}/payout"
@@ -3922,7 +3928,8 @@
    "nav": "SB-AFC-DSH-010",
    "apis": [
     "GET /notices",
-    "POST /me/notices/{id}/read"
+    "POST /me/notices/{id}/read",
+    "GET /notices/{id}/files/{n}"
    ]
   },
   {
@@ -4600,7 +4607,8 @@
     "GET /partner/notices",
     "POST /partner/notices/read-all",
     "POST /partner/notices/{id}/read",
-    "POST /me/notices/{id}/read"
+    "POST /me/notices/{id}/read",
+    "GET /notices/{id}/files/{n}"
    ],
    "nav": "SB-PTC-DSH-010",
    "note": "20260930 등록 — site/src/app 에 구현돼 있었으나 레지스트리에 없던 화면(서비스 파트너센터)."

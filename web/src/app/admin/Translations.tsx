@@ -12,7 +12,7 @@ import { SubTabs, type SubTab } from '../../components/SubTabs';
  *   다국어(i18n.enabled)가 꺼져 있는 동안 손님 화면은 바뀌지 않습니다 — 미리 넣고 승인해 둡니다.
  *   v10.103 다국어 3-1 — 「원문 목록」: 운영 글(공지 · 자주 묻는 질문 · 약관 · 분류 이름 · 소개몰 상품)을 골라
  *     칸마다 번역 상태를 보고, 그 자리에서 원문을 보며 번역을 넣고 승인 · 반려 (GET admin/i18n/catalog)
- *   v10.104 다국어 3-2 — 「자동 번역」: 등록 글(매물 · 요청) 자동 번역 작업 줄 · 다시 시도 · 노출 중인 글 한꺼번에 넣기 (GET admin/i18n/jobs)
+ *   v10.104 다국어 3-2 — 「자동 번역」: 등록 글(매물 · 요청 · v10.296 공지) 자동 번역 작업 줄 · 다시 시도 · 노출 중인 글 한꺼번에 넣기 (GET admin/i18n/jobs)
  * ════════════════════════════════════════════════════════════════════ */
 
 type View = 'list' | 'catalog' | 'jobs' | 'new' | 'langs';
@@ -159,14 +159,15 @@ function Jobs() {
   const a = useAct();
   const retry = (x: Job) => void a.run('rt:' + x.id, () => api(`/admin/i18n/jobs/${x.id}/retry`, { method: 'POST' }), r.reload, '다시 시도합니다 — 다음 배치(1분 안)에 번역합니다.');
   const backfill = () => {
-    if (!confirm('지금 손님에게 보이는 매물 · 요청을 모두 자동 번역 줄에 넣습니다. 건수만큼 비용이 듭니다(월 상한 안에서). 계속할까요?')) return;
+    if (!confirm('지금 손님에게 보이는 매물 · 요청 · 공지를 모두 자동 번역 줄에 넣습니다. 건수만큼 비용이 듭니다(월 상한 안에서). 계속할까요?')) return;
     void a.run('bf', () => api<{ queued: number }>('/admin/i18n/jobs/backfill', { method: 'POST' }), r.reload, '넣었습니다 — 스위치가 꺼져 있으면 0건입니다.');
   };
   const c = r.data?.counts ?? {};
   return (
     <>
-      <h2>자동 번역 (매물 · 요청)</h2>
+      <h2 data-auto-translate-notice>자동 번역 (매물 · 요청 · 공지)</h2>
       <p className="notice info">매물 · 요청이 손님에게 보이게 되면(검수 승인) · 보이는 동안 고쳐지면 번역 줄에 들어가고, 1분마다 몇 건씩 번역합니다.
+        공지(v10.296)는 게시하거나 게시를 예약하면 · 게시 뒤 제목 · 본문 · 등급을 고치면 들어갑니다(「관리자」만 보는 공지는 빼고).
         번역문에 차단 금칙어가 있으면 자동 승인하지 않고 「번역 목록」에 승인 대기로 남습니다. 사람이 승인한 번역은 덮어쓰지 않습니다.
         켜는 조건: 사이트 설정 <b>i18n.auto_translate.enabled</b> · AI 에이전트 전체 · 월 상한(AI 에이전트 화면) · 엔진 키(운영 .env).</p>
       <p className="row-act">

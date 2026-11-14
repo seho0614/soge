@@ -63,6 +63,7 @@ export function parseTranslation(text: string, keys: string[]): Record<string, s
  *     ③ 번역문 금칙어 재검사 — 차단 낱말이 있으면 자동 승인하지 않고 승인 대기(DRAFT · 운영 화면 「번역 승인」)
  *     ④ fn_agent_record_usage — 비용을 쌓고, 상한에 닿으면 DB 가 AI 전체를 끄고 운영 경보
  *   사람이 승인한(MANUAL · APPROVED · 낡지 않은) 칸은 덮어쓰지 않습니다. 원문은 바꾸지 않습니다.
+ *   v10.296 (D217 · docs/416) 공지(NOTICE)도 같은 줄 — 게시(예약 포함) · 게시 뒤 제목 · 본문 · 등급이 바뀌면 DB 트리거가 넣음(관리자만 공지 뺌).
  */
 @Injectable()
 export class TranslateService {
@@ -132,7 +133,8 @@ export class TranslateService {
     // 요금표에 없는 모델이면 부르지 않음 — 불러 놓고 비용을 못 쌓으면 월 상한이 듣지 않음
     const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
     if (!priced) return this.finish(j.id, 'HELD', 'MODEL_UNPRICED', `요금표에 없는 모델입니다(${model}) — 운영 화면 AI 에이전트 요금표나 설정 i18n.translate_model 을 고치십시오.`);
-    const reply = await p.complete({ model, system: translateSystem(j.lang), messages: [{ role: 'user', content: JSON.stringify(src) }], maxTokens: 16000, effort: 'low' });   // 번역은 생각을 적게 · 긴 본문이 잘리지 않게
+    /* v10.296 공지는 지시문의 글 종류만 다름 */
+    const reply = await p.complete({ model, system: translateSystem(j.lang, j.target_type === 'NOTICE' ? 'announcements from the operator of a referral marketplace' : undefined), messages: [{ role: 'user', content: JSON.stringify(src) }], maxTokens: 16000, effort: 'low' });   // 번역은 생각을 적게 · 긴 본문이 잘리지 않게
     await this.agent.record('TRANSLATE', model, reply.inputTokens, reply.outputTokens, reply.cacheReadTokens);
     if (reply.stopReason === 'refusal') return this.finish(j.id, 'HELD', 'REFUSAL', '엔진이 번역을 거절했습니다 — 운영자가 직접 넣으십시오.');
     if (reply.stopReason === 'max_tokens') return this.finish(j.id, 'HELD', 'TOO_LONG', '글이 길어 번역이 잘렸습니다 — 운영자가 직접 넣으십시오.');
@@ -207,12 +209,15 @@ export class TranslateService {
     return { ok: true, id, state: 'QUEUED' };
   }
 
-  /** 지금 손님에게 보이는 매물 · 요청을 한꺼번에 넣기(스위치를 켠 뒤 처음 한 번) */
+  /** 지금 손님에게 보이는 매물 · 요청 · 공지(v10.296 · 게시 중 · 예약 · 관리자만 공지 뺌)를 한꺼번에 넣기(스위치를 켠 뒤 처음 한 번) */
   async backfill() {
     const [r] = await this.db.query<{ n: number }>(
       `SELECT coalesce(sum(fn_translation_enqueue(t, id)), 0)::int AS n FROM (
          SELECT 'LISTING' AS t, id::text AS id FROM listings WHERE status = 'PUBLISHED'
-         UNION ALL SELECT 'REQUEST', id::text FROM requests WHERE status = 'PUBLISHED') x`);
+         UNION ALL SELECT 'REQUEST', id::text FROM requests WHERE status = 'PUBLISHED'
+         UNION ALL SELECT 'NOTICE', id::text FROM notices
+                    WHERE published_at IS NOT NULL AND (ends_at IS NULL OR ends_at > now())
+                      AND EXISTS (SELECT 1 FROM unnest(grades) g WHERE g <> 'STAFF')) x`);
     return { ok: true, queued: r?.n ?? 0 };
   }
 }

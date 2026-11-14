@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { IdentityVerifyService } from '../identity/identity-verify.service';
@@ -101,6 +102,25 @@ export class PublicController {
   @ApiQuery({ name: 'gwanCode', required: false })
   @ApiOkResponse({ type: NoticeDto, isArray: true })
   notices(@Query('gwanCode') gwanCode?: string) { return this.svc.notices(gwanCode); }
+
+  @Get('notices/:id/files/:n')
+  @ApiOperation({
+    summary: '공지 첨부 (보는 사람 기준)',
+    description: 'v10.295 (D217 · docs/416) n 번째(0부터) 첨부 바이트 — 공지 목록과 같은 기준(게시 중 · 끝나지 않음 · 내 등급에 보임)인 공지만 · 운영(ADMIN · SUPER)은 모두. 그림(JPG · PNG)은 화면에 · PDF 는 내려받기. 아니면 404.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' }) @ApiParam({ name: 'n', example: 0 })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiOkResponse({ description: '첨부 바이트', content: { 'image/jpeg': { schema: { type: 'string', format: 'binary' } }, 'image/png': { schema: { type: 'string', format: 'binary' } }, 'application/pdf': { schema: { type: 'string', format: 'binary' } } } })
+  async noticeFile(@Param('id') id: string, @Param('n', ParseIntPipe) n: number, @Res() res: Response) {
+    const f = await this.svc.noticeFile(id, n);
+    res.status(200);
+    res.setHeader('Content-Type', f.contentType); res.setHeader('Content-Length', String(f.size));
+    res.setHeader('Content-Disposition', f.disposition);
+    res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Cache-Control', 'private, max-age=300');
+    if (f.contentType !== 'application/pdf') res.setHeader('Content-Security-Policy', "default-src 'none'");
+    f.stream.on('error', () => res.destroy());
+    f.stream.pipe(res);
+  }
 
   @Post('inquiries')
   @ApiOperation({

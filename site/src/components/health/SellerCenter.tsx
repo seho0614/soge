@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { NoticeFiles, type NoticeFile } from '@/components/common/NoticeFiles';
 import { needsLogin } from './util';
 import type { HltSaleCategory } from './types';
 
@@ -11,7 +12,7 @@ export interface SellerCenterInfo {
   products: number; onSale: number; inReview: number; tenantOn: boolean;
   /** v10.277 (D208 · docs/406) 예정된 수수료율 변경 — 입점 약관 제17조 4항(30일 전 공지) */
   /** v10.278 (D209) 소개몰 공지(게시된 것 · 최근 5) */
-  notices?: { id: string; title: string; body: string; publishedAt: string; isPinned: boolean }[];
+  notices?: { id: string; title: string; body: string; publishedAt: string; isPinned: boolean; files?: NoticeFile[] }[];   // v10.295 files
   rateSchedules?: { scope: 'SELLER' | 'TYPE' | 'CATEGORY'; effectiveDate: string; fromRate: number | string | null; toRate: number | string | null; reason: string; categoryName: string | null }[];
 }
 export interface SellerProduct {
@@ -102,6 +103,7 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
               <details key={x.id} data-seller-notice={x.id} onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) markRead(x.id); }}>
                 <summary>{x.title} <span className="dim">{String(x.publishedAt).slice(0, 10)}</span></summary>
                 <p style={{ whiteSpace: 'pre-line' }}>{x.body}</p>
+                <NoticeFiles id={x.id} files={x.files} label={t('noticeFiles')} />
               </details>
             ))}
           </div>

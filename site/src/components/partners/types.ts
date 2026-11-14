@@ -86,6 +86,7 @@ export interface Notice {
   id: string; gwanCode: string | null; title: string; body: string;
   isPinned: boolean; publishedAt: string | null;
   unread?: boolean;   // v10.293 (docs/415) 최근 30일 · 아직 안 펼친 공지
+  files?: { n: number; name: string; contentType: string; size: number }[];   // v10.295 (docs/416) 첨부
 }
 
 /** 변경 API 공통 — 파트너가 아니면 201 + ok:false 로 옵니다 */

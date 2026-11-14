@@ -69,6 +69,15 @@ export class CreateAdDto {
   @ApiProperty({ format: 'date-time' }) @IsString() endsAt!: string;
 }
 
+/** v10.295 (D217 · docs/416) 공지 첨부 한 개 */
+export class NoticeFileDto {
+  @ApiPropertyOptional({ format: 'uuid', description: '파일 id(운영 화면 목록만)' }) id?: string;
+  @ApiProperty({ description: '순서(0부터) — GET /notices/{id}/files/{n}' }) n!: number;
+  @ApiProperty() name!: string;
+  @ApiProperty({ enum: ['image/jpeg', 'image/png', 'application/pdf'] }) contentType!: string;
+  @ApiProperty({ description: '바이트' }) size!: number;
+}
+
 export class NoticeDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ nullable: true }) gwanCode!: string | null;
@@ -88,6 +97,7 @@ export class NoticeDto {
   @ApiPropertyOptional({ description: 'v10.293 펼쳐 본 회원 수(운영 화면 목록만)' }) reads?: number;
   @ApiPropertyOptional({ nullable: true, description: 'v10.293 볼 수 있는 활동 중 회원 수 — 전체 공개 · 관리자만이면 null(운영 화면 목록만)' }) target?: number | null;
   @ApiPropertyOptional({ description: 'v10.293 로그인한 사람이 아직 펼쳐 보지 않은 최근 30일 공지(사용자 웹 목록만)' }) unread?: boolean;
+  @ApiPropertyOptional({ type: [NoticeFileDto], description: 'v10.295 (D217) 첨부(그림 · PDF · 3개까지) — 바이트는 GET /notices/{id}/files/{n}' }) files?: NoticeFileDto[];
 }
 
 export class CreateNoticeDto {
@@ -106,6 +116,8 @@ export class CreateNoticeDto {
   @IsOptional() @StrictBoolean() notify?: boolean;
   @ApiPropertyOptional({ description: 'v10.285 (D212) 받는 사람이 notice.notify_confirm_min 이상이면 「모두에게 알림」(아니면 422 NOTIFY_CONFIRM_REQUIRED)' })
   @IsOptional() @IsString() @MaxLength(20) notifyConfirm?: string;
+  @ApiPropertyOptional({ type: [String], description: 'v10.295 (D217) 첨부 — POST /files(NOTICE_ATTACHMENT)로 올린 파일 id · 3개까지(422 TOO_MANY_FILES · FILE_INVALID)' })
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) attachments?: string[];
 }
 
 /** v10.285 (D212) 공지 게시 — 알림 받을 사람이 많으면 확인 문구 */
@@ -125,6 +137,8 @@ export class UpdateNoticeDto {
   @ApiPropertyOptional() @IsOptional() @StrictBoolean() notify?: boolean;
   @ApiPropertyOptional({ description: '고치는 사유 — 게시 중인 공지는 2자 이상 필수' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
   @ApiPropertyOptional({ description: 'v10.285 알림을 켤 때 받는 사람이 많으면 「모두에게 알림」' }) @IsOptional() @IsString() @MaxLength(20) notifyConfirm?: string;
+  @ApiPropertyOptional({ type: [String], description: 'v10.295 (D217) 첨부를 통째로 바꿈(빈 목록 = 모두 뺌) · 3개까지 · 게시한 수수료율 공지는 409 NOTICE_LOCKED' })
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) attachments?: string[];
 }
 
 /** v10.280 (D211) 공지 내리기 사유 */

@@ -61,7 +61,7 @@ export class HealthRateScheduleService {
        VALUES ($1, $2, $3, $4, ($5::date)::timestamp AT TIME ZONE 'Asia/Seoul', $6, $7) RETURNING id`,
       [scope, target, from, rate, d, reason, RequestCtx.actorId()]);
     const show = (v: number | null) => (v === null ? '다음 순서 요율' : `${v}%`);
-    const sent = await this.notifySellers(scope, target, 'SELLER_RATE_SCHEDULED', '판매 수수료율 변경 예정 안내',
+    const sent = await this.notifySellers(row.id, 'SCHEDULE', scope, target, 'SELLER_RATE_SCHEDULED', '판매 수수료율 변경 예정 안내',
       `${label ? `${label} ` : ''}판매 수수료율이 ${d} 부터 ${show(rate)} 로 바뀝니다 — 그날 0시 뒤 들어오는 주문부터 적용(이미 받은 주문은 그대로) · 사유: ${reason}`);
     const noticeId = await this.draftNotice(`판매 수수료율 변경 안내(${d} 시행)`, [
       `소개몰 입점 판매자 여러분께 알려 드립니다.`,
@@ -128,13 +128,55 @@ export class HealthRateScheduleService {
     });
   }
 
-  private async notifySellers(scope: string, target: string, code: string, title: string, body: string) {
+  private async notifySellers(scheduleId: string, kind: 'SCHEDULE' | 'CANCEL', scope: string, target: string, code: string, title: string, body: string) {
     const rows = await this.db.query<{ id: string }>(
       `INSERT INTO notifications (account_id, event_code, title, body, link_url)
        SELECT s.account_id, $3, $4, $5, '/health/seller/center' FROM hlt_sellers s
         WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers($1, $2)) AND s.account_id IS NOT NULL
        RETURNING id`, [scope, target, code, title, body]);
+    await this.link(scheduleId, kind, rows.map((r) => r.id));
     return rows.length;
+  }
+
+  /** v10.297 (D217 · docs/416) — 요율 예약이 보낸 알림을 묶어 둠(운영 화면 메일 · 문자 발송 현황) */
+  private async link(scheduleId: string, kind: 'SCHEDULE' | 'CANCEL' | 'REMIND', ids: string[]) {
+    if (!ids.length) return;
+    await this.db.query(
+      `INSERT INTO hlt_rate_notifications (notification_id, schedule_id, kind) SELECT unnest($1::bigint[]), $2::uuid, $3 ON CONFLICT DO NOTHING`,
+      [ids, scheduleId, kind]);
+  }
+
+  /**
+   * v10.297 (D217 · docs/416) — 요율 알림 발송 현황: 알림(내 알림) 수 · 메일 · 문자(SMS → 알림톡)마다 보냄 · 대기 · 실패 · 아직(정기 작업 notify_dispatch 전 · 조용한 시간)
+   *   · 받을 주소 없음(메일 · 휴대폰이 없는 판매자 — 내 알림만 감). 발송은 notify_dispatch(1분)가 v_notify_queue 로 함 — 여기는 세기만.
+   */
+  async sendStatus(scheduleId: string) {
+    const [ex] = await this.db.query(`SELECT 1 FROM hlt_rate_schedules WHERE id = $1::uuid`, [scheduleId]);
+    if (!ex) throw new NotFound('요율 예약을 찾을 수 없습니다.');
+    const [r] = await this.db.query<Record<string, number>>(
+      `SELECT count(*)::int AS inapp,
+              count(*) FILTER (WHERE de.status IN ('SENT', 'DELIVERED'))::int AS "emailSent",
+              count(*) FILTER (WHERE de.status = 'QUEUED')::int AS "emailQueued",
+              count(*) FILTER (WHERE de.status = 'FAILED')::int AS "emailFailed",
+              count(*) FILTER (WHERE de.id IS NULL AND coalesce(a.email, '') <> '')::int AS "emailWaiting",
+              count(*) FILTER (WHERE coalesce(a.email, '') = '')::int AS "emailNone",
+              count(*) FILTER (WHERE ds.status IN ('SENT', 'DELIVERED'))::int AS "smsSent",
+              count(*) FILTER (WHERE ds.status = 'QUEUED')::int AS "smsQueued",
+              count(*) FILTER (WHERE ds.status = 'FAILED')::int AS "smsFailed",
+              count(*) FILTER (WHERE ds.id IS NULL AND coalesce(a.phone, '') <> '')::int AS "smsWaiting",
+              count(*) FILTER (WHERE coalesce(a.phone, '') = '')::int AS "smsNone"
+         FROM hlt_rate_notifications h
+         JOIN notifications n ON n.id = h.notification_id
+         JOIN accounts a ON a.id = n.account_id
+         LEFT JOIN notification_deliveries de ON de.notification_id = n.id AND de.channel = 'EMAIL'
+         LEFT JOIN notification_deliveries ds ON ds.notification_id = n.id AND ds.channel = 'SMS'
+        WHERE h.schedule_id = $1::uuid`, [scheduleId]);
+    const fails = await this.db.query<{ channel: string; reason: string; n: number }>(
+      `SELECT d.channel, coalesce(d.failed_reason, '') AS reason, count(*)::int AS n
+         FROM hlt_rate_notifications h JOIN notification_deliveries d ON d.notification_id = h.notification_id
+        WHERE h.schedule_id = $1::uuid AND d.status = 'FAILED' GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 5`, [scheduleId]);
+    const ch = await this.db.query<{ channel: string; ready: boolean }>(`SELECT channel, coalesce(ready, false) AS ready FROM v_notify_channels WHERE channel IN ('EMAIL', 'SMS')`);
+    return { ...r, fails, channels: Object.fromEntries(ch.map((c) => [c.channel, c.ready])) };
   }
 
   /** 운영 — 예약 목록(예정 먼저 · 최근 50) */
@@ -155,7 +197,15 @@ export class HealthRateScheduleService {
               (SELECT count(*)::int FROM hlt_sellers s JOIN notice_reads nr ON nr.account_id = s.account_id AND nr.notice_id = r.notice_id
                 WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers(r.scope, r.target))) AS "noticeReads",
               (SELECT max(m.at) FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "remindedAt",
-              (SELECT count(*)::int FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "reminds"
+              (SELECT count(*)::int FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "reminds",
+              /* v10.297 (D217) 메일 · 문자 발송 현황 한 줄(자세히는 GET …/send-status) */
+              (SELECT count(*)::int FROM hlt_rate_notifications h WHERE h.schedule_id = r.id) AS "sendTotal",
+              (SELECT count(*)::int FROM hlt_rate_notifications h JOIN notification_deliveries d ON d.notification_id = h.notification_id
+                WHERE h.schedule_id = r.id AND d.channel = 'EMAIL' AND d.status IN ('SENT', 'DELIVERED')) AS "sendEmail",
+              (SELECT count(*)::int FROM hlt_rate_notifications h JOIN notification_deliveries d ON d.notification_id = h.notification_id
+                WHERE h.schedule_id = r.id AND d.channel = 'SMS' AND d.status IN ('SENT', 'DELIVERED')) AS "sendSms",
+              (SELECT count(*)::int FROM hlt_rate_notifications h JOIN notification_deliveries d ON d.notification_id = h.notification_id
+                WHERE h.schedule_id = r.id AND d.status = 'FAILED') AS "sendFailed"
          FROM hlt_rate_schedules r LEFT JOIN accounts a ON a.id = r.created_by
          LEFT JOIN notices n ON n.id = r.notice_id LEFT JOIN notices c ON c.id = r.cancel_notice_id
         ORDER BY (r.status = 'SCHEDULED') DESC, r.effective_at DESC LIMIT 50`);
@@ -181,6 +231,7 @@ export class HealthRateScheduleService {
         [r.scope, r.target, '[다시 알림] 판매 수수료율 변경 예정 안내',
          `${r.d} 부터 판매 수수료율이 바뀝니다 — 판매자센터 「소개몰 공지」의 「${r.title ?? ''}」를 확인해 주십시오(입점 약관 제17조 4항).`, r.notice]);
       if (!rows.length) throw new StateConflict('ALL_READ', '영향받는 판매자가 모두 공지를 읽었습니다 — 다시 알릴 곳이 없습니다.');
+      await this.link(id, 'REMIND', rows.map((x) => x.id));   // v10.297
       await this.db.query(`INSERT INTO hlt_rate_reminds (schedule_id, sent, by_account) VALUES ($1, $2, $3)`, [id, rows.length, RequestCtx.actorId()]);
       return { ok: true, sent: rows.length, note: `안 읽은 판매자 ${rows.length}곳에 다시 알렸습니다.` };
     });
@@ -201,7 +252,7 @@ export class HealthRateScheduleService {
       await this.db.query(
         `UPDATE hlt_rate_schedules SET status = 'CANCELED', canceled_by = $2, canceled_at = now(), cancel_reason = $3 WHERE id::text = $1`,
         [id, RequestCtx.actorId(), reason]);
-      const sent = await this.notifySellers(r.scope, r.target, 'SELLER_RATE_SCHEDULE_CANCELED', '판매 수수료율 변경 예정이 취소되었습니다',
+      const sent = await this.notifySellers(id, 'CANCEL', r.scope, r.target, 'SELLER_RATE_SCHEDULE_CANCELED', '판매 수수료율 변경 예정이 취소되었습니다',
         `${r.d} 부터 바뀔 예정이던 판매 수수료율 변경을 취소했습니다 — 지금 요율 그대로입니다 · 사유: ${reason}`);
       /* v10.291 (docs/414) — 날짜 정해 게시 예약만 하고 아직 안 나간 공지는 거둠(초안으로 · 판매자에게 보인 적 없음 → 취소 안내 없음) */
       if (r.nsched && r.notice) await this.db.query(`UPDATE notices SET published_at = NULL WHERE id = $1 AND published_at > now()`, [r.notice]);

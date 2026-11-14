@@ -1854,4 +1854,8 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "공지 날짜는 오늘({0})부터 {1}까지 정할 수 있습니다 — 시행일({2}) 31일 전까지(입점 약관 제17조 4항).": "The notice date can be set from today ({0}) to {1} — at least 31 days before the effective date ({2}) (Seller Terms Article 17(4)).",
   "예약 안내 공지를 {0} 0시에 게시하도록 정했습니다 — 그때부터 파트너센터 공지 · 판매자센터에 보입니다.": "The rate change notice is set to be posted at 00:00 on {0} — from then it appears in the Partner Center notices and the Seller Center.",
   "예약을 취소했습니다 — 판매자 {0}곳에 알렸습니다. 게시 예약한 공지는 나가기 전이라 거뒀습니다.": "The scheduled change has been cancelled — {0} seller(s) have been notified. The notice set for a later date had not gone out yet, so it was withdrawn.",
+  /* v10.295 ~ 297 (docs/416) — 공지 첨부 · 요율 알림 발송 현황 */
+  "올리기를 마친 공지 첨부 파일만 붙일 수 있습니다.": "Only notice attachments that have finished uploading can be attached.",
+  "첨부 파일이 없습니다.": "Attachment not found.",
+  "공지에 붙은 파일은 지울 수 없습니다 — 공지에서 먼저 빼십시오": "Files attached to a notice cannot be deleted — remove them from the notice first",
 };

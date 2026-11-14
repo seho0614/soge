@@ -3,7 +3,7 @@ import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'cl
 
 /* v10.31 — 매물 · 요청 이미지 · 문의 첨부(w1) · BROKER_DOC 중개사 제출 서류(w2 · D050) · PARTNER_MEDIA 파트너 사진 · 로고(w5 · D072)
  *   DB 의 ck_files_purpose(D090 합침) · file_policies 와 같은 목록입니다 */
-export const FILE_PURPOSES = ['OWNERSHIP_DOC', 'MARKETING_MATERIAL', 'PARTNER_GUIDE', 'PRODUCT_IMAGE', 'LISTING_IMAGE', 'REQUEST_IMAGE', 'INQUIRY_ATTACHMENT', 'BROKER_DOC', 'PARTNER_MEDIA'] as const;   // + PARTNER_MEDIA(w5 · D072)
+export const FILE_PURPOSES = ['OWNERSHIP_DOC', 'MARKETING_MATERIAL', 'PARTNER_GUIDE', 'PRODUCT_IMAGE', 'LISTING_IMAGE', 'REQUEST_IMAGE', 'INQUIRY_ATTACHMENT', 'BROKER_DOC', 'PARTNER_MEDIA', 'NOTICE_ATTACHMENT'] as const;   // + PARTNER_MEDIA(w5 · D072) · NOTICE_ATTACHMENT(v10.295 · D217)
 
 export class CreateFileDto {
   @ApiProperty({ enum: FILE_PURPOSES, description: '어디에 쓸 파일인가 — 용도마다 받는 형식 · 크기가 다릅니다' })

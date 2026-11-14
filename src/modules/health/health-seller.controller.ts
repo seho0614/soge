@@ -290,6 +290,14 @@ export class HealthSellerController {
   @Audit('HLT_RATE_NOTICE_REMIND', 'HLT_COMMISSION')
   remindRateNotice(@Param('id', ParseUUIDPipe) id: string) { return this.rates.remind(id); }
 
+  @Get('admin/health/rate-schedules/:id/send-status')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 알림 메일 · 문자 발송 현황', description: 'v10.297 (D217 · docs/416) 이 예약이 보낸 판매자 알림(예약 안내 · 취소 · 다시 알림)마다 메일 · 문자(SMS → 알림톡) 보냄 · 대기 · 실패 · 아직 · 받을 주소 없음 · 실패 사유 5줄 · 채널 준비 상태(v_notify_channels). 읽기만 — 발송은 정기 작업 notify_dispatch.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  rateSendStatus(@Param('id', ParseUUIDPipe) id: string) { return this.rates.sendStatus(id); }
+
   @Get('admin/health/rate-impact')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '요율 바꾸기 영향 미리보기', description: 'v10.274 — 최근 30일 결제된 주문 줄을 지금 요율 · 새 요율로 셈(읽기만 · 저장 안 함). 순서상 그 칸이 실제로 쓰이는 줄만.' })

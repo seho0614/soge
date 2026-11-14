@@ -1,4 +1,7 @@
 import { checkOwnImages } from '../file/attach-images';
+import { storageFromEnv } from '../file/storage';
+import { contentDisposition } from '../file/sniff';
+import { noticeFilesSql } from '../site/notice-files';
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
@@ -147,7 +150,8 @@ export class PublicService {
               is_pinned AS "isPinned", published_at AS "publishedAt",
               /* v10.293 (docs/415) 로그인한 사람이 아직 펼쳐 보지 않은 최근 30일 공지 — 「새 글」 표시 · 머리줄 점과 같은 기준 */
               ($2::uuid IS NOT NULL AND published_at > now() - interval '30 days'
-               AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = notices.id AND r.account_id = $2::uuid)) AS unread
+               AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = notices.id AND r.account_id = $2::uuid)) AS unread,
+              ${noticeFilesSql('notices')} AS files   -- v10.295 (D217) 첨부(id 없이 · READY 만)
          FROM notices
         WHERE published_at IS NOT NULL AND published_at <= now()
           AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211) 끝 날짜 지남 · 내린 공지 뺌
@@ -156,6 +160,29 @@ export class PublicService {
         ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null, RequestCtx.actorId() ?? null]);
     /* v10.103 (3-1) — 승인된 번역이 있으면 화면 언어로 */
     return this.i18n.overlay(rows, 'NOTICE', (r) => String(r.id), { title: 'title', body: 'body' });
+  }
+
+  /**
+   * v10.295 (D217 · docs/416) — 공지 첨부 바이트. 공지 목록과 같은 기준(게시 중 · 끝나지 않음 · 내 등급에 보임 · 관리자 등급 뺌)으로 볼 수 있는 공지만 ·
+   *   운영(ADMIN · SUPER)은 미리 보기로 모든 공지. 아니면 없는 것과 같이 404.
+   */
+  async noticeFile(id: string, n: number) {
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID.test(id) || !Number.isInteger(n) || n < 0 || n > 2) throw new NotFound('첨부 파일이 없습니다.');
+    const me = RequestCtx.actorId() ?? null;
+    const [f] = await this.db.query<{ storage_key: string; content_type: string; size_bytes: string; original_name: string }>(
+      `SELECT f.storage_key, f.content_type, f.size_bytes, f.original_name
+         FROM notices x JOIN files f ON f.id = x.attachments[$2::int + 1] AND f.status = 'READY' AND f.purpose = 'NOTICE_ATTACHMENT'
+        WHERE x.id = $1::uuid
+          AND ((x.published_at IS NOT NULL AND x.published_at <= now() AND (x.ends_at IS NULL OR x.ends_at > now())
+                AND x.grades && array_remove(fn_notice_grades($3::uuid), 'STAFF'))
+               OR EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = $3::uuid AND r.role IN ('ADMIN', 'SUPER')))`, [id, n, me]);
+    if (!f) throw new NotFound('첨부 파일이 없습니다.');
+    const stream = await storageFromEnv().open(f.storage_key);
+    if (!stream) throw new NotFound('첨부 파일이 없습니다.');
+    /* 그림은 화면에 · PDF 는 내려받기(파일 이름 그대로 · sniff.contentDisposition) */
+    const disposition = contentDisposition(f.content_type === 'application/pdf' ? 'attachment' : 'inline', f.original_name);
+    return { stream, contentType: f.content_type, size: Number(f.size_bytes), disposition };
   }
 
   async createInquiry(input: {

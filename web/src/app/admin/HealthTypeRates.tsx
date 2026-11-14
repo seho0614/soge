@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
@@ -29,6 +30,14 @@ interface RateSchedule {
   noticeScheduled?: boolean;
   /** v10.283 (D212) 읽음 n / 대상 m · 다시 알림 */
   noticeReads?: number; remindedAt?: string | null; reminds?: number;
+  /** v10.297 (D217 · docs/416) 알림 · 메일 · 문자 보냄 · 실패 */
+  sendTotal?: number; sendEmail?: number; sendSms?: number; sendFailed?: number;
+}
+/** v10.297 (D217) GET …/send-status */
+interface SendStatus {
+  inapp: number; emailSent: number; emailQueued: number; emailFailed: number; emailWaiting: number; emailNone: number;
+  smsSent: number; smsQueued: number; smsFailed: number; smsWaiting: number; smsNone: number;
+  fails: { channel: string; reason: string; n: number }[]; channels: Record<string, boolean>;
 }
 const SCOPE_NAME: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
 const pct = (v: string | number | null) => (v === null ? '비움(다음 순서)' : `${Number(v)}%`);
@@ -111,6 +120,15 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
     if (!confirm(`「${r.noticeTitle}」 공지를 아직 펼쳐 보지 않은 판매자 ${unread}곳에 다시 알립니다(24시간에 한 번 · 기록이 남음). 보낼까요?`)) return;
     void a.run(`rmd:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/remind`, { method: 'POST' }), () => q.reload(), (x) => x.note);
   };
+  /* v10.297 (D217 · docs/416) 메일 · 문자 발송 현황 — 알림마다 보냄 · 대기 · 실패 · 아직 · 주소 없음 */
+  const [ss, setSs] = useState<{ id: string; label: string; d: SendStatus } | null>(null);
+  const loadSend = (r: RateSchedule) => {
+    if (ss?.id === r.id) { setSs(null); return; }
+    void (async () => {
+      const d = await a.run(`ss:${r.id}`, () => api<SendStatus>(`/admin/health/rate-schedules/${r.id}/send-status`), undefined, '발송 현황을 불러왔습니다.');
+      if (d) setSs({ id: r.id, label: `${SCOPE_NAME[r.scope]} ${r.label ?? r.target} · ${r.effectiveDate}`, d });
+    })();
+  };
   const noticeCell = (r: RateSchedule) => {
     if (r.status === 'CANCELED' && r.cancelNoticeId) {
       return r.cancelNoticePublishedAt ? <span className="dim">취소 안내 게시 {ymd(r.cancelNoticePublishedAt)}</span>
@@ -166,7 +184,13 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
                 <td className="num-cell">{pct(r.fromRate)} → <b>{pct(r.toRate)}</b></td>
                 <td className="mono">{r.effectiveDate}</td>
                 <td>{st[r.status]}{r.status === 'CANCELED' && r.cancelReason ? <span className="dim"> · {r.cancelReason}</span> : null}</td>
-                <td className="num-cell">{n(r.notified)}곳{r.status === 'SCHEDULED' ? <span className="dim"> (지금 {n(r.affectedNow)}곳)</span> : null}</td>
+                <td className="num-cell">{n(r.notified)}곳{r.status === 'SCHEDULED' ? <span className="dim"> (지금 {n(r.affectedNow)}곳)</span> : null}
+                  {(r.sendTotal ?? 0) > 0 && (
+                    <div className="dim" data-rate-send={`${r.sendTotal}/${r.sendEmail ?? 0}/${r.sendSms ?? 0}/${r.sendFailed ?? 0}`}>
+                      알림 {n(r.sendTotal ?? 0)} · 메일 {n(r.sendEmail ?? 0)} · 문자 {n(r.sendSms ?? 0)}{(r.sendFailed ?? 0) > 0 ?  <span className="badge badge-urgent">실패 {n(r.sendFailed ?? 0)}</span> : null}{' '}
+                      <button className="btn-plain" disabled={a.busy === `ss:${r.id}`} onClick={() => loadSend(r)} data-rate-send-open={r.id}>{ss?.id === r.id ? '닫기' : '발송 현황'}</button>
+                    </div>)}
+                </td>
                 <td>{noticeCell(r)}</td>
                 <td className="dim">{r.reason}</td>
                 <td>{r.status === 'SCHEDULED' && <button className="btn-plain" disabled={a.busy === `sch:${r.id}`} onClick={() => cancel(r)} data-rate-schedule-cancel={r.id}>취소</button>}</td>
@@ -174,6 +198,31 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
             ))}
           </tbody>
         </table>
+      )}
+      {ss && (
+        <div className="card pad" data-rate-send-status={ss.id} style={{ marginTop: 8 }}>
+          <b>메일 · 문자 발송 현황</b> <span className="dim">— {ss.label} · 예약 안내 · 취소 · 다시 알림 합계 · 1분마다 정기 작업(notify_dispatch)이 보냄 · 조용한 시간에는 다음 날 아침</span>
+          <table className="tbl" style={{ marginTop: 6 }}>
+            <thead><tr><th>길</th><th>준비</th><th>보냄</th><th>대기</th><th>실패</th><th>아직</th><th>주소 없음</th></tr></thead>
+            <tbody>
+              <tr data-rate-send-row="INAPP"><td>내 알림</td><td>항상</td><td className="num-cell">{n(ss.d.inapp)}</td><td /><td /><td /><td /></tr>
+              {(['EMAIL', 'SMS'] as const).map((c) => {
+                const k = c === 'EMAIL' ? 'email' : 'sms';
+                const g = (x: string) => n((ss.d as unknown as Record<string, number>)[`${k}${x}`] ?? 0);
+                return (
+                  <tr key={c} data-rate-send-row={c} data-rate-send-ready={ss.d.channels[c] ? 'on' : 'off'}>
+                    <td>{c === 'EMAIL' ? '메일' : '문자(알림톡)'}</td>
+                    <td>{ss.d.channels[c] ? '켜짐' : <span className="badge badge-urgent">준비 안 됨</span>}</td>
+                    <td className="num-cell">{g('Sent')}</td><td className="num-cell">{g('Queued')}</td><td className="num-cell">{g('Failed')}</td>
+                    <td className="num-cell">{g('Waiting')}</td><td className="num-cell">{g('None')}</td>
+                  </tr>);
+              })}
+            </tbody>
+          </table>
+          {ss.d.fails.length > 0 && (
+            <p className="dim" data-rate-send-fails={ss.d.fails.length}>실패 사유: {ss.d.fails.map((f) => `${f.channel === 'EMAIL' ? '메일' : '문자'} ${f.reason || '—'} ${f.n}건`).join(' · ')}</p>)}
+          <p className="hint">「준비 안 됨」이면 대기열에 넣는 순간 실패로 남습니다(사흘 지나면 다시 보내지 않음) — 판매자는 「내 알림」 · 판매자센터 공지 · 30일 전 공지로 알게 됩니다. 메일 켜기: 운영 화면 메일 설정 · notify.email_verified / 문자: 알림톡 켜기(notify.alimtalk_ready).</p>
+        </div>
       )}
     </div>
   );

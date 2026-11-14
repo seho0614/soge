@@ -26,6 +26,7 @@ const UPLOADERS: Record<string, string[]> = {
   /* (w2) LISTING_IMAGE · REQUEST_IMAGE 는 위(w1)와 같은 용도 — 매물 사진 GET /listings/{id}/photos/{n} · 요청 사진 GET /market/requests/{id}/photo 도 같은 파일을 씁니다 */
   BROKER_DOC: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],          // v10.31 (w2) — 중개사 인증 제출 서류(신청자 · 운영만 열람)
   PARTNER_MEDIA: ['BIZ_OWNER', 'BIZ_STAFF', 'MEMBER'],       // v10.31 (W5 · D072) — 파트너 서비스 대표 이미지 · 회사 로고(올린 사람과 운영만 엶)
+  NOTICE_ATTACHMENT: ['SUPER'],                              // v10.295 (D217) — 공지 첨부(그림 · PDF · 3개) · 공지를 볼 수 있는 사람은 GET /notices/{id}/files/{n}
 };
 
 interface FileRow {

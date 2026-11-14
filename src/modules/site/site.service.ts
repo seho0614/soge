@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { IntegTestService } from './integ-test.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { NOTICE_MAX_FILES, noticeFilesSql } from './notice-files';
 import { RequestCtx } from '../../core/request-context';
 
 /**
@@ -125,6 +126,18 @@ export class SiteService {
    *  v10.292 (docs/415) 상태 걸러 보기(status) · 제목 찾기(q · 글자 그대로) · 50줄씩 넘기기(page · 줄마다 total = 걸러진 전체 수)
    *  v10.293 (docs/415) reads(펼쳐 본 회원 수 · notice_reads) · target(볼 수 있는 활동 중 회원 수 — 전체 공개 · 관리자만이면 null) */
   static readonly NOTICE_STATUSES = ['DRAFT', 'SCHEDULED', 'LIVE', 'ENDED', 'TAKEN_DOWN'] as const;
+  /** v10.295 (D217) — 붙일 수 있는 것: 올리기를 마친(READY) 공지 첨부(NOTICE_ATTACHMENT) · 3개까지 · 순서 그대로 */
+  private async checkNoticeFiles(ids: string[] | undefined): Promise<string[] | undefined> {
+    if (ids === undefined) return undefined;
+    const list = [...new Set(ids.map((x) => String(x).trim()).filter(Boolean))];
+    if (list.length > NOTICE_MAX_FILES) throw new PolicyViolation('TOO_MANY_FILES', `첨부는 ${NOTICE_MAX_FILES}개까지입니다.`);
+    if (!list.length) return [];
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rows = list.every((x) => UUID.test(x)) ? await this.db.query<{ id: string }>(
+      `SELECT id FROM files WHERE id = ANY($1::uuid[]) AND purpose = 'NOTICE_ATTACHMENT' AND status = 'READY'`, [list]) : [];
+    if (rows.length !== list.length) throw new PolicyViolation('FILE_INVALID', '올리기를 마친 공지 첨부 파일만 붙일 수 있습니다.');
+    return list;
+  }
   async adminNotices(o: { gwanCode?: string; status?: string; q?: string; page?: number } = {}) {
     const st = o.status && (SiteService.NOTICE_STATUSES as readonly string[]).includes(o.status) ? o.status : null;
     const q = (o.q ?? '').trim().slice(0, 100) || null;
@@ -142,7 +155,8 @@ export class SiteService {
                    ELSE 'LIVE' END AS status,
               EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = n.id OR r.cancel_notice_id = n.id) AS "rateNotice",
               (SELECT count(*)::int FROM notice_revisions v WHERE v.notice_id = n.id) AS revisions,
-              (SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads
+              (SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads,
+              ${noticeFilesSql('n', true)} AS files   -- v10.295 (D217) 첨부
          FROM notices n
         WHERE ($1::text IS NULL OR n.gwan_code = $1 OR n.gwan_code IS NULL)
           AND NOT EXISTS (SELECT 1 FROM ops_board_posts o WHERE o.notice_id = n.id)   -- v10.286 (D213) 운영자 게시판 사본은 목록에서 뺌(게시판 · 첫 화면 「관리자 공지」에서 봄 · 사본이 50줄을 채우지 않게)
@@ -201,18 +215,19 @@ export class SiteService {
 
   async createNotice(input: {
     gwanCode?: string; title: string; body: string;
-    isPinned?: boolean; publishedAt?: string; grades: string[]; endsAt?: string; notify?: boolean; notifyConfirm?: string;
+    isPinned?: boolean; publishedAt?: string; grades: string[]; endsAt?: string; notify?: boolean; notifyConfirm?: string; attachments?: string[];
   }) {
     const grades = [...new Set(input.grades ?? [])];
+    const files = (await this.checkNoticeFiles(input.attachments)) ?? [];   // v10.295
     await this.checkGrades(grades);
     this.checkNotify(input.notify, grades);
     await this.checkBulk(input.notify, grades, input.notifyConfirm);   // v10.285
     this.checkPeriod(input.publishedAt, input.endsAt);
     const [row] = await this.db.query<{ id: string }>(
-      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades, ends_at, notify)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::text[],$8,$9) RETURNING id, title, published_at AS "publishedAt", grades, ends_at AS "endsAt", notify`,
+      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades, ends_at, notify, attachments)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::text[],$8,$9,$10::uuid[]) RETURNING id, title, published_at AS "publishedAt", grades, ends_at AS "endsAt", notify, attachments`,
       [input.gwanCode ?? null, input.title, input.body,
-       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId(), grades, input.endsAt ?? null, input.notify ?? false]);
+       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId(), grades, input.endsAt ?? null, input.notify ?? false, files]);
     const notified = await this.notifyNow(row.id);   // v10.281 — 지금 게시면 바로 · 예약이면 정기 작업 notice_schedule
     return { ...row, notified };
   }
@@ -227,9 +242,9 @@ export class SiteService {
     const [n] = await this.db.query<{
       id: string; title: string; body: string; grades: string[]; is_pinned: boolean; gwan_code: string | null;
       published_at: string | null; ends_at: string | null; ended_reason: string | null; notify: boolean; live: boolean; scheduled: boolean; ended: boolean; rate: boolean;
-      notified: boolean;
+      notified: boolean; attachments: string[];
     }>(
-      `SELECT n.id, n.title, n.body, n.grades, n.is_pinned, n.gwan_code, n.published_at, n.ends_at, n.ended_reason, n.notify,
+      `SELECT n.id, n.title, n.body, n.grades, n.is_pinned, n.gwan_code, n.published_at, n.ends_at, n.ended_reason, n.notify, n.attachments,
               (n.notified_at IS NOT NULL OR coalesce(n.notified_count, 0) > 0) AS notified,
               (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())) AS live,
               (n.published_at IS NOT NULL AND n.published_at > now()) AS scheduled,
@@ -265,10 +280,10 @@ export class SiteService {
   }
 
   /** v10.280 (D211) — 공지 고치기(게시 중이면 사유 필수 · 그 전 내용은 기록) · 게시한 요율 공지는 잠금 */
-  async updateNotice(id: string, d: { title?: string; body?: string; grades?: string[]; isPinned?: boolean; endsAt?: string | null; notify?: boolean; reason?: string; notifyConfirm?: string }) {
+  async updateNotice(id: string, d: { title?: string; body?: string; grades?: string[]; isPinned?: boolean; endsAt?: string | null; notify?: boolean; reason?: string; notifyConfirm?: string; attachments?: string[] }) {
     const n = await this.lockedRow(id);
-    const touchesText = d.title !== undefined || d.body !== undefined || d.grades !== undefined || d.endsAt !== undefined;
-    if (d.title === undefined && d.body === undefined && d.grades === undefined && d.isPinned === undefined && d.endsAt === undefined && d.notify === undefined) {
+    const touchesText = d.title !== undefined || d.body !== undefined || d.grades !== undefined || d.endsAt !== undefined || d.attachments !== undefined;
+    if (d.title === undefined && d.body === undefined && d.grades === undefined && d.isPinned === undefined && d.endsAt === undefined && d.notify === undefined && d.attachments === undefined) {
       throw new PolicyViolation('NO_CHANGE', '바꿀 것이 없습니다.');
     }
     const published = !!n.published_at && !n.scheduled;
@@ -282,14 +297,15 @@ export class SiteService {
     if (d.notify !== undefined || d.grades) this.checkNotify(d.notify ?? n.notify, grades);
     if (!n.notified && (d.notify === true || (d.grades && n.notify))) await this.checkBulk(true, grades, d.notifyConfirm);   // v10.285
     if (d.endsAt) this.checkPeriod(n.published_at, d.endsAt);
-    await this.revision(id, 'EDIT', { title: n.title, body: n.body, grades: n.grades, isPinned: n.is_pinned, endsAt: n.ends_at, notify: n.notify }, reason);
+    const files = await this.checkNoticeFiles(d.attachments);   // v10.295 — 주면 통째로 바꿈(빈 목록 = 모두 뺌)
+    await this.revision(id, 'EDIT', { title: n.title, body: n.body, grades: n.grades, isPinned: n.is_pinned, endsAt: n.ends_at, notify: n.notify, attachments: n.attachments ?? [] }, reason);
     await this.db.query(
       `UPDATE notices SET title = coalesce($2, title), body = coalesce($3, body), grades = coalesce($4::text[], grades),
               is_pinned = coalesce($5, is_pinned), ends_at = CASE WHEN $6 THEN $7::timestamptz ELSE ends_at END,
-              notify = coalesce($8, notify), updated_at = now(), updated_by = $9
+              notify = coalesce($8, notify), updated_at = now(), updated_by = $9, attachments = coalesce($10::uuid[], attachments)
         WHERE id::text = $1`,
       [id, d.title?.trim() ?? null, d.body?.trim() ?? null, d.grades ? grades : null, d.isPinned ?? null,
-       d.endsAt !== undefined, d.endsAt ?? null, d.notify ?? null, RequestCtx.actorId()]);
+       d.endsAt !== undefined, d.endsAt ?? null, d.notify ?? null, RequestCtx.actorId(), files ?? null]);
     return { ok: true, note: '공지를 고쳤습니다(전 내용은 고친 기록에 남습니다).' };
   }
 

@@ -6,6 +6,7 @@ import { useAct, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
+import { fmtSize, openFile, uploadFile, TYPE_LABEL } from '../../lib/files';
 
 interface Section {
   code: string; name: string; sortOrder: number;
@@ -24,6 +25,45 @@ interface Notice {
   notify?: boolean; notifiedAt?: string | null; notifiedCount?: number | null; rateNotice?: boolean; revisions?: number; notifying?: boolean;
   /* v10.292 · 293 (docs/415) 걸러진 전체 수 · 펼쳐 본 회원 · 볼 수 있는 회원(전체 공개 · 관리자만이면 null) */
   total?: number; reads?: number; target?: number | null;
+  /* v10.295 (D217 · docs/416) 첨부(그림 · PDF · 3개까지) */
+  files?: NoticeFile[];
+}
+interface NoticeFile { id: string; n?: number; name: string; contentType: string; size: number }
+
+/** v10.295 (D217 · docs/416) 공지 첨부 고르기 — JPG · PNG · PDF · 10MB · 3개까지 · 올리면 바로 목록(저장은 등록 · 저장 단추) */
+function NoticeFilesPick({ files, onChange, onErr }: { files: NoticeFile[]; onChange: (f: NoticeFile[]) => void; onErr: (m: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const add = async (list: FileList | null) => {
+    if (!list || !list.length) return;
+    const room = 3 - files.length;
+    if (list.length > room) { onErr(`첨부는 3개까지입니다 — ${room}개 더 붙일 수 있습니다.`); return; }
+    setBusy(true);
+    const got: NoticeFile[] = [];
+    try {
+      for (const f of Array.from(list)) {
+        if (f.size > 10 * 1048576) throw new Error(`${f.name} — 10MB 를 넘습니다.`);
+        const u = await uploadFile(f, 'NOTICE_ATTACHMENT');
+        got.push({ id: u.fileId, name: u.name, contentType: u.contentType, size: u.size });
+      }
+    } catch (e) { onErr(String((e as Error)?.message ?? e)); }
+    finally { setBusy(false); if (got.length) onChange([...files, ...got]); }
+  };
+  return (
+    <div className="acts" data-notice-files-pick={files.length}>
+      <b>첨부</b>
+      {files.map((x, i) => (
+        <span key={x.id} className="pill" data-notice-file={x.id}>
+          {TYPE_LABEL[x.contentType] ?? x.contentType} · {x.name} · {fmtSize(x.size)}{' '}
+          <button type="button" className="btn-sm ghost" onClick={() => void openFile(x.id).catch((e) => onErr(String((e as Error)?.message ?? e)))}>열기</button>{' '}
+          <button type="button" className="btn-sm ghost" onClick={() => onChange(files.filter((_, j) => j !== i))} data-notice-file-del={x.id}>빼기</button>
+        </span>))}
+      {files.length < 3 && (
+        <label className="btn-sm">{busy ? '올리는 중…' : '파일 붙이기'}
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple hidden disabled={busy}
+            onChange={(e) => { void add(e.target.files); e.target.value = ''; }} data-notice-file-input /></label>)}
+      <span className="dim">그림(JPG · PNG) · PDF · 10MB · 3개까지 — 그림은 공지 아래에 보이고 PDF 는 내려받기 링크로 나옵니다</span>
+    </div>
+  );
 }
 interface NoticeRev { id: string; action: 'EDIT' | 'UNPUBLISH' | 'REPUBLISH'; before: Record<string, unknown>; reason: string | null; at: string; by: string | null }
 const NT_STATUS: Record<string, [string, string]> = {
@@ -420,8 +460,9 @@ function Content() {
   };
   const [edit, setEdit] = useState<Record<string, string>>({});
   const [f, setF] = useState({ title: '', body: '', isPinned: false, mode: 'now' as 'now' | 'schedule' | 'draft', at: '', end: '', notify: false });
+  const [nfiles, setNfiles] = useState<NoticeFile[]>([]);   // v10.295 등록 첨부
   const [pick, setPick] = useState<string[]>([]);
-  const [ed, setEd] = useState<null | { id: string; title: string; body: string; grades: string[]; isPinned: boolean; end: string; notify: boolean; reason: string; locked: boolean; published: boolean }>(null);
+  const [ed, setEd] = useState<null | { id: string; title: string; body: string; grades: string[]; isPinned: boolean; end: string; notify: boolean; reason: string; locked: boolean; published: boolean; files: NoticeFile[] }>(null);
   const [revOf, setRevOf] = useState<string | null>(null);
   const [revs, setRevs] = useState<NoticeRev[]>([]);
   const a = useAct();
@@ -456,7 +497,7 @@ function Content() {
     id: nt.id, title: nt.title, body: nt.body, grades: nt.grades ?? [], isPinned: nt.isPinned,
     end: nt.endsAt ? new Date(nt.endsAt).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) : '', notify: !!nt.notify, reason: '',
     locked: !!nt.rateNotice && (nt.status === 'LIVE' || nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN'),
-    published: nt.status !== 'DRAFT' && nt.status !== 'SCHEDULED',
+    published: nt.status !== 'DRAFT' && nt.status !== 'SCHEDULED', files: nt.files ?? [],
   });
   const saveEdit = async () => {
     if (!ed) return;
@@ -466,7 +507,7 @@ function Content() {
     }
     const body: Record<string, unknown> = ed.locked ? { isPinned: ed.isPinned } : {
       title: ed.title.trim(), body: ed.body.trim(), grades: ed.grades, isPinned: ed.isPinned,
-      endsAt: ed.end ? kstEnd(ed.end) : null, notify: ed.notify,
+      endsAt: ed.end ? kstEnd(ed.end) : null, notify: ed.notify, attachments: ed.files.map((x) => x.id),
     };
     if (ed.reason.trim()) body.reason = ed.reason.trim();
     if (notifyConfirm) body.notifyConfirm = notifyConfirm;
@@ -512,8 +553,9 @@ function Content() {
       body: JSON.stringify({
         title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned, grades: pick, publishedAt,
         endsAt: f.end ? kstEnd(f.end) : undefined, notify, ...(notifyConfirm ? { notifyConfirm } : {}),
+        ...(nfiles.length ? { attachments: nfiles.map((x) => x.id) } : {}),
       }),
-    }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: false }); setPick([]); notices.reload(); grades.reload(); },
+    }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: false }); setPick([]); setNfiles([]); notices.reload(); grades.reload(); },
     f.mode === 'now' ? '공지를 게시했습니다.' : f.mode === 'schedule' ? '예약했습니다 — 그 시각에 저절로 게시됩니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
   };
 
@@ -574,7 +616,8 @@ function Content() {
               const lockedLive = !!nt.rateNotice && nt.status === 'LIVE';
               return (
               <tr key={nt.id} data-notice-row={nt.id} data-notice-status={nt.status}>
-                <td>{nt.title}{nt.rateNotice ? <span className="dim"> · 수수료율 공지</span> : null}</td>
+                <td>{nt.title}{nt.rateNotice ? <span className="dim"> · 수수료율 공지</span> : null}
+                  {(nt.files ?? []).length > 0 && <span className="dim" data-notice-files={(nt.files ?? []).length} title={(nt.files ?? []).map((x) => x.name).join('\n')}> · 첨부 {(nt.files ?? []).length}</span>}</td>
                 <td className="muted">{nt.gwanCode ?? '전 관'}</td>
                 <td data-notice-grades={(nt.grades ?? []).join(',')}>{(nt.grades ?? []).map(gname).join(' · ') || '—'}</td>
                 <td>{nt.isPinned ? '고정' : '—'}</td>
@@ -615,7 +658,7 @@ function Content() {
               <tbody>{revs.map((r) => (
                 <tr key={r.id}><td className="dim">{ymdhm(r.at)}</td><td>{REV_ACTION[r.action] ?? r.action}</td><td>{r.by ?? '—'}</td><td>{r.reason ?? '—'}</td>
                   <td className="dim" style={{ maxWidth: 420, whiteSpace: 'pre-wrap' }}>{
-                    r.action === 'EDIT' ? `제목: ${String(r.before.title ?? '')}\n등급: ${((r.before.grades as string[] | undefined) ?? []).map(gname).join(' · ')}\n본문: ${String(r.before.body ?? '').slice(0, 200)}`
+                    r.action === 'EDIT' ? `제목: ${String(r.before.title ?? '')}\n등급: ${((r.before.grades as string[] | undefined) ?? []).map(gname).join(' · ')}${Array.isArray(r.before.attachments) ? `\n첨부: ${(r.before.attachments as string[]).length}개` : ''}\n본문: ${String(r.before.body ?? '').slice(0, 200)}`
                       : `게시 ${ymd(r.before.publishedAt as string | null)}${r.before.endsAt ? ` ~ ${ymd(r.before.endsAt as string)}` : ''}`}</td></tr>))}
               </tbody></table>)}
         </div>
@@ -624,7 +667,7 @@ function Content() {
       {ed && (
         <div className="card pad" data-notice-edit-form={ed.id}>
           <b>공지 고치기</b>
-          {ed.locked ? <p className="card warn" data-notice-locked>게시한 수수료율 변경 공지는 제목 · 본문 · 등급 · 기간을 고치거나 내릴 수 없습니다(입점 약관 제17조 4항 공지 기록). 「상단 고정」만 바꿀 수 있습니다.</p> : (
+          {ed.locked ? <p className="card warn" data-notice-locked>게시한 수수료율 변경 공지는 제목 · 본문 · 등급 · 기간 · 첨부를 고치거나 내릴 수 없습니다(입점 약관 제17조 4항 공지 기록). 「상단 고정」만 바꿀 수 있습니다.</p> : (
             <>
               <div className="form-grid">
                 <label><span>제목</span><input value={ed.title} onChange={(e) => setEd({ ...ed, title: e.target.value })} data-edit-title /></label>
@@ -637,6 +680,7 @@ function Content() {
                     onChange={() => setEd({ ...ed, grades: ed.grades.includes(g.code) ? ed.grades.filter((x) => x !== g.code) : [...ed.grades, g.code] })} /> {g.name}</label>))}
               </div>
               {!ed.published && <div className="acts"><label><input type="checkbox" checked={ed.notify} onChange={(e) => setEd({ ...ed, notify: e.target.checked })} /> 게시되면 알림 보냄</label></div>}
+              <NoticeFilesPick files={ed.files} onChange={(x) => setEd({ ...ed, files: x })} onErr={a.setErr} />
             </>)}
           <div className="acts">
             <label><input type="checkbox" checked={ed.isPinned} onChange={(e) => setEd({ ...ed, isPinned: e.target.checked })} /> 상단 고정</label>
@@ -660,6 +704,7 @@ function Content() {
         <div className="acts">
           <label><input type="checkbox" checked={f.isPinned} onChange={(e) => setF({ ...f, isPinned: e.target.checked })} /> 상단 고정</label>
         </div>
+        <NoticeFilesPick files={nfiles} onChange={setNfiles} onErr={a.setErr} />
         {/* v10.282 (D211) 지금 게시 · 예약 · 초안 · 끝 날짜 */}
         <div className="acts" data-notice-mode={f.mode}>
           <b>게시</b>
