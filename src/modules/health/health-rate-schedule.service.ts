@@ -138,10 +138,40 @@ export class HealthRateScheduleService {
               (SELECT count(*)::int FROM fn_hlt_rate_sched_sellers(r.scope, r.target)) AS "affectedNow",
               r.notice_id AS "noticeId", n.title AS "noticeTitle", n.body AS "noticeBody", n.published_at AS "noticePublishedAt",
               r.cancel_notice_id AS "cancelNoticeId", c.title AS "cancelNoticeTitle", c.body AS "cancelNoticeBody", c.published_at AS "cancelNoticePublishedAt",
-              ((now() AT TIME ZONE 'Asia/Seoul')::date + ${NOTICE_DAYS} > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS "noticeLate"
+              ((now() AT TIME ZONE 'Asia/Seoul')::date + ${NOTICE_DAYS} > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS "noticeLate",
+              /* v10.283 (D212) 읽음 n / 대상 m · 다시 알림 */
+              (SELECT count(*)::int FROM hlt_sellers s JOIN notice_reads nr ON nr.account_id = s.account_id AND nr.notice_id = r.notice_id
+                WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers(r.scope, r.target))) AS "noticeReads",
+              (SELECT max(m.at) FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "remindedAt",
+              (SELECT count(*)::int FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "reminds"
          FROM hlt_rate_schedules r LEFT JOIN accounts a ON a.id = r.created_by
          LEFT JOIN notices n ON n.id = r.notice_id LEFT JOIN notices c ON c.id = r.cancel_notice_id
         ORDER BY (r.status = 'SCHEDULED') DESC, r.effective_at DESC LIMIT 50`);
+  }
+
+  /** v10.283 (D212 · docs/411) — 예약 안내 공지를 안 읽은 영향 판매자에게만 다시 알림(24시간에 한 번 · 기록) */
+  async remind(id: string) {
+    return this.db.transaction(async () => {
+      const [r] = await this.db.query<{ scope: string; target: string; ok: boolean; notice: string | null; title: string | null; d: string; soon: boolean }>(
+        `SELECT r.scope, r.target, (r.status = 'SCHEDULED' AND r.effective_at > now() AND n.published_at IS NOT NULL AND n.published_at <= now()) AS ok,
+                r.notice_id AS notice, n.title, to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
+                EXISTS (SELECT 1 FROM hlt_rate_reminds m WHERE m.schedule_id = r.id AND m.at > now() - interval '24 hours') AS soon
+           FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id WHERE r.id::text = $1 FOR UPDATE OF r`, [id]);
+      if (!r) throw new NotFound('요율 예약을 찾을 수 없습니다.');
+      if (!r.ok) throw new StateConflict('REMIND_NOT_READY', '예약 안내 공지를 게시한 예정 예약만 다시 알릴 수 있습니다.');
+      if (r.soon) throw new StateConflict('REMIND_TOO_SOON', '다시 알림은 24시간에 한 번만 보낼 수 있습니다.');
+      const rows = await this.db.query<{ id: string }>(
+        `INSERT INTO notifications (account_id, event_code, title, body, link_url)
+         SELECT s.account_id, 'SELLER_RATE_SCHEDULED', $3, $4, '/health/seller/center' FROM hlt_sellers s
+          WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers($1, $2)) AND s.account_id IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM notice_reads nr WHERE nr.notice_id = $5 AND nr.account_id = s.account_id)
+         RETURNING id`,
+        [r.scope, r.target, '[다시 알림] 판매 수수료율 변경 예정 안내',
+         `${r.d} 부터 판매 수수료율이 바뀝니다 — 판매자센터 「소개몰 공지」의 「${r.title ?? ''}」를 확인해 주십시오(입점 약관 제17조 4항).`, r.notice]);
+      if (!rows.length) throw new StateConflict('ALL_READ', '영향받는 판매자가 모두 공지를 읽었습니다 — 다시 알릴 곳이 없습니다.');
+      await this.db.query(`INSERT INTO hlt_rate_reminds (schedule_id, sent, by_account) VALUES ($1, $2, $3)`, [id, rows.length, RequestCtx.actorId()]);
+      return { ok: true, sent: rows.length, note: `안 읽은 판매자 ${rows.length}곳에 다시 알렸습니다.` };
+    });
   }
 
   /** 운영 — 시행 전 예약 취소(사유 · 판매자에게 알림) */

@@ -24,6 +24,8 @@ interface RateSchedule {
   noticeId: string | null; noticeTitle: string | null; noticeBody: string | null; noticePublishedAt: string | null;
   cancelNoticeId: string | null; cancelNoticeTitle: string | null; cancelNoticeBody: string | null; cancelNoticePublishedAt: string | null;
   noticeLate: boolean;
+  /** v10.283 (D212) 읽음 n / 대상 m · 다시 알림 */
+  noticeReads?: number; remindedAt?: string | null; reminds?: number;
 }
 const SCOPE_NAME: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
 const pct = (v: string | number | null) => (v === null ? '비움(다음 순서)' : `${Number(v)}%`);
@@ -83,13 +85,32 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
     void a.run(`ntc:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/notice`, { method: 'POST' }),
       () => q.reload(), (x) => x.note);
   };
+  /* v10.283 (D212) — 공지를 판매자센터에서 펼치지 않은 영향 판매자에게만 다시 알림(24시간에 한 번) */
+  const remind = (r: RateSchedule, unread: number) => {
+    if (!confirm(`「${r.noticeTitle}」 공지를 아직 펼쳐 보지 않은 판매자 ${unread}곳에 다시 알립니다(24시간에 한 번 · 기록이 남음). 보낼까요?`)) return;
+    void a.run(`rmd:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/remind`, { method: 'POST' }), () => q.reload(), (x) => x.note);
+  };
   const noticeCell = (r: RateSchedule) => {
     if (r.status === 'CANCELED' && r.cancelNoticeId) {
       return r.cancelNoticePublishedAt ? <span className="dim">취소 안내 게시 {ymd(r.cancelNoticePublishedAt)}</span>
         : <button className="btn-plain" disabled={a.busy === `ntc:${r.id}`} onClick={() => publish(r, true)} data-rate-notice-publish={r.id}>취소 안내 게시</button>;
     }
     if (!r.noticeId) return <span className="dim">—</span>;
-    if (r.noticePublishedAt) return <span data-rate-notice="published">게시 {ymd(r.noticePublishedAt)}</span>;
+    if (r.noticePublishedAt) {
+      const unread = Math.max(0, (r.affectedNow ?? 0) - (r.noticeReads ?? 0));
+      const soon = !!r.remindedAt && Date.now() - new Date(r.remindedAt).getTime() < 24 * 3600 * 1000;
+      return (
+        <>
+          <span data-rate-notice="published">게시 {ymd(r.noticePublishedAt)}</span>{' '}
+          <span className="dim" data-rate-notice-reads={`${r.noticeReads ?? 0}/${r.affectedNow ?? 0}`}>· 읽음 {r.noticeReads ?? 0} / 대상 {r.affectedNow ?? 0}</span>
+          {r.status === 'SCHEDULED' && unread > 0 && (
+            soon ? <span className="dim"> · 다시 알림 {ymd(r.remindedAt)}(24시간 뒤 다시)</span>
+              : <> <button className="btn-plain" disabled={a.busy === `rmd:${r.id}`} onClick={() => remind(r, unread)} data-rate-notice-remind={r.id}>안 읽은 {unread}곳 다시 알림</button></>
+          )}
+          {(r.reminds ?? 0) > 0 && !soon && <span className="dim"> · 다시 알림 {r.reminds}번</span>}
+        </>
+      );
+    }
     if (r.status !== 'SCHEDULED') return <span className="dim">게시 안 함</span>;
     return (
       <>

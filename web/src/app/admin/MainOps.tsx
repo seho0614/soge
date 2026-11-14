@@ -21,7 +21,7 @@ interface Notice {
   isPinned: boolean; publishedAt: string | null; grades?: string[];
   /* v10.280 ~ 282 (D211) */
   endsAt?: string | null; endedReason?: string | null; status?: 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED' | 'TAKEN_DOWN';
-  notify?: boolean; notifiedAt?: string | null; notifiedCount?: number | null; rateNotice?: boolean; revisions?: number;
+  notify?: boolean; notifiedAt?: string | null; notifiedCount?: number | null; rateNotice?: boolean; revisions?: number; notifying?: boolean;
 }
 interface NoticeRev { id: string; action: 'EDIT' | 'UNPUBLISH' | 'REPUBLISH'; before: Record<string, unknown>; reason: string | null; at: string; by: string | null }
 const NT_STATUS: Record<string, [string, string]> = {
@@ -401,6 +401,15 @@ function Content() {
   const copy = useApi<Copy[]>('/admin/main/copy');
   const notices = useApi<Notice[]>('/admin/notices');
   const grades = useApi<NoticeGrade[]>('/admin/notice-grades');   // v10.279 (D210)
+  const sets = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');   // v10.285 (D212) 공지 알림 기준
+  const [lim, setLim] = useState<Record<string, string>>({});
+  const setVal = (k: string) => lim[k] ?? (sets.data ?? []).find((x) => x.key === k)?.value ?? '';
+  const saveLim = (k: string) => {
+    const v = setVal(k).trim();
+    if (!/^[1-9]\d{0,6}$/.test(v)) { a.setErr('1 이상의 정수를 적어 주십시오.'); return; }
+    void a.run(`lim:${k}`, () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: k, value: v }) }),
+      () => { setLim((p) => { const nx = { ...p }; delete nx[k]; return nx; }); sets.reload(); }, '공지 알림 기준을 바꿨습니다.');
+  };
   const [edit, setEdit] = useState<Record<string, string>>({});
   const [f, setF] = useState({ title: '', body: '', isPinned: false, mode: 'now' as 'now' | 'schedule' | 'draft', at: '', end: '', notify: false });
   const [pick, setPick] = useState<string[]>([]);
@@ -410,10 +419,22 @@ function Content() {
   const a = useAct();
   const gname = (c: string) => (grades.data ?? []).find((g) => g.code === c)?.name ?? c;
   const togglePick = (c: string) => setPick((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
-  const publishDraft = (nt: Notice) => {
+  /* v10.285 (D212) — 받는 사람이 기준 이상이면 확인 문구 「모두에게 알림」(취소하면 null) */
+  const askBulk = async (gs: string[]): Promise<{ ok: boolean; confirm?: string; note?: string }> => {
+    const au = await api<{ count: number; note: string; needsConfirm?: boolean; confirmText?: string; confirmMin?: number }>(`/admin/notices/audience?grades=${encodeURIComponent(gs.join(','))}`);
+    if (!au.needsConfirm) return { ok: true, note: au.note };
+    const typed = prompt(`${au.note}\n받는 사람이 ${au.confirmMin}명 이상입니다 — 보내려면 「${au.confirmText}」을(를) 그대로 입력하십시오.`);
+    if (typed === null) return { ok: false };
+    return { ok: true, confirm: typed.trim(), note: au.note };
+  };
+  const publishDraft = async (nt: Notice) => {
     const again = nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN';
+    let notifyConfirm: string | undefined;
+    if (!again && nt.notify && !nt.notifiedAt && !nt.notifying) {
+      try { const b = await askBulk(nt.grades ?? []); if (!b.ok) return; notifyConfirm = b.confirm; } catch (e) { a.setErr(String((e as Error).message ?? e)); return; }
+    }
     if (!confirm(`「${nt.title}」 공지를 ${again ? '다시 ' : '지금 '}게시합니다 — 볼 수 있는 등급: ${(nt.grades ?? []).map(gname).join(' · ')}${nt.notify && !nt.notifiedAt ? '\n그 등급 회원에게 알림이 갑니다.' : ''}\n게시할까요?`)) return;
-    void a.run(`pub:${nt.id}`, () => api<{ note: string }>(`/admin/notices/${nt.id}/publish`, { method: 'POST' }), notices.reload, (r) => r.note);
+    void a.run(`pub:${nt.id}`, () => api<{ note: string }>(`/admin/notices/${nt.id}/publish`, { method: 'POST', body: JSON.stringify(notifyConfirm ? { notifyConfirm } : {}) }), notices.reload, (r) => r.note);
   };
   /* v10.280 (D211) 내리기 · 고치기 · 고친 기록 */
   const takeDown = (nt: Notice) => {
@@ -429,13 +450,18 @@ function Content() {
     locked: !!nt.rateNotice && (nt.status === 'LIVE' || nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN'),
     published: nt.status !== 'DRAFT' && nt.status !== 'SCHEDULED',
   });
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!ed) return;
+    let notifyConfirm: string | undefined;   // v10.285 — 알림을 켜면 받는 사람 수 확인
+    if (!ed.locked && !ed.published && ed.notify) {
+      try { const b = await askBulk(ed.grades); if (!b.ok) return; notifyConfirm = b.confirm; } catch (e) { a.setErr(String((e as Error).message ?? e)); return; }
+    }
     const body: Record<string, unknown> = ed.locked ? { isPinned: ed.isPinned } : {
       title: ed.title.trim(), body: ed.body.trim(), grades: ed.grades, isPinned: ed.isPinned,
       endsAt: ed.end ? kstEnd(ed.end) : null, notify: ed.notify,
     };
     if (ed.reason.trim()) body.reason = ed.reason.trim();
+    if (notifyConfirm) body.notifyConfirm = notifyConfirm;
     void a.run(`edit:${ed.id}`, () => api<{ note: string }>(`/admin/notices/${ed.id}`, { method: 'PATCH', body: JSON.stringify(body) }),
       () => { const id = ed.id; setEd(null); notices.reload(); if (revOf === id) void loadRevs(id); }, (r) => r.note);
   };
@@ -464,17 +490,20 @@ function Content() {
     if (f.mode === 'schedule' && !f.at) { a.setErr('예약 게시 날짜 · 시각을 정해 주십시오.'); return; }
     const publishedAt = f.mode === 'now' ? new Date().toISOString() : f.mode === 'schedule' ? kstAt(f.at) : undefined;
     const notify = f.notify && !noAudience;
-    if (notify) {   // v10.281 — 보내기 전에 받는 사람 수
+    let notifyConfirm: string | undefined;
+    if (notify) {   // v10.281 — 보내기 전에 받는 사람 수 · v10.285 많으면 확인 문구
       try {
-        const au = await api<{ count: number; note: string }>(`/admin/notices/audience?grades=${encodeURIComponent(pick.join(','))}`);
-        if (!confirm(`${au.note}\n${f.mode === 'now' ? '등록하면 바로' : f.mode === 'schedule' ? '예약 시각이 되면' : '게시할 때'} 알림이 갑니다. 등록할까요?`)) return;
+        const b = await askBulk(pick);
+        if (!b.ok) return;
+        notifyConfirm = b.confirm;
+        if (!notifyConfirm && !confirm(`${b.note}\n${f.mode === 'now' ? '등록하면 바로' : f.mode === 'schedule' ? '예약 시각이 되면' : '게시할 때'} 알림이 갑니다. 등록할까요?`)) return;
       } catch (e) { a.setErr(String((e as Error).message ?? e)); return; }
     }
     void a.run('notice', () => api('/admin/notices', {
       method: 'POST',
       body: JSON.stringify({
         title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned, grades: pick, publishedAt,
-        endsAt: f.end ? kstEnd(f.end) : undefined, notify,
+        endsAt: f.end ? kstEnd(f.end) : undefined, notify, ...(notifyConfirm ? { notifyConfirm } : {}),
       }),
     }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: false }); setPick([]); notices.reload(); grades.reload(); },
     f.mode === 'now' ? '공지를 게시했습니다.' : f.mode === 'schedule' ? '예약했습니다 — 그 시각에 저절로 게시됩니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
@@ -536,12 +565,12 @@ function Content() {
                   </span>
                   {nt.status === 'TAKEN_DOWN' && nt.endedReason ? <div className="dim">사유: {nt.endedReason}</div> : null}
                 </td>
-                <td className="dim" data-notice-notify={nt.notify ? (nt.notifiedAt ? 'sent' : 'wait') : 'off'}>
-                  {nt.notify ? (nt.notifiedAt ? `보냄 ${nt.notifiedCount ?? 0}명` : '게시되면 보냄') : '—'}
+                <td className="dim" data-notice-notify={nt.notify ? (nt.notifiedAt ? 'sent' : nt.notifying ? 'sending' : 'wait') : 'off'}>
+                  {nt.notify ? (nt.notifiedAt ? `보냄 ${nt.notifiedCount ?? 0}명` : nt.notifying ? `보내는 중 ${nt.notifiedCount ?? 0}명(10분마다 이어 보냄)` : '게시되면 보냄') : '—'}
                 </td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   {nt.status !== 'LIVE' && (
-                    <button className="btn-sm" disabled={a.busy === `pub:${nt.id}`} onClick={() => publishDraft(nt)} data-notice-publish={nt.id}>
+                    <button className="btn-sm" disabled={a.busy === `pub:${nt.id}`} onClick={() => void publishDraft(nt)} data-notice-publish={nt.id}>
                       {nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN' ? '다시 게시' : '게시'}</button>)}{' '}
                   <button className="btn-sm" onClick={() => startEdit(nt)} data-notice-edit={nt.id}>고치기</button>{' '}
                   {(nt.status === 'LIVE' || nt.status === 'SCHEDULED') && !lockedLive && (
@@ -590,7 +619,7 @@ function Content() {
             {ed.published && <label style={{ flex: 1 }}><span>고치는 사유(게시한 공지는 필수)</span> <input value={ed.reason} onChange={(e) => setEd({ ...ed, reason: e.target.value })} data-edit-reason /></label>}
           </div>
           <div className="acts">
-            <button className="btn-ok" disabled={a.busy === `edit:${ed.id}`} onClick={saveEdit} data-notice-save>저장</button>
+            <button className="btn-ok" disabled={a.busy === `edit:${ed.id}`} onClick={() => void saveEdit()} data-notice-save>저장</button>
             <button className="btn-sm" onClick={() => setEd(null)}>닫기</button>
           </div>
         </div>
@@ -633,6 +662,19 @@ function Content() {
           <button className="btn-ok" disabled={a.busy === 'notice'} onClick={() => void addNotice()} data-notice-submit>공지 등록</button>
         </div>
         <p className="hint">「예약」은 정한 시각(한국)에 저절로 게시되고, 「끝 날짜」가 지나면 저절로 내려갑니다. 「초안」은 이용자에게 보이지 않습니다(위 목록 「게시」로 나중에 게시). 알림은 「내 알림」으로 가며 받는 분이 끌 수 있습니다. 고른 등급 중 하나라도 맞는 사람만 봅니다 — 「관리자」만 고르면 운영 화면 첫 화면 「관리자 공지」에만 보이고 사용자 웹에는 나오지 않습니다.</p>
+      </div>
+
+      {/* v10.285 (D212) 공지 알림 기준 — 확인 문구 · 한 번에 보내는 수 */}
+      <h3 className="ad-s2">공지 알림 기준</h3>
+      <div className="card pad" data-notice-notify-limits>
+        <div className="form-grid">
+          {([['notice.notify_confirm_min', '확인 문구를 받는 기준(명 이상)'], ['notice.notify_batch', '한 번에 보내는 수(명) — 나머지는 10분마다']] as const).map(([k, label]) => (
+            <label key={k}><span>{label}</span>
+              <input inputMode="numeric" value={setVal(k)} onChange={(e) => setLim((p) => ({ ...p, [k]: e.target.value }))} data-notice-limit={k} />
+              <button className="btn-sm" disabled={a.busy === `lim:${k}` || lim[k] === undefined} onClick={() => saveLim(k)}>저장</button>
+            </label>))}
+        </div>
+        <p className="hint">받는 사람이 기준 이상이면 등록 · 게시 때 「모두에게 알림」을 입력해야 보냅니다. 다 보내면 운영 알림 「공지 알림 n명 보냄」(INFO)이 남습니다.</p>
       </div>
 
       {/* v10.279 (D210) 공지 등급 관리 — 코드 · 판단 규칙은 고정 */}

@@ -128,6 +128,7 @@ export class SiteService {
               n.is_pinned AS "isPinned", n.published_at AS "publishedAt", n.grades,
               n.ends_at AS "endsAt", n.ended_reason AS "endedReason", n.notify,
               n.notified_at AS "notifiedAt", n.notified_count AS "notifiedCount", n.updated_at AS "updatedAt",
+              (n.notify AND n.notified_at IS NULL AND coalesce(n.notified_count, 0) > 0) AS "notifying",
               CASE WHEN n.published_at IS NULL THEN 'DRAFT'
                    WHEN n.published_at > now() THEN 'SCHEDULED'
                    WHEN n.ends_at IS NOT NULL AND n.ends_at <= now() THEN (CASE WHEN n.ended_reason IS NULL THEN 'ENDED' ELSE 'TAKEN_DOWN' END)
@@ -157,6 +158,18 @@ export class SiteService {
     }
   }
 
+  /** v10.285 (D212) — 받는 사람이 notice.notify_confirm_min 이상이면 확인 문구 「모두에게 알림」 */
+  static readonly NOTIFY_CONFIRM = '모두에게 알림';
+  private async checkBulk(notify: boolean | undefined, grades: string[], confirm: string | undefined) {
+    if (!notify) return;
+    const [r] = await this.db.query<{ n: number; min: number }>(
+      `SELECT (SELECT count(*)::int FROM fn_notice_audience($1::text[])) AS n,
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'notice.notify_confirm_min'), 1000) AS min`, [grades]);
+    if (Number(r.n) >= Number(r.min) && (confirm ?? '').trim() !== SiteService.NOTIFY_CONFIRM) {
+      throw new PolicyViolation('NOTIFY_CONFIRM_REQUIRED', `알림을 받을 회원이 ${r.n}명입니다(기준 ${r.min}명) — 확인 문구 「${SiteService.NOTIFY_CONFIRM}」을 입력해야 보냅니다.`);
+    }
+  }
+
   /** v10.282 (D211) — 끝 시각은 게시 시각(없으면 지금) 뒤 */
   private checkPeriod(publishedAt: string | null | undefined, endsAt: string | null | undefined) {
     if (!endsAt) return;
@@ -166,11 +179,12 @@ export class SiteService {
 
   async createNotice(input: {
     gwanCode?: string; title: string; body: string;
-    isPinned?: boolean; publishedAt?: string; grades: string[]; endsAt?: string; notify?: boolean;
+    isPinned?: boolean; publishedAt?: string; grades: string[]; endsAt?: string; notify?: boolean; notifyConfirm?: string;
   }) {
     const grades = [...new Set(input.grades ?? [])];
     await this.checkGrades(grades);
     this.checkNotify(input.notify, grades);
+    await this.checkBulk(input.notify, grades, input.notifyConfirm);   // v10.285
     this.checkPeriod(input.publishedAt, input.endsAt);
     const [row] = await this.db.query<{ id: string }>(
       `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades, ends_at, notify)
@@ -191,8 +205,10 @@ export class SiteService {
     const [n] = await this.db.query<{
       id: string; title: string; body: string; grades: string[]; is_pinned: boolean; gwan_code: string | null;
       published_at: string | null; ends_at: string | null; ended_reason: string | null; notify: boolean; live: boolean; scheduled: boolean; ended: boolean; rate: boolean;
+      notified: boolean;
     }>(
       `SELECT n.id, n.title, n.body, n.grades, n.is_pinned, n.gwan_code, n.published_at, n.ends_at, n.ended_reason, n.notify,
+              (n.notified_at IS NOT NULL OR coalesce(n.notified_count, 0) > 0) AS notified,
               (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())) AS live,
               (n.published_at IS NOT NULL AND n.published_at > now()) AS scheduled,
               (n.published_at IS NOT NULL AND n.published_at <= now() AND n.ends_at IS NOT NULL AND n.ends_at <= now()) AS ended,
@@ -209,9 +225,10 @@ export class SiteService {
   }
 
   /** v10.279 (D210) 초안 · 예약 공지를 지금 게시 · v10.280 (D211) 내린 · 끝난 공지는 「다시 게시」(끝 시각을 비움 · 기록) */
-  async publishNotice(id: string) {
+  async publishNotice(id: string, notifyConfirm?: string) {
     const n = await this.lockedRow(id);
     if (n.live) throw new StateConflict('NOTICE_PUBLISHED', '이미 게시 중인 공지입니다.');
+    if (!n.ended) await this.checkBulk(n.notify && !n.notified, n.grades, notifyConfirm);   // v10.285 — 게시하면서 처음 보내는 공지
     if (n.ended) {
       await this.revision(id, 'REPUBLISH', { publishedAt: n.published_at, endsAt: n.ends_at, endedReason: n.ended_reason }, null);
       await this.db.query(
@@ -226,7 +243,7 @@ export class SiteService {
   }
 
   /** v10.280 (D211) — 공지 고치기(게시 중이면 사유 필수 · 그 전 내용은 기록) · 게시한 요율 공지는 잠금 */
-  async updateNotice(id: string, d: { title?: string; body?: string; grades?: string[]; isPinned?: boolean; endsAt?: string | null; notify?: boolean; reason?: string }) {
+  async updateNotice(id: string, d: { title?: string; body?: string; grades?: string[]; isPinned?: boolean; endsAt?: string | null; notify?: boolean; reason?: string; notifyConfirm?: string }) {
     const n = await this.lockedRow(id);
     const touchesText = d.title !== undefined || d.body !== undefined || d.grades !== undefined || d.endsAt !== undefined;
     if (d.title === undefined && d.body === undefined && d.grades === undefined && d.isPinned === undefined && d.endsAt === undefined && d.notify === undefined) {
@@ -241,6 +258,7 @@ export class SiteService {
     const grades = d.grades ? [...new Set(d.grades)] : n.grades;
     if (d.grades) await this.checkGrades(grades, n.grades);
     if (d.notify !== undefined || d.grades) this.checkNotify(d.notify ?? n.notify, grades);
+    if (!n.notified && (d.notify === true || (d.grades && n.notify))) await this.checkBulk(true, grades, d.notifyConfirm);   // v10.285
     if (d.endsAt) this.checkPeriod(n.published_at, d.endsAt);
     await this.revision(id, 'EDIT', { title: n.title, body: n.body, grades: n.grades, isPinned: n.is_pinned, endsAt: n.ends_at, notify: n.notify }, reason);
     await this.db.query(
@@ -285,7 +303,8 @@ export class SiteService {
     const grades = [...new Set(gradesIn)];
     const [r] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM fn_notice_audience($1::text[])`, [grades]);
     const none = grades.includes('PUBLIC') || !grades.some((g) => g !== 'STAFF');
-    return { count: Number(r?.n ?? 0), sendable: !none,
+    const [m] = await this.db.query<{ min: number }>(`SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'notice.notify_confirm_min'), 1000) AS min`);
+    return { count: Number(r?.n ?? 0), sendable: !none, confirmMin: Number(m.min), needsConfirm: !none && Number(r?.n ?? 0) >= Number(m.min), confirmText: SiteService.NOTIFY_CONFIRM,
              note: none ? '「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다.' : `알림을 받을 회원 ${Number(r?.n ?? 0)}명(활동 중 · 이 알림을 끄지 않은 분)` };
   }
 

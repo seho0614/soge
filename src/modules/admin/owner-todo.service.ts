@@ -30,7 +30,12 @@ export function ownerTodoWeeklyText(left: TodoRow[], done: number, total: number
   ].join('\n');
 }
 const HOLE = /〔[^〕]*〕/g;
-export const MANUAL_KEYS = ['plans', 'legal', 'ebs'] as const;
+/** v10.284 — 약관 판 「1.1」 같은 글자를 숫자로 견줌 */
+const verAtLeast = (v: string | null | undefined, ma: number, mi: number) => {
+  const [a, b] = String(v ?? '').split('.').map((x) => parseInt(x, 10));
+  return Number.isFinite(a) && (a > ma || (a === ma && (b || 0) >= mi));
+};
+export const MANUAL_KEYS = ['plans', 'legal', 'ebs', 'rate-legal'] as const;   // v10.284 (D212) rate-legal
 const KST = `(now() AT TIME ZONE 'Asia/Seoul')`;
 
 @Injectable()
@@ -45,7 +50,12 @@ export class OwnerTodoService {
         `SELECT (SELECT count(*)::int FROM ops_alerts WHERE acknowledged_at IS NULL AND resolved_at IS NULL AND severity = 'CRITICAL') AS critical,
                 ${set('admin.ip_verify')} AS "ipVerify", coalesce(${set('admin.mfa_required')}, 'off') AS mfa,
                 ${set('mall.biz_report_no')} AS "bizNo", ${set('mall.biz_report_at')} AS "bizAt",
-                ${set('seo.verify_google')} AS google, ${set('seo.verify_naver')} AS naver, ${set('community.lbs_report_no')} AS lbs`),
+                ${set('seo.verify_google')} AS google, ${set('seo.verify_naver')} AS naver, ${set('community.lbs_report_no')} AS lbs,
+                /* v10.284 (D212 · docs/411) 입점 유형 요율 · 처리방침 1.1 · 요율 예약 공지 빠뜨림 */
+                (SELECT count(*)::int FROM hlt_seller_type_rates WHERE rate IS NOT NULL) AS "typeRates",
+                (SELECT max(version) FROM v_terms_current WHERE code = 'PRIVACY') AS "privacyVer",
+                (SELECT count(*)::int FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id
+                  WHERE r.status = 'SCHEDULED' AND r.effective_at > now() AND r.created_at < now() - interval '1 day' AND n.published_at IS NULL) AS "rateNoticeMissing"`),
       this.db.query<{ open: number; noDate: number; overdue: number; applied: number }>(
         `SELECT count(*)::int AS open, count(*) FILTER (WHERE ip_requested_at IS NULL)::int AS "noDate",
                 count(*) FILTER (WHERE applied_at IS NOT NULL OR (NOT requires_ip AND ip_requested_at IS NOT NULL))::int AS applied,
@@ -95,6 +105,12 @@ export class OwnerTodoService {
         now: s.bizNo && s.bizAt ? `${s.bizAt} · 접수번호 있음` : '기록 없음 — 신고 뒤 「입점 열기 준비」 › 「적기」(SUPER)' },
       { key: 'seller-terms', label: '입점 약관(HLT_SELLER) 게시', go: 'terms', done: !!sl?.cur,
         now: sl?.cur ? '시행 중' : sl?.version ? `초안 ${sl.version} · 빈칸 ${holes}곳 — 법무 확인 뒤 게시` : '초안 없음' },
+      { key: 'type-rates', label: '입점 유형 요율 적기(입점 약관 제17조)', go: 'hlt-settle', done: s.typeRates > 0,
+        now: s.typeRates > 0 ? `${s.typeRates}개 유형 적음` : '비어 있음 — 소개몰 › 「소개몰 정산」 › 「입점 유형 요율」(입점 판매자가 없으면 바로 바뀜)' },
+      { key: 'privacy-11', label: '개인정보처리방침 1.1 게시', go: 'terms', done: verAtLeast(s.privacyVer, 1, 1),
+        now: s.privacyVer ? `지금 판 ${s.privacyVer}${verAtLeast(s.privacyVer, 1, 1) ? '' : ' — 1.1 초안 〔법령 근거〕 채운 뒤 게시'}` : '시행 중인 판 없음' },
+      { key: 'rate-notice', label: '수수료율 변경 예약 공지 빠뜨림 0건', go: 'hlt-settle', done: s.rateNoticeMissing === 0,
+        now: s.rateNoticeMissing === 0 ? '없음' : `${s.rateNoticeMissing}건 — 「요율 변경 예정」에서 「공지 게시」` },
       { key: 'seo', label: '검색 사이트 소유 확인 값(구글 · 네이버)', go: 'policy', done: !!(s.google && s.naver),
         now: `구글 ${s.google ? '있음' : '없음'} · 네이버 ${s.naver ? '있음' : '없음'}` },
       { key: 'lbs', label: '위치기반서비스사업 신고번호', go: 'community', done: !!s.lbs,
@@ -109,6 +125,7 @@ export class OwnerTodoService {
         { key: 'plans', label: '요금제 금액 확정', go: 'billing', hint: '운영 화면 › 요금제에서 금액을 정한 뒤' },
         { key: 'legal', label: '법무 · 세무 확인(약관 · 제휴 3.3% 등)', go: 'terms', hint: '결정 기록 terms-publishing 미정 항목' },
         { key: 'ebs', label: 'EBS 스냅샷 예약(AWS DLM)', go: 'home', hint: 'AWS 콘솔 › EC2 › 수명 주기 관리자' },
+        { key: 'rate-legal', label: '요율 인상 공지 방식을 법무에 알리기', go: 'hlt-settle', hint: '판매자센터 · 파트너센터 공지 + 개별 알림 + 열람 기록(docs/407 · 411)' },
       ].map(({ hint, ...r }) => {
         const m = mk.get(r.key) ?? null;
         return { ...r, manual: true, mark: m, done: m ? m.done : null,

@@ -2977,6 +2977,7 @@
    ],
    "apis": [
     "GET /me/health/seller/center",
+    "POST /me/health/seller/notices/{id}/read",
     "PATCH /me/health/seller/shipping",
     "GET /me/health/seller/products",
     "POST /me/health/seller/products",
@@ -3271,6 +3272,7 @@
     "GET /admin/health/rate-schedules",
     "POST /admin/health/rate-schedules/{id}/cancel",
     "POST /admin/health/rate-schedules/{id}/notice",
+    "POST /admin/health/rate-schedules/{id}/remind",
     "POST /admin/health/sellers/{id}/submerchant",
     "POST /admin/health/settlements/{id}/confirm",
     "POST /admin/health/settlements/{id}/payout"

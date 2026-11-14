@@ -18,8 +18,8 @@ export class LaunchStubCancelDto {
 
 /* v10.241 (D201 · docs/381) — 대표 할 일 직접 확인 줄 끝남 · 다시 아직 적기 */
 export class OwnerTodoMarkDto {
-  @ApiProperty({ enum: ['plans', 'legal', 'ebs'], description: '직접 확인 줄 — plans 요금제 금액 · legal 법무 · 세무 · ebs EBS 스냅샷 예약' })
-  @IsString() @IsIn(['plans', 'legal', 'ebs']) key!: string;
+  @ApiProperty({ enum: ['plans', 'legal', 'ebs', 'rate-legal'], description: '직접 확인 줄 — plans 요금제 금액 · legal 법무 · 세무 · ebs EBS 스냅샷 예약 · rate-legal 요율 공지 방식 법무 알림(v10.284)' })
+  @IsString() @IsIn(['plans', 'legal', 'ebs', 'rate-legal']) key!: string;
   @ApiProperty({ description: 'true 끝남 · false 다시 아직' })
   @IsBoolean() done!: boolean;
   @ApiProperty({ description: '메모 5 ~ 500자(무엇을 언제 했는지)' })

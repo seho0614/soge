@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiP
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
-  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES,
+  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES, NoticePublishDto,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
   GwanOrderDto, LandingDto,
 } from './site.dto';
@@ -190,7 +190,7 @@ export class SiteController {
     summary: '공지 등록',
     description: 'publishedAt 을 비우면 초안입니다. 지정한 시각에 공개됩니다.',
   })
-  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279) · NOTIFY_NO_AUDIENCE · BAD_PERIOD(v10.281 · 282)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279) · NOTIFY_NO_AUDIENCE · BAD_PERIOD(v10.281 · 282) · NOTIFY_CONFIRM_REQUIRED(v10.285)', type: ErrorDto })
   @Audit('NOTICE_CREATE', 'NOTICE')
   createNotice(@Body() dto: CreateNoticeDto) { return this.svc.createNotice(dto); }
 
@@ -200,7 +200,8 @@ export class SiteController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, description: 'NOTICE_PUBLISHED', type: ErrorDto })
   @Audit('NOTICE_PUBLISH', 'NOTICE')
-  publishNotice(@Param('id', ParseUUIDPipe) id: string) { return this.svc.publishNotice(id); }
+  @ApiResponse({ status: 422, description: 'NOTIFY_CONFIRM_REQUIRED(v10.285)', type: ErrorDto })
+  publishNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: NoticePublishDto) { return this.svc.publishNotice(id, dto?.notifyConfirm); }
 
   @Get('notices/audience')
   @ApiOperation({ summary: '공지 알림 받을 사람 수', description: 'v10.281 (D211) 등급(쉼표로)을 고르면 알림을 받을 회원 수 — 전체 공개 · 관리자만이면 보내지 않음.' })
@@ -216,7 +217,7 @@ export class SiteController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   @ApiResponse({ status: 409, description: 'NOTICE_LOCKED', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'NO_CHANGE · REASON_REQUIRED · GRADE_INACTIVE · NOTIFY_NO_AUDIENCE · BAD_PERIOD', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_CHANGE · REASON_REQUIRED · GRADE_INACTIVE · NOTIFY_NO_AUDIENCE · BAD_PERIOD · NOTIFY_CONFIRM_REQUIRED', type: ErrorDto })
   @Audit('NOTICE_UPDATE', 'NOTICE')
   updateNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateNoticeDto) { return this.svc.updateNotice(id, dto); }
 

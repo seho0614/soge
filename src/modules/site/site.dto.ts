@@ -99,6 +99,13 @@ export class CreateNoticeDto {
   @IsOptional() @IsDateString() endsAt?: string;
   @ApiPropertyOptional({ description: 'v10.281 (D211) 게시되면 그 등급 회원에게 「내 알림」 — 전체 공개 · 관리자만이면 422 NOTIFY_NO_AUDIENCE' })
   @IsOptional() @StrictBoolean() notify?: boolean;
+  @ApiPropertyOptional({ description: 'v10.285 (D212) 받는 사람이 notice.notify_confirm_min 이상이면 「모두에게 알림」(아니면 422 NOTIFY_CONFIRM_REQUIRED)' })
+  @IsOptional() @IsString() @MaxLength(20) notifyConfirm?: string;
+}
+
+/** v10.285 (D212) 공지 게시 — 알림 받을 사람이 많으면 확인 문구 */
+export class NoticePublishDto {
+  @ApiPropertyOptional({ description: '「모두에게 알림」(받는 사람이 기준 이상일 때)' }) @IsOptional() @IsString() @MaxLength(20) notifyConfirm?: string;
 }
 
 /** v10.280 (D211) 공지 고치기 — 게시 중이면 사유 필수 · 게시한 수수료율 공지는 고정만 */
@@ -112,6 +119,7 @@ export class UpdateNoticeDto {
   @IsOptional() @IsDateString() endsAt?: string | null;
   @ApiPropertyOptional() @IsOptional() @StrictBoolean() notify?: boolean;
   @ApiPropertyOptional({ description: '고치는 사유 — 게시 중인 공지는 2자 이상 필수' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
+  @ApiPropertyOptional({ description: 'v10.285 알림을 켤 때 받는 사람이 많으면 「모두에게 알림」' }) @IsOptional() @IsString() @MaxLength(20) notifyConfirm?: string;
 }
 
 /** v10.280 (D211) 공지 내리기 사유 */

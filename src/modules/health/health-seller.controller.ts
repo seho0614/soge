@@ -66,6 +66,15 @@ export class HealthSellerController {
   @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
   center() { return this.svc.center(); }
 
+  @Post('me/health/seller/notices/:id/read')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '소개몰 공지 읽음', description: 'v10.283 (D212 · docs/411) 판매자센터 「소개몰 공지」를 펼친 기록(처음 · 마지막 · 횟수) — 요율 공지 「읽음 n / 대상 m」.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  readNotice(@Param('id', ParseUUIDPipe) id: string) { return this.svc.readNotice(id); }
+
   @Patch('me/health/seller/shipping')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
   @ApiOperation({ summary: '배송비 · 반품비', description: '반품비(회원 사정 왕복)는 6,000원을 넘을 수 없습니다.' })
@@ -265,6 +274,16 @@ export class HealthSellerController {
   @ApiResponse({ status: 422, description: 'NOTICE_LATE', type: ErrorDto })
   @Audit('HLT_RATE_NOTICE_PUBLISH', 'NOTICE')
   publishRateNotice(@Param('id', ParseUUIDPipe) id: string) { return this.rates.publishNotice(id); }
+
+  @Post('admin/health/rate-schedules/:id/remind')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '요율 공지 안 읽은 판매자에게 다시 알림', description: 'v10.283 (D212 · docs/411) 예약 안내 공지를 게시한 예정 예약 — 영향받는 판매자 중 판매자센터에서 공지를 펼치지 않은 곳에만 · 24시간에 한 번 · 기록(hlt_rate_reminds).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'REMIND_NOT_READY · REMIND_TOO_SOON · ALL_READ', type: ErrorDto })
+  @Audit('HLT_RATE_NOTICE_REMIND', 'HLT_COMMISSION')
+  remindRateNotice(@Param('id', ParseUUIDPipe) id: string) { return this.rates.remind(id); }
 
   @Get('admin/health/rate-impact')
   @Roles('ADMIN', 'SUPER')

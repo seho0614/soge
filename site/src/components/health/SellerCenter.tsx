@@ -32,6 +32,13 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
   const [err, setErr] = useState<string | null>(null);
   const open = cats.filter((c) => c.state === 'OPEN');
 
+  /* v10.283 (D212) — 「소개몰 공지」를 펼치면 읽음 기록(한 화면에서 한 번 · 실패해도 화면은 그대로) */
+  const [readIds, setReadIds] = useState<string[]>([]);
+  function markRead(id: string) {
+    if (readIds.includes(id)) return;
+    setReadIds((p) => [...p, id]);
+    void fetch(`/api/v1/me/health/seller/notices/${id}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => undefined);
+  }
   async function send(path: string, method: string, body: unknown, done: string) {
     setErr(null); setMsg(null);
     const r = await fetch(`/api/v1/me/health/seller${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) });
@@ -92,7 +99,7 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
           <div className="card" data-seller-notices={(info.notices ?? []).length}>
             <b>{t('notices')}</b>
             {(info.notices ?? []).map((x) => (
-              <details key={x.id} data-seller-notice={x.id}>
+              <details key={x.id} data-seller-notice={x.id} onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) markRead(x.id); }}>
                 <summary>{x.title} <span className="dim">{String(x.publishedAt).slice(0, 10)}</span></summary>
                 <p style={{ whiteSpace: 'pre-line' }}>{x.body}</p>
               </details>

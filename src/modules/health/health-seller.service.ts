@@ -43,6 +43,19 @@ export class HealthSellerService {
     return { s, p };
   }
 
+  /** v10.283 (D212 · docs/411) — 판매자센터 「소개몰 공지」를 펼친 기록(처음 · 마지막 · 횟수) — 이 판매자에게 보이는 공지만 */
+  async readNotice(noticeId: string) {
+    await this.seller();
+    const [n] = await this.db.query<{ id: string }>(
+      `SELECT id FROM notices WHERE id::text = $1 AND gwan_code = 'HLT' AND published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now()) AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')`, [noticeId, this.me]);
+    if (!n) throw new NotFound('공지를 찾을 수 없습니다.');
+    await this.db.query(
+      `INSERT INTO notice_reads (notice_id, account_id) VALUES ($1, $2)
+       ON CONFLICT (notice_id, account_id) DO UPDATE SET last_at = now(), reads = notice_reads.reads + 1`, [n.id, this.me]);
+    return { ok: true };
+  }
+
   /** 판매자센터 첫 화면 — 판매자 정보 · 배송 설정 · 상품 수 */
   async center() {
     const s = await this.seller();
