@@ -61,7 +61,7 @@ ok('① v10.266 2단계 켜기 흐름 — 내 등록 → 켜기 전 점검 → �
 D395 = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('395_')] if os.path.isdir(os.path.join(K, 'docs')) else []
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isfile(os.path.join(K, 'prisma/migrations', d, 'migration.sql'))] if os.path.isdir(os.path.join(K, 'prisma/migrations')) else []
 ok('① 명세(출금 준비 점검 API) · 문서 395 · 마이그레이션 없음(243) · 판 v10.266 이상',
-   '"GET /admin/payouts/point-readiness"' in SPEC and bool(D395) and len(mig) in (243, 244, 245, 246, 247) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 266), f'{D395} · {len(mig)} · {VER}')
+   '"GET /admin/payouts/point-readiness"' in SPEC and bool(D395) and len(mig) in (243, 244, 245, 246, 247, 248) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 266), f'{D395} · {len(mig)} · {VER}')
 
 
 def call(m_, p, b=None, t=None):

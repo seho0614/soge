@@ -61,14 +61,14 @@ ok('① D209 — 공지 칸(예약 안내 · 취소 안내 → notices) · 알�
    'ADD COLUMN IF NOT EXISTS notice_id uuid REFERENCES public.notices(id)' in M9 and 'ADD COLUMN IF NOT EXISTS cancel_notice_id uuid REFERENCES public.notices(id)' in M9
    and "('SELLER_RATE_SCHEDULED'," in M9 and "('SELLER_RATE_SCHEDULE_CANCELED'," in M9 and 'ON CONFLICT (event_code) DO NOTHING' in M9 and not BAD.search(M9), '')
 ok('① API — 예약 때 소개몰 공지 초안 · 「공지 게시」(31일 · 422 NOTICE_LATE · 409 NOTICE_DONE · 감사) · 취소 안내 초안 · 정기 작업 RATE_NOTICE_MISSING · 판매자센터 공지 · 영어 사전',
-   "VALUES ('HLT', $1, $2, true, NULL, $3)" in RS and 'async publishNotice(' in RS and "'NOTICE_LATE'" in RS and "'NOTICE_DONE'" in RS
+   "VALUES ('HLT', $1, $2, true, NULL, $3" in RS and 'async publishNotice(' in RS and "'NOTICE_LATE'" in RS and "'NOTICE_DONE'" in RS
    and '판매 수수료율 변경 취소 안내' in RS and "@Post('admin/health/rate-schedules/:id/notice')" in CT and "@Audit('HLT_RATE_NOTICE_PUBLISH'" in CT
    and "'RATE_NOTICE_MISSING', 'WARN'" in SC and "WHERE gwan_code = 'HLT' AND published_at IS NOT NULL" in SS
    and '"예약 안내 공지를 게시했습니다.":' in EN, '')
 MK, ME = msgs('ko'), msgs('en')
 ok('① 화면 · 명세 · 문서 — 「공지 안 함」 · 「공지 게시」 · 본문 확인 창 · 판매자센터 소개몰 공지(한 · 영) · 명세 · 문서 407 · 마이그레이션 247 · 판 v10.278 이상',
    'data-rate-notice="missing"' in TR and 'data-rate-notice-publish=' in TR and '게시할까요?' in TR and 'data-seller-notices=' in CE and MK.get('notices') and ME.get('notices')
-   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) == 247 and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
+   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) in (247, 248) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
    f'{len(mig)} · {VER} · 407 {bool(D407)}')
 
 
@@ -169,7 +169,7 @@ if API and DB:
         p2 = call('POST', f"/admin/health/rate-schedules/{t2.get('id')}/notice", None, TS)
         pm = call('POST', f"/admin/health/rate-schedules/{t2.get('id')}/notice", None, TB)
         c1 = call('GET', '/me/health/seller/center', None, TL)
-        pub = call('GET', '/notices')
+        pub = call('GET', '/notices', None, TL)   # v10.279 (D210) — 등급 「소개몰 판매자」 공지라 판매자 계정으로 봄
         ok('② 「공지 게시」 — 게시(예약 안내) · 판매자센터 소개몰 공지에 보임 · 공개 공지에 보임 · 두 번째 409 NOTICE_DONE · 회원 403',
            p1.get('ok') is True and p1.get('kind') == 'SCHEDULE' and p2.get('_err') == 409 and p2.get('code') == 'NOTICE_DONE' and pm.get('_err') == 403
            and any(x.get('id') == nid for x in (c1.get('notices') or [])) and any(x.get('id') == nid for x in (pub if isinstance(pub, list) else [])),
