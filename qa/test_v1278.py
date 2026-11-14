@@ -68,7 +68,7 @@ ok('① API — 예약 때 소개몰 공지 초안 · 「공지 게시」(31일 
 MK, ME = msgs('ko'), msgs('en')
 ok('① 화면 · 명세 · 문서 — 「공지 안 함」 · 「공지 게시」 · 본문 확인 창 · 판매자센터 소개몰 공지(한 · 영) · 명세 · 문서 407 · 마이그레이션 247 · 판 v10.278 이상',
    'data-rate-notice="missing"' in TR and 'data-rate-notice-publish=' in TR and '게시할까요?' in TR and 'data-seller-notices=' in CE and MK.get('notices') and ME.get('notices')
-   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) in (247, 248) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
+   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) in (247, 248, 249) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
    f'{len(mig)} · {VER} · 407 {bool(D407)}')
 
 
@@ -205,7 +205,8 @@ if API and DB:
         cancel_mine()
         psql("UPDATE hlt_seller_type_rates SET rate = NULL")
         for x in made:
-            psql(f"UPDATE notices SET published_at = NULL, is_pinned = false WHERE id = '{x}'")   # 시험 공지는 게시를 거둠(다른 시험 · 화면에 안 보이게)
+            psql(f"UPDATE notices SET is_pinned = false WHERE id = '{x}'")   # v10.280 (D211) 게시한 요율 공지는 잠겨 고정만 풂
+            psql(f"UPDATE notices SET published_at = NULL WHERE id = '{x}' AND (published_at IS NULL OR published_at > now())")   # 게시 안 한 시험 공지만 거둠
         if sid_:
             psql(f"DELETE FROM hlt_products WHERE seller_id = '{sid_}'")
             psql(f"DELETE FROM hlt_seller_rate_changes WHERE seller_id = '{sid_}'")
