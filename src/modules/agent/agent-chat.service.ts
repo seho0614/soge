@@ -376,7 +376,10 @@ export class AgentChatService {
          FROM faqs WHERE is_active ORDER BY sort_order, category`);
     const notices = await this.db.query<{ title: string; body: string; at: string }>(
       `SELECT title, left(body, 1500) AS body, to_char(published_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS at
-         FROM notices WHERE published_at IS NOT NULL AND published_at <= now() ORDER BY is_pinned DESC, published_at DESC LIMIT 30`);
+         FROM notices WHERE published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now())
+          AND 'PUBLIC' = ANY(grades)   -- v10.280 (D211) AI 상담은 누구에게나 답하므로 「전체 공개」 공지만(v10.279 등급 공지가 새던 것 고침)
+        ORDER BY is_pinned DESC, published_at DESC LIMIT 30`);
     // 약관 — 지금 시행 중인 판(종류마다 하나) + 시행 예정 판(날짜 표시) · 검토 중 · 끝없는 날짜 판은 뺌
     const terms = await this.db.query<{ title: string; body: string; version: string; upcoming: string | null }>(
       `(SELECT DISTINCT ON (code) title, left(body, 2500) AS body, version, NULL::text AS upcoming

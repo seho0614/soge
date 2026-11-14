@@ -20,6 +20,7 @@ const JOBS = [
   'directory_expiry',   /* v10.33 (D092) 정액 노출 만료 안내 · 자동 종료 */
   'seller_license_watch', /* v10.223 (D193) 입점 서류 만료 30 · 7일 전 알림 · 만료일 운영 알림 */
   'hlt_rate_schedule',  /* v10.275 (D208) 수수료율 인상 예약 시행 — 매일 00:05 */
+  'notice_schedule',    /* v10.282 (D211) 예약 공지 알림 — 10분마다 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */
   'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */
   'review_shadow',      /* v10.106 (D120) AI 검수 보조(병행) — 의견만 저장 · 스위치 · 월 상한이 막으면 건너뜀 */

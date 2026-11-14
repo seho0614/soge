@@ -1688,7 +1688,11 @@
     "POST /admin/notices",
     "POST /admin/notices/{id}/publish",
     "GET /admin/notice-grades",
-    "PATCH /admin/notice-grades/{code}"
+    "PATCH /admin/notice-grades/{code}",
+    "GET /admin/notices/audience",
+    "PATCH /admin/notices/{id}",
+    "POST /admin/notices/{id}/unpublish",
+    "GET /admin/notices/{id}/revisions"
    ],
    "nav": "SB-ADM-MAIN-010"
   },

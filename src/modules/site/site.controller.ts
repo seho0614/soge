@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiP
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
-  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto,
+  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
   GwanOrderDto, LandingDto,
 } from './site.dto';
@@ -190,17 +190,52 @@ export class SiteController {
     summary: '공지 등록',
     description: 'publishedAt 을 비우면 초안입니다. 지정한 시각에 공개됩니다.',
   })
-  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279) · NOTIFY_NO_AUDIENCE · BAD_PERIOD(v10.281 · 282)', type: ErrorDto })
   @Audit('NOTICE_CREATE', 'NOTICE')
   createNotice(@Body() dto: CreateNoticeDto) { return this.svc.createNotice(dto); }
 
   @Post('notices/:id/publish')
-  @ApiOperation({ summary: '초안 공지 게시', description: 'v10.279 (D210) 게시 시각이 없거나 앞인 공지를 지금 게시합니다.' })
+  @ApiOperation({ summary: '초안 공지 게시', description: 'v10.279 (D210) 게시 시각이 없거나 앞인 공지를 지금 게시합니다. v10.280 (D211) 내린 · 끝난 공지는 다시 게시 · v10.281 알림 고른 공지면 알림.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, description: 'NOTICE_PUBLISHED', type: ErrorDto })
   @Audit('NOTICE_PUBLISH', 'NOTICE')
   publishNotice(@Param('id', ParseUUIDPipe) id: string) { return this.svc.publishNotice(id); }
+
+  @Get('notices/audience')
+  @ApiOperation({ summary: '공지 알림 받을 사람 수', description: 'v10.281 (D211) 등급(쉼표로)을 고르면 알림을 받을 회원 수 — 전체 공개 · 관리자만이면 보내지 않음.' })
+  @ApiQuery({ name: 'grades', required: true, description: '예) SELLER,MAL_PARTNER' })
+  @ApiOkResponse({ type: Object })
+  noticeAudience(@Query('grades') grades?: string) {
+    return this.svc.noticeAudience(String(grades ?? '').split(',').map((g) => g.trim()).filter((g) => (NOTICE_GRADES as readonly string[]).includes(g)));
+  }
+
+  @Patch('notices/:id')
+  @ApiOperation({ summary: '공지 고치기', description: 'v10.280 (D211) 제목 · 본문 · 등급 · 고정 · 끝 시각 · 알림 — 게시 중이면 사유 필수 · 그 전 내용은 고친 기록에 · 게시한 수수료율 공지는 고정만.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'NOTICE_LOCKED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_CHANGE · REASON_REQUIRED · GRADE_INACTIVE · NOTIFY_NO_AUDIENCE · BAD_PERIOD', type: ErrorDto })
+  @Audit('NOTICE_UPDATE', 'NOTICE')
+  updateNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateNoticeDto) { return this.svc.updateNotice(id, dto); }
+
+  @Post('notices/:id/unpublish')
+  @ApiOperation({ summary: '공지 내리기', description: 'v10.280 (D211) 게시 중이면 지금 끝냄(사유) · 예약이면 초안으로 · 게시한 수수료율 공지는 내릴 수 없음.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'NOTICE_NOT_LIVE · NOTICE_LOCKED', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED', type: ErrorDto })
+  @Audit('NOTICE_UNPUBLISH', 'NOTICE')
+  unpublishNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: NoticeReasonDto) { return this.svc.unpublishNotice(id, dto.reason); }
+
+  @Get('notices/:id/revisions')
+  @ApiOperation({ summary: '공지 고친 기록', description: 'v10.280 (D211) 고치기 · 내리기 · 다시 게시 때 그 전 내용 · 사유 · 한 사람(최근 50).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  noticeRevisions(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeRevisions(id); }
 
   @Get('notice-grades')
   @ApiOperation({ summary: '공지 열람 등급', description: 'v10.279 (D210) 등급 7개 — 코드 · 판단 규칙 고정 · 이름 · 순서 · 사용 여부 · 쓰인 공지 수.' })

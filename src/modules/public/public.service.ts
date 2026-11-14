@@ -147,6 +147,7 @@ export class PublicService {
               is_pinned AS "isPinned", published_at AS "publishedAt"
          FROM notices
         WHERE published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211) 끝 날짜 지남 · 내린 공지 뺌
           AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
           AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')
         ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null, RequestCtx.actorId() ?? null]);

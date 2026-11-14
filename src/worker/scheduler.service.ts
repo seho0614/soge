@@ -39,7 +39,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule';
 
 export interface JobResult {
   job: JobName;
@@ -603,6 +603,13 @@ export class SchedulerService {
             `수수료율 변경 예약 ${miss.length}건의 공지를 아직 게시하지 않았습니다 — 소개몰 › 소개몰 정산 › 「요율 변경 예정」에서 「공지 게시」(가장 빠른 시행일 ${miss[0].d})`, { items: miss });
         }
         detail = { applied: affected, noticeMissing: miss.length };
+        break;
+      }
+
+      /* v10.282 (D211 · docs/410) — 예약 공지 알림: 게시 시각이 된 공지 중 「알림 보냄」을 고른 것을 그 등급 회원에게(한 번) */
+      case 'notice_schedule': {
+        const [r] = await this.db.query<{ notices: number; sent: number }>(`SELECT * FROM fn_notice_notify_due()`);
+        affected = Number(r?.sent ?? 0); detail = { notices: Number(r?.notices ?? 0), sent: Number(r?.sent ?? 0) };
         break;
       }
 

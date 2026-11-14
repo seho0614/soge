@@ -53,14 +53,14 @@ export class MainService {
 
   /** 공지. 게시일(published_at)이 지난 것만 보입니다.
    *
-   * ★ 20260930 — notices 에는 starts_at · ends_at 이 없습니다(게시일 한 칸).
+   * ★ 20260930 — notices 에는 starts_at · ends_at 이 없습니다(게시일 한 칸). → v10.282 (D211) ends_at 더함.
    *   없는 열을 읽어 메인 운영 화면의 공지 목록이 늘 500 이었습니다(실측).
    *   게시 종료가 필요하면 열을 새 마이그레이션으로 더하고 여기를 바꾸십시오. */
   notices() {
     return this.db.query(
       `SELECT id, title, body, gwan_code AS "gwanCode", is_pinned AS "isPinned",
-              published_at AS "startsAt", NULL::timestamptz AS "endsAt",
-              (published_at IS NOT NULL AND published_at <= now()) AS "showing"
+              published_at AS "startsAt", ends_at AS "endsAt",   -- v10.282 (D211) 끝 시각 칸이 생김
+              (published_at IS NOT NULL AND published_at <= now() AND (ends_at IS NULL OR ends_at > now())) AS "showing"
          FROM notices ORDER BY is_pinned DESC, published_at DESC NULLS LAST LIMIT 50`);
   }
 

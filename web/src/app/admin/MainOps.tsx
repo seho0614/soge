@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, tokenRoles } from '../../lib/api';
 import { useHashSub } from '../../lib/hashSub';
 import { useApi } from '../../lib/useApi';
-import { useAct, ymd } from '../../lib/act';
+import { useAct, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
@@ -19,7 +19,18 @@ interface MainNotice {
 interface Notice {
   id: string; gwanCode: string | null; title: string; body: string;
   isPinned: boolean; publishedAt: string | null; grades?: string[];
+  /* v10.280 ~ 282 (D211) */
+  endsAt?: string | null; endedReason?: string | null; status?: 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED' | 'TAKEN_DOWN';
+  notify?: boolean; notifiedAt?: string | null; notifiedCount?: number | null; rateNotice?: boolean; revisions?: number;
 }
+interface NoticeRev { id: string; action: 'EDIT' | 'UNPUBLISH' | 'REPUBLISH'; before: Record<string, unknown>; reason: string | null; at: string; by: string | null }
+const NT_STATUS: Record<string, [string, string]> = {
+  DRAFT: ['초안', 'badge-urgent'], SCHEDULED: ['예약', ''], LIVE: ['게시 중', 'badge-verified'], ENDED: ['끝남', ''], TAKEN_DOWN: ['내림', ''],
+};
+const REV_ACTION: Record<string, string> = { EDIT: '고침', UNPUBLISH: '내림', REPUBLISH: '다시 게시' };
+/** v10.282 — 날짜 · 시각 칸은 한국 시각으로 읽음 */
+const kstAt = (v: string) => `${v}:00+09:00`;
+const kstEnd = (d: string) => `${d}T23:59:59+09:00`;
 /** v10.279 (D210) 공지 열람 등급 — 코드 · 규칙 고정 · 이름 · 순서 · 사용 여부만 바꿈 */
 interface NoticeGrade { code: string; name: string; rule: string; sortOrder: number; isActive: boolean; notices: number }
 interface Placement {
@@ -391,15 +402,45 @@ function Content() {
   const notices = useApi<Notice[]>('/admin/notices');
   const grades = useApi<NoticeGrade[]>('/admin/notice-grades');   // v10.279 (D210)
   const [edit, setEdit] = useState<Record<string, string>>({});
-  const [f, setF] = useState({ title: '', body: '', isPinned: false, publish: false });
+  const [f, setF] = useState({ title: '', body: '', isPinned: false, mode: 'now' as 'now' | 'schedule' | 'draft', at: '', end: '', notify: false });
   const [pick, setPick] = useState<string[]>([]);
+  const [ed, setEd] = useState<null | { id: string; title: string; body: string; grades: string[]; isPinned: boolean; end: string; notify: boolean; reason: string; locked: boolean; published: boolean }>(null);
+  const [revOf, setRevOf] = useState<string | null>(null);
+  const [revs, setRevs] = useState<NoticeRev[]>([]);
   const a = useAct();
   const gname = (c: string) => (grades.data ?? []).find((g) => g.code === c)?.name ?? c;
   const togglePick = (c: string) => setPick((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   const publishDraft = (nt: Notice) => {
-    if (!confirm(`「${nt.title}」 공지를 지금 게시합니다 — 볼 수 있는 등급: ${(nt.grades ?? []).map(gname).join(' · ')}\n게시할까요?`)) return;
+    const again = nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN';
+    if (!confirm(`「${nt.title}」 공지를 ${again ? '다시 ' : '지금 '}게시합니다 — 볼 수 있는 등급: ${(nt.grades ?? []).map(gname).join(' · ')}${nt.notify && !nt.notifiedAt ? '\n그 등급 회원에게 알림이 갑니다.' : ''}\n게시할까요?`)) return;
     void a.run(`pub:${nt.id}`, () => api<{ note: string }>(`/admin/notices/${nt.id}/publish`, { method: 'POST' }), notices.reload, (r) => r.note);
   };
+  /* v10.280 (D211) 내리기 · 고치기 · 고친 기록 */
+  const takeDown = (nt: Notice) => {
+    const reason = prompt(nt.status === 'SCHEDULED' ? `「${nt.title}」 예약을 풀어 초안으로 돌립니다 — 사유(2자 이상)` : `「${nt.title}」 공지를 내립니다 — 어디에도 보이지 않게 됩니다. 사유(2자 이상)`);
+    if (reason === null) return;
+    if (reason.trim().length < 2) { a.setErr('사유를 2자 이상 적어 주십시오.'); return; }
+    void a.run(`down:${nt.id}`, () => api<{ note: string }>(`/admin/notices/${nt.id}/unpublish`, { method: 'POST', body: JSON.stringify({ reason: reason.trim() }) }),
+      () => { notices.reload(); if (revOf === nt.id) void loadRevs(nt.id); }, (r) => r.note);
+  };
+  const startEdit = (nt: Notice) => setEd({
+    id: nt.id, title: nt.title, body: nt.body, grades: nt.grades ?? [], isPinned: nt.isPinned,
+    end: nt.endsAt ? new Date(nt.endsAt).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) : '', notify: !!nt.notify, reason: '',
+    locked: !!nt.rateNotice && (nt.status === 'LIVE' || nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN'),
+    published: nt.status !== 'DRAFT' && nt.status !== 'SCHEDULED',
+  });
+  const saveEdit = () => {
+    if (!ed) return;
+    const body: Record<string, unknown> = ed.locked ? { isPinned: ed.isPinned } : {
+      title: ed.title.trim(), body: ed.body.trim(), grades: ed.grades, isPinned: ed.isPinned,
+      endsAt: ed.end ? kstEnd(ed.end) : null, notify: ed.notify,
+    };
+    if (ed.reason.trim()) body.reason = ed.reason.trim();
+    void a.run(`edit:${ed.id}`, () => api<{ note: string }>(`/admin/notices/${ed.id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+      () => { const id = ed.id; setEd(null); notices.reload(); if (revOf === id) void loadRevs(id); }, (r) => r.note);
+  };
+  const loadRevs = async (id: string) => { try { setRevs(await api<NoticeRev[]>(`/admin/notices/${id}/revisions`)); } catch { setRevs([]); } };
+  const toggleRevs = (id: string) => { if (revOf === id) { setRevOf(null); return; } setRevOf(id); void loadRevs(id); };
   const editGrade = (g: NoticeGrade, what: 'name' | 'sort' | 'active') => {
     let body: Record<string, unknown> = {};
     if (what === 'name') { const v = prompt(`${g.code} 등급 이름(1 ~ 30자)`, g.name); if (v === null || !v.trim()) return; body = { name: v.trim() }; }
@@ -416,18 +457,27 @@ function Content() {
       () => { setEdit((p) => { const nx = { ...p }; delete nx[slot]; return nx; }); copy.reload(); },
       '문구를 바꿨습니다. 바로 반영됩니다.');
   };
-  const addNotice = () => {
+  const noAudience = pick.includes('PUBLIC') || !pick.some((g) => g !== 'STAFF');   // v10.281 — 전체 공개 · 관리자만이면 알림 없음
+  const addNotice = async () => {
     if (f.title.trim().length < 2 || !f.body.trim()) { a.setErr('제목(2자 이상)과 본문을 적어 주십시오.'); return; }
     if (!pick.length) { a.setErr('볼 수 있는 등급을 하나 이상 골라 주십시오.'); return; }   // v10.279 (D210)
+    if (f.mode === 'schedule' && !f.at) { a.setErr('예약 게시 날짜 · 시각을 정해 주십시오.'); return; }
+    const publishedAt = f.mode === 'now' ? new Date().toISOString() : f.mode === 'schedule' ? kstAt(f.at) : undefined;
+    const notify = f.notify && !noAudience;
+    if (notify) {   // v10.281 — 보내기 전에 받는 사람 수
+      try {
+        const au = await api<{ count: number; note: string }>(`/admin/notices/audience?grades=${encodeURIComponent(pick.join(','))}`);
+        if (!confirm(`${au.note}\n${f.mode === 'now' ? '등록하면 바로' : f.mode === 'schedule' ? '예약 시각이 되면' : '게시할 때'} 알림이 갑니다. 등록할까요?`)) return;
+      } catch (e) { a.setErr(String((e as Error).message ?? e)); return; }
+    }
     void a.run('notice', () => api('/admin/notices', {
       method: 'POST',
       body: JSON.stringify({
-        title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned, grades: pick,
-        // 비우면 초안입니다. 게시를 고르면 지금 시각으로 공개됩니다.
-        publishedAt: f.publish ? new Date().toISOString() : undefined,
+        title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned, grades: pick, publishedAt,
+        endsAt: f.end ? kstEnd(f.end) : undefined, notify,
       }),
-    }), () => { setF({ title: '', body: '', isPinned: false, publish: false }); setPick([]); notices.reload(); grades.reload(); },
-    f.publish ? '공지를 게시했습니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
+    }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: false }); setPick([]); notices.reload(); grades.reload(); },
+    f.mode === 'now' ? '공지를 게시했습니다.' : f.mode === 'schedule' ? '예약했습니다 — 그 시각에 저절로 게시됩니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
   };
 
   if (copy.error) return <ErrorView error={copy.error} onRetry={copy.reload} />;
@@ -467,22 +517,83 @@ function Content() {
       {notices.data && notices.data.length === 0 && <p className="muted">등록된 공지가 없습니다.</p>}
       {(notices.data ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>제목</th><th>관</th><th>볼 수 있는 등급</th><th>고정</th><th>게시</th></tr></thead>
+          <thead><tr><th>제목</th><th>관</th><th>볼 수 있는 등급</th><th>고정</th><th>상태</th><th>알림</th><th /></tr></thead>
           <tbody>
-            {(notices.data ?? []).map((nt) => (
-              <tr key={nt.id} data-notice-row={nt.id}>
-                <td>{nt.title}</td>
+            {(notices.data ?? []).map((nt) => {
+              const st = NT_STATUS[nt.status ?? (nt.publishedAt ? 'LIVE' : 'DRAFT')] ?? ['—', ''];
+              const lockedLive = !!nt.rateNotice && nt.status === 'LIVE';
+              return (
+              <tr key={nt.id} data-notice-row={nt.id} data-notice-status={nt.status}>
+                <td>{nt.title}{nt.rateNotice ? <span className="dim"> · 수수료율 공지</span> : null}</td>
                 <td className="muted">{nt.gwanCode ?? '전 관'}</td>
                 <td data-notice-grades={(nt.grades ?? []).join(',')}>{(nt.grades ?? []).map(gname).join(' · ') || '—'}</td>
                 <td>{nt.isPinned ? '고정' : '—'}</td>
-                <td>{nt.publishedAt
-                  ? <span className="badge badge-verified">{ymd(nt.publishedAt)}</span>
-                  : <><span className="badge badge-urgent">초안</span>{' '}
-                      <button className="btn-sm" disabled={a.busy === `pub:${nt.id}`} onClick={() => publishDraft(nt)} data-notice-publish={nt.id}>게시</button></>}</td>
-              </tr>
-            ))}
+                <td>
+                  <span className={`badge ${st[1]}`}>{st[0]}</span>{' '}
+                  <span className="dim">
+                    {nt.status === 'SCHEDULED' ? ymdhm(nt.publishedAt) : nt.publishedAt ? ymd(nt.publishedAt) : ''}
+                    {nt.endsAt ? ` ~ ${ymd(nt.endsAt)}` : ''}
+                  </span>
+                  {nt.status === 'TAKEN_DOWN' && nt.endedReason ? <div className="dim">사유: {nt.endedReason}</div> : null}
+                </td>
+                <td className="dim" data-notice-notify={nt.notify ? (nt.notifiedAt ? 'sent' : 'wait') : 'off'}>
+                  {nt.notify ? (nt.notifiedAt ? `보냄 ${nt.notifiedCount ?? 0}명` : '게시되면 보냄') : '—'}
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  {nt.status !== 'LIVE' && (
+                    <button className="btn-sm" disabled={a.busy === `pub:${nt.id}`} onClick={() => publishDraft(nt)} data-notice-publish={nt.id}>
+                      {nt.status === 'ENDED' || nt.status === 'TAKEN_DOWN' ? '다시 게시' : '게시'}</button>)}{' '}
+                  <button className="btn-sm" onClick={() => startEdit(nt)} data-notice-edit={nt.id}>고치기</button>{' '}
+                  {(nt.status === 'LIVE' || nt.status === 'SCHEDULED') && !lockedLive && (
+                    <button className="btn-sm" disabled={a.busy === `down:${nt.id}`} onClick={() => takeDown(nt)} data-notice-down={nt.id}>내리기</button>)}{' '}
+                  <button className="btn-sm" onClick={() => toggleRevs(nt.id)} data-notice-revs={nt.id}>고친 기록 {nt.revisions ?? 0}</button>
+                </td>
+              </tr>);
+            })}
           </tbody>
         </table>
+      )}
+
+      {revOf && (
+        <div className="card pad" data-notice-rev-list={revs.length}>
+          <b>고친 기록</b> <span className="dim">— 고치기 · 내리기 · 다시 게시 때 그 전 내용(고칠 수 없음)</span>
+          {revs.length === 0 ? <p className="dim">기록이 없습니다.</p> : (
+            <table className="tbl"><thead><tr><th>때</th><th>한 일</th><th>한 사람</th><th>사유</th><th>그 전 내용</th></tr></thead>
+              <tbody>{revs.map((r) => (
+                <tr key={r.id}><td className="dim">{ymdhm(r.at)}</td><td>{REV_ACTION[r.action] ?? r.action}</td><td>{r.by ?? '—'}</td><td>{r.reason ?? '—'}</td>
+                  <td className="dim" style={{ maxWidth: 420, whiteSpace: 'pre-wrap' }}>{
+                    r.action === 'EDIT' ? `제목: ${String(r.before.title ?? '')}\n등급: ${((r.before.grades as string[] | undefined) ?? []).map(gname).join(' · ')}\n본문: ${String(r.before.body ?? '').slice(0, 200)}`
+                      : `게시 ${ymd(r.before.publishedAt as string | null)}${r.before.endsAt ? ` ~ ${ymd(r.before.endsAt as string)}` : ''}`}</td></tr>))}
+              </tbody></table>)}
+        </div>
+      )}
+
+      {ed && (
+        <div className="card pad" data-notice-edit-form={ed.id}>
+          <b>공지 고치기</b>
+          {ed.locked ? <p className="card warn" data-notice-locked>게시한 수수료율 변경 공지는 제목 · 본문 · 등급 · 기간을 고치거나 내릴 수 없습니다(입점 약관 제17조 4항 공지 기록). 「상단 고정」만 바꿀 수 있습니다.</p> : (
+            <>
+              <div className="form-grid">
+                <label><span>제목</span><input value={ed.title} onChange={(e) => setEd({ ...ed, title: e.target.value })} data-edit-title /></label>
+                <label><span>끝 날짜(비우면 계속)</span><input type="date" value={ed.end} onChange={(e) => setEd({ ...ed, end: e.target.value })} /></label>
+                <label style={{ gridColumn: '1 / -1' }}><span>본문</span><textarea rows={3} value={ed.body} onChange={(e) => setEd({ ...ed, body: e.target.value })} /></label>
+              </div>
+              <div className="acts"><b>볼 수 있는 등급</b>
+                {(grades.data ?? []).filter((g) => g.isActive || ed.grades.includes(g.code)).map((g) => (
+                  <label key={g.code}><input type="checkbox" checked={ed.grades.includes(g.code)}
+                    onChange={() => setEd({ ...ed, grades: ed.grades.includes(g.code) ? ed.grades.filter((x) => x !== g.code) : [...ed.grades, g.code] })} /> {g.name}</label>))}
+              </div>
+              {!ed.published && <div className="acts"><label><input type="checkbox" checked={ed.notify} onChange={(e) => setEd({ ...ed, notify: e.target.checked })} /> 게시되면 알림 보냄</label></div>}
+            </>)}
+          <div className="acts">
+            <label><input type="checkbox" checked={ed.isPinned} onChange={(e) => setEd({ ...ed, isPinned: e.target.checked })} /> 상단 고정</label>
+            {ed.published && <label style={{ flex: 1 }}><span>고치는 사유(게시한 공지는 필수)</span> <input value={ed.reason} onChange={(e) => setEd({ ...ed, reason: e.target.value })} data-edit-reason /></label>}
+          </div>
+          <div className="acts">
+            <button className="btn-ok" disabled={a.busy === `edit:${ed.id}`} onClick={saveEdit} data-notice-save>저장</button>
+            <button className="btn-sm" onClick={() => setEd(null)}>닫기</button>
+          </div>
+        </div>
       )}
 
       <h3 className="ad-s2" id="notice-form">공지 등록</h3>
@@ -495,7 +606,15 @@ function Content() {
         </div>
         <div className="acts">
           <label><input type="checkbox" checked={f.isPinned} onChange={(e) => setF({ ...f, isPinned: e.target.checked })} /> 상단 고정</label>
-          <label><input type="checkbox" checked={f.publish} onChange={(e) => setF({ ...f, publish: e.target.checked })} /> 지금 게시</label>
+        </div>
+        {/* v10.282 (D211) 지금 게시 · 예약 · 초안 · 끝 날짜 */}
+        <div className="acts" data-notice-mode={f.mode}>
+          <b>게시</b>
+          <label><input type="radio" name="ntmode" checked={f.mode === 'now'} onChange={() => setF({ ...f, mode: 'now' })} data-mode="now" /> 지금 게시</label>
+          <label><input type="radio" name="ntmode" checked={f.mode === 'schedule'} onChange={() => setF({ ...f, mode: 'schedule' })} data-mode="schedule" /> 예약</label>
+          {f.mode === 'schedule' && <input type="datetime-local" aria-label="예약 게시 시각" value={f.at} onChange={(e) => setF({ ...f, at: e.target.value })} data-notice-at />}
+          <label><input type="radio" name="ntmode" checked={f.mode === 'draft'} onChange={() => setF({ ...f, mode: 'draft' })} data-mode="draft" /> 초안</label>
+          <label><span>끝 날짜(비우면 계속)</span> <input type="date" value={f.end} onChange={(e) => setF({ ...f, end: e.target.value })} data-notice-end /></label>
         </div>
         <div className="acts" data-notice-grade-pick>
           <b>볼 수 있는 등급</b>
@@ -503,10 +622,17 @@ function Content() {
             <label key={g.code} title={g.rule}><input type="checkbox" checked={pick.includes(g.code)} onChange={() => togglePick(g.code)} data-grade-pick={g.code} /> {g.name}</label>
           ))}
         </div>
+        {/* v10.281 (D211) 새 공지 알림 */}
         <div className="acts">
-          <button className="btn-ok" disabled={a.busy === 'notice'} onClick={addNotice}>공지 등록</button>
+          <label title={noAudience ? '「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다' : ''}>
+            <input type="checkbox" checked={f.notify && !noAudience} disabled={noAudience} onChange={(e) => setF({ ...f, notify: e.target.checked })} data-notice-notify-pick /> 그 등급 회원에게 알림 보냄
+          </label>
+          {noAudience && pick.length > 0 && <span className="dim">— 「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다</span>}
         </div>
-        <p className="hint">&lsquo;지금 게시&rsquo;를 고르지 않으면 초안으로 남고 이용자에게 보이지 않습니다(위 목록 「게시」로 나중에 게시). 고른 등급 중 하나라도 맞는 사람만 봅니다 — 「관리자」만 고르면 운영 화면 첫 화면 「관리자 공지」에만 보이고 사용자 웹에는 나오지 않습니다.</p>
+        <div className="acts">
+          <button className="btn-ok" disabled={a.busy === 'notice'} onClick={() => void addNotice()} data-notice-submit>공지 등록</button>
+        </div>
+        <p className="hint">「예약」은 정한 시각(한국)에 저절로 게시되고, 「끝 날짜」가 지나면 저절로 내려갑니다. 「초안」은 이용자에게 보이지 않습니다(위 목록 「게시」로 나중에 게시). 알림은 「내 알림」으로 가며 받는 분이 끌 수 있습니다. 고른 등급 중 하나라도 맞는 사람만 봅니다 — 「관리자」만 고르면 운영 화면 첫 화면 「관리자 공지」에만 보이고 사용자 웹에는 나오지 않습니다.</p>
       </div>
 
       {/* v10.279 (D210) 공지 등급 관리 — 코드 · 판단 규칙은 고정 */}

@@ -77,6 +77,12 @@ export class NoticeDto {
   @ApiProperty() isPinned!: boolean;
   @ApiProperty({ nullable: true, format: 'date-time' }) publishedAt!: string | null;
   @ApiPropertyOptional({ type: [String], description: 'v10.279 볼 수 있는 등급(운영 화면 목록만)' }) grades?: string[];
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.282 (D211) 게시 끝 시각(운영 화면 목록만)' }) endsAt?: string | null;
+  @ApiPropertyOptional({ enum: ['DRAFT', 'SCHEDULED', 'LIVE', 'ENDED', 'TAKEN_DOWN'], description: 'v10.280 ~ 282 상태(운영 화면 목록만)' }) status?: string;
+  @ApiPropertyOptional({ description: 'v10.281 게시되면 알림(운영 화면 목록만)' }) notify?: boolean;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.281 보낸 알림 수' }) notifiedCount?: number | null;
+  @ApiPropertyOptional({ description: 'v10.280 수수료율 변경 공지(게시 뒤 잠금)' }) rateNotice?: boolean;
+  @ApiPropertyOptional({ description: 'v10.280 고친 기록 수' }) revisions?: number;
 }
 
 export class CreateNoticeDto {
@@ -89,6 +95,28 @@ export class CreateNoticeDto {
   @IsOptional() @IsString() publishedAt?: string;
   @ApiProperty({ type: [String], enum: NOTICE_GRADES, description: 'v10.279 (D210) 볼 수 있는 등급 — 하나 이상 · 하나라도 맞으면 봄 · STAFF(관리자)만이면 운영 화면에서만' })
   @IsArray() @ArrayMinSize(1) @ArrayMaxSize(7) @IsIn(NOTICE_GRADES as unknown as string[], { each: true }) grades!: string[];
+  @ApiPropertyOptional({ format: 'date-time', description: 'v10.282 (D211) 게시 끝 시각 — 지나면 안 보임 · 게시 시각보다 뒤(422 BAD_PERIOD)' })
+  @IsOptional() @IsDateString() endsAt?: string;
+  @ApiPropertyOptional({ description: 'v10.281 (D211) 게시되면 그 등급 회원에게 「내 알림」 — 전체 공개 · 관리자만이면 422 NOTIFY_NO_AUDIENCE' })
+  @IsOptional() @StrictBoolean() notify?: boolean;
+}
+
+/** v10.280 (D211) 공지 고치기 — 게시 중이면 사유 필수 · 게시한 수수료율 공지는 고정만 */
+export class UpdateNoticeDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(2) title?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(1) body?: string;
+  @ApiPropertyOptional({ type: [String], enum: NOTICE_GRADES })
+  @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(7) @IsIn(NOTICE_GRADES as unknown as string[], { each: true }) grades?: string[];
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() isPinned?: boolean;
+  @ApiPropertyOptional({ nullable: true, format: 'date-time', description: 'v10.282 끝 시각 — null 이면 비움' })
+  @IsOptional() @IsDateString() endsAt?: string | null;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() notify?: boolean;
+  @ApiPropertyOptional({ description: '고치는 사유 — 게시 중인 공지는 2자 이상 필수' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
+}
+
+/** v10.280 (D211) 공지 내리기 사유 */
+export class NoticeReasonDto {
+  @ApiProperty({ description: '내리는 사유(2자 이상)' }) @IsString() @MinLength(2) @MaxLength(300) reason!: string;
 }
 
 /** v10.279 (D210) 공지 등급 이름 · 순서 · 사용 여부(코드 · 판단 규칙은 고정) */

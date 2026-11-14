@@ -121,41 +121,172 @@ export class SiteService {
   }
 
   /* ── 공지 ── */
+  /** 운영 화면 목록(publishedOnly=false) — v10.280 ~ 282 (D211) 상태 · 끝 시각 · 알림 · 잠금 · 고친 기록 수 */
   notices(gwanCode?: string, publishedOnly = true) {
     return this.db.query(
-      `SELECT id, gwan_code AS "gwanCode", title, body,
-              is_pinned AS "isPinned", published_at AS "publishedAt", grades
-         FROM notices
-        WHERE ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
-          AND ($2 = false OR (published_at IS NOT NULL AND published_at <= now()))
-        ORDER BY is_pinned DESC, published_at DESC NULLS LAST LIMIT 50`,
+      `SELECT n.id, n.gwan_code AS "gwanCode", n.title, n.body,
+              n.is_pinned AS "isPinned", n.published_at AS "publishedAt", n.grades,
+              n.ends_at AS "endsAt", n.ended_reason AS "endedReason", n.notify,
+              n.notified_at AS "notifiedAt", n.notified_count AS "notifiedCount", n.updated_at AS "updatedAt",
+              CASE WHEN n.published_at IS NULL THEN 'DRAFT'
+                   WHEN n.published_at > now() THEN 'SCHEDULED'
+                   WHEN n.ends_at IS NOT NULL AND n.ends_at <= now() THEN (CASE WHEN n.ended_reason IS NULL THEN 'ENDED' ELSE 'TAKEN_DOWN' END)
+                   ELSE 'LIVE' END AS status,
+              EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = n.id OR r.cancel_notice_id = n.id) AS "rateNotice",
+              (SELECT count(*)::int FROM notice_revisions v WHERE v.notice_id = n.id) AS revisions
+         FROM notices n
+        WHERE ($1::text IS NULL OR n.gwan_code = $1 OR n.gwan_code IS NULL)
+          AND ($2 = false OR (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())))
+        ORDER BY n.is_pinned DESC, n.published_at DESC NULLS LAST LIMIT 50`,
       [gwanCode ?? null, publishedOnly]);
+  }
+
+  /** v10.279 (D210) — 등급 하나 이상 · 쓰지 않는 등급은 새로 고를 수 없음(이미 있던 등급은 그대로 둘 수 있음) */
+  private async checkGrades(grades: string[], keep: string[] = []) {
+    if (!grades.length) throw new PolicyViolation('GRADE_REQUIRED', '볼 수 있는 등급을 하나 이상 골라 주십시오.');
+    const off = await this.db.query<{ name: string }>(
+      `SELECT name FROM notice_grades WHERE code = ANY($1::text[]) AND NOT is_active`, [grades.filter((g) => !keep.includes(g))]);
+    if (off.length) throw new PolicyViolation('GRADE_INACTIVE', `쓰지 않는 등급입니다 — ${off.map((x) => x.name).join(' · ')}`);
+  }
+
+  /** v10.281 (D211) — 알림은 전체 공개 · 관리자만인 공지에는 보내지 않음 */
+  private checkNotify(notify: boolean | undefined, grades: string[]) {
+    if (!notify) return;
+    if (grades.includes('PUBLIC') || !grades.some((g) => g !== 'STAFF')) {
+      throw new PolicyViolation('NOTIFY_NO_AUDIENCE', '「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다 — 알림을 끄거나 회원 등급을 고르십시오.');
+    }
+  }
+
+  /** v10.282 (D211) — 끝 시각은 게시 시각(없으면 지금) 뒤 */
+  private checkPeriod(publishedAt: string | null | undefined, endsAt: string | null | undefined) {
+    if (!endsAt) return;
+    const from = publishedAt ? new Date(publishedAt).getTime() : Date.now();
+    if (!(new Date(endsAt).getTime() > from)) throw new PolicyViolation('BAD_PERIOD', '끝 날짜는 게시 시각보다 뒤여야 합니다.');
   }
 
   async createNotice(input: {
     gwanCode?: string; title: string; body: string;
-    isPinned?: boolean; publishedAt?: string; grades: string[];
+    isPinned?: boolean; publishedAt?: string; grades: string[]; endsAt?: string; notify?: boolean;
   }) {
-    /* v10.279 (D210) — 등급 하나 이상 · 쓰지 않는 등급은 고를 수 없음 */
     const grades = [...new Set(input.grades ?? [])];
-    const off = await this.db.query<{ name: string }>(
-      `SELECT name FROM notice_grades WHERE code = ANY($1::text[]) AND NOT is_active`, [grades]);
-    if (!grades.length) throw new PolicyViolation('GRADE_REQUIRED', '볼 수 있는 등급을 하나 이상 골라 주십시오.');
-    if (off.length) throw new PolicyViolation('GRADE_INACTIVE', `쓰지 않는 등급입니다 — ${off.map((x) => x.name).join(' · ')}`);
-    const [row] = await this.db.query(
-      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::text[]) RETURNING id, title, published_at AS "publishedAt", grades`,
+    await this.checkGrades(grades);
+    this.checkNotify(input.notify, grades);
+    this.checkPeriod(input.publishedAt, input.endsAt);
+    const [row] = await this.db.query<{ id: string }>(
+      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades, ends_at, notify)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::text[],$8,$9) RETURNING id, title, published_at AS "publishedAt", grades, ends_at AS "endsAt", notify`,
       [input.gwanCode ?? null, input.title, input.body,
-       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId(), grades]);
-    return row;
+       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId(), grades, input.endsAt ?? null, input.notify ?? false]);
+    const notified = await this.notifyNow(row.id);   // v10.281 — 지금 게시면 바로 · 예약이면 정기 작업 notice_schedule
+    return { ...row, notified };
   }
 
-  /** v10.279 (D210) — 초안 공지를 지금 게시(전에는 나중에 게시할 길이 없었음) */
+  /** v10.281 (D211) — 게시된 · 알림 고른 · 아직 안 보낸 공지면 보냄(아니면 0) */
+  private async notifyNow(id: string) {
+    const [r] = await this.db.query<{ n: number }>(`SELECT fn_notice_notify($1::uuid) AS n`, [id]);
+    return Number(r?.n ?? 0);
+  }
+
+  private async lockedRow(id: string) {
+    const [n] = await this.db.query<{
+      id: string; title: string; body: string; grades: string[]; is_pinned: boolean; gwan_code: string | null;
+      published_at: string | null; ends_at: string | null; ended_reason: string | null; notify: boolean; live: boolean; scheduled: boolean; ended: boolean; rate: boolean;
+    }>(
+      `SELECT n.id, n.title, n.body, n.grades, n.is_pinned, n.gwan_code, n.published_at, n.ends_at, n.ended_reason, n.notify,
+              (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())) AS live,
+              (n.published_at IS NOT NULL AND n.published_at > now()) AS scheduled,
+              (n.published_at IS NOT NULL AND n.published_at <= now() AND n.ends_at IS NOT NULL AND n.ends_at <= now()) AS ended,
+              EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = n.id OR r.cancel_notice_id = n.id) AS rate
+         FROM notices n WHERE n.id::text = $1`, [id]);
+    if (!n) throw new NotFound('공지를 찾을 수 없습니다.');
+    return n;
+  }
+
+  private async revision(id: string, action: 'EDIT' | 'UNPUBLISH' | 'REPUBLISH', before: Record<string, unknown>, reason: string | null) {
+    await this.db.query(
+      `INSERT INTO notice_revisions (notice_id, action, before, reason, by_account) VALUES ($1, $2, $3::jsonb, $4, $5)`,
+      [id, action, JSON.stringify(before), reason, RequestCtx.actorId()]);
+  }
+
+  /** v10.279 (D210) 초안 · 예약 공지를 지금 게시 · v10.280 (D211) 내린 · 끝난 공지는 「다시 게시」(끝 시각을 비움 · 기록) */
   async publishNotice(id: string) {
-    const rows = await this.db.query<{ id: string }>(
-      `UPDATE notices SET published_at = now() WHERE id::text = $1 AND (published_at IS NULL OR published_at > now()) RETURNING id`, [id]);
-    if (!rows.length) throw new StateConflict('NOTICE_PUBLISHED', '이미 게시한 공지이거나 없는 공지입니다.');
-    return { ok: true, note: '공지를 게시했습니다.' };
+    const n = await this.lockedRow(id);
+    if (n.live) throw new StateConflict('NOTICE_PUBLISHED', '이미 게시 중인 공지입니다.');
+    if (n.ended) {
+      await this.revision(id, 'REPUBLISH', { publishedAt: n.published_at, endsAt: n.ends_at, endedReason: n.ended_reason }, null);
+      await this.db.query(
+        `UPDATE notices SET published_at = now(), ends_at = NULL, ended_reason = NULL, ended_by = NULL, updated_at = now(), updated_by = $2 WHERE id::text = $1`,
+        [id, RequestCtx.actorId()]);
+      return { ok: true, note: '공지를 다시 게시했습니다.', notified: 0 };
+    }
+    await this.db.query(
+      `UPDATE notices SET published_at = now(), ends_at = CASE WHEN ends_at IS NOT NULL AND ends_at <= now() THEN NULL ELSE ends_at END WHERE id::text = $1`, [id]);
+    const notified = await this.notifyNow(id);
+    return { ok: true, note: notified ? `공지를 게시했습니다 — ${notified}명에게 알림을 보냈습니다.` : '공지를 게시했습니다.', notified };
+  }
+
+  /** v10.280 (D211) — 공지 고치기(게시 중이면 사유 필수 · 그 전 내용은 기록) · 게시한 요율 공지는 잠금 */
+  async updateNotice(id: string, d: { title?: string; body?: string; grades?: string[]; isPinned?: boolean; endsAt?: string | null; notify?: boolean; reason?: string }) {
+    const n = await this.lockedRow(id);
+    const touchesText = d.title !== undefined || d.body !== undefined || d.grades !== undefined || d.endsAt !== undefined;
+    if (d.title === undefined && d.body === undefined && d.grades === undefined && d.isPinned === undefined && d.endsAt === undefined && d.notify === undefined) {
+      throw new PolicyViolation('NO_CHANGE', '바꿀 것이 없습니다.');
+    }
+    const published = !!n.published_at && !n.scheduled;
+    if (n.rate && published && touchesText) {
+      throw new StateConflict('NOTICE_LOCKED', '게시한 수수료율 변경 공지는 고치거나 내릴 수 없습니다 — 입점 약관 제17조 4항 공지 기록입니다(고정만 바꿀 수 있음).');
+    }
+    const reason = d.reason?.trim() || null;
+    if (published && (!reason || reason.length < 2)) throw new PolicyViolation('REASON_REQUIRED', '게시한 공지를 고치는 사유를 적어 주십시오(2자 이상) — 고친 기록에 남습니다.');
+    const grades = d.grades ? [...new Set(d.grades)] : n.grades;
+    if (d.grades) await this.checkGrades(grades, n.grades);
+    if (d.notify !== undefined || d.grades) this.checkNotify(d.notify ?? n.notify, grades);
+    if (d.endsAt) this.checkPeriod(n.published_at, d.endsAt);
+    await this.revision(id, 'EDIT', { title: n.title, body: n.body, grades: n.grades, isPinned: n.is_pinned, endsAt: n.ends_at, notify: n.notify }, reason);
+    await this.db.query(
+      `UPDATE notices SET title = coalesce($2, title), body = coalesce($3, body), grades = coalesce($4::text[], grades),
+              is_pinned = coalesce($5, is_pinned), ends_at = CASE WHEN $6 THEN $7::timestamptz ELSE ends_at END,
+              notify = coalesce($8, notify), updated_at = now(), updated_by = $9
+        WHERE id::text = $1`,
+      [id, d.title?.trim() ?? null, d.body?.trim() ?? null, d.grades ? grades : null, d.isPinned ?? null,
+       d.endsAt !== undefined, d.endsAt ?? null, d.notify ?? null, RequestCtx.actorId()]);
+    return { ok: true, note: '공지를 고쳤습니다(전 내용은 고친 기록에 남습니다).' };
+  }
+
+  /** v10.280 (D211) — 내리기: 게시 중이면 끝 시각을 지금으로(사유) · 예약이면 초안으로 돌림 · 게시한 요율 공지는 잠금 */
+  async unpublishNotice(id: string, reasonIn: string) {
+    const n = await this.lockedRow(id);
+    if (!n.live && !n.scheduled) throw new StateConflict('NOTICE_NOT_LIVE', '게시 중이거나 예약한 공지만 내릴 수 있습니다.');
+    if (n.rate && n.live) throw new StateConflict('NOTICE_LOCKED', '게시한 수수료율 변경 공지는 고치거나 내릴 수 없습니다 — 입점 약관 제17조 4항 공지 기록입니다(고정만 바꿀 수 있음).');
+    const reason = reasonIn?.trim();
+    if (!reason || reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '내리는 사유를 적어 주십시오(2자 이상) — 고친 기록에 남습니다.');
+    await this.revision(id, 'UNPUBLISH', { publishedAt: n.published_at, endsAt: n.ends_at }, reason);
+    if (n.scheduled) {
+      await this.db.query(`UPDATE notices SET published_at = NULL, updated_at = now(), updated_by = $2 WHERE id::text = $1`, [id, RequestCtx.actorId()]);
+      return { ok: true, note: '예약을 풀어 초안으로 돌렸습니다.' };
+    }
+    await this.db.query(
+      `UPDATE notices SET ends_at = now(), ended_reason = $2, ended_by = $3, updated_at = now(), updated_by = $3 WHERE id::text = $1`,
+      [id, reason, RequestCtx.actorId()]);
+    return { ok: true, note: '공지를 내렸습니다 — 이제 어디에도 보이지 않습니다(「다시 게시」로 되돌릴 수 있음).' };
+  }
+
+  /** v10.280 (D211) — 고친 기록(최근 순) */
+  async noticeRevisions(id: string) {
+    await this.lockedRow(id);
+    return this.db.query(
+      `SELECT v.id::text AS id, v.action, v.before, v.reason, v.at, a.name AS "by"
+         FROM notice_revisions v LEFT JOIN accounts a ON a.id = v.by_account
+        WHERE v.notice_id::text = $1 ORDER BY v.at DESC, v.id DESC LIMIT 50`, [id]);
+  }
+
+  /** v10.281 (D211) — 알림 받을 사람 수 미리 보기(fn_notice_audience) */
+  async noticeAudience(gradesIn: string[]) {
+    const grades = [...new Set(gradesIn)];
+    const [r] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM fn_notice_audience($1::text[])`, [grades]);
+    const none = grades.includes('PUBLIC') || !grades.some((g) => g !== 'STAFF');
+    return { count: Number(r?.n ?? 0), sendable: !none,
+             note: none ? '「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다.' : `알림을 받을 회원 ${Number(r?.n ?? 0)}명(활동 중 · 이 알림을 끄지 않은 분)` };
   }
 
   /** v10.279 (D210) — 공지 열람 등급(코드 · 규칙 고정) */
@@ -181,6 +312,7 @@ export class SiteService {
     return this.db.query(
       `SELECT id, title, body, is_pinned AS "isPinned", published_at AS "publishedAt", grades
          FROM notices WHERE 'STAFF' = ANY(grades) AND published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211) 끝 · 내린 공지 뺌
         ORDER BY is_pinned DESC, published_at DESC LIMIT 20`);
   }
 
