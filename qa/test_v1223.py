@@ -182,7 +182,7 @@ if API and DB:
                         card = pg.locator(f'[data-seller-change="{mine.get("id")}"]').count()
                         if row.count(): row.scroll_into_view_if_needed()
                         pg.screenshot(path=os.path.join(HERE, 'v1223_admin_sellers.png'), full_page=False)
-                        seen['admin'] = (row.count(), acts, row.locator('[data-seller-rate]').count(), card, bool(re.search(r'15(\.00)?%', row.inner_text() if row.count() else '')))
+                        seen['admin'] = (row.count(), acts, row.locator('[data-seller-rate]').count(), card, bool(re.search(r'(?<![\d.])5(\.00)?%', row.inner_text() if row.count() else '')))
                     if SITE:
                         for w in (1400, 390):
                             pg = b.new_page(viewport={'width': w, 'height': 900}); pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
@@ -199,7 +199,7 @@ if API and DB:
             except Exception as ex:
                 errs.append(str(ex)[:200])
             if ADMIN_WEB:
-                ok('③ 운영 화면 「소개몰 판매자」 — 시험 판매자 줄 · 정지 · 이용 제한 · 폐점 단추(ACTIVE) · 수수료율 15% · 정보 변경 요청 카드',
+                ok('③ 운영 화면 「소개몰 판매자」 — 시험 판매자 줄 · 정지 · 이용 제한 · 폐점 단추(ACTIVE) · 수수료율 5%(v10.275 부터 내림으로 봄) · 정보 변경 요청 카드',
                    seen.get('admin') == (1, ['PAUSE', 'BLOCK', 'CLOSE'], 1, 1, True), str(seen.get('admin')))
             if SITE:
                 for w in (1400, 390):
