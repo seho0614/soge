@@ -67,7 +67,7 @@ ok('① API 3개(유형 요율 보기 · 바꾸기(사유 · 기록 · 감사) �
    and 'export function HealthTypeRates(' in TR and 'export async function previewImpact(' in TR and '<HealthTypeRates ' in HS   # v10.276 onChanged 받음
    and "previewImpact('CATEGORY'" in HS and "previewImpact('SELLER'" in HL and "previewImpact('TYPE'" in TR
    and all(f'"{a}"' in SCR for a in ('GET /admin/health/type-rates', 'PATCH /admin/health/type-rates/{sellerType}', 'GET /admin/health/rate-impact'))
-   and bool(D404) and len(mig) in (245, 246, 247, 248, 249, 250, 251, 252, 253, 254) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 274), f'{len(mig)} · {VER}')
+   and bool(D404) and len(mig) in (245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 274), f'{len(mig)} · {VER}')
 
 
 def call(m_, p, b=None, t=None):

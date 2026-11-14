@@ -44,7 +44,7 @@ ok('① 서버 — adminNotices(상태 5개만 · 제목 글자 그대로 · 50�
    and 'LIMIT 50 OFFSET $4' in SS and 'count(*) OVER ()::int AS total' in SS and "@ApiQuery({ name: 'page'" in SC and 'this.svc.adminNotices({ gwanCode, status, q' in SC, f'{len(SS)}')
 ok('① 화면 · 문서 — 「공지」 표 상태 고르기 · 찾기 · 「앞」 · 「뒤」 · 쪽 · 문서 415 · 마이그레이션 254 · 판 v10.292',
    all(x in MO for x in ('data-notice-filter-status', 'data-notice-q-go', 'data-notice-prev', 'data-notice-next', 'data-notice-page', 'data-notice-filter-clear', 'data-notice-total'))
-   and '걸러 보기' in D415 and len(mig) == 254 and verok(292), f'{len(mig)} · {VER} · 415 {bool(D415)}')
+   and '걸러 보기' in D415 and len(mig) in (254, 255) and verok(292), f'{len(mig)} · {VER} · 415 {bool(D415)}')
 
 
 def call(m_, p, b=None, t=None):

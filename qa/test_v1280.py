@@ -67,7 +67,7 @@ ok('① 화면 · 명세 · 문서 — 상태 · 알림 칸 · 고치기 · 내�
    all(x in MO for x in ('data-notice-status=', 'data-notice-notify=', 'data-notice-edit=', 'data-notice-down=', 'data-notice-revs=', 'data-notice-locked',
                          'data-mode="schedule"', 'data-notice-end', 'data-notice-notify-pick', 'data-notice-rev-list=', '/admin/notices/audience?grades='))
    and all(f'"{a}"' in SCR for a in ('GET /admin/notices/audience', 'PATCH /admin/notices/{id}', 'POST /admin/notices/{id}/unpublish', 'GET /admin/notices/{id}/revisions'))
-   and bool(D410) and len(mig) in (249, 250, 251, 252, 253, 254) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 282), f'{len(mig)} · {VER} · 410 {bool(D410)}')
+   and bool(D410) and len(mig) in (249, 250, 251, 252, 253, 254, 255) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 282), f'{len(mig)} · {VER} · 410 {bool(D410)}')
 
 
 def call(m_, p, b=None, t=None):

@@ -45,7 +45,7 @@ ok('① D216 — privacy.notice_notified_days 365 · fn_purge_notice_notified(�
 ok('① 파기 작업 · 기록 · 문서 — pii_purge 가 부름(건수 noticeNotified) · 파기 기록 칸 「공지 알림 기록」 · 문서 414 · 마이그레이션 254 · 판 v10.290',
    'SELECT fn_purge_notice_notified() AS n' in SCH and 'noticeNotified: noticeNotified.n' in SCH and 'taxIds.n + noticeNotified.n' in SCH
    and "'taxIds', 'noticeNotified', 'overdue'" in RR and "['noticeNotified', '공지 알림 기록']" in PL and '공지 알림' in D414
-   and len(mig) == 254 and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 290), f'{len(mig)} · {VER} · 414 {bool(D414)}')
+   and len(mig) in (254, 255) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 290), f'{len(mig)} · {VER} · 414 {bool(D414)}')
 
 
 def call(m_, p, b=None, t=None):
