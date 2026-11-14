@@ -41,6 +41,7 @@ export const TABS = [
   ['billing', '청구'],
   ['checklist', '오픈 체크리스트'],
   ['policy', '정책'],
+  ['settings', '전체 설정'],   /* v10.287 (D214) 사이트 설정 모두 · 바뀐 기록 */
   ['siteinfo', '법정 고지'],
   ['terms', '약관'],   /* v10.161 — 법정 고지 맨 아래 「약관」 구역을 메뉴 하나로도(같은 화면 부품 · SB-ADM-SIT-070) */
   ['manual', '사용자 설명서'],   /* v10.203 (D180) — 회원용 설명서 · AI 상담 참고 자료 */
@@ -92,7 +93,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admusr',  label: '회원',      tabs: ['members', 'users'] },
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
-  { key: 'admpol',  label: '정책',      tabs: ['policy', 'codes'] },
+  { key: 'admpol',  label: '정책',      tabs: ['policy', 'settings', 'codes'] },
   { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'siteinfo', 'terms', 'manual', 'i18n'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
   { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log', 'privacy-requests', 'server-errors', 'ops-board'] },
@@ -153,6 +154,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   users:         { title: '회원 관리', sub: '사업자 신청을 승인 · 반려하고 회원을 정지합니다. 승인 시각이 소개비 수령 자격의 기준일입니다 (INV-10).', screen: 'SB-ADM-USR-010' },
   category:      { title: '업종 관리', sub: '업종은 열린 집합입니다 — 신청 → 승인 → 노출 (A-02).', screen: 'SB-ADM-CAT-010' },
   mainops:       { title: '메인 운영', sub: '메인에 무엇을 띄울지 정합니다. 광고는 추천 순위에 섞이지 않고 별도 슬롯에만 나갑니다. 배포 없이 즉시 반영됩니다.', screen: 'SB-ADM-MAIN-010' },
+  settings:      { title: '전체 설정', sub: '사이트 설정 모두를 찾고 고칩니다. 값이 바뀔 때마다 전 · 후 · 누가 · 까닭이 「바뀐 기록」에 남습니다(비밀 값은 가림).', screen: 'SB-ADM-SET-010' },
   policy:        { title: '정책', sub: '화면이 따르는 규칙의 원본입니다. 여기 값이 바뀌면 화면 문구와 계산이 함께 바뀝니다.', screen: 'SB-ADM-POL-010' },
   codes:         { title: '코드 라벨', sub: '화면에 보이는 상태 문구입니다. 코드는 고정이고 라벨만 바뀝니다.', screen: 'SB-ADM-COD-010' },
   gwans:         { title: '사이트 · 관 관리', sub: '관은 코드가 아니라 데이터입니다. 여기서 만든 관이 그대로 하나의 사이트가 됩니다.', screen: 'SB-ADM-SIT-010' },

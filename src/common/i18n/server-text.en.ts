@@ -1841,4 +1841,12 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "그 결과 파일이 서버에 없습니다(지워졌을 수 있음).": "That result file is not on the server (it may have been deleted).",
   /* v10.255 (docs/388) — 정산 내역 한눈에 */
   "다른 회원(추천한 분 · 추천받은 분)의 금액은 보이지 않습니다. 각 정산의 신청 · 계좌 · 지급은 해당 화면에서 합니다.": "Amounts of other members (who invited you or whom you invited) are not shown. Requests, accounts and payouts for each settlement are handled on their own screens.",
+  /* v10.288 (D215 · docs/413) — 감사 기록 찾기 · CSV */
+  "시작 날짜가 끝 날짜보다 늦습니다.": "The start date is later than the end date.",
+  "기간은 1년(366일)까지 고를 수 있습니다.": "The period can be up to one year (366 days).",
+  "감사 기록을 찾을 수 없습니다.": "The audit record could not be found.",
+  "1만 줄이 넘어 최근 1만 줄만 담았습니다 — 기간을 좁혀 나눠 받으십시오.": "There were more than 10,000 rows, so only the latest 10,000 were included — narrow the period and download in parts.",
+  "{0}줄을 담았습니다.": "{0} row(s) included.",
+  /* v10.289 (docs/413) — 운영 화면 전체 찾기 */
+  "두 글자 이상 적어 주십시오.": "Please enter at least two characters.",
 };

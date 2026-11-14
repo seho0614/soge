@@ -34,6 +34,8 @@ import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
 import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
 import { ServerErrors } from './app/admin/ServerErrors';   // v10.182 (D171)
 import { OpsBoard } from './app/admin/OpsBoard';   // v10.286 (D213)
+import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
+import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
@@ -234,6 +236,7 @@ function Console() {
             })}
           </nav>
           <div className="ad-hr">
+            <AdminSearch onGo={(t) => go(t as Tab)} canGo={(t) => visible(t as Tab)} />   {/* v10.289 전체 찾기 */}
             {roleText && <span className="ad-role">{roleText}</span>}
             <a className="ad-btn" href={siteUrl()} target="_blank" rel="noreferrer">사용자 화면으로</a>
             <button className="ad-btn bo-logout" onClick={() => setToken(null, null)}>로그아웃</button>
@@ -307,6 +310,7 @@ function Console() {
         {tab === 'billing' && <Billing />}
         {tab === 'checklist' && <OpenChecklist onGo={go} />}
         {tab === 'policy' && <Policies />}
+        {tab === 'settings' && <SiteSettings />}
         {tab === 'siteinfo' && <SiteInfo onGo={visible('checklist') ? go : undefined} />}
         {tab === 'terms' && <TermsPanel />}
         {tab === 'manual' && <HelpManual />}

@@ -270,6 +270,7 @@ export class AdminService {
       `SELECT s.key, s.value, s.description,
               s.is_required_for_open AS "isRequiredForOpen",
               s.value_example AS "valueExample",
+              s.updated_at AS "updatedAt", (SELECT a.name FROM accounts a WHERE a.id = s.updated_by) AS "updatedBy",   -- v10.287 (D214)
               -- 자리표시자·형식 오류를 화면에서 바로 보여 줍니다
               EXISTS (SELECT 1 FROM v_open_blockers b
                        WHERE b.kind='SETTING' AND b.item = s.key) AS "hasIssue",
@@ -280,6 +281,24 @@ export class AdminService {
     return rows.map((r) => AdminService.isSecretKey(r.key)
       ? { ...r, value: AdminService.mask(r.key, r.value), secret: true, hasValue: !!r.value?.trim() }
       : { ...r, secret: false, hasValue: !!r.value?.trim() });
+  }
+
+  /** v10.287 (D214 · docs/413) 설정 바뀐 기록 — 트리거가 남긴 전 · 후(비밀 값은 가린 값) · 50줄씩 · 키 · 기간으로 거름 */
+  async settingHistory(q: { key?: string; from?: string; to?: string; page?: number }) {
+    const page = Math.max(1, Math.min(Number(q.page) || 1, 1000));
+    const args = [q.key?.trim() || null, q.from || null, q.to || null];
+    const where = `WHERE ($1::text IS NULL OR c.key = $1 OR c.key LIKE $1 || '.%')
+        AND ($2::date IS NULL OR c.at >= ($2::date::timestamp AT TIME ZONE 'Asia/Seoul'))
+        AND ($3::date IS NULL OR c.at < (($3::date + 1)::timestamp AT TIME ZONE 'Asia/Seoul'))`;
+    const [items, [t]] = await Promise.all([
+      this.db.query(
+        `SELECT c.id::text AS id, c.key, c.before_val AS "before", c.after_val AS "after", c.secret, c.via, c.reason, c.at,
+                a.name AS who, s.description
+           FROM site_setting_changes c LEFT JOIN accounts a ON a.id = c.changed_by LEFT JOIN site_settings s ON s.key = c.key
+          ${where} ORDER BY c.at DESC, c.id DESC LIMIT 50 OFFSET ${(page - 1) * 50}`, args),
+      this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM site_setting_changes c ${where}`, args),
+    ]);
+    return { items, total: Number(t?.n ?? 0), page, pageSize: 50 };
   }
 
   /** v10.195 (D174 · docs/306) — 간주 결제가 켜져 있을 때 주문 받기를 켜려면 이 문구를 그대로 */

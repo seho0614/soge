@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ErrorDto } from '../../common/dto/common.dto';
 import { AuditService } from './audit.service';
 import { ReviewSignalDto } from './audit.dto';
 import { Roles } from '../../core/auth';
@@ -56,6 +57,39 @@ export class AuditController {
   logs(@Query('action') action?: string, @Query('days') days?: number, @Query('kind') kind?: string) {
     return this.svc.logs(action, days, kind);
   }
+
+  /* v10.288 (D215 · docs/413) 감사 기록 찾기 — 사람 · 행위 · 대상 · 기간 · 100줄씩 · 상세 · CSV */
+  @Get('search')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '감사 기록 찾기', description: 'v10.288 (D215) 사람(이름 · 이메일 일부) · 행위(앞부분) · 대상(종류 또는 번호) · 기간(한국 날짜 · 최대 1년 · 없으면 최근 7일) · 종류(OPS · MEMBER · PII) — 최근 순 100줄씩.' })
+  @ApiQuery({ name: 'who', required: false }) @ApiQuery({ name: 'action', required: false }) @ApiQuery({ name: 'target', required: false, description: '대상 종류(예: ACCOUNT) 또는 대상 · 사람 번호(uuid)' })
+  @ApiQuery({ name: 'from', required: false, description: 'YYYY-MM-DD' }) @ApiQuery({ name: 'to', required: false, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'kind', required: false, enum: ['OPS', 'MEMBER', 'PII'] }) @ApiQuery({ name: 'page', required: false })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'BAD_PERIOD · PERIOD_TOO_LONG', type: ErrorDto })
+  search(@Query('who') who?: string, @Query('action') action?: string, @Query('target') target?: string, @Query('from') from?: string,
+         @Query('to') to?: string, @Query('kind') kind?: string, @Query('page') page?: string) {
+    return this.svc.search({ who, action, target, from, to, kind, page: Number(page) || 1 });
+  }
+
+  @Get('export')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '감사 기록 CSV (SUPER)', description: 'v10.288 (D215) 찾기와 같은 조건 · 최근 순 1만 줄까지 · 전 · 후 내용은 넣지 않음 · 감사 AUDIT_LOG_EXPORT 에 조건 · 줄 수만 남음.' })
+  @ApiQuery({ name: 'who', required: false }) @ApiQuery({ name: 'action', required: false }) @ApiQuery({ name: 'target', required: false })
+  @ApiQuery({ name: 'from', required: false }) @ApiQuery({ name: 'to', required: false }) @ApiQuery({ name: 'kind', required: false, enum: ['OPS', 'MEMBER', 'PII'] })
+  @ApiOkResponse({ schema: { type: 'object', properties: { filename: { type: 'string' }, csv: { type: 'string' }, rows: { type: 'integer' }, truncated: { type: 'boolean' }, note: { type: 'string' } } } })
+  @ApiResponse({ status: 422, description: 'BAD_PERIOD · PERIOD_TOO_LONG', type: ErrorDto })
+  exportCsv(@Query('who') who?: string, @Query('action') action?: string, @Query('target') target?: string, @Query('from') from?: string,
+            @Query('to') to?: string, @Query('kind') kind?: string) {
+    return this.svc.exportCsv({ who, action, target, from, to, kind });
+  }
+
+  @Get('logs/:id')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '감사 기록 상세', description: 'v10.288 (D215) 전 · 후 내용 · IP · 브라우저.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  detail(@Param('id') id: string) { return this.svc.detail(id); }
 
   @Get('reviews')
   @Roles('ADMIN', 'SUPER')

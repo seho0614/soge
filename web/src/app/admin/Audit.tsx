@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -11,7 +11,6 @@ interface Signal {
   lastReview: { reviewedAt: string; verdict: string; reason: string } | null;
 }
 interface Signals { items: Signal[]; overdue: Array<{ code: string; signalCount: number; lastReviewed: string | null }>; note: string | null }
-interface Log { at: string; action: string; targetType: string | null; targetId: string | null; role: string | null; actor: string | null }
 interface Review { id: string; signalCode: string; verdict: string; reason: string; actionTaken: string | null; reviewedAt: string; reviewedBy: string }
 interface Reviews { items: Review[]; thinCount: number; note: string | null }
 /** v10.32 — GET /admin/audit/policy (보관 · 확인 기한 · 임계) */
@@ -168,45 +167,66 @@ function AuditSignals({ onLogs }: { onLogs: () => void }) {
   );
 }
 
-/* ── SB-ADM-AUD-020 감사 기록 — 「기록 보기」가 여는 화면: 일시 · 행위 · 대상 · 역할 · 누가 ── */
+/* ── SB-ADM-AUD-020 감사 기록 — 「기록 보기」가 여는 화면: 일시 · 행위 · 대상 · 역할 · 누가 ──
+ * v10.288 (D215 · docs/413) 찾기 키움 — 사람(이름 · 이메일 일부) · 행위(앞부분) · 대상(종류 · 번호) · 기간(최대 1년) · 100줄씩 넘김 · 줄 누르면 상세(전 · 후 · IP) · CSV(SUPER · 1만 줄) */
+interface LogRow { id: string; at: string; action: string; targetType: string | null; targetId: string | null; role: string | null; actor: string | null; ip: string | null }
+interface LogPage { items: LogRow[]; total: number; page: number; pageSize: number; from: string | null; to: string | null }
+interface LogDetail extends LogRow { userAgent: string | null; before: unknown; after: unknown }
 function AuditLogs({ onBack }: { onBack: () => void }) {
-  const [days, setDays] = useState('7');
-  const [action, setAction] = useState('');
+  const isSuper = tokenRoles().includes('SUPER');
+  const [f, setF] = useState({ who: '', action: '', target: '', from: '', to: '' });
   const [kind, setKind] = useState('');
-  const [logPath, setLogPath] = useState('/admin/audit/logs?days=7');
-  const logs = useApi<Log[]>(logPath);
-  const build = (k: string) => {
-    const q = new URLSearchParams();
-    if (/^\d+$/.test(days)) q.set('days', days);
-    if (action.trim()) q.set('action', action.trim().toUpperCase());
-    if (k) q.set('kind', k);
-    setLogPath(`/admin/audit/logs?${q.toString()}`);
+  const [cond, setCond] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const qs = new URLSearchParams({ ...cond, ...(kind ? { kind } : {}), page: String(page) }).toString();
+  const logs = useApi<LogPage>(`/admin/audit/search?${qs}`);
+  const [open, setOpen] = useState<LogDetail | null>(null);
+  const a = useAct();
+  const filter = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCond(Object.fromEntries(Object.entries(f).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v)));
+    setPage(1); setOpen(null);
   };
-  const filter = (e: React.FormEvent) => { e.preventDefault(); build(kind); };
+  const show = async (id: string) => { try { setOpen(await api<LogDetail>(`/admin/audit/logs/${id}`)); } catch (e) { a.setErr(String((e as Error).message ?? e)); } };
+  const csv = () => void a.run('csv', async () => {
+    const r = await api<{ filename: string; csv: string; note: string }>(`/admin/audit/export?${new URLSearchParams({ ...cond, ...(kind ? { kind } : {}) }).toString()}`);
+    const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([r.csv], { type: 'text/csv;charset=utf-8' })); el.download = r.filename; el.click(); URL.revokeObjectURL(el.href);
+    return r;
+  }, undefined, (r) => r.note);
+  const d = logs.data;
+  const pages = d ? Math.max(1, Math.ceil(d.total / d.pageSize)) : 1;
+  const js = (v: unknown) => (v == null ? '—' : JSON.stringify(v, null, 2));
   return (
     <section data-audit-logs-view>
-      {/* v10.31 — 시안 거르기 칩(전체 · 운영 · 회원 · 개인정보 열람). 서버 GET /admin/audit/logs?kind= */}
+      <Flash msg={a.msg} err={a.err} />
+      {/* v10.31 — 시안 거르기 칩(전체 · 운영 · 회원 · 개인정보 열람). 서버 kind= */}
       <div className="ad-flt" role="tablist" aria-label="감사 기록 거르기">
         {([['', '전체'], ['OPS', '운영'], ['MEMBER', '회원'], ['PII', '개인정보 열람']] as const).map(([k, t]) => (
           <button key={k || 'all'} role="tab" className={kind === k ? 'on' : ''} aria-selected={kind === k}
-                  onClick={() => { setKind(k); build(k); }} data-audit-kind={k || 'ALL'}>{t}</button>
+                  onClick={() => { setKind(k); setPage(1); }} data-audit-kind={k || 'ALL'}>{t}</button>
         ))}
       </div>
-      {/* 개발에만 — 행위 · 기간으로 좁히기(10/10 답: 남김) */}
-      <form className="search-row" onSubmit={filter}>
-        <input value={action} onChange={(e) => setAction(e.target.value)} placeholder="행위 (예: ACCOUNT_VIEW)" aria-label="행위" />
-        <input value={days} onChange={(e) => setDays(e.target.value)} style={{ maxWidth: 90 }} aria-label="기간(일)" />
+      <form className="search-row" onSubmit={filter} data-audit-search>
+        <input value={f.action} onChange={(e) => setF({ ...f, action: e.target.value })} placeholder="행위 (예: ACCOUNT_VIEW · 앞부분도)" aria-label="행위" />
+        <input value={f.who} onChange={(e) => setF({ ...f, who: e.target.value })} placeholder="사람 (이름 · 이메일 일부)" aria-label="사람" data-audit-who />
+        <input value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })} placeholder="대상 (종류 예: ACCOUNT · 번호)" aria-label="대상" data-audit-target />
+        <input type="date" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} aria-label="시작" data-audit-from />
+        <input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} aria-label="끝" data-audit-to />
         <button className="btn-ok" type="submit">기록 보기</button>
       </form>
+      <div className="acts">
+        <span className="dim" data-audit-total={d?.total ?? ''}>{d ? `${d.from ?? '처음'} ~ ${d.to ?? '지금'} · 모두 ${d.total}줄` : ''}</span>
+        {isSuper && <button className="btn-sm" disabled={a.busy === 'csv' || !d?.total} onClick={csv} data-audit-csv>CSV 받기(1만 줄까지)</button>}
+      </div>
       {logs.error ? <ErrorView error={logs.error} onRetry={logs.reload} /> : null}
-      {!logs.data && !logs.error && <p className="muted">불러오는 중…</p>}
-      {logs.data && logs.data.length === 0 && <p className="ad-empty">해당 기간에 기록이 없습니다.</p>}
-      {(logs.data ?? []).length > 0 && (
+      {!d && !logs.error && <p className="muted">불러오는 중…</p>}
+      {d && d.items.length === 0 && <p className="ad-empty">해당 기간에 기록이 없습니다.</p>}
+      {d && d.items.length > 0 && (
         <div className="ad-tw"><table className="tbl" data-audit-log-table>
           <thead><tr><th>일시</th><th>행위</th><th>대상</th><th>역할</th><th>누가</th></tr></thead>
           <tbody>
-            {(logs.data ?? []).slice(0, 100).map((l, i) => (
-              <tr key={i}>
+            {d.items.map((l) => (
+              <tr key={l.id} data-audit-row={l.id} onClick={() => void show(l.id)} style={{ cursor: 'pointer' }}>
                 <td className="muted">{ymdhm(l.at)}</td><td className="mono">{l.action}</td>
                 <td className="muted">{l.targetType ?? '—'}{l.targetId ? ` · ${l.targetId.slice(0, 8)}` : ''}</td>
                 <td>{l.role ?? '—'}</td><td>{l.actor ?? '—'}</td>
@@ -215,8 +235,23 @@ function AuditLogs({ onBack }: { onBack: () => void }) {
           </tbody>
         </table></div>
       )}
-      {(logs.data ?? []).length > 100 && <p className="dim">최근 100줄만 보입니다 — 행위 · 기간으로 좁혀 보십시오.</p>}
-      <div className="ad-nt info"><b>감사 기록은 고치거나 지울 수 없습니다.</b> DB 가 막습니다(바꾸기 · 지우기 모두 거절). 보관 3년(1095일) — 분쟁이 늦게 옵니다.</div>
+      {d && pages > 1 && (
+        <div className="acts" data-audit-pages={pages}>
+          <button className="btn-sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>앞</button>
+          <span className="dim">{page} / {pages}</span>
+          <button className="btn-sm" disabled={page >= pages} onClick={() => setPage(page + 1)}>뒤</button>
+        </div>
+      )}
+      {open && (
+        <div className="card pad" data-audit-detail={open.id}>
+          <div className="acts"><b className="mono">{open.action}</b><span className="dim">{ymdhm(open.at)} · {open.actor ?? '—'} · {open.role ?? '—'} · IP {open.ip ?? '—'}</span>
+            <button className="btn-sm" onClick={() => setOpen(null)}>닫기</button></div>
+          <p className="dim">대상 {open.targetType ?? '—'} {open.targetId ?? ''} · {open.userAgent ?? ''}</p>
+          {open.before != null && <><h4>전</h4><pre className="mono" style={{ whiteSpace: 'pre-wrap', maxHeight: 300, overflow: 'auto' }}>{js(open.before)}</pre></>}
+          <h4>내용(응답)</h4><pre className="mono" style={{ whiteSpace: 'pre-wrap', maxHeight: 400, overflow: 'auto' }} data-audit-after>{js(open.after)}</pre>
+        </div>
+      )}
+      <div className="ad-nt info"><b>감사 기록은 고치거나 지울 수 없습니다.</b> DB 가 막습니다(바꾸기 · 지우기 모두 거절). 보관 3년(1095일) — 분쟁이 늦게 옵니다. CSV 를 받으면 그 조건 · 줄 수가 감사 기록(AUDIT_LOG_EXPORT)에 남습니다.</div>
       <div className="ad-nt warn"><b>개인정보를 본 기록에는 사유가 함께 남습니다.</b> 사유 없이 본 기록은 징후(NO_REASON)로 잡힙니다.</div>
       <div className="ad-dact"><button className="btn-plain" onClick={onBack} data-audit-back>← 감사 징후</button></div>
     </section>

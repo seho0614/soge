@@ -1245,6 +1245,7 @@
    ],
    "gates": [],
    "apis": [
+    "GET /admin/search",
     "GET /admin/reports/daily",
     "GET /admin/staff-notices",
     "GET /admin/reports/not-agreed",
@@ -4907,7 +4908,10 @@
    "gates": [],
    "apis": [
     "GET /admin/audit/logs",
-    "GET /admin/audit/policy"
+    "GET /admin/audit/policy",
+    "GET /admin/audit/search",
+    "GET /admin/audit/logs/{id}",
+    "GET /admin/audit/export"
    ],
    "nav": "SB-ADM-AUD-010",
    "note": "일시 · 행위 · 대상 · 역할 · 누가 — 고치거나 지울 수 없음(v10.27 · G-130)"
@@ -5171,6 +5175,25 @@
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "v10.286 (D213 · docs/412) 하루 요약 · 급한 알림 · 대표 할 일 · 시험 메시지가 텔레그램 · 슬랙 결과와 함께 저절로(꺼져 있어도) · 관리자 공지 사본 2일 · 운영자 글 · 댓글 · 확인함 · 보관 기간(SUPER) · 운영 화면 계정만"
+  },
+  {
+   "id": "SB-ADM-SET-010",
+   "name": "전체 설정",
+   "group": "ADM",
+   "url": "/admin/settings",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/site-settings",
+    "PATCH /admin/site-settings",
+    "GET /admin/site-settings/history"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "v10.287 (D214 · docs/413) 사이트 설정 모두 찾기 · 묶음 · 오픈 필수 · 문제 · 고치기(사유) · 바뀐 기록(DB 트리거 · 전 · 후 · 누가 · 비밀 값 가림 · 50줄씩)"
   },
   {
    "id": "SB-ADM-ERR-010",

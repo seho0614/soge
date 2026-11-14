@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminMemberService } from './admin-member.service';
 import { AdminReviewService } from './admin-review.service';
@@ -100,6 +100,18 @@ export class AdminController {
   })
   @ApiOkResponse({ type: SiteSettingDto, isArray: true })
   settings() { return this.admin.siteSettings(); }
+
+  @Get('site-settings/history')
+  @ApiOperation({ summary: '설정 바뀐 기록', description: 'v10.287 (D214 · docs/413) 설정 값이 바뀔 때마다 DB 트리거가 남긴 전 · 후 · 누가 · 사유(비밀 값은 가린 값) — 최근 순 50줄씩. key 는 정확한 키 또는 앞부분(예: mall).' })
+  @ApiQuery({ name: 'key', required: false, description: '키 또는 앞부분(예: mall · ops.telegram_chat)' })
+  @ApiQuery({ name: 'from', required: false, description: 'YYYY-MM-DD(한국)' })
+  @ApiQuery({ name: 'to', required: false, description: 'YYYY-MM-DD(한국)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiOkResponse({ type: Object })
+  settingHistory(@Query('key') key?: string, @Query('from') from?: string, @Query('to') to?: string, @Query('page') page?: string) {
+    const ymd = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+    return this.admin.settingHistory({ key: key?.slice(0, 100), from: ymd(from), to: ymd(to), page: Number(page) || 1 });
+  }
 
   @Patch('site-settings')
   @ApiOperation({ summary: '설정 변경', description: '푸터 법정 고지가 여기서 채워집니다.' })

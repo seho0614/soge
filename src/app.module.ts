@@ -137,7 +137,9 @@ import { ReleaseLogService } from './modules/admin/release-log.service';   // v1
 import { ServerTrendService } from './modules/admin/server-trend.service';   // v10.248 (D203) 서버 자원 추세
 import { OpsReviewController } from './modules/admin/ops-review.controller';
 import { OpsBoardController } from './modules/admin/ops-board.controller';   // v10.286 (D213) 운영자 게시판
-import { OpsBoardService } from './modules/admin/ops-board.service';   // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
+import { OpsBoardService } from './modules/admin/ops-board.service';   // v10.286 (D213) 운영자 게시판
+import { AdminSearchController } from './modules/admin/admin-search.controller';   // v10.289 전체 찾기
+import { AdminSearchService } from './modules/admin/admin-search.service';
 import { OpsAlertsService } from './modules/admin/ops-alerts.service';
 import { PiiReviewService } from './modules/admin/pii-review.service';
 import { RoleReviewService } from './modules/admin/role-review.service';   // v10.180 (D169) 운영자 권한 점검 · 파기 기록
@@ -366,6 +368,7 @@ import { LeadService } from './modules/lead/lead.service';
     LaunchWatchController,   // v10.170 (D159) 공개 직후 지켜보기
     OpsReviewController,     // v10.179 (D168) 운영 알림 · 개인정보 접속기록 점검
     OpsBoardController,      // v10.286 (D213) 운영자 게시판
+    AdminSearchController,   // v10.289 전체 찾기
     MfaController,           // v10.180 (D169) 운영자 2단계 인증
     StaffIpController,       // v10.226 (D195) 운영 화면 접속 인증
     PrivacyController,       // v10.181 (D170) 내 정보 내려받기 · 로그인 기록 · 권리 요청
@@ -398,6 +401,7 @@ import { LeadService } from './modules/lead/lead.service';
     StateCheckService,   /* v10.212 (docs/340) 운영 상태 한눈에 */
     AlertChannelsService, OwnerTodoService,   /* v10.238 ~ 240 (docs/379) */
     OpsBoardService,   /* v10.286 (D213) 운영자 게시판 */
+    AdminSearchService,   /* v10.289 전체 찾기 */
     ReleaseLogService,   /* v10.244 (D202 · docs/383) 운영 적용 기록 */
     ServerTrendService,   /* v10.248 (D203 · docs/386) 서버 자원 추세 */
     OpsAlertsService, PiiReviewService,   /* v10.179 (D168) */
