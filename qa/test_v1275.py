@@ -83,7 +83,7 @@ ok('① 화면 — 운영 「요율 변경 예정」(취소) · 미리보기가 
    and '<HealthRateSchedules ' in HS and 'rate, ...p' in HS and 'reason: reason.trim(), ...p' in HL and 'reason: reason.trim(), ...p' in TR
    and 'data-rate-schedule-notice=' in CE and all(MK.get(k) and ME.get(k) for k in KEYS) and all(sorted(re.findall(r'\{\w+\}', MK[k])) == sorted(re.findall(r'\{\w+\}', ME[k])) for k in KEYS if MK.get(k) and ME.get(k))
    and all(f'"{a}"' in SCR for a in ('GET /admin/health/rate-schedules', 'POST /admin/health/rate-schedules/{id}/cancel'))
-   and bool(D406) and len(mig) in (246, 247, 248, 249, 250, 251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 277), f'{len(mig)} · {VER} · 406 {bool(D406)}')
+   and bool(D406) and len(mig) in (246, 247, 248, 249, 250, 251, 252, 253, 254) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 277), f'{len(mig)} · {VER} · 406 {bool(D406)}')
 
 
 def call(m_, p, b=None, t=None):

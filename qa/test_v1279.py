@@ -73,7 +73,7 @@ ok('① 화면 — 등급 고르기 · 등급 관리 · 초안 「게시」 · �
    and "apiGetPersonal<Notice[]>('/notices')" in SP and 'data-support-notices-link' in SNW and PN.count("apiGetPersonal<Notice[]>('/notices')") == 3 and "apiGet<Notice[]>('/notices'" not in PN
    and all((MK.get('support') or {}).get(k) and (ME.get('support') or {}).get(k) for k in NK) and (MK.get('meta') or {}).get('notices') and (ME.get('meta') or {}).get('notices')
    and '"id": "SB-HOM-NTC-010"' in SCR and all(f'"{a}"' in SCR for a in ('POST /admin/notices/{id}/publish', 'GET /admin/notice-grades', 'PATCH /admin/notice-grades/{code}', 'GET /admin/staff-notices'))
-   and bool(D408) and len(mig) in (248, 249, 250, 251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 279), f'{len(mig)} · {VER} · 408 {bool(D408)}')
+   and bool(D408) and len(mig) in (248, 249, 250, 251, 252, 253, 254) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 279), f'{len(mig)} · {VER} · 408 {bool(D408)}')
 
 
 def call(m_, p, b=None, t=None):
