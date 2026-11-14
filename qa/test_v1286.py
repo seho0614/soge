@@ -138,12 +138,12 @@ ROLLBACK;""")
         e5 = call('PATCH', f'/admin/ops-board/{wid}', {'body': '또'}, TS)
         e6 = call('GET', '/admin/ops-board', None, TB)
         det2 = call('GET', f'/admin/ops-board/{wid}', None, TS)
-        ok('③ API — 운영자 글 · 다른 운영자 목록 · 확인함 · 댓글 · 상세(확인 1 · 댓글 1) · 안 본 것 거름 · 다른 운영자 고치기 · 내리기 403 · SUPER 고치기(기록 1) · 자동 글 내용 409 · 고정 됨 · 사유 짧음 400 · 내림 · 내린 글 409 · 회원 403',
-           bool(wid) and row.get('author') and rd1.get('ok') is True and cm.get('ok') is True and len(det.get('reads') or []) == 1 and len(det.get('comments') or []) == 1
+        ok('③ API — 운영자 글 · 다른 운영자 목록 · 확인함 · 댓글 · 상세(확인 2 — 쓴 사람 · 검수 · 댓글 1) · 안 본 것 거름 · 다른 운영자 고치기 · 내리기 403 · SUPER 고치기(기록 1) · 자동 글 내용 409 · 고정 됨 · 사유 짧음 400 · 내림 · 내린 글 409 · 회원 403',
+           bool(wid) and row.get('author') and rd1.get('ok') is True and cm.get('ok') is True and len(det.get('reads') or []) == 2 and len(det.get('comments') or []) == 1
            and wid not in [x.get('id') for x in (un.get('items') or [])] and e1.get('code') == 'NOT_AUTHOR' and e2.get('code') == 'NOT_AUTHOR'
            and u1.get('ok') is True and e3.get('code') == 'AUTO_POST_LOCKED' and pn.get('ok') is True and e4.get('_err') == 400 and dn.get('ok') is True
            and e5.get('code') == 'POST_TAKEN_DOWN' and e6.get('_err') == 403 and len(det2.get('revisions') or []) == 1 and det2.get('takenDownAt'),
-           f"{e1.get('code')} · {e2.get('code')} · {e3.get('code')} · {e4.get('_err')} · {e5.get('code')} · {e6.get('_err')} · rev {len(det2.get('revisions') or [])}")
+           f"{wid} · {row.get('author')} · {rd1} · {cm} · 확인 {len(det.get('reads') or [])} · 댓글 {len(det.get('comments') or [])} · {e1.get('code')} · {e2.get('code')} · {e3.get('code')} · {e4.get('_err')} · {e5.get('code')} · {e6.get('_err')} · rev {len(det2.get('revisions') or [])}")
 
         # ④ 자동 글
         call('POST', '/admin/jobs', {'job': 'launch_digest'}, TS)
@@ -155,6 +155,8 @@ ROLLBACK;""")
         bp = psql(f"SELECT board_posted_at IS NOT NULL FROM ops_alerts WHERE alert_code = 'T1286_CRIT' AND title LIKE '{TAG}%'")
         staff = call('GET', '/admin/staff-notices', None, TR)
         seen = any(str(x.get('title', '')).startswith('[운영] 운영 하루 요약') for x in (staff if isinstance(staff, list) else []))
+        adm_list = call('GET', '/admin/notices', None, TS)
+        seen = seen and not any(str(x.get('title', '')).startswith('[운영] ') for x in (adm_list if isinstance(adm_list, list) else []))   # 콘텐츠 공지 목록에는 사본 없음
         ok('④ 자동 글 — 하루 요약(텔레그램 · 슬랙 결과 · 관리자 공지 사본) · 급한 알림은 두 번 돌아도 한 번 · board_posted_at · 운영 첫 화면 관리자 공지에 사본',
            dg.startswith('DAILY_DIGEST|') and dg.split('|')[1] != '-' and dg.endswith('|STAFF') and ug == '1' and bp == 't' and seen,
            f'{dg} · urgent {ug} · {bp} · staff {seen}')
