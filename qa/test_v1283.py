@@ -62,7 +62,7 @@ ok('① 화면 · 명세 · 문서 — 판매자센터 펼치면 읽음 · 읽�
    'markRead(x.id)' in CEN and '/notices/${id}/read' in CEN and 'data-rate-notice-reads=' in TR and 'data-rate-notice-remind=' in TR
    and "'sending'" in MO and 'askBulk' in MO and 'data-notice-notify-limits' in MO and 'data-notice-limit=' in MO
    and '"POST /admin/health/rate-schedules/{id}/remind"' in SCR and '"POST /me/health/seller/notices/{id}/read"' in SCR
-   and '"다시 알림은 24시간에 한 번만 보낼 수 있습니다.": ' in EN and bool(D411) and len(mig) in (250, 251) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 285),
+   and '"다시 알림은 24시간에 한 번만 보낼 수 있습니다.": ' in EN and bool(D411) and len(mig) in (250, 251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 285),
    f'{len(mig)} · {VER} · 411 {bool(D411)}')
 
 

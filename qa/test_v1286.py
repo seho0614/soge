@@ -60,7 +60,7 @@ ok('① 화면 · 명세 · 문서 — 위험감지 묶음 「운영자 게시�
    "['ops-board', '운영자 게시판']" in MENU and "'server-errors', 'ops-board'] }" in MENU and "'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF']" in APP
    and "{tab === 'ops-board' && <OpsBoard />}" in APP and all(x in OB for x in ('data-ops-board-row=', 'data-ops-board-unread', 'data-ops-board-read', 'data-ops-board-comment', 'data-ops-board-write', 'data-ops-board-retention'))
    and '"id": "SB-ADM-OBD-010"' in SCR and '"POST /admin/ops-board/{id}/take-down"' in SCR and '"게시판 글을 찾을 수 없습니다.": ' in EN
-   and bool(D412) and len(mig) == 251 and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 286), f'{len(mig)} · {VER} · 412 {bool(D412)}')
+   and bool(D412) and len(mig) in (251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 286), f'{len(mig)} · {VER} · 412 {bool(D412)}')
 
 
 def call(m_, p, b=None, t=None):

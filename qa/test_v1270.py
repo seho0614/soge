@@ -50,7 +50,7 @@ mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.is
 ok('① 문서 400(전문 빈칸 = 〔 〕 · 〔시행일〕 만 · 「회원(개인 또는 사업자)」 · 「발행 전 할 일」 없음) · 401(추천 · 주민등록번호 · 법령 근거 빈칸) · 402 · 마이그레이션 243 · 판 v10.271 이상',
    bool(full400) and sorted(set(re.findall('〔[^〕]*〕', full400))) == ['〔 〕', '〔시행일〕'] and '판매하는 회원(개인 또는 사업자).' in full400 and '발행 전 할 일' not in full400
    and bool(full401) and '### 추천 코드로 가입하실 때' in full401 and '| 주민등록번호 |' in full401 and '〔법령 근거〕' in full401 and '- 1.1 (〔시행일〕)' in full401
-   and bool(D402) and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 271),
+   and bool(D402) and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 271),
    f"{sorted(set(re.findall('〔[^〕]*〕', full400)))} · {len(mig)} · {VER}")
 
 

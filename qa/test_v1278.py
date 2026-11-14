@@ -68,7 +68,7 @@ ok('① API — 예약 때 소개몰 공지 초안 · 「공지 게시」(31일 
 MK, ME = msgs('ko'), msgs('en')
 ok('① 화면 · 명세 · 문서 — 「공지 안 함」 · 「공지 게시」 · 본문 확인 창 · 판매자센터 소개몰 공지(한 · 영) · 명세 · 문서 407 · 마이그레이션 247 · 판 v10.278 이상',
    'data-rate-notice="missing"' in TR and 'data-rate-notice-publish=' in TR and '게시할까요?' in TR and 'data-seller-notices=' in CE and MK.get('notices') and ME.get('notices')
-   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) in (247, 248, 249, 250, 251) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
+   and '"POST /admin/health/rate-schedules/{id}/notice"' in SCR and bool(D407) and len(mig) in (247, 248, 249, 250, 251, 252, 253) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 278),
    f'{len(mig)} · {VER} · 407 {bool(D407)}')
 
 
