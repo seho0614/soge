@@ -120,7 +120,7 @@ if API and DB:
     left = [r for r in td.get('rows', []) if r.get('done') is not True]
     want = [r['label'] + ('(직접 확인)' if r.get('done') is None else '') for r in left[:5]]
     ok('③ 하루 요약 「대표 할 일 끝남 n / 15 · 아직: 앞 5줄(외 n)」 — owner-todo 와 맞음',
-       tl.startswith(f"대표 할 일 끝남 {td.get('done')} / {td.get('total')}") and td.get('total') == 15
+       tl.startswith(f"대표 할 일 끝남 {td.get('done')} / {td.get('total')}") and td.get('total') in (15, 19)   # v10.284 (D212) 4줄 더함
        and ((not left and '모두 끝남' in tl) or (all(w in tl for w in want) and ((f' 외 {len(left) - 5}' in tl) if len(left) > 5 else ' 외 ' not in tl))), tl[:200])
     vl = next((l for l in dg.splitlines() if l.startswith('운영 판 ')), '')
     ok('③ 하루 요약 「운영 판 … · 마지막 바뀜 MM-DD HH:MI(…)」', vl.startswith(f'운영 판 {VER} · 마지막 바뀜 ') and re.search(r'\d{2}-\d{2} \d{2}:\d{2}\((첫 기록|올림|되돌림|바뀜)', vl) is not None, vl[:160])

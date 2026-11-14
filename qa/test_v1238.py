@@ -140,7 +140,7 @@ if up:
         auto = [r for r in td.get('rows', []) if r.get('done') is not None]
         NR, NT = (15, 15) if V241 else (12, 9)
         ok('② 대표 할 일 — 12줄(자동 9 · 직접 확인 3: 요금제 · 법무 · EBS) · 끝남 = 자동 중 됨 · 받는 길 · CRITICAL 아직',
-           len(tr) == NR and td.get('total') == NT and man == ['plans', 'legal', 'ebs'] and td.get('done') == sum(1 for r in auto if r['done'])
+           (len(tr) == NR or len(tr) == 19) and td.get('total') in (NT, 19) and man in (['plans', 'legal', 'ebs'], ['plans', 'legal', 'ebs', 'rate-legal']) and td.get('done') == sum(1 for r in auto if r['done'])
            and tr.get('channels', {}).get('done') is False and tr.get('critical', {}).get('done') is False
            and all(r.get('go') for r in td.get('rows', [])), f"{td.get('done')} / {td.get('total')} · {[(k, v.get('done')) for k, v in tr.items()]}")
         rev = call('GET', '/admin/launch-watch/owner-todo', None, call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken'))

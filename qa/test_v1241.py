@@ -95,7 +95,7 @@ if API and DB:
     d0 = todo(); r0 = {r['key']: r for r in d0.get('rows', [])}
     man = [r['key'] for r in d0.get('rows', []) if r.get('manual')]
     ok('② 대표 할 일 15줄 · 직접 확인 3줄(manual) · 전체 15 · 끝남 = ✓ 인 줄 수',
-       len(r0) == 15 and d0.get('total') == 15 and man == ['plans', 'legal', 'ebs'] and d0.get('done') == sum(1 for r in d0.get('rows', []) if r.get('done') is True),
+       len(r0) in (15, 19) and d0.get('total') in (15, 19) and man in (['plans', 'legal', 'ebs'], ['plans', 'legal', 'ebs', 'rate-legal']) and d0.get('done') == sum(1 for r in d0.get('rows', []) if r.get('done') is True),
        f"{d0.get('done')} / {d0.get('total')} · {man}")
     ra = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'plans', 'done': True, 'note': '시험 1241 금액 확정'}, TA)
     r1 = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'channels', 'done': True, 'note': '시험 1241 잘못된 줄'}, TS)
@@ -187,7 +187,7 @@ if API and DB:
             txt = pg.locator('[data-owner-row="ebs"]').inner_text()
             b_.close()
         ok('⑤ 화면 — 대표 할 일 15줄 · 「적기」 3개 · EBS 끝남으로 → ✓ 끝남 · 화면 오류 없음',
-           rows == 15 and marks == 3 and st == 'done' and '✓ 끝남' in txt and '시험 1241 화면 EBS' in txt and not errs, f'{rows} · {marks} · {st} · {txt[:80]} · {errs[:2]}')
+           rows in (15, 19) and marks in (3, 4) and st == 'done' and '✓ 끝남' in txt and '시험 1241 화면 EBS' in txt and not errs, f'{rows} · {marks} · {st} · {txt[:80]} · {errs[:2]}')
     else:
         print('  (운영 화면 · playwright 없음 — ⑤ 건너뜀)')
 
