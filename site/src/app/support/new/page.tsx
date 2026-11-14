@@ -73,6 +73,7 @@ export default async function NewInquiryPage({ searchParams }: { searchParams: P
                 {st['footer.privacy_email'] ? <a href={`mailto:${st['footer.privacy_email']}`}>{st['footer.privacy_email']}</a> : st['footer.privacy_contact']}</dd></>}
             <dt>{t('support.contactDispute')}</dt><dd><Link href="/support/dispute">{t('support.contactDisputeGo')}</Link></dd>
             <dt>{t('support.contactScam')}</dt><dd><Link href="/safety/guide">{t('support.contactScamGo')}</Link></dd>
+            <dt>{t('support.ntcTitle')}</dt><dd><Link href="/support/notices" data-support-notices-link>{t('support.ntcGo')}</Link></dd>
           </dl>
           <p className="w1-ls" style={{ marginTop: 10 }}>{t.rich('support.newFoot', { guide: (x) => <Link href="/safety/guide">{x}</Link>, hist: (x) => <Link href="/support/history">{x}</Link> })}</p>
         </aside>

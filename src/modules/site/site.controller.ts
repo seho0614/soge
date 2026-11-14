@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
-  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto,
+  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
   GwanOrderDto, LandingDto,
 } from './site.dto';
@@ -190,8 +190,37 @@ export class SiteController {
     summary: '공지 등록',
     description: 'publishedAt 을 비우면 초안입니다. 지정한 시각에 공개됩니다.',
   })
+  @ApiResponse({ status: 422, description: 'GRADE_REQUIRED · GRADE_INACTIVE(v10.279)', type: ErrorDto })
   @Audit('NOTICE_CREATE', 'NOTICE')
   createNotice(@Body() dto: CreateNoticeDto) { return this.svc.createNotice(dto); }
+
+  @Post('notices/:id/publish')
+  @ApiOperation({ summary: '초안 공지 게시', description: 'v10.279 (D210) 게시 시각이 없거나 앞인 공지를 지금 게시합니다.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NOTICE_PUBLISHED', type: ErrorDto })
+  @Audit('NOTICE_PUBLISH', 'NOTICE')
+  publishNotice(@Param('id', ParseUUIDPipe) id: string) { return this.svc.publishNotice(id); }
+
+  @Get('notice-grades')
+  @ApiOperation({ summary: '공지 열람 등급', description: 'v10.279 (D210) 등급 7개 — 코드 · 판단 규칙 고정 · 이름 · 순서 · 사용 여부 · 쓰인 공지 수.' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  noticeGrades() { return this.svc.noticeGrades(); }
+
+  @Patch('notice-grades/:code')
+  @ApiOperation({ summary: '공지 열람 등급 고치기', description: 'v10.279 (D210) 이름 · 순서 · 사용 여부만(최고 관리자). 끄면 새 공지에 고를 수 없음.' })
+  @ApiParam({ name: 'code', enum: ['PUBLIC', 'MEMBER', 'BIZ', 'MAL_PARTNER', 'AFF_PARTNER', 'SELLER', 'STAFF'] })
+  @ApiOkResponse({ type: Object, isArray: true })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_CHANGE', type: ErrorDto })
+  @Audit('NOTICE_GRADE_UPDATE', 'NOTICE')
+  patchNoticeGrade(@Param('code') code: string, @Body() dto: NoticeGradePatchDto) { return this.svc.patchNoticeGrade(code, dto); }
+
+  @Get('staff-notices')
+  @Roles('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF')
+  @ApiOperation({ summary: '관리자 공지', description: 'v10.279 (D210) 등급 「관리자」(STAFF)가 들어간 게시 공지 — 운영 화면 계정만 · 사용자 웹에는 나오지 않음.' })
+  @ApiOkResponse({ type: Object, isArray: true })
+  staffNotices() { return this.svc.staffNotices(); }
 
   /* ── 외부 연동 (SB-ADM-SIT-080) ── */
 

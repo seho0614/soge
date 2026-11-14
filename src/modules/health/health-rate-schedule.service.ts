@@ -83,7 +83,7 @@ export class HealthRateScheduleService {
   /** v10.278 (D209) — 소개몰 공지 초안(게시 안 됨 · published_at 비움) */
   private async draftNotice(title: string, body: string) {
     const [n] = await this.db.query<{ id: string }>(
-      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id) VALUES ('HLT', $1, $2, true, NULL, $3) RETURNING id`,
+      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades) VALUES ('HLT', $1, $2, true, NULL, $3, ARRAY['SELLER']) RETURNING id`,   // v10.279 등급 소개몰 판매자
       [title, body, RequestCtx.actorId()]);
     return n.id;
   }

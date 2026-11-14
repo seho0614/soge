@@ -59,7 +59,8 @@ export class HealthSellerService {
     const notices = await this.db.query(
       `SELECT id, title, body, published_at AS "publishedAt", is_pinned AS "isPinned" FROM notices
         WHERE gwan_code = 'HLT' AND published_at IS NOT NULL AND published_at <= now()
-        ORDER BY is_pinned DESC, published_at DESC LIMIT 5`);
+          AND grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')   -- v10.279 (D210) 이 판매자의 등급에 맞는 것만
+        ORDER BY is_pinned DESC, published_at DESC LIMIT 5`, [this.me]);
     return { ...r, rateSchedules: await this.rateSched.forSeller(s.id), notices };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
   }
 

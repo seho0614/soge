@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+
+/** v10.279 (D210) 공지 열람 등급 코드 — 판단은 DB fn_notice_grades */
+export const NOTICE_GRADES = ['PUBLIC', 'MEMBER', 'BIZ', 'MAL_PARTNER', 'AFF_PARTNER', 'SELLER', 'STAFF'] as const;
 import { StrictBoolean } from '../../common/strict-boolean';
 
 export class GwanAdminDto {
@@ -73,6 +76,7 @@ export class NoticeDto {
   @ApiProperty() body!: string;
   @ApiProperty() isPinned!: boolean;
   @ApiProperty({ nullable: true, format: 'date-time' }) publishedAt!: string | null;
+  @ApiPropertyOptional({ type: [String], description: 'v10.279 볼 수 있는 등급(운영 화면 목록만)' }) grades?: string[];
 }
 
 export class CreateNoticeDto {
@@ -83,6 +87,15 @@ export class CreateNoticeDto {
   @ApiPropertyOptional() @IsOptional() @StrictBoolean() isPinned?: boolean;
   @ApiPropertyOptional({ description: '지정하면 그 시각에 공개됩니다' })
   @IsOptional() @IsString() publishedAt?: string;
+  @ApiProperty({ type: [String], enum: NOTICE_GRADES, description: 'v10.279 (D210) 볼 수 있는 등급 — 하나 이상 · 하나라도 맞으면 봄 · STAFF(관리자)만이면 운영 화면에서만' })
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(7) @IsIn(NOTICE_GRADES as unknown as string[], { each: true }) grades!: string[];
+}
+
+/** v10.279 (D210) 공지 등급 이름 · 순서 · 사용 여부(코드 · 판단 규칙은 고정) */
+export class NoticeGradePatchDto {
+  @ApiPropertyOptional({ description: '이름(1 ~ 30자)' }) @IsOptional() @IsString() @MinLength(1) @MaxLength(30) name?: string;
+  @ApiPropertyOptional({ description: '순서(작을수록 앞)' }) @IsOptional() @IsInt() @Min(0) sortOrder?: number;
+  @ApiPropertyOptional({ description: '사용 — 끄면 새 공지에 고를 수 없음(이미 올린 공지는 그대로)' }) @IsOptional() @StrictBoolean() isActive?: boolean;
 }
 
 export class HubDto {

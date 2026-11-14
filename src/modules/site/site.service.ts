@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { IntegTestService } from './integ-test.service';
-import { PolicyViolation, StateConflict } from '../../core/errors';
+import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 
 /**
@@ -124,7 +124,7 @@ export class SiteService {
   notices(gwanCode?: string, publishedOnly = true) {
     return this.db.query(
       `SELECT id, gwan_code AS "gwanCode", title, body,
-              is_pinned AS "isPinned", published_at AS "publishedAt"
+              is_pinned AS "isPinned", published_at AS "publishedAt", grades
          FROM notices
         WHERE ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
           AND ($2 = false OR (published_at IS NOT NULL AND published_at <= now()))
@@ -134,14 +134,54 @@ export class SiteService {
 
   async createNotice(input: {
     gwanCode?: string; title: string; body: string;
-    isPinned?: boolean; publishedAt?: string;
+    isPinned?: boolean; publishedAt?: string; grades: string[];
   }) {
+    /* v10.279 (D210) — 등급 하나 이상 · 쓰지 않는 등급은 고를 수 없음 */
+    const grades = [...new Set(input.grades ?? [])];
+    const off = await this.db.query<{ name: string }>(
+      `SELECT name FROM notice_grades WHERE code = ANY($1::text[]) AND NOT is_active`, [grades]);
+    if (!grades.length) throw new PolicyViolation('GRADE_REQUIRED', '볼 수 있는 등급을 하나 이상 골라 주십시오.');
+    if (off.length) throw new PolicyViolation('GRADE_INACTIVE', `쓰지 않는 등급입니다 — ${off.map((x) => x.name).join(' · ')}`);
     const [row] = await this.db.query(
-      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, title, published_at AS "publishedAt"`,
+      `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, author_id, grades)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::text[]) RETURNING id, title, published_at AS "publishedAt", grades`,
       [input.gwanCode ?? null, input.title, input.body,
-       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId()]);
+       input.isPinned ?? false, input.publishedAt ?? null, RequestCtx.actorId(), grades]);
     return row;
+  }
+
+  /** v10.279 (D210) — 초안 공지를 지금 게시(전에는 나중에 게시할 길이 없었음) */
+  async publishNotice(id: string) {
+    const rows = await this.db.query<{ id: string }>(
+      `UPDATE notices SET published_at = now() WHERE id::text = $1 AND (published_at IS NULL OR published_at > now()) RETURNING id`, [id]);
+    if (!rows.length) throw new StateConflict('NOTICE_PUBLISHED', '이미 게시한 공지이거나 없는 공지입니다.');
+    return { ok: true, note: '공지를 게시했습니다.' };
+  }
+
+  /** v10.279 (D210) — 공지 열람 등급(코드 · 규칙 고정) */
+  noticeGrades() {
+    return this.db.query(
+      `SELECT g.code, g.name, g.rule, g.sort_order AS "sortOrder", g.is_active AS "isActive", g.updated_at AS "updatedAt",
+              (SELECT count(*)::int FROM notices n WHERE g.code = ANY(n.grades)) AS notices
+         FROM notice_grades g ORDER BY g.sort_order, g.code`);
+  }
+
+  async patchNoticeGrade(code: string, d: { name?: string; sortOrder?: number; isActive?: boolean }) {
+    if (d.name === undefined && d.sortOrder === undefined && d.isActive === undefined) throw new PolicyViolation('NO_CHANGE', '바꿀 것이 없습니다.');
+    const rows = await this.db.query<{ code: string }>(
+      `UPDATE notice_grades SET name = coalesce($2, name), sort_order = coalesce($3, sort_order), is_active = coalesce($4, is_active),
+              updated_by = $5, updated_at = now() WHERE code = $1 RETURNING code`,
+      [code, d.name?.trim() ?? null, d.sortOrder ?? null, d.isActive ?? null, RequestCtx.actorId()]);
+    if (!rows.length) throw new NotFound('공지 등급을 찾을 수 없습니다.');
+    return this.noticeGrades();
+  }
+
+  /** v10.279 (D210) — 관리자 공지(STAFF 등급 · 게시된 것 · 최근 20) — 운영 화면 첫 화면 */
+  staffNotices() {
+    return this.db.query(
+      `SELECT id, title, body, is_pinned AS "isPinned", published_at AS "publishedAt", grades
+         FROM notices WHERE 'STAFF' = ANY(grades) AND published_at IS NOT NULL AND published_at <= now()
+        ORDER BY is_pinned DESC, published_at DESC LIMIT 20`);
   }
 
   /* ── 허브 · 영향 범위 ── */

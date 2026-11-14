@@ -18,8 +18,10 @@ interface MainNotice {
 }
 interface Notice {
   id: string; gwanCode: string | null; title: string; body: string;
-  isPinned: boolean; publishedAt: string | null;
+  isPinned: boolean; publishedAt: string | null; grades?: string[];
 }
+/** v10.279 (D210) 공지 열람 등급 — 코드 · 규칙 고정 · 이름 · 순서 · 사용 여부만 바꿈 */
+interface NoticeGrade { code: string; name: string; rule: string; sortOrder: number; isActive: boolean; notices: number }
 interface Placement {
   id: string; slotCode: string | null; advertiserName: string | null;
   startsAt: string | null; endsAt: string | null; status: string;
@@ -387,9 +389,24 @@ function LayoutView() {
 function Content() {
   const copy = useApi<Copy[]>('/admin/main/copy');
   const notices = useApi<Notice[]>('/admin/notices');
+  const grades = useApi<NoticeGrade[]>('/admin/notice-grades');   // v10.279 (D210)
   const [edit, setEdit] = useState<Record<string, string>>({});
   const [f, setF] = useState({ title: '', body: '', isPinned: false, publish: false });
+  const [pick, setPick] = useState<string[]>([]);
   const a = useAct();
+  const gname = (c: string) => (grades.data ?? []).find((g) => g.code === c)?.name ?? c;
+  const togglePick = (c: string) => setPick((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
+  const publishDraft = (nt: Notice) => {
+    if (!confirm(`「${nt.title}」 공지를 지금 게시합니다 — 볼 수 있는 등급: ${(nt.grades ?? []).map(gname).join(' · ')}\n게시할까요?`)) return;
+    void a.run(`pub:${nt.id}`, () => api<{ note: string }>(`/admin/notices/${nt.id}/publish`, { method: 'POST' }), notices.reload, (r) => r.note);
+  };
+  const editGrade = (g: NoticeGrade, what: 'name' | 'sort' | 'active') => {
+    let body: Record<string, unknown> = {};
+    if (what === 'name') { const v = prompt(`${g.code} 등급 이름(1 ~ 30자)`, g.name); if (v === null || !v.trim()) return; body = { name: v.trim() }; }
+    if (what === 'sort') { const v = prompt(`${g.name} 순서(작을수록 앞 · 0 이상 정수)`, String(g.sortOrder)); if (v === null || !/^\d+$/.test(v.trim())) return; body = { sortOrder: Number(v) }; }
+    if (what === 'active') body = { isActive: !g.isActive };
+    void a.run(`grade:${g.code}`, () => api(`/admin/notice-grades/${g.code}`, { method: 'PATCH', body: JSON.stringify(body) }), grades.reload, '공지 등급을 바꿨습니다.');
+  };
 
   const saveCopy = (slot: string) => {
     const text = edit[slot];
@@ -401,14 +418,15 @@ function Content() {
   };
   const addNotice = () => {
     if (f.title.trim().length < 2 || !f.body.trim()) { a.setErr('제목(2자 이상)과 본문을 적어 주십시오.'); return; }
+    if (!pick.length) { a.setErr('볼 수 있는 등급을 하나 이상 골라 주십시오.'); return; }   // v10.279 (D210)
     void a.run('notice', () => api('/admin/notices', {
       method: 'POST',
       body: JSON.stringify({
-        title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned,
+        title: f.title.trim(), body: f.body.trim(), isPinned: f.isPinned, grades: pick,
         // 비우면 초안입니다. 게시를 고르면 지금 시각으로 공개됩니다.
         publishedAt: f.publish ? new Date().toISOString() : undefined,
       }),
-    }), () => { setF({ title: '', body: '', isPinned: false, publish: false }); notices.reload(); },
+    }), () => { setF({ title: '', body: '', isPinned: false, publish: false }); setPick([]); notices.reload(); grades.reload(); },
     f.publish ? '공지를 게시했습니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
   };
 
@@ -449,16 +467,18 @@ function Content() {
       {notices.data && notices.data.length === 0 && <p className="muted">등록된 공지가 없습니다.</p>}
       {(notices.data ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>제목</th><th>관</th><th>고정</th><th>게시</th></tr></thead>
+          <thead><tr><th>제목</th><th>관</th><th>볼 수 있는 등급</th><th>고정</th><th>게시</th></tr></thead>
           <tbody>
             {(notices.data ?? []).map((nt) => (
-              <tr key={nt.id}>
+              <tr key={nt.id} data-notice-row={nt.id}>
                 <td>{nt.title}</td>
                 <td className="muted">{nt.gwanCode ?? '전 관'}</td>
+                <td data-notice-grades={(nt.grades ?? []).join(',')}>{(nt.grades ?? []).map(gname).join(' · ') || '—'}</td>
                 <td>{nt.isPinned ? '고정' : '—'}</td>
                 <td>{nt.publishedAt
                   ? <span className="badge badge-verified">{ymd(nt.publishedAt)}</span>
-                  : <span className="badge badge-urgent">초안</span>}</td>
+                  : <><span className="badge badge-urgent">초안</span>{' '}
+                      <button className="btn-sm" disabled={a.busy === `pub:${nt.id}`} onClick={() => publishDraft(nt)} data-notice-publish={nt.id}>게시</button></>}</td>
               </tr>
             ))}
           </tbody>
@@ -476,10 +496,43 @@ function Content() {
         <div className="acts">
           <label><input type="checkbox" checked={f.isPinned} onChange={(e) => setF({ ...f, isPinned: e.target.checked })} /> 상단 고정</label>
           <label><input type="checkbox" checked={f.publish} onChange={(e) => setF({ ...f, publish: e.target.checked })} /> 지금 게시</label>
+        </div>
+        <div className="acts" data-notice-grade-pick>
+          <b>볼 수 있는 등급</b>
+          {(grades.data ?? []).filter((g) => g.isActive).map((g) => (
+            <label key={g.code} title={g.rule}><input type="checkbox" checked={pick.includes(g.code)} onChange={() => togglePick(g.code)} data-grade-pick={g.code} /> {g.name}</label>
+          ))}
+        </div>
+        <div className="acts">
           <button className="btn-ok" disabled={a.busy === 'notice'} onClick={addNotice}>공지 등록</button>
         </div>
-        <p className="hint">&lsquo;지금 게시&rsquo;를 고르지 않으면 초안으로 남고 이용자에게 보이지 않습니다.</p>
+        <p className="hint">&lsquo;지금 게시&rsquo;를 고르지 않으면 초안으로 남고 이용자에게 보이지 않습니다(위 목록 「게시」로 나중에 게시). 고른 등급 중 하나라도 맞는 사람만 봅니다 — 「관리자」만 고르면 운영 화면 첫 화면 「관리자 공지」에만 보이고 사용자 웹에는 나오지 않습니다.</p>
       </div>
+
+      {/* v10.279 (D210) 공지 등급 관리 — 코드 · 판단 규칙은 고정 */}
+      <h3 className="ad-s2">공지 등급 관리</h3>
+      {grades.error ? <ErrorView error={grades.error} onRetry={grades.reload} /> : (
+        <table className="tbl" data-notice-grades-admin={(grades.data ?? []).length}>
+          <thead><tr><th>순서</th><th>등급</th><th>코드</th><th>누가 보나(고정 규칙)</th><th>쓰인 공지</th><th>사용</th><th /></tr></thead>
+          <tbody>
+            {(grades.data ?? []).map((g) => (
+              <tr key={g.code} data-notice-grade={g.code}>
+                <td className="num-cell">{g.sortOrder}</td>
+                <td><b>{g.name}</b></td>
+                <td className="mono dim">{g.code}</td>
+                <td className="dim">{g.rule}</td>
+                <td className="num-cell">{g.notices}건</td>
+                <td>{g.isActive ? '사용' : <span className="badge badge-urgent">쓰지 않음</span>}</td>
+                <td>
+                  <button className="btn-sm" disabled={a.busy === `grade:${g.code}`} onClick={() => editGrade(g, 'name')}>이름</button>{' '}
+                  <button className="btn-sm" disabled={a.busy === `grade:${g.code}`} onClick={() => editGrade(g, 'sort')}>순서</button>{' '}
+                  <button className="btn-sm" disabled={a.busy === `grade:${g.code}`} onClick={() => editGrade(g, 'active')} data-grade-toggle={g.code}>{g.isActive ? '끄기' : '켜기'}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </>
   );
 }

@@ -522,6 +522,22 @@
    "new": true
   },
   {
+   "id": "SB-HOM-NTC-010",
+   "name": "고객센터 · 공지사항",
+   "group": "HOM",
+   "url": "/support/notices",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /notices"
+   ],
+   "nav": "SB-HOM-MAIN-010",
+   "note": "v10.279 (D210 · docs/408) 보는 사람의 공지 등급(fn_notice_grades)에 맞는 공지만 — 로그인 안 하면 전체 공개만 · 관리자 공지는 나오지 않음"
+  },
+  {
    "id": "SB-HOM-CSB-010",
    "name": "고객센터 · 챗봇",
    "group": "HOM",
@@ -1230,6 +1246,7 @@
    "gates": [],
    "apis": [
     "GET /admin/reports/daily",
+    "GET /admin/staff-notices",
     "GET /admin/reports/not-agreed",
     "GET /admin/reports/pending",
     "GET /admin/reports/revenue",
@@ -1668,7 +1685,10 @@
     "GET /admin/main/copy",
     "GET /admin/notices",
     "PATCH /admin/main/copy/{slot}",
-    "POST /admin/notices"
+    "POST /admin/notices",
+    "POST /admin/notices/{id}/publish",
+    "GET /admin/notice-grades",
+    "PATCH /admin/notice-grades/{code}"
    ],
    "nav": "SB-ADM-MAIN-010"
   },

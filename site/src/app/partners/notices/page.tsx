@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
-import { apiGet } from '@/lib/api';
+import { apiGetPersonal } from '@/lib/api';   // v10.279 (D210) 공지는 보는 사람 등급 기준
 import { ymd } from '@/components/partners/fmt';
 import type { Notice } from '@/components/partners/types';
 
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * SB-AFC-NTC-010 공지사항 — GET /notices
  *
- * 공개 공지(발행된 것만)를 그대로 씁니다. 누구에게나 같은 응답이라 apiGet(캐시)입니다.
+ * 공개 공지(발행된 것만) — v10.279 (D210) 부터 보는 사람의 등급에 맞는 것만이라 apiGetPersonal(캐시 안 함).
  * 고정 공지가 먼저 옵니다.
  */
 export default async function PartnerNoticesPage() {
@@ -22,7 +22,7 @@ export default async function PartnerNoticesPage() {
   if (!p) redirect('/login');
   const t = await getTranslations('affiliate');
 
-  const rows = await apiGet<Notice[]>('/notices', 60).catch(() => null);
+  const rows = await apiGetPersonal<Notice[]>('/notices').catch(() => null);
 
   return (
     <>

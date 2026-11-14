@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { me } from '@/lib/session';
-import { apiGet, apiGetPersonal } from '@/lib/api';
+import { apiGetPersonal } from '@/lib/api';   // v10.279 (D210) 공지는 보는 사람 등급 기준
 import { AffiliateApply } from '@/components/partners/AffiliateApply';
 import { P2Promo } from '@/components/partner/P2Promo';
 import { ymd, ORDER_STATE, codeText } from '@/components/partners/fmt';
@@ -87,7 +87,7 @@ export default async function PartnersDashboard() {
   const [links, products, notices] = await Promise.all([
     apiGetPersonal<AffLink[]>('/partner/affiliate/links').catch(() => [] as AffLink[]),
     apiGetPersonal<AffProduct[]>('/partner/affiliate/products').catch(() => [] as AffProduct[]),
-    apiGet<Notice[]>('/notices', 60).catch(() => [] as Notice[]),
+    apiGetPersonal<Notice[]>('/notices').catch(() => [] as Notice[]),
   ]);
   const m = d.month ?? { clicks: 0, orders: 0, earned: 0, payable: 0 };
   const firstLink = links.find((l) => l.isActive);

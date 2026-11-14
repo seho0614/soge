@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ymdKst } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiGetPersonal } from '@/lib/api';
 import { Bg, Empty, Note, Pgh, Tabs, Tw } from '@/components/partner/ui';
 import { ActButton } from '@/components/partner/act';
 import { getTranslations } from 'next-intl/server';
@@ -39,7 +39,7 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
 
   const [rows, notices] = await Promise.all([
     apiGet<N[]>('/partner/notices', 0).catch(() => [] as N[]),
-    apiGet<Notice[]>('/notices', 60).catch(() => [] as Notice[]),
+    apiGetPersonal<Notice[]>('/notices').catch(() => [] as Notice[]),
   ]);
   const unread = rows.filter((r) => !r.readAt).length;
 

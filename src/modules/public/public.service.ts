@@ -140,6 +140,7 @@ export class PublicService {
       { subject: 'subject', titleHint: 'title_hint', bodyHint: 'body_hint', notice: 'notice' });
   }
 
+  /** v10.279 (D210) — 보는 사람의 등급(fn_notice_grades · 로그인 안 하면 전체 공개만)에 맞는 공지만 · 관리자(STAFF) 등급은 사용자 웹에서 빼고 봄 */
   async notices(gwanCode?: string) {
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT id, gwan_code AS "gwanCode", title, body,
@@ -147,7 +148,8 @@ export class PublicService {
          FROM notices
         WHERE published_at IS NOT NULL AND published_at <= now()
           AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
-        ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null]);
+          AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')
+        ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null, RequestCtx.actorId() ?? null]);
     /* v10.103 (3-1) — 승인된 번역이 있으면 화면 언어로 */
     return this.i18n.overlay(rows, 'NOTICE', (r) => String(r.id), { title: 'title', body: 'body' });
   }
