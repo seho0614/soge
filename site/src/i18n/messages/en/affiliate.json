@@ -210,7 +210,8 @@
     "title": "Notices",
     "lead": "Notices for partners.",
     "loadFail": "Could not load notices. Please refresh in a moment.",
-    "pinned": "Pinned"
+    "pinned": "Pinned",
+    "new": "New"
   },
   "links": {
     "title": "My referral links",

@@ -178,11 +178,17 @@ export class SiteController {
   createAd(@Body() dto: CreateAdDto) { return this.svc.createAd(dto); }
 
   @Get('notices')
-  @ApiOperation({ summary: '공지 목록 (미발행 포함)' })
+  @ApiOperation({
+    summary: '공지 목록 (미발행 포함)',
+    description: 'v10.292 (docs/415) status 로 걸러 보기 · q 제목 찾기 · page 50줄씩(줄마다 total = 걸러진 전체 수) · v10.293 reads(펼쳐 본 회원) · target(볼 수 있는 활동 중 회원 · 전체 공개 · 관리자만이면 null).',
+  })
   @ApiQuery({ name: 'gwanCode', required: false })
+  @ApiQuery({ name: 'status', required: false, enum: ['DRAFT', 'SCHEDULED', 'LIVE', 'ENDED', 'TAKEN_DOWN'] })
+  @ApiQuery({ name: 'q', required: false, description: '제목에 든 글자' })
+  @ApiQuery({ name: 'page', required: false, description: '1부터 · 50줄씩' })
   @ApiOkResponse({ type: NoticeDto, isArray: true })
-  notices(@Query('gwanCode') gwanCode?: string) {
-    return this.svc.notices(gwanCode, false);
+  notices(@Query('gwanCode') gwanCode?: string, @Query('status') status?: string, @Query('q') q?: string, @Query('page') page?: string) {
+    return this.svc.adminNotices({ gwanCode, status, q, page: Number(page) || 1 });
   }
 
   @Post('notices')

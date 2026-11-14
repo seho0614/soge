@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { PartnerActorService } from '../partner/partner-actor.service';
+import { NotFound } from '../../core/errors';
 
 /**
  * 마이페이지 조회.
@@ -63,12 +64,37 @@ export class MeService {
     const [mal, aff] = await Promise.all([this.actors.forMember(this.me!), this.actors.affiliate(this.me!)]);
     return {
       unreadNotifications: Number(n.unread),
+      unreadNotices: await this.unreadNotices(),   // v10.294 (docs/415) 머리줄 공지 점
       publishedListings: Number(n.listings),
       openDeals: Number(n.deals),
       displayName: n.company ?? n.name ?? null,
       email: n.email ?? null,
       badges: { malPartner: !!mal, affPartner: aff?.affStatus === 'ACTIVE', seller: n.seller === true, tenantOn: n.tenant === true },
     };
+  }
+
+  /** v10.294 (docs/415) — 나에게 보이는 게시 중 공지 가운데 최근 30일 · 아직 펼쳐 보지 않은 수(머리줄 공지 점 · 사용자 웹 「새 글」과 같은 기준) */
+  async unreadNotices() {
+    const [r] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM notices n
+        WHERE n.published_at IS NOT NULL AND n.published_at <= now() AND n.published_at > now() - interval '30 days'
+          AND (n.ends_at IS NULL OR n.ends_at > now())
+          AND n.grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')
+          AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = n.id AND r.account_id = $1::uuid)`, [this.me]);
+    return Number(r?.n ?? 0);
+  }
+
+  /** v10.293 (docs/415) — 고객센터 › 공지사항 · 파트너센터 공지를 펼친 기록(처음 · 마지막 · 횟수 · 판매자센터와 같은 표 notice_reads)
+   *  나에게 보이는 게시 중 공지만(관리자 등급 빼고) · 남은 안 읽은 수를 함께 돌려줌(머리줄 점) */
+  async readNotice(noticeId: string) {
+    const [n] = await this.db.query<{ id: string }>(
+      `SELECT id FROM notices WHERE id::text = $1 AND published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now()) AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')`, [noticeId, this.me]);
+    if (!n) throw new NotFound('공지를 찾을 수 없습니다.');
+    await this.db.query(
+      `INSERT INTO notice_reads (notice_id, account_id) VALUES ($1, $2)
+       ON CONFLICT (notice_id, account_id) DO UPDATE SET last_at = now(), reads = notice_reads.reads + 1`, [n.id, this.me]);
+    return { ok: true, unreadNotices: await this.unreadNotices() };
   }
 
   /** 나의공간 첫 화면 (v10.27 · G-195 — 시안 scMy).

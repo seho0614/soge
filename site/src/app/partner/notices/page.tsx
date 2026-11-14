@@ -8,6 +8,7 @@ import { Bg, Empty, Note, Pgh, Tabs, Tw } from '@/components/partner/ui';
 import { ActButton } from '@/components/partner/act';
 import { getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
+import { NoticeDetails } from '@/components/common/NoticeDetails';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('notices') };
@@ -18,7 +19,7 @@ interface N {
   eventCode: string | null; linkUrl: string | null; createdAt: string; readAt: string | null;
   kind?: string; goUrl?: string | null;   /* v10.31 (W5) — 분류 · 「보기」가 갈 화면(서버) */
 }
-interface Notice { id: string; gwanCode: string | null; title: string; body: string; isPinned: boolean; publishedAt: string | null }
+interface Notice { id: string; gwanCode: string | null; title: string; body: string; isPinned: boolean; publishedAt: string | null; unread?: boolean }   // v10.293 unread
 
 /* v10.100 (다국어 2-5a) — 관 이름은 머리줄과 같은 사전 header.gwan.<코드> */
 
@@ -56,7 +57,7 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
             {notices.map((x) => (
               <tr key={x.id}>
                 <td>{x.isPinned ? <><Bg tone="no">{t('pinned')}</Bg> </> : null}<b>{x.title}</b>
-                  {x.body ? <details><summary className="pt-ls">{t('viewBody')}</summary><p className="pt-ls" style={{ whiteSpace: 'pre-wrap' }}>{x.body}</p></details> : null}
+                  {x.body ? <NoticeDetails id={x.id} unread={x.unread === true} newLabel={t('new')} summary={<span className="pt-ls">{t('viewBody')}</span>}><p className="pt-ls" style={{ whiteSpace: 'pre-wrap' }}>{x.body}</p></NoticeDetails> : null}
                 </td>
                 <td>{x.gwanCode ? (isGwanKey(x.gwanCode) ? tg(x.gwanCode) : x.gwanCode) : t('all')}</td>
                 <td>{x.publishedAt ? ymdKst(x.publishedAt) : '—'}</td>

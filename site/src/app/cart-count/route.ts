@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
  *   API 는 한 번만 부릅니다(장바구니 · 알림 중 하나). 로그인 여부를 보는 기준은 같습니다 — API 가 그 토큰을 받아들였는지.
  * v10.31 (w1) — 로그인했으면 장바구니 모드에서도 /me/summary 를 한 번 더 불러 읽지 않은 알림 수(bell) · 운영 역할 여부(ops)를 함께 돌려줍니다
  *   (소개광장 · 소개몰 머리줄의 🔔 · 「관리자 페이지」 — 시안 CMU 머리줄). 역할 이름 자체는 내보내지 않습니다.
+ * v10.294 (docs/415) — 같은 /me/summary 에서 최근 30일 안 펼친 공지 수(nt · 머리줄 공지 점)도 돌려줍니다.
  */
 import { isOps } from '@/components/common/links';
 const BASE = process.env.API_BASE ?? 'http://localhost:3000/api/v1';
@@ -22,7 +23,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   const at = (await cookies()).get('sgb_at')?.value;
-  let n = 0, loggedIn = false, ops = false, bell2 = 0;
+  let n = 0, loggedIn = false, ops = false, bell2 = 0, nt = 0;   // v10.294 (docs/415) nt = 최근 30일 안 펼친 공지(머리줄 공지 점)
   let badges = { mal: false, aff: false, seller: false, tenant: false };   // v10.202 (docs/319) — 머리줄 아이콘 자격
   if (new URL(req.url).searchParams.get('bell') === '1') {
     let bell = 0;
@@ -54,10 +55,12 @@ export async function GET(req: Request) {
       try {
         const r = await fetch(BASE + '/me/summary', { headers: { Authorization: `Bearer ${at}` }, cache: 'no-store' });
         if (r.ok) {
-          const j = (await r.json()) as { unreadNotifications?: number; principal?: { roles?: string[] };
+          const j = (await r.json()) as { unreadNotifications?: number; unreadNotices?: number; principal?: { roles?: string[] };
             badges?: { malPartner?: boolean; affPartner?: boolean; seller?: boolean; tenantOn?: boolean } };
           const u = Number(j?.unreadNotifications);
           bell2 = Number.isFinite(u) && u >= 0 ? Math.floor(u) : 0;
+          const un = Number(j?.unreadNotices);
+          nt = Number.isFinite(un) && un >= 0 ? Math.floor(un) : 0;
           ops = isOps(j?.principal?.roles);
           const b = j?.badges ?? {};
           badges = { mal: b.malPartner === true, aff: b.affPartner === true, seller: b.seller === true, tenant: b.tenantOn === true };
@@ -65,5 +68,5 @@ export async function GET(req: Request) {
       } catch { /* 없어도 됩니다 */ }
     }
   }
-  return NextResponse.json({ n, in: loggedIn, bell: bell2, ops, ...badges }, { headers: { 'Cache-Control': 'private, no-store' } });
+  return NextResponse.json({ n, in: loggedIn, bell: bell2, nt, ops, ...badges }, { headers: { 'Cache-Control': 'private, no-store' } });
 }

@@ -27,6 +27,8 @@
     "guide": "How it works",
     "request": "Get a referral",
     "partners": "Partner Center",
+    "notice": "Notices",
+    "noticeNew": "{n, plural, one {{n} new notice} other {{n} new notices}}",
     "my": "My page",
     "bell": "Notifications",
     "bellUnread": "{n, plural, one {{n} notification} other {{n} notifications}}",

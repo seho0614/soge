@@ -67,6 +67,7 @@ export class MeBadgesDto {
 export class MeSummaryDto {
   @ApiProperty({ type: PrincipalDto }) principal!: PrincipalDto;
   @ApiProperty({ example: 3 }) unreadNotifications!: number;
+  @ApiProperty({ example: 1, description: 'v10.294 최근 30일 · 아직 펼쳐 보지 않은 공지(머리줄 공지 점)' }) unreadNotices!: number;
   @ApiProperty({ example: 12, description: '노출 중인 내 매물' }) publishedListings!: number;
   @ApiProperty({ example: 2, description: '진행 중인 거래' }) openDeals!: number;
   @ApiProperty({

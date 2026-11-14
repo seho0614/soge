@@ -22,6 +22,8 @@ interface Notice {
   /* v10.280 ~ 282 (D211) */
   endsAt?: string | null; endedReason?: string | null; status?: 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED' | 'TAKEN_DOWN';
   notify?: boolean; notifiedAt?: string | null; notifiedCount?: number | null; rateNotice?: boolean; revisions?: number; notifying?: boolean;
+  /* v10.292 · 293 (docs/415) 걸러진 전체 수 · 펼쳐 본 회원 · 볼 수 있는 회원(전체 공개 · 관리자만이면 null) */
+  total?: number; reads?: number; target?: number | null;
 }
 interface NoticeRev { id: string; action: 'EDIT' | 'UNPUBLISH' | 'REPUBLISH'; before: Record<string, unknown>; reason: string | null; at: string; by: string | null }
 const NT_STATUS: Record<string, [string, string]> = {
@@ -399,7 +401,13 @@ function LayoutView() {
 /* ── SB-ADM-MAIN-040 콘텐츠 ──────────────────────────────────────── */
 function Content() {
   const copy = useApi<Copy[]>('/admin/main/copy');
-  const notices = useApi<Notice[]>('/admin/notices');
+  /* v10.292 (docs/415) 상태 걸러 보기 · 제목 찾기 · 50줄씩 넘기기 */
+  const [nf, setNf] = useState({ status: '', q: '', page: 1 });
+  const [qIn, setQIn] = useState('');
+  const nq = new URLSearchParams({ ...(nf.status ? { status: nf.status } : {}), ...(nf.q ? { q: nf.q } : {}), ...(nf.page > 1 ? { page: String(nf.page) } : {}) }).toString();
+  const notices = useApi<Notice[]>(`/admin/notices${nq ? `?${nq}` : ''}`);
+  const nTotal = (notices.data ?? [])[0]?.total ?? 0;
+  const nPages = Math.max(1, Math.ceil(nTotal / 50));
   const grades = useApi<NoticeGrade[]>('/admin/notice-grades');   // v10.279 (D210)
   const sets = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');   // v10.285 (D212) 공지 알림 기준
   const [lim, setLim] = useState<Record<string, string>>({});
@@ -541,12 +549,25 @@ function Content() {
         걸리면 어느 표현인지 그대로 알려드립니다.
       </p>
 
-      <h2 className="ad-s2">공지 <em>{(notices.data ?? []).length}</em></h2>
+      <h2 className="ad-s2">공지 <em data-notice-total={nTotal}>{nTotal}</em></h2>
+      <div className="acts" data-notice-filter>
+        <select aria-label="공지 상태" value={nf.status} onChange={(e) => setNf({ ...nf, status: e.target.value, page: 1 })} data-notice-filter-status>
+          <option value="">상태 모두</option>
+          {Object.entries(NT_STATUS).map(([k, v]) => <option key={k} value={k}>{v[0]}</option>)}
+        </select>
+        <input aria-label="제목 찾기" placeholder="제목에 든 글자" value={qIn} maxLength={100} onChange={(e) => setQIn(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') setNf({ ...nf, q: qIn.trim(), page: 1 }); }} data-notice-q />
+        <button className="btn-sm" onClick={() => setNf({ ...nf, q: qIn.trim(), page: 1 })} data-notice-q-go>찾기</button>
+        {(nf.status || nf.q) && <button className="btn-sm" onClick={() => { setQIn(''); setNf({ status: '', q: '', page: 1 }); }} data-notice-filter-clear>모두 보기</button>}
+        <span className="dim" data-notice-page={`${nf.page}/${nPages}`}>{nf.page} / {nPages}쪽 · 50줄씩</span>
+        <button className="btn-sm" disabled={nf.page <= 1} onClick={() => setNf({ ...nf, page: nf.page - 1 })} data-notice-prev>앞</button>
+        <button className="btn-sm" disabled={nf.page >= nPages} onClick={() => setNf({ ...nf, page: nf.page + 1 })} data-notice-next>뒤</button>
+      </div>
       {notices.error ? <ErrorView error={notices.error} onRetry={notices.reload} /> : null}
-      {notices.data && notices.data.length === 0 && <p className="muted">등록된 공지가 없습니다.</p>}
+      {notices.data && notices.data.length === 0 && <p className="muted" data-notice-none>{nf.status || nf.q ? '고른 조건에 맞는 공지가 없습니다.' : '등록된 공지가 없습니다.'}</p>}
       {(notices.data ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>제목</th><th>관</th><th>볼 수 있는 등급</th><th>고정</th><th>상태</th><th>알림</th><th /></tr></thead>
+          <thead><tr><th>제목</th><th>관</th><th>볼 수 있는 등급</th><th>고정</th><th>상태</th><th>알림</th><th title="공지를 펼쳐 본 회원 / 볼 수 있는 활동 중 회원">읽음</th><th /></tr></thead>
           <tbody>
             {(notices.data ?? []).map((nt) => {
               const st = NT_STATUS[nt.status ?? (nt.publishedAt ? 'LIVE' : 'DRAFT')] ?? ['—', ''];
@@ -567,6 +588,9 @@ function Content() {
                 </td>
                 <td className="dim" data-notice-notify={nt.notify ? (nt.notifiedAt ? 'sent' : nt.notifying ? 'sending' : 'wait') : 'off'}>
                   {nt.notify ? (nt.notifiedAt ? `보냄 ${nt.notifiedCount ?? 0}명` : nt.notifying ? `보내는 중 ${nt.notifiedCount ?? 0}명(10분마다 이어 보냄)` : '게시되면 보냄') : '—'}
+                </td>
+                <td className="num-cell" data-notice-reads={nt.reads ?? 0} data-notice-target={nt.target ?? ''}>
+                  {nt.status === 'DRAFT' || nt.status === 'SCHEDULED' ? '—' : `읽음 ${nt.reads ?? 0}${nt.target != null ? ` / 대상 ${nt.target}` : ''}`}
                 </td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   {nt.status !== 'LIVE' && (

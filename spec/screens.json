@@ -532,7 +532,8 @@
    ],
    "gates": [],
    "apis": [
-    "GET /notices"
+    "GET /notices",
+    "POST /me/notices/{id}/read"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "v10.279 (D210 · docs/408) 보는 사람의 공지 등급(fn_notice_grades)에 맞는 공지만 — 로그인 안 하면 전체 공개만 · 관리자 공지는 나오지 않음"
@@ -3920,7 +3921,8 @@
    "gates": [],
    "nav": "SB-AFC-DSH-010",
    "apis": [
-    "GET /notices"
+    "GET /notices",
+    "POST /me/notices/{id}/read"
    ]
   },
   {
@@ -4597,7 +4599,8 @@
    "apis": [
     "GET /partner/notices",
     "POST /partner/notices/read-all",
-    "POST /partner/notices/{id}/read"
+    "POST /partner/notices/{id}/read",
+    "POST /me/notices/{id}/read"
    ],
    "nav": "SB-PTC-DSH-010",
    "note": "20260930 등록 — site/src/app 에 구현돼 있었으나 레지스트리에 없던 화면(서비스 파트너센터)."

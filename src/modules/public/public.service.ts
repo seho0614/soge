@@ -144,7 +144,10 @@ export class PublicService {
   async notices(gwanCode?: string) {
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT id, gwan_code AS "gwanCode", title, body,
-              is_pinned AS "isPinned", published_at AS "publishedAt"
+              is_pinned AS "isPinned", published_at AS "publishedAt",
+              /* v10.293 (docs/415) 로그인한 사람이 아직 펼쳐 보지 않은 최근 30일 공지 — 「새 글」 표시 · 머리줄 점과 같은 기준 */
+              ($2::uuid IS NOT NULL AND published_at > now() - interval '30 days'
+               AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = notices.id AND r.account_id = $2::uuid)) AS unread
          FROM notices
         WHERE published_at IS NOT NULL AND published_at <= now()
           AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211) 끝 날짜 지남 · 내린 공지 뺌

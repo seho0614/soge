@@ -27,6 +27,8 @@
     "guide": "이용안내",
     "request": "소개받기",
     "partners": "파트너센터",
+    "notice": "공지사항",
+    "noticeNew": "새 공지 {n}건",
     "my": "나의공간",
     "bell": "알림 센터",
     "bellUnread": "알림 {n}건",

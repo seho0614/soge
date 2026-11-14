@@ -520,6 +520,7 @@
     "ntcEmpty": "There are no notices for you right now.",
     "ntcFail": "Could not load notices. Please try again shortly.",
     "ntcPinned": "Pinned",
+    "ntcNew": "New",
     "ntcGo": "View notices",
     "th": {
       "no": "Inquiry no.",

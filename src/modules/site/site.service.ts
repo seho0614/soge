@@ -121,10 +121,17 @@ export class SiteService {
   }
 
   /* ── 공지 ── */
-  /** 운영 화면 목록(publishedOnly=false) — v10.280 ~ 282 (D211) 상태 · 끝 시각 · 알림 · 잠금 · 고친 기록 수 */
-  notices(gwanCode?: string, publishedOnly = true) {
-    return this.db.query(
-      `SELECT n.id, n.gwan_code AS "gwanCode", n.title, n.body,
+  /** 운영 화면 목록 — v10.280 ~ 282 (D211) 상태 · 끝 시각 · 알림 · 잠금 · 고친 기록 수
+   *  v10.292 (docs/415) 상태 걸러 보기(status) · 제목 찾기(q · 글자 그대로) · 50줄씩 넘기기(page · 줄마다 total = 걸러진 전체 수)
+   *  v10.293 (docs/415) reads(펼쳐 본 회원 수 · notice_reads) · target(볼 수 있는 활동 중 회원 수 — 전체 공개 · 관리자만이면 null) */
+  static readonly NOTICE_STATUSES = ['DRAFT', 'SCHEDULED', 'LIVE', 'ENDED', 'TAKEN_DOWN'] as const;
+  async adminNotices(o: { gwanCode?: string; status?: string; q?: string; page?: number } = {}) {
+    const st = o.status && (SiteService.NOTICE_STATUSES as readonly string[]).includes(o.status) ? o.status : null;
+    const q = (o.q ?? '').trim().slice(0, 100) || null;
+    const page = Math.max(1, Math.min(1000, Math.floor(Number(o.page) || 1)));
+    const rows = await this.db.query<Record<string, any>>(
+      `SELECT x.*, count(*) OVER ()::int AS total FROM (
+       SELECT n.id, n.gwan_code AS "gwanCode", n.title, n.body,
               n.is_pinned AS "isPinned", n.published_at AS "publishedAt", n.grades,
               n.ends_at AS "endsAt", n.ended_reason AS "endedReason", n.notify,
               n.notified_at AS "notifiedAt", n.notified_count AS "notifiedCount", n.updated_at AS "updatedAt",
@@ -134,13 +141,27 @@ export class SiteService {
                    WHEN n.ends_at IS NOT NULL AND n.ends_at <= now() THEN (CASE WHEN n.ended_reason IS NULL THEN 'ENDED' ELSE 'TAKEN_DOWN' END)
                    ELSE 'LIVE' END AS status,
               EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = n.id OR r.cancel_notice_id = n.id) AS "rateNotice",
-              (SELECT count(*)::int FROM notice_revisions v WHERE v.notice_id = n.id) AS revisions
+              (SELECT count(*)::int FROM notice_revisions v WHERE v.notice_id = n.id) AS revisions,
+              (SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads
          FROM notices n
         WHERE ($1::text IS NULL OR n.gwan_code = $1 OR n.gwan_code IS NULL)
-          AND ($2 = false OR (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())))
           AND NOT EXISTS (SELECT 1 FROM ops_board_posts o WHERE o.notice_id = n.id)   -- v10.286 (D213) 운영자 게시판 사본은 목록에서 뺌(게시판 · 첫 화면 「관리자 공지」에서 봄 · 사본이 50줄을 채우지 않게)
-        ORDER BY n.is_pinned DESC, n.published_at DESC NULLS LAST LIMIT 50`,
-      [gwanCode ?? null, publishedOnly]);
+       ) x
+        WHERE ($2::text IS NULL OR x.status = $2)
+          AND ($3::text IS NULL OR strpos(lower(x.title), lower($3)) > 0)
+        ORDER BY x."isPinned" DESC, x."publishedAt" DESC NULLS LAST, x.id
+        LIMIT 50 OFFSET $4`,
+      [o.gwanCode ?? null, st, q, (page - 1) * 50]);
+    /* 대상 수 — 같은 등급 묶음은 한 번만 셈(전체 공개가 들거나 관리자만이면 셀 대상 없음) */
+    const key = (g: string[]) => [...g].sort().join(',');
+    const sets = [...new Set(rows.filter((r) => !(r.grades ?? []).includes('PUBLIC') && (r.grades ?? []).some((g: string) => g !== 'STAFF')).map((r) => key(r.grades)))];
+    const tgt = new Map<string, number>();
+    for (const k of sets) {
+      const [c] = await this.db.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM accounts a WHERE a.status = 'ACTIVE' AND fn_notice_grades(a.id) && array_remove($1::text[], 'STAFF')`, [k.split(',')]);
+      tgt.set(k, Number(c?.n ?? 0));
+    }
+    return rows.map((r) => ({ ...r, target: tgt.has(key(r.grades ?? [])) ? tgt.get(key(r.grades ?? [])) : null, page }));
   }
 
   /** v10.279 (D210) — 등급 하나 이상 · 쓰지 않는 등급은 새로 고를 수 없음(이미 있던 등급은 그대로 둘 수 있음) */

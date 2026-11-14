@@ -10,6 +10,7 @@
  *   가운데 관 메뉴(실제 /gwans — 주소가 있고 켜진 관) + 소개광장 + 이용안내 · **지금 있는 관에 주황 밑줄**(aria-current)
  *   오른쪽 검색(메인은 히어로 검색칸으로 · 그 밖은 검색 팝업) · 「파트너센터」(v10.187 B안 · 휴대폰 비로그인은 숨김) · 언어(다국어 켜짐일 때만 · lang)
  *          · 로그인 전: 로그인 · 무료 회원가입(남색 — 관 색 아님) / 로그인 뒤: 나의공간 · 🔔(읽지 않은 수) · 로그아웃 · 관리자 페이지(운영 역할만)
+ *          · v10.294 (docs/415) 로그인 뒤 최근 30일 안 펼친 공지가 있으면 📢 + 점 → 고객센터 › 공지사항
  *          · 소개몰 화면에서만 장바구니(숫자)
  *   v10.202 (docs/319 · 대표 「관리자 페이지 아이콘으로 · 안심소개 파트너 · 파트너센터 아이콘 · 소개몰 등록」 → 「승인」) — 641px 이상은 자격 있는 사람에게 동그란 아이콘
  *          (관리자 페이지 · 안심소개 파트너 · 파트너센터(제휴 활동 중) · 소개몰 입점(신청 받는 중 · 판매자면 판매자센터)) · 마우스를 올리면 이름(title) · 휴대폰은 메뉴 줄 끝 글자
@@ -47,8 +48,8 @@ function RoleIcon({ k }: { k: keyof typeof ROLE_ICON }) {
     </svg>
   );
 }
-type St = { in: boolean; n: number; bell: number; ops: boolean; mal: boolean; aff: boolean; seller: boolean; tenant: boolean };
-const ST0: St = { in: false, n: 0, bell: 0, ops: false, mal: false, aff: false, seller: false, tenant: false };
+type St = { in: boolean; n: number; bell: number; nt: number; ops: boolean; mal: boolean; aff: boolean; seller: boolean; tenant: boolean };
+const ST0: St = { in: false, n: 0, bell: 0, nt: 0, ops: false, mal: false, aff: false, seller: false, tenant: false };
 
 export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNode }) {
   const h = useTranslations('header');
@@ -59,15 +60,22 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
   const shop = isShop(p);
   const [st, setSt] = useState<St>(ST0);
   const [busy, start] = useTransition();
+  /* v10.294 (docs/415) — 공지를 펼쳐 읽음이 기록되면(NoticeDetails · 창 이벤트 sgb:notice-read) 공지 점을 다시 셈 */
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const on = () => setTick((x) => x + 1);
+    window.addEventListener('sgb:notice-read', on);
+    return () => window.removeEventListener('sgb:notice-read', on);
+  }, []);
 
   useEffect(() => {
     let live = true;
     fetch('/cart-count', { credentials: 'same-origin', cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => { if (live && j) setSt({ in: j.in === true, n: num(j.n), bell: num(j.bell), ops: j.ops === true, mal: j.mal === true, aff: j.aff === true, seller: j.seller === true, tenant: j.tenant === true }); })
+      .then((j) => { if (live && j) setSt({ in: j.in === true, n: num(j.n), bell: num(j.bell), nt: num(j.nt), ops: j.ops === true, mal: j.mal === true, aff: j.aff === true, seller: j.seller === true, tenant: j.tenant === true }); })
       .catch(() => { /* 못 받아도 로그인하지 않은 모양으로 씁니다 */ });
     return () => { live = false; };
-  }, [p]);
+  }, [p, tick]);
 
   function out() {
     start(async () => {
@@ -124,6 +132,12 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
           {st.in ? (
             <>
               <Link className="sh-pill" href="/my">{h('my')}</Link>
+              {/* v10.294 (docs/415) — 최근 30일 안 펼친 공지가 있을 때만 📢 + 점(고객센터 › 공지사항) */}
+              {st.nt > 0 && (
+                <Link className="sh-bell sh-ntc" href="/support/notices" aria-label={h('noticeNew', { n: st.nt })} title={h('noticeNew', { n: st.nt })} data-notice-dot={st.nt}>
+                  <span aria-hidden>📢</span><span className="sh-dot" aria-hidden />
+                </Link>
+              )}
               <Link className="sh-bell" href="/my/notifications" aria-label={st.bell > 0 ? t('bellUnread', { n: st.bell }) : t('bell')} title={t('bell')}>
                 <span aria-hidden>🔔</span>{st.bell > 0 && <span className="sh-num" aria-hidden>{st.bell > 99 ? '99+' : st.bell}</span>}
               </Link>

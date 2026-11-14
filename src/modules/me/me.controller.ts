@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ErrorDto } from '../../common/dto/common.dto';
 import { MeService } from './me.service';
 import { MeActivityService } from './me-activity.service';
 import { MeMoneyService } from './me-money.service';
@@ -10,7 +11,7 @@ import {
   MyDealDto, MyInquiryDto, MyListingDto, MySettlementDto,
   MarkReadResultDto, MyDisputeDto, MySubscriptionDto, NotificationDto,
   ContractListDto, UpdateProfileDto, UpdateBusinessDto, MyHomeDto, MyConversationDto,
-  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto } from './me.dto';
+  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto, NoticeReadResultDto } from './me.dto';
 import { Audit } from '../../core/audit.interceptor';
 import { ListingCardDto } from '../listing/listing.dto';
 import { Roles, RequireGate } from '../../core/auth';
@@ -49,6 +50,16 @@ export class MeController {
   })
   @ApiOkResponse({ type: MyDealDto, isArray: true })
   deals(@Query('limit') limit?: number) { return this.activity.deals(limit); }
+
+  @Post('notices/:id/read')
+  @ApiOperation({
+    summary: '공지 펼쳐 봄',
+    description: 'v10.293 (docs/415) 고객센터 › 공지사항 · 파트너센터 공지를 펼친 때(처음 · 마지막 · 횟수) — 나에게 보이는 게시 중 공지만 · 남은 안 읽은 최근 30일 공지 수(머리줄 점).',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: NoticeReadResultDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  readNotice(@Param('id') id: string) { return this.svc.readNotice(id); }
 
   @Get('home')
   @ApiOperation({

@@ -83,6 +83,11 @@ export class NoticeDto {
   @ApiPropertyOptional({ nullable: true, description: 'v10.281 보낸 알림 수' }) notifiedCount?: number | null;
   @ApiPropertyOptional({ description: 'v10.280 수수료율 변경 공지(게시 뒤 잠금)' }) rateNotice?: boolean;
   @ApiPropertyOptional({ description: 'v10.280 고친 기록 수' }) revisions?: number;
+  @ApiPropertyOptional({ description: 'v10.292 걸러진 전체 수(운영 화면 목록만 · 50줄씩)' }) total?: number;
+  @ApiPropertyOptional({ description: 'v10.292 이 줄이 든 쪽(운영 화면 목록만)' }) page?: number;
+  @ApiPropertyOptional({ description: 'v10.293 펼쳐 본 회원 수(운영 화면 목록만)' }) reads?: number;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.293 볼 수 있는 활동 중 회원 수 — 전체 공개 · 관리자만이면 null(운영 화면 목록만)' }) target?: number | null;
+  @ApiPropertyOptional({ description: 'v10.293 로그인한 사람이 아직 펼쳐 보지 않은 최근 30일 공지(사용자 웹 목록만)' }) unread?: boolean;
 }
 
 export class CreateNoticeDto {

@@ -250,3 +250,9 @@ export class MyConversationDto {
   @ApiProperty({ nullable: true }) dealStatus!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
+
+/** v10.293 (docs/415) 공지 펼쳐 봄 결과 */
+export class NoticeReadResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ example: 0, description: '남은 최근 30일 · 아직 펼쳐 보지 않은 공지(머리줄 점)' }) unreadNotices!: number;
+}
