@@ -138,6 +138,7 @@ export class SiteService {
          FROM notices n
         WHERE ($1::text IS NULL OR n.gwan_code = $1 OR n.gwan_code IS NULL)
           AND ($2 = false OR (n.published_at IS NOT NULL AND n.published_at <= now() AND (n.ends_at IS NULL OR n.ends_at > now())))
+          AND NOT (n.ends_at IS NOT NULL AND n.ends_at <= now() AND EXISTS (SELECT 1 FROM ops_board_posts o WHERE o.notice_id = n.id))   -- v10.286 (D213) 끝난 운영자 게시판 사본은 목록에서 뺌(게시판에 그대로)
         ORDER BY n.is_pinned DESC, n.published_at DESC NULLS LAST LIMIT 50`,
       [gwanCode ?? null, publishedOnly]);
   }

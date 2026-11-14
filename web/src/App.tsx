@@ -33,6 +33,7 @@ import { RoleReview } from './app/admin/RoleReview';   // v10.180 (D169)
 import { PurgeLog } from './app/admin/PurgeLog';   // v10.180 (D169)
 import { PrivacyRequests } from './app/admin/PrivacyRequests';   // v10.181 (D170)
 import { ServerErrors } from './app/admin/ServerErrors';   // v10.182 (D171)
+import { OpsBoard } from './app/admin/OpsBoard';   // v10.286 (D213)
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
@@ -102,6 +103,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   /* v10.226 (D195) — 접속 인증: 내 받을 곳은 운영 역할 모두 · 관리 칸은 화면이 ADMIN · SUPER 만 */
   'staff-access': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
+  /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
+  'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -322,6 +325,7 @@ function Console() {
       {tab === 'purge-log' && <PurgeLog />}
       {tab === 'privacy-requests' && <PrivacyRequests />}
       {tab === 'server-errors' && <ServerErrors />}
+      {tab === 'ops-board' && <OpsBoard />}
       {tab === 'my-mfa' && <MyMfa />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}

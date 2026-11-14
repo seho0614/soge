@@ -1,3 +1,4 @@
+import { opsBoardPost } from './ops-board.service';   // v10.286 (D213)
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
@@ -179,9 +180,12 @@ export class OpsAlertsService {
     if (Date.now() - OpsAlertsService.lastPushTestAt < 60_000 || (w?.n ?? 0) > 0) throw new StateConflict('PUSH_TEST_WAIT', '시험 메시지는 1분에 한 번만 보낼 수 있습니다.');
     OpsAlertsService.lastPushTestAt = Date.now();
     const st = await this.telegram.status();
+    if (!st.ready) await opsBoardPost(this.db, 'TEST', '텔레그램 시험 메시지(보내지 못함)', '[소개뱅크] 운영 알림 시험 메시지입니다.', st.reason, null);   // v10.286 — 꺼져 있어도 올림
     if (!st.ready) return { ok: false, reason: st.reason, chat: st.chat,
       note: st.reason === 'NO_TOKEN' ? '텔레그램 봇 토큰이 없습니다 — 외부 연동 › 연동 키 › 메일 칸 「텔레그램 봇 토큰」에 넣으십시오.' : '받을 대화방이 없습니다 — 「대화방 찾기」로 고르십시오.' };
-    const r = await this.telegram.send(['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 대화방으로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n'));
+    const text = ['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 대화방으로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n');
+    const r = await this.telegram.send(text);
+    await opsBoardPost(this.db, 'TEST', '텔레그램 시험 메시지', text, r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`, null);   // v10.286
     return r.ok
       ? { ok: true, reason: null, chat: st.chat, note: '시험 메시지를 보냈습니다 — 텔레그램 대화방을 확인하십시오.' }
       : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, chat: st.chat,
@@ -238,8 +242,11 @@ export class OpsAlertsService {
     if (Date.now() - OpsAlertsService.lastSlackTestAt < 60_000 || (w?.n ?? 0) > 0) throw new StateConflict('SLACK_TEST_WAIT', '시험 메시지는 1분에 한 번만 보낼 수 있습니다.');
     OpsAlertsService.lastSlackTestAt = Date.now();
     const st = this.slack.status();
+    if (!st.ready) await opsBoardPost(this.db, 'TEST', '슬랙 시험 메시지(보내지 못함)', '[소개뱅크] 운영 알림 시험 메시지입니다.', null, st.reason);   // v10.286
     if (!st.ready) return { ok: false, reason: st.reason, hook: null, note: '슬랙 웹훅 주소가 없습니다 — 외부 연동 › 연동 키 › 메일 칸 「슬랙 웹훅 주소」에 넣으십시오.' };
-    const r = await this.slack.send(['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 슬랙 채널로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n'));
+    const text = ['[소개뱅크] 운영 알림 시험 메시지입니다.', '', '이 메시지가 왔다면 급한 운영 알림이 이 슬랙 채널로 옵니다.', '운영 화면 › 운영 알림에서 SUPER 가 보냈습니다.'].join('\n');
+    const r = await this.slack.send(text);
+    await opsBoardPost(this.db, 'TEST', '슬랙 시험 메시지', text, null, r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`);   // v10.286
     return r.ok
       ? { ok: true, reason: null, hook: st.hook, note: '시험 메시지를 보냈습니다 — 슬랙 채널을 확인하십시오.' }
       : { ok: false, reason: `SEND_${r.errorKind ?? 'FAILED'}`, hook: st.hook,

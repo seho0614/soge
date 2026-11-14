@@ -1,3 +1,4 @@
+import { opsBoardPost, sendResult } from '../modules/admin/ops-board.service';   // v10.286 (D213)
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
 import { RecurringBatchService } from '../modules/billing/recurring-batch.service';
@@ -39,7 +40,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge';
 
 export interface JobResult {
   job: JobName;
@@ -499,11 +500,12 @@ export class SchedulerService {
         const am = await this.alertMail();
         const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
         const as = await this.alertSlack();   /* v10.237 (D200) — 텔레그램 · 메일과 따로 */
+        const ab = await this.alertBoard(ap, as);   /* v10.286 (D213) — 급한 알림을 게시판에 한 번(보냄 · 준비 안 됨 상관없이) */
         /* v10.239 (docs/379) — 켜 둔 길이 60분 넘게 보내기 실패면 ALERT_CHANNEL_FAIL(CRITICAL · 다음 차례에 다른 길로) · 다시 되거나 꺼지면 풀림 */
         const cf = await this.channels.failWatch({ mail: am, telegram: ap, slack: as });
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
         const ef = await this.launchWatch.flushServerErrors();   /* v10.250 (D204) — 서버 오류 건수를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, alertSlack: as, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, alertBoard: ab, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -525,6 +527,7 @@ export class SchedulerService {
         const dp = await this.digestPush(d.text);   /* v10.201 (D179) — 메일과 따로 텔레그램으로도(메일이 준비 안 돼도 감) */
         const ds = await this.digestSlack(d.text);   /* v10.237 (D200) — 슬랙으로도 */
         await this.alert('DAILY_DIGEST', 'INFO', `운영 하루 요약 ${d.day} — 가입 ${d.signups} · 주문 ${d.orders} · 시험 결제 주문 ${d.stubPaidOrders}`, { ...d, mailed, pushed: dp.pushed, pushReason: dp.reason, slacked: ds.pushed, slackReason: ds.reason });
+        await opsBoardPost(this.db, 'DAILY_DIGEST', `운영 하루 요약 ${d.day}`, d.text, sendResult(dp.pushed, dp.reason), sendResult(ds.pushed, ds.reason));   /* v10.286 (D213) — 운영자 게시판 · 관리자 공지(꺼져 있어도) */
         /* v10.177 (docs/275) — 올린 파일 백업 묶음이 36시간 넘게 새로 생기지 않으면(묶음이 하나라도 있을 때만 — 예약 전에는 조용) */
         const ub = uploadsBackupState();
         if (ub.stale) await this.alert('UPLOADS_BACKUP_STALE', 'WARN', `올린 파일 백업이 ${ub.ageHours}시간째 새로 생기지 않았습니다 — 마지막 ${ub.last} · cron · 디스크를 확인하십시오`, ub);
@@ -610,6 +613,13 @@ export class SchedulerService {
       case 'notice_schedule': {
         const [r] = await this.db.query<{ notices: number; sent: number }>(`SELECT * FROM fn_notice_notify_due()`);
         affected = Number(r?.sent ?? 0); detail = { notices: Number(r?.notices ?? 0), sent: Number(r?.sent ?? 0) };
+        break;
+      }
+
+      /* v10.286 (D213 · docs/412) — 운영자 게시판 자동 글 보관 기간 지난 것 · 끝난 지 7일 지난 관리자 공지 사본 */
+      case 'ops_board_purge': {
+        const [r] = await this.db.query<{ posts: number; notices: number }>(`SELECT * FROM fn_ops_board_purge()`);
+        affected = Number(r?.posts ?? 0); detail = { posts: Number(r?.posts ?? 0), notices: Number(r?.notices ?? 0) };
         break;
       }
 
@@ -744,6 +754,25 @@ export class SchedulerService {
     return { pending: 0, mailed: p.items.length, reason: null };
   }
 
+  /** v10.286 (D213 · docs/412) — 급한 알림(텔레그램 · 슬랙과 같은 기준)을 운영자 게시판에 한 번 — 보낸 결과(이번 차례)와 함께 · board_posted_at */
+  private async alertBoard(ap: { pushed: number; reason: string | null }, as: { pushed: number; reason: string | null }): Promise<{ posted: number }> {
+    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
+      `SELECT o.id::text AS id, o.alert_code AS code, o.severity, o.title, to_char(o.raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
+         FROM ops_alerts o
+        WHERE o.board_posted_at IS NULL AND o.acknowledged_at IS NULL AND o.resolved_at IS NULL AND o.raised_at > now() - interval '24 hours'
+          AND (o.severity = 'CRITICAL' OR o.alert_code IN ('SETTING_CHANGED', 'UPLOADS_BACKUP_FAILED', 'UPLOADS_BACKUP_BAD', 'ORDER_OPEN_EXPIRED', 'STAFF_LOGIN_NEW',
+               'AGENT_LIVE', 'AGENT_READY_GAP', 'AGENT_CAP_NEAR', 'AGENT_STEP_READY', 'STAFF_IP_PASS_NEW', 'STAFF_IP_LOCKED', 'STAFF_IP_DAY_LIMIT'))
+        ORDER BY (o.severity = 'CRITICAL') DESC, o.id LIMIT 50`);
+    if (!items.length) return { posted: 0 };
+    const plan = buildAlertPush(items, items.length);
+    const text = plan.parts.map((p) => p.text).join('\n\n');
+    const crit = items.filter((x) => x.severity === 'CRITICAL').length;
+    const id = await opsBoardPost(this.db, 'URGENT', `급한 운영 알림 ${items.length}건${crit ? `(CRITICAL ${crit})` : ''} — ${items[0].title}`.slice(0, 200), text,
+      sendResult(ap.pushed, ap.reason), sendResult(as.pushed, as.reason));
+    if (id) await this.db.query(`UPDATE ops_alerts SET board_posted_at = now() WHERE id = ANY($1::bigint[])`, [items.map((x) => x.id)]);
+    return { posted: id ? items.length : 0 };
+  }
+
   /** v10.200 (D178 · docs/316) — 급한 알림 텔레그램 한 통(메일과 같은 알림 · 같은 기준 · 기록은 pushed_at · repushed_at).
    *  준비 안 됨(토큰 · 대화방 없음)이면 보내지 않고 까닭만 — 보낸 것으로 적지 않음
    *  v10.233 — 한 통 4,000자(TG_MAX)를 넘으면 최대 3통으로 나눔 · 제목 200자 · 보내진 통의 알림만 「보냄」 · 3통에 못 든 알림은 「n건 더」로 세고 다음 차례에
@@ -796,6 +825,7 @@ export class SchedulerService {
     let slack: string | null = sk.ready ? null : sk.reason;
     if (sk.ready) { const r = await this.slack.send(text); slack = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
     const sent = [telegram === 'SENT' ? '텔레그램' : '', slack === 'SENT' ? '슬랙' : ''].filter(Boolean);
+    await opsBoardPost(this.db, 'OWNER_TODO', `대표 할 일 이번 주 — 아직 ${left.length}줄`, text, telegram, slack);   /* v10.286 (D213) */
     await this.alert('OWNER_TODO_WEEKLY', 'INFO',
       `대표 할 일 아직 ${left.length}줄(끝남 ${d.done} / ${d.total}) · 지난 7일 경고 이상 알림 ${aw.warnTotal}건 — ${sent.length ? `${sent.join(' · ')}으로 보냄` : '보낸 길 없음(텔레그램 · 슬랙이 준비 안 됨)'}`,
       { left: left.map((r) => r.key), done: d.done, total: d.total, warn7: aw.warnTotal, warnOpen: aw.warnOpen, telegram, slack });

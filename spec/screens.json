@@ -5144,6 +5144,35 @@
    "note": "2026-11-03 v10.181 D170 — 열린 요청 기한 순 · 처리 완료 · 거절(고칠 수 없음) · 연장 한 번 · 기한 2일 안이면 하루 요약 때 PRIVACY_REQUEST_DUE."
   },
   {
+   "id": "SB-ADM-OBD-010",
+   "name": "운영자 게시판",
+   "group": "ADM",
+   "url": "/admin/ops-board",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER",
+    "REVIEWER",
+    "PAYOUT",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/ops-board",
+    "GET /admin/ops-board/{id}",
+    "POST /admin/ops-board",
+    "PATCH /admin/ops-board/{id}",
+    "POST /admin/ops-board/{id}/take-down",
+    "POST /admin/ops-board/{id}/comments",
+    "POST /admin/ops-board/{id}/read",
+    "GET /admin/site-settings",
+    "PATCH /admin/site-settings"
+   ],
+   "nav": "SB-ADM-DSH-010",
+   "note": "v10.286 (D213 · docs/412) 하루 요약 · 급한 알림 · 대표 할 일 · 시험 메시지가 텔레그램 · 슬랙 결과와 함께 저절로(꺼져 있어도) · 관리자 공지 사본 2일 · 운영자 글 · 댓글 · 확인함 · 보관 기간(SUPER) · 운영 화면 계정만"
+  },
+  {
    "id": "SB-ADM-ERR-010",
    "name": "최근 서버 오류",
    "group": "ADM",
