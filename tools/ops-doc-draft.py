@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""운영 절차서 초안 만들기 (v10.298 · sgb-core docs/417)
+"""운영 절차서 초안 만들기 (v10.298 · sgb-core docs/417 · v10.299 docs/419 2단계)
 
-  python3 tools/ops-doc-draft.py <지금 운영 킷.zip> <올릴 킷.zip> [-o 초안.md] [--no <쓰지 않는 문서 번호>,...]
+  python3 tools/ops-doc-draft.py <지금 운영 킷.zip> <올릴 킷.zip> [-o 초안.md] [--no <쓰지 않는 문서 번호>,...] [--rehearsal 리허설결과.txt]
 
   - 킷 두 개(지금 운영 판 · 올릴 판)를 **읽기만** 해서 운영 적용 절차서(docs/409 모양) 초안을 씁니다.
   - 기계로 채우는 것: 킷 이름 · 만든 시각 · 커밋 · sha256(zip · tar.gz) · 새 마이그레이션 목록 · precheck 기대 줄 ① ·
@@ -9,7 +9,9 @@
     그 사이 판 문서(sgb/docs/NNN_…_v10.X…)들의 「바뀐 것」 표와 「운영 적용」 줄 · 명령 블록(3-0 ~ 3-4)
   - 사람이 채울 것은 〔채울 것: …〕 로 남깁니다(postcheck 숫자 · 화면 확인 순서 · 되돌리기 설명 · 하지 말 것 · 대표 할 일).
   - 마지막에 문서 안 64자 sha 가 모두 올릴 킷 sha 와 같은지 스스로 대조합니다(옛 절차서 베끼기 함정).
-  - 운영 서버 · DB · 네트워크에 닿지 않습니다. 킷은 임시 폴더에 풀고 끝나면 지웁니다.
+  - v10.299: 새 마이그레이션의 지우는 문장 검사(DO 블록 · 맨 위 문장의 DELETE · TRUNCATE · DROP TABLE · DROP COLUMN — 함수 정의 본문은 뺌) ·
+    DO 블록의 RAISE NOTICE 표 · 새 정기 작업(job_schedules) · 판 문서의 회귀 수 · --rehearsal(tools/mig-rehearsal.sh 결과)로 postcheck [11] · 리허설 줄.
+  - 운영 서버 · DB · 네트워크에 닿지 않습니다. 킷은 임시 폴더에 풀고 끝나면 지웁니다(리허설 파일은 읽기만).
 """
 import argparse, hashlib, os, re, shutil, sys, tempfile, time, zipfile
 
@@ -101,6 +103,69 @@ def version_docs(docs_dir, lo, hi, skip):
     return out
 
 
+DOLLAR = re.compile(r'(\$[A-Za-z0-9_]*\$)(.*?)\1', re.S)
+DANGER = re.compile(r'\b(DELETE\s+FROM|TRUNCATE|DROP\s+TABLE|DROP\s+SCHEMA|DROP\s+COLUMN|DROP\s+MATERIALIZED\s+VIEW)\b\s*(?:IF\s+EXISTS\s+)?([\w."]*)', re.I)
+NOTICE = re.compile(r"RAISE\s+NOTICE\s+'((?:[^']|'')*)'", re.I)
+JOB = re.compile(r"INSERT\s+INTO\s+(?:public\.)?job_schedules\s*\(([^)]*)\)\s*VALUES\s*\(\s*'([a-z0-9_]+)'\s*,\s*(\d+)\s*,\s*(NULL|\d+)\s*,\s*(NULL|\d+)", re.I)
+
+
+def sql_parts(sql):
+    """주석을 빼고 (바로 도는 부분, DO 블록 본문들) — CREATE FUNCTION 등의 $$ 본문은 부를 때 도므로 뺌"""
+    t = re.sub(r'/\*.*?\*/', ' ', re.sub(r'--[^\n]*', '', sql), flags=re.S)
+    run, dos, last = [], [], 0
+    for m in DOLLAR.finditer(t):
+        run.append(t[last:m.start()])
+        if re.search(r'\bDO(\s+LANGUAGE\s+\w+)?\s*$', t[max(0, m.start() - 40):m.start()], re.I):
+            dos.append(m.group(2))
+        last = m.end()
+    run.append(t[last:])
+    return ' '.join(run), dos
+
+
+def sql_scan(sql):
+    run, dos = sql_parts(sql)
+    hit = []
+    for part in [run] + dos:
+        for m in DANGER.finditer(part):
+            hit.append(re.sub(r'\s+', ' ', m.group(1)).upper() + (' ' + m.group(2) if m.group(2) else ''))
+    notes = [n.replace("''", "'") for b in dos for n in NOTICE.findall(b)]
+    jobs = []
+    for m in JOB.finditer(run):
+        cols = [c.strip() for c in m.group(1).split(',')]
+        if cols[:4] == ['job', 'every_min', 'at_hour', 'at_minute']:
+            mins, h, mi = int(m.group(3)), m.group(4), m.group(5)
+            if mins == 1440 and h != 'NULL':
+                when = f'매일 {int(h):02d}:{int(0 if mi == "NULL" else mi):02d}'
+            elif mins % 60 == 0 and mins >= 60 and mins < 1440:
+                when = f'{mins // 60}시간마다'
+            else:
+                when = f'{mins}분마다'
+            jobs.append((m.group(2), when))
+        else:
+            jobs.append((m.group(2), ''))
+    return sorted(set(hit)), notes, jobs
+
+
+def rehearsal(path):
+    r = {'notice': [], 'state': [], 'rerun_fail': []}
+    for ln in read(path).splitlines():
+        if '=' not in ln or ln.startswith('#'):
+            continue
+        k, v = ln.split('=', 1)
+        if k == 'first_notice':
+            r['notice'].append(v)
+        elif k == 'rerun_fail':
+            r['rerun_fail'].append(v)
+        elif k == 'state':
+            x = v.split('|')
+            if len(x) == 3:
+                r['state'].append(tuple(x))
+        else:
+            r[k] = v
+    r['stamp'] = (read(path).splitlines() or [''])[0].replace('# mig-rehearsal ', '').split(' · ')[0]
+    return r
+
+
 def group(paths):
     g = {}
     for p in sorted(paths):
@@ -118,7 +183,10 @@ def main():
     ap.add_argument('-o', '--out', default='-')
     ap.add_argument('--no', default='', help='쓰지 않는 옛 운영 절차서 번호(쉼표) — 머리말에 적음')
     ap.add_argument('--doc', default='〔번호〕', help='이 절차서 번호(예: 418)')
+    ap.add_argument('--rehearsal', default='', help='tools/mig-rehearsal.sh 결과 파일 — postcheck [11] · 리허설 줄을 채움')
     a = ap.parse_args()
+    if a.rehearsal and not os.path.isfile(a.rehearsal):
+        raise SystemExit(f'리허설 결과 파일이 없음: {a.rehearsal}')
     for p in (a.old, a.new):
         if not (os.path.isfile(p) and p.endswith('.zip')):
             raise SystemExit(f'킷 zip 이 아님: {p}')
@@ -153,6 +221,27 @@ def main():
         qa = [p for p in changed + added + removed if not p.startswith(('sgb/', 'sgb-ads/'))]
         docs = version_docs(os.path.join(n_sgb, 'docs'), ver_num(ov), ver_num(nv), set(x for x in a.no.split(',') if x))
         snap = bool(new_m)
+        # v10.299 — 새 마이그레이션 검사 · NOTICE · 정기 작업 · 회귀 수 · 리허설
+        danger, notes, jobs = {}, {}, []
+        for m in new_m:
+            h, ns, js = sql_scan(read(nm[m]))
+            if h:
+                danger[m] = h
+            if ns:
+                notes[m] = ns
+            jobs += [(j, w_, m.split('_')[0]) for j, w_ in js]
+        prints_notice = "on('notice'" in read(os.path.join(n_sgb, 'scripts', 'migrate.js'))
+        regs = [int(x) for num, f, *_ in docs for x in re.findall(r'^\| *회귀 *\| *(\d+)개', read(os.path.join(n_sgb, 'docs', f)), re.M)]
+        reh, reh_fail = None, ''
+        if a.rehearsal:
+            reh = rehearsal(a.rehearsal)
+            if reh.get('old') != ov or reh.get('new') != nv or reh.get('new_kit') != os.path.basename(a.new)[:-4] or reh.get('old_kit') != os.path.basename(a.old)[:-4]:
+                raise SystemExit(f"리허설 결과가 이 킷 두 개 것이 아님: {reh.get('old_kit')} → {reh.get('new_kit')}")
+            mst = dict((k, (b, c)) for k, b, c in reh['state'])
+            if reh.get('result') != '통과':
+                reh_fail = reh.get('result', '결과 줄 없음')
+            elif reh.get('old_applied') != str(len(om)) or mst.get('마이그레이션 적용', ('', ''))[1] != str(len(nm)):
+                reh_fail = f"리허설 마이그레이션 수({reh.get('old_applied')} → {mst.get('마이그레이션 적용', ('', ''))[1]})가 킷({len(om)} → {len(nm)})과 다름"
         vo, vn = ov, nv
         snapname = f"sgb-before-{vn.replace('.', '-')}-<적용하는 날 YYYYMMDD>"
         L = []
@@ -174,21 +263,71 @@ def main():
         w('|---|---|')
         w(f'| 올릴 킷 | `{kit}.zip` — **`~/kits/release/`**({made} · {commits}' + (f' · tar.gz 는 `{kit}.tar.gz`' if tsha else ' · tar.gz 없음') + ') |')
         w(f'| 킷 sha256 | zip `{zsha}`' + (f' · tar.gz `{tsha}`' if tsha else '') + '. 이 문서는 킷을 만든 뒤에 써서 **킷 안에는 없음** — 이 저장소 판이 기준 |')
-        w(f"| 올릴 마이그레이션 | **{len(new_m)}개**" + (' — ' + ' · '.join(f'`{m}`' for m in new_m) if new_m else '') + ' 〔채울 것: 지우는 문장 없음 · 재실행 안전 확인〕 |')
+        mig_note = ''
+        if new_m:
+            if danger:
+                mig_note += ' ⚠ **지우는 문장** — ' + ' · '.join(f'`{m}`: ' + ', '.join(f'`{x}`' for x in h) for m, h in danger.items()) + ' 〔채울 것: 왜 지우는지 · 되돌릴 수 있는지〕'
+            else:
+                mig_note += '. 지우는 문장 없음(기계 검사 — DO 블록 · 맨 위 문장에 DELETE · TRUNCATE · DROP TABLE · DROP COLUMN 없음 · 함수 본문은 부를 때 돎)'
+            if reh and not reh_fail:
+                mig_note += f" · 재실행 안전(버리는 DB 리허설 — 두 번째 「{reh.get('second', '')}」 · SQL {reh.get('rerun', '')} 다시 돌려도 오류 · 숫자 바뀜 없음)"
+            else:
+                mig_note += ' 〔채울 것: 재실행 안전 — tools/mig-rehearsal.sh 결과를 --rehearsal 로〕'
+        w(f"| 올릴 마이그레이션 | **{len(new_m)}개**" + (' — ' + ' · '.join(f'`{m}`' for m in new_m) if new_m else '') + mig_note + ' |')
         w(f"| precheck 기대 줄 | ① `적용됨 {len(om)} · 새 킷의 파일 {len(nm)} · 올릴 것 {len(new_m)} · 바뀐 파일 {len(chg_m)}`"
           + (' · 올릴 것 이름 ' + ' · '.join(m.split('_')[0] for m in new_m) if new_m else '')
           + ' ② [4] `판 보관 폴더: 〔채울 것〕`(「되돌린 상태」 줄이 **없어야 함**) ③ [5] 〔채울 것: 오픈 차단 · 약관 줄〕 ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
-        w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`') +
+        w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`')
+          + (' → `NOTICE …` 줄(1절 「마이그레이션 NOTICE」 표)' if notes and prints_notice else '') +
           f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → 〔채울 것: 옛 판 정리 줄〕 → postcheck 실패 0 |")
         w(f"| 스냅샷 이름 | `{snapname}`" + (' (**꼭 만듦**)' if snap else ' (마이그레이션 없음 — skip 가능)') + ' |')
+        job_note = (' 새 정기 작업 ' + ' · '.join(f'`{j}`' + (f'({w_} · {m})' if w_ else f'({m})') for j, w_, m in jobs)
+                    + '은 마이그레이션이 작업 표에 넣어 지금 돌고 있는 `sgb-jobs` 가 부름 — 따로 할 일 없음') if jobs else ''
         if dep:
-            w('| 적용 스크립트 | ⚠ **바뀜** — ' + ' · '.join(f'`{p}`' for p in sorted(dep)) + ' 〔채울 것: 무엇이 왜 바뀌었는지 · 운영 `.env` · Nginx 할 일〕 |')
+            w('| 적용 스크립트 | ⚠ **바뀜** — ' + ' · '.join(f'`{p}`' for p in sorted(dep)) + ' 〔채울 것: 무엇이 왜 바뀌었는지 · 운영 `.env` · Nginx 할 일〕' + (' ·' + job_note if job_note else '') + ' |')
         else:
-            w(f'| 적용 스크립트 | **바뀌지 않음** — `deploy/` 전체 · `package.json` · 잠금 파일 · `.env.example` 모두 {vo} 과 같음. **운영 `.env` · Nginx 는 고치지 않음.** |')
-        w('| postcheck 기대 | 〔채울 것: 통과 · 실패 0 · 확인 · [2] 올린 판 · [11] 같음 · 바뀜〕 |')
+            w(f'| 적용 스크립트 | **바뀌지 않음** — `deploy/` 전체 · `package.json` · 잠금 파일 · `.env.example` 모두 {vo} 과 같음. **운영 `.env` · Nginx 는 고치지 않음.**' + job_note + ' |')
+        pc = f'〔채울 것: 통과 · 실패 0 · 확인 — 적용 스크립트가 그대로면 지난 절차서와 같음〕 · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
+        if reh and not reh_fail:
+            same_n = sum(1 for k, b, c in reh['state'] if b == c)
+            chg = []
+            for k, b, c in reh['state']:
+                if b == c:
+                    continue
+                if k == '마이그레이션 적용':
+                    chg.append(f'`{k} {len(om)} → {len(nm)}`')
+                elif b.isdigit() and c.isdigit():
+                    chg.append(f'`{k}` {int(c) - int(b):+d}')
+                else:
+                    chg.append(f'`{k}` {b} → {c}(리허설 DB 값)')
+            pc += f' · [11] **같음 {same_n}개 · 바뀜 {len(chg)}개** — ' + ' · '.join(chg) + '(버리는 DB 리허설의 차이 — 운영 값은 precheck 숫자에 이 차이를 더한 것)'
+        else:
+            pc += ' 〔채울 것: [11] 같음 · 바뀜 — tools/mig-rehearsal.sh 결과를 --rehearsal 로〕'
+        w(f'| postcheck 기대 | {pc} |')
+        if reh_fail:
+            w(f'| ⛔ 멈출 것 | **리허설 실패** — {reh_fail} — **이대로 적용하지 않음** |')
         if chg_m or gone_m:
             w(f"| ⛔ 멈출 것 | 옛 마이그레이션이 바뀜 {chg_m} · 없어짐 {gone_m} — **이대로 적용하지 않음**(변경감지) |")
         w('')
+        if notes:
+            seen = reh['notice'] if reh else []
+            hit = lambda t: any(re.fullmatch(re.escape(t).replace('%', '.*?'), x) for x in seen)
+            w('### 마이그레이션 NOTICE (DB 가 내는 안내 · 오류 아님)')
+            w('')
+            w('| 마이그레이션 | NOTICE 문구(`…` 은 그때 값) | 리허설에서 |')
+            w('|---|---|---|')
+            for m, ns in notes.items():
+                for t in ns:
+                    w(f"| `{m}` | `{t.replace('%', '…')}` | {('나옴' if hit(t) else '—') if reh else '(리허설 없음)'} |")
+            w('')
+            w(('apply 화면에 `NOTICE …` 줄로 나옵니다(이 킷의 scripts/migrate.js). ' if prints_notice else
+               '⚠ 이 킷의 scripts/migrate.js 는 NOTICE 를 화면에 내지 않습니다 — 결과는 postcheck [11] · 화면으로 확인합니다. ')
+              + '〔채울 것: 보통 나오는 줄 · 나와도 괜찮은 줄 · 나오면 할 일〕')
+            rest = [m for m in new_m if m not in notes]
+            if rest:
+                w('')
+                w(' · '.join(m.split('_')[0] for m in rest) + ' 은 NOTICE 를 내지 않습니다.')
+            w('')
         w(f'### 두 킷 차이 ({vo} 킷 ↔ {vn} 킷)')
         w('')
         w('| 무엇 | 결과 |')
@@ -200,7 +339,12 @@ def main():
               + (f' · … 외 {len(ps) - 30}' if len(ps) > 30 else '') + ' |')
         w(f"| 광고 플랫폼(`sgb-ads/`) | {'바뀜 ' + str(len(ads)) if ads else '바뀌지 않음'} |")
         w(f'| 점검 도구(qa · docker 등 · 운영에 안 감) | 바뀜 {len(qa)} |')
-        w('| 개발 서버 점검 | 〔채울 것: 판마다 풀 리퀘스트 번호 · realcheck · 기능 점검 · 회귀 수〕 |')
+        chk = '〔채울 것: 판마다 풀 리퀘스트 번호 · realcheck · 기능 점검〕' + (f' · 판 문서 기준 회귀 {max(regs)}개' if regs else '')
+        if reh and not reh_fail:
+            ndiff = sum(1 for k, b, c in reh['state'] if b != c)
+            chk += (f" · **버리는 DB 리허설({reh.get('stamp', '')} · tools/mig-rehearsal.sh) — `{reh.get('first', '')}` · 두 번째 `{reh.get('second', '')}` · "
+                    f"SQL {reh.get('rerun', '')} 다시 돌려도 오류 없음 · 숫자 {len(reh['state'])}개 중 바뀜 {ndiff}**")
+        w(f'| 개발 서버 점검 | {chk} |')
         w('')
         w('## 2. 무엇이 바뀌나')
         w('')
@@ -262,7 +406,14 @@ def main():
         w('')
         w('- 빌드가 실패하면 apply 가 **교체 전에 멈추고 지금 판(' + vo + ')이 그대로 돕니다.** 출력을 보내 주십시오.')
         w('- 실패가 나오면 **다른 명령을 치지 말고** 출력을 보내 주십시오.')
-        w('- 〔채울 것: 마이그레이션 NOTICE 가 나오면 무엇인지〕')
+        if not new_m:
+            w('- 마이그레이션이 없어 NOTICE 줄이 없습니다.')
+        elif not notes:
+            w('- 새 마이그레이션은 NOTICE 를 내지 않습니다.')
+        elif prints_notice:
+            w('- `NOTICE …` 줄이 나오면 1절 「마이그레이션 NOTICE」 표를 봅니다(오류 아님).')
+        else:
+            w('- DB NOTICE 는 화면에 나오지 않습니다(이 킷의 migrate.js) — postcheck [11] 로 확인합니다.')
         w('')
         w('### 3-4. 적용 후 정리 (ubuntu)')
         w('')
@@ -323,8 +474,11 @@ def main():
             with open(a.out, 'w', encoding='utf-8') as f:
                 f.write(text)
         print(f'초안: {a.out} · {vo} → {vn} · 마이그레이션 {len(new_m)}개({len(om)} → {len(nm)}) · 스냅샷 {"필요" if snap else "skip 가능"} · '
-              f'적용 스크립트 {"바뀜 " + str(len(dep)) if dep else "그대로"} · 판 문서 {len(docs)}개 · 채울 곳 {todo} · sha 대조 {"맞음" if not bad else "다름 " + str(sorted(bad))}',
+              f'적용 스크립트 {"바뀜 " + str(len(dep)) if dep else "그대로"} · 판 문서 {len(docs)}개 · 채울 곳 {todo} · sha 대조 {"맞음" if not bad else "다름 " + str(sorted(bad))}'
+              f' · 지우는 문장 {sum(len(x) for x in danger.values())} · NOTICE {sum(len(x) for x in notes.values())} · 새 정기 작업 {len(jobs)} · 리허설 {("실패" if reh_fail else "통과") if reh else "없음"}',
               file=sys.stderr)
+        if reh_fail and not bad:
+            return 2
         return 3 if bad else (2 if chg_m or gone_m else 0)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
