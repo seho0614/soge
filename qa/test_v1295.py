@@ -141,11 +141,12 @@ if API and DB:
     consent_ok.agree('admin@x.com', PW); consent_ok.agree('buyer@x.com', PW)
     login = lambda e: call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken')
     TS, TB = login('admin@x.com'), login('buyer@x.com')
-    made, rate_sid = [], ''
+    made, rate_sid, fids = [], '', []
     try:
         fp, fd, f3, f4 = upload(TS, '안내 그림.png', 'image/png', PNG), upload(TS, '안내문.pdf', 'application/pdf', PDF), upload(TS, 'c.png', 'image/png', PNG), upload(TS, 'd.png', 'image/png', PNG)
         fm = call('POST', '/files', {'purpose': 'NOTICE_ATTACHMENT', 'name': 'm.png', 'contentType': 'image/png', 'size': len(PNG)}, TB)
         ids = [x.get('fileId') for x in (fp, fd, f3, f4)]
+        fids.extend(x for x in ids if x)
         ok('② API — 최고 관리자가 그림 · PDF 올림(READY) · 회원은 공지 첨부를 못 올림(403)',
            all(x.get('status') == 'READY' for x in (fp, fd, f3, f4)) and fm.get('_err') == 403, f"{[x.get('status') for x in (fp, fd, f3, f4)]} · {fm.get('_err')} {fm.get('code')}")
         base = {'body': '첨부 시험 본문', 'grades': ['MEMBER'], 'publishedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() - 60))}
@@ -242,6 +243,13 @@ if API and DB:
             psql(f"UPDATE notices SET ends_at = now() WHERE id = '{x}' AND published_at IS NOT NULL AND published_at <= now() AND ends_at IS NULL "
                  f"AND NOT EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = notices.id OR r.cancel_notice_id = notices.id)")
             psql(f"DELETE FROM notice_reads WHERE notice_id = '{x}'")
+        # 첨부 파일은 남기지 않음(test_v1149 가 디스크 · DB 파일 수를 셈) — 공지에서 빼고(요율 공지 제외) DELETED
+        for x in made:
+            psql(f"UPDATE notices SET attachments = '{{}}' WHERE id = '{x}' AND cardinality(attachments) > 0 "
+                 f"AND NOT EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = notices.id OR r.cancel_notice_id = notices.id)")
+        for f in fids:
+            psql(f"UPDATE files SET status = 'DELETED', deleted_at = now() WHERE id = '{f}' AND status <> 'DELETED' "
+                 f"AND NOT EXISTS (SELECT 1 FROM notices n WHERE files.id = ANY(n.attachments))")
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
 raise SystemExit(0 if passed == len(RES) else 1)

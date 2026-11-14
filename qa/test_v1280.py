@@ -11,7 +11,7 @@
   ⑥ (화면) 운영 화면 노출 › 메인 운영 › 「콘텐츠」 상태 · 알림 칸 · 고치기(요율 공지는 잠금 안내) · 내리기 · 고친 기록 · 게시 방법(지금 · 예약 · 초안) · 끝 날짜 · 알림 고르기
   만든 시험 공지는 끝내 두고(고친 기록이 있어 지우지 않음) 판매자 · 알림 · 설정은 지움(두 번 돌아도 통과).
 """
-import json, os, re, subprocess, sys, time, urllib.error, urllib.request
+import json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -94,6 +94,7 @@ def psql(sql):
 stamp = str(int(time.time()))[-7:]
 SEL = f't1280sel{stamp}@x.com'
 TAG = f'시험 1280 {stamp}'
+ADM_Q = '/admin/notices?q=' + urllib.parse.quote(TAG)   # 공지가 쌓이면 초안이 50줄 밖으로 밀림 — 이 시험 공지만 찾음
 iso = lambda sec: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() + sec))
 ids = lambda rows: [x.get('id') for x in (rows if isinstance(rows, list) else [])]
 if API and DB:
@@ -137,7 +138,7 @@ if API and DB:
         e2 = call('POST', f'/admin/notices/{lid}/unpublish', {'reason': 'x'}, TS)
         dn = call('POST', f'/admin/notices/{lid}/unpublish', {'reason': '잘못 올림'}, TS)
         seen2 = lid in ids(call('GET', '/notices', None, TB))
-        row = next((x for x in call('GET', '/admin/notices', None, TS) if x.get('id') == lid), {})
+        row = next((x for x in call('GET', ADM_Q, None, TS) if x.get('id') == lid), {})
         rp = call('POST', f'/admin/notices/{lid}/publish', None, TS)
         seen3 = lid in ids(call('GET', '/notices', None, TB))
         draft = call('POST', '/admin/notices', {'title': f'{TAG} 초안', 'body': 'x', 'grades': ['PUBLIC']}, TS)
@@ -179,7 +180,7 @@ if API and DB:
         sc = call('POST', '/admin/notices', {'title': f'{TAG} 예약', 'body': '예약 본문', 'grades': ['SELLER'], 'publishedAt': iso(3600), 'notify': True}, TS)
         scid = sc.get('id')
         hid1 = scid in ids(call('GET', '/notices', None, TL))
-        st1 = next((x.get('status') for x in call('GET', '/admin/notices', None, TS) if x.get('id') == scid), None)
+        st1 = next((x.get('status') for x in call('GET', ADM_Q, None, TS) if x.get('id') == scid), None)
         c4 = mine()
         psql(f"UPDATE notices SET published_at = now() - interval '1 minute' WHERE id = '{scid}'")
         j = call('POST', '/admin/jobs', {'job': 'notice_schedule'}, TS)
@@ -187,11 +188,11 @@ if API and DB:
         c5 = mine()
         en = call('POST', '/admin/notices', {'title': f'{TAG} 끝', 'body': 'x', 'grades': ['PUBLIC'], 'publishedAt': iso(-7200), 'endsAt': iso(-3600 * 1.5)}, TS)
         en_seen = en.get('id') in ids(call('GET', '/notices'))
-        st2 = next((x.get('status') for x in call('GET', '/admin/notices', None, TS) if x.get('id') == en.get('id')), None)
+        st2 = next((x.get('status') for x in call('GET', ADM_Q, None, TS) if x.get('id') == en.get('id')), None)
         e8 = call('POST', '/admin/notices', {'title': f'{TAG} 거꾸로', 'body': 'x', 'grades': ['PUBLIC'], 'publishedAt': iso(3600), 'endsAt': iso(60)}, TS)
         sc2 = call('POST', '/admin/notices', {'title': f'{TAG} 예약풀기', 'body': 'x', 'grades': ['PUBLIC'], 'publishedAt': iso(7200)}, TS)
         un = call('POST', f"/admin/notices/{sc2.get('id')}/unpublish", {'reason': '예약 취소'}, TS)
-        st3 = next((x.get('status') for x in call('GET', '/admin/notices', None, TS) if x.get('id') == sc2.get('id')), None)
+        st3 = next((x.get('status') for x in call('GET', ADM_Q, None, TS) if x.get('id') == sc2.get('id')), None)
         ok('⑤ 예약 게시 · 끝 날짜 — 예약은 안 보임(SCHEDULED · 알림 아직) → 시각 지남 + 정기 작업 notice_schedule → 보임 · 알림 1 · 끝 날짜 지난 공지 안 보임(ENDED) · 끝이 게시보다 앞 422 BAD_PERIOD · 예약 내리기는 초안으로',
            bool(scid) and not hid1 and st1 == 'SCHEDULED' and c4 == c3 and '_err' not in j and hid2 and int(c5 or 0) == int(c3 or 0) + 1
            and bool(en.get('id')) and not en_seen and st2 == 'ENDED' and e8.get('code') == 'BAD_PERIOD' and un.get('ok') is True and st3 == 'DRAFT',
