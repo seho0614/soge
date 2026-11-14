@@ -7,7 +7,7 @@
   ③ (화면) 메뉴 줄 오른쪽 「전체 찾기」 — 적으면 묶음별 결과
   만든 시험 회원은 남음(이메일마다 다름 · 두 번 돌아도 통과).
 """
-import json, os, re, subprocess, sys, time, urllib.error, urllib.request
+import json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -117,9 +117,9 @@ if API and DB:
         r2 = call('GET', f"/admin/search?q={stamp[-4:]}", None, TS)
         ph_hit = any(it.get('id') == m0.get('id') for s in r2.get('sections') or [] if s.get('key') == 'members' for it in s.get('items') or [])
         keys = [s.get('key') for s in r1.get('sections') or []]
-        rr = call('GET', '/admin/search?q=시험', None, TR)
+        rr = call('GET', '/admin/search?q=' + urllib.parse.quote('시험'), None, TR)
         rkeys = sorted(s.get('key') for s in rr.get('sections') or [])
-        rb = call('GET', '/admin/search?q=시험', None, TB)
+        rb = call('GET', '/admin/search?q=' + urllib.parse.quote('시험'), None, TB)
         r1c = call('GET', '/admin/search?q=a', None, TS)
         au = psql("SELECT after_data->>'q' FROM audit.audit_logs WHERE action = 'ADMIN_SEARCH' AND actor_account_id = (SELECT id FROM accounts WHERE email = 'admin@x.com') ORDER BY id DESC LIMIT 1")
         ok('② API — 이메일 일부로 회원(이름 찾** · 이메일 가림 · 원래 이메일 · 이름 없음) · 휴대폰 4자리 · SUPER 6묶음 · 검수 공지 · 매물만 · 회원 403 · 한 글자 422 · 감사 앞 2자(휴대폰 찾기)',
