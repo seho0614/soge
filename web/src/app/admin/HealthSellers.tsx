@@ -4,7 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
-import { previewImpact } from './HealthTypeRates';   // v10.274 (docs/404)
+import { afterSchedule, previewImpact } from './HealthTypeRates';   // v10.274 (docs/404)
 
 interface Seller {
   id: string; submerchantId?: string | null;
@@ -68,7 +68,7 @@ export function HealthSellers() {
     if (!p) return;
     const reason = prompt('바꾸는 사유 — 판매자에게 알림이 갑니다') ?? '';
     if (reason.trim().length < 2) return;
-    void a.run(`rate:${x.id}`, () => api<{ note?: string }>(`/admin/health/sellers/${x.id}/commission`, { method: 'POST', body: JSON.stringify({ rate: v, reason: reason.trim(), ...p }) }),
+    void a.run(`rate:${x.id}`, () => api<{ note?: string }>(`/admin/health/sellers/${x.id}/commission`, { method: 'POST', body: JSON.stringify({ rate: v, reason: reason.trim(), ...p }) }).then(afterSchedule),
       sellers.reload, (r) => r.note || '수수료율을 바꿨습니다. 새 주문부터 적용합니다.');
   };
   const submerchant = (x: Seller) => {

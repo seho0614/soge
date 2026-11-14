@@ -5,7 +5,7 @@ import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { HealthProductReviews } from './HealthProductReviews';
-import { HealthRateSchedules, HealthTypeRates, previewImpact } from './HealthTypeRates';   // v10.272 · 274 (docs/404) · v10.276 예약(docs/406)
+import { afterSchedule, HealthRateSchedules, HealthTypeRates, previewImpact } from './HealthTypeRates';   // v10.272 · 274 (docs/404) · v10.276 예약(docs/406)
 
 interface SettleRow {
   /* v10.168 (D157) — 판매수수료 세금계산서 */
@@ -289,7 +289,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
     if (!p) return;
     let reason = '';
     if (p.effectiveDate) { reason = (prompt('바꾸는 사유(2자 이상) — 판매자에게 알림으로 보이고 기록에 남습니다') ?? '').trim(); if (reason.length < 2) return; }
-    void a.run(`rate:${r.categoryCode}`, () => api<{ note?: string }>(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate, ...p, ...(reason ? { reason } : {}) }) }),
+    void a.run(`rate:${r.categoryCode}`, () => api<{ note?: string }>(`/admin/health/commission-rates/${encodeURIComponent(r.categoryCode)}`, { method: 'PATCH', body: JSON.stringify({ rate, ...p, ...(reason ? { reason } : {}) }) }).then(afterSchedule),
       () => { rates.reload(); setSchKey((k) => k + 1); }, (x) => (x && !Array.isArray(x) && x.note) || '수수료율을 바꿨습니다.');
   };
 

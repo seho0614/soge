@@ -1849,4 +1849,9 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "{0}줄을 담았습니다.": "{0} row(s) included.",
   /* v10.289 (docs/413) — 운영 화면 전체 찾기 */
   "두 글자 이상 적어 주십시오.": "Please enter at least two characters.",
+  /* v10.291 (docs/414) — 요율 예약 공지 날짜 정해 게시 */
+  "공지 날짜는 YYYY-MM-DD 로 적어 주십시오.": "Please enter the notice date as YYYY-MM-DD.",
+  "공지 날짜는 오늘({0})부터 {1}까지 정할 수 있습니다 — 시행일({2}) 31일 전까지(입점 약관 제17조 4항).": "The notice date can be set from today ({0}) to {1} — at least 31 days before the effective date ({2}) (Seller Terms Article 17(4)).",
+  "예약 안내 공지를 {0} 0시에 게시하도록 정했습니다 — 그때부터 파트너센터 공지 · 판매자센터에 보입니다.": "The rate change notice is set to be posted at 00:00 on {0} — from then it appears in the Partner Center notices and the Seller Center.",
+  "예약을 취소했습니다 — 판매자 {0}곳에 알렸습니다. 게시 예약한 공지는 나가기 전이라 거뒀습니다.": "The scheduled change has been cancelled — {0} seller(s) have been notified. The notice set for a later date had not gone out yet, so it was withdrawn.",
 };

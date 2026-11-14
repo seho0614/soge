@@ -43,6 +43,11 @@ export class TypeRateDto {
 export class RateScheduleCancelDto {
   @ApiProperty({ description: '취소 사유(2자 이상) — 판매자에게 알림' }) @IsString() @MaxLength(300) reason!: string;
 }
+/** v10.291 (docs/414) — 요율 예약 공지 게시 시점 */
+export class RateNoticeDto {
+  @ApiPropertyOptional({ description: '공지 날짜(YYYY-MM-DD · 그날 0시 한국) — 오늘 ~ 시행일 31일 전 · 비우거나 오늘이면 바로 게시', example: '2026-12-01' })
+  @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) at?: string;
+}
 export class SubmerchantDto {
   @ApiPropertyOptional({ description: '결제대행사 화면에서 받은 하위가맹점 번호(비우면 결제대행사에 등록 — 연동 전이라 간주 모드에서만 시험 번호)' })
   @IsOptional() @IsString() @MaxLength(60) submerchantId?: string;
@@ -266,14 +271,14 @@ export class HealthSellerController {
 
   @Post('admin/health/rate-schedules/:id/notice')
   @Roles('ADMIN', 'SUPER')
-  @ApiOperation({ summary: '요율 예약 공지 게시', description: 'v10.278 (D209) 예약 때 만든 소개몰 공지 초안을 게시(맨 위 고정) — 예정 예약은 예약 안내(게시한 날 + 31일 ≤ 시행일일 때만) · 취소한 예약은 변경 취소 안내. 입점 약관 제17조 4항 「공지」.' })
+  @ApiOperation({ summary: '요율 예약 공지 게시', description: 'v10.278 (D209) 예약 때 만든 소개몰 공지 초안을 게시(맨 위 고정) — 예정 예약은 예약 안내(게시한 날 + 31일 ≤ 시행일일 때만) · 취소한 예약은 변경 취소 안내. 입점 약관 제17조 4항 「공지」. v10.291 (docs/414) at 이면 그날 0시 게시 예약(오늘 ~ 시행일 31일 전 · 다시 정하거나 지금 게시 가능 · 나가기 전 예약을 취소하면 거둠).' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   @ApiResponse({ status: 409, description: 'NOTICE_DONE', type: ErrorDto })
-  @ApiResponse({ status: 422, description: 'NOTICE_LATE', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NOTICE_LATE · NOTICE_AT_RANGE · NOTICE_AT_BAD', type: ErrorDto })
   @Audit('HLT_RATE_NOTICE_PUBLISH', 'NOTICE')
-  publishRateNotice(@Param('id', ParseUUIDPipe) id: string) { return this.rates.publishNotice(id); }
+  publishRateNotice(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RateNoticeDto) { return this.rates.publishNotice(id, dto?.at); }
 
   @Post('admin/health/rate-schedules/:id/remind')
   @Roles('ADMIN', 'SUPER')

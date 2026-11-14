@@ -91,15 +91,20 @@ export class HealthRateScheduleService {
   /**
    * v10.278 (D209) — 「공지 게시」: 예정 예약이면 예약 안내(게시한 날 + 31일 ≤ 시행일일 때만) · 취소한 예약이면 취소 안내.
    *   게시하면 사용자 웹 공지(파트너센터 공지 · 소개몰 판매자센터 공지)에 맨 위 고정으로 보임.
+   * v10.291 (docs/414) — at(YYYY-MM-DD)이면 그날 0시(한국) 게시 예약 · 오늘 ~ 시행일 31일 전 · 비우거나 오늘이면 바로.
    */
-  async publishNotice(id: string) {
+  async publishNotice(id: string, atRaw?: string | null) {
+    const at = String(atRaw ?? '').trim();
+    if (at && !/^\d{4}-\d{2}-\d{2}$/.test(at)) throw new PolicyViolation('NOTICE_AT_BAD', '공지 날짜는 YYYY-MM-DD 로 적어 주십시오.');
     return this.db.transaction(async () => {
-      const [r] = await this.db.query<{ status: string; notice: string | null; cnotice: string | null; npub: boolean; cpub: boolean; late: boolean; d: string; e: string }>(
+      /* v10.291 (docs/414) — 날짜 정해 게시 예약(published_at 이 아직 안 옴)은 「게시 안 함」으로 보고 다시 정하거나 지금 게시할 수 있음 */
+      const [r] = await this.db.query<{ status: string; notice: string | null; cnotice: string | null; npub: boolean; cpub: boolean; late: boolean; d: string; e: string; today: string }>(
         `SELECT r.status, r.notice_id AS notice, r.cancel_notice_id AS cnotice,
-                (n.published_at IS NOT NULL) AS npub, (c.published_at IS NOT NULL) AS cpub,
+                (n.published_at IS NOT NULL AND n.published_at <= now()) AS npub, (c.published_at IS NOT NULL AND c.published_at <= now()) AS cpub,
                 ((now() AT TIME ZONE 'Asia/Seoul')::date + $2::int > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS late,
                 to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
-                to_char((r.effective_at AT TIME ZONE 'Asia/Seoul')::date - $2::int, 'YYYY-MM-DD') AS e
+                to_char((r.effective_at AT TIME ZONE 'Asia/Seoul')::date - $2::int, 'YYYY-MM-DD') AS e,
+                to_char((now() AT TIME ZONE 'Asia/Seoul')::date, 'YYYY-MM-DD') AS today
            FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id LEFT JOIN notices c ON c.id = r.cancel_notice_id
           WHERE r.id::text = $1 FOR UPDATE OF r`, [id, NOTICE_DAYS]);
       if (!r) throw new NotFound('요율 예약을 찾을 수 없습니다.');
@@ -111,8 +116,15 @@ export class HealthRateScheduleService {
         target = r.cnotice; kind = 'CANCEL';
       }
       if (!target) throw new StateConflict('NOTICE_DONE', '게시할 공지가 없습니다 — 이미 게시했거나 공지 초안이 없는 예약입니다.');
+      if (kind === 'SCHEDULE' && at && at !== r.today) {
+        if (at < r.today || at > r.e) {
+          throw new PolicyViolation('NOTICE_AT_RANGE', `공지 날짜는 오늘(${r.today})부터 ${r.e}까지 정할 수 있습니다 — 시행일(${r.d}) 31일 전까지(입점 약관 제17조 4항).`);
+        }
+        await this.db.query(`UPDATE notices SET published_at = ($2::date)::timestamp AT TIME ZONE 'Asia/Seoul', is_pinned = true WHERE id = $1`, [target, at]);
+        return { ok: true, noticeId: target, kind, at, note: `예약 안내 공지를 ${at} 0시에 게시하도록 정했습니다 — 그때부터 파트너센터 공지 · 판매자센터에 보입니다.` };
+      }
       await this.db.query(`UPDATE notices SET published_at = now(), is_pinned = true WHERE id = $1`, [target]);
-      return { ok: true, noticeId: target, kind, note: kind === 'SCHEDULE' ? '예약 안내 공지를 게시했습니다.' : '변경 취소 안내 공지를 게시했습니다.' };
+      return { ok: true, noticeId: target, kind, at: r.today, note: kind === 'SCHEDULE' ? '예약 안내 공지를 게시했습니다.' : '변경 취소 안내 공지를 게시했습니다.' };
     });
   }
 
@@ -136,7 +148,7 @@ export class HealthRateScheduleService {
                            WHEN 'TYPE' THEN CASE r.target WHEN 'BRAND' THEN '브랜드 직영관' ELSE '일반 입점' END
                            ELSE coalesce((SELECT c.name FROM categories c WHERE c.gwan_code = 'HLT' AND c.code = r.target), r.target) END AS "label",
               (SELECT count(*)::int FROM fn_hlt_rate_sched_sellers(r.scope, r.target)) AS "affectedNow",
-              r.notice_id AS "noticeId", n.title AS "noticeTitle", n.body AS "noticeBody", n.published_at AS "noticePublishedAt",
+              r.notice_id AS "noticeId", n.title AS "noticeTitle", n.body AS "noticeBody", n.published_at AS "noticePublishedAt", (n.published_at > now()) AS "noticeScheduled",
               r.cancel_notice_id AS "cancelNoticeId", c.title AS "cancelNoticeTitle", c.body AS "cancelNoticeBody", c.published_at AS "cancelNoticePublishedAt",
               ((now() AT TIME ZONE 'Asia/Seoul')::date + ${NOTICE_DAYS} > (r.effective_at AT TIME ZONE 'Asia/Seoul')::date) AS "noticeLate",
               /* v10.283 (D212) 읽음 n / 대상 m · 다시 알림 */
@@ -179,9 +191,10 @@ export class HealthRateScheduleService {
     const reason = String(reasonRaw ?? '').trim();
     if (reason.length < 2) throw new PolicyViolation('REASON_REQUIRED', '취소 사유를 적어 주십시오 — 판매자에게 알리고 기록에 남습니다.');
     return this.db.transaction(async () => {
-      const [r] = await this.db.query<{ scope: string; target: string; status: string; due: boolean; d: string; npub: boolean }>(
+      const [r] = await this.db.query<{ scope: string; target: string; status: string; due: boolean; d: string; npub: boolean; nsched: boolean; notice: string | null }>(
         `SELECT r.scope, r.target, r.status, r.effective_at <= now() AS due, to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
-                (n.published_at IS NOT NULL) AS npub
+                (n.published_at IS NOT NULL AND n.published_at <= now()) AS npub,
+                (n.published_at > now()) AS nsched, r.notice_id AS notice
            FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id WHERE r.id::text = $1 FOR UPDATE OF r`, [id]);
       if (!r) throw new NotFound('요율 예약을 찾을 수 없습니다.');
       if (r.status !== 'SCHEDULED' || r.due) throw new StateConflict('SCHEDULE_CLOSED', '이미 시행했거나 취소한 예약입니다 — 시행 시각이 지나면 취소할 수 없습니다.');
@@ -190,6 +203,8 @@ export class HealthRateScheduleService {
         [id, RequestCtx.actorId(), reason]);
       const sent = await this.notifySellers(r.scope, r.target, 'SELLER_RATE_SCHEDULE_CANCELED', '판매 수수료율 변경 예정이 취소되었습니다',
         `${r.d} 부터 바뀔 예정이던 판매 수수료율 변경을 취소했습니다 — 지금 요율 그대로입니다 · 사유: ${reason}`);
+      /* v10.291 (docs/414) — 날짜 정해 게시 예약만 하고 아직 안 나간 공지는 거둠(초안으로 · 판매자에게 보인 적 없음 → 취소 안내 없음) */
+      if (r.nsched && r.notice) await this.db.query(`UPDATE notices SET published_at = NULL WHERE id = $1 AND published_at > now()`, [r.notice]);
       let cancelNoticeId: string | null = null;   // v10.278 — 예약 안내를 이미 게시했으면 취소 안내 초안
       if (r.npub) {
         cancelNoticeId = await this.draftNotice(`판매 수수료율 변경 취소 안내(${r.d} 시행 예정이던 변경)`, [
@@ -203,6 +218,7 @@ export class HealthRateScheduleService {
       }
       return { ok: true, status: 'CANCELED', notified: sent, cancelNoticeId,
         note: cancelNoticeId ? `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다. 게시한 공지가 있어 「변경 취소 안내」 초안을 만들었습니다 — 「공지 게시」로 게시해 주십시오.`
+          : r.nsched ? `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다. 게시 예약한 공지는 나가기 전이라 거뒀습니다.`
           : `예약을 취소했습니다 — 판매자 ${sent}곳에 알렸습니다.` };
     });
   }

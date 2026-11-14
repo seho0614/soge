@@ -3,6 +3,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { askNoticeTiming } from './RateNoticeDialog';   // v10.291 (docs/414) — 공지 시점 확인 창
 
 interface TypeRate {
   sellerType: 'BRAND' | 'TENANT'; rate: string | number | null; note: string | null; updatedAt: string;
@@ -24,6 +25,8 @@ interface RateSchedule {
   noticeId: string | null; noticeTitle: string | null; noticeBody: string | null; noticePublishedAt: string | null;
   cancelNoticeId: string | null; cancelNoticeTitle: string | null; cancelNoticeBody: string | null; cancelNoticePublishedAt: string | null;
   noticeLate: boolean;
+  /** v10.291 (docs/414) 날짜 정해 게시 예약(published_at 이 아직 안 옴) */
+  noticeScheduled?: boolean;
   /** v10.283 (D212) 읽음 n / 대상 m · 다시 알림 */
   noticeReads?: number; remindedAt?: string | null; reminds?: number;
 }
@@ -62,6 +65,19 @@ export async function previewImpact(scope: 'SELLER' | 'TYPE' | 'CATEGORY', key: 
   }
 }
 
+/** v10.291 (docs/414) — 요율 바꾸기 응답이 「예약」이면 공지 시점을 바로 묻고(지금 · 날짜 · 나중에) 고른 대로 게시 · 결과를 안내 글에 붙임 */
+export async function afterSchedule<T extends { note?: string; scheduled?: boolean; id?: string; effectiveDate?: string }>(r: T): Promise<T> {
+  if (!r || !r.scheduled || !r.id || !r.effectiveDate) return r;
+  const t = await askNoticeTiming(r.effectiveDate, `판매 수수료율 변경 안내(${r.effectiveDate} 시행)`, true);
+  if (t === null) return { ...r, note: `${r.note ?? ''} 공지는 초안으로 남겼습니다 — 「요율 변경 예정」에서 게시하십시오.` };
+  try {
+    const p = await api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/notice`, { method: 'POST', body: JSON.stringify(t === 'NOW' ? {} : { at: t }) });
+    return { ...r, note: `${r.note ?? ''} ${p.note}` };
+  } catch (e) {
+    return { ...r, note: `${r.note ?? ''} 공지 게시는 되지 않았습니다(${(e as Error).message}) — 「요율 변경 예정」에서 다시 게시하십시오.` };
+  }
+}
+
 /**
  * SB-ADM-HST-010 소개몰 정산 › 요율 변경 예정 (v10.276 · D208 · docs/406)
  *   판매자 · 입점 유형 · 갈래 요율 인상 예약 — 시행 전에만 취소(사유 · 판매자에게 알림). 시행일 0시부터 새 주문에 적용 · 매일 00:05 표에 옮김.
@@ -82,8 +98,13 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
   const publish = (r: RateSchedule, cancel: boolean) => {
     const title = cancel ? r.cancelNoticeTitle : r.noticeTitle, body = cancel ? r.cancelNoticeBody : r.noticeBody;
     if (!confirm(`아래 공지를 소개몰 공지(맨 위 고정)로 게시합니다 — 파트너센터 공지 · 판매자센터에 보입니다.\n\n[${title}]\n${body}\n\n게시할까요?`)) return;
-    void a.run(`ntc:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/notice`, { method: 'POST' }),
-      () => q.reload(), (x) => x.note);
+    void (async () => {
+      /* v10.291 (docs/414) — 예약 안내는 「지금」 · 「날짜 정해」(시행일 31일 전까지) 고르기 · 취소 안내는 바로 */
+      const t = cancel ? 'NOW' : await askNoticeTiming(r.effectiveDate, title ?? '', false);
+      if (t === null) return;
+      await a.run(`ntc:${r.id}`, () => api<{ note: string }>(`/admin/health/rate-schedules/${r.id}/notice`, { method: 'POST', body: JSON.stringify(t === 'NOW' ? {} : { at: t }) }),
+        () => q.reload(), (x) => x.note);
+    })();
   };
   /* v10.283 (D212) — 공지를 판매자센터에서 펼치지 않은 영향 판매자에게만 다시 알림(24시간에 한 번) */
   const remind = (r: RateSchedule, unread: number) => {
@@ -96,6 +117,14 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
         : <button className="btn-plain" disabled={a.busy === `ntc:${r.id}`} onClick={() => publish(r, true)} data-rate-notice-publish={r.id}>취소 안내 게시</button>;
     }
     if (!r.noticeId) return <span className="dim">—</span>;
+    if (r.noticePublishedAt && r.noticeScheduled) {   // v10.291 — 날짜 정해 게시 예약(그날 0시 · 그 전에는 판매자에게 안 보임)
+      return (
+        <>
+          <span className="badge" data-rate-notice="scheduled">게시 예약 {ymd(r.noticePublishedAt)}</span>{' '}
+          {r.status === 'SCHEDULED' && !r.noticeLate && <button className="btn-plain" disabled={a.busy === `ntc:${r.id}`} onClick={() => publish(r, false)} data-rate-notice-publish={r.id}>날짜 바꾸기 · 지금 게시</button>}
+        </>
+      );
+    }
     if (r.noticePublishedAt) {
       const unread = Math.max(0, (r.affectedNow ?? 0) - (r.noticeReads ?? 0));
       const soon = !!r.remindedAt && Date.now() - new Date(r.remindedAt).getTime() < 24 * 3600 * 1000;
@@ -166,7 +195,7 @@ export function HealthTypeRates({ onChanged }: { onChanged?: () => void } = {}) 
     if (!p) return;
     const reason = prompt(p.effectiveDate ? '바꾸는 사유(2자 이상) — 판매자에게 알림으로 보이고 기록에 남습니다' : '바꾸는 사유(2자 이상) — 기록에 남습니다') ?? '';
     if (reason.trim().length < 2) return;
-    void a.run(`type:${t.sellerType}`, () => api<{ note: string }>(`/admin/health/type-rates/${t.sellerType}`, { method: 'PATCH', body: JSON.stringify({ rate: v, reason: reason.trim(), ...p }) }),
+    void a.run(`type:${t.sellerType}`, () => api<{ note: string }>(`/admin/health/type-rates/${t.sellerType}`, { method: 'PATCH', body: JSON.stringify({ rate: v, reason: reason.trim(), ...p }) }).then(afterSchedule),
       () => { q.reload(); onChanged?.(); }, (r) => r.note);
   };
   return (
