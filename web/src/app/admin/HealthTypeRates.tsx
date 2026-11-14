@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
@@ -39,6 +39,9 @@ interface SendStatus {
   smsSent: number; smsQueued: number; smsFailed: number; smsWaiting: number; smsNone: number;
   fails: { channel: string; reason: string; n: number }[]; channels: Record<string, boolean>;
 }
+/** v10.300 (docs/420) GET …/reads — 요율 변경 공지 열람 기록 */
+interface ReadsRow { code: string; name: string; status: string; target: boolean; firstAt: string | null; lastAt: string | null; reads: number; notifiedAt: string | null; reminds: number; delivery: string | null }
+interface Reads { noticeTitle: string | null; noticePublishedAt: string | null; rows: ReadsRow[]; target: number; read: number; unread: number; outsideRead: number }
 const SCOPE_NAME: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
 const pct = (v: string | number | null) => (v === null ? '비움(다음 순서)' : `${Number(v)}%`);
 
@@ -129,6 +132,21 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
       if (d) setSs({ id: r.id, label: `${SCOPE_NAME[r.scope]} ${r.label ?? r.target} · ${r.effectiveDate}`, d });
     })();
   };
+  /* v10.300 (docs/420) 공지 열람 기록(입점 약관 제17조 4항 증거) — 판매자마다 처음 · 마지막 · 횟수 · 알림 · CSV(SUPER · 감사 기록) */
+  const isSuper = tokenRoles().includes('SUPER');
+  const [rd, setRd] = useState<{ id: string; label: string; d: Reads } | null>(null);
+  const loadReads = (r: RateSchedule) => {
+    if (rd?.id === r.id) { setRd(null); return; }
+    void (async () => {
+      const d = await a.run(`rd:${r.id}`, () => api<Reads>(`/admin/health/rate-schedules/${r.id}/reads`), undefined, '읽음 기록을 불러왔습니다.');
+      if (d) setRd({ id: r.id, label: `${SCOPE_NAME[r.scope]} ${r.label ?? r.target} · ${r.effectiveDate}`, d });
+    })();
+  };
+  const readsCsv = (id: string) => void a.run('rdcsv', async () => {
+    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/health/rate-schedules/${id}/reads/export`);
+    const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([x.csv], { type: 'text/csv;charset=utf-8' })); el.download = x.filename; el.click(); URL.revokeObjectURL(el.href);
+    return x;
+  }, undefined, (x) => x.note);
   const noticeCell = (r: RateSchedule) => {
     if (r.status === 'CANCELED' && r.cancelNoticeId) {
       return r.cancelNoticePublishedAt ? <span className="dim">취소 안내 게시 {ymd(r.cancelNoticePublishedAt)}</span>
@@ -149,7 +167,8 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
       return (
         <>
           <span data-rate-notice="published">게시 {ymd(r.noticePublishedAt)}</span>{' '}
-          <span className="dim" data-rate-notice-reads={`${r.noticeReads ?? 0}/${r.affectedNow ?? 0}`}>· 읽음 {r.noticeReads ?? 0} / 대상 {r.affectedNow ?? 0}</span>
+          <span className="dim" data-rate-notice-reads={`${r.noticeReads ?? 0}/${r.affectedNow ?? 0}`}>· 읽음 {r.noticeReads ?? 0} / 대상 {r.affectedNow ?? 0}</span>{' '}
+          <button className="btn-plain" disabled={a.busy === `rd:${r.id}`} onClick={() => loadReads(r)} data-rate-reads-open={r.id}>{rd?.id === r.id ? '닫기' : '읽음 기록'}</button>
           {r.status === 'SCHEDULED' && unread > 0 && (
             soon ? <span className="dim"> · 다시 알림 {ymd(r.remindedAt)}(24시간 뒤 다시)</span>
               : <> <button className="btn-plain" disabled={a.busy === `rmd:${r.id}`} onClick={() => remind(r, unread)} data-rate-notice-remind={r.id}>안 읽은 {unread}곳 다시 알림</button></>
@@ -198,6 +217,29 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
             ))}
           </tbody>
         </table>
+      )}
+      {rd && (
+        <div className="card pad" data-rate-reads={rd.id} style={{ marginTop: 8 }}>
+          <b>공지 열람 기록</b> <span className="dim">— {rd.label} · 「{rd.d.noticeTitle ?? '—'}」 게시 {rd.d.noticePublishedAt ?? '—'} · 판매자센터 · 파트너센터에서 공지를 <b>펼친</b> 때(목록만 연 것은 안 셈) · 입점 약관 제17조 4항 증거</span>
+          <p style={{ margin: '6px 0' }} data-rate-reads-sum={`${rd.d.read}/${rd.d.target}`}>
+            읽음 <b>{n(rd.d.read)}</b> / 대상 {n(rd.d.target)}{rd.d.unread > 0 && <> · <span className="badge badge-urgent">안 읽음 {n(rd.d.unread)}</span></>}
+            {rd.d.outsideRead > 0 && <span className="dim"> · 지금 대상이 아닌데 펼친 곳 {n(rd.d.outsideRead)}</span>}{' '}
+            {isSuper && <button className="btn-sm" disabled={a.busy === 'rdcsv' || rd.d.rows.length === 0} onClick={() => readsCsv(rd.id)} data-rate-reads-csv>CSV 받기</button>}
+          </p>
+          {rd.d.rows.length === 0 ? <p className="dim" data-rate-reads-empty>대상 판매자가 없습니다.</p> : (
+            <table className="tbl">
+              <thead><tr><th>판매자 코드</th><th>상호</th><th>상태</th><th>대상</th><th>처음 펼침</th><th>마지막</th><th>횟수</th><th>예약 안내 알림</th><th>다시 알림</th><th>메일 · 문자</th></tr></thead>
+              <tbody>
+                {rd.d.rows.map((x) => (
+                  <tr key={x.code} data-rate-reads-row={x.firstAt ? 'read' : 'unread'}>
+                    <td className="mono">{x.code}</td><td>{x.name}</td><td>{x.status}</td><td>{x.target ? '예' : <span className="dim">아니오(펼침만)</span>}</td>
+                    <td>{x.firstAt ?? <span className="badge badge-urgent">안 읽음</span>}</td><td>{x.lastAt ?? '—'}</td><td className="num-cell">{n(x.reads)}</td>
+                    <td>{x.notifiedAt ?? <span className="dim">—</span>}</td><td className="num-cell">{n(x.reminds)}</td><td className="dim">{x.delivery ?? '—'}</td>
+                  </tr>))}
+              </tbody>
+            </table>)}
+          <p className="hint">{isSuper ? 'CSV 를 받으면 받은 사람 · 줄 수가 감사 기록(HLT_RATE_READS_EXPORT)에 남습니다.' : 'CSV 받기는 최고 관리자만 할 수 있습니다.'} 「예약 안내 알림」은 v10.297 이후 예약부터 보입니다.</p>
+        </div>
       )}
       {ss && (
         <div className="card pad" data-rate-send-status={ss.id} style={{ marginTop: 8 }}>

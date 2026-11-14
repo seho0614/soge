@@ -1847,6 +1847,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "감사 기록을 찾을 수 없습니다.": "The audit record could not be found.",
   "1만 줄이 넘어 최근 1만 줄만 담았습니다 — 기간을 좁혀 나눠 받으십시오.": "There were more than 10,000 rows, so only the latest 10,000 were included — narrow the period and download in parts.",
   "{0}줄을 담았습니다.": "{0} row(s) included.",
+  "판매자 {0}줄(읽음 {1} / 대상 {2})을 담았습니다 — 받은 기록이 감사 기록에 남습니다.": "Included {0} seller row(s) (read {1} / target {2}) — this download is recorded in the audit log.",
   /* v10.289 (docs/413) — 운영 화면 전체 찾기 */
   "두 글자 이상 적어 주십시오.": "Please enter at least two characters.",
   /* v10.291 (docs/414) — 요율 예약 공지 날짜 정해 게시 */

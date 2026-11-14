@@ -3281,6 +3281,8 @@
     "POST /admin/health/rate-schedules/{id}/notice",
     "POST /admin/health/rate-schedules/{id}/remind",
     "GET /admin/health/rate-schedules/{id}/send-status",
+    "GET /admin/health/rate-schedules/{id}/reads",
+    "GET /admin/health/rate-schedules/{id}/reads/export",
     "POST /admin/health/sellers/{id}/submerchant",
     "POST /admin/health/settlements/{id}/confirm",
     "POST /admin/health/settlements/{id}/payout"

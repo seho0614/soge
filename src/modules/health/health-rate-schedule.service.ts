@@ -6,6 +6,16 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 export type RateScope = 'SELLER' | 'TYPE' | 'CATEGORY';
 export const NOTICE_DAYS = 31;   // 예약한 날을 빼고 꼬박 30일 — DB(hlt_rate_sched_notice_31d)도 같은 값
 
+/** v10.300 (docs/420) 열람 기록 머리 · 줄 */
+export interface ReadsHead {
+  id: string; scope: string; target: string; fromRate: string | null; toRate: string | null; status: string; effectiveDate: string; label: string | null;
+  noticeId: string | null; noticeTitle: string | null; noticePublishedAt: string | null; noticeScheduled: boolean;
+}
+export interface ReadsRow {
+  code: string; name: string; status: string; target: boolean; firstAt: string | null; lastAt: string | null; reads: number;
+  notifiedAt: string | null; reminds: number; delivery: string | null;
+}
+
 /**
  * v10.275 ~ 277 (D208 · docs/406) — 판매수수료율 인상 예약(입점 약관 제17조 4항)
  *   올리거나 비워서 어느 갈래에서라도 오르고, 그 요율이 쓰이는 판매 중 · 정지 입점 판매자가 있으면 바로 바꾸지 않고 예약합니다.
@@ -235,6 +245,77 @@ export class HealthRateScheduleService {
       await this.db.query(`INSERT INTO hlt_rate_reminds (schedule_id, sent, by_account) VALUES ($1, $2, $3)`, [id, rows.length, RequestCtx.actorId()]);
       return { ok: true, sent: rows.length, note: `안 읽은 판매자 ${rows.length}곳에 다시 알렸습니다.` };
     });
+  }
+
+  /**
+   * v10.300 (docs/420) — 요율 변경 공지 열람 기록(입점 약관 제17조 4항 「공지를 봤다」 증거) — 읽기만.
+   *   지금 대상 판매자(fn_hlt_rate_sched_sellers) 모두 + 대상이 아니어도 공지를 펼친 판매자. 줄마다 처음 · 마지막 · 횟수(판매자센터 등에서 펼친 때 · notice_reads) ·
+   *   예약 안내 알림 때 · 다시 알림 수 · 메일 · 문자 결과(hlt_rate_notifications · notification_deliveries). 안 읽은 곳이 위.
+   */
+  async reads(scheduleId: string) {
+    const [s] = await this.db.query<ReadsHead>(
+      `SELECT r.id, r.scope, r.target, r.from_rate AS "fromRate", r.to_rate AS "toRate", r.status,
+              to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "effectiveDate",
+              CASE r.scope WHEN 'SELLER' THEN (SELECT x.name FROM hlt_sellers x WHERE x.id::text = r.target)
+                           WHEN 'TYPE' THEN CASE r.target WHEN 'BRAND' THEN '브랜드 직영관' ELSE '일반 입점' END
+                           ELSE coalesce((SELECT c.name FROM categories c WHERE c.gwan_code = 'HLT' AND c.code = r.target), r.target) END AS "label",
+              r.notice_id AS "noticeId", n.title AS "noticeTitle",
+              to_char(n.published_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "noticePublishedAt",
+              coalesce(n.published_at > now(), false) AS "noticeScheduled"
+         FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id WHERE r.id = $1::uuid`, [scheduleId]);
+    if (!s) throw new NotFound('요율 예약을 찾을 수 없습니다.');
+    const rows = await this.db.query<ReadsRow>(
+      `WITH tgt AS (SELECT fn_hlt_rate_sched_sellers($2, $3) AS id),
+            who AS (SELECT s.id, true AS target FROM hlt_sellers s WHERE s.id IN (SELECT id FROM tgt)
+                    UNION
+                    SELECT s.id, false FROM hlt_sellers s JOIN notice_reads nr ON nr.account_id = s.account_id AND nr.notice_id = $4::uuid
+                     WHERE s.id NOT IN (SELECT id FROM tgt))
+       SELECT s.code, s.name, s.status, w.target,
+              to_char(nr.first_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI:SS') AS "firstAt",
+              to_char(nr.last_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI:SS') AS "lastAt",
+              coalesce(nr.reads, 0)::int AS reads,
+              (SELECT to_char(min(h.at) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') FROM hlt_rate_notifications h JOIN notifications x ON x.id = h.notification_id
+                WHERE h.schedule_id = $1::uuid AND h.kind = 'SCHEDULE' AND x.account_id = s.account_id) AS "notifiedAt",
+              (SELECT count(*)::int FROM hlt_rate_notifications h JOIN notifications x ON x.id = h.notification_id
+                WHERE h.schedule_id = $1::uuid AND h.kind = 'REMIND' AND x.account_id = s.account_id) AS reminds,
+              (SELECT string_agg(DISTINCT CASE d.channel WHEN 'EMAIL' THEN '메일' WHEN 'SMS' THEN '문자' ELSE d.channel END || ' ' ||
+                                  CASE WHEN d.status IN ('SENT', 'DELIVERED') THEN '보냄' WHEN d.status = 'FAILED' THEN '실패' ELSE '대기' END, ' · ')
+                 FROM hlt_rate_notifications h JOIN notifications x ON x.id = h.notification_id JOIN notification_deliveries d ON d.notification_id = x.id
+                WHERE h.schedule_id = $1::uuid AND x.account_id = s.account_id) AS delivery
+         FROM who w JOIN hlt_sellers s ON s.id = w.id
+         LEFT JOIN notice_reads nr ON nr.notice_id = $4::uuid AND nr.account_id = s.account_id
+        ORDER BY (nr.first_at IS NULL) DESC, w.target DESC, s.name, s.code LIMIT 5000`,
+      [scheduleId, s.scope, s.target, s.noticeId]);
+    const target = rows.filter((x) => x.target).length;
+    const read = rows.filter((x) => x.target && x.reads > 0).length;
+    return { ...s, rows, target, read, unread: target - read, outsideRead: rows.filter((x) => !x.target && x.reads > 0).length };
+  }
+
+  /** v10.300 (docs/420) — 위 열람 기록 CSV(엑셀용 · SUPER) · 받을 때마다 감사 HLT_RATE_READS_EXPORT(예약 번호 · 줄 수) */
+  async readsCsv(scheduleId: string) {
+    const r = await this.reads(scheduleId);
+    const c = (v: unknown) => { const t = v == null ? '' : String(v); return /^[=+\-@]/.test(t) ? `'${t}` : /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const SCOPE: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
+    const head = [
+      ['요율 변경 공지 열람 기록', '입점 약관 제17조 4항'],
+      ['범위 · 대상', `${SCOPE[r.scope] ?? r.scope} ${r.label ?? r.target}`],
+      ['요율', `${r.fromRate == null ? '비움' : `${Number(r.fromRate)}%`} → ${r.toRate == null ? '비움' : `${Number(r.toRate)}%`}`],
+      ['시행일', r.effectiveDate],
+      ['공지', r.noticeTitle ?? '(공지 없음)'],
+      ['공지 게시(한국)', r.noticePublishedAt ? `${r.noticePublishedAt}${r.noticeScheduled ? ' (게시 예약 — 아직 안 보임)' : ''}` : '(게시 안 함)'],
+      ['읽음 / 대상', `${r.read} / ${r.target}`],
+      ['받은 때(한국)', new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')],
+    ];
+    const cols = ['판매자 코드', '상호', '판매자 상태', '지금 대상', '처음 펼침(한국)', '마지막 펼침(한국)', '펼친 횟수', '예약 안내 알림(한국)', '다시 알림', '메일 · 문자'];
+    const csv = '﻿' + [...head.map((x) => x.map(c).join(',')), '', cols.join(','),
+      ...r.rows.map((x) => [x.code, x.name, x.status, x.target ? '예' : '아니오(펼침만)', x.firstAt ?? '안 읽음', x.lastAt, x.reads, x.notifiedAt, x.reminds, x.delivery].map(c).join(','))].join('\r\n') + '\r\n';
+    await this.db.query(
+      `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
+       VALUES ($1, $2, 'HLT_RATE_READS_EXPORT', 'HLT_COMMISSION', $3::uuid, $4::jsonb, $5, $6)`,
+      [RequestCtx.actorId(), RequestCtx.get()?.actorRole ?? null, scheduleId, JSON.stringify({ rows: r.rows.length, read: r.read, target: r.target, noticeId: r.noticeId }),
+       RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
+    return { filename: `rate-notice-reads-${r.effectiveDate}-${String(r.id).slice(0, 8)}.csv`, csv, rows: r.rows.length,
+      note: `판매자 ${r.rows.length}줄(읽음 ${r.read} / 대상 ${r.target})을 담았습니다 — 받은 기록이 감사 기록에 남습니다.` };
   }
 
   /** 운영 — 시행 전 예약 취소(사유 · 판매자에게 알림) */

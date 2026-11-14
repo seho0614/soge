@@ -175,7 +175,7 @@ else
   fi
   mo=$(cd "$REL" && node scripts/migrate.js 2>&1); mrc=$?
   echo "$mo" >> "$BUILD_LOG"
-  echo "$mo" | grep -E '^(ok|!!) ' | sed 's/^/        /' | tee -a "$OUT"
+  echo "$mo" | grep -E '^(ok|!!) |^   NOTICE ' | sed 's/^/        /' | tee -a "$OUT"   # v10.299 — 마이그레이션 NOTICE 도(docs/419)
   say "        $(echo "$mo" | tail -1)"
   [ $mrc = 0 ] && echo "$mo" | tail -1 | grep -q "변경감지 0" || stop "마이그레이션 실패" "실패한 파일은 통째로 되돌아갔고, 그 앞 파일까지는 적용된 상태입니다. 돌던 서비스는 전 판 그대로입니다 — 출력과 함께 알려 주십시오."
   applied=$(q "select count(*) from schema_migrations"); files=$(echo "$ST" | wc -l | tr -d ' ')

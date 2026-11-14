@@ -23,6 +23,9 @@ const sum = (buf) => crypto.createHash('sha256').update(buf).digest('hex').slice
   if (!process.env.DATABASE_URL) { console.error('DATABASE_URL 필요'); process.exit(1); }
   const c = new Client({ connectionString: process.env.DATABASE_URL });
   await c.connect();
+  /* v10.299 (docs/419) — 마이그레이션 DO 블록의 RAISE NOTICE 만 화면에(where 가 「… at RAISE」) — apply 가 이 줄을 보여 주고 기록에도 남김 · 운영 절차서 「NOTICE」 표와 맞춤.
+     「… does not exist, skipping」 같은 DB 자체 안내는 내지 않음 */
+  c.on('notice', (m) => { if (/ at RAISE\b/.test(m.where ?? '')) console.log(`   NOTICE ${m.message}`); });
   await c.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
     name text PRIMARY KEY, checksum text NOT NULL,
     applied_at timestamptz NOT NULL DEFAULT now(), duration_ms int)`);
