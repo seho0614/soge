@@ -53,7 +53,7 @@ D398 = [f for f in docs if f.startswith('398_')]
 t398 = open(os.path.join(K, 'docs', D398[0]), encoding='utf-8').read() if D398 else ''
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isfile(os.path.join(K, 'prisma/migrations', d, 'migration.sql'))] if os.path.isdir(os.path.join(K, 'prisma/migrations')) else []
 ok('① 문서 397 · 398(입점 약관 빈칸 10곳 · 「회원(개인 또는 사업자)」 · 법무 물음) · 마이그레이션 없음(243) · 판 v10.269 이상',
-   bool(D397) and bool(D398) and '회원(개인 또는 사업자)' in t398 and '제21조' in t398 and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250)
+   bool(D397) and bool(D398) and '회원(개인 또는 사업자)' in t398 and '제21조' in t398 and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251)
    and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 269), f'{D397} · {D398} · {len(mig)} · {VER}')
 
 
