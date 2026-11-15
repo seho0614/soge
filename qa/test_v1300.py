@@ -41,7 +41,7 @@ D420 = next((open(os.path.join(K, 'docs', x), encoding='utf-8').read() for x in 
 RS, CT = rd('src/modules/health/health-rate-schedule.service.ts'), rd('src/modules/health/health-seller.controller.ts')
 HW, SCR, ST = rd('web/src/app/admin/HealthTypeRates.tsx'), rd('spec/screens.json'), rd('src/common/i18n/server-text.en.ts')
 ok('① 서버 — reads(대상 + 펼친 판매자 · 처음 · 마지막 · 횟수 · 알림 · 메일 · 문자 · 안 읽은 곳 위) · readsCsv(BOM · 수식 막음 · 감사 HLT_RATE_READS_EXPORT 예약 번호)',
-   'async reads(scheduleId: string)' in RS and 'async readsCsv(scheduleId: string)' in RS and 'fn_hlt_rate_sched_sellers($2, $3)' in RS
+   'async reads(scheduleId: string' in RS and 'async readsCsv(scheduleId: string' in RS and 'fn_hlt_rate_sched_sellers($2, $3)' in RS
    and 'ORDER BY (nr.first_at IS NULL) DESC' in RS and "'HLT_RATE_READS_EXPORT', 'HLT_COMMISSION', $3::uuid" in RS and "/^[=+\\-@]/.test(t) ? `'${t}`" in RS
    and "'\\uFEFF'" in RS, '')
 ok('① API — GET …/reads(ADMIN · SUPER) · GET …/reads/export(SUPER) · 응답 스키마 · 404 · 화면 연결 2줄 · 영어 사전(CSV 안내)',

@@ -43,8 +43,18 @@ if [ "${SITE_MODE:-dev}" = prod ]; then
   echo "COMPOSE_FILE=docker-compose.yml:docker-compose.site-prod.yml" >> .env
 fi
 echo "== $MODE: $BR ($(cat sgb/VERSION)) · 사용자 웹 ${SITE_MODE:-dev} → $RES"
+# v10.303 (docs/424) — realcheck 때 운영 킷(~/kits/ops) → 새 킷 마이그레이션 리허설(약 20초 · 킷의 tools/reh-check.sh) · 실패면 realcheck 도 실패 · SGB_NO_REH=1 이면 건너뜀
+REH=""; REHRC=0
+if [ "$MODE" = realcheck ] && [ "${SGB_NO_REH:-0}" != 1 ] && [ -f tools/reh-check.sh ]; then
+  REH=$(bash tools/reh-check.sh "$(ls -t ~/kits/out/*.zip | head -1)" "$RES" 2>&1); REHRC=$?
+  REH=$(printf '%s\n' "$REH" | tail -1); echo "== $REH"
+fi
 { [ "${3:-}" = fresh ] && echo yes; } | bash dev.sh "$MODE" ${3:-} 2>&1 | tee "$RES/$MODE.log"; RC=${PIPESTATUS[1]}
 cp realcheck_*.txt "$RES/" 2>/dev/null; cp -r qa/results_* "$RES/" 2>/dev/null
 tail -30 "$RES/$MODE.log" > "$RES/summary.txt"
+if [ -n "$REH" ]; then   # v10.303 — 리허설 한 줄을 summary 끝에(풀 리퀘스트 설명에 같이 붙음)
+  echo "$REH" >> "$RES/summary.txt"; echo "== $REH"
+  [ "$REHRC" = 1 ] && [ "$RC" = 0 ] && RC=1
+fi
 echo "== 끝: 결과 코드 $RC · 결과 폴더 $RES"
 exit $RC
