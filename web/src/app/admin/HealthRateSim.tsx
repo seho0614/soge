@@ -9,7 +9,11 @@ interface Rate { categoryCode: string; rate: string | number; note: string | nul
  *   입점 약관 제17조는 요율을 입점 유형(브랜드 직영관 · 일반 입점)으로 정하므로 두 유형으로 셉니다.
  *   실제 적용은 「소개몰 정산」의 갈래 요율 · 판매자 요율(fn_hlt_rate_for · 기본 10%)입니다 — 아래에 지금 갈래 요율을 함께 보여 줍니다(읽기만).
  *   판매수수료 = 판매액 × 요율 ÷ 100 버림(DB 주문 줄과 같은 식) · 결제대행 수수료는 판매자 몫에서 뺌(약관 제19조).
+ *
+ * v10.312 (docs/436) — 「이 요율로 정하기」: 두 유형 요율을 이 브라우저에 잠시 담고(sessionStorage · 저장 아님) 「소개몰 정산」으로 감 —
+ *   거기 「입점 유형 요율」 상자가 그 값으로 「바꾸기」(미리보기 · 사유 · 올림 예약 규칙 그대로)를 엶.
  */
+export const TYPE_RATE_PICK = 'sgb.typeRatePick';
 function rateSim(rows: Array<{ n: number; sales: number; rate: number }>, pg: number) {
   const per = rows.map((r) => {
     const total = r.n * r.sales;
@@ -56,6 +60,13 @@ export function HealthRateSim() {
         <tr><th>수수료에 부가세가 별도라면</th><td data-hlt-sim-out="vat">세금계산서 부가세 {won(r.vat)} · 합계 {won(r.fee + r.vat)}(한 달)</td></tr>
         <tr><th>전체 판매액 · 판매자가 받는 합계</th><td>{won(r.sales)} · {won(r.net)}(한 달)</td></tr>
       </tbody></table>
+      <p style={{ margin: '6px 0' }}>
+        <button className="btn-sm" onClick={() => {
+          try { sessionStorage.setItem(TYPE_RATE_PICK, JSON.stringify({ BRAND: num(v.br), TENANT: num(v.gr) })); } catch { /* 저장소를 못 쓰면 그대로 감 */ }
+          location.hash = '#/hlt-settle';
+        }} data-hlt-sim-pick={`${num(v.br)}|${num(v.gr)}`}>이 요율로 정하기(브랜드 직영관 {num(v.br)}% · 일반 입점 {num(v.gr)}%) → 소개몰 정산</button>
+        {' '}<span className="dim">저장하지 않습니다 — 「입점 유형 요율」에서 미리보기 · 사유를 거쳐 바꿉니다.</span>
+      </p>
       <p className="dim" style={{ marginTop: 4 }} data-hlt-sim-rates={q.data ? q.data.length : ''}>
         지금 갈래 요율(실제 적용 · 바꾸기는 「소개몰 정산」): {q.data && q.data.length ? q.data.map((x) => `${x.categoryCode} ${Number(x.rate)}%`).join(' · ') : '갈래별로 정한 값 없음 — 모두 기본 10%'}
         {' '}· 환불 · 쿠폰 · 반품비는 넣지 않은 어림입니다.

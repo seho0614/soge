@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 
 const TERM_STATUS = ['DRAFT', 'LEGAL_REVIEW', 'PUBLISHED', 'ARCHIVED'] as const;
@@ -221,4 +221,42 @@ export class TermRateTermDto {
 export class TermRateCheckDto {
   @ApiProperty({ type: [TermRateTermDto] }) terms!: TermRateTermDto[];
   @ApiProperty({ description: '모든 판이 ok(입점 약관이 없으면 false)' }) ok!: boolean;
+}
+
+/* v10.314 (D219 · docs/438) — 법무 회신 */
+export const LEGAL_TOPICS = ['RATE_NOTICE', 'PRIVACY', 'HLT_SELLER', 'OTHER'] as const;
+export class LegalReplyInputDto {
+  @ApiProperty({ enum: LEGAL_TOPICS, description: 'RATE_NOTICE 요율 인상 공지 방식(묶음 부록) · PRIVACY 처리방침 · HLT_SELLER 입점 약관 · OTHER 그 밖' })
+  @IsEnum(LEGAL_TOPICS) topic!: string;
+  @ApiProperty({ example: 1, minimum: 1, maximum: 20, description: '물음 번호(부록은 1 ~ 5)' })
+  @IsInt() @Min(1) @Max(20) qNo!: number;
+  @ApiProperty({ enum: ['OK', 'FIX', 'NOTE'], description: 'OK 맞음 · FIX 고쳐야 함 · NOTE 의견만' })
+  @IsEnum(['OK', 'FIX', 'NOTE']) answer!: string;
+  @ApiPropertyOptional({ maxLength: 2000 }) @IsOptional() @IsString() @MaxLength(2000) opinion?: string;
+  @ApiProperty({ example: '○○ 법무법인 홍길동 변호사', maxLength: 100 }) @IsString() @MinLength(1) @MaxLength(100) reviewer!: string;
+  @ApiProperty({ example: '2026-11-20', description: '답한 날(한국 날짜 · 오늘 이후는 안 됨)' }) @IsDateString() repliedOn!: string;
+}
+export class LegalReplyDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: LEGAL_TOPICS }) topic!: string;
+  @ApiProperty() qNo!: number;
+  @ApiProperty({ enum: ['OK', 'FIX', 'NOTE'] }) answer!: string;
+  @ApiPropertyOptional({ nullable: true }) opinion!: string | null;
+  @ApiProperty() reviewer!: string;
+  @ApiProperty({ example: '2026-11-20' }) repliedOn!: string;
+  @ApiPropertyOptional({ nullable: true, description: '적은 운영자' }) by!: string | null;
+  @ApiProperty({ example: '2026-11-20 14:05', description: '적은 때(한국)' }) at!: string;
+  @ApiProperty({ description: '그 물음의 가장 최근 답(지금 답)' }) latest!: boolean;
+}
+export class LegalTopicSumDto {
+  @ApiProperty({ enum: LEGAL_TOPICS }) topic!: string;
+  @ApiProperty({ description: '답이 있는 물음 수(물음마다 가장 최근 답)' }) answered!: number;
+  @ApiProperty() ok!: number;
+  @ApiProperty() fix!: number;
+  @ApiProperty() note!: number;
+}
+export class LegalRepliesDto {
+  @ApiProperty({ type: [LegalReplyDto], description: '최근 200줄(최근 순)' }) rows!: LegalReplyDto[];
+  @ApiProperty({ type: [LegalTopicSumDto] }) topics!: LegalTopicSumDto[];
+  @ApiProperty({ example: 5, description: '요율 인상 공지 방식 부록의 물음 수' }) rateNoticeQuestions!: number;
 }

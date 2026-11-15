@@ -5,7 +5,8 @@ import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { askNoticeTiming } from './RateNoticeDialog';
-import { RateAutoRemindPreview } from './RateAutoRemindPreview';   // v10.308 (docs/431)   // v10.291 (docs/414) — 공지 시점 확인 창
+import { RateAutoRemindPreview } from './RateAutoRemindPreview';   // v10.308 (docs/431)
+import { TYPE_RATE_PICK } from './HealthRateSim';   // v10.312 (docs/436)   // v10.291 (docs/414) — 공지 시점 확인 창
 
 interface TypeRate {
   sellerType: 'BRAND' | 'TENANT'; rate: string | number | null; note: string | null; updatedAt: string;
@@ -298,8 +299,13 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
 export function HealthTypeRates({ onChanged }: { onChanged?: () => void } = {}) {
   const q = useApi<TypeRate[]>('/admin/health/type-rates');
   const a = useAct();
-  const change = async (t: TypeRate) => {
-    const raw = prompt(`${TYPE_NAME[t.sellerType]} 판매수수료율(%) — 0 ~ 50 · 비우면 갈래 요율 · 새 주문부터 적용`, t.rate === null ? '' : String(Number(t.rate)));
+  /* v10.312 (docs/436) — 시뮬레이션 「이 요율로 정하기」가 담아 둔 값(이 브라우저만 · 저장 아님) */
+  const [pick, setPick] = useState<{ BRAND?: number; TENANT?: number } | null>(() => {
+    try { const raw = sessionStorage.getItem(TYPE_RATE_PICK); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  });
+  const clearPick = () => { try { sessionStorage.removeItem(TYPE_RATE_PICK); } catch { /* 그대로 */ } setPick(null); };
+  const change = async (t: TypeRate, preset?: number) => {
+    const raw = prompt(`${TYPE_NAME[t.sellerType]} 판매수수료율(%) — 0 ~ 50 · 비우면 갈래 요율 · 새 주문부터 적용`, preset !== undefined ? String(preset) : t.rate === null ? '' : String(Number(t.rate)));
     if (raw === null) return;
     const v = raw.trim() === '' ? null : Number(raw);
     if (v !== null && !(v >= 0 && v <= 50)) { alert('0 ~ 50 사이 숫자로 적어 주십시오.'); return; }
@@ -313,6 +319,19 @@ export function HealthTypeRates({ onChanged }: { onChanged?: () => void } = {}) 
   return (
     <div className="card pad" data-type-rates={(q.data ?? []).map((t) => `${t.sellerType}:${t.rate === null ? '-' : Number(t.rate)}`).join('|')} style={{ margin: '10px 0' }}>
       <b>입점 유형 요율</b> <span className="dim">— 입점 약관 제17조 · 순서: 판매자 지정 → <b>입점 유형</b> → 갈래 → 기본 → 10% · 비어 있으면 갈래 요율</span>
+      {pick && (q.data ?? []).length > 0 && (
+        <p className="ad-ls" style={{ margin: '6px 0' }} data-type-rate-pick={`${pick.BRAND ?? ''}|${pick.TENANT ?? ''}`}>
+          시뮬레이션에서 고른 요율 —{' '}
+          {(q.data ?? []).map((t) => pick[t.sellerType] === undefined ? null : (
+            <button key={t.sellerType} className="btn-sm" style={{ marginRight: 6 }} disabled={a.busy === `type:${t.sellerType}`}
+                    onClick={() => void change(t, pick[t.sellerType])} data-type-rate-pick-use={t.sellerType}>
+              {TYPE_NAME[t.sellerType]} {pick[t.sellerType]}% 로 바꾸기
+            </button>
+          ))}
+          <button className="btn-sm ghost" onClick={clearPick} data-type-rate-pick-clear>지우기</button>
+          <span className="dim"> · 정한 뒤 관 관리 › 「약관」 대조 상자 「약관 칸을 운영 요율로 채우기」로 입점 약관 제17조 칸을 맞춥니다</span>
+        </p>
+      )}
       <Flash msg={a.msg} err={a.err} />
       {q.error ? <ErrorView error={q.error} onRetry={q.reload} /> : (
         <table className="tbl" style={{ marginTop: 6 }}>

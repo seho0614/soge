@@ -15,6 +15,15 @@ export interface RateNoticeInfo {
   slots: Array<{ version: string; status: string; label: string; termText: string | null; rate: number | null; note: string }>;
 }
 
+/** v10.314 — 부록 「법무에 묻는 것」(번호 = legal_replies.q_no · RATE_NOTICE) */
+export const RATE_NOTICE_QUESTIONS: readonly string[] = [
+    '「시행일 30일 전에 공지」를 공지를 게시한 날을 빼고 꼬박 30일(게시한 날 + 31일 ≤ 시행일)로 보는 것이 맞습니까?',
+    '개별 통지를 사이트 안 알림 + 켜진 메일 · 문자로 하는 것이 제17조 4항의 「개별 통지」로 충분합니까? 메일 · 문자가 꺼져 있을 때도 그렇습니까?',
+    '공지를 펼치지 않은 판매자에게도 시행일부터 새 요율을 적용해도 됩니까(다시 알림 · 열람 기록으로 보완)?',
+    '「시행일 이후 접수된 주문부터」를 시행일 0시(한국) 이후 결제된 주문으로 보는 것이 맞습니까?',
+    '공지 · 열람 · 발송 기록을 얼마나 보관해야 합니까(지금은 지우지 않음)?',
+];
+
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 export function rateNoticeSection(x: RateNoticeInfo): string {
@@ -28,13 +37,7 @@ export function rateNoticeSection(x: RateNoticeInfo): string {
     ['시행', '시행일 0시(한국)부터 들어오는 주문에 새 요율을 적용합니다(그 전 주문은 주문 때 요율 그대로). 시행 때 판매자별 열람 기록(시행 전에 읽었는지)을 굳혀 남기고 운영 알림을 냅니다.', '굳힌 열람 기록(고칠 수 없음)'],
     ['취소', '시행 전에만 · 사유를 적고 · 판매자에게 알리고 취소 공지를 게시할 수 있습니다.', '취소 기록'],
   ];
-  const qs = [
-    '「시행일 30일 전에 공지」를 공지를 게시한 날을 빼고 꼬박 30일(게시한 날 + 31일 ≤ 시행일)로 보는 것이 맞습니까?',
-    '개별 통지를 사이트 안 알림 + 켜진 메일 · 문자로 하는 것이 제17조 4항의 「개별 통지」로 충분합니까? 메일 · 문자가 꺼져 있을 때도 그렇습니까?',
-    '공지를 펼치지 않은 판매자에게도 시행일부터 새 요율을 적용해도 됩니까(다시 알림 · 열람 기록으로 보완)?',
-    '「시행일 이후 접수된 주문부터」를 시행일 0시(한국) 이후 결제된 주문으로 보는 것이 맞습니까?',
-    '공지 · 열람 · 발송 기록을 얼마나 보관해야 합니까(지금은 지우지 않음)?',
-  ];
+  const qs = RATE_NOTICE_QUESTIONS;
   const slotRows = x.slots.map((s) => `<tr><td>${esc(s.version)} · ${esc(s.status)}</td><td>${esc(s.label)}</td><td>${s.termText === null ? '줄 없음' : esc(s.termText)}</td><td>${s.rate === null ? '비어 있음(갈래 요율)' : `${s.rate}%`}</td><td>${esc(s.note)}</td></tr>`).join('');
   return `
 <section class="term" id="rate-notice">

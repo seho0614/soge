@@ -607,6 +607,59 @@ export class AdminService {
     }
   }
 
+  /**
+   * v10.315 (docs/439) — 간주 모드 끄는 순서(읽기만): 간주 4개마다 서버가 끌 때 보는 조건(SWITCH_RULES · 세금계산서 설정 · 7일 시험 · 수금 계좌)을
+   *   그대로 셈 + 업체 진행표(신청 · 키 · 시험 · 연결 날짜) · 키 등록. 권하는 순서: 수금 계좌 → 중개사 → 세금계산서 → 결제(돈이 실제로 오가는 것을 마지막에).
+   *   키 · 주소 값은 보내지 않고 「있음 / 없음」만. 끄기는 지금 길(PATCH /admin/site-settings · 서버 조건 검사) 그대로.
+   */
+  async assumeReadiness() {
+    const integ = await this.db.query<{ code: string; name: string; status: string; secret: boolean; applied: string | null; keyAt: string | null; tested: string | null; live: string | null }>(
+      `SELECT code, name, status, secret_registered AS secret,
+              to_char(applied_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS applied, to_char(key_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "keyAt",
+              to_char(tested_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS tested, to_char(live_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS live
+         FROM integrations WHERE code IN ('PG', 'BROKER', 'ETAX')`);
+    const tests = await this.db.query<{ kind: string }>(
+      `SELECT DISTINCT kind FROM integration_tests WHERE ok AND NOT stub AND created_at > now() - interval '7 days' AND kind IN ('PG_KEY', 'ETAX_KEY', 'ETAX_TEST_ISSUE')`);
+    const [bank] = await this.db.query<{ ready: boolean }>(
+      `SELECT count(*) >= 3 AND bool_and(coalesce(btrim(value), '') <> '' AND value NOT LIKE '%시험용%' AND value NOT LIKE '999999-%') AS ready
+         FROM site_settings WHERE key LIKE 'company.bank%'`);
+    const t7 = (k: string) => tests.some((x) => x.kind === k);
+    const requireEtax = (await this.settingVal('etax.require_config', 'on')) !== 'off';
+    const envOk = ['ETAX_URL', 'ETAX_KEY'].map((k) => [k, !!(process.env[k] ?? '').trim()] as const);
+    type Step = { label: string; ok: boolean; must: boolean; now: string };
+    const integSteps = (code: string, need: string[]): Step[] => {
+      const i = integ.find((x) => x.code === code);
+      return [
+        { label: `외부 연동 상태 ${need.join(' · ')}`, ok: !!i && need.includes(i.status), must: true, now: i ? `${i.name} ${i.status}` : `${code} 없음` },
+        { label: '키 등록(외부 연동 › 연동 키)', ok: !!i?.secret, must: false, now: i?.secret ? '등록함' : '아직' },
+        { label: '업체 진행표', ok: !!i?.live, must: false,
+          now: i ? `신청 ${i.applied ?? '—'} · 키 ${i.keyAt ?? '—'} · 시험 ${i.tested ?? '—'} · 연결 ${i.live ?? '—'}` : '—' },
+      ];
+    };
+    const rows: Array<{ order: number; key: string; label: string; value: string; steps: Step[] }> = [
+      { order: 1, key: 'assume.bank', label: '수금 계좌 간주', value: await this.settingVal('assume.bank', 'on'),
+        steps: [{ label: '사이트 기본 정보에 실제 수금 계좌 세 항목(은행 · 계좌 · 예금주)', ok: !!bank?.ready, must: true, now: bank?.ready ? '들어 있음 — 넣으면 저절로 꺼짐' : '아직(시험용 값 또는 빈칸)' }] },
+      { order: 2, key: 'assume.broker', label: '중개사 인증 간주', value: await this.settingVal('assume.broker', 'on'), steps: integSteps('BROKER', ['TESTING', 'LIVE']) },
+      { order: 3, key: 'assume.etax', label: '전자세금계산서 간주', value: await this.settingVal('assume.etax', 'on'),
+        steps: [...integSteps('ETAX', ['TESTING', 'LIVE']),
+          ...(requireEtax ? [
+            { label: '업체 주소 · 키(.env ETAX_URL · ETAX_KEY)', ok: envOk.every(([, v]) => v), must: true, now: envOk.map(([k, v]) => `${k} ${v ? '있음' : '없음'}`).join(' · ') },
+            { label: '최근 7일 「세금계산서 키 확인」 성공', ok: t7('ETAX_KEY'), must: true, now: t7('ETAX_KEY') ? '있음' : '없음' },
+            { label: '최근 7일 「시험 발행」 성공', ok: t7('ETAX_TEST_ISSUE'), must: true, now: t7('ETAX_TEST_ISSUE') ? '있음' : '없음' },
+          ] : [{ label: '「간주 끄기 전 설정 확인」(etax.require_config)', ok: true, must: false, now: '꺼짐 — 연동 상태만 봄' }])] },
+      { order: 4, key: 'assume.payment', label: '결제 간주', value: await this.settingVal('assume.payment', 'on'),
+        steps: [...integSteps('PG', ['TESTING', 'LIVE']),
+          { label: '최근 7일 「결제 키 확인」 성공(연결됨(LIVE)으로 올릴 때 필요)', ok: t7('PG_KEY'), must: false, now: t7('PG_KEY') ? '있음' : '없음' }] },
+    ];
+    return {
+      rows: rows.map((r) => {
+        const miss = r.steps.filter((s) => s.must && !s.ok).map((s) => s.label);
+        return { ...r, off: r.value === 'off', ready: miss.length === 0, missing: miss };
+      }),
+      note: '권하는 순서: 수금 계좌 → 중개사 → 세금계산서 → 결제(돈이 실제로 오가는 것을 마지막에) · 끄기는 오픈 체크리스트 › 관리자 스위치(서버가 같은 조건을 다시 봄)',
+    };
+  }
+
   openBlockers() {
     return this.db.query(`SELECT kind, item, reason FROM v_open_blockers`);
   }

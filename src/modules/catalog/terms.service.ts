@@ -8,6 +8,8 @@ import { article17, RATE_TYPES, SLOT_TEXT, slotState, termRateCell } from './ter
 import { rateNoticeSection, withRateNotice } from './terms-rate-notice-pack';
 import { NOTICE_DAYS } from '../health/health-rate-schedule.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
+import { RequestCtx } from '../../core/request-context';
+import { RATE_NOTICE_QUESTIONS } from './terms-rate-notice-pack';
 import { AgentService } from '../agent/agent.service';
 import { GeoService } from '../../common/geo/geo.service';
 
@@ -209,6 +211,53 @@ export class TermsService {
     return { terms: out, ok: out.length > 0 && out.every((x) => x.ok) };
   }
 
+  /**
+   * v10.313 (docs/437) — 게시 준비 한 장(읽기만): 빈칸 · 가장 이른 시행일 · 재동의 대상 · 회원 알림 · 위탁 목록 · 국외 이전(AI) · 제17조 요율 ·
+   *   게시 뒤 켤 수 있게 되는 것. state = ok(준비됨) · todo(게시 전에 할 것) · info(알아 둘 것). ready = todo 가 없음.
+   */
+  async publishReady(code: string, version: string) {
+    const pv = await this.publishPreview(code, version);
+    const [t] = await this.db.query<{ body: string; audience: string | null; today: string; d7: string; d30: string; notify: boolean; taxId: boolean; tenant: boolean; town: boolean }>(
+      `SELECT coalesce(t.body, '') AS body, t.audience, to_char((now() AT TIME ZONE 'Asia/Seoul')::date, 'YYYY-MM-DD') AS today,
+              to_char((now() AT TIME ZONE 'Asia/Seoul')::date + 7, 'YYYY-MM-DD') AS d7, to_char((now() AT TIME ZONE 'Asia/Seoul')::date + 30, 'YYYY-MM-DD') AS d30,
+              coalesce((SELECT value FROM site_settings WHERE key = 'terms.notify_members'), 'on') = 'on' AS notify,
+              coalesce((SELECT value FROM site_settings WHERE key = 'point.cashout_tax_id'), 'off') = 'on' AS "taxId",
+              coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant_apply'), 'off') = 'on' AS tenant,
+              coalesce((SELECT value FROM site_settings WHERE key = 'community.town_verify'), 'off') = 'on' AS town
+         FROM terms t WHERE t.code = $1 AND t.version = $2`, [code, version]);
+    const hs = [...new Set(TermsService.holes(t.body))];
+    const items: Array<{ key: string; label: string; state: 'ok' | 'todo' | 'info'; text: string }> = [];
+    items.push({ key: 'holes', label: '빈칸(〔미확정〕)', state: hs.length ? 'todo' : 'ok',
+                 text: hs.length ? `${hs.length}곳 — ${hs.slice(0, 6).join(' · ')}${hs.length > 6 ? ' …' : ''} · 「고치기」 빈칸 도우미로 채움(법무가 정한 글)` : '없음' });
+    items.push({ key: 'date', label: '시행일', state: 'info',
+                 text: pv.first ? '앞 판이 없어 게시하는 순간 시행됩니다(시행일을 미래로 넣어도) — 시행하려는 날 게시'
+                   : `넣을 수 있는 가장 이른 날 — 보통 ${t.d7}(시행 7일 전 고지) · 회원에게 불리한 변경이면 ${t.d30}(30일 전) · 이용약관 제14조 · 그때까지 지금 판 ${pv.current} 그대로` });
+    items.push({ key: 'consent', label: '재동의', state: 'info',
+                 text: pv.required ? `필수 약관 — 활동 중 계정 ${pv.target.toLocaleString('ko-KR')}명이 ${pv.first ? '게시 뒤' : '시행일부터'} 다음 로그인 때 동의` : '필수 약관이 아님 — 재동의 화면 없음' });
+    items.push({ key: 'notify', label: '회원 알림', state: 'info',
+                 text: pv.first ? '처음 게시 — 「약관 변경 안내」 알림 없음' : t.audience === 'PARTNER' ? '제휴 약관 — 회원 알림 없음'
+                   : t.notify ? '게시하면 회원마다 「약관 변경 안내」 1건(사이트 안 · 메일 · 알림톡은 켜진 길로)' : '설정 terms.notify_members = off — 알림 안 보냄' });
+    if (OUTSOURCE_CODES.includes(code))
+      items.push({ key: 'outsource', label: '처리를 맡기는 곳(위탁) 표', state: pv.outsourceGaps.length ? 'todo' : 'ok',
+                   text: pv.outsourceGaps.length ? `지금 쓰는데 표에 없음 — ${pv.outsourceGaps.join(' · ')}` : '지금 쓰는 외부 서비스가 모두 표에 있음' });
+    if (code === 'PRIVACY')
+      items.push({ key: 'ai', label: '국외 이전 조항 · AI', state: 'info',
+                   text: pv.aiUnlock ? `시행되면 AI 잠금이 풀림 — ${pv.aiGaps.length ? `빠진 것: ${pv.aiGaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${pv.aiSwitches}` : '이 판으로 AI 잠금이 바뀌지 않음' });
+    if (code === 'HLT_SELLER')
+      items.push({ key: 'rate', label: '제17조 요율 ↔ 입점 유형 요율', state: pv.rateGaps.length ? 'todo' : 'ok',
+                   text: pv.rateGaps.length ? pv.rateGaps.join(' / ') : '빈칸이 아니면 운영 요율과 같음(빈칸은 위 「빈칸」)' });
+    const after: string[] = [];
+    if (code === 'PRIVACY') {
+      const tax = t.body.includes('주민등록번호(암호화)');
+      after.push(tax ? `포인트 출금 「주민등록번호 받기」(point.cashout_tax_id · 지금 ${t.taxId ? '켜짐' : '꺼짐'}) — 이 판이 시행된 뒤 켤 수 있음(SUPER)`
+                     : '「주민등록번호 받기」 — 이 판에도 「주민등록번호(암호화)」 수집 줄이 없어 켤 수 없음');
+      if (pv.aiUnlock) after.push('AI 상담 · 검수 보조 — 국외 이전 조항이 시행되면 잠금이 풀림(AI 전체 · 키 · 월 상한은 따로)');
+    }
+    if (code === 'HLT_SELLER') after.push(`소개몰 입점 신청 받기(mall.tenant_apply · 지금 ${t.tenant ? '켜짐' : '꺼짐'}) — 입점 약관이 게시된 뒤 켤 수 있음(SUPER)`);
+    if (code === 'LOCATION') after.push(`동네 인증(community.town_verify · 지금 ${t.town ? '켜짐' : '꺼짐'}) — 위치기반 약관 시행 · 신고번호가 있어야 켬`);
+    return { code, version, title: pv.title, first: pv.first, current: pv.current, ready: !items.some((x) => x.state === 'todo'), items, after };
+  }
+
   /** v10.206 (docs/330) — 지금 쓰는 외부 서비스(처리를 맡기는 곳) · re = 위탁 표의 그 줄 */
   private async outsourceUsed() {
     const [mapOn, kakaoKey, aiKey] = await Promise.all([this.geo.enabled(), this.geo.restKey(), this.agent.keySource()]);
@@ -394,6 +443,38 @@ export class TermsService {
     /* v10.311 (docs/434) — 부록 「요율 인상 공지 방식」(입점 약관 제17조 4항 · 법무에 묻는 것) */
     const rn = await this.rateNoticeInfo();
     return { fileName: `sogaebank_terms_legal_review_${day.replace(/-/g, '')}.html`, day, items, html: withRateNotice(html, rateNoticeSection(rn)), rateNotice: true };
+  }
+
+  /** v10.314 (D219 · docs/438) — 법무 회신 목록(최근 200) · 주제마다 물음별 가장 최근 답 수 */
+  async legalReplies() {
+    const rows = await this.db.query<{ id: string; topic: string; qNo: number; answer: string; opinion: string | null; reviewer: string; repliedOn: string; by: string | null; at: string; latest: boolean }>(
+      `SELECT r.id::text AS id, r.topic, r.q_no AS "qNo", r.answer, r.opinion, r.reviewer, to_char(r.replied_on, 'YYYY-MM-DD') AS "repliedOn",
+              a.name AS by, to_char(r.created_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS at,
+              NOT EXISTS (SELECT 1 FROM legal_replies x WHERE x.topic = r.topic AND x.q_no = r.q_no AND (x.created_at, x.id) > (r.created_at, r.id)) AS latest
+         FROM legal_replies r LEFT JOIN accounts a ON a.id = r.created_by
+        ORDER BY r.created_at DESC, r.id DESC LIMIT 200`);
+    const topics = await this.db.query<{ topic: string; answered: number; ok: number; fix: number; note: number }>(
+      `SELECT topic, count(*)::int AS answered, count(*) FILTER (WHERE answer = 'OK')::int AS ok,
+              count(*) FILTER (WHERE answer = 'FIX')::int AS fix, count(*) FILTER (WHERE answer = 'NOTE')::int AS note
+         FROM (SELECT DISTINCT ON (topic, q_no) topic, q_no, answer FROM legal_replies ORDER BY topic, q_no, created_at DESC, id DESC) l
+        GROUP BY topic ORDER BY topic`);
+    return { rows, topics, rateNoticeQuestions: RATE_NOTICE_QUESTIONS.length };
+  }
+
+  /** v10.314 — 법무 회신 한 줄 적기(SUPER · 쌓기만 · 답한 날은 오늘(한국)까지) */
+  async addLegalReply(dto: { topic: string; qNo: number; answer: string; opinion?: string; reviewer: string; repliedOn: string }) {
+    const reviewer = dto.reviewer.trim();
+    if (!reviewer) throw new PolicyViolation('REVIEWER_REQUIRED', '확인한 사람을 적어 주십시오.');
+    if (dto.topic === 'RATE_NOTICE' && dto.qNo > RATE_NOTICE_QUESTIONS.length)
+      throw new PolicyViolation('LEGAL_Q_RANGE', `요율 인상 공지 방식 물음은 1 ~ ${RATE_NOTICE_QUESTIONS.length}번입니다.`);
+    const [r] = await this.db.query<{ id: string; future: boolean }>(
+      `WITH chk AS (SELECT $6::date > (now() AT TIME ZONE 'Asia/Seoul')::date AS future)
+       INSERT INTO legal_replies (topic, q_no, answer, opinion, reviewer, replied_on, created_by)
+       SELECT $1, $2, $3, nullif(btrim($4), ''), $5, $6::date, $7 FROM chk WHERE NOT chk.future
+       RETURNING id::text AS id, false AS future`,
+      [dto.topic, dto.qNo, dto.answer, dto.opinion ?? '', reviewer, dto.repliedOn.slice(0, 10), RequestCtx.actorId()]);
+    if (!r) throw new PolicyViolation('REPLIED_ON_FUTURE', '답한 날은 오늘(한국 날짜)까지만 적을 수 있습니다.');
+    return { ok: true, id: r.id, note: '법무 회신을 적었습니다(고치거나 지울 수 없음 — 바꾸려면 같은 물음에 다시 적으면 그 줄이 지금 답).' };
   }
 
   /** v10.311 — 부록에 넣을 지금 값(설정 · 숫자 · 제17조 4항 글 · 요율 표 대조) */

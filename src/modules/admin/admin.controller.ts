@@ -93,6 +93,11 @@ export class AdminController {
     return this.admin.decideSettlement(id, dto.status, dto.rejectReason);
   }
 
+  @Get('assume-readiness')
+  @ApiOperation({ summary: '간주 모드 끄는 순서', description: 'v10.315 (docs/439) 간주 4개(수금 계좌 · 중개사 · 세금계산서 · 결제)마다 서버가 끌 때 보는 조건 · 업체 진행표 · 키 등록 · ready(끌 수 있음) · missing(빠진 것). 키 · 주소 값은 보내지 않음 · 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  assumeReadiness() { return this.admin.assumeReadiness(); }
+
   @Get('site-settings')
   @ApiOperation({
     summary: '사이트 설정',

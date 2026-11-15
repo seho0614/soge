@@ -29,6 +29,9 @@ import { ErrorView } from '../../components/ErrorView';
  * v10.309 (docs/432) — 「고치기」 빈칸 도우미: 남은 〔 〕 자리마다 줄 · 앞뒤 글 · 누르면 그 자리를 골라 줌
  * v10.310 (docs/433) — 맨 위 「입점 약관 제17조 요율 ↔ 입점 유형 요율」 대조 · 게시 확인 창에 다른 줄 경고
  * v10.311 (docs/434) — 법무 검토 묶음 맨 끝 부록 「요율 인상 공지 방식」
+ * v10.312 (docs/436) — 대조 상자 「약관 칸을 운영 요율로 채우기」(초안 「고치기」 칸의 제17조 표 요율 칸만 · 저장은 따로)
+ * v10.313 (docs/437) — 게시 안 된 판 줄마다 「게시 준비」 한 장(GET /admin/terms/{code}/publish-ready · 읽기만)
+ * v10.314 (D219 · docs/438) — 「법무 회신」 칸: 물은 것의 답 적기(SUPER · 쌓기만) · 지난 답
  */
 
 interface Term {
@@ -65,6 +68,29 @@ function holeSpots(b: string) {
   }
   return out;
 }
+/** v10.312 (docs/436) — 제17조 구간(「제17조」 ~ 「제18조」 앞) 표 줄 `| 브랜드 직영관 | … |` 의 요율 칸만 바꿈 — 서버 terms-rate-check.ts 와 같은 줄 찾기 */
+function fillRateCells(body: string, rates: Record<string, number>) {
+  const lines = body.split('\n');
+  let inArt = false;
+  return lines.map((l) => {
+    if (/^[#\s]*제\s*17\s*조/.test(l)) inArt = true;
+    else if (/^[#\s]*제\s*18\s*조/.test(l)) inArt = false;
+    if (!inArt) return l;
+    const cells = l.split('|');
+    if (cells.length < 4) return l;
+    const label = cells[1]!.trim();
+    if (rates[label] === undefined) return l;
+    cells[2] = ` ${rates[label]}% `;
+    return cells.join('|');
+  }).join('\n');
+}
+/** v10.313 — GET /admin/terms/{code}/publish-ready */
+interface Ready { ready: boolean; items: Array<{ key: string; label: string; state: 'ok' | 'todo' | 'info'; text: string }>; after: string[] }
+/** v10.314 — GET /admin/terms/legal-replies */
+interface LegalReplies { rows: Array<{ id: string; topic: string; qNo: number; answer: string; opinion: string | null; reviewer: string; repliedOn: string; by: string | null; at: string; latest: boolean }>;
+  topics: Array<{ topic: string; answered: number; ok: number; fix: number; note: number }>; rateNoticeQuestions: number }
+const TOPIC: Record<string, string> = { RATE_NOTICE: '요율 인상 공지 방식', PRIVACY: '처리방침', HLT_SELLER: '입점 약관', OTHER: '그 밖' };
+const ANSWER: Record<string, string> = { OK: '맞음', FIX: '고쳐야 함', NOTE: '의견만' };
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
 const editable = (st: string) => st === 'DRAFT' || st === 'LEGAL_REVIEW';
 const todayKst = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -109,7 +135,8 @@ function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[
 interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string;
   /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) · v10.304 개발 원문(source · docs/426) */ base?: 'orig' | 'current' | 'source';
   /** v10.304 — 불러온 개발 원문(킷 docs 의 게시용 완성본 「4. 전문」) */ src?: { file: string; body: string };
-  /** v10.307 (docs/430) — 「개발 원문으로 채우기」로 칸을 채움(아직 저장 안 함) */ filled?: boolean }
+  /** v10.307 (docs/430) — 「개발 원문으로 채우기」로 칸을 채움(아직 저장 안 함) */ filled?: boolean;
+  /** v10.312 (docs/436) — 제17조 요율 칸을 운영 요율로 채움(아직 저장 안 함) */ rateFilled?: string }
 
 /** v10.263 — 그 약관의 지금 시행 중인 판(게시 · 시행 예정 아님 · 가장 높은 판) */
 function inForce(all: Term[], code: string): Term | undefined {
@@ -124,6 +151,9 @@ export function TermsPanel() {
   const srcs = useApi<{ code: string; version: string; file: string }[]>('/admin/terms/sources');   // v10.304 (docs/426) — 개발 원문이 있는 판
   const rc = useApi<RateCheck>('/admin/terms/rate-check');   // v10.310 (docs/433) — 제17조 요율 표 대조
   const textRef = useRef<HTMLTextAreaElement>(null);   // v10.309 — 빈칸 자리로
+  const lr = useApi<LegalReplies>('/admin/terms/legal-replies');   // v10.314 (D219 · docs/438)
+  const [ready, setReady] = useState<{ key: string; data?: Ready; err?: string } | null>(null);   // v10.313
+  const [lf, setLf] = useState({ topic: 'RATE_NOTICE', qNo: '1', answer: 'OK', opinion: '', reviewer: '', repliedOn: todayKst() });   // v10.314
   const early = st.data?.find((s) => s.key === 'terms.reconsent_before_effective')?.value === 'on';
   /* v10.162 (D152) — 시행 예정 게시 때 회원 알림(terms.notify_members · 기본 on) */
   const notifyOn = (st.data?.find((s) => s.key === 'terms.notify_members')?.value ?? 'on') === 'on';
@@ -172,6 +202,37 @@ export function TermsPanel() {
     ta.setSelectionRange(o.start, o.end);
     const lh = parseFloat(getComputedStyle(ta).lineHeight) || 20;
     ta.scrollTop = Math.max(0, (o.line - 3) * lh);
+  }
+
+  /** v10.312 (docs/436) — 대조 상자에서 그 판 「고치기」를 열고 제17조 요율 칸을 운영 요율로 채움(저장은 「저장(게시 아님)」) */
+  function fillRates(version: string, rates: Record<string, number>) {
+    const t = data?.find((u) => u.code === 'HLT_SELLER' && u.version === version);
+    if (!t || !data) return;
+    startEdit(t, data);
+    const body = fillRateCells(t.body, rates);
+    setEd((e) => e && { ...e, body, diff: true, base: 'orig', rateFilled: Object.entries(rates).map(([k, v]) => `${k} ${v}%`).join(' · ') });
+    setTimeout(() => document.querySelector(`[data-term-editor="HLT_SELLER:${version}"]`)?.scrollIntoView({ block: 'center' }), 50);
+  }
+
+  /** v10.313 (docs/437) — 게시 준비 한 장(읽기만) */
+  async function openReady(t: Term) {
+    const key = `${t.code}:${t.version}`;
+    if (ready?.key === key) { setReady(null); return; }
+    setReady({ key });
+    try { setReady({ key, data: await api<Ready>(`/admin/terms/${t.code}/publish-ready?version=${encodeURIComponent(t.version)}`) }); }
+    catch (err) { setReady({ key, err: err instanceof ApiFailure ? err.body.message : '불러오지 못했습니다.' }); }
+  }
+
+  /** v10.314 (D219 · docs/438) — 법무 회신 한 줄 적기(쌓기만) */
+  async function addLegal() {
+    if (!window.confirm(`법무 회신을 적을까요?\n\n${TOPIC[lf.topic]} ${lf.qNo}번 — ${ANSWER[lf.answer]} · ${lf.reviewer} · ${lf.repliedOn}\n적은 줄은 고치거나 지울 수 없습니다(같은 물음에 다시 적으면 그 줄이 지금 답).`)) return;
+    setBusy('legal'); setRes(null);
+    try {
+      const r = await api<{ note: string }>('/admin/terms/legal-replies', { method: 'POST', body: JSON.stringify({ topic: lf.topic, qNo: Number(lf.qNo), answer: lf.answer, opinion: lf.opinion.trim() || undefined, reviewer: lf.reviewer.trim(), repliedOn: lf.repliedOn }) });
+      setRes({ ok: true, text: r.note }); setLf({ ...lf, opinion: '' }); lr.reload();
+    } catch (err) {
+      setRes({ ok: false, text: err instanceof ApiFailure ? err.body.message : '적지 못했습니다.' });
+    } finally { setBusy(null); }
   }
 
   async function save(e: Edit) {
@@ -313,6 +374,15 @@ export function TermsPanel() {
         <div className="card" data-terms-rate-check={rc.data.ok ? 'ok' : 'gap'}>
           <b>입점 약관 제17조 요율 ↔ 「입점 유형 요율」</b> <small className="dim">게시 전에 숫자를 맞춥니다 — 운영 요율은 소개몰 › 「소개몰 정산」 › 「입점 유형 요율」 · 약관 칸은 아래 「고치기」</small>
           <ul>
+            {rc.data.terms.filter((t) => t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW').map((t) => {
+              const rates = Object.fromEntries(t.slots.filter((x) => x.rate !== null && x.state !== 'match' && x.state !== 'scheduled').map((x) => [x.label, x.rate as number]));
+              return Object.keys(rates).length > 0 && (
+                <li key={`fill:${t.version}`}>
+                  <button className="btn-sm" onClick={() => fillRates(t.version, rates)} data-terms-rate-fill={t.version}>{t.version} 약관 칸을 운영 요율로 채우기</button>
+                  <span className="dim"> — 「고치기」 칸의 제17조 표만 바꿈 · 저장은 「저장(게시 아님)」</span>
+                </li>
+              );
+            })}
             {rc.data.terms.flatMap((t) => t.slots.map((x) => (
               <li key={`${t.version}:${x.type}`} className={x.state === 'match' || x.state === 'scheduled' ? '' : x.state === 'blank' ? 'muted' : 'form-error'} data-terms-rate-slot={`${t.version}:${x.type}:${x.state}`}>
                 {t.version}({STATUS[t.status] ?? t.status}) {x.label} — 약관 {x.termText ?? '줄 없음'} · 운영 {x.rate === null ? '비어 있음' : `${x.rate}%`}
@@ -377,6 +447,9 @@ export function TermsPanel() {
                             title={editable(t.status) ? '이 초안을 고쳐 저장' : '게시 · 보관된 판은 고칠 수 없어 새 판 번호로 저장'}>{ed?.key === key ? '고치기 닫기' : '고치기'}</button>
                     )}
                     {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (
+                      <button className="btn-sm" onClick={() => void openReady(t)} data-term-ready-btn>{ready?.key === key ? '게시 준비 닫기' : '게시 준비'}</button>
+                    )}
+                    {(t.status === 'DRAFT' || t.status === 'LEGAL_REVIEW') && (
                       <button className="btn-ok btn-sm" disabled={!can || !day || busy === key} onClick={() => void publish(t, data)} data-term-publish
                               title={h.length ? '〔미확정〕 표시를 먼저 채우십시오' : !day ? '시행일을 먼저 넣으십시오' : '게시'}>게시</button>
                     )}
@@ -392,6 +465,28 @@ export function TermsPanel() {
                     )}
                   </td>
                 </tr>,
+                ready?.key === key && (
+                  <tr key={key + ':ready'} data-term-ready={ready.data ? (ready.data.ready ? 'ready' : 'todo') : ''}>
+                    <td colSpan={6}>
+                      {ready.err ? <p className="warn-text">{ready.err}</p> : !ready.data ? <p className="muted">불러오는 중…</p> : (
+                        <div className="card">
+                          <b>{t.title} {t.version} — 게시 준비</b> <small className="dim">읽기만 · 게시 규칙은 그대로 · 법무 확인 뒤 게시</small>
+                          <table className="tbl" style={{ marginTop: 6 }}><tbody>
+                            {ready.data.items.map((x) => (
+                              <tr key={x.key} data-term-ready-item={`${x.key}:${x.state}`}>
+                                <th style={{ width: 180 }}>{x.label}</th>
+                                <td><span className={x.state === 'todo' ? 'warn-text' : x.state === 'ok' ? 'form-ok' : 'muted'}>{x.state === 'todo' ? '아직' : x.state === 'ok' ? '됨' : '알아 둘 것'}</span> — {x.text}</td>
+                              </tr>
+                            ))}
+                          </tbody></table>
+                          {ready.data.after.length > 0 && (
+                            <p style={{ margin: '6px 0 0' }} data-term-ready-after={ready.data.after.length}><b>게시 뒤 켤 수 있게 되는 것</b><br />{ready.data.after.map((a) => <span key={a}>· {a}<br /></span>)}</p>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ),
                 open === key && (
                   <tr key={key + ':body'} data-term-body={key}>
                     <td colSpan={6}><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 420, overflow: 'auto', margin: 0, fontSize: 13 }}>{t.body || '(본문 없음)'}</pre></td>
@@ -440,6 +535,12 @@ export function TermsPanel() {
                             </details>
                           );
                         })()}
+                        {ed.rateFilled && (
+                          <p className="warn-text" data-term-rate-filled={ed.rateFilled}>
+                            제17조 요율 칸을 운영 요율({ed.rateFilled})로 채웠습니다 — 아직 저장하지 않았습니다.{' '}
+                            <button className="btn-sm ghost" onClick={() => setEd({ ...ed, body: ed.orig, rateFilled: undefined })} data-term-rate-undo>되돌리기</button>
+                          </p>
+                        )}
                         {ed.filled && (
                           <p className="warn-text" data-term-src-filled>
                             개발 원문(docs/{ed.src?.file.slice(0, 3)})으로 칸을 채웠습니다 — 아직 저장하지 않았습니다. 「저장(게시 아님)」을 눌러야 바뀝니다.{' '}
@@ -491,6 +592,50 @@ export function TermsPanel() {
             })}
           </tbody>
         </table>
+      </div>
+      {/* v10.314 (D219 · docs/438) — 법무 회신 */}
+      <div className="card" style={{ marginTop: 12 }} data-terms-legal={(lr.data?.topics ?? []).map((x) => `${x.topic}:${x.answered}`).join('|')}>
+        <b>법무 회신</b> <small className="dim">법무 검토 묶음에 물은 것의 답 — 쌓기만(고치거나 지울 수 없음 · 같은 물음에 다시 적으면 그 줄이 지금 답)</small>
+        {lr.data && (
+          <p className="muted" style={{ margin: '4px 0' }}>
+            {(['RATE_NOTICE', 'PRIVACY', 'HLT_SELLER', 'OTHER'] as const).map((tp) => {
+              const x = lr.data!.topics.find((u) => u.topic === tp);
+              return <span key={tp} data-terms-legal-topic={`${tp}:${x?.answered ?? 0}`} style={{ marginRight: 12 }}>
+                {TOPIC[tp]} {x?.answered ?? 0}{tp === 'RATE_NOTICE' ? `/${lr.data!.rateNoticeQuestions}` : ''}{x?.fix ? ` · 고쳐야 함 ${x.fix}` : ''}</span>;
+            })}
+          </p>
+        )}
+        <div className="row-actions" style={{ flexWrap: 'wrap', gap: 6 }}>
+          <select className="sel" value={lf.topic} onChange={(e) => setLf({ ...lf, topic: e.target.value })} aria-label="주제" data-legal-topic>
+            {Object.entries(TOPIC).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <label>물음 <input className="inp-sm" type="number" min={1} max={lf.topic === 'RATE_NOTICE' ? (lr.data?.rateNoticeQuestions ?? 5) : 20} style={{ width: 56 }} value={lf.qNo}
+                             onChange={(e) => setLf({ ...lf, qNo: e.target.value })} aria-label="물음 번호" data-legal-q /></label>
+          <select className="sel" value={lf.answer} onChange={(e) => setLf({ ...lf, answer: e.target.value })} aria-label="답" data-legal-answer>
+            {Object.entries(ANSWER).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <input className="sel" style={{ width: 200 }} placeholder="확인한 사람(예: ○○ 법무법인 변호사)" value={lf.reviewer} maxLength={100}
+                 onChange={(e) => setLf({ ...lf, reviewer: e.target.value })} aria-label="확인한 사람" data-legal-reviewer />
+          <label>답한 날 <input type="date" max={todayKst()} value={lf.repliedOn} onChange={(e) => setLf({ ...lf, repliedOn: e.target.value })} aria-label="답한 날" data-legal-date /></label>
+        </div>
+        <textarea rows={2} style={{ width: '100%', marginTop: 6 }} maxLength={2000} placeholder="의견(선택 · 2000자)" value={lf.opinion}
+                  onChange={(e) => setLf({ ...lf, opinion: e.target.value })} aria-label="의견" data-legal-opinion />
+        <button className="btn-ok btn-sm" disabled={busy === 'legal' || !lf.reviewer.trim() || !lf.repliedOn} onClick={() => void addLegal()} data-legal-save>적기</button>
+        {lr.data && lr.data.rows.length > 0 && (
+          <table className="tbl" style={{ marginTop: 8 }}>
+            <thead><tr><th>주제</th><th>물음</th><th>답</th><th>의견</th><th>확인한 사람</th><th>답한 날</th><th>적은 사람 · 때</th></tr></thead>
+            <tbody>
+              {lr.data.rows.slice(0, 50).map((r) => (
+                <tr key={r.id} data-legal-row={`${r.topic}:${r.qNo}:${r.answer}${r.latest ? ':latest' : ''}`} style={r.latest ? undefined : { opacity: 0.6 }}>
+                  <td>{TOPIC[r.topic] ?? r.topic}</td><td>{r.qNo}</td>
+                  <td className={r.answer === 'FIX' ? 'warn-text' : undefined}>{ANSWER[r.answer] ?? r.answer}{r.latest ? '' : ' (옛 답)'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap' }}>{r.opinion ?? '—'}</td><td>{r.reviewer}</td><td className="mono">{r.repliedOn}</td>
+                  <td className="dim">{r.by ?? '—'} · {r.at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

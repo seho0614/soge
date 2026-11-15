@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TermsService } from './terms.service';
 import {
-  OpenBlockerDto, OpenDateDto, OpenReadinessDto, OutsourceCheckDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
+  LegalRepliesDto, LegalReplyInputDto, OpenBlockerDto, OpenDateDto, OpenReadinessDto, OutsourceCheckDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
   TermPublishPreviewDto, TermPublishResultDto, TermRateCheckDto, TermSourceDto, TermSourceItemDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -48,6 +48,25 @@ export class TermsController {
   @ApiOkResponse({ type: ReviewPackDto })
   reviewPack() { return this.terms.reviewPack(); }
 
+  @Get('terms/legal-replies')
+  @ApiOperation({
+    summary: '법무 회신 목록 (v10.314)',
+    description: 'D219 legal_replies 최근 200줄(최근 순 · 물음마다 latest = 지금 답) · 주제마다 답이 있는 물음 수 · 요율 인상 공지 방식 부록 물음 수. 읽기만.',
+  })
+  @ApiOkResponse({ type: LegalRepliesDto })
+  legalReplies() { return this.terms.legalReplies(); }
+
+  @Post('terms/legal-replies')
+  @ApiOperation({
+    summary: '법무 회신 적기 (v10.314)',
+    description: '법무 검토 묶음 물음의 답을 한 줄 적음 — 쌓기만(고치거나 지울 수 없음 · 같은 물음에 다시 적으면 그 줄이 지금 답) · 답한 날은 오늘(한국)까지 · 감사 LEGAL_REPLY.',
+  })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 400, description: 'VALIDATION_ERROR', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REVIEWER_REQUIRED · LEGAL_Q_RANGE · REPLIED_ON_FUTURE', type: ErrorDto })
+  @Audit('LEGAL_REPLY', 'TERM')
+  addLegalReply(@Body() dto: LegalReplyInputDto) { return this.terms.addLegalReply(dto); }
+
   @Get('terms/rate-check')
   @ApiOperation({
     summary: '입점 약관 요율 표 대조 (v10.310)',
@@ -91,6 +110,18 @@ export class TermsController {
   draft(@Param('code') code: string, @Body() dto: UpsertTermDto) {
     return this.terms.upsertDraft(code, dto);
   }
+
+  @Get('terms/:code/publish-ready')
+  @ApiOperation({
+    summary: '게시 준비 한 장 (v10.313)',
+    description: '게시 안 된 판 하나의 게시 준비 — items(빈칸 · 시행일 · 재동의 · 회원 알림 · 위탁 · 국외 이전 · 제17조 요율 · state ok / todo / info) · ready(todo 없음) · after(게시 뒤 켤 수 있게 되는 것). 읽기만 — 게시 규칙은 그대로.',
+  })
+  @ApiParam({ name: 'code', example: 'PRIVACY' })
+  @ApiQuery({ name: 'version', example: '1.1' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, description: '해당 버전의 약관 없음', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'TERM_PUBLISHED · TERM_ARCHIVED', type: ErrorDto })
+  publishReady(@Param('code') code: string, @Query('version') version: string) { return this.terms.publishReady(code, version); }
 
   @Get('terms/:code/publish-preview')
   @ApiOperation({

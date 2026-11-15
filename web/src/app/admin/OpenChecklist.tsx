@@ -3,6 +3,7 @@ import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { Switches } from './Switches';
+import { AssumeReadiness } from './AssumeReadiness';   // v10.315 (docs/439)
 
 interface Blocker { kind: string; item: string; reason: string; owner?: string; how?: string }   // v10.200 — 누가 · 풀리는 방법
 interface Check { key: string; label: string; ok: boolean; detail: string; go: string | null }
@@ -99,6 +100,7 @@ export function OpenChecklist({ onGo }: { onGo?: (tab: string) => void }) {
       </div>
 
       {/* v10.65 (docs/121) — 간주 모드 · 소개비 스위치를 운영 화면에서 */}
+      <AssumeReadiness />   {/* v10.315 (docs/439) */}
       <Switches />
 
       {/* v10.146 (D142 · docs/225) — 오픈 준비 점검: 꼭(안 되면 아래 「오픈 준비」 차단) · 권장(꺼져 있어도 오픈은 됨) */}

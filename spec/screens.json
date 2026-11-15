@@ -1552,6 +1552,7 @@
    "gates": [],
    "apis": [
     "GET /admin/open-blockers",
+    "GET /admin/assume-readiness",
     "GET /admin/open-readiness",
     "GET /admin/storage-status",
     "GET /admin/open-date",
@@ -1617,6 +1618,9 @@
     "GET /admin/terms/sources",
     "GET /admin/terms/{code}/source",
     "GET /admin/terms/rate-check",
+    "GET /admin/terms/legal-replies",
+    "POST /admin/terms/legal-replies",
+    "GET /admin/terms/{code}/publish-ready",
     "GET /admin/holidays",
     "PUT /admin/holidays",
     "DELETE /admin/holidays/{day}"

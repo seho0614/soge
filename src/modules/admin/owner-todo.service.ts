@@ -1,3 +1,4 @@
+import { RATE_NOTICE_QUESTIONS } from '../catalog/terms-rate-notice-pack';
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { AlertChannelsService } from './alert-channels.service';
@@ -94,6 +95,11 @@ export class OwnerTodoService {
            FROM p`),
     ]);
     const mk = new Map(marks.map((m) => [m.key, { done: m.done, note: m.note, at: m.at, by: m.by }]));
+    /* v10.314 (D219 · docs/438) — 「요율 인상 공지 방식을 법무에 알리기」 줄에 법무 회신 수(요율 공지 부록 물음 · 물음마다 가장 최근 답) */
+    const [lr] = await this.db.query<{ n: number; fix: number }>(
+      `SELECT count(*)::int AS n, count(*) FILTER (WHERE answer = 'FIX')::int AS fix
+         FROM (SELECT DISTINCT ON (q_no) q_no, answer FROM legal_replies WHERE topic = 'RATE_NOTICE' ORDER BY q_no, created_at DESC, id DESC) l`);
+    const legalNote = lr && lr.n > 0 ? ` · 법무 회신 ${lr.n}/${RATE_NOTICE_QUESTIONS.length}${lr.fix ? `(고쳐야 함 ${lr.fix})` : ''}` : '';
     const sl = seller[0];
     const holes = sl?.body ? [...new Set(sl.body.match(HOLE) ?? [])].filter((h) => h !== '〔시행일〕').length : 0;
     const rows: TodoRow[] = [
@@ -138,7 +144,7 @@ export class OwnerTodoService {
       ].map(({ hint, ...r }) => {
         const m = mk.get(r.key) ?? null;
         return { ...r, manual: true, mark: m, done: m ? m.done : null,
-                 now: m ? `${m.done ? '끝남' : '다시 아직'} — ${m.at} ${m.by ?? ''} · ${m.note}` : `직접 확인 — ${hint}` };
+                 now: (m ? `${m.done ? '끝남' : '다시 아직'} — ${m.at} ${m.by ?? ''} · ${m.note}` : `직접 확인 — ${hint}`) + (r.key === 'rate-legal' ? legalNote : '') };
       })),
     ];
     /* v10.241 — 전체는 모든 줄(직접 확인 포함 15) · 끝남은 ✓ 인 줄(직접 확인은 「끝남」을 적어야 셈) */
