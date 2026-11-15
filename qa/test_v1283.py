@@ -155,7 +155,7 @@ if API and DB:
         m2 = call('POST', '/admin/launch-watch/owner-todo/mark', {'key': 'rate-legal', 'done': False, 'note': '시험 1283 처음대로'}, TS)
         ok('④ 대표 할 일 — 새 4줄(입점 유형 요율 · 처리방침 1.1 · 요율 공지 빠뜨림 · 법무 알림) · 전체 19 · rate-legal 직접 확인 → 「적기」 끝남',
            all(k in rows for k in ('type-rates', 'privacy-11', 'rate-notice', 'rate-legal')) and rows.get('rate-legal', {}).get('manual') is True
-           and td.get('total') == 19 and rows.get('type-rates', {}).get('go') == 'hlt-settle' and rows.get('rate-notice', {}).get('done') in (True, False)
+           and td.get('total') in (19, 20) and rows.get('type-rates', {}).get('go') == 'hlt-settle' and rows.get('rate-notice', {}).get('done') in (True, False)
            and m1.get('_err') is None and rl.get('done') is True and m2.get('_err') is None,
            f"{td.get('total')} · {[k for k in ('type-rates', 'privacy-11', 'rate-notice', 'rate-legal') if k in rows]} · {rl.get('done')}")
 

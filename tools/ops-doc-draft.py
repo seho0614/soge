@@ -147,7 +147,7 @@ def sql_scan(sql):
 
 
 def rehearsal(path):
-    r = {'notice': [], 'state': [], 'rerun_fail': []}
+    r = {'notice': [], 'state': [], 'rerun_fail': [], 'pc': {'new_warn': [], 'gone_warn': [], 'new_fail': [], 'gone_fail': []}}
     for ln in read(path).splitlines():
         if '=' not in ln or ln.startswith('#'):
             continue
@@ -156,6 +156,8 @@ def rehearsal(path):
             r['notice'].append(v)
         elif k == 'rerun_fail':
             r['rerun_fail'].append(v)
+        elif k.startswith('pc_') and k[3:] in r['pc']:   # v10.306 (docs/428) — postcheck DB 줄 차이
+            r['pc'][k[3:]].append(v)
         elif k == 'state':
             x = v.split('|')
             if len(x) == 3:
@@ -164,6 +166,25 @@ def rehearsal(path):
             r[k] = v
     r['stamp'] = (read(path).splitlines() or [''])[0].replace('# mig-rehearsal ', '').split(' · ')[0]
     return r
+
+
+PC_NUM = re.compile(r'통과\s*(\d+)\s*·\s*실패\s*(\d+)\s*·\s*확인\s*(\d+)')
+
+
+def postcheck_expect(reh, base):
+    """v10.306 (docs/428) — 리허설 postcheck DB 줄 차이(pc_before → pc_after)로 기대 숫자 · 달라지는 줄. 리허설에 없으면 None"""
+    b, c = PC_NUM.search(reh.get('pc_before', '')), PC_NUM.search(reh.get('pc_after', ''))
+    if not (b and c):
+        return None
+    d = [int(y) - int(x) for x, y in zip(b.groups(), c.groups())]
+    why = ([f'확인 생김 「{x}」' for x in reh['pc']['new_warn']] + [f'확인 없어짐 「{x}」' for x in reh['pc']['gone_warn']]
+           + [f'⚠ 실패 생김 「{x}」' for x in reh['pc']['new_fail']] + [f'실패 없어짐 「{x}」' for x in reh['pc']['gone_fail']])
+    tail = ('DB 줄 차이 — ' + ' · '.join(why)) if why else 'DB 줄 차이 없음'
+    if base:
+        e = [max(0, x + y) for x, y in zip(base, d)]
+        return (f'**통과 {e[0]} · 실패 {e[1]} · 확인 {e[2]}**(지난 운영 {base[0]} · {base[1]} · {base[2]} 에 리허설 차이 {d[0]:+d} · {d[1]:+d} · {d[2]:+d} — {tail}'
+                f' · 화면 · 서버 줄은 리허설이 못 봄 — 「올린 파일 백업」 줄이 확인이면 확인 +1 · 통과 -1 도 정상)')
+    return f'〔채울 것: 지난 운영 postcheck 숫자 — --postcheck-base 로〕에 리허설 차이 통과 {d[0]:+d} · 실패 {d[1]:+d} · 확인 {d[2]:+d}({tail})'
 
 
 def group(paths):
@@ -184,7 +205,14 @@ def main():
     ap.add_argument('--no', default='', help='쓰지 않는 옛 운영 절차서 번호(쉼표) — 머리말에 적음')
     ap.add_argument('--doc', default='〔번호〕', help='이 절차서 번호(예: 418)')
     ap.add_argument('--rehearsal', default='', help='tools/mig-rehearsal.sh 결과 파일 — postcheck [11] · 리허설 줄을 채움')
+    ap.add_argument('--postcheck-base', default='', help='지난 운영 적용 postcheck 「통과/실패/확인」(예: 54/0/5) — 리허설의 postcheck DB 줄 차이를 더해 기대 숫자를 채움(v10.306)')
     a = ap.parse_args()
+    pcb = None
+    if a.postcheck_base:
+        m_ = re.fullmatch(r'\s*(\d+)\s*/\s*(\d+)\s*/\s*(\d+)\s*', a.postcheck_base)
+        if not m_:
+            raise SystemExit(f'--postcheck-base 는 통과/실패/확인 숫자(예: 54/0/5): {a.postcheck_base}')
+        pcb = tuple(int(x) for x in m_.groups())
     if a.rehearsal and not os.path.isfile(a.rehearsal):
         raise SystemExit(f'리허설 결과 파일이 없음: {a.rehearsal}')
     for p in (a.old, a.new):
@@ -288,6 +316,9 @@ def main():
         else:
             w(f'| 적용 스크립트 | **바뀌지 않음** — `deploy/` 전체 · `package.json` · 잠금 파일 · `.env.example` 모두 {vo} 과 같음. **운영 `.env` · Nginx 는 고치지 않음.**' + job_note + ' |')
         pc = f'〔채울 것: 통과 · 실패 0 · 확인 — 적용 스크립트가 그대로면 지난 절차서와 같음〕 · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
+        pcx = postcheck_expect(reh, pcb) if reh and not reh_fail else None
+        if pcx:
+            pc = pcx + f' · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
         if reh and not reh_fail:
             same_n = sum(1 for k, b, c in reh['state'] if b == c)
             chg = []

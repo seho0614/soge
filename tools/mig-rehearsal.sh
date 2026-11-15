@@ -8,6 +8,9 @@
 #   ③ 새 킷 scripts/migrate.js 로 적용(apply 3단계와 같은 도구) → 한 번 더(적용 0 이어야 함)
 #   ④ 새 마이그레이션 SQL 을 psql 로 하나씩 다시 돌림(재실행 안전) → 숫자 13개를 다시 셈(다시 돌려도 같아야 함)
 #   ⑤ 결과 파일(key=값 줄) — tools/ops-doc-draft.py --rehearsal 이 읽어 절차서 postcheck [11] · 점검 줄을 채움
+#   v10.306 (docs/428) — 새 킷 postcheck.sh 에 DB 만 보는 방식(POSTCHECK_DB_ONLY)이 있으면 ② 뒤 · ③ 뒤에 돌려
+#     「확인」 · 「실패」 줄이 무엇이 생기고 없어졌는지 적음(pc_before · pc_after · pc_new_warn · pc_gone_warn · pc_new_fail · pc_gone_fail)
+#     — 절차서 postcheck 기대 숫자(지난 운영 postcheck + 이 차이)를 초안 도구가 채움 · 리허설 통과 · 실패에는 넣지 않음(보여 주기만)
 #
 #   운영 서버 · RDS 에 닿지 않습니다(개발 서버 rootless 도커만). 끝나면(실패해도) 컨테이너 · 네트워크 · 임시 폴더를 지웁니다.
 #   종료 코드: 0 통과 · 1 리허설 실패(결과 파일 result= 줄에 까닭) · 2 쓰는 법 · 킷 문제
@@ -74,12 +77,21 @@ mig() {   # $1 = 킷 sgb 폴더 · 나머지 = bash 명령
     -v "$d/prisma:/app/prisma:ro" -v "$d/scripts:/app/scripts:ro" -w /app --entrypoint bash "$IMG" -c "$*" 2>&1
 }
 psqlq() { docker exec -i "$DB" psql -U sgb -tA -v ON_ERROR_STOP=1 "$@" 2>&1; }
+# v10.306 — postcheck DB 만 보는 방식(새 킷 스크립트 · $1 = 마이그레이션 상태를 견줄 킷 sgb 폴더)
+PCDB=0; grep -q 'POSTCHECK_DB_ONLY' "$N/deploy/aws/postcheck.sh" 2>/dev/null && PCDB=1
+pcdb() {
+  docker run --rm --network "$NET" -e DATABASE_URL="postgresql://sgb:sgb@$DB:5432/sgb" -e POSTCHECK_DB_ONLY=1 -e APP_DIR=/app \
+    -v "$N/deploy:/pc/deploy:ro" -v "$1/prisma:/app/prisma:ro" -v "$1/VERSION:/app/VERSION:ro" --entrypoint bash "$IMG" /pc/deploy/aws/postcheck.sh 2>&1
+}
+pcsum() { echo "$1" | sed -n 's/^적용 후 확인 — //p' | tail -1; }
+pclines() { echo "$1" | sed -n "s/^  $2  //p" | sed 's/ — .*//; s/[[:space:]]*$//' | sort -u; }
 
 # ② 옛 판 + 시드
 o1=$(mig "$O" 'node scripts/migrate.js | tail -1; [ -f scripts/fixture.sql ] && psql "$DATABASE_URL" -q -f scripts/fixture.sql >/dev/null 2>&1; true')
 OA=$(psqlq -c "select count(*) from schema_migrations" | tail -1)
 echo "$o1" | grep -q "변경감지 0" || fail "옛 킷 마이그레이션부터 실패: $(echo "$o1" | tail -1)"
 BEFORE=$(psqlq -c "$SL")
+[ "$PCDB" = 1 ] && PCB=$(pcdb "$O")
 
 # ③ 새 판 적용 · 한 번 더
 m1=$(mig "$N" 'node scripts/migrate.js')
@@ -87,6 +99,7 @@ FIRST=$(echo "$m1" | tail -1)
 echo "$m1" | grep -q '^!! ' && fail "새 마이그레이션 적용 실패: $(echo "$m1" | grep -m1 '^!! ')"
 echo "$FIRST" | grep -q "변경감지 0" || fail "새 마이그레이션 적용 실패: $FIRST"
 AFTER=$(psqlq -c "$SL")
+[ "$PCDB" = 1 ] && PCA=$(pcdb "$N")
 m2=$(mig "$N" 'node scripts/migrate.js | tail -1')
 SECOND=$(echo "$m2" | tail -1)
 echo "$SECOND" | grep -qE '^적용 0 · ' || fail "두 번째 실행이 적용 0 이 아님: $SECOND"
@@ -124,6 +137,17 @@ paste -d'|' <(echo "$BEFORE") <(echo "$AFTER") | while IFS='|' read -r b a; do
   echo "state=${b%%=*}|${b#*=}|${a#*=}"
 done > "$TMP/st.txt"
 while IFS= read -r l; do r "$l"; done < "$TMP/st.txt"
+if [ "$PCDB" = 1 ]; then
+  r "pc_before=$(pcsum "$PCB")"; r "pc_after=$(pcsum "$PCA")"
+  for kind in 확인:warn 실패:fail; do
+    ko=${kind%%:*}; en=${kind#*:}
+    comm -13 <(pclines "$PCB" "$ko") <(pclines "$PCA" "$ko") | while IFS= read -r l; do [ -n "$l" ] && echo "pc_new_$en=$l"; done >> "$TMP/pc.txt"
+    comm -23 <(pclines "$PCB" "$ko") <(pclines "$PCA" "$ko") | while IFS= read -r l; do [ -n "$l" ] && echo "pc_gone_$en=$l"; done >> "$TMP/pc.txt"
+  done
+  [ -f "$TMP/pc.txt" ] && while IFS= read -r l; do r "$l"; done < "$TMP/pc.txt"
+else
+  r "pc_skip=새 킷 postcheck.sh 에 DB 만 보는 방식 없음(v10.306 전)"
+fi
 SAME=$(awk -F'|' '$2==$3' "$TMP/st.txt" | wc -l | tr -d ' '); DIFF=$(awk -F'|' '$2!=$3' "$TMP/st.txt" | wc -l | tr -d ' ')
 if [ -z "$FAIL" ]; then r "result=통과"; else r "result=실패 — $FAIL"; fi
 
