@@ -87,7 +87,7 @@ function fillRateCells(body: string, rates: Record<string, number>) {
 /** v10.313 — GET /admin/terms/{code}/publish-ready */
 interface Ready { ready: boolean; items: Array<{ key: string; label: string; state: 'ok' | 'todo' | 'info'; text: string }>; after: string[] }
 /** v10.314 — GET /admin/terms/legal-replies */
-interface LegalReplies { rows: Array<{ id: string; topic: string; qNo: number; answer: string; opinion: string | null; reviewer: string; repliedOn: string; by: string | null; at: string; latest: boolean }>;
+interface LegalReplies { rows: Array<{ id: string; topic: string; qNo: number; answer: string; opinion: string | null; reviewer: string; repliedOn: string; by: string | null; at: string; latest: boolean; termCode?: string | null }>;
   topics: Array<{ topic: string; answered: number; ok: number; fix: number; note: number }>; rateNoticeQuestions: number }
 const TOPIC: Record<string, string> = { RATE_NOTICE: '요율 인상 공지 방식', PRIVACY: '처리방침', HLT_SELLER: '입점 약관', OTHER: '그 밖' };
 const ANSWER: Record<string, string> = { OK: '맞음', FIX: '고쳐야 함', NOTE: '의견만' };
@@ -136,7 +136,8 @@ interface Edit { key: string; code: string; from: string; version: string; title
   /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) · v10.304 개발 원문(source · docs/426) */ base?: 'orig' | 'current' | 'source';
   /** v10.304 — 불러온 개발 원문(킷 docs 의 게시용 완성본 「4. 전문」) */ src?: { file: string; body: string };
   /** v10.307 (docs/430) — 「개발 원문으로 채우기」로 칸을 채움(아직 저장 안 함) */ filled?: boolean;
-  /** v10.312 (docs/436) — 제17조 요율 칸을 운영 요율로 채움(아직 저장 안 함) */ rateFilled?: string }
+  /** v10.312 (docs/436) — 제17조 요율 칸을 운영 요율로 채움(아직 저장 안 함) */ rateFilled?: string;
+  /** v10.316 (docs/441) — 「법무 회신」 「이 약관 고치기」로 열었을 때 그 답(고치기 칸 위에 보임) */ legal?: string }
 
 /** v10.263 — 그 약관의 지금 시행 중인 판(게시 · 시행 예정 아님 · 가장 높은 판) */
 function inForce(all: Term[], code: string): Term | undefined {
@@ -214,6 +215,17 @@ export function TermsPanel() {
     setTimeout(() => document.querySelector(`[data-term-editor="HLT_SELLER:${version}"]`)?.scrollIntoView({ block: 'center' }), 50);
   }
 
+  /** v10.316 (docs/441) — 법무 회신 「고쳐야 함」 줄에서 그 약관의 가장 높은 초안(없으면 가장 높은 판 → 새 판) 「고치기」를 열고 답을 위에 보여 줌 */
+  function fixFromLegal(r: LegalReplies['rows'][number]) {
+    if (!data || !r.termCode) return;
+    const same = data.filter((u) => u.code === r.termCode).sort((a, b) => verCmp(b.version, a.version));
+    const t = same.find((u) => editable(u.status)) ?? same[0];
+    if (!t) { setRes({ ok: false, text: `${r.termCode} 약관이 없습니다.` }); return; }
+    startEdit(t, data);
+    setEd((e) => e && { ...e, legal: `${TOPIC[r.topic] ?? r.topic} ${r.qNo}번 · 고쳐야 함 · ${r.reviewer} · ${r.repliedOn}${r.opinion ? ` — ${r.opinion}` : ''}` });
+    setTimeout(() => document.querySelector(`[data-term-editor="${t.code}:${t.version}"]`)?.scrollIntoView({ block: 'center' }), 50);
+  }
+
   /** v10.313 (docs/437) — 게시 준비 한 장(읽기만) */
   async function openReady(t: Term) {
     const key = `${t.code}:${t.version}`;
@@ -272,16 +284,29 @@ export function TermsPanel() {
     else if (prev && lead < 30 && !adverse) lines.push(`회원에게 불리한 변경이면 30일 전 고지가 필요합니다(지금 ${lead}일 전) — 불리하면 「회원에게 불리한 변경」을 고르십시오.`, '');
     if (prev && adverse) lines.push('「회원에게 불리한 변경」 — 시행일이 30일 안이면 서버가 거절합니다.', '');
     if (prev && lead > 0 && notifyOn && t.audience !== 'PARTNER') lines.push('게시하면 회원마다 「약관 변경 안내」 알림이 갑니다(사이트 안 · 메일 · 알림톡은 켜진 뒤).', '');
+    /* v10.318 (docs/443) — 게시 준비 결과를 같은 창에 · 「아직」이 있으면 「게시」를 한 번 더 입력(서버는 막지 않고 기록만) */
+    const rd = await api<Ready>(`/admin/terms/${t.code}/publish-ready?version=${encodeURIComponent(t.version)}`).catch(() => null);
+    const todo = rd?.items.filter((x) => x.state === 'todo') ?? [];
+    if (rd) {
+      lines.push(`게시 준비 — 아직 ${todo.length} · 알아 둘 것 ${rd.items.filter((x) => x.state === 'info').length} · 됨 ${rd.items.filter((x) => x.state === 'ok').length}`);
+      for (const x of todo) lines.push(`  ✗ ${x.label}: ${x.text}`);
+      lines.push('');
+    } else lines.push('게시 준비를 불러오지 못했습니다 — 「게시 준비」 단추로 따로 확인하십시오.', '');
     lines.push('게시하면 이용자와의 계약 조건이 되고, 되돌려도 이미 받은 동의 기록은 남습니다.', '법무 확인을 마친 글입니까?');
     if (!window.confirm(lines.join('\n'))) return;
+    if (todo.length && (window.prompt(`게시 준비에 「아직」이 ${todo.length}건 있습니다(${todo.map((x) => x.label).join(' · ')}).\n그래도 게시하려면 「게시」라고 입력하십시오.`) ?? '').trim() !== '게시') {
+      setRes({ ok: false, text: `게시하지 않았습니다 — 게시 준비 「아직」 ${todo.length}건(${todo.map((x) => x.label).join(' · ')}).` });
+      return;
+    }
     const key = `${t.code}:${t.version}`;
     setBusy(key); setRes(null);
     try {
-      const r = await api<{ code: string; version: string; remainingBlockers: number; scheduled?: boolean; notified?: number }>(`/admin/terms/${t.code}/publish`,
+      const r = await api<{ code: string; version: string; remainingBlockers: number; scheduled?: boolean; notified?: number; readyCheck?: { ready: boolean; todo: string[] } }>(`/admin/terms/${t.code}/publish`,
         { method: 'PATCH', body: JSON.stringify({ version: t.version, effectiveFrom: day, adverse }) });
-      setRes({ ok: true, text: r.scheduled
+      setRes({ ok: true, text: (r.scheduled
         ? `${t.title} ${r.version} 을 시행 예정으로 게시했습니다(시행 ${day} · 그때까지 앞 판 시행 · 재동의는 ${day} 부터 · 회원 알림 ${r.notified ?? 0}건). 남은 오픈 차단 ${r.remainingBlockers}건.`
-        : `${t.title} ${r.version} 을 게시했습니다(시행 ${day}${pv?.first && lead > 0 ? ' · 앞 판이 없어 지금부터 시행 중' : ''}). 남은 오픈 차단 ${r.remainingBlockers}건.` });
+        : `${t.title} ${r.version} 을 게시했습니다(시행 ${day}${pv?.first && lead > 0 ? ' · 앞 판이 없어 지금부터 시행 중' : ''}). 남은 오픈 차단 ${r.remainingBlockers}건.`)
+        + (r.readyCheck && !r.readyCheck.ready ? ` 게시 준비 「아직」 ${r.readyCheck.todo.join(' · ')} 인 채로 게시함(감사 기록에 남음).` : '') });
       reload();
     } catch (e) {
       setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '게시하지 못했습니다.' });
@@ -512,6 +537,10 @@ export function TermsPanel() {
                           <label style={{ flex: 1, minWidth: 240 }}>제목 <input className="sel" style={{ width: '80%' }} value={ed.title} onChange={(e) => setEd({ ...ed, title: e.target.value })} aria-label="제목" data-term-title /></label>
                           <span className="muted">{editable(t.status) && ed.version === ed.from ? `${ed.from} 초안을 고침` : `${ed.from} 은 그대로 두고 새 판 ${ed.version} 으로`}</span>
                         </div>
+                        {ed.legal && (   /* v10.316 (docs/441) — 법무 회신에서 열었을 때 그 답 */
+                          <p className="warn-text" style={{ whiteSpace: 'pre-wrap' }} data-term-legal-note>법무 회신 — {ed.legal}
+                            <br /><small className="dim">고친 뒤 「저장(게시 아님)」 · 법무에 다시 확인받으면 「법무 회신」에 같은 물음의 새 답을 적습니다.</small></p>
+                        )}
                         <textarea ref={textRef} value={ed.body} onChange={(e) => setEd({ ...ed, body: e.target.value })} rows={18} style={{ width: '100%', fontSize: 13, fontFamily: 'inherit' }} aria-label="약관 본문" data-term-text />
                         <label style={{ display: 'block', margin: '6px 0' }}>바뀐 점(회원 재동의 화면에 보임 · 300자)
                           <input className="sel" style={{ width: '100%' }} maxLength={300} value={ed.note} placeholder="예: 제6조 국외 이전 — AI 상담 질문을 받는 곳 · 보관 기간을 적음"
@@ -623,7 +652,7 @@ export function TermsPanel() {
         <button className="btn-ok btn-sm" disabled={busy === 'legal' || !lf.reviewer.trim() || !lf.repliedOn} onClick={() => void addLegal()} data-legal-save>적기</button>
         {lr.data && lr.data.rows.length > 0 && (
           <table className="tbl" style={{ marginTop: 8 }}>
-            <thead><tr><th>주제</th><th>물음</th><th>답</th><th>의견</th><th>확인한 사람</th><th>답한 날</th><th>적은 사람 · 때</th></tr></thead>
+            <thead><tr><th>주제</th><th>물음</th><th>답</th><th>의견</th><th>확인한 사람</th><th>답한 날</th><th>적은 사람 · 때</th><th></th></tr></thead>
             <tbody>
               {lr.data.rows.slice(0, 50).map((r) => (
                 <tr key={r.id} data-legal-row={`${r.topic}:${r.qNo}:${r.answer}${r.latest ? ':latest' : ''}`} style={r.latest ? undefined : { opacity: 0.6 }}>
@@ -631,6 +660,8 @@ export function TermsPanel() {
                   <td className={r.answer === 'FIX' ? 'warn-text' : undefined}>{ANSWER[r.answer] ?? r.answer}{r.latest ? '' : ' (옛 답)'}</td>
                   <td style={{ whiteSpace: 'pre-wrap' }}>{r.opinion ?? '—'}</td><td>{r.reviewer}</td><td className="mono">{r.repliedOn}</td>
                   <td className="dim">{r.by ?? '—'} · {r.at}</td>
+                  <td>{r.latest && r.answer === 'FIX' && r.termCode
+                    ? <button className="btn-sm" onClick={() => fixFromLegal(r)} data-legal-fix={`${r.topic}:${r.qNo}:${r.termCode}`}>이 약관 고치기</button> : null}</td>
                 </tr>
               ))}
             </tbody>

@@ -10,6 +10,7 @@ import { NOTICE_DAYS } from '../health/health-rate-schedule.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { RATE_NOTICE_QUESTIONS } from './terms-rate-notice-pack';
+import { LEGAL_TOPIC_LABEL, LEGAL_TOPIC_TERM } from './terms.dto';
 import { AgentService } from '../agent/agent.service';
 import { GeoService } from '../../common/geo/geo.service';
 
@@ -246,6 +247,19 @@ export class TermsService {
     if (code === 'HLT_SELLER')
       items.push({ key: 'rate', label: '제17조 요율 ↔ 입점 유형 요율', state: pv.rateGaps.length ? 'todo' : 'ok',
                    text: pv.rateGaps.length ? pv.rateGaps.join(' / ') : '빈칸이 아니면 운영 요율과 같음(빈칸은 위 「빈칸」)' });
+    /* v10.316 (docs/441) — 법무 회신(D219): 이 약관에 이어진 주제(처리방침 → PRIVACY · 입점 약관 · 요율 인상 공지 방식 → HLT_SELLER)의 물음마다 가장 최근 답 */
+    const lt = Object.entries(LEGAL_TOPIC_TERM).filter(([, c]) => c === code).map(([tp]) => tp);
+    if (lt.length) {
+      const [lg] = await this.db.query<{ answered: number; fix: number; fixQ: string | null }>(
+        `SELECT count(*)::int AS answered, count(*) FILTER (WHERE answer = 'FIX')::int AS fix,
+                string_agg(CASE WHEN answer = 'FIX' THEN topic || ' ' || q_no END, ' · ' ORDER BY topic, q_no) AS "fixQ"
+           FROM (SELECT DISTINCT ON (topic, q_no) topic, q_no, answer FROM legal_replies WHERE topic = ANY($1::text[])
+                  ORDER BY topic, q_no, created_at DESC, id DESC) l`, [lt]);
+      const nm = (q: string) => q.replace(/^(\w+) (\d+)$/, (_m, tp: string, n: string) => `${LEGAL_TOPIC_LABEL[tp] ?? tp} ${n}번`);
+      items.push({ key: 'legal', label: '법무 회신', state: lg.fix ? 'todo' : lg.answered ? 'ok' : 'info',
+                   text: lg.fix ? `고쳐야 함 ${lg.fix}건 — ${(lg.fixQ ?? '').split(' · ').map(nm).join(' · ')} · 「법무 회신」 줄의 「이 약관 고치기」로 고친 뒤 같은 물음에 새 답을 적음`
+                     : lg.answered ? `답 ${lg.answered}건 — 고쳐야 함 없음` : `아직 적은 답이 없음(${lt.map((tp) => LEGAL_TOPIC_LABEL[tp]).join(' · ')}) — 법무 답을 받으면 「법무 회신」에 적음` });
+    }
     const after: string[] = [];
     if (code === 'PRIVACY') {
       const tax = t.body.includes('주민등록번호(암호화)');
@@ -333,6 +347,9 @@ export class TermsService {
     const [dup] = await this.db.query<{ version: string }>(
       `SELECT version FROM v_terms_upcoming WHERE code = $1 AND version <> $2`, [code, dto.version]);
     if (dup) throw new PolicyViolation('TERM_SCHEDULED_EXISTS', `시행 예정인 판(${dup.version})이 이미 있습니다 — 먼저 그 판의 「예정 취소」를 하십시오.`);
+    /* v10.318 (docs/443) — 게시하는 때의 게시 준비 결과를 응답 · 감사 기록(TERM_PUBLISH after_data)에 남김 · 막지는 않음(빈칸은 위에서 이미 거절) */
+    const rd = await this.publishReady(code, dto.version);
+    const readyCheck = { ready: rd.ready, todo: rd.items.filter((x) => x.state === 'todo').map((x) => x.label), info: rd.items.filter((x) => x.state === 'info').length };
 
     return this.db.transaction(async () => {
       const [row] = await this.db.query<{ code: string; version: string; status: string }>(
@@ -354,7 +371,7 @@ export class TermsService {
 
       const [n] = await this.db.query<{ c: string }>(
         `SELECT count(*) AS c FROM v_open_blockers`);
-      return { ...row, scheduled: sc.scheduled, archived: a.n, notified, remainingBlockers: Number(n.c) };
+      return { ...row, scheduled: sc.scheduled, archived: a.n, notified, remainingBlockers: Number(n.c), readyCheck };
     });
   }
 
@@ -458,7 +475,7 @@ export class TermsService {
               count(*) FILTER (WHERE answer = 'FIX')::int AS fix, count(*) FILTER (WHERE answer = 'NOTE')::int AS note
          FROM (SELECT DISTINCT ON (topic, q_no) topic, q_no, answer FROM legal_replies ORDER BY topic, q_no, created_at DESC, id DESC) l
         GROUP BY topic ORDER BY topic`);
-    return { rows, topics, rateNoticeQuestions: RATE_NOTICE_QUESTIONS.length };
+    return { rows: rows.map((r) => ({ ...r, termCode: LEGAL_TOPIC_TERM[r.topic] ?? null })), topics, rateNoticeQuestions: RATE_NOTICE_QUESTIONS.length };
   }
 
   /** v10.314 — 법무 회신 한 줄 적기(SUPER · 쌓기만 · 답한 날은 오늘(한국)까지) */

@@ -64,6 +64,7 @@ const NAME: Record<string, string> = {
   ORDER_OPEN_EXPIRED: '주문 받기 저절로 꺼짐', ORDER_OPEN_NO_END: '주문 받기 꺼질 시각 없음', REVIEW_SLA_BREACH: '검수 기한 넘김', DISK_LOW: '디스크 모자람',   // v10.199 (D177)
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
   STAFF_IP_PASS_NEW: '접속 인증 처음 보는 대역', STAFF_IP_LOCKED: '접속 인증번호 5번 틀림', STAFF_IP_DAY_LIMIT: '접속 인증번호 하루 한도',   // v10.228 (D197)
+  ASSUME_READY: '간주 끌 수 있음',   // v10.317 (D220 · docs/442)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)
   TERMS_EFFECTIVE_SOON: '약관 시행 3일 안',   // v10.243 (docs/381)

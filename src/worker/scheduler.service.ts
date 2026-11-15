@@ -10,6 +10,7 @@ import { buildAlertPush } from '../common/telegram/alert-push';
 import { SlackService } from '../common/slack/slack.service';
 import { AlertChannelsService } from '../modules/admin/alert-channels.service';
 import { OwnerTodoService, ownerTodoWeeklyText } from '../modules/admin/owner-todo.service';
+import { AdminService } from '../modules/admin/admin.service';
 import { ServerTrendService } from '../modules/admin/server-trend.service';
 import { NotifyMailSender } from '../common/mail/notify-mail';
 import { AlimtalkService } from '../common/alimtalk/alimtalk.service';
@@ -75,6 +76,7 @@ export class SchedulerService {
     private readonly channels: AlertChannelsService,   // v10.239 (docs/379) 알림 길 연속 실패 경보
     private readonly ownerTodo: OwnerTodoService,   // v10.249 (D203 · docs/386) 대표 할 일 주간 알림
     private readonly trend: ServerTrendService,   // v10.248 (D203 · docs/386) 서버 자원 하루 기록
+    private readonly admin: AdminService,   // v10.317 (D220 · docs/442) 간주 끌 수 있음 알림(간주 모드 끄는 순서)
   ) {}
 
   /**
@@ -494,6 +496,8 @@ export class SchedulerService {
         /* v10.205 (docs/328) — AI 켜기 다음 단계가 「할 차례」(앞 단계 기준 넘음)면 단계마다 한 번 */
         const sr = await this.launchWatch.agentStepReady();
         for (const x of sr) await this.alert('AGENT_STEP_READY', 'INFO', x.title, x.detail);
+        /* v10.317 (D220 · docs/442) — 간주가 켜져 있는데 끌 조건을 모두 갖춘 항목(간주 모드 끄는 순서) · 처음 한 번 · 켜진 채면 7일마다 한 번 · 꺼지면 멈춤 */
+        const ar = await this.assumeReadyAlert();
         /* v10.199 (D177) — 원인이 없어진 알림에 「풀림」(백업 멈춤 · 백업 실패 · 묶음 깨짐 · 디스크) — 확인 안 한 수 · 메일에서 빠짐 */
         const rs = await this.launchWatch.resolveAlerts(dk.usedPct, dk.limit);
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
@@ -505,7 +509,7 @@ export class SchedulerService {
         const cf = await this.channels.failWatch({ mail: am, telegram: ap, slack: as });
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
         const ef = await this.launchWatch.flushServerErrors();   /* v10.250 (D204) — 서버 오류 건수를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, alertSlack: as, alertBoard: ab, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, alertBoard: ab, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), assumeReady: ar, channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -789,7 +793,8 @@ export class SchedulerService {
          FROM ops_alerts o
         WHERE o.board_posted_at IS NULL AND o.acknowledged_at IS NULL AND o.resolved_at IS NULL AND o.raised_at > now() - interval '24 hours'
           AND (o.severity = 'CRITICAL' OR o.alert_code IN ('SETTING_CHANGED', 'UPLOADS_BACKUP_FAILED', 'UPLOADS_BACKUP_BAD', 'ORDER_OPEN_EXPIRED', 'STAFF_LOGIN_NEW',
-               'AGENT_LIVE', 'AGENT_READY_GAP', 'AGENT_CAP_NEAR', 'AGENT_STEP_READY', 'STAFF_IP_PASS_NEW', 'STAFF_IP_LOCKED', 'STAFF_IP_DAY_LIMIT'))
+               'AGENT_LIVE', 'AGENT_READY_GAP', 'AGENT_CAP_NEAR', 'AGENT_STEP_READY', 'STAFF_IP_PASS_NEW', 'STAFF_IP_LOCKED', 'STAFF_IP_DAY_LIMIT',
+               'ASSUME_READY'))   /* v10.317 (D220) */
         ORDER BY (o.severity = 'CRITICAL') DESC, o.id LIMIT 50`);
     if (!items.length) return { posted: 0 };
     const plan = buildAlertPush(items, items.length);
@@ -892,6 +897,27 @@ export class SchedulerService {
   /* 심각도는 DB 제약(ops_alerts_severity_check)이 받는 셋뿐입니다.
    * 전에는 'HIGH' · 'MEDIUM' 을 쓰는 곳이 있어 그 알림을 넣을 때 제약에 걸렸고, **알림이 남지 않은 채 작업 전체가 실패로 기록**됐습니다
    * (정기결제 실패 · 카드 교체 필요 · 알림 미발송 · 위험 탐지 — 실측 422 CHECK_VIOLATION). 타입으로 막습니다. */
+  /**
+   * v10.317 (D220 · docs/442) — 「간주 끌 수 있음」: 간주 모드 끄는 순서(AdminService.assumeReadiness · 서버가 끌 때 보는 조건 그대로)에서
+   *   켜져 있고(off 아님) 조건을 모두 갖춘(ready) 항목 중 최근 7일 안에 ASSUME_READY 로 알리지 않은 것을 한 줄로(items · (종류 · 시각) 고유라 한 번에 한 줄).
+   *   메일 · 텔레그램 · 슬랙 급한 알림 목록에 들어감(D220). 끄는 것은 사람이(관리자 스위치) — 여기서는 알리기만. 돌려주는 값: 이번에 알린 키.
+   */
+  private async assumeReadyAlert(): Promise<string[]> {
+    const ar = await this.admin.assumeReadiness();
+    const due: Array<{ key: string; order: number; label: string }> = [];
+    for (const r of ar.rows.filter((x) => !x.off && x.ready)) {
+      const [seen] = await this.db.query<{ s: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = 'ASSUME_READY' AND raised_at > now() - interval '7 days'
+                         AND detail -> 'items' @> jsonb_build_array(jsonb_build_object('key', $1::text))) AS s`, [r.key]);
+      if (!seen?.s) due.push({ key: r.key, order: r.order, label: r.label });
+    }
+    if (!due.length) return [];
+    await this.alert('ASSUME_READY', 'INFO',
+      `간주를 끌 수 있습니다 — ${due.map((x) => `${x.order}. ${x.label}`).join(' · ')}(관 관리 › 오픈 체크리스트 › 「간주 모드 끄는 순서」 · 끄기는 「관리자 스위치」 · 권하는 순서 수금 계좌 → 중개사 → 세금계산서 → 결제)`,
+      { items: due });
+    return due.map((x) => x.key);
+  }
+
   private alert(code: string, severity: 'INFO' | 'WARN' | 'CRITICAL', title: string, detail: unknown) {
     return this.db.query(
       `INSERT INTO ops_alerts (alert_code, severity, title, detail)

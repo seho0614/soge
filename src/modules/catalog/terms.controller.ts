@@ -114,7 +114,7 @@ export class TermsController {
   @Get('terms/:code/publish-ready')
   @ApiOperation({
     summary: '게시 준비 한 장 (v10.313)',
-    description: '게시 안 된 판 하나의 게시 준비 — items(빈칸 · 시행일 · 재동의 · 회원 알림 · 위탁 · 국외 이전 · 제17조 요율 · state ok / todo / info) · ready(todo 없음) · after(게시 뒤 켤 수 있게 되는 것). 읽기만 — 게시 규칙은 그대로.',
+    description: '게시 안 된 판 하나의 게시 준비 — items(빈칸 · 시행일 · 재동의 · 회원 알림 · 위탁 · 국외 이전 · 제17조 요율 · v10.316 법무 회신 · state ok / todo / info) · ready(todo 없음) · after(게시 뒤 켤 수 있게 되는 것). 읽기만 — 게시 규칙은 그대로.',
   })
   @ApiParam({ name: 'code', example: 'PRIVACY' })
   @ApiQuery({ name: 'version', example: '1.1' })

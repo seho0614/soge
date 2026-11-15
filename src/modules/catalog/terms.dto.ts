@@ -90,6 +90,8 @@ export class TermPublishResultDto {
     description: '발행 후 남은 오픈 차단 항목 수. 0 이 되면 이 관문은 통과입니다',
   })
   remainingBlockers!: number;
+  @ApiPropertyOptional({ description: '게시하는 때의 게시 준비 결과(v10.318 · 막지 않음 · 감사 기록에도 남음) — ready · todo(「아직」 항목 이름) · info(「알아 둘 것」 수)', example: { ready: false, todo: ['법무 회신'], info: 3 } })
+  readyCheck?: { ready: boolean; todo: string[]; info: number };
 }
 
 /** v10.205 (docs/328) — 게시 전에 보는 영향(처음 게시는 시행일이 미래여도 게시하는 순간 시행 · D151) */
@@ -225,6 +227,9 @@ export class TermRateCheckDto {
 
 /* v10.314 (D219 · docs/438) — 법무 회신 */
 export const LEGAL_TOPICS = ['RATE_NOTICE', 'PRIVACY', 'HLT_SELLER', 'OTHER'] as const;
+/** v10.316 (docs/441) — 법무 회신 주제 → 고칠 약관(그 밖은 없음) · 게시 준비 「법무 회신」 항목 · 화면 「이 약관 고치기」 */
+export const LEGAL_TOPIC_TERM: Record<string, string | null> = { RATE_NOTICE: 'HLT_SELLER', PRIVACY: 'PRIVACY', HLT_SELLER: 'HLT_SELLER', OTHER: null };
+export const LEGAL_TOPIC_LABEL: Record<string, string> = { RATE_NOTICE: '요율 인상 공지 방식', PRIVACY: '처리방침', HLT_SELLER: '입점 약관', OTHER: '그 밖' };
 export class LegalReplyInputDto {
   @ApiProperty({ enum: LEGAL_TOPICS, description: 'RATE_NOTICE 요율 인상 공지 방식(묶음 부록) · PRIVACY 처리방침 · HLT_SELLER 입점 약관 · OTHER 그 밖' })
   @IsEnum(LEGAL_TOPICS) topic!: string;
@@ -247,6 +252,7 @@ export class LegalReplyDto {
   @ApiPropertyOptional({ nullable: true, description: '적은 운영자' }) by!: string | null;
   @ApiProperty({ example: '2026-11-20 14:05', description: '적은 때(한국)' }) at!: string;
   @ApiProperty({ description: '그 물음의 가장 최근 답(지금 답)' }) latest!: boolean;
+  @ApiPropertyOptional({ nullable: true, example: 'HLT_SELLER', description: '고칠 약관(v10.316 · 처리방침 → PRIVACY · 입점 약관 · 요율 인상 공지 방식 → HLT_SELLER · 그 밖은 없음)' }) termCode!: string | null;
 }
 export class LegalTopicSumDto {
   @ApiProperty({ enum: LEGAL_TOPICS }) topic!: string;
