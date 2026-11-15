@@ -55,7 +55,13 @@ export class OwnerTodoService {
                 (SELECT count(*)::int FROM hlt_seller_type_rates WHERE rate IS NOT NULL) AS "typeRates",
                 (SELECT max(version) FROM v_terms_current WHERE code = 'PRIVACY') AS "privacyVer",
                 (SELECT count(*)::int FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id
-                  WHERE r.status = 'SCHEDULED' AND r.effective_at > now() AND r.created_at < now() - interval '1 day' AND n.published_at IS NULL) AS "rateNoticeMissing"`),
+                  WHERE r.status = 'SCHEDULED' AND r.effective_at > now() AND r.created_at < now() - interval '1 day' AND n.published_at IS NULL) AS "rateNoticeMissing",
+                /* v10.305 (docs/427) 최근 30일 시행된 예약 — 시행 때 굳힌 기록에서 대상인데 시행 전에 공지를 안 펼친 곳 */
+                (SELECT count(*)::int FROM hlt_rate_schedules WHERE reads_frozen_at > now() - interval '30 days') AS "rateFrozen",
+                (SELECT count(*)::int FROM hlt_rate_read_snaps p JOIN hlt_rate_schedules r ON r.id = p.schedule_id
+                  WHERE r.reads_frozen_at > now() - interval '30 days' AND p.target AND NOT p.read_before) AS "rateFrozenUnread",
+                (SELECT count(*)::int FROM hlt_rate_read_snaps p JOIN hlt_rate_schedules r ON r.id = p.schedule_id
+                  WHERE r.reads_frozen_at > now() - interval '30 days' AND p.target) AS "rateFrozenTarget"`),
       this.db.query<{ open: number; noDate: number; overdue: number; applied: number }>(
         `SELECT count(*)::int AS open, count(*) FILTER (WHERE ip_requested_at IS NULL)::int AS "noDate",
                 count(*) FILTER (WHERE applied_at IS NOT NULL OR (NOT requires_ip AND ip_requested_at IS NOT NULL))::int AS applied,
@@ -111,6 +117,9 @@ export class OwnerTodoService {
         now: s.privacyVer ? `지금 판 ${s.privacyVer}${verAtLeast(s.privacyVer, 1, 1) ? '' : ' — 1.1 초안 〔법령 근거〕 채운 뒤 게시'}` : '시행 중인 판 없음' },
       { key: 'rate-notice', label: '수수료율 변경 예약 공지 빠뜨림 0건', go: 'hlt-settle', done: s.rateNoticeMissing === 0,
         now: s.rateNoticeMissing === 0 ? '없음' : `${s.rateNoticeMissing}건 — 「요율 변경 예정」에서 「공지 게시」` },
+      { key: 'rate-frozen', label: '최근 30일 요율 시행 — 시행 전 안 읽은 대상 0곳', go: 'hlt-settle', done: s.rateFrozenUnread === 0,
+        now: s.rateFrozen === 0 ? '최근 30일 시행 없음'
+          : `시행 ${s.rateFrozen}건 · 시행 전 읽음 ${s.rateFrozenTarget - s.rateFrozenUnread} / 대상 ${s.rateFrozenTarget}${s.rateFrozenUnread ? ` — 안 읽은 ${s.rateFrozenUnread}곳은 「요율 변경 예정」 › 「읽음 기록」(시행 때 기록) · 필요하면 CSV 로 남김` : ''}` },
       { key: 'seo', label: '검색 사이트 소유 확인 값(구글 · 네이버)', go: 'policy', done: !!(s.google && s.naver),
         now: `구글 ${s.google ? '있음' : '없음'} · 네이버 ${s.naver ? '있음' : '없음'}` },
       { key: 'lbs', label: '위치기반서비스사업 신고번호', go: 'community', done: !!s.lbs,

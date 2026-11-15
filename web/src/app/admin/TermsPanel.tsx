@@ -86,7 +86,8 @@ function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[
 }
 
 interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string;
-  /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) */ base?: 'orig' | 'current' }
+  /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) · v10.304 개발 원문(source · docs/426) */ base?: 'orig' | 'current' | 'source';
+  /** v10.304 — 불러온 개발 원문(킷 docs 의 게시용 완성본 「4. 전문」) */ src?: { file: string; body: string } }
 
 /** v10.263 — 그 약관의 지금 시행 중인 판(게시 · 시행 예정 아님 · 가장 높은 판) */
 function inForce(all: Term[], code: string): Term | undefined {
@@ -98,6 +99,7 @@ export function TermsPanel() {
   /* v10.161 — 재동의 시점 스위치(terms.reconsent_before_effective · 기본 off = 시행일부터 · 법무 판단 뒤에만 on) */
   const st = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');
   const oc = useApi<OutsourceCheck>('/admin/terms/outsource-check');   // v10.206 (docs/330) — 위탁 목록 점검
+  const srcs = useApi<{ code: string; version: string; file: string }[]>('/admin/terms/sources');   // v10.304 (docs/426) — 개발 원문이 있는 판
   const early = st.data?.find((s) => s.key === 'terms.reconsent_before_effective')?.value === 'on';
   /* v10.162 (D152) — 시행 예정 게시 때 회원 알림(terms.notify_members · 기본 on) */
   const notifyOn = (st.data?.find((s) => s.key === 'terms.notify_members')?.value ?? 'on') === 'on';
@@ -114,6 +116,17 @@ export function TermsPanel() {
             title: t.title, body: t.body, orig: t.body, diff: false,
             /* v10.159 — 새 판이면 바뀐 점을 새로 적음(재동의 화면 「바뀐 점」) · 초안을 고칠 때는 적어 둔 것 */
             note: editable(t.status) ? (t.changeNote ?? '') : '', origNote: editable(t.status) ? (t.changeNote ?? '') : '' });
+  }
+
+  /** v10.304 — 개발 원문을 불러와 비교 기준으로(한 번 불러오면 그대로 씀) */
+  async function useSource(e: Edit) {
+    if (e.src) { setEd({ ...e, diff: true, base: 'source' }); return; }
+    try {
+      const r = await api<{ file: string; body: string }>(`/admin/terms/${e.code}/source?version=${encodeURIComponent(e.from)}`);
+      setEd({ ...e, diff: true, base: 'source', src: { file: r.file, body: r.body } });
+    } catch (err) {
+      setRes({ ok: false, text: err instanceof ApiFailure ? err.body.message : '개발 원문을 불러오지 못했습니다.' });
+    }
   }
 
   async function save(e: Edit) {
@@ -330,7 +343,10 @@ export function TermsPanel() {
                   const changed = ed.body !== ed.orig || ed.title !== t.title || ed.note !== ed.origNote;
                   const cur = inForce(data, ed.code);
                   const useCur = ed.base === 'current' && !!cur;
-                  const baseBody = useCur ? cur!.body : ed.orig;
+                  /* v10.304 — 개발 원문(HLT_SELLER 1.0 → docs/400 · PRIVACY 1.1 → docs/401)이 있는 판이면 셋째 기준 */
+                  const hasSrc = !!srcs.data?.some((x) => x.code === ed.code && x.version === ed.from);
+                  const useSrc = ed.base === 'source' && !!ed.src;
+                  const baseBody = useSrc ? ed.src!.body : useCur ? cur!.body : ed.orig;
                   const d = ed.diff ? lineDiff(baseBody, ed.body) : [];
                   const dMinus = d.filter((x) => x.t === '-'), dPlus = d.filter((x) => x.t === '+');
                   const clash = ed.version !== ed.from && data.some((u) => u.code === ed.code && u.version === ed.version);
@@ -352,30 +368,32 @@ export function TermsPanel() {
                         </p>
                         {clash && <p className="warn-text" data-term-clash>{ed.version} 판이 이미 있습니다 — 다른 번호를 적으십시오.</p>}
                         <div className="row-actions">
-                          <button className="btn-sm" disabled={!changed && !(cur && cur.body !== ed.body)} onClick={() => setEd({ ...ed, diff: !ed.diff, base: ed.base ?? (cur && cur.version !== ed.from ? 'current' : 'orig') })} data-term-diff-btn>{ed.diff ? '비교 닫기' : '바뀐 곳 보기'}</button>
+                          <button className="btn-sm" disabled={!changed && !(cur && cur.body !== ed.body) && !hasSrc} onClick={() => setEd({ ...ed, diff: !ed.diff, base: ed.base ?? (cur && cur.version !== ed.from ? 'current' : 'orig') })} data-term-diff-btn>{ed.diff ? '비교 닫기' : '바뀐 곳 보기'}</button>
+                          {hasSrc && !ed.diff && <button className="btn-sm" onClick={() => void useSource(ed)} data-term-src-btn>개발 원문과 비교</button>}
                           <button className="btn-ok btn-sm" disabled={!changed || clash || !ed.version || ed.body.trim().length < 50 || busy === key} onClick={() => void save(ed)} data-term-save>저장(게시 아님)</button>
                           <button className="btn-sm" onClick={() => setEd(null)}>취소</button>
                           {!changed && <span className="muted">고친 곳이 없습니다</span>}
                         </div>
                         {ed.diff && (
-                          <div style={{ marginTop: 8, fontSize: 13 }} data-term-diff={d.length} data-term-diff-base={useCur ? `current:${cur!.version}` : 'orig'}>
+                          <div style={{ marginTop: 8, fontSize: 13 }} data-term-diff={d.length} data-term-diff-base={useSrc ? `source:${ed.src!.file.slice(0, 3)}` : useCur ? `current:${cur!.version}` : 'orig'}>
                             {/* v10.263 (docs/395) — 비교 기준을 고름 · 뺀 줄 ↔ 더한 줄을 나란히 */}
                             <div className="row-actions" style={{ marginBottom: 6 }}>
                               <span className="muted">비교 기준</span>
-                              <button className={`btn-sm${!useCur ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'orig' })} data-term-diff-orig>고치기 시작한 글({ed.from})</button>
-                              {cur && <button className={`btn-sm${useCur ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'current' })} data-term-diff-current>지금 시행 중 {cur.version}</button>}
+                              <button className={`btn-sm${!useCur && !useSrc ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'orig' })} data-term-diff-orig>고치기 시작한 글({ed.from})</button>
+                              {cur && <button className={`btn-sm${useCur && !useSrc ? ' btn-ok' : ''}`} onClick={() => setEd({ ...ed, base: 'current' })} data-term-diff-current>지금 시행 중 {cur.version}</button>}
+                              {hasSrc && <button className={`btn-sm${useSrc ? ' btn-ok' : ''}`} onClick={() => void useSource(ed)} data-term-diff-source>개발 원문(docs/{srcs.data!.find((x) => x.code === ed.code && x.version === ed.from)!.file.slice(0, 3)})</button>}
                               <span className="muted" data-term-diff-count={`${dMinus.length}|${dPlus.length}`}>뺀 줄 {dMinus.length} · 더한 줄 {dPlus.length}</span>
                             </div>
-                            {d.length === 0 ? <p className="muted">본문은 같습니다{useCur ? `(지금 시행 중 ${cur!.version} 과 같음)` : '(제목 · 바뀐 점만 바뀜)'}</p> : (
+                            {d.length === 0 ? <p className="muted" data-term-diff-same>본문은 같습니다{useSrc ? '(개발 원문과 같음)' : useCur ? `(지금 시행 중 ${cur!.version} 과 같음)` : '(제목 · 바뀐 점만 바뀜)'}</p> : (
                               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 8, maxHeight: 360, overflow: 'auto' }}>
                                 <div data-term-diff-col="minus">
-                                  <b className="muted">{useCur ? `${cur!.version} 에서 빠지는 줄` : '빠지는 줄'}</b>
+                                  <b className="muted">{useSrc ? '개발 원문에만 있는 줄' : useCur ? `${cur!.version} 에서 빠지는 줄` : '빠지는 줄'}</b>
                                   {dMinus.length === 0 ? <p className="muted">없음</p> : dMinus.map((x, i) => (
                                     <div key={i} style={{ whiteSpace: 'pre-wrap', color: 'var(--danger)' }} data-diff-line="-"><span className="mono">- {x.n}</span> {x.s || ' '}</div>
                                   ))}
                                 </div>
                                 <div data-term-diff-col="plus">
-                                  <b className="muted">{`새 글(${ed.version})에 더해지는 줄`}</b>
+                                  <b className="muted">{useSrc ? `이 글(${ed.version})에만 있는 줄` : `새 글(${ed.version})에 더해지는 줄`}</b>
                                   {dPlus.length === 0 ? <p className="muted">없음</p> : dPlus.map((x, i) => (
                                     <div key={i} style={{ whiteSpace: 'pre-wrap', color: 'var(--ok)' }} data-diff-line="+"><span className="mono">+ {x.n}</span> {x.s || ' '}</div>
                                   ))}

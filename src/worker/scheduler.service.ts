@@ -612,7 +612,26 @@ export class SchedulerService {
           await this.alert('RATE_AUTO_REMIND', 'INFO',
             `요율 공지 자동 다시 알림 — 예약 ${arN}건 · 안 읽은 판매자 ${arSent}곳에 보냄(소개몰 › 소개몰 정산 › 「요율 변경 예정」 「읽음 기록」)`, { schedules: arN, sent: arSent });
         }
-        detail = { applied: affected, noticeMissing: miss.length, autoRemind: { schedules: arN, sent: arSent } };
+        /* v10.305 (docs/427) — 시행 때 기록을 굳힌 예약(최근 30일 · 아직 RATE_FROZEN 에 안 실린 것)을 한 줄로 · 안 읽은 대상이 있으면 WARN
+             ops_alerts 는 (종류 · 시각) 고유라 한 번에 한 줄 — 여러 예약은 items 로 묶음 · 다음 날 다시 돌아도 items 에 있으면 빠짐 */
+        const fz = await this.db.query<{ id: string; label: string; d: string; target: number; readBefore: number }>(
+          `SELECT r.id::text AS id,
+                  CASE r.scope WHEN 'SELLER' THEN '판매자 ' || coalesce((SELECT s.name FROM hlt_sellers s WHERE s.id::text = r.target), r.target)
+                               WHEN 'TYPE' THEN '유형 ' || r.target ELSE '갈래 ' || r.target END AS label,
+                  to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS d,
+                  count(p.seller_id) FILTER (WHERE p.target)::int AS target,
+                  count(p.seller_id) FILTER (WHERE p.target AND p.read_before)::int AS "readBefore"
+             FROM hlt_rate_schedules r LEFT JOIN hlt_rate_read_snaps p ON p.schedule_id = r.id
+            WHERE r.reads_frozen_at > now() - interval '30 days'
+              AND NOT EXISTS (SELECT 1 FROM ops_alerts o WHERE o.alert_code = 'RATE_FROZEN' AND o.detail -> 'items' @> jsonb_build_array(jsonb_build_object('id', r.id::text)))
+            GROUP BY r.id ORDER BY r.effective_at, r.id`);
+        if (fz.length) {
+          const tgt = fz.reduce((a, x) => a + x.target, 0), rb = fz.reduce((a, x) => a + x.readBefore, 0);
+          await this.alert('RATE_FROZEN', tgt - rb > 0 ? 'WARN' : 'INFO',
+            `요율 시행 — 예약 ${fz.length}건 · 시행 전 공지 읽음 ${rb} / 대상 ${tgt}${tgt - rb > 0 ? ` · 안 읽은 곳 ${tgt - rb}` : ''}(소개몰 › 소개몰 정산 › 「요율 변경 예정」 「읽음 기록」 · 시행 때 기록)`,
+            { items: fz.map((x) => ({ id: x.id, label: x.label, effective: x.d, target: x.target, readBefore: x.readBefore })) });
+        }
+        detail = { applied: affected, noticeMissing: miss.length, autoRemind: { schedules: arN, sent: arSent }, frozen: fz.length };
         break;
       }
 

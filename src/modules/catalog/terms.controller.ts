@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResp
 import { TermsService } from './terms.service';
 import {
   OpenBlockerDto, OpenDateDto, OpenReadinessDto, OutsourceCheckDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
-  TermPublishPreviewDto, TermPublishResultDto, UnscheduleTermDto, UpsertTermDto,
+  TermPublishPreviewDto, TermPublishResultDto, TermSourceDto, TermSourceItemDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -47,6 +47,25 @@ export class TermsController {
   })
   @ApiOkResponse({ type: ReviewPackDto })
   reviewPack() { return this.terms.reviewPack(); }
+
+  @Get('terms/sources')
+  @ApiOperation({
+    summary: '개발 원문이 있는 약관 판 (v10.304)',
+    description: '킷에 든 게시용 완성본 문서(HLT_SELLER 1.0 → docs/400 · PRIVACY 1.1 → docs/401)가 있는 판만. 화면이 「개발 원문」 비교 단추를 보일지 정합니다. 읽기만.',
+  })
+  @ApiOkResponse({ type: TermSourceItemDto, isArray: true })
+  sources() { return this.terms.sources(); }
+
+  @Get('terms/:code/source')
+  @ApiOperation({
+    summary: '약관 판의 개발 원문 (v10.304)',
+    description: '완성본 문서의 「4. 전문」 칸 글 — 운영 초안(운영 화면에서 고친 글)과 줄 단위로 견줄 때 씁니다. 읽기만 · DB 를 바꾸지 않음.',
+  })
+  @ApiParam({ name: 'code', example: 'HLT_SELLER' })
+  @ApiQuery({ name: 'version', example: '1.0' })
+  @ApiOkResponse({ type: TermSourceDto })
+  @ApiResponse({ status: 404, description: '이 약관 판의 개발 원문 없음', type: ErrorDto })
+  source(@Param('code') code: string, @Query('version') version: string) { return this.terms.source(code, version); }
 
   @Put('terms/:code')
   @ApiOperation({

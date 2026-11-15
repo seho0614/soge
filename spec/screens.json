@@ -1614,6 +1614,8 @@
     "GET /admin/terms/review-pack",
     "GET /admin/terms/{code}/publish-preview",
     "GET /admin/terms/outsource-check",
+    "GET /admin/terms/sources",
+    "GET /admin/terms/{code}/source",
     "GET /admin/holidays",
     "PUT /admin/holidays",
     "DELETE /admin/holidays/{day}"

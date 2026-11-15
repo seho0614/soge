@@ -8,22 +8,34 @@
 #
 #   SITE_DOMAIN   바깥 주소(선택). 비우면 DB 의 site.domain 을 씁니다       예) sogaebank.com
 #   ADMIN_DOMAIN  운영 화면 주소(선택)                                    예) admin.sogaebank.com
+#
+#   v10.306 (docs/428) — POSTCHECK_DB_ONLY=1 : DB 만 보는 줄([3] · [9] · [10])만 돎. 개발 서버 리허설(tools/mig-rehearsal.sh)이
+#     버리는 DB 에 적용 전 · 뒤로 돌려 「확인」 줄이 몇 개 바뀌는지 셈 — DATABASE_URL · APP_DIR(킷 sgb 폴더)을 넘김 · .env · 결과 파일 없음.
+#     운영에서는 쓰지 않음(보통 돌릴 때는 그대로 전부 돎).
 # =====================================================================
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 . "$HERE/lib.sh"
 APP_LINK="${APP_LINK:-$HOME/sgb}"
 DATA_DIR="${DATA_DIR:-$HOME/sgb-data}"
+DBO="${POSTCHECK_DB_ONLY:-0}"
+if [ "$DBO" = "1" ]; then
+  [ -n "${DATABASE_URL:-}" ] && [ -d "${APP_DIR:-}" ] || { echo "!! POSTCHECK_DB_ONLY=1 에는 DATABASE_URL · APP_DIR 이 필요합니다"; exit 2; }
+  APP="$APP_DIR"; OUT=""; SKIP_EGRESS_CHECK=1
+  VER="$(cat "$APP/VERSION" 2>/dev/null || echo '?')"
+else
 mkdir -p "$DATA_DIR/logs"
 OUT="$DATA_DIR/logs/postcheck_$(date +%Y%m%d_%H%M%S).txt"; : > "$OUT"
 APP="$(readlink -f "$APP_LINK")"
 VER="$(cat "$APP/VERSION" 2>/dev/null || echo '?')"
 load_env "$APP/.env" || { echo "!! $APP/.env 가 없습니다"; exit 1; }
+fi
 API="http://127.0.0.1:${PORT:-3000}"; SITE="http://127.0.0.1:${SITE_PORT:-5174}"
 
 say "소개뱅크 AWS 적용 후 확인 ($(date '+%Y-%m-%d %H:%M:%S %Z')) — $VER"
 say "앱 폴더: $APP_LINK → $APP"
 
+if [ "$DBO" != "1" ]; then   # v10.306 — DB 만 보는 방식이면 [1] · [2] 건너뜀
 say ""; say "[1] 프로세스 (pm2)"
 for n in sgb sgb-site; do
   st=$(pm2_state "$n"); set -- $st
@@ -58,6 +70,7 @@ case "$b" in *'"confident"'*) ok "API 본문 읽기 — POST 저장 길 정상(�
   *) bad "API 본문 읽기 확인 실패" "${b:-응답 없음}";; esac
 [ "${NODE_ENV:-}" = "production" ] && ok ".env NODE_ENV=production" || bad ".env 의 NODE_ENV 가 production 이 아님" "${NODE_ENV:-없음}"
 case "$(pm2 logs sgb --lines 200 --nostream 2>/dev/null)" in *"Nest application successfully started"*) ok "기동 로그 정상";; *) info "기동 로그에서 시작 문구를 찾지 못함 (로그가 넘어갔을 수 있음)";; esac
+fi
 
 say ""; say "[3] DB"
 if db -c "SELECT 1" >/dev/null 2>&1; then
@@ -85,6 +98,7 @@ else
   bad "DB 접속 실패"
 fi
 
+if [ "$DBO" != "1" ]; then   # v10.306 — [4] ~ [8] 건너뜀
 say ""; say "[4] 사용자 웹"
 http_is "메인"              "$SITE/" 200
 http_is "소개광장 투표"      "$SITE/community/polls" 200
@@ -158,6 +172,7 @@ if command -v nginx >/dev/null 2>&1; then
   [ -n "${ADMIN_DOMAIN:-}" ] && { c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "https://$ADMIN_DOMAIN/" 2>/dev/null); info "https://$ADMIN_DOMAIN/ → ${c:-000} (서버 자신은 허용 IP 가 아니면 403 이 정상)"; }
 else
   warn "nginx 가 없음" "바깥에서 들어올 길이 없습니다 — 절차서 6부"
+fi
 fi
 
 say ""; say "[9] 열기 전 상태 (오픈 전에는 「확인」이 정상입니다)"
@@ -239,6 +254,7 @@ if db -c "SELECT 1" >/dev/null 2>&1; then
   [ "$g" = "t" ] && ok "파일 행 지킴 — 저장 위치는 옮기는 거래에서만(D143)" || warn "파일 행 지킴이 옛 모양" "D143 이 안 들어갔을 수 있음"
 fi
 
+if [ "$DBO" != "1" ]; then   # v10.306 — 파일 백업 · [11] 건너뜀
 # v10.177 (docs/275) — 올린 파일 백업 묶음(uploads-backup.sh) · 없으면 「확인」(예약 전) · 36시간 넘게 새 묶음이 없어도 「확인」
 BKD="${BACKUP_DIR:-$HOME/sgb-data/backup/uploads}"
 last=$(ls -1t "$BKD"/uploads_*.tar.gz 2>/dev/null | head -1)
@@ -280,6 +296,7 @@ else
     [ "$nd" = "0" ] || info "  → 「마이그레이션 적용」은 이번에 올린 것이면 정상 · 나머지는 그 사이 운영 화면에서 바꾼 것(절차서 기대 숫자와 다르면 이 줄로 까닭 확인)"
   fi
 fi
+fi   # v10.306 — DB 만 보는 방식 끝
 
 say ""
 say "적용 후 확인 — 통과 $PASS · 실패 $FAIL · 확인 $WARN"

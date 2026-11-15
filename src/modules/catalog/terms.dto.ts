@@ -178,6 +178,18 @@ export class ReviewPackItemDto {
 }
 
 /** v10.201 (docs/318) — 법무 검토 묶음(게시 안 된 초안 전부 · HTML 한 파일 · 읽기만) */
+/** v10.304 (docs/426) — 개발 원문이 있는 약관 판 */
+export class TermSourceItemDto {
+  @ApiProperty({ example: 'HLT_SELLER' }) code!: string;
+  @ApiProperty({ example: '1.0' }) version!: string;
+  @ApiProperty({ example: '400_소개몰입점약관1.0_게시용완성본_20261113.md', description: '킷 docs 폴더의 파일 이름' }) file!: string;
+}
+
+/** v10.304 — 개발 원문 전문 */
+export class TermSourceDto extends TermSourceItemDto {
+  @ApiProperty({ description: '완성본 문서 「4. 전문」 칸의 글(운영 화면 「고치기」에 붙여 넣는 글과 같음)' }) body!: string;
+}
+
 export class ReviewPackDto {
   @ApiProperty({ example: 'sogaebank_terms_legal_review_20261106.html' }) fileName!: string;
   @ApiProperty({ example: '2026-11-06', description: '한국 날짜' }) day!: string;

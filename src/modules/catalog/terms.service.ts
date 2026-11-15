@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
 import { DatabaseService } from '../../db/database.service';
 import { blockerOwner } from './open-blocker-owner';
 import { buildReviewPack, PackTerm } from './terms-review-pack';
@@ -17,9 +19,57 @@ import { GeoService } from '../../common/geo/geo.service';
 /** v10.206 — 위탁 목록이 있는 글(처리방침 제5조 · 위탁 안내 제2조) */
 const OUTSOURCE_CODES = ['PRIVACY', 'OUTSOURCE'];
 
+/**
+ * v10.304 (docs/426) — 약관 초안의 「개발 원문」: 킷에 든 게시용 완성본 문서(docs/NNN_*.md)의 「## 4. 전문」 ````markdown 칸.
+ *   운영 초안을 운영 화면에서 고쳐 D207 이 덮어쓰지 않았을 때(11/15 운영 NOTICE) 차이를 화면에서 보려는 것 — 읽기만.
+ */
+export const TERM_SOURCES: { code: string; version: string; prefix: string }[] = [
+  { code: 'HLT_SELLER', version: '1.0', prefix: '400_' },
+  { code: 'PRIVACY', version: '1.1', prefix: '401_' },
+];
+
+/** v10.304 — 완성본 문서에서 붙여 넣을 전문만(「## 4. 전문」 아래 첫 ````markdown 칸) · 없으면 null */
+export function termSourceBody(doc: string): string | null {
+  const h = doc.indexOf('## 4. 전문');
+  if (h < 0) return null;
+  const open = doc.indexOf('````markdown\n', h);
+  if (open < 0) return null;
+  const from = open + '````markdown\n'.length;
+  const end = doc.indexOf('\n````', from);
+  return end < 0 ? null : doc.slice(from, end);
+}
+
 @Injectable()
 export class TermsService {
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly geo: GeoService) {}
+
+  /** v10.304 — 킷 docs 폴더에서 원문 파일 찾기(앱 폴더 기준 · 없으면 null) */
+  private sourceFile(prefix: string): string | null {
+    try {
+      const dir = join(process.cwd(), 'docs');
+      const f = readdirSync(dir).filter((x) => x.startsWith(prefix) && x.endsWith('.md')).sort()[0];
+      return f ? join(dir, f) : null;
+    } catch { return null; }
+  }
+
+  /** v10.304 (docs/426) — 개발 원문이 있는 약관 판 목록(파일이 있고 전문 칸을 읽을 수 있는 것만) */
+  sources() {
+    return TERM_SOURCES.flatMap((t) => {
+      const f = this.sourceFile(t.prefix);
+      if (!f) return [];
+      try { return termSourceBody(readFileSync(f, 'utf8')) != null ? [{ code: t.code, version: t.version, file: f.split('/').pop()! }] : []; } catch { return []; }
+    });
+  }
+
+  /** v10.304 — 그 약관 판의 개발 원문 전문(읽기만) · 없으면 404 */
+  source(code: string, version: string) {
+    const t = TERM_SOURCES.find((x) => x.code === String(code ?? '').toUpperCase() && x.version === String(version ?? ''));
+    const f = t && this.sourceFile(t.prefix);
+    let body: string | null = null;
+    if (f) { try { body = termSourceBody(readFileSync(f, 'utf8')); } catch { body = null; } }
+    if (!t || !f || body == null) throw new NotFound('이 약관 판의 개발 원문이 없습니다.');
+    return { code: t.code, version: t.version, file: f.split('/').pop()!, body };
+  }
 
   /** 관리자용. 미발행 약관도 보입니다. */
   async listAll() {
