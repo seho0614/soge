@@ -91,7 +91,7 @@ if API and DB:
     TS = login('admin@x.com')
     C, V = 'T1318', '1.0'
     today = psql("SELECT to_char((now() AT TIME ZONE 'Asia/Seoul')::date, 'YYYY-MM-DD')")
-    clean = lambda: psql(f"DELETE FROM terms WHERE code = '{C}'")
+    clean = lambda: psql(f"SET session_replication_role = replica; DELETE FROM term_agreements WHERE term_code = '{C}'; DELETE FROM terms WHERE code = '{C}'")
     clean()
     ins = psql(f"INSERT INTO terms(code, version, title, body, is_required, effective_from, status) VALUES ('{C}', '{V}', '시험 약관 1318', E'## 제1조 시험\\n본문', false, 'infinity', 'LEGAL_REVIEW')")
     try:
