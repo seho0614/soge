@@ -32,6 +32,8 @@ interface RateSchedule {
   noticeReads?: number; remindedAt?: string | null; reminds?: number;
   /** v10.297 (D217 · docs/416) 알림 · 메일 · 문자 보냄 · 실패 */
   sendTotal?: number; sendEmail?: number; sendSms?: number; sendFailed?: number;
+  /** v10.301 · 302 (D218 · docs/422 · 423) 시행 때 기록 · 자동 다시 알림 */
+  readsFrozenAt?: string | null; autoReminds?: number; autoRemindDays?: number;
 }
 /** v10.297 (D217) GET …/send-status */
 interface SendStatus {
@@ -40,8 +42,8 @@ interface SendStatus {
   fails: { channel: string; reason: string; n: number }[]; channels: Record<string, boolean>;
 }
 /** v10.300 (docs/420) GET …/reads — 요율 변경 공지 열람 기록 */
-interface ReadsRow { code: string; name: string; status: string; target: boolean; firstAt: string | null; lastAt: string | null; reads: number; notifiedAt: string | null; reminds: number; delivery: string | null }
-interface Reads { noticeTitle: string | null; noticePublishedAt: string | null; rows: ReadsRow[]; target: number; read: number; unread: number; outsideRead: number }
+interface ReadsRow { code: string; name: string; status: string; target: boolean; firstAt: string | null; lastAt: string | null; reads: number; notifiedAt: string | null; reminds: number; delivery: string | null; readBefore?: boolean }
+interface Reads { noticeTitle: string | null; noticePublishedAt: string | null; rows: ReadsRow[]; target: number; read: number; unread: number; outsideRead: number; view: 'now' | 'frozen'; frozenAt: string | null }
 const SCOPE_NAME: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
 const pct = (v: string | number | null) => (v === null ? '비움(다음 순서)' : `${Number(v)}%`);
 
@@ -135,15 +137,17 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
   /* v10.300 (docs/420) 공지 열람 기록(입점 약관 제17조 4항 증거) — 판매자마다 처음 · 마지막 · 횟수 · 알림 · CSV(SUPER · 감사 기록) */
   const isSuper = tokenRoles().includes('SUPER');
   const [rd, setRd] = useState<{ id: string; label: string; d: Reads } | null>(null);
-  const loadReads = (r: RateSchedule) => {
-    if (rd?.id === r.id) { setRd(null); return; }
+  /* v10.301 (D218) — 시행된 예약은 「시행 때 기록(고정)」을 먼저(있으면) · 「지금」과 바꿔 봄 */
+  const loadReads = (r: RateSchedule, view?: 'now' | 'frozen') => {
+    if (rd?.id === r.id && !view) { setRd(null); return; }
+    const v = view ?? (r.readsFrozenAt ? 'frozen' : 'now');
     void (async () => {
-      const d = await a.run(`rd:${r.id}`, () => api<Reads>(`/admin/health/rate-schedules/${r.id}/reads`), undefined, '읽음 기록을 불러왔습니다.');
+      const d = await a.run(`rd:${r.id}`, () => api<Reads>(`/admin/health/rate-schedules/${r.id}/reads?view=${v}`), undefined, '읽음 기록을 불러왔습니다.');
       if (d) setRd({ id: r.id, label: `${SCOPE_NAME[r.scope]} ${r.label ?? r.target} · ${r.effectiveDate}`, d });
     })();
   };
-  const readsCsv = (id: string) => void a.run('rdcsv', async () => {
-    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/health/rate-schedules/${id}/reads/export`);
+  const readsCsv = (id: string, view: 'now' | 'frozen') => void a.run('rdcsv', async () => {
+    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/health/rate-schedules/${id}/reads/export?view=${view}`);
     const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([x.csv], { type: 'text/csv;charset=utf-8' })); el.download = x.filename; el.click(); URL.revokeObjectURL(el.href);
     return x;
   }, undefined, (x) => x.note);
@@ -173,7 +177,8 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
             soon ? <span className="dim"> · 다시 알림 {ymd(r.remindedAt)}(24시간 뒤 다시)</span>
               : <> <button className="btn-plain" disabled={a.busy === `rmd:${r.id}`} onClick={() => remind(r, unread)} data-rate-notice-remind={r.id}>안 읽은 {unread}곳 다시 알림</button></>
           )}
-          {(r.reminds ?? 0) > 0 && !soon && <span className="dim"> · 다시 알림 {r.reminds}번</span>}
+          {(r.reminds ?? 0) > 0 && !soon && <span className="dim" data-rate-reminds={`${r.reminds}/${r.autoReminds ?? 0}`}> · 다시 알림 {r.reminds}번{(r.autoReminds ?? 0) > 0 ? `(자동 ${r.autoReminds})` : ''}</span>}
+          {r.readsFrozenAt && <span className="dim" data-rate-reads-frozen={r.id}> · 시행 때 기록 고정</span>}
         </>
       );
     }
@@ -189,6 +194,10 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
   return (
     <div className="card pad" data-rate-schedules={open.length} style={{ margin: '10px 0' }}>
       <b>요율 변경 예정</b> <span className="dim">— 입점 약관 제17조 4항 · 올리면 30일 전 공지 · 개별 알림 · 시행일 0시부터 새 주문에 적용 · 시행 전에만 취소</span>
+      {rows.length > 0 && (() => {   /* v10.302 (D218 · docs/423) — 설정 hlt.rate_auto_remind_days(정책 › 전체 설정 · 최고 관리자) */
+        const days = rows[0]?.autoRemindDays ?? 0;
+        return <p className="dim" style={{ margin: '4px 0 0' }} data-rate-auto-remind={days}>자동 다시 알림: {days > 0 ? <b>시행 {days}일 전 — 공지를 안 펼친 대상 판매자에게 한 번(매일 00:05)</b> : '꺼짐'} · 바꾸기는 정책 › 「전체 설정」 <span className="mono">hlt.rate_auto_remind_days</span>(최고 관리자)</p>;
+      })()}
       <Flash msg={a.msg} err={a.err} />
       {q.error ? <ErrorView error={q.error} onRetry={q.reload} /> : rows.length === 0 ? (
         <p className="dim" style={{ marginTop: 6 }} data-rate-schedule-empty>예약한 요율 변경이 없습니다. 요율을 올릴 때 영향받는 판매자가 있으면 여기에 예약으로 쌓입니다.</p>
@@ -221,20 +230,30 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
       {rd && (
         <div className="card pad" data-rate-reads={rd.id} style={{ marginTop: 8 }}>
           <b>공지 열람 기록</b> <span className="dim">— {rd.label} · 「{rd.d.noticeTitle ?? '—'}」 게시 {rd.d.noticePublishedAt ?? '—'} · 판매자센터 · 파트너센터에서 공지를 <b>펼친</b> 때(목록만 연 것은 안 셈) · 입점 약관 제17조 4항 증거</span>
+          {rd.d.frozenAt && (() => {   /* v10.301 (D218 · docs/422) 시행 때 굳힌 기록 ↔ 지금 */
+            const r = rows.find((x) => x.id === rd.id);
+            return (
+              <div style={{ margin: '6px 0' }} data-rate-reads-view={rd.d.view}>
+                <button className={rd.d.view === 'frozen' ? 'btn-sm' : 'btn-plain'} disabled={!r || rd.d.view === 'frozen' || a.busy === `rd:${rd.id}`} onClick={() => r && loadReads(r, 'frozen')} data-rate-reads-view-btn="frozen">시행 때 기록(고정 · {rd.d.frozenAt})</button>{' '}
+                <button className={rd.d.view === 'now' ? 'btn-sm' : 'btn-plain'} disabled={!r || rd.d.view === 'now' || a.busy === `rd:${rd.id}`} onClick={() => r && loadReads(r, 'now')} data-rate-reads-view-btn="now">지금</button>
+                {rd.d.view === 'frozen' && <span className="dim"> · 시행하는 순간 굳힌 줄(고칠 수 없음) — 「읽음」 = 대상이고 시행 시각 전에 펼침</span>}
+              </div>);
+          })()}
           <p style={{ margin: '6px 0' }} data-rate-reads-sum={`${rd.d.read}/${rd.d.target}`}>
-            읽음 <b>{n(rd.d.read)}</b> / 대상 {n(rd.d.target)}{rd.d.unread > 0 && <> · <span className="badge badge-urgent">안 읽음 {n(rd.d.unread)}</span></>}
+            {rd.d.view === 'frozen' ? '시행 전 읽음' : '읽음'} <b>{n(rd.d.read)}</b> / 대상 {n(rd.d.target)}{rd.d.unread > 0 && <> · <span className="badge badge-urgent">안 읽음 {n(rd.d.unread)}</span></>}
             {rd.d.outsideRead > 0 && <span className="dim"> · 지금 대상이 아닌데 펼친 곳 {n(rd.d.outsideRead)}</span>}{' '}
-            {isSuper && <button className="btn-sm" disabled={a.busy === 'rdcsv' || rd.d.rows.length === 0} onClick={() => readsCsv(rd.id)} data-rate-reads-csv>CSV 받기</button>}
+            {isSuper && <button className="btn-sm" disabled={a.busy === 'rdcsv' || rd.d.rows.length === 0} onClick={() => readsCsv(rd.id, rd.d.view)} data-rate-reads-csv={rd.d.view}>CSV 받기</button>}
           </p>
           {rd.d.rows.length === 0 ? <p className="dim" data-rate-reads-empty>대상 판매자가 없습니다.</p> : (
             <table className="tbl">
-              <thead><tr><th>판매자 코드</th><th>상호</th><th>상태</th><th>대상</th><th>처음 펼침</th><th>마지막</th><th>횟수</th><th>예약 안내 알림</th><th>다시 알림</th><th>메일 · 문자</th></tr></thead>
+              <thead><tr><th>판매자 코드</th><th>상호</th><th>상태</th><th>대상</th><th>처음 펼침</th><th>마지막</th><th>횟수</th><th>예약 안내 알림</th><th>다시 알림</th><th>메일 · 문자</th>{rd.d.view === 'frozen' && <th>시행 전 읽음</th>}</tr></thead>
               <tbody>
                 {rd.d.rows.map((x) => (
-                  <tr key={x.code} data-rate-reads-row={x.firstAt ? 'read' : 'unread'}>
+                  <tr key={x.code} data-rate-reads-row={(rd.d.view === 'frozen' ? x.readBefore : x.firstAt) ? 'read' : 'unread'}>
                     <td className="mono">{x.code}</td><td>{x.name}</td><td>{x.status}</td><td>{x.target ? '예' : <span className="dim">아니오(펼침만)</span>}</td>
                     <td>{x.firstAt ?? <span className="badge badge-urgent">안 읽음</span>}</td><td>{x.lastAt ?? '—'}</td><td className="num-cell">{n(x.reads)}</td>
                     <td>{x.notifiedAt ?? <span className="dim">—</span>}</td><td className="num-cell">{n(x.reminds)}</td><td className="dim">{x.delivery ?? '—'}</td>
+                    {rd.d.view === 'frozen' && <td>{x.readBefore ? '예' : <span className="badge badge-urgent">아니오</span>}</td>}
                   </tr>))}
               </tbody>
             </table>)}

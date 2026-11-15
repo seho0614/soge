@@ -303,16 +303,20 @@ export class HealthSellerController {
   @ApiOperation({ summary: '요율 변경 공지 열람 기록', description: 'v10.300 (docs/420) 입점 약관 제17조 4항 증거 — 지금 대상 판매자 모두 + 대상이 아니어도 공지를 펼친 판매자 · 처음 · 마지막 · 횟수(notice_reads) · 예약 안내 알림 때 · 다시 알림 수 · 메일 · 문자 결과 · 안 읽은 곳이 위 · 읽기만.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object })
+  @ApiQuery({ name: 'view', required: false, enum: ['now', 'frozen'], description: 'v10.301 (D218) now = 지금(기본) · frozen = 시행 때 굳힌 기록(읽음 = 시행 전에 펼침)' })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
-  rateNoticeReads(@Param('id', ParseUUIDPipe) id: string) { return this.rates.reads(id); }
+  @ApiResponse({ status: 409, description: 'READS_NOT_FROZEN — 시행 때 기록이 없음(v10.301 이후 시행된 예약부터)', type: ErrorDto })
+  rateNoticeReads(@Param('id', ParseUUIDPipe) id: string, @Query('view') view?: string) { return this.rates.reads(id, view === 'frozen' ? 'frozen' : 'now'); }
 
   @Get('admin/health/rate-schedules/:id/reads/export')
   @Roles('SUPER')
   @ApiOperation({ summary: '요율 변경 공지 열람 기록 CSV (SUPER)', description: 'v10.300 (docs/420) 위 기록을 엑셀용 CSV 로 — 머리에 범위 · 요율 · 시행일 · 공지 게시 시각 · 읽음 / 대상 · 받은 때. 받을 때마다 감사 HLT_RATE_READS_EXPORT(예약 번호 · 줄 수) · 바꾸는 것 없음.' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ schema: { type: 'object', properties: { filename: { type: 'string' }, csv: { type: 'string' }, rows: { type: 'integer' }, note: { type: 'string' } } } })
+  @ApiQuery({ name: 'view', required: false, enum: ['now', 'frozen'], description: 'v10.301 (D218) now = 지금(기본) · frozen = 시행 때 굳힌 기록(읽음 = 시행 전에 펼침)' })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
-  rateNoticeReadsCsv(@Param('id', ParseUUIDPipe) id: string) { return this.rates.readsCsv(id); }
+  @ApiResponse({ status: 409, description: 'READS_NOT_FROZEN — 시행 때 기록이 없음(v10.301 이후 시행된 예약부터)', type: ErrorDto })
+  rateNoticeReadsCsv(@Param('id', ParseUUIDPipe) id: string, @Query('view') view?: string) { return this.rates.readsCsv(id, view === 'frozen' ? 'frozen' : 'now'); }
 
   @Get('admin/health/rate-impact')
   @Roles('ADMIN', 'SUPER')

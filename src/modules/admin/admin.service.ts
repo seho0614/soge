@@ -376,6 +376,10 @@ export class AdminService {
     if (AdminService.OPS_PUSH_KEYS.includes(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('OPS_PUSH_SETTING_SUPER', '운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.302 (D218 · docs/423) — 요율 공지 자동 다시 알림은 판매자에게 알림이 나가는 기준이라 SUPER 만 */
+    if (key === 'hlt.rate_auto_remind_days' && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('RATE_REMIND_SETTING_SUPER', '요율 공지 자동 다시 알림은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.180 (D169) — 운영자 2단계 인증 설정은 SUPER 만 · 켜는 사람이 먼저 등록해야 함(등록 없이 켜서 스스로 잠기는 일 막음) */
     if (key.startsWith('admin.mfa_')) {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {

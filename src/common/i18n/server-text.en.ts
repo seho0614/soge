@@ -1718,6 +1718,8 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "반려할 수 있는 출금 신청이 아닙니다 (신청 · 확정 상태만).": "This withdrawal request cannot be rejected (requested or confirmed status only).",
   "반려했습니다. 포인트는 회원의 출금 가능 잔액으로 돌아갑니다.": "Rejected. The points return to the member's withdrawable balance.",
   "포인트 출금 기준은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only the super administrator (SUPER) can change the point withdrawal settings.",
+  "요율 공지 자동 다시 알림은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only the super administrator (SUPER) can change the automatic rate-notice reminder.",
+  "시행 때 굳힌 열람 기록이 없습니다 — v10.301 이후 시행된 예약부터 남습니다.": "No read record was frozen at the effective time — records are kept for schedules applied from v10.301 on.",
   "본인인증을 마친 뒤 출금을 신청할 수 있습니다.": "You can request a withdrawal after completing identity verification.",
   "출금 기준(원천징수율)이 아직 정해지지 않아 신청을 받지 않습니다.": "Withdrawal requests are not accepted yet because the withdrawal setting (withholding tax rate) has not been set.",
   "최소 출금 금액은 {0}원입니다.": "The minimum withdrawal amount is {0} won.",

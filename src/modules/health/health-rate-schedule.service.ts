@@ -10,10 +10,14 @@ export const NOTICE_DAYS = 31;   // 예약한 날을 빼고 꼬박 30일 — DB(
 export interface ReadsHead {
   id: string; scope: string; target: string; fromRate: string | null; toRate: string | null; status: string; effectiveDate: string; label: string | null;
   noticeId: string | null; noticeTitle: string | null; noticePublishedAt: string | null; noticeScheduled: boolean;
+  /** v10.301 (D218) 시행 때 굳힌 때(한국) — 비면 기록 없음 */
+  frozenAt: string | null;
 }
 export interface ReadsRow {
   code: string; name: string; status: string; target: boolean; firstAt: string | null; lastAt: string | null; reads: number;
   notifiedAt: string | null; reminds: number; delivery: string | null;
+  /** v10.301 — 시행 때 기록에서만: 처음 펼친 때가 시행 시각 이전 */
+  readBefore?: boolean;
 }
 
 /**
@@ -208,6 +212,10 @@ export class HealthRateScheduleService {
                 WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers(r.scope, r.target))) AS "noticeReads",
               (SELECT max(m.at) FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "remindedAt",
               (SELECT count(*)::int FROM hlt_rate_reminds m WHERE m.schedule_id = r.id) AS "reminds",
+              /* v10.301 · 302 (D218) 시행 때 기록 · 자동 다시 알림 */
+              r.reads_frozen_at AS "readsFrozenAt",
+              (SELECT count(*)::int FROM hlt_rate_reminds m WHERE m.schedule_id = r.id AND m.auto) AS "autoReminds",
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'hlt.rate_auto_remind_days'), 0) AS "autoRemindDays",
               /* v10.297 (D217) 메일 · 문자 발송 현황 한 줄(자세히는 GET …/send-status) */
               (SELECT count(*)::int FROM hlt_rate_notifications h WHERE h.schedule_id = r.id) AS "sendTotal",
               (SELECT count(*)::int FROM hlt_rate_notifications h JOIN notification_deliveries d ON d.notification_id = h.notification_id
@@ -252,7 +260,7 @@ export class HealthRateScheduleService {
    *   지금 대상 판매자(fn_hlt_rate_sched_sellers) 모두 + 대상이 아니어도 공지를 펼친 판매자. 줄마다 처음 · 마지막 · 횟수(판매자센터 등에서 펼친 때 · notice_reads) ·
    *   예약 안내 알림 때 · 다시 알림 수 · 메일 · 문자 결과(hlt_rate_notifications · notification_deliveries). 안 읽은 곳이 위.
    */
-  async reads(scheduleId: string) {
+  async reads(scheduleId: string, view: 'now' | 'frozen' = 'now') {
     const [s] = await this.db.query<ReadsHead>(
       `SELECT r.id, r.scope, r.target, r.from_rate AS "fromRate", r.to_rate AS "toRate", r.status,
               to_char(r.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "effectiveDate",
@@ -261,9 +269,25 @@ export class HealthRateScheduleService {
                            ELSE coalesce((SELECT c.name FROM categories c WHERE c.gwan_code = 'HLT' AND c.code = r.target), r.target) END AS "label",
               r.notice_id AS "noticeId", n.title AS "noticeTitle",
               to_char(n.published_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "noticePublishedAt",
-              coalesce(n.published_at > now(), false) AS "noticeScheduled"
+              coalesce(n.published_at > now(), false) AS "noticeScheduled",
+              to_char(r.reads_frozen_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "frozenAt"
          FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id WHERE r.id = $1::uuid`, [scheduleId]);
     if (!s) throw new NotFound('요율 예약을 찾을 수 없습니다.');
+    /* v10.301 (D218 · docs/422) — 「시행 때 기록」: 정기 작업이 시행하는 순간 굳힌 줄(hlt_rate_read_snaps) · 읽음 = 대상이고 시행 전에 펼침 */
+    if (view === 'frozen') {
+      if (!s.frozenAt) throw new StateConflict('READS_NOT_FROZEN', '시행 때 굳힌 열람 기록이 없습니다 — v10.301 이후 시행된 예약부터 남습니다.');
+      const fr = await this.db.query<ReadsRow>(
+        `SELECT p.code, p.name, p.status, p.target,
+                to_char(p.first_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI:SS') AS "firstAt",
+                to_char(p.last_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI:SS') AS "lastAt",
+                p.reads, to_char(p.notified_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "notifiedAt",
+                p.reminds, p.delivery, p.read_before AS "readBefore"
+           FROM hlt_rate_read_snaps p WHERE p.schedule_id = $1::uuid
+          ORDER BY (NOT p.read_before) DESC, p.target DESC, p.name, p.code LIMIT 5000`, [scheduleId]);
+      const ft = fr.filter((x) => x.target).length;
+      const frd = fr.filter((x) => x.target && x.readBefore).length;
+      return { ...s, view: 'frozen' as const, rows: fr, target: ft, read: frd, unread: ft - frd, outsideRead: fr.filter((x) => !x.target && x.reads > 0).length };
+    }
     const rows = await this.db.query<ReadsRow>(
       `WITH tgt AS (SELECT fn_hlt_rate_sched_sellers($2, $3) AS id),
             who AS (SELECT s.id, true AS target FROM hlt_sellers s WHERE s.id IN (SELECT id FROM tgt)
@@ -288,33 +312,36 @@ export class HealthRateScheduleService {
       [scheduleId, s.scope, s.target, s.noticeId]);
     const target = rows.filter((x) => x.target).length;
     const read = rows.filter((x) => x.target && x.reads > 0).length;
-    return { ...s, rows, target, read, unread: target - read, outsideRead: rows.filter((x) => !x.target && x.reads > 0).length };
+    return { ...s, view: 'now' as const, rows, target, read, unread: target - read, outsideRead: rows.filter((x) => !x.target && x.reads > 0).length };
   }
 
   /** v10.300 (docs/420) — 위 열람 기록 CSV(엑셀용 · SUPER) · 받을 때마다 감사 HLT_RATE_READS_EXPORT(예약 번호 · 줄 수) */
-  async readsCsv(scheduleId: string) {
-    const r = await this.reads(scheduleId);
+  async readsCsv(scheduleId: string, view: 'now' | 'frozen' = 'now') {
+    const r = await this.reads(scheduleId, view);
+    const fz = r.view === 'frozen';
     const c = (v: unknown) => { const t = v == null ? '' : String(v); return /^[=+\-@]/.test(t) ? `'${t}` : /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
     const SCOPE: Record<string, string> = { SELLER: '판매자', TYPE: '입점 유형', CATEGORY: '갈래' };
     const head = [
       ['요율 변경 공지 열람 기록', '입점 약관 제17조 4항'],
+      ['기준', fz ? `시행 때 기록(고정 · ${r.frozenAt}) — 읽음 = 시행 전에 펼침` : '지금(받는 때)'],
       ['범위 · 대상', `${SCOPE[r.scope] ?? r.scope} ${r.label ?? r.target}`],
       ['요율', `${r.fromRate == null ? '비움' : `${Number(r.fromRate)}%`} → ${r.toRate == null ? '비움' : `${Number(r.toRate)}%`}`],
       ['시행일', r.effectiveDate],
       ['공지', r.noticeTitle ?? '(공지 없음)'],
       ['공지 게시(한국)', r.noticePublishedAt ? `${r.noticePublishedAt}${r.noticeScheduled ? ' (게시 예약 — 아직 안 보임)' : ''}` : '(게시 안 함)'],
-      ['읽음 / 대상', `${r.read} / ${r.target}`],
+      [fz ? '시행 전 읽음 / 대상' : '읽음 / 대상', `${r.read} / ${r.target}`],
       ['받은 때(한국)', new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')],
     ];
-    const cols = ['판매자 코드', '상호', '판매자 상태', '지금 대상', '처음 펼침(한국)', '마지막 펼침(한국)', '펼친 횟수', '예약 안내 알림(한국)', '다시 알림', '메일 · 문자'];
+    const cols = ['판매자 코드', '상호', '판매자 상태', fz ? '시행 때 대상' : '지금 대상', '처음 펼침(한국)', '마지막 펼침(한국)', '펼친 횟수', '예약 안내 알림(한국)', '다시 알림', '메일 · 문자', ...(fz ? ['시행 전 읽음'] : [])];
     const csv = '\uFEFF' + [...head.map((x) => x.map(c).join(',')), '', cols.join(','),
-      ...r.rows.map((x) => [x.code, x.name, x.status, x.target ? '예' : '아니오(펼침만)', x.firstAt ?? '안 읽음', x.lastAt, x.reads, x.notifiedAt, x.reminds, x.delivery].map(c).join(','))].join('\r\n') + '\r\n';
+      ...r.rows.map((x) => [x.code, x.name, x.status, x.target ? '예' : '아니오(펼침만)', x.firstAt ?? '안 읽음', x.lastAt, x.reads, x.notifiedAt, x.reminds, x.delivery,
+        ...(fz ? [x.readBefore ? '예' : '아니오'] : [])].map(c).join(','))].join('\r\n') + '\r\n';
     await this.db.query(
       `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
        VALUES ($1, $2, 'HLT_RATE_READS_EXPORT', 'HLT_COMMISSION', $3::uuid, $4::jsonb, $5, $6)`,
-      [RequestCtx.actorId(), RequestCtx.get()?.actorRole ?? null, scheduleId, JSON.stringify({ rows: r.rows.length, read: r.read, target: r.target, noticeId: r.noticeId }),
+      [RequestCtx.actorId(), RequestCtx.get()?.actorRole ?? null, scheduleId, JSON.stringify({ rows: r.rows.length, read: r.read, target: r.target, noticeId: r.noticeId, view: r.view }),
        RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
-    return { filename: `rate-notice-reads-${r.effectiveDate}-${String(r.id).slice(0, 8)}.csv`, csv, rows: r.rows.length,
+    return { filename: `rate-notice-reads-${r.effectiveDate}-${String(r.id).slice(0, 8)}${fz ? '-frozen' : ''}.csv`, csv, rows: r.rows.length,
       note: `판매자 ${r.rows.length}줄(읽음 ${r.read} / 대상 ${r.target})을 담았습니다 — 받은 기록이 감사 기록에 남습니다.` };
   }
 

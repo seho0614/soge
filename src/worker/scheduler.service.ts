@@ -605,7 +605,14 @@ export class SchedulerService {
           await this.alert('RATE_NOTICE_MISSING', 'WARN',
             `수수료율 변경 예약 ${miss.length}건의 공지를 아직 게시하지 않았습니다 — 소개몰 › 소개몰 정산 › 「요율 변경 예정」에서 「공지 게시」(가장 빠른 시행일 ${miss[0].d})`, { items: miss });
         }
-        detail = { applied: affected, noticeMissing: miss.length };
+        /* v10.302 (D218 · docs/423) — 시행 n일 전 안 읽은 판매자 자동 다시 알림(설정 hlt.rate_auto_remind_days · 0 = 끔) · 시행 때 열람 기록 고정(v10.301)은 위 함수 안 */
+        const [ar] = await this.db.query<{ schedules: number; sent: number }>(`SELECT * FROM fn_hlt_rate_auto_remind()`);
+        const arN = Number(ar?.schedules ?? 0), arSent = Number(ar?.sent ?? 0);
+        if (arSent > 0) {
+          await this.alert('RATE_AUTO_REMIND', 'INFO',
+            `요율 공지 자동 다시 알림 — 예약 ${arN}건 · 안 읽은 판매자 ${arSent}곳에 보냄(소개몰 › 소개몰 정산 › 「요율 변경 예정」 「읽음 기록」)`, { schedules: arN, sent: arSent });
+        }
+        detail = { applied: affected, noticeMissing: miss.length, autoRemind: { schedules: arN, sent: arSent } };
         break;
       }
 
