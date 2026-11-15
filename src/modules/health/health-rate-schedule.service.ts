@@ -307,7 +307,7 @@ export class HealthRateScheduleService {
       ['받은 때(한국)', new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')],
     ];
     const cols = ['판매자 코드', '상호', '판매자 상태', '지금 대상', '처음 펼침(한국)', '마지막 펼침(한국)', '펼친 횟수', '예약 안내 알림(한국)', '다시 알림', '메일 · 문자'];
-    const csv = '﻿' + [...head.map((x) => x.map(c).join(',')), '', cols.join(','),
+    const csv = '\uFEFF' + [...head.map((x) => x.map(c).join(',')), '', cols.join(','),
       ...r.rows.map((x) => [x.code, x.name, x.status, x.target ? '예' : '아니오(펼침만)', x.firstAt ?? '안 읽음', x.lastAt, x.reads, x.notifiedAt, x.reminds, x.delivery].map(c).join(','))].join('\r\n') + '\r\n';
     await this.db.query(
       `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
