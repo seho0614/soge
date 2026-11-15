@@ -2,7 +2,7 @@
   KIT=<kit> API=http://localhost:13000/api/v1 DB=postgresql://sgb:sgb@localhost:15432/sgb ADMIN_WEB=http://localhost:15173 python3 test_v1309.py
 
   ① (코드) 빈칸 자리마다 · 〔시행일〕 뺌 · 누르면 그 자리 선택 · 게시 막힘 규칙 그대로 · 문서 432 · 판 v10.309
-  ② (화면) 처리방침 1.1 「고치기」 → 목록 수 = 본문 빈칸 자리 수 · 둘째 줄 → 칸 선택 · 치면 하나 줄어듦 · 「취소」 → 약관 표 그대로
+  ② (화면) 입점 약관 1.0 「고치기」 → 목록 수 = 본문 빈칸 자리 수 · 둘째 줄 → 칸 선택 · 치면 하나 줄어듦 · 「취소」 → 약관 표 그대로
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.request
 
@@ -88,12 +88,13 @@ if API and DB:
     import consent_ok
     consent_ok.agree('admin@x.com', PW)
     before = psql(TERMS_MD5)
-    body = psql("SELECT body FROM terms WHERE code = 'PRIVACY' AND version = '1.1'")
+    body = psql("SELECT body FROM terms WHERE code = 'HLT_SELLER' AND version = '1.0'")   # 점검판 DB 에는 처리방침 1.1 이 없음(D207 이 시드 전에 돌아 건너뜀)
     spots = [m for m in re.finditer(r'〔[^〕]*〕', body) if m.group(0) != '〔시행일〕']
     try:
         from playwright.sync_api import sync_playwright
     except Exception:
         sync_playwright = None
+    ok('② 입점 약관 1.0 본문에 빈칸 자리 2곳 이상(제17조 요율 〔 〕% 두 칸)', len(spots) >= 2, f'{len(spots)}곳')
     if ADMIN_WEB and sync_playwright and len(spots) >= 2:
         seen = {}
         try:
@@ -103,11 +104,11 @@ if API and DB:
                 pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                 pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
                 pg.goto(ADMIN_WEB + '/#/terms', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
-                row = pg.locator('[data-term-row="PRIVACY:1.1"]')
+                row = pg.locator('[data-term-row="HLT_SELLER:1.0"]')
                 seen['row'] = row.count()
                 if row.count():
                     row.locator('[data-term-edit]').first.click(); pg.wait_for_timeout(800)
-                    ed = pg.locator('[data-term-editor="PRIVACY:1.1"]')
+                    ed = pg.locator('[data-term-editor="HLT_SELLER:1.0"]')
                     hl = ed.locator('[data-term-hole-list]')
                     seen['n'] = hl.get_attribute('data-term-hole-list') if hl.count() else ''
                     if hl.count() and hl.get_attribute('open') is None:
@@ -126,7 +127,7 @@ if API and DB:
         except Exception as e:
             seen['err'] = str(e)[:200]
         after = psql(TERMS_MD5)
-        ok('② 화면 — 처리방침 1.1 「고치기」 → 빈칸 목록 = 본문 〔 〕 자리 수 · 둘째 줄 누르면 칸 선택 = 그 빈칸 · 치면 목록 하나 줄어듦 · 「취소」 → 약관 표 그대로',
+        ok('② 화면 — 입점 약관 1.0 「고치기」 → 빈칸 목록 = 본문 〔 〕 자리 수(같은 빈칸 두 곳도 따로) · 둘째 줄 누르면 칸 선택 = 그 빈칸 · 치면 목록 하나 줄어듦 · 「취소」 → 약관 표 그대로',
            seen.get('row') == 1 and seen.get('n') == str(len(spots)) and seen.get('items') == len(spots)
            and seen.get('sel') == [spots[1].start(), spots[1].end()] and seen.get('selText') == spots[1].group(0) and seen.get('focus') is True
            and seen.get('n2') == str(len(spots) - 1) and after == before, f'{seen} · 빈칸 {len(spots)} · 표 {before == after}')
