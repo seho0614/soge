@@ -105,6 +105,7 @@ export class TermPublishPreviewDto {
   @ApiProperty({ type: [String], example: ['AI 키 없음', '월 상한 0'], description: 'aiUnlock 일 때 빠진 것(AI 키 없음 · 월 상한 0 · AI 전체 꺼짐) · 아니면 빈 목록' }) aiGaps!: string[];
   @ApiProperty({ example: '검수 보조 꺼짐 · AI 상담 꺼짐', description: 'aiUnlock 일 때 스위치 상태 · 아니면 빈 문자열' }) aiSwitches!: string;
   @ApiProperty({ type: [String], example: ['카카오(카카오 키 있음)'], description: 'v10.206 — 처리방침 · 위탁 안내일 때 지금 쓰는 외부 서비스 중 이 판의 위탁 목록에 없는 것 · 아니면 빈 목록' }) outsourceGaps!: string[];
+  @ApiProperty({ type: [String], example: ['일반 입점 — 약관 12% · 운영 10%: 다름'], description: 'v10.310 — 입점 약관(HLT_SELLER)일 때 제17조 2항 요율 표가 운영 「입점 유형 요율」과 다르거나 운영 요율이 비었거나 줄이 없는 것 · 아니면 빈 목록' }) rateGaps!: string[];
 }
 
 /* v10.206 (docs/330) — 위탁 목록 점검 */
@@ -195,4 +196,29 @@ export class ReviewPackDto {
   @ApiProperty({ example: '2026-11-06', description: '한국 날짜' }) day!: string;
   @ApiProperty({ type: [ReviewPackItemDto] }) items!: ReviewPackItemDto[];
   @ApiProperty({ description: '내려받을 HTML 문서 전체(바깥 글꼴 · 그림 · 스크립트 없음)' }) html!: string;
+  @ApiProperty({ description: 'v10.311 — 맨 끝 부록 「요율 인상 공지 방식」(입점 약관 제17조 4항 · 법무에 묻는 것 5가지)이 들어 있음' }) rateNotice!: boolean;
+}
+
+/* v10.310 (docs/433) — 입점 약관 제17조 2항 요율 표 ↔ 운영 「입점 유형 요율」 */
+export class TermRateSlotDto {
+  @ApiProperty({ enum: ['BRAND', 'TENANT'] }) type!: string;
+  @ApiProperty({ example: '일반 입점' }) label!: string;
+  @ApiPropertyOptional({ nullable: true, example: '〔 〕%', description: '약관 표의 요율 칸 글(줄이 없으면 null)' }) termText!: string | null;
+  @ApiPropertyOptional({ nullable: true, example: 12, description: '약관 칸 숫자(빈칸이면 null)' }) termValue!: number | null;
+  @ApiPropertyOptional({ nullable: true, example: 10, description: '운영 입점 유형 요율(비면 null — 갈래 요율을 씀)' }) rate!: number | null;
+  @ApiPropertyOptional({ nullable: true, example: null, description: '예정 예약 새 요율' }) scheduledRate!: number | null;
+  @ApiPropertyOptional({ nullable: true, example: null, description: '예정 예약 시행일(한국 날짜)' }) scheduledDate!: string | null;
+  @ApiProperty({ enum: ['blank', 'missing', 'unset', 'match', 'scheduled', 'mismatch'] }) state!: string;
+  @ApiProperty({ example: '약관 칸이 비어 있음(〔 〕)' }) note!: string;
+}
+export class TermRateTermDto {
+  @ApiProperty({ example: '1.0' }) version!: string;
+  @ApiProperty({ example: 'DRAFT' }) status!: string;
+  @ApiProperty({ description: '게시했지만 시행일 전' }) scheduled!: boolean;
+  @ApiProperty({ type: [TermRateSlotDto] }) slots!: TermRateSlotDto[];
+  @ApiProperty({ description: '두 줄 모두 같음(또는 예정 예약 값과 같음)' }) ok!: boolean;
+}
+export class TermRateCheckDto {
+  @ApiProperty({ type: [TermRateTermDto] }) terms!: TermRateTermDto[];
+  @ApiProperty({ description: '모든 판이 ok(입점 약관이 없으면 false)' }) ok!: boolean;
 }

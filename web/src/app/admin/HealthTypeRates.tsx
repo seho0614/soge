@@ -4,7 +4,8 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymd, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
-import { askNoticeTiming } from './RateNoticeDialog';   // v10.291 (docs/414) — 공지 시점 확인 창
+import { askNoticeTiming } from './RateNoticeDialog';
+import { RateAutoRemindPreview } from './RateAutoRemindPreview';   // v10.308 (docs/431)   // v10.291 (docs/414) — 공지 시점 확인 창
 
 interface TypeRate {
   sellerType: 'BRAND' | 'TENANT'; rate: string | number | null; note: string | null; updatedAt: string;
@@ -198,6 +199,7 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
         const days = rows[0]?.autoRemindDays ?? 0;
         return <p className="dim" style={{ margin: '4px 0 0' }} data-rate-auto-remind={days}>자동 다시 알림: {days > 0 ? <b>시행 {days}일 전 — 공지를 안 펼친 대상 판매자에게 한 번(매일 00:05)</b> : '꺼짐'} · 바꾸기는 정책 › 「전체 설정」 <span className="mono">hlt.rate_auto_remind_days</span>(최고 관리자)</p>;
       })()}
+      <RateAutoRemindPreview onChanged={q.reload} />   {/* v10.308 (docs/431) */}
       <Flash msg={a.msg} err={a.err} />
       {q.error ? <ErrorView error={q.error} onRetry={q.reload} /> : rows.length === 0 ? (
         <p className="dim" style={{ marginTop: 6 }} data-rate-schedule-empty>예약한 요율 변경이 없습니다. 요율을 올릴 때 영향받는 판매자가 있으면 여기에 예약으로 쌓입니다.</p>

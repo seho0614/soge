@@ -258,6 +258,14 @@ export class HealthSellerController {
   @ApiOkResponse({ type: Object, isArray: true })
   rateSchedules() { return this.rates.list(); }
 
+  @Get('admin/health/rate-schedules/auto-remind-preview')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '자동 다시 알림 미리보기', description: 'v10.308 (docs/431) 설정 hlt.rate_auto_remind_days 를 n일(1 ~ 30 · 기본 7)로 켜면 예정 예약마다 언제(매일 00:05 정기 작업) · 몇 곳(공지를 안 펼친 대상 판매자)에 다시 알림이 가는지 — fn_hlt_rate_auto_remind 와 같은 조건 · 읽기만(설정을 바꾸지 않음).' })
+  @ApiQuery({ name: 'days', required: false, example: 7 })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'DAYS_RANGE', type: ErrorDto })
+  autoRemindPreview(@Query('days') days?: string) { return this.rates.autoRemindPreview(days); }
+
   @Post('admin/health/rate-schedules/:id/cancel')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '요율 예약 취소', description: 'v10.275 (D208) 시행 전에만 · 사유 필수 · 영향받는 판매자에게 알림 · 기록은 남음(고칠 수 없음).' })

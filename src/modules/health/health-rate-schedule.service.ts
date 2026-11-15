@@ -229,6 +229,55 @@ export class HealthRateScheduleService {
         ORDER BY (r.status = 'SCHEDULED') DESC, r.effective_at DESC LIMIT 50`);
   }
 
+  /**
+   * v10.308 (docs/431) — 자동 다시 알림을 n일로 켜면 어떻게 되나(읽기만 · 설정을 바꾸지 않음).
+   *   fn_hlt_rate_auto_remind 와 같은 조건 — 예정 · 시행 전 · 게시된 공지 · 예약마다 자동 한 번 · 사람이 24시간 안에 다시 알렸으면 그날 건너뜀 ·
+   *   대상 판매자 중 공지를 안 펼친 곳만. 정기 작업 hlt_rate_schedule 은 매일 00:05(한국) — 시행일 − n일 뒤 첫 00:05 · 공지 게시 뒤 · 지금 뒤.
+   */
+  async autoRemindPreview(daysIn: string | undefined) {
+    const days = Number(daysIn ?? 7);
+    if (!Number.isInteger(days) || days < 1 || days > 30) throw new PolicyViolation('DAYS_RANGE', '일수는 1 ~ 30 사이 정수로 적어 주십시오.');
+    const run = (ts: string) => `((date_trunc('day', (${ts}) AT TIME ZONE 'Asia/Seoul') + interval '5 minutes'
+        + CASE WHEN ((${ts}) AT TIME ZONE 'Asia/Seoul') > date_trunc('day', (${ts}) AT TIME ZONE 'Asia/Seoul') + interval '5 minutes' THEN interval '1 day' ELSE interval '0' END) AT TIME ZONE 'Asia/Seoul')`;
+    const rows = await this.db.query<{ id: string; label: string | null; scope: string; effectiveDate: string; noticeOn: boolean; noticeAt: string | null;
+      targets: number; unread: number; autoDone: boolean; runAt: string; runDate: string; willRun: boolean; skipped: boolean }>(
+      `WITH b AS (
+         SELECT r.id, r.scope, r.target, r.effective_at, r.notice_id, n.published_at,
+                CASE r.scope WHEN 'SELLER' THEN (SELECT s.name FROM hlt_sellers s WHERE s.id::text = r.target)
+                             WHEN 'TYPE' THEN CASE r.target WHEN 'BRAND' THEN '브랜드 직영관' ELSE '일반 입점' END
+                             ELSE coalesce((SELECT c.name FROM categories c WHERE c.gwan_code = 'HLT' AND c.code = r.target), r.target) END AS label,
+                greatest(${run(`r.effective_at - make_interval(days => $1::int)`)}, ${run('now()')},
+                         CASE WHEN n.published_at IS NULL THEN NULL ELSE ${run('n.published_at')} END) AS run0
+           FROM hlt_rate_schedules r LEFT JOIN notices n ON n.id = r.notice_id
+          WHERE r.status = 'SCHEDULED' AND r.effective_at > now()),
+       c AS (
+         SELECT b.*, EXISTS (SELECT 1 FROM hlt_rate_reminds m WHERE m.schedule_id = b.id AND NOT m.auto AND m.at > b.run0 - interval '24 hours') AS skipped
+           FROM b)
+       SELECT c.id, c.label, c.scope, to_char(c.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "effectiveDate",
+              (c.published_at IS NOT NULL) AS "noticeOn", c.published_at AS "noticeAt",
+              (SELECT count(*)::int FROM hlt_sellers s WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers(c.scope, c.target)) AND s.account_id IS NOT NULL) AS targets,
+              (SELECT count(*)::int FROM hlt_sellers s WHERE s.id IN (SELECT fn_hlt_rate_sched_sellers(c.scope, c.target)) AND s.account_id IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM notice_reads nr WHERE nr.notice_id = c.notice_id AND nr.account_id = s.account_id)) AS unread,
+              EXISTS (SELECT 1 FROM hlt_rate_reminds m WHERE m.schedule_id = c.id AND m.auto) AS "autoDone",
+              (c.run0 + CASE WHEN c.skipped THEN interval '1 day' ELSE interval '0' END) AS "runAt",
+              to_char((c.run0 + CASE WHEN c.skipped THEN interval '1 day' ELSE interval '0' END) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "runDate",
+              (c.run0 IS NOT NULL AND c.run0 + CASE WHEN c.skipped THEN interval '1 day' ELSE interval '0' END < c.effective_at) AS "willRun", c.skipped
+         FROM c ORDER BY c.effective_at`, [days]);
+    const [g] = await this.db.query<{ current: number; nextRun: string; nextRunAt: string }>(
+      `SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'hlt.rate_auto_remind_days'), 0) AS current,
+              to_char(${run('now()')} AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS "nextRun", ${run('now()')} AS "nextRunAt"`);
+    const out = rows.map((r) => {
+      const state = r.autoDone ? 'done' : !r.noticeOn ? 'no-notice' : !r.willRun ? 'none' : r.unread === 0 ? 'all-read'
+        : r.runDate === g.nextRun ? 'next' : 'later';
+      return { id: r.id, label: r.label, scope: r.scope, effectiveDate: r.effectiveDate, targets: r.targets, unread: r.unread,
+               runDate: r.noticeOn && r.willRun && !r.autoDone ? r.runDate : null, skipped: r.skipped, state };
+    });
+    const next = out.filter((x) => x.state === 'next');
+    return { days, current: g.current, nextRun: g.nextRun, rows: out,
+             summary: { schedules: out.length, nextSchedules: next.length, nextSellers: next.reduce((a, x) => a + x.unread, 0),
+                        laterSchedules: out.filter((x) => x.state === 'later').length } };
+  }
+
   /** v10.283 (D212 · docs/411) — 예약 안내 공지를 안 읽은 영향 판매자에게만 다시 알림(24시간에 한 번 · 기록) */
   async remind(id: string) {
     return this.db.transaction(async () => {

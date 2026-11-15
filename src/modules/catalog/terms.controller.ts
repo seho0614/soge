@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResp
 import { TermsService } from './terms.service';
 import {
   OpenBlockerDto, OpenDateDto, OpenReadinessDto, OutsourceCheckDto, PublishTermDto, ReviewPackDto, SetOpenDateDto, TermDetailDto,
-  TermPublishPreviewDto, TermPublishResultDto, TermSourceDto, TermSourceItemDto, UnscheduleTermDto, UpsertTermDto,
+  TermPublishPreviewDto, TermPublishResultDto, TermRateCheckDto, TermSourceDto, TermSourceItemDto, UnscheduleTermDto, UpsertTermDto,
 } from './terms.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -47,6 +47,14 @@ export class TermsController {
   })
   @ApiOkResponse({ type: ReviewPackDto })
   reviewPack() { return this.terms.reviewPack(); }
+
+  @Get('terms/rate-check')
+  @ApiOperation({
+    summary: '입점 약관 요율 표 대조 (v10.310)',
+    description: '입점 약관(HLT_SELLER) 게시 안 된 판 · 게시 판마다 제17조 2항 표(브랜드 직영관 · 일반 입점)의 요율 칸을 운영 「입점 유형 요율」 · 예정 예약과 견줌 — blank(〔 〕) · missing(줄 없음) · unset(운영 요율 비어 있음) · match · scheduled(예정 예약 값과 같음) · mismatch. 읽기만.',
+  })
+  @ApiOkResponse({ type: TermRateCheckDto })
+  rateCheck() { return this.terms.rateCheck(); }
 
   @Get('terms/sources')
   @ApiOperation({

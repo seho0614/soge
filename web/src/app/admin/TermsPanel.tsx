@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ymdKst } from '../../lib/format';
@@ -25,6 +25,10 @@ import { ErrorView } from '../../components/ErrorView';
  * v10.206 (docs/330) — 맨 위 「위탁 목록 점검」(쓰는 외부 서비스가 처리를 맡기는 곳 표에 있나) · 게시 확인 창에 빠진 서비스 경고
  * v10.205 (docs/328) — 처음 게시하는 약관(앞 판 없음)은 시행일이 미래여도 게시하는 순간 시행 — 확인 창에 경고 · 재동의 대상 수 ·
  *   처리방침이면 AI 잠금 풀림과 빠진 것(GET /admin/terms/{code}/publish-preview · 게시 규칙은 그대로)
+ * v10.307 (docs/430) — 「고치기」 「개발 원문으로 채우기」(칸만 채움 · 저장은 「저장(게시 아님)」 · 되돌리기)
+ * v10.309 (docs/432) — 「고치기」 빈칸 도우미: 남은 〔 〕 자리마다 줄 · 앞뒤 글 · 누르면 그 자리를 골라 줌
+ * v10.310 (docs/433) — 맨 위 「입점 약관 제17조 요율 ↔ 입점 유형 요율」 대조 · 게시 확인 창에 다른 줄 경고
+ * v10.311 (docs/434) — 법무 검토 묶음 맨 끝 부록 「요율 인상 공지 방식」
  */
 
 interface Term {
@@ -38,12 +42,29 @@ interface Term {
 
 /** v10.205 (docs/328) — GET /admin/terms/{code}/publish-preview */
 interface Preview { first: boolean; current: string | null; required: boolean; target: number; aiUnlock: boolean; aiGaps: string[]; aiSwitches: string;
-  /** v10.206 (docs/330) — 지금 쓰는 외부 서비스 중 이 판의 위탁 목록에 없는 것 */ outsourceGaps?: string[] }
+  /** v10.206 (docs/330) — 지금 쓰는 외부 서비스 중 이 판의 위탁 목록에 없는 것 */ outsourceGaps?: string[];
+  /** v10.310 (docs/433) — 입점 약관 제17조 2항 요율이 운영과 다른 줄 */ rateGaps?: string[] }
+/** v10.310 (docs/433) — GET /admin/terms/rate-check */
+interface RateCheck { ok: boolean; terms: Array<{ version: string; status: string; ok: boolean;
+  slots: Array<{ type: string; label: string; termText: string | null; rate: number | null; scheduledRate: number | null; scheduledDate: string | null; state: string; note: string }> }> }
 /** v10.206 (docs/330) — GET /admin/terms/outsource-check */
 interface OutsourceCheck { lines: string[]; pending: string[] }
 const STATUS: Record<string, string> = { DRAFT: '초안', LEGAL_REVIEW: '법무 검토', PUBLISHED: '게시', ARCHIVED: '보관' };
 /* v10.213 — 같은 빈칸은 한 번만 셈(운영 상태 표 · 동네 인증 준비 상태와 같은 수) */
 const holes = (b: string) => [...new Set(b.match(/〔[^〕]*〕/g) ?? [])].filter((m) => m !== '〔시행일〕');
+/** v10.309 (docs/432) — 빈칸 자리마다(같은 빈칸도 따로) 줄 번호 · 앞뒤 글 · 글 안 위치(〔시행일〕은 뺌) */
+function holeSpots(b: string) {
+  const out: { text: string; start: number; end: number; line: number; before: string; after: string }[] = [];
+  const re = /〔[^〕]*〕/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(b))) {
+    if (m[0] === '〔시행일〕') continue;
+    const start = m.index, end = start + m[0].length;
+    out.push({ text: m[0], start, end, line: b.slice(0, start).split('\n').length,
+               before: b.slice(Math.max(0, start - 24), start).replace(/\s+/g, ' '), after: b.slice(end, end + 24).replace(/\s+/g, ' ') });
+  }
+  return out;
+}
 const aiClause = (b: string) => /(^|\n)#{1,4}[^\n]*국외 이전/.test(b);
 const editable = (st: string) => st === 'DRAFT' || st === 'LEGAL_REVIEW';
 const todayKst = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -87,7 +108,8 @@ function lineDiff(a: string, b: string): { t: '+' | '-'; n: number; s: string }[
 
 interface Edit { key: string; code: string; from: string; version: string; title: string; body: string; orig: string; diff: boolean; note: string; origNote: string;
   /** v10.263 (docs/395) — 비교 기준: 고치기 시작한 글(orig) · 지금 시행 중인 판(current) · v10.304 개발 원문(source · docs/426) */ base?: 'orig' | 'current' | 'source';
-  /** v10.304 — 불러온 개발 원문(킷 docs 의 게시용 완성본 「4. 전문」) */ src?: { file: string; body: string } }
+  /** v10.304 — 불러온 개발 원문(킷 docs 의 게시용 완성본 「4. 전문」) */ src?: { file: string; body: string };
+  /** v10.307 (docs/430) — 「개발 원문으로 채우기」로 칸을 채움(아직 저장 안 함) */ filled?: boolean }
 
 /** v10.263 — 그 약관의 지금 시행 중인 판(게시 · 시행 예정 아님 · 가장 높은 판) */
 function inForce(all: Term[], code: string): Term | undefined {
@@ -100,6 +122,8 @@ export function TermsPanel() {
   const st = useApi<{ key: string; value: string | null }[]>('/admin/site-settings');
   const oc = useApi<OutsourceCheck>('/admin/terms/outsource-check');   // v10.206 (docs/330) — 위탁 목록 점검
   const srcs = useApi<{ code: string; version: string; file: string }[]>('/admin/terms/sources');   // v10.304 (docs/426) — 개발 원문이 있는 판
+  const rc = useApi<RateCheck>('/admin/terms/rate-check');   // v10.310 (docs/433) — 제17조 요율 표 대조
+  const textRef = useRef<HTMLTextAreaElement>(null);   // v10.309 — 빈칸 자리로
   const early = st.data?.find((s) => s.key === 'terms.reconsent_before_effective')?.value === 'on';
   /* v10.162 (D152) — 시행 예정 게시 때 회원 알림(terms.notify_members · 기본 on) */
   const notifyOn = (st.data?.find((s) => s.key === 'terms.notify_members')?.value ?? 'on') === 'on';
@@ -129,6 +153,27 @@ export function TermsPanel() {
     }
   }
 
+  /** v10.307 (docs/430) — 고치기 칸을 개발 원문으로 채움(화면만 · 저장은 「저장(게시 아님)」 · 감사 TERM_DRAFT) · 바뀐 줄을 바로 보여 줌 */
+  async function fillSource(e: Edit) {
+    if (!window.confirm('고치기 칸의 글을 개발 원문으로 바꿀까요?\n\n화면의 칸만 바뀌고, 「저장(게시 아님)」을 눌러야 저장됩니다(「취소」 · 「채우기 되돌리기」면 그대로).\n바뀌는 줄은 바로 아래 비교로 보여 드립니다.')) return;
+    try {
+      const src = e.src ?? await api<{ file: string; body: string }>(`/admin/terms/${e.code}/source?version=${encodeURIComponent(e.from)}`);
+      setEd({ ...e, src: { file: src.file, body: src.body }, body: src.body, filled: true, diff: true, base: 'orig' });
+    } catch (err) {
+      setRes({ ok: false, text: err instanceof ApiFailure ? err.body.message : '개발 원문을 불러오지 못했습니다.' });
+    }
+  }
+
+  /** v10.309 (docs/432) — 빈칸 자리를 골라 줌(칸으로 옮기고 그 글자를 선택 · 그 줄이 보이게) */
+  function goHole(o: { start: number; end: number; line: number }) {
+    const ta = textRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(o.start, o.end);
+    const lh = parseFloat(getComputedStyle(ta).lineHeight) || 20;
+    ta.scrollTop = Math.max(0, (o.line - 3) * lh);
+  }
+
   async function save(e: Edit) {
     const isNew = e.version !== e.from;
     if (!window.confirm(isNew ? `「${e.title}」 을 새 판 ${e.version} 으로 저장할까요?\n(${e.from} 은 그대로 남습니다 · 저장만으로는 게시되지 않습니다)`
@@ -138,7 +183,7 @@ export function TermsPanel() {
       const r = await api<{ code: string; version: string; holes: number }>(`/admin/terms/${e.code}`,
         { method: 'PUT', body: JSON.stringify({ version: e.version, title: e.title, body: e.body, ...(e.note.trim() ? { changeNote: e.note.trim() } : {}) }) });
       setRes({ ok: true, text: `${e.title} ${r.version} 을 저장했습니다(법무 검토 · 게시 전). ${r.holes ? `〔미확정〕 ${r.holes}곳 남음 — 채워야 게시할 수 있습니다.` : '〔미확정〕 없음 — 시행일을 넣고 게시할 수 있습니다.'}` });
-      setEd(null); reload();
+      setEd(null); reload(); rc.reload();
     } catch (err) {
       setRes({ ok: false, text: err instanceof ApiFailure ? err.body.message : '저장하지 못했습니다.' });
     } finally { setBusy(null); }
@@ -158,6 +203,7 @@ export function TermsPanel() {
       if (lead > 0) lines.push(`· ${day} 에 시행하려면 그날 게시하십시오.`);
       lines.push('');
     }
+    if (pv?.rateGaps?.length) lines.push(`⚠ 입점 약관 제17조 2항 요율이 운영 「입점 유형 요율」과 맞지 않습니다 — ${pv.rateGaps.join(' / ')}. 맞춘 뒤 게시하기를 권합니다(게시를 막지는 않음).`, '');
     if (pv?.outsourceGaps?.length) lines.push(`⚠ 지금 쓰는 외부 서비스가 이 판의 「처리를 맡기는 곳」 표에 없습니다 — ${pv.outsourceGaps.join(' · ')}. 법무 확인 뒤 「고치기」로 더하십시오.`, '');
     if (pv?.aiUnlock) lines.push(`⚠ AI 잠금이 ${pv.first || lead <= 0 ? '바로' : `${day} 에`} 풀립니다(국외 이전 조항) — ${pv.aiGaps.length ? `빠진 것: ${pv.aiGaps.join(' · ')}` : '키 · 월 상한 · AI 전체 갖춰짐'} · ${pv.aiSwitches}`, '');
     if (prev && lead > 0) lines.push(`지금 시행 중인 ${prev.version} 은 ${day} 전날까지 그대로 시행되고, 회원 재동의는 ${day} 부터 받습니다. 그동안 사용자 웹에 「바뀔 약관」 알림이 나갑니다.`, '');
@@ -233,14 +279,14 @@ export function TermsPanel() {
   const downloadPack = async () => {
     setBusy('pack'); setRes(null);
     try {
-      const r = await api<{ fileName: string; html: string; items: Array<{ holes: string[] }> }>('/admin/terms/review-pack');
+      const r = await api<{ fileName: string; html: string; items: Array<{ holes: string[] }>; rateNotice?: boolean }>('/admin/terms/review-pack');
       const url = URL.createObjectURL(new Blob([r.html], { type: 'text/html;charset=utf-8' }));
       const link = document.createElement('a');
       link.href = url; link.download = r.fileName;
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       const h = r.items.reduce((acc, x) => acc + x.holes.length, 0);
-      setRes({ ok: true, text: `법무 검토 묶음을 내려받았습니다(${r.fileName}) — 게시 안 된 초안 ${r.items.length}건 · 남은 〔미확정〕 ${h}곳. 브라우저로 열어 PDF 로 인쇄해 보낼 수 있습니다.` });
+      setRes({ ok: true, text: `법무 검토 묶음을 내려받았습니다(${r.fileName}) — 게시 안 된 초안 ${r.items.length}건 · 남은 〔미확정〕 ${h}곳${r.rateNotice ? ' · 맨 끝 부록 「요율 인상 공지 방식」(법무에 묻는 것 5가지)' : ''}. 브라우저로 열어 PDF 로 인쇄해 보낼 수 있습니다.` });
     } catch (e) {
       setRes({ ok: false, text: e instanceof ApiFailure ? e.body.message : '내려받지 못했습니다.' });
     } finally { setBusy(null); }
@@ -252,7 +298,7 @@ export function TermsPanel() {
       <h2 className="ad-s2">약관 <small className="dim">법무 확인을 마친 글만 게시 — 게시하면 가입 · 바닥줄에 나가고 오픈 차단(약관)이 줄어듭니다</small></h2>
       <p className="muted" data-terms-pack="">
         <button className="btn-sm" disabled={busy === 'pack'} onClick={() => void downloadPack()} data-terms-pack-btn="">법무 검토용 내려받기</button>
-        {' '}게시 안 된 초안 전부를 한 파일로 — 지금 게시판과 바뀐 줄 · 남은 〔미확정〕 · 확인 칸(검토를 돕는 자료 · 법적 판단은 법무)
+        {' '}게시 안 된 초안 전부를 한 파일로 — 지금 게시판과 바뀐 줄 · 남은 〔미확정〕 · 확인 칸 · 부록 「요율 인상 공지 방식」(검토를 돕는 자료 · 법적 판단은 법무)
       </p>
       {oc.data && (oc.data.lines.length > 0 || oc.data.pending.length > 0) && (
         <div className="card" data-terms-outsource="">
@@ -260,6 +306,19 @@ export function TermsPanel() {
           <ul>
             {oc.data.lines.map((l) => <li key={l} className="form-error" data-terms-outsource-gap="">{l}</li>)}
             {oc.data.pending.map((l) => <li key={l} data-terms-outsource-pending="">{l}</li>)}
+          </ul>
+        </div>
+      )}
+      {rc.data && rc.data.terms.length > 0 && (
+        <div className="card" data-terms-rate-check={rc.data.ok ? 'ok' : 'gap'}>
+          <b>입점 약관 제17조 요율 ↔ 「입점 유형 요율」</b> <small className="dim">게시 전에 숫자를 맞춥니다 — 운영 요율은 소개몰 › 「소개몰 정산」 › 「입점 유형 요율」 · 약관 칸은 아래 「고치기」</small>
+          <ul>
+            {rc.data.terms.flatMap((t) => t.slots.map((x) => (
+              <li key={`${t.version}:${x.type}`} className={x.state === 'match' || x.state === 'scheduled' ? '' : x.state === 'blank' ? 'muted' : 'form-error'} data-terms-rate-slot={`${t.version}:${x.type}:${x.state}`}>
+                {t.version}({STATUS[t.status] ?? t.status}) {x.label} — 약관 {x.termText ?? '줄 없음'} · 운영 {x.rate === null ? '비어 있음' : `${x.rate}%`}
+                {x.scheduledRate !== null ? ` · 예정 ${x.scheduledRate}%(${x.scheduledDate})` : ''}: <b>{x.note}</b>
+              </li>
+            )))}
           </ul>
         </div>
       )}
@@ -358,7 +417,7 @@ export function TermsPanel() {
                           <label style={{ flex: 1, minWidth: 240 }}>제목 <input className="sel" style={{ width: '80%' }} value={ed.title} onChange={(e) => setEd({ ...ed, title: e.target.value })} aria-label="제목" data-term-title /></label>
                           <span className="muted">{editable(t.status) && ed.version === ed.from ? `${ed.from} 초안을 고침` : `${ed.from} 은 그대로 두고 새 판 ${ed.version} 으로`}</span>
                         </div>
-                        <textarea value={ed.body} onChange={(e) => setEd({ ...ed, body: e.target.value })} rows={18} style={{ width: '100%', fontSize: 13, fontFamily: 'inherit' }} aria-label="약관 본문" data-term-text />
+                        <textarea ref={textRef} value={ed.body} onChange={(e) => setEd({ ...ed, body: e.target.value })} rows={18} style={{ width: '100%', fontSize: 13, fontFamily: 'inherit' }} aria-label="약관 본문" data-term-text />
                         <label style={{ display: 'block', margin: '6px 0' }}>바뀐 점(회원 재동의 화면에 보임 · 300자)
                           <input className="sel" style={{ width: '100%' }} maxLength={300} value={ed.note} placeholder="예: 제6조 국외 이전 — AI 상담 질문을 받는 곳 · 보관 기간을 적음"
                                  onChange={(e) => setEd({ ...ed, note: e.target.value })} aria-label="바뀐 점" data-term-note /></label>
@@ -366,10 +425,32 @@ export function TermsPanel() {
                         <p className={eh.length ? 'warn-text' : 'muted'} data-term-edit-holes={eh.length}>
                           {eh.length ? `〔미확정〕 ${eh.length}곳 남음: ${eh.slice(0, 8).join(' · ')}${eh.length > 8 ? ' …' : ''} — 법무가 정한 글로 바꾸십시오(〔시행일〕은 게시할 때 채워짐)` : '〔미확정〕 없음'}
                         </p>
+                        {(() => {   /* v10.309 (docs/432) — 빈칸 도우미 */
+                          const occ = holeSpots(ed.body);
+                          return occ.length > 0 && (
+                            <details data-term-hole-list={occ.length} open={occ.length <= 12} style={{ margin: '0 0 6px' }}>
+                              <summary>빈칸 자리 {occ.length}곳 — 누르면 칸에서 그 자리를 골라 줍니다</summary>
+                              <ol style={{ margin: '4px 0', paddingLeft: 22 }}>
+                                {occ.map((o, i) => (
+                                  <li key={i}><button className="btn-plain" onClick={() => goHole(o)} data-term-hole-go={i} data-term-hole-at={o.start}>
+                                    <span className="mono">{o.line}줄</span> …{o.before}<mark>{o.text}</mark>{o.after}…
+                                  </button></li>
+                                ))}
+                              </ol>
+                            </details>
+                          );
+                        })()}
+                        {ed.filled && (
+                          <p className="warn-text" data-term-src-filled>
+                            개발 원문(docs/{ed.src?.file.slice(0, 3)})으로 칸을 채웠습니다 — 아직 저장하지 않았습니다. 「저장(게시 아님)」을 눌러야 바뀝니다.{' '}
+                            <button className="btn-sm ghost" onClick={() => setEd({ ...ed, body: ed.orig, filled: false })} data-term-src-undo>채우기 되돌리기</button>
+                          </p>
+                        )}
                         {clash && <p className="warn-text" data-term-clash>{ed.version} 판이 이미 있습니다 — 다른 번호를 적으십시오.</p>}
                         <div className="row-actions">
                           <button className="btn-sm" disabled={!changed && !(cur && cur.body !== ed.body) && !hasSrc} onClick={() => setEd({ ...ed, diff: !ed.diff, base: ed.base ?? (cur && cur.version !== ed.from ? 'current' : 'orig') })} data-term-diff-btn>{ed.diff ? '비교 닫기' : '바뀐 곳 보기'}</button>
                           {hasSrc && !ed.diff && <button className="btn-sm" onClick={() => void useSource(ed)} data-term-src-btn>개발 원문과 비교</button>}
+                          {hasSrc && !(ed.src && ed.body === ed.src.body) && <button className="btn-sm" onClick={() => void fillSource(ed)} data-term-src-fill>개발 원문으로 채우기</button>}
                           <button className="btn-ok btn-sm" disabled={!changed || clash || !ed.version || ed.body.trim().length < 50 || busy === key} onClick={() => void save(ed)} data-term-save>저장(게시 아님)</button>
                           <button className="btn-sm" onClick={() => setEd(null)}>취소</button>
                           {!changed && <span className="muted">고친 곳이 없습니다</span>}

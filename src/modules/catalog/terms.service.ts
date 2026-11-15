@@ -4,6 +4,9 @@ import { join } from 'path';
 import { DatabaseService } from '../../db/database.service';
 import { blockerOwner } from './open-blocker-owner';
 import { buildReviewPack, PackTerm } from './terms-review-pack';
+import { article17, RATE_TYPES, SLOT_TEXT, slotState, termRateCell } from './terms-rate-check';
+import { rateNoticeSection, withRateNotice } from './terms-rate-notice-pack';
+import { NOTICE_DAYS } from '../health/health-rate-schedule.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { AgentService } from '../agent/agent.service';
 import { GeoService } from '../../common/geo/geo.service';
@@ -161,11 +164,49 @@ export class TermsService {
     const outsourceGaps = OUTSOURCE_CODES.includes(code)
       ? (await this.outsourceUsed()).filter((x) => x.used && !x.re.test(t.body)).map((x) => `${x.name}(${x.why})`)
       : [];
+    /* v10.310 (docs/433) — 입점 약관 게시 전 제17조 2항 요율 표가 운영 「입점 유형 요율」과 다르면(빈칸은 〔미확정〕으로 이미 막힘) */
+    const rateGaps = code === 'HLT_SELLER'
+      ? ((await this.rateCheck()).terms.find((x) => x.version === version)?.slots ?? [])
+          .filter((x) => x.state === 'mismatch' || x.state === 'unset' || x.state === 'missing')
+          .map((x) => `${x.label} — 약관 ${x.termText ?? '줄 없음'} · 운영 ${x.rate === null ? '비어 있음' : `${x.rate}%`}${x.scheduledRate !== null ? ` (예정 ${x.scheduledRate}% · ${x.scheduledDate})` : ''}: ${x.note}`)
+      : [];
     return {
       code, version, title: t.title, first: !r.current, current: r.current, required: t.required, target: t.required ? r.target : 0,
       aiUnlock, aiGaps, aiSwitches: aiUnlock ? `검수 보조 ${r.review ? '켜짐' : '꺼짐'} · AI 상담 ${r.chat ? '켜짐' : '꺼짐'}` : '',
-      outsourceGaps,
+      outsourceGaps, rateGaps,
     };
+  }
+
+  /**
+   * v10.310 (docs/433) — 입점 약관(HLT_SELLER) 게시 안 된 판 · 시행 중 판의 제17조 2항 요율 표 ↔ 운영 「입점 유형 요율」 · 예정 예약.
+   *   ok = 판마다 두 줄이 모두 「같음」 또는 「예정 예약 값과 같음」. 읽기만.
+   */
+  async rateCheck() {
+    const terms = await this.db.query<{ version: string; status: string; body: string; scheduled: boolean }>(
+      `SELECT version, status, coalesce(body, '') AS body, (status = 'PUBLISHED' AND effective_from > now()) AS scheduled FROM terms
+        WHERE code = 'HLT_SELLER' AND status <> 'ARCHIVED'
+        ORDER BY string_to_array(regexp_replace(version, '[^0-9.]', '', 'g'), '.')::int[] DESC`);
+    const rates = await this.db.query<{ type: string; rate: string | null; toRate: string | null; effectiveDate: string | null }>(
+      `SELECT t.seller_type AS type, t.rate::text AS rate, s.to_rate::text AS "toRate",
+              to_char(s.effective_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "effectiveDate"
+         FROM hlt_seller_type_rates t
+         LEFT JOIN LATERAL (SELECT to_rate, effective_at FROM hlt_rate_schedules x
+                             WHERE x.scope = 'TYPE' AND x.target = t.seller_type AND x.status = 'SCHEDULED' AND x.effective_at > now()
+                             ORDER BY x.effective_at LIMIT 1) s ON true`);
+    const num = (v: string | null | undefined) => (v === null || v === undefined || v === '' ? null : Number(v));
+    const rateOf = (type: string) => rates.find((r) => r.type === type);
+    const out = terms.map((t) => {
+      const slots = RATE_TYPES.map(({ type, label }) => {
+        const cell = termRateCell(t.body, label);
+        const r = rateOf(type);
+        const rate = num(r?.rate), sched = num(r?.toRate);
+        const state = slotState(cell, rate, sched);
+        return { type, label, termText: cell?.text ?? null, termValue: cell?.value ?? null, rate,
+                 scheduledRate: sched, scheduledDate: r?.effectiveDate ?? null, state, note: SLOT_TEXT[state] };
+      });
+      return { version: t.version, status: t.status, scheduled: t.scheduled, slots, ok: slots.every((x) => x.state === 'match' || x.state === 'scheduled') };
+    });
+    return { terms: out, ok: out.length > 0 && out.every((x) => x.ok) };
   }
 
   /** v10.206 (docs/330) — 지금 쓰는 외부 서비스(처리를 맡기는 곳) · re = 위탁 표의 그 줄 */
@@ -350,7 +391,35 @@ export class TermsService {
       base: r.baseVersion ? { version: r.baseVersion, body: r.baseBody ?? '' } : null,
     }));
     const { items, html } = buildReviewPack(terms, day);
-    return { fileName: `sogaebank_terms_legal_review_${day.replace(/-/g, '')}.html`, day, items, html };
+    /* v10.311 (docs/434) — 부록 「요율 인상 공지 방식」(입점 약관 제17조 4항 · 법무에 묻는 것) */
+    const rn = await this.rateNoticeInfo();
+    return { fileName: `sogaebank_terms_legal_review_${day.replace(/-/g, '')}.html`, day, items, html: withRateNotice(html, rateNoticeSection(rn)), rateNotice: true };
+  }
+
+  /** v10.311 — 부록에 넣을 지금 값(설정 · 숫자 · 제17조 4항 글 · 요율 표 대조) */
+  private async rateNoticeInfo() {
+    const [c] = await this.db.query<{ total: number; scheduled: number; applied: number; canceled: number; noticed: number; reminds: number; autoReminds: number; snaps: number; days: number; email: boolean; sms: boolean; body: string | null }>(
+      `SELECT (SELECT count(*)::int FROM hlt_rate_schedules) AS total,
+              (SELECT count(*)::int FROM hlt_rate_schedules WHERE status = 'SCHEDULED') AS scheduled,
+              (SELECT count(*)::int FROM hlt_rate_schedules WHERE status = 'APPLIED') AS applied,
+              (SELECT count(*)::int FROM hlt_rate_schedules WHERE status = 'CANCELED') AS canceled,
+              (SELECT count(*)::int FROM hlt_rate_schedules r JOIN notices n ON n.id = r.notice_id WHERE n.published_at <= now()) AS noticed,
+              (SELECT count(*)::int FROM hlt_rate_reminds) AS reminds,
+              (SELECT count(*)::int FROM hlt_rate_reminds WHERE auto) AS "autoReminds",
+              (SELECT count(*)::int FROM hlt_rate_read_snaps) AS snaps,
+              coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'hlt.rate_auto_remind_days'), 0) AS days,
+              coalesce((SELECT value FROM site_settings WHERE key = 'notify.email_verified'), 'off') = 'on' AS email,
+              coalesce((SELECT value FROM site_settings WHERE key = 'notify.alimtalk_ready'), 'off') = 'on' AS sms,
+              (SELECT coalesce(body, '') FROM terms WHERE code = 'HLT_SELLER' AND status <> 'ARCHIVED'
+                ORDER BY string_to_array(regexp_replace(version, '[^0-9.]', '', 'g'), '.')::int[] DESC LIMIT 1) AS body`);
+    const clause4 = article17(c.body ?? '').split('\n').map((l) => l.trim()).find((l) => /^4\.\s/.test(l)) ?? null;
+    const rc = await this.rateCheck();
+    return {
+      noticeDays: NOTICE_DAYS, autoRemindDays: c.days, clause4,
+      counts: { total: c.total, scheduled: c.scheduled, applied: c.applied, canceled: c.canceled, noticed: c.noticed, reminds: c.reminds, autoReminds: c.autoReminds, snaps: c.snaps },
+      channels: `사이트 안 알림 켜짐 · 메일 ${c.email ? '켜짐' : '꺼짐'} · 문자(알림톡) ${c.sms ? '켜짐' : '꺼짐'}`,
+      slots: rc.terms.flatMap((t) => t.slots.map((x) => ({ version: t.version, status: t.status, label: x.label, termText: x.termText, rate: x.rate, note: x.note }))),
+    };
   }
 
   /** 오픈 차단 항목. 설정·약관·푸터를 함께 봅니다. v10.200 — 줄마다 누가(owner) · 풀리는 방법(how) */

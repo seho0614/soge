@@ -1616,6 +1616,7 @@
     "GET /admin/terms/outsource-check",
     "GET /admin/terms/sources",
     "GET /admin/terms/{code}/source",
+    "GET /admin/terms/rate-check",
     "GET /admin/holidays",
     "PUT /admin/holidays",
     "DELETE /admin/holidays/{day}"
@@ -3279,6 +3280,7 @@
     "PATCH /admin/health/type-rates/{sellerType}",
     "GET /admin/health/rate-impact",
     "GET /admin/health/rate-schedules",
+    "GET /admin/health/rate-schedules/auto-remind-preview",
     "POST /admin/health/rate-schedules/{id}/cancel",
     "POST /admin/health/rate-schedules/{id}/notice",
     "POST /admin/health/rate-schedules/{id}/remind",
