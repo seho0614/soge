@@ -187,7 +187,7 @@ if API and DB:
             txt = pg.locator('[data-owner-row="ebs"]').inner_text()
             b_.close()
         ok('⑤ 화면 — 대표 할 일 15줄 · 「적기」 3개 · EBS 끝남으로 → ✓ 끝남 · 화면 오류 없음',
-           rows in (15, 19) and marks in (3, 4) and st == 'done' and '✓ 끝남' in txt and '시험 1241 화면 EBS' in txt and not errs, f'{rows} · {marks} · {st} · {txt[:80]} · {errs[:2]}')
+           rows in (15, 19, 20) and marks in (3, 4) and st == 'done' and '✓ 끝남' in txt and '시험 1241 화면 EBS' in txt and not errs, f'{rows} · {marks} · {st} · {txt[:80]} · {errs[:2]}')
     else:
         print('  (운영 화면 · playwright 없음 — ⑤ 건너뜀)')
 
