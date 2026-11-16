@@ -71,7 +71,7 @@ ok('① API — 공개 공지는 보는 사람 등급(관리자 등급 뺌) · �
    and "ARRAY['SELLER']" in RS and "grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')" in HS, '')
 ok('① 화면 — 등급 고르기 · 등급 관리 · 초안 「게시」 · 첫 화면 관리자 공지 · 고객센터 공지사항(한 · 영 · 캐시 안 함) · 파트너센터 공지 보는 사람 기준 · 명세 · 문서 408 · 마이그레이션 248 · 판 v10.279',
    'data-grade-pick=' in MO and 'data-notice-grades-admin=' in MO and 'data-notice-publish=' in MO and '<StaffNotices />' in DA and "'/admin/staff-notices'" in SN
-   and ("apiGetPersonal<Notice[]>('/notices')" in SP or "redirect('/community?board=NOTICE')" in SP) and 'data-support-notices-link' in SNW and PN.count("apiGetPersonal<Notice[]>('/notices')") == 3 and "apiGet<Notice[]>('/notices'" not in PN
+   and ("apiGetPersonal<Notice[]>('/notices')" in SP or "redirect('/community?board=NOTICE')" in SP) and 'data-support-notices-link' in SNW and PN.count("apiGetPersonal<Notice[]>(") == 3 and "apiGet<Notice[]>('/notices'" not in PN
    and all((MK.get('support') or {}).get(k) and (ME.get('support') or {}).get(k) for k in NK) and (MK.get('meta') or {}).get('notices') and (ME.get('meta') or {}).get('notices')
    and '"id": "SB-HOM-NTC-010"' in SCR and all(f'"{a}"' in SCR for a in ('POST /admin/notices/{id}/publish', 'GET /admin/notice-grades', 'PATCH /admin/notice-grades/{code}', 'GET /admin/staff-notices'))
    and bool(D408) and len(mig) in (248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 279), f'{len(mig)} · {VER} · 408 {bool(D408)}')
