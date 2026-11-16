@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { FooterLink, Gwan } from '@/lib/types';
 import type { HomeContent } from './content';
-import type { AdServe, MeSummary, WeatherToday } from './types';
+import type { AdServe, HomeNotice, MeSummary, WeatherToday } from './types';
 import type { Poll as PollData } from '../community/poll';
 import { HERO_SEARCH_EVENT, HeroSearch } from './HeroSearch';
 import { HeroPromo, type PromoSlide } from './HeroPromo';
@@ -52,9 +52,11 @@ export interface HomeViewProps {
   weather: WeatherToday | null;
   /** v10.188 (docs/294) — AI 상담이 켜졌는가. 꺼져 있으면 「소뱅AI」 대신 「통합 검색」 문구 */
   ai?: boolean;
+  /** v10.319 (docs/445) 「상단 고정」 공지(최대 2건 · 없으면 띠 없음) */
+  notices?: HomeNotice[];
 }
 
-export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false }: HomeViewProps) {
+export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false, notices = [] }: HomeViewProps) {
   const t = useTranslations('main');
   const tq = useTranslations('gwan.qm');
   const on = (code: string) => live.includes(code);
@@ -64,6 +66,19 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
 
       <section className="home-hero" aria-labelledby="home-h1">
         <div className="home-in">
+          {/* v10.319 (docs/445) 「상단 고정」 공지 띠 — 누르면 고객센터 › 공지사항의 그 공지로 */}
+          {notices.length > 0 && (
+            <nav className="home-ntc" aria-label={t('ntc.aria')} data-home-notices={notices.length}>
+              {notices.map((n) => (
+                <Link key={n.id} href={`/support/notices#n-${n.id}`} className="home-ntci" data-home-notice={n.id}>
+                  <span className="home-ntcb">{t('ntc.label')}</span>
+                  <span className="home-ntct">{n.title}</span>
+                  {n.publishedAt && <span className="home-ntcd">{String(n.publishedAt).slice(0, 10)}</span>}
+                </Link>
+              ))}
+              <Link href="/support/notices" className="home-ntcm" data-home-notice-more>{t('ntc.more')}</Link>
+            </nav>
+          )}
           <div className="home-heroin">
             <div className="home-herol">
               <span className="home-aibdg" data-hero-ai={ai ? 'on' : 'off'}><Pic name="spark-s" h={19} /> {t(ai ? 'hero.aiBadge' : 'hero.aiBadgeOff')}</span>

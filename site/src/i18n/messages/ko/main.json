@@ -345,5 +345,6 @@
       "trustGoods": "검증된 업체의 매물",
       "trustSameDay": "인증업체 1곳이 연락"
     }
-  }
+  },
+  "ntc": { "aria": "고정 공지", "label": "공지", "more": "공지 모두 보기" }
 }

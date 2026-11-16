@@ -703,6 +703,7 @@ function Content() {
         </div>
         <div className="acts">
           <label><input type="checkbox" checked={f.isPinned} onChange={(e) => setF({ ...f, isPinned: e.target.checked })} /> 상단 고정</label>
+          <span className="dim" data-notice-where>게시한 공지는 사용자 웹 <b>고객센터 › 공지사항</b>에 나옵니다. <b>상단 고정</b>이면 <b>메인 첫 화면 공지 띠</b>에도(최근 2건 · 볼 수 있는 등급 그대로).</span>
         </div>
         <NoticeFilesPick files={nfiles} onChange={setNfiles} onErr={a.setErr} />
         {/* v10.282 (D211) 지금 게시 · 예약 · 초안 · 끝 날짜 */}

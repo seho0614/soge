@@ -345,5 +345,6 @@
       "trustGoods": "Listings from verified businesses",
       "trustSameDay": "one verified company contacts you"
     }
-  }
+  },
+  "ntc": { "aria": "Pinned notices", "label": "Notice", "more": "All notices" }
 }

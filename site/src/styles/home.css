@@ -68,6 +68,16 @@
 .home-icbtn:hover { background: var(--hv-w); color: var(--hv); }
 
 /* ── 히어로 ─────────────────────────────────────────────────────────── */
+/* v10.319 (docs/445) 「상단 고정」 공지 띠 — 히어로 맨 위 · 한 줄씩 · 긴 제목은 「…」 */
+.home-ntc { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 14px; }
+.home-ntci { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 6px 14px; border-radius: 999px; background: #fff; box-shadow: var(--sgb-shadow); color: var(--hk); text-decoration: none; }
+.home-ntci:hover { color: var(--hv); }
+.home-ntcb { flex: none; padding: 2px 8px; border-radius: 999px; background: var(--hv-w); color: var(--hv); font-size: 13px; font-weight: 700; }
+.home-ntct { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.home-ntcd { flex: none; color: var(--hk3); font-size: 13px; }
+.home-ntcm { display: inline-flex; align-items: center; min-height: 44px; color: var(--hk3); font-size: 14px; }
+.home-ntcm:hover { color: var(--hv); }
+
 .home-hero {
   position: relative; overflow: hidden; margin-top: -22px; padding: 58px 0 24px;
   background:

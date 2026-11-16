@@ -17,6 +17,7 @@
  *   늘        GET /gwans · /footer-links · /site-settings/public · /ads/serve?slot=HERO(성향 광고) · /me/summary(로그인) · /community/polls?scope=home(투표)
  *             · /weather/today?region=(v10.49 오늘의 날씨 · 10분 캐시 · 지역은 쿠키 sgb_wx · 없으면 운영이 정한 처음 지역)
  *             · /agent/chat/status(v10.188 「소뱅AI」 문구를 켤지) · /search/keywords?limit=4&place=hero(v10.188 추천 칩 · v10.189 운영이 고른 칩)
+ *             · /notices(v10.319 「상단 고정」 공지 띠 · 보는 사람 등급 기준 · 캐시 안 함)
  *   live 만   GET /listings · /requests · /health/products · /community/posts
  */
 import { cookies } from 'next/headers';
@@ -25,7 +26,7 @@ import { apiGet, apiGetPersonal, apiGetVisitor } from '@/lib/api';
 import { me } from '@/lib/session';
 import type { FooterLink, Gwan, ListingListData } from '@/lib/types';
 import type { HltProduct } from '@/components/health/types';
-import { WX_COOKIE, WX_REGION_RE, type AdServe, type HomeRequest, type MeSummary, type WeatherToday } from '@/components/home/types';
+import { HOME_NOTICE_MAX, WX_COOKIE, WX_REGION_RE, type AdServe, type HomeNotice, type HomeRequest, type MeSummary, type WeatherToday } from '@/components/home/types';
 import type { PromoSlide } from '@/components/home/HeroPromo';
 import type { Poll } from '@/components/community/poll';
 import { HomeView } from '@/components/home/HomeView';
@@ -55,7 +56,7 @@ export default async function Home() {
   const wxPick = (await cookies()).get(WX_COOKIE)?.value ?? '';
   const wxRegion = WX_REGION_RE.test(wxPick) ? wxPick : '';
 
-  const [gwans, links, settings, ad, summary, polls, weather, aiStat, hotKw] = await Promise.all([
+  const [gwans, links, settings, ad, summary, polls, weather, aiStat, hotKw, notices] = await Promise.all([
     apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]),
     apiGet<FooterLink[]>('/footer-links', 300).catch(() => [] as FooterLink[]),
     /* 60초 — 운영이 넣은 사회관계망 주소 · 법정 표시가 1분 안에 메인에 반영됩니다(v10.14 · 전에는 5분) */
@@ -71,7 +72,11 @@ export default async function Home() {
     /* v10.188 (Hero ③) — 추천 칩은 실제로 결과가 나온 인기 검색어(제한업종 낱말 뺌 · 검색 팝업과 같은 규칙). 3개 미만이면 사전의 예시 칩
      * v10.189 (D172 · docs/296) — place=hero: 운영이 고른 말(설정 home.hero_chips)이 있으면 그 말(source pick · 1분 안에 반영) */
     apiGet<{ items?: { term: string }[]; source?: string }>('/search/keywords?limit=4&place=hero', 60).catch(() => null),
+    /* v10.319 (docs/445) — 공지는 고객센터 › 공지사항에만 나와 메인에서 보이지 않았음 → 「상단 고정」 공지만 메인 띠에(서버 순서 = 고정 먼저 · 최근 순) */
+    apiGetPersonal<HomeNotice[]>('/notices').catch(() => [] as HomeNotice[]),
   ]);
+  const pinned = (Array.isArray(notices) ? notices : []).filter((n) => n.isPinned).slice(0, HOME_NOTICE_MAX)
+    .map((n) => ({ id: n.id, title: n.title, isPinned: true, publishedAt: n.publishedAt }));
   const aiOn = aiStat?.enabled === true;
   const hot = (hotKw?.items ?? []).map((k) => k.term).filter(Boolean);
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
@@ -107,7 +112,7 @@ export default async function Home() {
     <Msgs ns={['main']}>
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
         live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
-        weather={weather} />
+        weather={weather} notices={pinned} />
     </Msgs>
   );
 }
