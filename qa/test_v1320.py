@@ -107,7 +107,7 @@ if API and DB:
                                             'publishedAt': now, 'notifyConfirm': '모두에게 알림'}, TA)
         nid = r.get('id')
         link = psql(f"SELECT n.link_url FROM notifications n JOIN accounts a ON a.id = n.account_id WHERE a.email = 'buyer@x.com' AND n.event_code = 'NOTICE_PUBLISHED' AND n.title LIKE '새 공지 — {T} 회원%' LIMIT 1") if nid else ''
-        bad = call('POST', '/community/posts', {'board': 'NOTICE', 'title': f'{T} 글', 'body': '소개광장에서 공지 글을 써 봄 — 막혀야 함'}, TA)
+        bad = call('POST', '/me/community/posts', {'board': 'NOTICE', 'title': f'{T} 글', 'body': '소개광장에서 공지 글을 써 봄 — 막혀야 함'}, login('buyer@x.com'))
         ok('③ API — 운영 공지(로그인 회원 · 고정 · 알림) 등록 → buyer 알림 주소 = /community?board=NOTICE#n-<id> · 소개광장 공지 글쓰기 400',
            bool(nid) and link == f'/community?board=NOTICE#n-{nid}' and bad.get('_err') == 400, f"{r.get('_err')} {r.get('code')} · {link} · {bad.get('_err')}")
         if SITE:
