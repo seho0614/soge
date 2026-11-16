@@ -4,6 +4,7 @@ import { IntegTestService } from './integ-test.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { NOTICE_MAX_FILES, noticeFilesSql } from './notice-files';
 import { RequestCtx } from '../../core/request-context';
+import { maskName } from '../../common/mask';
 
 /**
  * 관 · 메인 운영 (SB-ADM-SIT-* · MAIN-*).
@@ -364,6 +365,49 @@ export class SiteService {
       id, grades, reads, bulk: Number(c?.bulk ?? 0), target, rate: rate(reads, target),
       byGrade: byGrade.map((g) => ({ code: g.code, name: g.name, target: Number(g.target), reads: Number(g.reads), rate: rate(Number(g.reads), Number(g.target)) })),
     };
+  }
+
+  /**
+   * v10.329 (docs/457) — 공지 읽음 CSV(최고 관리자). 머리(제목 · 게시 · 읽음 / 대상 · 비율 · 받은 때) · 등급별 표 · 읽은 회원 줄
+   *   (회원 번호 앞 8자리 · 가린 이름 · 상태 · 해당 등급 · 처음 · 마지막 펼침 · 횟수 · 「모두 읽음」만). 받을 때마다 감사 NOTICE_READS_EXPORT · 바꾸는 것 없음.
+   */
+  async noticeReadsCsv(id: string) {
+    const r = await this.noticeReads(id);
+    const [n] = await this.db.query<{ title: string; pub: string | null }>(
+      `SELECT title, to_char(published_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS pub FROM notices WHERE id = $1::uuid`, [id]);
+    const codes = r.grades.filter((g) => g !== 'PUBLIC' && g !== 'STAFF');
+    const rows = await this.db.query<{ account_id: string; name: string | null; status: string; grades: string[]; first_at: string; last_at: string; reads: number; bulk: boolean }>(
+      `SELECT r.account_id, a.name, a.status::text AS status,
+              ARRAY(SELECT g FROM unnest(fn_notice_grades(a.id)) g WHERE g = ANY($2::text[]) ORDER BY g) AS grades,
+              to_char(r.first_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS first_at,
+              to_char(r.last_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS last_at, r.reads, r.bulk
+         FROM notice_reads r JOIN accounts a ON a.id = r.account_id
+        WHERE r.notice_id = $1::uuid
+        ORDER BY r.bulk, r.first_at, r.account_id
+        LIMIT 50000`, [id, codes]);
+    const c = (v: unknown) => { const t = v == null ? '' : String(v); return /^[=+\-@]/.test(t) ? `'${t}` : /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const pct = (x: number | null) => (x == null ? '—' : `${x}%`);
+    const nameOf = new Map(r.byGrade.map((g) => [g.code, g.name]));
+    const head = [
+      ['공지 읽음 기록', n?.title ?? ''],
+      ['공지 게시(한국)', n?.pub ?? '(게시 안 함)'],
+      ['열람 등급', r.grades.map((g) => nameOf.get(g) ?? g).join(' · ')],
+      ['읽음 / 대상', r.target == null ? `${r.reads} / 세지 않음(전체 공개 · 관리자)` : `${r.reads} / ${r.target} (${pct(r.rate)})`],
+      ['「모두 읽음」 표시(셈에서 뺌)', r.bulk],
+      ['받은 때(한국)', new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')],
+    ];
+    const grades = r.byGrade.length ? ['', ['등급', '대상', '읽음', '비율'].join(','), ...r.byGrade.map((g) => [g.name, g.target, g.reads, pct(g.rate)].map(c).join(','))] : [];
+    const cols = ['회원 번호(앞 8자리)', '이름(가림)', '회원 상태', '해당 등급', '처음 펼침(한국)', '마지막 펼침(한국)', '펼친 횟수', '「모두 읽음」만'];
+    const csv = '\uFEFF' + [...head.map((x) => x.map(c).join(',')), ...grades, '', cols.join(','),
+      ...rows.map((x) => [String(x.account_id).slice(0, 8), (maskName(x.name) ?? '').replace(/\*/g, '○'), x.status, (x.grades ?? []).map((g) => nameOf.get(g) ?? g).join(' · '),
+        x.first_at, x.bulk ? '' : x.last_at, x.bulk ? '' : x.reads, x.bulk ? '예' : '아니오'].map(c).join(','))].join('\r\n') + '\r\n';
+    await this.db.query(
+      `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, after_data, ip, user_agent)
+       VALUES ($1, $2, 'NOTICE_READS_EXPORT', 'NOTICE', $3::uuid, $4::jsonb, $5, $6)`,
+      [RequestCtx.actorId(), RequestCtx.get()?.actorRole ?? null, id, JSON.stringify({ rows: rows.length, reads: r.reads, bulk: r.bulk, target: r.target }),
+       RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
+    return { filename: `notice-reads-${(n?.pub ?? 'draft').slice(0, 10)}-${id.slice(0, 8)}.csv`, csv, rows: rows.length,
+      note: `회원 ${rows.length}줄(펼침 ${r.reads} · 「모두 읽음」 ${r.bulk})을 담았습니다 — 받은 기록이 감사 기록에 남습니다.` };
   }
 
   /** v10.281 (D211) — 알림 받을 사람 수 미리 보기(fn_notice_audience) */

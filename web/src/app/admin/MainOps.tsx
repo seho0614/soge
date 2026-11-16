@@ -578,6 +578,11 @@ function Content() {
     setRdOf(id); setRd(null); setRdErr(false);
     try { setRd(await api<NoticeReads>(`/admin/notices/${id}/reads`)); } catch { setRdErr(true); }
   };
+  const readsCsv = (id: string) => void a.run('ntcsv', async () => {
+    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/notices/${id}/reads/export`);
+    const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([x.csv], { type: 'text/csv;charset=utf-8' })); el.download = x.filename; el.click(); URL.revokeObjectURL(el.href);
+    return x;
+  }, undefined, 'CSV 를 받았습니다 — 받은 기록이 감사 기록(NOTICE_READS_EXPORT)에 남습니다.');
   const editGrade = (g: NoticeGrade, what: 'name' | 'sort' | 'active') => {
     let body: Record<string, unknown> = {};
     if (what === 'name') { const v = prompt(`${g.code} 등급 이름(1 ~ 30자)`, g.name); if (v === null || !v.trim()) return; body = { name: v.trim() }; }
@@ -717,7 +722,9 @@ function Content() {
       {rdOf && (
         <div className="card pad" data-notice-reads-detail={rdOf}>
           <b>공지 읽음 자세히</b> <span className="dim">— 펼쳐 본 회원 · 「모두 읽음」 단추로만 표시된 회원은 셈에서 뺌 · 한 회원이 여러 등급이면 등급마다 셈</span>{' '}
+          <button className="btn-sm" disabled={a.busy === 'ntcsv' || !rd} onClick={() => readsCsv(rdOf)} data-notice-reads-csv={rdOf}>CSV 받기</button>{' '}
           <button className="btn-sm" onClick={() => setRdOf(null)} data-notice-reads-close>닫기</button>
+          <p className="hint">CSV 에는 등급별 표와 읽은 회원(회원 번호 앞 8자리 · 가린 이름 · 처음 · 마지막 펼침 · 횟수 · 「모두 읽음」만)이 들어갑니다. 받을 때마다 감사 기록에 남습니다(최고 관리자만).</p>
           {rdErr ? <p className="form-error" role="alert">읽음 기록을 불러오지 못했습니다.</p> : !rd ? <p className="dim">불러오는 중…</p> : (
             <>
               <p data-notice-reads-sum={`${rd.reads}/${rd.target ?? ''}/${rd.bulk}`}>

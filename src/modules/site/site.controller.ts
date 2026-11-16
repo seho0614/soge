@@ -251,6 +251,14 @@ export class SiteController {
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   noticeReads(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeReads(id); }
 
+  @Get('notices/:id/reads/export')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '공지 읽음 CSV (SUPER)', description: 'v10.329 (docs/457) 위 기록을 엑셀용 CSV 로 — 머리(제목 · 게시 · 읽음 / 대상 · 비율) · 등급별 표 · 읽은 회원 줄(회원 번호 앞 8자리 · 가린 이름 · 처음 · 마지막 펼침 · 횟수 · 「모두 읽음」만). 받을 때마다 감사 NOTICE_READS_EXPORT(공지 번호 · 줄 수) · 바꾸는 것 없음.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ schema: { type: 'object', properties: { filename: { type: 'string' }, csv: { type: 'string' }, rows: { type: 'integer' }, note: { type: 'string' } } } })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  noticeReadsCsv(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeReadsCsv(id); }
+
   @Get('notice-grades')
   @ApiOperation({ summary: '공지 열람 등급', description: 'v10.279 (D210) 등급 7개 — 코드 · 판단 규칙 고정 · 이름 · 순서 · 사용 여부 · 쓰인 공지 수.' })
   @ApiOkResponse({ type: Object, isArray: true })

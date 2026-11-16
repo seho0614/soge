@@ -5,6 +5,7 @@
  *   pinned: 「상단 고정」만 최대 2줄(메인 띠와 같은 기준) → 「공지」 탭의 그 공지로
  *   v10.324 (docs/451) 찾기 칸(nq · 제목 · 본문) · 30개씩 「지난 공지 더 보기」(np) — 고정 공지는 앞 쪽에 먼저
  *   v10.323 고침 — 로그인 안 하면 「로그인하면 회원 공지도」 안내(옛 고객센터 › 공지사항과 같음 · data-notice-login)
+ *   v10.327 (docs/455) #n-<id> 공지가 이 쪽에 없으면(30개 밖) 한 건만 불러 「지난 공지」로 펼친 채(NoticeHashOpen)
  *   v10.322 (D222 · docs/449) 고정 줄에도 「새 글」 · 공지 탭 「모두 읽음」(로그인 · 안 읽은 공지가 있을 때) · #n-<id> 로 오면 그 공지를 펼친 채(NoticeDetails)
  */
 import Link from 'next/link';
@@ -12,6 +13,7 @@ import { getTranslations } from 'next-intl/server';
 import { NoticeDetails } from '@/components/common/NoticeDetails';
 import { NoticeFiles, type NoticeFile } from '@/components/common/NoticeFiles';
 import { PlazaReadAll } from './PlazaReadAll';
+import { NoticeHashOpen } from '@/components/common/NoticeHashOpen';
 
 export interface PlazaNotice { id: string; title: string; body: string; isPinned: boolean; publishedAt: string | null; unread?: boolean; files?: NoticeFile[] }
 export const PLAZA_PINNED_MAX = 2;
@@ -50,6 +52,7 @@ export async function PlazaNotices({ rows, login, mode, nq = '', np = 1 }: { row
         <button type="submit" className="btn btn-sm">{t('ntc.qGo')}</button>
         {nq && <Link href="/community?board=NOTICE" data-plaza-notice-search-clear>{t('ntc.qClear')}</Link>}
       </form>
+      <NoticeHashOpen shown={rows.map((n) => n.id)} login={login} labels={{ old: t('ntc.oldOne'), isNew: s('ntcNew'), files: s('ntcFiles'), gone: t('ntc.gone') }} />
       {rows.length === 0 ? <p className="plz-empty" data-plaza-notices-empty>{nq ? t('ntc.qEmpty', { q: nq }) : np > 1 ? t('ntc.pageEmpty') : t('ntc.empty')}</p> : (
         <ul className="plz-ntcl">
           {rows.map((n) => (

@@ -105,6 +105,16 @@ export class PublicController {
   @ApiOkResponse({ type: NoticeDto, isArray: true })
   notices(@Query('gwanCode') gwanCode?: string, @Query('q') q?: string, @Query('page') page?: string) { return this.svc.notices(gwanCode, q, page); }
 
+  @Get('notices/:id')
+  @ApiOperation({
+    summary: '공지 한 건 (보는 사람 기준)',
+    description: 'v10.327 (docs/455) 알림 · 주소 #n-<id> 로 온 공지가 목록 첫 쪽(30개) 밖이면 화면이 이 한 건을 불러 펼친 채 보여 줌. 목록과 같은 기준(게시 중 · 끝나지 않음 · 내 등급에 보임 · 관리자 등급 뺌)이 아니면 404. 승인된 번역이 있으면 화면 언어로.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: NoticeDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  notice(@Param('id') id: string) { return this.svc.notice(id); }
+
   @Get('notices/:id/files/:n')
   @ApiOperation({
     summary: '공지 첨부 (보는 사람 기준)',

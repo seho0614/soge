@@ -169,6 +169,29 @@ export class PublicService {
   }
 
   /**
+   * v10.327 (docs/455) — 공지 한 건. 목록(notices)과 같은 칸 · 같은 기준 · 아니면 404(없는 것과 같이).
+   */
+  async notice(id: string) {
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID.test(id)) throw new NotFound('공지를 찾을 수 없습니다.');
+    const rows = await this.db.query<Record<string, unknown>>(
+      `SELECT id, gwan_code AS "gwanCode", title, body,
+              is_pinned AS "isPinned", published_at AS "publishedAt",
+              ($2::uuid IS NOT NULL AND published_at > now() - interval '30 days'
+               AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = notices.id AND r.account_id = $2::uuid)) AS unread,
+              ${noticeFilesSql('notices')} AS files
+         FROM notices
+        WHERE id = $1::uuid
+          AND published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now())
+          AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')`,
+      [id, RequestCtx.actorId() ?? null]);
+    if (!rows.length) throw new NotFound('공지를 찾을 수 없습니다.');
+    const [one] = await this.i18n.overlay(rows, 'NOTICE', (r) => String(r.id), { title: 'title', body: 'body' });
+    return one;
+  }
+
+  /**
    * v10.295 (D217 · docs/416) — 공지 첨부 바이트. 공지 목록과 같은 기준(게시 중 · 끝나지 않음 · 내 등급에 보임 · 관리자 등급 뺌)으로 볼 수 있는 공지만 ·
    *   운영(ADMIN · SUPER)은 미리 보기로 모든 공지. 아니면 없는 것과 같이 404.
    */

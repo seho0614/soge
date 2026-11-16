@@ -10,6 +10,9 @@ import { getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
 import { NoticeDetails } from '@/components/common/NoticeDetails';
 import { NoticeFiles, type NoticeFile } from '@/components/common/NoticeFiles';
+import { NoticeHashOpen } from '@/components/common/NoticeHashOpen';
+import { NoticeEmptyText, NoticePager, NoticeSearch, noticeQuery } from '@/components/common/NoticeListTools';
+import { PlazaReadAll } from '@/components/community/PlazaReadAll';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('notices') };
@@ -30,18 +33,21 @@ interface Notice { id: string; gwanCode: string | null; title: string; body: str
  * 정책이 바뀌면 여기에 남습니다. 알림톡은 놓칠 수 있지만 **이 목록은 남아 있어야** "못 들었다" 는 분쟁을 줄입니다.
  *   공지사항 = GET /notices (본사 공지) · 알림 = GET /partner/notices (내 알림)
  * v10.31 (W5 · 10/10 시안 기준) — 알림 분류(리드 · 검수 · 리드 이용료 · 정산 · 공지) · 「보기」의 화면 이동(분류별) · 「모두 읽음」(POST /partner/notices/read-all).
+ * v10.328 (docs/456) 「공지사항」 탭 — 소개광장 › 공지와 같은 찾기(nq) · 30개씩 쪽(np) · 공지 「모두 읽음」(POST /me/notices/read-all) · 줄마다 #n-<id> · 30개 밖 공지 한 건(NoticeHashOpen).
  */
-export default async function NoticesPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function NoticesPage({ searchParams }: { searchParams: Promise<{ tab?: string; nq?: string; np?: string }> }) {
   const p = await me();
   if (!p) redirect('/login');
   const t = await getTranslations('partner.notices');
   const tg = await getTranslations('header.gwan');
   const sp = await searchParams;
   const tab = sp.tab === 'alarm' ? 'alarm' : 'notice';
+  const tp = await getTranslations('plaza');
+  const { nq, np, api } = noticeQuery(sp);
 
   const [rows, notices] = await Promise.all([
     apiGet<N[]>('/partner/notices', 0).catch(() => [] as N[]),
-    apiGetPersonal<Notice[]>('/notices').catch(() => [] as Notice[]),
+    apiGetPersonal<Notice[]>(api).catch(() => [] as Notice[]),
   ]);
   const unread = rows.filter((r) => !r.readAt).length;
 
@@ -52,11 +58,16 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
         { key: 'alarm', label: t('tabAlarm'), count: unread, href: '/partner/notices?tab=alarm' },
       ]} />
 
+      {tab === 'notice' && <>
+        {notices.some((x) => x.unread === true) && <p data-notice-read-all-row><PlazaReadAll label={tp('ntc.readAll')} failLabel={tp('ntc.readAllFail')} /></p>}
+        <NoticeSearch path="/partner/notices" nq={nq} />
+        <NoticeHashOpen shown={notices.map((x) => x.id)} login labels={{ old: tp('ntc.oldOne'), isNew: t('new'), files: t('files'), gone: tp('ntc.gone') }} />
+      </>}
       {tab === 'notice' ? (
-        notices.length === 0 ? <Empty>{t('empty')}</Empty> : (
+        notices.length === 0 ? <Empty><NoticeEmptyText nq={nq} np={np} empty={t('empty')} /></Empty> : (<>
           <Tw head={[t('thTitle'), t('thKind'), t('thDate')]}>
             {notices.map((x) => (
-              <tr key={x.id}>
+              <tr key={x.id} id={`n-${x.id}`}>
                 <td>{x.isPinned ? <><Bg tone="no">{t('pinned')}</Bg> </> : null}<b>{x.title}</b>
                   {x.body ? <NoticeDetails id={x.id} unread={x.unread === true} newLabel={t('new')} summary={<span className="pt-ls">{t('viewBody')}</span>}><p className="pt-ls" style={{ whiteSpace: 'pre-wrap' }}>{x.body}</p><NoticeFiles id={x.id} files={x.files} label={t('files')} /></NoticeDetails> : null}
                 </td>
@@ -65,7 +76,8 @@ export default async function NoticesPage({ searchParams }: { searchParams: Prom
               </tr>
             ))}
           </Tw>
-        )
+          <NoticePager path="/partner/notices" nq={nq} np={np} count={notices.length} />
+        </>)
       ) : rows.length === 0 ? (
         <Empty>{t('emptyAlarm')}</Empty>
       ) : (

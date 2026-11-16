@@ -1703,6 +1703,7 @@
     "PATCH /admin/notices/{id}",
     "POST /admin/notices/{id}/unpublish",
     "GET /admin/notices/{id}/revisions",
+    "GET /admin/notices/{id}/reads/export",
     "GET /admin/notices/{id}/reads",
     "POST /files",
     "POST /files/{id}/complete",
@@ -3398,6 +3399,7 @@
     "GET /notices",
     "POST /me/notices/{id}/read",
     "POST /me/notices/read-all",
+    "GET /notices/{id}",
     "GET /notices/{id}/files/{n}"
    ]
   },
@@ -3944,6 +3946,8 @@
    "apis": [
     "GET /notices",
     "POST /me/notices/{id}/read",
+    "GET /notices/{id}",
+    "POST /me/notices/read-all",
     "GET /notices/{id}/files/{n}"
    ]
   },
@@ -4623,6 +4627,9 @@
     "POST /partner/notices/read-all",
     "POST /partner/notices/{id}/read",
     "POST /me/notices/{id}/read",
+    "GET /notices",
+    "GET /notices/{id}",
+    "POST /me/notices/read-all",
     "GET /notices/{id}/files/{n}"
    ],
    "nav": "SB-PTC-DSH-010",

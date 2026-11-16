@@ -33,6 +33,15 @@
 .sh-nav .m-only { display: none; }
 .sh-nav .m-lang { display: none; align-items: center; }
 .sh-dot { position: absolute; top: 7px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--sgb-point, #f26b1d); box-shadow: 0 0 0 2px #fff; }   /* v10.294 (docs/415) 공지 점 */
+.nt-q { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }   /* v10.328 (docs/456) 파트너센터 공지 찾기 · 쪽 */
+.nt-q input[type="search"] { flex: 1 1 220px; min-height: 44px; padding: 0 12px; border: 1px solid var(--sgb-line, #e3e6eb); border-radius: var(--sgb-r-sm, 7px); font: inherit; }
+.nt-q a, .nt-pg a { display: inline-flex; align-items: center; min-height: 44px; }
+.nt-pg { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
+.nt-pg [data-notice-older] { margin-left: auto; }
+.nt-old { padding: 12px; margin: 0 0 8px; scroll-margin-top: 96px; border: 1px solid var(--sgb-point, #f26b1d); }   /* v10.327 (docs/455) 30개 밖 공지 한 건 */
+.nt-old summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; cursor: pointer; }
+.nt-oldb { display: inline-block; padding: 0 6px; border-radius: 9px; background: var(--sgb-bg, #f4f5f7); font: 700 11px/18px var(--sgb-font-body); }
+.nt-gone { margin: 0 0 12px; font-size: 13px; color: var(--sgb-ink-2, #5b6270); }
 .nt-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }   /* v10.295 공지 첨부 */
 .nt-files img { display: block; max-width: 100%; max-height: 360px; border-radius: 8px; border: 1px solid var(--sgb-line, #e3e6eb); }
 .nt-docs { flex-basis: 100%; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
