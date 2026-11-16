@@ -6,6 +6,7 @@ import { isBoard, type PostRow } from '@/components/community/types';
 import { BoardBadge, Pager, PlazaHero, PlazaTabs, PLAZA_TABS, dot, plazaHref } from '@/components/community/Plaza';
 import { TownBadge, TownVerify } from '@/components/community/TownVerify';
 import { TownPicks } from '@/components/community/TownPicks';
+import { PlazaNotices, type PlazaNotice } from '@/components/community/PlazaNotices';
 import { me } from '@/lib/session';
 import '@/styles/plaza.css';
 
@@ -25,6 +26,8 @@ interface Board { items: PostRow[]; total: number; page: number; size: number; p
  *   사람마다 응답이 다릅니다 — 캐시하면 남의 대기 글이 보이거나 내 글이 "사라집니다".
  * ★ 작성자는 서버가 첫 글자만 내려줍니다(김OO · G-146). 화면에서 가리는 것이 아닙니다.
  * 비로그인도 봅니다. 글쓰기만 로그인이 필요합니다.
+ * v10.320 (docs/446) 운영 공지(GET /notices · 보는 사람 등급) — 「공지」 탭 맨 위에 모두 · 「전체」 탭 첫 쪽 맨 위에 「상단 고정」 2줄.
+ *   소개광장 공지 글(posts · NOTICE)은 그 아래 그대로 — 새로 쓰기는 입구(CreatePostDto)에서 이미 받지 않음.
  */
 export default async function CommunityPage({ searchParams }: {
   searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string }>;
@@ -46,6 +49,10 @@ export default async function CommunityPage({ searchParams }: {
     return null;
   });
   const rows = b?.items ?? [];
+  const login = !!(await me());
+  const showNtc = !q && (cur === 'NOTICE' || (cur === '' && page === 1));
+  const ntc = showNtc ? await apiGetPersonal<PlazaNotice[]>('/notices').catch(() => [] as PlazaNotice[]) : [];
+  const ntcRows = Array.isArray(ntc) ? ntc : [];
   const hrefOf = (p: number) => plazaHref({ board: cur, q, page: p });
 
   return (
@@ -54,8 +61,9 @@ export default async function CommunityPage({ searchParams }: {
       <div className="plz-body">
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
-        {!q && <TownPicks loggedIn={!!(await me())} />}
-        <TownVerify loggedIn={!!(await me())} />
+        {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} />}
+        {!q && cur !== 'NOTICE' && <TownPicks loggedIn={login} />}
+        {cur !== 'NOTICE' && <TownVerify loggedIn={login} />}
         {q && b && (
           <p className="plz-found" role="status">
             {t.rich('list.found', { b: (c) => <b>{c}</b>, q, n: b.total.toLocaleString('ko-KR'), clear: (c) => <Link href={plazaHref({ board: cur })}>{c}</Link> })}
@@ -64,7 +72,7 @@ export default async function CommunityPage({ searchParams }: {
 
         {err ? (
           <p className="plz-err form-error" role="alert">{err} <Link href="/community">{t('list.toAll')}</Link></p>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && cur === 'NOTICE' && !q ? null : rows.length === 0 ? (
           <p className="plz-empty">
             {b && b.total > 0
               ? <>{t.rich('list.emptyPage', { page: String(page), first: (c) => <Link href={hrefOf(1)}>{c}</Link> })}</>
@@ -74,6 +82,7 @@ export default async function CommunityPage({ searchParams }: {
           </p>
         ) : (
           <div className="plz-tblw">
+            {cur === 'NOTICE' && <h2 className="plz-ntch" data-plaza-notice-posts>{t('ntc.posts')}</h2>}
             <table className="plz-tbl">
               <thead><tr><th scope="col">{t('list.th.title')}</th><th scope="col">{t('list.th.board')}</th><th scope="col">{t('list.th.author')}</th><th scope="col">{t('list.th.date')}</th><th scope="col">{t('list.th.views')}</th></tr></thead>
               <tbody>

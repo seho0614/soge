@@ -25,11 +25,12 @@ const toneOf = (n: Noti) => n.tone ?? (/FAIL|REJECT|BLOCK|EXPIR|OVERDUE|PAST_DUE
 
 /* 시안처럼 바로가기 단추에 갈 곳의 이름을 붙입니다(결제 수단 확인 · 구독 보기 · 소개 내역 …) */
 /* v10.99 — 단추 이름은 사전 키(my.ntf.link.*) */
-type LinkKey = 'payment' | 'subscription' | 'deals' | 'settlement' | 'contracts' | 'listings' | 'chat' | 'intro' | 'partner' | 'orders' | 'go';
+type LinkKey = 'payment' | 'subscription' | 'deals' | 'settlement' | 'contracts' | 'listings' | 'chat' | 'intro' | 'partner' | 'orders' | 'notice' | 'go';
 const LINK_LABEL: [RegExp, LinkKey][] = [
   [/^\/my\/payment/, 'payment'], [/^\/my\/subscription/, 'subscription'], [/^\/my\/deals/, 'deals'],
   [/^\/my\/settlement/, 'settlement'], [/^\/my\/contracts/, 'contracts'], [/^\/my\/listings/, 'listings'],
   [/^\/my\/inquiries|^\/chat/, 'chat'], [/^\/my\/intro/, 'intro'], [/^\/partner/, 'partner'], [/^\/my\/health/, 'orders'],
+  [/^\/community\?board=NOTICE|^\/support\/notices/, 'notice'],   // v10.320 (docs/446) 새 공지 알림
 ];
 const linkLabel = (u: string): LinkKey => LINK_LABEL.find(([re]) => re.test(u))?.[1] ?? 'go';
 

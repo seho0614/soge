@@ -66,17 +66,17 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
 
       <section className="home-hero" aria-labelledby="home-h1">
         <div className="home-in">
-          {/* v10.319 (docs/445) 「상단 고정」 공지 띠 — 누르면 고객센터 › 공지사항의 그 공지로 */}
+          {/* v10.319 (docs/445) 「상단 고정」 공지 띠 — v10.320 (docs/446) 누르면 소개광장 › 공지의 그 공지로 */}
           {notices.length > 0 && (
             <nav className="home-ntc" aria-label={t('ntc.aria')} data-home-notices={notices.length}>
               {notices.map((n) => (
-                <Link key={n.id} href={`/support/notices#n-${n.id}`} className="home-ntci" data-home-notice={n.id}>
+                <Link key={n.id} href={`/community?board=NOTICE#n-${n.id}`} className="home-ntci" data-home-notice={n.id}>
                   <span className="home-ntcb">{t('ntc.label')}</span>
                   <span className="home-ntct">{n.title}</span>
                   {n.publishedAt && <span className="home-ntcd">{String(n.publishedAt).slice(0, 10)}</span>}
                 </Link>
               ))}
-              <Link href="/support/notices" className="home-ntcm" data-home-notice-more>{t('ntc.more')}</Link>
+              <Link href="/community?board=NOTICE" className="home-ntcm" data-home-notice-more>{t('ntc.more')}</Link>
             </nav>
           )}
           <div className="home-heroin">

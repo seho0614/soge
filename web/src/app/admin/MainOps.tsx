@@ -459,7 +459,7 @@ function Content() {
       () => { setLim((p) => { const nx = { ...p }; delete nx[k]; return nx; }); sets.reload(); }, '공지 알림 기준을 바꿨습니다.');
   };
   const [edit, setEdit] = useState<Record<string, string>>({});
-  const [f, setF] = useState({ title: '', body: '', isPinned: false, mode: 'now' as 'now' | 'schedule' | 'draft', at: '', end: '', notify: false });
+  const [f, setF] = useState({ title: '', body: '', isPinned: false, mode: 'now' as 'now' | 'schedule' | 'draft', at: '', end: '', notify: true });   // v10.320 (docs/446) 알림 처음부터 켬(끌 수 있음)
   const [nfiles, setNfiles] = useState<NoticeFile[]>([]);   // v10.295 등록 첨부
   const [pick, setPick] = useState<string[]>([]);
   const [ed, setEd] = useState<null | { id: string; title: string; body: string; grades: string[]; isPinned: boolean; end: string; notify: boolean; reason: string; locked: boolean; published: boolean; files: NoticeFile[] }>(null);
@@ -555,7 +555,7 @@ function Content() {
         endsAt: f.end ? kstEnd(f.end) : undefined, notify, ...(notifyConfirm ? { notifyConfirm } : {}),
         ...(nfiles.length ? { attachments: nfiles.map((x) => x.id) } : {}),
       }),
-    }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: false }); setPick([]); setNfiles([]); notices.reload(); grades.reload(); },
+    }), () => { setF({ title: '', body: '', isPinned: false, mode: 'now', at: '', end: '', notify: true }); setPick([]); setNfiles([]); notices.reload(); grades.reload(); },
     f.mode === 'now' ? '공지를 게시했습니다.' : f.mode === 'schedule' ? '예약했습니다 — 그 시각에 저절로 게시됩니다.' : '초안으로 저장했습니다. 게시 시각이 없어 공개되지 않습니다.');
   };
 
@@ -703,7 +703,7 @@ function Content() {
         </div>
         <div className="acts">
           <label><input type="checkbox" checked={f.isPinned} onChange={(e) => setF({ ...f, isPinned: e.target.checked })} /> 상단 고정</label>
-          <span className="dim" data-notice-where>게시한 공지는 사용자 웹 <b>고객센터 › 공지사항</b>에 나옵니다. <b>상단 고정</b>이면 <b>메인 첫 화면 공지 띠</b>에도(최근 2건 · 볼 수 있는 등급 그대로).</span>
+          <span className="dim" data-notice-where>게시한 공지는 사용자 웹 <b>소개광장 › 공지</b> · <b>고객센터 › 공지사항</b>에 나옵니다. <b>상단 고정</b>이면 <b>메인 첫 화면 공지 띠</b> · 소개광장 「전체」 맨 위에도(최근 2건 · 볼 수 있는 등급 그대로). 알림을 켜 두면 그 등급 회원 알림에 「새 공지」 → 소개광장 공지로.</span>
         </div>
         <NoticeFilesPick files={nfiles} onChange={setNfiles} onErr={a.setErr} />
         {/* v10.282 (D211) 지금 게시 · 예약 · 초안 · 끝 날짜 */}

@@ -134,7 +134,7 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
               <Link className="sh-pill" href="/my">{h('my')}</Link>
               {/* v10.294 (docs/415) — 최근 30일 안 펼친 공지가 있을 때만 📢 + 점(고객센터 › 공지사항) */}
               {st.nt > 0 && (
-                <Link className="sh-bell sh-ntc" href="/support/notices" aria-label={h('noticeNew', { n: st.nt })} title={h('noticeNew', { n: st.nt })} data-notice-dot={st.nt}>
+                <Link className="sh-bell sh-ntc" href="/community?board=NOTICE" aria-label={h('noticeNew', { n: st.nt })} title={h('noticeNew', { n: st.nt })} data-notice-dot={st.nt}>
                   <span aria-hidden>📢</span><span className="sh-dot" aria-hidden />
                 </Link>
               )}

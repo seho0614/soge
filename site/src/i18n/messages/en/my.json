@@ -506,7 +506,7 @@
       "chat": "View chat",
       "intro": "Referral activity",
       "partner": "Partner Center",
-      "orders": "View order",
+      "orders": "View order", "notice": "View notice",
       "go": "Go"
     },
     "hPrefs": "Notification settings",
