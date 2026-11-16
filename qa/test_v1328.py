@@ -90,10 +90,12 @@ def site_login(b, perr, email):
 LT = rd('site/src/components/common/NoticeListTools.tsx')
 PA, PB = rd('site/src/app/partners/notices/page.tsx'), rd('site/src/app/partner/notices/page.tsx')
 SJ = rd('spec/screens.json')
-ok('① 코드 — NoticeListTools(찾기 · 쪽 · 빈 안내) · 두 파트너센터 공지에 찾기 · 쪽 · 모두 읽음 · 한 건 · 안심 줄 #n-<id> · screens.json · 문서 456 · 판 v10.328',
+ND = rd('site/src/components/common/NoticeDetails.tsx')
+ok('① 코드 — NoticeListTools(찾기 · 쪽 · 빈 안내) · 두 파트너센터 공지에 찾기 · 쪽 · 모두 읽음 · 한 건 · 안심 줄 #n-<id> · 「모두 읽음」 뒤 새 글 지움 · screens.json · 문서 456 · 판 v10.328',
    'export function noticeQuery' in LT and 'data-notice-search' in LT and 'data-notice-pager' in LT and 'data-notice-older' in LT
    and all(x in PA for x in ('<NoticeSearch path="/partners/notices"', '<NoticePager path="/partners/notices"', '<PlazaReadAll', '<NoticeHashOpen'))
    and all(x in PB for x in ('<NoticeSearch path="/partner/notices"', '<NoticePager path="/partner/notices"', '<PlazaReadAll', '<NoticeHashOpen', 'id={`n-${x.id}`}'))
+   and 'useEffect(() => { setNew(unread); }, [unread]);' in ND
    and SJ.count('"POST /me/notices/read-all"') >= 3 and SJ.count('"GET /notices/{id}"') >= 3 and '파트너센터' in doc('456_') and VT >= (10, 328), VER)
 if API and DB and SITE:
     import consent_ok
