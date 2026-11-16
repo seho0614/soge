@@ -100,7 +100,7 @@ ok('① DB · API 코드 — D222 bulk 칸(지우는 문장 없음) · POST /me/
    and "@Post('notices/read-all')" in MC and 'async readAllNotices()' in MS and 'h.notice_id = n.id OR h.cancel_notice_id = n.id' in MS and 'bulk = false' in MS
    and 'AND NOT r.bulk) AS reads' in SS and len(mig) >= 260 and 'D222_notice_reads_bulk' in mig, f'{len(mig)}')
 ok('① 사용자 웹 코드 — #n-<id> 면 펼친 채(hashchange 도) · 고정 줄 · 메인 띠 「새 글」 · 「모두 읽음」(로그인 · 안 읽은 것 있을 때) · 사전 ko · en · 문서 449 · 판 v10.322',
-   'window.location.hash !== `#n-${id}`' in ND and "addEventListener('hashchange', openIfHash)" in ND and 'data-plaza-pin-new' in PN and 'data-home-notice-new' in HV
+   'window.location.hash !== `#n-${id}`' in ND and "addEventListener('hashchange', openIfHash)" in ND and 'data-plaza-pin-new' in PN and 'data-home-notice-new' in HV and 'publishedAt: n.publishedAt, unread: n.unread' in rd('site/src/app/page.tsx')
    and "fetch('/api/v1/me/notices/read-all'" in PR and 'login && rows.some((n) => n.unread === true) && <>' in PN
    and KO('plaza')['ntc'].get('readAll') == '모두 읽음' and EN('plaza')['ntc'].get('readAll') and KO('main')['ntc'].get('new') == '새 글' and EN('main')['ntc'].get('new') == 'New'
    and '모두 읽음' in doc('449_') and VT >= (10, 322), VER)
