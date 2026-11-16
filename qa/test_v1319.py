@@ -66,7 +66,7 @@ HV, PG, TY, CSS, MO = rd('site/src/components/home/HomeView.tsx'), rd('site/src/
 KO, EN, D445 = json.loads(rd('site/src/i18n/messages/ko/main.json') or '{}'), json.loads(rd('site/src/i18n/messages/en/main.json') or '{}'), doc('445_')
 ok('① 메인 — GET /notices(보는 사람 기준 · 캐시 안 함) 중 「상단 고정」만 최대 2건 → 히어로 맨 위 띠 · 그 공지로 가는 링크 · 「공지 모두 보기」',
    "apiGetPersonal<HomeNotice[]>('/notices')" in PG and '.filter((n) => n.isPinned).slice(0, HOME_NOTICE_MAX)' in PG and 'export const HOME_NOTICE_MAX = 2;' in TY
-   and 'notices={pinned}' in PG and 'href={`/support/notices#n-${n.id}`}' in HV and 'data-home-notices={notices.length}' in HV and 'data-home-notice-more' in HV
+   and 'notices={pinned}' in PG and ('href={`/support/notices#n-${n.id}`}' in HV or 'href={`/community?board=NOTICE#n-${n.id}`}' in HV)   # v10.320 소개광장 공지로(test_v1320) and 'data-home-notices={notices.length}' in HV and 'data-home-notice-more' in HV
    and '.home-ntc {' in CSS and 'min-height: 44px' in CSS.split('.home-ntci {')[1].split('}')[0], '')
 ok('① 사전 · 운영 화면 · 문서 — main.ntc ko · en(aria · label · more) · 공지 등록 칸 「고객센터 › 공지사항 · 상단 고정이면 메인 첫 화면 공지 띠」 · 문서 445 · 판 v10.319',
    set((KO.get('ntc') or {}).keys()) == {'aria', 'label', 'more'} == set((EN.get('ntc') or {}).keys()) and (EN.get('ntc') or {}).get('label') == 'Notice'
@@ -96,7 +96,7 @@ if API and DB and SITE:
         has = {k: (f'data-home-notice="{v}"' in html) for k, v in ids.items()}
         ok('② 사용자 웹 메인(로그인 안 함) — 고정 · 전체 공개 2개만 띠에(최근 순) · 로그인 회원만 · 고정 아님은 없음 · 그 공지 링크 · 「공지 모두 보기」',
            not ins.startswith('!') and len(ids) == 4 and m and m.group(1) == '2' and has.get('고정A') and has.get('고정B') and not has.get('회원만') and not has.get('고정아님')
-           and f'/support/notices#n-{ids.get("고정A")}' in html and '공지 모두 보기' in html and T + ' 고정A' in html,
+           and (f'/support/notices#n-{ids.get("고정A")}' in html or f'/community?board=NOTICE#n-{ids.get("고정A")}' in html) and '공지 모두 보기' in html and T + ' 고정A' in html,
            f"ins {ins[:80]} · n {m.group(1) if m else None} · {has}")
     finally:
         clean()

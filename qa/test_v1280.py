@@ -67,7 +67,7 @@ ok('① 화면 · 명세 · 문서 — 상태 · 알림 칸 · 고치기 · 내�
    all(x in MO for x in ('data-notice-status=', 'data-notice-notify=', 'data-notice-edit=', 'data-notice-down=', 'data-notice-revs=', 'data-notice-locked',
                          'data-mode="schedule"', 'data-notice-end', 'data-notice-notify-pick', 'data-notice-rev-list=', '/admin/notices/audience?grades='))
    and all(f'"{a}"' in SCR for a in ('GET /admin/notices/audience', 'PATCH /admin/notices/{id}', 'POST /admin/notices/{id}/unpublish', 'GET /admin/notices/{id}/revisions'))
-   and bool(D410) and len(mig) in (249, 250, 251, 252, 253, 254, 255, 256, 257, 258) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 282), f'{len(mig)} · {VER} · 410 {bool(D410)}')
+   and bool(D410) and len(mig) in (249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 282), f'{len(mig)} · {VER} · 410 {bool(D410)}')
 
 
 def call(m_, p, b=None, t=None):
@@ -172,7 +172,7 @@ if API and DB:
         psql(f"DELETE FROM notification_preferences WHERE account_id = '{aid}' AND event_code = 'NOTICE_PUBLISHED'")
         ok('④ 새 공지 알림 — 판매자 등급 공지 → 그 판매자 「내 알림」 1(/support/notices) · 회원은 안 받음 · 받는 사람 수 · 전체 공개 422 NOTIFY_NO_AUDIENCE · 다시 게시해도 한 번 · 알림 끈 사람 뺌',
            (au.get('count') or 0) >= 1 and au.get('sendable') is True and aup.get('sendable') is False and aup.get('count') == 0
-           and e7.get('code') == 'NOTIFY_NO_AUDIENCE' and (n1.get('notified') or 0) >= 1 and c1 == '1' and buyer_got == '0' and link == '/support/notices'
+           and e7.get('code') == 'NOTIFY_NO_AUDIENCE' and (n1.get('notified') or 0) >= 1 and c1 == '1' and buyer_got == '0' and (link == '/support/notices' or link.startswith('/community?board=NOTICE#n-'))   # v10.320 (D221) 소개광장 공지로
            and c2 == '1' and au2.get('count') == au.get('count') - 1 and c3 == '1' and n2.get('id'),
            f"{au} · {e7.get('code')} · n1 {n1.get('notified')} · {c1}/{c2}/{c3} · buyer {buyer_got}")
 

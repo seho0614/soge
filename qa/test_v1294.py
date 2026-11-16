@@ -45,7 +45,7 @@ ok('① 서버 — /me/summary unreadNotices(최근 30일 · 보이는 게시 �
    'unreadNotices: await this.unreadNotices()' in MS and 'async unreadNotices()' in MS and "n.published_at > now() - interval '30 days'" in MS
    and 'unreadNotices!: number' in AD, f'{len(MS)}')
 ok('① 화면 — /cart-count nt · 머리줄 📢 점(nt > 0 일 때만 · /support/notices) · 펼치면 다시 셈 · 점 모양 · 사전 ko · en · 문서 415 · 판 v10.294',
-   'nt, ops, ...badges' in CC and 'st.nt > 0 &&' in UH and 'data-notice-dot={st.nt}' in UH and 'href="/support/notices"' in UH
+   'nt, ops, ...badges' in CC and 'st.nt > 0 &&' in UH and 'data-notice-dot={st.nt}' in UH and ('href="/support/notices"' in UH or 'href="/community?board=NOTICE"' in UH)   # v10.320 소개광장 공지로(test_v1320)
    and "addEventListener('sgb:notice-read'" in UH and "new Event('sgb:notice-read')" in ND and '.sh-dot {' in CSS
    and '"noticeNew": "새 공지 {n}건"' in KO and '"noticeNew":' in EN and '머리줄' in D415 and verok(294), f'{VER}')
 
@@ -150,7 +150,7 @@ if API and DB:
             else:
                 seen, perr = r
                 ok('③ 화면 — 머리줄 📢 점 1(고객센터 › 공지사항으로) → 펼치면 그 자리에서 사라짐 · 메인에서도 없음 · 화면 오류 없음',
-                   seen.get('api') == 1 and seen.get('dot') == 1 and seen.get('n') == '1' and seen.get('href') == '/support/notices'
+                   seen.get('api') == 1 and seen.get('dot') == 1 and seen.get('n') == '1' and seen.get('href') in ('/support/notices', '/community?board=NOTICE')
                    and seen.get('dot2') == 0 and seen.get('dot3') == 0 and not perr, f'{seen} · {perr[:2]}')
     finally:
         psql(f"DELETE FROM notice_reads WHERE account_id = '{acc}' AND first_at = '2001-01-01'")
