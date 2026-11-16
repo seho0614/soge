@@ -78,7 +78,7 @@ ok('① DB — D221 fn_notice_notify 다시 만듦 · 알림 주소 /community?b
    'CREATE OR REPLACE FUNCTION public.fn_notice_notify' in M21 and "'/community?board=NOTICE#n-' || n.id::text FROM pick" in M21
    and not re.search(r'\b(DELETE FROM|DROP TABLE|TRUNCATE|DROP COLUMN)\b', M21) and len(mig) >= 259 and 'D221_notice_link_plaza' in mig, f'{len(mig)}')
 ok('① 소개광장 — 「공지」 탭 맨 위 운영 공지(GET /notices · 펼치기 · 첨부 · #n-id) · 「전체」 첫 쪽 고정 2줄 · 공지 글쓰기는 입구(CreatePostDto)에서 받지 않음',
-   "apiGetPersonal<PlazaNotice[]>('/notices')" in CP and "mode={cur === 'NOTICE' ? 'full' : 'pinned'}" in CP and 'id={`n-${n.id}`}' in PN and '<NoticeFiles' in PN
+   ("apiGetPersonal<PlazaNotice[]>('/notices')" in CP or "apiGetPersonal<PlazaNotice[]>(`/notices${" in CP) and "mode={cur === 'NOTICE' ? 'full' : 'pinned'}" in CP and 'id={`n-${n.id}`}' in PN and '<NoticeFiles' in PN
    and 'export const PLAZA_PINNED_MAX = 2;' in PN and "@IsIn(['REVIEW', 'TRADE', 'QNA'])" in PD and "'NOTICE'" not in PD.split('class CreatePostDto')[1].split('class UpdatePostDto')[0].replace('★ NOTICE', ''), '')
 ok('① 알림 · 머리줄 · 운영 화면 · 사전 · 문서 — 머리줄 공지 점 → 소개광장 공지 · 알림 단추 「공지 보기」 · 공지 등록 「알림」 처음부터 켬 · plaza.ntc · my.ntf.link.notice ko · en · 문서 446 · 판 v10.320',
    'href="/community?board=NOTICE"' in UH and "'notice']," in NF and "notify: true });   // v10.320" in MO and '소개광장 › 공지' in MO
