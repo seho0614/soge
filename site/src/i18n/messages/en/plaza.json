@@ -571,5 +571,5 @@
     "plaza": "Plaza",
     "read": "Read post"
   },
-  "ntc": { "h": "Official notices", "empty": "There are no notices right now.", "posts": "Plaza notice posts", "badge": "Notice", "pinnedAria": "Pinned notices" }
+  "ntc": { "h": "Official notices", "empty": "There are no notices right now.", "posts": "Plaza notice posts", "badge": "Notice", "pinnedAria": "Pinned notices", "readAll": "Mark all as read", "readAllFail": "Could not mark as read. Please try again shortly." }
 }

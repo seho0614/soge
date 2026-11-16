@@ -65,7 +65,7 @@ export interface WeatherToday {
 /** 방문자가 고른 날씨 지역(시 · 도 코드)을 기억하는 쿠키 — 서버(page.tsx)와 브라우저(Weather.tsx)가 같이 씁니다.
  *  ★ 'use client' 파일에서 내보내면 서버 쪽에서 값이 아니라 참조가 되므로 이 파일에 둡니다 */
 /** v10.319 (docs/445) 메인 공지 띠 — GET /notices(보는 사람 기준) 중 「상단 고정」만 · 최대 2건 */
-export interface HomeNotice { id: string; title: string; isPinned: boolean; publishedAt: string | null }
+export interface HomeNotice { id: string; title: string; isPinned: boolean; publishedAt: string | null; unread?: boolean }   // unread: v10.322 (docs/449) 로그인 · 최근 30일 안 펼침
 export const HOME_NOTICE_MAX = 2;
 
 export const WX_COOKIE = 'sgb_wx';

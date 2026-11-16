@@ -155,7 +155,7 @@ export class SiteService {
                    ELSE 'LIVE' END AS status,
               EXISTS (SELECT 1 FROM hlt_rate_schedules r WHERE r.notice_id = n.id OR r.cancel_notice_id = n.id) AS "rateNotice",
               (SELECT count(*)::int FROM notice_revisions v WHERE v.notice_id = n.id) AS revisions,
-              (SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads,
+              (SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id AND NOT r.bulk) AS reads,   -- v10.322 (D222) 「모두 읽음」 표시는 빼고
               ${noticeFilesSql('n', true)} AS files   -- v10.295 (D217) 첨부
          FROM notices n
         WHERE ($1::text IS NULL OR n.gwan_code = $1 OR n.gwan_code IS NULL)

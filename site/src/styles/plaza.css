@@ -184,3 +184,4 @@
 .plz-ntcp { list-style: none; margin: 10px 0 12px; padding: 0; display: grid; gap: 6px; }
 .plz-ntcp a { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; border-radius: var(--sgb-r-sm, 7px); background: var(--sgb-bg); color: inherit; text-decoration: none; overflow: hidden; }
 .plz-ntcp a b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plz-ntcra { margin-left: 8px; font-size: 13px; font-weight: 400; }   /* v10.322 (docs/449) 「모두 읽음」 */

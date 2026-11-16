@@ -11,7 +11,7 @@ import {
   MyDealDto, MyInquiryDto, MyListingDto, MySettlementDto,
   MarkReadResultDto, MyDisputeDto, MySubscriptionDto, NotificationDto,
   ContractListDto, UpdateProfileDto, UpdateBusinessDto, MyHomeDto, MyConversationDto,
-  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto, NoticeReadResultDto } from './me.dto';
+  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto, NoticeReadResultDto, NoticeReadAllResultDto } from './me.dto';
 import { Audit } from '../../core/audit.interceptor';
 import { ListingCardDto } from '../listing/listing.dto';
 import { Roles, RequireGate } from '../../core/auth';
@@ -50,6 +50,14 @@ export class MeController {
   })
   @ApiOkResponse({ type: MyDealDto, isArray: true })
   deals(@Query('limit') limit?: number) { return this.activity.deals(limit); }
+
+  @Post('notices/read-all')
+  @ApiOperation({
+    summary: '공지 모두 읽음',
+    description: 'v10.322 (D222 · docs/449) 소개광장 › 공지 「모두 읽음」 — 나에게 보이는 게시 중 공지에 읽음 표시만(펼쳐 본 회원 수에는 안 셈) · 요율 변경 공지는 빼고 · 남은 안 읽은 최근 30일 공지 수.',
+  })
+  @ApiOkResponse({ type: NoticeReadAllResultDto })
+  readAllNotices() { return this.svc.readAllNotices(); }
 
   @Post('notices/:id/read')
   @ApiOperation({

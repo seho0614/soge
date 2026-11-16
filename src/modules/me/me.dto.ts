@@ -256,3 +256,10 @@ export class NoticeReadResultDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty({ example: 0, description: '남은 최근 30일 · 아직 펼쳐 보지 않은 공지(머리줄 점)' }) unreadNotices!: number;
 }
+
+/** v10.322 (D222 · docs/449) 소개광장 공지 「모두 읽음」 결과 */
+export class NoticeReadAllResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ example: 3, description: '이번에 읽음 표시한 공지 수(요율 변경 공지 빼고)' }) marked!: number;
+  @ApiProperty({ example: 0, description: '남은 최근 30일 · 아직 펼쳐 보지 않은 공지(머리줄 점)' }) unreadNotices!: number;
+}

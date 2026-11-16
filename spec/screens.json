@@ -537,7 +537,7 @@
     "GET /notices/{id}/files/{n}"
    ],
    "nav": "SB-HOM-MAIN-010",
-   "note": "v10.279 (D210 · docs/408) 보는 사람의 공지 등급(fn_notice_grades)에 맞는 공지만 — 로그인 안 하면 전체 공개만 · 관리자 공지는 나오지 않음"
+   "note": "v10.279 (D210 · docs/408) 보는 사람의 공지 등급(fn_notice_grades)에 맞는 공지만 — 로그인 안 하면 전체 공개만 · 관리자 공지는 나오지 않음 · v10.321 (docs/448) 소개광장 › 공지(/community?board=NOTICE)로 넘김"
   },
   {
    "id": "SB-HOM-CSB-010",
@@ -3393,7 +3393,11 @@
     "GET /me/town",
     "POST /me/town/verify",
     "DELETE /me/town",
-    "GET /community/town-picks"
+    "GET /community/town-picks",
+    "GET /notices",
+    "POST /me/notices/{id}/read",
+    "POST /me/notices/read-all",
+    "GET /notices/{id}/files/{n}"
    ]
   },
   {

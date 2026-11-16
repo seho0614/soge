@@ -72,6 +72,7 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
               {notices.map((n) => (
                 <Link key={n.id} href={`/community?board=NOTICE#n-${n.id}`} className="home-ntci" data-home-notice={n.id}>
                   <span className="home-ntcb">{t('ntc.label')}</span>
+                  {n.unread === true && <span className="nt-new" data-home-notice-new>{t('ntc.new')}</span>}   {/* v10.322 (docs/449) */}
                   <span className="home-ntct">{n.title}</span>
                   {n.publishedAt && <span className="home-ntcd">{String(n.publishedAt).slice(0, 10)}</span>}
                 </Link>

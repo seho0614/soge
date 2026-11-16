@@ -31,6 +31,57 @@ interface Notice {
 interface NoticeFile { id: string; n?: number; name: string; contentType: string; size: number }
 
 /** v10.295 (D217 · docs/416) 공지 첨부 고르기 — JPG · PNG · PDF · 10MB · 3개까지 · 올리면 바로 목록(저장은 등록 · 저장 단추) */
+/** v10.323 (docs/450) 공지 등록 미리보기 — 고른 등급 · 상단 고정 · 게시 방식으로 사용자 웹 어디에 나오는지 · 알림 받을 회원 수(GET /admin/notices/audience) · 휴대폰 폭 모양.
+ *  읽기만 — 저장 · 게시는 아래 「등록」 단추 그대로. 고정 공지는 최근 2건만 메인 띠 · 소개광장 「전체」 맨 위에 나옴. */
+function NoticePreview({ title, body, isPinned, grades, gname, mode, at, end, notify, noAudience }: {
+  title: string; body: string; isPinned: boolean; grades: string[]; gname: (c: string) => string;
+  mode: 'now' | 'schedule' | 'draft'; at: string; end: string; notify: boolean; noAudience: boolean;
+}) {
+  const [au, setAu] = useState<{ key: string; count?: number; note?: string; err?: boolean } | null>(null);
+  const key = grades.slice().sort().join(',');
+  const wantCount = notify && !noAudience && grades.length > 0;
+  useEffect(() => {
+    if (!wantCount) return;
+    let live = true;
+    const tm = setTimeout(() => {
+      api<{ count: number; note: string }>(`/admin/notices/audience?grades=${encodeURIComponent(key)}`)
+        .then((r) => { if (live) setAu({ key, count: r.count, note: r.note }); })
+        .catch(() => { if (live) setAu({ key, err: true }); });
+    }, 300);
+    return () => { live = false; clearTimeout(tm); };
+  }, [key, wantCount]);
+  const staffOnly = grades.length > 0 && grades.every((g) => g === 'STAFF');
+  const isPublic = grades.includes('PUBLIC');
+  const where: string[] = grades.length === 0 || staffOnly ? [] : [
+    '소개광장 › 공지(고객센터 › 공지사항도 이리로)',
+    ...(isPinned ? ['메인 첫 화면 공지 띠(고정 최근 2건)', '소개광장 「전체」 맨 위(고정 최근 2건)'] : []),
+  ];
+  const when = mode === 'draft' ? '초안 — 게시하기 전에는 어디에도 나오지 않음'
+    : mode === 'schedule' ? `예약 — ${at ? at.replace('T', ' ') : '(시각을 고르십시오)'}부터` : '지금 게시';
+  const cnt = au && au.key === key ? au : null;
+  return (
+    <div className="card pad" data-notice-preview style={{ marginTop: 8 }}>
+      <b>미리보기</b> <span className="dim">— 저장하지 않음 · 게시는 아래 「등록」</span>
+      <ul style={{ margin: '6px 0', paddingLeft: 18 }}>
+        <li data-preview-when={mode}>{when}{end ? ` · ${end} 까지` : ''}</li>
+        <li data-preview-grades={key}>볼 수 있는 사람: {grades.length ? grades.map(gname).join(' · ') : '(등급을 고르십시오)'}{isPublic ? ' — 로그인 안 한 사람도' : ''}</li>
+        <li data-preview-where={where.length}>나오는 곳: {where.length ? where.join(' · ') : staffOnly ? '사용자 웹에 나오지 않음(관리자만)' : '—'}</li>
+        <li data-preview-notify={!wantCount ? 'off' : cnt?.err ? 'err' : cnt ? String(cnt.count) : 'wait'}>
+          알림: {!notify ? '보내지 않음' : noAudience ? '보내지 않음(전체 공개 · 관리자 등급)' : grades.length === 0 ? '—'
+            : cnt?.err ? '받을 회원 수를 불러오지 못함' : cnt ? `${cnt.count}명에게 「새 공지」 → 소개광장 공지로${mode === 'draft' ? '(게시할 때)' : ''}` : '받을 회원 수를 세는 중…'}
+        </li>
+      </ul>
+      <div data-preview-phone style={{ maxWidth: 360, border: '1px solid var(--line, #ddd)', borderRadius: 12, padding: 12 }}>
+        <div className="dim" style={{ fontSize: 12 }}>휴대폰 폭(360px) · 소개광장 › 공지</div>
+        <div style={{ marginTop: 6 }}>
+          {isPinned && <span className="dim">[고정] </span>}<b data-preview-title>{title.trim() || '(제목)'}</b>
+        </div>
+        <p style={{ whiteSpace: 'pre-line', margin: '6px 0 0', overflowWrap: 'anywhere' }} data-preview-body>{body.trim() || '(본문)'}</p>
+      </div>
+    </div>
+  );
+}
+
 function NoticeFilesPick({ files, onChange, onErr }: { files: NoticeFile[]; onChange: (f: NoticeFile[]) => void; onErr: (m: string) => void }) {
   const [busy, setBusy] = useState(false);
   const add = async (list: FileList | null) => {
@@ -728,6 +779,8 @@ function Content() {
           </label>
           {noAudience && pick.length > 0 && <span className="dim">— 「전체 공개」 · 「관리자」 등급 공지는 알림을 보내지 않습니다</span>}
         </div>
+        <NoticePreview title={f.title} body={f.body} isPinned={f.isPinned} grades={pick} gname={gname} mode={f.mode} at={f.at} end={f.end}
+          notify={f.notify} noAudience={noAudience} />   {/* v10.323 (docs/450) */}
         <div className="acts">
           <button className="btn-ok" disabled={a.busy === 'notice'} onClick={() => void addNotice()} data-notice-submit>공지 등록</button>
         </div>

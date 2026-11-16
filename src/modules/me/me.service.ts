@@ -93,8 +93,26 @@ export class MeService {
     if (!n) throw new NotFound('공지를 찾을 수 없습니다.');
     await this.db.query(
       `INSERT INTO notice_reads (notice_id, account_id) VALUES ($1, $2)
-       ON CONFLICT (notice_id, account_id) DO UPDATE SET last_at = now(), reads = notice_reads.reads + 1`, [n.id, this.me]);
+       ON CONFLICT (notice_id, account_id) DO UPDATE SET last_at = now(),
+         first_at = CASE WHEN notice_reads.bulk THEN now() ELSE notice_reads.first_at END,   -- v10.322 (D222) 「모두 읽음」 뒤 처음 펼침
+         reads = CASE WHEN notice_reads.bulk THEN 1 ELSE notice_reads.reads + 1 END, bulk = false`, [n.id, this.me]);
     return { ok: true, unreadNotices: await this.unreadNotices() };
+  }
+
+  /** v10.322 (D222 · docs/449) 소개광장 공지 「모두 읽음」 — 나에게 보이는 게시 중 공지 가운데 아직 기록 없는 것에 읽음 표시(bulk)만.
+   *  요율 변경 공지(hlt_rate_schedules notice_id · cancel_notice_id)는 빼서 「읽음」 증거가 펼친 사람만으로 남게 함. 펼쳐 본 회원 수에서도 빠짐. */
+  async readAllNotices() {
+    const rows = await this.db.query<{ notice_id: string }>(
+      `INSERT INTO notice_reads (notice_id, account_id, bulk)
+       SELECT n.id, $1::uuid, true FROM notices n
+        WHERE n.published_at IS NOT NULL AND n.published_at <= now()
+          AND (n.ends_at IS NULL OR n.ends_at > now())
+          AND n.grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')
+          AND NOT EXISTS (SELECT 1 FROM hlt_rate_schedules h WHERE h.notice_id = n.id OR h.cancel_notice_id = n.id)
+          AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = n.id AND r.account_id = $1::uuid)
+       ON CONFLICT (notice_id, account_id) DO NOTHING
+       RETURNING notice_id`, [this.me]);
+    return { ok: true, marked: rows.length, unreadNotices: await this.unreadNotices() };
   }
 
   /** 나의공간 첫 화면 (v10.27 · G-195 — 시안 scMy).
