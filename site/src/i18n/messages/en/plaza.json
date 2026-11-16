@@ -571,5 +571,5 @@
     "plaza": "Plaza",
     "read": "Read post"
   },
-  "ntc": { "h": "Official notices", "empty": "There are no notices right now.", "posts": "Plaza notice posts", "badge": "Notice", "pinnedAria": "Pinned notices", "readAll": "Mark all as read", "readAllFail": "Could not mark as read. Please try again shortly." }
+  "ntc": { "h": "Official notices", "empty": "There are no notices right now.", "posts": "Plaza notice posts", "badge": "Notice", "pinnedAria": "Pinned notices", "readAll": "Mark all as read", "readAllFail": "Could not mark as read. Please try again shortly.", "qPh": "Search notice title or text", "qAria": "Search notices", "qGo": "Search", "qClear": "Clear search", "qEmpty": "No notices contain “{q}”.", "pageEmpty": "There are no notices on this page.", "older": "Older notices →", "newer": "← Newer notices", "pager": "Notice pages" }
 }

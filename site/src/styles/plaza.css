@@ -185,3 +185,8 @@
 .plz-ntcp a { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; border-radius: var(--sgb-r-sm, 7px); background: var(--sgb-bg); color: inherit; text-decoration: none; overflow: hidden; }
 .plz-ntcp a b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plz-ntcra { margin-left: 8px; font-size: 13px; font-weight: 400; }   /* v10.322 (docs/449) 「모두 읽음」 */
+.plz-ntcq { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }   /* v10.324 (docs/451) 공지 찾기 */
+.plz-ntcq input[type="search"] { flex: 1 1 220px; min-width: 0; min-height: 44px; }
+.plz-ntcpg { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; }   /* v10.324 쪽 넘기기 */
+.plz-ntcpg a { min-height: 44px; display: inline-flex; align-items: center; }
+.plz-ntcpg a[data-plaza-notice-older] { margin-left: auto; }

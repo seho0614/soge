@@ -17,6 +17,7 @@
  * 연도처럼 서버와 브라우저에서 달라질 수 있는 값은 page.tsx 가 정해서 넘깁니다(year).
  */
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { FooterLink, Gwan } from '@/lib/types';
 import type { HomeContent } from './content';
@@ -26,6 +27,7 @@ import { HERO_SEARCH_EVENT, HeroSearch } from './HeroSearch';
 import { HeroPromo, type PromoSlide } from './HeroPromo';
 import { DemoBar, HomeFooter } from './Frame';
 import { isOps } from '@/components/common/links';
+import { readNoticeHidden, writeNoticeHidden } from './noticeHide';
 import { Line, Pic } from './Icons';
 import { Core, ForMe, Needs, Picks, Poll, Startup, Strip, Today, Town, Trust } from './Sections';
 import { Weather } from './Weather';
@@ -60,14 +62,18 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
   const t = useTranslations('main');
   const tq = useTranslations('gwan.qm');
   const on = (code: string) => live.includes(code);
+  const ntcIds = notices.map((n) => n.id);
+  const ntcKey = ntcIds.join(',');
+  const [ntcHidden, setNtcHidden] = useState(false);
+  useEffect(() => { setNtcHidden(readNoticeHidden(ntcKey ? ntcKey.split(',') : [])); }, [ntcKey]);
   return (
     <div className="home" data-content={c.mode}>
       {/* v10.188 (docs/294) — 머리줄은 layout 의 공통 머리줄(UniHeader · 이 머리줄 모양 그대로)이 그립니다 */}
 
       <section className="home-hero" aria-labelledby="home-h1">
         <div className="home-in">
-          {/* v10.319 (docs/445) 「상단 고정」 공지 띠 — v10.320 (docs/446) 누르면 소개광장 › 공지의 그 공지로 */}
-          {notices.length > 0 && (
+          {/* v10.319 (docs/445) 「상단 고정」 공지 띠 — v10.320 (docs/446) 누르면 소개광장 › 공지의 그 공지로 · v10.326 (docs/453) 「오늘 하루 안 보기」 */}
+          {notices.length > 0 && !ntcHidden && (
             <nav className="home-ntc" aria-label={t('ntc.aria')} data-home-notices={notices.length}>
               {notices.map((n) => (
                 <Link key={n.id} href={`/community?board=NOTICE#n-${n.id}`} className="home-ntci" data-home-notice={n.id}>
@@ -78,6 +84,10 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
                 </Link>
               ))}
               <Link href="/community?board=NOTICE" className="home-ntcm" data-home-notice-more>{t('ntc.more')}</Link>
+              <button type="button" className="home-ntcx" aria-label={t('ntc.hideAria')} title={t('ntc.hide')}
+                onClick={() => { writeNoticeHidden(ntcIds); setNtcHidden(true); }} data-home-notice-hide>
+                <span aria-hidden="true">✕</span> <span className="home-ntcxl">{t('ntc.hide')}</span>
+              </button>
             </nav>
           )}
           <div className="home-heroin">

@@ -336,6 +336,36 @@ export class SiteService {
         WHERE v.notice_id::text = $1 ORDER BY v.at DESC, v.id DESC LIMIT 50`, [id]);
   }
 
+  /** v10.325 (docs/452) — 공지 읽음 자세히: 목록 「읽음 / 대상」과 같은 기준(활동 중 · fn_notice_grades) · 등급마다 · 「모두 읽음」(bulk)은 따로 */
+  async noticeReads(id: string) {
+    const [n] = await this.db.query<{ grades: string[] }>(`SELECT grades FROM notices WHERE id = $1::uuid`, [id]);
+    if (!n) throw new NotFound('공지를 찾을 수 없습니다.');
+    const grades = n.grades ?? [];
+    const rate = (r: number, t: number | null) => (t ? Math.round((r * 1000) / t) / 10 : null);
+    const [c] = await this.db.query<{ reads: number; bulk: number }>(
+      `SELECT count(*) FILTER (WHERE NOT bulk)::int AS reads, count(*) FILTER (WHERE bulk)::int AS bulk FROM notice_reads WHERE notice_id = $1::uuid`, [id]);
+    const none = grades.includes('PUBLIC') || !grades.some((g) => g !== 'STAFF');
+    let target: number | null = null;
+    if (!none) {
+      const [t] = await this.db.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM accounts a WHERE a.status = 'ACTIVE' AND fn_notice_grades(a.id) && array_remove($1::text[], 'STAFF')`, [grades]);
+      target = Number(t?.n ?? 0);
+    }
+    const codes = grades.filter((g) => g !== 'PUBLIC' && g !== 'STAFF');
+    const byGrade = codes.length ? await this.db.query<{ code: string; name: string; target: number; reads: number }>(
+      `SELECT g.code, coalesce(ng.name, g.code) AS name,
+              (SELECT count(*)::int FROM accounts a WHERE a.status = 'ACTIVE' AND g.code = ANY(fn_notice_grades(a.id))) AS target,
+              (SELECT count(*)::int FROM notice_reads r JOIN accounts a ON a.id = r.account_id
+                WHERE r.notice_id = $1::uuid AND NOT r.bulk AND a.status = 'ACTIVE' AND g.code = ANY(fn_notice_grades(a.id))) AS reads
+         FROM unnest($2::text[]) WITH ORDINALITY AS g(code, ord) LEFT JOIN notice_grades ng ON ng.code = g.code
+        ORDER BY g.ord`, [id, codes]) : [];
+    const reads = Number(c?.reads ?? 0);
+    return {
+      id, grades, reads, bulk: Number(c?.bulk ?? 0), target, rate: rate(reads, target),
+      byGrade: byGrade.map((g) => ({ code: g.code, name: g.name, target: Number(g.target), reads: Number(g.reads), rate: rate(Number(g.reads), Number(g.target)) })),
+    };
+  }
+
   /** v10.281 (D211) — 알림 받을 사람 수 미리 보기(fn_notice_audience) */
   async noticeAudience(gradesIn: string[]) {
     const grades = [...new Set(gradesIn)];

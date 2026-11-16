@@ -77,6 +77,9 @@
 .home-ntcd { flex: none; color: var(--hk3); font-size: 13px; }
 .home-ntcm { display: inline-flex; align-items: center; min-height: 44px; color: var(--hk3); font-size: 14px; }
 .home-ntcm:hover { color: var(--hv); }
+.home-ntcx { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--hk3); font-size: 13px; cursor: pointer; }   /* v10.326 (docs/453) 오늘 하루 안 보기 */
+.home-ntcx:hover { color: var(--hv); }
+@media (max-width: 640px) { .home-ntcxl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
 
 .home-hero {
   position: relative; overflow: hidden; margin-top: -22px; padding: 58px 0 24px;

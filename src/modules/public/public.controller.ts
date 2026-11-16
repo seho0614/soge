@@ -100,8 +100,10 @@ export class PublicController {
   @Get('notices')
   @ApiOperation({ summary: '공지' })
   @ApiQuery({ name: 'gwanCode', required: false })
+  @ApiQuery({ name: 'q', required: false, description: 'v10.324 (docs/451) 제목 · 본문에 든 글자(100자까지 · 원문 기준)' })
+  @ApiQuery({ name: 'page', required: false, description: 'v10.324 (docs/451) 1부터 · 30개씩(고정 공지 먼저)' })
   @ApiOkResponse({ type: NoticeDto, isArray: true })
-  notices(@Query('gwanCode') gwanCode?: string) { return this.svc.notices(gwanCode); }
+  notices(@Query('gwanCode') gwanCode?: string, @Query('q') q?: string, @Query('page') page?: string) { return this.svc.notices(gwanCode, q, page); }
 
   @Get('notices/:id/files/:n')
   @ApiOperation({

@@ -144,7 +144,11 @@ export class PublicService {
   }
 
   /** v10.279 (D210) — 보는 사람의 등급(fn_notice_grades · 로그인 안 하면 전체 공개만)에 맞는 공지만 · 관리자(STAFF) 등급은 사용자 웹에서 빼고 봄 */
-  async notices(gwanCode?: string) {
+  /** v10.324 (docs/451) q 제목 · 본문 찾기 · page 30개씩 — 값을 안 주면 전과 같이 첫 30개(메인 띠 · 머리줄 종) */
+  static readonly NOTICE_PAGE = 30;
+  async notices(gwanCode?: string, qIn?: string, pageIn?: string) {
+    const q = typeof qIn === 'string' ? qIn.trim().replace(/\s+/g, ' ').slice(0, 100) : '';
+    const page = /^\d{1,4}$/.test(String(pageIn ?? '')) ? Math.max(1, Number(pageIn)) : 1;
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT id, gwan_code AS "gwanCode", title, body,
               is_pinned AS "isPinned", published_at AS "publishedAt",
@@ -157,7 +161,9 @@ export class PublicService {
           AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211) 끝 날짜 지남 · 내린 공지 뺌
           AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
           AND grades && array_remove(fn_notice_grades($2::uuid), 'STAFF')
-        ORDER BY is_pinned DESC, published_at DESC LIMIT 30`, [gwanCode ?? null, RequestCtx.actorId() ?? null]);
+          AND ($3::text = '' OR strpos(lower(title), lower($3)) > 0 OR strpos(lower(body), lower($3)) > 0)
+        ORDER BY is_pinned DESC, published_at DESC, id LIMIT ${PublicService.NOTICE_PAGE} OFFSET $4`,
+      [gwanCode ?? null, RequestCtx.actorId() ?? null, q, (page - 1) * PublicService.NOTICE_PAGE]);
     /* v10.103 (3-1) — 승인된 번역이 있으면 화면 언어로 */
     return this.i18n.overlay(rows, 'NOTICE', (r) => String(r.id), { title: 'title', body: 'body' });
   }

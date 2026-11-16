@@ -346,5 +346,5 @@
       "trustSameDay": "one verified company contacts you"
     }
   },
-  "ntc": { "aria": "Pinned notices", "label": "Notice", "more": "All notices", "new": "New" }
+  "ntc": { "aria": "Pinned notices", "label": "Notice", "more": "All notices", "new": "New", "hide": "Hide for today", "hideAria": "Hide the notice bar for today" }
 }

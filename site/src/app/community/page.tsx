@@ -27,10 +27,11 @@ interface Board { items: PostRow[]; total: number; page: number; size: number; p
  * ★ 작성자는 서버가 첫 글자만 내려줍니다(김OO · G-146). 화면에서 가리는 것이 아닙니다.
  * 비로그인도 봅니다. 글쓰기만 로그인이 필요합니다.
  * v10.320 (docs/446) 운영 공지(GET /notices · 보는 사람 등급) — 「공지」 탭 맨 위에 모두 · 「전체」 탭 첫 쪽 맨 위에 「상단 고정」 2줄.
+ *   v10.324 (docs/451) 「공지」 탭 찾기(nq) · 30개씩 쪽(np) — 글 목록의 q · page 와 따로
  *   소개광장 공지 글(posts · NOTICE)은 그 아래 그대로 — 새로 쓰기는 입구(CreatePostDto)에서 이미 받지 않음.
  */
 export default async function CommunityPage({ searchParams }: {
-  searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string }>;
+  searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string; nq?: string | string[]; np?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const t = await getTranslations('plaza');
@@ -51,7 +52,13 @@ export default async function CommunityPage({ searchParams }: {
   const rows = b?.items ?? [];
   const login = !!(await me());
   const showNtc = !q && (cur === 'NOTICE' || (cur === '' && page === 1));
-  const ntc = showNtc ? await apiGetPersonal<PlazaNotice[]>('/notices').catch(() => [] as PlazaNotice[]) : [];
+  const nq = cur === 'NOTICE' ? one(sp.nq).trim().replace(/\s+/g, ' ').slice(0, 100) : '';
+  const npIn = cur === 'NOTICE' && /^\d{1,4}$/.test(one(sp.np)) ? Number(one(sp.np)) : 1;
+  const np = npIn >= 1 ? npIn : 1;
+  const nqs = new URLSearchParams();
+  if (nq) nqs.set('q', nq);
+  if (np > 1) nqs.set('page', String(np));
+  const ntc = showNtc ? await apiGetPersonal<PlazaNotice[]>(`/notices${nqs.toString() ? `?${nqs}` : ''}`).catch(() => [] as PlazaNotice[]) : [];
   const ntcRows = Array.isArray(ntc) ? ntc : [];
   const hrefOf = (p: number) => plazaHref({ board: cur, q, page: p });
 
@@ -61,7 +68,7 @@ export default async function CommunityPage({ searchParams }: {
       <div className="plz-body">
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
-        {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} />}
+        {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} nq={nq} np={np} />}
         {!q && cur !== 'NOTICE' && <TownPicks loggedIn={login} />}
         {cur !== 'NOTICE' && <TownVerify loggedIn={login} />}
         {q && b && (

@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiP
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
-  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES, NoticePublishDto,
+  CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeReadsDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES, NoticePublishDto,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
   GwanOrderDto, LandingDto,
 } from './site.dto';
@@ -243,6 +243,13 @@ export class SiteController {
   @ApiOkResponse({ type: Object, isArray: true })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   noticeRevisions(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeRevisions(id); }
+
+  @Get('notices/:id/reads')
+  @ApiOperation({ summary: '공지 읽음 자세히', description: 'v10.325 (docs/452) 읽음 · 대상 · 비율과 등급별 읽음 / 대상 · 「모두 읽음」 표시 수(셈에서 뺌 · D222).' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: NoticeReadsDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  noticeReads(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeReads(id); }
 
   @Get('notice-grades')
   @ApiOperation({ summary: '공지 열람 등급', description: 'v10.279 (D210) 등급 7개 — 코드 · 판단 규칙 고정 · 이름 · 순서 · 사용 여부 · 쓰인 공지 수.' })

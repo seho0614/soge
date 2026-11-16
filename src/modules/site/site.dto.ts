@@ -78,6 +78,24 @@ export class NoticeFileDto {
   @ApiProperty({ description: '바이트' }) size!: number;
 }
 
+/** v10.325 (docs/452) 공지 읽음 자세히 — 등급별 */
+export class NoticeReadGradeDto {
+  @ApiProperty({ example: 'SELLER' }) code!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty({ description: '이 등급의 활동 중 회원 수' }) target!: number;
+  @ApiProperty({ description: '그중 펼쳐 본 회원 수(「모두 읽음」 표시 뺌)' }) reads!: number;
+  @ApiProperty({ nullable: true, description: '읽음 ÷ 대상 × 100(소수 한 자리) · 대상 0이면 null' }) rate!: number | null;
+}
+export class NoticeReadsDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ type: [String] }) grades!: string[];
+  @ApiProperty({ description: '펼쳐 본 회원 수(「모두 읽음」 표시 뺌 · 목록 「읽음」과 같음)' }) reads!: number;
+  @ApiProperty({ description: '「모두 읽음」으로만 표시된 회원 수(셈에서 뺌 · D222 bulk)' }) bulk!: number;
+  @ApiProperty({ nullable: true, description: '볼 수 있는 활동 중 회원 수 — 전체 공개 · 관리자만이면 null' }) target!: number | null;
+  @ApiProperty({ nullable: true, description: '읽음 ÷ 대상 × 100(소수 한 자리)' }) rate!: number | null;
+  @ApiProperty({ type: [NoticeReadGradeDto], description: '등급마다(한 회원이 여러 등급이면 겹쳐 셈 · 전체 공개 · 관리자 뺌)' }) byGrade!: NoticeReadGradeDto[];
+}
+
 export class NoticeDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ nullable: true }) gwanCode!: string | null;

@@ -121,6 +121,9 @@ const NT_STATUS: Record<string, [string, string]> = {
   DRAFT: ['초안', 'badge-urgent'], SCHEDULED: ['예약', ''], LIVE: ['게시 중', 'badge-verified'], ENDED: ['끝남', ''], TAKEN_DOWN: ['내림', ''],
 };
 const REV_ACTION: Record<string, string> = { EDIT: '고침', UNPUBLISH: '내림', REPUBLISH: '다시 게시' };
+/** v10.325 (docs/452) 공지 읽음 자세히 */
+interface NoticeReads { id: string; grades: string[]; reads: number; bulk: number; target: number | null; rate: number | null; byGrade: { code: string; name: string; target: number; reads: number; rate: number | null }[] }
+const pct = (r: number, t: number) => `${Math.round((r * 1000) / t) / 10}%`;
 /** v10.282 — 날짜 · 시각 칸은 한국 시각으로 읽음 */
 const kstAt = (v: string) => `${v}:00+09:00`;
 const kstEnd = (d: string) => `${d}T23:59:59+09:00`;
@@ -515,6 +518,9 @@ function Content() {
   const [pick, setPick] = useState<string[]>([]);
   const [ed, setEd] = useState<null | { id: string; title: string; body: string; grades: string[]; isPinned: boolean; end: string; notify: boolean; reason: string; locked: boolean; published: boolean; files: NoticeFile[] }>(null);
   const [revOf, setRevOf] = useState<string | null>(null);
+  const [rdOf, setRdOf] = useState<string | null>(null);
+  const [rd, setRd] = useState<NoticeReads | null>(null);
+  const [rdErr, setRdErr] = useState(false);
   const [revs, setRevs] = useState<NoticeRev[]>([]);
   const a = useAct();
   const gname = (c: string) => (grades.data ?? []).find((g) => g.code === c)?.name ?? c;
@@ -567,6 +573,11 @@ function Content() {
   };
   const loadRevs = async (id: string) => { try { setRevs(await api<NoticeRev[]>(`/admin/notices/${id}/revisions`)); } catch { setRevs([]); } };
   const toggleRevs = (id: string) => { if (revOf === id) { setRevOf(null); return; } setRevOf(id); void loadRevs(id); };
+  const toggleReads = async (id: string) => {
+    if (rdOf === id) { setRdOf(null); return; }
+    setRdOf(id); setRd(null); setRdErr(false);
+    try { setRd(await api<NoticeReads>(`/admin/notices/${id}/reads`)); } catch { setRdErr(true); }
+  };
   const editGrade = (g: NoticeGrade, what: 'name' | 'sort' | 'active') => {
     let body: Record<string, unknown> = {};
     if (what === 'name') { const v = prompt(`${g.code} 등급 이름(1 ~ 30자)`, g.name); if (v === null || !v.trim()) return; body = { name: v.trim() }; }
@@ -684,7 +695,9 @@ function Content() {
                   {nt.notify ? (nt.notifiedAt ? `보냄 ${nt.notifiedCount ?? 0}명` : nt.notifying ? `보내는 중 ${nt.notifiedCount ?? 0}명(10분마다 이어 보냄)` : '게시되면 보냄') : '—'}
                 </td>
                 <td className="num-cell" data-notice-reads={nt.reads ?? 0} data-notice-target={nt.target ?? ''}>
-                  {nt.status === 'DRAFT' || nt.status === 'SCHEDULED' ? '—' : `읽음 ${nt.reads ?? 0}${nt.target != null ? ` / 대상 ${nt.target}` : ''}`}
+                  {nt.status === 'DRAFT' || nt.status === 'SCHEDULED' ? '—' : (
+                    <button className="btn-sm" onClick={() => void toggleReads(nt.id)} data-notice-reads-open={nt.id} title="누르면 등급별 읽음">
+                      {`읽음 ${nt.reads ?? 0}${nt.target != null ? ` / 대상 ${nt.target}${nt.target > 0 ? ` (${pct(nt.reads ?? 0, nt.target)})` : ''}` : ''}`}</button>)}
                 </td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   {nt.status !== 'LIVE' && (
@@ -699,6 +712,27 @@ function Content() {
             })}
           </tbody>
         </table>
+      )}
+
+      {rdOf && (
+        <div className="card pad" data-notice-reads-detail={rdOf}>
+          <b>공지 읽음 자세히</b> <span className="dim">— 펼쳐 본 회원 · 「모두 읽음」 단추로만 표시된 회원은 셈에서 뺌 · 한 회원이 여러 등급이면 등급마다 셈</span>{' '}
+          <button className="btn-sm" onClick={() => setRdOf(null)} data-notice-reads-close>닫기</button>
+          {rdErr ? <p className="form-error" role="alert">읽음 기록을 불러오지 못했습니다.</p> : !rd ? <p className="dim">불러오는 중…</p> : (
+            <>
+              <p data-notice-reads-sum={`${rd.reads}/${rd.target ?? ''}/${rd.bulk}`}>
+                읽음 <b>{rd.reads}</b>{rd.target != null ? <> / 대상 {rd.target}{rd.rate != null ? ` (${rd.rate}%)` : ''}</> : ' · 전체 공개 · 관리자 공지는 대상 수를 세지 않음'}
+                {' · '}「모두 읽음」 표시 <b data-notice-reads-bulk={rd.bulk}>{rd.bulk}</b>명
+              </p>
+              {rd.byGrade.length > 0 && (
+                <table className="tbl"><thead><tr><th>등급</th><th>대상</th><th>읽음</th><th>비율</th></tr></thead>
+                  <tbody>{rd.byGrade.map((g) => (
+                    <tr key={g.code} data-notice-reads-grade={g.code} data-reads={g.reads} data-target={g.target}>
+                      <td>{g.name}</td><td className="num-cell">{g.target}</td><td className="num-cell">{g.reads}</td><td className="num-cell">{g.rate != null ? `${g.rate}%` : '—'}</td>
+                    </tr>))}
+                  </tbody></table>)}
+            </>)}
+        </div>
       )}
 
       {revOf && (
