@@ -47,6 +47,8 @@ NF, FS, FD = rd('src/modules/site/notice-files.ts'), rd('src/modules/file/file.s
 HS = rd('src/modules/health/health-seller.service.ts')
 MO, NFC = rd('web/src/app/admin/MainOps.tsx'), rd('site/src/components/common/NoticeFiles.tsx')
 PG = [rd('site/src/app/support/notices/page.tsx'), rd('site/src/app/partners/notices/page.tsx'), rd('site/src/app/partner/notices/page.tsx'), rd('site/src/components/health/SellerCenter.tsx')]
+PG[0] = rd('site/src/components/community/PlazaNotices.tsx') if "redirect('/community?board=NOTICE')" in PG[0] else PG[0]   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지(같은 부품)
+NSEL = 'data-plaza-notice' if "redirect('/community?board=NOTICE')" in rd('site/src/app/support/notices/page.tsx') else 'data-site-notice'   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지
 SCR = rd('spec/screens.json')
 EN = rd('src/common/i18n/server-text.en.ts')
 BAD = re.compile(r'DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM', re.I)
@@ -61,8 +63,8 @@ ok('① 서버 — 올리기는 최고 관리자만 · 붙이기 검사(3개 · 
    and '"올리기를 마친 공지 첨부 파일만 붙일 수 있습니다.":' in EN and '"첨부 파일이 없습니다.":' in EN, '')
 ok('① 화면 — 운영 첨부 고르기(등록 · 고치기 · 3개 · 열기 · 빼기) · 표 첨부 수 · 사용자 웹 부품 · 4곳 · 화면 연결(4곳 + 운영 파일 API) · 문서 416 · 마이그레이션 255 · 판 v10.295',
    'function NoticeFilesPick(' in MO and MO.count('<NoticeFilesPick') == 2 and 'data-notice-files=' in MO and "uploadFile(f, 'NOTICE_ATTACHMENT')" in MO
-   and '/api/v1/notices/${id}/files/${f.n}' in NFC and all('<NoticeFiles' in x for x in PG) and SCR.count('"GET /notices/{id}/files/{n}"') == 4
-   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
+   and '/api/v1/notices/${id}/files/${f.n}' in NFC and all('<NoticeFiles' in x for x in PG) and SCR.count('"GET /notices/{id}/files/{n}"') >= 4
+   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259, 260) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
 
 def call(m_, p, b=None, t=None):
     hd = {'content-type': 'application/json'}
@@ -206,7 +208,7 @@ if API and DB:
                 if SITE:
                     ps = b.new_page(viewport={'width': 1280, 'height': 900}); ps.on('pageerror', lambda e: perr.append(str(e)[:120]))
                     ps.goto(SITE + '/support/notices', wait_until='networkidle', timeout=120000); ps.wait_for_timeout(1500)
-                    box = f'[data-site-notice="{pn}"]'
+                    box = f'[{NSEL}="{pn}"]'
                     seen['row'] = ps.locator(box).count()
                     if seen['row']:
                         ps.click(f'{box} summary'); ps.wait_for_timeout(2500)

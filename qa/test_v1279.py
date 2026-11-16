@@ -41,6 +41,7 @@ PS, SS, SC, SD = rd('src/modules/public/public.service.ts'), rd('src/modules/sit
 RS, HS = rd('src/modules/health/health-rate-schedule.service.ts'), rd('src/modules/health/health-seller.service.ts')
 MO, DA, SN = rd('web/src/app/admin/MainOps.tsx'), rd('web/src/app/admin/Dashboard.tsx'), rd('web/src/app/admin/StaffNotices.tsx')
 SP, SNW = rd('site/src/app/support/notices/page.tsx'), rd('site/src/app/support/new/page.tsx')
+NSEL = 'data-plaza-notice' if "redirect('/community?board=NOTICE')" in rd('site/src/app/support/notices/page.tsx') else 'data-site-notice'   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지
 PN = rd('site/src/app/partners/notices/page.tsx') + rd('site/src/app/partner/notices/page.tsx') + rd('site/src/app/partners/page.tsx')
 SCR = rd('spec/screens.json')
 docs = os.listdir(os.path.join(K, 'docs')) if os.path.isdir(os.path.join(K, 'docs')) else []
@@ -70,10 +71,10 @@ ok('① API — 공개 공지는 보는 사람 등급(관리자 등급 뺌) · �
    and "ARRAY['SELLER']" in RS and "grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')" in HS, '')
 ok('① 화면 — 등급 고르기 · 등급 관리 · 초안 「게시」 · 첫 화면 관리자 공지 · 고객센터 공지사항(한 · 영 · 캐시 안 함) · 파트너센터 공지 보는 사람 기준 · 명세 · 문서 408 · 마이그레이션 248 · 판 v10.279',
    'data-grade-pick=' in MO and 'data-notice-grades-admin=' in MO and 'data-notice-publish=' in MO and '<StaffNotices />' in DA and "'/admin/staff-notices'" in SN
-   and "apiGetPersonal<Notice[]>('/notices')" in SP and 'data-support-notices-link' in SNW and PN.count("apiGetPersonal<Notice[]>('/notices')") == 3 and "apiGet<Notice[]>('/notices'" not in PN
+   and ("apiGetPersonal<Notice[]>('/notices')" in SP or "redirect('/community?board=NOTICE')" in SP) and 'data-support-notices-link' in SNW and PN.count("apiGetPersonal<Notice[]>('/notices')") == 3 and "apiGet<Notice[]>('/notices'" not in PN
    and all((MK.get('support') or {}).get(k) and (ME.get('support') or {}).get(k) for k in NK) and (MK.get('meta') or {}).get('notices') and (ME.get('meta') or {}).get('notices')
    and '"id": "SB-HOM-NTC-010"' in SCR and all(f'"{a}"' in SCR for a in ('POST /admin/notices/{id}/publish', 'GET /admin/notice-grades', 'PATCH /admin/notice-grades/{code}', 'GET /admin/staff-notices'))
-   and bool(D408) and len(mig) in (248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 279), f'{len(mig)} · {VER} · 408 {bool(D408)}')
+   and bool(D408) and len(mig) in (248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 279), f'{len(mig)} · {VER} · 408 {bool(D408)}')
 
 
 def call(m_, p, b=None, t=None):
@@ -175,9 +176,9 @@ if API and DB:
                     if SITE:
                         ps = b.new_page(viewport={'width': 1200, 'height': 900}); ps.on('pageerror', lambda e: perr.append(str(e)[:120]))
                         ps.goto(SITE + '/support/notices', wait_until='networkidle', timeout=120000); ps.wait_for_timeout(1500)
-                        seen['siteP'] = ps.locator(f'[data-site-notice="{nP.get("id")}"]').count()
-                        seen['siteM'] = ps.locator(f'[data-site-notice="{nM.get("id")}"]').count()
-                        seen['siteS'] = ps.locator(f'[data-site-notice="{nS.get("id")}"]').count()
+                        seen['siteP'] = ps.locator(f'[{NSEL}="{nP.get("id")}"]').count()
+                        seen['siteM'] = ps.locator(f'[{NSEL}="{nM.get("id")}"]').count()
+                        seen['siteS'] = ps.locator(f'[{NSEL}="{nS.get("id")}"]').count()
                         seen['login'] = ps.locator('[data-notice-login]').count()
                     b.close()
             except Exception as ex:

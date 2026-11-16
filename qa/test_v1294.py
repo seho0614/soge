@@ -95,6 +95,7 @@ def site_login(b, perr, email):
     ps.fill('input[name=email]', email); ps.fill('input[name=password]', PW); ps.click('form.auth button'); ps.wait_for_timeout(2500)
     return ps
 
+NSEL = 'data-plaza-notice' if "redirect('/community?board=NOTICE')" in rd('site/src/app/support/notices/page.tsx') else 'data-site-notice'   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지
 stamp = str(int(time.time()))[-7:]
 tag = f'U{stamp}X'
 if API and DB:
@@ -138,7 +139,7 @@ if API and DB:
                 seen['n'] = ps.locator('[data-notice-dot]').get_attribute('data-notice-dot') if seen['dot'] else None
                 seen['href'] = ps.locator('[data-notice-dot]').get_attribute('href') if seen['dot'] else None
                 ps.screenshot(path=os.path.join(HERE, 'v1294_dot.png'))
-                box = f'[data-site-notice="{nD}"]'
+                box = f'[{NSEL}="{nD}"]'
                 if ps.locator(box).count():
                     ps.click(f'{box} summary'); ps.wait_for_timeout(3000)
                 seen['dot2'] = ps.locator('[data-notice-dot]').count()

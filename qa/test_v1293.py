@@ -41,14 +41,16 @@ MS, MC, PS = rd('src/modules/me/me.service.ts'), rd('src/modules/me/me.controlle
 SS = rd('src/modules/site/site.service.ts')
 ND = rd('site/src/components/common/NoticeDetails.tsx')
 PG = [rd('site/src/app/support/notices/page.tsx'), rd('site/src/app/partners/notices/page.tsx'), rd('site/src/app/partner/notices/page.tsx')]
+PG[0] = rd('site/src/components/community/PlazaNotices.tsx') if "redirect('/community?board=NOTICE')" in PG[0] else PG[0]   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지(같은 부품)
+NSEL = 'data-plaza-notice' if "redirect('/community?board=NOTICE')" in rd('site/src/app/support/notices/page.tsx') else 'data-site-notice'   # v10.321 (docs/448) 고객센터 공지사항 → 소개광장 공지
 SCR = rd('spec/screens.json')
 ok('① 서버 — POST /me/notices/{id}/read(보이는 게시 중 공지만 · 관리자 등급 빼고 · 횟수) · GET /notices unread(최근 30일) · 운영 목록 reads · target',
-   "@Post('notices/:id/read')" in MC and 'async readNotice(noticeId: string)' in MS and 'reads = notice_reads.reads + 1' in MS
+   "@Post('notices/:id/read')" in MC and 'async readNotice(noticeId: string)' in MS and ('reads = notice_reads.reads + 1' in MS or 'ELSE notice_reads.reads + 1 END, bulk = false' in MS)
    and "array_remove(fn_notice_grades($2::uuid), 'STAFF')" in MS and 'AS unread' in PS and "interval '30 days'" in PS
-   and '(SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads' in SS and "fn_notice_grades(a.id) && array_remove($1::text[], 'STAFF')" in SS, f'{len(MS)}')
+   and ('(SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id) AS reads' in SS or '(SELECT count(*)::int FROM notice_reads r WHERE r.notice_id = n.id AND NOT r.bulk) AS reads' in SS) and "fn_notice_grades(a.id) && array_remove($1::text[], 'STAFF')" in SS, f'{len(MS)}')
 ok('① 화면 — 펼치기 부품(펼치면 기록 · 「새 글」) · 고객센터 · 제휴 · 안심 파트너센터 셋 다 · 화면 연결 3곳 · 문서 415 · 판 v10.293',
    "/api/v1/me/notices/${id}/read" in ND and 'data-notice-new' in ND and all('<NoticeDetails' in x for x in PG)
-   and SCR.count('"POST /me/notices/{id}/read"') == 3 and '읽음 n / 대상 m' in D415 and verok(293), f"{[('<NoticeDetails' in x) for x in PG]} · {SCR.count('POST /me/notices')} · {VER}")
+   and SCR.count('"POST /me/notices/{id}/read"') >= 3 and '읽음 n / 대상 m' in D415 and verok(293), f"{[('<NoticeDetails' in x) for x in PG]} · {SCR.count('POST /me/notices')} · {VER}")
 
 
 def call(m_, p, b=None, t=None):
@@ -145,7 +147,7 @@ if API and DB:
             def run(b, seen, perr):
                 ps = site_login(b, perr, 'buyer@x.com')
                 ps.goto(SITE + '/support/notices', wait_until='networkidle', timeout=120000); ps.wait_for_timeout(2000)
-                box = f'[data-site-notice="{nP}"]'
+                box = f'[{NSEL}="{nP}"]'
                 seen['row'] = ps.locator(box).count()
                 seen['new'] = ps.locator(f'{box} [data-notice-new]').count()
                 if seen['row']:

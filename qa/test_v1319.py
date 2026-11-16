@@ -69,7 +69,7 @@ ok('① 메인 — GET /notices(보는 사람 기준 · 캐시 안 함) 중 「�
    and 'notices={pinned}' in PG and ('href={`/support/notices#n-${n.id}`}' in HV or 'href={`/community?board=NOTICE#n-${n.id}`}' in HV)   # v10.320 소개광장 공지로(test_v1320) and 'data-home-notices={notices.length}' in HV and 'data-home-notice-more' in HV
    and '.home-ntc {' in CSS and 'min-height: 44px' in CSS.split('.home-ntci {')[1].split('}')[0], '')
 ok('① 사전 · 운영 화면 · 문서 — main.ntc ko · en(aria · label · more) · 공지 등록 칸 「고객센터 › 공지사항 · 상단 고정이면 메인 첫 화면 공지 띠」 · 문서 445 · 판 v10.319',
-   set((KO.get('ntc') or {}).keys()) == {'aria', 'label', 'more'} == set((EN.get('ntc') or {}).keys()) and (EN.get('ntc') or {}).get('label') == 'Notice'
+   set((KO.get('ntc') or {}).keys()) >= {'aria', 'label', 'more'} and set((KO.get('ntc') or {}).keys()) == set((EN.get('ntc') or {}).keys()) and (EN.get('ntc') or {}).get('label') == 'Notice'
    and 'data-notice-where' in MO and '메인 첫 화면 공지 띠' in MO and '공지 띠' in D445 and VT >= (10, 319), VER)
 if API and DB and SITE:
     stamp = int(time.time()) % 100000

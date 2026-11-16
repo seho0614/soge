@@ -82,7 +82,7 @@ ok('① 소개광장 — 「공지」 탭 맨 위 운영 공지(GET /notices · 
    and 'export const PLAZA_PINNED_MAX = 2;' in PN and "@IsIn(['REVIEW', 'TRADE', 'QNA'])" in PD and "'NOTICE'" not in PD.split('class CreatePostDto')[1].split('class UpdatePostDto')[0].replace('★ NOTICE', ''), '')
 ok('① 알림 · 머리줄 · 운영 화면 · 사전 · 문서 — 머리줄 공지 점 → 소개광장 공지 · 알림 단추 「공지 보기」 · 공지 등록 「알림」 처음부터 켬 · plaza.ntc · my.ntf.link.notice ko · en · 문서 446 · 판 v10.320',
    'href="/community?board=NOTICE"' in UH and "'notice']," in NF and "notify: true });   // v10.320" in MO and '소개광장 › 공지' in MO
-   and set((KO('plaza').get('ntc') or {}).keys()) == set((EN('plaza').get('ntc') or {}).keys()) == {'h', 'empty', 'posts', 'badge', 'pinnedAria'}
+   and set((KO('plaza').get('ntc') or {}).keys()) == set((EN('plaza').get('ntc') or {}).keys()) >= {'h', 'empty', 'posts', 'badge', 'pinnedAria'}   # v10.322 readAll 더함(test_v1322)
    and KO('my')['ntf']['link'].get('notice') == '공지 보기' and EN('my')['ntf']['link'].get('notice') == 'View notice'
    and '소개광장' in D446 and VT >= (10, 320), VER)
 if API and DB:
