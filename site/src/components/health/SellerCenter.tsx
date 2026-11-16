@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { NoticeFiles, type NoticeFile } from '@/components/common/NoticeFiles';
 import { needsLogin } from './util';
@@ -12,7 +13,9 @@ export interface SellerCenterInfo {
   products: number; onSale: number; inReview: number; tenantOn: boolean;
   /** v10.277 (D208 · docs/406) 예정된 수수료율 변경 — 입점 약관 제17조 4항(30일 전 공지) */
   /** v10.278 (D209) 소개몰 공지(게시된 것 · 최근 5) */
-  notices?: { id: string; title: string; body: string; publishedAt: string; isPinned: boolean; files?: NoticeFile[] }[];   // v10.295 files
+  notices?: { id: string; title: string; body: string; publishedAt: string; isPinned: boolean; files?: NoticeFile[]; unread?: boolean }[];   // v10.295 files · v10.330 unread
+  /** v10.330 (docs/459) 소개몰 공지 전체 수 — 보이는 5건보다 많으면 「지난 공지 모두 보기」 */
+  noticeTotal?: number;
   rateSchedules?: { scope: 'SELLER' | 'TYPE' | 'CATEGORY'; effectiveDate: string; fromRate: number | string | null; toRate: number | string | null; reason: string; categoryName: string | null }[];
 }
 export interface SellerProduct {
@@ -101,11 +104,12 @@ export function SellerCenter({ info, items, cats }: { info: SellerCenterInfo; it
             <b>{t('notices')}</b>
             {(info.notices ?? []).map((x) => (
               <details key={x.id} data-seller-notice={x.id} onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) markRead(x.id); }}>
-                <summary>{x.title} <span className="dim">{String(x.publishedAt).slice(0, 10)}</span></summary>
+                <summary>{x.unread === true && !readIds.includes(x.id) && <><span className="nt-new" data-notice-new="">{t('noticeNew')}</span>{' '}</>}{x.title} <span className="dim">{String(x.publishedAt).slice(0, 10)}</span></summary>
                 <p style={{ whiteSpace: 'pre-line' }}>{x.body}</p>
                 <NoticeFiles id={x.id} files={x.files} label={t('noticeFiles')} />
               </details>
             ))}
+            {(info.noticeTotal ?? 0) > (info.notices ?? []).length && <p><Link href="/health/seller/center/notices" data-seller-notices-all={info.noticeTotal}>{t('noticeAll')}</Link></p>}
           </div>
         )}
         {!info.payable && <p className="notice" data-center-warn="payable">{t('notPayable')}</p>}

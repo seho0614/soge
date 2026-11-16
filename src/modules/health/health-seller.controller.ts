@@ -8,6 +8,7 @@ import { OptionInputDto, OptionPatchDto, ProductCreateDto, ProductPatchDto } fro
 import { AdvanceDto, ShipDto } from './health-orders.controller';
 import { ReturnDecideDto } from './health-shop.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
+import { NoticeDto } from '../site/site.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 
@@ -70,6 +71,15 @@ export class HealthSellerController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
   center() { return this.svc.center(); }
+
+  @Get('me/health/seller/notices')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '소개몰 공지 모두', description: 'v10.330 (docs/459) 판매자센터 「지난 공지 모두 보기」 — 소개몰(HLT) 공지 · 이 판매자 등급 · 고정 먼저 · 찾기(제목 · 본문) · 30개씩 · 최근 30일 안 펼친 것 unread. 「모두 읽음」 없음.' })
+  @ApiQuery({ name: 'q', required: false, description: '찾을 글자(100자까지)' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiOkResponse({ type: NoticeDto, isArray: true })
+  @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
+  notices(@Query('q') q?: string, @Query('page') page?: string) { return this.svc.notices(q, page); }
 
   @Post('me/health/seller/notices/:id/read')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')

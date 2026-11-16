@@ -3020,6 +3020,26 @@
    "nav": "SB-HLT-SEL-010"
   },
   {
+   "id": "SB-HLT-SEL-030",
+   "name": "판매자센터 소개몰 공지 모두",
+   "group": "HLT",
+   "url": "/health/seller/center/notices",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "apis": [
+    "GET /me/health/seller/notices",
+    "POST /me/health/seller/notices/{id}/read",
+    "GET /notices/{id}/files/{n}"
+   ],
+   "nav": "SB-HLT-SEL-020"
+  },
+  {
    "id": "SB-HLT-ORD-030",
    "name": "주문 완료",
    "group": "HLT",

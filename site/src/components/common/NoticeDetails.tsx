@@ -6,11 +6,12 @@
  *   v10.294 — 기록되면 머리줄 공지 점을 다시 셈(창 이벤트 sgb:notice-read · UniHeader 가 받음).
  *   v10.322 (docs/449) — 주소 끝이 #n-<id> 면(알림 · 메인 띠 · 고정 줄에서 옴) 그 공지를 펼친 채 보여 줌 → 펼친 것과 같아 읽음 기록.
  *   v10.328 (docs/456) — 「모두 읽음」 뒤 화면 새로 읽기(router.refresh)로 unread 가 바뀌면 「새 글」도 따라 지움.
+ *   v10.330 (docs/459) — readPath: 읽음 기록 주소(판매자센터 소개몰 공지는 /api/v1/me/health/seller/notices/{id}/read · 비우면 공통).
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export function NoticeDetails({ id, summary, children, unread = false, newLabel, login = true }: {
-  id: string; summary: ReactNode; children: ReactNode; unread?: boolean; newLabel: string; login?: boolean;
+export function NoticeDetails({ id, summary, children, unread = false, newLabel, login = true, readPath }: {
+  id: string; summary: ReactNode; children: ReactNode; unread?: boolean; newLabel: string; login?: boolean; readPath?: string;
 }) {
   const [isNew, setNew] = useState(unread);
   useEffect(() => { setNew(unread); }, [unread]);
@@ -31,7 +32,7 @@ export function NoticeDetails({ id, summary, children, unread = false, newLabel,
     <details ref={box} data-notice-read={id} data-notice-unread={isNew ? '1' : '0'} onToggle={(e) => {
       if (!(e.currentTarget as HTMLDetailsElement).open || sent.current || !login) return;
       sent.current = true;
-      void fetch(`/api/v1/me/notices/${id}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      void fetch(readPath ?? `/api/v1/me/notices/${id}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
         .then((r) => { if (r.ok) { setNew(false); window.dispatchEvent(new Event('sgb:notice-read')); } })
         .catch(() => undefined);
     }}>

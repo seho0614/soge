@@ -69,16 +69,38 @@ export class HealthSellerService {
               (SELECT count(*)::int FROM hlt_products p WHERE p.seller_id = s.id AND p.review_state = 'SUBMITTED') AS "inReview",
               (SELECT coalesce((SELECT value FROM site_settings WHERE key = 'mall.tenant'), 'off') = 'on') AS "tenantOn"
          FROM hlt_sellers s WHERE s.id = $1`, [s.id]);
-    /* v10.278 (D209 · docs/407) — 소개몰 공지(게시된 것 · 고정 먼저 · 최근 5) — 수수료율 변경 안내 등 */
-    const notices = await this.db.query(
-      `SELECT id, title, body, published_at AS "publishedAt", is_pinned AS "isPinned",
+    /* v10.278 (D209 · docs/407) — 소개몰 공지(게시된 것 · 고정 먼저 · 최근 5) — 수수료율 변경 안내 등
+     * v10.330 (docs/459) — 「새 글」 unread · 전체 수 noticeTotal(5 넘으면 「지난 공지 모두 보기」) */
+    const notices = await this.sellerNoticeRows('', 5, 0);
+    const [{ n: noticeTotal }] = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM notices WHERE ${HealthSellerService.NOTICE_WHERE}`, [this.me]);
+    return { ...r, rateSchedules: await this.rateSched.forSeller(s.id), notices, noticeTotal };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
+  }
+
+  static readonly NOTICE_PAGE = 30;
+  /** 판매자센터 「소개몰 공지」 기준 — 소개몰(HLT) 공지 · 게시 중 · 끝나지 않음 · 이 판매자 등급($1) */
+  static readonly NOTICE_WHERE = `gwan_code = 'HLT' AND published_at IS NOT NULL AND published_at <= now()
+          AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211)
+          AND grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')   -- v10.279 (D210) 이 판매자의 등급에 맞는 것만`;
+
+  private sellerNoticeRows(q: string, limit: number, offset: number) {
+    return this.db.query(
+      `SELECT id, gwan_code AS "gwanCode", title, body, published_at AS "publishedAt", is_pinned AS "isPinned",
+              (published_at > now() - interval '30 days'
+               AND NOT EXISTS (SELECT 1 FROM notice_reads r WHERE r.notice_id = notices.id AND r.account_id = $1::uuid)) AS unread,
               ${noticeFilesSql('notices')} AS files   -- v10.295 (D217) 첨부(GET /notices/{id}/files/{n})
          FROM notices
-        WHERE gwan_code = 'HLT' AND published_at IS NOT NULL AND published_at <= now()
-          AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211)
-          AND grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')   -- v10.279 (D210) 이 판매자의 등급에 맞는 것만
-        ORDER BY is_pinned DESC, published_at DESC LIMIT 5`, [this.me]);
-    return { ...r, rateSchedules: await this.rateSched.forSeller(s.id), notices };   // v10.277 (D208) 예정된 수수료율 변경(약관 제17조 4항 공지)
+        WHERE ${HealthSellerService.NOTICE_WHERE}
+          AND ($2::text = '' OR strpos(lower(title), lower($2)) > 0 OR strpos(lower(body), lower($2)) > 0)
+        ORDER BY is_pinned DESC, published_at DESC, id LIMIT ${limit} OFFSET $3`, [this.me, q, offset]);
+  }
+
+  /** v10.330 (docs/459) 판매자센터 › 「지난 공지 모두 보기」 — 찾기(q · 제목 · 본문) · 30개씩(page) · 「모두 읽음」 없음(요율 공지는 펼친 기록이 증거) */
+  async notices(qIn?: string, pageIn?: string) {
+    await this.seller();
+    const q = typeof qIn === 'string' ? qIn.trim().replace(/\s+/g, ' ').slice(0, 100) : '';
+    const page = /^\d{1,4}$/.test(String(pageIn ?? '')) ? Math.max(1, Number(pageIn)) : 1;
+    return this.sellerNoticeRows(q, HealthSellerService.NOTICE_PAGE, (page - 1) * HealthSellerService.NOTICE_PAGE);
   }
 
   /** 배송비 · 반품비 — 반품비는 6,000원을 넘을 수 없음(DB 도 막음) */
