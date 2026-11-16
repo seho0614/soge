@@ -76,7 +76,7 @@ export default async function Home() {
     apiGetPersonal<HomeNotice[]>('/notices').catch(() => [] as HomeNotice[]),
   ]);
   const pinned = (Array.isArray(notices) ? notices : []).filter((n) => n.isPinned).slice(0, HOME_NOTICE_MAX)
-    .map((n) => ({ id: n.id, title: n.title, isPinned: true, publishedAt: n.publishedAt }));
+    .map((n) => ({ id: n.id, title: n.title, isPinned: true, publishedAt: n.publishedAt, unread: n.unread }));
   const aiOn = aiStat?.enabled === true;
   const hot = (hotKw?.items ?? []).map((k) => k.term).filter(Boolean);
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
