@@ -48,6 +48,7 @@ export function InquiryDesk() {
 
   return (
     <section data-inquiry-desk="">
+      <InquiryStats />
       <p data-inquiry-counts={`${counts.open}|${counts.overdue}|${counts.answered}|${counts.closed}`}>
         <button className={`btn-sm ${f.status === 'OPEN' && !f.overdue ? 'btn-ok' : 'btn-plain'}`} onClick={() => pick({ status: 'OPEN', overdue: false })}>답변 전 <b>{counts.open}</b></button>{' '}
         <button className={`btn-sm ${f.overdue ? 'btn-ok' : 'btn-plain'}`} onClick={() => pick({ status: 'OPEN', overdue: true })} data-inquiry-overdue-btn="">
@@ -103,15 +104,16 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
   const tq = useApi<{ rows: Tpl[] }>('/admin/inquiry-templates');   /* v10.334 (D226) 답변 틀 */
   const a = useAct();
   const [text, setText] = useState<string | null>(null);
+  const [tplId, setTplId] = useState<string | null>(null);   /* v10.337 — 고른 답변 틀(지표) */
   const [note, setNote] = useState<string | null>(null);
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const d = q.data;
   const ans = text ?? d.answer ?? '';
-  const after = () => { setText(null); setNote(null); q.reload(); onChanged(); };
+  const after = () => { setText(null); setTplId(null); setNote(null); q.reload(); onChanged(); };
   const send = (close: boolean) => {
     if (!confirm(`${d.guest ? '비회원 문의입니다 — 메일로만 답이 갑니다. ' : '회원에게 알림이 갑니다. '}${d.answer ? '답변을 고칩니다' : '답변을 보냅니다'}${close ? '(닫음)' : ''}.`)) return;
-    void a.run('answer', () => api(`/admin/inquiries/${id}/answer`, { method: 'POST', body: JSON.stringify({ answer: ans, close }) }), after);
+    void a.run('answer', () => api(`/admin/inquiries/${id}/answer`, { method: 'POST', body: JSON.stringify({ answer: ans, close, ...(tplId ? { templateId: tplId } : {}) }) }), after);
   };
   const patch = (v: Record<string, string>, ask?: string) => {
     if (ask && !confirm(ask)) return;
@@ -134,7 +136,7 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
       {d.status !== 'CLOSED' && (tq.data?.rows ?? []).some((t) => t.isActive) && (
         <p>
           <select name="inq-template" value="" data-inquiry-template=""
-            onChange={(e) => { const t = tq.data?.rows.find((x) => x.id === e.target.value); if (t && (!ans.trim() || confirm('답변 칸의 글을 이 틀로 바꿉니다.'))) setText(t.body); }}>
+            onChange={(e) => { const t = tq.data?.rows.find((x) => x.id === e.target.value); if (t && (!ans.trim() || confirm('답변 칸의 글을 이 틀로 바꿉니다.'))) { setText(t.body); setTplId(t.id); } }}>
             <option value="">답변 틀 고르기 — 칸에 채운 뒤 고쳐서 보냄</option>
             {(tq.data?.rows ?? []).filter((t) => t.isActive).map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
@@ -214,5 +216,44 @@ function TemplateManager() {
         </tbody>
       </table>
     </div>
+  );
+}
+
+interface Stats {
+  days: number; received: number; answered: number; stillOpen: number; avgHours: number | null; medianHours: number | null;
+  inTime: number; inTimeRate: number | null;
+  byCategory: Array<{ category: string; label: string | null; received: number; answered: number }>;
+  templates: Array<{ id: string; title: string; used: number }>;
+}
+
+/** v10.337 (docs/470) — 1:1 문의 처리 지표(최근 30일) · 처음 답 시각은 감사 기록 기준 */
+function InquiryStats() {
+  const [days, setDays] = useState(30);
+  const s = useApi<Stats>(`/admin/inquiries/stats?days=${days}`);
+  if (s.error || !s.data) return null;
+  const d = s.data;
+  const h = (v: number | null) => (v === null ? '—' : `${v}시간`);
+  return (
+    <details className="card" data-inquiry-stats={`${d.received}|${d.answered}`}>
+      <summary>
+        <b>최근 {d.days}일</b> 접수 {d.received} · 답함 {d.answered} · 처음 답까지 평균 {h(d.avgHours)}(가운데 {h(d.medianHours)}) ·
+        기한 안 {d.inTimeRate === null ? '—' : `${d.inTimeRate}%`} · 아직 답변 전 {d.stillOpen}
+      </summary>
+      <p>
+        {[7, 30, 90].map((n) => (
+          <button key={n} className={`btn-sm ${days === n ? 'btn-ok' : 'btn-plain'}`} onClick={() => setDays(n)}>{n}일</button>
+        ))}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+        <table className="tbl" data-inquiry-stats-cat=""><thead><tr><th>분류</th><th>접수</th><th>답함</th></tr></thead><tbody>
+          {d.byCategory.length === 0 ? <tr><td colSpan={3} className="muted">없음</td></tr>
+            : d.byCategory.map((c) => <tr key={c.category}><td>{c.label ?? c.category}</td><td>{c.received}</td><td>{c.answered}</td></tr>)}
+        </tbody></table>
+        <table className="tbl" data-inquiry-stats-tpl=""><thead><tr><th>답변 틀</th><th>쓴 횟수</th></tr></thead><tbody>
+          {d.templates.map((t) => <tr key={t.id}><td>{t.title}</td><td>{t.used}</td></tr>)}
+        </tbody></table>
+      </div>
+      <p className="muted">처음 답 시각은 감사 기록(답변) 기준입니다. 기한 = 접수 뒤 영업일 1일. 답변 틀 횟수는 「답변 틀 고르기」로 골라 보낸 답만 셉니다(v10.337 부터).</p>
+    </details>
   );
 }

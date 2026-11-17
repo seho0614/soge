@@ -40,7 +40,26 @@ export class FaqAdminService {
     /* v10.334 (D226) — 「많이 찾는 질문 후보」: 보이는 질문 중 아직 TOP 이 아닌 것 · 최근 30일 펼침 순 10개 */
     const candidates = rows.filter((r) => r.isActive && !r.isTop && Number(r.views30) > 0)
       .sort((x, y) => Number(y.views30) - Number(x.views30)).slice(0, 10).map((r) => ({ id: r.id, question: r.question, views30: r.views30 }));
-    return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), topics: FAQ_TOPICS, channels: FAQ_CHANNELS, topMax: FAQ_TOP_MAX, top, candidates };
+    /* v10.336 (D228) — 「못 찾은 낱말 30일」: 다룸 표시 뒤 다시 찾은 것만 다시 나옴 · 횟수 순 20개 */
+    const misses = await this.db.query<{ word: string; hits30: number; last: string }>(
+      `SELECT m.word, sum(m.hits)::int AS hits30, max(m.day)::text AS last
+         FROM faq_search_misses m LEFT JOIN faq_search_miss_done d ON d.word = m.word
+        WHERE m.day > (now() AT TIME ZONE 'Asia/Seoul')::date - 30
+          AND (d.word IS NULL OR m.day > (d.done_at AT TIME ZONE 'Asia/Seoul')::date)
+        GROUP BY m.word ORDER BY sum(m.hits) DESC, max(m.day) DESC, m.word LIMIT 20`);
+    return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), topics: FAQ_TOPICS, channels: FAQ_CHANNELS, topMax: FAQ_TOP_MAX, top, candidates, misses };
+  }
+
+  /** v10.336 (D228) — 못 찾은 낱말 「다룸」(새 질문을 만들었거나 다룰 필요 없음). 다시 찾으면 목록에 다시 나옴 */
+  async missDone(word: string) {
+    const w = (word ?? '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (w.length < 2 || w.length > 40) throw new PolicyViolation('FAQ_MISS_WORD', '낱말은 2 ~ 40자입니다.');
+    const [hit] = await this.db.query(`SELECT 1 FROM faq_search_misses WHERE word = $1 LIMIT 1`, [w]);
+    if (!hit) throw new NotFound('그 낱말은 못 찾은 낱말 목록에 없습니다.');
+    await this.db.query(
+      `INSERT INTO faq_search_miss_done (word, done_by, done_at) VALUES ($1, $2, now())
+       ON CONFLICT (word) DO UPDATE SET done_by = EXCLUDED.done_by, done_at = now()`, [w, RequestCtx.actorId() ?? null]);
+    return { ok: true, word: w, note: `「${w}」을(를) 다룸으로 표시했습니다. 다시 찾는 사람이 있으면 목록에 다시 나옵니다.` };
   }
 
   private clean(v: FaqInput, base: Required<Pick<FaqInput, 'channels'>> & FaqInput) {

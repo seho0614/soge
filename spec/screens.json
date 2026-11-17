@@ -640,10 +640,11 @@
     "GET /faq",
     "GET /notices",
     "POST /faq/{id}/view",
-    "POST /faq/{id}/helpful"
+    "POST /faq/{id}/helpful",
+    "POST /faq/miss"
    ],
    "nav": "SB-HOM-CSB-010",
-   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건 · v10.334 (D226 · docs/465) 질문 펼침 · 「도움이 되었나요?」(하루 셈)"
+   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건 · v10.334 (D226 · docs/465) 질문 펼침 · 「도움이 되었나요?」(하루 셈) · v10.336 (D228 · docs/469) 찾기 결과 0건 낱말을 셈(사람 정보 없음)"
   },
   {
    "id": "SB-HOM-ETC-031",
@@ -1843,10 +1844,11 @@
    "apis": [
     "GET /admin/faqs",
     "POST /admin/faqs",
-    "PATCH /admin/faqs/{id}"
+    "PATCH /admin/faqs/{id}",
+    "POST /admin/faqs/misses/done"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE. · v10.334 (D226) 최근 30일 펼침 · 도움 됨 / 안 됨 · 많이 찾는 질문 후보 · 질문 초안 14개(숨김)"
+   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE. · v10.334 (D226) 최근 30일 펼침 · 도움 됨 / 안 됨 · 많이 찾는 질문 후보 · 질문 초안 14개(숨김) · v10.336 (D228) 못 찾은 낱말 30일 · 이 낱말로 새 질문 · 다룸(감사 FAQ_MISS_DONE)"
   },
   {
    "id": "SB-AIS-PRF-010",
@@ -3444,10 +3446,11 @@
     "GET /files/{id}",
     "GET /admin/inquiry-templates",
     "POST /admin/inquiry-templates",
-    "PATCH /admin/inquiry-templates/{id}"
+    "PATCH /admin/inquiry-templates/{id}",
+    "GET /admin/inquiries/stats"
    ],
    "nav": "SB-ADM-MBR-010",
-   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리"
+   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리 · v10.337 (docs/470) 처리 지표 상자(최근 7 · 30 · 90일 · 처음 답까지 시간 · 기한 안 비율 · 분류별 · 답변 틀별)"
   },
   {
    "id": "SB-HOM-CMU-010",
@@ -5335,6 +5338,46 @@
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "2026-11-03 v10.182 D171 — API 가 지난 1시간 보낸 5xx 최근 50건(시각 · 방법 · 주소 · 응답 · 오류 종류 · 요청 번호 · 가린 설명) · 요청 내용 · 개인정보 없음 · 다시 띄우면 지워짐."
+  },
+  {
+   "id": "SB-ADM-PTN-100",
+   "name": "리드 현황",
+   "group": "ADM",
+   "url": "/partners/status",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER",
+    "PARTNER_MAL"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/lead-status"
+   ],
+   "nav": "SB-ADM-PTN-010",
+   "note": "2026-11-17 v10.338 (docs/471) 리드관(소개리드 · Consult Leads) 운영 현황 — 관 상태 · lead.legal_ok · 신청 받을 길 · 상담 업종별 신청 · 전달 · 받을 업체 없음 · 반려 · 받을 업체 0곳 경고. 읽기만"
+  },
+  {
+   "id": "SB-ADM-SIT-110",
+   "name": "업무 안내",
+   "group": "ADM",
+   "url": "/admin/ops-guide",
+   "p": "P1",
+   "roles": [
+    "REVIEWER",
+    "ADMIN",
+    "PAYOUT",
+    "SUPER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/ops-guides",
+    "POST /admin/ops-guides/{code}"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-17 v10.339 D229 (docs/472) 운영진 업무 12가지 순서 · 「이 화면」 단추 · 누가 · 알아 둘 것. 고치기 SUPER — 새 판(ops_guides 쌓기만 · 감사 OPS_GUIDE_SAVE)"
   }
  ],
  "deferred": [

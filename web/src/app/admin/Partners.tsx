@@ -8,6 +8,7 @@ import { Apply } from './partners/Apply';
 import { Services } from './partners/Services';
 import { Rejects } from './partners/Rejects';
 import { Wallet } from './partners/Wallet';
+import { LeadStatus } from './partners/LeadStatus';
 
 const TABS: SubTab<Tab2>[] = [
   { key: 'list', label: '파트너사 목록', screen: 'SB-ADM-PTN-010' },
@@ -19,6 +20,7 @@ const TABS: SubTab<Tab2>[] = [
   { key: 'cats', label: '카테고리 마스터', screen: 'SB-ADM-PTN-060', out: true },
   { key: 'quals', label: '자격 심사', screen: 'SB-ADM-PTN-070', out: true },
   { key: 'wallet', label: '리드 이용료 · 정산', screen: 'SB-ADM-PTN-080' },
+  { key: 'status', label: '리드 현황', screen: 'SB-ADM-PTN-100' },   /* v10.338 (docs/471) */
 ];
 
 const OUT: Record<string, string> = { medical: 'quals/medical', cats: 'quals/cats', quals: 'quals/pending' };
@@ -30,6 +32,7 @@ const OUT: Record<string, string> = { medical: 'quals/medical', cats: 'quals/cat
  * SB-ADM-PTN-090 리드 배정 (D008) — LeadAssign.tsx
  * SB-ADM-PTN-050 리드 반려 인정 / 기각 (T-04)
  * SB-ADM-PTN-080 소개캐시 입금 확인 · 리드 등급 비율
+ * SB-ADM-PTN-100 리드 현황(v10.338) — partners/LeadStatus.tsx
  *
  * 파트너가 리드를 못 받는 이유는 넷입니다 — 승인 · 서비스 · 지역 · 미납.
  * 여기서 앞의 둘을 풉니다. 미납은 자동으로 멈추고 자동으로 풀립니다.
@@ -40,7 +43,7 @@ const OUT: Record<string, string> = { medical: 'quals/medical', cats: 'quals/cat
  * v10.86 (리팩토링) — 하위 화면은 partners/ 폴더(화면 하나 = 파일 하나), 같이 쓰는 형식 · 표는 partners/shared.ts. 이 파일은 탭 전환만 합니다.
  */
 export function Partners({ onGo }: { onGo?: (tab: string) => void }) {
-  const [view, setView] = useHashSub<View>('list', ['list', 'apply', 'services', 'leads', 'rejects', 'wallet', 'detail']);
+  const [view, setView] = useHashSub<View>('list', ['list', 'apply', 'services', 'leads', 'rejects', 'wallet', 'status', 'detail']);
   const pick = (k: Tab2) => { if (OUT[k]) { if (onGo) onGo(OUT[k]!); } else setView(k as View); };
   const tabs = TABS.filter((t) => !OUT[t.key] || onGo);
   /* v10.32 — SB-ADM-PTN-011 파트너사 상세는 목록 안에 펼치지 않고 자기 주소(#/partners/detail/<id>)로 따로 엽니다(시안 admptnd) */
@@ -63,6 +66,7 @@ export function Partners({ onGo }: { onGo?: (tab: string) => void }) {
       {view === 'leads' && <LeadAssign />}
       {view === 'rejects' && <Rejects />}
       {view === 'wallet' && <Wallet onGo={onGo} />}
+      {view === 'status' && <LeadStatus onGo={onGo} />}
     </section>
   );
 }

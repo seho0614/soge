@@ -1685,8 +1685,9 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "동네 인증은 위치기반서비스 이용약관(LOCATION)을 게시해 시행된 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service terms (LOCATION) are published and in effect.",
   "동네 인증은 위치기반서비스사업 신고번호(community.lbs_report_no)를 넣은 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service business report number (community.lbs_report_no) is entered.",
   /* v10.335 (D227) — 리드관 켜기 전 안전장치 */
-  "리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.": "The Sogae Lead hall can be turned on only after the legal re-review reply is received (setting lead.legal_ok = on).",
-  "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Sogae Lead legal confirmation setting.",
+  "리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.": "The Consult Leads section can be turned on only after the legal re-review reply is received (setting lead.legal_ok = on).",
+  "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Consult Leads legal confirmation setting.",
+  "업무 안내는 고치거나 지우지 않고 새 판을 더합니다.": "Work guides are not edited or deleted — save a new version instead.",
   /* v10.211 (D188) — 동네픽 AI */
   "없는 동네픽 후보입니다.": "No such neighborhood pick candidate.",
   "이미 처리한 동네픽 후보입니다.": "This neighborhood pick candidate has already been handled.",

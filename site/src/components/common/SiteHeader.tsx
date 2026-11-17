@@ -17,7 +17,7 @@ import { HdNav } from './HdNav';
 import { HdAuth } from '@/components/HdAuth';
 import { useLocale, useTranslations } from 'next-intl';
 import { LangPick } from '@/i18n/LangPick';
-import { isGwanKey } from '@/i18n/keys';
+import { isHeaderGwanKey as isGwanKey } from '@/i18n/keys';   // v10.338 머리줄은 리드관(LED)까지
 
 export function Logo() {
   const t = useTranslations('header');

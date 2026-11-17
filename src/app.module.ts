@@ -234,6 +234,8 @@ import { FileService } from './modules/file/file.service';
 import { MyConsultController, LeadAdminController } from './modules/lead/lead.controller';
 import { ConsultController, PartnerAxisController, PartnerAxisAdminController } from './modules/partner/consult.controller';
 import { ConsultService } from './modules/partner/consult.service';
+import { LeadStatusController } from './modules/partner/lead-status.controller';   // v10.338 리드 현황
+import { OpsGuideController } from './modules/admin/ops-guide.controller';   // v10.339 (D229) 업무 안내
 import { PartnerWithdrawController } from './modules/partner/partner-withdraw.controller';   // v10.224 (D194) 파트너 본인 해지
 import { PartnerWithdrawService } from './modules/partner/partner-withdraw.service';
 import { DirectoryService } from './modules/partner/directory.service';
@@ -344,6 +346,8 @@ import { LeadService } from './modules/lead/lead.service';
     /* ★ 상담 신청(D018) — 정액 노출 목록(consult/directory/:code)이 신청 경로(consult/requests)와 겹치지 않게 먼저 둡니다 */
     DirectoryController,
     ConsultController,
+    LeadStatusController,     // v10.338 리드 현황(읽기만)
+    OpsGuideController,       // v10.339 (D229) 업무 안내
     MyConsultController,
     PartnerAxisController,
     PartnerWithdrawController,   // v10.224 (D194)

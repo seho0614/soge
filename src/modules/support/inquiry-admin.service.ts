@@ -86,7 +86,45 @@ export class InquiryAdminService {
     };
   }
 
-  async answer(id: string, text: string, close?: boolean) {
+  /**
+   * v10.337 (docs/470) — 1:1 문의 처리 지표(최근 days 일 · 7 ~ 90 · 처음 30)
+   *   처음 답 시각 = 감사 기록 INQUIRY_ANSWER 가장 이른 것(answered_at 은 고치면 바뀜). 시간은 접수부터 · 시간 단위(소수 한 자리).
+   *   기한 안 = 처음 답이 due_at 전(기한 없는 옛 문의는 답했으면 기한 안으로 셈).
+   */
+  async stats(daysIn?: number) {
+    const days = Math.max(7, Math.min(90, Math.floor(Number(daysIn) || 30)));
+    const base = `WITH w AS (
+        SELECT i.id, i.category, i.status, i.created_at, i.due_at,
+               (SELECT min(l.occurred_at) FROM audit.audit_logs l WHERE l.action = 'INQUIRY_ANSWER' AND l.target_id = i.id) AS first_at
+          FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))`;
+    const [s] = await this.db.query<Record<string, number | null>>(
+      `${base}
+       SELECT count(*)::int AS received, count(first_at)::int AS answered,
+              count(*) FILTER (WHERE status = 'OPEN')::int AS "stillOpen",
+              round((avg(extract(epoch FROM first_at - created_at)) / 3600)::numeric, 1)::float AS "avgHours",
+              round((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM first_at - created_at)) / 3600)::numeric, 1)::float AS "medianHours",
+              count(*) FILTER (WHERE first_at IS NOT NULL AND (due_at IS NULL OR first_at <= due_at))::int AS "inTime"
+         FROM w`, [days]);
+    const byCategory = await this.db.query<{ category: string; label: string | null; received: number; answered: number }>(
+      `${base}
+       SELECT w.category, cl.label, count(*)::int AS received, count(first_at)::int AS answered
+         FROM w LEFT JOIN code_labels cl ON cl.domain = 'inquiry.category' AND cl.code = w.category
+        GROUP BY w.category, cl.label ORDER BY count(*) DESC, w.category`, [days]);
+    const templates = await this.db.query<{ id: string; title: string; used: number }>(
+      `SELECT t.id::text AS id, t.title, count(l.occurred_at)::int AS used
+         FROM inquiry_templates t
+         LEFT JOIN audit.audit_logs l ON l.action = 'INQUIRY_ANSWER' AND l.after_data->>'templateId' = t.id::text
+                                     AND l.occurred_at > now() - make_interval(days => $1)
+        WHERE t.is_active GROUP BY t.id, t.title, t.sort_order ORDER BY count(l.occurred_at) DESC, t.sort_order, t.title`, [days]);
+    const received = Number(s?.received ?? 0), answered = Number(s?.answered ?? 0);
+    return {
+      days, received, answered, stillOpen: Number(s?.stillOpen ?? 0), avgHours: s?.avgHours ?? null, medianHours: s?.medianHours ?? null,
+      inTime: Number(s?.inTime ?? 0), inTimeRate: answered ? Math.round((Number(s?.inTime ?? 0) / answered) * 1000) / 10 : null,
+      byCategory, templates,
+    };
+  }
+
+  async answer(id: string, text: string, close?: boolean, templateId?: string) {
     const body = String(text ?? '').replace(/\r\n/g, '\n').trim();
     if (body.length < 2) throw new PolicyViolation('INQUIRY_ANSWER_SHORT', '답변을 2자 이상 적어 주십시오.');
     if (body.length > INQUIRY_ANSWER_MAX) throw new PolicyViolation('INQUIRY_ANSWER_LONG', `답변은 ${INQUIRY_ANSWER_MAX.toLocaleString('ko-KR')}자까지입니다.`);
@@ -100,6 +138,9 @@ export class InquiryAdminService {
         `UPDATE inquiries SET answer = $2, answered_at = now(), answered_by = $3, status = $4 WHERE id = $1::uuid`,
         [id, body, RequestCtx.actorId() ?? null, close ? 'CLOSED' : 'ANSWERED']);
       const edit = cur.answer !== null;
+      /* v10.337 — 답변 틀을 골라 썼으면 감사 기록에 틀 번호(지표 「답변 틀별 쓴 횟수」) · 없는 틀이면 적지 않음 */
+      const [t] = templateId ? await this.db.query<{ id: string }>(`SELECT id::text AS id FROM inquiry_templates WHERE id::text = $1`, [templateId]) : [];
+      const tpl = t?.id ?? null;
       if (cur.accountId) {
         await this.db.query(`SELECT fn_notify($1::uuid, 'INQUIRY_ANSWERED', jsonb_build_object('title', $2::text), '/support/history')`,
           [cur.accountId, cur.title]);
@@ -108,7 +149,7 @@ export class InquiryAdminService {
         `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, before_data, after_data, ip, user_agent)
          VALUES ($1, $2, 'INQUIRY_ANSWER', 'INQUIRY', $3::uuid, $4::jsonb, $5::jsonb, $6, $7)`,
         [RequestCtx.actorId(), RequestCtx.get()?.actorRole ?? null, id, JSON.stringify({ status: cur.status, answer: cur.answer }),
-         JSON.stringify({ status: close ? 'CLOSED' : 'ANSWERED', chars: body.length, edit }), RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
+         JSON.stringify({ status: close ? 'CLOSED' : 'ANSWERED', chars: body.length, edit, templateId: tpl }), RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
       const who = cur.accountId ? '회원에게 알림을 보냈습니다(나의공간 · 내 문의 내역에 보임)' : '비회원 문의라 메일로만 답이 갑니다 — 운영 메일 준비 전이면 메일 대기';
       return { ok: true, id, note: `${edit ? '답변을 고쳤습니다' : '답변했습니다'}${close ? '(닫음)' : ''} — ${who}.` };
     });

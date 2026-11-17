@@ -94,6 +94,16 @@ const STEP_ALERT = ['REVIEW', 'CHAT', 'LOOKUP', 'DRAFTS'];
 
 @Injectable()
 export class LaunchWatchService {
+  /** v10.337 (docs/470) — 하루 요약 「1:1 문의 답변 전 n · 기한 넘김 m · 어제 접수 k」 */
+  private async inquiryDigestLine(): Promise<string> {
+    const [q] = await this.db.query<{ open: number; overdue: number; yday: number }>(
+      `SELECT count(*) FILTER (WHERE status = 'OPEN')::int AS open,
+              count(*) FILTER (WHERE status = 'OPEN' AND due_at < now())::int AS overdue,
+              count(*) FILTER (WHERE (created_at AT TIME ZONE 'Asia/Seoul')::date = (now() AT TIME ZONE 'Asia/Seoul')::date - 1)::int AS yday
+         FROM inquiries`);
+    return `1:1 문의 답변 전 ${q.open} · 기한 넘김 ${q.overdue}${q.overdue > 0 ? '(운영 화면 › 회원 › 1:1 문의)' : ''} · 어제 접수 ${q.yday}`;
+  }
+
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService,
               private readonly todo: OwnerTodoService, private readonly releases: ReleaseLogService,
               private readonly trend: ServerTrendService) {}
@@ -185,6 +195,7 @@ export class LaunchWatchService {
       diskLine(serverHealth()),
       await this.trend.digestLine().catch(() => '디스크 추세 — 읽지 못함'),   // v10.248 (D203 · docs/386)
       await this.serverErrorDigestLine().catch(() => '어제 서버 오류 — 읽지 못함'),   // v10.250 (D204 · docs/387)
+      await this.inquiryDigestLine().catch(() => '1:1 문의 — 읽지 못함'),   // v10.337 (docs/470)
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');

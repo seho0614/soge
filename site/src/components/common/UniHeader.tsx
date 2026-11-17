@@ -24,7 +24,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Gwan } from '@/lib/types';
 import { GWAN_PATH } from '@/lib/format';
-import { isGwanKey } from '@/i18n/keys';
+import { isHeaderGwanKey as isGwanKey } from '@/i18n/keys';   // v10.338 머리줄은 리드관(LED)까지
 import { logout } from '@/lib/session';
 import { clearDraft } from '@/lib/profileDraft';
 import { FindButton } from '@/components/search/FindButton';

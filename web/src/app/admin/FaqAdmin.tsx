@@ -12,7 +12,8 @@ interface Row {
   gwanCode: string | null; sortOrder: number; updatedAt: string; by: string | null;
   views30?: number; yes30?: number; no30?: number;   /* v10.334 (D226) 최근 30일 펼침 · 도움 됨 · 안 됨 */
 }
-interface Data { rows: Row[]; topics: string[]; channels: string[]; topMax: number; top: number; candidates?: Array<{ id: string; question: string; views30: number }> }
+interface Miss { word: string; hits30: number; last: string }
+interface Data { rows: Row[]; topics: string[]; channels: string[]; topMax: number; top: number; candidates?: Array<{ id: string; question: string; views30: number }>; misses?: Miss[] }
 
 const TOPIC_KO: Record<string, string> = {
   ACCOUNT: '회원 · 가입', DEAL: '소개 · 거래', MONEY: '수수료 · 정산', MALL: '소개몰', ADS: '광고 · 구독', SAFETY: '안전 · 신고', ETC: '기타',
@@ -41,7 +42,7 @@ export function FaqAdmin() {
   const [word, setWord] = useState('');
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
-  const { rows, topics, channels, topMax, top, candidates = [] } = q.data;
+  const { rows, topics, channels, topMax, top, candidates = [], misses = [] } = q.data;
   const w = word.trim();
   const shown = rows.filter((r) => (!topic || r.topic === topic) && (!w || r.question.includes(w) || r.answer.includes(w) || r.category.includes(w)));
 
@@ -59,6 +60,12 @@ export function FaqAdmin() {
   const patch = (r: Row, v: Partial<Pick<Row, 'isActive' | 'isTop'>>, ask: string) => {
     if (!confirm(ask)) return;
     void a.run(`p-${r.id}`, () => api(`/admin/faqs/${r.id}`, { method: 'PATCH', body: JSON.stringify(v) }), q.reload);
+  };
+  /* v10.336 (D228) — 못 찾은 낱말: 「새 질문」은 낱말을 질문 · 챗봇 낱말 칸에 넣어 엶 · 「다룸」은 목록에서 내림 */
+  const fromMiss = (m: Miss) => setEdit({ id: null, f: { ...EMPTY, question: m.word, keywords: m.word } });
+  const missDone = (m: Miss) => {
+    if (!confirm(`「${m.word}」을(를) 다룸으로 표시합니다. 다시 찾는 사람이 있으면 목록에 다시 나옵니다.`)) return;
+    void a.run(`m-${m.word}`, () => api('/admin/faqs/misses/done', { method: 'POST', body: JSON.stringify({ word: m.word }) }), q.reload);
   };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setEdit((e) => (e ? { ...e, f: { ...e.f, [k]: v } } : e));
 
@@ -85,6 +92,22 @@ export function FaqAdmin() {
           {candidates.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{c.question} <small className="dim">{c.views30}회</small></span>)}
         </div>
       )}
+      <div className="card" data-faq-misses={misses.length}>
+        <b>못 찾은 낱말 30일</b> <small className="dim">고객센터 찾기에서 결과가 0건이던 낱말 · 많이 찾은 순 20개 · 사람 정보 없음</small>
+        {misses.length === 0 ? <p className="muted">아직 없습니다.</p> : (
+          <table className="tbl"><thead><tr><th>낱말</th><th>30일</th><th>마지막</th><th></th></tr></thead><tbody>
+            {misses.map((m) => (
+              <tr key={m.word} data-faq-miss={m.word}>
+                <td>{m.word}</td><td>{m.hits30}회</td><td>{m.last}</td>
+                <td>
+                  <button className="btn-sm" onClick={() => fromMiss(m)} data-faq-miss-new="">이 낱말로 새 질문</button>{' '}
+                  <button className="btn-sm ghost" onClick={() => missDone(m)} disabled={a.busy === `m-${m.word}`} data-faq-miss-done="">다룸</button>
+                </td>
+              </tr>
+            ))}
+          </tbody></table>
+        )}
+      </div>
       {edit && (
         <div className="card" data-faq-form={edit.id ?? 'new'}>
           <h3 className="sec">{edit.id ? '질문 고치기' : '새 질문'}</h3>

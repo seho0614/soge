@@ -19,6 +19,31 @@ export class InquiryAnswerDto {
   @ApiProperty({ maxLength: INQUIRY_ANSWER_MAX, description: `답변(2 ~ ${INQUIRY_ANSWER_MAX}자 · 회원에게 그대로 보임)` })
   @IsString() @MaxLength(8000) answer!: string;
   @ApiPropertyOptional({ description: 'true = 답하면서 닫음' }) @IsOptional() @IsBoolean() close?: boolean;
+  @ApiPropertyOptional({ format: 'uuid', description: 'v10.337 — 「답변 틀 고르기」로 고른 틀(지표 「답변 틀별 쓴 횟수」 · 없는 틀이면 무시)' })
+  @IsOptional() @IsString() @MaxLength(40) templateId?: string;
+}
+export class InquiryStatsCatDto {
+  @ApiProperty() category!: string;
+  @ApiPropertyOptional({ nullable: true }) label!: string | null;
+  @ApiProperty() received!: number;
+  @ApiProperty() answered!: number;
+}
+export class InquiryStatsTplDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() title!: string;
+  @ApiProperty() used!: number;
+}
+export class InquiryStatsDto {
+  @ApiProperty({ example: 30 }) days!: number;
+  @ApiProperty() received!: number;
+  @ApiProperty() answered!: number;
+  @ApiProperty() stillOpen!: number;
+  @ApiPropertyOptional({ nullable: true, description: '처음 답까지 평균 시간' }) avgHours!: number | null;
+  @ApiPropertyOptional({ nullable: true, description: '처음 답까지 가운데 값(시간)' }) medianHours!: number | null;
+  @ApiProperty({ description: '기한(영업일 1일) 안에 처음 답한 수' }) inTime!: number;
+  @ApiPropertyOptional({ nullable: true, description: '기한 안 비율 % (답한 것 중)' }) inTimeRate!: number | null;
+  @ApiProperty({ type: InquiryStatsCatDto, isArray: true }) byCategory!: InquiryStatsCatDto[];
+  @ApiProperty({ type: InquiryStatsTplDto, isArray: true }) templates!: InquiryStatsTplDto[];
 }
 export class InquiryPatchDto {
   @ApiPropertyOptional({ format: 'uuid', description: '담당 운영자(빈 글자 = 담당 없음)' }) @IsOptional() @IsString() @MaxLength(40) assigneeId?: string;
@@ -53,6 +78,13 @@ export class InquiryAdminController {
     return this.svc.list({ status, category, overdue: overdue === '1' || overdue === 'true', q, page: Number(page) || 1 });
   }
 
+  @Get('stats')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '1:1 문의 — 처리 지표 (v10.337)', description: '최근 days 일(7 ~ 90 · 처음 30) 접수 · 답한 수 · 처음 답까지 평균 · 가운데 시간 · 기한 안 비율 · 분류별 · 답변 틀별 쓴 횟수. 처음 답 시각은 감사 기록 INQUIRY_ANSWER 가장 이른 것.' })
+  @ApiQuery({ name: 'days', required: false, description: '7 ~ 90 · 처음 30' })
+  @ApiOkResponse({ type: InquiryStatsDto })
+  stats(@Query('days') days?: string) { return this.svc.stats(Number(days) || 30); }
+
   @Get(':id')
   @Roles('ADMIN', 'SUPER')
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -70,7 +102,7 @@ export class InquiryAdminController {
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'INQUIRY_CLOSED — 닫힌 문의(다시 연 뒤 답함)' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'INQUIRY_ANSWER_SHORT · INQUIRY_ANSWER_LONG' })
-  answer(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InquiryAnswerDto) { return this.svc.answer(id, dto.answer, dto.close); }
+  answer(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InquiryAnswerDto) { return this.svc.answer(id, dto.answer, dto.close, dto.templateId); }
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPER')

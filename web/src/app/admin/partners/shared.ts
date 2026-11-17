@@ -29,7 +29,7 @@ export interface VoidRequest {
 
 export interface VoidList { items: VoidRequest[]; rules: Array<{ code: string; name: string }> }
 
-export type View = 'list' | 'apply' | 'services' | 'leads' | 'rejects' | 'wallet' | 'detail';
+export type View = 'list' | 'apply' | 'services' | 'leads' | 'rejects' | 'wallet' | 'status' | 'detail';
 
 /* v10.31 (10/10 시안 기준) — 시안 하위 탭 줄 그대로(파트너사 목록 · 입점 신청 · 서비스 검수 · 의료 심의 · 리드 반려 · 리드 배정 · 카테고리 마스터 · 자격 심사 · 리드 이용료 · 정산).
  * 의료 심의 · 카테고리 마스터 · 자격 심사는 같은 API 를 쓰는 「인증 심사 › 자격 심사」 화면에 있어 그 하위 탭으로 바로 보냅니다(두 곳에 두지 않음). */

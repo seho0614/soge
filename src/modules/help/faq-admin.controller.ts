@@ -12,6 +12,7 @@ import { FAQ_CHANNELS, FAQ_TOPICS, FaqAdminService } from './faq-admin.service';
  *   ADMIN·SUPER  GET   /admin/faqs        모든 질문(숨긴 것 포함) · 분야 · 나오는 곳 · 「많이 찾는 질문」 수
  *                POST  /admin/faqs        새 질문(감사 FAQ_CREATE)
  *                PATCH /admin/faqs/:id    고치기 · 숨기기 · 순서 · 「많이 찾는 질문」(감사 FAQ_UPDATE)
+ *                POST  /admin/faqs/misses/done  v10.336 못 찾은 낱말 「다룸」(감사 FAQ_MISS_DONE)
  *   지우기는 없습니다(숨기기). 사용자 웹은 GET /faq 를 그대로 읽습니다.
  * ------------------------------------------------------------------- */
 
@@ -34,6 +35,14 @@ export class FaqPatchDto {
 }
 /** 새로 등록 — 분류 · 질문 · 답은 꼭(비면 서비스가 422 FAQ_CATEGORY · FAQ_QUESTION · FAQ_ANSWER) */
 export class FaqCreateDto extends FaqPatchDto {}
+export class FaqMissDoneDto {
+  @ApiProperty({ example: '탈퇴 후 재가입', description: '「못 찾은 낱말 30일」의 낱말' }) @IsString() @MaxLength(100) word!: string;
+}
+export class FaqMissDoneResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty() word!: string;
+  @ApiProperty() note!: string;
+}
 export class FaqSaveResultDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty({ format: 'uuid' }) id!: string;
@@ -62,6 +71,17 @@ export class FaqAdminController {
   @ApiResponse({ status: 409, type: ErrorDto, description: 'FAQ_DUPLICATE — 같은 질문이 이미 있음' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'FAQ_CATEGORY · FAQ_QUESTION · FAQ_ANSWER · FAQ_TOPIC · FAQ_CHANNELS · FAQ_LINK · FAQ_SORT · FAQ_GWAN · FAQ_TOP_FULL(10개 넘음)' })
   create(@Body() dto: FaqCreateDto) { return this.svc.create(dto); }
+
+  @Post('misses/done')
+  @HttpCode(200)
+  @Roles('ADMIN', 'SUPER')
+  @Audit('FAQ_MISS_DONE', 'FAQ')
+  @ApiOperation({ summary: '못 찾은 낱말 「다룸」 (v10.336)', description: '새 질문을 만들었거나 다룰 필요가 없는 낱말을 목록에서 내림. 다룸 뒤 다시 찾는 사람이 있으면 다시 나옴.' })
+  @ApiOkResponse({ type: FaqMissDoneResultDto })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 못 찾은 낱말 목록에 없음' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'FAQ_MISS_WORD — 2 ~ 40자' })
+  missDone(@Body() dto: FaqMissDoneDto) { return this.svc.missDone(dto.word); }
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPER')

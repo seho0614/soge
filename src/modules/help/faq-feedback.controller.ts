@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsString, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { DatabaseService } from '../../db/database.service';
 import { NotFound } from '../../core/errors';
@@ -19,6 +19,21 @@ export class FaqHelpfulDto {
 export class FaqCountResultDto {
   @ApiProperty() ok!: boolean;
 }
+export class FaqMissDto {
+  @ApiProperty({ example: '탈퇴 후 재가입', description: '고객센터 찾기에서 결과가 0건이던 낱말(2 ~ 40자)' }) @IsString() @MaxLength(100) q!: string;
+}
+export class FaqMissResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ description: 'false = 사람 정보로 보이거나 길이가 맞지 않아 세지 않음' }) kept!: boolean;
+}
+
+/** v10.336 (D228) — 셀 낱말로 다듬기. 사람 정보로 보이는 것(숫자 4자리 이상 · @ · 주소)은 버림 */
+export function missWord(q: string): string | null {
+  const w = q.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (w.length < 2 || w.length > 40) return null;
+  if (/\d{4,}|@|https?:|www\./.test(w.replace(/[\s-]/g, ''))) return null;
+  return w;
+}
 
 @ApiTags('HOM')
 @Controller('api/v1/faq')
@@ -32,6 +47,22 @@ export class FaqFeedbackController {
       `INSERT INTO faq_daily (faq_id, day, ${col}) VALUES ($1::uuid, (now() AT TIME ZONE 'Asia/Seoul')::date, 1)
        ON CONFLICT (faq_id, day) DO UPDATE SET ${col} = faq_daily.${col} + 1`, [id]);
     return { ok: true };
+  }
+
+  @Post('miss')
+  @HttpCode(200)
+  @ApiOperation({ summary: '고객센터 찾기 「못 찾은 낱말」 +1 (v10.336)', description: '결과가 0건이던 낱말을 그날 줄에 셈(사람 정보 없음). 숫자 4자리 이상 · @ · 주소 모양은 세지 않고 kept false. 운영 화면 「자주 묻는 질문」 「못 찾은 낱말 30일」의 근거.' })
+  @ApiOkResponse({ type: FaqMissResultDto })
+  @ApiResponse({ status: 404, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  async miss(@Body() dto: FaqMissDto) {
+    const w = missWord(dto.q);
+    if (!w) return { ok: true, kept: false };
+    await this.db.query(
+      `INSERT INTO faq_search_misses (word, day, hits) VALUES ($1, (now() AT TIME ZONE 'Asia/Seoul')::date, 1)
+       ON CONFLICT (word, day) DO UPDATE SET hits = faq_search_misses.hits + 1`, [w]);
+    return { ok: true, kept: true };
   }
 
   @Post(':id/view')

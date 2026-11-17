@@ -5,7 +5,7 @@
  *   대표 11/17 「보통의 고객센터 기능(당근 · 네이버 참조)」 — 맨 위 「무엇을 도와드릴까요?」 찾기 → 분야 탭 → 질문 펼치기.
  *   질문 글은 서버 FAQ(GET /faq — 운영 화면 「자주 묻는 질문」에서 고침). 찾는 것이 없으면 1:1 문의(챗봇) · 문의하기 폼으로 잇습니다.
  */
-import { useMemo, useState, type SyntheticEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
@@ -67,6 +67,14 @@ export function CsHub({ faqs }: { faqs: HubFaq[] }) {
     return (picked.length ? picked : faqs).slice(0, TOP_MAX);
   }, [faqs]);
   const tabs = TOPICS.filter((k) => faqs.some((f) => f.topic === k));
+  /* v10.336 (D228) — 결과 0건 낱말을 1.2초 멈춘 뒤 한 번 보냄(이 화면에서 같은 낱말은 한 번 · 사람 정보 없음) */
+  const sent = useRef(new Set<string>());
+  const missed = word.length >= 2 && found.length === 0 ? word : '';
+  useEffect(() => {
+    if (!missed || sent.current.has(missed)) return undefined;
+    const tm = setTimeout(() => { sent.current.add(missed); void post('/api/v1/faq/miss', { q: missed }); }, 1200);
+    return () => clearTimeout(tm);
+  }, [missed]);
   const list = topic === 'TOP' ? top : faqs.filter((f) => f.topic === topic);
 
   return (

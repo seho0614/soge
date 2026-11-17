@@ -47,6 +47,7 @@ export const TABS = [
   ['terms', '약관'],   /* v10.161 — 법정 고지 맨 아래 「약관」 구역을 메뉴 하나로도(같은 화면 부품 · SB-ADM-SIT-070) */
   ['manual', '사용자 설명서'],   /* v10.203 (D180) — 회원용 설명서 · AI 상담 참고 자료 */
   ['faq', '자주 묻는 질문'],   /* v10.332 (D224) — 고객센터 · 이용안내 · 챗봇 질문 글 관리 */
+  ['ops-guide', '업무 안내'],   /* v10.339 (D229) — 운영진 업무 순서 · 그 화면 단추 */
   ['i18n', '번역'],   /* v10.93 다국어 1단계(D115 · docs/150) */
   ['integrations', '외부 연동'],
   ['mainops', '메인 운영'],
@@ -96,7 +97,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'settings', 'codes'] },
-  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'faq', 'siteinfo', 'terms', 'manual', 'i18n'] },
+  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'checklist', 'faq', 'ops-guide', 'siteinfo', 'terms', 'manual', 'i18n'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
   { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log', 'privacy-requests', 'server-errors', 'ops-board'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
@@ -167,6 +168,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   terms:         { title: '약관', sub: '법무가 확인한 글을 고치고 시행일을 정해 게시합니다. 시행일 전에는 앞 판이 그대로 시행되고, 재동의는 시행일부터 받습니다.', screen: 'SB-ADM-SIT-070' },
   manual:        { title: '사용자 설명서', sub: '회원용 사용 방법입니다. 사용자 웹 이용안내 › 「자세한 사용 설명서」에 나가고, AI 상담이 답의 근거로 읽습니다(2만 자까지). 고치면 새 판이 되고 옛 판은 남습니다.', screen: 'SB-ADM-SIT-090' },
   faq:           { title: '자주 묻는 질문', sub: '사용자 웹 고객센터(분야 탭 · 많이 찾는 질문 · 찾기) · 이용안내 · 1:1 문의 챗봇에 나가는 질문 글입니다. 저장하면 바로 나가고, 지우기 대신 숨깁니다.', screen: 'SB-ADM-SIT-100' },
+  'ops-guide':   { title: '업무 안내', sub: '운영진 업무마다 순서와 그 화면으로 가는 단추입니다. 고치기는 최고 관리자(SUPER) — 고치면 새 판이 되고 옛 판은 남습니다.', screen: 'SB-ADM-SIT-110' },
   i18n:          { title: '번역', sub: '다국어 — 번역을 넣고 승인합니다. 승인한 번역만, 다국어를 켠 뒤 손님 화면에 나갑니다.', screen: 'SB-ADM-TRN-010' },
   'hlt-products':{ title: '소개몰 상품', sub: '상품 · 옵션(묶음 개수) · 재고 · 그림 · 고시를 넣고 고칩니다.', screen: 'SB-ADM-HPR-010' },
   ads:           { title: '광고 관리', sub: '메인 광고 자리에 어떤 소재를 누구에게 내보낼지 정합니다. 소재 · 슬롯 · 세그먼트 세 가지가 전부입니다.', screen: 'SB-ADM-ADS-010' },
