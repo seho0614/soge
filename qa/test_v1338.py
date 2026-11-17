@@ -119,16 +119,16 @@ if API and DB:
         code = next((r.get('code') for r in rows0 if r.get('status') == 'APPROVED'), None) or (rows0[0].get('code') if rows0 else None)
         r0 = next((r for r in rows0 if r.get('code') == code), {})
         ins = psql(f"SET session_replication_role = replica; INSERT INTO consult_requests (category_id, phone_hash, sido, memo, consent_version, consented_at, state, verified_at) "
-                   f"SELECT id, 'test1338', '서울', '{MEMO}', 'v1', now(), 'DELIVERED', now() FROM categories WHERE code = '{code}'")
+                   f"SELECT id, 'test1338', '서울', '{MEMO}', 'v1', now(), 'NO_PARTNER', now() FROM categories WHERE code = '{code}'")
         s1 = call('GET', '/admin/lead-status', None, TA)
         r1 = next((r for r in (s1.get('rows') or []) if r.get('code') == code), {})
         d1, d2 = call('GET', '/admin/lead-status?days=1', None, TA), call('GET', '/admin/lead-status?days=500', None, TA)
         fb = call('GET', '/admin/lead-status', None, TB)
         hall = s0.get('hall') or {}
-        ok('② API — 리드관 꺼진 채 · lead.legal_ok off · 상담 업종 줄 · 법률 · 세무 빠짐 · 시험 신청(전달) → 신청 · 전달 +1 · 합계 +1 · days 1 → 7 · 500 → 90 · 회원 403',
+        ok('② API — 리드관 꺼진 채 · lead.legal_ok off · 상담 업종 줄 · 법률 · 세무 빠짐 · 시험 신청(파트너 없음) → 신청 · 파트너 없음 +1 · 합계 +1 · days 1 → 7 · 500 → 90 · 회원 403',
            hall.get('active') is False and hall.get('legalOk') == 'off' and isinstance(hall.get('notifyReady'), bool) and len(rows0) > 0
            and not any(str(r.get('code', '')).endswith(('LEGAL', 'TAX')) for r in rows0) and '!' not in ins
-           and r1.get('requests') == (r0.get('requests') or 0) + 1 and r1.get('delivered') == (r0.get('delivered') or 0) + 1
+           and r1.get('requests') == (r0.get('requests') or 0) + 1 and r1.get('noPartner') == (r0.get('noPartner') or 0) + 1
            and (s1.get('total') or {}).get('requests') == (s0.get('total') or {}).get('requests', 0) + 1
            and d1.get('days') == 7 and d2.get('days') == 90 and fb.get('_err') == 403,
            f"{hall} · 업종 {len(rows0)} · {code} {r0.get('requests')}→{r1.get('requests')} · {ins[-80:]} · {fb.get('_err')}")
