@@ -112,11 +112,12 @@ export class PublicService {
 
   /** FAQ 는 데이터입니다. 관리자가 바꿀 때 배포가 필요하면 안 됩니다 */
   /* v10.31 — channel(FAQ 기본 · CS · GUIDE · BOT)으로 고릅니다. 챗봇 낱말 · 「…에서 보기」 · 상담원 연결 여부도 함께(D048) */
+  /* v10.332 (D224 · docs/463) — 고객센터 홈 분야 탭 · 「많이 찾는 질문」을 위해 id · topic · isTop 을 함께 */
   async faq(gwanCode?: string, channel?: string) {
     const ch = ['FAQ', 'CS', 'GUIDE', 'BOT'].includes(channel ?? '') ? channel! : 'FAQ';
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT category, question, answer, keywords, link_href AS "linkHref", link_label AS "linkLabel", handoff,
-              id::text AS "_id"
+              id::text AS id, topic, is_top AS "isTop", id::text AS "_id"
          FROM faqs
         WHERE is_active AND ($1::text IS NULL OR gwan_code = $1 OR gwan_code IS NULL)
           AND $2 = ANY(channels)

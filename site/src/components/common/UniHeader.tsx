@@ -92,8 +92,10 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
       .map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name })),
     { href: '/community', label: h('community') },
     { href: '/guide', label: h('guide') },
+    /* v10.332 (docs/463) — 대표 11/17 「고객센터 링크 추가」 · 1:1 문의 · 문의 내역 · 분쟁 접수(/support/…)에서도 켜짐 */
+    { href: '/support/new', label: h('support') },
   ];
-  const cur = menu.find((m) => under(p, m.href))?.href;
+  const cur = menu.find((m) => under(p, m.href === '/support/new' ? '/support' : m.href))?.href;
 
   return (
     <header className={`sh-hd${st.in ? ' in' : ''}`} data-uni-header="">

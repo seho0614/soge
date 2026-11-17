@@ -47,6 +47,7 @@ export function SiteHeader({ gwans }: { gwans: Gwan[] }) {
           ...menu,
           { href: '/community', label: t('community') },
           { href: '/guide', label: t('guide') },
+          { href: '/support/new', label: t('support') },
         ]} />
         <div className="pc-hr"><LangPick /><HdAuth /></div>
       </div>

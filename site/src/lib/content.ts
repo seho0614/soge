@@ -16,6 +16,8 @@ export interface Faq {
   category: string; question: string; answer: string;
   /* v10.31 (D048) — 챗봇 낱말 · 「…에서 보기」 · 상담원 연결 */
   keywords?: string[]; linkHref?: string | null; linkLabel?: string | null; handoff?: boolean;
+  /* v10.332 (D224) — 고객센터 홈 분야 탭 · 많이 찾는 질문 */
+  id?: string; topic?: string; isTop?: boolean;
 }
 
 /** 화면 고정 문구. 없으면 빈 문자열 — 문구가 안 나오는 게 틀린 문구보다 낫습니다 */

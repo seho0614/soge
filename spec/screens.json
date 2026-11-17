@@ -636,9 +636,12 @@
    "apis": [
     "POST /inquiries",
     "GET /me/agent/drafts/{id}",
-    "GET /site-settings/public"
+    "GET /site-settings/public",
+    "GET /faq",
+    "GET /notices"
    ],
-   "nav": "SB-HOM-CSB-010"
+   "nav": "SB-HOM-CSB-010",
+   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건"
   },
   {
    "id": "SB-HOM-ETC-031",
@@ -1825,6 +1828,25 @@
    "note": "2026-11-06 v10.203 D180 — 회원용 사용자 설명서(AI 상담 참고 자료 · /guide/manual). 판을 쌓기만 함(옛 판 보기) · 저장은 SUPER · 2만 자 · ### 절이 AI 답 출처."
   },
   {
+   "id": "SB-ADM-SIT-100",
+   "name": "자주 묻는 질문",
+   "group": "ADM",
+   "url": "/admin/faq",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/faqs",
+    "POST /admin/faqs",
+    "PATCH /admin/faqs/{id}"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE."
+  },
+  {
    "id": "SB-AIS-PRF-010",
    "name": "관심 성향 분석",
    "group": "AI",
@@ -1963,7 +1985,9 @@
    "apis": [
     "GET /admin/ops-alerts",
     "POST /admin/ops-alerts/{id}/ack",
-    "POST /admin/ops-alerts/ack-code", "GET /admin/ops-alerts/ack-bulk/preview", "POST /admin/ops-alerts/ack-bulk",
+    "POST /admin/ops-alerts/ack-code",
+    "GET /admin/ops-alerts/ack-bulk/preview",
+    "POST /admin/ops-alerts/ack-bulk",
     "GET /admin/ops-alerts/mail-status",
     "GET /admin/launch-watch/alerts-week",
     "POST /admin/ops-alerts/mail-test",
@@ -5067,7 +5091,8 @@
     "POST /admin/health/sellers/{id}/status",
     "POST /admin/health/sellers/{id}/commission",
     "GET /admin/health/rate-impact",
-    "GET /admin/health/tenant/readiness", "POST /admin/health/tenant/biz-report"
+    "GET /admin/health/tenant/readiness",
+    "POST /admin/health/tenant/biz-report"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "v10.224 (D194) — 소개몰 정산에서 나눈 탭 · 판매자 관리는 v10.223 (D193)",

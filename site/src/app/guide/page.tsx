@@ -46,7 +46,7 @@ export default async function GuidePage() {
       {faq.length ? (
         <div className="w1-faq">{faq.map((f) => <details key={f.question}><summary>{f.question}</summary><p>{f.answer}</p></details>)}</div>
       ) : <div className="w1-empty">{tr('guide.faqEmpty')}</div>}
-      <h2 className="w1-s2">{tr('guide.termsH')}</h2>
+      <h2 className="w1-s2" id="terms">{tr('guide.termsH')}</h2>
       <table className="w1-tb">
         <thead><tr><th>{tr('guide.colDoc')}</th><th>{tr('guide.colState')}</th></tr></thead>
         <tbody>

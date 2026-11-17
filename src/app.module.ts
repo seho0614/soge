@@ -108,6 +108,8 @@ import { IntegrationKeysController, PaymentClientKeyController } from './modules
 import { WeatherAdminController, WeatherPublicController } from './modules/weather/weather.controller';   // v10.49 (D103) 오늘의 날씨
 import { WeatherService } from './modules/weather/weather.service';
 import { HelpAdminController, HelpPublicController } from './modules/help/help.controller';   // v10.203 (D180) 사용자 설명서
+import { FaqAdminController } from './modules/help/faq-admin.controller';   // v10.332 (D224) 자주 묻는 질문 관리
+import { FaqAdminService } from './modules/help/faq-admin.service';
 import { HelpService } from './modules/help/help.service';
 import { HolidayController } from './modules/holiday/holiday.controller';   // v10.206 (D183) 공휴일
 import { HolidayService } from './modules/holiday/holiday.service';
@@ -355,6 +357,7 @@ import { LeadService } from './modules/lead/lead.service';
     WeatherAdminController,   // v10.49 (D103) 오늘의 날씨
     HelpPublicController,
     HelpAdminController,      // v10.203 (D180) 사용자 설명서
+    FaqAdminController,       // v10.332 (D224) 자주 묻는 질문 관리
     HolidayController,        // v10.206 (D183) 공휴일
     PlanAdminController,      // v10.207 (D184) 요금제 금액 · 한도
     HealthOpenStockController, // v10.208 (D185) 개봉 반품 재고
@@ -387,6 +390,7 @@ import { LeadService } from './modules/lead/lead.service';
     IntegrationSecretService,   /* v10.128 (D128) 외부 연동 키 — process.env 에 얹음 */
     WeatherService,   /* v10.49 (D103) 오늘의 날씨 */
     HelpService,      /* v10.203 (D180) 사용자 설명서 · AI 상담 자료 */
+    FaqAdminService,      /* v10.332 (D224) 자주 묻는 질문 관리 */
     HolidayService,   /* v10.206 (D183) 공휴일 · 영업일 */
     PlanAdminService, /* v10.207 (D184) 요금제 금액 · 한도 */
     HealthOpenStockService, /* v10.208 (D185) 개봉 반품 재고 */

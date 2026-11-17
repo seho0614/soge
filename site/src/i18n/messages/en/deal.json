@@ -538,7 +538,50 @@
     "received": "Received",
     "noAnswer": "None yet",
     "newInquiry": "New inquiry",
-    "form": "Inquiry form"
+    "form": "Inquiry form",
+    "hub": {
+      "quickLabel": "Help Center shortcuts",
+      "quick": {
+        "bot": "1:1 chat",
+        "hist": "My inquiries",
+        "dispute": "File a dispute",
+        "scam": "Scam & reporting",
+        "notice": "Notices",
+        "guide": "How it works",
+        "terms": "Terms & policies",
+        "account": "My account"
+      },
+      "quickSub": {
+        "bot": "Instant answers from the chatbot",
+        "hist": "Check replies",
+        "dispute": "Hold & mediation",
+        "scam": "Safe trading tips",
+        "notice": "Community notices",
+        "guide": "For first-time users",
+        "terms": "Terms · Privacy policy",
+        "account": "My page"
+      },
+      "findH": "How can we help you?",
+      "findPh": "Type your question (e.g. settlement, referral code, returns)",
+      "foundH": "{n, plural, one {{n} question} other {{n} questions}} found for “{q}”",
+      "none": "No matching questions.",
+      "askBot": "Ask the 1:1 chatbot",
+      "askForm": "use the inquiry form below",
+      "tabsLabel": "Question topics",
+      "topic": {
+        "TOP": "Top questions",
+        "ACCOUNT": "Account & sign-up",
+        "DEAL": "Referrals & deals",
+        "MONEY": "Fees & settlement",
+        "MALL": "Sogae Mall",
+        "ADS": "Ads & plans",
+        "SAFETY": "Safety & reports",
+        "ETC": "Other"
+      },
+      "empty": "No questions in this topic yet.",
+      "ntcH": "Latest notices",
+      "more": "View all →"
+    }
   },
   "tpl": {
     "backDeal": "← Contract · Signing",

@@ -52,6 +52,9 @@ export class FaqDto {
   @ApiProperty() category!: string;
   @ApiProperty() question!: string;
   @ApiProperty() answer!: string;
+  @ApiPropertyOptional({ format: 'uuid', description: 'v10.332 (D224) 질문 번호' }) id?: string;
+  @ApiPropertyOptional({ enum: ['ACCOUNT', 'DEAL', 'MONEY', 'MALL', 'ADS', 'SAFETY', 'ETC'], description: 'v10.332 (D224) 고객센터 분야 탭' }) topic?: string;
+  @ApiPropertyOptional({ description: 'v10.332 (D224) 「많이 찾는 질문」에 올림' }) isTop?: boolean;
 }
 
 export class CreateDisputeDto {
