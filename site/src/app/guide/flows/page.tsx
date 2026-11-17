@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { BackBar } from '@/components/common/BackBar';
 import '@/styles/proto-w1.css';
 
@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('policy'))('flows.title') };
 }
 
-/* 흐름마다 바로 가기 주소 — 글은 사전 policy.flows.items.<키> */
+/* 흐름마다 바로 가기 주소 — 글은 사전 policy.flows.items.<키> · 단계는 번호 열쇠("1", "2" …)의 글자(사전 값은 모두 글자 — 옛 번역 시험) */
 const FLOWS = [
   ['join', '/signup'], ['earn', '/money'], ['consult', '/mall?axis=consult'], ['buy', '/health'],
   ['support', '/support/new'], ['partner', '/partner/apply'], ['affiliate', '/partners'],
@@ -21,6 +21,7 @@ const FLOWS = [
  */
 export default async function FlowsPage() {
   const t = await getTranslations('policy');
+  const items = ((await getMessages()) as unknown as { policy: { flows: { items: Record<string, { steps: Record<string, string> }> } } }).policy.flows.items;
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-ETC-050" style={{ maxWidth: 1000 }}>
       <BackBar href="/guide" label={t('flows.back')} wrap={false} />
@@ -29,7 +30,7 @@ export default async function FlowsPage() {
         <p>{t('flows.intro')}</p>
       </div>
       {FLOWS.map(([k, href]) => {
-        const steps = t.raw(`flows.items.${k}.steps`) as string[];
+        const steps = Object.values(items[k]?.steps || {});
         return (
           <section key={k} className="w1-panel" style={{ marginTop: 14 }} data-guide-flow={k}>
             <h2 className="w1-s2" style={{ marginTop: 0 }}>{t(`flows.items.${k}.t`)} <small className="w1-ls">{t('flows.who')}: {t(`flows.items.${k}.who`)}</small></h2>
