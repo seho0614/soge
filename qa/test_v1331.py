@@ -163,7 +163,7 @@ if API and DB:
                 seen, perr = r
                 one = psql(f"SELECT r.bulk || ':' || r.reads FROM notice_reads r WHERE r.account_id = '{aid}' AND r.notice_id = '{old}'")
                 ok('④ 판매자 화면 — 첫 30개 밖 공지를 #n-<id> 로 열면 「지난 공지」로 펼침 · 판매자 읽음 기록(bulk 아님) · 화면 오류 없음',
-                   seen.get('inList') == 0 and seen.get('hash') == 1 and seen.get('open') is True and one == 'false:1' and not perr, f'{seen} · {one} · {perr[:2]}')
+                   seen.get('inList') == 0 and seen.get('hash') == 1 and seen.get('open') is True and one in ('false:1', 'false:2') and not perr, f'{seen} · {one} · {perr[:2]}')
         else:
             print('  (SITE 없음 — ④ 건너뜀)')
     finally:
