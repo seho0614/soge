@@ -131,7 +131,7 @@ if API and DB:
         c1 = call('POST', '/admin/faqs', {'category': '시험', 'question': Q, 'answer': '시험 답 1332', 'topic': 'MONEY', 'channels': ['FAQ', 'CS'], 'keywords': ['시험1332']}, TA)
         fid = c1.get('id')
         c2 = call('POST', '/admin/faqs', {'category': '시험', 'question': Q, 'answer': '다른 답', 'topic': 'MONEY'}, TA)
-        c3 = call('POST', '/admin/faqs', {'category': '시험', 'question': Q + ' 링크', 'answer': '답', 'linkHref': 'https://example.com', 'linkLabel': '밖'}, TA)
+        c3 = call('POST', '/admin/faqs', {'category': '시험', 'question': Q + ' 링크', 'answer': '링크 시험 답 1332', 'linkHref': 'https://example.com', 'linkLabel': '밖'}, TA)
         pick = lambda: next((f for f in call('GET', '/faq?channel=CS') if isinstance(f, dict) and f.get('id') == fid), None) if fid else None
         g1 = pick() or {}
         p1 = call('PATCH', f'/admin/faqs/{fid}', {'isTop': True}, TA)
