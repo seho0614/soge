@@ -105,7 +105,7 @@ except Exception:
 MD = os.path.join(K, 'prisma/migrations')
 mig = sorted(x for x in (os.listdir(MD) if os.path.isdir(MD) else []) if x[:1] in 'ABCD')
 ok('① 코드 — D227(지우는 문장 없음 · 꺼진 채) · lead.legal_ok SUPER · /lead 화면(꺼지면 404) · 주소표 LED · 안심소개 상담 탭 숨김 · 사전 · screens.json(이연 5 · 새 화면) · 문서 466 · 467 · 판 v10.335 · 마이그레이션 265',
-   "'lead.legal_ok', 'off'" in M27 and 'trg_lead_gwan_guard' in M27 and 'SET is_active = true' not in M27 and not re.search(r'\b(DROP|DELETE|TRUNCATE)\b', M27)
+   "'lead.legal_ok', 'off'" in M27 and 'fn_gwan_open_guard' in M27 and "c.gwan_code = 'MAL' AND c.axis = 'CONSULT'" in M27 and "($1 = 'LED' AND gwan_code='MAL' AND axis='CONSULT')" in rd('src/modules/site/site.service.ts') and 'SET is_active = true' not in M27 and not re.search(r'\b(DROP|DELETE|TRUNCATE)\b', M27)
    and "key === 'lead.legal_ok'" in AS_ and "'LEAD_SETTING_SUPER'" in AS_ and 'notFound()' in LP and "x.code === 'LED'" in LP and 'data-lead-hall' in LP
    and "LED: 'lead'" in FMT and "lead: 'LED'" in FMT and "redirect('/lead')" in GL and KO.get('title') and EN.get('title')
    and len(DEF) == 5 and not any(x in DEF for x in ('SB-ADM-PTN-010', 'SB-PTC-DSH-010')) and '"SB-LED-MAIN-010"' in SJ
