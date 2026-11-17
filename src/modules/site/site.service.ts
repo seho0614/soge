@@ -61,9 +61,10 @@ export class SiteService {
     name?: string; description?: string; isActive?: boolean; sortOrder?: number;
   }) {
     if (input.isActive === true) {
-      // 업종 없이 열면 등록 폼의 선택지가 비어 사용자가 막힙니다
+      // 업종 없이 열면 등록 폼의 선택지가 비어 사용자가 막힙니다 — 리드관(LED)은 안심소개 상담 축 업종을 씀(v10.335)
       const [c] = await this.db.query<{ n: string }>(
-        `SELECT count(*) AS n FROM categories WHERE gwan_code=$1 AND status='APPROVED'`, [code]);
+        `SELECT count(*) AS n FROM categories
+          WHERE status='APPROVED' AND (gwan_code=$1 OR ($1 = 'LED' AND gwan_code='MAL' AND axis='CONSULT'))`, [code]);
       if (Number(c.n) === 0) {
         throw new PolicyViolation(
           'NO_APPROVED_CATEGORY',
