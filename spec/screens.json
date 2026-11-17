@@ -3418,8 +3418,31 @@
     "PATCH /admin/accounts/{id}/posting-suspension/lift",
     "GET /admin/accounts/{id}/login-lock",
     "DELETE /admin/accounts/{id}/login-lock",
-    "POST /admin/accounts/{id}/password-reset-link"
-   ]
+    "POST /admin/accounts/{id}/password-reset-link",
+    "POST /admin/reports/roles"
+   ],
+   "note": "v10.333 (docs/464) 권한 주기 · 거두기(SUPER · 사유 필수 · 권한 관리와 같은 API)"
+  },
+  {
+   "id": "SB-ADM-INQ-010",
+   "name": "1:1 문의",
+   "group": "ADM",
+   "url": "/admin/inquiries",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/inquiries",
+    "GET /admin/inquiries/{id}",
+    "POST /admin/inquiries/{id}/answer",
+    "PATCH /admin/inquiries/{id}",
+    "GET /files/{id}"
+   ],
+   "nav": "SB-ADM-MBR-010",
+   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기."
   },
   {
    "id": "SB-HOM-CMU-010",

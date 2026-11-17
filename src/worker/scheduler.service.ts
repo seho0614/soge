@@ -129,6 +129,9 @@ export class SchedulerService {
         affected = r.n;
         // v10.90 — 운영자에게 알릴 길: CloudWatch 필터 「REVIEW_SLA_BREACH」 → 경보 sgb-review-sla(deploy/aws/cloudwatch/setup.sh)
         if (r.n > 0) this.log.warn(`REVIEW_SLA_BREACH 검수 기한 넘김 ${r.n}건 — 운영 화면 › 검수 화면`);
+        /* v10.333 (D225 · docs/464) — 1:1 문의 답변 기한(영업일 1일) 넘김도 같은 작업에서(운영 알림 INQUIRY_DUE_BREACH · 0건이면 풂) */
+        const [iq] = await this.db.query<{ n: number }>(`SELECT fn_inquiry_due_alert() AS n`);
+        if (iq.n > 0) this.log.warn(`INQUIRY_DUE_BREACH 1:1 문의 답변 기한 넘김 ${iq.n}건 — 운영 화면 › 회원 › 1:1 문의`);
         break;
       }
 

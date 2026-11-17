@@ -26,6 +26,7 @@ export const TABS = [
   ['category', '업종 승인'],
   ['members', '회원'],
   ['users', '사업자 인증'],
+  ['inquiries', '1:1 문의'],   /* v10.333 (D225) — 고객센터 문의 답변함 */
   ['community', '글 검수'],
   ['polls', '이건 어때? 투표'],
   ['ownership', '소유 확인'],
@@ -91,7 +92,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
-  { key: 'admusr',  label: '회원',      tabs: ['members', 'users'] },
+  { key: 'admusr',  label: '회원',      tabs: ['members', 'users', 'inquiries'] },
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'settings', 'codes'] },
@@ -153,6 +154,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'hlt-orders':  { title: '소개몰 주문', sub: '결제 완료 주문의 발송을 처리합니다 — 택배사 · 송장번호를 넣으면 배송중, 「배송 완료로」를 누르면 배송 완료.', screen: 'SB-ADM-HOR-010' },
   members:       { title: '회원 목록', sub: '이름 · 이메일 · 연락처로 찾습니다.', screen: 'SB-ADM-MBR-010' },
   users:         { title: '회원 관리', sub: '사업자 신청을 승인 · 반려하고 회원을 정지합니다. 승인 시각이 소개비 수령 자격의 기준일입니다 (INV-10).', screen: 'SB-ADM-USR-010' },
+  inquiries:     { title: '1:1 문의', sub: '고객센터 문의하기 · 챗봇 「상담원 연결」로 들어온 문의입니다. 답하면 회원에게 알림이 가고, 기한(접수 뒤 영업일 1일)을 넘기면 운영 알림이 뜹니다.', screen: 'SB-ADM-INQ-010' },
   category:      { title: '업종 관리', sub: '업종은 열린 집합입니다 — 신청 → 승인 → 노출 (A-02).', screen: 'SB-ADM-CAT-010' },
   mainops:       { title: '메인 운영', sub: '메인에 무엇을 띄울지 정합니다. 광고는 추천 순위에 섞이지 않고 별도 슬롯에만 나갑니다. 배포 없이 즉시 반영됩니다.', screen: 'SB-ADM-MAIN-010' },
   settings:      { title: '전체 설정', sub: '사이트 설정 모두를 찾고 고칩니다. 값이 바뀔 때마다 전 · 후 · 누가 · 까닭이 「바뀐 기록」에 남습니다(비밀 값은 가림).', screen: 'SB-ADM-SET-010' },

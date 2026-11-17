@@ -539,6 +539,7 @@
     "noAnswer": "None yet",
     "newInquiry": "New inquiry",
     "form": "Inquiry form",
+    "answeredOn": "Answered on {d}",
     "hub": {
       "quickLabel": "Help Center shortcuts",
       "quick": {

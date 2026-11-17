@@ -6,6 +6,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
 import { RecommendDetail } from './affiliates/Recommend';   // v10.253 (docs/388) 회원 상세에서 추천 관계도
 import { SettlementSummary } from './SettlementSummary';   // v10.255 (docs/388) 회원 정산 내역
+import { MemberRoles } from './MemberRoles';   // v10.333 (docs/464) 회원 상세에서 권한 주기 · 거두기(SUPER)
 
 interface Row {
   id: string; email: string; name: string; phone: string | null;
@@ -159,6 +160,7 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
           </tbody>
         </table>
       </div>
+      <MemberRoles accountId={a.id} name={a.name} roles={d.roles ?? []} onDone={load} />
 
       <h3 className="ad-s2">사업자</h3>
       {d.business ? (

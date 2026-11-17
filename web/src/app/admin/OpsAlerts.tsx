@@ -65,6 +65,7 @@ const NAME: Record<string, string> = {
   STAFF_LOGIN_NEW: '운영자 낯선 로그인',   // v10.201 (D179) — 30일에 없던 IP 대역 · 브라우저
   STAFF_IP_PASS_NEW: '접속 인증 처음 보는 대역', STAFF_IP_LOCKED: '접속 인증번호 5번 틀림', STAFF_IP_DAY_LIMIT: '접속 인증번호 하루 한도',   // v10.228 (D197)
   ASSUME_READY: '간주 끌 수 있음',   // v10.317 (D220 · docs/442)
+  INQUIRY_DUE_BREACH: '1:1 문의 답변 기한 넘김',   // v10.333 (D225 · docs/464) — 회원 › 1:1 문의
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)
   TERMS_EFFECTIVE_SOON: '약관 시행 3일 안',   // v10.243 (docs/381)

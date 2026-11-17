@@ -38,7 +38,12 @@ export default async function HistoryPage() {
                 <td>{r.channel === 'BOT' ? t('chBot') : t('chAgent')}</td>
                 <td>{r.status === 'ANSWERED' || r.status === 'CLOSED' ? <span className="w1-bg ok">{r.statusLabel ?? t('answered')}</span> : <span className="w1-bg wait">{r.statusLabel ?? t('received')}</span>}</td>
                 <td>{ymdKst(r.createdAt)}</td>
-                <td style={{ maxWidth: 320 }}>{r.answer ? r.answer.slice(0, 80) + (r.answer.length > 80 ? '…' : '') : <span className="w1-ls">{t('noAnswer')}</span>}</td>
+                {/* v10.333 (D225 · docs/464) — 운영 화면 「1:1 문의」에서 단 답변 전체를 펼쳐 봄(전: 80자에서 자름) */}
+                <td style={{ maxWidth: 360 }} data-inquiry-answer={r.answer ? 'yes' : 'no'}>{r.answer
+                  ? <details><summary>{r.answer.slice(0, 80) + (r.answer.length > 80 ? '…' : '')}</summary>
+                      <p style={{ whiteSpace: 'pre-wrap', margin: '6px 0 0' }}>{r.answer}</p>
+                      {r.answeredAt && <p className="w1-ls" style={{ margin: '4px 0 0' }}>{t('answeredOn', { d: ymdKst(r.answeredAt) })}</p>}</details>
+                  : <span className="w1-ls">{t('noAnswer')}</span>}</td>
               </tr>
             ))}
           </tbody>

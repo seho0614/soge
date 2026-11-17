@@ -548,6 +548,7 @@
     "noAnswer": "아직 없음",
     "newInquiry": "새 문의",
     "form": "문의하기 폼",
+    "answeredOn": "{d} 답변",
     "hub": {
       "quickLabel": "고객센터 바로가기",
       "quick": {

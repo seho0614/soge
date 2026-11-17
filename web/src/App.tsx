@@ -40,6 +40,7 @@ import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { FaqAdmin } from './app/admin/FaqAdmin';   // v10.332 (D224)
+import { InquiryDesk } from './app/admin/InquiryDesk';   // v10.333 (D225)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
 import { MainOps } from './app/admin/MainOps';
@@ -316,6 +317,7 @@ function Console() {
         {tab === 'terms' && <TermsPanel />}
         {tab === 'manual' && <HelpManual />}
         {tab === 'faq' && <FaqAdmin />}
+        {tab === 'inquiries' && <InquiryDesk />}
         {tab === 'integrations' && <Integrations />}
         {tab === 'mainops' && <MainOps onGo={go} />}
       {tab === 'gwans' && <Gwans onGo={go} />}

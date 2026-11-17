@@ -28,7 +28,7 @@ export const ROLE_LABEL: Record<string, string> = {
   SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당',
   PARTNER_MAL: '안심 파트너 담당', PARTNER_AFF: '제휴 파트너 담당',
 };
-const GRANTABLE = ['PARTNER_MAL', 'PARTNER_AFF', 'REVIEWER', 'ADMIN', 'SUPER'];
+export const GRANTABLE = ['PARTNER_MAL', 'PARTNER_AFF', 'REVIEWER', 'ADMIN', 'SUPER'];
 interface Found { id: string; email: string; name: string; status: string }
 const TABS: SubTab<View>[] = [
   { key: 'holders', label: '권한 보유자', screen: 'SB-ADM-USR-010' },
