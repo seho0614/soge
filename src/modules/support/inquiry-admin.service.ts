@@ -93,12 +93,11 @@ export class InquiryAdminService {
    */
   async stats(daysIn?: number) {
     const days = Math.max(7, Math.min(90, Math.floor(Number(daysIn) || 30)));
-    const base = `WITH w AS (
+    const [s] = await this.db.query<Record<string, number | null>>(
+      `WITH w AS (
         SELECT i.id, i.category, i.status, i.created_at, i.due_at,
                (SELECT min(l.occurred_at) FROM audit.audit_logs l WHERE l.action = 'INQUIRY_ANSWER' AND l.target_id = i.id) AS first_at
-          FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))`;
-    const [s] = await this.db.query<Record<string, number | null>>(
-      `${base}
+          FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))
        SELECT count(*)::int AS received, count(first_at)::int AS answered,
               count(*) FILTER (WHERE status = 'OPEN')::int AS "stillOpen",
               round((avg(extract(epoch FROM first_at - created_at)) / 3600)::numeric, 1)::float AS "avgHours",
@@ -106,7 +105,10 @@ export class InquiryAdminService {
               count(*) FILTER (WHERE first_at IS NOT NULL AND (due_at IS NULL OR first_at <= due_at))::int AS "inTime"
          FROM w`, [days]);
     const byCategory = await this.db.query<{ category: string; label: string | null; received: number; answered: number }>(
-      `${base}
+      `WITH w AS (
+        SELECT i.id, i.category, i.status, i.created_at, i.due_at,
+               (SELECT min(l.occurred_at) FROM audit.audit_logs l WHERE l.action = 'INQUIRY_ANSWER' AND l.target_id = i.id) AS first_at
+          FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))
        SELECT w.category, cl.label, count(*)::int AS received, count(first_at)::int AS answered
          FROM w LEFT JOIN code_labels cl ON cl.domain = 'inquiry.category' AND cl.code = w.category
         GROUP BY w.category, cl.label ORDER BY count(*) DESC, w.category`, [days]);
