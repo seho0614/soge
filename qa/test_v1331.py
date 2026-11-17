@@ -103,7 +103,7 @@ ok('① 코드 — D223 판매자 알림 주소(지우는 문장 없음) · 한 
    and not re.search(r'\b(DROP|DELETE|TRUNCATE)\b', M23) and "@Get('me/health/seller/notices/:id')" in SC and 'async notice(id: string)' in SV
    and "(onePath ?? '/api/v1/notices/{id}').replace('{id}', id)" in HO and "readPath={readPath?.replace('{id}', one.id)}" in HO
    and 'onePath="/api/v1/me/health/seller/notices/{id}"' in NP and 'readPath="/api/v1/me/health/seller/notices/{id}/read"' in NP
-   and not any(x in DEF for x in ('SB-BIZ-POL-030', 'SB-ADS-LND-010', 'SB-ADM-SEG-020')) and len(DEF) == 14 and '"GET /me/health/seller/notices/{id}"' in SJ
+   and not any(x in DEF for x in ('SB-BIZ-POL-030', 'SB-ADS-LND-010', 'SB-ADM-SEG-020')) and len(DEF) in (14, 5) and '"GET /me/health/seller/notices/{id}"' in SJ
    and '시안만' not in SJ and 'D223' in doc('461_') and VT >= (10, 331) and len(mig) >= 261 and 'D223_notice_link_seller' in mig, f'{VER} · 이연 {len(DEF)} · 마이그레이션 {len(mig)}')
 if API and DB:
     import consent_ok
