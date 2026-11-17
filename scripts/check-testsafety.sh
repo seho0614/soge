@@ -204,12 +204,15 @@ echo "======================================================="
 # ★ 건강상품이 PATH_GWAN 에 빠져 **/health 가 404** 였습니다.
 #   DB 에도 있고 API 도 받는데 화면만 못 갔습니다 — 관 코드를 코드에
 #   박으면 관을 늘릴 때마다 이런 곳이 남습니다(함정 ⑦).
-n=$(psql "$DATABASE_URL" -t -A -c "SELECT count(*) FROM gwans WHERE is_active AND NOT is_hub" 2>/dev/null | tr -d '[:space:]')
-m=$(grep -oE "'[A-Z]{3}'" site/src/lib/format.ts 2>/dev/null | sort -u | wc -l | tr -d ' ')
-if [ "${n:-0}" = "${m:-0}" ]; then
-  echo "  ok   ⑬ 주소 매핑에 관 ${n}개 전부"
+# v10.335 (D227 · docs/466) — 꺼진 관(리드관 LED)을 미리 매핑해 두면 수가 달라 「같은 수」로는 못 봅니다.
+#   뜻(켠 관은 모두 주소가 있음)대로 켠 관 코드가 하나씩 format.ts 에 있는지 봅니다. 켠 관을 못 읽으면(빈 목록) 실패로 둡니다.
+codes=$(psql "$DATABASE_URL" -t -A -c "SELECT code FROM gwans WHERE is_active AND NOT is_hub ORDER BY 1" 2>/dev/null | tr -d '\r')
+n=$(printf '%s\n' "$codes" | grep -c '[A-Z]')
+miss=""; for c in $codes; do grep -q "'$c'" site/src/lib/format.ts 2>/dev/null || miss="$miss $c"; done
+if [ "${n:-0}" -gt 0 ] && [ -z "$miss" ]; then
+  echo "  ok   ⑬ 주소 매핑에 켠 관 ${n}개 전부"
 else
-  echo "  ▲    ⑬ 관 ${n}개인데 매핑 ${m}개 — site/src/lib/format.ts 를 보십시오"
+  echo "  ▲    ⑬ 켠 관 ${n}개 중 매핑 없음:${miss:- (켠 관을 못 읽음)} — site/src/lib/format.ts 를 보십시오"
   ng=$((ng+1))   # 이 파일의 위험 카운터는 ng 입니다 (risk 는 오타였습니다)
 fi
 
