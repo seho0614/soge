@@ -30,11 +30,17 @@ export class FaqAdminService {
     const rows = await this.db.query<Record<string, unknown> & { by: string | null }>(
       `SELECT f.id::text AS id, f.category, f.question, f.answer, f.topic, f.is_top AS "isTop", f.is_active AS "isActive",
               f.channels, f.keywords, f.link_href AS "linkHref", f.link_label AS "linkLabel", f.handoff,
-              f.gwan_code AS "gwanCode", f.sort_order AS "sortOrder", f.updated_at AS "updatedAt", a.email AS by
+              f.gwan_code AS "gwanCode", f.sort_order AS "sortOrder", f.updated_at AS "updatedAt", a.email AS by,
+              coalesce(d.views, 0)::int AS views30, coalesce(d.yes, 0)::int AS yes30, coalesce(d.no, 0)::int AS no30
          FROM faqs f LEFT JOIN accounts a ON a.id = f.updated_by
+         LEFT JOIN (SELECT faq_id, sum(views) AS views, sum(yes) AS yes, sum(no) AS no FROM faq_daily
+                     WHERE day > (now() AT TIME ZONE 'Asia/Seoul')::date - 30 GROUP BY faq_id) d ON d.faq_id = f.id
         ORDER BY f.is_active DESC, f.sort_order, f.category, f.question`);
     const top = rows.filter((r) => r.isActive && r.isTop).length;
-    return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), topics: FAQ_TOPICS, channels: FAQ_CHANNELS, topMax: FAQ_TOP_MAX, top };
+    /* v10.334 (D226) — 「많이 찾는 질문 후보」: 보이는 질문 중 아직 TOP 이 아닌 것 · 최근 30일 펼침 순 10개 */
+    const candidates = rows.filter((r) => r.isActive && !r.isTop && Number(r.views30) > 0)
+      .sort((x, y) => Number(y.views30) - Number(x.views30)).slice(0, 10).map((r) => ({ id: r.id, question: r.question, views30: r.views30 }));
+    return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), topics: FAQ_TOPICS, channels: FAQ_CHANNELS, topMax: FAQ_TOP_MAX, top, candidates };
   }
 
   private clean(v: FaqInput, base: Required<Pick<FaqInput, 'channels'>> & FaqInput) {

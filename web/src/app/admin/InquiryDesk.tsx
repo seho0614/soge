@@ -22,6 +22,8 @@ interface One extends Omit<Row, 'files' | 'nameHead'> {
   staff: Array<{ id: string; email: string }>;
 }
 
+interface Tpl { id: string; title: string; body: string; sortOrder: number; isActive: boolean; updatedAt: string }
+
 const ST: Record<string, string> = { OPEN: '답변 전', ANSWERED: '답변 완료', CLOSED: '닫힘' };
 const ST_CLS: Record<string, string> = { OPEN: 'wait', ANSWERED: 'ok', CLOSED: '' };
 
@@ -38,6 +40,7 @@ export function InquiryDesk() {
     ...(f.overdue ? { overdue: '1' } : {}), ...(f.q ? { q: f.q } : {}), page: String(f.page) }).toString();
   const list = useApi<ListData>(`/admin/inquiries?${qs}`);
   const [open, setOpen] = useState<string | null>(null);
+  const [tpl, setTpl] = useState(false);
   if (list.error) return <ErrorView error={list.error} onRetry={list.reload} />;
   if (!list.data) return <p className="muted">불러오는 중…</p>;
   const { rows, counts, categories, more, page } = list.data;
@@ -60,8 +63,10 @@ export function InquiryDesk() {
         </select>{' '}
         <input name="inq-q" value={word} onChange={(e) => setWord(e.target.value)} placeholder="제목 · 본문 · 메일"
           onKeyDown={(e) => { if (e.key === 'Enter') pick({ q: word.trim() }); }} />{' '}
-        <button className="btn-plain btn-sm" onClick={() => pick({ q: word.trim() })} data-inquiry-q-go="">찾기</button>
+        <button className="btn-plain btn-sm" onClick={() => pick({ q: word.trim() })} data-inquiry-q-go="">찾기</button>{' '}
+        <button className="btn-plain btn-sm" onClick={() => setTpl(!tpl)} data-inquiry-tpl-manage="">{tpl ? '답변 틀 닫기' : '답변 틀 관리'}</button>
       </p>
+      {tpl && <TemplateManager />}
       <table className="tbl" data-inquiry-rows={rows.length}>
         <thead><tr><th>문의번호</th><th>분류</th><th>제목</th><th>보낸 사람</th><th>접수</th><th>기한</th><th>상태</th></tr></thead>
         <tbody>
@@ -95,6 +100,7 @@ export function InquiryDesk() {
 
 function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
   const q = useApi<One>(`/admin/inquiries/${id}`);
+  const tq = useApi<{ rows: Tpl[] }>('/admin/inquiry-templates');   /* v10.334 (D226) 답변 틀 */
   const a = useAct();
   const [text, setText] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -125,6 +131,15 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
       </p>
       <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--g50, #f8fafc)', padding: 12, borderRadius: 8 }} data-inquiry-body="">{d.body}</pre>
       {d.files.length > 0 && <p>첨부: {d.files.map((fid, i) => <button key={fid} className="btn-plain btn-sm" onClick={() => openFile(fid)}>파일 {i + 1}</button>)}</p>}
+      {d.status !== 'CLOSED' && (tq.data?.rows ?? []).some((t) => t.isActive) && (
+        <p>
+          <select name="inq-template" value="" data-inquiry-template=""
+            onChange={(e) => { const t = tq.data?.rows.find((x) => x.id === e.target.value); if (t && (!ans.trim() || confirm('답변 칸의 글을 이 틀로 바꿉니다.'))) setText(t.body); }}>
+            <option value="">답변 틀 고르기 — 칸에 채운 뒤 고쳐서 보냄</option>
+            {(tq.data?.rows ?? []).filter((t) => t.isActive).map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+          </select>
+        </p>
+      )}
       {d.answer && <p className="muted">지난 답변 {ymdhm(d.answeredAt)}{d.answeredBy ? ` · ${d.answeredBy}` : ''}</p>}
       <textarea name="inq-answer" value={ans} onChange={(e) => setText(e.target.value)} rows={7} maxLength={4000} readOnly={d.status === 'CLOSED'}
         placeholder={d.status === 'CLOSED' ? '닫힌 문의입니다 — 「다시 열기」 뒤 답합니다.' : '답변(회원에게 그대로 보임 · 4,000자)'} style={{ width: '100%' }} data-inquiry-answer="" />
@@ -149,6 +164,55 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
           <ul className="plain">{d.past.map((p) => <li key={p.id}><span className="mono">{p.no}</span> {p.title} <small className="dim">{ST[p.status] ?? p.status} · {ymdhm(p.createdAt)}</small></li>)}</ul>
         </details>
       )}
+    </div>
+  );
+}
+
+/** v10.334 (D226 · docs/465) — 답변 틀 관리(ADMIN · SUPER) · 지우기 없음(숨기기) */
+function TemplateManager() {
+  const q = useApi<{ rows: Tpl[] }>('/admin/inquiry-templates');
+  const a = useAct();
+  const [edit, setEdit] = useState<{ id: string | null; title: string; body: string; sortOrder: number } | null>(null);
+  if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
+  if (!q.data) return <p className="muted">불러오는 중…</p>;
+  const save = () => {
+    if (!edit) return;
+    const { id, ...v } = edit;
+    void a.run('tpl', () => api(id ? `/admin/inquiry-templates/${id}` : '/admin/inquiry-templates', { method: id ? 'PATCH' : 'POST', body: JSON.stringify(v) }),
+      () => { setEdit(null); q.reload(); });
+  };
+  const toggle = (t: Tpl) => {
+    if (!confirm(t.isActive ? `「${t.title}」 틀을 숨깁니다.` : `「${t.title}」 틀을 다시 보이게 합니다.`)) return;
+    void a.run(`t-${t.id}`, () => api(`/admin/inquiry-templates/${t.id}`, { method: 'PATCH', body: JSON.stringify({ isActive: !t.isActive }) }), q.reload);
+  };
+  return (
+    <div className="card" data-inquiry-templates={q.data.rows.length}>
+      <Flash msg={a.msg} err={a.err} />
+      <h3 className="sec">답변 틀 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: null, title: '', body: '', sortOrder: 100 })} data-inquiry-tpl-new="">새 틀</button></h3>
+      {edit && (
+        <div>
+          <p><input name="tpl-title" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} maxLength={40} placeholder="틀 이름(40자)" />{' '}
+            <input name="tpl-sort" type="number" min={0} max={9999} value={edit.sortOrder} onChange={(e) => setEdit({ ...edit, sortOrder: Number(e.target.value) })} style={{ width: 80 }} /></p>
+          <p><textarea name="tpl-body" value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} rows={6} maxLength={4000} style={{ width: '100%' }} placeholder="답변 글(2 ~ 4,000자)" /></p>
+          <p><button className="btn-ok" disabled={a.busy === 'tpl' || !edit.title.trim() || edit.body.trim().length < 2} onClick={save} data-inquiry-tpl-save="">저장</button>{' '}
+            <button className="btn-plain btn-sm" onClick={() => setEdit(null)}>취소</button></p>
+        </div>
+      )}
+      <table className="tbl">
+        <thead><tr><th>순서</th><th>이름</th><th>글 앞부분</th><th>상태</th><th></th></tr></thead>
+        <tbody>
+          {q.data.rows.map((t) => (
+            <tr key={t.id} className={t.isActive ? undefined : 'muted'}>
+              <td>{t.sortOrder}</td><td>{t.title}</td><td className="muted">{t.body.slice(0, 50)}{t.body.length > 50 ? '…' : ''}</td>
+              <td>{t.isActive ? '보임' : '숨김'}</td>
+              <td style={{ whiteSpace: 'nowrap' }}>
+                <button className="btn-plain btn-sm" onClick={() => setEdit({ id: t.id, title: t.title, body: t.body, sortOrder: t.sortOrder })}>고치기</button>{' '}
+                <button className="btn-plain btn-sm" disabled={a.busy === `t-${t.id}`} onClick={() => toggle(t)}>{t.isActive ? '숨기기' : '보이기'}</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

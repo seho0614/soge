@@ -5,7 +5,7 @@
  *   대표 11/17 「보통의 고객센터 기능(당근 · 네이버 참조)」 — 맨 위 「무엇을 도와드릴까요?」 찾기 → 분야 탭 → 질문 펼치기.
  *   질문 글은 서버 FAQ(GET /faq — 운영 화면 「자주 묻는 질문」에서 고침). 찾는 것이 없으면 1:1 문의(챗봇) · 문의하기 폼으로 잇습니다.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type SyntheticEvent } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
@@ -18,12 +18,39 @@ const TOPICS = ['ACCOUNT', 'DEAL', 'MONEY', 'MALL', 'ADS', 'SAFETY', 'ETC'] as c
 type Tab = 'TOP' | (typeof TOPICS)[number];
 const TOP_MAX = 10;
 
+/* v10.334 (D226 · docs/465) — 펼침 · 「도움이 되었나요?」는 같은 브라우저에서 질문마다 하루 한 번만 보냄(서버는 하루 셈만 · 사람 정보 없음) */
+const today = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+function once(key: string): boolean {
+  try {
+    if (localStorage.getItem(key) === today()) return false;
+    localStorage.setItem(key, today());
+  } catch { /* 저장소가 막힌 브라우저는 매번 보냄 */ }
+  return true;
+}
+const post = (path: string, body?: unknown) =>
+  fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) }).catch(() => undefined);
+
 function Item({ f, open }: { f: HubFaq; open?: boolean }) {
+  const t = useTranslations('deal.support.hub');
+  const [voted, setVoted] = useState(false);
+  const onToggle = (e: SyntheticEvent<HTMLDetailsElement>) => {
+    if (e.currentTarget.open && once(`sgb_faq_v:${f.id}`)) void post(`/api/v1/faq/${f.id}/view`);
+  };
+  const vote = (yes: boolean) => {
+    setVoted(true);
+    if (once(`sgb_faq_h:${f.id}`)) void post(`/api/v1/faq/${f.id}/helpful`, { yes });
+  };
   return (
-    <details data-cs-faq={f.id} data-cs-topic={f.topic} open={open}>
+    <details data-cs-faq={f.id} data-cs-topic={f.topic} open={open} onToggle={onToggle}>
       <summary>{f.question}</summary>
       <p>{f.answer}</p>
       {f.linkHref && f.linkLabel && <p className="w1-cs-go"><Link href={f.linkHref}>{f.linkLabel} →</Link></p>}
+      <p className="w1-cs-help" data-cs-help={f.id}>
+        {voted ? <span data-cs-help-done="">{t('helpThanks')}</span> : <>
+          {t('helpQ')}{' '}
+          <button type="button" onClick={() => vote(true)} data-cs-help-yes="">{t('helpYes')}</button>{' '}
+          <button type="button" onClick={() => vote(false)} data-cs-help-no="">{t('helpNo')}</button></>}
+      </p>
     </details>
   );
 }

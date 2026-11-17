@@ -10,20 +10,21 @@ interface Row {
   id: string; category: string; question: string; answer: string; topic: string; isTop: boolean; isActive: boolean;
   channels: string[]; keywords: string[]; linkHref: string | null; linkLabel: string | null; handoff: boolean;
   gwanCode: string | null; sortOrder: number; updatedAt: string; by: string | null;
+  views30?: number; yes30?: number; no30?: number;   /* v10.334 (D226) 최근 30일 펼침 · 도움 됨 · 안 됨 */
 }
-interface Data { rows: Row[]; topics: string[]; channels: string[]; topMax: number; top: number }
+interface Data { rows: Row[]; topics: string[]; channels: string[]; topMax: number; top: number; candidates?: Array<{ id: string; question: string; views30: number }> }
 
 const TOPIC_KO: Record<string, string> = {
   ACCOUNT: '회원 · 가입', DEAL: '소개 · 거래', MONEY: '수수료 · 정산', MALL: '소개몰', ADS: '광고 · 구독', SAFETY: '안전 · 신고', ETC: '기타',
 };
 const CH_KO: Record<string, string> = { FAQ: '고객센터', CS: '고객센터(시안)', GUIDE: '이용안내', BOT: '챗봇' };
 
-type Form = Omit<Row, 'id' | 'updatedAt' | 'by' | 'keywords'> & { keywords: string };
+type Form = Omit<Row, 'id' | 'updatedAt' | 'by' | 'keywords' | 'views30' | 'yes30' | 'no30'> & { keywords: string };
 const EMPTY: Form = {
   category: '', question: '', answer: '', topic: 'ETC', isTop: false, isActive: true, channels: ['FAQ', 'CS'], keywords: '',
   linkHref: '', linkLabel: '', handoff: false, gwanCode: '', sortOrder: 100,
 };
-const toForm = (r: Row): Form => ({ ...r, keywords: r.keywords.join(', '), linkHref: r.linkHref ?? '', linkLabel: r.linkLabel ?? '', gwanCode: r.gwanCode ?? '' });
+const toForm = ({ views30: _v, yes30: _y, no30: _n, id: _i, updatedAt: _u, by: _b, ...r }: Row): Form => ({ ...r, keywords: r.keywords.join(', '), linkHref: r.linkHref ?? '', linkLabel: r.linkLabel ?? '', gwanCode: r.gwanCode ?? '' });
 
 /**
  * SB-ADM-SIT-100 자주 묻는 질문 (v10.332 · D224 · docs/463)
@@ -40,7 +41,7 @@ export function FaqAdmin() {
   const [word, setWord] = useState('');
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
-  const { rows, topics, channels, topMax, top } = q.data;
+  const { rows, topics, channels, topMax, top, candidates = [] } = q.data;
   const w = word.trim();
   const shown = rows.filter((r) => (!topic || r.topic === topic) && (!w || r.question.includes(w) || r.answer.includes(w) || r.category.includes(w)));
 
@@ -78,6 +79,12 @@ export function FaqAdmin() {
         <button className="btn-ok" onClick={() => setEdit({ id: null, f: { ...EMPTY } })} data-faq-new="">새 질문</button>
       </p>
 
+      {candidates.length > 0 && (
+        <div className="ad-nt info" data-faq-candidates={candidates.length}>
+          <b>「많이 찾는 질문」 후보</b>(최근 30일 많이 펼친 순 · 아직 TOP 아님):{' '}
+          {candidates.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{c.question} <small className="dim">{c.views30}회</small></span>)}
+        </div>
+      )}
       {edit && (
         <div className="card" data-faq-form={edit.id ?? 'new'}>
           <h3 className="sec">{edit.id ? '질문 고치기' : '새 질문'}</h3>
@@ -117,7 +124,7 @@ export function FaqAdmin() {
       )}
 
       <table className="tbl" data-faq-rows={shown.length}>
-        <thead><tr><th>순서</th><th>분야</th><th>질문</th><th>나오는 곳</th><th>상태</th><th>고친 때</th><th></th></tr></thead>
+        <thead><tr><th>순서</th><th>분야</th><th>질문</th><th>나오는 곳</th><th>상태</th><th title="최근 30일">펼침 · 도움 됨 / 안 됨</th><th>고친 때</th><th></th></tr></thead>
         <tbody>
           {shown.map((r) => (
             <tr key={r.id} data-faq-row={r.id} className={r.isActive ? undefined : 'muted'}>
@@ -126,6 +133,7 @@ export function FaqAdmin() {
               <td>{r.isTop && <b className="warn-text">TOP </b>}{r.question}</td>
               <td>{r.channels.map((c) => CH_KO[c] ?? c).join(' · ')}</td>
               <td>{r.isActive ? '보임' : '숨김'}</td>
+              <td className="muted" data-faq-stat={`${r.views30 ?? 0}|${r.yes30 ?? 0}|${r.no30 ?? 0}`}>{r.views30 ?? 0} · {r.yes30 ?? 0} / {r.no30 ?? 0}</td>
               <td className="muted">{ymdhm(r.updatedAt)}{r.by ? ` · ${r.by}` : ''}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
                 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: r.id, f: toForm(r) })} data-faq-edit={r.id}>고치기</button>{' '}

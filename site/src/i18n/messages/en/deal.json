@@ -581,7 +581,11 @@
       },
       "empty": "No questions in this topic yet.",
       "ntcH": "Latest notices",
-      "more": "View all →"
+      "more": "View all →",
+      "helpQ": "Was this helpful?",
+      "helpYes": "Yes",
+      "helpNo": "No",
+      "helpThanks": "Thanks for your feedback."
     }
   },
   "tpl": {

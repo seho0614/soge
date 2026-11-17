@@ -638,10 +638,12 @@
     "GET /me/agent/drafts/{id}",
     "GET /site-settings/public",
     "GET /faq",
-    "GET /notices"
+    "GET /notices",
+    "POST /faq/{id}/view",
+    "POST /faq/{id}/helpful"
    ],
    "nav": "SB-HOM-CSB-010",
-   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건"
+   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건 · v10.334 (D226 · docs/465) 질문 펼침 · 「도움이 되었나요?」(하루 셈)"
   },
   {
    "id": "SB-HOM-ETC-031",
@@ -1844,7 +1846,7 @@
     "PATCH /admin/faqs/{id}"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE."
+   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE. · v10.334 (D226) 최근 30일 펼침 · 도움 됨 / 안 됨 · 많이 찾는 질문 후보 · 질문 초안 14개(숨김)"
   },
   {
    "id": "SB-AIS-PRF-010",
@@ -3439,10 +3441,13 @@
     "GET /admin/inquiries/{id}",
     "POST /admin/inquiries/{id}/answer",
     "PATCH /admin/inquiries/{id}",
-    "GET /files/{id}"
+    "GET /files/{id}",
+    "GET /admin/inquiry-templates",
+    "POST /admin/inquiry-templates",
+    "PATCH /admin/inquiry-templates/{id}"
    ],
    "nav": "SB-ADM-MBR-010",
-   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기."
+   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리"
   },
   {
    "id": "SB-HOM-CMU-010",

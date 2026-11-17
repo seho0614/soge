@@ -307,6 +307,9 @@ textarea.w1-in { resize: vertical; min-height: 88px; line-height: 1.65; }
 .w1-cs-ntc em.new { color: #C2410C; }
 .w1-cs-ntc time { flex: none; font-size: 12px; color: var(--ink-3); }
 @media (max-width: 640px) { .w1-cs-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* v10.334 (D226) — 질문 아래 「도움이 되었나요?」 */
+.w1-cs-help { margin-top: 0 !important; font-size: 12px; color: var(--ink-3); }
+.w1-cs-help button { min-height: 32px; padding: 0 12px; margin-left: 4px; font-size: 12px; border: 1px solid var(--g200); border-radius: 999px; background: #fff; color: var(--ink-2); cursor: pointer; }
 @media (max-width: 640px) { .w1-dst { grid-template-columns: 1fr 1fr; } }
 
 /* 약관 전문(시안 termsv — 탭 칩 · 조항 목록 · 본문) */

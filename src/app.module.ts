@@ -112,6 +112,8 @@ import { FaqAdminController } from './modules/help/faq-admin.controller';   // v
 import { FaqAdminService } from './modules/help/faq-admin.service';
 import { InquiryAdminController } from './modules/support/inquiry-admin.controller';   // v10.333 (D225) 1:1 문의 답변함
 import { InquiryAdminService } from './modules/support/inquiry-admin.service';
+import { InquiryTemplateController } from './modules/support/inquiry-template.controller';   // v10.334 (D226) 답변 틀
+import { FaqFeedbackController } from './modules/help/faq-feedback.controller';   // v10.334 (D226) 질문 펼침 · 도움 됨
 import { HelpService } from './modules/help/help.service';
 import { HolidayController } from './modules/holiday/holiday.controller';   // v10.206 (D183) 공휴일
 import { HolidayService } from './modules/holiday/holiday.service';
@@ -361,6 +363,8 @@ import { LeadService } from './modules/lead/lead.service';
     HelpAdminController,      // v10.203 (D180) 사용자 설명서
     FaqAdminController,       // v10.332 (D224) 자주 묻는 질문 관리
     InquiryAdminController,   // v10.333 (D225) 1:1 문의 답변함
+    InquiryTemplateController,   // v10.334 (D226) 1:1 문의 답변 틀
+    FaqFeedbackController,    // v10.334 (D226) 고객센터 질문 펼침 · 도움이 되었나요?
     HolidayController,        // v10.206 (D183) 공휴일
     PlanAdminController,      // v10.207 (D184) 요금제 금액 · 한도
     HealthOpenStockController, // v10.208 (D185) 개봉 반품 재고
