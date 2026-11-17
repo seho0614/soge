@@ -92,7 +92,7 @@ PC, PS = rd('src/modules/public/public.controller.ts'), rd('src/modules/public/p
 HO, PN = rd('site/src/components/common/NoticeHashOpen.tsx'), rd('site/src/components/community/PlazaNotices.tsx')
 ok('① 코드 — GET /notices/{id} · notice() · NoticeHashOpen(주소 · 한 건 · 볼 수 없음) · 소개광장 공지에 붙음 · 글자 · screens.json · 문서 455 · 판 v10.327',
    "@Get('notices/:id')" in PC and 'async notice(id: string)' in PS and 'data-notice-hash-open' in HO and 'data-notice-hash-gone' in HO
-   and '/api/v1/notices/${id}' in HO and '<NoticeHashOpen shown={rows.map((n) => n.id)}' in PN
+   and ('/api/v1/notices/${id}' in HO or "'/api/v1/notices/{id}'" in HO) and '<NoticeHashOpen shown={rows.map((n) => n.id)}' in PN
    and '"oldOne"' in rd('site/src/i18n/messages/ko/plaza.json') and '"gone"' in rd('site/src/i18n/messages/en/plaza.json')
    and '"GET /notices/{id}"' in rd('spec/screens.json') and '오래된 공지' in doc('455_') and VT >= (10, 327), VER)
 if API and DB:
