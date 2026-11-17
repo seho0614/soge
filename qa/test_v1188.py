@@ -54,7 +54,7 @@ ok('① 문서 · 판 — docs/294 · v10.188 이상', any(f.startswith('294_') 
 
 if SITE and API:
     from playwright.sync_api import sync_playwright
-    PAGES = [('/', None), ('/money', '/money'), ('/mall', '/mall'), ('/biz', '/biz'), ('/health', '/health'), ('/community', '/community'), ('/guide', '/guide'), ('/support', None)]
+    PAGES = [('/', None), ('/money', '/money'), ('/mall', '/mall'), ('/biz', '/biz'), ('/health', '/health'), ('/community', '/community'), ('/guide', '/guide'), ('/support', '/support/new')]   # v10.332 (docs/463) — 머리줄 「고객센터」 메뉴가 /support 에서 켜짐
     HD = """() => { const hs = [...document.querySelectorAll('header')].filter(e => { const r = e.getBoundingClientRect(); return r.height > 20 && getComputedStyle(e).display !== 'none' && r.top < 80 });
       const u = document.querySelector('header[data-uni-header]'); const on = u && u.querySelector('.sh-nav a.on'); const join = u && [...u.querySelectorAll('a')].find(a => a.getAttribute('href') === '/signup');
       const logo = u && u.querySelector('.sh-logo img');
