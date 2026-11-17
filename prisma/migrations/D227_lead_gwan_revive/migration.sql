@@ -19,15 +19,15 @@ UPDATE public.gwans
 
 CREATE OR REPLACE FUNCTION public.fn_lead_gwan_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF NEW.code = 'LED' AND NEW.is_active AND (TG_OP = 'INSERT' OR NOT OLD.is_active)
+  IF NEW.code = 'LED' AND NEW.is_active AND NOT OLD.is_active
      AND coalesce((SELECT value FROM public.site_settings WHERE key = 'lead.legal_ok'), 'off') <> 'on' THEN
     RAISE EXCEPTION 'SETTING: 리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.';
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION public.fn_lead_gwan_guard() IS 'v10.335 (D227) 리드관(LED)은 lead.legal_ok = on 일 때만 켬';
+COMMENT ON FUNCTION public.fn_lead_gwan_guard() IS 'v10.335 (D227) 리드관(LED)은 lead.legal_ok = on 일 때만 켬(켜는 UPDATE 만 봄 — LED 줄은 이미 있고, 점검 자료의 INSERT … ON CONFLICT DO NOTHING 을 막지 않게)';
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_lead_gwan_guard' AND tgrelid = 'public.gwans'::regclass) THEN
-    CREATE TRIGGER trg_lead_gwan_guard BEFORE INSERT OR UPDATE OF is_active ON public.gwans FOR EACH ROW EXECUTE FUNCTION public.fn_lead_gwan_guard();
+    CREATE TRIGGER trg_lead_gwan_guard BEFORE UPDATE OF is_active ON public.gwans FOR EACH ROW EXECUTE FUNCTION public.fn_lead_gwan_guard();
   END IF;
 END $$;
