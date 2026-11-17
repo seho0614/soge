@@ -3034,6 +3034,7 @@
    ],
    "apis": [
     "GET /me/health/seller/notices",
+    "GET /me/health/seller/notices/{id}",
     "POST /me/health/seller/notices/{id}/read",
     "GET /notices/{id}/files/{n}"
    ],
@@ -4905,7 +4906,7 @@
     "GET /biz/policies/{no}/source"
    ],
    "nav": "SB-BIZ-DTL-010",
-   "note": "시안만 — 실제 웹 개발중(소개창업 정보 축이 실제 웹에 없음) · v10.27 G-130"
+   "note": "v10.31 서버 자료(GET /biz/policies/{no}/source)로 그림 · v10.331 (docs/461) v10.27 G-130 「개발중」 표시 지움"
   },
   {
    "id": "SB-ADS-LND-010",
@@ -4922,7 +4923,7 @@
     "GET /ads/{id}"
    ],
    "nav": "SB-AIS-REC-010",
-   "note": "시안만 — 실제 웹 개발중(랜딩 주소가 없는 소재) · v10.27 G-130"
+   "note": "v10.31 노출 중 소재 한 건(GET /ads/{id}) · v10.331 (docs/461) v10.27 G-130 「개발중」 표시 지움"
   },
   {
    "id": "SB-ADM-PTN-011",
@@ -5322,18 +5323,6 @@
   {
    "id": "SB-BIZ-LST-010",
    "reason": "반응형 통합 — SB-BIZ-MAIN-010 에 흡수 (랜딩 겸 목록)"
-  },
-  {
-   "id": "SB-BIZ-POL-030",
-   "reason": "시안만 — 실제 웹 개발중(v10.27 G-130 · 10/9 「시안까지만 한 경우 개발중으로 표시」)"
-  },
-  {
-   "id": "SB-ADS-LND-010",
-   "reason": "시안만 — 실제 웹 개발중(v10.27 G-130 · 10/9 「시안까지만 한 경우 개발중으로 표시」)"
-  },
-  {
-   "id": "SB-ADM-SEG-020",
-   "reason": "시안만 — 실제 웹 개발중(v10.27 G-130 · 10/9 「시안까지만 한 경우 개발중으로 표시」)"
   }
  ],
  "retired": [

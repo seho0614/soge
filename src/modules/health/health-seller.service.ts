@@ -83,7 +83,7 @@ export class HealthSellerService {
           AND (ends_at IS NULL OR ends_at > now())   -- v10.282 (D211)
           AND grades && array_remove(fn_notice_grades($1::uuid), 'STAFF')   -- v10.279 (D210) 이 판매자의 등급에 맞는 것만`;
 
-  private sellerNoticeRows(q: string, limit: number, offset: number) {
+  private sellerNoticeRows(q: string, limit: number, offset: number, id: string | null = null) {
     return this.db.query(
       `SELECT id, gwan_code AS "gwanCode", title, body, published_at AS "publishedAt", is_pinned AS "isPinned",
               (published_at > now() - interval '30 days'
@@ -92,7 +92,8 @@ export class HealthSellerService {
          FROM notices
         WHERE ${HealthSellerService.NOTICE_WHERE}
           AND ($2::text = '' OR strpos(lower(title), lower($2)) > 0 OR strpos(lower(body), lower($2)) > 0)
-        ORDER BY is_pinned DESC, published_at DESC, id LIMIT ${limit} OFFSET $3`, [this.me, q, offset]);
+          AND ($4::uuid IS NULL OR id = $4::uuid)
+        ORDER BY is_pinned DESC, published_at DESC, id LIMIT ${limit} OFFSET $3`, [this.me, q, offset, id]);
   }
 
   /** v10.330 (docs/459) 판매자센터 › 「지난 공지 모두 보기」 — 찾기(q · 제목 · 본문) · 30개씩(page) · 「모두 읽음」 없음(요율 공지는 펼친 기록이 증거) */
@@ -101,6 +102,14 @@ export class HealthSellerService {
     const q = typeof qIn === 'string' ? qIn.trim().replace(/\s+/g, ' ').slice(0, 100) : '';
     const page = /^\d{1,4}$/.test(String(pageIn ?? '')) ? Math.max(1, Number(pageIn)) : 1;
     return this.sellerNoticeRows(q, HealthSellerService.NOTICE_PAGE, (page - 1) * HealthSellerService.NOTICE_PAGE);
+  }
+
+  /** v10.331 (docs/461) 판매자 공지 한 건 — 알림 #n-<id> 가 첫 30개 밖일 때 화면이 불러 펼침 · 목록과 같은 기준이 아니면 404 */
+  async notice(id: string) {
+    await this.seller();
+    const [one] = await this.sellerNoticeRows('', 1, 0, id);
+    if (!one) throw new NotFound('공지를 찾을 수 없습니다.');
+    return one;
   }
 
   /** 배송비 · 반품비 — 반품비는 6,000원을 넘을 수 없음(DB 도 막음) */

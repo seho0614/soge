@@ -6,6 +6,7 @@ import { me } from '@/lib/session';
 import { Crumb, HltNav, HltEmpty } from '@/components/health/HltParts';
 import { NoticeDetails } from '@/components/common/NoticeDetails';
 import { NoticeFiles, type NoticeFile } from '@/components/common/NoticeFiles';
+import { NoticeHashOpen } from '@/components/common/NoticeHashOpen';
 import { NoticeEmptyText, NoticePager, NoticeSearch, noticeQuery } from '@/components/common/NoticeListTools';
 import { getTranslations } from 'next-intl/server';
 
@@ -21,10 +22,12 @@ type SellerNotice = { id: string; title: string; body: string; publishedAt: stri
  * 판매자센터 「소개몰 공지」 상자의 「지난 공지 모두 보기」 — GET /me/health/seller/notices?q=&page=.
  *   찾기(nq) · 30개씩(np)은 소개광장 · 파트너센터 공지와 같은 부품(NoticeListTools).
  *   펼치면 판매자 읽음 기록(POST /me/health/seller/notices/{id}/read — 요율 공지 「읽음 n / 대상 m」 증거) · 「모두 읽음」은 두지 않음.
+ * v10.331 (docs/461) 소개몰 공지 알림(D223)이 #n-<id> 로 이리 옴 — 첫 30개 밖이면 GET /me/health/seller/notices/{id} 한 건을 「지난 공지」로 펼침.
  */
 export default async function HltSellerNoticesPage({ searchParams }: { searchParams: Promise<{ nq?: string; np?: string }> }) {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('hlt.center');
+  const tp = await getTranslations('plaza');
   const { nq, np, api } = noticeQuery(await searchParams);
   let rows: SellerNotice[] | null = null;
   let notSeller = false;
@@ -42,6 +45,8 @@ export default async function HltSellerNoticesPage({ searchParams }: { searchPar
       {notSeller ? <HltEmpty msg={t('notSeller')} href="/health/seller" label={t('apply')} /> : rows === null ? <p className="form-error" role="alert">{t('errLoad')}</p> : <>
         <p className="lead">{t('noticesLead')}</p>
         <NoticeSearch path={path} nq={nq} />
+        <NoticeHashOpen shown={rows.map((x) => x.id)} login labels={{ old: tp('ntc.oldOne'), isNew: t('noticeNew'), files: t('noticeFiles'), gone: tp('ntc.gone') }}
+          onePath="/api/v1/me/health/seller/notices/{id}" readPath="/api/v1/me/health/seller/notices/{id}/read" />
         {rows.length === 0 ? (
           <p className="empty" data-notice-empty><NoticeEmptyText nq={nq} np={np} empty={t('noticesEmpty')} /></p>
         ) : (

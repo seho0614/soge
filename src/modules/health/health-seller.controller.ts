@@ -81,6 +81,15 @@ export class HealthSellerController {
   @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
   notices(@Query('q') q?: string, @Query('page') page?: string) { return this.svc.notices(q, page); }
 
+  @Get('me/health/seller/notices/:id')
+  @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
+  @ApiOperation({ summary: '소개몰 공지 한 건', description: 'v10.331 (docs/461) 알림 · 주소 #n-<id> 로 온 판매자 공지가 첫 30개 밖이면 판매자센터 › 소개몰 공지 화면이 이 한 건을 불러 펼친 채 보여 줌. 목록과 같은 기준(소개몰 공지 · 게시 중 · 끝나지 않음 · 이 판매자 등급)이 아니면 404.' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: NoticeDto })
+  @ApiResponse({ status: 403, description: 'NOT_SELLER', type: ErrorDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  notice(@Param('id', ParseUUIDPipe) id: string) { return this.svc.notice(id); }
+
   @Post('me/health/seller/notices/:id/read')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
   @ApiOperation({ summary: '소개몰 공지 읽음', description: 'v10.283 (D212 · docs/411) 판매자센터 「소개몰 공지」를 펼친 기록(처음 · 마지막 · 횟수) — 요율 공지 「읽음 n / 대상 m」.' })
