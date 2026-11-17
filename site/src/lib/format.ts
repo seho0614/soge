@@ -24,7 +24,7 @@ export function ym(iso: string | null): string {
 
 /* 관 코드 → 주소 조각. PATH_GWAN 의 역방향입니다 — 둘을 같이 고치십시오. */
 export const GWAN_PATH: Record<string, string> = {
-  MNY: 'money', MAL: 'mall', BIZ: 'biz', HLT: 'health',
+  MNY: 'money', MAL: 'mall', BIZ: 'biz', HLT: 'health', LED: 'lead',   // v10.335 (D227) 리드관 — 켜야 메뉴에 나옴
 };
 /* 주소 조각 → 관 코드.
  *
@@ -35,7 +35,7 @@ export const GWAN_PATH: Record<string, string> = {
  *   관을 더하시면 **여기와 GWAN_PATH 를 같이** 고치십시오.
  *   검정 ⑫ 가 관 코드 목록이 최신인지 감시합니다. */
 export const PATH_GWAN: Record<string, string> = {
-  money: 'MNY', mall: 'MAL', biz: 'BIZ', health: 'HLT',
+  money: 'MNY', mall: 'MAL', biz: 'BIZ', health: 'HLT', lead: 'LED',
 };
 
 /* 20261001 — 목록 정렬값. 주소창에 모르는 값(예: sort=PRICE_ASC)이 오면

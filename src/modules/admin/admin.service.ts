@@ -376,6 +376,10 @@ export class AdminService {
     if (AdminService.OPS_PUSH_KEYS.includes(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('OPS_PUSH_SETTING_SUPER', '운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.335 (D227 · docs/466) — 리드관 법무 재확인 회신은 리드관을 켜는 조건이라 SUPER 만 */
+    if (key === 'lead.legal_ok' && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('LEAD_SETTING_SUPER', '리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.302 (D218 · docs/423) — 요율 공지 자동 다시 알림은 판매자에게 알림이 나가는 기준이라 SUPER 만 */
     if (key === 'hlt.rate_auto_remind_days' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('RATE_REMIND_SETTING_SUPER', '요율 공지 자동 다시 알림은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

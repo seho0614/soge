@@ -173,5 +173,10 @@
     "repick": "Choose another category",
     "verifying": "Verifying…",
     "notReady": "We are still setting up the messages that deliver verification codes, so consultation requests are paused for now. You can apply here as soon as it is ready."
+  },
+  "lead": {
+    "title": "Sogae Lead",
+    "desc": "Request a consultation for insurance, medical, rental and other life & finance services, and a certified provider qualified in that field will contact you.",
+    "warn": "Your request is shared with only one certified provider in the field you choose. The provider is responsible for the consultation and contract; SogaeBank verifies the provider's qualifications."
   }
 }

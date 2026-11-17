@@ -4841,6 +4841,23 @@
    "note": "D018 상담 업종 목록. 공개 · 준비 중 업종과 받을 수 있는 인증업체 수를 보여 줍니다. 0곳이면 신청 버튼을 막고, 법률 · 세무(월 정액 노출형)는 사무소 보기로 갑니다."
   },
   {
+   "id": "SB-LED-MAIN-010",
+   "name": "소개리드(리드관) 메인",
+   "group": "LED",
+   "url": "/lead",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /gwans",
+    "GET /consult/categories"
+   ],
+   "nav": "SB-HOM-MAIN-010",
+   "note": "2026-11-17 v10.335 D227 — 리드관 되살림(꺼진 채 · 법무 재확인 회신 lead.legal_ok 뒤 SUPER 가 켬). 업종 · 상담 신청은 안심소개 생활 · 금융 상담(SB-MAL-CSL-020 · /mal/consult/{code})을 그대로 씀. 켜면 안심소개 상담 축 탭 숨김."
+  },
+  {
    "id": "SB-MAL-CSL-025",
    "name": "상담 업종 상세 / 법률 · 세무 사무소 보기",
    "group": "MAL",
@@ -5321,42 +5338,6 @@
   }
  ],
  "deferred": [
-  {
-   "id": "SB-ADM-PTN-010",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-020",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-030",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-040",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-050",
-   "reason": "의료 심의 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-060",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-070",
-   "reason": "파트너센터 — 리드관 보류"
-  },
-  {
-   "id": "SB-ADM-PTN-080",
-   "reason": "규제 카테고리 자격 심사 — 리드관 보류"
-  },
-  {
-   "id": "SB-PTC-DSH-010",
-   "reason": "파트너센터 홈 — 리드관 보류"
-  },
   {
    "id": "SB-HOM-DTL-M10",
    "reason": "반응형 확정 — 관별 DTL 로 흡수"

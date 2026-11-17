@@ -23,6 +23,7 @@
  *   안심소개 상담 업종 GET /consult/categories · 입점 여부 GET /partner/dashboard · 광고 GET /ads/serve?slot=FLOAT.
  */
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import { me } from '@/lib/session';
@@ -111,7 +112,11 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
   const base = `/${g.path}`;
   const serverAxes = code === 'MNY' ? null
     : await apiGet<ServerAxis[]>(`/site/gwan-axes?gwan=${code}`, 60).catch(() => null);
-  const axDef = code === 'MNY' ? null : withServerAxes(axesFor(t, tc)[code], serverAxes, locale === 'ko');
+  const axDef0 = code === 'MNY' ? null : withServerAxes(axesFor(t, tc)[code], serverAxes, locale === 'ko');
+  /* v10.335 (D227 · docs/466) — 리드관(소개리드)을 켜면 「생활 · 금융 상담」은 리드관(/lead)에서 보여 주고 안심소개 축 탭에서는 뺍니다(같은 업종 · 같은 상담 신청) */
+  const leadOn = code === 'MAL' && (await apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[])).some((x) => x.code === 'LED' && x.isActive !== false);
+  if (leadOn && q.axis === 'consult') redirect('/lead');
+  const axDef = axDef0 && leadOn ? { ...axDef0, tabs: axDef0.tabs.filter((a) => a.body !== 'consult') } : axDef0;
   /* 예전 주소 ?axis=listing(안심소개 매물 전체)은 첫 축으로 */
   const ax = axDef ? (axDef.tabs.find((a) => a.k === q.axis) ?? axDef.tabs[0]) : null;
   const consult = ax?.body === 'consult';
