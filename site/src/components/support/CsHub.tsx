@@ -15,6 +15,7 @@ export interface HubFaq {
 }
 
 const TOPICS = ['ACCOUNT', 'DEAL', 'MONEY', 'MALL', 'ADS', 'SAFETY', 'ETC'] as const;
+type Tab = 'TOP' | (typeof TOPICS)[number];
 const TOP_MAX = 10;
 
 function Item({ f, open }: { f: HubFaq; open?: boolean }) {
@@ -30,7 +31,7 @@ function Item({ f, open }: { f: HubFaq; open?: boolean }) {
 export function CsHub({ faqs }: { faqs: HubFaq[] }) {
   const t = useTranslations('deal.support.hub');
   const [q, setQ] = useState('');
-  const [topic, setTopic] = useState<string>('TOP');
+  const [topic, setTopic] = useState<Tab>('TOP');
   const word = q.trim().toLowerCase();
   const found = useMemo(() => !word ? [] : faqs.filter((f) =>
     f.question.toLowerCase().includes(word) || f.answer.toLowerCase().includes(word) || f.keywords.some((k) => k.toLowerCase().includes(word) || word.includes(k.toLowerCase()))), [faqs, word]);
@@ -59,7 +60,7 @@ export function CsHub({ faqs }: { faqs: HubFaq[] }) {
       ) : (
         <section>
           <div className="w1-cs-tabs" role="tablist" aria-label={t('tabsLabel')}>
-            {['TOP', ...tabs].map((k) => (
+            {(['TOP', ...tabs] as Tab[]).map((k) => (
               <button key={k} type="button" role="tab" aria-selected={topic === k} className={topic === k ? 'on' : undefined}
                 onClick={() => setTopic(k)} data-cs-tab={k}>{t(`topic.${k}`)}</button>
             ))}
