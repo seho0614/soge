@@ -586,7 +586,12 @@
       "helpYes": "Yes",
       "helpNo": "No",
       "helpThanks": "Thanks for your feedback."
-    }
+    },
+    "fbQ": "Did this answer solve your issue?",
+    "fbYes": "Solved",
+    "fbNo": "Not solved yet",
+    "fbDoneYes": "You marked this as solved. Thank you.",
+    "fbDoneNo": "Your inquiry has been reopened. We will reply again within 1 business day."
   },
   "tpl": {
     "backDeal": "← Contract · Signing",

@@ -9,6 +9,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { SimilarFaq, type SimilarItem } from '@/components/support/SimilarFaq';   // v10.340 (D230)
 
 /* v10.101 (2-5b) — 유형 이름은 사전 forms.inq.type.* */
 const TYPES = ['DEAL', 'SETTLE', 'ACCOUNT', 'DISPUTE', 'ETC'] as const;
@@ -16,7 +17,7 @@ export interface MyDeal { id: string; title: string | null; statusLabel?: string
 
 /* v10.31 — ?type=DISPUTE · ?deal= 로 들어오면(1:1 문의 화면의 「신고」) 그 유형 · 거래를 고른 채로 엽니다
  * v10.139 — draft: AI 상담 초안(제목 · 내용을 채워 둠 · 제출은 회원이 · 접수 때 agentDraftId 를 붙여 「제출됨」만 적음) */
-export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, draft }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string; draft?: { id: string; title?: string; body?: string } }) {
+export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, draft, faqs = [] }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string; draft?: { id: string; title?: string; body?: string }; faqs?: SimilarItem[] }) {
   const router = useRouter();
   const ft = useTranslations('forms');
   const t = useTranslations('forms.inq');
@@ -86,7 +87,8 @@ export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, 
           <div className="w1-fh">{loggedIn ? t('dealHint') : t('dealHintGuest')}</div></div>
       )}
       <div className="w1-fld"><label htmlFor="cs-title">{t('subject')} <i>*</i></label>
-        <input id="cs-title" className="w1-in" maxLength={60} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('subjectPh')} /></div>
+        <input id="cs-title" className="w1-in" maxLength={60} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('subjectPh')} />
+        <SimilarFaq faqs={faqs} title={title} /></div>
       <div className="w1-fld"><label htmlFor="cs-body">{t('body')} <i>*</i></label>
         <textarea id="cs-body" className="w1-in" rows={6} maxLength={2000} value={body} onChange={(e) => setBody(e.target.value)} placeholder={t('bodyPh')} />
         <div className="w1-fh">{t('bodyHint')}</div></div>

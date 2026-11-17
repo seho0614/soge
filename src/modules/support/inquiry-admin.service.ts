@@ -33,7 +33,7 @@ export class InquiryAdminService {
               i.created_at AS "createdAt", i.due_at AS "dueAt", i.answered_at AS "answeredAt",
               (i.status = 'OPEN' AND i.due_at < now()) AS overdue, (i.account_id IS NULL) AS guest,
               coalesce(a.email, i.email)::text AS email, left(coalesce(a.name, ''), 1) AS "nameHead",
-              s.email::text AS assignee, cardinality(i.attachment_keys) AS files
+              s.email::text AS assignee, cardinality(i.attachment_keys) AS files, i.feedback, i.reopen_count AS "reopenCount"
          FROM inquiries i
          LEFT JOIN accounts a ON a.id = i.account_id
          LEFT JOIN accounts s ON s.id = i.assignee_id
@@ -95,18 +95,20 @@ export class InquiryAdminService {
     const days = Math.max(7, Math.min(90, Math.floor(Number(daysIn) || 30)));
     const [s] = await this.db.query<Record<string, number | null>>(
       `WITH w AS (
-        SELECT i.id, i.category, i.status, i.created_at, i.due_at,
+        SELECT i.id, i.category, i.status, i.created_at, i.due_at, i.feedback,
                (SELECT min(l.occurred_at) FROM audit.audit_logs l WHERE l.action = 'INQUIRY_ANSWER' AND l.target_id = i.id) AS first_at
           FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))
        SELECT count(*)::int AS received, count(first_at)::int AS answered,
               count(*) FILTER (WHERE status = 'OPEN')::int AS "stillOpen",
               round((avg(extract(epoch FROM first_at - created_at)) / 3600)::numeric, 1)::float AS "avgHours",
               round((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM first_at - created_at)) / 3600)::numeric, 1)::float AS "medianHours",
-              count(*) FILTER (WHERE first_at IS NOT NULL AND (due_at IS NULL OR first_at <= due_at))::int AS "inTime"
+              count(*) FILTER (WHERE first_at IS NOT NULL AND (due_at IS NULL OR first_at <= due_at))::int AS "inTime",
+              count(*) FILTER (WHERE feedback = 'RESOLVED')::int AS resolved,
+              count(*) FILTER (WHERE feedback = 'UNRESOLVED')::int AS unresolved
          FROM w`, [days]);
     const byCategory = await this.db.query<{ category: string; label: string | null; received: number; answered: number }>(
       `WITH w AS (
-        SELECT i.id, i.category, i.status, i.created_at, i.due_at,
+        SELECT i.id, i.category, i.status, i.created_at, i.due_at, i.feedback,
                (SELECT min(l.occurred_at) FROM audit.audit_logs l WHERE l.action = 'INQUIRY_ANSWER' AND l.target_id = i.id) AS first_at
           FROM inquiries i WHERE i.created_at > now() - make_interval(days => $1))
        SELECT w.category, cl.label, count(*)::int AS received, count(first_at)::int AS answered
@@ -118,11 +120,17 @@ export class InquiryAdminService {
          LEFT JOIN audit.audit_logs l ON l.action = 'INQUIRY_ANSWER' AND l.after_data->>'templateId' = t.id::text
                                      AND l.occurred_at > now() - make_interval(days => $1)
         WHERE t.is_active GROUP BY t.id, t.title, t.sort_order ORDER BY count(l.occurred_at) DESC, t.sort_order, t.title`, [days]);
+    /* v10.340 (D230) — 문의하기 폼에서 「이걸로 해결됨」(문의 전 해결) */
+    const [df] = await this.db.query<{ n: number }>(
+      `SELECT coalesce(sum(deflect), 0)::int AS n FROM faq_daily WHERE day > (now() AT TIME ZONE 'Asia/Seoul')::date - $1::int`, [days]);
     const received = Number(s?.received ?? 0), answered = Number(s?.answered ?? 0);
     return {
       days, received, answered, stillOpen: Number(s?.stillOpen ?? 0), avgHours: s?.avgHours ?? null, medianHours: s?.medianHours ?? null,
       inTime: Number(s?.inTime ?? 0), inTimeRate: answered ? Math.round((Number(s?.inTime ?? 0) / answered) * 1000) / 10 : null,
-      byCategory, templates,
+      byCategory, templates, deflected: Number(df?.n ?? 0),
+      /* v10.341 (D231) — 답변 만족도: 해결됨 · 아직 해결 안 됨 · 해결률(남긴 것 중) */
+      resolved: Number(s?.resolved ?? 0), unresolved: Number(s?.unresolved ?? 0),
+      resolvedRate: Number(s?.resolved ?? 0) + Number(s?.unresolved ?? 0) ? Math.round((Number(s?.resolved ?? 0) / (Number(s?.resolved ?? 0) + Number(s?.unresolved ?? 0))) * 1000) / 10 : null,
     };
   }
 
@@ -137,7 +145,7 @@ export class InquiryAdminService {
       if (cur.status === 'CLOSED') throw new StateConflict('INQUIRY_CLOSED', '닫힌 문의입니다 — 「다시 열기」 뒤 답하십시오.');
       if (cur.answer === body && !close) return { ok: true, id, note: '바뀐 내용이 없습니다.' };
       await this.db.query(
-        `UPDATE inquiries SET answer = $2, answered_at = now(), answered_by = $3, status = $4 WHERE id = $1::uuid`,
+        `UPDATE inquiries SET answer = $2, answered_at = now(), answered_by = $3, status = $4, feedback = NULL, feedback_at = NULL WHERE id = $1::uuid`,
         [id, body, RequestCtx.actorId() ?? null, close ? 'CLOSED' : 'ANSWERED']);
       const edit = cur.answer !== null;
       /* v10.337 — 답변 틀을 골라 썼으면 감사 기록에 틀 번호(지표 「답변 틀별 쓴 횟수」) · 없는 틀이면 적지 않음 */

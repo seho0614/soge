@@ -1688,6 +1688,11 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.": "The Consult Leads section can be turned on only after the legal re-review reply is received (setting lead.legal_ok = on).",
   "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Consult Leads legal confirmation setting.",
   "업무 안내는 고치거나 지우지 않고 새 판을 더합니다.": "Work guides are not edited or deleted — save a new version instead.",
+  "답변을 받은 문의에만 남길 수 있습니다.": "You can leave this only on an inquiry that has been answered.",
+  "문의를 다시 열었습니다. 영업일 1일 안에 다시 답변드립니다.": "Your inquiry has been reopened. We will reply again within 1 business day.",
+  "이미 남겼습니다.": "Already recorded.",
+  "해결되었다고 남겼습니다. 감사합니다.": "Marked as solved. Thank you.",
+  "그 문의가 없습니다.": "That inquiry does not exist.",
   /* v10.211 (D188) — 동네픽 AI */
   "없는 동네픽 후보입니다.": "No such neighborhood pick candidate.",
   "이미 처리한 동네픽 후보입니다.": "This neighborhood pick candidate has already been handled.",

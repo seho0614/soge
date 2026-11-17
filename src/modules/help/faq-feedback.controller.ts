@@ -40,7 +40,7 @@ export function missWord(q: string): string | null {
 export class FaqFeedbackController {
   constructor(private readonly db: DatabaseService) {}
 
-  private async bump(id: string, col: 'views' | 'yes' | 'no') {
+  private async bump(id: string, col: 'views' | 'yes' | 'no' | 'deflect') {
     const [f] = await this.db.query(`SELECT 1 FROM faqs WHERE id = $1::uuid AND is_active`, [id]);
     if (!f) throw new NotFound('그 질문이 없습니다.');
     await this.db.query(
@@ -74,6 +74,16 @@ export class FaqFeedbackController {
   @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
   @ApiResponse({ status: 422, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
   view(@Param('id', ParseUUIDPipe) id: string) { return this.bump(id, 'views'); }
+
+  @Post(':id/deflect')
+  @HttpCode(200)
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOperation({ summary: '문의하기 폼 「이걸로 해결됨」 +1 (v10.340)', description: '문의하기 폼 제목 아래 「혹시 이 질문인가요?」에서 이 질문으로 해결했다고 누른 수(하루 셈 · 사람 정보 없음). 운영 지표 「문의 전 해결」.' })
+  @ApiOkResponse({ type: FaqCountResultDto })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 없거나 숨긴 질문' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  deflect(@Param('id', ParseUUIDPipe) id: string) { return this.bump(id, 'deflect'); }
 
   @Post(':id/helpful')
   @HttpCode(200)

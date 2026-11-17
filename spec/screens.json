@@ -573,10 +573,12 @@
    ],
    "gates": [],
    "apis": [
-    "GET /me/inquiries"
+    "GET /me/inquiries",
+    "POST /me/inquiries/{id}/feedback"
    ],
    "nav": "SB-HOM-CSB-010",
-   "state": "inquiry.status"
+   "state": "inquiry.status",
+   "note": " · v10.341 (D231 · docs/474) 답변 아래 「해결됨 / 아직 해결 안 됨」(아직이면 다시 열림)"
   },
   {
    "id": "SB-HOM-ETC-010",
@@ -641,10 +643,11 @@
     "GET /notices",
     "POST /faq/{id}/view",
     "POST /faq/{id}/helpful",
-    "POST /faq/miss"
+    "POST /faq/miss",
+    "POST /faq/{id}/deflect"
    ],
    "nav": "SB-HOM-CSB-010",
-   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건 · v10.334 (D226 · docs/465) 질문 펼침 · 「도움이 되었나요?」(하루 셈) · v10.336 (D228 · docs/469) 찾기 결과 0건 낱말을 셈(사람 정보 없음)"
+   "note": "v10.332 (D224 · docs/463) 고객센터 홈 — 머리줄 「고객센터」 · 찾기 · 바로가기 8칸 · 분야 탭 · 많이 찾는 질문 · 최근 공지 3건 · v10.334 (D226 · docs/465) 질문 펼침 · 「도움이 되었나요?」(하루 셈) · v10.336 (D228 · docs/469) 찾기 결과 0건 낱말을 셈(사람 정보 없음) · v10.340 (D230 · docs/473) 문의하기 폼 「혹시 이 질문인가요?」 · 「이걸로 해결됨」"
   },
   {
    "id": "SB-HOM-ETC-031",
@@ -5378,6 +5381,20 @@
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-17 v10.339 D229 (docs/472) 운영진 업무 12가지 순서 · 「이 화면」 단추 · 누가 · 알아 둘 것. 고치기 SUPER — 새 판(ops_guides 쌓기만 · 감사 OPS_GUIDE_SAVE)"
+  },
+  {
+   "id": "SB-HOM-ETC-050",
+   "name": "이용 흐름",
+   "group": "HOM",
+   "url": "/guide/flows",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [],
+   "nav": "SB-HOM-ETC-010",
+   "note": "2026-11-17 v10.343 (docs/476) 회원 · 파트너 이용 흐름 일곱 가지(가입 · 소개비 받기 · 상담 신청 · 소개몰 구매 · 반품 · 고객센터 · 상담 업체 입점 · 제휴) — 단계 · 바로 가기 · 한국어 · 영어 사전(policy.flows). 이용안내에서 링크"
   }
  ],
  "deferred": [

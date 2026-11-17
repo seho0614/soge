@@ -5,6 +5,8 @@ import { me } from '@/lib/session';
 import { apiGetPersonal } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
+import { InquiryFeedback } from '@/components/support/InquiryFeedback';   // v10.341 (D231)
+import { Msgs } from '@/i18n/Msgs';
 import { getTranslations } from 'next-intl/server';
 import '@/styles/proto-w1.css';
 
@@ -14,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 interface Inquiry {
   id: string; no?: string; category: string; categoryLabel?: string | null; title: string; status: string;
-  statusLabel?: string; answer: string | null; createdAt: string; answeredAt?: string | null; channel?: string;
+  statusLabel?: string; answer: string | null; createdAt: string; answeredAt?: string | null; channel?: string; feedback?: string | null;
 }
 
 /** SB-HOM-CSB-020 — v10.31 시안 scAskList: 표(문의번호 · 제목 · 응대 · 상태 · 접수일 · 최근 답변) + 새 문의 */
@@ -42,7 +44,8 @@ export default async function HistoryPage() {
                 <td style={{ maxWidth: 360 }} data-inquiry-answer={r.answer ? 'yes' : 'no'}>{r.answer
                   ? <details><summary>{r.answer.slice(0, 80) + (r.answer.length > 80 ? '…' : '')}</summary>
                       <p style={{ whiteSpace: 'pre-wrap', margin: '6px 0 0' }}>{r.answer}</p>
-                      {r.answeredAt && <p className="w1-ls" style={{ margin: '4px 0 0' }}>{t('answeredOn', { d: ymdKst(r.answeredAt) })}</p>}</details>
+                      {r.answeredAt && <p className="w1-ls" style={{ margin: '4px 0 0' }}>{t('answeredOn', { d: ymdKst(r.answeredAt) })}</p>}
+                      {(r.status === 'ANSWERED' || r.status === 'CLOSED' || r.feedback === 'UNRESOLVED') && <Msgs ns={['deal']}><InquiryFeedback id={r.id} feedback={r.feedback ?? null} /></Msgs>}</details>
                   : <span className="w1-ls">{t('noAnswer')}</span>}</td>
               </tr>
             ))}

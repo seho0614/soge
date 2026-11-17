@@ -103,7 +103,7 @@ export default async function NewInquiryPage({ searchParams }: { searchParams: P
         </aside>
       </div>
       <div id="cs-form" />
-      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={aiDraft?.category ?? sp.type} initialDeal={sp.deal} draft={aiDraft} /></Msgs>
+      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={aiDraft?.category ?? sp.type} initialDeal={sp.deal} draft={aiDraft} faqs={hub} /></Msgs>
     </div>
   );
 }

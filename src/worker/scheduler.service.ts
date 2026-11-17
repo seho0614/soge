@@ -132,6 +132,9 @@ export class SchedulerService {
         /* v10.333 (D225 · docs/464) — 1:1 문의 답변 기한(영업일 1일) 넘김도 같은 작업에서(운영 알림 INQUIRY_DUE_BREACH · 0건이면 풂) */
         const [iq] = await this.db.query<{ n: number }>(`SELECT fn_inquiry_due_alert() AS n`);
         if (iq.n > 0) this.log.warn(`INQUIRY_DUE_BREACH 1:1 문의 답변 기한 넘김 ${iq.n}건 — 운영 화면 › 회원 › 1:1 문의`);
+        /* v10.342 (D232 · docs/475) — 리드관이 켜져 있을 때 받을 업체 0곳 업종 · 24시간 전달 못 함(꺼지면 풂) */
+        const [ld] = await this.db.query<{ n: number }>(`SELECT fn_lead_alert() AS n`);
+        if (ld.n > 0) this.log.warn(`LEAD_ALERT 리드관 경고 ${ld.n} — 운영 화면 › 파트너사 › 리드 현황`);
         break;
       }
 

@@ -9,6 +9,7 @@ interface Row {
   id: string; no: string; category: string; categoryLabel: string | null; title: string; status: string; channel: string;
   createdAt: string; dueAt: string | null; answeredAt: string | null; overdue: boolean; guest: boolean;
   email: string | null; nameHead: string; assignee: string | null; files: number;
+  feedback?: string | null; reopenCount?: number;   /* v10.341 (D231) 회원 만족도 · 다시 연 횟수 */
 }
 interface ListData {
   rows: Row[]; more: boolean; page: number;
@@ -77,7 +78,9 @@ export function InquiryDesk() {
               <td className="mono">{r.no}</td>
               <td>{r.categoryLabel ?? r.category}{r.channel === 'BOT' && <><br /><small className="dim">챗봇 → 상담원</small></>}</td>
               <td><button className="linkbtn" onClick={() => setOpen(open === r.id ? null : r.id)} data-inquiry-open={r.id}>{r.title}</button>
-                {r.files > 0 && <small className="dim"> · 첨부 {r.files}</small>}</td>
+                {r.files > 0 && <small className="dim"> · 첨부 {r.files}</small>}
+                {r.feedback === 'UNRESOLVED' && <span className="badge badge-urgent" data-inquiry-reopened=""> 다시 열림{(r.reopenCount ?? 0) > 1 ? ` ${r.reopenCount}` : ''}</span>}
+                {r.feedback === 'RESOLVED' && <span className="badge badge-verified" data-inquiry-resolved-row=""> 해결됨</span>}</td>
               <td>{r.guest ? <span className="muted">비회원 · </span> : null}{r.email ?? '—'}</td>
               <td className="muted">{ymdhm(r.createdAt)}</td>
               <td className={r.overdue ? 'warn-text' : 'muted'}>{r.status === 'OPEN' && r.dueAt ? ymdhm(r.dueAt) : '—'}{r.overdue && ' · 넘김'}</td>
@@ -224,6 +227,8 @@ interface Stats {
   inTime: number; inTimeRate: number | null;
   byCategory: Array<{ category: string; label: string | null; received: number; answered: number }>;
   templates: Array<{ id: string; title: string; used: number }>;
+  deflected?: number;
+  resolved?: number; unresolved?: number; resolvedRate?: number | null;   /* v10.341 (D231) */
 }
 
 /** v10.337 (docs/470) — 1:1 문의 처리 지표(최근 30일) · 처음 답 시각은 감사 기록 기준 */
@@ -237,7 +242,8 @@ function InquiryStats() {
     <details className="card" data-inquiry-stats={`${d.received}|${d.answered}`}>
       <summary>
         <b>최근 {d.days}일</b> 접수 {d.received} · 답함 {d.answered} · 처음 답까지 평균 {h(d.avgHours)}(가운데 {h(d.medianHours)}) ·
-        기한 안 {d.inTimeRate === null ? '—' : `${d.inTimeRate}%`} · 아직 답변 전 {d.stillOpen}
+        기한 안 {d.inTimeRate === null ? '—' : `${d.inTimeRate}%`} · 아직 답변 전 {d.stillOpen} · 문의 전 해결 <span data-inquiry-deflected={d.deflected ?? 0}>{d.deflected ?? 0}</span> ·
+        해결률 <span data-inquiry-resolved={`${d.resolved ?? 0}|${d.unresolved ?? 0}`}>{d.resolvedRate == null ? '—' : `${d.resolvedRate}%`}</span>
       </summary>
       <p>
         {[7, 30, 90].map((n) => (

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { clampLimit } from '../../core/pagination';
-import { PolicyViolation, StateConflict } from '../../core/errors';
+import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { I18nService } from '../i18n/i18n.service';
 
 /**
@@ -70,12 +70,41 @@ export class MeNotifyService {
       /* v10.31 — 시안 「내 문의 내역」 표(문의번호 · 제목 · 응대 · 상태 · 접수일 · 최근 답변) */
       `SELECT i.id, i.category, cl.label AS "categoryLabel", i.title, i.status,
               coalesce(sl.label, i.status) AS "statusLabel", i.answer,
-              i.created_at AS "createdAt", i.answered_at AS "answeredAt", i.channel
+              i.created_at AS "createdAt", i.answered_at AS "answeredAt", i.channel, i.feedback
          FROM inquiries i
          LEFT JOIN code_labels sl ON sl.domain='inquiry.status' AND sl.code=i.status
          LEFT JOIN code_labels cl ON cl.domain='inquiry.category' AND cl.code=i.category
         WHERE i.account_id = $1 ORDER BY i.created_at DESC LIMIT 50`, [this.me])
       .then((rows) => (rows as Array<{ id: string; createdAt: Date }>).map((r) => ({ ...r, no: inquiryNo(r.id, r.createdAt) })));
+  }
+
+  /**
+   * v10.341 (D231 · docs/474) — 내 문의 답변 만족도. 답이 있는 내 문의만(ANSWERED · CLOSED).
+   *   해결됨 = 표시만 · 아직 해결 안 됨 = 문의를 다시 엶(OPEN · 기한 다시 영업일 1일 · 다시 연 횟수 +1). 운영자가 다시 답하면 만족도를 비움.
+   */
+  async inquiryFeedback(id: string, resolved: boolean) {
+    return this.db.transaction(async () => {
+      const [cur] = await this.db.query<{ status: string; answer: string | null; feedback: string | null }>(
+        `SELECT status, answer, feedback FROM inquiries WHERE id = $1::uuid AND account_id = $2 FOR UPDATE`, [id, this.me]);
+      if (!cur) throw new NotFound('그 문의가 없습니다.');
+      if (!cur.answer || !['ANSWERED', 'CLOSED'].includes(cur.status)) throw new StateConflict('INQUIRY_NO_ANSWER', '답변을 받은 문의에만 남길 수 있습니다.');
+      const fb = resolved ? 'RESOLVED' : 'UNRESOLVED';
+      if (cur.feedback === fb) return { ok: true, id, feedback: fb, status: cur.status, note: '이미 남겼습니다.' };
+      if (resolved) {
+        await this.db.query(`UPDATE inquiries SET feedback = 'RESOLVED', feedback_at = now() WHERE id = $1::uuid`, [id]);
+      } else {
+        await this.db.query(
+          `UPDATE inquiries SET feedback = 'UNRESOLVED', feedback_at = now(), status = 'OPEN', reopen_count = reopen_count + 1,
+                  due_at = public.fn_business_day_after(now()) WHERE id = $1::uuid`, [id]);
+      }
+      await this.db.query(
+        `INSERT INTO audit.audit_logs (actor_account_id, actor_role, action, target_type, target_id, before_data, after_data, ip, user_agent)
+         VALUES ($1, 'MEMBER', 'INQUIRY_FEEDBACK', 'INQUIRY', $2::uuid, $3::jsonb, $4::jsonb, $5, $6)`,
+        [this.me, id, JSON.stringify({ status: cur.status, feedback: cur.feedback }), JSON.stringify({ feedback: fb, status: resolved ? cur.status : 'OPEN' }),
+         RequestCtx.get()?.ip ?? null, RequestCtx.get()?.userAgent ?? null]);
+      return { ok: true, id, feedback: fb, status: resolved ? cur.status : 'OPEN',
+        note: resolved ? '해결되었다고 남겼습니다. 감사합니다.' : '문의를 다시 열었습니다. 영업일 1일 안에 다시 답변드립니다.' };
+    });
   }
 
   /** 내 분쟁 — 내가 접수한 것만(raised_by = 나). v10.32 — 분쟁 접수 · 처리 현황 표(시안 dspu: 접수 번호 · 거래 · 유형 · 상태 · 접수)에

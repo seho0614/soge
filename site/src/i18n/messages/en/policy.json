@@ -80,7 +80,8 @@
     "colState": "Status",
     "note": "<b>Click a document name to open its full text.</b> The published version is shown as is — with its effective date and version number.",
     "more": "Have more questions? Ask via <ask>1:1 inquiry</ask> · <cs>Help Center</cs>.",
-    "manualLink": "Full user manual — how to use each menu · FAQ"
+    "manualLink": "Full user manual — how to use each menu · FAQ",
+    "flowsLink": "How to use SogaeBank — seven flows"
   },
   "agree": {
     "title": "Agree to terms",
@@ -170,5 +171,85 @@
     "koOnly": "This manual is currently available in Korean only.",
     "ai": "The AI help chat answers from this manual too. For anything about your own account or deals, please contact the help center.",
     "empty": "Could not load the manual. Please try again shortly."
+  },
+  "flows": {
+    "back": "Guide",
+    "title": "How to use SogaeBank",
+    "intro": "Seven common tasks on SogaeBank, step by step. Step numbers show the real order, and the button takes you to that screen.",
+    "go": "Go",
+    "who": "Who",
+    "items": {
+      "join": {
+        "t": "Sign up",
+        "who": "Anyone",
+        "steps": [
+          "Enter your email and password and agree to the terms (required and optional separately).",
+          "Enter a referral code if you have one (optional).",
+          "Verify your identity when you receive referral fees or post listings.",
+          "See notifications, settlements and your referral tree in My Space."
+        ]
+      },
+      "earn": {
+        "t": "Refer and earn fees",
+        "who": "Members (individuals too)",
+        "steps": [
+          "Choose a category and register a listing or request.",
+          "It appears in the list after review.",
+          "Get a referral code for each listing and share it with people you know.",
+          "The deal and contract are completed.",
+          "After your payout account is confirmed, the referral fee is paid."
+        ]
+      },
+      "consult": {
+        "t": "Request a life & finance consultation",
+        "who": "Non-members too",
+        "steps": [
+          "Choose a field (insurance, medical, rental, cleaning and more).",
+          "Write your request, agree to third-party sharing and verify your phone.",
+          "It is shared with one certified provider qualified in that field (kept 6 months, then deleted).",
+          "The provider contacts you."
+        ]
+      },
+      "buy": {
+        "t": "Buy and return at Sogae Mall",
+        "who": "Members",
+        "steps": [
+          "Pick products, add them to the cart, then order and pay.",
+          "Receive the delivery.",
+          "Request a return from your order history (shipping and refund rules shown on screen apply)."
+        ]
+      },
+      "support": {
+        "t": "Use the customer center",
+        "who": "Anyone",
+        "steps": [
+          "Search questions or browse popular questions in the customer center.",
+          "When you type a title in the inquiry form, similar questions appear first.",
+          "If that does not help, send the inquiry.",
+          "See the answer in My inquiries and mark it Solved or Not solved yet."
+        ]
+      },
+      "partner": {
+        "t": "Join as a consultation provider",
+        "who": "Business members",
+        "steps": [
+          "Apply with your field, service area and documents.",
+          "Wait for the qualification review.",
+          "Top up Sogae Cash (refunds and tax invoices available).",
+          "Receive consultation requests (leads) in the Partner Center, contact them, and reject wrong ones within 72 hours.",
+          "Check performance and settlements."
+        ]
+      },
+      "affiliate": {
+        "t": "Affiliate partner",
+        "who": "Affiliate members",
+        "steps": [
+          "Apply for affiliation and get approved.",
+          "Get links and materials and share them.",
+          "Check orders, earnings and settlements.",
+          "See members below you in the referral tree (names masked)."
+        ]
+      }
+    }
   }
 }

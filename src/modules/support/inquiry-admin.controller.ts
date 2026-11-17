@@ -44,6 +44,10 @@ export class InquiryStatsDto {
   @ApiPropertyOptional({ nullable: true, description: '기한 안 비율 % (답한 것 중)' }) inTimeRate!: number | null;
   @ApiProperty({ type: InquiryStatsCatDto, isArray: true }) byCategory!: InquiryStatsCatDto[];
   @ApiProperty({ type: InquiryStatsTplDto, isArray: true }) templates!: InquiryStatsTplDto[];
+  @ApiProperty({ description: 'v10.340 — 문의하기 폼에서 「이걸로 해결됨」(문의 전 해결) 수' }) deflected!: number;
+  @ApiProperty({ description: 'v10.341 — 회원 「해결됨」' }) resolved!: number;
+  @ApiProperty({ description: 'v10.341 — 회원 「아직 해결 안 됨」(다시 열림)' }) unresolved!: number;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.341 — 해결률 %(남긴 것 중)' }) resolvedRate!: number | null;
 }
 export class InquiryPatchDto {
   @ApiPropertyOptional({ format: 'uuid', description: '담당 운영자(빈 글자 = 담당 없음)' }) @IsOptional() @IsString() @MaxLength(40) assigneeId?: string;

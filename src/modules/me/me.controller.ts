@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { MeService } from './me.service';
@@ -11,7 +11,8 @@ import {
   MyDealDto, MyInquiryDto, MyListingDto, MySettlementDto,
   MarkReadResultDto, MyDisputeDto, MySubscriptionDto, NotificationDto,
   ContractListDto, UpdateProfileDto, UpdateBusinessDto, MyHomeDto, MyConversationDto,
-  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto, NoticeReadResultDto, NoticeReadAllResultDto } from './me.dto';
+  NotificationPrefsDto, SetNotificationPrefDto, TaxInvoiceDto, NoticeReadResultDto, NoticeReadAllResultDto,
+  InquiryFeedbackDto, InquiryFeedbackResultDto } from './me.dto';
 import { Audit } from '../../core/audit.interceptor';
 import { ListingCardDto } from '../listing/listing.dto';
 import { Roles, RequireGate } from '../../core/auth';
@@ -176,6 +177,16 @@ export class MeController {
   @ApiOperation({ summary: '내 문의 내역' })
   @ApiOkResponse({ type: MyInquiryDto, isArray: true })
   inquiries() { return this.notify.inquiries(); }
+
+  @Post('inquiries/:id/feedback')
+  @HttpCode(200)
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOperation({ summary: '내 문의 답변 만족도 (v10.341)', description: '답을 받은 내 문의에 「해결됨」(resolved true) · 「아직 해결 안 됨」(false — 문의가 다시 열리고 기한 다시 영업일 1일). 감사 INQUIRY_FEEDBACK.' })
+  @ApiOkResponse({ type: InquiryFeedbackResultDto })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 내 문의가 아님' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'INQUIRY_NO_ANSWER — 답을 받기 전' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  inquiryFeedback(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InquiryFeedbackDto) { return this.notify.inquiryFeedback(id, dto.resolved); }
 
   @Get('disputes')
   @ApiOperation({ summary: '내 분쟁', description: '내가 접수한 분쟁만(본인 것). v10.32 — 분쟁 접수 · 처리 현황 표(SB-HOM-ETC-010)가 읽습니다 · 거래 이름 · 유형 글자 포함.' })

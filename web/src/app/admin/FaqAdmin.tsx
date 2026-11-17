@@ -11,6 +11,7 @@ interface Row {
   channels: string[]; keywords: string[]; linkHref: string | null; linkLabel: string | null; handoff: boolean;
   gwanCode: string | null; sortOrder: number; updatedAt: string; by: string | null;
   views30?: number; yes30?: number; no30?: number;   /* v10.334 (D226) 최근 30일 펼침 · 도움 됨 · 안 됨 */
+  deflect30?: number;   /* v10.340 (D230) 문의하기 폼에서 「이걸로 해결됨」 */
 }
 interface Miss { word: string; hits30: number; last: string }
 interface Data { rows: Row[]; topics: string[]; channels: string[]; topMax: number; top: number; candidates?: Array<{ id: string; question: string; views30: number }>; misses?: Miss[] }
@@ -20,12 +21,12 @@ const TOPIC_KO: Record<string, string> = {
 };
 const CH_KO: Record<string, string> = { FAQ: '고객센터', CS: '고객센터(시안)', GUIDE: '이용안내', BOT: '챗봇' };
 
-type Form = Omit<Row, 'id' | 'updatedAt' | 'by' | 'keywords' | 'views30' | 'yes30' | 'no30'> & { keywords: string };
+type Form = Omit<Row, 'id' | 'updatedAt' | 'by' | 'keywords' | 'views30' | 'yes30' | 'no30' | 'deflect30'> & { keywords: string };
 const EMPTY: Form = {
   category: '', question: '', answer: '', topic: 'ETC', isTop: false, isActive: true, channels: ['FAQ', 'CS'], keywords: '',
   linkHref: '', linkLabel: '', handoff: false, gwanCode: '', sortOrder: 100,
 };
-const toForm = ({ views30: _v, yes30: _y, no30: _n, id: _i, updatedAt: _u, by: _b, ...r }: Row): Form => ({ ...r, keywords: r.keywords.join(', '), linkHref: r.linkHref ?? '', linkLabel: r.linkLabel ?? '', gwanCode: r.gwanCode ?? '' });
+const toForm = ({ views30: _v, yes30: _y, no30: _n, deflect30: _d, id: _i, updatedAt: _u, by: _b, ...r }: Row): Form => ({ ...r, keywords: r.keywords.join(', '), linkHref: r.linkHref ?? '', linkLabel: r.linkLabel ?? '', gwanCode: r.gwanCode ?? '' });
 
 /**
  * SB-ADM-SIT-100 자주 묻는 질문 (v10.332 · D224 · docs/463)
@@ -156,7 +157,7 @@ export function FaqAdmin() {
               <td>{r.isTop && <b className="warn-text">TOP </b>}{r.question}</td>
               <td>{r.channels.map((c) => CH_KO[c] ?? c).join(' · ')}</td>
               <td>{r.isActive ? '보임' : '숨김'}</td>
-              <td className="muted" data-faq-stat={`${r.views30 ?? 0}|${r.yes30 ?? 0}|${r.no30 ?? 0}`}>{r.views30 ?? 0} · {r.yes30 ?? 0} / {r.no30 ?? 0}</td>
+              <td className="muted" data-faq-stat={`${r.views30 ?? 0}|${r.yes30 ?? 0}|${r.no30 ?? 0}`}>{r.views30 ?? 0} · {r.yes30 ?? 0} / {r.no30 ?? 0}{r.deflect30 ? <> · 문의 전 해결 {r.deflect30}</> : null}</td>
               <td className="muted">{ymdhm(r.updatedAt)}{r.by ? ` · ${r.by}` : ''}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
                 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: r.id, f: toForm(r) })} data-faq-edit={r.id}>고치기</button>{' '}

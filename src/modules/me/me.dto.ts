@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -63,6 +63,18 @@ export class MyInquiryDto {
   @ApiProperty() statusLabel!: string;
   @ApiProperty({ nullable: true }) answer!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
+  @ApiPropertyOptional({ nullable: true, enum: ['RESOLVED', 'UNRESOLVED'], description: 'v10.341 — 답변 만족도' }) feedback?: string | null;
+}
+
+export class InquiryFeedbackDto {
+  @ApiProperty({ description: 'true = 해결됨 · false = 아직 해결 안 됨(문의가 다시 열림)' }) @IsBoolean() resolved!: boolean;
+}
+export class InquiryFeedbackResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ enum: ['RESOLVED', 'UNRESOLVED'] }) feedback!: string;
+  @ApiProperty() status!: string;
+  @ApiProperty() note!: string;
 }
 
 export class NotificationDto {

@@ -31,9 +31,9 @@ export class FaqAdminService {
       `SELECT f.id::text AS id, f.category, f.question, f.answer, f.topic, f.is_top AS "isTop", f.is_active AS "isActive",
               f.channels, f.keywords, f.link_href AS "linkHref", f.link_label AS "linkLabel", f.handoff,
               f.gwan_code AS "gwanCode", f.sort_order AS "sortOrder", f.updated_at AS "updatedAt", a.email AS by,
-              coalesce(d.views, 0)::int AS views30, coalesce(d.yes, 0)::int AS yes30, coalesce(d.no, 0)::int AS no30
+              coalesce(d.views, 0)::int AS views30, coalesce(d.yes, 0)::int AS yes30, coalesce(d.no, 0)::int AS no30, coalesce(d.deflect, 0)::int AS deflect30
          FROM faqs f LEFT JOIN accounts a ON a.id = f.updated_by
-         LEFT JOIN (SELECT faq_id, sum(views) AS views, sum(yes) AS yes, sum(no) AS no FROM faq_daily
+         LEFT JOIN (SELECT faq_id, sum(views) AS views, sum(yes) AS yes, sum(no) AS no, sum(deflect) AS deflect FROM faq_daily
                      WHERE day > (now() AT TIME ZONE 'Asia/Seoul')::date - 30 GROUP BY faq_id) d ON d.faq_id = f.id
         ORDER BY f.is_active DESC, f.sort_order, f.category, f.question`);
     const top = rows.filter((r) => r.isActive && r.isTop).length;

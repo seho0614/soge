@@ -257,7 +257,10 @@
     "mailHintGuest": "You are not logged in — we will send the reply to this email.",
     "submitting": "Submitting…",
     "submit": "Submit inquiry",
-    "aiDraft": "This form was filled from a draft prepared in AI chat. It has not been submitted — check and edit it, then press submit."
+    "aiDraft": "This form was filled from a draft prepared in AI chat. It has not been submitted — check and edit it, then press submit.",
+    "similarH": "Is this what you are asking?",
+    "similarYes": "This solved it",
+    "similarThanks": "Glad it helped. You do not need to send an inquiry."
   },
   "editPage": {
     "title": "Edit listing",
