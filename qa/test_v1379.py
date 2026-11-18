@@ -133,7 +133,9 @@ if API and DB:
     import consent_ok
     consent_ok.agree('admin@x.com', PW)
     TS = login('admin@x.com')
-    kst = lambda h: (datetime.datetime.utcnow() + datetime.timedelta(hours=9 + h)).strftime('%Y-%m-%dT%H:%M')
+    import random
+    OFF = random.randint(0, 600)   # 두 번 돌림(a · b)이 같은 분이면 점검 시작 시각이 같아 「이미 보냄」 — 시작을 0 ~ 10시간 당겨 겹치지 않게
+    kst = lambda h: (datetime.datetime.utcnow() + datetime.timedelta(hours=9 + h, minutes=-OFF if h < 24 else 0)).strftime('%Y-%m-%dT%H:%M')
     m0 = psql("SELECT value FROM site_settings WHERE key = 'site.maintenance_mail'")
     TAG = f"시험 1379 {int(time.time()) % 100000}"
     try:

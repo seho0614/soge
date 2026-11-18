@@ -150,8 +150,8 @@ if API and DB:
     R = call('POST', '/auth/refresh', {'refreshToken': A.get('refreshToken')})
     sr, srr = claim(R.get('accessToken')), claim(R.get('refreshToken'))
     l2 = call('GET', '/me/sessions', None, R.get('accessToken'))
-    ok('② 목록 — 두 번 로그인 = 두 줄(증표 sid) · 지금 이 기기 표시 · 다시 받아도 같은 줄(새로 안 생김) · 기기 · IP 가림',
-       bool(sa) and bool(sb) and sa != sb and sorted(ids) == sorted([sa, sb]) and cur == [sa] and sr == sa and srr == sa and len(l2.get('items') or []) == 2 and l1.get('currentKnown') is True,
+    ok('② 목록 — 두 번 로그인 = 두 줄 더함(증표 sid · 약관 확인 로그인 줄도 있음) · 지금 이 기기 표시 · 다시 받아도 같은 줄(새로 안 생김) · 기기 · IP 가림',
+       bool(sa) and bool(sb) and sa != sb and {sa, sb} <= set(ids) and cur == [sa] and sr == sa and srr == sa and len(l2.get('items') or []) == len(ids) and l1.get('currentKnown') is True,
        f"{len(ids)} · cur {cur == [sa]} · refresh 같은 줄 {sr == sa} · {len(l2.get('items') or [])}")
     TA = R.get('accessToken')
     v0 = call('GET', '/me/summary', None, B.get('accessToken'))
@@ -166,7 +166,7 @@ if API and DB:
     aud = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'SESSION_REVOKE' AND target_id = '{sb}'")
     ok('③ 기기별 로그아웃 — 끊은 기기 증표는 비로그인 · 그 refresh 막힘 · 이 기기 그대로 · 목록에서 빠짐 · 남의 기기 404 · 두 번 404 · 남은 그대로 · 감사',
        '_err' not in v0 and rv.get('ok') is True and rv.get('current') is False and v1.get('_err') in (401, 403) and rb.get('code') == 'INVALID_TOKEN'
-       and '_err' not in va and [x.get('id') for x in l3.get('items') or []] == [sa] and other.get('_err') == 404 and again.get('_err') == 404 and '_err' not in vo and aud == '1',
+       and '_err' not in va and sa in [x.get('id') for x in l3.get('items') or []] and sb not in [x.get('id') for x in l3.get('items') or []] and len(l3.get('items') or []) == len(ids) - 1 and other.get('_err') == 404 and again.get('_err') == 404 and '_err' not in vo and aud == '1',
        f"{rv.get('ok')} {rv.get('current')} · 끊긴 {v1.get('_err')} · refresh {rb.get('code')} · 이 기기 {va.get('_err')} · {len(l3.get('items') or [])} · {other.get('_err')} {again.get('_err')} · 감사 {aud}")
     # ④ 이 기기 끊기 · 비밀번호 바꾸면 옛 줄 빠짐 · 옛 증표(sid 없음)는 그대로
     me_ = call('POST', f'/me/sessions/{sa}/revoke', None, TA)
