@@ -7,6 +7,7 @@ import { StaffNotices } from './StaffNotices';   // v10.279 (D210) 관리자 공
 import { CsGlance } from './CsGlance';
 import { TodoBox } from './MemberOpsBoxes';   // v10.364 (docs/498) 오늘 할 일   // v10.344 (docs/478) 고객센터 한눈에
 import { OwnerTodo, ReleaseLog, ServerTrend, StateCheck } from './StateCheck';   // v10.212 (docs/340) 운영 상태 한눈에 · v10.240 (docs/379) 대표 할 일
+import { ApplyChecksBox } from './OpsWeekBoxes';   // v10.374 (D240)
 
 /* v10.29 — 서버(/admin/summary)가 보내는 이름은 slaBreached · settlementPending 입니다.
  * 화면은 reviewSlaBreached · settlementRequested 를 읽어 두 칸이 늘 빈칸이었습니다(10/9 비교 그림). 둘 다 받습니다. */
@@ -182,6 +183,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
       <StateCheck onGo={onGo} canGo={canGo} />
       <OwnerTodo onGo={onGo} canGo={canGo} />
       <ReleaseLog />   {/* v10.244 (D202 · docs/383) 지금 판 · 운영 적용 기록 */}
+      <ApplyChecksBox />   {/* v10.374 (D240 · docs/509) 운영 적용 확인표 */}
       <ServerTrend />   {/* v10.248 (D203 · docs/386) 서버 자원 추세 */}
       <div className="ad-tiles" data-dash-tiles>
         {tiles.map((t) => (

@@ -14,6 +14,7 @@ export function MemberRoles({ accountId, name, roles, onDone }: { accountId: str
   const can = GRANTABLE.filter((r) => !roles.includes(r));
   const [role, setRole] = useState(can.includes('ADMIN') ? 'ADMIN' : (can[0] ?? ''));
   const [reason, setReason] = useState('');
+  const [days, setDays] = useState('');   // v10.372 (D239) 기한
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   if (!isSuper) return <p className="muted" data-member-roles="read">권한 주기 · 거두기는 최고 관리자(SUPER)만 합니다.</p>;
@@ -26,7 +27,7 @@ export function MemberRoles({ accountId, name, roles, onDone }: { accountId: str
     if (!confirm(ask)) return;
     setBusy(true); setMsg(null);
     try {
-      await api('/admin/reports/roles', { method: 'POST', body: JSON.stringify({ accountId, role: r, grant, reason: reason.trim() }) });
+      await api('/admin/reports/roles', { method: 'POST', body: JSON.stringify({ accountId, role: r, grant, reason: reason.trim(), ...(grant && days ? { expiresDays: Number(days) } : {}) }) });
       setMsg({ ok: true, t: `${ROLE_LABEL[r] ?? r} 권한을 ${grant ? '주었습니다' : '거두었습니다'}.` });
       setReason(''); onDone();
     } catch (e) {
@@ -52,12 +53,17 @@ export function MemberRoles({ accountId, name, roles, onDone }: { accountId: str
             {can.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]} ({r})</option>)}
           </select>
         )}
+        {can.length > 0 && (
+          <select name="member-role-days" value={days} onChange={(e) => setDays(e.target.value)} aria-label="기한" data-member-role-days="">
+            <option value="">기한 없음</option><option value="7">7일</option><option value="30">30일</option><option value="90">90일</option>
+          </select>
+        )}
         <input name="member-role-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} placeholder="사유(꼭 · 기록에 남습니다)" aria-label="사유" />
         {can.length > 0 && <button className="btn-ok" disabled={busy || !role || !reason.trim()} onClick={() => void send(role, true)} data-member-role-grant="">권한 주기</button>}
       </div>
       {msg && <p className={msg.ok ? 'form-ok' : 'form-error'} role={msg.ok ? 'status' : 'alert'}>{msg.t}</p>}
       <p className="muted">자기 권한은 바꿀 수 없고, 마지막 최고 관리자는 거둘 수 없습니다. 지급 담당(PAYOUT)은 여기서 주지 않습니다(운영과 함께 가질 수 없음).
-        주고 거둔 기록은 「권한 계층 › 권한 관리」의 변경 이력에 남고 고칠 수 없습니다.</p>
+        주고 거둔 기록은 「권한 계층 › 권한 관리」의 변경 이력에 남고 고칠 수 없습니다. 기한을 두면 지난 뒤 매시간 정기 작업이 거둡니다(3일 전 운영 알림 · 기한은 위험감지 › 운영자 권한 「기한」 칸).</p>
     </div>
   );
 }

@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 interface Check {
   canWithdraw: boolean;
+  graceDays?: number;   // v10.376 (D240) 탈퇴 유예 날 수
   blockers: Array<{ code: string; label: string; cnt: number; link: string }>;
   reasons: Array<{ code: string; label: string }>;
   keepsRecords: boolean;
@@ -72,7 +73,7 @@ export default async function WithdrawPage() {
           {c.canWithdraw ? (
             <>
               <h2 className="my-st2">{t('hApply')}</h2>
-              <WithdrawForm reasons={c.reasons} action={doWithdraw} />
+              <WithdrawForm reasons={c.reasons} action={doWithdraw} graceDays={c.graceDays ?? 0} />
             </>
           ) : (
             <div className="my-btns"><Link className="my-bp" href="/my">{t('toMy')}</Link></div>

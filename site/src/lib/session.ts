@@ -211,3 +211,9 @@ export async function me(): Promise<Principal | null> {
   const d = await res.json();
   return (d.principal ?? d) as Principal;
 }
+
+/** v10.376 (D240 · docs/511) — 탈퇴 유예 중 「탈퇴 취소」(이메일 · 비밀번호) — 성공하면 화면이 다시 로그인 */
+export async function cancelWithdraw(email: string, password: string): Promise<{ ok: boolean; message?: string; note?: string }> {
+  const r = await call('POST', '/auth/withdraw/cancel', { email, password }, false);
+  return r.status === 200 ? { ok: true, note: r.data?.note } : { ok: false, message: r.data?.message ?? '탈퇴를 취소하지 못했습니다.' };
+}

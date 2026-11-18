@@ -357,6 +357,7 @@
     "memoPh": "We will use this to improve. Please do not include personal info such as name · contact.",
     "password": "Current password",
     "agree": "I have read the notice above and understand that <b>deletion cannot be undone</b>.",
+    "agreeGrace": "I have read the notice above and understand that <b>it cannot be undone after {n, plural, one {{n} day} other {{n} days}}</b>.",
     "processing": "Processing…",
     "submit": "Delete account"
   },

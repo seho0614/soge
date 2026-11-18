@@ -5,6 +5,8 @@ import { useAct, n, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { OncallBox } from './SecurityBoxes';   // v10.358 (D236) 급한 알림 당번
+import { AlertMuteBox } from './OpsStaffBoxes';   // v10.370 (D239) 알림 잠시 끄기
+import { AlertWeeklyBox } from './OpsWeekBoxes';   // v10.375 알림 주간 통계
 
 interface Alert {
   id: string; code: string; severity: 'INFO' | 'WARN' | 'CRITICAL'; title: string; detail: unknown; raisedAt: string;
@@ -78,6 +80,11 @@ const NAME: Record<string, string> = {
   SECURITY_MONTHLY: '월간 보안 보고',   // v10.354 (D235 · docs/488)
   AUDIT_CHAIN_BROKEN: '감사 기록 위변조 의심',   // v10.356 (D235 · docs/490) — 위험감지 › 감사
   SIGNUP_BLOCK_SPIKE: '가입 차단에 많이 막힘',   // v10.362 (D237 · docs/496)
+  ROLE_EXPIRED: '운영 권한 기한 지나 거둠',   // v10.372 (D239 · docs/507)
+  ROLE_EXPIRING: '운영 권한 기한 3일 안',   // v10.372
+  DISPUTE_OVERDUE: '분쟁 처리 기한 넘김',   // v10.373 (D240 · docs/508)
+  SETTLE_OVERDUE: '정산 승인 기한 넘김',   // v10.373
+  APPLY_CHECK_NG: '운영 적용 확인 「다름」',   // v10.374
   REPORT_OVERDUE: '신고 처리 기한 넘김',   // v10.367 (D238 · docs/502)
   RESTORE_DRILL_DUE: 'DB 복원 시험 할 때',   // v10.368 (D238 · docs/503)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
@@ -131,6 +138,7 @@ function AlertsWeek() {
 export function OpsAlerts() {
   const [state, setState] = useState<'open' | 'all'>('open');
   const [code, setCode] = useState('');
+  const [mutePick, setMutePick] = useState('');   // v10.370 (D239)
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
   const [showResolved, setShowResolved] = useState(false);   /* v10.199 (D177) — 풀린 알림도 보기 */
@@ -188,6 +196,8 @@ export function OpsAlerts() {
   return (
     <section data-ops-alerts="">
       {(tokenRoles().includes('ADMIN') || tokenRoles().includes('SUPER')) && <OncallBox />}
+      {(tokenRoles().includes('ADMIN') || tokenRoles().includes('SUPER')) && <AlertMuteBox codes={(d?.codes ?? []).map((c) => c.code)} name={NAME} pick={mutePick} />}   {/* v10.370 (D239 · docs/505) */}
+      <AlertWeeklyBox name={NAME} />   {/* v10.375 (docs/510) */}
       <Flash msg={a.msg} err={a.err} />
       <AlertsWeek />
       {ms.data && <ChannelGuide ms={ms.data} isSuper={isSuper} busy={a.busy} onTest={{ mail: mailTest, telegram: pushTest, slack: slackTest }} />}
@@ -263,7 +273,8 @@ export function OpsAlerts() {
                 <td className="num-cell">{c.open > 0 ? <b className={c.openSeverity === 'INFO' ? '' : 'warn-text'}>{n(c.open)}</b> : 0}</td>
                 <td className="num-cell muted" data-code-resolved={c.resolved ?? 0}>{n(c.resolved ?? 0)}</td>
                 <td className="num-cell">{n(c.last7d)}</td><td className="muted">{ymdhm(c.lastAt)}</td>
-                <td>{(c.open > 0 || (c.resolved ?? 0) > 0) && <button className="btn-sm" disabled={a.busy === `code:${c.code}`} onClick={() => ackCode(c)} data-ack-code="">모두 확인</button>}</td>
+                <td>{(c.open > 0 || (c.resolved ?? 0) > 0) && <button className="btn-sm" disabled={a.busy === `code:${c.code}`} onClick={() => ackCode(c)} data-ack-code="">모두 확인</button>}
+                  {tokenRoles().includes('SUPER') && c.code !== 'AUDIT_CHAIN_BROKEN' && <> <button className="btn-sm btn-plain" onClick={() => setMutePick(c.code)} data-mute-pick={c.code}>잠시 끄기</button></>}</td>
               </tr>))}</tbody>
           </table>
         )}

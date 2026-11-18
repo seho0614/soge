@@ -14,7 +14,12 @@
   },
   "common": {
     "skipToMain": "Skip to main content",
-    "backTo": "← Back to {label}"
+    "backTo": "← Back to {label}",
+    "maintTitle": "We are under maintenance",
+    "maintBody": "We are working to improve the service. Please come back shortly.",
+    "maintUntil": "Expected to end: {until}",
+    "maintContact": "Urgent inquiries: {phone}",
+    "maintSoon": "Scheduled maintenance: {from} to {until} — the site will be unavailable during this time."
   },
   "lang": {
     "label": "Language"
@@ -203,7 +208,9 @@
     "forgotPw": "Forgot password",
     "forgotEmail": "Forgot email",
     "working": "Working…",
-    "submit": "Log in"
+    "submit": "Log in",
+    "cancelWithdraw": "Cancel withdrawal and sign in",
+    "cancelFail": "Could not cancel the withdrawal."
   },
   "pwForm": {
     "weak": "Your password must be at least 10 characters and mix letters, numbers and symbols.",

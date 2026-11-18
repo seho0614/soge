@@ -564,8 +564,11 @@ export class LaunchWatchService {
        SELECT id::text, alert_code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI'), true
          FROM fn_ops_alert_remail_pending()`);
+    /* v10.370 (D239 · docs/505) — 잠시 끈 종류는 메일도 뺌 */
+    const muted = new Set((await this.db.query<{ c: string }>(`SELECT alert_code AS c FROM alert_mutes WHERE lifted_at IS NULL AND until_at > now()`)).map((x) => x.c));
+    const items2 = items.filter((x) => !muted.has(x.code));
     const [c] = await this.db.query<{ to: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.digest_to'), '') AS "to"`);
-    return { to: (c?.to ?? '').trim(), items };
+    return { to: (c?.to ?? '').trim(), items: items2 };
   }
 
   /**
@@ -613,14 +616,16 @@ export class LaunchWatchService {
   async alertPushPending(ch: 'push' | 'slack' = 'push'): Promise<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[]> {
     /* v10.237 (D200) — 슬랙은 같은 기준 · 칸만 slack_pushed_at · slack_repushed_at */
     const [p, rp] = ch === 'slack' ? ['FROM fn_ops_alert_slack_pending()', 'FROM fn_ops_alert_slack_repush_pending()'] : ['FROM fn_ops_alert_push_pending()', 'FROM fn_ops_alert_repush_pending()'];
+    /* v10.370 (D239 · docs/505) — 잠시 끈 종류(alert_mutes)는 뺌 · 끝나면 다음 차례에 보냄 */
     return this.db.query(
-      `SELECT id::text AS id, alert_code AS code, severity, title,
+      `SELECT * FROM (
+       SELECT id::text AS id, alert_code AS code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
          ${p}
        UNION ALL
        SELECT id::text, alert_code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI'), true
-         ${rp}`);
+         ${rp}) x WHERE NOT EXISTS (SELECT 1 FROM alert_mutes m WHERE m.alert_code = x.code AND m.lifted_at IS NULL AND m.until_at > now())`);
   }
 
   /** v10.230 (D198 · docs/369) — 같은 기준의 전체 수(대기 목록은 CRITICAL 먼저 · 최근 순 50건) — 「보내지 못한 알림 n건 더」 줄에 씀 */

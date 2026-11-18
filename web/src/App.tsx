@@ -37,6 +37,7 @@ import { OpsBoard } from './app/admin/OpsBoard';   // v10.286 (D213)
 import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
 import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
+import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { FaqAdmin } from './app/admin/FaqAdmin';   // v10.332 (D224)
@@ -109,6 +110,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
+  'my-password': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.369 (docs/504)
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
   'guide-flows': ['ADMIN', 'SUPER'],   /* v10.347 (D233) 이용 흐름 — 읽기 ADMIN · 고치기 SUPER */
   /* v10.226 (D195) — 접속 인증: 내 받을 곳은 운영 역할 모두 · 관리 칸은 화면이 ADMIN · SUPER 만 */
@@ -344,6 +346,7 @@ function Console() {
       {tab === 'server-errors' && <ServerErrors />}
       {tab === 'ops-board' && <OpsBoard />}
       {tab === 'my-mfa' && <MyMfa />}
+      {tab === 'my-password' && <MyPassword />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

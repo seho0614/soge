@@ -6,6 +6,7 @@ import type { FooterLink, Gwan } from '@/lib/types';
 import { GLOBAL_NS, pick } from '@/i18n/messages';
 import { Footer } from '@/components/Footer';
 import { NoticeBar } from '@/components/NoticeBar';
+import { MaintenancePage, MaintenanceSoon, maintenanceState } from '@/components/Maintenance';   // v10.371 (D239) 점검 중 화면
 import { UpcomingTermsBar } from '@/components/UpcomingTerms';
 import { UniHeader } from '@/components/common/UniHeader';
 import { SiteHeader } from '@/components/common/SiteHeader';
@@ -60,6 +61,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     apiGet<Record<string, string | null>>('/site-settings/public', 300).catch(() => ({})),
   ]);
   const [locale, messages, t] = await Promise.all([getLocale(), getMessages(), getTranslations('common')]);   // v10.95 다국어
+  const maint = maintenanceState(settings);   // v10.371 (D239 · docs/506) — 점검 시각 안이면 모든 화면 대신 점검 안내
+  if (maint === 'on') {
+    return (
+      <html lang={locale}>
+        <body><MaintenancePage settings={settings} locale={locale} /></body>
+      </html>
+    );
+  }
 
   return (
     <html lang={locale}>
@@ -70,6 +79,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="skip-main" href="#main">{t('skipToMain')}</a>
         {/* v10.173 (D162) — 운영이 켠 안내 한 줄(site.notice_bar · 비면 그리지 않음) */}
         <NoticeBar settings={settings} locale={locale} />
+        {/* v10.371 (D239) — 점검 24시간 전부터 안내 띠 */}
+        {maint === 'soon' && <MaintenanceSoon settings={settings} />}
         {/* v10.188 (docs/294 · 대표 「머리줄 통일」) — 메인 · 관 · 일반 화면이 같은 머리줄(UniHeader · 메인 머리줄 모양).
             전: 메인(home/Frame) · 소개광장 · 소개몰 · 소개장터 메인(b2/Frame) · 그 밖(common/SiteHeader) 세 가지. /partner/** 는 전용 상단바(Chrome.tsx OWN_HEADER_PATHS) */}
         <AnyHeader><UniHeader gwans={gwans} lang={<LangPick />} /></AnyHeader>

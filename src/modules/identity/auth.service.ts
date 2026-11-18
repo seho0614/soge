@@ -40,8 +40,13 @@ export class AuthService {
         `로그인 실패가 많아 잠시 막았습니다. ${minutesText(gate.retry_after_sec)} 뒤에 다시 시도해 주십시오.`, gate.retry_after_sec);
     }
 
-    const [acc] = await this.db.query<{ id: string; password_hash: string; status: string }>(
-      `SELECT id, password_hash, status FROM accounts WHERE email = $1`,
+    const [acc] = await this.db.query<{ id: string; password_hash: string; status: string; grace_until: string | null }>(
+      /* v10.376 (D240 · docs/511) — 탈퇴 유예 중이면 그 끝(설정 member.withdraw_grace_days · 0 이면 없음) */
+      `SELECT id, password_hash, status,
+              CASE WHEN status = 'WITHDRAWN' AND withdrawn_at IS NOT NULL AND purged_at IS NULL AND fn_setting_int('member.withdraw_grace_days', 0) > 0
+                        AND withdrawn_at > now() - make_interval(days => fn_setting_int('member.withdraw_grace_days', 0))
+                   THEN to_char((withdrawn_at + make_interval(days => fn_setting_int('member.withdraw_grace_days', 0))) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') END AS grace_until
+         FROM accounts WHERE email = $1`,
       [email],
     );
     // 계정 없음과 비밀번호 불일치를 구분하지 않습니다 — 계정 존재 여부가 새면 안 됩니다
@@ -62,6 +67,10 @@ export class AuthService {
           : '이메일 또는 비밀번호가 올바르지 않습니다.',
         details: { attemptsLeft: left },
       });
+    }
+    if (acc.status === 'WITHDRAWN' && acc.grace_until) {
+      /* v10.376 — 비밀번호가 맞은 유예 중 탈퇴 계정: 화면이 「탈퇴 취소」(POST /auth/withdraw/cancel)를 보여 줌 */
+      throw new AppError(403, { code: 'WITHDRAW_PENDING', message: `탈퇴 처리 중인 계정입니다. ${acc.grace_until} 까지 탈퇴를 취소할 수 있습니다.`, details: { graceUntil: acc.grace_until } });
     }
     if (acc.status !== 'ACTIVE') {
       throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');

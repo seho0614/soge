@@ -6,7 +6,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { StaffActivityBox } from './SecurityBoxes';   // v10.355 운영자 활동 요약
 
-interface Op { id: string; name: string | null; email: string; status: string; roles: string[]; grantedAt: string; lastLoginAt: string | null; mfa: boolean; idle: boolean; passwordAt?: string | null; passwordOld?: boolean }
+interface Op { id: string; name: string | null; email: string; status: string; roles: string[]; grantedAt: string; lastLoginAt: string | null; mfa: boolean; idle: boolean; passwordAt?: string | null; passwordOld?: boolean; expiresAt?: string | null }
 interface Change { id: string; role: string; action: 'GRANT' | 'REVOKE'; reason: string | null; changedAt: string; targetName: string | null; targetEmail: string | null; changedByName: string | null }
 interface Quarter { quarter: string; reviewedAt: string | null; reviewedBy: string | null; note: string | null; current: boolean }
 interface Data { idleDays: number; items: Op[]; total: number; idleCount: number; noMfa: number; changes: Change[]; quarters: Quarter[] }
@@ -38,7 +38,7 @@ export function RoleReview() {
       <Flash msg={a.msg} err={a.err} />
       <p className="muted" data-role-summary="">운영자 {d.total}명 · 오래 안 씀({d.idleDays}일) <b className={d.idleCount ? 'warn-text' : ''}>{d.idleCount}</b>명 · 2단계 미등록 <b className={d.noMfa ? 'warn-text' : ''}>{d.noMfa}</b>명</p>
       <table className="tbl" data-role-operators="">
-        <thead><tr><th>운영자</th><th>역할</th><th>받은 날</th><th>마지막 로그인</th><th>2단계</th><th>비밀번호</th><th>상태</th></tr></thead>
+        <thead><tr><th>운영자</th><th>역할</th><th>받은 날</th><th>마지막 로그인</th><th>2단계</th><th>비밀번호</th><th>기한</th><th>상태</th></tr></thead>
         <tbody>{d.items.map((o) => (
           <tr key={o.id} data-idle={o.idle ? '1' : '0'}>
             <td>{o.name ?? '(이름 없음)'} <small className="dim">{o.email}</small></td>
@@ -47,6 +47,7 @@ export function RoleReview() {
             <td className="muted">{o.lastLoginAt ? ymdhm(o.lastLoginAt) : '없음'}</td>
             <td>{o.mfa ? '등록' : <span className="warn-text">미등록</span>}</td>
             <td data-pw-old={o.passwordOld ? 'y' : 'n'}>{o.passwordOld ? <span className="warn-text">비밀번호 오래됨(90일)</span> : <span className="muted">{o.passwordAt ? new Date(o.passwordAt).toLocaleDateString('ko-KR') : '—'}</span>}</td>
+            <td data-role-expires={o.expiresAt ? 'y' : 'n'}>{o.expiresAt ? <span className="warn-text">{ymdhm(o.expiresAt)} 까지</span> : <span className="muted">없음</span>}</td>
             <td>{o.status !== 'ACTIVE' ? <span className="dim">{o.status}</span> : o.idle ? <b className="warn-text">정지 권함</b> : '사용 중'}</td>
           </tr>))}</tbody>
       </table>

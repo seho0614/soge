@@ -14,7 +14,12 @@
   },
   "common": {
     "skipToMain": "본문으로 건너뛰기",
-    "backTo": "← {label}(으)로 돌아가기"
+    "backTo": "← {label}(으)로 돌아가기",
+    "maintTitle": "서비스 점검 중입니다",
+    "maintBody": "더 나은 서비스를 위해 점검하고 있습니다. 잠시 뒤 다시 찾아 주십시오.",
+    "maintUntil": "예상 끝: {until}",
+    "maintContact": "급한 문의: {phone}",
+    "maintSoon": "서비스 점검 예정: {from} ~ {until} — 이 시간에는 사이트를 쓸 수 없습니다."
   },
   "lang": {
     "label": "언어"
@@ -203,7 +208,9 @@
     "forgotPw": "비밀번호 찾기",
     "forgotEmail": "이메일 찾기",
     "working": "처리 중…",
-    "submit": "로그인"
+    "submit": "로그인",
+    "cancelWithdraw": "탈퇴 취소하고 로그인",
+    "cancelFail": "탈퇴를 취소하지 못했습니다."
   },
   "pwForm": {
     "weak": "비밀번호는 영문 · 숫자 · 특수문자를 섞어 10자 이상이어야 합니다.",

@@ -3,6 +3,7 @@ import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, n, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
+import { MaintenanceBox } from './OpsStaffBoxes';   // v10.371 (D239) 사이트 점검 예약
 
 interface Watch {
   signups: number; logins: number; posts: number; listings: number; orders: number; paidOrders: number; stubPaidOrders: number;
@@ -190,6 +191,7 @@ export function LaunchWatch() {
         {/* v10.172 — 어제 요약을 지금 보기(알림 · 메일은 남기지 않음) */}
         <button className="btn-plain" disabled={a.busy === 'digest'} onClick={showDigest} data-digest-show="">{digest !== null ? '요약 닫기' : '어제 요약 보기'}</button></p>
       {digest !== null && <pre className="card pad" data-digest-text="">{digest}</pre>}
+      <MaintenanceBox />   {/* v10.371 (D239 · docs/506) */}
       <p data-abuse-tools="">
         새 가입 <b data-signup-open={d.signupOpen ?? 'on'}>{d.signupOpen === 'off' ? '막힘' : '받는 중'}</b>{' '}
         <button className={d.signupOpen === 'off' ? 'btn-ok' : 'btn-no'} disabled={a.busy === 'signup.open'} onClick={toggleSignup} data-signup-toggle="">{d.signupOpen === 'off' ? '가입 다시 받기' : '가입 잠시 막기'}</button>

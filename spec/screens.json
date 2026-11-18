@@ -205,10 +205,12 @@
     "GET /verifications/identity/mode",
     "POST /verifications/identity/start",
     "POST /verifications/identity/complete",
-    "POST /verifications/identity/mock-sign"
+    "POST /verifications/identity/mock-sign",
+    "POST /auth/withdraw/cancel"
    ],
    "nav": "SB-MYP-DSH-010",
-   "state": "business.status"
+   "state": "business.status",
+   "note": " · v10.376 (D240 · docs/511) 탈퇴 유예 중 취소"
   },
   {
    "id": "SB-HOM-AUT-040",
@@ -1286,10 +1288,16 @@
     "GET /admin/cs-glance",
     "GET /admin/cs-glance/weekly",
     "GET /auth/staff-session",
-    "GET /admin/todo"
+    "GET /admin/todo",
+    "GET /admin/maintenance",
+    "POST /admin/maintenance",
+    "POST /admin/maintenance/clear",
+    "GET /admin/apply-checks",
+    "POST /admin/apply-checks",
+    "POST /admin/apply-checks/{id}/mark"
    ],
    "nav": "SB-HOM-MAIN-010",
-   "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486) · v10.357 · 360 자동 로그아웃 · 비밀번호 나이(docs/491 · 494) · v10.364 오늘 할 일(docs/498)"
+   "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486) · v10.357 · 360 자동 로그아웃 · 비밀번호 나이(docs/491 · 494) · v10.364 오늘 할 일(docs/498) · v10.371 (D239 · docs/506) 사이트 점검 예약 · v10.374 (D240 · docs/509) 운영 적용 확인표"
   },
   {
    "id": "SB-ADM-REV-010",
@@ -2017,10 +2025,14 @@
     "POST /admin/ops-alerts/push-find-chat",
     "PATCH /admin/site-settings",
     "GET /admin/oncall",
-    "PUT /admin/oncall/{dow}"
+    "PUT /admin/oncall/{dow}",
+    "GET /admin/alert-mutes",
+    "POST /admin/alert-mutes",
+    "POST /admin/alert-mutes/{id}/lift",
+    "GET /admin/ops-alerts/weekly"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-11-03 v10.179 D168 — 운영 알림(ops_alerts) 목록 · 종류별 확인 안 한 수 · 확인(한 번만 · 누가 · 언제 · 메모 · 되돌릴 수 없음) · 같은 종류 한꺼번에 확인. · v10.358 급한 알림 당번(docs/492)"
+   "note": "2026-11-03 v10.179 D168 — 운영 알림(ops_alerts) 목록 · 종류별 확인 안 한 수 · 확인(한 번만 · 누가 · 언제 · 메모 · 되돌릴 수 없음) · 같은 종류 한꺼번에 확인. · v10.358 급한 알림 당번(docs/492) · v10.370 (D239 · docs/505) 알림 잠시 끄기 · v10.375 (docs/510) 알림 주간 통계"
   },
   {
    "id": "SB-ADM-PII-010",
@@ -3456,7 +3468,7 @@
     "POST /admin/signup-blocks",
     "GET /admin/accounts/{id}/activity"
    ],
-   "note": "v10.333 (docs/464) 권한 주기 · 거두기(SUPER · 사유 필수 · 권한 관리와 같은 API) · v10.361 운영 메모 · v10.362 이 사람 막기(docs/495 · 496) · v10.365 (D238 · docs/500) 활동 한 줄 기록"
+   "note": "v10.333 (docs/464) 권한 주기 · 거두기(SUPER · 사유 필수 · 권한 관리와 같은 API) · v10.361 운영 메모 · v10.362 이 사람 막기(docs/495 · 496) · v10.365 (D238 · docs/500) 활동 한 줄 기록 · v10.372 (D239 · docs/507) 권한 주기 기한"
   },
   {
    "id": "SB-ADM-INQ-010",
@@ -5458,6 +5470,27 @@
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-18 v10.347 D233 (docs/481) 사용자 웹 /guide/flows 흐름 글(한 · 영 · 바로 가기 · 보임) 고치기. 고치기 SUPER — 새 판(guide_flows 쌓기만 · 감사 GUIDE_FLOW_SAVE) · v10.351 지난 판 보기 · 되돌리기(docs/485)"
+  },
+  {
+   "id": "SB-ADM-PWD-010",
+   "name": "내 비밀번호",
+   "group": "ADM",
+   "url": "/admin/my-password",
+   "p": "P1",
+   "roles": [
+    "REVIEWER",
+    "ADMIN",
+    "PAYOUT",
+    "SUPER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "PATCH /admin/me/password"
+   ],
+   "note": "2026-11-18 v10.369 (docs/504) — 운영자 비밀번호 바꾸기(회원 역할 없어도 · 12자 · 최근 3개 다시 쓰기 금지 · 다른 기기 로그아웃)"
   }
  ],
  "deferred": [

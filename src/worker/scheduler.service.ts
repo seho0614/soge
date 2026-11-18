@@ -29,6 +29,7 @@ import { PiiReviewService } from '../modules/admin/pii-review.service';
 import { RoleReviewService } from '../modules/admin/role-review.service';
 import { PrivacyService } from '../modules/identity/privacy.service';
 import { measureServerHealth } from '../common/server-health';
+import { maskMail } from '../common/mail/mail-admin.service';   // v10.372 (D239)
 
 /**
  * 배치 실행기.
@@ -151,7 +152,11 @@ export class SchedulerService {
         const ro = await this.reportOverdue().catch((e) => ({ error: (e as Error).message }));
         /* v10.368 (D238 · docs/503) — 마지막 DB 복원 시험이 ops.restore_drill_days(처음 30) 넘으면(한 번도 없으면) 경고 · 적으면 풂 */
         const rd = await this.restoreDrillDue().catch((e) => ({ error: (e as Error).message }));
-        detail = { expired: ex, nginx: ng, auditChain: ac, signupBlocked: Number(bh?.n ?? 0), reportOverdue: ro, restoreDrill: rd };
+        /* v10.372 (D239 · docs/507) — 기한 지난 운영 권한 거두기 · 3일 안 기한 알림 */
+        const rx = await this.roleExpire().catch((e) => ({ error: (e as Error).message }));
+        /* v10.373 (D240 · docs/508) — 분쟁 · 정산 처리 기한 */
+        const du = await this.disputeSettleOverdue().catch((e) => ({ error: (e as Error).message }));
+        detail = { expired: ex, nginx: ng, auditChain: ac, signupBlocked: Number(bh?.n ?? 0), reportOverdue: ro, restoreDrill: rd, roleExpire: rx, dueOverdue: du };
         break;
       }
 
@@ -933,6 +938,7 @@ export class SchedulerService {
     const items = await this.db.query<{ id: string; title: string }>(
       `SELECT id::text AS id, title FROM ops_alerts
         WHERE severity = 'CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL AND oncall_pushed_at IS NULL AND raised_at > now() - interval '24 hours'
+          AND NOT EXISTS (SELECT 1 FROM alert_mutes m WHERE m.alert_code = ops_alerts.alert_code AND m.lifted_at IS NULL AND m.until_at > now())   /* v10.370 (D239) 잠시 끈 종류 뺌 */
         ORDER BY raised_at LIMIT 20`);
     if (items.length) {
       if (!o?.chat) reason = o?.account_id ? 'ONCALL_NO_CHAT' : 'NO_ONCALL';
@@ -946,6 +952,7 @@ export class SchedulerService {
       `SELECT id::text AS id, title FROM ops_alerts
         WHERE severity = 'CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL AND escalated_at IS NULL
           AND raised_at < now() - interval '30 minutes' AND raised_at > now() - interval '24 hours'
+          AND NOT EXISTS (SELECT 1 FROM alert_mutes m WHERE m.alert_code = ops_alerts.alert_code AND m.lifted_at IS NULL AND m.until_at > now())   /* v10.370 (D239) */
         ORDER BY raised_at LIMIT 20`);
     if (esc.length) {
       const chats = await this.db.query<{ chat: string }>(
@@ -1057,6 +1064,49 @@ export class SchedulerService {
   }
 
   /** 같은 종류의 풀리지 않은 알림이 없을 때만 한 건 */
+  /** v10.372 (D239 · docs/507) 운영 권한 기한 — 지난 권한을 거둠(role_changes 사유 「기한 지남」 · 마지막 SUPER 는 DB 가 막음 → 실패로 셈) ·
+   *  거둔 것이 있으면 기록용 알림 ROLE_EXPIRED(INFO · 바로 풀림) · 3일 안 기한이 있으면 ROLE_EXPIRING(INFO · 없어지면 풂) */
+  private async roleExpire() {
+    const due = await this.db.query<{ id: string; role: string; email: string }>(
+      `SELECT r.account_id::text AS id, r.role, a.email::text AS email FROM account_roles r JOIN accounts a ON a.id = r.account_id
+        WHERE r.expires_at IS NOT NULL AND r.expires_at <= now() ORDER BY r.expires_at LIMIT 50`);
+    const done: string[] = [], failed: string[] = [];
+    for (const d of due) {
+      try {
+        await this.db.transaction(async () => {
+          await this.db.query(`SELECT set_config('app.role_reason', '기한 지남 — 정기 작업 sla_alert · v10.372', true), set_config('app.actor_id', '', true)`);
+          await this.db.query(`DELETE FROM account_roles WHERE account_id = $1 AND role = $2 AND expires_at <= now()`, [d.id, d.role]);
+        });
+        done.push(`${maskMail(d.email)} ${d.role}`);
+      } catch { failed.push(`${maskMail(d.email)} ${d.role}`); }
+    }
+    if (done.length || failed.length) {
+      await this.db.query(
+        `INSERT INTO ops_alerts (alert_code, severity, title, detail, resolved_at, resolve_note) VALUES ('ROLE_EXPIRED', $1, $2, $3::jsonb, CASE WHEN $4 THEN now() END, CASE WHEN $4 THEN '기록만' END)`,
+        [failed.length ? 'WARN' : 'INFO', `운영 권한 기한 지나 거둠 ${done.length}건${failed.length ? ` · 못 거둠 ${failed.length}건(마지막 SUPER 등)` : ''}(위험감지 › 운영자 권한)`,
+         JSON.stringify({ done, failed }), !failed.length]);
+    }
+    const [s] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM account_roles WHERE expires_at > now() AND expires_at <= now() + interval '3 days'`);
+    const soon = Number(s?.n ?? 0);
+    if (soon) await this.alertOnce('ROLE_EXPIRING', 'INFO', `3일 안에 기한이 끝나는 운영 권한 ${soon}건(위험감지 › 운영자 권한 「기한」 · 이어 주려면 회원 상세에서 다시 「권한 주기」)`, { soon });
+    else await this.resolveAlert('ROLE_EXPIRING', '3일 안 기한 없음');
+    return { revoked: done.length, failed: failed.length, soon };
+  }
+
+  /** v10.373 (D240 · docs/508) 분쟁(열림 · 검토 중) · 정산 승인 대기가 설정 날 수를 넘으면 DISPUTE_OVERDUE · SETTLE_OVERDUE(WARN · 하나만) · 0건이면 풂 */
+  private async disputeSettleOverdue() {
+    const [r] = await this.db.query<{ d: number; s: number; dd: number; sd: number }>(
+      `SELECT (SELECT count(*)::int FROM disputes WHERE status IN ('OPEN', 'IN_REVIEW') AND opened_at < now() - make_interval(days => fn_setting_int('ops.dispute_due_days', 3))) AS d,
+              (SELECT count(*)::int FROM settlements WHERE status = 'REQUESTED' AND requested_at < now() - make_interval(days => fn_setting_int('ops.settle_due_days', 2))) AS s,
+              fn_setting_int('ops.dispute_due_days', 3) AS dd, fn_setting_int('ops.settle_due_days', 2) AS sd`);
+    const d = Number(r?.d ?? 0), s = Number(r?.s ?? 0);
+    if (d) await this.alertOnce('DISPUTE_OVERDUE', 'WARN', `분쟁 ${d}건이 ${r!.dd}일 넘게 처리 중입니다(거래 › 분쟁 · 오래된 것부터)`, { overdue: d, days: r!.dd });
+    else await this.resolveAlert('DISPUTE_OVERDUE', '기한 넘긴 분쟁 없음');
+    if (s) await this.alertOnce('SETTLE_OVERDUE', 'WARN', `정산 승인 대기 ${s}건이 ${r!.sd}일을 넘었습니다(정산 › 정산 승인)`, { overdue: s, days: r!.sd });
+    else await this.resolveAlert('SETTLE_OVERDUE', '기한 넘긴 정산 없음');
+    return { disputes: d, settlements: s };
+  }
+
   /** v10.367 (D238 · docs/502) 신고 처리 기한 — 열린 신고가 설정 시간을 넘으면 REPORT_OVERDUE(WARN · 하나만) · 다 처리되면 풂 */
   private async reportOverdue() {
     const [r] = await this.db.query<{ n: number; h: number; oldest: string | null }>(

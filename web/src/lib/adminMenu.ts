@@ -68,6 +68,7 @@ export const TABS = [
   ['server-errors', '서버 오류'],   /* v10.182 (D171) */
   ['ops-board', '운영자 게시판'],   /* v10.286 (D213) */
   ['my-mfa', '내 2단계 인증'],   /* v10.180 (D169) — 운영 역할 모두 */
+  ['my-password', '내 비밀번호'],   /* v10.369 (docs/504) — 운영 역할 모두(회원 역할 없어도) */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -105,7 +106,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcmu',  label: '소개광장',  tabs: ['community', 'polls', 'events'] },
   { key: 'affapl',  label: '제휴',      tabs: ['affiliates'] },
   { key: 'integ',   label: '통합 현황', tabs: ['integ', 'integrations', 'reports', 'collect'] },
-  { key: 'acl',     label: '권한 계층', tabs: ['roles', 'my-mfa', 'staff-access'] },
+  { key: 'acl',     label: '권한 계층', tabs: ['roles', 'my-mfa', 'my-password', 'staff-access'] },
   { key: 'invreg',  label: '불변식',    tabs: ['invariants'] },
 ];
 
@@ -182,6 +183,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'privacy-requests': { title: '개인정보 권리 요청', sub: '회원의 열람 · 정정 · 삭제 · 처리정지 요청을 기한 안에 처리하고 결과를 남깁니다.', screen: 'SB-ADM-PRQ-010' },
   'ops-board':   { title: '운영자 게시판', sub: '하루 요약 · 급한 알림 · 대표 할 일 · 시험 메시지가 텔레그램 · 슬랙 결과와 함께 저절로 올라옵니다(꺼져 있어도). 운영자끼리 글 · 댓글 · 「확인함」. 운영 화면 계정만 봅니다.', screen: 'SB-ADM-OBD-010' },
   'server-errors': { title: '최근 서버 오류', sub: 'API 가 지난 1시간 보낸 서버 오류(5xx) 최근 50건 — 요청 내용 · 개인정보는 남기지 않습니다.', screen: 'SB-ADM-ERR-010' },
+  'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
   'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록. 허용 IP 는 Nginx 반영 스크립트로 운영 화면 접속 허용에도 씁니다(SUPER).', screen: 'SB-ADM-SIP-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },

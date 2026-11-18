@@ -98,7 +98,7 @@ export class ReportService {
    * 관리자 역할을 주면 검수·정산·제재 권한이 함께 갑니다.
    * 사유를 남기게 하는 것은 나중에 "누가 왜 줬는가"를 답하기 위해서입니다.
    */
-  async setRole(accountId: string, role: string, grant: boolean, reason: string) {
+  async setRole(accountId: string, role: string, grant: boolean, reason: string, expiresDays?: number) {
     const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 (D173) — 안심 · 제휴 파트너 담당
     if (!OK.includes(role)) {
       throw new PolicyViolation('BAD_ROLE', '부여할 수 없는 역할입니다.');
@@ -118,16 +118,25 @@ export class ReportService {
       await this.db.query(`SELECT set_config('app.role_reason', $1, true), set_config('app.actor_id', $2, true)`,
         [reason.trim(), RequestCtx.actorId() ?? '']);
       if (grant) {
+        /* v10.372 (D239 · docs/507) — 기한: SUPER 에 기한을 두려면 기한 없는 다른 SUPER 가 있어야 함(다 사라지면 복구 불가) */
+        if (expiresDays && role === 'SUPER') {
+          const [o] = await this.db.query<{ n: number }>(
+            `SELECT count(*)::int AS n FROM account_roles WHERE role = 'SUPER' AND expires_at IS NULL AND account_id <> $1`, [accountId]);
+          if (!Number(o?.n ?? 0)) throw new PolicyViolation('ROLE_EXPIRY_LAST_SUPER', '기한 없는 다른 최고 관리자(SUPER)가 없으면 SUPER 에 기한을 둘 수 없습니다.');
+        }
         await this.db.query(
           `INSERT INTO account_roles(account_id, role) VALUES ($1,$2)
            ON CONFLICT DO NOTHING`, [accountId, role]);
+        await this.db.query(
+          `UPDATE account_roles SET expires_at = CASE WHEN $3::int IS NULL THEN NULL ELSE now() + make_interval(days => $3::int) END
+            WHERE account_id = $1 AND role = $2`, [accountId, role, expiresDays ?? null]);
       } else {
         const [gone] = await this.db.query<any>(
           `DELETE FROM account_roles WHERE account_id=$1 AND role=$2 RETURNING role`,
           [accountId, role]);
         if (!gone) throw new StateConflict('NO_SUCH_ROLE', '가지고 있지 않은 역할입니다.');
       }
-      return { accountId, role, granted: grant };
+      return { accountId, role, granted: grant, expiresDays: grant ? (expiresDays ?? null) : null };
     });
   }
 

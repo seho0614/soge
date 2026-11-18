@@ -51,6 +51,7 @@ export function StaffSession() {
       {pw?.old && (
         <div className="ad-nt warn" data-pw-old-bar={pw.days ?? ''} style={{ margin: '8px 16px' }}>
           <b>비밀번호를 바꾼 지 {pw.days}일이 지났습니다</b>(운영 역할은 {pw.maxDays}일마다 권함 · 12자 이상 · 최근 3개는 다시 못 씀) —{' '}
+          <a href="#/my-password" data-pw-old-go="">권한 계층 › 내 비밀번호에서 바꾸기</a>{' · '}
           <a href={siteHref('/my/account')} target="_blank" rel="noreferrer">사용자 웹 › 나의공간 › 계정에서 바꾸기</a>
         </div>
       )}

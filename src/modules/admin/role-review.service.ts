@@ -38,6 +38,7 @@ export class RoleReviewService {
       `SELECT a.id, a.name, a.email, a.status,
               array_agg(r.role ORDER BY array_position(ARRAY['SUPER','ADMIN','PARTNER_MAL','PARTNER_AFF','REVIEWER','PAYOUT'], r.role)) AS roles,
               min(r.granted_at) AS "grantedAt", a.last_login_at AS "lastLoginAt",
+              min(r.expires_at) AS "expiresAt",   /* v10.372 (D239) 가장 이른 권한 기한 */
               (m.enabled_at IS NOT NULL) AS mfa,
               coalesce(a.password_changed_at, a.created_at) AS "passwordAt",
               (coalesce(a.password_changed_at, a.created_at) < now() - interval '90 days') AS "passwordOld",

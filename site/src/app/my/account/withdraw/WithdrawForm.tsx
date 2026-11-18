@@ -10,8 +10,9 @@ import { useTranslations } from 'next-intl';
 
 type Act = { ok: true; note?: string } | { ok: false; code: string; message: string };
 
-export function WithdrawForm({ reasons, action }: {
+export function WithdrawForm({ reasons, action, graceDays = 0 }: {
   reasons: Array<{ code: string; label: string }>;
+  graceDays?: number;   // v10.376 (D240 · docs/511) 0 이면 되돌릴 수 없음 문구 그대로
   action: (password: string, reason: string, memo?: string) => Promise<Act>;
 }) {
   const router = useRouter();
@@ -58,7 +59,7 @@ export function WithdrawForm({ reasons, action }: {
         <textarea name="memo" maxLength={500} rows={3} placeholder={t('memoPh')} /></label>
       <label className="fld"><span>{t('password')}</span><input name="password" type="password" autoComplete="current-password" maxLength={100} /></label>
       <label className="chk"><input type="checkbox" name="agree" />
-        <span>{t.rich('agree', { b: (c) => <b>{c}</b> })}</span></label>
+        <span>{graceDays > 0 ? t.rich('agreeGrace', { b: (c) => <b>{c}</b>, n: graceDays }) : t.rich('agree', { b: (c) => <b>{c}</b> })}</span></label>
       {err && <p className="form-error" role="alert">{err}</p>}
       <div className="p2act"><button className="btn-sm p2danger" disabled={pending}>{pending ? t('processing') : t('submit')}</button></div>
     </form>

@@ -12,7 +12,9 @@ import { useTranslations } from 'next-intl';
 
 type Result = { ok: true; reconsent?: boolean } | { ok: false; code: string; message: string };
 
-export function LoginForm({ action, next }: { action: (email: string, password: string, keep: boolean) => Promise<Result>; next: string }) {
+export function LoginForm({ action, next, cancel }: { action: (email: string, password: string, keep: boolean) => Promise<Result>; next: string;
+  /* v10.376 (D240 · docs/511) — 탈퇴 유예 중이면 「탈퇴 취소」 */
+  cancel?: (email: string, password: string) => Promise<{ ok: boolean; message?: string; note?: string }> }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [show, setShow] = useState(false);
@@ -20,6 +22,7 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
   const t = useTranslations('loginForm');
   const [err, setErr] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
+  const [pendingWd, setPendingWd] = useState<{ email: string; pw: string } | null>(null);   // v10.376
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,7 +33,7 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
     start(async () => {
       const r = await action(email, pw, keep);
       if (r.ok) router.push(r.reconsent ? `/terms/agree?next=${encodeURIComponent(next)}` : next);
-      else { setErr(r.message); setLocked(r.code === 'ACCOUNT_LOCKED' || r.code === 'TOO_MANY_ATTEMPTS'); }
+      else { setErr(r.message); setLocked(r.code === 'ACCOUNT_LOCKED' || r.code === 'TOO_MANY_ATTEMPTS'); setPendingWd(r.code === 'WITHDRAW_PENDING' ? { email, pw } : null); }
     });
   }
 
@@ -53,6 +56,16 @@ export function LoginForm({ action, next }: { action: (email: string, password: 
           <Link className="w1-lnk2" href="/support/new#inquiry">{t('forgotEmail')}</Link></span>
       </div>
       {err && <p className="w1-err form-error" role="alert">{err}{locked && <> <Link className="w1-lnk2" href="/login/forgot">{t('forgotPw')}</Link></>}</p>}
+      {pendingWd && cancel && (
+        <p data-withdraw-pending=""><span role="button" tabIndex={0} className="w1-bo" data-withdraw-cancel=""
+          onClick={() => start(async () => {
+            const c = await cancel(pendingWd.email, pendingWd.pw);
+            if (!c.ok) { setErr(c.message ?? t('cancelFail')); return; }
+            setPendingWd(null); setErr(null);
+            const r = await action(pendingWd.email, pendingWd.pw, keep);
+            if (r.ok) router.push(r.reconsent ? `/terms/agree?next=${encodeURIComponent(next)}` : next); else setErr(r.message);
+          })}>{t('cancelWithdraw')}</span></p>
+      )}
       <button className="w1-bp w1-lgb cta-primary" disabled={pending}>{pending ? t('working') : t('submit')}</button>
     </form>
   );

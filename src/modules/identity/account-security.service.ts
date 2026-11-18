@@ -176,7 +176,11 @@ export class AccountSecurityService {
                        WHERE s.account_id = $1 AND s.status IN ('ACTIVE','PAST_DUE') AND p.monthly_price > 0) AS paid_sub,
               EXISTS (SELECT 1 FROM partners p JOIN businesses b ON b.id = p.business_id
                        WHERE b.account_id = $1 AND (p.status IN ('APPLIED','ACTIVE') OR p.aff_status IN ('APPLIED','ACTIVE'))) AS partner`, [me]);
+    /* v10.376 (D240 · docs/511) — 탈퇴 유예 날 수(0 = 꺼짐) */
+    const [g] = await this.db.query<{ n: number }>(`SELECT fn_setting_int('member.withdraw_grace_days', 0) AS n`);
+    const grace = Number(g?.n ?? 0);
     return {
+      graceDays: grace,
       canWithdraw: blockers.length === 0,
       blockers,
       reasons: Object.entries(WITHDRAW_REASONS).map(([code, label]) => ({ code, label })),
@@ -187,7 +191,8 @@ export class AccountSecurityService {
         '탈퇴하시면 올린 매물 · 요청이 바로 내려가고, 발급한 소개코드가 멈춥니다.',
         x?.has_deal
           ? '거래 기록이 있어 관련 법령(전자상거래법 · 상법)에 따라 5년 동안 보관한 뒤 파기합니다. 그 기간에도 로그인과 이용은 할 수 없습니다.'
-          : '거래 기록이 없어 회원 정보(이메일 · 이름 · 연락처)를 바로 파기합니다.',
+          : grace > 0 ? `거래 기록이 없어 회원 정보(이메일 · 이름 · 연락처)를 탈퇴 ${grace}일 뒤 파기합니다.` : '거래 기록이 없어 회원 정보(이메일 · 이름 · 연락처)를 바로 파기합니다.',
+        ...(grace > 0 ? [`탈퇴한 뒤 ${grace}일 안에 다시 로그인하면 「탈퇴 취소」를 할 수 있습니다(내려간 매물 · 요청 · 정기 결제 카드 · 구독은 다시 올리고 등록해 주셔야 합니다). ${grace}일이 지나면 되돌릴 수 없습니다.`] : []),
         ...(x?.paid_sub ? ['유료 구독은 자동 결제를 멈춥니다. 이미 낸 기간의 환불 규칙은 구독 환불 약관을 따릅니다.'] : []),
         ...(x?.partner ? ['파트너센터 활동(입점 · 서비스 노출)도 함께 끝납니다.'] : []),
         '같은 이메일로 다시 가입하시려면 파기가 끝난 뒤에 하실 수 있습니다.',

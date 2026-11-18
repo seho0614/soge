@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiGet } from '@/lib/api';
-import { login, me } from '@/lib/session';
+import { login, me, cancelWithdraw } from '@/lib/session';
 import { GWAN_PATH } from '@/lib/format';
 import { LoginForm } from '@/components/auth/LoginForm';
 import '@/styles/proto-w1.css';
@@ -49,6 +49,10 @@ export default async function LoginPage({ searchParams }: Props) {
     'use server';
     return login(email, password, keep);
   }
+  async function doCancel(email: string, password: string) {
+    'use server';
+    return cancelWithdraw(email, password);   // v10.376 (D240) 탈퇴 유예 중 취소
+  }
 
   return (
     <div className="w1 w1-lgw" data-screen="SB-HOM-AUT-030">
@@ -58,7 +62,7 @@ export default async function LoginPage({ searchParams }: Props) {
         <div className="w1-jc w"><span className="lb">{t('reconsentLb')}</span>
           {t.rich('reconsentBody', { b: (c) => <b>{c}</b> })}
           <div style={{ marginTop: 8 }}><Link className="w1-bo sm" href="/terms/agree">{t('reconsentLink')}</Link></div></div>
-        <LoginForm action={doLogin} next={nextUrl} />
+        <LoginForm action={doLogin} next={nextUrl} cancel={doCancel} />
         <div className="w1-jc w" style={{ marginTop: 16 }}><span className="lb">{t('pendingLb')}</span>
           {t.rich('pendingBody', { b: (c) => <b>{c}</b> })}
           <div style={{ marginTop: 8 }}><Link className="w1-bo sm" href="/verify">{t('pendingLink')}</Link></div></div>

@@ -5,6 +5,7 @@
  *   운영 화면 첫 화면 「고객센터 한눈에」 › 「주간 보고 미리 보기」(GET /admin/cs-glance/weekly)가 같은 글을 보여 줍니다.
  *   숫자만(문의 본문 · 연락처 없음). 낱말은 사람 정보를 걸러 쌓은 것(v10.336).
  * ------------------------------------------------------------------- */
+import { opsAlertWeekly } from '../admin/ops-alert-weekly';   // v10.375 (docs/510)
 interface Q { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> }
 
 export interface CsWeeklyStats {
@@ -13,6 +14,7 @@ export interface CsWeeklyStats {
   misses: Array<{ word: string; hits: number }>;
   lead: { active: boolean; requests: number; noPartner: number };
   openNow: number; overdueNow: number;
+  alerts?: string;   // v10.375 (docs/510) 운영 알림 주간 한 줄
 }
 
 export async function csWeeklyStats(db: Q): Promise<CsWeeklyStats> {
@@ -66,6 +68,7 @@ export async function csWeeklyStats(db: Q): Promise<CsWeeklyStats> {
     deflected: Number(d?.n ?? 0), misses,
     lead: { active: !!l?.active, requests: Number(l?.requests ?? 0), noPartner: Number(l?.noPartner ?? 0) },
     openNow: Number(f?.openNow ?? 0), overdueNow: Number(f?.overdueNow ?? 0),
+    alerts: (await opsAlertWeekly(db).catch(() => null))?.line,
   };
 }
 
@@ -79,6 +82,7 @@ export function csWeeklyText(s: CsWeeklyStats): string {
     `못 찾은 낱말: ${s.misses.length ? s.misses.map((m) => `「${m.word}」 ${m.hits}`).join(' · ') : '없음'}`,
     `리드관: ${s.lead.active ? `신청 ${s.lead.requests} · 받을 업체 없음 ${s.lead.noPartner}` : '꺼짐'}`,
     `지금 답변 전 ${s.openNow} · 기한 넘김 ${s.overdueNow}(운영 화면 › 회원 › 1:1 문의)`,
+    ...(s.alerts ? [s.alerts] : []),
     '이 알림 끄기: 설정 ops.cs_weekly = off',
   ].join('\n');
 }
