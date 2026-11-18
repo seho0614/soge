@@ -5,6 +5,7 @@ import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
 import type { IpStatus } from '../../components/IpGate';
 import { NginxAllowBox } from './NginxAllowBox';   // v10.348 (docs/482) Nginx 반영
+import { DeniedBox } from './SecurityBoxes';   // v10.353 (docs/487) 막힌 접속
 
 type Allow = { id: string; ip: string; memo: string; createdAt: string; createdBy: string | null; expiresAt?: string | null };   /* v10.350 (D234) 기한 */
 type Staff = { id: string; email: string; name: string | null; roles: string[]; personalChat: boolean; phoneLast4: string | null; receive: string | null; todayPasses: number; lastVerifiedAt: string | null };
@@ -128,6 +129,7 @@ export function StaffAccess() {
         )}
 
         {isSuper && <NginxAllowBox key={d.allow.map((x) => x.ip).join(',')} />}
+        <DeniedBox onPick={isSuper ? (x) => { setIp(x); setMemo('막힌 접속에서 더함'); window.scrollTo(0, 0); } : undefined} />
 
         <h3 className="sec">운영자별 받을 곳 · 오늘 인증</h3>
         <table className="tbl" data-ip-staff=""><thead><tr><th>운영자</th><th>역할</th><th>받을 곳</th><th>휴대폰</th><th>오늘</th><th>마지막 인증</th>{isSuper && <th>개인 대화 번호(SUPER)</th>}</tr></thead><tbody>

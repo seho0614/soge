@@ -43,6 +43,7 @@ export function buildNginxAllowScript(list: AllowIp[], hash: string, madeAt: str
     "cat > \"$NEW\" <<'SGB_ALLOW_END'",
     `# sgb-admin-allow ${hash} — 운영 화면 › 권한 계층 › 접속 인증 에서 만듦(손으로 고치지 마십시오)`,
     allow,
+    'access_log /var/log/nginx/sgb-admin-access.log;',
     'deny all;',
     'SGB_ALLOW_END',
     'echo "== 바뀌는 줄 (< 빠짐 · > 더함)"',
@@ -127,4 +128,20 @@ export function writeNginxRequest(list: AllowIp[], hash: string): string {
   fs.writeFileSync(tmp, buildRequestText(list, hash, id), { mode: 0o600 });
   fs.renameSync(tmp, path.join(d.req, 'request.conf'));
   return id;
+}
+
+/* ---------------------------------------------------------------------
+ * v10.353 (docs/487) — 막힌 접속 기록: 루트 타이머(sgb-nginx-deny)가 10분마다 쓴 요약 파일을 읽기만
+ *   운영 화면 전용 접속 기록(/var/log/nginx/sgb-admin-access.log)에서 Nginx 가 막은 403(화면 · 파일 주소 — /api/ 는 뺌)
+ * ------------------------------------------------------------------- */
+export interface DeniedRow { ip: string; n7: number; n24: number; last: string; paths: string[] }
+export function nginxDenied(): { installed: boolean; at: string | null; total7: number; rows: DeniedRow[] } {
+  const d = nginxWatchDirs();
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(d.out, 'denied.json'), 'utf8').slice(0, 200_000));
+    const rows: DeniedRow[] = Array.isArray(j.rows) ? j.rows.filter((r: DeniedRow) => validIp(String(r?.ip ?? ''))).slice(0, 50) : [];
+    return { installed: true, at: typeof j.at === 'string' ? j.at : null, total7: Number(j.total7) || 0, rows };
+  } catch {
+    return { installed: false, at: null, total7: 0, rows: [] };
+  }
 }

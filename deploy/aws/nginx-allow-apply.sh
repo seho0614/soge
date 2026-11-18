@@ -7,6 +7,7 @@
 #   운영 화면 「적용」 → 프로그램(ubuntu)이 요청 파일만 씀 → 여기서 다시 검사 → 허용 파일 교체 → nginx -t → 다시 읽기 · 실패면 되돌림.
 #   · 요청 글은 실행하지 않습니다. allow <IP>; 와 deny all; 줄만 받고, 메모(# 뒤)는 버립니다. 링크 · 큰 파일 · 모르는 줄이 있으면 거절.
 #   · 결과는 root 폴더 /var/lib/sgb-nginx-allow/result.json(정해진 글만 · 요청 내용은 적지 않음) — 운영 화면이 읽습니다.
+#   · v10.353 — 허용 파일 끝에 운영 화면 전용 접속 기록 한 줄(access_log /var/log/nginx/sgb-admin-access.log) — 막힌 접속 요약(nginx_deny_summary.py)이 읽음.
 # =====================================================================
 set -uo pipefail
 REQ="${SGB_ALLOW_REQ:-/home/ubuntu/sgb-state/nginx-allow/request.conf}"
@@ -47,6 +48,7 @@ while IFS= read -r line || [ -n "$line" ]; do
   else result false "모르는 줄이 있음 — 거절"; exit 1; fi
 done < <(tail -n +2 "$REQ")
 [ "$N" -ge 1 ] && [ "$DENY" = 1 ] || { result false "허용 IP 가 없거나 deny all 이 없음 — 거절"; exit 1; }
+echo "access_log /var/log/nginx/sgb-admin-access.log;" >> "$NEW"   # v10.353 운영 화면 전용 접속 기록(막힌 접속 요약용)
 echo "deny all;" >> "$NEW"
 [ -f "$DST" ] && cp -p "$DST" "$DST.bak"
 install -m 644 "$NEW" "$DST"

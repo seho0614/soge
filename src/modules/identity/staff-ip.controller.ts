@@ -184,6 +184,13 @@ export class StaffIpController {
   @ApiResponse({ status: 422, description: '쓰지 않음(문서 규칙)', type: ErrorDto })
   nginxApplied(@Body() dto: StaffIpNginxAppliedDto) { return this.svc.nginxApplied(dto.hash); }
 
+  /* v10.353 (docs/487) — 막힌 접속 기록(루트 타이머 요약 · 읽기만) · ADMIN 은 IP 가림 */
+  @Get('admin/staff-access/denied')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '막힌 접속 기록 (v10.353)', description: '운영 화면에 허용 IP 밖에서 들어오려다 Nginx 가 막은 403(화면 · 파일 주소 · /api/ 뺌) — IP · 7일 · 24시간 · 마지막 때 · 주소 3개 · 상위 50. 운영 서버 감시 서비스가 10분마다 요약. SUPER 는 IP 전부 · ADMIN 은 가림.' })
+  @ApiOkResponse({ type: Object })
+  denied(@Req() req: Request) { return this.svc.denied((req as any).principal as Principal | undefined); }
+
   @Post('admin/staff-access/nginx-apply')
   @HttpCode(200)
   @Roles('SUPER')

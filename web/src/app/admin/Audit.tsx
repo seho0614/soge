@@ -5,6 +5,7 @@ import { useAct, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { useHashSub } from '../../lib/hashSub';
+import { AuditChainBox } from './SecurityBoxes';   // v10.354 · 356 (D235) 감사 기록 사슬 · 월간 보안 보고
 
 interface Signal {
   code: string; view: string; note: string; count: number; ok: boolean;
@@ -72,6 +73,7 @@ function AuditSignals({ onLogs }: { onLogs: () => void }) {
   return (
     <section>
       {/* v10.29 — 화면 제목 · 설명은 위 공통 제목 줄(App · adminMenu PAGE)이 그립니다 */}
+      <AuditChainBox />
       {/* v10.32 — 시안(scAdmAud .kpi4 > .kc)은 숫자 4칸을 세로 4줄(흰 줄 · 왼쪽 값 · 오른쪽 이름)로 그립니다 */}
       <div className="kpi4 ad-krows" data-audit-kpi>
         <div><b className={hot ? 'bad' : 'good'}>{hot}</b><span>징후</span></div>

@@ -9,7 +9,7 @@ import { AlimtalkService, last4 } from '../../common/alimtalk/alimtalk.service';
 import { clientIpRaw } from './abuse-guard';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { OPS_ROLES } from './mfa.service';
-import { buildNginxAllowScript, NGINX_ALLOW_FILE, nginxListState, nginxWatcher, validIp, writeNginxRequest } from './nginx-allow-script';   // v10.348 (docs/482)
+import { buildNginxAllowScript, NGINX_ALLOW_FILE, nginxDenied, nginxListState, nginxWatcher, validIp, writeNginxRequest } from './nginx-allow-script';   // v10.348 (docs/482)
 
 /* ---------------------------------------------------------------------
  * v10.226 (D195 · docs/363) — 운영 화면 접속 인증
@@ -299,6 +299,14 @@ export class StaffIpService {
   }
 
   watcher() { return nginxWatcher(); }
+
+  /** v10.353 (docs/487) — 막힌 접속 기록 · 허용 IP 에 이미 있는지 · SUPER 아니면 IP 가림 */
+  async denied(p?: Principal) {
+    const d = nginxDenied();
+    const sup = (p?.roles ?? []).includes('SUPER');
+    const allow = new Set((await this.db.query<{ ip: string }>(`SELECT host(ip) AS ip FROM staff_ip_allow`)).map((x) => x.ip));
+    return { ...d, rows: d.rows.map((r) => ({ ...r, ip: sup ? r.ip : maskIp(r.ip), allowed: allow.has(r.ip) })), full: sup };
+  }
 
   /** v10.348 — 「적용」(SUPER · 확인 문구 「적용」 · 사유) → 요청 파일만 씀(sudo 없음). 루트 감시 서비스가 1분 안에 적용 · 결과는 watcher().last */
   async nginxApply(confirm: string, reason: string) {

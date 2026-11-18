@@ -2085,10 +2085,11 @@
     "DELETE /admin/staff-access/{id}/phone",
     "GET /admin/staff-access/nginx-script",
     "POST /admin/staff-access/nginx-applied",
-    "POST /admin/staff-access/nginx-apply"
+    "POST /admin/staff-access/nginx-apply",
+    "GET /admin/staff-access/denied"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음). · v10.348 Nginx 반영 — 허용 IP 로 반영 스크립트(보여 주기만 · SUPER) · 반영했음(docs/482) · v10.348 「적용」 — 요청 파일만 · 운영 서버 루트 감시 서비스가 적용"
+   "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음). · v10.348 Nginx 반영 — 허용 IP 로 반영 스크립트(보여 주기만 · SUPER) · 반영했음(docs/482) · v10.348 「적용」 — 요청 파일만 · 운영 서버 루트 감시 서비스가 적용 · v10.353 막힌 접속(docs/487)"
   },
   {
    "id": "SB-ADM-ROLE-010",
@@ -2102,10 +2103,11 @@
    "gates": [],
    "apis": [
     "GET /admin/role-review",
-    "POST /admin/role-review"
+    "POST /admin/role-review",
+    "GET /admin/security/staff-activity"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-11-03 v10.180 D169 — 운영자별 역할 · 받은 날 · 마지막 로그인 · 2단계 등록 · 오래 안 씀(ops.role_idle_days) · 최근 권한 변경 · 분기 점검 완료(audit.role_reviews · 고칠 수 없음)."
+   "note": "2026-11-03 v10.180 D169 — 운영자별 역할 · 받은 날 · 마지막 로그인 · 2단계 등록 · 오래 안 씀(ops.role_idle_days) · 최근 권한 변경 · 분기 점검 완료(audit.role_reviews · 고칠 수 없음). · v10.355 운영자 활동 요약(docs/489)"
   },
   {
    "id": "SB-ADM-PRG-010",
@@ -4251,8 +4253,12 @@
     "GET /admin/audit/logs",
     "GET /admin/audit/reviews",
     "POST /admin/audit/reviews",
-    "GET /admin/audit/policy"
-   ]
+    "GET /admin/audit/policy",
+    "GET /admin/security/audit-chain",
+    "POST /admin/security/audit-chain/check",
+    "GET /admin/security/monthly"
+   ],
+   "note": " · v10.354 월간 보안 보고 · v10.356 감사 기록 위변조 확인(docs/488 · 490)"
   },
   {
    "id": "SB-ADM-DIC-010",

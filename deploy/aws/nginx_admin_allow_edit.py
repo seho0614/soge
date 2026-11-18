@@ -58,7 +58,7 @@ def main(src, admin, out_site, out_allow):
     open(out_site, 'w', encoding='utf-8').write('\n'.join(out))
     open(out_allow, 'w', encoding='utf-8').write(
         '# sgb-admin-allow setup — 처음 준비 때 지금 사이트 파일에서 옮김(이후 운영 화면 「Nginx 반영」 스크립트가 덮어씀)\n'
-        + ''.join(f'allow {ip};\n' for ip in ips) + 'deny all;\n')
+        + ''.join(f'allow {ip};\n' for ip in ips) + 'access_log /var/log/nginx/sgb-admin-access.log;\n' + 'deny all;\n')   # v10.353 운영 화면 전용 접속 기록
     print(f'RESULT {runs} {len(ips)} {",".join(ips)}')
     return 0
 

@@ -1,5 +1,6 @@
 import { opsBoardPost, sendResult } from '../modules/admin/ops-board.service';   // v10.286 (D213)
-import { nginxListState, nginxWatcher, writeNginxRequest } from '../modules/identity/nginx-allow-script';   // v10.349 · 350 (docs/483 · 484)
+import { nginxDenied, nginxListState, nginxWatcher, writeNginxRequest } from '../modules/identity/nginx-allow-script';   // v10.349 · 350 · 353 (docs/483 · 484 · 487)
+import { auditChainCheck, securityMonthlyStats, securityMonthlyText } from '../modules/admin/security-report';   // v10.354 · 356 (D235 · docs/488 · 490)
 import { csWeeklyStats, csWeeklyText } from '../modules/support/cs-weekly';   // v10.352 (D234 · docs/486)
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
@@ -43,7 +44,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly';
 
 export interface JobResult {
   job: JobName;
@@ -140,7 +141,9 @@ export class SchedulerService {
         /* v10.350 (D234 · docs/484) — 기한 지난 허용 IP 빼기(마지막 하나는 남김) · v10.349 (docs/483) Nginx 적용 알림 셋 */
         const ex = await this.staffIpExpire().catch((e) => ({ error: (e as Error).message }));
         const ng = await this.nginxAlerts().catch((e) => ({ error: (e as Error).message }));
-        detail = { expired: ex, nginx: ng };
+        /* v10.356 (D235 · docs/490) — 감사 기록 사슬 확인(마지막 온전 지점부터) · 끊기면 급한 알림 AUDIT_CHAIN_BROKEN */
+        const ac = await this.auditChain().catch((e) => ({ error: (e as Error).message }));
+        detail = { expired: ex, nginx: ng, auditChain: ac };
         break;
       }
 
@@ -526,6 +529,13 @@ export class SchedulerService {
       }
 
       /* v10.249 (D203 · docs/386) — 대표 할 일 주간 알림(월요일 09:05): 아직인 줄만 텔레그램 · 슬랙(켜 둔 길만) · 모두 끝났으면 안 보냄 */
+      /* v10.354 (D235 · docs/488) — 월간 보안 보고(매일 09:20 · 지난달 보고를 아직 안 보냈으면) */
+      case 'security_monthly': {
+        const m = await this.securityMonthly();
+        affected = m.sent ? 1 : 0; detail = m;
+        break;
+      }
+
       /* v10.352 (D234 · docs/486) — 고객센터 주간 보고(월요일 09:10) */
       case 'cs_weekly': {
         const w = await this.csWeekly();
@@ -902,6 +912,39 @@ export class SchedulerService {
     return { from: st.from, to: st.to, telegram, slack };
   }
 
+  /** v10.354 (D235 · docs/488) — 월간 보안 보고: 지난달 것을 아직 안 보냈으면 한 통(텔레그램 · 슬랙 · 켜 둔 길만) · 운영자 게시판 · 운영 알림 SECURITY_MONTHLY(INFO · detail.month)
+   *  스위치 ops.security_monthly(on). 같은 달은 한 번만(운영 알림 detail.month 로 셈) */
+  private async securityMonthly(): Promise<{ off?: true; month: string; sent: boolean; skipped?: string; telegram: string | null; slack: string | null }> {
+    const [o] = await this.db.query<{ v: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.security_monthly'), 'on') AS v`);
+    const st = await securityMonthlyStats(this.db);
+    if ((o?.v ?? 'on') !== 'on') return { off: true, month: st.month, sent: false, telegram: null, slack: null };
+    const [done] = await this.db.query(`SELECT 1 FROM ops_alerts WHERE alert_code = 'SECURITY_MONTHLY' AND detail->>'month' = $1 LIMIT 1`, [st.month]);
+    if (done) return { month: st.month, sent: false, skipped: 'ALREADY_SENT', telegram: null, slack: null };
+    const text = securityMonthlyText(st);
+    const tg = await this.telegram.status();
+    let telegram: string | null = tg.ready ? null : tg.reason;
+    if (tg.ready) { const r = await this.telegram.send(text); telegram = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const sk = this.slack.status();
+    let slack: string | null = sk.ready ? null : sk.reason;
+    if (sk.ready) { const r = await this.slack.send(text); slack = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const title = `월간 보안 보고 ${st.month} — 권한 주기 ${st.grants} · 개인정보 열람 ${st.piiViews} · 급한 알림 ${st.critical}`;
+    await opsBoardPost(this.db, 'DAILY_DIGEST', title, text, telegram, slack);
+    await this.alert('SECURITY_MONTHLY', 'INFO', title, { ...st, telegram, slack });
+    return { month: st.month, sent: true, telegram, slack };
+  }
+
+  /** v10.356 (D235 · docs/490) — 감사 기록 사슬 확인 · 끊기면 급한 알림(같은 것 한 번) · 다시 온전하면 풂 */
+  private async auditChain(): Promise<{ ok: boolean; checked: number; brokenId: string | null }> {
+    const r = await auditChainCheck(this.db);
+    if (!r.ok) {
+      await this.alertOnce('AUDIT_CHAIN_BROKEN', 'CRITICAL', `감사 기록 위변조 의심 — 줄 ${r.brokenId ?? '?'}: ${r.reason ?? ''}(위험감지 › 감사 · DB 에서 직접 고치거나 지웠을 수 있음)`, { brokenId: r.brokenId, reason: r.reason });
+      this.log.error(`AUDIT_CHAIN_BROKEN 감사 기록 사슬 끊김 — 줄 ${r.brokenId}: ${r.reason}`);
+    } else {
+      await this.resolveAlert('AUDIT_CHAIN_BROKEN', '다시 확인하니 온전함');
+    }
+    return { ok: r.ok, checked: r.checked, brokenId: r.brokenId };
+  }
+
   /** v10.350 (D234 · docs/484) — 기한 지난 허용 IP 를 목록에서 뺌(감사 STAFF_IP_ALLOW_EXPIRE) · 남는 IP 가 없으면 빼지 않고 경고 ·
    *  뺐고 감시 서비스가 있으면 Nginx 적용을 요청(남은 목록) */
   private async staffIpExpire(): Promise<{ removed: string[]; kept: number; requested: string | null }> {
@@ -950,6 +993,15 @@ export class SchedulerService {
       if (await this.alertOnce('NGINX_NOT_APPLIED', 'WARN', `허용 IP 를 고친 뒤 24시간이 지나도 Nginx 에 반영하지 않았습니다(권한 계층 › 접속 인증 › Nginx 반영 · 「적용」)`, { hash: st.hash, lastChangedAt: st.lastChangedAt })) out.push('NOT_APPLIED');
     } else if (st.appliedSame || !st.list.length) {
       await this.resolveAlert('NGINX_NOT_APPLIED', '반영한 목록과 같아짐');
+    }
+    /* v10.353 (docs/487) — 막힌 접속: 한 IP 가 24시간 100번 넘게 두드리면 경고(IP 는 가림) · 줄면 풂 */
+    const dn = nginxDenied();
+    const hot = dn.rows.filter((r) => r.n24 >= 100);
+    if (hot.length) {
+      const mask = (ip: string) => (ip.includes('.') ? ip.split('.').slice(0, 2).join('.') + '.*.*' : ip.split(':').slice(0, 2).join(':') + ':…');
+      if (await this.alertOnce('NGINX_DENIED_SPIKE', 'WARN', `운영 화면에 허용 밖 접속이 몰립니다 — ${hot.slice(0, 3).map((r) => `${mask(r.ip)} ${r.n24}번`).join(' · ')}(24시간 · 권한 계층 › 접속 인증 › 막힌 접속)`, { ips: hot.length, top: hot.slice(0, 3).map((r) => ({ n24: r.n24, last: r.last })) })) out.push('DENIED_SPIKE');
+    } else if (dn.installed) {
+      await this.resolveAlert('NGINX_DENIED_SPIKE', '24시간 100번 넘는 IP 가 없어짐');
     }
     return out;
   }

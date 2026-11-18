@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { StaffActivityBox } from './SecurityBoxes';   // v10.355 운영자 활동 요약
 
 interface Op { id: string; name: string | null; email: string; status: string; roles: string[]; grantedAt: string; lastLoginAt: string | null; mfa: boolean; idle: boolean }
 interface Change { id: string; role: string; action: 'GRANT' | 'REVOKE'; reason: string | null; changedAt: string; targetName: string | null; targetEmail: string | null; changedByName: string | null }
@@ -48,6 +49,7 @@ export function RoleReview() {
             <td>{o.status !== 'ACTIVE' ? <span className="dim">{o.status}</span> : o.idle ? <b className="warn-text">정지 권함</b> : '사용 중'}</td>
           </tr>))}</tbody>
       </table>
+      <StaffActivityBox />
 
       <h3 className="sec">분기 점검</h3>
       <table className="tbl" data-role-quarters="">
