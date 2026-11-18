@@ -153,11 +153,18 @@ export class AccountSecurityController {
     summary: '비밀번호 재설정',
     description: '메일 링크의 token 과 새 비밀번호. 한 번만 쓸 수 있습니다. 바꾸면 로그인 증표 판 번호가 올라 **다른 기기의 로그인이 모두 끊기고** 로그인 잠금도 풀립니다.',
   })
-  @ApiResponse({ status: 422, description: 'RESET_TOKEN_INVALID · WEAK_PASSWORD', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'RESET_TOKEN_INVALID · WEAK_PASSWORD · WEAK_PASSWORD_STAFF · PASSWORD_REUSED(v10.360 운영 역할)', type: ErrorDto })
   @ApiOkResponse({ type: OkNoteDto })
   reset(@Body() dto: ResetPasswordDto) {
     return this.svc.reset(dto.token, dto.password);
   }
+
+  @Get('auth/staff-session')
+  @ApiBearerAuth()
+  @Roles('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF')
+  @ApiOperation({ summary: '운영자 세션 · 비밀번호 나이 (v10.357 · 360)', description: '운영 화면 자동 로그아웃 분(ops.admin_idle_min) · 운영 역할 로그인 유지 일(ops.staff_refresh_days) · 비밀번호 바꾼 지 며칠 · 90일 넘음(old). 읽기만.' })
+  @ApiOkResponse({ type: Object })
+  staffSession() { return this.svc.staffSessionInfo(); }
 
   @Patch('me/password')
   @ApiBearerAuth()
@@ -166,7 +173,7 @@ export class AccountSecurityController {
     summary: '비밀번호 변경 (로그인 상태)',
     description: '지금 비밀번호가 틀리면 로그인 실패와 같이 셉니다(5회 → 30분 잠금). 성공하면 새 accessToken · refreshToken 을 돌려줍니다 — 그 전 증표는 모두 무효.',
   })
-  @ApiResponse({ status: 422, description: 'CURRENT_PASSWORD_WRONG · WEAK_PASSWORD · SAME_PASSWORD', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'CURRENT_PASSWORD_WRONG · WEAK_PASSWORD · SAME_PASSWORD · WEAK_PASSWORD_STAFF · PASSWORD_REUSED(v10.360 운영 역할)', type: ErrorDto })
   @ApiResponse({ status: 423, description: 'ACCOUNT_LOCKED', type: ErrorDto })
   @ApiOkResponse({ type: PasswordChangedDto })
   change(@Body() dto: ChangePasswordDto) {

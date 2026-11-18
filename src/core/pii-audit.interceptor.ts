@@ -17,6 +17,20 @@ export const PII_ACCESS_KEY = 'pii_access';
 export const PiiAccess = (targetType: 'ACCOUNT' | 'BUSINESS' | 'LEAD', reason: string) =>
   SetMetadata(PII_ACCESS_KEY, { targetType, reason });
 
+/** v10.359 (D236 · docs/493) — 머리글 X-PII-Reason(INQUIRY · DISPUTE · SETTLEMENT · REVIEW · LEGAL · OTHER:<글>) → 사유 글. 모르면 「미입력」 */
+export const PII_REASON_KO: Record<string, string> = { INQUIRY: '문의 답변', DISPUTE: '분쟁 처리', SETTLEMENT: '정산 · 지급', REVIEW: '심사 · 인증', LEGAL: '법적 요청' };
+export function piiReason(h: unknown): string {
+  const v = typeof h === 'string' ? h.trim() : '';
+  if (PII_REASON_KO[v]) return PII_REASON_KO[v]!;
+  if (v.startsWith('OTHER:')) {
+    let t = '';
+    try { t = decodeURIComponent(v.slice(6)); } catch { t = ''; }
+    t = t.replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (t.length >= 2) return `기타: ${t}`;
+  }
+  return '미입력';
+}
+
 @Injectable()
 export class PiiAuditInterceptor implements NestInterceptor {
   constructor(
@@ -31,6 +45,7 @@ export class PiiAuditInterceptor implements NestInterceptor {
 
     const req = ctx.switchToHttp().getRequest();
     const c = RequestCtx.get();
+    const why = piiReason(req.headers?.['x-pii-reason']);   /* v10.359 (D236 · docs/493) — 화면이 고른 열람 사유 · 없으면 「사유 미입력」(막지 않음) */
 
     return next.handle().pipe(
       tap({
@@ -42,7 +57,7 @@ export class PiiAuditInterceptor implements NestInterceptor {
                  (actor_account_id, target_type, target_account_id, access_type, reason, ip)
                VALUES ($1,$2,$3,'VIEW',$4,$5)`,
               [c?.actorId ?? null, meta.targetType,
-               req.params?.id ?? null, meta.reason, c?.ip ?? null],
+               req.params?.id ?? null, `${meta.reason} · 사유 ${why}`, c?.ip ?? null],
             )
             .catch((e) => console.error('[PII_AUDIT_FAILED]', meta.targetType, e.message));
         },

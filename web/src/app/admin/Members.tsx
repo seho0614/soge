@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PiiReasonGate } from '../../components/PiiReasonGate';   // v10.359 (D236) 개인정보 열람 사유
 import { api, ApiFailure, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ymd, ymdhm } from '../../lib/act';
@@ -60,7 +61,7 @@ export function Members() {
     <section>
       <SubTabs tabs={tabs} value={view} onChange={setView} />
       {view === 'list' && <MemberList onOpen={(x) => { setId(x); setView('detail'); }} />}
-      {view === 'detail' && <MemberDetail id={id} onBack={() => setView('list')} />}
+      {view === 'detail' && <PiiReasonGate what="회원 상세"><MemberDetail id={id} onBack={() => setView('list')} /></PiiReasonGate>}
     </section>
   );
 }

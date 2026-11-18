@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../../db/database.service';
 import { PrincipalService } from './principal.service';
 import { AppError, Forbidden, PolicyViolation, NotFound } from '../../core/errors';
+import { isStaff, staffSession } from './staff-policy';   // v10.357 (D236) 운영 역할 로그인 유지
 import { AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText } from './auth-throttle';
 import { clientIpRaw, isInternalIp, settingInt } from './abuse-guard';
 import { AttributionEngine } from '../../engines/attribution/attribution.engine';
@@ -201,8 +202,10 @@ export class AuthService {
       secret,
       { expiresIn: ACCESS_TTL },
     );
+    /* v10.357 (D236 · docs/491) — 운영 역할은 ops.staff_refresh_days(처음 1일) · 회원은 14일 그대로 */
+    const days = isStaff(principal.roles) ? (await staffSession(this.db)).refreshDays : REFRESH_TTL_DAYS;
     const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv, ...(mfaAt ? { ma: mfaAt } : {}) }, secret, {
-      expiresIn: `${REFRESH_TTL_DAYS}d`,
+      expiresIn: `${days}d`,
     });
     return { accessToken, refreshToken, principal };
   }

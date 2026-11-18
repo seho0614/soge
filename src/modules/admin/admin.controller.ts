@@ -169,6 +169,7 @@ export class AdminController {
   @Audit('POSTING_SUSPENSION_LIFT', 'ACCOUNT')
   liftPosting(@Param('id') id: string) { return this.memberSvc.liftPostingSuspension(id); }
 
+  @PiiAccess('ACCOUNT', '회원 상세')   /* v10.359 (D236 · docs/493) — 회원 상세도 개인정보 접속기록(사유 머리글) */
   @Get('accounts/:id')
   @Roles('ADMIN', 'SUPER')
   @ApiOperation({

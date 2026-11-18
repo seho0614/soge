@@ -41,6 +41,8 @@ import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { FaqAdmin } from './app/admin/FaqAdmin';   // v10.332 (D224)
 import { OpsGuide } from './app/admin/OpsGuide';   // v10.339 (D229)
+import { StaffSession } from './app/admin/StaffSession';
+import { PiiReasonGate } from './components/PiiReasonGate';   // v10.359 (D236) 개인정보 열람 사유   // v10.357 · 360 (D236) 자동 로그아웃 · 비밀번호 나이
 import { GuideFlows } from './app/admin/GuideFlows';   // v10.347 (D233)
 import { InquiryDesk } from './app/admin/InquiryDesk';   // v10.333 (D225)
 import { Ads } from './app/admin/Ads';
@@ -250,6 +252,7 @@ function Console() {
         </div>
       </header>
 
+      <StaffSession />
       {orderLive && (
         <div className="bo-order-live" role="alert" data-order-live-bar="">
           <b>소개몰 「주문 받기」가 켜져 있습니다</b>{settings['mall.order_open_until'] ? <> · <span data-order-live-until="">{ymdhm(settings['mall.order_open_until'])} 에 저절로 꺼짐</span></> : <> · <span data-order-live-until="">꺼질 시각 없음</span></>} — 간주 결제(시험 결제) 상태라 손님 주문이 실제 돈 없이 결제 완료됩니다.{' '}
@@ -309,8 +312,8 @@ function Console() {
         {tab === 'rules' && <AutoReviewRules onGo={visible('policy') ? go : undefined} />}
         {tab === 'disputes' && <Disputes />}
         {tab === 'category' && <Categories />}
-        {tab === 'users' && <Users onGo={go} />}
-        {tab === 'deals' && <Deals onGo={go} />}
+        {tab === 'users' && <PiiReasonGate what="사업자 인증"><Users onGo={go} /></PiiReasonGate>}
+        {tab === 'deals' && <PiiReasonGate what="거래"><Deals onGo={go} /></PiiReasonGate>}
         {tab === 'settlement' && <Settlements />}
         {tab === 'payouts' && <Payouts />}
         {tab === 'billing' && <Billing />}

@@ -1,3 +1,4 @@
+import { piiReasonHeader } from '../components/PiiReasonGate';
 /**
  * API 클라이언트.
  *
@@ -97,6 +98,8 @@ export async function api<T>(
 
   const ref = localStorage.getItem(REF_KEY);
   if (ref) headers.set('X-Ref-Code', ref);
+  const pii = piiReasonHeader();   /* v10.359 (D236) 개인정보 열람 사유 — 고른 동안 모든 요청에(서버는 @PiiAccess 화면만 기록) */
+  if (pii) headers.set('X-PII-Reason', pii);
 
   // 결제·정산·코드 발급은 헤더가 없으면 서버가 422 로 거절합니다
   if (init.idempotencyKey) headers.set('Idempotency-Key', init.idempotencyKey);

@@ -39,6 +39,8 @@ export class RoleReviewService {
               array_agg(r.role ORDER BY array_position(ARRAY['SUPER','ADMIN','PARTNER_MAL','PARTNER_AFF','REVIEWER','PAYOUT'], r.role)) AS roles,
               min(r.granted_at) AS "grantedAt", a.last_login_at AS "lastLoginAt",
               (m.enabled_at IS NOT NULL) AS mfa,
+              coalesce(a.password_changed_at, a.created_at) AS "passwordAt",
+              (coalesce(a.password_changed_at, a.created_at) < now() - interval '90 days') AS "passwordOld",
               (a.status = 'ACTIVE' AND (a.last_login_at IS NULL OR a.last_login_at < now() - make_interval(days => $1))) AS idle
          FROM accounts a
          JOIN account_roles r ON r.account_id = a.id AND r.role IN ${OPS}

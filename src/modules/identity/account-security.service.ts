@@ -1,3 +1,4 @@
+import { assertStaffPassword, keepOldPassword, PASSWORD_MAX_DAYS, staffSession } from './staff-policy';   // v10.360 (D236) 운영자 비밀번호 정책
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -118,6 +119,8 @@ export class AccountSecurityService {
       if (!r?.a) {
         throw new PolicyViolation('RESET_TOKEN_INVALID', '링크가 만료됐거나 이미 쓰였습니다. 비밀번호 찾기에서 다시 요청해 주십시오.');
       }
+      await assertStaffPassword(this.db, r.a, password);   /* v10.360 — 운영 역할: 12자 · 최근 3개 금지(거래 안 · 막히면 증표도 안 쓰임) */
+      await keepOldPassword(this.db, r.a);
       const [acc] = await this.db.query<{ email: string }>(
         `UPDATE accounts SET password_hash = $2, password_changed_at = now(), token_version = token_version + 1
           WHERE id = $1 RETURNING email`, [r.a, hash]);
@@ -128,6 +131,18 @@ export class AccountSecurityService {
     return { ok: true, note: '비밀번호를 바꿨습니다. 새 비밀번호로 로그인해 주십시오. 다른 기기의 로그인은 모두 풀렸습니다.' };
   }
 
+  /** v10.357 · 360 (D236 · docs/491 · 494) — 운영 화면이 읽음: 자동 로그아웃 분 · 로그인 유지 일 · 비밀번호 바꾼 지 며칠(90일 넘으면 old) */
+  async staffSessionInfo() {
+    const me = RequestCtx.actorId();
+    if (!me) throw new Forbidden('UNAUTHENTICATED', '로그인이 필요합니다.');
+    const st = await staffSession(this.db);
+    const [a] = await this.db.query<{ at: string | null; days: number | null }>(
+      `SELECT coalesce(password_changed_at, created_at) AS at, floor(extract(epoch FROM now() - coalesce(password_changed_at, created_at)) / 86400)::int AS days
+         FROM accounts WHERE id = $1`, [me]);
+    const days = a?.days ?? null;
+    return { idleMin: st.idleMin, refreshDays: st.refreshDays, password: { changedAt: a?.at ?? null, days, maxDays: PASSWORD_MAX_DAYS, old: days != null && days > PASSWORD_MAX_DAYS } };
+  }
+
   /* ── 로그인 상태에서 변경 ────────────────────────────────────── */
   async change(current: string, next: string) {
     const me = RequestCtx.actorId();
@@ -135,8 +150,10 @@ export class AccountSecurityService {
     assertStrongPassword(next);
     if (current === next) throw new PolicyViolation('SAME_PASSWORD', '지금과 다른 비밀번호를 넣어 주십시오.');
     await this.checkPassword(me, current);
+    await assertStaffPassword(this.db, me, next);   /* v10.360 (D236 · docs/494) — 운영 역할: 12자 · 최근 3개 다시 쓰기 금지 */
     const hash = await bcrypt.hash(next, 12);
     await this.db.transaction(async () => {
+      await keepOldPassword(this.db, me);
       await this.db.query(
         `UPDATE accounts SET password_hash = $2, password_changed_at = now(), token_version = token_version + 1
           WHERE id = $1`, [me, hash]);
@@ -310,3 +327,4 @@ export class AccountSecurityService {
       [accountId, c?.actorRole ?? 'MEMBER', action, JSON.stringify(data), c?.ip ?? null, c?.userAgent ?? null]);
   }
 }
+

@@ -80,6 +80,12 @@ export class PiiReviewService {
           WHERE a.action IN ('ACCOUNT_VIEW', 'LEAD_VIEW')
             AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month') x
         GROUP BY k ORDER BY count(*) DESC`, [month]);
+    /* v10.359 (D236 · docs/493) — 열람 사유별(접속기록 reason 의 「 · 사유 」 뒤 · 그 전 기록은 「사유 칸 없음」) */
+    const reasons = await this.db.query<{ r: string; n: number }>(
+      `SELECT CASE WHEN position(' · 사유 ' IN coalesce(l.reason, '')) > 0 THEN split_part(l.reason, ' · 사유 ', 2) ELSE '사유 칸 없음(v10.359 전)' END AS r, count(*)::int AS n
+         FROM audit.pii_access_logs l
+        WHERE (l.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (l.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month'
+        GROUP BY 1 ORDER BY count(*) DESC LIMIT 20`, [month]);
     const [rv] = await this.db.query(
       `SELECT r.reviewed_at AS "reviewedAt", a.name AS "reviewedBy", r.note, r.summary
          FROM audit.pii_reviews r LEFT JOIN accounts a ON a.id = r.reviewed_by WHERE r.month = $1::date`, [month]);
@@ -89,7 +95,7 @@ export class PiiReviewService {
     return {
       month: month.slice(0, 7), closed: lim!.closed, flagDaily: lim!.n,
       total: actors.reduce((s, a: any) => s + a.views, 0), flagged: actors.filter((a) => a.flagged).length,
-      actors, kinds, review: rv ?? null,
+      actors, kinds, reasons, review: rv ?? null,
     };
   }
 

@@ -1689,6 +1689,8 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Consult Leads legal confirmation setting.",
   "업무 안내는 고치거나 지우지 않고 새 판을 더합니다.": "Work guides are not edited or deleted — save a new version instead.",
   "이용 흐름은 고치거나 지우지 않고 새 판을 더합니다.": "How-to flows are not edited or deleted — save a new version instead.",
+  "운영 역할 계정의 비밀번호는 12자 이상이어야 합니다(영문 · 숫자 · 특수문자 섞어).": "Staff account passwords must be at least 12 characters (mix letters, numbers and symbols).",
+  "최근에 쓴 비밀번호(3개)는 다시 쓸 수 없습니다. 새 비밀번호를 넣어 주십시오.": "You cannot reuse your last 3 passwords. Please enter a new password.",
   "마지막 허용 IP 는 뺄 수 없습니다. 새 IP 를 먼저 더한 뒤 빼십시오.": "The last allowed IP cannot be removed. Add a new IP first, then remove it.",
   "사유는 2 ~ 200자입니다.": "The reason must be 2–200 characters.",
   "스크립트를 만든 뒤 허용 IP 목록이 바뀌었습니다. 새 스크립트로 다시 반영하십시오.": "The allowed IP list changed after the script was made. Apply again with a new script.",

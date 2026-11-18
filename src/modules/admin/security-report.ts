@@ -40,7 +40,7 @@ export async function auditChainState(db: Q) {
 }
 
 export interface SecurityMonthly {
-  month: string; grants: number; revokes: number; settingChanges: number; settingAlerts: number; piiViews: number; piiActors: number;
+  month: string; grants: number; revokes: number; settingChanges: number; settingAlerts: number; piiViews: number; piiActors: number; piiNoReason: number;
   newLogins: number; ipPasses: number; ipLocked: number; critical: number; criticalAcked: number; ackMinutes: number | null; auditRows: number;
   chain: { ok: boolean | null; at: string | null; brokenId: string | null }; denied: { installed: boolean; total7: number; top: Array<{ ip: string; n7: number }> };
 }
@@ -58,6 +58,7 @@ export async function securityMonthlyStats(db: Q): Promise<SecurityMonthly> {
             (SELECT count(*)::int FROM ops_alerts a, r WHERE a.alert_code = 'SETTING_CHANGED' AND a.raised_at >= r.f AND a.raised_at < r.t) AS "settingAlerts",
             (SELECT count(*)::int FROM audit.pii_access_logs p, r WHERE p.occurred_at >= r.f AND p.occurred_at < r.t) AS "piiViews",
             (SELECT count(DISTINCT p.actor_account_id)::int FROM audit.pii_access_logs p, r WHERE p.occurred_at >= r.f AND p.occurred_at < r.t) AS "piiActors",
+            (SELECT count(*)::int FROM audit.pii_access_logs p, r WHERE p.occurred_at >= r.f AND p.occurred_at < r.t AND p.reason LIKE '% · 사유 미입력') AS "piiNoReason",
             (SELECT count(*)::int FROM ops_alerts a, r WHERE a.alert_code = 'STAFF_LOGIN_NEW' AND a.raised_at >= r.f AND a.raised_at < r.t) AS "newLogins",
             (SELECT count(*)::int FROM staff_ip_passes p, r WHERE p.verified_at >= r.f AND p.verified_at < r.t) AS "ipPasses",
             (SELECT count(*)::int FROM staff_ip_codes c, r WHERE c.tries >= 5 AND c.created_at >= r.f AND c.created_at < r.t) AS "ipLocked",
@@ -72,7 +73,7 @@ export async function securityMonthlyStats(db: Q): Promise<SecurityMonthly> {
   const num = (k: string) => Number(s?.[k] ?? 0);
   return {
     month: String(s?.month ?? ''), grants: num('grants'), revokes: num('revokes'), settingChanges: num('settingChanges'), settingAlerts: num('settingAlerts'),
-    piiViews: num('piiViews'), piiActors: num('piiActors'), newLogins: num('newLogins'), ipPasses: num('ipPasses'), ipLocked: num('ipLocked'),
+    piiViews: num('piiViews'), piiActors: num('piiActors'), piiNoReason: num('piiNoReason'), newLogins: num('newLogins'), ipPasses: num('ipPasses'), ipLocked: num('ipLocked'),
     critical: num('critical'), criticalAcked: num('criticalAcked'), ackMinutes: s?.ackMinutes == null ? null : Number(s.ackMinutes), auditRows: num('auditRows'),
     chain: { ok: c ? !!c.ok : null, at: c?.at ?? null, brokenId: c?.broken_id ?? null },
     denied: { installed: d.installed, total7: d.total7, top: d.rows.slice(0, 3).map((r) => ({ ip: maskIp(r.ip), n7: r.n7 })) },
@@ -86,7 +87,7 @@ export function securityMonthlyText(s: SecurityMonthly): string {
     `[소개뱅크] 월간 보안 보고 ${s.month}`,
     `운영 권한 주기 ${s.grants} · 거두기 ${s.revokes}(위험감지 › 운영자 권한)`,
     `설정 바뀜 ${s.settingChanges}(중요 설정 알림 ${s.settingAlerts})`,
-    `개인정보 열람 ${s.piiViews}회 · ${s.piiActors}명(위험감지 › 개인정보 접속기록)`,
+    `개인정보 열람 ${s.piiViews}회 · ${s.piiActors}명 · 사유 미입력 ${s.piiNoReason}(위험감지 › 개인정보 접속기록)`,
     `운영자 낯선 로그인 ${s.newLogins} · 접속 인증 통과 ${s.ipPasses} · 잠김 ${s.ipLocked}`,
     `막힌 접속(최근 7일): ${s.denied.installed ? `${s.denied.total7}번${s.denied.top.length ? ` — ${s.denied.top.map((t) => `${t.ip} ${t.n7}`).join(' · ')}` : ''}` : '기록 없음(감시 서비스 설치 전)'}`,
     `급한 알림 ${s.critical} · 확인 ${s.criticalAcked} · 확인까지 평균 ${s.ackMinutes == null ? '—' : `${s.ackMinutes}분`}`,

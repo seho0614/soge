@@ -518,13 +518,14 @@ export class SchedulerService {
         /* v10.197 (D175 · docs/310) — 급한 알림(CRITICAL · 중요 설정 바뀜)을 ops.digest_to 로 메일 · 메일이 준비 안 됐으면 기록만(보낸 것으로 적지 않음) */
         const am = await this.alertMail();
         const ap = await this.alertPush();   /* v10.200 (D178) — 메일과 따로(메일이 준비 안 돼도 감) */
+        const oc = await this.oncallPush().catch((e) => ({ error: (e as Error).message }));   /* v10.358 (D236 · docs/492) — 당번 개인 텔레그램 · 30분 미확인 SUPER */
         const as = await this.alertSlack();   /* v10.237 (D200) — 텔레그램 · 메일과 따로 */
         const ab = await this.alertBoard(ap, as);   /* v10.286 (D213) — 급한 알림을 게시판에 한 번(보냄 · 준비 안 됨 상관없이) */
         /* v10.239 (docs/379) — 켜 둔 길이 60분 넘게 보내기 실패면 ALERT_CHANNEL_FAIL(CRITICAL · 다음 차례에 다른 길로) · 다시 되거나 꺼지면 풀림 */
         const cf = await this.channels.failWatch({ mail: am, telegram: ap, slack: as });
         const cs = await this.launchWatch.flushCsp();   /* v10.221 (D191) — 보안 정책 보고를 DB 에 더함 · 30일 지난 줄 지움 */
         const ef = await this.launchWatch.flushServerErrors();   /* v10.250 (D204) — 서버 오류 건수를 DB 에 더함 · 30일 지난 줄 지움 */
-        detail = { alertMail: am, alertPush: ap, alertSlack: as, alertBoard: ab, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), assumeReady: ar, channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
+        detail = { alertMail: am, alertPush: ap, alertSlack: as, oncall: oc, alertBoard: ab, ...r, signupHour: sp.n, serverErrors10m: se.n, slowP95: sl.p95, diskPct: dk.usedPct, orderGuard: og.expired ? 'EXPIRED' : og.noEnd ? 'NO_END' : og.open ? 'OPEN' : 'OFF', resolved: rs, csp: cs, agentLive: aw.live?.severity ?? null, agentGap: !!aw.gap, agentStep: sr.map((x) => x.detail.step), assumeReady: ar, channelFail: cf, serverDaily: sd, serverErrorsSaved: ef };   /* v10.198 — alertMail 을 앞에(job_runs.detail 은 2000자에서 잘림 · 운영 알림 화면이 읽음) */
         break;
       }
 
@@ -910,6 +911,47 @@ export class SchedulerService {
     await opsBoardPost(this.db, 'DAILY_DIGEST', title, text, telegram, slack);
     await this.alert('CS_WEEKLY', 'INFO', title, { ...st, telegram, slack });
     return { from: st.from, to: st.to, telegram, slack };
+  }
+
+  /** v10.358 (D236 · docs/492) — 급한 알림(CRITICAL · 확인 · 풀림 전 · 24시간 안)을 오늘 당번 개인 텔레그램으로 한 번(oncall_pushed_at) ·
+   *  30분 안에 확인이 없으면 SUPER 개인 텔레그램(당번 뺌)으로 한 번(escalated_at). 대화방 보내기(alertPush)는 그대로 */
+  private async oncallPush(): Promise<{ oncall: number; escalated: number; reason: string | null }> {
+    const tg = await this.telegram.status();
+    if (tg.reason === 'NO_TOKEN') return { oncall: 0, escalated: 0, reason: 'NO_TOKEN' };
+    const [o] = await this.db.query<{ account_id: string | null; chat: string | null }>(
+      `SELECT o.account_id, s.telegram_chat AS chat FROM staff_oncall o LEFT JOIN staff_access s ON s.account_id = o.account_id
+        WHERE o.dow = extract(isodow FROM now() AT TIME ZONE 'Asia/Seoul')::int`);
+    let oncall = 0, escalated = 0, reason: string | null = null;
+    const items = await this.db.query<{ id: string; title: string }>(
+      `SELECT id::text AS id, title FROM ops_alerts
+        WHERE severity = 'CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL AND oncall_pushed_at IS NULL AND raised_at > now() - interval '24 hours'
+        ORDER BY raised_at LIMIT 20`);
+    if (items.length) {
+      if (!o?.chat) reason = o?.account_id ? 'ONCALL_NO_CHAT' : 'NO_ONCALL';
+      else {
+        const r = await this.telegram.send(`[소개뱅크 당번] 급한 알림 ${items.length}건\n${items.map((x) => `· ${x.title}`).join('\n')}\n운영 화면 › 위험감지 › 운영 알림에서 「확인」`, o.chat);
+        if (r.ok) { await this.db.query(`UPDATE ops_alerts SET oncall_pushed_at = now() WHERE id = ANY($1::bigint[])`, [items.map((x) => x.id)]); oncall = items.length; }
+        else reason = `SEND_${r.errorKind ?? 'FAILED'}`;
+      }
+    }
+    const esc = await this.db.query<{ id: string; title: string }>(
+      `SELECT id::text AS id, title FROM ops_alerts
+        WHERE severity = 'CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL AND escalated_at IS NULL
+          AND raised_at < now() - interval '30 minutes' AND raised_at > now() - interval '24 hours'
+        ORDER BY raised_at LIMIT 20`);
+    if (esc.length) {
+      const chats = await this.db.query<{ chat: string }>(
+        `SELECT DISTINCT s.telegram_chat AS chat FROM account_roles r JOIN staff_access s ON s.account_id = r.account_id
+          WHERE r.role = 'SUPER' AND s.telegram_chat IS NOT NULL AND r.account_id IS DISTINCT FROM $1::uuid`, [o?.account_id ?? null]);
+      let sent = false;
+      for (const c of chats) {
+        const r = await this.telegram.send(`[소개뱅크 · 30분 확인 없음] 급한 알림 ${esc.length}건\n${esc.map((x) => `· ${x.title}`).join('\n')}\n당번이 아직 확인하지 않았습니다 — 운영 화면 › 위험감지 › 운영 알림`, c.chat);
+        sent = sent || r.ok;
+      }
+      if (sent) { await this.db.query(`UPDATE ops_alerts SET escalated_at = now() WHERE id = ANY($1::bigint[])`, [esc.map((x) => x.id)]); escalated = esc.length; }
+      else reason = reason ?? (chats.length ? 'ESCALATE_SEND_FAILED' : 'NO_SUPER_CHAT');
+    }
+    return { oncall, escalated, reason };
   }
 
   /** v10.354 (D235 · docs/488) — 월간 보안 보고: 지난달 것을 아직 안 보냈으면 한 통(텔레그램 · 슬랙 · 켜 둔 길만) · 운영자 게시판 · 운영 알림 SECURITY_MONTHLY(INFO · detail.month)

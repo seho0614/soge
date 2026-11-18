@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, n, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { OncallBox } from './SecurityBoxes';   // v10.358 (D236) 급한 알림 당번
 
 interface Alert {
   id: string; code: string; severity: 'INFO' | 'WARN' | 'CRITICAL'; title: string; detail: unknown; raisedAt: string;
@@ -183,6 +184,7 @@ export function OpsAlerts() {
   const d = q.data;
   return (
     <section data-ops-alerts="">
+      {(tokenRoles().includes('ADMIN') || tokenRoles().includes('SUPER')) && <OncallBox />}
       <Flash msg={a.msg} err={a.err} />
       <AlertsWeek />
       {ms.data && <ChannelGuide ms={ms.data} isSuper={isSuper} busy={a.busy} onTest={{ mail: mailTest, telegram: pushTest, slack: slackTest }} />}

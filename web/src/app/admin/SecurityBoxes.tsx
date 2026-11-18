@@ -100,3 +100,41 @@ export function DeniedBox({ onPick }: { onPick?: (ip: string) => void }) {
     </div>
   );
 }
+
+interface Oncall {
+  today: number | null; canEdit: boolean;
+  rows: Array<{ dow: number; label: string; accountId: string | null; email: string | null; name: string | null; chat: boolean }>;
+  staff: Array<{ id: string; email: string; name: string | null; chat: boolean }>;
+}
+
+/** v10.358 (D236 · docs/492) 급한 알림 당번 — 위험감지 › 「운영 알림」 맨 위 · 정하기는 SUPER */
+export function OncallBox() {
+  const q = useApi<Oncall>('/admin/oncall');
+  const a = useAct();
+  if (q.error || !q.data) return null;
+  const d = q.data;
+  const set = (dow: number, accountId: string) =>
+    void a.run(`d${dow}`, () => api(`/admin/oncall/${dow}`, { method: 'PUT', body: JSON.stringify(accountId ? { accountId } : {}) }), q.reload);
+  const today = d.rows.find((r) => r.dow === d.today);
+  return (
+    <div className="card" data-oncall={today?.accountId ? 'set' : 'none'}>
+      <Flash msg={a.msg} err={a.err} />
+      <b>급한 알림 당번</b>{' '}
+      <span>오늘({today?.label ?? '—'}) {today?.accountId ? <>{today.name ?? today.email}{!today.chat && <span className="warn-text"> · 개인 텔레그램 없음(권한 계층 › 접속 인증 › 받을 곳)</span>}</> : <span className="dim">없음 — 대화방에만 감</span>}</span>
+      <small className="dim"> · 급한 알림을 당번 개인 텔레그램으로도 · 30분 안에 「확인」이 없으면 SUPER 개인 텔레그램으로 한 번</small>
+      <table className="tbl" style={{ marginTop: 6 }}><tbody><tr>
+        {d.rows.map((r) => (
+          <td key={r.dow} data-oncall-dow={r.dow} style={{ fontWeight: r.dow === d.today ? 700 : undefined }}>
+            {r.label}<br />
+            {d.canEdit ? (
+              <select value={r.accountId ?? ''} disabled={a.busy === `d${r.dow}`} onChange={(e) => set(r.dow, e.target.value)} data-oncall-pick={r.dow} style={{ maxWidth: 130 }}>
+                <option value="">없음</option>
+                {d.staff.map((s) => <option key={s.id} value={s.id}>{(s.name ?? s.email)}{s.chat ? '' : ' (텔레그램 없음)'}</option>)}
+              </select>
+            ) : <small>{r.name ?? r.email ?? '없음'}</small>}
+          </td>
+        ))}
+      </tr></tbody></table>
+    </div>
+  );
+}

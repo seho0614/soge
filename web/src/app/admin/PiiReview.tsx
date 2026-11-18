@@ -8,7 +8,7 @@ import { Flash } from '../../components/Flash';
 interface Month { month: string; views: number; reviewedAt: string | null; reviewedBy: string | null; closed: boolean }
 interface Actor { actorId: string; name: string | null; email: string | null; roles: string; views: number; exports: number; targets: number; maxPerDay: number; nightViews: number; flagged: boolean }
 interface Detail {
-  month: string; closed: boolean; flagDaily: number; total: number; flagged: number; actors: Actor[]; kinds: Array<{ k: string; n: number }>;
+  month: string; closed: boolean; flagDaily: number; total: number; flagged: number; actors: Actor[]; kinds: Array<{ k: string; n: number }>; reasons?: Array<{ r: string; n: number }>;   /* v10.359 열람 사유 */
   review: { reviewedAt: string; reviewedBy: string | null; note: string } | null;
 }
 
@@ -71,6 +71,7 @@ function MonthDetail({ month, onDone }: { month: string; onDone: () => void }) {
         </table>
       )}
       {d.kinds.length > 0 && <p className="muted">종류: {d.kinds.map((k) => `${k.k} ${n(k.n)}`).join(' · ')}</p>}
+      {(d.reasons ?? []).length > 0 && <p className="muted" data-pii-reasons="">열람 사유: {(d.reasons ?? []).map((k) => `${k.r} ${n(k.n)}`).join(' · ')}</p>}
       {d.review
         ? <p className="card" data-pii-reviewed="">점검 완료 — {d.review.reviewedBy ?? '—'} · {ymdhm(d.review.reviewedAt)} · {d.review.note}</p>
         : d.closed
