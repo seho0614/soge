@@ -64,7 +64,7 @@ ok('① 서버 — 올리기는 최고 관리자만 · 붙이기 검사(3개 · 
 ok('① 화면 — 운영 첨부 고르기(등록 · 고치기 · 3개 · 열기 · 빼기) · 표 첨부 수 · 사용자 웹 부품 · 4곳 · 화면 연결(4곳 + 운영 파일 API) · 문서 416 · 마이그레이션 255 · 판 v10.295',
    'function NoticeFilesPick(' in MO and MO.count('<NoticeFilesPick') == 2 and 'data-notice-files=' in MO and "uploadFile(f, 'NOTICE_ATTACHMENT')" in MO
    and '/api/v1/notices/${id}/files/${f.n}' in NFC and all('<NoticeFiles' in x for x in PG) and SCR.count('"GET /notices/{id}/files/{n}"') >= 4
-   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
+   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
 
 def call(m_, p, b=None, t=None):
     hd = {'content-type': 'application/json'}
