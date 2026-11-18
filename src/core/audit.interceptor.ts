@@ -6,6 +6,8 @@ import { Observable, tap } from 'rxjs';
 import { DatabaseService } from '../db/database.service';
 import { RequestCtx } from './request-context';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const AUDIT_KEY = 'audit';
 /** 감사 대상 액션을 선언합니다. 검수 승인·정산 지급·계좌 변경·정책 변경은 필수입니다. */
 export const Audit = (action: string, targetType?: string) =>
@@ -41,7 +43,8 @@ export class AuditInterceptor implements NestInterceptor {
               [
                 c?.actorId ?? null, c?.actorRole ?? null,
                 meta.action, meta.targetType ?? null,
-                req.params?.id ?? null,
+                /* v10.368 — 대상 칸은 uuid: 번호(bigint) 대상이면 비움(번호는 응답 after_data 에 있음) — 전에는 기록 쓰기가 통째로 실패 */
+                (UUID_RE.test(String(req.params?.id ?? '')) ? req.params.id : null),
                 JSON.stringify(result ?? {}),
                 c?.ip ?? null, c?.userAgent ?? null,
               ],
