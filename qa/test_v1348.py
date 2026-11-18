@@ -122,7 +122,7 @@ try:
     r3 = subprocess.run(['python3', ed, os.path.join(T, 'sgb'), 'nope.example.com', os.path.join(T, 'o3'), os.path.join(T, 'a3')], capture_output=True, text=True)
     ok('② 준비 편집기 — 운영 화면 블록 3곳만 include · 사용자 웹 allow 그대로 · 허용 파일(IP · deny all) · 다시 돌리면 READY · 없는 주소는 멈춤',
        r1.stdout.strip().endswith('RESULT 3 1 121.168.92.13') and out.count('include /etc/nginx/snippets/sgb-admin-allow.conf;') == 3
-       and conf.count('allow 121.168.92.13;') - out.count('allow 121.168.92.13;') == 3 and 'allow 121.168.92.13;\ndeny all;' in al
+       and conf.count('allow 121.168.92.13;') - out.count('allow 121.168.92.13;') == 3 and 'allow 121.168.92.13;\naccess_log /var/log/nginx/sgb-admin-access.log;\ndeny all;' in al
        and r2.stdout.strip() == 'RESULT READY' and r3.returncode == 1, f'{r1.stdout.strip()[-40:]} · {r2.stdout.strip()} · {r3.returncode}')
 finally:
     shutil.rmtree(T, ignore_errors=True)
@@ -216,7 +216,7 @@ if API and DB:
             w6 = wrun('# sgb-admin-allow abcdef123456 id=req-t1348none\ndeny all;\n')
             old_f = 'allow 198.51.100.9;\ndeny all;\n'
             ok('④-2 루트 감시 스크립트(흉내) — 통과면 허용 파일(메모 버림) · 결과 ok · nginx -t 실패면 되돌림 · 모르는 줄 · 잘못된 IP · 링크 · 빈 목록 거절(파일 그대로)',
-               w1[0] == 0 and w1[1].get('ok') is True and w1[1].get('id') == 'req-t1348ok' and f'allow {IP1};\nallow 2001:db8::1;\ndeny all;' in w1[2] and '메모' not in w1[2]
+               w1[0] == 0 and w1[1].get('ok') is True and w1[1].get('id') == 'req-t1348ok' and f'allow {IP1};\nallow 2001:db8::1;\naccess_log /var/log/nginx/sgb-admin-access.log;\ndeny all;' in w1[2] and '메모' not in w1[2]
                and w2[0] == 1 and w2[1].get('ok') is False and w2[2] == old_f
                and all(x[0] == 1 and x[1].get('ok') is False and x[2] == old_f for x in (w3, w4, w5, w6)),
                f"{w1[0]} {w1[1].get('message')} · {w2[1].get('message')} · {w3[1].get('message')} · {w4[1].get('message')} · {w5[1].get('message')} · {w6[1].get('message')}")
