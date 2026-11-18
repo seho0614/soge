@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 import type { Request } from 'express';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Principal, Roles } from '../../core/auth';
@@ -13,11 +13,36 @@ export class StaffIpCodeDto {
   @IsString() @Matches(/^\d{6}$/, { message: '6자리 번호를 넣어 주십시오.' }) code!: string;
 }
 
+export class StaffIpNginxAppliedDto {
+  @ApiProperty({ example: '3f2a9c01b7de', description: '반영 스크립트 첫 줄의 목록 지문(12자)' })
+  @IsString() @Length(12, 12) hash!: string;
+}
+export class StaffIpNginxApplyDto {
+  @ApiProperty({ example: '적용', description: '확인 문구 — 「적용」 그대로' }) @IsString() @Length(1, 10) confirm!: string;
+  @ApiProperty({ example: '사무실 IP 바뀜', description: '사유(2 ~ 200자)' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class StaffIpNginxScriptDto {
+  @ApiProperty({ description: '허용 IP · 메모' }) ips!: Array<{ ip: string; memo: string }>;
+  @ApiProperty() count!: number;
+  @ApiProperty({ description: '목록 지문(sha256 앞 12자)' }) hash!: string;
+  @ApiProperty({ example: '/etc/nginx/snippets/sgb-admin-allow.conf' }) file!: string;
+  @ApiPropertyOptional({ nullable: true, description: '목록을 마지막으로 고친 때(더함 · 뺌)' }) lastChangedAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '마지막 「반영했음」(지문 · 때 · 사람)' }) applied!: { hash: string | null; at: string | null; by: string | null } | null;
+  @ApiProperty({ description: '마지막 「반영했음」과 지금 목록이 같음' }) appliedSame!: boolean;
+  @ApiProperty({ description: '지금 접속한 IP 가 목록에 있음' }) myIpIn!: boolean;
+  @ApiPropertyOptional({ nullable: true }) myIp!: string | null;
+  @ApiProperty({ type: String, isArray: true, description: 'Nginx 가 읽지 못할 모양(있으면 스크립트에서 뺌)' }) invalid!: string[];
+  @ApiProperty({ description: '반영 스크립트(bash) — 목록이 비면 빈 글자' }) script!: string;
+  @ApiProperty({ description: '「적용」 감시 서비스 — installed · last(id · hash · ok · at · message) · pending(id · at)' }) watcher!: { installed: boolean; last: unknown; pending: unknown };
+}
+
 export class StaffIpAllowDto {
   @ApiProperty({ example: '121.168.92.13', description: 'IP 주소 하나(IPv4 · IPv6)' })
   @IsString() @Length(2, 45) ip!: string;
   @ApiProperty({ example: '집', description: '어디인지(1 ~ 100자)' })
   @IsString() @Length(1, 100) memo!: string;
+  @ApiPropertyOptional({ enum: [1, 3, 7, 14, 30], description: 'v10.350 임시 허용 — 며칠 뒤 저절로 빠짐(비우면 기한 없음)' })
+  @IsOptional() @IsIn([1, 3, 7, 14, 30]) expiresDays?: number;
 }
 
 export class StaffTelegramDto {
@@ -128,17 +153,46 @@ export class StaffIpController {
   @Post('admin/staff-access/allow')
   @Roles('SUPER')
   @Audit('STAFF_IP_ALLOW_ADD', 'SETTING')
-  @ApiOperation({ summary: '허용 IP 더하기(SUPER)', description: '이 IP 에서는 인증 없이. 메모 필수.' })
+  @ApiOperation({ summary: '허용 IP 더하기(SUPER)', description: '이 IP 에서는 인증 없이. 메모 필수. v10.350 기한(expiresDays 1 · 3 · 7 · 14 · 30) — 지나면 인증 면제가 끊기고 정기 작업이 목록에서 뺌.' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, description: 'IP_EXISTS', type: ErrorDto })
-  addAllow(@Body() dto: StaffIpAllowDto) { return this.svc.addAllow(dto.ip, dto.memo); }
+  addAllow(@Body() dto: StaffIpAllowDto) { return this.svc.addAllow(dto.ip, dto.memo, dto.expiresDays); }
 
   @Delete('admin/staff-access/allow/:id')
   @Roles('SUPER')
   @Audit('STAFF_IP_ALLOW_REMOVE', 'SETTING')
   @ApiOperation({ summary: '허용 IP 빼기(SUPER)' })
+  @ApiResponse({ status: 422, description: 'IP_LAST — 마지막 허용 IP 는 뺄 수 없음(v10.348)', type: ErrorDto })
   @ApiOkResponse({ type: Object })
   removeAllow(@Param('id') id: string) { return this.svc.removeAllow(id); }
+
+  /* v10.348 (docs/482) — 허용 IP → Nginx 반영: 화면은 스크립트를 보여 주기만(서버를 바꾸지 않음) · 사람이 운영 서버에서 돌린 뒤 「반영했음」 */
+  @Get('admin/staff-access/nginx-script')
+  @Roles('SUPER')
+  @Audit('STAFF_IP_NGINX_SCRIPT', 'SETTING')
+  @ApiOperation({ summary: '허용 IP → Nginx 반영 스크립트 (v10.348 · SUPER)', description: '허용 IP 목록 · 목록 지문 · 마지막 반영 · 지금 접속 IP 들어 있음 · 반영 스크립트(bash). 서버를 바꾸지 않습니다 — 사람이 운영 서버 ubuntu 로 붙여 넣습니다.' })
+  @ApiOkResponse({ type: StaffIpNginxScriptDto })
+  nginxScript() { return this.svc.nginxScript(); }
+
+  @Post('admin/staff-access/nginx-applied')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('STAFF_IP_NGINX_APPLIED', 'SETTING')
+  @ApiOperation({ summary: 'Nginx 에 반영했음 (v10.348 · SUPER)', description: '반영 스크립트를 운영 서버에서 돌린 뒤 누름 — 그 스크립트의 목록 지문을 감사 기록에 남김. 그 사이 목록이 바뀌었으면 409.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NGINX_LIST_CHANGED — 스크립트를 만든 뒤 목록이 바뀜', type: ErrorDto })
+  @ApiResponse({ status: 422, description: '쓰지 않음(문서 규칙)', type: ErrorDto })
+  nginxApplied(@Body() dto: StaffIpNginxAppliedDto) { return this.svc.nginxApplied(dto.hash); }
+
+  @Post('admin/staff-access/nginx-apply')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('STAFF_IP_NGINX_APPLY', 'SETTING')
+  @ApiOperation({ summary: 'Nginx 에 적용 요청 (v10.348 · SUPER)', description: '확인 문구 「적용」 · 사유. 프로그램은 요청 파일만 씁니다 — 운영 서버 루트 감시 서비스가 다시 검사해 허용 파일 교체 · nginx -t · 다시 읽기(실패면 되돌림). 결과는 nginx-script 의 watcher.last.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, description: 'NGINX_APPLY_PENDING — 앞 요청 적용 중', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NGINX_CONFIRM · NGINX_REASON · NGINX_WATCH_NOT_READY(감시 서비스 설치 전) · NGINX_LIST_EMPTY · NGINX_MY_IP_MISSING(지금 주소가 목록에 없음)', type: ErrorDto })
+  nginxApply(@Body() dto: StaffIpNginxApplyDto) { return this.svc.nginxApply(dto.confirm, dto.reason); }
 
   @Put('admin/staff-access/:id/telegram')
   @Roles('SUPER')

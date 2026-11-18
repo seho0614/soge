@@ -4,7 +4,7 @@ import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsOptional, IsString, M
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
-import { PolicyViolation } from '../../core/errors';
+import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
@@ -16,6 +16,7 @@ import { maskMail } from '../../common/mail/mail-admin.service';
  *   공개         GET  /guide/flows                  보이는 흐름마다 가장 높은 판(한 · 영 · 바로 가기)
  *   ADMIN·SUPER GET  /admin/guide-flows            숨긴 것 포함 · 판 수 · 고친 사람(가린 메일)
  *   SUPER       POST /admin/guide-flows/:code      새 판(고치기 · 지우기 없음 · 감사 GUIDE_FLOW_SAVE)
+ *   ADMIN·SUPER GET  /admin/guide-flows/:code/versions   v10.351 (docs/485) 지난 판 모두(되돌리기는 옛 글을 POST 로 새 판)
  *   영어 칸이 비면 사용자 웹은 사전(policy.flows) 영어 글을 씁니다. 바로 가기는 사이트 안 주소(/ 로 시작)만.
  * ------------------------------------------------------------------- */
 
@@ -91,6 +92,22 @@ export class GuideFlowAdminController {
     const [s] = await this.db.query<{ sup: boolean }>(
       `SELECT EXISTS (SELECT 1 FROM account_roles WHERE account_id = $1::uuid AND role = 'SUPER') AS sup`, [RequestCtx.actorId() ?? null]);
     return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), canEdit: !!s?.sup };
+  }
+
+  @Get(':code/versions')
+  @Roles('ADMIN', 'SUPER')
+  @ApiParam({ name: 'code', example: 'join' })
+  @ApiOperation({ summary: '이용 흐름 — 지난 판 모두 (v10.351)', description: '높은 판부터 · 한 · 영 글 · 바로 가기 · 보임 · 때 · 고친 사람(가린 메일). 되돌리기는 옛 글을 POST /admin/guide-flows/{code} 로 새 판(SUPER).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 그 흐름이 없음' })
+  async versions(@Param('code') code: string) {
+    const rows = await this.db.query<Record<string, unknown> & { by: string | null }>(
+      `SELECT g.version, g.title_ko AS "titleKo", g.who_ko AS "whoKo", g.steps_ko AS "stepsKo", g.title_en AS "titleEn", g.who_en AS "whoEn",
+              g.steps_en AS "stepsEn", g.href, g.is_active AS "isActive", g.created_at AS "createdAt", a.email::text AS by
+         FROM guide_flows g LEFT JOIN accounts a ON a.id = g.created_by
+        WHERE g.code = $1 ORDER BY g.version DESC LIMIT 50`, [String(code ?? '').trim()]);
+    if (!rows.length) throw new NotFound('그 이용 흐름이 없습니다.');
+    return { code, rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })) };
   }
 
   @Post(':code')

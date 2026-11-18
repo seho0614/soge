@@ -68,6 +68,11 @@ const NAME: Record<string, string> = {
   INQUIRY_DUE_BREACH: '1:1 문의 답변 기한 넘김',   // v10.333 (D225 · docs/464) — 회원 › 1:1 문의
   LEAD_NO_PARTNER: '리드관 받을 업체 없는 업종',   // v10.342 (D232 · docs/475) — 파트너사 › 리드 현황
   LEAD_UNDELIVERED: '리드관 상담 신청 전달 못 함',   // v10.342 (D232)
+  NGINX_APPLY_FAILED: '허용 IP Nginx 적용 실패',   // v10.349 (docs/483) — 권한 계층 › 접속 인증 › Nginx 반영
+  NGINX_WATCH_STUCK: 'Nginx 적용 결과 없음(감시 서비스)',   // v10.349
+  NGINX_NOT_APPLIED: '허용 IP 고친 뒤 Nginx 반영 안 함',   // v10.349
+  STAFF_IP_EXPIRE_LAST: '허용 IP 모두 기한 지남',   // v10.350 (D234 · docs/484)
+  CS_WEEKLY: '고객센터 주간 보고',   // v10.352 (D234 · docs/486)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)
   TERMS_EFFECTIVE_SOON: '약관 시행 3일 안',   // v10.243 (docs/381)

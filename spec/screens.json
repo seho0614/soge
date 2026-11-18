@@ -1283,10 +1283,11 @@
     "GET /admin/launch-watch/releases/file",
     "GET /admin/launch-watch/server-trend",
     "PATCH /admin/site-settings",
-    "GET /admin/cs-glance"
+    "GET /admin/cs-glance",
+    "GET /admin/cs-glance/weekly"
    ],
    "nav": "SB-HOM-MAIN-010",
-   "note": " · v10.344 고객센터 한눈에(docs/478)"
+   "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486)"
   },
   {
    "id": "SB-ADM-REV-010",
@@ -2081,10 +2082,13 @@
     "PATCH /admin/site-settings",
     "POST /me/staff/phone",
     "POST /me/staff/phone/confirm",
-    "DELETE /admin/staff-access/{id}/phone"
+    "DELETE /admin/staff-access/{id}/phone",
+    "GET /admin/staff-access/nginx-script",
+    "POST /admin/staff-access/nginx-applied",
+    "POST /admin/staff-access/nginx-apply"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음)."
+   "note": "2026-11-10 v10.226 D195 — 운영 화면 접속 인증: admin.ip_verify 켜지면 허용 IP 밖에서 그날 한 번 텔레그램 인증번호(개인 대화 · 없으면 운영 대화방) · 한국 시간 자정까지 · 허용 IP · 받을 곳은 SUPER · 기본 꺼짐(오픈 전). 로그인 뒤 인증 화면(2단계 인증 다음). · v10.348 Nginx 반영 — 허용 IP 로 반영 스크립트(보여 주기만 · SUPER) · 반영했음(docs/482) · v10.348 「적용」 — 요청 파일만 · 운영 서버 루트 감시 서비스가 적용"
   },
   {
    "id": "SB-ADM-ROLE-010",
@@ -5380,10 +5384,11 @@
    "gates": [],
    "apis": [
     "GET /admin/ops-guides",
-    "POST /admin/ops-guides/{code}"
+    "POST /admin/ops-guides/{code}",
+    "GET /admin/ops-guides/{code}/versions"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-17 v10.339 D229 (docs/472) 운영진 업무 12가지 순서 · 「이 화면」 단추 · 누가 · 알아 둘 것. 고치기 SUPER — 새 판(ops_guides 쌓기만 · 감사 OPS_GUIDE_SAVE)"
+   "note": "2026-11-17 v10.339 D229 (docs/472) 운영진 업무 12가지 순서 · 「이 화면」 단추 · 누가 · 알아 둘 것. 고치기 SUPER — 새 판(ops_guides 쌓기만 · 감사 OPS_GUIDE_SAVE) · v10.351 지난 판 보기 · 되돌리기(docs/485)"
   },
   {
    "id": "SB-HOM-ETC-050",
@@ -5414,10 +5419,11 @@
    "gates": [],
    "apis": [
     "GET /admin/guide-flows",
-    "POST /admin/guide-flows/{code}"
+    "POST /admin/guide-flows/{code}",
+    "GET /admin/guide-flows/{code}/versions"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-18 v10.347 D233 (docs/481) 사용자 웹 /guide/flows 흐름 글(한 · 영 · 바로 가기 · 보임) 고치기. 고치기 SUPER — 새 판(guide_flows 쌓기만 · 감사 GUIDE_FLOW_SAVE)"
+   "note": "2026-11-18 v10.347 D233 (docs/481) 사용자 웹 /guide/flows 흐름 글(한 · 영 · 바로 가기 · 보임) 고치기. 고치기 SUPER — 새 판(guide_flows 쌓기만 · 감사 GUIDE_FLOW_SAVE) · v10.351 지난 판 보기 · 되돌리기(docs/485)"
   }
  ],
  "deferred": [

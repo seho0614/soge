@@ -183,7 +183,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'ops-board':   { title: '운영자 게시판', sub: '하루 요약 · 급한 알림 · 대표 할 일 · 시험 메시지가 텔레그램 · 슬랙 결과와 함께 저절로 올라옵니다(꺼져 있어도). 운영자끼리 글 · 댓글 · 「확인함」. 운영 화면 계정만 봅니다.', screen: 'SB-ADM-OBD-010' },
   'server-errors': { title: '최근 서버 오류', sub: 'API 가 지난 1시간 보낸 서버 오류(5xx) 최근 50건 — 요청 내용 · 개인정보는 남기지 않습니다.', screen: 'SB-ADM-ERR-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
-  'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록.', screen: 'SB-ADM-SIP-010' },
+  'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록. 허용 IP 는 Nginx 반영 스크립트로 운영 화면 접속 허용에도 씁니다(SUPER).', screen: 'SB-ADM-SIP-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },
   'report-queue':{ title: '신고 처리', sub: '오래된 것이 위로 옵니다 — 신고해 놓고 답이 없으면 다음부터 신고를 안 합니다.', screen: 'SB-ADM-RPT-010' },
   'ai-ops':      { title: 'AI 운영', sub: '분류 · 검색 · 성향 · 위험감지의 품질을 보고 학습을 고칩니다.', screen: 'SB-ADM-AIS-010' },

@@ -1,4 +1,6 @@
 import { opsBoardPost, sendResult } from '../modules/admin/ops-board.service';   // v10.286 (D213)
+import { nginxListState, nginxWatcher, writeNginxRequest } from '../modules/identity/nginx-allow-script';   // v10.349 · 350 (docs/483 · 484)
+import { csWeeklyStats, csWeeklyText } from '../modules/support/cs-weekly';   // v10.352 (D234 · docs/486)
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
 import { RecurringBatchService } from '../modules/billing/recurring-batch.service';
@@ -41,7 +43,7 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly';
 
 export interface JobResult {
   job: JobName;
@@ -135,6 +137,10 @@ export class SchedulerService {
         /* v10.342 (D232 · docs/475) — 리드관이 켜져 있을 때 받을 업체 0곳 업종 · 24시간 전달 못 함(꺼지면 풂) */
         const [ld] = await this.db.query<{ n: number }>(`SELECT fn_lead_alert() AS n`);
         if (ld.n > 0) this.log.warn(`LEAD_ALERT 리드관 경고 ${ld.n} — 운영 화면 › 파트너사 › 리드 현황`);
+        /* v10.350 (D234 · docs/484) — 기한 지난 허용 IP 빼기(마지막 하나는 남김) · v10.349 (docs/483) Nginx 적용 알림 셋 */
+        const ex = await this.staffIpExpire().catch((e) => ({ error: (e as Error).message }));
+        const ng = await this.nginxAlerts().catch((e) => ({ error: (e as Error).message }));
+        detail = { expired: ex, nginx: ng };
         break;
       }
 
@@ -520,6 +526,13 @@ export class SchedulerService {
       }
 
       /* v10.249 (D203 · docs/386) — 대표 할 일 주간 알림(월요일 09:05): 아직인 줄만 텔레그램 · 슬랙(켜 둔 길만) · 모두 끝났으면 안 보냄 */
+      /* v10.352 (D234 · docs/486) — 고객센터 주간 보고(월요일 09:10) */
+      case 'cs_weekly': {
+        const w = await this.csWeekly();
+        affected = w.telegram === 'SENT' || w.slack === 'SENT' ? 1 : 0; detail = w;
+        break;
+      }
+
       case 'owner_todo_weekly': {
         const w = await this.ownerTodoWeekly();
         affected = w.left; detail = w;
@@ -869,6 +882,89 @@ export class SchedulerService {
       `대표 할 일 아직 ${left.length}줄(끝남 ${d.done} / ${d.total}) · 지난 7일 경고 이상 알림 ${aw.warnTotal}건 — ${sent.length ? `${sent.join(' · ')}으로 보냄` : '보낸 길 없음(텔레그램 · 슬랙이 준비 안 됨)'}`,
       { left: left.map((r) => r.key), done: d.done, total: d.total, warn7: aw.warnTotal, warnOpen: aw.warnOpen, telegram, slack });
     return { left: left.length, total: d.total, warn7: aw.warnTotal, telegram, slack };
+  }
+
+  /** v10.352 (D234 · docs/486) — 고객센터 주간 보고 한 통(텔레그램 · 슬랙 · 켜 둔 길만) · 운영자 게시판 · 운영 알림 CS_WEEKLY(INFO). 스위치 ops.cs_weekly(on) */
+  private async csWeekly(): Promise<{ off?: true; from: string; to: string; telegram: string | null; slack: string | null }> {
+    const [o] = await this.db.query<{ v: string }>(`SELECT coalesce((SELECT value FROM site_settings WHERE key = 'ops.cs_weekly'), 'on') AS v`);
+    const st = await csWeeklyStats(this.db);
+    if ((o?.v ?? 'on') !== 'on') return { off: true, from: st.from, to: st.to, telegram: null, slack: null };
+    const text = csWeeklyText(st);
+    const tg = await this.telegram.status();
+    let telegram: string | null = tg.ready ? null : tg.reason;
+    if (tg.ready) { const r = await this.telegram.send(text); telegram = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const sk = this.slack.status();
+    let slack: string | null = sk.ready ? null : sk.reason;
+    if (sk.ready) { const r = await this.slack.send(text); slack = r.ok ? 'SENT' : `SEND_${r.errorKind ?? 'FAILED'}`; }
+    const title = `고객센터 주간 보고 ${st.from} ~ ${st.to} — 접수 ${st.received} · 해결률 ${st.resolvedRate == null ? '—' : `${st.resolvedRate}%`}`;
+    await opsBoardPost(this.db, 'DAILY_DIGEST', title, text, telegram, slack);
+    await this.alert('CS_WEEKLY', 'INFO', title, { ...st, telegram, slack });
+    return { from: st.from, to: st.to, telegram, slack };
+  }
+
+  /** v10.350 (D234 · docs/484) — 기한 지난 허용 IP 를 목록에서 뺌(감사 STAFF_IP_ALLOW_EXPIRE) · 남는 IP 가 없으면 빼지 않고 경고 ·
+   *  뺐고 감시 서비스가 있으면 Nginx 적용을 요청(남은 목록) */
+  private async staffIpExpire(): Promise<{ removed: string[]; kept: number; requested: string | null }> {
+    const [k] = await this.db.query<{ active: number; expired: number }>(
+      `SELECT count(*) FILTER (WHERE expires_at IS NULL OR expires_at > now())::int AS active,
+              count(*) FILTER (WHERE expires_at <= now())::int AS expired FROM staff_ip_allow`);
+    if (!k || !Number(k.expired)) return { removed: [], kept: 0, requested: null };
+    if (!Number(k.active)) {
+      await this.alertOnce('STAFF_IP_EXPIRE_LAST', 'WARN',
+        `허용 IP 가 모두 기한이 지났습니다 — ${k.expired}곳을 빼지 않고 남겼습니다(인증 면제는 끊김 · 권한 계층 › 접속 인증에서 기한 없는 IP 를 더하십시오)`, { expired: k.expired });
+      return { removed: [], kept: Number(k.expired), requested: null };
+    }
+    const rows = await this.db.query<{ ip: string; memo: string }>(`DELETE FROM staff_ip_allow WHERE expires_at <= now() RETURNING host(ip) AS ip, memo`);
+    await this.db.query(`INSERT INTO audit.audit_logs (action, target_type, after_data) VALUES ('STAFF_IP_ALLOW_EXPIRE', 'SETTING', $1::jsonb)`, [JSON.stringify({ removed: rows })]);
+    await this.resolveAlert('STAFF_IP_EXPIRE_LAST', '기한 없는 허용 IP 가 생김');
+    let requested: string | null = null;
+    if (rows.length && nginxWatcher().installed) {
+      const st = await nginxListState(this.db);
+      if (st.list.length) { try { requested = writeNginxRequest(st.list, st.hash); } catch { requested = 'WRITE_FAILED'; } }
+    }
+    if (rows.length) this.log.warn(`STAFF_IP_ALLOW_EXPIRE 기한 지난 허용 IP ${rows.length}곳 뺌${requested ? ` · Nginx 적용 요청 ${requested}` : ''}`);
+    return { removed: rows.map((r) => r.ip), kept: 0, requested };
+  }
+
+  /** v10.349 (docs/483) — Nginx 적용 알림: 적용 실패(급함 · 결과마다 한 번) · 요청 뒤 10분 결과 없음(급함) · 목록을 고친 뒤 24시간 반영 안 함(경고). 고치면 풂 */
+  private async nginxAlerts(): Promise<string[]> {
+    const st = await nginxListState(this.db);
+    const w = st.watch;
+    const out: string[] = [];
+    if (w.last && !w.last.ok) {
+      const [e] = await this.db.query(`SELECT 1 FROM ops_alerts WHERE alert_code = 'NGINX_APPLY_FAILED' AND detail->>'id' = $1 LIMIT 1`, [w.last.id]);
+      if (!e) {
+        await this.alert('NGINX_APPLY_FAILED', 'CRITICAL', `운영 화면 허용 IP Nginx 적용 실패 — ${w.last.message}(권한 계층 › 접속 인증 › Nginx 반영 · Nginx 는 그대로)`, { id: w.last.id, hash: w.last.hash, at: w.last.at });
+        out.push('FAILED');
+      }
+    } else if (w.last?.ok) {
+      await this.resolveAlert('NGINX_APPLY_FAILED', '다음 적용이 성공함');
+    }
+    if (w.pending && Date.now() - new Date(w.pending.at).getTime() > 10 * 60_000) {
+      if (await this.alertOnce('NGINX_WATCH_STUCK', 'CRITICAL', `Nginx 적용 요청 뒤 10분이 지나도 결과가 없습니다 — 운영 서버 감시 서비스(sgb-nginx-allow.path)를 확인하십시오`, { id: w.pending.id, at: w.pending.at })) out.push('STUCK');
+    } else if (!w.pending) {
+      await this.resolveAlert('NGINX_WATCH_STUCK', '요청 결과가 나옴');
+    }
+    const old = !!st.lastChangedAt && Date.now() - new Date(st.lastChangedAt).getTime() > 24 * 3600_000;
+    if (st.list.length && !st.appliedSame && old) {
+      if (await this.alertOnce('NGINX_NOT_APPLIED', 'WARN', `허용 IP 를 고친 뒤 24시간이 지나도 Nginx 에 반영하지 않았습니다(권한 계층 › 접속 인증 › Nginx 반영 · 「적용」)`, { hash: st.hash, lastChangedAt: st.lastChangedAt })) out.push('NOT_APPLIED');
+    } else if (st.appliedSame || !st.list.length) {
+      await this.resolveAlert('NGINX_NOT_APPLIED', '반영한 목록과 같아짐');
+    }
+    return out;
+  }
+
+  /** 같은 종류의 풀리지 않은 알림이 없을 때만 한 건 */
+  private async alertOnce(code: string, severity: 'INFO' | 'WARN' | 'CRITICAL', title: string, detail: unknown): Promise<boolean> {
+    const r = await this.db.query(
+      `INSERT INTO ops_alerts (alert_code, severity, title, detail)
+       SELECT $1, $2, $3, $4::jsonb WHERE NOT EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = $1 AND resolved_at IS NULL)
+       ON CONFLICT DO NOTHING RETURNING id`, [code, severity, title, JSON.stringify(detail)]);
+    return r.length > 0;
+  }
+
+  private resolveAlert(code: string, note: string) {
+    return this.db.query(`UPDATE ops_alerts SET resolved_at = now(), resolve_note = $2 WHERE alert_code = $1 AND resolved_at IS NULL`, [code, note]);
   }
 
   /** v10.237 (D200 · docs/377) — 급한 알림 슬랙(텔레그램과 같은 알림 · 같은 기준 · 같은 글 · 기록은 slack_pushed_at · slack_repushed_at).

@@ -4,8 +4,9 @@ import { api, tokenRoles } from '../../lib/api';
 import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
 import type { IpStatus } from '../../components/IpGate';
+import { NginxAllowBox } from './NginxAllowBox';   // v10.348 (docs/482) Nginx 반영
 
-type Allow = { id: string; ip: string; memo: string; createdAt: string; createdBy: string | null };
+type Allow = { id: string; ip: string; memo: string; createdAt: string; createdBy: string | null; expiresAt?: string | null };   /* v10.350 (D234) 기한 */
 type Staff = { id: string; email: string; name: string | null; roles: string[]; personalChat: boolean; phoneLast4: string | null; receive: string | null; todayPasses: number; lastVerifiedAt: string | null };
 type Row = { at: string; kind: string; email: string; ip: string | null; channel: string };
 type Overview = { on: boolean; mode: string; sms: { ready: boolean }; telegram: { ready: boolean; reason: string | null; opsChat: string | null }; allow: Allow[]; staff: Staff[]; recent: Row[]; myIp: string | null; myIpFull: string | null };
@@ -32,6 +33,7 @@ export function StaffAccess() {
   const [myChat, setMyChat] = useState('');
   const [ip, setIp] = useState('');
   const [memo, setMemo] = useState('');
+  const [days, setDays] = useState('');   /* v10.350 (D234 · docs/484) 임시 허용 기한(비면 없음) */
   const [chats, setChats] = useState<Record<string, string>>({});
   const [phone, setPhone] = useState('');
   const [pcode, setPcode] = useState('');
@@ -101,12 +103,12 @@ export function StaffAccess() {
           <small className="dim"> 켜진 채 바꾸면 새 길로 모든 운영자가 받을 수 있어야 바뀜</small>
         </p>
 
-        <h3 className="sec">허용 IP <small className="dim">— 여기서는 인증 없이</small></h3>
-        <table className="tbl" data-ip-allow=""><thead><tr><th>IP</th><th>메모</th><th>더한 사람 · 때</th>{isSuper && <th />}</tr></thead><tbody>
-          {d.allow.length === 0 && <tr><td colSpan={4} className="dim">없음 — 켜면 모든 곳에서 인증</td></tr>}
+        <h3 className="sec">허용 IP <small className="dim">— 여기서는 인증 없이 · 운영 화면에 들어올 수 있는 곳(Nginx 반영은 아래)</small></h3>
+        <table className="tbl" data-ip-allow=""><thead><tr><th>IP</th><th>메모</th><th>더한 사람 · 때</th><th>기한</th>{isSuper && <th />}</tr></thead><tbody>
+          {d.allow.length === 0 && <tr><td colSpan={5} className="dim">없음 — 켜면 모든 곳에서 인증</td></tr>}
           {d.allow.map((x) => (
-            <tr key={x.id} data-ip-allow-row={x.ip}><td>{x.ip}</td><td>{x.memo}</td><td>{x.createdBy ?? '-'} · {ymdhm(x.createdAt)}</td>
-              {isSuper && <td><button className="btn-sm" disabled={a.busy === `rm${x.id}`}
+            <tr key={x.id} data-ip-allow-row={x.ip}><td>{x.ip}</td><td>{x.memo}</td><td>{x.createdBy ?? '-'} · {ymdhm(x.createdAt)}</td><td data-ip-allow-exp={x.expiresAt ? 'y' : 'n'}>{x.expiresAt ? <span className={new Date(x.expiresAt).getTime() < Date.now() ? 'warn-text' : undefined}>{ymdhm(x.expiresAt)}까지</span> : <span className="dim">없음</span>}</td>
+              {isSuper && <td><button className="btn-sm" disabled={a.busy === `rm${x.id}` || d.allow.length <= 1} title={d.allow.length <= 1 ? '마지막 허용 IP 는 뺄 수 없습니다(v10.348)' : undefined}
                 onClick={() => { if (confirm(`${x.ip}(${x.memo})를 허용 목록에서 뺍니다.`)) void a.run(`rm${x.id}`, () => api(`/admin/staff-access/allow/${x.id}`, { method: 'DELETE' }), reload); }}>빼기</button></td>}
             </tr>
           ))}
@@ -115,11 +117,17 @@ export function StaffAccess() {
           <p data-ip-allow-form="">
             <input name="allow-ip" value={ip} onChange={(e) => setIp(e.target.value.trim())} placeholder="IP 예: 121.168.92.13" maxLength={45} />{' '}
             <input name="allow-memo" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 예: 집" maxLength={100} />{' '}
+            <select name="allow-days" value={days} onChange={(e) => setDays(e.target.value)} data-ip-allow-days="">
+              <option value="">기한 없음</option>
+              {[1, 3, 7, 14, 30].map((n) => <option key={n} value={n}>{n}일 뒤 빠짐</option>)}
+            </select>{' '}
             <button className="btn-ok" disabled={a.busy === 'add' || !ip || !memo.trim()} data-ip-allow-add=""
-              onClick={() => void a.run('add', () => api('/admin/staff-access/allow', { method: 'POST', body: JSON.stringify({ ip, memo }) }), () => { setIp(''); setMemo(''); reload(); })}>더하기</button>{' '}
+              onClick={() => void a.run('add', () => api('/admin/staff-access/allow', { method: 'POST', body: JSON.stringify(days ? { ip, memo, expiresDays: Number(days) } : { ip, memo }) }), () => { setIp(''); setMemo(''); setDays(''); reload(); })}>더하기</button>{' '}
             {d.myIpFull && <button className="btn-sm" onClick={() => setIp(d.myIpFull!)} data-ip-mine="">지금 주소 넣기</button>}
           </p>
         )}
+
+        {isSuper && <NginxAllowBox key={d.allow.map((x) => x.ip).join(',')} />}
 
         <h3 className="sec">운영자별 받을 곳 · 오늘 인증</h3>
         <table className="tbl" data-ip-staff=""><thead><tr><th>운영자</th><th>역할</th><th>받을 곳</th><th>휴대폰</th><th>오늘</th><th>마지막 인증</th>{isSuper && <th>개인 대화 번호(SUPER)</th>}</tr></thead><tbody>

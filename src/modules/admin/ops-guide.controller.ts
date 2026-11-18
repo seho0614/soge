@@ -5,7 +5,7 @@ import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, MaxLength, V
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
-import { PolicyViolation } from '../../core/errors';
+import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
@@ -16,6 +16,7 @@ import { maskMail } from '../../common/mail/mail-admin.service';
  *   대표 11/17 「업무별 워크 플로우 작성」 → 흐름표 → 「다음개발」 ④ 업무 흐름표를 운영 화면에.
  *   운영 역할 모두  GET  /admin/ops-guides          업무마다 가장 높은 판(단계 · 그 화면 탭 · 누가 · 알아 둘 것)
  *   SUPER          POST /admin/ops-guides/:code    새 판(고치기 · 지우기 없음 — 판을 쌓음 · 감사 OPS_GUIDE_SAVE)
+ *   운영 역할 모두  GET  /admin/ops-guides/:code/versions   v10.351 (docs/485) 지난 판 모두(되돌리기는 옛 글을 POST 로 새 판)
  * ------------------------------------------------------------------- */
 
 const TAB_RE = /^[a-z][a-z0-9-]{1,30}(\/[a-z0-9-]{1,30})?$/;
@@ -58,6 +59,21 @@ export class OpsGuideController {
     const [s] = await this.db.query<{ sup: boolean }>(
       `SELECT EXISTS (SELECT 1 FROM account_roles WHERE account_id = $1::uuid AND role = 'SUPER') AS sup`, [RequestCtx.actorId() ?? null]);
     return { rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })), canEdit: !!s?.sup };
+  }
+
+  @Get(':code/versions')
+  @Roles('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF')
+  @ApiParam({ name: 'code', example: 'INQUIRY_ANSWER' })
+  @ApiOperation({ summary: '업무 안내 — 지난 판 모두 (v10.351)', description: '높은 판부터 · 글 · 단계 · 알아 둘 것 · 때 · 고친 사람(가린 메일). 되돌리기는 옛 글을 POST /admin/ops-guides/{code} 로 새 판(SUPER).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 그 업무가 없음' })
+  async versions(@Param('code') code: string) {
+    const rows = await this.db.query<Record<string, unknown> & { by: string | null }>(
+      `SELECT g.version, g.title, g.who, g.steps, g.note, g.created_at AS "createdAt", a.email::text AS by
+         FROM ops_guides g LEFT JOIN accounts a ON a.id = g.created_by
+        WHERE g.code = $1 ORDER BY g.version DESC LIMIT 50`, [String(code ?? '').trim()]);
+    if (!rows.length) throw new NotFound('그 업무 안내가 없습니다.');
+    return { code, rows: rows.map((r) => ({ ...r, by: maskMail(r.by) })) };
   }
 
   @Post(':code')

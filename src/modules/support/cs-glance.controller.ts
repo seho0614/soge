@@ -3,12 +3,14 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiResponse, A
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { DatabaseService } from '../../db/database.service';
+import { csWeeklyStats, csWeeklyText } from './cs-weekly';
 
 /* ---------------------------------------------------------------------
  * v10.344 (docs/478) — 운영 화면 첫 화면 「고객센터 한눈에」 카드(SB-ADM-DSH-010)
  *
  *   대표 11/18 「다음개발」 → ① 고객센터 한눈에. 1:1 문의 · 못 찾은 낱말 · 리드관을 한 장으로(읽기만).
  *   ADMIN · SUPER  GET /admin/cs-glance
+ *   ADMIN · SUPER  GET /admin/cs-glance/weekly   v10.352 (D234 · docs/486) 고객센터 주간 보고 미리 보기(월요일 09:10 에 보내는 글과 같음)
  *   숫자만 내보냅니다(문의 본문 · 연락처 없음). 낱말은 사람 정보를 걸러 쌓은 것(v10.336).
  * ------------------------------------------------------------------- */
 
@@ -31,6 +33,11 @@ export class CsGlanceDto {
   @ApiProperty({ nullable: true, description: '최근 30일 해결률(%) · 고른 사람이 없으면 null' }) resolvedRate30!: number | null;
   @ApiProperty({ type: CsGlanceMissDto, isArray: true, description: '못 찾은 낱말 상위 3(다룸 뒤 다시 찾은 것만)' }) misses!: CsGlanceMissDto[];
   @ApiProperty({ type: CsGlanceLeadDto }) lead!: CsGlanceLeadDto;
+}
+
+export class CsWeeklyDto {
+  @ApiProperty({ description: '보내는 글(텔레그램 · 슬랙 · 운영자 게시판과 같음)' }) text!: string;
+  @ApiProperty({ description: '숫자(지난주 월 ~ 일 · 한국)' }) stats!: Record<string, unknown>;
 }
 
 @ApiTags('ADM')
@@ -74,5 +81,14 @@ export class CsGlanceController {
       misses,
       lead: { active: !!l?.active, requests24h: Number(l?.requests24h ?? 0), noPartner24h: Number(l?.noPartner24h ?? 0), emptyCategories: Number(l?.emptyCategories ?? 0) },
     };
+  }
+
+  @Get('weekly')
+  @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '고객센터 주간 보고 미리 보기 (v10.352)', description: '지난주(월 ~ 일 · 한국) 1:1 문의 접수 · 답함 · 처음 답까지 · 기한 안 · 해결률 · 문의 전 해결 · 못 찾은 낱말 5 · 리드관 · 지금 답변 전. 월요일 09:10 정기 작업 cs_weekly 가 보내는 글과 같음. 읽기만.' })
+  @ApiOkResponse({ type: CsWeeklyDto })
+  async weekly(): Promise<CsWeeklyDto> {
+    const stats = await csWeeklyStats(this.db);
+    return { text: csWeeklyText(stats), stats: stats as unknown as Record<string, unknown> };
   }
 }

@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { VersionHistory } from './VersionHistory';   // v10.351 (docs/485) 지난 판
 
 interface Step { t: string; go?: string }
 interface Guide { code: string; version: number; title: string; who: string; steps: Step[]; note: string | null; updatedAt: string; by: string | null; versions: number }
@@ -19,6 +20,7 @@ export function OpsGuide({ onGo, canGo }: { onGo: (tab: string) => void; canGo: 
   const q = useApi<Data>('/admin/ops-guides');
   const a = useAct();
   const [open, setOpen] = useState<string | null>(null);
+  const [hist, setHist] = useState<string | null>(null);   /* v10.351 지난 판을 연 업무 */
   const [edit, setEdit] = useState<{ code: string; title: string; who: string; steps: string; note: string } | null>(null);
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
@@ -54,7 +56,13 @@ export function OpsGuide({ onGo, canGo }: { onGo: (tab: string) => void; canGo: 
           {g.note && <p className="ad-nt info">{g.note}</p>}
           <p className="muted">{ymdhm(g.updatedAt)}{g.by ? ` · ${g.by}` : ''}{g.versions > 1 ? ` · 판 ${g.versions}개` : ''}
             {canEdit && <> · <button className="btn-sm" onClick={() => setEdit({ code: g.code, title: g.title, who: g.who, steps: toText(g.steps), note: g.note ?? '' })} data-ops-guide-edit={g.code}>고치기</button></>}
+            {' · '}<button className="btn-sm btn-plain" onClick={() => setHist(hist === g.code ? null : g.code)} data-ops-guide-hist={g.code}>{hist === g.code ? '지난 판 닫기' : '지난 판'}</button>
           </p>
+          {hist === g.code && (
+            <VersionHistory path={`/admin/ops-guides/${g.code}/versions`} current={g.version} canRestore={canEdit} onDone={q.reload}
+              lines={(r) => [`업무: ${String(r.title)}`, `누가: ${String(r.who)}`, ...((r.steps as Step[]) ?? []).map((x, i) => `${i + 1}. ${x.t}${x.go ? ` → ${x.go}` : ''}`), r.note ? `알아 둘 것: ${String(r.note)}` : '']}
+              restore={(r) => api(`/admin/ops-guides/${g.code}`, { method: 'POST', body: JSON.stringify({ title: r.title, who: r.who, steps: r.steps, note: r.note ?? '' }) })} />
+          )}
           {edit?.code === g.code && (
             <div className="card" data-ops-guide-form={g.code}>
               <p><label>업무 이름 <input name="og-title" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} maxLength={60} /></label>{' '}

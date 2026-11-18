@@ -7,7 +7,9 @@ import { RequestCtx } from '../../core/request-context';
 import { TelegramService } from '../../common/telegram/telegram.service';
 import { AlimtalkService, last4 } from '../../common/alimtalk/alimtalk.service';
 import { clientIpRaw } from './abuse-guard';
+import { maskMail } from '../../common/mail/mail-admin.service';
 import { OPS_ROLES } from './mfa.service';
+import { buildNginxAllowScript, NGINX_ALLOW_FILE, nginxListState, nginxWatcher, validIp, writeNginxRequest } from './nginx-allow-script';   // v10.348 (docs/482)
 
 /* ---------------------------------------------------------------------
  * v10.226 (D195 · docs/363) — 운영 화면 접속 인증
@@ -118,7 +120,7 @@ export class StaffIpService {
     const c = passCache.get(k);
     if (c && c.day === day && Date.now() - c.at < PASS_MS) return true;
     const [r] = await this.db.query<{ ok: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM staff_ip_allow WHERE ip = $2::inet)
+      `SELECT EXISTS (SELECT 1 FROM staff_ip_allow WHERE ip = $2::inet AND (expires_at IS NULL OR expires_at > now()))
            OR EXISTS (SELECT 1 FROM staff_ip_passes WHERE account_id = $1 AND ip = $2::inet AND day = (now() AT TIME ZONE 'Asia/Seoul')::date) AS ok`,
       [accountId, ip]).catch(() => [{ ok: false }]);
     if (r?.ok) passCache.set(k, { at: Date.now(), day });
@@ -225,7 +227,7 @@ export class StaffIpService {
   async overview() {
     const tg = await this.tg.status();
     const allow = await this.db.query(
-      `SELECT a.id, host(a.ip) AS ip, a.memo, a.created_at AS "createdAt", c.email AS "createdBy"
+      `SELECT a.id, host(a.ip) AS ip, a.memo, a.created_at AS "createdAt", c.email AS "createdBy", a.expires_at AS "expiresAt"
          FROM staff_ip_allow a LEFT JOIN accounts c ON c.id = a.created_by ORDER BY a.created_at`);
     const staff = await this.db.query(
       `SELECT a.id, a.email, a.name, array_agg(DISTINCT r.role ORDER BY r.role) AS roles,
@@ -255,23 +257,74 @@ export class StaffIpService {
     };
   }
 
-  async addAllow(ip: string, memo: string) {
+  async addAllow(ip: string, memo: string, expiresDays?: number) {
     const v = ip.trim();
     const [ok] = await this.db.query<{ ok: boolean }>(`SELECT $1::inet IS NOT NULL AND masklen($1::inet) IN (32, 128) AS ok`, [v]).catch(() => [{ ok: false }]);
     if (!ok?.ok) throw new PolicyViolation('IP_FORMAT', 'IP 주소 하나를 넣으십시오(예: 121.168.92.13).');
     const [r] = await this.db.query<{ id: string }>(
-      `INSERT INTO staff_ip_allow (ip, memo, created_by) VALUES ($1::inet, $2, $3) ON CONFLICT (ip) DO NOTHING RETURNING id`, [v, memo.trim(), RequestCtx.actorId()]);
+      `INSERT INTO staff_ip_allow (ip, memo, created_by, expires_at)
+       VALUES ($1::inet, $2, $3, CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(days => $4::int) END)
+       ON CONFLICT (ip) DO NOTHING RETURNING id`, [v, memo.trim(), RequestCtx.actorId(), expiresDays ?? null]);   /* v10.350 (D234 · docs/484) 임시 허용 IP — 기한(1 · 3 · 7 · 14 · 30일) */
     if (!r) throw new AppError(409, { code: 'IP_EXISTS', message: '이미 허용 목록에 있는 IP 입니다.' });
     passCache.clear();
-    return { id: r.id, ip: v, memo: memo.trim() };
+    return { id: r.id, ip: v, memo: memo.trim(), expiresDays: expiresDays ?? null };
   }
 
   async removeAllow(id: string) {
     if (!/^[0-9]{1,18}$/.test(id)) throw new AppError(404, { code: 'IP_NOT_FOUND', message: '허용 목록에 없는 줄입니다.' });
+    /* v10.348 (docs/482) — 허용 IP 는 Nginx 허용 목록이기도 합니다. 마지막 하나를 빼면 운영 화면에 아무도 못 들어오게 반영될 수 있어 막습니다 */
+    const [n] = await this.db.query<{ n: number; mine: boolean }>(`SELECT count(*) FILTER (WHERE expires_at IS NULL OR expires_at > now())::int AS n, bool_or(id = $1::bigint AND (expires_at IS NULL OR expires_at > now())) AS mine FROM staff_ip_allow`, [id]);
+    if (n && n.mine && Number(n.n) <= 1) throw new PolicyViolation('IP_LAST', '마지막 허용 IP 는 뺄 수 없습니다. 새 IP 를 먼저 더한 뒤 빼십시오.');
     const [r] = await this.db.query<{ ip: string }>(`DELETE FROM staff_ip_allow WHERE id = $1 RETURNING host(ip) AS ip`, [id]);
     if (!r) throw new AppError(404, { code: 'IP_NOT_FOUND', message: '허용 목록에 없는 줄입니다.' });
     passCache.clear();
     return { removed: true, ip: r.ip };
+  }
+
+  /** v10.348 (docs/482) — 허용 IP → Nginx 반영 스크립트(글자만) · 목록 지문 · 마지막 「반영했음」 · 지금 접속 IP 가 들어 있는가 */
+  async nginxScript() {
+    const st = await nginxListState(this.db);
+    const madeAt = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 16).replace('T', ' ') + ' KST';
+    const my = staffIp();
+    return {
+      ips: st.list, count: st.list.length, hash: st.hash, file: NGINX_ALLOW_FILE,
+      lastChangedAt: st.lastChangedAt,
+      applied: st.applied ? { hash: st.applied.hash, at: st.applied.at, by: maskMail(st.applied.by) } : null,
+      appliedSame: st.appliedSame,
+      watcher: st.watch,
+      myIpIn: !!my && st.ips.includes(my), myIp: maskIp(my),
+      invalid: st.ips.filter((x) => !validIp(x)),
+      script: buildNginxAllowScript(st.list, st.hash, madeAt),
+    };
+  }
+
+  watcher() { return nginxWatcher(); }
+
+  /** v10.348 — 「적용」(SUPER · 확인 문구 「적용」 · 사유) → 요청 파일만 씀(sudo 없음). 루트 감시 서비스가 1분 안에 적용 · 결과는 watcher().last */
+  async nginxApply(confirm: string, reason: string) {
+    if ((confirm ?? '').trim() !== '적용') throw new PolicyViolation('NGINX_CONFIRM', '확인 문구 「적용」을 그대로 넣으십시오.');
+    const why = (reason ?? '').trim();
+    if (why.length < 2 || why.length > 200) throw new PolicyViolation('NGINX_REASON', '사유는 2 ~ 200자입니다.');
+    const w = this.watcher();
+    if (!w.installed) throw new PolicyViolation('NGINX_WATCH_NOT_READY', '운영 서버에 감시 서비스가 아직 설치되지 않았습니다(nginx-allow-watch-install.sh). 그 전에는 반영 스크립트를 복사해 쓰십시오.');
+    if (w.pending && Date.now() - new Date(w.pending.at).getTime() < 120_000) throw new AppError(409, { code: 'NGINX_APPLY_PENDING', message: '앞 요청을 적용하는 중입니다. 1 ~ 2분 뒤 다시 보십시오.' });
+    const cur = await this.nginxScript();
+    if (!cur.count || cur.invalid.length === cur.count) throw new PolicyViolation('NGINX_LIST_EMPTY', '허용 IP 가 없어 적용하지 않습니다(비면 운영 화면에 아무도 못 들어옴).');
+    if (!cur.myIpIn) throw new PolicyViolation('NGINX_MY_IP_MISSING', '지금 접속한 주소가 허용 IP 에 없습니다. 적용하면 지금 자리에서 막히므로, 먼저 「지금 주소 넣기」로 더하십시오.');
+    let id = '';
+    try {
+      id = writeNginxRequest(cur.ips, cur.hash);
+    } catch {
+      throw new AppError(503, { code: 'NGINX_WATCH_WRITE', message: '요청 파일을 쓰지 못했습니다. 반영 스크립트를 복사해 쓰십시오.' });
+    }
+    return { ok: true, id, hash: cur.hash, count: cur.count, reason: why, note: `적용을 요청했습니다(허용 IP ${cur.count}곳 · 목록 ${cur.hash}). 1분 안에 결과가 이 상자에 나옵니다.` };
+  }
+
+  /** v10.348 — 사람이 운영 서버에서 반영 스크립트를 돌린 뒤 「반영했음」(감사 STAFF_IP_NGINX_APPLIED 에 목록 지문) · 그 사이 목록이 바뀌었으면 409 */
+  async nginxApplied(hash: string) {
+    const cur = await this.nginxScript();
+    if (cur.hash !== String(hash ?? '').trim()) throw new AppError(409, { code: 'NGINX_LIST_CHANGED', message: '스크립트를 만든 뒤 허용 IP 목록이 바뀌었습니다. 새 스크립트로 다시 반영하십시오.' });
+    return { ok: true, hash: cur.hash, count: cur.count, note: `허용 IP ${cur.count}곳(목록 ${cur.hash})을 Nginx 에 반영했다고 적었습니다.` };
   }
 
   /** 받을 곳 — 본인 또는 SUPER · 빈 값이면 지움(운영 대화방으로) */

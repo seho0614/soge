@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 
 interface Data {
@@ -14,7 +16,12 @@ interface Data {
  */
 export function CsGlance({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab: string) => boolean }) {
   const q = useApi<Data>('/admin/cs-glance');
+  const [week, setWeek] = useState<string | null>(null);   /* v10.352 (D234 · docs/486) 주간 보고 미리 보기 */
   if (q.error || !q.data) return null;
+  const toggleWeek = () => {
+    if (week !== null) { setWeek(null); return; }
+    void api<{ text: string }>('/admin/cs-glance/weekly').then((r) => setWeek(r.text)).catch(() => setWeek('주간 보고를 읽지 못했습니다.'));
+  };
   const d = q.data;
   const btn = (to: string, label: string) => (canGo(to.split('/')[0]!) ? <button className="linkbtn" onClick={() => onGo(to)} data-cs-glance-go={to}>{label}</button> : null);
   const tone = d.overdue > 0 || d.lead.noPartner24h > 0 ? 'warn' : 'info';
@@ -33,6 +40,11 @@ export function CsGlance({ onGo, canGo }: { onGo: (tab: string) => void; canGo: 
           <b>리드관</b> {d.lead.active
             ? <>켜짐 · 24시간 신청 {d.lead.requests24h} · 받을 업체 없음 <b className={d.lead.noPartner24h > 0 ? 'warn-text' : undefined}>{d.lead.noPartner24h}</b> · 받을 업체 0곳 업종 {d.lead.emptyCategories}</>
             : <>꺼짐</>} {btn('partners/status', '리드 현황으로')}
+        </div>
+        <div>
+          <button className="linkbtn" onClick={toggleWeek} data-cs-weekly-toggle="">{week === null ? '주간 보고 미리 보기' : '주간 보고 닫기'}</button>
+          <small className="dim"> 월요일 09:10 텔레그램 · 슬랙 · 운영자 게시판으로 보내는 글(설정 ops.cs_weekly)</small>
+          {week !== null && <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, marginTop: 6 }} data-cs-weekly="">{week}</pre>}
         </div>
       </div>
     </>

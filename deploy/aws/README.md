@@ -11,6 +11,8 @@
 | `cleanup.sh` | v10.186 — 디스크 정리. 기본은 읽기만(지울 수 있는 것 · 많이 차지하는 곳) · `--apply` 는 yes 뒤 푼 킷(지금 판 이하) · 30일 넘은 기록 · npm 캐시 · 50MB 넘는 pm2 로그만(docs/292) | 집 폴더의 그 파일만 |
 | `run-api.sh` · `run-site.sh` · `run-jobs.sh` | pm2 가 부르는 실행 스크립트 (`sgb` · `sgb-site` · `sgb-jobs`). `.env` 를 직접 읽습니다 | — |
 | `nginx-sgb.conf.example` · `nginx-render.sh` | Nginx 설정 예시와, 주소 · 사무실 IP 를 채워 찍어 주는 도우미 | 없음(화면에 찍기만) |
+| `nginx-admin-allow-setup.sh` · `nginx_admin_allow_edit.py` | v10.348 — 운영 화면 블록의 allow · deny 줄을 `include /etc/nginx/snippets/sgb-admin-allow.conf;` 로 옮기기(처음 한 번 · 미리 보기 뒤 `--apply`). 이후 허용 IP 는 운영 화면 › 권한 계층 › 접속 인증 › 「Nginx 반영」 스크립트로 | `--apply` 때만 sudo(백업 · nginx -t 실패면 되돌림) |
+| `nginx-allow-watch-install.sh` · `nginx-allow-apply.sh` | v10.348 — 운영 화면 「적용」 단추용 루트 감시 서비스(systemd path) 설치(처음 한 번 · 보여 주기 뒤 `--apply`). 프로그램은 요청 파일만 쓰고, 루트 서비스가 다시 검사해 허용 파일 교체 · nginx -t · 다시 읽기(실패면 되돌림). **킷에서 nginx-allow-apply.sh 가 바뀌면 설치를 다시 칩니다** | `--apply` 때만 sudo |
 | `psql.sh` | `.env` 의 접속 주소로 운영 DB 에 psql | — |
 | `seed-test-users.sql` | v10.36 — 시험 계정 6개(@t.local · 비밀번호는 실행 때 `-v pw=…`). 다시 돌리면 비밀번호를 바꾸고 정지를 풉니다. **오픈 직전 정지**(파일 머리말) | 운영 DB(accounts · account_roles) |
 | `env.production.example` | 운영 `.env` 에 들어가는 값의 이름과 뜻 | — |

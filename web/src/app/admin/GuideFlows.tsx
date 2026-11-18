@@ -5,6 +5,7 @@ import { useAct, ymdhm } from '../../lib/act';
 import { siteHref } from '../../lib/siteUrl';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
+import { VersionHistory } from './VersionHistory';   // v10.351 (docs/485) 지난 판
 
 interface Flow {
   code: string; version: number; titleKo: string; whoKo: string; stepsKo: string[]; titleEn: string | null; whoEn: string | null; stepsEn: string[] | null;
@@ -24,6 +25,7 @@ export function GuideFlows() {
   const q = useApi<Data>('/admin/guide-flows');
   const a = useAct();
   const [edit, setEdit] = useState<Form | null>(null);
+  const [hist, setHist] = useState<string | null>(null);   /* v10.351 지난 판을 연 흐름 */
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const { rows, canEdit } = q.data;
@@ -85,7 +87,15 @@ export function GuideFlows() {
           <p className="dim">
             바로 가기 <code>{f.href}</code> · {ymdhm(f.updatedAt)}{f.by ? ` · ${f.by}` : ''} · 판 {f.versions}개
             {canEdit && <> · <button className="btn-sm" onClick={() => setEdit(toForm(f))} data-guide-flow-edit={f.code}>고치기</button></>}
+            {' · '}<button className="btn-sm btn-plain" onClick={() => setHist(hist === f.code ? null : f.code)} data-guide-flow-hist={f.code}>{hist === f.code ? '지난 판 닫기' : '지난 판'}</button>
           </p>
+          {hist === f.code && (
+            <VersionHistory path={`/admin/guide-flows/${f.code}/versions`} current={f.version} canRestore={canEdit} onDone={q.reload}
+              lines={(r) => [`제목: ${String(r.titleKo)}`, `누가: ${String(r.whoKo)}`, ...((r.stepsKo as string[]) ?? []).map((x, i) => `${i + 1}. ${x}`), `바로 가기: ${String(r.href)}`,
+                r.isActive ? '' : '숨김', r.titleEn ? `영어: ${String(r.titleEn)}` : '', ...((r.stepsEn as string[] | null) ?? []).map((x, i) => `EN ${i + 1}. ${x}`)]}
+              restore={(r) => api(`/admin/guide-flows/${f.code}`, { method: 'POST', body: JSON.stringify({
+                titleKo: r.titleKo, whoKo: r.whoKo, stepsKo: r.stepsKo, titleEn: r.titleEn ?? '', whoEn: r.whoEn ?? '', stepsEn: r.stepsEn ?? [], href: r.href, isActive: r.isActive }) })} />
+          )}
         </details>
       ))}
       <div className="ad-nt info">
