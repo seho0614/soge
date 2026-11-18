@@ -97,7 +97,8 @@ END $$;
 CREATE OR REPLACE FUNCTION public.fn_acct_balance_check() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE d bigint; c bigint; n int; eid bigint;
 BEGIN
-  eid := CASE WHEN TG_TABLE_NAME = 'acct_entries' THEN NEW.id ELSE NEW.entry_id END;
+  -- 표마다 칸이 달라 CASE 한 줄로 쓰면 acct_entries 에서 NEW.entry_id 를 못 찾음 → IF 로 나눔
+  IF TG_TABLE_NAME = 'acct_entries' THEN eid := NEW.id; ELSE eid := NEW.entry_id; END IF;
   SELECT coalesce(sum(debit), 0), coalesce(sum(credit), 0), count(*) INTO d, c, n FROM acct_lines WHERE entry_id = eid;
   IF n < 2 OR d <> c OR d = 0 THEN
     RAISE EXCEPTION 'ACCT_UNBALANCED: 전표 % 차변 % · 대변 % · 줄 %', eid, d, c, n;

@@ -196,7 +196,7 @@ export async function runJournal(db: DatabaseService) {
       const lines = (b?.lines ?? []).filter((l) => l.debit > 0 || l.credit > 0);
       if (!b || lines.length < 2) continue;
       try {
-        await db.transaction(async () => {
+        const done = await db.transaction(async () => {
           const [e] = await db.query<{ id: string }>(
             `WITH d AS (SELECT ($1::timestamptz AT TIME ZONE 'Asia/Seoul')::date AS day)
              INSERT INTO acct_entries (entry_date, source, source_key, memo, party, evidence, late)
@@ -205,13 +205,15 @@ export async function runJournal(db: DatabaseService) {
                FROM d
              ON CONFLICT (source, source_key) DO NOTHING RETURNING id::text AS id`,
             [r.at, src.name, r.key, b.memo.slice(0, 200), r.party ? String(r.party).slice(0, 120) : null, b.evidence]);
-          if (!e) return;
+          if (!e) return false;
           await db.query(
             `INSERT INTO acct_lines (entry_id, role, debit, credit)
              SELECT $1::bigint, x.role, x.debit, x.credit FROM jsonb_to_recordset($2::jsonb) AS x(role text, debit bigint, credit bigint)`,
             [e.id, JSON.stringify(lines)]);
-          made[src.name] = (made[src.name] ?? 0) + 1;
+          return true;
         });
+        // 셈은 COMMIT(차변 = 대변 미룬 검사) 지난 뒤에만
+        if (done) made[src.name] = (made[src.name] ?? 0) + 1;
       } catch (err) {
         failed.push({ source: src.name, key: r.key, why: String((err as Error)?.message ?? err).slice(0, 160) });
       }
