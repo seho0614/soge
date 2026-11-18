@@ -61,6 +61,9 @@ const PUBLIC_OK = new Set([
      자주 묻는 질문 · 공지 · 약관 발행본만 근거로 답하고 **조회 도구가 없어** 누구의 정보도 돌려주지 않습니다. 스위치(agent.chat.enabled · 꺼짐) ·
      AI 전체 · 월 상한 · 하루 횟수(회원 id · 방문자 쿠키 · 비회원 전체)가 막고, 남의 상담은 회원 id · 방문자 키가 같아야 이어 쓸 수 있습니다. 운영 목록은 /admin/agent/chats(@Roles). */
   'agent',
+  /* ★ v10.347 (D233 · docs/481) 이용 흐름 GET /guide/flows — 사용자 웹 이용안내 › 「이렇게 이용하세요」가 **로그인 전에도** 읽습니다.
+     보이는 흐름 글(제목 · 누가 · 단계 · 바로 가기)만 돌려줍니다(개인정보 없음). 고치기 POST /admin/guide-flows/{code} 는 SUPER(@Roles). */
+  'guide',
 ]);
 
 function walk(dir, out = []) {
