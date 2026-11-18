@@ -52,7 +52,7 @@ ok('① 운영 화면 — 인증 화면(받기 · 넣기 · 받을 곳 없음) �
    'data-ip-gate=""' in IG and 'data-ip-send=""' in IG and 'data-ip-confirm=""' in IG and 'data-ip-noready=""' in IG
    and '<IpGate status={ipv} onDone={checkIp} />' in AP and "{tab === 'staff-access' && <StaffAccess />}" in AP and "'IP_VERIFY_REQUIRED') ipListeners" in AA
    and 'data-ip-allow=""' in SA and 'data-ip-staff=""' in SA and 'data-ip-toggle=""' in SA and 'data-my-chat=""' in SA
-   and "tabs: ['roles', 'my-mfa', 'staff-access']" in AM and "screen: 'SB-ADM-SIP-010'" in AM, '')
+   and "tabs: ['roles', 'my-mfa', 'my-password', 'staff-access']" in AM and "screen: 'SB-ADM-SIP-010'" in AM, '')
 SJ = json.loads(rd('spec/screens.json') or '{"screens":[]}'); sc = {s['id']: s for s in SJ.get('screens', [])}
 EN = rd('src/common/i18n/server-text.en.ts')
 ok('① 명세 SB-ADM-SIP-010(API 9) · 영어(접속 인증 글)',

@@ -114,7 +114,7 @@ if API and DB:
     fb = call('GET', '/admin/cs-glance/weekly', None, TB)
     lines = (w.get('text') or '').split('\n')
     ok('② API — 미리 보기 글 8줄(제목 · 문의 · 해결 · 문의 전 해결 · 낱말 · 리드관 · 지금 · 끄기) · 지난주 월 ~ 일 · 회원 403',
-       len(lines) == 8 and lines[0].startswith('[소개뱅크] 고객센터 주간 보고 ') and 'ops.cs_weekly' in lines[-1] and rng and isinstance(st.get('received'), int) and fb.get('_err') == 403,
+       len(lines) == 9 and lines[0].startswith('[소개뱅크] 고객센터 주간 보고 ') and 'ops.cs_weekly' in lines[-1] and rng and isinstance(st.get('received'), int) and fb.get('_err') == 403,
        f"{lines[:2]} · {st.get('from')} ~ {st.get('to')} · {fb.get('_err')}")
     try:
         t0 = psql("SELECT now()")
