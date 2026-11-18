@@ -147,7 +147,11 @@ export class SchedulerService {
         const [bh] = await this.db.query<{ n: number }>(`SELECT coalesce(sum(n), 0)::int AS n FROM signup_block_hits WHERE day = (now() AT TIME ZONE 'Asia/Seoul')::date`).catch(() => [{ n: 0 }]);
         if (Number(bh?.n ?? 0) >= 20) await this.alertOnce('SIGNUP_BLOCK_SPIKE', 'WARN', `가입 차단에 오늘 ${bh!.n}번 막혔습니다(위험감지 › 가입 차단 목록 · 같은 사람 · 대역이 계속 시도하는지 보십시오)`, { today: bh!.n });
         else await this.resolveAlert('SIGNUP_BLOCK_SPIKE', '오늘 막힌 수가 20 아래');
-        detail = { expired: ex, nginx: ng, auditChain: ac, signupBlocked: Number(bh?.n ?? 0) };
+        /* v10.367 (D238 · docs/502) — 열린 신고(OPEN · QUEUED)가 ops.report_due_hours(처음 24) 넘으면 경고 · 0건이면 풂 */
+        const ro = await this.reportOverdue().catch((e) => ({ error: (e as Error).message }));
+        /* v10.368 (D238 · docs/503) — 마지막 DB 복원 시험이 ops.restore_drill_days(처음 30) 넘으면(한 번도 없으면) 경고 · 적으면 풂 */
+        const rd = await this.restoreDrillDue().catch((e) => ({ error: (e as Error).message }));
+        detail = { expired: ex, nginx: ng, auditChain: ac, signupBlocked: Number(bh?.n ?? 0), reportOverdue: ro, restoreDrill: rd };
         break;
       }
 
@@ -1053,6 +1057,32 @@ export class SchedulerService {
   }
 
   /** 같은 종류의 풀리지 않은 알림이 없을 때만 한 건 */
+  /** v10.367 (D238 · docs/502) 신고 처리 기한 — 열린 신고가 설정 시간을 넘으면 REPORT_OVERDUE(WARN · 하나만) · 다 처리되면 풂 */
+  private async reportOverdue() {
+    const [r] = await this.db.query<{ n: number; h: number; oldest: string | null }>(
+      `WITH s AS (SELECT coalesce((SELECT CASE WHEN value ~ '^[0-9]+$' THEN value::int END FROM site_settings WHERE key = 'ops.report_due_hours'), 24) AS h)
+       SELECT (SELECT count(*)::int FROM reports, s WHERE state IN ('OPEN', 'QUEUED') AND created_at < now() - make_interval(hours => s.h)) AS n,
+              (SELECT h FROM s) AS h,
+              (SELECT min(created_at) FROM reports, s WHERE state IN ('OPEN', 'QUEUED') AND created_at < now() - make_interval(hours => s.h)) AS oldest`);
+    const n = Number(r?.n ?? 0);
+    if (n > 0) await this.alertOnce('REPORT_OVERDUE', 'WARN', `신고 ${n}건이 ${r!.h}시간 넘게 처리되지 않았습니다(신고 처리 화면 · 가장 오래된 것부터)`, { overdue: n, hours: r!.h, oldest: r!.oldest });
+    else await this.resolveAlert('REPORT_OVERDUE', '기한 넘긴 신고 없음');
+    return { overdue: n, hours: Number(r?.h ?? 24) };
+  }
+
+  /** v10.368 (D238 · docs/503) DB 복원 시험 — 마지막 시험이 설정 날 수보다 오래되면(없으면) RESTORE_DRILL_DUE(WARN) · 적으면 풂 */
+  private async restoreDrillDue() {
+    const [r] = await this.db.query<{ days: number | null; due: number }>(
+      `SELECT ((now() AT TIME ZONE 'Asia/Seoul')::date - (SELECT max(drill_date) FROM restore_drills))::int AS days,
+              coalesce((SELECT CASE WHEN value ~ '^[0-9]+$' THEN value::int END FROM site_settings WHERE key = 'ops.restore_drill_days'), 30) AS due`);
+    const days = r?.days == null ? null : Number(r.days);
+    const due = Number(r?.due ?? 30);
+    if (days == null || days > due) {
+      await this.alertOnce('RESTORE_DRILL_DUE', 'WARN', days == null ? 'DB 복원 시험 기록이 아직 없습니다(관 관리 › 업무 안내 › DB 복원 시험)' : `DB 복원 시험을 ${days}일째 안 했습니다(주기 ${due}일 · 관 관리 › 업무 안내 › DB 복원 시험)`, { days, due });
+    } else await this.resolveAlert('RESTORE_DRILL_DUE', '복원 시험 기록됨');
+    return { days, due };
+  }
+
   private async alertOnce(code: string, severity: 'INFO' | 'WARN' | 'CRITICAL', title: string, detail: unknown): Promise<boolean> {
     const r = await this.db.query(
       `INSERT INTO ops_alerts (alert_code, severity, title, detail)

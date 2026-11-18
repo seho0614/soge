@@ -11,6 +11,7 @@ import { ErrorDto } from '../../common/dto/common.dto';
 import { NoticeDto } from '../site/site.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { ExportGate } from '../admin/export-approval';   // v10.366 (D238) 내려받기 승인
 
 /* v10.166 (D156 · docs/257) — 소개몰 판매자센터(상품 등록 → 운영 검수 · 배송비 · 반품비) · 운영 검수 */
 
@@ -335,6 +336,7 @@ export class HealthSellerController {
   @ApiResponse({ status: 409, description: 'READS_NOT_FROZEN — 시행 때 기록이 없음(v10.301 이후 시행된 예약부터)', type: ErrorDto })
   rateNoticeReads(@Param('id', ParseUUIDPipe) id: string, @Query('view') view?: string) { return this.rates.reads(id, view === 'frozen' ? 'frozen' : 'now'); }
 
+  @ExportGate('RATE_READS')
   @Get('admin/health/rate-schedules/:id/reads/export')
   @Roles('SUPER')
   @ApiOperation({ summary: '요율 변경 공지 열람 기록 CSV (SUPER)', description: 'v10.300 (docs/420) 위 기록을 엑셀용 CSV 로 — 머리에 범위 · 요율 · 시행일 · 공지 게시 시각 · 읽음 / 대상 · 받은 때. 받을 때마다 감사 HLT_RATE_READS_EXPORT(예약 번호 · 줄 수) · 바꾸는 것 없음.' })

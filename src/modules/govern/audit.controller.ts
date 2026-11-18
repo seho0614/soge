@@ -5,6 +5,7 @@ import { AuditService } from './audit.service';
 import { ReviewSignalDto } from './audit.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { ExportGate } from '../admin/export-approval';   // v10.366 (D238) 내려받기 승인
 
 /**
  * 감사 — 징후를 보고 판단을 남깁니다.
@@ -72,6 +73,7 @@ export class AuditController {
     return this.svc.search({ who, action, target, from, to, kind, page: Number(page) || 1 });
   }
 
+  @ExportGate('AUDIT_EXPORT')
   @Get('export')
   @Roles('SUPER')
   @ApiOperation({ summary: '감사 기록 CSV (SUPER)', description: 'v10.288 (D215) 찾기와 같은 조건 · 최근 순 1만 줄까지 · 전 · 후 내용은 넣지 않음 · 감사 AUDIT_LOG_EXPORT 에 조건 · 줄 수만 남음.' })

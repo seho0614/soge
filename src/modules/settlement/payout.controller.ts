@@ -6,6 +6,7 @@ import { PayoutService } from './payout.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { ExportGate } from '../admin/export-approval';   // v10.366 (D238) 내려받기 승인
 
 export class PayDto {
   @ApiProperty({ example: 'KB-20261001-000123', description: '이체 참조 — 은행 거래번호 등. 대사(對査)의 근거입니다' })
@@ -86,6 +87,7 @@ export class PayoutController {
   } } })
   pointReadiness() { return this.svc.pointReadiness(); }
 
+  @ExportGate('POINT_REPORT')
   @Get('point-report')
   @Roles('PAYOUT')   // SUPER 는 AuthGuard 가 통과 — 주민등록번호 원문이 들어 있어 ADMIN 은 안 됨
   @ApiOperation({

@@ -6,6 +6,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { useHashSub } from '../../lib/hashSub';
 import { AuditChainBox } from './SecurityBoxes';   // v10.354 · 356 (D235) 감사 기록 사슬 · 월간 보안 보고
+import { ExportApprovalBox, exportTicket } from './OpsSafetyBoxes';   // v10.366 (D238) 내려받기 승인
 
 interface Signal {
   code: string; view: string; note: string; count: number; ok: boolean;
@@ -74,6 +75,7 @@ function AuditSignals({ onLogs }: { onLogs: () => void }) {
     <section>
       {/* v10.29 — 화면 제목 · 설명은 위 공통 제목 줄(App · adminMenu PAGE)이 그립니다 */}
       <AuditChainBox />
+      <ExportApprovalBox />   {/* v10.366 (D238 · docs/501) 내려받기 승인 */}
       {/* v10.32 — 시안(scAdmAud .kpi4 > .kc)은 숫자 4칸을 세로 4줄(흰 줄 · 왼쪽 값 · 오른쪽 이름)로 그립니다 */}
       <div className="kpi4 ad-krows" data-audit-kpi>
         <div><b className={hot ? 'bad' : 'good'}>{hot}</b><span>징후</span></div>
@@ -191,7 +193,9 @@ function AuditLogs({ onBack }: { onBack: () => void }) {
   };
   const show = async (id: string) => { try { setOpen(await api<LogDetail>(`/admin/audit/logs/${id}`)); } catch (e) { a.setErr(String((e as Error).message ?? e)); } };
   const csv = () => void a.run('csv', async () => {
-    const r = await api<{ filename: string; csv: string; note: string }>(`/admin/audit/export?${new URLSearchParams({ ...cond, ...(kind ? { kind } : {}) }).toString()}`);
+    const t = await exportTicket('AUDIT_EXPORT');   /* v10.366 (D238 · docs/501) 내려받기 승인 */
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const r = await api<{ filename: string; csv: string; note: string }>(`/admin/audit/export?${new URLSearchParams({ ...cond, ...(kind ? { kind } : {}), ticket: t }).toString()}`);
     const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([r.csv], { type: 'text/csv;charset=utf-8' })); el.download = r.filename; el.click(); URL.revokeObjectURL(el.href);
     return r;
   }, undefined, (r) => r.note);

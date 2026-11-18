@@ -7,6 +7,7 @@ import { Flash } from '../../components/Flash';
 import { askNoticeTiming } from './RateNoticeDialog';
 import { RateAutoRemindPreview } from './RateAutoRemindPreview';   // v10.308 (docs/431)
 import { TYPE_RATE_PICK } from './HealthRateSim';   // v10.312 (docs/436)   // v10.291 (docs/414) — 공지 시점 확인 창
+import { exportTicket } from './OpsSafetyBoxes';   // v10.366 (D238) 내려받기 승인
 
 interface TypeRate {
   sellerType: 'BRAND' | 'TENANT'; rate: string | number | null; note: string | null; updatedAt: string;
@@ -149,7 +150,9 @@ export function HealthRateSchedules({ onChanged }: { onChanged?: () => void }) {
     })();
   };
   const readsCsv = (id: string, view: 'now' | 'frozen') => void a.run('rdcsv', async () => {
-    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/health/rate-schedules/${id}/reads/export?view=${view}`);
+    const t = await exportTicket('RATE_READS');   /* v10.366 (D238 · docs/501) 내려받기 승인 */
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/health/rate-schedules/${id}/reads/export?view=${view}&ticket=${t}`);
     const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([x.csv], { type: 'text/csv;charset=utf-8' })); el.download = x.filename; el.click(); URL.revokeObjectURL(el.href);
     return x;
   }, undefined, (x) => x.note);

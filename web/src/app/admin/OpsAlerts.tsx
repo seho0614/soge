@@ -78,6 +78,8 @@ const NAME: Record<string, string> = {
   SECURITY_MONTHLY: '월간 보안 보고',   // v10.354 (D235 · docs/488)
   AUDIT_CHAIN_BROKEN: '감사 기록 위변조 의심',   // v10.356 (D235 · docs/490) — 위험감지 › 감사
   SIGNUP_BLOCK_SPIKE: '가입 차단에 많이 막힘',   // v10.362 (D237 · docs/496)
+  REPORT_OVERDUE: '신고 처리 기한 넘김',   // v10.367 (D238 · docs/502)
+  RESTORE_DRILL_DUE: 'DB 복원 시험 할 때',   // v10.368 (D238 · docs/503)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)
   TERMS_EFFECTIVE_SOON: '약관 시행 3일 안',   // v10.243 (docs/381)

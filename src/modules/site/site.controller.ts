@@ -13,6 +13,7 @@ import { Audit } from '../../core/audit.interceptor';
 import { MainService } from './main.service';
 import { IsInt, IsOptional, IsString } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
+import { ExportGate } from '../admin/export-approval';   // v10.366 (D238) 내려받기 승인
 
 /** SB-ADM-SIT-010/020/030/050/060 · MAIN-010/020/030/040 */
 
@@ -251,6 +252,7 @@ export class SiteController {
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   noticeReads(@Param('id', ParseUUIDPipe) id: string) { return this.svc.noticeReads(id); }
 
+  @ExportGate('NOTICE_READS')
   @Get('notices/:id/reads/export')
   @Roles('SUPER')
   @ApiOperation({ summary: '공지 읽음 CSV (SUPER)', description: 'v10.329 (docs/457) 위 기록을 엑셀용 CSV 로 — 머리(제목 · 게시 · 읽음 / 대상 · 비율) · 등급별 표 · 읽은 회원 줄(회원 번호 앞 8자리 · 가린 이름 · 처음 · 마지막 펼침 · 횟수 · 「모두 읽음」만). 받을 때마다 감사 NOTICE_READS_EXPORT(공지 번호 · 줄 수) · 바꾸는 것 없음.' })

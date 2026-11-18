@@ -9,6 +9,7 @@ import { SubTabs, type SubTab } from '../../components/SubTabs';
 import { RecommendDetail } from './affiliates/Recommend';   // v10.253 (docs/388) 회원 상세에서 추천 관계도
 import { SettlementSummary } from './SettlementSummary';   // v10.255 (docs/388) 회원 정산 내역
 import { MemberRoles } from './MemberRoles';   // v10.333 (docs/464) 회원 상세에서 권한 주기 · 거두기(SUPER)
+import { MemberActivityBox } from './OpsSafetyBoxes';   // v10.365 (D238) 활동 기록
 
 interface Row {
   id: string; email: string; name: string; phone: string | null;
@@ -145,6 +146,7 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
         <b>이 화면을 여신 기록이 남습니다.</b> 누가 언제 누구를 보았는지 감사 로그에 기록됩니다 (개인정보 보호법 29조).
       </div>
       <MemberNotesBox accountId={id} />   {/* v10.361 (D237 · docs/495) 운영 메모 */}
+      <MemberActivityBox accountId={id} />   {/* v10.365 (D238 · docs/500) 활동 한 줄 기록 */}
       <div className="ad-tw">
         <table className="tbl" data-member-detail>
           <thead><tr><th style={{ width: 200 }}>항목</th><th>내용</th></tr></thead>

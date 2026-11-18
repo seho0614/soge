@@ -239,6 +239,8 @@ import { CsGlanceController } from './modules/support/cs-glance.controller';   /
 import { SecurityReportController } from './modules/admin/security-report.controller';   // v10.354 ~ 356 보안 보고 · 운영자 활동 · 감사 사슬
 import { OncallController } from './modules/admin/oncall.controller';   // v10.358 (D236) 급한 알림 당번
 import { MemberOpsController } from './modules/admin/member-ops.controller';   // v10.361 ~ 364 (D237) 회원 메모 · 가입 차단 · 탈퇴 통계 · 오늘 할 일
+import { OpsSafetyController } from './modules/admin/ops-safety.controller';   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
+import { ExportApprovalService, ExportGateInterceptor } from './modules/admin/export-approval';   // v10.366 (D238) 개인정보 대량 내려받기 승인
 import { GuideFlowAdminController, GuideFlowPublicController } from './modules/help/guide-flow.controller';   // v10.347 (D233) 이용 흐름
 import { OpsGuideController } from './modules/admin/ops-guide.controller';   // v10.339 (D229) 업무 안내
 import { PartnerWithdrawController } from './modules/partner/partner-withdraw.controller';   // v10.224 (D194) 파트너 본인 해지
@@ -356,6 +358,7 @@ import { LeadService } from './modules/lead/lead.service';
     SecurityReportController, // v10.354 ~ 356 (D235) 보안 보고 · 운영자 활동 · 감사 사슬
     OncallController,         // v10.358 (D236) 급한 알림 당번
     MemberOpsController,      // v10.361 ~ 364 (D237) 회원 메모 · 가입 차단 · 탈퇴 통계 · 오늘 할 일
+    OpsSafetyController,      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
     GuideFlowPublicController,   // v10.347 (D233) 이용 흐름(공개)
     GuideFlowAdminController,    // v10.347 (D233) 이용 흐름 고치기(SUPER)
     OpsGuideController,       // v10.339 (D229) 업무 안내
@@ -448,6 +451,7 @@ import { LeadService } from './modules/lead/lead.service';
     EventService,
     AbuseService,
     DatabaseService,
+    ExportApprovalService,   // v10.366 (D238)
     AdsService,
     AiService,
     IntroducerService,
@@ -518,6 +522,7 @@ import { LeadService } from './modules/lead/lead.service';
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PiiAuditInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: ExportGateInterceptor },   // v10.366 (D238) 내려받기 승인 번호 확인
     { provide: APP_INTERCEPTOR, useClass: CategoryNameInterceptor },   // v10.107 업종 이름을 화면 언어로(docs/166)
     { provide: APP_INTERCEPTOR, useClass: ServerTextInterceptor },   // v10.125 서버 안내 글을 화면 언어로(docs/189)
   ],

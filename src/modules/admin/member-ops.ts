@@ -23,6 +23,7 @@ export async function staffTodo(db: Q, roles: string[]): Promise<{ items: TodoIt
             (SELECT min(opened_at) FROM disputes WHERE status IN ('OPEN', 'IN_REVIEW')) AS dsp_old,
             (SELECT count(*)::int FROM reports WHERE state IN ('OPEN', 'QUEUED')) AS rep_n,
             (SELECT min(created_at) FROM reports WHERE state IN ('OPEN', 'QUEUED')) AS rep_old,
+            (SELECT count(*)::int FROM reports WHERE state IN ('OPEN', 'QUEUED') AND created_at < now() - make_interval(hours => coalesce((SELECT CASE WHEN value ~ '^[0-9]+$' THEN value::int END FROM site_settings WHERE key = 'ops.report_due_hours'), 24))) AS rep_over,
             (SELECT count(*)::int FROM settlements WHERE status = 'REQUESTED') AS stl_n,
             (SELECT min(requested_at) FROM settlements WHERE status = 'REQUESTED') AS stl_old,
             (SELECT count(*)::int FROM businesses WHERE verified_at IS NULL AND rejected_at IS NULL AND kind = 'BUSINESS') AS biz_n,
@@ -45,7 +46,7 @@ export async function staffTodo(db: Q, roles: string[]): Promise<{ items: TodoIt
     items.push(row('cash', '포인트 출금 확정 대기', 'payouts'));
     items.push(row('inq', '1:1 문의 답변 전', 'inquiries', Number(c?.inq_over ?? 0)));
     items.push(row('dsp', '분쟁 처리 중', 'disputes'));
-    items.push(row('rep', '신고 처리 대기', 'report-queue'));
+    items.push(row('rep', '신고 처리 대기', 'report-queue', Number(c?.rep_over ?? 0)));   /* v10.367 (docs/502) 기한(ops.report_due_hours) 넘김 */
     items.push(row('stl', '정산 승인 대기', 'settlement'));
     items.push(row('biz', '사업자 인증 대기', 'users'));
     items.push(row('crit', '확인 안 한 급한 알림', 'ops-alerts', n('crit')));

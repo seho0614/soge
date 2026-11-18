@@ -7,6 +7,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { SubTabs, type SubTab } from '../../components/SubTabs';
 import { fmtSize, openFile, uploadFile, TYPE_LABEL } from '../../lib/files';
+import { exportTicket } from './OpsSafetyBoxes';   // v10.366 (D238) 내려받기 승인
 
 interface Section {
   code: string; name: string; sortOrder: number;
@@ -579,7 +580,9 @@ function Content() {
     try { setRd(await api<NoticeReads>(`/admin/notices/${id}/reads`)); } catch { setRdErr(true); }
   };
   const readsCsv = (id: string) => void a.run('ntcsv', async () => {
-    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/notices/${id}/reads/export`);
+    const t = await exportTicket('NOTICE_READS');   /* v10.366 (D238 · docs/501) 내려받기 승인 */
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const x = await api<{ filename: string; csv: string; note: string }>(`/admin/notices/${id}/reads/export?ticket=${t}`);
     const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([x.csv], { type: 'text/csv;charset=utf-8' })); el.download = x.filename; el.click(); URL.revokeObjectURL(el.href);
     return x;
   }, undefined, 'CSV 를 받았습니다 — 받은 기록이 감사 기록(NOTICE_READS_EXPORT)에 남습니다.');

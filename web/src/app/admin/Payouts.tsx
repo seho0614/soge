@@ -3,6 +3,7 @@ import { api, ApiFailure, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { won } from '../../lib/format';
+import { exportTicket } from './OpsSafetyBoxes';   // v10.366 (D238) 내려받기 승인
 
 interface Row {
   kind: 'PARTNER' | 'HEALTH' | 'POINT'; id: string; sub?: string; payee: string;
@@ -84,7 +85,9 @@ export function Payouts() {
   };
   /* 신고 자료 — 주민등록번호 원문이 들어 있는 파일이라 지급 담당 · SUPER 만(서버도 막음) · 받은 기록은 개인정보 접속기록에 남음 */
   const download = () => act('report', async () => {
-    const r = await api<{ csv: string; filename: string; note: string }>(`/admin/payouts/point-report?month=${encodeURIComponent(month)}`);
+    const t = await exportTicket('POINT_REPORT');   /* v10.366 (D238 · docs/501) 내려받기 승인 */
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const r = await api<{ csv: string; filename: string; note: string }>(`/admin/payouts/point-report?month=${encodeURIComponent(month)}&ticket=${t}`);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r.csv], { type: 'text/csv;charset=utf-8' }));
     a.download = r.filename; a.click(); URL.revokeObjectURL(a.href);
     return { note: r.note };
