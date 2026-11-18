@@ -9,6 +9,7 @@ import { PolicyViolation, StateConflict } from '../../core/errors';
  *   운영자가 회원 · 사업자 · 리드 개인정보를 본 기록을 한 달 단위로 모아 봅니다.
  *     ① audit.pii_access_logs — @PiiAccess(사업자 심사 · 거래 모니터링) · 리드 연락처 열람(DB 함수)
  *     ② audit.audit_logs 의 ACCOUNT_VIEW(회원 상세) · LEAD_VIEW(리드 보기)
+ *        — v10.359 부터 회원 상세는 ① 에도 남으므로(@PiiAccess '회원 상세 · 사유 …'), 1분 안에 짝이 있는 ACCOUNT_VIEW 는 세지 않음(한 번 본 것을 두 번 세지 않게)
  *   운영자마다 본 수 · 서로 다른 대상 수 · 하루 최다 · 밤(22 ~ 06시 한국 시간) 조회 · 내려받기(EXPORT)를 보이고,
  *   하루 최다가 pii.review_flag_daily(기본 50) 이상이거나 밤 조회가 10건 이상이면 「살펴볼 것」.
  *   SUPER 가 메모(5자 이상)를 남겨 「점검 완료」 — audit.pii_reviews 한 달 한 줄 · 고치거나 지울 수 없음.
@@ -37,7 +38,9 @@ export class PiiReviewService {
               ((SELECT count(*) FROM audit.pii_access_logs l
                  WHERE (l.occurred_at AT TIME ZONE 'Asia/Seoul') >= m.month AND (l.occurred_at AT TIME ZONE 'Asia/Seoul') < m.month + interval '1 month')
              + (SELECT count(*) FROM audit.audit_logs a WHERE a.action IN ('ACCOUNT_VIEW', 'LEAD_VIEW')
-                 AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= m.month AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < m.month + interval '1 month'))::int AS views,
+                 AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= m.month AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < m.month + interval '1 month'
+                 AND NOT (a.action = 'ACCOUNT_VIEW' AND EXISTS (SELECT 1 FROM audit.pii_access_logs p WHERE p.actor_account_id = a.actor_account_id AND p.target_account_id::text = a.target_id::text
+                   AND p.reason LIKE '회원 상세 · 사유 %' AND p.occurred_at BETWEEN a.occurred_at - interval '1 minute' AND a.occurred_at + interval '1 minute'))))::int AS views,
               r.reviewed_at AS "reviewedAt", ra.name AS "reviewedBy",
               (m.month < date_trunc('month', (now() AT TIME ZONE 'Asia/Seoul'))::date) AS closed
          FROM m LEFT JOIN audit.pii_reviews r ON r.month = m.month LEFT JOIN accounts ra ON ra.id = r.reviewed_by
@@ -57,7 +60,9 @@ export class PiiReviewService {
          SELECT a.actor_account_id, a.occurred_at, 'VIEW', a.target_type, a.target_id::text
            FROM audit.audit_logs a
           WHERE a.action IN ('ACCOUNT_VIEW', 'LEAD_VIEW') AND a.actor_account_id IS NOT NULL
-            AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month'),
+            AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month'
+            AND NOT (a.action = 'ACCOUNT_VIEW' AND EXISTS (SELECT 1 FROM audit.pii_access_logs p WHERE p.actor_account_id = a.actor_account_id AND p.target_account_id::text = a.target_id::text
+                   AND p.reason LIKE '회원 상세 · 사유 %' AND p.occurred_at BETWEEN a.occurred_at - interval '1 minute' AND a.occurred_at + interval '1 minute'))),
        d AS (SELECT actor, (at AT TIME ZONE 'Asia/Seoul')::date AS day, count(*) AS n FROM v GROUP BY 1, 2),
        lim AS (SELECT coalesce((SELECT nullif(value, '')::int FROM site_settings WHERE key = 'pii.review_flag_daily'), 50) AS n)
        SELECT v.actor::text AS "actorId", acc.name, acc.email,
@@ -78,7 +83,9 @@ export class PiiReviewService {
          UNION ALL
          SELECT a.action FROM audit.audit_logs a
           WHERE a.action IN ('ACCOUNT_VIEW', 'LEAD_VIEW')
-            AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month') x
+            AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') >= $1::date AND (a.occurred_at AT TIME ZONE 'Asia/Seoul') < $1::date + interval '1 month'
+            AND NOT (a.action = 'ACCOUNT_VIEW' AND EXISTS (SELECT 1 FROM audit.pii_access_logs p WHERE p.actor_account_id = a.actor_account_id AND p.target_account_id::text = a.target_id::text
+                   AND p.reason LIKE '회원 상세 · 사유 %' AND p.occurred_at BETWEEN a.occurred_at - interval '1 minute' AND a.occurred_at + interval '1 minute'))) x
         GROUP BY k ORDER BY count(*) DESC`, [month]);
     /* v10.359 (D236 · docs/493) — 열람 사유별(접속기록 reason 의 「 · 사유 」 뒤 · 그 전 기록은 「사유 칸 없음」) */
     const reasons = await this.db.query<{ r: string; n: number }>(
