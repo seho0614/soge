@@ -140,7 +140,13 @@ export class OpsStaffController {
               coalesce(now() >= f AND now() < u, false) AS on, coalesce(now() < f AND now() >= f - interval '24 hours', false) AS soon,
               coalesce(now() >= u, false) AS past
          FROM v`);
-    return { from: s?.f ?? null, until: s?.u ?? null, note: s?.note || '', noteEn: s?.note_en || '', on: !!s?.on, soon: !!s?.soon, past: !!s?.past, canEdit: (p?.roles ?? []).includes('SUPER') };
+    /* v10.379 (D241 · docs/515) — 이 점검 시작 시각으로 회원 알림을 보냈는가 · 메일 스위치 */
+    const [n] = await this.db.query<{ at: string; sent: number; mailed: boolean }>(
+      `SELECT to_char(n.created_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI') AS at, n.sent, n.mailed FROM maintenance_notices n
+        WHERE n.from_at = nullif((SELECT value FROM site_settings WHERE key = 'site.maintenance_from'), '')::timestamptz`).catch(() => []);
+    const [ml] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'site.maintenance_mail'`).catch(() => []);
+    return { from: s?.f ?? null, until: s?.u ?? null, note: s?.note || '', noteEn: s?.note_en || '', on: !!s?.on, soon: !!s?.soon, past: !!s?.past, canEdit: (p?.roles ?? []).includes('SUPER'),
+             notice: n ? { at: n.at, sent: Number(n.sent), mailed: !!n.mailed } : null, mail: (ml?.v ?? 'off') === 'on' };
   }
 
   @Post('maintenance')

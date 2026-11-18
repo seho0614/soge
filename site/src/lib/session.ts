@@ -191,6 +191,14 @@ export async function logoutAllDevices(password: string): Promise<ActResult> {
   return { ok: true, note: r.data?.note };
 }
 
+/** v10.380 (D241 · docs/516) — 내 로그인 기기 하나 로그아웃 · 지금 이 기기면 쿠키도 지움 */
+export async function revokeSession(id: string): Promise<ActResult & { current?: boolean }> {
+  const r = await call('POST', `/me/sessions/${encodeURIComponent(id)}/revoke`, {}, true);
+  if (r.status >= 400) return fail(r.data, '로그아웃하지 못했습니다.');
+  if (r.data?.current) await logout();
+  return { ok: true, note: r.data?.note, current: !!r.data?.current };
+}
+
 /** SB-MYP-PRV-010 — 열람 · 정정 · 삭제 · 처리정지 요청 */
 export async function createPrivacyRequest(kind: string, body: string): Promise<ActResult> {
   const r = await call('POST', '/me/privacy-requests', { kind, body }, true);

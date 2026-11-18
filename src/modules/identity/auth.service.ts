@@ -13,6 +13,7 @@ import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
 import { notifyNewDevice, recordLogin } from './login-history';
 import { RecommendService } from '../affiliate/recommend.service';
+import { createSession, sessionAlive, sessionReusable } from './login-sessions';   // v10.380 (D241) 내 로그인 기기
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -193,10 +194,14 @@ export class AuthService {
   }
 
   /** 로그인 증표 발급. v10.48 — 비밀번호 변경 뒤 새 증표를 주려고 공개합니다(AccountSecurityService). tv = accounts.token_version */
-  async issue(accountId: string, mfaAt?: number) {
+  async issue(accountId: string, mfaAt?: number, sid?: string) {
     const principal = await this.principals.load(accountId);
     if (!principal) throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
     const tv = principal.tokenVersion ?? 0;
+    /* v10.380 (D241 · docs/516) — 로그인 기기: 다시 받기 · 2단계 확인 뒤처럼 같은 기기면 그 줄을 이어 쓰고(같은 판 번호 · 끊지 않음), 아니면 새 줄 */
+    let s = sid ?? RequestCtx.get()?.sid;
+    if (s && !(await sessionReusable(this.db, s, accountId, tv))) s = undefined;
+    if (!s) s = await createSession(this.db, accountId, tv);
 
     const secret = process.env.JWT_SECRET!;
     const accessToken = jwt.sign(
@@ -209,26 +214,27 @@ export class AuthService {
         tv,
         /* v10.180 (D169) — 운영자 2단계 확인 시각(초) · refresh 로 다시 받아도 이어짐 · 유효 시간은 서버가 admin.mfa_hours 로 판단 */
         ...(mfaAt ? { ma: mfaAt } : {}),
+        ...(s ? { sid: s } : {}),
       },
       secret,
       { expiresIn: ACCESS_TTL },
     );
     /* v10.357 (D236 · docs/491) — 운영 역할은 ops.staff_refresh_days(처음 1일) · 회원은 14일 그대로 */
     const days = isStaff(principal.roles) ? (await staffSession(this.db)).refreshDays : REFRESH_TTL_DAYS;
-    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv, ...(mfaAt ? { ma: mfaAt } : {}) }, secret, {
+    const refreshToken = jwt.sign({ sub: principal.accountId, typ: 'refresh', tv, ...(mfaAt ? { ma: mfaAt } : {}), ...(s ? { sid: s } : {}) }, secret, {
       expiresIn: `${days}d`,
     });
     return { accessToken, refreshToken, principal };
   }
 
   /** access 토큰 검증. refresh 토큰은 여기서 거부합니다 — 14일짜리가 access 로 쓰이면 만료가 무의미해집니다. */
-  verify(token: string): { sub: string; tv: number; ma?: number } {
+  verify(token: string): { sub: string; tv: number; ma?: number; sid?: string } {
     const payload = this.decode(token);
     if (payload.typ === 'refresh') {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
     /* v10.48 — 판 번호가 없는 증표(이 판 전에 발급)는 0 으로 봅니다. 계정 판 번호도 처음 0 이라 그대로 통합니다 */
-    return { sub: payload.sub, tv: Number(payload.tv ?? 0), ma: payload.ma ? Number(payload.ma) : undefined };
+    return { sub: payload.sub, tv: Number(payload.tv ?? 0), ma: payload.ma ? Number(payload.ma) : undefined, sid: payload.sid };
   }
 
   /** refresh 토큰으로 재발급. principal 을 DB 에서 다시 조립하므로 정지·만료가 즉시 반영됩니다. */
@@ -242,12 +248,19 @@ export class AuthService {
     if (!p || (p.tokenVersion ?? 0) !== Number(payload.tv ?? 0)) {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }
-    return this.issue(payload.sub, payload.ma ? Number(payload.ma) : undefined);
+    /* v10.380 (D241) — 끊은 기기의 refresh 증표로는 다시 받지 못함 */
+    if (payload.sid && !(await sessionAlive(this.db, payload.sid, payload.sub))) {
+      throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
+    }
+    return this.issue(payload.sub, payload.ma ? Number(payload.ma) : undefined, payload.sid);
   }
 
-  private decode(token: string): { sub: string; typ?: string; tv?: number; ma?: number } {
+  /** v10.380 (D241) — 요청마다 이 증표의 기기가 끊기지 않았는지(AuthMiddleware) */
+  sessionAlive(sid: string, accountId: string) { return sessionAlive(this.db, sid, accountId); }
+
+  private decode(token: string): { sub: string; typ?: string; tv?: number; ma?: number; sid?: string } {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string; tv?: number; ma?: number };
+      return jwt.verify(token, process.env.JWT_SECRET!) as { sub: string; typ?: string; tv?: number; ma?: number; sid?: string };
     } catch {
       throw new Forbidden('INVALID_TOKEN', '인증 정보가 유효하지 않습니다.');
     }

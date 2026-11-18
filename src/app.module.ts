@@ -241,6 +241,8 @@ import { OncallController } from './modules/admin/oncall.controller';   // v10.3
 import { MemberOpsController } from './modules/admin/member-ops.controller';   // v10.361 ~ 364 (D237) 회원 메모 · 가입 차단 · 탈퇴 통계 · 오늘 할 일
 import { OpsSafetyController } from './modules/admin/ops-safety.controller';
 import { OpsStaffController } from './modules/admin/ops-staff.controller';
+import { OpsPlanController } from './modules/admin/ops-plan.controller';   // v10.377 (D241) 설정 예약 변경
+import { LoginSessionsController } from './modules/identity/login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
 import { ExportApprovalService, ExportGateInterceptor } from './modules/admin/export-approval';   // v10.366 (D238) 개인정보 대량 내려받기 승인
 import { GuideFlowAdminController, GuideFlowPublicController } from './modules/help/guide-flow.controller';   // v10.347 (D233) 이용 흐름
@@ -362,6 +364,8 @@ import { LeadService } from './modules/lead/lead.service';
     MemberOpsController,      // v10.361 ~ 364 (D237) 회원 메모 · 가입 차단 · 탈퇴 통계 · 오늘 할 일
     OpsSafetyController,
     OpsStaffController,       // v10.369 ~ 371 (D239)
+    OpsPlanController,        // v10.377 (D241)
+    LoginSessionsController,  // v10.380 (D241)
     OpsWeekController,        // v10.374 ~ 376 (D240)      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
     GuideFlowPublicController,   // v10.347 (D233) 이용 흐름(공개)
     GuideFlowAdminController,    // v10.347 (D233) 이용 흐름 고치기(SUPER)

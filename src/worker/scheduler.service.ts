@@ -30,6 +30,8 @@ import { RoleReviewService } from '../modules/admin/role-review.service';
 import { PrivacyService } from '../modules/identity/privacy.service';
 import { measureServerHealth } from '../common/server-health';
 import { maskMail } from '../common/mail/mail-admin.service';   // v10.372 (D239)
+import { applyDueSettingSchedules } from '../modules/admin/ops-plan.controller';   // v10.377 (D241)
+import { maintNotice, withdrawGraceMail } from '../modules/admin/member-notice-jobs';   // v10.378 · 379 (D241)
 
 /**
  * 배치 실행기.
@@ -45,7 +47,8 @@ export type JobName =
   | 'contract_nudge' | 'ad_expiry_notice' | 'event_close' | 'lead_assign'
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
-  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly';
+  | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly'
+  | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice';   // v10.377 ~ 379 (D241)
 
 export interface JobResult {
   job: JobName;
@@ -683,6 +686,31 @@ export class SchedulerService {
       }
 
       /* v10.282 (D211 · docs/410) — 예약 공지 알림: 게시 시각이 된 공지 중 「알림 보냄」을 고른 것을 그 등급 회원에게(한 번) */
+      /* v10.377 (D241 · docs/513) — 시각이 된 설정 예약을 운영 화면과 같은 검사로 · 실패하면 SETTING_SCHEDULE_FAIL(WARN) */
+      case 'setting_schedule': {
+        const r = await applyDueSettingSchedules(this.db, this.admin);
+        if (r.failed.length) {
+          await this.alert('SETTING_SCHEDULE_FAIL', 'WARN',
+            `설정 예약 ${r.failed.length}건을 바꾸지 못했습니다 — ${r.failed.map((f) => `${f.key}: ${f.why}`).join(' · ')}`.slice(0, 300) + '(정책 › 전체 설정 › 예약 변경)', { failed: r.failed });
+        }
+        affected = r.applied.length; detail = r;
+        break;
+      }
+
+      /* v10.378 (D241 · docs/514) — 탈퇴 유예 끝 하루 전 메일(유예 2일 이상 · 한 번) */
+      case 'withdraw_grace_mail': {
+        const r = await withdrawGraceMail(this.db, this.mail);
+        affected = r.mailed; detail = r;
+        break;
+      }
+
+      /* v10.379 (D241 · docs/515) — 점검 시작 24시간 안이면 쓰는 회원 모두에게 사이트 알림 한 번(메일은 site.maintenance_mail) */
+      case 'maint_notice': {
+        const r = await maintNotice(this.db);
+        affected = r.sent; detail = r;
+        break;
+      }
+
       case 'notice_schedule': {
         const [r] = await this.db.query<{ notices: number; sent: number }>(`SELECT * FROM fn_notice_notify_due()`);
         affected = Number(r?.sent ?? 0); detail = { notices: Number(r?.notices ?? 0), sent: Number(r?.sent ?? 0) };

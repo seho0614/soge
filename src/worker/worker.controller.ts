@@ -23,6 +23,9 @@ const JOBS = [
   'seller_license_watch', /* v10.223 (D193) 입점 서류 만료 30 · 7일 전 알림 · 만료일 운영 알림 */
   'hlt_rate_schedule',  /* v10.275 (D208) 수수료율 인상 예약 시행 — 매일 00:05 */
   'notice_schedule',    /* v10.282 (D211) 예약 공지 알림 — 10분마다 */
+  'setting_schedule',   /* v10.377 (D241) 설정 예약 변경 — 5분마다 */
+  'withdraw_grace_mail', /* v10.378 (D241) 탈퇴 유예 끝 하루 전 메일 — 매시간 */
+  'maint_notice',       /* v10.379 (D241) 점검 예정 회원 알림 — 10분마다 */
   'ops_board_purge',    /* v10.286 (D213) 운영자 게시판 보관 기간 정리 — 매일 04:40 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */
   'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */

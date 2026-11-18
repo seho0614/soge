@@ -35,6 +35,8 @@ export interface RequestContext {
   ext?: ExternalMarks;
   /** v10.103 — 사용자 웹이 알려 준 화면 언어(X-Lang · 한국어가 아닐 때만). 켜짐 · 켜진 언어인지는 I18nService.overlay 가 봅니다 */
   lang?: string;
+  /** v10.380 (D241) — 이 요청 증표의 로그인 기기 번호(login_sessions.id · v10.380 전 증표는 없음) */
+  sid?: string;
 }
 
 const als = new AsyncLocalStorage<RequestContext>();

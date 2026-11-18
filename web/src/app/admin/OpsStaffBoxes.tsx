@@ -86,7 +86,7 @@ export function AlertMuteBox({ codes, name, pick }: { codes: string[]; name: Rec
   );
 }
 
-interface Maint { from: string | null; until: string | null; note: string; noteEn: string; on: boolean; soon: boolean; past: boolean; canEdit: boolean }
+interface Maint { from: string | null; until: string | null; note: string; noteEn: string; on: boolean; soon: boolean; past: boolean; canEdit: boolean; notice?: { at: string; sent: number; mailed: boolean } | null; mail?: boolean }
 
 export function MaintenanceBox() {
   const q = useApi<Maint>('/admin/maintenance');
@@ -108,6 +108,12 @@ export function MaintenanceBox() {
         : has ? <span className={d.soon ? 'warn-text' : ''}>{d.from?.replace('T', ' ')} ~ {d.until?.replace('T', ' ')}{d.soon ? ' · 지금 사용자 웹에 안내 띠' : ''}</span>
         : <span className="muted">예약 없음</span>}
       {has && d.canEdit && <> <button className="btn-sm btn-plain" disabled={a.busy === 'maintClear'} onClick={clear} data-maintenance-clear="">{d.on ? '지금 끝내기' : '예약 지우기'}</button></>}
+      {has && !d.on && (
+        <p data-maintenance-notice={d.notice ? 'sent' : 'wait'}>
+          {d.notice ? <>회원 알림 보냄 · {d.notice.at} · {d.notice.sent.toLocaleString()}명{d.notice.mailed ? ' · 메일 함께' : ' · 사이트 알림만'}</>
+            : <span className="dim">회원 알림 — 시작 24시간 전에 쓰는 회원 모두에게 사이트 알림을 한 번 보냅니다{d.mail ? '(메일 함께)' : '(메일은 꺼짐 · 정책 › 전체 설정 site.maintenance_mail)'}.</span>}
+        </p>
+      )}
       <p className="muted">점검 시각 안에는 사용자 웹 모든 화면이 「점검 중」 안내로 바뀝니다(운영 화면 · API 는 그대로). 시작 24시간 전부터 안내 띠 · 끝 시각이 지나면 저절로 풀림 · 사용자 웹은 최대 5분 늦게 바뀝니다.</p>
       {d.canEdit && !d.on && (
         <p data-maintenance-form="">

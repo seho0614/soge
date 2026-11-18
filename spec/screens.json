@@ -5288,10 +5288,12 @@
    "gates": [],
    "apis": [
     "GET /me/login-history",
-    "POST /me/logout-all"
+    "POST /me/logout-all",
+    "GET /me/sessions",
+    "POST /me/sessions/{id}/revoke"
    ],
    "nav": "SB-MYP-ACC-010",
-   "note": "2026-11-03 v10.181 D170 — 최근 30건(IP 앞 두 마디 · 브라우저 종류) · 보관 privacy.login_history_days(180) · 모든 기기 로그아웃 = token_version + 1(이 기기는 새 증표)."
+   "note": "2026-11-03 v10.181 D170 — 최근 30건(IP 앞 두 마디 · 브라우저 종류) · 보관 privacy.login_history_days(180) · 모든 기기 로그아웃 = token_version + 1(이 기기는 새 증표). · v10.380 (D241 · docs/516) 로그인한 기기 · 기기별 로그아웃(지금 이 기기면 로그인 화면으로)"
   },
   {
    "id": "SB-MYP-PRV-010",
@@ -5371,10 +5373,13 @@
    "apis": [
     "GET /admin/site-settings",
     "PATCH /admin/site-settings",
-    "GET /admin/site-settings/history"
+    "GET /admin/site-settings/history",
+    "GET /admin/setting-schedules",
+    "POST /admin/setting-schedules",
+    "POST /admin/setting-schedules/{id}/cancel"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "v10.287 (D214 · docs/413) 사이트 설정 모두 찾기 · 묶음 · 오픈 필수 · 문제 · 고치기(사유) · 바뀐 기록(DB 트리거 · 전 · 후 · 누가 · 비밀 값 가림 · 50줄씩)"
+   "note": "v10.287 (D214 · docs/413) 사이트 설정 모두 찾기 · 묶음 · 오픈 필수 · 문제 · 고치기(사유) · 바뀐 기록(DB 트리거 · 전 · 후 · 누가 · 비밀 값 가림 · 50줄씩) · v10.377 (D241 · docs/513) 예약 변경(SUPER · 정한 시각에 정기 작업이 같은 검사로 바꿈 · 취소)"
   },
   {
    "id": "SB-ADM-ERR-010",
@@ -5488,9 +5493,11 @@
    "gates": [],
    "nav": "SB-ADM-DSH-010",
    "apis": [
-    "PATCH /admin/me/password"
+    "PATCH /admin/me/password",
+    "GET /me/sessions",
+    "POST /me/sessions/{id}/revoke"
    ],
-   "note": "2026-11-18 v10.369 (docs/504) — 운영자 비밀번호 바꾸기(회원 역할 없어도 · 12자 · 최근 3개 다시 쓰기 금지 · 다른 기기 로그아웃)"
+   "note": "2026-11-18 v10.369 (docs/504) — 운영자 비밀번호 바꾸기(회원 역할 없어도 · 12자 · 최근 3개 다시 쓰기 금지 · 다른 기기 로그아웃) · v10.380 (D241 · docs/516) 내 로그인 기기 · 기기별 로그아웃"
   }
  ],
  "deferred": [

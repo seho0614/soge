@@ -26,10 +26,11 @@ export class AuthMiddleware implements NestMiddleware {
     const header = req.headers.authorization;
     if (header?.startsWith('Bearer ')) {
       try {
-        const { sub, tv, ma } = this.auth.verify(header.slice(7));
+        const { sub, tv, ma, sid } = this.auth.verify(header.slice(7));
         const principal = await this.principals.load(sub);
-        /* v10.48 (D102) — 비밀번호 변경 · 재설정 · 탈퇴 뒤에는 그 전 증표의 판 번호(tv)가 맞지 않아 비로그인으로 봅니다 */
-        if (principal && (principal.tokenVersion ?? 0) === tv) {
+        /* v10.48 (D102) — 비밀번호 변경 · 재설정 · 탈퇴 뒤에는 그 전 증표의 판 번호(tv)가 맞지 않아 비로그인으로 봅니다
+         * v10.380 (D241 · docs/516) — 「내 로그인 기기」에서 끊은 기기(sid)의 증표도 비로그인 · sid 없는 옛 증표는 그대로 */
+        if (principal && (principal.tokenVersion ?? 0) === tv && (!sid || (await this.auth.sessionAlive(sid, sub)))) {
           /* v10.180 (D169) — 운영자 2단계 인증: 확인 시각 · 아직 필요한지(운영 역할일 때만 설정을 봄) */
           principal.mfaAt = ma;
           principal.mfaPending = await this.mfa.pending(principal, ma).catch(() => false);
@@ -37,7 +38,7 @@ export class AuthMiddleware implements NestMiddleware {
           principal.ipPending = await this.staffIp.pending(principal).catch(() => false);
           (req as any).principal = principal;
           const c = RequestCtx.get();
-          if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; }
+          if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; c.sid = sid; }
         }
       } catch {
         // 무효 토큰은 비로그인으로 취급합니다. 가드가 필요한 곳에서만 막습니다

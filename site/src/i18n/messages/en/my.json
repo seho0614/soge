@@ -835,7 +835,19 @@
     "errPw": "Please enter your current password to confirm it's you.",
     "confirm": "Log out of all other devices?",
     "submit": "Log out of all devices",
-    "done": "Logged out of all other devices."
+    "done": "Logged out of all other devices.",
+    "hSessions": "Logged-in devices",
+    "sessLoadFail": "Could not load your logged-in devices. Please refresh in a moment.",
+    "sessOld": "This device logged in the old way and is not listed. Log in again to see it.",
+    "sessEmpty": "No devices listed.",
+    "sessText": "Phones and computers that are logged in now (only the first two parts of the IP and the browser type). If you see a device you don't know, log it out and change your password. Devices unused for more than 14 days are not shown.",
+    "sessFirst": "First login",
+    "sessLast": "Last used",
+    "sessCurrent": "This device",
+    "sessLogout": "Log out",
+    "sessConfirm": "Log out of {device}?",
+    "sessConfirmSelf": "Log out of this device?",
+    "sessDone": "Logged out of that device."
   },
   "privacy": {
     "title": "Privacy requests",
