@@ -143,7 +143,11 @@ export class SchedulerService {
         const ng = await this.nginxAlerts().catch((e) => ({ error: (e as Error).message }));
         /* v10.356 (D235 · docs/490) — 감사 기록 사슬 확인(마지막 온전 지점부터) · 끊기면 급한 알림 AUDIT_CHAIN_BROKEN */
         const ac = await this.auditChain().catch((e) => ({ error: (e as Error).message }));
-        detail = { expired: ex, nginx: ng, auditChain: ac };
+        /* v10.362 (D237 · docs/496) — 가입 차단에 오늘 20번 넘게 막히면 경고(종류별 수만) · 줄면 다음 날 풂 */
+        const [bh] = await this.db.query<{ n: number }>(`SELECT coalesce(sum(n), 0)::int AS n FROM signup_block_hits WHERE day = (now() AT TIME ZONE 'Asia/Seoul')::date`).catch(() => [{ n: 0 }]);
+        if (Number(bh?.n ?? 0) >= 20) await this.alertOnce('SIGNUP_BLOCK_SPIKE', 'WARN', `가입 차단에 오늘 ${bh!.n}번 막혔습니다(위험감지 › 가입 차단 목록 · 같은 사람 · 대역이 계속 시도하는지 보십시오)`, { today: bh!.n });
+        else await this.resolveAlert('SIGNUP_BLOCK_SPIKE', '오늘 막힌 수가 20 아래');
+        detail = { expired: ex, nginx: ng, auditChain: ac, signupBlocked: Number(bh?.n ?? 0) };
         break;
       }
 

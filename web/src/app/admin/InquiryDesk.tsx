@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MemberNotesBox } from './MemberOpsBoxes';   // v10.361 (D237) 운영 메모
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
@@ -16,7 +17,7 @@ interface ListData {
   counts: { open: number; overdue: number; answered: number; closed: number };
   categories: Array<{ code: string; label: string }>;
 }
-interface One extends Omit<Row, 'files' | 'nameHead'> {
+interface One extends Omit<Row, 'files' | 'nameHead'> { accountId?: string | null;   /* v10.361 운영 메모 */
   body: string; answer: string | null; answeredBy: string | null; assigneeId: string | null; staffNote: string | null;
   name: string | null; files: string[]; dealId: string | null; dealStatus: string | null;
   past: Array<{ id: string; no: string; title: string; status: string; createdAt: string }>;
@@ -129,6 +130,7 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
     <div className="card" data-inquiry-one={id}>
       <Flash msg={a.msg} err={a.err} />
       <h3 className="sec">{d.no} · {d.title} <small className="dim">{d.categoryLabel ?? d.category} · {ST[d.status] ?? d.status}{d.overdue ? ' · 기한 넘김' : ''}</small></h3>
+      {d.accountId && <MemberNotesBox accountId={d.accountId} compact />}   {/* v10.361 (D237) 그 회원 운영 메모(중요 먼저 3개) */}
       <p className="muted">
         {d.guest ? '비회원' : (d.name ?? '회원')} · {d.email ?? '—'} · 접수 {ymdhm(d.createdAt)}{d.dueAt && d.status === 'OPEN' ? ` · 기한 ${ymdhm(d.dueAt)}` : ''}
         {d.channel === 'BOT' && ' · 챗봇에서 상담원 연결(대화가 본문에 붙어 있음)'}

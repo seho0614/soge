@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SignupBlocksBox } from './MemberOpsBoxes';   // v10.362 (D237) 가입 차단 목록
 import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
@@ -57,6 +58,7 @@ export function RiskAlerts() {
 
   return (
     <section>
+      <SignupBlocksBox />   {/* v10.362 (D237 · docs/496) 가입 차단 목록 */}
       <Pills label="경보 등급" value={f} onChange={setF}
              items={[['all', '전체', live.length], ['HIGH', '높음', cnt('HIGH')], ['MEDIUM', '보통', cnt('MEDIUM')], ['LOW', '낮음', cnt('LOW')]]} />
       <label className="dim" style={{ fontSize: 12, display: 'block', margin: '-4px 0 10px' }}>

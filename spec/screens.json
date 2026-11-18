@@ -1285,10 +1285,11 @@
     "PATCH /admin/site-settings",
     "GET /admin/cs-glance",
     "GET /admin/cs-glance/weekly",
-    "GET /auth/staff-session"
+    "GET /auth/staff-session",
+    "GET /admin/todo"
    ],
    "nav": "SB-HOM-MAIN-010",
-   "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486) · v10.357 · 360 자동 로그아웃 · 비밀번호 나이(docs/491 · 494)"
+   "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486) · v10.357 · 360 자동 로그아웃 · 비밀번호 나이(docs/491 · 494) · v10.364 오늘 할 일(docs/498)"
   },
   {
    "id": "SB-ADM-REV-010",
@@ -1978,10 +1979,13 @@
     "GET /admin/risk/rule-health",
     "GET /admin/risk/rules",
     "POST /admin/risk/alerts",
-    "POST /admin/risk/alerts/{id}/close"
+    "POST /admin/risk/alerts/{id}/close",
+    "GET /admin/signup-blocks",
+    "POST /admin/signup-blocks",
+    "POST /admin/signup-blocks/{id}/remove"
    ],
    "nav": "SB-ADM-DSH-010",
-   "note": "규칙 원문과 오탐 가능성을 함께 노출합니다. 경보 기록은 변조·삭제되지 않습니다"
+   "note": "규칙 원문과 오탐 가능성을 함께 노출합니다. 경보 기록은 변조·삭제되지 않습니다 · v10.362 가입 차단 목록(docs/496)"
   },
   {
    "id": "SB-ADM-OPS-010",
@@ -3415,8 +3419,10 @@
     "PATCH /admin/businesses/{id}/reject",
     "GET /admin/accounts-counts",
     "PATCH /admin/accounts/{id}/status",
-    "PATCH /admin/accounts/{id}/posting-suspension/lift"
-   ]
+    "PATCH /admin/accounts/{id}/posting-suspension/lift",
+    "GET /admin/reports/withdrawals"
+   ],
+   "note": " · v10.363 탈퇴 사유 통계(docs/497)"
   },
   {
    "id": "SB-ADM-MBR-020",
@@ -3438,9 +3444,12 @@
     "GET /admin/accounts/{id}/login-lock",
     "DELETE /admin/accounts/{id}/login-lock",
     "POST /admin/accounts/{id}/password-reset-link",
-    "POST /admin/reports/roles"
+    "POST /admin/reports/roles",
+    "GET /admin/accounts/{id}/notes",
+    "POST /admin/accounts/{id}/notes",
+    "POST /admin/signup-blocks"
    ],
-   "note": "v10.333 (docs/464) 권한 주기 · 거두기(SUPER · 사유 필수 · 권한 관리와 같은 API)"
+   "note": "v10.333 (docs/464) 권한 주기 · 거두기(SUPER · 사유 필수 · 권한 관리와 같은 API) · v10.361 운영 메모 · v10.362 이 사람 막기(docs/495 · 496)"
   },
   {
    "id": "SB-ADM-INQ-010",
@@ -3462,10 +3471,11 @@
     "GET /admin/inquiry-templates",
     "POST /admin/inquiry-templates",
     "PATCH /admin/inquiry-templates/{id}",
-    "GET /admin/inquiries/stats"
+    "GET /admin/inquiries/stats",
+    "GET /admin/accounts/{id}/notes"
    ],
    "nav": "SB-ADM-MBR-010",
-   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리 · v10.337 (docs/470) 처리 지표 상자(최근 7 · 30 · 90일 · 처음 답까지 시간 · 기한 안 비율 · 분류별 · 답변 틀별)"
+   "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리 · v10.337 (docs/470) 처리 지표 상자(최근 7 · 30 · 90일 · 처음 답까지 시간 · 기한 안 비율 · 분류별 · 답변 틀별) · v10.361 그 회원 운영 메모(docs/495)"
   },
   {
    "id": "SB-HOM-CMU-010",

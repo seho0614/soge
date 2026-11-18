@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PiiReasonGate } from '../../components/PiiReasonGate';   // v10.359 (D236) 개인정보 열람 사유
+import { MemberNotesBox, WithdrawStatsBox } from './MemberOpsBoxes';   // v10.361 · 363 (D237) 운영 메모 · 탈퇴 통계
 import { api, ApiFailure, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ymd, ymdhm } from '../../lib/act';
@@ -60,6 +61,7 @@ export function Members() {
   return (
     <section>
       <SubTabs tabs={tabs} value={view} onChange={setView} />
+      {view === 'list' && <WithdrawStatsBox />}   {/* v10.363 (docs/497) 탈퇴 사유 통계 */}
       {view === 'list' && <MemberList onOpen={(x) => { setId(x); setView('detail'); }} />}
       {view === 'detail' && <PiiReasonGate what="회원 상세"><MemberDetail id={id} onBack={() => setView('list')} /></PiiReasonGate>}
     </section>
@@ -142,6 +144,7 @@ function MemberDetail({ id, onBack }: { id: string | null; onBack: () => void })
       <div className="ad-nt warn">
         <b>이 화면을 여신 기록이 남습니다.</b> 누가 언제 누구를 보았는지 감사 로그에 기록됩니다 (개인정보 보호법 29조).
       </div>
+      <MemberNotesBox accountId={id} />   {/* v10.361 (D237 · docs/495) 운영 메모 */}
       <div className="ad-tw">
         <table className="tbl" data-member-detail>
           <thead><tr><th style={{ width: 200 }}>항목</th><th>내용</th></tr></thead>

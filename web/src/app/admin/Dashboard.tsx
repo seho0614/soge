@@ -4,7 +4,8 @@ import { won } from '../../lib/format';
 import { ErrorView } from '../../components/ErrorView';
 import { LaunchWatch } from './LaunchWatch';
 import { StaffNotices } from './StaffNotices';   // v10.279 (D210) 관리자 공지
-import { CsGlance } from './CsGlance';   // v10.344 (docs/478) 고객센터 한눈에
+import { CsGlance } from './CsGlance';
+import { TodoBox } from './MemberOpsBoxes';   // v10.364 (docs/498) 오늘 할 일   // v10.344 (docs/478) 고객센터 한눈에
 import { OwnerTodo, ReleaseLog, ServerTrend, StateCheck } from './StateCheck';   // v10.212 (docs/340) 운영 상태 한눈에 · v10.240 (docs/379) 대표 할 일
 
 /* v10.29 — 서버(/admin/summary)가 보내는 이름은 slaBreached · settlementPending 입니다.
@@ -54,6 +55,7 @@ export function Dashboard({ onGo, canGo }: { onGo: (tab: string) => void; canGo?
     if (mal || aff) {
       return (
         <>
+          <TodoBox onGo={onGo} canGo={canGo} />
           <div className="ad-nt info" data-partner-role="">
             <b>{mal && aff ? '안심 · 제휴 파트너 담당 계정입니다.' : mal ? '안심 파트너 담당 계정입니다.' : '제휴 파트너 담당 계정입니다.'}</b>{' '}
             {mal && '안심소개 입점 · 공인중개사 인증 · 자격 심사 · 정액 노출을 처리합니다. '}
@@ -68,6 +70,7 @@ export function Dashboard({ onGo, canGo }: { onGo: (tab: string) => void; canGo?
     const payout = roles.includes('PAYOUT');
     return (
       <>
+        <TodoBox onGo={onGo} canGo={canGo} />
         <div className="ad-nt info">
           {payout
             ? <><b>지급 담당 계정입니다.</b> 확정된 지급과 광고비 입금을 기록합니다.</>
@@ -171,6 +174,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
 
   return (
     <>
+      <TodoBox onGo={onGo} canGo={canGo} />   {/* v10.364 (docs/498) 오늘 할 일 */}
       <StaffNotices />   {/* v10.279 (D210 · docs/408) 관리자 공지 — 등급 「관리자」 · 운영 화면 계정만 */}
       {/* v10.170 (D159) — 사용자 웹 전체 공개(11/1) 뒤 첫 화면 맨 위 */}
       <LaunchWatch />

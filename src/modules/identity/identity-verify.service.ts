@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { assertPersonAllowed } from './signup-block';   // v10.362 (D237)
 import { createHash } from 'crypto';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
@@ -134,6 +135,7 @@ export class IdentityVerifyService {
     }
 
     const [h] = await this.db.query<{ h: string }>(`SELECT encode(hmac($1, fn_enc_key(), 'sha256'), 'hex') AS h`, [r.ci]);
+    await assertPersonAllowed(this.db, h.h);   /* v10.362 (D237 · docs/496) — 가입 차단 목록(사람) */
     const [dup] = await this.db.query<{ n: number }>(
       `SELECT count(DISTINCT account_id)::int AS n FROM identity_verifications
         WHERE ci_hash = $1 AND result = 'SUCCESS' AND account_id <> $2`, [h.h, this.me]);

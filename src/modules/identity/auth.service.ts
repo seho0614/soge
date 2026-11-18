@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../../db/database.service';
 import { PrincipalService } from './principal.service';
 import { AppError, Forbidden, PolicyViolation, NotFound } from '../../core/errors';
+import { assertSignupAllowed } from './signup-block';   // v10.362 (D237) 가입 차단 목록
 import { isStaff, staffSession } from './staff-policy';   // v10.357 (D236) 운영 역할 로그인 유지
 import { AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText } from './auth-throttle';
 import { clientIpRaw, isInternalIp, settingInt } from './abuse-guard';
@@ -98,6 +99,7 @@ export class AuthService {
     if (gate?.open === 'off') {
       throw new PolicyViolation('SIGNUP_CLOSED', '지금은 새 가입을 잠시 받지 않습니다. 잠시 뒤 다시 시도해 주십시오.');
     }
+    await assertSignupAllowed(this.db, input.email, clientIpRaw());   /* v10.362 (D237 · docs/496) — 가입 차단 목록(도메인 · IP 대역) */
     const signupIpKey = isInternalIp(clientIpRaw()) ? null : clientIpKey();
     const signupIpMax = signupIpKey ? await settingInt(this.db, 'abuse.signup_per_ip_day', 20) : 0;
     if (signupIpKey && signupIpMax > 0) {

@@ -41,7 +41,7 @@ export async function auditChainState(db: Q) {
 
 export interface SecurityMonthly {
   month: string; grants: number; revokes: number; settingChanges: number; settingAlerts: number; piiViews: number; piiActors: number; piiNoReason: number;
-  newLogins: number; ipPasses: number; ipLocked: number; critical: number; criticalAcked: number; ackMinutes: number | null; auditRows: number;
+  newLogins: number; ipPasses: number; ipLocked: number; critical: number; criticalAcked: number; ackMinutes: number | null; auditRows: number; withdrawals: number; withdrawTop: string | null; signupBlocked: number;
   chain: { ok: boolean | null; at: string | null; brokenId: string | null }; denied: { installed: boolean; total7: number; top: Array<{ ip: string; n7: number }> };
 }
 
@@ -66,7 +66,10 @@ export async function securityMonthlyStats(db: Q): Promise<SecurityMonthly> {
             (SELECT count(*)::int FROM ops_alerts a, r WHERE a.severity = 'CRITICAL' AND a.acknowledged_at IS NOT NULL AND a.raised_at >= r.f AND a.raised_at < r.t) AS "criticalAcked",
             (SELECT round((avg(extract(epoch FROM a.acknowledged_at - a.raised_at)) / 60)::numeric)::int FROM ops_alerts a, r
               WHERE a.severity = 'CRITICAL' AND a.acknowledged_at IS NOT NULL AND a.raised_at >= r.f AND a.raised_at < r.t) AS "ackMinutes",
-            (SELECT count(*)::int FROM audit.audit_logs l, r WHERE l.occurred_at >= r.f AND l.occurred_at < r.t) AS "auditRows"`);
+            (SELECT count(*)::int FROM audit.audit_logs l, r WHERE l.occurred_at >= r.f AND l.occurred_at < r.t) AS "auditRows",
+            (SELECT count(*)::int FROM account_withdrawals w, r WHERE w.created_at >= r.f AND w.created_at < r.t) AS withdrawals,
+            (SELECT w.reason_code FROM account_withdrawals w, r WHERE w.created_at >= r.f AND w.created_at < r.t GROUP BY w.reason_code ORDER BY count(*) DESC, w.reason_code LIMIT 1) AS "withdrawTop",
+            (SELECT coalesce(sum(h.n), 0)::int FROM signup_block_hits h, r WHERE h.day >= (r.f AT TIME ZONE 'Asia/Seoul')::date AND h.day < (r.t AT TIME ZONE 'Asia/Seoul')::date) AS "signupBlocked"`);
   const [c] = await db.query<{ ok: boolean | null; at: string | null; broken_id: string | null }>(
     `SELECT ok, checked_at AS at, broken_id::text AS broken_id FROM audit.chain_checks ORDER BY id DESC LIMIT 1`);
   const d = nginxDenied();
@@ -74,12 +77,13 @@ export async function securityMonthlyStats(db: Q): Promise<SecurityMonthly> {
   return {
     month: String(s?.month ?? ''), grants: num('grants'), revokes: num('revokes'), settingChanges: num('settingChanges'), settingAlerts: num('settingAlerts'),
     piiViews: num('piiViews'), piiActors: num('piiActors'), piiNoReason: num('piiNoReason'), newLogins: num('newLogins'), ipPasses: num('ipPasses'), ipLocked: num('ipLocked'),
-    critical: num('critical'), criticalAcked: num('criticalAcked'), ackMinutes: s?.ackMinutes == null ? null : Number(s.ackMinutes), auditRows: num('auditRows'),
+    critical: num('critical'), criticalAcked: num('criticalAcked'), ackMinutes: s?.ackMinutes == null ? null : Number(s.ackMinutes), auditRows: num('auditRows'), withdrawals: num('withdrawals'), withdrawTop: s?.withdrawTop == null ? null : String(s.withdrawTop), signupBlocked: num('signupBlocked'),
     chain: { ok: c ? !!c.ok : null, at: c?.at ?? null, brokenId: c?.broken_id ?? null },
     denied: { installed: d.installed, total7: d.total7, top: d.rows.slice(0, 3).map((r) => ({ ip: maskIp(r.ip), n7: r.n7 })) },
   };
 }
 
+const WD_KO: Record<string, string> = { LOW_USE: '자주 안 씀', NOT_USEFUL: '도움이 안 됨', OTHER_SERVICE: '다른 서비스', PRIVACY: '개인정보 걱정', BAD_EXPERIENCE: '나쁜 경험', OTHER: '기타' };
 const maskIp = (ip: string) => (ip.includes('.') ? ip.split('.').slice(0, 2).join('.') + '.*.*' : ip.split(':').slice(0, 2).join(':') + ':…');
 
 export function securityMonthlyText(s: SecurityMonthly): string {
@@ -91,6 +95,7 @@ export function securityMonthlyText(s: SecurityMonthly): string {
     `운영자 낯선 로그인 ${s.newLogins} · 접속 인증 통과 ${s.ipPasses} · 잠김 ${s.ipLocked}`,
     `막힌 접속(최근 7일): ${s.denied.installed ? `${s.denied.total7}번${s.denied.top.length ? ` — ${s.denied.top.map((t) => `${t.ip} ${t.n7}`).join(' · ')}` : ''}` : '기록 없음(감시 서비스 설치 전)'}`,
     `급한 알림 ${s.critical} · 확인 ${s.criticalAcked} · 확인까지 평균 ${s.ackMinutes == null ? '—' : `${s.ackMinutes}분`}`,
+    `회원 탈퇴 ${s.withdrawals}${s.withdrawTop ? ` · 사유 1위 ${WD_KO[s.withdrawTop] ?? s.withdrawTop}` : ''} · 가입 차단에 막힘 ${s.signupBlocked}`,
     `감사 기록 ${s.auditRows}줄 · 위변조 확인 ${s.chain.ok == null ? '아직 안 함' : s.chain.ok ? '온전' : `끊김(줄 ${s.chain.brokenId})`}`,
     '이 알림 끄기: 설정 ops.security_monthly = off',
   ].join('\n');
