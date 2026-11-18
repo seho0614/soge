@@ -128,6 +128,7 @@ if API and DB:
         if ADMIN_WEB:
             def run(b, seen, perr):
                 pg = b.new_page(viewport={'width': 1440, 'height': 900}, accept_downloads=True); pg.on('pageerror', lambda e: perr.append(str(e)[:120]))
+                pg.on('dialog', lambda d: d.accept('시험 1329 내려받기') if d.type == 'prompt' else d.accept())   # v10.366 (D238) 내려받기 사유 창
                 pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                 pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
                 pg.goto(ADMIN_WEB + '/#/mainops/content', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
