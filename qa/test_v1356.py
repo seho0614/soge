@@ -127,6 +127,8 @@ if API and DB:
         ok('② DB — 새 감사 줄 둘에 사슬(순번 · 앞 줄 연결 · 지문 64자) · 둘째는 첫째에 이어짐 · 사슬 칸 고치기 막힘',
            len(rows) == 2 and r1[3] == '64' and r2[3] == '64' and r2[2] == r1[0] and int(r2[1]) > int(r1[1]) and '!' in up and 'append-only' in up, f'{rows} · {up[-80:]}')
         vf = lambda: psql(f"SELECT ok || '|' || coalesce(broken_id::text, '-') || '|' || checked FROM audit.fn_audit_chain_verify({base if base != '0' else 'NULL'}::bigint, {repr(bh) if bh else 'NULL'}::text)")
+        vf0 = vf
+        vf = lambda: vf0().replace('true|', 't|', 1).replace('false|', 'f|', 1)   # psql 이 boolean || 를 true/false 로 냄
         v1 = vf()
         orig = psql(f"SELECT after_data::text FROM audit.audit_logs WHERE id = {r2[0]}")
         psql(f"""SET session_replication_role = replica; UPDATE audit.audit_logs SET after_data = '{{"n": 99}}'::jsonb WHERE id = {r2[0]}""")

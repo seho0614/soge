@@ -78,6 +78,7 @@ def until(cond, sec=20, every=0.5):
 def new_ctx(b, w=1280, h=900):
     c = b.new_context(viewport={'width': w, 'height': h}, user_agent=UA)
     c.set_default_timeout(20000)
+    c.add_init_script("try{sessionStorage.setItem('sgb_pii_reason',JSON.stringify({code:'REVIEW',until:Date.now()+4*3600000}))}catch(e){}")   # v10.359 운영 화면 개인정보 열람 사유를 미리 고름(사업자 인증 탭)
     # 이 PC 안의 주소만 — 바깥 주소(다음 우편번호 스크립트 등)로는 요청을 보내지 않습니다
     c.route('**/*', lambda r: r.continue_() if re.match(r'(https?|wss?)://(localhost|127\.0\.0\.1)[:/]', r.request.url) or r.request.url.startswith(('data:', 'blob:', 'about:')) else r.abort())
     return c
