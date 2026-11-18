@@ -170,6 +170,7 @@ if API and DB:
         try:
             with sync_playwright() as p:
                 b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1400, 'height': 1000})
+                pg.add_init_script("try{sessionStorage.setItem('sgb_pii_reason',JSON.stringify({code:'REVIEW',until:Date.now()+4*3600000}))}catch(e){}")   # v10.359 개인정보 열람 사유를 미리 고름(창은 test_v1359 가 시험)
                 pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
                 pg.goto(SITE + '/login'); pg.fill('input[name=email]', 'buyer@x.com'); pg.fill('input[name=password]', PW)
                 pg.click('form.auth button'); pg.wait_for_timeout(2000)
@@ -200,6 +201,7 @@ if API and DB:
         try:
             with sync_playwright() as p:
                 b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1500, 'height': 1000})
+                pg.add_init_script("try{sessionStorage.setItem('sgb_pii_reason',JSON.stringify({code:'REVIEW',until:Date.now()+4*3600000}))}catch(e){}")   # v10.359 개인정보 열람 사유를 미리 고름(창은 test_v1359 가 시험)
                 pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
                 pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                 pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
