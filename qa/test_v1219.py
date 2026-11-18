@@ -218,7 +218,8 @@ if API and DB:
            due == want and int(purged or 0) >= 1 and left == '0|1', f'{due} · {want} · {purged} · {left}')
 
         mon = psql("SELECT to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM')")
-        rp = call('GET', f'/admin/payouts/point-report?month={mon}', t=YT)
+        tk = __import__('export_ticket').get(YT, 'POINT_REPORT', ST)   # v10.366 (D238) 내려받기 승인 — 지급 담당 요청 → SUPER 승인
+        rp = call('GET', f'/admin/payouts/point-report?month={mon}&ticket={tk}', t=YT)
         rp_admin = call('GET', f'/admin/payouts/point-report?month={mon}', t=OT)
         rp_bad = call('GET', '/admin/payouts/point-report?month=2026-13', t=YT)
         line = next((l for l in (rp.get('csv') or '').split('\r\n') if me_email in l), '')

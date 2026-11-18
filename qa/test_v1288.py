@@ -131,7 +131,8 @@ if API and DB:
            f"{r} · {it} · {(dt.get('after') or {})} · {s2.get('from')} {s2.get('total')} · {b1.get('code')} · {b2.get('code')} · {nf.get('_err')} · {rv.get('_err')}")
 
         n0 = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'AUDIT_LOG_EXPORT'")
-        ex = call('GET', f'/admin/audit/export?action=SITE_SETTING&from={today}&to={today}', None, TS)
+        tk = __import__('export_ticket').get(TS, 'AUDIT_EXPORT')   # v10.366 (D238) 내려받기 승인(SUPER 혼자면 스스로)
+        ex = call('GET', f'/admin/audit/export?action=SITE_SETTING&from={today}&to={today}&ticket={tk}', None, TS)
         n1 = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'AUDIT_LOG_EXPORT'")
         lastx = psql("SELECT after_data->>'action' || '|' || (after_data->>'rows') FROM audit.audit_logs WHERE action = 'AUDIT_LOG_EXPORT' ORDER BY id DESC LIMIT 1")
         ea = call('GET', '/admin/audit/export', None, TA)

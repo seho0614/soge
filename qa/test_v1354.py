@@ -117,8 +117,8 @@ if API and DB:
         lines = (m.get('text') or '').split('\n')
         prev = (datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).strftime('%Y-%m')
         fa = call('GET', '/admin/security/monthly', None, TA); fb = call('GET', '/admin/security/monthly', None, TB)
-        ok('② API — 미리 보기 글 10줄(제목 · 권한 · 설정 · 개인정보 · 로그인 · 막힌 접속 · 급한 알림 · 탈퇴 · 가입 차단(v10.363) · 감사 기록 · 끄기) · 지난달 · ADMIN · 회원 403',
-           len(lines) == 10 and lines[0] == f'[소개뱅크] 월간 보안 보고 {st.get("month")}' and st.get('month') in (prev, datetime.date.today().strftime('%Y-%m'))
+        ok('② API — 미리 보기 글 11줄(제목 · 권한 · 설정 · 개인정보 · 로그인 · 막힌 접속 · 급한 알림 · 탈퇴 · 가입 차단(v10.363) · 내려받기 · 복원 시험(v10.366) · 감사 기록 · 끄기) · 지난달 · ADMIN · 회원 403',
+           len(lines) == 11 and lines[0] == f'[소개뱅크] 월간 보안 보고 {st.get("month")}' and st.get('month') in (prev, datetime.date.today().strftime('%Y-%m'))
            and isinstance(st.get('grants'), int) and 'ops.security_monthly' in lines[-1] and fa.get('_err') == 403 and fb.get('_err') == 403,
            f"{lines[:1]} · {st.get('month')} · {fa.get('_err')} {fb.get('_err')}")
         mon = st.get('month') or ''

@@ -141,9 +141,10 @@ if API and DB:
            f"{an.get('reads')} · {af.get('reads')} · {up[-60:]} · {de[-40:]} · {again} · {l1.get('readsFrozenAt')}")
 
         # ③ CSV
-        cv = call('GET', f"/admin/health/rate-schedules/{sch['S1']}/reads/export?view=frozen", None, TS)
+        tk = __import__('export_ticket').get(TS, 'RATE_READS')   # v10.366 (D238) 내려받기 승인 — 409 는 번호를 쓰지 않으므로 먼저
+        nf = call('GET', f"/admin/health/rate-schedules/{sch['S3']}/reads/export?view=frozen&ticket={tk}", None, TS)
+        cv = call('GET', f"/admin/health/rate-schedules/{sch['S1']}/reads/export?view=frozen&ticket={tk}", None, TS)
         au = psql(f"SELECT coalesce(max(after_data->>'view'), '') || '|' || count(*) FROM audit.audit_logs WHERE action = 'HLT_RATE_READS_EXPORT' AND target_id = '{sch['S1']}'")
-        nf = call('GET', f"/admin/health/rate-schedules/{sch['S3']}/reads/export?view=frozen", None, TS)
         lines = (cv.get('csv') or '').lstrip('﻿').split('\r\n')
         ok('③ CSV view=frozen — 「기준,시행 때 기록(고정 · …)」 · 「시행 전 읽음 / 대상,1 / 1」 · 열 「시행 때 대상 … 시행 전 읽음」 · A 줄 끝 「예」 · B \'= · -frozen · 감사 view=frozen · 고정 안 된 예약 409',
            any(l.startswith('기준,시행 때 기록(고정 · ') for l in lines) and '시행 전 읽음 / 대상,1 / 1' in lines

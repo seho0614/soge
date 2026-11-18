@@ -110,14 +110,15 @@ if API and DB:
         nid = psql(f"INSERT INTO notices (title, body, is_pinned, published_at, grades) VALUES ('{T}', 'CSV 본문', false, now(), ARRAY['MEMBER']) RETURNING id").splitlines()[0]
         psql(f"INSERT INTO notice_reads (notice_id, account_id, bulk, reads) VALUES ('{nid}', '{acc}', false, 2), ('{nid}', '{oth[0]}', false, 1), ('{nid}', '{oth[1]}', true, 1)")
         aud = lambda: psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'NOTICE_READS_EXPORT' AND target_id = '{nid}'")
-        js = call('GET', f'/admin/notices/{nid}/reads/export', None, TA)
+        tk = __import__('export_ticket').get(TA, 'NOTICE_READS')   # v10.366 (D238) 내려받기 승인 — 404 는 번호를 쓰지 않으므로 먼저
+        nf = call('GET', f'/admin/notices/00000000-0000-4000-8000-000000000000/reads/export?ticket={tk}', None, TA)
+        js = call('GET', f'/admin/notices/{nid}/reads/export?ticket={tk}', None, TA)
         csv = js.get('csv', '') if isinstance(js, dict) else ''
         lines = csv.lstrip('\ufeff').split('\r\n')
         ci = next((i for i, l in enumerate(lines) if l.startswith('회원 번호(앞 8자리)')), -1)
         body = [l for l in lines[ci + 1:] if l] if ci >= 0 else []
         bl = next((l for l in body if l.startswith(acc[:8])), '')
         a1 = aud()
-        nf = call('GET', '/admin/notices/00000000-0000-4000-8000-000000000000/reads/export', None, TA)
         fb = call('GET', f'/admin/notices/{nid}/reads/export', None, TB)
         ok('② API — 파일 이름 · BOM · 머리(제목 · 읽음 2 / 대상) · 등급별 표 · 회원 3줄 · 「모두 읽음」 줄 맨 뒤 · 내 줄 횟수 2 · 이름 가림 · 감사 1 · 없는 공지 404 · 회원 403',
            str(js.get('filename', '')).startswith('notice-reads-') and csv.startswith('\ufeff공지 읽음 기록') and T in lines[0] and any(l.startswith('읽음 / 대상,2 / ') for l in lines)

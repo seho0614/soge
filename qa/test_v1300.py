@@ -128,7 +128,8 @@ if API and DB:
 
         # ③ CSV
         au0 = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'HLT_RATE_READS_EXPORT' AND target_id = '{sch}'")
-        cv = call('GET', f'/admin/health/rate-schedules/{sch}/reads/export', None, TS)
+        tk = __import__('export_ticket').get(TS, 'RATE_READS')   # v10.366 (D238) 내려받기 승인
+        cv = call('GET', f'/admin/health/rate-schedules/{sch}/reads/export?ticket={tk}', None, TS)
         au1 = psql(f"SELECT count(*) || '|' || coalesce(max(after_data->>'rows'), '') || '|' || coalesce(max(after_data->>'read'), '') FROM audit.audit_logs WHERE action = 'HLT_RATE_READS_EXPORT' AND target_id = '{sch}'")
         na = call('GET', f'/admin/health/rate-schedules/{sch}/reads/export', None, TA)
         csv = cv.get('csv') or ''
