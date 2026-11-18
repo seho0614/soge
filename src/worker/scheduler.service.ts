@@ -32,6 +32,7 @@ import { measureServerHealth } from '../common/server-health';
 import { maskMail } from '../common/mail/mail-admin.service';   // v10.372 (D239)
 import { applyDueSettingSchedules } from '../modules/admin/ops-plan.controller';   // v10.377 (D241)
 import { maintNotice, withdrawGraceMail } from '../modules/admin/member-notice-jobs';   // v10.378 · 379 (D241)
+import { runJournal } from '../modules/acct/journal';   // v10.382 (D242)
 
 /**
  * 배치 실행기.
@@ -48,7 +49,8 @@ export type JobName =
   | 'hlt_auto_confirm' | 'hlt_rank' | 'hlt_settle_weekly' | 'launch_watch' | 'launch_digest' | 'lead_cash_auto' | 'directory_expiry'
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
   | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly'
-  | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice';   // v10.377 ~ 379 (D241)
+  | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice'   // v10.377 ~ 379 (D241)
+  | 'acct_journal';   // v10.382 (D242)
 
 export interface JobResult {
   job: JobName;
@@ -694,6 +696,15 @@ export class SchedulerService {
             `설정 예약 ${r.failed.length}건을 바꾸지 못했습니다 — ${r.failed.map((f) => `${f.key}: ${f.why}`).join(' · ')}`.slice(0, 300) + '(정책 › 전체 설정 › 예약 변경)', { failed: r.failed });
         }
         affected = r.applied.length; detail = r;
+        break;
+      }
+
+      /* v10.382 (D242 · docs/518) — 자동 전표(아직 없는 돈 흐름만 · 같은 근거 한 번) · 실패가 있으면 ACCT_JOURNAL_FAIL(WARN · 하나만) */
+      case 'acct_journal': {
+        const r = await runJournal(this.db);
+        if (r.failedCount) await this.alertOnce('ACCT_JOURNAL_FAIL', 'WARN', `자동 전표 ${r.failedCount}건을 만들지 못했습니다 — ${r.failed.slice(0, 3).map((f) => `${f.source}: ${f.why}`).join(' · ')}`.slice(0, 280) + '(회계 › 전표)', r);
+        else await this.resolveAlert('ACCT_JOURNAL_FAIL', '자동 전표 실패 없음');
+        affected = r.total; detail = r;
         break;
       }
 

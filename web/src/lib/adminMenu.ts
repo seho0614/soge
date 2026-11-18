@@ -69,6 +69,10 @@ export const TABS = [
   ['ops-board', '운영자 게시판'],   /* v10.286 (D213) */
   ['my-mfa', '내 2단계 인증'],   /* v10.180 (D169) — 운영 역할 모두 */
   ['my-password', '내 비밀번호'],   /* v10.369 (docs/504) — 운영 역할 모두(회원 역할 없어도) */
+  ['acct-journal', '전표'],   /* v10.382 (D242 · docs/518) 회계 — 자동 전표 · 월 마감 */
+  ['acct-tax', '신고 자료'],   /* v10.383 (docs/519) 부가세 · 원천세 · 세금계산서 */
+  ['acct-report', '경영 보고서'],   /* v10.384 (docs/520) */
+  ['acct-accounts', '계정 · 규칙'],   /* v10.381 (docs/517) 계정 코드 · 전표 규칙 · 상품 과세 */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -92,6 +96,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
+  { key: 'admacc',  label: '회계',      tabs: ['acct-journal', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -183,6 +188,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'privacy-requests': { title: '개인정보 권리 요청', sub: '회원의 열람 · 정정 · 삭제 · 처리정지 요청을 기한 안에 처리하고 결과를 남깁니다.', screen: 'SB-ADM-PRQ-010' },
   'ops-board':   { title: '운영자 게시판', sub: '하루 요약 · 급한 알림 · 대표 할 일 · 시험 메시지가 텔레그램 · 슬랙 결과와 함께 저절로 올라옵니다(꺼져 있어도). 운영자끼리 글 · 댓글 · 「확인함」. 운영 화면 계정만 봅니다.', screen: 'SB-ADM-OBD-010' },
   'server-errors': { title: '최근 서버 오류', sub: 'API 가 지난 1시간 보낸 서버 오류(5xx) 최근 50건 — 요청 내용 · 개인정보는 남기지 않습니다.', screen: 'SB-ADM-ERR-010' },
+  'acct-journal':  { title: '전표', sub: '소개뱅크를 지난 돈 흐름으로 매시간 만든 전표입니다. 달마다 마감하고 회계 프로그램에 올릴 CSV 를 받습니다(내려받기 승인).', screen: 'SB-ADM-ACC-010' },
+  'acct-tax':      { title: '신고 자료', sub: '부가세(분기) · 원천세(월) · 세금계산서 발행 대상을 전표와 원래 자료에서 모았습니다. 신고서 칸 맞춤은 세무사 확인.', screen: 'SB-ADM-ACC-020' },
+  'acct-report':   { title: '경영 보고서', sub: '달마다 매출(공급가) · 비용 · 이익 · 현금 들고 남 — 시스템을 지난 돈만입니다(급여 · 임대료 등은 회계 프로그램).', screen: 'SB-ADM-ACC-030' },
+  'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드와 돈 흐름별 전표 모양(초안 · 세무사 확인), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
   'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록. 허용 IP 는 Nginx 반영 스크립트로 운영 화면 접속 허용에도 씁니다(SUPER).', screen: 'SB-ADM-SIP-010' },

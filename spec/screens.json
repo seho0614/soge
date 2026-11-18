@@ -5498,6 +5498,87 @@
     "POST /me/sessions/{id}/revoke"
    ],
    "note": "2026-11-18 v10.369 (docs/504) — 운영자 비밀번호 바꾸기(회원 역할 없어도 · 12자 · 최근 3개 다시 쓰기 금지 · 다른 기기 로그아웃) · v10.380 (D241 · docs/516) 내 로그인 기기 · 기기별 로그아웃"
+  },
+  {
+   "id": "SB-ADM-ACC-010",
+   "name": "회계 전표",
+   "group": "ADM",
+   "url": "/admin/acct-journal",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/journal",
+    "POST /admin/acct/journal/run",
+    "GET /admin/acct/journal/export",
+    "GET /admin/acct/closings",
+    "POST /admin/acct/closings",
+    "POST /admin/export-requests"
+   ],
+   "note": "2026-11-19 v10.382 (D242 · docs/518) 자동 전표(돈 흐름 13 · 같은 근거 한 번) · 월 마감(SUPER · 쌓기만) · 전표 CSV(내려받기 승인 ACCT_JOURNAL)"
+  },
+  {
+   "id": "SB-ADM-ACC-020",
+   "name": "회계 신고 자료",
+   "group": "ADM",
+   "url": "/admin/acct-tax",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/tax/vat",
+    "GET /admin/acct/tax/withholding",
+    "GET /admin/acct/tax/invoices",
+    "GET /admin/acct/tax/export",
+    "POST /admin/export-requests"
+   ],
+   "note": "2026-11-19 v10.383 (D242 · docs/519) 부가세 분기 · 원천세 월 · 세금계산서 발행 대상 · 신고 자료 CSV(내려받기 승인 ACCT_TAX)"
+  },
+  {
+   "id": "SB-ADM-ACC-030",
+   "name": "회계 경영 보고서",
+   "group": "ADM",
+   "url": "/admin/acct-report",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/report"
+   ],
+   "note": "2026-11-19 v10.384 (D242 · docs/520) 월별 매출 · 비용 · 이익 · 현금 · 지난달 대비"
+  },
+  {
+   "id": "SB-ADM-ACC-040",
+   "name": "회계 계정 · 규칙",
+   "group": "ADM",
+   "url": "/admin/acct-accounts",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/accounts",
+    "PATCH /admin/acct/accounts/{role}",
+    "GET /admin/acct/products",
+    "PATCH /admin/acct/products/{code}/tax-type"
+   ],
+   "note": "2026-11-19 v10.381 · 383 (D242 · docs/517 · 519) 계정 코드(SUPER) · 전표 규칙(초안) · 직판 상품 과세 · 면세(ADMIN · SUPER)"
   }
  ],
  "deferred": [
