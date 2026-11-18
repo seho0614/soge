@@ -127,7 +127,7 @@ if API and DB:
     TS, TB = login('admin@x.com'), login('buyer@x.com')
     em, adm = mk_staff('1358')
     consent_ok.agree(em, PW); TA = login(em)
-    buyer = psql("SELECT id FROM accounts WHERE email = 'buyer@x.com'")
+    _em2, buyer = mk_staff('1358m', None)
     g0 = call('GET', '/admin/oncall', None, TS)
     today = g0.get('today'); prev = next((r.get('accountId') for r in (g0.get('rows') or []) if r.get('dow') == today), None)
     try:
