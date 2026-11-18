@@ -1282,9 +1282,11 @@
     "GET /admin/launch-watch/releases/files",
     "GET /admin/launch-watch/releases/file",
     "GET /admin/launch-watch/server-trend",
-    "PATCH /admin/site-settings"
+    "PATCH /admin/site-settings",
+    "GET /admin/cs-glance"
    ],
-   "nav": "SB-HOM-MAIN-010"
+   "nav": "SB-HOM-MAIN-010",
+   "note": " · v10.344 고객센터 한눈에(docs/478)"
   },
   {
    "id": "SB-ADM-REV-010",
@@ -1848,10 +1850,11 @@
     "GET /admin/faqs",
     "POST /admin/faqs",
     "PATCH /admin/faqs/{id}",
-    "POST /admin/faqs/misses/done"
+    "POST /admin/faqs/misses/done",
+    "POST /admin/faqs/misses/attach"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE. · v10.334 (D226) 최근 30일 펼침 · 도움 됨 / 안 됨 · 많이 찾는 질문 후보 · 질문 초안 14개(숨김) · v10.336 (D228) 못 찾은 낱말 30일 · 이 낱말로 새 질문 · 다룸(감사 FAQ_MISS_DONE)"
+   "note": "2026-11-17 v10.332 D224 — 고객센터 · 이용안내 · 챗봇 질문 글(faqs) 등록 · 고치기 · 숨기기 · 순서 · 분야(topic) · 많이 찾는 질문(is_top 10개). 지우기 없음 · 감사 FAQ_CREATE · FAQ_UPDATE. · v10.334 (D226) 최근 30일 펼침 · 도움 됨 / 안 됨 · 많이 찾는 질문 후보 · 질문 초안 14개(숨김) · v10.336 (D228) 못 찾은 낱말 30일 · 이 낱말로 새 질문 · 다룸(감사 FAQ_MISS_DONE) · v10.345 미리보기 · v10.346 기존 질문에 더하기(docs/479 · 480)"
   },
   {
    "id": "SB-AIS-PRF-010",
@@ -5392,9 +5395,29 @@
     "GUEST"
    ],
    "gates": [],
-   "apis": [],
+   "apis": [
+    "GET /guide/flows"
+   ],
    "nav": "SB-HOM-ETC-010",
-   "note": "2026-11-17 v10.343 (docs/476) 회원 · 파트너 이용 흐름 일곱 가지(가입 · 소개비 받기 · 상담 신청 · 소개몰 구매 · 반품 · 고객센터 · 상담 업체 입점 · 제휴) — 단계 · 바로 가기 · 한국어 · 영어 사전(policy.flows). 이용안내에서 링크"
+   "note": "2026-11-17 v10.343 (docs/476) 회원 · 파트너 이용 흐름 일곱 가지(가입 · 소개비 받기 · 상담 신청 · 소개몰 구매 · 반품 · 고객센터 · 상담 업체 입점 · 제휴) — 단계 · 바로 가기 · 한국어 · 영어 사전(policy.flows). 이용안내에서 링크 · v10.347 D233 글은 운영 화면 관 관리 › 이용 흐름에서 고친 DB 판(못 읽으면 사전)(docs/481)"
+  },
+  {
+   "id": "SB-ADM-SIT-120",
+   "name": "이용 흐름",
+   "group": "ADM",
+   "url": "/admin/guide-flows",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/guide-flows",
+    "POST /admin/guide-flows/{code}"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-18 v10.347 D233 (docs/481) 사용자 웹 /guide/flows 흐름 글(한 · 영 · 바로 가기 · 보임) 고치기. 고치기 SUPER — 새 판(guide_flows 쌓기만 · 감사 GUIDE_FLOW_SAVE)"
   }
  ],
  "deferred": [

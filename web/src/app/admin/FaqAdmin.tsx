@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { siteHref } from '../../lib/siteUrl';
+import { FaqPreview, type PreviewFaq } from './FaqPreview';   // v10.345 (docs/479) 미리보기
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 
@@ -41,6 +42,8 @@ export function FaqAdmin() {
   const [edit, setEdit] = useState<{ id: string | null; f: Form } | null>(null);
   const [topic, setTopic] = useState('');
   const [word, setWord] = useState('');
+  const [pv, setPv] = useState<Form | 'edit' | null>(null);
+  const [pick, setPick] = useState<Record<string, string>>({});   /* v10.346 못 찾은 낱말마다 고른 질문 */   /* v10.345 미리보기 — 줄(Form) 또는 고치는 칸('edit') */
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const { rows, topics, channels, topMax, top, candidates = [], misses = [] } = q.data;
@@ -67,6 +70,14 @@ export function FaqAdmin() {
   const missDone = (m: Miss) => {
     if (!confirm(`「${m.word}」을(를) 다룸으로 표시합니다. 다시 찾는 사람이 있으면 목록에 다시 나옵니다.`)) return;
     void a.run(`m-${m.word}`, () => api('/admin/faqs/misses/done', { method: 'POST', body: JSON.stringify({ word: m.word }) }), q.reload);
+  };
+  const toPreview = (f: Form): PreviewFaq => ({ ...f, keywords: f.keywords.split(',').map((x) => x.trim()).filter(Boolean) });
+  const pvForm = pv === 'edit' ? edit?.f ?? null : pv;
+  /* v10.346 (docs/480) — 못 찾은 낱말을 있는 질문의 찾기 낱말에 붙이고 다룸 */
+  const missAttach = (m: Miss) => {
+    const id = pick[m.word]; const r = rows.find((x) => x.id === id);
+    if (!r || !confirm(`「${m.word}」을(를) 「${r.question}」의 찾기 낱말에 더하고 다룸으로 표시합니다.`)) return;
+    void a.run(`m-${m.word}`, () => api('/admin/faqs/misses/attach', { method: 'POST', body: JSON.stringify({ word: m.word, faqId: id }) }), q.reload);
   };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setEdit((e) => (e ? { ...e, f: { ...e.f, [k]: v } } : e));
 
@@ -103,6 +114,11 @@ export function FaqAdmin() {
                 <td>
                   <button className="btn-sm" onClick={() => fromMiss(m)} data-faq-miss-new="">이 낱말로 새 질문</button>{' '}
                   <button className="btn-sm ghost" onClick={() => missDone(m)} disabled={a.busy === `m-${m.word}`} data-faq-miss-done="">다룸</button>
+                  <br /><select name="faq-miss-pick" value={pick[m.word] ?? ''} onChange={(e) => setPick((p) => ({ ...p, [m.word]: e.target.value }))} data-faq-miss-pick={m.word} style={{ maxWidth: 260 }}>
+                    <option value="">있는 질문 고르기</option>
+                    {rows.filter((r) => r.isActive).map((r) => <option key={r.id} value={r.id}>{r.question.slice(0, 40)}</option>)}
+                  </select>{' '}
+                  <button className="btn-sm" onClick={() => missAttach(m)} disabled={!pick[m.word] || a.busy === `m-${m.word}`} data-faq-miss-attach="">기존 질문에 더하기</button>
                 </td>
               </tr>
             ))}
@@ -142,10 +158,13 @@ export function FaqAdmin() {
           </p>
           <p>
             <button className="btn-ok" disabled={a.busy === 'save'} onClick={save} data-faq-save="">저장</button>{' '}
+            <button className="btn-plain btn-sm" onClick={() => setPv('edit')} data-faq-preview-edit="">미리보기</button>{' '}
             <button className="btn-plain btn-sm" onClick={() => setEdit(null)}>취소</button>
           </p>
         </div>
       )}
+
+      {pvForm && <FaqPreview f={toPreview(pvForm)} onClose={() => setPv(null)} />}
 
       <table className="tbl" data-faq-rows={shown.length}>
         <thead><tr><th>순서</th><th>분야</th><th>질문</th><th>나오는 곳</th><th>상태</th><th title="최근 30일">펼침 · 도움 됨 / 안 됨</th><th>고친 때</th><th></th></tr></thead>
@@ -161,6 +180,7 @@ export function FaqAdmin() {
               <td className="muted">{ymdhm(r.updatedAt)}{r.by ? ` · ${r.by}` : ''}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
                 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: r.id, f: toForm(r) })} data-faq-edit={r.id}>고치기</button>{' '}
+                <button className="btn-plain btn-sm" onClick={() => setPv(toForm(r))} data-faq-preview-row={r.id}>미리보기</button>{' '}
                 {r.isActive && <button className="btn-plain btn-sm" disabled={a.busy === `p-${r.id}`} data-faq-toggle-top={r.id}
                   onClick={() => patch(r, { isTop: !r.isTop }, r.isTop ? '「많이 찾는 질문」에서 내립니다.' : '「많이 찾는 질문」에 올립니다.')}>{r.isTop ? 'TOP 내리기' : 'TOP 올리기'}</button>}{' '}
                 <button className="btn-plain btn-sm" disabled={a.busy === `p-${r.id}`} data-faq-toggle-active={r.id}

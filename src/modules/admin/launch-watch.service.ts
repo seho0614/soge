@@ -104,6 +104,23 @@ export class LaunchWatchService {
     return `1:1 문의 답변 전 ${q.open} · 기한 넘김 ${q.overdue}${q.overdue > 0 ? '(운영 화면 › 회원 › 1:1 문의)' : ''} · 어제 접수 ${q.yday}`;
   }
 
+  /** v10.344 (docs/478) — 하루 요약 「리드관 꺼짐」 또는 「리드관 어제 신청 n · 받을 업체 없음 m · 받을 업체 0곳 업종 k」 */
+  private async leadDigestLine(): Promise<string> {
+    const [l] = await this.db.query<{ active: boolean; yday: number; noPartner: number; empty: number }>(
+      `SELECT coalesce((SELECT is_active FROM gwans WHERE code = 'LED'), false) AS active,
+              (SELECT count(*)::int FROM consult_requests r JOIN categories c ON c.id = r.category_id
+                WHERE c.gwan_code = 'MAL' AND c.axis = 'CONSULT' AND r.verified_at IS NOT NULL
+                  AND (r.created_at AT TIME ZONE 'Asia/Seoul')::date = (now() AT TIME ZONE 'Asia/Seoul')::date - 1) AS yday,
+              (SELECT count(*)::int FROM consult_requests r JOIN categories c ON c.id = r.category_id
+                WHERE c.gwan_code = 'MAL' AND c.axis = 'CONSULT' AND r.state = 'NO_PARTNER'
+                  AND (r.created_at AT TIME ZONE 'Asia/Seoul')::date = (now() AT TIME ZONE 'Asia/Seoul')::date - 1) AS "noPartner",
+              (SELECT count(*)::int FROM categories c
+                WHERE c.gwan_code = 'MAL' AND c.axis = 'CONSULT' AND c.status = 'APPROVED' AND c.consult_mode IS DISTINCT FROM 'LISTING_FEE'
+                  AND NOT EXISTS (SELECT 1 FROM v_consult_eligible_partner e WHERE e.category_id = c.id)) AS empty`);
+    if (!l?.active) return '리드관 꺼짐';
+    return `리드관 어제 신청 ${l.yday} · 받을 업체 없음 ${l.noPartner} · 받을 업체 0곳 업종 ${l.empty}${l.empty > 0 || l.noPartner > 0 ? '(운영 화면 › 파트너사 › 파트너 › 리드 현황)' : ''}`;
+  }
+
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly channels: AlertChannelsService,
               private readonly todo: OwnerTodoService, private readonly releases: ReleaseLogService,
               private readonly trend: ServerTrendService) {}
@@ -196,6 +213,7 @@ export class LaunchWatchService {
       await this.trend.digestLine().catch(() => '디스크 추세 — 읽지 못함'),   // v10.248 (D203 · docs/386)
       await this.serverErrorDigestLine().catch(() => '어제 서버 오류 — 읽지 못함'),   // v10.250 (D204 · docs/387)
       await this.inquiryDigestLine().catch(() => '1:1 문의 — 읽지 못함'),   // v10.337 (docs/470)
+      await this.leadDigestLine().catch(() => '리드관 — 읽지 못함'),   // v10.344 (docs/478)
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');

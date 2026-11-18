@@ -41,6 +41,7 @@ import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { FaqAdmin } from './app/admin/FaqAdmin';   // v10.332 (D224)
 import { OpsGuide } from './app/admin/OpsGuide';   // v10.339 (D229)
+import { GuideFlows } from './app/admin/GuideFlows';   // v10.347 (D233)
 import { InquiryDesk } from './app/admin/InquiryDesk';   // v10.333 (D225)
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
@@ -107,6 +108,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
+  'guide-flows': ['ADMIN', 'SUPER'],   /* v10.347 (D233) 이용 흐름 — 읽기 ADMIN · 고치기 SUPER */
   /* v10.226 (D195) — 접속 인증: 내 받을 곳은 운영 역할 모두 · 관리 칸은 화면이 ADMIN · SUPER 만 */
   'staff-access': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
@@ -320,6 +322,7 @@ function Console() {
         {tab === 'manual' && <HelpManual />}
         {tab === 'faq' && <FaqAdmin />}
         {tab === 'ops-guide' && <OpsGuide onGo={go} canGo={(t) => visible(t.split('/')[0] as Tab)} />}
+        {tab === 'guide-flows' && <GuideFlows />}
         {tab === 'inquiries' && <InquiryDesk />}
         {tab === 'integrations' && <Integrations />}
         {tab === 'mainops' && <MainOps onGo={go} />}

@@ -4,6 +4,7 @@ import { won } from '../../lib/format';
 import { ErrorView } from '../../components/ErrorView';
 import { LaunchWatch } from './LaunchWatch';
 import { StaffNotices } from './StaffNotices';   // v10.279 (D210) 관리자 공지
+import { CsGlance } from './CsGlance';   // v10.344 (docs/478) 고객센터 한눈에
 import { OwnerTodo, ReleaseLog, ServerTrend, StateCheck } from './StateCheck';   // v10.212 (docs/340) 운영 상태 한눈에 · v10.240 (docs/379) 대표 할 일
 
 /* v10.29 — 서버(/admin/summary)가 보내는 이름은 slaBreached · settlementPending 입니다.
@@ -211,6 +212,8 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
             {a.go && canGo(a.go) && <> <button className="linkbtn" onClick={() => onGo(a.go!)}>보러 가기</button></>}
           </div>
         ))}
+
+      <CsGlance onGo={onGo} canGo={canGo} />
 
       {/* v10.31 — 시안 「활주로」 4칸 + 안내. 실제 매출 · 입력한 월 비용으로 서버가 계산(가정치 아님) */}
       <h2 className="ad-s2">활주로</h2>

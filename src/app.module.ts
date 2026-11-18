@@ -235,6 +235,8 @@ import { MyConsultController, LeadAdminController } from './modules/lead/lead.co
 import { ConsultController, PartnerAxisController, PartnerAxisAdminController } from './modules/partner/consult.controller';
 import { ConsultService } from './modules/partner/consult.service';
 import { LeadStatusController } from './modules/partner/lead-status.controller';   // v10.338 리드 현황
+import { CsGlanceController } from './modules/support/cs-glance.controller';   // v10.344 고객센터 한눈에
+import { GuideFlowAdminController, GuideFlowPublicController } from './modules/help/guide-flow.controller';   // v10.347 (D233) 이용 흐름
 import { OpsGuideController } from './modules/admin/ops-guide.controller';   // v10.339 (D229) 업무 안내
 import { PartnerWithdrawController } from './modules/partner/partner-withdraw.controller';   // v10.224 (D194) 파트너 본인 해지
 import { PartnerWithdrawService } from './modules/partner/partner-withdraw.service';
@@ -347,6 +349,9 @@ import { LeadService } from './modules/lead/lead.service';
     DirectoryController,
     ConsultController,
     LeadStatusController,     // v10.338 리드 현황(읽기만)
+    CsGlanceController,       // v10.344 고객센터 한눈에(읽기만)
+    GuideFlowPublicController,   // v10.347 (D233) 이용 흐름(공개)
+    GuideFlowAdminController,    // v10.347 (D233) 이용 흐름 고치기(SUPER)
     OpsGuideController,       // v10.339 (D229) 업무 안내
     MyConsultController,
     PartnerAxisController,

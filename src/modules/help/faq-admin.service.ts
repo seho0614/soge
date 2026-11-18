@@ -62,6 +62,32 @@ export class FaqAdminService {
     return { ok: true, word: w, note: `「${w}」을(를) 다룸으로 표시했습니다. 다시 찾는 사람이 있으면 목록에 다시 나옵니다.` };
   }
 
+  /** v10.346 (docs/480) — 못 찾은 낱말을 있는 질문의 찾기 낱말(챗봇 낱말)에 붙이고 「다룸」. 이미 있으면 붙이지 않고 다룸만 */
+  async missAttach(word: string, faqId: string) {
+    const w = (word ?? '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (w.length < 2 || w.length > 40) throw new PolicyViolation('FAQ_MISS_WORD', '낱말은 2 ~ 40자입니다.');
+    if (w.length > 20) throw new PolicyViolation('FAQ_MISS_WORD', '찾기 낱말은 20자까지입니다. 「이 낱말로 새 질문」을 쓰십시오.');
+    const [hit] = await this.db.query(`SELECT 1 FROM faq_search_misses WHERE word = $1 LIMIT 1`, [w]);
+    if (!hit) throw new NotFound('그 낱말은 못 찾은 낱말 목록에 없습니다.');
+    const [f] = await this.db.query<{ keywords: string[] | null; question: string }>(`SELECT keywords, question FROM faqs WHERE id = $1`, [faqId]);
+    if (!f) throw new NotFound('그 질문이 없습니다.');
+    const kw = f.keywords ?? [];
+    const has = kw.some((k) => (k ?? '').toLowerCase() === w);
+    if (!has && kw.length >= 10) throw new PolicyViolation('FAQ_KEYWORDS_FULL', '그 질문은 찾기 낱말이 이미 10개입니다. 질문을 고쳐 낱말을 줄인 뒤 더하십시오.');
+    if (!has) {
+      await this.db.query(`UPDATE faqs SET keywords = array_append(coalesce(keywords, '{}'), $2::text), updated_by = $3, updated_at = now() WHERE id = $1`,
+        [faqId, w, RequestCtx.actorId() ?? null]);
+    }
+    await this.db.query(
+      `INSERT INTO faq_search_miss_done (word, done_by, done_at) VALUES ($1, $2, now())
+       ON CONFLICT (word) DO UPDATE SET done_by = EXCLUDED.done_by, done_at = now()`, [w, RequestCtx.actorId() ?? null]);
+    return {
+      ok: true, word: w, id: faqId, added: !has,
+      note: has ? `「${w}」은(는) 이미 「${f.question}」의 찾기 낱말입니다. 다룸으로만 표시했습니다.`
+        : `「${w}」을(를) 「${f.question}」의 찾기 낱말에 더하고 다룸으로 표시했습니다. 이제 고객센터에서 이 낱말로 찾으면 나옵니다.`,
+    };
+  }
+
   private clean(v: FaqInput, base: Required<Pick<FaqInput, 'channels'>> & FaqInput) {
     const t = (s: string | undefined, max: number) => (s ?? '').replace(/\r\n/g, '\n').trim().slice(0, max);
     const out = {

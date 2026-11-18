@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { FAQ_CHANNELS, FAQ_TOPICS, FaqAdminService } from './faq-admin.service';
  *                POST  /admin/faqs        새 질문(감사 FAQ_CREATE)
  *                PATCH /admin/faqs/:id    고치기 · 숨기기 · 순서 · 「많이 찾는 질문」(감사 FAQ_UPDATE)
  *                POST  /admin/faqs/misses/done  v10.336 못 찾은 낱말 「다룸」(감사 FAQ_MISS_DONE)
+ *                POST  /admin/faqs/misses/attach  v10.346 못 찾은 낱말 → 있는 질문의 찾기 낱말 + 다룸(감사 FAQ_MISS_ATTACH)
  *   지우기는 없습니다(숨기기). 사용자 웹은 GET /faq 를 그대로 읽습니다.
  * ------------------------------------------------------------------- */
 
@@ -41,6 +42,17 @@ export class FaqMissDoneDto {
 export class FaqMissDoneResultDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty() word!: string;
+  @ApiProperty() note!: string;
+}
+export class FaqMissAttachDto {
+  @ApiProperty({ example: '재가입', description: '「못 찾은 낱말 30일」의 낱말(찾기 낱말은 20자까지)' }) @IsString() @MaxLength(100) word!: string;
+  @ApiProperty({ format: 'uuid', description: '붙일 질문' }) @IsUUID() faqId!: string;
+}
+export class FaqMissAttachResultDto {
+  @ApiProperty() ok!: boolean;
+  @ApiProperty() word!: string;
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ description: 'false = 이미 그 질문의 찾기 낱말(다룸만)' }) added!: boolean;
   @ApiProperty() note!: string;
 }
 export class FaqSaveResultDto {
@@ -82,6 +94,17 @@ export class FaqAdminController {
   @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'FAQ_MISS_WORD — 2 ~ 40자' })
   missDone(@Body() dto: FaqMissDoneDto) { return this.svc.missDone(dto.word); }
+
+  @Post('misses/attach')
+  @HttpCode(200)
+  @Roles('ADMIN', 'SUPER')
+  @Audit('FAQ_MISS_ATTACH', 'FAQ')
+  @ApiOperation({ summary: '못 찾은 낱말 → 있는 질문에 더하기 (v10.346)', description: '새 질문을 만들지 않고, 고른 질문의 찾기 낱말(챗봇 낱말)에 붙인 뒤 「다룸」. 이미 있으면 다룸만. 질문 하나에 낱말 10개까지.' })
+  @ApiOkResponse({ type: FaqMissAttachResultDto })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND — 못 찾은 낱말 목록에 없음 · 질문 없음' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: '쓰지 않음(문서 규칙)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'FAQ_MISS_WORD — 2 ~ 20자 · FAQ_KEYWORDS_FULL — 그 질문은 낱말 10개' })
+  missAttach(@Body() dto: FaqMissAttachDto) { return this.svc.missAttach(dto.word, dto.faqId); }
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPER')
