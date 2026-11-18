@@ -50,10 +50,10 @@ ok('① API — GET site-settings/history(키 · 앞부분 · 기간 · 50줄) �
    "@Get('site-settings/history')" in AC and 'async settingHistory(' in AD and "c.key LIKE $1 || '.%'" in AD and 'LIMIT 50 OFFSET' in AD
    and '"updatedAt", (SELECT a.name FROM accounts a WHERE a.id = s.updated_by) AS "updatedBy"' in AD)
 ok('① 화면 · 명세 · 문서 — 정책 › 「전체 설정」(ADMIN · SUPER) · 찾기 · 묶음 · 고치기(까닭) · 기록 · 명세 SB-ADM-SET-010 · 문서 413 · 마이그레이션 252 · 판 v10.287',
-   "['settings', '전체 설정']" in MENU and "tabs: ['policy', 'settings', 'codes']" in MENU and "{tab === 'settings' && <SiteSettings />}" in APP
+   "['settings', '전체 설정']" in MENU and "tabs: ['policy', 'settings', 'codes']" in MENU and "{tab === 'settings' && <><SettingScheduleBox /><SiteSettings /></>}" in APP
    and 'data-site-settings-search' in SS and 'data-site-setting-history' in SS and '/admin/site-settings/history?' in SS and 'data-site-setting-reason' in SS
    and '"id": "SB-ADM-SET-010"' in SCR and '"GET /admin/site-settings/history"' in SCR and bool(D413)
-   and len(mig) in (252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 287), f'{len(mig)} · {VER} · 413 {bool(D413)}')
+   and len(mig) in (252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 287), f'{len(mig)} · {VER} · 413 {bool(D413)}')
 
 
 def call(m_, p, b=None, t=None):

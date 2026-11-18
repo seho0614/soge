@@ -125,7 +125,7 @@ def admin_page(path, fn):
 OC, AM, MN, AP, SS = rd('src/modules/admin/ops-staff.controller.ts'), rd('src/app.module.ts'), rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/StaffSession.tsx')
 ok('① 코드 — PATCH /admin/me/password(운영 역할 모두 · 같은 서비스) · 권한 계층 › 「내 비밀번호」 탭 · 화면 목록 SB-ADM-PWD-010 · 90일 띠 링크 · 문서 504 · 판 v10.369',
    "@Patch('me/password')" in OC and 'return this.sec.change(dto.currentPassword, dto.newPassword);' in OC and 'OpsStaffController' in AM
-   and "['my-password', '내 비밀번호']" in MN and "tabs: ['roles', 'my-mfa', 'my-password', 'staff-access']" in MN and "{tab === 'my-password' && <MyPassword />}" in AP
+   and "['my-password', '내 비밀번호']" in MN and "tabs: ['roles', 'my-mfa', 'my-password', 'staff-access']" in MN and "{tab === 'my-password' && <><MyPassword /><MySessions /></>}" in AP
    and 'href="#/my-password"' in SS and '"SB-ADM-PWD-010"' in SJ and '"PATCH /admin/me/password"' in SJ and '내 비밀번호' in doc('504_') and VT >= (10, 369), VER)
 if API and DB:
     import consent_ok

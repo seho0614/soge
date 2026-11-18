@@ -56,7 +56,7 @@ MENU = rd('web/src/lib/adminMenu.ts'); APP = rd('web/src/App.tsx'); SP = rd('spe
 ok('① 권한 검사 — 운영 역할만 요구하는 API 에서 MFA_REQUIRED · 증표 ma · refresh 이어짐 · @Audit 이 예비 번호를 남기지 않음 · 설정은 SUPER 만 · 켜기 전 등록',
    "principal.mfaPending && required.every((r) => MFA_OPS.includes(r))" in AU and "'MFA_REQUIRED'" in AU
    and 'principal.mfaPending = await this.mfa.pending(principal, ma)' in MW and '...(mfaAt ? { ma: mfaAt } : {})' in AS
-   and 'return this.issue(payload.sub, payload.ma ? Number(payload.ma) : undefined);' in AS
+   and 'return this.issue(payload.sub, payload.ma ? Number(payload.ma) : undefined, payload.sid);' in AS
    and MC.split("@Post('auth/mfa/enable')")[1].split('enable(')[0].count('@Audit(') == 0 and "'MFA_ENABLE'" in MS
    and "'MFA_SETTING_SUPER'" in rd('src/modules/admin/admin.service.ts') and "'MFA_ENROLL_FIRST'" in rd('src/modules/admin/admin.service.ts'), '')
 ok('① API · 화면 — 2단계 5 · 권한 점검 2(SUPER) · 파기 기록 1 · 메뉴(위험감지 · 권한 계층) · role-review SUPER 만 · 번호 넣기 화면 · 회원 상세 초기화 · screens.json 3',
