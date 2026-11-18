@@ -10,14 +10,16 @@ export interface OpsAlertWeekly {
 }
 
 export async function opsAlertWeekly(db: Q): Promise<OpsAlertWeekly> {
-  const W = `WITH r AS (SELECT (date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') - interval '7 days') AT TIME ZONE 'Asia/Seoul' AS f,
-                               date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') AT TIME ZONE 'Asia/Seoul' AS t)`;
   const rows = await db.query<{ code: string; n: number; critical: number; open: number }>(
-    `${W} SELECT a.alert_code AS code, count(*)::int AS n, count(*) FILTER (WHERE a.severity = 'CRITICAL')::int AS critical,
+    `WITH r AS (SELECT (date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') - interval '7 days') AT TIME ZONE 'Asia/Seoul' AS f,
+                               date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') AT TIME ZONE 'Asia/Seoul' AS t)
+     SELECT a.alert_code AS code, count(*)::int AS n, count(*) FILTER (WHERE a.severity = 'CRITICAL')::int AS critical,
                  count(*) FILTER (WHERE a.acknowledged_at IS NULL AND a.resolved_at IS NULL)::int AS open
             FROM ops_alerts a, r WHERE a.raised_at >= r.f AND a.raised_at < r.t GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 20`);
   const [s] = await db.query<{ from: string; to: string; total: number; critical: number; ack: number | null; open: number; mutes: number }>(
-    `${W} SELECT to_char(r.f AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "from", to_char((r.t - interval '1 day') AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "to",
+    `WITH r AS (SELECT (date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') - interval '7 days') AT TIME ZONE 'Asia/Seoul' AS f,
+                               date_trunc('week', now() AT TIME ZONE 'Asia/Seoul') AT TIME ZONE 'Asia/Seoul' AS t)
+     SELECT to_char(r.f AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "from", to_char((r.t - interval '1 day') AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS "to",
                  (SELECT count(*)::int FROM ops_alerts a WHERE a.raised_at >= r.f AND a.raised_at < r.t) AS total,
                  (SELECT count(*)::int FROM ops_alerts a WHERE a.severity = 'CRITICAL' AND a.raised_at >= r.f AND a.raised_at < r.t) AS critical,
                  (SELECT round((avg(extract(epoch FROM a.acknowledged_at - a.raised_at)) / 60)::numeric)::int FROM ops_alerts a
