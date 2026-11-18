@@ -161,7 +161,7 @@ if API and DB:
         aud = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'ACCOUNT_WITHDRAW_CANCEL' AND occurred_at > now() - interval '10 minutes'")
         ok('③ 켬(7) — 탈퇴 확인 화면 graceDays 7 · 안내 줄 · 파기 날 +7 · 로그인 WITHDRAW_PENDING(취소 가능 때) · 틀린 비밀번호 403 · 취소 → ACTIVE(탈퇴 시각 · 보관 기한 비움 · canceled_at) · 다시 로그인 · 다시 탈퇴 가능(canceled_at 비움) · 감사',
            ck.get('graceDays') == 7 and any('7일 안에 다시 로그인' in n_ for n_ in ck.get('notes') or []) and w2.get('ok') is True and r2 == 't' and l2.get('code') == 'WITHDRAW_PENDING' and bad.get('code') == 'INVALID_CREDENTIALS' and c2.get('ok') is True
-           and st == 'ACTIVE|t|t|t' and bool(l3.get('accessToken')) and w3.get('ok') is True and again == 'WITHDRAWN|t' and int(aud or 0) >= 1,
+           and st in ('ACTIVE|t|t|t', 'ACTIVE|true|true|true') and bool(l3.get('accessToken')) and w3.get('ok') is True and again in ('WITHDRAWN|t', 'WITHDRAWN|true') and int(aud or 0) >= 1,
            f"{r2} · {l2.get('code')} {l2.get('message')} · {bad.get('code')} · {c2.get('ok')} · {st} · {bool(l3.get('accessToken'))} · {w3.get('ok')} {w3.get('code')} · {again} · 감사 {aud}")
     finally:
         setg(g0 or '0')

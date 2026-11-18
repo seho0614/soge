@@ -1,6 +1,6 @@
 """v10.369 (docs/504) 운영자 비밀번호 — 운영 화면에서
   ① (코드) API · 탭 · 화면 목록 · 띠 링크
-  ② (API) 회원 역할 없는 ADMIN 이 바꿈 · 422 · 옛 증표 무효 · 403
+  ② (API) 회원 역할 없는 REVIEWER(검수) 가 바꿈 · 422 · 옛 증표 무효 · 403
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
@@ -131,7 +131,7 @@ if API and DB:
     import consent_ok
     consent_ok.agree('buyer@x.com', PW)
     TB = login('buyer@x.com')
-    em, aid = mk_staff('1369')
+    em, aid = mk_staff('1369', 'REVIEWER')   # ADMIN · SUPER · 파트너는 회원 역할이 저절로 붙음(10/1 결정 · principal.service) — 검수 · 지급만 회원 역할 없음
     try:
         psql(f"BEGIN; SELECT set_config('app.role_reason', '시험 1369 회원 역할 뺌', true); DELETE FROM account_roles WHERE account_id = '{aid}' AND role = 'MEMBER'; COMMIT;")
         roles = psql(f"SELECT string_agg(role, ',' ORDER BY role) FROM account_roles WHERE account_id = '{aid}'")
@@ -146,8 +146,8 @@ if API and DB:
         l2 = call('POST', '/auth/login', {'email': em, 'password': NEW})
         fb = call('PATCH', '/admin/me/password', {'currentPassword': PW, 'newPassword': NEW}, TB)
         aud = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'PASSWORD_CHANGE' AND occurred_at > now() - interval '10 minutes'")
-        ok('② API — 회원 역할 없는 ADMIN: 사용자 웹 길은 403 · 운영 화면 길로 바꿈 · 11자 422 · 지금 비밀번호 틀림 422 · 옛 증표 무효 · 새 증표 · 새 비밀번호 로그인 · 감사 · 회원 403',
-           roles == 'ADMIN' and old_site.get('_err') == 403 and short.get('_err') in (400, 422) and wrong.get('code') == 'CURRENT_PASSWORD_WRONG' and r.get('ok') is True
+        ok('② API — 회원 역할 없는 REVIEWER: 사용자 웹 길은 403 · 운영 화면 길로 바꿈 · 11자 422 · 지금 비밀번호 틀림 422 · 옛 증표 무효 · 새 증표 · 새 비밀번호 로그인 · 감사 · 회원 403',
+           roles == 'REVIEWER' and old_site.get('_err') == 403 and short.get('_err') in (400, 422) and wrong.get('code') == 'CURRENT_PASSWORD_WRONG' and r.get('ok') is True
            and stale.get('_err') in (401, 403) and not fresh.get('_err') and bool(l2.get('accessToken')) and fb.get('_err') == 403 and int(aud or 0) >= 1,
            f"{roles} · {old_site.get('_err')} · {short.get('_err')} {short.get('code')} · {wrong.get('code')} · {r.get('ok')} · {stale.get('_err')} {fresh.get('_err')} · {bool(l2.get('accessToken'))} · {fb.get('_err')}")
     finally:
