@@ -166,6 +166,10 @@ if API and DB:
                     pg.on('pageerror', lambda e: errs.append(str(e)[:120]))
                     pg.goto(ADMIN_WEB + '/', wait_until='networkidle', timeout=120000)
                     pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', PW); pg.click('button[type=submit]'); pg.wait_for_timeout(2500)
+                    try:   # v10.360 — 첫 화면 상자가 늘어 「공개 직후 지켜보기」가 늦게 뜰 수 있음 · 다 뜬 뒤에 셈
+                        pg.wait_for_selector('[data-abuse-tools]', timeout=30000)
+                    except Exception:
+                        pass
                     su = pg.locator('[data-signup-toggle]').count(); nb = pg.locator('[data-notice-toggle]').count(); dg = pg.locator('[data-digest-show]').count()
                     pg.screenshot(path=os.path.join(HERE, 'v1173_admin_watch.png'), full_page=False)
                     b_.close()
