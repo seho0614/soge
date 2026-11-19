@@ -26,7 +26,9 @@ export interface AgentToolUse { id: string; name: string; input: Record<string, 
 export type AgentBlock =
   | { type: 'text'; text: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; tool_use_id: string; content: string };
+  | { type: 'tool_result'; tool_use_id: string; content: string }
+  /* v10.438 (D257) — 영수증 사진(Messages API image 조각 그대로) */
+  | { type: 'image'; source: { type: 'base64'; media_type: 'image/jpeg' | 'image/png'; data: string } };
 export interface AgentMessage { role: 'user' | 'assistant'; content: string | AgentBlock[] }
 export interface AgentInput {
   model: string; system: string; messages: AgentMessage[]; maxTokens: number;

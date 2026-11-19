@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseService } from './db/database.service';
 import { ContextMiddleware } from './core/context.middleware';
 import { AuthGuard } from './core/auth';
+import { PermGuard } from './core/perm.guard';   // v10.442 (D258) 업무별 권한 검사(AuthGuard 다음)
+import { PermController } from './modules/admin/perm.controller';   // v10.441 ~ 444 (D258) 권한 관리
 import { AuditInterceptor } from './core/audit.interceptor';
 import { PiiAuditInterceptor } from './core/pii-audit.interceptor';
 import { CategoryNameInterceptor } from './modules/i18n/category-name.interceptor';
@@ -243,6 +245,7 @@ import { OpsSafetyController } from './modules/admin/ops-safety.controller';
 import { OpsStaffController } from './modules/admin/ops-staff.controller';
 import { AcctController } from './modules/acct/acct.controller';   // v10.381 ~ 384 (D242) 회계 · 세무 1단계
 import { AcctFilingsController } from './modules/acct/acct-filings.controller';   // v10.420 ~ 422 (D252) 원천세 신고서 · 지급명세서 · 4대보험 신고
+import { AcctExtraController } from './modules/acct/acct-extra.controller';   // v10.437 ~ 440 (D257) 세무사 · 영수증 읽기 · 고정비 · 장부 보관
 import { OpsPlanController } from './modules/admin/ops-plan.controller';   // v10.377 (D241) 설정 예약 변경
 import { LoginSessionsController } from './modules/identity/login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
@@ -290,6 +293,7 @@ import { LeadService } from './modules/lead/lead.service';
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     WorkReportController,     // v10.412 ~ 415 (D250)
+    PermController,           // v10.441 ~ 444 (D258)
     ErpController,            // v10.433 ~ 436 (D256)
     AcctOfficeController,     // v10.424 ~ 427 (D253)
     AuthController,
@@ -374,6 +378,7 @@ import { LeadService } from './modules/lead/lead.service';
     OpsStaffController,       // v10.369 ~ 371 (D239)
     AcctController,           // v10.381 ~ 384 (D242)
     AcctFilingsController,    // v10.420 ~ 422 (D252)
+    AcctExtraController,      // v10.437 ~ 440 (D257)
     OpsPlanController,        // v10.377 (D241)
     LoginSessionsController,  // v10.380 (D241)
     OpsWeekController,        // v10.374 ~ 376 (D240)      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
@@ -538,6 +543,7 @@ import { LeadService } from './modules/lead/lead.service';
     SafenumService,
     MarketService, SafetyService, BizAxisService,   // v10.31 (w2)
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: PermGuard },   // v10.442 (D258) — 역할 검사 뒤 업무 권한(perm.enforce · 처음 SHADOW)
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PiiAuditInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ExportGateInterceptor },   // v10.366 (D238) 내려받기 승인 번호 확인

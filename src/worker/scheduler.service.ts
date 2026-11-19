@@ -46,6 +46,7 @@ import { opsReportJob } from '../modules/admin/report-period';   // v10.412 (D25
 import { acctInsuranceJob } from '../modules/acct/filings';   // v10.422 (D252)
 import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D250)
 import { dunningJob } from '../modules/acct/dunning';   // v10.436 (D256)
+import { acctAccrualJob } from '../modules/acct/accrual';   // v10.439 (D257)
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
@@ -80,7 +81,8 @@ export type JobName =
   | 'acct_insurance'  // v10.422 (D252)
   | 'corp_doc_due'    // v10.425 (D253)
   | 'acct_biz_check'  // v10.431 (D254)
-  | 'acct_dunning';   // v10.436 (D256)
+  | 'acct_dunning'    // v10.436 (D256)
+  | 'acct_accrual';   // v10.439 (D257)
 
 export interface JobResult {
   job: JobName;
@@ -822,6 +824,13 @@ export class SchedulerService {
       case 'acct_dunning': {
         const r = await dunningJob(this.db, this.mail);
         affected = r.sent; detail = r;
+        break;
+      }
+
+      /* v10.439 (D257 · docs/576) — 이번 달 고정비 줄(acct.contract_accrue on 일 때만) · 같은 거래처 매입 자동 맞춤 · 다음 달 말까지 매입 없으면 ACCT_ACCRUAL_UNMATCHED */
+      case 'acct_accrual': {
+        const r = await acctAccrualJob(this.db);
+        affected = r.made + r.matched; detail = r;
         break;
       }
 

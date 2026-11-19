@@ -26,9 +26,9 @@ type View = 'holders' | 'acl';
 /* v10.194 (D173 · docs/304) — 운영 화면에서 줄 수 있는 역할(서버 report.service setRole 과 같음 · SUPER 만 줌) */
 export const ROLE_LABEL: Record<string, string> = {
   SUPER: '최고 관리자', ADMIN: '운영', REVIEWER: '검수 담당', PAYOUT: '지급 담당',
-  PARTNER_MAL: '안심 파트너 담당', PARTNER_AFF: '제휴 파트너 담당',
+  PARTNER_MAL: '안심 파트너 담당', PARTNER_AFF: '제휴 파트너 담당', ACCOUNTANT: '세무사(읽기 전용 · 기한 꼭)',
 };
-export const GRANTABLE = ['PARTNER_MAL', 'PARTNER_AFF', 'REVIEWER', 'ADMIN', 'SUPER'];
+export const GRANTABLE = ['PARTNER_MAL', 'PARTNER_AFF', 'REVIEWER', 'ADMIN', 'SUPER', 'ACCOUNTANT'];   // v10.437 (D257) 세무사
 interface Found { id: string; email: string; name: string; status: string }
 const TABS: SubTab<View>[] = [
   { key: 'holders', label: '권한 보유자', screen: 'SB-ADM-USR-010' },

@@ -18,7 +18,7 @@ import { maskIp, uaKind } from './login-history';
  *   로그인한 누구나   POST /me/sessions/{id}/revoke   그 기기 로그아웃(감사 SESSION_REVOKE) · 이 기기면 이 화면도 로그아웃
  * ------------------------------------------------------------------- */
 
-const ANY_SIGNED_IN = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
+const ANY_SIGNED_IN = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'] as const;   // v10.437 세무사
 
 /** 새 기기 줄 — 남기지 못하면 sid 없이(로그인은 그대로) */
 export async function createSession(db: DatabaseService, accountId: string, tv: number): Promise<string | undefined> {

@@ -6449,6 +6449,109 @@
     "POST /admin/acct/receipt-promises/{id}/close"
    ],
    "note": "2026-11-20 v10.436 (D256 · docs/573) 거래처별 받을 돈 · 독촉 단계(안내 · 독촉 · 최종) · 메일(자동은 처음 꺼짐) · 보낸 기록 · 입금 예정 → 자금 흐름 예정"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-420",
+   "name": "회계 세무사",
+   "url": "/admin/acct-accountant",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ACCOUNTANT"
+   ],
+   "apis": [
+    "GET /admin/acct/accountant",
+    "POST /admin/acct/accountant/notes",
+    "POST /admin/acct/accountant/notes/{id}/reply"
+   ],
+   "note": "2026-11-20 v10.437 (D257 · docs/574) 세무사 공유 계정 — 읽기 전용 · 기한 꼭 · 접속 기록 · 질문 · SUPER 답"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-430",
+   "name": "회계 영수증 읽기",
+   "url": "/admin/acct-receipt",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "apis": [
+    "POST /admin/acct/receipt-ai/read",
+    "GET /admin/acct/receipt-ai/reads"
+   ],
+   "note": "2026-11-20 v10.438 (D257 · docs/575) 증빙 사진 → 칸 채움 제안(acct.receipt_ai 처음 off · 간주) · 확인 뒤 매입 넣기"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-440",
+   "name": "회계 고정비",
+   "url": "/admin/acct-accrual",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "apis": [
+    "GET /admin/acct/accruals",
+    "PUT /admin/acct/accruals/rules/{contractId}",
+    "POST /admin/acct/accruals/{id}/match"
+   ],
+   "note": "2026-11-20 v10.439 (D257 · docs/576) 계약 달 금액 → 미지급 비용 전표 · 매입 맞춤 → 되돌림 · 빠진 매입 알림"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-450",
+   "name": "회계 장부 보관 · 통제",
+   "url": "/admin/acct-archive",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "apis": [
+    "GET /admin/acct/archives",
+    "POST /admin/acct/archives",
+    "GET /admin/acct/archives/{id}/export",
+    "GET /admin/acct/control"
+   ],
+   "note": "2026-11-20 v10.440 (D257 · docs/577) 해 마감 뒤 장부 · 증빙 지문 보관(지우기 없음 · 5년) · 내려받기 승인 ACCT_ARCHIVE · 내부통제 보고"
+  },
+  {
+   "id": "SB-ADM-PRM-010",
+   "name": "권한 관리",
+   "group": "ADM",
+   "url": "/admin/perm-admin",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/perm/me",
+    "GET /admin/perm/overview",
+    "GET /admin/perm/role-groups/{key}",
+    "PUT /admin/perm/role-groups/{key}",
+    "PATCH /admin/perm/task-groups/{key}",
+    "PATCH /admin/perm/tasks/{key}",
+    "GET /admin/perm/accounts/{id}",
+    "PUT /admin/perm/accounts/{id}",
+    "GET /admin/perm/shadow",
+    "GET /admin/perm/changes",
+    "GET /admin/perm/widen-log"
+   ],
+   "note": "2026-11-19 v10.441 ~ 444 (D258 · docs/578 ~ 581) 업무별 권한 관리 — 업무그룹 · 업무 · 권한그룹(업무 × 보기 · 고치기 · 승인 · 내려받기) · 개인권한(그룹 · 개별 더하기/빼기 · 기한 · 업무용/관리자) · 미리보기 · SHADOW 기록 · 바꾼 기록(SUPER) · /admin/perm/me 는 운영자 누구나 · 권한 넓히기 스위치 · 넓혀서 통과한 요청"
   }
  ],
  "deferred": [

@@ -22,7 +22,7 @@ import { AccountSecurityService } from '../identity/account-security.service';
  *   SUPER         POST  /admin/maintenance/clear        점검 지우기 · 끝내기(사유 · 감사 SITE_MAINTENANCE_CLEAR)
  * ------------------------------------------------------------------- */
 
-const OPS_ROLES = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
+const OPS_ROLES = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'] as const;   // v10.437 세무사도 내 비밀번호 · 휴대폰 · 텔레그램
 const KST_TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;   // 화면은 한국 시각 「YYYY-MM-DDTHH:MM」
 
 export class StaffPasswordDto {

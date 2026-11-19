@@ -376,6 +376,10 @@ export class AdminService {
     if (AdminService.OPS_PUSH_KEYS.includes(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('OPS_PUSH_SETTING_SUPER', '운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.442 (D258 · docs/579) — 업무 권한 검사 모드 · 역할 → 권한그룹 저절로 붙이기는 SUPER 만 */
+    if (key.startsWith('perm.') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('PERM_SETTING_SUPER', '업무 권한 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.335 (D227 · docs/466) — 리드관 법무 재확인 회신은 리드관을 켜는 조건이라 SUPER 만 */
     if (key === 'lead.legal_ok' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('LEAD_SETTING_SUPER', '리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

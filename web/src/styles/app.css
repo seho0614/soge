@@ -748,3 +748,8 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
 .ghost.btn-sm { background: transparent; }
 .plain { list-style: none; padding-left: 0; margin: 4px 0; }
 .block { display: block; }
+
+/* v10.444 (D258 · docs/581) 탭 내용 감싸기 — 권한이 없어 막은 단추(data-perm-off) · 보기만 탭 */
+.perm-scope { display: contents; }
+.perm-readonly { --perm-readonly: 1; }
+.perm-scope button[data-perm-off] { opacity: .45; cursor: not-allowed; }

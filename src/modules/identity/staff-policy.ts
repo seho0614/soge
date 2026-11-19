@@ -8,7 +8,7 @@ import { PolicyViolation } from '../../core/errors';
  *   회원은 지금 규칙 그대로(10자 · 14일).
  * ------------------------------------------------------------------- */
 /** 운영 역할 — mfa.service 의 OPS_ROLES 와 같게(여기서 가져오면 auth.service → mfa.service → auth.service 로 물려 Nest 가 못 뜸) */
-const OPS_ROLES: readonly string[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];
+const OPS_ROLES: readonly string[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];   // v10.437 (D257) 세무사
 
 interface Q { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> }
 

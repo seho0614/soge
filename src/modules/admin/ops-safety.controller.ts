@@ -63,7 +63,7 @@ export class OpsSafetyController {
 
   /* ── ② 개인정보 대량 내려받기 승인 ── */
   @Get('export-requests')
-  @Roles('PAYOUT', 'SUPER')
+  @Roles('PAYOUT', 'SUPER', 'ACCOUNTANT')   // v10.437 (D257) 세무사 — 자기 요청만
   @ApiOperation({ summary: '내려받기 승인 (v10.366)', description: '기다리는 요청(SUPER) · 내 요청 최근 20 · 최근 결정 20(SUPER) · 오늘 내 요청 수 / 하루 10 · 결정할 수 있는가 · 다른 SUPER 수.' })
   @ApiOkResponse({ type: Object })
   exportList(@Req() req: Request) {
@@ -72,7 +72,7 @@ export class OpsSafetyController {
   }
 
   @Get('export-requests/ready')
-  @Roles('PAYOUT', 'SUPER')
+  @Roles('PAYOUT', 'SUPER', 'ACCOUNTANT')   // v10.437 (D257)
   @ApiQuery({ name: 'target', enum: [...EXPORT_TARGETS] })
   @ApiOperation({ summary: '내 내려받기 승인 번호 (v10.366)', description: '이 대상에서 승인되고 안 쓴 번호(24시간 안) · 기다리는 요청 번호.' })
   @ApiOkResponse({ type: Object })
@@ -80,7 +80,7 @@ export class OpsSafetyController {
 
   @Post('export-requests')
   @HttpCode(200)
-  @Roles('PAYOUT', 'SUPER')
+  @Roles('PAYOUT', 'SUPER', 'ACCOUNTANT')   // v10.437 (D257) — 대상마다 역할은 export-approval TARGET_ROLES
   @Audit('EXPORT_REQUEST', 'SETTING')
   @ApiOperation({ summary: '내려받기 요청 (v10.366)', description: '사유 필수 · 하루 10건. SUPER 가 요청자 한 명뿐이면 스스로 승인(solo). 같은 대상의 기다림 · 안 쓴 승인이 있으면 그것을 돌려줌.' })
   @ApiOkResponse({ type: Object })

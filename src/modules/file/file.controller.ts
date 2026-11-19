@@ -85,7 +85,7 @@ export class FileController {
   }
 
   @Get('files/:id')
-  @Roles(...ALL)
+  @Roles(...ALL, 'ACCOUNTANT')   // v10.437 세무사 — 증빙(ACCT_EVIDENCE)만 fn_file_can_read 가 열어 줌
   @ApiOperation({
     summary: '파일 열기 (짧게 유효한 주소)',
     description:

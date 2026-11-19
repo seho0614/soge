@@ -696,8 +696,8 @@ export function AcctExpenses() {
                   <td>{d.evidences[x.evidence] ?? x.evidence} {x.attachments.map((id, i) => <button key={id} className="btn-sm btn-plain" onClick={() => void openFile(id).catch((e) => alert(String(e)))}>파일 {i + 1}</button>)}</td>
                   <td>{EXP_STATE[x.state] ?? x.state}{x.rejectReason ? <small className="dim"> {x.rejectReason}</small> : ''}{x.entryId ? <small className="dim"> 전표 {x.entryId}</small> : ''}</td>
                   <td>
-                    {x.state === 'REQUESTED' && d.canDecide && !x.mine && <><button className="btn-sm" disabled={a.busy === `decide${x.id}`} onClick={() => act(x.id, 'decide', { decision: 'approve' })} data-acct-expense-approve="">승인</button>{' '}
-                      <button className="btn-sm btn-plain" disabled={a.busy === `decide${x.id}`} onClick={() => reject(x.id)} data-acct-expense-reject="">반려</button></>}
+                    {x.state === 'REQUESTED' && d.canDecide && !x.mine && <><button className="btn-sm" disabled={a.busy === `decide${x.id}`} onClick={() => act(x.id, 'decide', { decision: 'approve' })} data-acct-expense-approve="" data-perm="approve">승인</button>{' '}
+                      <button className="btn-sm btn-plain" disabled={a.busy === `decide${x.id}`} onClick={() => reject(x.id)} data-acct-expense-reject="" data-perm="approve">반려</button></>}
                     {x.state === 'APPROVED' && d.canPay && !x.mine && <button className="btn-sm" disabled={a.busy === `paid${x.id}`} onClick={() => confirm(`${x.claimantName ?? ''}님에게 ${won(x.amount)}원을 보냈습니까?`) && act(x.id, 'paid')} data-acct-expense-pay="">지급함</button>}
                     {x.state === 'REQUESTED' && x.mine && <button className="btn-sm btn-plain" disabled={a.busy === `cancel${x.id}`} onClick={() => confirm('청구를 취소합니까?') && act(x.id, 'cancel')} data-acct-expense-cancel="">취소</button>}
                   </td>
@@ -1528,8 +1528,8 @@ export function AcctManual() {
                 <td>{M_STATE[m.state] ?? m.state}{m.entryId && <small className="dim"> 전표 {m.entryId}</small>}{m.decideNote && <small className="dim"> · {m.decideNote}</small>}</td>
                 <td><small>{m.createdByEmail ?? ''} {ymdhm(m.createdAt)}</small></td>
                 <td>{m.state === 'REQUESTED' && <>
-                  {isSuper() && <><button className="btn-sm" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, true)} data-acct-manual-approve={m.id}>승인</button>{' '}
-                    <button className="btn-sm btn-plain" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, false)}>반려</button>{' '}</>}
+                  {isSuper() && <><button className="btn-sm" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, true)} data-acct-manual-approve={m.id} data-perm="approve">승인</button>{' '}
+                    <button className="btn-sm btn-plain" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, false)} data-perm="approve">반려</button>{' '}</>}
                   <button className="btn-sm btn-plain" onClick={() => cancel(m.id)}>취소</button></>}</td>
               </tr>))}</tbody></table>
         </>
@@ -1838,7 +1838,7 @@ export function AcctRequisitions() {
                 <td>{won(r.amount)}{r.spent != null && (r.state === 'APPROVED' || r.state === 'USED') && <small className={Number(r.remaining) < 0 ? 'warn-text' : 'dim'} data-acct-req-spent={r.id}><br />쓴 {won(r.spent)} · 남은 {won(r.remaining)}</small>}</td><td>{r.accountName}</td>
                 <td>{d.states[r.state] ?? r.state}{r.decideNote ? <small className="dim"> · {r.decideNote}</small> : ''}{r.usedRef ? <small className="dim"> · {r.usedKind === 'EXPENSE' ? '경비' : '매입'} {r.usedRef}번 {won(r.usedAmount)}</small> : ''}</td>
                 <td>
-                  {r.state === 'REQUESTED' && d.canDecide && r.requesterId !== d.me && <><button className="btn-sm" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, true)}>승인</button> <button className="btn-sm btn-plain" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, false)}>반려</button> </>}
+                  {r.state === 'REQUESTED' && d.canDecide && r.requesterId !== d.me && <><button className="btn-sm" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, true)} data-perm="approve">승인</button> <button className="btn-sm btn-plain" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, false)} data-perm="approve">반려</button> </>}
                   {r.state === 'APPROVED' && d.all && <button className="btn-sm btn-plain" disabled={a.busy === `u${r.id}`} onClick={() => use(r)}>연결</button>}{' '}
                   {['REQUESTED', 'APPROVED'].includes(r.state) && (r.requesterId === d.me || d.canDecide) && <button className="btn-sm btn-plain" disabled={a.busy === `c${r.id}`} onClick={() => cancel(r)}>취소</button>}
                 </td>

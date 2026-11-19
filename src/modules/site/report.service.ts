@@ -99,9 +99,12 @@ export class ReportService {
    * 사유를 남기게 하는 것은 나중에 "누가 왜 줬는가"를 답하기 위해서입니다.
    */
   async setRole(accountId: string, role: string, grant: boolean, reason: string, expiresDays?: number) {
-    const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 (D173) — 안심 · 제휴 파트너 담당
+    const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];   // v10.194 (D173) — 안심 · 제휴 파트너 담당 · v10.437 (D257) 세무사
     if (!OK.includes(role)) {
       throw new PolicyViolation('BAD_ROLE', '부여할 수 없는 역할입니다.');
+    }
+    if (grant && role === 'ACCOUNTANT' && !expiresDays) {
+      throw new PolicyViolation('ACCOUNTANT_EXPIRY', '세무사 계정은 기한(7 · 30 · 90일)을 꼭 고르십시오.');
     }
     if (!reason?.trim()) {
       throw new PolicyViolation('REASON_REQUIRED',

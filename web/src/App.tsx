@@ -40,7 +40,9 @@ import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
 import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, ReportTrend } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
 import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
+import { AccountantDesk, ReceiptReader, AccrualBox, ArchiveBox } from './app/admin/AcctExtra';   // v10.437 ~ 440 (D257)
 import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
+import { PermAdmin, PermReadonlyBar, PermScope, loadPerm, permVisible, usePermTick } from './app/admin/Perm';   // v10.441 ~ 444 (D258) 업무별 권한 · 탭 내용 감싸기
 import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/AcctFilings';   // v10.420 ~ 422 (D252) 신고 자료
 import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports, AcctExports, AcctPos, AcctTaxInbox } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
 import { MySessions, SettingScheduleBox } from './app/admin/OpsPlanBoxes';   // v10.377 · 380 (docs/513 · 516) 설정 예약 변경 · 내 로그인 기기
@@ -115,8 +117,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   badges: ['ADMIN', 'SUPER', 'REVIEWER'],
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
-  'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
-  'my-password': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.369 (docs/504)
+  'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'],
+  'my-password': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'],   // v10.369 (docs/504) · v10.437 세무사
   /* v10.381 ~ 384 (D242) — 회계: 보기 SUPER · 지급 담당 · 고치기 · 마감 SUPER(상품 과세는 ADMIN 도 — 계정 · 규칙 탭) */
   'acct-journal': ['SUPER', 'PAYOUT'], 'acct-tax': ['SUPER', 'PAYOUT'], 'acct-report': ['SUPER', 'PAYOUT'], 'acct-accounts': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-month': ['SUPER', 'PAYOUT'], 'acct-bank': ['SUPER', 'PAYOUT'],
   'acct-statements': ['SUPER', 'PAYOUT'], 'acct-ledger': ['SUPER', 'PAYOUT'], 'acct-assets': ['SUPER', 'PAYOUT'], 'acct-budget': ['SUPER', 'PAYOUT'],   // v10.396 ~ 399 (D246)
@@ -126,6 +128,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-parties': ['SUPER', 'PAYOUT'], 'acct-contracts': ['SUPER', 'PAYOUT'], 'acct-imports': ['SUPER', 'PAYOUT'], 'acct-exports': ['SUPER', 'PAYOUT'], 'acct-po': ['SUPER', 'PAYOUT'],   // v10.428 (D254)   // v10.408 · 409 · 411 (D249)
   'acct-docs': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-depts': ['SUPER', 'PAYOUT'], 'acct-wh': ['SUPER', 'PAYOUT'], 'acct-dunning': ['SUPER', 'PAYOUT'],   // v10.433 ~ 436 (D256)
   'acct-taxinbox': ['SUPER', 'PAYOUT'],   // v10.432 (D255)
+  'acct-accountant': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-receipt': ['SUPER', 'PAYOUT'], 'acct-accrual': ['SUPER', 'PAYOUT'], 'acct-archive': ['SUPER', 'PAYOUT'],   // v10.437 ~ 440 (D257)
   'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
   'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'], 'rpt-trend': ['ADMIN', 'SUPER'],   // v10.429 (D254)   // v10.412 ~ 415 (D250)
   'approvals': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'approval-lines': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'corp-docs': ['ADMIN', 'PAYOUT', 'SUPER'],   // v10.424 · 425 (D253)
@@ -138,11 +141,14 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'staff-access': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
   'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
+  'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
 const canSee = (t: Tab, roles: string[]) =>
-  roles.includes('SUPER') || (TAB_ROLES[t] ?? ['ADMIN']).some((r) => roles.includes(r));
+  roles.includes('SUPER') || (TAB_ROLES[t] ?? ['ADMIN']).some((r) => roles.includes(r))
+  /* v10.437 (D257) — 세무사(ACCOUNTANT)는 회계 탭 중 지급 담당이 보는 것을 읽기로(서버가 GET 만 엶) */
+  || (roles.includes('ACCOUNTANT') && String(t).startsWith('acct-') && (TAB_ROLES[t] ?? []).includes('PAYOUT'));
 
 /**
  * 운영 BO.
@@ -185,7 +191,9 @@ const ROLE_NAME: Record<string, string> = { SUPER: '최고 관리자', ADMIN: '�
 
 function Console() {
   const roles = tokenRoles();
-  const visible = (t: Tab) => canSee(t, roles);
+  usePermTick();   // v10.444 (D258) 내 업무 권한을 받으면 다시 그림
+  useEffect(() => { void loadPerm(); }, []);
+  const visible = (t: Tab) => canSee(t, roles) && permVisible(t);   // 역할 + (검사 ON 이고 표에 있는 탭이면) 업무 권한
   const [tab, setTab] = useState<Tab>(() => { const h = tabFromHash(); return h && visible(h) ? h : 'home'; });
   const [open, setOpen] = useState<string | null>(null);
   const [links, setLinks] = useState<FooterLink[]>([]);
@@ -317,6 +325,8 @@ function Console() {
             ))}
           </div>
         )}
+        {/* v10.444 (D258 · docs/581) — 모든 탭 내용을 한 곳에서 감쌈: 고치기 · 승인 · 내려받기 권한이 없으면 그 단추를 막음(검사 SHADOW · ON · SUPER 아님) */}
+        <PermScope tab={tab}>
         {tab === 'home' && <Dashboard onGo={go} canGo={(t) => visible(t as Tab)} />}
         {tab === 'reports' && <Reports />}
         {tab === 'report-queue' && <ReportQueue />}
@@ -414,6 +424,10 @@ function Console() {
       {tab === 'acct-depts' && <ErpDepts />}
       {tab === 'acct-wh' && <ErpWarehouses />}
       {tab === 'acct-dunning' && <ErpDunning />}
+      {tab === 'acct-accountant' && <AccountantDesk />}
+      {tab === 'acct-receipt' && <ReceiptReader />}
+      {tab === 'acct-accrual' && <AccrualBox />}
+      {tab === 'acct-archive' && <ArchiveBox />}
       {tab === 'acct-taxinbox' && <AcctTaxInbox />}
       {tab === 'acct-exports' && <AcctExports />}
       {tab === 'acct-po' && <AcctPos />}
@@ -425,7 +439,9 @@ function Console() {
       {tab === 'rpt-trend' && <ReportTrend />}
       {tab === 'approvals' && <ApprovalInbox />}
       {tab === 'approval-lines' && <ApprovalLines />}
+      <PermReadonlyBar tab={tab} />
       {tab === 'corp-docs' && <CorpDocs />}
+      {tab === 'perm-admin' && <PermAdmin />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}
@@ -433,6 +449,7 @@ function Console() {
       {tab === 'gwan-ux' && <GwanUx onGo={go} />}
       {tab === 'adx' && <Adx view="platform" onGo={go} />}
       {tab === 'adx-payout' && <Adx view="payout" onGo={go} />}
+        </PermScope>
       </main>
 
       <Footer links={links} settings={settings} variant="slim" className="bo-foot" />

@@ -32,7 +32,8 @@ interface Body { kind: Kind; period: string; from: string; to: string; m: M; pre
            listingRegion?: Array<{ k: string; n: number }>; dealRegion?: Array<{ k: string; n: number }>; consultRegion?: Array<{ k: string; n: number }> };   // v10.430 지역
   now: { acct: { openAlerts: number; deadlines: Array<{ label: string; due: string; daysLeft: number }> }; server: { diskUsedPct: number | null } } }
 interface View { kind: Kind; period: string; from: string; to: string; snapshot: { id: string; createdAt: string; source: string } | null; live: boolean; body: Body; text: string;
-  history: Array<{ id: string; period: string; source: string; createdAt: string; sent: number }>; sends: Array<{ channel: string; result: string; createdAt: string }>; note: string }
+  history: Array<{ id: string; period: string; source: string; createdAt: string; sent: number }>; sends: Array<{ channel: string; result: string; createdAt: string }>; note: string;
+  control?: { text: string; exceptions: number } | null }   // v10.440 (D257)
 interface Settings { on: boolean; kinds: Kind[]; mailTo: string; canEdit: boolean }
 
 const KO: Record<Kind, string> = { DAY: '일보', WEEK: '주보', MONTH: '월보' };
@@ -81,6 +82,7 @@ function ReportView({ kind }: { kind: Kind }) {
         <>
           <h3>{KO[kind]} {d.from === d.to ? d.from : `${d.from} ~ ${d.to}`}{' '}
             <small className="dim">{d.live ? '지금 계산(남긴 보고 없음)' : `남긴 보고 #${d.snapshot!.id} · ${d.snapshot!.source === 'JOB' ? '정기 작업' : '직접'} · ${ymdhm(d.snapshot!.createdAt)}`}</small></h3>
+          {d.control && <p className={d.control.exceptions ? 'warn-text' : 'muted'} data-rpt-control="">{d.control.text} — 회계 › 장부 보관 · 통제</p>}
           <table className="tbl" data-rpt-table={kind}><thead><tr><th>구분</th><th>항목</th><th>이번</th><th>지난 기간</th><th>증감</th></tr></thead>
             <tbody>{GROUPS.flatMap(([g, gk, items]) => items.map(([k, label], i) => (
               <tr key={`${g}.${k}`}><td>{i === 0 ? gk : ''}</td><td>{label}</td><td>{num(d.body.m[g]?.[k])}</td><td className="dim">{num(d.body.prev?.[g]?.[k])}</td>

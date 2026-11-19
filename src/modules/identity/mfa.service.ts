@@ -17,7 +17,7 @@ import { maskMail } from '../../common/mail/mail-admin.service';
  *   v10.236 (docs/375) — 켜기 전 점검(turnOnPreview · SUPER): 고른 설정에서 번호를 넣어야 하는 운영자 · 아직 등록 안 한 사람(이메일 가림).
  *     막지는 않음 — 등록 안 한 사람도 다음 로그인 때 /auth/mfa/* 로 등록하고 들어옴(그 사이 운영 화면은 쓰지 못함).
  * ------------------------------------------------------------------- */
-export const OPS_ROLES: readonly Role[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];   // v10.194 — 파트너 담당도 운영 역할
+export const OPS_ROLES: readonly Role[] = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];   // v10.437 (D257) 세무사   // v10.194 — 파트너 담당도 운영 역할
 const MAX_FAILS = 5;
 const LOCK_MIN = 15;
 const CACHE_MS = 30_000;
@@ -43,6 +43,8 @@ export class MfaService {
 
   /** 이 역할에 2단계가 필요한가 */
   static requiredFor(mode: string, roles: readonly string[]): boolean {
+    /* v10.437 (D257) — 세무사(외부 사람)는 2단계 인증 설정과 상관없이 늘 2단계(비밀번호만으로 장부를 보지 않게) */
+    if (roles.includes('ACCOUNTANT' as Role)) return true;
     if (mode === 'SUPER') return isSuper(roles);
     if (mode === 'ALL') return roles.some((r) => OPS_ROLES.includes(r as Role));
     return false;

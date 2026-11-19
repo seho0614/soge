@@ -1,8 +1,10 @@
 import {
-  CanActivate, ExecutionContext, Injectable, SetMetadata,
+  CanActivate, ExecutionContext, Injectable, Optional, SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Forbidden } from './errors';
+import { DatabaseService } from '../db/database.service';
+import { widenAllowed } from '../modules/admin/perm.service';   // v10.442 (D258) 권한 넓히기(perm.allow_widen · 처음 off)
 import { RequestCtx } from './request-context';
 
 export type Role =
@@ -11,7 +13,9 @@ export type Role =
    *   승인하는 사람과 돈을 보내는 사람을 나눕니다. */
   | 'REVIEWER' | 'ADMIN' | 'PAYOUT' | 'SUPER'
   /* v10.194 (D173 · docs/304) — 안심 파트너 담당 · 제휴 파트너 담당. PAYOUT 과 함께 가질 수 없습니다 */
-  | 'PARTNER_MAL' | 'PARTNER_AFF';
+  | 'PARTNER_MAL' | 'PARTNER_AFF'
+  /* v10.437 (D257 · docs/574) — 세무사 공유 계정(회계 화면 읽기 전용 · 기한 꼭) */
+  | 'ACCOUNTANT';
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
@@ -46,13 +50,19 @@ export interface Principal {
 }
 
 /** v10.180 — 운영 역할(2단계 인증 대상) */
-const MFA_OPS = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];
+const MFA_OPS = ['REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];   // v10.437 세무사도 운영 화면 2단계 인증
+/** v10.437 (D257) — 세무사만인 계정(다른 운영 역할 없음) · 회계 GET 중 지급 담당이 볼 수 있는 것만 읽게 함(쓰기는 역할이 없어 막힘) */
+const OTHER_STAFF = ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'];
+const accountantRead = (p: Principal | undefined, req: { method?: string; originalUrl?: string; url?: string }, required: Role[]) =>
+  !!p && p.roles.includes('ACCOUNTANT') && !p.roles.some((r) => OTHER_STAFF.includes(r)) && req.method === 'GET'
+  && String(req.originalUrl ?? req.url ?? '').startsWith('/api/v1/admin/acct/') && required.includes('PAYOUT');   // 끝 / — acct-* 같은 다른 경로는 빼고 정확히 회계 아래만
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector, @Optional() private readonly db?: DatabaseService) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  /* v10.442 (D258) — 권한 넓히기 판정에 DB 가 필요해 비동기(Nest 는 Promise<boolean> 도 받음) */
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
     const principal: Principal | undefined = req.principal;
 
@@ -65,8 +75,11 @@ export class AuthGuard implements CanActivate {
 
     if (required?.length) {
       if (!principal) throw new Forbidden('UNAUTHENTICATED', '로그인이 필요합니다.');
-      if (!hasRole(principal.roles, ...required)) {
-        throw new Forbidden('FORBIDDEN', '권한이 없습니다.');
+      if (!hasRole(principal.roles, ...required) && !accountantRead(principal, req, required)) {
+        /* v10.442 (D258) — perm.allow_widen = on · perm.enforce = ON 이면 권한그룹 · 개인권한으로 넓힘(금지 목록 · 감사 PERM_WIDEN) · 아래 2단계 · 접속 인증은 그대로 */
+        if (!(this.db && await widenAllowed(this.db, principal, req, required as string[]))) {
+          throw new Forbidden('FORBIDDEN', '권한이 없습니다.');
+        }
       }
       /* v10.180 (D169 · docs/281) — 운영 역할만 요구하는 API(회원 역할이 섞이면 보지 않음)는 2단계 확인 뒤에만 */
       if (principal.mfaPending && required.every((r) => MFA_OPS.includes(r))) {

@@ -37,8 +37,8 @@ export function ApprovalInbox() {
                   <td>{it.kindKo}</td><td>{it.title}</td><td>{it.who ?? ''}</td><td className="num">{won(it.amount)}</td>
                   <td>{it.step}/{it.of}{it.final && <small className="dim"> 마지막(SUPER)</small>}</td><td>{ymdhm(it.created_at)}</td>
                   <td>{it.final ? <small className="dim">{WHERE[it.kind]}에서 승인 · 반려</small> : (
-                    <><button className="btn-sm" disabled={a.busy === `s${it.kind}${it.id}`} onClick={() => step(it, true)} data-apv-approve={it.id}>결재</button>{' '}
-                      <button className="btn-sm btn-plain" disabled={a.busy === `s${it.kind}${it.id}`} onClick={() => step(it, false)}>반려</button></>
+                    <><button className="btn-sm" disabled={a.busy === `s${it.kind}${it.id}`} onClick={() => step(it, true)} data-apv-approve={it.id} data-perm="approve">결재</button>{' '}
+                      <button className="btn-sm btn-plain" disabled={a.busy === `s${it.kind}${it.id}`} onClick={() => step(it, false)} data-perm="approve">반려</button></>
                   )}</td></tr>))}</tbody></table>
           )}
         </>

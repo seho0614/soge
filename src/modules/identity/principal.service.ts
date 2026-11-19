@@ -36,7 +36,7 @@ export class PrincipalService {
                    AND s.current_period_end > now()
               ) AS has_active_subscription
          FROM accounts a
-         LEFT JOIN account_roles r ON r.account_id = a.id
+         LEFT JOIN account_roles r ON r.account_id = a.id AND NOT (r.role = 'ACCOUNTANT' AND (r.expires_at IS NULL OR r.expires_at <= now()))   -- v10.437 (D257)
         WHERE a.id = $1
         GROUP BY a.id`,
       [accountId],
