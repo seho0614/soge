@@ -3,6 +3,7 @@
   ② (설정) SUPER 만 · 지난 날짜 422 · 오늘 · 비우기
   ③ (금액) 요금제 결제 금액 · 첫 결제 청구서 공급가 · 부가세 · 소개코드 1건 금액 · CHECK
 """
+import uuid
 import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +41,8 @@ VT = tuple(int(x) for x in re.findall(r'\d+', VER))
 
 def call(m_, p, b=None, t=None):
     hd = {'content-type': 'application/json'}
+    if m_ == 'POST':
+        hd['Idempotency-Key'] = uuid.uuid4().hex   # 구독 결제는 Idempotency-Key 필수(없으면 422)
     if t:
         hd['Authorization'] = 'Bearer ' + t
     r = urllib.request.Request(API + p, data=json.dumps(b).encode() if b is not None else (b'{}' if m_ in ('POST', 'PATCH', 'PUT') else None), headers=hd, method=m_)
