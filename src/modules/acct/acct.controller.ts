@@ -142,7 +142,7 @@ export class AcctRuleDto {
   @ApiProperty({ example: '세무사 확인 — 구독 매출 계정 따로' }) @IsString() @Length(1, 400) reason!: string;
 }
 export class AcctAccountAddDto {
-  @ApiProperty({ example: 'U_REV_SUB2', description: '역할(U_ 로 시작 · 대문자)' }) @IsString() @Matches(/^U_[A-Z][A-Z0-9_]{1,30}$/) role!: string;
+  @ApiProperty({ example: 'U_REV_SUB2', description: '역할(U_ 로 시작 · 대문자)' }) @IsString() @Matches(/^U_[A-Z][A-Z_]{1,30}$/) role!: string;
   @ApiProperty({ example: '구독 매출(연간)' }) @IsString() @Length(1, 60) name!: string;
   @ApiProperty({ enum: ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'] }) @IsIn(['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']) kind!: string;   // v10.396 (D246) 자본
   @ApiPropertyOptional({ example: '405' }) @IsOptional() @IsString() @Matches(/^([0-9A-Za-z._-]{1,20})?$/) extCode?: string;
