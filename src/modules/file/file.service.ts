@@ -28,6 +28,7 @@ const UPLOADERS: Record<string, string[]> = {
   PARTNER_MEDIA: ['BIZ_OWNER', 'BIZ_STAFF', 'MEMBER'],       // v10.31 (W5 · D072) — 파트너 서비스 대표 이미지 · 회사 로고(올린 사람과 운영만 엶)
   NOTICE_ATTACHMENT: ['SUPER'],                              // v10.295 (D217) — 공지 첨부(그림 · PDF · 3개) · 공지를 볼 수 있는 사람은 GET /notices/{id}/files/{n}
   ACCT_EVIDENCE: ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.392 (D245) — 매입(SUPER · PAYOUT) · 경비 청구(운영자 누구나) 증빙 · 올린 사람 · SUPER · PAYOUT 만 엶(fn_file_can_read)
+  CORP_DOC: ['SUPER', 'ADMIN'],   // v10.425 (D253) — 사내 문서(정관 · 등기부 · 인감 …) · 열람 SUPER · ADMIN · PAYOUT(fn_file_can_read)
 };
 
 interface FileRow {

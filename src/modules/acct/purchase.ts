@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import type { Line, Source } from './journal';
+import { supplierWarning } from './bizcheck';   // v10.431 (D254)
 
 /* ---------------------------------------------------------------------
  * v10.392 (D245 · docs/529) 매입 관리
@@ -92,8 +93,9 @@ export async function addPurchase(db: DatabaseService, b: PurchaseInput, actor: 
      VALUES ($1, $2::date, $3, $4, $5, $6::bigint, $7::bigint, $6::bigint + $7::bigint, $8, $9, $10, $11, $12::uuid[], $13, $14::bigint) RETURNING id::text AS id`,
     [v.kind, v.issuedOn, v.supplier, v.bizNo, v.item, v.supply, v.vat, v.deductible, v.accountRole, v.payRole, v.memo, v.files, actor,
      /^\d{1,18}$/.test(b.requisitionId ?? '') ? b.requisitionId : null]);
-  return { ok: true, id: r!.id, deductible: v.deductible, total: v.supply + v.vat,
-           note: '매입을 넣었습니다 — 전표는 정기 작업(매시간) 또는 「지금 전표 만들기」.' };
+  const warn = await supplierWarning(db, v.bizNo);   // v10.431 (D254) 휴업 · 폐업 거래처면 경고만
+  return { ok: true, id: r!.id, deductible: v.deductible, total: v.supply + v.vat, warn,
+           note: warn ?? '매입을 넣었습니다 — 전표는 정기 작업(매시간) 또는 「지금 전표 만들기」.' };
 }
 
 /** POST /admin/acct/purchases/{id}/cancel — 사유 · 전표가 있으면 반대 전표가 따라옴 */

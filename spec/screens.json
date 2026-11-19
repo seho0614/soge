@@ -5753,9 +5753,11 @@
    "nav": "SB-ADM-DSH-010",
    "apis": [
     "GET /admin/acct/budget",
-    "PUT /admin/acct/budget"
+    "PUT /admin/acct/budget",
+    "GET /admin/acct/budget/period",
+    "POST /admin/acct/budget/year"
    ],
-   "note": "2026-11-20 v10.399 (D246 · docs/536) 계정별 달 예산(SUPER · 지난달 옮기기 · 바꾼 기록) · 실적 · 차이 · 넘으면 운영 알림 ACCT_BUDGET_OVER · 경영 보고서 한 줄"
+   "note": "2026-11-20 v10.399 (D246 · docs/536) 계정별 달 예산(SUPER · 지난달 옮기기 · 바꾼 기록) · 실적 · 차이 · 넘으면 운영 알림 ACCT_BUDGET_OVER · 경영 보고서 한 줄 · 2026-11-20 v10.427 (D253 · docs/564) 분기 · 연 예산 · 누계"
   },
   {
    "id": "SB-ADM-ACC-120",
@@ -6020,7 +6022,8 @@
     "GET /admin/acct/parties/{id}",
     "POST /admin/acct/parties",
     "PATCH /admin/acct/parties/{id}",
-    "POST /admin/acct/parties/import"
+    "POST /admin/acct/parties/import",
+    "POST /admin/acct/parties/{id}/biz-check"
    ],
    "note": "2026-11-20 v10.408 (D249 · docs/545) 매입처 · 매출처 · 사업자번호 · 담당 · 계좌 끝 4자리 · 광고주 · 입점 판매자 · 매입 연결 · 가져오기(SUPER) · 거래 합계"
   },
@@ -6147,6 +6150,305 @@
     "GET /admin/worklogs/board"
    ],
    "note": "2026-11-19 v10.414 (D250 · docs/551) 대표 「업무일지 현황판」 — 운영자마다 그날 일지 · 안 쓴 사람 · 7일 작성률 · 막힌 것 · 확인 안 한 일지(SUPER)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-270",
+   "name": "회계 원천세 신고서",
+   "url": "/admin/acct-whtreturn",
+   "apis": [
+    "GET /admin/acct/tax/wht-return",
+    "GET /admin/acct/tax/wht-return/export"
+   ],
+   "note": "2026-11-20 v10.420 (D252 · docs/557) 원천세 이행상황신고서 미리보기 — A01 근로 · A20 퇴직 · A25 사업 · A99 · 납부 기한 다음 달 10일 · CSV(내려받기 승인 ACCT_TAX)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-280",
+   "name": "회계 지급명세서",
+   "url": "/admin/acct-wagestmt",
+   "apis": [
+    "GET /admin/acct/payroll/statements",
+    "GET /admin/acct/payroll/statements/export",
+    "GET /admin/acct/payroll/statements/{employeeId}/receipt"
+   ],
+   "note": "2026-11-20 v10.421 (D252 · docs/558) 근로소득 지급명세서 · 간이지급명세서(반기) · 원천징수영수증(인쇄) — 주민등록번호 없음"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-ACC-290",
+   "name": "회계 4대보험 신고",
+   "url": "/admin/acct-insurance",
+   "apis": [
+    "GET /admin/acct/payroll/insurance",
+    "POST /admin/acct/payroll/insurance/done"
+   ],
+   "note": "2026-11-20 v10.422 (D252 · docs/559) 4대보험 취득 · 상실 신고 자료 · 기한 다음 달 15일 · 처리함(SUPER) · ACCT_INSURANCE_DUE"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-APV-010",
+   "name": "결재함",
+   "url": "/admin/approvals",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "apis": [
+    "GET /admin/acct/approvals/inbox",
+    "GET /admin/acct/approvals/{kind}/{id}",
+    "POST /admin/acct/approvals/{kind}/{id}/step"
+   ],
+   "note": "2026-11-20 v10.424 (D253 · docs/561) 내 결재 차례 품의 · 경비 청구 · 수동 전표 · 중간 단계 결재 · 반려 · 마지막(SUPER)은 각 화면"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-APV-020",
+   "name": "결재선",
+   "url": "/admin/approval-lines",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "apis": [
+    "GET /admin/acct/approval-lines",
+    "PUT /admin/acct/approval-lines"
+   ],
+   "note": "2026-11-20 v10.424 (D253 · docs/561) 종류마다 금액 구간 · 단계(역할 · 사람 · 마지막 SUPER) · 고치기 SUPER · 바꾼 기록"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-DOC-010",
+   "name": "사내 문서함",
+   "url": "/admin/corp-docs",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT"
+   ],
+   "apis": [
+    "GET /admin/corp-docs",
+    "GET /admin/corp-docs/{id}",
+    "POST /admin/corp-docs",
+    "POST /admin/corp-docs/{id}/versions",
+    "POST /admin/corp-docs/{id}/archive"
+   ],
+   "note": "2026-11-20 v10.425 (D253 · docs/562) 정관 · 등기부 · 인감 · 사업자등록 · 규정 · 인증서 · 판(쌓기만) · 만료 30일 전 CORP_DOC_DUE · 보관 끝(SUPER)"
+  },
+  {
+   "id": "SB-ADM-ACC-310",
+   "name": "회계 수출",
+   "group": "ADM",
+   "url": "/admin/acct-exports",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/exports",
+    "POST /admin/acct/exports",
+    "POST /admin/acct/exports/{id}/advance",
+    "POST /admin/acct/exports/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.428 (D254 · docs/565) 무역 2단계 — 수주 → 선적(선적일 환율 매출 · 영세율 · 재고 출고) → 수출신고 수리(영세율 근거 번호) → 대금 회수(외환차익 · 차손)"
+  },
+  {
+   "id": "SB-ADM-ACC-320",
+   "name": "회계 국내 발주",
+   "group": "ADM",
+   "url": "/admin/acct-po",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/pos",
+    "POST /admin/acct/pos",
+    "POST /admin/acct/pos/{id}/receive",
+    "POST /admin/acct/pos/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.428 (D254 · docs/565) 국내 구매 발주 → 입고(⑫ 매입 한 건 자동 · 직판 옵션 재고 입고)"
+  },
+  {
+   "id": "SB-ADM-WRP-060",
+   "name": "보고 추세",
+   "group": "ADM",
+   "url": "/admin/rpt-trend",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/work-reports/trend"
+   ],
+   "note": "2026-11-20 v10.429 (D254 · docs/566) 경영 대시보드 그래프 — 12달 · 13주 매출 · 이익 · 현금 · 가입 · 소개몰 결제(SVG)"
+  },
+  {
+   "id": "SB-ADM-ACC-350",
+   "name": "회계 매입 세금계산서 받기",
+   "group": "ADM",
+   "url": "/admin/acct-taxinbox",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/tax-inbox",
+    "POST /admin/acct/tax-inbox/fetch",
+    "POST /admin/acct/tax-inbox/{id}/book",
+    "POST /admin/acct/tax-inbox/{id}/ignore"
+   ],
+   "note": "2026-11-20 v10.432 (D255 · docs/569) 홈택스 매입 전자세금계산서를 연동 업체(바로빌 · 팝빌 등 · 처음 간주)로 가져와 계정 골라 매입으로 · 같은 승인번호 한 번 · 같은 매입 409 · 이카운트 연동은 보류(대표 11/19)"
+  },
+  {
+   "id": "SB-ADM-ACC-380",
+   "name": "회계 견적 · 명세서",
+   "group": "ADM",
+   "url": "/admin/acct-docs",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/sales-docs",
+    "POST /admin/acct/sales-docs",
+    "GET /admin/acct/sales-docs/{id}",
+    "POST /admin/acct/sales-docs/{id}/revise",
+    "POST /admin/acct/sales-docs/{id}/convert",
+    "POST /admin/acct/sales-docs/{id}/state",
+    "POST /admin/acct/sales-docs/{id}/tax-invoice",
+    "GET /admin/acct/sales-docs/po/{id}/print",
+    "GET /admin/acct/erp/company"
+   ],
+   "note": "2026-11-20 v10.433 (D256 · docs/570) 견적서 → 주문서 → 거래명세서 · 번호 Q/O/S-YYMM-0001 · 새 판 · 확정 = 매출 전표 SALES_DOC · 세금계산서 요청(SALES_DOC) · 인쇄 · 발주서 인쇄"
+  },
+  {
+   "id": "SB-ADM-ACC-390",
+   "name": "회계 부서 손익",
+   "group": "ADM",
+   "url": "/admin/acct-depts",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/depts",
+    "POST /admin/acct/depts",
+    "PATCH /admin/acct/depts/{id}",
+    "PUT /admin/acct/depts/rules",
+    "POST /admin/acct/projects",
+    "PATCH /admin/acct/projects/{id}",
+    "GET /admin/acct/tags/entries",
+    "POST /admin/acct/tags/entry/{id}",
+    "POST /admin/acct/tags/source",
+    "GET /admin/acct/dept-pnl"
+   ],
+   "note": "2026-11-20 v10.434 (D256 · docs/571) 부서 · 프로젝트 · 전표 꼬리표(전표 > 근거 > 돈 흐름 기본) · 부서 · 프로젝트별 손익"
+  },
+  {
+   "id": "SB-ADM-ACC-400",
+   "name": "회계 창고 · 바코드",
+   "group": "ADM",
+   "url": "/admin/acct-wh",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/warehouses",
+    "POST /admin/acct/warehouses",
+    "PATCH /admin/acct/warehouses/{id}",
+    "GET /admin/acct/warehouses/stock",
+    "POST /admin/acct/warehouses/transfer",
+    "POST /admin/acct/warehouses/in",
+    "POST /admin/acct/warehouses/adjust",
+    "GET /admin/acct/barcodes",
+    "POST /admin/acct/barcodes/{optionId}",
+    "GET /admin/acct/barcodes/find"
+   ],
+   "note": "2026-11-20 v10.435 (D256 · docs/572) 창고 여러 곳 · 창고 간 이동(원가 전표 없음) · 창고 입고 · 실사 · 바코드 Code128 인쇄 · 카메라 읽기(BarcodeDetector)"
+  },
+  {
+   "id": "SB-ADM-ACC-410",
+   "name": "회계 미수금 독촉",
+   "group": "ADM",
+   "url": "/admin/acct-dunning",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/dunning",
+    "PUT /admin/acct/dunning/templates/{stage}",
+    "POST /admin/acct/dunning/preview",
+    "POST /admin/acct/dunning/send",
+    "POST /admin/acct/receipt-promises",
+    "POST /admin/acct/receipt-promises/{id}/close"
+   ],
+   "note": "2026-11-20 v10.436 (D256 · docs/573) 거래처별 받을 돈 · 독촉 단계(안내 · 독촉 · 최종) · 메일(자동은 처음 꺼짐) · 보낸 기록 · 입금 예정 → 자금 흐름 예정"
   }
  ],
  "deferred": [

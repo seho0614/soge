@@ -7,7 +7,7 @@ import { PolicyViolation } from '../../core/errors';
  *     (1) 과세 세금계산서 발급분 = 증빙 TAX_INVOICE
  *     (3) 과세 신용카드 · 현금영수증 발행분 = CARD_PG · CASH
  *     (4) 과세 기타(정규영수증 외) = 그 밖
- *     (5)(6) 영세율 — 지금 돈 흐름에 없음(0) · 면세 수입금액(소개몰 면세 상품)은 따로
+ *     (5)(6) 영세율 — (6) 수출 매출(v10.428 REV_EXPORT) · (5) 영세율 세금계산서는 아직 없음(0) · 면세 수입금액(소개몰 면세 상품)은 따로
  *   매입: 전표 VAT_IN(공제되는 매입 부가세)을 증빙별로
  *     (10) 세금계산서 수취분 일반매입 = TAX_INVOICE 중 고정자산(⑬ FIXED_ASSET) 아닌 것 · (11) 고정자산 매입 = 같은 전표에 FIXED_ASSET 차변
  *     (14) 그 밖의 공제매입세액(신용카드매출전표 등 수령명세서) = CARD · CARD_PG · CASH
@@ -47,7 +47,12 @@ export async function vatForm(db: DatabaseService, q?: string) {
   const pick = (f: (ev: string) => boolean) => sales.filter((x) => f(x.evidence)).reduce((a, x) => ({ supply: a.supply + n(x.supply), vat: a.vat + n(x.vat) }), { supply: 0, vat: 0 });
   const s1 = pick((e) => e === 'TAX_INVOICE'), s3 = pick((e) => e === 'CARD_PG' || e === 'CASH' || e === 'CARD'), s4 = pick((e) => !['TAX_INVOICE', 'CARD_PG', 'CASH', 'CARD'].includes(e));
   const exempt = sales.reduce((a, x) => a + n(x.exempt), 0);
-  const outTotal = { supply: s1.supply + s3.supply + s4.supply, vat: s1.vat + s3.vat + s4.vat };
+  /* v10.428 (D254) — 영세율 · 기타(6) = 수출 매출(REV_EXPORT · 부가세 0 · 수출신고필증) · 영세율 세금계산서(5 · 내국신용장 · 구매확인서)는 아직 없음(0) */
+  const [zx] = await db.query<{ s: string }>(
+    `SELECT coalesce(sum(l.credit - l.debit), 0)::text AS s FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id
+      WHERE l.role = 'REV_EXPORT' AND e.entry_date >= $1::date AND e.entry_date < $2::date AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')`, [r.from, r.to]).catch(() => [{ s: '0' }]);
+  const s6 = { supply: n(zx?.s), vat: 0 };
+  const outTotal = { supply: s1.supply + s3.supply + s4.supply + s6.supply, vat: s1.vat + s3.vat + s4.vat };
 
   /* 매입 — VAT_IN 차변(공제) · 같은 전표에 FIXED_ASSET 이 있으면 고정자산 */
   const buys = await db.query<{ evidence: string; fixed: boolean; vat: string; supply: string }>(
@@ -82,7 +87,7 @@ export async function vatForm(db: DatabaseService, q?: string) {
     { no: '3', group: '매출', label: '과세 · 신용카드 · 현금영수증 발행분', ...s3 },
     { no: '4', group: '매출', label: '과세 · 기타(정규영수증 외 매출분)', ...s4 },
     { no: '5', group: '매출', label: '영세율 · 세금계산서 발급분', supply: 0, vat: 0 },
-    { no: '6', group: '매출', label: '영세율 · 기타', supply: 0, vat: 0 },
+    { no: '6', group: '매출', label: '영세율 · 기타(수출 · v10.428)', ...s6 },
     { no: '9', group: '매출', label: '매출 합계(매출세액)', ...outTotal },
     { no: '10', group: '매입', label: '세금계산서 수취분 · 일반매입', ...b10 },
     { no: '11', group: '매입', label: '세금계산서 수취분 · 고정자산 매입', ...b11 },

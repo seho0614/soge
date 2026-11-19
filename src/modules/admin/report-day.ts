@@ -94,6 +94,18 @@ export async function tops(db: DatabaseService, from: string, to: string) {
     mallProduct: await q(`SELECT p.name AS k, sum(it.qty)::int AS n FROM hlt_order_items it JOIN hlt_orders o ON o.id = it.order_id JOIN hlt_products p ON p.id = it.product_id
                             WHERE o.status IN ('PAID', 'PREPARING', 'SHIPPED', 'DELIVERED') AND (o.created_at AT TIME ZONE 'Asia/Seoul')::date BETWEEN $1::date AND $2::date
                             GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 5`),
+    /* v10.430 (D254) 지역 상위 5 — 시 · 도(시군구가 있으면 「시도 시군구」) · 지역 없는 것은 뺌 · 회원 주소는 셈하지 않음(개인정보 · 칸 없음) */
+    listingRegion: await q(`SELECT trim(coalesce(vr.sido, '') || ' ' || coalesce(vr.sigungu, '')) AS k, count(*)::int AS n
+                              FROM listings l JOIN v_listing_region vr ON vr.listing_id = l.id
+                             WHERE vr.sido IS NOT NULL AND (l.created_at AT TIME ZONE 'Asia/Seoul')::date BETWEEN $1::date AND $2::date
+                             GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 5`),
+    dealRegion: await q(`SELECT trim(coalesce(sd.sido, '') || ' ' || coalesce(sd.sigungu, '')) AS k, count(*)::int AS n
+                           FROM v_success_deals sd
+                          WHERE sd.sido IS NOT NULL AND (sd.confirmed_at AT TIME ZONE 'Asia/Seoul')::date BETWEEN $1::date AND $2::date
+                          GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 5`),
+    consultRegion: await q(`SELECT trim(c.sido || ' ' || coalesce(c.sigungu, '')) AS k, count(*)::int AS n
+                              FROM consult_requests c WHERE (c.created_at AT TIME ZONE 'Asia/Seoul')::date BETWEEN $1::date AND $2::date
+                              GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 5`),
   };
 }
 

@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { ALL_SOURCES } from './sources';
 import { budgetLine } from './budget';   // v10.392 — ⑫ 돈 흐름 이름까지
+import { budgetYearLine } from './budget-period';   // v10.427 (D253) 연 누계 한 줄
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
@@ -161,6 +162,7 @@ export async function acctReport(db: DatabaseService, months: number) {
   const last = list[list.length - 1], prev = list[list.length - 2];
   const pct = (a?: number, b?: number) => (a == null || !b ? null : Math.round(((a - b) / Math.abs(b)) * 1000) / 10);
   const budget = last ? await budgetLine(db, last.ym).catch(() => null) : null;   // v10.399 (D246) 예산 대비 한 줄
-  return { months: list, revenueNames: names, latest: last ?? null, budget, change: { revenue: pct(last?.revenue, prev?.revenue), profit: pct(last?.profit, prev?.profit) },
+  const budgetYear = await budgetYearLine(db).catch(() => null);   // v10.427 (D253) 올해 누계 비용 · 매출 대비 예산
+  return { months: list, revenueNames: names, latest: last ?? null, budget, budgetYear, change: { revenue: pct(last?.revenue, prev?.revenue), profit: pct(last?.profit, prev?.profit) },
            note: '전표에서 셈(공급가 · 부가세 뺌) — 회사 장부 전체가 아니라 소개뱅크 시스템을 지난 돈만입니다(급여 · 임대료 등 비용은 회계 프로그램).' };
 }

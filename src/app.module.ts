@@ -242,6 +242,7 @@ import { MemberOpsController } from './modules/admin/member-ops.controller';   /
 import { OpsSafetyController } from './modules/admin/ops-safety.controller';
 import { OpsStaffController } from './modules/admin/ops-staff.controller';
 import { AcctController } from './modules/acct/acct.controller';   // v10.381 ~ 384 (D242) 회계 · 세무 1단계
+import { AcctFilingsController } from './modules/acct/acct-filings.controller';   // v10.420 ~ 422 (D252) 원천세 신고서 · 지급명세서 · 4대보험 신고
 import { OpsPlanController } from './modules/admin/ops-plan.controller';   // v10.377 (D241) 설정 예약 변경
 import { LoginSessionsController } from './modules/identity/login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
@@ -275,6 +276,8 @@ import { AccountSecurityService } from './modules/identity/account-security.serv
 import { EtaxAdminController } from './modules/etax/etax.controller';
 import { AttributionController } from './modules/attribution/attribution.controller';
 import { WorkReportController } from './modules/admin/report.controller';   // v10.412 ~ 415 (D250) 업무 보고 · 업무 일지
+import { ErpController } from './modules/acct/erp.controller';   // v10.433 ~ 436 (D256) 내부 ERP — 견적 · 명세서 · 부서 손익 · 창고 · 독촉
+import { AcctOfficeController } from './modules/acct/office.controller';   // v10.424 ~ 427 (D253) 결재선 · 사내 문서함 · 분기 · 연 예산
 import { LeadService } from './modules/lead/lead.service';
 
 /**
@@ -287,6 +290,8 @@ import { LeadService } from './modules/lead/lead.service';
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     WorkReportController,     // v10.412 ~ 415 (D250)
+    ErpController,            // v10.433 ~ 436 (D256)
+    AcctOfficeController,     // v10.424 ~ 427 (D253)
     AuthController,
     I18nController,   // v10.93 다국어 기반
     AgentController,  // v10.94 AI 에이전트 틀
@@ -368,6 +373,7 @@ import { LeadService } from './modules/lead/lead.service';
     OpsSafetyController,
     OpsStaffController,       // v10.369 ~ 371 (D239)
     AcctController,           // v10.381 ~ 384 (D242)
+    AcctFilingsController,    // v10.420 ~ 422 (D252)
     OpsPlanController,        // v10.377 (D241)
     LoginSessionsController,  // v10.380 (D241)
     OpsWeekController,        // v10.374 ~ 376 (D240)      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험

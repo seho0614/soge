@@ -47,6 +47,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'MAP', name: 'KAKAO_JS_KEY', label: 'JavaScript 키(공개)', env: null, envRead: 'NEXT_PUBLIC_KAKAO_JS_KEY', isPublic: true },
   { code: 'WEATHER', name: 'KMA_SERVICE_KEY', label: '공공데이터포털 인증키', env: null, envRead: 'KMA_SERVICE_KEY', isPublic: false },
   { code: 'AGENT', name: 'ANTHROPIC_API_KEY', label: 'API 키', env: null, envRead: 'ANTHROPIC_API_KEY', isPublic: false },
+  { code: 'TAXINBOX', name: 'TAXINBOX_API_KEY', label: '연동 업체 API 키', env: 'TAXINBOX_API_KEY', envRead: 'TAXINBOX_API_KEY', isPublic: false },   // v10.432 (D255)
 ];
 
 const EVERY_MS = 60_000;

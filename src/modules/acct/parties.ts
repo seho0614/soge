@@ -82,6 +82,7 @@ export async function listParties(db: DatabaseService, q?: string, kind?: string
     `SELECT p.id::text AS id, p.kind, p.name, p.biz_no AS "bizNo", p.contact_name AS "contactName", p.contact_phone AS "contactPhone", p.contact_email AS "contactEmail",
             p.bank_name AS "bankName", p.account_last4 AS "accountLast4", p.advertiser_id AS "advertiserId", a.name AS "advertiserName",
             p.seller_id AS "sellerId", s.name AS "sellerName", p.memo, p.state, p.updated_at AS "updatedAt",
+            p.biz_status AS "bizStatus", p.biz_checked_at AS "bizCheckedAt", p.biz_detail AS "bizDetail", p.biz_stub AS "bizStub",   -- v10.431 (D254) 휴폐업 조회
             ${pur ? `(SELECT coalesce(sum(x.total), 0)::bigint FROM acct_purchases x WHERE x.state = 'ACTIVE' AND p.biz_no IS NOT NULL AND x.supplier_biz_no = p.biz_no)` : '0::bigint'} AS "purchaseTotal",
             (SELECT coalesce(sum(i.total), 0)::bigint FROM ad_invoices i WHERE p.advertiser_id IS NOT NULL AND i.advertiser_id = p.advertiser_id AND i.status <> 'VOID') AS "adTotal"
        FROM acct_parties p LEFT JOIN advertisers a ON a.id = p.advertiser_id LEFT JOIN hlt_sellers s ON s.id = p.seller_id

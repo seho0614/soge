@@ -20,10 +20,13 @@ import { PAY_ROLES, PURCHASE_KINDS, PURCHASE_MAX_FILES, addPurchase, cancelPurch
 import { bookCard, cancelExpense, cardMonth, createExpense, decideExpense, listExpenses, payExpense, uploadCard } from './expense';
 import { addCashBalance, addCashPlan, cancelCashPlan, cashflow, listCashPlans } from './cashflow';
 import { stockAdjust, stockIn, stockList, stockMoves } from './stock';
+import { EXPORT_STATES, addExport, addPo, advanceExport, cancelExport, cancelPo, listExports, listPos, receivePo } from './trade';
+import { bizCheckParty } from './bizcheck';
 import { PARTY_KINDS, addParty, importParties, listParties, partyDetail, updateParty } from './parties';
 import { CONTRACT_KINDS, CONTRACT_MAX_FILES, addContract, endContract, listContracts, renewContract } from './contracts';
 import { addRequisition, cancelRequisition, decideRequisition, listRequisitions, useRequisition } from './requisitions';
 import { IMPORT_STATES, addImport, advanceImport, cancelImport, importDetail, listImports } from './imports';
+import { bookInbox, fetchInbox, ignoreInbox, listInbox } from './taxinbox';   // v10.432 (D255) 매입 세금계산서 가져오기
 import { PG_MAX_CHARS, pgAutoMatch, pgMatch, pgMonth, uploadPg } from './pgsettle';
 import { MANUAL_EVIDENCES, addManual, cancelManual, decideManual, listManual } from './manual';
 import { leaveBook, leaveGrant, leaveUse, severanceEstimate, severanceRun } from './severance';
@@ -474,6 +477,72 @@ export class ImportAdvanceDto {
 }
 export class ImportCancelDto {
   @ApiProperty({ example: '발주 취소' }) @IsString() @Length(1, 400) reason!: string;
+}
+/* ── v10.432 (D255) 매입 세금계산서 가져오기 ── */
+export class TaxInboxFetchDto {
+  @ApiPropertyOptional({ example: '2026-11-13', description: '시작일(비우면 끝일 6일 전)' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) from?: string;
+  @ApiPropertyOptional({ example: '2026-11-19', description: '끝일(비우면 오늘 · 31일까지)' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) to?: string;
+}
+export class TaxInboxBookDto {
+  @ApiProperty({ example: 'EXP_SUPPLIES', description: '비용 · 자산 계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole!: string;
+  @ApiProperty({ enum: ['CASH', 'AP', 'CARD_AP'], description: '낸 방법' }) @IsIn(['CASH', 'AP', 'CARD_AP']) payRole!: string;
+  @ApiPropertyOptional({ example: '11월 사무용품' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
+  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계 매입이 있어도 넘기기' }) @IsOptional() @IsBoolean() force?: boolean;
+  @ApiPropertyOptional({ example: '12', description: '붙일 품의 번호(v10.417)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
+}
+export class TaxInboxIgnoreDto {
+  @ApiProperty({ example: '대표 개인 카드 매입' }) @IsString() @Length(1, 400) note!: string;
+}
+
+/* ── ㉑ d254.ctrl.ts ── */
+export class ExportLineDto {
+  @ApiPropertyOptional({ format: 'uuid', description: '직판 상품 옵션(있으면 선적 때 재고 출고)' }) @IsOptional() @IsString() @Length(36, 36) optionId?: string;
+  @ApiPropertyOptional({ example: '건강음료 세트', description: '옵션이 없으면 품목 이름(2 ~ 100자)' }) @IsOptional() @IsString() @Length(0, 100) item?: string;
+  @ApiProperty({ example: 10 }) @IsInt() @Min(1) @Max(1000000) qty!: number;
+  @ApiProperty({ example: 1500.5, description: '외화 금액(소수 둘째 자리)' }) @IsNumber() @Min(0) @Max(1000000000) foreignAmount!: number;
+}
+export class ExportAddDto {
+  @ApiPropertyOptional({ example: '12' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) partyId?: string;
+  @ApiProperty({ example: '미국 A사 11월 주문' }) @IsString() @Length(2, 100) title!: string;
+  @ApiPropertyOptional({ example: 'USD' }) @IsOptional() @IsString() @Matches(/^[A-Za-z]{3}$/) currency?: string;
+  @ApiPropertyOptional({ example: 'FOB' }) @IsOptional() @IsString() @Matches(/^([A-Za-z]{3})?$/) incoterms?: string;
+  @ApiProperty({ example: '2026-11-20' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) orderedOn!: string;
+  @ApiPropertyOptional({ example: '부산항 · 30일 후 송금' }) @IsOptional() @IsString() @Length(0, 200) memo?: string;
+  @ApiProperty({ type: [ExportLineDto] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(50) @ValidateNested({ each: true }) @Type(() => ExportLineDto) lines!: ExportLineDto[];
+}
+export class ExportAdvanceDto {
+  @ApiProperty({ enum: EXPORT_STATES.slice(1) }) @IsIn(EXPORT_STATES.slice(1) as unknown as string[]) to!: string;
+  @ApiProperty({ example: '2026-11-25' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) date!: string;
+  @ApiPropertyOptional({ example: 1385.2, description: '선적일 환율(원 · 외화 1단위) — 선적 때 꼭' }) @IsOptional() @IsNumber() @Min(0) @Max(100000) fxRate?: number;
+  @ApiPropertyOptional({ example: 'BL123456' }) @IsOptional() @IsString() @Length(0, 40) blNo?: string;
+  @ApiPropertyOptional({ example: '12345-26-123456X', description: '수출신고번호 — 수출신고 수리 때 꼭(영세율 근거)' }) @IsOptional() @IsString() @Length(0, 40) declNo?: string;
+  @ApiPropertyOptional({ example: 13852000, description: '통장에 들어온 원화 — 대금 회수 때 꼭' }) @IsOptional() @IsInt() @Min(1) @Max(100000000000) paidKrw?: number;
+}
+export class TradeCancelDto {
+  @ApiProperty({ example: '주문 취소' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class PoLineDto {
+  @ApiPropertyOptional({ format: 'uuid', description: '직판 상품 옵션(있으면 입고 때 재고 입고)' }) @IsOptional() @IsString() @Length(36, 36) optionId?: string;
+  @ApiPropertyOptional({ example: '포장 상자', description: '옵션이 없으면 품목 이름(2 ~ 100자)' }) @IsOptional() @IsString() @Length(0, 100) item?: string;
+  @ApiProperty({ example: 100 }) @IsInt() @Min(1) @Max(1000000) qty!: number;
+  @ApiProperty({ example: 1200, description: '단가(공급가 · 원)' }) @IsInt() @Min(0) @Max(10000000000) unitPrice!: number;
+}
+export class PoAddDto {
+  @ApiProperty({ example: '3', description: '매입처(거래처 대장)' }) @IsString() @Matches(/^\d{1,18}$/) partyId!: string;
+  @ApiProperty({ example: '11월 포장재' }) @IsString() @Length(2, 100) title!: string;
+  @ApiProperty({ example: '2026-11-20' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) orderedOn!: string;
+  @ApiPropertyOptional({ example: '납기 11/27' }) @IsOptional() @IsString() @Length(0, 200) memo?: string;
+  @ApiPropertyOptional({ example: '5', description: '붙일 품의(승인)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
+  @ApiProperty({ type: [PoLineDto] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(50) @ValidateNested({ each: true }) @Type(() => PoLineDto) lines!: PoLineDto[];
+}
+export class PoReceiveDto {
+  @ApiProperty({ example: '2026-11-27' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) date!: string;
+  @ApiPropertyOptional({ enum: ['TAX_INVOICE', 'CARD', 'CASH', 'SIMPLE'] }) @IsOptional() @IsIn(['TAX_INVOICE', 'CARD', 'CASH', 'SIMPLE']) kind?: string;
+  @ApiPropertyOptional({ example: 12000, description: '부가세(비우면 공급가의 10% · 간이영수증 0)' }) @IsOptional() @IsInt() @Min(0) @Max(10000000000) vat?: number;
+  @ApiPropertyOptional({ description: '부가세 공제(처음 예)' }) @IsOptional() @IsBoolean() deductible?: boolean;
+  @ApiPropertyOptional({ example: 'INVENTORY', description: '계정(비우면 모두 직판 옵션이면 상품 · 아니면 소모품비)' }) @IsOptional() @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole?: string;
+  @ApiPropertyOptional({ enum: ['CASH', 'AP', 'CARD_AP'] }) @IsOptional() @IsIn(['CASH', 'AP', 'CARD_AP']) payRole?: string;
+  @ApiPropertyOptional({ type: [String], description: '증빙 파일(ACCT_EVIDENCE)' }) @IsOptional() @IsArray() @ArrayMaxSize(5) @IsString({ each: true }) attachments?: string[];
 }
 
 const reasonOk = (r: string, code: string) => {
@@ -1776,4 +1845,140 @@ export class AcctController {
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'IMPORT_STATE' })
   cancelImport(@Param('id') id: string, @Body() dto: ImportCancelDto) { return cancelImport(this.db, id, dto.reason); }
+
+  /* ── ㉑ d254 ── */
+  @Get('exports')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'state', required: false, enum: ['ORDERED', 'SHIPPED', 'CLEARED', 'PAID', 'CANCELED'] })
+  @ApiOperation({ summary: '수출 건 (v10.428)', description: '수주 → 선적 → 수출신고 수리 → 대금 회수 · 받을 돈(원화) · 직판 옵션 목록.' })
+  @ApiOkResponse({ type: Object })
+  exports(@Query('state') state?: string) { return listExports(this.db, state); }
+
+  @Post('exports')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_EXPORT_ADD', 'SETTING')
+  @ApiOperation({ summary: '수주 넣기 (v10.428)', description: '거래처 · 통화 · 인코텀즈 · 품목(직판 옵션 또는 이름) · 외화 금액.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPORT_TITLE · EXPORT_CURRENCY · EXPORT_DATE · EXPORT_LINES · TRADE_PARTY' })
+  addExport(@Body() dto: ExportAddDto) { return addExport(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('exports/:id/advance')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_EXPORT_ADVANCE', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '수출 다음 단계 (v10.428)', description: '선적(환율 · 매출 · 재고 출고) · 수출신고 수리(번호) · 대금 회수(원화 · 환율 차이). 앞으로만.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'EXPORT_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPORT_STATE · EXPORT_DATE · EXPORT_FX · EXPORT_DECL · EXPORT_PAID' })
+  advanceExport(@Param('id') id: string, @Body() dto: ExportAdvanceDto) { return advanceExport(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('exports/:id/cancel')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_EXPORT_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '수출 건 취소 (v10.428)', description: '선적 전에만 · 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'EXPORT_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_REASON' })
+  cancelExport(@Param('id') id: string, @Body() dto: TradeCancelDto) { return cancelExport(this.db, id, dto.reason); }
+
+  /* ── v10.428 국내 구매 발주 ── */
+  @Get('pos')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'state', required: false, enum: ['ORDERED', 'RECEIVED', 'CANCELED'] })
+  @ApiOperation({ summary: '국내 구매 발주 (v10.428)', description: '발주 → 입고(매입 한 건 · 직판 옵션 재고 입고).' })
+  @ApiOkResponse({ type: Object })
+  pos(@Query('state') state?: string) { return listPos(this.db, state); }
+
+  @Post('pos')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PO_ADD', 'SETTING')
+  @ApiOperation({ summary: '발주 넣기 (v10.428)', description: '매입처 · 품목(직판 옵션 또는 이름) · 수량 · 단가 · 품의(선택).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PO_TITLE · PO_DATE · PO_LINES · PO_REQ · TRADE_PARTY' })
+  addPo(@Body() dto: PoAddDto) { return addPo(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('pos/:id/receive')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PO_RECEIVE', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '발주 입고 (v10.428)', description: '⑫ 매입 한 건(같은 건 막기 건너뜀 · 품의 한도는 DB) · 직판 옵션 품목은 재고 수불부 입고(purchase_id).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PO_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PO_DATE · PO_LINES · PURCHASE_* · REQ_OVER' })
+  receivePo(@Param('id') id: string, @Body() dto: PoReceiveDto) { return receivePo(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('pos/:id/cancel')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PO_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '발주 취소 (v10.428)', description: '입고 전에만 · 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PO_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_REASON' })
+  cancelPo(@Param('id') id: string, @Body() dto: TradeCancelDto) { return cancelPo(this.db, id, dto.reason); }
+
+  /* ── v10.431 거래처 휴폐업 조회 ── */
+  @Post('parties/:id/biz-check')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PARTY_BIZ_CHECK', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '거래처 휴폐업 조회 (v10.431)', description: '국세청 사업자 상태(키 없으면 간주) · acct.biz_status_check on 일 때만 · 휴업 · 폐업이면 운영 알림.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'BIZ_CHECK_OFF · ACCT_PARTY_BIZNO' })
+  bizCheckParty(@Param('id') id: string) { return bizCheckParty(this.db, id); }
+
+  /* ── v10.432 (D255 · docs/569) 매입 세금계산서 가져오기 ── */
+  @Get('tax-inbox')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiQuery({ name: 'state', required: false, enum: ['NEW', 'BOOKED', 'IGNORED'] })
+  @ApiOperation({ summary: '가져온 매입 세금계산서 (v10.432)', description: '그 달 가져온 줄 · 상태(새로 · 매입으로 넘김 · 넘기지 않음) · 같은 매입이 이미 있는지 · 켜짐 · 방식(간주 · 업체) · 마지막 가져오기.' })
+  @ApiOkResponse({ type: Object })
+  taxInbox(@Query('ym') ym?: string, @Query('state') state?: string) { return listInbox(this.db, { ym, state }); }
+
+  @Post('tax-inbox/fetch')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_TAXINBOX_FETCH', 'SETTING')
+  @ApiOperation({ summary: '매입 세금계산서 가져오기 (v10.432)', description: '연동 업체(또는 간주)에서 기간(31일까지)의 매입 세금계산서를 가져옴 · 같은 승인번호는 한 번. 꺼져 있으면 422 TAXINBOX_OFF · 업체 키 없으면 422 TAXINBOX_NOT_READY.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TAXINBOX_OFF · TAXINBOX_NOT_READY · TAXINBOX_PERIOD' })
+  taxInboxFetch(@Body() dto: TaxInboxFetchDto) { return fetchInbox(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('tax-inbox/:id/book')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_TAXINBOX_BOOK', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '매입으로 넘기기 (v10.432)', description: '계정 · 낸 방법을 골라 매입 관리(매입 세금계산서)로 · 면세 계산서는 불공제 · 같은 공급자 · 날짜 · 합계 매입이 있으면 409(force).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'TAXINBOX_STATE · TAXINBOX_DUP' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PURCHASE_ACCOUNT · PURCHASE_PAY · PURCHASE_BIZNO · REQ_OVER' })
+  taxInboxBook(@Param('id') id: string, @Body() dto: TaxInboxBookDto) { return bookInbox(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('tax-inbox/:id/ignore')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_TAXINBOX_IGNORE', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '매입으로 넘기지 않음 (v10.432)', description: '사유(2 ~ 200자) — 개인 지출 · 다른 회사 것 등.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'TAXINBOX_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_REASON' })
+  taxInboxIgnore(@Param('id') id: string, @Body() dto: TaxInboxIgnoreDto) { return ignoreInbox(this.db, id, dto.note, RequestCtx.actorId() ?? null); }
 }

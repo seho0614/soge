@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { assertStepsDone, recordFinal } from './approval';   // v10.424 (D253) 결재선
 
 /* ---------------------------------------------------------------------
  * v10.410 (D249 · docs/547) 품의 · 전자결재
@@ -54,8 +55,12 @@ export async function decideRequisition(db: DatabaseService, id: string, approve
   if (r.state !== 'REQUESTED') throw new StateConflict('REQ_STATE', '결재를 기다리는 품의가 아닙니다.');
   if (actor && r.requester === actor) throw new PolicyViolation('REQ_SELF', '본인 품의는 결재할 수 없습니다.');
   const t = approve ? ((note ?? '').trim().slice(0, 200) || null) : rejectNote(note);
-  await db.query(`UPDATE acct_requisitions SET state = $2, decided_by = $3, decided_at = now(), decide_note = $4 WHERE id = $1::bigint AND state = 'REQUESTED'`,
-    [id, approve ? 'APPROVED' : 'REJECTED', actor, t]);
+  if (approve) await assertStepsDone(db, 'REQ', id);   // v10.424 (D253) — 결재선이 있으면 앞 단계가 끝나야 승인
+  await db.transaction(async () => {   // 상태 바꿈 · 결재 기록을 한 거래로(기록이 막히면 상태도 그대로)
+    await db.query(`UPDATE acct_requisitions SET state = $2, decided_by = $3, decided_at = now(), decide_note = $4 WHERE id = $1::bigint AND state = 'REQUESTED'`,
+      [id, approve ? 'APPROVED' : 'REJECTED', actor, t]);
+    await recordFinal(db, 'REQ', id, actor, approve, t);   // v10.424 — 결재선이 있으면 마지막 줄
+  });
   return { ok: true, id, state: approve ? 'APPROVED' : 'REJECTED', note: approve ? '품의를 승인했습니다 — 매입 · 경비 청구에 연결할 수 있습니다.' : '품의를 반려했습니다.' };
 }
 

@@ -81,4 +81,7 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     otherEnv: ['AGENT_PROVIDER'], assume: null, adapter: 'REAL',
     files: ['src/modules/agent/agent.provider.ts', 'src/modules/agent/agent.service.ts', 'src/modules/agent/agent.controller.ts', 'web/src/app/admin/ailearn/AgentKey.tsx'],
     doc: 'docs/173' },
+  /* v10.432 (D255) 홈택스 매입 세금계산서 — 연동 업체(바로빌 · 팝빌 등) API · 간주는 설정 acct.taxinbox_mode(assume.* 아님 · 오픈 차단 아님) */
+  { code: 'TAXINBOX', name: '매입 세금계산서 가져오기', dbRow: true, secretEnv: 'TAXINBOX_API_KEY', otherEnv: ['TAXINBOX_API_BASE', 'TAXINBOX_CORP_NUM', 'TAXINBOX_MAP', 'TAXINBOX_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/acct/taxinbox.ts'], doc: 'docs/569' },
 ];

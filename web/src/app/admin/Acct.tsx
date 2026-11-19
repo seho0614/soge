@@ -171,7 +171,7 @@ export function AcctTax() {
   );
 }
 
-interface Report { months: Array<{ ym: string; revenue: number; byRevenue: Record<string, number>; expense: number; profit: number; vat: number; cashIn: number; cashOut: number }>; revenueNames: Record<string, string>; latest: { revenue: number; profit: number } | null; change: { revenue: number | null; profit: number | null }; note: string; budget?: { text: string } | null }
+interface Report { months: Array<{ ym: string; revenue: number; byRevenue: Record<string, number>; expense: number; profit: number; vat: number; cashIn: number; cashOut: number }>; revenueNames: Record<string, string>; latest: { revenue: number; profit: number } | null; change: { revenue: number | null; profit: number | null }; note: string; budget?: { text: string } | null; budgetYear?: { text: string } | null }
 
 export function AcctReport() {
   const q = useApi<Report>('/admin/acct/report?months=12');
@@ -184,6 +184,7 @@ export function AcctReport() {
     <section data-acct-report={d.months.length}>
       <p data-acct-latest="">이번 달 매출 <b>{won(d.latest?.revenue)}</b>(지난달 대비 {pct(d.change.revenue)}) · 이익 <b>{won(d.latest?.profit)}</b>(지난달 대비 {pct(d.change.profit)})</p>
       {d.budget && <p data-acct-report-budget="">{d.budget.text}</p>}
+      {d.budgetYear && <p data-acct-report-budget-year="">{d.budgetYear.text}</p>}
       {d.months.length === 0 ? <p className="muted">아직 전표가 없습니다 — 회계 › 전표에서 「지금 전표 만들기」.</p> : (
         <table className="tbl"><thead><tr><th>달</th><th>매출(공급가)</th>{roles.map((r) => <th key={r}>{d.revenueNames[r]}</th>)}<th>비용</th><th>이익</th><th>부가세</th><th>들어옴</th><th>나감</th></tr></thead>
           <tbody>{d.months.map((m) => (
@@ -1311,7 +1312,7 @@ export function AcctYearClose() {
 /* ── v10.403 급여 ── */
 interface Emp { id: string; name: string; joinedOn: string; leftOn: string | null; monthlyBase: number; nontax: number; dependents: number; memo: string | null; active: boolean }
 interface PayLine { id: string; employeeId: string; name: string; dependents: number; gross: number; nontax: number; incomeTax: number; localTax: number; np: number; hi: number; ltc: number; ei: number; net: number;
-  companyNp: number; companyHi: number; companyLtc: number; companyEi: number; whtMissing: boolean }
+  companyNp: number; companyHi: number; companyLtc: number; companyEi: number; companyIa?: number; whtMissing: boolean }
 interface PayT { ym: string; run: { id: string; state: 'DRAFT' | 'FIXED' | 'PAID'; payDay: string; fixedAt: string | null; paidAt: string | null } | null; lines: PayLine[];
   total: { gross: number; incomeTax: number; localTax: number; employeeIns: number; companyIns: number; net: number; people: number };
   rates: { year: number; draft: boolean; missing: string[]; whtRows: number; rows: Array<{ year: number; key: string; value: number; draft: boolean; label: string }> }; note: string }
@@ -1362,14 +1363,14 @@ export function AcctPayroll() {
         <p className="warn-text" data-payroll-rate-warn="">{d.rates.year}년 요율 {d.rates.draft ? '초안(공단 고시로 확인 필요)' : '일반 원칙 · 2026 고시 기준(바뀌면 고침)'}{d.rates.missing.length ? ` · 빠진 요율 ${d.rates.missing.join(', ')}` : ''}{d.rates.whtRows === 0 ? ' · 간이세액표 없음(소득세는 산식 근사 — 국세청 표를 올리면 표가 우선)' : ''}</p>
       )}
       {d && d.lines.length > 0 && (
-        <table className="tbl"><thead><tr><th>직원</th><th className="num">지급액</th><th className="num">비과세</th><th className="num">소득세</th><th className="num">지방소득세</th><th className="num">국민연금</th><th className="num">건강</th><th className="num">장기요양</th><th className="num">고용</th><th className="num">실지급</th><th className="num">회사 4대보험</th></tr></thead>
+        <table className="tbl"><thead><tr><th>직원</th><th className="num">지급액</th><th className="num">비과세</th><th className="num">소득세</th><th className="num">지방소득세</th><th className="num">국민연금</th><th className="num">건강</th><th className="num">장기요양</th><th className="num">고용</th><th className="num">실지급</th><th className="num">회사 4대보험 · 산재</th></tr></thead>
           <tbody>{d.lines.map((l) => (
             <tr key={l.id} data-payroll-line={l.employeeId}>
               <td>{l.name} <small className="dim">가족 {l.dependents}</small></td>
               <td className="num">{sup && d.run?.state === 'DRAFT' ? <button className="btn-sm btn-plain" onClick={() => editGross(l)} data-payroll-gross={l.id}>{won(l.gross)}</button> : won(l.gross)}</td>
               <td className="num">{won(l.nontax)}</td><td className="num">{won(l.incomeTax)}{l.whtMissing && <small className="dim"> 산식</small>}</td><td className="num">{won(l.localTax)}</td>
               <td className="num">{won(l.np)}</td><td className="num">{won(l.hi)}</td><td className="num">{won(l.ltc)}</td><td className="num">{won(l.ei)}</td><td className="num"><b>{won(l.net)}</b></td>
-              <td className="num">{won(l.companyNp + l.companyHi + l.companyLtc + l.companyEi)}</td></tr>))}
+              <td className="num" data-payroll-company={l.employeeId}>{won(l.companyNp + l.companyHi + l.companyLtc + l.companyEi + (l.companyIa ?? 0))}{(l.companyIa ?? 0) > 0 && <small className="dim"> 산재 {won(l.companyIa)}</small>}</td></tr>))}
             <tr className="strong"><td>합계 {d.total.people}명</td><td className="num">{won(d.total.gross)}</td><td /><td className="num">{won(d.total.incomeTax)}</td><td className="num">{won(d.total.localTax)}</td>
               <td className="num" colSpan={4}>{won(d.total.employeeIns)}</td><td className="num"><b>{won(d.total.net)}</b></td><td className="num">{won(d.total.companyIns)}</td></tr></tbody></table>
       )}
@@ -1627,8 +1628,10 @@ export function AcctCorpTax() {
 
 interface Party { id: string; kind: string; name: string; bizNo: string | null; contactName: string | null; contactPhone: string | null; contactEmail: string | null;
   bankName: string | null; accountLast4: string | null; advertiserId: string | null; advertiserName: string | null; sellerId: string | null; sellerName: string | null;
-  memo: string | null; state: string; purchaseTotal: number; adTotal: number }
+  memo: string | null; state: string; purchaseTotal: number; adTotal: number;
+  bizStatus?: string | null; bizCheckedAt?: string | null; bizDetail?: string | null; bizStub?: boolean | null }   // v10.431 (D254)
 interface Parties { items: Party[]; kinds: Record<string, string>; note: string }
+const BIZ_KO: Record<string, string> = { VALID: '계속', SUSPENDED: '휴업', CLOSED: '폐업', UNKNOWN: '확인 안 됨' };
 interface PartyOne { party: Party; purchases: Array<{ id: string; issuedOn: string; item: string; total: number; state: string }>;
   ads: Array<{ id: string; invoiceNo: string | null; total: number; paid: number; status: string }>; settlements: Array<{ id: string; periodFrom: string; periodTo: string; commission: number; status: string }>;
   contracts: Array<{ id: string; title: string; endOn: string | null; state: string }>; imports: Array<{ id: string; title: string; state: string }>;
@@ -1644,6 +1647,7 @@ export function AcctParties() {
   const save = () => f && void a.run('save', () => api(f.id ? `/admin/acct/parties/${f.id}` : '/admin/acct/parties', { method: f.id ? 'PATCH' : 'POST',
     body: JSON.stringify({ ...f, id: undefined, state: f.id ? f.state : undefined }) }), () => { setF(null); l.reload(); });
   const imp = () => void a.run('imp', () => api('/admin/acct/parties/import', { method: 'POST' }), l.reload);
+  const bizCheck = (id: string) => void a.run(`b${id}`, () => api(`/admin/acct/parties/${id}/biz-check`, { method: 'POST' }), l.reload);   // v10.431 휴폐업 조회
   const edit = (p: Party) => setF({ id: p.id, kind: p.kind, name: p.name, bizNo: p.bizNo ?? '', contactName: p.contactName ?? '', contactPhone: p.contactPhone ?? '', contactEmail: p.contactEmail ?? '',
     bankName: p.bankName ?? '', accountLast4: p.accountLast4 ?? '', advertiserId: p.advertiserId ?? '', sellerId: p.sellerId ?? '', memo: p.memo ?? '', state: p.state });
   const d = l.data;
@@ -1678,7 +1682,10 @@ export function AcctParties() {
         <table className="tbl"><thead><tr><th>거래처</th><th>종류</th><th>사업자번호</th><th>담당</th><th>연결</th><th>매입 합계</th><th>광고 청구</th><th /></tr></thead>
           <tbody>{d.items.map((p) => (
             <tr key={p.id} data-acct-party-row={p.state}>
-              <td>{p.name} {p.state === 'CLOSED' && <small className="dim">닫음</small>}</td><td>{d.kinds[p.kind] ?? p.kind}</td><td>{p.bizNo ?? '—'}</td>
+              <td>{p.name} {p.state === 'CLOSED' && <small className="dim">닫음</small>}</td><td>{d.kinds[p.kind] ?? p.kind}</td>
+              <td data-acct-party-biz={p.bizStatus ?? ''}>{p.bizNo ?? '—'}{p.bizStatus && (
+                <small className={p.bizStatus === 'CLOSED' || p.bizStatus === 'SUSPENDED' ? 'warn-text' : 'dim'} title={p.bizDetail ?? ''}> {BIZ_KO[p.bizStatus] ?? p.bizStatus}{p.bizStub ? '(간주)' : ''}</small>)}
+                {p.bizNo && <> <button className="btn-sm btn-plain" disabled={a.busy === `b${p.id}`} onClick={() => bizCheck(p.id)} data-acct-party-bizcheck={p.id}>조회</button></>}</td>
               <td><small>{[p.contactName, p.contactPhone, p.contactEmail].filter(Boolean).join(' · ')}{p.bankName ? ` · ${p.bankName} ****${p.accountLast4 ?? ''}` : ''}</small></td>
               <td><small>{[p.advertiserName && `광고주 ${p.advertiserName}`, p.sellerName && `판매자 ${p.sellerName}`].filter(Boolean).join(' · ') || '—'}</small></td>
               <td>{won(p.purchaseTotal)}</td><td>{won(p.adTotal)}</td>
@@ -1941,5 +1948,218 @@ function ReqPicker({ value, onChange }: { value: string; onChange: (v: string) =
       <option value="">(없음)</option>
       {list.map((r) => <option key={r.id} value={r.id}>{r.id}번 {r.title} · 남은 {won(r.remaining ?? r.amount)}원</option>)}
     </select></label>
+  );
+}
+
+/* ── v10.428 (D254 · docs/565) 무역 2단계 — 수출 · 국내 구매 발주 ── */
+interface Exp { id: string; partyName: string | null; title: string; currency: string; incoterms: string | null; fxRate: number | null; saleKrw: number | null; paidKrw: number | null;
+  blNo: string | null; declNo: string | null; state: string; orderedOn: string; shippedOn: string | null; clearedOn: string | null; paidOn: string | null; foreignTotal: number; lines: number; saleEntryId: string | null }
+interface Exps { items: Exp[]; options: Array<{ id: string; label: string }>; states: Record<string, string>; count: { open: number; receivable: number }; note: string }
+const EXP_NEXT: Record<string, string> = { ORDERED: 'SHIPPED', SHIPPED: 'CLEARED', CLEARED: 'PAID' };
+export function AcctExports() {
+  const [st, setSt] = useState('');
+  const l = useApi<Exps>(`/admin/acct/exports?state=${st}`);
+  const parties = useApi<{ items: Array<{ id: string; name: string }> }>('/admin/acct/parties?state=ACTIVE');
+  const a = useAct();
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const [f, setF] = useState({ partyId: '', title: '', currency: 'USD', incoterms: 'FOB', orderedOn: today, memo: '' });
+  const [lines, setLines] = useState<Array<{ optionId: string; item: string; qty: string; foreignAmount: string }>>([{ optionId: '', item: '', qty: '', foreignAmount: '' }]);
+  const [adv, setAdv] = useState<{ id: string; to: string; date: string; fxRate: string; blNo: string; declNo: string; paidKrw: string } | null>(null);
+  const d = l.data;
+  const okLines = lines.filter((x) => (x.optionId || x.item.trim().length >= 2) && Number(x.qty) > 0);
+  const send = () => void a.run('add', () => api('/admin/acct/exports', { method: 'POST', body: JSON.stringify({ ...f, partyId: f.partyId || undefined, memo: f.memo || undefined, incoterms: f.incoterms || undefined,
+    lines: okLines.map((x) => ({ optionId: x.optionId || undefined, item: x.optionId ? undefined : x.item, qty: Number(x.qty), foreignAmount: Number(x.foreignAmount || 0) })) }) }),
+    () => { setF({ ...f, title: '', memo: '' }); setLines([{ optionId: '', item: '', qty: '', foreignAmount: '' }]); l.reload(); });
+  const go = () => adv && void a.run('adv', () => api(`/admin/acct/exports/${adv.id}/advance`, { method: 'POST', body: JSON.stringify({ to: adv.to, date: adv.date,
+    ...(adv.to === 'SHIPPED' ? { fxRate: Number(adv.fxRate), blNo: adv.blNo || undefined } : {}), ...(adv.to === 'CLEARED' ? { declNo: adv.declNo } : {}), ...(adv.to === 'PAID' ? { paidKrw: Number(adv.paidKrw) } : {}) }) }),
+    () => { setAdv(null); l.reload(); });
+  const cancel = (x: Exp) => { const reason = prompt(`「${x.title}」 수출 건 취소 사유`); if (reason) void a.run(`c${x.id}`, () => api(`/admin/acct/exports/${x.id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }), l.reload); };
+  const setA = (k: string, v: string) => adv && setAdv({ ...adv, [k]: v });
+  const setL = (i: number, k: string, v: string) => setLines(lines.map((y, j) => (j === i ? { ...y, [k]: v } : y)));
+  return (
+    <section data-acct-exports={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="card pad" data-acct-export-form="">
+        <b>수주 넣기</b><br />
+        <select value={f.partyId} onChange={(e) => setF({ ...f, partyId: e.target.value })} aria-label="거래처"><option value="">거래처 없음</option>{(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>{' '}
+        <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="제목(꼭)" size={18} />{' '}
+        <input value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value.toUpperCase().slice(0, 3) })} size={4} aria-label="통화" />{' '}
+        <input value={f.incoterms} onChange={(e) => setF({ ...f, incoterms: e.target.value.toUpperCase().slice(0, 3) })} size={4} aria-label="인코텀즈" />{' '}
+        <label>수주일 <input type="date" value={f.orderedOn} onChange={(e) => setF({ ...f, orderedOn: e.target.value })} /></label>{' '}
+        <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="메모(항구 · 조건)" size={16} />
+        {lines.map((x, i) => (
+          <div key={i} data-acct-export-line={i}>
+            <select value={x.optionId} onChange={(e) => setL(i, 'optionId', e.target.value)} aria-label="상품 옵션"><option value="">직판 상품 옵션(재고 출고) · 없으면 품목 이름</option>{(d?.options ?? []).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</select>{' '}
+            {!x.optionId && <><input value={x.item} onChange={(e) => setL(i, 'item', e.target.value)} placeholder="품목 이름" size={14} />{' '}</>}
+            <input value={x.qty} onChange={(e) => setL(i, 'qty', e.target.value.replace(/\D/g, ''))} placeholder="수량" size={6} />{' '}
+            <input value={x.foreignAmount} onChange={(e) => setL(i, 'foreignAmount', e.target.value.replace(/[^0-9.]/g, ''))} placeholder={`금액(${f.currency})`} size={10} />
+          </div>
+        ))}
+        <button className="btn-sm btn-plain" disabled={lines.length >= 50} onClick={() => setLines([...lines, { optionId: '', item: '', qty: '', foreignAmount: '' }])}>줄 더하기</button>{' '}
+        <button className="btn-sm" disabled={a.busy === 'add' || f.title.trim().length < 2 || !okLines.length} onClick={send} data-acct-export-add="">수주 넣기</button>
+      </div>
+      {adv && (
+        <div className="card pad" data-acct-export-advance={adv.to}>
+          <b>{adv.id}번 → {d?.states[adv.to]}</b>{' '}
+          <label>날짜 <input type="date" value={adv.date} onChange={(e) => setA('date', e.target.value)} /></label>{' '}
+          {adv.to === 'SHIPPED' && <><input value={adv.fxRate} onChange={(e) => setA('fxRate', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="선적일 환율(꼭)" size={9} />{' '}
+            <input value={adv.blNo} onChange={(e) => setA('blNo', e.target.value)} placeholder="B/L 번호" size={14} /></>}
+          {adv.to === 'CLEARED' && <input value={adv.declNo} onChange={(e) => setA('declNo', e.target.value)} placeholder="수출신고번호(꼭)" size={18} />}
+          {adv.to === 'PAID' && <input value={adv.paidKrw} onChange={(e) => setA('paidKrw', e.target.value.replace(/\D/g, ''))} placeholder="통장 입금 원화(꼭)" size={12} />}{' '}
+          <button className="btn-sm" disabled={a.busy === 'adv' || !adv.date || (adv.to === 'SHIPPED' && !Number(adv.fxRate)) || (adv.to === 'CLEARED' && adv.declNo.trim().length < 5) || (adv.to === 'PAID' && !Number(adv.paidKrw))} onClick={go}>넘기기</button>{' '}
+          <button className="btn-sm btn-plain" onClick={() => setAdv(null)}>닫기</button>
+        </div>
+      )}
+      <p><select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="">모두</option>{Object.entries(d?.states ?? {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        {d && <small className="dim"> 진행 {d.count.open}건 · 받을 돈(원화) {won(d.count.receivable)}</small>}</p>
+      {d && (
+        <table className="tbl"><thead><tr><th>번호</th><th>거래처 · 제목</th><th>외화</th><th>환율 · 매출(원)</th><th>상태</th><th>날짜</th><th /></tr></thead>
+          <tbody>{d.items.map((x) => (
+            <tr key={x.id} data-acct-export-row={x.state}>
+              <td>{x.id}</td><td>{x.partyName ?? '—'} · {x.title} <small className="dim">{x.incoterms ?? ''} · {x.lines}줄</small></td>
+              <td className="num">{x.currency} {x.foreignTotal.toLocaleString('ko-KR')}</td>
+              <td className="num">{x.fxRate ?? '—'} · {won(x.saleKrw)}{x.paidKrw != null && <small className="dim"> 입금 {won(x.paidKrw)}</small>}</td>
+              <td>{d.states[x.state] ?? x.state}{x.declNo && <small className="dim"> {x.declNo}</small>}</td>
+              <td><small>{x.paidOn ?? x.clearedOn ?? x.shippedOn ?? x.orderedOn}</small></td>
+              <td>{EXP_NEXT[x.state] && <button className="btn-sm btn-plain" onClick={() => setAdv({ id: x.id, to: EXP_NEXT[x.state]!, date: today, fxRate: '', blNo: '', declNo: '', paidKrw: x.saleKrw ? String(x.saleKrw) : '' })} data-acct-export-next={x.id}>{d.states[EXP_NEXT[x.state]!]}</button>}
+                {x.state === 'ORDERED' && <> <button className="btn-sm btn-plain" disabled={a.busy === `c${x.id}`} onClick={() => cancel(x)}>취소</button></>}</td>
+            </tr>))}</tbody></table>
+      )}
+      {d && <p className="muted">{d.note}</p>}
+    </section>
+  );
+}
+
+interface PoRow { id: string; partyName: string; title: string; state: string; orderedOn: string; receivedOn: string | null; purchaseId: string | null; supply: number; lines: number }
+interface PosT { items: PoRow[]; states: Record<string, string>; note: string }
+export function AcctPos() {
+  const [st, setSt] = useState('ORDERED');
+  const l = useApi<PosT>(`/admin/acct/pos?state=${st}`);
+  const parties = useApi<{ items: Array<{ id: string; name: string }> }>('/admin/acct/parties?state=ACTIVE');
+  const opts = useApi<Exps>('/admin/acct/exports?state=ORDERED');   // 직판 옵션 목록(수출 화면과 같은 목록)
+  const a = useAct();
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const [f, setF] = useState({ partyId: '', title: '', orderedOn: today, memo: '' });
+  const [lines, setLines] = useState<Array<{ optionId: string; item: string; qty: string; unitPrice: string }>>([{ optionId: '', item: '', qty: '', unitPrice: '' }]);
+  const [rc, setRc] = useState<{ id: string; date: string; kind: string; vat: string } | null>(null);
+  const d = l.data;
+  const okLines = lines.filter((x) => (x.optionId || x.item.trim().length >= 2) && Number(x.qty) > 0);
+  const setL = (i: number, k: string, v: string) => setLines(lines.map((y, j) => (j === i ? { ...y, [k]: v } : y)));
+  const send = () => void a.run('add', () => api('/admin/acct/pos', { method: 'POST', body: JSON.stringify({ ...f, memo: f.memo || undefined,
+    lines: okLines.map((x) => ({ optionId: x.optionId || undefined, item: x.optionId ? undefined : x.item, qty: Number(x.qty), unitPrice: Number(x.unitPrice || 0) })) }) }),
+    () => { setF({ ...f, title: '', memo: '' }); setLines([{ optionId: '', item: '', qty: '', unitPrice: '' }]); l.reload(); });
+  const receive = () => rc && void a.run('rc', () => api(`/admin/acct/pos/${rc.id}/receive`, { method: 'POST', body: JSON.stringify({ date: rc.date, kind: rc.kind, ...(rc.vat !== '' ? { vat: Number(rc.vat) } : {}) }) }), () => { setRc(null); l.reload(); });
+  const cancel = (x: PoRow) => { const reason = prompt(`「${x.title}」 발주 취소 사유`); if (reason) void a.run(`c${x.id}`, () => api(`/admin/acct/pos/${x.id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }), l.reload); };
+  return (
+    <section data-acct-pos={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="card pad" data-acct-po-form="">
+        <b>발주 넣기</b><br />
+        <select value={f.partyId} onChange={(e) => setF({ ...f, partyId: e.target.value })} aria-label="거래처"><option value="">매입처(꼭)</option>{(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>{' '}
+        <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="제목(꼭)" size={18} />{' '}
+        <label>발주일 <input type="date" value={f.orderedOn} onChange={(e) => setF({ ...f, orderedOn: e.target.value })} /></label>{' '}
+        <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="메모" size={14} />
+        {lines.map((x, i) => (
+          <div key={i} data-acct-po-line={i}>
+            <select value={x.optionId} onChange={(e) => setL(i, 'optionId', e.target.value)} aria-label="상품 옵션"><option value="">직판 상품 옵션(재고 입고) · 없으면 품목 이름</option>{(opts.data?.options ?? []).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</select>{' '}
+            {!x.optionId && <><input value={x.item} onChange={(e) => setL(i, 'item', e.target.value)} placeholder="품목 이름" size={14} />{' '}</>}
+            <input value={x.qty} onChange={(e) => setL(i, 'qty', e.target.value.replace(/\D/g, ''))} placeholder="수량" size={6} />{' '}
+            <input value={x.unitPrice} onChange={(e) => setL(i, 'unitPrice', e.target.value.replace(/\D/g, ''))} placeholder="단가(공급가 원)" size={10} />
+          </div>
+        ))}
+        <button className="btn-sm btn-plain" disabled={lines.length >= 50} onClick={() => setLines([...lines, { optionId: '', item: '', qty: '', unitPrice: '' }])}>줄 더하기</button>{' '}
+        <button className="btn-sm" disabled={a.busy === 'add' || !f.partyId || f.title.trim().length < 2 || !okLines.length} onClick={send} data-acct-po-add="">발주 넣기</button>
+      </div>
+      {rc && (
+        <div className="card pad" data-acct-po-receive={rc.id}>
+          <b>{rc.id}번 입고</b>{' '}
+          <label>입고일 <input type="date" value={rc.date} onChange={(e) => setRc({ ...rc, date: e.target.value })} /></label>{' '}
+          <select value={rc.kind} onChange={(e) => setRc({ ...rc, kind: e.target.value })} aria-label="증빙"><option value="TAX_INVOICE">세금계산서</option><option value="CARD">카드</option><option value="CASH">현금영수증</option><option value="SIMPLE">간이영수증</option></select>{' '}
+          <input value={rc.vat} onChange={(e) => setRc({ ...rc, vat: e.target.value.replace(/\D/g, '') })} placeholder="부가세(비우면 10%)" size={12} />{' '}
+          <button className="btn-sm" disabled={a.busy === 'rc' || !rc.date} onClick={receive}>입고(매입 · 재고)</button> <button className="btn-sm btn-plain" onClick={() => setRc(null)}>닫기</button>
+        </div>
+      )}
+      <p><select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="">모두</option>{Object.entries(d?.states ?? {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></p>
+      {d && (
+        <table className="tbl"><thead><tr><th>번호</th><th>매입처 · 제목</th><th>공급가</th><th>상태</th><th>날짜</th><th /></tr></thead>
+          <tbody>{d.items.map((x) => (
+            <tr key={x.id} data-acct-po-row={x.state}>
+              <td>{x.id}</td><td>{x.partyName} · {x.title} <small className="dim">{x.lines}줄</small></td><td className="num">{won(x.supply)}</td>
+              <td>{d.states[x.state] ?? x.state}{x.purchaseId && <small className="dim"> 매입 {x.purchaseId}번</small>}</td><td><small>{x.receivedOn ?? x.orderedOn}</small></td>
+              <td>{x.state === 'ORDERED' && <><button className="btn-sm btn-plain" onClick={() => setRc({ id: x.id, date: today, kind: 'TAX_INVOICE', vat: '' })} data-acct-po-receive-open={x.id}>입고</button>{' '}
+                <button className="btn-sm btn-plain" disabled={a.busy === `c${x.id}`} onClick={() => cancel(x)}>취소</button></>}</td>
+            </tr>))}</tbody></table>
+      )}
+      {d && <p className="muted">{d.note}</p>}
+    </section>
+  );
+}
+
+/** v10.432 (D255 · docs/569) — 매입 세금계산서 받기(홈택스 → 연동 업체 → 여기 → 매입) · 업체 계약 전에는 간주 */
+interface InboxRow { id: string; approvalNo: string; issuedOn: string; supplierBizNo: string | null; supplierName: string; item: string; supply: number; vat: number; total: number;
+  exempt: boolean; source: 'ASSUME' | 'PROVIDER'; state: 'NEW' | 'BOOKED' | 'IGNORED'; purchaseId: string | null; ignoreNote: string | null; dupPurchaseId: string | null }
+interface InboxView { ym: string; items: InboxRow[]; count: { new: number; booked: number; ignored: number };
+  status: { on: boolean; mode: 'ASSUME' | 'LIVE'; provider: string; ready: boolean; last: { from: string; to: string; added: number; dup: number; error: string | null; createdAt: string } | null } }
+const INBOX_STATE: Record<string, string> = { NEW: '새로', BOOKED: '매입으로 넘김', IGNORED: '넘기지 않음' };
+export function AcctTaxInbox() {
+  const [ym, setYm] = useState(kstYm());
+  const [st, setSt] = useState('');
+  const q = useApi<InboxView>(`/admin/acct/tax-inbox?ym=${ym}${st ? `&state=${st}` : ''}`, [ym, st]);
+  const acc = useApi<{ accounts: Array<{ role: string; name: string; kind: string; extCode: string | null }> }>(`/admin/acct/purchases?ym=${ym}`, [ym]);
+  const a = useAct();
+  const [bk, setBk] = useState<{ id: string; accountRole: string; payRole: string; memo: string; requisitionId: string; force: boolean } | null>(null);
+  const fetchNow = () => void a.run('fetch', () => api('/admin/acct/tax-inbox/fetch', { method: 'POST', body: JSON.stringify({}) }), q.reload);
+  const book = () => bk && void a.run(`b${bk.id}`, () => api(`/admin/acct/tax-inbox/${bk.id}/book`, { method: 'POST', body: JSON.stringify({
+    accountRole: bk.accountRole, payRole: bk.payRole, memo: bk.memo || undefined, requisitionId: bk.requisitionId || undefined, force: bk.force || undefined }) }), () => { setBk(null); q.reload(); });
+  const ignore = (id: string) => { const note = prompt('넘기지 않는 사유(2 ~ 200자)'); if (note) void a.run(`i${id}`, () => api(`/admin/acct/tax-inbox/${id}/ignore`, { method: 'POST', body: JSON.stringify({ note }) }), q.reload); };
+  const d = q.data, s = d?.status;
+  return (
+    <section data-acct-taxinbox={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      {s && (
+        <p className={s.on ? 'muted' : 'warn-text'} data-acct-taxinbox-status={s.mode}>
+          {s.on ? '가져오기 켜짐' : '가져오기 꺼짐(정책 › 전체 설정 acct.taxinbox · SUPER)'} · 방식 {s.mode === 'LIVE' ? `연동 업체(${s.provider})` : '간주 — 업체 계약 전 · 시험 줄'}
+          {s.mode === 'LIVE' && !s.ready ? ' · 업체 키 · 주소 없음(외부 연동 › 연동 키)' : ''}
+          {s.last ? ` · 마지막 ${s.last.from} ~ ${s.last.to} 새로 ${s.last.added} · 이미 있음 ${s.last.dup}${s.last.error ? ` · 오류 ${s.last.error}` : ''}` : ''}
+        </p>
+      )}
+      <p>
+        <label>달 <input type="month" value={ym} onChange={(e) => setYm(e.target.value)} /></label>{' '}
+        <select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="">모두</option>{Object.entries(INBOX_STATE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>{' '}
+        <button className="btn-sm" disabled={a.busy === 'fetch' || !s?.on} onClick={fetchNow} data-acct-taxinbox-fetch="">지난 7일 가져오기</button>{' '}
+        {d && <small className="dim">새로 {d.count.new} · 넘김 {d.count.booked} · 넘기지 않음 {d.count.ignored}</small>}
+      </p>
+      {d && (
+        <table className="tbl"><thead><tr><th>발행일</th><th>공급자</th><th>품목</th><th className="num">공급가</th><th className="num">부가세</th><th>상태</th><th /></tr></thead>
+          <tbody>{d.items.map((r) => (
+            <tr key={r.id} data-acct-taxinbox-row={r.state}>
+              <td>{r.issuedOn}</td>
+              <td>{r.supplierName} <small className="dim">{r.supplierBizNo ?? ''}</small>{r.source === 'ASSUME' && <small className="warn-text"> 간주</small>}</td>
+              <td>{r.item}{r.exempt && <small className="dim"> 면세</small>}</td>
+              <td className="num">{won(r.supply)}</td><td className="num">{won(r.vat)}</td>
+              <td>{INBOX_STATE[r.state]}{r.purchaseId ? ` (매입 ${r.purchaseId}번)` : ''}{r.ignoreNote ? ` — ${r.ignoreNote}` : ''}
+                {r.state === 'NEW' && r.dupPurchaseId && <small className="warn-text" data-acct-taxinbox-dup={r.dupPurchaseId}> 같은 매입 {r.dupPurchaseId}번 있음</small>}</td>
+              <td>{r.state === 'NEW' && (<>
+                <button className="btn-sm" onClick={() => setBk({ id: r.id, accountRole: 'EXP_SUPPLIES', payRole: 'AP', memo: '', requisitionId: '', force: !!r.dupPurchaseId })} data-acct-taxinbox-book={r.id}>매입으로</button>{' '}
+                <button className="btn-sm btn-plain" disabled={a.busy === `i${r.id}`} onClick={() => ignore(r.id)}>넘기지 않음</button></>)}</td>
+            </tr>))}</tbody></table>
+      )}
+      {bk && (
+        <div className="card pad" data-acct-taxinbox-form={bk.id}>
+          <b>매입으로 넘기기</b>{' '}
+          <select value={bk.accountRole} onChange={(e) => setBk({ ...bk, accountRole: e.target.value })} aria-label="계정">
+            {(acc.data?.accounts ?? []).map((x) => <option key={x.role} value={x.role}>{x.name}{x.extCode ? ` (${x.extCode})` : ''}</option>)}
+          </select>{' '}
+          <select value={bk.payRole} onChange={(e) => setBk({ ...bk, payRole: e.target.value })} aria-label="낸 방법">
+            <option value="AP">미지급금(아직 안 냄)</option><option value="CASH">보통예금</option><option value="CARD_AP">법인카드</option>
+          </select>{' '}
+          <ReqPicker value={bk.requisitionId} onChange={(v) => setBk({ ...bk, requisitionId: v })} />{' '}
+          <input value={bk.memo} onChange={(e) => setBk({ ...bk, memo: e.target.value })} placeholder="메모(선택)" size={16} />{' '}
+          <label><input type="checkbox" checked={bk.force} onChange={(e) => setBk({ ...bk, force: e.target.checked })} /> 같은 매입이 있어도 넘기기</label>{' '}
+          <button className="btn-sm" disabled={a.busy === `b${bk.id}`} onClick={book}>넘기기</button> <button className="btn-sm btn-plain" onClick={() => setBk(null)}>닫기</button>
+        </div>
+      )}
+      <p className="muted">홈택스를 직접 읽지 않고 연동 업체(바로빌 · 팝빌 등) API 로 가져옵니다. 업체 계약 전에는 간주(시험 줄 · 「간주」 표시)입니다 — 간주 줄은 매입으로 넘기지 마십시오.</p>
+    </section>
   );
 }

@@ -27,13 +27,15 @@ import { assumeOn } from '../../common/integration/switches';
  *                  ③ 손으로 넣은 줄 · 보낸 줄은 다시 보내지 않음(DB 가드 fn_etax_guard)
  * 키(ETAX_KEY)는 응답 · 기록 · 화면에 싣지 않습니다 — 「등록됨」만.
  */
-type KindSlug = 'directory' | 'lead-cash' | 'ad' | 'commission';
-const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION'; letter: string; label: string; issuedAt: boolean }> = {
+type KindSlug = 'directory' | 'lead-cash' | 'ad' | 'commission' | 'sales-doc';   // v10.433 (D256) 거래명세서
+const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION' | 'SALES_DOC'; letter: string; label: string; issuedAt: boolean }> = {
   directory: { table: 'consult_directory_invoices', kind: 'DIRECTORY', letter: 'D', label: '법률 · 세무 정액 노출료', issuedAt: true },
   'lead-cash': { table: 'lead_cash_invoices', kind: 'LEAD_CASH', letter: 'L', label: '리드 이용료', issuedAt: false },
   /* v10.391 (D244 · docs/528) — 광고 청구 · 입점 수수료: 회계 › 신고 자료 › 세금계산서에서 「발행 요청」한 줄(acct_tax_invoices) */
   ad: { table: 'acct_tax_invoices', kind: 'AD', letter: 'A', label: '광고비', issuedAt: false },
   commission: { table: 'acct_tax_invoices', kind: 'COMMISSION', letter: 'C', label: '입점 판매 수수료', issuedAt: false },
+  /* v10.433 (D256 · docs/570) — 거래명세서 확정 뒤 「세금계산서 요청」한 줄(acct_tax_invoices kind SALES_DOC) */
+  'sales-doc': { table: 'acct_tax_invoices', kind: 'SALES_DOC', letter: 'S', label: '거래명세서 매출', issuedAt: false },
 };
 
 interface Row {

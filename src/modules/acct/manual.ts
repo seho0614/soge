@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { assertStepsDone, recordFinal } from './approval';   // v10.424 (D253) 결재선
 
 /* ---------------------------------------------------------------------
  * v10.405 (D248 · docs/542) 수동 전표 쓰기 · 결재
@@ -87,8 +88,10 @@ export async function decideManual(db: DatabaseService, id: string, b: { approve
     if (!b.approve) {
       if (note.length < 2) throw new PolicyViolation('ACCT_MANUAL', '반려는 사유를 2자 이상 적어 주십시오.');
       await db.query(`UPDATE acct_manual_entries SET state = 'REJECTED', decided_by = $2, decided_at = now(), decide_note = $3 WHERE id = $1::bigint`, [id, actor, note]);
+      await recordFinal(db, 'MANUAL', id, actor, false, note);   // v10.424 (D253)
       return { ok: true, id, state: 'REJECTED', note: '반려했습니다.' };
     }
+    await assertStepsDone(db, 'MANUAL', id);   // v10.424 (D253) — 결재선이 있으면 앞 단계가 끝나야 승인
     await assertOpen(db, m.entry_date);
     const [e] = await db.query<{ id: string }>(
       `INSERT INTO acct_entries (entry_date, source, source_key, memo, party, evidence, late) VALUES ($1::date, 'MANUAL', $2, $3, $4, $5, false) RETURNING id::text AS id`,
@@ -98,6 +101,7 @@ export async function decideManual(db: DatabaseService, id: string, b: { approve
       [e.id, JSON.stringify(m.lines.map((l) => ({ role: l.role, debit: l.debit, credit: l.credit })))]);
     await db.query(`UPDATE acct_manual_entries SET state = 'APPROVED', decided_by = $2, decided_at = now(), decide_note = nullif($3, ''), entry_id = $4::bigint WHERE id = $1::bigint`,
       [id, actor, note, e.id]);
+    await recordFinal(db, 'MANUAL', id, actor, true, note);   // v10.424 (D253)
     return { ok: true, id, state: 'APPROVED', entryId: e.id, note: `승인했습니다 — 전표 ${e.id} 로 장부에 들어갔습니다.` };
   });
 }

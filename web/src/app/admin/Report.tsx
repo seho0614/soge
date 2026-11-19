@@ -28,7 +28,8 @@ import { Flash } from '../../components/Flash';
 type Kind = 'DAY' | 'WEEK' | 'MONTH';
 type M = Record<string, Record<string, number>>;
 interface Body { kind: Kind; period: string; from: string; to: string; m: M; prev?: M | null; change?: Record<string, number | null>;
-  tops?: { inquiryCategory: Array<{ k: string; n: number }>; mallProduct: Array<{ k: string; n: number }> };
+  tops?: { inquiryCategory: Array<{ k: string; n: number }>; mallProduct: Array<{ k: string; n: number }>;
+           listingRegion?: Array<{ k: string; n: number }>; dealRegion?: Array<{ k: string; n: number }>; consultRegion?: Array<{ k: string; n: number }> };   // v10.430 지역
   now: { acct: { openAlerts: number; deadlines: Array<{ label: string; due: string; daysLeft: number }> }; server: { diskUsedPct: number | null } } }
 interface View { kind: Kind; period: string; from: string; to: string; snapshot: { id: string; createdAt: string; source: string } | null; live: boolean; body: Body; text: string;
   history: Array<{ id: string; period: string; source: string; createdAt: string; sent: number }>; sends: Array<{ channel: string; result: string; createdAt: string }>; note: string }
@@ -84,11 +85,14 @@ function ReportView({ kind }: { kind: Kind }) {
             <tbody>{GROUPS.flatMap(([g, gk, items]) => items.map(([k, label], i) => (
               <tr key={`${g}.${k}`}><td>{i === 0 ? gk : ''}</td><td>{label}</td><td>{num(d.body.m[g]?.[k])}</td><td className="dim">{num(d.body.prev?.[g]?.[k])}</td>
                 <td className={(d.body.change?.[`${g}.${k}`] ?? 0) < 0 ? 'warn-text' : ''}>{pct(d.body.change?.[`${g}.${k}`])}</td></tr>)))}</tbody></table>
-          {d.body.tops && (d.body.tops.inquiryCategory.length > 0 || d.body.tops.mallProduct.length > 0) && (
+          {d.body.tops && (d.body.tops.inquiryCategory.length > 0 || d.body.tops.mallProduct.length > 0 || !!d.body.tops.listingRegion?.length || !!d.body.tops.dealRegion?.length || !!d.body.tops.consultRegion?.length) && (
             <div className="card pad" data-rpt-tops="">
               <b>상위 5</b>
               {d.body.tops.inquiryCategory.length > 0 && <p>문의 분야: {d.body.tops.inquiryCategory.map((t) => `${t.k} ${t.n}`).join(' · ')}</p>}
               {d.body.tops.mallProduct.length > 0 && <p>소개몰 상품(수량): {d.body.tops.mallProduct.map((t) => `${t.k} ${t.n}`).join(' · ')}</p>}
+              {!!d.body.tops.listingRegion?.length && <p data-rpt-top-region="listing">매물 지역: {d.body.tops.listingRegion.map((t) => `${t.k} ${t.n}`).join(' · ')}</p>}
+              {!!d.body.tops.dealRegion?.length && <p data-rpt-top-region="deal">성사 지역: {d.body.tops.dealRegion.map((t) => `${t.k} ${t.n}`).join(' · ')}</p>}
+              {!!d.body.tops.consultRegion?.length && <p data-rpt-top-region="consult">상담 신청 지역: {d.body.tops.consultRegion.map((t) => `${t.k} ${t.n}`).join(' · ')}</p>}
             </div>
           )}
           <p className="muted">회계 알림 열림 {d.body.now.acct.openAlerts}{d.body.now.acct.deadlines.length ? ` · 다가오는 기한 ${d.body.now.acct.deadlines.map((x) => `${x.label} ${x.due}`).join(' · ')}` : ''} · 서버 디스크 {d.body.now.server.diskUsedPct ?? '—'}%</p>
@@ -208,6 +212,68 @@ export function ReportWorklogBoard() {
             <table className="tbl" data-rpt-board-blocked={d.blocked.length}><thead><tr><th>날짜</th><th>누가</th><th>막힌 것</th><th>확인</th></tr></thead>
               <tbody>{d.blocked.map((b) => <tr key={b.id}><td>{b.date}</td><td>{b.who}</td><td>{b.blocked}</td><td>{b.reviewed ? '함' : <span className="warn-text">안 함</span>}</td></tr>)}</tbody></table>
           ) : <p className="muted">막힌 것이 없습니다.</p>}
+          <p className="muted">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* v10.429 (D254 · docs/566) 경영 대시보드 그래프 — SVG 직접(라이브러리 없음) · 운영 화면 › 보고 › 추세 */
+interface TrendPoint { key: string; label: string; revenue: number; expense: number; profit: number; cash: number; signups: number; orders: number; mallPaid: number }
+interface TrendT { unit: 'MONTH' | 'WEEK'; points: TrendPoint[]; change: Record<string, number | null> | null; note: string }
+const TREND_SERIES: Array<{ key: keyof TrendPoint; label: string; color: string; money: boolean }> = [
+  { key: 'revenue', label: '매출', color: 'var(--c-brand, #2563eb)', money: true },
+  { key: 'profit', label: '이익', color: 'var(--c-ok, #16a34a)', money: true },
+  { key: 'cash', label: '현금(기간 끝)', color: 'var(--c-warn, #d97706)', money: true },
+  { key: 'signups', label: '가입', color: 'var(--c-brand, #2563eb)', money: false },
+  { key: 'orders', label: '소개몰 결제 주문', color: 'var(--c-ok, #16a34a)', money: false },
+];
+function TrendChart({ points, keys, title }: { points: TrendPoint[]; keys: Array<keyof TrendPoint>; title: string }) {
+  const W = 640, H = 180, P = 36;
+  const series = TREND_SERIES.filter((s) => keys.includes(s.key));
+  const vals = points.flatMap((p) => series.map((s) => Number(p[s.key]) || 0));
+  const max = Math.max(1, ...vals), min = Math.min(0, ...vals);
+  const x = (i: number) => P + (points.length <= 1 ? 0 : (i * (W - P * 2)) / (points.length - 1));
+  const y = (v: number) => H - P / 2 - ((v - min) / (max - min || 1)) * (H - P);
+  const fmt = (v: number) => (Math.abs(v) >= 1e8 ? `${Math.round(v / 1e7) / 10}억` : Math.abs(v) >= 1e4 ? `${Math.round(v / 1e3) / 10}만` : String(Math.round(v)));
+  return (
+    <figure className="card pad" data-rpt-trend-chart={title} style={{ margin: 0 }}>
+      <figcaption><b>{title}</b> {series.map((s) => <small key={String(s.key)} style={{ color: s.color, marginLeft: 8 }}>■ {s.label}</small>)}</figcaption>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={title}>
+        <line x1={P} x2={W - P} y1={y(0)} y2={y(0)} stroke="currentColor" opacity={0.2} />
+        <text x={2} y={y(max) + 4} fontSize={10} fill="currentColor" opacity={0.6}>{fmt(max)}</text>
+        {min < 0 && <text x={2} y={y(min) + 4} fontSize={10} fill="currentColor" opacity={0.6}>{fmt(min)}</text>}
+        {points.map((p, i) => (i % Math.ceil(points.length / 7) === 0 || i === points.length - 1) &&
+          <text key={p.key} x={x(i)} y={H - 2} fontSize={10} textAnchor="middle" fill="currentColor" opacity={0.6}>{p.label}</text>)}
+        {series.map((s) => (
+          <g key={String(s.key)}>
+            <polyline fill="none" stroke={s.color} strokeWidth={2} points={points.map((p, i) => `${x(i)},${y(Number(p[s.key]) || 0)}`).join(' ')} />
+            {points.map((p, i) => <circle key={p.key} cx={x(i)} cy={y(Number(p[s.key]) || 0)} r={2.5} fill={s.color}><title>{`${p.label} ${s.label} ${(Number(p[s.key]) || 0).toLocaleString('ko-KR')}`}</title></circle>)}
+          </g>))}
+      </svg>
+    </figure>
+  );
+}
+export function ReportTrend() {
+  const [unit, setUnit] = useState<'MONTH' | 'WEEK'>('MONTH');
+  const q = useApi<TrendT>(`/admin/work-reports/trend?unit=${unit}`, [unit]);
+  const d = q.data;
+  const pct = (v: number | null | undefined) => (v == null ? '—' : `${v > 0 ? '+' : ''}${v}%`);
+  const last = d?.points[d.points.length - 1];
+  return (
+    <section data-rpt-trend={d?.points.length ?? ''}>
+      <p><label><input type="radio" checked={unit === 'MONTH'} onChange={() => setUnit('MONTH')} /> 12달</label>{' '}
+        <label><input type="radio" checked={unit === 'WEEK'} onChange={() => setUnit('WEEK')} /> 13주</label></p>
+      {q.error ? <p className="warn-text">{String(q.error)}</p> : null}
+      {d && last && (
+        <>
+          <div className="card pad" data-rpt-trend-latest="">
+            이번 {unit === 'MONTH' ? '달' : '주'}: 매출 <b>{last.revenue.toLocaleString('ko-KR')}</b>({pct(d.change?.revenue)}) · 이익 <b>{last.profit.toLocaleString('ko-KR')}</b>({pct(d.change?.profit)}) ·
+            현금 {last.cash.toLocaleString('ko-KR')} · 가입 {last.signups}({pct(d.change?.signups)}) · 소개몰 결제 {last.orders}건({pct(d.change?.orders)})
+          </div>
+          <TrendChart points={d.points} keys={['revenue', 'profit', 'cash']} title="돈(원)" />
+          <TrendChart points={d.points} keys={['signups', 'orders']} title="회원 · 주문(건)" />
           <p className="muted">{d.note}</p>
         </>
       )}

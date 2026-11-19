@@ -41,8 +41,13 @@ import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
 import { acctAgingJob } from '../modules/acct/aging';   // v10.401 (D247)
 import { acctPgCheckJob } from '../modules/acct/pgsettle';   // v10.404 (D248)
 import { acctContractsJob } from '../modules/acct/contracts';   // v10.409 (D249)
+import { acctTaxInboxJob } from '../modules/acct/taxinbox';   // v10.432 (D255)
 import { opsReportJob } from '../modules/admin/report-period';   // v10.412 (D250)
+import { acctInsuranceJob } from '../modules/acct/filings';   // v10.422 (D252)
 import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D250)
+import { dunningJob } from '../modules/acct/dunning';   // v10.436 (D256)
+import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
+import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -70,7 +75,12 @@ export type JobName =
   | 'acct_aging'      // v10.401 (D247)
   | 'acct_pg_check'   // v10.404 (D248)
   | 'acct_contracts'  // v10.409 (D249)
-  | 'ops_report';     // v10.412 (D250)
+  | 'acct_taxinbox'   // v10.432 (D255)
+  | 'ops_report'      // v10.412 (D250)
+  | 'acct_insurance'  // v10.422 (D252)
+  | 'corp_doc_due'    // v10.425 (D253)
+  | 'acct_biz_check'  // v10.431 (D254)
+  | 'acct_dunning';   // v10.436 (D256)
 
 export interface JobResult {
   job: JobName;
@@ -767,6 +777,12 @@ export class SchedulerService {
         break;
       }
 
+      case 'acct_taxinbox': {   // v10.432 (D255 · docs/569) — acct.taxinbox on 일 때만 지난 7일 가져오기(간주 · 업체)
+        const r = await acctTaxInboxJob(this.db);
+        affected = r.added; detail = r;
+        break;
+      }
+
       case 'acct_contracts': {   // v10.409 (D249 · docs/546) — 만기 30일 전 ACCT_CONTRACT_DUE(계약마다 한 번 · 갱신 · 끝내면 풀림)
         const r = await acctContractsJob(this.db);
         affected = r.made.length; detail = r;
@@ -774,10 +790,38 @@ export class SchedulerService {
       }
 
       /* v10.412 · 415 (D250 · docs/549 · 552) — 전날 일보 · 월요일 지난주 주보 · 1일 지난달 월보(같은 기간 JOB 한 번) · report.send on 이면 보냄 */
+      /* v10.422 (D252 · docs/559) — 4대보험 취득 · 상실 신고 기한 3일 전부터 ACCT_INSURANCE_DUE(같은 건 한 번 · 처리함 누르면 풀림) */
+      case 'acct_insurance': {
+        const r = await acctInsuranceJob(this.db);
+        affected = r.made.length; detail = r;
+        break;
+      }
+
+      /* v10.425 (D253 · docs/562) — 사내 문서 만료 N일 전 CORP_DOC_DUE(판 하나에 한 번) · 새 판 · 보관 끝이면 풀림 */
+      case 'corp_doc_due': {
+        const r = await corpDocDueJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       case 'ops_report': {
         const r = await opsReportJob(this.db);
         const s = await sendAfterJob(this.db, { telegram: this.telegram, slack: this.slack, mail: this.mail }, r.made);
         affected = r.made.filter((m) => m.made).length; detail = { ...r, send: s };
+        break;
+      }
+
+      /* v10.431 (D254 · docs/568) — 거래처 휴폐업 다시 조회(acct.biz_status_check on · 30일 지난 50곳) · 휴업 · 폐업 ACCT_PARTY_CLOSED */
+      case 'acct_biz_check': {
+        const r = await acctBizCheckJob(this.db);
+        affected = r.checked; detail = r;
+        break;
+      }
+
+      /* v10.436 (D256 · docs/573) — 지난 입금 예정 BROKEN · acct.dunning on 이면 단계가 올라간 거래처에 메일 한 번(메일 준비된 때만) */
+      case 'acct_dunning': {
+        const r = await dunningJob(this.db, this.mail);
+        affected = r.sent; detail = r;
         break;
       }
 

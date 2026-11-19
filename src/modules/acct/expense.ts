@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { parseCsv, parseDate } from './bank';
+import { assertStepsDone, recordFinal } from './approval';   // v10.424 (D253) 결재선
 import type { Line, Source } from './journal';
 
 /* ---------------------------------------------------------------------
@@ -151,9 +152,12 @@ export async function decideExpense(db: DatabaseService, id: string, decision: '
     if (decision === 'reject') {
       const why = reasonOk(reason, 'ACCT_REASON');
       await db.query(`UPDATE acct_expense_claims SET state = 'REJECTED', decided_by = $2, decided_at = now(), reject_reason = $3 WHERE id = $1::bigint`, [id, actor, why]);
+      await recordFinal(db, 'EXPENSE', id, actor, false, why);   // v10.424 (D253)
       return { ok: true, id: Number(id), state: 'REJECTED', note: '반려했습니다.' };
     }
+    await assertStepsDone(db, 'EXPENSE', id);   // v10.424 (D253) — 결재선이 있으면 앞 단계가 끝나야 승인
     await db.query(`UPDATE acct_expense_claims SET state = 'APPROVED', decided_by = $2, decided_at = now() WHERE id = $1::bigint`, [id, actor]);
+    await recordFinal(db, 'EXPENSE', id, actor, true);
     return { ok: true, id: Number(id), state: 'APPROVED', note: '승인했습니다 — 다음 전표 작업(매시간 · 「지금 전표 만들기」)에서 전표가 만들어집니다.' };
   });
 }

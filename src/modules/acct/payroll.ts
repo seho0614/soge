@@ -131,7 +131,7 @@ export async function uploadWhtTable(db: DatabaseService, year: number, csv: str
 
 /* ── 셈 ── */
 export interface Calc { gross: number; nontax: number; income_tax: number; local_tax: number; np: number; hi: number; ltc: number; ei: number; net: number;
-  company_np: number; company_hi: number; company_ltc: number; company_ei: number; wht_missing: boolean }
+  company_np: number; company_hi: number; company_ltc: number; company_ei: number; company_ia: number; wht_missing: boolean }
 
 export async function calcLine(db: DatabaseService, year: number, gross: number, nontax: number, dependents: number, rates?: Partial<Record<RateKey, number>>): Promise<Calc> {
   const r = rates ?? (await ratesOf(db, year)).rates;
@@ -140,12 +140,13 @@ export async function calcLine(db: DatabaseService, year: number, gross: number,
   const np = taxable > 0 ? floor10(base * (r.np_rate ?? 0) / 100) : 0;
   const hi = floor10(taxable * (r.hi_rate ?? 0) / 100), ltc = floor10(hi * (r.ltc_rate ?? 0) / 100);
   const ei = floor10(taxable * (r.ei_rate ?? 0) / 100), cei = floor10(taxable * (r.ei_company_rate ?? 0) / 100);
+  const cia = floor10(taxable * (r.ia_company_rate ?? 0) / 100);   // v10.423 (D252) 산재 — 회사만 · 실지급에 영향 없음
   const [w] = taxable > 0 ? await db.query<{ tax: string }>(
     `SELECT tax::text FROM acct_wht_table WHERE year = $1 AND $2 >= wage_from AND $2 < wage_to AND dependents <= $3 ORDER BY dependents DESC LIMIT 1`, [year, taxable, dependents]) : [];
   /* v10.418 — 국세청 표가 없으면 산식 근사(whtformula · 일반 원칙) · wht_missing = 표 없이 산식으로 셈 */
   const it = w ? n(w.tax) : estimateMonthlyWht(taxable, dependents, np), lt = floor10(it * 0.1);
   return { gross, nontax: nt, income_tax: it, local_tax: lt, np, hi, ltc, ei, net: gross - it - lt - np - hi - ltc - ei,
-           company_np: np, company_hi: hi, company_ltc: ltc, company_ei: cei, wht_missing: taxable > 0 && !w };
+           company_np: np, company_hi: hi, company_ltc: ltc, company_ei: cei, company_ia: cia, wht_missing: taxable > 0 && !w };
 }
 
 /* ── 달 급여 ── */
@@ -155,11 +156,12 @@ export async function payrollMonth(db: DatabaseService, ym: string) {
     `SELECT id::text AS id, state, pay_day::text AS "payDay", fixed_at AS "fixedAt", paid_at AS "paidAt" FROM acct_payroll_runs WHERE ym = $1`, [ym]);
   const lines = run ? await db.query(
     `SELECT l.id::text AS id, l.employee_id::text AS "employeeId", e.name, e.dependents, l.gross, l.nontax, l.income_tax AS "incomeTax", l.local_tax AS "localTax",
-            l.np, l.hi, l.ltc, l.ei, l.net, l.company_np AS "companyNp", l.company_hi AS "companyHi", l.company_ltc AS "companyLtc", l.company_ei AS "companyEi", l.wht_missing AS "whtMissing"
+            l.np, l.hi, l.ltc, l.ei, l.net, l.company_np AS "companyNp", l.company_hi AS "companyHi", l.company_ltc AS "companyLtc", l.company_ei AS "companyEi",
+            l.company_ia AS "companyIa", l.wht_missing AS "whtMissing"
        FROM acct_payroll_lines l JOIN acct_employees e ON e.id = l.employee_id WHERE l.run_id = $1::bigint ORDER BY e.joined_on, e.id`, [run.id]) : [];
   const sum = (k: string) => (lines as Array<Record<string, unknown>>).reduce((a, x) => a + n(x[k]), 0);
   const total = { gross: sum('gross'), incomeTax: sum('incomeTax'), localTax: sum('localTax'), employeeIns: sum('np') + sum('hi') + sum('ltc') + sum('ei'),
-                  companyIns: sum('companyNp') + sum('companyHi') + sum('companyLtc') + sum('companyEi'), net: sum('net'), people: lines.length };
+                  companyIns: sum('companyNp') + sum('companyHi') + sum('companyLtc') + sum('companyEi') + sum('companyIa'), companyIa: sum('companyIa'), net: sum('net'), people: lines.length };
   const r = await ratesOf(db, Number(ym.slice(0, 4)));
   return { ym, run: run ?? null, lines, total, rates: r,
     note: '요율 · 간이세액표는 초안일 수 있습니다(표에 「초안」) — 노무사 · 세무사 확인. 확정하면 전표가 생기고 줄을 고칠 수 없습니다.' };
@@ -189,9 +191,9 @@ export async function createRun(db: DatabaseService, ym: string, payDay: string 
 
 async function insLine(db: DatabaseService, runId: string, empId: string, c: Calc) {
   await db.query(
-    `INSERT INTO acct_payroll_lines (run_id, employee_id, gross, nontax, income_tax, local_tax, np, hi, ltc, ei, net, company_np, company_hi, company_ltc, company_ei, wht_missing)
-     VALUES ($1::bigint, $2::bigint, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-    [runId, empId, c.gross, c.nontax, c.income_tax, c.local_tax, c.np, c.hi, c.ltc, c.ei, c.net, c.company_np, c.company_hi, c.company_ltc, c.company_ei, c.wht_missing]);
+    `INSERT INTO acct_payroll_lines (run_id, employee_id, gross, nontax, income_tax, local_tax, np, hi, ltc, ei, net, company_np, company_hi, company_ltc, company_ei, wht_missing, company_ia)
+     VALUES ($1::bigint, $2::bigint, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+    [runId, empId, c.gross, c.nontax, c.income_tax, c.local_tax, c.np, c.hi, c.ltc, c.ei, c.net, c.company_np, c.company_hi, c.company_ltc, c.company_ei, c.wht_missing, c.company_ia]);
 }
 
 /** 초안 줄 고침 — 지급액 · 비과세 → 다시 셈 */
@@ -204,8 +206,8 @@ export async function updateLine(db: DatabaseService, lineId: string, b: { gross
   const c = await calcLine(db, Number(l.ym.slice(0, 4)), b.gross ?? n(l.gross), b.nontax ?? n(l.nontax), l.dependents);
   await db.query(
     `UPDATE acct_payroll_lines SET gross = $2, nontax = $3, income_tax = $4, local_tax = $5, np = $6, hi = $7, ltc = $8, ei = $9, net = $10,
-            company_np = $11, company_hi = $12, company_ltc = $13, company_ei = $14, wht_missing = $15 WHERE id = $1::bigint`,
-    [lineId, c.gross, c.nontax, c.income_tax, c.local_tax, c.np, c.hi, c.ltc, c.ei, c.net, c.company_np, c.company_hi, c.company_ltc, c.company_ei, c.wht_missing]);
+            company_np = $11, company_hi = $12, company_ltc = $13, company_ei = $14, wht_missing = $15, company_ia = $16 WHERE id = $1::bigint`,
+    [lineId, c.gross, c.nontax, c.income_tax, c.local_tax, c.np, c.hi, c.ltc, c.ei, c.net, c.company_np, c.company_hi, c.company_ltc, c.company_ei, c.wht_missing, c.company_ia]);
   return { ok: true, id: lineId, line: c, note: '다시 셈했습니다.' };
 }
 
@@ -236,7 +238,7 @@ export const PAYROLL_SOURCES: Source[] = [
     name: 'PAYROLL', label: '급여 확정',
     sql: `SELECT r.id::text AS key, (r.pay_day::timestamp + interval '12 hours') AT TIME ZONE 'Asia/Seoul' AS at, NULL::text AS party, r.ym,
                  sum(l.gross)::bigint AS gross, sum(l.income_tax + l.local_tax)::bigint AS wht,
-                 sum(l.np + l.hi + l.ltc + l.ei)::bigint AS emp_ins, sum(l.company_np + l.company_hi + l.company_ltc + l.company_ei)::bigint AS com_ins, sum(l.net)::bigint AS net
+                 sum(l.np + l.hi + l.ltc + l.ei)::bigint AS emp_ins, sum(l.company_np + l.company_hi + l.company_ltc + l.company_ei + l.company_ia)::bigint AS com_ins, sum(l.net)::bigint AS net
             FROM acct_payroll_runs r JOIN acct_payroll_lines l ON l.run_id = r.id
            WHERE r.state IN ('FIXED', 'PAID') AND (r.pay_day::timestamp AT TIME ZONE 'Asia/Seoul') >= fn_acct_from()
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'PAYROLL' AND e.source_key = r.id::text)

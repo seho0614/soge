@@ -38,8 +38,11 @@ import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
 import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
-import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
-import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
+import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, ReportTrend } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
+import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
+import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
+import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/AcctFilings';   // v10.420 ~ 422 (D252) 신고 자료
+import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports, AcctExports, AcctPos, AcctTaxInbox } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
 import { MySessions, SettingScheduleBox } from './app/admin/OpsPlanBoxes';   // v10.377 · 380 (docs/513 · 516) 설정 예약 변경 · 내 로그인 기기
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
@@ -80,7 +83,7 @@ import { Integ } from './app/admin/Integ';
 import { GwanUx } from './app/admin/GwanUx';
 import { Adx } from './app/admin/Adx';
 import { Footer, type FooterLink } from './components/Footer';
-import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, sectionsOf, type Tab } from './lib/adminMenu';   // v10.416 sectionsOf
+import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, sectionsOf, navSectionsOf, type Tab } from './lib/adminMenu';   // v10.416 sectionsOf
 import { hashSub } from './lib/hashSub';
 import { siteUrl } from './lib/siteUrl';
 
@@ -118,10 +121,14 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-journal': ['SUPER', 'PAYOUT'], 'acct-tax': ['SUPER', 'PAYOUT'], 'acct-report': ['SUPER', 'PAYOUT'], 'acct-accounts': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-month': ['SUPER', 'PAYOUT'], 'acct-bank': ['SUPER', 'PAYOUT'],
   'acct-statements': ['SUPER', 'PAYOUT'], 'acct-ledger': ['SUPER', 'PAYOUT'], 'acct-assets': ['SUPER', 'PAYOUT'], 'acct-budget': ['SUPER', 'PAYOUT'],   // v10.396 ~ 399 (D246)
   'acct-vatform': ['SUPER', 'PAYOUT'], 'acct-aging': ['SUPER', 'PAYOUT'], 'acct-yearclose': ['SUPER', 'PAYOUT'], 'acct-payroll': ['SUPER', 'PAYOUT'],   // v10.400 ~ 403 (D247)
+  'acct-whtreturn': ['SUPER', 'PAYOUT'], 'acct-wagestmt': ['SUPER', 'PAYOUT'], 'acct-insurance': ['SUPER', 'PAYOUT'],   // v10.420 ~ 422 (D252)
   'acct-pg': ['SUPER', 'PAYOUT'], 'acct-manual': ['SUPER', 'PAYOUT'], 'acct-severance': ['SUPER', 'PAYOUT'], 'acct-corptax': ['SUPER', 'PAYOUT'],   // v10.404 ~ 407 (D248)
-  'acct-parties': ['SUPER', 'PAYOUT'], 'acct-contracts': ['SUPER', 'PAYOUT'], 'acct-imports': ['SUPER', 'PAYOUT'],   // v10.408 · 409 · 411 (D249)
+  'acct-parties': ['SUPER', 'PAYOUT'], 'acct-contracts': ['SUPER', 'PAYOUT'], 'acct-imports': ['SUPER', 'PAYOUT'], 'acct-exports': ['SUPER', 'PAYOUT'], 'acct-po': ['SUPER', 'PAYOUT'],   // v10.428 (D254)   // v10.408 · 409 · 411 (D249)
+  'acct-docs': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-depts': ['SUPER', 'PAYOUT'], 'acct-wh': ['SUPER', 'PAYOUT'], 'acct-dunning': ['SUPER', 'PAYOUT'],   // v10.433 ~ 436 (D256)
+  'acct-taxinbox': ['SUPER', 'PAYOUT'],   // v10.432 (D255)
   'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
-  'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'],   // v10.412 ~ 415 (D250)
+  'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'], 'rpt-trend': ['ADMIN', 'SUPER'],   // v10.429 (D254)   // v10.412 ~ 415 (D250)
+  'approvals': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'approval-lines': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'corp-docs': ['ADMIN', 'PAYOUT', 'SUPER'],   // v10.424 · 425 (D253)
   'rpt-worklog': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
   'acct-purchase': ['SUPER', 'PAYOUT'], 'acct-cash': ['SUPER', 'PAYOUT'], 'acct-stock': ['SUPER', 'PAYOUT'],   // v10.392 · 394 · 395 (D245)
   'acct-expense': ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.393 (D245) 경비 청구는 운영자 누구나(법인카드 상자는 SUPER · PAYOUT)
@@ -248,16 +255,22 @@ function Console() {
             <span className="d" />소개뱅크 <b>운영</b>
           </a>
           <nav className="ad-gnb" aria-label="운영 메뉴">
-            {groups.map((g) => {
-              const on = g.key === navKey;
-              return (
-                <button key={g.key} className={on ? 'on' : ''} data-group={g.key}
-                        data-tabs={`|${g.tabs.map(label).join('|')}|`}
-                        aria-current={on ? 'page' : undefined}
-                        title={g.tabs.map(label).join(' · ')}
-                        onClick={() => go(on && g.tabs.includes(tab) ? tab : g.tabs[0]!)}>{g.label}</button>
-              );
-            })}
+            {/* v10.426 (D253) — 상위 묶음 이름표(누르지 않음) · 그룹 단추는 그대로 */}
+            {navSectionsOf(groups).map((s) => (
+              <span key={s.label} className="ad-gsec" data-nav-section={s.label}>
+                <em className="ad-gsec-l" aria-hidden="true">{s.label}</em>
+                {s.groups.map((g) => {
+                  const on = g.key === navKey;
+                  return (
+                    <button key={g.key} className={on ? 'on' : ''} data-group={g.key}
+                            data-tabs={`|${g.tabs.map(label).join('|')}|`}
+                            aria-current={on ? 'page' : undefined}
+                            title={g.tabs.map(label).join(' · ')}
+                            onClick={() => go(on && g.tabs.includes(tab) ? tab : g.tabs[0]!)}>{g.label}</button>
+                  );
+                })}
+              </span>
+            ))}
           </nav>
           <div className="ad-hr">
             <AdminSearch onGo={(t) => go(t as Tab)} canGo={(t) => visible(t as Tab)} />   {/* v10.289 전체 찾기 */}
@@ -381,10 +394,14 @@ function Console() {
       {tab === 'acct-ledger' && <AcctLedger />}
       {tab === 'acct-assets' && <AcctAssets />}
       {tab === 'acct-budget' && <AcctBudget />}
+      {tab === 'acct-budget' && <BudgetPeriod />}   {/* v10.427 (D253) 분기 · 연 예산 */}
       {tab === 'acct-vatform' && <AcctVatForm />}
       {tab === 'acct-aging' && <AcctAging />}
       {tab === 'acct-yearclose' && <AcctYearClose />}
       {tab === 'acct-payroll' && <AcctPayroll />}
+      {tab === 'acct-whtreturn' && <AcctWhtReturn />}
+      {tab === 'acct-wagestmt' && <AcctWageStatements />}
+      {tab === 'acct-insurance' && <AcctInsurance />}
       {tab === 'acct-pg' && <AcctPg />}
       {tab === 'acct-manual' && <AcctManual />}
       {tab === 'acct-severance' && <AcctSeverance />}
@@ -393,11 +410,22 @@ function Console() {
       {tab === 'acct-contracts' && <AcctContracts />}
       {tab === 'acct-requisitions' && <AcctRequisitions />}
       {tab === 'acct-imports' && <AcctImports />}
+      {tab === 'acct-docs' && <ErpDocs />}
+      {tab === 'acct-depts' && <ErpDepts />}
+      {tab === 'acct-wh' && <ErpWarehouses />}
+      {tab === 'acct-dunning' && <ErpDunning />}
+      {tab === 'acct-taxinbox' && <AcctTaxInbox />}
+      {tab === 'acct-exports' && <AcctExports />}
+      {tab === 'acct-po' && <AcctPos />}
       {tab === 'rpt-day' && <ReportDay />}
       {tab === 'rpt-week' && <ReportWeek />}
       {tab === 'rpt-month' && <ReportMonth />}
       {tab === 'rpt-worklog' && <ReportWorklog />}
       {tab === 'rpt-board' && <ReportWorklogBoard />}
+      {tab === 'rpt-trend' && <ReportTrend />}
+      {tab === 'approvals' && <ApprovalInbox />}
+      {tab === 'approval-lines' && <ApprovalLines />}
+      {tab === 'corp-docs' && <CorpDocs />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

@@ -13,6 +13,7 @@ import { csvRowsOf } from './report-day';
 import { KINDS, kindOk, makeSnapshot, reportView, snapshotById } from './report-period';
 import { sendSettings, sendSnapshot, setSendSettings } from './report-send';
 import { addWorklog, listWorklogs, worklogBoard, reviewWorklog } from './worklog';
+import { trend } from './report-trend';   // v10.429 (D254) 경영 대시보드 그래프
 
 /* ---------------------------------------------------------------------
  * v10.412 ~ 415 (D250 · docs/549 ~ 552) 업무 보고 — 운영 화면 「보고」 메뉴
@@ -160,4 +161,13 @@ export class WorkReportController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
   reviewWorklog(@Param('id') id: string, @Body() dto: WorklogReviewDto) { return reviewWorklog(this.db, id, dto.note, RequestCtx.actorId() ?? null); }
+
+  /* ── v10.429 (D254 · docs/566) 경영 대시보드 그래프 ── */
+  @Get('work-reports/trend')
+  @Roles('ADMIN', 'SUPER')
+  @ApiQuery({ name: 'unit', required: false, enum: ['MONTH', 'WEEK'] })
+  @ApiOperation({ summary: '경영 추세 (v10.429)', description: '12달 또는 13주 — 매출 · 비용 · 이익(전표) · 기간 끝 현금 · 가입 · 소개몰 결제 주문 · 결제 금액 · 지난 기간 대비 %.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'REPORT_PERIOD' })
+  trend(@Query('unit') unit?: string) { return trend(this.db, unit); }
 }
