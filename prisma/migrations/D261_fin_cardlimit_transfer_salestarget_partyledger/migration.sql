@@ -369,3 +369,24 @@ INSERT INTO public.perm_route_map (method, pattern, task_key, level) VALUES
   ('GET', '/admin/acct/party-ledger/{id}/export', 'acct-partyledger', 'EXPORT')
 ON CONFLICT (method, pattern, task_key) DO NOTHING;
 
+
+/* ── ㉙ (D261) INV-11 예외 한 줄 — 대량 이체 줄의 은행 코드(acct_transfer_items.bank_code)
+ *   회사가 **자기 돈을 거래처 · 직원에게 보내는 곳**(펌뱅킹 지급 · 2명 승인)이라 파트너 정산 계좌와 같은 성격 — 남의 돈을 받아 두지 않음.
+ *   계좌번호는 암호문(acct_no_enc) · 끝 4자리만. 예외는 이 표 · 이 칸 하나만(다른 표 bank_code 는 그대로 위반). 재실행 안전. */
+CREATE OR REPLACE VIEW public.v_inv11_violations AS
+SELECT table_name, column_name
+  FROM information_schema.columns
+ WHERE table_schema = 'public'
+   AND column_name ~ 'account_no|bank_code|pg_provider|pg_tid|escrow|vaccount|card_no'
+   AND NOT (table_name = 'hlt_payments' AND column_name = 'pg_tid')
+   /* v10.26 — 소개몰(직판) 교환 배송비 결제의 거래번호. 회사가 판매자로서 받는 돈(주문 결제와 같음) */
+   AND NOT (table_name = 'hlt_exchange_fees' AND column_name = 'pg_tid')
+   /* ★ 파트너 정산 계좌는 **우리가 돈을 보내는 곳**입니다(법무 확인 2026-09-22). */
+   AND table_name <> 'partner_settlement_accounts'
+   /* v10.454 (D261) — 대량 이체 줄: 회사 돈을 내보내는 곳(파트너 정산 계좌와 같은 성격) */
+   AND NOT (table_name = 'acct_transfer_items' AND column_name = 'bank_code');
+
+COMMENT ON VIEW public.v_inv11_violations IS
+  'INV-11 위반 — 자금을 수탁하는 컬럼. **0이어야 합니다.** '
+  '예외: 소개몰(직판) 결제의 거래번호(hlt_payments · hlt_exchange_fees — 회사가 판매자로서 받는 돈) · '
+  '파트너 정산 계좌 · 대량 이체 줄 은행 코드(acct_transfer_items · D261)(우리가 **돈을 보내는 곳**)';
