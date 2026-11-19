@@ -176,6 +176,8 @@ if API and DB:
            f"{c1} · {st1} · 판매자 {mine.get('commissionVat')} · {c2} · {st2}")
     finally:
         setvat(v0)
+        # 공용 시험 회원(MEM)에서 판매자를 떼어 둠 — 주문이 달려 지울 수 없어 옛 시험 1165 · 1166 이 새 판매자를 못 만듦
+        psql(f"UPDATE hlt_sellers SET account_id = NULL WHERE account_id = '{mid}' AND type IN ('TENANT','BRAND')")
         psql(f"BEGIN; SELECT set_config('app.setting_reason', '시험 {TAG} 되돌림', true); UPDATE site_settings SET value = '{t0}' WHERE key = 'mall.tenant'; UPDATE site_settings SET value = '{ta0}' WHERE key = 'mall.tenant_apply'; COMMIT;")
         psql(f"UPDATE accounts SET identity_verified_at = {('NULL' if not biv0 else repr(biv0))} WHERE id = '{bid}'")
 else:
