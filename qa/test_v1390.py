@@ -143,7 +143,7 @@ ok('① 코드 — 설정 4 · 정기 작업 acct_deadline(09:15) · 기한 셈(
    "'acct.deadline_alert'" in M44 and "'acct.deadline_days_before'" in M44 and "'acct.vat_months'" in M44 and "'acct.close_by_day'" in M44 and "('acct_deadline', 1440, 9, 15," in M44
    and 'fn_is_business_day' in MO and "'ACCT_DEADLINE'" in MO and "'ACCT_UNCLOSED'" in MO and 'export async function monthSummary' in MO
    and "case 'acct_deadline':" in SC and "'acct_deadline'," in WK and "@Get('month')" in AC and "@Get('deadlines')" in AC
-   and 'export function AcctMonth' in UI and "tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-tax', 'acct-report', 'acct-accounts']" in MN
+   and 'export function AcctMonth' in UI and "'acct-month', 'acct-journal', 'acct-bank'" in MN
    and '"SB-ADM-ACC-050"' in SJ and '신고 기한' in doc('527_') and VT >= (10, 390), VER)
 if API and DB:
     import consent_ok

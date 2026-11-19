@@ -168,9 +168,12 @@ if API and DB:
         call('POST', '/admin/acct/journal/run', None, TS)
         el = ent('AD_INVOICE', inv2.get('id'))
         direct = psql(f"INSERT INTO acct_entries (entry_date, source, source_key) VALUES ('{prev}-20', 'TEST', 't1382c-{stamp}')")
-        nt = call('GET', f'/admin/acct/journal/export?ym={ym}', None, TP)
+        # v10.392 부터 기본 양식이 「세무사랑 일반전표」일 수 있어 「일반 양식」을 골라 내려받음(D244 전이면 format 없음 = 옛 머리줄)
+        gfmt = psql("SELECT coalesce(max(id)::text, '') FROM acct_export_formats WHERE name = '일반 양식'") if psql("SELECT to_regclass('public.acct_export_formats') IS NOT NULL") == 't' else ''
+        fq = f'&format={gfmt}' if gfmt.isdigit() else ''
+        nt = call('GET', f'/admin/acct/journal/export?ym={ym}{fq}', None, TP)
         tk = __import__('export_ticket').get(TP, 'ACCT_JOURNAL', TS)
-        cv = call('GET', f'/admin/acct/journal/export?ym={ym}&ticket={tk}', None, TP) if tk else {}
+        cv = call('GET', f'/admin/acct/journal/export?ym={ym}{fq}&ticket={tk}', None, TP) if tk else {}
         head = (cv.get('csv') or '').lstrip('\ufeff').split('\r\n')[0]
         ok('③ 마감 · CSV — 이번 달 422 · 지난달 마감(이미면 409) · 두 번 409 · 마감 달 돈 흐름은 오늘 날짜 · late · 마감 달 날짜로 넣기 막힘 · CSV 승인 없이 422 · 지급 담당 요청 → SUPER 승인 → 받음(일반 양식 머리줄)',
            cf.get('code') == 'ACCT_CLOSE_FUTURE' and (c1.get('ok') is True or c1.get('code') == 'ACCT_CLOSED') and c2.get('code') == 'ACCT_CLOSED'

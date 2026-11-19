@@ -158,6 +158,10 @@ if API and DB:
     cols = [{'field': 'date', 'title': '전표일자'}, {'field': 'code', 'title': '계정'}, {'field': 'dc', 'title': '구분'}, {'field': 'amount', 'title': '금액'}, {'field': 'memo', 'title': '적요'}, {'field': 'blank', 'title': '비고'}]
     body = {'name': nm, 'columns': cols, 'dateStyle': 'YYYYMMDD', 'dcStyle': 'SIGN', 'dcDebit': '1', 'dcCredit': '2'}
     gen = psql("SELECT id FROM acct_export_formats WHERE name = '일반 양식'")
+    # v10.392 부터 기본이 「세무사랑 일반전표」일 수 있음 — 이 시험 동안만 「일반 양식」을 기본으로 두고 끝나면 되돌림
+    prev_def = psql("SELECT coalesce(max(name) FILTER (WHERE is_default), '') FROM acct_export_formats")
+    psql("UPDATE acct_export_formats SET is_default = false WHERE is_default AND name <> '일반 양식'")
+    psql("UPDATE acct_export_formats SET is_default = true WHERE name = '일반 양식'")
     try:
         f0 = call('GET', '/admin/acct/formats', None, TP)
         g = next((x for x in f0.get('items') or [] if x.get('name') == '일반 양식'), {})
@@ -187,8 +191,9 @@ if API and DB:
            f"일반 {g.get('isDefault')} · 미리 {pv.get('head')} {(pv.get('rows') or [[]])[0][:4]} · 새 {new.get('id')} · {dup.get('code')} {badf.get('code')} {badd.get('code')} {byadmin.get('_err')} · {lines[:2]} · 기본 {defs}")
     finally:
         # 기본 양식은 「일반 양식」으로 되돌림(옛 시험 · 다음 돌림이 그 머리줄을 봄) — 고유 색인 때문에 두 번에 나눔
-        psql("UPDATE acct_export_formats SET is_default = false WHERE is_default AND name <> '일반 양식'")
-        psql("UPDATE acct_export_formats SET is_default = true WHERE name = '일반 양식'")
+        back = prev_def if prev_def else '일반 양식'
+        psql(f"UPDATE acct_export_formats SET is_default = false WHERE is_default AND name <> '{back}'")
+        psql(f"UPDATE acct_export_formats SET is_default = true WHERE name = '{back}'")
         rm_role(pid, '1389'); rm_role(aid, '1389a')
     if ADMIN_WEB:
         def chk(pg, seen):

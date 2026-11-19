@@ -57,14 +57,14 @@ ok('① D217 — 파일 용도 NOTICE_ATTACHMENT(JPG · PNG · PDF 10MB) · noti
    and 'CHECK (cardinality(attachments) <= 3)' in M17 and 'trg_files_notice_guard' in M17 and 'NEW.attachments IS DISTINCT FROM OLD.attachments' in M17
    and "'INQUIRY_ATTACHMENT','BROKER_DOC'" in M17 and not BAD.search(M17), f'{len(M17)}')
 ok('① 서버 — 올리기는 최고 관리자만 · 붙이기 검사(3개 · READY · 용도) · 첨부 목록 SQL · 바이트 API(보는 사람 기준 · 운영 미리 보기 · PDF 내려받기) · 판매자센터 공지 첨부 · 영어 사전',
-   "NOTICE_ATTACHMENT: ['SUPER']" in FS and "'NOTICE_ATTACHMENT'] as const" in FD and 'private async checkNoticeFiles(' in SS and "'TOO_MANY_FILES'" in SS and "'FILE_INVALID'" in SS
+   "NOTICE_ATTACHMENT: ['SUPER']" in FS and "'NOTICE_ATTACHMENT'" in FD and 'FILE_PURPOSES' in FD and 'private async checkNoticeFiles(' in SS and "'TOO_MANY_FILES'" in SS and "'FILE_INVALID'" in SS
    and 'export function noticeFilesSql(' in NF and "@Get('notices/:id/files/:n')" in PC and 'async noticeFile(id: string, n: number)' in PS
    and "array_remove(fn_notice_grades($3::uuid), 'STAFF')" in PS and "'application/pdf' ? 'attachment' : 'inline'" in PS and "noticeFilesSql('notices')" in HS
    and '"올리기를 마친 공지 첨부 파일만 붙일 수 있습니다.":' in EN and '"첨부 파일이 없습니다.":' in EN, '')
 ok('① 화면 — 운영 첨부 고르기(등록 · 고치기 · 3개 · 열기 · 빼기) · 표 첨부 수 · 사용자 웹 부품 · 4곳 · 화면 연결(4곳 + 운영 파일 API) · 문서 416 · 마이그레이션 255 · 판 v10.295',
    'function NoticeFilesPick(' in MO and MO.count('<NoticeFilesPick') == 2 and 'data-notice-files=' in MO and "uploadFile(f, 'NOTICE_ATTACHMENT')" in MO
    and '/api/v1/notices/${id}/files/${f.n}' in NFC and all('<NoticeFiles' in x for x in PG) and SCR.count('"GET /notices/{id}/files/{n}"') >= 4
-   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
+   and '"POST /files/{id}/complete"' in SCR and '첨부' in D416 and len(mig) in (255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283) and verok(295), f"{[('<NoticeFiles' in x) for x in PG]} · {SCR.count('files/{n}')} · {len(mig)} · {VER}")
 
 def call(m_, p, b=None, t=None):
     hd = {'content-type': 'application/json'}

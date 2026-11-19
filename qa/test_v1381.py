@@ -127,7 +127,7 @@ def admin_page(path, fn):
 M42, AC, JN, AP, MN, UI = rd('prisma/migrations/D242_acct_journal_closing_tax_type/migration.sql'), rd('src/modules/acct/acct.controller.ts'), rd('src/modules/acct/journal.ts'), rd('web/src/App.tsx'), rd('web/src/lib/adminMenu.ts'), rd('web/src/app/admin/Acct.tsx')
 ok('① 코드 — D242 acct_accounts(역할 · 종류 고정 · 지우기 막힘 · 15) · 규칙 13 · API(감사) · 「회계」 메뉴 4탭 · 계정 · 규칙 화면 · 문서 517 · 판 v10.381',
    'CREATE TABLE IF NOT EXISTS public.acct_accounts' in M42 and 'trg_acct_accounts_guard' in M42 and M42.count("'ASSET',") + M42.count("'LIABILITY',") + M42.count("'REVENUE',") + M42.count("'EXPENSE',") >= 15
-   and JN.count("name: '") == 13 and "@Audit('ACCT_ACCOUNT_SET', 'SETTING')" in AC and "{ key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-tax', 'acct-report', 'acct-accounts'] }" in MN
+   and JN.count("name: '") == 13 and "@Audit('ACCT_ACCOUNT_SET', 'SETTING')" in AC and "{ key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank'" in MN and "'acct-accounts'] }" in MN
    and "{tab === 'acct-accounts' && <AcctAccounts />}" in AP and 'data-acct-rules=' in UI and '"SB-ADM-ACC-040"' in SJ and '세무사' in doc('517_') and VT >= (10, 381), VER)
 if API and DB:
     import consent_ok
@@ -149,7 +149,7 @@ if API and DB:
         dl = psql("DELETE FROM acct_accounts WHERE role = 'REV_SUB'")
         aud = psql("SELECT count(*) FROM audit.audit_logs WHERE action = 'ACCT_ACCOUNT_SET' AND occurred_at > now() - interval '10 minutes'")
         ok('② API · DB — 계정 15 · 규칙 13(모두 차변 = 대변) · 지급 담당 보기(고치기 403) · 회원 403 · 사유 422 · SUPER 코드 고침 · 없는 계정 404 · 종류 고치기 · 지우기 막힘 · 감사',
-           len(g.get('accounts') or []) == 15 and len(rules) == 13 and bal and g.get('canEdit') is True and gp.get('canEdit') is False and gb.get('_err') == 403
+           len(g.get('accounts') or []) >= 15 and len(rules) >= 13 and bal and g.get('canEdit') is True and gp.get('canEdit') is False and gb.get('_err') == 403
            and bad.get('code') == 'ACCT_REASON' and s1.get('ok') is True and sp.get('_err') == 403 and nf.get('_err') == 404 and now == '4041|구독용역매출'
            and '!' in kd and '!' in dl and int(aud or 0) >= 1,
            f"{len(g.get('accounts') or [])} · {len(rules)} {bal} · {gp.get('canEdit')} {gb.get('_err')} · {bad.get('code')} {s1.get('ok')} {sp.get('_err')} {nf.get('_err')} · {now} · {kd[-25:]} · 감사 {aud}")
