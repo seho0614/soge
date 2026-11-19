@@ -36,6 +36,8 @@ import { runJournal } from '../modules/acct/journal';   // v10.382 (D242)
 import { ALL_SOURCES } from '../modules/acct/sources';   // v10.392 (D245) — ⑫ 매입 · 경비 · 법인카드 · 재고 전표까지
 import { acctCashflowJob } from '../modules/acct/cashflow';   // v10.394 (D245)
 import { stockJob } from '../modules/acct/stock';   // v10.395 (D245)
+import { depreciationJob } from '../modules/acct/assets';   // v10.398 (D246)
+import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -57,7 +59,9 @@ export type JobName =
   | 'acct_journal'    // v10.382 (D242)
   | 'acct_deadline'   // v10.390 (D244)
   | 'acct_cashflow'   // v10.394 (D245)
-  | 'acct_stock';     // v10.395 (D245)
+  | 'acct_stock'      // v10.395 (D245)
+  | 'acct_depreciation'   // v10.398 (D246)
+  | 'acct_budget';    // v10.399 (D246)
 
 export interface JobResult {
   job: JobName;
@@ -731,6 +735,17 @@ export class SchedulerService {
       }
 
       /* v10.395 (D245 · docs/532) — 직판 결제 승인 → 출고 · 취소 · 반품 → 반입(이동평균 원가) · 재고 없이 나가면 STOCK_NEGATIVE */
+      case 'acct_depreciation': {   // v10.398 (D246 · docs/535) — 끝난 달까지 자산마다 상각 한 줄(전표는 acct_journal 이 DEPRECIATION)
+        const r = await depreciationJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+      case 'acct_budget': {   // v10.399 (D246 · docs/536) — 비용 계정 실적 > 예산이면 ACCT_BUDGET_OVER(예산을 올리면 풀림)
+        const r = await budgetJob(this.db);
+        affected = r.made.length; detail = r;
+        break;
+      }
+
       case 'acct_stock': {
         const r = await stockJob(this.db);
         affected = r.out + r.back; detail = r;

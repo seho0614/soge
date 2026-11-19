@@ -52,7 +52,7 @@ function ActivityList({ accountId }: { accountId: string }) {
 }
 
 /** 내려받기 단추 — 승인 번호를 돌려줌(없으면 사유를 물어 요청 · 기다려야 하면 null) */
-export async function exportTicket(target: 'POINT_REPORT' | 'AUDIT_EXPORT' | 'NOTICE_READS' | 'RATE_READS' | 'ACCT_JOURNAL' | 'ACCT_TAX'): Promise<string | null> {
+export async function exportTicket(target: 'POINT_REPORT' | 'AUDIT_EXPORT' | 'NOTICE_READS' | 'RATE_READS' | 'ACCT_JOURNAL' | 'ACCT_TAX' | 'ACCT_LEDGER'): Promise<string | null> {
   const r = await api<{ id: string | null; pendingId: string | null }>(`/admin/export-requests/ready?target=${target}`);
   if (r.id) return r.id;
   if (r.pendingId) { alert('이 자료의 내려받기 요청이 승인을 기다리고 있습니다(위험감지 › 감사 › 「내려받기 승인」).'); return null; }

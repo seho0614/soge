@@ -5717,6 +5717,90 @@
     "POST /admin/acct/stock/adjust"
    ],
    "note": "2026-11-19 v10.395 (D245 · docs/532) 직판 재고 수불부 — 옵션마다 이동평균 원가 · 입고(SUPER · PAYOUT) · 결제 승인 때 출고 · 취소 · 반품 반입(자동 acct_stock) · 실사 조정(SUPER · 사유) · 매출원가 전표 · 화면 ID 는 메인이 다른 판과 겹치지 않게 정함"
+  },
+  {
+   "id": "SB-ADM-ACC-130",
+   "name": "회계 고정자산",
+   "group": "ADM",
+   "url": "/admin/acct-assets",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/assets",
+    "GET /admin/acct/assets/{id}",
+    "POST /admin/acct/assets",
+    "POST /admin/acct/assets/{id}/dispose",
+    "POST /admin/acct/assets/depreciate"
+   ],
+   "note": "2026-11-20 v10.398 (D246 · docs/535) 고정자산 대장 · 달 감가상각(정액 · 정률 · 잔존 · 초안 · 세무사 확인) · ⑫ 매입에서 넘기기 · 처분 이익 · 손실 · 전표 ASSET_ACQUIRE · ASSET_FROM_PURCHASE · DEPRECIATION · ASSET_DISPOSE"
+  },
+  {
+   "id": "SB-ADM-ACC-140",
+   "name": "회계 예산",
+   "group": "ADM",
+   "url": "/admin/acct-budget",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/budget",
+    "PUT /admin/acct/budget"
+   ],
+   "note": "2026-11-20 v10.399 (D246 · docs/536) 계정별 달 예산(SUPER · 지난달 옮기기 · 바꾼 기록) · 실적 · 차이 · 넘으면 운영 알림 ACCT_BUDGET_OVER · 경영 보고서 한 줄"
+  },
+  {
+   "id": "SB-ADM-ACC-120",
+   "name": "회계 원장 · 매입매출장",
+   "group": "ADM",
+   "url": "/admin/acct-ledger",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/ledger",
+    "GET /admin/acct/ledger/export",
+    "GET /admin/acct/books",
+    "GET /admin/acct/books/export",
+    "GET /admin/acct/accounts"
+   ],
+   "note": "2026-11-20 v10.397 (D246 · docs/534) 계정별 원장(기초 · 잔액) · 매출장 · 매입장(거래처별 · 전표별 · 공제 · 불공제) · CSV 내려받기 승인 ACCT_LEDGER"
+  },
+  {
+   "id": "SB-ADM-ACC-110",
+   "name": "회계 재무제표",
+   "group": "ADM",
+   "url": "/admin/acct-statements",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/statements/trial",
+    "GET /admin/acct/statements/income",
+    "GET /admin/acct/statements/balance",
+    "GET /admin/acct/opening",
+    "POST /admin/acct/opening",
+    "PUT /admin/acct/opening/{id}/lines",
+    "POST /admin/acct/opening/{id}/fix",
+    "GET /admin/acct/accounts"
+   ],
+   "note": "2026-11-20 v10.396 (D246 · docs/533) 시산표 · 손익계산서 · 재무상태표(자산 = 부채 + 자본 + 마감 전 손익) · 기초 잔액(판 · DRAFT → FIXED · 확정 뒤 못 고침 · SUPER) · 자본(EQUITY) 계정 종류"
   }
  ],
  "deferred": [

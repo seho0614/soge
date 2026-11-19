@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
-import { ALL_SOURCES } from './sources';   // v10.392 — ⑫ 돈 흐름 이름까지
+import { ALL_SOURCES } from './sources';
+import { budgetLine } from './budget';   // v10.392 — ⑫ 돈 흐름 이름까지
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
@@ -137,25 +138,28 @@ export async function cancelTaxInvoiceRequest(db: DatabaseService, id: string, r
 }
 
 export async function acctReport(db: DatabaseService, months: number) {
-  const rows = await db.query<{ ym: string; role: string; d: string; c: string }>(
-    `SELECT e.ym, l.role, sum(l.debit)::text AS d, sum(l.credit)::text AS c
-       FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id
+  /* v10.396 (D246) — 매출 · 비용은 계정 종류(kind)로 셈(매출원가 · 처분 손익 · 더한 계정까지) · 해 마감 전표(YEAR_CLOSE · YEAR_REOPEN)는 손익에서 뺌 */
+  const rows = await db.query<{ ym: string; role: string; kind: string; d: string; c: string }>(
+    `SELECT e.ym, l.role, a.kind, sum(l.debit)::text AS d, sum(l.credit)::text AS c
+       FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id JOIN acct_accounts a ON a.role = l.role
       WHERE e.entry_date >= (date_trunc('month', now() AT TIME ZONE 'Asia/Seoul') - make_interval(months => $1::int - 1))::date
-      GROUP BY e.ym, l.role ORDER BY e.ym`, [months]);
+        AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')
+      GROUP BY e.ym, l.role, a.kind ORDER BY e.ym`, [months]);
   const byYm = new Map<string, { ym: string; revenue: number; byRevenue: Record<string, number>; expense: number; profit: number; vat: number; cashIn: number; cashOut: number }>();
   for (const r of rows) {
     const m = byYm.get(r.ym) ?? { ym: r.ym, revenue: 0, byRevenue: {}, expense: 0, profit: 0, vat: 0, cashIn: 0, cashOut: 0 };
     const d = Number(r.d), c = Number(r.c);
-    if (r.role.startsWith('REV_')) { m.revenue += c - d; m.byRevenue[r.role] = (m.byRevenue[r.role] ?? 0) + c - d; }
-    else if (r.role.startsWith('EXP_')) m.expense += d - c;
+    if (r.kind === 'REVENUE') { m.revenue += c - d; m.byRevenue[r.role] = (m.byRevenue[r.role] ?? 0) + c - d; }
+    else if (r.kind === 'EXPENSE') m.expense += d - c;
     else if (r.role === 'VAT_OUT') m.vat += c - d;
     else if (r.role === 'CASH' || r.role === 'PG_RECV') { m.cashIn += d; m.cashOut += c; }
     byYm.set(r.ym, m);
   }
   const list = [...byYm.values()].map((m) => ({ ...m, profit: m.revenue - m.expense }));
-  const names = Object.fromEntries((await db.query<{ role: string; name: string }>(`SELECT role, name FROM acct_accounts WHERE role LIKE 'REV_%'`)).map((x) => [x.role, x.name]));
+  const names = Object.fromEntries((await db.query<{ role: string; name: string }>(`SELECT role, name FROM acct_accounts WHERE kind = 'REVENUE'`)).map((x) => [x.role, x.name]));
   const last = list[list.length - 1], prev = list[list.length - 2];
   const pct = (a?: number, b?: number) => (a == null || !b ? null : Math.round(((a - b) / Math.abs(b)) * 1000) / 10);
-  return { months: list, revenueNames: names, latest: last ?? null, change: { revenue: pct(last?.revenue, prev?.revenue), profit: pct(last?.profit, prev?.profit) },
+  const budget = last ? await budgetLine(db, last.ym).catch(() => null) : null;   // v10.399 (D246) 예산 대비 한 줄
+  return { months: list, revenueNames: names, latest: last ?? null, budget, change: { revenue: pct(last?.revenue, prev?.revenue), profit: pct(last?.profit, prev?.profit) },
            note: '전표에서 셈(공급가 · 부가세 뺌) — 회사 장부 전체가 아니라 소개뱅크 시스템을 지난 돈만입니다(급여 · 임대료 등 비용은 회계 프로그램).' };
 }

@@ -79,6 +79,10 @@ export const TABS = [
   ['acct-expense', '경비 청구'],   /* v10.393 (D245 · docs/530) 경비 청구 · 법인카드 */
   ['acct-cash', '자금 흐름'],   /* v10.394 (D245 · docs/531) */
   ['acct-stock', '재고'],   /* v10.395 (D245 · docs/532) 직판 재고 수불부 */
+  ['acct-statements', '재무제표'],   /* v10.396 (D246 · docs/533) 시산표 · 손익 · 재무상태표 · 기초 잔액 */
+  ['acct-ledger', '원장'],   /* v10.397 (D246 · docs/534) 계정별 원장 · 매입매출장 */
+  ['acct-assets', '고정자산'],   /* v10.398 (D246 · docs/535) */
+  ['acct-budget', '예산'],   /* v10.399 (D246 · docs/536) */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -102,7 +106,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -203,6 +207,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-expense':  { title: '경비 청구', sub: '운영자가 쓴 돈을 증빙과 올리고 SUPER 가 승인(본인 건 불가) · 지급 담당이 지급합니다. 법인카드 이용 내역 CSV 를 올려 줄마다 계정을 골라 장부에 넣습니다.', screen: 'SB-ADM-ACC-080' },
   'acct-cash':     { title: '자금 흐름', sub: '앞으로 90일 날마다 예상 잔액 — 시작 잔액(직접 넣음 · 통장 CSV)에 확정된 들어올 돈 · 나갈 돈을 더하고 뺍니다. 가장 낮은 날이 기준 밑이면 운영 알림.', screen: 'SB-ADM-ACC-090' },
   'acct-stock':    { title: '재고', sub: '직판 상품 원가 장부(이동평균) — 입고 · 결제 때 출고 · 취소 · 반품 반입 · 실사 조정 · 매출원가 전표', screen: 'SB-ADM-ACC-100' },
+  'acct-statements': { title: '재무제표', sub: '시산표 · 손익계산서 · 재무상태표와 기초 잔액(시작일 통장 · 받을 돈 · 갚을 돈 · 자본금 — 확정 뒤 못 고침)입니다.', screen: 'SB-ADM-ACC-110' },
+  'acct-ledger':   { title: '원장 · 매입매출장', sub: '계정별 원장(날짜별 들고 남 · 잔액) · 거래처별 매출장 · 매입장 · CSV(내려받기 승인)', screen: 'SB-ADM-ACC-120' },
+  'acct-assets':   { title: '고정자산', sub: '고정자산 대장 · 달마다 감가상각 전표(정액 · 정률 · 잔존가치 · 초안) · 매입에서 넘기기 · 처분 손익', screen: 'SB-ADM-ACC-130' },
+  'acct-budget':   { title: '예산', sub: '계정별 달 예산(SUPER) · 실적 · 차이 · 넘으면 운영 알림 · 경영 보고서에 한 줄', screen: 'SB-ADM-ACC-140' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },

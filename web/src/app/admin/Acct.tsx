@@ -170,7 +170,7 @@ export function AcctTax() {
   );
 }
 
-interface Report { months: Array<{ ym: string; revenue: number; byRevenue: Record<string, number>; expense: number; profit: number; vat: number; cashIn: number; cashOut: number }>; revenueNames: Record<string, string>; latest: { revenue: number; profit: number } | null; change: { revenue: number | null; profit: number | null }; note: string }
+interface Report { months: Array<{ ym: string; revenue: number; byRevenue: Record<string, number>; expense: number; profit: number; vat: number; cashIn: number; cashOut: number }>; revenueNames: Record<string, string>; latest: { revenue: number; profit: number } | null; change: { revenue: number | null; profit: number | null }; note: string; budget?: { text: string } | null }
 
 export function AcctReport() {
   const q = useApi<Report>('/admin/acct/report?months=12');
@@ -182,6 +182,7 @@ export function AcctReport() {
   return (
     <section data-acct-report={d.months.length}>
       <p data-acct-latest="">이번 달 매출 <b>{won(d.latest?.revenue)}</b>(지난달 대비 {pct(d.change.revenue)}) · 이익 <b>{won(d.latest?.profit)}</b>(지난달 대비 {pct(d.change.profit)})</p>
+      {d.budget && <p data-acct-report-budget="">{d.budget.text}</p>}
       {d.months.length === 0 ? <p className="muted">아직 전표가 없습니다 — 회계 › 전표에서 「지금 전표 만들기」.</p> : (
         <table className="tbl"><thead><tr><th>달</th><th>매출(공급가)</th>{roles.map((r) => <th key={r}>{d.revenueNames[r]}</th>)}<th>비용</th><th>이익</th><th>부가세</th><th>들어옴</th><th>나감</th></tr></thead>
           <tbody>{d.months.map((m) => (
@@ -238,7 +239,7 @@ function AccountAdd({ onDone }: { onDone: () => void }) {
       <b>계정 더하기</b> <small className="dim">역할은 U_ 로 시작하는 대문자 · 지우지 않음</small><br />
       <input value={f.role} onChange={(e) => setF({ ...f, role: e.target.value.toUpperCase() })} size={14} aria-label="역할" />{' '}
       <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="이름" size={14} />{' '}
-      <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>{['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE'].map((k) => <option key={k} value={k}>{KIND_KO[k]}</option>)}</select>{' '}
+      <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>{['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'].map((k) => <option key={k} value={k}>{KIND_KO[k]}</option>)}</select>{' '}
       <input value={f.extCode} onChange={(e) => setF({ ...f, extCode: e.target.value })} placeholder="코드" size={6} />{' '}
       <input value={f.extName} onChange={(e) => setF({ ...f, extName: e.target.value })} placeholder="계정과목" size={10} />{' '}
       <input value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} placeholder="사유(꼭)" size={14} />{' '}
@@ -916,5 +917,258 @@ function StockMoves({ code, tick }: { code: string; tick: number }) {
             <tr key={m.id}><td>{m.date}</td><td>{STOCK_KIND_KO[m.kind] ?? m.kind}{m.zeroCost && <small className="warn-text"> 원가 0</small>}{m.purchaseId && <small className="dim"> 매입 {m.purchaseId}</small>}</td>
               <td>{m.label}</td><td>{m.qty > 0 ? `+${m.qty}` : m.qty}</td><td>{won(Math.round(m.unitCost))}</td><td>{won(m.amount)}</td><td>{won(m.qtyAfter)}</td><td>{won(m.amountAfter)}</td><td>{won(Math.round(m.avgAfter))}</td></tr>))}</tbody></table>))}
     </div>
+  );
+}
+
+interface TbRowW { role: string; name: string; kind: string; code: string | null; opening: number; debit: number; credit: number; closing: number }
+interface TbW { from: string; to: string; openingSet: { id: string; asOf: string } | null; rows: TbRowW[]; total: { debit: number; credit: number }; balanced: boolean }
+interface IsW { from: string; to: string; revenue: Array<{ role: string; name: string; amount: number }>; expense: Array<{ role: string; name: string; amount: number }>;
+  total: { revenue: number; cogs: number; grossProfit: number; expense: number; profit: number }; note: string }
+interface BsItem { role: string; name: string; amount: number }
+interface BsW { asOf: string; assets: BsItem[]; liabilities: BsItem[]; equity: BsItem[]; unclosedProfit: number; total: { assets: number; liabilitiesAndEquity: number }; balanced: boolean; warnings: string[]; note: string }
+interface OpLine { role: string; debit: number; credit: number; memo?: string | null }
+interface OpSet { id: string; asOf: string; state: string; note: string | null; debit: number; credit: number; n: number; lines: Array<OpLine & { id: string; name: string; kind: string }> }
+interface OpW { sets: OpSet[]; startOn: string; note: string }
+const KIND_W: Record<string, string> = { ASSET: '자산', LIABILITY: '부채', EQUITY: '자본', REVENUE: '매출', EXPENSE: '비용' };
+
+export function AcctStatements() {
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(`${today.slice(0, 4)}-01-01`);
+  const [to, setTo] = useState(today);
+  const [view, setView] = useState<'bs' | 'is' | 'tb' | 'op'>('bs');
+  const tb = useApi<TbW>(`/admin/acct/statements/trial?from=${from}&to=${to}`);
+  const is = useApi<IsW>(`/admin/acct/statements/income?from=${from}&to=${to}`);
+  const bs = useApi<BsW>(`/admin/acct/statements/balance?asOf=${to}`);
+  return (
+    <section data-acct-statements={view}>
+      <div className="acts">
+        <label>기간 <input type="date" value={from} onChange={(e) => e.target.value && setFrom(e.target.value)} /></label> ~ <input type="date" value={to} onChange={(e) => e.target.value && setTo(e.target.value)} aria-label="끝일" />{' '}
+        {(['bs', 'is', 'tb', 'op'] as const).map((v) => <button key={v} className={`btn-sm ${view === v ? '' : 'btn-plain'}`} onClick={() => setView(v)} data-acct-stmt-tab={v}>{({ bs: '재무상태표', is: '손익계산서', tb: '시산표', op: '기초 잔액' } as Record<string, string>)[v]}</button>)}
+      </div>
+      {view === 'bs' && bs.data && (
+        <div data-acct-bs={bs.data.balanced ? 'ok' : 'diff'}>
+          {bs.data.warnings.map((w, i) => <p key={i} className="warn-text">{w}</p>)}
+          <div className="grid2">
+            <table className="tbl"><thead><tr><th>자산</th><th>{bs.data.asOf}</th></tr></thead>
+              <tbody>{bs.data.assets.map((x) => <tr key={x.role}><td>{x.name}</td><td>{won(x.amount)}</td></tr>)}<tr><th>합계</th><th>{won(bs.data.total.assets)}</th></tr></tbody></table>
+            <table className="tbl"><thead><tr><th>부채 · 자본</th><th /></tr></thead>
+              <tbody>{bs.data.liabilities.map((x) => <tr key={x.role}><td>{x.name}</td><td>{won(x.amount)}</td></tr>)}
+                {bs.data.equity.map((x) => <tr key={x.role}><td>{x.name}</td><td>{won(x.amount)}</td></tr>)}
+                <tr><td>마감 전 손익</td><td>{won(bs.data.unclosedProfit)}</td></tr>
+                <tr><th>합계</th><th>{won(bs.data.total.liabilitiesAndEquity)}</th></tr></tbody></table>
+          </div>
+          <p className="muted">{bs.data.note}</p>
+        </div>
+      )}
+      {view === 'is' && is.data && (
+        <div data-acct-is={is.data.total.profit}>
+          <table className="tbl"><tbody>
+            <tr><th colSpan={2}>매출 · 수익</th></tr>{is.data.revenue.map((x) => <tr key={x.role}><td>{x.name}</td><td>{won(x.amount)}</td></tr>)}
+            <tr><th>매출 합계</th><th>{won(is.data.total.revenue)}</th></tr>
+            <tr><td>매출원가</td><td>{won(is.data.total.cogs)}</td></tr><tr><th>매출총이익</th><th>{won(is.data.total.grossProfit)}</th></tr>
+            <tr><th colSpan={2}>비용</th></tr>{is.data.expense.filter((x) => x.role !== 'COGS').map((x) => <tr key={x.role}><td>{x.name}</td><td>{won(x.amount)}</td></tr>)}
+            <tr><th>순이익</th><th>{won(is.data.total.profit)}</th></tr></tbody></table>
+          <p className="muted">{is.data.note}</p>
+        </div>
+      )}
+      {view === 'tb' && tb.data && (
+        <div data-acct-tb={tb.data.rows.length}>
+          <p>{tb.data.balanced ? '차변 합 = 대변 합' : <b className="warn-text">차변 합 ≠ 대변 합</b>} · 기초 잔액 {tb.data.openingSet ? `${tb.data.openingSet.asOf} 판` : '없음'}</p>
+          <table className="tbl"><thead><tr><th>계정</th><th>종류</th><th>코드</th><th>기초</th><th>차변</th><th>대변</th><th>기말</th></tr></thead>
+            <tbody>{tb.data.rows.map((r) => <tr key={r.role}><td>{r.name}</td><td>{KIND_W[r.kind]}</td><td>{r.code ?? '—'}</td><td>{won(r.opening)}</td><td>{won(r.debit)}</td><td>{won(r.credit)}</td><td>{won(r.closing)}</td></tr>)}
+              <tr><th colSpan={4}>합계</th><th>{won(tb.data.total.debit)}</th><th>{won(tb.data.total.credit)}</th><th /></tr></tbody></table>
+        </div>
+      )}
+      {view === 'op' && <AcctOpening />}
+    </section>
+  );
+}
+
+/** 기초 잔액 — 판 만들기 · 줄 넣기(DRAFT) · 확정(SUPER) */
+function AcctOpening() {
+  const q = useApi<OpW>('/admin/acct/opening');
+  const acc = useApi<{ accounts: Array<{ role: string; name: string; kind: string }> }>('/admin/acct/accounts');
+  const a = useAct();
+  const [asOf, setAsOf] = useState('');
+  const [rows, setRows] = useState<OpLine[] | null>(null);
+  const draft = q.data?.sets.find((s) => s.state === 'DRAFT');
+  const lines = rows ?? draft?.lines.map((l) => ({ role: l.role, debit: l.debit, credit: l.credit, memo: l.memo ?? '' })) ?? [];
+  const d = lines.reduce((s, l) => s + (Number(l.debit) || 0), 0), c = lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
+  const create = () => void a.run('new', () => api('/admin/acct/opening', { method: 'POST', body: JSON.stringify({ asOf: asOf || q.data?.startOn }) }), q.reload);
+  const saveLines = () => draft && void a.run('lines', () => api(`/admin/acct/opening/${draft.id}/lines`, { method: 'PUT', body: JSON.stringify({ lines: lines.filter((l) => l.role && ((Number(l.debit) || 0) > 0 || (Number(l.credit) || 0) > 0)).map((l) => ({ role: l.role, debit: Number(l.debit) || 0, credit: Number(l.credit) || 0, memo: l.memo ?? '' })) }) }), () => { setRows(null); q.reload(); });
+  const fix = () => {
+    if (!draft) return;
+    const reason = prompt(`${draft.asOf} 기초 잔액을 확정합니다. 확정 뒤로는 고칠 수 없습니다. 사유를 적으십시오.`);
+    if (reason) void a.run('fix', () => api(`/admin/acct/opening/${draft.id}/fix`, { method: 'POST', body: JSON.stringify({ reason }) }), q.reload);
+  };
+  const set = (i: number, k: keyof OpLine, v: string) => setRows(lines.map((l, j) => (j === i ? { ...l, [k]: k === 'role' || k === 'memo' ? v : Number(v.replace(/[^0-9]/g, '')) || 0 } : l)));
+  return (
+    <div className="card pad" data-acct-opening={q.data?.sets.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      {q.data && <p className="muted">{q.data.note}</p>}
+      {q.data?.sets.filter((s) => s.state === 'FIXED').map((s) => <p key={s.id} data-acct-opening-fixed={s.asOf}><b>{s.asOf}</b> 확정 · 줄 {s.n} · 차변 = 대변 {won(s.debit)}</p>)}
+      {isSuper() && !draft && (
+        <p><input type="date" value={asOf || q.data?.startOn || ''} onChange={(e) => setAsOf(e.target.value)} aria-label="기준일" /> <button className="btn-sm" disabled={a.busy === 'new'} onClick={create} data-acct-opening-new="">기초 잔액 판 만들기</button></p>
+      )}
+      {draft && (
+        <>
+          <b>{draft.asOf} 기초 잔액(작성 중)</b>
+          <table className="tbl"><thead><tr><th>계정</th><th>차변</th><th>대변</th><th>메모</th><th /></tr></thead>
+            <tbody>{lines.map((l, i) => (
+              <tr key={i}><td><select value={l.role} onChange={(e) => set(i, 'role', e.target.value)} aria-label="계정"><option value="">계정</option>{(acc.data?.accounts ?? []).filter((x) => ['ASSET', 'LIABILITY', 'EQUITY'].includes(x.kind)).map((x) => <option key={x.role} value={x.role}>{x.name}({KIND_W[x.kind]})</option>)}</select></td>
+                <td><input value={l.debit || ''} onChange={(e) => set(i, 'debit', e.target.value)} size={12} inputMode="numeric" aria-label="차변" /></td>
+                <td><input value={l.credit || ''} onChange={(e) => set(i, 'credit', e.target.value)} size={12} inputMode="numeric" aria-label="대변" /></td>
+                <td><input value={l.memo ?? ''} onChange={(e) => set(i, 'memo', e.target.value)} size={14} aria-label="메모" /></td>
+                <td><button className="btn-sm btn-plain" onClick={() => setRows(lines.filter((_, j) => j !== i))}>빼기</button></td></tr>))}
+              <tr><th>합계</th><th>{won(d)}</th><th>{won(c)}</th><th colSpan={2}>{d === c ? '맞음' : <span className="warn-text">차이 {won(d - c)}</span>}</th></tr></tbody></table>
+          {isSuper() && (
+            <p><button className="btn-sm btn-plain" onClick={() => setRows([...lines, { role: '', debit: 0, credit: 0, memo: '' }])}>줄 더하기</button>{' '}
+              <button className="btn-sm" disabled={a.busy === 'lines'} onClick={saveLines} data-acct-opening-save="">저장</button>{' '}
+              <button className="btn-sm" disabled={a.busy === 'fix' || rows !== null || d !== c || d === 0} onClick={fix} data-acct-opening-fix="">확정</button>
+              <small className="dim"> 저장한 뒤 차변 = 대변이면 확정</small></p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+interface LedgerW { account: { role: string; name: string; code: string | null }; from: string; to: string; opening: number; closing: number; total: { debit: number; credit: number };
+  rows: Array<{ date: string; entryId: string; source: string; memo: string; party: string; debit: number; credit: number; balance: number; late: boolean }>; note: string }
+interface BookW { kind: string; items: Array<{ date: string; entryId: string; source: string; party: string; evidence: string; supply: number; vat: number; exempt: number; total: number; deductible: boolean | null }>;
+  parties: Array<{ party: string; count: number; supply: number; vat: number; exempt: number; total: number }>; total: { count: number; supply: number; vat: number; exempt: number; total: number }; note: string }
+
+export function AcctLedger() {
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
+  const [to, setTo] = useState(today);
+  const [role, setRole] = useState('CASH');
+  const [mode, setMode] = useState<'ledger' | 'SALES' | 'PURCHASE'>('ledger');
+  const acc = useApi<{ accounts: Array<{ role: string; name: string; kind: string }> }>('/admin/acct/accounts');
+  const lg = useApi<LedgerW>(mode === 'ledger' ? `/admin/acct/ledger?role=${role}&from=${from}&to=${to}` : `/admin/acct/books?kind=${mode}&from=${from}&to=${to}`);
+  const a = useAct();
+  const csv = () => void a.run('csv', async () => {
+    const t = await exportTicket('ACCT_LEDGER');
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const p = mode === 'ledger' ? `/admin/acct/ledger/export?role=${role}&from=${from}&to=${to}` : `/admin/acct/books/export?kind=${mode}&from=${from}&to=${to}`;
+    const r = await api<{ filename: string; csv: string; note: string }>(`${p}&ticket=${t}`);
+    save(r.filename, r.csv); return r;
+  }, undefined, (r) => r.note);
+  const L = mode === 'ledger' ? (lg.data as LedgerW | null) : null;
+  const B = mode !== 'ledger' ? (lg.data as unknown as BookW | null) : null;
+  return (
+    <section data-acct-ledger={mode}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="acts">
+        {(['ledger', 'SALES', 'PURCHASE'] as const).map((m) => <button key={m} className={`btn-sm ${mode === m ? '' : 'btn-plain'}`} onClick={() => setMode(m)} data-acct-ledger-mode={m}>{({ ledger: '계정별 원장', SALES: '매출장', PURCHASE: '매입장' } as Record<string, string>)[m]}</button>)}{' '}
+        {mode === 'ledger' && <select value={role} onChange={(e) => setRole(e.target.value)} aria-label="계정">{(acc.data?.accounts ?? []).map((x) => <option key={x.role} value={x.role}>{x.name}</option>)}</select>}{' '}
+        <input type="date" value={from} onChange={(e) => e.target.value && setFrom(e.target.value)} aria-label="시작일" /> ~ <input type="date" value={to} onChange={(e) => e.target.value && setTo(e.target.value)} aria-label="끝일" />{' '}
+        <button className="btn-sm" disabled={a.busy === 'csv'} onClick={csv} data-acct-ledger-csv="">CSV</button>
+      </div>
+      {!!lg.error && <p className="warn-text">{String(lg.error)}</p>}
+      {L?.rows && (
+        <table className="tbl" data-acct-ledger-rows={L.rows.length}><thead><tr><th>일자</th><th>전표</th><th>적요</th><th>거래처</th><th>차변</th><th>대변</th><th>잔액</th></tr></thead>
+          <tbody><tr><td>{L.from}</td><td /><td>기초 잔액</td><td /><td /><td /><td>{won(L.opening)}</td></tr>
+            {L.rows.map((r, i) => <tr key={i}><td>{r.date}{r.late && <small className="dim"> 늦게</small>}</td><td>{r.entryId}</td><td>{r.memo}</td><td>{r.party}</td><td>{won(r.debit)}</td><td>{won(r.credit)}</td><td>{won(r.balance)}</td></tr>)}
+            <tr><th colSpan={4}>합계 · 기말</th><th>{won(L.total.debit)}</th><th>{won(L.total.credit)}</th><th>{won(L.closing)}</th></tr></tbody></table>
+      )}
+      {B?.parties && (
+        <>
+          <p data-acct-book-total={B.total.count}>{B.total.count}건 · 공급가 {won(B.total.supply)} · 세액 {won(B.total.vat)}{B.kind === 'SALES' ? ` · 면세 ${won(B.total.exempt)}` : ''} · 합계 {won(B.total.total)}</p>
+          <table className="tbl"><thead><tr><th>거래처</th><th>건수</th><th>공급가</th><th>세액</th><th>합계</th></tr></thead>
+            <tbody>{B.parties.map((p) => <tr key={p.party}><td>{p.party}</td><td>{p.count}</td><td>{won(p.supply)}</td><td>{won(p.vat)}</td><td>{won(p.total)}</td></tr>)}</tbody></table>
+          <details><summary>전표별 {B.items.length}줄</summary>
+            <table className="tbl"><thead><tr><th>일자</th><th>전표</th><th>거래처</th><th>공급가</th><th>세액</th>{B.kind === 'PURCHASE' && <th>공제</th>}</tr></thead>
+              <tbody>{B.items.map((x) => <tr key={x.entryId}><td>{x.date}</td><td>{x.entryId}</td><td>{x.party}</td><td>{won(x.supply)}</td><td>{won(x.vat)}</td>{B.kind === 'PURCHASE' && <td>{x.deductible ? '공제' : '불공제'}</td>}</tr>)}</tbody></table>
+          </details>
+          <p className="muted">{B.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+interface AssetW { id: string; name: string; category: string | null; acquired_on: string; cost: number; residual: number; life_months: number; method: string; state: string; payRole: string;
+  purchaseId: string | null; accumulated: number; book: number; next: { ym: string; amount: number } | null; warn: string; disposedOn: string | null }
+interface AssetsW { items: AssetW[]; total: { count: number; cost: number; accumulated: number; book: number }; note: string }
+
+export function AcctAssets() {
+  const q = useApi<AssetsW>('/admin/acct/assets');
+  const a = useAct();
+  const blank = { name: '', category: '', acquiredOn: '', cost: '', residual: '0', lifeMonths: '60', method: 'STRAIGHT', payRole: 'AP', purchaseId: '', priorDepr: '0', priorMonths: '0' };
+  const [f, setF] = useState(blank);
+  const add = () => void a.run('add', () => api('/admin/acct/assets', { method: 'POST', body: JSON.stringify({
+    name: f.name, category: f.category, method: f.method, lifeMonths: Number(f.lifeMonths), residual: Number(f.residual) || 0,
+    ...(f.purchaseId ? { purchaseId: f.purchaseId } : { acquiredOn: f.acquiredOn, cost: Number(f.cost) || 0, payRole: f.payRole, priorDepr: Number(f.priorDepr) || 0, priorMonths: Number(f.priorMonths) || 0 }) }) }), () => { setF(blank); q.reload(); });
+  const dispose = (x: AssetW) => {
+    const day = prompt(`${x.name} 처분일(YYYY-MM-DD)`); if (!day) return;
+    const amt = prompt('받은 돈(폐기는 0)', '0'); if (amt === null) return;
+    const reason = prompt('사유(꼭) — 처분은 되돌리지 않습니다'); if (!reason) return;
+    void a.run(`d${x.id}`, () => api(`/admin/acct/assets/${x.id}/dispose`, { method: 'POST', body: JSON.stringify({ disposedOn: day, amount: Number(amt) || 0, reason }) }), q.reload);
+  };
+  const run = () => void a.run('dep', () => api<{ made: number }>('/admin/acct/assets/depreciate', { method: 'POST' }), q.reload, (r) => `상각 ${r.made}줄을 만들었습니다(전표는 다음 전표 작업에서).`);
+  const d = q.data;
+  return (
+    <section data-acct-assets={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      {d && <p className="warn-text">{d.note}</p>}
+      {d && <p>쓰는 자산 {d.total.count} · 취득가 {won(d.total.cost)} · 누계액 {won(d.total.accumulated)} · 장부가 {won(d.total.book)} {isSuper() && <button className="btn-sm btn-plain" disabled={a.busy === 'dep'} onClick={run} data-acct-depreciate="">지금 상각</button>}</p>}
+      {d && (
+        <table className="tbl"><thead><tr><th>자산</th><th>취득</th><th>취득가</th><th>방법 · 연수</th><th>누계액</th><th>장부가</th><th>다음 상각</th><th /></tr></thead>
+          <tbody>{d.items.map((x) => (
+            <tr key={x.id} data-acct-asset={x.state}><td>{x.name}{x.purchaseId && <small className="dim"> 매입 {x.purchaseId}</small>}{x.warn && <><br /><small className="warn-text">{x.warn}</small></>}</td>
+              <td>{x.acquired_on}</td><td>{won(x.cost)}</td><td>{x.method === 'DECLINING' ? '정률' : '정액'} · {x.life_months}달</td><td>{won(x.accumulated)}</td><td>{won(x.book)}</td>
+              <td>{x.state === 'DISPOSED' ? `처분 ${x.disposedOn}` : x.next ? `${x.next.ym} ${won(x.next.amount)}` : '끝'}</td>
+              <td>{isSuper() && x.state === 'ACTIVE' && <button className="btn-sm btn-plain" disabled={a.busy === `d${x.id}`} onClick={() => dispose(x)} data-acct-asset-dispose={x.id}>처분</button>}</td></tr>))}</tbody></table>
+      )}
+      {isSuper() && (
+        <div className="card pad" data-acct-asset-add="">
+          <b>고정자산 넣기</b> <small className="dim">매입 번호를 넣으면 날짜 · 금액은 매입 값</small><br />
+          <input value={f.purchaseId} onChange={(e) => setF({ ...f, purchaseId: e.target.value.replace(/\D/g, '') })} placeholder="⑫ 매입 번호(선택)" size={12} />{' '}
+          <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="이름" size={14} />{' '}
+          {!f.purchaseId && <><input type="date" value={f.acquiredOn} onChange={(e) => setF({ ...f, acquiredOn: e.target.value })} aria-label="취득일" />{' '}
+            <input value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value.replace(/\D/g, '') })} placeholder="취득가" size={10} inputMode="numeric" />{' '}
+            <select value={f.payRole} onChange={(e) => setF({ ...f, payRole: e.target.value })} aria-label="낸 방법"><option value="AP">미지급금</option><option value="CASH">보통예금</option><option value="NONE">기초 잔액에 있음</option></select>{' '}</>}
+          <select value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} aria-label="방법"><option value="STRAIGHT">정액</option><option value="DECLINING">정률</option></select>{' '}
+          <input value={f.lifeMonths} onChange={(e) => setF({ ...f, lifeMonths: e.target.value.replace(/\D/g, '') })} size={4} aria-label="내용연수(달)" />달{' '}
+          <input value={f.residual} onChange={(e) => setF({ ...f, residual: e.target.value.replace(/\D/g, '') })} size={8} aria-label="잔존가치" placeholder="잔존" />{' '}
+          <button className="btn-sm" disabled={a.busy === 'add' || !f.lifeMonths || (!f.purchaseId && (!f.name || !f.acquiredOn || !f.cost))} onClick={add}>넣기</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface BudgetW { ym: string; items: Array<{ role: string; name: string; kind: string; budget: number | null; actual: number; diff: number | null; pct: number | null; over: boolean; short: boolean }>;
+  total: { expenseBudget: number; expenseActual: number; overCount: number }; note: string }
+
+export function AcctBudget() {
+  const [ym, setYm] = useState(new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7));
+  const q = useApi<BudgetW>(`/admin/acct/budget?ym=${ym}`);
+  const a = useAct();
+  const [ed, setEd] = useState<Record<string, string>>({});
+  const prev = (() => { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y! - 1}-12` : `${y}-${String(m! - 1).padStart(2, '0')}`; })();
+  const items = Object.entries(ed).map(([role, v]) => ({ role, amount: Number(v.replace(/\D/g, '')) || 0 }));
+  const save = (copy?: boolean) => {
+    const reason = prompt(copy ? `${prev} 예산을 ${ym} 로 옮깁니다(이미 넣은 계정은 그대로). 사유` : `${ym} 예산 ${items.length}줄을 저장합니다. 사유`);
+    if (reason) void a.run('save', () => api('/admin/acct/budget', { method: 'PUT', body: JSON.stringify({ ym, reason, ...(copy ? { copyFrom: prev, items: [] } : { items }) }) }), () => { setEd({}); q.reload(); });
+  };
+  const d = q.data;
+  return (
+    <section data-acct-budget={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="acts"><label>달 <input type="month" value={ym} onChange={(e) => e.target.value && setYm(e.target.value)} /></label>{' '}
+        {isSuper() && <><button className="btn-sm btn-plain" disabled={a.busy === 'save'} onClick={() => save(true)} data-acct-budget-copy="">지난달 예산 옮기기</button>{' '}
+          <button className="btn-sm" disabled={a.busy === 'save' || !items.length} onClick={() => save()} data-acct-budget-save="">저장</button></>}</div>
+      {d && <p>비용 예산 {won(d.total.expenseBudget)} · 실적 {won(d.total.expenseActual)}{d.total.overCount > 0 && <b className="warn-text"> · 넘은 계정 {d.total.overCount}</b>}</p>}
+      {d && (
+        <table className="tbl"><thead><tr><th>계정</th><th>예산</th><th>실적</th><th>차이</th><th>쓴 비율</th></tr></thead>
+          <tbody>{d.items.map((x) => (
+            <tr key={x.role} data-acct-budget-row={x.over ? 'over' : 'ok'}><td>{x.name} <small className="dim">{x.kind === 'REVENUE' ? '매출' : '비용'}</small></td>
+              <td>{isSuper() ? <input value={ed[x.role] ?? (x.budget ?? '')} onChange={(e) => setEd({ ...ed, [x.role]: e.target.value })} size={10} inputMode="numeric" aria-label={`${x.name} 예산`} /> : won(x.budget)}</td>
+              <td>{won(x.actual)}</td><td className={x.over ? 'warn-text' : ''}>{won(x.diff)}</td><td>{x.pct == null ? '—' : `${x.pct}%`}</td></tr>))}</tbody></table>
+      )}
+      {d && <p className="muted">{d.note}</p>}
+    </section>
   );
 }
