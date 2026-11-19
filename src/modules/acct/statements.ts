@@ -44,7 +44,7 @@ export async function openingSetFor(db: DatabaseService, day: string) {
  * from 을 비우면 to 이전 가장 늦은 확정 판부터(판이 없으면 처음부터 · 기초 0).
  * ⑭ · ⑮ 가 씀 — 바꾸면 그쪽 시험도.
  */
-export async function trialBalance(db: DatabaseService, from: string | null, to: string, opts: { withZero?: boolean } = {}): Promise<TrialBalance> {
+export async function trialBalance(db: DatabaseService, from: string | null, to: string, opts: { withZero?: boolean; noClose?: boolean } = {}): Promise<TrialBalance> {   // v10.402 noClose — 손익(기간)에서 해 마감 전표를 뺌
   dateOk(to);
   if (from) dateOk(from);
   if (from && from > to) throw new PolicyViolation('ACCT_DATE', '시작일이 끝일보다 늦습니다.');
@@ -56,13 +56,14 @@ export async function trialBalance(db: DatabaseService, from: string | null, to:
           pre AS (SELECT l.role, sum(l.debit) AS d, sum(l.credit) AS c FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id
                    WHERE e.entry_date >= $2::date AND e.entry_date < $3::date GROUP BY l.role),
           per AS (SELECT l.role, sum(l.debit) AS d, sum(l.credit) AS c FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id
-                   WHERE e.entry_date >= $3::date AND e.entry_date <= $4::date GROUP BY l.role)
+                   WHERE e.entry_date >= $3::date AND e.entry_date <= $4::date
+                     AND (NOT $5::boolean OR e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')) GROUP BY l.role)
      SELECT a.role, a.name, a.kind, a.ext_code AS code, a.ext_name AS cname, a.sort,
             (coalesce(op.d, 0) + coalesce(pre.d, 0))::text AS od, (coalesce(op.c, 0) + coalesce(pre.c, 0))::text AS oc,
             coalesce(per.d, 0)::text AS pd, coalesce(per.c, 0)::text AS pc
        FROM acct_accounts a LEFT JOIN op ON op.role = a.role LEFT JOIN pre ON pre.role = a.role LEFT JOIN per ON per.role = a.role
       ORDER BY array_position(ARRAY['ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE'], a.kind), a.sort, a.role`,
-    [set?.id ?? null, base, start, to]);
+    [set?.id ?? null, base, start, to, !!opts.noClose]);
   const out: TbRow[] = [];
   const t = { debit: 0, credit: 0, openingDebit: 0, openingCredit: 0, closingDebit: 0, closingCredit: 0 };
   for (const r of rows) {
@@ -83,7 +84,7 @@ export async function trialBalance(db: DatabaseService, from: string | null, to:
 /** 손익계산서 — 기간 매출 · 비용(공급가 · 전표 기준) · 순이익 */
 export async function incomeStatement(db: DatabaseService, from: string, to: string) {
   dateOk(from); dateOk(to);
-  const tb = await trialBalance(db, from, to);
+  const tb = await trialBalance(db, from, to, { noClose: true });   // v10.402 해 마감 전표는 손익에서 뺌
   const per = (r: TbRow) => (debitNormal(r.kind) ? r.debit - r.credit : r.credit - r.debit);
   const revenue = tb.rows.filter((r) => r.kind === 'REVENUE').map((r) => ({ role: r.role, name: r.name, code: r.code, amount: per(r) })).filter((r) => r.amount !== 0);
   const expense = tb.rows.filter((r) => r.kind === 'EXPENSE').map((r) => ({ role: r.role, name: r.name, code: r.code, amount: per(r) })).filter((r) => r.amount !== 0);

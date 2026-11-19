@@ -38,6 +38,7 @@ import { acctCashflowJob } from '../modules/acct/cashflow';   // v10.394 (D245)
 import { stockJob } from '../modules/acct/stock';   // v10.395 (D245)
 import { depreciationJob } from '../modules/acct/assets';   // v10.398 (D246)
 import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
+import { acctAgingJob } from '../modules/acct/aging';   // v10.401 (D247)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -61,7 +62,8 @@ export type JobName =
   | 'acct_cashflow'   // v10.394 (D245)
   | 'acct_stock'      // v10.395 (D245)
   | 'acct_depreciation'   // v10.398 (D246)
-  | 'acct_budget';    // v10.399 (D246)
+  | 'acct_budget'     // v10.399 (D246)
+  | 'acct_aging';     // v10.401 (D247)
 
 export interface JobResult {
   job: JobName;
@@ -742,6 +744,12 @@ export class SchedulerService {
       }
       case 'acct_budget': {   // v10.399 (D246 · docs/536) — 비용 계정 실적 > 예산이면 ACCT_BUDGET_OVER(예산을 올리면 풀림)
         const r = await budgetJob(this.db);
+        affected = r.made.length; detail = r;
+        break;
+      }
+
+      case 'acct_aging': {   // v10.401 (D247 · docs/538) — 받을 돈 · 갚을 돈이 acct.aging_over_days 넘으면 ACCT_AGING_OVER(거래처마다 한 번 · 갚으면 풀림)
+        const r = await acctAgingJob(this.db);
         affected = r.made.length; detail = r;
         break;
       }

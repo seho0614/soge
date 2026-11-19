@@ -1172,3 +1172,213 @@ export function AcctBudget() {
     </section>
   );
 }
+
+/* ── v10.400 부가세 신고서 미리보기 ── */
+interface VatForm { q: string; label: string; from: string; to: string; final: boolean; exempt: number; payable: number; efile: number; due: number; note: string;
+  lines: Array<{ no: string; group: string; label: string; supply: number; vat: number }> }
+export function AcctVatForm() {
+  const k = new Date(Date.now() + 9 * 3600e3);
+  const [qv, setQv] = useState(`${k.getUTCFullYear()}-${Math.floor(k.getUTCMonth() / 3) + 1}`);
+  const q = useApi<VatForm>(`/admin/acct/tax/vat-form?q=${qv}`);
+  const a = useAct();
+  const dl = () => void a.run('dlvf', async () => {
+    const t = await exportTicket('ACCT_TAX');
+    if (!t) throw new Error('내려받기 승인 전입니다 — 위험감지 › 감사 › 「내려받기 승인」에서 확인하십시오.');
+    const r = await api<{ filename: string; csv: string; rows: number }>(`/admin/acct/tax/vat-form/export?q=${qv}&ticket=${t}`);
+    save(r.filename, r.csv); return r;
+  }, undefined, (r) => `${r?.rows ?? 0}줄을 내려받았습니다.`);
+  const d = q.data;
+  return (
+    <section data-acct-vatform={d?.lines.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <p>
+        <select value={qv} onChange={(e) => setQv(e.target.value)} aria-label="분기">
+          {[0, 1, 2, 3, 4, 5].map((i) => { const x = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth() - i * 3, 1)); const s = `${x.getUTCFullYear()}-${Math.floor(x.getUTCMonth() / 3) + 1}`; return <option key={s} value={s}>{s.replace('-', '년 ')}분기</option>; })}
+        </select>{' '}
+        <button className="btn-sm" disabled={a.busy === 'dlvf'} onClick={dl} data-acct-vatform-csv="">CSV</button>{' '}
+        {d && <b>{d.label}</b>} {d && <small className="dim">{d.from} ~ {d.to}</small>}
+      </p>
+      {d && (
+        <>
+          <table className="tbl"><thead><tr><th>칸</th><th>나눔</th><th>항목</th><th className="num">금액(공급가)</th><th className="num">세액</th></tr></thead>
+            <tbody>{d.lines.map((l) => (
+              <tr key={l.no + l.label} data-vatform-line={l.no} className={['9', '15', '마'].includes(l.no) ? 'strong' : undefined}>
+                <td>{l.no}</td><td>{l.group}</td><td>{l.label}</td><td className="num">{l.group === '납부' ? '' : won(l.supply)}</td><td className="num">{won(l.vat)}</td></tr>))}</tbody></table>
+          <p>면세 수입금액(소개몰 면세 상품) {won(d.exempt)} · <b data-acct-vat-due="">{d.due >= 0 ? `납부할 세액 ${won(d.due)}` : `환급 예상 ${won(-d.due)}`}</b></p>
+          <p className="warn-text">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ── v10.401 기간 분석 ── */
+interface AgingT { asOf: string; overDays: number; alertOn: boolean; note: string;
+  rows: Array<{ role: string; roleKo: string; party: string; open: number; b30: number; b60: number; b90: number; over: number; oldest: string | null; oldestDays: number }>;
+  total: Record<string, { open: number; b30: number; b60: number; b90: number; over: number; parties: number }> }
+export function AcctAging() {
+  const [asOf, setAsOf] = useState('');
+  const q = useApi<AgingT>(`/admin/acct/aging${asOf ? `?asOf=${asOf}` : ''}`);
+  const d = q.data;
+  const ROLE: Record<string, string> = { AR: '받을 돈(외상매출금)', AP: '갚을 돈(미지급금)', CARD_AP: '법인카드 미지급금' };
+  return (
+    <section data-acct-aging={d?.rows.length ?? ''}>
+      <p>기준일 <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} aria-label="기준일" /> {d && <small className="dim">{d.asOf} 까지 전표 · 알림 {d.alertOn ? `켜짐(${d.overDays}일 넘음)` : '꺼짐'}</small>}</p>
+      {d && (
+        <>
+          <table className="tbl"><thead><tr><th>계정</th><th className="num">남은 돈</th><th className="num">30일 안</th><th className="num">31 ~ 60</th><th className="num">61 ~ {d.overDays}</th><th className="num">{d.overDays}일 넘음</th><th>거래처</th></tr></thead>
+            <tbody>{Object.entries(d.total).map(([r, t]) => (
+              <tr key={r} data-aging-total={r}><td>{ROLE[r] ?? r}</td><td className="num">{won(t.open)}</td><td className="num">{won(t.b30)}</td><td className="num">{won(t.b60)}</td><td className="num">{won(t.b90)}</td>
+                <td className="num">{t.over ? <b className="warn-text">{won(t.over)}</b> : won(0)}</td><td>{t.parties}곳</td></tr>))}</tbody></table>
+          <h3>거래처별</h3>
+          {d.rows.length === 0 ? <p className="muted">남은 받을 돈 · 갚을 돈이 없습니다.</p> : (
+            <table className="tbl"><thead><tr><th>계정</th><th>거래처</th><th className="num">남은 돈</th><th className="num">30일 안</th><th className="num">31 ~ 60</th><th className="num">61 ~ {d.overDays}</th><th className="num">넘음</th><th>가장 오래된 날</th></tr></thead>
+              <tbody>{d.rows.map((x) => (
+                <tr key={x.role + x.party} data-aging-row={x.role}><td>{x.roleKo}</td><td>{x.party}</td><td className="num">{won(x.open)}</td><td className="num">{won(x.b30)}</td><td className="num">{won(x.b60)}</td><td className="num">{won(x.b90)}</td>
+                  <td className="num">{x.over ? <b className="warn-text">{won(x.over)}</b> : ''}</td><td>{x.oldest} <small className="dim">{x.oldestDays}일</small></td></tr>))}</tbody></table>
+          )}
+          <p className="muted">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ── v10.402 해 마감 ── */
+interface YearT { canEdit: boolean; note: string;
+  years: Array<{ year: number; months: number; monthsClosed: number; missing: string[]; ended: boolean; closed: boolean; revenue: number; expense: number; netIncome: number;
+    history: Array<{ id: string; action: string; netIncome: number | null; entryId: string | null; reason: string | null; createdAt: string; actor: string | null }> }> }
+export function AcctYearClose() {
+  const q = useApi<YearT>('/admin/acct/year-closings');
+  const a = useAct();
+  const close = (year: number) => {
+    if (!confirm(`${year}년을 마감합니다 — 수익 · 비용을 이월이익잉여금으로 넘기고 ${year}년 날짜로는 전표를 넣을 수 없게 됩니다.`)) return;
+    void a.run(`c${year}`, () => api<{ note: string }>('/admin/acct/year-closings', { method: 'POST', body: JSON.stringify({ year }) }), q.reload, (r) => r.note);
+  };
+  const reopen = (year: number) => {
+    const reason = prompt(`${year}년 해 마감을 풉니다(마감 전표의 반대 전표). 사유를 적으십시오.`);
+    if (reason) void a.run(`r${year}`, () => api<{ note: string }>(`/admin/acct/year-closings/${year}/reopen`, { method: 'POST', body: JSON.stringify({ reason }) }), q.reload, (r) => r.note);
+  };
+  return (
+    <section data-acct-yearclose={q.data?.years.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      {q.data && (
+        <>
+          <table className="tbl"><thead><tr><th>해</th><th>월 마감</th><th className="num">수익</th><th className="num">비용</th><th className="num">순이익</th><th>상태</th><th /></tr></thead>
+            <tbody>{q.data.years.map((y) => (
+              <tr key={y.year} data-year={y.year} data-year-closed={y.closed ? '1' : '0'}>
+                <td>{y.year}</td><td>{y.monthsClosed} / {y.months}{y.missing.length > 0 && <small className="dim"> 남음 {y.missing.join(' · ')}</small>}</td>
+                <td className="num">{won(y.revenue)}</td><td className="num">{won(y.expense)}</td><td className="num"><b>{won(y.netIncome)}</b></td>
+                <td>{y.closed ? <b>마감함</b> : !y.ended ? '해가 끝나지 않음' : y.missing.length ? '월 마감 먼저' : '마감할 수 있음'}</td>
+                <td>{q.data!.canEdit && (y.closed
+                  ? <button className="btn-sm btn-plain" disabled={a.busy === `r${y.year}`} onClick={() => reopen(y.year)} data-year-reopen={y.year}>풀기</button>
+                  : <button className="btn-sm" disabled={!y.ended || y.missing.length > 0 || a.busy === `c${y.year}`} onClick={() => close(y.year)} data-year-close={y.year}>해 마감</button>)}</td>
+              </tr>))}</tbody></table>
+          {q.data.years.some((y) => y.history.length) && (
+            <details><summary>마감 · 풀기 기록</summary>
+              <table className="tbl"><thead><tr><th>때</th><th>해</th><th>무엇</th><th className="num">순이익</th><th>사유</th><th>누가</th></tr></thead>
+                <tbody>{q.data.years.flatMap((y) => y.history.map((h) => (
+                  <tr key={h.id}><td>{ymdhm(h.createdAt)}</td><td>{y.year}</td><td>{h.action === 'CLOSE' ? '마감' : '풀기'}</td><td className="num">{h.netIncome == null ? '' : won(h.netIncome)}</td><td>{h.reason ?? ''}</td><td>{h.actor ?? ''}</td></tr>)))}</tbody></table>
+            </details>
+          )}
+          <p className="muted">{q.data.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ── v10.403 급여 ── */
+interface Emp { id: string; name: string; joinedOn: string; leftOn: string | null; monthlyBase: number; nontax: number; dependents: number; memo: string | null; active: boolean }
+interface PayLine { id: string; employeeId: string; name: string; dependents: number; gross: number; nontax: number; incomeTax: number; localTax: number; np: number; hi: number; ltc: number; ei: number; net: number;
+  companyNp: number; companyHi: number; companyLtc: number; companyEi: number; whtMissing: boolean }
+interface PayT { ym: string; run: { id: string; state: 'DRAFT' | 'FIXED' | 'PAID'; payDay: string; fixedAt: string | null; paidAt: string | null } | null; lines: PayLine[];
+  total: { gross: number; incomeTax: number; localTax: number; employeeIns: number; companyIns: number; net: number; people: number };
+  rates: { year: number; draft: boolean; missing: string[]; whtRows: number; rows: Array<{ year: number; key: string; value: number; draft: boolean; label: string }> }; note: string }
+export function AcctPayroll() {
+  const [ym, setYm] = useState(kstYm());
+  const p = useApi<PayT>(`/admin/acct/payroll?ym=${ym}`);
+  const e = useApi<{ items: Emp[]; canEdit: boolean; note: string }>('/admin/acct/employees');
+  const a = useAct();
+  const sup = isSuper();
+  const [f, setF] = useState({ name: '', joinedOn: '', monthlyBase: '', nontax: '200000', dependents: '1' });
+  const addEmp = () => void a.run('emp', () => api<{ note: string }>('/admin/acct/employees', { method: 'POST', body: JSON.stringify({ name: f.name, joinedOn: f.joinedOn, monthlyBase: Number(f.monthlyBase), nontax: Number(f.nontax || 0), dependents: Number(f.dependents || 1) }) }),
+    () => { setF({ name: '', joinedOn: '', monthlyBase: '', nontax: '200000', dependents: '1' }); e.reload(); }, (r) => r.note);
+  const leave = (x: Emp) => {
+    const d = prompt(`${x.name} 퇴사일(YYYY-MM-DD)`, kstYm() + '-28');
+    if (d) void a.run(`l${x.id}`, () => api<{ note: string }>(`/admin/acct/employees/${x.id}`, { method: 'PATCH', body: JSON.stringify({ leftOn: d }) }), e.reload, (r) => r.note);
+  };
+  const create = () => void a.run('run', () => api<{ note: string }>('/admin/acct/payroll/runs', { method: 'POST', body: JSON.stringify({ ym }) }), p.reload, (r) => r.note);
+  const editGross = (l: PayLine) => {
+    const v = prompt(`${l.name} 지급액(원)`, String(l.gross));
+    if (v && /^\d+$/.test(v)) void a.run(`g${l.id}`, () => api<{ note: string }>(`/admin/acct/payroll/lines/${l.id}`, { method: 'PATCH', body: JSON.stringify({ gross: Number(v) }) }), p.reload, (r) => r.note);
+  };
+  const fix = () => { if (p.data?.run && confirm(`${ym} 급여를 확정합니다 — 줄을 더 고칠 수 없고 급여 전표가 생깁니다.`)) void a.run('fix', () => api<{ note: string }>(`/admin/acct/payroll/runs/${p.data!.run!.id}/fix`, { method: 'POST' }), p.reload, (r) => r.note); };
+  const paid = () => { if (p.data?.run && confirm(`${ym} 급여를 지급 처리합니다(통장 출금 뒤).`)) void a.run('paid', () => api<{ note: string }>(`/admin/acct/payroll/runs/${p.data!.run!.id}/paid`, { method: 'POST' }), p.reload, (r) => r.note); };
+  const year = Number(ym.slice(0, 4));
+  const setRate = (key: string, cur: number) => {
+    const v = prompt(`${year}년 ${key} 값(현재 ${cur})`, String(cur)); if (v == null || !/^\d+(\.\d+)?$/.test(v)) return;
+    const reason = prompt('사유(예: 공단 고시)'); if (!reason) return;
+    void a.run(`rt${key}`, () => api<{ note: string }>('/admin/acct/payroll/rates', { method: 'POST', body: JSON.stringify({ year, key, value: Number(v), reason }) }), p.reload, (r) => r.note);
+  };
+  const upWht = async (fl: File) => {
+    const buf = await fl.arrayBuffer();
+    let text = new TextDecoder('utf-8').decode(buf); if (text.includes('\uFFFD')) text = new TextDecoder('euc-kr').decode(buf);
+    const reason = prompt(`${year}년 간이세액표를 바꿉니다(그 해 전체). 사유를 적으십시오.`); if (!reason) return;
+    if (text.length > 95000) { a.setErr('파일이 큽니다(95,000자까지) — 나눠 올리십시오(두 번째부터 이어 넣기).'); return; }
+    void a.run('wht', () => api<{ note: string }>('/admin/acct/payroll/wht-table', { method: 'POST', body: JSON.stringify({ year, csv: text, unit: 'THOUSAND', reason }) }), p.reload, (r) => r.note);
+  };
+  const d = p.data;
+  return (
+    <section data-acct-payroll={d?.lines.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <p><input type="month" value={ym} onChange={(x) => setYm(x.target.value)} aria-label="달" />{' '}
+        {d?.run ? <b data-payroll-state={d.run.state}>{({ DRAFT: '초안', FIXED: '확정', PAID: '지급함' } as Record<string, string>)[d.run.state]} · 지급일 {d.run.payDay}</b> : <span className="muted">이 달 급여 대장이 없습니다.</span>}{' '}
+        {sup && !d?.run && <button className="btn-sm" disabled={a.busy === 'run'} onClick={create} data-payroll-create="">급여 대장 만들기</button>}
+        {sup && d?.run?.state === 'DRAFT' && <button className="btn-sm" disabled={a.busy === 'fix'} onClick={fix} data-payroll-fix="">확정</button>}
+        {d?.run?.state === 'FIXED' && <button className="btn-sm" disabled={a.busy === 'paid'} onClick={paid} data-payroll-paid="">지급 처리</button>}
+      </p>
+      {d && (d.rates.draft || d.rates.missing.length > 0 || d.rates.whtRows === 0) && (
+        <p className="warn-text" data-payroll-rate-warn="">{d.rates.year}년 요율 {d.rates.draft ? '초안(공단 고시로 확인 필요)' : ''}{d.rates.missing.length ? ` · 빠진 요율 ${d.rates.missing.join(', ')}` : ''}{d.rates.whtRows === 0 ? ' · 간이세액표 없음(소득세 0 으로 셈 — 국세청 표를 올리십시오)' : ''}</p>
+      )}
+      {d && d.lines.length > 0 && (
+        <table className="tbl"><thead><tr><th>직원</th><th className="num">지급액</th><th className="num">비과세</th><th className="num">소득세</th><th className="num">지방소득세</th><th className="num">국민연금</th><th className="num">건강</th><th className="num">장기요양</th><th className="num">고용</th><th className="num">실지급</th><th className="num">회사 4대보험</th></tr></thead>
+          <tbody>{d.lines.map((l) => (
+            <tr key={l.id} data-payroll-line={l.employeeId}>
+              <td>{l.name} <small className="dim">가족 {l.dependents}</small></td>
+              <td className="num">{sup && d.run?.state === 'DRAFT' ? <button className="btn-sm btn-plain" onClick={() => editGross(l)} data-payroll-gross={l.id}>{won(l.gross)}</button> : won(l.gross)}</td>
+              <td className="num">{won(l.nontax)}</td><td className="num">{won(l.incomeTax)}{l.whtMissing && <small className="warn-text"> 표 없음</small>}</td><td className="num">{won(l.localTax)}</td>
+              <td className="num">{won(l.np)}</td><td className="num">{won(l.hi)}</td><td className="num">{won(l.ltc)}</td><td className="num">{won(l.ei)}</td><td className="num"><b>{won(l.net)}</b></td>
+              <td className="num">{won(l.companyNp + l.companyHi + l.companyLtc + l.companyEi)}</td></tr>))}
+            <tr className="strong"><td>합계 {d.total.people}명</td><td className="num">{won(d.total.gross)}</td><td /><td className="num">{won(d.total.incomeTax)}</td><td className="num">{won(d.total.localTax)}</td>
+              <td className="num" colSpan={4}>{won(d.total.employeeIns)}</td><td className="num"><b>{won(d.total.net)}</b></td><td className="num">{won(d.total.companyIns)}</td></tr></tbody></table>
+      )}
+      {d && <p className="muted">{d.note}</p>}
+      <h3>직원</h3>
+      {e.data && (
+        <table className="tbl" data-acct-employees={e.data.items.length}><thead><tr><th>이름</th><th>입사</th><th>퇴사</th><th className="num">월 기본급</th><th className="num">비과세</th><th>가족</th><th /></tr></thead>
+          <tbody>{e.data.items.map((x) => (
+            <tr key={x.id} className={x.active ? undefined : 'dim'}><td>{x.name}</td><td>{x.joinedOn}</td><td>{x.leftOn ?? ''}</td><td className="num">{won(x.monthlyBase)}</td><td className="num">{won(x.nontax)}</td><td>{x.dependents}</td>
+              <td>{e.data!.canEdit && !x.leftOn && <button className="btn-sm btn-plain" onClick={() => leave(x)}>퇴사</button>}</td></tr>))}</tbody></table>
+      )}
+      {e.data?.canEdit && (
+        <p data-acct-employee-add="">
+          <input value={f.name} onChange={(x) => setF({ ...f, name: x.target.value })} placeholder="이름" size={8} />{' '}
+          <input type="date" value={f.joinedOn} onChange={(x) => setF({ ...f, joinedOn: x.target.value })} aria-label="입사일" />{' '}
+          <input value={f.monthlyBase} onChange={(x) => setF({ ...f, monthlyBase: x.target.value.replace(/\D/g, '') })} placeholder="월 기본급" size={9} />{' '}
+          <input value={f.nontax} onChange={(x) => setF({ ...f, nontax: x.target.value.replace(/\D/g, '') })} placeholder="비과세" size={7} aria-label="비과세" />{' '}
+          <input value={f.dependents} onChange={(x) => setF({ ...f, dependents: x.target.value.replace(/\D/g, '') })} size={2} aria-label="부양가족 수" />{' '}
+          <button className="btn-sm" disabled={!f.name.trim() || !f.joinedOn || !f.monthlyBase || a.busy === 'emp'} onClick={addEmp}>직원 넣기</button>
+        </p>
+      )}
+      {e.data && <p className="muted">{e.data.note}</p>}
+      {d && (
+        <details><summary>{d.rates.year}년 요율 · 간이세액표 {d.rates.whtRows}줄</summary>
+          <table className="tbl"><tbody>{d.rates.rows.map((r) => <tr key={r.key} data-payroll-rate={r.key}><td>{r.label}</td><td className="num">{r.value}</td><td>{r.year}년{r.draft && <small className="warn-text"> 초안</small>}</td>
+            <td>{sup && <button className="btn-sm btn-plain" onClick={() => setRate(r.key, r.value)}>고치기</button>}</td></tr>)}</tbody></table>
+          {sup && <p>간이세액표 CSV(국세청 · 이상 · 미만 칸은 천원) <input type="file" accept=".csv,text/csv" onChange={(x) => { const fl = x.target.files?.[0]; if (fl) upWht(fl); x.target.value = ''; }} data-payroll-wht-upload="" /></p>}
+        </details>
+      )}
+    </section>
+  );
+}

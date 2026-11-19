@@ -19,8 +19,8 @@ export async function budgetView(db: DatabaseService, ymQ?: string) {
   const ym = ymOk(ymQ ?? kstYm());
   const rows = await db.query<{ role: string; name: string; kind: string; code: string | null; budget: string | null; d: string; c: string }>(
     `SELECT a.role, a.name, a.kind, a.ext_code AS code, b.amount::text AS budget,
-            coalesce((SELECT sum(l.debit) FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id WHERE l.role = a.role AND e.ym = $1), 0)::text AS d,
-            coalesce((SELECT sum(l.credit) FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id WHERE l.role = a.role AND e.ym = $1), 0)::text AS c
+            coalesce((SELECT sum(l.debit) FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id WHERE l.role = a.role AND e.ym = $1 AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')), 0)::text AS d,
+            coalesce((SELECT sum(l.credit) FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id WHERE l.role = a.role AND e.ym = $1 AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')), 0)::text AS c
        FROM acct_accounts a LEFT JOIN acct_budgets b ON b.role = a.role AND b.ym = $1
       WHERE a.kind IN ('EXPENSE', 'REVENUE') ORDER BY a.kind DESC, a.sort, a.role`, [ym]);
   const items = rows.map((r) => {

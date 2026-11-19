@@ -83,6 +83,10 @@ export const TABS = [
   ['acct-ledger', '원장'],   /* v10.397 (D246 · docs/534) 계정별 원장 · 매입매출장 */
   ['acct-assets', '고정자산'],   /* v10.398 (D246 · docs/535) */
   ['acct-budget', '예산'],   /* v10.399 (D246 · docs/536) */
+  ['acct-vatform', '부가세 신고서'],   /* v10.400 (D247 · docs/537) */
+  ['acct-aging', '기간 분석'],   /* v10.401 (D247 · docs/538) */
+  ['acct-yearclose', '해 마감'],   /* v10.402 (D247 · docs/539) */
+  ['acct-payroll', '급여'],   /* v10.403 (D247 · docs/540) */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -106,7 +110,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -211,6 +215,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-ledger':   { title: '원장 · 매입매출장', sub: '계정별 원장(날짜별 들고 남 · 잔액) · 거래처별 매출장 · 매입장 · CSV(내려받기 승인)', screen: 'SB-ADM-ACC-120' },
   'acct-assets':   { title: '고정자산', sub: '고정자산 대장 · 달마다 감가상각 전표(정액 · 정률 · 잔존가치 · 초안) · 매입에서 넘기기 · 처분 손익', screen: 'SB-ADM-ACC-130' },
   'acct-budget':   { title: '예산', sub: '계정별 달 예산(SUPER) · 실적 · 차이 · 넘으면 운영 알림 · 경영 보고서에 한 줄', screen: 'SB-ADM-ACC-140' },
+  'acct-vatform':   { title: '부가세 신고서', sub: '일반과세자 신고서 칸을 전표 · 매입 관리로 채운 미리보기 — 실제 신고는 세무사 · 홈택스.', screen: 'SB-ADM-ACC-150' },
+  'acct-aging':     { title: '기간 분석', sub: '받을 돈 · 갚을 돈을 거래처별 30 · 60 · 90일 · 넘음으로 — 넘으면 운영 알림.', screen: 'SB-ADM-ACC-160' },
+  'acct-yearclose': { title: '해 마감', sub: '손익을 이월이익잉여금으로 넘기고 다음 해 기초 잔액 초안 — 마감한 해는 전표를 넣지 못함.', screen: 'SB-ADM-ACC-170' },
+  'acct-payroll':   { title: '급여', sub: '직원 · 달 급여 · 원천세 · 4대보험 · 급여 전표 — 요율 · 간이세액표는 해마다 SUPER(초안).', screen: 'SB-ADM-ACC-180' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },

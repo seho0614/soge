@@ -5801,6 +5801,87 @@
     "GET /admin/acct/accounts"
    ],
    "note": "2026-11-20 v10.396 (D246 · docs/533) 시산표 · 손익계산서 · 재무상태표(자산 = 부채 + 자본 + 마감 전 손익) · 기초 잔액(판 · DRAFT → FIXED · 확정 뒤 못 고침 · SUPER) · 자본(EQUITY) 계정 종류"
+  },
+  {
+   "id": "SB-ADM-ACC-150",
+   "name": "회계 부가세 신고서",
+   "group": "ADM",
+   "url": "/admin/acct-vatform",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/tax/vat-form",
+    "GET /admin/acct/tax/vat-form/export"
+   ],
+   "note": "2026-11-20 v10.400 (D247 · docs/537) 일반과세자 부가세 신고서 미리보기(매출 1 · 3 · 4 · 매입 10 · 11 · 14 · 불공제 16 · 납부세액 · 전자신고 세액공제) · CSV(내려받기 승인 ACCT_TAX)"
+  },
+  {
+   "id": "SB-ADM-ACC-160",
+   "name": "회계 기간 분석",
+   "group": "ADM",
+   "url": "/admin/acct-aging",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/aging"
+   ],
+   "note": "2026-11-20 v10.401 (D247 · docs/538) 받을 돈 · 갚을 돈 거래처별 30 · 60 · 90일 · 넘음(FIFO) · 정기 작업 acct_aging · 운영 알림 ACCT_AGING_OVER"
+  },
+  {
+   "id": "SB-ADM-ACC-170",
+   "name": "회계 해 마감",
+   "group": "ADM",
+   "url": "/admin/acct-yearclose",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/year-closings",
+    "POST /admin/acct/year-closings",
+    "POST /admin/acct/year-closings/{year}/reopen"
+   ],
+   "note": "2026-11-20 v10.402 (D247 · docs/539) 해 마감(손익 → 이월이익잉여금 · YEAR_CLOSE) · 마감한 해 전표 막힘 · 풀기(사유 · YEAR_REOPEN) · 다음 해 기초 잔액 초안"
+  },
+  {
+   "id": "SB-ADM-ACC-180",
+   "name": "회계 급여",
+   "group": "ADM",
+   "url": "/admin/acct-payroll",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/employees",
+    "POST /admin/acct/employees",
+    "PATCH /admin/acct/employees/{id}",
+    "GET /admin/acct/payroll",
+    "POST /admin/acct/payroll/runs",
+    "PATCH /admin/acct/payroll/lines/{id}",
+    "POST /admin/acct/payroll/runs/{id}/fix",
+    "POST /admin/acct/payroll/runs/{id}/paid",
+    "GET /admin/acct/payroll/rates",
+    "POST /admin/acct/payroll/rates",
+    "POST /admin/acct/payroll/wht-table"
+   ],
+   "note": "2026-11-20 v10.403 (D247 · docs/540) 직원(주민번호 · 계좌 없음) · 달 급여(초안 → 확정 → 지급) · 원천세(간이세액표) · 4대보험(요율 표 · 초안) · 전표 PAYROLL · PAYROLL_PAID"
   }
  ],
  "deferred": [

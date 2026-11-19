@@ -19,6 +19,10 @@ import { PAY_ROLES, PURCHASE_KINDS, PURCHASE_MAX_FILES, addPurchase, cancelPurch
 import { bookCard, cancelExpense, cardMonth, createExpense, decideExpense, listExpenses, payExpense, uploadCard } from './expense';
 import { addCashBalance, addCashPlan, cancelCashPlan, cashflow, listCashPlans } from './cashflow';
 import { stockAdjust, stockIn, stockList, stockMoves } from './stock';
+import { vatForm, vatFormRows } from './vatform';
+import { agingView } from './aging';
+import { closeYear, reopenYear, yearClosings } from './yearclose';
+import { addEmployee, createRun, fixRun, listEmployees, paidRun, payrollMonth, ratesOf, RATE_KEYS, setRate, updateEmployee, updateLine, uploadWhtTable } from './payroll';
 import { balanceSheet, incomeStatement, openingCreate, openingFix, openingList, openingSetLines, trialBalance, kstToday, yearStart } from './statements';
 import { accountLedger, bookCsv, ledgerCsv, salesPurchaseBook } from './ledger';
 import { addAsset, assetDetail, depreciationJob, disposeAsset, listAssets } from './assets';
@@ -277,6 +281,56 @@ export class AcctBudgetSetDto {
   @ApiPropertyOptional({ type: [AcctBudgetItemDto] }) @IsOptional() @IsArray() items?: AcctBudgetItemDto[];
   @ApiPropertyOptional({ example: '2026-11', description: '이 달 예산을 그대로 옮김(이미 넣은 계정은 그대로)' }) @IsOptional() @Matches(YM) copyFrom?: string;
   @ApiProperty({ example: '12월 예산(대표 승인)' }) @IsString() @Length(1, 400) reason!: string;
+}
+
+/* ── ⑭ d247.ctrl.ts ── */
+/* ── DTO(클래스 이름: src · ⑫ 조각과 겹치지 않음 확인 — AcctYear* · AcctEmp* · AcctPay* · AcctWht*) ── */
+const YMD7 = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export class AcctYearCloseDto {
+  @ApiProperty({ example: 2026, description: '마감할 해(끝난 해)' }) @IsInt() @Min(2000) @Max(2100) year!: number;
+  @ApiPropertyOptional({ example: '세무사 결산 확인' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+export class AcctYearReopenDto {
+  @ApiProperty({ example: '결산 수정 — 세무사 요청' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class AcctEmpDto {
+  @ApiProperty({ example: '홍길동' }) @IsString() @Length(1, 40) name!: string;
+  @ApiProperty({ example: '2026-11-01' }) @Matches(YMD7) joinedOn!: string;
+  @ApiPropertyOptional({ example: '' , description: '퇴사일(비우면 재직)' }) @IsOptional() @IsString() @Matches(/^(\d{4}-\d{2}-\d{2})?$/) leftOn?: string;
+  @ApiProperty({ example: 3000000, description: '월 기본급(원)' }) @IsInt() @Min(0) @Max(100000000) monthlyBase!: number;
+  @ApiPropertyOptional({ example: 200000, description: '비과세(식대 등 · 원)' }) @IsOptional() @IsInt() @Min(0) @Max(10000000) nontax?: number;
+  @ApiPropertyOptional({ example: 1, description: '부양가족 수(본인 포함 1 ~ 11)' }) @IsOptional() @IsInt() @Min(1) @Max(11) dependents?: number;
+  @ApiPropertyOptional({ example: '' }) @IsOptional() @IsString() @Length(0, 200) memo?: string;
+}
+export class AcctEmpPatchDto {
+  @ApiPropertyOptional({ example: '홍길동' }) @IsOptional() @IsString() @Length(1, 40) name?: string;
+  @ApiPropertyOptional({ example: '2026-11-01' }) @IsOptional() @Matches(YMD7) joinedOn?: string;
+  @ApiPropertyOptional({ example: '2027-03-31', description: '퇴사일(빈 글자면 지움)' }) @IsOptional() @IsString() @Matches(/^(\d{4}-\d{2}-\d{2})?$/) leftOn?: string;
+  @ApiPropertyOptional({ example: 3200000 }) @IsOptional() @IsInt() @Min(0) @Max(100000000) monthlyBase?: number;
+  @ApiPropertyOptional({ example: 200000 }) @IsOptional() @IsInt() @Min(0) @Max(10000000) nontax?: number;
+  @ApiPropertyOptional({ example: 2 }) @IsOptional() @IsInt() @Min(1) @Max(11) dependents?: number;
+  @ApiPropertyOptional({ example: '' }) @IsOptional() @IsString() @Length(0, 200) memo?: string;
+}
+export class AcctPayRunDto {
+  @ApiProperty({ example: '2026-11' }) @Matches(/^\d{4}-(0[1-9]|1[0-2])$/) ym!: string;
+  @ApiPropertyOptional({ example: '2026-11-25', description: '지급일(비우면 acct.pay_day)' }) @IsOptional() @Matches(YMD7) payDay?: string;
+}
+export class AcctPayLineDto {
+  @ApiPropertyOptional({ example: 3000000, description: '지급액(원)' }) @IsOptional() @IsInt() @Min(0) @Max(100000000) gross?: number;
+  @ApiPropertyOptional({ example: 200000, description: '비과세(원)' }) @IsOptional() @IsInt() @Min(0) @Max(100000000) nontax?: number;
+}
+export class AcctPayRateDto {
+  @ApiProperty({ example: 2026 }) @IsInt() @Min(2000) @Max(2100) year!: number;
+  @ApiProperty({ enum: RATE_KEYS }) @IsIn(RATE_KEYS as unknown as string[]) key!: string;
+  @ApiProperty({ example: 4.75, description: '% 또는 원(기준소득 하한 · 상한)' }) @IsNumber() @Min(0) value!: number;
+  @ApiProperty({ example: '국민연금공단 2026 고시' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class AcctWhtTableDto {
+  @ApiProperty({ example: 2026 }) @IsInt() @Min(2000) @Max(2100) year!: number;
+  @ApiProperty({ description: '국세청 근로소득 간이세액표 CSV(머리줄 이상 · 미만 · 1 ~ 11 · 95,000자까지 — 넘으면 나눠 올리고 둘째부터 append)' }) @IsString() @Length(1, 95000) csv!: string;
+  @ApiPropertyOptional({ description: '이어 올리기(처음 false = 그 해 전체 바꿈)' }) @IsOptional() @IsBoolean() append?: boolean;
+  @ApiPropertyOptional({ enum: ['THOUSAND', 'WON'], description: '이상 · 미만 칸 단위(처음 천원)' }) @IsOptional() @IsIn(['THOUSAND', 'WON']) unit?: 'THOUSAND' | 'WON';
+  @ApiProperty({ example: '국세청 2026 간이세액표' }) @IsString() @Length(1, 400) reason!: string;
 }
 
 const reasonOk = (r: string, code: string) => {
@@ -1093,4 +1147,172 @@ export class AcctController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_BUDGET · ACCT_YM · ACCT_REASON' })
   budgetSet(@Body() dto: AcctBudgetSetDto) { return setBudget(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  /* ── ⑭ d247 ── */
+  @Get('tax/vat-form')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'q', required: false, example: '2026-4' })
+  @ApiOperation({ summary: '부가세 신고서 미리보기 (v10.400)', description: '일반과세자 신고서 칸(매출 1 · 3 · 4 · 매입 10 · 11 · 14 · 불공제 16 · 납부세액 · 전자신고 세액공제)을 전표 · 매입 관리로 채움. 미리보기 — 세무사 확인.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_PERIOD' })
+  vatForm(@Query('q') q?: string) { return vatForm(this.db, q); }
+
+  @Get('tax/vat-form/export')
+  @Roles(...VIEW)
+  @ExportGate('ACCT_TAX')
+  @ApiQuery({ name: 'q', required: false, example: '2026-4' })
+  @ApiOperation({ summary: '부가세 신고서 미리보기 CSV (v10.400)', description: '칸 · 나눔 · 항목 · 공급가 · 세액(내려받기 승인 ACCT_TAX).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPORT_NEED_APPROVAL · ACCT_PERIOD' })
+  async vatFormExport(@Query('q') q?: string) {
+    const f = await vatForm(this.db, q);
+    const { head, rows } = vatFormRows(f);
+    return { csv: toCsv(head, rows), filename: `부가세신고서_미리보기_${f.q}.csv`, rows: rows.length };
+  }
+
+  /* ── ⑭ v10.401 기간 분석 ── */
+  @Get('aging')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'asOf', required: false, example: '2026-11-30' })
+  @ApiOperation({ summary: '받을 돈 · 갚을 돈 기간 분석 (v10.401)', description: '외상매출금 · 미지급금 · 법인카드 미지급금을 거래처별 30 · 60 · 90일 · 넘음으로(먼저 생긴 몫부터 갚았다고 봄). 넘은 몫은 매일 09:25 운영 알림 ACCT_AGING_OVER.' })
+  @ApiOkResponse({ type: Object })
+  aging(@Query('asOf') asOf?: string) { return agingView(this.db, asOf); }
+
+  /* ── ⑭ v10.402 해 마감 ── */
+  @Get('year-closings')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '해 마감 상태 (v10.402)', description: '해마다 월 마감 남은 달 · 손익 · 마감 여부 · 기록.' })
+  @ApiOkResponse({ type: Object })
+  async yearClosings() { return { ...(await yearClosings(this.db)), canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER' }; }
+
+  @Post('year-closings')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_YEAR_CLOSE', 'SETTING')
+  @ApiOperation({ summary: '해 마감 (v10.402 · SUPER)', description: '수익 · 비용 → 이월이익잉여금 전표 YEAR_CLOSE(12-31) · 그 해 전표 넣기 막힘 · 다음 해 기초 잔액 초안. 조건: 해가 끝남 · 모든 달 월 마감.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_YEAR · ACCT_YEAR_FUTURE · ACCT_YEAR_OPEN_MONTHS · ACCT_YEAR_CLOSED' })
+  closeYear(@Body() dto: AcctYearCloseDto) { return closeYear(this.db, dto.year, dto.note, RequestCtx.actorId() ?? null); }
+
+  @Post('year-closings/:year/reopen')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_YEAR_REOPEN', 'SETTING')
+  @ApiParam({ name: 'year', example: '2026' })
+  @ApiOperation({ summary: '해 마감 풀기 (v10.402 · SUPER)', description: '마감 전표의 반대 전표 YEAR_REOPEN · 사유 필수. 월 마감은 그대로.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_YEAR_NOT_CLOSED · ACCT_REASON' })
+  reopenYear(@Param('year') year: string, @Body() dto: AcctYearReopenDto) { return reopenYear(this.db, Number(year), dto.reason, RequestCtx.actorId() ?? null); }
+
+  /* ── ⑭ v10.403 급여 대장 ── */
+  @Get('employees')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '급여 직원 (v10.403)', description: '이름 · 입사 · 퇴사 · 월 기본급 · 비과세 · 부양가족 수(주민등록번호 · 계좌 없음).' })
+  @ApiOkResponse({ type: Object })
+  async employees() { return { ...(await listEmployees(this.db)), canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER' }; }
+
+  @Post('employees')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_EMPLOYEE_ADD', 'SETTING')
+  @ApiOperation({ summary: '급여 직원 넣기 (v10.403 · SUPER)' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_EMPLOYEE' })
+  addEmployee(@Body() dto: AcctEmpDto) { return addEmployee(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Patch('employees/:id')
+  @Roles('SUPER')
+  @Audit('ACCT_EMPLOYEE_SET', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '급여 직원 고치기 (v10.403 · SUPER)', description: '퇴사는 퇴사일(지우지 않음). 확정한 급여는 그대로.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  updateEmployee(@Param('id') id: string, @Body() dto: AcctEmpPatchDto) {
+    if (!/^\d{1,18}$/.test(id)) throw new NotFound('없는 직원입니다.');
+    return updateEmployee(this.db, id, dto);
+  }
+
+  @Get('payroll')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: true, example: '2026-11' })
+  @ApiOperation({ summary: '그 달 급여 대장 (v10.403)', description: '줄(지급액 · 소득세 · 지방소득세 · 4대보험 본인 · 회사 · 실지급) · 합계 · 요율(초안 표시).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_PERIOD' })
+  payroll(@Query('ym') ym: string) { return payrollMonth(this.db, ym); }
+
+  @Post('payroll/runs')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_PAYROLL_CREATE', 'SETTING')
+  @ApiOperation({ summary: '급여 대장 만들기 (v10.403 · SUPER)', description: '그 달 재직자 줄(월 기본급 · 비과세)로 초안 · 달마다 하나.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_PAYROLL_EXISTS' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_PERIOD · ACCT_PAYROLL' })
+  createRun(@Body() dto: AcctPayRunDto) { return createRun(this.db, dto.ym, dto.payDay, RequestCtx.actorId() ?? null); }
+
+  @Patch('payroll/lines/:id')
+  @Roles('SUPER')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '급여 줄 고치기 (v10.403 · SUPER · 초안만)', description: '지급액 · 비과세 → 4대보험 · 소득세 다시 셈.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_PAYROLL_FIXED' })
+  updatePayLine(@Param('id') id: string, @Body() dto: AcctPayLineDto) {
+    if (!/^\d{1,18}$/.test(id)) throw new NotFound('없는 급여 줄입니다.');
+    return updateLine(this.db, id, dto);
+  }
+
+  @Post('payroll/runs/:id/fix')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_PAYROLL_FIX', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '급여 확정 (v10.403 · SUPER)', description: '줄 고치기 막힘 · 다음 자동 전표에서 PAYROLL(직원급여 · 보험료 / 예수금 · 미지급금).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_PAYROLL_FIXED' })
+  fixRun(@Param('id') id: string) {
+    if (!/^\d{1,18}$/.test(id)) throw new NotFound('없는 급여 대장입니다.');
+    return fixRun(this.db, id, RequestCtx.actorId() ?? null);
+  }
+
+  @Post('payroll/runs/:id/paid')
+  @Roles('SUPER', 'PAYOUT')
+  @HttpCode(200)
+  @Audit('ACCT_PAYROLL_PAID', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '급여 지급 처리 (v10.403 · SUPER · PAYOUT)', description: '확정한 급여만 · 전표 PAYROLL_PAID(미지급금 / 보통예금).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_PAYROLL_STATE' })
+  paidRun(@Param('id') id: string) {
+    if (!/^\d{1,18}$/.test(id)) throw new NotFound('없는 급여 대장입니다.');
+    return paidRun(this.db, id, RequestCtx.actorId() ?? null);
+  }
+
+  @Get('payroll/rates')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'year', required: false, example: '2026' })
+  @ApiOperation({ summary: '4대보험 요율 · 간이세액표 (v10.403)', description: '그 해(없으면 가장 가까운 앞 해) 요율 · 초안 여부 · 간이세액표 줄 수.' })
+  @ApiOkResponse({ type: Object })
+  async payRates(@Query('year') year?: string) {
+    const y = /^\d{4}$/.test(year ?? '') ? Number(year) : Number(new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 4));
+    return { ...(await ratesOf(this.db, y)), canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER' };
+  }
+
+  @Post('payroll/rates')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_PAYROLL_RATE', 'SETTING')
+  @ApiOperation({ summary: '4대보험 요율 고치기 (v10.403 · SUPER)', description: '해 · 요율 키 · 값 · 사유 — 고치면 초안 표시가 사라짐 · 기록 acct_payroll_rate_log.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_PAYROLL_RATE · ACCT_REASON' })
+  setPayRate(@Body() dto: AcctPayRateDto) { return setRate(this.db, dto.year, dto.key, dto.value, dto.reason, RequestCtx.actorId() ?? null); }
+
+  @Post('payroll/wht-table')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_WHT_TABLE', 'SETTING')
+  @ApiOperation({ summary: '근로소득 간이세액표 올리기 (v10.403 · SUPER)', description: '국세청 표 CSV(머리줄 이상 · 미만 · 부양가족 1 ~ 11) · 처음은 그 해 전체를 바꿈 · 크면 나눠 append · 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_WHT_TABLE · ACCT_REASON' })
+  uploadWht(@Body() dto: AcctWhtTableDto) { return uploadWhtTable(this.db, dto.year, dto.csv, dto.unit ?? 'THOUSAND', dto.reason, RequestCtx.actorId() ?? null, dto.append === true); }
 }

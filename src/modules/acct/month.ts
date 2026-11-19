@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { bankMonth } from './bank';
 import { taxInvoices } from './acct-reports';
+import { agingLine } from './aging';   // v10.401 (D247)
 
 /* ---------------------------------------------------------------------
  * v10.390 (D244 · docs/527) 월 결산 요약 · 신고 기한 알림
@@ -104,7 +105,8 @@ export async function monthSummary(db: DatabaseService, ym: string) {
   const roles = await db.query<{ role: string; name: string; kind: string; d: string; c: string }>(
     `SELECT l.role, a.name, a.kind, sum(l.debit)::text AS d, sum(l.credit)::text AS c
        FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id JOIN acct_accounts a ON a.role = l.role
-      WHERE e.ym = $1 GROUP BY l.role, a.name, a.kind, a.sort ORDER BY a.sort`, [ym]);
+      WHERE e.ym = $1 AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')   -- v10.402 해 마감 전표는 손익에서 뺌
+      GROUP BY l.role, a.name, a.kind, a.sort ORDER BY a.sort`, [ym]);
   const sum = (f: (r: typeof roles[number]) => boolean, g: (d: number, c: number) => number) => roles.filter(f).reduce((a, r) => a + g(Number(r.d), Number(r.c)), 0);
   const revenue = sum((r) => r.kind === 'REVENUE', (d, c) => c - d), expense = sum((r) => r.kind === 'EXPENSE', (d, c) => d - c);
   const vatOut = sum((r) => r.role === 'VAT_OUT', (d, c) => c - d), wht = sum((r) => r.role === 'WHT', (d, c) => c - d);
@@ -127,7 +129,7 @@ export async function monthSummary(db: DatabaseService, ym: string) {
     money: { revenue, expense, profit: revenue - expense, vatOut, wht, cashIn, cashOut },
     byRole: roles.map((r) => ({ role: r.role, name: r.name, kind: r.kind, debit: Number(r.d), credit: Number(r.c) })),
     bank: bank.count, lastBalance: bank.lastBalance, invoicesTodo: inv.todo,
-    deadlines: dl.list.slice(0, 4), checks, ready: checks.filter((c) => c.key !== 'close').every((c) => c.ok),
+    deadlines: dl.list.slice(0, 4), checks, aging: await agingLine(db).catch(() => null),   // v10.401 (D247) 기간 분석 한 줄(마감 조건 아님 · checks 밖) ready: checks.filter((c) => c.key !== 'close').every((c) => c.ok),
     note: '마감 전에 할 일 — 전표 실패 없음 · 통장 맞춤 · 세금계산서 발행. 신고 기한은 세법 기본 날짜(주말 · 공휴일이면 다음 영업일)이며 세무사 확인이 필요합니다.',
   };
 }
