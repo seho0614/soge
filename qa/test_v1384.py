@@ -142,7 +142,7 @@ if API and DB:
         call('POST', '/admin/ad-invoices', {'advertiserId': adv.get('id'), 'periodFrom': d0, 'periodTo': d0, 'amount': 30000, 'dueDate': d0, 'memo': '시험 1384'}, TS)
         call('POST', '/admin/acct/journal/run', None, TS)
         r = call('GET', '/admin/acct/report?months=12', None, TP)
-        sq = psql(f"SELECT coalesce(sum(l.credit - l.debit) FILTER (WHERE l.role LIKE 'REV_%'), 0) || '|' || coalesce(sum(l.debit - l.credit) FILTER (WHERE l.role LIKE 'EXP_%'), 0) FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id WHERE e.ym = '{ym}'")
+        sq = psql(f"SELECT coalesce(sum(l.credit - l.debit) FILTER (WHERE a.kind = 'REVENUE'), 0) || '|' || coalesce(sum(l.debit - l.credit) FILTER (WHERE a.kind = 'EXPENSE'), 0) FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id JOIN acct_accounts a ON a.role = l.role WHERE e.ym = '{ym}' AND e.source NOT IN ('YEAR_CLOSE', 'YEAR_REOPEN')")   # v10.396 (D246) — 경영 보고서는 계정 종류로 셈(매출원가 · 처분 손익 포함)
         last = next((m for m in r.get('months') or [] if m.get('ym') == ym), {})
         rb = call('GET', '/admin/acct/report', None, TB)
         rv, ex = (sq.split('|') + ['0', '0'])[:2]
