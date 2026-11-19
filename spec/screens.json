@@ -5517,9 +5517,10 @@
     "GET /admin/acct/journal/export",
     "GET /admin/acct/closings",
     "POST /admin/acct/closings",
-    "POST /admin/export-requests"
+    "POST /admin/export-requests",
+    "GET /admin/acct/formats"
    ],
-   "note": "2026-11-19 v10.382 (D242 · docs/518) 자동 전표(돈 흐름 13 · 같은 근거 한 번) · 월 마감(SUPER · 쌓기만) · 전표 CSV(내려받기 승인 ACCT_JOURNAL)"
+   "note": "2026-11-19 v10.382 (D242 · docs/518) 자동 전표(돈 흐름 13 · 같은 근거 한 번) · 월 마감(SUPER · 쌓기만) · 전표 CSV(내려받기 승인 ACCT_JOURNAL) · 2026-11-19 v10.389 (D244 · docs/526) 전표 CSV 양식 고르기"
   },
   {
    "id": "SB-ADM-ACC-020",
@@ -5538,9 +5539,12 @@
     "GET /admin/acct/tax/withholding",
     "GET /admin/acct/tax/invoices",
     "GET /admin/acct/tax/export",
-    "POST /admin/export-requests"
+    "POST /admin/export-requests",
+    "POST /admin/acct/tax/invoices/request",
+    "POST /admin/acct/tax/invoices/{id}/cancel",
+    "POST /admin/etax/{kind}/{id}/send"
    ],
-   "note": "2026-11-19 v10.383 (D242 · docs/519) 부가세 분기 · 원천세 월 · 세금계산서 발행 대상 · 신고 자료 CSV(내려받기 승인 ACCT_TAX)"
+   "note": "2026-11-19 v10.383 (D242 · docs/519) 부가세 분기 · 원천세 월 · 세금계산서 발행 대상 · 신고 자료 CSV(내려받기 승인 ACCT_TAX) · 2026-11-19 v10.391 (D244 · docs/528) 광고 청구 · 입점 수수료 세금계산서 발행 요청 → 발행(전자세금계산서 · 간주)"
   },
   {
    "id": "SB-ADM-ACC-030",
@@ -5576,9 +5580,51 @@
     "GET /admin/acct/accounts",
     "PATCH /admin/acct/accounts/{role}",
     "GET /admin/acct/products",
-    "PATCH /admin/acct/products/{code}/tax-type"
+    "PATCH /admin/acct/products/{code}/tax-type",
+    "GET /admin/acct/formats",
+    "POST /admin/acct/formats",
+    "PATCH /admin/acct/formats/{id}",
+    "POST /admin/acct/formats/preview"
    ],
-   "note": "2026-11-19 v10.381 · 383 (D242 · docs/517 · 519) 계정 코드(SUPER) · 전표 규칙(초안) · 직판 상품 과세 · 면세(ADMIN · SUPER)"
+   "note": "2026-11-19 v10.381 · 383 (D242 · docs/517 · 519) 계정 코드(SUPER) · 전표 규칙(초안) · 직판 상품 과세 · 면세(ADMIN · SUPER) · 2026-11-19 v10.389 (D244 · docs/526) 전표 CSV 양식(칸 · 날짜 · 차변/대변 · 기본 · SUPER)"
+  },
+  {
+   "id": "SB-ADM-ACC-050",
+   "name": "회계 월 결산",
+   "group": "ADM",
+   "url": "/admin/acct-month",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/month",
+    "GET /admin/acct/deadlines"
+   ],
+   "note": "2026-11-19 v10.390 (D244 · docs/527) 월 결산 요약 · 마감 전 할 일 · 신고 기한(원천세 10일 · 부가세 25일) · 운영 알림 ACCT_DEADLINE · ACCT_UNCLOSED"
+  },
+  {
+   "id": "SB-ADM-ACC-060",
+   "name": "회계 은행 맞추기",
+   "group": "ADM",
+   "url": "/admin/acct-bank",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/bank",
+    "POST /admin/acct/bank/upload",
+    "POST /admin/acct/bank/{id}/match",
+    "POST /admin/acct/bank/auto-match"
+   ],
+   "note": "2026-11-19 v10.388 (D244 · docs/525) 통장 거래 내역 CSV(같은 줄 한 번) ↔ 전표 보통예금 줄(금액 · 날짜 ±N일 · 이름) · 맞출 것 없음(사유) · 자동 맞춤"
   }
  ],
  "deferred": [

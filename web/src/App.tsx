@@ -38,7 +38,7 @@ import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
 import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
-import { AcctAccounts, AcctJournal, AcctReport, AcctTax } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
+import { AcctAccounts, AcctBank, AcctJournal, AcctMonth, AcctReport, AcctTax } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
 import { MySessions, SettingScheduleBox } from './app/admin/OpsPlanBoxes';   // v10.377 · 380 (docs/513 · 516) 설정 예약 변경 · 내 로그인 기기
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
@@ -114,7 +114,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   'my-password': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.369 (docs/504)
   /* v10.381 ~ 384 (D242) — 회계: 보기 SUPER · 지급 담당 · 고치기 · 마감 SUPER(상품 과세는 ADMIN 도 — 계정 · 규칙 탭) */
-  'acct-journal': ['SUPER', 'PAYOUT'], 'acct-tax': ['SUPER', 'PAYOUT'], 'acct-report': ['SUPER', 'PAYOUT'], 'acct-accounts': ['SUPER', 'PAYOUT', 'ADMIN'],
+  'acct-journal': ['SUPER', 'PAYOUT'], 'acct-tax': ['SUPER', 'PAYOUT'], 'acct-report': ['SUPER', 'PAYOUT'], 'acct-accounts': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-month': ['SUPER', 'PAYOUT'], 'acct-bank': ['SUPER', 'PAYOUT'],
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
   'guide-flows': ['ADMIN', 'SUPER'],   /* v10.347 (D233) 이용 흐름 — 읽기 ADMIN · 고치기 SUPER */
   /* v10.226 (D195) — 접속 인증: 내 받을 곳은 운영 역할 모두 · 관리 칸은 화면이 ADMIN · SUPER 만 */
@@ -355,6 +355,8 @@ function Console() {
       {tab === 'acct-tax' && <AcctTax />}
       {tab === 'acct-report' && <AcctReport />}
       {tab === 'acct-accounts' && <AcctAccounts />}
+      {tab === 'acct-month' && <AcctMonth />}
+      {tab === 'acct-bank' && <AcctBank />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

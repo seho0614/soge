@@ -33,6 +33,7 @@ import { maskMail } from '../common/mail/mail-admin.service';   // v10.372 (D239
 import { applyDueSettingSchedules } from '../modules/admin/ops-plan.controller';   // v10.377 (D241)
 import { maintNotice, withdrawGraceMail } from '../modules/admin/member-notice-jobs';   // v10.378 · 379 (D241)
 import { runJournal } from '../modules/acct/journal';   // v10.382 (D242)
+import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
  * 배치 실행기.
@@ -50,7 +51,8 @@ export type JobName =
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
   | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly'
   | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice'   // v10.377 ~ 379 (D241)
-  | 'acct_journal';   // v10.382 (D242)
+  | 'acct_journal'    // v10.382 (D242)
+  | 'acct_deadline';  // v10.390 (D244)
 
 export interface JobResult {
   job: JobName;
@@ -705,6 +707,13 @@ export class SchedulerService {
         if (r.failedCount) await this.alertOnce('ACCT_JOURNAL_FAIL', 'WARN', `자동 전표 ${r.failedCount}건을 만들지 못했습니다 — ${r.failed.slice(0, 3).map((f) => `${f.source}: ${f.why}`).join(' · ')}`.slice(0, 280) + '(회계 › 전표)', r);
         else await this.resolveAlert('ACCT_JOURNAL_FAIL', '자동 전표 실패 없음');
         affected = r.total; detail = r;
+        break;
+      }
+
+      /* v10.390 (D244 · docs/527) — 신고 기한(원천세 10일 · 부가세 25일) N일 전 ACCT_DEADLINE · 지난달 마감 안 함 ACCT_UNCLOSED(같은 기한 · 같은 달 한 번) */
+      case 'acct_deadline': {
+        const r = await acctDeadlineJob(this.db);
+        affected = r.made.length; detail = r;
         break;
       }
 

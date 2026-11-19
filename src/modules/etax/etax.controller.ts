@@ -8,7 +8,7 @@ import { Audit } from '../../core/audit.interceptor';
 
 export class EtaxInvoiceDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty({ enum: ['DIRECTORY', 'LEAD_CASH'] }) kind!: string;
+  @ApiProperty({ enum: ['DIRECTORY', 'LEAD_CASH', 'AD', 'COMMISSION'] }) kind!: string;
   @ApiProperty({ enum: ['REQUESTED', 'ISSUED', 'CANCELED'] }) state!: string;
   @ApiPropertyOptional({ description: '발행 번호 — 업체 전송이면 승인번호(8-8-8) · 간주면 「간주-문서번호」 · 손으로 넣은 번호' }) invoiceNo?: string;
   @ApiPropertyOptional() issuedOn?: string;
@@ -61,7 +61,7 @@ export class EtaxAdminController {
   @Post(':kind/:id/send')
   @HttpCode(200)
   @ApiOperation({ summary: '발행(국세청 전송)', description: 'assume.etax on → 「간주 발행」(승인번호 없음). off → 업체 어댑터로 전송 → SENT(승인번호) · SENDING(승인 대기) · FAILED(사유 · 「다시 보내기」). 실패도 200 으로 결과를 돌려주고 줄에 기록합니다.' })
-  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash'] })
+  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash', 'ad', 'commission'] })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: EtaxInvoiceDto })
   @ApiResponse({ status: 409, description: 'ETAX_MANUAL · ETAX_ALREADY_SENT · ETAX_ALREADY_ASSUMED · ETAX_IN_FLIGHT · ETAX_USE_RESEND · ETAX_CONFLICT · NOT_REQUESTED', type: ErrorDto })
@@ -72,7 +72,7 @@ export class EtaxAdminController {
   @Post(':kind/:id/resend')
   @HttpCode(200)
   @ApiOperation({ summary: '다시 보내기', description: '실패한 줄 · 간주 발행 줄(연동 뒤 실제 전송). 업체에 보낸 적이 있으면 먼저 상태를 조회해 이미 발행된 문서를 두 번 발행하지 않습니다(같은 문서 번호).' })
-  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash'] })
+  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash', 'ad', 'commission'] })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: EtaxInvoiceDto })
   @ApiResponse({ status: 409, description: 'ETAX_NOT_SENT · ETAX_STILL_ASSUMED · ETAX_ALREADY_SENT · ETAX_IN_FLIGHT · ETAX_MANUAL · ETAX_CONFLICT', type: ErrorDto })
@@ -83,7 +83,7 @@ export class EtaxAdminController {
   @Post(':kind/:id/refresh')
   @HttpCode(200)
   @ApiOperation({ summary: '상태 조회', description: '보내는 중(승인 대기) · 업체에 보낸 뒤 실패로 남은 줄 — 업체에 물어 승인번호 · 결과를 기록합니다.' })
-  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash'] })
+  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash', 'ad', 'commission'] })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: EtaxInvoiceDto })
   @ApiResponse({ status: 409, description: 'ETAX_NOTHING_TO_CHECK', type: ErrorDto })
@@ -93,7 +93,7 @@ export class EtaxAdminController {
   @Post(':kind/:id/cancel')
   @HttpCode(200)
   @ApiOperation({ summary: '취소 · 수정 발행', description: '국세청에 보낸(SENT) 줄만 — 업체 어댑터로 취소(전송 전) 또는 수정세금계산서(전송 뒤).' })
-  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash'] })
+  @ApiParam({ name: 'kind', enum: ['directory', 'lead-cash', 'ad', 'commission'] })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: EtaxInvoiceDto })
   @ApiResponse({ status: 409, description: 'ETAX_NOT_SENT', type: ErrorDto })

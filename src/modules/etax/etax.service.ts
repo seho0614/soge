@@ -27,10 +27,13 @@ import { assumeOn } from '../../common/integration/switches';
  *                  ③ 손으로 넣은 줄 · 보낸 줄은 다시 보내지 않음(DB 가드 fn_etax_guard)
  * 키(ETAX_KEY)는 응답 · 기록 · 화면에 싣지 않습니다 — 「등록됨」만.
  */
-type KindSlug = 'directory' | 'lead-cash';
-const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH'; letter: string; label: string; issuedAt: boolean }> = {
+type KindSlug = 'directory' | 'lead-cash' | 'ad' | 'commission';
+const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION'; letter: string; label: string; issuedAt: boolean }> = {
   directory: { table: 'consult_directory_invoices', kind: 'DIRECTORY', letter: 'D', label: '법률 · 세무 정액 노출료', issuedAt: true },
   'lead-cash': { table: 'lead_cash_invoices', kind: 'LEAD_CASH', letter: 'L', label: '리드 이용료', issuedAt: false },
+  /* v10.391 (D244 · docs/528) — 광고 청구 · 입점 수수료: 회계 › 신고 자료 › 세금계산서에서 「발행 요청」한 줄(acct_tax_invoices) */
+  ad: { table: 'acct_tax_invoices', kind: 'AD', letter: 'A', label: '광고비', issuedAt: false },
+  commission: { table: 'acct_tax_invoices', kind: 'COMMISSION', letter: 'C', label: '입점 판매 수수료', issuedAt: false },
 };
 
 interface Row {
@@ -64,7 +67,7 @@ export class EtaxService {
 
   private kind(slug: string) {
     const k = KINDS[slug as KindSlug];
-    if (!k) throw new NotFound('세금계산서 종류가 없습니다(directory · lead-cash).');
+    if (!k) throw new NotFound('세금계산서 종류가 없습니다(directory · lead-cash · ad · commission).');
     return k;
   }
   private uuid(id: string) {
@@ -77,7 +80,11 @@ export class EtaxService {
     const cols = `i.id, i.state, i.supply, i.vat, i.total, i.invoice_no, i.issued_on::text AS issued_on,
                   i.etax_mode, i.etax_status, i.etax_doc_key, i.etax_approval_no, i.etax_amend_approval_no, i.etax_error,
                   i.etax_attempts, i.etax_adapter, i.etax_sent_at, i.etax_result_at`;
-    const [r] = k.kind === 'DIRECTORY'
+    const [r] = k.table === 'acct_tax_invoices'
+      ? await this.db.query<Row>(
+        `SELECT ${cols}, NULL::text AS supplier_name, NULL::text AS supplier_biz_no, i.buyer_name, i.buyer_biz_no, i.item
+           FROM acct_tax_invoices i WHERE i.id = $1 AND i.kind = $2`, [id, k.kind])
+      : k.kind === 'DIRECTORY'
       ? await this.db.query<Row>(
         `SELECT ${cols}, i.supplier_name, i.supplier_biz_no, i.buyer_name, i.buyer_biz_no,
                 '법률 · 세무 정액 노출료 ' || p.seq || '회차(' || p.period_from || ' ~ ' || p.period_to || ')' AS item
@@ -178,7 +185,10 @@ export class EtaxService {
          FROM consult_directory_invoices GROUP BY 1, 2
        UNION ALL
        SELECT 'LEAD_CASH', coalesce(etax_status, CASE WHEN etax_mode = 'MANUAL' THEN 'MANUAL' WHEN state = 'REQUESTED' THEN 'REQUESTED' ELSE state END), count(*)
-         FROM lead_cash_invoices GROUP BY 1, 2`);
+         FROM lead_cash_invoices GROUP BY 1, 2
+       UNION ALL
+       SELECT kind, coalesce(etax_status, CASE WHEN etax_mode = 'MANUAL' THEN 'MANUAL' WHEN state = 'REQUESTED' THEN 'REQUESTED' ELSE state END), count(*)
+         FROM acct_tax_invoices GROUP BY 1, 2`);
     let host: string | null = null;
     try { host = url ? new URL(url).host : null; } catch { host = '(주소 형식 오류)'; }
     const adapter = assume ? 'assume' : url && keySet ? 'http' : null;

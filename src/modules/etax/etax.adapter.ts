@@ -28,7 +28,7 @@ export type EtaxErrorKind = IntegrationErrorKind;
 export interface EtaxDoc {
   /** 우리 쪽 문서 번호(업체 관리 번호) — 24자 이하 · 영문 숫자 - 만 */
   docKey: string;
-  kind: 'DIRECTORY' | 'LEAD_CASH';
+  kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION';   // v10.391 (D244) 광고 청구 · 입점 수수료
   /** 작성일자 YYYY-MM-DD (한국 시각 · 발행하는 날) */
   writeDate: string;
   supplier: { bizNo: string; name: string; ceoName?: string | null };

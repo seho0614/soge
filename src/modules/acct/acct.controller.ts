@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -9,7 +9,10 @@ import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { ExportGate } from '../admin/export-approval';
 import { SOURCES, runJournal } from './journal';
-import { acctReport, taxInvoices, vatSummary, withholdingSummary } from './acct-reports';
+import { acctReport, cancelTaxInvoiceRequest, requestTaxInvoice, taxInvoices, vatSummary, withholdingSummary } from './acct-reports';
+import { BANK_MAX_CHARS, bankAutoMatch, bankMatch, bankMonth, uploadBank } from './bank';
+import { DATE_STYLES, FIELDS, checkFormat, listFormats, pickFormat, renderRows } from './formats';
+import { deadlines, monthSummary } from './month';
 
 /* ---------------------------------------------------------------------
  * v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계 · 세무 1단계 — 운영 화면 「회계」 메뉴
@@ -25,6 +28,18 @@ import { acctReport, taxInvoices, vatSummary, withholdingSummary } from './acct-
  *   v10.383  GET   /admin/acct/tax/vat?q=YYYY-Qn · /tax/withholding?ym= · /tax/invoices?ym=
  *            GET   /admin/acct/tax/export?kind=VAT|WHT_YEAR&period=   신고 자료 CSV(내려받기 승인 ACCT_TAX)
  *   v10.384  GET   /admin/acct/report?months=              월별 손익 · 매출 구성 · 현금 들고 남
+ *   ── ⑪ (D244 · docs/525 ~ 528) ──
+ *   v10.388  POST  /admin/acct/bank/upload                 통장 거래 내역 CSV(같은 줄 한 번 · 감사 ACCT_BANK_UPLOAD)
+ *            GET   /admin/acct/bank?ym=                    그 달 통장 줄 · 후보 전표 · 장부에만 있음 · 마지막 잔액
+ *            POST  /admin/acct/bank/{id}/match             맞춤(전표) · 맞출 것 없음(사유) · 풀기(사유) · 감사 ACCT_BANK_MATCH
+ *            POST  /admin/acct/bank/auto-match             후보 하나 + 이름 같음만 자동
+ *   v10.389  GET   /admin/acct/formats · POST /admin/acct/formats · PATCH /admin/acct/formats/{id}   전표 CSV 양식(SUPER)
+ *            POST  /admin/acct/formats/preview             양식 미리보기(보기 줄 3개 · 실제 전표 아님)
+ *            GET   /admin/acct/journal/export?ym=&format=  고른 양식(비우면 기본)
+ *   v10.390  GET   /admin/acct/month?ym=                   월 결산 요약 · 할 일 · 신고 기한
+ *            GET   /admin/acct/deadlines                   다가오는 신고 기한(원천세 10일 · 부가세 25일)
+ *   v10.391  POST  /admin/acct/tax/invoices/request        광고 청구 · 입점 수수료 세금계산서 발행 요청 → /admin/etax/{ad|commission}/{id}/send
+ *            POST  /admin/acct/tax/invoices/{id}/cancel    보내지 않은 요청 취소
  * ------------------------------------------------------------------- */
 
 const YM = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -44,6 +59,42 @@ export class AcctCloseDto {
   @ApiPropertyOptional({ example: '회계 프로그램에 올림', description: '메모(200자까지)' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 
+export class BankUploadDto {
+  @ApiProperty({ description: `통장 거래 내역 CSV 글자(엑셀 저장 · ${BANK_MAX_CHARS.toLocaleString('ko-KR')}자까지)` }) @IsString() @Length(1, BANK_MAX_CHARS) csv!: string;
+  @ApiPropertyOptional({ example: '거래내역_202611.csv' }) @IsOptional() @IsString() @Length(0, 200) filename?: string;
+  @ApiPropertyOptional({ example: '국민은행' }) @IsOptional() @IsString() @Length(0, 40) bank?: string;
+}
+export class BankMatchDto {
+  @ApiPropertyOptional({ example: '123', description: '맞출 전표 번호' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) entryId?: string;
+  @ApiPropertyOptional({ description: '맞출 것 없음(이자 · 수수료 등 — 사유 필요)' }) @IsOptional() @IsBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ description: '맞춤 풀기(사유 필요)' }) @IsOptional() @IsBoolean() clear?: boolean;
+  @ApiPropertyOptional({ example: '예금 이자' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+export class YmDto {
+  @ApiProperty({ example: '2026-11' }) @Matches(YM) ym!: string;
+}
+export class FormatColDto {
+  @ApiProperty({ enum: Object.keys(FIELDS) }) @IsIn(Object.keys(FIELDS)) field!: string;
+  @ApiPropertyOptional({ example: '일자' }) @IsOptional() @IsString() @Length(0, 30) title?: string;
+}
+export class AcctFormatDto {
+  @ApiProperty({ example: '세무사랑' }) @IsString() @Length(1, 40) name!: string;
+  @ApiProperty({ type: [FormatColDto] }) @IsArray() columns!: FormatColDto[];
+  @ApiPropertyOptional({ enum: DATE_STYLES }) @IsOptional() @IsIn(DATE_STYLES as unknown as string[]) dateStyle?: string;
+  @ApiPropertyOptional({ enum: ['SPLIT', 'SIGN'] }) @IsOptional() @IsIn(['SPLIT', 'SIGN']) dcStyle?: string;
+  @ApiPropertyOptional({ example: '차변' }) @IsOptional() @IsString() @Length(0, 10) dcDebit?: string;
+  @ApiPropertyOptional({ example: '대변' }) @IsOptional() @IsString() @Length(0, 10) dcCredit?: string;
+  @ApiPropertyOptional({ description: '머리줄 넣기(처음 예)' }) @IsOptional() @IsBoolean() header?: boolean;
+  @ApiPropertyOptional({ description: '기본 양식으로' }) @IsOptional() @IsBoolean() isDefault?: boolean;
+}
+export class TaxInvoiceRequestDto {
+  @ApiProperty({ enum: ['AD', 'COMMISSION'] }) @IsIn(['AD', 'COMMISSION']) kind!: 'AD' | 'COMMISSION';
+  @ApiProperty({ format: 'uuid', description: '광고 청구서 · 입점 정산 번호' }) @IsString() @Length(36, 36) sourceId!: string;
+}
+export class TaxInvoiceCancelDto {
+  @ApiProperty({ example: '금액 다시 확인' }) @IsString() @Length(1, 400) reason!: string;
+}
+
 const reasonOk = (r: string, code: string) => {
   const t = (r ?? '').replace(/\s+/g, ' ').trim();
   if (t.length < 2 || t.length > 200) throw new PolicyViolation(code, '사유는 2 ~ 200자입니다.');
@@ -55,6 +106,7 @@ const csvCell = (v: unknown) => {
 };
 export const toCsv = (head: string[], rows: unknown[][]) => '﻿' + [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 const kstYm = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 7);
+const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '' };
 
 @ApiTags('ADM')
 @ApiBearerAuth()
@@ -161,10 +213,11 @@ export class AcctController {
   @Roles(...VIEW)
   @ExportGate('ACCT_JOURNAL')
   @ApiQuery({ name: 'ym', required: true, example: '2026-11' })
+  @ApiQuery({ name: 'format', required: false, example: '1', description: 'v10.389 양식 번호(비우면 기본 양식)' })
   @ApiOperation({ summary: '전표 CSV (v10.382 · 내려받기 승인)', description: '회계 프로그램 올리기용 일반 양식 — 일자 · 전표번호 · 줄 · 계정코드 · 계정명 · 차변 · 대변 · 거래처 · 적요 · 증빙 · 근거. 엑셀에서 열림(UTF-8 BOM). 대표 회계 프로그램 양식은 양식 파일을 받은 뒤 맞춤.' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPORT_NEED_APPROVAL · ACCT_YM' })
-  async export(@Query('ym') ym: string) {
+  async export(@Query('ym') ym: string, @Query('format') format?: string) {
     if (!YM.test(ym ?? '')) throw new PolicyViolation('ACCT_YM', '달은 YYYY-MM 으로 적어 주십시오.');
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT e.entry_date::text AS date, e.id::text AS no, row_number() OVER (PARTITION BY e.id ORDER BY l.id)::int AS line,
@@ -172,10 +225,11 @@ export class AcctController {
               e.evidence, e.source || ':' || e.source_key AS src
          FROM acct_entries e JOIN acct_lines l ON l.entry_id = e.id JOIN acct_accounts a ON a.role = l.role
         WHERE e.ym = $1 ORDER BY e.entry_date, e.id, l.id`, [ym]);
-    const EV: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '' };
-    const csv = toCsv(['일자', '전표번호', '줄', '계정코드', '계정명', '차변', '대변', '거래처', '적요', '증빙', '근거'],
-      rows.map((r) => [r.date, r.no, r.line, r.code, r.name, r.debit, r.credit, r.party, r.memo, EV[String(r.evidence)] ?? '', r.src]));
-    return { filename: `journal-${ym}.csv`, csv, rows: rows.length, note: `${ym} 전표 ${rows.length}줄을 내려받았습니다.` };
+    /* v10.389 (D244 · docs/526) — 고른 양식(비우면 기본 · 처음 기본은 「일반 양식」 = 전과 같은 칸) */
+    const f = await pickFormat(this.db, format && /^\d{1,9}$/.test(format) ? format : undefined);
+    const { head, body } = renderRows(f, rows, EV_KO);
+    const csv = f.header ? toCsv(head, body) : toCsv((body[0] ?? []).map(String), body.slice(1));
+    return { filename: `journal-${ym}.csv`, csv, rows: rows.length, format: { id: f.id, name: f.name }, note: `${ym} 전표 ${rows.length}줄을 「${f.name}」 양식으로 내려받았습니다.` };
   }
 
   @Get('closings')
@@ -268,4 +322,149 @@ export class AcctController {
   @ApiOperation({ summary: '경영 보고서 (v10.384)', description: '전표에서 — 달마다 매출(공급가 · 돈 흐름별) · 비용 · 이익 · 부가세 · 현금 들어옴(PG · 계좌) · 나감 · 지난달 대비. 전표 시작일(acct.start_on) 뒤만.' })
   @ApiOkResponse({ type: Object })
   report(@Query('months') m?: string) { return acctReport(this.db, Math.min(24, Math.max(1, Number(m) || 12))); }
+
+  /* ── v10.388 은행 거래 내역 맞추기 ── */
+  @Post('bank/upload')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_BANK_UPLOAD', 'SETTING')
+  @ApiOperation({ summary: '통장 거래 내역 올리기 (v10.388)', description: '인터넷뱅킹 거래내역 CSV(엑셀 저장) 글자 — 머리줄 이름으로 거래일 · 입금 · 출금 · 잔액 · 내용 · 메모 칸을 찾음 · 같은 줄은 한 번 · 못 읽은 줄 수. 크면 기간을 나눠 올림.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'BANK_CSV_HEAD · BANK_CSV_EMPTY · BANK_CSV_SIZE · BANK_CSV_TOO_MANY' })
+  bankUpload(@Body() dto: BankUploadDto) { return uploadBank(this.db, dto.csv, dto.filename ?? null, dto.bank ?? null, RequestCtx.actorId() ?? null); }
+
+  @Get('bank')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '은행 맞추기 (v10.388)', description: '그 달 통장 줄(맞춤 · 맞출 것 없음 · 남음) · 남은 줄의 후보 전표(같은 방향 · 같은 금액 · 날짜 ±acct.bank_match_days · 이름 비슷하면 위) · 장부에만 있는 보통예금 줄 · 마지막 잔액 · 올린 기록.' })
+  @ApiOkResponse({ type: Object })
+  bank(@Query('ym') ym?: string) { return bankMonth(this.db, ym && YM.test(ym) ? ym : kstYm()); }
+
+  @Post('bank/auto-match')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_BANK_MATCH', 'SETTING')
+  @ApiOperation({ summary: '자동 맞춤 (v10.388)', description: '그 달 남은 줄 중 후보가 하나뿐이고 이름도 같은 줄만 맞춤.' })
+  @ApiOkResponse({ type: Object })
+  bankAuto(@Body() dto: YmDto) { return bankAutoMatch(this.db, dto.ym, RequestCtx.actorId() ?? null); }
+
+  @Post('bank/:id/match')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_BANK_MATCH', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '통장 줄 맞춤 (v10.388)', description: 'entryId = 그 전표와 맞춤(같은 금액의 보통예금 줄이 있어야 · 전표당 한 줄) · ignore = 맞출 것 없음(사유) · clear = 풀기(사유).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'BANK_MATCHED · BANK_ENTRY_USED' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'BANK_REASON · BANK_ENTRY · ACCT_BANK_MISMATCH' })
+  bankMatch(@Param('id') id: string, @Body() dto: BankMatchDto) { return bankMatch(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  /* ── v10.389 전표 양식 ── */
+  @Get('formats')
+  @Roles('SUPER', 'PAYOUT', 'ADMIN')
+  @ApiOperation({ summary: '전표 CSV 양식 (v10.389)', description: '양식(칸 순서 · 칸 이름 · 날짜 모양 · 차변/대변 표시 · 기본) · 고를 수 있는 칸 · 고칠 수 있는가(SUPER).' })
+  @ApiOkResponse({ type: Object })
+  async formats() {
+    return { items: await listFormats(this.db), fields: FIELDS, dateStyles: DATE_STYLES, canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER',
+             note: '회계 프로그램의 올리기 양식 파일을 받으면 칸 순서 · 이름을 그대로 맞춰 기본으로 두십시오.' };
+  }
+
+  @Post('formats/preview')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '양식 미리보기 (v10.389)', description: '보기 전표 1장(3줄 · 실제 전표 아님)을 그 양식으로 — 저장하지 않음.' })
+  @ApiOkResponse({ type: Object })
+  preview(@Body() dto: AcctFormatDto) {
+    const c = checkFormat(dto);
+    const f = { id: '0', isDefault: false, header: dto.header !== false, ...c } as never;
+    const sample = [
+      { date: '2026-11-05', no: '101', line: 1, code: '108', name: '외상매출금', debit: 110000, credit: 0, party: '보기 광고주', memo: '광고 청구', evidence: 'TAX_INVOICE', src: 'AD_INVOICE:보기' },
+      { date: '2026-11-05', no: '101', line: 2, code: '404', name: '용역매출', debit: 0, credit: 100000, party: '보기 광고주', memo: '광고 청구', evidence: 'TAX_INVOICE', src: 'AD_INVOICE:보기' },
+      { date: '2026-11-05', no: '101', line: 3, code: '255', name: '부가세예수금', debit: 0, credit: 10000, party: '보기 광고주', memo: '광고 청구', evidence: 'TAX_INVOICE', src: 'AD_INVOICE:보기' },
+    ];
+    const { head, body } = renderRows(f, sample, EV_KO);
+    return { head, rows: body, csv: dto.header !== false ? toCsv(head, body) : toCsv((body[0] ?? []).map(String), body.slice(1)) };
+  }
+
+  @Post('formats')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('ACCT_FORMAT_SET', 'SETTING')
+  @ApiOperation({ summary: '전표 양식 만들기 (v10.389 · SUPER)', description: '이름 · 칸 · 날짜 모양 · 차변/대변 표시 · 기본으로(하나만).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_FORMAT_NAME — 같은 이름' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_FORMAT' })
+  async addFormat(@Body() dto: AcctFormatDto) { return this.saveFormat(null, dto); }
+
+  @Patch('formats/:id')
+  @Roles('SUPER')
+  @Audit('ACCT_FORMAT_SET', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '전표 양식 고치기 (v10.389 · SUPER)', description: '칸 · 이름 · 날짜 모양 · 차변/대변 표시 · 기본으로.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_FORMAT' })
+  async setFormat(@Param('id') id: string, @Body() dto: AcctFormatDto) {
+    if (!/^\d{1,9}$/.test(id ?? '')) throw new NotFound('없는 양식입니다.');
+    return this.saveFormat(id, dto);
+  }
+
+  private async saveFormat(id: string | null, dto: AcctFormatDto) {
+    const c = checkFormat(dto);
+    const actor = RequestCtx.actorId() ?? null;
+    return this.db.transaction(async () => {
+      const [dup] = await this.db.query(`SELECT 1 FROM acct_export_formats WHERE name = $1 AND ($2::bigint IS NULL OR id <> $2::bigint)`, [c.name, id]);
+      if (dup) throw new AppError(409, { code: 'ACCT_FORMAT_NAME', message: '같은 이름의 양식이 있습니다.' });
+      if (dto.isDefault) await this.db.query(`UPDATE acct_export_formats SET is_default = false WHERE is_default AND ($1::bigint IS NULL OR id <> $1::bigint)`, [id]);
+      const args = [c.name, JSON.stringify(c.columns), c.dateStyle, c.dcStyle, c.dcDebit, c.dcCredit, dto.header !== false, actor];
+      const [r] = id
+        ? await this.db.query<{ id: string }>(
+            `UPDATE acct_export_formats SET name = $1, columns = $2::jsonb, date_style = $3, dc_style = $4, dc_debit = $5, dc_credit = $6, header = $7, updated_by = $8, updated_at = now(),
+                    is_default = CASE WHEN $10::boolean THEN true ELSE is_default END
+              WHERE id = $9::bigint RETURNING id::text AS id`, [...args, id, !!dto.isDefault])
+        : await this.db.query<{ id: string }>(
+            `INSERT INTO acct_export_formats (name, columns, date_style, dc_style, dc_debit, dc_credit, header, updated_by, is_default)
+             VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8, $9) RETURNING id::text AS id`, [...args, !!dto.isDefault]);
+      if (!r) throw new NotFound('없는 양식입니다.');
+      return { ok: true, id: r.id, note: `양식 「${c.name}」을 저장했습니다${dto.isDefault ? ' — 기본 양식입니다' : ''}.` };
+    });
+  }
+
+  /* ── v10.390 월 결산 · 신고 기한 ── */
+  @Get('month')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '월 결산 요약 (v10.390)', description: '그 달 전표 수 · 매출 · 비용 · 이익 · 부가세 · 원천세 · 현금 · 통장 맞춤 · 세금계산서 남음 · 할 일(전표 실패 · 통장 · 세금계산서 · 마감) · 다가오는 신고 기한.' })
+  @ApiOkResponse({ type: Object })
+  month(@Query('ym') ym?: string) { return monthSummary(this.db, ym && YM.test(ym) ? ym : kstYm()); }
+
+  @Get('deadlines')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '신고 기한 (v10.390)', description: '이번 달 · 다음 달 원천세(10일) · 부가세(acct.vat_months 의 25일) — 주말 · 공휴일이면 다음 영업일 · 남은 날 · 알림 설정.' })
+  @ApiOkResponse({ type: Object })
+  deadlines() { return deadlines(this.db); }
+
+  /* ── v10.391 세금계산서(광고 청구 · 입점 수수료) ── */
+  @Post('tax/invoices/request')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('TAXINV_REQUEST', 'INVOICE')
+  @ApiOperation({ summary: '세금계산서 발행 요청 (v10.391)', description: '광고 청구(AD · 공급가 · 부가세 그대로) · 입점 수수료(COMMISSION · 수수료 + 수수료 부가세) — 금액 · 공급받는 자를 지금 값으로 고정. 발행은 POST /admin/etax/{ad|commission}/{id}/send(ADMIN · SUPER · 지금은 간주).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'TAXINV_REQUESTED · TAXINV_HAS_NO' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TAXINV_NOT_ELIGIBLE' })
+  taxInvoiceRequest(@Body() dto: TaxInvoiceRequestDto) { return requestTaxInvoice(this.db, dto.kind, dto.sourceId, RequestCtx.actorId() ?? null); }
+
+  @Post('tax/invoices/:id/cancel')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('TAXINV_REQUEST_CANCEL', 'INVOICE')
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOperation({ summary: '발행 요청 취소 (v10.391)', description: '아직 보내지 않은 요청만(보낸 것은 전자세금계산서 「취소 · 수정 발행」) · 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'TAXINV_NOT_CANCELABLE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TAXINV_REASON' })
+  taxInvoiceCancel(@Param('id') id: string, @Body() dto: TaxInvoiceCancelDto) { return cancelTaxInvoiceRequest(this.db, id, dto.reason); }
 }

@@ -73,6 +73,8 @@ export const TABS = [
   ['acct-tax', '신고 자료'],   /* v10.383 (docs/519) 부가세 · 원천세 · 세금계산서 */
   ['acct-report', '경영 보고서'],   /* v10.384 (docs/520) */
   ['acct-accounts', '계정 · 규칙'],   /* v10.381 (docs/517) 계정 코드 · 전표 규칙 · 상품 과세 */
+  ['acct-month', '월 결산'],   /* v10.390 (D244 · docs/527) 월 결산 요약 · 신고 기한 */
+  ['acct-bank', '은행 맞추기'],   /* v10.388 (D244 · docs/525) 통장 거래 내역 ↔ 전표 */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -96,7 +98,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-journal', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -191,6 +193,8 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-journal':  { title: '전표', sub: '소개뱅크를 지난 돈 흐름으로 매시간 만든 전표입니다. 달마다 마감하고 회계 프로그램에 올릴 CSV 를 받습니다(내려받기 승인).', screen: 'SB-ADM-ACC-010' },
   'acct-tax':      { title: '신고 자료', sub: '부가세(분기) · 원천세(월) · 세금계산서 발행 대상을 전표와 원래 자료에서 모았습니다. 신고서 칸 맞춤은 세무사 확인.', screen: 'SB-ADM-ACC-020' },
   'acct-report':   { title: '경영 보고서', sub: '달마다 매출(공급가) · 비용 · 이익 · 현금 들고 남 — 시스템을 지난 돈만입니다(급여 · 임대료 등은 회계 프로그램).', screen: 'SB-ADM-ACC-030' },
+  'acct-month':    { title: '월 결산', sub: '그 달 매출 · 비용 · 부가세 · 원천세 · 현금과 마감 전 할 일(전표 실패 · 통장 맞춤 · 세금계산서), 다가오는 신고 기한(원천세 10일 · 부가세 25일)입니다.', screen: 'SB-ADM-ACC-050' },
+  'acct-bank':     { title: '은행 맞추기', sub: '인터넷뱅킹 거래 내역 CSV 를 올려 전표의 보통예금 줄과 금액 · 날짜 · 이름으로 맞춥니다. 맞출 것이 없는 줄(이자 · 수수료)은 사유와 함께 둡니다.', screen: 'SB-ADM-ACC-060' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드와 돈 흐름별 전표 모양(초안 · 세무사 확인), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
