@@ -127,7 +127,7 @@ def admin_page(path, fn):
 M42, AC, JN, AP, MN, UI = rd('prisma/migrations/D242_acct_journal_closing_tax_type/migration.sql'), rd('src/modules/acct/acct.controller.ts'), rd('src/modules/acct/journal.ts'), rd('web/src/App.tsx'), rd('web/src/lib/adminMenu.ts'), rd('web/src/app/admin/Acct.tsx')
 ok('① 코드 — D242 acct_accounts(역할 · 종류 고정 · 지우기 막힘 · 15) · 규칙 13 · API(감사) · 「회계」 메뉴 4탭 · 계정 · 규칙 화면 · 문서 517 · 판 v10.381',
    'CREATE TABLE IF NOT EXISTS public.acct_accounts' in M42 and 'trg_acct_accounts_guard' in M42 and M42.count("'ASSET',") + M42.count("'LIABILITY',") + M42.count("'REVENUE',") + M42.count("'EXPENSE',") >= 15
-   and JN.count("name: '") == 13 and "@Audit('ACCT_ACCOUNT_SET', 'SETTING')" in AC and "{ key: 'admacc',  label: '회계',      tabs: ['acct-journal', 'acct-tax', 'acct-report', 'acct-accounts'] }" in MN
+   and JN.count("name: '") == 13 and "@Audit('ACCT_ACCOUNT_SET', 'SETTING')" in AC and "{ key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-tax', 'acct-report', 'acct-accounts'] }" in MN
    and "{tab === 'acct-accounts' && <AcctAccounts />}" in AP and 'data-acct-rules=' in UI and '"SB-ADM-ACC-040"' in SJ and '세무사' in doc('517_') and VT >= (10, 381), VER)
 if API and DB:
     import consent_ok
