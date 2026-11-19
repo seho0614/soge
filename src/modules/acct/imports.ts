@@ -140,7 +140,7 @@ export async function advanceImport(db: DatabaseService, id: string, b: AdvanceI
       await db.query(`UPDATE acct_import_lines SET landed_cost = $2::bigint WHERE id = $1::bigint`, [l.id, landed[i]]);
       await db.query(
         `INSERT INTO acct_stock_moves (option_id, moved_on, kind, qty, unit_cost, source_key, note, created_by)
-         VALUES ($1::uuid, $2::date, 'IN', $3, round($4::numeric / $3, 2), $5, $6, $7)`,
+         VALUES ($1::uuid, $2::date, 'IN', $3::int, round($4::numeric / $3::int, 2), $5, $6, $7)`,
         [l.option_id, b.date, l.qty, landed[i], `IMP-${id}-${l.id}`, `수입 ${id}번 입고(물품 + 관세 + 운임 + 기타)`, actor]);
     }
     await db.query(`UPDATE acct_imports SET state = 'RECEIVED', received_on = $2::date, goods_krw = $3::bigint WHERE id = $1::bigint`, [id, b.date, goods]);
