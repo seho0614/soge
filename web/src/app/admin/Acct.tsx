@@ -231,7 +231,7 @@ function RuleEdit({ r, accounts, evidences, onDone }: { r: Rule; accounts: Acc[]
 function AccountAdd({ onDone }: { onDone: () => void }) {
   const a = useAct();
   const [f, setF] = useState({ role: 'U_', name: '', kind: 'EXPENSE', extCode: '', extName: '', reason: '' });
-  const ok = /^U_[A-Z][A-Z0-9_]{1,30}$/.test(f.role) && f.name.trim() && f.reason.trim().length >= 2;
+  const ok = /^U_[A-Z][A-Z_]{1,30}$/.test(f.role) && f.name.trim() && f.reason.trim().length >= 2;
   return (
     <div className="card pad" data-acct-account-add="">
       <Flash msg={a.msg} err={a.err} />

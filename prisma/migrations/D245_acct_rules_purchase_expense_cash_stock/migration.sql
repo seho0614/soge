@@ -68,7 +68,7 @@ BEGIN
 END $$;
 CREATE OR REPLACE FUNCTION public.fn_acct_accounts_ins_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF NEW.custom AND NEW.role !~ '^U_[A-Z][A-Z0-9_]{1,30}$' THEN
+  IF NEW.custom AND NEW.role !~ '^U_[A-Z][A-Z_]{1,30}$' THEN
     RAISE EXCEPTION 'ACCT_ACCOUNT: 더하는 계정 역할은 U_ 로 시작하는 대문자입니다.';
   END IF;
   RETURN NEW;
