@@ -10,6 +10,21 @@
  *   규칙 고치기는 「계정 자리」 · 증빙만(금액 계산은 코드) · 같은 종류 계정으로만 · 다음 전표부터.
  * ------------------------------------------------------------------------------- */
 
+/* INV-9(소개비 공제 칸 없음) 예외에 회사 회계 장부(acct_*)를 더함 — 매입 부가세 「공제」(deductible) · 급여 원천징수는
+ *   회사 자신의 세금 계산이고 회원 사이 소개비가 아님(point_cashouts · adx_ · partner_ 와 같은 까닭). D190 정의 + acct_ 한 줄. */
+CREATE OR REPLACE FUNCTION public.fn_is_fee_exempt(p_table text)
+ RETURNS boolean
+ LANGUAGE sql
+ IMMUTABLE
+AS $function$
+  SELECT p_table ~ '^(hlt_|v_hlt_)'              -- 건강몰 직판 대금
+      OR p_table ~ '^(affiliate_|v_affiliate_)'   -- 제휴 마케팅비
+      OR p_table ~ '^(partner_|v_p(order|stl|artner)_)'   -- 파트너 트랙
+      OR p_table ~ '^(adx_|v_adx_)'               -- v10.31 외부 송출 퍼블리셔 수익(원천징수 — 소개비 아님)
+      OR p_table ~ '^(point_cashouts)$'           -- v10.219 포인트 출금(회사 마케팅비 · 원천징수 — 소개비 아님)
+      OR p_table ~ '^(acct_|v_acct_)';            -- v10.392 회사 회계 장부(매입 부가세 공제 · 급여 원천징수 — 소개비 아님)
+$function$;
+
 /* 증빙 — 법인카드(CARD) · 간이영수증(SIMPLE) 더함 */
 ALTER TABLE public.acct_entries DROP CONSTRAINT IF EXISTS acct_entries_evidence_check;
 ALTER TABLE public.acct_entries ADD CONSTRAINT acct_entries_evidence_check
