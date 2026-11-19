@@ -178,7 +178,7 @@ if API and DB:
         setting('acct.close_by_day', '1', '1390'); setting('acct.start_on', f'{pm}-01', '1390')
         j1 = call('POST', '/admin/jobs', {'job': 'acct_deadline'}, TS)
         j2 = call('POST', '/admin/jobs', {'job': 'acct_deadline'}, TS)
-        soon = [x for x in lst if x.get('daysLeft', 99) <= 7]
+        soon = [x for x in lst if x.get('daysLeft', 99) <= 7 and x.get('kind') not in ('PAY', 'CARD')]   # v10.418 급여 · 카드 기한은 알림 처음 꺼짐(acct.deadline_payday)
         nkeys = {x['key']: psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'ACCT_DEADLINE' AND detail->>'key' = '{x['key']}'") for x in soon}
         fk = psql(f"SELECT (resolved_at IS NOT NULL)::text FROM ops_alerts WHERE alert_code = 'ACCT_DEADLINE' AND detail->>'key' = '{fake}'")
         closed = psql(f"SELECT count(*) FROM acct_closings WHERE ym = '{pm}'")
