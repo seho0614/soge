@@ -128,7 +128,7 @@ ok('빠른 매칭 목록 — 회신함 표시', mine.get('offered') is True, str
 
 # ⑧ 세금계산서 — 개인 파트너는 국세청 전송 대상 아님
 ym = '2001-01'
-iid = sql(f"INSERT INTO lead_cash_invoices (partner_id, ym, total, supply, vat) VALUES ('{pid}', '{ym}', 11000, 10000, 1000) ON CONFLICT (partner_id, ym) DO UPDATE SET ym=EXCLUDED.ym RETURNING id").splitlines()[0]
+iid = sql(f"INSERT INTO lead_cash_invoices (partner_id, ym, total, supply, vat) VALUES ('{pid}', '{ym}', 11000, 10000, 1000) ON CONFLICT (partner_id, ym) WHERE charge_id IS NULL DO UPDATE SET ym=EXCLUDED.ym RETURNING id").splitlines()[0]
 st, d = call('POST', f'/admin/etax/lead-cash/{iid}/send', ta, {})
 ok('세금계산서 전송 — 개인 파트너는 422 ETAX_PERSON_BUYER(영수증으로 갈음 안내)', st == 422 and (d or {}).get('code') == 'ETAX_PERSON_BUYER', f'{st} {str(d)[:120]}')
 ok('노출료 세금계산서 줄 — 공급받는 자 사업자등록번호 비울 수 있음(개인)', sql("select is_nullable from information_schema.columns where table_name='consult_directory_invoices' and column_name='buyer_biz_no'") == 'YES', '')
