@@ -41,6 +41,8 @@ import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
 import { acctAgingJob } from '../modules/acct/aging';   // v10.401 (D247)
 import { acctPgCheckJob } from '../modules/acct/pgsettle';   // v10.404 (D248)
 import { acctContractsJob } from '../modules/acct/contracts';   // v10.409 (D249)
+import { opsReportJob } from '../modules/admin/report-period';   // v10.412 (D250)
+import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D250)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -67,7 +69,8 @@ export type JobName =
   | 'acct_budget'     // v10.399 (D246)
   | 'acct_aging'      // v10.401 (D247)
   | 'acct_pg_check'   // v10.404 (D248)
-  | 'acct_contracts'; // v10.409 (D249)
+  | 'acct_contracts'  // v10.409 (D249)
+  | 'ops_report';     // v10.412 (D250)
 
 export interface JobResult {
   job: JobName;
@@ -767,6 +770,14 @@ export class SchedulerService {
       case 'acct_contracts': {   // v10.409 (D249 · docs/546) — 만기 30일 전 ACCT_CONTRACT_DUE(계약마다 한 번 · 갱신 · 끝내면 풀림)
         const r = await acctContractsJob(this.db);
         affected = r.made.length; detail = r;
+        break;
+      }
+
+      /* v10.412 · 415 (D250 · docs/549 · 552) — 전날 일보 · 월요일 지난주 주보 · 1일 지난달 월보(같은 기간 JOB 한 번) · report.send on 이면 보냄 */
+      case 'ops_report': {
+        const r = await opsReportJob(this.db);
+        const s = await sendAfterJob(this.db, { telegram: this.telegram, slack: this.slack, mail: this.mail }, r.made);
+        affected = r.made.filter((m) => m.made).length; detail = { ...r, send: s };
         break;
       }
 

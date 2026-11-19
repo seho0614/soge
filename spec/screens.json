@@ -6048,6 +6048,105 @@
     "POST /admin/acct/requisitions/{id}/cancel"
    ],
    "note": "2026-11-20 v10.410 (D249 · docs/547) 지출 품의(운영자 누구나) → SUPER 결재(본인 불가) → 매입 · 경비 청구에 연결(허용 % 넘으면 다시 품의)"
+  },
+  {
+   "id": "SB-ADM-WRP-010",
+   "name": "보고 일보",
+   "group": "ADM",
+   "url": "/admin/rpt-day",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/work-reports/view",
+    "POST /admin/work-reports/make",
+    "GET /admin/work-reports/snapshots/{id}/csv",
+    "POST /admin/work-reports/snapshots/{id}/send",
+    "GET /admin/work-reports/settings",
+    "PATCH /admin/work-reports/settings"
+   ],
+   "note": "2026-11-20 v10.412 · 415 (D250 · docs/549 · 552) 일보(하루 숫자 한 장 · 정기 작업 ops_report 07:00) · 지금 만들기 · CSV · 인쇄 · 보내기(SUPER · report.send 처음 꺼짐)"
+  },
+  {
+   "id": "SB-ADM-WRP-020",
+   "name": "보고 주보",
+   "group": "ADM",
+   "url": "/admin/rpt-week",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/work-reports/view",
+    "POST /admin/work-reports/make",
+    "GET /admin/work-reports/snapshots/{id}/csv"
+   ],
+   "note": "2026-11-20 v10.413 (D250 · docs/550) 주보(월 ~ 일 · 지난주 대비 · 상위 5)"
+  },
+  {
+   "id": "SB-ADM-WRP-030",
+   "name": "보고 월보",
+   "group": "ADM",
+   "url": "/admin/rpt-month",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/work-reports/view",
+    "POST /admin/work-reports/make",
+    "GET /admin/work-reports/snapshots/{id}/csv"
+   ],
+   "note": "2026-11-20 v10.413 (D250 · docs/550) 월보(1일 ~ 말일 · 지난달 대비 · 상위 5)"
+  },
+  {
+   "id": "SB-ADM-WRP-040",
+   "name": "보고 업무 일지",
+   "group": "ADM",
+   "url": "/admin/rpt-worklog",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/worklogs",
+    "POST /admin/worklogs",
+    "POST /admin/worklogs/{id}/review"
+   ],
+   "note": "2026-11-20 v10.414 (D250 · docs/551) 업무 일지(오늘만 · 고치기 없음) · SUPER 확인 · 한 줄 답"
+  },
+  {
+   "id": "SB-ADM-WRP-050",
+   "name": "업무 일지 현황판",
+   "group": "ADM",
+   "url": "/admin/rpt-board",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/worklogs/board"
+   ],
+   "note": "2026-11-19 v10.414 (D250 · docs/551) 대표 「업무일지 현황판」 — 운영자마다 그날 일지 · 안 쓴 사람 · 7일 작성률 · 막힌 것 · 확인 안 한 일지(SUPER)"
   }
  ],
  "deferred": [

@@ -274,6 +274,7 @@ import { AccountSecurityController } from './modules/identity/account-security.c
 import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
 import { AttributionController } from './modules/attribution/attribution.controller';
+import { WorkReportController } from './modules/admin/report.controller';   // v10.412 ~ 415 (D250) 업무 보고 · 업무 일지
 import { LeadService } from './modules/lead/lead.service';
 
 /**
@@ -285,6 +286,7 @@ import { LeadService } from './modules/lead/lead.service';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
+    WorkReportController,     // v10.412 ~ 415 (D250)
     AuthController,
     I18nController,   // v10.93 다국어 기반
     AgentController,  // v10.94 AI 에이전트 틀

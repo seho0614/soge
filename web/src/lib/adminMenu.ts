@@ -95,6 +95,7 @@ export const TABS = [
   ['acct-contracts', '계약'],   /* v10.409 (D249 · docs/546) */
   ['acct-requisitions', '품의'],   /* v10.410 (D249 · docs/547) */
   ['acct-imports', '수입'],   /* v10.411 (D249 · docs/548) */
+  ['rpt-day', '일보'], ['rpt-week', '주보'], ['rpt-month', '월보'], ['rpt-worklog', '업무 일지'], ['rpt-board', '일지 현황판'],   /* v10.412 ~ 415 (D250 · docs/549 ~ 552) 보고 */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -119,6 +120,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
   { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-manual', 'acct-pg', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-severance', 'acct-corptax', 'acct-parties', 'acct-contracts', 'acct-requisitions', 'acct-imports', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admrpt',  label: '보고',      tabs: ['rpt-day', 'rpt-week', 'rpt-month', 'rpt-worklog', 'rpt-board'] },   /* v10.412 ~ 415 (D250) 업무 보고 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -235,6 +237,11 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-contracts': { title: '계약', sub: '임대 · 용역 · 서버 · 구독 계약과 만기입니다. 만기 알림 일수 전부터 운영 알림이 뜨고, 달 금액은 자금 흐름 예정에 들어갑니다.', screen: 'SB-ADM-ACC-240' },
   'acct-requisitions': { title: '품의', sub: '쓰기 전에 지출 품의를 올리고 SUPER 가 결재합니다(본인 품의 불가). 승인된 품의는 매입 · 경비 청구에 연결합니다.', screen: 'SB-ADM-ACC-250' },
   'acct-imports': { title: '수입', sub: '수입 건을 발주 → 선적 → 통관 → 입고로 넘깁니다. 입고 원가(물품 + 관세 + 운임 + 기타)는 재고 수불부로, 수입 부가세는 부가세대급금으로 갑니다. 신고는 관세사.', screen: 'SB-ADM-ACC-260' },
+  'rpt-day':     { title: '일보', sub: '하루(한국 날짜) 회원 · 거래 · 소개몰 · 매출 · 고객센터 · 운영 알림 · 회계 할 일 · 업무 일지를 숫자로 한 장 — 매일 07:00 전날 것을 남김.', screen: 'SB-ADM-WRP-010' },
+  'rpt-week':    { title: '주보', sub: '월요일 ~ 일요일 합계와 지난주 대비 증감 · 상위 5 — 월요일 07:00 지난주 것을 남김.', screen: 'SB-ADM-WRP-020' },
+  'rpt-month':   { title: '월보', sub: '1일 ~ 말일 합계와 지난달 대비 증감 · 상위 5 — 1일 07:00 지난달 것을 남김.', screen: 'SB-ADM-WRP-030' },
+  'rpt-board':   { title: '일지 현황판', sub: '오늘 운영자마다 쓴 일지 · 안 쓴 사람 · 최근 7일 작성률 · 막힌 것 · 확인 안 한 일지(SUPER).', screen: 'SB-ADM-WRP-050' },
+  'rpt-worklog': { title: '업무 일지', sub: '운영자가 오늘 한 일 · 할 일 · 막힌 것을 남김(고치기 없음 · 덧붙임만) — SUPER 가 확인 · 한 줄 답.', screen: 'SB-ADM-WRP-040' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
