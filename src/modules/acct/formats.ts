@@ -6,10 +6,11 @@ import { NotFound, PolicyViolation } from '../../core/errors';
  *   회계 프로그램(세무사랑 · 기타)마다 올리기 양식이 달라 칸 순서 · 칸 이름 · 날짜 모양 · 차변/대변 표시를 고릅니다.
  *   SPLIT — 차변 칸 · 대변 칸 따로 / SIGN — 「구분」 칸(차변 · 대변 글자) + 「금액」 칸 하나.
  *   양식 파일을 받으면 그대로 맞춰 「기본」으로 둡니다. 내려받기(전표 CSV)는 기본 양식 또는 고른 양식.
+ *   v10.392 (D245 · docs/529) — 월 · 일 칸(month · day) 더함 · 「세무사랑 일반전표」 양식(구분 3 차변 · 4 대변)을 기본으로.
  * ------------------------------------------------------------------- */
 
 export const FIELDS: Record<string, string> = {
-  date: '일자', no: '전표번호', line: '줄', code: '계정코드', name: '계정명', debit: '차변', credit: '대변',
+  date: '일자', month: '월', day: '일', no: '전표번호', line: '줄', code: '계정코드', name: '계정명', debit: '차변', credit: '대변',
   dc: '구분(차변 · 대변)', amount: '금액', party: '거래처', memo: '적요', evidence: '증빙', src: '근거', blank: '빈 칸',
 };
 export const DATE_STYLES = ['YYYY-MM-DD', 'YYYYMMDD', 'YYYY/MM/DD', 'YYYY.MM.DD'] as const;
@@ -63,6 +64,8 @@ export function renderRows(f: Fmt, rows: Array<Record<string, unknown>>, evKo: R
     const debit = Number(r.debit ?? 0), credit = Number(r.credit ?? 0);
     switch (c.field) {
       case 'date': return fmtDate(String(r.date), f.dateStyle);
+      case 'month': return String(r.date).slice(5, 7);   // v10.392 세무사랑 일반전표 — 월 · 일 칸 따로
+      case 'day': return String(r.date).slice(8, 10);
       case 'dc': return debit > 0 ? f.dcDebit : f.dcCredit;
       case 'amount': return debit > 0 ? debit : credit;
       case 'debit': return f.dcStyle === 'SPLIT' ? debit : (debit || '');

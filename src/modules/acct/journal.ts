@@ -12,14 +12,15 @@ import { DatabaseService } from '../../db/database.service';
  *   리드 캐시 보너스(현금이 아님) · 리드 캐시 사용(11/19 대표 「충전 때 매출」이라 쓸 때는 전표 없음) · 성공 수수료(스위치 off · 받는 길 없음).
  * ------------------------------------------------------------------- */
 
-export type Role = 'CASH' | 'PG_RECV' | 'AR' | 'ADV' | 'VAT_OUT' | 'WHT' | 'REV_SUB' | 'REV_REFCODE' | 'REV_AD' | 'REV_LEAD'
-  | 'REV_DIRECTORY' | 'REV_COMMISSION' | 'REV_MALL' | 'REV_MALL_EXEMPT' | 'EXP_PROMO';
+/* v10.392 (D245) — 계정 역할은 acct_accounts 표(더하는 계정 U_ · ⑫ 매입 · 경비 · 재고 계정)라 글자로 둠 */
+export type Role = string;
 export interface Line { role: Role; debit: number; credit: number }
-export interface Draft { key: string; at: string; memo: string; party: string | null; evidence: 'TAX_INVOICE' | 'CARD_PG' | 'CASH' | 'NONE'; lines: Line[] }
-type Row = Record<string, any> & { key: string; at: string; party: string | null };
+export type Evidence = 'TAX_INVOICE' | 'CARD_PG' | 'CASH' | 'NONE' | 'CARD' | 'SIMPLE';
+export interface Draft { key: string; at: string; memo: string; party: string | null; evidence: Evidence; lines: Line[] }
+export type Row = Record<string, any> & { key: string; at: string; party: string | null };
 
-const dr = (role: Role, n: number): Line => ({ role, debit: n, credit: 0 });
-const cr = (role: Role, n: number): Line => ({ role, debit: 0, credit: n });
+export const dr = (role: Role, n: number): Line => ({ role, debit: n, credit: 0 });
+export const cr = (role: Role, n: number): Line => ({ role, debit: 0, credit: n });
 /** 부가세 포함 금액 → 공급가 · 세액(공급가 = 반올림(합계 ÷ 1.1)) */
 export const vatSplit = (total: number) => { const supply = Math.round(total / 1.1); return { supply, vat: total - supply }; };
 /** 매출 줄(대변) — 부가세를 나누면 공급가 · 부가세예수금 두 줄 */
@@ -35,9 +36,9 @@ const revenueSep = (rev: Role, total: number, vat: unknown, split: boolean): Lin
 export const reverse = (ls: Line[]): Line[] => ls.map((l) => ({ role: l.role, debit: l.credit, credit: l.debit }));
 const n = (v: unknown) => Number(v ?? 0);
 
-interface Ctx { subVat: boolean; commissionVat: boolean }
+export interface Ctx { subVat: boolean; commissionVat: boolean }
 
-interface Source { name: string; label: string; sql: string; build: (r: Row, c: Ctx) => Omit<Draft, 'key' | 'at' | 'party'> | null }
+export interface Source { name: string; label: string; sql: string; build: (r: Row, c: Ctx) => Omit<Draft, 'key' | 'at' | 'party'> | null }
 
 /* 각 조회는 아직 전표가 없는 것만(NOT EXISTS) · 시작일 뒤 · 500건씩 */
 export const SOURCES: Source[] = [
@@ -201,16 +202,31 @@ function mallLines(amt: number, exempt: number): Line[] {
   return [dr('PG_RECV', amt), ...(ex > 0 ? [cr('REV_MALL_EXEMPT', ex)] : []), ...(amt - ex > 0 ? revenue('REV_MALL', amt - ex, true) : [])];
 }
 
+/* v10.392 (D245) 규칙 고치기 — 돈 흐름마다 계정 자리 바꾸기 · 증빙 바꾸기(SUPER · 다음 전표부터 · 같은 종류 계정만 · DB 가 막음) */
+export interface Overrides { maps: Map<string, string>; ev: Map<string, Evidence> }
+export async function ruleOverrides(db: DatabaseService): Promise<Overrides> {
+  const has = await db.query<{ ok: boolean }>(`SELECT to_regclass('public.acct_rule_maps') IS NOT NULL AS ok`);
+  if (!has[0]?.ok) return { maps: new Map(), ev: new Map() };
+  const m = await db.query<{ source: string; from_role: string; to_role: string }>(`SELECT source, from_role, to_role FROM acct_rule_maps`);
+  const e = await db.query<{ source: string; evidence: Evidence }>(`SELECT source, evidence FROM acct_rule_evidence`);
+  return { maps: new Map(m.map((x) => [`${x.source}:${x.from_role}`, x.to_role])), ev: new Map(e.map((x) => [x.source, x.evidence])) };
+}
+export function applyRule<T extends { evidence: Evidence; lines: Line[] }>(source: string, b: T, ov: Overrides): T {
+  return { ...b, evidence: ov.ev.get(source) ?? b.evidence, lines: b.lines.map((l) => ({ ...l, role: ov.maps.get(`${source}:${l.role}`) ?? l.role })) };
+}
+
 /** 정기 작업 acct_journal — 근거마다 한 거래(전표 + 줄 · 차변 = 대변은 DB 가 거래 끝에 확인) */
-export async function runJournal(db: DatabaseService) {
+export async function runJournal(db: DatabaseService, sources: Source[] = SOURCES) {   // v10.392 — ⑫ 매입 · 경비 · 재고는 sources.ts ALL_SOURCES
   const [s] = await db.query<{ sv: string | null; cv: string | null }>(
     `SELECT (SELECT value FROM site_settings WHERE key = 'acct.sub_vat_included') AS sv, (SELECT value FROM site_settings WHERE key = 'acct.commission_vat_included') AS cv`);
   const ctx: Ctx = { subVat: (s?.sv ?? 'on') === 'on', commissionVat: (s?.cv ?? 'on') === 'on' };
+  const ov = await ruleOverrides(db);
   const made: Record<string, number> = {}, failed: Array<{ source: string; key: string; why: string }> = [];
-  for (const src of SOURCES) {
+  for (const src of sources) {
     const rows = await db.query<Row>(src.sql);
     for (const r of rows) {
-      const b = src.build(r, ctx);
+      const b0 = src.build(r, ctx);
+      const b = b0 ? applyRule(src.name, b0, ov) : null;
       const lines = (b?.lines ?? []).filter((l) => l.debit > 0 || l.credit > 0);
       if (!b || lines.length < 2) continue;
       try {

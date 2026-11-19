@@ -75,6 +75,10 @@ export const TABS = [
   ['acct-accounts', '계정 · 규칙'],   /* v10.381 (docs/517) 계정 코드 · 전표 규칙 · 상품 과세 */
   ['acct-month', '월 결산'],   /* v10.390 (D244 · docs/527) 월 결산 요약 · 신고 기한 */
   ['acct-bank', '은행 맞추기'],   /* v10.388 (D244 · docs/525) 통장 거래 내역 ↔ 전표 */
+  ['acct-purchase', '매입'],   /* v10.392 (D245 · docs/529) 매입 세금계산서 · 카드 · 현금영수증 · 간이영수증 */
+  ['acct-expense', '경비 청구'],   /* v10.393 (D245 · docs/530) 경비 청구 · 법인카드 */
+  ['acct-cash', '자금 흐름'],   /* v10.394 (D245 · docs/531) */
+  ['acct-stock', '재고'],   /* v10.395 (D245 · docs/532) 직판 재고 수불부 */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -98,7 +102,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-tax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -195,7 +199,11 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-report':   { title: '경영 보고서', sub: '달마다 매출(공급가) · 비용 · 이익 · 현금 들고 남 — 시스템을 지난 돈만입니다(급여 · 임대료 등은 회계 프로그램).', screen: 'SB-ADM-ACC-030' },
   'acct-month':    { title: '월 결산', sub: '그 달 매출 · 비용 · 부가세 · 원천세 · 현금과 마감 전 할 일(전표 실패 · 통장 맞춤 · 세금계산서), 다가오는 신고 기한(원천세 10일 · 부가세 25일)입니다.', screen: 'SB-ADM-ACC-050' },
   'acct-bank':     { title: '은행 맞추기', sub: '인터넷뱅킹 거래 내역 CSV 를 올려 전표의 보통예금 줄과 금액 · 날짜 · 이름으로 맞춥니다. 맞출 것이 없는 줄(이자 · 수수료)은 사유와 함께 둡니다.', screen: 'SB-ADM-ACC-060' },
-  'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드와 돈 흐름별 전표 모양(초안 · 세무사 확인), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
+  'acct-purchase': { title: '매입', sub: '매입 세금계산서 · 카드 · 현금영수증 · 간이영수증(공제 안 됨)을 증빙 파일과 넣으면 비용 · 부가세대급금 전표가 생깁니다. 분기 매입 부가세는 신고 자료 매입 쪽.', screen: 'SB-ADM-ACC-070' },
+  'acct-expense':  { title: '경비 청구', sub: '운영자가 쓴 돈을 증빙과 올리고 SUPER 가 승인(본인 건 불가) · 지급 담당이 지급합니다. 법인카드 이용 내역 CSV 를 올려 줄마다 계정을 골라 장부에 넣습니다.', screen: 'SB-ADM-ACC-080' },
+  'acct-cash':     { title: '자금 흐름', sub: '앞으로 90일 날마다 예상 잔액 — 시작 잔액(직접 넣음 · 통장 CSV)에 확정된 들어올 돈 · 나갈 돈을 더하고 뺍니다. 가장 낮은 날이 기준 밑이면 운영 알림.', screen: 'SB-ADM-ACC-090' },
+  'acct-stock':    { title: '재고', sub: '직판 상품 원가 장부(이동평균) — 입고 · 결제 때 출고 · 취소 · 반품 반입 · 실사 조정 · 매출원가 전표', screen: 'SB-ADM-ACC-100' },
+  'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
   'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록. 허용 IP 는 Nginx 반영 스크립트로 운영 화면 접속 허용에도 씁니다(SUPER).', screen: 'SB-ADM-SIP-010' },

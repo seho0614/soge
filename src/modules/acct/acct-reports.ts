@@ -1,5 +1,5 @@
 import { DatabaseService } from '../../db/database.service';
-import { SOURCES } from './journal';
+import { ALL_SOURCES } from './sources';   // v10.392 — ⑫ 돈 흐름 이름까지
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
@@ -7,8 +7,8 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
  * ------------------------------------------------------------------- */
 
 const REV = ['REV_SUB', 'REV_REFCODE', 'REV_AD', 'REV_LEAD', 'REV_DIRECTORY', 'REV_COMMISSION', 'REV_MALL'];
-const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '증빙 없음' };
-const LABEL = Object.fromEntries(SOURCES.map((s) => [s.name, s.label]));
+const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '증빙 없음', CARD: '법인카드', SIMPLE: '간이영수증' };
+const LABEL = Object.fromEntries(ALL_SOURCES.map((s) => [s.name, s.label]));
 
 /** 'YYYY-n' → [시작, 끝) 날짜 · 비우면 이번 분기(한국) */
 export function quarterRange(q?: string) {

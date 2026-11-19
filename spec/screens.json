@@ -5584,9 +5584,12 @@
     "GET /admin/acct/formats",
     "POST /admin/acct/formats",
     "PATCH /admin/acct/formats/{id}",
-    "POST /admin/acct/formats/preview"
+    "POST /admin/acct/formats/preview",
+    "POST /admin/acct/accounts",
+    "PATCH /admin/acct/rules/{source}",
+    "GET /admin/acct/rules/sheet"
    ],
-   "note": "2026-11-19 v10.381 · 383 (D242 · docs/517 · 519) 계정 코드(SUPER) · 전표 규칙(초안) · 직판 상품 과세 · 면세(ADMIN · SUPER) · 2026-11-19 v10.389 (D244 · docs/526) 전표 CSV 양식(칸 · 날짜 · 차변/대변 · 기본 · SUPER)"
+   "note": "2026-11-19 v10.381 · 383 (D242 · docs/517 · 519) 계정 코드(SUPER) · 전표 규칙(초안) · 직판 상품 과세 · 면세(ADMIN · SUPER) · 2026-11-19 v10.389 (D244 · docs/526) 전표 CSV 양식(칸 · 날짜 · 차변/대변 · 기본 · SUPER) · 2026-11-19 v10.392 (D245 · docs/529) 계정 더하기(U_) · 규칙 고치기(계정 자리 · 증빙 · SUPER · 다음 전표부터) · 확인표 CSV · 세무사랑 일반전표 양식 기본"
   },
   {
    "id": "SB-ADM-ACC-050",
@@ -5625,6 +5628,95 @@
     "POST /admin/acct/bank/auto-match"
    ],
    "note": "2026-11-19 v10.388 (D244 · docs/525) 통장 거래 내역 CSV(같은 줄 한 번) ↔ 전표 보통예금 줄(금액 · 날짜 ±N일 · 이름) · 맞출 것 없음(사유) · 자동 맞춤"
+  },
+  {
+   "id": "SB-ADM-ACC-070",
+   "name": "회계 매입",
+   "group": "ADM",
+   "url": "/admin/acct-purchase",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/purchases",
+    "POST /admin/acct/purchases",
+    "POST /admin/acct/purchases/{id}/cancel",
+    "GET /admin/acct/tax/vat-purchase"
+   ],
+   "note": "2026-11-19 v10.392 (D245 · docs/529) 매입 세금계산서 · 카드 · 현금영수증 · 간이영수증(공제 안 됨) · 증빙 파일(ACCT_EVIDENCE) · 취소(사유 · 반대 전표) · 분기 매입 부가세(공제 · 불공제 · 공급자별)"
+  },
+  {
+   "id": "SB-ADM-ACC-080",
+   "name": "회계 경비 청구 · 법인카드",
+   "group": "ADM",
+   "url": "/admin/acct-expense",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ADMIN",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/expenses",
+    "POST /admin/acct/expenses",
+    "POST /admin/acct/expenses/{id}/decide",
+    "POST /admin/acct/expenses/{id}/paid",
+    "POST /admin/acct/expenses/{id}/cancel",
+    "POST /admin/acct/cards/upload",
+    "GET /admin/acct/cards",
+    "POST /admin/acct/cards/{id}/book"
+   ],
+   "note": "2026-11-19 v10.393 (D245 · docs/530) 경비 청구(운영자 누구나 올림 · SUPER 승인 · 본인 불가 · PAYOUT 지급 · 증빙 ACCT_EVIDENCE 3개) · 법인카드 이용 내역 CSV · 장부에 넣기(계정 · 공제) · 전표 EXPENSE_APPROVED · EXPENSE_PAID · CARD_TXN · 법인카드 상자는 SUPER · PAYOUT 만"
+  },
+  {
+   "id": "SB-ADM-ACC-090",
+   "name": "회계 자금 흐름",
+   "group": "ADM",
+   "url": "/admin/acct-cash",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/cashflow",
+    "POST /admin/acct/cashflow/balance",
+    "GET /admin/acct/cashflow/plans",
+    "POST /admin/acct/cashflow/plans",
+    "POST /admin/acct/cashflow/plans/{id}/cancel"
+   ],
+   "note": "2026-11-19 v10.394 (D245 · docs/531) 앞으로 90일 날마다 예상 잔액 — 시작 잔액(직접 넣음 · 통장 CSV) + 확정된 들어올 돈 · 나갈 돈 · 가장 낮은 날 · 기준 밑이면 ACCT_CASH_SHORT"
+  },
+  {
+   "id": "SB-ADM-ACC-100",
+   "name": "회계 재고",
+   "group": "ADM",
+   "url": "/admin/acct-stock",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/stock",
+    "GET /admin/acct/stock/{code}/moves",
+    "POST /admin/acct/stock/in",
+    "POST /admin/acct/stock/adjust"
+   ],
+   "note": "2026-11-19 v10.395 (D245 · docs/532) 직판 재고 수불부 — 옵션마다 이동평균 원가 · 입고(SUPER · PAYOUT) · 결제 승인 때 출고 · 취소 · 반품 반입(자동 acct_stock) · 실사 조정(SUPER · 사유) · 매출원가 전표 · 화면 ID 는 메인이 다른 판과 겹치지 않게 정함"
   }
  ],
  "deferred": [

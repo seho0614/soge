@@ -7,7 +7,7 @@ import { api, ApiFailure } from './api';
  *
  * 형식 · 크기 · 해시는 서버가 실제 바이트로 다시 봅니다. 여기 검사는 안내용입니다.
  */
-export type Purpose = 'OWNERSHIP_DOC' | 'MARKETING_MATERIAL' | 'PARTNER_GUIDE' | 'PRODUCT_IMAGE' | 'NOTICE_ATTACHMENT';   // v10.295 공지 첨부
+export type Purpose = 'OWNERSHIP_DOC' | 'MARKETING_MATERIAL' | 'PARTNER_GUIDE' | 'PRODUCT_IMAGE' | 'NOTICE_ATTACHMENT' | 'ACCT_EVIDENCE';   // v10.295 공지 첨부 · v10.392 (D245) 회계 증빙(매입 · 경비 청구)
 export interface Uploaded { fileId: string; name: string; contentType: string; size: number }
 
 export function guessType(f: File): string {

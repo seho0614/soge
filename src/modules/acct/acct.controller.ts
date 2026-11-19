@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -8,11 +8,17 @@ import { AppError, NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { ExportGate } from '../admin/export-approval';
-import { SOURCES, runJournal } from './journal';
+import { runJournal } from './journal';
+import { ALL_SOURCES } from './sources';
+import { EVIDENCES, addAccount, ruleSheet, rulesView, setRule } from './rules';
 import { acctReport, cancelTaxInvoiceRequest, requestTaxInvoice, taxInvoices, vatSummary, withholdingSummary } from './acct-reports';
 import { BANK_MAX_CHARS, bankAutoMatch, bankMatch, bankMonth, uploadBank } from './bank';
 import { DATE_STYLES, FIELDS, checkFormat, listFormats, pickFormat, renderRows } from './formats';
 import { deadlines, monthSummary } from './month';
+import { PAY_ROLES, PURCHASE_KINDS, PURCHASE_MAX_FILES, addPurchase, cancelPurchase, listPurchases, purchaseVat } from './purchase';
+import { bookCard, cancelExpense, cardMonth, createExpense, decideExpense, listExpenses, payExpense, uploadCard } from './expense';
+import { addCashBalance, addCashPlan, cancelCashPlan, cashflow, listCashPlans } from './cashflow';
+import { stockAdjust, stockIn, stockList, stockMoves } from './stock';
 
 /* ---------------------------------------------------------------------
  * v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계 · 세무 1단계 — 운영 화면 「회계」 메뉴
@@ -40,6 +46,25 @@ import { deadlines, monthSummary } from './month';
  *            GET   /admin/acct/deadlines                   다가오는 신고 기한(원천세 10일 · 부가세 25일)
  *   v10.391  POST  /admin/acct/tax/invoices/request        광고 청구 · 입점 수수료 세금계산서 발행 요청 → /admin/etax/{ad|commission}/{id}/send
  *            POST  /admin/acct/tax/invoices/{id}/cancel    보내지 않은 요청 취소
+ *   ── ⑫ (D245 · docs/529 ~ 532) ──
+ *   v10.392  PATCH /admin/acct/rules/{source}              규칙 고치기 — 계정 자리(같은 종류) · 증빙(SUPER · 사유 · 다음 전표부터 · 감사 ACCT_RULE_SET)
+ *            POST  /admin/acct/accounts                    계정 더하기(U_ · SUPER · 감사 ACCT_ACCOUNT_ADD)
+ *            GET   /admin/acct/rules/sheet?csv=1           규칙 확인표(예시 전표 · 계정 코드 · 초안 · CSV)
+ *            GET   /admin/acct/purchases?ym=               그 달 매입 · 합계 · 고를 계정
+ *            POST  /admin/acct/purchases                   매입 넣기(SUPER · PAYOUT · 같은 건 409 · 감사 ACCT_PURCHASE_ADD)
+ *            POST  /admin/acct/purchases/{id}/cancel       취소(사유 · 반대 전표 · 감사 ACCT_PURCHASE_CANCEL)
+ *            GET   /admin/acct/tax/vat-purchase?q=YYYY-n   신고 자료 매입 쪽(공제 · 불공제 · 종류별 · 공급자별)
+ *   v10.393  GET   /admin/acct/expenses?state=&ym=         경비 청구(SUPER · PAYOUT 모두 · 나머지 자기 것)
+ *            POST  /admin/acct/expenses                    경비 청구 올리기(운영자 누구나 · 증빙 3개 · 감사 ACCT_EXPENSE_CREATE)
+ *            POST  /admin/acct/expenses/{id}/decide        승인 · 반려(SUPER · 본인 불가 · 감사 ACCT_EXPENSE_DECIDE)
+ *            POST  /admin/acct/expenses/{id}/paid          지급 처리(PAYOUT · 본인 불가 · 감사 ACCT_EXPENSE_PAID)
+ *            POST  /admin/acct/expenses/{id}/cancel        본인 청구 취소(감사 ACCT_EXPENSE_CANCEL)
+ *            POST  /admin/acct/cards/upload · GET /admin/acct/cards?ym= · POST /admin/acct/cards/{id}/book   법인카드 CSV · 장부에 넣기
+ *   v10.394  GET   /admin/acct/cashflow?days=90            날마다 예상 잔액 · 가장 낮은 날(확정된 것만)
+ *            POST  /admin/acct/cashflow/balance            잔액 직접 넣기(SUPER · 감사 ACCT_CASH_BALANCE)
+ *            GET · POST /admin/acct/cashflow/plans · POST /admin/acct/cashflow/plans/{id}/cancel   예정 들고 남
+ *   v10.395  GET   /admin/acct/stock · GET /admin/acct/stock/{code}/moves?ym=   직판 재고 · 수불
+ *            POST  /admin/acct/stock/in · POST /admin/acct/stock/adjust        입고 · 실사 조정(감사 ACCT_STOCK_*)
  * ------------------------------------------------------------------- */
 
 const YM = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -94,6 +119,105 @@ export class TaxInvoiceRequestDto {
 export class TaxInvoiceCancelDto {
   @ApiProperty({ example: '금액 다시 확인' }) @IsString() @Length(1, 400) reason!: string;
 }
+export class RuleMapDto {
+  @ApiProperty({ example: 'REV_SUB', description: '원래 계정 자리(역할)' }) @IsString() @Matches(/^[A-Z][A-Z0-9_]{1,39}$/) from!: string;
+  @ApiProperty({ example: 'U_REV_SUB2', description: '쓸 계정(같은 종류)' }) @IsString() @Matches(/^[A-Z][A-Z0-9_]{1,39}$/) to!: string;
+}
+export class AcctRuleDto {
+  @ApiPropertyOptional({ type: [RuleMapDto], description: '계정 자리 바꾸기(원래 역할로 두면 바꾼 것 지움)' }) @IsOptional() @IsArray() maps?: RuleMapDto[];
+  @ApiPropertyOptional({ enum: EVIDENCES, description: '증빙 바꾸기' }) @IsOptional() @IsIn(EVIDENCES as string[]) evidence?: string;
+  @ApiProperty({ example: '세무사 확인 — 구독 매출 계정 따로' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class AcctAccountAddDto {
+  @ApiProperty({ example: 'U_REV_SUB2', description: '역할(U_ 로 시작 · 대문자)' }) @IsString() @Matches(/^U_[A-Z][A-Z0-9_]{1,30}$/) role!: string;
+  @ApiProperty({ example: '구독 매출(연간)' }) @IsString() @Length(1, 60) name!: string;
+  @ApiProperty({ enum: ['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE'] }) @IsIn(['ASSET', 'LIABILITY', 'REVENUE', 'EXPENSE']) kind!: string;
+  @ApiPropertyOptional({ example: '405' }) @IsOptional() @IsString() @Matches(/^([0-9A-Za-z._-]{1,20})?$/) extCode?: string;
+  @ApiPropertyOptional({ example: '용역매출' }) @IsOptional() @IsString() @Length(0, 60) extName?: string;
+  @ApiProperty({ example: '세무사 계정 코드표' }) @IsString() @Length(1, 400) reason!: string;
+}
+
+export class PurchaseAddDto {
+  @ApiProperty({ enum: PURCHASE_KINDS, description: 'TAX_INVOICE 매입 세금계산서 · CARD 카드 · CASH 현금영수증 · SIMPLE 간이영수증(공제 안 됨)' }) @IsIn(PURCHASE_KINDS as unknown as string[]) kind!: string;
+  @ApiProperty({ example: '2026-11-18', description: '발행일(앞날 안 됨)' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) issuedOn!: string;
+  @ApiProperty({ example: '(주)사무용품' }) @IsString() @Length(1, 120) supplierName!: string;
+  @ApiPropertyOptional({ example: '1234567890', description: '공급자 사업자등록번호(세금계산서는 필수 · - 빼도 됨)' }) @IsOptional() @IsString() @Length(0, 14) supplierBizNo?: string;
+  @ApiProperty({ example: '복사용지' }) @IsString() @Length(1, 120) item!: string;
+  @ApiProperty({ example: 100000, description: '공급가(간이영수증은 합계)' }) @IsInt() @Min(1) @Max(10_000_000_000) supply!: number;
+  @ApiPropertyOptional({ example: 10000, description: '부가세(간이영수증은 0)' }) @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) vat?: number;
+  @ApiPropertyOptional({ description: '부가세 공제(처음 예 · 간이영수증 · 기업업무추진비는 언제나 아니오)' }) @IsOptional() @IsBoolean() deductible?: boolean;
+  @ApiProperty({ example: 'EXP_SUPPLIES', description: '비용 · 자산 계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole!: string;
+  @ApiProperty({ enum: PAY_ROLES, description: 'CASH 보통예금 · AP 미지급금 · CARD_AP 법인카드' }) @IsIn(PAY_ROLES as unknown as string[]) payRole!: string;
+  @ApiPropertyOptional({ example: '11월 사무용품' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
+  @ApiPropertyOptional({ type: [String], description: `증빙 파일 id — POST /files(ACCT_EVIDENCE)로 올린 것 · ${PURCHASE_MAX_FILES}개까지` }) @IsOptional() @IsArray() @ArrayMaxSize(PURCHASE_MAX_FILES) @IsString({ each: true }) attachments?: string[];
+  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계가 있어도 넣기' }) @IsOptional() @IsBoolean() force?: boolean;
+}
+export class PurchaseCancelDto {
+  @ApiProperty({ example: '금액 잘못 넣음' }) @IsString() @Length(1, 400) reason!: string;
+}
+
+const STAFF = ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'] as const;   // SUPER 는 늘 통과
+
+export class ExpenseCreateDto {
+  @ApiProperty({ example: '2026-11-18', description: '쓴 날(오늘까지)' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) spentOn!: string;
+  @ApiProperty({ example: 'EXP_TRAVEL', description: '비용 계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole!: string;
+  @ApiProperty({ example: 33000, description: '쓴 금액(부가세 포함 · 1 ~ 1억 원)' }) @IsInt() @Min(1) @Max(100000000) amount!: number;
+  @ApiPropertyOptional({ example: 3000, description: '공제받을 부가세(간이영수증은 0)' }) @IsOptional() @IsInt() @Min(0) vat?: number;
+  @ApiProperty({ enum: ['CARD', 'CASH', 'SIMPLE', 'TAX_INVOICE'] }) @IsIn(['CARD', 'CASH', 'SIMPLE', 'TAX_INVOICE']) evidence!: string;
+  @ApiProperty({ example: '거래처 방문 택시비' }) @IsString() @Length(2, 100) item!: string;
+  @ApiPropertyOptional({ example: '강남 → 판교' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
+  @ApiPropertyOptional({ type: [String], description: 'POST /files(ACCT_EVIDENCE)로 올린 파일 id · 3개까지' }) @IsOptional() @IsArray() @IsString({ each: true }) attachments?: string[];
+}
+export class ExpenseDecideDto {
+  @ApiProperty({ enum: ['approve', 'reject'] }) @IsIn(['approve', 'reject']) decision!: 'approve' | 'reject';
+  @ApiPropertyOptional({ example: '증빙이 흐림 — 다시 올려 주십시오', description: '반려 사유(2 ~ 200자)' }) @IsOptional() @IsString() @Length(0, 400) reason?: string;
+}
+export class CardUploadDto {
+  @ApiProperty({ description: '법인카드 이용 내역 CSV 글자(95,000자까지)' }) @IsString() @Length(1, 95000) csv!: string;
+  @ApiPropertyOptional({ example: '이용내역_202611.csv' }) @IsOptional() @IsString() @Length(0, 200) filename?: string;
+  @ApiPropertyOptional({ example: '신한 법인카드' }) @IsOptional() @IsString() @Length(0, 40) card?: string;
+}
+export class CardBookDto {
+  @ApiPropertyOptional({ example: 'EXP_WELFARE', description: '비용 · 자산 계정 역할' }) @IsOptional() @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole?: string;
+  @ApiPropertyOptional({ description: '매입세액 공제(÷ 11) — 간이과세 · 면세 가맹점 · 접대비는 아니오' }) @IsOptional() @IsBoolean() deductible?: boolean;
+  @ApiPropertyOptional({ description: '장부에 넣지 않음(사유 필요)' }) @IsOptional() @IsBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ example: '개인 사용 — 본인 부담 처리' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+
+/* ── DTO(클래스 이름 src 전체 고유 확인함: CashBalanceDto · CashPlanDto · CashPlanCancelDto 없음) ── */
+const YMD = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export class CashBalanceDto {
+  @ApiProperty({ example: '2026-11-19', description: '잔액 날짜(오늘부터 1년 전까지)' }) @Matches(YMD) asOf!: string;
+  @ApiProperty({ example: 25000000, description: '그날 끝 통장 잔액(원 · 여러 통장이면 합)' }) @IsInt() amount!: number;
+  @ApiPropertyOptional({ example: '국민 · 기업 통장 합' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+export class CashPlanDto {
+  @ApiProperty({ example: '2026-11-25', description: '날짜(매달이면 첫 날)' }) @Matches(YMD) dueOn!: string;
+  @ApiProperty({ enum: ['IN', 'OUT'] }) @IsIn(['IN', 'OUT']) direction!: 'IN' | 'OUT';
+  @ApiProperty({ example: 1500000 }) @IsInt() amount!: number;
+  @ApiProperty({ example: '사무실 임대료' }) @IsString() @Length(1, 200) memo!: string;
+  @ApiPropertyOptional({ enum: ['NONE', 'MONTHLY'] }) @IsOptional() @IsIn(['NONE', 'MONTHLY']) repeat?: 'NONE' | 'MONTHLY';
+  @ApiPropertyOptional({ example: '2027-10-25', description: '매달 반복 끝 날짜(비우면 계속)' }) @IsOptional() @Matches(YMD) untilOn?: string;
+}
+export class CashPlanCancelDto {
+  @ApiProperty({ example: '계약 해지' }) @IsString() @Length(1, 400) reason!: string;
+}
+
+/* ── DTO (클래스 위치: 다른 DTO 옆 · 컨트롤러 클래스 앞) ── */
+export class StockInDto {
+  @ApiProperty({ format: 'uuid', description: '직판 상품 옵션 번호' }) @IsString() @Length(36, 36) optionId!: string;
+  @ApiProperty({ example: 100, description: '들어온 수량(1 ~ 1,000,000)' }) @IsInt() @Min(1) @Max(1000000) qty!: number;
+  @ApiProperty({ example: 12000, description: '한 개 매입 단가(원 · 부가세 뺀 공급가)' }) @IsNumber() @Min(0.01) @Max(1000000000) unitCost!: number;
+  @ApiPropertyOptional({ example: '2026-11-19', description: '입고 날짜(비우면 오늘 · 오늘까지)' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) movedOn?: string;
+  @ApiPropertyOptional({ example: '12', description: '⑫ 매입 번호(있으면 입고 전표 없음 — 매입 전표가 상품으로 잡음)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) purchaseId?: string;
+  @ApiPropertyOptional({ example: '11월 2차 입고' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
+}
+export class StockAdjustDto {
+  @ApiProperty({ format: 'uuid', description: '직판 상품 옵션 번호' }) @IsString() @Length(36, 36) optionId!: string;
+  @ApiProperty({ example: -2, description: '늘림 + · 줄임 − (0 아님 · 줄임은 0 아래로 못 감)' }) @IsInt() @Min(-1000000) @Max(1000000) qty!: number;
+  @ApiPropertyOptional({ example: 12000, description: '재고가 없을 때 늘리면 단가 필요(있으면 지금 평균 단가)' }) @IsOptional() @IsNumber() @Min(0) @Max(1000000000) unitCost?: number;
+  @ApiProperty({ example: '11월 실사 — 파손 2개', description: '사유(2 ~ 200자)' }) @IsString() @Length(1, 400) reason!: string;
+}
 
 const reasonOk = (r: string, code: string) => {
   const t = (r ?? '').replace(/\s+/g, ' ').trim();
@@ -106,7 +230,7 @@ const csvCell = (v: unknown) => {
 };
 export const toCsv = (head: string[], rows: unknown[][]) => '﻿' + [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 const kstYm = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 7);
-const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '' };
+const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '', CARD: '법인카드', SIMPLE: '간이영수증' };
 
 @ApiTags('ADM')
 @ApiBearerAuth()
@@ -121,16 +245,39 @@ export class AcctController {
   @ApiOperation({ summary: '회계 계정 · 전표 규칙 (v10.381)', description: '계정(역할 · 이름 · 회계 프로그램 코드) · 돈 흐름별 전표 줄 모양(11,000원 예) · 설정(acct.*) · 고칠 수 있는가(SUPER). 규칙은 초안(세무사 확인).' })
   @ApiOkResponse({ type: Object })
   async accounts() {
-    const accounts = await this.db.query(
-      `SELECT role, name, kind, ext_code AS "extCode", ext_name AS "extName", note, updated_at AS "updatedAt" FROM acct_accounts ORDER BY sort, role`);
     const settings = await this.db.query<{ key: string; value: string }>(`SELECT key, value FROM site_settings WHERE key LIKE 'acct.%' ORDER BY key`);
-    const sv = settings.find((s) => s.key === 'acct.sub_vat_included')?.value !== 'off', cv = settings.find((s) => s.key === 'acct.commission_vat_included')?.value !== 'off';
-    const sample: Record<string, unknown> = { key: 'x', at: '', party: null, amt: 11000, supply: 10000, vat: 1000, total: 11000, paid: 11000, exempt: 0, gross: 11000, wht: 363, net: 10637, kind: 'USE', no: '', method: 'TRANSFER', period: '' };
-    const rules = SOURCES.map((s) => {
-      const b = s.build(sample as never, { subVat: sv, commissionVat: cv });
-      return { source: s.name, label: s.label, evidence: b?.evidence ?? 'NONE', lines: b?.lines ?? [] };
-    });
-    return { accounts, rules, settings, canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER', note: '전표 규칙 · 계정 코드는 초안입니다 — 세무사 확인 뒤 회계 프로그램 코드만 고치십시오(역할은 그대로).' };
+    const v = await rulesView(this.db, ALL_SOURCES);   // v10.392 — 바꾼 규칙 · 계정 자리 · 바꾼 기록 · 계정 초안 표시
+    return { ...v, settings, canEdit: (RequestCtx.get()?.actorRole ?? '') === 'SUPER',
+             note: '전표 규칙 · 계정 코드는 초안입니다 — 세무사 확인 뒤 계정 코드 · 계정 자리 · 증빙을 고치십시오(금액 계산은 고정 · 바꾼 다음 전표부터).' };
+  }
+
+  @Post('accounts')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_ACCOUNT_ADD', 'SETTING')
+  @ApiOperation({ summary: '회계 계정 더하기 (v10.392 · SUPER)', description: '역할 U_ 로 시작 · 종류(자산 · 부채 · 매출 · 비용) · 회계 프로그램 코드 · 이름. 규칙의 같은 종류 계정 자리에 고를 수 있습니다. 지우지 않습니다.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_ACCOUNT · ACCT_ACCOUNT_DUP · ACCT_REASON' })
+  addAccount(@Body() dto: AcctAccountAddDto) { return addAccount(this.db, dto); }
+
+  @Patch('rules/:source')
+  @Roles('SUPER')
+  @Audit('ACCT_RULE_SET', 'SETTING')
+  @ApiParam({ name: 'source', example: 'SUB_PAID' })
+  @ApiOperation({ summary: '전표 규칙 고치기 (v10.392 · SUPER)', description: '돈 흐름의 계정 자리를 같은 종류 다른 계정으로 · 증빙 바꾸기. 금액 계산은 고정. 바꾼 다음 전표부터(지난 전표는 그대로) · 바꾼 기록(acct_rule_changes).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_RULE · ACCT_RULE_KIND · ACCT_REASON' })
+  setRule(@Param('source') source: string, @Body() dto: AcctRuleDto) { return setRule(this.db, ALL_SOURCES, source, dto, RequestCtx.actorId() ?? null); }
+
+  @Get('rules/sheet')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'csv', required: false, example: '1' })
+  @ApiOperation({ summary: '전표 규칙 확인표 (v10.392)', description: '모든 규칙을 예시 금액(11,000원) 전표 · 계정 코드 · 초안 여부로 한 장. csv=1 이면 CSV 글자(세무사 확인용 · 개인정보 없음).' })
+  @ApiOkResponse({ type: Object })
+  async ruleSheet(@Query('csv') csv?: string) {
+    const r = await ruleSheet(this.db, ALL_SOURCES);
+    return csv === '1' ? { ...r, csv: toCsv(r.head, r.rows), filename: `전표규칙_확인표_${kstYm()}.csv` } : r;
   }
 
   @Patch('accounts/:role')
@@ -207,7 +354,7 @@ export class AcctController {
   @Roles('SUPER')
   @ApiOperation({ summary: '지금 전표 만들기 (v10.382 · SUPER)', description: '정기 작업 acct_journal 과 같음 — 아직 전표가 없는 돈 흐름만(같은 근거는 한 번).' })
   @ApiOkResponse({ type: Object })
-  run() { return runJournal(this.db); }
+  run() { return runJournal(this.db, ALL_SOURCES); }
 
   @Get('journal/export')
   @Roles(...VIEW)
@@ -253,7 +400,7 @@ export class AcctController {
     if (dto.ym >= kstYm()) throw new PolicyViolation('ACCT_CLOSE_FUTURE', '이번 달과 앞으로의 달은 마감할 수 없습니다(달이 끝난 뒤).');
     const [had] = await this.db.query(`SELECT 1 FROM acct_closings WHERE ym = $1`, [dto.ym]);
     if (had) throw new AppError(409, { code: 'ACCT_CLOSED', message: '이미 마감한 달입니다.' });
-    const made = await runJournal(this.db);
+    const made = await runJournal(this.db, ALL_SOURCES);
     const [r] = await this.db.query<{ n: number; d: string }>(
       `INSERT INTO acct_closings (ym, entries, debit_sum, note, closed_by)
        SELECT $1, count(DISTINCT e.id)::int, coalesce(sum(l.debit), 0), nullif($2, ''), $3
@@ -467,4 +614,227 @@ export class AcctController {
   @ApiResponse({ status: 409, type: ErrorDto, description: 'TAXINV_NOT_CANCELABLE' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'TAXINV_REASON' })
   taxInvoiceCancel(@Param('id') id: string, @Body() dto: TaxInvoiceCancelDto) { return cancelTaxInvoiceRequest(this.db, id, dto.reason); }
+
+  /* ── ⑫ purchase ── */
+
+  /* ── v10.392 매입 관리 ── */
+  @Get('purchases')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '매입 목록 (v10.392)', description: '그 달(발행일) 매입 · 종류 · 공급자 · 공급가 · 부가세 · 공제 · 계정 · 낸 방법 · 증빙 파일 · 전표 번호 · 합계(취소 뺌) · 고를 계정(비용 · 자산).' })
+  @ApiOkResponse({ type: Object })
+  async purchases(@Query('ym') ym?: string) {
+    const m = ym && YM.test(ym) ? ym : kstYm();
+    return listPurchases(this.db, m);
+  }
+
+  @Post('purchases')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PURCHASE_ADD', 'SETTING')
+  @ApiOperation({ summary: '매입 넣기 (v10.392 · SUPER · PAYOUT)', description: '매입 세금계산서 · 카드 · 현금영수증 · 간이영수증. 금액 · 날짜는 나중에 못 고침(취소 뒤 다시). 전표는 정기 작업이 만듦(차변 비용 · 부가세대급금 / 대변 낸 방법).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PURCHASE_DUP — 같은 공급자 · 날짜 · 합계(force 로 넣음)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PURCHASE_KIND · PURCHASE_DATE · PURCHASE_SUPPLIER · PURCHASE_BIZNO · PURCHASE_ITEM · PURCHASE_AMOUNT · PURCHASE_SIMPLE_VAT · PURCHASE_ACCOUNT · PURCHASE_PAY · PURCHASE_FILES' })
+  async addPurchase(@Body() dto: PurchaseAddDto) {
+    return addPurchase(this.db, dto, RequestCtx.actorId() ?? null);
+  }
+
+  @Post('purchases/:id/cancel')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PURCHASE_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '12' })
+  @ApiOperation({ summary: '매입 취소 (v10.392 · SUPER · PAYOUT)', description: '사유(2 ~ 200자). 전표가 있었으면 다음 전표 만들기 때 반대 전표(PURCHASE_CANCEL). 취소한 것은 다시 못 고침.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PURCHASE_STATE — 이미 취소함' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PURCHASE_REASON' })
+  async cancelPurchase(@Param('id') id: string, @Body() dto: PurchaseCancelDto) {
+    return cancelPurchase(this.db, id, dto.reason, RequestCtx.actorId() ?? null);
+  }
+
+  @Get('tax/vat-purchase')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'q', required: false, example: '2026-4', description: '분기 YYYY-n(비우면 이번 분기)' })
+  @ApiOperation({ summary: '부가세 신고 자료 — 매입 쪽 (v10.392)', description: '분기 매입 — 종류별 · 공제 · 불공제 합계 · 매입 세금계산서 공급자(사업자번호)별 합계. 신고서 칸 맞춤은 세무사 확인.' })
+  @ApiOkResponse({ type: Object })
+  vatPurchase(@Query('q') q?: string) { return purchaseVat(this.db, q); }   // 잘못된 분기는 ok:false(tax/vat 와 같음)
+
+  /* ── ⑫ expense ── */
+
+  /* ── ⑫ v10.393 경비 청구 · 법인카드 ── */
+  @Get('expenses')
+  @Roles(...STAFF)
+  @ApiQuery({ name: 'state', required: false, enum: ['REQUESTED', 'APPROVED', 'REJECTED', 'PAID', 'CANCELED'] })
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '경비 청구 목록 (v10.393)', description: 'SUPER · PAYOUT 은 모두, 나머지 운영자는 자기 청구만 · 비용 계정 · 증빙 종류 · 청구 · 승인(지급 전) 셈 · 승인할 수 있는가(SUPER) · 지급 처리할 수 있는가(PAYOUT).' })
+  @ApiOkResponse({ type: Object })
+  expenses(@Query('state') state?: string, @Query('ym') ym?: string) {
+    return listExpenses(this.db, RequestCtx.actorId() ?? '00000000-0000-0000-0000-000000000000', { state, ym });
+  }
+
+  @Post('expenses')
+  @Roles(...STAFF)
+  @Audit('ACCT_EXPENSE_CREATE', 'SETTING')
+  @ApiOperation({ summary: '경비 청구 올리기 (v10.393)', description: '개인 돈으로 쓴 경비 — 쓴 날(오늘까지) · 비용 계정 · 금액(부가세 포함) · 공제 부가세(간이영수증 0) · 증빙 종류 · 내용 · 증빙 파일(ACCT_EVIDENCE · 본인이 올린 것 · 3개).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_EXPENSE_INPUT · ACCT_EXPENSE_ROLE · TOO_MANY_FILES · FILE_INVALID' })
+  createExpense(@Body() dto: ExpenseCreateDto) { return createExpense(this.db, dto, RequestCtx.actorId()!); }
+
+  @Post('expenses/:id/decide')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('ACCT_EXPENSE_DECIDE', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '경비 승인 · 반려 (v10.393 · SUPER)', description: '청구 상태만 · 본인 청구는 불가(DB 도 막음 EXPENSE_SELF) · 반려는 사유. 승인하면 다음 전표 작업에서 EXPENSE_APPROVED 전표(비용 · 부가세대급금 / 미지급금).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_EXPENSE_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPENSE_SELF · ACCT_REASON' })
+  decideExpense(@Param('id') id: string, @Body() dto: ExpenseDecideDto) { return decideExpense(this.db, id, dto.decision, dto.reason, RequestCtx.actorId()!); }
+
+  @Post('expenses/:id/paid')
+  @HttpCode(200)
+  @Roles('PAYOUT')
+  @Audit('ACCT_EXPENSE_PAID', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '경비 지급 처리 (v10.393 · PAYOUT)', description: '승인된 것만 · 본인 경비는 불가 · 다음 전표 작업에서 EXPENSE_PAID 전표(미지급금 / 보통예금) — 통장 출금은 은행 맞추기에서 이 전표와 맞춤.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_EXPENSE_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'EXPENSE_SELF' })
+  payExpense(@Param('id') id: string) { return payExpense(this.db, id, RequestCtx.actorId()!); }
+
+  @Post('expenses/:id/cancel')
+  @HttpCode(200)
+  @Roles(...STAFF)
+  @Audit('ACCT_EXPENSE_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '경비 청구 취소 (v10.393)', description: '본인 청구 · 청구 상태만(승인 · 반려 뒤에는 못 함).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_EXPENSE_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_EXPENSE_OWNER' })
+  cancelExpense(@Param('id') id: string) { return cancelExpense(this.db, id, RequestCtx.actorId()!); }
+
+  @Post('cards/upload')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_CARD_UPLOAD', 'SETTING')
+  @ApiOperation({ summary: '법인카드 이용 내역 올리기 (v10.393)', description: '카드사 이용 내역 CSV(엑셀 저장) 글자 — 머리줄 이름으로 이용일 · 가맹점 · 이용 금액 · 승인번호 · 카드번호 · 취소 칸을 찾음 · 같은 줄은 한 번 · 취소는 음수.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CARD_CSV_HEAD · CARD_CSV_EMPTY · CARD_CSV_SIZE · CARD_CSV_TOO_MANY' })
+  cardUpload(@Body() dto: CardUploadDto) { return uploadCard(this.db, dto.csv, dto.filename ?? null, dto.card ?? null, RequestCtx.actorId() ?? null); }
+
+  @Get('cards')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '법인카드 이용 내역 (v10.393)', description: '그 달 카드 이용 줄(남음 · 장부에 넣음 · 넣지 않음) · 셈 · 올린 기록 10 · 미지급금(법인카드) 잔액 · 고를 계정(비용 · 자산).' })
+  @ApiOkResponse({ type: Object })
+  cards(@Query('ym') ym?: string) { return cardMonth(this.db, ym && YM.test(ym) ? ym : kstYm()); }
+
+  @Post('cards/:id/book')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_CARD_BOOK', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '카드 이용 장부에 넣기 (v10.393)', description: '계정(비용 · 자산) · 공제 여부(÷ 11) → 다음 전표 작업에서 CARD_TXN 전표(계정 · 부가세대급금 / 미지급금(법인카드)) · 되돌리지 않음. 넣지 않음(ignore)은 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_CARD_BOOKED' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_CARD_ROLE · ACCT_REASON' })
+  cardBook(@Param('id') id: string, @Body() dto: CardBookDto) { return bookCard(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  /* ── ⑫ cashflow ── */
+  /* ── v10.394 자금 흐름 ── */
+  @Get('cashflow')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'days', required: false, example: 90 })
+  @ApiOperation({ summary: '자금 흐름 90일 (v10.394)', description: '시작 잔액(직접 넣은 것 · 통장 CSV 마지막 잔액 중 최근) + 확정된 들어올 돈(광고 청구 · PG 정산 · 예정) · 나갈 돈(미지급금 · 법인카드 · 부가세 · 원천세 · 포인트 출금 · 입점 정산 · 예정) · 날마다 잔액 · 가장 낮은 날. 7 ~ 180일.' })
+  @ApiOkResponse({ type: Object })
+  cashFlowView(@Query('days') days?: string) { return cashflow(this.db, Number(days ?? 90) || 90); }
+
+  @Post('cashflow/balance')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('ACCT_CASH_BALANCE', 'SETTING')
+  @ApiOperation({ summary: '잔액 직접 넣기 (v10.394 · SUPER)', description: '그날 끝 통장 잔액(여러 통장이면 합). 쌓기만 — 틀리면 새로 넣음(가장 최근 날짜를 씀).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CASH_BALANCE' })
+  cashBalance(@Body() dto: CashBalanceDto) { return addCashBalance(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Get('cashflow/plans')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '자금 흐름 예정 · 넣은 잔액 (v10.394)', description: '예정 들고 남(진행 중 먼저 · 취소 포함 300줄) · 직접 넣은 잔액 최근 20줄.' })
+  @ApiOkResponse({ type: Object })
+  cashPlans() { return listCashPlans(this.db); }
+
+  @Post('cashflow/plans')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_CASH_PLAN', 'SETTING')
+  @ApiOperation({ summary: '예정 들고 남 넣기 (v10.394)', description: '임대료 · 대출 상환 · 투자금처럼 장부에 아직 없는 확정 예정(한 번 · 매달 · 1년 안).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CASH_PLAN' })
+  cashPlanAdd(@Body() dto: CashPlanDto) { return addCashPlan(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('cashflow/plans/:id/cancel')
+  @HttpCode(200)
+  @Roles(...VIEW)
+  @Audit('ACCT_CASH_PLAN_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '예정 취소 (v10.394)', description: '지우지 않고 취소(사유 2 ~ 200자).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CASH_PLAN' })
+  cashPlanCancel(@Param('id') id: string, @Body() dto: CashPlanCancelDto) { return cancelCashPlan(this.db, id, dto.reason, RequestCtx.actorId() ?? null); }
+
+  /* ── ⑫ stock ── */
+  /* ── v10.395 직판 재고 수불부 ── */
+  @Get('stock')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '직판 재고 수불부 (v10.395)', description: '직판 상품 옵션마다 회계용 수량 · 이동평균 단가 · 재고 금액 · 판매용 재고(쇼핑몰)와 차이 · 원가 0 으로 나간 줄 수.' })
+  @ApiOkResponse({ type: Object })
+  async stock() {
+    return stockList(this.db);
+  }
+
+  @Get('stock/:code/moves')
+  @Roles(...VIEW)
+  @ApiParam({ name: 'code', example: 'HB-0001' })
+  @ApiQuery({ name: 'ym', required: false, example: '2026-11' })
+  @ApiOperation({ summary: '직판 상품 수불 (v10.395)', description: '그 상품(옵션 모두)의 그 달 들어옴 · 나감 · 남은 수량 · 금액 · 평균(비우면 이번 달).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  async stockMovesGet(@Param('code') code: string, @Query('ym') ym?: string) {
+    const m = ym && YM.test(ym) ? ym : kstYm();
+    return stockMoves(this.db, code, m);
+  }
+
+  @Post('stock/in')
+  @HttpCode(200)
+  @Roles('SUPER', 'PAYOUT')
+  @Audit('ACCT_STOCK_IN', 'SETTING')
+  @ApiOperation({ summary: '직판 재고 입고 (v10.395 · SUPER · PAYOUT)', description: '옵션 · 수량 · 단가(공급가). 평균 단가를 다시 셈. 매입 번호가 있으면 입고 전표 없음(매입 전표가 상품으로), 없으면 전표 「상품 / 미지급금」.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_STOCK' })
+  async stockInPost(@Body() dto: StockInDto) {
+    return stockIn(this.db, dto, RequestCtx.actorId() ?? null);
+  }
+
+  @Post('stock/adjust')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('ACCT_STOCK_ADJUST', 'SETTING')
+  @ApiOperation({ summary: '직판 재고 실사 조정 (v10.395 · SUPER)', description: '늘림 + · 줄임 − · 사유. 늘림은 지금 평균 단가(재고가 없으면 단가 입력) · 줄임은 0 아래로 못 감. 전표 「매출원가 ↔ 상품」.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_STOCK · ACCT_REASON' })
+  async stockAdjustPost(@Body() dto: StockAdjustDto) {
+    const reason = reasonOk(dto.reason, 'ACCT_REASON');
+    if (!dto.qty) throw new PolicyViolation('ACCT_STOCK', '조정 수량은 0이 아니어야 합니다.');
+    return stockAdjust(this.db, { ...dto, reason }, RequestCtx.actorId() ?? null);
+  }
 }
