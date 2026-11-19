@@ -52,7 +52,7 @@ ok('① API — 운영 역할만 · 목록 · 글 · 쓰기 · 고치기(쓴 사
    "@Roles(...STAFF)" in BC and "'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'" in BC
    and all(x in BC for x in ("@Post(':id/take-down')", "@Post(':id/comments')", "@Post(':id/read')", "@Audit('OPS_BOARD_POST', 'OPS_BOARD')", "@Audit('OPS_BOARD_UPDATE', 'OPS_BOARD')"))
    and all(x in BS for x in ("'AUTO_POST_LOCKED'", "'NOT_AUTHOR'", "'POST_TAKEN_DOWN'", 'fn_ops_board_post($1, $2, $3, $4, $5)'))
-   and "'ops.board_retention_days']" in AD and 'OpsBoardController' in AM and 'OpsBoardService' in AM, '')
+   and ("'ops.board_retention_days']" in AD or "'ops.board_retention_days', 'report.send', 'report.send_kinds']" in AD) and 'OpsBoardController' in AM and 'OpsBoardService' in AM, '')
 ok('① 자동 글 4곳 — 하루 요약 · 급한 알림(alertBoard · 한 번) · 대표 할 일 주간 · 시험 메시지(텔레그램 · 슬랙) · 정리 정기 작업 · 끝난 사본은 공지 목록에서 뺌',
    "opsBoardPost(this.db, 'DAILY_DIGEST'" in SCH and 'private async alertBoard(' in SCH and 'board_posted_at = now()' in SCH and "opsBoardPost(this.db, 'OWNER_TODO'" in SCH
    and "case 'ops_board_purge':" in SCH and OA.count("opsBoardPost(this.db, 'TEST'") == 4 and 'FROM ops_board_posts o WHERE o.notice_id = n.id' in SS, '')

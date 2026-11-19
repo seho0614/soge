@@ -179,6 +179,7 @@ if API and DB:
         byb = call('GET', '/admin/worklogs', None, TB)
         mine2 = call('GET', '/admin/worklogs', None, TP)
         row = next((x for x in mine2.get('items') or [] if x.get('id') == a1.get('id')), {})
+        call('POST', '/admin/work-reports/make', {'kind': 'DAY', 'period': a1.get('workDate')}, TS)   # 1412 가 먼저 남긴 오늘 일보(일지 전 숫자) 대신 지금 숫자로 새로 남김
         day = call('GET', f"/admin/work-reports/view?kind=DAY&period={a1.get('workDate')}", None, TS)
         wl = ((day.get('body') or {}).get('m') or {}).get('worklog') or {}
         ok('② 업무 일지 — 쓰기 · 짧음 422 · 지난 날짜 DB 막음 · 고치기 막음 · 자기 것만 · SUPER 모두 · 확인 · 지급 담당 확인 403 · 회원 403 · 답 보임 · 일보에 숫자',
