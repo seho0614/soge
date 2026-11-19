@@ -153,7 +153,8 @@ export async function reviseDoc(db: DatabaseService, id: string, b: Partial<DocI
     if (cur.superseded_by) throw new StateConflict('ACCT_DOC_STATE', '이미 새 판이 있습니다 — 마지막 판을 고치십시오.');
     if (!['DRAFT', 'SENT'].includes(cur.state)) throw new StateConflict('ACCT_DOC_STATE', '확정 · 취소한 문서는 고치지 않습니다.');
     const d = await loadDoc(db, id);
-    const h = await checkHead(db, { partyId: d.partyId, title: d.title, issuedOn: d.issuedOn, validUntil: d.validUntil, dueOn: d.dueOn, revenueRole: d.revenueRole, memo: d.memo, ...b });
+    const h = await checkHead(db, { partyId: d.partyId, title: d.title, issuedOn: d.issuedOn, validUntil: d.validUntil, dueOn: d.dueOn, revenueRole: d.revenueRole, memo: d.memo,
+      ...Object.fromEntries(Object.entries(b).filter(([k, v]) => v !== undefined && k !== 'lines')) });   // 빈 칸(undefined)이 옛 값을 덮지 않게
     const c = calcLines(b.lines);
     if (d.rev >= 99) throw new PolicyViolation('ACCT_DOC', '판은 99까지입니다.');
     const nid = await insertDoc(db, { kind: d.kind, docNo: d.docNo, rev: d.rev + 1, rootId: d.rootId ?? d.id, prevId: d.id, parentId: d.parentId, ...h }, c, actor);
