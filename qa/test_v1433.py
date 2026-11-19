@@ -196,7 +196,7 @@ if API and DB:
         call('POST', '/admin/acct/journal/run', None, TS)
         rev = psql(f"SELECT count(*) FROM acct_entries WHERE source = 'SALES_DOC_CANCEL' AND source_key = '{s1.get('id')}'")
         lst = call('GET', '/admin/acct/sales-docs', None, TB)
-        want = 100000 + 10000 + 10000   # 과세 10만 + 부가세 1만 + 면세 1만
+        want = 100000 + 10000 + 10000 + 1000 + 100   # 과세 10만 + 부가세 1만 + 면세 1만 + 고친 판에 더한 「추가」 1천(과세 · 부가세 100)
         ok('② 문서 — 견적(ADMIN) · 빈 품목 400/422 · 새 판 2 · 옛 판 다시 고치기 409 · 주문 · 거래명세서 · ADMIN 확정 403 · 확정 · 합계(과세 · 면세) · DB 고치기 막음 · 매출 전표 차변 = 대변 3줄 · 세금계산서 요청(SALES_DOC) · 두 번 409 · 취소 → 반대 전표 · 회원 403',
            q1.get('ok') is True and str(q1.get('docNo', '')).startswith('Q-') and bad.get('_err') in (400, 422) and rv.get('rev') == 2 and rv2.get('code') == 'ACCT_DOC_STATE'
            and str(o1.get('docNo', '')).startswith('O-') and str(s1.get('docNo', '')).startswith('S-') and byadm.get('_err') == 403 and acc.get('ok') is True
