@@ -272,7 +272,7 @@ const WIDEN_DENY = [/^\/admin\/perm(\/|$)/, /^\/admin\/reports\/roles(\/|$)/, /^
   /^\/admin\/mfa(\/|$)/, /^\/admin\/integrations?(\/|$)/, /^\/admin\/integration-keys(\/|$)/, /^\/admin\/integ-tests(\/|$)/, /^\/admin\/secrets?(\/|$)/,
   /^\/admin\/agent\/(key|model-prices)(\/|$)/, /^\/admin\/map\/keys(\/|$)/, /^\/admin\/weather\/key(\/|$)/,
   /^\/admin\/staff-access(\/|$)/, /^\/admin\/staff-ip(\/|$)/, /^\/admin\/site-settings(\/|$)/, /^\/admin\/security(\/|$)/, /^\/admin\/jobs(\/|$)/, /^\/admin\/audit(\/|$)/];
-const WIDEN_DENY_WRITE = [/payout/, /settlement/, /cashout/, /refund/, /\/pay(\/|$)/, /\/paid(\/|$)/, /payments?(\/|$)/];
+const WIDEN_DENY_WRITE = [/payout/, /settlement/, /cashout/, /refund/, /\/pay(\/|$)/, /\/paid(\/|$)/, /payments?(\/|$)/, /^\/admin\/fin\/transfers(\/|$)/];   // v10.454 (D261) 대량 이체는 넓히지 않음
 const WIDEN_DENY_EXPORT = [/member/, /privacy/, /account/, /audit/, /tax-?id/, /pii/, /payout/];
 
 export async function widenAllowed(db: DatabaseService, p: { accountId: string; roles: string[] } | undefined,

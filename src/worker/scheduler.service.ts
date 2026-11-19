@@ -47,6 +47,7 @@ import { acctInsuranceJob } from '../modules/acct/filings';   // v10.422 (D252)
 import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D250)
 import { dunningJob } from '../modules/acct/dunning';   // v10.436 (D256)
 import { acctAccrualJob } from '../modules/acct/accrual';   // v10.439 (D257)
+import { acctCardLimitJob } from '../modules/acct/cardlimit';   // v10.453 (D261)
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
@@ -82,6 +83,7 @@ export type JobName =
   | 'corp_doc_due'    // v10.425 (D253)
   | 'acct_biz_check'  // v10.431 (D254)
   | 'acct_dunning'    // v10.436 (D256)
+  | 'acct_card_limit' // v10.453 (D261)
   | 'acct_accrual';   // v10.439 (D257)
 
 export interface JobResult {
@@ -824,6 +826,13 @@ export class SchedulerService {
       case 'acct_dunning': {
         const r = await dunningJob(this.db, this.mail);
         affected = r.sent; detail = r;
+        break;
+      }
+
+      /* v10.453 (D261 · docs/590) — 이번 달 법인카드 사용이 한도의 acct.card_alert_pct 넘으면 ACCT_CARD_LIMIT(카드마다 한 번 · 한도 넘으면 한 번 더 · 지난달 풀림) */
+      case 'acct_card_limit': {
+        const r = await acctCardLimitJob(this.db);
+        affected = r.made.length; detail = r;
         break;
       }
 

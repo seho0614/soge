@@ -48,6 +48,8 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'WEATHER', name: 'KMA_SERVICE_KEY', label: '공공데이터포털 인증키', env: null, envRead: 'KMA_SERVICE_KEY', isPublic: false },
   { code: 'AGENT', name: 'ANTHROPIC_API_KEY', label: 'API 키', env: null, envRead: 'ANTHROPIC_API_KEY', isPublic: false },
   { code: 'TAXINBOX', name: 'TAXINBOX_API_KEY', label: '연동 업체 API 키', env: 'TAXINBOX_API_KEY', envRead: 'TAXINBOX_API_KEY', isPublic: false },   // v10.432 (D255)
+  { code: 'FIRMBANK', name: 'FIRMBANK_CLIENT_ID', label: '금융결제원 오픈뱅킹 Client ID', env: 'FIRMBANK_CLIENT_ID', envRead: 'FIRMBANK_CLIENT_ID', isPublic: false },   // v10.454 (D261)
+  { code: 'FIRMBANK', name: 'FIRMBANK_CLIENT_SECRET', label: '금융결제원 오픈뱅킹 Client Secret', env: 'FIRMBANK_CLIENT_SECRET', envRead: 'FIRMBANK_CLIENT_SECRET', isPublic: false },   // v10.454 (D261)
 ];
 
 const EVERY_MS = 60_000;

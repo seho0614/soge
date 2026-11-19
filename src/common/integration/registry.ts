@@ -84,4 +84,8 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   /* v10.432 (D255) 홈택스 매입 세금계산서 — 연동 업체(바로빌 · 팝빌 등) API · 간주는 설정 acct.taxinbox_mode(assume.* 아님 · 오픈 차단 아님) */
   { code: 'TAXINBOX', name: '매입 세금계산서 가져오기', dbRow: true, secretEnv: 'TAXINBOX_API_KEY', otherEnv: ['TAXINBOX_API_BASE', 'TAXINBOX_CORP_NUM', 'TAXINBOX_MAP', 'TAXINBOX_TIMEOUT_MS'],
     assume: null, adapter: 'REAL', files: ['src/modules/acct/taxinbox.ts'], doc: 'docs/569' },
+  /* v10.454 (D261) 대량 이체 — 금융결제원 오픈뱅킹(KFTC) · 간주는 설정 acct.transfer_mode(assume.* 아님 · 오픈 차단 아님) · 보내기는 acct.transfer(처음 off) */
+  { code: 'FIRMBANK', name: '대량 이체(금융결제원 오픈뱅킹)', dbRow: true, secretEnv: 'FIRMBANK_CLIENT_SECRET',
+    otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/acct/transfer.ts'], doc: 'docs/591' },
 ];

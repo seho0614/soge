@@ -41,6 +41,9 @@ import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 
 import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, ReportTrend } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
 import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
 import { AccountantDesk, ReceiptReader, AccrualBox, ArchiveBox } from './app/admin/AcctExtra';   // v10.437 ~ 440 (D257)
+import { FinCardLimits, FinTransfers, FinTargets, FinPartyLedger } from './app/admin/Fin';   // v10.453 ~ 456 (D261) 자금 · 영업
+import { AcctDaybook, AcctCashbook, AcctFxReval } from './app/admin/AcctBooks';   // v10.449 ~ 452 (D260)
+import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/Hr';   // v10.445 ~ 448 (D259)
 import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
 import { PermAdmin, PermReadonlyBar, PermScope, loadPerm, permVisible, usePermTick } from './app/admin/Perm';   // v10.441 ~ 444 (D258) 업무별 권한 · 탭 내용 감싸기
 import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/AcctFilings';   // v10.420 ~ 422 (D252) 신고 자료
@@ -129,6 +132,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-docs': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-depts': ['SUPER', 'PAYOUT'], 'acct-wh': ['SUPER', 'PAYOUT'], 'acct-dunning': ['SUPER', 'PAYOUT'],   // v10.433 ~ 436 (D256)
   'acct-taxinbox': ['SUPER', 'PAYOUT'],   // v10.432 (D255)
   'acct-accountant': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-receipt': ['SUPER', 'PAYOUT'], 'acct-accrual': ['SUPER', 'PAYOUT'], 'acct-archive': ['SUPER', 'PAYOUT'],   // v10.437 ~ 440 (D257)
+  'acct-cardlimit': ['SUPER', 'PAYOUT'], 'fin-transfer': ['SUPER', 'PAYOUT'], 'acct-target': ['SUPER', 'PAYOUT'], 'acct-partyledger': ['SUPER', 'PAYOUT'],   // v10.453 ~ 456 (D261)
+  'acct-daybook': ['SUPER', 'PAYOUT'], 'acct-cashbook': ['SUPER', 'PAYOUT'], 'acct-fxreval': ['SUPER', 'PAYOUT'],   // v10.449 ~ 452 (D260)
   'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
   'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'], 'rpt-trend': ['ADMIN', 'SUPER'],   // v10.429 (D254)   // v10.412 ~ 415 (D250)
   'approvals': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'approval-lines': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'corp-docs': ['ADMIN', 'PAYOUT', 'SUPER'],   // v10.424 · 425 (D253)
@@ -142,6 +147,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
   'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
+  'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
+  'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -428,6 +435,18 @@ function Console() {
       {tab === 'acct-receipt' && <ReceiptReader />}
       {tab === 'acct-accrual' && <AccrualBox />}
       {tab === 'acct-archive' && <ArchiveBox />}
+      {tab === 'acct-cardlimit' && <FinCardLimits />}
+      {tab === 'fin-transfer' && <FinTransfers />}
+      {tab === 'acct-target' && <FinTargets />}
+      {tab === 'acct-partyledger' && <FinPartyLedger />}
+      {tab === 'acct-daybook' && <AcctDaybook />}
+      {tab === 'acct-cashbook' && <AcctCashbook />}
+      {tab === 'acct-fxreval' && <AcctFxReval />}
+      {tab === 'hr-attend' && <HrAttend />}
+      {tab === 'hr-leave' && <HrLeave />}
+      {tab === 'acct-payslip' && <AcctPayslip />}
+      {tab === 'acct-yearend' && <AcctYearend />}
+      {tab === 'my-hr' && <MyHr />}
       {tab === 'acct-taxinbox' && <AcctTaxInbox />}
       {tab === 'acct-exports' && <AcctExports />}
       {tab === 'acct-po' && <AcctPos />}

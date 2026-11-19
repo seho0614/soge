@@ -107,6 +107,10 @@ export const TABS = [
   ['acct-receipt', '영수증 읽기'],   /* v10.438 (D257 · docs/575) */
   ['acct-accrual', '고정비'],   /* v10.439 (D257 · docs/576) */
   ['acct-archive', '장부 보관 · 통제'],   /* v10.440 (D257 · docs/577) */
+  ['acct-cardlimit', '법인카드 한도'], ['fin-transfer', '대량 이체'], ['acct-target', '매출 목표'], ['acct-partyledger', '거래처 원장'],   /* v10.453 ~ 456 (D261 · docs/590 ~ 593) 자금 · 영업 */
+  ['acct-daybook', '분개장'], ['acct-cashbook', '현금출납장'], ['acct-fxreval', '외화 환산'],   /* v10.449 ~ 452 (D260 · docs/586 ~ 589) */
+  ['hr-attend', '근태'], ['hr-leave', '휴가 신청'], ['acct-payslip', '급여명세서'], ['acct-yearend', '연말정산 자료'],   /* v10.445 ~ 448 (D259 · docs/582 ~ 585) 인사 2 */
+  ['my-hr', '내 인사'],   /* v10.445 ~ 447 (D259) 본인 출퇴근 · 휴가 신청 · 급여명세서 */
   ['acct-exports', '수출'], ['acct-po', '국내 발주'],   /* v10.428 (D254 · docs/565) 무역 2단계 */
   ['rpt-day', '일보'], ['rpt-week', '주보'], ['rpt-month', '월보'], ['rpt-worklog', '업무 일지'], ['rpt-board', '일지 현황판'], ['rpt-trend', '추세'],   /* v10.429 (D254) 경영 추세 그래프 */   /* v10.412 ~ 415 (D250 · docs/549 ~ 552) 보고 */
   ['approvals', '결재함'], ['approval-lines', '결재선'], ['corp-docs', '사내 문서함'],   /* v10.424 · 425 (D253 · docs/561 · 562) 사무 */
@@ -134,9 +138,9 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-manual', 'acct-pg', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-severance', 'acct-corptax', 'acct-whtreturn', 'acct-wagestmt', 'acct-insurance', 'acct-parties', 'acct-contracts', 'acct-requisitions', 'acct-imports', 'acct-exports', 'acct-po', 'acct-taxinbox', 'acct-docs', 'acct-dunning', 'acct-wh', 'acct-depts', 'acct-accountant', 'acct-receipt', 'acct-accrual', 'acct-archive', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-manual', 'acct-pg', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-daybook', 'acct-cashbook', 'acct-fxreval', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-severance', 'acct-corptax', 'acct-whtreturn', 'acct-wagestmt', 'acct-insurance', 'acct-parties', 'acct-contracts', 'acct-requisitions', 'acct-imports', 'acct-exports', 'acct-po', 'acct-taxinbox', 'acct-docs', 'acct-dunning', 'acct-cardlimit', 'fin-transfer', 'acct-target', 'acct-partyledger', 'acct-wh', 'acct-depts', 'acct-accountant', 'acct-receipt', 'acct-accrual', 'acct-archive', 'hr-attend', 'hr-leave', 'acct-payslip', 'acct-yearend', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admrpt',  label: '보고',      tabs: ['rpt-trend', 'rpt-day', 'rpt-week', 'rpt-month', 'rpt-worklog', 'rpt-board'] },   /* v10.412 ~ 415 (D250) 업무 보고 */
-  { key: 'admoff',  label: '사무',      tabs: ['approvals', 'approval-lines', 'corp-docs', 'perm-admin'] },   /* v10.424 · 425 (D253) 결재 · 사내 문서 */
+  { key: 'admoff',  label: '사무',      tabs: ['my-hr', 'approvals', 'approval-lines', 'corp-docs', 'perm-admin'] },   /* v10.424 · 425 (D253) 결재 · 사내 문서 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -165,12 +169,12 @@ export const groupOf = (t: Tab): MenuGroup => GROUPS.find((g) => g.tabs.includes
 export interface MenuSection { label: string; tabs: Tab[] }
 export const GROUP_SECTIONS: Record<string, MenuSection[]> = {
   admacc: [
-    { label: '장부',        tabs: ['acct-month', 'acct-journal', 'acct-manual', 'acct-statements', 'acct-ledger', 'acct-yearclose', 'acct-docs'] },
-    { label: '자금',        tabs: ['acct-bank', 'acct-pg', 'acct-cash', 'acct-aging', 'acct-dunning'] },
+    { label: '장부',        tabs: ['acct-month', 'acct-journal', 'acct-manual', 'acct-statements', 'acct-ledger', 'acct-daybook', 'acct-cashbook', 'acct-fxreval', 'acct-yearclose', 'acct-docs', 'acct-partyledger'] },
+    { label: '자금',        tabs: ['acct-bank', 'acct-pg', 'acct-cash', 'acct-aging', 'acct-dunning', 'acct-cardlimit', 'fin-transfer'] },
     { label: '매입 · 경비', tabs: ['acct-purchase', 'acct-expense', 'acct-requisitions', 'acct-parties', 'acct-contracts', 'acct-imports', 'acct-exports', 'acct-po', 'acct-stock', 'acct-assets', 'acct-taxinbox', 'acct-wh', 'acct-receipt', 'acct-accrual'] },
     { label: '세무',        tabs: ['acct-tax', 'acct-vatform', 'acct-corptax', 'acct-whtreturn'] },
-    { label: '인사',        tabs: ['acct-payroll', 'acct-severance', 'acct-wagestmt', 'acct-insurance'] },
-    { label: '설정 · 보고', tabs: ['acct-report', 'acct-budget', 'acct-depts', 'acct-accounts', 'acct-accountant', 'acct-archive'] },
+    { label: '인사',        tabs: ['acct-payroll', 'acct-payslip', 'hr-attend', 'hr-leave', 'acct-severance', 'acct-wagestmt', 'acct-yearend', 'acct-insurance'] },
+    { label: '설정 · 보고', tabs: ['acct-report', 'acct-budget', 'acct-depts', 'acct-accounts', 'acct-accountant', 'acct-archive', 'acct-target'] },
   ],
 };
 /** 그룹의 보이는 탭을 하위 묶음으로 — 하위 묶음이 없는 그룹은 이름표 없는 한 묶음 */
@@ -329,6 +333,18 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-receipt':  { title: '영수증 읽기', sub: '증빙 사진에서 날짜 · 공급자 · 금액을 읽어 칸을 채워 줍니다(처음 꺼짐 · 간주) — 확인하고 고친 뒤 매입으로 넣습니다.', screen: 'SB-ADM-ACC-430' },
   'acct-accrual':  { title: '고정비', sub: '계약 달 금액을 매달 1일 미지급 비용으로 · 같은 거래처 매입이 오면 되돌림(비용 두 번 막기) · 빠진 매입 알림.', screen: 'SB-ADM-ACC-440' },
   'acct-archive':  { title: '장부 보관 · 통제', sub: '해 마감 뒤 장부 · 증빙 지문을 남기고(5년 · 지우지 않음) 달마다 내부통제 숫자를 봅니다.', screen: 'SB-ADM-ACC-450' },
+  'acct-cardlimit':   { title: '법인카드 한도', sub: '카드(끝 4자리)마다 쓰는 사람 · 달 한도를 정하고 이번 달 사용을 봅니다 — 한도의 80% · 한도를 넘으면 운영 알림(매일 09:40).', screen: 'SB-ADM-FIN-010' },
+  'fin-transfer':     { title: '대량 이체', sub: '거래처 대금 · 경비를 묶음으로 만들고, 만든 사람이 아닌 두 사람이 승인한 뒤 보냅니다(처음 꺼짐 · 간주) — 계좌는 끝 4자리만 보입니다.', screen: 'SB-ADM-FIN-020' },
+  'acct-target':      { title: '매출 목표', sub: '달마다 회사 전체 · 부서 · 담당자 매출 목표를 정하고(SUPER) 실적 · 달성률을 봅니다 — 부서는 부서 손익과 같은 셈.', screen: 'SB-ADM-FIN-030' },
+  'acct-partyledger': { title: '거래처 원장', sub: '거래처별 받을 돈 · 갚을 돈의 기초 · 늘어남 · 줄어듦 · 기말과 한 거래처 줄(전표) — CSV 는 내려받기 승인.', screen: 'SB-ADM-FIN-040' },
+  'acct-daybook':  { title: '분개장', sub: '기간 전표를 날짜 · 번호 순으로 줄째(계정 · 차변 · 대변) 봅니다 · 합계 차변 = 대변 · CSV(내려받기 승인).', screen: 'SB-ADM-LDG-010' },   /* v10.449 (D260) */
+  'acct-cashbook': { title: '현금출납장', sub: '보통예금 · 현금(시재)의 날짜별 들어옴 · 나감 · 잔액 · CSV(내려받기 승인).', screen: 'SB-ADM-LDG-020' },   /* v10.450 (D260) */
+  'acct-fxreval':  { title: '외화 환산 평가', sub: '달 말일까지 못 받은 수출 받을 돈을 기말 환율로 다시 셉니다 — 평가 전표 + 다음 달 첫날 되돌림(SUPER · 달마다 한 번).', screen: 'SB-ADM-LDG-030' },   /* v10.452 (D260) */
+  'hr-attend':     { title: '근태', sub: '직원이 사무 › 내 인사에서 누른 출근 · 퇴근 · 달 집계(늦음 · 퇴근 없음 · 휴가) · 시각 고침(사유) · 달 확인 — 직원과 운영 계정 연결은 SUPER.', screen: 'SB-ADM-HRM-010' },
+  'hr-leave':      { title: '휴가 신청', sub: '직원 휴가 신청을 승인 · 반려 — 승인하면 연차 쓴 날로 들어가고, 본인 신청은 다른 관리자가 처리합니다.', screen: 'SB-ADM-HRM-020' },
+  'acct-payslip':  { title: '급여명세서', sub: '확정 · 지급한 급여의 직원별 명세서(인쇄) · 알림 메일(처음 꺼짐 · 금액 없음).', screen: 'SB-ADM-HRM-030' },
+  'acct-yearend':  { title: '연말정산 자료', sub: '직원별 해 합계 · 달별 총급여 · 기납부 세액 · 서류 받음 표시 · CSV(승인) — 주민등록번호 · 결정세액은 회계 프로그램에서.', screen: 'SB-ADM-HRM-040' },
+  'my-hr':         { title: '내 인사', sub: '출근 · 퇴근 누르기 · 이번 달 근태 · 남은 연차 · 휴가 신청 · 내 급여명세서.', screen: 'SB-ADM-HRM-050' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },

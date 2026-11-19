@@ -17,7 +17,7 @@ export interface ManualLine { role: string; debit?: number; credit?: number; mem
 const YMD = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /** 그 날짜가 마감한 달 · 마감한 해면 422(ACCT_MANUAL_CLOSED) */
-async function assertOpen(db: DatabaseService, day: string) {
+export async function assertOpen(db: DatabaseService, day: string) {   // v10.451 · 452 (D260) books.ts 도 씀
   const [c] = await db.query(`SELECT 1 FROM acct_closings WHERE ym = $1`, [day.slice(0, 7)]);
   if (c) throw new PolicyViolation('ACCT_MANUAL_CLOSED', `${day.slice(0, 7)} 은 마감한 달이라 수동 전표를 넣지 못합니다.`);
   /* ⑭ D247 fn_acct_year_closed — 그 해 마지막 기록이 CLOSE 면 마감(풀면 REOPEN) · 함수가 없으면(⑭ 전) 건너뜀 */
@@ -66,8 +66,10 @@ export async function listManual(db: DatabaseService, state?: string) {
   const items = await db.query(
     `SELECT m.id::text AS id, m.entry_date::text AS "entryDate", m.memo, m.party, m.evidence, m.lines, m.total::bigint AS total, m.state,
             m.created_by AS "createdBy", ca.email AS "createdByEmail", m.created_at AS "createdAt",
-            da.email AS "decidedByEmail", m.decided_at AS "decidedAt", m.decide_note AS "decideNote", m.entry_id::text AS "entryId"
+            da.email AS "decidedByEmail", m.decided_at AS "decidedAt", m.decide_note AS "decideNote", m.entry_id::text AS "entryId",
+            rv.reverse_entry_id::text AS "reverseEntryId", rv.reverse_on::text AS "reverseOn", rv.reason AS "reverseReason"   -- v10.451 (D260)
        FROM acct_manual_entries m LEFT JOIN accounts ca ON ca.id = m.created_by LEFT JOIN accounts da ON da.id = m.decided_by
+            LEFT JOIN acct_entry_reversals rv ON rv.manual_id = m.id
       WHERE ($1::text IS NULL OR m.state = $1) ORDER BY (m.state = 'REQUESTED') DESC, m.id DESC LIMIT 200`, [st]);
   const [n] = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM acct_manual_entries WHERE state = 'REQUESTED'`);
   return { items: items.map((x: Record<string, unknown>) => ({ ...x, total: Number(x.total) })), waiting: Number(n?.n ?? 0),

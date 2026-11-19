@@ -5922,6 +5922,7 @@
     "POST /admin/acct/manual",
     "POST /admin/acct/manual/{id}/decide",
     "POST /admin/acct/manual/{id}/cancel",
+    "POST /admin/acct/manual/{id}/reverse",
     "GET /admin/acct/accounts"
    ],
    "note": "2026-11-20 v10.405 (D248 · docs/542) 수동 전표 요청(줄 2 ~ 30 · 차대 같음 · 마감 달 · 해 안 됨) → 쓴 사람이 아닌 SUPER 승인 → acct_entries MANUAL · 반려 사유"
@@ -6552,6 +6553,244 @@
     "GET /admin/perm/widen-log"
    ],
    "note": "2026-11-19 v10.441 ~ 444 (D258 · docs/578 ~ 581) 업무별 권한 관리 — 업무그룹 · 업무 · 권한그룹(업무 × 보기 · 고치기 · 승인 · 내려받기) · 개인권한(그룹 · 개별 더하기/빼기 · 기한 · 업무용/관리자) · 미리보기 · SHADOW 기록 · 바꾼 기록(SUPER) · /admin/perm/me 는 운영자 누구나 · 권한 넓히기 스위치 · 넓혀서 통과한 요청"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRM-010",
+   "name": "회계 근태",
+   "url": "/admin/hr-attend",
+   "apis": [
+    "GET /admin/hr/attendance",
+    "POST /admin/hr/attendance/{id}/fix",
+    "POST /admin/hr/attendance/add",
+    "POST /admin/hr/attendance/confirm",
+    "PUT /admin/hr/employees/{id}/account"
+   ],
+   "note": "2026-11-20 v10.445 (D259 · docs/582) 근태 — 직원 ↔ 운영 계정 연결(SUPER) · 달 근태 · 늦음 · 시각 고침(사유 · 본인 아님) · 달 확인"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRM-020",
+   "name": "회계 휴가 신청",
+   "url": "/admin/hr-leave",
+   "apis": [
+    "GET /admin/hr/leave",
+    "POST /admin/hr/leave/{id}/decide",
+    "POST /admin/hr/leave/{id}/revoke"
+   ],
+   "note": "2026-11-20 v10.446 (D259 · docs/583) 휴가 신청 승인 · 반려 · 승인 취소 — 승인하면 연차 쓴 날(본인 신청은 다른 관리자)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRM-030",
+   "name": "회계 급여명세서",
+   "url": "/admin/acct-payslip",
+   "apis": [
+    "GET /admin/acct/payslips",
+    "GET /admin/acct/payslips/{lineId}",
+    "POST /admin/acct/payslips/notify"
+   ],
+   "note": "2026-11-20 v10.447 (D259 · docs/584) 급여명세서(확정 · 지급) · 인쇄 · 알림 메일(acct.payslip_mail 처음 off · 금액 없음)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRM-040",
+   "name": "회계 연말정산 자료",
+   "url": "/admin/acct-yearend",
+   "apis": [
+    "GET /admin/acct/yearend",
+    "POST /admin/acct/yearend/checks",
+    "GET /admin/acct/yearend/export"
+   ],
+   "note": "2026-11-20 v10.448 (D259 · docs/585) 연말정산 자료 모음 — 해 합계 · 달별 · 서류 받음 표시 · CSV(내려받기 승인) · 주민등록번호 없음"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRM-050",
+   "name": "사무 내 인사",
+   "url": "/admin/my-hr",
+   "apis": [
+    "GET /admin/me/hr",
+    "POST /admin/me/hr/clock",
+    "POST /admin/me/hr/leave",
+    "POST /admin/me/hr/leave/{id}/cancel",
+    "GET /admin/me/hr/payslips/{lineId}"
+   ],
+   "note": "2026-11-20 v10.445 ~ 447 (D259) 내 인사 — 출근 · 퇴근 · 이번 달 근태 · 남은 연차 · 휴가 신청 · 내 급여명세서(본인 것만 · 세무사 빠짐)"
+  },
+  {
+   "id": "SB-ADM-LDG-010",
+   "name": "회계 분개장",
+   "group": "ADM",
+   "url": "/admin/acct-daybook",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/daybook",
+    "GET /admin/acct/daybook/export"
+   ],
+   "note": "2026-11-20 v10.449 (D260 · docs/586) 분개장 — 기간 전표 날짜 · 번호 순 줄째(계정 · 차변 · 대변) · 합계 차변 = 대변 · CSV 내려받기 승인 ACCT_LEDGER"
+  },
+  {
+   "id": "SB-ADM-LDG-020",
+   "name": "회계 현금출납장",
+   "group": "ADM",
+   "url": "/admin/acct-cashbook",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/cashbook",
+    "GET /admin/acct/cashbook/export"
+   ],
+   "note": "2026-11-20 v10.450 (D260 · docs/587) 현금출납장 — 보통예금 CASH · 현금(시재) CASH_HAND · 기초 · 날짜별 들어옴 · 나감 · 잔액 · CSV 내려받기 승인 ACCT_LEDGER"
+  },
+  {
+   "id": "SB-ADM-LDG-030",
+   "name": "회계 외화 환산 평가",
+   "group": "ADM",
+   "url": "/admin/acct-fxreval",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/fx-reval",
+    "GET /admin/acct/fx-reval/preview",
+    "POST /admin/acct/fx-reval"
+   ],
+   "note": "2026-11-20 v10.452 (D260 · docs/589) 결산 외화 받을 돈 환산 평가 — 말일까지 못 받은 수출 받을 돈 × 기말 환율(SUPER) → FX_REVAL(말일) + FX_REVAL_REV(다음 달 첫날 되돌림) · 달마다 한 번"
+  },
+  {
+   "id": "SB-ADM-FIN-010",
+   "name": "회계 법인카드 한도",
+   "group": "ADM",
+   "url": "/admin/acct-cardlimit",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/card-limits",
+    "PUT /admin/acct/card-limits/{tail}"
+   ],
+   "note": "2026-11-20 v10.453 (D261 · docs/590) 카드(끝 4자리)별 달 한도 · 쓰는 사람 · 이번 달 사용 · 사람별 합 · 한도의 80% · 넘음 운영 알림(ACCT_CARD_LIMIT)"
+  },
+  {
+   "id": "SB-ADM-FIN-020",
+   "name": "회계 대량 이체",
+   "group": "ADM",
+   "url": "/admin/fin-transfer",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/fin/transfers",
+    "GET /admin/fin/transfers/{id}",
+    "POST /admin/fin/transfers",
+    "POST /admin/fin/transfers/{id}/items",
+    "POST /admin/fin/transfers/{id}/items/{itemId}/remove",
+    "POST /admin/fin/transfers/{id}/approve",
+    "POST /admin/fin/transfers/{id}/send",
+    "POST /admin/fin/transfers/{id}/check",
+    "POST /admin/fin/transfers/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.454 (D261 · docs/591) 이체 묶음 · 줄(계좌 암호문 · 끝 4자리) · 만든 사람이 아닌 2명 승인 · 보내기(acct.transfer 처음 off · 간주) · LIVE 성공 줄만 전표 TRANSFER_PAID"
+  },
+  {
+   "id": "SB-ADM-FIN-030",
+   "name": "회계 매출 목표",
+   "group": "ADM",
+   "url": "/admin/acct-target",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/sales-targets",
+    "PUT /admin/acct/sales-targets"
+   ],
+   "note": "2026-11-20 v10.455 (D261 · docs/592) 달마다 전체 · 부서 · 담당자 매출 목표(SUPER) · 실적(부서 손익 · 담당자 거래명세서) · 달성률"
+  },
+  {
+   "id": "SB-ADM-FIN-040",
+   "name": "회계 거래처 원장",
+   "group": "ADM",
+   "url": "/admin/acct-partyledger",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/party-ledger",
+    "GET /admin/acct/party-ledger/{id}",
+    "GET /admin/acct/party-ledger/{id}/export"
+   ],
+   "note": "2026-11-20 v10.456 (D261 · docs/593) 거래처별 받을 돈 · 갚을 돈 기초 · 늘어남 · 줄어듦 · 기말 · 한 거래처 줄 · CSV(내려받기 승인 ACCT_LEDGER)"
   }
  ],
  "deferred": [

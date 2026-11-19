@@ -519,8 +519,9 @@ n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 #   v10.111(D122) AI(AGENT · Anthropic — 키를 운영 화면에서)를 더해 12종.
 #   v10.128(D128) 메일(MAIL · SES SMTP — 키를 운영 화면에서 받으려고 줄을 둠)을 더해 13종.
 #   v10.432(D255) 매입 세금계산서 가져오기(TAXINBOX · 연동 업체 — 처음 꺼짐)를 더해 14종.
+#   v10.454(D261) 대량 이체(FIRMBANK · 금융결제원 오픈뱅킹 — 처음 꺼짐 · 간주)를 더해 15종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "14" ]; then echo "  ok   INTG  연동 14종 등록"; pass=$((pass+1));
+if [ "$n" = "15" ]; then echo "  ok   INTG  연동 15종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
 
 # v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장

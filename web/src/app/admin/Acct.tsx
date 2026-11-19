@@ -1467,7 +1467,8 @@ export function AcctPg() {
 
 interface MLine { role: string; debit: number; credit: number; memo?: string | null }
 interface Manual { items: Array<{ id: string; entryDate: string; memo: string; party: string | null; evidence: string; lines: MLine[]; total: number; state: string; createdBy: string;
-  createdByEmail: string | null; createdAt: string; decidedByEmail: string | null; decidedAt: string | null; decideNote: string | null; entryId: string | null }>; waiting: number; note: string }
+  createdByEmail: string | null; createdAt: string; decidedByEmail: string | null; decidedAt: string | null; decideNote: string | null; entryId: string | null;
+  reverseEntryId?: string | null; reverseOn?: string | null; reverseReason?: string | null }>; waiting: number; note: string }   // v10.451 (D260) 반대 전표
 const M_STATE: Record<string, string> = { REQUESTED: '승인 기다림', APPROVED: '승인(장부)', REJECTED: '반려', CANCELED: '취소' };
 
 /** v10.405 — 수동 전표 쓰기 · 결재 */
@@ -1488,6 +1489,12 @@ export function AcctManual() {
     void a.run(`d${id}`, () => api<{ note: string }>(`/admin/acct/manual/${id}/decide`, { method: 'POST', body: JSON.stringify({ approve, note }) }), q.reload, (r) => r.note);
   };
   const cancel = (id: string) => confirm('이 요청을 취소합니까?') && void a.run(`c${id}`, () => api<{ note: string }>(`/admin/acct/manual/${id}/cancel`, { method: 'POST' }), q.reload, (r) => r.note);
+  /* v10.451 (D260) 승인된 수동 전표 반대 전표 — SUPER · 사유 5자 이상 · 한 번만 */
+  const reverse = (id: string) => {
+    const reason = prompt('반대 전표 사유(5자 이상) — 차대를 바꾼 전표가 한 장 들어가고 되돌릴 수 없습니다'); if (!reason) return;
+    const day = prompt('반대 전표 날짜(YYYY-MM-DD · 비우면 오늘)', today) ?? '';
+    void a.run(`r${id}`, () => api<{ note: string }>(`/admin/acct/manual/${id}/reverse`, { method: 'POST', body: JSON.stringify({ reason, ...(day ? { reverseOn: day } : {}) }) }), q.reload, (r) => r.note);
+  };
   const names: Record<string, string> = Object.fromEntries((acc.data?.accounts ?? []).map((x) => [x.role, x.name]));
   return (
     <section data-acct-manual={q.data?.items.length ?? ''}>
@@ -1530,7 +1537,10 @@ export function AcctManual() {
                 <td>{m.state === 'REQUESTED' && <>
                   {isSuper() && <><button className="btn-sm" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, true)} data-acct-manual-approve={m.id} data-perm="approve">승인</button>{' '}
                     <button className="btn-sm btn-plain" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, false)} data-perm="approve">반려</button>{' '}</>}
-                  <button className="btn-sm btn-plain" onClick={() => cancel(m.id)}>취소</button></>}</td>
+                  <button className="btn-sm btn-plain" onClick={() => cancel(m.id)}>취소</button></>}
+                  {m.state === 'APPROVED' && (m.reverseEntryId
+                    ? <small className="dim" data-acct-manual-reversed={m.id}>반대 전표 {m.reverseEntryId} ({m.reverseOn}) · {m.reverseReason}</small>
+                    : isSuper() && <button className="btn-sm btn-plain" disabled={a.busy === `r${m.id}`} onClick={() => reverse(m.id)} data-acct-manual-reverse={m.id} data-perm="approve">반대 전표</button>)}</td>
               </tr>))}</tbody></table>
         </>
       )}
