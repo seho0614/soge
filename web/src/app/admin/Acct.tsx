@@ -1382,3 +1382,225 @@ export function AcctPayroll() {
     </section>
   );
 }
+
+interface PgCand { entryId: string; date: string; source: string; memo: string | null; party: string | null; amount: number }
+interface PgTxn { id: string; paidOn: string; settleOn: string; gross: number; fee: number; feeVat: number; net: number; key: string | null; method: string | null;
+  matchKind: string | null; entryId: string | null; matchNote: string | null; booked: boolean; candidates: PgCand[] }
+interface PgMonth { ym: string; days: number; items: PgTxn[]; unsettled: Array<{ entryId: string; date: string; source: string; memo: string | null; amount: number; days: number }>;
+  total: { rows: number; gross: number; fee: number; feeVat: number; net: number };
+  count: { total: number; matched: number; ignored: number; open: number; booked: number; unsettled: number; autoReady: number }; note: string }
+
+/** v10.404 — PG 정산 맞추기 */
+export function AcctPg() {
+  const [ym, setYm] = useState(kstYm());
+  const q = useApi<PgMonth>(`/admin/acct/pg?ym=${ym}`);
+  const a = useAct();
+  const [pick, setPick] = useState<Record<string, string>>({});
+  const upload = (f: File | undefined) => f && void a.run('up', async () => {
+    const csv = await readText(f);
+    return api<{ note: string }>('/admin/acct/pg/upload', { method: 'POST', body: JSON.stringify({ csv, filename: f.name }) });
+  }, q.reload, (r) => r.note);
+  const match = (id: string, b: Record<string, unknown>) => void a.run(`m${id}`, () => api<{ note: string }>(`/admin/acct/pg/${id}/match`, { method: 'POST', body: JSON.stringify(b) }), q.reload, (r) => r.note);
+  const ignore = (id: string) => { const note = prompt('맞출 것 없음 — 사유(예: 회계 시작일 전 결제 · 시험 결제)'); if (note) match(id, { ignore: true, note }); };
+  const clear = (id: string) => { const note = prompt('맞춤을 풉니다 — 사유'); if (note) match(id, { clear: true, note }); };
+  const auto = () => void a.run('auto', () => api<{ note: string }>('/admin/acct/pg/auto-match', { method: 'POST' }), q.reload, (r) => r.note);
+  const d = q.data;
+  return (
+    <section data-acct-pg={d?.count.total ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="acts">
+        <label>정산 달 <input type="month" value={ym} onChange={(e) => e.target.value && setYm(e.target.value)} /></label>{' '}
+        <button className="btn-sm btn-plain" onClick={() => setYm(prevYm(ym))}>지난달</button>{' '}
+        <label className="btn-sm">PG 정산 내역 CSV 올리기 <input type="file" accept=".csv,.txt,text/csv" hidden disabled={a.busy === 'up'} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} data-acct-pg-file="" /></label>{' '}
+        <button className="btn-sm" disabled={a.busy === 'auto' || !d?.count.autoReady} onClick={auto} data-acct-pg-auto="">자동 맞춤{d?.count.autoReady ? ` ${d.count.autoReady}` : ''}</button>
+      </div>
+      {!!q.error && <p className="warn-text">{String(q.error)}</p>}
+      {d && (
+        <>
+          <p data-acct-pg-count="">정산 줄 <b>{d.count.total}</b> · 맞춤 {d.count.matched} · 맞출 것 없음 {d.count.ignored} · <b className={d.count.open ? 'warn-text' : ''}>남음 {d.count.open}</b> · 전표 {d.count.booked}
+            {' '}· 결제 {won(d.total.gross)} · 수수료 {won(d.total.fee)}(부가세 {won(d.total.feeVat)}) · 입금 {won(d.total.net)}</p>
+          {d.count.unsettled > 0 && <p className="warn-text" data-acct-pg-unsettled={d.count.unsettled}>PG 정산이 안 들어온 결제 {d.count.unsettled}건({d.unsettled[0]?.days}일 넘음) — 가장 오래된 것 {d.unsettled[0]?.date} 전표 {d.unsettled[0]?.entryId}</p>}
+          <p className="muted">{d.note}</p>
+          {d.items.length > 0 && (
+            <table className="tbl" data-acct-pg-rows={d.items.length}><thead><tr><th>결제일</th><th>정산일</th><th>결제</th><th>수수료</th><th>입금</th><th>거래 번호</th><th>맞춤</th></tr></thead>
+              <tbody>{d.items.map((t) => (
+                <tr key={t.id} data-acct-pg-row={t.matchKind ?? 'open'}>
+                  <td>{t.paidOn}</td><td>{t.settleOn}</td><td>{won(t.gross)}</td><td>{won(t.fee)}</td><td>{won(t.net)}</td><td><small>{t.key ?? ''} {t.method ?? ''}</small></td>
+                  <td>{t.matchKind === 'ENTRY' ? <>전표 {t.entryId} {t.booked ? <small className="dim">정산 전표 있음</small> : <button className="btn-sm btn-plain" onClick={() => clear(t.id)}>풀기</button>}</>
+                    : t.matchKind === 'IGNORE' ? <>맞출 것 없음 <small className="dim">{t.matchNote}</small> <button className="btn-sm btn-plain" onClick={() => clear(t.id)}>풀기</button></>
+                    : <>
+                      {t.candidates.length > 0 ? (
+                        <select value={pick[t.id] ?? t.candidates[0]!.entryId} onChange={(e) => setPick({ ...pick, [t.id]: e.target.value })} aria-label="후보 전표" data-acct-pg-cand={t.candidates.length}>
+                          {t.candidates.map((c) => <option key={c.entryId} value={c.entryId}>{c.date} 전표 {c.entryId} · {c.memo ?? c.source}</option>)}
+                        </select>) : <small className="dim">후보 없음 </small>}{' '}
+                      {t.candidates.length > 0 && <button className="btn-sm" disabled={a.busy === `m${t.id}`} onClick={() => match(t.id, { entryId: pick[t.id] ?? t.candidates[0]!.entryId })}>맞춤</button>}{' '}
+                      <button className="btn-sm btn-plain" onClick={() => ignore(t.id)}>맞출 것 없음</button>
+                    </>}</td>
+                </tr>))}</tbody></table>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+interface MLine { role: string; debit: number; credit: number; memo?: string | null }
+interface Manual { items: Array<{ id: string; entryDate: string; memo: string; party: string | null; evidence: string; lines: MLine[]; total: number; state: string; createdBy: string;
+  createdByEmail: string | null; createdAt: string; decidedByEmail: string | null; decidedAt: string | null; decideNote: string | null; entryId: string | null }>; waiting: number; note: string }
+const M_STATE: Record<string, string> = { REQUESTED: '승인 기다림', APPROVED: '승인(장부)', REJECTED: '반려', CANCELED: '취소' };
+
+/** v10.405 — 수동 전표 쓰기 · 결재 */
+export function AcctManual() {
+  const q = useApi<Manual>('/admin/acct/manual');
+  const acc = useApi<{ accounts: Array<{ role: string; name: string; kind: string; extCode: string | null }> }>('/admin/acct/accounts');
+  const a = useAct();
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const blank = () => ({ entryDate: today, memo: '', party: '', evidence: 'NONE', lines: [{ role: '', debit: 0, credit: 0 }, { role: '', debit: 0, credit: 0 }] as MLine[] });
+  const [f, setF] = useState(blank());
+  const dSum = f.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0), cSum = f.lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
+  const okForm = f.memo.trim().length >= 2 && f.lines.length >= 2 && f.lines.every((l) => l.role && ((l.debit > 0) !== (l.credit > 0))) && dSum === cSum && dSum > 0;
+  const setLine = (i: number, p: Partial<MLine>) => setF({ ...f, lines: f.lines.map((l, k) => (k === i ? { ...l, ...p } : l)) });
+  const submit = () => void a.run('add', () => api<{ note: string }>('/admin/acct/manual', { method: 'POST', body: JSON.stringify({ ...f, party: f.party || undefined }) }), () => { setF(blank()); q.reload(); });
+  const decide = (id: string, approve: boolean) => {
+    const note = approve ? (prompt('승인 메모(선택)') ?? '') : prompt('반려 사유(2자 이상)');
+    if (!approve && !note) return;
+    void a.run(`d${id}`, () => api<{ note: string }>(`/admin/acct/manual/${id}/decide`, { method: 'POST', body: JSON.stringify({ approve, note }) }), q.reload, (r) => r.note);
+  };
+  const cancel = (id: string) => confirm('이 요청을 취소합니까?') && void a.run(`c${id}`, () => api<{ note: string }>(`/admin/acct/manual/${id}/cancel`, { method: 'POST' }), q.reload, (r) => r.note);
+  const names: Record<string, string> = Object.fromEntries((acc.data?.accounts ?? []).map((x) => [x.role, x.name]));
+  return (
+    <section data-acct-manual={q.data?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="card pad" data-acct-manual-form="">
+        <b>수동 전표 쓰기</b> <small className="dim">요청 → 쓴 사람이 아닌 SUPER 승인 → 장부 · 마감한 달 · 해는 안 됨</small><br />
+        <input type="date" value={f.entryDate} onChange={(e) => setF({ ...f, entryDate: e.target.value })} aria-label="전표 날짜" />{' '}
+        <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="적요(예: 11월 사무실 임대료)" size={28} />{' '}
+        <input value={f.party} onChange={(e) => setF({ ...f, party: e.target.value })} placeholder="거래처(선택)" size={14} />{' '}
+        <select value={f.evidence} onChange={(e) => setF({ ...f, evidence: e.target.value })} aria-label="증빙">
+          {['NONE', 'TAX_INVOICE', 'CARD', 'CASH', 'SIMPLE', 'CARD_PG'].map((k) => <option key={k} value={k}>{({ NONE: '증빙 없음', TAX_INVOICE: '세금계산서', CARD: '법인카드', CASH: '현금영수증', SIMPLE: '간이영수증', CARD_PG: '카드 · PG' } as Record<string, string>)[k]}</option>)}
+        </select>
+        <table className="tbl"><thead><tr><th>계정</th><th>차변</th><th>대변</th><th>줄 메모</th><th /></tr></thead>
+          <tbody>{f.lines.map((l, i) => (
+            <tr key={i} data-acct-manual-line={i}>
+              <td><select value={l.role} onChange={(e) => setLine(i, { role: e.target.value })} aria-label={`${i + 1}번째 줄 계정`}>
+                <option value="">계정 고르기</option>
+                {(acc.data?.accounts ?? []).map((x) => <option key={x.role} value={x.role}>{x.name}{x.extCode ? ` (${x.extCode})` : ''}</option>)}
+              </select></td>
+              <td><input type="number" min={0} value={l.debit || ''} onChange={(e) => setLine(i, { debit: Math.max(0, Math.floor(Number(e.target.value) || 0)), credit: 0 })} size={10} aria-label="차변" /></td>
+              <td><input type="number" min={0} value={l.credit || ''} onChange={(e) => setLine(i, { credit: Math.max(0, Math.floor(Number(e.target.value) || 0)), debit: 0 })} size={10} aria-label="대변" /></td>
+              <td><input value={l.memo ?? ''} onChange={(e) => setLine(i, { memo: e.target.value })} size={14} /></td>
+              <td>{f.lines.length > 2 && <button className="btn-sm btn-plain" onClick={() => setF({ ...f, lines: f.lines.filter((_x, k) => k !== i) })}>빼기</button>}</td>
+            </tr>))}</tbody></table>
+        <button className="btn-sm btn-plain" disabled={f.lines.length >= 30} onClick={() => setF({ ...f, lines: [...f.lines, { role: '', debit: 0, credit: 0 }] })}>줄 더하기</button>{' '}
+        <span data-acct-manual-sum={dSum === cSum ? 'ok' : 'diff'} className={dSum === cSum ? '' : 'warn-text'}>차변 {won(dSum)} · 대변 {won(cSum)}{dSum !== cSum ? ` · 차이 ${won(dSum - cSum)}` : ''}</span>{' '}
+        <button className="btn-sm" disabled={!okForm || a.busy === 'add'} onClick={submit} data-acct-manual-submit="">요청 올리기</button>
+      </div>
+      {q.data && (
+        <>
+          <p className="muted">승인 기다림 <b>{q.data.waiting}</b> · {q.data.note}</p>
+          <table className="tbl" data-acct-manual-rows={q.data.items.length}><thead><tr><th>번호</th><th>날짜</th><th>적요</th><th>줄</th><th>금액</th><th>상태</th><th>쓴 사람</th><th /></tr></thead>
+            <tbody>{q.data.items.map((m) => (
+              <tr key={m.id} data-acct-manual-row={m.state}>
+                <td>{m.id}</td><td>{m.entryDate}</td><td>{m.memo} <small className="dim">{m.party ?? ''}</small></td>
+                <td><small>{m.lines.map((l) => `${names[l.role] ?? l.role} ${l.debit ? `차 ${won(l.debit)}` : `대 ${won(l.credit)}`}`).join(' · ')}</small></td>
+                <td>{won(m.total)}</td>
+                <td>{M_STATE[m.state] ?? m.state}{m.entryId && <small className="dim"> 전표 {m.entryId}</small>}{m.decideNote && <small className="dim"> · {m.decideNote}</small>}</td>
+                <td><small>{m.createdByEmail ?? ''} {ymdhm(m.createdAt)}</small></td>
+                <td>{m.state === 'REQUESTED' && <>
+                  {isSuper() && <><button className="btn-sm" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, true)} data-acct-manual-approve={m.id}>승인</button>{' '}
+                    <button className="btn-sm btn-plain" disabled={a.busy === `d${m.id}`} onClick={() => decide(m.id, false)}>반려</button>{' '}</>}
+                  <button className="btn-sm btn-plain" onClick={() => cancel(m.id)}>취소</button></>}</td>
+              </tr>))}</tbody></table>
+        </>
+      )}
+    </section>
+  );
+}
+
+interface Sev { ym: string; asOf: string; rows: Array<{ employeeId: string; name: string; joinedOn: string; serviceDays: number; eligible: boolean; dailyAvg: number; estimate: number; basis: string }>;
+  total: number; allTotal: number; book: number; diff: number; done: { id: string; estimate: number; diff: number; entryId: string | null; createdAt: string } | null; hasEmployees: boolean; note: string }
+interface Leave { year: number; rows: Array<{ employeeId: string; name: string; joinedOn: string; granted: number; used: number; remaining: number; suggest: number }>;
+  recent: Array<{ kind: string; id: string; employeeId: string; day: string; days: number; note: string | null; createdAt: string }>; hasEmployees: boolean; note: string }
+
+/** v10.406 — 퇴직금 추계 · 연차 대장 */
+export function AcctSeverance() {
+  const [ym, setYm] = useState(prevYm(kstYm()));
+  const [year, setYear] = useState(Number(kstYm().slice(0, 4)));
+  const s = useApi<Sev>(`/admin/acct/severance?ym=${ym}`);
+  const l = useApi<Leave>(`/admin/acct/leave?year=${year}`);
+  const a = useAct();
+  const run = () => confirm(`${ym} 퇴직금 추계 전표를 넣습니까?(그 달 한 번 · 차이만)`) && void a.run('run', () => api<{ note: string }>('/admin/acct/severance/run', { method: 'POST', body: JSON.stringify({ ym }) }), s.reload, (r) => r.note);
+  const grant = (empId: string, suggest: number) => {
+    const days = prompt(`${year}년 연차 생긴 날(제안 ${suggest}일 · 0.5 단위)`, String(suggest)); if (!days) return;
+    const note = prompt('사유(예: 입사 1년 · 2026년 연차)'); if (!note) return;
+    void a.run(`g${empId}`, () => api<{ note: string }>('/admin/acct/leave/grant', { method: 'POST', body: JSON.stringify({ employeeId: empId, year, days: Number(days), note }) }), l.reload, (r) => r.note);
+  };
+  const use = (empId: string) => {
+    const usedOn = prompt('쓴 날(YYYY-MM-DD)', new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)); if (!usedOn) return;
+    const days = prompt('일수(0.5 단위 · 취소는 음수)', '1'); if (!days) return;
+    const note = prompt('메모(취소면 사유 필수)') ?? '';
+    void a.run(`u${empId}`, () => api<{ note: string }>('/admin/acct/leave/use', { method: 'POST', body: JSON.stringify({ employeeId: empId, usedOn, days: Number(days), note }) }), l.reload, (r) => r.note);
+  };
+  return (
+    <section data-acct-severance={s.data?.rows.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <h3>퇴직금 추계</h3>
+      <div className="acts"><label>달 <input type="month" value={ym} onChange={(e) => e.target.value && setYm(e.target.value)} /></label>{' '}
+        {isSuper() && <button className="btn-sm" disabled={a.busy === 'run' || !!s.data?.done || !s.data?.hasEmployees} onClick={run} data-acct-severance-run="">이 달 추계 전표</button>}</div>
+      {s.data && (
+        <>
+          {!s.data.hasEmployees && <p className="warn-text">직원 표(급여 · v10.403)가 아직 없습니다.</p>}
+          <p data-acct-severance-sum="">추계액(1년 이상) <b>{won(s.data.total)}</b> · 전체 {won(s.data.allTotal)} · 장부 잔액 {won(s.data.book)} · 차이 <b>{won(s.data.diff)}</b>
+            {s.data.done && <> · <small className="dim">이 달 추계함(전표 {s.data.done.entryId ?? '없음'})</small></>}</p>
+          <table className="tbl"><thead><tr><th>직원</th><th>입사</th><th>재직일</th><th>1일 평균임금</th><th>추계액</th><th>기준</th></tr></thead>
+            <tbody>{s.data.rows.map((r) => (
+              <tr key={r.employeeId} data-acct-severance-row={r.eligible ? 'y' : 'n'}><td>{r.name}</td><td>{r.joinedOn}</td><td>{r.serviceDays}</td><td>{won(r.dailyAvg)}</td>
+                <td>{won(r.estimate)}{!r.eligible && <small className="dim"> (1년 미만 · 합계 뺌)</small>}</td><td><small>{({ PAYROLL: '최근 3개월 급여', BASE: '월 기본급', NONE: '급여 없음' } as Record<string, string>)[r.basis]}</small></td></tr>))}</tbody></table>
+          <p className="muted">{s.data.note}</p>
+        </>
+      )}
+      <h3>연차 대장</h3>
+      <div className="acts"><label>해 <input type="number" value={year} min={2000} max={2100} onChange={(e) => setYear(Number(e.target.value) || year)} style={{ width: 90 }} /></label></div>
+      {l.data && (
+        <>
+          <table className="tbl" data-acct-leave={l.data.rows.length}><thead><tr><th>직원</th><th>입사</th><th>생긴 날</th><th>쓴 날</th><th>남은 날</th><th>제안</th><th /></tr></thead>
+            <tbody>{l.data.rows.map((r) => (
+              <tr key={r.employeeId}><td>{r.name}</td><td>{r.joinedOn}</td><td>{r.granted}</td><td>{r.used}</td><td><b className={r.remaining < 0 ? 'warn-text' : ''}>{r.remaining}</b></td><td>{r.suggest}</td>
+                <td>{isSuper() && <button className="btn-sm btn-plain" onClick={() => grant(r.employeeId, r.suggest)} data-acct-leave-grant={r.employeeId}>생긴 날</button>}{' '}
+                  <button className="btn-sm btn-plain" onClick={() => use(r.employeeId)}>쓴 날</button></td></tr>))}</tbody></table>
+          <p className="muted">{l.data.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+interface Corp { fiscalYear: { start: string; end: string }; asOf: string; months: number;
+  ytd: { revenue: number; expense: number; profit: number; base: number; tax: number; local: number; total: number };
+  annualized: { profit: number; base: number; tax: number; local: number; total: number }; interim: { base: number; tax: number; total: number }; firstHalfComplete: boolean;
+  brackets: Array<{ upTo: number | null; rate: number }>; localRate: number; deadlines: Array<{ key: string; label: string; due: string; daysLeft: number }>; note: string }
+
+/** v10.407 — 법인세 추정 미리보기 */
+export function AcctCorpTax() {
+  const q = useApi<Corp>('/admin/acct/corptax');
+  const d = q.data;
+  return (
+    <section data-acct-corptax={d ? d.months : ''}>
+      {!!q.error && <p className="warn-text">{String(q.error)}</p>}
+      {d && (
+        <>
+          <p>사업연도 {d.fiscalYear.start} ~ {d.fiscalYear.end} · {d.asOf} 까지 {d.months}개월</p>
+          <table className="tbl"><thead><tr><th /><th>이익(과세표준)</th><th>법인세</th><th>지방소득세</th><th>합계</th></tr></thead>
+            <tbody>
+              <tr data-acct-corptax-ytd=""><td>지금까지</td><td>{won(d.ytd.profit)} <small className="dim">매출 {won(d.ytd.revenue)} · 비용 {won(d.ytd.expense)}</small></td><td>{won(d.ytd.tax)}</td><td>{won(d.ytd.local)}</td><td>{won(d.ytd.total)}</td></tr>
+              <tr data-acct-corptax-annual=""><td>1년으로 늘리면</td><td>{won(d.annualized.profit)}</td><td>{won(d.annualized.tax)}</td><td>{won(d.annualized.local)}</td><td><b>{won(d.annualized.total)}</b></td></tr>
+              <tr><td>중간예납(가결산 추정)</td><td>{won(d.interim.base)} <small className="dim">상반기{d.firstHalfComplete ? '' : ' · 아직 안 끝남'}</small></td><td>{won(d.interim.tax)}</td><td>—</td><td>{won(d.interim.total)}</td></tr>
+            </tbody></table>
+          <p>세율 구간(초안): {d.brackets.map((b) => `${b.upTo == null ? '그 위' : `${won(b.upTo)}원까지`} ${b.rate}%`).join(' · ')} · 지방소득세 {d.localRate}%</p>
+          {d.deadlines.length > 0 && <p data-acct-corptax-deadlines={d.deadlines.length}>기한: {d.deadlines.map((x) => `${x.label} ${x.due}(${x.daysLeft}일 남음)`).join(' · ')}</p>}
+          <p className="warn-text">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}

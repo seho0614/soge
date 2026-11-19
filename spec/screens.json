@@ -5882,6 +5882,85 @@
     "POST /admin/acct/payroll/wht-table"
    ],
    "note": "2026-11-20 v10.403 (D247 · docs/540) 직원(주민번호 · 계좌 없음) · 달 급여(초안 → 확정 → 지급) · 원천세(간이세액표) · 4대보험(요율 표 · 초안) · 전표 PAYROLL · PAYROLL_PAID"
+  },
+  {
+   "id": "SB-ADM-ACC-190",
+   "name": "회계 PG 정산",
+   "group": "ADM",
+   "url": "/admin/acct-pg",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/pg",
+    "POST /admin/acct/pg/upload",
+    "POST /admin/acct/pg/{id}/match",
+    "POST /admin/acct/pg/auto-match"
+   ],
+   "note": "2026-11-20 v10.404 (D248 · docs/541) PG 정산 내역 CSV(같은 줄 한 번) ↔ 전표 PG 정산 받을 돈(금액 · 결제일 ±N일) · 맞춘 줄은 PG_SETTLE 전표(보통예금 · 지급수수료 · 부가세대급금) · 안 들어온 결제 ACCT_PG_UNSETTLED"
+  },
+  {
+   "id": "SB-ADM-ACC-200",
+   "name": "회계 수동 전표",
+   "group": "ADM",
+   "url": "/admin/acct-manual",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/manual",
+    "POST /admin/acct/manual",
+    "POST /admin/acct/manual/{id}/decide",
+    "POST /admin/acct/manual/{id}/cancel",
+    "GET /admin/acct/accounts"
+   ],
+   "note": "2026-11-20 v10.405 (D248 · docs/542) 수동 전표 요청(줄 2 ~ 30 · 차대 같음 · 마감 달 · 해 안 됨) → 쓴 사람이 아닌 SUPER 승인 → acct_entries MANUAL · 반려 사유"
+  },
+  {
+   "id": "SB-ADM-ACC-210",
+   "name": "회계 퇴직금 · 연차",
+   "group": "ADM",
+   "url": "/admin/acct-severance",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/severance",
+    "POST /admin/acct/severance/run",
+    "GET /admin/acct/leave",
+    "POST /admin/acct/leave/grant",
+    "POST /admin/acct/leave/use"
+   ],
+   "note": "2026-11-20 v10.406 (D248 · docs/543) 퇴직금 추계(최근 3개월 급여 · 1년 이상) · 달마다 차이만 SEVERANCE_ACCRUE · 연차 생긴 날 · 쓴 날(쌓기만 · 초안 노무사 확인)"
+  },
+  {
+   "id": "SB-ADM-ACC-220",
+   "name": "회계 법인세 추정",
+   "group": "ADM",
+   "url": "/admin/acct-corptax",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/corptax"
+   ],
+   "note": "2026-11-20 v10.407 (D248 · docs/544) 올해 회계 이익 기준 법인세 · 지방소득세 추정(지금까지 · 1년 환산 · 중간예납 가결산) · 세율 구간 설정 · 중간예납 · 확정 기한(세무조정 없음)"
   }
  ],
  "deferred": [

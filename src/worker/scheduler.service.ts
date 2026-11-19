@@ -39,6 +39,7 @@ import { stockJob } from '../modules/acct/stock';   // v10.395 (D245)
 import { depreciationJob } from '../modules/acct/assets';   // v10.398 (D246)
 import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
 import { acctAgingJob } from '../modules/acct/aging';   // v10.401 (D247)
+import { acctPgCheckJob } from '../modules/acct/pgsettle';   // v10.404 (D248)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -63,7 +64,8 @@ export type JobName =
   | 'acct_stock'      // v10.395 (D245)
   | 'acct_depreciation'   // v10.398 (D246)
   | 'acct_budget'     // v10.399 (D246)
-  | 'acct_aging';     // v10.401 (D247)
+  | 'acct_aging'      // v10.401 (D247)
+  | 'acct_pg_check';  // v10.404 (D248)
 
 export interface JobResult {
   job: JobName;
@@ -751,6 +753,12 @@ export class SchedulerService {
       case 'acct_aging': {   // v10.401 (D247 · docs/538) — 받을 돈 · 갚을 돈이 acct.aging_over_days 넘으면 ACCT_AGING_OVER(거래처마다 한 번 · 갚으면 풀림)
         const r = await acctAgingJob(this.db);
         affected = r.made.length; detail = r;
+        break;
+      }
+
+      case 'acct_pg_check': {   // v10.404 (D248 · docs/541) — PG 정산이 늦은 결제 ACCT_PG_UNSETTLED(하나 · 다 들어오면 풀림)
+        const r = await acctPgCheckJob(this.db);
+        affected = r.unsettled; detail = r;
         break;
       }
 

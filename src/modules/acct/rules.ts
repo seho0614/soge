@@ -14,7 +14,7 @@ export const EVIDENCES: Evidence[] = ['TAX_INVOICE', 'CARD_PG', 'CASH', 'NONE', 
 export const EV_LABEL: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '없음', CARD: '법인카드', SIMPLE: '간이영수증' };
 
 const SAMPLE: Record<string, unknown> = { key: 'x', at: '', party: null, amt: 11000, supply: 10000, vat: 1000, total: 11000, paid: 11000, exempt: 0, gross: 11000, wht: 363, net: 10637,
-  kind: 'USE', no: '', method: 'TRANSFER', period: '', deductible: true, qty: 1, unit_cost: 10000, amount: 11000, pay_role: 'AP', account_role: 'EXP_SUPPLIES' };
+  kind: 'USE', no: '', method: 'TRANSFER', period: '', deductible: true, qty: 1, unit_cost: 10000, amount: 11000, pay_role: 'AP', account_role: 'EXP_SUPPLIES', fee: 330, fee_vat: 30 };   // v10.404 PG 수수료 자리
 /** 계정 자리 찾기용 — 면세 몫 · 부가세 없는 경우까지 돌려 보고 나온 역할을 모두 모음 */
 const VARIANTS: Array<Record<string, unknown>> = [SAMPLE, { ...SAMPLE, exempt: 3000 }, { ...SAMPLE, vat: null }, { ...SAMPLE, vat: 0, deductible: false }];
 

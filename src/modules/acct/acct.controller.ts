@@ -19,6 +19,11 @@ import { PAY_ROLES, PURCHASE_KINDS, PURCHASE_MAX_FILES, addPurchase, cancelPurch
 import { bookCard, cancelExpense, cardMonth, createExpense, decideExpense, listExpenses, payExpense, uploadCard } from './expense';
 import { addCashBalance, addCashPlan, cancelCashPlan, cashflow, listCashPlans } from './cashflow';
 import { stockAdjust, stockIn, stockList, stockMoves } from './stock';
+import { PG_MAX_CHARS, pgAutoMatch, pgMatch, pgMonth, uploadPg } from './pgsettle';
+import { MANUAL_EVIDENCES, addManual, cancelManual, decideManual, listManual } from './manual';
+import { leaveBook, leaveGrant, leaveUse, severanceEstimate, severanceRun } from './severance';
+import { corpTaxPreview } from './corptax';
+import { PG_SOURCES } from './pgsettle';
 import { vatForm, vatFormRows } from './vatform';
 import { agingView } from './aging';
 import { closeYear, reopenYear, yearClosings } from './yearclose';
@@ -331,6 +336,51 @@ export class AcctWhtTableDto {
   @ApiPropertyOptional({ description: '이어 올리기(처음 false = 그 해 전체 바꿈)' }) @IsOptional() @IsBoolean() append?: boolean;
   @ApiPropertyOptional({ enum: ['THOUSAND', 'WON'], description: '이상 · 미만 칸 단위(처음 천원)' }) @IsOptional() @IsIn(['THOUSAND', 'WON']) unit?: 'THOUSAND' | 'WON';
   @ApiProperty({ example: '국세청 2026 간이세액표' }) @IsString() @Length(1, 400) reason!: string;
+}
+
+/* ── ⑮ d248.ctrl.ts ── */
+export class AcctPgUploadDto {
+  @ApiProperty({ description: `PG 정산 내역 CSV 글자(${PG_MAX_CHARS.toLocaleString('ko-KR')}자까지)` }) @IsString() @Length(1, PG_MAX_CHARS) csv!: string;
+  @ApiPropertyOptional({ example: '정산내역_202611.csv' }) @IsOptional() @IsString() @Length(0, 200) filename?: string;
+  @ApiPropertyOptional({ example: '토스페이먼츠' }) @IsOptional() @IsString() @Length(0, 40) pgName?: string;
+}
+export class AcctPgMatchDto {
+  @ApiPropertyOptional({ example: '123', description: '맞출 전표 번호(PG 정산 받을 돈 줄이 있는 전표)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) entryId?: string;
+  @ApiPropertyOptional({ description: '맞출 것 없음(회계 시작일 전 결제 · 시험 결제 등 — 사유 필요 · 전표 만들지 않음)' }) @IsOptional() @IsBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ description: '맞춤 풀기(사유 · PG 정산 전표가 만들어지기 전만)' }) @IsOptional() @IsBoolean() clear?: boolean;
+  @ApiPropertyOptional({ example: '회계 시작일 전 결제' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+export class AcctManualLineDto {
+  @ApiProperty({ example: 'EXP_RENT', description: '계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z0-9_]{1,39}$/) role!: string;
+  @ApiPropertyOptional({ example: 1000000 }) @IsOptional() @IsInt() @Min(0) debit?: number;
+  @ApiPropertyOptional({ example: 0 }) @IsOptional() @IsInt() @Min(0) credit?: number;
+  @ApiPropertyOptional({ example: '11월 임대료' }) @IsOptional() @IsString() @Length(0, 100) memo?: string;
+}
+export class AcctManualDto {
+  @ApiProperty({ example: '2026-11-25' }) @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) entryDate!: string;
+  @ApiProperty({ example: '11월 사무실 임대료' }) @IsString() @Length(1, 400) memo!: string;
+  @ApiPropertyOptional({ example: '(주)건물주' }) @IsOptional() @IsString() @Length(0, 120) party?: string;
+  @ApiPropertyOptional({ enum: MANUAL_EVIDENCES }) @IsOptional() @IsIn(MANUAL_EVIDENCES as unknown as string[]) evidence?: string;
+  @ApiProperty({ type: [AcctManualLineDto], description: '줄 2 ~ 30 · 차변 합 = 대변 합' }) @IsArray() lines!: AcctManualLineDto[];
+}
+export class AcctManualDecideDto {
+  @ApiProperty({ description: 'true 승인(전표 넣기) · false 반려(사유)' }) @IsBoolean() approve!: boolean;
+  @ApiPropertyOptional({ example: '계약서 확인' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
+}
+export class AcctSeveranceRunDto {
+  @ApiProperty({ example: '2026-11', description: '추계할 달(지난 달까지 · 마감 전)' }) @Matches(YM) ym!: string;
+}
+export class AcctLeaveGrantDto {
+  @ApiProperty({ example: '1', description: '직원 번호(⑭ acct_employees)' }) @IsString() @Matches(/^\d{1,18}$/) employeeId!: string;
+  @ApiProperty({ example: 2026 }) @IsInt() @Min(2000) @Max(2100) year!: number;
+  @ApiProperty({ example: 15, description: '일수(0.5 단위 · 바로잡기는 음수)' }) @IsNumber() @Min(-40) @Max(40) days!: number;
+  @ApiProperty({ example: '2026년 연차(입사 1년)' }) @IsString() @Length(1, 400) note!: string;
+}
+export class AcctLeaveUseDto {
+  @ApiProperty({ example: '1' }) @IsString() @Matches(/^\d{1,18}$/) employeeId!: string;
+  @ApiProperty({ example: '2026-11-20' }) @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) usedOn!: string;
+  @ApiProperty({ example: 1, description: '일수(0.5 단위 · 취소는 음수 + 사유)' }) @IsNumber() @Min(-30) @Max(30) days!: number;
+  @ApiPropertyOptional({ example: '개인 사정' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 
 const reasonOk = (r: string, code: string) => {
@@ -1315,4 +1365,137 @@ export class AcctController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_WHT_TABLE · ACCT_REASON' })
   uploadWht(@Body() dto: AcctWhtTableDto) { return uploadWhtTable(this.db, dto.year, dto.csv, dto.unit ?? 'THOUSAND', dto.reason, RequestCtx.actorId() ?? null, dto.append === true); }
+
+  /* ── ⑮ d248 ── */
+  @Post('pg/upload')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PG_UPLOAD', 'SETTING')
+  @ApiOperation({ summary: 'PG 정산 내역 올리기 (v10.404)', description: 'PG 사 정산 내역 CSV — 머리줄 이름으로 결제일 · 정산일 · 결제 금액 · 수수료 · 수수료 부가세 · 입금액 · 거래 번호 칸을 찾고 같은 줄은 한 번만. 올린 뒤 후보 하나뿐인 줄은 자동 맞춤.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PG_CSV_HEAD · PG_CSV_EMPTY · PG_CSV_SIZE · PG_CSV_TOO_MANY' })
+  pgUpload(@Body() dto: AcctPgUploadDto) { return uploadPg(this.db, dto.csv, dto.filename ?? null, dto.pgName ?? null, RequestCtx.actorId() ?? null); }
+
+  @Get('pg')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', example: '2026-11' })
+  @ApiOperation({ summary: 'PG 정산 맞추기 (v10.404)', description: '정산일 기준 그 달 PG 정산 줄 · 후보 전표(PG 정산 받을 돈 · 같은 금액 · 결제일 ±acct.pg_match_days) · 합계(결제 · 수수료 · 입금) · 안 들어온 결제(acct.pg_unsettled_days 지남).' })
+  @ApiOkResponse({ type: Object })
+  pgGet(@Query('ym') ym: string) {
+    if (!YM.test(ym ?? '')) throw new PolicyViolation('ACCT_YM', '달(YYYY-MM)이 바르지 않습니다.');
+    return pgMonth(this.db, ym);
+  }
+
+  @Post('pg/auto-match')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PG_MATCH', 'SETTING')
+  @ApiOperation({ summary: 'PG 정산 자동 맞춤 (v10.404)', description: '후보 전표가 하나뿐인 줄만 맞춥니다.' })
+  @ApiOkResponse({ type: Object })
+  pgAuto() { return pgAutoMatch(this.db, RequestCtx.actorId() ?? null); }
+
+  @Post('pg/:id/match')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_PG_MATCH', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: 'PG 정산 줄 맞추기 (v10.404)', description: '전표와 맞춤(DB 가 PG 정산 받을 돈 금액 · 방향을 다시 확인) · 맞출 것 없음(사유 · 전표 만들지 않음) · 풀기(사유 · PG 정산 전표 전만).' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'PG_MATCHED · PG_ENTRY_USED · PG_BOOKED' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PG_REASON · PG_ENTRY · ACCT_PG_MISMATCH' })
+  pgMatchPost(@Param('id') id: string, @Body() dto: AcctPgMatchDto) { return pgMatch(this.db, id, dto, RequestCtx.actorId() ?? null); }
+
+  /* ── v10.405 수동 전표 ── */
+  @Get('manual')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'state', required: false, enum: ['REQUESTED', 'APPROVED', 'REJECTED', 'CANCELED'] })
+  @ApiOperation({ summary: '수동 전표 요청 목록 (v10.405)', description: '요청 · 승인 · 반려 · 취소 · 기다리는 수. 승인은 쓴 사람이 아닌 SUPER.' })
+  @ApiOkResponse({ type: Object })
+  manualList(@Query('state') state?: string) { return listManual(this.db, state); }
+
+  @Post('manual')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_MANUAL_ADD', 'SETTING')
+  @ApiOperation({ summary: '수동 전표 요청 (v10.405)', description: '날짜 · 적요 · 줄(계정 · 차변 · 대변) — 줄 2 ~ 30 · 차변 합 = 대변 합 · 마감한 달 · 해는 안 됨. SUPER 승인 뒤 장부에 들어감.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_MANUAL · ACCT_MANUAL_BALANCE · ACCT_MANUAL_CLOSED' })
+  manualAdd(@Body() dto: AcctManualDto) { return addManual(this.db, dto, RequestCtx.actorId()!); }
+
+  @Post('manual/:id/decide')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_MANUAL_DECIDE', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '수동 전표 승인 · 반려 (v10.405 · SUPER)', description: '쓴 사람은 못 함(DB 도 막음). 승인하면 acct_entries(source MANUAL)로 들어가고, 반려는 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_MANUAL_STATE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_MANUAL_SELF · ACCT_MANUAL_CLOSED · ACCT_MANUAL' })
+  manualDecide(@Param('id') id: string, @Body() dto: AcctManualDecideDto) {
+    return decideManual(this.db, id, dto, RequestCtx.actorId()!, (RequestCtx.get()?.actorRole ?? '') === 'SUPER');
+  }
+
+  @Post('manual/:id/cancel')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_MANUAL_CANCEL', 'SETTING')
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiOperation({ summary: '수동 전표 요청 취소 (v10.405)', description: '요청 상태일 때 쓴 사람 · SUPER 만.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_MANUAL_STATE' })
+  manualCancel(@Param('id') id: string) { return cancelManual(this.db, id, RequestCtx.actorId()!, (RequestCtx.get()?.actorRole ?? '') === 'SUPER'); }
+
+  /* ── v10.406 퇴직금 · 연차 ── */
+  @Get('severance')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'ym', example: '2026-11' })
+  @ApiOperation({ summary: '퇴직금 추계 (v10.406)', description: '그 달 말 기준 직원별 재직일수 · 1일 평균임금(최근 3개월 급여) · 추계액 · 법정 대상(1년 이상) · 장부 잔액 · 차이. 초안 — 노무사 · 세무사 확인.' })
+  @ApiOkResponse({ type: Object })
+  severanceGet(@Query('ym') ym: string) { return severanceEstimate(this.db, ym); }
+
+  @Post('severance/run')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_SEVERANCE_RUN', 'SETTING')
+  @ApiOperation({ summary: '퇴직금 추계 전표 (v10.406 · SUPER)', description: '그 달 한 번 · 추계액 − 장부 잔액 차이만 전표(SEVERANCE_ACCRUE · 그 달 말 날짜) · 마감한 달 · 이번 달은 안 됨.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'ACCT_SEVERANCE_DONE' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_SEVERANCE' })
+  severanceRunPost(@Body() dto: AcctSeveranceRunDto) { return severanceRun(this.db, dto.ym, RequestCtx.actorId() ?? null); }
+
+  @Get('leave')
+  @Roles(...VIEW)
+  @ApiQuery({ name: 'year', example: '2026' })
+  @ApiOperation({ summary: '연차 대장 (v10.406)', description: '직원별 그 해 생긴 날 · 쓴 날 · 남은 날 · 제안 일수(설정 acct.leave_* · 초안) · 최근 기록.' })
+  @ApiOkResponse({ type: Object })
+  leaveGet(@Query('year') year: string) { return leaveBook(this.db, Number(year)); }
+
+  @Post('leave/grant')
+  @Roles('SUPER')
+  @HttpCode(200)
+  @Audit('ACCT_LEAVE_GRANT', 'SETTING')
+  @ApiOperation({ summary: '연차 생긴 날 넣기 (v10.406 · SUPER)', description: '쌓기만 · 바로잡기는 음수 줄 · 사유 필수.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_LEAVE' })
+  leaveGrantPost(@Body() dto: AcctLeaveGrantDto) { return leaveGrant(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  @Post('leave/use')
+  @Roles(...VIEW)
+  @HttpCode(200)
+  @Audit('ACCT_LEAVE_USE', 'SETTING')
+  @ApiOperation({ summary: '연차 쓴 날 (v10.406)', description: '쌓기만 · 취소는 음수 + 사유.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_LEAVE' })
+  leaveUsePost(@Body() dto: AcctLeaveUseDto) { return leaveUse(this.db, dto, RequestCtx.actorId() ?? null); }
+
+  /* ── v10.407 법인세 추정 ── */
+  @Get('corptax')
+  @Roles(...VIEW)
+  @ApiOperation({ summary: '법인세 추정 미리보기 (v10.407)', description: '올해(사업연도) 회계 이익 기준 법인세 · 지방소득세 추정(지금까지 · 1년으로 늘린 값 · 중간예납 가결산) · 세율 구간(acct.corp_tax_brackets) · 중간예납 · 확정 신고 기한. 세무조정 없음 — 세무사 확인.' })
+  @ApiOkResponse({ type: Object })
+  corpTaxGet() { return corpTaxPreview(this.db); }
 }
