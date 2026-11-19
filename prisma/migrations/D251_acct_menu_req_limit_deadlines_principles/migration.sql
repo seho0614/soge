@@ -29,7 +29,7 @@ SELECT r.id, r.amount,
 COMMENT ON VIEW public.v_acct_req_spend IS 'v10.417 (D251) 품의별 붙인 매입 · 경비 합계(spent) · 한도(limit_amount = 금액 × (100 + 허용 %) / 100) · 건수';
 
 CREATE OR REPLACE FUNCTION public.fn_acct_req_link_guard() RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE q record; tol int; lim bigint; used bigint; mine bigint; kind text;
+DECLARE q record; tol int; lim bigint; used bigint; mine bigint; v_kind text;   -- v_ 앞머리: acct_purchases.kind 칸과 이름이 겹치면 plpgsql 이 모호하다고 막음
 BEGIN
   IF TG_OP = 'UPDATE' AND OLD.requisition_id IS NOT NULL AND NEW.requisition_id IS DISTINCT FROM OLD.requisition_id THEN
     RAISE EXCEPTION 'REQ_LINK_FIXED: 붙인 품의는 바꾸지 않습니다(취소하고 다시 넣으십시오).';
@@ -41,9 +41,9 @@ BEGIN
   IF q.state NOT IN ('APPROVED', 'USED') THEN RAISE EXCEPTION 'REQ_STATE: 승인된 품의에만 붙입니다.'; END IF;
   tol := coalesce((SELECT value FROM public.site_settings WHERE key = 'acct.req_tolerance_pct'), '10')::int;
   lim := floor(q.amount * (100 + tol) / 100.0)::bigint;
-  IF TG_TABLE_NAME = 'acct_purchases' THEN kind := 'PURCHASE'; mine := NEW.total; ELSE kind := 'EXPENSE'; mine := NEW.amount; END IF;
-  used := coalesce((SELECT sum(p.total) FROM public.acct_purchases p WHERE p.requisition_id = q.id AND p.state = 'ACTIVE' AND NOT (kind = 'PURCHASE' AND p.id = NEW.id)), 0)
-        + coalesce((SELECT sum(c.amount) FROM public.acct_expense_claims c WHERE c.requisition_id = q.id AND c.state IN ('REQUESTED', 'APPROVED', 'PAID') AND NOT (kind = 'EXPENSE' AND c.id = NEW.id)), 0);
+  IF TG_TABLE_NAME = 'acct_purchases' THEN v_kind := 'PURCHASE'; mine := NEW.total; ELSE v_kind := 'EXPENSE'; mine := NEW.amount; END IF;
+  used := coalesce((SELECT sum(p.total) FROM public.acct_purchases p WHERE p.requisition_id = q.id AND p.state = 'ACTIVE' AND NOT (v_kind = 'PURCHASE' AND p.id = NEW.id)), 0)
+        + coalesce((SELECT sum(c.amount) FROM public.acct_expense_claims c WHERE c.requisition_id = q.id AND c.state IN ('REQUESTED', 'APPROVED', 'PAID') AND NOT (v_kind = 'EXPENSE' AND c.id = NEW.id)), 0);
   IF used + mine > lim THEN
     RAISE EXCEPTION 'REQ_OVER: 품의 금액(허용 비율 포함)을 넘습니다 — 다시 품의하십시오.';
   END IF;
@@ -60,13 +60,13 @@ END $$;
 
 /* 처음 붙으면 품의를 USED 로(⑯ used_* = 처음 붙은 것 · 상태 앞으로만 가드 그대로) */
 CREATE OR REPLACE FUNCTION public.fn_acct_req_link_used() RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE kind text; amt bigint; who uuid;
+DECLARE v_kind text; amt bigint; who uuid;
 BEGIN
   IF NEW.requisition_id IS NULL OR (TG_OP = 'UPDATE' AND OLD.requisition_id IS NOT DISTINCT FROM NEW.requisition_id) THEN RETURN NULL; END IF;
-  IF TG_TABLE_NAME = 'acct_purchases' THEN kind := 'PURCHASE'; amt := NEW.total; who := NEW.created_by; ELSE kind := 'EXPENSE'; amt := NEW.amount; who := NEW.claimant; END IF;
-  UPDATE public.acct_requisitions SET state = 'USED', used_kind = kind, used_ref = NEW.id, used_amount = amt, used_by = who, used_at = now()
+  IF TG_TABLE_NAME = 'acct_purchases' THEN v_kind := 'PURCHASE'; amt := NEW.total; who := NEW.created_by; ELSE v_kind := 'EXPENSE'; amt := NEW.amount; who := NEW.claimant; END IF;
+  UPDATE public.acct_requisitions SET state = 'USED', used_kind = v_kind, used_ref = NEW.id, used_amount = amt, used_by = who, used_at = now()
    WHERE id = NEW.requisition_id AND state = 'APPROVED'
-     AND NOT EXISTS (SELECT 1 FROM public.acct_requisitions x WHERE x.used_kind = kind AND x.used_ref = NEW.id);
+     AND NOT EXISTS (SELECT 1 FROM public.acct_requisitions x WHERE x.used_kind = v_kind AND x.used_ref = NEW.id);
   RETURN NULL;
 END $$;
 DO $$ BEGIN
