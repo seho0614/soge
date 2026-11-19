@@ -192,7 +192,7 @@ if API and DB:
         byb = call('GET', '/admin/acct/tax-inbox', None, TB)
         rows = psql(f"SELECT id || '|' || exempt || '|' || state FROM acct_tax_inbox WHERE id > {int(t0 or 0)} AND source = 'ASSUME' ORDER BY id")
         ids = [r.split('|') for r in rows.split('\n') if r and '|' in r]
-        tax = next((x[0] for x in ids if x[1] == 'f' and x[2] == 'NEW'), None); ex = next((x[0] for x in ids if x[1] == 't' and x[2] == 'NEW'), None)
+        tax = next((x[0] for x in ids if x[1] in ('f', 'false') and x[2] == 'NEW'), None); ex = next((x[0] for x in ids if x[1] in ('t', 'true') and x[2] == 'NEW'), None)
         bk = call('POST', f'/admin/acct/tax-inbox/{tax}/book', {'accountRole': 'EXP_SUPPLIES', 'payRole': 'AP'}, TS) if tax else {}
         again = call('POST', f'/admin/acct/tax-inbox/{tax}/book', {'accountRole': 'EXP_SUPPLIES', 'payRole': 'AP'}, TS) if tax else {}
         pur = psql(f"SELECT deductible || '|' || kind || '|' || total FROM acct_purchases WHERE id = {int(bk.get('purchaseId') or 0)}")
