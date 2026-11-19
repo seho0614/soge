@@ -168,11 +168,14 @@ export class LeadCashService {
     const bonus = Math.floor(amount * rate);
     const orderId = `lc-${Date.now().toString(36)}${randomBytes(6).toString('hex')}`;
     /* v10.387 (D243 · docs/523) — 부가세 별도 시작일 뒤면 결제 = 충전 금액 + 부가세 10% · 지갑에는 충전 금액만 · 충전 때 세금계산서 */
+    /*   부가세는 따로 셉니다 — 같은 $3 을 bigint 칸과 numeric 함수에 함께 쓰면 「inconsistent types deduced」(500) */
+    const [vr] = await this.db.query<{ vat: string }>(
+      `SELECT CASE WHEN fn_vat_separate(now()) THEN fn_vat10($1::numeric) ELSE 0 END::bigint AS vat`, [amount]);
     const [c] = await this.db.query<any>(
       `INSERT INTO lead_cash_charges(partner_id, order_id, amount, bonus_rate, bonus_amount, source, requested_by, vat)
-       VALUES ($1,$2,$3,$4,$5,$6,$7, CASE WHEN fn_vat_separate(now()) THEN fn_vat10($3) ELSE 0 END)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING id, order_id AS "orderId", amount, vat, bonus_amount AS bonus, state`,
-      [p.id, orderId, amount, rate, bonus, source, this.me ?? null]);
+      [p.id, orderId, amount, rate, bonus, source, this.me ?? null, Number(vr?.vat ?? 0)]);
     const vat = Number(c.vat);
     return { ...c, amount: Number(c.amount), vat, payAmount: Number(c.amount) + vat, bonus: Number(c.bonus), bonusRate: rate,
       orderName: '소개뱅크 리드 이용료 충전',

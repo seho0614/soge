@@ -200,3 +200,60 @@ BEGIN
   GET DIAGNOSTICS v_n = ROW_COUNT;
   RETURN v_n;
 END $$;
+
+-- ⑦ v10.386 — 정산 줄 검사 두 곳(B075 fn_hlt_settle_guard · fn_hlt_settlement_guard)에 수수료 부가세를 넣습니다
+--    지급액 = 매출 − 수수료 − 수수료 부가세 − 환불 + 이월 · 알림 글의 「수수료」 자리에는 수수료 + 수수료 부가세
+CREATE OR REPLACE FUNCTION public.fn_hlt_settle_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.net_amount <> NEW.gross_amount - NEW.commission - NEW.commission_vat - NEW.refund_amount + NEW.carried_in THEN
+    RAISE EXCEPTION
+      'HLTS: 정산액이 맞지 않습니다 — 매출 % - 수수료 % - 환불 % + 이월 % ≠ 지급액 %',
+      NEW.gross_amount, NEW.commission + NEW.commission_vat, NEW.refund_amount, NEW.carried_in, NEW.net_amount;
+  END IF;
+
+  /* 음수면 지급하지 않고 다음 주로 넘깁니다 — 계좌에서 빼 올 수 없습니다. */
+  IF NEW.net_amount < 0 AND NEW.status = 'PAID' THEN
+    RAISE EXCEPTION 'HLTS: 정산액이 음수입니다 — 지급이 아니라 이월해야 합니다';
+  END IF;
+
+  /* 지급하려면 보낼 곳이 있어야 합니다. */
+  IF NEW.status = 'PAID' AND NOT EXISTS (
+    SELECT 1 FROM hlt_sellers s
+     WHERE s.id = NEW.seller_id
+       AND (s.type = 'DIRECT' OR coalesce(btrim(s.submerchant_id),'') <> '')) THEN
+    RAISE EXCEPTION
+      'HLTS: 하위가맹점 ID 가 없습니다 — 어디로 보낼지 모릅니다 (PG 계약 뒤 채우십시오)';
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.fn_hlt_settlement_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.net_amount <> NEW.gross_amount - NEW.commission - NEW.commission_vat - NEW.refund_amount + NEW.carried_in THEN
+    RAISE EXCEPTION
+      'HLTS: 정산 합계가 맞지 않습니다 — 매출 % - 수수료 % - 환불 % + 이월 % ≠ %',
+      NEW.gross_amount, NEW.commission + NEW.commission_vat, NEW.refund_amount, NEW.carried_in, NEW.net_amount;
+  END IF;
+
+  /* 음수면 지급하지 않고 넘깁니다. */
+  IF NEW.net_amount < 0 AND NEW.status = 'PAID' THEN
+    RAISE EXCEPTION 'HLTS: 정산액이 음수입니다 — 지급할 수 없습니다. 다음 주로 넘기십시오';
+  END IF;
+
+  /* 하위가맹점이 없으면 지급이 안 됩니다. */
+  IF NEW.status = 'PAID' AND NOT EXISTS (
+    SELECT 1 FROM hlt_sellers
+     WHERE id = NEW.seller_id
+       AND (type = 'DIRECT' OR coalesce(btrim(submerchant_id),'') <> '')
+  ) THEN
+    RAISE EXCEPTION
+      'HLTS: 하위가맹점 ID 가 없습니다 — PG 계약 뒤에 채우셔야 지급됩니다';
+  END IF;
+
+  RETURN NEW;
+END $$;
