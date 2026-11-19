@@ -169,6 +169,7 @@ export class PurchaseAddDto {
   @ApiPropertyOptional({ example: '11월 사무용품' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
   @ApiPropertyOptional({ type: [String], description: `증빙 파일 id — POST /files(ACCT_EVIDENCE)로 올린 것 · ${PURCHASE_MAX_FILES}개까지` }) @IsOptional() @IsArray() @ArrayMaxSize(PURCHASE_MAX_FILES) @IsString({ each: true }) attachments?: string[];
   @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계가 있어도 넣기' }) @IsOptional() @IsBoolean() force?: boolean;
+  @ApiPropertyOptional({ example: '12', description: 'v10.417 붙일 품의 번호(승인 · 쓰는 중) — 합계가 품의 금액 × (1 + 허용 %) 넘으면 422 REQ_OVER' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
 }
 export class PurchaseCancelDto {
   @ApiProperty({ example: '금액 잘못 넣음' }) @IsString() @Length(1, 400) reason!: string;
@@ -185,6 +186,7 @@ export class ExpenseCreateDto {
   @ApiProperty({ example: '거래처 방문 택시비' }) @IsString() @Length(2, 100) item!: string;
   @ApiPropertyOptional({ example: '강남 → 판교' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
   @ApiPropertyOptional({ type: [String], description: 'POST /files(ACCT_EVIDENCE)로 올린 파일 id · 3개까지' }) @IsOptional() @IsArray() @IsString({ each: true }) attachments?: string[];
+  @ApiPropertyOptional({ example: '12', description: 'v10.417 붙일 품의 번호 — 합계가 한도를 넘으면 422 REQ_OVER' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
 }
 export class ExpenseDecideDto {
   @ApiProperty({ enum: ['approve', 'reject'] }) @IsIn(['approve', 'reject']) decision!: 'approve' | 'reject';
@@ -1219,7 +1221,7 @@ export class AcctController {
     const r = await salesPurchaseBook(this.db, String(kind ?? ''), from, to);
     const { head, body } = bookCsv(r);
     return { filename: `${r.kind === 'SALES' ? 'sales' : 'purchase'}-book-${r.from}-${r.to}.csv`, csv: toCsv(head, body), rows: r.items.length,
-             note: `${r.kind === 'SALES' ? '매출장' : '매입장'} ${r.items.length}줄을 내려받았습니다.` };
+             note: r.kind === 'SALES' ? `매출장 ${r.items.length}줄을 내려받았습니다.` : `매입장 ${r.items.length}줄을 내려받았습니다.` };   // v10.419 사전 틀과 같은 문장
   }
 
   /* ── ⑬ assets ── */

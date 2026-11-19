@@ -79,7 +79,7 @@ export async function expenseAccounts(db: DatabaseService) {
 }
 
 /* ── 경비 청구 ── */
-export interface ExpenseInput { spentOn: string; accountRole: string; amount: number; vat?: number; evidence: string; item: string; memo?: string; attachments?: string[] }
+export interface ExpenseInput { spentOn: string; accountRole: string; amount: number; vat?: number; evidence: string; item: string; memo?: string; attachments?: string[]; requisitionId?: string }   // v10.417 품의
 
 export async function createExpense(db: DatabaseService, b: ExpenseInput, actor: string) {
   const spent = parseDate(b.spentOn);
@@ -102,9 +102,10 @@ export async function createExpense(db: DatabaseService, b: ExpenseInput, actor:
   const [acc] = await db.query(`SELECT 1 FROM acct_accounts WHERE role = $1 AND kind = 'EXPENSE'`, [b.accountRole]);
   if (!acc) throw new PolicyViolation('ACCT_EXPENSE_ROLE', '경비 청구 계정은 비용 계정이어야 합니다.');
   const [r] = await db.query<{ id: string }>(
-    `INSERT INTO acct_expense_claims (claimant, spent_on, account_role, amount, vat, evidence, item, memo, attachments)
-     VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9::uuid[]) RETURNING id::text AS id`,
-    [actor, spent, b.accountRole, amount, vat, b.evidence, b.item.trim().slice(0, 100), (b.memo ?? '').trim().slice(0, 400) || null, files]);
+    `INSERT INTO acct_expense_claims (claimant, spent_on, account_role, amount, vat, evidence, item, memo, attachments, requisition_id)
+     VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9::uuid[], $10::bigint) RETURNING id::text AS id`,
+    [actor, spent, b.accountRole, amount, vat, b.evidence, b.item.trim().slice(0, 100), (b.memo ?? '').trim().slice(0, 400) || null, files,
+     /^\d{1,18}$/.test(b.requisitionId ?? '') ? b.requisitionId : null]);
   return { ok: true, id: Number(r.id), note: '경비를 청구했습니다 — SUPER 가 승인하면 전표가 만들어집니다.' };
 }
 

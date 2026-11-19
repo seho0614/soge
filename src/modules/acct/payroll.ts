@@ -1,4 +1,5 @@
 import { DatabaseService } from '../../db/database.service';
+import { estimateMonthlyWht } from './whtformula';   // v10.418 표 없을 때 산식 근사
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import type { Line, Source } from './journal';
 import { parseCsv } from './bank';
@@ -17,11 +18,11 @@ import { parseCsv } from './bank';
 const n = (v: unknown) => Number(v ?? 0);
 const floor10 = (v: number) => Math.floor(v / 10) * 10;
 const YM = /^\d{4}-(0[1-9]|1[0-2])$/;
-export const RATE_KEYS = ['np_rate', 'np_base_min', 'np_base_max', 'hi_rate', 'ltc_rate', 'ei_rate', 'ei_company_rate'] as const;
+export const RATE_KEYS = ['np_rate', 'np_base_min', 'np_base_max', 'hi_rate', 'ltc_rate', 'ei_rate', 'ei_company_rate', 'ia_company_rate'] as const;   // v10.418 산재(회사만)
 export type RateKey = typeof RATE_KEYS[number];
 export const RATE_KO: Record<RateKey, string> = {
   np_rate: '국민연금(본인 · 회사 각 %)', np_base_min: '국민연금 기준소득 하한(원)', np_base_max: '국민연금 기준소득 상한(원)',
-  hi_rate: '건강보험(본인 · 회사 각 %)', ltc_rate: '장기요양(건강보험료의 %)', ei_rate: '고용보험 본인(%)', ei_company_rate: '고용보험 회사(%)',
+  hi_rate: '건강보험(본인 · 회사 각 %)', ltc_rate: '장기요양(건강보험료의 %)', ei_rate: '고용보험 본인(%)', ei_company_rate: '고용보험 회사(%)', ia_company_rate: '산재보험 회사(% · 업종 요율)',
 };
 
 const reasonOk = (r: string | undefined) => {
@@ -141,7 +142,8 @@ export async function calcLine(db: DatabaseService, year: number, gross: number,
   const ei = floor10(taxable * (r.ei_rate ?? 0) / 100), cei = floor10(taxable * (r.ei_company_rate ?? 0) / 100);
   const [w] = taxable > 0 ? await db.query<{ tax: string }>(
     `SELECT tax::text FROM acct_wht_table WHERE year = $1 AND $2 >= wage_from AND $2 < wage_to AND dependents <= $3 ORDER BY dependents DESC LIMIT 1`, [year, taxable, dependents]) : [];
-  const it = w ? n(w.tax) : 0, lt = floor10(it * 0.1);
+  /* v10.418 — 국세청 표가 없으면 산식 근사(whtformula · 일반 원칙) · wht_missing = 표 없이 산식으로 셈 */
+  const it = w ? n(w.tax) : estimateMonthlyWht(taxable, dependents, np), lt = floor10(it * 0.1);
   return { gross, nontax: nt, income_tax: it, local_tax: lt, np, hi, ltc, ei, net: gross - it - lt - np - hi - ltc - ei,
            company_np: np, company_hi: hi, company_ltc: ltc, company_ei: cei, wht_missing: taxable > 0 && !w };
 }

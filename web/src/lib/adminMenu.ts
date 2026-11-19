@@ -142,6 +142,31 @@ export const GROUPS: MenuGroup[] = [
 export const groupOf = (t: Tab): MenuGroup => GROUPS.find((g) => g.tabs.includes(t)) ?? GROUPS[0]!;
 
 /**
+ * v10.416 (D251 · docs/553) — 묶음 안 탭 줄을 하위 묶음 이름표로 나눔(대표 11/19 「미해결 문제」 · 회계 탭 26개).
+ *   그룹의 tabs(권한 · 순서 · 옛 시험이 보는 글자)는 그대로 · 줄을 그릴 때만 이 순서와 이름표로 나눔.
+ *   여기 없는 탭은 줄 끝 「그 밖」에 붙음(빠지지 않음).
+ */
+export interface MenuSection { label: string; tabs: Tab[] }
+export const GROUP_SECTIONS: Record<string, MenuSection[]> = {
+  admacc: [
+    { label: '장부',        tabs: ['acct-month', 'acct-journal', 'acct-manual', 'acct-statements', 'acct-ledger', 'acct-yearclose'] },
+    { label: '자금',        tabs: ['acct-bank', 'acct-pg', 'acct-cash', 'acct-aging'] },
+    { label: '매입 · 경비', tabs: ['acct-purchase', 'acct-expense', 'acct-requisitions', 'acct-parties', 'acct-contracts', 'acct-imports', 'acct-stock', 'acct-assets'] },
+    { label: '세무',        tabs: ['acct-tax', 'acct-vatform', 'acct-corptax'] },
+    { label: '인사',        tabs: ['acct-payroll', 'acct-severance'] },
+    { label: '설정 · 보고', tabs: ['acct-report', 'acct-budget', 'acct-accounts'] },
+  ],
+};
+/** 그룹의 보이는 탭을 하위 묶음으로 — 하위 묶음이 없는 그룹은 이름표 없는 한 묶음 */
+export function sectionsOf(groupKey: string, visibleTabs: Tab[]): MenuSection[] {
+  const secs = GROUP_SECTIONS[groupKey];
+  if (!secs) return [{ label: '', tabs: visibleTabs }];
+  const out = secs.map((s) => ({ label: s.label, tabs: s.tabs.filter((t) => visibleTabs.includes(t)) })).filter((s) => s.tabs.length);
+  const rest = visibleTabs.filter((t) => !secs.some((s) => s.tabs.includes(t)));
+  return rest.length ? [...out, { label: '그 밖', tabs: rest }] : out;
+}
+
+/**
  * v10.32 — 하위 화면이 시안에서 다른 묶음에 속하는 경우 상단바에서 켜 둘 묶음(키 = '탭/하위', 값 = 묶음 key).
  * 주소(#/quals/medical)와 본문 위 탭 줄(.ad-snb — 그 탭이 든 묶음)은 그대로 두고, 상단바의 켜진 묶음만 시안대로 바꿉니다.
  * 시안은 의료 심의(admptnm) · 카테고리 마스터(admptnc)를 파트너사 화면(ptnShell)에 둡니다.
@@ -157,6 +182,13 @@ if (import.meta.env.DEV) {
   const missing = TABS.map(([k]) => k).filter((k) => !placed.includes(k));
   const dup = placed.filter((k, i) => placed.indexOf(k) !== i);
   if (missing.length || dup.length) console.warn('[adminMenu] 묶음에 없는 탭', missing, '두 번 든 탭', dup);
+  /* v10.416 — 하위 묶음 탭은 그 그룹 tabs 에 있어야 하고 두 번 들면 안 됨 */
+  for (const [k, secs] of Object.entries(GROUP_SECTIONS)) {
+    const g = GROUPS.find((x) => x.key === k); const all = secs.flatMap((s) => s.tabs);
+    const out = all.filter((t) => !g?.tabs.includes(t)); const twice = all.filter((t, i) => all.indexOf(t) !== i);
+    const left = (g?.tabs ?? []).filter((t) => !all.includes(t));
+    if (out.length || twice.length || left.length) console.warn('[adminMenu] 하위 묶음', k, '그룹에 없음', out, '두 번', twice, '빠짐', left);
+  }
 }
 
 /**

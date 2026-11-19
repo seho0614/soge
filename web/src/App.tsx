@@ -80,7 +80,7 @@ import { Integ } from './app/admin/Integ';
 import { GwanUx } from './app/admin/GwanUx';
 import { Adx } from './app/admin/Adx';
 import { Footer, type FooterLink } from './components/Footer';
-import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, type Tab } from './lib/adminMenu';
+import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, sectionsOf, type Tab } from './lib/adminMenu';   // v10.416 sectionsOf
 import { hashSub } from './lib/hashSub';
 import { siteUrl } from './lib/siteUrl';
 
@@ -292,9 +292,15 @@ function Console() {
         {/* v10.29 — 같은 묶음의 탭(시안 .tabs2). 탭이 하나면 그리지 않습니다 */}
         {curTabs.length > 1 && (
           <div className="ad-snb" role="tablist" aria-label={`${cur.label} 화면`}>
-            {curTabs.map((t) => (
-              <button key={t} role="tab" className={t === tab ? 'on' : ''} data-tab={t}
-                      aria-selected={t === tab} onClick={() => go(t)}>{label(t)}</button>
+            {/* v10.416 (D251) — 하위 묶음이 있으면 이름표로 나눔(단추 · data-tab 은 그대로 · 이름표는 누르지 않음) */}
+            {sectionsOf(cur.key, curTabs).map((s) => (
+              <span key={s.label || 'all'} className={s.label ? 'ad-sec' : 'ad-sec ad-sec-plain'} data-section={s.label || undefined}>
+                {s.label && <em className="ad-sec-l" aria-hidden="true">{s.label}</em>}
+                {s.tabs.map((t) => (
+                  <button key={t} role="tab" className={t === tab ? 'on' : ''} data-tab={t}
+                          aria-selected={t === tab} onClick={() => go(t)}>{label(t)}</button>
+                ))}
+              </span>
             ))}
           </div>
         )}
@@ -365,7 +371,7 @@ function Console() {
       {tab === 'acct-tax' && <AcctTax />}
       {tab === 'acct-report' && <AcctReport />}
       {tab === 'acct-accounts' && <AcctAccounts />}
-      {tab === 'acct-month' && <AcctMonth />}
+      {tab === 'acct-month' && <AcctMonth onGo={(t) => go(t as Tab)} canGo={(t) => visible(t as Tab)} />}
       {tab === 'acct-bank' && <AcctBank />}
       {tab === 'acct-purchase' && <AcctPurchases />}
       {tab === 'acct-expense' && <><AcctExpenses /><AcctCards /></>}

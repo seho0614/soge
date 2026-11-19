@@ -76,7 +76,7 @@ export async function worklogBoard(db: DatabaseService, date?: string) {
      SELECT s.id::text AS id, s.name, s.email, s.roles,
             count(w.id) FILTER (WHERE w.work_date = $1::date)::int AS n,
             coalesce(sum(w.minutes) FILTER (WHERE w.work_date = $1::date), 0)::int AS minutes,
-            count(DISTINCT w.work_date) FILTER (WHERE w.work_date BETWEEN $2::date AND $1::date)::int AS days7,
+            count(DISTINCT w.work_date) FILTER (WHERE w.work_date BETWEEN $2::date AND $1::date AND fn_is_business_day(w.work_date))::int AS days7,   -- v10.419 영업일에 쓴 날만
             count(w.id) FILTER (WHERE w.work_date BETWEEN $2::date AND $1::date
                                   AND NOT EXISTS (SELECT 1 FROM staff_worklog_reviews v WHERE v.worklog_id = w.id))::int AS unreviewed
        FROM staff s LEFT JOIN staff_worklogs w ON w.account_id = s.id
@@ -89,13 +89,16 @@ export async function worklogBoard(db: DatabaseService, date?: string) {
       WHERE w.work_date BETWEEN $2::date AND $1::date AND coalesce(btrim(w.blocked), '') <> ''
       ORDER BY w.work_date DESC, w.id DESC LIMIT 30`, [day, from7]);
   const wrote = people.filter((p) => p.n > 0).length;
+  /* v10.419 (D251) — 7일 중 영업일 수(주말 · 공휴일 public_holidays 뺌 · fn_is_business_day) — 작성률 분모 */
+  const [bz] = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM generate_series($2::date, $1::date, interval '1 day') g(d) WHERE fn_is_business_day(g.d::date)`, [day, from7]);
+  const biz7 = Math.max(1, Number(bz?.n ?? 5));
   return {
     date: day, from7,
     total: { staff: people.length, wrote, missing: people.length - wrote, entries: people.reduce((a, p) => a + p.n, 0), minutes: people.reduce((a, p) => a + p.minutes, 0),
              unreviewed: people.reduce((a, p) => a + p.unreviewed, 0), blocked: blocked.length,
-             rate7: people.length ? Math.round((people.reduce((a, p) => a + p.days7, 0) / (people.length * 7)) * 100) : 0 },
-    people: people.map((p) => ({ ...p, rate7: Math.round((p.days7 / 7) * 100) })),
+             rate7: people.length ? Math.round((people.reduce((a, p) => a + p.days7, 0) / (people.length * biz7)) * 100) : 0, biz7 },
+    people: people.map((p) => ({ ...p, rate7: Math.round((p.days7 / biz7) * 100) })),
     blocked,
-    note: '운영자(SUPER · ADMIN · PAYOUT · REVIEWER · 파트너 담당)마다 그날 일지 · 최근 7일 작성률 · 막힌 것 · 확인 안 한 일지입니다. 주말 · 휴일도 7일에 셈합니다.',
+    note: '운영자(SUPER · ADMIN · PAYOUT · REVIEWER · 파트너 담당)마다 그날 일지 · 최근 7일 작성률 · 막힌 것 · 확인 안 한 일지입니다. 작성률은 7일 중 영업일(주말 · 공휴일 뺌)만 셉니다.',
   };
 }

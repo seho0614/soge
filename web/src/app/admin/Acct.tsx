@@ -4,6 +4,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
 import { exportTicket } from './OpsSafetyBoxes';
+import { GROUP_SECTIONS, TABS } from '../../lib/adminMenu';   // v10.416 (D251) 월 결산 바로가기
 import { fmtSize, openFile, uploadFile } from '../../lib/files';
 
 /* ---------------------------------------------------------------------
@@ -459,12 +460,29 @@ interface Month { ym: string; closing: { closedAt: string } | null; entries: num
   bank: Bank['count']; lastBalance: Bank['lastBalance']; invoicesTodo: number;
   deadlines: Array<{ key: string; label: string; due: string; daysLeft: number }>; checks: Array<{ key: string; label: string; ok: boolean; detail: string; where: string }>; ready: boolean; note: string }
 
-export function AcctMonth() {
+/** v10.416 (D251 · docs/553) — 월 결산 첫 화면 바로가기(하위 묶음별 · 볼 수 있는 탭만) */
+function AcctShortcuts({ onGo, canGo }: { onGo: (t: string) => void; canGo?: (t: string) => boolean }) {
+  const name = (t: string) => TABS.find(([k]) => k === t)?.[1] ?? t;
+  const secs = (GROUP_SECTIONS.admacc ?? []).map((s) => ({ ...s, tabs: s.tabs.filter((t) => t !== 'acct-month' && (!canGo || canGo(t))) })).filter((s) => s.tabs.length);
+  if (!secs.length) return null;
+  return (
+    <div className="card pad" data-acct-shortcuts={secs.length}>
+      <b>회계 바로가기</b>
+      {secs.map((s) => (
+        <p key={s.label} data-acct-shortcut-sec={s.label}><small className="dim">{s.label}</small>{' '}
+          {s.tabs.map((t) => <button key={t} className="btn-sm btn-plain" data-acct-shortcut={t} onClick={() => onGo(t)}>{name(t)}</button>)}</p>
+      ))}
+    </div>
+  );
+}
+
+export function AcctMonth({ onGo, canGo }: { onGo?: (t: string) => void; canGo?: (t: string) => boolean } = {}) {
   const [ym, setYm] = useState(prevYm(kstYm()));
   const q = useApi<Month>(`/admin/acct/month?ym=${ym}`);
   const d = q.data;
   return (
     <section data-acct-month-sum={d?.entries ?? ''}>
+      {onGo && <AcctShortcuts onGo={onGo} canGo={canGo} />}
       <div className="acts">
         <label>달 <input type="month" value={ym} onChange={(e) => e.target.value && setYm(e.target.value)} /></label>{' '}
         <button className="btn-sm btn-plain" onClick={() => setYm(prevYm(ym))}>그 전 달</button>{' '}
@@ -500,7 +518,7 @@ interface PurVat { ok: boolean; q: string; byKind: Array<{ kind: string; kindKo:
 
 const kstQ = () => { const d = new Date(Date.now() + 9 * 3600e3); return `${d.getUTCFullYear()}-${Math.floor(d.getUTCMonth() / 3) + 1}`; };
 const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
-const PUR_EMPTY = { kind: 'TAX_INVOICE', issuedOn: '', supplierName: '', supplierBizNo: '', item: '', supply: '', vat: '', deductible: true, accountRole: 'EXP_SUPPLIES', payRole: 'AP', memo: '' };
+const PUR_EMPTY = { kind: 'TAX_INVOICE', issuedOn: '', supplierName: '', supplierBizNo: '', item: '', supply: '', vat: '', deductible: true, accountRole: 'EXP_SUPPLIES', payRole: 'AP', memo: '', requisitionId: '' };
 
 export function AcctPurchases() {
   const [ym, setYm] = useState(kstYm());
@@ -523,7 +541,7 @@ export function AcctPurchases() {
   const send = (force = false) => void a.run('add', () => api<{ note: string }>('/admin/acct/purchases', { method: 'POST', body: JSON.stringify({
     kind: f.kind, issuedOn: f.issuedOn, supplierName: f.supplierName, supplierBizNo: f.supplierBizNo || undefined, item: f.item,
     supply: Number(f.supply), vat: simple ? 0 : Number(f.vat || 0), deductible: simple ? false : f.deductible, accountRole: f.accountRole, payRole: f.payRole,
-    memo: f.memo || undefined, attachments: files.map((x) => x.id), force }) }),
+    memo: f.memo || undefined, attachments: files.map((x) => x.id), force, requisitionId: f.requisitionId || undefined }) }),
     () => { setF({ ...PUR_EMPTY, issuedOn: f.issuedOn, kind: f.kind, payRole: f.payRole }); setFiles([]); q.reload(); v.reload(); }, (r) => r.note);
   const cancel = (p: Purchase) => { const reason = prompt(`${p.id}번 매입(${p.supplierName} · ${won(p.total)}원)을 취소합니다 — 사유`); if (reason) void a.run(`c${p.id}`, () => api<{ note: string }>(`/admin/acct/purchases/${p.id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }), () => { q.reload(); v.reload(); }, (r) => r.note); };
   const dup = (a.err ?? '').includes('이미 있습니다');
@@ -537,7 +555,8 @@ export function AcctPurchases() {
         <label>발행일 <input type="date" value={f.issuedOn} max={kstDay()} onChange={(e) => set('issuedOn', e.target.value)} /></label>{' '}
         <label>공급자 <input value={f.supplierName} maxLength={120} onChange={(e) => set('supplierName', e.target.value)} placeholder="(주)사무용품" /></label>{' '}
         <label>사업자번호 <input value={f.supplierBizNo} maxLength={12} onChange={(e) => set('supplierBizNo', e.target.value)} placeholder={f.kind === 'TAX_INVOICE' ? '필수 · 숫자 10자리' : '있으면'} /></label>{' '}
-        <label>품목 <input value={f.item} maxLength={120} onChange={(e) => set('item', e.target.value)} placeholder="복사용지" /></label>
+        <label>품목 <input value={f.item} maxLength={120} onChange={(e) => set('item', e.target.value)} placeholder="복사용지" /></label>{' '}
+        <ReqPicker value={f.requisitionId} onChange={(v) => setF({ ...f, requisitionId: v })} />
       </div>
       <div className="acts">
         <label>{simple ? '합계' : '공급가'} <input type="number" min={1} value={f.supply} onChange={(e) => setSupply(e.target.value)} data-acct-purchase-supply="" /></label>{' '}
@@ -616,7 +635,7 @@ export function AcctExpenses() {
   const [state, setState] = useState('');
   const q = useApi<Expenses>(`/admin/acct/expenses${state ? `?state=${state}` : ''}`, [state]);
   const a = useAct();
-  const blank = { spentOn: kstToday(), accountRole: 'EXP_TRAVEL', amount: '', vat: '', evidence: 'CARD', item: '', memo: '' };
+  const blank = { spentOn: kstToday(), accountRole: 'EXP_TRAVEL', amount: '', vat: '', evidence: 'CARD', item: '', memo: '', requisitionId: '' };
   const [f, setF] = useState(blank);
   const [files, setFiles] = useState<Array<{ fileId: string; name: string }>>([]);
   const d = q.data;
@@ -630,7 +649,7 @@ export function AcctExpenses() {
   const autoVat = () => { const amt = Number(f.amount || 0); if (amt > 0 && f.evidence !== 'SIMPLE') setF({ ...f, vat: String(amt - Math.round(amt / 1.1)) }); };
   const submit = () => void a.run('new', () => api<{ note: string }>('/admin/acct/expenses', { method: 'POST', body: JSON.stringify({
     spentOn: f.spentOn, accountRole: f.accountRole, amount: Number(f.amount || 0), vat: f.evidence === 'SIMPLE' ? 0 : Number(f.vat || 0),
-    evidence: f.evidence, item: f.item, memo: f.memo || undefined, attachments: files.map((x) => x.fileId) }) }),
+    evidence: f.evidence, item: f.item, memo: f.memo || undefined, attachments: files.map((x) => x.fileId), requisitionId: f.requisitionId || undefined }) }),
     () => { setF(blank); setFiles([]); q.reload(); }, (r) => r.note);
   const act = (id: string, path: string, body: Record<string, unknown> = {}) =>
     void a.run(`${path}${id}`, () => api<{ note: string }>(`/admin/acct/expenses/${id}/${path}`, { method: 'POST', body: JSON.stringify(body) }), q.reload, (r) => r.note);
@@ -655,6 +674,7 @@ export function AcctExpenses() {
         <div className="acts">
           <label>내용 <input value={f.item} maxLength={100} placeholder="예: 거래처 방문 택시비" onChange={(e) => setF({ ...f, item: e.target.value })} data-acct-expense-item="" /></label>{' '}
           <label>메모 <input value={f.memo} maxLength={400} onChange={(e) => setF({ ...f, memo: e.target.value })} /></label>{' '}
+          <ReqPicker value={f.requisitionId} onChange={(v) => setF({ ...f, requisitionId: v })} />{' '}
           <label className="btn-sm">증빙 올리기({files.length}/3) <input type="file" accept=".jpg,.jpeg,.png,.pdf" hidden disabled={a.busy === 'file' || files.length >= 3} onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ''; }} /></label>{' '}
           {files.map((x) => <small key={x.fileId} className="dim">{x.name} <button className="btn-sm btn-plain" onClick={() => setFiles(files.filter((y) => y.fileId !== x.fileId))}>빼기</button> </small>)}
           <button className="btn-sm" disabled={a.busy === 'new' || !f.item.trim() || !(Number(f.amount) > 0)} onClick={submit} data-acct-expense-submit="">청구</button>
@@ -1339,7 +1359,7 @@ export function AcctPayroll() {
         {d?.run?.state === 'FIXED' && <button className="btn-sm" disabled={a.busy === 'paid'} onClick={paid} data-payroll-paid="">지급 처리</button>}
       </p>
       {d && (d.rates.draft || d.rates.missing.length > 0 || d.rates.whtRows === 0) && (
-        <p className="warn-text" data-payroll-rate-warn="">{d.rates.year}년 요율 {d.rates.draft ? '초안(공단 고시로 확인 필요)' : ''}{d.rates.missing.length ? ` · 빠진 요율 ${d.rates.missing.join(', ')}` : ''}{d.rates.whtRows === 0 ? ' · 간이세액표 없음(소득세 0 으로 셈 — 국세청 표를 올리십시오)' : ''}</p>
+        <p className="warn-text" data-payroll-rate-warn="">{d.rates.year}년 요율 {d.rates.draft ? '초안(공단 고시로 확인 필요)' : '일반 원칙 · 2026 고시 기준(바뀌면 고침)'}{d.rates.missing.length ? ` · 빠진 요율 ${d.rates.missing.join(', ')}` : ''}{d.rates.whtRows === 0 ? ' · 간이세액표 없음(소득세는 산식 근사 — 국세청 표를 올리면 표가 우선)' : ''}</p>
       )}
       {d && d.lines.length > 0 && (
         <table className="tbl"><thead><tr><th>직원</th><th className="num">지급액</th><th className="num">비과세</th><th className="num">소득세</th><th className="num">지방소득세</th><th className="num">국민연금</th><th className="num">건강</th><th className="num">장기요양</th><th className="num">고용</th><th className="num">실지급</th><th className="num">회사 4대보험</th></tr></thead>
@@ -1347,7 +1367,7 @@ export function AcctPayroll() {
             <tr key={l.id} data-payroll-line={l.employeeId}>
               <td>{l.name} <small className="dim">가족 {l.dependents}</small></td>
               <td className="num">{sup && d.run?.state === 'DRAFT' ? <button className="btn-sm btn-plain" onClick={() => editGross(l)} data-payroll-gross={l.id}>{won(l.gross)}</button> : won(l.gross)}</td>
-              <td className="num">{won(l.nontax)}</td><td className="num">{won(l.incomeTax)}{l.whtMissing && <small className="warn-text"> 표 없음</small>}</td><td className="num">{won(l.localTax)}</td>
+              <td className="num">{won(l.nontax)}</td><td className="num">{won(l.incomeTax)}{l.whtMissing && <small className="dim"> 산식</small>}</td><td className="num">{won(l.localTax)}</td>
               <td className="num">{won(l.np)}</td><td className="num">{won(l.hi)}</td><td className="num">{won(l.ltc)}</td><td className="num">{won(l.ei)}</td><td className="num"><b>{won(l.net)}</b></td>
               <td className="num">{won(l.companyNp + l.companyHi + l.companyLtc + l.companyEi)}</td></tr>))}
             <tr className="strong"><td>합계 {d.total.people}명</td><td className="num">{won(d.total.gross)}</td><td /><td className="num">{won(d.total.incomeTax)}</td><td className="num">{won(d.total.localTax)}</td>
@@ -1763,7 +1783,8 @@ export function AcctContracts() {
 }
 
 interface Req { id: string; requesterId: string; requester: string; requesterName: string | null; title: string; amount: number; accountRole: string; accountName: string; reason: string;
-  neededOn: string | null; state: string; decidedBy: string | null; decideNote: string | null; usedKind: string | null; usedRef: string | null; usedAmount: number | null; createdAt: string }
+  neededOn: string | null; state: string; decidedBy: string | null; decideNote: string | null; usedKind: string | null; usedRef: string | null; usedAmount: number | null; createdAt: string;
+  spent?: number | null; remaining?: number | null; limitAmount?: number | null }   // v10.417 (D251) 쓴 돈 · 남은 돈
 interface Reqs { items: Req[]; accounts: Array<{ role: string; name: string; kind: string }>; states: Record<string, string>; all: boolean; canDecide: boolean; me: string | null;
   tolerancePct: number; waiting: number; note: string }
 const REQ_EMPTY = { title: '', amount: '', accountRole: 'EXP_SUPPLIES', reason: '', neededOn: '' };
@@ -1807,7 +1828,7 @@ export function AcctRequisitions() {
             <tbody>{d.items.map((r) => (
               <tr key={r.id} data-acct-req-row={r.state}>
                 <td>{r.title} <small className="dim">{r.reason}{r.neededOn ? ` · ${r.neededOn}` : ''}</small></td><td><small>{r.requesterName ?? r.requester}</small></td>
-                <td>{won(r.amount)}</td><td>{r.accountName}</td>
+                <td>{won(r.amount)}{r.spent != null && (r.state === 'APPROVED' || r.state === 'USED') && <small className={Number(r.remaining) < 0 ? 'warn-text' : 'dim'} data-acct-req-spent={r.id}><br />쓴 {won(r.spent)} · 남은 {won(r.remaining)}</small>}</td><td>{r.accountName}</td>
                 <td>{d.states[r.state] ?? r.state}{r.decideNote ? <small className="dim"> · {r.decideNote}</small> : ''}{r.usedRef ? <small className="dim"> · {r.usedKind === 'EXPENSE' ? '경비' : '매입'} {r.usedRef}번 {won(r.usedAmount)}</small> : ''}</td>
                 <td>
                   {r.state === 'REQUESTED' && d.canDecide && r.requesterId !== d.me && <><button className="btn-sm" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, true)}>승인</button> <button className="btn-sm btn-plain" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, false)}>반려</button> </>}
@@ -1907,5 +1928,18 @@ export function AcctImports() {
         </>
       )}
     </section>
+  );
+}
+
+/** v10.417 (D251 · docs/554) — 붙일 품의 고르기(승인 · 쓰는 중 · 남은 돈) — 매입 · 경비 청구 공용 */
+interface ReqPick { id: string; title: string; amount: number; state: string; spent?: number; remaining?: number; limitAmount?: number }
+function ReqPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const q = useApi<{ items: ReqPick[] }>('/admin/acct/requisitions');
+  const list = (q.data?.items ?? []).filter((r) => r.state === 'APPROVED' || r.state === 'USED');
+  return (
+    <label data-acct-req-pick={list.length}>품의 <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">(없음)</option>
+      {list.map((r) => <option key={r.id} value={r.id}>{r.id}번 {r.title} · 남은 {won(r.remaining ?? r.amount)}원</option>)}
+    </select></label>
   );
 }

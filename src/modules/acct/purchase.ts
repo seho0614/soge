@@ -39,6 +39,7 @@ const kstToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 
 export interface PurchaseInput {
   kind: string; issuedOn: string; supplierName: string; supplierBizNo?: string; item: string;
   supply: number; vat?: number; deductible?: boolean; accountRole: string; payRole: string; memo?: string; attachments?: string[]; force?: boolean;
+  requisitionId?: string;   // v10.417 (D251) 붙일 품의(승인 · 쓰는 중) — 한도는 DB 가 지킴(REQ_OVER)
 }
 
 /** 입력 검사(DB 도 다시 봄) — 고친 값 돌려줌 */
@@ -87,9 +88,10 @@ export async function addPurchase(db: DatabaseService, b: PurchaseInput, actor: 
     if (dup) throw new StateConflict('PURCHASE_DUP', `같은 공급자 · 날짜 · 합계 매입(${dup.id}번)이 이미 있습니다 — 다른 건이면 「그래도 넣기」.`);
   }
   const [r] = await db.query<{ id: string }>(
-    `INSERT INTO acct_purchases (kind, issued_on, supplier_name, supplier_biz_no, item, supply, vat, total, deductible, account_role, pay_role, memo, attachments, created_by)
-     VALUES ($1, $2::date, $3, $4, $5, $6::bigint, $7::bigint, $6::bigint + $7::bigint, $8, $9, $10, $11, $12::uuid[], $13) RETURNING id::text AS id`,
-    [v.kind, v.issuedOn, v.supplier, v.bizNo, v.item, v.supply, v.vat, v.deductible, v.accountRole, v.payRole, v.memo, v.files, actor]);
+    `INSERT INTO acct_purchases (kind, issued_on, supplier_name, supplier_biz_no, item, supply, vat, total, deductible, account_role, pay_role, memo, attachments, created_by, requisition_id)
+     VALUES ($1, $2::date, $3, $4, $5, $6::bigint, $7::bigint, $6::bigint + $7::bigint, $8, $9, $10, $11, $12::uuid[], $13, $14::bigint) RETURNING id::text AS id`,
+    [v.kind, v.issuedOn, v.supplier, v.bizNo, v.item, v.supply, v.vat, v.deductible, v.accountRole, v.payRole, v.memo, v.files, actor,
+     /^\d{1,18}$/.test(b.requisitionId ?? '') ? b.requisitionId : null]);
   return { ok: true, id: r!.id, deductible: v.deductible, total: v.supply + v.vat,
            note: '매입을 넣었습니다 — 전표는 정기 작업(매시간) 또는 「지금 전표 만들기」.' };
 }

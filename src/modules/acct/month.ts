@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { bankMonth } from './bank';
 import { taxInvoices } from './acct-reports';
 import { agingLine } from './aging';   // v10.401 (D247)
+import { corpDeadlines } from './corptax';   // v10.418 (D251) 법인세 기한을 신고 기한에
 
 /* ---------------------------------------------------------------------
  * v10.390 (D244 · docs/527) 월 결산 요약 · 신고 기한 알림
@@ -19,12 +20,16 @@ const nextYm = (ym: string) => { const [y, m] = ym.split('-').map(Number); retur
 
 async function settings(db: DatabaseService) {
   const rows = await db.query<{ key: string; value: string | null }>(
-    `SELECT key, value FROM site_settings WHERE key IN ('acct.deadline_alert','acct.deadline_days_before','acct.vat_months','acct.close_by_day','acct.start_on')`);
+    `SELECT key, value FROM site_settings WHERE key IN ('acct.deadline_alert','acct.deadline_days_before','acct.vat_months','acct.close_by_day','acct.start_on',
+                                                       'acct.pay_day','acct.card_pay_day','acct.deadline_payday')`);
   const v = (k: string) => rows.find((r) => r.key === k)?.value ?? null;
   const months = (v('acct.vat_months') ?? '1,4,7,10').split(',').map(Number).filter((x) => x >= 1 && x <= 12);
   return { on: (v('acct.deadline_alert') ?? 'on') === 'on', before: Math.min(7, Math.max(1, Number(v('acct.deadline_days_before') ?? 3) || 3)),
            vatMonths: months.length ? months : [1, 4, 7, 10], closeBy: Math.min(28, Math.max(1, Number(v('acct.close_by_day') ?? 10) || 10)),
-           startYm: (v('acct.start_on') ?? '2026-11-01').slice(0, 7) };
+           startYm: (v('acct.start_on') ?? '2026-11-01').slice(0, 7),
+           /* v10.418 (D251) — 급여 지급일(⑭) · 법인카드 대금일(⑫) · 그 둘의 알림(처음 꺼짐 · acct.deadline_payday) */
+           payDay: Math.min(28, Math.max(1, Number(v('acct.pay_day') ?? 25) || 25)), cardDay: Math.min(28, Math.max(1, Number(v('acct.card_pay_day') ?? 15) || 15)),
+           payAlert: (v('acct.deadline_payday') ?? 'off') === 'on' };
 }
 
 /** 주말 · 공휴일이면 다음 영업일(DB 함수 fn_is_business_day · 공휴일 표) */
@@ -35,7 +40,7 @@ async function bizDay(db: DatabaseService, d: string) {
   return r?.d ?? d;
 }
 
-export interface Deadline { key: string; kind: 'WHT' | 'VAT'; label: string; due: string; base: string; daysLeft: number }
+export interface Deadline { key: string; kind: 'WHT' | 'VAT' | 'CORP' | 'PAY' | 'CARD'; label: string; due: string; base: string; daysLeft: number }   // v10.418 CORP · PAY · CARD
 
 /** 오늘(한국) 기준 이번 달 · 다음 달 기한 — 지나지 않은 것만 */
 export async function deadlines(db: DatabaseService, today = kstToday()) {
@@ -44,8 +49,12 @@ export async function deadlines(db: DatabaseService, today = kstToday()) {
   const out: Deadline[] = [];
   for (const m of [ym, nextYm(ym)]) {
     const mon = Number(m.slice(5, 7));
-    const cands: Array<{ kind: 'WHT' | 'VAT'; base: string; label: string }> = [
+    const dd = (n: number) => String(n).padStart(2, '0');
+    const cands: Array<{ kind: Deadline['kind']; base: string; label: string }> = [
       { kind: 'WHT', base: `${m}-10`, label: `원천세 신고 · 납부(${prevYm(m)} 지급분)` },
+      /* v10.418 (D251) — 급여 지급일 · 법인카드 대금일(목록엔 늘 · 알림은 acct.deadline_payday 가 on 일 때만) */
+      { kind: 'PAY', base: `${m}-${dd(s.payDay)}`, label: `급여 지급(${m} · 매달 ${s.payDay}일)` },
+      { kind: 'CARD', base: `${m}-${dd(s.cardDay)}`, label: `법인카드 대금(${prevYm(m)} 사용분 · 매달 ${s.cardDay}일)` },
       ...(s.vatMonths.includes(mon) ? [{ kind: 'VAT' as const, base: `${m}-25`, label: `부가세 신고 · 납부(${m.slice(0, 4)}년 ${mon === 1 ? '지난해 2기 확정' : mon === 4 ? '1기 예정' : mon === 7 ? '1기 확정' : mon === 10 ? '2기 예정' : `${mon}월`})` }] : []),
     ];
     for (const c of cands) {
@@ -53,6 +62,10 @@ export async function deadlines(db: DatabaseService, today = kstToday()) {
       if (due < today) continue;
       out.push({ key: `${c.kind}:${c.base}`, kind: c.kind, label: c.label, due, base: c.base, daysLeft: Math.round((Date.parse(due) - Date.parse(today)) / 86400e3) });
     }
+  }
+  /* v10.418 (D251) — ⑮ 법인세 중간예납 · 확정 신고 기한(가까운 둘) */
+  for (const c of await corpDeadlines(db, today).catch(() => [])) {
+    if (!out.some((o) => o.key === c.key)) out.push({ key: c.key, kind: 'CORP', label: c.label, due: c.due, base: c.base, daysLeft: c.daysLeft });
   }
   return { list: out.sort((a, b) => a.due.localeCompare(b.due)), settings: s, today };
 }
@@ -71,7 +84,7 @@ export async function acctDeadlineJob(db: DatabaseService, today = kstToday()) {
   resolved = r1.length + r2.length;
   if (!s.on) return { on: false, made, resolved, upcoming: list };
 
-  const soon = list.filter((d) => d.daysLeft <= s.before);
+  const soon = list.filter((d) => d.daysLeft <= s.before && ((d.kind !== 'PAY' && d.kind !== 'CARD') || s.payAlert));   // v10.418 급여 · 카드 알림은 켰을 때만
   for (const d of soon) {
     const r = await db.query(
       `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at)
@@ -129,7 +142,7 @@ export async function monthSummary(db: DatabaseService, ym: string) {
     money: { revenue, expense, profit: revenue - expense, vatOut, wht, cashIn, cashOut },
     byRole: roles.map((r) => ({ role: r.role, name: r.name, kind: r.kind, debit: Number(r.d), credit: Number(r.c) })),
     bank: bank.count, lastBalance: bank.lastBalance, invoicesTodo: inv.todo,
-    deadlines: dl.list.slice(0, 4), checks, aging: await agingLine(db).catch(() => null),   // v10.401 (D247) 기간 분석 한 줄(마감 조건 아님 · checks 밖) ready: checks.filter((c) => c.key !== 'close').every((c) => c.ok),
+    deadlines: dl.list.slice(0, 6), checks, aging: await agingLine(db).catch(() => null),   // v10.401 (D247) 기간 분석 한 줄(마감 조건 아님 · checks 밖) ready: checks.filter((c) => c.key !== 'close').every((c) => c.ok),
     note: '마감 전에 할 일 — 전표 실패 없음 · 통장 맞춤 · 세금계산서 발행. 신고 기한은 세법 기본 날짜(주말 · 공휴일이면 다음 영업일)이며 세무사 확인이 필요합니다.',
   };
 }

@@ -299,6 +299,11 @@
 .ad-snb button.on, .subtabs button.on { background: var(--pp); border-color: var(--pp); color: #fff; }
 /* 화면 안 하위 탭은 묶음 줄보다 한 단계 아래 — 크기만 조금 줄입니다(색 · 모양은 같음) */
 .subtabs button { font-size: 12px; padding: 7px 13px; }
+/* v10.416 (D251) — 탭 줄 하위 묶음(회계 등): 이름표 + 그 묶음 단추 · 묶음 사이 세로 선 */
+.ad-sec { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ad-sec + .ad-sec { padding-left: 10px; border-left: 1px solid var(--line); }
+.ad-sec-plain + .ad-sec-plain { padding-left: 0; border-left: 0; }
+.ad-sec-l { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-3, #8a8f98); margin-right: 2px; }
 
 /* ── 소제목 (시안 .s2) ── */
 .bo-main h2, .sec-title, .sec, .sub-title {

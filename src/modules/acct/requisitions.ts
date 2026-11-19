@@ -89,9 +89,10 @@ export async function useRequisition(db: DatabaseService, id: string, kind: stri
   if (n(x.amt) > limit) throw new PolicyViolation('REQ_OVER', `품의 금액(${n(r.amount).toLocaleString('ko-KR')}원 · 허용 ${tol}%)보다 큽니다 — 다시 품의하십시오.`);
   const [dup] = await db.query<{ id: string }>(`SELECT id::text AS id FROM acct_requisitions WHERE used_kind = $1 AND used_ref = $2::bigint`, [kind, refId]);
   if (dup) throw new StateConflict('REQ_USED', `이미 다른 품의(${dup.id}번)에 연결한 것입니다.`);
-  await db.query(
-    `UPDATE acct_requisitions SET state = 'USED', used_kind = $2, used_ref = $3::bigint, used_amount = $4::bigint, used_by = $5, used_at = now() WHERE id = $1::bigint AND state = 'APPROVED'`,
-    [id, kind, refId, n(x.amt), actor]);
+  /* v10.417 (D251) — 매입 · 경비 쪽 requisition_id 로 붙임: 합계 한도 · USED 는 DB 트리거(fn_acct_req_link_guard · fn_acct_req_link_used) */
+  const [linked] = await db.query<{ r: string | null }>(`SELECT requisition_id::text AS r FROM ${table} WHERE id = $1::bigint`, [refId]);
+  if (linked?.r && linked.r !== String(id)) throw new StateConflict('REQ_USED', `이미 다른 품의(${linked.r}번)에 연결한 것입니다.`);
+  if (!linked?.r) await db.query(`UPDATE ${table} SET requisition_id = $1::bigint WHERE id = $2::bigint AND requisition_id IS NULL`, [id, refId]);
   return { ok: true, id, usedAmount: n(x.amt), note: '품의를 연결했습니다.' };
 }
 
@@ -103,8 +104,10 @@ export async function listRequisitions(db: DatabaseService, actor: string | null
     `SELECT r.id::text AS id, r.requester::text AS "requesterId", a.email AS requester, a.name AS "requesterName", r.title, r.amount::bigint AS amount,
             r.account_role AS "accountRole", ac.name AS "accountName", r.reason, r.needed_on::text AS "neededOn", r.state,
             d.email AS "decidedBy", r.decided_at AS "decidedAt", r.decide_note AS "decideNote",
-            r.used_kind AS "usedKind", r.used_ref::text AS "usedRef", r.used_amount::bigint AS "usedAmount", r.used_at AS "usedAt", r.created_at AS "createdAt"
+            r.used_kind AS "usedKind", r.used_ref::text AS "usedRef", r.used_amount::bigint AS "usedAmount", r.used_at AS "usedAt", r.created_at AS "createdAt",
+            sp.spent::bigint AS spent, sp.limit_amount::bigint AS "limitAmount", (sp.limit_amount - sp.spent)::bigint AS remaining, sp.links   -- v10.417 (D251)
        FROM acct_requisitions r JOIN accounts a ON a.id = r.requester JOIN acct_accounts ac ON ac.role = r.account_role LEFT JOIN accounts d ON d.id = r.decided_by
+            LEFT JOIN v_acct_req_spend sp ON sp.id = r.id
       WHERE ($1::boolean OR r.requester = $2::uuid) AND ($3::text = '' OR r.state = $3)
       ORDER BY (r.state = 'REQUESTED') DESC, r.created_at DESC LIMIT 300`,
     [all, actor, Object.keys(REQ_STATE_KO).includes(state ?? '') ? state : '']);

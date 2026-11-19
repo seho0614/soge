@@ -70,8 +70,13 @@ export async function severanceEstimate(db: DatabaseService, ym: string) {
     return { employeeId: e.id, name: e.name, joinedOn: e.joinedOn, serviceDays, eligible, dailyAvg: Math.round(dailyAvg), estimate, basis };
   });
   const total = rows.filter((r) => r.eligible).reduce((a, r) => a + r.estimate, 0);
+  /* v10.418 (D251) — 퇴직급여충당부채 장부 잔액 = 가장 늦은 확정 기초 잔액 판(⑬ acct_opening) + 그 기준일부터 전표(⑬ trialBalance 와 같은 셈) */
   const [b] = await db.query<{ v: string }>(
-    `SELECT coalesce(sum(l.credit - l.debit), 0)::text AS v FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id WHERE l.role = 'SEVERANCE_RES' AND e.entry_date <= $1::date`, [end]);
+    `WITH s AS (SELECT id, as_of FROM acct_opening_sets WHERE state = 'FIXED' AND as_of <= $1::date ORDER BY as_of DESC LIMIT 1)
+     SELECT (coalesce((SELECT sum(o.credit - o.debit) FROM acct_opening o JOIN s ON s.id = o.set_id WHERE o.role = 'SEVERANCE_RES'), 0)
+           + coalesce((SELECT sum(l.credit - l.debit) FROM acct_lines l JOIN acct_entries e ON e.id = l.entry_id
+                        WHERE l.role = 'SEVERANCE_RES' AND e.entry_date <= $1::date
+                          AND e.entry_date >= coalesce((SELECT as_of FROM s), '0001-01-01'::date)), 0))::text AS v`, [end]);
   const book = Number(b?.v ?? 0);
   const [done] = await db.query(`SELECT id::text AS id, estimate::bigint AS estimate, diff::bigint AS diff, entry_id::text AS "entryId", created_at AS "createdAt" FROM acct_severance_runs WHERE ym = $1`, [ym]);
   return {

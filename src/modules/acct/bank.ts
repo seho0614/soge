@@ -123,7 +123,7 @@ export async function uploadBank(db: DatabaseService, csv: string, filename: str
          FROM jsonb_to_recordset($2::jsonb) AS x(date text, deposit bigint, withdraw bigint, balance bigint, counterparty text, memo text, hash text)
        ON CONFLICT (row_hash) DO NOTHING RETURNING id::text AS id`, [u.id, JSON.stringify(rows)]);
     return { uploadId: Number(u.id), total: rows.length, added: added.length, dup: rows.length - added.length, bad, columns: head,
-             note: `거래 ${rows.length}줄 중 새로 ${added.length} · 이미 있음 ${rows.length - added.length}${bad ? ` · 못 읽음 ${bad}` : ''}.` };
+             note: `거래 ${rows.length}줄 중 새로 ${added.length} · 이미 있음 ${rows.length - added.length} · 못 읽음 ${bad}.` };   // v10.419 늘 같은 모양(번역 틀)
   });
 }
 

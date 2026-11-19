@@ -181,7 +181,7 @@ export function ReportWorklog() {
 
 /* v10.414 — 업무 일지 현황판(SUPER · 대표 11/19 「업무일지 현황판」) */
 interface BoardP { id: string; name: string; email: string; roles: string; n: number; minutes: number; days7: number; rate7: number; unreviewed: number }
-interface Board { date: string; from7: string; total: { staff: number; wrote: number; missing: number; entries: number; minutes: number; unreviewed: number; blocked: number; rate7: number };
+interface Board { date: string; from7: string; total: { staff: number; wrote: number; missing: number; entries: number; minutes: number; unreviewed: number; blocked: number; rate7: number; biz7?: number };
   people: BoardP[]; blocked: Array<{ id: string; date: string; who: string; blocked: string; reviewed: boolean }>; note: string }
 export function ReportWorklogBoard() {
   const [date, setDate] = useState(kstDay());
@@ -202,7 +202,7 @@ export function ReportWorklogBoard() {
               <tr key={p.id} data-rpt-board-person={p.n > 0 ? 'wrote' : 'missing'}>
                 <td>{p.name || p.email}</td><td className="dim"><small>{p.roles}</small></td>
                 <td>{p.n > 0 ? `${p.n}건` : <span className="warn-text">안 씀</span>}</td><td>{p.minutes ? `${p.minutes}분` : '—'}</td>
-                <td>{p.rate7}% <small className="dim">({p.days7}/7일)</small></td><td>{p.unreviewed || '—'}</td></tr>))}</tbody></table>
+                <td>{p.rate7}% <small className="dim">({p.days7}/{d.total.biz7 ?? 7} 영업일)</small></td><td>{p.unreviewed || '—'}</td></tr>))}</tbody></table>
           <h3>막힌 것 (최근 7일 · {d.from7} ~ {d.date})</h3>
           {d.blocked.length ? (
             <table className="tbl" data-rpt-board-blocked={d.blocked.length}><thead><tr><th>날짜</th><th>누가</th><th>막힌 것</th><th>확인</th></tr></thead>

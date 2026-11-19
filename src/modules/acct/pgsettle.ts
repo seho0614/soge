@@ -109,7 +109,7 @@ export async function uploadPg(db: DatabaseService, csv: string, filename: strin
   });
   const auto = await pgAutoMatch(db, actor);
   return { ...res, autoMatched: auto.matched,
-           note: `정산 ${res.total}줄 중 새로 ${res.added} · 이미 있음 ${res.dup}${bad ? ` · 못 읽음 ${bad}` : ''} · 자동 맞춤 ${auto.matched}.` };
+           note: `정산 ${res.total}줄 중 새로 ${res.added} · 이미 있음 ${res.dup} · 못 읽음 ${bad} · 자동 맞춤 ${auto.matched}.` };   // v10.419 늘 같은 모양
 }
 
 export interface PgCand { entryId: string; date: string; source: string; memo: string | null; party: string | null; amount: number }
@@ -229,7 +229,7 @@ export async function pgAutoMatch(db: DatabaseService, actor: string | null) {
       if (r.length) { used.add(c[0].entryId); matched++; }
     } catch { skipped++; }
   }
-  return { matched, skipped, note: `자동 맞춤 ${matched}${skipped ? ` · 건너뜀 ${skipped}` : ''}.` };
+  return { matched, skipped, note: `자동 맞춤 ${matched} · 건너뜀 ${skipped}.` };   // v10.419 늘 같은 모양
 }
 
 /** 정기 작업 acct_pg_check — 안 들어온 결제가 있으면 하루 한 번 운영 알림 · 없으면 풀기 */
