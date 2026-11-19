@@ -255,10 +255,10 @@ if API and DB:
         # ⑤ 규칙 고치기 · 계정 더하기 · 확인표 · 세무사랑 양식
         g0 = call('GET', '/admin/acct/accounts', None, TS)
         accs = {a['role']: a for a in g0.get('accounts') or []}
-        add = call('POST', '/admin/acct/accounts', {'role': 'U_T1392', 'name': '시험 1392 매출', 'kind': 'REVENUE', 'extCode': '4049', 'extName': '시험매출', 'reason': '시험 1392'}, TS)
+        add = call('POST', '/admin/acct/accounts', {'role': 'U_TEST_RULE', 'name': '시험 1392 매출', 'kind': 'REVENUE', 'extCode': '4049', 'extName': '시험매출', 'reason': '시험 1392'}, TS)
         badrole = call('POST', '/admin/acct/accounts', {'role': 'T1392', 'name': 'x', 'kind': 'REVENUE', 'reason': '시험 1392'}, TS)
         try:
-            ch = call('PATCH', '/admin/acct/rules/SUB_PAID', {'maps': [{'from': 'REV_SUB', 'to': 'U_T1392'}], 'evidence': 'CARD', 'reason': '시험 1392 규칙'}, TS)
+            ch = call('PATCH', '/admin/acct/rules/SUB_PAID', {'maps': [{'from': 'REV_SUB', 'to': 'U_TEST_RULE'}], 'evidence': 'CARD', 'reason': '시험 1392 규칙'}, TS)
             kind = call('PATCH', '/admin/acct/rules/SUB_PAID', {'maps': [{'from': 'REV_SUB', 'to': 'CASH'}], 'reason': '시험 1392 종류'}, TS)
             slot = call('PATCH', '/admin/acct/rules/SUB_PAID', {'maps': [{'from': 'COGS', 'to': 'COGS'}], 'reason': '시험 1392 자리'}, TS)
             byp = call('PATCH', '/admin/acct/rules/SUB_PAID', {'maps': [{'from': 'REV_SUB', 'to': 'REV_SUB'}], 'reason': '시험 1392 지급'}, TP)
@@ -276,7 +276,7 @@ if API and DB:
            all(k in accs for k in ('VAT_IN', 'AP', 'CARD_AP', 'INVENTORY', 'COGS', 'EXP_FEE')) and bool(accs.get('EXP_PROMO', {}).get('extCode'))
            and (add.get('ok') is True or add.get('code') == 'ACCT_ACCOUNT_DUP') and badrole.get('_err') in (400, 422)
            and ch.get('ok') is True and kind.get('code') == 'ACCT_RULE_KIND' and slot.get('code') == 'ACCT_RULE' and byp.get('_err') == 403 and nos.get('_err') == 404
-           and r1.get('changed') is True and r1.get('evidence') == 'CARD' and any(l.get('role') == 'U_T1392' for l in r1.get('lines') or [])
+           and r1.get('changed') is True and r1.get('evidence') == 'CARD' and any(l.get('role') == 'U_TEST_RULE' for l in r1.get('lines') or [])
            and head.startswith('돈 흐름,근거 코드,증빙') and '바꿈' in (sh.get('csv') or '') and int(sh.get('count') or 0) >= 13
            and back.get('ok') is True and r2.get('changed') is False and r2.get('evidence') == 'CARD_PG' and int(logn or 0) >= 4,
            f"{len(accs)} {accs.get('EXP_PROMO', {}).get('extCode')} · {add.get('ok') or add.get('code')} {badrole.get('_err')} · {ch.get('ok')} {kind.get('code')} {slot.get('code')} {byp.get('_err')} {nos.get('_err')} · {r1.get('changed')} {r1.get('evidence')} · {head[:20]} {sh.get('count')} · {back.get('ok')} {r2.get('changed')} · {logn}")
@@ -289,6 +289,8 @@ if API and DB:
            and len(str(row0[0] if row0 else '')) == 2 and (row0[2] if len(row0) > 2 else '') in ('3', '4'),
            f"{bool(sj)} {[c.get('title') for c in sj.get('columns') or []][:5]} · {pv.get('head')} {row0[:4]}")
     finally:
+        # 시험이 올린 증빙 파일 — 매입에 붙어 지우기가 막히므로 replica 로 DELETED(다른 시험 test_v1149 가 디스크 파일 수를 셈)
+        psql("SET session_replication_role = replica; UPDATE files SET status = 'DELETED', deleted_at = now() WHERE purpose = 'ACCT_EVIDENCE' AND original_name LIKE '영수증1392-%' AND status <> 'DELETED';")
         rm_role(pid, '1392')
     if ADMIN_WEB:
         def chk(pg, seen):
