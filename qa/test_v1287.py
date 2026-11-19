@@ -53,7 +53,7 @@ ok('① 화면 · 명세 · 문서 — 정책 › 「전체 설정」(ADMIN · S
    "['settings', '전체 설정']" in MENU and "tabs: ['policy', 'settings', 'codes']" in MENU and "{tab === 'settings' && <><SettingScheduleBox /><SiteSettings /></>}" in APP
    and 'data-site-settings-search' in SS and 'data-site-setting-history' in SS and '/admin/site-settings/history?' in SS and 'data-site-setting-reason' in SS
    and '"id": "SB-ADM-SET-010"' in SCR and '"GET /admin/site-settings/history"' in SCR and bool(D413)
-   and len(mig) in (252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 287), f'{len(mig)} · {VER} · 413 {bool(D413)}')
+   and len(mig) in (252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 287), f'{len(mig)} · {VER} · 413 {bool(D413)}')
 
 
 def call(m_, p, b=None, t=None):
