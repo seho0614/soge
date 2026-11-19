@@ -15,6 +15,9 @@ export const EV_LABEL: Record<string, string> = { TAX_INVOICE: '세금계산서'
 
 const SAMPLE: Record<string, unknown> = { key: 'x', at: '', party: null, amt: 11000, supply: 10000, vat: 1000, total: 11000, paid: 11000, exempt: 0, gross: 11000, wht: 363, net: 10637,
   kind: 'USE', no: '', method: 'TRANSFER', period: '', deductible: true, qty: 1, unit_cost: 10000, amount: 11000, pay_role: 'AP', account_role: 'EXP_SUPPLIES', fee: 330, fee_vat: 30 };   // v10.404 PG 수수료 자리
+/** 돈 흐름마다 예시 값 바로잡기 — PG 정산은 입금액 = 결제 금액 − 수수료(부가세 포함)라 공통 예시의 net(원천세 예시 10,637)과 다름 */
+const SAMPLE_FIX: Record<string, Record<string, unknown>> = { PG_SETTLE: { net: 11000 - 330 } };
+const sampleOf = (name: string) => ({ ...SAMPLE, ...(SAMPLE_FIX[name] ?? {}) });
 /** 계정 자리 찾기용 — 면세 몫 · 부가세 없는 경우까지 돌려 보고 나온 역할을 모두 모음 */
 const VARIANTS: Array<Record<string, unknown>> = [SAMPLE, { ...SAMPLE, exempt: 3000 }, { ...SAMPLE, vat: null }, { ...SAMPLE, vat: 0, deductible: false }];
 
@@ -24,7 +27,7 @@ const safeBuild = (s: Source, r: Record<string, unknown>, c: Ctx) => { try { ret
 
 export function slotsOf(s: Source, c: Ctx): string[] {
   const set = new Set<string>();
-  for (const v of VARIANTS) for (const l of safeBuild(s, v, c)?.lines ?? []) set.add(l.role);
+  for (const v of VARIANTS) for (const l of safeBuild(s, { ...v, ...(SAMPLE_FIX[s.name] ?? {}) }, c)?.lines ?? []) set.add(l.role);
   return [...set];
 }
 
@@ -44,7 +47,7 @@ export async function rulesView(db: DatabaseService, sources: Source[]) {
   const acc = new Map(accs.map((a) => [a.role, a]));
   const show = (l: Line) => ({ ...l, name: acc.get(l.role)?.name ?? l.role, code: acc.get(l.role)?.extCode ?? null, draft: acc.get(l.role)?.draft ?? true });
   const rules = sources.map((s) => {
-    const base = safeBuild(s, SAMPLE, c);
+    const base = safeBuild(s, sampleOf(s.name), c);
     const now = base ? applyRule(s.name, base, ov) : null;
     const slots = slotsOf(s, c).map((role) => {
       const to = ov.maps.get(`${s.name}:${role}`) ?? role;
@@ -92,7 +95,7 @@ export async function setRule(db: DatabaseService, sources: Source[], source: st
       n++;
     }
     if (b.evidence) {
-      const base = safeBuild(src, SAMPLE, c)?.evidence ?? 'NONE';
+      const base = safeBuild(src, sampleOf(src.name), c)?.evidence ?? 'NONE';
       const [cur] = await db.query<{ evidence: string }>(`SELECT evidence FROM acct_rule_evidence WHERE source = $1`, [source]);
       const prev = cur?.evidence ?? base;
       if (prev !== b.evidence) {
