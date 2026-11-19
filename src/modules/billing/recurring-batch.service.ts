@@ -196,13 +196,13 @@ export class RecurringBatchService {
       if (!d.billing_key_id) {
         const reason = '등록된 결제 수단이 없습니다';
         const [inv] = await this.db.query<{ id: string }>(
-          `INSERT INTO subscription_invoices (subscription_id, period_start, period_end, amount, status, failure_reason, plan_code)
-           SELECT s.id, s.current_period_end, s.current_period_end + interval '30 days', $2, 'FAILED', $3, $4
+          `INSERT INTO subscription_invoices (subscription_id, period_start, period_end, amount, status, failure_reason, plan_code, supply, vat)
+           SELECT s.id, s.current_period_end, s.current_period_end + interval '30 days', $2, 'FAILED', $3, $4, $5, $6
              FROM subscriptions s WHERE s.id = $1
            ON CONFLICT (subscription_id, period_start) DO UPDATE
               SET attempt = subscription_invoices.attempt + 1, failure_reason = EXCLUDED.failure_reason
             WHERE subscription_invoices.status = 'FAILED'
-           RETURNING id`, [subId, d.amount, reason, d.plan_code]);
+           RETURNING id`, [subId, d.amount, reason, d.plan_code, d.vat == null ? null : d.supply, d.vat]);   // v10.385 (D243) 부가세 별도면 공급가 · 부가세
         if (!inv) return null;
         await this.recordAttempt(inv.id, 'NO_METHOD', reason);
         await this.markUnpaid(inv.id);
@@ -213,18 +213,19 @@ export class RecurringBatchService {
        * 기간 값은 구독 줄의 값 그대로(SQL 안에서) — Node 를 거치면 밀리초로 잘려 구독의 기간 끝과 달라집니다. */
       const [inv] = await this.db.query<{ id: string; attempt: number; ep: string }>(
         `INSERT INTO subscription_invoices
-           (subscription_id, period_start, period_end, amount, status, billing_key_id, attempt, claimed_at, is_stub, plan_code)
-         SELECT s.id, s.current_period_end, s.current_period_end + interval '30 days', $2, 'PENDING', $3, 1, clock_timestamp(), $4, $5
+           (subscription_id, period_start, period_end, amount, status, billing_key_id, attempt, claimed_at, is_stub, plan_code, supply, vat)
+         SELECT s.id, s.current_period_end, s.current_period_end + interval '30 days', $2, 'PENDING', $3, 1, clock_timestamp(), $4, $5, $6, $7
            FROM subscriptions s WHERE s.id = $1
          ON CONFLICT (subscription_id, period_start) DO UPDATE
             SET status = 'PENDING', attempt = subscription_invoices.attempt + 1,
-                amount = EXCLUDED.amount, billing_key_id = EXCLUDED.billing_key_id, plan_code = EXCLUDED.plan_code,
+                amount = EXCLUDED.amount, supply = EXCLUDED.supply, vat = EXCLUDED.vat, billing_key_id = EXCLUDED.billing_key_id, plan_code = EXCLUDED.plan_code,
                 failure_reason = NULL, pg_status = NULL, checked_at = NULL,
                 payment_key = NULL, order_id = NULL, claimed_at = clock_timestamp(), is_stub = EXCLUDED.is_stub
           WHERE subscription_invoices.status = 'FAILED'
          RETURNING id, attempt, floor(extract(epoch FROM period_start) * 1000)::bigint::text AS ep`,
         /* is_stub — 결제사 열쇠 없는 방식으로 잡은 청구라는 표시. 스텁 방식의 서버는 이 표시가 있는 것만 닫습니다(reconcileOne) */
-        [subId, d.amount, d.billing_key_id, provider instanceof StubPaymentProvider, d.plan_code /* G-189 예약 요금제면 그 코드 */]);
+        [subId, d.amount, d.billing_key_id, provider instanceof StubPaymentProvider, d.plan_code /* G-189 예약 요금제면 그 코드 */,
+         d.vat == null ? null : d.supply, d.vat /* v10.385 (D243) 부가세 별도면 공급가 · 부가세 · 금액(amount)은 둘의 합 */]);
       if (!inv) return null;      // 그 기간의 줄이 이미 PENDING · PAID — 다른 청구가 잡았습니다
 
       /* 주문번호는 시도마다 새로 만듭니다. 거절된 주문번호를 다시 쓰면 결제사가 「중복된 주문번호」로 거절합니다.

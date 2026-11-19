@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface Plan {
-  code: string; name: string; nameKo?: string; monthlyPrice: number; includedCodes: number;
+  code: string; name: string; nameKo?: string; monthlyPrice: number; chargePrice?: number; includedCodes: number;
   requestViewsPerMonth: number | null; listingSlots: number | null;
   prioritySlotCount: number;
   /* v10.31 — 시안 요금제 카드 혜택 줄(서버 subscription_plans.features) · 소개 제안 월 한도(null = 무제한) */
@@ -122,7 +122,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
           detail={detail}
           canSubscribe={p.roles.some((r) => r === 'MEMBER' || r === 'BIZ_OWNER')}   /* v10.37 (D095) — 개인 회원도 구독 */
           plans={plans.map((pl) => ({
-            code: pl.code, name: pl.name, nameKo: pl.nameKo, monthlyPrice: pl.monthlyPrice,
+            code: pl.code, name: pl.name, nameKo: pl.nameKo, monthlyPrice: pl.monthlyPrice, chargePrice: pl.chargePrice,
             lines: [
               ...(pl.features?.length
                 ? pl.features.map((t, i) => ({ k: `f${i}`, t }))

@@ -17,7 +17,7 @@ import { useTossClientKey } from '@/lib/useTossClientKey';
  *   키가 있으면 토스 결제창 → /my/subscription/pay 에서 서버가 승인합니다.
  * 환불 조건(결제 당일 · 열람 전)은 결제 전에 보이고, 확인 칸을 체크해야 결제됩니다.
  */
-export interface PlanLite { code: string; name: string; nameKo?: string; monthlyPrice: number; lines?: { k: string; t: string }[]; note?: string }
+export interface PlanLite { code: string; name: string; nameKo?: string; monthlyPrice: number; chargePrice?: number; lines?: { k: string; t: string }[]; note?: string }
 
 const TOSS_SDK = 'https://js.tosspayments.com/v1/payment';
 type TossPaymentsFn = (clientKey: string) => { requestPayment: (m: string, p: Record<string, unknown>) => Promise<unknown> };
@@ -93,14 +93,14 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
         });
         const j = await r.json().catch(() => null);
         if (!r.ok) { setMsg(['err', j?.message ?? t('notApproved')]); return; }
-        setMsg(['ok', t('stubOk', { amount: won(p.monthlyPrice), plan: p.name })]); setPick(null); setAgree(false);
+        setMsg(['ok', t('stubOk', { amount: won(p.chargePrice ?? p.monthlyPrice), plan: p.name })]); setPick(null); setAgree(false);
         router.refresh();
         return;
       }
       const TossPayments = await loadToss();
       const origin = window.location.origin;
       await TossPayments(CLIENT_KEY).requestPayment('카드', {
-        amount: Number(p.monthlyPrice), orderId, orderName: `${p.nameKo ?? p.name} 구독료`,   // v10.124 — 결제 기록 값은 언어와 상관없이 원래 이름
+        amount: Number(p.chargePrice ?? p.monthlyPrice), orderId,   // v10.385 — 부가세 별도면 + 부가세 orderName: `${p.nameKo ?? p.name} 구독료`,   // v10.124 — 결제 기록 값은 언어와 상관없이 원래 이름
         successUrl: `${origin}/my/subscription/pay?plan=${encodeURIComponent(p.code)}`,
         failUrl: `${origin}/my/subscription?pay=fail`,
       });
@@ -153,7 +153,7 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
             <tr><th>{t('thCur')}</th><td>{cur ? t('curVal', { plan: cur.name, price: won(cur.monthlyPrice) }) : t('none')}{reserveMode && t('nextPay', { date: nextDay })}</td></tr>
             <tr><th>{t('thTo')}</th><td>{to.name} · {Number(to.monthlyPrice) > 0 ? tc('monthly', { price: won(to.monthlyPrice) }) : tc('free')}</td></tr>
             <tr><th>{t('thApply')}</th><td>{k === 'NEW' ? `${t('applyNew')}${Number(to.monthlyPrice) > 0 ? t('applyAuto', { price: won(to.monthlyPrice) }) : ''}` : <>{t.rich('applyReserve', { b: (c) => <b>{c}</b>, date: nextDay, plan: to.name, cur: cur?.name ?? '' })}</>}</td></tr>
-            <tr><th>{t('thAmount')}</th><td data-plan-amount>{k === 'NEW' ? (Number(to.monthlyPrice) > 0 ? won(to.monthlyPrice) : t('noneFree')) : t('noPayNow')}</td></tr>
+            <tr><th>{t('thAmount')}</th><td data-plan-amount>{k === 'NEW' ? (Number(to.monthlyPrice) > 0 ? <>{won(to.chargePrice ?? to.monthlyPrice)}{Number(to.chargePrice ?? 0) > Number(to.monthlyPrice) && <small data-plan-vat=""> {t('vatIncl', { vat: won(Number(to.chargePrice) - Number(to.monthlyPrice)) })}</small>}</> : t('noneFree')) : t('noPayNow')}</td></tr>
           </tbody></table>
 
           {k === 'NEW' && Number(to.monthlyPrice) > 0 ? (
@@ -162,7 +162,7 @@ export function PlanPicker({ plans, detail, canSubscribe }: { plans: PlanLite[];
               <label className="agree-line"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} data-plan-agree /> {t('agree')} <b className="warn-text">{t('required')}</b></label>
               <div className="invite-actions">
                 <button type="button" className="btn-primary" disabled={!keyReady || busy || !agree} onClick={() => void pay(to)} data-plan-pay>
-                  {busy ? t('paying') : t('payBtn', { amount: won(to.monthlyPrice) })}
+                  {busy ? t('paying') : t('payBtn', { amount: won(to.chargePrice ?? to.monthlyPrice) })}
                 </button>
                 <button type="button" className="btn ghost" onClick={() => setPick(null)}>{tc('close')}</button>
               </div>

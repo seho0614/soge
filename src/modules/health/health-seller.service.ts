@@ -260,7 +260,7 @@ export class HealthSellerService {
   async settlements() {
     const s = await this.seller();
     return this.db.query(
-      `SELECT st.id, st.period_from AS "from", st.period_to AS "to", st.gross_amount AS gross, st.commission, st.refund_amount AS refund,
+      `SELECT st.id, st.period_from AS "from", st.period_to AS "to", st.gross_amount AS gross, st.commission, st.commission_vat AS "commissionVat", st.refund_amount AS refund,
               st.carried_in AS "carriedIn", st.net_amount AS net, st.carried_out AS "carriedOut", st.status,
               st.invoice_state AS "invoiceState", st.invoice_no AS "invoiceNo", st.confirmed_at AS "confirmedAt", st.paid_at AS "paidAt",
               (SELECT count(*)::int FROM hlt_settlement_items i WHERE i.settlement_id = st.id) AS "items",
@@ -275,7 +275,7 @@ export class HealthSellerService {
     const [st] = await this.db.query<{ id: string }>(`SELECT id FROM hlt_settlements WHERE id::text = $1 AND seller_id = $2`, [id, s.id]);
     if (!st) throw new NotFound('내 정산서를 찾을 수 없습니다.');
     return this.db.query(
-      `SELECT i.kind, o.order_no AS "orderNo", i.goods_amount AS "goodsAmount", i.commission, i.net_amount AS net, o.delivered_at AS "deliveredAt"
+      `SELECT i.kind, o.order_no AS "orderNo", i.goods_amount AS "goodsAmount", i.commission, i.commission_vat AS "commissionVat", i.net_amount AS net, o.delivered_at AS "deliveredAt"
          FROM hlt_settlement_items i JOIN hlt_orders o ON o.id = i.order_id WHERE i.settlement_id = $1 ORDER BY i.kind DESC, o.order_no`, [st.id]);
   }
 

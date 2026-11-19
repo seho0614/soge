@@ -74,7 +74,7 @@ export async function taxInvoices(db: DatabaseService, ym: string) {
        FROM ad_invoices a LEFT JOIN advertisers v ON v.id = a.advertiser_id
       WHERE a.status <> 'VOID' AND to_char(a.created_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM') = $1
      UNION ALL
-     SELECT 'COMMISSION', s.id::text, h.name, s.commission::text, (s.invoice_state = 'ISSUED'), false, s.invoice_no, s.confirmed_at
+     SELECT 'COMMISSION', s.id::text, h.name, (s.commission + s.commission_vat)::text, (s.invoice_state = 'ISSUED'), false, s.invoice_no, s.confirmed_at
        FROM hlt_settlements s JOIN hlt_sellers h ON h.id = s.seller_id AND h.type <> 'DIRECT'
       WHERE s.status IN ('CONFIRMED', 'PAID') AND s.commission > 0 AND to_char(s.confirmed_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM') = $1
      ORDER BY 8 DESC LIMIT 500`, [ym]);

@@ -15,6 +15,9 @@ export class PlanDto {
   @ApiProperty({ description: '우선노출 슬롯' }) prioritySlotCount!: number;
   @ApiProperty({ description: '초과 코드 단가 (원). 거래 금액과 무관한 정액입니다' })
   extraCodePrice!: number;
+  @ApiPropertyOptional({ description: 'v10.385 (D243) — 결제 금액(부가세 별도 시작일 뒤면 월 요금 + 부가세 10%)' }) chargePrice?: number;
+  @ApiPropertyOptional({ description: 'v10.385 (D243) — 초과 코드 1건 결제 금액' }) extraCodeCharge?: number;
+  @ApiPropertyOptional({ description: 'v10.385 (D243) — 지금 부가세 별도인가(vat.separate_from)' }) vatSeparate?: boolean;
 }
 
 export class SubscribeDto {

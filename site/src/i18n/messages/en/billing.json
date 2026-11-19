@@ -56,6 +56,7 @@
     "required": "(required)",
     "paying": "Processing payment…",
     "payBtn": "Pay {amount}",
+    "vatIncl": "(incl. VAT {vat})",
     "stubHint": "No payment provider key is set in this environment, so this is a <b>test payment</b> — no real money changes hands.",
     "reserveInfo": "<b>Nothing is charged now.</b> From {date} you switch to {plan}{fee}. Until then, your {cur} benefits stay the same, and you can withdraw the change before that date.",
     "feeMonthly": " ({price}/mo)",

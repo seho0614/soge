@@ -290,7 +290,8 @@
     "refundReq": "환불 신청",
     "close": "닫기",
     "checking": "결제를 확인하는 중입니다…",
-    "backToCash": "리드 이용료로"
+    "backToCash": "리드 이용료로",
+    "vatNote": "부가세 별도 — 부가세 {vat}을 더해 {pay} 결제 · 세금계산서 발행"
   },
   "services": {
     "title": "내 서비스",

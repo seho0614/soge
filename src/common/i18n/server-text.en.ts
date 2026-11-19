@@ -1975,5 +1975,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "계정은 지우지 않습니다.": "Accounts are not deleted.",
   "계정 역할 · 종류는 고치지 않습니다(회계 프로그램 코드 · 이름만).": "Account roles and kinds are not changed (only the accounting program code and name).",
   "{0} 은 마감한 달입니다.": "{0} is a closed month.",
+  "부가세 별도 시작일은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the VAT-extra start date.",
+  "부가세 별도 시작일은 오늘 이후 날짜(YYYY-MM-DD)로만 정합니다.": "Set the VAT-extra start date to today or later (YYYY-MM-DD).",
   "전표 {0} 차변 {1} · 대변 {2} · 줄 {3}": "Entry {0}: debit {1} · credit {2} · lines {3} (debit and credit must match).",
 };

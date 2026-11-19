@@ -453,6 +453,7 @@
     "period": "기간",
     "gross": "매출",
     "commission": "수수료",
+    "commissionVat": "(+ 부가세 {amt})",
     "refund": "환불 조정",
     "net": "지급액",
     "status": "상태",

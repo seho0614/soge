@@ -36,6 +36,10 @@ export class BillingService {
               listing_slots AS "listingSlots",
               priority_slot_count AS "prioritySlotCount",
               extra_code_price AS "extraCodePrice",
+              /* v10.385 (D243) — 결제 금액(부가세 별도 시작일 뒤면 + 부가세 10%) · 표시 요금(monthlyPrice)은 공급가 그대로 */
+              (monthly_price + CASE WHEN fn_vat_separate(now()) THEN fn_vat10(monthly_price) ELSE 0 END)::float8 AS "chargePrice",
+              (extra_code_price + CASE WHEN fn_vat_separate(now()) THEN fn_vat10(extra_code_price) ELSE 0 END)::float8 AS "extraCodeCharge",
+              fn_vat_separate(now()) AS "vatSeparate",
               /* v10.31 — 시안 요금제 카드의 혜택 줄 · 소개 제안 월 한도(NULL = 무제한) */
               features, proposal_limit AS "proposalLimit"
          FROM subscription_plans WHERE is_active ORDER BY monthly_price`);
@@ -56,6 +60,13 @@ export class BillingService {
    * 계정당 활성 구독은 1건입니다(부분 유니크 인덱스). 기존 구독이 있으면
    * 플랜만 바꿉니다 — 해지 후 재가입으로 처리하면 미성사 코드가 실효됩니다.
    */
+  /** v10.385 (D243) — 공급가 → 결제 금액. 부가세 별도 시작일(vat.separate_from) 전이면 공급가 그대로 */
+  async vatFor(supply: number): Promise<{ separate: boolean; supply: number; vat: number; total: number }> {
+    const [v] = await this.db.query<{ sep: boolean; vat: string }>(`SELECT fn_vat_separate(now()) AS sep, fn_vat10($1) AS vat`, [supply]);
+    const vat = v?.sep ? Number(v.vat) : 0;
+    return { separate: !!v?.sep, supply, vat, total: supply + vat };
+  }
+
   async subscribe(planCode: string, paymentKey?: string, orderId?: string) {
     return this.db.transaction(async () => {
       const [plan] = await this.db.query<{ monthly_price: number; name: string }>(
@@ -85,6 +96,8 @@ export class BillingService {
        *
        * 금액 검증은 어댑터가 합니다 — 토스가 확인해 준 금액과
        * 우리가 청구하려던 금액이 다르면 승인하지 않습니다. */
+      /* ★ v10.385 (D243 · docs/521) — 부가세 별도 시작일 뒤면 결제 = 요금(공급가) + 부가세 10% */
+      const vx = await this.vatFor(Number(plan.monthly_price));
       let paidByStub = false;      // 열쇠 없는 방식(스텁)의 승인인가 — 청구서에 표시해 둡니다(스텁 방식의 서버는 그 표시가 있는 것만 환불 · 대조)
       if (plan.monthly_price > 0) {
         /* ★ D022 (v10.18) — 결제를 받기 **전에** 막을 것을 먼저 봅니다. 결제 뒤에 막히면 돈만 나갑니다.
@@ -116,7 +129,7 @@ export class BillingService {
         const pay = await confirmOrRecover(resolvePaymentProvider(), {
           paymentKey: paymentKey!,
           orderId: orderId ?? `sub_${this.me}_${Date.now()}`,
-          amount: plan.monthly_price,
+          amount: vx.total,
           orderName: `${plan.name} 구독료`,   // 소개비 문구가 들어오면 어댑터가 막습니다
         });
         if (!pay.approved) {
@@ -173,11 +186,11 @@ export class BillingService {
          *   주문번호(order_id)도 남깁니다 — 결제 키와 따로. */
         await this.db.query(
           `INSERT INTO subscription_invoices
-             (subscription_id, period_start, period_end, amount, status, payment_key, order_id, paid_at, is_stub, plan_code)
-           SELECT s.id, s.current_period_start, s.current_period_end, $2, 'PAID', $3, $4, now(), $5, s.plan_code
+             (subscription_id, period_start, period_end, amount, status, payment_key, order_id, paid_at, is_stub, plan_code, supply, vat)
+           SELECT s.id, s.current_period_start, s.current_period_end, $2, 'PAID', $3, $4, now(), $5, s.plan_code, $6, $7
              FROM subscriptions s WHERE s.id = $1
            ON CONFLICT (subscription_id, period_start) DO NOTHING`,
-          [sub.id, plan.monthly_price, paymentKey, orderId ?? null, paidByStub]);
+          [sub.id, vx.total, paymentKey, orderId ?? null, paidByStub, vx.separate ? vx.supply : null, vx.separate ? vx.vat : null]);
       }
       return { subscriptionId: sub.id, ...sub };
     });
@@ -444,6 +457,8 @@ export class BillingService {
       usedThisMonth: u.scope === 'NONE' ? 0 : u.used,
       freeRemaining,
       extraCodePrice: Number(sub.extra_code_price),
+      /* v10.385 (D243) — 1건 결제 금액(부가세 별도 시작일 뒤면 + 부가세) · 화면은 이 금액으로 결제창을 엶 */
+      ...(await this.vatFor(Number(sub.extra_code_price)).then((v) => ({ extraCodeCharge: v.total, extraCodeVat: v.vat, vatSeparate: v.separate }))),
       identityVerified: u.identityVerified,
       countScope: u.scope,
       current,
@@ -559,7 +574,9 @@ export class BillingService {
         let paymentKey: string | null = null;
         let stub = false;
         if (extraN > 0) {
-          const amount = extraN * price;
+          /* v10.385 (D243) — 부가세 별도 시작일 뒤면 결제 = 단가 × 건수 + 부가세 */
+          const vx = await this.vatFor(extraN * price);
+          const amount = vx.total;
           if (!pay?.paymentKey) {
             throw new PolicyViolation(
               'EXTRA_PAYMENT_REQUIRED',
@@ -571,7 +588,7 @@ export class BillingService {
                 : u.identityVerified
                 ? `이번 달 무료 소개코드(${sub.included_codes}건)를 모두 받았습니다. 추가 ${extraN}건은 ${amount.toLocaleString('ko-KR')}원 결제 후 발급됩니다.`
                 : `본인인증 전에는 무료 소개코드가 없습니다. 본인인증을 하시거나 ${extraN}건 ${amount.toLocaleString('ko-KR')}원을 결제해 주십시오.`,
-              { extraCount: extraN, unitPrice: price, amount, freeRemaining: freeLeft,
+              { extraCount: extraN, unitPrice: price, amount, supply: vx.supply, vat: vx.vat, freeRemaining: freeLeft,
                 includedCodes: sub.included_codes, identityVerified: u.identityVerified });
           }
           if (pay.amount != null && Number(pay.amount) !== amount) {
@@ -605,9 +622,9 @@ export class BillingService {
 
           await this.db.query(
             `INSERT INTO referral_code_payments
-               (payment_key, order_id, account_id, subscription_id, unit_price, code_count, amount, stub)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-            [pay.paymentKey, orderId, this.me, sub.id, price, extraN, amount, stub]);
+               (payment_key, order_id, account_id, subscription_id, unit_price, code_count, amount, stub, vat)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            [pay.paymentKey, orderId, this.me, sub.id, price, extraN, amount, stub, vx.vat]);
           paymentKey = pay.paymentKey;
         }
 

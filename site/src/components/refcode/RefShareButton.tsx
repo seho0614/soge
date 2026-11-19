@@ -119,7 +119,7 @@ export function RefShareButton({ base, listingId }:
 
   async function pay(q: RefQuota) {
     setErr(null); setBusy(true);
-    const amount = q.extraCodePrice;
+    const amount = q.extraCodeCharge ?? q.extraCodePrice;   // v10.385 — 부가세 별도면 + 부가세
     const orderId = `rcx-${crypto.randomUUID()}`;
     try {
       /* 시험 결제(스텁) — 결제창 키가 없을 때. 서버도 키가 없으면 stub:true 로 승인하고 돈은 오가지 않습니다 */
@@ -189,7 +189,7 @@ export function RefShareButton({ base, listingId }:
           )}
           <div className="rc-act">
             <button type="button" className="rc-btn" disabled={!keyReady || busy} onClick={() => void pay(view.q)} data-refshare-paybtn="1">
-              {busy ? t('button.paying') : CLIENT_KEY ? t('button.payBtn', { price: won(view.q.extraCodePrice) }) : t('button.payBtnStub', { price: won(view.q.extraCodePrice) })}
+              {busy ? t('button.paying') : CLIENT_KEY ? t('button.payBtn', { price: won(view.q.extraCodeCharge ?? view.q.extraCodePrice) }) : t('button.payBtnStub', { price: won(view.q.extraCodeCharge ?? view.q.extraCodePrice) })}
             </button>
             <a className="rc-btn ghost" href="/my/subscription/upgrade">{t('button.plans')}</a>
           </div>

@@ -13,7 +13,7 @@ interface SettleRow {
   /* v10.169 (D158) — 확정 · 지급 요청(입점만) */
   sellerType?: string; payable?: boolean; payoutState?: 'READY' | 'DONE' | 'FAILED' | null;
   from: string; to: string; seller: string; sellerName: string;
-  gross: number | string; commission: number | string; refund: number | string;
+  gross: number | string; commission: number | string; commissionVat?: number | string; refund: number | string;
   carriedIn: number | string; net: number | string; carriedOut: number | string; status: string;
 }
 interface Settle {
@@ -267,7 +267,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
 
   /* v10.168 (D157) — 판매수수료 세금계산서 발행 번호(국세청 연동 전 · 방향은 설정 mall.invoice_direction) · 갈래 수수료율(결정 B) */
   const invoice = (r: SettleRow) => {
-    const no = prompt(`${r.sellerName} ${ymd(r.from)} 주 판매수수료 ${n(r.commission)}원 — 발행한 세금계산서 승인번호`) ?? '';
+    const no = prompt(`${r.sellerName} ${ymd(r.from)} 주 판매수수료 ${n(r.commission)}원${Number(r.commissionVat ?? 0) > 0 ? ` + 부가세 ${n(r.commissionVat)}원` : ''} — 발행한 세금계산서 승인번호`) ?? '';
     if (!no.trim()) return;
     void a.run(r.id, () => api(`/admin/health/settlements/${r.id}/invoice`, { method: 'POST', body: JSON.stringify({ invoiceNo: no.trim() }) }), settle.reload, '발행 번호를 적었습니다.');
   };
@@ -344,7 +344,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
                 <td className="muted">{ymd(r.from)} ~ {ymd(r.to)}</td>
                 <td>{r.sellerName}</td>
                 <td className="num-cell">{n(r.gross)}</td>
-                <td className="num-cell">{n(r.commission)}</td>
+                <td className="num-cell">{n(r.commission)}{Number(r.commissionVat ?? 0) > 0 && <small className="muted" data-settle-vat=""> + 부가세 {n(r.commissionVat)}</small>}</td>
                 <td className="num-cell">{n(r.refund)}</td>
                 <td className="num-cell">{n(r.carriedIn)}</td>
                 <td className="num-cell">{Number(r.net) < 0 ? <b className="warn-text">{n(r.net)}</b> : <b>{n(r.net)}</b>}</td>

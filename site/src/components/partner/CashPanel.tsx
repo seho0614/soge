@@ -33,7 +33,7 @@ function loadToss(): Promise<TossPaymentsFn> {
 /** v10.102 (2-5c) — 화면 언어에 묶은 원 표기(ko 「1,000원」 · en 「₩1,000」) */
 const useWon = () => { const fm = useFmt(); return (n: number | null | undefined) => fm.won(n ?? 0); };
 
-export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: number; max: number; room: number; bonusRate: number; canMoney: boolean }) {
+export function ChargeForm({ min, max, room, bonusRate, canMoney, vatSeparate }: { min: number; max: number; room: number; bonusRate: number; canMoney: boolean; vatSeparate?: boolean }) {
   const { key: CLIENT_KEY, ready: keyReady } = useTossClientKey();   // v10.128 — 운영 화면 키(빌드 불필요)
   const t = useTranslations('partnerOps.cashPanel');
   const won = useWon();
@@ -47,7 +47,8 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
   async function charge() {
     setBusy(true); setMsg(null);
     try {
-      const c = await api<{ orderId: string; amount: number; orderName: string }>('POST', '/partner/cash/charges', { amount });
+      const c0 = await api<{ orderId: string; amount: number; payAmount?: number; orderName: string }>('POST', '/partner/cash/charges', { amount });
+      const c = { ...c0, amount: c0.payAmount ?? c0.amount };   // v10.387 — 결제 금액(부가세 별도 시작일 뒤면 + 부가세)
       if (!CLIENT_KEY) {
         const r = await api<{ note: string }>('POST', '/partner/cash/charges/confirm',
           { orderId: c.orderId, paymentKey: `stub_${crypto.randomUUID()}`, amount: c.amount });
@@ -87,6 +88,7 @@ export function ChargeForm({ min, max, room, bonusRate, canMoney }: { min: numbe
       <p className="pt-ls" style={{ marginTop: 6 }}>
         {t('chargeInfo', { pct: String(Math.round(bonusRate * 100)), bonus: won(bonus), min: won(min), max: won(max), room: won(room) })}
         {!CLIENT_KEY && <> · {t.rich('stubInfo', { b: (c) => <b>{c}</b> })}</>}
+        {vatSeparate && <span data-cash-vat=""> · {t('vatNote', { vat: won(Math.floor(amount * 0.1)), pay: won(amount + Math.floor(amount * 0.1)) })}</span>}
       </p>
       {msg && <p className={`pt-msg ${msg[0]}`} role="status">{msg[1]}</p>}
     </div>

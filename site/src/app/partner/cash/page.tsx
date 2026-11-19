@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface Cash {
-  mode: string; total: number; paid: number; bonus: number; bonusRate: number; grade: string; canMoney: boolean;
+  mode: string; total: number; paid: number; bonus: number; bonusRate: number; grade: string; canMoney: boolean; vatSeparate?: boolean;
   auto: { on: boolean; below: number | null; amount: number | null; engine: boolean; card: { company: string | null; last4: string | null } | null; failedAt: string | null; failReason: string | null };
   month: { used: number; usedBonus: number };
   refundable: number;
@@ -61,7 +61,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       {c.total <= 0 && <Note kind="warn">{t.rich('zeroNote', { b: (x) => <b>{x}</b> })}</Note>}
 
       <S2>{t('chargeH')}</S2>
-      <div className="pt-fset"><ChargeForm min={c.limits.min} max={c.limits.max} room={room} bonusRate={c.bonusRate} canMoney={c.canMoney} /></div>
+      <div className="pt-fset"><ChargeForm min={c.limits.min} max={c.limits.max} room={room} bonusRate={c.bonusRate} canMoney={c.canMoney} vatSeparate={!!c.vatSeparate} /></div>
 
       <S2>{t('autoH')}</S2>
       <AutoForm on={c.auto.on} below={c.auto.below} amount={c.auto.amount} engine={c.auto.engine} card={c.auto.card}

@@ -380,6 +380,17 @@ export class AdminService {
     if (key === 'lead.legal_ok' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('LEAD_SETTING_SUPER', '리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.385 (D243 · docs/521) — 부가세 별도 시작일은 결제 금액이 바뀌는 기준이라 SUPER 만 · 오늘(한국) 이후 날짜만(지난 결제를 바꾸지 않음) */
+    if (key === 'vat.separate_from') {
+      if (RequestCtx.get()?.actorRole !== 'SUPER') {
+        throw new Forbidden('VAT_SETTING_SUPER', '부가세 별도 시작일은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+      }
+      const v = (value ?? '').trim();
+      const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+      if (v && (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v)) || v < today)) {
+        throw new PolicyViolation('VAT_START_PAST', '부가세 별도 시작일은 오늘 이후 날짜(YYYY-MM-DD)로만 정합니다.');
+      }
+    }
     /* v10.302 (D218 · docs/423) — 요율 공지 자동 다시 알림은 판매자에게 알림이 나가는 기준이라 SUPER 만 */
     if (key === 'hlt.rate_auto_remind_days' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('RATE_REMIND_SETTING_SUPER', '요율 공지 자동 다시 알림은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

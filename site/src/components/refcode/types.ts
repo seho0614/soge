@@ -12,6 +12,7 @@ export interface RefQuota {
   usedThisMonth: number;
   freeRemaining: number;
   extraCodePrice: number;
+  extraCodeCharge?: number;   // v10.385 — 1건 결제 금액(부가세 별도 시작일 뒤면 + 부가세)
   identityVerified: boolean;
   countScope: 'CI' | 'ACCOUNT' | 'SUBSCRIPTION' | 'NONE';
   /** scope=listing: 그 매물의 내 코드(달과 무관) · scope=all: 이번 달 받은 코드 */

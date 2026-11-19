@@ -34,7 +34,7 @@ export class HealthSettleService {
               s.type AS "sellerType", (coalesce(btrim(s.submerchant_id), '') <> '') AS "payable",
               (SELECT pr.state FROM hlt_payout_requests pr WHERE pr.settlement_id = st.id) AS "payoutState",
               s.code AS "seller", s.name AS "sellerName",
-              st.gross_amount AS "gross", st.commission,
+              st.gross_amount AS "gross", st.commission, st.commission_vat AS "commissionVat",
               st.refund_amount AS "refund", st.carried_in AS "carriedIn",
               st.net_amount AS "net", st.carried_out AS "carriedOut",
               st.status

@@ -56,6 +56,7 @@
     "required": "(필수)",
     "paying": "결제하는 중…",
     "payBtn": "{amount} 결제하기",
+    "vatIncl": "(부가세 {vat} 포함)",
     "stubHint": "결제사 키가 없는 환경이라 <b>시험 결제</b>입니다 — 실제 돈은 오가지 않습니다.",
     "reserveInfo": "<b>지금 결제하는 돈은 없습니다.</b> {date}부터 {plan} 바뀝니다{fee}. 그 전까지 {cur}의 혜택이 그대로이고, 예약은 그 전에 거둘 수 있습니다.",
     "feeMonthly": "(월 {price})",

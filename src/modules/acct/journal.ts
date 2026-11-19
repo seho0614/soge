@@ -28,6 +28,9 @@ const revenue = (rev: Role, total: number, split: boolean): Line[] => {
   const v = vatSplit(total);
   return [cr(rev, v.supply), cr('VAT_OUT', v.vat)];
 };
+/** v10.385 (D243) — 부가세를 따로 받은 것(공급가 · 부가세 칸이 있음)은 그 값 그대로, 없으면 전처럼(설정에 따라 ÷ 1.1) */
+const revenueSep = (rev: Role, total: number, vat: unknown, split: boolean): Line[] =>
+  vat == null ? revenue(rev, total, split) : [cr(rev, total - n(vat)), ...(n(vat) > 0 ? [cr('VAT_OUT', n(vat))] : [])];
 /** 반대 전표(차변 ↔ 대변) */
 export const reverse = (ls: Line[]): Line[] => ls.map((l) => ({ role: l.role, debit: l.credit, credit: l.debit }));
 const n = (v: unknown) => Number(v ?? 0);
@@ -40,30 +43,31 @@ interface Source { name: string; label: string; sql: string; build: (r: Row, c: 
 export const SOURCES: Source[] = [
   {
     name: 'SUB_PAID', label: '구독 결제',
-    sql: `SELECT i.id::text AS key, i.paid_at AS at, i.amount::bigint AS amt, NULL::text AS party
+    sql: `SELECT i.id::text AS key, i.paid_at AS at, i.amount::bigint AS amt, i.vat::bigint AS vat, NULL::text AS party
             FROM subscription_invoices i
            WHERE i.status IN ('PAID', 'REFUNDED') AND i.paid_at IS NOT NULL AND i.amount > 0 AND i.paid_at >= fn_acct_from() AND fn_acct_stub_ok(i.is_stub)
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'SUB_PAID' AND e.source_key = i.id::text)
            ORDER BY i.paid_at LIMIT 500`,
-    build: (r, c) => ({ memo: '구독 결제', evidence: 'CARD_PG', lines: [dr('PG_RECV', n(r.amt)), ...revenue('REV_SUB', n(r.amt), c.subVat)] }),
+    build: (r, c) => ({ memo: '구독 결제', evidence: 'CARD_PG', lines: [dr('PG_RECV', n(r.amt)), ...revenueSep('REV_SUB', n(r.amt), r.vat, c.subVat)] }),
   },
   {
     name: 'SUB_REFUND', label: '구독 환불',
-    sql: `SELECT r.id::text AS key, r.completed_at AS at, r.amount::bigint AS amt, NULL::text AS party
+    sql: `SELECT r.id::text AS key, r.completed_at AS at, r.amount::bigint AS amt, NULL::text AS party,
+                 (SELECT i.vat::bigint FROM subscription_invoices i WHERE i.id = r.invoice_id AND i.amount = r.amount) AS vat
             FROM subscription_refunds r
            WHERE r.state = 'SUCCEEDED' AND r.completed_at IS NOT NULL AND r.amount > 0 AND r.completed_at >= fn_acct_from() AND fn_acct_stub_ok(r.is_stub)
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'SUB_REFUND' AND e.source_key = r.id::text)
            ORDER BY r.completed_at LIMIT 500`,
-    build: (r, c) => ({ memo: '구독 환불', evidence: 'CARD_PG', lines: reverse([dr('PG_RECV', n(r.amt)), ...revenue('REV_SUB', n(r.amt), c.subVat)]) }),
+    build: (r, c) => ({ memo: '구독 환불', evidence: 'CARD_PG', lines: reverse([dr('PG_RECV', n(r.amt)), ...revenueSep('REV_SUB', n(r.amt), r.vat, c.subVat)]) }),
   },
   {
     name: 'REFCODE_PAID', label: '소개코드 결제',
-    sql: `SELECT p.payment_key AS key, p.paid_at AS at, p.amount::bigint AS amt, NULL::text AS party
+    sql: `SELECT p.payment_key AS key, p.paid_at AS at, p.amount::bigint AS amt, nullif(p.vat, 0)::bigint AS vat, NULL::text AS party
             FROM referral_code_payments p
            WHERE p.paid_at IS NOT NULL AND p.amount > 0 AND p.paid_at >= fn_acct_from() AND fn_acct_stub_ok(p.stub)
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'REFCODE_PAID' AND e.source_key = p.payment_key)
            ORDER BY p.paid_at LIMIT 500`,
-    build: (r, c) => ({ memo: '소개코드 결제', evidence: 'CARD_PG', lines: [dr('PG_RECV', n(r.amt)), ...revenue('REV_REFCODE', n(r.amt), c.subVat)] }),
+    build: (r, c) => ({ memo: '소개코드 결제', evidence: 'CARD_PG', lines: [dr('PG_RECV', n(r.amt)), ...revenueSep('REV_REFCODE', n(r.amt), r.vat, c.subVat)] }),
   },
   {
     name: 'AD_INVOICE', label: '광고 청구',
@@ -123,37 +127,51 @@ export const SOURCES: Source[] = [
   },
   {
     name: 'COMMISSION', label: '입점 수수료',
-    sql: `SELECT st.id::text AS key, st.confirmed_at AS at, st.commission::bigint AS amt, s.name AS party, st.period_from::text || ' ~ ' || st.period_to::text AS period
+    sql: `SELECT st.id::text AS key, st.confirmed_at AS at, st.commission::bigint AS amt, nullif(st.commission_vat, 0)::bigint AS vat, s.name AS party, st.period_from::text || ' ~ ' || st.period_to::text AS period
             FROM hlt_settlements st JOIN hlt_sellers s ON s.id = st.seller_id AND s.type <> 'DIRECT'
            WHERE st.status IN ('CONFIRMED', 'PAID') AND st.confirmed_at IS NOT NULL AND st.commission > 0 AND st.confirmed_at >= fn_acct_from()
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'COMMISSION' AND e.source_key = st.id::text)
            ORDER BY st.confirmed_at LIMIT 500`,
     build: (r, c) => {
       const amt = n(r.amt);
+      /* v10.386 (D243) — 정산에서 수수료 부가세를 뺀 정산서는 그 값 그대로 */
+      if (r.vat != null) return { memo: `입점 수수료 ${r.period ?? ''}`.trim(), evidence: 'TAX_INVOICE', lines: [dr('AR', amt + n(r.vat)), cr('REV_COMMISSION', amt), cr('VAT_OUT', n(r.vat))] };
       const total = c.commissionVat ? amt : amt + Math.round(amt * 0.1);
       return { memo: `입점 수수료 ${r.period ?? ''}`.trim(), evidence: 'TAX_INVOICE', lines: [dr('AR', total), ...revenue('REV_COMMISSION', total, true)] };
     },
   },
   {
     name: 'LEAD_CHARGE', label: '리드 캐시 충전(매출)',
-    sql: `SELECT c.id::text AS key, c.approved_at AS at, c.amount::bigint AS amt, b.company_name AS party
+    sql: `SELECT c.id::text AS key, c.approved_at AS at, (c.amount + c.vat)::bigint AS amt, nullif(c.vat, 0)::bigint AS vat, b.company_name AS party
             FROM lead_cash_charges c LEFT JOIN partners pt ON pt.id = c.partner_id LEFT JOIN businesses b ON b.id = pt.business_id
            WHERE c.state = 'DONE' AND c.approved_at IS NOT NULL AND c.amount > 0 AND c.approved_at >= fn_acct_from() AND fn_acct_stub_ok(c.stub)
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'LEAD_CHARGE' AND e.source_key = c.id::text)
            ORDER BY c.approved_at LIMIT 500`,
     /* 11/19 대표 「충전 때 매출」 — 충전 금액(부가세 포함)을 그때 매출 · 보너스 캐시는 매출 아님 · 쓸 때는 전표 없음 */
-    build: (r) => ({ memo: '리드 캐시 충전', evidence: 'TAX_INVOICE', lines: [dr('PG_RECV', n(r.amt)), ...revenue('REV_LEAD', n(r.amt), true)] }),
+    /* v10.387 (D243) — 부가세 별도 충전은 결제 = 충전 금액(매출) + 부가세 */
+    build: (r) => ({ memo: '리드 캐시 충전', evidence: 'TAX_INVOICE', lines: [dr('PG_RECV', n(r.amt)), ...revenueSep('REV_LEAD', n(r.amt), r.vat, true)] }),
   },
   {
     name: 'LEAD_REFUND', label: '리드 캐시 환급',
     sql: `SELECT e.id::text AS key, e.created_at AS at, b.company_name AS party,
-                 (SELECT coalesce(-sum(l.amount), 0) FROM lead_cash_lines l WHERE l.entry_id = e.id AND l.account = 'PG_CLEARING')::bigint AS amt
+                 (SELECT coalesce(-sum(l.amount), 0) FROM lead_cash_lines l WHERE l.entry_id = e.id AND l.account = 'PG_CLEARING')::bigint AS amt,
+                 /* v10.387 (D243) — 부가세 별도 충전에서 돌려준 몫: 공급가 · 부가세 따로 · 그 전 충전 몫은 ÷ 1.1 */
+                 (SELECT coalesce(sum(p.amount) FILTER (WHERE c.vat > 0), 0) FROM lead_cash_refund_parts p JOIN lead_cash_charges c ON c.id = p.charge_id
+                   WHERE e.ref_type = 'REFUND' AND p.refund_id::text = e.ref_id AND p.ok)::bigint AS sep_supply,
+                 (SELECT coalesce(sum(p.vat) FILTER (WHERE c.vat > 0), 0) FROM lead_cash_refund_parts p JOIN lead_cash_charges c ON c.id = p.charge_id
+                   WHERE e.ref_type = 'REFUND' AND p.refund_id::text = e.ref_id AND p.ok)::bigint AS sep_vat
             FROM lead_cash_entries e LEFT JOIN partners pt ON pt.id = e.partner_id LEFT JOIN businesses b ON b.id = pt.business_id
            WHERE e.kind = 'REFUND_PAID' AND e.created_at >= fn_acct_from()
              AND NOT EXISTS (SELECT 1 FROM acct_entries x WHERE x.source = 'LEAD_REFUND' AND x.source_key = e.id::text)
            ORDER BY e.created_at LIMIT 500`,
     /* 환급(현금 충전분) — 충전 매출의 반대 */
-    build: (r) => (n(r.amt) > 0 ? { memo: '리드 캐시 환급', evidence: 'TAX_INVOICE', lines: reverse([dr('PG_RECV', n(r.amt)), ...revenue('REV_LEAD', n(r.amt), true)]) } : null),
+    build: (r) => {
+      if (n(r.amt) <= 0) return null;
+      const sepS = Math.min(n(r.sep_supply), n(r.amt)), sepV = n(r.sep_vat), old = n(r.amt) - sepS;
+      const v = vatSplit(old);
+      const ls: Line[] = [dr('PG_RECV', n(r.amt) + sepV), cr('REV_LEAD', sepS + v.supply), ...(sepV + v.vat > 0 ? [cr('VAT_OUT', sepV + v.vat)] : [])];
+      return { memo: '리드 캐시 환급', evidence: 'TAX_INVOICE', lines: reverse(ls) };
+    },
   },
   {
     name: 'DIRECTORY', label: '정액 노출 입금',

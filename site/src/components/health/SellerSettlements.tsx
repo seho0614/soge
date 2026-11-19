@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useFmt } from '@/lib/useFmt';
 
 export interface SellerSettlement {
-  id: string; from: string; to: string; gross: number | string; commission: number | string; refund: number | string;
+  id: string; from: string; to: string; gross: number | string; commission: number | string; commissionVat?: number | string; refund: number | string;
   carriedIn: number | string; net: number | string; status: string; invoiceState: string; invoiceNo: string | null; items: number;
   /** v10.169 — 결제대행사 지급 요청(판매자 하위가맹점으로) */
   payoutState?: 'READY' | 'DONE' | 'FAILED' | null; payoutRef?: string | null;
@@ -43,7 +43,7 @@ export function SellerSettlements({ rows }: { rows: SellerSettlement[] }) {
             {rows.map((r) => (
               <tr key={r.id} data-seller-settlement={r.id}>
                 <td>{r.from.slice(0, 10)} ~ {r.to.slice(0, 10)}</td>
-                <td>{f.won(r.gross, '-')}</td><td>{f.won(r.commission, '-')}</td><td>{f.won(r.refund, '-')}</td>
+                <td>{f.won(r.gross, '-')}</td><td>{f.won(r.commission, '-')}{Number(r.commissionVat ?? 0) > 0 ? <small className="dim" data-settle-vat=""> {t('commissionVat', { amt: f.won(r.commissionVat, '-') })}</small> : null}</td><td>{f.won(r.refund, '-')}</td>
                 <td><b>{f.won(r.net, '-')}</b>{Number(r.carriedIn) !== 0 ? <small className="dim"> ({t('carried', { amt: f.won(r.carriedIn, '-') })})</small> : null}</td>
                 <td>{t(`st.${r.status as 'DRAFT'}`)}{r.invoiceState === 'ISSUED' ? <small className="dim"> · {t('invoice', { no: r.invoiceNo ?? '' })}</small> : null}{r.payoutState ? <small className="dim" data-payout={r.payoutState}> · {t(`payout.${r.payoutState}`)}</small> : null}</td>
                 <td><button className="hlt-btn sm" onClick={() => void show(r.id)}>{open === r.id ? t('close') : t('detail', { n: String(r.items) })}</button></td>

@@ -136,6 +136,7 @@ export class LeadCashService {
       month: { used: Number(month?.used ?? 0), usedBonus: Number(month?.usedBonus ?? 0) },
       refundable: Math.min(w.paid, Number(refundable?.v ?? 0)),
       limits: { min: s.min, max: s.max, maxBalance: s.maxBalance },
+      vatSeparate: !!(await this.db.query<{ v: boolean }>(`SELECT fn_vat_separate(now()) AS v`))[0]?.v,   // v10.387 — 결제 = 충전 금액 + 부가세
       legacy: { pending: Number(legacy?.pending ?? 0), count: legacy?.n ?? 0 },
       log: log.map((r) => ({
         id: Number(r.id), kind: r.kind, kindKo: KIND_KO[r.kind] ?? r.kind, at: r.at,
@@ -166,31 +167,35 @@ export class LeadCashService {
     const rate = await this.bonusRate(p.grade);
     const bonus = Math.floor(amount * rate);
     const orderId = `lc-${Date.now().toString(36)}${randomBytes(6).toString('hex')}`;
+    /* v10.387 (D243 · docs/523) — 부가세 별도 시작일 뒤면 결제 = 충전 금액 + 부가세 10% · 지갑에는 충전 금액만 · 충전 때 세금계산서 */
     const [c] = await this.db.query<any>(
-      `INSERT INTO lead_cash_charges(partner_id, order_id, amount, bonus_rate, bonus_amount, source, requested_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
-       RETURNING id, order_id AS "orderId", amount, bonus_amount AS bonus, state`,
+      `INSERT INTO lead_cash_charges(partner_id, order_id, amount, bonus_rate, bonus_amount, source, requested_by, vat)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, CASE WHEN fn_vat_separate(now()) THEN fn_vat10($3) ELSE 0 END)
+       RETURNING id, order_id AS "orderId", amount, vat, bonus_amount AS bonus, state`,
       [p.id, orderId, amount, rate, bonus, source, this.me ?? null]);
-    return { ...c, amount: Number(c.amount), bonus: Number(c.bonus), bonusRate: rate,
+    const vat = Number(c.vat);
+    return { ...c, amount: Number(c.amount), vat, payAmount: Number(c.amount) + vat, bonus: Number(c.bonus), bonusRate: rate,
       orderName: '소개뱅크 리드 이용료 충전',
-      note: `결제가 승인되면 유상 잔액 ${amount.toLocaleString('ko-KR')}원${bonus ? ` · 등급 할인 ${bonus.toLocaleString('ko-KR')}원` : ''}이 들어옵니다.` };
+      note: `결제가 승인되면 유상 잔액 ${amount.toLocaleString('ko-KR')}원${bonus ? ` · 등급 할인 ${bonus.toLocaleString('ko-KR')}원` : ''}이 들어옵니다.`
+        + (vat ? ` 결제 금액은 부가세 ${vat.toLocaleString('ko-KR')}원을 더한 ${(amount + vat).toLocaleString('ko-KR')}원입니다(세금계산서 발행).` : '') };
   }
 
   /** POST /partner/cash/charges/confirm — 결제사 승인 확인 뒤 원장에 올립니다(같은 주문 두 번 → 한 번만) */
   async confirmCharge(orderId: string, paymentKey: string, amount: number) {
     const p = await this.minePartner(true);
     const [c] = await this.db.query<any>(
-      `SELECT id, amount, state, payment_key FROM lead_cash_charges WHERE order_id = $1 AND partner_id = $2`, [orderId, p.id]);
+      `SELECT id, amount, vat, state, payment_key FROM lead_cash_charges WHERE order_id = $1 AND partner_id = $2`, [orderId, p.id]);
     if (!c) throw new NotFound('충전 주문이 없습니다.');
     if (c.state === 'DONE') return { ok: true, already: true, state: 'DONE', note: '이미 충전되었습니다.' };
     if (c.state === 'FAILED') throw new StateConflict('CHARGE_FAILED', '실패로 끝난 충전입니다 — 새로 충전해 주십시오.');
-    if (Number(c.amount) !== Number(amount)) {
+    const payAmount = Number(c.amount) + Number(c.vat ?? 0);   // v10.387 — 충전 금액 + 부가세
+    if (payAmount !== Number(amount)) {
       throw new PolicyViolation('AMOUNT_MISMATCH', '결제 금액이 주문 금액과 다릅니다.');
     }
     if (!paymentKey || paymentKey.length > 200) throw new PolicyViolation('BAD_PAYMENT_KEY', '결제 키가 올바르지 않습니다.');
 
     const provider = resolvePaymentProvider();
-    const r = await provider.confirm({ paymentKey, orderId, amount: Number(c.amount), orderName: '소개뱅크 리드 이용료 충전' });
+    const r = await provider.confirm({ paymentKey, orderId, amount: payAmount, orderName: '소개뱅크 리드 이용료 충전' });
     if (!r.approved) {
       if (r.uncertain) {
         await this.db.query(`UPDATE lead_cash_charges SET state='UNKNOWN', payment_key=$2, fail_reason=$3 WHERE id=$1 AND state='READY'`,
@@ -263,14 +268,14 @@ export class LeadCashService {
     try { c = await this.createCharge(Number(x.auto_amount), 'AUTO', { id: partnerId, grade: x.grade }); }
     catch (e: any) { return fail(e?.response?.message ?? e?.message ?? '충전 주문을 만들지 못했습니다.'); }
     const r = await resolvePaymentProvider().chargeWithBillingKey({
-      billingKey: card.billingKey, customerKey: x.owner, orderId: c.orderId, amount: c.amount,
+      billingKey: card.billingKey, customerKey: x.owner, orderId: c.orderId, amount: c.payAmount,
       orderName: '소개뱅크 리드 이용료 자동 충전', idempotencyKey: c.orderId,
     });
     if (r.approved) {
       await this.db.query(`SELECT fn_lead_cash_charge_done($1,$2,$3,$4,NULL)`, [c.id, r.paymentKey ?? `bill_${c.orderId}`, r.method ?? 'BILLING', r.stub]);
       await this.db.query(`UPDATE billing_keys SET last_used_at = now() WHERE id = $1`, [card.id]);
       await this.db.query(`UPDATE lead_cash_wallets SET auto_failed_at = NULL, auto_fail_reason = NULL WHERE partner_id = $1`, [partnerId]);
-      return { partnerId, result: 'DONE', detail: `${c.amount}원${r.stub ? ' (시험 결제)' : ''}` };
+      return { partnerId, result: 'DONE', detail: `${c.amount}원${c.vat ? ` + 부가세 ${c.vat}원` : ''}${r.stub ? ' (시험 결제)' : ''}` };
     }
     if (r.uncertain) {
       await this.db.query(`UPDATE lead_cash_charges SET state='UNKNOWN', fail_reason=$2 WHERE id=$1`, [c.id, r.detail ?? '결과 확인 중']);
@@ -301,22 +306,26 @@ export class LeadCashService {
     const refundId = h.id;
 
     const charges = await this.db.query<any>(
-      `SELECT id, amount, refunded, payment_key AS "paymentKey" FROM lead_cash_charges
+      `SELECT id, amount, refunded, vat, vat_refunded, payment_key AS "paymentKey" FROM lead_cash_charges
         WHERE partner_id = $1 AND state = 'DONE' AND amount > refunded
         ORDER BY approved_at DESC`, [p.id]);
     const provider = resolvePaymentProvider();
     let left = amount;
     for (const c of charges) {
       if (left <= 0) break;
-      const part = Math.min(left, Number(c.amount) - Number(c.refunded));
+      const remain = Number(c.amount) - Number(c.refunded);
+      const part = Math.min(left, remain);
+      /* v10.387 (D243) — 부가세를 더해 받은 충전이면 그 몫의 부가세도 함께 취소(남은 것을 다 돌려주면 남은 부가세 전부 · 끝수 맞춤) */
+      const vatLeft = Number(c.vat ?? 0) - Number(c.vat_refunded ?? 0);
+      const vatPart = vatLeft <= 0 ? 0 : part >= remain ? vatLeft : Math.min(vatLeft, Math.floor((part * Number(c.vat)) / Number(c.amount)));
       const r = await provider.cancel({ paymentKey: c.paymentKey, cancelReason: `리드 이용료 잔액 환불 — ${reason.trim().slice(0, 100)}`,
-        cancelAmount: part, idempotencyKey: `lcr-${refundId}-${c.id}` });
+        cancelAmount: part + vatPart, idempotencyKey: `lcr-${refundId}-${c.id}` });
       const ok = !!r.ok;
       await this.db.query(
-        `INSERT INTO lead_cash_refund_parts(refund_id, charge_id, amount, ok, detail, transaction_key) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [refundId, c.id, part, ok, r.detail ?? (r.uncertain ? '결과 확인 필요' : null), r.transactionKey ?? null]);
+        `INSERT INTO lead_cash_refund_parts(refund_id, charge_id, amount, ok, detail, transaction_key, vat) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [refundId, c.id, part, ok, r.detail ?? (r.uncertain ? '결과 확인 필요' : null), r.transactionKey ?? null, vatPart]);
       if (ok) {
-        await this.db.query(`UPDATE lead_cash_charges SET refunded = refunded + $2 WHERE id = $1`, [c.id, part]);
+        await this.db.query(`UPDATE lead_cash_charges SET refunded = refunded + $2, vat_refunded = vat_refunded + $3 WHERE id = $1`, [c.id, part, vatPart]);
         left -= part;
       } else {
         this.log.warn(`lead cash refund ${refundId} charge ${c.id} cancel failed: ${r.detail}`);

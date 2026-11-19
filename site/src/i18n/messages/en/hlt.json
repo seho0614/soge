@@ -453,6 +453,7 @@
     "period": "Period",
     "gross": "Sales",
     "commission": "Commission",
+    "commissionVat": "(+ VAT {amt})",
     "refund": "Refund adjustment",
     "net": "Payout",
     "status": "Status",

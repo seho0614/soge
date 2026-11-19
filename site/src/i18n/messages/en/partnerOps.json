@@ -290,7 +290,8 @@
     "refundReq": "Request refund",
     "close": "Close",
     "checking": "Checking the payment…",
-    "backToCash": "Back to lead credit"
+    "backToCash": "Back to lead credit",
+    "vatNote": "VAT extra — you pay {pay} including VAT {vat} · tax invoice issued"
   },
   "services": {
     "title": "My services",
