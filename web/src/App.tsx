@@ -38,7 +38,7 @@ import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
 import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
-import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
+import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
 import { MySessions, SettingScheduleBox } from './app/admin/OpsPlanBoxes';   // v10.377 · 380 (docs/513 · 516) 설정 예약 변경 · 내 로그인 기기
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
@@ -118,6 +118,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-statements': ['SUPER', 'PAYOUT'], 'acct-ledger': ['SUPER', 'PAYOUT'], 'acct-assets': ['SUPER', 'PAYOUT'], 'acct-budget': ['SUPER', 'PAYOUT'],   // v10.396 ~ 399 (D246)
   'acct-vatform': ['SUPER', 'PAYOUT'], 'acct-aging': ['SUPER', 'PAYOUT'], 'acct-yearclose': ['SUPER', 'PAYOUT'], 'acct-payroll': ['SUPER', 'PAYOUT'],   // v10.400 ~ 403 (D247)
   'acct-pg': ['SUPER', 'PAYOUT'], 'acct-manual': ['SUPER', 'PAYOUT'], 'acct-severance': ['SUPER', 'PAYOUT'], 'acct-corptax': ['SUPER', 'PAYOUT'],   // v10.404 ~ 407 (D248)
+  'acct-parties': ['SUPER', 'PAYOUT'], 'acct-contracts': ['SUPER', 'PAYOUT'], 'acct-imports': ['SUPER', 'PAYOUT'],   // v10.408 · 409 · 411 (D249)
+  'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
   'acct-purchase': ['SUPER', 'PAYOUT'], 'acct-cash': ['SUPER', 'PAYOUT'], 'acct-stock': ['SUPER', 'PAYOUT'],   // v10.392 · 394 · 395 (D245)
   'acct-expense': ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.393 (D245) 경비 청구는 운영자 누구나(법인카드 상자는 SUPER · PAYOUT)
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
@@ -378,6 +380,10 @@ function Console() {
       {tab === 'acct-manual' && <AcctManual />}
       {tab === 'acct-severance' && <AcctSeverance />}
       {tab === 'acct-corptax' && <AcctCorpTax />}
+      {tab === 'acct-parties' && <AcctParties />}
+      {tab === 'acct-contracts' && <AcctContracts />}
+      {tab === 'acct-requisitions' && <AcctRequisitions />}
+      {tab === 'acct-imports' && <AcctImports />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}

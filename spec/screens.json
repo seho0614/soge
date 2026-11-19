@@ -5961,6 +5961,93 @@
     "GET /admin/acct/corptax"
    ],
    "note": "2026-11-20 v10.407 (D248 · docs/544) 올해 회계 이익 기준 법인세 · 지방소득세 추정(지금까지 · 1년 환산 · 중간예납 가결산) · 세율 구간 설정 · 중간예납 · 확정 기한(세무조정 없음)"
+  },
+  {
+   "id": "SB-ADM-ACC-240",
+   "name": "회계 계약",
+   "group": "ADM",
+   "url": "/admin/acct-contracts",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/contracts",
+    "POST /admin/acct/contracts",
+    "POST /admin/acct/contracts/{id}/renew",
+    "POST /admin/acct/contracts/{id}/end"
+   ],
+   "note": "2026-11-20 v10.409 (D249 · docs/546) 계약 대장 · 계약서 파일(ACCT_EVIDENCE) · 만기 N일 전 운영 알림 ACCT_CONTRACT_DUE · 달 금액 → 자금 흐름 예정(MONTHLY) · 연장 · 끝내기"
+  },
+  {
+   "id": "SB-ADM-ACC-260",
+   "name": "회계 수입",
+   "group": "ADM",
+   "url": "/admin/acct-imports",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/imports",
+    "GET /admin/acct/imports/{id}",
+    "POST /admin/acct/imports",
+    "POST /admin/acct/imports/{id}/advance",
+    "POST /admin/acct/imports/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.411 (D249 · docs/548) 수입 건 발주 → 선적 → 통관(환율 · 관세 · 수입 부가세 → IMPORT_VAT) → 입고(운임 · 기타 → 재고 수불부 IN 원가 → STOCK_IN) · 신고는 관세사"
+  },
+  {
+   "id": "SB-ADM-ACC-230",
+   "name": "회계 거래처",
+   "group": "ADM",
+   "url": "/admin/acct-parties",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/parties",
+    "GET /admin/acct/parties/{id}",
+    "POST /admin/acct/parties",
+    "PATCH /admin/acct/parties/{id}",
+    "POST /admin/acct/parties/import"
+   ],
+   "note": "2026-11-20 v10.408 (D249 · docs/545) 매입처 · 매출처 · 사업자번호 · 담당 · 계좌 끝 4자리 · 광고주 · 입점 판매자 · 매입 연결 · 가져오기(SUPER) · 거래 합계"
+  },
+  {
+   "id": "SB-ADM-ACC-250",
+   "name": "회계 품의",
+   "group": "ADM",
+   "url": "/admin/acct-requisitions",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/requisitions",
+    "POST /admin/acct/requisitions",
+    "POST /admin/acct/requisitions/{id}/decide",
+    "POST /admin/acct/requisitions/{id}/use",
+    "POST /admin/acct/requisitions/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.410 (D249 · docs/547) 지출 품의(운영자 누구나) → SUPER 결재(본인 불가) → 매입 · 경비 청구에 연결(허용 % 넘으면 다시 품의)"
   }
  ],
  "deferred": [

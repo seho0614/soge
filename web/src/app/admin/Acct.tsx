@@ -1604,3 +1604,308 @@ export function AcctCorpTax() {
     </section>
   );
 }
+
+interface Party { id: string; kind: string; name: string; bizNo: string | null; contactName: string | null; contactPhone: string | null; contactEmail: string | null;
+  bankName: string | null; accountLast4: string | null; advertiserId: string | null; advertiserName: string | null; sellerId: string | null; sellerName: string | null;
+  memo: string | null; state: string; purchaseTotal: number; adTotal: number }
+interface Parties { items: Party[]; kinds: Record<string, string>; note: string }
+interface PartyOne { party: Party; purchases: Array<{ id: string; issuedOn: string; item: string; total: number; state: string }>;
+  ads: Array<{ id: string; invoiceNo: string | null; total: number; paid: number; status: string }>; settlements: Array<{ id: string; periodFrom: string; periodTo: string; commission: number; status: string }>;
+  contracts: Array<{ id: string; title: string; endOn: string | null; state: string }>; imports: Array<{ id: string; title: string; state: string }>;
+  total: { purchase: number; ad: number; adPaid: number; commission: number } }
+const PARTY_EMPTY = { id: '', kind: 'SUPPLIER', name: '', bizNo: '', contactName: '', contactPhone: '', contactEmail: '', bankName: '', accountLast4: '', advertiserId: '', sellerId: '', memo: '', state: 'ACTIVE' };
+
+export function AcctParties() {
+  const [q, setQ] = useState(''), [kind, setKind] = useState(''), [st, setSt] = useState('ACTIVE');
+  const l = useApi<Parties>(`/admin/acct/parties?q=${encodeURIComponent(q)}&kind=${kind}&state=${st}`);
+  const a = useAct();
+  const [f, setF] = useState<typeof PARTY_EMPTY | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const save = () => f && void a.run('save', () => api(f.id ? `/admin/acct/parties/${f.id}` : '/admin/acct/parties', { method: f.id ? 'PATCH' : 'POST',
+    body: JSON.stringify({ ...f, id: undefined, state: f.id ? f.state : undefined }) }), () => { setF(null); l.reload(); });
+  const imp = () => void a.run('imp', () => api('/admin/acct/parties/import', { method: 'POST' }), l.reload);
+  const edit = (p: Party) => setF({ id: p.id, kind: p.kind, name: p.name, bizNo: p.bizNo ?? '', contactName: p.contactName ?? '', contactPhone: p.contactPhone ?? '', contactEmail: p.contactEmail ?? '',
+    bankName: p.bankName ?? '', accountLast4: p.accountLast4 ?? '', advertiserId: p.advertiserId ?? '', sellerId: p.sellerId ?? '', memo: p.memo ?? '', state: p.state });
+  const d = l.data;
+  return (
+    <section data-acct-parties={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <p>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 · 사업자번호" size={18} aria-label="찾기" />{' '}
+        <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="종류"><option value="">모든 종류</option>{Object.entries(d?.kinds ?? {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>{' '}
+        <select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="ACTIVE">거래 중</option><option value="CLOSED">닫음</option><option value="">모두</option></select>{' '}
+        <button className="btn-sm" onClick={() => setF({ ...PARTY_EMPTY })} data-acct-party-new="">거래처 넣기</button>{' '}
+        {isSuper() && <button className="btn-sm btn-plain" disabled={a.busy === 'imp'} onClick={imp} data-acct-party-import="">가져오기(광고주 · 입점 판매자 · 매입)</button>}
+      </p>
+      {f && (
+        <div className="card pad" data-acct-party-form="">
+          <b>{f.id ? `거래처 ${f.id}번 고치기` : '거래처 넣기'}</b><br />
+          <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} aria-label="종류">{Object.entries(d?.kinds ?? {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>{' '}
+          <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="이름(꼭)" size={18} />{' '}
+          <input value={f.bizNo} onChange={(e) => setF({ ...f, bizNo: e.target.value })} placeholder="사업자번호" size={12} />{' '}
+          <input value={f.contactName} onChange={(e) => setF({ ...f, contactName: e.target.value })} placeholder="담당" size={8} />{' '}
+          <input value={f.contactPhone} onChange={(e) => setF({ ...f, contactPhone: e.target.value })} placeholder="전화" size={12} />{' '}
+          <input value={f.contactEmail} onChange={(e) => setF({ ...f, contactEmail: e.target.value })} placeholder="메일" size={16} />{' '}
+          <input value={f.bankName} onChange={(e) => setF({ ...f, bankName: e.target.value })} placeholder="은행" size={8} />{' '}
+          <input value={f.accountLast4} onChange={(e) => setF({ ...f, accountLast4: e.target.value.replace(/[^0-9]/g, '').slice(0, 4) })} placeholder="계좌 끝 4자리" size={8} />{' '}
+          <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="메모" size={16} />{' '}
+          {f.id && <label><input type="checkbox" checked={f.state === 'CLOSED'} onChange={(e) => setF({ ...f, state: e.target.checked ? 'CLOSED' : 'ACTIVE' })} /> 닫기</label>}{' '}
+          <button className="btn-sm" disabled={a.busy === 'save' || !f.name.trim()} onClick={save}>저장</button> <button className="btn-sm btn-plain" onClick={() => setF(null)}>닫기</button>
+          <p className="muted"><small>계좌는 끝 4자리만 적습니다(통장 사본 · 전체 번호는 받지 않음).</small></p>
+        </div>
+      )}
+      {d && (
+        <table className="tbl"><thead><tr><th>거래처</th><th>종류</th><th>사업자번호</th><th>담당</th><th>연결</th><th>매입 합계</th><th>광고 청구</th><th /></tr></thead>
+          <tbody>{d.items.map((p) => (
+            <tr key={p.id} data-acct-party-row={p.state}>
+              <td>{p.name} {p.state === 'CLOSED' && <small className="dim">닫음</small>}</td><td>{d.kinds[p.kind] ?? p.kind}</td><td>{p.bizNo ?? '—'}</td>
+              <td><small>{[p.contactName, p.contactPhone, p.contactEmail].filter(Boolean).join(' · ')}{p.bankName ? ` · ${p.bankName} ****${p.accountLast4 ?? ''}` : ''}</small></td>
+              <td><small>{[p.advertiserName && `광고주 ${p.advertiserName}`, p.sellerName && `판매자 ${p.sellerName}`].filter(Boolean).join(' · ') || '—'}</small></td>
+              <td>{won(p.purchaseTotal)}</td><td>{won(p.adTotal)}</td>
+              <td><button className="btn-sm btn-plain" onClick={() => setOpen(open === p.id ? null : p.id)} data-acct-party-open={p.id}>{open === p.id ? '닫기' : '보기'}</button> <button className="btn-sm btn-plain" onClick={() => edit(p)}>고치기</button></td>
+            </tr>))}</tbody></table>
+      )}
+      {open && <PartyDetail key={open} id={open} />}
+      {d && <p className="muted">{d.note}</p>}
+    </section>
+  );
+}
+
+/** 거래처 한 곳 — 매입 · 광고 청구 · 입점 정산 · 계약 · 수입 */
+function PartyDetail({ id }: { id: string }) {
+  const one = useApi<PartyOne>(`/admin/acct/parties/${id}`);
+  const o = one.data;
+  if (!o) return null;
+  return (
+    <div className="card pad" data-acct-party-detail={id}>
+      <b>{o.party.name}</b> <small className="dim">매입 {won(o.total.purchase)} · 광고 청구 {won(o.total.ad)}(입금 {won(o.total.adPaid)}) · 입점 수수료 {won(o.total.commission)}</small>
+      {!!o.purchases.length && <p><small>매입: {o.purchases.slice(0, 10).map((x) => `${x.issuedOn} ${x.item} ${won(x.total)}${x.state === 'CANCELED' ? '(취소)' : ''}`).join(' · ')}</small></p>}
+      {!!o.ads.length && <p><small>광고 청구: {o.ads.slice(0, 10).map((x) => `${x.invoiceNo ?? x.id} ${won(x.total)} / 입금 ${won(x.paid)}`).join(' · ')}</small></p>}
+      {!!o.settlements.length && <p><small>입점 정산: {o.settlements.slice(0, 10).map((x) => `${x.periodFrom} ~ ${x.periodTo} 수수료 ${won(x.commission)}`).join(' · ')}</small></p>}
+      {!!o.contracts.length && <p><small>계약: {o.contracts.map((x) => `${x.title}(${x.endOn ?? '기한 없음'})`).join(' · ')}</small></p>}
+      {!!o.imports.length && <p><small>수입: {o.imports.map((x) => `${x.title}(${x.state})`).join(' · ')}</small></p>}
+      {!o.purchases.length && !o.ads.length && !o.settlements.length && !o.contracts.length && !o.imports.length && <p className="muted"><small>아직 거래 기록이 없습니다.</small></p>}
+    </div>
+  );
+}
+
+interface CFile { id: string; name: string; size: number }
+interface Contract { id: string; partyId: string | null; partyName: string | null; title: string; kind: string; startOn: string; endOn: string | null; autoRenew: boolean;
+  noticeDays: number; monthlyAmount: number; payDay: number | null; cashPlanId: string | null; memo: string | null; state: string; endNote: string | null;
+  files: CFile[]; daysLeft: number | null; due: boolean }
+interface Contracts { items: Contract[]; kinds: Record<string, string>; maxFiles: number; count: { active: number; due: number; overdue: number }; monthlyTotal: number; note: string }
+const CON_EMPTY = { partyId: '', title: '', kind: 'RENT', startOn: '', endOn: '', autoRenew: false, noticeDays: '30', monthlyAmount: '', payDay: '25', memo: '' };
+
+export function AcctContracts() {
+  const [st, setSt] = useState('ACTIVE');
+  const l = useApi<Contracts>(`/admin/acct/contracts?state=${st}`);
+  const parties = useApi<{ items: Array<{ id: string; name: string }> }>('/admin/acct/parties?state=ACTIVE');
+  const a = useAct();
+  const [f, setF] = useState({ ...CON_EMPTY, startOn: new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) });
+  const [files, setFiles] = useState<CFile[]>([]);
+  const [show, setShow] = useState(false);
+  const d = l.data;
+  const addFile = (fl: File | undefined) => fl && void a.run('file', async () => {
+    const u = await uploadFile(fl, 'ACCT_EVIDENCE');
+    setFiles((x) => [...x, { id: u.fileId, name: u.name, size: u.size }]);
+    return { note: `계약서 파일을 올렸습니다(${u.name}).` };
+  });
+  const send = () => void a.run('add', () => api('/admin/acct/contracts', { method: 'POST', body: JSON.stringify({
+    partyId: f.partyId || undefined, title: f.title, kind: f.kind, startOn: f.startOn, endOn: f.endOn || undefined, autoRenew: f.autoRenew, noticeDays: Number(f.noticeDays || 30),
+    monthlyAmount: Number(f.monthlyAmount || 0), payDay: Number(f.monthlyAmount || 0) > 0 ? Number(f.payDay) : undefined, memo: f.memo || undefined, attachments: files.map((x) => x.id) }) }),
+    () => { setF({ ...CON_EMPTY, startOn: f.startOn }); setFiles([]); setShow(false); l.reload(); });
+  const renew = (c: Contract) => {
+    const endOn = prompt(`「${c.title}」 새 만기일(YYYY-MM-DD · 지금 ${c.endOn ?? '없음'})`); if (!endOn) return;
+    const reason = prompt('연장 사유'); if (reason) void a.run(`r${c.id}`, () => api(`/admin/acct/contracts/${c.id}/renew`, { method: 'POST', body: JSON.stringify({ endOn, reason }) }), l.reload);
+  };
+  const end = (c: Contract) => {
+    const reason = prompt(`「${c.title}」 계약을 끝냅니다(자금 흐름 예정도 취소). 사유를 적으십시오.`);
+    if (reason) void a.run(`e${c.id}`, () => api(`/admin/acct/contracts/${c.id}/end`, { method: 'POST', body: JSON.stringify({ reason }) }), l.reload);
+  };
+  return (
+    <section data-acct-contracts={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      {d && <p><b>거래 중 {d.count.active}</b> · 만기 알림 대상 <b className={d.count.due ? 'warn-text' : ''} data-acct-contract-due={d.count.due}>{d.count.due}</b> · 만기 지남 {d.count.overdue} · 달 고정비 합 {won(d.monthlyTotal)}{' '}
+        <select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="ACTIVE">거래 중</option><option value="ENDED">끝냄</option><option value="">모두</option></select>{' '}
+        <button className="btn-sm" onClick={() => setShow(!show)} data-acct-contract-new="">{show ? '닫기' : '계약 넣기'}</button></p>}
+      {show && (
+        <div className="card pad" data-acct-contract-form="">
+          <select value={f.partyId} onChange={(e) => setF({ ...f, partyId: e.target.value })} aria-label="거래처"><option value="">거래처 없음</option>{(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>{' '}
+          <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="계약 이름(꼭)" size={16} />{' '}
+          <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} aria-label="종류">{Object.entries(d?.kinds ?? {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>{' '}
+          <label>시작 <input type="date" value={f.startOn} onChange={(e) => setF({ ...f, startOn: e.target.value })} /></label>{' '}
+          <label>만기 <input type="date" value={f.endOn} onChange={(e) => setF({ ...f, endOn: e.target.value })} /></label>{' '}
+          <label><input type="checkbox" checked={f.autoRenew} onChange={(e) => setF({ ...f, autoRenew: e.target.checked })} /> 자동 갱신</label>{' '}
+          <label>알림 <input value={f.noticeDays} onChange={(e) => setF({ ...f, noticeDays: e.target.value.replace(/\D/g, '') })} size={3} />일 전</label><br />
+          <label>달 금액 <input value={f.monthlyAmount} onChange={(e) => setF({ ...f, monthlyAmount: e.target.value.replace(/\D/g, '') })} size={10} placeholder="0 = 없음" /></label>{' '}
+          {Number(f.monthlyAmount || 0) > 0 && <label>낼 날 <input value={f.payDay} onChange={(e) => setF({ ...f, payDay: e.target.value.replace(/\D/g, '') })} size={3} />일</label>}{' '}
+          <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="메모" size={16} />{' '}
+          <label className="btn-sm btn-plain" data-acct-contract-file="">계약서 파일 <input type="file" accept=".pdf,.jpg,.jpeg,.png" hidden disabled={files.length >= (d?.maxFiles ?? 5)} onChange={(e) => addFile(e.target.files?.[0])} /></label>{' '}
+          {files.map((x) => <small key={x.id} className="dim">{x.name}({fmtSize(x.size)}) </small>)}
+          <button className="btn-sm" disabled={a.busy === 'add' || f.title.trim().length < 2 || !f.startOn} onClick={send}>저장</button>
+        </div>
+      )}
+      {d && (
+        <table className="tbl"><thead><tr><th>계약</th><th>거래처</th><th>기간</th><th>남은 날</th><th>달 금액</th><th>계약서</th><th /></tr></thead>
+          <tbody>{d.items.map((c) => (
+            <tr key={c.id} data-acct-contract-row={c.due ? 'due' : c.state}>
+              <td>{c.title} <small className="dim">{d.kinds[c.kind] ?? c.kind}{c.autoRenew ? ' · 자동 갱신' : ''}</small></td><td>{c.partyName ?? '—'}</td>
+              <td>{c.startOn} ~ {c.endOn ?? '기한 없음'}</td>
+              <td>{c.state === 'ENDED' ? <small className="dim">끝냄 · {c.endNote}</small> : c.daysLeft == null ? '—' : c.daysLeft < 0 ? <b className="warn-text">{-c.daysLeft}일 지남</b> : c.due ? <b className="warn-text">{c.daysLeft}일</b> : `${c.daysLeft}일`}</td>
+              <td>{c.monthlyAmount ? `${won(c.monthlyAmount)} · ${c.payDay}일` : '—'}</td>
+              <td>{c.files.map((x) => <small key={x.id}>{x.name} </small>)}</td>
+              <td>{c.state === 'ACTIVE' && <><button className="btn-sm btn-plain" disabled={a.busy === `r${c.id}`} onClick={() => renew(c)}>연장</button> <button className="btn-sm btn-plain" disabled={a.busy === `e${c.id}`} onClick={() => end(c)}>끝내기</button></>}</td>
+            </tr>))}</tbody></table>
+      )}
+      {d && <p className="muted">{d.note}</p>}
+    </section>
+  );
+}
+
+interface Req { id: string; requesterId: string; requester: string; requesterName: string | null; title: string; amount: number; accountRole: string; accountName: string; reason: string;
+  neededOn: string | null; state: string; decidedBy: string | null; decideNote: string | null; usedKind: string | null; usedRef: string | null; usedAmount: number | null; createdAt: string }
+interface Reqs { items: Req[]; accounts: Array<{ role: string; name: string; kind: string }>; states: Record<string, string>; all: boolean; canDecide: boolean; me: string | null;
+  tolerancePct: number; waiting: number; note: string }
+const REQ_EMPTY = { title: '', amount: '', accountRole: 'EXP_SUPPLIES', reason: '', neededOn: '' };
+
+export function AcctRequisitions() {
+  const [st, setSt] = useState('');
+  const l = useApi<Reqs>(`/admin/acct/requisitions?state=${st}`);
+  const a = useAct();
+  const [f, setF] = useState(REQ_EMPTY);
+  const d = l.data;
+  const send = () => void a.run('add', () => api('/admin/acct/requisitions', { method: 'POST', body: JSON.stringify({
+    title: f.title, amount: Number(f.amount), accountRole: f.accountRole, reason: f.reason, neededOn: f.neededOn || undefined }) }), () => { setF(REQ_EMPTY); l.reload(); });
+  const decide = (r: Req, approve: boolean) => {
+    const note = approve ? (prompt(`「${r.title}」 ${won(r.amount)}원 승인 — 메모(비워도 됨)`) ?? null) : prompt(`「${r.title}」 반려 사유`);
+    if (note === null || (!approve && !note.trim())) return;
+    void a.run(`d${r.id}`, () => api(`/admin/acct/requisitions/${r.id}/decide`, { method: 'POST', body: JSON.stringify({ approve, note }) }), l.reload);
+  };
+  const use = (r: Req) => {
+    const kind = prompt('연결할 것: PURCHASE(매입) 또는 EXPENSE(경비 청구)', 'PURCHASE'); if (!kind) return;
+    const refId = prompt(`${kind === 'EXPENSE' ? '경비 청구' : '매입'} 번호`); if (!refId) return;
+    void a.run(`u${r.id}`, () => api(`/admin/acct/requisitions/${r.id}/use`, { method: 'POST', body: JSON.stringify({ kind: kind.trim().toUpperCase(), refId: refId.trim() }) }), l.reload);
+  };
+  const cancel = (r: Req) => confirm(`「${r.title}」 품의를 취소할까요?`) && void a.run(`c${r.id}`, () => api(`/admin/acct/requisitions/${r.id}/cancel`, { method: 'POST' }), l.reload);
+  return (
+    <section data-acct-requisitions={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="card pad" data-acct-req-form="">
+        <b>품의 올리기</b><br />
+        <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="제목(꼭)" size={18} />{' '}
+        <input value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value.replace(/\D/g, '') })} placeholder="금액(원)" size={10} />{' '}
+        <select value={f.accountRole} onChange={(e) => setF({ ...f, accountRole: e.target.value })} aria-label="계정">{(d?.accounts ?? []).map((x) => <option key={x.role} value={x.role}>{x.name}</option>)}</select>{' '}
+        <input value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} placeholder="사유(꼭)" size={24} />{' '}
+        <label>쓸 날 <input type="date" value={f.neededOn} onChange={(e) => setF({ ...f, neededOn: e.target.value })} /></label>{' '}
+        <button className="btn-sm" disabled={a.busy === 'add' || f.title.trim().length < 2 || !Number(f.amount) || f.reason.trim().length < 2} onClick={send}>올리기</button>
+      </div>
+      {d && (
+        <>
+          <p>결재 기다림 <b data-acct-req-waiting={d.waiting}>{d.waiting}</b> · 허용 {d.tolerancePct}% {d.all ? '· 모든 품의' : '· 내 품의만'}{' '}
+            <select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="">모든 상태</option>{Object.entries(d.states).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></p>
+          <table className="tbl"><thead><tr><th>품의</th><th>올린 사람</th><th>금액</th><th>계정</th><th>상태</th><th /></tr></thead>
+            <tbody>{d.items.map((r) => (
+              <tr key={r.id} data-acct-req-row={r.state}>
+                <td>{r.title} <small className="dim">{r.reason}{r.neededOn ? ` · ${r.neededOn}` : ''}</small></td><td><small>{r.requesterName ?? r.requester}</small></td>
+                <td>{won(r.amount)}</td><td>{r.accountName}</td>
+                <td>{d.states[r.state] ?? r.state}{r.decideNote ? <small className="dim"> · {r.decideNote}</small> : ''}{r.usedRef ? <small className="dim"> · {r.usedKind === 'EXPENSE' ? '경비' : '매입'} {r.usedRef}번 {won(r.usedAmount)}</small> : ''}</td>
+                <td>
+                  {r.state === 'REQUESTED' && d.canDecide && r.requesterId !== d.me && <><button className="btn-sm" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, true)}>승인</button> <button className="btn-sm btn-plain" disabled={a.busy === `d${r.id}`} onClick={() => decide(r, false)}>반려</button> </>}
+                  {r.state === 'APPROVED' && d.all && <button className="btn-sm btn-plain" disabled={a.busy === `u${r.id}`} onClick={() => use(r)}>연결</button>}{' '}
+                  {['REQUESTED', 'APPROVED'].includes(r.state) && (r.requesterId === d.me || d.canDecide) && <button className="btn-sm btn-plain" disabled={a.busy === `c${r.id}`} onClick={() => cancel(r)}>취소</button>}
+                </td>
+              </tr>))}</tbody></table>
+          <p className="muted">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+interface Imp { id: string; partyName: string | null; title: string; currency: string; fxRate: number | null; duty: number; importVat: number; freight: number; otherCost: number;
+  goodsKrw: number | null; blNo: string | null; brokerName: string | null; declNo: string | null; state: string; orderedOn: string; shippedOn: string | null; customsOn: string | null;
+  receivedOn: string | null; memo: string | null; cancelNote: string | null; foreignTotal: number; lines: number; vatEntryId: string | null }
+interface Imps { items: Imp[]; options: Array<{ id: string; label: string }>; states: Record<string, string>; count: { open: number; customs: number }; note: string }
+const NEXT: Record<string, string> = { ORDERED: 'SHIPPED', SHIPPED: 'CUSTOMS', CUSTOMS: 'RECEIVED' };
+
+export function AcctImports() {
+  const [st, setSt] = useState('');
+  const l = useApi<Imps>(`/admin/acct/imports?state=${st}`);
+  const parties = useApi<{ items: Array<{ id: string; name: string }> }>('/admin/acct/parties?state=ACTIVE');
+  const a = useAct();
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const [f, setF] = useState({ partyId: '', title: '', currency: 'USD', orderedOn: today, memo: '' });
+  const [lines, setLines] = useState<Array<{ optionId: string; qty: string; foreignAmount: string }>>([{ optionId: '', qty: '', foreignAmount: '' }]);
+  const [adv, setAdv] = useState<{ id: string; to: string; date: string; blNo: string; fxRate: string; duty: string; importVat: string; brokerName: string; declNo: string; freight: string; otherCost: string } | null>(null);
+  const d = l.data;
+  const okLines = lines.filter((x) => x.optionId && Number(x.qty) > 0);
+  const send = () => void a.run('add', () => api('/admin/acct/imports', { method: 'POST', body: JSON.stringify({ ...f, partyId: f.partyId || undefined, memo: f.memo || undefined,
+    lines: okLines.map((x) => ({ optionId: x.optionId, qty: Number(x.qty), foreignAmount: Number(x.foreignAmount || 0) })) }) }),
+    () => { setF({ ...f, title: '', memo: '' }); setLines([{ optionId: '', qty: '', foreignAmount: '' }]); l.reload(); });
+  const go = () => adv && void a.run('adv', () => api(`/admin/acct/imports/${adv.id}/advance`, { method: 'POST', body: JSON.stringify({
+    to: adv.to, date: adv.date, blNo: adv.blNo || undefined, brokerName: adv.brokerName || undefined, declNo: adv.declNo || undefined,
+    ...(adv.to === 'CUSTOMS' ? { fxRate: Number(adv.fxRate), duty: Number(adv.duty || 0), importVat: Number(adv.importVat || 0) } : {}),
+    ...(adv.to === 'RECEIVED' ? { freight: Number(adv.freight || 0), otherCost: Number(adv.otherCost || 0) } : {}) }) }), () => { setAdv(null); l.reload(); });
+  const cancel = (x: Imp) => { const reason = prompt(`「${x.title}」 수입 건 취소 사유`); if (reason) void a.run(`c${x.id}`, () => api(`/admin/acct/imports/${x.id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }), l.reload); };
+  const setA = (k: string, v: string) => adv && setAdv({ ...adv, [k]: v });
+  return (
+    <section data-acct-imports={d?.items.length ?? ''}>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="card pad" data-acct-import-form="">
+        <b>발주 넣기</b><br />
+        <select value={f.partyId} onChange={(e) => setF({ ...f, partyId: e.target.value })} aria-label="거래처"><option value="">거래처 없음</option>{(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>{' '}
+        <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="제목(꼭)" size={18} />{' '}
+        <input value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value.toUpperCase().slice(0, 3) })} size={4} aria-label="통화" />{' '}
+        <label>발주일 <input type="date" value={f.orderedOn} onChange={(e) => setF({ ...f, orderedOn: e.target.value })} /></label>{' '}
+        <input value={f.memo} onChange={(e) => setF({ ...f, memo: e.target.value })} placeholder="메모(조건 · 항구)" size={16} />
+        {lines.map((x, i) => (
+          <div key={i} data-acct-import-line={i}>
+            <select value={x.optionId} onChange={(e) => setLines(lines.map((y, j) => (j === i ? { ...y, optionId: e.target.value } : y)))} aria-label="상품 옵션"><option value="">직판 상품 옵션</option>{(d?.options ?? []).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</select>{' '}
+            <input value={x.qty} onChange={(e) => setLines(lines.map((y, j) => (j === i ? { ...y, qty: e.target.value.replace(/\D/g, '') } : y)))} placeholder="수량" size={6} />{' '}
+            <input value={x.foreignAmount} onChange={(e) => setLines(lines.map((y, j) => (j === i ? { ...y, foreignAmount: e.target.value.replace(/[^0-9.]/g, '') } : y)))} placeholder={`금액(${f.currency})`} size={10} />
+          </div>
+        ))}
+        <button className="btn-sm btn-plain" disabled={lines.length >= 50} onClick={() => setLines([...lines, { optionId: '', qty: '', foreignAmount: '' }])}>줄 더하기</button>{' '}
+        <button className="btn-sm" disabled={a.busy === 'add' || f.title.trim().length < 2 || !okLines.length} onClick={send}>발주 넣기</button>
+      </div>
+      {adv && (
+        <div className="card pad" data-acct-import-advance={adv.to}>
+          <b>{adv.id}번 → {d?.states[adv.to]}</b>{' '}
+          <label>날짜 <input type="date" value={adv.date} onChange={(e) => setA('date', e.target.value)} /></label>{' '}
+          {adv.to === 'SHIPPED' && <input value={adv.blNo} onChange={(e) => setA('blNo', e.target.value)} placeholder="B/L 번호" size={14} />}
+          {adv.to === 'CUSTOMS' && <>
+            <input value={adv.fxRate} onChange={(e) => setA('fxRate', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="과세 환율(꼭)" size={8} />{' '}
+            <input value={adv.duty} onChange={(e) => setA('duty', e.target.value.replace(/\D/g, ''))} placeholder="관세(원)" size={10} />{' '}
+            <input value={adv.importVat} onChange={(e) => setA('importVat', e.target.value.replace(/\D/g, ''))} placeholder="수입 부가세(원)" size={10} />{' '}
+            <input value={adv.brokerName} onChange={(e) => setA('brokerName', e.target.value)} placeholder="관세사" size={12} />{' '}
+            <input value={adv.declNo} onChange={(e) => setA('declNo', e.target.value)} placeholder="수입신고번호" size={14} />
+          </>}
+          {adv.to === 'RECEIVED' && <>
+            <input value={adv.freight} onChange={(e) => setA('freight', e.target.value.replace(/\D/g, ''))} placeholder="운임(원)" size={10} />{' '}
+            <input value={adv.otherCost} onChange={(e) => setA('otherCost', e.target.value.replace(/\D/g, ''))} placeholder="기타 비용(원)" size={10} />
+            <small className="dim"> 입고 원가 = 물품(외화 × 환율) + 관세 + 운임 + 기타 → 재고 수불부</small>
+          </>}{' '}
+          <button className="btn-sm" disabled={a.busy === 'adv' || !adv.date || (adv.to === 'CUSTOMS' && !Number(adv.fxRate))} onClick={go}>넘기기</button> <button className="btn-sm btn-plain" onClick={() => setAdv(null)}>닫기</button>
+        </div>
+      )}
+      {d && (
+        <>
+          <p>진행 중 <b>{d.count.open}</b> · 통관 {d.count.customs}{' '}
+            <select value={st} onChange={(e) => setSt(e.target.value)} aria-label="상태"><option value="">모든 상태</option>{Object.entries(d.states).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></p>
+          <table className="tbl"><thead><tr><th>수입 건</th><th>거래처</th><th>상태</th><th>외화</th><th>환율 · 관세 · 수입 부가세</th><th>입고 물품(원)</th><th /></tr></thead>
+            <tbody>{d.items.map((x) => (
+              <tr key={x.id} data-acct-import-row={x.state}>
+                <td>{x.title} <small className="dim">{x.lines}줄{x.blNo ? ` · B/L ${x.blNo}` : ''}{x.declNo ? ` · 신고 ${x.declNo}` : ''}</small></td><td>{x.partyName ?? '—'}</td>
+                <td>{d.states[x.state] ?? x.state} <small className="dim">{x.receivedOn ?? x.customsOn ?? x.shippedOn ?? x.orderedOn}</small>{x.cancelNote ? <small className="dim"> · {x.cancelNote}</small> : ''}</td>
+                <td>{x.foreignTotal.toLocaleString('ko-KR')} {x.currency}</td>
+                <td>{x.fxRate ? `${x.fxRate} · ${won(x.duty)} · ${won(x.importVat)}` : '—'}{x.vatEntryId ? <small className="dim"> · 전표 {x.vatEntryId}</small> : ''}</td>
+                <td>{won(x.goodsKrw)}</td>
+                <td>{NEXT[x.state] && <button className="btn-sm btn-plain" onClick={() => setAdv({ id: x.id, to: NEXT[x.state]!, date: today, blNo: '', fxRate: '', duty: '', importVat: '', brokerName: '', declNo: '', freight: '', otherCost: '' })} data-acct-import-next={x.id}>{d.states[NEXT[x.state]!]}</button>}{' '}
+                  {['ORDERED', 'SHIPPED'].includes(x.state) && <button className="btn-sm btn-plain" disabled={a.busy === `c${x.id}`} onClick={() => cancel(x)}>취소</button>}</td>
+              </tr>))}</tbody></table>
+          <p className="muted">{d.note}</p>
+        </>
+      )}
+    </section>
+  );
+}

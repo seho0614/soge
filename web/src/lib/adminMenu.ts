@@ -91,6 +91,10 @@ export const TABS = [
   ['acct-manual', '수동 전표'],   /* v10.405 (D248 · docs/542) */
   ['acct-severance', '퇴직금 · 연차'],   /* v10.406 (D248 · docs/543) */
   ['acct-corptax', '법인세 추정'],   /* v10.407 (D248 · docs/544) */
+  ['acct-parties', '거래처'],   /* v10.408 (D249 · docs/545) */
+  ['acct-contracts', '계약'],   /* v10.409 (D249 · docs/546) */
+  ['acct-requisitions', '품의'],   /* v10.410 (D249 · docs/547) */
+  ['acct-imports', '수입'],   /* v10.411 (D249 · docs/548) */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
   ['ads', '광고'],
   ['roles', '권한 관리'],
@@ -114,7 +118,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admrev',  label: '검수',      tabs: ['queue', 'rules', 'audit', 'badges'] },
   { key: 'admptn',  label: '파트너사',  tabs: ['partners', 'partner-axes', 'directory'] },
   { key: 'admstl',  label: '정산',      tabs: ['settlement', 'payouts', 'billing'] },
-  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-manual', 'acct-pg', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-severance', 'acct-corptax', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
+  { key: 'admacc',  label: '회계',      tabs: ['acct-month', 'acct-journal', 'acct-bank', 'acct-manual', 'acct-pg', 'acct-cash', 'acct-purchase', 'acct-expense', 'acct-stock', 'acct-statements', 'acct-ledger', 'acct-assets', 'acct-budget', 'acct-tax', 'acct-vatform', 'acct-aging', 'acct-yearclose', 'acct-payroll', 'acct-severance', 'acct-corptax', 'acct-parties', 'acct-contracts', 'acct-requisitions', 'acct-imports', 'acct-report', 'acct-accounts'] },   /* v10.381 ~ 384 (D242) 회계 · 세무 1단계 */
   { key: 'admdel',  label: '거래',      tabs: ['deals', 'disputes'] },
   /* v10.224 (D194 · docs/359) — 「소개몰」 묶음: 흩어져 있던 소개몰 탭(검수 · 정산 · 거래 · 관 관리)을 한곳에 · 판매자 탭 새로 */
   { key: 'admhlt',  label: '소개몰',    tabs: ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews'] },
@@ -227,6 +231,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'acct-manual':    { title: '수동 전표', sub: '자동으로 안 잡히는 거래(임대료 · 대출 등) — 요청 → 쓴 사람이 아닌 SUPER 승인 → 장부.', screen: 'SB-ADM-ACC-200' },
   'acct-severance': { title: '퇴직금 · 연차', sub: '퇴직금 추계(최근 3개월 급여) · 달마다 차이만 전표 · 연차 생긴 날 · 쓴 날(초안 · 노무사 확인).', screen: 'SB-ADM-ACC-210' },
   'acct-corptax':   { title: '법인세 추정', sub: '올해 회계 이익 기준 법인세 · 지방소득세 추정 · 중간예납 · 확정 신고 기한(세무조정 없음 · 세무사 확인).', screen: 'SB-ADM-ACC-220' },
+  'acct-parties': { title: '거래처', sub: '매입처 · 매출처를 한 곳에 — 사업자번호 · 담당 · 계좌 끝 4자리 · 광고주 · 입점 판매자 · 매입 연결과 거래 합계입니다.', screen: 'SB-ADM-ACC-230' },
+  'acct-contracts': { title: '계약', sub: '임대 · 용역 · 서버 · 구독 계약과 만기입니다. 만기 알림 일수 전부터 운영 알림이 뜨고, 달 금액은 자금 흐름 예정에 들어갑니다.', screen: 'SB-ADM-ACC-240' },
+  'acct-requisitions': { title: '품의', sub: '쓰기 전에 지출 품의를 올리고 SUPER 가 결재합니다(본인 품의 불가). 승인된 품의는 매입 · 경비 청구에 연결합니다.', screen: 'SB-ADM-ACC-250' },
+  'acct-imports': { title: '수입', sub: '수입 건을 발주 → 선적 → 통관 → 입고로 넘깁니다. 입고 원가(물품 + 관세 + 운임 + 기타)는 재고 수불부로, 수입 부가세는 부가세대급금으로 갑니다. 신고는 관세사.', screen: 'SB-ADM-ACC-260' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
