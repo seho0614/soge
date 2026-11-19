@@ -112,7 +112,7 @@ export async function setRule(db: DatabaseService, sources: Source[], source: st
 export async function addAccount(db: DatabaseService, b: { role: string; name: string; kind: string; extCode?: string; extName?: string; reason?: string }) {
   reasonOk(b.reason);
   const role = (b.role ?? '').trim().toUpperCase();
-  if (!/^U_[A-Z][A-Z0-9_]{1,30}$/.test(role)) throw new PolicyViolation('ACCT_ACCOUNT', '더하는 계정 역할은 U_ 로 시작하는 대문자입니다.');
+  if (!/^U_[A-Z][A-Z_]{1,30}$/.test(role)) throw new PolicyViolation('ACCT_ACCOUNT', '더하는 계정 역할은 U_ 로 시작하는 대문자입니다.');
   const [dup] = await db.query(`SELECT 1 FROM acct_accounts WHERE role = $1`, [role]);
   if (dup) throw new PolicyViolation('ACCT_ACCOUNT_DUP', '이미 있는 계정 역할입니다.');
   const [mx] = await db.query<{ s: number }>(`SELECT coalesce(max(sort), 0)::int + 1 AS s FROM acct_accounts`);
