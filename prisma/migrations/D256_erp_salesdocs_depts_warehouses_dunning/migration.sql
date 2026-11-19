@@ -331,3 +331,12 @@ INSERT INTO public.job_schedules (job, every_min, at_hour, at_minute, at_dow, is
 VALUES ('acct_dunning', 1440, 9, 35, NULL, true, '미수금 독촉(acct.dunning on 일 때만 메일) · 입금 예정 지난 것 BROKEN 표시 · D256 · v10.436')
 ON CONFLICT (job) DO NOTHING;
 
+
+/* INV-11 미아 참조 검사를 낱말 경계로 — acct_tax_invoices(있는 표)를 옛 tax_invoices(없는 표)로 잘못 잡지 않게.
+   public.tax_invoices · 줄 맨 앞 · 공백 뒤 등 진짜 참조는 그대로 잡음. 열 이름 · 순서 같음(CREATE OR REPLACE). */
+CREATE OR REPLACE VIEW public.v_dangling_refs AS
+ SELECT p.proname AS routine,
+    t.tbl AS missing_table
+   FROM (pg_proc p
+     CROSS JOIN ( VALUES ('bank_accounts'::text), ('payment_transactions'::text), ('tax_invoices'::text), ('deal_payment_records'::text), ('settlement_batches'::text), ('ledger_entries'::text)) t(tbl))
+  WHERE ((p.pronamespace = ('public'::regnamespace)::oid) AND (p.prosrc ~ (('(^|[^a-z0-9_])'::text || t.tbl) || '([^a-z0-9_]|$)'::text)));
