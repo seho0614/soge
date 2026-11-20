@@ -174,6 +174,7 @@ if API and DB:
         sum_ok = bool(rows) and rows[-1].get('endBalance') == p12.get('start', 0) + sum(r.get('net', 0) for r in rows)
         month_ok = len(rows) == 12 and rows[0].get('ym') == today[:7] and len(p6.get('rows') or []) == 6
         bid = psql(f"INSERT INTO acct_cash_balances (as_of, amount, source, note) VALUES ('{today}', 1000000, 'MANUAL', '시험 1476 잔액') RETURNING id").split('\n')[0]
+        pb = call('GET', '/admin/acct/cash-plan', None, TS)   # 큰 예정 넣기 전 — 점검판에 남은 다른 예정 · 장부로 이미 모자란 달은 「지움」 판단에서 뺌(회귀 두 번째)
         pid = psql(f"INSERT INTO acct_cash_plans (due_on, direction, amount, memo, repeat) VALUES ('{far}', 'OUT', 900000000000, '{memo}', 'NONE') RETURNING id").split('\n')[0]
         p2 = call('GET', '/admin/acct/cash-plan', None, TS)
         frow = next((r for r in p2.get('rows') or [] if r.get('ym') == fym), {})
@@ -189,7 +190,7 @@ if API and DB:
         setting('acct.cashplan_alert', alert0 or 'on', '1476')
         psql(f"SET session_replication_role = replica; DELETE FROM acct_cash_plans WHERE id = {int(pid or 0)};"); pid = ''
         p3 = call('GET', '/admin/acct/cash-plan', None, TS)
-        gone = fym not in (p3.get('shortMonths') or [])
+        gone = fym not in (p3.get('shortMonths') or []) or fym in (pb.get('shortMonths') or [])
         rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-cashplan'")
         ok('② 자금 계획 — 회원 403 · 12달(이번 달부터) · 6달 · 달 말 잔액 = 시작 + 차이 합 · 200일 뒤 큰 예정 → 그 달 줄 · 모자라는 달 · 정기 작업 두 번 → 열린 알림 1(첫 모자라는 달) · 알림 끔 → 0 · 예정 지우면 그 달 모자람 없음 · 권한 주소 1',
                mb.get('_err') == 403 and month_ok and sum_ok and has_item and fym in (p2.get('shortMonths') or []) and p2.get('hasBase') is True

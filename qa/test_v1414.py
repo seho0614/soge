@@ -193,7 +193,7 @@ if API and DB:
         bdp = call('GET', '/admin/worklogs/board', None, TP)
         me = next((x for x in bd.get('people') or [] if x.get('id') == pid), {})
         ok('② 현황판 — SUPER 만 · 운영자마다 오늘 건수 · 7일 작성률 · 합계(쓴 사람 + 안 쓴 사람 = 운영자) · 지급 담당 403',
-           int(me.get('n') or 0) >= 1 and int(me.get('rate7') or 0) > 0 and (bd.get('total') or {}).get('wrote', 0) + (bd.get('total') or {}).get('missing', 0) == (bd.get('total') or {}).get('staff', -1)
+           int(me.get('n') or 0) >= 1 and (int(me.get('rate7') or 0) > 0 or psql("SELECT fn_is_business_day((now() AT TIME ZONE 'Asia/Seoul')::date)").strip() != 't') and (bd.get('total') or {}).get('wrote', 0) + (bd.get('total') or {}).get('missing', 0) == (bd.get('total') or {}).get('staff', -1)
            and bdp.get('_err') == 403, f"{me} · {bd.get('total')} · {bdp.get('_err')}")
     finally:
         psql(f"SET session_replication_role = replica; DELETE FROM staff_worklog_reviews WHERE worklog_id IN (SELECT id FROM staff_worklogs WHERE account_id = '{pid}'); DELETE FROM staff_worklogs WHERE account_id = '{pid}'")

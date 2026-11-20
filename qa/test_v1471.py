@@ -306,7 +306,7 @@ if API and DB:
         lk = psql(f"SELECT count(*) FROM hrx_ot_pay_links WHERE run_id = {int(run.get('id') or 0)}")
         ok('⑤ 급여 대장 — 대장 없으면 422 · 미리보기 수당 30,000(겹친 120분 × 150%) · 160,000(휴일 480분 150% + 120분 200%) · 근태 짧음 표시 · ADMIN 넘기기 403 · SUPER 넘김 2건 190,000 · 지급액 2,090,000 → 2,280,000 · 다시 셈(실지급 맞음) · 두 번째 0건 · 넘긴 승인 취소 409 · 되돌리기 · 지급액 되돌아옴 · 넘김 기록 0',
            nr.get('code') == 'HRX_OT_NO_RUN' and bool(run.get('id')) and pays == [30000, 160000] and 'SHORT' in flags and p403.get('_err') == 403 and g0 == '2090000'
-           and ps.get('pushed') == 2 and ps.get('amount') == 190000 and g1x == '2280000|t' and ps2.get('pushed') == 0 and rv.get('code') == 'HRX_OT_PAID'
+           and ps.get('pushed') == 2 and ps.get('amount') == 190000 and g1x in ('2280000|t', '2280000|true') and ps2.get('pushed') == 0 and rv.get('code') == 'HRX_OT_PAID'
            and un.get('undone') == 2 and g2x == '2090000' and lk == '0',
            f"{nr.get('code')} {run.get('id') or run.get('code')} {pays} {flags} {p403.get('_err')} {g0} {ps.get('pushed') or ps.get('code')} {ps.get('amount')} {g1x} {ps2.get('pushed')} {rv.get('code')} {un.get('undone') or un.get('code')} {g2x} {lk}")
 

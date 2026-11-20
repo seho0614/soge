@@ -170,7 +170,7 @@ if API and DB:
     try:
         if not fname: setting('footer.company_name', '시험 1477 공급자', '1477')
         if not fbiz: setting('footer.biz_reg_no', '123-45-67890', '1477')
-        pid = psql(f"INSERT INTO acct_parties (kind, name, biz_no) VALUES ('CUSTOMER', '시험 1477 거래처-{stamp}', '1234567890') RETURNING id").split('\n')[0]
+        pid = psql(f"INSERT INTO acct_parties (kind, name, biz_no) VALUES ('CUSTOMER', '시험 1477 거래처-{stamp}', '9{stamp:09d}') RETURNING id").split('\n')[0]
         # 확정한 거래명세서 2장(확정일은 회계 시작 전 — 매출 전표가 생기지 않게) · 1: 과세 + 면세 · 2: 면세만
         d1 = psql(f"INSERT INTO acct_sales_docs (kind, doc_no, rev, party_id, title, issued_on, supply, vat, total, state, accepted_at) VALUES ('STATEMENT', '{no1}', 1, {int(pid or 0)}, '시험 1477 섞임', '2020-01-02', 150000, 10000, 160000, 'ACCEPTED', '2020-01-02') RETURNING id").split('\n')[0]
         d2 = psql(f"INSERT INTO acct_sales_docs (kind, doc_no, rev, party_id, title, issued_on, supply, vat, total, state, accepted_at) VALUES ('STATEMENT', '{no2}', 1, {int(pid or 0)}, '시험 1477 면세만', '2020-01-02', 30000, 0, 30000, 'ACCEPTED', '2020-01-02') RETURNING id").split('\n')[0]

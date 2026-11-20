@@ -291,6 +291,9 @@ if API and DB:
                 pg = b.new_page(viewport={'width': 1280, 'height': 900}); pg.on('pageerror', lambda e: perr.append(str(e)[:120]))
                 pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
                 seen['btn'] = pg.locator('[data-social="KAKAO"]').count()
+                if not seen['btn']:   # 사용자 웹은 켜진 업체 목록을 30초 담아 둠 — 시험 앞에서 「꺼짐」을 담았으면 한 번 지나고 다시 엶
+                    pg.wait_for_timeout(32000); pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
+                    seen['btn'] = pg.locator('[data-social="KAKAO"]').count()
                 seen['href'] = pg.locator('[data-social="KAKAO"]').first.get_attribute('href') if seen['btn'] else None
             r = ui(run)
             if r is not None:
