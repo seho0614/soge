@@ -82,7 +82,7 @@ ok('① 제안 403 문구(사업자 회원만 → 본인인증 회원) · 화면
    '사업자' not in json.dumps(RJ, ensure_ascii=False).split('"err403"')[1][:60] and 'business' not in json.dumps(RE_).split('"err403"')[1][:80]
    and SCR.get('SB-ADM-SIT-090', {}).get('apis') == ['GET /admin/help/manual', 'GET /admin/help/manual/versions/{v}', 'POST /admin/help/manual']
    and SCR.get('SB-HOM-ETC-040', {}).get('apis') == ['GET /site/manual'] and 'POST /me/logout-all' in SCR.get('SB-ADM-MFA-010', {}).get('apis', [])
-   and all(any(f.startswith(f'{n}_') for f in docs) for n in (321, 322, 323, 324))
+   and all(any(f.startswith(f'{n}_') for f in docs) for n in (321, 322, 323, 324, 325, 326))
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 203), rd('VERSION').strip())
 
 

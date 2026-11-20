@@ -36,7 +36,7 @@ one() {   # $1 시험 파일 · $2 host|box
 }
 T0=$(date +%s)
 for f in $HOST; do [ -f "$Q/$f" ] && one "$f" host; done
-for f in $(cd "$Q" && ls test_v109*.py test_v11*.py test_v12*.py test_v13*.py test_v14*.py 2>/dev/null | sort); do
+for f in $(cd "$Q" && ls test_v109*.py test_v11*.py test_v12*.py test_v13*.py test_v14*.py test_v15*.py 2>/dev/null | sort); do
   echo " $HOST " | grep -q " $f " && continue
   one "$f" box
 done
