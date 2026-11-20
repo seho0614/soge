@@ -69,6 +69,12 @@
     {"code":"VSX_BOOK_CANCELLED","name":"방문 예약 취소","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"상대가 취소 · 주인이 칸을 닫음 · 방문 시각까지 확정 안 돼 저절로 취소 (v10.542 D284)","screen":"SB-MYP-VSX-010"},
     {"code":"VSX_VISIT_REMIND","name":"내일 방문 예약","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"정기 작업 vsx_visit — 내일 확정 방문 · 한국 시각 10시부터 한 번(회원 · 매물 주인) (v10.542 D284)","screen":"SB-MYP-VSX-010"},
     {"code":"MBX_DM_NEW","name":"회원 대화 새 글","actor":"COUNTERPART","channels":["INAPP"],"optout":true,"trigger":"mbx_dm_messages INSERT — 같은 대화의 안 읽은 알림이 30분 안에 있으면 보내지 않음 (v10.504 D273)","screen":"SB-MYP-MBX-050"},
+    {"code":"LPX_OFFER_NEW","name":"가격 제안 받음","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"회원이 내 매물에 희망 가격을 제안 · 되제안에 다시 제안(lpx.offer on · 관별) (v10.549 D286)","screen":"SB-MYP-LPX-010"},
+    {"code":"LPX_OFFER_COUNTER","name":"가격 되제안 받음","actor":"COUNTERPART","channels":["INAPP"],"optout":true,"trigger":"매물 주인이 내 가격 제안에 되제안(회원 다시 제안과 합쳐 lpx.offer_counter_max 번 · 처음 3) (v10.549 D286)","screen":"SB-MYP-LPX-010"},
+    {"code":"LPX_OFFER_ACCEPTED","name":"가격 제안 수락","actor":"COUNTERPART","channels":["INAPP"],"optout":true,"trigger":"상대가 가격 제안 · 되제안을 수락 — 거래는 1:1 문의로 (v10.549 D286)","screen":"SB-MYP-LPX-010"},
+    {"code":"LPX_OFFER_REJECTED","name":"가격 제안 거절","actor":"COUNTERPART","channels":["INAPP"],"optout":true,"trigger":"상대가 가격 제안 · 되제안을 거절 (v10.549 D286)","screen":"SB-MYP-LPX-010"},
+    {"code":"LPX_OFFER_EXPIRED","name":"가격 제안 기한 지남","actor":"OWNER","channels":["INAPP"],"optout":true,"trigger":"정기 작업 lpx_hourly — 답 기한이 지나거나 매물이 내려가 내 제안이 끝남 (v10.549 D286)","screen":"SB-MYP-LPX-010"},
+    {"code":"LPX_AWAY_AUTO","name":"판매자 자리 비움 안내","actor":"COUNTERPART","channels":["INAPP"],"optout":true,"trigger":"자리 비움 중인 판매자 매물에 1:1 문의 · 공개 질문 · 가격 제안 · 방문 예약 — 같은 자리 비움 · 같은 회원 한 번(DB 트리거 · lpx.away on) (v10.551 D286)","screen":"SB-MYP-LPX-010"},
     {"code":"NOTICE_PUBLISHED","name":"공지 등록","actor":"ALL","channels":["INAPP"],"optout":true,"trigger":"notices.published_at","screen":"SB-MNY-EVT-010"}
   ],
   "admin_alerts": [

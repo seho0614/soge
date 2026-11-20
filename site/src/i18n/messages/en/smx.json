@@ -1,0 +1,24 @@
+{
+  "rp": {
+    "title": "Review replies",
+    "sub": "You can post one reply to each review of your products. Edits are logged, and wording that needs checking is shown after an admin review.",
+    "off": "Review replies are not available right now (until the admin turns them on). You can still read reviews.",
+    "open": "Awaiting reply",
+    "all": "All",
+    "empty": "No reviews are awaiting a reply.",
+    "mine": "My reply",
+    "stVISIBLE": "Visible",
+    "stPENDING": "Awaiting admin check",
+    "stHIDDEN": "Hidden by admin",
+    "edited": "Edited {n, plural, one {{n} time} other {{n} times}}",
+    "holdWord": "Wording to check: {w}",
+    "hiddenReason": "Reason: {r}",
+    "save": "Save reply",
+    "saving": "Saving…",
+    "failed": "Could not save. Please try again shortly.",
+    "ph": "Reply to the customer review (2 to 1,000 characters · do not include phone or account numbers)",
+    "hidden": "A reply hidden by the admin cannot be edited.",
+    "back": "Seller center",
+    "link": "Review replies"
+  }
+}

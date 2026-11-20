@@ -133,6 +133,7 @@ export default async function MyHltOrderDetail({ params }: Props) {
         <h3>{t('hOrder.payInfo')}</h3>
         <div className="hlt-sum"><span>{t('hOrder.goods')}</span><span>{f.won(o.goodsAmount, '-')}</span></div>
         <div className="hlt-sum"><span>{t('hOrder.shipFee')}</span><span>{Number(o.shipFee) === 0 ? t('hOrder.free') : f.won(o.shipFee, '-')}</span></div>
+        {Number((o as { remoteShipFee?: number }).remoteShipFee ?? 0) > 0 && <div className="hlt-sum" data-remote-ship=""><span>{to('form.remoteShip')}</span><span>{f.won(Number((o as { remoteShipFee?: number }).remoteShipFee), '-')}</span></div>}
         <div className="hlt-sum tot"><span>{t('hOrder.totalPay')}</span><span>{f.won(o.total, '-')}</span></div>
       </section>
 

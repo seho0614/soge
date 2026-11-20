@@ -4,6 +4,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { CARD_COLS, CARD_FROM } from './health-catalog.sql';
 import { I18nService } from '../i18n/i18n.service';
+import { smxAttachReplies } from '../smx/replies';   // v10.555 (D287) 리뷰 답글
 
 const MASK = `coalesce(left(btrim(a.name), 1), '회') || '○○'`;
 
@@ -34,6 +35,7 @@ export class HealthReviewService {
          FROM hlt_reviews r JOIN accounts a ON a.id = r.account_id JOIN hlt_order_items i ON i.id = r.order_item_id
         WHERE r.product_id = $1 AND r.state = 'VISIBLE' AND ($2::int IS NULL OR r.rating = $2)
         ORDER BY r.created_at DESC LIMIT 100`, [pid, rating && rating >= 1 && rating <= 5 ? rating : null, me]);
+    await smxAttachReplies(this.db, items);   // v10.555 (D287 · docs/693) 보이는 답글(smx.review_reply on 일 때만)
     return {
       count: st?.review_count ?? 0, avg: st ? Number(st.rating_avg) : null,
       dist: { 5: st?.r5 ?? 0, 4: st?.r4 ?? 0, 3: st?.r3 ?? 0, 2: st?.r2 ?? 0, 1: st?.r1 ?? 0 },

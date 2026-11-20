@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { codeText, needsLogin, PAY_METHODS } from './util';
 import { ProductArt } from './ProductArt';
 import { useFmt } from '@/lib/useFmt';
+import { useRemoteFee } from '@/components/smx/useRemoteFee';   // v10.554 (D287) 도서산간 추가 배송비 미리보기
 
 /**
  * 주문서 — POST /health/orders { addressId, items:[{productCode, qty}] }
@@ -29,6 +30,8 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
   /* v10.25 — 시안처럼 고른 배송지 한 곳만 보이고 「변경」을 누르면 전체가 펼쳐집니다(배송지가 많으면 주문서가 길어졌습니다) */
   const [pick, setPick] = useState(false);
   const picked = addresses.find((a) => a.id === addr);
+  /* v10.554 (D287) — 판매자 하나인 장바구니(직판 · 입점)면 고른 배송지의 도서산간 추가 배송비(꺼져 있거나 구역 밖이면 0 — 결제 금액은 주문 때 서버 값) */
+  const remote = useRemoteFee(addr, (cart.sellers ?? []).length === 1);
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
@@ -161,7 +164,8 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
         <div className="hlt-sum"><span>{t('common.goods')}</span><span>{f.won(cart.goods, '-')}</span></div>
         <div className="hlt-sum"><span>{t('common.shipFee')}</span><span>{cart.shipFee === 0 ? t('common.free') : f.won(cart.shipFee, '-')}</span></div>
         <div className="hlt-sum" data-discount=""><span>{t('form.discount')}</span><span>{f.won(0, '-')}</span></div>
-        <div className="hlt-sum tot"><span>{t('form.total')}</span><span>{f.won(cart.total, '-')}</span></div>
+        {remote > 0 && <div className="hlt-sum" data-remote-ship={remote}><span>{t('form.remoteShip')}</span><span>{f.won(remote, '-')}</span></div>}
+        <div className="hlt-sum tot"><span>{t('form.total')}</span><span>{f.won(cart.total + remote, '-')}</span></div>
         <p className="hint">{t('form.recalc')}</p>
       </section>
 
@@ -180,7 +184,7 @@ export function OrderForm({ cart, addresses }: { cart: HltCart; addresses: HltAd
 
       {err && <p className="form-error" role="alert">{err}</p>}
       <button type="button" className="cta-primary" disabled={!ready || pending} onClick={submit}>
-        {pending ? t('form.submitting') : t('common.payBtn', { amount: f.won(cart.total, '-') })}
+        {pending ? t('form.submitting') : t('common.payBtn', { amount: f.won(cart.total + remote, '-') })}
       </button>
       {!ready && !pending && (
         <p className="cta-note">

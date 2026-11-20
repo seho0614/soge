@@ -102,6 +102,7 @@
     "discount": "Discount",
     "total": "Total",
     "recalc": "The server recalculates the amount when you place the order.",
+    "remoteShip": "Remote-area shipping surcharge",
     "agree": "Consent",
     "agree1": "[Required] I have reviewed the order and the right of withdrawal terms and agree to purchase (<link>How it works · Withdrawal</link>)",
     "agree2": "[Required] I agree to share the recipient's name, phone number and address with the carrier for delivery",

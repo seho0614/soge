@@ -24,6 +24,9 @@ import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
 import { AiSummary } from '@/components/lsx/AiSummary';   // v10.516 (D276)
 import { ListingVideo } from '@/components/lsy/ListingVideo';   // v10.526 (D279)
 import { siteOrigin } from '@/components/refcode/origin';
+import { LpxPhotoMark } from '@/components/lpx/LpxPhotoMark';   // v10.550 (D286) 사진 워터마크(화면 겹침)
+import { LpxAwayNote } from '@/components/lpx/LpxAwayNote';   // v10.551 (D286) 판매자 자리 비움
+import { LpxOffer } from '@/components/lpx/LpxOffer';   // v10.549 · 552 (D286) 가격 제안 · 이 지역 시세
 import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
 import { VisitBook } from '@/components/vsx/VisitBook';   // v10.542 (D284) 방문 예약
 
@@ -126,7 +129,7 @@ export default async function DetailPage({ params }: Props) {
         <div className="gw-panel gw-dtp" style={{ overflow: 'hidden' }}>
           <div className="gw-dt">
             <div>
-              <GwPhotos urls={item.mediaUrls} fallback={photoSrc(item.categoryName)} alt={item.title} status={item.statusLabel} />
+              <LpxPhotoMark listingId={item.id} has={(item.mediaUrls?.length ?? 0) > 0}><GwPhotos urls={item.mediaUrls} fallback={photoSrc(item.categoryName)} alt={item.title} status={item.statusLabel} /></LpxPhotoMark>
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -163,6 +166,7 @@ export default async function DetailPage({ params }: Props) {
             <GwProfileActions id={item.id} loggedIn={!!viewer} />
           </div>
 
+          {item.status === 'PUBLISHED' && <LpxAwayNote listingId={item.id} />}
           <div className="gw-sth">{t('statsHead')} <span title={t('statsTip')}>?</span></div>
           <div className="gw-stat">
             <div><div className="gw-k">{t('statTotal')}</div><div className="gw-v">{t('count', { n: o.totalDeals.toLocaleString('ko-KR') })}</div></div>
@@ -236,6 +240,7 @@ export default async function DetailPage({ params }: Props) {
           <GwDetailBar id={item.id} path={`/${gwan}/${item.id}`} loggedIn={!!viewer} liked={item.liked}
                        canInquire={item.canInquire} blockReason={item.inquireBlockReason}
                        questionCount={questions.length} ctaNote={msg.CTA_ATTRIBUTION} />
+          {item.status === 'PUBLISHED' && <Msgs ns={['lpx']}><LpxOffer listingId={item.id} gwanCode={code} loggedIn={!!viewer} /></Msgs>}
           {/* v10.501 ~ 503 (D273) — 스위치가 모두 꺼져 있으면 아무것도 그리지 않음 */}
           {item.status === 'PUBLISHED' && <Msgs ns={['mbx']}><MbxItemTools type="LISTING" id={item.id} title={item.title} loggedIn={!!viewer} /></Msgs>}
           {item.status === 'PUBLISHED' && <Msgs ns={['vsx']}><VisitBook listingId={item.id} loggedIn={!!viewer} /></Msgs>}

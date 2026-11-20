@@ -1,0 +1,54 @@
+/* v10.549 ~ 552 (D286 · docs/687 ~ 690) (56) 매물 3 — 가격 제안 · 사진 워터마크 · 자리 비움 · 지역별 시세
+ * 디자인 값은 sgb-tokens.css 토큰만(색 · 글자 · 모서리) — 새 색 없음 · 어두운 테마에서도 토큰이 바뀜 · 그림자 없음 */
+.lpx-box { border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-md); background: var(--sgb-bg); padding: 14px 16px; margin: 14px 0 0; color: var(--sgb-ink); }
+.lpx-box h3 { font-size: var(--sgb-fs-body-1); font-weight: var(--sgb-fw-bold); margin: 0 0 8px; }
+.lpx-note { font-size: var(--sgb-fs-cap); color: var(--sgb-ink-3); margin: 6px 0; }
+.lpx-note.warn { color: var(--sgb-rd-text); }
+.lpx-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.lpx-row input, .lpx-row select { font: inherit; font-size: var(--sgb-fs-body-2); border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-sm); padding: 6px 8px; background: var(--sgb-bg); color: var(--sgb-ink); min-height: 32px; }
+.lpx-btn { font: inherit; font-size: var(--sgb-fs-body-2); border: 1px solid var(--sgb-line); background: var(--sgb-bg); color: var(--sgb-ink);
+  border-radius: var(--sgb-r-sm); padding: 6px 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
+.lpx-btn.pri { border-color: var(--sgb-action); background: var(--sgb-action); color: var(--sgb-on-point); }
+.lpx-btn:disabled { opacity: .55; cursor: default; }
+.lpx-badge { display: inline-block; font-size: var(--sgb-fs-micro); border-radius: var(--sgb-r-pill); padding: 1px 8px; border: 1px solid var(--sgb-line); color: var(--sgb-ink-2); }
+.lpx-badge.ok { border-color: var(--sgb-point); color: var(--sgb-point-text); }
+.lpx-badge.warn { border-color: var(--sgb-alert); color: var(--sgb-rd-text); }
+.lpx-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--sgb-line-soft); }
+.lpx-list li { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--sgb-line-soft); }
+.lpx-list .t { flex: 1; min-width: 200px; }
+.lpx-list .t b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lpx-list .m { display: block; font-size: var(--sgb-fs-cap); color: var(--sgb-ink-3); }
+.lpx-h1 { font-size: var(--sgb-fs-title-2); font-weight: var(--sgb-fw-title); margin: 18px 0 6px; }
+.lpx-h2 { font-size: var(--sgb-fs-title-3); font-weight: var(--sgb-fw-title); margin: 22px 0 8px; }
+.lpx-empty { border: 1px dashed var(--sgb-line); border-radius: var(--sgb-r-md); padding: 20px 16px; text-align: center; color: var(--sgb-ink-3); font-size: var(--sgb-fs-body-2); }
+.lpx-page { padding-top: 16px; padding-bottom: 32px; }
+
+/* 판매자 자리 비움 띠(매물 상세) */
+.lpx-away { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; border: 1px solid var(--sgb-alert); border-radius: var(--sgb-r-md); background: var(--sgb-bg);
+  color: var(--sgb-ink); padding: 10px 14px; margin: 12px 0 0; font-size: var(--sgb-fs-body-2); }
+.lpx-away b { color: var(--sgb-rd-text); font-weight: var(--sgb-fw-bold); }
+.lpx-away-msg { flex: 1; min-width: 160px; }
+.lpx-away small { width: 100%; font-size: var(--sgb-fs-cap); color: var(--sgb-ink-3); }
+
+/* 이 지역 시세 한 줄 · 시세 표 */
+.lpx-stat-line { font-size: var(--sgb-fs-body-2); color: var(--sgb-ink-2); margin: 12px 0 0; }
+.lpx-tbl { width: 100%; border-collapse: collapse; font-size: var(--sgb-fs-body-2); }
+.lpx-tbl th, .lpx-tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--sgb-line-soft); }
+.lpx-tbl th { color: var(--sgb-ink-3); font-weight: var(--sgb-fw-bold); font-size: var(--sgb-fs-cap); }
+.lpx-bar { display: block; height: 6px; border-radius: var(--sgb-r-pill); background: var(--sgb-point); margin: 0 0 4px; max-width: 100%; }
+
+/* 사진 워터마크 — 원본 사진은 그대로 · 사진 칸 위에 글자만 겹침(누르기 막지 않음) */
+.lpx-wm-wrap { position: relative; }
+.lpx-wm { position: absolute; z-index: 2; pointer-events: none; user-select: none; white-space: nowrap; font-size: var(--sgb-fs-cap); font-weight: var(--sgb-fw-bold);
+  color: var(--sgb-ink); background: var(--sgb-bg); border-radius: var(--sgb-r-pill); padding: 2px 10px; }
+.lpx-wm-br { right: 12px; bottom: 40px; }
+.lpx-wm-bl { left: 12px; bottom: 40px; }
+.lpx-wm-tr { right: 12px; top: 40px; }
+.lpx-wm-tl { left: 12px; top: 40px; }
+.lpx-wm-c { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.lpx-wm-tile { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); place-items: center; }
+.lpx-wm-tile .lpx-wm { position: static; transform: rotate(-20deg); }
+@media (max-width: 640px) {
+  .lpx-wm { font-size: var(--sgb-fs-micro); }
+  .lpx-tbl th:nth-child(3), .lpx-tbl td:nth-child(3) { display: none; }
+}

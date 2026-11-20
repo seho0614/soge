@@ -7,6 +7,8 @@ import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROU
 import { FEE_STATE_SQL, PAY_COLS } from './health-shop.shared';
 import { applyBenefits } from './health-benefit';   // v10.479 · 482 (D267) 적립금 · 상품권
 import { quoteCoupon, useCoupon } from './health-coupon';   // v10.469 (D264) 할인 쿠폰
+import { smxBundleInsert, smxBundleQuote, smxBundleView, smxHasBundles } from '../smx/bundles';   // v10.553 (D287) 묶음(세트) 할인
+import { smxRemoteNote, smxRemoteQuote } from '../smx/remote';   // v10.554 (D287) 도서산간 배송비
 
 /**
  * 건강몰 — 주문 넣기 · 내 주문 · 배송지 · 장바구니 · 배송 조회(결제는 HealthPaymentService).
@@ -24,7 +26,7 @@ export class HealthCheckoutService {
    */
   async order(d: any, visitorKey?: string) {
     const me = RequestCtx.actorId()!;
-    if (!d.items?.length) throw new PolicyViolation('EMPTY', '담으신 상품이 없습니다.');
+    if (!d.items?.length && !smxHasBundles(d)) throw new PolicyViolation('EMPTY', '담으신 상품이 없습니다.');   // v10.553 (D287) 묶음만 담은 주문도 받음
     /* v10.170 (D159) — 「주문 받기」 스위치가 꺼져 있으면 주문을 받지 않습니다(결제대행사 연결 전 · 시험 결제 주문 방지) */
     const [oo] = await this.db.query<{ open: boolean }>(ORDER_OPEN_SQL);
     if (!oo?.open) throw new PolicyViolation('ORDERS_CLOSED', ORDERS_CLOSED_MSG);
@@ -36,21 +38,25 @@ export class HealthCheckoutService {
     if (!addr) throw new PolicyViolation('BAD_ADDRESS', '배송지를 다시 골라 주십시오.');
 
     /* v10.26 (D027) — 품목마다 옵션을 정합니다. 옵션을 주지 않으면 켠 옵션이 하나뿐인 상품(단품)만 그 옵션으로 봅니다 */
-    const lines = await this.resolveLines(d.items);
+    const lines = await this.resolveLines(d.items ?? []);   // v10.553 (D287) 묶음만 담은 주문은 items 없음
     let goods = 0;
     for (const l of lines) goods += Number(l.price) * l.qty;
+    /* v10.553 (D287 · docs/691) — 묶음(세트) 할인: 스위치(smx.bundle) · 판매 중 · 품절 · 단가 나눔(묶음이 없으면 빈 결과 · 앞 판과 같음) */
+    const bx = await smxBundleQuote(this.db, d);
+    goods += bx.goods;
 
     /* v10.167 — 한 주문은 한 판매자(INV-H9 · DB 도 막음). 판매자가 섞이면 DB 오류 대신 판매자별로 주문하라고 알립니다 */
     const sellers = await this.db.query<{ id: string; type: string; ship_fee: number; free_ship_over: number | null }>(
       `SELECT DISTINCT s.id, s.type, s.ship_fee, s.free_ship_over FROM hlt_products p JOIN hlt_sellers s ON s.id = p.seller_id WHERE p.id = ANY($1::uuid[])`,
-      [lines.map((l) => l.productId)]);
+      [[...lines.map((l) => l.productId), ...bx.productIds]]);   // v10.553 (D287) 묶음 구성 상품(직판)도 함께 — 입점 상품과 섞이면 MIXED_SELLERS
     if (sellers.length > 1) {
       throw new PolicyViolation('MIXED_SELLERS', '판매자가 다른 상품은 따로 주문해 주십시오 — 장바구니에서 판매자별로 주문할 수 있습니다.');
     }
     /* 배송비 — 직판은 받지 않습니다(전 상품 무료 · 2026-10-08 · health-policy.ts). 입점 판매자는 그 판매자의 배송비 · 무료 기준(v10.167) */
     const ship = sellerShipFee(sellers[0], goods);
+    const remote = await smxRemoteQuote(this.db, d.addressId, me, sellers[0]?.type);   // v10.554 (D287 · docs/692) 도서산간 — 직판 · 입점 모두 · smx.remote_ship on · 배송지 우편번호가 구역 안이면(아니면 0 · 입점 몫은 판매자 정산)
     /* v10.469 (D264) — 쿠폰(선택): 직판 주문만 · 쿠폰이 걸린 상품 금액에서 · 배송비에는 걸지 않음 · 상품 금액을 넘지 않음(DB CHECK) · 한도는 DB 가 다시 셈 */
-    const coupon = d.couponCode ? await quoteCoupon(this.db, String(d.couponCode), me, lines.map((l) => ({ productId: l.productId, amount: Number(l.price) * l.qty })), sellers[0]?.type) : null;
+    const coupon = d.couponCode ? await quoteCoupon(this.db, String(d.couponCode), me, [...lines.map((l) => ({ productId: l.productId, amount: Number(l.price) * l.qty })), ...bx.couponLines], sellers[0]?.type) : null;   // v10.553 (D287) 묶음은 나눈 금액(묶음가 기준) — 할인 ≤ 대상 금액 ≤ 상품 금액(DB CHECK 그대로)
     const discount = coupon?.discount ?? 0;
 
     /* 20261002 — 한 트랜잭션으로 묶습니다. 전에는 재고 트리거가 422 로 막아도
@@ -85,10 +91,10 @@ export class HealthCheckoutService {
     }
     const [o] = await this.db.query<any>(
       `INSERT INTO hlt_orders (order_no, account_id, address_id,
-                               goods_amount, ship_fee, total, ship_memo, discount_amount)
-       VALUES (fn_next_hlt_order_no(), $1, $2, $3, $4, $5, $6, $7)
+                               goods_amount, ship_fee, total, ship_memo, discount_amount, remote_ship_fee, remote_zone)
+       VALUES (fn_next_hlt_order_no(), $1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, order_no AS "orderNo", total, status`,
-      [me, d.addressId, goods, ship, goods + ship - discount, memo || null, discount]);   // v10.469 (D264) 쿠폰 할인
+      [me, d.addressId, goods, ship + remote.fee, goods + ship - discount + remote.fee, memo || null, discount, remote.fee, remote.zone]);   // v10.469 (D264) 쿠폰 할인 · v10.554 (D287) 도서산간 몫은 ship_fee 안 + remote_ship_fee 따로
 
     /* 옵션 재고 확인 · 옵션 이름 복사(fn_hlt_stock_guard) · 재고 빼기(fn_hlt_stock_take)는 DB 가 합니다 */
     for (const l of lines) {
@@ -98,6 +104,9 @@ export class HealthCheckoutService {
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [o.id, l.productId, l.optionId, l.qty, l.price, Number(l.price) * l.qty, l.withdrawalCode]);
     }
+
+    /* v10.553 (D287) — 묶음 줄 · 구성 품목(옵션 확인 · 재고 빼기 · 옵션 이름은 기존 트리거) · 금액 합 · 구성 수량은 거래 끝에 DB 가 다시 셈(trg_smx_order_bundle_sum) */
+    if (bx.lines.length) await smxBundleInsert(this.db, o.id, bx);
 
     /* v10.469 (D264) — 쿠폰 쓴 기록(주문 하나에 하나) · DB 가 쿠폰 줄을 잠그고 한도 · 직판 · 금액을 다시 확인(넘으면 주문째 되돌아감) */
     if (coupon) await useCoupon(this.db, coupon, o.id, me);
@@ -139,8 +148,9 @@ export class HealthCheckoutService {
         [o.id, touch, me, lines.map((l) => l.code), AFF_WINDOW_HOURS]);
     }
 
-    return { ...o, shipFee: ship, discount, couponCode: coupon?.code ?? null,   // v10.469 (D264) — 안내 문장은 통째로(번역 틀이 한 문장씩 맞춤)
-             note: discount > 0
+    return { ...o, shipFee: ship + remote.fee, discount, couponCode: coupon?.code ?? null,   // v10.469 (D264) — 안내 문장은 통째로(번역 틀이 한 문장씩 맞춤)
+             remoteShipFee: remote.fee, remoteZone: remote.zone, bundles: smxBundleView(bx),   // v10.553 · 554 (D287)
+             note: remote.fee > 0 ? smxRemoteNote(remote.fee, discount, ship) : discount > 0
                ? (ship === 0 ? `배송비는 없습니다(전 상품 무료). 쿠폰 ${discount.toLocaleString('ko-KR')}원 할인.` : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비). 쿠폰 ${discount.toLocaleString('ko-KR')}원 할인.`)
                : (ship === 0 ? '배송비는 없습니다(전 상품 무료).' : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비).`) };
     });
@@ -210,6 +220,7 @@ export class HealthCheckoutService {
     const [o] = await this.db.query<any>(
       `SELECT id, order_no AS "orderNo", goods_amount AS "goodsAmount",
               ship_fee AS "shipFee", total, status, created_at AS "createdAt",
+              remote_ship_fee AS "remoteShipFee", remote_zone AS "remoteZone",   -- v10.554 (D287) 배송비 가운데 도서산간 몫
               paid_at AS "paidAt", shipped_at AS "shippedAt",
               delivered_at AS "deliveredAt",
               EXISTS (SELECT 1 FROM hlt_returns r WHERE r.order_id = hlt_orders.id AND r.kind = 'CANCEL' AND r.state = 'REQUESTED') AS "cancelRequested",
@@ -227,6 +238,7 @@ export class HealthCheckoutService {
       /* v10.26 — 옵션 이름(주문 때 복사한 것) · 작은 그림(꼴 · 색 · 사진) · 표제 성분 */
       `SELECT p.code, p.name, i.qty, i.unit_price AS "unitPrice", i.amount,
               i.option_id AS "optionId", i.option_label AS "optionLabel", i.months,
+              (SELECT ob.name FROM hlt_order_bundles ob WHERE ob.id = i.bundle_line_id) AS "bundleName",   -- v10.553 (D287) 묶음 구성 품목이면 묶음 이름
               w.label AS "withdrawalLabel", w.days AS "withdrawalDays",
               w.blocked_if AS "withdrawalBlockedIf",
               json_build_object('form', p.art_form, 'tone', p.art_tone) AS art,

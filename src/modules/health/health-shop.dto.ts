@@ -4,6 +4,8 @@ import { Type } from 'class-transformer';
 /* ★ 불리언 입력은 받은 값 그대로 검사합니다(@StrictBoolean · common/strict-boolean.ts) — 개봉 판정이 문자열 하나로 뒤집히면 재고가 틀어집니다. */
 import { ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
+import { ArrayMaxSize as SmxArrayMaxSize, ValidateIf as SmxValidateIf } from 'class-validator';   // v10.553 (D287) — 위 import 줄 글자는 그대로(이름을 바꿔 겹침 없음)
+import { SmxOrderBundleInDto } from '../smx/smx.dto';   // v10.553 (D287) 주문에 담는 묶음
 
 export class CartAddDto {
   @ApiProperty({ description: '상품 코드' }) @IsString() productCode!: string;
@@ -32,6 +34,8 @@ export class OrderCreateDto {
   /* ★ 검증 데코레이터가 없으면 **whitelist 가 통째로 걸러냅니다** —
    *   "담으신 상품이 없습니다" 가 나오는데 실제로는 보냈습니다. */
   @ApiProperty({ type: [Object], description: '담을 것 — [{ productCode, optionId?, qty }] (v10.26 — 옵션이 여럿인 상품은 optionId 필수)' })
+  /* v10.553 (D287) — 묶음(bundles)만 담은 주문이면 items 는 없어도 됨. 묶음이 없으면 앞 판과 같이 1줄 이상 */
+  @SmxValidateIf((o: { bundles?: unknown[] }) => !(Array.isArray(o.bundles) && o.bundles.length > 0))
   @IsArray() @ArrayMinSize(1)
   items!: Array<{ productCode: string; qty: number }>;
 
@@ -55,6 +59,9 @@ export class OrderCreateDto {
   /* v10.469 (D264) — 할인 쿠폰 코드(선택 · mall.coupon on 일 때만 · 직판 주문만). 대문자로 바꾼 뒤 DB CHECK 와 같은 ^[A-Z0-9-]{4,20}$ 로 다시 봅니다 */
   @ApiPropertyOptional({ example: 'WELCOME-5000', description: '할인 쿠폰 코드 — 쿠폰 받기(mall.coupon)가 켜져 있을 때 · 직판 상품 주문만' })
   @IsOptional() @IsString() @Matches(/^[A-Za-z0-9-]{4,20}$/) couponCode?: string;
+  /* v10.553 (D287) — 묶음(세트) 할인(선택 · smx.bundle on · 직판만 · 쿠폰과 함께 씀(대상 = 묶음가) · 한 주문 열 가지까지 · 재고는 구성 옵션에서) */
+  @ApiPropertyOptional({ type: [SmxOrderBundleInDto], description: '묶음 할인 — [{ code, qty }] · 묶음 판매(smx.bundle)가 켜져 있을 때 · 쿠폰을 함께 쓰면 대상 금액은 묶음가 기준' })
+  @IsOptional() @IsArray() @SmxArrayMaxSize(10) @ValidateNested({ each: true }) @Type(() => SmxOrderBundleInDto) bundles?: SmxOrderBundleInDto[];
 }
 
 export class AddressDto {

@@ -64,6 +64,7 @@ import { mallStatementJob } from '../modules/slx/statements';   // v10.532 (D281
 import { prxAdReportJob, prxHourlyJob } from '../modules/prx/jobs';   // v10.518 ~ 520 (D277)
 import { secDailyPurgeJob } from '../modules/identity/geo-guard';   // v10.485 (D268)
 import { uptDailyJob } from '../modules/uptime/uptime';   // v10.497 (D272)
+import { opzDailyJob } from '../modules/opz/jobs';   // v10.556 · 557 (D288)
 import { mallBenefitExpireJob, mallTierJob } from '../modules/health/health-benefit';   // v10.479 · 480 (D267)
 import { mallSubscribeJob } from '../modules/health/health-subscribe';   // v10.481 (D267)
 import { mallCashReceiptJob } from '../modules/health/health-cashrcpt';   // v10.506 (D274)
@@ -77,6 +78,7 @@ import { applicantPurgeJob } from '../modules/acct/hr-recruit';   // v10.461 (D2
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
 import { ofcTaskDueJob } from '../modules/acct/ofc-tasks';   // v10.463 (D263)
+import { lpxHourlyJob, lpxStatsDailyJob } from '../modules/lpx/jobs';   // v10.549 ~ 552 (D286)
 import { lsxDailyJob, lsxHourlyJob } from '../modules/lsx/jobs';   // v10.513 ~ 516 (D276)
 import { csxDailyJob, csxHourlyJob } from '../modules/csx/jobs';   // v10.528 ~ 531 (D280)
 import { lsyHourlyJob, lsyTriageJob } from '../modules/lsy/jobs';   // v10.524 ~ 527 (D279)
@@ -144,6 +146,7 @@ export type JobName =
   | 'opx_risk_daily'    // v10.510 (D275)
   | 'sfx_daily'         // v10.546 ~ 548 (D285)
   | 'upt_daily'         // v10.497 (D272)
+  | 'opz_daily'         // v10.556 · 557 (D288)
   | 'mall_benefit_expire' // v10.479 (D267)
   | 'mall_tier_recalc'    // v10.480 (D267)
   | 'mall_subscribe'      // v10.481 (D267)
@@ -157,6 +160,8 @@ export type JobName =
   | 'hr_training_due' // v10.458 (D262)
   | 'hr_applicant_purge' // v10.461 (D262)
   | 'lsx_daily'       // v10.513 · 514 (D276)
+  | 'lpx_hourly'      // v10.549 · 551 (D286)
+  | 'lpx_stats_daily' // v10.552 (D286)
   | 'lsx_hourly'      // v10.515 · 516 (D276)
   | 'csx_daily'       // v10.529 (D280)
   | 'csx_hourly'      // v10.528 (D280)
@@ -1131,6 +1136,13 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.556 · 557 (D288 · docs/694 · 695) — 알림만: 되돌아보기 기한 넘김 OPZ_REVIEW_DUE · 24시간 기록 없는 열린 장애 OPZ_INCIDENT_STALE · 이달 뉴스레터 없음 OPZ_NL_REMIND */
+      case 'opz_daily': {
+        const r = await opzDailyJob(this.db);
+        affected = r.reviewDue + r.stale + r.nlRemind; detail = r;
+        break;
+      }
+
       /* v10.518 · 520 (D277 · docs/656 · 658) — 추천 이벤트 기간 끝 ENDED(PERIOD) · 끝난 이벤트 PRX_REF_EVENT_END · 비교 시험 기간 끝 결과 고정 PRX_AB_DONE */
       case 'prx_hourly': {
         const r = await prxHourlyJob(this.db);
@@ -1294,6 +1306,20 @@ export class SchedulerService {
       case 'agent_chat_purge': {
         const r = await this.agentChat.purge();
         affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.549 · 551 (D286 · docs/687 · 689) — 기한 지난 · 내려간 매물의 열린 가격 제안 EXPIRED(회원 알림) · 끝 날짜 지난 자리 비움 ENDED — 스위치와 상관없이 */
+      case 'lpx_hourly': {
+        const r = await lpxHourlyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.552 (D286 · docs/690) — lpx.stats on 일 때만 · 이번 달 · 지난달 다시 셈 · lpx.stats_months 안 빠진 달 채움(fn_lpx_stats_refresh) */
+      case 'lpx_stats_daily': {
+        const r = await lpxStatsDailyJob(this.db);
+        affected = r.made; detail = r;
         break;
       }
 

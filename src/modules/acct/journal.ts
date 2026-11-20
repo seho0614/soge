@@ -103,7 +103,7 @@ export const SOURCES: Source[] = [
   {
     name: 'MALL_SALE', label: '소개몰 직판 결제',
     sql: `SELECT p.id::text AS key, p.approved_at AS at, p.amount::bigint AS amt, o.order_no AS no, NULL::text AS party,
-                 (coalesce((SELECT sum(it.amount) FROM hlt_order_items it WHERE it.order_id = o.id AND it.tax_type = 'EXEMPT'), 0) * (o.goods_amount - o.discount_amount) / nullif(o.goods_amount, 0))::bigint AS exempt
+                 ((coalesce((SELECT sum(it.amount) FROM hlt_order_items it WHERE it.order_id = o.id AND it.tax_type = 'EXEMPT'), 0) * (o.goods_amount - o.discount_amount) / nullif(o.goods_amount, 0))::bigint + fn_smx_remote_exempt(o.id)) AS exempt
             FROM hlt_payments p JOIN hlt_orders o ON o.id = p.order_id JOIN hlt_sellers s ON s.id = o.seller_id AND s.type = 'DIRECT'
            WHERE p.state IN ('PAID', 'CANCELED') AND p.approved_at IS NOT NULL AND p.amount > 0 AND p.approved_at >= fn_acct_from() AND fn_acct_stub_ok(p.stub)
              AND NOT EXISTS (SELECT 1 FROM acct_entries e WHERE e.source = 'MALL_SALE' AND e.source_key = p.id::text)
@@ -113,7 +113,7 @@ export const SOURCES: Source[] = [
   {
     name: 'MALL_REFUND', label: '소개몰 직판 취소 · 환불',
     sql: `SELECT p.id::text AS key, p.canceled_at AS at, coalesce(p.canceled_amount, p.amount)::bigint AS amt, p.amount::bigint AS paid, o.order_no AS no, NULL::text AS party,
-                 (coalesce((SELECT sum(it.amount) FROM hlt_order_items it WHERE it.order_id = o.id AND it.tax_type = 'EXEMPT'), 0) * (o.goods_amount - o.discount_amount) / nullif(o.goods_amount, 0))::bigint AS exempt
+                 ((coalesce((SELECT sum(it.amount) FROM hlt_order_items it WHERE it.order_id = o.id AND it.tax_type = 'EXEMPT'), 0) * (o.goods_amount - o.discount_amount) / nullif(o.goods_amount, 0))::bigint + fn_smx_remote_exempt(o.id)) AS exempt
             FROM hlt_payments p JOIN hlt_orders o ON o.id = p.order_id JOIN hlt_sellers s ON s.id = o.seller_id AND s.type = 'DIRECT'
            WHERE p.canceled_at IS NOT NULL AND coalesce(p.canceled_amount, p.amount) > 0 AND p.approved_at IS NOT NULL
              AND p.canceled_at >= fn_acct_from() AND fn_acct_stub_ok(p.stub)

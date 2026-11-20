@@ -27,6 +27,7 @@ export default async function HltSellerCenterPage() {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('hlt.center');
   const ts = await getTranslations('slx.stmt');   // v10.532 (D281)
+  const tsx = await getTranslations('smx.rp');   // v10.555 (D287) 리뷰 답글 단추
   let info: SellerCenterInfo | null = null;
   let notSeller = false;
   try {
@@ -58,6 +59,7 @@ export default async function HltSellerCenterPage() {
   ]);
   return (
     <><div className="hlt">{head}
+      <p className="hlt-btns"><a className="hlt-btn sm" href="/health/seller/center/reviews" data-smx-replies-link="">{tsx('link')}</a></p>
       <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerSettlements rows={settles} /><SellerCenter info={info} items={items} cats={cats} />{account && <SellerAccount info={account} />}</Msgs>
     </div><i hidden data-root-end="" /></>
   );

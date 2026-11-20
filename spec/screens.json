@@ -9304,6 +9304,283 @@
     "POST /admin/sfx/tm/backfill"
    ],
    "note": "2026-11-20 v10.548 (D285 · docs/686) 번역 메모리 — 원문 열쇠(공백 정리 md5) → 번역 재사용 · 승인 · 자동 승인 번역을 트리거가 모음(사람 것 먼저 · 소개광장 글 · 댓글 빼고) · 자동 번역 배치가 엔진 앞에서 씀(엔진 TM) · 찾기 · 고치기(HUMAN) · 끄기 · sfx.tm 처음 off"
+  },
+  {
+   "id": "SB-ADM-LPX-010",
+   "name": "매물 가격 제안",
+   "group": "ADM",
+   "url": "/admin/lpx-offers",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lpx-offers",
+   "apis": [
+    "GET /admin/lpx/offers",
+    "POST /admin/lpx/offers/run",
+    "PUT /admin/lpx/settings"
+   ],
+   "note": "2026-11-21 v10.549 (D286 · docs/687) 매물 가격 제안 운영 — lpx.offer 처음 off · 관별 스위치 lpx.offer_gwans(처음 NONE · SUPER · 꺼진 관은 서버 · DB 트리거가 막음 422 LPX_GWAN_OFF) · 기한 · 하한 · 개수 · 최근 30일 상태별 수 · 수락 금액 평균(거래 금액 대비) · 최근 제안 100(가린 이름 · 메모 없음) · 정기 작업 lpx_hourly 지금 한 번(SUPER) · 설정 PUT 은 SUPER(네 기능 설정 한 곳)"
+  },
+  {
+   "id": "SB-ADM-LPX-020",
+   "name": "매물 사진 워터마크",
+   "group": "ADM",
+   "url": "/admin/lpx-photo",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lpx-photo",
+   "apis": [
+    "GET /admin/lpx/watermark",
+    "PUT /admin/lpx/settings",
+    "GET /site/lpx/listings/{id}"
+   ],
+   "note": "2026-11-21 v10.550 (D286 · docs/688) 사진 워터마크 — 원본 사진 그대로(새 npm · 그림 도구 없음) · 사용자 웹 매물 상세 사진 위에 「SogaeBank/소개뱅크」 CSS 겹침 · lpx.watermark 처음 off · 자리 6가지 · 진하기 10 ~ 60 · 운영 미리보기 · 공개 표시 정보 GET /site/lpx/listings/{id}"
+  },
+  {
+   "id": "SB-ADM-LPX-030",
+   "name": "판매자 자리 비움",
+   "group": "ADM",
+   "url": "/admin/lpx-away",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lpx-away",
+   "apis": [
+    "GET /admin/lpx/away",
+    "PUT /admin/lpx/settings"
+   ],
+   "note": "2026-11-21 v10.551 (D286 · docs/689) 자리 비움 — lpx.away 처음 off · 최대 일수 · 켜 둔 수 · 보이는 중 · 자동 안내 수(1:1 문의 · 공개 질문 · 가격 제안 · 방문 예약 — 같은 자리 비움 · 같은 회원 한 번) · 최근 100(가린 이름 · 기간 · 안내 글 없음) · 끝 날짜 지나면 lpx_hourly 가 저절로 정리"
+  },
+  {
+   "id": "SB-ADM-LPX-040",
+   "name": "지역별 시세 통계",
+   "group": "ADM",
+   "url": "/admin/lpx-stats",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lpx-stats",
+   "apis": [
+    "GET /admin/lpx/stats",
+    "POST /admin/lpx/stats/run",
+    "PUT /admin/lpx/settings"
+   ],
+   "note": "2026-11-21 v10.552 (D286 · docs/690) 시세 통계 — lpx.stats 처음 off · 매일 04:50 lpx_stats_daily(fn_lpx_stats_refresh) · 달 × 관 × 업종(상위) × 시 · 도 × 시 · 구 가운데값 · 매물 5개 미만 칸은 DB 가 값 비움 · 공개 최소 수 lpx.stats_min · 달별 칸 수 · 매물 많은 칸 100 · 지금 셈(SUPER · 스위치와 상관없이)"
+  },
+  {
+   "id": "SB-MYP-LPX-010",
+   "name": "가격 제안",
+   "group": "MYP",
+   "url": "/my/offers",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /lpx/me/offers",
+    "GET /lpx/listings/{id}/offer",
+    "POST /lpx/listings/{id}/offers",
+    "POST /lpx/offers/{id}/accept",
+    "POST /lpx/offers/{id}/reject",
+    "POST /lpx/offers/{id}/counter",
+    "POST /lpx/offers/{id}/reoffer",
+    "POST /lpx/offers/{id}/withdraw"
+   ],
+   "note": "2026-11-21 v10.549 (D286 · docs/687) 받은 제안(수락 · 거절 · 되제안 · 가린 이름) · 보낸 제안(되제안 수락 · 거절 · 다시 제안 · 거두기) · 되제안 · 다시 제안 합쳐 lpx.offer_counter_max(처음 3)번 · 하한 30% · 기한 7일(대표 11/21) · 매물 상세 아래 「가격 제안」 칸(LpxOfferBox)도 같은 API · 합의하면 1:1 문의로 기존 거래 흐름(거래를 만들지 않음) · lpx.offer · 관별 lpx.offer_gwans 처음 모두 꺼짐"
+  },
+  {
+   "id": "SB-MYP-LPX-020",
+   "name": "자리 비움",
+   "group": "MYP",
+   "url": "/my/away",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /lpx/me/away",
+    "PUT /lpx/me/away",
+    "POST /lpx/me/away/end"
+   ],
+   "note": "2026-11-21 v10.551 (D286 · docs/689) 시작 · 끝 날짜 · 한 줄 안내(연락처 가림) · 매물 상세 띠(LpxAwayNote) · 문의 · 질문 · 가격 제안 · 방문 예약 자동 안내 한 번 · 끝 날짜 지나면 저절로 풀림 · lpx.away 처음 off"
+  },
+  {
+   "id": "SB-HOM-LPX-010",
+   "name": "지역별 시세",
+   "group": "HOM",
+   "url": "/price-stats",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-MAIN-010",
+   "apis": [
+    "GET /site/lpx/price-stats",
+    "GET /site/lpx/listings/{id}"
+   ],
+   "note": "2026-11-21 v10.552 (D286 · docs/690) 공개 — 관 · 업종 · 시 · 도 · 시 · 구 달별 거래(희망) 금액 가운데값 · 아래 지역 최근 달 · 매물 lpx.stats_min(5) 개 미만 칸 숨김 · 집계만(매물 id · 주소 없음) · 매물 상세 「이 지역 시세」 한 줄도 GET /site/lpx/listings/{id} · lpx.stats 처음 off"
+  },
+  {
+   "id": "SB-ADM-SMX-010",
+   "name": "소개몰 묶음 할인",
+   "group": "ADM",
+   "url": "/admin/smx-bundles",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/smx/bundles",
+    "POST /admin/smx/bundles",
+    "PUT /admin/smx/bundles/{id}",
+    "POST /admin/smx/bundles/{id}/state",
+    "GET /health/bundles",
+    "GET /health/bundles/{code}"
+   ],
+   "note": "2026-11-21 v10.553 (D287 · docs/691) 묶음(세트) 할인 — 직판 상품 옵션 여럿 · 묶음가 · 재고는 구성 옵션에서(주문 품목 = 구성 줄 · bundle_line_id) · 하나라도 품절이면 묶음 품절(v_hlt_bundle_stock) · 반품은 주문 통째(묶음 단위) · 쿠폰 함께(대상 = 묶음가) · 판매 중이면 구성 못 바꿈 · smx.bundle 처음 off · 공개 목록(회원 화면은 주문 받기를 켤 때)"
+  },
+  {
+   "id": "SB-ADM-SMX-020",
+   "name": "소개몰 도서산간 배송비",
+   "group": "ADM",
+   "url": "/admin/smx-remote",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/smx/remote-zones",
+    "GET /admin/smx/remote-zones/check",
+    "POST /admin/smx/remote-zones",
+    "PUT /admin/smx/remote-zones/{id}",
+    "DELETE /admin/smx/remote-zones/{id}",
+    "GET /me/health/remote-fee"
+   ],
+   "note": "2026-11-21 v10.554 (D287 · docs/692) 도서산간 추가 배송비 — 우편번호 범위 표(제주 · 도서 · 산간) · 금액 운영 지정 · 직판 · 입점 주문 때 배송지로 자동 더함(입점 몫은 판매자 정산 · 면세 몫 fn_smx_remote_exempt)(ship_fee 안 · remote_ship_fee 따로 · 주문 뒤 못 바꿈) · 주문서 · 내 주문에 따로 표시(GET /me/health/remote-fee 는 주문서가 부름) · smx.remote_ship 처음 off"
+  },
+  {
+   "id": "SB-ADM-SMX-030",
+   "name": "소개몰 리뷰 답글",
+   "group": "ADM",
+   "url": "/admin/smx-replies",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/smx/review-replies",
+    "GET /admin/smx/review-replies/{id}/edits",
+    "PUT /admin/smx/review-replies/{id}",
+    "POST /admin/smx/review-replies/{id}/decide"
+   ],
+   "note": "2026-11-21 v10.555 (D287 · docs/693) 리뷰 답글 — 직판 상품 리뷰는 운영 답글 · 입점 판매자 답글 보이기 · 가리기(사유) · 리뷰당 하나 · 고치기 기록(쌓기만) · 금칙어(기존 사전 HLT)면 운영 확인 뒤 · 보이게 되면 리뷰 쓴 회원에게 한 번 알림 · smx.review_reply 처음 off(꺼지면 공개 화면에도 안 보임)"
+  },
+  {
+   "id": "SB-HLT-SMX-010",
+   "name": "판매자센터 리뷰 답글",
+   "group": "HLT",
+   "url": "/health/seller/center/reviews",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "nav": "SB-HLT-SEL-020",
+   "apis": [
+    "GET /me/health/seller/review-replies",
+    "PUT /me/health/seller/review-replies/{id}"
+   ],
+   "note": "2026-11-21 v10.555 (D287 · docs/693) 입점 판매자 본인 상품의 보이는 리뷰 · 답글 하나씩 · 다시 저장하면 고치기(기록) · 운영 확인 대기 · 가린 답글 사유 · 꺼져 있으면 쓰기 잠김 · 판매자센터 본문 위 단추에서 들어옴"
+  },
+  {
+   "id": "SB-ADM-OPZ-010",
+   "name": "월간 뉴스레터",
+   "group": "ADM",
+   "url": "/admin/opz-newsletter",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/opz-newsletter",
+   "apis": [
+    "GET /admin/opz/newsletters",
+    "GET /admin/opz/newsletters/{id}",
+    "POST /admin/opz/newsletters",
+    "PUT /admin/opz/newsletters/{id}",
+    "POST /admin/opz/newsletters/{id}/test",
+    "POST /admin/opz/newsletters/{id}/send",
+    "POST /admin/opz/newsletters/{id}/cancel",
+    "PUT /admin/opz/newsletter-settings"
+   ],
+   "note": "2026-11-21 v10.556 (D288 · docs/694) 월간 뉴스레터 — 달마다 한 호 · 공지(모두에게 보이는 것) · 인기 매물(게시 중 · 최근 30일) · 이벤트(게시 중) 후보에서 고르기 · 틀(자리값 {month} {intro} {notices} {listings} {events} {base} · ㊿ renderMailTemplate 재사용) · 본문 2,000자 · 미리보기((광고) · 보낸 곳 · 수신 거부 자리) · 나에게 시험 · 보내기 SUPER — 보내는 길은 ㊳ 캠페인(EMAIL · 대상 ALL · 마케팅 동의자만 · 야간 동의 · 수신 거부) · opz.nl_enabled 처음 off(+ campaign.enabled · send_mode ASSUME)"
+  },
+  {
+   "id": "SB-ADM-OPZ-020",
+   "name": "장애 대응",
+   "group": "ADM",
+   "url": "/admin/opz-incident",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/opz-incident",
+   "apis": [
+    "GET /admin/opz/incidents",
+    "GET /admin/opz/incidents/{id}",
+    "POST /admin/opz/incidents",
+    "POST /admin/opz/incidents/{id}/page",
+    "POST /admin/opz/incidents/{id}/steps/{stepId}",
+    "POST /admin/opz/incidents/{id}/notes",
+    "POST /admin/opz/incidents/{id}/state",
+    "PUT /admin/opz/incidents/{id}/upt",
+    "PUT /admin/opz/incidents/{id}/review",
+    "POST /admin/opz/incidents/{id}/review/finalize",
+    "GET /admin/opz/runbooks/{id}",
+    "POST /admin/opz/runbooks",
+    "PUT /admin/opz/runbooks/{id}",
+    "PUT /admin/opz/incident-settings"
+   ],
+   "note": "2026-11-21 v10.557 (D288 · docs/695) 장애 대응 절차 — 런북 6(시드 · 고치면 판 +1) · 장애 열기(opz.ir_enabled 처음 off · 단계 복사) · 운영 알림 OPZ_INCIDENT_OPEN(SEV1 ~ 3 모두 긴급 → 기존 대화방 · 당번 개인 텔레그램 · 30분 SUPER 길) · 열 때 당번 바로 호출(opz.ir_page_now 처음 off) · 단계 체크 · 진행 기록 쌓기만 · 누그러뜨림 → 끝(한 방향 · 그 알림 풀림) · 되돌아보기(확정하면 잠김 · 3일 넘으면 OPZ_REVIEW_DUE) · D272 장애 공지 올리기 · 잇기 · 끝냄 · 열 거리(UPTIME_DOWN 알림 · 잇지 않은 공지)"
   }
  ],
  "deferred": [

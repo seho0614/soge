@@ -13,6 +13,7 @@ import { ReviewQueue } from './app/admin/ReviewQueue';
 import { ReviewDecide } from './app/admin/ReviewDecide';
 import { AutoReviewRules } from './app/admin/AutoReviewRules';
 import { Badges } from './app/admin/Badges';
+import { LpxOffers, LpxPhoto, LpxAway, LpxStats } from './app/admin/ListingPrice';   // v10.549 ~ 552 (D286) (56) 매물 3
 import { LsxExpiry, LsxBump, LsxSummary, LsxSaved } from './app/admin/ListingOps';   // v10.513 ~ 516 (D276) ㊻ 매물
 import { LsyDups, LsyPhotos, LsyVideos, LsyTriage } from './app/admin/ListingQuality';   // v10.524 ~ 527 (D279) ㊾ 매물 2
 import { Disputes } from './app/admin/Disputes';
@@ -47,6 +48,7 @@ import { SecGeo } from './app/admin/SecGeo';   // v10.485 (D268) 해외 접속 �
 import { OpxArchive, OpxRisk, OpxBulk, OpxSwitches } from './app/admin/Opx';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
 import { SfxDevice, SfxRetention, SfxTm } from './app/admin/Sfx';   // v10.546 ~ 548 (D285) 같은 기기 여러 계정 · 서류 보관 기한 · 번역 메모리
 import { SocLogin, UptStatus } from './app/admin/Uptime';   // v10.497 · 498 (D272) 가동 · 장애 공지 · 간편 로그인
+import { OpzNewsletter, OpzIncident } from './app/admin/Opz';   // v10.556 · 557 (D288) 월간 뉴스레터 · 장애 대응
 import { MktCampaigns } from './app/admin/MktCampaigns';   // v10.483 (D268) 문자 · 메일 캠페인
 import { MkxPush, MkxSms, MkxRebuy, MkxGroupbuy } from './app/admin/Mkx';   // v10.538 ~ 541 (D283) 웹 푸시 · 문자 마케팅 · 재구매 알림 · 공동구매
 import { PtnOpenApi, PtnBulkInvite } from './app/admin/PartnerOpenApi';   // v10.521 · 522 (D278) 파트너 오픈 API · 직원 일괄 등록
@@ -61,6 +63,7 @@ import { AccountantDesk, ReceiptReader, AccrualBox, ArchiveBox } from './app/adm
 import { FinCardLimits, FinTransfers, FinTargets, FinPartyLedger } from './app/admin/Fin';   // v10.453 ~ 456 (D261) 자금 · 영업
 import { SalCrm, AcctBankFeed } from './app/admin/Sales';   // v10.466 · 467 (D264) 영업 기회 · 은행 자동 조회
 import { HealthCoupons } from './app/admin/HealthCoupons';   // v10.469 (D264) 소개몰 쿠폰 · 기획전
+import { SmxBundles, SmxRemote, SmxReplies } from './app/admin/Smx';   // v10.553 ~ 555 (D287) 묶음 할인 · 도서산간 배송비 · 리뷰 답글
 import { HealthRestock, HealthCashReceipts } from './app/admin/HealthMlx';   // v10.505 · 506 (D274) 소개몰 재입고 알림 · 현금영수증
 import { PlazaRanking } from './app/admin/PlazaRanking';   // v10.507 (D274) 소개광장 활동 배지 · 랭킹
 import { SiteUsage } from './app/admin/SiteUsage';   // v10.508 (D274) 회원 화면 사용 통계
@@ -406,6 +409,9 @@ function Console() {
         {tab === 'hlt-subscribe' && <HealthSubscribe />}
         {tab === 'hlt-giftcards' && <HealthGiftcards />}
         {tab === 'hlt-coupons' && <HealthCoupons />}
+        {tab === 'smx-bundles' && <SmxBundles />}
+        {tab === 'smx-remote' && <SmxRemote />}
+        {tab === 'smx-replies' && <SmxReplies />}
         {tab === 'hlt-restock' && <HealthRestock />}
         {tab === 'mkx-rebuy' && <MkxRebuy />}
         {tab === 'mkx-groupbuy' && <MkxGroupbuy />}
@@ -430,6 +436,10 @@ function Console() {
           ? <ReviewDecide id={open} onDone={() => setOpen(null)} />
           : <ReviewQueue onOpen={setOpen} />)}
         {tab === 'badges' && <Badges />}
+        {tab === 'lpx-offers' && <LpxOffers />}
+        {tab === 'lpx-photo' && <LpxPhoto />}
+        {tab === 'lpx-away' && <LpxAway />}
+        {tab === 'lpx-stats' && <LpxStats />}
         {tab === 'lsx-expiry' && <LsxExpiry />}
         {tab === 'lsx-bump' && <LsxBump />}
         {tab === 'lsx-summary' && <LsxSummary />}
@@ -486,6 +496,8 @@ function Console() {
       {tab === 'opx-switches' && <OpxSwitches onGo={visible('settings') ? go : undefined} />}
       {tab === 'sfx-device' && <SfxDevice />}
       {tab === 'upt-status' && <UptStatus />}
+      {tab === 'opz-incident' && <OpzIncident />}
+      {tab === 'opz-newsletter' && <OpzNewsletter />}
       {tab === 'soc-login' && <SocLogin />}
       {tab === 'mkt-campaign' && <MktCampaigns />}
       {tab === 'mkx-push' && <MkxPush />}

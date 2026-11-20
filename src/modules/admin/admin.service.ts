@@ -364,6 +364,10 @@ export class AdminService {
         `SELECT EXISTS (SELECT 1 FROM v_terms_current WHERE code = 'PRIVACY' AND body LIKE '%주민등록번호(암호화)%') AS ok`);
       if (!pv?.ok) throw new PolicyViolation('TAX_ID_PRIVACY_FIRST', '처리방침(지금 판)에 「주민등록번호(암호화)」 수집 줄이 게시된 뒤에 켤 수 있습니다 — 법무 확인 뒤 약관 화면에서 처리방침을 먼저 게시하십시오.');
     }
+    /* v10.554 (D287) — 도서산간 배송비 부가세 구분(세무 일반 원칙 · 현금영수증 · 전표가 씀)은 SUPER 만 */
+    if (key === 'smx.remote_tax_mode' && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('SMX_TAX_SETTING_SUPER', '도서산간 배송비 부가세 구분은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.161 (D151) — 약관 재동의 시점(terms.reconsent_before_effective)은 약관 게시와 같이 SUPER 만 */
     if (key.startsWith('terms.') && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('TERMS_SETTING_SUPER', '약관 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

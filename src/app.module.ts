@@ -260,6 +260,7 @@ import { SecGeoController } from './modules/identity/geo-guard.controller';   //
 import { OpxController } from './modules/opx/opx.controller';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
 import { SfxAdminController } from './modules/sfx/sfx.controller';   // v10.546 ~ 548 (D285) 같은 기기 여러 계정 · 서류 보관 기한 · 번역 메모리
 import { UptimeController } from './modules/uptime/uptime.controller';   // v10.497 (D272) 가동 감시 · 장애 공지
+import { OpzNewsletterController, OpzIncidentController } from './modules/opz/opz.controller';   // v10.556 · 557 (D288) 월간 뉴스레터 · 장애 대응 절차
 import { SocialAuthController } from './modules/social/social.controller';   // v10.498 (D272) 카카오 · 네이버 간편 로그인
 import { SocialAuthService } from './modules/social/social';   // v10.498 (D272)
 import { MktCampaignController, MktUnsubscribeController } from './modules/marketing/campaign.controller';   // v10.483 (D268) 문자 · 메일 캠페인 · 수신 거부(공개)
@@ -297,6 +298,7 @@ import { IntegTestService } from './modules/site/integ-test.service';   /* v10.1
 import { IntegTestController } from './modules/site/integ-test.controller';
 import { SafenumService } from './modules/listing/safenum.service';   /* v10.145 (D141) 050 안심번호 */
 import { SafenumController, SafenumAdminController } from './modules/listing/safenum.controller';
+import { LpxController } from './modules/lpx/lpx.controller';   // v10.549 ~ 552 (D286) 매물 가격 제안 · 사진 워터마크 · 판매자 자리 비움 · 지역별 시세 통계
 import { LsxController } from './modules/lsx/lsx.controller';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 만료 · 연장 · 끌어올리기 · 매물 AI 요약
 import { CsxController } from './modules/csx/csx.controller';   // v10.528 ~ 531 (D280) 1:1 문의 AI 답변 초안 · 이탈 위험 신호 · 메일 문구 · 계정 합치기
 import { LsyController } from './modules/lsy/lsy.controller';   // v10.524 ~ 527 (D279) 중복 매물 자동 탐지 · 사진 품질 검사 · 매물 동영상 · 신고 자동 분류
@@ -310,6 +312,7 @@ import { ErpController } from './modules/acct/erp.controller';   // v10.433 ~ 43
 import { FinController } from './modules/acct/fin.controller';   // v10.453 ~ 456 (D261) 자금 · 영업 — 법인카드 한도 · 대량 이체 · 매출 목표 · 거래처 원장
 import { HealthBenefitController, HealthBenefitMeController } from './modules/health/health-benefit.controller';   // v10.479 ~ 482 (D267) 소개몰 회원 혜택 — 적립금 · 등급 · 정기 배송 · 상품권
 import { HealthMlxController, HealthMlxMeController } from './modules/health/health-mlx.controller';   // v10.505 · 506 (D274) 소개몰 재입고 알림 · 현금영수증
+import { SmxAdminController, SmxPublicController, SmxMeController, SmxSellerController } from './modules/smx/smx.controller';   // v10.553 ~ 555 (D287) 묶음 할인 · 도서산간 배송비 · 리뷰 답글
 import { PlazaRankController } from './modules/community/plaza-rank.controller';   // v10.507 (D274) 소개광장 활동 배지 · 랭킹(공개 · 회원 · 운영)
 import { SiteUsageController } from './modules/site/site-usage.controller';   // v10.508 (D274) 회원 화면 사용 통계(공개 /site/usage/beat · 운영)
 import { SalesController } from './modules/acct/sales.controller';   // v10.466 · 467 (D264) 영업 기회 CRM · 은행 거래내역 자동 조회
@@ -336,6 +339,10 @@ import { LeadService } from './modules/lead/lead.service';
     HealthBenefitMeController, // v10.479 ~ 482 (D267) 회원
     HealthMlxController,      // v10.505 · 506 (D274) 운영
     HealthMlxMeController,    // v10.505 · 506 (D274) 회원
+    SmxAdminController,       // v10.553 ~ 555 (D287) 운영 — 묶음 할인 · 도서산간 배송비 · 리뷰 답글
+    SmxPublicController,      // v10.553 (D287) 공개 — 판매 중 묶음(공개 구역 health)
+    SmxMeController,          // v10.554 (D287) 회원 — 주문서 도서산간 배송비 미리보기
+    SmxSellerController,      // v10.555 (D287) 판매자센터 — 리뷰 답글
     PlazaRankController,      // v10.507 (D274)
     SiteUsageController,      // v10.508 (D274) 공개 — /site/usage/beat
     SalesController,          // v10.466 · 467 (D264)
@@ -437,6 +444,8 @@ import { LeadService } from './modules/lead/lead.service';
     OpxController,            // v10.509 ~ 512 (D275) 기록 · 안전 · 운영
     SfxAdminController,       // v10.546 ~ 548 (D285) 운영 · 보안
     UptimeController,         // v10.497 (D272) 가동 감시 · 장애 공지 · 공개 상태
+    OpzNewsletterController,  // v10.556 (D288) 월간 뉴스레터(㊳ 캠페인으로 보냄)
+    OpzIncidentController,    // v10.557 (D288) 장애 대응 절차(런북 · 당번 호출 · 되돌아보기)
     SocialAuthController,     // v10.498 (D272) 간편 로그인
     MktCampaignController,    // v10.483 (D268)
     PapiAdminController,      // v10.521 (D278) 파트너 오픈 API(운영)
@@ -517,6 +526,7 @@ import { LeadService } from './modules/lead/lead.service';
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
     IntegTestController,   // v10.144 (D140) 운영 화면 › 외부 연동 › 결제 · 계좌 연결 확인
     SafenumController, SafenumAdminController,   // v10.145 (D141) 전화하기 · 통화 웹훅 · 운영 화면 「안심번호」
+    LpxController,   // v10.549 ~ 552 (D286) (56) 매물 3 — 공개 /site/lpx · 회원 /lpx · 운영 /admin/lpx
     LsxController,   // v10.513 ~ 516 (D276) ㊻ 매물
     CsxController,   // v10.528 ~ 531 (D280) ㊿ 고객센터 · 회원
     LsyController,   // v10.524 ~ 527 (D279) ㊾ 매물 2

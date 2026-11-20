@@ -36,7 +36,9 @@ import policy from './ko/policy.json';
 import aiChat from './ko/aiChat.json';
 import safety from './ko/safety.json';
 import codes from './ko/codes.json';
+import lpx from './ko/lpx.json';   // v10.549 ~ 552 (D286) 가격 제안 · 자리 비움 · 지역별 시세(화면 전용 묶음)
 import lsx from './ko/lsx.json';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 관리 도구 · AI 요약
+import smx from './ko/smx.json';   // v10.555 (D287) 판매자센터 리뷰 답글(화면 전용 묶음 · 서버 화면만 씀)
 import lsy from './ko/lsy.json';   // v10.525 · 526 (D279) 매물 동영상 · 사진 점검
 import mbx from './ko/mbx.json';   // v10.501 ~ 504 (D273) 최근 본 · 비교하기 · 가격 알림 · 회원 대화(화면 전용 묶음)
 import vsx from './ko/vsx.json';   // v10.542 · 544 (D284) 방문 예약 · 파트너 자료 내려받기(화면 전용 묶음)
@@ -44,7 +46,7 @@ import mkx from './ko/mkx.json';   // v10.538 · 540 (D283) 웹 푸시 · 소개
 import slx from './ko/slx.json';   // v10.532 · 534 (D281) 판매자센터 월 정산서 · 파트너센터 성과 추이(화면 전용 묶음 · 서버 화면만 씀)
 
 const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode, aiChat };   // v10.98 consult · refcode · v10.110 aiChat(사이트 공통 AI 상담 단추)
-const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join, policy, safety, codes, mbx, lsx, lsy, slx, mkx, vsx };   // v10.122 codes(서버 코드 이름표 code_labels — 다른 언어 화면 글자) · v10.119 safety(안전 수칙 · 사기 유형 · 서버 화면만) · v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join · v10.102 policy · 새 묶음은 끝에 더함(main · search 가 맨 앞 — test_v1097)
+const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join, policy, safety, codes, mbx, lsx, lsy, slx, mkx, vsx, lpx, smx };   // v10.122 codes(서버 코드 이름표 code_labels — 다른 언어 화면 글자) · v10.119 safety(안전 수칙 · 사기 유형 · 서버 화면만) · v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join · v10.102 policy · 새 묶음은 끝에 더함(main · search 가 맨 앞 — test_v1097)
 
 export const KO = { ...base, ...SHARED, ...PAGE };
 export type PageNs = keyof typeof PAGE;

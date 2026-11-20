@@ -7,6 +7,7 @@ import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles, RequireGate } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { HealthReviewService } from './health-review.service';
+import { SmxReplyViewDto } from '../smx/smx.dto';   // v10.555 (D287) 리뷰 줄의 답글
 
 export class ReviewCreateDto {
   @ApiProperty() @IsString() @MaxLength(40) orderNo!: string;
@@ -36,6 +37,7 @@ export class HltReviewItemDto {
   @ApiProperty() id!: string; @ApiProperty() rating!: number; @ApiProperty() body!: string;
   @ApiProperty() createdAt!: string; @ApiProperty() updatedAt!: string;
   @ApiProperty({ description: '이름 첫 글자 + ○○' }) writer!: string; @ApiProperty() mine!: boolean;
+  @ApiPropertyOptional({ type: SmxReplyViewDto, nullable: true, description: 'v10.555 (D287) 판매자 · 운영 답글(보이는 것 · smx.review_reply on 일 때만 칸이 있음)' }) reply?: SmxReplyViewDto | null;
   @ApiPropertyOptional({ nullable: true }) optionLabel!: string | null;
   @ApiPropertyOptional({ nullable: true, description: 'v10.533 (D281) 사진 주소 /api/v1/health/reviews/{id}/photo — 사진 없으면 null' }) photoUrl?: string | null;
 }

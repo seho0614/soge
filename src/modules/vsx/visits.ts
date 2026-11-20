@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { maskName } from '../../common/mask';
 import { vsxToday, vsxSettings } from './vsx-settings';
+import { awayNow } from '../lpx/away';   // (56) D286 판매자 자리 비움
 
 /* ---------------------------------------------------------------------
  * v10.542 (D284 · docs/680) 매물 방문 예약 — 대표 11/20 「(54) ① 매물 방문 예약」
@@ -111,7 +112,9 @@ export async function bookVisit(db: DatabaseService, listingId: string, me: stri
     dbErr(e);
   }
   await notify(db, l.ownerId, 'VSX_BOOK_REQUEST', '방문 예약 요청이 왔습니다', `「${l.title.slice(0, 40)}」 ${kst(row!.startsAt)} 방문 요청 — 나의공간 › 방문 예약에서 확정해 주십시오.`);
-  return { ok: true, id: row!.id, state: 'REQUESTED', note: '방문 예약을 요청했습니다 — 매물 주인이 확정하면 알림이 갑니다.' };
+  const away = await awayNow(db, l.ownerId);   // (56) D286 — 자동 안내 알림은 DB 트리거 trg_lpx_away_on_visit 가 이미 보냄
+  return { ok: true, id: row!.id, state: 'REQUESTED', away: away ? { endsOn: away.endsOn, message: away.message } : null,
+    note: away ? `방문 예약을 요청했습니다 — 판매자가 ${away.endsOn} 까지 자리를 비워 확정이 늦을 수 있습니다.` : '방문 예약을 요청했습니다 — 매물 주인이 확정하면 알림이 갑니다.' };
 }
 
 /** 나의공간 › 방문 예약 — 내가 한 예약 · 내 매물에 온 예약 · 내 게시 매물(열린 칸 수) */

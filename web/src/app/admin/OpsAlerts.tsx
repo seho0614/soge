@@ -80,6 +80,7 @@ const NAME: Record<string, string> = {
   SECURITY_MONTHLY: '월간 보안 보고',   // v10.354 (D235 · docs/488)
   STAFF_LOGIN_ABROAD: '운영자 해외 로그인', STAFF_LOGIN_ABROAD_BLOCKED: '해외 운영 로그인 막음',   // v10.485 (D268 · docs/623) — 위험감지 › 해외 접속 경고
   PASSKEY_CLONE_SUSPECT: '운영자 패스키 복제 의심',   // v10.484 (D268 · docs/622)
+  OPZ_INCIDENT_OPEN: '장애 대응 열림', OPZ_INCIDENT_CLOSED: '장애 대응 끝', OPZ_INCIDENT_STALE: '열린 장애 24시간 기록 없음', OPZ_REVIEW_DUE: '장애 되돌아보기 기한 넘김', OPZ_NL_REMIND: '이달 뉴스레터 없음',   // v10.556 · 557 (D288) — 위험감지 › 장애 대응 · 회원 › 월간 뉴스레터
   UPTIME_DOWN: '바깥 감시 — 응답 없음', UPTIME_RECOVERED: '바깥 감시 — 다시 응답함', UPT_INCIDENT: '장애 공지',   // v10.497 (D272 · docs/635) — 위험감지 › 가동 · 장애 공지
   SFX_DEVICE_MULTI: '같은 기기 여러 계정', SFX_RETENTION_DUE: '서류 보관 기한 다가옴 · 지남', SFX_RETENTION_REMOVE_FAIL: '파기한 서류 저장소 파일 못 지움',   // v10.546 · 547 (D285) — 위험감지 › 같은 기기 여러 계정 · 사무 › 서류 보관 기한
   MKT_CAMPAIGN_STUCK: '캠페인 보내기 멈춤',   // v10.483 (D268 · docs/621) — 회원 › 문자 · 메일 캠페인

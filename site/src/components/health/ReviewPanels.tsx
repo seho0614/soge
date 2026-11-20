@@ -5,6 +5,7 @@ import { apiGetPersonal } from '@/lib/api';
 import { Msgs } from '@/i18n/Msgs';
 import { QnaForm } from './QnaForm';
 import { ymdKst } from '@/lib/format';
+import { SmxReplyLine, type SmxReplyView } from '@/components/smx/ReplyLine';   // v10.555 (D287) 리뷰 답글
 
 interface ReviewList { count: number; avg: number | null; dist: Record<string, number>; items: Array<{ id: string; rating: number; body: string; createdAt: string; writer: string; mine: boolean; optionLabel: string | null }> }
 interface QnaList { count: number; items: Array<{ id: string; isPrivate: boolean; createdAt: string; writer: string; mine: boolean; body: string | null; answer: string | null; answeredAt: string | null; answered: boolean }> }
@@ -35,6 +36,7 @@ export async function ReviewsPanel({ code, rating }: { code: string; rating?: nu
               <li key={x.id} data-review={x.id}>
                 <div><span className="hlt-stars">{stars(x.rating)}</span> <b>{x.writer}</b> <span className="hlt-mut hlt-sm">{ymd(x.createdAt)}{x.optionLabel && x.optionLabel !== '단품' ? ` · ${x.optionLabel}` : ''}{x.mine ? ` · ${t('mine')}` : ''}</span></div>
                 <p>{x.body}</p>
+                <SmxReplyLine reply={(x as { reply?: SmxReplyView | null }).reply} mallLabel={tc('mall')} />
               </li>))}
           </ul>)}
       </>}
