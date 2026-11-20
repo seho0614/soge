@@ -86,8 +86,10 @@ export async function computeScores(db: DatabaseService, idsIn: string[], via: '
         const [a] = await db.query<{ email: string }>(`SELECT email::text AS email FROM accounts WHERE id = $1::uuid`, [id]);
         const why = reasons.map((r) => `${r.name} +${r.points}`).join(' · ');
         await db.query(
-          `INSERT INTO risk_alerts (rule_code, severity, subject, detail, reason, action) VALUES ('RSK-OPX', 'MEDIUM', $1, $2, $3, $4)`,
-          [`계정 ${maskEmail(a?.email) ?? '—'}`, `이상 거래 점수 ${score}(기준 ${threshold}) — 검수 대기 #${c.id}`, why.slice(0, 500), '위험감지 › 이상 거래 점수에서 확인']);
+          `INSERT INTO risk_alerts (rule_code, severity, subject, detail, reason, action)
+           SELECT 'RSK-OPX', 'MEDIUM', $1, $2, $3, $4
+            WHERE NOT EXISTS (SELECT 1 FROM risk_alerts WHERE rule_code = 'RSK-OPX' AND subject = $1 AND state IN ('OPEN', 'REVIEWING'))`,   // 자동 탐지(fn_risk_scan)와 같은 subject — 두 번 안 들어감
+          [`opx_case:${c.id}`, `이상 거래 점수 ${score}(기준 ${threshold}) — 검수 대기 #${c.id}`, why.slice(0, 500), '위험감지 › 이상 거래 점수에서 확인']);
         await db.query(
           `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at) VALUES ('OPX_RISK_HIGH', 'WARN', $1, $2::jsonb, clock_timestamp()) ON CONFLICT DO NOTHING`,
           [`이상 거래 점수 ${score} — 검수 대기 #${c.id}(위험감지 › 이상 거래 점수)`, JSON.stringify({ caseId: c.id, score, threshold, rules: reasons.map((r) => r.code) })]);

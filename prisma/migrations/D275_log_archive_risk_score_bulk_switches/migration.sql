@@ -300,8 +300,10 @@ DO $$ BEGIN
 END $$;
 
 INSERT INTO public.risk_rules (code, name, protects, source, false_positive, severity, is_active, sort_order, detect_sql, auto_detect)
-VALUES ('RSK-OPX', '이상 거래 점수 기준 넘음', '사기 · 도배 · 차단 우회 예방', '이상 거래 점수(v10.510 · 규칙 표 opx_risk_rules)의 합이 opx.risk_threshold 이상', '새 회원이 한 번에 매물을 여러 개 올린 정상 경우일 수 있습니다 — 까닭 보고 판단.', 'MEDIUM', true, 90, NULL, false)
+VALUES ('RSK-OPX', '이상 거래 점수 기준 넘음', '사기 · 도배 · 차단 우회 예방', '이상 거래 점수(v10.510 · 규칙 표 opx_risk_rules)의 합이 opx.risk_threshold 이상', '새 회원이 한 번에 매물을 여러 개 올린 정상 경우일 수 있습니다 — 까닭 보고 판단.', 'MEDIUM', true, 90,
+  'SELECT ''opx_case:'' || c.id AS subject, ''이상 거래 점수 '' || c.score || '' — 검수 대기 #'' || c.id AS detail FROM opx_risk_cases c WHERE c.state = ''OPEN''', true)
 ON CONFLICT (code) DO NOTHING;
+/* 잠든 규칙(S-01 · v_risk_dormant) 막음 — RSK-OPX 도 자동 탐지(열린 검수 대기)로 둠 · 정기 작업이 넣는 줄과 같은 subject 라 두 번 들어가지 않음 */
 
 /* ── ③ 일괄 처리 실행 기록 ── */
 CREATE TABLE IF NOT EXISTS public.opx_bulk_runs (
