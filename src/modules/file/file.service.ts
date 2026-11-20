@@ -29,6 +29,7 @@ const UPLOADERS: Record<string, string[]> = {
   NOTICE_ATTACHMENT: ['SUPER'],                              // v10.295 (D217) — 공지 첨부(그림 · PDF · 3개) · 공지를 볼 수 있는 사람은 GET /notices/{id}/files/{n}
   ACCT_EVIDENCE: ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.392 (D245) — 매입(SUPER · PAYOUT) · 경비 청구(운영자 누구나) 증빙 · 올린 사람 · SUPER · PAYOUT 만 엶(fn_file_can_read)
   CORP_DOC: ['SUPER', 'ADMIN'],   // v10.425 (D253) — 사내 문서(정관 · 등기부 · 인감 …) · 열람 SUPER · ADMIN · PAYOUT(fn_file_can_read)
+  HR_DOC: ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.458 ~ 461 (D262) — 인사 서류(의무교육 증빙 · 지원자 서류) · 열람 ADMIN · SUPER · 올린 사람만(지급 담당 · 세무사 · 검수 못 엶 · fn_file_can_read)
 };
 
 interface FileRow {

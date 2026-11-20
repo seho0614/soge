@@ -97,7 +97,7 @@ export function Collect() {
               </tr>
               {open === s.id && (
                 <tr key={s.id + '-f'}>
-                  <td colSpan={6} style={{ background: '#FAFBFD' }}>
+                  <td colSpan={6} style={{ background: 'var(--surface)' }}>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
                       {!s.robotsOk && (
                         <button className="btn-sm"

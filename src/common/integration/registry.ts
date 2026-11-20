@@ -86,6 +86,7 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     assume: null, adapter: 'REAL', files: ['src/modules/acct/taxinbox.ts'], doc: 'docs/569' },
   /* v10.454 (D261) 대량 이체 — 금융결제원 오픈뱅킹(KFTC) · 간주는 설정 acct.transfer_mode(assume.* 아님 · 오픈 차단 아님) · 보내기는 acct.transfer(처음 off) */
   { code: 'FIRMBANK', name: '대량 이체(금융결제원 오픈뱅킹)', dbRow: true, secretEnv: 'FIRMBANK_CLIENT_SECRET',
-    otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS'],
-    assume: null, adapter: 'REAL', files: ['src/modules/acct/transfer.ts'], doc: 'docs/591' },
+    otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS',
+               'FIRMBANK_USER_TOKEN', 'FIRMBANK_FEED_MAP'],   // v10.467 (D264) 은행 거래내역 자동 조회 — 사용자 토큰(연동 키) · 경로 · 칸 JSON
+    assume: null, adapter: 'REAL', files: ['src/modules/acct/transfer.ts', 'src/modules/acct/bankfeed.ts'], doc: 'docs/591' },
 ];

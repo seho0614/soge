@@ -13,6 +13,7 @@ import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
 import { exportTicket } from './OpsSafetyBoxes';
+import { openPrint } from '../../lib/printDoc';   // v10.468 (D264) 문서 PDF(인쇄)
 
 const won = (n: number | null | undefined) => (n == null ? '—' : Number(n).toLocaleString('ko-KR'));
 const kstDay = (add = 0) => new Date(Date.now() + 9 * 3600e3 + add * 86400e3).toISOString().slice(0, 10);
@@ -29,20 +30,16 @@ const save = (filename: string, csv: string) => {
 interface Line { label: string; amount: number }
 interface Slip { company: string; slip: { name: string; ym: string; payDay: string; joinedOn: string }; pay: Line[]; deductions: Line[]; companyShare: Line[]; net: number; totalDeductions: number; note: string }
 function printSlip(s: Slip) {
-  const w = window.open('', '_blank', 'width=760,height=1000');
-  if (!w) return;
+  /* v10.468 (D264 · docs/606) — 공용 인쇄 창(A4 · 「PDF 로 저장」 안내) · 지급 · 공제를 나란히(좁으면 아래로) · 파일 이름 「급여명세서_YYYY-MM_이름」 */
   const rows = (ls: Line[]) => ls.map((l) => `<tr><td>${esc(l.label)}</td><td class="r">${won(l.amount)}</td></tr>`).join('');
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>급여명세서 ${esc(s.slip.ym)}</title><style>
-    body{font-family:sans-serif;margin:24px;color:#111} h1{font-size:20px;text-align:center;letter-spacing:6px} table{width:100%;border-collapse:collapse;margin:8px 0}
-    th,td{border:1px solid #444;padding:4px 6px;font-size:12px} th{background:#eee} .r{text-align:right} .sum{font-weight:bold} small{color:#555}
-    @media print{button{display:none}}</style></head><body>
-    <h1>급여명세서</h1><p>${esc(s.company)}</p><p>${esc(s.slip.name)} · ${esc(s.slip.ym)} · 지급일 ${esc(s.slip.payDay)}</p>
-    <table><tr><th colspan="2">지급</th></tr>${rows(s.pay)}</table>
-    <table><tr><th colspan="2">공제</th></tr>${rows(s.deductions)}<tr class="sum"><td>공제 합계</td><td class="r">${won(s.totalDeductions)}</td></tr></table>
-    <table><tr class="sum"><td>실지급액</td><td class="r">${won(s.net)}</td></tr></table>
-    <table><tr><th colspan="2">회사 부담(참고)</th></tr>${rows(s.companyShare)}</table>
-    <p><small>${esc(s.note)}</small></p><p><button onclick="window.print()">인쇄</button></p></body></html>`);
-  w.document.close();
+  const body = `<h1>급 여 명 세 서</h1>
+    <table class="meta"><tr><td><b>${esc(s.company)}</b></td><td class="r">${esc(s.slip.ym)} · 지급일 ${esc(s.slip.payDay)}</td></tr><tr><td>성명 <b>${esc(s.slip.name)}</b></td><td class="r">입사일 ${esc(s.slip.joinedOn)}</td></tr></table>
+    <div class="cols"><table><thead><tr><th colspan="2">지급</th></tr></thead><tbody>${rows(s.pay)}</tbody></table>
+    <table><thead><tr><th colspan="2">공제</th></tr></thead><tbody>${rows(s.deductions)}<tr class="sum"><td>공제 합계</td><td class="r">${won(s.totalDeductions)}</td></tr></tbody></table></div>
+    <table class="total"><tr class="sum"><td>실지급액</td><td class="r">${won(s.net)}원</td></tr></table>
+    <table><thead><tr><th colspan="2">회사 부담(참고)</th></tr></thead><tbody>${rows(s.companyShare)}</tbody></table>
+    <p class="small">${esc(s.note)}</p>`;
+  if (!openPrint({ title: `급여명세서_${s.slip.ym}_${s.slip.name}`, body, kind: 'PAYSLIP' })) alert('팝업이 막혀 명세서 창을 열지 못했습니다 — 팝업 차단을 풀고 다시 누르십시오.');
 }
 
 /* ── v10.445 근태 ── */

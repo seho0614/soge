@@ -46,6 +46,9 @@ export class OrderCreateDto {
   /* v10.31 (시안 주문서 「배송 요청사항」) — 50자. 연락처 · 계좌 같은 글은 서버가 거릅니다(배송사로 넘어가는 글) */
   @ApiPropertyOptional({ maxLength: 50, example: '부재 시 경비실에 맡겨 주세요' })
   @IsOptional() @IsString() @MaxLength(50) shipMemo?: string;
+  /* v10.469 (D264) — 할인 쿠폰 코드(선택 · mall.coupon on 일 때만 · 직판 주문만). 대문자로 바꾼 뒤 DB CHECK 와 같은 ^[A-Z0-9-]{4,20}$ 로 다시 봅니다 */
+  @ApiPropertyOptional({ example: 'WELCOME-5000', description: '할인 쿠폰 코드 — 쿠폰 받기(mall.coupon)가 켜져 있을 때 · 직판 상품 주문만' })
+  @IsOptional() @IsString() @Matches(/^[A-Za-z0-9-]{4,20}$/) couponCode?: string;
 }
 
 export class AddressDto {

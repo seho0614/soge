@@ -5,6 +5,7 @@ import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, ORDER_OPEN_SQL, ORDERS_CLOSED_MSG, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction, sellerShipFee } from './health-policy';
 import { FEE_STATE_SQL, PAY_COLS } from './health-shop.shared';
+import { quoteCoupon, useCoupon } from './health-coupon';   // v10.469 (D264) 할인 쿠폰
 
 /**
  * 건강몰 — 주문 넣기 · 내 주문 · 배송지 · 장바구니 · 배송 조회(결제는 HealthPaymentService).
@@ -47,6 +48,9 @@ export class HealthCheckoutService {
     }
     /* 배송비 — 직판은 받지 않습니다(전 상품 무료 · 2026-10-08 · health-policy.ts). 입점 판매자는 그 판매자의 배송비 · 무료 기준(v10.167) */
     const ship = sellerShipFee(sellers[0], goods);
+    /* v10.469 (D264) — 쿠폰(선택): 직판 주문만 · 쿠폰이 걸린 상품 금액에서 · 배송비에는 걸지 않음 · 상품 금액을 넘지 않음(DB CHECK) · 한도는 DB 가 다시 셈 */
+    const coupon = d.couponCode ? await quoteCoupon(this.db, String(d.couponCode), me, lines.map((l) => ({ productId: l.productId, amount: Number(l.price) * l.qty })), sellers[0]?.type) : null;
+    const discount = coupon?.discount ?? 0;
 
     /* 20261002 — 한 트랜잭션으로 묶습니다. 전에는 재고 트리거가 422 로 막아도
      * 주문 머리 행이 남아 **품목 없는 주문**이 생기고 그 주문에 결제까지 걸 수 있었습니다(실측). */
@@ -80,10 +84,10 @@ export class HealthCheckoutService {
     }
     const [o] = await this.db.query<any>(
       `INSERT INTO hlt_orders (order_no, account_id, address_id,
-                               goods_amount, ship_fee, total, ship_memo)
-       VALUES (fn_next_hlt_order_no(), $1, $2, $3, $4, $5, $6)
+                               goods_amount, ship_fee, total, ship_memo, discount_amount)
+       VALUES (fn_next_hlt_order_no(), $1, $2, $3, $4, $5, $6, $7)
        RETURNING id, order_no AS "orderNo", total, status`,
-      [me, d.addressId, goods, ship, goods + ship, memo || null]);
+      [me, d.addressId, goods, ship, goods + ship - discount, memo || null, discount]);   // v10.469 (D264) 쿠폰 할인
 
     /* 옵션 재고 확인 · 옵션 이름 복사(fn_hlt_stock_guard) · 재고 빼기(fn_hlt_stock_take)는 DB 가 합니다 */
     for (const l of lines) {
@@ -93,6 +97,9 @@ export class HealthCheckoutService {
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [o.id, l.productId, l.optionId, l.qty, l.price, Number(l.price) * l.qty, l.withdrawalCode]);
     }
+
+    /* v10.469 (D264) — 쿠폰 쓴 기록(주문 하나에 하나) · DB 가 쿠폰 줄을 잠그고 한도 · 직판 · 금액을 다시 확인(넘으면 주문째 되돌아감) */
+    if (coupon) await useCoupon(this.db, coupon, o.id, me);
 
     /* 주문한 옵션은 장바구니에서 뺍니다 — 전에는 남아 있어 같은 것을 또 주문하게 됐습니다 */
     await this.db.query(
@@ -124,7 +131,10 @@ export class HealthCheckoutService {
         [o.id, touch, me, lines.map((l) => l.code), AFF_WINDOW_HOURS]);
     }
 
-    return { ...o, shipFee: ship, note: ship === 0 ? '배송비는 없습니다(전 상품 무료).' : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비).` };
+    return { ...o, shipFee: ship, discount, couponCode: coupon?.code ?? null,   // v10.469 (D264) — 안내 문장은 통째로(번역 틀이 한 문장씩 맞춤)
+             note: discount > 0
+               ? (ship === 0 ? `배송비는 없습니다(전 상품 무료). 쿠폰 ${discount.toLocaleString('ko-KR')}원 할인.` : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비). 쿠폰 ${discount.toLocaleString('ko-KR')}원 할인.`)
+               : (ship === 0 ? '배송비는 없습니다(전 상품 무료).' : `배송비 ${ship.toLocaleString('ko-KR')}원이 포함되어 있습니다(판매자 배송비).`) };
     });
   }
 

@@ -6791,6 +6791,315 @@
     "GET /admin/acct/party-ledger/{id}/export"
    ],
    "note": "2026-11-20 v10.456 (D261 · docs/593) 거래처별 받을 돈 · 갚을 돈 기초 · 늘어남 · 줄어듦 · 기말 · 한 거래처 줄 · CSV(내려받기 승인 ACCT_LEDGER)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRE-010",
+   "name": "회계 법정 의무교육",
+   "url": "/admin/hr-training",
+   "apis": [
+    "GET /admin/hr/training",
+    "GET /admin/hr/training/kinds",
+    "PUT /admin/hr/training/kinds/{code}",
+    "POST /admin/hr/training/records",
+    "POST /admin/hr/training/records/{id}/decide",
+    "POST /admin/hr/training/records/{id}/void"
+   ],
+   "note": "2026-11-20 v10.458 (D262 · docs/596) 법정 의무교육 — 종류 4개(일반 원칙 값 · SUPER 고침) · 직원별 이수 · 증빙(HR_DOC · ADMIN · SUPER · 본인만 엶) · 집합 등록 · 제출 확인(본인 아님) · 무효 · 기한 알림 HR_TRAINING_DUE · OVERDUE"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRE-020",
+   "name": "회계 근로계약서",
+   "url": "/admin/hr-contract",
+   "apis": [
+    "GET /admin/hr/contracts",
+    "GET /admin/hr/contracts/templates",
+    "POST /admin/hr/contracts/templates",
+    "POST /admin/hr/contracts",
+    "GET /admin/hr/contracts/{id}",
+    "POST /admin/hr/contracts/{id}/send",
+    "POST /admin/hr/contracts/{id}/check",
+    "POST /admin/hr/contracts/{id}/cancel"
+   ],
+   "note": "2026-11-20 v10.459 (D262 · docs/597) 근로계약서 — 양식(새 판) · 초안(본문 · 지문 고정) · 보내기(hr.contract_esign 처음 off = 간주 · on = 전자계약 ESIGN 어댑터 · 키 없으면 NOT_READY) · 상태 확인 · 취소 · 서명본 인쇄"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRE-030",
+   "name": "회계 인사 평가",
+   "url": "/admin/hr-review",
+   "apis": [
+    "GET /admin/hr/reviews",
+    "POST /admin/hr/reviews",
+    "GET /admin/hr/reviews/{id}",
+    "POST /admin/hr/reviews/{id}/advance",
+    "PUT /admin/hr/reviews/{id}/employees/{employeeId}"
+   ],
+   "note": "2026-11-20 v10.460 (D262 · docs/598) 인사 평가 — 분기 차례 목표 → 평가 → 닫음 · 직원별 목표 · 자기 · 상사 점수(본인 아님) · 가중 평균 · 등급 제안(hr.review_grade_cuts) · 확정"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "id": "SB-ADM-HRE-040",
+   "name": "회계 채용",
+   "url": "/admin/hr-recruit",
+   "apis": [
+    "GET /admin/hr/recruit",
+    "POST /admin/hr/recruit/postings",
+    "PUT /admin/hr/recruit/postings/{id}",
+    "GET /admin/hr/recruit/postings/{id}",
+    "POST /admin/hr/recruit/applicants",
+    "POST /admin/hr/recruit/applicants/{id}/stage",
+    "POST /admin/hr/recruit/applicants/{id}/interviews",
+    "PUT /admin/hr/recruit/interviews/{id}",
+    "POST /admin/hr/recruit/applicants/{id}/hire",
+    "POST /admin/hr/recruit/applicants/{id}/purge"
+   ],
+   "note": "2026-11-20 v10.461 (D262 · docs/599) 채용 — 공고 · 지원자(이름 · 메일 또는 휴대폰 · 서류 HR_DOC 3개 · ADMIN · SUPER · 올린 사람만 엶) · 단계 · 면접 · 합격 → 직원 대장 · 불합격 · 철회 서류 자동 파기(hr.applicant_retention_days · 매일 04:50 · 파기 기록 · 감사 HR_APPLICANT_PURGE)"
+  },
+  {
+   "group": "ADM",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-HRM-050",
+   "id": "SB-ADM-HRE-050",
+   "name": "사무 내 인사 — 의무교육 · 계약서 · 평가",
+   "url": "/admin/my-hr/more",
+   "apis": [
+    "GET /admin/me/hr/more",
+    "POST /admin/me/hr/training",
+    "GET /admin/me/hr/contracts/{id}",
+    "POST /admin/me/hr/contracts/{id}/sign",
+    "PUT /admin/me/hr/reviews/{cycleId}/goals",
+    "POST /admin/me/hr/reviews/{cycleId}/self"
+   ],
+   "note": "2026-11-20 v10.458 ~ 460 (D262) 내 인사 아래 — 의무교육 이수 제출(증빙) · 받은 근로계약서 읽고 서명(간주 · 법적 전자서명 아님 표시) · 서명본 · 분기 목표 · 자기 평가(본인 것만 · 세무사 빠짐)"
+  },
+  {
+   "id": "SB-ADM-OFC-010",
+   "name": "사무 사내 일정",
+   "group": "ADM",
+   "url": "/admin/ofc-calendar",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/office/calendar",
+    "POST /admin/office/events",
+    "PUT /admin/office/events/{id}",
+    "POST /admin/office/events/{id}/remove"
+   ],
+   "note": "2026-11-20 v10.462 (D263 · docs/600) 달 · 주 보기 — 휴가 · 품의 쓸 날 · 신고 기한 · 계약 만기 · 급여일 · 출장 · 업무 기한(지금 표에서 읽음) · 직접 일정(개인 · 회사)"
+  },
+  {
+   "id": "SB-ADM-OFC-020",
+   "name": "사무 업무 요청",
+   "group": "ADM",
+   "url": "/admin/ofc-tasks",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/office/tasks",
+    "GET /admin/office/tasks/{id}",
+    "POST /admin/office/tasks",
+    "POST /admin/office/tasks/{id}/move",
+    "POST /admin/office/tasks/{id}/assign",
+    "POST /admin/office/tasks/{id}/cancel",
+    "POST /admin/office/tasks/{id}/comments"
+   ],
+   "note": "2026-11-20 v10.463 (D263 · docs/601) 요청 → 진행 → 완료 칸반 · 담당 바꾸기 · 취소 · 다시 열기 · 댓글 · 기한 지남 운영 알림(OFC_TASK_OVERDUE · 수만)"
+  },
+  {
+   "id": "SB-ADM-OFC-030",
+   "name": "사무 출장",
+   "group": "ADM",
+   "url": "/admin/ofc-trips",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/office/trips",
+    "GET /admin/office/trips/{id}",
+    "POST /admin/office/trips",
+    "POST /admin/office/trips/{id}/cancel",
+    "POST /admin/office/trips/{id}/settle",
+    "PUT /admin/office/trip-standards"
+   ],
+   "note": "2026-11-20 v10.464 (D263 · docs/602) 출장 신청 = 품의(EXP_TRAVEL) · 다녀온 뒤 여비 정산 = 경비 청구 · 두 번 청구 막기(DB) · 여비 기준 SUPER"
+  },
+  {
+   "id": "SB-ADM-OFC-040",
+   "name": "사무 내 알림",
+   "group": "ADM",
+   "url": "/admin/ofc-notify",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/me/notify",
+    "PUT /admin/me/notify",
+    "GET /admin/me/notify/feed"
+   ],
+   "note": "2026-11-20 v10.465 (D263 · docs/603) 브라우저 알림 — 화면을 열어 둔 동안 Notification API · 계정마다 켬(처음 꺼짐) · 급한 운영 알림 · 나에게 온 결재 · 업무 요청 · 서버 푸시 키 없음"
+  },
+  {
+   "id": "SB-ADM-SAL-010",
+   "name": "회계 영업 기회(CRM)",
+   "group": "ADM",
+   "url": "/admin/sal-crm",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/sales/opps",
+    "GET /admin/sales/opps/{id}",
+    "POST /admin/sales/opps",
+    "PUT /admin/sales/opps/{id}",
+    "POST /admin/sales/opps/{id}/stage",
+    "POST /admin/sales/opps/{id}/quote",
+    "POST /admin/sales/opps/{id}/note"
+   ],
+   "note": "2026-11-20 v10.466 (D264 · docs/604) 거래처별 영업 기회 · 단계 상담 → 견적(견적서 연결 · 초안 만들기) → 계약 → 성사 · 실패(사유) · 예상 매출 · 담당 · 다음 할 일(SAL_OPP_DUE 매일 08:50) · 파이프라인 · 기록(쌓기만)"
+  },
+  {
+   "id": "SB-ADM-SAL-020",
+   "name": "회계 은행 거래내역 자동 조회",
+   "group": "ADM",
+   "url": "/admin/acct-bankfeed",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/bank-feed",
+    "POST /admin/acct/bank-feed/accounts",
+    "PUT /admin/acct/bank-feed/accounts/{id}",
+    "POST /admin/acct/bank-feed/run"
+   ],
+   "note": "2026-11-20 v10.467 (D264 · docs/605) 금융결제원 오픈뱅킹(FIRMBANK 재사용 · 사용자 토큰 FIRMBANK_USER_TOKEN) 거래내역조회 → 은행 맞추기 자동 들여옴 · acct.bank_feed 처음 off · 간주(ASSUME) · 매일 06:40 · 같은 줄 · CSV 로 올린 줄 건너뜀"
+  },
+  {
+   "id": "SB-ADM-SAL-030",
+   "name": "문서 인쇄 · PDF 로 저장(견적서 · 거래명세서 · 발주서 · 급여명세서)",
+   "group": "ADM",
+   "url": "/admin/acct-docs/print",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "PAYOUT",
+    "ADMIN",
+    "ACCOUNTANT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-ACC-380",
+   "apis": [
+    "GET /admin/acct/sales-docs/{id}",
+    "GET /admin/acct/sales-docs/po/{id}/print",
+    "GET /admin/acct/payslips/{lineId}",
+    "GET /admin/me/hr/payslips/{lineId}"
+   ],
+   "note": "2026-11-20 v10.468 (D264 · docs/606) 새 창 인쇄용 화면(web/src/lib/printDoc.ts) · A4 · @media print · 「PDF 로 저장」(브라우저 인쇄 → PDF) 안내 · 서버 PDF 라이브러리 없음 · 회계 › 견적 · 명세서 「인쇄」 · 급여명세서 「인쇄」 · 내 인사 「보기 · 인쇄」에서 열림"
+  },
+  {
+   "id": "SB-ADM-SAL-040",
+   "name": "소개몰 쿠폰 · 기획전",
+   "group": "ADM",
+   "url": "/admin/hlt-coupons",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/health/coupons",
+    "POST /admin/health/coupons",
+    "PUT /admin/health/coupons/{id}",
+    "GET /admin/health/coupons/{id}/uses",
+    "POST /admin/health/coupons/quote",
+    "POST /admin/health/promotions",
+    "GET /admin/health/promotions/{id}",
+    "PUT /admin/health/promotions/{id}"
+   ],
+   "note": "2026-11-20 v10.469 (D264 · docs/607) 정액 · 정률 쿠폰(최소 주문 · 전체 · 1인 한도 · 기간 · 기획전 상품만) · 직판 주문만 · 주문 couponCode(mall.coupon 처음 off) · 취소 · 반품 되돌림(DB) · 매출할인 전표 MALL_DISCOUNT(계정 초안 · 세무사 확인)"
   }
  ],
  "deferred": [

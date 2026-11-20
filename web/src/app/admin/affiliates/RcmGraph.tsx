@@ -63,7 +63,7 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
     return (
       <ul className="rcm-ul" style={{ listStyle: 'none', paddingLeft: 18, margin: '4px 0 0' }}>
         {xs.map((x) => (
-          <li key={x.k} data-rcm-gen={x.gen} style={hit.includes(x.k) ? { background: '#fff3d6' } : undefined}>
+          <li key={x.k} data-rcm-gen={x.gen} style={hit.includes(x.k) ? { background: 'var(--ad-w)' } : undefined}>
             {x.children > 0
               ? <details open={open.has(x.k)} onToggle={(e) => { const o = (e.target as HTMLDetailsElement).open; if (o !== open.has(x.k)) toggle(x.k); }}>
                   <summary>{listLabel(x)} <span className="dim">· 그분이 추천한 분 {x.children}명</span></summary>{open.has(x.k) && branch(x.k)}</details>
@@ -110,9 +110,9 @@ export function RcmGraph({ rootName, nodes, onSelect, listLabel }: {
                 return (
                   <g key={k} transform={`translate(${p.x},${p.y})`} {...(n ? { 'data-rcm-node': n.id } : {})} style={{ cursor: n ? 'pointer' : 'default' }}
                      onClick={() => { if (n) pick(n); }}>
-                    <rect width={W} height={H} rx={8} fill={k === 0 ? 'var(--accent)' : '#fff'} stroke={stroke} strokeWidth={hit.includes(k) || sel === k ? 2.5 : 1.2} />
-                    <text x={W / 2} y={20} textAnchor="middle" fontSize={13} fontWeight={700} fill={k === 0 ? '#fff' : 'currentColor'}>{k === 0 ? rootName : n!.name}</text>
-                    <text x={W / 2} y={37} textAnchor="middle" fontSize={11} fill={k === 0 ? '#fff' : 'var(--muted, #777)'}>{k === 0 ? '고른 회원' : `${n!.joined}${n!.verified ? ' · 인증' : ''}${n!.status !== 'ACTIVE' ? ` · ${n!.status}` : ''}`}</text>
+                    <rect width={W} height={H} rx={8} fill={k === 0 ? 'var(--accent)' : 'var(--paper)'} stroke={stroke} strokeWidth={hit.includes(k) || sel === k ? 2.5 : 1.2} />
+                    <text x={W / 2} y={20} textAnchor="middle" fontSize={13} fontWeight={700} fill={k === 0 ? 'var(--paper)' : 'currentColor'}>{k === 0 ? rootName : n!.name}</text>
+                    <text x={W / 2} y={37} textAnchor="middle" fontSize={11} fill={k === 0 ? 'var(--paper)' : 'var(--muted, #777)'}>{k === 0 ? '고른 회원' : `${n!.joined}${n!.verified ? ' · 인증' : ''}${n!.status !== 'ACTIVE' ? ` · ${n!.status}` : ''}`}</text>
                     {n?.reward && <text x={W / 2} y={53} textAnchor="middle" fontSize={11} fontWeight={700} fill={n.reward.state === 'GOT' ? 'var(--ok)' : n.reward.state === 'WAIT' ? 'var(--sgb-or-text)' : 'var(--muted, #777)'} data-rcm-reward={n.reward.state}>{RW(n.reward)}</text>}
                     {n && n.children > 0 && (
                       <text x={W - 8} y={14} textAnchor="end" fontSize={12} fontWeight={700} fill="var(--accent)" onClick={(e) => { e.stopPropagation(); toggle(k); }} data-rcm-toggle={n.id}>{closed ? `+${n.children}` : '−'}</text>

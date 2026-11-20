@@ -806,3 +806,49 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
   .ad-tr-dim { display: block; position: fixed; inset: 0; background: rgba(15, 23, 42, .35); z-index: 39; }
   .ad-tr-fold { display: none; }
 }
+
+/* ── v10.470 (docs/608) 운영 화면 다크 모드 — 색은 tokens.css 의 :root[data-theme='dark'] 토큰 · 여기는 # 색 없이 토큰만 ──
+ *   앞머리 :where(:root[data-theme='dark']) 는 무게(specificity)가 0 — 그래서 아래 규칙은 위의 같은 이름 규칙을 「흰 칸 · 연한 상태 칸 숫자 대신 토큰」으로
+ *   딱 그 자리만 바꾸고, 더 좁은 규칙(.on · .warn · :hover)은 지금처럼 이깁니다. 밝은 화면(data-theme 없음 · light)에서는 아무것도 바뀌지 않습니다.
+ *   상단바(.bo-head)는 어두운 남색 그대로 둡니다. */
+.ad-theme { font-size: 14px; line-height: 1; padding: 5px 9px; }
+/* 흰 칸 → 카드 색 */
+:where(:root[data-theme='dark']) .card, :where(:root[data-theme='dark']) .row, :where(:root[data-theme='dark']) .ad-tile,
+:where(:root[data-theme='dark']) .stat, :where(:root[data-theme='dark']) .kpi4 > div, :where(:root[data-theme='dark']) .tbl,
+:where(:root[data-theme='dark']) .ad-tw, :where(:root[data-theme='dark']) .btn-no, :where(:root[data-theme='dark']) .btn-no.btn-sm,
+:where(:root[data-theme='dark']) .ad-cap, :where(:root[data-theme='dark']) .ad-mcard, :where(:root[data-theme='dark']) .kpi,
+:where(:root[data-theme='dark']) .ad-rc, :where(:root[data-theme='dark']) .ad-panel, :where(:root[data-theme='dark']) .ad-steps > div,
+:where(:root[data-theme='dark']) .ad-alert, :where(:root[data-theme='dark']) .ad-nsteps > li, :where(:root[data-theme='dark']) .ad-fset,
+:where(:root[data-theme='dark']) .ad-mrow, :where(:root[data-theme='dark']) .ad-prof, :where(:root[data-theme='dark']) .ad-kc4 > div,
+:where(:root[data-theme='dark']) .tbl.kv th, :where(:root[data-theme='dark']) .kpi4.ad-krows > div, :where(:root[data-theme='dark']) .ad-stat > div,
+:where(:root[data-theme='dark']) .tbl input.num, :where(:root[data-theme='dark']) .tbl input.inp-sm, :where(:root[data-theme='dark']) .tbl select,
+:where(:root[data-theme='dark']) .ad-snb button, :where(:root[data-theme='dark']) .subtabs button, :where(:root[data-theme='dark']) .ad-flt button,
+:where(:root[data-theme='dark']) .ad-guxu button { background: var(--paper); }
+:where(:root[data-theme='dark']) :where(.bo-main) :where(input:not([type]), input[type=text], input[type=search], input[type=email], input[type=number],
+  input[type=date], input[type=datetime-local], input[type=url], input[type=tel], select, textarea) { background: var(--paper); color: var(--ink); }
+/* 노랑(주의) 칸 */
+:where(:root[data-theme='dark']) .row-warn, :where(:root[data-theme='dark']) .ad-tile.warn, :where(:root[data-theme='dark']) .stat.warn,
+:where(:root[data-theme='dark']) .badge-urgent, :where(:root[data-theme='dark']) .pill-warning, :where(:root[data-theme='dark']) .ad-chip.warn,
+:where(:root[data-theme='dark']) .ad-flg.warn, :where(:root[data-theme='dark']) .ad-bg.wait, :where(:root[data-theme='dark']) .ad-mrow.warn {
+  background: var(--st-warn-bg); border-color: var(--st-warn-line); }
+:where(:root[data-theme='dark']) .tbl tr.hl td, :where(:root[data-theme='dark']) .ad-stat > div.hi { background: var(--st-warn-bg); }
+/* 빨강(막힘 · 오류) 칸 */
+:where(:root[data-theme='dark']) .pill-danger, :where(:root[data-theme='dark']) .notice.err, :where(:root[data-theme='dark']) .ad-nt.err,
+:where(:root[data-theme='dark']) .card.warn.flash-err, :where(:root[data-theme='dark']) .form-error, :where(:root[data-theme='dark']) .alert-critical,
+:where(:root[data-theme='dark']) .confirm, :where(:root[data-theme='dark']) .ad-qrow.over, :where(:root[data-theme='dark']) .ad-chip.no,
+:where(:root[data-theme='dark']) .ad-bg.no, :where(:root[data-theme='dark']) .ad-nt.bad {
+  background: var(--st-bad-bg); border-color: var(--st-bad-line); }
+:where(:root[data-theme='dark']) .tbl tr.bad td, :where(:root[data-theme='dark']) .ad-stat > div.bad { background: var(--st-bad-bg); }
+:where(:root[data-theme='dark']) .ad-alert.hi { border-color: var(--st-bad-line); }
+/* 초록(됨) 칸 */
+:where(:root[data-theme='dark']) .badge-verified, :where(:root[data-theme='dark']) .form-ok, :where(:root[data-theme='dark']) .ad-chip.ok,
+:where(:root[data-theme='dark']) .ad-flg.ok, :where(:root[data-theme='dark']) .ad-bg.ok {
+  background: var(--st-ok-bg); border-color: var(--st-ok-line); }
+:where(:root[data-theme='dark']) .ad-nsteps > li.done .n, :where(:root[data-theme='dark']) .ad-stat > div.ok { background: var(--st-ok-bg); }
+/* 밝아진 남색 · 초록 · 본문색 바탕 위 글자 — 흰 글자 대신 어두운 남색(on-point) · 카드 색 */
+:where(:root[data-theme='dark']) .ad-snb button.on, :where(:root[data-theme='dark']) .subtabs button.on, :where(:root[data-theme='dark']) .ad-flt button.on,
+:where(:root[data-theme='dark']) .ad-bg.hi, :where(:root[data-theme='dark']) .ad-nsteps > li.on .n, :where(:root[data-theme='dark']) .ad-prof .av,
+:where(:root[data-theme='dark']) .ad-gnb button:hover { color: var(--sgb-on-point); }
+:where(:root[data-theme='dark']) .ad-guxu button.on, :where(:root[data-theme='dark']) .ad-tr-leaf.on small { color: var(--paper); }
+/* 상단바 위 「☰ 메뉴」 — 원래 글자색이 --paper 라 다크에서 어두워지므로 상단바 글자색으로 */
+:where(:root[data-theme='dark']) .ad-tr-tg { color: var(--ahd-fg); }

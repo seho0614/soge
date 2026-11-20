@@ -93,7 +93,7 @@ export function Events() {
                 </tr>
                 {open === u.id && (
                   <tr key={u.id + '-f'}>
-                    <td colSpan={5} style={{ background: '#FAFBFD' }}>
+                    <td colSpan={5} style={{ background: 'var(--surface)' }}>
                       <input value={note} maxLength={200}
                         placeholder="무엇을 어떻게 드렸는지 적어 주십시오. 참여자에게 전달됩니다."
                         onChange={(e) => setNote(e.target.value)}

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
 import { captureRef } from './lib/api';
+import { initTheme } from './components/ThemeToggle';   // v10.470 (docs/608) 다크 모드
 import './styles/sgb-tokens.css';   // v10.67 — 디자인 시트(사용자 웹과 같은 파일)
 import './styles/sgb-buttons.css';   // v10.68 — 단추 3종 값(사용자 웹과 같은 파일)
 import './styles/admin-fonts.css';
@@ -11,6 +12,7 @@ import './styles/app.css';
 
 // 최초 유입은 ?ref= 로 옵니다. 저장해 두고 이후 요청부터 헤더로 보냅니다 (INV-2)
 captureRef();
+initTheme();   // v10.470 — <html data-theme> 를 이 브라우저에 저장된 값으로(처음은 밝게)
 
 const qc = new QueryClient({
   defaultOptions: {

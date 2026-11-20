@@ -48,8 +48,13 @@ import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D25
 import { dunningJob } from '../modules/acct/dunning';   // v10.436 (D256)
 import { acctAccrualJob } from '../modules/acct/accrual';   // v10.439 (D257)
 import { acctCardLimitJob } from '../modules/acct/cardlimit';   // v10.453 (D261)
+import { salOppRemindJob } from '../modules/acct/crm';   // v10.466 (D264)
+import { acctBankFeedJob } from '../modules/acct/bankfeed';   // v10.467 (D264)
+import { trainingDueJob } from '../modules/acct/hr-training';   // v10.458 (D262)
+import { applicantPurgeJob } from '../modules/acct/hr-recruit';   // v10.461 (D262)
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
+import { ofcTaskDueJob } from '../modules/acct/ofc-tasks';   // v10.463 (D263)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -81,9 +86,14 @@ export type JobName =
   | 'ops_report'      // v10.412 (D250)
   | 'acct_insurance'  // v10.422 (D252)
   | 'corp_doc_due'    // v10.425 (D253)
+  | 'ofc_task_due'    // v10.463 (D263)
   | 'acct_biz_check'  // v10.431 (D254)
   | 'acct_dunning'    // v10.436 (D256)
   | 'acct_card_limit' // v10.453 (D261)
+  | 'sal_opp_remind'  // v10.466 (D264)
+  | 'acct_bank_feed'  // v10.467 (D264)
+  | 'hr_training_due' // v10.458 (D262)
+  | 'hr_applicant_purge' // v10.461 (D262)
   | 'acct_accrual';   // v10.439 (D257)
 
 export interface JobResult {
@@ -801,6 +811,13 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.463 (D263 · docs/601) — 기한 지난 업무 요청 수를 OFC_TASK_OVERDUE 하나로(제목 없이 수만 · 하루 한 번 · 0 이거나 꺼지면 풀림) */
+      case 'ofc_task_due': {
+        const r = await ofcTaskDueJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       /* v10.425 (D253 · docs/562) — 사내 문서 만료 N일 전 CORP_DOC_DUE(판 하나에 한 번) · 새 판 · 보관 끝이면 풀림 */
       case 'corp_doc_due': {
         const r = await corpDocDueJob(this.db);
@@ -829,10 +846,38 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.466 (D264 · docs/604) — 다음 할 날짜가 된 열린 영업 기회 → SAL_OPP_DUE(기회 · 날짜마다 한 번 · 닫거나 날짜를 바꾸면 풀림) */
+      case 'sal_opp_remind': {
+        const r = await salOppRemindJob(this.db);
+        affected = r.made.length; detail = r;
+        break;
+      }
+
+      /* v10.467 (D264 · docs/605) — acct.bank_feed on 일 때만 · 등록 계좌마다 거래내역조회(ASSUME 간주 · LIVE 금융결제원) → 은행 맞추기 · 실패 ACCT_BANK_FEED_FAIL */
+      case 'acct_bank_feed': {
+        const r = await acctBankFeedJob(this.db);
+        affected = r.runs.length; detail = r;
+        break;
+      }
+
       /* v10.453 (D261 · docs/590) — 이번 달 법인카드 사용이 한도의 acct.card_alert_pct 넘으면 ACCT_CARD_LIMIT(카드마다 한 번 · 한도 넘으면 한 번 더 · 지난달 풀림) */
       case 'acct_card_limit': {
         const r = await acctCardLimitJob(this.db);
         affected = r.made.length; detail = r;
+        break;
+      }
+
+      /* v10.458 (D262 · docs/596) — 법정 의무교육 기간 끝 N일(hr.training_due_days) 전 미이수 HR_TRAINING_DUE · 지난 기간 미이수 HR_TRAINING_OVERDUE(종류 · 기간마다 한 번 · 모두 이수하면 풀림) */
+      case 'hr_training_due': {
+        const r = await trainingDueJob(this.db);
+        affected = r.made; detail = { days: r.days, made: r.made, resolved: r.resolved };
+        break;
+      }
+
+      /* v10.461 (D262 · docs/599) — 파기 예정일 지난 불합격 · 철회 지원자 서류 파일 · 연락처 · 메모 파기 · 파기 기록 · 감사 기록 HR_APPLICANT_PURGE */
+      case 'hr_applicant_purge': {
+        const r = await applicantPurgeJob(this.db);
+        affected = r.purged; detail = r;
         break;
       }
 

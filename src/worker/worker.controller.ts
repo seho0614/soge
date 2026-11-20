@@ -40,8 +40,13 @@ const JOBS = [
   'acct_dunning',       /* v10.436 (D256) 미수금 독촉(acct.dunning on 일 때만 메일) · 지난 입금 예정 표시 — 매일 09:35 */
   'acct_accrual',       /* v10.439 (D257) 고정비 자동 전표 · 매입 맞춤 · 빠진 매입 알림 — 매일 01:20 */
   'acct_card_limit',    /* v10.453 (D261) 법인카드 한도 알림 — 매일 09:40 · acct.card_alert on 일 때 */
+  'sal_opp_remind',     /* v10.466 (D264) 영업 기회 다음 할 일 알림 — 매일 08:50 · sales.opp_remind on 일 때 */
+  'acct_bank_feed',     /* v10.467 (D264) 은행 거래내역 자동 조회 — 매일 06:40 · acct.bank_feed on 일 때만(처음 off) */
+  'hr_training_due',    /* v10.458 (D262) 법정 의무교육 기한 알림 — 매일 09:45 */
+  'hr_applicant_purge', /* v10.461 (D262) 불합격 · 철회 지원자 서류 자동 파기 — 매일 04:50 */
   'acct_biz_check',     /* v10.431 (D254) 거래처 휴폐업 다시 조회 — 매일 06:10 · 스위치 on 일 때만 */
   'corp_doc_due',       /* v10.425 (D253) 사내 문서 만료 알림 — 매일 09:30 */
+  'ofc_task_due',       /* v10.463 (D263) 업무 요청 기한 지남 수 알림 — 매일 09:10 · ofc.task_due_alert on 일 때 */
   'acct_insurance',     /* v10.422 (D252) 4대보험 취득 · 상실 신고 기한 알림 — 매일 09:35 */
   'ops_board_purge',    /* v10.286 (D213) 운영자 게시판 보관 기간 정리 — 매일 04:40 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */

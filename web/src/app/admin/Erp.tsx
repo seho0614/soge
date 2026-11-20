@@ -11,6 +11,7 @@ import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
+import { openPrint } from '../../lib/printDoc';   // v10.468 (D264) 문서 PDF(인쇄)
 
 const won = (n: number | null | undefined) => (n == null ? '—' : Number(n).toLocaleString('ko-KR'));
 const kstDay = (add = 0) => new Date(Date.now() + 9 * 3600e3 + add * 86400e3).toISOString().slice(0, 10);
@@ -19,13 +20,8 @@ const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&
 
 /** 인쇄 — 새 창에 문서만 그려 브라우저 인쇄(종이 · PDF 저장) */
 function printHtml(title: string, body: string) {
-  const w = window.open('', '_blank', 'width=900,height=1000');
-  if (!w) return;
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
-    body{font-family:sans-serif;margin:24px;color:#111} h1{font-size:22px;text-align:center;letter-spacing:8px} table{width:100%;border-collapse:collapse;margin:8px 0}
-    th,td{border:1px solid #444;padding:4px 6px;font-size:12px} th{background:#eee} .r{text-align:right} .meta td{border:none;padding:2px 4px} .sum{font-weight:bold}
-    @media print{button{display:none}}</style></head><body>${body}<p><button onclick="window.print()">인쇄</button></p></body></html>`);
-  w.document.close();
+  /* v10.468 (D264 · docs/606) — 공용 인쇄 창: A4 · 머리 · 공급자 도장 칸 · 「PDF 로 저장」(브라우저 인쇄 → PDF) 안내 · 서버 PDF 라이브러리 없음 */
+  if (!openPrint({ title, body, kind: title.startsWith('발주서') ? 'PO' : 'SALES', sign: '공급자' })) alert('팝업이 막혀 인쇄 창을 열지 못했습니다 — 주소창 오른쪽 팝업 차단을 풀고 다시 누르십시오.');
 }
 
 interface Company { name: string | null; bizNo: string | null; ceo: string | null; address: string | null; phone: string | null }

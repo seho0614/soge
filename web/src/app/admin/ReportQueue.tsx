@@ -113,7 +113,7 @@ export function ReportQueue() {
                 </tr>
                 {open === r.id && (
                   <tr>
-                    <td colSpan={6} style={{ background: '#FAFBFD' }}>
+                    <td colSpan={6} style={{ background: 'var(--surface)' }}>
                       <div style={{ padding: '4px 0' }}>
                         <textarea
                           rows={2} value={text} maxLength={500}

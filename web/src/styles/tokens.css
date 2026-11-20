@@ -111,3 +111,65 @@ h1, h2, h3 { font-family: var(--sgb-font-title); }
   --ok-w: #ECFDF5;
   --c-danger: var(--danger);
 }
+
+/* ── v10.470 (docs/608) 운영 화면 다크 모드 — 상단바 해 · 달 단추가 <html data-theme="dark"> 를 붙일 때만 ──────────────
+ *   · 처음은 밝게(운영체제 설정을 따라가지 않음) · 사용자 웹(site/)은 이 파일을 읽지 않아 그대로.
+ *   · sgb-tokens.css 는 사용자 웹과 글자 그대로 같은 사본이라(test_v1067) 고치지 않고, 여기서 같은 이름(--sgb-…)을 덮어씀.
+ *   · 상태 칸 바탕 · 테두리 이름(--st-…)은 밝은 값도 함께 둠 — app.css 의 옛 #FFFBEB · #FEF2F2 · #ECFDF5 칸이 다크에서 이 이름으로 바뀜.
+ *   · 글자 대비(WCAG 4.5 이상)는 docs/608 2절 표 — 흐린 글자(ink-3)도 가장 어두운 칸 · 연한 상태 칸 모두에서 5.4 이상. */
+:root {
+  --st-warn-bg: #FFFBEB; --st-warn-line: #FDE68A;
+  --st-bad-bg: #FEF2F2;  --st-bad-line: #FECACA;
+  --st-ok-bg: #ECFDF5;   --st-ok-line: #A7F3D0;
+  --ahd-fg: #EDEFF3;     /* 상단바 위 글자(밝음 · 어두움 같음) */
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;   /* 꾸밈 없는 입력 칸 · 고르기 칸 · 스크롤 막대도 어둡게 */
+
+  /* 바탕 3단 — 화면 바탕 < 카드 < 옅은 칸(표 머리) */
+  --sgb-bg: #0e1520;
+  --paper: #161f2e;
+  --surface: #1c2638;
+  --g50: #1c2638; --g100: #232f44; --g200: #3a4860;
+  --line2: #233044;
+  --bg: var(--paper);   /* 화면 코드의 var(--bg, #fff)(전체 찾기 · FAQ 미리보기 · 추천 관계도)가 다크에서 카드 색 — 밝은 화면은 정의 없이 예전처럼 #fff */
+
+  /* 글자 3단 · 선 */
+  --sgb-ink: #e6eaf2;
+  --sgb-ink-2: #c4cbd9;
+  --sgb-ink-3: #9ba6bc;
+  --sgb-ph: #7c879c;
+  --sgb-line: #2e3a50;
+  --sgb-line-soft: #233044;
+
+  /* 남색 강조는 밝게 — 고른 탭 · 주요 단추 · 트리 고른 화면. 그 위 글자(on-point)는 어두운 남색 */
+  --sgb-navy: #8db4ff;
+  --sgb-point-d: #b3ccff;
+  --sgb-point-l: #1d2e4d;
+  --sgb-point-l2: #2a4170;
+  --sgb-on-point: #0b1424;
+  --sgb-link: #7fb0ff; --sgb-link-d: #a9c9ff; --sgb-link-l: #1a2a45;
+  --sgb-cream: #2a2316;
+  --sgb-tile: #1c2638;
+
+  /* 상태 글자 · 상태 칸 */
+  --sgb-gr-text: #5fd39a;
+  --sgb-rd-text: #ff8a8a;
+  --sgb-or-text: #ffb35c;
+  --st-warn-bg: #2d2414; --st-warn-line: #5c4718;
+  --st-bad-bg: #33191c;  --st-bad-line: #6b2f33;
+  --st-ok-bg: #12291f;   --st-ok-line: #24543d;
+  --or-l: var(--st-warn-bg); --gr-l: var(--st-ok-bg);
+  --ad-w: var(--st-warn-bg); --danger-w: var(--st-bad-bg); --ok-w: var(--st-ok-bg);
+
+  /* 단추 3종 — 보조 · 줄 단추 바탕은 카드 색(sgb-buttons.css 의 #ffffff 대신) */
+  --sgb-btn2-bg: var(--paper); --sgb-btn2-hover: var(--g100);
+  --sgb-btn3-bg: var(--paper);
+
+  /* 상단바는 어두운 남색 그대로(시트 남색) — 위 --sgb-navy 를 밝게 바꿔 별칭이 따라가지 않게 값을 박음 */
+  --ahd: #00245a;
+
+  /* 그림자 — 어두운 바탕에서는 남색 10% 가 보이지 않아 검정으로 */
+  --sgb-shadow: 4px 4px 8px rgba(0, 0, 0, .35);
+  --sgb-shadow-up: 0 6px 22px rgba(0, 0, 0, .5);
+}

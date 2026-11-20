@@ -42,8 +42,12 @@ import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, 
 import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
 import { AccountantDesk, ReceiptReader, AccrualBox, ArchiveBox } from './app/admin/AcctExtra';   // v10.437 ~ 440 (D257)
 import { FinCardLimits, FinTransfers, FinTargets, FinPartyLedger } from './app/admin/Fin';   // v10.453 ~ 456 (D261) 자금 · 영업
+import { SalCrm, AcctBankFeed } from './app/admin/Sales';   // v10.466 · 467 (D264) 영업 기회 · 은행 자동 조회
+import { HealthCoupons } from './app/admin/HealthCoupons';   // v10.469 (D264) 소개몰 쿠폰 · 기획전
 import { AcctDaybook, AcctCashbook, AcctFxReval } from './app/admin/AcctBooks';   // v10.449 ~ 452 (D260)
 import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/Hr';   // v10.445 ~ 448 (D259)
+import { OfcCalendar, OfcTasks, OfcTrips, OfcNotifyBox, BrowserNotify } from './app/admin/Ofc';   // v10.462 ~ 465 (D263) 사무 2
+import { HrTraining, HrContracts, HrReviews, HrRecruit, MyHrMore } from './app/admin/HrPeople';   // v10.458 ~ 461 (D262)
 import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
 import { PermAdmin, PermReadonlyBar, PermScope, loadPerm, permVisible, usePermTick } from './app/admin/Perm';   // v10.441 ~ 444 (D258) 업무별 권한 · 탭 내용 감싸기
 import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/AcctFilings';   // v10.420 ~ 422 (D252) 신고 자료
@@ -92,6 +96,7 @@ import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, type Tab } from './li
 import { AdminTree } from './app/admin/AdminTree';   // v10.457 왼쪽 메뉴 트리
 import { hashSub } from './lib/hashSub';
 import { siteUrl } from './lib/siteUrl';
+import { ThemeToggle } from './components/ThemeToggle';   // v10.470 (docs/608) 다크 모드
 
 /* v10.29 — 탭 목록 · 시안 묶음 · 제목 줄은 lib/adminMenu.ts 로 옮겼습니다(키 · 글자는 그대로) */
 
@@ -134,6 +139,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-taxinbox': ['SUPER', 'PAYOUT'],   // v10.432 (D255)
   'acct-accountant': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-receipt': ['SUPER', 'PAYOUT'], 'acct-accrual': ['SUPER', 'PAYOUT'], 'acct-archive': ['SUPER', 'PAYOUT'],   // v10.437 ~ 440 (D257)
   'acct-cardlimit': ['SUPER', 'PAYOUT'], 'fin-transfer': ['SUPER', 'PAYOUT'], 'acct-target': ['SUPER', 'PAYOUT'], 'acct-partyledger': ['SUPER', 'PAYOUT'],   // v10.453 ~ 456 (D261)
+  'sal-crm': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-bankfeed': ['SUPER', 'PAYOUT'],   // v10.466 · 467 (D264)
   'acct-daybook': ['SUPER', 'PAYOUT'], 'acct-cashbook': ['SUPER', 'PAYOUT'], 'acct-fxreval': ['SUPER', 'PAYOUT'],   // v10.449 ~ 452 (D260)
   'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
   'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'], 'rpt-trend': ['ADMIN', 'SUPER'],   // v10.429 (D254)   // v10.412 ~ 415 (D250)
@@ -150,6 +156,9 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
   'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
   'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
+  'ofc-calendar': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-tasks': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
+  'ofc-trips': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-notify': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.462 ~ 465 (D263) 사무 2 · 세무사 빠짐
+  'hr-training': ['SUPER', 'ADMIN'], 'hr-contract': ['SUPER', 'ADMIN'], 'hr-review': ['SUPER', 'ADMIN'], 'hr-recruit': ['SUPER', 'ADMIN'],   // v10.458 ~ 461 (D262)
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -280,6 +289,7 @@ function Console() {
           <div className="ad-hr">
             <AdminSearch onGo={(t) => go(t as Tab)} canGo={(t) => visible(t as Tab)} />   {/* v10.289 전체 찾기 */}
             {roleText && <span className="ad-role">{roleText}</span>}
+            <ThemeToggle />   {/* v10.470 (docs/608) 밝게 · 어둡게 — 이 브라우저에만 */}
             <a className="ad-btn" href={siteUrl()} target="_blank" rel="noreferrer">사용자 화면으로</a>
             <button className="ad-btn bo-logout" onClick={() => setToken(null, null)}>로그아웃</button>
           </div>
@@ -287,6 +297,7 @@ function Console() {
       </header>
 
       <StaffSession />
+      <BrowserNotify />   {/* v10.465 (D263) 브라우저 알림 — 사무 › 내 알림에서 켠 계정만 · 화면을 열어 둔 동안 */}
       {orderLive && (
         <div className="bo-order-live" role="alert" data-order-live-bar="">
           <b>소개몰 「주문 받기」가 켜져 있습니다</b>{settings['mall.order_open_until'] ? <> · <span data-order-live-until="">{ymdhm(settings['mall.order_open_until'])} 에 저절로 꺼짐</span></> : <> · <span data-order-live-until="">꺼질 시각 없음</span></>} — 간주 결제(시험 결제) 상태라 손님 주문이 실제 돈 없이 결제 완료됩니다.{' '}
@@ -330,6 +341,7 @@ function Console() {
         {tab === 'hlt-orders' && <HealthOrders onGo={go} />}
         {tab === 'hlt-open' && <HealthOpenStock />}
         {tab === 'hlt-reviews' && <HealthReviews onGo={go} />}
+        {tab === 'hlt-coupons' && <HealthCoupons />}
         {tab === 'affiliates' && <Affiliates onGo={go} />}
         {tab === 'gov-audit' && <Audit />}
         {tab === 'invariants' && <Invariants />}
@@ -419,6 +431,8 @@ function Console() {
       {tab === 'fin-transfer' && <FinTransfers />}
       {tab === 'acct-target' && <FinTargets />}
       {tab === 'acct-partyledger' && <FinPartyLedger />}
+      {tab === 'sal-crm' && <SalCrm />}
+      {tab === 'acct-bankfeed' && <AcctBankFeed />}
       {tab === 'acct-daybook' && <AcctDaybook />}
       {tab === 'acct-cashbook' && <AcctCashbook />}
       {tab === 'acct-fxreval' && <AcctFxReval />}
@@ -427,6 +441,15 @@ function Console() {
       {tab === 'acct-payslip' && <AcctPayslip />}
       {tab === 'acct-yearend' && <AcctYearend />}
       {tab === 'my-hr' && <MyHr />}
+      {tab === 'ofc-calendar' && <OfcCalendar />}
+      {tab === 'ofc-tasks' && <OfcTasks />}
+      {tab === 'ofc-trips' && <OfcTrips />}
+      {tab === 'ofc-notify' && <OfcNotifyBox />}
+      {tab === 'my-hr' && <MyHrMore />}
+      {tab === 'hr-training' && <HrTraining />}
+      {tab === 'hr-contract' && <HrContracts />}
+      {tab === 'hr-review' && <HrReviews />}
+      {tab === 'hr-recruit' && <HrRecruit />}
       {tab === 'acct-taxinbox' && <AcctTaxInbox />}
       {tab === 'acct-exports' && <AcctExports />}
       {tab === 'acct-po' && <AcctPos />}
