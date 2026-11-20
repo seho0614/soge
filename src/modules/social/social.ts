@@ -129,8 +129,9 @@ export class SocialAuthService {
       r = await exchangeAndFetch(this.db, p, { code: d.code, state: d.state, verifier: st.verifier, redirectUri: st.redirect_uri });
     }
     if (!r.ok) {
-      await this.event(p, 'FAIL', st.account_id, r.code, st.assumed);
-      throw new AppError(502, { code: r.code, message: '간편 로그인 업체에서 회원 정보를 받지 못했습니다. 잠시 뒤 다시 해 주십시오.' });
+      const fail = r as { ok: false; code: string };   // ts-node(strict:false)는 boolean 판별 유니온의 거짓 쪽을 좁히지 않음 — 명시
+      await this.event(p, 'FAIL', st.account_id, fail.code, st.assumed);
+      throw new AppError(502, { code: fail.code, message: '간편 로그인 업체에서 회원 정보를 받지 못했습니다. 잠시 뒤 다시 해 주십시오.' });
     }
     const prof: SocProfile = r.profile;
     const sh = subjectHash(p, prof.id);
