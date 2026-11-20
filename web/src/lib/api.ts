@@ -50,6 +50,9 @@ export const onMfaNeeded = (f: () => void) => { mfaListeners.add(f); return () =
 /** v10.226 (D195) — 서버가 403 IP_VERIFY_REQUIRED(허용 IP 밖 · 오늘 인증 안 함)를 주면 App 이 접속 인증 화면을 띄움 */
 const ipListeners = new Set<() => void>();
 export const onIpVerifyNeeded = (f: () => void) => { ipListeners.add(f); return () => { ipListeners.delete(f); }; };
+/** v10.484 (D268) — 서버가 403 PASSKEY_REQUIRED(패스키 EXTRA · 이 기기 확인 안 함 · 12시간 지남)를 주면 App 이 패스키 확인 화면을 띄움 */
+const pkListeners = new Set<() => void>();
+export const onPasskeyNeeded = (f: () => void) => { pkListeners.add(f); return () => { pkListeners.delete(f); }; };
 export const setToken = (t: string | null, rt?: string | null) => {
   accessToken = t; ss.set(AT_KEY, t);
   if (rt !== undefined) { refreshToken = rt; ss.set(RT_KEY, rt); }
@@ -122,6 +125,7 @@ export async function api<T>(
   }
   if (res.status === 403 && (body as ApiError).code === 'MFA_REQUIRED') mfaListeners.forEach((f) => f());
   if (res.status === 403 && (body as ApiError).code === 'IP_VERIFY_REQUIRED') ipListeners.forEach((f) => f());
+  if (res.status === 403 && (body as ApiError).code === 'PASSKEY_REQUIRED') pkListeners.forEach((f) => f());   // v10.484 (D268)
   if (!res.ok) throw new ApiFailure(res.status, body as ApiError);
   return body as T;
 }

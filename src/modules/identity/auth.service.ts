@@ -14,6 +14,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { notifyNewDevice, recordLogin } from './login-history';
 import { RecommendService } from '../affiliate/recommend.service';
 import { createSession, sessionAlive, sessionReusable } from './login-sessions';   // v10.380 (D241) 내 로그인 기기
+import { assertGeoAllowed } from './geo-guard';   // v10.485 (D268) 운영자 해외 접속 경고 · 막기
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -77,6 +78,7 @@ export class AuthService {
       throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
     }
     await this.db.query(`SELECT fn_login_clear($1)`, [email]);
+    await assertGeoAllowed(this.db, acc.id);   /* v10.485 (D268 · docs/623) — security.geo_watch on 일 때 운영 역할만 · 허용 나라 밖이면 운영 알림 · security.geo_block on 이면 막음 */
 
     // ★ 귀속 연결. 이 호출이 빠지면 비로그인 유입이 전부 유실됩니다
     if (visitorKey) {

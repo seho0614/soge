@@ -867,7 +867,7 @@ export function AcctCashflow() {
 interface StockItem { code: string; name: string; optionId: string; label: string; active: boolean; shopQty: number; qty: number; avgCost: number; amount: number; lastMove: string | null; zeroCost: number; diff: number }
 interface Stock { items: StockItem[]; total: { amount: number; qty: number; zeroCost: number }; note: string }
 interface Move { id: string; date: string; kind: string; label: string; qty: number; unitCost: number; amount: number; qtyAfter: number; amountAfter: number; avgAfter: number; zeroCost: boolean; purchaseId: string | null; note: string | null }
-const STOCK_KIND_KO: Record<string, string> = { IN: '입고', OUT_SALE: '판매 출고', RETURN: '취소 · 반품 반입', ADJUST: '실사 조정' };
+const STOCK_KIND_KO: Record<string, string> = { IN: '입고', OUT_SALE: '판매 출고', RETURN: '취소 · 반품 반입', ADJUST: '실사 조정', SUP_RETURN: '공급사 반품' };   // v10.496 (D271)
 
 export function AcctStock() {
   const q = useApi<Stock>('/admin/acct/stock');

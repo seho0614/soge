@@ -78,6 +78,9 @@ const NAME: Record<string, string> = {
   CS_WEEKLY: '고객센터 주간 보고',   // v10.352 (D234 · docs/486)
   NGINX_DENIED_SPIKE: '운영 화면 허용 밖 접속 몰림',   // v10.353 (docs/487) — 권한 계층 › 접속 인증 › 막힌 접속
   SECURITY_MONTHLY: '월간 보안 보고',   // v10.354 (D235 · docs/488)
+  STAFF_LOGIN_ABROAD: '운영자 해외 로그인', STAFF_LOGIN_ABROAD_BLOCKED: '해외 운영 로그인 막음',   // v10.485 (D268 · docs/623) — 위험감지 › 해외 접속 경고
+  PASSKEY_CLONE_SUSPECT: '운영자 패스키 복제 의심',   // v10.484 (D268 · docs/622)
+  MKT_CAMPAIGN_STUCK: '캠페인 보내기 멈춤',   // v10.483 (D268 · docs/621) — 회원 › 문자 · 메일 캠페인
   AUDIT_CHAIN_BROKEN: '감사 기록 위변조 의심',   // v10.356 (D235 · docs/490) — 위험감지 › 감사
   SIGNUP_BLOCK_SPIKE: '가입 차단에 많이 막힘',   // v10.362 (D237 · docs/496)
   ROLE_EXPIRED: '운영 권한 기한 지나 거둠',   // v10.372 (D239 · docs/507)

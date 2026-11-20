@@ -118,10 +118,12 @@ import { InquiryTemplateController } from './modules/support/inquiry-template.co
 import { FaqFeedbackController } from './modules/help/faq-feedback.controller';   // v10.334 (D226) 질문 펼침 · 도움 됨
 import { HelpService } from './modules/help/help.service';
 import { HolidayController } from './modules/holiday/holiday.controller';   // v10.206 (D183) 공휴일
+import { LegalController } from './modules/legal/legal.controller';   // v10.486 ~ 489 (D269) 법무 — 인허가 · 계약 검토 · 소송 · 분쟁 · 회사 보험
 import { HolidayService } from './modules/holiday/holiday.service';
 import { PlanAdminController } from './modules/billing/plan-admin.controller';   // v10.207 (D184) 요금제 금액 · 한도
 import { PlanAdminService } from './modules/billing/plan-admin.service';
 import { HealthOpenStockController } from './modules/health/health-open-stock.controller';   // v10.208 (D185) 개봉 반품 재고
+import { QltController } from './modules/qlt/qlt.controller';   // v10.494 ~ 496 (D271) 협력사 평가 · 재고 로트 · 유통기한 · 품질 클레임
 import { HealthOpenStockService } from './modules/health/health-open-stock.service';
 import { TownFoodAdminController, TownFoodController } from './modules/community/town-food.controller';   // v10.47 (D100) 우리동네 맛집
 import { TownFoodService } from './modules/community/town-food.service';
@@ -247,10 +249,15 @@ import { AcctController } from './modules/acct/acct.controller';   // v10.381 ~ 
 import { AcctFilingsController } from './modules/acct/acct-filings.controller';   // v10.420 ~ 422 (D252) 원천세 신고서 · 지급명세서 · 4대보험 신고
 import { AcctExtraController } from './modules/acct/acct-extra.controller';   // v10.437 ~ 440 (D257) 세무사 · 영수증 읽기 · 고정비 · 장부 보관
 import { AcctBooksController } from './modules/acct/acct-books.controller';   // v10.449 ~ 452 (D260) 분개장 · 현금출납장 · 반대 전표 · 외화 환산 평가
+import { AcctOpsController } from './modules/acct/acct-ops.controller';   // v10.475 ~ 478 (D266) 업무용 차량 · 12개월 자금 계획 · 전자계산서(면세) · 안전 재고 · 재주문
+import { HrxController } from './modules/acct/hrx.controller';   // v10.471 ~ 474 (D265) 연장 · 야간 · 휴일 근로 · 근무표 · 회의실 · 장비 예약 · 자산 실사
 import { HrController } from './modules/acct/hr.controller';   // v10.445 ~ 448 (D259) 근태 · 휴가 신청 · 급여명세서 · 연말정산 자료
 import { HrPeopleController } from './modules/acct/hr-people.controller';   // v10.458 ~ 461 (D262) 의무교육 · 근로계약서 · 인사 평가 · 채용
 import { OpsPlanController } from './modules/admin/ops-plan.controller';   // v10.377 (D241) 설정 예약 변경
 import { LoginSessionsController } from './modules/identity/login-sessions';   // v10.380 (D241) 내 로그인 기기
+import { PasskeyController } from './modules/identity/passkey.controller';   // v10.484 (D268) 운영자 패스키
+import { SecGeoController } from './modules/identity/geo-guard.controller';   // v10.485 (D268) 해외 접속 경고
+import { MktCampaignController, MktUnsubscribeController } from './modules/marketing/campaign.controller';   // v10.483 (D268) 문자 · 메일 캠페인 · 수신 거부(공개)
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
 import { ExportApprovalService, ExportGateInterceptor } from './modules/admin/export-approval';   // v10.366 (D238) 개인정보 대량 내려받기 승인
 import { GuideFlowAdminController, GuideFlowPublicController } from './modules/help/guide-flow.controller';   // v10.347 (D233) 이용 흐름
@@ -282,8 +289,10 @@ import { AccountSecurityService } from './modules/identity/account-security.serv
 import { EtaxAdminController } from './modules/etax/etax.controller';
 import { AttributionController } from './modules/attribution/attribution.controller';
 import { WorkReportController } from './modules/admin/report.controller';   // v10.412 ~ 415 (D250) 업무 보고 · 업무 일지
+import { ItsController } from './modules/admin/its.controller';   // v10.490 ~ 493 (D270) 사무 · 보안 — 연동 키 만료 · IT 자산 · 제안함 · 사내 설문
 import { ErpController } from './modules/acct/erp.controller';   // v10.433 ~ 436 (D256) 내부 ERP — 견적 · 명세서 · 부서 손익 · 창고 · 독촉
 import { FinController } from './modules/acct/fin.controller';   // v10.453 ~ 456 (D261) 자금 · 영업 — 법인카드 한도 · 대량 이체 · 매출 목표 · 거래처 원장
+import { HealthBenefitController, HealthBenefitMeController } from './modules/health/health-benefit.controller';   // v10.479 ~ 482 (D267) 소개몰 회원 혜택 — 적립금 · 등급 · 정기 배송 · 상품권
 import { SalesController } from './modules/acct/sales.controller';   // v10.466 · 467 (D264) 영업 기회 CRM · 은행 거래내역 자동 조회
 import { HealthCouponController } from './modules/health/health-coupon.controller';   // v10.469 (D264) 소개몰 할인 쿠폰 · 기획전
 import { AcctOfficeController } from './modules/acct/office.controller';   // v10.424 ~ 427 (D253) 결재선 · 사내 문서함 · 분기 · 연 예산
@@ -300,9 +309,12 @@ import { LeadService } from './modules/lead/lead.service';
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     WorkReportController,     // v10.412 ~ 415 (D250)
+    ItsController,            // v10.490 ~ 493 (D270)
     PermController,           // v10.441 ~ 444 (D258)
     ErpController,            // v10.433 ~ 436 (D256)
     FinController,            // v10.453 ~ 456 (D261)
+    HealthBenefitController,  // v10.479 ~ 482 (D267) 운영
+    HealthBenefitMeController, // v10.479 ~ 482 (D267) 회원
     SalesController,          // v10.466 · 467 (D264)
     HealthCouponController,   // v10.469 (D264)
     AcctOfficeController,     // v10.424 ~ 427 (D253)
@@ -391,10 +403,16 @@ import { LeadService } from './modules/lead/lead.service';
     AcctFilingsController,    // v10.420 ~ 422 (D252)
     AcctExtraController,      // v10.437 ~ 440 (D257)
     AcctBooksController,      // v10.449 ~ 452 (D260)
+    AcctOpsController,        // v10.475 ~ 478 (D266)
+    HrxController,            // v10.471 ~ 474 (D265)
     HrController,             // v10.445 ~ 448 (D259)
     HrPeopleController,       // v10.458 ~ 461 (D262)
     OpsPlanController,        // v10.377 (D241)
     LoginSessionsController,  // v10.380 (D241)
+    PasskeyController,        // v10.484 (D268)
+    SecGeoController,         // v10.485 (D268)
+    MktCampaignController,    // v10.483 (D268)
+    MktUnsubscribeController, // v10.483 (D268) 공개 — /site/unsubscribe
     OpsWeekController,        // v10.374 ~ 376 (D240)      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
     GuideFlowPublicController,   // v10.347 (D233) 이용 흐름(공개)
     GuideFlowAdminController,    // v10.347 (D233) 이용 흐름 고치기(SUPER)
@@ -421,8 +439,10 @@ import { LeadService } from './modules/lead/lead.service';
     InquiryTemplateController,   // v10.334 (D226) 1:1 문의 답변 틀
     FaqFeedbackController,    // v10.334 (D226) 고객센터 질문 펼침 · 도움이 되었나요?
     HolidayController,        // v10.206 (D183) 공휴일
+    LegalController,          // v10.486 ~ 489 (D269) 법무
     PlanAdminController,      // v10.207 (D184) 요금제 금액 · 한도
     HealthOpenStockController, // v10.208 (D185) 개봉 반품 재고
+    QltController,             // v10.494 ~ 496 (D271) 구매 · 소개몰 품질
     TownFoodController,
     TownFoodAdminController,   // v10.47 (D100) 우리동네 맛집
     TownVerifyController,   // v10.164 (D154) 동네 인증

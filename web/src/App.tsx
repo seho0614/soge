@@ -5,6 +5,9 @@ import { api, hasToken, onAuthChange, onIpVerifyNeeded, onMfaNeeded, setToken, t
 import { Login } from './components/Login';
 import { MfaGate, type MfaStatus } from './components/MfaGate';
 import { IpGate, type IpStatus } from './components/IpGate';
+import { PasskeyGate } from './components/PasskeyGate';   // v10.484 (D268) 운영자 패스키
+import { onPasskeyNeeded } from './lib/api';   // v10.484 (D268)
+import type { PasskeyStatus } from './lib/passkey';   // v10.484 (D268)
 import { Dashboard } from './app/admin/Dashboard';
 import { ReviewQueue } from './app/admin/ReviewQueue';
 import { ReviewDecide } from './app/admin/ReviewDecide';
@@ -37,6 +40,9 @@ import { OpsBoard } from './app/admin/OpsBoard';   // v10.286 (D213)
 import { SiteSettings } from './app/admin/SiteSettings';   // v10.287 (D214)
 import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾기
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
+import { MyPasskey } from './app/admin/MyPasskey';   // v10.484 (D268) 내 2단계 인증 화면 아래 패스키 구역
+import { SecGeo } from './app/admin/SecGeo';   // v10.485 (D268) 해외 접속 경고
+import { MktCampaigns } from './app/admin/MktCampaigns';   // v10.483 (D268) 문자 · 메일 캠페인
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
 import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, ReportTrend } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
 import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
@@ -45,10 +51,14 @@ import { FinCardLimits, FinTransfers, FinTargets, FinPartyLedger } from './app/a
 import { SalCrm, AcctBankFeed } from './app/admin/Sales';   // v10.466 · 467 (D264) 영업 기회 · 은행 자동 조회
 import { HealthCoupons } from './app/admin/HealthCoupons';   // v10.469 (D264) 소개몰 쿠폰 · 기획전
 import { AcctDaybook, AcctCashbook, AcctFxReval } from './app/admin/AcctBooks';   // v10.449 ~ 452 (D260)
+import { AcctVehicles, AcctCashPlan, AcctExemptInvoices, AcctReorder } from './app/admin/AcctOps';   // v10.475 ~ 478 (D266) 사무 · 자금
 import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/Hr';   // v10.445 ~ 448 (D259)
+import { HrxOvertime, HrxShifts, HrxBooking, HrxStocktake, MyHrx } from './app/admin/Hrx';   // v10.471 ~ 474 (D265) 인사 4
 import { OfcCalendar, OfcTasks, OfcTrips, OfcNotifyBox, BrowserNotify } from './app/admin/Ofc';   // v10.462 ~ 465 (D263) 사무 2
 import { HrTraining, HrContracts, HrReviews, HrRecruit, MyHrMore } from './app/admin/HrPeople';   // v10.458 ~ 461 (D262)
 import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
+import { ItsAssets, ItsSuggest, ItsSurvey } from './app/admin/Its';   // v10.491 ~ 493 (D270) 사무 · 보안
+import { LglLicenses, LglReviews, LglCases, LglInsurance } from './app/admin/Legal';   // v10.486 ~ 489 (D269) 법무
 import { PermAdmin, PermReadonlyBar, PermScope, loadPerm, permVisible, usePermTick } from './app/admin/Perm';   // v10.441 ~ 444 (D258) 업무별 권한 · 탭 내용 감싸기
 import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/AcctFilings';   // v10.420 ~ 422 (D252) 신고 자료
 import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports, AcctExports, AcctPos, AcctTaxInbox } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
@@ -81,10 +91,12 @@ import { Ownership } from './app/admin/Ownership';
 import { HealthSettle } from './app/admin/HealthSettle';
 import { HealthSellerTab } from './app/admin/HealthSellerTab';
 import { HealthOpenStock } from './app/admin/HealthOpenStock';   // v10.208 (D185)
+import { QltSupEval, QltLots, QltClaims } from './app/admin/Quality';   // v10.494 ~ 496 (D271) 협력사 평가 · 로트 · 유통기한 · 품질 클레임
 import { HealthProducts } from './app/admin/HealthProducts';
 import { Translations } from './app/admin/Translations';
 import { HealthOrders } from './app/admin/HealthOrders';
 import { HealthReviews } from './app/admin/HealthReviews';
+import { HealthPoints, HealthTiers, HealthSubscribe, HealthGiftcards } from './app/admin/HealthBenefits';   // v10.479 ~ 482 (D267) 소개몰 회원 혜택
 import { Affiliates } from './app/admin/Affiliates';
 import { Audit } from './app/admin/Audit';
 import { Invariants } from './app/admin/Invariants';
@@ -144,8 +156,12 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'acct-requisitions': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.410 (D249) 품의는 운영자 누구나
   'rpt-day': ['ADMIN', 'SUPER'], 'rpt-week': ['ADMIN', 'SUPER'], 'rpt-month': ['ADMIN', 'SUPER'], 'rpt-board': ['SUPER'], 'rpt-trend': ['ADMIN', 'SUPER'],   // v10.429 (D254)   // v10.412 ~ 415 (D250)
   'approvals': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'approval-lines': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'corp-docs': ['ADMIN', 'PAYOUT', 'SUPER'],   // v10.424 · 425 (D253)
+  'its-assets': ['SUPER', 'ADMIN', 'PAYOUT'], 'its-suggest': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'its-survey': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.491 ~ 493 (D270)
+  'lgl-licenses': ['SUPER', 'ADMIN'], 'lgl-reviews': ['SUPER', 'ADMIN'], 'lgl-cases': ['SUPER', 'ADMIN'], 'lgl-insurance': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.486 ~ 489 (D269) 법무
   'rpt-worklog': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
   'acct-purchase': ['SUPER', 'PAYOUT'], 'acct-cash': ['SUPER', 'PAYOUT'], 'acct-stock': ['SUPER', 'PAYOUT'],   // v10.392 · 394 · 395 (D245)
+  'qlt-lots': ['SUPER', 'ADMIN', 'PAYOUT'], 'qlt-claims': ['SUPER', 'ADMIN', 'PAYOUT'], 'qlt-supeval': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.494 ~ 496 (D271)
+  'acct-vehicle': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-cashplan': ['SUPER', 'PAYOUT'], 'acct-exemptinv': ['SUPER', 'PAYOUT'], 'acct-reorder': ['SUPER', 'PAYOUT', 'ADMIN'],   // v10.475 ~ 478 (D266)
   'acct-expense': ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.393 (D245) 경비 청구는 운영자 누구나(법인카드 상자는 SUPER · PAYOUT)
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
   'guide-flows': ['ADMIN', 'SUPER'],   /* v10.347 (D233) 이용 흐름 — 읽기 ADMIN · 고치기 SUPER */
@@ -156,6 +172,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
   'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
   'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
+  'hrx-overtime': ['SUPER', 'ADMIN'], 'hrx-shifts': ['SUPER', 'ADMIN'], 'hrx-stocktake': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.471 · 472 · 474 (D265)
+  'hrx-booking': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.473 (D265) 운영 역할 모두 · 세무사 빠짐
   'ofc-calendar': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-tasks': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
   'ofc-trips': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-notify': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.462 ~ 465 (D263) 사무 2 · 세무사 빠짐
   'hr-training': ['SUPER', 'ADMIN'], 'hr-contract': ['SUPER', 'ADMIN'], 'hr-review': ['SUPER', 'ADMIN'], 'hr-recruit': ['SUPER', 'ADMIN'],   // v10.458 ~ 461 (D262)
@@ -187,10 +205,18 @@ export function App() {
   const checkIp = () => { api<IpStatus>('/auth/ip-verify').then(setIpv).catch(() => setIpv(null)); };
   useEffect(() => { if (authed) checkIp(); else setIpv('loading'); }, [authed]);
   useEffect(() => onIpVerifyNeeded(checkIp), []);
+  /* v10.484 (D268 · docs/622) — 운영자 패스키: EXTRA 면 2단계 · 접속 인증 다음에 패스키 확인 화면 · REPLACE_MFA 면 2단계 화면 대신(「인증 앱 번호로」 누르면 원래 화면) */
+  const [pk, setPk] = useState<PasskeyStatus | null>(null);
+  const [pkSkip, setPkSkip] = useState(false);
+  const checkPk = () => { api<PasskeyStatus>('/auth/passkey').then(setPk).catch(() => setPk(null)); };
+  useEffect(() => { if (authed) checkPk(); else { setPk(null); setPkSkip(false); } }, [authed]);
+  useEffect(() => onPasskeyNeeded(checkPk), []);
   if (!authed) return <Login />;
   if (mfa === 'loading' || ipv === 'loading') return <p className="muted" style={{ padding: 24 }}>불러오는 중…</p>;
+  if (pk && pk.gate === 'REPLACE_MFA' && !pkSkip && mfa && mfa.required && !mfa.verified) return <PasskeyGate mode="REPLACE_MFA" onSkip={() => setPkSkip(true)} onDone={() => { checkMfa(); checkPk(); }} />;
   if (mfa && mfa.required && !mfa.verified) return <MfaGate status={mfa} onDone={checkMfa} />;
   if (ipv && ipv.required && !ipv.verified) return <IpGate status={ipv} onDone={checkIp} />;
+  if (pk && pk.gate === 'EXTRA') return <PasskeyGate mode="EXTRA" onDone={checkPk} />;
   return <Console />;
 }
 
@@ -340,7 +366,14 @@ function Console() {
         {tab === 'i18n' && <Translations />}
         {tab === 'hlt-orders' && <HealthOrders onGo={go} />}
         {tab === 'hlt-open' && <HealthOpenStock />}
+        {tab === 'qlt-lots' && <QltLots />}
+        {tab === 'qlt-claims' && <QltClaims />}
+        {tab === 'qlt-supeval' && <QltSupEval />}
         {tab === 'hlt-reviews' && <HealthReviews onGo={go} />}
+        {tab === 'hlt-points' && <HealthPoints />}
+        {tab === 'hlt-tiers' && <HealthTiers />}
+        {tab === 'hlt-subscribe' && <HealthSubscribe />}
+        {tab === 'hlt-giftcards' && <HealthGiftcards />}
         {tab === 'hlt-coupons' && <HealthCoupons />}
         {tab === 'affiliates' && <Affiliates onGo={go} />}
         {tab === 'gov-audit' && <Audit />}
@@ -386,8 +419,10 @@ function Console() {
       {tab === 'purge-log' && <PurgeLog />}
       {tab === 'privacy-requests' && <PrivacyRequests />}
       {tab === 'server-errors' && <ServerErrors />}
+      {tab === 'sec-geo' && <SecGeo />}
+      {tab === 'mkt-campaign' && <MktCampaigns />}
       {tab === 'ops-board' && <OpsBoard />}
-      {tab === 'my-mfa' && <MyMfa />}
+      {tab === 'my-mfa' && <><MyMfa /><MyPasskey /></>}
       {tab === 'my-password' && <><MyPassword /><MySessions /></>}
       {tab === 'acct-journal' && <AcctJournal />}
       {tab === 'acct-tax' && <AcctTax />}
@@ -399,6 +434,10 @@ function Console() {
       {tab === 'acct-expense' && <><AcctExpenses /><AcctCards /></>}
       {tab === 'acct-cash' && <AcctCashflow />}
       {tab === 'acct-stock' && <AcctStock />}
+      {tab === 'acct-vehicle' && <AcctVehicles />}
+      {tab === 'acct-cashplan' && <AcctCashPlan />}
+      {tab === 'acct-exemptinv' && <AcctExemptInvoices />}
+      {tab === 'acct-reorder' && <AcctReorder />}
       {tab === 'acct-statements' && <AcctStatements />}
       {tab === 'acct-ledger' && <AcctLedger />}
       {tab === 'acct-assets' && <AcctAssets />}
@@ -441,6 +480,11 @@ function Console() {
       {tab === 'acct-payslip' && <AcctPayslip />}
       {tab === 'acct-yearend' && <AcctYearend />}
       {tab === 'my-hr' && <MyHr />}
+      {tab === 'my-hr' && <MyHrx />}
+      {tab === 'hrx-overtime' && <HrxOvertime />}
+      {tab === 'hrx-shifts' && <HrxShifts />}
+      {tab === 'hrx-booking' && <HrxBooking />}
+      {tab === 'hrx-stocktake' && <HrxStocktake />}
       {tab === 'ofc-calendar' && <OfcCalendar />}
       {tab === 'ofc-tasks' && <OfcTasks />}
       {tab === 'ofc-trips' && <OfcTrips />}
@@ -463,6 +507,13 @@ function Console() {
       {tab === 'approval-lines' && <ApprovalLines />}
       <PermReadonlyBar tab={tab} />
       {tab === 'corp-docs' && <CorpDocs />}
+      {tab === 'its-assets' && <ItsAssets />}
+      {tab === 'its-suggest' && <ItsSuggest />}
+      {tab === 'its-survey' && <ItsSurvey />}
+      {tab === 'lgl-licenses' && <LglLicenses />}
+      {tab === 'lgl-reviews' && <LglReviews />}
+      {tab === 'lgl-cases' && <LglCases />}
+      {tab === 'lgl-insurance' && <LglInsurance />}
       {tab === 'perm-admin' && <PermAdmin />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}

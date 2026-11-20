@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { ymdKst } from '../../lib/format';
+import { IntegKeyLife } from './Its';   // v10.490 (D270) 키 만료 · 교체(값 · 끝 4자리 없음)
 
 /**
  * v10.128 (D128 · docs/192) — 외부 연동 › 연동 키 (SB-ADM-SIT-080 안의 한 구역 · SUPER)
@@ -95,6 +96,7 @@ export function IntegrationKeys() {
           </li>
         ))}
       </ul>
+      <IntegKeyLife />   {/* v10.490 (D270 · docs/628) 키마다 만료일 · 교체 주기 · 마지막 교체 · 다음 기한 · 「바꿨음」 */}
       {msg && !msg.at && <p className="warn-text" role="alert">{msg.text}</p>}
     </div>
   );

@@ -7,6 +7,7 @@ import { StaffIpService } from './staff-ip.service';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { accountantOnly, logAccountantAccess } from '../acct/accountant';   // v10.437 (D257) 세무사 접속 기록
+import { passkeyPending } from './passkey';   // v10.484 (D268) 운영자 패스키
 
 /**
  * 토큰 → principal.
@@ -40,6 +41,8 @@ export class AuthMiddleware implements NestMiddleware {
           principal.mfaPending = await this.mfa.pending(principal, ma).catch(() => principal.roles.some((r) => (OPS_ROLES as readonly string[]).includes(r)));
           /* v10.226 (D195) — 운영 화면 접속 인증: 허용 IP 밖이면 그날 인증했는지(운영 역할 · 켜짐일 때만 DB 를 봄) */
           principal.ipPending = await this.staffIp.pending(principal).catch(() => false);
+          /* v10.484 (D268) — 패스키 EXTRA: 등록한 운영자 · 이 기기(sid) 확인 여부(꺼짐 · REPLACE_MFA · 회원이면 DB 를 부르지 않음) */
+          principal.passkeyPending = await passkeyPending(this.db, principal, sid).catch(() => false);
           (req as any).principal = principal;
           const c = RequestCtx.get();
           if (c) { c.actorId = principal.accountId; c.actorRole = principal.roles[0]; c.sid = sid; }

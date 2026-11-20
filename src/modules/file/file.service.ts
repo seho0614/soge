@@ -30,6 +30,7 @@ const UPLOADERS: Record<string, string[]> = {
   ACCT_EVIDENCE: ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.392 (D245) — 매입(SUPER · PAYOUT) · 경비 청구(운영자 누구나) 증빙 · 올린 사람 · SUPER · PAYOUT 만 엶(fn_file_can_read)
   CORP_DOC: ['SUPER', 'ADMIN'],   // v10.425 (D253) — 사내 문서(정관 · 등기부 · 인감 …) · 열람 SUPER · ADMIN · PAYOUT(fn_file_can_read)
   HR_DOC: ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.458 ~ 461 (D262) — 인사 서류(의무교육 증빙 · 지원자 서류) · 열람 ADMIN · SUPER · 올린 사람만(지급 담당 · 세무사 · 검수 못 엶 · fn_file_can_read)
+  LGL_DOC: ['SUPER', 'ADMIN'],   // v10.486 ~ 489 (D269) — 법무 서류(인허가 · 계약 검토 · 사건 · 보험) · 열람 ADMIN · SUPER · 올린 사람 · 보험 증권에 붙은 파일만 PAYOUT(fn_file_can_read) · 세무사 · 검수 못 엶
 };
 
 interface FileRow {

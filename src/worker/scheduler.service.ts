@@ -36,18 +36,29 @@ import { runJournal } from '../modules/acct/journal';   // v10.382 (D242)
 import { ALL_SOURCES } from '../modules/acct/sources';   // v10.392 (D245) — ⑫ 매입 · 경비 · 법인카드 · 재고 전표까지
 import { acctCashflowJob } from '../modules/acct/cashflow';   // v10.394 (D245)
 import { stockJob } from '../modules/acct/stock';   // v10.395 (D245)
+import { acctCashPlanJob } from '../modules/acct/cashplan';   // v10.476 (D266)
+import { acctReorderJob } from '../modules/acct/reorder';   // v10.478 (D266)
 import { depreciationJob } from '../modules/acct/assets';   // v10.398 (D246)
+import { otWeekJob } from '../modules/acct/hrx-overtime';   // v10.471 (D265)
 import { budgetJob } from '../modules/acct/budget';   // v10.399 (D246)
 import { acctAgingJob } from '../modules/acct/aging';   // v10.401 (D247)
 import { acctPgCheckJob } from '../modules/acct/pgsettle';   // v10.404 (D248)
 import { acctContractsJob } from '../modules/acct/contracts';   // v10.409 (D249)
+import { legalDueJob } from '../modules/legal/lgl-due';   // v10.486 ~ 489 (D269)
 import { acctTaxInboxJob } from '../modules/acct/taxinbox';   // v10.432 (D255)
 import { opsReportJob } from '../modules/admin/report-period';   // v10.412 (D250)
 import { acctInsuranceJob } from '../modules/acct/filings';   // v10.422 (D252)
+import { itsKeyExpiryJob } from '../modules/admin/its-keys';   // v10.490 (D270)
+import { itsOfficeDailyJob } from '../modules/admin/its-daily';   // v10.491 ~ 493 (D270)
 import { sendAfterJob } from '../modules/admin/report-send';     // v10.415 (D250)
 import { dunningJob } from '../modules/acct/dunning';   // v10.436 (D256)
 import { acctAccrualJob } from '../modules/acct/accrual';   // v10.439 (D257)
 import { acctCardLimitJob } from '../modules/acct/cardlimit';   // v10.453 (D261)
+import { qltDailyJob, qltLotAllocJob } from '../modules/qlt/jobs';   // v10.495 · 496 (D271)
+import { mktCampaignJob } from '../modules/marketing/campaign';   // v10.483 (D268)
+import { secDailyPurgeJob } from '../modules/identity/geo-guard';   // v10.485 (D268)
+import { mallBenefitExpireJob, mallTierJob } from '../modules/health/health-benefit';   // v10.479 · 480 (D267)
+import { mallSubscribeJob } from '../modules/health/health-subscribe';   // v10.481 (D267)
 import { salOppRemindJob } from '../modules/acct/crm';   // v10.466 (D264)
 import { acctBankFeedJob } from '../modules/acct/bankfeed';   // v10.467 (D264)
 import { trainingDueJob } from '../modules/acct/hr-training';   // v10.458 (D262)
@@ -77,19 +88,32 @@ export type JobName =
   | 'acct_deadline'   // v10.390 (D244)
   | 'acct_cashflow'   // v10.394 (D245)
   | 'acct_stock'      // v10.395 (D245)
+  | 'acct_cashplan'   // v10.476 (D266)
+  | 'acct_reorder'    // v10.478 (D266)
   | 'acct_depreciation'   // v10.398 (D246)
+  | 'hrx_ot_week'     // v10.471 (D265)
   | 'acct_budget'     // v10.399 (D246)
   | 'acct_aging'      // v10.401 (D247)
   | 'acct_pg_check'   // v10.404 (D248)
   | 'acct_contracts'  // v10.409 (D249)
+  | 'lgl_due'         // v10.486 ~ 489 (D269)
   | 'acct_taxinbox'   // v10.432 (D255)
   | 'ops_report'      // v10.412 (D250)
   | 'acct_insurance'  // v10.422 (D252)
+  | 'its_key_expiry'  // v10.490 (D270)
+  | 'its_office_daily'   // v10.491 ~ 493 (D270)
   | 'corp_doc_due'    // v10.425 (D253)
   | 'ofc_task_due'    // v10.463 (D263)
   | 'acct_biz_check'  // v10.431 (D254)
   | 'acct_dunning'    // v10.436 (D256)
   | 'acct_card_limit' // v10.453 (D261)
+  | 'qlt_lot_alloc'   // v10.495 (D271)
+  | 'qlt_daily'       // v10.495 · 496 (D271)
+  | 'mkt_campaign_send' // v10.483 (D268)
+  | 'sec_daily_purge'   // v10.485 (D268)
+  | 'mall_benefit_expire' // v10.479 (D267)
+  | 'mall_tier_recalc'    // v10.480 (D267)
+  | 'mall_subscribe'      // v10.481 (D267)
   | 'sal_opp_remind'  // v10.466 (D264)
   | 'acct_bank_feed'  // v10.467 (D264)
   | 'hr_training_due' // v10.458 (D262)
@@ -773,6 +797,13 @@ export class SchedulerService {
         affected = r.made; detail = r;
         break;
       }
+
+      /* v10.471 (D265 · docs/609) — 이번 주 연장 · 휴일 근로(신청 + 승인)가 hrx.week_limits WARN − BASE 시간을 넘은 직원 수를 HRX_OT_WEEK 하나로(이름 없이 수만 · 주에 한 번 · 다음 주 · 0명이면 풀림) */
+      case 'hrx_ot_week': {
+        const r = await otWeekJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
       case 'acct_budget': {   // v10.399 (D246 · docs/536) — 비용 계정 실적 > 예산이면 ACCT_BUDGET_OVER(예산을 올리면 풀림)
         const r = await budgetJob(this.db);
         affected = r.made.length; detail = r;
@@ -803,7 +834,29 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.486 ~ 489 (D269 · docs/624 ~ 627) — 법무 기한: 인허가 다음 갱신일 60 · 30 · 7일 전 LGL_LICENSE_DUE · 사건 기일 7 · 1일 전 LGL_HEARING_DUE
+         · 보험 만기 30일 전 LGL_INSURANCE_DUE · 계약 검토 희망일 지남 LGL_REVIEW_LATE(차례마다 한 번 · 처리하면 풀림) */
+      case 'lgl_due': {
+        const r = await legalDueJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       /* v10.412 · 415 (D250 · docs/549 · 552) — 전날 일보 · 월요일 지난주 주보 · 1일 지난달 월보(같은 기간 JOB 한 번) · report.send on 이면 보냄 */
+      /* v10.490 (D270 · docs/628) — 연동 키 다음 기한(만료일 · 마지막 교체 + 주기) N일 전 · 지남 → ITS_KEY_EXPIRY(키 이름만 · 값 없음 · 기한이 바뀌면 풀림) */
+      case 'its_key_expiry': {
+        const r = await itsKeyExpiryJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.491 ~ 493 (D270 · docs/629 ~ 631) — IT 자산 자동 갱신일 옮김 · 자금 흐름 예정 맞춤 · ITS_ASSET_RENEW · 제안 접수 대기 수 ITS_SUGGEST_WAITING · 기간 지난 설문 마감 */
+      case 'its_office_daily': {
+        const r = await itsOfficeDailyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       /* v10.422 (D252 · docs/559) — 4대보험 취득 · 상실 신고 기한 3일 전부터 ACCT_INSURANCE_DUE(같은 건 한 번 · 처리함 누르면 풀림) */
       case 'acct_insurance': {
         const r = await acctInsuranceJob(this.db);
@@ -860,6 +913,41 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.479 (D267 · docs/617 · 620) — 유효 기간 지난 소개몰 적립금 묶음 · 상품권 잔액 소멸(쌓기만 기록 · 전표 근거) · 적립금 30일 전 회원 알림 · 있으면 MALL_BENEFIT_EXPIRED */
+      case 'mall_benefit_expire': {
+        const r = await mallBenefitExpireJob(this.db);
+        affected = r.pointLots + r.giftCards; detail = r;
+        break;
+      }
+
+      /* v10.480 (D267 · docs/618) — mall.tiers on 일 때만 · 최근 mall.tier_months 개월 구매확정 직판 주문으로 회원 등급(운영이 정한 회원 건너뜀) */
+      case 'mall_tier_recalc': {
+        const r = await mallTierJob(this.db);
+        affected = r.changed; detail = r;
+        break;
+      }
+
+      /* v10.481 (D267 · docs/619) — mall.subscribe · mall.order_open on 일 때만 · 결제일이 된 정기 배송 주문 · 결제(ASSUME 간주 · LIVE 카드 등록 키) · 실패 MALL_SUBSCRIBE_FAIL */
+      case 'mall_subscribe': {
+        const r = await mallSubscribeJob(this.db);
+        affected = r.paid + r.skipped + r.failed; detail = r;
+        break;
+      }
+
+      /* v10.495 (D271 · docs/633) — 로트 관리 상품의 수불부 출고(주문은 배송 뒤) · 줄이는 실사 → 로트(출고 지정 → FEFO) · 반입 → 나갔던 로트 · 모자라면 QLT_LOT_SHORT */
+      case 'qlt_lot_alloc': {
+        const r = await qltLotAllocJob(this.db);
+        affected = r.done + r.short + r.back; detail = r;
+        break;
+      }
+
+      /* v10.495 · 496 (D271 · docs/633 · 634) — 로트 유통기한 임박 · 지남 QLT_LOT_EXPIRY(qlt.expiry_alert on 일 때) · 클레임 재발 QLT_CLAIM_REPEAT */
+      case 'qlt_daily': {
+        const r = await qltDailyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       /* v10.453 (D261 · docs/590) — 이번 달 법인카드 사용이 한도의 acct.card_alert_pct 넘으면 ACCT_CARD_LIMIT(카드마다 한 번 · 한도 넘으면 한 번 더 · 지난달 풀림) */
       case 'acct_card_limit': {
         const r = await acctCardLimitJob(this.db);
@@ -881,6 +969,20 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.483 (D268 · docs/621) — campaign.enabled on 일 때만 · 예약 시각이 된 캠페인을 campaign.batch 만큼(야간은 야간 동의자만 · ASSUME 은 보내지 않고 간주) */
+      case 'mkt_campaign_send': {
+        const r = await mktCampaignJob(this.db, this.mail);
+        affected = r.sent + r.assumed; detail = r;
+        break;
+      }
+
+      /* v10.485 (D268 · docs/623) — 1년 지난 접속 나라 기록 · 30일 지난 나라 캐시 · 하루 지난 패스키 확인 문제 */
+      case 'sec_daily_purge': {
+        const r = await secDailyPurgeJob(this.db);
+        affected = r.geoEvents + r.geoCache + r.passkeyChallenges; detail = r;
+        break;
+      }
+
       /* v10.439 (D257 · docs/576) — 이번 달 고정비 줄(acct.contract_accrue on 일 때만) · 같은 거래처 매입 자동 맞춤 · 다음 달 말까지 매입 없으면 ACCT_ACCRUAL_UNMATCHED */
       case 'acct_accrual': {
         const r = await acctAccrualJob(this.db);
@@ -891,6 +993,20 @@ export class SchedulerService {
       case 'acct_stock': {
         const r = await stockJob(this.db);
         affected = r.out + r.back; detail = r;
+        break;
+      }
+
+      /* v10.476 (D266 · docs/614) — 12개월 자금 계획에서 달 말 예상 잔액이 acct.cash_floor 밑인 첫 달 ACCT_CASHPLAN_SHORT(달이 바뀌면 새로 · 넉넉해지면 · 끄면 풀림) */
+      case 'acct_cashplan': {
+        const r = await acctCashPlanJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.478 (D266 · docs/616) — 판매용 재고 + 발주 중 < 최소인 직판 옵션 STOCK_REORDER(옵션마다 하나) · 매입처별 재주문 초안 줄(발주는 사람이 「발주로 넣기」) */
+      case 'acct_reorder': {
+        const r = await acctReorderJob(this.db);
+        affected = r.made + r.lines; detail = r;
         break;
       }
 

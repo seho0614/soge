@@ -45,8 +45,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     files: ['src/modules/billing/payment.provider.ts'], doc: 'docs/62 9절' },
   /* v10.142 (D138 · docs/215) — 대행사 공통 HTTP 틀 · 방식 alimtalk.provider · 켜기 notify.alimtalk_ready. 대행사 미정 — 정해지면 칸 이름 확인 */
   { code: 'ALIMTALK', name: '알림톡 · SMS', dbRow: true, secretEnv: 'ALIMTALK_KEY',
-    otherEnv: ['ALIMTALK_SENDER_KEY', 'ALIMTALK_URL', 'ALIMTALK_AUTH_HEADER', 'ALIMTALK_AUTH_PREFIX', 'ALIMTALK_RESULT_ID_PATH', 'ALIMTALK_TIMEOUT_MS', 'ALIMTALK_FALLBACK_SMS'], assume: null, adapter: 'STUB',
-    files: ['src/common/alimtalk/alimtalk.service.ts', 'src/common/alimtalk/alimtalk.templates.ts', 'src/modules/partner/consult.service.ts'], doc: 'docs/215 · 설계 docs/213 · docs/93 3절' },
+    otherEnv: ['ALIMTALK_SENDER_KEY', 'ALIMTALK_URL', 'ALIMTALK_AUTH_HEADER', 'ALIMTALK_AUTH_PREFIX', 'ALIMTALK_RESULT_ID_PATH', 'ALIMTALK_TIMEOUT_MS', 'ALIMTALK_FALLBACK_SMS',
+               'CAMPAIGN_SMS_URL'], assume: null, adapter: 'STUB',   // v10.483 (D268) 광고 문자 캠페인 — 같은 대행사의 문자 주소(알림톡은 광고를 보낼 수 없음)
+    files: ['src/common/alimtalk/alimtalk.service.ts', 'src/common/alimtalk/alimtalk.templates.ts', 'src/modules/partner/consult.service.ts', 'src/modules/marketing/campaign.ts'], doc: 'docs/215 · 설계 docs/213 · docs/93 3절 · docs/621' },
   /* v10.145 (D141 · docs/221) — 업체 공통 HTTP 틀 · 방식 safenum.provider · 웹훅 /webhooks/safenum(HMAC). 업체 미정 — 정해지면 칸 이름 확인 */
   { code: 'SAFENUM', name: '050 안심번호', dbRow: true, secretEnv: 'SAFENUM_KEY',
     otherEnv: ['SAFENUM_WEBHOOK_SECRET', 'SAFENUM_URL', 'SAFENUM_ALLOC_PATH', 'SAFENUM_RELEASE_PATH', 'SAFENUM_AUTH_HEADER', 'SAFENUM_AUTH_PREFIX', 'SAFENUM_RESULT_ID_PATH', 'SAFENUM_RESULT_NUMBER_PATH', 'SAFENUM_EVT_ID_PATH', 'SAFENUM_EVT_NUMBER_PATH', 'SAFENUM_EVT_DURATION_PATH', 'SAFENUM_EVT_ENDED_PATH', 'SAFENUM_EVT_CALLER_PATH', 'SAFENUM_SIG_HEADER', 'SAFENUM_TS_HEADER', 'SAFENUM_TIMEOUT_MS'],
@@ -84,6 +85,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   /* v10.432 (D255) 홈택스 매입 세금계산서 — 연동 업체(바로빌 · 팝빌 등) API · 간주는 설정 acct.taxinbox_mode(assume.* 아님 · 오픈 차단 아님) */
   { code: 'TAXINBOX', name: '매입 세금계산서 가져오기', dbRow: true, secretEnv: 'TAXINBOX_API_KEY', otherEnv: ['TAXINBOX_API_BASE', 'TAXINBOX_CORP_NUM', 'TAXINBOX_MAP', 'TAXINBOX_TIMEOUT_MS'],
     assume: null, adapter: 'REAL', files: ['src/modules/acct/taxinbox.ts'], doc: 'docs/569' },
+  /* v10.485 (D268 · docs/623) IP 국가 판별 — 운영자 해외 로그인 경고 · 업체 주소 틀 GEOIP_API_BASE({ip} · {key}) · 간주는 설정 security.geo_mode(assume.* 아님 · 오픈 차단 아님) · 경고 security.geo_watch(처음 off) */
+  { code: 'GEOIP', name: 'IP 국가 판별', dbRow: true, secretEnv: 'GEOIP_API_KEY', otherEnv: ['GEOIP_API_BASE', 'GEOIP_COUNTRY_PATH', 'GEOIP_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/identity/geo-guard.ts'], doc: 'docs/623' },
   /* v10.454 (D261) 대량 이체 — 금융결제원 오픈뱅킹(KFTC) · 간주는 설정 acct.transfer_mode(assume.* 아님 · 오픈 차단 아님) · 보내기는 acct.transfer(처음 off) */
   { code: 'FIRMBANK', name: '대량 이체(금융결제원 오픈뱅킹)', dbRow: true, secretEnv: 'FIRMBANK_CLIENT_SECRET',
     otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS',

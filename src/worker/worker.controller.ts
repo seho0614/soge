@@ -30,16 +30,27 @@ const JOBS = [
   'acct_deadline',      /* v10.390 (D244) 신고 기한 · 지난달 마감 알림 — 매일 09:15 */
   'acct_cashflow',      /* v10.394 (D245) 자금 흐름 90일 · 잔액 모자람 알림 — 매일 09:20 */
   'acct_stock',         /* v10.395 (D245) 직판 재고 수불부 출고 · 반입 — 매시간 */
+  'acct_cashplan',      /* v10.476 (D266) 12개월 자금 계획 · 모자라는 달 알림 — 매일 09:35 · acct.cashplan_alert on 일 때 */
+  'acct_reorder',       /* v10.478 (D266) 안전 재고 · 재주문 초안 — 매시간 · acct.reorder on 일 때(발주는 사람이) */
   'acct_depreciation',  /* v10.398 (D246) 감가상각 — 매일 03:40 */
+  'hrx_ot_week',        /* v10.471 (D265) 주 52시간 경고 — 매일 09:50 · 이번 주 연장 · 휴일 근로가 경고 시간을 넘은 직원 수 */
   'acct_budget',        /* v10.399 (D246) 예산 넘음 알림 — 매일 09:25 */
   'acct_aging',         /* v10.401 (D247) 받을 돈 · 갚을 돈 오래됨 알림 */
   'acct_pg_check',      /* v10.404 (D248) PG 정산 늦음 알림 — 매일 09:25 */
   'acct_contracts',     /* v10.409 (D249) 계약 만기 알림 */
+  'lgl_due',            /* v10.486 ~ 489 (D269) 법무 기한 알림(인허가 갱신 · 사건 기일 · 보험 만기 · 검토 늦음) — 매일 09:50 */
   'acct_taxinbox',      /* v10.432 (D255) 매입 세금계산서 가져오기 — 매일 08:10(켜져 있을 때) */
   'ops_report',         /* v10.412 (D250) 업무 보고 — 매일 07:00 전날 일보 · 월요일 주보 · 1일 월보 */
   'acct_dunning',       /* v10.436 (D256) 미수금 독촉(acct.dunning on 일 때만 메일) · 지난 입금 예정 표시 — 매일 09:35 */
   'acct_accrual',       /* v10.439 (D257) 고정비 자동 전표 · 매입 맞춤 · 빠진 매입 알림 — 매일 01:20 */
   'acct_card_limit',    /* v10.453 (D261) 법인카드 한도 알림 — 매일 09:40 · acct.card_alert on 일 때 */
+  'qlt_lot_alloc',      /* v10.495 (D271) 재고 로트 붙이기 — 매시간 · 로트 관리 상품의 출고(배송 뒤) · 반입 · 줄이는 실사 */
+  'qlt_daily',          /* v10.495 · 496 (D271) 로트 유통기한 임박 · 지남 · 클레임 재발 알림 — 매일 07:20 */
+  'mkt_campaign_send',  /* v10.483 (D268) 문자 · 메일 캠페인 — 5분마다 · campaign.enabled on 일 때만(처음 off) */
+  'sec_daily_purge',    /* v10.485 (D268) 보안 기록 정리 — 매일 04:55 · 1년 지난 접속 나라 · 30일 캐시 · 하루 지난 패스키 문제 */
+  'mall_benefit_expire', /* v10.479 (D267) 소개몰 적립금 · 상품권 소멸 — 매일 00:20 · 적립금 30일 전 회원 알림 */
+  'mall_tier_recalc',   /* v10.480 (D267) 소개몰 회원 등급 다시 셈 — 매일 05:20 · mall.tiers on 일 때 */
+  'mall_subscribe',     /* v10.481 (D267) 소개몰 정기 배송 — 매일 07:10 · mall.subscribe · mall.order_open on 일 때만(처음 off · 간주) */
   'sal_opp_remind',     /* v10.466 (D264) 영업 기회 다음 할 일 알림 — 매일 08:50 · sales.opp_remind on 일 때 */
   'acct_bank_feed',     /* v10.467 (D264) 은행 거래내역 자동 조회 — 매일 06:40 · acct.bank_feed on 일 때만(처음 off) */
   'hr_training_due',    /* v10.458 (D262) 법정 의무교육 기한 알림 — 매일 09:45 */
@@ -48,6 +59,8 @@ const JOBS = [
   'corp_doc_due',       /* v10.425 (D253) 사내 문서 만료 알림 — 매일 09:30 */
   'ofc_task_due',       /* v10.463 (D263) 업무 요청 기한 지남 수 알림 — 매일 09:10 · ofc.task_due_alert on 일 때 */
   'acct_insurance',     /* v10.422 (D252) 4대보험 취득 · 상실 신고 기한 알림 — 매일 09:35 */
+  'its_key_expiry',     /* v10.490 (D270) 외부 연동 키 만료 · 교체 알림 — 매일 08:40 · its.key_alert on 일 때 */
+  'its_office_daily',   /* v10.491 ~ 493 (D270) IT 자산 갱신 알림 · 자동 갱신일 옮김 · 제안 접수 대기 수 · 기간 지난 설문 마감 — 매일 08:55 */
   'ops_board_purge',    /* v10.286 (D213) 운영자 게시판 보관 기간 정리 — 매일 04:40 */
   'geo_backfill',       /* v10.46 (D099) 매물 좌표 채우기(카카오 로컬) · 지도 사용 off 면 건너뜀 */
   'translate_jobs',     /* v10.104 (D118) 등록 글 자동 번역 · 스위치 · 월 상한이 막으면 건너뜀 */

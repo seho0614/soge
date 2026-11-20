@@ -47,6 +47,8 @@ export interface Principal {
   mfaAt?: number;
   /** v10.226 (D195) — 접속 인증이 켜졌는데 허용 IP 도 아니고 오늘 이 IP 로 인증하지 않음(AuthMiddleware 가 채움) → 운영 역할만 요구하는 API 는 403 IP_VERIFY_REQUIRED */
   ipPending?: boolean;
+  /** v10.484 (D268) — 패스키 EXTRA 방식 · 패스키를 등록한 운영자인데 이 로그인 기기가 admin.mfa_hours 안에 패스키로 확인하지 않음(AuthMiddleware 가 채움) → 운영 역할만 요구하는 API 는 403 PASSKEY_REQUIRED */
+  passkeyPending?: boolean;
 }
 
 /** v10.180 — 운영 역할(2단계 인증 대상) */
@@ -88,6 +90,10 @@ export class AuthGuard implements CanActivate {
       /* v10.226 (D195 · docs/363) — 허용 IP 밖이면 그날 접속 인증 뒤에만(2단계 인증과 같은 범위) */
       if (principal.ipPending && required.every((r) => MFA_OPS.includes(r))) {
         throw new Forbidden('IP_VERIFY_REQUIRED', '처음 쓰는 곳에서 접속했습니다 — 접속 인증번호를 받아 넣어 주십시오.');
+      }
+      /* v10.484 (D268 · docs/622) — 패스키 EXTRA: 등록한 운영자는 이 기기에서 패스키 확인 뒤에만(2단계 인증과 같은 범위) */
+      if (principal.passkeyPending && required.every((r) => MFA_OPS.includes(r))) {
+        throw new Forbidden('PASSKEY_REQUIRED', '등록한 패스키로 확인해 주십시오.');
       }
     }
 

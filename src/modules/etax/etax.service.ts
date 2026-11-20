@@ -6,6 +6,7 @@ import { EtaxAdapter, EtaxDoc, EtaxResult, fmtApproval } from './etax.adapter';
 import { AssumeEtaxAdapter } from './etax.assume';
 import { HttpEtaxAdapter } from './etax.http';
 import { assumeOn } from '../../common/integration/switches';
+import { exemptOn } from '../acct/exemptinv';   // v10.477 (D266) 전자계산서 스위치(acct.exempt_invoice)
 
 /**
  * v10.34 (D093) 국세청 전자세금계산서 전송 — 운영의 「발행」 · 「다시 보내기」 · 「상태 조회」 · 「취소(수정 발행)」
@@ -27,8 +28,8 @@ import { assumeOn } from '../../common/integration/switches';
  *                  ③ 손으로 넣은 줄 · 보낸 줄은 다시 보내지 않음(DB 가드 fn_etax_guard)
  * 키(ETAX_KEY)는 응답 · 기록 · 화면에 싣지 않습니다 — 「등록됨」만.
  */
-type KindSlug = 'directory' | 'lead-cash' | 'ad' | 'commission' | 'sales-doc';   // v10.433 (D256) 거래명세서
-const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION' | 'SALES_DOC'; letter: string; label: string; issuedAt: boolean }> = {
+type KindSlug = 'directory' | 'lead-cash' | 'ad' | 'commission' | 'sales-doc' | 'exempt';   // v10.433 (D256) 거래명세서 · v10.477 (D266) 전자계산서(면세)
+const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' | 'AD' | 'COMMISSION' | 'SALES_DOC' | 'EXEMPT'; letter: string; label: string; issuedAt: boolean }> = {
   directory: { table: 'consult_directory_invoices', kind: 'DIRECTORY', letter: 'D', label: '법률 · 세무 정액 노출료', issuedAt: true },
   'lead-cash': { table: 'lead_cash_invoices', kind: 'LEAD_CASH', letter: 'L', label: '리드 이용료', issuedAt: false },
   /* v10.391 (D244 · docs/528) — 광고 청구 · 입점 수수료: 회계 › 신고 자료 › 세금계산서에서 「발행 요청」한 줄(acct_tax_invoices) */
@@ -36,6 +37,8 @@ const KINDS: Record<KindSlug, { table: string; kind: 'DIRECTORY' | 'LEAD_CASH' |
   commission: { table: 'acct_tax_invoices', kind: 'COMMISSION', letter: 'C', label: '입점 판매 수수료', issuedAt: false },
   /* v10.433 (D256 · docs/570) — 거래명세서 확정 뒤 「세금계산서 요청」한 줄(acct_tax_invoices kind SALES_DOC) */
   'sales-doc': { table: 'acct_tax_invoices', kind: 'SALES_DOC', letter: 'S', label: '거래명세서 매출', issuedAt: false },
+  /* v10.477 (D266 · docs/615) — 거래명세서 면세 품목 전자계산서(acct_tax_invoices kind EXEMPT · 부가세 0 · 스위치 acct.exempt_invoice) */
+  exempt: { table: 'acct_tax_invoices', kind: 'EXEMPT', letter: 'E', label: '전자계산서(면세)', issuedAt: false },
 };
 
 interface Row {
@@ -209,6 +212,7 @@ export class EtaxService {
   /* ── 발행 · 다시 보내기 ──────────────────────────────────────── */
   async send(slug: string, id: string, mode: 'send' | 'resend') {
     const { k, r } = await this.load(slug, id);
+    if (k.kind === 'EXEMPT' && !(await exemptOn(this.db))) throw new PolicyViolation('EXEMPT_OFF', '전자계산서 발행이 꺼져 있습니다(acct.exempt_invoice) — SUPER 가 정책 › 전체 설정에서 켭니다.');   // v10.477 (D266)
     if (r.etax_mode === 'MANUAL') throw new StateConflict('ETAX_MANUAL', '발행 번호를 손으로 넣은 줄입니다(연동 전 임시 방식) — 전송하면 중복 발행이 됩니다.');
     if (r.state === 'CANCELED') throw new StateConflict('ETAX_CANCELED_INVOICE', '취소된 발행 요청입니다.');
     if (r.etax_status === 'SENT' || r.etax_status === 'CANCELED') throw new StateConflict('ETAX_ALREADY_SENT', `이미 국세청에 보낸 세금계산서입니다(${r.etax_status === 'SENT' ? '승인번호 ' + fmtApproval(r.etax_approval_no) : '취소됨'}).`);

@@ -5,6 +5,7 @@ import { AppError, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { HLT_CUSTOMER_REASONS, HLT_EXCHANGE_SHIP_ROUND_TRIP, HLT_RETURN_SHIP_ROUND_TRIP, ORDER_OPEN_SQL, ORDERS_CLOSED_MSG, ORDER_ROUND_TRIP_SQL, exchangeFee, returnShipDeduction, sellerShipFee } from './health-policy';
 import { FEE_STATE_SQL, PAY_COLS } from './health-shop.shared';
+import { applyBenefits } from './health-benefit';   // v10.479 · 482 (D267) 적립금 · 상품권
 import { quoteCoupon, useCoupon } from './health-coupon';   // v10.469 (D264) 할인 쿠폰
 
 /**
@@ -100,6 +101,13 @@ export class HealthCheckoutService {
 
     /* v10.469 (D264) — 쿠폰 쓴 기록(주문 하나에 하나) · DB 가 쿠폰 줄을 잠그고 한도 · 직판 · 금액을 다시 확인(넘으면 주문째 되돌아감) */
     if (coupon) await useCoupon(this.db, coupon, o.id, me);
+
+    /* v10.479 · 482 (D267) — 적립금 · 상품권(선택) · ㉝ 쿠폰 다음 차례 · DB(fn_hlt_benefit_apply)가 잠그고 직판 · 스위치 · 잔액 · 최소 1원 결제를 다시 확인(막히면 주문째 되돌아감)
+     *   돌려준 결제 금액(total) · 적립금 · 상품권 금액을 응답 o 에 덮음 — 아래 return 줄은 고치지 않음(㉝ 패치와 겹치지 않게) */
+    if (d.usePoints || d.giftCode) {
+      const bf = await applyBenefits(this.db, o.id, me, Number(d.usePoints ?? 0), d.giftCode ? String(d.giftCode) : null);
+      if (bf) Object.assign(o, bf);
+    }
 
     /* 주문한 옵션은 장바구니에서 뺍니다 — 전에는 남아 있어 같은 것을 또 주문하게 됐습니다 */
     await this.db.query(

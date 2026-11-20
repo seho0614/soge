@@ -36,6 +36,7 @@
     {"code":"PASSWORD_CHANGED","name":"비밀번호 변경","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"accounts.password_changed_at 설정 (변경 · 재설정 · v10.48 D102)","screen":"SB-MYP-ACC-010"},
     {"code":"LOGIN_LOCKED","name":"로그인 잠금","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"auth_throttle.locked_until 설정 (5회 연속 실패 · v10.48 D102)","screen":"SB-HOM-AUT-040"},
     {"code":"LOGIN_NEW_DEVICE","name":"낯선 기기 로그인","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"로그인 성공 · 90일 안에 없던 (IP 앞 두 마디 + 브라우저 종류) · 하루 3번까지 · 설정 account.login_alert (v10.221 D191)","screen":"SB-MYP-SEC-010"},
+    {"code":"CONSENT_OPTOUT","name":"광고 수신 거부 처리","actor":"OWNER","channels":["INAPP"],"optout":false,"trigger":"캠페인 메일의 수신 거부 링크로 마케팅 · 야간 광고 동의 철회 (v10.483 D268 · 정보통신망법 제50조 처리 결과 알림)","screen":"SB-HOM-ETC-022"},
     {"code":"PARTNER_APPROVED","name":"안심소개 파트너 승인","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"partners.status APPLIED → ACTIVE (v10.222 D192)","screen":"SB-PTC-DSH-010"},
     {"code":"PARTNER_REJECTED","name":"안심소개 파트너 반려","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"partners.status APPLIED → REJECTED · 사유","screen":"SB-PTC-CTR-100"},
     {"code":"PARTNER_SUSPENDED","name":"안심소개 파트너 정지","actor":"OWNER","channels":["INAPP","EMAIL"],"optout":false,"trigger":"partners.status ACTIVE → SUSPENDED · 사유 (v10.222 D192)","screen":"SB-PTC-CTR-100"},

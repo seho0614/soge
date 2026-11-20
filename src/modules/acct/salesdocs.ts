@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import type { Line, Source } from './journal';
+import { taxableShare } from './exemptinv';   // v10.477 (D266) 면세 품목은 전자계산서로(스위치 on 일 때)
 
 /* ---------------------------------------------------------------------
  * v10.433 (D256 · docs/570) 견적서 · 주문서 · 거래명세서 · 발주서 출력 — 대표 11/19 「이카운트 보류 → 내부 시스템으로」
@@ -211,12 +212,13 @@ export async function requestDocInvoice(db: DatabaseService, id: string, actor: 
     if (old && old.state !== 'CANCELED') throw new StateConflict('ACCT_DOC_STATE', '이미 세금계산서를 요청했습니다.');
   }
   if (n(d.supply) <= 0) throw new PolicyViolation('ACCT_DOC', '공급가가 0원이라 세금계산서를 요청할 수 없습니다.');
+  const share = await taxableShare(db, id, { supply: d.supply, vat: d.vat });   // v10.477 (D266) — acct.exempt_invoice on 이면 면세 품목을 빼고(면세만이면 422 ACCT_DOC_EXEMPT_ONLY)
   const biz = /^\d{10}$/.test(d.partyBizNo ?? '') ? `${d.partyBizNo.slice(0, 3)}-${d.partyBizNo.slice(3, 5)}-${d.partyBizNo.slice(5)}` : null;
   return db.transaction(async () => {
     const [t] = await db.query<{ id: string }>(
       `INSERT INTO acct_tax_invoices (kind, source_id, supply, vat, total, buyer_name, buyer_biz_no, item, requested_by)
        VALUES ('SALES_DOC', $1::uuid, $2, $3, $4, $5, $6, $7, $8) RETURNING id::text AS id`,
-      [id, d.supply, d.vat, d.total, String(d.partyName).slice(0, 120), biz, `${d.docNo} ${d.title}`.slice(0, 100), actor]);
+      [id, share.supply, share.vat, share.supply + share.vat, String(d.partyName).slice(0, 120), biz, `${d.docNo} ${d.title}`.slice(0, 100), actor]);   // v10.477 (D266) 스위치 off 면 d.supply · d.vat · d.total 과 같음
     await db.query(`UPDATE acct_sales_docs SET tax_invoice_id = $2::uuid WHERE id::text = $1`, [id, t!.id]);
     return { ok: true, id, taxInvoiceId: t!.id, note: biz ? '세금계산서 발행을 요청했습니다 — 회계 › 신고 자료 › 세금계산서에서 보냅니다.' : '세금계산서 발행을 요청했습니다(거래처 사업자번호가 없어 개인 · 주민번호 발행은 회계 프로그램에서).' };
   });

@@ -1,6 +1,8 @@
 import { DatabaseService } from '../../db/database.service';
 import { hasRole } from '../../core/auth';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { bookingCalItems } from './hrx-booking';   // v10.473 (D265) 내 회의실 · 장비 예약
+import { legalDueItems } from '../legal/lgl-due';   // v10.486 ~ 489 (D269) 법무 기한
 import { deadlines } from './month';   // v10.390 · 418 신고 기한 · 급여일 · 카드 대금일(같은 셈을 그대로 씀)
 
 /* ---------------------------------------------------------------------
@@ -21,6 +23,8 @@ const YMD = /^\d{4}-\d{2}-\d{2}$/;
 export const OFC_TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;   // DB CHECK ofc_events.at_time 과 같음
 export const OFC_EVENT_SCOPES = ['PERSONAL', 'COMPANY'] as const;
 export const OFC_CAL_KINDS: Record<string, string> = {
+  BOOK: '회의실 · 장비 예약',   // v10.473 (D265)
+  LEGAL: '법무 기한',   // v10.486 ~ 489 (D269)
   EVENT: '직접 일정', LEAVE: '휴가', APV: '품의 쓸 날', TAX: '신고 · 납부 기한', PAY: '급여일', CONTRACT: '계약 만기', TRIP: '출장', TASK: '업무 기한',
 };
 const kstToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
@@ -143,6 +147,8 @@ export async function calendarView(db: DatabaseService, v: Viewer, fromIn?: stri
     items.push({ key: `TASK:${k.id}`, kind: 'TASK', title: `업무 기한 — ${k.title}${k.late ? ' (지남)' : ''}`, start: k.d, end: k.d, time: null, mine: k.mine, editable: false, tab: 'ofc-tasks' });
   }
 
+  for (const x of await bookingCalItems(db, v.id, from, to)) items.push(x);
+  if (editor) for (const x of await legalDueItems(db, from, to)) items.push({ key: x.key, kind: 'LEGAL', title: x.title, start: x.day, end: x.day, time: x.time, mine: false, editable: false, tab: x.tab });   // v10.486 ~ 489 (D269) 법무 기한(관리자만)   // v10.473 (D265) 내 회의실 · 장비 예약
   items.sort((a, b) => a.start.localeCompare(b.start) || String(a.time ?? '').localeCompare(String(b.time ?? '')) || a.key.localeCompare(b.key));
   return { from, to, today, items, count: items.length, kinds: OFC_CAL_KINDS, canCompany: editor, finance: fin,
            note: '휴가 · 품의 쓸 날 · 신고 기한 · 계약 만기 · 급여일 · 출장 · 업무 기한은 각 화면의 표를 그대로 읽습니다(여기서 고치지 않음). 직접 일정은 개인(본인만) · 회사(모두 · ADMIN · SUPER 가 넣음)입니다.' };

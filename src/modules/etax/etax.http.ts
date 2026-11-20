@@ -71,7 +71,7 @@ export class HttpEtaxAdapter implements EtaxAdapter {
     const r = await httpJson({
       url: `${this.base()}/invoices`, method: 'POST', headers: this.headers, timeoutMs: this.timeoutMs, fetchFn: this.fetchFn,
       body: {
-        docKey: doc.docKey, writeDate: doc.writeDate, taxType: 'TAX', purposeType: 'RECEIPT',
+        docKey: doc.docKey, writeDate: doc.writeDate, taxType: doc.kind === 'EXEMPT' ? 'EXEMPT' : 'TAX', purposeType: 'RECEIPT',   // v10.477 (D266) 전자계산서(면세)
         supplier: { bizNo: doc.supplier.bizNo.replace(/\D/g, ''), name: doc.supplier.name, ceoName: doc.supplier.ceoName ?? null },
         buyer: { bizNo: doc.buyer.bizNo.replace(/\D/g, ''), name: doc.buyer.name },
         supplyAmount: doc.supply, taxAmount: doc.vat, totalAmount: doc.total,
