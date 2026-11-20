@@ -28,7 +28,7 @@ REP = 3
 BLOCK = json.dumps({'statusCode': 422, 'code': 'BTN_CHECK', 'message': '단추 점검 — 이 요청은 서버로 보내지 않았습니다.'}, ensure_ascii=False)
 norm_api = lambda p: re.sub(r'/[0-9a-f]{8}-[0-9a-f-]{27,}|/\d+(?=/|$)|/H\d{8,}', '/{}', re.sub(r'^/api/v1', '', p))
 # v10.29 — 상단은 묶음 단추(data-tabs="|탭|탭|"). 탭 목록 = 묶음마다 data-tabs 를 펼친 것(묶음 × .ad-snb 탭)
-TABS = "[...document.querySelectorAll('.bo-head nav button')].flatMap(b=>(b.getAttribute('data-tabs')||'').split('|').filter(Boolean))"
+TABS = "[...document.querySelectorAll('.ad-tree button[data-group]')].flatMap(b=>(b.getAttribute('data-tabs')||'').split('|').filter(Boolean))"
 # v10.31 — 하위 탭 줄의 「다른 탭으로 옮기는 단추」(data-out)는 상태가 아니라 이동이라 빼고 셉니다
 SUBS = lambda n: f"(document.querySelectorAll('.bo-main .subtabs')[{n}] ? [...document.querySelectorAll('.bo-main .subtabs')[{n}].querySelectorAll('button:not([data-out])')].map(b=>b.innerText.trim()) : [])"
 
@@ -66,12 +66,12 @@ with sync_playwright() as pw:
         if fresh:
             if os.environ.get('BO_DEBUG'): print('  ss before reload', pg.evaluate("Object.keys(sessionStorage)"), file=sys.stderr, flush=True)
             pg.reload()
-            try: pg.wait_for_selector('.bo-head nav button', timeout=15000)
+            try: pg.wait_for_selector('.ad-tree button[data-group]', timeout=15000)
             except Exception:
                 print('  (새로 고침 뒤 탭이 안 보임)', pg.url, repr(pg.inner_text('body')[:160]), state['errs'][-2:], file=sys.stderr, flush=True)
                 if pg.locator('input[name=email]').count():       # 로그인이 풀렸으면 다시 로그인
                     __import__('consent_ok').agree(email, pwd); pg.fill('input[name=email]', email); pg.fill('input[name=password]', pwd); pg.click('form button[type=submit]')
-                pg.wait_for_selector('.bo-head nav button', timeout=15000)
+                pg.wait_for_selector('.ad-tree button[data-group]', timeout=15000)
             pg.wait_for_timeout(300)
         if not bo_tab(pg, tabs[path[0]]): print('  (탭을 못 찾음)', tabs[path[0]], file=sys.stderr, flush=True)   # v10.29
         if path[1] is not None:
@@ -110,7 +110,7 @@ with sync_playwright() as pw:
         except Exception: items = []
         main_ids = set(pg.evaluate("[...document.querySelectorAll('.bo-main [data-bc]')].map(e=>+e.getAttribute('data-bc'))"))
         sub_ids = set(pg.evaluate("[...document.querySelectorAll('.bo-main .subtabs [data-bc], .bo-main .ad-snb [data-bc]')].map(e=>+e.getAttribute('data-bc'))"))   # v10.29 — 묶음 안 탭 줄(.ad-snb)도 상태 전환이라 누르는 목록에서 뺌
-        head_ids = set(pg.evaluate("[...document.querySelectorAll('.bo-head [data-bc]')].filter(e=>!e.closest('nav')).map(e=>+e.getAttribute('data-bc'))"))
+        head_ids = set(pg.evaluate("[...document.querySelectorAll('.bo-head [data-bc]')].filter(e=>!e.closest('nav') && !e.closest('[data-tree-open]')).map(e=>+e.getAttribute('data-bc'))"))
         rec = {'state': label, 'path': path, 'n_main': len(main_ids - sub_ids), 'n_subtab': len(sub_ids), 'buttons': [],
                'len': pg.evaluate("(document.querySelector('.bo-main')||{innerText:''}).innerText.length")}
         sig_count = {}; dirty = False

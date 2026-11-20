@@ -22,7 +22,7 @@ with sync_playwright() as pw:
         login_visible=pg.locator('form input[name=email]').count()>0
         __import__('consent_ok').agree(email, pwd); pg.fill('input[name=email]',email); pg.fill('input[name=password]',pwd); pg.click('form button[type=submit]'); pg.wait_for_timeout(1500)
         alert=pg.evaluate("document.querySelector('[role=alert]')?.innerText||''")
-        try: pg.wait_for_selector('.bo-head nav button', timeout=15000)
+        try: pg.wait_for_selector('.ad-tree button[data-group]', timeout=15000)
         except Exception: pass
         groups=bo_groups(pg)                                     # v10.29 — [(묶음, [탭 …])]
         tabs=[t for _, ts in groups for t in ts]                 # v10.29 — 묶음 순서대로 탭 글자

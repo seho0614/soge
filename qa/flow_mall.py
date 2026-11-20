@@ -196,7 +196,7 @@ def main():
         def bo_open():
             c = b.new_context(viewport={'width': 1500, 'height': 1000}); guard(c)
             bp = bo_login(c, 'admin@x.com'); dl = []; bp.on('dialog', lambda d: (dl.append(d.message), d.accept()))
-            until(lambda: bp.locator('.bo-head nav button').count() > 5, 15)
+            until(lambda: bp.locator('.ad-tree button[data-group]').count() > 5, 15)
             S.update(bo=bp, boctx=c, bodlg=dl, wbo=Watch(bp))
             return bo_tab(bp, '소개몰 정산')
 

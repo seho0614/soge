@@ -138,7 +138,7 @@ with sync_playwright() as p:
     cb, bo = ctx()
     bo.goto(BO + '/', wait_until='networkidle'); bo.wait_for_timeout(500)
     __import__('consent_ok').agree(EMAIL, PW); bo.fill('input[name=email]', EMAIL); bo.fill('input[name=password]', PW); bo.click('form button[type=submit]'); bo.wait_for_timeout(2000)
-    rec('D-2 운영 화면 로그인', bo.locator('.bo-head nav button').count() > 5, bo.locator('.bo-head nav button').count())
+    rec('D-2 운영 화면 로그인', bo.locator('.ad-tree button[data-group]').count() > 5, bo.locator('.ad-tree button[data-group]').count())
     _bo_tab(bo, '이건 어때? 투표'); bo.wait_for_selector('[data-polls-admin]', timeout=10000)   # v10.29 — 묶음 단추 → .ad-snb 탭
     T = f'리허설 {tag} 어느 쪽이 좋을까요?'
     bo.select_option('select[name=poll-kind]', 'VS'); bo.fill('input[name=poll-title]', T); bo.fill('textarea[name=poll-options]', '왼쪽 | 가볍다\n오른쪽 | 오래 간다')

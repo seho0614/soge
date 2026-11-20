@@ -104,7 +104,7 @@ def main():
         ctx = br.new_context(); pg = ctx.new_page(); bad = []; okc = []
         pg.on('response', lambda res: (bad if res.status >= 400 else okc).append(f"{res.status} {res.request.method} {res.url.split('/api/v1')[-1][:40]}") if '/api/' in res.url else None)
         pg.goto(BO); pg.wait_for_timeout(800); __import__('consent_ok').agree('admin@x.com', 'sgb-dev-1234'); pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', 'sgb-dev-1234'); pg.click('form button[type=submit]'); pg.wait_for_timeout(1800)
-        try: pg.wait_for_selector('.bo-head nav button', timeout=15000)
+        try: pg.wait_for_selector('.ad-tree button[data-group]', timeout=15000)
         except Exception: pass
         groups = bo_groups(pg); tabs = [t for _, ts in groups for t in ts]      # v10.29 — 묶음 단추(data-tabs) × 묶음 안 탭
         rec(f'A-8 운영 화면 로그인 → API → 묶음 {len(groups)}개 · 탭 {len(tabs)}개가 열림 · 실패한 API 응답 0', len(tabs) >= 30 and not bad, (len(okc), bad[:3]))   # v10.29

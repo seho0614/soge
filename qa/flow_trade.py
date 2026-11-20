@@ -109,7 +109,7 @@ def member(b):
 
 def bo_open(b, label='운영 화면'):
     ctx = new_ctx(b, 1400, 900); pg = bo_login(ctx, 'admin@x.com'); track(pg, label)
-    try: pg.wait_for_selector('.bo-head nav button', timeout=30000)
+    try: pg.wait_for_selector('.ad-tree button[data-group]', timeout=30000)
     except Exception: pass
     return ctx, pg
 

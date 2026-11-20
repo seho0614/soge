@@ -144,20 +144,20 @@ def mig(prefix):
 M48 = mig('D248')
 
 M51 = mig('D251')
-MN, AP, UI, CSS = rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/Acct.tsx'), rd('web/src/styles/app.css')
+MN, AP, UI, CSS = rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx') + rd('web/src/app/admin/AdminTree.tsx'), rd('web/src/app/admin/Acct.tsx'), rd('web/src/styles/app.css')   # v10.457 탭 줄은 왼쪽 트리(AdminTree)로
 ok('① 코드 — 하위 묶음 6(장부 · 자금 · 매입 · 경비 · 세무 · 인사 · 설정 · 보고) · sectionsOf · 탭 줄 이름표(data-section) · 단추 data-tab 그대로 · 월 결산 바로가기 · 옛 회계 그룹 글자 그대로 · 문서 553 · 판 v10.416',
    'export const GROUP_SECTIONS' in MN and 'export function sectionsOf' in MN and all(f"label: '{x}'" in MN for x in ('장부', '자금', '매입 · 경비', '세무', '인사', '설정 · 보고'))
    and "tabs: ['acct-month', 'acct-journal', 'acct-bank'" in MN and "'acct-accounts'] }" in MN
-   and 'sectionsOf(cur.key, curTabs)' in AP and 'data-section=' in AP and 'data-tab={t}' in AP and '<AcctMonth onGo=' in AP
+   and ('sectionsOf(cur.key, curTabs)' in AP or 'sectionsOf(g.key, g.tabs)' in AP) and 'data-section=' in AP and 'data-tab={t}' in AP and '<AcctMonth onGo=' in AP
    and 'function AcctShortcuts' in UI and 'data-acct-shortcuts=' in UI and '.ad-sec-l' in CSS and '하위 묶음' in doc('553_') and VT >= (10, 416), VER)
 
 if ADMIN_WEB:
     def chk(pg, seen):
-        pg.wait_for_selector('.ad-snb [data-section]', timeout=30000)
-        seen['secs'] = pg.locator('.ad-snb [data-section]').count()
-        seen['tabs'] = pg.locator('.ad-snb button[data-tab^="acct-"]').count()
-        seen['bank'] = pg.locator('.ad-snb button[data-tab="acct-bank"].on').count()
-        pg.locator('.ad-snb button[data-tab="acct-month"]').click(); pg.wait_for_timeout(2500)
+        pg.wait_for_selector('.ad-tree .ad-tr-g.on [data-section]', timeout=30000)
+        seen['secs'] = pg.locator('.ad-tree .ad-tr-g.on [data-section]').count()
+        seen['tabs'] = pg.locator('.ad-tree .ad-tr-g.on button[data-tab^="acct-"]').count()
+        seen['bank'] = pg.locator('.ad-tree .ad-tr-g.on button[data-tab="acct-bank"].on').count()
+        pg.locator('.ad-tree .ad-tr-g.on button[data-tab="acct-month"]').click(); pg.wait_for_timeout(2500)
         seen['short'] = pg.locator('[data-acct-shortcuts]').count()
         seen['shortbtn'] = pg.locator('[data-acct-shortcut]').count()
     res = admin_page('/#/acct-bank', chk)

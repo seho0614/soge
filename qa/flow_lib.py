@@ -111,20 +111,20 @@ def bo_login(ctx, email='admin@x.com', pw=None):
     pw = pw or (DEV_PW if email.endswith('@x.com') else TEST_PW)
     pg = ctx.new_page(); pg.goto(BO); pg.wait_for_timeout(800)
     pg.fill('input[name=email]', email); pg.fill('input[name=password]', pw); pg.click('form button[type=submit]')
-    try: pg.wait_for_selector('.bo-head nav button', timeout=30000)      # 운영 화면을 막 올린 뒤 첫 화면은 늦게 뜹니다(개발 서버가 처음 한 번 묶음을 만듦)
+    try: pg.wait_for_selector('.ad-tree button[data-group]', timeout=30000)      # 운영 화면을 막 올린 뒤 첫 화면은 늦게 뜹니다(개발 서버가 처음 한 번 묶음을 만듦)
     except Exception: pass
     pg.wait_for_timeout(600)
     return pg
-# v10.29 — 운영 화면 메뉴가 「묶음(상단 .bo-head nav button · data-tabs="|탭|탭|") → 묶음 안 탭(.bo-main .ad-snb button[data-tab])
+# v10.29 — 운영 화면 메뉴가 「묶음(상단 .ad-tree button[data-group] · data-tabs="|탭|탭|") → 묶음 안 탭(.ad-tree .ad-tr-g.on button[data-tab])
 #           → 화면 안 하위 탭(.bo-main .subtabs)」 3단이 되었습니다. 탭 글자는 예전 그대로입니다.
-BO_GROUP = '.bo-head nav button'            # v10.29 묶음 단추
-BO_SNB = '.bo-main .ad-snb button[data-tab]'   # v10.29 묶음 안 탭(탭이 하나뿐인 묶음은 줄이 없음)
+BO_GROUP = '.ad-tree button[data-group]'            # v10.29 묶음 단추 · v10.457 왼쪽 메뉴 트리의 그룹 단추
+BO_SNB = '.ad-tree .ad-tr-g.on button[data-tab]'   # v10.29 묶음 안 탭 · v10.457 트리에서 지금 그룹의 화면 단추(탭이 하나뿐인 그룹은 없음)
 def bo_groups(pg):
     """v10.29 — [(묶음 글자, [탭 글자 …]), …] 지금 계정에게 보이는 것만"""
     return [(g, [t for t in (ts or '').split('|') if t]) for g, ts in pg.evaluate(
-        "[...document.querySelectorAll('.bo-head nav button')].map(b=>[b.innerText.trim(), b.getAttribute('data-tabs')])")]
+        "[...document.querySelectorAll('.ad-tree button[data-group]')].map(b=>[b.innerText.trim(), b.getAttribute('data-tabs')])")]
 def bo_tab_names(pg):
-    """v10.29 — 보이는 탭 글자 전부(묶음 순서대로) — 예전 `.bo-head nav button` 글자 목록과 같은 뜻"""
+    """v10.29 — 보이는 탭 글자 전부(묶음 순서대로) — 예전 `.ad-tree button[data-group]` 글자 목록과 같은 뜻"""
     return [t for _, ts in bo_groups(pg) for t in ts]
 # v10.31 (w6 · 10/10 시안 기준) — 시안 글자로 바뀐 탭 · 하위 탭. 옛 글자로 불러도 새 글자로 누릅니다.
 BO_TAB_ALIAS = {'소개광장 검수': '글 검수'}

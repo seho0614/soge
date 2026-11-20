@@ -163,13 +163,13 @@ ok('① 코드 — D250 report_sends · report.send off · send_kinds · sendSna
 
 M53 = migr('D253_')
 
-MN, APP, CSS = rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/styles/app.css')
+MN, APP, CSS = rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx') + rd('web/src/app/admin/AdminTree.tsx'), rd('web/src/styles/app.css')   # v10.457 그룹 단추는 왼쪽 트리
 keys = re.findall(r"\{ key: '([a-z]+)',", MN)
 secs = re.search(r"export const NAV_SECTIONS: NavSection\[\] = \[(.*?)\];", MN, re.S)
 placed = re.findall(r"'([a-z]+)'", secs.group(1)) if secs else []
 ok('① 코드 — 상위 묶음 6 · 모든 그룹이 한 번씩 · navSectionsOf · 단추 data-group · data-tabs 그대로 · 이름표 em · 문서 563 · 판 v10.426',
    bool(secs) and sorted(placed) == sorted(keys) and len(placed) == len(set(placed)) and 'export function navSectionsOf' in MN
-   and 'navSectionsOf(groups).map' in APP and 'data-group={g.key}' in APP and "data-tabs={`|${g.tabs.map(label).join('|')}|`}" in APP and 'className="ad-gsec-l"' in APP
+   and 'navSectionsOf(groups).map' in APP and 'data-group={g.key}' in APP and "data-tabs={`|${g.tabs.map(label).join('|')}|`}" in APP and ('className="ad-gsec-l"' in APP or 'data-nav-section={s.label}' in APP)
    and '.ad-gsec' in CSS and '.ad-gnb button.on { background: var(--ahd-on); color: var(--sgb-navy); }' in CSS and '상단바' in doc('563_') and VT >= (10, 426),
    f"{len(keys)} 그룹 · 묶음에 {len(placed)} · 빠짐 {sorted(set(keys) - set(placed))} · {VER}")
 
@@ -177,22 +177,23 @@ if API and DB and ADMIN_WEB:
     import consent_ok
     consent_ok.agree('admin@x.com', PW)
     def chk(pg, seen):
-        pg.wait_for_selector('.bo-head nav button', timeout=30000)
-        seen['labels'] = pg.locator('.bo-head nav .ad-gsec-l').count()
-        seen['btn'] = pg.locator('.bo-head nav button').count()
-        seen['emInBtn'] = pg.locator('.bo-head nav button em').count()
-        g = pg.locator('.bo-head nav button[data-tabs*="|은행 맞추기|"]')
+        # v10.457 — 상위 묶음 이름표 · 그룹 단추는 왼쪽 메뉴 트리로 옮김(data-nav-section · data-group · data-tabs 그대로)
+        pg.wait_for_selector('.ad-tree button[data-group]', timeout=30000)
+        seen['labels'] = pg.locator('.ad-tree [data-nav-section]').count()
+        seen['btn'] = pg.locator('.ad-tree button[data-group]').count()
+        seen['emInBtn'] = pg.locator('.ad-tree button[data-group] em').count()
+        g = pg.locator('.ad-tree button[data-group][data-tabs*="|은행 맞추기|"]')
         seen['grp'] = g.count()
         if g.count():
             g.first.click(); pg.wait_for_timeout(800)
-            b = pg.locator('.bo-main .ad-snb button[data-tab="acct-bank"]')
+            b = pg.locator('.ad-tree .ad-tr-g.on button[data-tab="acct-bank"]')
             if b.count(): b.first.click(); pg.wait_for_timeout(800)
             seen['tab'] = pg.locator('.bo-main').get_attribute('data-tab')
     res = admin_page('/#/home', chk)
     if res is None: print('  (playwright 없음 — ② 건너뜀)')
     else:
         seen, perr = res
-        ok('② 화면 — 상단바 이름표 6 · 그룹 단추 20개 넘게 그대로 · 단추 안에 이름표 없음 · data-tabs 로 회계 › 은행 맞추기 들어감 · 화면 오류 없음',
+        ok('② 화면 — 상위 묶음 이름표 6(v10.457 왼쪽 트리) · 그룹 단추 20개 넘게 그대로 · 단추 안에 이름표 없음 · data-tabs 로 회계 › 은행 맞추기 들어감 · 화면 오류 없음',
            seen.get('labels') == 6 and seen.get('btn', 0) >= 20 and seen.get('emInBtn') == 0 and seen.get('grp') == 1 and seen.get('tab') == 'acct-bank' and not perr, f"{seen} {perr[:2]}")
 else:
     print('  (화면 없음 — ② 건너뜀)')

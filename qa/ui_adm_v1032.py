@@ -9,7 +9,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(); c = b.new_context(viewport={'width': 1280, 'height': 900}); pg = c.new_page()
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
     pg.goto(BO); pg.fill('input[name=email]', 'admin@x.com'); pg.fill('input[name=password]', 'sgb-dev-1234'); pg.click('form button[type=submit]')
-    pg.wait_for_selector('.bo-head nav button', timeout=60000)
+    pg.wait_for_selector('.ad-tree button[data-group]', timeout=60000)
     h1 = lambda: pg.inner_text('.ad-pgh h1')
     # 감사
     pg.goto(BO + '/#/gov-audit'); pg.reload(); pg.wait_for_selector('[data-audit-logs]', timeout=30000)

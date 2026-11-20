@@ -97,7 +97,7 @@ def bo_open(br, email='admin@x.com'):
     """운영 화면 창 — (ctx, page, Watch)"""
     ctx = br.new_context(viewport={'width': 1400, 'height': 900})
     pg = bo_login(ctx, email)
-    assert wait_for(pg, lambda: pg.locator('.bo-head nav button').count() > 3, 20), '운영 화면 로그인이 되지 않음'
+    assert wait_for(pg, lambda: pg.locator('.ad-tree button[data-group]').count() > 3, 20), '운영 화면 로그인이 되지 않음'
     pg.on('dialog', lambda d: d.accept())
     return ctx, pg, Watch(pg)
 
