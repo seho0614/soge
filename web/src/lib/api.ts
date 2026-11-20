@@ -60,6 +60,11 @@ export function tokenRoles(): string[] {
   try { return JSON.parse(atob(((accessToken ?? '').split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/'))).roles ?? []; }
   catch { return []; }
 }
+/** v10.457 — JWT 본문의 계정 번호(sub) · 왼쪽 메뉴 트리 즐겨찾기 · 최근 화면을 계정마다 따로 두는 열쇠로만 씀 */
+export function tokenSub(): string {
+  try { return String(JSON.parse(atob(((accessToken ?? '').split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/'))).sub ?? ''); }
+  catch { return ''; }
+}
 async function tryRefresh(): Promise<boolean> {
   if (!refreshToken) return false;
   const res = await fetch((import.meta.env.VITE_API_BASE ?? '/api/v1') + '/auth/refresh', {

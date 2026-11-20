@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadCodes } from './lib/codes';
 import { ymdhm } from './lib/act';   // v10.199 — 「주문 받기」 띠의 꺼질 시각
-import { api, hasToken, onAuthChange, onIpVerifyNeeded, onMfaNeeded, setToken, tokenRoles } from './lib/api';
+import { api, hasToken, onAuthChange, onIpVerifyNeeded, onMfaNeeded, setToken, tokenRoles, tokenSub } from './lib/api';
 import { Login } from './components/Login';
 import { MfaGate, type MfaStatus } from './components/MfaGate';
 import { IpGate, type IpStatus } from './components/IpGate';
@@ -88,7 +88,8 @@ import { Integ } from './app/admin/Integ';
 import { GwanUx } from './app/admin/GwanUx';
 import { Adx } from './app/admin/Adx';
 import { Footer, type FooterLink } from './components/Footer';
-import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, sectionsOf, navSectionsOf, type Tab } from './lib/adminMenu';   // v10.416 sectionsOf
+import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, type Tab } from './lib/adminMenu';
+import { AdminTree } from './app/admin/AdminTree';   // v10.457 왼쪽 메뉴 트리
 import { hashSub } from './lib/hashSub';
 import { siteUrl } from './lib/siteUrl';
 
@@ -229,6 +230,11 @@ function Console() {
 
   /* v10.32 — 지금 하위 화면(#/탭/하위). SUB_PAGE 에 있으면 제목 줄을 그 화면 제목으로 */
   const [sub, setSub] = useState<string | null>(() => hashSub());
+  /* v10.457 — 왼쪽 메뉴 트리: 좁은 화면 서랍 · 넓은 화면 접기(이 브라우저에 기억) */
+  const who = tokenSub();
+  const [drawer, setDrawer] = useState(false);
+  const [folded, setFolded] = useState<boolean>(() => { try { return localStorage.getItem('sgb.admTree.folded') === '1'; } catch { return false; } });
+  const foldTree = (v: boolean) => { setFolded(v); try { localStorage.setItem('sgb.admTree.folded', v ? '1' : '0'); } catch { /* 저장 막힘 */ } };
   /* 뒤로 가기 · 주소창에서 바꾼 탭을 따라갑니다 */
   useEffect(() => {
     const on = () => { const h = tabFromHash(); if (h && visible(h)) { setTab(h); setOpen(null); } setSub(hashSub()); };
@@ -252,7 +258,6 @@ function Console() {
 
   const cur = groupOf(tab);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(visible) })).filter((g) => g.tabs.length);
-  const curTabs = groups.find((g) => g.key === cur.key)?.tabs ?? [];
   /* v10.32 — 상단바에서 켜 둘 묶음(하위 화면이 시안에서 다른 묶음이면 그 묶음 · SUB_GROUP). 탭 줄은 cur 그대로 */
   const navKey = (sub && SUB_GROUP[`${tab}/${sub}`]) || cur.key;
   const label = (t: Tab) => TABS.find(([k]) => k === t)?.[1] ?? t;
@@ -262,31 +267,16 @@ function Console() {
   const orderLive = 'mall.order_open' in settings && (settings['mall.order_open'] ?? 'on') !== 'off' && (settings['assume.payment'] ?? 'on') === 'on';
 
   return (
-    <div className="bo">
+    <div className={`bo${folded ? ' tree-folded' : ''}`}>
       {/* v10.29 — 시안 admNav: 어두운 상단바 · 묶음 메뉴 · 오른쪽 「사용자 화면으로」 */}
       <header className="bo-head">
         <div className="ad-in">
           <a className="ad-lg" href="#/home" onClick={(e) => { e.preventDefault(); go('home'); }}>
             <span className="d" />소개뱅크 <b>운영</b>
           </a>
-          <nav className="ad-gnb" aria-label="운영 메뉴">
-            {/* v10.426 (D253) — 상위 묶음 이름표(누르지 않음) · 그룹 단추는 그대로 */}
-            {navSectionsOf(groups).map((s) => (
-              <span key={s.label} className="ad-gsec" data-nav-section={s.label}>
-                <em className="ad-gsec-l" aria-hidden="true">{s.label}</em>
-                {s.groups.map((g) => {
-                  const on = g.key === navKey;
-                  return (
-                    <button key={g.key} className={on ? 'on' : ''} data-group={g.key}
-                            data-tabs={`|${g.tabs.map(label).join('|')}|`}
-                            aria-current={on ? 'page' : undefined}
-                            title={g.tabs.map(label).join(' · ')}
-                            onClick={() => go(on && g.tabs.includes(tab) ? tab : g.tabs[0]!)}>{g.label}</button>
-                  );
-                })}
-              </span>
-            ))}
-          </nav>
+          {/* v10.457 — 그룹 단추는 왼쪽 트리로 옮김 · 이 단추는 좁은 화면 서랍 열기 · 접은 트리 펴기 */}
+          <button className="ad-tr-tg" aria-label="메뉴 열기" data-tree-open="" aria-expanded={drawer || !folded}
+                  onClick={() => { if (window.matchMedia('(max-width: 1240px)').matches) setDrawer((d) => !d); else foldTree(!folded); }}>☰ 메뉴</button>
           <div className="ad-hr">
             <AdminSearch onGo={(t) => go(t as Tab)} canGo={(t) => visible(t as Tab)} />   {/* v10.289 전체 찾기 */}
             {roleText && <span className="ad-role">{roleText}</span>}
@@ -304,6 +294,10 @@ function Console() {
         </div>
       )}
 
+      <div className="bo-body">
+      <AdminTree groups={groups} tab={tab} navKey={navKey} label={label} go={(t) => go(t)} who={who}
+                 drawer={drawer} onClose={() => setDrawer(false)} folded={folded} onFold={foldTree} />
+      {drawer && <div className="ad-tr-dim" aria-hidden="true" onClick={() => setDrawer(false)} />}
       <main className="bo-main" data-tab={tab}>
         {page && (
           <div className="ad-pgh">
@@ -317,21 +311,7 @@ function Console() {
             )}
           </div>
         )}
-        {/* v10.29 — 같은 묶음의 탭(시안 .tabs2). 탭이 하나면 그리지 않습니다 */}
-        {curTabs.length > 1 && (
-          <div className="ad-snb" role="tablist" aria-label={`${cur.label} 화면`}>
-            {/* v10.416 (D251) — 하위 묶음이 있으면 이름표로 나눔(단추 · data-tab 은 그대로 · 이름표는 누르지 않음) */}
-            {sectionsOf(cur.key, curTabs).map((s) => (
-              <span key={s.label || 'all'} className={s.label ? 'ad-sec' : 'ad-sec ad-sec-plain'} data-section={s.label || undefined}>
-                {s.label && <em className="ad-sec-l" aria-hidden="true">{s.label}</em>}
-                {s.tabs.map((t) => (
-                  <button key={t} role="tab" className={t === tab ? 'on' : ''} data-tab={t}
-                          aria-selected={t === tab} onClick={() => go(t)}>{label(t)}</button>
-                ))}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* v10.457 — 같은 묶음의 탭 줄(.ad-snb)은 왼쪽 트리로 옮김(data-tab · data-section 표식 그대로) */}
         {/* v10.444 (D258 · docs/581) — 모든 탭 내용을 한 곳에서 감쌈: 고치기 · 승인 · 내려받기 권한이 없으면 그 단추를 막음(검사 SHADOW · ON · SUPER 아님) */}
         <PermScope tab={tab}>
         {tab === 'home' && <Dashboard onGo={go} canGo={(t) => visible(t as Tab)} />}
@@ -470,6 +450,7 @@ function Console() {
       {tab === 'adx-payout' && <Adx view="payout" onGo={go} />}
         </PermScope>
       </main>
+      </div>
 
       <Footer links={links} settings={settings} variant="slim" className="bo-foot" />
     </div>

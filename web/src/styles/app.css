@@ -753,3 +753,56 @@ div.ad-tile:hover { border-color: var(--line); box-shadow: none; }
 .perm-scope { display: contents; }
 .perm-readonly { --perm-readonly: 1; }
 .perm-scope button[data-perm-off] { opacity: .45; cursor: not-allowed; }
+
+/* ── v10.457 운영 화면 왼쪽 메뉴 트리(대표 11/20 · decisions/design-standard) — 색 · 글자 · 모서리는 디자인 시트 토큰 ── */
+.bo-body { flex: 1; display: flex; align-items: stretch; min-width: 0; }
+.bo-body > .bo-main { min-width: 0; }
+.ad-tree { flex: 0 0 236px; width: 236px; background: var(--paper); border-right: 1px solid var(--line);
+           position: sticky; top: 0; align-self: flex-start; height: 100vh; overflow-y: auto; font-size: 13px; padding: 10px 8px 40px; }
+.ad-tree.folded { display: none; }
+.ad-tr-top { display: flex; gap: 6px; margin-bottom: 8px; }
+.ad-tr-q { flex: 1; min-width: 0; font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-sm, 7px); background: var(--g50); }
+.ad-tr-q:focus { outline: 2px solid var(--pp); outline-offset: -1px; background: var(--paper); }
+.ad-tr-fold { font: inherit; border: 1px solid var(--line); background: var(--paper); border-radius: var(--r-sm, 7px); width: 32px; cursor: pointer; color: var(--g500); }
+.ad-tr-fold:hover { color: var(--pp); border-color: var(--pp); }
+.ad-tr-box { margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.ad-tr-cap { font-size: 12px; font-weight: 700; color: var(--g500); padding: 4px 6px; }
+.ad-tree ul { list-style: none; margin: 0; padding: 0; }
+.ad-tr-li { display: flex; align-items: center; }
+.ad-tr-sec { margin-bottom: 4px; }
+.ad-tr-sech { display: flex; align-items: center; gap: 4px; width: 100%; font: inherit; font-size: 12px; font-weight: 800; color: var(--g500);
+              background: none; border: 0; padding: 8px 6px 4px; cursor: pointer; text-align: left; letter-spacing: .02em; }
+.ad-tree .chev { display: inline-block; width: 12px; text-align: center; font-size: 14px; line-height: 1; transition: transform .12s ease; }
+.ad-tree .chev.open { transform: rotate(90deg); }
+.ad-tr-gh { display: flex; align-items: center; }
+.ad-tr-car { flex: 0 0 20px; font-size: 13px; color: var(--g500); background: none; border: 0; cursor: pointer; padding: 6px 0; }
+.ad-tr-gb { flex: 1; display: flex; align-items: center; justify-content: space-between; font: inherit; font-weight: 700; color: var(--g700);
+            background: none; border: 0; border-radius: var(--r-sm, 7px); padding: 7px 8px; cursor: pointer; text-align: left; min-height: 34px; }
+.ad-tr-gh > .ad-tr-gb:first-child { margin-left: 20px; }
+.ad-tr-gb small { font-size: 12px; font-weight: 600; color: var(--g500); }
+.ad-tr-gb:hover { background: var(--g100); }
+.ad-tr-gb.on { color: var(--pp); background: var(--pp-l); }
+.ad-tr-leaves { margin: 2px 0 6px 20px; border-left: 1px solid var(--line); padding-left: 6px; }
+.ad-tr-ssl { font-size: 12px; font-weight: 700; color: var(--g500); padding: 6px 6px 2px; }
+.ad-tr-leaf { flex: 1; font: inherit; color: var(--g700); background: none; border: 0; border-radius: var(--r-sm, 7px);
+              padding: 6px 8px; text-align: left; cursor: pointer; min-height: 32px; }
+.ad-tr-leaf small { color: var(--g500); font-size: 12px; margin-left: 4px; }
+.ad-tr-leaf:hover { background: var(--g100); }
+.ad-tr-leaf.on { background: var(--pp); color: var(--paper); font-weight: 700; }
+.ad-tr-leaf.on small { color: rgba(255, 255, 255, .8); }
+.ad-tr-star { flex: 0 0 26px; background: none; border: 0; cursor: pointer; color: var(--g200); font-size: 13px; padding: 4px 0; visibility: hidden; }
+.ad-tr-li:hover .ad-tr-star, .ad-tr-star.on, .ad-tr-star:focus-visible { visibility: visible; }
+.ad-tr-star.on { color: var(--sgb-orange); }
+.ad-tr-none { color: var(--g500); padding: 8px 6px; }
+.ad-tr-tg { font: inherit; font-size: 13px; font-weight: 700; color: var(--paper); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: var(--r-sm, 7px); padding: 6px 10px; cursor: pointer; display: none; }
+.bo.tree-folded .ad-tr-tg { display: inline-block; }
+.ad-tr-dim { display: none; }
+@media (max-width: 1240px) {
+  .ad-tr-tg { display: inline-block; }
+  .ad-tree, .ad-tree.folded { display: block; position: fixed; left: 0; top: 0; bottom: 0; height: auto; z-index: 40; width: 280px;
+                              transform: translateX(-100%); transition: transform .18s ease; box-shadow: var(--sgb-shadow-up); }
+  .ad-tree.open { transform: none; }
+  .ad-tr-dim { display: block; position: fixed; inset: 0; background: rgba(15, 23, 42, .35); z-index: 39; }
+  .ad-tr-fold { display: none; }
+}
