@@ -72,7 +72,7 @@ co = open(os.path.join(HERE, 'consent_ok.py'), encoding='utf-8').read()
 solo_ok = [t for t in SOLO if "__import__('consent_ok').agree_seed()" in open(os.path.join(HERE, t + '.py'), encoding='utf-8').read()]
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isfile(os.path.join(K, 'prisma/migrations', d, 'migration.sql'))] if os.path.isdir(os.path.join(K, 'prisma/migrations')) else []
 ok('① 혼자 돌기 — consent_ok.agree_seed(시험 회원 넷) · 화면 시험 20개 맨 위 · 마이그레이션 243 · 판 v10.260 이상',
-   'def agree_seed(' in co and len(solo_ok) == len(SOLO) and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 260),
+   'def agree_seed(' in co and len(solo_ok) == len(SOLO) and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 260),
    f'{len(solo_ok)}/{len(SOLO)} · {len(mig)} · {VER}')
 
 

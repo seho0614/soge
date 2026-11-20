@@ -58,7 +58,7 @@ ok('① 제휴 판정 — 사유 없는 반려 422 REASON_REQUIRED · 심사 대
 MN, APP, HS, HT = rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/HealthSettle.tsx'), rd('web/src/app/admin/HealthSellerTab.tsx')
 grp = re.search(r"\{ key: 'admhlt',\s+label: '소개몰',\s+tabs: \[([^\]]*)\]", MN)
 ok('① 운영 메뉴 — 「소개몰」 묶음(판매자 · 상품 · 주문 · 개봉 반품 · 정산 · 리뷰) · 탭 「소개몰 판매자」(ADMIN · SUPER — 따로 적지 않은 탭) · App 연결 · 정산 화면에서 입점 심사 뺌',
-   grp is not None and [x.strip(" '") for x in grp.group(1).split(',')] == ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews']
+   grp is not None and [t for t in (x.strip(" '") for x in grp.group(1).split(',')) if t in ('hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews')] == ['hlt-sellers', 'hlt-products', 'hlt-orders', 'hlt-open', 'hlt-settle', 'hlt-reviews']   # v10.469 ~ 쿠폰 · 혜택 · 품질 탭이 더 붙어도 원래 6개 순서만 봄
    and "['hlt-sellers', '소개몰 판매자']" in MN and "'hlt-sellers': { title: '소개몰 판매자'" in MN and "{tab === 'hlt-sellers' && <HealthSellerTab />}" in APP
    and "'hlt-sellers'" not in APP.split('const TAB_ROLES')[1].split('};')[0] and '<HealthTenantApply />' in HT and '<HealthSellers />' in HT
    and '<HealthTenantApply />' not in HS and '<HealthSellers />' not in HS, grp.group(1) if grp else '')
