@@ -1,4 +1,6 @@
 import type { SmtpResult } from './smtp';
+import { renderMailTemplate } from '../../modules/csx/mail-render';   // v10.530 (D280) 알림 메일 틀(NOTIFY_MAIL)
+import { csxNotifyTemplate } from '../../modules/csx/mail-templates';
 
 /* ---------------------------------------------------------------------
  * v10.85 — 알림 메일 실제 발송 (notify_dispatch 의 다음 단계)
@@ -32,12 +34,17 @@ interface Row {
 }
 
 /** 메일 한 통의 제목 · 본문 — 시험에서도 씁니다 */
-export function notifyMailText(r: Pick<Row, 'title' | 'body' | 'linkUrl' | 'baseUrl'>) {
+export function notifyMailText(r: Pick<Row, 'title' | 'body' | 'linkUrl' | 'baseUrl'>, tpl?: { subject: string; body: string } | null) {
   const base = (r.baseUrl && /^https:\/\/[^\s/]+$/.test(r.baseUrl.replace(/\/+$/, '')) ? r.baseUrl.replace(/\/+$/, '') : 'https://sogaebank.com');
   const subject = ((r.title ?? '').replace(/[\r\n]+/g, ' ').trim() || '소개뱅크 알림').slice(0, 120);
   const link = r.linkUrl && /^\/(?!\/)[^\s]*$/.test(r.linkUrl) ? `${base}${r.linkUrl}` : null;
   const text = [r.body.trim(), link ? `\n바로 가기: ${link}` : '', `\n—\n소개뱅크 알림입니다. 알림 보기 · 설정: ${base}/my/notifications`]
     .filter(Boolean).join('\n');
+  /* v10.530 (D280) — 운영 화면에서 고친 알림 메일 틀(검사 통과 · 스위치 on)이 있으면 그 틀로 · 없으면 위 글자 그대로 */
+  if (tpl) {
+    const t = renderMailTemplate(tpl.subject, tpl.body, { title: subject, body: r.body.trim(), golink: link ? `\n바로 가기: ${link}\n` : '', base });
+    return { subject: t.subject || subject, text: t.text };
+  }
   return { subject, text };
 }
 
@@ -48,6 +55,7 @@ export class NotifyMailSender {
     const out: NotifyMailResult = { ready: false, sent: 0, failed: 0, retry: 0, closed: 0 };
     if (!(await this.mail.ready())) return out;
     out.ready = true;
+    const tpl = await csxNotifyTemplate(this.db);   // v10.530 (D280) — 없거나 꺼짐이면 null(코드 글자 그대로)
     const rows = await this.db.query<Row>(
       `SELECT d.id::text AS id, n.title, n.body, n.link_url AS "linkUrl", a.email, d.failed_reason AS "failedReason",
               (EXISTS (SELECT 1 FROM notification_preferences p
@@ -73,7 +81,7 @@ export class NotifyMailSender {
           `UPDATE notification_deliveries SET status = 'FAILED', failed_reason = $2 WHERE id = $1::bigint AND status = 'QUEUED'`, [r.id, close]);
         out.closed++; continue;
       }
-      const res = await this.mail.send({ to: r.email as string, ...notifyMailText(r) });
+      const res = await this.mail.send({ to: r.email as string, ...notifyMailText(r, tpl) });
       if (res.ok) {
         await this.db.query(
           `UPDATE notification_deliveries SET status = 'SENT', sent_at = now(), provider = 'SES', provider_msg_id = $2, failed_reason = NULL

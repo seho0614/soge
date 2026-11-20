@@ -47,9 +47,16 @@ const JOBS = [
   'qlt_lot_alloc',      /* v10.495 (D271) 재고 로트 붙이기 — 매시간 · 로트 관리 상품의 출고(배송 뒤) · 반입 · 줄이는 실사 */
   'qlt_daily',          /* v10.495 · 496 (D271) 로트 유통기한 임박 · 지남 · 클레임 재발 알림 — 매일 07:20 */
   'mkt_campaign_send',  /* v10.483 (D268) 문자 · 메일 캠페인 — 5분마다 · campaign.enabled on 일 때만(처음 off) */
+  'mkx_push_send',      /* v10.538 (D283) 웹 푸시 보내기 — 1분마다 · push.send on 일 때만(처음 off · ASSUME) */
+  'mkx_groupbuy',       /* v10.540 (D283) 소개몰 공동구매 확정 · 실패(기존 취소 신청) · 마감 — 10분마다 */
+  'mkx_daily',          /* v10.539 (D283) 재구매 알림(mkx.rebuy on · 처음 off) · 웹 푸시 기록 정리 — 매일 10:05 */
   'papi_hook_send',     /* v10.521 (D278) 파트너 웹훅 보내기 — 1분마다 · papi.enabled · papi.hook_enabled on 일 때만(처음 off · ASSUME) */
   'papi_daily',         /* v10.521 (D278) 파트너 API 하루 정리 — 매일 03:50 · 기록 정리 · 키 기한 · 틀린 키 몰림 */
   'pbulk_match',        /* v10.522 (D278) 직원 일괄 등록 짝 맞춤 — 15분마다 · 초대 메일은 pbulk.invite_mail on 일 때만 */
+  'vsx_visit',          /* v10.542 (D284) 매물 방문 예약 — 매시간 · 지난 칸 요청 저절로 취소 · 전날 알림 · vsx.enabled on 일 때만 */
+  'papi_usage',         /* v10.545 (D284) 오픈 API 하루 사용량 — 매일 03:40 · 청구서 초안은 papi.bill_enabled on · papi.bill_day 일부터 */
+  'bi_daily',           /* v10.535 (D282) BI 일별 집계 — 매일 04:50 · 어제까지 3일 다시 셈 · bi.keep_days 지난 줄 지움 */
+  'mall_statement',     /* v10.532 (D281) 입점 판매자 월 정산서 — 매일 09:10 · mall.statement_day 일부터 지난달 · 메일은 mall.statement_mail on 일 때만(처음 off · 같은 달 한 번) */
   'prx_hourly',         /* v10.518 · 520 (D277) 추천 이벤트 기간 끝 · 광고 소재 비교 기간 끝(결과 고정) — 매시간 */
   'prx_ad_report',      /* v10.519 (D277) 광고 성과 보고서 — 매일 08:10 · 주기(prx.ad_report_cycle 하루 · 주 · 달)의 지난 기간 없는 것만 · prx.ad_report_mail on 이면 메일(처음 off) */
   'sec_daily_purge',    /* v10.485 (D268) 보안 기록 정리 — 매일 04:55 · 1년 지난 접속 나라 · 30일 캐시 · 하루 지난 패스키 문제 */
@@ -72,6 +79,7 @@ const JOBS = [
   'opx_archive',        /* v10.509 (D275) 기록 장기 보관 — 매일 04:20 · opx.archive on 일 때 · 묶음 · S3 · 복원 확인 · 파기 · DB 정리(설정 > 0) */
   'opx_risk_events',    /* v10.510 (D275) 이상 거래 점수 — 5분 · 매물 등록 · 신고 접수로 표시된 계정 */
   'opx_risk_daily',     /* v10.510 (D275) 이상 거래 점수 — 매일 04:50 · 최근 계정 다시 셈 */
+  'sfx_daily',          /* v10.546 ~ 548 (D285) 매일 05:20 · 오래된 기기 표지 · 번역 메모리 지움 · 서류 보관 만료 알림은 sfx.retention_alert on 일 때만 */
   'acct_insurance',     /* v10.422 (D252) 4대보험 취득 · 상실 신고 기한 알림 — 매일 09:35 */
   'its_key_expiry',     /* v10.490 (D270) 외부 연동 키 만료 · 교체 알림 — 매일 08:40 · its.key_alert on 일 때 */
   'its_office_daily',   /* v10.491 ~ 493 (D270) IT 자산 갱신 알림 · 자동 갱신일 옮김 · 제안 접수 대기 수 · 기간 지난 설문 마감 — 매일 08:55 */
@@ -85,6 +93,10 @@ const JOBS = [
   'safenum_release',    /* v10.145 (D141) 기한 지난 050 번호 돌려주기 */
   'lsx_daily',          /* v10.513 · 514 (D276) 저장한 검색 묶음 알림 · 매물 만료 예고 · 만료로 내림 — 매일 08:10 · 스위치 꺼져 있으면 아무것도 안 함 */
   'lsx_hourly',         /* v10.515 · 516 (D276) 효과 끝난 끌어올림 정리 · 매물 AI 요약 초안 — 매시간 */
+  'csx_daily',          /* v10.529 (D280) 이탈 위험 신호 다시 셈 — 매일 06:20 · csx.churn on 일 때만 */
+  'csx_hourly',         /* v10.528 (D280) 1:1 문의 자동 AI 초안 — 매시간 · csx.ai_draft_auto on · AI 통로 CSX_DRAFT 열림일 때만 */
+  'lsy_hourly',         /* v10.524 · 525 (D279) 중복 매물 짝 찾기 · 사진 품질 검사 · 사진 속 연락처 AI — 매시간 · 스위치 꺼져 있으면 아무것도 안 함 */
+  'lsy_triage',         /* v10.527 (D279) 신고 규칙 · AI 분류 — 10분마다 · 스위치 꺼져 있으면 아무것도 안 함 */
 ] as const;
 
 export class RunJobDto {

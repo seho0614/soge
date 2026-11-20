@@ -29,7 +29,8 @@ export class HealthReviewService {
     const [st] = await this.db.query<any>(`SELECT * FROM v_hlt_review_stats WHERE product_id = $1`, [pid]);
     const items = await this.db.query<any>(
       `SELECT r.id, r.rating, r.body, r.created_at AS "createdAt", r.updated_at AS "updatedAt", ${MASK} AS "writer",
-              (r.account_id = $3) AS mine, i.option_label AS "optionLabel"
+              (r.account_id = $3) AS mine, i.option_label AS "optionLabel",
+              CASE WHEN r.photo_file_id IS NOT NULL THEN '/api/v1/health/reviews/' || r.id || '/photo' END AS "photoUrl"
          FROM hlt_reviews r JOIN accounts a ON a.id = r.account_id JOIN hlt_order_items i ON i.id = r.order_item_id
         WHERE r.product_id = $1 AND r.state = 'VISIBLE' AND ($2::int IS NULL OR r.rating = $2)
         ORDER BY r.created_at DESC LIMIT 100`, [pid, rating && rating >= 1 && rating <= 5 ? rating : null, me]);
@@ -41,7 +42,7 @@ export class HealthReviewService {
   }
 
   /** 리뷰 쓰기 — 구매확정한 내 주문의 그 상품 줄(주문번호 + 상품 코드 + 옵션) */
-  async create(d: { orderNo: string; productCode: string; optionId?: string; rating: number; body: string }) {
+  async create(d: { orderNo: string; productCode: string; optionId?: string; rating: number; body: string; photoFileId?: string }) {
     const me = RequestCtx.actorId()!;
     const [it] = await this.db.query<any>(
       `SELECT i.id, i.order_id, i.product_id, o.status
@@ -55,10 +56,13 @@ export class HealthReviewService {
     const body = (d.body ?? '').trim();
     if (body.length < 10) throw new PolicyViolation('TOO_SHORT', '리뷰는 10자 이상 써 주십시오.');
     const [r] = await this.db.query<any>(
-      `INSERT INTO hlt_reviews (order_item_id, order_id, product_id, account_id, rating, body)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, state, rating, body, hold_word AS "holdWord"`,
-      [it.id, it.order_id, it.product_id, me, d.rating, body]);
-    return { ...r, note: r.state === 'PENDING' ? '리뷰를 받았습니다. 확인이 필요한 표현이 있어 운영 확인 뒤 보입니다.' : '리뷰를 올렸습니다.' };
+      `INSERT INTO hlt_reviews (order_item_id, order_id, product_id, account_id, rating, body, photo_file_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::uuid) RETURNING id, state, rating, body, hold_word AS "holdWord"`,
+      [it.id, it.order_id, it.product_id, me, d.rating, body, d.photoFileId || null]);
+    /* v10.533 (D281) — 리뷰 작성 적립(꺼져 있거나 조건 밖이면 줄 없음 → 0) */
+    const [rw] = await this.db.query<any>(`SELECT amount FROM hlt_review_rewards WHERE review_id = $1 AND state = 'GRANTED'`, [r.id]);
+    const pointAmount = rw ? Number(rw.amount) : 0;
+    return { ...r, pointAmount, note: r.state === 'PENDING' ? '리뷰를 받았습니다. 확인이 필요한 표현이 있어 운영 확인 뒤 보입니다.' : pointAmount > 0 ? `리뷰를 올렸습니다. 적립금 ${pointAmount.toLocaleString('ko-KR')}원이 쌓였습니다.` : '리뷰를 올렸습니다.' };
   }
 
   private async mine(id: string) {

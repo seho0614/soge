@@ -22,7 +22,7 @@ import { envInt, FetchLike, getPath, httpJson } from '../../common/http-json';
  * ------------------------------------------------------------------- */
 
 export const CAMPAIGN_CHANNELS = ['EMAIL', 'SMS'] as const;
-export const CAMPAIGN_AUDIENCES = ['ALL', 'RECENT_90'] as const;
+export const CAMPAIGN_AUDIENCES = ['ALL', 'RECENT_90', 'CHURN_RISK', 'MALL_BUYERS', 'MALL_REBUY'] as const;   // v10.529 (D280) CHURN_RISK 이탈 위험 신호 회원 · v10.541 (D283) 소개몰 구매 회원 · 재구매 시기 회원(동의자만)
 export const PHONE_RE = /^01[016789][0-9]{7,8}$/;
 export const OPTOUT_RE = /^(|080[0-9]{7,8})$/;      // DB value_pattern campaign.optout_phone 과 같음
 export const SMS_FROM_RE = /^(|0[0-9]{8,10})$/;     // DB value_pattern campaign.sms_from 과 같음
@@ -208,7 +208,7 @@ export async function updateCampaign(db: DatabaseService, id: string, d: { title
   const body = d.body !== undefined ? cleanText(d.body) ?? '' : c.body;
   const audience = d.audience !== undefined ? d.audience : c.audience;
   if (title.length < 2 || title.length > 80) throw new PolicyViolation('MKT_TITLE', '캠페인 이름은 2 ~ 80자입니다.');
-  if (!(CAMPAIGN_AUDIENCES as readonly string[]).includes(audience)) throw new PolicyViolation('MKT_AUDIENCE', '대상은 ALL · RECENT_90 중 하나입니다.');
+  if (!(CAMPAIGN_AUDIENCES as readonly string[]).includes(audience)) throw new PolicyViolation('MKT_AUDIENCE', '대상은 ALL · RECENT_90 · CHURN_RISK · MALL_BUYERS · MALL_REBUY 중 하나입니다.');
   checkContent(c.channel, subject, body);
   await db.query(`UPDATE mkt_campaigns SET title = $2, subject = $3, body = $4, audience = $5 WHERE id = $1::bigint AND state = 'DRAFT'`, [c.id, title, subject, body, audience]);
   void actor;
@@ -224,7 +224,11 @@ const AUDIENCE_SQL = `
          ($1 = 'EMAIL' AND EXISTS (SELECT 1 FROM mail_suppressions sp WHERE sp.email = a.email AND sp.released_at IS NULL)) AS suppressed
     FROM accounts a
     JOIN v_term_consent_current m ON m.account_id = a.id AND m.term_code = 'MARKETING' AND m.agreed
-   WHERE a.status = 'ACTIVE' AND ($2 = 'ALL' OR a.last_login_at > now() - interval '90 days')`;
+   WHERE a.status = 'ACTIVE' AND ($2 = 'ALL' OR ($2 = 'RECENT_90' AND a.last_login_at > now() - interval '90 days')
+        OR ($2 = 'CHURN_RISK' AND EXISTS (SELECT 1 FROM csx_churn_signals cs WHERE cs.account_id = a.id))
+        OR ($2 = 'MALL_BUYERS' AND EXISTS (SELECT 1 FROM hlt_orders ho WHERE ho.account_id = a.id AND ho.paid_at > now() - interval '180 days' AND ho.status NOT IN ('CANCELED', 'RETURNED')))
+        OR ($2 = 'MALL_REBUY' AND EXISTS (SELECT 1 FROM v_mkx_rebuy_due rd WHERE rd.account_id = a.id
+                                            AND rd.notify_on BETWEEN (now() AT TIME ZONE 'Asia/Seoul')::date - 7 AND (now() AT TIME ZONE 'Asia/Seoul')::date + 30)))`;   // v10.529 (D280) · v10.541 (D283)
 
 export async function campaignAudience(db: DatabaseService, id: string) {
   const c = await campaignRow(db, id);

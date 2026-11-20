@@ -67,6 +67,7 @@ export default async function NotificationsPage() {
         </div>
       )}
 
+      <p><Link className="my-bo sm" href="/my/push" data-mkx-push-link="">{(await getTranslations('mkx.link'))('push')}</Link></p>   {/* v10.538 (D283) 나의공간 › 웹 푸시 */}
       <h2 className="my-s2" id="prefs">{t('hPrefs')}</h2>
       {prefs ? <NotificationPrefs items={prefs.items} emailReady={prefs.emailReady} /> : <Empty>{t('prefsFail')}</Empty>}
       {!prefs?.emailReady && (

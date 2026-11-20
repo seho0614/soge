@@ -56,6 +56,8 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'SOCIAL', name: 'NAVER_CLIENT_ID', label: '네이버 로그인 Client ID', env: 'NAVER_CLIENT_ID', envRead: 'NAVER_CLIENT_ID', isPublic: false },   // v10.498 (D272)
   { code: 'SOCIAL', name: 'NAVER_CLIENT_SECRET', label: '네이버 로그인 Client Secret', env: 'NAVER_CLIENT_SECRET', envRead: 'NAVER_CLIENT_SECRET', isPublic: false },   // v10.498 (D272)
   { code: 'FIRMBANK', name: 'FIRMBANK_USER_TOKEN', label: '금융결제원 오픈뱅킹 사용자 토큰(거래내역조회)', env: 'FIRMBANK_USER_TOKEN', envRead: 'FIRMBANK_USER_TOKEN', isPublic: false },   // v10.467 (D264)
+  { code: 'WEBPUSH', name: 'WEBPUSH_VAPID_PUBLIC', label: '웹 푸시 VAPID 공개 키(87자 · B 로 시작)', env: 'WEBPUSH_VAPID_PUBLIC', envRead: 'WEBPUSH_VAPID_PUBLIC', isPublic: false },   // v10.538 (D283) — 브라우저에는 /me/push 가 줌
+  { code: 'WEBPUSH', name: 'WEBPUSH_VAPID_PRIVATE', label: '웹 푸시 VAPID 비밀 키(43자)', env: 'WEBPUSH_VAPID_PRIVATE', envRead: 'WEBPUSH_VAPID_PRIVATE', isPublic: false },   // v10.538 (D283)
 ];
 
 const EVERY_MS = 60_000;

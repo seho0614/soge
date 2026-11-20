@@ -4,6 +4,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { MailService } from '../../common/mail/mail.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿
 
 /* ---------------------------------------------------------------------
  * v10.522 (D278 · docs/660) 파트너 직원 일괄 등록 CSV — 운영 화면 › 파트너사 › 직원 일괄 등록(SB-ADM-OAPI-020)
@@ -326,7 +327,8 @@ export async function pbulkMatchJob(db: DatabaseService, mail: MailService): Pro
         const text = m.pending
           ? `${m.company} 에서 소개뱅크 파트너센터 직원으로 초대했습니다.\n\n이 이메일로 소개뱅크에 가입하시면 초대가 「파트너센터 › 회사 · 계정」에 들어옵니다. 받아들이시면 합류합니다.\n가입하지 않으시면 기한이 지나 이 이메일은 지워집니다.\n\n(주)한국바이오헬스케어 소개뱅크 사업부`
           : `${m.company} 에서 소개뱅크 파트너센터 직원으로 초대했습니다.\n\n로그인한 뒤 「파트너센터 › 회사 · 계정」에서 받아들이시면 합류합니다.\n\n(주)한국바이오헬스케어 소개뱅크 사업부`;
-        const r = await mail.send({ to: m.to, subject: `[소개뱅크] ${m.company} 파트너센터 직원 초대`, text });
+        const tm = await csxMail(db, m.pending ? 'PTN_INVITE_NEW' : 'PTN_INVITE_MEMBER', { company: m.company }, { subject: `[소개뱅크] ${m.company} 파트너센터 직원 초대`, text });   // v10.530 (D280)
+        const r = await mail.send({ to: m.to, subject: tm.subject, text: tm.text });
         await db.query(`UPDATE ptn_bulk_invite_rows SET mail_state = $2, mailed_at = CASE WHEN $2 = 'SENT' THEN now() END WHERE id = $1::bigint`, [m.id, r.ok ? 'SENT' : 'FAILED']);
         if (r.ok) out.mailed++; else out.mailFailed++;
       }

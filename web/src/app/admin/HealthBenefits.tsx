@@ -58,7 +58,7 @@ export function HealthPoints() {
                 <button className="btn-sm" disabled={!(Number(f.amount) >= 1) || f.reason.trim().length < 2 || a.busy === 'adj'} onClick={adjust}>적용</button>
               </p>
               <table className="tbl"><thead><tr><th>묶음</th><th>근거</th><th className="num">금액</th><th className="num">남음</th><th>소멸</th><th>닫힘</th></tr></thead>
-                <tbody>{d.member.lots.map((l) => <tr key={l.id}><td>{l.id}</td><td>{l.source === 'EARN' ? '적립' : l.source === 'ADMIN' ? '운영 지급' : '되돌림'}</td><td className="num">{won(l.amount)}</td>
+                <tbody>{d.member.lots.map((l) => <tr key={l.id}><td>{l.id}</td><td>{l.source === 'EARN' ? '적립' : l.source === 'ADMIN' ? '운영 지급' : l.source === 'REVIEW' ? '리뷰 적립' : '되돌림'}</td><td className="num">{won(l.amount)}</td>
                   <td className="num">{won(l.remaining)}</td><td>{ymdhm(l.expiresAt)}</td><td>{l.closedReason === 'EXPIRED' ? '소멸' : l.closedReason === 'REVOKED' ? '회수' : '—'}</td></tr>)}</tbody></table>
               <TxnTable rows={d.member.txns} />
             </div>

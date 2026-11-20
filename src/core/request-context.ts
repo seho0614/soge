@@ -37,6 +37,8 @@ export interface RequestContext {
   lang?: string;
   /** v10.380 (D241) — 이 요청 증표의 로그인 기기 번호(login_sessions.id · v10.380 전 증표는 없음) */
   sid?: string;
+  /** v10.546 (D285) — 사용자 웹이 넘긴 기기 표지(X-Device-Mark · 무작위 값 · 모양만 본 것) — DB 에는 해시만(sfx/device.ts) */
+  deviceMark?: string;
 }
 
 const als = new AsyncLocalStorage<RequestContext>();

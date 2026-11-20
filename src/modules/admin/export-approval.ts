@@ -15,14 +15,14 @@ import { DatabaseService } from '../../db/database.service';
 import { AppError, NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 
-export const EXPORT_TARGETS = ['POINT_REPORT', 'AUDIT_EXPORT', 'NOTICE_READS', 'RATE_READS', 'ACCT_JOURNAL', 'ACCT_TAX', 'ACCT_LEDGER', 'ACCT_ARCHIVE', 'ITS_SURVEY'] as const;   // v10.440 (D257) 장부 보관   // v10.382 · 383 (D242) 전표 · 신고 자료
+export const EXPORT_TARGETS = ['POINT_REPORT', 'AUDIT_EXPORT', 'NOTICE_READS', 'RATE_READS', 'ACCT_JOURNAL', 'ACCT_TAX', 'ACCT_LEDGER', 'ACCT_ARCHIVE', 'BI_DAILY', 'PTN_LEADS', 'ITS_SURVEY'] as const;   // v10.440 (D257) 장부 보관   // v10.382 · 383 (D242) 전표 · 신고 자료   // v10.535 (D282) BI_DAILY(통계 내보내기 CSV)   // v10.544 (D284) PTN_LEADS(파트너 리드 CSV)
 export type ExportTarget = typeof EXPORT_TARGETS[number];
 export const EXPORT_KO: Record<ExportTarget, string> = {
   POINT_REPORT: '포인트 원천징수 신고 자료', AUDIT_EXPORT: '감사 기록 CSV', NOTICE_READS: '공지 읽음 CSV', RATE_READS: '요율 공지 읽음 CSV',
-  ACCT_JOURNAL: '회계 전표 CSV', ACCT_TAX: '세금 신고 자료 CSV', ACCT_LEDGER: '회계 원장 · 매입매출장 CSV', ACCT_ARCHIVE: '장부 보관 묶음 CSV', ITS_SURVEY: '사내 설문 결과 CSV',   // v10.440 (D257)   // v10.397 (D246)
+  ACCT_JOURNAL: '회계 전표 CSV', ACCT_TAX: '세금 신고 자료 CSV', ACCT_LEDGER: '회계 원장 · 매입매출장 CSV', ACCT_ARCHIVE: '장부 보관 묶음 CSV', BI_DAILY: '통계 내보내기(BI) CSV', PTN_LEADS: '파트너 리드 CSV(파트너센터)', ITS_SURVEY: '사내 설문 결과 CSV',   // v10.440 (D257)   // v10.397 (D246)
 };
 /** 요청할 수 있는 역할(SUPER 는 모두) — 내려받기 API 의 @Roles 와 같게 */
-const TARGET_ROLES: Record<ExportTarget, string[]> = { POINT_REPORT: ['PAYOUT'], AUDIT_EXPORT: [], NOTICE_READS: [], RATE_READS: [], ACCT_JOURNAL: ['PAYOUT', 'ACCOUNTANT'], ACCT_TAX: ['PAYOUT', 'ACCOUNTANT'], ACCT_LEDGER: ['PAYOUT', 'ACCOUNTANT'], ACCT_ARCHIVE: ['PAYOUT', 'ACCOUNTANT'], ITS_SURVEY: ['ADMIN'] };   // v10.437 · 440 (D257)
+const TARGET_ROLES: Record<ExportTarget, string[]> = { POINT_REPORT: ['PAYOUT'], AUDIT_EXPORT: [], NOTICE_READS: [], RATE_READS: [], ACCT_JOURNAL: ['PAYOUT', 'ACCOUNTANT'], ACCT_TAX: ['PAYOUT', 'ACCOUNTANT'], ACCT_LEDGER: ['PAYOUT', 'ACCOUNTANT'], ACCT_ARCHIVE: ['PAYOUT', 'ACCOUNTANT'], BI_DAILY: ['ADMIN'], PTN_LEADS: [], ITS_SURVEY: ['ADMIN'] };   // v10.437 · 440 (D257)
 export const EXPORT_DAILY_MAX = 10;
 const EXPORT_GATE_KEY = 'export_gate';
 

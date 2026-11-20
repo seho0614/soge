@@ -1,6 +1,7 @@
 /** SB-HLT-SEL-020 판매자센터 (v10.166 · D156 · docs/257 · v10.167 주문 · 발송 · 반품 docs/258) */
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';   // v10.532 (D281) 월 정산서 단추
 import { apiGet, apiGetPersonal, ApiFailure } from '@/lib/api';
 import { me } from '@/lib/session';
 import { Crumb, HltNav, HltEmpty } from '@/components/health/HltParts';
@@ -25,6 +26,7 @@ export const dynamic = 'force-dynamic';
 export default async function HltSellerCenterPage() {
   if (!(await me())) redirect('/login');
   const t = await getTranslations('hlt.center');
+  const ts = await getTranslations('slx.stmt');   // v10.532 (D281)
   let info: SellerCenterInfo | null = null;
   let notSeller = false;
   try {
@@ -34,7 +36,7 @@ export default async function HltSellerCenterPage() {
   }
   const head = (
     <><HltNav back="/health/seller" /><Crumb items={[{ href: '/health/seller', label: t('apply') }, { label: t('title') }]} />
-      <div className="page-head"><h1>{t('title')}</h1></div></>
+      <div className="page-head"><h1>{t('title')}</h1><Link className="hlt-btn sm" href="/health/seller/center/statements" data-slx-stmt-link="">{ts('monthly')}</Link></div></>
   );
   if (!info) {
     return (

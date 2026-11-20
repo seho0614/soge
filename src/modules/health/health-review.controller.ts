@@ -14,6 +14,8 @@ export class ReviewCreateDto {
   @ApiPropertyOptional({ format: 'uuid', description: '같은 상품을 다른 옵션으로 산 경우' }) @IsOptional() @IsUUID() optionId?: string;
   @ApiProperty({ minimum: 1, maximum: 5 }) @Type(() => Number) @IsInt() @Min(1) @Max(5) rating!: number;
   @ApiProperty({ description: '10 ~ 1,000자' }) @IsString() @MinLength(10) @MaxLength(1000) body!: string;
+  /* v10.533 (D281) — 사진 한 장(선택) · 올리기를 마친 본인 회원 사진(REQUEST_IMAGE) · DB 트리거 fn_hlt_review_photo_guard 가 다시 봄 · 사진 리뷰는 적립 가산 */
+  @ApiPropertyOptional({ format: 'uuid', description: 'v10.533 리뷰 사진(올리기를 마친 본인 REQUEST_IMAGE 파일) — 사진 리뷰 적립 가산' }) @IsOptional() @IsUUID() photoFileId?: string;
 }
 export class ReviewPatchDto {
   @ApiPropertyOptional({ minimum: 1, maximum: 5 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5) rating?: number;
@@ -35,6 +37,7 @@ export class HltReviewItemDto {
   @ApiProperty() createdAt!: string; @ApiProperty() updatedAt!: string;
   @ApiProperty({ description: '이름 첫 글자 + ○○' }) writer!: string; @ApiProperty() mine!: boolean;
   @ApiPropertyOptional({ nullable: true }) optionLabel!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.533 (D281) 사진 주소 /api/v1/health/reviews/{id}/photo — 사진 없으면 null' }) photoUrl?: string | null;
 }
 export class ReviewDistDto { @ApiProperty() 5!: number; @ApiProperty() 4!: number; @ApiProperty() 3!: number; @ApiProperty() 2!: number; @ApiProperty() 1!: number; }
 export class ReviewListDto {
@@ -45,6 +48,7 @@ export class ReviewResultDto {
   @ApiProperty() id!: string; @ApiProperty({ enum: ['VISIBLE', 'PENDING', 'HIDDEN'] }) state!: string;
   @ApiPropertyOptional() rating?: number; @ApiPropertyOptional() body?: string;
   @ApiPropertyOptional({ nullable: true }) holdWord?: string | null; @ApiPropertyOptional() deleted?: boolean; @ApiProperty() note!: string;
+  @ApiPropertyOptional({ description: 'v10.533 (D281) 리뷰 작성 적립(원 · 없으면 0 — 꺼짐 · 조건 밖 · 이미 받은 주문)' }) pointAmount?: number;
 }
 export class MyOrderReviewDto {
   @ApiProperty() id!: string; @ApiProperty() orderItemId!: string; @ApiProperty() productCode!: string;

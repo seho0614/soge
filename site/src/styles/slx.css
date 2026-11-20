@@ -1,0 +1,45 @@
+/* v10.532 · 534 (D281 · docs/670 · 672) (51) 판매자센터 월 정산서 · 파트너센터 성과 추이
+ * 디자인 값은 sgb-tokens.css 토큰만(색 · 글자 · 모서리 · 그림자) — 새 색 없음 · 어두운 테마에서도 토큰이 바뀜 */
+.slx-months { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; padding: 0; list-style: none; }
+.slx-months a { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--sgb-line); border-radius: var(--sgb-r-pill); padding: 5px 12px;
+  font-size: var(--sgb-fs-body-2); color: var(--sgb-ink); text-decoration: none; background: var(--sgb-bg); }
+.slx-months a.on { border-color: var(--sgb-point); color: var(--sgb-point-text); background: var(--sgb-point-l); }
+.slx-months small { color: var(--sgb-ink-3); font-size: var(--sgb-fs-cap); }
+.slx-sheet { border: 1px solid var(--sgb-card-line); border-radius: var(--sgb-card-r); background: var(--sgb-bg); padding: 20px 18px; box-shadow: var(--sgb-shadow); }
+.slx-sheet h2 { font-size: var(--sgb-fs-title-2); font-weight: var(--sgb-fw-title); text-align: center; margin: 0 0 14px; }
+.slx-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: var(--sgb-fs-body-2); color: var(--sgb-ink-2); margin: 0 0 12px; }
+.slx-meta b { color: var(--sgb-ink); font-weight: var(--sgb-fw-bold); }
+.slx-tbl { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: var(--sgb-fs-body-2); }
+.slx-tbl th, .slx-tbl td { border: 1px solid var(--sgb-line); padding: 6px 8px; text-align: left; color: var(--sgb-ink); }
+.slx-tbl th { background: var(--sgb-tile); font-weight: var(--sgb-fw-bold); }
+.slx-tbl td.num, .slx-tbl th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.slx-tbl tr.sum td { font-weight: var(--sgb-fw-bold); }
+.slx-scroll { overflow-x: auto; }
+.slx-hint { font-size: var(--sgb-fs-cap); color: var(--sgb-ink-3); margin: 8px 0; }
+.slx-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.slx-badge { display: inline-block; border-radius: var(--sgb-r-pill); padding: 1px 8px; font-size: var(--sgb-fs-cap); border: 1px solid var(--sgb-line); color: var(--sgb-ink-2); }
+.slx-badge.ok { border-color: var(--sgb-point); color: var(--sgb-point-text); }
+
+/* 파트너센터 성과 추이 그래프 */
+.slx-chart { border: 1px solid var(--sgb-card-line); border-radius: var(--sgb-card-r); background: var(--sgb-bg); padding: 12px; margin: 12px 0; }
+.slx-chart figcaption { font-size: var(--sgb-fs-body-2); color: var(--sgb-ink-2); margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 12px; }
+.slx-chart svg { display: block; width: 100%; height: auto; color: var(--sgb-ink-3); }
+.slx-chart .bar { fill: var(--sgb-point); opacity: .6; }
+.slx-chart .dot { fill: var(--sgb-orange); }
+.slx-chart .axis { stroke: var(--sgb-line); }
+.slx-chart .lbl { fill: var(--sgb-ink-3); font-size: var(--sgb-fs-cap); }
+.slx-key-bar { color: var(--sgb-point-text); }
+.slx-key-dot { color: var(--sgb-or-text); }
+.slx-periods { display: flex; gap: 8px; margin: 8px 0 12px; }
+
+@media (max-width: 640px) {
+  .slx-meta { grid-template-columns: 1fr; }
+  .slx-sheet { padding: 14px 12px; }
+}
+
+/* 인쇄 — 머리줄 · 꼬리줄 · 길 안내 · 단추를 숨기고 정산서만 */
+@media print {
+  header, footer, nav, .hlt-crumb, .slx-noprint, .slx-months { display: none !important; }
+  .slx-sheet { border: none; box-shadow: none; padding: 0; }
+  .slx-tbl th { background: transparent; }
+}

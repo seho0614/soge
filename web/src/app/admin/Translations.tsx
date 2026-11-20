@@ -55,6 +55,7 @@ const ST_KO: Record<string, string> = {
 const JOB_KO: Record<string, string> = { QUEUED: '대기', RUNNING: '처리 중', DONE: '끝', HELD: '보류', FAILED: '실패' };
 const RESULT_KO: Record<string, string> = {
   AUTO_APPROVED: '자동 승인', DRAFT: '금칙어 — 승인 대기', SKIPPED: '사람이 승인한 번역 있음', SOURCE_MISSING: '원문 없음', REFUSAL: '엔진 거절', TOO_LONG: '글이 김',
+  TM_REUSED: '번역 메모리에서 씀',   // v10.548 (D285)
 };
 
 interface Row {

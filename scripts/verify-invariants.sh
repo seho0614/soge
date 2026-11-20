@@ -522,8 +522,9 @@ n=$($PSQL -t -A -c "SELECT count(*) FROM integrations;")
 #   v10.454(D261) 대량 이체(FIRMBANK · 금융결제원 오픈뱅킹 — 처음 꺼짐 · 간주)를 더해 15종.
 #   v10.485(D268) IP 국가 판별(GEOIP · 운영자 해외 로그인 경고 — 처음 꺼짐 · 간주)를 더해 16종.
 #   v10.498(D272) 간편 로그인(SOCIAL · 카카오 · 네이버 — 처음 꺼짐 · 간주)를 더해 17종.
+#   v10.538(D283) 웹 푸시(WEBPUSH · VAPID — 처음 꺼짐 · 간주)를 더해 18종.
 #   연동을 늘리실 때 이 수를 함께 고치십시오.
-if [ "$n" = "17" ]; then echo "  ok   INTG  연동 17종 등록"; pass=$((pass+1));
+if [ "$n" = "18" ]; then echo "  ok   INTG  연동 18종 등록"; pass=$((pass+1));
 else echo "  FAIL INTG  연동 ${n}종"; fail=$((fail+1)); fi
 
 # v10.46 (D099 · docs/96) — 카카오맵: 정확 좌표 · 키가 공개 보기로 새지 않음 · 처음엔 꺼짐 · 키는 암호문으로만 저장

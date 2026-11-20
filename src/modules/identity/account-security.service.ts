@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { DatabaseService } from '../../db/database.service';
 import { MailService } from '../../common/mail/mail.service';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿(고친 판 · 없으면 아래 코드 글자 그대로)
 import { AppError, Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { AuthService } from './auth.service';
@@ -89,11 +90,13 @@ export class AccountSecurityService {
       const base = (b?.v || 'https://sogaebank.com').replace(/\/+$/, '');
       const sent = await this.mail.send({
         to: acc.email,
+        ...(await csxMail(this.db, 'PW_RESET', { link: `${base}${path}`, ttl }, {   // v10.530 (D280) — 고친 문구가 쓸 만할 때만 바꿈
         subject: '[소개뱅크] 비밀번호 재설정 안내',
         text: `소개뱅크 비밀번호 재설정 링크입니다.\n\n${base}${path}\n\n`
             + `${ttl}분 동안 한 번만 쓸 수 있습니다. 새로 요청하시면 이 링크는 쓸 수 없게 됩니다.\n`
             + `직접 요청하지 않으셨다면 이 메일을 무시하십시오 — 비밀번호는 바뀌지 않습니다.\n\n`
             + `본 메일은 발신 전용입니다.\n(주)한국바이오헬스케어 소개뱅크 사업부`,
+        })),
       });
       if (!sent.ok) {
         /* 보내지 못한 링크는 바로 무효 — 남겨 두면 메일함 밖에서 쓰일 수 있는 것처럼 보입니다 */

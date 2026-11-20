@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿
 
 /* ---------------------------------------------------------------------
  * v10.519 (D277 · docs/657) 광고 성과 보고서 — 광고주별 기간(하루 · 주 · 달) 노출 · 클릭 · 비용
@@ -207,7 +208,9 @@ export async function sendReport(db: DatabaseService, mail: Mailer, id: string) 
   if (st?.sw !== 'on') throw new StateConflict('PRX_MAIL_OFF', '광고 성과 보고서 메일이 꺼져 있습니다(prx.ad_report_mail) — 인쇄 PDF 로 전달하거나 메일을 켜십시오.');
   if (!st?.email) { await mark('NO_ADDRESS', null); return { ok: false, result: 'NO_ADDRESS', note: '광고주 담당 메일이 없습니다(광고 과금 › 광고주).' }; }
   if (!(await mail.ready())) { await mark('NOT_READY', mask(st.email)); return { ok: false, result: 'NOT_READY', note: '메일 준비가 되지 않았습니다(보내는 주소 · 설정).' }; }
-  const res = await mail.send({ to: st.email, subject: `[소개뱅크] ${r.label} 광고 성과 보고서 — ${r.advertiser}`, text: String(r.mailText) });
+  const tm = await csxMail(db, 'AD_REPORT', { label: r.label, advertiser: r.advertiser, report: String(r.mailText) },
+    { subject: `[소개뱅크] ${r.label} 광고 성과 보고서 — ${r.advertiser}`, text: String(r.mailText) });   // v10.530 (D280)
+  const res = await mail.send({ to: st.email, subject: tm.subject, text: tm.text });
   await mark(res.ok ? 'SENT' : 'FAILED', mask(st.email));
   return { ok: res.ok, result: res.ok ? 'SENT' : 'FAILED', note: res.ok ? `${r.advertiser} 에 ${r.label} 보고서를 보냈습니다.` : '메일을 보내지 못했습니다.' };
 }

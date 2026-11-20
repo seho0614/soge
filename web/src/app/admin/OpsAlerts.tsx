@@ -81,8 +81,12 @@ const NAME: Record<string, string> = {
   STAFF_LOGIN_ABROAD: '운영자 해외 로그인', STAFF_LOGIN_ABROAD_BLOCKED: '해외 운영 로그인 막음',   // v10.485 (D268 · docs/623) — 위험감지 › 해외 접속 경고
   PASSKEY_CLONE_SUSPECT: '운영자 패스키 복제 의심',   // v10.484 (D268 · docs/622)
   UPTIME_DOWN: '바깥 감시 — 응답 없음', UPTIME_RECOVERED: '바깥 감시 — 다시 응답함', UPT_INCIDENT: '장애 공지',   // v10.497 (D272 · docs/635) — 위험감지 › 가동 · 장애 공지
+  SFX_DEVICE_MULTI: '같은 기기 여러 계정', SFX_RETENTION_DUE: '서류 보관 기한 다가옴 · 지남', SFX_RETENTION_REMOVE_FAIL: '파기한 서류 저장소 파일 못 지움',   // v10.546 · 547 (D285) — 위험감지 › 같은 기기 여러 계정 · 사무 › 서류 보관 기한
   MKT_CAMPAIGN_STUCK: '캠페인 보내기 멈춤',   // v10.483 (D268 · docs/621) — 회원 › 문자 · 메일 캠페인
+  MKX_PUSH_NOT_READY: '웹 푸시 LIVE 준비 안 됨', MKX_PUSH_AUTH: '웹 푸시 인증 거절', MKX_GB_FAILED: '공동구매 실패 · 취소(취소 신청 처리)', MKX_GB_CANCEL_FAIL: '공동구매 취소 신청 못 넣음',   // v10.538 · 540 (D283) — 회원 › 웹 푸시 · 소개몰 › 공동구매
   PAPI_HOOK_DISABLED: '파트너 웹훅 자동으로 끔', PAPI_KEY_EXPIRING: '파트너 API 키 기한 7일 안', PAPI_KEY_ABUSE: '파트너 API 틀린 키 몰림',   // v10.521 (D278 · docs/659) — 파트너사 › 오픈 API
+  PTN_EXPORT_REQUEST: '파트너 리드 내려받기 승인 요청', PAPI_BILL_DRAFTS: '오픈 API 월 청구서 초안',   // v10.544 · 545 (D284) — 위험감지 › 감사 › 내려받기 승인 · 파트너사 › 오픈 API 사용량 · 청구
+  MALL_STATEMENT_MAIL_FAIL: '판매자 월 정산서 메일 실패', MALL_REVIEW_POINT_SHORT: '리뷰 적립 다 회수 못함', MALL_REVIEW_POINT_FAIL: '리뷰 적립 · 회수 실패',   // v10.532 · 533 (D281) — 소개몰 › 판매자 월 정산서 · 리뷰 적립
   AUDIT_CHAIN_BROKEN: '감사 기록 위변조 의심',   // v10.356 (D235 · docs/490) — 위험감지 › 감사
   SIGNUP_BLOCK_SPIKE: '가입 차단에 많이 막힘',   // v10.362 (D237 · docs/496)
   ROLE_EXPIRED: '운영 권한 기한 지나 거둠',   // v10.372 (D239 · docs/507)

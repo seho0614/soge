@@ -4,6 +4,7 @@ import { REF_COOKIE, VISITOR_COOKIE } from './api';
 
 const AT = 'sgb_at';
 const RT = 'sgb_rt';
+const DM = 'sgb_dm';   // v10.546 (D285) 기기 표지 — 무작위 값(HttpOnly · 2년) · 로그인 · 가입 때만 API 로 넘김 · API 는 해시만 남김(켜져 있을 때)
 const BASE = process.env.API_BASE ?? 'http://localhost:3000/api/v1';
 
 export interface Principal {
@@ -40,6 +41,21 @@ export async function ensureVisitor(): Promise<string> {
   return v;
 }
 
+/**
+ * v10.546 (D285) 기기 표지 — 같은 브라우저에서 여러 계정을 만드는지 보는 데만 씁니다(운영 위험감지 · 자동 정지 없음).
+ *   무작위 값 하나(브라우저 지문 · 화면 크기 · 글꼴 같은 것은 모으지 않음) · HttpOnly 쿠키 · 로그인 · 가입 때 없으면 만듦
+ *   API 로는 fwdHeaders 가 X-Device-Mark 로 넘김(API 는 로그인 성공 · 가입 때만 해시로 씀 · 꺼져 있으면 버림)
+ */
+async function ensureDeviceMark(): Promise<void> {
+  try {
+    const jar = await cookies();
+    const v = jar.get(DM)?.value;
+    if (!v || !/^[A-Za-z0-9-]{16,64}$/.test(v)) {
+      jar.set(DM, crypto.randomUUID(), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 730 });
+    }
+  } catch { /* 요청 밖 — 만들 것 없음 */ }
+}
+
 /** 소개코드는 ?ref= 로 들어옵니다. 쿠키에 담아 이후 요청 헤더로 보냅니다 */
 export async function captureRef(ref: string) {
   const jar = await cookies();
@@ -62,6 +78,9 @@ async function fwdHeaders(extra: Record<string, string> = {}): Promise<Record<st
     /* v10.181 (D170) — 로그인 기록의 브라우저 종류 · 약관 동의 기록이 서버(node)가 아니라 손님 브라우저가 되게 */
     const ua = hh.get('user-agent');
     if (ua) h['User-Agent'] = ua.slice(0, 300);
+    /* v10.546 (D285) — 기기 표지 쿠키가 있으면 넘김(읽기만 · 만드는 것은 로그인 · 가입의 ensureDeviceMark) */
+    const dm = (await cookies()).get(DM)?.value;
+    if (dm && /^[A-Za-z0-9-]{16,64}$/.test(dm)) h['X-Device-Mark'] = dm;
   } catch { /* 요청 밖에서 불림 — 넘길 것 없음 */ }
   return h;
 }
@@ -98,6 +117,7 @@ async function needsConsent(token: string): Promise<boolean> {
 export async function login(email: string, password: string, keep = true): Promise<AuthResult> {
   // ★ visitorKey 를 함께 보냅니다. 빠뜨리면 비로그인 유입이 전부 유실됩니다
   const visitorKey = await ensureVisitor();
+  await ensureDeviceMark();   // v10.546 (D285) 기기 표지
   return post('/auth/login', { email, password, visitorKey }, keep);
 }
 
@@ -105,6 +125,7 @@ export async function signup(
   email: string, password: string, name: string, agreedTerms?: string[], jobTitle?: string, recommendCode?: string,
 ): Promise<AuthResult> {
   const visitorKey = await ensureVisitor();
+  await ensureDeviceMark();   // v10.546 (D285) 기기 표지
   return post('/auth/signup', {
     email, password, name, visitorKey, ...(agreedTerms ? { agreedTerms } : {}), ...(jobTitle ? { jobTitle } : {}),
     ...(recommendCode ? { recommendCode } : {}),   // v10.218 (D189) — 추천 코드(선택)

@@ -258,12 +258,17 @@ import { LoginSessionsController } from './modules/identity/login-sessions';   /
 import { PasskeyController } from './modules/identity/passkey.controller';   // v10.484 (D268) 운영자 패스키
 import { SecGeoController } from './modules/identity/geo-guard.controller';   // v10.485 (D268) 해외 접속 경고
 import { OpxController } from './modules/opx/opx.controller';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
+import { SfxAdminController } from './modules/sfx/sfx.controller';   // v10.546 ~ 548 (D285) 같은 기기 여러 계정 · 서류 보관 기한 · 번역 메모리
 import { UptimeController } from './modules/uptime/uptime.controller';   // v10.497 (D272) 가동 감시 · 장애 공지
 import { SocialAuthController } from './modules/social/social.controller';   // v10.498 (D272) 카카오 · 네이버 간편 로그인
 import { SocialAuthService } from './modules/social/social';   // v10.498 (D272)
 import { MktCampaignController, MktUnsubscribeController } from './modules/marketing/campaign.controller';   // v10.483 (D268) 문자 · 메일 캠페인 · 수신 거부(공개)
+import { MkxAdminController, MkxMemberController, MkxPublicController } from './modules/mkx/mkx.controller';   // v10.538 ~ 541 (D283) 웹 푸시 · 재구매 알림 · 공동구매 · 문자 마케팅
 import { PapiAdminController, PbulkAdminController, PapiPartnerController } from './modules/papi/papi.controller';   // v10.521 · 522 (D278) 파트너 오픈 API · 직원 일괄 등록
+import { VsxMemberController, VsxMapController, VsxPartnerController, VsxPapiUsageController, VsxAdminController, VsxPtnAdminController } from './modules/vsx/vsx.controller';   // v10.542 ~ 545 (D284) 매물 방문 예약 · 지도 묶음 · 파트너 자료 내려받기 · 오픈 API 사용량 과금
+import { SlxAdminController, SlxSellerController, SlxReviewPhotoController, SlxPartnerController, SlxPartnerAdminController } from './modules/slx/slx.controller';   // v10.532 ~ 534 (D281) 판매자 월 정산서 · 리뷰 적립 · 파트너 성과
 import { I18nReviewController } from './modules/i18n/i18n-review.controller';   // v10.523 (D278) 일본어 · 중국어 검수
+import { BiExportController, DashLayoutController, LotCountController } from './modules/dtx/dtx.controller';   // v10.535 ~ 537 (D282) 통계 내보내기 BI · 대시보드 위젯 배치 · 휴대폰 재고 실사
 import { PrxAdminController, PrxPublicController } from './modules/prx/prx.controller';   // v10.517 ~ 520 (D277) 메인 팝업 · 추천 이벤트 · 광고 성과 보고서 · 광고 소재 비교
 import { MbxController, MbxAdminController } from './modules/mbx/mbx.controller';   // v10.501 ~ 504 (D273) 최근 본 · 비교하기 · 가격 알림 · 회원 대화
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
@@ -293,6 +298,8 @@ import { IntegTestController } from './modules/site/integ-test.controller';
 import { SafenumService } from './modules/listing/safenum.service';   /* v10.145 (D141) 050 안심번호 */
 import { SafenumController, SafenumAdminController } from './modules/listing/safenum.controller';
 import { LsxController } from './modules/lsx/lsx.controller';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 만료 · 연장 · 끌어올리기 · 매물 AI 요약
+import { CsxController } from './modules/csx/csx.controller';   // v10.528 ~ 531 (D280) 1:1 문의 AI 답변 초안 · 이탈 위험 신호 · 메일 문구 · 계정 합치기
+import { LsyController } from './modules/lsy/lsy.controller';   // v10.524 ~ 527 (D279) 중복 매물 자동 탐지 · 사진 품질 검사 · 매물 동영상 · 신고 자동 분류
 import { AccountSecurityController } from './modules/identity/account-security.controller';  /* v10.48 비밀번호 재설정 · 변경 · 탈퇴 · 잠금 */
 import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
@@ -428,14 +435,32 @@ import { LeadService } from './modules/lead/lead.service';
     PasskeyController,        // v10.484 (D268)
     SecGeoController,         // v10.485 (D268)
     OpxController,            // v10.509 ~ 512 (D275) 기록 · 안전 · 운영
+    SfxAdminController,       // v10.546 ~ 548 (D285) 운영 · 보안
     UptimeController,         // v10.497 (D272) 가동 감시 · 장애 공지 · 공개 상태
     SocialAuthController,     // v10.498 (D272) 간편 로그인
     MktCampaignController,    // v10.483 (D268)
     PapiAdminController,      // v10.521 (D278) 파트너 오픈 API(운영)
     PbulkAdminController,     // v10.522 (D278) 직원 일괄 등록
+    VsxMemberController,      // v10.542 (D284) 매물 방문 예약(회원 · 매물 주인)
+    VsxMapController,         // v10.543 (D284) 지도 매물 묶음(공개 · GET /listings/map/clusters — 두 마디라 /listings/{id} 와 겹치지 않음)
+    VsxPartnerController,     // v10.544 (D284) 파트너센터 자료 내려받기
+    VsxPapiUsageController,   // v10.545 (D284) 파트너 API GET /api/partner/v1/usage(PartnerApiKeyGuard)
+    VsxAdminController,       // v10.542 · 543 (D284) 운영 — 방문 예약 · 지도 묶음 · 설정
+    VsxPtnAdminController,    // v10.544 · 545 (D284) 운영 — 오픈 API 사용량 · 청구 · 파트너 자료 내려받기
+    SlxAdminController,       // v10.532 · 533 (D281) 운영 — 판매자 월 정산서 · 리뷰 적립
+    SlxSellerController,      // v10.532 (D281) 판매자센터 월 정산서
+    SlxReviewPhotoController, // v10.533 (D281) 리뷰 사진(공개 구역 health)
+    SlxPartnerController,     // v10.534 (D281) 파트너센터 성과 추이
+    SlxPartnerAdminController, // v10.534 (D281) 운영 — 파트너 성과
     PapiPartnerController,    // v10.521 (D278) /api/partner/v1(파트너 API 키 · PartnerApiKeyGuard)
     I18nReviewController,     // v10.523 (D278) 일본어 · 중국어 검수
+    BiExportController,       // v10.535 (D282) 통계 내보내기 BI
+    DashLayoutController,     // v10.536 (D282) 대시보드 위젯 배치(자기 것)
+    LotCountController,       // v10.537 (D282) 휴대폰 재고 실사(로트)
     MktUnsubscribeController, // v10.483 (D268) 공개 — /site/unsubscribe
+    MkxAdminController,       // v10.538 ~ 541 (D283) 운영 — 웹 푸시 · 재구매 알림 · 공동구매 · 문자 마케팅
+    MkxMemberController,      // v10.538 · 540 (D283) 회원 — 웹 푸시 · 내 공동구매
+    MkxPublicController,      // v10.540 · 541 (D283) 공개 구역 health · site — 공동구매 목록 · 참여 · 080 수신 거부 웹훅
     PrxPublicController,      // v10.517 (D277) 공개 — /popups
     PrxAdminController,       // v10.517 ~ 520 (D277) /admin/prx
     MbxController,            // v10.501 ~ 504 (D273) 회원 — /me/recent · /me/price-alerts · /me/dm · 공개 /site/mbx
@@ -493,6 +518,8 @@ import { LeadService } from './modules/lead/lead.service';
     IntegTestController,   // v10.144 (D140) 운영 화면 › 외부 연동 › 결제 · 계좌 연결 확인
     SafenumController, SafenumAdminController,   // v10.145 (D141) 전화하기 · 통화 웹훅 · 운영 화면 「안심번호」
     LsxController,   // v10.513 ~ 516 (D276) ㊻ 매물
+    CsxController,   // v10.528 ~ 531 (D280) ㊿ 고객센터 · 회원
+    LsyController,   // v10.524 ~ 527 (D279) ㊾ 매물 2
     PaymentClientKeyController,   // v10.128 (D128) 외부 연동 키
   ],
   providers: [

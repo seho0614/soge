@@ -12,6 +12,7 @@ import { AttributionEngine } from '../../engines/attribution/attribution.engine'
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
 import { notifyNewDevice, recordLogin } from './login-history';
+import { sfxDeviceSeen } from '../sfx/device';   // v10.546 (D285) 가입 때 기기 표지
 import { RecommendService } from '../affiliate/recommend.service';
 import { createSession, sessionAlive, sessionReusable } from './login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { assertGeoAllowed } from './geo-guard';   // v10.485 (D268) 운영자 해외 접속 경고 · 막기
@@ -188,6 +189,7 @@ export class AuthService {
       if (input.visitorKey) {
         await this.attribution.link(input.visitorKey, acc.id, 'SIGNUP');
       }
+      await sfxDeviceSeen(this.db, acc.id, 'SIGNUP');   // v10.546 (D285) — sfx.device_watch on · 표지 있을 때만
       if (recommender) {   /* v10.218 — 추천 관계(introducer_referrals · 한 사람에 한 번) · 보상은 이 분이 본인인증할 때 DB 가 */
         await this.db.query(`INSERT INTO introducer_referrals (inviter_id, invitee_id) VALUES ($1, $2)`, [recommender, acc.id]);
       }

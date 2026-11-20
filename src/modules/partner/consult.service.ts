@@ -6,6 +6,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { normSido } from '../../common/region';
 import { MailService } from '../../common/mail/mail.service';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿
 import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
 import { I18nService } from '../i18n/i18n.service';
 
@@ -222,11 +223,13 @@ export class ConsultService {
     if (byMail) {
       const sent = await this.mail.send({
         to: email,
+        ...(await csxMail(this.db, 'CONSULT_OTP', { code, ttl: OTP_TTL_MIN }, {   // v10.530 (D280)
         subject: `[소개뱅크] 상담 신청 인증번호 ${code}`,
         text: `소개뱅크 안심소개 상담 신청 인증번호입니다.\n\n인증번호: ${code}\n\n`
             + `${OTP_TTL_MIN}분 안에 신청 화면에 넣어 주십시오. 확인을 마쳐야 업체에 전달됩니다.\n`
             + `직접 신청하지 않으셨다면 이 메일을 무시하십시오 — 확인하지 않은 신청은 업체에 가지 않습니다.\n\n`
             + `본 메일은 발신 전용입니다.\n(주)한국바이오헬스케어 소개뱅크 사업부`,
+        })),
       });
       if (!sent.ok && !atOk) {
         await this.db.query(`DELETE FROM consult_requests WHERE id = $1 AND lead_id IS NULL`, [row.id]);

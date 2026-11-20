@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MemberNotesBox } from './MemberOpsBoxes';   // v10.361 (D237) 운영 메모
+import { CsxDraftBox } from './CsxDesk';   // v10.528 (D280) AI 답변 초안 상자
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
@@ -147,6 +148,7 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
           </select>
         </p>
       )}
+      <CsxDraftBox inquiryId={id} closed={d.status === 'CLOSED'} onUse={(t) => { setText(t); setTplId(null); }} />   {/* v10.528 (D280) 초안은 회원에게 안 보임 · 넣은 뒤 고쳐 보냄 */}
       {d.answer && <p className="muted">지난 답변 {ymdhm(d.answeredAt)}{d.answeredBy ? ` · ${d.answeredBy}` : ''}</p>}
       <textarea name="inq-answer" value={ans} onChange={(e) => setText(e.target.value)} rows={7} maxLength={4000} readOnly={d.status === 'CLOSED'}
         placeholder={d.status === 'CLOSED' ? '닫힌 문의입니다 — 「다시 열기」 뒤 답합니다.' : '답변(회원에게 그대로 보임 · 4,000자)'} style={{ width: '100%' }} data-inquiry-answer="" />

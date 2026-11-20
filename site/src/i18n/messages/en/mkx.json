@@ -1,0 +1,48 @@
+{
+  "push": {
+    "title": "Web push notifications",
+    "sub": "Get SogaeBank notifications even when the browser is closed. Turn them on or off for each device.",
+    "prefs": "Notification types",
+    "loadFail": "Could not load web push information.",
+    "pwaOff": "The install-as-app feature is currently off, so web push cannot be turned on in this browser yet. We will let you know when it is ready.",
+    "hDevices": "Devices turned on",
+    "noDevices": "No devices are turned on.",
+    "thDevice": "Device",
+    "thState": "Status",
+    "thSince": "Turned on",
+    "thLast": "Last received",
+    "unknownDevice": "Unknown device",
+    "stateActive": "Receiving",
+    "stateGone": "Disconnected (please turn it on again)",
+    "privacy": "Push messages pass through the browser vendor push service (Google, Mozilla, Microsoft, Apple) and only the encrypted notification text is delivered. Notification types you turned off are not sent, and only urgent notifications are sent between 9 PM and 8 AM.",
+    "on": "Turn on in this browser",
+    "off": "Turn off in this browser",
+    "test": "Send me a test notification",
+    "busy": "Working…",
+    "here": "This browser",
+    "unsupported": "This browser does not support web push. Please use the latest Chrome, Edge, Firefox or Safari.",
+    "noWorker": "The SogaeBank app feature is not installed in this browser yet. Please refresh the page and try again.",
+    "denied": "Notifications are not allowed in this browser. Allow them from the lock icon next to the address bar.",
+    "turnedOn": "Web push is now on in this browser.",
+    "turnedOff": "Web push is now off in this browser.",
+    "failed": "Something went wrong. Please try again shortly."
+  },
+  "gb": {
+    "title": "SogaeBank Mall group buys",
+    "sub": "When enough people join, we ship at the group price. If not enough people join, we cancel the order and refund the full payment.",
+    "empty": "There are no group buys open right now.",
+    "until": "Until {at}",
+    "won": "KRW {v}",
+    "progress": "{paid} paid / goal {target}",
+    "confirmed": "Confirmed ({paid} paid) — you can still join until the deadline",
+    "perMember": "Up to {n} per person",
+    "join": "Join",
+    "busy": "Working…",
+    "login": "Log in to join",
+    "pay": "You have joined. Please complete payment in My orders.",
+    "failed": "Could not join. Please try again shortly."
+  },
+  "link": {
+    "push": "Turn on web push notifications"
+  }
+}

@@ -22,8 +22,10 @@ import { isGwanKey } from '@/i18n/keys';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
 import { AiSummary } from '@/components/lsx/AiSummary';   // v10.516 (D276)
+import { ListingVideo } from '@/components/lsy/ListingVideo';   // v10.526 (D279)
 import { siteOrigin } from '@/components/refcode/origin';
 import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
+import { VisitBook } from '@/components/vsx/VisitBook';   // v10.542 (D284) 방문 예약
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -171,6 +173,7 @@ export default async function DetailPage({ params }: Props) {
           </div>
 
           <AiSummary listingId={item.id} />
+          <ListingVideo listingId={item.id} />
           <div className="gw-dsec">
             <h4>{t('descHead')}</h4>
             {item.body ? <p className="gw-body">{item.body}</p> : <p>{t.rich('descFallback', { gwan: gwanName ?? '', title: item.title, b: (c) => <b>{c}</b> })}</p>}
@@ -235,6 +238,7 @@ export default async function DetailPage({ params }: Props) {
                        questionCount={questions.length} ctaNote={msg.CTA_ATTRIBUTION} />
           {/* v10.501 ~ 503 (D273) — 스위치가 모두 꺼져 있으면 아무것도 그리지 않음 */}
           {item.status === 'PUBLISHED' && <Msgs ns={['mbx']}><MbxItemTools type="LISTING" id={item.id} title={item.title} loggedIn={!!viewer} /></Msgs>}
+          {item.status === 'PUBLISHED' && <Msgs ns={['vsx']}><VisitBook listingId={item.id} loggedIn={!!viewer} /></Msgs>}
         </div>
 
         {/* v10.31 — 주인에게만: 사진 올리기 · 급구/급매 신청 */}

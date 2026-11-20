@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
+import { sfxDeviceSeen } from '../sfx/device';   // v10.546 (D285) 같은 기기 여러 계정
 
 /* ---------------------------------------------------------------------
  * v10.181 (D170 · docs/283) — 회원 로그인 기록(SB-MYP-SEC-010)
@@ -34,6 +35,7 @@ export async function recordLogin(db: DatabaseService, accountId: string, ok: bo
   await db.query(
     `INSERT INTO login_history (account_id, ok, ip_masked, ua_kind) VALUES ($1, $2, $3, $4)`,
     [accountId, ok, maskIp(c?.clientIp ?? c?.ip), uaKind(c?.userAgent)]).catch(() => undefined);
+  if (ok) await sfxDeviceSeen(db, accountId, 'LOGIN');   // v10.546 (D285) — 꺼져 있거나 표지가 없으면 아무것도 안 함 · 실패해도 로그인은 그대로
 }
 
 /**

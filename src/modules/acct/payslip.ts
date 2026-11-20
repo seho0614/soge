@@ -1,6 +1,7 @@
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { myEmployee } from './hr';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿
 
 /* ---------------------------------------------------------------------
  * ㉖ v10.447 (D259 · docs/584) 급여명세서 — ⑭ 급여 대장 줄(확정 · 지급만)을 한 장으로
@@ -91,8 +92,8 @@ export async function notifyPayslips(db: DatabaseService, mail: SlipMailer, ym: 
     if (l.sent) { skipped++; continue; }
     if (!l.email) { noAccount++; await log(l.id, null, 'NO_ACCOUNT', null); continue; }
     if (!ready) { failed++; await log(l.id, mask(l.email), 'NOT_READY', null); continue; }
-    const res = await mail.send({ to: l.email, subject: `[소개뱅크] ${ym} 급여명세서가 나왔습니다`,
-      text: `${l.name} 님,\n\n${ym} 급여명세서가 나왔습니다. 운영 화면 › 사무 › 내 인사에서 보십시오.\n(보안을 위해 메일에는 금액을 넣지 않습니다.)\n` });
+    const res = await mail.send({ to: l.email, ...(await csxMail(db, 'PAYSLIP_NOTICE', { name: l.name, ym }, { subject: `[소개뱅크] ${ym} 급여명세서가 나왔습니다`,   // v10.530 (D280)
+      text: `${l.name} 님,\n\n${ym} 급여명세서가 나왔습니다. 운영 화면 › 사무 › 내 인사에서 보십시오.\n(보안을 위해 메일에는 금액을 넣지 않습니다.)\n` })) });
     if (res.ok) { sent++; await log(l.id, mask(l.email), 'SENT', null); }
     else { failed++; await log(l.id, mask(l.email), 'FAILED', (res.error ?? '').slice(0, 300) || null); }
   }

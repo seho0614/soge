@@ -10,6 +10,7 @@ import { OwnerTodo, ReleaseLog, ServerTrend, StateCheck } from './StateCheck';  
 import { ApplyChecksBox } from './OpsWeekBoxes';   // v10.374 (D240)
 import { AcctCard } from './Acct';   // v10.384 (D242) 이번 달 매출
 import { isSuperNow } from './OpsStaffBoxes';
+import { DashSlots } from './DashWidgets';   // v10.536 (D282 · docs/674) 위젯 배치 — 저장한 배치가 없으면 기본 그대로
 
 /* v10.29 — 서버(/admin/summary)가 보내는 이름은 slaBreached · settlementPending 입니다.
  * 화면은 reviewSlaBreached · settlementRequested 를 읽어 두 칸이 늘 빈칸이었습니다(10/9 비교 그림). 둘 다 받습니다. */
@@ -175,19 +176,21 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
   ] as [string, string][]).filter(([k]) => canGo(k.split('/')[0]!) && (!k.startsWith('mainops/') || k === 'mainops/banner' || isSuper));
   const wonN = (v: number) => `${v.toLocaleString('ko-KR')}원`;
 
+  /* v10.536 (D282 · docs/674) 위젯 배치 — 카드 조각을 열쇠별로 넘기면 DashSlots 가 이 계정에 저장한 차례 · 숨김대로 그림(저장한 배치가 없으면 아래 차례 그대로) */
   return (
-    <>
-      <TodoBox onGo={onGo} canGo={canGo} />   {/* v10.364 (docs/498) 오늘 할 일 */}
-      <StaffNotices />   {/* v10.279 (D210 · docs/408) 관리자 공지 — 등급 「관리자」 · 운영 화면 계정만 */}
-      {/* v10.170 (D159) — 사용자 웹 전체 공개(11/1) 뒤 첫 화면 맨 위 */}
-      <LaunchWatch />
-      {/* v10.212 (docs/340) — 운영 적용 뒤 화면 확인을 한 표로 */}
-      <StateCheck onGo={onGo} canGo={canGo} />
-      <OwnerTodo onGo={onGo} canGo={canGo} />
-      <ReleaseLog />   {/* v10.244 (D202 · docs/383) 지금 판 · 운영 적용 기록 */}
-      <ApplyChecksBox />   {/* v10.374 (D240 · docs/509) 운영 적용 확인표 */}
-      {isSuperNow() && <AcctCard onGo={onGo} />}   {/* v10.384 (D242 · docs/520) 이번 달 매출 · 이익(SUPER) */}
-      <ServerTrend />   {/* v10.248 (D203 · docs/386) 서버 자원 추세 */}
+    <DashSlots parts={{
+      todo: <TodoBox onGo={onGo} canGo={canGo} />,   /* v10.364 (docs/498) 오늘 할 일 */
+      notices: <StaffNotices />,   /* v10.279 (D210 · docs/408) 관리자 공지 — 등급 「관리자」 · 운영 화면 계정만 */
+      /* v10.170 (D159) — 사용자 웹 전체 공개(11/1) 뒤 첫 화면 맨 위 */
+      launch: <LaunchWatch />,
+      /* v10.212 (docs/340) — 운영 적용 뒤 화면 확인을 한 표로 */
+      state: <StateCheck onGo={onGo} canGo={canGo} />,
+      owner: <OwnerTodo onGo={onGo} canGo={canGo} />,
+      release: <ReleaseLog />,   /* v10.244 (D202 · docs/383) 지금 판 · 운영 적용 기록 */
+      apply: <ApplyChecksBox />,   /* v10.374 (D240 · docs/509) 운영 적용 확인표 */
+      acct: <>{isSuperNow() && <AcctCard onGo={onGo} />}</>,   /* v10.384 (D242 · docs/520) 이번 달 매출 · 이익(SUPER) */
+      server: <ServerTrend />,   /* v10.248 (D203 · docs/386) 서버 자원 추세 */
+      tiles: (
       <div className="ad-tiles" data-dash-tiles>
         {tiles.map((t) => (
           <button key={t.label} className={`ad-tile${t.warn ? ' warn' : ''}`} onClick={() => onGo(t.k)}
@@ -199,7 +202,9 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
           </button>
         ))}
       </div>
-
+      ),
+      cap: (
+      <>
       <h2 className="ad-s2">검수 처리 여력</h2>
       <div className="ad-cap" data-dash-cap>
         <div className="cb"><div className={`cf${pct >= 100 ? ' over' : ''}`} style={{ width: `${pct}%` }} /></div>
@@ -211,7 +216,10 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
         {(data.decidedToday ?? x?.decidedToday) != null && <> 오늘 처리 {data.decidedToday ?? x?.decidedToday}건.</>}
         {' '}하루 {cap}건을 넘기기 시작하면 증원 시점입니다 (J-06).
       </div>
-
+      </>
+      ),
+      alerts: (
+      <>
       <h2 className="ad-s2">확인이 필요한 것</h2>
       {alerts.length === 0
         ? <div className="ad-nt info"><b>지금 손댈 것이 없습니다</b> — 검수 · 경보 · 분쟁 · 오픈 차단이 모두 0 입니다.</div>
@@ -221,10 +229,12 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
             {a.go && canGo(a.go) && <> <button className="linkbtn" onClick={() => onGo(a.go!)}>보러 가기</button></>}
           </div>
         ))}
-
-      <CsGlance onGo={onGo} canGo={canGo} />
-
-      {/* v10.31 — 시안 「활주로」 4칸 + 안내. 실제 매출 · 입력한 월 비용으로 서버가 계산(가정치 아님) */}
+      </>
+      ),
+      cs: <CsGlance onGo={onGo} canGo={canGo} />,
+      /* v10.31 — 시안 「활주로」 4칸 + 안내. 실제 매출 · 입력한 월 비용으로 서버가 계산(가정치 아님) */
+      runway: (
+      <>
       <h2 className="ad-s2">활주로</h2>
       {rw ? (
         <>
@@ -244,9 +254,10 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
           </div>
         </>
       ) : <div className="ad-nt info">활주로를 계산하지 못했습니다(경영 지표 권한이 없거나 서버 오류).</div>}
-
-      {/* v10.27 (G-198) 시안 — 위 메뉴 줄에서 한 번 더 들어가야 하는 운영 화면 */}
-      {more.length > 0 && (
+      </>
+      ),
+      /* v10.27 (G-198) 시안 — 위 메뉴 줄에서 한 번 더 들어가야 하는 운영 화면 */
+      more: more.length > 0 ? (
         <>
           <h2 className="ad-s2">다른 운영 화면</h2>
           <div className="ad-mgrid" data-adm-more>
@@ -257,7 +268,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
             ))}
           </div>
         </>
-      )}
-    </>
+      ) : null,
+    }} />
   );
 }

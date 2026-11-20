@@ -22,6 +22,7 @@ export const TABS = [
   ['queue', '검수 큐'],
   ['badges', '배지 신청'],
   ['lsx-expiry', '매물 만료 · 연장'], ['lsx-bump', '끌어올리기'], ['lsx-summary', '매물 AI 요약'], ['lsx-saved', '저장한 검색'],   /* v10.513 ~ 516 (D276 · docs/651 ~ 654) ㊻ 매물 */
+  ['lsy-dups', '매물 중복 의심'], ['lsy-photos', '사진 품질'], ['lsy-videos', '매물 동영상'], ['lsy-triage', '신고 분류'],   /* v10.524 ~ 527 (D279 · docs/662 ~ 665) ㊾ 매물 2 */
   ['audit', '표본 감사'],
   ['rules', '자동검수 규칙'],
   ['disputes', '분쟁'],
@@ -30,7 +31,9 @@ export const TABS = [
   ['users', '사업자 인증'],
   ['inquiries', '1:1 문의'],   /* v10.333 (D225) — 고객센터 문의 답변함 */
   ['mkt-campaign', '문자 · 메일 캠페인'],   /* v10.483 (D268 · docs/621) — 마케팅 동의자만 · 야간 동의 · (광고) · 수신 거부 */
+  ['mkx-push', '웹 푸시'], ['mkx-sms', '문자 마케팅'], ['mkx-rebuy', '재구매 알림'], ['mkx-groupbuy', '공동구매'],   /* v10.538 ~ 541 (D283 · docs/676 ~ 679) */
   ['mbx-ops', '회원 편의 기능'], ['mbx-dm', '회원 대화 신고'],   /* v10.501 ~ 504 (D273 · docs/639 ~ 642) 최근 본 · 비교 · 가격 알림 · 회원 대화 */
+  ['csx-aidraft', 'AI 답변 초안'], ['csx-churn', '이탈 위험 신호'], ['csx-mailtpl', '메일 문구'], ['csx-merge', '계정 합치기'],   /* v10.528 ~ 531 (D280 · docs/666 ~ 669) ㊿ 고객센터 · 회원 */
   ['community', '글 검수'],
   ['polls', '이건 어때? 투표'],
   ['ownership', '소유 확인'],
@@ -47,6 +50,7 @@ export const TABS = [
   ['hlt-points', '적립금'], ['hlt-tiers', '회원 등급'], ['hlt-subscribe', '정기 배송'], ['hlt-giftcards', '상품권'],   // v10.479 ~ 482 (D267 · docs/617 ~ 620)
   ['hlt-coupons', '쿠폰 · 기획전'],   // v10.469 (D264 · docs/607)
   ['hlt-restock', '재입고 알림'], ['hlt-cashrcpt', '현금영수증'], ['plz-rank', '활동 배지 · 랭킹'], ['site-usage', '화면 사용 통계'],   // v10.505 ~ 508 (D274 · docs/643 ~ 646)
+  ['bi-export', '통계 내보내기(BI)'], ['mob-scan', '휴대폰 실사'],   // v10.535 · 537 (D282 · docs/673 · 675)
   ['billing', '청구'],
   ['checklist', '오픈 체크리스트'],
   ['policy', '정책'],
@@ -66,6 +70,8 @@ export const TABS = [
   ['partner-axes', '안심소개 입점 심사'],
   ['directory', '법률·세무 정액 노출'],
   ['ptn-openapi', '오픈 API'], ['ptn-bulk', '직원 일괄 등록'],   /* v10.521 · 522 (D278 · docs/659 · 660) */
+  ['vsx-visits', '매물 방문 예약'], ['vsx-map', '지도 매물 묶음'], ['vsx-papi-bill', '오픈 API 사용량 · 청구'], ['vsx-ptn-export', '파트너 자료 내려받기'],   /* v10.542 ~ 545 (D284 · docs/680 ~ 683) */
+  ['slx-statements', '판매자 월 정산서'], ['slx-review-points', '리뷰 적립'], ['slx-ptn-perf', '파트너 성과'],   /* v10.532 ~ 534 (D281 · docs/670 ~ 672) */
   ['i18n-review', '일본어 · 중국어 검수'],   /* v10.523 (D278 · docs/661) */
   ['affiliates', '제휴'],
   ['quals', '자격 심사'],
@@ -78,6 +84,7 @@ export const TABS = [
   ['server-errors', '서버 오류'],   /* v10.182 (D171) */
   ['sec-geo', '해외 접속 경고'],   /* v10.485 (D268 · docs/623) — 운영자 로그인 나라 · 허용 나라 밖 경고 · 막기 */
   ['opx-archive', '기록 장기 보관'], ['opx-risk', '이상 거래 점수'], ['opx-bulk', '일괄 처리'], ['opx-switches', '기능 스위치 한눈에'],   /* v10.509 ~ 512 (D275 · docs/647 ~ 650) */
+  ['sfx-device', '같은 기기 여러 계정'], ['sfx-retention', '서류 보관 기한'], ['sfx-tm', '번역 메모리'],   /* v10.546 ~ 548 (D285 · docs/684 ~ 686) */
   ['upt-status', '가동 · 장애 공지'], ['soc-login', '간편 로그인'],   /* v10.497 · 498 (D272 · docs/635 · 636) — 바깥 감시 · 장애 공지 띠 / 카카오 · 네이버 로그인 */
   ['ops-board', '운영자 게시판'],   /* v10.286 (D213) */
   ['my-mfa', '내 2단계 인증'],   /* v10.180 (D169) — 운영 역할 모두 */
@@ -195,6 +202,8 @@ hrxAddTabs(GROUPS.find((g) => g.key === 'admdsp')?.tabs, 'mainops', ['prx-popup'
 hrxAddTabs(GROUPS.find((g) => g.key === 'affapl')?.tabs, 'affiliates', ['prx-refevent']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admad')?.tabs, 'ad-billing', ['prx-adreport', 'prx-adab']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admrev')?.tabs, 'badges', ['lsx-expiry', 'lsx-bump', 'lsx-summary', 'lsx-saved']);   /* v10.513 ~ 516 (D276) 검수 › 매물 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admrev')?.tabs, 'lsx-saved', ['lsy-dups', 'lsy-photos', 'lsy-videos']);   /* v10.524 ~ 526 (D279) 검수 › 매물 품질 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'report-queue', ['lsy-triage']);   /* v10.527 (D279) 위험감지 › 신고 처리 뒤 신고 분류 */
 /* v10.509 ~ 512 (D275) ㊺ — 위험감지: 위험감지 뒤 이상 거래 점수 · 감사 뒤 기록 장기 보관 / 회원: 1:1 문의 뒤 일괄 처리 / 정책: 전체 설정 뒤 기능 스위치 한눈에 */
 hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'risk', ['opx-risk']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'gov-audit', ['opx-archive']);
@@ -202,12 +211,30 @@ hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'inquiries', ['opx-bulk
 hrxAddTabs(GROUPS.find((g) => g.key === 'admpol')?.tabs, 'settings', ['opx-switches']);
 /* v10.505 ~ 508 (D274 · docs/643 ~ 646) — 소개몰: 쿠폰 뒤 재입고 알림 · 현금영수증 / 소개광장: 투표 뒤 활동 배지 · 랭킹 / 통합 현황: 경영 지표 뒤 화면 사용 통계 */
 hrxAddTabs(GROUPS.find((g) => g.key === 'admhlt')?.tabs, 'hlt-coupons', ['hlt-restock', 'hlt-cashrcpt']);
+/* v10.538 ~ 541 (D283) — 회원: 캠페인 뒤 문자 마케팅 · 웹 푸시 / 소개몰: 현금영수증 뒤 재구매 알림 · 공동구매 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'mkt-campaign', ['mkx-sms', 'mkx-push']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admhlt')?.tabs, 'hlt-cashrcpt', ['mkx-rebuy', 'mkx-groupbuy']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admcmu')?.tabs, 'polls', ['plz-rank']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'integ')?.tabs, 'reports', ['site-usage']);
+/* v10.535 · 537 (D282) — 통합 현황: 화면 사용 통계 뒤 통계 내보내기(BI) / 소개몰: 로트 · 유통기한 뒤 휴대폰 실사 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'integ')?.tabs, 'site-usage', ['bi-export']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admhlt')?.tabs, 'qlt-lots', ['mob-scan']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'inquiries', ['mbx-ops', 'mbx-dm']);   /* v10.501 ~ 504 (D273) 회원 › 1:1 문의 뒤 */
 /* v10.497 · 498 (D272) — 위험감지: 해외 접속 경고 뒤 가동 · 장애 공지 / 회원: 끝에 간편 로그인(GROUPS 줄을 바꾸지 않고 붙임) */
 hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'sec-geo', ['upt-status']);
+/* v10.546 ~ 548 (D285) — 위험감지: 이상 거래 점수 뒤 같은 기기 여러 계정 / 사무: 사내 문서함 뒤 서류 보관 기한(법무 넷 뒤로 밀림) / 관 관리: 번역 검수 뒤 번역 메모리 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'opx-risk', ['sfx-device']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admoff')?.tabs, 'corp-docs', ['sfx-retention']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admsit')?.tabs, 'i18n-review', ['sfx-tm']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'mkt-campaign', ['soc-login']);
+/* v10.542 ~ 545 (D284) — 검수: 저장한 검색 뒤 방문 예약 · 지도 묶음 / 파트너사: 오픈 API 뒤 사용량 · 청구 · 자료 내려받기 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admrev')?.tabs, 'lsx-saved', ['vsx-visits', 'vsx-map']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admptn')?.tabs, 'ptn-openapi', ['vsx-papi-bill', 'vsx-ptn-export']);
+/* v10.532 ~ 534 (D281) — 소개몰: 정산 뒤 판매자 월 정산서 · 리뷰 · 문의 뒤 리뷰 적립 / 파트너사: 직원 일괄 등록 뒤 파트너 성과 */
+hrxAddTabs(GROUPS.find((g) => g.key === 'admhlt')?.tabs, 'hlt-settle', ['slx-statements']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admhlt')?.tabs, 'hlt-reviews', ['slx-review-points']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admptn')?.tabs, 'ptn-bulk', ['slx-ptn-perf']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'inquiries', ['csx-aidraft', 'csx-churn', 'csx-mailtpl', 'csx-merge']);   /* v10.528 ~ 531 (D280) 회원 › 1:1 문의 뒤 */
 
 /* v10.486 ~ 489 (D269) 법무 — 사무 그룹 사내 문서함 뒤에 인허가 · 계약 검토 · 소송 · 분쟁 · 회사 보험(GROUPS 줄을 고치지 않고 덧붙임 · 다른 묶음과 겹침 없게) */
 { const g = GROUPS.find((x) => x.key === 'admoff'); if (g) { const at = g.tabs.indexOf('corp-docs'); g.tabs.splice(at < 0 ? g.tabs.length : at + 1, 0, 'lgl-licenses', 'lgl-reviews', 'lgl-cases', 'lgl-insurance'); } }
@@ -304,6 +331,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'lsx-bump':    { title: '끌어올리기', sub: '방식(끔 · 무료 · 유료)을 운영자가 정합니다. 효과는 방식과 상관없이 같은 상한 — 최신순에서 그 시각의 새 글 자리에서 시작해 정한 시간 뒤 원래 자리.', screen: 'SB-ADM-LSX-020' },
   'lsx-summary': { title: '매물 AI 요약', sub: 'AI 가 만든 3줄 요약 초안을 읽고 고쳐 승인해야 매물 상세에 보입니다. 매물을 고치면 다시 초안부터.', screen: 'SB-ADM-LSX-030' },
   'lsx-saved':   { title: '저장한 검색', sub: '회원이 저장한 검색 조건 · 새 매물 하루 묶음 알림 — 모은 숫자만 봅니다.', screen: 'SB-ADM-LSX-040' },
+  'lsy-dups':    { title: '매물 중복 의심', sub: '사진 지문 · 글 겹침 · 같은 연락처로 찾은 짝 — 두 매물을 나란히 보고 같은 매물 · 다른 매물을 정합니다. 자동으로 내리지 않습니다.', screen: 'SB-ADM-LSY-010' },
+  'lsy-photos':  { title: '사진 품질', sub: '해상도 · 크기 · 비율 · 흐림 근사 · 사진 속 연락처 글자(AI) — 경고만 보이고 검수 · 게시를 막지 않습니다.', screen: 'SB-ADM-LSY-020' },
+  'lsy-videos':  { title: '매물 동영상', sub: '회원이 붙인 짧은 동영상 — 보고 승인해야 매물 상세에 보입니다. 반려 사유는 회원에게 보입니다.', screen: 'SB-ADM-LSY-030' },
+  'lsy-triage':  { title: '신고 분류', sub: '열린 신고를 종류 · 급함으로 — 규칙 · AI 가 제안하고 사람이 확정합니다. 처리(인정 · 기각)는 신고 처리에서.', screen: 'SB-ADM-LSY-040' },
   'hlt-reviews': { title: '소개몰 리뷰 · 문의', sub: '리뷰는 바로 보이고, 효능 · 효과를 단정하는 표현에 걸린 것만 여기서 확인합니다. 상품 문의는 운영자가 답합니다.', screen: 'SB-ADM-HRV-010' },
   'hlt-points':    { title: '적립금', sub: '구매확정 때 쌓이고 직판 주문에 쓰는 소개몰 적립금 — 남은 합(충당부채) · 곧 소멸 · 회원별 묶음 · 운영 지급 · 회수(처음 꺼짐).', screen: 'SB-ADM-MBS-010' },
   'hlt-tiers':     { title: '회원 등급', sub: '최근 기간 구매액으로 매일 정하는 등급 · 등급별 적립률 · 혜택 — 운영이 정한 회원은 건너뜁니다(처음 꺼짐).', screen: 'SB-ADM-MBS-020' },
@@ -311,14 +342,24 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'hlt-giftcards': { title: '상품권', sub: '판매 · 판촉 상품권 발행(코드는 한 번만 보임) · 잔액 · 무효 · 잔액 환불 · 소멸 — 판매분 잔액은 선수금(처음 꺼짐 · 법무 확인).', screen: 'SB-ADM-MBS-040' },
   'hlt-coupons': { title: '쿠폰 · 기획전', sub: '정액 · 정률 할인 쿠폰(최소 주문 · 사용 한도 · 기간)과 상품 묶음 기획전 — 직판 주문에만 쓰이고, 취소 · 반품되면 저절로 되돌아갑니다.', screen: 'SB-ADM-SAL-040' },
   'hlt-restock':  { title: '재입고 알림', sub: '품절 옵션에 회원이 신청한 「입고되면 알림」 — 재고가 0 에서 다시 늘면 한 번 알립니다(알림 수신을 끈 회원 빼고 · 처음 꺼짐).', screen: 'SB-ADM-MLX-010' },
+  'mkx-rebuy':    { title: '재구매 알림', sub: '상품마다 사용 일수 — 산 날 + 일수 − 며칠 전에 한 번 알림(광고 · 마케팅 수신 동의자만 · 회원 하루 한 통 · 처음 꺼짐).', screen: 'SB-ADM-MKX-020' },
+  'mkx-groupbuy': { title: '공동구매', sub: '직판 상품 옵션 하나 · 목표 인원 · 기한 · 할인가 — 모이면 확정, 못 모이면 참여 주문마다 취소 신청(환불은 기존 절차) · 처음 꺼짐.', screen: 'SB-ADM-MKX-030' },
   'hlt-cashrcpt': { title: '현금영수증', sub: '직판 · 계좌이체 · 가상계좌 결제의 소득공제 · 지출증빙 현금영수증 — 발급 · 취소 · 반품 차감 뒤 다시 발급(처음 꺼짐 · 간주 · 세무사 · PG 확인).', screen: 'SB-ADM-MLX-020' },
   'plz-rank':     { title: '활동 배지 · 랭킹', sub: '소개광장 글 · 답변 · 도움돼요 점수로 달마다 순위와 배지 — 숨김 · 신고된 글은 빼고, 회원이 랭킹 노출을 끌 수 있습니다(처음 꺼짐).', screen: 'SB-ADM-MLX-030' },
   'site-usage':   { title: '화면 사용 통계', sub: '사용자 웹 화면별 보기 · 이탈 · 전환 — 하루 × 화면 주소 묶음 수만(계정 · IP · 쿠키 없음 · 처음 꺼짐 · 처리방침 먼저).', screen: 'SB-ADM-MLX-040' },
+  'bi-export':    { title: '통계 내보내기(BI)', sub: '개인 식별 없는 일별 집계(가입 · 매물 · 거래 · 주문 · 문의 · 화면 보기) — 기간 표 · CSV(내려받기 승인 · 작은 칸 가림) · 외부 BI 도구용 읽기 전용 보기(bi 스키마).', screen: 'SB-ADM-DTX-010' },
   partners:      { title: '파트너사', sub: '파트너센터(파트너사가 쓰는 별도 사이트)에서 올라오는 것을 본사가 처리하는 자리입니다.', screen: 'SB-ADM-PTN-010' },
   'partner-axes':{ title: '안심소개 입점 심사', sub: '안심소개 입점 신청을 축별로 심사합니다.' },
   directory:     { title: '법률 · 세무 정액 노출', sub: '법률 · 세무 전문가의 정액 노출을 관리합니다.' },
   'ptn-openapi': { title: '오픈 API', sub: '파트너 시스템이 부르는 읽기 API(/api/partner/v1) — 파트너별 키(원문은 발급 때 한 번) · 범위 · 1분 한도 · 요청 기록 · 서명 웹훅. 처음에는 꺼져 있고, 보안 검토 뒤 최고 관리자가 켭니다.', screen: 'SB-ADM-OAPI-010' },
+  'vsx-visits':     { title: '매물 방문 예약', sub: '매물 주인이 연 방문 시간 칸을 회원이 골라 요청 → 주인 확정 · 전날 알림 · 노쇼 표시. 운영은 숫자 · 기록만(연락처 없음). 처음에는 꺼져 있습니다.', screen: 'SB-ADM-VSX-010' },
+  'vsx-map':        { title: '지도 매물 묶음', sub: '공개 지도 API — 줌 단계별 시 · 도 / 시 · 구 / 격자(2km 넘음) 묶음 수만. 매물 주소 · 좌표는 내지 않습니다. 격자 단계는 법무 확인 뒤. 처음에는 꺼져 있습니다.', screen: 'SB-ADM-VSX-020' },
+  'vsx-papi-bill':  { title: '오픈 API 사용량 · 청구', sub: '파트너 API 하루 사용량 · 달 무료 한도 · 1,000건 단가(부가세 별도) · 월 청구서 초안. 확정은 최고 관리자가 사람 손으로 · 실제 청구는 이 화면 밖. 처음에는 꺼져 있습니다.', screen: 'SB-ADM-VSX-040' },
+  'vsx-ptn-export': { title: '파트너 자료 내려받기', sub: '파트너센터 리드 CSV(내려받기 승인 뒤 한 번 · 연락처 없음) · 성과 CSV(숫자만) 기록. 승인은 위험감지 › 감사. 처음에는 꺼져 있습니다.', screen: 'SB-ADM-VSX-030' },
   'ptn-bulk':    { title: '직원 일괄 등록', sub: '파트너 직원을 CSV(이메일 · 정산 권한 두 칸)로 한꺼번에 — 미리보기 → 확정. 가입 회원은 직원 초대, 아직 안 한 분은 가입 대기. 초대 메일은 처음에 꺼져 있습니다.', screen: 'SB-ADM-OAPI-020' },
+  'slx-statements':    { title: '판매자 월 정산서', sub: '입점 판매자의 주 정산서를 달마다 모은 한 장 — 만들기 · 다시 셈 · 인쇄(PDF 저장) · 메일(처음 꺼짐 · 같은 달 한 번만).', screen: 'SB-ADM-SLX-010' },
+  'slx-review-points': { title: '리뷰 적립', sub: '구매확정한 직판 주문의 리뷰에 적립금 — 주문 하나에 한 번 · 사진 리뷰 가산 · 지우거나 가리면 회수(처음 꺼짐).', screen: 'SB-ADM-SLX-020' },
+  'slx-ptn-perf':      { title: '파트너 성과', sub: '받은 리드 · 열람 · 응답 속도 · 리드 전환 · 이용료 · 정산을 기간 그래프로 — 모든 파트너 합 · 파트너별 · 순위.', screen: 'SB-ADM-SLX-030' },
   'i18n-review': { title: '일본어 · 중국어 검수', sub: '일본어 · 중국어(간체) 사전은 기계 번역 초안입니다. 검수자가 고친 뒤 사용자 웹 · 서버 문장 승인을 남겨야 그 언어를 켤 수 있습니다.', screen: 'SB-ADM-OAPI-030' },
   settlement:    { title: '정산 승인', sub: '신청 → 승인 → 지급 실행. 소개비에서 떼는 금액은 없습니다 (INV-9). 지급은 당사자가 직접 합니다 (INV-11).', screen: 'SB-ADM-STL-010' },
   payouts:       { title: '지급 데스크', sub: '확정된 지급을 보내고 기록합니다. 확정은 운영, 지급 기록은 지급 담당이 합니다.', screen: 'SB-ADM-PAY-010' },
@@ -329,13 +370,20 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   disputes:      { title: '분쟁 처리', sub: '접수된 분쟁을 처리합니다. 분쟁이 걸린 거래는 정산이 보류됩니다.', screen: 'SB-ADM-DSP-010' },
   'hlt-open':    { title: '개봉 반품 재고', sub: '반품 승인 때 개봉으로 판정한 상품 — 보관(폐기 대기) · 폐기 · 판매자 반송. 식품 · 화장품 개봉품은 다시 팔 수 없습니다.', screen: 'SB-ADM-HOS-010' },
   'qlt-lots':    { title: '로트 · 유통기한', sub: '직판 상품마다 로트 관리를 켜면 입고 줄을 로트(제조일 · 유통기한)로 나누고, 배송 뒤 출고에 먼저 끝나는 로트부터 붙입니다. 임박 30일 알림 · 회수 로트의 나간 곳.', screen: 'SB-ADM-QLT-020' },
+  'mob-scan':    { title: '휴대폰 실사', sub: '휴대폰 카메라(바코드 · QR) 또는 손 입력으로 로트 재고를 세고(회차 · 차이 · SUPER 조정), 자산 실사 QR 을 읽습니다 — 카메라를 못 쓰는 브라우저는 손으로 넣습니다.', screen: 'SB-ADM-DTX-030' },
   'qlt-claims':  { title: '품질 클레임', sub: '불량 접수 → 확인 → 조치 → 끝냄(원인 · 조치). 상품 · 로트 · 공급사 · 주문을 잇고, 공급사 반품은 재고와 전표에 같이 들어갑니다. 같은 불량이 되풀이되면 알림.', screen: 'SB-ADM-QLT-030' },
   'qlt-supeval': { title: '협력사 평가', sub: '매입처를 분기마다 납기(발주 · 입고로 자동) · 품질(클레임) · 가격 · 대응으로 매겨 등급을 냅니다. 확정한 평가는 고치지 않습니다.', screen: 'SB-ADM-QLT-010' },
   'hlt-orders':  { title: '소개몰 주문', sub: '결제 완료 주문의 발송을 처리합니다 — 택배사 · 송장번호를 넣으면 배송중, 「배송 완료로」를 누르면 배송 완료.', screen: 'SB-ADM-HOR-010' },
   members:       { title: '회원 목록', sub: '이름 · 이메일 · 연락처로 찾습니다.', screen: 'SB-ADM-MBR-010' },
   users:         { title: '회원 관리', sub: '사업자 신청을 승인 · 반려하고 회원을 정지합니다. 승인 시각이 소개비 수령 자격의 기준일입니다 (INV-10).', screen: 'SB-ADM-USR-010' },
   inquiries:     { title: '1:1 문의', sub: '고객센터 문의하기 · 챗봇 「상담원 연결」로 들어온 문의입니다. 답하면 회원에게 알림이 가고, 기한(접수 뒤 영업일 1일)을 넘기면 운영 알림이 뜹니다.', screen: 'SB-ADM-INQ-010' },
+  'csx-aidraft': { title: 'AI 답변 초안', sub: '1:1 문의마다 자주 묻는 질문 · 답변 틀 · 지난 답변을 바탕으로 AI 가 만든 초안입니다. 회원에게 보이지 않고, 운영자가 고쳐 보냅니다.', screen: 'SB-ADM-CSX-010' },
+  'csx-churn':   { title: '이탈 위험 신호', sub: '최근 30일 활동이 앞 60일보다 크게 줄어든 회원입니다. 운영 화면 안에서만 보고, 재방문 안내는 마케팅 동의자에게만 캠페인으로 보냅니다.', screen: 'SB-ADM-CSX-020' },
+  'csx-mailtpl': { title: '메일 문구', sub: '코드가 보내는 메일의 제목 · 본문을 고칩니다. 자리값 검사 · 미리보기 · 판 기록 · 되돌리기 — 스위치가 꺼져 있으면 코드 기본 문구로 보냅니다.', screen: 'SB-ADM-CSX-030' },
+  'csx-merge':   { title: '계정 합치기', sub: '본인인증이 같은 한 사람의 두 계정을 하나로 합칩니다. 운영자가 요청하고 다른 SUPER 가 승인하며, 되돌릴 수 없습니다.', screen: 'SB-ADM-CSX-040' },
   'mkt-campaign': { title: '문자 · 메일 캠페인', sub: '마케팅 수신 동의자에게만 보냅니다(21 ~ 8시는 야간 동의자만). (광고) 표기 · 보낸 곳 · 무료 수신 거부는 서버가 붙이고, 처음에는 꺼짐 · 간주(보내지 않음)입니다.', screen: 'SB-ADM-SCU-010' },
+  'mkx-push':     { title: '웹 푸시', sub: '회원 알림을 브라우저 푸시로 — 기기마다 회원이 켬 · 처음에는 꺼짐 · 간주(밖으로 부르지 않음). 키는 「키 만들기」(최고 관리자).', screen: 'SB-ADM-MKX-010' },
+  'mkx-sms':      { title: '문자 마케팅', sub: '소개몰 대상(구매 회원 · 재구매 시기) · 회원별 7일 상한 · 080 수신 거부 반영 · 예상 비용. 보내기는 문자 · 메일 캠페인에서 합니다.', screen: 'SB-ADM-MKX-040' },
   'mbx-ops':      { title: '회원 편의 기능', sub: '최근 본 매물 · 상품 · 비교하기 · 가격 변동 알림 · 회원 간 1:1 대화의 스위치(처음 모두 꺼짐 · 바꾸기 SUPER) · 감지 방식 · 보관 일수와 수(개인 식별 없음) · 정리 기록.', screen: 'SB-ADM-MBX-010' },
   'mbx-dm':       { title: '회원 대화 신고', sub: '신고가 들어온 회원 대화만 엽니다 — 열 때마다 사유를 적고, 개인정보 접속기록에 남습니다. 조치하면 대화를 닫을 수 있습니다.', screen: 'SB-ADM-MBX-020' },
   category:      { title: '업종 관리', sub: '업종은 열린 집합입니다 — 신청 → 승인 → 노출 (A-02).', screen: 'SB-ADM-CAT-010' },
@@ -365,6 +413,9 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'opx-risk':    { title: '이상 거래 점수', sub: '새 계정 · 짧은 시간 매물 여러 개 · 같은 연락처 · 신고 · 가입 차단 근접 등 규칙 점수의 합. 기준을 넘으면 검수 대기 · 알림. 회원에게는 보이지 않습니다.', screen: 'SB-ADM-OPX-020' },
   'opx-bulk':    { title: '일괄 처리', sub: '검수 · 신고 · 1:1 문의 · 회원을 여러 줄 골라 한 번에(최대 100 · 사유 필수). 한 줄씩 한 건 처리와 같이 돌고 감사 기록도 줄마다 남습니다.', screen: 'SB-ADM-OPX-030' },
   'opx-switches': { title: '기능 스위치 한눈에', sub: '켜고 끄는 설정 모두 — 지금 값 · 처음 값 · 켤 조건 · 누가 언제 바꿨는지. 읽기만 — 고치기는 「전체 설정」.', screen: 'SB-ADM-OPX-040' },
+  'sfx-device':    { title: '같은 기기 여러 계정', sub: '가입 · 로그인 때 기기 표지(무작위 값의 해시 · 지문 없음)로 같은 브라우저의 여러 계정을 봅니다. 기준을 넘으면 위험감지 경보 — 자동 정지는 없습니다(처음 꺼짐).', screen: 'SB-ADM-SFX-010' },
+  'sfx-retention': { title: '서류 보관 기한', sub: '인사 · 법무 · 회계 증빙 · 사내 문서의 보관 기간 표와 대장 — 만료 전 알림(처음 꺼짐) · 법정 보관(보존) · 파기는 SUPER 가 「파기」 입력으로(기록은 쌓기만).', screen: 'SB-ADM-SFX-020' },
+  'sfx-tm':        { title: '번역 메모리', sub: '승인된 번역을 원문 열쇠로 모아 같은 원문은 엔진을 부르지 않고 다시 씁니다(사람이 고친 것 먼저 · 처음 꺼짐). 찾기 · 고치기 · 끄기.', screen: 'SB-ADM-SFX-030' },
   'pii-review':  { title: '개인정보 접속기록 점검', sub: '운영자가 개인정보를 본 기록을 달마다 점검하고 기록을 남깁니다(SUPER).', screen: 'SB-ADM-PII-010' },
   'role-review': { title: '운영자 권한 점검', sub: '운영자별 역할 · 마지막 로그인 · 2단계 등록을 보고 분기마다 점검 기록을 남깁니다(SUPER).', screen: 'SB-ADM-ROLE-010' },
   'purge-log':   { title: '파기 실행 기록', sub: '매일 03:00 개인정보 파기 작업이 지운 건수를 날짜별 · 달별로 봅니다.', screen: 'SB-ADM-PRG-010' },

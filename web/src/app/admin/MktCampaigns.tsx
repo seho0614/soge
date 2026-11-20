@@ -21,7 +21,7 @@ interface Audience { consented: number; stale: number; noAddr: number; suppresse
 
 const STATE: Record<string, string> = { DRAFT: '초안', QUEUED: '대기(예약)', SENDING: '보내는 중', DONE: '끝', CANCELED: '취소' };
 const CH: Record<string, string> = { EMAIL: '메일', SMS: '문자' };
-const AUD: Record<string, string> = { ALL: '동의한 모든 회원', RECENT_90: '90일 안 로그인한 동의 회원' };
+const AUD: Record<string, string> = { ALL: '동의한 모든 회원', RECENT_90: '90일 안 로그인한 동의 회원', CHURN_RISK: '이탈 위험 신호 회원(동의자만)', MALL_BUYERS: '소개몰 구매 회원(180일 · 동의자만)', MALL_REBUY: '재구매 시기 회원(동의자만)' };   // v10.529 (D280) · v10.541 (D283)
 const SKIP: Record<string, string> = { NO_CONSENT: '동의 없음', INACTIVE: '쓰지 않는 계정', NO_ADDRESS: '받는 곳 없음', SUPPRESSED: '반송 · 거부 주소', CANCELED: '취소', UNSUBSCRIBED: '수신 거부' };
 const EMPTY = { title: '', channel: 'EMAIL', subject: '', body: '', audience: 'ALL' };
 

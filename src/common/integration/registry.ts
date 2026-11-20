@@ -91,6 +91,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   /* v10.498 (D272 · docs/636) 간편 로그인 — 카카오 client_id 는 KAKAO_LOGIN_CLIENT_ID(비면 지도 MAP 의 KAKAO_REST_KEY 를 다시 씀 · 같은 카카오 앱일 때) · 간주는 설정 social.mode(assume.* 아님 · 오픈 차단 아님) · 켜기 social.kakao · social.naver(처음 off) */
   { code: 'SOCIAL', name: '간편 로그인(카카오 · 네이버)', dbRow: true, secretEnv: 'NAVER_CLIENT_SECRET', otherEnv: ['NAVER_CLIENT_ID', 'KAKAO_LOGIN_CLIENT_ID', 'KAKAO_LOGIN_SECRET', 'SOCIAL_TIMEOUT_MS'],
     assume: null, adapter: 'REAL', files: ['src/modules/social/social.provider.ts', 'src/modules/social/social.ts', 'src/modules/social/social.controller.ts', 'site/src/app/login/social/[provider]/route.ts'], doc: 'docs/636' },
+  /* v10.538 (D283 · docs/676) 웹 푸시 — VAPID 키를 우리가 만듦(업체 계약 없음) · 공개 키 WEBPUSH_VAPID_PUBLIC · 보낸 곳 push.vapid_subject · 간주는 설정 push.send_mode(assume.* 아님 · 오픈 차단 아님) · 보내기 push.send(처음 off) */
+  { code: 'WEBPUSH', name: '웹 푸시(VAPID)', dbRow: true, secretEnv: 'WEBPUSH_VAPID_PRIVATE', otherEnv: ['WEBPUSH_VAPID_PUBLIC', 'WEBPUSH_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/mkx/webpush.ts', 'site/public/sw.js', 'site/src/components/mkx/PushToggle.tsx'], doc: 'docs/676' },
   /* v10.454 (D261) 대량 이체 — 금융결제원 오픈뱅킹(KFTC) · 간주는 설정 acct.transfer_mode(assume.* 아님 · 오픈 차단 아님) · 보내기는 acct.transfer(처음 off) */
   { code: 'FIRMBANK', name: '대량 이체(금융결제원 오픈뱅킹)', dbRow: true, secretEnv: 'FIRMBANK_CLIENT_SECRET',
     otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS',

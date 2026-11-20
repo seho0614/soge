@@ -4,6 +4,7 @@ import { DatabaseService } from '../../db/database.service';
 import { AgentService } from '../agent/agent.service';
 import { AgentProvider } from '../agent/agent.provider';
 import { I18N_FIELDS } from './i18n.service';
+import { sfxTmApply } from '../sfx/tm';   // v10.548 (D285) 번역 메모리
 
 /** 번역 언어 이름(지시문용) — i18n_langs 의 7개 */
 const LANG_NAME: Record<string, string> = {
@@ -128,6 +129,12 @@ export class TranslateService {
     const force = j.result === 'FORCE';
     for (const h of have) if (!force || h.engine === 'MANUAL' || h.status === 'REJECTED') delete src[h.field];
     if (!Object.keys(src).length) return this.finish(j.id, 'DONE', 'SKIPPED');
+    /* v10.548 (D285 · docs/686) 번역 메모리 — 같은 원문(공백 정리 · 해시) 번역이 있으면 엔진을 부르지 않고 그대로 저장(엔진 TM · 자동 승인 · 사람이 고친 것 먼저)
+     *   sfx.tm on 일 때만 · 금칙어 · 원문에 없는 연락처 검사를 다시 함 · 쓴 칸은 src 에서 빠지고 남은 칸만 아래 엔진으로 · 「다시 시도」(FORCE)는 엔진으로 */
+    if (!force) {
+      const tm = await sfxTmApply(this.db, { type: j.target_type, id: j.target_id, lang: j.lang, gwan }, src, suspiciousTranslation);
+      if (tm.used && !Object.keys(src).length) return this.finish(j.id, 'DONE', 'TM_REUSED');
+    }
 
     const model = (await this.setting('i18n.translate_model')) ?? 'claude-haiku-5-5';
     // 요금표에 없는 모델이면 부르지 않음 — 불러 놓고 비용을 못 쌓으면 월 상한이 듣지 않음

@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
 import { MailService } from '../../common/mail/mail.service';
+import { csxMail } from '../csx/mail-templates';   // v10.530 (D280) 메일 문구 템플릿
 
 /* ---------------------------------------------------------------------
  * v10.378 · 379 (D241 · docs/514 · 515) 회원에게 미리 알리는 정기 작업 둘
@@ -44,7 +45,8 @@ export async function withdrawGraceMail(db: DatabaseService, mail: MailService) 
       '',
       '이 메일은 탈퇴 유예 안내로 한 번만 보냅니다.',
     ].join('\n');
-    const r = await mail.send({ to: d.email, subject: `[소개뱅크] 탈퇴 취소는 ${d.until} 까지입니다`, text }).catch(() => ({ ok: false }));
+    const m = await csxMail(db, 'WITHDRAW_GRACE', { until: d.until, base }, { subject: `[소개뱅크] 탈퇴 취소는 ${d.until} 까지입니다`, text });   // v10.530 (D280)
+    const r = await mail.send({ to: d.email, subject: m.subject, text: m.text }).catch(() => ({ ok: false }));
     if (r.ok) {
       await db.query(`UPDATE account_withdrawals SET grace_mailed_at = now() WHERE account_id = $1::uuid AND grace_mailed_at IS NULL`, [d.id]);
       mailed++;

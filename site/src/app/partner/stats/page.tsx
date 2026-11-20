@@ -29,6 +29,8 @@ export default async function StatsPage() {
   const t = await getTranslations('partner.stats');
   const f = await getFmt();
   const tp = await getTranslations('partner');
+  const tv = await getTranslations('vsx.exp');   // v10.544 (D284)
+  const ts = await getTranslations('slx.perf');   // v10.534 (D281)
   const s = await apiGet<S>('/partner/stats', 0).catch(() => null);
   if (!s) return <><Pgh title={t('title')} /><Empty>{tp('common.notPartner')}</Empty><i hidden data-root-end="" /></>;
   const dist = (s.dist ?? []).filter((d) => d.grade || d.count > 0);
@@ -66,6 +68,8 @@ export default async function StatsPage() {
       <div className="pt-dact">
         <Link className="pt-bo" href="/partner/trust">{t('trust')}</Link>
         <Link className="pt-bo" href="/partner/performance">{t('perf')}</Link>
+        <Link className="pt-bo" href="/partner/export" data-vsx-export-link="">{tv('title')}</Link>
+        <Link className="pt-bo" href="/partner/trend" data-slx-trend-link="">{ts('title')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

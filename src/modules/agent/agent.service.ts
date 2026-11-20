@@ -5,7 +5,7 @@ import { RequestCtx } from '../../core/request-context';
 import { PolicyViolation } from '../../core/errors';
 import { AgentProvider, ClaudeAgentProvider, MockAgentProvider, resolveAgentProvider } from './agent.provider';
 
-export type AgentChannel = 'SITE_CHAT' | 'REVIEW_SHADOW' | 'AUDIT' | 'SETTLE' | 'TRANSLATE' | 'BOARD' | 'TOWN_PICK' | 'RECEIPT' | 'LSX_SUMMARY';   // v10.516 (D276) LSX_SUMMARY 매물 AI 요약   // v10.438 (D257) RECEIPT 영수증 읽기   // v10.104 TRANSLATE(D118) · v10.105 BOARD(D119) · v10.211 TOWN_PICK(D188)
+export type AgentChannel = 'SITE_CHAT' | 'REVIEW_SHADOW' | 'AUDIT' | 'SETTLE' | 'CSX_DRAFT' | 'TRANSLATE' | 'BOARD' | 'TOWN_PICK' | 'LSY_PHOTO' | 'LSY_REPORT' | 'RECEIPT' | 'LSX_SUMMARY';   // v10.516 (D276) LSX_SUMMARY 매물 AI 요약   // v10.438 (D257) RECEIPT 영수증 읽기   // v10.104 TRANSLATE(D118) · v10.105 BOARD(D119) · v10.211 TOWN_PICK(D188)   // v10.525 · 527 (D279) LSY_PHOTO 사진 속 연락처 · LSY_REPORT 신고 분류   // v10.528 (D280) CSX_DRAFT 1:1 문의 답변 초안
 /** v10.111 — 엔진의 키가 어디서 왔나: 운영 화면 · .env · 시험 엔진(.env AGENT_PROVIDER=MOCK) · 없음 */
 export type AgentKeySource = 'ADMIN' | 'ENV' | 'MOCK' | 'NONE';
 

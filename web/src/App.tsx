@@ -14,6 +14,7 @@ import { ReviewDecide } from './app/admin/ReviewDecide';
 import { AutoReviewRules } from './app/admin/AutoReviewRules';
 import { Badges } from './app/admin/Badges';
 import { LsxExpiry, LsxBump, LsxSummary, LsxSaved } from './app/admin/ListingOps';   // v10.513 ~ 516 (D276) ㊻ 매물
+import { LsyDups, LsyPhotos, LsyVideos, LsyTriage } from './app/admin/ListingQuality';   // v10.524 ~ 527 (D279) ㊾ 매물 2
 import { Disputes } from './app/admin/Disputes';
 import { AuditSamples } from './app/admin/AuditSamples';
 import { CodeLabels } from './app/admin/CodeLabels';
@@ -44,9 +45,13 @@ import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPasskey } from './app/admin/MyPasskey';   // v10.484 (D268) 내 2단계 인증 화면 아래 패스키 구역
 import { SecGeo } from './app/admin/SecGeo';   // v10.485 (D268) 해외 접속 경고
 import { OpxArchive, OpxRisk, OpxBulk, OpxSwitches } from './app/admin/Opx';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
+import { SfxDevice, SfxRetention, SfxTm } from './app/admin/Sfx';   // v10.546 ~ 548 (D285) 같은 기기 여러 계정 · 서류 보관 기한 · 번역 메모리
 import { SocLogin, UptStatus } from './app/admin/Uptime';   // v10.497 · 498 (D272) 가동 · 장애 공지 · 간편 로그인
 import { MktCampaigns } from './app/admin/MktCampaigns';   // v10.483 (D268) 문자 · 메일 캠페인
+import { MkxPush, MkxSms, MkxRebuy, MkxGroupbuy } from './app/admin/Mkx';   // v10.538 ~ 541 (D283) 웹 푸시 · 문자 마케팅 · 재구매 알림 · 공동구매
 import { PtnOpenApi, PtnBulkInvite } from './app/admin/PartnerOpenApi';   // v10.521 · 522 (D278) 파트너 오픈 API · 직원 일괄 등록
+import { VsxVisits, VsxMap, VsxPapiBill, VsxPtnExport } from './app/admin/Vsx';   // v10.542 ~ 545 (D284) 매물 방문 예약 · 지도 묶음 · 오픈 API 사용량 · 파트너 자료 내려받기
+import { SlxStatements, SlxReviewPoints, SlxPartnerPerf } from './app/admin/Slx';   // v10.532 ~ 534 (D281) 판매자 월 정산서 · 리뷰 적립 · 파트너 성과
 import { I18nReview } from './app/admin/I18nReview';   // v10.523 (D278) 일본어 · 중국어 검수
 import { MbxOps, MbxDmReports } from './app/admin/MemberMbx';   // v10.501 ~ 504 (D273) 회원 편의 기능 · 회원 대화 신고
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
@@ -59,6 +64,8 @@ import { HealthCoupons } from './app/admin/HealthCoupons';   // v10.469 (D264) �
 import { HealthRestock, HealthCashReceipts } from './app/admin/HealthMlx';   // v10.505 · 506 (D274) 소개몰 재입고 알림 · 현금영수증
 import { PlazaRanking } from './app/admin/PlazaRanking';   // v10.507 (D274) 소개광장 활동 배지 · 랭킹
 import { SiteUsage } from './app/admin/SiteUsage';   // v10.508 (D274) 회원 화면 사용 통계
+import { BiExport } from './app/admin/BiExport';   // v10.535 (D282) 통계 내보내기 BI
+import { MobileScan } from './app/admin/MobileScan';   // v10.537 (D282) 휴대폰 재고 실사
 import { AcctDaybook, AcctCashbook, AcctFxReval } from './app/admin/AcctBooks';   // v10.449 ~ 452 (D260)
 import { AcctVehicles, AcctCashPlan, AcctExemptInvoices, AcctReorder } from './app/admin/AcctOps';   // v10.475 ~ 478 (D266) 사무 · 자금
 import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/Hr';   // v10.445 ~ 448 (D259)
@@ -80,6 +87,7 @@ import { StaffSession } from './app/admin/StaffSession';
 import { PiiReasonGate } from './components/PiiReasonGate';   // v10.359 (D236) 개인정보 열람 사유   // v10.357 · 360 (D236) 자동 로그아웃 · 비밀번호 나이
 import { GuideFlows } from './app/admin/GuideFlows';   // v10.347 (D233)
 import { InquiryDesk } from './app/admin/InquiryDesk';   // v10.333 (D225)
+import { CsxAiDrafts, CsxChurn, CsxMailTemplates, CsxMerges } from './app/admin/CsxDesk';   // v10.528 ~ 531 (D280) ㊿ 고객센터 · 회원
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
 import { MainOps } from './app/admin/MainOps';
@@ -139,6 +147,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'partner-axes': ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   directory: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   'ptn-openapi': ['ADMIN', 'SUPER', 'PARTNER_MAL'], 'ptn-bulk': ['ADMIN', 'SUPER', 'PARTNER_MAL'],   // v10.521 · 522 (D278) — 발급 · 설정은 서버가 SUPER 만
+  'vsx-papi-bill': ['ADMIN', 'SUPER', 'PARTNER_MAL'], 'vsx-ptn-export': ['ADMIN', 'SUPER', 'PARTNER_MAL'],   // v10.544 · 545 (D284) — 확정 · 무효 · 설정은 서버가 SUPER 만
+  'slx-ptn-perf': ['ADMIN', 'SUPER', 'PARTNER_MAL'],   // v10.534 (D281) — 읽기만
   'i18n-review': ['ADMIN', 'SUPER'],   // v10.523 (D278) — 검수 기록은 서버가 SUPER 만
   quals: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   affiliates: ['ADMIN', 'SUPER', 'PARTNER_AFF'],
@@ -149,6 +159,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   queue: ['ADMIN', 'SUPER', 'REVIEWER'],
   badges: ['ADMIN', 'SUPER', 'REVIEWER'],
   'lsx-expiry': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsx-summary': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsx-bump': ['ADMIN', 'SUPER'], 'lsx-saved': ['ADMIN', 'SUPER'],   // v10.513 ~ 516 (D276)
+  'lsy-dups': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsy-photos': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsy-videos': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsy-triage': ['ADMIN', 'SUPER'],   // v10.524 ~ 527 (D279)
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'],
@@ -171,9 +182,11 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'approvals': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'approval-lines': ['ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'SUPER'], 'corp-docs': ['ADMIN', 'PAYOUT', 'SUPER'],   // v10.424 · 425 (D253)
   'its-assets': ['SUPER', 'ADMIN', 'PAYOUT'], 'its-suggest': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'its-survey': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.491 ~ 493 (D270)
   'lgl-licenses': ['SUPER', 'ADMIN'], 'lgl-reviews': ['SUPER', 'ADMIN'], 'lgl-cases': ['SUPER', 'ADMIN'], 'lgl-insurance': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.486 ~ 489 (D269) 법무
+  'sfx-device': ['ADMIN', 'SUPER'], 'sfx-retention': ['ADMIN', 'SUPER'], 'sfx-tm': ['ADMIN', 'SUPER'],   // v10.546 ~ 548 (D285) — 보관 기간 · 대장 고치기 · 파기는 서버가 SUPER 만 · 세무사 빠짐
   'rpt-worklog': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
   'acct-purchase': ['SUPER', 'PAYOUT'], 'acct-cash': ['SUPER', 'PAYOUT'], 'acct-stock': ['SUPER', 'PAYOUT'],   // v10.392 · 394 · 395 (D245)
   'qlt-lots': ['SUPER', 'ADMIN', 'PAYOUT'], 'qlt-claims': ['SUPER', 'ADMIN', 'PAYOUT'], 'qlt-supeval': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.494 ~ 496 (D271)
+  'bi-export': ['ADMIN', 'SUPER'], 'mob-scan': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.535 · 537 (D282) · 세무사 빠짐
   'acct-vehicle': ['SUPER', 'PAYOUT', 'ADMIN'], 'acct-cashplan': ['SUPER', 'PAYOUT'], 'acct-exemptinv': ['SUPER', 'PAYOUT'], 'acct-reorder': ['SUPER', 'PAYOUT', 'ADMIN'],   // v10.475 ~ 478 (D266)
   'acct-expense': ['SUPER', 'PAYOUT', 'ADMIN', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.393 (D245) 경비 청구는 운영자 누구나(법인카드 상자는 SUPER · PAYOUT)
   'ops-guide': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],   /* v10.339 (D229) 업무 안내 — 운영 역할 모두 읽기 · 고치기 SUPER */
@@ -185,6 +198,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
   'prx-popup': ['ADMIN', 'SUPER'], 'prx-refevent': ['ADMIN', 'SUPER'], 'prx-adreport': ['ADMIN', 'SUPER'], 'prx-adab': ['ADMIN', 'SUPER'],   // v10.517 ~ 520 (D277)
   'opx-archive': ['SUPER'], 'opx-risk': ['ADMIN', 'SUPER'], 'opx-bulk': ['ADMIN', 'SUPER', 'REVIEWER'], 'opx-switches': ['ADMIN', 'SUPER'],   // v10.509 ~ 512 (D275)
+  'csx-aidraft': ['ADMIN', 'SUPER'], 'csx-churn': ['ADMIN', 'SUPER'], 'csx-mailtpl': ['ADMIN', 'SUPER'], 'csx-merge': ['ADMIN', 'SUPER'],   // v10.528 ~ 531 (D280) — 메일 문구 저장 · 합치기 승인은 서버가 SUPER 만
   'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
   'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
   'hrx-overtime': ['SUPER', 'ADMIN'], 'hrx-shifts': ['SUPER', 'ADMIN'], 'hrx-stocktake': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.471 · 472 · 474 (D265)
@@ -380,6 +394,7 @@ function Console() {
         {tab === 'hlt-products' && <HealthProducts />}
         {tab === 'i18n' && <Translations />}
         {tab === 'i18n-review' && <I18nReview />}
+        {tab === 'sfx-tm' && <SfxTm />}
         {tab === 'hlt-orders' && <HealthOrders onGo={go} />}
         {tab === 'hlt-open' && <HealthOpenStock />}
         {tab === 'qlt-lots' && <QltLots />}
@@ -392,9 +407,15 @@ function Console() {
         {tab === 'hlt-giftcards' && <HealthGiftcards />}
         {tab === 'hlt-coupons' && <HealthCoupons />}
         {tab === 'hlt-restock' && <HealthRestock />}
+        {tab === 'mkx-rebuy' && <MkxRebuy />}
+        {tab === 'mkx-groupbuy' && <MkxGroupbuy />}
         {tab === 'hlt-cashrcpt' && <HealthCashReceipts />}
+        {tab === 'slx-statements' && <SlxStatements />}
+        {tab === 'slx-review-points' && <SlxReviewPoints />}
         {tab === 'plz-rank' && <PlazaRanking />}
         {tab === 'site-usage' && <SiteUsage />}
+        {tab === 'bi-export' && <BiExport />}
+        {tab === 'mob-scan' && <MobileScan />}
         {tab === 'affiliates' && <Affiliates onGo={go} />}
         {tab === 'gov-audit' && <Audit />}
         {tab === 'invariants' && <Invariants />}
@@ -412,7 +433,13 @@ function Console() {
         {tab === 'lsx-expiry' && <LsxExpiry />}
         {tab === 'lsx-bump' && <LsxBump />}
         {tab === 'lsx-summary' && <LsxSummary />}
+        {tab === 'vsx-visits' && <VsxVisits />}
+        {tab === 'vsx-map' && <VsxMap />}
         {tab === 'lsx-saved' && <LsxSaved />}
+        {tab === 'lsy-dups' && <LsyDups />}
+        {tab === 'lsy-photos' && <LsyPhotos />}
+        {tab === 'lsy-videos' && <LsyVideos />}
+        {tab === 'lsy-triage' && <LsyTriage />}
         {tab === 'audit' && <AuditSamples />}
         {tab === 'rules' && <AutoReviewRules onGo={visible('policy') ? go : undefined} />}
         {tab === 'disputes' && <Disputes />}
@@ -440,7 +467,10 @@ function Console() {
       {tab === 'partner-axes' && <PartnerAxes />}
       {tab === 'directory' && <DirectoryAdmin />}
       {tab === 'ptn-openapi' && <PtnOpenApi />}
+      {tab === 'vsx-papi-bill' && <VsxPapiBill />}
+      {tab === 'vsx-ptn-export' && <VsxPtnExport />}
       {tab === 'ptn-bulk' && <PtnBulkInvite />}
+      {tab === 'slx-ptn-perf' && <SlxPartnerPerf />}
       {tab === 'quals' && <Qualifications onGo={go} />}
       {tab === 'risk' && <RiskAlerts />}
       {tab === 'ops-alerts' && <OpsAlerts />}
@@ -454,11 +484,18 @@ function Console() {
       {tab === 'opx-risk' && <OpxRisk isSuper={roles.includes('SUPER')} />}
       {tab === 'opx-bulk' && <OpxBulk roles={roles} />}
       {tab === 'opx-switches' && <OpxSwitches onGo={visible('settings') ? go : undefined} />}
+      {tab === 'sfx-device' && <SfxDevice />}
       {tab === 'upt-status' && <UptStatus />}
       {tab === 'soc-login' && <SocLogin />}
       {tab === 'mkt-campaign' && <MktCampaigns />}
+      {tab === 'mkx-push' && <MkxPush />}
+      {tab === 'mkx-sms' && <MkxSms />}
       {tab === 'mbx-ops' && <MbxOps />}
       {tab === 'mbx-dm' && <MbxDmReports />}
+      {tab === 'csx-aidraft' && <CsxAiDrafts isSuper={roles.includes('SUPER')} />}
+      {tab === 'csx-churn' && <CsxChurn isSuper={roles.includes('SUPER')} />}
+      {tab === 'csx-mailtpl' && <CsxMailTemplates isSuper={roles.includes('SUPER')} />}
+      {tab === 'csx-merge' && <CsxMerges isSuper={roles.includes('SUPER')} />}
       {tab === 'ops-board' && <OpsBoard />}
       {tab === 'my-mfa' && <><MyMfa /><MyPasskey /></>}
       {tab === 'my-password' && <><MyPassword /><MySessions /></>}
@@ -552,6 +589,7 @@ function Console() {
       {tab === 'lgl-reviews' && <LglReviews />}
       {tab === 'lgl-cases' && <LglCases />}
       {tab === 'lgl-insurance' && <LglInsurance />}
+      {tab === 'sfx-retention' && <SfxRetention isSuper={roles.includes('SUPER')} />}
       {tab === 'perm-admin' && <PermAdmin />}
       {tab === 'staff-access' && <StaffAccess />}
       {tab === 'ads' && <Ads />}
