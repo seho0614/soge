@@ -57,7 +57,7 @@ export class HltCouponQuoteItemDto {
 export class HltCouponQuoteDto {
   @ApiProperty({ example: 'WELCOME-5000' }) @IsString() @Matches(/^[A-Za-z0-9-]{4,20}$/) code!: string;
   @ApiProperty({ type: [HltCouponQuoteItemDto] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(30) @ValidateNested({ each: true }) @Type(() => HltCouponQuoteItemDto) items!: HltCouponQuoteItemDto[];
-  @ApiPropertyOptional({ format: 'uuid', description: '회원 — 주면 한 사람 한도까지 봄' }) @IsOptional() @IsUUID('all') accountId?: string;   // 개발 시드 고정 번호(2222…)도 받음 — 다른 DTO 와 같이
+  @ApiPropertyOptional({ format: 'uuid', description: '회원 — 주면 한 사람 한도까지 봄' }) @IsOptional() @Matches(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/) accountId?: string;   // 개발 시드 고정 번호(2222…)도 받음 — validator 13.15 의 IsUUID('all') 은 판 숫자가 없는 번호를 거절
 }
 export class HltPromoNewDto {
   @ApiProperty({ example: '연말 면역 기획전' }) @IsString() @Length(2, 60) title!: string;
