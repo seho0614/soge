@@ -192,7 +192,7 @@ if API and DB:
             w_deny = call('GET', '/admin/perm/overview', None, TR)
             w_write = call('POST', '/admin/acct/journal/run', None, TR)
             wlog = psql(f"SELECT count(*) FROM perm_widen_log WHERE account_id = '{rid}' AND created_at > '{t0}'")
-            waud = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'PERM_WIDEN' AND actor_account_id = '{rid}' AND created_at > '{t0}'")
+            waud = psql(f"SELECT count(*) FROM audit.audit_logs WHERE action = 'PERM_WIDEN' AND actor_account_id = '{rid}' AND occurred_at > '{t0}'")
             ok('③ 넓히기 — 꺼짐이면 역할로 403 · 켜면(검사 ON) 개인권한으로 전표 보기 통과 · 기록 · 감사 PERM_WIDEN · SUPER 전용(권한 관리) 은 그대로 403 · 쓰기(전표 만들기)는 권한 없어 403',
                ov.get('ok') is True and w_off.get('_err') == 403 and '_err' not in w_on and int(wlog or 0) >= 1 and int(waud or 0) >= 1
                and w_deny.get('_err') == 403 and w_write.get('_err') == 403,

@@ -2,7 +2,7 @@
   ① (코드) 역할 CHECK · 기한 미룬 트리거 · 증빙 열람 · 권한 검사 세무사 읽기 · 기한 지난 역할 빠짐 · 접속 기록 · 줄 수 있는 역할 · 내려받기 대상 · API · 화면 · 문서 574
   ② (API · DB) 기한 없이 주기 DB 막음 · 기한 두고 주기 · 회계 GET 200 · 쓰기 403 · 다른 운영 화면 403 · 질문 · SUPER 답 · 세무사 답 403 · 접속 기록 · 기한 지나면 403
 """
-import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import base64, datetime, hashlib, hmac, json, os, re, struct, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -62,6 +62,18 @@ def psql(sql):
 
 def login(e):
     return call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken')
+
+def totp(secret, step, digits=6):
+    key = base64.b32decode(secret.upper() + '=' * (-len(secret) % 8))
+    h = hmac.new(key, struct.pack('>Q', step), hashlib.sha1).digest()
+    o_ = h[-1] & 15
+    return str((struct.unpack('>I', h[o_:o_ + 4])[0] & 0x7fffffff) % 10 ** digits).zfill(digits)
+
+def mfa_token(t):
+    """세무사는 늘 2단계(D257) — 등록 · 켜기 뒤 확인된 증표"""
+    sec = call('POST', '/auth/mfa/setup', None, t).get('secret') or ''
+    if not sec: return t
+    return call('POST', '/auth/mfa/enable', {'code': totp(sec, int(time.time() // 30))}, t).get('accessToken') or t
 
 def ui(fn):
     """playwright 가 있으면 브라우저 하나로 fn(b, seen, perr) · 없으면 None"""
@@ -179,7 +191,9 @@ if API and DB:
         good = psql(f"BEGIN; SELECT set_config('app.role_reason', '시험 1437', true); INSERT INTO account_roles (account_id, role) VALUES ('{aid}', 'ACCOUNTANT'); "
                     f"UPDATE account_roles SET expires_at = now() + interval '7 days' WHERE account_id = '{aid}' AND role = 'ACCOUNTANT'; COMMIT;")
         consent_ok.agree(em, PW)
-        TA = login(em)
+        TA0 = login(em)
+        pend = call('GET', '/admin/acct/accounts', None, TA0)   # 2단계 전 — MFA_REQUIRED
+        TA = mfa_token(TA0)
         acc = call('GET', '/admin/acct/accounts', None, TA)
         mon = call('GET', f'/admin/acct/month?ym={ym}', None, TA)
         run = call('POST', '/admin/acct/journal/run', None, TA)
@@ -195,16 +209,16 @@ if API and DB:
         logs = psql(f"SELECT count(*) FROM acct_accountant_access WHERE account_id = '{aid}'")
         psql(f"UPDATE account_roles SET expires_at = now() - interval '1 minute' WHERE account_id = '{aid}' AND role = 'ACCOUNTANT'")
         late = call('GET', '/admin/acct/accounts', None, TA)
-        ok('② 세무사 — 기한 없이 주기 DB 막음 · 기한 두고 주기 · 회계 GET 200 · 전표 만들기 · 매입 넣기 403 · 다른 운영 화면 403 · 질문 · SUPER 답 · 세무사 답 403 · 내 질문 · 답 보임 · SUPER 목록 · 접속 기록 · 기한 지나면 403',
-           'ACCOUNTANT_EXPIRY' in noexp and '!' not in good and isinstance(acc.get('accounts'), list) and mon.get('ym') == ym
+        ok('② 세무사 — 기한 없이 주기 DB 막음 · 기한 두고 주기 · 2단계 전 MFA_REQUIRED · 2단계 뒤 회계 GET 200 · 전표 만들기 · 매입 넣기 403 · 다른 운영 화면 403 · 질문 · SUPER 답 · 세무사 답 403 · 내 질문 · 답 보임 · SUPER 목록 · 접속 기록 · 기한 지나면 403',
+           'ACCOUNTANT_EXPIRY' in noexp and '!' not in good and pend.get('code') == 'MFA_REQUIRED' and isinstance(acc.get('accounts'), list) and mon.get('ym') == ym
            and run.get('_err') == 403 and pur.get('_err') == 403 and other.get('_err') == 403
            and nt.get('ok') is True and rp.get('ok') is True and rpa.get('_err') == 403 and desk.get('isAccountant') is True
            and any(r.get('body') == '시험 1437 답' for r in mine.get('replies') or []) and any(x.get('id') == aid for x in sdesk.get('accountants') or [])
            and int(logs or 0) >= 3 and late.get('_err') in (401, 403),
-           f"{noexp[-40:]} · {good[-30:]} · {bool(acc.get('accounts'))} {mon.get('ym')} · {run.get('_err')} {pur.get('_err')} {other.get('_err')} · {nt.get('ok')} {rp.get('ok')} {rpa.get('_err')} {desk.get('isAccountant')} · {logs} · {late.get('_err')}")
+           f"{noexp[-40:]} · {good[-30:]} · {pend.get('code')} · {bool(acc.get('accounts'))} {mon.get('ym')} · {run.get('_err')} {pur.get('_err')} {other.get('_err')} · {nt.get('ok')} {rp.get('ok')} {rpa.get('_err')} {desk.get('isAccountant')} · {logs} · {late.get('_err')}")
     finally:
         psql(f"SET session_replication_role = replica; DELETE FROM acct_accountant_replies WHERE note_id IN (SELECT id FROM acct_accountant_notes WHERE account_id = '{aid}'); "
-             f"DELETE FROM acct_accountant_notes WHERE account_id = '{aid}'; DELETE FROM acct_accountant_access WHERE account_id = '{aid}';")
+             f"DELETE FROM acct_accountant_notes WHERE account_id = '{aid}'; DELETE FROM acct_accountant_access WHERE account_id = '{aid}'; DELETE FROM account_mfa WHERE account_id = '{aid}';")
         rm_role(aid, '1437')
     if ADMIN_WEB:
         def chk(pg, seen):

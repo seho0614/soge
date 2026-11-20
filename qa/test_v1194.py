@@ -49,11 +49,12 @@ ok('① D173 — 제휴 칸(aff_status · 신청일 · 승인일 · 승인자 ·
    and "p.aff_status = 'ACTIVE') INTO v_partner" in M and "'PARTNER_MAL' = ANY (p_roles) AND f.purpose IN ('BROKER_DOC','PARTNER_MEDIA')" in M
    and 'pt.aff_status AS partner_status' in M and "r.partner_status IS DISTINCT FROM 'ACTIVE'" in M, '')
 
-AU = rd('src/core/auth.ts'); MF = rd('src/modules/identity/mfa.service.ts')
+NA = lambda t: re.sub(r"'PARTNER_AFF'\n(  /\*[^\n]*\*/\n)?  \| 'ACCOUNTANT';", "'PARTNER_AFF';", t).replace(", 'ACCOUNTANT'", '')   # v10.437 (D257) 세무사 역할을 더한 줄도 받음
+AU = NA(rd('src/core/auth.ts')); MF = NA(rd('src/modules/identity/mfa.service.ts'))
 ok('① 서버 — 역할 이름 · 2단계 인증 대상 · 권한 정기 점검 · 줄 수 있는 역할(SUPER)',
    "| 'PARTNER_MAL' | 'PARTNER_AFF';" in AU and "'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];" in AU and "'PARTNER_MAL', 'PARTNER_AFF'];" in MF
    and "'PARTNER_MAL','PARTNER_AFF')`" in rd('src/modules/admin/role-review.service.ts')
-   and "const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];" in rd('src/modules/site/report.service.ts'), '')
+   and "const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'];" in NA(rd('src/modules/site/report.service.ts')), '')
 P = 'src/modules/partner/'
 MALC = [('broker-admin.controller.ts', 'api/v1/admin/brokers'), ('consult.controller.ts', 'api/v1/admin/partner-axes'), ('directory.controller.ts', 'api/v1/admin/directory'),
         ('partner-admin.controller.ts', 'api/v1/admin/partners'), ('partner-center.controller.ts', 'api/v1/admin/partner-center'), ('qualification.controller.ts', 'api/v1/admin/qualifications')]
@@ -84,7 +85,7 @@ ok('① 서버 — 제휴는 aff_status(찾기 · 대시보드 · 심사 · 목�
    and ("WHERE partners.status IN ('REJECTED', 'NONE')" in rd(P + 'partner.service.ts') or "WHERE partners.status IN ('REJECTED', 'NONE', 'WITHDRAWN')" in rd(P + 'partner.service.ts'))   # v10.224
    and "@Post('partner/affiliate/apply')" in AC, '')
 
-APP = rd('web/src/App.tsx'); RA = rd('web/src/app/admin/RoleAdmin.tsx')
+APP = NA(rd('web/src/App.tsx')); RA = NA(rd('web/src/app/admin/RoleAdmin.tsx'))
 ok('① 운영 화면 — 메뉴(안심 4 · 제휴 1 · 홈 · 내 2단계) · 역할 이름 · 역할 주기 칸 · 제휴 정산 탭 숨김 · 파트너 상세 자격 줄 · 제휴 파트너 현황',
    "partners: ['ADMIN', 'SUPER', 'PARTNER_MAL']," in APP and "quals: ['ADMIN', 'SUPER', 'PARTNER_MAL']," in APP and "affiliates: ['ADMIN', 'SUPER', 'PARTNER_AFF']," in APP
    and "'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF']," in APP

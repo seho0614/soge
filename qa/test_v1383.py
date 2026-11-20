@@ -128,7 +128,7 @@ def admin_page(path, fn):
 M42, AC, RP, UI, EX = rd('prisma/migrations/D242_acct_journal_closing_tax_type/migration.sql'), rd('src/modules/acct/acct.controller.ts'), rd('src/modules/acct/acct-reports.ts'), rd('web/src/app/admin/Acct.tsx'), rd('src/modules/admin/export-approval.ts')
 ok('① 코드 — D242 상품 · 주문 줄 과세 구분(옮김 트리거) · 내려받기 대상 ACCT_JOURNAL · ACCT_TAX · 부가세 · 원천세 · 세금계산서 · CSV(승인) · 신고 자료 화면 · 문서 519 · 판 v10.383',
    "ALTER TABLE public.hlt_products ADD COLUMN IF NOT EXISTS tax_type" in M42 and 'trg_hlt_item_tax_type' in M42 and "'ACCT_JOURNAL', 'ACCT_TAX'));" in M42
-   and "ACCT_JOURNAL: ['PAYOUT'], ACCT_TAX: ['PAYOUT']" in EX and "@ExportGate('ACCT_TAX')" in AC and "@Audit('PRODUCT_TAX_TYPE', 'SETTING')" in AC
+   and ("ACCT_JOURNAL: ['PAYOUT'], ACCT_TAX: ['PAYOUT']" in EX or "ACCT_JOURNAL: ['PAYOUT', 'ACCOUNTANT'], ACCT_TAX: ['PAYOUT', 'ACCOUNTANT']" in EX)   # v10.437 세무사 and "@ExportGate('ACCT_TAX')" in AC and "@Audit('PRODUCT_TAX_TYPE', 'SETTING')" in AC
    and 'export async function vatSummary' in RP and 'data-acct-invoices=' in UI and 'data-acct-tax-type=' in UI and '면세' in doc('519_') and VT >= (10, 383), VER)
 if API and DB:
     import consent_ok
