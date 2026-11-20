@@ -60,7 +60,7 @@ ok('① 화면 · 명세 · 문서 — 위험감지 묶음 「운영자 게시�
    "['ops-board', '운영자 게시판']" in MENU and "'server-errors', 'ops-board'] }" in MENU and "'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF']" in APP
    and "{tab === 'ops-board' && <OpsBoard />}" in APP and all(x in OB for x in ('data-ops-board-row=', 'data-ops-board-unread', 'data-ops-board-read', 'data-ops-board-comment', 'data-ops-board-write', 'data-ops-board-retention'))
    and '"id": "SB-ADM-OBD-010"' in SCR and '"POST /admin/ops-board/{id}/take-down"' in SCR and '"게시판 글을 찾을 수 없습니다.": ' in EN
-   and bool(D412) and len(mig) in (251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 286), f'{len(mig)} · {VER} · 412 {bool(D412)}')
+   and bool(D412) and len(mig) in (251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 286), f'{len(mig)} · {VER} · 412 {bool(D412)}')
 
 
 def call(m_, p, b=None, t=None):

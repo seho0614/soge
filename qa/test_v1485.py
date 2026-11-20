@@ -137,11 +137,12 @@ M68 = migr('D268_')
 GG, GC, AS_, RG, SS, VI, EV, UI, MN = (rd('src/modules/identity/geo-guard.ts'), rd('src/modules/identity/geo-guard.controller.ts'), rd('src/modules/identity/auth.service.ts'),
                                        rd('src/common/integration/registry.ts'), rd('src/common/integration/secret.service.ts'), rd('scripts/verify-invariants.sh'),
                                        rd('deploy/aws/env.production.example'), rd('web/src/app/admin/SecGeo.tsx'), rd('web/src/lib/adminMenu.ts'))
+# 연동 수 16 → v10.497 (D272) SOCIAL 로 17 — 16 이상이면 통과(뒤 묶음이 연동을 더해도)
 ok('① 코드 — D268 접속 나라 기록 · 캐시 · 설정 security.geo_watch off · ASSUME · 허용 KR · 막기 off · 외부 연동 GEOIP 줄 · 받는 키 GEOIP_API_KEY(CHECK · 함수 · FIRMBANK_USER_TOKEN 유지) · 어댑터(주소 틀 · NOT_READY) · 로그인 연결 · 연동 16 · .env 예시 · 메뉴 sec-geo · 화면 SCU-030 · 문서 623 · 판 v10.485',
    'CREATE TABLE IF NOT EXISTS public.sec_geo_events' in M68 and 'CREATE TABLE IF NOT EXISTS public.sec_geo_cache' in M68 and "('security.geo_watch', 'off'" in M68 and "('security.geo_block', 'off'" in M68
    and "VALUES ('GEOIP', 'IP 국가 판별'" in M68 and "('GEOIP','GEOIP_API_KEY')" in M68 and "('FIRMBANK','FIRMBANK_USER_TOKEN')" in M68 and "'FIRMBANK_USER_TOKEN', 'GEOIP_API_KEY') THEN" in M68
    and 'export class GeoIpHttp' in GG and "source: 'NOT_READY'" in GG and "'GEO_BLOCKED'" in GG and "'STAFF_LOGIN_ABROAD'" in GG and 'await assertGeoAllowed(this.db, acc.id)' in AS_
-   and "code: 'GEOIP'" in RG and "name: 'GEOIP_API_KEY'" in SS and 'if [ "$n" = "16" ]' in VI and 'GEOIP_API_KEY=' in EV and "@Put('security/geo')" in GC
+   and "code: 'GEOIP'" in RG and "name: 'GEOIP_API_KEY'" in SS and re.search(r'if \[ "\$n" = "1[6-9]" \]', VI) and 'GEOIP_API_KEY=' in EV and "@Put('security/geo')" in GC
    and 'export function SecGeo' in UI and "['sec-geo', '해외 접속 경고']" in MN and "'server-errors', 'ops-board'] }" in MN and '"SB-ADM-SCU-030"' in SJ and '해외' in doc('623_') and VT >= (10, 485), VER)
 
 if API and DB:
