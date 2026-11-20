@@ -152,7 +152,7 @@ ok('① 코드 — D264 자동 조회 계좌(핀테크이용번호 암호문 · 
    'CREATE TABLE IF NOT EXISTS public.acct_bank_feed_accounts' in M64 and 'fintech_enc   bytea NOT NULL' in M64 and 'trg_acct_bank_feed_runs_ro' in M64 and "('acct.bank_feed', 'off'" in M64
    and "('acct.bank_feed_mode', 'ASSUME'" in M64 and "('acct_bank_feed', 1440, 6, 40" in M64 and "('FIRMBANK','FIRMBANK_USER_TOKEN')" in M64 and "'FIRMBANK_CLIENT_SECRET', 'FIRMBANK_USER_TOKEN') THEN" in M64
    and 'export class AssumeBankFeed' in BF and 'export class KftcBankFeed' in BF and "'/v2.0/account/transaction_list/fin_num'" in BF and 'INSERT INTO acct_bank_txns' in BF and "hashtext('acct_bank_upload')" in BF
-   and "'src/modules/acct/bankfeed.ts'" in RG and "'FIRMBANK_USER_TOKEN'" in RG and "name: 'FIRMBANK_USER_TOKEN'" in SS and 'FIRMBANK_USER_TOKEN=' in EV and 'if [ "$n" = "15" ]' in VI
+   and "'src/modules/acct/bankfeed.ts'" in RG and "'FIRMBANK_USER_TOKEN'" in RG and "name: 'FIRMBANK_USER_TOKEN'" in SS and 'FIRMBANK_USER_TOKEN=' in EV and bool(re.search(r'if \[ "\$n" = "1[5-9]" \]', VI))   # v10.483 GEOIP · v10.498 SOCIAL 로 늘어도 받음
    and "case 'acct_bank_feed':" in SCH and "'acct_bank_feed'," in WK and "@Post('acct/bank-feed/run')" in SC_ and 'export function AcctBankFeed' in UI and "['acct-bankfeed', '은행 자동 조회']" in MN
    and '"SB-ADM-SAL-020"' in SJ and '금융결제원' in doc('605_') and VT >= (10, 467), VER)
 
