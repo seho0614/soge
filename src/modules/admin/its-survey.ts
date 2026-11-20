@@ -105,7 +105,7 @@ export async function listSurveys(db: DatabaseService) {
   const rows = await db.query<S & { takers: number; qn: number }>(
     `SELECT x.*, (SELECT count(*)::int FROM its_survey_takers t WHERE t.survey_id = x.id::bigint) AS takers,
             (SELECT count(*)::int FROM its_survey_questions q WHERE q.survey_id = x.id::bigint) AS qn
-       FROM (` + SEL + `) x ORDER BY (x.state IN ('DRAFT', 'OPEN')) DESC, x.closes_on DESC, x.id DESC LIMIT 200`);
+       FROM (${SEL}) x ORDER BY (x.state IN ('DRAFT', 'OPEN')) DESC, x.closes_on DESC, x.id DESC LIMIT 200`);
   const items = [];
   for (const s of rows) {
     items.push({ id: s.id, title: s.title, anonymous: s.is_anon, audience: s.audience, opensOn: s.opens_on, closesOn: s.closes_on, state: s.state, stateKo: SURVEY_STATE_KO[s.state] ?? s.state,
@@ -186,7 +186,7 @@ export async function mySurveys(db: DatabaseService, v: Viewer) {
   const rows = await db.query<S & { taken: boolean; qn: number }>(
     `SELECT x.*, EXISTS (SELECT 1 FROM its_survey_takers t WHERE t.survey_id = x.id::bigint AND t.account_id = $2::uuid) AS taken,
             (SELECT count(*)::int FROM its_survey_questions q WHERE q.survey_id = x.id::bigint) AS qn
-       FROM (` + SEL + `) x WHERE x.state = 'OPEN' AND x.opens_on::date <= $1::date AND x.closes_on::date >= $1::date ORDER BY x.closes_on, x.id`, [today, v.id]);
+       FROM (${SEL}) x WHERE x.state = 'OPEN' AND x.opens_on::date <= $1::date AND x.closes_on::date >= $1::date ORDER BY x.closes_on, x.id`, [today, v.id]);
   const items = rows.filter((s) => inAudience(s, v)).map((s) => ({ id: s.id, title: s.title, anonymous: s.is_anon, closesOn: s.closes_on, questions: s.qn, taken: s.taken }));
   return { today, items, note: '익명 설문은 낸 사실만 남고(두 번 내기 막기), 무엇을 골랐는지는 누가 냈는지와 이어지지 않게 저장됩니다. 낸 답은 고칠 수 없습니다.' };
 }

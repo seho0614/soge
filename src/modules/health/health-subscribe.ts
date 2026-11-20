@@ -201,7 +201,7 @@ export async function mallSubscribeJob(db: DatabaseService) {
     if (mode === 'ASSUME') {
       r = { approved: true, stub: true, amount: made.amount, method: 'CARD', status: 'DONE', paymentKey: `assume_sub_${made.orderNo}` } as PaymentResult;
     } else {
-      const [k] = await db.query<{ billing_key: string }>(`SELECT billing_key FROM billing_keys WHERE account_id = $1::uuid AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1`, [s.account_id]);
+      const [k] = await db.query<{ billing_key: string }>(`SELECT billing_key FROM billing_keys WHERE account_id = $1::uuid AND status = 'ACTIVE' ORDER BY registered_at DESC LIMIT 1`, [s.account_id]);
       r = k ? await provider!.chargeWithBillingKey({ billingKey: k.billing_key, customerKey: s.account_id, orderId: made.orderNo, amount: made.amount,
                                                    orderName: `소개몰 정기 배송 ${made.orderNo}`, idempotencyKey: `hltsub-${made.runId}` })
             : ({ approved: false, stub: false, detail: '등록된 카드가 없습니다' } as PaymentResult);

@@ -233,7 +233,7 @@ export async function campaignAudience(db: DatabaseService, id: string) {
             count(*) FILTER (WHERE suppressed)::int AS suppressed,
             count(*) FILTER (WHERE NOT stale AND NOT no_addr AND NOT suppressed)::int AS "willSend",
             count(*) FILTER (WHERE NOT stale AND NOT no_addr AND NOT suppressed AND night_ok)::int AS "nightOk"
-       FROM (` + AUDIENCE_SQL + `) z`, [c.channel, c.audience]);
+       FROM (${AUDIENCE_SQL}) z`, [c.channel, c.audience]);
   return { id: c.id, channel: c.channel, audience: c.audience, night: isNightKst(), ...r,
     note: '받을 사람은 「보내기」를 누르는 순간 고정되고, 보낼 때 동의를 다시 봅니다 — 2년 넘은 동의 · 받는 곳 없음 · 반송 주소는 뺍니다. 21시 ~ 8시에는 야간 동의한 분만 받고 나머지는 8시 뒤에 받습니다.' };
 }
