@@ -1,0 +1,103 @@
+{
+  "_draft": "MACHINE_DRAFT v10.523 — not reviewed (D278 · docs/661)",
+  "lang": { "label": "言語" },
+  "meta": {
+    "title": "ソゲバンク",
+    "description": "個人・事業者の誰もが取引先・物件・創業の機会を紹介し、紹介料を受け取れるP2P紹介プラットフォーム"
+  },
+  "common": {
+    "skipToMain": "本文へ移動",
+    "backTo": "← {label}に戻る",
+    "maintTitle": "ただいまメンテナンス中です",
+    "maintBody": "サービス改善のため作業を行っています。しばらくしてから再度お越しください。",
+    "maintUntil": "終了予定: {until}",
+    "maintContact": "お急ぎのお問い合わせ: {phone}",
+    "maintSoon": "メンテナンス予定: {from} 〜 {until} — この間はサイトをご利用いただけません。"
+  },
+  "header": {
+    "logoHome": "ソゲバンク ホーム",
+    "brand": "ソゲバンク",
+    "mainMenu": "メインメニュー",
+    "community": "紹介広場",
+    "guide": "ご利用ガイド",
+    "request": "紹介を依頼",
+    "partners": "パートナーセンター",
+    "notice": "お知らせ",
+    "noticeNew": "{n, plural, other {新着のお知らせ {n}件}}",
+    "my": "マイページ",
+    "bell": "通知",
+    "bellUnread": "{n, plural, other {通知 {n}件}}",
+    "member": "会員",
+    "support": "カスタマーセンター",
+    "loggingOut": "ログアウト中…",
+    "logout": "ログアウト",
+    "admin": "管理者",
+    "malPartner": "安心紹介パートナー",
+    "seller": "モール出店の申し込み",
+    "sellerCenter": "モール出店者センター",
+    "login": "ログイン",
+    "signup": "無料会員登録",
+    "search": "検索",
+    "gwan": { "MNY": "紹介マーケット", "MAL": "安心紹介", "BIZ": "紹介創業", "HLT": "ソゲモール", "LED": "相談リード" }
+  },
+  "footer": {
+    "preparing": "準備中",
+    "tipCompany": "商号 — 公開前に入力します",
+    "ceo": "代表者",
+    "tipCeo": "代表者 — 公開前に入力します",
+    "bizRegNo": "事業者登録番号",
+    "tipNeeded": "公開前に入力します",
+    "mailOrderNo": "通信販売業申告番号",
+    "tipMailOrder": "通信販売業の申告を進めています。申告後に番号を表示します。",
+    "jobInfoNo": "職業情報提供事業 申告番号",
+    "address": "住所",
+    "phone": "電話",
+    "privacyOfficer": "個人情報保護責任者",
+    "privacyEmail": "個人情報に関するお問い合わせ",
+    "hosting": "ホスティング"
+  },
+  "login": {
+    "title": "ログイン",
+    "noAccount": "まだアカウントをお持ちでない方",
+    "signup": "会員登録",
+    "reconsentLink": "同意ページを見る",
+    "pendingLink": "確認手順を見る",
+    "profileSub": "会員登録の前でも始められます",
+    "profileLink": "関心を分析して保存",
+    "whoCanJoin": "個人・個人事業者・法人のどなたでも登録できます。休業・廃業中の事業者は事業者確認を通過できません。"
+  },
+  "loginForm": {
+    "needBoth": "メールアドレスとパスワードを入力してください。",
+    "email": "メールアドレス",
+    "emailPh": "登録したメールアドレス",
+    "password": "パスワード",
+    "hide": "隠す",
+    "show": "表示",
+    "keep": "ログイン状態を保持",
+    "forgotPw": "パスワードをお忘れの方",
+    "forgotEmail": "メールアドレスをお忘れの方",
+    "working": "処理中…",
+    "submit": "ログイン",
+    "cancelWithdraw": "退会を取り消してログイン",
+    "cancelFail": "退会を取り消せませんでした。"
+  },
+  "errorPage": {
+    "title": "問題が発生しました",
+    "body": "ページの読み込み中にエラーが発生しました。しばらくしてから再度お試しください。繰り返し発生する場合はカスタマーセンターまでお知らせください。",
+    "retry": "再試行",
+    "home": "ホーム",
+    "support": "カスタマーセンター",
+    "code": "エラー番号"
+  },
+  "forgot": {
+    "title": "パスワードをお忘れの方",
+    "remembered": "パスワードを思い出しましたか?",
+    "login": "ログイン",
+    "support": "カスタマーセンターに問い合わせる"
+  },
+  "reset": {
+    "title": "パスワードの再設定",
+    "badLb": "このリンクは無効です",
+    "forgot": "パスワードをお忘れの方"
+  }
+}

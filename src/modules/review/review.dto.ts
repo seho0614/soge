@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 
 const TARGET_TYPES = ['LISTING','REQUEST','LEAD_SERVICE','MEDICAL','BUSINESS','CATEGORY','LISTING_BADGE'] as const;
 const REVIEW_STATUS = ['QUEUED','IN_PROGRESS','APPROVED','REJECTED'] as const;
@@ -37,6 +37,14 @@ export class DecideReviewDto {
   @ApiPropertyOptional({ description: 'v10.138 — 「AI 의견과 같게 확인」(AI 의견과 같은 결정일 때만 · 결정은 사람). 다르면 422 AI_NOT_MATCH' })
   @IsOptional() @IsBoolean()
   aiAgreed?: boolean;
+
+  @ApiPropertyOptional({ enum: [1, 3, 6, 12], description: 'v10.514 (D276) — 매물 승인 때 노출 만료 기간(개월). 안 보내면 lsx.expiry_default_months(처음 6). 매물이 아니면 무시' })
+  @IsOptional() @IsInt() @IsIn([1, 3, 6, 12])
+  expiryMonths?: number;
+
+  @ApiPropertyOptional({ example: '2027-05-31', description: 'v10.514 (D276) — 매물 승인 때 만료일 직접(그 날 끝 · 36개월 안) · expiryMonths 보다 먼저' })
+  @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  expiresOn?: string;
 }
 
 export class ReviewQueueQueryDto {

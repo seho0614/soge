@@ -8,6 +8,7 @@
  *   서버 화면(getTranslations)은 묶음과 상관없이 모든 사전을 봅니다 — 가리는 것은 브라우저로 보내는 사전뿐입니다.
  */
 import base from './ko.json';
+import { LANG_FALLBACK } from '../drafts';   // v10.523 (D278) 일본어 · 중국어 — 빠진 문장은 영어로
 import main from './ko/main.json';
 import search from './ko/search.json';
 import gwan from './ko/gwan.json';
@@ -35,9 +36,11 @@ import policy from './ko/policy.json';
 import aiChat from './ko/aiChat.json';
 import safety from './ko/safety.json';
 import codes from './ko/codes.json';
+import lsx from './ko/lsx.json';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 관리 도구 · AI 요약
+import mbx from './ko/mbx.json';   // v10.501 ~ 504 (D273) 최근 본 · 비교하기 · 가격 알림 · 회원 대화(화면 전용 묶음)
 
 const SHARED = { gwan, money, shop, listing, searchPop, consult, refcode, aiChat };   // v10.98 consult · refcode · v10.110 aiChat(사이트 공통 AI 상담 단추)
-const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join, policy, safety, codes };   // v10.122 codes(서버 코드 이름표 code_labels — 다른 언어 화면 글자) · v10.119 safety(안전 수칙 · 사기 유형 · 서버 화면만) · v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join · v10.102 policy
+const PAGE = { main, search, detail, request, order, hlt, my, myDeal, partner, partnerOps, affiliate, billing, plaza, forms, deal, join, policy, safety, codes, mbx, lsx };   // v10.122 codes(서버 코드 이름표 code_labels — 다른 언어 화면 글자) · v10.119 safety(안전 수칙 · 사기 유형 · 서버 화면만) · v10.98 detail · request · v10.99 order · hlt · my · myDeal · v10.100 partner · partnerOps · affiliate · billing · v10.101 plaza · forms · deal · join · v10.102 policy · 새 묶음은 끝에 더함(main · search 가 맨 앞 — test_v1097)
 
 export const KO = { ...base, ...SHARED, ...PAGE };
 export type PageNs = keyof typeof PAGE;
@@ -60,6 +63,9 @@ const load = (path: string) => import(`./${path}.json`).then((m) => m.default as
 /** 그 언어 사전 — 한국어를 바탕으로 덮습니다(빠진 문장은 한국어 · 빈칸 금지) */
 export async function messagesFor(locale: string): Promise<Dict> {
   if (locale === 'ko') return KO as unknown as Dict;
+  /* v10.523 (D278 · docs/661) 일본어 · 중국어(간체) — 기계 번역 초안(drafts.ts) · 빠진 문장은 영어 → 한국어 순 */
+  const fb = LANG_FALLBACK[locale];
+  if (fb) return merge(await messagesFor(fb), await draftOver(locale));
   const over: Dict = { ...(await load(locale)) };
   const parts = await Promise.all(NS.map((n) => load(`${locale}/${n}`)));
   NS.forEach((n, i) => { over[n] = parts[i] ?? {}; });
@@ -68,4 +74,13 @@ export async function messagesFor(locale: string): Promise<Dict> {
 
 export function pick(all: Record<string, unknown>, ns: readonly string[]): Record<string, unknown> {
   return Object.fromEntries(ns.filter((n) => n in all).map((n) => [n, all[n]]));
+}
+
+/* v10.523 (D278) — 초안 언어(ja · zh)의 덮을 사전 · 맨 위 "_draft" 표시 칸은 화면으로 내려보내지 않음 · 묶음 파일이 없으면 그 묶음은 영어 그대로 */
+async function draftOver(locale: string): Promise<Dict> {
+  const over: Dict = { ...(await load(locale)) };
+  delete over._draft;
+  const parts = await Promise.all(NS.map((n) => load(`${locale}/${n}`)));
+  NS.forEach((n, i) => { const p = parts[i]; if (p && Object.keys(p).length) over[n] = p; });
+  return over;
 }

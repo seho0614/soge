@@ -8,7 +8,7 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
  * v10.383 · 384 (D242 · docs/519 · 520) 신고 자료 · 경영 보고서 — 모두 전표(acct_entries · acct_lines)와 원래 표에서 읽기만
  * ------------------------------------------------------------------- */
 
-const REV = ['REV_SUB', 'REV_REFCODE', 'REV_AD', 'REV_LEAD', 'REV_DIRECTORY', 'REV_COMMISSION', 'REV_MALL'];
+const REV = ['REV_SUB', 'REV_REFCODE', 'REV_AD', 'REV_LEAD', 'REV_DIRECTORY', 'REV_COMMISSION', 'REV_MALL', 'REV_BUMP'];   // v10.515 (D276) REV_BUMP
 const EV_KO: Record<string, string> = { TAX_INVOICE: '세금계산서', CARD_PG: '카드 · PG', CASH: '현금영수증', NONE: '증빙 없음', CARD: '법인카드', SIMPLE: '간이영수증' };
 const LABEL: Record<string, string> = { ...Object.fromEntries(ALL_SOURCES.map((s) => [s.name, s.label])),
   MANUAL: '수동 전표', SEVERANCE_ACCRUE: '퇴직금 추계', YEAR_CLOSE: '해 마감', YEAR_REOPEN: '해 마감 풀기' };   // v10.402 · 405 · 406 — 서비스가 바로 넣는 전표

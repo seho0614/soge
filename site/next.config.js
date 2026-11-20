@@ -29,6 +29,13 @@ module.exports = withNextIntl({
          * 운영 화면 「지켜보기」의 「정책 보고」에 모입니다. 1 ~ 2주 본 뒤 필요한 출처를 넣고 막는 정책으로 바꿀지 판단 */
         { key: 'Content-Security-Policy-Report-Only', value: CSP_REPORT_ONLY },
       ],
+    }, {
+      /* v10.499 (D272 · docs/637) — 서비스 워커(public/sw.js)는 늘 새로 받게 · 범위는 사이트 전체 */
+      source: '/sw.js',
+      headers: [
+        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        { key: 'Service-Worker-Allowed', value: '/' },
+      ],
     }];
   },
   /* D007 — 개발(로컬 저장소)에서는 파일 바이트가 /api 프록시(middleware)를 지납니다.

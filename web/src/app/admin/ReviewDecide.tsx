@@ -4,6 +4,7 @@ import { codeList, label } from '../../lib/codes';
 import { remain } from '../../lib/format';
 import { ErrorView } from '../../components/ErrorView';
 import { ListingGeoPanel } from './ListingGeoPanel';
+import { LsxExpiryPick, type LsxExpiryValue } from './ListingOps';   // v10.514 (D276) 승인 때 만료 기간
 
 /** SB-ADM-REV-020 반려 사유 입력
  *
@@ -37,6 +38,7 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
   /* v10.138 (D134 · docs/206) — AI 가 반려를 제안하면 사유 코드만 미리 채움 · 반려는 검수자가 「사유를 확인했습니다」를 누른 뒤 */
   const [aiFilled, setAiFilled] = useState('');
   const [aiConfirm, setAiConfirm] = useState(false);
+  const [lsxExp, setLsxExp] = useState<LsxExpiryValue>({});   // v10.514 (D276)
 
   useEffect(() => {
     api<{ code: string; label: string; category?: string }[]>('/admin/review-reasons')
@@ -54,7 +56,8 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
     setBusy(true); setError(null);
     api(`/admin/reviews/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ decision, reasonCode: reasonCode || undefined, memo: memo || undefined, ...(aiAgreed ? { aiAgreed: true } : {}) }),
+      body: JSON.stringify({ decision, reasonCode: reasonCode || undefined, memo: memo || undefined, ...(aiAgreed ? { aiAgreed: true } : {}),
+        ...(decision === 'APPROVED' && item?.target_type === 'LISTING' ? lsxExp : {}) }),   // v10.514 (D276)
     })
       .then(onDone)
       .catch(setError)
@@ -150,6 +153,7 @@ export function ReviewDecide({ id, onDone }: { id: string; onDone: () => void })
                       maxLength={1000} style={{ resize: 'vertical' }} />
           </label>
 
+          {item?.target_type === 'LISTING' && <LsxExpiryPick value={lsxExp} onChange={setLsxExp} />}
           <div className="rvact">
             <button className="btn-no" disabled={busy || !reasonCode || (aiReject && !aiConfirm)} onClick={() => decide('REJECTED', aiReject)}
                     title={!reasonCode ? '반려하려면 사유를 선택하십시오' : aiReject && !aiConfirm ? 'AI 가 채운 사유를 확인했다고 표시하십시오' : undefined}>

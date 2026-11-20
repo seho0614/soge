@@ -13,6 +13,7 @@ import { TRANSFER_SOURCES } from './transfer';   // v10.454 (D261) 대량 이체
 import { QLT_SOURCES } from '../qlt/claims';   // v10.496 (D271) 공급사 반품(품질 클레임) — 외상매입금 / 상품
 import { BENEFIT_SOURCES } from '../health/health-benefit';   // v10.479 · 482 (D267) 소개몰 적립금 · 상품권(충당부채 · 선수금 · 사용 · 소멸)
 import { COUPON_SOURCES } from '../health/health-coupon';   // v10.469 (D264) 소개몰 쿠폰 할인(매출할인) · 되돌림
+import { LSX_SOURCES } from '../lsx/bump';   // v10.515 (D276) 매물 끌어올리기 결제 · 환불(PG 받을 돈 / 끌어올리기 매출 · 부가세예수금)
 
 /* v10.392 (D245) — 자동 전표 돈 흐름 전체(⑨ 13가지 + ⑫ 매입 · 경비 청구 · 법인카드 · 재고)
  *   journal.ts 와 각 모듈이 서로 부르지 않게 여기서 모음 · 정기 작업 · 규칙 · 확인표 · 전표 화면 이름이 이 목록을 씀 */
@@ -29,3 +30,6 @@ ALL_SOURCES.push(...BENEFIT_SOURCES);
 
 /* v10.496 (D271) — 공급사 반품(수불부 SUP_RETURN · 원가) · 목록 줄을 고치지 않고 덧붙임 */
 ALL_SOURCES.push(...QLT_SOURCES);
+
+/* v10.515 (D276) — 매물 끌어올리기 결제 · 환불 · 목록 줄을 고치지 않고 덧붙임 */
+ALL_SOURCES.push(...LSX_SOURCES);

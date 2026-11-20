@@ -14,6 +14,12 @@ import { LangPick } from '@/i18n/LangPick';
 import { AnyHeader, BaseFooter, MainWrap, OldHeader, OnlySkin } from '@/components/Chrome';
 import { B2Footer } from '@/components/b2/Frame';
 import { AiChat } from '@/components/common/AiChat';
+import { UsageBeacon } from '@/components/common/UsageBeacon';   // v10.508 (D274) 회원 화면 사용 통계(site.usage_stats on 일 때만 · 화면 주소만)
+import { IncidentBar } from '@/components/upt/IncidentBar';   // v10.497 (D272) 장애 공지 띠
+import { A11yBoot } from '@/components/upt/A11yBoot';   // v10.500 (D272) 보기 설정 — 그리기 전에 붙임
+import { A11yTools } from '@/components/upt/A11yTools';   // v10.500 (D272) 보기 설정 단추
+import { PwaRegister } from '@/components/upt/PwaRegister';   // v10.499 (D272) 서비스 워커(site.pwa)
+import { pwaOn } from '@/components/upt/flags';
 import '@/styles/noto-sans-kr.css';   /* v10.31 (w1 · 공유) — F-11 */
 import '@/styles/tokens.css';
 import '@/styles/site.css';
@@ -34,6 +40,8 @@ import '@/styles/proto-my.css';
 import '@/styles/proto-partner.css';
 import '@/styles/site-head.css';   // v10.188 공통 머리줄(docs/294)
 import '@/styles/ai-chat.css';   // v10.110 사이트 공통 AI 상담(docs/171)
+import '@/styles/upt-tokens.css';   // v10.497 ~ 500 (D272) 사이트 전용 새 토큰(sgb-tokens.css 는 디자인 시트 사본 그대로)
+import '@/styles/upt.css';   // v10.497 ~ 500 (D272) 장애 공지 띠 · 서비스 상태 · 간편 로그인 단추 · 보기 설정(토큰만)
 
 /* v10.95 — 제목 · 설명도 사전에서(한국어는 전과 같음) */
 export async function generateMetadata(): Promise<Metadata> {
@@ -65,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (maint === 'on') {
     return (
       <html lang={locale}>
-        <body><MaintenancePage settings={settings} locale={locale} /></body>
+        <body><A11yBoot /><IncidentBar locale={locale} /><MaintenancePage settings={settings} locale={locale} /></body>
       </html>
     );
   }
@@ -76,9 +84,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <NextIntlClientProvider locale={locale} messages={pick(messages, GLOBAL_NS)} /* v10.97 — 화면 전용 묶음은 그 화면의 <Msgs> 가 */>
         {/* v10.31 — 시안 .skip 「본문으로 건너뛰기」(키보드 · 화면 읽기) */}
+        <A11yBoot />
         <a className="skip-main" href="#main">{t('skipToMain')}</a>
         {/* v10.173 (D162) — 운영이 켠 안내 한 줄(site.notice_bar · 비면 그리지 않음) */}
         <NoticeBar settings={settings} locale={locale} />
+        {/* v10.497 (D272 · docs/635) — 운영이 쓴 장애 공지(띠 켠 것 · 끝나지 않은 것) · 공개 상태 주소 60초 */}
+        <IncidentBar locale={locale} />
         {/* v10.371 (D239) — 점검 24시간 전부터 안내 띠 */}
         {maint === 'soon' && <MaintenanceSoon settings={settings} />}
         {/* v10.188 (docs/294 · 대표 「머리줄 통일」) — 메인 · 관 · 일반 화면이 같은 머리줄(UniHeader · 메인 머리줄 모양).
@@ -92,6 +103,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <OnlySkin skin="b2"><B2Footer links={links} settings={settings} year={new Date().getFullYear()} /></OnlySkin>
         {/* v10.110 (docs/171) — AI 상담 단추 · 창. 서버가 꺼짐이면 아무것도 그리지 않음 · 파트너센터 제외 */}
         <AiChat />
+        {/* v10.508 (D274 · docs/646) — 화면이 바뀔 때 화면 주소만 한 번 보냄(계정 · 쿠키 없음 · DNT · GPC 존중 · 꺼져 있으면 아무것도 안 함) */}
+        <UsageBeacon settings={settings} />
+        {/* v10.500 (D272 · docs/638) 보기 설정(글자 크게 · 고대비 · 이 브라우저) · v10.499 서비스 워커(site.pwa on · 운영 빌드만 · off 면 지움) */}
+        <A11yTools />
+        <PwaRegister on={pwaOn(settings)} />
         </NextIntlClientProvider>
       </body>
     </html>

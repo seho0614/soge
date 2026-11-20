@@ -60,6 +60,7 @@ function ListCard({ item }: { item: ListingCardData }) {
       <div className="gw-pt">
         {item.urgent && <span className="gw-bg gw-no">{item.urgent.label}</span>}
         {item.isAd && item.adLabel && <span className="gw-bg gw-ad">{item.adLabel}</span>}
+        {item.bumpLabel && <span className="gw-bg gw-ad" data-lsx-bump-label="">{item.bumpLabel}</span>}
         {item.badges.filter((b) => b.type === 'VERIFIED_DOC').map((b) => <span key={b.type} className="gw-bg gw-ok">{b.label}</span>)}
         <span className="gw-ck">{item.categoryName}</span>
       </div>

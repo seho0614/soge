@@ -6,6 +6,7 @@ import { isBoard, type PostRow } from '@/components/community/types';
 import { BoardBadge, Pager, PlazaHero, PlazaTabs, PLAZA_TABS, dot, plazaHref } from '@/components/community/Plaza';
 import { TownBadge, TownVerify } from '@/components/community/TownVerify';
 import { TownPicks } from '@/components/community/TownPicks';
+import { RankingLink } from '@/components/community/RankingLink';   // v10.507 (D274)
 import { PlazaNotices, type PlazaNotice } from '@/components/community/PlazaNotices';
 import { me } from '@/lib/session';
 import '@/styles/plaza.css';
@@ -70,6 +71,7 @@ export default async function CommunityPage({ searchParams }: {
         <PlazaTabs cur={cur} q={q} />
         {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} nq={nq} np={np} />}
         {!q && cur !== 'NOTICE' && <TownPicks loggedIn={login} />}
+        {!q && cur === '' && <RankingLink />}
         {cur !== 'NOTICE' && <TownVerify loggedIn={login} />}
         {q && b && (
           <p className="plz-found" role="status">

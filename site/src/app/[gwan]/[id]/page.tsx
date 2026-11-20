@@ -21,7 +21,9 @@ import { getFmt } from '@/lib/getFmt';
 import { isGwanKey } from '@/i18n/keys';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
+import { AiSummary } from '@/components/lsx/AiSummary';   // v10.516 (D276)
 import { siteOrigin } from '@/components/refcode/origin';
+import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
 
 type Props = { params: Promise<{ gwan: string; id: string }> };
 
@@ -168,6 +170,7 @@ export default async function DetailPage({ params }: Props) {
             <div title={t('statSettledTip')}><div className="gw-k">{t('statSettled')}</div><div className="gw-v">{o.settledAmount != null ? f.won(o.settledAmount) : <span className="gw-ls">{t('private')}</span>}</div></div>
           </div>
 
+          <AiSummary listingId={item.id} />
           <div className="gw-dsec">
             <h4>{t('descHead')}</h4>
             {item.body ? <p className="gw-body">{item.body}</p> : <p>{t.rich('descFallback', { gwan: gwanName ?? '', title: item.title, b: (c) => <b>{c}</b> })}</p>}
@@ -230,6 +233,8 @@ export default async function DetailPage({ params }: Props) {
           <GwDetailBar id={item.id} path={`/${gwan}/${item.id}`} loggedIn={!!viewer} liked={item.liked}
                        canInquire={item.canInquire} blockReason={item.inquireBlockReason}
                        questionCount={questions.length} ctaNote={msg.CTA_ATTRIBUTION} />
+          {/* v10.501 ~ 503 (D273) — 스위치가 모두 꺼져 있으면 아무것도 그리지 않음 */}
+          {item.status === 'PUBLISHED' && <Msgs ns={['mbx']}><MbxItemTools type="LISTING" id={item.id} title={item.title} loggedIn={!!viewer} /></Msgs>}
         </div>
 
         {/* v10.31 — 주인에게만: 사진 올리기 · 급구/급매 신청 */}

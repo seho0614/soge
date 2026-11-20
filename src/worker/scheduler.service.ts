@@ -56,9 +56,16 @@ import { acctAccrualJob } from '../modules/acct/accrual';   // v10.439 (D257)
 import { acctCardLimitJob } from '../modules/acct/cardlimit';   // v10.453 (D261)
 import { qltDailyJob, qltLotAllocJob } from '../modules/qlt/jobs';   // v10.495 · 496 (D271)
 import { mktCampaignJob } from '../modules/marketing/campaign';   // v10.483 (D268)
+import { papiDailyJob, papiHookSendJob, pbulkMatchJob } from '../modules/papi/jobs';   // v10.521 · 522 (D278)
+import { prxAdReportJob, prxHourlyJob } from '../modules/prx/jobs';   // v10.518 ~ 520 (D277)
 import { secDailyPurgeJob } from '../modules/identity/geo-guard';   // v10.485 (D268)
+import { uptDailyJob } from '../modules/uptime/uptime';   // v10.497 (D272)
 import { mallBenefitExpireJob, mallTierJob } from '../modules/health/health-benefit';   // v10.479 · 480 (D267)
 import { mallSubscribeJob } from '../modules/health/health-subscribe';   // v10.481 (D267)
+import { mallCashReceiptJob } from '../modules/health/health-cashrcpt';   // v10.506 (D274)
+import { plzBadgeMonthJob } from '../modules/community/plaza-rank';   // v10.507 (D274)
+import { mlxDailyPurgeJob } from '../modules/health/mlx-purge';   // v10.505 · 506 · 508 (D274)
+import { mbxDailyJob, mbxPriceDigestJob } from '../modules/mbx/jobs';   // v10.501 ~ 504 (D273)
 import { salOppRemindJob } from '../modules/acct/crm';   // v10.466 (D264)
 import { acctBankFeedJob } from '../modules/acct/bankfeed';   // v10.467 (D264)
 import { trainingDueJob } from '../modules/acct/hr-training';   // v10.458 (D262)
@@ -66,6 +73,8 @@ import { applicantPurgeJob } from '../modules/acct/hr-recruit';   // v10.461 (D2
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
 import { ofcTaskDueJob } from '../modules/acct/ofc-tasks';   // v10.463 (D263)
+import { lsxDailyJob, lsxHourlyJob } from '../modules/lsx/jobs';   // v10.513 ~ 516 (D276)
+import { opxArchiveJob, opxRiskDailyJob, opxRiskEventsJob } from '../modules/opx/jobs';   // v10.509 · 510 (D275)
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 
 /**
@@ -110,14 +119,30 @@ export type JobName =
   | 'qlt_lot_alloc'   // v10.495 (D271)
   | 'qlt_daily'       // v10.495 · 496 (D271)
   | 'mkt_campaign_send' // v10.483 (D268)
+  | 'papi_hook_send'    // v10.521 (D278)
+  | 'papi_daily'        // v10.521 (D278)
+  | 'pbulk_match'       // v10.522 (D278)
+  | 'prx_hourly'      // v10.518 · 520 (D277)
+  | 'prx_ad_report'   // v10.519 (D277)
   | 'sec_daily_purge'   // v10.485 (D268)
+  | 'opx_archive'       // v10.509 (D275)
+  | 'opx_risk_events'   // v10.510 (D275)
+  | 'opx_risk_daily'    // v10.510 (D275)
+  | 'upt_daily'         // v10.497 (D272)
   | 'mall_benefit_expire' // v10.479 (D267)
   | 'mall_tier_recalc'    // v10.480 (D267)
   | 'mall_subscribe'      // v10.481 (D267)
+  | 'mall_cash_receipt'   // v10.506 (D274)
+  | 'plz_badge_month'     // v10.507 (D274)
+  | 'mlx_daily_purge'     // v10.505 · 506 · 508 (D274)
+  | 'mbx_price_digest'    // v10.503 (D273)
+  | 'mbx_daily'           // v10.501 ~ 504 (D273)
   | 'sal_opp_remind'  // v10.466 (D264)
   | 'acct_bank_feed'  // v10.467 (D264)
   | 'hr_training_due' // v10.458 (D262)
   | 'hr_applicant_purge' // v10.461 (D262)
+  | 'lsx_daily'       // v10.513 · 514 (D276)
+  | 'lsx_hourly'      // v10.515 · 516 (D276)
   | 'acct_accrual';   // v10.439 (D257)
 
 export interface JobResult {
@@ -927,6 +952,20 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.503 (D273 · docs/641) — mbx.price_alert on 일 때만 · 관심 매물 · 상품 기준값과 지금 값이 다른 것을 회원마다 한 통(MBX_PRICE_DIGEST · 수신 설정 따름 · 하루 한 번) */
+      case 'mbx_price_digest': {
+        const r = await mbxPriceDigestJob(this.db);
+        affected = r.members; detail = r;
+        break;
+      }
+
+      /* v10.501 ~ 504 (D273 · docs/639 · 642) — 최근 본 보관 기간 · 대화 글 보관 기간(처리 중 신고 대화는 남김) · 끝난 신고 · 빈 대화 · 탈퇴 회원 기록 → mbx_purges */
+      case 'mbx_daily': {
+        const r = await mbxDailyJob(this.db);
+        affected = r.recent + r.watches + r.messages + r.reports + r.threads; detail = r;
+        break;
+      }
+
       /* v10.481 (D267 · docs/619) — mall.subscribe · mall.order_open on 일 때만 · 결제일이 된 정기 배송 주문 · 결제(ASSUME 간주 · LIVE 카드 등록 키) · 실패 MALL_SUBSCRIBE_FAIL */
       case 'mall_subscribe': {
         const r = await mallSubscribeJob(this.db);
@@ -969,6 +1008,48 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.506 (D274 · docs/644) — mall.cash_receipt on 일 때만 · 발급 대기 · 다시 보낼 실패 · 취소 대기를 50건씩(ASSUME 간주 · LIVE 토스 · 키 없으면 NOT_READY) */
+      case 'mall_cash_receipt': {
+        const r = await mallCashReceiptJob(this.db);
+        affected = r.issued + r.assumed + r.canceled + r.failed + r.reissued; detail = r;
+        break;
+      }
+
+      /* v10.507 (D274 · docs/645) — 이번 달 소개광장 점수 다시 셈 · 지난달이 마감 전이면 마감 배지 · 회원 알림 PLZ_BADGE(plaza.ranking on 일 때만) */
+      case 'plz_badge_month': {
+        const r = await plzBadgeMonthJob(this.db);
+        affected = r.members + (r.badges ?? 0); detail = r;
+        break;
+      }
+
+      /* v10.505 · 506 · 508 (D274 · docs/643 · 644 · 646) — 재입고 기한 닫기 · 따라잡기 · 현금영수증 번호(암호화) 보관 끝 지움 · 사용 통계 보관 끝 지움 */
+      case 'mlx_daily_purge': {
+        const r = await mlxDailyPurgeJob(this.db);
+        affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.521 (D278 · docs/659) — papi.enabled · papi.hook_enabled on 일 때만 · 보낼 웹훅 줄 50개(ASSUME 은 간주 · 실패는 1분 ~ 12시간 뒤 다시 · 6번 뒤 포기) */
+      case 'papi_hook_send': {
+        const r = await papiHookSendJob(this.db);
+        affected = r.sent + r.assumed; detail = r;
+        break;
+      }
+
+      /* v10.521 (D278 · docs/659) — 요청 기록 papi.log_keep_days 지난 것 지움 · 3일 넘은 웹훅 줄 포기 · 기한 7일 안 키(PAPI_KEY_EXPIRING) · 틀린 키 몰림(PAPI_KEY_ABUSE) */
+      case 'papi_daily': {
+        const r = await papiDailyJob(this.db);
+        affected = r.purged + r.staleGiveup; detail = r;
+        break;
+      }
+
+      /* v10.522 (D278 · docs/660) — 일괄 등록 가입 대기 짝 맞춤 · 기한 지남 · 하루 지난 미리보기 취소 · 초대 메일(pbulk.invite_mail on · 메일 준비됨일 때만) */
+      case 'pbulk_match': {
+        const r = await pbulkMatchJob(this.db, this.mail);
+        affected = r.matched + r.expired + r.mailed; detail = r;
+        break;
+      }
+
       /* v10.483 (D268 · docs/621) — campaign.enabled on 일 때만 · 예약 시각이 된 캠페인을 campaign.batch 만큼(야간은 야간 동의자만 · ASSUME 은 보내지 않고 간주) */
       case 'mkt_campaign_send': {
         const r = await mktCampaignJob(this.db, this.mail);
@@ -976,10 +1057,52 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.497 (D272 · docs/635 · 636) — uptime.keep_days 지난 바깥 감시 결과 · 하루 지난 OAuth state · 간편 로그인 이어서 표(이메일 함께) · 180일 지난 간편 로그인 기록 */
+      case 'upt_daily': {
+        const r = await uptDailyJob(this.db);
+        affected = r.checks + r.states + r.pending + r.events; detail = r;
+        break;
+      }
+
+      /* v10.518 · 520 (D277 · docs/656 · 658) — 추천 이벤트 기간 끝 ENDED(PERIOD) · 끝난 이벤트 PRX_REF_EVENT_END · 비교 시험 기간 끝 결과 고정 PRX_AB_DONE */
+      case 'prx_hourly': {
+        const r = await prxHourlyJob(this.db);
+        affected = r.eventsEnded + r.abEnded; detail = r;
+        break;
+      }
+
+      /* v10.519 (D277 · docs/657) — 주기(DAILY 어제 · WEEKLY 지난주 · MONTHLY 지난달)의 광고 성과 보고서(없는 광고주만) · prx.ad_report_mail on 이면 아직 안 보낸 것 메일(같은 기간 두 번 안 보냄) */
+      case 'prx_ad_report': {
+        const r = await prxAdReportJob(this.db, this.mail);
+        affected = r.made + r.sent; detail = r;
+        break;
+      }
+
       /* v10.485 (D268 · docs/623) — 1년 지난 접속 나라 기록 · 30일 지난 나라 캐시 · 하루 지난 패스키 확인 문제 */
       case 'sec_daily_purge': {
         const r = await secDailyPurgeJob(this.db);
         affected = r.geoEvents + r.geoCache + r.passkeyChallenges; detail = r;
+        break;
+      }
+
+      /* v10.509 (D275 · docs/647) — opx.archive on 일 때만 · 지난 달 기록 묶음(sha256 · 감사 사슬 머리와 묶은 목록 지문) · S3(opx.archive_s3 + 버킷) · 복원 확인 1개 · 보관 개월 지난 묶음 파기 · DB 원래 줄 정리(opx.archive_db_purge_months > 0) */
+      case 'opx_archive': {
+        const r = await opxArchiveJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.510 (D275 · docs/648) — opx.risk_score on 일 때만 · 표시된 계정(매물 등록 · 신고 접수) 점수 · 기준 넘으면 검수 대기 · OPX_RISK_HIGH */
+      case 'opx_risk_events': {
+        const r = await opxRiskEventsJob(this.db);
+        affected = r.scored; detail = r;
+        break;
+      }
+
+      /* v10.510 (D275 · docs/648) — 최근 30일 가입 · 7일 매물 · 30일 신고 계정 다시 셈 */
+      case 'opx_risk_daily': {
+        const r = await opxRiskDailyJob(this.db);
+        affected = r.scored; detail = r;
         break;
       }
 
@@ -1097,6 +1220,20 @@ export class SchedulerService {
       case 'agent_chat_purge': {
         const r = await this.agentChat.purge();
         affected = r.affected; detail = r.detail;
+        break;
+      }
+
+      /* v10.513 · 514 (D276 · docs/651 · 652) — 저장한 검색 새 매물 묶음 알림(lsx.saved_search on) · 만료 예고 · 만료로 내림(lsx.expiry on · 지우지 않음) */
+      case 'lsx_daily': {
+        const r = await lsxDailyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.515 · 516 (D276 · docs/653 · 654) — 효과 끝난 끌어올림 지움(원래 자리) · 매물 AI 요약 초안(lsx.ai_summary · AI 월 상한) */
+      case 'lsx_hourly': {
+        const r = await lsxHourlyJob(this.db);
+        affected = r.made; detail = r;
         break;
       }
 

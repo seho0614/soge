@@ -376,6 +376,12 @@ export class AdminService {
     if (AdminService.OPS_PUSH_KEYS.includes(key) && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('OPS_PUSH_SETTING_SUPER', '운영 알림 텔레그램 · 낯선 로그인 알림 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
     }
+    /* v10.506 · 508 (D274 · docs/644 · 646) — 현금영수증 켜기 · 실제 발급(LIVE) · 자진발급 · 자진발급 기준 금액(세무 · 외부 호출) · 회원 화면 사용 통계 켜기는 SUPER 만
+     *   끄기(off) · 간주로 돌리기(ASSUME)는 ADMIN 도 바로 */
+    if (['mall.cash_receipt', 'mall.cash_receipt_mode', 'mall.cash_receipt_self', 'mall.cash_receipt_self_min', 'site.usage_stats'].includes(key)
+        && RequestCtx.get()?.actorRole !== 'SUPER' && !['off', 'ASSUME'].includes((value ?? '').trim())) {
+      throw new Forbidden('MLX_SETTING_SUPER', '현금영수증 · 사용 통계 설정을 켜거나 바꾸는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
+    }
     /* v10.442 (D258 · docs/579) — 업무 권한 검사 모드 · 역할 → 권한그룹 저절로 붙이기는 SUPER 만 */
     if (key.startsWith('perm.') && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('PERM_SETTING_SUPER', '업무 권한 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');

@@ -25,6 +25,7 @@ export default async function SecurityPage() {
   if (!(await me())) redirect('/login?next=/my/account/security');
   const t = await getTranslations('my.security');
   const tp = await getTranslations('my.privacy');
+  const tu = await getTranslations('upt');   // v10.498 (D272) 간편 로그인 단추
   const h = await apiGetPersonal<Hist>('/me/login-history').catch(() => null);
   const ss = await apiGetPersonal<Sessions>('/me/sessions').catch(() => null);
   const fmt = (s: string) => new Date(s).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
@@ -46,6 +47,7 @@ export default async function SecurityPage() {
       <div className="my-btns" data-security-links="">
         <Link className="my-bo" href="/my/account/data">{tp('toData')}</Link>
         <Link className="my-bo" href="/my/account/privacy">{tp('title')}</Link>
+        <Link className="my-bo" href="/my/account/social" data-to-social="">{tu('toSocial')}</Link>
       </div>
       {!h ? <Note kind="warn" role="alert">{t('loadFail')}</Note> : (
         <>

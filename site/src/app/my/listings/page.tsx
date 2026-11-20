@@ -52,12 +52,13 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
   const tab = TABS.find((t) => t.k === want) ? want! : 'all';
   const rows = tab === 'all' ? all : all.filter((r) => TABS.find((t) => t.k === tab)!.st.includes(r.status));
   const t = await getTranslations('my.lst');
+  const tl = await getTranslations('lsx');   // v10.513 ~ 516 (D276)
   const f = await getFmt();
 
   return (
     <>
       <MyHead title={t('title')} sub={t('sub')}
-        right={<Link className="my-bp" href="/register">{t('new')}</Link>} />
+        right={<><Link className="btn-sm" href="/my/listing-tools" data-lsx-tools-link="">{tl('toolsLink')}</Link> <Link className="btn-sm" href="/my/saved-searches">{tl('savedTitle')}</Link> <Link className="my-bp" href="/register">{t('new')}</Link></>} />
 
       <Tabs label={t('tabsAria')} cur={tab} items={[
         { k: 'all', t: t('tab.all'), n: all.length, href: '/my/listings' },

@@ -104,7 +104,8 @@ export class ListingRepository {
     const KEY: Record<string, { expr: string; type: string }> = {
       FEE_DESC: { expr: 'coalesce(l.desired_fee, -1)::numeric', type: 'numeric' },
       POPULAR:  { expr: '(l.like_count::numeric * 1000000 + least(l.view_count, 999999))', type: 'numeric' },
-      RECENT:   { expr: "coalesce(l.published_at, 'epoch'::timestamptz)", type: 'timestamptz' },
+      /* v10.515 (D276) — 끌어올림 효과 중이면 greatest(게시 시각, 끌어올린 시각) · 무료 · 유료 · 운영 같은 상한(lsx.bump_effect_hours) · 지나면 lsx_hourly 가 지워 원래 자리 */
+      RECENT:   { expr: "coalesce(greatest(l.published_at, bx.sort_at), 'epoch'::timestamptz)", type: 'timestamptz' },
       DEADLINE: { expr: "(CASE WHEN ur.until IS NOT NULL THEN 4000000000 - extract(epoch FROM ur.until) ELSE extract(epoch FROM coalesce(l.published_at, 'epoch'::timestamptz)) / 1000 END)::numeric", type: 'numeric' },
       FEE_RATIO: { expr: "(CASE WHEN l.desired_fee IS NOT NULL AND l.deal_amount > 0 THEN round(l.desired_fee / l.deal_amount, 8) ELSE -1 END)::numeric", type: 'numeric' },
       /* v10.31 — 급구 · 급매 화면의 「낮은 가격순 · 높은 가격순」(거래 금액 · 금액이 없으면 뒤) */
@@ -129,8 +130,10 @@ export class ListingRepository {
     const where = this.filters(p);
 
     return this.db.query(
-      `SELECT ${this.CARD}, (${k.expr})::text AS "_sk", l.category_id::text AS "_cid"   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
+      `SELECT ${this.CARD}, (${k.expr})::text AS "_sk", l.category_id::text AS "_cid",
+              CASE WHEN bx.listing_id IS NULL THEN NULL WHEN bx.kind = 'PAID' THEN '유료 끌어올림' ELSE '끌어올림' END AS "bumpLabel"   /* v10.515 (D276) */   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
          FROM listings l ${this.JOINS}
+         LEFT JOIN lsx_bump_live bx ON bx.listing_id = l.id   /* v10.515 (D276) 끌어올림 효과 중 */
         WHERE ${where}
           AND ${after}
         ORDER BY ${order}

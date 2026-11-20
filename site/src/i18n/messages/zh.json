@@ -1,0 +1,103 @@
+{
+  "_draft": "MACHINE_DRAFT v10.523 — not reviewed (D278 · docs/661)",
+  "lang": { "label": "语言" },
+  "meta": {
+    "title": "SogaeBank",
+    "description": "个人和企业都可以推荐客户、房源和创业机会并获得推荐费的 P2P 推荐平台"
+  },
+  "common": {
+    "skipToMain": "跳到正文",
+    "backTo": "← 返回{label}",
+    "maintTitle": "系统维护中",
+    "maintBody": "我们正在改进服务，请稍后再来。",
+    "maintUntil": "预计结束时间：{until}",
+    "maintContact": "紧急咨询：{phone}",
+    "maintSoon": "维护计划：{from} 至 {until} — 此期间网站无法使用。"
+  },
+  "header": {
+    "logoHome": "SogaeBank 首页",
+    "brand": "SogaeBank",
+    "mainMenu": "主菜单",
+    "community": "推荐广场",
+    "guide": "使用指南",
+    "request": "申请推荐",
+    "partners": "合作伙伴中心",
+    "notice": "公告",
+    "noticeNew": "{n, plural, other {{n} 条新公告}}",
+    "my": "我的页面",
+    "bell": "通知",
+    "bellUnread": "{n, plural, other {{n} 条通知}}",
+    "member": "会员",
+    "support": "客服中心",
+    "loggingOut": "正在退出…",
+    "logout": "退出登录",
+    "admin": "管理员",
+    "malPartner": "安心推荐合作伙伴",
+    "seller": "申请入驻商城",
+    "sellerCenter": "商城卖家中心",
+    "login": "登录",
+    "signup": "免费注册",
+    "search": "搜索",
+    "gwan": { "MNY": "推荐市场", "MAL": "安心推荐", "BIZ": "推荐创业", "HLT": "Sogae 商城", "LED": "咨询线索" }
+  },
+  "footer": {
+    "preparing": "准备中",
+    "tipCompany": "商号 — 上线前填写",
+    "ceo": "代表人",
+    "tipCeo": "代表人 — 上线前填写",
+    "bizRegNo": "营业执照号",
+    "tipNeeded": "上线前填写",
+    "mailOrderNo": "邮购业备案号",
+    "tipMailOrder": "邮购业备案正在办理中，备案后将显示编号。",
+    "jobInfoNo": "职业信息服务备案号",
+    "address": "地址",
+    "phone": "电话",
+    "privacyOfficer": "个人信息保护负责人",
+    "privacyEmail": "个人信息咨询",
+    "hosting": "托管服务"
+  },
+  "login": {
+    "title": "登录",
+    "noAccount": "还没有账号？",
+    "signup": "注册",
+    "reconsentLink": "查看同意页面",
+    "pendingLink": "查看认证步骤",
+    "profileSub": "注册前也可以开始",
+    "profileLink": "分析并保存我的兴趣",
+    "whoCanJoin": "个人、个体工商户和法人均可注册。停业或注销的企业无法通过企业认证。"
+  },
+  "loginForm": {
+    "needBoth": "请输入邮箱和密码。",
+    "email": "邮箱",
+    "emailPh": "注册时使用的邮箱",
+    "password": "密码",
+    "hide": "隐藏",
+    "show": "显示",
+    "keep": "保持登录状态",
+    "forgotPw": "忘记密码",
+    "forgotEmail": "忘记邮箱",
+    "working": "处理中…",
+    "submit": "登录",
+    "cancelWithdraw": "取消注销并登录",
+    "cancelFail": "无法取消注销。"
+  },
+  "errorPage": {
+    "title": "出现问题",
+    "body": "加载页面时发生错误。请稍后再试。如果问题持续出现，请告知客服中心。",
+    "retry": "重试",
+    "home": "首页",
+    "support": "客服中心",
+    "code": "错误编号"
+  },
+  "forgot": {
+    "title": "忘记密码",
+    "remembered": "想起密码了吗？",
+    "login": "登录",
+    "support": "联系客服中心"
+  },
+  "reset": {
+    "title": "重置密码",
+    "badLb": "此链接无效",
+    "forgot": "忘记密码"
+  }
+}

@@ -136,6 +136,10 @@
     "orderSeller": "Order this seller's items",
     "closed": "Sogae Mall is not taking orders right now — you can still browse and add items to your cart. We will let you know when ordering opens."
   },
+  "restockBtn": "Notify me when restocked",
+  "restockDone": "Done — we will notify you when it is back in stock.",
+  "restockAlready": "You have already asked for this option — we will notify you when it is back.",
+  "restockFail": "Could not save your request. Please try again shortly.",
   "opt": {
     "errAdd": "Could not add to cart. Please try again shortly.",
     "added": "Added {name} to your cart.",

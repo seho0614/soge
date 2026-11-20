@@ -5,6 +5,7 @@ import { apiGet } from '@/lib/api';
 import { login, me, cancelWithdraw } from '@/lib/session';
 import { GWAN_PATH } from '@/lib/format';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { SocialButtons } from '@/components/upt/SocialButtons';   // v10.498 (D272) 간편 로그인
 import '@/styles/proto-w1.css';
 import { getTranslations } from 'next-intl/server';
 
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('login'))('title') };
 }
 
-type Props = { searchParams: Promise<{ next?: string | string[] }> };
+type Props = { searchParams: Promise<{ next?: string | string[]; social_error?: string | string[] }> };   // v10.498 (D272) social_error — 간편 로그인 실패 코드
 
 /**
  * 로그인 뒤 돌아갈 주소(?next=) — **우리 사이트 안의 경로만** 받습니다.
@@ -63,6 +64,7 @@ export default async function LoginPage({ searchParams }: Props) {
           {t.rich('reconsentBody', { b: (c) => <b>{c}</b> })}
           <div style={{ marginTop: 8 }}><Link className="w1-bo sm" href="/terms/agree">{t('reconsentLink')}</Link></div></div>
         <LoginForm action={doLogin} next={nextUrl} cancel={doCancel} />
+        <SocialButtons next={nextUrl} error={(Array.isArray(sp.social_error) ? sp.social_error[0] : sp.social_error) ?? null} />
         <div className="w1-jc w" style={{ marginTop: 16 }}><span className="lb">{t('pendingLb')}</span>
           {t.rich('pendingBody', { b: (c) => <b>{c}</b> })}
           <div style={{ marginTop: 8 }}><Link className="w1-bo sm" href="/verify">{t('pendingLink')}</Link></div></div>

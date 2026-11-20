@@ -346,5 +346,6 @@
       "trustSameDay": "one verified company contacts you"
     }
   },
+  "popup": { "more": "Learn more", "hideToday": "Hide for today", "close": "Close", "next": "Next", "closeAria": "Close the pop-up", "count": "{n} / {total}", "countAria": "Pop-up {n} of {total}" },
   "ntc": { "aria": "Pinned notices", "label": "Notice", "more": "All notices", "new": "New", "hide": "Hide for today", "hideAria": "Hide the notice bar for today" }
 }

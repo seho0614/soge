@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>연결이 끊겼습니다 · 소개뱅크</title>
+<!-- v10.499 (D272 · docs/637) SB-HOM-UPT-030 오프라인 안내 — 서비스 워커(public/sw.js)가 화면 이동이 실패할 때만 보여 줌.
+     앱 밖의 한 장짜리라 스크립트 · 앱 CSS 를 쓰지 않음. 색 · 글자 · 모서리는 디자인 시트 토큰(styles/sgb-tokens.css)과 같은 이름 · 같은 값을 여기에만 다시 적음(그쪽을 바꾸면 여기도). -->
+<style>
+  :root { --sgb-navy: #00245a; --sgb-bg: #f5f7fa; --sgb-ink: #000000; --sgb-ink-2: #404a66; --sgb-line: #dbdbdb; --sgb-accent: #f5a008; --sgb-r-md: 11px;
+          --sgb-fs-title-2: 24px; --sgb-fs-body-1: 16px; --sgb-fs-cap: 13px; }
+  html, body { margin: 0; background: var(--sgb-bg); color: var(--sgb-ink); font-family: "Nanum Square Neo", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  main { max-width: 520px; margin: 72px auto; padding: 0 16px; text-align: center; }
+  .logo { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: var(--sgb-r-md); background: var(--sgb-navy); color: #fff; font-weight: 700; font-size: 40px; line-height: 1; }
+  .logo i { display: block; width: 28px; height: 5px; margin-top: 3px; background: var(--sgb-accent); }
+  h1 { font-size: var(--sgb-fs-title-2); margin: 20px 0 8px; }
+  p { font-size: var(--sgb-fs-body-1); color: var(--sgb-ink-2); line-height: 1.7; margin: 0 0 8px; }
+  .en { font-size: var(--sgb-fs-cap); }
+  button { margin-top: 16px; font: inherit; font-weight: 700; padding: 10px 22px; border-radius: var(--sgb-r-md); border: 1px solid var(--sgb-line); background: #fff; color: var(--sgb-navy); cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--sgb-accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main data-screen="SB-HOM-UPT-030" data-offline="">
+  <span class="logo" aria-hidden="true">S<i></i></span>
+  <h1>인터넷 연결이 끊겼습니다</h1>
+  <p>연결이 돌아오면 다시 시도해 주십시오. 결제 · 등록 중이었다면 연결된 뒤 내 정보에서 결과를 확인해 주십시오.</p>
+  <p class="en" lang="en">You are offline. Please try again when your connection is back.</p>
+  <button type="button" onclick="location.reload()">다시 시도 · Retry</button>
+</main>
+</body>
+</html>

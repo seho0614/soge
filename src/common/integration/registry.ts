@@ -88,6 +88,9 @@ export const INTEGRATIONS: IntegrationEntry[] = [
   /* v10.485 (D268 · docs/623) IP 국가 판별 — 운영자 해외 로그인 경고 · 업체 주소 틀 GEOIP_API_BASE({ip} · {key}) · 간주는 설정 security.geo_mode(assume.* 아님 · 오픈 차단 아님) · 경고 security.geo_watch(처음 off) */
   { code: 'GEOIP', name: 'IP 국가 판별', dbRow: true, secretEnv: 'GEOIP_API_KEY', otherEnv: ['GEOIP_API_BASE', 'GEOIP_COUNTRY_PATH', 'GEOIP_TIMEOUT_MS'],
     assume: null, adapter: 'REAL', files: ['src/modules/identity/geo-guard.ts'], doc: 'docs/623' },
+  /* v10.498 (D272 · docs/636) 간편 로그인 — 카카오 client_id 는 KAKAO_LOGIN_CLIENT_ID(비면 지도 MAP 의 KAKAO_REST_KEY 를 다시 씀 · 같은 카카오 앱일 때) · 간주는 설정 social.mode(assume.* 아님 · 오픈 차단 아님) · 켜기 social.kakao · social.naver(처음 off) */
+  { code: 'SOCIAL', name: '간편 로그인(카카오 · 네이버)', dbRow: true, secretEnv: 'NAVER_CLIENT_SECRET', otherEnv: ['NAVER_CLIENT_ID', 'KAKAO_LOGIN_CLIENT_ID', 'KAKAO_LOGIN_SECRET', 'SOCIAL_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/social/social.provider.ts', 'src/modules/social/social.ts', 'src/modules/social/social.controller.ts', 'site/src/app/login/social/[provider]/route.ts'], doc: 'docs/636' },
   /* v10.454 (D261) 대량 이체 — 금융결제원 오픈뱅킹(KFTC) · 간주는 설정 acct.transfer_mode(assume.* 아님 · 오픈 차단 아님) · 보내기는 acct.transfer(처음 off) */
   { code: 'FIRMBANK', name: '대량 이체(금융결제원 오픈뱅킹)', dbRow: true, secretEnv: 'FIRMBANK_CLIENT_SECRET',
     otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS',

@@ -10,6 +10,8 @@ export interface ListingCardData {
   badges: { type: string; label: string; validUntil?: string }[];
   isAd: boolean;
   adLabel: string | null;
+  /** v10.515 (D276) — 기본 목록에서 끌어올림 효과 중이면 「끌어올림」 · 유료면 「유료 끌어올림」 — 반드시 함께 표시 */
+  bumpLabel?: string | null;
   publishedAt: string | null;
   likeCount: number;
   /** v10.31 — 등급(골든 · 실버 · 브론즈 — 가칭) · 조회 수 */

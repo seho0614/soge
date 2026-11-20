@@ -10,6 +10,7 @@ import { PromptSearch } from './PromptSearch';
 import { budgetText } from '@/components/request/ReqCard';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { SaveSearchButton } from '@/components/lsx/SaveSearchButton';   // v10.513 (D276)
 import { isGwanKey } from '@/i18n/keys';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -114,6 +115,7 @@ export default async function SearchPage({ searchParams }: {
           <p>{t('lead')}</p>
         </div>
         {q && !short && <span className="did">{t('count', { n })}</span>}
+        {q && !short && <Msgs ns={['lsx']}><SaveSearchButton q={q} gwanCode={gTab} /></Msgs>}
       </div>
 
       {/* 개발에만 있던 결과 화면 안 검색칸 — 같은 검색 팝업을 엽니다(diffs 기록) */}

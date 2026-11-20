@@ -87,7 +87,7 @@ const FLOWS = [
 const apiOf = a => {
   if (!a) return null;
   const [m, p] = a.split(' ');
-  const full = '/api/v1' + p.split('?')[0];
+  const full = (p.startsWith('/api/') ? '' : '/api/v1') + p.split('?')[0];   // v10.521 (D278)
   const op = D.paths[full]?.[m.toLowerCase()];
   return op ? { impl: op['x-status']==='IMPLEMENTED', roles: op['x-roles']??[], gates: op['x-gates']??[] } : null;
 };

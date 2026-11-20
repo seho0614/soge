@@ -13,6 +13,7 @@ import { ReviewQueue } from './app/admin/ReviewQueue';
 import { ReviewDecide } from './app/admin/ReviewDecide';
 import { AutoReviewRules } from './app/admin/AutoReviewRules';
 import { Badges } from './app/admin/Badges';
+import { LsxExpiry, LsxBump, LsxSummary, LsxSaved } from './app/admin/ListingOps';   // v10.513 ~ 516 (D276) ㊻ 매물
 import { Disputes } from './app/admin/Disputes';
 import { AuditSamples } from './app/admin/AuditSamples';
 import { CodeLabels } from './app/admin/CodeLabels';
@@ -42,7 +43,12 @@ import { AdminSearch } from './app/admin/AdminSearch';   // v10.289 전체 찾�
 import { MyMfa } from './app/admin/MyMfa';   // v10.180 (D169)
 import { MyPasskey } from './app/admin/MyPasskey';   // v10.484 (D268) 내 2단계 인증 화면 아래 패스키 구역
 import { SecGeo } from './app/admin/SecGeo';   // v10.485 (D268) 해외 접속 경고
+import { OpxArchive, OpxRisk, OpxBulk, OpxSwitches } from './app/admin/Opx';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
+import { SocLogin, UptStatus } from './app/admin/Uptime';   // v10.497 · 498 (D272) 가동 · 장애 공지 · 간편 로그인
 import { MktCampaigns } from './app/admin/MktCampaigns';   // v10.483 (D268) 문자 · 메일 캠페인
+import { PtnOpenApi, PtnBulkInvite } from './app/admin/PartnerOpenApi';   // v10.521 · 522 (D278) 파트너 오픈 API · 직원 일괄 등록
+import { I18nReview } from './app/admin/I18nReview';   // v10.523 (D278) 일본어 · 중국어 검수
+import { MbxOps, MbxDmReports } from './app/admin/MemberMbx';   // v10.501 ~ 504 (D273) 회원 편의 기능 · 회원 대화 신고
 import { MyPassword } from './app/admin/OpsStaffBoxes';   // v10.369 (docs/504) 내 비밀번호
 import { ReportDay, ReportWeek, ReportMonth, ReportWorklog, ReportWorklogBoard, ReportTrend } from './app/admin/Report';   // v10.412 ~ 415 (D250) 보고
 import { ErpDocs, ErpDepts, ErpWarehouses, ErpDunning } from './app/admin/Erp';   // v10.433 ~ 436 (D256) 내부 ERP
@@ -50,6 +56,9 @@ import { AccountantDesk, ReceiptReader, AccrualBox, ArchiveBox } from './app/adm
 import { FinCardLimits, FinTransfers, FinTargets, FinPartyLedger } from './app/admin/Fin';   // v10.453 ~ 456 (D261) 자금 · 영업
 import { SalCrm, AcctBankFeed } from './app/admin/Sales';   // v10.466 · 467 (D264) 영업 기회 · 은행 자동 조회
 import { HealthCoupons } from './app/admin/HealthCoupons';   // v10.469 (D264) 소개몰 쿠폰 · 기획전
+import { HealthRestock, HealthCashReceipts } from './app/admin/HealthMlx';   // v10.505 · 506 (D274) 소개몰 재입고 알림 · 현금영수증
+import { PlazaRanking } from './app/admin/PlazaRanking';   // v10.507 (D274) 소개광장 활동 배지 · 랭킹
+import { SiteUsage } from './app/admin/SiteUsage';   // v10.508 (D274) 회원 화면 사용 통계
 import { AcctDaybook, AcctCashbook, AcctFxReval } from './app/admin/AcctBooks';   // v10.449 ~ 452 (D260)
 import { AcctVehicles, AcctCashPlan, AcctExemptInvoices, AcctReorder } from './app/admin/AcctOps';   // v10.475 ~ 478 (D266) 사무 · 자금
 import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/Hr';   // v10.445 ~ 448 (D259)
@@ -81,6 +90,7 @@ import { ReportQueue } from './app/admin/ReportQueue';
 import { Events } from './app/admin/Events';
 import { AiOps } from './app/admin/AiOps';
 import { AdBilling } from './app/admin/AdBilling';
+import { PrxAbTests, PrxAdReports, PrxPopups, PrxRefEvents } from './app/admin/Prx';   // v10.517 ~ 520 (D277)
 import { Collect } from './app/admin/Collect';
 import { RoleAdmin } from './app/admin/RoleAdmin';
 import { Payouts } from './app/admin/Payouts';
@@ -128,6 +138,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   partners: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   'partner-axes': ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   directory: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
+  'ptn-openapi': ['ADMIN', 'SUPER', 'PARTNER_MAL'], 'ptn-bulk': ['ADMIN', 'SUPER', 'PARTNER_MAL'],   // v10.521 · 522 (D278) — 발급 · 설정은 서버가 SUPER 만
+  'i18n-review': ['ADMIN', 'SUPER'],   // v10.523 (D278) — 검수 기록은 서버가 SUPER 만
   quals: ['ADMIN', 'SUPER', 'PARTNER_MAL'],
   affiliates: ['ADMIN', 'SUPER', 'PARTNER_AFF'],
   /* 2026-10-01 결정 Q1 — 지급 담당의 작업 화면. 확정은 운영, 지급은 지급 담당 */
@@ -136,6 +148,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'adx-payout': ['ADMIN', 'SUPER', 'PAYOUT'],
   queue: ['ADMIN', 'SUPER', 'REVIEWER'],
   badges: ['ADMIN', 'SUPER', 'REVIEWER'],
+  'lsx-expiry': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsx-summary': ['ADMIN', 'SUPER', 'REVIEWER'], 'lsx-bump': ['ADMIN', 'SUPER'], 'lsx-saved': ['ADMIN', 'SUPER'],   // v10.513 ~ 516 (D276)
   audit: ['ADMIN', 'SUPER', 'REVIEWER'],
   /* v10.180 (D169) — 내 2단계 인증은 운영 역할 모두 */
   'my-mfa': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'],
@@ -170,6 +183,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
   'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
+  'prx-popup': ['ADMIN', 'SUPER'], 'prx-refevent': ['ADMIN', 'SUPER'], 'prx-adreport': ['ADMIN', 'SUPER'], 'prx-adab': ['ADMIN', 'SUPER'],   // v10.517 ~ 520 (D277)
+  'opx-archive': ['SUPER'], 'opx-risk': ['ADMIN', 'SUPER'], 'opx-bulk': ['ADMIN', 'SUPER', 'REVIEWER'], 'opx-switches': ['ADMIN', 'SUPER'],   // v10.509 ~ 512 (D275)
   'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
   'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
   'hrx-overtime': ['SUPER', 'ADMIN'], 'hrx-shifts': ['SUPER', 'ADMIN'], 'hrx-stocktake': ['SUPER', 'ADMIN', 'PAYOUT'],   // v10.471 · 472 · 474 (D265)
@@ -364,6 +379,7 @@ function Console() {
         {tab === 'hlt-settle' && <HealthSettle onGo={go} />}
         {tab === 'hlt-products' && <HealthProducts />}
         {tab === 'i18n' && <Translations />}
+        {tab === 'i18n-review' && <I18nReview />}
         {tab === 'hlt-orders' && <HealthOrders onGo={go} />}
         {tab === 'hlt-open' && <HealthOpenStock />}
         {tab === 'qlt-lots' && <QltLots />}
@@ -375,16 +391,28 @@ function Console() {
         {tab === 'hlt-subscribe' && <HealthSubscribe />}
         {tab === 'hlt-giftcards' && <HealthGiftcards />}
         {tab === 'hlt-coupons' && <HealthCoupons />}
+        {tab === 'hlt-restock' && <HealthRestock />}
+        {tab === 'hlt-cashrcpt' && <HealthCashReceipts />}
+        {tab === 'plz-rank' && <PlazaRanking />}
+        {tab === 'site-usage' && <SiteUsage />}
         {tab === 'affiliates' && <Affiliates onGo={go} />}
         {tab === 'gov-audit' && <Audit />}
         {tab === 'invariants' && <Invariants />}
         {tab === 'ad-billing' && <AdBilling />}
+        {tab === 'prx-popup' && <PrxPopups />}
+        {tab === 'prx-refevent' && <PrxRefEvents />}
+        {tab === 'prx-adreport' && <PrxAdReports />}
+        {tab === 'prx-adab' && <PrxAbTests />}
         {tab === 'collect' && <Collect />}
       {tab === 'roles' && <RoleAdmin />}
       {tab === 'queue' && (open
           ? <ReviewDecide id={open} onDone={() => setOpen(null)} />
           : <ReviewQueue onOpen={setOpen} />)}
         {tab === 'badges' && <Badges />}
+        {tab === 'lsx-expiry' && <LsxExpiry />}
+        {tab === 'lsx-bump' && <LsxBump />}
+        {tab === 'lsx-summary' && <LsxSummary />}
+        {tab === 'lsx-saved' && <LsxSaved />}
         {tab === 'audit' && <AuditSamples />}
         {tab === 'rules' && <AutoReviewRules onGo={visible('policy') ? go : undefined} />}
         {tab === 'disputes' && <Disputes />}
@@ -411,6 +439,8 @@ function Console() {
       {tab === 'partners' && <Partners onGo={go} />}
       {tab === 'partner-axes' && <PartnerAxes />}
       {tab === 'directory' && <DirectoryAdmin />}
+      {tab === 'ptn-openapi' && <PtnOpenApi />}
+      {tab === 'ptn-bulk' && <PtnBulkInvite />}
       {tab === 'quals' && <Qualifications onGo={go} />}
       {tab === 'risk' && <RiskAlerts />}
       {tab === 'ops-alerts' && <OpsAlerts />}
@@ -420,7 +450,15 @@ function Console() {
       {tab === 'privacy-requests' && <PrivacyRequests />}
       {tab === 'server-errors' && <ServerErrors />}
       {tab === 'sec-geo' && <SecGeo />}
+      {tab === 'opx-archive' && <OpxArchive />}
+      {tab === 'opx-risk' && <OpxRisk isSuper={roles.includes('SUPER')} />}
+      {tab === 'opx-bulk' && <OpxBulk roles={roles} />}
+      {tab === 'opx-switches' && <OpxSwitches onGo={visible('settings') ? go : undefined} />}
+      {tab === 'upt-status' && <UptStatus />}
+      {tab === 'soc-login' && <SocLogin />}
       {tab === 'mkt-campaign' && <MktCampaigns />}
+      {tab === 'mbx-ops' && <MbxOps />}
+      {tab === 'mbx-dm' && <MbxDmReports />}
       {tab === 'ops-board' && <OpsBoard />}
       {tab === 'my-mfa' && <><MyMfa /><MyPasskey /></>}
       {tab === 'my-password' && <><MyPassword /><MySessions /></>}

@@ -28,7 +28,7 @@ export function cardPrice(item: ListingCardData, tr?: (k: CardKey) => string, lo
 
 export function GwCard({ item }: { item: ListingCardData }) {
   const href = `/${GWAN_PATH[item.gwanCode] ?? 'money'}/${item.id}`;
-  const badge = item.urgent?.label ?? (item.isAd && item.adLabel ? item.adLabel : item.badges.find((b) => b.type !== 'URGENT' && b.type !== 'URGENT_SALE')?.label);
+  const badge = item.urgent?.label ?? (item.isAd && item.adLabel ? item.adLabel : item.bumpLabel ?? item.badges.find((b) => b.type !== 'URGENT' && b.type !== 'URGENT_SALE')?.label);   // v10.515 (D276) 끌어올림
   const t = useTranslations('gwan');
   const locale = useLocale();
   const f = useFmt();

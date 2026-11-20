@@ -51,6 +51,10 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'FIRMBANK', name: 'FIRMBANK_CLIENT_ID', label: '금융결제원 오픈뱅킹 Client ID', env: 'FIRMBANK_CLIENT_ID', envRead: 'FIRMBANK_CLIENT_ID', isPublic: false },   // v10.454 (D261)
   { code: 'FIRMBANK', name: 'FIRMBANK_CLIENT_SECRET', label: '금융결제원 오픈뱅킹 Client Secret', env: 'FIRMBANK_CLIENT_SECRET', envRead: 'FIRMBANK_CLIENT_SECRET', isPublic: false },   // v10.454 (D261)
   { code: 'GEOIP', name: 'GEOIP_API_KEY', label: 'IP 국가 판별 업체 키', env: 'GEOIP_API_KEY', envRead: 'GEOIP_API_KEY', isPublic: false },   // v10.485 (D268)
+  { code: 'SOCIAL', name: 'KAKAO_LOGIN_CLIENT_ID', label: '카카오 로그인 client_id(비면 카카오맵 REST 키)', env: 'KAKAO_LOGIN_CLIENT_ID', envRead: 'KAKAO_LOGIN_CLIENT_ID', isPublic: false },   // v10.498 (D272)
+  { code: 'SOCIAL', name: 'KAKAO_LOGIN_SECRET', label: '카카오 로그인 Client Secret(켰을 때만)', env: 'KAKAO_LOGIN_SECRET', envRead: 'KAKAO_LOGIN_SECRET', isPublic: false },   // v10.498 (D272)
+  { code: 'SOCIAL', name: 'NAVER_CLIENT_ID', label: '네이버 로그인 Client ID', env: 'NAVER_CLIENT_ID', envRead: 'NAVER_CLIENT_ID', isPublic: false },   // v10.498 (D272)
+  { code: 'SOCIAL', name: 'NAVER_CLIENT_SECRET', label: '네이버 로그인 Client Secret', env: 'NAVER_CLIENT_SECRET', envRead: 'NAVER_CLIENT_SECRET', isPublic: false },   // v10.498 (D272)
   { code: 'FIRMBANK', name: 'FIRMBANK_USER_TOKEN', label: '금융결제원 오픈뱅킹 사용자 토큰(거래내역조회)', env: 'FIRMBANK_USER_TOKEN', envRead: 'FIRMBANK_USER_TOKEN', isPublic: false },   // v10.467 (D264)
 ];
 

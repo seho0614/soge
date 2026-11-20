@@ -107,7 +107,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
 
   const apiOf = (a) => {
     const [m, p] = a.split(' ');
-    const op = api.paths['/api/v1' + p.split('?')[0]]?.[m.toLowerCase()];
+    const op = api.paths[(p.startsWith('/api/') ? '' : '/api/v1') + p.split('?')[0]]?.[m.toLowerCase()];   // v10.521 (D278)
     return op ? op['x-status'] === 'IMPLEMENTED' : null;
   };
 

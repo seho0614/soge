@@ -9,6 +9,7 @@ import { MyHead, Note, Empty, Table, GwanTag, shortId } from '@/components/my/ui
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
 import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
+import { MbxLinks } from '@/components/mbx/MbxLinks';   // v10.501 ~ 504 (D273) 함께 쓰기 줄
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.likes'))('title') };
@@ -50,6 +51,8 @@ export default async function LikesPage() {
           ))}
         </Table>
       )}
+      {/* v10.501 ~ 504 (D273) — 켜진 회원 편의 기능만(최근 본 · 비교하기 · 가격 알림 · 회원 대화) · 모두 꺼져 있으면 없음 */}
+      <MbxLinks />
       {/* 안내는 목록이 있든 없든 늘 보여야 합니다 — 계약으로 바로 가려다 소개비를 놓치는 일을 막는 문구입니다(시안 그대로). */}
       <Note kind="info">
         {withCodes(t.rich('note', { b: (c) => <b>{c}</b> }))}

@@ -14,6 +14,7 @@ import { me } from '@/lib/session';
 import { getFmt } from '@/lib/getFmt';
 import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
 import { siteOrigin } from '@/components/refcode/origin';
+import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
 
 type Props = { params: Promise<{ code: string }>; searchParams?: Promise<{ tab?: string; rating?: string }> };
 
@@ -127,9 +128,11 @@ export default async function HltProductPage({ params, searchParams }: Props) {
           )}
           {p.reviewNo && <p className="hlt-rev">{t('adReview', { no: p.reviewNo })}</p>}
 
-          <Msgs ns={['order']}><OptionRows code={p.code} name={p.name} options={p.options ?? []} /></Msgs>
+          <Msgs ns={['order']}><OptionRows code={p.code} name={p.name} options={p.options ?? []} restock={st['mall.restock_alert'] === 'on'} /></Msgs>
 
           <div style={{ marginTop: 18 }}><SellerBox /></div>
+          {/* v10.501 ~ 503 (D273) — 스위치가 모두 꺼져 있으면 아무것도 그리지 않음 */}
+          <Msgs ns={['mbx']}><MbxItemTools type="PRODUCT" id={p.code} title={p.name} loggedIn={!!(await me().catch(() => null))} /></Msgs>
 
           <section className="hlt-box" data-withdrawal-block="1" data-ship-block style={{ marginTop: 12 }}>
             <h3>{t('shipTitle')}</h3>

@@ -118,7 +118,7 @@ ok(settle.every(s=>s.gates.includes('IDENTITY_VERIFIED')||s.gates.includes('BUSI
    settle.filter(s=>!s.gates.includes('IDENTITY_VERIFIED')&&!s.gates.includes('BUSINESS_VERIFIED')).map(s=>s.id).join(','));
 
 console.log('== OpenAPI ==');
-const specApis=new Set(S.screens.flatMap(s=>s.apis.map(a=>{const[m,p]=a.split(' ');return `${m} /api/v1${p.split('?')[0]}`;})));
+const specApis=new Set(S.screens.flatMap(s=>s.apis.map(a=>{const[m,p]=a.split(' ');return `${m} ${p.startsWith('/api/')?'':'/api/v1'}${p.split('?')[0]}`;})));   // v10.521 (D278) /api/partner/v1 그대로
 const docApis=new Set(Object.entries(API.paths).flatMap(([p,ops])=>Object.keys(ops).map(m=>`${m.toUpperCase()} ${p}`)));
 ok([...specApis].every(a=>docApis.has(a)),'화면의 모든 API 가 OpenAPI 에 있음',
    [...specApis].filter(a=>!docApis.has(a)).join(' '));

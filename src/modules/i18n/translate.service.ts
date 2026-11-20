@@ -7,7 +7,7 @@ import { I18N_FIELDS } from './i18n.service';
 
 /** 번역 언어 이름(지시문용) — i18n_langs 의 7개 */
 const LANG_NAME: Record<string, string> = {
-  en: 'English', ja: 'Japanese', de: 'German', fr: 'French', id: 'Indonesian', vi: 'Vietnamese', ar: 'Arabic',
+  en: 'English', ja: 'Japanese', de: 'German', fr: 'French', id: 'Indonesian', vi: 'Vietnamese', ar: 'Arabic', zh: 'Simplified Chinese',   // v10.523 (D278)
 };
 const MAX_ATTEMPTS = 3;
 /** 배치 한 번의 시간 예산 — 이 시간이 지나면 새 줄을 시작하지 않음(1분 배치가 겹쳐 같은 줄을 두 번 부르지 않게) */

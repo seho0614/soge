@@ -24,6 +24,7 @@ export function ListingCard({ item }: { item: ListingCardData }) {
           ))}
           {/* 유료 노출은 라벨과 함께만 나갑니다 (전상법) */}
           {item.isAd && item.adLabel && <span className="badge badge-ad">{item.adLabel}</span>}
+          {item.bumpLabel && <span className="badge badge-ad" data-lsx-bump-label="">{item.bumpLabel}</span>}
         </div>
 
         <h3 className="card-title">{item.title}</h3>

@@ -34,6 +34,8 @@ import { liveContent, sampleContent } from '@/components/home/content';
 import { Msgs } from '@/i18n/Msgs';
 import { getFmt } from '@/lib/getFmt';
 import '@/styles/home.css';
+import { HomePopups } from '@/components/home/HomePopups';   // v10.517 (D277) 메인 팝업 공지
+import type { HomePopup } from '@/components/home/popupTypes';
 
 /* 추천 칩 — 글은 사전(main.hero.chips) */
 const CHIPS = ['c1', 'c2', 'c3', 'c4'] as const;
@@ -56,6 +58,8 @@ export default async function Home() {
   const wxPick = (await cookies()).get(WX_COOKIE)?.value ?? '';
   const wxRegion = WX_REGION_RE.test(wxPick) ? wxPick : '';
 
+  /* v10.517 (D277 · docs/655) 메인 팝업 — 보는 사람 대상(비로그인 · 회원 · 파트너) 기준이라 캐시 안 함 · 실패하면 팝업 없음 */
+  const popupsP = apiGetPersonal<HomePopup[]>('/popups').catch(() => [] as HomePopup[]);
   const [gwans, links, settings, ad, summary, polls, weather, aiStat, hotKw, notices] = await Promise.all([
     apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]),
     apiGet<FooterLink[]>('/footer-links', 300).catch(() => [] as FooterLink[]),
@@ -77,6 +81,7 @@ export default async function Home() {
   ]);
   const pinned = (Array.isArray(notices) ? notices : []).filter((n) => n.isPinned).slice(0, HOME_NOTICE_MAX)
     .map((n) => ({ id: n.id, title: n.title, isPinned: true, publishedAt: n.publishedAt, unread: n.unread }));
+  const popups = await popupsP.then((x) => (Array.isArray(x) ? x : []));   // v10.517 (D277)
   const aiOn = aiStat?.enabled === true;
   const hot = (hotKw?.items ?? []).map((k) => k.term).filter(Boolean);
   const live = gwans.filter((g) => g.isActive !== false).map((g) => g.code);
@@ -113,6 +118,7 @@ export default async function Home() {
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
         live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
         weather={weather} notices={pinned} />
+      <HomePopups items={popups} />
     </Msgs>
   );
 }

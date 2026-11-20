@@ -6,6 +6,7 @@ import type { HltOption } from './types';
 import { useTranslations } from 'next-intl';
 import { needsLogin } from './util';
 import { useFmt } from '@/lib/useFmt';
+import { RestockButton } from './RestockButton';   // v10.505 (D274)
 
 /**
  * 상품 상세의 「옵션 선택 (복용 개월 수)」 — 시안(SB-HLT-PRD-010) 그대로 (v10.26).
@@ -13,7 +14,7 @@ import { useFmt } from '@/lib/useFmt';
  *   아래 큰 단추 「장바구니」 「바로구매」는 **가장 짧은 개월 수 옵션**(대표 옵션)을 담습니다(시안과 같음).
  * 옵션이 하나뿐인 상품(단품)은 줄 없이 수량 · 큰 단추만 둡니다.
  */
-export function OptionRows({ code, name, options }: { code: string; name: string; options: HltOption[] }) {
+export function OptionRows({ code, name, options, restock }: { code: string; name: string; options: HltOption[]; restock?: boolean }) {
   const t = useTranslations('order');
   const f = useFmt();
   const router = useRouter();
@@ -66,6 +67,7 @@ export function OptionRows({ code, name, options }: { code: string; name: string
                 {/* 시안의 옵션 이름 그대로 — 「월 3,900원 × 9개월 분 : 메가바이탈 비타민C 3000 2+1」 */}
                 {o.unit != null ? t('opt.unitName', { unit: f.won(o.unit, '-'), months: String(o.months), name: `${name}${o.tag ? ` ${o.tag}` : ''}` }) : o.label}
                 {o.stock <= 0 && <> <span className="hlt-bdg soldout">{t('opt.soldout')}</span></>}
+                {o.stock <= 0 && restock && <> <RestockButton optionId={o.id} /></>}
                 <br /><span className="hlt-sm hlt-mut3">{t('opt.pay', { price: f.won(o.price, '-') })}{o.stock > 0 && t('opt.leftSep', { n: String(o.stock) })}</span>
               </span>
               <Qty o={o} />
@@ -76,6 +78,7 @@ export function OptionRows({ code, name, options }: { code: string; name: string
         </div>
       )}
       {single && rep && <div style={{ marginTop: 16 }}><Qty o={rep} /> <span className="hlt-sm hlt-mut3">{rep.stock > 0 ? t('opt.left', { n: String(rep.stock) }) : t('opt.soldNow')}</span></div>}
+      {single && rep && repSold && restock && <div style={{ marginTop: 8 }}><RestockButton optionId={rep.id} /></div>}
       <div className="hlt-btns" style={{ marginTop: 16 }}>
         <button type="button" className="hlt-btn lg" style={{ flex: 1 }} disabled={pending || repSold} onClick={() => rep && add(rep, false)} data-addcart-main>{t('common.cart')}</button>
         <button type="button" className="hlt-btn lg pri" style={{ flex: 1 }} disabled={pending || repSold} onClick={() => rep && add(rep, true)} data-buynow>

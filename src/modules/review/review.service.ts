@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException, BadRequestException, 
 import { DatabaseService } from '../../db/database.service';
 import { ReviewRepository } from './review.repository';
 import { DecideReviewDto } from './review.dto';
+import { lsxApplyDecideExpiry } from '../lsx/expiry';   // v10.514 (D276) 승인 때 만료일
 
 @Injectable()
 export class ReviewService {
@@ -75,6 +76,8 @@ export class ReviewService {
             WHERE id = $1`,
           [item.targetId, nextStatus],
         );
+        /* v10.514 (D276) — 게시 트리거가 기본 기간으로 채운 만료일을 검수자가 고른 값으로(안 고르면 기본 그대로 · 검수 승인 표시) */
+        if (nextStatus === 'PUBLISHED') await lsxApplyDecideExpiry(this.db, item.targetId, actorId, { expiryMonths: dto.expiryMonths, expiresOn: dto.expiresOn });
       } else if (item.targetType === 'REQUEST') {
         await this.db.query(`UPDATE requests SET status = $2 WHERE id = $1`,
           [item.targetId, nextStatus]);

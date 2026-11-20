@@ -301,7 +301,7 @@ const can = (role, screen) =>
   for (const s of S.screens) {
     for (const a of s.apis) {
       const [method, rawPath] = a.split(' ');
-      const p = '/api/v1' + rawPath.split('?')[0];
+      const p = (rawPath.startsWith('/api/') ? '' : '/api/v1') + rawPath.split('?')[0];   // v10.521 (D278) 파트너 API 는 /api/partner/v1 그대로
       const key = `${method} ${p}`;
       if (seen.has(key)) { paths[p][method.toLowerCase()]['x-screens'].push(s.id); continue; }
       seen.add(key);

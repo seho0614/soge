@@ -225,6 +225,8 @@ export class ListingCardDto {
   @ApiProperty({ example: 5, description: '사진 장수' }) photoCount!: number;
   @ApiProperty({ nullable: true, example: 87.9, description: '소개 신뢰도(등록자 · 0~100 · v_account_trust)' }) trustScore!: number | null;
   @ApiProperty({ nullable: true, description: '급구 · 급매 {kind: BUY|SELL, label, until}' }) urgent!: { kind: string; label: string; until: string } | null;
+  /* v10.515 (D276) — 기본 목록(최신순 등)에서 끌어올림 효과 중이면 「끌어올림」 · 유료면 「유료 끌어올림」(반드시 함께 표시) · 그 밖 null */
+  @ApiPropertyOptional({ nullable: true, example: '끌어올림' }) bumpLabel?: string | null;
 }
 
 /** v10.46 (docs/96) — 매물 상세의 지도 좌표 

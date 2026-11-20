@@ -1,0 +1,64 @@
+/* v10.497 ~ 500 (D272 · docs/635 ~ 638) 장애 공지 띠 · 서비스 상태 화면 · 간편 로그인 단추 · 웹 접근성 도구(보기 설정)
+ * ★ 값은 모두 토큰(var(--sgb-…)) — 새 토큰(간편 로그인 업체 색 · 고대비 · 글자 크게 배율 · 띠 색)은 upt-tokens.css 에 둠(sgb-tokens.css 는 디자인 시트 사본이라 손대지 않음).
+ *   글자 크게: <html data-a11y-font="l|xl"> → body 를 zoom(픽셀로 적힌 옛 화면 글자까지 함께 커짐 · 가로 넘침은 화면마다 보던 그대로 줄바꿈)
+ *   고대비:   <html data-a11y-contrast="high"> → 글자 · 줄 · 링크 토큰을 진하게 바꾸고 링크 밑줄 · 포커스 테두리를 두껍게 */
+
+/* ── 장애 공지 띠 ── */
+.upt-bar { border-bottom: 1px solid var(--sgb-line-soft); }
+.upt-bar-row { margin: 0; padding: 8px 16px; text-align: center; font-size: var(--sgb-fs-cap); color: var(--sgb-ink); background: var(--sgb-upt-minor-bg); word-break: keep-all; }
+.upt-bar-row.upt-lv-major, .upt-bar-row.upt-lv-critical { background: var(--sgb-upt-major-bg); }
+.upt-bar-row a { color: var(--sgb-link); font-weight: var(--sgb-fw-bold); margin-left: 6px; }
+
+/* ── 서비스 상태 화면(/status) ── */
+.upt-page { max-width: 760px; margin: 0 auto; padding: 32px 16px 56px; font-family: var(--sgb-font-body); color: var(--sgb-ink); }
+.upt-page h1 { font-family: var(--sgb-font-title); font-size: var(--sgb-fs-title-2); margin: 0 0 6px; }
+.upt-page h2 { font-size: var(--sgb-fs-body-1); margin: 28px 0 10px; }
+.upt-page h3 { font-size: var(--sgb-fs-body-1); margin: 0 0 4px; }
+.upt-sub, .upt-meta, .upt-none { color: var(--sgb-ink-3); font-size: var(--sgb-fs-cap); }
+.upt-ov { margin: 16px 0; padding: 14px 16px; border-radius: var(--sgb-r-md); border: 1px solid var(--sgb-line); background: var(--sgb-upt-ok-bg); font-weight: var(--sgb-fw-bold); }
+.upt-ov-minor, .upt-ov-maintenance, .upt-ov-unknown { background: var(--sgb-upt-minor-bg); }
+.upt-ov-major, .upt-ov-degraded { background: var(--sgb-upt-major-bg); }
+.upt-card { padding: 12px 14px; margin: 0 0 10px; border: 1px solid var(--sgb-line); border-left-width: 4px; border-radius: var(--sgb-r-sm); background: var(--sgb-upt-paper); }
+.upt-card.upt-lv-major, .upt-card.upt-lv-critical { border-left-color: var(--sgb-alert); }
+.upt-card.upt-lv-minor { border-left-color: var(--sgb-accent); }
+.upt-card p { margin: 4px 0 0; }
+.upt-checks, .upt-recent { margin: 0; padding-left: 18px; line-height: 1.8; }
+
+/* ── 간편 로그인 단추(로그인 화면) — 업체 색은 업체 안내서 값(토큰) ── */
+.upt-soc { margin: 14px 0 6px; }
+.upt-soc-or { display: flex; align-items: center; gap: 10px; color: var(--sgb-ink-3); font-size: var(--sgb-fs-cap); margin: 0 0 10px; }
+.upt-soc-or::before, .upt-soc-or::after { content: ''; flex: 1; height: 1px; background: var(--sgb-line); }
+.upt-soc-btn { display: flex; align-items: center; justify-content: center; height: 46px; margin: 0 0 8px; border-radius: var(--sgb-r-sm);
+  font-size: var(--sgb-fs-body-2); font-weight: var(--sgb-fw-bold); text-decoration: none; }
+.upt-soc-kakao { background: var(--sgb-kakao-bg); color: var(--sgb-kakao-fg); }
+.upt-soc-naver { background: var(--sgb-naver-bg); color: var(--sgb-naver-fg); }
+.upt-soc-btn:focus-visible { outline: var(--sgb-focus-w) solid var(--sgb-focus); outline-offset: 2px; }
+
+/* ── 보기 설정(웹 접근성 도구) ── */
+.a11y-tools { position: fixed; left: 16px; bottom: 16px; z-index: 900; font-family: var(--sgb-font-body); }
+.a11y-fab { min-height: 44px; padding: 0 14px; border-radius: var(--sgb-r-pill); border: 1px solid var(--sgb-line); background: var(--sgb-upt-paper); color: var(--sgb-navy);
+  font-size: var(--sgb-fs-cap); font-weight: var(--sgb-fw-bold); box-shadow: var(--sgb-shadow); cursor: pointer; }
+.a11y-panel { position: absolute; left: 0; bottom: 52px; width: 280px; max-width: calc(100vw - 32px); padding: 14px; border-radius: var(--sgb-r-md); border: 1px solid var(--sgb-line);
+  background: var(--sgb-upt-paper); color: var(--sgb-ink); box-shadow: var(--sgb-shadow-up); }
+.a11y-h { margin: 0 0 10px; font-weight: var(--sgb-fw-bold); font-size: var(--sgb-fs-body-2); }
+.a11y-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; font-size: var(--sgb-fs-cap); }
+.a11y-row > span { width: 100%; color: var(--sgb-ink-2); }
+.a11y-row button { min-height: 44px; padding: 0 12px; border-radius: var(--sgb-r-sm); border: 1px solid var(--sgb-line); background: var(--sgb-upt-paper); color: var(--sgb-ink); font: inherit; cursor: pointer; }
+.a11y-row button[aria-pressed='true'] { border-color: var(--sgb-navy); background: var(--sgb-navy); color: var(--sgb-upt-paper); }
+.a11y-note { margin: 0; color: var(--sgb-ink-3); font-size: var(--sgb-fs-micro); }
+.a11y-fab:focus-visible, .a11y-row button:focus-visible { outline: var(--sgb-focus-w) solid var(--sgb-focus); outline-offset: 2px; }
+@media (max-width: 640px) { .a11y-tools { left: 8px; bottom: 8px; } }
+@media print { .a11y-tools, .upt-bar { display: none; } }
+
+/* 글자 크게 — body 배율(토큰) */
+html[data-a11y-font='l'] body { zoom: var(--sgb-a11y-zoom-l); }
+html[data-a11y-font='xl'] body { zoom: var(--sgb-a11y-zoom-xl); }
+
+/* 고대비 — 글자 · 줄 · 링크 토큰(디자인 시트 --sgb-* · 옛 --ink 계열 모두)을 진하게 */
+html[data-a11y-contrast='high'] {
+  --sgb-ink: var(--sgb-hc-ink); --sgb-ink-2: var(--sgb-hc-ink); --sgb-ink-3: var(--sgb-hc-ink-soft); --sgb-sys: var(--sgb-hc-ink-soft);
+  --sgb-line: var(--sgb-hc-line); --sgb-line-soft: var(--sgb-hc-line); --sgb-card-line: var(--sgb-hc-line); --sgb-ph: var(--sgb-hc-ink-soft); --sgb-link: var(--sgb-hc-link);
+  --ink: var(--sgb-hc-ink); --ink-2: var(--sgb-hc-ink); --ink-3: var(--sgb-hc-ink-soft); --line: var(--sgb-hc-line); --line-2: var(--sgb-hc-line);
+}
+html[data-a11y-contrast='high'] a { text-decoration: underline; text-underline-offset: 2px; }
+html[data-a11y-contrast='high'] :focus-visible { outline: var(--sgb-focus-w) solid var(--sgb-focus) !important; outline-offset: 2px; }

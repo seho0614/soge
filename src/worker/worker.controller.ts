@@ -47,10 +47,21 @@ const JOBS = [
   'qlt_lot_alloc',      /* v10.495 (D271) 재고 로트 붙이기 — 매시간 · 로트 관리 상품의 출고(배송 뒤) · 반입 · 줄이는 실사 */
   'qlt_daily',          /* v10.495 · 496 (D271) 로트 유통기한 임박 · 지남 · 클레임 재발 알림 — 매일 07:20 */
   'mkt_campaign_send',  /* v10.483 (D268) 문자 · 메일 캠페인 — 5분마다 · campaign.enabled on 일 때만(처음 off) */
+  'papi_hook_send',     /* v10.521 (D278) 파트너 웹훅 보내기 — 1분마다 · papi.enabled · papi.hook_enabled on 일 때만(처음 off · ASSUME) */
+  'papi_daily',         /* v10.521 (D278) 파트너 API 하루 정리 — 매일 03:50 · 기록 정리 · 키 기한 · 틀린 키 몰림 */
+  'pbulk_match',        /* v10.522 (D278) 직원 일괄 등록 짝 맞춤 — 15분마다 · 초대 메일은 pbulk.invite_mail on 일 때만 */
+  'prx_hourly',         /* v10.518 · 520 (D277) 추천 이벤트 기간 끝 · 광고 소재 비교 기간 끝(결과 고정) — 매시간 */
+  'prx_ad_report',      /* v10.519 (D277) 광고 성과 보고서 — 매일 08:10 · 주기(prx.ad_report_cycle 하루 · 주 · 달)의 지난 기간 없는 것만 · prx.ad_report_mail on 이면 메일(처음 off) */
   'sec_daily_purge',    /* v10.485 (D268) 보안 기록 정리 — 매일 04:55 · 1년 지난 접속 나라 · 30일 캐시 · 하루 지난 패스키 문제 */
+  'upt_daily',          /* v10.497 (D272) 가동 감시 · 간편 로그인 정리 — 매일 04:50 · 감시 결과 보관 날수 · 지난 state · 이어서 표 · 180일 기록 */
   'mall_benefit_expire', /* v10.479 (D267) 소개몰 적립금 · 상품권 소멸 — 매일 00:20 · 적립금 30일 전 회원 알림 */
   'mall_tier_recalc',   /* v10.480 (D267) 소개몰 회원 등급 다시 셈 — 매일 05:20 · mall.tiers on 일 때 */
   'mall_subscribe',     /* v10.481 (D267) 소개몰 정기 배송 — 매일 07:10 · mall.subscribe · mall.order_open on 일 때만(처음 off · 간주) */
+  'mall_cash_receipt',  /* v10.506 (D274) 소개몰 현금영수증 발급 · 취소 — 10분마다 · mall.cash_receipt on 일 때만(처음 off · 간주) */
+  'plz_badge_month',    /* v10.507 (D274) 소개광장 이번 달 점수 · 지난달 마감 배지 — 매일 03:30 · 배지는 plaza.ranking on 일 때 */
+  'mlx_daily_purge',    /* v10.505 · 506 · 508 (D274) 재입고 기한 · 현금영수증 번호 보관 끝 · 사용 통계 보관 끝 — 매일 04:35 */
+  'mbx_price_digest',   /* v10.503 (D273) 가격 변동 묶음 알림 — 매일 08:30 · 가격 알림 스위치 on 일 때만 */
+  'mbx_daily',          /* v10.501 ~ 504 (D273) 최근 본 · 회원 대화 보관 기간 · 탈퇴 회원 기록 정리 — 매일 04:35 */
   'sal_opp_remind',     /* v10.466 (D264) 영업 기회 다음 할 일 알림 — 매일 08:50 · sales.opp_remind on 일 때 */
   'acct_bank_feed',     /* v10.467 (D264) 은행 거래내역 자동 조회 — 매일 06:40 · acct.bank_feed on 일 때만(처음 off) */
   'hr_training_due',    /* v10.458 (D262) 법정 의무교육 기한 알림 — 매일 09:45 */
@@ -58,6 +69,9 @@ const JOBS = [
   'acct_biz_check',     /* v10.431 (D254) 거래처 휴폐업 다시 조회 — 매일 06:10 · 스위치 on 일 때만 */
   'corp_doc_due',       /* v10.425 (D253) 사내 문서 만료 알림 — 매일 09:30 */
   'ofc_task_due',       /* v10.463 (D263) 업무 요청 기한 지남 수 알림 — 매일 09:10 · ofc.task_due_alert on 일 때 */
+  'opx_archive',        /* v10.509 (D275) 기록 장기 보관 — 매일 04:20 · opx.archive on 일 때 · 묶음 · S3 · 복원 확인 · 파기 · DB 정리(설정 > 0) */
+  'opx_risk_events',    /* v10.510 (D275) 이상 거래 점수 — 5분 · 매물 등록 · 신고 접수로 표시된 계정 */
+  'opx_risk_daily',     /* v10.510 (D275) 이상 거래 점수 — 매일 04:50 · 최근 계정 다시 셈 */
   'acct_insurance',     /* v10.422 (D252) 4대보험 취득 · 상실 신고 기한 알림 — 매일 09:35 */
   'its_key_expiry',     /* v10.490 (D270) 외부 연동 키 만료 · 교체 알림 — 매일 08:40 · its.key_alert on 일 때 */
   'its_office_daily',   /* v10.491 ~ 493 (D270) IT 자산 갱신 알림 · 자동 갱신일 옮김 · 제안 접수 대기 수 · 기간 지난 설문 마감 — 매일 08:55 */
@@ -69,6 +83,8 @@ const JOBS = [
   'agent_chat_purge',   /* v10.109 (D121) AI 상담 대화 보관 기간(5년) 지난 것 정리 */
   'esign_poll',         /* v10.143 (D139) 전자계약 만료 · 업체 상태 맞추기 */
   'safenum_release',    /* v10.145 (D141) 기한 지난 050 번호 돌려주기 */
+  'lsx_daily',          /* v10.513 · 514 (D276) 저장한 검색 묶음 알림 · 매물 만료 예고 · 만료로 내림 — 매일 08:10 · 스위치 꺼져 있으면 아무것도 안 함 */
+  'lsx_hourly',         /* v10.515 · 516 (D276) 효과 끝난 끌어올림 정리 · 매물 AI 요약 초안 — 매시간 */
 ] as const;
 
 export class RunJobDto {

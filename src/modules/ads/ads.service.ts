@@ -4,6 +4,7 @@ import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { ComplianceService } from '../catalog/compliance.service';
 import { I18nService } from '../i18n/i18n.service';
+import { abSwapInfeed, abSwapServing } from '../prx/abtest';   // v10.520 (D277) 광고 소재 비교 — 번갈아 내기
 
 /**
  * 광고 · 관심 성향 (프론트 v3.2 서버 계층).
@@ -221,10 +222,11 @@ export class AdsService {
          FROM v_ad_serving
         WHERE slot_code = $1
           AND (($2::text IS NULL AND cardinality(segments) = 0) OR $2 = ANY(segments))
+          AND NOT fn_prx_ab_hidden(id)   -- v10.520 (D277) 비교 시험 B 는 A 차례로만
         ORDER BY random() LIMIT 1`, [slot, seg]);
 
     const AD = { title: 'title', body: 'body', cta: 'cta' };   // v10.123 (D126) 광고 자리 소재 번역
-    if (hit) return { ...(await this.i18n.overlayOne(hit, 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: seg, empty: false };
+    if (hit) return { ...(await this.i18n.overlayOne(await abSwapServing(this.db, hit), 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: seg, empty: false };   // v10.520 (D277) 표기 「광고」 그대로
 
     // 성향에 맞는 소재가 없으면 세그먼트 지정이 없는 기본 소재를 씁니다.
     const [fallback] = await this.db.query<any>(
@@ -232,9 +234,10 @@ export class AdsService {
               landing_route AS "landingRoute", slot_code AS "slot"
          FROM v_ad_serving
         WHERE slot_code = $1 AND cardinality(segments) = 0
+          AND NOT fn_prx_ab_hidden(id)   -- v10.520 (D277)
         ORDER BY random() LIMIT 1`, [slot]);
 
-    if (fallback) return { ...(await this.i18n.overlayOne(fallback, 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: null, empty: false };
+    if (fallback) return { ...(await this.i18n.overlayOne(await abSwapServing(this.db, fallback), 'AD_PLACEMENT', (x: any) => x.id, AD)), label: '광고', matchedSegment: null, empty: false };   // v10.520 (D277)
     return { empty: true, note: '이 슬롯에 나갈 소재가 없습니다. 자리를 비웁니다.' };
   }
 
@@ -404,10 +407,12 @@ export class AdsService {
               p.landing_route AS "landingUrl", p.advertiser
          FROM ad_placements p
         WHERE p.slot_code = 'INFEED'
+          AND NOT fn_prx_ab_hidden(p.id)   -- v10.520 (D277)
           AND p.status = 'ACTIVE'
           AND (p.starts_at IS NULL OR p.starts_at <= (now() AT TIME ZONE 'Asia/Seoul')::date)
           AND (p.ends_at   IS NULL OR p.ends_at   >= (now() AT TIME ZONE 'Asia/Seoul')::date)
         ORDER BY random() LIMIT $1`, [want]);
+    await abSwapInfeed(this.db, rows);   // v10.520 (D277) 비교 시험 A 면 차례대로 A · B
     await this.i18n.overlay(rows, 'AD_PLACEMENT', (r: any) => r.id, { title: 'title', body: 'body' });   // v10.123 · D126
 
     return {

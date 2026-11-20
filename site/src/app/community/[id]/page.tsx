@@ -10,6 +10,7 @@ import { type PostDetail, type PostComment } from '@/components/community/types'
 import { BoardBadge, PlazaHero, PlazaTabs, dot } from '@/components/community/Plaza';
 import { CommentForm, ReplyToggle } from '@/components/community/CommentForm';
 import { PostOwnerActions } from '@/components/community/PostOwnerActions';
+import { HelpfulButton, HelpfulScope } from '@/components/community/HelpfulButton';   // v10.507 (D274) 도움돼요(plaza.ranking on 일 때만 보임)
 import '@/styles/plaza.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -84,6 +85,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
         {c.translated && <span className="dim" data-mt=""> · {t('mt.label')}</span>}</p>
       {/* v10.80 — 남의 공개 댓글은 신고(본인인증 회원 · 서로 다른 3명이면 가려짐 · D110) */}
       {loggedIn && !c.mine && !c.hidden && <a className="dim cmu-rpt" href={`/report/comment/${c.id}`} data-comment-report="">{t('comment.report')}</a>}
+      {!c.hidden && <HelpfulButton type="COMMENT" id={c.id} mine={!!c.mine} />}
     </div>
   );
 
@@ -112,7 +114,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
   }
 
   return (
-    <Shell board={d.board}>
+    <Shell board={d.board}><HelpfulScope postId={d.id!}>
       {posted === 'PENDING' && <p className="notice">{t.rich('post.postedPending', { b: (c) => <b>{c}</b> })}</p>}
       {posted === 'PUBLISHED' && <p className="ok-note" role="status">{t('post.posted')}</p>}
       {saved && <p className="ok-note" role="status">{t('post.saved')}</p>}
@@ -139,6 +141,7 @@ export default async function CommunityPostPage({ params, searchParams }: {
         <div className="notice">{t.rich('post.reviewNote', { b: (c) => <b>{c}</b> })}</div>
       )}
       {d.mine && <PostOwnerActions id={d.id!} />}
+      <HelpfulButton type="POST" id={d.id!} mine={!!d.mine} />
 
       <h2>{t('comment.count', { n: String(comments.length) })}</h2>
       <div className="card p2pad">
@@ -153,6 +156,6 @@ export default async function CommunityPostPage({ params, searchParams }: {
       <p className="hint">{t('comment.depthHint')}</p>
       <CommentForm postId={d.id!} loggedIn={loggedIn} reportHref={!d.mine && d.state === 'PUBLISHED' ? `/report/post/${d.id}` : undefined} />
       {back}
-    </Shell>
+    </HelpfulScope></Shell>
   );
 }

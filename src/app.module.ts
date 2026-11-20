@@ -257,7 +257,15 @@ import { OpsPlanController } from './modules/admin/ops-plan.controller';   // v1
 import { LoginSessionsController } from './modules/identity/login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { PasskeyController } from './modules/identity/passkey.controller';   // v10.484 (D268) 운영자 패스키
 import { SecGeoController } from './modules/identity/geo-guard.controller';   // v10.485 (D268) 해외 접속 경고
+import { OpxController } from './modules/opx/opx.controller';   // v10.509 ~ 512 (D275) 기록 장기 보관 · 이상 거래 점수 · 일괄 처리 · 기능 스위치 한눈에
+import { UptimeController } from './modules/uptime/uptime.controller';   // v10.497 (D272) 가동 감시 · 장애 공지
+import { SocialAuthController } from './modules/social/social.controller';   // v10.498 (D272) 카카오 · 네이버 간편 로그인
+import { SocialAuthService } from './modules/social/social';   // v10.498 (D272)
 import { MktCampaignController, MktUnsubscribeController } from './modules/marketing/campaign.controller';   // v10.483 (D268) 문자 · 메일 캠페인 · 수신 거부(공개)
+import { PapiAdminController, PbulkAdminController, PapiPartnerController } from './modules/papi/papi.controller';   // v10.521 · 522 (D278) 파트너 오픈 API · 직원 일괄 등록
+import { I18nReviewController } from './modules/i18n/i18n-review.controller';   // v10.523 (D278) 일본어 · 중국어 검수
+import { PrxAdminController, PrxPublicController } from './modules/prx/prx.controller';   // v10.517 ~ 520 (D277) 메인 팝업 · 추천 이벤트 · 광고 성과 보고서 · 광고 소재 비교
+import { MbxController, MbxAdminController } from './modules/mbx/mbx.controller';   // v10.501 ~ 504 (D273) 최근 본 · 비교하기 · 가격 알림 · 회원 대화
 import { OpsWeekController } from './modules/admin/ops-week.controller';   // v10.374 ~ 376 (D240) 적용 확인표 · 알림 주간 · 탈퇴 취소   // v10.369 ~ 371 (D239) 내 비밀번호 · 알림 끄기 · 점검 예약   // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
 import { ExportApprovalService, ExportGateInterceptor } from './modules/admin/export-approval';   // v10.366 (D238) 개인정보 대량 내려받기 승인
 import { GuideFlowAdminController, GuideFlowPublicController } from './modules/help/guide-flow.controller';   // v10.347 (D233) 이용 흐름
@@ -284,6 +292,7 @@ import { IntegTestService } from './modules/site/integ-test.service';   /* v10.1
 import { IntegTestController } from './modules/site/integ-test.controller';
 import { SafenumService } from './modules/listing/safenum.service';   /* v10.145 (D141) 050 안심번호 */
 import { SafenumController, SafenumAdminController } from './modules/listing/safenum.controller';
+import { LsxController } from './modules/lsx/lsx.controller';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 만료 · 연장 · 끌어올리기 · 매물 AI 요약
 import { AccountSecurityController } from './modules/identity/account-security.controller';  /* v10.48 비밀번호 재설정 · 변경 · 탈퇴 · 잠금 */
 import { AccountSecurityService } from './modules/identity/account-security.service';
 import { EtaxAdminController } from './modules/etax/etax.controller';
@@ -293,6 +302,9 @@ import { ItsController } from './modules/admin/its.controller';   // v10.490 ~ 4
 import { ErpController } from './modules/acct/erp.controller';   // v10.433 ~ 436 (D256) 내부 ERP — 견적 · 명세서 · 부서 손익 · 창고 · 독촉
 import { FinController } from './modules/acct/fin.controller';   // v10.453 ~ 456 (D261) 자금 · 영업 — 법인카드 한도 · 대량 이체 · 매출 목표 · 거래처 원장
 import { HealthBenefitController, HealthBenefitMeController } from './modules/health/health-benefit.controller';   // v10.479 ~ 482 (D267) 소개몰 회원 혜택 — 적립금 · 등급 · 정기 배송 · 상품권
+import { HealthMlxController, HealthMlxMeController } from './modules/health/health-mlx.controller';   // v10.505 · 506 (D274) 소개몰 재입고 알림 · 현금영수증
+import { PlazaRankController } from './modules/community/plaza-rank.controller';   // v10.507 (D274) 소개광장 활동 배지 · 랭킹(공개 · 회원 · 운영)
+import { SiteUsageController } from './modules/site/site-usage.controller';   // v10.508 (D274) 회원 화면 사용 통계(공개 /site/usage/beat · 운영)
 import { SalesController } from './modules/acct/sales.controller';   // v10.466 · 467 (D264) 영업 기회 CRM · 은행 거래내역 자동 조회
 import { HealthCouponController } from './modules/health/health-coupon.controller';   // v10.469 (D264) 소개몰 할인 쿠폰 · 기획전
 import { AcctOfficeController } from './modules/acct/office.controller';   // v10.424 ~ 427 (D253) 결재선 · 사내 문서함 · 분기 · 연 예산
@@ -315,6 +327,10 @@ import { LeadService } from './modules/lead/lead.service';
     FinController,            // v10.453 ~ 456 (D261)
     HealthBenefitController,  // v10.479 ~ 482 (D267) 운영
     HealthBenefitMeController, // v10.479 ~ 482 (D267) 회원
+    HealthMlxController,      // v10.505 · 506 (D274) 운영
+    HealthMlxMeController,    // v10.505 · 506 (D274) 회원
+    PlazaRankController,      // v10.507 (D274)
+    SiteUsageController,      // v10.508 (D274) 공개 — /site/usage/beat
     SalesController,          // v10.466 · 467 (D264)
     HealthCouponController,   // v10.469 (D264)
     AcctOfficeController,     // v10.424 ~ 427 (D253)
@@ -411,8 +427,19 @@ import { LeadService } from './modules/lead/lead.service';
     LoginSessionsController,  // v10.380 (D241)
     PasskeyController,        // v10.484 (D268)
     SecGeoController,         // v10.485 (D268)
+    OpxController,            // v10.509 ~ 512 (D275) 기록 · 안전 · 운영
+    UptimeController,         // v10.497 (D272) 가동 감시 · 장애 공지 · 공개 상태
+    SocialAuthController,     // v10.498 (D272) 간편 로그인
     MktCampaignController,    // v10.483 (D268)
+    PapiAdminController,      // v10.521 (D278) 파트너 오픈 API(운영)
+    PbulkAdminController,     // v10.522 (D278) 직원 일괄 등록
+    PapiPartnerController,    // v10.521 (D278) /api/partner/v1(파트너 API 키 · PartnerApiKeyGuard)
+    I18nReviewController,     // v10.523 (D278) 일본어 · 중국어 검수
     MktUnsubscribeController, // v10.483 (D268) 공개 — /site/unsubscribe
+    PrxPublicController,      // v10.517 (D277) 공개 — /popups
+    PrxAdminController,       // v10.517 ~ 520 (D277) /admin/prx
+    MbxController,            // v10.501 ~ 504 (D273) 회원 — /me/recent · /me/price-alerts · /me/dm · 공개 /site/mbx
+    MbxAdminController,       // v10.501 ~ 504 (D273) 운영 — /admin/mbx
     OpsWeekController,        // v10.374 ~ 376 (D240)      // v10.365 ~ 368 (D238) 회원 활동 기록 · 내려받기 승인 · 복원 시험
     GuideFlowPublicController,   // v10.347 (D233) 이용 흐름(공개)
     GuideFlowAdminController,    // v10.347 (D233) 이용 흐름 고치기(SUPER)
@@ -465,6 +492,7 @@ import { LeadService } from './modules/lead/lead.service';
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
     IntegTestController,   // v10.144 (D140) 운영 화면 › 외부 연동 › 결제 · 계좌 연결 확인
     SafenumController, SafenumAdminController,   // v10.145 (D141) 전화하기 · 통화 웹훅 · 운영 화면 「안심번호」
+    LsxController,   // v10.513 ~ 516 (D276) ㊻ 매물
     PaymentClientKeyController,   // v10.128 (D128) 외부 연동 키
   ],
   providers: [
@@ -553,6 +581,7 @@ import { LeadService } from './modules/lead/lead.service';
     SettlementSummaryService,   /* v10.255 (docs/388) */
     AffiliateService, AffiliateAdminService, AffiliateAccountService,   // v10.92 · v10.108
     RecommendService,   // v10.218
+    SocialAuthService,  // v10.498 (D272) 간편 로그인
     SearchService,
     PublicService,
     SiteService,

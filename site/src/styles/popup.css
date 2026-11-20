@@ -1,0 +1,12 @@
+/* v10.517 (D277 · docs/655) 메인 팝업 공지 — 디자인 값은 sgb-tokens 토큰만(글자 · 모서리 · 그림자 · 폭 기준) */
+.hpop-dim { position: fixed; inset: 0; z-index: 950; display: flex; align-items: center; justify-content: center; padding: 16px; background: color-mix(in srgb, var(--sgb-navy) 35%, transparent); }
+.hpop { width: 100%; max-width: 420px; max-height: calc(100vh - 32px); overflow: auto; background: var(--paper, var(--sgb-on-point)); color: var(--sgb-ink); border-radius: var(--sgb-r-lg); box-shadow: var(--sgb-shadow-up); padding: 24px 20px 12px; font-family: var(--sgb-font-body); }
+.hpop-t { margin: 0 0 12px; font-family: var(--sgb-font-title); font-size: var(--sgb-fs-title-3); font-weight: var(--sgb-fw-title); color: var(--sgb-navy); }
+.hpop-b { margin: 0 0 16px; font-size: var(--sgb-fs-body-2); color: var(--sgb-ink-2); white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+.hpop-go { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: var(--sgb-r-pill); background: var(--sgb-navy); color: var(--sgb-on-point); font-size: var(--sgb-fs-body-2); font-weight: var(--sgb-fw-bold); text-decoration: none; }
+.hpop-ft { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; border-top: 1px solid var(--sgb-line); padding-top: 4px; }
+.hpop-x { min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: var(--sgb-ink-3); font-size: var(--sgb-fs-cap); cursor: pointer; }
+.hpop-x:hover, .hpop-x:focus-visible { color: var(--sgb-navy); }
+.hpop-close { font-weight: var(--sgb-fw-bold); color: var(--sgb-ink-2); }
+.hpop-n { color: var(--sgb-ink-3); font-size: var(--sgb-fs-micro); }
+@media (max-width: 640px) { .hpop { padding: 20px 16px 8px; } }

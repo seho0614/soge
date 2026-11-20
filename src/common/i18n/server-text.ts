@@ -7,9 +7,13 @@
  *   부르는 곳: 응답 출구(ServerTextInterceptor — note · warning · reason · message · notice 칸) · 오류 출구(DbErrorFilter — message).
  */
 import { SERVER_TEXT_EN } from './server-text.en';
+import { SERVER_TEXT_JA } from './server-text.ja';   // v10.523 (D278) 기계 번역 초안
+import { SERVER_TEXT_ZH } from './server-text.zh';   // v10.523 (D278) 기계 번역 초안
 
 type Pat = { re: RegExp; en: string };
-const DICTS: Record<string, Record<string, string>> = { en: SERVER_TEXT_EN };
+const DICTS: Record<string, Record<string, string>> = { en: SERVER_TEXT_EN, ja: SERVER_TEXT_JA, zh: SERVER_TEXT_ZH };
+/** v10.523 (D278) — 초안 언어의 사전에 없는 글은 이 언어 사전으로(한국어 원문보다 읽기 쉬움) */
+const FALLBACK: Record<string, string> = { ja: 'en', zh: 'en' };
 const pats = new Map<string, Pat[]>();
 
 function patterns(lang: string): Pat[] {
@@ -29,6 +33,16 @@ function patterns(lang: string): Pat[] {
 
 /** 화면 언어로 — 사전에 없으면 원문 그대로 */
 export function serverText(text: string, lang: string | null | undefined, depth = 0): string {
+  /* v10.523 (D278 · docs/661) 일본어 · 중국어 — 그 언어 사전(기계 번역 초안)에 없으면 영어 사전으로 한 번 더 */
+  const fb = lang ? FALLBACK[lang] : undefined;
+  if (fb && depth === 0) {
+    const own = serverTextOne(text, lang, 0);
+    return own !== text ? own : serverTextOne(text, fb, 0);
+  }
+  return serverTextOne(text, lang, depth);
+}
+
+function serverTextOne(text: string, lang: string | null | undefined, depth = 0): string {
   if (!lang || !text || text.length > 500 || !/[가-힣]/.test(text)) return text;   // 긴 글(회원이 쓴 글 등)은 맞춰 보지 않음
   const d = DICTS[lang];
   if (!d) return text;
