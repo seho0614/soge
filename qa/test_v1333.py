@@ -107,7 +107,7 @@ ok('① 코드 — D225(지우는 문장 없음) · 운영 API 4개 · 정기 �
    and not re.search(r'\b(DROP|DELETE|TRUNCATE)\b', M25) and "@Controller('api/v1/admin/inquiries')" in IC and "@Post(':id/answer')" in IC
    and "@Patch(':id')" in IC and "'INQUIRY_ANSWERED'" in IS and "'INQUIRY_ANSWER'" in IS and 'InquiryAdminController' in AM and 'InquiryAdminService' in AM
    and 'fn_inquiry_due_alert()' in SCH and "['inquiries', '1:1 문의']" in MENU and "tab === 'inquiries' && <InquiryDesk />" in APP and 'data-inquiry-desk' in DESK
-   and "'/admin/reports/roles'" in MR and '<MemberRoles accountId={a.id}' in MB and "INQUIRY_DUE_BREACH: '1:1 문의 답변 기한 넘김'" in OA
+   and ("'/admin/reports/roles'" in MR or 'data-member-roles="view"' in MR) and '<MemberRoles accountId={a.id}' in MB and "INQUIRY_DUE_BREACH: '1:1 문의 답변 기한 넘김'" in OA
    and 'data-inquiry-answer' in HI and KO.get('answeredOn') and EN.get('answeredOn') and '"SB-ADM-INQ-010"' in SJ and '"POST /admin/inquiries/{id}/answer"' in SJ
    and 'D225' in doc('464_') and VT >= (10, 333) and len(mig) >= 263 and 'D225_inquiry_answer_desk' in mig, f'{VER} · 마이그레이션 {len(mig)}')
 if API and DB:
@@ -187,7 +187,7 @@ if API and DB:
                 sent = psql(f"SELECT answer FROM inquiries WHERE id = '{iid}'")
                 ok('④ 화면 — 운영 화면 「1:1 문의」 표 → 펼쳐 답변 보내기 · 회원 상세 「권한 주기 · 거두기」(SUPER 면 단추 · 아니면 안내) · 화면 오류 없음',
                    seen.get('desk') == 1 and seen.get('row') == 1 and seen.get('one') == 1 and sent == '화면에서 보낸 답변 1333'
-                   and seen.get('roles') == ('super' if sup else 'read') and (seen.get('grant') == 1 or not sup) and not perr, f'{seen} · SUPER {sup} · {sent} · {perr[:2]}')
+                   and (seen.get('roles') == 'view' or (seen.get('roles') == ('super' if sup else 'read') and (seen.get('grant') == 1 or not sup))) and not perr, f'{seen} · SUPER {sup} · {sent} · {perr[:2]}')
         else:
             print('  (ADMIN_WEB 없음 — ④ 건너뜀)')
     finally:

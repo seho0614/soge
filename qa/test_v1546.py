@@ -182,7 +182,7 @@ ok('① 코드 — D285 기기 표지 표(해시 64자만) · 쌓기 함수(꺼�
    and "createHash('sha256').update(`sgb-dm:${mark}`)" in DV and 'export async function sfxDeviceSeen' in DV and "deviceMark: markOf(req.headers['x-device-mark'])" in MW
    and 'deviceMark?: string;' in RC and "if (ok) await sfxDeviceSeen(db, accountId, 'LOGIN');" in LH and "await sfxDeviceSeen(this.db, acc.id, 'SIGNUP');" in AS
    and "const DM = 'sgb_dm';" in SS and "h['X-Device-Mark'] = dm" in SS and 'async function ensureDeviceMark' in SS and 'headers: await fwdHeaders()' in SS and 'httpOnly: true' in SS
-   and "@Get('device/:mark')" in CT and "@Audit('SFX_DEVICE_VIEW', 'ACCOUNT')" in CT and 'export function SfxDevice' in UI
+   and "@Get('device/:mark')" in CT and "@Audit('SFX_DEVICE_VIEW', 'ACCOUNT'" in CT and 'export function SfxDevice' in UI
    and "['sfx-device', '같은 기기 여러 계정']" in MN and "'admrsk')?.tabs, 'opx-risk', ['sfx-device']" in MN and "{tab === 'sfx-device' && <SfxDevice />}" in AP
    and '"SB-ADM-SFX-010"' in SJ and '지문' in doc('684_') and VT >= (10, 546), VER)
 

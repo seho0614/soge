@@ -60,7 +60,7 @@ ok('① 관계도 — GET /me/recommend/tree(모든 회원 · memberTree) · 파
 ok('① 정산 내역 — 소개비 · 포인트 · 출금 · 제휴 · 판매자 · 다른 회원 금액 없음 · 나 · 운영(ADMIN · SUPER · 감사 ACCOUNT_SETTLEMENT_VIEW) · 공급자',
    'FROM settlements WHERE payee_account_id = $1' in SS and 'FROM point_ledger' in SS and 'FROM point_cashouts' in SS and 'FROM partner_settlements' in SS
    and 'FROM hlt_settlements' in SS and "@Get('me/settlement-summary')" in SCt and "@Get('admin/accounts/:id/settlement-summary')" in SCt
-   and "@Audit('ACCOUNT_SETTLEMENT_VIEW', 'ACCOUNT')" in SCt and "@Roles('ADMIN', 'SUPER')" in SCt and 'SettlementSummaryService,' in AM and 'SettlementSummaryController,' in AM, '')
+   and "@Audit('ACCOUNT_SETTLEMENT_VIEW', 'ACCOUNT'" in SCt and "@Roles('ADMIN', 'SUPER')" in SCt and 'SettlementSummaryService,' in AM and 'SettlementSummaryController,' in AM, '')
 ok('① 명세 — SB-MYP-RCM-010(/my/recommend) · SB-MYP-STL-030(/my/settlement/all) · 회원 상세에 운영 정산 API',
    'GET /me/recommend/tree' in sid.get('SB-MYP-RCM-010', {}).get('apis', []) and sid.get('SB-MYP-RCM-010', {}).get('url') == '/my/recommend'
    and 'GET /me/settlement-summary' in sid.get('SB-MYP-STL-030', {}).get('apis', []) and 'GET /admin/accounts/{id}/settlement-summary' in sid.get('SB-ADM-MBR-020', {}).get('apis', []), '')

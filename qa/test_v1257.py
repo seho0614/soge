@@ -83,7 +83,7 @@ mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.is
 all_text = strip_comments(RT + MR + SA + HM) + json.dumps(KA.get('recommend', {}), ensure_ascii=False) + json.dumps(KO.get('settleAll', {}), ensure_ascii=False) + json.dumps(KO['home']['recommend'], ensure_ascii=False)
 DOC = [f for f in os.listdir(os.path.join(K, 'docs')) if f.startswith('390_')] if os.path.isdir(os.path.join(K, 'docs')) else []
 ok('① 계층 용어 없음 · 마이그레이션 없음(242 · v10.260 부터 243) · 여러 단계 보상 없음 · 문서 390 · 판 v10.258 이상',
-   not any(w in all_text for w in WORDS) and len(mig) in (242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327) and bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 258),
+   not any(w in all_text for w in WORDS) and len(mig) in (242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329) and bool(DOC) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 258),
    f'{len(mig)} · {DOC} · {VER}')
 
 

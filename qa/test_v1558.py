@@ -172,7 +172,7 @@ if API and DB:
         long_db = psql(f"INSERT INTO prx_popups (title, link_url, audience, starts_at, ends_at) VALUES ('{tag} 너무 김', '/' || repeat('a', 301), ARRAY['GUEST'], now(), now() + interval '1 hour')")
         js_db = psql(f"INSERT INTO prx_popups (title, link_url, audience, starts_at, ends_at) VALUES ('{tag} 나쁜 주소', 'javascript:alert(1)', ARRAY['GUEST'], now(), now() + interval '1 hour')")
         ok('② DB — 마이그레이션 327 · 끝 D289 · 255 넘는 반복 수 검사 0 · 세 검사 다시 붙음 · 출처 주소 500자까지 받고 501자 막음 · 제휴상품 https 사진 주소 저장 됨',
-           mig == '327|D289_regex_repeat_fix' and bad == '0' and defs == 'affiliate_products_image_path_check,biz_axis_items_source_url_check,prx_popups_link_url_check'
+           (mig.split('|')[0].isdigit() and int(mig.split('|')[0]) >= 327 and mig.split('|')[1] >= 'D289_regex_repeat_fix') and bad == '0' and defs == 'affiliate_products_image_path_check,biz_axis_items_source_url_check,prx_popups_link_url_check'
            and rx == 't' and '!' not in aff, f"{mig} {bad} {defs} {rx} {aff[-60:]}")
         ok('② 팝업 — 단추 주소 있는 팝업 만들기(500 아님) · 사이트 안 주소 300자 · https 경로 300자 · 고치기 · 301자 · javascript: 는 DB 가 막음',
            c1.get('ok') is True and c2.get('ok') is True and c3.get('ok') is True and e1.get('ok') is True

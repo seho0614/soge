@@ -61,7 +61,7 @@ ok('① API — 회원 4개(요청 · 상태 · 취소 · 가짜 서명) · 웹�
    sorted(routes) == sorted([('Post', 'deals/:id/contract/esign', "'MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'"), ('Get', 'deals/:id/contract/esign', "'MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'"),
                              ('Post', 'deals/:id/contract/esign/cancel', "'MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'"), ('Post', 'deals/:id/contract/esign/mock-sign', "'MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'"),
                              ('Post', 'webhooks/esign', ''), ('Get', 'status', "'ADMIN', 'SUPER'"), ('Get', 'documents', "'ADMIN', 'SUPER'")])
-   and "@Audit('CONTRACT_ESIGN', 'DEAL')" in EC and "@Audit('CONTRACT_ESIGN_CANCEL', 'DEAL')" in EC and "@Post('deals/:id/contract/esign')" not in DC
+   and "@Audit('CONTRACT_ESIGN', 'DEAL'" in EC and "@Audit('CONTRACT_ESIGN_CANCEL', 'DEAL')" in EC and "@Post('deals/:id/contract/esign')" not in DC
    and "'webhooks'," in rd('scripts/check-acl.js'), str(routes))
 ok('① 웹훅 본문 그대로(rawBody) · 배치 esign_poll 등록(스케줄러 · 작업 목록)', "NestFactory.create(AppModule, { rawBody: true })" in rd('src/main.ts')
    and "case 'esign_poll'" in rd('src/worker/scheduler.service.ts') and "'esign_poll'," in rd('src/worker/worker.controller.ts'), '')

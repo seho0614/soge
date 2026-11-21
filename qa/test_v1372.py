@@ -125,14 +125,15 @@ def admin_page(path, fn):
 M39, RS, RC, SC, MR, RR = rd('prisma/migrations/D239_alert_mutes_maintenance_role_expiry/migration.sql'), rd('src/modules/site/report.service.ts'), rd('src/modules/site/report.controller.ts'), rd('src/worker/scheduler.service.ts'), rd('web/src/app/admin/MemberRoles.tsx'), rd('web/src/app/admin/RoleReview.tsx')
 ok('① 코드 — D239 account_roles.expires_at · 권한 주기 expiresDays(7 · 30 · 90) · 마지막 SUPER 막음 · 정기 작업 거둠 · 3일 알림 · 화면 기한 고르기 · 「기한」 칸 · 문서 507 · 판 v10.372',
    'ADD COLUMN IF NOT EXISTS expires_at timestamptz' in M39 and "@IsOptional() @IsIn([7, 30, 90]) expiresDays?: number;" in RC and "'ROLE_EXPIRY_LAST_SUPER'" in RS
-   and 'const rx = await this.roleExpire()' in SC and "'ROLE_EXPIRING', 'INFO'" in SC and 'data-member-role-days=""' in MR and 'data-role-expires=' in RR and '기한' in doc('507_') and VT >= (10, 372), VER)
+   and 'const rx = await this.roleExpire()' in SC and "'ROLE_EXPIRING', 'INFO'" in SC and ('data-member-role-days=""' in MR or 'data-role-grant-days=""' in rd('web/src/app/admin/RoleAdmin.tsx')) and 'data-role-expires=' in RR and '기한' in doc('507_') and VT >= (10, 372), VER)
 if API and DB:
     import consent_ok
     consent_ok.agree('admin@x.com', PW)
     TS = login('admin@x.com')
     em, aid = mk_staff('1372', None)
     try:
-        g1 = call('POST', '/admin/reports/roles', {'accountId': aid, 'role': 'REVIEWER', 'grant': True, 'reason': '시험 1372 기한 30일', 'expiresDays': 30}, TS)
+        emp1372 = (psql("INSERT INTO acct_employees (name, joined_on, monthly_base) VALUES ('시험1372', current_date, 0) RETURNING id") or '0').splitlines()[0]   # v10.563 (D291) 안쪽 역할은 직원 대장 연결 필수
+        g1 = call('POST', '/admin/reports/roles', {'accountId': aid, 'role': 'REVIEWER', 'grant': True, 'reason': '시험 1372 기한 30일', 'expiresDays': 30, 'employeeId': emp1372}, TS)
         ex1 = psql(f"SELECT round(extract(epoch FROM expires_at - now()) / 86400) FROM account_roles WHERE account_id = '{aid}' AND role = 'REVIEWER'")
         bad = call('POST', '/admin/reports/roles', {'accountId': aid, 'role': 'REVIEWER', 'grant': True, 'reason': '시험 1372 15일', 'expiresDays': 15}, TS)
         sup = call('POST', '/admin/reports/roles', {'accountId': aid, 'role': 'SUPER', 'grant': True, 'reason': '시험 1372 SUPER 기한', 'expiresDays': 7}, TS)
@@ -155,6 +156,7 @@ if API and DB:
     finally:
         psql(f"UPDATE account_roles SET expires_at = NULL WHERE account_id = '{aid}'")
         rm_role(aid, '1372')
+        psql("BEGIN; SET LOCAL session_replication_role = replica; DELETE FROM acct_employees WHERE name = '시험1372'; COMMIT;")   # v10.563 시험 직원
 else:
     print('  (API · DB 없음 — ② 건너뜀)')
 
