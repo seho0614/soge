@@ -112,8 +112,11 @@ export class HealthReviewService {
     const items = await this.db.query<any>(
       `SELECT q.id, q.is_private AS "isPrivate", q.created_at AS "createdAt", ${MASK} AS "writer", (q.account_id = $2) AS mine,
               CASE WHEN q.is_private AND q.account_id IS DISTINCT FROM $2 THEN NULL ELSE q.body END AS body,
-              CASE WHEN q.is_private AND q.account_id IS DISTINCT FROM $2 THEN NULL ELSE q.answer END AS answer,
-              q.answered_at AS "answeredAt", (q.answer IS NOT NULL) AS answered
+              CASE WHEN (q.is_private AND q.account_id IS DISTINCT FROM $2) OR q.answer_state <> 'VISIBLE' THEN NULL ELSE q.answer END AS answer,
+              CASE WHEN q.answer_state = 'VISIBLE' THEN q.answered_at END AS "answeredAt", (q.answer IS NOT NULL AND q.answer_state = 'VISIBLE') AS answered,
+              /* v10.577 — 판매자가 답했으면 그 판매자 이름(운영 답은 null — 화면이 「소개몰」) */
+              CASE WHEN q.answer_kind = 'SELLER' AND q.answer_state = 'VISIBLE'
+                   THEN (SELECT s.name FROM hlt_products p2 JOIN hlt_sellers s ON s.id = p2.seller_id WHERE p2.id = q.product_id) END AS "answerBy"
          FROM hlt_qna q JOIN accounts a ON a.id = q.account_id
         WHERE q.product_id = $1 AND q.state = 'VISIBLE'
         ORDER BY q.created_at DESC LIMIT 100`, [pid, me]);
@@ -126,7 +129,8 @@ export class HealthReviewService {
     if (body.length < 5) throw new PolicyViolation('TOO_SHORT', '문의는 5자 이상 써 주십시오.');
     const [q] = await this.db.query<any>(
       `INSERT INTO hlt_qna (product_id, account_id, body, is_private) VALUES ($1,$2,$3,$4)
-       RETURNING id, is_private AS "isPrivate", created_at AS "createdAt"`, [pid, RequestCtx.actorId(), body, d.isPrivate === true]);
+       RETURNING id, is_private AS "isPrivate", created_at AS "createdAt", state`, [pid, RequestCtx.actorId(), body, d.isPrivate === true]);
+    if (q?.state === 'PENDING') return { ...q, note: '문의를 받았습니다. 확인이 필요한 표현이 있어 운영 확인 뒤 보입니다.' };   // v10.577 (smq.qna · 금칙어)
     return { ...q, note: '문의를 받았습니다. 운영자가 답하면 알림으로 알려 드립니다.' };
   }
 
@@ -139,7 +143,7 @@ export class HealthReviewService {
       const items = last?.d ? await this.db.query<any>(
         `SELECT r.rank, r.qty, r.orders, ${CARD_COLS}
            FROM hlt_rankings r JOIN ${CARD_FROM} ON p.id = r.product_id
-          WHERE r.snapshot_date = $1 AND r.kind = $2 AND p.status IN ('ON_SALE','SOLD_OUT')
+          WHERE r.snapshot_date = $1 AND r.kind = $2 AND p.status IN ('ON_SALE','SOLD_OUT') AND NOT EXISTS (SELECT 1 FROM v_smq_exposure_limited xl WHERE xl.seller_id = p.seller_id)
           ORDER BY r.rank`, [last.d, kind]) : [];
       const [m] = last?.d ? await this.db.query<any>(
         `SELECT to_char(min(basis_from), 'YYYY-MM-DD') AS "from", to_char(max(basis_to), 'YYYY-MM-DD') AS "to", max(made_at) AS "madeAt" FROM hlt_rankings WHERE snapshot_date = $1 AND kind = $2`, [last.d, kind]) : [null];

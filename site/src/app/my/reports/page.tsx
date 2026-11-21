@@ -37,6 +37,7 @@ export default async function MyReportsPage() {
   const rows = await apiGet<R[]>('/me/reports', 0).catch(() => [] as R[]);
   const open = rows.filter((r) => r.state === 'OPEN' || r.state === 'QUEUED').length;
   const t = await getTranslations('my.reports');
+  const tm = await getTranslations('mtr');   // v10.573 이의 제기 안내
 
   return (
     <>
@@ -63,6 +64,7 @@ export default async function MyReportsPage() {
         </Table>
       )}
       <Note kind="info"><b>{t('noteB')}</b> {t('noteText')}</Note>
+      <Note kind="plain" data-mtr-appeal-link="">{tm('reportsLink')} <a href="/my/appeals">{tm('reportsLinkGo')}</a></Note>   {/* v10.573 (docs/715) */}
     </>
   );
 }

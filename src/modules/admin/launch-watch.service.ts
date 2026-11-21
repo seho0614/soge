@@ -12,6 +12,7 @@ import { AlertChannelsService, ChannelState } from './alert-channels.service';
 import { OwnerTodoService } from './owner-todo.service';
 import { ReleaseLogService } from './release-log.service';
 import { ServerTrendService } from './server-trend.service';
+import { opbRouteBacklog, opbRoutePending } from '../opb/alert-routes';   // v10.572 (docs/714) 운영 알림 받을 사람 규칙(스위치 off 면 null → 지금 동작)
 
 /* ---------------------------------------------------------------------
  * v10.170 (D159 · docs/262) — 공개 직후 지켜보기
@@ -556,7 +557,8 @@ export class LaunchWatchService {
    *   올린 파일 백업 실패 · 묶음 깨짐도 처음 보낼 종류에 들어감(DB 함수).
    */
   async alertMailPending(): Promise<{ to: string; items: { id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[] }> {
-    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
+    /* v10.572 (docs/714) — 받을 사람 규칙(opb.alert_routes on)이면 규칙으로 고름 · off 면 null 이라 아래 지금 함수 그대로 */
+    const items = (await opbRoutePending(this.db, 'mail')) ?? await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
       `SELECT id::text AS id, alert_code AS code, severity, title,
               to_char(raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
          FROM fn_ops_alert_mail_pending()
@@ -614,6 +616,9 @@ export class LaunchWatchService {
 
   /** v10.200 (D178 · docs/316) — 텔레그램으로 보낼 것 · 다시 보낼 것(메일과 같은 기준 · 칸은 pushed_at · repushed_at) */
   async alertPushPending(ch: 'push' | 'slack' = 'push'): Promise<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }[]> {
+    /* v10.572 (docs/714) — 받을 사람 규칙(opb.alert_routes on)이면 규칙으로(잠시 끈 종류 빼기 포함) · off 면 아래 지금 함수 그대로 */
+    const routed = await opbRoutePending(this.db, ch === 'slack' ? 'slack' : 'telegram');
+    if (routed) return routed;
     /* v10.237 (D200) — 슬랙은 같은 기준 · 칸만 slack_pushed_at · slack_repushed_at */
     const [p, rp] = ch === 'slack' ? ['FROM fn_ops_alert_slack_pending()', 'FROM fn_ops_alert_slack_repush_pending()'] : ['FROM fn_ops_alert_push_pending()', 'FROM fn_ops_alert_repush_pending()'];
     /* v10.370 (D239 · docs/505) — 잠시 끈 종류(alert_mutes)는 뺌 · 끝나면 다음 차례에 보냄 */
@@ -630,6 +635,8 @@ export class LaunchWatchService {
 
   /** v10.230 (D198 · docs/369) — 같은 기준의 전체 수(대기 목록은 CRITICAL 먼저 · 최근 순 50건) — 「보내지 못한 알림 n건 더」 줄에 씀 */
   async alertBacklog(kind: 'mail' | 'push' | 'slack'): Promise<number> {
+    const routed = await opbRouteBacklog(this.db, kind === 'push' ? 'telegram' : kind);   // v10.572 (docs/714) 규칙 켜짐이면 같은 기준 · off 면 null
+    if (routed !== null) return routed;
     const fn = { mail: 'fn_ops_alert_mail_backlog()', push: 'fn_ops_alert_push_backlog()', slack: 'fn_ops_alert_slack_backlog()' }[kind];
     const [r] = await this.db.query<{ n: number }>(`SELECT ${fn} AS n`);
     return Number(r?.n ?? 0);

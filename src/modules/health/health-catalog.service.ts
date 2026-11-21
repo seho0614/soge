@@ -26,6 +26,7 @@ export class HealthCatalogService {
       `SELECT ${CARD_COLS}
          FROM ${CARD_FROM}
         WHERE p.status IN ('ON_SALE','SOLD_OUT')
+          AND NOT EXISTS (SELECT 1 FROM v_smq_exposure_limited xl WHERE xl.seller_id = p.seller_id)   /* v10.579 노출 제한(상세 · 주문은 그대로) */
           AND ($1::text IS NULL OR c.code = $1)
           AND ($2::text IS NULL OR fn_search_match(p.name, ${SEARCH_BODY}, $2))
           AND ($3::text IS NULL OR EXISTS (
@@ -289,6 +290,7 @@ export class HealthCatalogService {
                 WHERE pi.product_id = p.id) AS ingredients
          FROM ${CARD_FROM}
         WHERE p.status IN ('ON_SALE','SOLD_OUT')
+          AND NOT EXISTS (SELECT 1 FROM v_smq_exposure_limited xl WHERE xl.seller_id = p.seller_id)   /* v10.579 노출 제한 */
           AND EXISTS (SELECT 1 FROM hlt_product_ingredients pi
                         JOIN hlt_concern_ingredients ci ON ci.ingredient_code = pi.ingredient_code AND ci.concern_code = $1
                        WHERE pi.product_id = p.id)

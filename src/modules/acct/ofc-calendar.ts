@@ -1,5 +1,6 @@
 import { DatabaseService } from '../../db/database.service';
 import { hasRole } from '../../core/auth';
+import { pgxCan } from '../admin/pgx-perm';   // v10.615 (docs/757)
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { bookingCalItems } from './hrx-booking';   // v10.473 (D265) 내 회의실 · 장비 예약
 import { legalDueItems } from '../legal/lgl-due';   // v10.486 ~ 489 (D269) 법무 기한
@@ -57,7 +58,8 @@ export function calRange(fromIn?: string, toIn?: string) {
 /** GET /admin/office/calendar — 모은 일정(날짜순) */
 export async function calendarView(db: DatabaseService, v: Viewer, fromIn?: string, toIn?: string) {
   const { from, to, today } = calRange(fromIn, toIn);
-  const fin = isFinance(v), editor = isCompanyEditor(v);
+  /* v10.615 (docs/757) perm.mode GROUPS — 재무 일정 = 월 결산(acct-month) 보기(R_PAYOUT · R_세무사만 · 세무사는 이 화면에 못 옴 → 지급 담당과 같은 범위) · 회사 일정 고치기(ADMIN)는 업무 단위가 없어 역할 그대로 */
+  const fin = await pgxCan(db, v.id, v.roles, ['acct-month'], ['VIEW'], ['PAYOUT']), editor = isCompanyEditor(v);
   const items: CalItem[] = [];
 
   /* 직접 넣은 일정 */

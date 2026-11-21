@@ -6,7 +6,7 @@ interface Q { query<T = Record<string, unknown>>(sql: string, params?: unknown[]
 
 export interface TodoItem { key: string; label: string; n: number; oldest: string | null; over: number; tab: string }
 
-export async function staffTodo(db: Q, roles: string[]): Promise<{ items: TodoItem[]; total: number }> {
+export async function staffTodo(db: Q, roles: string[], eff: Set<string> | null = null): Promise<{ items: TodoItem[]; total: number }> {   // v10.615 eff — perm.mode GROUPS 일 때 실제 권한(pgxEffective) · 아니면 null
   const has = (...r: string[]) => roles.includes('SUPER') || r.some((x) => roles.includes(x));
   const [c] = await db.query<Record<string, number | string | null>>(
     `SELECT (SELECT count(*)::int FROM review_items WHERE status IN ('QUEUED', 'IN_PROGRESS')) AS review_n,
@@ -41,6 +41,27 @@ export async function staffTodo(db: Q, roles: string[]): Promise<{ items: TodoIt
   const n = (k: string) => Number(c?.[`${k}_n`] ?? 0);
   const o = (k: string) => (c?.[`${k}_old`] ? String(c[`${k}_old`]) : null);
   const row = (key: string, label: string, tab: string, over = 0): TodoItem => ({ key, label, n: n(key), oldest: o(key), over, tab });
+  /* v10.615 (docs/757) perm.mode GROUPS — 역할 대신 줄이 가는 탭(업무)의 권한으로 고름(표시만 · 서버는 그 탭 API 에서 다시 봄)
+   *   제휴 신청은 「고치기」(지급 담당 R_PAYOUT 도 제휴 보기를 가져 넓어지지 않게) · 출금 지급 · 확정 대기는 같은 「지급」 탭이라 둘 다 보일 수 있음(숫자만) */
+  if (eff && !roles.includes('SUPER')) {
+    const pick: Array<[TodoItem, string]> = [
+      [row('review', '검수 대기', 'queue', Number(c?.review_over ?? 0)), 'queue:VIEW'],
+      [row('pay', '포인트 출금 지급 대기(확정됨)', 'payouts'), 'payouts:VIEW'],
+      [row('cash', '포인트 출금 확정 대기', 'payouts'), 'payouts:VIEW'],
+      [row('inq', '1:1 문의 답변 전', 'inquiries', Number(c?.inq_over ?? 0)), 'inquiries:VIEW'],
+      [row('dsp', '분쟁 처리 중', 'disputes', Number(c?.dsp_over ?? 0)), 'disputes:VIEW'],
+      [row('rep', '신고 처리 대기', 'report-queue', Number(c?.rep_over ?? 0)), 'report-queue:VIEW'],
+      [row('stl', '정산 승인 대기', 'settlement', Number(c?.stl_over ?? 0)), 'settlement:VIEW'],
+      [row('biz', '사업자 인증 대기', 'users'), 'users:VIEW'],
+      [row('crit', '확인 안 한 급한 알림', 'ops-alerts', n('crit')), 'ops-alerts:VIEW'],
+      [row('ptn', '입점(파트너) 신청', 'partners'), 'partners:VIEW'],
+      [row('qual', '자격 심사 대기', 'quals'), 'quals:VIEW'],
+      [row('aff', '제휴 신청', 'affiliates'), 'affiliates:EDIT'],
+    ];
+    const ef: Set<string> = eff;
+    const got = pick.filter(([, k]) => ef.has(k)).map(([x]) => x);
+    return { items: got, total: got.reduce((s, x) => s + x.n, 0) };
+  }
   const items: TodoItem[] = [];
   if (has('REVIEWER', 'ADMIN')) items.push(row('review', '검수 대기', 'queue', Number(c?.review_over ?? 0)));
   if (has('PAYOUT')) items.push(row('pay', '포인트 출금 지급 대기(확정됨)', 'payouts'));

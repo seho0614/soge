@@ -63,6 +63,7 @@ export class QnaItemDto {
   @ApiPropertyOptional({ nullable: true, description: '남의 비공개 문의는 null' }) body!: string | null;
   @ApiPropertyOptional({ nullable: true }) answer!: string | null; @ApiPropertyOptional({ nullable: true }) answeredAt!: string | null;
   @ApiProperty() answered!: boolean;
+  @ApiPropertyOptional({ nullable: true, description: 'v10.577 — 판매자가 답했으면 판매자 이름(운영 답 · 답 없음은 null)' }) answerBy?: string | null;
 }
 export class QnaListDto { @ApiProperty() count!: number; @ApiProperty({ type: [QnaItemDto] }) items!: QnaItemDto[]; }
 export class QnaResultDto {

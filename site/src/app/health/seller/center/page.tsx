@@ -28,6 +28,8 @@ export default async function HltSellerCenterPage() {
   const t = await getTranslations('hlt.center');
   const ts = await getTranslations('slx.stmt');   // v10.532 (D281)
   const tsx = await getTranslations('smx.rp');   // v10.555 (D287) 리뷰 답글 단추
+  const tlq = await getTranslations('lsq.ret');   // v10.608 (docs/750) 반품 사진 · 판정 단추
+  const tsq = await getTranslations('smx.smq');   // v10.577 · 579 상품 문의 · 판매 평가 단추
   let info: SellerCenterInfo | null = null;
   let notSeller = false;
   try {
@@ -59,7 +61,7 @@ export default async function HltSellerCenterPage() {
   ]);
   return (
     <><div className="hlt">{head}
-      <p className="hlt-btns"><a className="hlt-btn sm" href="/health/seller/center/reviews" data-smx-replies-link="">{tsx('link')}</a></p>
+      <p className="hlt-btns"><a className="hlt-btn sm" href="/health/seller/center/reviews" data-smx-replies-link="">{tsx('link')}</a> <a className="hlt-btn sm" href="/health/seller/center/returns-evidence" data-lsq-seller-link="">{tlq('seller')}</a>{' '}<a className="hlt-btn sm" href="/health/seller/center/qna" data-smq-qna-link="">{tsq('qna.link')}</a>{' '}<a className="hlt-btn sm" href="/health/seller/center/grade" data-smq-grade-link="">{tsq('grade.link')}</a></p>
       <Msgs ns={['hlt']}><SellerOrdersView orders={orders} returns={returns} /><SellerSettlements rows={settles} /><SellerCenter info={info} items={items} cats={cats} />{account && <SellerAccount info={account} />}</Msgs>
     </div><i hidden data-root-end="" /></>
   );

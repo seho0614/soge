@@ -10,6 +10,7 @@ import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { staffTodo } from './member-ops';
+import { pgxEffective } from './pgx-perm';   // v10.615 (docs/757)
 
 /* ---------------------------------------------------------------------
  * v10.361 ~ 364 (D237 · docs/495 ~ 498)
@@ -196,8 +197,9 @@ export class MemberOpsController {
   @Roles('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF')
   @ApiOperation({ summary: '오늘 할 일 (v10.364)', description: '내 역할에 맞는 줄만 — 검수 대기 · 지급 대기 · 출금 확정 대기 · 1:1 문의 · 분쟁 · 신고 · 정산 · 사업자 인증 · 확인 안 한 급한 알림 · 입점 · 자격 심사 · 제휴 신청. 수 · 가장 오래된 때 · 넘김 · 갈 탭. 읽기만.' })
   @ApiOkResponse({ type: Object })
-  todo(@Req() req: Request) {
+  async todo(@Req() req: Request) {
     const p = (req as any).principal as Principal | undefined;
-    return staffTodo(this.db, (p?.roles ?? []) as string[]);
+    const roles = (p?.roles ?? []) as string[];
+    return staffTodo(this.db, roles, await pgxEffective(this.db, p?.accountId ?? null, roles));   // v10.615 GROUPS 가 아니면 null — 지금처럼 역할
   }
 }

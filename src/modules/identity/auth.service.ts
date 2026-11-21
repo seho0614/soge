@@ -13,9 +13,13 @@ import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
 import { notifyNewDevice, recordLogin } from './login-history';
 import { sfxDeviceSeen } from '../sfx/device';   // v10.546 (D285) 가입 때 기기 표지
+import { mtrDormantWake } from '../mtr/dormant';   // v10.576 휴면 계정 — 로그인하면 풂
 import { RecommendService } from '../affiliate/recommend.service';
 import { createSession, sessionAlive, sessionReusable } from './login-sessions';   // v10.380 (D241) 내 로그인 기기
 import { assertGeoAllowed } from './geo-guard';   // v10.485 (D268) 운영자 해외 접속 경고 · 막기
+import { sec2MemberMfaTicket } from '../sec2/member-mfa';   // v10.592 (docs/734) 회원 2단계 인증
+import { sec2LoginAlert } from '../sec2/login-alert';   // v10.593 (docs/735) 낯선 로그인 줄
+import { sec2AssertNotPwned } from '../sec2/pwned';   // v10.591 (docs/733) 유출 비밀번호 막기
 
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_DAYS = 14;
@@ -71,6 +75,10 @@ export class AuthService {
         details: { attemptsLeft: left },
       });
     }
+    if (acc.status === 'DORMANT') {
+      /* v10.576 (docs/718) — 비밀번호가 맞은 휴면 계정은 여기서 풂(이름 · 전화는 DB 트리거 fn_mtr_dormant_guard 가 금고에서 되돌림) · 아래 검사는 그대로 */
+      if (await mtrDormantWake(this.db, acc.id, 'LOGIN')) acc.status = 'ACTIVE';
+    }
     if (acc.status === 'WITHDRAWN' && acc.grace_until) {
       /* v10.376 — 비밀번호가 맞은 유예 중 탈퇴 계정: 화면이 「탈퇴 취소」(POST /auth/withdraw/cancel)를 보여 줌 */
       throw new AppError(403, { code: 'WITHDRAW_PENDING', message: `탈퇴 처리 중인 계정입니다. ${acc.grace_until} 까지 탈퇴를 취소할 수 있습니다.`, details: { graceUntil: acc.grace_until } });
@@ -86,10 +94,15 @@ export class AuthService {
       await this.attribution.link(visitorKey, acc.id, 'LOGIN');
     }
 
+    /* v10.592 (docs/734) — 회원 2단계 인증(sec2.member_mfa on · 켠 회원 · 운영 역할 아님): 증표 대신 표(5분)를 주고 POST /auth/mfa/member-login 에서 번호 뒤 증표.
+     *   마지막 로그인 · 낯선 기기 · 로그인 기록은 번호 뒤에 남김(꺼져 있으면 null — 지금 그대로) */
+    const sec2Ticket = await sec2MemberMfaTicket(this.db, acc.id);
+    if (sec2Ticket) return sec2Ticket;
+
     await this.db.query(`UPDATE accounts SET last_login_at = now() WHERE id = $1`, [acc.id]);
-    await notifyNewDevice(this.db, acc.id);   // v10.221 (D191) — 이번 로그인을 남기기 전에 90일 기록과 견줌
+    const newDev = await notifyNewDevice(this.db, acc.id);   // v10.221 (D191) — 이번 로그인을 남기기 전에 90일 기록과 견줌
     await recordLogin(this.db, acc.id, true);
-    return this.issue(acc.id);
+    return sec2LoginAlert(this.db, acc.id, newDev, await this.issue(acc.id));   // v10.593 (docs/735) — 낯선 기기면 그 기기 번호로 한 줄 · 알림 링크 · 증표는 그대로
   }
 
   /** 잠겼다는 알림 — 본인이 아니라면 비밀번호를 바꾸라는 뜻. 알림을 남기지 못해도 로그인 응답은 그대로 */
@@ -106,6 +119,7 @@ export class AuthService {
   }) {
     /* v10.31 — 시안 가입 3단계 「영문 · 숫자 · 특수문자 조합 10자 이상」(전: 10자 이상만) */
     assertStrongPassword(input.password);   /* v10.48 — 변경 · 재설정과 같은 규칙(auth-throttle.ts) */
+    await sec2AssertNotPwned(this.db, input.password, 'SIGNUP');   /* v10.591 (docs/733) — sec2.pwned_check off(처음)면 아무것도 안 함 · 원문 · 전체 해시는 밖으로 안 보냄 */
     /* v10.173 (D162 · docs/266) — 가입 잠시 막기(signup.open) · 같은 접속 IP 의 하루 가입 상한(abuse.signup_per_ip_day · 내부 IP 는 세지 않음) */
     const [gate] = await this.db.query<{ open: string }>(
       `SELECT coalesce((SELECT value FROM site_settings WHERE key = 'signup.open'), 'on') AS open`);

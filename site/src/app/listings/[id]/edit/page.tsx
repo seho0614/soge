@@ -7,6 +7,7 @@ import { BackBar } from '@/components/common/BackBar';
 import { ListingEditForm, type Draft, type ReviewState } from '@/components/ListingEditForm';
 import { getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
+import { GrwFillBox } from '@/components/grw/FillBox';   // v10.601 (docs/743) 등록 도우미
 import '@/styles/proto-w1.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,6 +37,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
         <h1>{t('title')}</h1>
         <p>{t('sub')}</p>
       </div>
+      <GrwFillBox id={id} />{/* v10.601 — 충실도 · 더 적으면 좋은 칸(노출 순위 · 소개비에 쓰지 않음) */}
       <div style={{ marginTop: 12 }}><Msgs ns={['forms']}><ListingEditForm item={item} review={review} draft={draft && draft.savedAt ? draft : null} /></Msgs></div>
     </div>
   );

@@ -15,6 +15,7 @@ import { AnyHeader, BaseFooter, MainWrap, OldHeader, OnlySkin } from '@/componen
 import { B2Footer } from '@/components/b2/Frame';
 import { AiChat } from '@/components/common/AiChat';
 import { UsageBeacon } from '@/components/common/UsageBeacon';   // v10.508 (D274) 회원 화면 사용 통계(site.usage_stats on 일 때만 · 화면 주소만)
+import { WebVitalsBeacon } from '@/components/common/WebVitalsBeacon';   // v10.588 (docs/730) 화면 속도(ops2.web_vitals on 일 때만 · 화면 주소 · 지표 · 값만)
 import { IncidentBar } from '@/components/upt/IncidentBar';   // v10.497 (D272) 장애 공지 띠
 import { A11yBoot } from '@/components/upt/A11yBoot';   // v10.500 (D272) 보기 설정 — 그리기 전에 붙임
 import { A11yTools } from '@/components/upt/A11yTools';   // v10.500 (D272) 보기 설정 단추
@@ -105,6 +106,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AiChat />
         {/* v10.508 (D274 · docs/646) — 화면이 바뀔 때 화면 주소만 한 번 보냄(계정 · 쿠키 없음 · DNT · GPC 존중 · 꺼져 있으면 아무것도 안 함) */}
         <UsageBeacon settings={settings} />
+        {/* v10.588 (docs/730) — 화면 속도(LCP · INP · CLS · FCP · TTFB) 값 하나씩(계정 · 쿠키 · 방문자 키 없음 · DNT · GPC 존중 · 꺼져 있으면 아무것도 안 함) */}
+        <WebVitalsBeacon settings={settings} />
         {/* v10.500 (D272 · docs/638) 보기 설정(글자 크게 · 고대비 · 이 브라우저) · v10.499 서비스 워커(site.pwa on · 운영 빌드만 · off 면 지움) */}
         <A11yTools />
         <PwaRegister on={pwaOn(settings)} />

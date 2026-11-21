@@ -12,6 +12,7 @@ import { withCodes } from '@/lib/ruleCodes';   // v10.132 규칙 코드 작게
 import { siteOrigin } from '@/components/refcode/origin';
 import { RcmTree, type RcmNode } from '@/components/recommend/RcmTree';   // v10.257 첫 화면 작은 관계도
 import { rcmLabels } from '@/components/recommend/labels';
+import { GrwFirstSteps } from '@/components/grw/FirstSteps';   // v10.598 (docs/740) 첫 거래 안내
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.home'))('title') };
@@ -126,6 +127,8 @@ export default async function MyPage() {
           <Link className="my-bo" href="/my/account">{t('editProfile')}</Link>
         </div>
       )}
+
+      <GrwFirstSteps />{/* v10.598 (docs/740) 새 회원 첫 거래 안내 — 서버가 show=false 면 그리지 않음 */}
 
       {rcm?.code && (
         <Note kind="info" data-my-recommend="">

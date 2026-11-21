@@ -54,6 +54,7 @@ export default async function SettlementPage() {
     );
   }
   const s = await apiGet<S>('/partner/settlement', 0).catch(() => null);
+  const tq = await getTranslations('smx.smq.fc');   // v10.580 이번 달 정산 예측 단추
   if (!s) return <><Pgh title={t('title')} /><Empty>{t('notPartner')}</Empty><i hidden data-root-end="" /></>;
   const acc = s.account;
 
@@ -107,6 +108,7 @@ export default async function SettlementPage() {
       <div className="pt-dact">
         <Link className="pt-bo" href="/partner/cash">{t('kind.leadCash')}</Link>
         <Link className="pt-bo" href="/partners/settlements">{t('affLink')}</Link>
+        <Link className="pt-bp" href="/partner/settlement/forecast" data-smq-forecast-link="">{tq('link')}</Link>
       </div>
     <i hidden data-root-end="" /></>
   );

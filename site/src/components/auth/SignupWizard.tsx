@@ -30,6 +30,7 @@ import { StepPerson } from './signup/StepPerson';
 import { StepTerms } from './signup/StepTerms';
 import { StepProfile } from './signup/StepProfile';
 import { clearDraft, loadDraft } from '@/lib/profileDraft';
+import { grwStep } from '@/lib/grwStep';   // v10.597 (docs/739) 가입 단계 수(grw.signup_steps on 일 때만 · 단계 번호만)
 
 export type { SignupType, JoinTerm } from './signup/rules';
 
@@ -42,6 +43,7 @@ export function SignupWizard({ types, terms, notices, questions, action, initial
   const t = useTranslations('signup');
   const [pending, start] = useTransition();
   const [step, setStep] = useState(1);
+  useEffect(() => { grwStep(step); }, [step]);   // v10.597 — 탭마다 단계 하나에 한 번 · 스위치 꺼짐 · DNT · GPC 면 보내지 않음
   const [type, setType] = useState(types[0]?.code ?? 'PERSONAL');
   const cur = types.find((t) => t.code === type) ?? types[0];
   const needsBiz = !!cur?.needsBiz, needsCorp = !!cur?.needsCorp;

@@ -290,7 +290,7 @@ export class ListingService {
       /* w1 — 검수 중인 매물 사진은 운영(검수자)도 봅니다 */
       const viewer = RequestCtx.actorId();
       const [ops] = viewer ? await this.db.query(
-        `SELECT 1 FROM account_roles WHERE account_id = $1 AND role IN ('ADMIN','SUPER','REVIEWER') LIMIT 1`, [viewer]) : [];
+        `SELECT 1 FROM account_roles WHERE account_id = $1 AND (role IN ('ADMIN','SUPER','REVIEWER') OR public.pgx_groups_task($1::uuid, ARRAY['queue'], ARRAY['VIEW'])) LIMIT 1`, [viewer]) : [];   // v10.615 (docs/757) GROUPS 면 검수 큐 보기도(R_ADMIN · R_REVIEWER 와 같은 범위)
       if (!ops) throw new NotFound('사진이 없습니다.');
     }
     const stream = await storageFromEnv().open(f.storage_key);

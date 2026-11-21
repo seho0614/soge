@@ -61,10 +61,13 @@ import { papiDailyJob, papiHookSendJob, pbulkMatchJob } from '../modules/papi/jo
 import { papiUsageJob, vsxVisitJob } from '../modules/vsx/jobs';   // v10.542 · 545 (D284)
 import { biDailyJob } from '../modules/dtx/bi';   // v10.535 (D282)
 import { mallStatementJob } from '../modules/slx/statements';   // v10.532 (D281)
+import { smqDailyJob } from '../modules/smq/jobs';   // v10.577 · 579 상품 문의 기한 · 판매자 평가
 import { prxAdReportJob, prxHourlyJob } from '../modules/prx/jobs';   // v10.518 ~ 520 (D277)
+import { bzxDailyJob, bzxFrequentJob } from '../modules/bzx/jobs';   // v10.609 ~ 614 (docs/751 ~ 756)
 import { secDailyPurgeJob } from '../modules/identity/geo-guard';   // v10.485 (D268)
 import { uptDailyJob } from '../modules/uptime/uptime';   // v10.497 (D272)
 import { opzDailyJob } from '../modules/opz/jobs';   // v10.556 · 557 (D288)
+import { grwDailyJob } from '../modules/grw/digest';   // v10.597 · 599 (docs/739 · 741)
 import { mallBenefitExpireJob, mallTierJob } from '../modules/health/health-benefit';   // v10.479 · 480 (D267)
 import { mallSubscribeJob } from '../modules/health/health-subscribe';   // v10.481 (D267)
 import { mallCashReceiptJob } from '../modules/health/health-cashrcpt';   // v10.506 (D274)
@@ -77,14 +80,20 @@ import { trainingDueJob } from '../modules/acct/hr-training';   // v10.458 (D262
 import { applicantPurgeJob } from '../modules/acct/hr-recruit';   // v10.461 (D262)
 import { acctBizCheckJob } from '../modules/acct/bizcheck';      // v10.431 (D254)
 import { corpDocDueJob } from '../modules/admin/corpdocs';   // v10.425 (D253)
+import { prrDailyJob } from '../modules/admin/prr-jobs';   // v10.566 · 568 권한 정기 점검 · 입사퇴사
+import { hraDailyJob } from '../modules/acct/hra-close';   // v10.581 ~ 584 (docs/723 ~ 726) 13차 알림 셋
 import { ofcTaskDueJob } from '../modules/acct/ofc-tasks';   // v10.463 (D263)
 import { lpxHourlyJob, lpxStatsDailyJob } from '../modules/lpx/jobs';   // v10.549 ~ 552 (D286)
+import { lsqDailyJob, lsqTrackJob } from '../modules/lsq/jobs';   // v10.602 ~ 607 (docs/744 ~ 749)
 import { lsxDailyJob, lsxHourlyJob } from '../modules/lsx/jobs';   // v10.513 ~ 516 (D276)
 import { csxDailyJob, csxHourlyJob } from '../modules/csx/jobs';   // v10.528 ~ 531 (D280)
 import { lsyHourlyJob, lsyTriageJob } from '../modules/lsy/jobs';   // v10.524 ~ 527 (D279)
+import { mtrDailyJob, mtrHourlyJob } from '../modules/mtr/jobs';   // v10.573 ~ 576 11차 회원 · 거래
 import { opxArchiveJob, opxRiskDailyJob, opxRiskEventsJob } from '../modules/opx/jobs';   // v10.509 · 510 (D275)
 import { sfxDailyJob } from '../modules/sfx/jobs';   // v10.546 ~ 548 (D285)
+import { sec2TickJob } from '../modules/sec2/jobs';   // v10.590 ~ 593 (docs/732 ~ 735) 15차 보안 · 기반
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
+import { opbGroupMail, opbRoutePending } from '../modules/opb/alert-routes';   // v10.572 (docs/714) 운영 알림 받을 사람 규칙
 
 /**
  * 배치 실행기.
@@ -121,6 +130,8 @@ export type JobName =
   | 'its_key_expiry'  // v10.490 (D270)
   | 'its_office_daily'   // v10.491 ~ 493 (D270)
   | 'corp_doc_due'    // v10.425 (D253)
+  | 'prr_daily'       // v10.566 · 568
+  | 'hra_daily'       // v10.581 ~ 584 (docs/723 ~ 726)
   | 'ofc_task_due'    // v10.463 (D263)
   | 'acct_biz_check'  // v10.431 (D254)
   | 'acct_dunning'    // v10.436 (D256)
@@ -138,15 +149,20 @@ export type JobName =
   | 'papi_usage'        // v10.545 (D284)
   | 'bi_daily'          // v10.535 (D282)
   | 'mall_statement'    // v10.532 (D281)
+  | 'smq_daily'         // v10.577 · 579
   | 'prx_hourly'      // v10.518 · 520 (D277)
   | 'prx_ad_report'   // v10.519 (D277)
+  | 'bzx_daily'       // v10.609 (docs/751) 파트너 계약 만기
+  | 'bzx_frequent'    // v10.610 · 613 (docs/752 · 755) 광고 예산 · 카드 사용 알림
   | 'sec_daily_purge'   // v10.485 (D268)
   | 'opx_archive'       // v10.509 (D275)
   | 'opx_risk_events'   // v10.510 (D275)
   | 'opx_risk_daily'    // v10.510 (D275)
   | 'sfx_daily'         // v10.546 ~ 548 (D285)
+  | 'sec2_tick'         // v10.590 ~ 593 (docs/732 ~ 735)
   | 'upt_daily'         // v10.497 (D272)
   | 'opz_daily'         // v10.556 · 557 (D288)
+  | 'grw_daily'         // v10.597 · 599 (docs/739 · 741)
   | 'mall_benefit_expire' // v10.479 (D267)
   | 'mall_tier_recalc'    // v10.480 (D267)
   | 'mall_subscribe'      // v10.481 (D267)
@@ -162,10 +178,13 @@ export type JobName =
   | 'lsx_daily'       // v10.513 · 514 (D276)
   | 'lpx_hourly'      // v10.549 · 551 (D286)
   | 'lpx_stats_daily' // v10.552 (D286)
+  | 'lsq_daily'       // v10.602 ~ 604 (docs/744 ~ 746)
+  | 'lsq_track'       // v10.607 (docs/749)
   | 'lsx_hourly'      // v10.515 · 516 (D276)
   | 'csx_daily'       // v10.529 (D280)
   | 'csx_hourly'      // v10.528 (D280)
   | 'lsy_hourly' | 'lsy_triage'   // v10.524 ~ 527 (D279)
+  | 'mtr_hourly' | 'mtr_daily'    // v10.573 ~ 576
   | 'acct_accrual';   // v10.439 (D257)
 
 export interface JobResult {
@@ -920,9 +939,23 @@ export class SchedulerService {
       }
 
       /* v10.425 (D253 · docs/562) — 사내 문서 만료 N일 전 CORP_DOC_DUE(판 하나에 한 번) · 새 판 · 보관 끝이면 풀림 */
+      /* v10.581 ~ 584 (docs/723 ~ 726) — 연차 촉진(hra.leave_promo) · 꼭 읽을 사내 공지 기한(hra.lib_unread_alert) · 회계 마감 남은 일(hra.close_alert) · 모두 처음 off · 하나가 실패해도 나머지는 돎 */
+      case 'hra_daily': {
+        const r = await hraDailyJob(this.db);
+        affected = r.affected; detail = r.detail;
+        break;
+      }
+
       case 'corp_doc_due': {
         const r = await corpDocDueJob(this.db);
         affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.566 · 568 (docs/708 · 710) — 이번 분기 거둘 후보 다시 만들기(prr.review_auto on · PRR_REVIEW_OPEN) · 입사 · 퇴사 흐름 기한 넘김 STAFF_JOIN_OVERDUE · STAFF_LEAVE_OVERDUE · 거두기 없음 */
+      case 'prr_daily': {
+        const r = await prrDailyJob(this.db);
+        affected = r.affected; detail = r;
         break;
       }
 
@@ -1073,6 +1106,13 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.577 · 579 (docs/719 · 721) — 상품 문의 답 기한 넘김(smq.qna on · SMQ_QNA_DUE · SMQ_QNA_OVERDUE) · 판매자 평가(smq.penalty on · 1일부터 지난달 셈 · 3일부터 알림 · SMQ_LIMIT_PROPOSED) · 기간 끝난 노출 제한 풀기 */
+      case 'smq_daily': {
+        const r = await smqDailyJob(this.db);
+        affected = r.affected; detail = r;
+        break;
+      }
+
       /* v10.522 (D278 · docs/660) — 일괄 등록 가입 대기 짝 맞춤 · 기한 지남 · 하루 지난 미리보기 취소 · 초대 메일(pbulk.invite_mail on · 메일 준비됨일 때만) */
       case 'pbulk_match': {
         const r = await pbulkMatchJob(this.db, this.mail);
@@ -1143,6 +1183,13 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.597 · 599 (docs/739 · 741) — 알림 하루 요약 GRW_DIGEST(grw.digest on 일 때만 · 회원마다 하루 한 번) · 가입 단계 수 보관 끝 · 요약 기록 400일 */
+      case 'grw_daily': {
+        const r = await grwDailyJob(this.db);
+        affected = r.members; detail = r;
+        break;
+      }
+
       /* v10.518 · 520 (D277 · docs/656 · 658) — 추천 이벤트 기간 끝 ENDED(PERIOD) · 끝난 이벤트 PRX_REF_EVENT_END · 비교 시험 기간 끝 결과 고정 PRX_AB_DONE */
       case 'prx_hourly': {
         const r = await prxHourlyJob(this.db);
@@ -1154,6 +1201,20 @@ export class SchedulerService {
       case 'prx_ad_report': {
         const r = await prxAdReportJob(this.db, this.mail);
         affected = r.made + r.sent; detail = r;
+        break;
+      }
+
+      /* v10.609 (docs/751) — 파트너 계약 만기 알림 BZX_PARTNER_RENEW · 만기 지남 EXPIRED · ENDED · 서명 없음 BZX_PARTNER_UNSIGNED · 파트너 알림은 bzx.partner_notice on 일 때만 */
+      case 'bzx_daily': {
+        const r = await bzxDailyJob(this.db);
+        affected = r.affected; detail = r;
+        break;
+      }
+
+      /* v10.610 · 613 (docs/752 · 755) — 광고 예산 알림 · 자동 정지(bzx.ad_autopause) · 법인카드 사용 알림(bzx.card_notify) — 갈래마다 실패를 따로 담음 */
+      case 'bzx_frequent': {
+        const r = await bzxFrequentJob(this.db);
+        affected = r.affected; detail = r;
         break;
       }
 
@@ -1189,6 +1250,13 @@ export class SchedulerService {
       case 'sfx_daily': {
         const r = await sfxDailyJob(this.db);
         affected = r.devicePurged + r.tmPurged + r.alerted; detail = r;
+        break;
+      }
+
+      /* v10.590 ~ 593 (docs/732 ~ 735) — 10분마다 · 07시 뒤 어제 운영자 이상 행동(sec2.anomaly_watch on · 하루 한 번 · STAFF_ANOMALY) · 「내가 아니에요」 몰림(MEMBER_NOT_ME_SURGE) · 지난 2단계 표 · 낯선 로그인 · 유출 확인 건수 정리 */
+      case 'sec2_tick': {
+        const r = await sec2TickJob(this.db);
+        affected = r.affected; detail = r.detail;
         break;
       }
 
@@ -1323,6 +1391,20 @@ export class SchedulerService {
         break;
       }
 
+      /* v10.602 ~ 604 (docs/744 ~ 746) — 후기 요청(lsq.review_ask on) · 미리보기 지난 CSV 묶음 EXPIRED · 90일 지난 묶음 · 보관 지난 검색 클릭 지움 */
+      case 'lsq_daily': {
+        const r = await lsqDailyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.607 (docs/749) — 배송 추적(lsq.track on 일 때만 · 방식 lsq.track_mode 처음 ASSUME · 배송 완료 반영은 LIVE · lsq.track_auto_deliver on) */
+      case 'lsq_track': {
+        const r = await lsqTrackJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
       /* v10.513 · 514 (D276 · docs/651 · 652) — 저장한 검색 새 매물 묶음 알림(lsx.saved_search on) · 만료 예고 · 만료로 내림(lsx.expiry on · 지우지 않음) */
       case 'lsx_daily': {
         const r = await lsxDailyJob(this.db);
@@ -1361,6 +1443,20 @@ export class SchedulerService {
       /* v10.527 (D279 · docs/665) — 신고 규칙 분류(lsy.report_triage) · AI 분류(lsy.report_ai · AI 월 상한) · 사람이 확정 */
       case 'lsy_triage': {
         const r = await lsyTriageJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.573 · 574 (docs/715 · 716) — 이의 제기 처리 기한 넘김 알림(MTR_APPEAL_OVERDUE) · 가짜 후기 탐지(mtr.review_watch · 의심 목록만) */
+      case 'mtr_hourly': {
+        const r = await mtrHourlyJob(this.db);
+        affected = r.made; detail = r;
+        break;
+      }
+
+      /* v10.575 · 576 (docs/717 · 718) — 소개자 신뢰 점수 셈(mtr.trust) · 휴면 전 알림 · 휴면 전환(mtr.dormant · 메일은 mtr.dormant_mail) */
+      case 'mtr_daily': {
+        const r = await mtrDailyJob(this.db, this.mail);
         affected = r.made; detail = r;
         break;
       }
@@ -1432,12 +1528,14 @@ export class SchedulerService {
     const m = await this.mail.send({ to: p.to, subject: `[소개뱅크] 급한 운영 알림 ${p.items.length}건 — ${p.items[0].again ? '[다시] ' : ''}${p.items[0].title}`.slice(0, 150), text });
     if (!m.ok) return { pending: p.items.length, mailed: 0, reason: `SEND_${m.errorKind ?? 'FAILED'}` };
     await this.launchWatch.markMailed(p.items.filter((x) => !x.again).map((x) => x.id), p.items.filter((x) => x.again).map((x) => x.id));
+    await opbGroupMail(this.db, this.mail, p.items);   // v10.572 (docs/714) opb.alert_routes · opb.alert_group_mail 둘 다 on 일 때만 · 안에서 실패를 삼킴
     return { pending: 0, mailed: p.items.length, reason: null };
   }
 
   /** v10.286 (D213 · docs/412) — 급한 알림(텔레그램 · 슬랙과 같은 기준)을 운영자 게시판에 한 번 — 보낸 결과(이번 차례)와 함께 · board_posted_at */
   private async alertBoard(ap: { pushed: number; reason: string | null }, as: { pushed: number; reason: string | null }): Promise<{ posted: number }> {
-    const items = await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
+    /* v10.572 (docs/714) — 받을 사람 규칙(opb.alert_routes on)이면 규칙으로(CRITICAL 은 늘 올림) · off 면 null 이라 아래 지금 목록 그대로 */
+    const items = (await opbRoutePending(this.db, 'board')) ?? await this.db.query<{ id: string; code: string; severity: string; title: string; raisedAt: string; again: boolean }>(
       `SELECT o.id::text AS id, o.alert_code AS code, o.severity, o.title, to_char(o.raised_at AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') AS "raisedAt", false AS again
          FROM ops_alerts o
         WHERE o.board_posted_at IS NULL AND o.acknowledged_at IS NULL AND o.resolved_at IS NULL AND o.raised_at > now() - interval '24 hours'

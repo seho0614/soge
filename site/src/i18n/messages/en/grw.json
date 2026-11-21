@@ -1,0 +1,69 @@
+{
+  "first": {
+    "title": "Getting started",
+    "progress": "{done} / {total}",
+    "lead": "These are the steps new members usually take. Going through them makes your first deal easier.",
+    "hide": "Hide",
+    "failed": "Could not finish this. Please try again later.",
+    "step": {
+      "VERIFY": "Verify your identity",
+      "PROFILE": "Pick your interests",
+      "LIKE": "Save a listing you like",
+      "ASK": "Send your first inquiry",
+      "POST": "Post a listing or a request",
+      "DEAL": "Start your first deal",
+      "NOTIFY": "Choose how to get notifications",
+      "SHARE": "Share your referral code"
+    },
+    "why": {
+      "VERIFY": "Inquiries, deals and settlement open after identity verification.",
+      "PROFILE": "We show listings that match the fields you care about first.",
+      "LIKE": "Saved listings are easy to find again.",
+      "ASK": "Ask through the in-platform chat so the record stays and you stay protected.",
+      "POST": "Post what you offer or what you need to get introductions.",
+      "DEAL": "When terms match, start a deal and check the contract and fee on the platform.",
+      "NOTIFY": "Get only the notices you need, or get them bundled once a day.",
+      "SHARE": "When someone joins with your code and verifies their identity, you can get the announced reward."
+    }
+  },
+  "digest": {
+    "title": "Daily summary",
+    "on": "On. We bundle your notifications and send them once at 8 am.",
+    "off": "Off. We send each notification as it comes.",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "note": "Notices you must see, such as money or contract notices, still go out right away. Each notification stays in your list.",
+    "mailWait": "Email is not ready yet, so the summary goes to your site notifications only.",
+    "failed": "Could not finish this. Please try again later."
+  },
+  "fill": {
+    "title": "Listing helper",
+    "sub": "For each of your listings, we show the fields worth filling in. Detailed listings get more inquiries.",
+    "notRank": "The completeness score is only a guide to what to fix. It is not used for display order, search ranking or fees.",
+    "off": "The listing helper is not in use right now.",
+    "empty": "You have not posted a listing yet.",
+    "first": "Post your first listing",
+    "edit": "Edit",
+    "boxTitle": "Listing helper",
+    "score": "Completeness {score}",
+    "allDone": "Nothing is missing.",
+    "allLink": "See all my listings",
+    "grade": {
+      "A": "Excellent",
+      "B": "Good",
+      "C": "Fair",
+      "D": "Needs more detail"
+    },
+    "tip": {
+      "TITLE": "Write a title of 10 to 60 characters that says what you are offering.",
+      "SUMMARY": "Add the one-line summary shown in lists.",
+      "BODY": "Write more than 200 characters about the condition, terms and what is handed over.",
+      "PHOTO1": "Add at least one photo.",
+      "PHOTO3": "More than three photos make the listing stand out.",
+      "REGION": "Choose a region.",
+      "AMOUNT": "Enter the deal amount.",
+      "FEE": "Enter the desired fee and who pays it.",
+      "HOURS": "Enter the hours when you can be reached."
+    }
+  }
+}

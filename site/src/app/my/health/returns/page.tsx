@@ -7,6 +7,7 @@ import { me } from '@/lib/session';
 import type { HltReturn } from '@/components/health/types';
 import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
+import { LsqReturnEvidenceBox } from '@/components/lsq/ReturnEvidenceBox';   // v10.608 (docs/750) 사진 · 판정 기록
 import {
   codeText, reasonLabel, RETURN_KIND, RETURN_REASONS, RETURN_SHIP_ROUND_TRIP, RETURN_STATE, RETURN_TONE, ymd,
 } from '@/components/health/util';
@@ -85,6 +86,7 @@ export default async function MyHltReturns() {
                     {r.decideNote && <tr><th>{t('hReturns.memo')}</th><td>{r.decideNote}</td></tr>}
                   </tbody>
                 </table>
+                <LsqReturnEvidenceBox returnId={r.id} />
               </div>
             );
           })}

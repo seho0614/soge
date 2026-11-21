@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { PaymentResult, resolvePaymentProvider } from '../billing/payment.provider';
 import { ORDER_OPEN_SQL, sellerShipFee } from './health-policy';
+import { lsqAfterSubFail } from '../lsq/sub-retry-hook';   // v10.606 (docs/748) 결제 실패 다시 시도(lsq.sub_retry off 면 아무것도 안 함)
 
 /* ---------------------------------------------------------------------
  * v10.481 (D267 · docs/619) 소개몰 정기 배송 — 대표 11/20 「㊲ ③」
@@ -140,7 +141,8 @@ const addDays = (ymd: string, d: number) => new Date(Date.parse(`${ymd}T00:00:00
 /** 다음 결제일 = 결제일 + 주기(오늘이 지날 때까지) */
 const nextAfter = (ymd: string, cycle: number, today: string) => { let x = addDays(ymd, cycle); while (x <= today) x = addDays(x, cycle); return x; };
 
-export async function mallSubscribeJob(db: DatabaseService) {
+/** v10.606 (docs/748) onlyId — 「지금 다시 결제」(lsq/sub-retry.ts)가 그 한 건만 · 정기 작업(scheduler)은 비워서 그대로 */
+export async function mallSubscribeJob(db: DatabaseService, onlyId?: string) {
   const on = (await sw(db, 'mall.subscribe')) === 'on';
   const [oo] = await db.query<{ open: boolean }>(ORDER_OPEN_SQL);
   if (!on || !oo?.open) return { on, ordersOpen: !!oo?.open, due: 0, paid: 0, skipped: 0, failed: 0, note: '꺼짐(mall.subscribe · mall.order_open)' };
@@ -152,7 +154,8 @@ export async function mallSubscribeJob(db: DatabaseService) {
             cycle_days, next_on::text AS next_on, skip_next, fail_count
        FROM hlt_subscriptions s WHERE state = 'ACTIVE' AND next_on <= $1::date
         AND NOT EXISTS (SELECT 1 FROM hlt_subscription_runs r WHERE r.sub_id = s.id AND (r.run_on = $1::date OR r.state = 'ORDERED'))
-      ORDER BY next_on, id LIMIT 200`, [today]);
+        AND ($2::bigint IS NULL OR s.id = $2::bigint)
+      ORDER BY next_on, id LIMIT 200`, [today, onlyId ?? null]);
   let paid = 0, skipped = 0, failed = 0;
   const provider = mode === 'LIVE' ? resolvePaymentProvider() : null;
   for (const s of due) {
@@ -250,4 +253,5 @@ async function failSub(db: DatabaseService, s: DueRow, today: string, runId: str
       [`소개몰 정기 배송 실패 — ${s.id}번 · ${today} · ${why}${pause ? ' · 멈춤' : ''} — 소개몰 › 정기 배송`.slice(0, 300),
        JSON.stringify({ key: `${s.id}|${today}`, sub: s.id, day: today, why, paused: pause }), `${s.id}|${today}`]);
   });
+  await lsqAfterSubFail(db, s, s.fail_count + 1, s.fail_count + 1 >= retry, why, today);   // v10.606 (docs/748) 다음 시도일 간격표 · 회원 알림
 }

@@ -107,6 +107,14 @@ async function post(path: string, body: unknown, keep = true): Promise<AuthResul
       message: data?.message ?? '요청을 처리하지 못했습니다.',
     };
   }
+  /* v10.592 (docs/734) — 회원 2단계 인증: 증표 대신 표(ticket) — 브라우저 스크립트 · 주소창에 두지 않고 HttpOnly 쿠키(5분) · 화면은 /login/mfa 로(lib/scxAuth memberMfaLogin) */
+  if (data?.mfaRequired && typeof data.ticket === 'string') {
+    const jar = await cookies();
+    const prod = process.env.NODE_ENV === 'production';
+    jar.set('sgb_mfa_t', data.ticket, { httpOnly: true, secure: prod, sameSite: 'lax', path: '/', maxAge: 300 });
+    jar.set('sgb_mfa_k', keep ? '1' : '0', { httpOnly: true, secure: prod, sameSite: 'lax', path: '/', maxAge: 300 });
+    return { ok: false, code: 'MFA_REQUIRED', message: String(data.message ?? '') };
+  }
   await saveTokens(data.accessToken, data.refreshToken, keep);
   return { ok: true, reconsent: await needsConsent(data.accessToken) };
 }

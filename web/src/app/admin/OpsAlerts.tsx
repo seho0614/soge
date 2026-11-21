@@ -60,6 +60,7 @@ const SEV: Record<string, string> = { CRITICAL: '긴급', WARN: '경고', INFO: 
 /* 알림 종류 이름 — 모르는 종류는 코드 그대로 */
 const NAME: Record<string, string> = {
   SERVER_ERROR_SPIKE: '서버 오류 몰림', SLOW_API: '느린 응답', UPLOADS_BACKUP_STALE: '올린 파일 백업 멈춤', UPLOADS_BACKUP_SKIPPED: '올린 파일 백업 건너뜀',
+  SERVER_ERROR_NEW: '처음 보는 서버 오류', SERVER_ERROR_REOPEN: '고친 서버 오류 다시 남',   /* v10.587 (docs/729) */
   POLL_HIDDEN_BY_REPORTS: '회원 투표 신고 감춤', DAILY_DIGEST: '하루 요약', STUB_PAYMENT_ORDER: '시험 결제 주문', SIGNUP_SPIKE: '가입 급증',
   PII_REVIEW_DUE: '개인정보 접속기록 점검',
   SETTING_CHANGED: '중요 설정 바뀜',   // v10.195 (D174) — 주문 받기 · 가입 · 2단계 인증 · 간주 · 기능 스위치
@@ -80,6 +81,7 @@ const NAME: Record<string, string> = {
   SECURITY_MONTHLY: '월간 보안 보고',   // v10.354 (D235 · docs/488)
   STAFF_LOGIN_ABROAD: '운영자 해외 로그인', STAFF_LOGIN_ABROAD_BLOCKED: '해외 운영 로그인 막음',   // v10.485 (D268 · docs/623) — 위험감지 › 해외 접속 경고
   PASSKEY_CLONE_SUSPECT: '운영자 패스키 복제 의심',   // v10.484 (D268 · docs/622)
+  SMQ_QNA_OVERDUE: '상품 문의 답 기한 넘김', SMQ_LIMIT_PROPOSED: '판매자 노출 제한 제안',   // v10.577 · 579 — 소개몰 › 상품 문의 답 관리 · 판매자 평가 · 패널티
   OPZ_INCIDENT_OPEN: '장애 대응 열림', OPZ_INCIDENT_CLOSED: '장애 대응 끝', OPZ_INCIDENT_STALE: '열린 장애 24시간 기록 없음', OPZ_REVIEW_DUE: '장애 되돌아보기 기한 넘김', OPZ_NL_REMIND: '이달 뉴스레터 없음',   // v10.556 · 557 (D288) — 위험감지 › 장애 대응 · 회원 › 월간 뉴스레터
   UPTIME_DOWN: '바깥 감시 — 응답 없음', UPTIME_RECOVERED: '바깥 감시 — 다시 응답함', UPT_INCIDENT: '장애 공지',   // v10.497 (D272 · docs/635) — 위험감지 › 가동 · 장애 공지
   SFX_DEVICE_MULTI: '같은 기기 여러 계정', SFX_RETENTION_DUE: '서류 보관 기한 다가옴 · 지남', SFX_RETENTION_REMOVE_FAIL: '파기한 서류 저장소 파일 못 지움',   // v10.546 · 547 (D285) — 위험감지 › 같은 기기 여러 계정 · 사무 › 서류 보관 기한
@@ -93,10 +95,12 @@ const NAME: Record<string, string> = {
   ROLE_EXPIRED: '운영 권한 기한 지나 거둠',   // v10.372 (D239 · docs/507)
   ROLE_EXPIRING: '운영 권한 기한 3일 안',   // v10.372
   STAFF_LEFT_ROLE: '퇴사 직원 계정에 운영 역할 남음',   // v10.563 (D291 · docs/705) — 직원 · 권한 › 운영자 목록
+  PRR_REVIEW_OPEN: '분기 권한 점검 — 거둘 후보 있음', STAFF_CASE_OPEN: '입사 · 퇴사 흐름 진행 중', STAFF_JOIN_OVERDUE: '입사 흐름 기한 넘김', STAFF_LEAVE_OVERDUE: '퇴사 흐름 기한 넘김',   // v10.566 · 568 (docs/708 · 710) — 직원 · 권한 › 거둘 후보 · 입사 · 퇴사
   DISPUTE_OVERDUE: '분쟁 처리 기한 넘김',   // v10.373 (D240 · docs/508)
   SETTLE_OVERDUE: '정산 승인 기한 넘김',   // v10.373
   APPLY_CHECK_NG: '운영 적용 확인 「다름」',   // v10.374
   REPORT_OVERDUE: '신고 처리 기한 넘김',   // v10.367 (D238 · docs/502)
+  MTR_APPEAL_OVERDUE: '이의 제기 처리 기한 넘김', MTR_REVIEW_SUSPECT: '가짜 후기 의심 새로 잡힘',   // v10.573 · 574 — 위험감지 › 이의 제기 · 가짜 후기 의심
   RESTORE_DRILL_DUE: 'DB 복원 시험 할 때',   // v10.368 (D238 · docs/503)
   INTEGRATION_OVERDUE: '외부 연동 예상일 지남',   // v10.235 (docs/375)
   ALERT_CHANNEL_FAIL: '급한 알림 길 연속 실패',   // v10.239 (docs/379)

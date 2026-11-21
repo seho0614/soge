@@ -206,7 +206,8 @@ export class PublicService {
         WHERE x.id = $1::uuid
           AND ((x.published_at IS NOT NULL AND x.published_at <= now() AND (x.ends_at IS NULL OR x.ends_at > now())
                 AND x.grades && array_remove(fn_notice_grades($3::uuid), 'STAFF'))
-               OR EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = $3::uuid AND r.role IN ('ADMIN', 'SUPER')))`, [id, n, me]);
+               OR EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = $3::uuid AND r.role IN ('ADMIN', 'SUPER'))
+               OR public.pgx_groups_task($3::uuid, ARRAY['mainops'], ARRAY['VIEW']))`, [id, n, me]);   // v10.615 (docs/757) GROUPS 면 공지 업무 보기도(R_ADMIN 만)
     if (!f) throw new NotFound('첨부 파일이 없습니다.');
     const stream = await storageFromEnv().open(f.storage_key);
     if (!stream) throw new NotFound('첨부 파일이 없습니다.');

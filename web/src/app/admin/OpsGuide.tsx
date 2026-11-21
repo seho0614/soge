@@ -6,6 +6,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 import { VersionHistory } from './VersionHistory';   // v10.351 (docs/485) 지난 판
 import { RestoreDrillBox } from './OpsSafetyBoxes';   // v10.368 (D238) 복원 시험
+import { Ops2DrillPaste } from './Ops2Drill';   // v10.585 (docs/727) 복원 시험 스크립트 결과 붙여 넣기(SUPER)
 
 interface Step { t: string; go?: string }
 interface Guide { code: string; version: number; title: string; who: string; steps: Step[]; note: string | null; updatedAt: string; by: string | null; versions: number }
@@ -41,6 +42,7 @@ export function OpsGuide({ onGo, canGo }: { onGo: (tab: string) => void; canGo: 
   return (
     <section data-ops-guide={rows.length}>
       <RestoreDrillBox />   {/* v10.368 (D238 · docs/503) DB 복원 시험 기록 */}
+      <Ops2DrillPaste />   {/* v10.585 (docs/727) restore-drill.sh 결과 붙여 넣기(SUPER 만 · 다른 역할은 그리지 않음) */}
       <Flash msg={a.msg} err={a.err} />
       <p className="muted">업무 {rows.length}가지 · 단계 번호는 실제 순서입니다. 「이 화면」을 누르면 그 탭으로 갑니다(권한이 없는 화면은 단추가 흐립니다).</p>
       {rows.map((g) => (

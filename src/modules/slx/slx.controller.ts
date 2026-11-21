@@ -136,7 +136,7 @@ export class SlxReviewPhotoController {
   async photo(@Param('id') id: string, @Res() res: Response) {
     const me = RequestCtx.actorId() ?? null;
     const [st] = me ? await this.db.query<{ staff: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM account_roles WHERE account_id = $1::uuid AND role IN ('ADMIN', 'SUPER', 'REVIEWER')) AS staff`, [me]) : [{ staff: false }];
+      `SELECT EXISTS (SELECT 1 FROM account_roles WHERE account_id = $1::uuid AND role IN ('ADMIN', 'SUPER', 'REVIEWER')) OR public.pgx_groups_task($1::uuid, ARRAY['queue'], ARRAY['VIEW']) AS staff`, [me]) : [{ staff: false }];   // v10.615 (docs/757)
     const r = await reviewPhoto(this.db, id, me, !!st?.staff);
     res.status(200);
     res.setHeader('Content-Type', r.contentType); res.setHeader('Content-Length', String(r.size));

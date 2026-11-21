@@ -54,12 +54,13 @@ export default async function MyListings({ searchParams }: { searchParams: Promi
   const t = await getTranslations('my.lst');
   const tl = await getTranslations('lsx');   // v10.513 ~ 516 (D276)
   const ty = await getTranslations('lsy');   // v10.525 · 526 (D279)
+  const tq = await getTranslations('lsq.bulk');   // v10.602 (docs/744) 일괄 등록 단추
   const f = await getFmt();
 
   return (
     <>
       <MyHead title={t('title')} sub={t('sub')}
-        right={<><Link className="btn-sm" href="/my/listing-tools" data-lsx-tools-link="">{tl('toolsLink')}</Link> <Link className="btn-sm" href="/my/saved-searches">{tl('savedTitle')}</Link> <Link className="btn-sm" href="/my/listing-video" data-lsy-video-link="">{ty('videoLink')}</Link> <Link className="my-bp" href="/register">{t('new')}</Link></>} />
+        right={<><Link className="btn-sm" href="/my/listing-tools" data-lsx-tools-link="">{tl('toolsLink')}</Link> <Link className="btn-sm" href="/my/saved-searches">{tl('savedTitle')}</Link> <Link className="btn-sm" href="/my/listing-video" data-lsy-video-link="">{ty('videoLink')}</Link> <Link className="btn-sm" href="/my/listings/bulk" data-lsq-bulk-link="">{tq('link')}</Link> <Link className="btn-sm" href="/my/listing-fill" data-grw-fill-link="">{(await getTranslations('grw.fill'))('title')}</Link> <Link className="my-bp" href="/register">{t('new')}</Link></>} />
 
       <Tabs label={t('tabsAria')} cur={tab} items={[
         { k: 'all', t: t('tab.all'), n: all.length, href: '/my/listings' },

@@ -5,6 +5,7 @@ import { Principal, ROLES_KEY, isSuper } from './auth';
 import { DatabaseService } from '../db/database.service';
 import { PERM_OPS, effective, logDenied, permMode, routeNeeds } from '../modules/admin/perm.service';
 import { groupsApplicable, groupsDecide, logDiff, permDecideMode } from '../modules/admin/perm-mode';   // v10.564 (D291)
+import { prrNoteUse } from '../modules/admin/prr-use';   // v10.566 업무 사용 기록(권한 정기 점검 「안 쓴 권한그룹」)
 
 /* ---------------------------------------------------------------------
  * v10.442 (D258 · docs/579) 업무별 권한 검사 — AuthGuard(역할 · 2단계 · 접속 인증) 다음 단계
@@ -23,6 +24,7 @@ export class PermGuard implements CanActivate {
     if (!principal || isSuper(principal.roles)) return true;
     const required = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [ctx.getHandler(), ctx.getClass()]);
     if (!required?.length || !required.every((r) => PERM_OPS.includes(r))) return true;
+    prrNoteUse(this.db, principal.accountId, String(req.method), String(req.originalUrl ?? req.url ?? ''));   // v10.566 — 계정 · 업무 · 날짜만 · 하루 한 번 · 실패해도 요청 그대로
     /* v10.564 (D291 · docs/706) perm.mode — GROUPS: 역할로 통과한 요청도 권한그룹이 정함(표에 없는 주소는 역할 그대로) · COMPARE: 역할은 열었는데 권한그룹은 막으면 「다름(ROLE_ONLY)」 */
     if (groupsApplicable(principal.roles, required)) {
       const pm = await permDecideMode(this.db);

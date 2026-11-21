@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import {
   AccountLocked, TooManyAttempts, assertStrongPassword, clientIpKey, minutesText, tokenHash,
 } from './auth-throttle';
+import { sec2AssertNotPwned } from '../sec2/pwned';   // v10.591 (docs/733) 유출 비밀번호 막기
 
 /* ---------------------------------------------------------------------
  * v10.48 (D102 · 2026-10-20) — 비밀번호 재설정 · 변경 · 회원 탈퇴 · 운영 잠금 해제
@@ -77,7 +78,7 @@ export class AccountSecurityService {
     const note = `가입된 이메일이면 비밀번호 재설정 링크를 보냈습니다. ${ttl}분 안에 메일의 링크를 여십시오. 받은편지함에 없으면 스팸함을 확인해 주십시오.`;
 
     const [acc] = await this.db.query<{ id: string; email: string }>(
-      `SELECT id, email FROM accounts WHERE email = $1 AND status = 'ACTIVE' AND withdrawn_at IS NULL`, [email]);
+      `SELECT id, email FROM accounts WHERE email = $1 AND status IN ('ACTIVE', 'DORMANT') AND withdrawn_at IS NULL`, [email]);   /* v10.576 — 휴면 계정도 링크(메일 주인 확인 뒤 풂) */
     if (!acc) return { ok: true, note };
 
     const token = randomBytes(32).toString('base64url');
@@ -116,8 +117,13 @@ export class AccountSecurityService {
       throw new PolicyViolation('RESET_TOKEN_INVALID', '링크가 올바르지 않습니다. 비밀번호 찾기에서 다시 요청해 주십시오.');
     }
     assertStrongPassword(password);
+    await sec2AssertNotPwned(this.db, password, 'RESET');   // v10.591 (docs/733) — 증표를 쓰기 전에 봄(막혀도 링크는 그대로 · 다른 비밀번호로 다시)
     const hash = await bcrypt.hash(password, 12);
     await this.db.transaction(async () => {
+      /* v10.576 (docs/718) — 휴면 계정이면 쓰지 않은 · 기한 안 링크(메일 주인 확인)로 먼저 풂 · 같은 거래라 아래가 실패하면 함께 되돌아감 */
+      await this.db.query(
+        `SELECT fn_mtr_dormant_wake(t.account_id, 'PW_RESET') FROM password_reset_tokens t JOIN accounts ac ON ac.id = t.account_id
+          WHERE t.token_hash = $1 AND ac.status = 'DORMANT' AND t.used_at IS NULL AND t.revoked_at IS NULL AND t.expires_at > now()`, [tokenHash(token)]);
       const [r] = await this.db.query<{ a: string | null }>(`SELECT fn_password_reset_consume($1) AS a`, [tokenHash(token)]);
       if (!r?.a) {
         throw new PolicyViolation('RESET_TOKEN_INVALID', '링크가 만료됐거나 이미 쓰였습니다. 비밀번호 찾기에서 다시 요청해 주십시오.');
@@ -153,6 +159,7 @@ export class AccountSecurityService {
     assertStrongPassword(next);
     if (current === next) throw new PolicyViolation('SAME_PASSWORD', '지금과 다른 비밀번호를 넣어 주십시오.');
     await this.checkPassword(me, current);
+    await sec2AssertNotPwned(this.db, next, 'CHANGE');   // v10.591 (docs/733)
     await assertStaffPassword(this.db, me, next);   /* v10.360 (D236 · docs/494) — 운영 역할: 12자 · 최근 3개 다시 쓰기 금지 */
     const hash = await bcrypt.hash(next, 12);
     await this.db.transaction(async () => {

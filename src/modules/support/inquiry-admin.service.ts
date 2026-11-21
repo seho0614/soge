@@ -4,6 +4,7 @@ import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { inquiryNo } from '../public/public.service';
+import { permDecideMode } from '../admin/perm-mode';   // v10.615 (docs/757) GROUPS 면 담당 = 1:1 문의 고치기 이상
 
 export const INQUIRY_STATES = ['OPEN', 'ANSWERED', 'CLOSED'] as const;
 export const INQUIRY_PAGE = 30;
@@ -76,9 +77,15 @@ export class InquiryAdminService {
     const past = r.accountId ? await this.db.query<{ id: string; createdAt: Date }>(
       `SELECT id::text AS id, title, status, created_at AS "createdAt" FROM inquiries
         WHERE account_id = $1 AND id <> $2::uuid ORDER BY created_at DESC LIMIT 10`, [r.accountId, id]) : [];
+    const groups = (await permDecideMode(this.db).catch(() => 'ROLE')) === 'GROUPS';   // v10.615 (docs/757) — ROLE · COMPARE 는 지금처럼 ADMIN · SUPER
     const staff = await this.db.query<{ id: string; email: string }>(
       `SELECT DISTINCT a.id::text AS id, a.email::text AS email FROM accounts a JOIN account_roles ar ON ar.account_id = a.id
-        WHERE ar.role IN ('ADMIN', 'SUPER') AND a.status = 'ACTIVE' ORDER BY 2 LIMIT 50`);
+        WHERE a.status = 'ACTIVE'
+          AND CASE WHEN $1::boolean
+                   THEN ar.role = 'SUPER' OR (ar.role IN ('ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT')
+                        AND EXISTS (SELECT 1 FROM fn_perm_effective(a.id) e WHERE e.task_key = 'inquiries' AND e.level IN ('EDIT', 'APPROVE')))
+                   ELSE ar.role IN ('ADMIN', 'SUPER') END
+        ORDER BY 2 LIMIT 50`, [groups]);
     return {
       ...r, no: inquiryNo(r.id, r.createdAt), email: maskMail(r.email), guest: !r.accountId,
       past: past.map((p) => ({ ...p, no: inquiryNo(p.id, p.createdAt) })),
@@ -175,7 +182,14 @@ export class InquiryAdminService {
     if (v.assigneeId !== undefined) {
       assignee = v.assigneeId || null;
       if (assignee) {
-        const [ok] = await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1::uuid AND role IN ('ADMIN', 'SUPER')`, [assignee]);
+        const groups = (await permDecideMode(this.db).catch(() => 'ROLE')) === 'GROUPS';   // v10.615 (docs/757)
+        const [ok] = await this.db.query(
+          `SELECT 1 FROM account_roles r WHERE r.account_id = $1::uuid
+              AND CASE WHEN $2::boolean
+                       THEN r.role = 'SUPER' OR (r.role IN ('ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT')
+                            AND EXISTS (SELECT 1 FROM fn_perm_effective(r.account_id) e WHERE e.task_key = 'inquiries' AND e.level IN ('EDIT', 'APPROVE')))
+                       ELSE r.role IN ('ADMIN', 'SUPER') END
+            LIMIT 1`, [assignee, groups]);
         if (!ok) throw new PolicyViolation('INQUIRY_ASSIGNEE', '담당은 운영자(ADMIN · SUPER)만 정할 수 있습니다.');
       }
     }

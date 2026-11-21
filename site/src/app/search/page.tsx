@@ -11,6 +11,7 @@ import { budgetText } from '@/components/request/ReqCard';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Msgs } from '@/i18n/Msgs';
 import { SaveSearchButton } from '@/components/lsx/SaveSearchButton';   // v10.513 (D276)
+import { LsqClickBeacon } from '@/components/lsq/ClickBeacon';   // v10.604 (docs/746) 검색 클릭 분석(익명)
 import { isGwanKey } from '@/i18n/keys';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -142,17 +143,18 @@ export default async function SearchPage({ searchParams }: {
           {showList && (rows.length ? (
             <>
               <h2 className="s2">{t('list.headCount', { n: rows.length })}</h2>
+              <LsqClickBeacon q={q} gwan={gTab ?? 'ALL'} />
               <div className="tw">
                 <table className="tb2">
                   <thead><tr><th>{t('list.colType')}</th><th>{t('list.colItem')}</th><th>{t('list.colCategory')}</th><th>{t('list.colGrade')}</th><th>{t('list.colOwner')}</th><th>{t('list.colFee')}</th><th>{t('list.colViews')}</th></tr></thead>
                   <tbody>
-                    {rows.map((r) => (
+                    {rows.map((r, i) => (
                       <tr key={r.id + (r.ad ? '-ad' : '')}>
                         <td>
                           <span className={`gt g-${r.gwanCode.toLowerCase()}`}>{GN[r.gwanCode] ?? r.gwanCode}</span>
                           {r.ad && <span className="gt g-ad">{r.adLabel ?? t('list.ad')}</span>}
                         </td>
-                        <td><Link href={`/${GWAN_PATH[r.gwanCode] ?? 'money'}/${r.id}`}><b>{r.title}</b></Link></td>
+                        <td><Link href={`/${GWAN_PATH[r.gwanCode] ?? 'money'}/${r.id}`} data-lsq-pos={r.ad ? undefined : i - list.promoted.length + 1} data-lsq-id={r.ad ? undefined : r.id}><b>{r.title}</b></Link></td>
                         <td>{r.categoryName}</td>
                         <td>{r.gradeLabel ?? '—'}</td>
                         <td>{r.owner?.companyName ?? '—'}</td>

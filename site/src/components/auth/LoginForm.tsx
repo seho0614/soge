@@ -33,6 +33,7 @@ export function LoginForm({ action, next, cancel }: { action: (email: string, pa
     start(async () => {
       const r = await action(email, pw, keep);
       if (r.ok) router.push(r.reconsent ? `/terms/agree?next=${encodeURIComponent(next)}` : next);
+      else if (r.code === 'MFA_REQUIRED') router.push(`/login/mfa?next=${encodeURIComponent(next)}`);   /* v10.592 (docs/734) 회원 2단계 인증 */
       else { setErr(r.message); setLocked(r.code === 'ACCOUNT_LOCKED' || r.code === 'TOO_MANY_ATTEMPTS'); setPendingWd(r.code === 'WITHDRAW_PENDING' ? { email, pw } : null); }
     });
   }

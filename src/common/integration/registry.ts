@@ -99,4 +99,7 @@ export const INTEGRATIONS: IntegrationEntry[] = [
     otherEnv: ['FIRMBANK_CLIENT_ID', 'FIRMBANK_ORG_CODE', 'FIRMBANK_CNTR_ACCOUNT', 'FIRMBANK_ENV', 'FIRMBANK_API_BASE', 'FIRMBANK_TEST_BASE', 'FIRMBANK_REQ_NAME', 'FIRMBANK_MAP', 'FIRMBANK_TIMEOUT_MS',
                'FIRMBANK_USER_TOKEN', 'FIRMBANK_FEED_MAP'],   // v10.467 (D264) 은행 거래내역 자동 조회 — 사용자 토큰(연동 키) · 경로 · 칸 JSON
     assume: null, adapter: 'REAL', files: ['src/modules/acct/transfer.ts', 'src/modules/acct/bankfeed.ts'], doc: 'docs/591' },
+  /* v10.607 (docs/749) 택배사 배송 조회 — 조회 대행(스마트택배 · 굿스플로 등) 주소 틀 CARRIER_TRACK_BASE({carrier} · {no} · {key}) · 칸 지도 CARRIER_TRACK_MAP · 간주는 설정 lsq.track_mode(assume.* 아님 · 오픈 차단 아님) · 켜기 lsq.track(처음 off) */
+  { code: 'CARRIER', name: '택배사 배송 조회', dbRow: true, secretEnv: 'CARRIER_TRACK_KEY', otherEnv: ['CARRIER_TRACK_BASE', 'CARRIER_TRACK_MAP', 'CARRIER_TRACK_TIMEOUT_MS'],
+    assume: null, adapter: 'REAL', files: ['src/modules/lsq/carrier.adapter.ts', 'src/modules/lsq/tracking.ts'], doc: 'docs/749' },
 ];

@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { dtKst } from '@/lib/format';
 import { MyHead, Empty, Note } from '@/components/my/ui';
 import { NotificationPrefs, type Pref } from '@/components/my/NotificationPrefs';
+import { GrwDigestBox } from '@/components/grw/DigestBox';   // v10.599 (docs/741)
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -70,6 +71,7 @@ export default async function NotificationsPage() {
       <p><Link className="my-bo sm" href="/my/push" data-mkx-push-link="">{(await getTranslations('mkx.link'))('push')}</Link></p>   {/* v10.538 (D283) 나의공간 › 웹 푸시 */}
       <h2 className="my-s2" id="prefs">{t('hPrefs')}</h2>
       {prefs ? <NotificationPrefs items={prefs.items} emailReady={prefs.emailReady} /> : <Empty>{t('prefsFail')}</Empty>}
+      <GrwDigestBox />{/* v10.599 (docs/741) 하루 요약 받기 — 스위치 꺼짐이면 그리지 않음 */}
       {!prefs?.emailReady && (
         <Note kind="warn"><b>{t('emailB')}</b> {t('emailText')}</Note>
       )}

@@ -6,6 +6,7 @@ import { apiGetPersonal } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import { BackBar } from '@/components/common/BackBar';
 import { InquiryFeedback } from '@/components/support/InquiryFeedback';   // v10.341 (D231)
+import { InquiryPhotos } from '@/components/bzx/InquiryPhotos';   // v10.611 (docs/753)
 import { Msgs } from '@/i18n/Msgs';
 import { getTranslations } from 'next-intl/server';
 import '@/styles/proto-w1.css';
@@ -36,7 +37,7 @@ export default async function HistoryPage() {
             {rows.map((r) => (
               <tr key={r.id}>
                 <td><b style={{ fontFamily: 'var(--mono, monospace)', fontSize: 12 }}>{r.no ?? r.id.slice(0, 8)}</b></td>
-                <td><b>{r.title}</b>{r.categoryLabel ? <div className="w1-ls">{r.categoryLabel}</div> : null}</td>
+                <td><b>{r.title}</b>{r.categoryLabel ? <div className="w1-ls">{r.categoryLabel}</div> : null}<InquiryPhotos id={r.id} closed={r.status === 'CLOSED'} /></td>
                 <td>{r.channel === 'BOT' ? t('chBot') : t('chAgent')}</td>
                 <td>{r.status === 'ANSWERED' || r.status === 'CLOSED' ? <span className="w1-bg ok">{r.statusLabel ?? t('answered')}</span> : <span className="w1-bg wait">{r.statusLabel ?? t('received')}</span>}</td>
                 <td>{ymdKst(r.createdAt)}</td>

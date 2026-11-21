@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { apiGet } from '@/lib/api';
 import { GWAN_PATH } from '@/lib/format';
 import { siteOrigin } from '@/components/refcode/origin';
+import { EMPTY_REGIONS, lsqAreaEntries, type LsqRegionList } from '@/components/lsq/area';   // v10.605 (docs/747) 지역별 소개
 
 /**
  * v10.174 (docs/268) — 사이트 지도(/sitemap.xml). 공개 화면 + 서버가 고른 공개 주소(GET /site/sitemap-entries — 주소 조각 · 바뀐 시각만).
@@ -23,11 +24,13 @@ const STATIC: Array<[string, MetadataRoute.Sitemap[number]['changeFrequency'], n
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const o = await siteOrigin();
   const e = await apiGet<Entries>('/site/sitemap-entries', 3600).catch(() => ({ listings: [], posts: [], products: [] }) as Entries);
+  const rg = await apiGet<LsqRegionList>('/site/lsq/regions', 3600).catch(() => EMPTY_REGIONS);
   const at = (v: string) => new Date(v);
   return [
     ...STATIC.map(([p, changeFrequency, priority]) => ({ url: o + p, changeFrequency, priority })),
     ...e.listings.filter((l) => GWAN_PATH[l.gwan]).map((l) => ({ url: `${o}/${GWAN_PATH[l.gwan]}/${l.id}`, lastModified: at(l.at), changeFrequency: 'weekly' as const, priority: 0.6 })),
     ...e.posts.map((p) => ({ url: `${o}/community/${p.id}`, lastModified: at(p.at), changeFrequency: 'weekly' as const, priority: 0.5 })),
     ...e.products.map((p) => ({ url: `${o}/health/p/${encodeURIComponent(p.code)}`, lastModified: at(p.at), changeFrequency: 'weekly' as const, priority: 0.6 })),
+    ...lsqAreaEntries(o, rg),
   ];
 }

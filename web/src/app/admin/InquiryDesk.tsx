@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MemberNotesBox } from './MemberOpsBoxes';   // v10.361 (D237) 운영 메모
 import { CsxDraftBox } from './CsxDesk';   // v10.528 (D280) AI 답변 초안 상자
+import { BzxInquiryPhotos } from './Bzx';   // v10.611 (docs/753) 사진 미리 보기 · 답변 사진
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
@@ -139,6 +140,7 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
       </p>
       <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--g50, #f8fafc)', padding: 12, borderRadius: 8 }} data-inquiry-body="">{d.body}</pre>
       {d.files.length > 0 && <p>첨부: {d.files.map((fid, i) => <button key={fid} className="btn-plain btn-sm" onClick={() => openFile(fid)}>파일 {i + 1}</button>)}</p>}
+      <BzxInquiryPhotos id={id} closed={d.status === 'CLOSED'} />   {/* v10.611 (docs/753) 접수 첨부 · 더한 사진 · 답변 사진 미리 보기 */}
       {d.status !== 'CLOSED' && (tq.data?.rows ?? []).some((t) => t.isActive) && (
         <p>
           <select name="inq-template" value="" data-inquiry-template=""

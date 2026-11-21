@@ -9,6 +9,7 @@ import { HltEmpty } from '@/components/health/HltParts';
 import { MyHltNav } from '@/components/health/MyHltNav';
 import { CopyText } from '@/components/health/CopyText';
 import { codeText, ORDER_LABEL, SHIP_LABEL, ymdhm } from '@/components/health/util';
+import { LsqTrackBox } from '@/components/lsq/TrackBox';   // v10.607 (docs/749) 택배사 배송 단계
 
 import { getTranslations } from 'next-intl/server';
 import { getFmt } from '@/lib/getFmt';
@@ -99,6 +100,8 @@ export default async function MyHltShip({ params }: Props) {
           </ul>
         )}
       </section>
+
+      <LsqTrackBox no={no} />
 
       <div className="hlt-btns">
         <Link className="hlt-btn" href={`/my/health/orders/${enc}`}>{t('hOrder.title')}</Link>

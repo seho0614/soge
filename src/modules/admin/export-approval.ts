@@ -23,6 +23,10 @@ export const EXPORT_KO: Record<ExportTarget, string> = {
 };
 /** 요청할 수 있는 역할(SUPER 는 모두) — 내려받기 API 의 @Roles 와 같게 */
 const TARGET_ROLES: Record<ExportTarget, string[]> = { POINT_REPORT: ['PAYOUT'], AUDIT_EXPORT: [], NOTICE_READS: [], RATE_READS: [], ACCT_JOURNAL: ['PAYOUT', 'ACCOUNTANT'], ACCT_TAX: ['PAYOUT', 'ACCOUNTANT'], ACCT_LEDGER: ['PAYOUT', 'ACCOUNTANT'], ACCT_ARCHIVE: ['PAYOUT', 'ACCOUNTANT'], BI_DAILY: ['ADMIN'], PTN_LEADS: [], ITS_SURVEY: ['ADMIN'] };   // v10.437 · 440 (D257)
+/* v10.583 (docs/725) 급여 이체 파일(계좌 원문) — 옛 시험이 위 배열 끝 글자를 보므로 배열 줄은 그대로 두고 여기서 붙임 · DB CHECK 는 13차 SQL(D284 와 같은 방식) · 지급 담당(SUPER 는 늘) */
+(EXPORT_TARGETS as unknown as string[]).push('HRA_PAY_FILE');
+(EXPORT_KO as unknown as Record<string, string>).HRA_PAY_FILE = '급여 이체 파일(계좌 원문)';
+(TARGET_ROLES as unknown as Record<string, string[]>).HRA_PAY_FILE = ['PAYOUT'];
 export const EXPORT_DAILY_MAX = 10;
 const EXPORT_GATE_KEY = 'export_gate';
 

@@ -5206,7 +5206,8 @@
     "POST /admin/health/sellers/{id}/commission",
     "GET /admin/health/rate-impact",
     "GET /admin/health/tenant/readiness",
-    "POST /admin/health/tenant/biz-report"
+    "POST /admin/health/tenant/biz-report",
+    "GET /admin/smq/tenant-ready2"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "v10.224 (D194) — 소개몰 정산에서 나눈 탭 · 판매자 관리는 v10.223 (D193)",
@@ -9760,6 +9761,1222 @@
     "GET /admin/me/hr/payslips/{lineId}"
    ],
    "note": "2026-11-21 v10.567 (docs/709) 내 인사 맨 위 「내 카드」(접는 칸) — 관리자 사원 카드(SB-ADM-HRC-010)와 같은 칸 모양 · 본인 것만(직원 번호 안 받음) · 기본 · 근태 · 연차 · 휴가 신청 · 내 급여명세서 목록(금액 없음 · 보기 · 인쇄) · 근로계약서 상태 · 의무교육 · 평가(닫힌 차례의 내 결과만 · 의견 없음) · 연장 근로 · 이번 주 근무표 · 퇴직금 추계 없음 · 열람 사유 · 감사 없음 · 자세히는 같은 화면 안 칸으로 · 연결 없으면 「연결된 직원이 없습니다」 · 세무사 빠짐"
+  },
+  {
+   "id": "SB-ADM-OPB-010",
+   "name": "대표 한눈에",
+   "group": "ADM",
+   "url": "/admin/opb-glance",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/opb/glance"
+   ],
+   "note": "2026-11-21 v10.571 (docs/713) 10차 운영 기반 ③ — 대시보드 › 대표 한눈에 · 가입 · 탈퇴 · 매물 · 요청 · 거래 · 성사 · 소개몰 결제 주문 · 매출 · 취소 · 소개비 정산 지급 · 판매자 정산 지급 · 문의 · 답변 · 경고 · 급한 알림을 오늘 · 어제 · 그저께 · 지난 7일 · 그 앞 7일로(일보 metrics 와 같은 셈) · 지금 상태(확인 안 한 급한 알림 · 오픈 차단 · 열린 문의 · 정산 대기) · 읽기만 · 합계만 · SUPER"
+  },
+  {
+   "id": "SB-ADM-OPB-020",
+   "name": "운영 알림 받을 사람 규칙",
+   "group": "ADM",
+   "url": "/admin/opb-alert-routes",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-OPS-010",
+   "apis": [
+    "GET /admin/opb/alert-routes",
+    "PUT /admin/opb/alert-routes/{code}",
+    "POST /admin/opb/alert-routes/{code}/remove",
+    "PUT /admin/opb/alert-route-settings"
+   ],
+   "note": "2026-11-21 v10.572 (docs/714) 10차 운영 기반 ④ — 위험감지 › 알림 받을 사람 규칙 · 종류(ops_alerts.alert_code)마다 텔레그램 · 메일 · 슬랙 · 게시판 · 급함 기준 · 묶음 간격 · 받을 권한그룹 · 기본 줄(*) · 처음 값 = 지금 동작 · 스위치 opb.alert_routes · opb.alert_group_mail 처음 off · 최근 30일 종류별 「지금 동작」 대 「규칙」 · 바꾼 기록 · SUPER"
+  },
+  {
+   "id": "SB-ADM-HRA-010",
+   "name": "회계 연차 사용 촉진",
+   "group": "ADM",
+   "url": "/admin/hra-leave-promo",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/hr/leave-promo",
+    "POST /admin/hr/leave-promo/issue",
+    "POST /admin/hr/leave-promo/{id}/designate",
+    "GET /admin/hra/settings",
+    "PUT /admin/hra/settings"
+   ],
+   "note": "2026-11-21 v10.581 (docs/723) 연차 사용 촉진 — 회계 › 인사 › 휴가 신청 뒤 · 근로기준법 61조 일반 원칙(1차 6개월 전 10일 안 남은 연차 알림 · 직원 계획 · 2차 2개월 전까지 쓸 날 지정 · 노무 확인 권함) · 1년 미만은 대상 아님 표시 · 본인 직원 지정 못 함 · 스위치 hra.leave_promo 처음 off(정기 작업 hra_daily · 운영 알림 HRA_LEAVE_PROMO)"
+  },
+  {
+   "id": "SB-ADM-HRA-015",
+   "name": "내 인사 연차 사용 촉진",
+   "group": "ADM",
+   "url": "/admin/my-hr/leave-promo",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/me/hr/leave-promo",
+    "POST /admin/me/hr/leave-promo/{id}/plan",
+    "POST /admin/me/hr/leave-promo/{id}/ack"
+   ],
+   "note": "2026-11-21 v10.581 (docs/723) 내 인사 맨 아래 상자 — 내 촉진 알림 · 쓸 날 계획 내기(기한 안 · 한 번) · 받았습니다(확인 시각 기록) · 연결 안 된 계정은 상자 없음 · 세무사 빠짐"
+  },
+  {
+   "id": "SB-ADM-HRA-020",
+   "name": "사무 사내 자료실 · 공지",
+   "group": "ADM",
+   "url": "/admin/hra-library",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/hra/library",
+    "GET /admin/hra/library/{id}",
+    "POST /admin/hra/library/{id}/read",
+    "GET /admin/hra/library/{id}/file",
+    "GET /admin/hra/library/manage",
+    "POST /admin/hra/library",
+    "PUT /admin/hra/library/{id}",
+    "POST /admin/hra/library/{id}/archive",
+    "GET /admin/hra/library/{id}/reads"
+   ],
+   "note": "2026-11-21 v10.582 (docs/724) 사내 자료실 · 공지 — 사무 › 사내 문서함 바로 뒤 · 운영 역할 모두 읽기(세무사 빠짐) · 공개 범위 = 권한그룹(D258 · 비우면 모두) · 꼭 읽기 · 기한 · 읽었습니다(쌓기만) · 자료 파일은 CORP_DOC 로 올리거나 사내 문서함 문서를 고름 · 파일 열기는 공개 범위를 보고 5분 주소(감사 HRA_LIB_FILE_OPEN) · 쓰기 · 읽음 현황 ADMIN · SUPER · 기한 지남 알림 hra.lib_unread_alert 처음 off"
+  },
+  {
+   "id": "SB-ADM-HRA-030",
+   "name": "회계 급여 이체 파일",
+   "group": "ADM",
+   "url": "/admin/hra-payfile",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/hra/payfile",
+    "PUT /admin/hra/pay-banks/{id}",
+    "GET /admin/hra/bank-formats",
+    "POST /admin/hra/bank-formats",
+    "PUT /admin/hra/bank-formats/{id}",
+    "GET /admin/hra/payfile/export"
+   ],
+   "note": "2026-11-21 v10.583 (docs/725) 급여 이체 파일 — 회계 › 인사 › 급여 뒤 · 확정 · 지급 급여의 실지급 → 은행 대량 이체 CSV(UTF-8 BOM) · 계좌는 암호문 저장 · 화면 끝 4자리 · 바꾸면 기록 · 운영 알림 HRA_PAY_BANK_CHANGED · 양식(칸 짝짓기) SUPER · 내려받기는 hra.payfile_export(처음 off) + 내려받기 승인 HRA_PAY_FILE · 기록 SHA-256 · 세무사 · ADMIN 못 봄"
+  },
+  {
+   "id": "SB-ADM-HRA-040",
+   "name": "회계 마감 체크리스트",
+   "group": "ADM",
+   "url": "/admin/acct-close-check",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/acct/close-check",
+    "POST /admin/acct/close-check/marks",
+    "POST /admin/acct/close-check/items",
+    "PUT /admin/acct/close-check/items/{key}",
+    "GET /admin/hra/settings",
+    "PUT /admin/hra/settings"
+   ],
+   "note": "2026-11-21 v10.584 (docs/726) 회계 마감 체크리스트 — 회계 › 장부 › 월 결산 뒤 · 저절로 셈(자동 전표 실패 · 통장 맞춤 · 세금계산서 발행 = 월 결산 요약 그대로 + 매입 · 경비 청구 · 급여 확정 · 감가상각 · 미수금) · 사람 확인 항목(SUPER 가 더하고 끔) · 예외 확인은 사유 꼭 · 마감한 달은 못 바꿈 · 남은 일 알림 HRA_CLOSE_TODO(hra.close_alert 처음 off) · 세무사 읽기만 (세무사 ACCOUNTANT 는 회계 읽기 규칙으로 GET 만)"
+  },
+  {
+   "id": "SB-ADM-MTR-010",
+   "name": "이의 제기",
+   "group": "ADM",
+   "url": "/admin/mtr-appeals",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/mtr/appeals",
+    "POST /admin/mtr/appeals/{id}/decide",
+    "GET /admin/mtr/overview",
+    "PUT /admin/mtr/settings"
+   ],
+   "note": "2026-11-21 v10.573 (docs/715) 신고 → 이의 제기 — 신고로 내려간 매물(반려 · 정지) · 소개광장 글 · 댓글(감춤)의 작성자가 대상마다 한 번 · 운영 재판단(받아들임: 글 · 댓글 다시 보임 · 매물 검수 대기 · 그 대상 신고 기각 · 신고한 사람 알림 / 받아들이지 않음) · 사유 필수 · 기한 mtr.appeal_sla_hours(72) · 넘으면 MTR_APPEAL_OVERDUE · 스위치 mtr.appeal 처음 off"
+  },
+  {
+   "id": "SB-ADM-MTR-020",
+   "name": "가짜 후기 의심",
+   "group": "ADM",
+   "url": "/admin/mtr-reviews",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/mtr/reviews",
+    "GET /admin/mtr/reviews/{id}",
+    "POST /admin/mtr/reviews/{id}/decide",
+    "POST /admin/mtr/reviews/scan",
+    "GET /admin/mtr/overview",
+    "PUT /admin/mtr/settings"
+   ],
+   "note": "2026-11-21 v10.574 (docs/716) 가짜 후기 · 리뷰 탐지 — 거래 후기 · 소개몰 리뷰 · 신호(같은 기기 40 · 거래 없음 40 · 몰림 25 · 비슷한 문장 25 · 새 계정 10) · 기준 mtr.review_threshold(50) · 의심 목록만 · 자동 삭제 없음 · 가짜 · 문제없음(사유) · 가짜 거래 후기는 신뢰 점수에서 뺌 · 스위치 mtr.review_watch 처음 off"
+  },
+  {
+   "id": "SB-ADM-MTR-030",
+   "name": "소개자 신뢰 점수",
+   "group": "ADM",
+   "url": "/admin/mtr-trust",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/mtr/trust",
+    "GET /admin/mtr/trust/lookup",
+    "PUT /admin/mtr/trust/rules",
+    "POST /admin/mtr/trust/recompute",
+    "GET /admin/mtr/overview",
+    "PUT /admin/mtr/settings"
+   ],
+   "note": "2026-11-21 v10.575 (docs/717) 소개자 신뢰 점수 0 ~ 100 — 시작 15 · 본인인증 15 · 사업자 5 · 성사 25 · 받은 후기 25 · 응답 속도 15 · 인정된 신고 -15(산식 초안 · SUPER 고침) · 분포 · 한 사람 찾기 · 운영 · 본인 화면만 · 노출 순위 · 검색 정렬 · 광고 · 소개비 계산에 쓰지 않음 · 스위치 mtr.trust 처음 off"
+  },
+  {
+   "id": "SB-ADM-MTR-040",
+   "name": "휴면 계정",
+   "group": "ADM",
+   "url": "/admin/mtr-dormant",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "ADMIN"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/mtr/dormant",
+    "POST /admin/mtr/dormant/{id}/wake",
+    "GET /admin/mtr/overview",
+    "PUT /admin/mtr/settings"
+   ],
+   "note": "2026-11-21 v10.576 (docs/718) 회원 휴면 계정 — 미접속 mtr.dormant_days(365)일 · 30일 전 알림 · 휴면 때 이름 · 전화 분리 보관(pii 금고 · 암호화) · 로그인 · 간편 로그인 · 재설정 링크로 풀림 · 풀기(SUPER · 사유) · 법무 확인 필요 · 회사 선택 · 스위치 mtr.dormant · mtr.dormant_mail 처음 off"
+  },
+  {
+   "id": "SB-MYP-MTR-010",
+   "name": "신고로 내려간 내 글 · 이의 제기",
+   "group": "MYP",
+   "url": "/my/appeals",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-RPT-010",
+   "apis": [
+    "GET /me/mtr/appeals",
+    "POST /me/mtr/appeals"
+   ],
+   "note": "2026-11-21 v10.573 (docs/715) 신고로 내려간 내 매물 · 글 · 댓글 · 신고 사유 이름 · 건수 · 운영 처리 내용(신고한 사람 안 보임) · 대상마다 한 번 이의(10 ~ 1000자) · 결과 · 내 신고 내역 아래 안내에서 들어옴 · mtr.appeal 처음 off"
+  },
+  {
+   "id": "SB-MYP-MTR-020",
+   "name": "내 신뢰 점수",
+   "group": "MYP",
+   "url": "/my/trust",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /me/mtr/trust"
+   ],
+   "note": "2026-11-21 v10.575 (docs/717) 본인 신뢰 점수 · 칸마다 얻은 점수 · 근거 수 · 본인만 봄 · 노출 순서 · 검색 순서 · 소개비에 쓰지 않음 · mtr.trust 처음 off(꺼지면 안내만)"
+  },
+  {
+   "id": "SB-ADM-SMQ-010",
+   "name": "소개몰 상품 문의 답 관리",
+   "group": "ADM",
+   "url": "/admin/smq-qna",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/smq/qna",
+    "POST /admin/smq/qna/{id}/decide",
+    "POST /admin/health/qna/{id}/answer"
+   ],
+   "note": "2026-11-21 v10.577 (docs/719) 상품 문의 2차 — 기존 상품 문의(D036 hlt_qna) 넓힘 · 답할 것 · 기한 넘김 · 운영 확인 대기(문의 · 판매자 답 금칙어) · 직판은 기존 운영 답 주소로 답 · 문의 · 답 보이기 · 가리기(사유) · 입점 상품은 판매자가 판매자센터에서 답 · 답 기한 smq.qna_due_hours(처음 48시간 · 쓸 때 박음) · smq.qna 처음 off"
+  },
+  {
+   "id": "SB-ADM-SMQ-020",
+   "name": "소개몰 판매자 평가 · 패널티",
+   "group": "ADM",
+   "url": "/admin/smq-grades",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/smq/grades",
+    "POST /admin/smq/grades/recalc",
+    "POST /admin/smq/limits/{id}/decide",
+    "GET /admin/smq/rules",
+    "PUT /admin/smq/rules"
+   ],
+   "note": "2026-11-21 v10.579 (docs/721) 달마다 배송 지연 · 판매자 사정 취소 · 반품 · 문의 답 늦음 · 등급(A · B · C · D · 표본 부족) · 경고 · 잇달아 넘으면 노출 제한 제안 → 운영 승인 · 반려 · 풀기 · 기준 값 일반 초안(SUPER 고침 · PUT /admin/smq/rules) · smq.penalty · smq.penalty_exposure 처음 off · 노출 제한은 목록 · 검색 · 고민별 · 순위에서만 뺌(상세 · 주문 그대로 · INV-11 대가 가중 아님)"
+  },
+  {
+   "id": "SB-HLT-SMQ-010",
+   "name": "판매자센터 상품 문의",
+   "group": "HLT",
+   "url": "/health/seller/center/qna",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "nav": "SB-HLT-SEL-020",
+   "apis": [
+    "GET /me/health/seller/qna",
+    "PUT /me/health/seller/qna/{id}"
+   ],
+   "note": "2026-11-21 v10.577 (docs/719) 입점 판매자 본인 상품의 보이는 문의(비밀글 포함 · 쓴 사람 가린 이름) · 답 기한 · 넘김 · 다시 저장하면 고침 · 금칙어면 운영 확인 뒤 보임 · 운영이 가린 답 잠김 · smq.qna 꺼져 있으면 쓰기 잠김 · 판매자센터 본문 위 단추에서 들어옴"
+  },
+  {
+   "id": "SB-HLT-SMQ-020",
+   "name": "판매자센터 판매 평가",
+   "group": "HLT",
+   "url": "/health/seller/center/grade",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "nav": "SB-HLT-SEL-020",
+   "apis": [
+    "GET /me/health/seller/grade"
+   ],
+   "note": "2026-11-21 v10.579 (docs/721) 공개 기준 · 이번 달 미리보기 · 알린 최근 6달 · 적용 중 노출 제한(사유 · 기간) · 읽기만"
+  },
+  {
+   "id": "SB-PTC-SMQ-010",
+   "name": "파트너센터 이번 달 정산 예측",
+   "group": "PTC",
+   "url": "/partner/settlement/forecast",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "nav": "SB-PTC-CTR-410",
+   "apis": [
+    "GET /partner/settle-forecast"
+   ],
+   "note": "2026-11-21 v10.580 (docs/722) 내 파트너의 이번 달(한국) 제휴 주문 — 확정 · 대기 · 취소 가능 · 취소됨 · 예상 지급(원천징수 3.3% 뺌 · 확정분만 ~ 대기분까지) · 지급일(다음 달 affiliate.payout_day) · 이번 달에 만든 정산 · 추천 보상 요약 · 돈 칸은 대표 · 정산 권한 직원만 · 읽기만 · 정산 화면 단추에서 들어옴"
+  },
+  {
+   "id": "SB-ADM-PRR-010",
+   "name": "거둘 후보(권한 정기 점검)",
+   "group": "ADM",
+   "url": "/admin/perm-review",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-review",
+   "apis": [
+    "GET /admin/staff/review",
+    "POST /admin/staff/review/build",
+    "POST /admin/staff/review/revoke",
+    "POST /admin/staff/review/keep"
+   ],
+   "note": "2026-11-21 v10.566 (docs/708) 직원 · 권한 › 거둘 후보 — 분기마다 퇴사자 권한 · 오래 로그인 안 함(ops.role_idle_days 90) · 90일 안 쓴 권한그룹(업무 사용 기록 prr_task_use · 모으기 시작 90일 뒤부터) · 외부 계정 기한 없음 · 역할 없는데 권한 남음 · 기한 지난 권한 줄 · 줄마다 최근 막힘 기록 수(perm_shadow_log) · SUPER 가 골라 한 번에 거두기(사유) · 그대로 두기(메모) · 후보 다시 만들기 · 자동으로 거두지 않음 · 분기 점검 기록은 권한 점검(SB-ADM-ROLE-010)"
+  },
+  {
+   "id": "SB-ADM-PRR-020",
+   "name": "입사 · 퇴사 흐름",
+   "group": "ADM",
+   "url": "/admin/staff-cases",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/staff-cases",
+   "apis": [
+    "GET /admin/staff/cases",
+    "GET /admin/staff/cases/{id}",
+    "POST /admin/staff/cases",
+    "POST /admin/staff/cases/{id}/invite",
+    "PUT /admin/staff/cases/{id}/steps/{step}",
+    "DELETE /admin/staff/cases/{id}/steps/{step}",
+    "POST /admin/staff/cases/{id}/revoke",
+    "POST /admin/staff/cases/{id}/close",
+    "POST /admin/staff/cases/{id}/cancel"
+   ],
+   "note": "2026-11-21 v10.568 (docs/710) 직원 · 권한 › 입사 · 퇴사 — 입사(직원 대장 · 운영 계정 초대(안내문 · 메일 안 보냄) · 계정 연결 · 역할 · 권한그룹 · 근로계약서 서명 · 의무교육) · 퇴사(퇴사일 · 운영 권한 거두기 · IT 자산 반납 · 퇴직금 추계 확인 · 서류 보관 기한) · 단계 대부분 저절로 됨 · 손으로 됨은 초대 · 퇴직금 · 서류만 · 건너뜀은 사유 · 끝날 때까지 운영 알림 STAFF_CASE_OPEN · 기한 넘김 STAFF_JOIN_OVERDUE · STAFF_LEAVE_OVERDUE · 보기 ADMIN · 고치기 SUPER"
+  },
+  {
+   "id": "SB-ADM-OPS-030",
+   "name": "DB 복원 시험 — 스크립트 결과 붙여 넣기",
+   "group": "ADM",
+   "url": "/admin/ops-guide/restore-script",
+   "p": "P2",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-SIT-110",
+   "apis": [
+    "GET /admin/ops2/restore-drills/script",
+    "POST /admin/ops2/restore-drills/result"
+   ],
+   "note": "2026-11-21 v10.585 (docs/727) 14차 운영 ① — 관 관리 › 업무 안내 › DB 복원 시험 기록 아래 상자(SUPER 만) · 운영 서버 deploy/aws/restore-drill.sh --run 이 찍은 JSON(날 · 스냅샷 · 분 · 표마다 운영 / 복원 행 수 · 방식 aws · console)을 붙여 넣으면 restore_drills(D238)에 source SCRIPT · detail 로 쌓임 · 행 수 맞음은 서버가 다시 셈(ops2.drill_tol_pct 5) · 리허설(compare)은 422 · 같은 날 · 스냅샷 409 · 감사 RESTORE_DRILL_ADD(pick) · RESTORE_DRILL_DUE 풀림"
+  },
+  {
+   "id": "SB-ADM-OPS-020",
+   "name": "서버 오류 묶음",
+   "group": "ADM",
+   "url": "/admin/server-errors/groups",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-ERR-010",
+   "apis": [
+    "GET /admin/ops2/error-groups",
+    "POST /admin/ops2/error-groups/{fp}/state"
+   ],
+   "note": "2026-11-21 v10.587 (docs/729) 14차 운영 ③ — 위험감지 › 서버 오류 아래 「오류 묶음」 상자 · 지문(방법 · 주소 · 오류 종류 · 응답 · DB 오류 번호)마다 처음 · 마지막 · 모든 횟수 · 7일 · 난 날 수 · 상태(열림 · 확인함 · 알리지 않음 · 고침) · ops_server_error_days(D204) 트리거가 채움 · 처음 보는 오류 · 고친 오류가 다시 나면 운영 알림 SERVER_ERROR_NEW · SERVER_ERROR_REOPEN(ops2.error_new_alert 처음 on · 한 시간 10건) · 감사 OPS2_ERROR_GROUP_STATE(pick)"
+  },
+  {
+   "id": "SB-ADM-OPS-040",
+   "name": "화면 속도",
+   "group": "ADM",
+   "url": "/admin/web-vitals",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/ops2/web-vitals"
+   ],
+   "note": "2026-11-21 v10.588 (docs/730) 14차 운영 ④ — 위험감지 › 서버 오류 뒤 새 탭 web-vitals · 사용자 웹 LCP · INP · CLS · FCP · TTFB 의 75번째 값 · 좋음 · 나쁨 비율 · 화면 주소 묶음 50 · 날마다 · 읽기만 · 화면 주소 · 지표 · 값만(계정 · IP · 방문자 키 없음) · ops2.web_vitals 처음 off(켜기 SUPER · 처리방침 1.2 게시 뒤)"
+  },
+  {
+   "id": "SB-HOM-OPS-010",
+   "name": "화면 속도 보내기(모든 화면 공통 · 그리는 것 없음)",
+   "group": "HOM",
+   "url": "/_vitals-beat",
+   "p": "홈",
+   "roles": [
+    "GUEST",
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "root",
+   "apis": [
+    "POST /site/vitals"
+   ],
+   "note": "2026-11-21 v10.588 (docs/730) 루트 layout 의 WebVitalsBeacon(next/web-vitals) — 화면 주소 · 지표 · 값만(계정 · 쿠키 · 방문자 키 · 검색어 없음 · DNT · GPC 존중 · 표본 ops2.web_vitals_sample 10) · ops2.web_vitals 처음 off"
+  },
+  {
+   "id": "SB-ADM-GRW-010",
+   "name": "회원 성장",
+   "group": "ADM",
+   "url": "/admin/grw-ops",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/overview",
+    "PUT /admin/grw/settings"
+   ],
+   "note": "2026-11-21 v10.597 ~ 601 (docs/739 ~ 743) 회원 › 회원 성장 「설정」 칸 — 스위치 grw.signup_steps(off) · grw.first_steps(on · 표시만) · grw.digest(off) · grw.tier_legal_ok(off) · grw.tier_reward(off · 법무 확인 끝 표시 없이는 422) · grw.fill_helper(on · 표시만) · 날 수 · 여러 단계 점수 · 한 달 상한 · 바꾸기 SUPER · 사유"
+  },
+  {
+   "id": "SB-ADM-GRW-020",
+   "name": "회원 성장 — 가입 퍼널",
+   "group": "ADM",
+   "url": "/admin/grw-ops/funnel",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/funnel",
+    "GET /site/grw/switches",
+    "POST /site/grw/signup-step"
+   ],
+   "note": "2026-11-21 v10.597 (docs/739) 가입 화면 본 수(화면 사용 통계 v10.508) → 가입 단계 1 ~ 5(grw_signup_steps_daily · 가입 화면 SB-HOM-AUT-020 이 공개 POST /site/grw/signup-step 로 단계 번호만 · grw.signup_steps off 면 받지 않음) → 가입 → 본인인증 → 첫 활동 → 첫 거래 · 유입 경로(추천 코드 D189 · 소개코드 링크 · 광고 D010 · 직접)별 · 날마다 · 숫자만 · 운영 · 직원 계정 뺌"
+  },
+  {
+   "id": "SB-ADM-GRW-030",
+   "name": "회원 성장 — 첫 거래 안내",
+   "group": "ADM",
+   "url": "/admin/grw-ops/first",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/first-steps"
+   ],
+   "note": "2026-11-21 v10.598 (docs/740) 최근 가입자(30 · 60 · 90일) 단계마다 끝낸 수 · 다 끝냄 · 그만 보기 — 숫자만"
+  },
+  {
+   "id": "SB-ADM-GRW-040",
+   "name": "회원 성장 — 알림 하루 요약",
+   "group": "ADM",
+   "url": "/admin/grw-ops/digest",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/digest"
+   ],
+   "note": "2026-11-21 v10.599 (docs/741) 켠 회원 수 · 최근 7일 요약 · 묶어 닫은 메일(DIGEST) · 메일 준비 여부 · 정기 작업 grw_daily 08:00"
+  },
+  {
+   "id": "SB-ADM-GRW-050",
+   "name": "회원 성장 — 여러 단계 추천 보상",
+   "group": "ADM",
+   "url": "/admin/grw-ops/tier",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/tier"
+   ],
+   "note": "2026-11-21 v10.600 (docs/742) 처음 꺼짐 · 법무 확인 필요(방문판매법 다단계판매 해당 여부 — 11/9 확인은 1단계 기준) · 2 ~ 4단계 점수 · 한 달 상한 · 현금화 안 됨 · 지금 관계 단계 수 · 최근 보상(가린 이름)"
+  },
+  {
+   "id": "SB-ADM-GRW-060",
+   "name": "회원 성장 — 매물 충실도",
+   "group": "ADM",
+   "url": "/admin/grw-ops/fill",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/grw/fill"
+   ],
+   "note": "2026-11-21 v10.601 (docs/743) 게시 중 매물 점수 나눔 · 많이 빠진 칸 · 노출 순위 · 검색 순서 · 소개비 · 검수에 쓰지 않음"
+  },
+  {
+   "id": "SB-MYP-GRW-010",
+   "name": "첫 거래 안내",
+   "group": "MYP",
+   "url": "/my#first-steps",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /me/grw/first-steps",
+    "POST /me/grw/first-steps/hide"
+   ],
+   "note": "2026-11-21 v10.598 (docs/740) 나의공간 첫 화면 카드 — 본인인증 · 관심 성향 · 관심 담기 · 첫 문의 · 매물/요청 · 첫 거래 · 알림 설정 · 추천 코드(본인 기록만 셈) · 가입 grw.first_steps_days(60)일 안 · 그만 보기"
+  },
+  {
+   "id": "SB-MYP-GRW-020",
+   "name": "알림 하루 요약 받기",
+   "group": "MYP",
+   "url": "/my/notifications#digest",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /me/grw/digest",
+    "PUT /me/grw/digest"
+   ],
+   "note": "2026-11-21 v10.599 (docs/741) 나의공간 › 알림 수신 설정 아래 상자 — 켜면 매일 08:00 한 통(GRW_DIGEST) · 돈 · 계약 알림은 바로 · 메일 준비 전에는 사이트 알림만 · grw.digest off 면 안 보임"
+  },
+  {
+   "id": "SB-MYP-GRW-030",
+   "name": "매물 등록 도우미",
+   "group": "MYP",
+   "url": "/my/listing-fill",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /me/grw/listings"
+   ],
+   "note": "2026-11-21 v10.601 (docs/743) 내 매물(보관 빼고 50) 충실도 점수 · 등급 · 더 적으면 좋은 칸 · 고치기 바로 · 노출 순위 · 소개비에 쓰지 않음"
+  },
+  {
+   "id": "SB-MYP-GRW-040",
+   "name": "매물 고치기 — 등록 도우미 상자",
+   "group": "MYP",
+   "url": "/listings/{id}/edit#assist",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-DSH-010",
+   "apis": [
+    "GET /me/grw/listings/{id}/fill"
+   ],
+   "note": "2026-11-21 v10.601 (docs/743) 매물 고치기 화면(SB-HOM-REG-020) 위 상자 — 점수 · 더 적으면 좋은 칸 · 남의 매물 404"
+  },
+  {
+   "id": "SB-ADM-BZX-010",
+   "name": "파트너 계약 갱신",
+   "group": "ADM",
+   "url": "/admin/bzx-ptn-contract",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER",
+    "PARTNER_MAL"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-PTN-010",
+   "apis": [
+    "GET /admin/bzx/switches",
+    "PUT /admin/bzx/switch",
+    "GET /admin/bzx/partner-contracts",
+    "GET /admin/bzx/partner-contracts/{id}",
+    "POST /admin/bzx/partner-contracts",
+    "POST /admin/bzx/partner-contracts/{id}/check",
+    "POST /admin/bzx/partner-contracts/{id}/cancel"
+   ],
+   "note": "2026-11-21 v10.609 (docs/751) ㉕ 파트너 계약 — 만기 · 남은 날 · 갱신 보내기(새 줄 · 다시 서명) · 종이 계약 적기 · 업체 상태 확인 · 취소 · 본문 · 서명 길 bzx.partner_esign off = 간주 서명 · 운영 알림 BZX_PARTNER_RENEW · BZX_PARTNER_EXPIRED · BZX_PARTNER_UNSIGNED(bzx_daily 09:35) · 파트너 알림 bzx.partner_notice(off) · 안심 파트너 담당은 보기만"
+  },
+  {
+   "id": "SB-ADM-BZX-020",
+   "name": "광고 예산",
+   "group": "ADM",
+   "url": "/admin/bzx-ad-budget",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-ADS-010",
+   "apis": [
+    "GET /admin/bzx/switches",
+    "PUT /admin/bzx/switch",
+    "GET /admin/bzx/ad-budgets",
+    "POST /admin/bzx/ad-budgets/run",
+    "PUT /admin/bzx/ad-budgets/{creativeId}",
+    "POST /admin/bzx/ad-budgets/{id}/reset",
+    "POST /admin/bzx/ad-budgets/{id}/off"
+   ],
+   "note": "2026-11-21 v10.610 (docs/752) ㉖ 소재마다 노출 · 클릭 상한(기간 전체 · 하루) · 알림 기준(처음 80%) · 운영 알림 BZX_AD_BUDGET · 자동 정지(bzx.ad_autopause off · 줄마다 고름) · 하루 예산은 다음 날 다시 노출 · 셈은 ad_events 읽기만 · bzx_frequent 10분마다"
+  },
+  {
+   "id": "SB-ADM-BZX-030",
+   "name": "답변 품질",
+   "group": "ADM",
+   "url": "/admin/bzx-cs-quality",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-INQ-010",
+   "apis": [
+    "GET /admin/bzx/switches",
+    "PUT /admin/bzx/switch",
+    "GET /admin/bzx/cs-quality",
+    "GET /admin/bzx/cs-quality/samples",
+    "POST /admin/bzx/cs-quality/reviews"
+   ],
+   "note": "2026-11-21 v10.612 (docs/754) ㉘ 상담원(처음 답한 운영자 · 감사 INQUIRY_ANSWER)마다 답한 수 · 처음 답 시간 · 기한 안 · 해결률 · 다시 열림 · 고친 답 · 표본 점검(정확 · 친절 · 충분 1 ~ 5 · 자기 답 못 함) · 살펴볼 상담원 표시만 · bzx.inquiry_photos 스위치 상자"
+  },
+  {
+   "id": "SB-ADM-BZX-031",
+   "name": "1:1 문의 사진(한 건 화면 안)",
+   "group": "ADM",
+   "url": "/admin/inquiries#photos",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-INQ-010",
+   "apis": [
+    "GET /admin/bzx/inquiries/{id}/photos",
+    "POST /admin/bzx/inquiries/{id}/photos",
+    "POST /files",
+    "POST /files/{id}/complete",
+    "GET /files/{id}"
+   ],
+   "note": "2026-11-21 v10.611 (docs/753) ㉗ 1:1 문의 한 건 화면 첨부 줄 아래 — 접수 첨부 · 회원이 더한 사진 · 답변 사진 미리 보기(늘) · 답변 사진 붙이기(bzx.inquiry_photos on · INQUIRY_ATTACHMENT 그림 · 문의마다 6장)"
+  },
+  {
+   "id": "SB-ADM-BZX-040",
+   "name": "카드 사용 알림",
+   "group": "ADM",
+   "url": "/admin/bzx-card-notice",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-FIN-010",
+   "apis": [
+    "GET /admin/bzx/switches",
+    "PUT /admin/bzx/switch",
+    "GET /admin/bzx/card-notices",
+    "PUT /admin/bzx/card-notices/settings",
+    "POST /admin/bzx/card-notices/run"
+   ],
+   "note": "2026-11-21 v10.613 (docs/755) ㉙ 카드 이용 줄이 들어오면 트리거가 대기 · bzx.card_notify(off) on 이면 10분 안에 쓰는 사람(D261 카드 한도 holder) 회원 알림 BZX_CARD_USE · 큰 금액(bzx.card_big_amount 500,000) · 주말 · 공휴일 · 한도 없는 카드 · 한도 넘김은 운영 알림 BZX_CARD_USE · 끝 4자리만 · 세무사 빠짐"
+  },
+  {
+   "id": "SB-ADM-BZX-050",
+   "name": "인건비 시뮬레이션",
+   "group": "ADM",
+   "url": "/admin/bzx-hc-sim",
+   "p": "P2",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-ACC-210",
+   "apis": [
+    "GET /admin/bzx/hc-plans",
+    "GET /admin/bzx/hc-plans/{id}",
+    "POST /admin/bzx/hc-sim",
+    "POST /admin/bzx/hc-plans",
+    "PUT /admin/bzx/hc-plans/{id}",
+    "POST /admin/bzx/hc-plans/{id}/archive"
+   ],
+   "note": "2026-11-21 v10.614 (docs/756) ㉚ 채용 줄(자리 · 인원 · 월 기본급 · 비과세 · 입사 · 퇴사 달) + 지금 직원 → 달마다 지급액 · 회사 4대보험(급여 요율표 · 일반 원칙 docs/555) · 퇴직금 적립(지급액 1/12) · 해마다 인상 · 합계만 · 실제 급여 · 장부와 무관 · 세무사 빠짐"
+  },
+  {
+   "id": "SB-HOM-BZX-010",
+   "name": "내 문의 사진",
+   "group": "HOM",
+   "url": "/support/history#photos",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-CSB-020",
+   "apis": [
+    "GET /me/bzx/inquiries/{id}/photos",
+    "POST /me/bzx/inquiries/{id}/photos",
+    "GET /me/bzx/inquiries/{id}/photos/{fileId}",
+    "POST /files",
+    "POST /files/{id}/complete"
+   ],
+   "note": "2026-11-21 v10.611 (docs/753) ㉗ 내 문의 내역 제목 칸 아래 「사진」 펼치기 — 내가 더한 사진 · 답변 사진 보기 · 닫히지 않은 문의에 더 붙이기(bzx.inquiry_photos on · 한 번에 3장 · 문의마다 6장 · JPG · PNG)"
+  },
+  {
+   "id": "SB-PTC-BZX-010",
+   "name": "파트너센터 계약",
+   "group": "PTC",
+   "url": "/partner/contracts",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [],
+   "nav": "SB-PTC-CTR-500",
+   "apis": [
+    "GET /partner/bzx/contracts",
+    "POST /partner/bzx/contracts/{id}/sign"
+   ],
+   "note": "2026-11-21 v10.609 (docs/751) ㉕ 파트너 대표 계정만 — 내 계약 · 만기 · 갱신 계약 본문 · 간주 서명(대표자 이름 또는 상호 · 동의 · 법적 전자서명 아님 표시) · 전자계약(HTTP)은 업체 화면 주소 · 회원 알림 BZX_PARTNER_CONTRACT 주소로 들어옴(메뉴 줄 안 고침)"
+  },
+  {
+   "id": "SB-ADM-SCX-010",
+   "name": "위험감지 이상 행동 감지",
+   "group": "ADM",
+   "url": "/admin/scx-watch",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/sec2/watch",
+    "POST /admin/sec2/anomalies/scan",
+    "POST /admin/sec2/anomalies/{id}/review",
+    "POST /admin/sec2/pwned/test",
+    "PUT /admin/sec2/settings"
+   ],
+   "note": "2026-11-21 v10.590 ~ 593 (docs/732 ~ 735) 15차 보안 · 기반 — ⑥ 운영자 이상 행동(감사 기록 · 개인정보 접속기록 · 내려받기 승인 · 로그인 기록으로 하루 열람 · 내려받기 · 밤 22 ~ 06시 활동 · 기준과 30일 평균 배수 둘 다 넘으면 줄 · 운영 알림 STAFF_ANOMALY · 자동으로 막지 않음 · 확인 메모 본인 줄 못 함 · sec2.anomaly_watch 처음 off) · ⑦ 유출 비밀번호 막기(off · ASSUME · LIVE k-익명 범위 조회 · SHA-1 앞 5글자만 · LIVE 는 법무 확인 sec2.pwned_legal_ok 먼저 · 처음 off) · ⑧ 회원 2단계 인증 열기(sec2.member_mfa 처음 off) · ⑨ 「내가 아니에요」 몰림 기준 · 회원 보안 숫자"
+  },
+  {
+   "id": "SB-ADM-SCX-020",
+   "name": "관 관리 화면 도움말",
+   "group": "ADM",
+   "url": "/admin/scx-help",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/help/tab",
+    "GET /admin/help/tab-links",
+    "PUT /admin/help/tab-links/{key}",
+    "POST /admin/help/tab-links/{key}/remove",
+    "GET /admin/help/guide",
+    "POST /admin/help/guide"
+   ],
+   "note": "2026-11-21 v10.594 (docs/736) ⑩ 운영 화면 탭 제목 옆 「?」 — 사용자 설명서 표(help_docs · D180)의 ADMIN_GUIDE(운영 화면 도움말 · 1판 · 운영자만) · USER_MANUAL 절(### 제목)로 · 찾는 순서 잇기(sec2_tab_help) → 절 제목 [탭 키] → 탭 이름 → 회원 설명서 · 저장 · 잇기 SUPER · GET /admin/help/tab 은 모든 운영 역할(「?」 단추)"
+  },
+  {
+   "id": "SB-MYP-SCX-010",
+   "name": "2단계 인증(회원 선택)",
+   "group": "MYP",
+   "url": "/my/account/security#mfa",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-SEC-010",
+   "apis": [
+    "GET /me/mfa",
+    "POST /me/mfa/setup",
+    "POST /me/mfa/enable",
+    "POST /me/mfa/disable"
+   ],
+   "note": "2026-11-21 v10.592 (docs/734) ⑧ 나의공간 › 보안 「2단계 인증」 칸 — 운영자 2단계 인증(D169 account_mfa · TOTP)을 그대로 · 켜기(비밀값 → 앱 번호 → 예비 번호 10개 한 번) · 끄기(비밀번호 + 번호) · 운영 계정은 안내만 · 간편 로그인만 쓰는 계정은 비밀번호 먼저 · sec2.member_mfa on 일 때만 보임"
+  },
+  {
+   "id": "SB-MYP-SCX-020",
+   "name": "낯선 기기 로그인",
+   "group": "MYP",
+   "url": "/my/account/security#login-alerts",
+   "p": "P2",
+   "roles": [
+    "MEMBER"
+   ],
+   "gates": [],
+   "nav": "SB-MYP-SEC-010",
+   "apis": [
+    "GET /me/login-alerts",
+    "POST /me/login-alerts/{id}/answer"
+   ],
+   "note": "2026-11-21 v10.593 (docs/735) ⑨ 낯선 기기 로그인 알림(LOGIN_NEW_DEVICE · D191) 한 건마다 한 줄(내 로그인 기기 D241 번호) · 「나였어요」 · 「내가 아니에요」(그 기기 로그아웃 · 비밀번호 바꾸기 안내 · 감사 LOGIN_NOT_ME) · 알림 링크 ?alert=번호 · 1시간 몰림이면 운영 알림 MEMBER_NOT_ME_SURGE"
+  },
+  {
+   "id": "SB-HOM-SCX-010",
+   "name": "2단계 로그인(회원)",
+   "group": "HOM",
+   "url": "/login/mfa",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-AUT-010",
+   "apis": [
+    "POST /auth/mfa/member-login"
+   ],
+   "note": "2026-11-21 v10.592 (docs/734) ⑧ 비밀번호가 맞고 2단계를 켠 회원 — 로그인 응답 { mfaRequired, ticket }(증표 없음) · 사용자 웹은 표를 HttpOnly 쿠키(5분)에 두고 이 화면에서 번호 → 증표 · 표 한 번 · 5번 틀리면 다시 로그인 · 번호 5번 틀리면 15분 잠금"
+  },
+  {
+   "id": "SB-ADM-LSQ-010",
+   "name": "매물 일괄 등록",
+   "group": "ADM",
+   "url": "/admin/lsq-bulk",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-bulk",
+   "apis": [
+    "GET /admin/lsq/bulk",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.602 (docs/744) 검수 › 매물 일괄 등록 — lsq.bulk 처음 off · 한 번 줄 수 lsq.bulk_max_rows(50) · 최근 30일 묶음 · 줄 · 등록 · 실패 · 등록 매물 상태(검수 대기 · 게시 · 반려) · 최근 묶음 50(가린 이름 · 글 없음) · 설정 PUT 은 SUPER(일곱 기능 설정 한 곳)"
+  },
+  {
+   "id": "SB-ADM-LSQ-020",
+   "name": "거래 후기 요청",
+   "group": "ADM",
+   "url": "/admin/lsq-review-ask",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-review-ask",
+   "apis": [
+    "GET /admin/lsq/review-asks",
+    "POST /admin/lsq/daily/run",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.603 (docs/745) 검수 › 거래 후기 요청 — lsq.review_ask 처음 off · 성사 확정 뒤 3일 · 7일 뒤 한 번 더(0 = 없음) · 최근 30일 요청 · 전환율 · 평균 일수 · 날마다 · 하루 일 지금 한 번(SUPER · lsq_daily)"
+  },
+  {
+   "id": "SB-ADM-LSQ-030",
+   "name": "검색 클릭 분석",
+   "group": "ADM",
+   "url": "/admin/lsq-search-click",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-search-click",
+   "apis": [
+    "GET /admin/lsq/search-clicks",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.604 (docs/746) 검수 › 검색 클릭 분석 — lsq.search_click 처음 off · 날 × 낱말 × 관 × 순위 수만(회원 · 방문자 · IP 없음) · 1 · 7 · 30 · 90일 · 평균 순위 · 1 ~ 3위 비율 · 낱말 100 · 순위 분포 · 많이 눌린 매물 50 · 보관 lsq.search_click_keep_days(180)"
+  },
+  {
+   "id": "SB-ADM-LSQ-040",
+   "name": "지역별 소개 페이지",
+   "group": "ADM",
+   "url": "/admin/lsq-region",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-region",
+   "apis": [
+    "GET /admin/lsq/regions",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.605 (docs/747) 검수 › 지역별 소개 페이지 — lsq.region_pages 처음 off · 문턱 lsq.region_min(3) · 공개될 시 · 도 · 시 · 군 · 구 수 · 문턱 아래 · 지역 모름 매물 · 지역 표 100(v_listing_region)"
+  },
+  {
+   "id": "SB-ADM-LSQ-050",
+   "name": "정기 배송 결제 다시 시도",
+   "group": "ADM",
+   "url": "/admin/lsq-sub-retry",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-sub-retry",
+   "apis": [
+    "GET /admin/lsq/sub-retry",
+    "POST /admin/lsq/sub-retry/{id}/run",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.606 (docs/748) 소개몰 › 정기 배송 결제 다시 시도 — lsq.sub_retry 처음 off(off 면 지금처럼 다음 날) · 간격표 1,3,5 · 실패 중 100(가린 이름) · 최근 실패 · 지금 다시 결제(운영 · 오늘 회차 없을 때 · 청구는 기존 mall.subscribe_mode 처음 ASSUME)"
+  },
+  {
+   "id": "SB-ADM-LSQ-060",
+   "name": "배송 추적",
+   "group": "ADM",
+   "url": "/admin/lsq-track",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-track",
+   "apis": [
+    "GET /admin/lsq/tracking",
+    "GET /admin/lsq/tracking/orders/{no}",
+    "POST /admin/lsq/tracking/run",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.607 (docs/749) 소개몰 › 배송 추적 — lsq.track 처음 off · 방식 lsq.track_mode ASSUME(간주) · LIVE(외부 연동 CARRIER 키 · 없으면 NOT_READY) · 배송 완료 반영 lsq.track_auto_deliver 처음 off · LIVE 만 · 준비 상태 · 최근 조회 50 · 주문 하나 단계 · 지금 한 번(SUPER)"
+  },
+  {
+   "id": "SB-ADM-LSQ-070",
+   "name": "반품 사진 · 판정",
+   "group": "ADM",
+   "url": "/admin/lsq-return-ev",
+   "p": "P2",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/lsq-return-ev",
+   "apis": [
+    "GET /admin/lsq/returns",
+    "GET /admin/lsq/returns/{id}",
+    "POST /admin/lsq/returns/{id}/verdicts",
+    "POST /admin/lsq/returns/{id}/photos/{pid}/hide",
+    "GET /files/{id}",
+    "PUT /admin/lsq/settings"
+   ],
+   "note": "2026-11-21 v10.608 (docs/750) 소개몰 › 반품 사진 · 판정 — lsq.return_photos 처음 off(회원 · 판매자 사진 · 판매자 판정) · 신청 100(사진 · 검수 기록 수) · 사진은 기존 파일 열기(GET /files/{id} · 열람 기록) · 가리기(지우지 않음) · 판정 기록(STATE 자동 · INSPECT · NOTE · 쌓기만) · 승인 · 반려 · 환불은 기존 화면"
+  },
+  {
+   "id": "SB-MYP-LSQ-010",
+   "name": "매물 일괄 등록",
+   "group": "MYP",
+   "url": "/my/listings/bulk",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER",
+    "BIZ_STAFF"
+   ],
+   "gates": [
+    "IDENTITY_VERIFIED"
+   ],
+   "nav": "SB-MYP-LST-010",
+   "apis": [
+    "GET /lsq/me/bulk",
+    "GET /lsq/me/bulk/{id}",
+    "POST /lsq/me/bulk/preview",
+    "POST /lsq/me/bulk/{id}/confirm"
+   ],
+   "note": "2026-11-21 v10.602 (docs/744) 내 매물 › 일괄 등록 — CSV(gwan · category · title 필수 · 200KB · 50줄) 미리보기 → 확정(본인인증) · 확정한 줄은 기존 매물 등록 함수(검수 큐 · 자동검수 · 제한업종 · 금칙어 · 슬롯 한도) · 양식 받기 · 최근 묶음 10 · lsq.bulk 처음 off"
+  },
+  {
+   "id": "SB-HOM-LSQ-010",
+   "name": "지역별 소개",
+   "group": "HOM",
+   "url": "/area",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-MAIN-010",
+   "apis": [
+    "GET /site/lsq/regions"
+   ],
+   "note": "2026-11-21 v10.605 (docs/747) 공개 — 시 · 도와 아래 시 · 군 · 구(게시 매물 lsq.region_min 개 이상만) · 사이트 지도에도 같은 목록 · lsq.region_pages 처음 off(「준비 중」)"
+  },
+  {
+   "id": "SB-HOM-LSQ-020",
+   "name": "지역 매물 소개",
+   "group": "HOM",
+   "url": "/area/{sido}/{sigungu}",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-LSQ-010",
+   "apis": [
+    "GET /site/lsq/regions/listings",
+    "GET /site/lsq/regions"
+   ],
+   "note": "2026-11-21 v10.605 (docs/747) 공개 — 지역 하나의 게시 매물(제목 · 한줄 소개 · 업종 · 금액 · 게시일만 · 등록자 · 연락처 · 상세 주소 없음) · 관 거르기 · 많은 업종 10 · 아래 지역 · 30개씩 · 문턱 아래 지역은 404"
+  },
+  {
+   "id": "SB-HOM-LSQ-030",
+   "name": "통합 검색 클릭 분석",
+   "group": "HOM",
+   "url": "/search#lsq-click",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "nav": "SB-HOM-SRC-010",
+   "apis": [
+    "POST /site/lsq/search-click"
+   ],
+   "note": "2026-11-21 v10.604 (docs/746) 통합 검색 결과 매물 줄을 누르면 한 번 — 검색어 · 매물 번호 · 순위(광고 줄 제외) · 관 탭만 · 계정 · 방문자 · 쿠키 없음 · DNT · GPC 면 보내지 않음 · lsq.search_click 처음 off 면 서버가 받지 않음"
+  },
+  {
+   "id": "SB-HLT-LSQ-010",
+   "name": "정기 배송 결제 다시 시도",
+   "group": "HLT",
+   "url": "/my/health/sub-retry",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [],
+   "nav": "SB-HLT-MYO-010",
+   "apis": [
+    "GET /lsq/me/subscriptions/fails",
+    "POST /lsq/me/subscriptions/{id}/retry"
+   ],
+   "note": "2026-11-21 v10.606 (docs/748) 결제가 실패한 내 정기 배송 · 다음 시도일 · 지금 다시 결제(하루 한 번 · 실패로 멈춘 것은 다시 켬) · 회원 알림 LSQ_SUB_PAY_FAIL 의 링크 · lsq.sub_retry 처음 off"
+  },
+  {
+   "id": "SB-HLT-LSQ-020",
+   "name": "판매자센터 반품 사진 · 판정",
+   "group": "HLT",
+   "url": "/health/seller/center/returns-evidence",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [],
+   "nav": "SB-HLT-SEL-020",
+   "apis": [
+    "GET /lsq/seller/returns",
+    "GET /lsq/returns/{id}/evidence",
+    "POST /lsq/returns/{id}/photos",
+    "GET /lsq/returns/{id}/photos/{pid}",
+    "POST /lsq/returns/{id}/verdicts",
+    "POST /files",
+    "PUT /files/{id}/content",
+    "POST /files/{id}/complete"
+   ],
+   "note": "2026-11-21 v10.608 (docs/750) 입점 판매자 — 내 주문의 반품 · 교환 신청 100 · 사진 붙이기(RETURN_PHOTO) · 검수 판정(상품 상태 · 책임 · 메모 · 회원에게 보임) · 판매자센터 본문 위 단추에서 들어옴 · lsq.return_photos 처음 off"
+  },
+  {
+   "id": "SB-HLT-LSQ-030",
+   "name": "취소 · 반품 내역 사진 · 판정 기록",
+   "group": "HLT",
+   "url": "/my/health/returns#lsq-evidence",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [],
+   "nav": "SB-HLT-RTN-020",
+   "apis": [
+    "GET /lsq/returns/{id}/evidence",
+    "POST /lsq/returns/{id}/photos",
+    "GET /lsq/returns/{id}/photos/{pid}",
+    "POST /files",
+    "PUT /files/{id}/content",
+    "POST /files/{id}/complete"
+   ],
+   "note": "2026-11-21 v10.608 (docs/750) 신청마다 접힌 칸 — 사진(회원 · 판매자) · 회원에게 보이는 판정 기록 · 열린 신청(접수 · 승인)에 사진 붙이기(한쪽 lsq.return_photo_max 장)"
+  },
+  {
+   "id": "SB-HLT-LSQ-040",
+   "name": "배송 조회 택배사 단계",
+   "group": "HLT",
+   "url": "/my/health/orders/{no}/ship#lsq-track",
+   "p": "P2",
+   "roles": [
+    "MEMBER",
+    "BIZ_OWNER"
+   ],
+   "gates": [],
+   "nav": "SB-HLT-MYO-030",
+   "apis": [
+    "GET /lsq/me/orders/{no}/tracking"
+   ],
+   "note": "2026-11-21 v10.607 (docs/749) 배송 조회 화면 아래 — 택배사 조회로 쌓인 단계(장소 · 시각) · 간주(ASSUME) 표시 · 꺼져 있고 단계도 없으면 안 그림"
   }
  ],
  "deferred": [

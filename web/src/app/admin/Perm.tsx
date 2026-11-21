@@ -12,7 +12,7 @@ const LV = ['VIEW', 'EDIT', 'APPROVE', 'EXPORT'] as const;
 const LV_KO: Record<string, string> = { VIEW: '보기', EDIT: '고치기', APPROVE: '승인', EXPORT: '내려받기' };
 
 /* ── 화면 반영 ── */
-interface PermMe { mode: string; super: boolean; tasks: Record<string, string[]>; known: string[] }
+interface PermMe { mode: string; decide?: string; super: boolean; tasks: Record<string, string[]>; known: string[] }   // v10.615 decide — perm.mode(ROLE · COMPARE · GROUPS)
 let ME: (PermMe & { knownSet: Set<string> }) | null = null;
 const listeners = new Set<() => void>();
 /** 로그인 뒤 한 번(운영 화면 Console) — 실패하면 지금처럼 역할만 */
@@ -20,9 +20,11 @@ export function loadPerm() {
   return api<PermMe>('/admin/perm/me').then((m) => { ME = { ...m, knownSet: new Set(m.known ?? []) }; listeners.forEach((f) => f()); }).catch(() => { ME = null; });
 }
 export function usePermTick() { const [, set] = useState(0); useEffect(() => { const f = () => set((n) => n + 1); listeners.add(f); return () => { listeners.delete(f); }; }, []); }
-const enforced = () => !!ME && ME.mode === 'ON' && !ME.super;
+const enforced = () => !!ME && (ME.mode === 'ON' || ME.decide === 'GROUPS') && !ME.super;   // v10.615 (docs/757) 판정 방식 GROUPS 면 검사 ON 과 같게(서버가 권한그룹으로 정함)
+/** v10.615 (docs/757) 이 탭을 권한그룹만으로 고를지 — 판정 방식 GROUPS · SUPER 아님 · 표(perm_tasks)에 있는 탭(App.tsx 가 SUPER 전용 탭은 빼고 씀) */
+export const permGroupsTab = (tab: string) => !!ME && ME.decide === 'GROUPS' && !ME.super && ME.knownSet.has(tab);
 /** 화면 단추 막기 — 검사 모드가 SHADOW · ON 이고 SUPER 가 아니면(서버는 ON 일 때만 막음 · 화면은 SHADOW 부터 미리 맞춤) */
-const uiScoped = () => !!ME && (ME.mode === 'ON' || ME.mode === 'SHADOW') && !ME.super;
+const uiScoped = () => !!ME && (ME.mode === 'ON' || ME.mode === 'SHADOW' || ME.decide === 'GROUPS') && !ME.super;   // v10.615 GROUPS 면 검사 모드와 상관없이
 /** 탭을 보일지 — 검사 ON 이고 표에 있는 탭이면 보기 권한이 있어야 함 */
 export const permVisible = (tab: string) => !enforced() || !ME!.knownSet.has(tab) || (ME!.tasks[tab] ?? []).includes('VIEW');
 /** 그 탭에서 그 수준을 할 수 있는지(고치기 · 승인 · 내려받기 단추) */

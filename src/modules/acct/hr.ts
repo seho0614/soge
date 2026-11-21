@@ -221,7 +221,7 @@ async function bizDays(db: DatabaseService, from: string, to: string) {
     `SELECT d::date::text AS d FROM generate_series($1::date, $2::date, interval '1 day') d WHERE fn_is_business_day(d::date) ORDER BY d`, [from, to]);
   return r.map((x) => x.d);
 }
-async function remaining(db: DatabaseService, employeeId: string, year: number) {
+export async function remaining(db: DatabaseService, employeeId: string, year: number) {   // v10.581 (docs/723) 연차 촉진도 씀
   const [g] = await db.query<{ d: string }>(`SELECT coalesce(sum(days), 0)::text AS d FROM acct_leave_grants WHERE employee_id = $1::bigint AND year = $2::int`, [employeeId, year]);
   const [u] = await db.query<{ d: string }>(
     `SELECT coalesce(sum(days), 0)::text AS d FROM acct_leave_uses WHERE employee_id = $1::bigint AND used_on BETWEEN $2::date AND $3::date`, [employeeId, `${year}-01-01`, `${year}-12-31`]);

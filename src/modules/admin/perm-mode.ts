@@ -4,6 +4,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation } from '../../core/errors';
 import { PERM_OPS, effective, permCacheClear, routeNeeds } from './perm.service';
 import { permLog } from './perm-sets';
+import { PGX_OPEN } from './pgx-open';   // v10.615 (docs/757) 역할 이름 검사 중 권한그룹과 맞추지 않은 곳(지금 0)
 
 /* ---------------------------------------------------------------------
  * v10.564 (D291 · docs/706) 판정 바꾸기 — 설정 perm.mode
@@ -125,7 +126,7 @@ export async function modeView(db: DatabaseService, modules: ModulesContainer) {
   const [since] = await db.query<{ at: string | null }>(
     `SELECT max(at) AS at FROM site_setting_changes WHERE key = 'perm.mode'`).catch(() => [{ at: null }]);
   return { mode, modes: PERM_MODES, unmapped: um.unmapped, unmappedItems: um.items.slice(0, 100), diff24: d.diff24, recent: d.recent, since: since?.at ?? null,
-           groupsReady: um.unmapped === 0 && d.diff24 === 0,
+           groupsReady: um.unmapped === 0 && d.diff24 === 0 && PGX_OPEN.length === 0, roleChecksOpen: PGX_OPEN.length,   // v10.615 (docs/757)
            note: 'ROLE → COMPARE 로 하루 이상 돌려 「다름」이 없고 연결 안 된 주소가 0 이면 GROUPS 로 바꿀 수 있습니다. 되돌리기는 언제든(SUPER).' };
 }
 
@@ -138,6 +139,11 @@ export async function setMode(db: DatabaseService, modules: ModulesContainer, mo
   if (mode === 'GROUPS') {
     const um = await unmappedRoutes(db, modules);
     const d = await diffs(db);
+    /* v10.615 (docs/757) — 역할 이름으로 직접 막는 곳 중 권한그룹과 맞추지 않은 곳(pgx-open.ts PGX_OPEN)이 있으면 막음 */
+    if (PGX_OPEN.length) {
+      throw new PolicyViolation('PERM_MODE_NOT_READY',
+        `GROUPS 로 바꿀 수 없습니다 — 역할 이름으로 막는 곳 중 권한그룹과 맞추지 않은 곳 ${PGX_OPEN.length}개(docs/757 3절).`, { roleChecksOpen: PGX_OPEN.length, items: PGX_OPEN });
+    }
     if (um.unmapped > 0 || d.diff24 > 0) {
       throw new PolicyViolation('PERM_MODE_NOT_READY',
         `GROUPS 로 바꿀 수 없습니다 — 연결 안 된 /admin 주소 ${um.unmapped}개 · 최근 24시간 다름 ${d.diff24}건(둘 다 0 이어야 함).`, { unmapped: um.unmapped, diff24: d.diff24 });

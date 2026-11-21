@@ -31,7 +31,8 @@ export class AuthController {
     summary: '로그인',
     description:
       'visitorKey 를 함께 보내면 비로그인 상태의 소개코드 유입이 이 계정에 연결됩니다. ' +
-      '**이 값을 빠뜨리면 유입의 대부분이 귀속되지 않습니다.**',
+      '**이 값을 빠뜨리면 유입의 대부분이 귀속되지 않습니다.** ' +
+      'v10.592 — 회원 2단계 인증(sec2.member_mfa on)을 켠 회원이면 증표 대신 { mfaRequired: true, ticket, expiresIn } — POST /auth/mfa/member-login 에 ticket · 번호.',
   })
   @ApiOkResponse({ type: TokenDto })
   @ApiResponse({

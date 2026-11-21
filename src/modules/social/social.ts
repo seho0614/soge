@@ -12,6 +12,10 @@ import { assertSignupAllowed } from '../identity/signup-block';
 import { clientIpRaw, isInternalIp, settingInt } from '../identity/abuse-guard';
 import { isStaff } from '../identity/staff-policy';
 import { notifyNewDevice, recordLogin } from '../identity/login-history';
+import { sec2AssertNotPwned } from '../sec2/pwned';   // v10.591 (docs/733) 유출 비밀번호 막기
+import { sec2MemberMfaBlocksSocial } from '../sec2/member-mfa';   // v10.592 (docs/734) 2단계를 켠 회원은 간편 로그인 막음
+import { sec2LoginAlert } from '../sec2/login-alert';   // v10.593 (docs/735) 낯선 로그인 줄
+import { mtrDormantWake } from '../mtr/dormant';   // v10.576 휴면 계정 — 간편 로그인도 풂
 import {
   SOC_PROVIDERS, SOC_REDIRECT_RE, SocProfile, SocProvider, SocResult, assumeProfile, authorizeUrl, b64url, exchangeAndFetch, isProd, sha, socReady, subjectHash,
 } from './social.provider';
@@ -311,6 +315,7 @@ export class SocialAuthService {
     if (!a) throw new NotFound('계정을 찾을 수 없습니다.');
     if (a.has) throw new StateConflict('PASSWORD_EXISTS', '이미 비밀번호가 있습니다 — 비밀번호 바꾸기를 써 주십시오.');
     assertStrongPassword(password);
+    await sec2AssertNotPwned(this.db, password, 'SOCIAL_PW');   // v10.591 (docs/733)
     const hash = await bcrypt.hash(password, 12);
     await this.db.query(`UPDATE accounts SET password_hash = $2 WHERE id = $1 AND coalesce(password_hash, '') = ''`, [accountId, hash]);
     return { ok: true, note: '비밀번호를 만들었습니다 — 이제 이메일 · 비밀번호로도 로그인할 수 있습니다.' };
@@ -385,6 +390,7 @@ export class SocialAuthService {
       `SELECT status, (status = 'WITHDRAWN' AND withdrawn_at IS NOT NULL AND purged_at IS NULL AND fn_setting_int('member.withdraw_grace_days', 0) > 0
                        AND withdrawn_at > now() - make_interval(days => fn_setting_int('member.withdraw_grace_days', 0))) AS grace
          FROM accounts WHERE id = $1`, [accountId]);
+    if (acc?.status === 'DORMANT' && (await mtrDormantWake(this.db, accountId, 'SOCIAL'))) acc.status = 'ACTIVE';   // v10.576 (docs/718)
     if (acc?.status === 'WITHDRAWN' && acc.grace) {
       await this.event(p, 'FAIL', accountId, 'WITHDRAW_PENDING', assumed);
       throw new AppError(403, { code: 'WITHDRAW_PENDING', message: '탈퇴 처리 중인 계정입니다 — 이메일 · 비밀번호로 로그인하면 탈퇴를 취소할 수 있습니다.' });
@@ -394,11 +400,12 @@ export class SocialAuthService {
       throw new Forbidden('ACCOUNT_INACTIVE', '사용할 수 없는 계정입니다.');
     }
     await this.assertNotStaff(accountId);
+    await sec2MemberMfaBlocksSocial(this.db, accountId);   /* v10.592 (docs/734) — sec2.member_mfa on · 2단계를 켠 회원이면 403 SEC2_MFA_USE_EMAIL(번호를 물을 곳이 없음 · 꺼져 있으면 지금 그대로) */
     if (visitorKey) await this.attribution.link(visitorKey, accountId, 'LOGIN');
     await this.db.query(`UPDATE accounts SET last_login_at = now() WHERE id = $1`, [accountId]);
-    await notifyNewDevice(this.db, accountId);
+    const newDev = await notifyNewDevice(this.db, accountId);
     await recordLogin(this.db, accountId, true);
     await this.event(p, 'LOGIN', accountId, null, assumed);
-    return this.auth.issue(accountId);
+    return sec2LoginAlert(this.db, accountId, newDev, await this.auth.issue(accountId));   // v10.593 (docs/735)
   }
 }

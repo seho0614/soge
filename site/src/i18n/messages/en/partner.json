@@ -41,6 +41,15 @@
       "stats": "Results",
       "business": "Company · Account",
       "notices": "Notices · Alerts"
+    },
+    "subAria": "Pages in this menu",
+    "sub": {
+      "settlement": "Settlement history",
+      "forecast": "Settlement forecast",
+      "stats": "Results",
+      "export": "Data downloads",
+      "business": "Company · Account",
+      "contracts": "Contracts"
     }
   },
   "p2": {

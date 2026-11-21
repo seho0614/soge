@@ -296,3 +296,10 @@ textarea.pt-input { width: 100%; min-height: 76px; }
 }
 /* v10.32 — 시안 .nt.warn/.info/.ok 의 마지막 값(옅은 주황 · 파랑 · 초록, 테두리 같은 색) */
 .pt-nt.warn, .pt-root .notice.warn, .pt-root .note.warn { border-color: var(--or-l, #FFF7ED); background: var(--or-l, #FFF7ED); }
+
+/* v10.617 (docs/759) 파트너센터 메뉴 안 하위 링크 줄 — 상단바(.pt-hd) 아래 · 메뉴 줄과 같은 색 · 좁은 화면은 가로 밀기 */
+.pt-sub { background: #12342B; border-top: 1px solid #17392F; }
+.pt-sub .pt-in { display: flex; gap: 2px; align-items: center; min-height: 40px; overflow-x: auto; }
+.pt-sub a { font-size: 12px; font-weight: 700; color: #A7C4BA !important; text-decoration: none; padding: 6px 11px; border-radius: var(--sgb-r-sm, 7px); white-space: nowrap; }
+.pt-sub a:hover { background: #17392F; color: #fff !important; }
+.pt-sub a.on { background: #0F6B4F; color: #fff !important; }

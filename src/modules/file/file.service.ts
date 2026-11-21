@@ -5,6 +5,8 @@ import { DatabaseService } from '../../db/database.service';
 import { AppError, Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import type { Principal } from '../../core/auth';
 import { hasRole } from '../../core/auth';
+import { PERM_OPS } from '../admin/perm.service';   // v10.615 (docs/757)
+import { PGX_EDIT_UP, pgxCan } from '../admin/pgx-perm';
 import { RequestCtx } from '../../core/request-context';
 import { LocalStorage, StorageProvider, storageFromEnv } from './storage';
 import { SNIFF_BYTES, TYPE_LABEL, contentDisposition, sanitizeName, sniff } from './sniff';
@@ -21,7 +23,7 @@ const UPLOADERS: Record<string, string[]> = {
   /* v10.31 — 매물 · 요청의 대표 · 상세 이미지(시안 등록 폼). 올린 사람만 자기 글에 붙일 수 있습니다(attach-images.checkOwnImages) */
   LISTING_IMAGE: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],
   REQUEST_IMAGE: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],
-  INQUIRY_ATTACHMENT: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],   /* v10.31 — 고객센터 문의 첨부(이미지 · PDF · 3개) — 올린 사람과 운영만 봅니다 */
+  INQUIRY_ATTACHMENT: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN'],   /* v10.31 — 고객센터 문의 첨부(이미지 · PDF · 3개) — 올린 사람과 운영만 봅니다 · v10.611 (docs/753) 운영 답변 사진도(회원은 GET /me/bzx/inquiries/{id}/photos/{fileId}) */
   PRODUCT_IMAGE: ['ADMIN', 'SUPER'],                         // v10.26 — 소개몰 상품 사진(운영 화면 「소개몰 상품」). 판매 중 상품의 사진은 누구나 봅니다(GET /health/products/{code}/image)
   /* (w2) LISTING_IMAGE · REQUEST_IMAGE 는 위(w1)와 같은 용도 — 매물 사진 GET /listings/{id}/photos/{n} · 요청 사진 GET /market/requests/{id}/photo 도 같은 파일을 씁니다 */
   BROKER_DOC: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],          // v10.31 (w2) — 중개사 인증 제출 서류(신청자 · 운영만 열람)
@@ -32,6 +34,12 @@ const UPLOADERS: Record<string, string[]> = {
   HR_DOC: ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.458 ~ 461 (D262) — 인사 서류(의무교육 증빙 · 지원자 서류) · 열람 ADMIN · SUPER · 올린 사람만(지급 담당 · 세무사 · 검수 못 엶 · fn_file_can_read)
   LGL_DOC: ['SUPER', 'ADMIN'],   // v10.486 ~ 489 (D269) — 법무 서류(인허가 · 계약 검토 · 사건 · 보험) · 열람 ADMIN · SUPER · 올린 사람 · 보험 증권에 붙은 파일만 PAYOUT(fn_file_can_read) · 세무사 · 검수 못 엶
   LISTING_VIDEO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],   // v10.526 (D279) — 매물 동영상(MP4 · 50MB) · 붙이기는 POST /me/lsy/listings/{id}/video(내 매물 · 내 파일) · 공개는 승인 뒤 GET /site/lsy/listings/{id}/video · 그 밖은 주인 · 운영만(fn_file_can_read 그대로)
+  RETURN_PHOTO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],   // v10.608 (docs/750) — 반품 · 교환 사진(JPG · PNG 10MB) · 붙이기는 POST /lsq/returns/{id}/photos(구매 회원 · 그 주문의 입점 판매자 · 내 파일) · 보기는 GET /lsq/returns/{id}/photos/{pid} · 운영은 GET /files/{id}(fn_file_can_read 그대로)
+};
+/** v10.615 (docs/757) perm.mode GROUPS — 운영 쪽 올리기를 업무(고치기 이상)로 볼 용도(R_역할과 같은 범위인 것만) · 나머지 용도는 역할 그대로
+ *   CORP_DOC(사내 문서함 — 지급 담당도 고치기를 가져 넓어짐) · MARKETING_MATERIAL · PARTNER_GUIDE(제휴 — 제휴 파트너 담당도 가짐) · 운영 역할 모두인 ACCT_EVIDENCE · HR_DOC 는 넣지 않음 */
+const PGX_UPLOAD_TASKS: Record<string, string[]> = {
+  PRODUCT_IMAGE: ['hlt-products'], LGL_DOC: ['lgl-reviews', 'lgl-cases', 'lgl-licenses'], INQUIRY_ATTACHMENT: ['inquiries'],
 };
 
 interface FileRow {
@@ -83,7 +91,13 @@ export class FileService {
   async create(p: Principal, dto: { purpose: string; name: string; contentType: string; size: number; sha256?: string }) {
     const uploaders = UPLOADERS[dto.purpose];
     if (!uploaders || !hasRole(p.roles, ...uploaders)) {   // 2026-10-21 — SUPER 는 모든 용도(hasRole)
-      throw new Forbidden('FORBIDDEN', '이 용도의 파일을 올릴 권한이 없습니다.');
+      /* v10.615 (docs/757) — perm.mode GROUPS 면 운영 쪽 용도(PGX_UPLOAD_TASKS)는 업무 「고치기 이상」으로도 엶(역할 또는 업무 · DB 트리거와 같은 식)
+       *   ROLE · COMPARE 는 pgxCan 이 역할로만 보므로 여기 오면 늘 막힘(지금과 같음) · 파일을 붙이는 API 는 가드가 권한그룹으로 다시 봄 */
+      const tasks = uploaders ? PGX_UPLOAD_TASKS[dto.purpose] : undefined;
+      const opsPart = (uploaders ?? []).filter((r) => PERM_OPS.includes(r));
+      if (!tasks || !opsPart.length || !(await pgxCan(this.db, p.accountId, p.roles, tasks, PGX_EDIT_UP, opsPart))) {
+        throw new Forbidden('FORBIDDEN', '이 용도의 파일을 올릴 권한이 없습니다.');
+      }
     }
     const ct = dto.contentType.toLowerCase().split(';')[0].trim();
     const pol = await this.db.query<{ content_type: string; max_bytes: number; ext: string }>(

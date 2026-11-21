@@ -41,6 +41,15 @@
       "stats": "실적",
       "business": "회사 · 계정",
       "notices": "공지 · 알림"
+    },
+    "subAria": "이 메뉴 안 화면",
+    "sub": {
+      "settlement": "정산 내역",
+      "forecast": "정산 예측",
+      "stats": "실적",
+      "export": "자료 내려받기",
+      "business": "회사 · 계정",
+      "contracts": "계약"
     }
   },
   "p2": {

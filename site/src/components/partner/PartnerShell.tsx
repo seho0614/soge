@@ -38,7 +38,22 @@ const BELONGS: Array<[string, string]> = [
   ['/partner/leads-rejects', '/partner/leads'],
   ['/partner/fees', '/partner/cash'],
   ['/partner/trust', '/partner/stats'],
+  ['/partner/export', '/partner/stats'],        // v10.617 (docs/759) 자료 내려받기 → 실적
+  ['/partner/contracts', '/partner/business'],  // v10.617 계약 → 회사 · 계정
 ];
+
+/** v10.617 (docs/759) 메뉴 안 하위 링크 — 메뉴 줄 개수(12)는 그대로 · 켜진 메뉴에 있으면 상단바 아래 한 줄 · 이름은 사전 partner.shell.sub.<키> */
+export const PTC_SUB: Record<string, ReadonlyArray<readonly [string, string]>> = {
+  '/partner/settlement': [['/partner/settlement', 'settlement'], ['/partner/settlement/forecast', 'forecast']],
+  '/partner/stats': [['/partner/stats', 'stats'], ['/partner/export', 'export']],
+  '/partner/business': [['/partner/business', 'business'], ['/partner/contracts', 'contracts']],
+};
+/** 하위 링크 중 지금 화면 — 가장 길게 맞는 주소 */
+function subOf(path: string, subs: ReadonlyArray<readonly [string, string]>): string {
+  let best = '';
+  for (const [href] of subs) if ((path === href || path.startsWith(href + '/')) && href.length > best.length) best = href;
+  return best;
+}
 
 function activeOf(path: string): string {
   for (const [p, to] of BELONGS) if (path === p || path.startsWith(p + '/')) return to;
@@ -68,6 +83,16 @@ export function PartnerTopBar({ corp }: { corp?: string | null }) {
           <Link className="pt-bo sm" href="/">{t('toUser')}</Link>
         </div>
       </div>
+      {PTC_SUB[act] ? (
+        <nav className="pt-sub" aria-label={t('subAria')} data-ptc-sub={act}>
+          <div className="pt-in">
+            {PTC_SUB[act]!.map(([href, key]) => {
+              const on = href === subOf(path, PTC_SUB[act]!);
+              return <Link key={href} href={href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}>{t(`sub.${key}` as never)}</Link>;
+            })}
+          </div>
+        </nav>
+      ) : null}
     </header>
   );
 }

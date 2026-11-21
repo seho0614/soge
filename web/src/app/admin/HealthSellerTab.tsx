@@ -1,6 +1,7 @@
 import { HealthTenantApply } from './HealthTenantApply';
 import { HealthSellers } from './HealthSellers';
 import { HealthTenantReady } from './HealthTenantReady';
+import { SmqTenantReady2 } from './Smq';   // v10.578 입점 열기 2차 점검
 import { HealthRateSim } from './HealthRateSim';
 
 /**
@@ -16,6 +17,7 @@ export function HealthSellerTab() {
     <section data-hlt-seller-tab="">
       <HealthTenantReady />
       <HealthRateSim />
+      <SmqTenantReady2 />
       <HealthTenantApply />
       <HealthSellers />
     </section>

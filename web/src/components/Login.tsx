@@ -10,6 +10,8 @@ import { siteUrl } from '../lib/siteUrl';
  * v10.112 — 모양: 가운데 카드(대표 2026-10-26 「가운데 카드」 · 안내는 「사용자 웹으로 가기」만) · 색 · 글자 · 모서리 · 그림자는 디자인 시트 값.
  */
 const OPS = ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT'];
+/* v10.615 (docs/757) — v10.194 파트너 담당(PARTNER_MAL · PARTNER_AFF) · v10.437 세무사(ACCOUNTANT)도 운영 역할(서버 PERM_OPS 와 같음) · 위 줄은 옛 시험(test_v1112)이 글자로 봄 */
+const OPS_MORE = ['PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -25,7 +27,7 @@ export function Login() {
         method: 'POST', body: JSON.stringify({ email, password: pw }),
       });
       setToken(r.accessToken, r.refreshToken ?? null);
-      if (!tokenRoles().some((x) => OPS.includes(x))) {
+      if (!tokenRoles().some((x) => OPS.includes(x) || OPS_MORE.includes(x))) {
         setToken(null, null);
         setMsg('운영 권한이 없는 계정입니다. 사용자 화면은 소개뱅크 웹에서 이용하십시오.');
       }

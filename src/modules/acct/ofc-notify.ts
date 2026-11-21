@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation } from '../../core/errors';
 import { inbox } from './approval';   // v10.424 (D253) 내 결재함 — 같은 셈(중간 단계 · 마지막 SUPER 단계)
 import type { Viewer } from './ofc-calendar';
+import { pgxCan } from '../admin/pgx-perm';   // v10.615 (docs/757) GROUPS 면 운영 알림 = 운영 알림 탭(ops-alerts) 보기(R_ADMIN 만)
 
 /* ---------------------------------------------------------------------
  * v10.465 (D263 · docs/603) 브라우저 알림 — 대표 11/20 「㉜ 사무 2」
@@ -34,7 +35,7 @@ async function prefsOf(db: DatabaseService, id: string) {
 export async function myNotify(db: DatabaseService, v: Viewer) {
   const g = await globals(db);
   const p = await prefsOf(db, v.id);
-  const opsOk = v.roles.includes('SUPER') || v.roles.includes('ADMIN');
+  const opsOk = await pgxCan(db, v.id, v.roles, ['ops-alerts'], ['VIEW'], ['ADMIN']);   // v10.615 — ROLE · COMPARE 는 지금처럼 SUPER · ADMIN
   return { global: g.on, pollSec: g.pollSec, enabled: p.enabled, kinds: p.kinds, kindsKo: NOTIFY_KIND_KO, opsAllowed: opsOk,
            note: '운영 화면을 열어 둔 동안만 브라우저 알림을 띄웁니다(창을 닫으면 오지 않음 · 서버 푸시 아님). 켜기를 누르면 브라우저가 한 번 허락을 묻습니다 — 브라우저마다 따로 허락합니다.' };
 }
@@ -67,7 +68,7 @@ export async function notifyFeed(db: DatabaseService, v: Viewer, sinceIn?: strin
   const since = new Date(Number.isFinite(t) ? Math.max(t, floor) : now.getTime() - 86400e3).toISOString();
   const items: FeedItem[] = [];
 
-  if (p.kinds.includes('OPS') && (v.roles.includes('SUPER') || v.roles.includes('ADMIN'))) {
+  if (p.kinds.includes('OPS') && await pgxCan(db, v.id, v.roles, ['ops-alerts'], ['VIEW'], ['ADMIN'])) {   // v10.615 (docs/757)
     const rows = await db.query<{ id: string; title: string; severity: string; at: string }>(
       `SELECT id::text AS id, title, severity, raised_at AS at FROM ops_alerts
         WHERE severity = 'CRITICAL' AND acknowledged_at IS NULL AND resolved_at IS NULL AND raised_at >= $1::timestamptz

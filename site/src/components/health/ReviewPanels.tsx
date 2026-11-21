@@ -8,7 +8,7 @@ import { ymdKst } from '@/lib/format';
 import { SmxReplyLine, type SmxReplyView } from '@/components/smx/ReplyLine';   // v10.555 (D287) 리뷰 답글
 
 interface ReviewList { count: number; avg: number | null; dist: Record<string, number>; items: Array<{ id: string; rating: number; body: string; createdAt: string; writer: string; mine: boolean; optionLabel: string | null }> }
-interface QnaList { count: number; items: Array<{ id: string; isPrivate: boolean; createdAt: string; writer: string; mine: boolean; body: string | null; answer: string | null; answeredAt: string | null; answered: boolean }> }
+interface QnaList { count: number; items: Array<{ id: string; isPrivate: boolean; createdAt: string; writer: string; mine: boolean; body: string | null; answer: string | null; answeredAt: string | null; answered: boolean; answerBy?: string | null }> }
 
 const ymd = (s: string) => ymdKst(s);      /* G-201 규칙 — toLocale… 쓰지 않음 */
 export const stars = (n: number) => '★★★★★'.slice(0, Math.round(n)) + '☆☆☆☆☆'.slice(0, 5 - Math.round(n));
@@ -58,7 +58,7 @@ export async function QnaPanel({ code, loggedIn }: { code: string; loggedIn: boo
             <li key={x.id} data-qna-row={x.id}>
               <div><span className={`hlt-bdg ${x.answered ? 'st ok' : ''}`}>{x.answered ? t('answered') : t('waiting')}</span> <b>{x.writer}</b> <span className="hlt-mut hlt-sm">{ymd(x.createdAt)}{x.isPrivate ? ` · ${t('private')}` : ''}</span></div>
               <p>{x.body ?? t('privateBody')}</p>
-              {x.answer && <p className="hlt-ans" data-qna-answer><b>{tc('mall')}</b> {x.answer}</p>}
+              {x.answer && <p className="hlt-ans" data-qna-answer data-qna-answer-by={x.answerBy ? 'SELLER' : 'STAFF'}><b>{x.answerBy ?? tc('mall')}</b> {x.answer}</p>}
             </li>))}
         </ul>)}
     </div>

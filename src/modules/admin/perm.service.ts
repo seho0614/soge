@@ -113,7 +113,10 @@ export async function myPerms(db: DatabaseService, accountId: string, roles: str
   for (const k of set) { const [t, l] = k.split(':'); (tasks[t!] ??= []).push(l!); }
   /* known — 표에 있는 업무(탭)만 권한그룹으로 고르고, 표에 없는 탭은 화면도 지금처럼 역할로 */
   const known = (await db.query<{ key: string }>(`SELECT key FROM perm_tasks WHERE active`)).map((r) => r.key);
-  return { mode, super: sup, tasks, known };
+  /* v10.615 (docs/757) decide — 판정 방식 perm.mode(ROLE · COMPARE · GROUPS) · 화면이 GROUPS 면 탭 · 단추를 권한그룹대로(perm-mode 를 가져오면 고리라 글자로 읽음) */
+  const [dm] = await db.query<{ value: string | null }>(`SELECT value FROM site_settings WHERE key = 'perm.mode'`).catch(() => [] as Array<{ value: string | null }>);
+  const decide = ['ROLE', 'COMPARE', 'GROUPS'].includes(dm?.value ?? '') ? String(dm!.value) : 'ROLE';
+  return { mode, decide, super: sup, tasks, known };
 }
 
 /** GET /admin/perm/overview — 업무그룹 · 업무 · 권한그룹 · 운영자 */

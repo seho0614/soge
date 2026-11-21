@@ -58,6 +58,7 @@ export const INTEG_KEYS: KeyDef[] = [
   { code: 'FIRMBANK', name: 'FIRMBANK_USER_TOKEN', label: '금융결제원 오픈뱅킹 사용자 토큰(거래내역조회)', env: 'FIRMBANK_USER_TOKEN', envRead: 'FIRMBANK_USER_TOKEN', isPublic: false },   // v10.467 (D264)
   { code: 'WEBPUSH', name: 'WEBPUSH_VAPID_PUBLIC', label: '웹 푸시 VAPID 공개 키(87자 · B 로 시작)', env: 'WEBPUSH_VAPID_PUBLIC', envRead: 'WEBPUSH_VAPID_PUBLIC', isPublic: false },   // v10.538 (D283) — 브라우저에는 /me/push 가 줌
   { code: 'WEBPUSH', name: 'WEBPUSH_VAPID_PRIVATE', label: '웹 푸시 VAPID 비밀 키(43자)', env: 'WEBPUSH_VAPID_PRIVATE', envRead: 'WEBPUSH_VAPID_PRIVATE', isPublic: false },   // v10.538 (D283)
+  { code: 'CARRIER', name: 'CARRIER_TRACK_KEY', label: '택배사 조회 API 키', env: 'CARRIER_TRACK_KEY', envRead: 'CARRIER_TRACK_KEY', isPublic: false },   // v10.607 (docs/749)
 ];
 
 const EVERY_MS = 60_000;

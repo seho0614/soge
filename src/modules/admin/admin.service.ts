@@ -364,9 +364,22 @@ export class AdminService {
         `SELECT EXISTS (SELECT 1 FROM v_terms_current WHERE code = 'PRIVACY' AND body LIKE '%주민등록번호(암호화)%') AS ok`);
       if (!pv?.ok) throw new PolicyViolation('TAX_ID_PRIVACY_FIRST', '처리방침(지금 판)에 「주민등록번호(암호화)」 수집 줄이 게시된 뒤에 켤 수 있습니다 — 법무 확인 뒤 약관 화면에서 처리방침을 먼저 게시하십시오.');
     }
+    /* v10.581 ~ 584 (docs/723 ~ 726) — 13차 인사 · 회계(연차 촉진 · 사내 공지 알림 · 급여 이체 파일 · 마감 알림) 설정은 SUPER 만(전용 PUT /admin/hra/settings 와 같은 권한) */
+    if (key.startsWith('hra.') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('HRA_SETTING_SUPER', '인사 · 회계(13차) 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
     /* v10.554 (D287) — 도서산간 배송비 부가세 구분(세무 일반 원칙 · 현금영수증 · 전표가 씀)은 SUPER 만 */
     if (key === 'smx.remote_tax_mode' && RequestCtx.get()?.actorRole !== 'SUPER') {
       throw new Forbidden('SMX_TAX_SETTING_SUPER', '도서산간 배송비 부가세 구분은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
+    /* v10.577 · 579 (docs/719 · 721) — 판매자 평가 스위치 · 기준 값 · 노출 제한 실제 적용 · 상품 문의 답 기한은 판매자에게 불이익이 걸린 기준이라 SUPER 만(상품 문의 켜고 끄기 smq.qna 는 ADMIN 도) */
+    if ((key.startsWith('smq.penalty') || key === 'smq.qna_due_hours') && RequestCtx.get()?.actorRole !== 'SUPER') {
+      throw new Forbidden('SMQ_SETTING_SUPER', '판매자 평가 · 노출 제한 기준은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
+    }
+    /* v10.569 (docs/711 ⑤) — 처리방침 1.2(docs/699 4절)에 걸린 스위치는 전체 설정(이 주소)에서도 SUPER 만 바꿈(기능 화면 주소는 이미 SUPER).
+     *   끄기(off) · 간주로 돌리기(ASSUME) · 빈 값(관 목록 비우기)은 ADMIN 도 바로 — 개인정보를 덜 모으는 쪽이라 */
+    if (AdminService.isPrivacySwitch(key) && RequestCtx.get()?.actorRole !== 'SUPER' && !['off', 'ASSUME', ''].includes((value ?? '').trim())) {
+      throw new Forbidden('PRIVACY_SWITCH_SUPER', '처리방침에 걸린 기능 스위치(웹 푸시 · 기기 표지 · 간편 로그인 · 회원 편의 · AI 위탁 등)를 켜거나 바꾸는 것은 최고 관리자(SUPER)만 할 수 있습니다 — 끄기는 바로 됩니다.');
     }
     /* v10.161 (D151) — 약관 재동의 시점(terms.reconsent_before_effective)은 약관 게시와 같이 SUPER 만 */
     if (key.startsWith('terms.') && RequestCtx.get()?.actorRole !== 'SUPER') {
@@ -382,7 +395,7 @@ export class AdminService {
     }
     /* v10.506 · 508 (D274 · docs/644 · 646) — 현금영수증 켜기 · 실제 발급(LIVE) · 자진발급 · 자진발급 기준 금액(세무 · 외부 호출) · 회원 화면 사용 통계 켜기는 SUPER 만
      *   끄기(off) · 간주로 돌리기(ASSUME)는 ADMIN 도 바로 */
-    if (['mall.cash_receipt', 'mall.cash_receipt_mode', 'mall.cash_receipt_self', 'mall.cash_receipt_self_min', 'site.usage_stats'].includes(key)
+    if (['mall.cash_receipt', 'mall.cash_receipt_mode', 'mall.cash_receipt_self', 'mall.cash_receipt_self_min', 'site.usage_stats', 'ops2.web_vitals', 'ops2.web_vitals_sample'].includes(key)   // v10.588 (docs/730) 화면 속도 · 표본
         && RequestCtx.get()?.actorRole !== 'SUPER' && !['off', 'ASSUME'].includes((value ?? '').trim())) {
       throw new Forbidden('MLX_SETTING_SUPER', '현금영수증 · 사용 통계 설정을 켜거나 바꾸는 것은 최고 관리자(SUPER)만 할 수 있습니다.');
     }
@@ -470,6 +483,23 @@ export class AdminService {
 
   /** v10.203 (docs/324) — 운영 알림 텔레그램 · 낯선 로그인 알림 설정(SUPER 만) */
   static readonly OPS_PUSH_KEYS = ['ops.telegram_chat', 'ops.telegram_digest', 'ops.staff_login_alert', 'ops.slack_digest', 'ops.board_retention_days', 'report.send', 'report.send_kinds'];   // v10.415 (D250) 보고 보내기   // v10.286 (D213) 게시판 보관 기간   // v10.237 (D200) 슬랙 하루 요약
+
+  /** v10.569 (docs/711 ⑤) — 처리방침 1.2(docs/699 4절 표 · 7-3)에 걸린 스위치 — 전체 설정에서도 켜기 · 바꾸기는 SUPER 만
+   *   앞머리 sfx. · push. · social. 은 모두(보관 기간 · 방식 · 키 칸 포함) · 나머지는 표에 적힌 키만.
+   *   이미 따로 막는 것(site.usage_stats · mall.cash_receipt* · agent.* 등)은 그 규칙 그대로(여기 넣지 않음) */
+  static readonly PRIVACY_SWITCH_KEYS = [
+    'mall.review_points', 'csx.account_merge', 'csx.churn', 'csx.ai_draft', 'csx.ai_draft_auto',
+    'security.geo_watch', 'security.geo_mode', 'security.geo_block', 'campaign.enabled', 'campaign.send_mode',
+    'mbx.recent', 'mbx.compare', 'mbx.price_alert', 'mbx.dm', 'lsy.video', 'lsy.photo_ai', 'lsy.report_ai',
+    'plaza.ranking', 'opx.archive', 'opx.risk_score', 'lsx.saved_search', 'lsx.ai_summary',
+    'papi.enabled', 'papi.hook_enabled', 'pbulk.invite_mail', 'vsx.enabled', 'vsx.gwans', 'lpx.offer', 'lpx.offer_gwans', 'lpx.away',
+    /* v10.614 합칠 때 — 11 · 14 ~ 17차 처리방침 · 법무 걸린 스위치(docs/699 · 715 ~ 718 · 730 · 732 ~ 735 · 739 ~ 743 · 744 ~ 750) */
+    'mtr.trust', 'mtr.dormant', 'mtr.dormant_mail', 'mtr.review_watch', 'grw.tier_reward', 'grw.tier_legal_ok', 'grw.signup_steps', 'grw.digest',
+    'sec2.anomaly_watch', 'sec2.pwned_check', 'sec2.pwned_legal_ok', 'sec2.member_mfa', 'ops2.web_vitals', 'lsq.search_click', 'lsq.return_photos', 'lsq.track_mode',
+  ];
+  static isPrivacySwitch(key: string): boolean {
+    return key.startsWith('sfx.') || key.startsWith('push.') || key.startsWith('social.') || AdminService.PRIVACY_SWITCH_KEYS.includes(key);
+  }
 
   /** v10.129 (docs/194) — AI 스위치 · 상한 · 모델 · 한도(agent.* · AI 번역)는 최고 관리자만 — 비용 · 법무에 걸린 설정(대표 승인 2026-10-27) */
   static isAiSetting(key: string): boolean {

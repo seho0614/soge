@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 import { kstToday } from './hr';
 import { HRX_HM_RE, hrxAddDays, hrxHm, hrxKstMs } from './hrx-overtime';
+import { pgxCan } from '../admin/pgx-perm';   // v10.615 (docs/757)
 
 /* ---------------------------------------------------------------------
  * v10.473 (D265 · docs/611) 회의실 · 장비 예약 — 대표 11/20 「㉟ 인사 4」
@@ -21,7 +22,8 @@ const clean = (s: unknown) => String(s ?? '').replace(/\s+/g, ' ').trim();
 const diffDays = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400e3);
 
 export interface BookViewer { id: string; roles: string[] }
-const isManager = (v: BookViewer) => v.roles.includes('SUPER') || v.roles.includes('ADMIN');
+/* v10.615 (docs/757) perm.mode GROUPS — 관리자 = 「회의실 · 장비 예약」 업무의 승인(APPROVE)(R_ADMIN 만 가짐 · 같은 범위) · ROLE · COMPARE 는 지금처럼 ADMIN · SUPER */
+const isManager = (db: DatabaseService, v: BookViewer) => pgxCan(db, v.id, v.roles, ['hrx-booking'], ['APPROVE'], ['ADMIN']);
 
 async function bookRules(db: DatabaseService) {
   const rows = await db.query<{ key: string; value: string | null }>(`SELECT key, value FROM site_settings WHERE key IN ('hrx.book_ahead_days', 'hrx.book_max_hours')`);
@@ -48,7 +50,7 @@ export async function bookingBoard(db: DatabaseService, v: BookViewer, fromIn?: 
        FROM hrx_bookings b JOIN hrx_resources r ON r.id = b.resource_id LEFT JOIN accounts a ON a.id = b.booked_by
       WHERE b.canceled_at IS NULL AND b.start_at < $2::timestamptz AND b.end_at > $1::timestamptz
       ORDER BY b.start_at, r.sort, b.id LIMIT 1000`, [fromIso, toIso]);
-  const now = Date.now(), mgr = isManager(v);
+  const now = Date.now(), mgr = await isManager(db, v);
   const items = rows.map((b) => {
     const mine = b.bookedBy === v.id, s = Date.parse(b.startAt), e = Date.parse(b.endAt);
     return { id: b.id, resourceId: b.resourceId, resource: b.resource, title: b.title, memo: mine || mgr ? b.memo : null, day: new Date(s + 9 * 3600e3).toISOString().slice(0, 10),
@@ -104,7 +106,7 @@ export async function cancelBooking(db: DatabaseService, id: string, reasonIn: s
     const [b] = await db.query<{ id: string; bookedBy: string; ended: boolean; canceled: boolean }>(
       `SELECT id::text AS id, booked_by::text AS "bookedBy", end_at <= now() AS ended, canceled_at IS NOT NULL AS canceled FROM hrx_bookings WHERE id = $1::bigint FOR UPDATE`, [id]);
     if (!b) throw new NotFound('없는 예약입니다.');
-    if (b.bookedBy !== v.id && !isManager(v)) throw new Forbidden('HRX_BOOK_OWNER', '예약한 사람 · 관리자만 취소합니다.');
+    if (b.bookedBy !== v.id && !(await isManager(db, v))) throw new Forbidden('HRX_BOOK_OWNER', '예약한 사람 · 관리자만 취소합니다.');
     if (b.canceled) throw new StateConflict('HRX_BOOK_STATE', '이미 취소한 예약입니다.');
     if (b.ended) throw new StateConflict('HRX_BOOK_STATE', '끝난 예약은 취소하지 않습니다.');
     if (b.bookedBy !== v.id && (!reason || reason.length < 2)) throw new PolicyViolation('HRX_BOOK_REASON', '남의 예약을 취소할 때는 사유를 2자 이상 적습니다.');

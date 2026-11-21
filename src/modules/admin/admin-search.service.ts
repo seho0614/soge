@@ -3,6 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { PolicyViolation } from '../../core/errors';
 import { maskEmail, maskName } from '../../common/mask';
+import { pgxEffective } from './pgx-perm';   // v10.615 (docs/757) perm.mode GROUPS 면 묶음을 탭(업무) 보기 권한으로
 
 /* ---------------------------------------------------------------------
  * v10.289 (docs/413) — 운영 화면 전체 찾기(메뉴 줄 오른쪽)
@@ -21,6 +22,10 @@ export const SEARCH_SECTIONS: Record<SearchSection, { roles: string[]; tab: stri
   listings: { roles: ['ADMIN', 'REVIEWER'], tab: 'queue', label: '매물' },
   deals:    { roles: ['ADMIN', 'PAYOUT'], tab: 'deals', label: '거래' },
 };
+/** v10.615 (docs/757) perm.mode GROUPS 에서 묶음을 열 업무(보기) — R_역할 처음 권한그룹과 같은 범위가 되게 고름 · 공지(notices)는 운영 역할 누구나라 없음(역할 그대로) */
+export const PGX_SEARCH_TASKS: Partial<Record<SearchSection, string[]>> = {
+  members: ['members'], orders: ['hlt-orders'], sellers: ['hlt-sellers', 'partners'], listings: ['queue'], deals: ['deals', 'payouts'],
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
@@ -31,7 +36,10 @@ export class AdminSearchService {
     const q = (qIn ?? '').trim().slice(0, 100);
     if (q.length < 2) throw new PolicyViolation('QUERY_TOO_SHORT', '두 글자 이상 적어 주십시오.');
     const c = RequestCtx.get();
-    const can = (s: SearchSection) => roles.includes('SUPER') || SEARCH_SECTIONS[s].roles.some((r) => roles.includes(r));
+    const eff = await pgxEffective(this.db, c?.actorId ?? null, roles);   // v10.615 (docs/757) GROUPS 가 아니면 null — 지금처럼 역할
+    const can = (s: SearchSection) => roles.includes('SUPER') || (eff && PGX_SEARCH_TASKS[s]
+      ? PGX_SEARCH_TASKS[s]!.some((t) => eff.has(`${t}:VIEW`))
+      : SEARCH_SECTIONS[s].roles.some((r) => roles.includes(r)));
     const like = `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
     const digits = q.replace(/\D/g, '');
     const uuid = UUID.test(q) ? q : null;

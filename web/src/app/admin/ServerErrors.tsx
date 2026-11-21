@@ -1,6 +1,7 @@
 import { useApi } from '../../lib/useApi';
 import { n, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
+import { Ops2ErrorGroups } from './Ops2ErrorGroups';   // v10.587 (docs/729) 오류 묶음
 
 interface Row { at: string; method: string; path: string; status: number; code: string; detail: string | null; requestId: string | null }
 interface WeekTop { method: string; path: string; code: string; status: number; n: number; lastAt: string; detail: string | null; requestId: string | null }
@@ -59,6 +60,7 @@ export function ServerErrors() {
           )}
         </div>
       )}
+      <Ops2ErrorGroups />   {/* v10.587 (docs/729) 지문마다 처음 · 마지막 · 횟수 · 상태(30일 기록이 지워져도 남음) */}
       <div className="ad-nt info">{d.note}</div>
     </section>
   );

@@ -7,6 +7,7 @@ import { apiGetPersonal } from '@/lib/api';
 import { MyHead, Note, Table } from '@/components/my/ui';
 import { LogoutAllForm } from './LogoutAllForm';
 import { SessionList } from './SessionList';
+import { ScxSecurity } from '@/components/scx/ScxSecurity';   // v10.592 · 593 (docs/734 · 735) 낯선 기기 로그인 · 2단계 인증
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('my.security'))('title') };
@@ -49,6 +50,7 @@ export default async function SecurityPage() {
         <Link className="my-bo" href="/my/account/privacy">{tp('title')}</Link>
         <Link className="my-bo" href="/my/account/social" data-to-social="">{tu('toSocial')}</Link>
       </div>
+      <ScxSecurity />
       {!h ? <Note kind="warn" role="alert">{t('loadFail')}</Note> : (
         <>
           {h.recentFails > 0 && <Note kind="warn" data-login-fails={String(h.recentFails)}><b>{t('failsB', { n: String(h.recentFails) })}</b> {t('failsText')}</Note>}
