@@ -184,7 +184,8 @@ if ADMIN_WEB:
         for tab, sel in (('perm-roles', '[data-perm-roles]'), ('perm-groups', '[data-perm-groups]'), ('perm-tasks', '[data-perm-tasks]')):
             pg.goto(ADMIN_WEB + '/#/' + tab, wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
             seen[tab] = pg.locator(sel).count()
-        seen['sets'] = pg.locator('[data-perm-conflicts]').count()
+            if tab == 'perm-roles':   # 조합 규칙 표는 권한그룹 탭 안
+                seen['sets'] = pg.locator('[data-perm-conflicts]').count()
     r = admin_page('/#/perm-roles', chk)
     if r is None:
         print('  (playwright 없음 — ③ 건너뜀)')

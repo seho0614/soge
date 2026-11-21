@@ -255,7 +255,14 @@ if API and DB:
             seen['dm'] = len(ck)
             seen['http'] = bool(ck and ck[0].get('httpOnly'))
             seen['shape'] = bool(ck and re.match(r'^[A-Za-z0-9-]{16,64}$', ck[0].get('value') or ''))
-        r2 = ui(run_site)
+        # v10.559: 쿠키는 sfx.device_watch 가 켜진 때만 만듦(대표 11/21) — 이 단계만 켜고 되돌림 · 사용자 웹 공개 설정 캐시 60초 기다림
+        sw1 = getset('sfx.device_watch')
+        setting('sfx.device_watch', 'on', '1546 쿠키')
+        try:
+            time.sleep(65)
+            r2 = ui(run_site)
+        finally:
+            setting('sfx.device_watch', sw1 or 'off', '1546 쿠키 되돌림')
         if r2 is not None:
             seen2, perr2 = r2
             ok('③ 화면 — 사용자 웹 로그인 뒤 기기 표지 쿠키 sgb_dm(HttpOnly · 무작위 값 모양)', seen2.get('dm') == 1 and seen2.get('http') and seen2.get('shape') and not perr2, f"{seen2} {perr2[:2]}")

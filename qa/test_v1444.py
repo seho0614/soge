@@ -169,7 +169,7 @@ if API and DB:
     if ADMIN_WEB:
         def chk(pg, seen):
             pg.wait_for_selector('[data-perm-admin]', timeout=30000)
-            seen['sec'] = pg.locator('[data-perm-admin]').count(); seen['mode'] = pg.locator('[data-perm-mode]').count(); seen['groups'] = pg.locator('[data-perm-groups]').count()
+            seen['sec'] = pg.locator('[data-perm-admin]').count(); seen['mode'] = pg.locator('p[data-perm-mode]').count(); seen['groups'] = pg.locator('[data-perm-groups]').count()
             seen['scope'] = pg.locator('[data-perm-scope="perm-admin"]').count(); seen['lvl'] = pg.locator('[data-perm-scope]').first.get_attribute('data-perm-level') if seen['scope'] else None
             seen['widen'] = pg.locator('[data-perm-widen]').count(); seen['off'] = pg.locator('button[data-perm-off]').count()
         res = admin_page('/#/perm-admin', chk)

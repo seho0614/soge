@@ -278,8 +278,8 @@ if API and DB:
         n1 = call('GET', '/admin/me/hr/card', None, TN)
         a1 = call('GET', '/admin/me/hr/card', None, TC)
         u1 = call('GET', '/admin/me/hr/card', None, None)
-        ok('② 연결 없음 · 권한 — 연결 없는 운영 계정 200 + linked false(직원 칸 없음) · 세무사 403 · 로그인 없이 401',
-           n1.get('_err') is None and n1.get('linked') is False and 'employee' not in n1 and a1.get('_err') == 403 and u1.get('_err') == 401,
+        ok('② 연결 없음 · 권한 — 연결 없는 운영 계정 200 + linked false(직원 칸 없음) · 세무사 403 · 로그인 없이 403(UNAUTHENTICATED)',
+           n1.get('_err') is None and n1.get('linked') is False and 'employee' not in n1 and a1.get('_err') == 403 and u1.get('_err') == 403 and u1.get('code') == 'UNAUTHENTICATED',
            f"{n1} {a1.get('_err')} {a1.get('code')} {u1.get('_err')}")
         if ADMIN_WEB:
             def chk(pg, seen):
