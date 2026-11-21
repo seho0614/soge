@@ -236,7 +236,7 @@ if API and DB:
         gd = psql(f"DELETE FROM plz_badges WHERE id = {bid or 0}")
         adm = call('GET', '/admin/community/ranking?month=2001-01', None, TS)
         badm = call('GET', '/admin/community/ranking?month=2001-13', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'plz-rank'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'plz-rank'")
         wA, wB = W['plaza.score_post'] + W['plaza.score_helpful'], W['plaza.score_answer'] + W['plaza.score_helpful']
         ok('② 랭킹 · 배지 — 꺼짐(공개 on:false · 도움돼요 422) · 누르기 1 · 취소 0 · 다시 1 · 자기 글 422 · 댓글 도움돼요 · 수 · 내 것 · 고치기 막음 · 다시 셈 → 글쓴이 글 1 도움 1 · 답변자 답변 1 도움 1(점수 규칙대로) · 신고된 답변 빠짐 · 내 활동 · 노출 끄면 공개 랭킹에서 빠짐 · 회원은 운영 403 · 지난 달 마감 → TOP1 · 한 번만 · 배지 알림 · 거두기 · 다시 409 · 지우기 막음 · 운영 달 보기 · 틀린 달 422 · 권한 주소 3',
            bool(pid) and bool(cid) and r_off.get('on') is False and h_off.get('code') == 'PLZ_RANK_OFF' and h1.get('on') is True and h1.get('count') == 1 and h2.get('on') is False and h2.get('count') == 0

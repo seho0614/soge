@@ -230,7 +230,7 @@ if API and DB:
         rid = int(rids[0]) if rids else 0
         dbu = psql(f"UPDATE i18n_lang_reviews SET verdict = 'REJECTED' WHERE id = {rid}")
         dbd = psql(f"DELETE FROM i18n_lang_reviews WHERE id = {rid}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'i18n-review'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'i18n-review'")
         ok('② 검수 기록은 DB 가 고치기 · 지우기 막음 · 권한 주소 2', 'I18N_REVIEW' in dbu and 'I18N_REVIEW' in dbd and rmap == '2', f"{dbu[-30:]} {dbd[-30:]} {rmap}")
     finally:
         psql(f"SET session_replication_role = replica; DELETE FROM i18n_lang_reviews WHERE id > {int(start or 0)} AND lang = 'zh' AND reviewer = '시험 검수자';")

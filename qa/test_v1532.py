@@ -207,7 +207,7 @@ if API and DB:
         calc = psql(f"SELECT (fn_hlt_statement_calc('{sid}', '2025-03')->>'weeks') || '|' || (fn_hlt_statement_calc('{sid}', '2025-03')->>'net')") if sid else ''
         badfn = psql(f"SELECT fn_hlt_statement_calc('{sid}', '2025-3')") if sid else ''
         jb = call('POST', '/admin/jobs', {'job': 'mall_statement'}, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'slx-statements'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'slx-statements'")
         ok('② 월 정산서 — 회원 403 · 판매자 미리보기(2주 · 매출 30,000 · 수수료 3,000 · 지급 26,200 · 2월 주 뺌) · 판매자 아님 403 · 만들기 1 · 목록 · 한 장 주별 2줄 · 판매자 목록(3월 만듦 · 2월 미리보기) · 메일 꺼짐 422 · 잘못된 달 422 · 미래 달 422 · 형식 400 · 보낸 줄 다시 셈 409 · UPDATE · DELETE 막음 · DB 셈 · 달 무늬 · 작업 · 권한 주소 4',
            bool(sid) and r403.get('_err') == 403 and pv.get('preview') is True and pv.get('weeks') == 2 and pv.get('gross') == 30000 and pv.get('fee') == 3000 and pv.get('feeVat') == 300
            and pv.get('refund') == 500 and pv.get('net') == 26200 and other.get('_err') == 403 and other.get('code') == 'NOT_SELLER'

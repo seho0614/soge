@@ -226,7 +226,7 @@ if API and DB:
         o3 = psql(f"INSERT INTO acct_stock_moves (option_id, moved_on, kind, qty, source_key) VALUES ('{opt}', '{today}', 'OUT_SALE', -1, 'T1495:{stamp}:3') RETURNING id").split('\n')[0]; moves.append(o3)
         call('POST', '/admin/jobs', {'job': 'qlt_lot_alloc'}, TS)
         mk3 = psql(f"SELECT count(*) FROM qlt_move_marks WHERE move_id = {int(o3 or 0)}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'qlt-lots'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'qlt-lots'")
         ok('② 로트 — 회원 403 · 꺼진 상품 422 · 켜기 · 입고 10 → 로트 A 6(D-20) · B 4 · 입고 줄 넘침 422 · 같은 번호 409 · 번호 무늬 400 · DB 합 가드 · 출고 7 → A 0 · B 3(FEFO · DONE) · 출고 5 → SHORT 2 · B 0 · 반입 7 → A 6 · B 1 · 임박 알림 A 1(두 번) · B 없음 · 나간 곳(ADMIN 됨 · PAYOUT 403 · 감사 +1) · 회수 사유 422 · 회수 · 알림 · 회수 → 정상 409 · 조정 PAYOUT 403 · SUPER ADJUST −1 · DB 고치기 · 지우기 · 번호 · 0 아래 막음 · FEFO 제안 · 없는 주문 404 · 끄면 새 출고 그대로 · 권한 주소 9',
            mb.get('_err') == 403 and off.get('code') == 'QLT_LOT_OFF' and on.get('on') is True and bool(mid) and la.get('ok') is True and lb.get('ok') is True
            and over.get('_err') == 422 and dup.get('_err') == 409 and badno.get('_err') == 400 and 'QLT_LOT' in dbsum

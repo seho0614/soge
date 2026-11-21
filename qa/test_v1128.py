@@ -84,7 +84,7 @@ scr = json.loads(rd('spec/screens.json') or '{"screens":[]}')['screens']
 t = {x['id']: x for x in scr}
 REG = rd('src/common/integration/registry.ts'); INV = rd('scripts/verify-invariants.sh'); ENVX = rd('deploy/aws/env.production.example')
 ok('② 점검표 — 목록표 MAIL dbRow · 불변식 13종 · KEY-1 · 2 · MAP-4 짝 · .env 예시 안내 · 화면 목록 API',
-   "code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: true" in REG and ('if [ "$n" = "13" ]' in INV or 'if [ "$n" = "14" ]' in INV or 'if [ "$n" = "15" ]' in INV or 'if [ "$n" = "16" ]' in INV or 'if [ "$n" = "17" ]' in INV or 'if [ "$n" = "18" ]' in INV) and 'KEY-1' in INV and 'KEY-2' in INV
+   "code: 'MAIL', name: '메일(Amazon SES SMTP)', dbRow: true" in REG and ('if [ "$n" = "13" ]' in INV or 'if [ "$n" = "14" ]' in INV or 'if [ "$n" = "15" ]' in INV or 'if [ "$n" = "16" ]' in INV or 'if [ "$n" = "17" ]' in INV or 'if [ "$n" = "18" ]' in INV or 'if [ "$n" = "19" ]' in INV) and 'KEY-1' in INV and 'KEY-2' in INV
    and "('PG','KAKAO_REST_KEY','\\\\x00','0000')" in INV and '「연동 키」(SUPER)에서 넣는 것이 먼저' in ENVX
    and {'GET /admin/integration-keys', 'PUT /admin/integration-keys/{code}/{name}', 'DELETE /admin/integration-keys/{code}/{name}'} <= set(t.get('SB-ADM-SIT-080', {}).get('apis', []))
    and all('GET /site-settings/payment' in t.get(i, {}).get('apis', []) for i in ('SB-HLT-ORD-020', 'SB-PTC-CTR-400', 'SB-MYP-SUB-020', 'SB-MAL-DTL-010')), '')

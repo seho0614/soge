@@ -204,7 +204,7 @@ if API and DB:
             call('PUT', f'/admin/acct/reorder/rules/{opt}', {'minQty': 0, 'reorderQty': 1, 'active': False, 'memo': '시험 1478 끔'}, TS)
             call('POST', '/admin/acct/reorder/run', {}, TS)
             al3 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'STOCK_REORDER' AND detail->>'option' = '{opt}' AND resolved_at IS NULL")
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-reorder'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'acct-reorder'")
             need = max(5, p0 + 10 - p0)
             ok('② 안전 재고 · 재주문 — 회원 403 · 재주문 0 은 400 · 직판 아닌 옵션 404 · 규칙 · 지금 점검 두 번 → 알림 1 · 초안 줄(수량 max(재주문, 최소 − 위치) · 단가) · 목록 모자람 · 초안 고치기 · 규칙 지우기 DB 막음 · 발주로 넣기(ORDERED · 매입처 · 수량 12) · 초안 CONVERTED · 두 번 409 · 끝난 초안 DB 고치기 막음 · 발주 중이 들어가 알림 풀림 · 새 초안 버림 · 두 번 409 · 규칙 끄면 알림 풀림 · 권한 주소 6',
                    mb.get('_err') == 403 and bad.get('_err') == 400 and nf.get('_err') == 404 and rule.get('ok') is True and al1 == '1' and did.isdigit() and line1 == f'{need}|1000'

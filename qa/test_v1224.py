@@ -196,7 +196,7 @@ if API and DB:
                     ok(f'③ {w}px 파트너센터 계정 탭 · 제휴 정산 — 해지 칸 · 막는 것 보임', seen.get(f'site{w}') == ((1, 1), (1, 1)), str(seen.get(f'site{w}')))
             if ADMIN_WEB:
                 t_ = seen.get('tab') or ('', 0, 0, 0)
-                ok('③ 운영 화면 「소개몰」 묶음(판매자 먼저 · 6탭) › 「소개몰 판매자」 — 입점 심사 · 판매자 표 · 정보 변경 요청', (t_[0] or '').startswith('|소개몰 판매자|소개몰 상품|') and t_[1:] == (1, 1, 1), str(t_))
+                ok('③ 운영 화면 「소개몰」 묶음(판매자 먼저 · 6탭) › 「소개몰 판매자」 — 입점 심사 · 판매자 표 · 정보 변경 요청', (t_[0] or '').startswith('|소개몰 판매자|') and '|소개몰 상품|' in (t_[0] or '') and t_[1:] == (1, 1, 1), str(t_))
                 ok('③ 「안심소개 입점 심사」 승인 탭 — 시험 축 줄에 해지 단추 · 「해지」 탭', seen.get('axes') == (1, 1, 1), str(seen.get('axes')))
             ok('③ 화면 오류 없음', not errs, str(errs[:3]))
         else:

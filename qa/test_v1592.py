@@ -156,6 +156,7 @@ def rm_accounts(like):
                 f"DELETE FROM sec2_staff_anomalies WHERE account_id IN {ids}; DELETE FROM account_mfa WHERE account_id IN {ids}; "
                 f"DELETE FROM login_sessions WHERE account_id IN {ids}; DELETE FROM login_history WHERE account_id IN {ids}; "
                 f"DELETE FROM notifications WHERE account_id IN {ids}; DELETE FROM term_agreements WHERE account_id IN {ids}; "
+                f"DELETE FROM perm_account_groups WHERE account_id IN {ids}; DELETE FROM perm_account_overrides WHERE account_id IN {ids}; "   # 주인 없는 권한 줄을 남기지 않음(v1566 후보 만들기 외래 키)
                 f"DELETE FROM account_roles WHERE account_id IN {ids}; DELETE FROM accounts WHERE email LIKE '{like}';")
 
 

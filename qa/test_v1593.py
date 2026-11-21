@@ -155,6 +155,7 @@ def rm_accounts(like):
                 f"DELETE FROM sec2_staff_anomalies WHERE account_id IN {ids}; DELETE FROM account_mfa WHERE account_id IN {ids}; "
                 f"DELETE FROM login_sessions WHERE account_id IN {ids}; DELETE FROM login_history WHERE account_id IN {ids}; "
                 f"DELETE FROM notifications WHERE account_id IN {ids}; DELETE FROM term_agreements WHERE account_id IN {ids}; "
+                f"DELETE FROM perm_account_groups WHERE account_id IN {ids}; DELETE FROM perm_account_overrides WHERE account_id IN {ids}; "   # 주인 없는 권한 줄을 남기지 않음(v1566 후보 만들기 외래 키)
                 f"DELETE FROM account_roles WHERE account_id IN {ids}; DELETE FROM accounts WHERE email LIKE '{like}';")
 
 
@@ -203,7 +204,7 @@ if API and DB:
         rs = [r.split('|') for r in rows.splitlines() if r]
         link = psql(f"SELECT link_url FROM notifications WHERE account_id = '{mid}' AND event_code = 'LOGIN_NEW_DEVICE' ORDER BY id DESC LIMIT 1")
         ok('② 낯선 기기 두 번 → 줄 둘(Chrome · Windows · Firefox · Mac · 기기 번호) · 알림 링크가 그 줄로',
-           bool(T1) and bool(T2) and len(rs) == 2 and rs[0][1] == 'Chrome · Windows' and rs[1][1] == 'Firefox · Mac' and all(r[2] == 't' for r in rs)
+           bool(T1) and bool(T2) and len(rs) == 2 and rs[0][1] == 'Chrome · Windows' and rs[1][1] == 'Firefox · Mac' and all(r[2] in ('t', 'true') for r in rs)
            and link == f'/my/account/security?alert={rs[1][0]}', f"{rows} {link}")
         a1, a2 = (rs[0][0], rs[1][0]) if len(rs) == 2 else ('0', '0')
         li = call_ua('GET', '/me/login-alerts', None, T1, W)

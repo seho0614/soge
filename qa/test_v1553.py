@@ -247,7 +247,7 @@ if API and DB:
         pub2 = call('GET', '/health/bundles', None)
         so = next((x for x in (pub2.get('items') or []) if x.get('code') == code), {})
         sold = call('POST', '/health/orders', {'addressId': adr, 'bundles': [{'code': code, 'qty': 1}]}, TM)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'smx-bundles'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'smx-bundles'")
         ok('② 묶음 — 운영 목록 · 회원 403 · 초안 만들기 · 같은 코드 409 · 수량 1 줄 없으면 판매 시작 422 · 고친 뒤 판매 시작 · 다시 409 · 판매 중 구성 고치기 409 · 꺼짐이면 공개 on:false · 주문 422 · 켜면 공개 목록 · 묶음 + 쿠폰 함께(할인 = 쿠폰 금액 · 대상은 묶음가 · 금액 규칙 맞음) · 묶음 주문(합계 = 묶음가 − 쿠폰 · 구성 2줄 · 구성 수량 · 재고 빠짐) · 묶음 줄 고치기 막음 · 취소하면 재고 되돌림 · 구성 품절이면 묶음 품절 · 주문 422 · 권한 주소 4',
            len(opts) == 2 and v0.get('on') is False and m403.get('_err') == 403 and bool(bid) and dup.get('code') == 'SMX_BUNDLE_DUP'
            and start_bad.get('_err') == 422 and fix.get('id') == bid and start.get('state') == 'ON_SALE' and again.get('_err') == 409 and locked.get('code') == 'SMX_BUNDLE_ON_SALE'

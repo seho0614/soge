@@ -247,7 +247,7 @@ if API and DB:
         setting('smx.review_reply', 'off', '1555')
         pub4 = call('GET', f'/health/products/{code}/reviews', None)
         item4 = next((x for x in (pub4.get('items') or []) if x.get('id') == rid), {})
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'smx-replies'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'smx-replies'")
         ok('② 리뷰 답글 — 꺼짐이면 422 · 켜면 답글 없는 직판 리뷰 목록 · 운영 답글 보임 · 알림 한 번 · 공개 줄 reply(STAFF) · 고치기 → 기록 1 · 기록 못 바꿈 · 금칙어면 대기(공개 줄 null) · 보이기 · 사유 없는 가림 422 · 가림 · 가린 답글 못 고침 409 · 알림 그대로 1 · 판매자 아님 403 · DB 가 직판 리뷰 판매자 답글 막음 · 회원 403 · 끄면 공개 줄에 답글 칸 없음 · 권한 주소 4',
            bool(code) and bool(rid) and off.get('code') == 'SMX_REPLY_OFF' and listed and w1.get('state') == 'VISIBLE' and w1.get('created') is True and ntf == '1'
            and (item.get('reply') or {}).get('kind') == 'STAFF' and w2.get('editCount') == 1 and len(eds.get('items') or []) == 1 and '!' in elock

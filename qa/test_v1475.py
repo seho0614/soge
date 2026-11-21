@@ -210,7 +210,7 @@ if API and DB:
         dbd = psql(f"DELETE FROM acct_vehicles WHERE id = {int(vid or 0)}")
         lst = call('GET', f'/admin/acct/vehicles?year={year}', None, TS)
         mine = next((x for x in lst.get('items') or [] if x.get('id') == vid), {})
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-vehicle'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'acct-vehicle'")
         ok('② 업무용 차량 — 회원 403 · 번호 400 · 넣기 · 겹침 409 · 운행 4(계기판 끊김 안내 1) · 계기판 422 · 비용 2 · 해 셈(거리 비율 · 감가상각 한도 이월 = 파이썬 셈) · 운행기록부 줄 4 · 취소 → 비율 100% · 두 번 409 · 보험 없음 → 모두 불인정 · 번호 고치기 409 · 빈 고치기 422(다른 칸 그대로) · DB 고치기 · 지우기 막음 · 목록 · 권한 주소 8',
            mb.get('_err') == 403 and badp.get('_err') == 400 and c.get('ok') is True and dup.get('_err') == 409
            and t1.get('distance') == 100 and t3.get('gap') is None and (t4.get('gap') or {}).get('prevEnd') == 1250 and bado.get('_err') == 422 and bado.get('code') == 'VEH_ODO'

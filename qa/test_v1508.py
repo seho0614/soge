@@ -214,7 +214,7 @@ if API and DB:
         v403 = call('GET', '/admin/site-usage?days=1', None, None)
         v = call('GET', '/admin/site-usage?days=1', None, TS)
         pa = next((x for x in (v.get('paths') or []) if x.get('path') == '/qa1508/a'), {})
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'site-usage'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'site-usage'")
         ok('② 사용 통계 — 꺼짐 ok:false · 첫 화면 · 둘째 화면(이어 봄) · uuid · 상품 코드는 :id · 물음표 뒤 버림 · 전환 SIGNUP · DNT · GPC · 로봇 · 운영 주소 받지 않음 · 틀린 목표 400 · a = 보기 1 · 첫 1 · 이어 봄 1 · b = 1 · 0 · 0 · 전환 1 · 칸에 계정 · IP · 브라우저 없음 · 주소 CHECK · 표본 50 → 추정 2 · 로그인 없이 운영 403 · 운영 보기 이탈 0 · 권한 주소 1',
            b0.get('ok') is False and b0.get('reason') == 'OFF' and b1.get('ok') is True and b2.get('ok') is True and b3.get('ok') is True and b4.get('ok') is True
            and bd.get('reason') == 'DNT' and bg.get('reason') == 'DNT' and bb.get('reason') == 'BOT' and ba.get('reason') == 'PATH' and bx.get('_err') == 400

@@ -233,7 +233,7 @@ if API and DB:
         de = psql(f"DELETE FROM hlt_tiers WHERE code = '{code}'")
         ro = psql(f"UPDATE hlt_tier_changes SET reason = '바꿈' WHERE account_id = '{aid}'")
         me_ = call('GET', '/me/health/benefits', None, TM)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-tiers'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-tiers'")
         ok('② 회원 등급 — 회원 403 · 처음 등급 3 · 만들기 · 같은 코드 409 · 적립률 소수 둘 400 · 소문자 400 · 고치기(8.0) · 운영이 정함(manual) · 등급 꺼짐 = 기본 적립률 1% · 켜짐 = 등급 적립률 8% · 회원 있으면 끄기 409 · 풀기 · 사유 없음 400 · 다시 셈 → 기본 등급(구매액 0) · 바뀐 기록(운영 1 · 작업 1) · 끄기 · DB 가 지우기 · 기록 고치기 막음 · 내 혜택에 등급 · 권한 주소 5',
            bool(dp) and price > 2000 and mb.get('_err') == 403 and seed == ['BASIC', 'GOLD', 'SILVER'] and c1.get('ok') is True and dup.get('code') == 'HLT_TIER_DUP'
            and badr.get('_err') == 400 and low.get('_err') == 400 and ed.get('ok') is True and rate == '8.0|999999999|시험' and m1.get('ok') is True and mt == f'{code}|true'

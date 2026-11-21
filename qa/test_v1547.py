@@ -238,7 +238,7 @@ if API and DB:
         call('POST', '/admin/jobs', {'job': 'sfx_daily'}, TS)
         oa2 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'SFX_RETENTION_DUE' AND raised_at >= '{T0}'::timestamptz")
         lst = call('GET', '/admin/sfx/retention?due=over', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'sfx-retention'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'sfx-retention'")
         ok('② 서류 보관 — 표 4 · HR_DOC 36(최소 36) · 최소 밑 422 · 빈 칸 422 · 운영 관리자 403 · 대장 맞추기(기준일 오늘 · 36개월) · 만료 전 파기 409 · 기준일 2020 → 만료 2023 · 미래 기준일 422 · 보존 까닭 없음 422 · 보존 · 보존 중 파기 409 · 파일 지우기 DB 막음 · 확인 글자 422 · 운영 관리자 파기 403 · 파기(파일 DELETED · 대장 DESTROYED · 가린 이름) · 다시 409 · 기록 지우기 · 고치기 막음 · 파기 기록 목록 · 개월 48 → 만료일 다시 셈 · 정기 작업 알림 한 번 · 지남 목록 · 권한 주소 7',
            len(rules.get('rules') or []) == 4 and hr.get('months') == 36 and hr.get('minMonths') == 36
            and rmin.get('_err') == 422 and rmin.get('code') == 'SFX_RET_MIN' and rnone.get('code') == 'SFX_RET_NOTHING' and r403.get('_err') == 403

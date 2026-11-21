@@ -244,7 +244,7 @@ if API and DB:
         kinds = [t.get('kind') for t in dt.get('txns') or []]
         ro = psql(f"UPDATE hlt_giftcard_txns SET amount = 1 WHERE card_id = {int(ids[0]) if ids else 0}")
         lst = call('GET', '/admin/health/giftcards?state=VOID', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-giftcards'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-giftcards'")
         ok('② 상품권 — 회원 403 · 판촉 2장 발행(코드는 응답에만 · DB 는 지문 · 끝 4자리) · 액면 500 400 · 0장 400 · 판매 1장 · 코드로 찾기 5,000 · 받기 꺼짐 422(조회 · 주문) · 소문자 코드 조회 · 없는 코드 422 · 주문 = 상품 − min(5,000, 상품 − 1) · 잔액 줄어듦 · 잔액 0 이면 422 · DB 가 잔액 고치기 · 음수 막음 · 주문 취소 → 잔액 되돌림 · 안 쓴 것 무효 · 쓴 것 무효 409 · 판촉 환불 422 · 판매 잔액 환불 · 다시 409 · 소멸 작업(2,000) · 기록(발행 · 사용 · 되돌림) · 기록 고치기 막음 · 상태 거르기 · 권한 주소 5',
            bool(dp) and price > 1 and mb.get('_err') == 403 and len(codes) == 2 and all(c and len(c) == 19 for c in codes) and hashed == f'1|{plain[-4:]}' and noplain == '0'
            and badA.get('_err') == 400 and badC.get('_err') == 400 and bool(id3) and lk.get('balance') == 5000 and lk.get('state') == 'ACTIVE'

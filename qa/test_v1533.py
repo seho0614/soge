@@ -242,7 +242,7 @@ if API and DB:
         r2 = call('POST', '/me/health/reviews', {'orderNo': no, 'productCode': dp, 'rating': 5, 'body': body}, TM)
         w3 = psql(f"SELECT count(*) || '|' || string_agg(state, ',') FROM hlt_review_rewards WHERE order_id = '{oid}'") if oid else ''
         delg = psql(f"DELETE FROM hlt_review_rewards WHERE order_id = '{oid}'") if oid else ''
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'slx-review-points'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'slx-review-points'")
         ok('② 리뷰 적립 — 직판 주문 확정 · 꺼짐이면 적립 없음(0) · 남의 사진 422 · 사진 리뷰 = 글 500 + 사진 300 · 묶음 REVIEW · 기록 EARN 「리뷰 작성 적립」 · 같은 주문 다시 0 · 목록 사진 주소 · 없는 사진 404 · 회원 403 · 운영 기록 · 짧은 사유 400 · 운영 회수 800 · 다시 409 · 묶음 REVOKED · 남은 0 · 지움 · 다시 써도 적립 없음(한 주문 한 번) · 기록 지우기 막음 · 권한 주소 2',
            bool(dp) and bool(no) and '!' not in dlv and '!' not in cnf and r0.get('pointAmount') == 0 and w0 == '0' and d0.get('deleted') is True
            and bad.get('code') == 'HLT_REVIEW_PHOTO' and r1.get('pointAmount') == 800 and w1 == '800|true|GRANTED|REVIEW|800'

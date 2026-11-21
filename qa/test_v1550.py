@@ -181,7 +181,7 @@ if API and DB:
         nor = call('PUT', '/admin/lpx/settings', {'markOn': False}, TS)
         bad_id = call('GET', '/site/lpx/listings/not-a-uuid')
         adm = call('GET', '/admin/lpx/watermark', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'lpx-photo'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'lpx-photo'")
         w0, w1 = off.get('watermark') or {}, on.get('watermark') or {}
         ok('② 워터마크 — 꺼짐 on false · SUPER 설정(사유) · 켜고 TL · 40 · 글자 SogaeBank/소개뱅크 · 잘못된 자리 400 · 사유 없음 400 · 잘못된 번호도 표시 정보만 · 운영 6자리 · 권한 주소 2',
                w0.get('on') is False and put.get('ok') is True and w1.get('on') is True and w1.get('pos') == 'TL' and w1.get('opacity') == 40 and w1.get('text') == 'SogaeBank/소개뱅크'

@@ -186,7 +186,7 @@ if API and DB:
         dbev = psql(f"UPDATE qlt_sup_evals SET memo = '바꿈' WHERE id = {int(eid or 0)}")
         dbdel = psql(f"DELETE FROM qlt_sup_evals WHERE id = {int(eid or 0)}")
         det = call('GET', f'/admin/qlt/suppliers/{pid}', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'qlt-supeval'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'qlt-supeval'")
         ok('② 협력사 평가 — 회원 403 · 발주일 앞 납기 422 · 납기 넣기 2 · 입고 뒤 납기 409 · DB 도 막음 · 입고 2(제때 1 · 늦음 1) → 납기 50 · 늦은 날 · 품질 100(클레임 0) · 분기 무늬 400 · 매출처 422 · 저장(가중 합 · 등급) · 덮어쓰기 · 확정 · 확정 뒤 저장 409 · 다시 확정 409 · DB 고치기 · 지우기 막음 · 매입처 자세히 · 권한 주소 5',
            mb.get('_err') == 403 and bad_due.get('_err') == 422 and due1.get('ok') is True and due2.get('ok') is True and r1.get('ok') is True and r2.get('ok') is True
            and after.get('_err') == 409 and 'QLT_PO_DUE' in dbdue

@@ -226,7 +226,7 @@ if API and DB:
             rrow = next((x for x in (mine_o.get('received') or []) if x.get('id') == oid1), {})
             adm = call('GET', '/admin/lpx/offers', None, TS)
             arow = next((x for x in (adm.get('recent') or []) if x.get('id') == oid1), {})
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'lpx-offers'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'lpx-offers'")
             ok('② 가격 제안 — 꺼짐 409 · 관 꺼짐 422(서버 · DB) · 칸 켜짐(되제안 3번) · 자기 매물 422 · 하한(30%) 422 · 형식 400 · 제안 · 메모 연락처 가림 · 같은 매물 409 · 주인 알림 · 되제안 · 되제안 받은 것에 또 되제안 409 · 다시 제안 · 되제안(3번째) · 넷째 422 LPX_COUNTER_LIMIT(서버 · DB 트리거) · 회원 수락(최종 = 마지막 되제안 · 1:1 문의 안내) · 다시 409 · 거두기 · 만료(작업) · 지우기 막음 · 가린 이름 · 운영 목록에 메모 없음 · 권한 주소 3',
                off.get('_err') == 409 and off.get('code') == 'LPX_OFFER_OFF' and gw.get('_err') == 422 and gw.get('code') == 'LPX_GWAN_OFF' and '!' in gw_db and 'LPX_GWAN_OFF' in gw_db
                and box.get('enabled') is True and box.get('counterMax') == 3 and own.get('_err') == 422 and own.get('code') == 'LPX_OFFER_SELF' and low.get('code') == 'LPX_AMOUNT_LOW' and badf.get('_err') == 400

@@ -239,7 +239,7 @@ if API and DB:
         n3 = call('POST', f'/admin/uptime/incidents/{inc}/notes', {'state': 'MONITORING', 'body': '끝난 뒤 글(시험)'}, TA)
         dd = psql(f"DELETE FROM upt_incidents WHERE id = {int(inc or 0)}")
         du = psql(f"UPDATE upt_incident_notes SET body = '바꿈' WHERE incident_id = {int(inc or 0)}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'upt-status'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'upt-status'")
         ok('② 장애 공지 — 올리기(ADMIN) · 영향 범위 밖 400 · 공개 상태에 나옴(major) · 운영 알림 UPT_INCIDENT 긴급 · 진행 글 · 끝남 → 공개 상태에서 빠지고 최근에 · 끝난 공지 고치기 409 · 띠 끄기는 됨 · 끝난 공지 글 409 · DB 지우기 · 글 고치기 막음 · 권한 주소 6',
            bool(inc) and badp.get('_err') == 400 and has1 and st1.get('status') in ('major', 'maintenance') and al == 'CRITICAL' and n1.get('ok') is True and n2.get('state') == 'RESOLVED'
            and gone and e1.get('_err') == 409 and e1.get('code') == 'UPT_RESOLVED' and e2.get('ok') is True and n3.get('_err') == 409 and 'UPT_INCIDENT' in dd and 'UPT_NOTE' in du and rmap == '6',

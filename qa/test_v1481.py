@@ -245,7 +245,7 @@ if API and DB:
         if live.get('id'): subs.append(str(live['id']))
         g1 = psql(f"UPDATE hlt_subscriptions SET qty = 2 WHERE id = {int(sid) if sid else 0}")
         g2 = psql(f"DELETE FROM hlt_subscription_runs WHERE sub_id = {int(sid2) if sid2 else 0}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-subscribe'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-subscribe'")
         ok('② 정기 배송 — 꺼짐 422 · 신청(내일 · 30일) · 같은 옵션 409 · 주기 7일 400 · 첫 결제일 오늘 422 · 남의 배송지 422 · 내 목록 · 회원 운영 화면 403 · 건너뛰기 · 남의 것 404 · 건너뛴 회차(주문 없음) → 다음 결제일 +30 · 정기 결제 간주 → 회차 결제됨 · 주문 결제 완료 · 결제 간주 표시 · 다음 결제일 +14 · 다시 돌려도 한 번 · 사유 없음 400 · 운영 멈춤 · 해지 · 다시 해지 409 · LIVE 는 카드 없으면 422 · 해지 뒤 고치기 · 회차 지우기 DB 막음 · 권한 주소 3',
            bool(dp) and price > 0 and s_off.get('code') == 'HLT_SUB_OFF' and bool(sid) and s1.get('nextOn') == tmr and dup.get('code') == 'HLT_SUB_DUP' and badc.get('_err') == 400
            and badf.get('code') == 'HLT_SUB_FIRST' and oth.get('code') == 'HLT_SUB_ADDRESS' and any(x.get('id') == sid for x in mine.get('items') or []) and mb.get('_err') == 403

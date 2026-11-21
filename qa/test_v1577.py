@@ -230,7 +230,7 @@ if API and DB:
         dlock = psql(f"UPDATE hlt_qna SET due_at = due_at + interval '1 day' WHERE id = '{q1}'") if q1 else ''
         nsel = call('GET', '/me/health/seller/qna', None, TM)
         m403 = call('GET', '/admin/smq/qna', None, TM)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'smq-qna'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'smq-qna'")
         ok('② 상품 문의 — 기한 48시간 박음 · 꺼짐이면 판매자 답 422 · 켜면 판매자 목록(비밀글 포함) · 판매자 답 SELLER · 보임 · 쓴 사람 알림 1 · 공개 줄 answerBy · 금칙어 답 대기(쓴 사람에게도 답 없음) · 운영 대기 목록 · 보이기 → 알림 2 · 금칙어 문의 대기(공개 목록에 없음) · 사유 없는 가림 422 · 가린 문의 답 409 · 가린 답 고치기 409 · 기한 못 바꿈 · 판매자 아님 403 · 회원 운영 403 · 권한 주소 3',
            bool(sid) and bool(pid) and bool(q1) and due == '48' and off.get('code') == 'SMQ_QNA_OFF' and q1 in seen and q2 in seen and (seen.get(q2) or {}).get('isPrivate') is True
            and w1.get('answerKind') == 'SELLER' and w1.get('answerState') == 'VISIBLE' and n1 == '1' and p1.get('answerBy') == '시험1577 입점' and p1.get('answered') is True

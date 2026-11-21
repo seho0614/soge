@@ -203,7 +203,7 @@ if API and DB:
            nt.get('code') == 'EXPORT_NEED_APPROVAL' and csv.lstrip('﻿').startswith('day,metric,label,unit,dim,value,suppressed') and row != ''
            and (row.endswith(',,Y') if mc > 1 else row.endswith(',1.00,')) and ex2.get('code') == 'EXPORT_NEED_APPROVAL',
            f"{nt.get('code')} {csv[:60]!r} {row!r} {ex2.get('code')}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'bi-export'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'bi-export'")
         ok('② 권한 주소 5 · 설정 바꾸기는 SUPER(사유 없으면 400)', rmap == '5' and call('PUT', '/admin/bi/settings', {'minCell': 3}, TS).get('_err') == 400, rmap)
     finally:
         psql("DELETE FROM bi_daily_metrics WHERE day = '2001-01-01' AND dim = 'T1535X'")

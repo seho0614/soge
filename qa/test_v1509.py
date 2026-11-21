@@ -197,7 +197,7 @@ if API and DB:
         d4 = psql(f"BEGIN; SELECT set_config('app.opx_purge', 'PII:{mon}', true); DELETE FROM audit.pii_access_logs WHERE id = {int(pid or 0)}; COMMIT;")   # 조건 모두 → 지움
         left = psql(f"SELECT count(*) FROM audit.pii_access_logs WHERE id = {int(pid or 0)}")
         trn = psql("BEGIN; TRUNCATE audit.pii_access_logs; ROLLBACK;")   # B-4 — 통째 비우기 막음
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'opx-archive'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'opx-archive'")
         ok('② 기록 장기 보관 — 회원 403 · 꺼짐 · 보관 36(최소 12) · 경고 · 꺼진 채 돌리기 409 · 보관 11 막음 · 12 됨 · 정리 12 막음(13부터) · 묶음 줄 고치기 막음 · 정리 꺼짐 막음 · 확인 전 막음 · S3 올림 없으면 막음 · 확인 · S3 뒤 정리 0줄 · 다시 막음 · 접속기록 지우기 표시 없으면 막힘 · 표시만(묶음 없음) 막힘 · 확인만 막힘 · 확인 + S3 면 지움 · 통째 비우기 막음 · 권한 주소 4',
            mb.get('_err') == 403 and st.get('on') is False and st.get('keepMonths') == int(keep0 or 36) and st.get('minMonths') == 12 and any('꺼져' in w for w in st.get('warnings') or [])
            and run.get('_err') == 409 and run.get('code') == 'OPX_ARCHIVE_OFF' and '!' in k11 and '!' not in k12 and v12 == '12' and '!' in p12 and 'append-only' in upd

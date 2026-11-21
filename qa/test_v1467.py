@@ -188,7 +188,7 @@ if API and DB:
         r3 = call('POST', '/admin/acct/bank-feed/run', {'accountId': aid}, TS)
         vw = call('GET', '/admin/acct/bank-feed', None, TS)
         acc = next((x for x in vw.get('accounts') or [] if x.get('id') == aid), {})
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-bankfeed'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'acct-bankfeed'")
         ok('② 자동 조회 — 회원 403 · 계좌 등록(암호문 · 끝 4자리) · 같은 번호 422 · 은행 코드 400 · 꺼짐 422 · 간주 2줄 들여옴(새로 2) · 다시 조회 = 이미 있음 2 · 기간 31일 넘음 422 · 들여온 줄 2(지문 겹침 없음 · 입금 1 · 출금 3,000) · LIVE 키 없음 422 · 정기 작업 기록(누가 비움) · DB 가 은행 바꾸기 · 기록 고치기 막음 · 끄면 422 · 화면은 끝 4자리 · 권한 주소 4',
            mb.get('_err') == 403 and ad.get('ok') is True and dup.get('code') == 'BANK_FEED_DUP' and badb.get('_err') == 400 and enc == 'true|1467' and off.get('code') == 'BANK_FEED_OFF'
            and r1.get('added') == 2 and r1.get('dup') == 0 and r2.get('added') == 0 and r2.get('dup') == 2 and rng.get('code') == 'BANK_FEED_RANGE'

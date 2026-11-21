@@ -200,7 +200,7 @@ if API and DB:
         setting('acct.exempt_invoice', 'off', '1477')
         offsend = call('POST', f'/admin/acct/exempt-invoices/{x3}/send', {}, TS)
         offetax = call('POST', f'/admin/etax/exempt/{x3}/send', {}, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-exemptinv'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'acct-exemptinv'")
         sent_ok = (sent.get('etaxStatus') == 'ASSUMED' and str(sent.get('invoiceNo') or '').startswith('간주-SGB-E-') and docno == sent.get('invoiceNo')) if assume == 'on' else sent.get('_err') in (None, 422)
         ok('② 전자계산서 — 회원 403 · 꺼짐 422 · 요청 후보(면세 50,000) · 세금계산서는 과세 몫만(100,000 · 10,000) · 면세만 문서 세금계산서 422 · 요청(EXEMPT · 부가세 0) · 겹침 409 · DB 공급가 다름 · 부가세 막음 · 발행(간주 · 번호 간주-SGB-E- · 문서에 번호) · 다시 409 · 전송 기록 · 발행한 문서 취소 막음 · 요청 취소 → 다시 요청 · 꺼지면 발행 422(두 길 모두) · 권한 주소 4',
                mb.get('_err') == 403 and off.get('code') == 'EXEMPT_OFF' and cand and tx.get('ok') is True and txrow == '100000|10000|110000' and only.get('code') == 'ACCT_DOC_EXEMPT_ONLY'

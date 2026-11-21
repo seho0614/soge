@@ -178,7 +178,7 @@ if API and DB:
         vw = call('GET', '/admin/security/geo', None, TS)
         dbu = psql(f"UPDATE sec_geo_events SET country = 'KR' WHERE account_id = '{asf}' AND id > {mark}")
         dbd = psql(f"DELETE FROM sec_geo_events WHERE account_id = '{asf}' AND id > {mark}")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'sec-geo'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'sec-geo'")
         key_set = bool((v0.get('ready') or {}).get('keySet'))
         ok('② 해외 접속 — ADMIN 설정 403(보기는 됨) · LIVE 키 없음 422 · KR 없는 허용 422 · 경고 없이 막기 422 · 켜기(간주 US) · 운영자 로그인 통과 + 기록 US ALERT · 긴급 알림 · 회원 로그인은 기록 없음 · 막기 → 403 GEO_BLOCKED + BLOCKED · 경고 알림 · 허용 KR,US → 통과 OK · 판별 시험 US 허용 · 30일 경고 1 이상 · DB 고치기 · 지우기 막음 · 권한 주소 3',
            adm.get('_err') == 403 and 'settings' in v0 and (key_set or live.get('code') == 'GEO_NOT_READY') and nokr.get('code') == 'GEO_ALLOW_KR' and nob.get('code') == 'GEO_BLOCK_NEEDS_WATCH'

@@ -233,7 +233,7 @@ if API and DB:
            on.get('ok') is True and on.get('settings', {}).get('tierReward') is True
            and rows['D'] == 'REFERRAL_DIRECT:1000:true' and rows['C'] == 'REFERRAL_DIRECT:1000:true,REFERRAL_TIER:300:false'
            and rows['B'] == 'REFERRAL_TIER:100:false' and rows['A'] == '' and tr == '2:300,3:100' and tr2 == '2'
-           and direct.startswith('!') and 'GRW_TIER' in direct and cash.startswith('!') and ro.startswith('!')
+           and direct.startswith('!') and 'GRW_TIER' in direct and '\n!' in '\n' + cash and 'GRW_TIER' in cash and ro.startswith('!')
            and tv.get('totals', {}).get('rewards', 0) >= 2 and '법무 확인' in (tv.get('legal') or ''),
            f"{rows} {tr} {tr2} {direct[-50:]} {cash[-40:]} {ro[-40:]}")
         legal_off = call('PUT', '/admin/grw/settings', {'tierLegalOk': False, 'reason': '시험 1600 법무 끔'}, TS)

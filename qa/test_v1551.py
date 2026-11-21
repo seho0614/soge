@@ -210,7 +210,7 @@ if API and DB:
             end2 = call('POST', '/lpx/me/away/end', {}, TO)
             run = call('POST', '/admin/lpx/offers/run', {}, TS)
             adm = call('GET', '/admin/lpx/away', None, TS)
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'lpx-away'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'lpx-away'")
             cur = mine.get('current') or {}
             ok('② 자리 비움 — 꺼짐 409 · 켜기 · 안내 연락처 가림 · 공개 표시 · 1:1 문의 첫 줄에 안내 한 번(질문은 더 안 감) · 다른 회원 질문 한 번 · 지난 날짜 422 · 너무 김 422 · 보이는 중 · 지우기 막음 · 끝내기 · 표시 사라짐 · 다시 409 · 정리 작업 · 운영 목록 · 권한 주소 2',
                off.get('_err') == 409 and off.get('code') == 'LPX_AWAY_OFF' and on.get('ok') is True and '010-1234-5678' not in str(on.get('message')) and '***' in str(on.get('message'))

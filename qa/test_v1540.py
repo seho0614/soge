@@ -233,7 +233,7 @@ if API and DB:
         st3 = psql(f"SELECT state || '|' || (SELECT count(*) FROM mkx_gb_joins WHERE groupbuy_id = {gid2 or 0} AND cancel_return_id IS NOT NULL) FROM mkx_groupbuys WHERE id = {gid2 or 0}")
         alert = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'MKX_GB_FAILED' AND detail->>'key' = 'gb-{gid2}'")
         a403 = call('GET', '/admin/mkx/groupbuys', None, toks[0])
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mkx-groupbuy'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'mkx-groupbuy'")
         ok('② 공동구매 — 꺼짐이면 공개 목록 빈 · 할인가 ≥ 정가 422 · 초안 · 꺼짐 열기 422 · 켜고 열기 · 같은 옵션 둘째 409 · 연 뒤 값 409 · 참여 2 · 두 번 409 · 수량 넘침 422 · 할인가 주문 · 확정 전 발송 막음 · 공개 목록 · '
            '결제 1 → 모집 중 · 결제 2 → 확정 · 확정 알림 2 · 확정 뒤 발송 됨 · 내 참여 · 짧은 사유 400 · 운영 취소 → 취소 신청 2 · 취소 알림 2 · 둘째 열기 · 참여 · 기한 지남 → 실패 · 취소 신청 1 · 운영 알림 · 회원 403 · 권한 주소 7',
            bool(dp) and pub0.get('on') is False and badp.get('code') == 'MKX_GB_PRICE' and bool(gid) and o_off.get('code') == 'MKX_GB_OFF' and o1.get('ok') is True

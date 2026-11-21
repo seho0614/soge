@@ -210,7 +210,7 @@ if API and DB:
             ok('② 닫은 뒤 — 고치기 409 · DB 가 센 수 고치기 · 회차 지우기 막음 · 조정은 SUPER 만(ADMIN 403) · 차이 0 은 422 QLT_CNT_NODIFF(원가 장부 줄 안 생김)',
                af.get('_err') == 409 and 'QLT_CNT' in dbg and 'QLT_CNT' in dbd and ad_a.get('_err') == 403
                and (ad_s.get('code') == 'QLT_CNT_NODIFF' if is_super else ad_s.get('_err') == 403), f"{af.get('_err')} {dbg[-40:]} {dbd[-40:]} {ad_a.get('_err')} {ad_s.get('code') or ad_s.get('_err')}")
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mob-scan'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'mob-scan'")
             ok('② 권한 주소 7', rmap == '7', rmap)
         finally:
             if cnt_id and re.match(r'^\d+$', str(cnt_id)):
@@ -218,7 +218,7 @@ if API and DB:
             if lot_id and re.match(r'^\d+$', str(lot_id)):
                 psql(f"SET session_replication_role = replica; DELETE FROM qlt_lot_count_lines WHERE lot_id = {int(lot_id)}; DELETE FROM qlt_lot_moves WHERE lot_id = {int(lot_id)}; DELETE FROM qlt_lots WHERE id = {int(lot_id)};")
             for e in made:
-                psql(f"SET session_replication_role = replica; DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
+                psql(f"SET session_replication_role = replica; DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_groups WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_overrides WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
     if ADMIN_WEB:
         def chk(pg, seen):
             pg.set_viewport_size({'width': 390, 'height': 844}); pg.wait_for_timeout(800)

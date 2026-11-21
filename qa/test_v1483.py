@@ -229,7 +229,7 @@ if API and DB:
             live = call('POST', f'/admin/marketing/campaigns/{cid2}/send', {'confirm': '보내기'}, TS)
             setting('campaign.send_mode', 'ASSUME', '1483')
             cn = call('POST', f'/admin/marketing/campaigns/{cid2}/cancel', {'reason': '시험 1483 취소'}, TSF)
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mkt-campaign'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'mkt-campaign'")
             mail_ready = bool((lst.get('ready') or {}).get('mail'))
             ok('② 캠페인 — 회원 403 · 글에 수신 거부 422 · 긴 문자 422 · 초안 · 받을 사람 2 이상 · 시험 보내기(간주 · (광고) 제목 · 수신 거부 링크) · 꺼짐 422 · ADMIN 설정 403 · 연락처 없음 422 · 확인 글자 422 · 보내기(동의 A · B 만 · C 빠짐) · 고치기 409 · DB 가 글 고치기 · 동의 없는 줄 막음',
                mb.get('_err') == 403 and bad.get('code') == 'MKT_OPTOUT_TEXT' and smsl.get('code') == 'MKT_SMS_LEN' and c1.get('ok') is True and (aud.get('consented') or 0) >= 2

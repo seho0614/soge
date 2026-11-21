@@ -61,7 +61,7 @@ t = [x for x in scr if x['id'] == 'SB-ADM-AGT-010']
 REG = rd('src/common/integration/registry.ts'); ENVX = rd('deploy/aws/env.production.example'); INV = rd('scripts/verify-invariants.sh')
 ok('② 점검 — 외부 연동 목록표 AGENT · .env 예시 ANTHROPIC_API_KEY · 불변식 12종 · AIK-1 ~ 5',
    "code: 'AGENT', name: 'AI(Anthropic Claude)', dbRow: true, secretEnv: 'ANTHROPIC_API_KEY'" in REG and re.search(r'\bANTHROPIC_API_KEY=', ENVX)
-   and re.search(r'if \[ "\$n" = "1[2345678]" \]', INV) and all(f'AIK-{i}' in INV for i in range(1, 6)), '')
+   and re.search(r'if \[ "\$n" = "1[2-9]" \]', INV) and all(f'AIK-{i}' in INV for i in range(1, 6)), '')
 ok('② 화면 목록 SB-ADM-AGT-010 에 키 API 4개', t and {'GET /admin/agent/key', 'PUT /admin/agent/key', 'DELETE /admin/agent/key', 'POST /admin/agent/key/test'} <= set(t[0]['apis']), str(t and t[0]['apis']))
 W = rd('web/src/app/admin/ailearn/AgentStatus.tsx'); WK = rd('web/src/app/admin/ailearn/AgentKey.tsx')
 ok('② 운영 화면 — 「AI 키」는 최고 관리자에게만 · 엔진 표시 · 비밀번호 칸(다시 안 보임) · 키 확인 · 지우기 확인 창',

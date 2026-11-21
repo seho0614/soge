@@ -223,7 +223,7 @@ if API and DB:
         dl = psql(f"DELETE FROM hra_pay_banks WHERE employee_id = {E}")
         inv = psql("SELECT count(*) FROM v_inv11_violations WHERE table_name LIKE 'hra\\_%'")
         ok('② 계좌 — 은행 코드 2자리 400 · 지급 담당 넣기(끝 4자리만 돌려줌) · 암호문(원문 없음) · 바뀐 기록 · 운영 알림 · 화면 응답에 원문 없음 · 지우기 막음 · INV-11 0',
-           b1.get('_err') == 400 and b2.get('ok') is True and b2.get('account') == '****9012' and b2.get('created') is True and enc == '9012|t' and ch == '1|9012'
+           b1.get('_err') == 400 and b2.get('ok') is True and b2.get('account') == '****9012' and b2.get('created') is True and enc in ('9012|t', '9012|true') and ch == '1|9012'
            and int(al or 0) >= 1 and ln(v1).get('account') == '****9012' and '123456789012' not in flat and ACC not in flat and 'HRA_PAY_BANK' in dl and inv == '0',
            f"{b1.get('_err')} {b2.get('account') or b2} {enc} {ch} {al} {ln(v1).get('account')} {dl[-40:]} {inv}")
         f1 = call('POST', '/admin/hra/bank-formats', {'name': f'시험1583-{STAMP} 계좌 없음', 'columns': [{'field': 'bank'}, {'field': 'amount'}]}, TS)

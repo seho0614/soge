@@ -224,7 +224,7 @@ if API and DB:
         mb = call('GET', '/admin/sfx/device', None, login(accs[2][0]))
         nf = call('GET', '/admin/sfx/device/zzzz', None, TS)
         nf2 = call('GET', f'/admin/sfx/device/{"0" * 16}', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'sfx-device'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'sfx-device'")
         ok('② 같은 기기 — 꺼짐이면 안 쌓음 · 켜고 세 계정 → 표지 3줄 · 경보 1 · 운영 알림 · 다시 로그인 횟수 2 · 경보 그대로 1 · 자동 탐지 0 넣음(정상) · 잠든 규칙 아님 · 모양 틀린 표지 무시 · 운영 목록(기준 넘음) · 계정 보기(가린 이메일 · 감사) · 회원 403 · 없는 표지 404 · 권한 주소 2',
            r_off.get('accessToken') and n_off == '0' and all(x.get('accessToken') for x in lg) and n_on == '3' and al1 == '1' and oa != '0'
            and again.get('accessToken') and seen == '2' and scan == '0|true' and al2 == '1' and dormant == '0'

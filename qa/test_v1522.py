@@ -204,7 +204,7 @@ if API and DB:
             cst = psql(f"SELECT i.state || '|' || count(r.*) FILTER (WHERE r.email IS NOT NULL) FROM ptn_bulk_invites i JOIN ptn_bulk_invite_rows r ON r.batch_id = i.id WHERE i.id = {int(pv2.get('id') or 0)} GROUP BY i.state")
             dbdel = psql(f"DELETE FROM ptn_bulk_invite_rows WHERE batch_id = {int(pv.get('id') or 0)}")
             dbback = psql(f"UPDATE ptn_bulk_invite_rows SET state = 'PREVIEW' WHERE batch_id = {int(pv.get('id') or 0)} AND result = 'PENDING'")
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'ptn-bulk'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'ptn-bulk'")
             ok('② 취소 — CANCELED · 원문 이메일 0 · DB 가 지우기 · 되돌리기 막음 · 권한 주소 7', cn.get('ok') and cst == 'CANCELED|0' and 'PBULK' in dbdel and 'PBULK' in dbback and rmap == '7',
                f"{cn.get('ok')} {cst} {dbdel[-30:]} {dbback[-30:]} {rmap}")
         finally:
@@ -213,7 +213,7 @@ if API and DB:
             for b in batches:
                 psql(f"SET session_replication_role = replica; DELETE FROM ptn_bulk_invite_rows WHERE batch_id = {int(b)}; DELETE FROM ptn_bulk_invites WHERE id = {int(b)};")
             for e in made_emails:
-                psql(f"SET session_replication_role = replica; DELETE FROM business_members WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
+                psql(f"SET session_replication_role = replica; DELETE FROM business_members WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_groups WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_overrides WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
     if ADMIN_WEB:
         r = admin_page('/#/ptn-bulk', lambda pg, seen: seen.update(n=pg.locator('[data-pbulk]').count(), pv=pg.locator('[data-pbulk-preview]').count()))
         if r is not None:

@@ -272,7 +272,7 @@ if API and DB:
         setting('mall.cash_receipt_mode', 'ASSUME', '1506')
         na = call('PATCH', '/admin/site-settings', {'key': 'mall.cash_receipt_mode', 'value': 'LIVE', 'reason': '시험 1506 ADMIN'}, TA)
         nb = call('PATCH', '/admin/site-settings', {'key': 'mall.cash_receipt', 'value': 'off', 'reason': '시험 1506 ADMIN 끄기'}, TA)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-cashrcpt'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-cashrcpt'")
         ok('② 현금영수증 — 꺼짐 422 · 결제 전 신청(REQUESTED · 가린 번호) · 번호 틀림 422 · 형식 400 · 지출증빙으로 바꿈(암호화 풀면 원래 번호) · 남의 주문 404 · 결제 승인 → 발급 대기 · 회원 403 · 지금 돌리기 → 간주 발급(금액 = 공급가액 + 부가세 + 면세 · 문서 번호) · 회원 알림 · 발급 뒤 바꾸기 409 · 가린 값 고치기 · 지우기 막음 · 목록에 번호 원문 없음 · 주문 취소 → 취소 대기 → 취소 · 알림 2 · 카드 결제 422 · 자진발급 줄 · 실제 방식 키 없으면 NOT_READY · ADMIN 은 LIVE 못 켬 · 끄기는 됨 · 권한 주소 5',
            bool(dp) and bool(no1) and off.get('code') == 'HLT_CR_OFF' and r1.get('state') == 'REQUESTED' and r1.get('idMask') == '010-****-5678' and badn.get('code') == 'HLT_CR_NUMBER'
            and bad400.get('_err') == 400 and r2.get('idMask') == '123-**-67890' and enc == '1234567890|123-**-67890|REQUESTED' and other.get('_err') == 404 and st_p == 'PENDING'

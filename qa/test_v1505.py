@@ -223,7 +223,7 @@ if API and DB:
         psql(f"INSERT INTO hlt_restock_subs (account_id, option_id, product_id, expires_at) VALUES ('{aid}', '{oid}', '{pid}', now() + interval '1 day')")
         run = call('POST', '/admin/health/restock/run', {}, TS)
         n4 = psql(f"SELECT count(*) FROM notifications WHERE account_id = '{aid}' AND event_code = 'HLT_RESTOCK'")
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-restock'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-restock'")
         ok('② 재입고 — 꺼짐 422 · 신청 · 다시 신청 already · 잘못된 옵션 400 · 내 목록 · 회원 403 · 운영 기다림 · 지우기 막음 · 신청 시각 고치기 막음 · 회원당 상한 · 재고 돌아옴 → 알림 1 · 재고 있음 422 · 두 번째 0 → 양수는 알림 없음(한 번) · 취소 · 다시 취소 409 · 수신 끔이면 닫히되 알림 없음 · 지금 보내기(따라잡기) +1 · 권한 주소 2',
            bool(oid) and int(o0 or 0) > 0 and off.get('code') == 'HLT_RESTOCK_OFF' and bool(s1.get('id')) and s1.get('already') is False and s2.get('already') is True and bad.get('_err') == 400
            and any(x.get('id') == s1.get('id') for x in (mine.get('items') or [])) and av403.get('_err') == 403 and av.get('waiting', 0) >= 1

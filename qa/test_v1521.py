@@ -270,7 +270,7 @@ if API and DB:
                     print('  (배정할 리드 없음 — 리드 트리거 단언 건너뜀)')
             else:
                 print('  (그 파트너에 살아 있는 웹훅이 이미 있음 — 웹훅 단언 건너뜀)')
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'ptn-openapi'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'ptn-openapi'")
             ok('② 권한 주소 13(ptn-openapi)', rmap == '13', rmap)
         finally:
             for k_, v_ in old.items():

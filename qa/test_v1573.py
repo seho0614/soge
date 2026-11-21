@@ -192,7 +192,7 @@ if API and DB:
          "DELETE FROM reports WHERE target_id IN (SELECT id FROM posts WHERE title LIKE '시험1573-%'); DELETE FROM posts WHERE title LIKE '시험1573-%';")
 
     def hidden_post(title):
-        pid = psql(f"INSERT INTO posts (board, author_id, title, body) VALUES ('QNA', '{buyer}', '{title}', '시험 글입니다. 열 글자를 넘깁니다.') RETURNING id").split('\n')[0]
+        pid = psql(f"SET session_replication_role = replica; INSERT INTO posts (board, author_id, title, body) VALUES ('QNA', '{buyer}', '{title}', '시험 글입니다({title}). 열 글자를 넘깁니다.') RETURNING id").split('\n')[0]   # 글 가드(같은 본문 · 하루 5개)는 이 시험 대상이 아님
         psql(f"UPDATE posts SET state = 'HIDDEN', hidden_at = now(), hidden_reason = '신고 3건 — 운영 확인 대기' WHERE id = '{pid}'")
         psql(f"INSERT INTO reports (target_type, target_id, reason_code, detail, reporter_id, state) VALUES ('POST', '{pid}', '{reason}', '시험 신고 1573', '{seller}', 'OPEN')")
         return pid

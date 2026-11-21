@@ -218,7 +218,7 @@ if API and DB:
             cl = call('POST', f'/vsx/owner/slots/{sid}/close', {}, TO)
             st = psql(f"SELECT state FROM vsx_slots WHERE id = {int(sid or 0)}")
             dele = psql(f"DELETE FROM vsx_bookings WHERE id = {int(bid or 0)}")
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'vsx-visits'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'vsx-visits'")
             ok('② 방문 예약 — 꺼짐(빈 목록 · 409 VSX_OFF) · 관 꺼짐(422 VSX_GWAN_OFF · DB 트리거도 · 빈 목록) · 주인 보기에 노쇼 칸 없음 · 칸 열기 1 · 겹침 건너뜀 1 · 10분 단위 아님 400 · 자기 매물 422 · 요청 · 같은 칸 409 VSX_SLOT_TAKEN · 같은 매물 409 VSX_ALREADY · 주인 보기 가린 이름 · 확정 · 알림 · 전날 알림(10시 뒤) · 이른 노쇼 422 · 회원 취소 · 주인 알림 · 칸 닫기 · 지우기 막음 · 권한 주소 2',
                off_get.get('enabled') is False and off_open.get('code') == 'VSX_OFF' and gw_off.get('_err') == 422 and gw_off.get('code') == 'VSX_GWAN_OFF'
                and '!' in gw_db and 'VSX_GWAN_OFF' in gw_db and gw_get.get('enabled') is False and 'noshow180' not in orow and op.get('made') == 1 and len(op.get('skipped') or []) == 1

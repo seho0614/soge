@@ -187,7 +187,7 @@ if API and DB:
         det = call('GET', f'/admin/sales/opps/{oid}', None, TS)
         lro = psql(f"UPDATE sal_opp_logs SET note = '바꿈' WHERE opp_id = {int(oid or 0)}")
         lst = call('GET', '/admin/sales/opps?stage=WON', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'sal-crm'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'sal-crm'")
         kinds = sorted(l.get('kind') for l in det.get('logs') or [])
         ok('② 영업 기회 — 회원 403 · 만들기(상담) · 이름 400 · 없는 거래처 404 · 고치기(보낸 칸만 · 다른 칸 그대로) · 다음 할 일 알림 1(두 번 돌려도) · 견적서 초안(QUOTE · 같은 거래처 · 5,500,000) → 견적 · 다른 종류 문서 DB 막음 · 계약 · 실패 사유 422 · 성사 · 성사 뒤 단계 409 · 고치기 409 · DB 고치기 · 지우기 막음 · 닫으면 알림 풀림 · 메모 · 기록(쌓기만 · 만듦 · 고침 · 견적 · 단계 · 메모) · 성사 목록 · 권한 주소 7',
            mb.get('_err') == 403 and c.get('stage') == 'LEAD' and short.get('_err') == 400 and nop.get('_err') == 404 and ed.get('ok') is True and keep == f'5000000|전화|{today}'

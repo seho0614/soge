@@ -244,7 +244,7 @@ if API and DB:
         row2 = psql(f"SELECT remote_ship_fee FROM hlt_orders WHERE id = '{oid}'") if oid else ''
         chk2 = call('GET', '/admin/smx/remote-zones/check?zip=99995', None, TS)
         m403 = call('GET', '/admin/smx/remote-zones', None, TM)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'smx-remote'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'smx-remote'")
         ok('② 도서산간 — 운영 표 · 구역 더하기 · 같은 범위 409 · 거꾸로 422 · 틀린 우편번호 422 · 확인 4321 · 꺼짐이면 미리보기 0 · 주문 배송비 0 · 켜면 미리보기 4321 · 직판 주문 배송비 = 4321(따로 · 구역 이름 · 금액 규칙 맞음) · 주문 뒤 못 바꿈 · 내 주문 remoteShipFee · 면세 몫(비율 · 과세 모드 0) · 정산 보기 칸(도서산간 · 기본 배송비 — 입점 기본 배송비도 판매자 정산) · 구역을 고쳐도 주문 그대로 · 끈 구역은 확인 0 · 회원 403 · 권한 주소 5',
            bool(code) and v0.get('on') is False and bool(zid) and dup.get('code') == 'SMX_REMOTE_DUP' and rev.get('_err') == 422 and badzip.get('code') == 'SMX_REMOTE_ZIP'
            and chk.get('fee') == 4321 and q_off.get('on') is False and q_off.get('fee') == 0 and int(o_off.get('shipFee', -1)) == 0 and int(o_off.get('remoteShipFee', -1)) == 0

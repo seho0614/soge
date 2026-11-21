@@ -180,7 +180,7 @@ if API and DB:
     nf = call('POST', '/admin/vsx/papi-bills/999999999/confirm', {'confirm': '확정'}, TS)
     nv = call('POST', '/admin/vsx/papi-bills/999999999/void', {'reason': '시험 1545'}, TS)
     m403 = call('GET', '/admin/vsx/papi-usage', None, TM)
-    rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'vsx-papi-bill'")
+    rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'vsx-papi-bill'")
     syn_ok = (syn_line.split('|')[1:] == ['2', '1', '1']) if (syn_line and '!' not in syn) else None   # psql 이 여러 결과를 안 보이는 판이면 건너뜀
     ok('② 사용량 · 청구 — 금액 CHECK 거절 · 모으기(과금 2 · 무료 1 · 오류 1 · ROLLBACK) · 63일 범위 거절 · 운영 보기 · 잘못된 달 422 · 확인 글자 422 · 없는 번호 404 · 무효 404 · 회원 403 · 권한 주소 4',
        '!' in chk and 'ck_papi_bill_amt' in chk and syn_ok is not False and 'PAPI_USAGE_RANGE' in rng and v.get('ym') == '2024-01' and isinstance(v.get('drafts'), list) and 'settings' in v

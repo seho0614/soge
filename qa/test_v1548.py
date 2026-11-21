@@ -245,7 +245,7 @@ if API and DB:
         bf_on = call('POST', '/admin/sfx/tm/backfill', {}, TS)
         setting('sfx.tm', 'off', '1548')
         bf_off = call('POST', '/admin/sfx/tm/backfill', {}, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'sfx-tm'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'sfx-tm'")
         ok('② 번역 메모리 — 열쇠 공백 정리 · 꺼짐이면 안 채움 · 사람 번역 채움(HUMAN) · 엔진 자동 승인이 못 덮음 · 자동 번역 배치가 메모리를 씀(TM_REUSED · 엔진 TM · 쓰인 횟수 · MOCK 일 때) · 찾기 · 고치기(HUMAN) · 빈 칸 422 · 끄기 · 없는 줄 404 · 회원 403 · 채우기(켜짐 됨 · 꺼짐 422) · 권한 주소 3',
            keyq == 'true' and n_off == '0' and h1 == 'HUMAN|TM1548 human' and h2 == 'HUMAN|TM1548 human' and reuse_ok
            and row.get('id') and ed.get('origin') == 'HUMAN' and en_.get('code') == 'SFX_TM_NOTHING' and off.get('active') is False and act == 'false|HUMAN|TM1548 edited'

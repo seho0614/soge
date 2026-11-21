@@ -207,7 +207,7 @@ if API and DB:
         us = call('GET', f'/admin/health/coupons/{cids[0] if cids else 0}/uses', None, TS)
         lst = call('GET', '/admin/health/coupons', None, TS)
         row = next((x for x in lst.get('coupons') or [] if x.get('code') == ca), {})
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-coupons'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-coupons'")
         ok('② 쿠폰 — 기획전(상품 1) · 회원 403 · 정액 만들기 · 같은 코드 409 · 소문자 400 · 정률 비율 없음 422 · 미리 셈(정액 1,000 · 정률 10% 최대 500) · 쿠폰 받기 꺼짐 422 · 주문(소문자 코드도) = 상품 − 1,000 · 쓴 기록 1 · 한 사람 한도 422 · DB 가 할인 고치기 · 음수 결제 막음 · 쓴 뒤 금액 409 · 멈춤(다른 칸 그대로) · 주문 취소 → 되돌림(주문 취소) · 되돌린 뒤 다시 쓸 수 있음 · 쓴 기록 · 목록 · 권한 주소 8',
            bool(dp) and price > 1000 and pr.get('products') == 1 and mb.get('_err') == 403 and a.get('ok') is True and dup.get('code') == 'COUPON_DUP' and low.get('_err') == 400 and norate.get('code') == 'COUPON_RATE'
            and qa_.get('discount') == 1000 and qb.get('discount') == min(price * 2 // 10, 500) and o0.get('code') == 'COUPON_OFF'

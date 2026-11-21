@@ -192,7 +192,7 @@ if API and DB:
            and admin_before == admin_after, f"{dl.get('removed')} {g3.get('saved')} {admin_before}/{admin_after}")
     finally:
         for e in made:
-            psql(f"SET session_replication_role = replica; DELETE FROM staff_dash_layouts WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
+            psql(f"SET session_replication_role = replica; DELETE FROM staff_dash_layouts WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_groups WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM perm_account_overrides WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM account_roles WHERE account_id IN (SELECT id FROM accounts WHERE email = '{e}'); DELETE FROM accounts WHERE email = '{e}';")
     if ADMIN_WEB:
         def chk(pg, seen):
             pg.wait_for_selector('[data-dash-edit]', timeout=30000)

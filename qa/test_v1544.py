@@ -187,7 +187,7 @@ if API and DB:
             pf = call('GET', '/partner/export/perf', None, TP)
             dele = psql(f"DELETE FROM ptn_export_logs WHERE ticket_id = {int(rid or 0)}")
             av = call('GET', '/admin/vsx/ptn-exports', None, TS)
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'vsx-ptn-export'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'vsx-ptn-export'")
             can = st.get('canExport')
             ok('② 내려받기 — 파트너 아님 409 · 꺼짐 409 · 상태 · 승인 번호 없이 422 · 요청 PENDING · SUPER 승인 · 리드 CSV(머리 배정 번호 · 전화 · 연락처 칸 없음 · 기록 1) · 같은 번호 422 · 성과 12달 · 지우기 막음 · 운영 기록 · 권한 주소 1(정산 권한이 없는 계정이면 403 확인만)',
                np_.get('code') == 'NOT_PARTNER' and offr.get('code') == 'PTN_EXPORT_OFF' and st.get('enabled') is True

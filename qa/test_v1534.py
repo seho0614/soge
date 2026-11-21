@@ -176,7 +176,7 @@ if API and DB:
     av = call('GET', '/admin/partner-perf?period=90d&sort=confirmed', None, TS)
     nf = call('GET', '/admin/partner-perf?partnerId=00000000-0000-4000-8000-000000000000', None, TS)
     bad = call('GET', '/admin/partner-perf?partnerId=abc', None, TS)
-    rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'slx-ptn-perf'")
+    rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'slx-ptn-perf'")
     syn_ok = (syn_line == '3|2|1|3000|10.0|10.0|1') if (syn_line is not None and '!' not in syn) else None   # 다른 규칙이 막거나 psql 이 결과를 안 보이면 건너뜀
     ok('② 파트너 성과 — 30일 30줄 · 12개월 12줄 · 주 묶음 월요일 · 단위 · 기간 오류 · 가짜 파트너 리드 3 · 열람 2 · 성사 1 · 이용료 3,000 · 응답 평균 · 가운데 10분(ROLLBACK) · 파트너 아님 409 · 파트너센터 12개월(달마다 12 · 요약 · 앞 기간) · 회원 403 · 운영 90일(주마다) · 순위 · 없는 파트너 404 · 권한 주소 1',
            d30 == '30' and m12 == '12' and wk == '2024-01-08' and 'PTN_PERF_UNIT' in bu and 'PTN_PERF_RANGE' in br and syn_ok is not False

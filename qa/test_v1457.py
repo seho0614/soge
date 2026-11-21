@@ -191,7 +191,9 @@ if API and DB and ADMIN_WEB:
         pg.set_viewport_size({'width': 390, 'height': 844}); pg.wait_for_timeout(500)
         pg.click('[data-tree-open]'); pg.wait_for_timeout(500)
         seen['drawer'] = pg.locator('.ad-tree.open').count()
-        pg.locator('.ad-tree button[data-group="adm"]').click(); pg.wait_for_timeout(800)
+        pg.locator('.ad-tree button[data-group="adm"]').click(); pg.wait_for_timeout(500)
+        if pg.locator('.ad-tree.open [data-tab="home"]').count(): pg.locator('.ad-tree.open [data-tab="home"]').click()   # v10.571 대시보드에 「대표 한눈에」 — 묶음이 여러 탭이면 탭을 골라야 닫힘
+        pg.wait_for_timeout(800)
         seen['drawerClosed'] = pg.locator('.ad-tree.open').count()
     res = admin_page('/#/home', chk)
     if res is None: print('  (playwright 없음 — ② 건너뜀)')

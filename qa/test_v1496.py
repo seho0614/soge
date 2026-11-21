@@ -206,7 +206,7 @@ if API and DB:
         rep2 = psql(f"SELECT count(*) FROM ops_alerts WHERE alert_code = 'QLT_CLAIM_REPEAT' AND detail->>'product' = '{prod}' AND detail->>'defect' = 'LABEL' AND resolved_at IS NULL")
         st = call('GET', '/admin/qlt/claims/stats?months=1', None, TS)
         lst = call('GET', '/admin/qlt/claims?state=OPENALL', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'qlt-claims'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'qlt-claims'")
         ok('② 클레임 — 회원 403 · 검수 담당 403 · 로트로 접수(공급사 · 옵션 · 상품 따라옴) · 상품 없음 422 · 유형 400 · 없는 주문 404 · 원인 없이 끝냄 422 · 고치기(보낸 칸만) · 반품 검수 담당 403 · 지급 담당 반품 2(SUP_RETURN · 원가 · 로트 3) · 수량 넘침 422 · DB 재고 모자람 막음 · 끝냄 · 끝낸 뒤 409 · DB 고치기 · 지우기 막음 · 기록 쌓기만 · 반려 사유 422 · 재발 알림 1(두 번) → 반려로 줄면 풀림 · 집계 · 권한 주소 7',
            mb.get('_err') == 403 and rvw.get('_err') == 403 and c1.get('state') == 'OPEN' and party == f'{pid}|{opt}|{prod}' and noprod.get('code') == 'QLT_CLAIM' and badt.get('_err') == 400
            and noord.get('_err') == 404 and cl0.get('code') == 'QLT_CLAIM_DONE' and ed.get('ok') is True and keep == 'CHECKING|시험 1496 포장 불량|상자 찢어짐'

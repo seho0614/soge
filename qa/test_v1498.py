@@ -181,7 +181,7 @@ ok('① 코드 — D272 연결 · state · 이어서 · 기록 표 · social.kak
    and "VALUES ('SOCIAL', '간편 로그인(카카오 · 네이버)'" in M72 and "('SOCIAL','NAVER_CLIENT_SECRET')" in M72 and "('GEOIP','GEOIP_API_KEY')" in M72 and "'NAVER_CLIENT_ID', 'NAVER_CLIENT_SECRET') THEN" in M72
    and "code_challenge_method: 'S256'" in SP and 'subjectHash' in SP and "'SOCIAL_STATE_INVALID'" in SV and 'binding_hash !== sha(' in SV and "'SOCIAL_STAFF_NOT_ALLOWED'" in SV
    and "'SOCIAL_ASSUME_PROD'" in SV and "'SOCIAL_NO_MATCH'" in SV and 'bcrypt.compare' in SV and "'SOCIAL_LAST_METHOD'" in SV and "@Post('auth/social/:provider/callback')" in SCT
-   and 'SocialAuthService' in AM and "code: 'SOCIAL'" in RG and "name: 'NAVER_CLIENT_SECRET'" in SS and ('if [ "$n" = "17" ]' in VI or 'if [ "$n" = "18" ]' in VI) and 'NAVER_CLIENT_SECRET=' in EV
+   and 'SocialAuthService' in AM and "code: 'SOCIAL'" in RG and "name: 'NAVER_CLIENT_SECRET'" in SS and ('if [ "$n" = "17" ]' in VI or 'if [ "$n" = "18" ]' in VI or 'if [ "$n" = "19" ]' in VI) and 'NAVER_CLIENT_SECRET=' in EV
    and '<SocialButtons next={nextUrl}' in LG and 'setSocCookie(SOC_BIND' in ST_ and "/auth/social/${provider}/callback" in CB and 'SB-HOM-UPT-020' in CT and 'SB-MYP-UPT-010' in MS
    and "httpOnly: true" in SA and 'export function SocLogin' in UI and "['soc-login', '간편 로그인']" in MN and '"SB-HOM-UPT-020"' in SJ and '"SB-ADM-UPT-020"' in SJ and '"SB-MYP-UPT-010"' in SJ
    and '처리방침 고칠 곳' in doc('636_') and VT >= (10, 498), VER)
@@ -277,7 +277,7 @@ if API and DB:
             TSF = login(es)
             stf = call('POST', '/me/social/kakao/start', {'redirectUri': RU, 'binding': secrets.token_urlsafe(32)}, TSF)
             ev = psql(f"SELECT count(DISTINCT kind) FROM soc_events WHERE account_id IN ('{aid2}', '{nid}')")
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'soc-login'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'soc-login'")
             nint = psql("SELECT count(*)::text || '|' || (SELECT secret_key_name FROM integrations WHERE code = 'SOCIAL') FROM integrations")
             key = psql("BEGIN; SET LOCAL app.enc_key = 'inv-check-enc-key-0123456789abcdef'; SELECT o_last4 FROM fn_integ_secret_set('SOCIAL', 'NAVER_CLIENT_ID', 'qa1498naverid', NULL); ROLLBACK;")
             vwa = call('GET', '/admin/social', None, TA)

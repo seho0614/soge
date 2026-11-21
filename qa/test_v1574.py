@@ -229,7 +229,7 @@ if API and DB:
             still = psql(f"SELECT count(*) FROM deal_reviews WHERE id IN ('{ids[0]}', '{ids[1]}')")
             tr = psql(f"SELECT (items -> 4 -> 'basis' ->> 'reviews') FROM fn_mtr_trust('{tgt}')")
             ok('② 다시 보기 — 결정한 줄은 덮지 않음 · 후기는 지우지 않음(2) · 가짜 후기는 신뢰 점수 후기 수에서 빠짐(대상 계정이 없으면 빈 값)',
-               sc2.get('scanned', 0) >= 2 and st == 'FAKE,OK' and still == '2' and not tr.startswith('!'), f"{st} {still} {tr}")
+               sc2.get('scanned', 0) >= 2 and sorted(st.split(',')) == ['FAKE', 'OK'] and still == '2' and not tr.startswith('!'), f"{st} {still} {tr}")
         finally:
             setting('mtr.review_watch', old['mtr.review_watch'] or 'off', '1574 되돌림')
             CLEAN()

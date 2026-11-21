@@ -191,7 +191,7 @@ if API and DB:
         psql(f"SET session_replication_role = replica; DELETE FROM acct_cash_plans WHERE id = {int(pid or 0)};"); pid = ''
         p3 = call('GET', '/admin/acct/cash-plan', None, TS)
         gone = fym not in (p3.get('shortMonths') or []) or fym in (pb.get('shortMonths') or [])
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'acct-cashplan'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'acct-cashplan'")
         ok('② 자금 계획 — 회원 403 · 12달(이번 달부터) · 6달 · 달 말 잔액 = 시작 + 차이 합 · 200일 뒤 큰 예정 → 그 달 줄 · 모자라는 달 · 정기 작업 두 번 → 열린 알림 1(첫 모자라는 달) · 알림 끔 → 0 · 예정 지우면 그 달 모자람 없음 · 권한 주소 1',
                mb.get('_err') == 403 and month_ok and sum_ok and has_item and fym in (p2.get('shortMonths') or []) and p2.get('hasBase') is True
                and open_all == '1' and mine1 == '1' and off_open == '0' and gone and rmap == '1',

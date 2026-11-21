@@ -62,6 +62,10 @@ def psql(sql):
 
 
 
+def getset(key):
+    return psql(f"SELECT coalesce(value, '') FROM site_settings WHERE key = '{key}'")
+
+
 def login(e):
     return call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken')
 

@@ -214,7 +214,7 @@ if API and DB:
             ro = psql(f"DELETE FROM mkx_optout080 WHERE phone_last4 = '{phone[-4:]}'")
             hook = call('POST', '/site/optout080', {'phones': [phone]}, None)
             a403 = call('GET', '/admin/mkx/sms', None, TM)
-            rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mkx-sms'")
+            rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'mkx-sms'")
             ok('② 문자 마케팅 — 대상 MALL_BUYERS 로 캠페인(DB CHECK) · 7일 상한 1 → 첫 줄 QUEUED · 둘째 SKIPPED FREQ_CAP · API 대상 MALL_REBUY · 받을 사람 보기 · 운영 보기(바이트 · 종류) · 번호 없음 422 · '
                '080 반영(하이픈 번호 · 짧은 줄 무시) → 찾음 1 · 철회 2 · 동의 false · 대기 줄 UNSUBSCRIBED · 기록 끝 4자리 · 처리 결과 알림 · 기록 지우기 막음 · 웹훅 꺼짐 403 · 회원 403 · 권한 주소 3',
                all(cids[:2]) and caps == ['QUEUED|', 'SKIPPED|FREQ_CAP'] and bool(api_c.get('id')) and aud.get('audience') == 'MALL_REBUY'

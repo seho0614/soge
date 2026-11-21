@@ -165,11 +165,11 @@ if API and DB:
            su.get('_err') is None and bool(t1) and bool(t3) and (c1, c2, c3, c4) == (0, 0, 1, 1), f'{su.get("_err")} · {(c1, c2, c3, c4)}')
         ok('② 알림 글 — 「새 기기에서 로그인했습니다」 · 한국 시간 · 브라우저 종류 · IP 앞 두 마디만(원래 IP 없음) · 모든 기기 로그아웃 안내 · 링크 /my/account/security',
            body.startswith('새 기기에서 로그인했습니다|') and '(한국 시간) Firefox · Mac · 10.21.*.* 에서 로그인했습니다' in body and '10.21.1.1' not in body
-           and '「모든 기기 로그아웃」' in body and body.endswith('|/my/account/security'), body[:200])
+           and '「모든 기기 로그아웃」' in body and re.search(r'\|/my/account/security(\?alert=\d+)?$', body) is not None, body[:200])   # v10.593 알림 링크가 그 줄로(?alert=)
         mn = call('GET', '/me/notifications', None, t3)
         items = mn if isinstance(mn, list) else (mn.get('items') or [])
         got = next((x for x in items if x.get('eventCode') == 'LOGIN_NEW_DEVICE'), {})
-        ok('② 회원 알림 목록 — LOGIN_NEW_DEVICE · 주황', got.get('tone') == 'warn' and got.get('linkUrl') == '/my/account/security', str(got)[:160])
+        ok('② 회원 알림 목록 — LOGIN_NEW_DEVICE · 주황', got.get('tone') == 'warn' and re.fullmatch(r'/my/account/security(\?alert=\d+)?', got.get('linkUrl') or '') is not None, str(got)[:160])   # v10.593 ?alert=
         lg('chrome', '10.77.1.1'); c5 = cnt()
         lg('safari', '10.21.1.1'); c6 = cnt()
         lg('edge', '10.21.1.1'); c7 = cnt()

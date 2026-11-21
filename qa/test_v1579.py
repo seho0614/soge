@@ -257,7 +257,7 @@ if API and DB:
         glock = psql(f"UPDATE smq_seller_limits SET state = 'ACTIVE' WHERE id = {lid}") if lid else ''
         nid = call('POST', '/admin/smq/limits/abc/decide', {'action': 'LIFT', 'note': '시험'}, TS)
         m403 = call('GET', '/admin/smq/grades', None, TSel)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'smq-grades'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'smq-grades'")
         ok('② 노출 제한 — 승인 ACTIVE · 판매자 알림 · 실제 적용 꺼짐이면 보기 0 · 목록에 보임 · 켜면 보기 1 · 목록에서 빠짐 · 상품 상세는 200 · 판매자 평가 화면에 제한 · 사유 없는 풀기 422 · 풀기 · 다시 보임 · 끝난 제한 승인 409 · DB 가 되돌리기 막음 · 숫자 아닌 번호 404 · 판매자 운영 403 · 권한 주소 5',
            bool(lid) and ap.get('state') == 'ACTIVE' and ap.get('inEffect') is False and ntf == '1' and v_off == '0' and l_off is not False and v_on == '1' and l_on is not True
            and det.get('_err') is None and (sg.get('limit') or {}).get('state') == 'ACTIVE' and lf0.get('code') == 'REASON_REQUIRED' and lf.get('state') == 'LIFTED' and l_lift is not False

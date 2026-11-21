@@ -184,7 +184,7 @@ if API and DB:
         badc = call('GET', '/site/lpx/price-stats?gwan=MNY&category=xyz')
         adm = call('GET', '/admin/lpx/stats', None, TS)
         badym = call('GET', '/admin/lpx/stats?ym=2026-13', None, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'lpx-stats'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'lpx-stats'")
         keys = set()
         for m in (pub.get('months') or []):
             keys |= set(m.keys())

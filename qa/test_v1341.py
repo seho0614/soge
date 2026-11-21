@@ -150,7 +150,7 @@ if API and DB:
                 tr = ps.locator('tr', has_text=f'{T} 화면')
                 seen['row'] = tr.count()
                 if tr.count():
-                    tr.locator('details summary').first.click(); ps.wait_for_timeout(500)
+                    tr.locator('details:not([data-inq-photos]) summary').first.click()   # v10.611 사진 펼침(details)이 앞에 있음; ps.wait_for_timeout(500)
                     tr.locator('[data-inq-fb-yes]').click(); ps.wait_for_timeout(2500)
                     seen['done'] = ps.locator('tr', has_text=f'{T} 화면').locator('[data-inq-fb="RESOLVED"]').count()
                 seen['db'] = psql(f"SELECT coalesce(feedback, '-') FROM inquiries WHERE id = '{iq2.get('id')}'")

@@ -238,7 +238,7 @@ if API and DB:
         cl = psql(f"SELECT count(*) FROM hlt_point_lots WHERE account_id = '{aid}' AND closed_reason = 'EXPIRED' AND remaining = 0")
         ro = psql(f"UPDATE hlt_point_txns SET amount = 1 WHERE account_id = '{aid}'")
         a2 = call('POST', '/admin/health/points/adjust', {'accountId': aid, 'direction': 'SUB', 'amount': 5000, 'reason': '시험 1479 회수'}, TS)
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'hlt-points'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'hlt-points'")
         ok('② 적립금 — 회원 403 · 지급 5,000 · 0원 400 · 모자란 회수 422 · 회원 찾기 남은 5,000 · 꺼짐 422 · 최소 사용 422 · 1원 남김 422 · 주문 = 상품 − 적립금 1,000 · 묶음별 쓴 기록 · 남은 4,000 · DB 가 주문 칸 고치기 · 음수 막음 · 적립(1%) 한 번만 · 주문 취소 → 되돌림 · 적립 회수 · 남은 5,000 · 소멸 작업(700) · 기록 고치기 막음 · 회수 → 0 · 권한 주소 2',
            bool(dp) and price > 2000 and mb.get('_err') == 403 and a1.get('balance') == 5000 and bad.get('_err') == 400 and short.get('code') == 'HLT_POINT_SHORT'
            and (pv.get('member') or {}).get('balance') == 5000 and o0.get('code') == 'HLT_POINT_OFF' and omin.get('code') == 'HLT_POINT_MIN' and oover.get('code') == 'HLT_POINT_OVER'

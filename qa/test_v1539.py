@@ -224,7 +224,7 @@ if API and DB:
         av = call('GET', '/admin/mkx/rebuy', None, TS)
         rule = next((x for x in (av.get('rules') or []) if x.get('code') == dp), {})
         a403 = call('GET', '/admin/mkx/rebuy', None, toks[1])
-        rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mkx-rebuy'")
+        rmap = psql("SELECT count(*) FROM perm_route_map WHERE pattern <> '/admin/help/tab' AND task_key = 'mkx-rebuy'")
         sent_ok = (sa == 'SENT|' and sb == 'SKIPPED|NO_CONSENT' and nt.startswith('1|(광고)') and cnt == '2') if not night else (sa == '' and sb == '')
         ok('② 재구매 알림 — 며칠 전 ≥ 사용 일수 422 · 없는 상품 404 · 규칙 저장 · 알릴 날 오늘 · 꺼짐 422 · 켬 → 동의 회원 SENT(알림 「(광고)」) · 동의 없는 회원 SKIPPED NO_CONSENT(밤이면 422 · 안 보냄) · 광고 감시 0 · 다시 돌려도 한 번 · 기록 지우기 막음 · 운영 보기 · 회원 403 · 권한 주소 4',
                bool(dp) and bad.get('code') == 'MKX_REBUY_BEFORE' and nf.get('_err') == 404 and r0.get('ok') is True and due == 'true,true'
