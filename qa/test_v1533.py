@@ -208,7 +208,7 @@ if API and DB:
         no = o1.get('orderNo') or ''
         oid = psql(f"SELECT id FROM hlt_orders WHERE order_no = '{no}'") if no else ''
         dlv = psql(f"UPDATE hlt_orders SET status = 'DELIVERED', paid_at = coalesce(paid_at, now()), shipped_at = coalesce(shipped_at, now()), delivered_at = now() WHERE order_no = '{no}'") if no else '!'
-        cnf = psql(f"UPDATE hlt_orders SET status = 'CONFIRMED' WHERE order_no = '{no}'") if no else '!'
+        cnf = psql(f"UPDATE hlt_orders SET status = 'CONFIRMED', confirmed_by = 'BUYER' WHERE order_no = '{no}'") if no else '!'
         body = '시험 1533 리뷰 — 잘 받았고 포장도 깔끔했습니다. 다음에도 살게요.'
         r0 = call('POST', '/me/health/reviews', {'orderNo': no, 'productCode': dp, 'rating': 5, 'body': body}, TM)
         w0 = psql(f"SELECT count(*) FROM hlt_review_rewards WHERE order_id = '{oid}'") if oid else ''

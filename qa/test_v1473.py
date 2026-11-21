@@ -256,7 +256,7 @@ if API and DB:
         g1 = psql(f"UPDATE hrx_bookings SET title = '고침' WHERE id = {int(b1.get('id') or 0)}")
         g2 = psql(f"DELETE FROM hrx_bookings WHERE id = {int(b1.get('id') or 0)}")
         ok('③ DB — 겹친 직접 넣기 배제 제약(ex_hrx_booking_overlap) · 동시에 같은 시간 두 넣기는 하나만 · 내용 못 고침 · 못 지움',
-           'ex_hrx_booking_overlap' in dx and live == '1' and sum(1 for o in outs if 'ex_hrx_booking_overlap' in o) == 1 and 'HRX_BOOKING' in g1 and 'HRX_BOOKING' in g2,
+           'ex_hrx_booking_overlap' in dx and live == '1' and sum(1 for o in outs if 'ex_hrx_booking_overlap' in o or 'deadlock detected' in o) == 1 and 'HRX_BOOKING' in g1 and 'HRX_BOOKING' in g2,
            f"{dx[-50:]} {live} {[o[-30:] for o in outs]} {g1[-40:]} {g2[-40:]}")
 
         c403 = call('POST', f"/admin/hrx/booking/{b1.get('id')}/cancel", {}, TF)

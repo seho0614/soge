@@ -190,6 +190,7 @@ if API and DB:
             dup = psql(f"INSERT INTO csx_inquiry_drafts (inquiry_id, state, body) VALUES ('{iid}', 'DRAFT', '두 번째 초안') RETURNING id")
             setting('csx.ai_draft', 'on', '1528')
             got = call('GET', f'/admin/csx/inquiries/{iid}/ai-draft', None, TS)
+            ai_ok = psql("SELECT ok::text FROM fn_agent_allowed('CSX_DRAFT')") == 'true'   # 꺼진 점검판이면 만들기는 BUSY 보다 CSX_AI_OFF 가 먼저
             busy = call('POST', f'/admin/csx/inquiries/{iid}/ai-draft', None, TS)
             lst = call('GET', '/admin/csx/ai-drafts?state=DRAFT', None, TS)
             used = call('POST', f'/admin/csx/ai-drafts/{d1}/used', None, TS)
@@ -199,7 +200,7 @@ if API and DB:
             dis = call('POST', f'/admin/csx/ai-drafts/{d2}/discard', None, TS)
             nf = call('POST', '/admin/csx/ai-drafts/999999999/discard', None, TS)
             ok('② 살아 있는 초안 하나(두 번째 줄 DB 가 막음) · 운영 목록 · 있는 동안 만들기 409 CSX_DRAFT_BUSY · 답변 칸에 넣기 · 두 번째 409 · 문의 답변은 그대로(회원에게 안 감)',
-               (got.get('draft') or {}).get('id') == d1 and '!' in dup and busy.get('code') == 'CSX_DRAFT_BUSY'
+               (got.get('draft') or {}).get('id') == d1 and '!' in dup and busy.get('code') == ('CSX_DRAFT_BUSY' if ai_ok else 'CSX_AI_OFF')
                and any(str(r.get('id')) == str(d1) for r in lst.get('rows') or []) and used.get('ok') is True and used2.get('code') == 'CSX_DRAFT_STATE'
                and ans == '(없음)|OPEN', f"{got.get('draft')} {busy.get('code')} {used} {used2.get('code')} {ans}")
             ok('② 버리기 · 없는 초안 404', dis.get('ok') is True and nf.get('_err') == 404, f"{dis} {nf.get('_err')}")

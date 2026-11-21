@@ -229,7 +229,7 @@ if API and DB:
         badn = call('PUT', f'/me/health/orders/{no1}/cash-receipt', {'purpose': 'INCOME', 'number': '02-123-4567'}, TM)
         bad400 = call('PUT', f'/me/health/orders/{no1}/cash-receipt', {'purpose': 'INCOME', 'number': 'abc'}, TM)
         r2 = call('PUT', f'/me/health/orders/{no1}/cash-receipt', {'purpose': 'EXPENSE', 'number': '123-45-67890'}, TM)
-        enc = psql(f"SELECT pgp_sym_decrypt(c.id_enc, fn_enc_key()) || '|' || c.id_mask || '|' || c.state FROM hlt_cash_receipts c JOIN hlt_orders o ON o.id = c.order_id WHERE o.order_no = '{no1}' AND c.state NOT IN ('CANCELED', 'SKIPPED')")
+        enc = psql(f"SET app.enc_key = 'inv-check-enc-key-0123456789abcdef'; SELECT pgp_sym_decrypt(c.id_enc, fn_enc_key()) || '|' || c.id_mask || '|' || c.state FROM hlt_cash_receipts c JOIN hlt_orders o ON o.id = c.order_id WHERE o.order_no = '{no1}' AND c.state NOT IN ('CANCELED', 'SKIPPED')")
         other = call('GET', f'/me/health/orders/{no1}/cash-receipt', None, TS)
         call('POST', f'/health/orders/{no1}/pay', {'method': 'TRANSFER'}, TM)
         tot1 = int(psql(f"SELECT total FROM hlt_orders WHERE order_no = '{no1}'") or 0)

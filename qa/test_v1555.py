@@ -216,7 +216,7 @@ if API and DB:
         no = o.get('orderNo') or ''
         oid = psql(f"SELECT id FROM hlt_orders WHERE order_no = '{no}'") if no else ''
         psql(f"UPDATE hlt_orders SET status = 'DELIVERED', paid_at = coalesce(paid_at, now()), shipped_at = coalesce(shipped_at, now()), delivered_at = now() WHERE id = '{oid}'") if oid else ''
-        psql(f"UPDATE hlt_orders SET status = 'CONFIRMED' WHERE id = '{oid}'") if oid else ''
+        psql(f"UPDATE hlt_orders SET status = 'CONFIRMED', confirmed_by = 'BUYER' WHERE id = '{oid}'") if oid else ''
         rv = call('POST', '/me/health/reviews', {'orderNo': no, 'productCode': code, 'rating': 5, 'body': '시험 1555 리뷰 — 잘 받았습니다. 포장이 꼼꼼했어요.'}, TM)
         rid = rv.get('id') or ''
         off = call('PUT', f'/admin/smx/review-replies/{rid}', {'body': '고맙습니다.'}, TS) if rid else {}

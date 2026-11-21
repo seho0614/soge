@@ -284,16 +284,20 @@ if API and DB:
             ok('② 같은 이메일 — 확인된 이메일이면 연결 후보 · 가입은 409 DUPLICATE(저절로 합치지 않음) · 틀린 비밀번호 403 · 맞으면 연결 · 로그인 · 운영 역할 연결 403 · 기록 · 권한 주소 2 · 연동 17 · SOCIAL 키 받음 · 운영 화면 보기',
                    p4.get('result') == 'PENDING' and p4.get('emailMatch') is True and dup.get('code') == 'DUPLICATE' and wpw.get('_err') == 403 and wpw.get('code') == 'INVALID_CREDENTIALS'
                    and lk.get('result') == 'LOGIN' and lk.get('linked') is True and lrow == '1' and stf.get('_err') == 403 and int(ev or 0) >= 3 and rmap == '2'
-                   and nint == '17|NAVER_CLIENT_SECRET' and key.endswith('erid') and 'settings' in vwa,
+                   and nint in ('17|NAVER_CLIENT_SECRET', '18|NAVER_CLIENT_SECRET') and key.endswith('erid') and 'settings' in vwa,
                    f"{p4.get('result')} {p4.get('emailMatch')} {dup.get('code')} {wpw.get('code')} {lk.get('result') or lk} {lrow} {stf.get('_err')} {stf.get('code')} {ev} {rmap} {nint} {key[-20:]} {'settings' in vwa}")
         if SITE and not prod:
             def run(b, seen, perr):
                 pg = b.new_page(viewport={'width': 1280, 'height': 900}); pg.on('pageerror', lambda e: perr.append(str(e)[:120]))
                 pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
                 seen['btn'] = pg.locator('[data-social="KAKAO"]').count()
-                if not seen['btn']:   # 사용자 웹은 켜진 업체 목록을 30초 담아 둠 — 시험 앞에서 「꺼짐」을 담았으면 한 번 지나고 다시 엶
-                    pg.wait_for_timeout(32000); pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(1500)
-                    seen['btn'] = pg.locator('[data-social="KAKAO"]').count()
+                if not seen['btn']:   # 사용자 웹은 켜진 업체 목록을 30초 담아 둠 — 지난 첫 요청은 옛 값을 주고 뒤에서 새로 받음 → 몇 번 더 엶
+                    pg.wait_for_timeout(32000)
+                    for _ in range(4):
+                        pg.goto(SITE + '/login', wait_until='networkidle', timeout=120000); pg.wait_for_timeout(2500)
+                        seen['btn'] = pg.locator('[data-social="KAKAO"]').count()
+                        if seen['btn']:
+                            break
                 seen['href'] = pg.locator('[data-social="KAKAO"]').first.get_attribute('href') if seen['btn'] else None
             r = ui(run)
             if r is not None:

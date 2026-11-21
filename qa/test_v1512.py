@@ -123,6 +123,12 @@ def admin_page(path, fn):
     return ui(run)
 
 
+def migr(prefix):
+    d = os.path.join(K, 'prisma', 'migrations')
+    n = next((x for x in sorted(os.listdir(d)) if x.startswith(prefix)), None) if os.path.isdir(d) else None
+    return open(os.path.join(d, n, 'migration.sql'), encoding='utf-8').read() if n else ''
+
+
 M75 = migr('D275_')
 SW, OC, MN, AP, UI = (rd('src/modules/opx/switches.ts'), rd('src/modules/opx/opx.controller.ts'), rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/Opx.tsx'))
 ok('① 코드 — opx_switch_docs(처음 값 · 켤 조건 · 문서) 시드 · isSwitchPattern · 처음 값 순서 · 고치기 없음(GET 만) · 메뉴 정책 › 기능 스위치 한눈에 · 「전체 설정」 단추 · 화면 OPX-040 · 문서 650 · 판 v10.512',

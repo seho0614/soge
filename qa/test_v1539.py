@@ -207,7 +207,7 @@ if API and DB:
             iid = psql(f"SELECT id FROM hlt_order_items WHERE order_id = '{oid}'") if oid else ''
             days = psql(f"SELECT days FROM v_mkx_rebuy_due WHERE order_item_id = '{iid}'") if iid else ''
             if days.isdigit():
-                psql(f"UPDATE hlt_orders SET paid_at = now() - make_interval(days => {int(days) - 7}) WHERE id = '{oid}'")
+                psql(f"UPDATE hlt_orders SET created_at = now() - make_interval(days => {int(days) - 7}), paid_at = now() - make_interval(days => {int(days) - 7}) WHERE id = '{oid}'")   # 결제 시각이 주문 시각보다 앞서면 DB 가 막음(HLT_TIME_ORDER)
             items.append(iid)
         due = psql(f"SELECT string_agg((notify_on = (now() AT TIME ZONE 'Asia/Seoul')::date)::text, ',') FROM v_mkx_rebuy_due WHERE order_item_id IN ('{items[0]}', '{items[1]}')") if all(items) else ''
         off = call('POST', '/admin/mkx/rebuy/run', None, TS)

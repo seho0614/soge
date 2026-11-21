@@ -123,6 +123,12 @@ def admin_page(path, fn):
     return ui(run)
 
 
+def migr(prefix):
+    d = os.path.join(K, 'prisma', 'migrations')
+    n = next((x for x in sorted(os.listdir(d)) if x.startswith(prefix)), None) if os.path.isdir(d) else None
+    return open(os.path.join(d, n, 'migration.sql'), encoding='utf-8').read() if n else ''
+
+
 M75 = migr('D275_')
 stamp = int(time.time()) % 1000000
 BK, OC, MN, AP, UI = (rd('src/modules/opx/bulk.ts'), rd('src/modules/opx/opx.controller.ts'), rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/Opx.tsx'))
