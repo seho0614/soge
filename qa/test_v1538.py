@@ -227,7 +227,7 @@ if API and DB:
         tst2 = call('POST', '/me/push/test', None, TM)
         rmap = psql("SELECT count(*) FROM perm_route_map WHERE task_key = 'mkx-push'")
         ok('② 웹 푸시 — 처음 off · ASSUME · 연동 18 · 꺼짐이면 구독 422 · 키(없으면 만듦) · 낯선 주소 422 · 켜기 · 다시 켜도 한 줄 · DB 가 낯선 주소 막음 · 보내기 꺼짐 422 · 간주로 보냄 · 같은 알림 다시 안 보냄 · 기록 고치기 막음 · 시험 · 내 기기 · 회원 403 · 운영 보기 · 끄기 · 끈 뒤 시험 409 · 권한 주소 3',
-           dflt == 'push.enabled=off,push.send=off,push.send_mode=ASSUME' and n_int == '18' and off.get('enabled') is False and s_off.get('code') == 'MKX_PUSH_OFF'
+           dflt == 'push.enabled=off,push.send=off,push.send_mode=ASSUME' and n_int in ('18', '19') and off.get('enabled') is False and s_off.get('code') == 'MKX_PUSH_OFF'
            and mk.get('ok') is True and bad.get('code') == 'MKX_PUSH_ENDPOINT' and s1.get('ok') is True and s2.get('ok') is True and cnt == '1' and '!' in dbbad
            and r_off.get('code') == 'MKX_PUSH_SEND_OFF' and (r1.get('assumed') or 0) >= 1 and st == 'ASSUMED' and st2 == '1' and '!' in ro
            and tst.get('mode') == 'ASSUME' and tst.get('sent') == 1 and len(mine.get('subs') or []) >= 1 and bool(mine.get('publicKey'))

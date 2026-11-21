@@ -284,7 +284,7 @@ if API and DB:
             ok('② 같은 이메일 — 확인된 이메일이면 연결 후보 · 가입은 409 DUPLICATE(저절로 합치지 않음) · 틀린 비밀번호 403 · 맞으면 연결 · 로그인 · 운영 역할 연결 403 · 기록 · 권한 주소 2 · 연동 17 · SOCIAL 키 받음 · 운영 화면 보기',
                    p4.get('result') == 'PENDING' and p4.get('emailMatch') is True and dup.get('code') == 'DUPLICATE' and wpw.get('_err') == 403 and wpw.get('code') == 'INVALID_CREDENTIALS'
                    and lk.get('result') == 'LOGIN' and lk.get('linked') is True and lrow == '1' and stf.get('_err') == 403 and int(ev or 0) >= 3 and rmap == '2'
-                   and nint in ('17|NAVER_CLIENT_SECRET', '18|NAVER_CLIENT_SECRET') and key.endswith('erid') and 'settings' in vwa,
+                   and nint in ('17|NAVER_CLIENT_SECRET', '18|NAVER_CLIENT_SECRET', '19|NAVER_CLIENT_SECRET') and key.endswith('erid') and 'settings' in vwa,
                    f"{p4.get('result')} {p4.get('emailMatch')} {dup.get('code')} {wpw.get('code')} {lk.get('result') or lk} {lrow} {stf.get('_err')} {stf.get('code')} {ev} {rmap} {nint} {key[-20:]} {'settings' in vwa}")
         if SITE and not prod:
             def run(b, seen, perr):

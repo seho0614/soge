@@ -106,6 +106,8 @@ def version_docs(docs_dir, lo, hi, skip):
 DOLLAR = re.compile(r'(\$[A-Za-z0-9_]*\$)(.*?)\1', re.S)
 DANGER = re.compile(r'\b(DELETE\s+FROM|TRUNCATE|DROP\s+TABLE|DROP\s+SCHEMA|DROP\s+COLUMN|DROP\s+MATERIALIZED\s+VIEW)\b\s*(?:IF\s+EXISTS\s+)?([\w."]*)', re.I)
 NOTICE = re.compile(r"RAISE\s+NOTICE\s+'((?:[^']|'')*)'", re.I)
+JOB_STMT = re.compile(r"INSERT\s+INTO\s+(?:public\.)?job_schedules\s*\(([^)]*)\)\s*VALUES(.*?)(?:ON\s+CONFLICT|;)", re.I | re.S)
+JOB_ROW = re.compile(r"\(\s*'([a-z0-9_]+)'\s*,\s*(\d+)\s*,\s*(NULL|\d+)\s*,\s*(NULL|\d+)", re.I)
 JOB = re.compile(r"INSERT\s+INTO\s+(?:public\.)?job_schedules\s*\(([^)]*)\)\s*VALUES\s*\(\s*'([a-z0-9_]+)'\s*,\s*(\d+)\s*,\s*(NULL|\d+)\s*,\s*(NULL|\d+)", re.I)
 
 
@@ -130,20 +132,25 @@ def sql_scan(sql):
             hit.append(re.sub(r'\s+', ' ', m.group(1)).upper() + (' ' + m.group(2) if m.group(2) else ''))
     notes = [n.replace("''", "'") for b in dos for n in NOTICE.findall(b)]
     jobs = []
-    for m in JOB.finditer(run):
-        cols = [c.strip() for c in m.group(1).split(',')]
+    # v10.614 — 한 INSERT 의 VALUES 줄을 모두 읽음(전에는 첫 줄만 · docs/697 에서 17개 빠짐)
+    for st in JOB_STMT.finditer(run):
+        cols = [c.strip() for c in st.group(1).split(',')]
+        for t in JOB_ROW.finditer(st.group(2)):
+            jobs.append(job_when(cols, t))
+    return sorted(set(hit)), notes, jobs
+
+
+def job_when(cols, m):
         if cols[:4] == ['job', 'every_min', 'at_hour', 'at_minute']:
-            mins, h, mi = int(m.group(3)), m.group(4), m.group(5)
+            mins, h, mi = int(m.group(2)), m.group(3), m.group(4)
             if mins == 1440 and h != 'NULL':
                 when = f'매일 {int(h):02d}:{int(0 if mi == "NULL" else mi):02d}'
             elif mins % 60 == 0 and mins >= 60 and mins < 1440:
                 when = f'{mins // 60}시간마다'
             else:
                 when = f'{mins}분마다'
-            jobs.append((m.group(2), when))
-        else:
-            jobs.append((m.group(2), ''))
-    return sorted(set(hit)), notes, jobs
+            return (m.group(1), when)
+        return (m.group(1), '')
 
 
 def rehearsal(path):
