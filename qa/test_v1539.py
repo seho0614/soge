@@ -228,7 +228,7 @@ if API and DB:
         sent_ok = (sa == 'SENT|' and sb == 'SKIPPED|NO_CONSENT' and nt.startswith('1|(광고)') and cnt == '2') if not night else (sa == '' and sb == '')
         ok('② 재구매 알림 — 며칠 전 ≥ 사용 일수 422 · 없는 상품 404 · 규칙 저장 · 알릴 날 오늘 · 꺼짐 422 · 켬 → 동의 회원 SENT(알림 「(광고)」) · 동의 없는 회원 SKIPPED NO_CONSENT(밤이면 422 · 안 보냄) · 광고 감시 0 · 다시 돌려도 한 번 · 기록 지우기 막음 · 운영 보기 · 회원 403 · 권한 주소 4',
                bool(dp) and bad.get('code') == 'MKX_REBUY_BEFORE' and nf.get('_err') == 404 and r0.get('ok') is True and due == 'true,true'
-               and off.get('code') == 'MKX_REBUY_OFF' and (mk_ok != '1' or sent_ok) and viol == '0' and (night or again.get('sent') == 0) and '!' in ro
+               and off.get('code') == 'MKX_REBUY_OFF' and (mk_ok != '1' or sent_ok) and viol == '0' and (night or (again.get('sent') == 0 and '!' in ro))   # 밤이면 보낸 줄 없음 — 지우기 막힘은 낮에만 확인
                and rule.get('useDays') == 30 and a403.get('_err') == 403 and rmap == '4',
                f"{dp} {bad.get('code')} {nf.get('_err')} {r0.get('ok') or r0} {due} · {off.get('code')} {run.get('code') or run.get('sent')} · {sa} {sb} {nt} 감시 {viol} · {again.get('sent')} {cnt} {ro[-30:]} · {rule.get('useDays')} {a403.get('_err')} {rmap}")
     finally:
