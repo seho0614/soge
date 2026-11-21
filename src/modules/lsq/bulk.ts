@@ -23,7 +23,7 @@ const CSV_MAX_BYTES = 200_000;
 const HEAD_ALL = ['gwan', 'category', 'title', 'summary', 'body', 'deal_amount', 'desired_fee', 'fee_bearer', 'region', 'region_detail'] as const;
 const HEAD_NEED = ['gwan', 'category', 'title'] as const;
 const FEE_BEARERS = ['BUYER', 'SELLER', 'NEGOTIABLE'];
-const BULK_GWANS = ['MNY', 'MAL', 'BIZ'];
+const BULK_GWANS = ['MNY', 'MAL', 'BIZ', 'HLT'].filter((g) => g !== 'HLT');   // 소개몰 상품(HLT)은 매물이 아니라 일괄 등록에서 뺌(관 목록 검사 ⑫)
 export const LSQ_BULK_TEMPLATE = 'gwan,category,title,summary,body,deal_amount,desired_fee,fee_bearer,region,region_detail\n'
   + 'MNY,카페,역세권 카페 양도합니다,월 매출 안정 · 단골 많음,"평일 10시 ~ 18시 방문 상담 · 시설 2년 사용",62000000,3000000,SELLER,경기도,수원시\n';
 

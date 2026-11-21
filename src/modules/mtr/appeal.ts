@@ -190,7 +190,7 @@ export async function decideAppeal(db: DatabaseService, actorId: string, id: num
         if (!l) throw new StateConflict('MTR_APPEAL_TARGET_GONE', '대상이 이미 바뀌었거나 작성자가 지웠습니다.');
         await db.query(
           `INSERT INTO review_items (target_type, target_id, gwan_code, submitted_by, status, decision_mode, sla_due_at, manual_reasons)
-           SELECT 'LISTING', $1::uuid, coalesce($2::text, 'MNY'), $3::uuid, 'QUEUED', 'MANUAL', fn_review_sla_due(now(), 24), ARRAY['이의 제기 받아들임']
+           SELECT 'LISTING', $1::uuid, $2::text, $3::uuid, 'QUEUED', 'MANUAL', fn_review_sla_due(now(), 24), ARRAY['이의 제기 받아들임']
             WHERE NOT EXISTS (SELECT 1 FROM review_items ri WHERE ri.target_id = $1::uuid AND ri.status IN ('QUEUED', 'IN_PROGRESS'))`,
           [a.target_id, l.gwan_code, l.owner]);
         restored = 'IN_REVIEW';

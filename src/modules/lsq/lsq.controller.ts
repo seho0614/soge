@@ -111,7 +111,7 @@ export class LsqController {
   @Get('site/lsq/regions/listings')
   @ApiOperation({ summary: '지역별 소개 — 그 지역 매물 (v10.605 · 공개)', description: '시 · 도(필수) · 시 · 군 · 구 · 관 · 쪽(30개씩) — 제목 · 한줄 소개 · 업종 · 금액 · 게시일만(등록자 · 연락처 · 상세 주소 없음) · 관별 수 · 많은 업종 10.' })
   @ApiQuery({ name: 'sido', required: true, example: '경기도' }) @ApiQuery({ name: 'sigungu', required: false, example: '수원시' })
-  @ApiQuery({ name: 'gwan', required: false, example: 'MNY' }) @ApiQuery({ name: 'page', required: false, example: '1' })
+  @ApiQuery({ name: 'gwan', required: false, example: 'MAL' }) @ApiQuery({ name: 'page', required: false, example: '1' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto, description: '매물이 문턱보다 적은 지역' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'LSQ_REGION_SIDO · LSQ_REGION_SIGUNGU' })
