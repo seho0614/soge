@@ -123,6 +123,16 @@ def admin_page(path, fn):
     return ui(run)
 
 
+def setting(key, value, tag):
+    """설정 바꾸기(시험만 · 설정 무늬 검사는 그대로)"""
+    v = 'NULL' if value is None else "'" + str(value).replace("'", "''") + "'"
+    return psql(f"BEGIN; SELECT set_config('app.setting_reason', '시험 {tag}', true); UPDATE site_settings SET value = {v} WHERE key = '{key}'; COMMIT;")
+
+
+def getset(key):
+    return psql(f"SELECT coalesce(value, '') FROM site_settings WHERE key = '{key}'")
+
+
 def migr(prefix):
     d = os.path.join(K, 'prisma', 'migrations')
     n = next((x for x in sorted(os.listdir(d)) if x.startswith(prefix)), None) if os.path.isdir(d) else None

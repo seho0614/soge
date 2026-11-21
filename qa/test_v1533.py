@@ -167,7 +167,9 @@ def photo_file(owner, tag):
     """올리기를 마친 회원 사진 줄(REQUEST_IMAGE · READY) — 바이트는 없음(사진 주소 응답은 보지 않음)"""
     fid = psql("SELECT gen_random_uuid()")
     psql(f"INSERT INTO files (id, owner_account_id, purpose, original_name, content_type, size_bytes, storage_provider, storage_key, status, completed_at) "
-         f"VALUES ('{fid}', '{owner}', 'REQUEST_IMAGE', 'r{tag}.jpg', 'image/jpeg', 1000, 'LOCAL', 'request_image/2026/11/{fid}.jpg', 'READY', now())")
+         f"VALUES ('{fid}', '{owner}', 'REQUEST_IMAGE', 'r{tag}.jpg', 'image/jpeg', 1000, 'LOCAL', 'request_image/2026/11/{fid}.jpg', 'UPLOADING', NULL)")
+    # 새 파일은 UPLOADING 으로만 넣고(fn_files_guard) READY 는 해시 · 판정 형식과 함께(ck_files_ready)
+    psql(f"UPDATE files SET status = 'READY', detected_type = 'image/jpeg', sha256 = '{'c' * 64}', completed_at = now() WHERE id = '{fid}'")
     return fid
 
 
