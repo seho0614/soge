@@ -17,7 +17,7 @@
 const fs = require('fs');
 const ctl = fs.readFileSync('src/worker/worker.controller.ts', 'utf8');
 const block = ctl.split('const JOBS = [')[1].split(']')[0];
-const inCode = new Set([...block.matchAll(/'([a-z_]+)'/g)].map(m => m[1]));
+const inCode = new Set([...block.matchAll(/'([a-z0-9_]+)'/g)].map(m => m[1]));   // v10.617 숫자 든 이름(sec2_tick)도 읽음
 
 console.log('== 배치 등록 대조 ==');
 let checks = 1, fail = 0;
