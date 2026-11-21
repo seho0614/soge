@@ -67,7 +67,7 @@ export async function sec2AnswerLoginAlert(db: Sec2Db, id: string, answer: strin
   const cur = RequestCtx.get()?.sid ?? null;
   let revoked = false;
   if (answer === 'NOT_ME' && x.session_id && x.session_id !== cur) {
-    const r = await db.query(`UPDATE login_sessions SET revoked_at = now() WHERE id = $1::uuid AND account_id = $2 AND revoked_at IS NULL RETURNING id`, [x.session_id, me]);
+    const r = await db.query(`UPDATE login_sessions SET revoked_at = now(), revoked_reason = '본인 아님 신고' WHERE id = $1::uuid AND account_id = $2 AND revoked_at IS NULL RETURNING id`, [x.session_id, me]);
     revoked = r.length > 0;
   }
   const u = await db.query(`UPDATE sec2_login_alerts SET answer = $2, answered_at = now() WHERE id = $1::bigint AND answer IS NULL RETURNING id`, [id, answer]);

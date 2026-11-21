@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, HttpCode, Ip, Param, Post, Put, Query }
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
+import { StrictBoolean } from '../../common/strict-boolean';
 import { Roles } from '../../core/auth';
 import { DatabaseService } from '../../db/database.service';
 import { grwSettings, grwSwitches, me, setGrwSettings, TIER_POINTS_RE } from './common';
@@ -29,7 +30,7 @@ export class GrwStepDto {
   @IsInt() @Min(1) @Max(5) s!: number;
 }
 export class GrwHideDto {
-  @ApiProperty({ example: true, description: 'true = 그만 보기 · false = 다시 보기' }) @IsBoolean() hidden!: boolean;
+  @ApiProperty({ example: true, description: 'true = 그만 보기 · false = 다시 보기' }) @StrictBoolean() hidden!: boolean;   // v10.617 받은 값 그대로("x" 400)
 }
 export class GrwDigestDto {
   @ApiProperty({ example: true, description: '알림 하루 요약 받기' }) @IsBoolean() enabled!: boolean;

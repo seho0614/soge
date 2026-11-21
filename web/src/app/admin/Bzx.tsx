@@ -349,7 +349,9 @@ export function BzxHcSim() {
   const [p, setP] = useState({ title: '', startYm: ymNow(), months: 12, raisePct: 0, includeCurrent: true, lines: [EMPTY_LINE()] });
   const [res, setRes] = useState<HcResult | null>(null);
   const body = () => JSON.stringify({ ...p, lines: p.lines.filter((l) => l.role.trim()).map((l) => ({ ...l, endYm: l.endYm || null })) });
-  const sim = () => void a.run('sim', () => api<HcResult>('/admin/bzx/hc-sim', { method: 'POST', body: body() }).then((r) => { setRes(r); return r; }), undefined, '셈했습니다.');
+  /* v10.617 셈하기는 저장이 아니라 계획 이름이 비어도 됨 — 서버 검사(2 ~ 80자)를 넘도록 임시 이름 · 저장은 이름 필수 그대로 */
+  const simBody = () => JSON.stringify({ ...JSON.parse(body()), title: p.title.trim().length >= 2 ? p.title : '셈하기' });
+  const sim = () => void a.run('sim', () => api<HcResult>('/admin/bzx/hc-sim', { method: 'POST', body: simBody() }).then((r) => { setRes(r); return r; }), undefined, '셈했습니다.');
   const save = () => void a.run('save', () => id ? api(`/admin/bzx/hc-plans/${id}`, { method: 'PUT', body: body() }) : api<{ id: string }>('/admin/bzx/hc-plans', { method: 'POST', body: body() }).then((r) => { setId(r.id); return r; }), q.reload);
   const load = (pid: string) => void api<{ id: string; plan: typeof p } & HcResult>(`/admin/bzx/hc-plans/${pid}`).then((r) => {
     setId(r.id); setP({ ...r.plan, lines: r.plan.lines.length ? r.plan.lines.map((l) => ({ ...l, nontax: l.nontax ?? 0, endYm: l.endYm ?? null })) : [EMPTY_LINE()] }); setRes(r);
