@@ -92,6 +92,7 @@ const NAME: Record<string, string> = {
   SIGNUP_BLOCK_SPIKE: '가입 차단에 많이 막힘',   // v10.362 (D237 · docs/496)
   ROLE_EXPIRED: '운영 권한 기한 지나 거둠',   // v10.372 (D239 · docs/507)
   ROLE_EXPIRING: '운영 권한 기한 3일 안',   // v10.372
+  STAFF_LEFT_ROLE: '퇴사 직원 계정에 운영 역할 남음',   // v10.563 (D291 · docs/705) — 직원 · 권한 › 운영자 목록
   DISPUTE_OVERDUE: '분쟁 처리 기한 넘김',   // v10.373 (D240 · docs/508)
   SETTLE_OVERDUE: '정산 승인 기한 넘김',   // v10.373
   APPLY_CHECK_NG: '운영 적용 확인 「다름」',   // v10.374

@@ -36,6 +36,7 @@ export class HealthSettleService {
               s.code AS "seller", s.name AS "sellerName",
               st.gross_amount AS "gross", st.commission, st.commission_vat AS "commissionVat",
               st.refund_amount AS "refund", st.carried_in AS "carriedIn",
+              st.return_ship_amount AS "returnShip",   -- v10.560 (D290) 반품 배송비(판매자 몫 · 수수료 없음)
               st.net_amount AS "net", st.carried_out AS "carriedOut",
               st.status
          FROM hlt_settlements st JOIN hlt_sellers s ON s.id = st.seller_id
@@ -43,9 +44,12 @@ export class HealthSettleService {
     const ready = await this.db.query(
       `SELECT count(*)::int AS n, coalesce(sum(goods_amount),0) AS amount
          FROM v_hlt_settle_ready`);
+    /* v10.560 (D290) — 다음 마감에 판매자에게 줄 반품 배송비(입점 주문 회원 사정 반품 · 환불 끝남 · 아직 정산 항목 없음) */
+    const [returnShip] = await this.db.query<{ n: number; amount: string }>(
+      `SELECT count(*)::int AS n, coalesce(sum(amount), 0) AS amount FROM v_hlt_return_ship_ready`);
     const blocked = await this.db.query(
       `SELECT code, name, reason FROM v_hlt_settle_blocked`);
-    return { items: rows, ready: ready[0], blocked,
+    return { items: rows, ready: ready[0], returnShip: returnShip ?? { n: 0, amount: 0 }, blocked,
       note: blocked.length
         ? '하위가맹점 ID 가 없는 판매자가 있습니다 — 집계는 되지만 지급되지 않습니다.'
         : undefined };

@@ -138,6 +138,7 @@ export const TABS = [
   ['my-hr', '내 인사'],   /* v10.445 ~ 447 (D259) 본인 출퇴근 · 휴가 신청 · 급여명세서 */
   ['ofc-calendar', '사내 일정'], ['ofc-tasks', '업무 요청'], ['ofc-trips', '출장'], ['ofc-notify', '내 알림'],   /* v10.462 ~ 465 (D263 · docs/600 ~ 603) 사무 2 */
   ['hr-training', '의무교육'], ['hr-contract', '근로계약서'], ['hr-review', '인사 평가'], ['hr-recruit', '채용'],   /* v10.458 ~ 461 (D262 · docs/596 ~ 599) 인사 3 */
+  ['hr-card', '사원 카드'],   /* v10.559 (docs/698) 직원 한 사람 한눈에 · 읽기만 */
   ['acct-exports', '수출'], ['acct-po', '국내 발주'],   /* v10.428 (D254 · docs/565) 무역 2단계 */
   ['acct-vehicle', '업무용 차량'], ['acct-cashplan', '자금 계획 12개월'], ['acct-exemptinv', '전자계산서(면세)'], ['acct-reorder', '안전 재고 · 재주문'],   /* v10.475 ~ 478 (D266 · docs/613 ~ 616) 사무 · 자금 */
   ['rpt-day', '일보'], ['rpt-week', '주보'], ['rpt-month', '월보'], ['rpt-worklog', '업무 일지'], ['rpt-board', '일지 현황판'], ['rpt-trend', '추세'],   /* v10.429 (D254) 경영 추세 그래프 */   /* v10.412 ~ 415 (D250 · docs/549 ~ 552) 보고 */
@@ -146,6 +147,7 @@ export const TABS = [
   ['lgl-licenses', '인허가'], ['lgl-reviews', '계약 검토'], ['lgl-cases', '소송 · 분쟁'], ['lgl-insurance', '회사 보험'],   /* v10.486 ~ 489 (D269 · docs/624 ~ 627) 법무 */
   ['perm-admin', '권한 관리'],   /* v10.443 (D258 · docs/580) 업무별 권한 관리(SUPER) */
   ['staff-access', '접속 인증'],   /* v10.226 (D195) — 운영 역할 모두(관리 칸은 ADMIN · SUPER) */
+  ['staff-list', '운영자 목록'], ['perm-staff', '사원 권한'], ['perm-roles', '권한그룹'], ['perm-groups', '업무그룹'], ['perm-tasks', '업무 목록'], ['perm-log', '바뀐 기록'],   /* v10.561 ~ 563 (D291 · docs/703 ~ 705) 직원 · 권한 */
   ['ads', '광고'],
   ['roles', '권한 관리'],
   ['gov-audit', '감사'],
@@ -159,7 +161,9 @@ export const TABS = [
 ] as const;
 
 export type Tab = (typeof TABS)[number][0];
-export const tabLabel = (t: Tab) => TABS.find(([k]) => k === t)?.[1] ?? t;
+/* v10.561 (D291 · docs/703) — 직원 · 권한 그룹으로 옮기며 이름 정리(TABS 줄 글자는 옛 시험이 봐서 그대로 · 화면 글자만 여기서) */
+export const TAB_RENAME: Partial<Record<Tab, string>> = { 'perm-admin': '업무별 권한', 'role-review': '권한 점검', roles: '역할 주기' };
+export const tabLabel = (t: Tab) => TAB_RENAME[t] ?? TABS.find(([k]) => k === t)?.[1] ?? t;
 
 /** 시안 admNav 의 묶음 — 순서 · 글자는 시안 그대로. key 는 시안 화면 키(data-group 으로 남김) */
 export interface MenuGroup { key: string; label: string; tabs: Tab[] }
@@ -185,7 +189,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcmu',  label: '소개광장',  tabs: ['community', 'polls', 'events'] },
   { key: 'affapl',  label: '제휴',      tabs: ['affiliates'] },
   { key: 'integ',   label: '통합 현황', tabs: ['integ', 'integrations', 'reports', 'collect'] },
-  { key: 'acl',     label: '권한 계층', tabs: ['roles', 'my-mfa', 'my-password', 'staff-access'] },
+  { key: 'acl',     label: '직원 · 권한', tabs: ['roles', 'my-mfa', 'my-password', 'staff-access'] },   /* v10.561 (D291) 그룹 이름만 · 탭 순서 · 옮김은 아래 「직원 · 권한 탭 정리」 */
   { key: 'invreg',  label: '불변식',    tabs: ['invariants'] },
 ];
 
@@ -251,6 +255,15 @@ hrxAddTabs(GROUPS.find((g) => g.key === 'admrsk')?.tabs, 'upt-status', ['opz-inc
 /* v10.486 ~ 489 (D269) 법무 — 사무 그룹 사내 문서함 뒤에 인허가 · 계약 검토 · 소송 · 분쟁 · 회사 보험(GROUPS 줄을 고치지 않고 덧붙임 · 다른 묶음과 겹침 없게) */
 { const g = GROUPS.find((x) => x.key === 'admoff'); if (g) { const at = g.tabs.indexOf('corp-docs'); g.tabs.splice(at < 0 ? g.tabs.length : at + 1, 0, 'lgl-licenses', 'lgl-reviews', 'lgl-cases', 'lgl-insurance'); } }
 
+/* v10.561 ~ 563 (D291 · docs/703 ~ 705) 직원 · 권한 탭 정리 — 사무 › 권한 관리(perm-admin) · 위험감지 › 운영자 권한(role-review)을 옮기고 새 탭과 함께 순서대로
+ *   (옛 GROUPS 줄 글자를 바꾸지 않으려고 덧붙임 · 합칠 때 줄 안으로 옮겨도 같음) */
+{
+  const ACL_ORDER: Tab[] = ['staff-list', 'perm-staff', 'perm-roles', 'perm-groups', 'perm-tasks', 'perm-admin', 'roles', 'role-review', 'staff-access', 'perm-log', 'my-mfa', 'my-password'];
+  for (const g of GROUPS) if (g.key !== 'acl') g.tabs = g.tabs.filter((t) => t !== 'perm-admin' && t !== 'role-review');
+  const acl = GROUPS.find((x) => x.key === 'acl');
+  if (acl) { const rest = acl.tabs.filter((t) => !ACL_ORDER.includes(t)); acl.tabs = [...ACL_ORDER, ...rest]; }
+}
+
 export const groupOf = (t: Tab): MenuGroup => GROUPS.find((g) => g.tabs.includes(t)) ?? GROUPS[0]!;
 
 /**
@@ -272,6 +285,9 @@ export const GROUP_SECTIONS: Record<string, MenuSection[]> = {
 /* v10.471 ~ 474 (D265) — 하위 묶음에 새 탭(줄 글자를 바꾸지 않고 붙임 · hrxAddTabs 는 위 groupOf 앞) */
 hrxAddTabs(GROUP_SECTIONS.admacc?.find((s) => s.label === '인사')?.tabs, 'hr-leave', ['hrx-overtime', 'hrx-shifts']);
 hrxAddTabs(GROUP_SECTIONS.admacc?.find((s) => s.label === '매입 · 경비')?.tabs, 'acct-assets', ['hrx-stocktake']);
+/* v10.559 (docs/698) — 회계 › 인사 맨 앞에 사원 카드(hrxAddTabs 는 「뒤에」라 앞에 넣기는 unshift · 옛 줄 글자 그대로) */
+{ const g = GROUPS.find((x) => x.key === 'admacc'); if (g && !g.tabs.includes('hr-card')) { const at = g.tabs.indexOf('acct-payroll'); g.tabs.splice(at < 0 ? g.tabs.length : at, 0, 'hr-card'); } }
+{ const s = GROUP_SECTIONS.admacc?.find((x) => x.label === '인사'); if (s && !s.tabs.includes('hr-card')) s.tabs.unshift('hr-card'); }
 
 /** 그룹의 보이는 탭을 하위 묶음으로 — 하위 묶음이 없는 그룹은 이름표 없는 한 묶음 */
 export function sectionsOf(groupKey: string, visibleTabs: Tab[]): MenuSection[] {
@@ -532,9 +548,16 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'hr-contract':   { title: '근로계약서', sub: '양식 · 직원별 계약서 · 보내기 · 서명본 보관 — 전자서명 연동은 처음 꺼짐(간주 서명 · 법적 전자서명 아님).', screen: 'SB-ADM-HRE-020' },
   'hr-review':     { title: '인사 평가', sub: '분기 목표 → 자기 평가 → 상사 평가 · 등급 — 직원은 자기 것만 · 결과는 닫은 뒤에 보입니다.', screen: 'SB-ADM-HRE-030' },
   'hr-recruit':    { title: '채용', sub: '공고 · 지원자(최소 개인정보) · 면접 일정 · 합격 → 직원 대장 · 불합격 서류는 보관 기간 뒤 자동 파기.', screen: 'SB-ADM-HRE-040' },
+  'hr-card':       { title: '사원 카드', sub: '직원 한 사람의 기본 · 근태 · 휴가 · 급여 · 퇴직금 추계 · 계약 · 교육 · 평가 · 근무를 한 장에(읽기만) — 열람 사유와 함께 감사 기록에 남습니다.', screen: 'SB-ADM-HRC-010' },
   'acct-accounts': { title: '계정 · 규칙', sub: '전표 계정의 회계 프로그램 코드 · 계정 더하기, 돈 흐름별 전표 모양과 계정 자리 · 증빙 고치기(초안 · 세무사 확인 · 확인표 CSV), 전표 양식(세무사랑), 직판 상품의 과세 · 면세를 고릅니다.', screen: 'SB-ADM-ACC-040' },
   'my-password': { title: '내 비밀번호', sub: '운영 화면 계정의 비밀번호를 바꿉니다. 12자 이상 · 최근 3개는 다시 쓸 수 없음 · 90일마다 권함.', screen: 'SB-ADM-PWD-010' },
   'my-mfa':      { title: '내 2단계 인증', sub: '휴대폰 인증 앱을 등록해 운영 화면 로그인을 한 번 더 확인합니다.', screen: 'SB-ADM-MFA-010' },
+  'staff-list':  { title: '운영자 목록', sub: '운영 역할이 있는 계정만 — 연결 직원 · 역할 · 기한 · 2단계 · 마지막 로그인. 회원 목록에서는 기본으로 빠집니다(운영자 정지는 SUPER 만).', screen: 'SB-ADM-STF-010' },
+  'perm-staff':  { title: '사원 권한', sub: '사원(운영자)마다 권한그룹 · 기한 · 개별 더하기 · 빼기를 붙이고 실제 권한을 미리 봅니다. 함께 못 갖는 조합이면 저장되지 않습니다(SUPER).', screen: 'SB-ADM-STF-020' },
+  'perm-roles':  { title: '권한그룹', sub: '업무그룹 × 수준(보기 · 고치기 · 승인 · 내려받기)으로 권한그룹을 만들고, 업무 하나씩 더하거나 뺍니다. 실제로 여는 업무를 미리 봅니다(SUPER).', screen: 'SB-ADM-STF-030' },
+  'perm-groups': { title: '업무그룹', sub: '업무를 묶습니다 — 업무 하나가 여러 업무그룹에 들 수 있습니다. 메뉴와 같은 처음 업무그룹은 지우지 않고 끄기만 합니다(SUPER).', screen: 'SB-ADM-STF-040' },
+  'perm-tasks':  { title: '업무 목록', sub: '업무 = 운영 화면 탭 하나. 이름 · 설명 · 쓸 수 있는 수준 · 켜고 끄기 · 주소 연결 수 · 탭에는 있는데 업무에 없는 것(SUPER).', screen: 'SB-ADM-STF-050' },
+  'perm-log':    { title: '바뀐 기록', sub: '역할을 주고 거둔 기록과 업무 권한(권한그룹 · 업무그룹 · 사원 권한 · 판정 방식)을 바꾼 기록 — 고칠 수 없습니다.', screen: 'SB-ADM-STF-060' },
   'staff-access': { title: '접속 인증', sub: '허용 IP 밖에서 들어오면 그날 한 번 텔레그램 인증번호를 넣습니다 — 허용 IP · 받을 곳 · 기록. 허용 IP 는 Nginx 반영 스크립트로 운영 화면 접속 허용에도 씁니다(SUPER).', screen: 'SB-ADM-SIP-010' },
   risk:          { title: 'AI 위험감지', sub: '규칙을 로그에 걸어 경보를 만듭니다. 경보마다 근거 · 규칙 원문 · 오탐 가능성을 함께 봅니다. 규칙은 숨기지 않습니다.', screen: 'SB-ADM-RSK-010' },
   'report-queue':{ title: '신고 처리', sub: '오래된 것이 위로 옵니다 — 신고해 놓고 답이 없으면 다음부터 신고를 안 합니다.', screen: 'SB-ADM-RPT-010' },
@@ -555,6 +578,10 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'gwan-ux':     { title: '관 UI/UX 관리', sub: '관마다 성격이 다르면 화면도 달라야 합니다. 축을 켜고 끄고, 축의 UI 유형을 여기서 정합니다.', screen: 'SB-ADM-GWN-010' },
   invariants:    { title: '불변식 현황', sub: '감시 뷰를 한 번에 훑습니다.', screen: 'SB-ADM-INV-010' },
 };
+/* v10.561 (D291) — 직원 · 권한으로 옮긴 탭 제목(위 줄 글자는 옛 시험이 봐서 그대로) */
+PAGE['perm-admin'] = { ...PAGE['perm-admin'], title: '업무별 권한', sub: '업무(탭) × 권한그룹 표 · 개인권한 · SHADOW 기록 · 판정 방식(ROLE · COMPARE · GROUPS)을 봅니다(SUPER).' };
+PAGE['role-review'] = { ...PAGE['role-review'], title: '권한 점검' };
+PAGE.roles = { ...PAGE.roles, title: '역할 주기', sub: '역할(운영 · 검수 · 최고 · 파트너 담당 · 세무사)을 주고 거둡니다 — 안쪽 역할은 직원 대장 연결이 필요하고, 외부 역할은 기한이 꼭 있어야 합니다(SUPER).' };
 
 /**
  * v10.32 — 하위 화면의 제목 줄(시안은 하위 화면마다 자기 제목을 씁니다). 키 = '탭/하위'(주소 #/탭/하위).

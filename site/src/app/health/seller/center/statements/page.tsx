@@ -20,11 +20,11 @@ export const dynamic = 'force-dynamic';
 const YM = /^[0-9]{4}-(0[1-9]|1[0-2])$/;   // 서버 STMT_YM · DB CHECK 와 같음
 type MonthRow = { ym: string; id: string | null; weeks: number; net: number | null; paid: number | null; mailState: string | null; mailedAt: string | null; preview: boolean };
 type List = { seller: { code: string; name: string }; items: MonthRow[]; note: string };
-type Line = { id: string; from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number };
+type Line = { id: string; from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; returnShip?: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number };
 type Doc = {
   id: string | null; ym: string; preview: boolean; company: string;
   seller: { code: string; name: string; bizRegNo: string | null; ceoName: string | null; ecomRegNo: string | null; addr: string | null };
-  weeks: number; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; paid: number; lines: Line[];
+  weeks: number; gross: number; fee: number; feeVat: number; refund: number; returnShip?: number; carriedIn: number; net: number; carriedOut: number; paid: number; lines: Line[];
   mailState: string; mailedAt: string | null; note: string;
 };
 
@@ -87,19 +87,19 @@ export default async function HltSellerStatementsPage({ searchParams }: { search
               </div>
               <div className="slx-scroll">
                 <table className="slx-tbl">
-                  <thead><tr><th className="num">{ts('gross')}</th><th className="num">{ts('fee')}</th><th className="num">{ts('feeVat')}</th><th className="num">{ts('refund')}</th><th className="num">{ts('net')}</th><th className="num">{ts('paid')}</th><th className="num">{ts('carriedOut')}</th></tr></thead>
-                  <tbody><tr className="sum"><td className="num">{w(doc.gross)}</td><td className="num">{w(doc.fee)}</td><td className="num">{w(doc.feeVat)}</td><td className="num">{w(doc.refund)}</td><td className="num">{w(doc.net)}</td><td className="num">{w(doc.paid)}</td><td className="num">{w(doc.carriedOut)}</td></tr></tbody>
+                  <thead><tr><th className="num">{ts('gross')}</th><th className="num">{ts('fee')}</th><th className="num">{ts('feeVat')}</th><th className="num">{ts('refund')}</th><th className="num">{ts('returnShip')}</th><th className="num">{ts('net')}</th><th className="num">{ts('paid')}</th><th className="num">{ts('carriedOut')}</th></tr></thead>
+                  <tbody><tr className="sum"><td className="num">{w(doc.gross)}</td><td className="num">{w(doc.fee)}</td><td className="num">{w(doc.feeVat)}</td><td className="num">{w(doc.refund)}</td><td className="num" data-slx-return-ship={doc.returnShip ?? 0}>{w(doc.returnShip)}</td><td className="num">{w(doc.net)}</td><td className="num">{w(doc.paid)}</td><td className="num">{w(doc.carriedOut)}</td></tr></tbody>
                 </table>
                 <table className="slx-tbl" data-slx-lines={doc.lines.length}>
-                  <thead><tr><th>{ts('week')}</th><th className="num">{ts('gross')}</th><th className="num">{ts('fee')}</th><th className="num">{ts('refund')}</th><th className="num">{ts('carriedIn')}</th><th className="num">{ts('net')}</th><th>{ts('status')}</th></tr></thead>
+                  <thead><tr><th>{ts('week')}</th><th className="num">{ts('gross')}</th><th className="num">{ts('fee')}</th><th className="num">{ts('refund')}</th><th className="num">{ts('returnShip')}</th><th className="num">{ts('carriedIn')}</th><th className="num">{ts('net')}</th><th>{ts('status')}</th></tr></thead>
                   <tbody>
                     {doc.lines.map((l) => (
                       <tr key={l.id}>
-                        <td>{l.from} ~ {l.to}</td><td className="num">{w(l.gross)}</td><td className="num">{w(l.fee)}</td><td className="num">{w(l.refund)}</td>
+                        <td>{l.from} ~ {l.to}</td><td className="num">{w(l.gross)}</td><td className="num">{w(l.fee)}</td><td className="num">{w(l.refund)}</td><td className="num">{w(l.returnShip)}</td>
                         <td className="num">{w(l.carriedIn)}</td><td className="num">{w(l.net)}</td><td>{stLabel(l.status)}{l.invoiceNo ? ` · ${l.invoiceNo}` : ''}</td>
                       </tr>
                     ))}
-                    {doc.lines.length === 0 && <tr><td colSpan={7}>{ts('noWeeks')}</td></tr>}
+                    {doc.lines.length === 0 && <tr><td colSpan={8}>{ts('noWeeks')}</td></tr>}
                   </tbody>
                 </table>
               </div>

@@ -167,17 +167,24 @@ function GrantForm({ onDone, onError }: { onDone: (m: string) => void; onError: 
   const [role, setRole] = useState('PARTNER_MAL');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
+  /* v10.563 (D291 · docs/705) — 안쪽 역할(검수 · 운영 · 최고)은 직원 대장 연결 필수 · 외부 역할(세무사 · 파트너 담당)은 직원 연결 없으면 기한 꼭 */
+  const staff = useApi<{ items: Array<{ id: string; employeeId: string | null; employeeName: string | null }>; freeEmployees: Array<{ id: string; name: string; joinedOn: string }> }>('/admin/staff');
+  const [emp, setEmp] = useState('');
+  const [days, setDays] = useState('');
+  const linkedName = pick ? (staff.data?.items.find((s) => s.id === pick.id)?.employeeName ?? null) : null;
+  const external = ['ACCOUNTANT', 'PARTNER_MAL', 'PARTNER_AFF'].includes(role);
 
   async function search() {
     if (q.trim().length < 2) return;
-    try { setFound(await api<Found[]>(`/admin/accounts?q=${encodeURIComponent(q.trim())}&limit=20`)); setPick(null); }
+    try { setFound(await api<Found[]>(`/admin/accounts?q=${encodeURIComponent(q.trim())}&limit=20&staff=include`)); setPick(null); }   // v10.563 운영자도 찾음(회원 목록 기본은 회원만)
     catch (e) { onError(e instanceof ApiFailure ? e.body.message : '찾지 못했습니다.'); }
   }
   async function grant() {
     if (!pick || !reason.trim()) return;
     setBusy(true);
     try {
-      await api('/admin/reports/roles', { method: 'POST', body: JSON.stringify({ accountId: pick.id, role, grant: true, reason: reason.trim() }) });
+      await api('/admin/reports/roles', { method: 'POST', body: JSON.stringify({ accountId: pick.id, role, grant: true, reason: reason.trim(), ...(emp && !linkedName ? { employeeId: emp } : {}), ...(days ? { expiresDays: Number(days) } : {}) }) });
+      staff.reload(); setEmp(''); setDays('');
       onDone(`${pick.name} 에게 ${ROLE_LABEL[role] ?? role} 역할을 주었습니다.`);
       setReason(''); setPick(null); setFound(null); setQ('');
     } catch (e) {
@@ -207,6 +214,15 @@ function GrantForm({ onDone, onError }: { onDone: (m: string) => void; onError: 
         <div className="row">
           <select value={role} onChange={(e) => setRole(e.target.value)} aria-label="역할">
             {GRANTABLE.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]} ({r})</option>)}
+          </select>
+          {linkedName ? <span className="muted" data-role-grant-linked="">직원 {linkedName}</span> : (
+            <select value={emp} onChange={(e) => setEmp(e.target.value)} aria-label="연결할 직원" data-role-grant-emp="">
+              <option value="">{external ? '직원 아님(외부 · 기한 꼭)' : '직원 고르기(꼭)'}</option>
+              {(staff.data?.freeEmployees ?? []).map((x) => <option key={x.id} value={x.id}>{x.name} · 입사 {x.joinedOn}</option>)}
+            </select>
+          )}
+          <select value={days} onChange={(e) => setDays(e.target.value)} aria-label="기한" data-role-grant-days="">
+            <option value="">기한 없음</option><option value="7">7일</option><option value="30">30일</option><option value="90">90일</option>
           </select>
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="사유(기록에 남습니다)" aria-label="사유" />
           <button className="btn-ok" onClick={() => void grant()} disabled={busy || !reason.trim()}>주기</button>

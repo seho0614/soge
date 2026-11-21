@@ -123,7 +123,7 @@ export class EsignController {
   @ApiResponse({ status: 422, description: 'ESIGN_CONTACT_MISSING', type: ErrorDto })
   @ApiResponse({ status: 502, description: 'ESIGN_FAILED — 업체 연결 실패(잠시 뒤 다시)', type: ErrorDto })
   @ApiOkResponse({ type: EsignViewDto })
-  @Audit('CONTRACT_ESIGN', 'DEAL')
+  @Audit('CONTRACT_ESIGN', 'DEAL', { pick: ['mode', 'contractState', 'state', 'stub', 'docId', 'docHash', 'requestedAt'] })
   async request(@Param('id') id: string) {
     return (await this.esign.request(id)) ?? this.contracts.requestESign(id);
   }

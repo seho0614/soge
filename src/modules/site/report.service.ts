@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
 import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { assertStaffGrant, resolveLeftAlert } from '../admin/staff';   // v10.563 (D291) 직원 대장 연결 · 퇴사 알림 풀기
 
 /**
  * 백오피스 — 경영 지표와 권한 관리.
@@ -98,7 +99,7 @@ export class ReportService {
    * 관리자 역할을 주면 검수·정산·제재 권한이 함께 갑니다.
    * 사유를 남기게 하는 것은 나중에 "누가 왜 줬는가"를 답하기 위해서입니다.
    */
-  async setRole(accountId: string, role: string, grant: boolean, reason: string, expiresDays?: number) {
+  async setRole(accountId: string, role: string, grant: boolean, reason: string, expiresDays?: number, employeeId?: string) {
     const OK = ['REVIEWER', 'ADMIN', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'];   // v10.194 (D173) — 안심 · 제휴 파트너 담당 · v10.437 (D257) 세무사
     if (!OK.includes(role)) {
       throw new PolicyViolation('BAD_ROLE', '부여할 수 없는 역할입니다.');
@@ -120,7 +121,10 @@ export class ReportService {
        *   전에는 기록을 만든 뒤 UPDATE 로 채웠는데, 권한 변경 기록은 수정 금지(trg_role_change_ro)라 늘 실패했음 */
       await this.db.query(`SELECT set_config('app.role_reason', $1, true), set_config('app.actor_id', $2, true)`,
         [reason.trim(), RequestCtx.actorId() ?? '']);
+      let linked: string | null = null;
       if (grant) {
+        /* v10.563 (D291 · docs/705) — 안쪽 역할은 직원 대장 연결 필수(없으면 employeeId 로 이 거래에서 연결) · 외부 역할(세무사 · 파트너 담당)은 연결 없으면 기한 꼭 */
+        linked = (await assertStaffGrant(this.db, accountId, role, expiresDays ?? null, employeeId ?? null)).linked;
         /* v10.372 (D239 · docs/507) — 기한: SUPER 에 기한을 두려면 기한 없는 다른 SUPER 가 있어야 함(다 사라지면 복구 불가) */
         if (expiresDays && role === 'SUPER') {
           const [o] = await this.db.query<{ n: number }>(
@@ -138,8 +142,9 @@ export class ReportService {
           `DELETE FROM account_roles WHERE account_id=$1 AND role=$2 RETURNING role`,
           [accountId, role]);
         if (!gone) throw new StateConflict('NO_SUCH_ROLE', '가지고 있지 않은 역할입니다.');
+        await resolveLeftAlert(this.db, accountId, `역할 거둠 — ${reason.trim()}`);   // v10.563 마지막 운영 역할이면 STAFF_LEFT_ROLE 풀림
       }
-      return { accountId, role, granted: grant, expiresDays: grant ? (expiresDays ?? null) : null };
+      return { accountId, role, granted: grant, expiresDays: grant ? (expiresDays ?? null) : null, employeeId: linked };
     });
   }
 

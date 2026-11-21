@@ -145,9 +145,10 @@ export class AdminController {
     summary: '회원 목록',
     description: '이름 · 이메일 · 연락처로 찾습니다. 탈퇴 회원은 기본으로 빼고 보여 줍니다.',
   })
-  @Audit('ACCOUNT_LIST', 'ACCOUNT')
-  accounts(@Query('q') q?: string, @Query('limit') limit?: number, @Query('status') status?: string) {
-    return this.memberSvc.accounts(q, limit, status && ['ACTIVE', 'SUSPENDED'].includes(status) ? status : undefined);
+  @Audit('ACCOUNT_LIST', 'ACCOUNT', { pick: [] })
+  @ApiQuery({ name: 'staff', required: false, enum: ['include', 'only'], description: 'v10.563 (D291) 운영자(운영 역할 있는 계정) — 비우면 빼고(회원만) · include 함께 · only 운영자만' })
+  accounts(@Query('q') q?: string, @Query('limit') limit?: number, @Query('status') status?: string, @Query('staff') staff?: string) {
+    return this.memberSvc.accounts(q, limit, status && ['ACTIVE', 'SUSPENDED'].includes(status) ? status : undefined, staff === 'include' || staff === 'only' ? staff : undefined);
   }
 
   @Get('accounts-counts')
@@ -157,8 +158,9 @@ export class AdminController {
   @Patch('accounts/:id/status')
   @ApiOperation({
     summary: '회원 상태 변경(정상 ↔ 정지)',
-    description: 'v10.31 — 시안 회원 상세 「상태 변경」. 사유 필수 · 기록(account_status_changes). 자기 자신 · 최고 관리자는 바꿀 수 없습니다. 정지하면 로그인이 막히고 소개코드가 멈춥니다.',
+    description: 'v10.31 — 시안 회원 상세 「상태 변경」. 사유 필수 · 기록(account_status_changes). 자기 자신 · 최고 관리자는 바꿀 수 없습니다. 정지하면 로그인이 막히고 소개코드가 멈춥니다. v10.563 (D291) — 운영 역할이 있는 계정은 SUPER 만 바꿈(403 STAFF_TARGET_SUPER_ONLY · 일괄 처리도 같음).',
   })
+  @ApiResponse({ status: 403, description: 'STAFF_TARGET_SUPER_ONLY(v10.563)', type: ErrorDto })
   @ApiParam({ name: 'id', format: 'uuid' })
   @Audit('ACCOUNT_STATUS', 'ACCOUNT')
   setStatus(@Param('id') id: string, @Body() dto: AccountStatusDto) { return this.memberSvc.setAccountStatus(id, dto.status, dto.reason); }
@@ -179,6 +181,6 @@ export class AdminController {
       '**조회 자체가 감사 로그에 남습니다** — 남의 정보를 들여다보는 일이라 ' +
       '누가 언제 봤는지 기록이 필요합니다(개인정보 보호법 29조).',
   })
-  @Audit('ACCOUNT_VIEW', 'ACCOUNT')
+  @Audit('ACCOUNT_VIEW', 'ACCOUNT', { idOnly: true })
   account(@Param('id') id: string) { return this.memberSvc.account(id); }
 }

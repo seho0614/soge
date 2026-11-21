@@ -16,6 +16,7 @@ interface Row {
   accountType: string; status: string; identityVerified: boolean;
   companyName: string | null; bizVerified: boolean;
   createdAt: string; lastLoginAt: string | null;
+  isStaff?: boolean;   // v10.563 (D291) 운영 역할 있는 계정
 }
 interface Detail {
   ok: boolean; note: string | null;
@@ -71,13 +72,14 @@ export function Members() {
 
 function MemberList({ onOpen }: { onOpen: (id: string) => void }) {
   const [q, setQ] = useState('');
+  const [withStaff, setWithStaff] = useState(false);   // v10.563 (D291 · docs/705) 운영자는 기본으로 뺌(직원 · 권한 › 운영자 목록에서 봄)
   const [path, setPath] = useState('/admin/accounts?limit=50');
   const list = useApi<Row[]>(path);
+  const pathOf = (t: string, staff: boolean) => `/admin/accounts?${t ? `q=${encodeURIComponent(t)}&` : ''}limit=50${staff ? '&staff=include' : ''}`;
 
   const search = (e: React.FormEvent) => {
     e.preventDefault();
-    const t = q.trim();
-    setPath(t ? `/admin/accounts?q=${encodeURIComponent(t)}&limit=50` : '/admin/accounts?limit=50');
+    setPath(pathOf(q.trim(), withStaff));
   };
 
   return (
@@ -85,8 +87,9 @@ function MemberList({ onOpen }: { onOpen: (id: string) => void }) {
       <form className="search-row" onSubmit={search}>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 · 이메일 · 연락처" aria-label="회원 검색" />
         <button className="btn-ok" type="submit">찾기</button>
+        <label data-member-staff-filter=""><input type="checkbox" checked={withStaff} onChange={(e) => { setWithStaff(e.target.checked); setPath(pathOf(q.trim(), e.target.checked)); }} /> 운영자 포함</label>
       </form>
-      <div className="ad-nt info"><b>탈퇴 회원은 기본으로 빼고 보여 줍니다.</b> 보관 기간이 지나면 개인정보가 지워집니다.</div>
+      <div className="ad-nt info"><b>탈퇴 회원은 기본으로 빼고 보여 줍니다.</b> 보관 기간이 지나면 개인정보가 지워집니다. 운영자(운영 역할 있는 계정)도 기본으로 빠집니다 — <a href="#/staff-list">직원 · 권한 › 운영자 목록</a>.</div>
       {list.error ? <ErrorView error={list.error} onRetry={list.reload} /> : null}
       {list.loading && !list.data && <p className="muted">불러오는 중…</p>}
       {list.data && list.data.length === 0 && <p className="muted">찾는 회원이 없습니다.</p>}
@@ -96,7 +99,7 @@ function MemberList({ onOpen }: { onOpen: (id: string) => void }) {
           <tbody>
             {(list.data ?? []).map((m) => (
               <tr key={m.id}>
-                <td><button className="linkbtn" onClick={() => onOpen(m.id)}>{m.name || '(이름 없음)'}</button></td>
+                <td><button className="linkbtn" onClick={() => onOpen(m.id)}>{m.name || '(이름 없음)'}</button>{m.isStaff && <small className="badge badge-verified" data-member-staff={m.id}> 운영자</small>}</td>
                 <td className="mono">{m.email}</td>
                 <td>{TYPE[m.accountType] ?? m.accountType}</td>
                 <td>{m.identityVerified ? <span className="st ok">완료</span> : <span className="muted">미인증</span>}</td>

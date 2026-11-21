@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty,
          ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { ReportService } from './report.service';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -16,6 +16,8 @@ export class RoleSetDto {
   @IsString() reason!: string;
   @ApiPropertyOptional({ enum: [7, 30, 90], description: 'v10.372 (D239) 기한(일 · 비우면 없음 · 줄 때만) — 지나면 매시간 정기 작업이 거둠' })
   @IsOptional() @IsIn([7, 30, 90]) expiresDays?: number;
+  @ApiPropertyOptional({ example: '12', description: 'v10.563 (D291) 직원 대장 번호 — 안쪽 역할(검수 · 운영 · 최고)을 직원 연결 없는 계정에 줄 때 그 자리에서 연결(퇴사 전 · 다른 계정과 연결 안 된 직원)' })
+  @IsOptional() @IsString() @Matches(/^\d{1,18}$/) employeeId?: string;
 }
 export class ReportDto {
   @ApiPropertyOptional() signal?: string;
@@ -83,11 +85,12 @@ export class ReportController {
       '**자기 권한은 바꿀 수 없고**, 마지막 SUPER 는 회수되지 않습니다 — ' +
       '다 지우면 아무도 권한을 줄 수 없어 복구가 막힙니다.',
   })
-  @ApiResponse({ status: 422, description: 'REASON_REQUIRED · SELF_GRANT · ROLE_EXPIRY_LAST_SUPER(v10.372 — 기한 없는 다른 SUPER 가 없으면 SUPER 에 기한을 둘 수 없음)', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'REASON_REQUIRED · SELF_GRANT · ROLE_EXPIRY_LAST_SUPER(v10.372 — 기한 없는 다른 SUPER 가 없으면 SUPER 에 기한을 둘 수 없음) · STAFF_EMPLOYEE_REQUIRED(v10.563 — 안쪽 역할은 직원 대장 연결 필요) · STAFF_EXTERNAL_EXPIRY(외부 역할은 직원 연결 없으면 기한 꼭) · STAFF_EMPLOYEE_LEFT', type: ErrorDto })
+  @ApiResponse({ status: 409, description: 'NO_SUCH_ROLE · HR_LINK_TAKEN(v10.563 — 고른 직원이 다른 계정과 연결됨)', type: ErrorDto })
   @ApiOkResponse({ type: ReportDto })
   @Audit('ROLE_SET', 'ACCOUNT')
   setRole(@Body() dto: RoleSetDto) {
-    return this.svc.setRole(dto.accountId, dto.role, dto.grant, dto.reason, dto.expiresDays);
+    return this.svc.setRole(dto.accountId, dto.role, dto.grant, dto.reason, dto.expiresDays, dto.employeeId);
   }
 
   @Get('pending')

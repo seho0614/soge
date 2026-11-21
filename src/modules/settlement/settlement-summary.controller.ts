@@ -27,6 +27,6 @@ export class SettlementSummaryController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto, description: '없는 회원' })
   @ApiResponse({ status: 403, type: ErrorDto, description: '권한 없음' })
-  @Audit('ACCOUNT_SETTLEMENT_VIEW', 'ACCOUNT')
+  @Audit('ACCOUNT_SETTLEMENT_VIEW', 'ACCOUNT', { idOnly: true })
   forAdmin(@Param('id') id: string) { return this.svc.forAdmin(id); }
 }

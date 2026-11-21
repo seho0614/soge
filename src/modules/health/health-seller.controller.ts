@@ -230,7 +230,7 @@ export class HealthSellerController {
 
   @Get('me/health/seller/settlements/:id')
   @Roles('MEMBER', 'BIZ_OWNER', 'ADMIN', 'SUPER')
-  @ApiOperation({ summary: '정산 명세', description: '주문별 매출 · 수수료 · 지급액 · 환불 조정(입점 약관 제19조).' })
+  @ApiOperation({ summary: '정산 명세', description: '주문별 매출 · 수수료 · 지급액 · 환불 조정 · 반품 배송비(입점 약관 제19조 · v10.560 RETURN_SHIP — 회원 사정 반품에서 뺀 왕복 배송비 · 수수료 없음).' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: Object, isArray: true })
   settlement(@Param('id', ParseUUIDPipe) id: string) { return this.svc.settlement(id); }

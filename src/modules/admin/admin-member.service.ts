@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
-import { PolicyViolation, StateConflict } from '../../core/errors';
+import { Forbidden, PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { maskBizNo, maskEmail, maskName, maskPhone } from '../../common/mask';
 
@@ -75,11 +75,14 @@ export class AdminMemberService {
     if (!reason?.trim() || reason.trim().length < 2) throw new PolicyViolation('REASON_REQUIRED', '상태를 바꾸는 사유를 적어 주십시오.');
     if (id === RequestCtx.actorId()) throw new PolicyViolation('SELF_CHANGE', '자기 계정의 상태는 바꿀 수 없습니다.');
     return this.db.transaction(async () => {
-      const [a] = await this.db.query<{ status: string; sup: boolean }>(
-        `SELECT status, EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role = 'SUPER') AS sup
+      const [a] = await this.db.query<{ status: string; sup: boolean; staff: boolean }>(
+        `SELECT status, EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role = 'SUPER') AS sup,
+                EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT')) AS staff
            FROM accounts a WHERE id = $1 FOR UPDATE`, [id]);
       if (!a) throw new StateConflict('NOT_FOUND', '없는 회원입니다.');
       if (a.sup) throw new PolicyViolation('PROTECTED_ACCOUNT', '최고 관리자 계정은 이 화면에서 바꿀 수 없습니다.');
+      /* v10.563 (D291 · docs/705) — 운영자(운영 역할 있는 계정) 정지 · 되살리기는 SUPER 만(ADMIN 이 다른 운영자를 정지하지 못하게) */
+      if (a.staff && RequestCtx.get()?.actorRole !== 'SUPER') throw new Forbidden('STAFF_TARGET_SUPER_ONLY', '운영자 계정의 상태는 최고 관리자(SUPER)만 바꿉니다 — 직원 · 권한 › 운영자 목록에서 확인하십시오.');
       if (a.status === 'WITHDRAWN') throw new StateConflict('WITHDRAWN', '탈퇴한 회원입니다.');
       if (a.status === status) throw new StateConflict('SAME_STATUS', status === 'ACTIVE' ? '이미 정상입니다.' : '이미 정지된 회원입니다.');
       await this.db.query(`UPDATE accounts SET status = $2 WHERE id = $1`, [id, status]);
@@ -129,10 +132,12 @@ export class AdminMemberService {
   }
 
   /** v10.31 (10/10 결함 · 시안 kim****@) — 목록에는 가린 이메일 · 연락처만 보냅니다. 찾기는 원래 값으로 */
-  async accounts(q?: string, limit?: number, status?: string) {
+  async accounts(q?: string, limit?: number, status?: string, staff?: string) {
     const n = Math.min(Math.max(Number(limit) || 30, 1), 100);
+    /* v10.563 (D291 · docs/705) — 운영자(운영 역할 있는 계정)는 기본으로 뺌 · include 함께 · only 운영자만 · 줄마다 isStaff */
     const rows = await this.db.query<any>(
       `SELECT a.id, a.email, a.name, a.phone,
+              EXISTS (SELECT 1 FROM account_roles sr WHERE sr.account_id = a.id AND sr.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT')) AS "isStaff",
               a.account_type AS "accountType", a.status,
               (a.identity_verified_at IS NOT NULL) AS "identityVerified",
               b.company_name AS "companyName",
@@ -145,8 +150,10 @@ export class AdminMemberService {
           AND ($1::text IS NULL OR a.name ILIKE '%'||$1||'%'
                 OR a.email::text ILIKE '%'||$1||'%'
                 OR coalesce(a.phone,'') ILIKE '%'||$1||'%')
+          AND ($4::text = 'include'
+                OR ($4::text = 'only') = EXISTS (SELECT 1 FROM account_roles xr WHERE xr.account_id = a.id AND xr.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT')))
         ORDER BY a.created_at DESC
-        LIMIT $2`, [q ?? null, n, status ?? null]);
+        LIMIT $2`, [q ?? null, n, status ?? null, staff ?? 'member']);
     return rows.map((r) => ({ ...r, email: maskEmail(r.email), phone: maskPhone(r.phone) }));
   }
 

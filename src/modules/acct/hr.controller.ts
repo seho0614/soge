@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -12,6 +12,8 @@ import { toCsv } from './acct.controller';
 import { addAttendance, attendanceMonth, cancelMyLeave, clock, confirmMonth, decideLeave, fixAttendance, leaveRequests, linkAccount, myHr, requestLeave, revokeLeave } from './hr';
 import { myPayslip, notifyPayslips, payslipOne, payslips } from './payslip';
 import { YE_ITEMS, setYearendCheck, yearendCsv, yearendView } from './yearend';
+import { hrCard } from './hr-card';   // v10.559 (docs/698) 사원 카드
+import { hrCardSelf } from './hr-card-self';   // v10.567 (docs/709) 내 사원 카드(본인)
 
 /* ---------------------------------------------------------------------
  * ㉖ 인사 2 (D259 · docs/582 ~ 585) — 대표 11/20 「다음개발」
@@ -21,6 +23,7 @@ import { YE_ITEMS, setYearendCheck, yearendCsv, yearendView } from './yearend';
  *     POST /admin/me/hr/leave                 휴가 신청(종일 · 오전 · 오후 반차)
  *     POST /admin/me/hr/leave/{id}/cancel     내 신청 취소(승인 전)
  *     GET  /admin/me/hr/payslips/{lineId}     내 급여명세서
+ *     GET  /admin/me/hr/card                  내 사원 카드(v10.567 · 읽기만 · 본인)
  *   관리자(ADMIN · SUPER) — v10.445 · 446
  *     GET  /admin/hr/attendance?ym=           달 근태 · 집계 · 고침 기록
  *     POST /admin/hr/attendance/{id}/fix      시각 고침(본인 줄 아님 · 사유)
@@ -139,6 +142,13 @@ export class HrController {
   @ApiResponse({ status: 422, type: ErrorDto, description: 'HR_NOT_LINKED' })
   mySlip(@Param('lineId') lineId: string) { return myPayslip(this.db, RequestCtx.actorId() ?? null, lineId); }
 
+  /* v10.567 (docs/709) 내 사원 카드 — 본인 것만(직원 번호를 받지 않음) · 감사 · 열람 사유 없음(본인 · 베끼는 개인정보 없음) */
+  @Get('me/hr/card')
+  @Roles(...SELF)
+  @ApiOperation({ summary: '내 사원 카드 (v10.567)', description: '로그인한 계정에 연결된 직원의 기본 · 근태 · 연차 · 휴가 신청 · 내 급여명세서 목록(금액 없음 · lineId) · 근로계약서 상태 · 의무교육 · 평가(닫힌 차례의 내 결과만 · 의견 없음) · 연장 근로 · 이번 주 근무표. 퇴직금 추계 없음. 연결 안 됐으면 200 + linked=false.' })
+  @ApiOkResponse({ type: Object })
+  myCard() { return hrCardSelf(this.db, RequestCtx.actorId() ?? null); }
+
   /* ── v10.445 근태(관리자) ── */
   @Get('hr/attendance')
   @Roles('ADMIN')
@@ -162,7 +172,7 @@ export class HrController {
   @Post('hr/attendance/add')
   @Roles('ADMIN')
   @HttpCode(200)
-  @Audit('HR_ATTEND_ADD', 'SETTING')
+  @Audit('HR_ATTEND_ADD', 'SETTING', { pick: ['ok', 'id'] })
   @ApiOperation({ summary: '빠진 근태 넣기 (v10.445)', description: '본인 아님 · 사유 · 오늘까지 · 입사 ~ 퇴사 안 · 그날 줄이 있으면 409.' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
@@ -182,7 +192,7 @@ export class HrController {
 
   @Put('hr/employees/:id/account')
   @Roles('SUPER')
-  @Audit('HR_EMPLOYEE_LINK', 'SETTING')
+  @Audit('HR_EMPLOYEE_LINK', 'SETTING', { pick: ['ok', 'employeeId', 'accountId'] })
   @ApiParam({ name: 'id', example: '1' })
   @ApiOperation({ summary: '직원 ↔ 운영 계정 연결 (v10.445 · SUPER)', description: '운영 역할이 있는 계정만 · 한 계정은 한 직원 · 메일을 비우면 연결 풂.' })
   @ApiOkResponse({ type: Object })
@@ -190,6 +200,17 @@ export class HrController {
   @ApiResponse({ status: 409, type: ErrorDto, description: 'HR_LINK_TAKEN' })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'HR_LINK' })
   link(@Param('id') id: string, @Body() dto: HrLinkDto) { return linkAccount(this.db, id, dto.email); }
+
+  /* ── v10.559 (docs/698) 사원 카드 — 읽기만 · 급여 탭과 같은 범위(SUPER · 지급 담당) · /admin/hr 아래라 세무사는 못 봄 ── */
+  @Get('hr/employees/:id/card')
+  @Roles('SUPER', 'PAYOUT')
+  @Audit('HR_CARD_VIEW', 'ACCOUNT', { idOnly: true })   // 급여 · 퇴직금은 감사 기록에 베끼지 않음(직원 번호만)
+  @ApiParam({ name: 'id', example: '1' })
+  @ApiHeader({ name: 'X-PII-Reason', required: false, description: '개인정보 열람 사유(INQUIRY · DISPUTE · SETTLEMENT · REVIEW · LEGAL · OTHER:<글>) — 없으면 「미입력」으로 남김(막지 않음)' })
+  @ApiOperation({ summary: '사원 카드 (v10.559)', description: '직원 한 사람의 기본 · 근태 · 휴가 · 급여(최근 6개월 · 퇴직금 추계) · 계약 · 의무교육 · 평가 · 연장 근로 · 이번 주 근무표를 한 장에. 주민등록번호 · 계좌 · 계약서 본문 없음. **조회 자체가 감사(HR_CARD_VIEW)와 개인정보 접속기록에 남습니다.**' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
+  card(@Param('id') id: string, @Headers('x-pii-reason') reason?: string) { return hrCard(this.db, id, reason); }
 
   /* ── v10.446 휴가(관리자) ── */
   @Get('hr/leave')
@@ -202,7 +223,7 @@ export class HrController {
   @Post('hr/leave/:id/decide')
   @Roles('ADMIN')
   @HttpCode(200)
-  @Audit('HR_LEAVE_DECIDE', 'SETTING')
+  @Audit('HR_LEAVE_DECIDE', 'SETTING', { pick: ['ok', 'id', 'state', 'days', 'remaining'] })
   @ApiParam({ name: 'id', example: '1' })
   @ApiOperation({ summary: '휴가 승인 · 반려 (v10.446)', description: '본인 신청 아님 · 승인하면 연차 쓴 날에 날마다 한 줄 · 남은 연차보다 많으면 422(hr.leave_allow_negative off) · 반려는 사유.' })
   @ApiOkResponse({ type: Object })
@@ -214,7 +235,7 @@ export class HrController {
   @Post('hr/leave/:id/revoke')
   @Roles('ADMIN')
   @HttpCode(200)
-  @Audit('HR_LEAVE_REVOKE', 'SETTING')
+  @Audit('HR_LEAVE_REVOKE', 'SETTING', { pick: ['ok', 'id', 'state', 'returned'] })
   @ApiParam({ name: 'id', example: '1' })
   @ApiOperation({ summary: '휴가 승인 취소 (v10.446)', description: '승인된 휴가만 · 본인 아님 · 사유 · 연차 쓴 날을 음수 줄로 되돌림.' })
   @ApiOkResponse({ type: Object })
@@ -260,7 +281,7 @@ export class HrController {
   @Post('acct/yearend/checks')
   @Roles('PAYOUT')
   @HttpCode(200)
-  @Audit('ACCT_YEAREND_CHECK', 'SETTING')
+  @Audit('ACCT_YEAREND_CHECK', 'SETTING', { pick: ['ok', 'id'] })
   @ApiOperation({ summary: '연말정산 서류 받음 표시 (v10.448)', description: '쌓기만 · 마지막 줄이 지금 상태 · 서류 파일은 받지 않음.' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })

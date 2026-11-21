@@ -5,6 +5,7 @@ import { Reflector } from '@nestjs/core';
 import { Forbidden } from './errors';
 import { DatabaseService } from '../db/database.service';
 import { widenAllowed } from '../modules/admin/perm.service';   // v10.442 (D258) 권한 넓히기(perm.allow_widen · 처음 off)
+import { groupsApplicable, groupsDecide, logDiff, permDecideMode } from '../modules/admin/perm-mode';   // v10.564 (D291) 판정 방식 perm.mode
 import { RequestCtx } from './request-context';
 
 export type Role =
@@ -77,7 +78,19 @@ export class AuthGuard implements CanActivate {
 
     if (required?.length) {
       if (!principal) throw new Forbidden('UNAUTHENTICATED', '로그인이 필요합니다.');
-      if (!hasRole(principal.roles, ...required) && !accountantRead(principal, req, required)) {
+      const roleOk = hasRole(principal.roles, ...required) || accountantRead(principal, req, required);
+      /* v10.564 (D291 · docs/706) perm.mode — 운영 역할 계정이 운영 역할만 요구하는 API(SUPER 전용 · 회원 역할 섞임 빼고)를 부를 때만 봄
+       *   GROUPS: 역할 대신 권한그룹이 정함(역할로 막혀도 권한그룹이 주면 통과 · 역할로 통과해도 PermGuard 가 권한그룹으로 다시 봄)
+       *   COMPARE: 역할로 막고, 권한그룹은 열었을 것이면 「다름(GROUP_ONLY)」 기록 · ROLE: 지금 그대로 */
+      const pm = this.db && groupsApplicable(principal.roles, required) ? await permDecideMode(this.db) : 'ROLE';
+      if (!roleOk && pm === 'GROUPS') {
+        const g = await groupsDecide(this.db!, principal.accountId, String(req.method ?? ''), String(req.originalUrl ?? req.url ?? ''));
+        if (g !== true) throw new Forbidden(g === false ? 'PERM_DENIED' : 'FORBIDDEN', g === false ? '이 업무의 권한이 없습니다 — SUPER 에게 권한그룹을 요청하십시오.' : '권한이 없습니다.');
+        req.permGroupsOk = true;
+      } else if (!roleOk) {
+        if (pm === 'COMPARE' && await groupsDecide(this.db!, principal.accountId, String(req.method ?? ''), String(req.originalUrl ?? req.url ?? '')).catch(() => null) === true) {   // 비교 실패는 요청을 막지 않음
+          await logDiff(this.db!, principal.accountId, String(req.method ?? ''), String(req.originalUrl ?? req.url ?? ''), 'GROUP_ONLY');
+        }
         /* v10.442 (D258) — perm.allow_widen = on · perm.enforce = ON 이면 권한그룹 · 개인권한으로 넓힘(금지 목록 · 감사 PERM_WIDEN) · 아래 2단계 · 접속 인증은 그대로 */
         if (!(this.db && await widenAllowed(this.db, principal, req, required as string[]))) {
           throw new Forbidden('FORBIDDEN', '권한이 없습니다.');

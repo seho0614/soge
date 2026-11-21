@@ -84,7 +84,7 @@ export class PublicService {
     const rows = await this.db.query<{ key: string; value: string | null }>(
       /* 20261007 (v10.25) — 직판 고지(legal.direct_notice · scope PUBLIC)도 같이 내려 줍니다. 설정에만 있고 화면에 닿지 않아,
        *   직접 파는 소개몰 화면에 통신판매중개자 고지만 나오고 있었습니다(DB 의 v_direct_notice_missing 은 「글이 있는지」만 봅니다). */
-      `SELECT key, value FROM site_settings WHERE scope='GLOBAL' OR key='legal.direct_notice'`);
+      `SELECT key, value FROM site_settings WHERE scope='GLOBAL' OR key IN ('legal.direct_notice', 'sfx.device_watch')`);   /* v10.559 — 기기 표지 스위치(on/off 만 · 사용자 웹이 쿠키를 만들지 정함) */
     await this.i18n.overlay(rows.filter((r) => I18N_SETTING_KEYS.includes(r.key)), 'SETTING', (r) => r.key, { value: 'value' });
     return Object.fromEntries(rows.map((r) => [r.key, r.value]));
   }

@@ -349,7 +349,7 @@ export class HealthShopController {
   @ApiParam({ name: 'no' })
   @ApiResponse({ status: 422, description: '이미 결제됨 등', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  @Audit('HLT_PAY', 'HLT_ORDER')
+  @Audit('HLT_PAY', 'HLT_ORDER', { pick: ['id', 'method', 'amount', 'state', 'stub', 'pgStatus', 'approvedAt', 'orderNo'] })
   pay(@Param('no') no: string, @Body() dto: { method: string }) {
     return this.payments.pay(no, dto.method);
   }
@@ -370,7 +370,7 @@ export class HealthShopController {
   @ApiResponse({ status: 409, description: 'NOT_FOUND · ALREADY · NO_READY_PAYMENT · VBANK_WAITING · PAYMENT_KEY_MISMATCH', type: ErrorDto })
   @ApiResponse({ status: 422, description: 'AMOUNT_MISMATCH · PAY_REJECTED(PG 거절 — 주문은 결제 대기로 남음)', type: ErrorDto })
   @ApiOkResponse({ type: Object })
-  @Audit('HLT_PAY_CONFIRM', 'HLT_ORDER')
+  @Audit('HLT_PAY_CONFIRM', 'HLT_ORDER', { pick: ['id', 'method', 'amount', 'state', 'stub', 'pgStatus', 'approvedAt', 'orderNo', 'orderStatus', 'again'] })
   confirmPay(@Param('no') no: string, @Body() dto: PayConfirmDto) {
     return this.payments.confirmPay(no, dto.paymentKey, dto.amount);
   }

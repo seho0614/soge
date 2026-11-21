@@ -56,7 +56,7 @@ export class SfxAdminController {
 
   @Get('device/:mark')
   @Roles('ADMIN', 'SUPER')
-  @Audit('SFX_DEVICE_VIEW', 'ACCOUNT')
+  @Audit('SFX_DEVICE_VIEW', 'ACCOUNT', { pick: ['mark', 'accounts'] })
   @ApiParam({ name: 'mark', example: '3fa85f6457174562', description: '기기 표지(해시 앞 16자)' })
   @ApiOperation({ summary: '기기 표지 한 개의 계정 (v10.546)', description: '같은 표지로 가입 · 로그인한 계정(가린 이메일 · 이름 · 상태 · 가입일 · 처음 · 마지막) · 경보. 감사 기록.' })
   @ApiOkResponse({ type: Object })

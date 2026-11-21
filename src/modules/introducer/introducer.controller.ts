@@ -109,7 +109,7 @@ export class IntroducerController {
   })
   @ApiResponse({ status: 422, description: 'CHANNEL_NOT_READY', type: ErrorDto })
   @ApiOkResponse({ type: IntroOkDto })
-  @Audit('INTRO_INVITE', 'INVITE')
+  @Audit('INTRO_INVITE', 'INVITE', { pick: ['id', 'state', 'expiresAt', 'channel'] })
   invite(@Body() dto: InviteDto & { requestId: string }) {
     return this.svc.invite((dto as any).requestId, dto.inviteeLabel, dto.channel ?? 'SELF');
   }

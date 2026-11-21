@@ -224,7 +224,9 @@ const AUDIENCE_SQL = `
          ($1 = 'EMAIL' AND EXISTS (SELECT 1 FROM mail_suppressions sp WHERE sp.email = a.email AND sp.released_at IS NULL)) AS suppressed
     FROM accounts a
     JOIN v_term_consent_current m ON m.account_id = a.id AND m.term_code = 'MARKETING' AND m.agreed
-   WHERE a.status = 'ACTIVE' AND ($2 = 'ALL' OR ($2 = 'RECENT_90' AND a.last_login_at > now() - interval '90 days')
+   WHERE a.status = 'ACTIVE'
+     AND NOT EXISTS (SELECT 1 FROM account_roles xr WHERE xr.account_id = a.id AND xr.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'))   -- v10.563 (D291) 운영자 빼기(시험은 「나에게 시험 보내기」)
+     AND ($2 = 'ALL' OR ($2 = 'RECENT_90' AND a.last_login_at > now() - interval '90 days')
         OR ($2 = 'CHURN_RISK' AND EXISTS (SELECT 1 FROM csx_churn_signals cs WHERE cs.account_id = a.id))
         OR ($2 = 'MALL_BUYERS' AND EXISTS (SELECT 1 FROM hlt_orders ho WHERE ho.account_id = a.id AND ho.paid_at > now() - interval '180 days' AND ho.status NOT IN ('CANCELED', 'RETURNED')))
         OR ($2 = 'MALL_REBUY' AND EXISTS (SELECT 1 FROM v_mkx_rebuy_due rd WHERE rd.account_id = a.id

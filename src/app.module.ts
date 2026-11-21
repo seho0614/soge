@@ -299,6 +299,8 @@ import { IntegTestController } from './modules/site/integ-test.controller';
 import { SafenumService } from './modules/listing/safenum.service';   /* v10.145 (D141) 050 안심번호 */
 import { SafenumController, SafenumAdminController } from './modules/listing/safenum.controller';
 import { LpxController } from './modules/lpx/lpx.controller';   // v10.549 ~ 552 (D286) 매물 가격 제안 · 사진 워터마크 · 판매자 자리 비움 · 지역별 시세 통계
+import { StaffAdminController } from './modules/admin/staff.controller';   // v10.561 ~ 563 (D291) 직원 · 권한 › 운영자 목록 · 역할 모두 거두기
+import { PermSetsController } from './modules/admin/perm-sets.controller';   // v10.562 ~ 564 (D291) 업무 목록 · 업무그룹 · 권한그룹 · 사원 권한 · 판정 방식
 import { LsxController } from './modules/lsx/lsx.controller';   // v10.513 ~ 516 (D276) 저장한 검색 · 매물 만료 · 연장 · 끌어올리기 · 매물 AI 요약
 import { CsxController } from './modules/csx/csx.controller';   // v10.528 ~ 531 (D280) 1:1 문의 AI 답변 초안 · 이탈 위험 신호 · 메일 문구 · 계정 합치기
 import { LsyController } from './modules/lsy/lsy.controller';   // v10.524 ~ 527 (D279) 중복 매물 자동 탐지 · 사진 품질 검사 · 매물 동영상 · 신고 자동 분류
@@ -527,6 +529,8 @@ import { LeadService } from './modules/lead/lead.service';
     IntegTestController,   // v10.144 (D140) 운영 화면 › 외부 연동 › 결제 · 계좌 연결 확인
     SafenumController, SafenumAdminController,   // v10.145 (D141) 전화하기 · 통화 웹훅 · 운영 화면 「안심번호」
     LpxController,   // v10.549 ~ 552 (D286) (56) 매물 3 — 공개 /site/lpx · 회원 /lpx · 운영 /admin/lpx
+    StaffAdminController,   // v10.561 ~ 563 (D291) /admin/staff
+    PermSetsController,     // v10.562 ~ 564 (D291) /admin/perm(tasks · task-groups · role-groups/{key}/sets · conflicts · staff · mode · unmapped-routes)
     LsxController,   // v10.513 ~ 516 (D276) ㊻ 매물
     CsxController,   // v10.528 ~ 531 (D280) ㊿ 고객센터 · 회원
     LsyController,   // v10.524 ~ 527 (D279) ㊾ 매물 2

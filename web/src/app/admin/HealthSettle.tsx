@@ -15,9 +15,12 @@ interface SettleRow {
   from: string; to: string; seller: string; sellerName: string;
   gross: number | string; commission: number | string; commissionVat?: number | string; refund: number | string;
   carriedIn: number | string; net: number | string; carriedOut: number | string; status: string;
+  /* v10.560 (D290) 반품 배송비 — 판매자 몫 · 수수료 없음 */
+  returnShip?: number | string;
 }
 interface Settle {
   items: SettleRow[]; ready: { n: number; amount: number | string };
+  returnShip?: { n: number; amount: number | string };
   blocked: Array<{ code: string; name: string; reason: string }>; note?: string;
 }
 interface Rate {
@@ -320,6 +323,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       <h3 className="sec">주 정산 마감</h3>
       <div className="card pad">
         <p>마감 가능 <b>{n(s?.ready.n)}</b>건 · 상품 금액 <b className="money-sm">{n(s?.ready.amount)}원</b></p>
+        {Number(s?.returnShip?.n ?? 0) > 0 && <p className="muted" data-return-ship-ready={s?.returnShip?.n}>반품 배송비 <b>{n(s?.returnShip?.n)}</b>건 · <b className="money-sm">{n(s?.returnShip?.amount)}원</b> — 입점 주문 회원 사정 반품에서 뺀 왕복 배송비는 다음 마감에 판매자에게 더합니다(수수료 없음 · 직판은 회사 몫).</p>}
         <div className="form-grid">
           <label><span>정산 시작일 (월요일)</span><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
         </div>
@@ -337,7 +341,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
       {s && s.items.length === 0 && <p className="muted">아직 마감한 정산이 없습니다.</p>}
       {(s?.items ?? []).length > 0 && (
         <table className="tbl">
-          <thead><tr><th>기간</th><th>판매자</th><th>매출</th><th>수수료</th><th>환불</th><th>이월</th><th>지급액</th><th>상태</th><th>지급</th><th>계산서</th></tr></thead>
+          <thead><tr><th>기간</th><th>판매자</th><th>매출</th><th>수수료</th><th>환불</th><th>반품 배송비</th><th>이월</th><th>지급액</th><th>상태</th><th>지급</th><th>계산서</th></tr></thead>
           <tbody>
             {s!.items.map((r) => (
               <tr key={r.seller + r.from}>
@@ -346,6 +350,7 @@ export function HealthSettle({ onGo }: { onGo?: (tab: string) => void }) {
                 <td className="num-cell">{n(r.gross)}</td>
                 <td className="num-cell">{n(r.commission)}{Number(r.commissionVat ?? 0) > 0 && <small className="muted" data-settle-vat=""> + 부가세 {n(r.commissionVat)}</small>}</td>
                 <td className="num-cell">{n(r.refund)}</td>
+                <td className="num-cell" data-settle-return-ship={Number(r.returnShip ?? 0)}>{Number(r.returnShip ?? 0) > 0 ? `+${n(r.returnShip)}` : <span className="dim">—</span>}</td>
                 <td className="num-cell">{n(r.carriedIn)}</td>
                 <td className="num-cell">{Number(r.net) < 0 ? <b className="warn-text">{n(r.net)}</b> : <b>{n(r.net)}</b>}</td>
                 <td>{SST[r.status] ?? r.status}</td>

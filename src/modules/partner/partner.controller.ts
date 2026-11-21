@@ -106,7 +106,7 @@ export class PartnerController {
   })
   @ApiParam({ name: 'id', description: 'deliveryId' })
   @ApiResponse({ status: 422, description: 'NOT_ELIGIBLE', type: ErrorDto })
-  @Audit('LEAD_VIEW', 'LEAD')
+  @Audit('LEAD_VIEW', 'LEAD', { pick: ['fee', 'viewedAt', 'parts'] })
   view(@Param('id') id: string) { return this.lead.viewLead(id); }
 
   @Get('leads/:id/contact')

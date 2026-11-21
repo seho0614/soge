@@ -169,7 +169,7 @@ export class StaffIpController {
   /* v10.348 (docs/482) — 허용 IP → Nginx 반영: 화면은 스크립트를 보여 주기만(서버를 바꾸지 않음) · 사람이 운영 서버에서 돌린 뒤 「반영했음」 */
   @Get('admin/staff-access/nginx-script')
   @Roles('SUPER')
-  @Audit('STAFF_IP_NGINX_SCRIPT', 'SETTING')
+  @Audit('STAFF_IP_NGINX_SCRIPT', 'SETTING', { pick: ['count', 'hash', 'file', 'appliedSame'] })
   @ApiOperation({ summary: '허용 IP → Nginx 반영 스크립트 (v10.348 · SUPER)', description: '허용 IP 목록 · 목록 지문 · 마지막 반영 · 지금 접속 IP 들어 있음 · 반영 스크립트(bash). 서버를 바꾸지 않습니다 — 사람이 운영 서버 ubuntu 로 붙여 넣습니다.' })
   @ApiOkResponse({ type: StaffIpNginxScriptDto })
   nginxScript() { return this.svc.nginxScript(); }

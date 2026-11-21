@@ -26,18 +26,18 @@ const ymOk = (ym: unknown) => {
   return s;
 };
 
-export interface StatementLine { id: string; from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number }
+export interface StatementLine { id: string; from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; returnShip: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number }
 export interface StatementDoc {
   id: string | null; ym: string; preview: boolean;
   seller: { id: string; code: string; name: string; type: string; bizRegNo: string | null; ceoName: string | null; ecomRegNo: string | null; addr: string | null };
-  company: string; weeks: number; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; paid: number;
+  company: string; weeks: number; gross: number; fee: number; feeVat: number; refund: number; returnShip: number; carriedIn: number; net: number; carriedOut: number; paid: number;
   lines: StatementLine[]; madeAt: string | null; remadeAt: string | null; mailState: string; mailedAt: string | null; mailTo: string | null; note: string;
 }
 export interface StatementJobResult { ym: string | null; skipped: string | null; made: number; mailed: number; failed: number; noAddr: number; off: number }
 
 function docFrom(seller: StatementDoc['seller'], ym: string, c: Record<string, unknown>, row: Record<string, unknown> | null): StatementDoc {
   const lines = ((row ? row.lines : c.lines) as Array<Record<string, unknown>> | undefined ?? []).map((l) => ({
-    id: String(l.id ?? ''), from: String(l.from ?? '').slice(0, 10), to: String(l.to ?? '').slice(0, 10), gross: n(l.gross), fee: n(l.fee), feeVat: n(l.feeVat), refund: n(l.refund),
+    id: String(l.id ?? ''), from: String(l.from ?? '').slice(0, 10), to: String(l.to ?? '').slice(0, 10), gross: n(l.gross), fee: n(l.fee), feeVat: n(l.feeVat), refund: n(l.refund), returnShip: n(l.returnShip),
     carriedIn: n(l.carriedIn), net: n(l.net), carriedOut: n(l.carriedOut), status: String(l.status ?? ''), invoiceState: String(l.invoiceState ?? ''),
     invoiceNo: (l.invoiceNo as string | null) ?? null, items: n(l.items) }));
   const src = row ?? c;
@@ -45,6 +45,7 @@ function docFrom(seller: StatementDoc['seller'], ym: string, c: Record<string, u
   return {
     id: row ? String(row.id) : null, ym, preview: !row, seller, company: STMT_COMPANY,
     weeks: pick('weeks', 'weeks'), gross: pick('gross_amount', 'gross'), fee: pick('fee_amount', 'fee'), feeVat: pick('fee_vat', 'feeVat'), refund: pick('refund_amount', 'refund'),
+    returnShip: pick('return_ship_amount', 'returnShip'),   // v10.560 (D290)
     carriedIn: pick('carried_in', 'carriedIn'), net: pick('net_amount', 'net'), carriedOut: pick('carried_out', 'carriedOut'), paid: pick('paid_amount', 'paid'),
     lines, madeAt: (row?.made_at as string) ?? null, remadeAt: (row?.remade_at as string) ?? null,
     mailState: row ? String(row.mail_state) : 'NONE', mailedAt: (row?.mailed_at as string) ?? null, mailTo: (row?.mail_to as string) ?? null,
@@ -101,14 +102,14 @@ export async function statementsView(db: DatabaseService, mail: MailService, ymI
        SELECT DISTINCT st.seller_id FROM hlt_settlements st WHERE st.period_from >= ($1::text || '-01')::date AND st.period_from < (($1::text || '-01')::date + interval '1 month')
        UNION SELECT x.seller_id FROM hlt_seller_statements x WHERE x.ym = $1::text)
      SELECT s.id::text AS "sellerId", s.code, s.name, s.type, s.status, x.id::text AS id, (x.id IS NOT NULL) AS made,
-            x.weeks, x.gross_amount AS gross, x.fee_amount AS fee, x.fee_vat AS "feeVat", x.refund_amount AS refund, x.net_amount AS net, x.carried_out AS "carriedOut",
+            x.weeks, x.gross_amount AS gross, x.fee_amount AS fee, x.fee_vat AS "feeVat", x.refund_amount AS refund, x.return_ship_amount AS "returnShip", x.net_amount AS net, x.carried_out AS "carriedOut",
             x.paid_amount AS paid, x.mail_state AS "mailState", x.mail_to AS "mailTo", x.mailed_at AS "mailedAt", x.mail_error AS "mailError", x.mail_tries AS "mailTries",
             x.made_at AS "madeAt", x.remade_at AS "remadeAt"
        FROM sel JOIN hlt_sellers s ON s.id = sel.seller_id AND s.type IN ('TENANT', 'BRAND')
        LEFT JOIN hlt_seller_statements x ON x.seller_id = s.id AND x.ym = $1::text
       ORDER BY s.code`, [ym]);
   const num = (v: unknown) => (v == null ? null : n(v));
-  const items = rows.map((r): Record<string, unknown> => ({ ...r, weeks: num(r.weeks), gross: num(r.gross), fee: num(r.fee), feeVat: num(r.feeVat), refund: num(r.refund), net: num(r.net),
+  const items = rows.map((r): Record<string, unknown> => ({ ...r, weeks: num(r.weeks), gross: num(r.gross), fee: num(r.fee), feeVat: num(r.feeVat), refund: num(r.refund), returnShip: num(r.returnShip), net: num(r.net),
     carriedOut: num(r.carriedOut), paid: num(r.paid), mailTries: num(r.mailTries) }));
   return {
     ym, mailOn: st?.sw === 'on', day: n(st?.day ?? 5), mailReady: !!ready.ready, mailReason: (ready as { reason?: string | null }).reason ?? null,
@@ -156,6 +157,7 @@ function mailText(d: StatementDoc) {
     `매출: ${w(d.gross)}`,
     `판매수수료: ${w(d.fee)} (부가세 ${w(d.feeVat)})`,
     `환불 조정: ${w(d.refund)}`,
+    `반품 배송비: ${w(d.returnShip)} (회원 사정 반품에서 뺀 왕복 배송비 · 수수료 없음)`,
     `지급액 합계: ${w(d.net)} (지급 끝남 ${w(d.paid)})`,
     `다음 주로 이월: ${w(d.carriedOut)}`, '',
     '주별 명세와 인쇄용 정산서(PDF 저장)는 판매자센터 › 정산 › 월 정산서에서 보실 수 있습니다.',

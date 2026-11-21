@@ -45,6 +45,7 @@ export async function smsAdminView(db: DatabaseService) {
        SELECT a.id, public.fn_consent_at(a.id, 'MARKETING_NIGHT', now()) AS night
          FROM accounts a JOIN v_term_consent_current c ON c.account_id = a.id AND c.term_code = 'MARKETING' AND c.agreed
         WHERE a.status = 'ACTIVE' AND c.agreed_at > now() - interval '2 years'
+          AND NOT EXISTS (SELECT 1 FROM account_roles xr WHERE xr.account_id = a.id AND xr.role IN ('REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF', 'ACCOUNTANT'))   -- v10.563 (D291) 운영자 빼기(campaign.ts AUDIENCE_SQL 과 같음)
           AND coalesce(regexp_replace(a.phone, '[^0-9]', '', 'g'), '') ~ '^01[016789][0-9]{7,8}$')
      SELECT count(*) FILTER (WHERE b)::int AS buyers, count(*) FILTER (WHERE b AND night)::int AS "buyersNight",
             count(*) FILTER (WHERE r)::int AS rebuy, count(*) FILTER (WHERE r AND night)::int AS "rebuyNight"

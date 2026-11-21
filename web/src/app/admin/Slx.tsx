@@ -20,17 +20,17 @@ const ST_KO: Record<string, string> = { DRAFT: '마감', CONFIRMED: '확정', PA
 
 /* ── 판매자 월 정산서 ── */
 interface StmtRow { sellerId: string; code: string; name: string; type: string; status: string; id: string | null; made: boolean; weeks: number | null; gross: number | null; fee: number | null;
-  feeVat: number | null; refund: number | null; net: number | null; carriedOut: number | null; paid: number | null; mailState: string | null; mailTo: string | null; mailedAt: string | null;
+  feeVat: number | null; refund: number | null; returnShip?: number | null; net: number | null; carriedOut: number | null; paid: number | null; mailState: string | null; mailTo: string | null; mailedAt: string | null;
   mailError: string | null; madeAt: string | null; remadeAt: string | null }
 interface StmtView { ym: string; mailOn: boolean; day: number; mailReady: boolean; mailReason: string | null; made: number; sent: number; items: StmtRow[]; note: string }
-interface StmtLine { from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number }
+interface StmtLine { from: string; to: string; gross: number; fee: number; feeVat: number; refund: number; returnShip?: number; carriedIn: number; net: number; carriedOut: number; status: string; invoiceState: string; invoiceNo: string | null; items: number }
 export interface StmtDoc { id: string | null; ym: string; seller: { code: string; name: string; bizRegNo: string | null; ceoName: string | null; ecomRegNo: string | null; addr: string | null };
-  company: string; weeks: number; gross: number; fee: number; feeVat: number; refund: number; carriedIn: number; net: number; carriedOut: number; paid: number; lines: StmtLine[]; note: string; mailState: string }
+  company: string; weeks: number; gross: number; fee: number; feeVat: number; refund: number; returnShip?: number; carriedIn: number; net: number; carriedOut: number; paid: number; lines: StmtLine[]; note: string; mailState: string }
 
 /** 인쇄용 본문(A4) — 판매자센터 화면과 같은 칸 */
 export function statementHtml(d: StmtDoc) {
   const w = (v: number) => esc(Number(v ?? 0).toLocaleString('ko-KR'));
-  const rows = d.lines.map((l) => `<tr><td>${esc(l.from)} ~ ${esc(l.to)}</td><td class="r">${w(l.gross)}</td><td class="r">${w(l.fee)}</td><td class="r">${w(l.feeVat)}</td><td class="r">${w(l.refund)}</td>`
+  const rows = d.lines.map((l) => `<tr><td>${esc(l.from)} ~ ${esc(l.to)}</td><td class="r">${w(l.gross)}</td><td class="r">${w(l.fee)}</td><td class="r">${w(l.feeVat)}</td><td class="r">${w(l.refund)}</td><td class="r">${w(l.returnShip ?? 0)}</td>`
     + `<td class="r">${w(l.carriedIn)}</td><td class="r">${w(l.net)}</td><td>${esc(ST_KO[l.status] ?? l.status)}${l.invoiceNo ? ` · ${esc(l.invoiceNo)}` : ''}</td></tr>`).join('');
   return `<h1>월 정산서</h1>
     <table class="meta"><tbody>
@@ -38,9 +38,9 @@ export function statementHtml(d: StmtDoc) {
       <tr><td>판매자</td><td>${esc(d.seller.name)} (${esc(d.seller.code)})</td><td>사업자등록번호</td><td>${esc(d.seller.bizRegNo ?? '—')}</td></tr>
       <tr><td>대표</td><td>${esc(d.seller.ceoName ?? '—')}</td><td>통신판매업 신고</td><td>${esc(d.seller.ecomRegNo ?? '—')}</td></tr>
     </tbody></table>
-    <table><thead><tr><th>매출</th><th>판매수수료</th><th>수수료 부가세</th><th>환불 조정</th><th>지급액 합계</th><th>지급 끝남</th><th>다음 주로 이월</th></tr></thead>
-      <tbody><tr class="total sum"><td class="r">${w(d.gross)}</td><td class="r">${w(d.fee)}</td><td class="r">${w(d.feeVat)}</td><td class="r">${w(d.refund)}</td><td class="r">${w(d.net)}</td><td class="r">${w(d.paid)}</td><td class="r">${w(d.carriedOut)}</td></tr></tbody></table>
-    <table><thead><tr><th>주(월요일 시작)</th><th>매출</th><th>수수료</th><th>부가세</th><th>환불</th><th>이월 받음</th><th>지급액</th><th>상태 · 계산서</th></tr></thead><tbody>${rows || '<tr><td colspan="8">주 정산서가 없습니다.</td></tr>'}</tbody></table>
+    <table><thead><tr><th>매출</th><th>판매수수료</th><th>수수료 부가세</th><th>환불 조정</th><th>반품 배송비</th><th>지급액 합계</th><th>지급 끝남</th><th>다음 주로 이월</th></tr></thead>
+      <tbody><tr class="total sum"><td class="r">${w(d.gross)}</td><td class="r">${w(d.fee)}</td><td class="r">${w(d.feeVat)}</td><td class="r">${w(d.refund)}</td><td class="r">${w(d.returnShip ?? 0)}</td><td class="r">${w(d.net)}</td><td class="r">${w(d.paid)}</td><td class="r">${w(d.carriedOut)}</td></tr></tbody></table>
+    <table><thead><tr><th>주(월요일 시작)</th><th>매출</th><th>수수료</th><th>부가세</th><th>환불</th><th>반품 배송비</th><th>이월 받음</th><th>지급액</th><th>상태 · 계산서</th></tr></thead><tbody>${rows || '<tr><td colspan="9">주 정산서가 없습니다.</td></tr>'}</tbody></table>
     <p class="small">${esc(d.note)} 금액 단위 원. 지급은 결제대행사가 판매자 하위가맹점으로 합니다.</p>`;
 }
 
@@ -75,7 +75,7 @@ export function SlxStatements() {
               <tr key={r.sellerId} data-slx-stmt-row={r.id ?? ''}>
                 <td>{r.name} <span className="muted">{r.code}</span></td>
                 <td className="num">{r.made ? r.weeks : '—'}</td><td className="num">{won(r.gross)}</td><td className="num">{won(r.fee)}{r.feeVat ? <span className="muted"> ({won(r.feeVat)})</span> : null}</td>
-                <td className="num">{won(r.refund)}</td><td className="num"><b>{won(r.net)}</b></td><td className="num">{won(r.paid)}</td>
+                <td className="num">{won(r.refund)}{r.returnShip ? <span className="muted" data-slx-return-ship=""> (반품 배송비 +{won(r.returnShip)})</span> : null}</td><td className="num"><b>{won(r.net)}</b></td><td className="num">{won(r.paid)}</td>
                 <td>{r.made ? (MAIL_KO[r.mailState ?? 'NONE'] ?? r.mailState) : '안 만듦'}{r.mailTo ? <span className="muted"> {r.mailTo}</span> : null}{r.mailedAt ? <span className="muted"> {ymdhm(r.mailedAt)}</span> : null}
                   {r.mailError ? <div className="warn-text">{r.mailError}</div> : null}</td>
                 <td>

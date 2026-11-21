@@ -1,10 +1,10 @@
 'use server';
 import { cookies, headers } from 'next/headers';
-import { REF_COOKIE, VISITOR_COOKIE } from './api';
+import { REF_COOKIE, VISITOR_COOKIE, apiGet } from './api';
 
 const AT = 'sgb_at';
 const RT = 'sgb_rt';
-const DM = 'sgb_dm';   // v10.546 (D285) 기기 표지 — 무작위 값(HttpOnly · 2년) · 로그인 · 가입 때만 API 로 넘김 · API 는 해시만 남김(켜져 있을 때)
+const DM = 'sgb_dm';   // v10.546 (D285) 기기 표지 — 무작위 값(HttpOnly · 2년) · 로그인 · 가입 때만 API 로 넘김 · API 는 해시만 남김 · v10.559 스위치 켜졌을 때만 만듦
 const BASE = process.env.API_BASE ?? 'http://localhost:3000/api/v1';
 
 export interface Principal {
@@ -50,6 +50,13 @@ async function ensureDeviceMark(): Promise<void> {
   try {
     const jar = await cookies();
     const v = jar.get(DM)?.value;
+    /* v10.559 — 스위치(sfx.device_watch)가 켜졌을 때만 만듦 · 꺼져 있으면 있던 표지도 지움(처리방침에 기기 표지를 게시하기 전에는 쿠키를 남기지 않음 · 대표 11/21)
+     *   스위치 값은 공개 설정(/site-settings/public · 이 키 하나만 더함)에서 · 못 읽으면 꺼진 것으로 봄 */
+    const st = await apiGet<Record<string, string | null>>('/site-settings/public', 60).catch(() => ({} as Record<string, string | null>));
+    if (st['sfx.device_watch'] !== 'on') {
+      if (v) jar.delete(DM);
+      return;
+    }
     if (!v || !/^[A-Za-z0-9-]{16,64}$/.test(v)) {
       jar.set(DM, crypto.randomUUID(), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 730 });
     }

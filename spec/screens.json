@@ -1427,7 +1427,8 @@
     "PATCH /admin/businesses/{id}/verify",
     "POST /admin/reports/roles",
     "PATCH /admin/businesses/{id}/reject",
-    "GET /admin/accounts-counts"
+    "GET /admin/accounts-counts",
+    "GET /admin/staff"
    ],
    "nav": "SB-ADM-DSH-010",
    "state": "account.type"
@@ -3470,7 +3471,6 @@
     "GET /admin/accounts/{id}/login-lock",
     "DELETE /admin/accounts/{id}/login-lock",
     "POST /admin/accounts/{id}/password-reset-link",
-    "POST /admin/reports/roles",
     "GET /admin/accounts/{id}/notes",
     "POST /admin/accounts/{id}/notes",
     "POST /admin/signup-blocks",
@@ -5893,7 +5893,9 @@
     "POST /admin/acct/payroll/runs/{id}/paid",
     "GET /admin/acct/payroll/rates",
     "POST /admin/acct/payroll/rates",
-    "POST /admin/acct/payroll/wht-table"
+    "POST /admin/acct/payroll/wht-table",
+    "GET /admin/staff/employees/{id}/roles",
+    "POST /admin/staff/{accountId}/revoke-all"
    ],
    "note": "2026-11-20 v10.403 (D247 · docs/540) 직원(주민번호 · 계좌 없음) · 달 급여(초안 → 확정 → 지급) · 원천세(간이세액표) · 4대보험(요율 표 · 초안) · 전표 PAYROLL · PAYROLL_PAID"
   },
@@ -9581,6 +9583,183 @@
     "PUT /admin/opz/incident-settings"
    ],
    "note": "2026-11-21 v10.557 (D288 · docs/695) 장애 대응 절차 — 런북 6(시드 · 고치면 판 +1) · 장애 열기(opz.ir_enabled 처음 off · 단계 복사) · 운영 알림 OPZ_INCIDENT_OPEN(SEV1 ~ 3 모두 긴급 → 기존 대화방 · 당번 개인 텔레그램 · 30분 SUPER 길) · 열 때 당번 바로 호출(opz.ir_page_now 처음 off) · 단계 체크 · 진행 기록 쌓기만 · 누그러뜨림 → 끝(한 방향 · 그 알림 풀림) · 되돌아보기(확정하면 잠김 · 3일 넘으면 OPZ_REVIEW_DUE) · D272 장애 공지 올리기 · 잇기 · 끝냄 · 열 거리(UPTIME_DOWN 알림 · 잇지 않은 공지)"
+  },
+  {
+   "id": "SB-ADM-HRC-010",
+   "name": "회계 사원 카드",
+   "group": "ADM",
+   "url": "/admin/hr-card",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "PAYOUT"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/hr/employees/{id}/card",
+    "GET /admin/acct/employees"
+   ],
+   "note": "2026-11-21 v10.559 (docs/698) 사원 카드 — 회계 › 인사 맨 앞 · 직원 고르기(급여 직원 목록 재사용) · 기본 · 근태 · 휴가 · 급여 6개월 · 퇴직금 추계 · 계약 · 의무교육 · 평가 · 연장 근로 · 이번 주 근무표 한 장 · 읽기만 · SUPER · 지급 담당(급여 탭과 같음 · 세무사 못 봄) · 열람 사유(X-PII-Reason · 회원 상세와 같은 PiiReasonGate) · 감사 HR_CARD_VIEW · 개인정보 접속기록 target_type EMPLOYEE · 급여 탭 직원 이름 → #/hr-card/{id}"
+  },
+  {
+   "id": "SB-ADM-STF-010",
+   "name": "운영자 목록",
+   "group": "ADM",
+   "url": "/admin/staff-list",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/staff-list",
+   "apis": [
+    "GET /admin/staff",
+    "GET /admin/staff/employees/{id}/roles",
+    "POST /admin/staff/{accountId}/revoke-all"
+   ],
+   "note": "2026-11-21 v10.561 (D291 · docs/703) 직원 · 권한 › 운영자 목록 — 운영 역할 있는 계정만 · 연결 직원(직원 연결 없음 · 퇴사했는데 역할 남음) · 역할 · 기한 · 2단계 · 마지막 로그인 · 붙은 권한그룹 수 · 메일 원문은 SUPER · 역할 모두 거두기(SUPER · v10.563)"
+  },
+  {
+   "id": "SB-ADM-STF-020",
+   "name": "사원 권한",
+   "group": "ADM",
+   "url": "/admin/perm-staff",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-staff",
+   "apis": [
+    "GET /admin/perm/staff",
+    "GET /admin/perm/overview",
+    "GET /admin/perm/accounts/{id}",
+    "PUT /admin/perm/accounts/{id}"
+   ],
+   "note": "2026-11-21 v10.563 (D291 · docs/705) 사원마다 권한그룹(기한) · 개별 더하기/빼기 · 실제 권한 미리보기 · 함께 못 갖는 조합이면 422 PERM_CONFLICT"
+  },
+  {
+   "id": "SB-ADM-STF-030",
+   "name": "권한그룹",
+   "group": "ADM",
+   "url": "/admin/perm-roles",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-roles",
+   "apis": [
+    "GET /admin/perm/overview",
+    "GET /admin/perm/task-groups",
+    "GET /admin/perm/role-groups/{key}/sets",
+    "PUT /admin/perm/role-groups/{key}/sets",
+    "GET /admin/perm/conflicts",
+    "PUT /admin/perm/conflicts/{code}"
+   ],
+   "note": "2026-11-21 v10.562 (D291 · docs/704) 권한그룹 = 업무그룹 × 수준(perm_role_group_sets) + 업무 더하기 · 빼기(effect) · 실제 여는 업무 미리보기 · 함께 못 갖는 조합(C710 · D173)"
+  },
+  {
+   "id": "SB-ADM-STF-040",
+   "name": "업무그룹",
+   "group": "ADM",
+   "url": "/admin/perm-groups",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-groups",
+   "apis": [
+    "GET /admin/perm/task-groups",
+    "PUT /admin/perm/task-groups/{key}",
+    "GET /admin/perm/tasks"
+   ],
+   "note": "2026-11-21 v10.562 (D291 · docs/704) 업무그룹 만들기 · 고치기 · 끄기 · 업무 넣고 빼기 — 업무 하나가 여러 업무그룹에(perm_task_group_items)"
+  },
+  {
+   "id": "SB-ADM-STF-050",
+   "name": "업무 목록",
+   "group": "ADM",
+   "url": "/admin/perm-tasks",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-tasks",
+   "apis": [
+    "GET /admin/perm/tasks",
+    "POST /admin/perm/tasks",
+    "PUT /admin/perm/tasks/{key}"
+   ],
+   "note": "2026-11-21 v10.562 (D291 · docs/704) 업무(탭) 이름 · 설명 · 수준 · 켜고 끄기 · 주소 연결 수(0 이면 「주소 연결 없음」) · 탭 목록에 있는데 업무에 없는 것 더하기"
+  },
+  {
+   "id": "SB-ADM-STF-060",
+   "name": "바뀐 기록",
+   "group": "ADM",
+   "url": "/admin/perm-log",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "bo": "#/perm-log",
+   "apis": [
+    "GET /admin/reports/roles/changes",
+    "GET /admin/perm/changes"
+   ],
+   "note": "2026-11-21 v10.563 (D291 · docs/705) 역할 주고 거둔 기록(ADMIN · SUPER) · 업무 권한 바꾼 기록(SUPER) — 고칠 수 없음"
+  },
+  {
+   "id": "SB-ADM-STF-070",
+   "name": "판정 방식",
+   "group": "ADM",
+   "url": "/admin/perm-admin/mode",
+   "p": "P1",
+   "roles": [
+    "SUPER"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-DSH-010",
+   "apis": [
+    "GET /admin/perm/mode",
+    "PUT /admin/perm/mode",
+    "GET /admin/perm/unmapped-routes"
+   ],
+   "note": "2026-11-21 v10.564 (D291 · docs/706) 직원 · 권한 › 업무별 권한 위 상자 — perm.mode ROLE(처음) · COMPARE(다름 기록) · GROUPS(연결 안 된 /admin 주소 0 · 24시간 다름 0 일 때만 · 서버 · DB 가 막음)"
+  },
+  {
+   "id": "SB-ADM-HRS-050",
+   "name": "사무 내 인사 — 내 카드",
+   "group": "ADM",
+   "url": "/admin/my-hr/card",
+   "p": "P1",
+   "roles": [
+    "SUPER",
+    "ADMIN",
+    "PAYOUT",
+    "REVIEWER",
+    "PARTNER_MAL",
+    "PARTNER_AFF"
+   ],
+   "gates": [],
+   "nav": "SB-ADM-HRM-050",
+   "apis": [
+    "GET /admin/me/hr/card",
+    "GET /admin/me/hr/payslips/{lineId}"
+   ],
+   "note": "2026-11-21 v10.567 (docs/709) 내 인사 맨 위 「내 카드」(접는 칸) — 관리자 사원 카드(SB-ADM-HRC-010)와 같은 칸 모양 · 본인 것만(직원 번호 안 받음) · 기본 · 근태 · 연차 · 휴가 신청 · 내 급여명세서 목록(금액 없음 · 보기 · 인쇄) · 근로계약서 상태 · 의무교육 · 평가(닫힌 차례의 내 결과만 · 의견 없음) · 연장 근로 · 이번 주 근무표 · 퇴직금 추계 없음 · 열람 사유 · 감사 없음 · 자세히는 같은 화면 안 칸으로 · 연결 없으면 「연결된 직원이 없습니다」 · 세무사 빠짐"
   }
  ],
  "deferred": [

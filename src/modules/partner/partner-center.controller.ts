@@ -331,7 +331,7 @@ export class PartnerCenterAdminController {
   @Post('cash/auto-run')
   @Roles('ADMIN', 'SUPER')   // v10.194 — 돈을 움직이는 일은 ADMIN 만(안심 파트너 담당 제외)
   @ApiOperation({ summary: '자동 청구 한 번 돌리기', description: '자동 청구가 켜져 있고 잔액이 기준 미만인 파트너 전부' })
-  @Audit('LEAD_CASH_AUTO_RUN', 'PARTNER')
+  @Audit('LEAD_CASH_AUTO_RUN', 'PARTNER', { pick: ['ran'] })
   autoRun() { return this.cash.runAutoAll(); }
 
   @Get('cash/:partnerId')

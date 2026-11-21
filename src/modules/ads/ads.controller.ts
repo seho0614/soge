@@ -179,7 +179,7 @@ export class AdsController {
       '저장된 성향은 광고를 고르는 데만 쓰며 광고주에게 제공하지 않습니다. 언제든 해지할 수 있습니다.',
   })
   @ApiResponse({ status: 422, description: 'CONSENT_REQUIRED · CONSENT_UNAVAILABLE · BAD_ANSWER', type: ErrorDto })
-  @Audit('PROFILE_REGISTER', 'ACCOUNT')
+  @Audit('PROFILE_REGISTER', 'ACCOUNT', { pick: ['consentedAt'] })
   register(@Body() dto: ProfileRegisterDto) {
     return this.svc.register(dto.answers, dto.consent);
   }

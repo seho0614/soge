@@ -261,6 +261,7 @@ export class HealthSellerService {
     const s = await this.seller();
     return this.db.query(
       `SELECT st.id, st.period_from AS "from", st.period_to AS "to", st.gross_amount AS gross, st.commission, st.commission_vat AS "commissionVat", st.refund_amount AS refund,
+              st.return_ship_amount AS "returnShip",
               st.carried_in AS "carriedIn", st.net_amount AS net, st.carried_out AS "carriedOut", st.status,
               st.invoice_state AS "invoiceState", st.invoice_no AS "invoiceNo", st.confirmed_at AS "confirmedAt", st.paid_at AS "paidAt",
               (SELECT count(*)::int FROM hlt_settlement_items i WHERE i.settlement_id = st.id) AS "items",

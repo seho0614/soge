@@ -22,6 +22,7 @@
     "fee": "Sales commission",
     "feeVat": "VAT on commission",
     "refund": "Refund adjustment",
+    "returnShip": "Return shipping",
     "net": "Total payout",
     "paid": "Paid out",
     "carriedOut": "Carried to next week",

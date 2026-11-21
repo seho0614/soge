@@ -1327,7 +1327,14 @@ export function AcctPayroll() {
     () => { setF({ name: '', joinedOn: '', monthlyBase: '', nontax: '200000', dependents: '1' }); e.reload(); }, (r) => r.note);
   const leave = (x: Emp) => {
     const d = prompt(`${x.name} 퇴사일(YYYY-MM-DD)`, kstYm() + '-28');
-    if (d) void a.run(`l${x.id}`, () => api<{ note: string }>(`/admin/acct/employees/${x.id}`, { method: 'PATCH', body: JSON.stringify({ leftOn: d }) }), e.reload, (r) => r.note);
+    if (d) void a.run(`l${x.id}`, () => api<{ note: string }>(`/admin/acct/employees/${x.id}`, { method: 'PATCH', body: JSON.stringify({ leftOn: d }) }), () => { e.reload(); void askStaffRevoke(x, d); }, (r) => r.note);
+  };
+  /* v10.563 (D291 · docs/705) — 연결 계정에 운영 역할이 남으면 묻기(그대로 두면 운영 알림 STAFF_LEFT_ROLE · 직원 · 권한 › 운영자 목록에 「퇴사 · 역할 남음」) */
+  const askStaffRevoke = async (x: Emp, d: string) => {
+    const r = await api<{ accountId: string | null; roles: string[] }>(`/admin/staff/employees/${x.id}/roles`).catch(() => null);
+    if (!r?.accountId || !r.roles.length) return;
+    if (!confirm(`${x.name} 님 계정에 운영 역할(${r.roles.join(', ')})이 남아 있습니다.\n운영 역할도 거둘까요?`)) { a.setMsg('운영 역할은 그대로 두었습니다 — 운영 알림 「퇴사 직원 계정에 운영 역할 남음」이 올라갑니다.'); return; }
+    void a.run(`rv${x.id}`, () => api<{ note: string }>(`/admin/staff/${r.accountId}/revoke-all`, { method: 'POST', body: JSON.stringify({ reason: `퇴사(${d}) — 급여 › 직원에서 거둠` }) }), undefined, (q) => q.note);
   };
   const create = () => void a.run('run', () => api<{ note: string }>('/admin/acct/payroll/runs', { method: 'POST', body: JSON.stringify({ ym }) }), p.reload, (r) => r.note);
   const editGross = (l: PayLine) => {
@@ -1379,7 +1386,7 @@ export function AcctPayroll() {
       {e.data && (
         <table className="tbl" data-acct-employees={e.data.items.length}><thead><tr><th>이름</th><th>입사</th><th>퇴사</th><th className="num">월 기본급</th><th className="num">비과세</th><th>가족</th><th /></tr></thead>
           <tbody>{e.data.items.map((x) => (
-            <tr key={x.id} className={x.active ? undefined : 'dim'}><td>{x.name}</td><td>{x.joinedOn}</td><td>{x.leftOn ?? ''}</td><td className="num">{won(x.monthlyBase)}</td><td className="num">{won(x.nontax)}</td><td>{x.dependents}</td>
+            <tr key={x.id} className={x.active ? undefined : 'dim'}><td><a href={`#/hr-card/${x.id}`} data-hr-card-link={x.id} title="사원 카드">{x.name}</a></td><td>{x.joinedOn}</td><td>{x.leftOn ?? ''}</td><td className="num">{won(x.monthlyBase)}</td><td className="num">{won(x.nontax)}</td><td>{x.dependents}</td>
               <td>{e.data!.canEdit && !x.leftOn && <button className="btn-sm btn-plain" onClick={() => leave(x)}>퇴사</button>}</td></tr>))}</tbody></table>
       )}
       {e.data?.canEdit && (

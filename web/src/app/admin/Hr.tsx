@@ -249,3 +249,8 @@ export function MyHr() {
     </section>
   );
 }
+
+
+/* v10.567 (docs/709) 내 사원 카드(MyHrCard.tsx)의 「보기 · 인쇄」가 같은 인쇄 창을 씀 */
+export { printSlip };
+export type { Slip };

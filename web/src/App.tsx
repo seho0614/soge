@@ -75,6 +75,8 @@ import { HrAttend, HrLeave, AcctPayslip, AcctYearend, MyHr } from './app/admin/H
 import { HrxOvertime, HrxShifts, HrxBooking, HrxStocktake, MyHrx } from './app/admin/Hrx';   // v10.471 ~ 474 (D265) 인사 4
 import { OfcCalendar, OfcTasks, OfcTrips, OfcNotifyBox, BrowserNotify } from './app/admin/Ofc';   // v10.462 ~ 465 (D263) 사무 2
 import { HrTraining, HrContracts, HrReviews, HrRecruit, MyHrMore } from './app/admin/HrPeople';   // v10.458 ~ 461 (D262)
+import { HrCard } from './app/admin/HrCard';   // v10.559 (docs/698) 사원 카드
+import { MyHrCard } from './app/admin/MyHrCard';   // v10.567 (docs/709) 내 사원 카드(본인)
 import { ApprovalInbox, ApprovalLines, BudgetPeriod, CorpDocs } from './app/admin/Office';   // v10.424 ~ 427 (D253) 사무 · 분기 · 연 예산
 import { ItsAssets, ItsSuggest, ItsSurvey } from './app/admin/Its';   // v10.491 ~ 493 (D270) 사무 · 보안
 import { LglLicenses, LglReviews, LglCases, LglInsurance } from './app/admin/Legal';   // v10.486 ~ 489 (D269) 법무
@@ -83,6 +85,8 @@ import { AcctInsurance, AcctWageStatements, AcctWhtReturn } from './app/admin/Ac
 import { AcctAccounts, AcctBank, AcctCards, AcctCashflow, AcctExpenses, AcctJournal, AcctMonth, AcctPurchases, AcctReport, AcctStock, AcctTax, AcctStatements, AcctLedger, AcctAssets, AcctBudget, AcctVatForm, AcctAging, AcctYearClose, AcctPayroll, AcctPg, AcctManual, AcctSeverance, AcctCorpTax, AcctParties, AcctContracts, AcctRequisitions, AcctImports, AcctExports, AcctPos, AcctTaxInbox } from './app/admin/Acct';   // v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계
 import { MySessions, SettingScheduleBox } from './app/admin/OpsPlanBoxes';   // v10.377 · 380 (docs/513 · 516) 설정 예약 변경 · 내 로그인 기기
 import { StaffAccess } from './app/admin/StaffAccess';   // v10.226 (D195)
+import { StaffList, PermStaff, PermRoles, PermGroups, PermTasks, PermLog, PermModeBox } from './app/admin/StaffPerm';   // v10.561 ~ 564 (D291) 직원 · 권한
+import { TAB_RENAME } from './lib/adminMenu';   // v10.561 (D291) 옮긴 탭 이름
 import { HelpManual } from './app/admin/HelpManual';   // v10.203 (D180)
 import { FaqAdmin } from './app/admin/FaqAdmin';   // v10.332 (D224)
 import { OpsGuide } from './app/admin/OpsGuide';   // v10.339 (D229)
@@ -199,6 +203,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   /* v10.286 (D213) — 운영자 게시판은 운영 역할 모두 */
   'ops-board': ['ADMIN', 'SUPER', 'REVIEWER', 'PAYOUT', 'PARTNER_MAL', 'PARTNER_AFF'],
   'perm-admin': ['SUPER'],   // v10.443 (D258) 권한 관리는 SUPER 만
+  'staff-list': ['ADMIN', 'SUPER'], 'perm-log': ['ADMIN', 'SUPER'], 'perm-staff': ['SUPER'], 'perm-roles': ['SUPER'], 'perm-groups': ['SUPER'], 'perm-tasks': ['SUPER'],   // v10.561 ~ 563 (D291) 권한 관리는 SUPER 만
   'prx-popup': ['ADMIN', 'SUPER'], 'prx-refevent': ['ADMIN', 'SUPER'], 'prx-adreport': ['ADMIN', 'SUPER'], 'prx-adab': ['ADMIN', 'SUPER'],   // v10.517 ~ 520 (D277)
   'opx-archive': ['SUPER'], 'opx-risk': ['ADMIN', 'SUPER'], 'opx-bulk': ['ADMIN', 'SUPER', 'REVIEWER'], 'opx-switches': ['ADMIN', 'SUPER'],   // v10.509 ~ 512 (D275)
   'csx-aidraft': ['ADMIN', 'SUPER'], 'csx-churn': ['ADMIN', 'SUPER'], 'csx-mailtpl': ['ADMIN', 'SUPER'], 'csx-merge': ['ADMIN', 'SUPER'],   // v10.528 ~ 531 (D280) — 메일 문구 저장 · 합치기 승인은 서버가 SUPER 만
@@ -209,6 +214,7 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'ofc-calendar': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-tasks': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],
   'ofc-trips': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'], 'ofc-notify': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.462 ~ 465 (D263) 사무 2 · 세무사 빠짐
   'hr-training': ['SUPER', 'ADMIN'], 'hr-contract': ['SUPER', 'ADMIN'], 'hr-review': ['SUPER', 'ADMIN'], 'hr-recruit': ['SUPER', 'ADMIN'],   // v10.458 ~ 461 (D262)
+  'hr-card': ['SUPER', 'PAYOUT'],   // v10.559 (docs/698) 사원 카드 — 급여 탭(acct-payroll)과 같음 · 'acct-' 로 시작하지 않아 세무사 읽기에도 안 걸림
   ...Object.fromEntries(SUPER_ONLY.map((t) => [t, ['SUPER']])),
 };
 /* 2026-10-21 결정 — SUPER 는 모든 탭(서버 AuthGuard 와 같은 규칙: SUPER 는 권한 검사를 항상 통과) */
@@ -327,7 +333,7 @@ function Console() {
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(visible) })).filter((g) => g.tabs.length);
   /* v10.32 — 상단바에서 켜 둘 묶음(하위 화면이 시안에서 다른 묶음이면 그 묶음 · SUB_GROUP). 탭 줄은 cur 그대로 */
   const navKey = (sub && SUB_GROUP[`${tab}/${sub}`]) || cur.key;
-  const label = (t: Tab) => TABS.find(([k]) => k === t)?.[1] ?? t;
+  const label = (t: Tab) => TAB_RENAME[t] ?? TABS.find(([k]) => k === t)?.[1] ?? t;   // v10.561 (D291)
   const page = (sub && SUB_PAGE[`${tab}/${sub}`]) || PAGE[tab];
   const roleText = roles.filter((r) => ROLE_NAME[r]).map((r) => ROLE_NAME[r]).join(' · ');
   /* v10.196 — 간주 결제가 켜진 채 주문 받기가 켜짐 = 손님 주문이 돈 없이 결제 완료됨. 설정을 못 읽었으면(키 없음) 띄우지 않음 */
@@ -566,6 +572,7 @@ function Console() {
       {tab === 'hr-leave' && <HrLeave />}
       {tab === 'acct-payslip' && <AcctPayslip />}
       {tab === 'acct-yearend' && <AcctYearend />}
+      {tab === 'my-hr' && <MyHrCard />}
       {tab === 'my-hr' && <MyHr />}
       {tab === 'my-hr' && <MyHrx />}
       {tab === 'hrx-overtime' && <HrxOvertime />}
@@ -581,6 +588,7 @@ function Console() {
       {tab === 'hr-contract' && <HrContracts />}
       {tab === 'hr-review' && <HrReviews />}
       {tab === 'hr-recruit' && <HrRecruit />}
+      {tab === 'hr-card' && <PiiReasonGate what="사원 카드"><HrCard /></PiiReasonGate>}
       {tab === 'acct-taxinbox' && <AcctTaxInbox />}
       {tab === 'acct-exports' && <AcctExports />}
       {tab === 'acct-po' && <AcctPos />}
@@ -604,6 +612,13 @@ function Console() {
       {tab === 'sfx-retention' && <SfxRetention isSuper={roles.includes('SUPER')} />}
       {tab === 'perm-admin' && <PermAdmin />}
       {tab === 'staff-access' && <StaffAccess />}
+      {tab === 'perm-admin' && <PermModeBox />}
+      {tab === 'staff-list' && <StaffList />}
+      {tab === 'perm-staff' && <PermStaff />}
+      {tab === 'perm-roles' && <PermRoles />}
+      {tab === 'perm-groups' && <PermGroups />}
+      {tab === 'perm-tasks' && <PermTasks />}
+      {tab === 'perm-log' && <PermLog />}
       {tab === 'ads' && <Ads />}
       {tab === 'codes' && <CodeLabels />}
       {tab === 'integ' && <Integ />}

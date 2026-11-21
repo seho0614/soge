@@ -305,7 +305,7 @@ export class AffiliateController {
     summary: '정산 배치 실행',
     description: '확정된 주문을 모아 정산서를 만듭니다. **지급은 별도 승인**입니다.',
   })
-  @Audit('PARTNER_SETTLE_RUN', 'SETTLEMENT')
+  @Audit('PARTNER_SETTLE_RUN', 'SETTLEMENT', { pick: ['ok', 'created'] })
   runSettle(@Body() dto: SettleRunDto) { return this.admin.runSettle(dto); }
 
   /* ── 마케팅자료 · 파트너가이드 등록 (D007) ─────────────────── */

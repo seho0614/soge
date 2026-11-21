@@ -447,7 +447,7 @@
   },
   "ssettle": {
     "title": "Settlement",
-    "help": "Every Monday we close the previous week (orders delivered more than 7 days ago). The payment provider pays your account. Orders refunded after settlement are deducted in the next cycle.",
+    "help": "Every Monday we close the previous week (orders delivered more than 7 days ago). The payment provider pays your account. Orders refunded after settlement are deducted in the next cycle. Round-trip shipping kept from change-of-mind returns is added back to you as return shipping (no commission).",
     "empty": "No closed settlements yet.",
     "errLoad": "Could not load the details.",
     "period": "Period",
@@ -455,6 +455,7 @@
     "commission": "Commission",
     "commissionVat": "(+ VAT {amt})",
     "refund": "Refund adjustment",
+    "returnShip": "Return shipping",
     "net": "Payout",
     "status": "Status",
     "carried": "carried over {amt}",
@@ -471,7 +472,8 @@
     },
     "k": {
       "SALE": "Sale",
-      "REFUND": "Refund adjustment"
+      "REFUND": "Refund adjustment",
+      "RETURN_SHIP": "Return shipping fee"
     },
     "payout": {
       "READY": "Payout requested",

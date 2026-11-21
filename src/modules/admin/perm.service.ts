@@ -161,7 +161,7 @@ export async function saveRoleGroup(db: DatabaseService, key: string,
       `INSERT INTO perm_role_groups (key, name, kind, note, active, created_by) VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, kind = EXCLUDED.kind, note = EXCLUDED.note, active = EXCLUDED.active, updated_at = now()`,
       [key, (b.name ?? '').trim().slice(0, 40) || key, kind, b.note?.trim().slice(0, 200) || null, b.active !== false, actor]);
-    await db.query(`DELETE FROM perm_role_group_items WHERE group_key = $1`, [key]);
+    await db.query(`DELETE FROM perm_role_group_items WHERE group_key = $1 AND effect = 'ALLOW'`, [key]);   // v10.562 (D291) 빼기(DENY) · 세트는 새 화면(권한그룹)에서
     if (items.length) await db.query(
       `INSERT INTO perm_role_group_items (group_key, task_key, level)
        SELECT $1, x.t, x.l FROM jsonb_to_recordset($2::jsonb) AS x(t text, l text) ON CONFLICT DO NOTHING`,
@@ -211,6 +211,12 @@ export async function saveAccount(db: DatabaseService, id: string,
     for (const o of ovs) await db.query(
       `INSERT INTO perm_account_overrides (account_id, task_key, level, effect, expires_at, reason, granted_by) VALUES ($1::uuid, $2, $3, $4, $5::timestamptz, $6, $7)`,
       [id, o.taskKey, o.level, o.effect, dateOrNull(o.expiresAt), (o.reason ?? reason).trim().slice(0, 200) || reason, actor]);
+    if (!acc.sup) {   // v10.563 (D291) 함께 못 갖는 조합(정산 승인 ↔ 지급 실행 등) — 422 PERM_CONFLICT(perm-sets 는 이 파일을 가져오므로 늦게 불러 고리를 피함)
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { assertNoConflict } = require('./perm-sets') as typeof import('./perm-sets');   // 부르는 순간에 가져옴(서로 가져오는 고리)
+      const effRows = await db.query<{ task_key: string; level: string }>(`SELECT task_key, level FROM fn_perm_effective($1::uuid)`, [id]);
+      await assertNoConflict(db, new Set(effRows.map((e) => `${e.task_key}:${e.level}`)), '이 사원의 권한');
+    }
     await changed(db, 'ACCOUNT', id, 'SAVE', { kind, groups: groups.map((g) => g.key), overrides: ovs.length, super: acc.sup }, reason, actor);
   });
   return { ok: true, id, note: acc.sup ? '저장했습니다 — 이 사람은 SUPER 라 권한그룹과 상관없이 모든 권한입니다.' : '개인권한을 저장했습니다 — 길어야 1분 안에 반영됩니다.' };
