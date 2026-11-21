@@ -47,7 +47,7 @@ one() {   # $1 시험 파일 · $2 host|box · $3 단계 이름(시간 기록)
   echo "$1 | $(echo "$out" | grep -E '^결과' | tail -1)" | tee -a "$LOG"
   echo "$out" | grep '^FAIL' | sed 's/^/    /' | tee -a "$LOG"
 }
-ALL=$(cd "$Q" && ls test_v109*.py test_v11*.py test_v12*.py test_v13*.py test_v14*.py test_v15*.py 2>/dev/null | sort)
+ALL=$(cd "$Q" && ls test_v109*.py test_v11*.py test_v12*.py test_v13*.py test_v14*.py test_v15*.py test_v16*.py 2>/dev/null | sort)
 T0=$(date +%s)
 for f in $HOST; do [ -f "$Q/$f" ] && one "$f" host host; done
 T1=$(date +%s)
