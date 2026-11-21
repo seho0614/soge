@@ -22,6 +22,7 @@
 - partner-affiliate.md
 - partner-center-account-basis.md
 - point-cashout.md
+- staff-permission-groups.md
 - subscription-referral-code.md
 - super-all-permissions.md
 - tailwind-adoption.md
