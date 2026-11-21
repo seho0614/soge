@@ -128,10 +128,14 @@ export class ListingRepository {
       if (!okType) p = { ...p, cursor: null };
     }
     const where = this.filters(p);
+    /* v10.558 (docs/696) 「끌어올림」 표시는 끌어올림이 자리를 바꾸는 최신순에서만 — 소개비순 · 인기순 등에서는 자리가 그대로라 표시하지 않음(docs/653) */
+    const bumpLabel = !rel && k === KEY.RECENT
+      ? `CASE WHEN bx.listing_id IS NULL THEN NULL WHEN bx.kind = 'PAID' THEN '유료 끌어올림' ELSE '끌어올림' END`
+      : 'NULL::text';
 
     return this.db.query(
       `SELECT ${this.CARD}, (${k.expr})::text AS "_sk", l.category_id::text AS "_cid",
-              CASE WHEN bx.listing_id IS NULL THEN NULL WHEN bx.kind = 'PAID' THEN '유료 끌어올림' ELSE '끌어올림' END AS "bumpLabel"   /* v10.515 (D276) */   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
+              ${bumpLabel} AS "bumpLabel"   /* v10.515 (D276) · v10.558 최신순만 */   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
          FROM listings l ${this.JOINS}
          LEFT JOIN lsx_bump_live bx ON bx.listing_id = l.id   /* v10.515 (D276) 끌어올림 효과 중 */
         WHERE ${where}
