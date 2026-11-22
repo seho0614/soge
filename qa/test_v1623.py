@@ -132,10 +132,11 @@ if API and DB and reachable(API):
     lk = psql(f"SELECT count(*) FROM sec2_tab_help WHERE doc_code = 'ADMIN_GUIDE' AND tab_key = ANY ({RK})")
     ok('② DB — 지금 판 3판 이상 · 4만 자 안 · TABS 모든 키 절 · D305 잇기 모두',
        '|' in cur and int(cur.split('|')[0]) >= 3 and int(cur.split('|')[1]) <= 40000 and has == str(len(TABS)) and lk == str(len(K305)), f"{cur} {has}/{len(TABS)} {lk}/{len(K305)}")
-    um = psql_in("BEGIN;\nINSERT INTO help_docs (code, version, title, body) VALUES ('USER_MANUAL', 999999, '시험1623', repeat('가', 20001));\nROLLBACK;\n")
+    UMAX = 30000 if VT >= (10, 634) else 20000   # v10.634 (D307 · docs/778) 사용자 설명서 3만 자
+    um = psql_in(f"BEGIN;\nINSERT INTO help_docs (code, version, title, body) VALUES ('USER_MANUAL', 999999, '시험1623', repeat('가', {UMAX + 1}));\nROLLBACK;\n")
     ag = psql_in("BEGIN;\nINSERT INTO help_docs (code, version, title, body) VALUES ('ADMIN_GUIDE', 999999, '시험1623', repeat('가', 40001));\nROLLBACK;\n")
     ag2 = psql_in("BEGIN;\nINSERT INTO help_docs (code, version, title, body) VALUES ('ADMIN_GUIDE', 999999, '시험1623', '### 시험 [zz-1623]\n' || repeat('가', 30000));\nSELECT 'ok1623';\nROLLBACK;\n")
-    ok('② 한도 — USER_MANUAL 2만 1자 · ADMIN_GUIDE 4만 1자는 CHECK 가 막음 · ADMIN_GUIDE 3만 자는 들어감(모두 ROLLBACK)',
+    ok(f'② 한도 — USER_MANUAL {UMAX + 1}자 · ADMIN_GUIDE 4만 1자는 CHECK 가 막음 · ADMIN_GUIDE 3만 자는 들어감(모두 ROLLBACK)',
        'help_docs_body_len' in um and 'help_docs_body_len' in ag and 'ok1623' in ag2, f"{um[-90:]} | {ag[-90:]} | {ag2[-60:]}")
     h1 = call('GET', f"/admin/help/tab?key=queue&label={q('검수 큐')}", None, TS)
     g = call('GET', '/admin/help/guide', None, TS)
