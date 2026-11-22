@@ -2,7 +2,7 @@
   ① 규칙 — psql 글 안 `key = 'i18n.enabled'` · `key IN ('a.b', 'c.d')` · f-string 고정 부분에서 키를 찾음 · SELECT … FROM site_settings 는 SETREAD(같은 잠금)
      · 키 없는 SETREAD 는 PAR 그대로 · perm.mode 같은 키를 바꾸면 SOLO(SETGLOBAL) · 코드 검사 글자(psql 밖)는 세지 않음
   ② 실제 시험 — 11/22 부딪힌 i18n.enabled 시험 5개(1093 · 1104 · 1105 · 1119 · 1296)가 모두 잠금 set:i18n(서로 동시에 안 돎)
-     · perm.mode · admin.mfa_required 를 바꾸는 시험(1564 · 1631 · 1196_daily)은 SOLO
+     · perm.mode · admin.mfa_required 를 바꾸는 시험(1564 · 1631 · 1196_daily)은 SOLO · 묶음 실행 POST /admin/…/run 은 잠금 job
   ③ 손 목록 reg_solo_force.txt 는 3줄(1570 · 1420 · 1421)로 되돌림 · 문서 782 · 판
   (파일만 읽음 · 임시 폴더는 스스로 지움 — 두 번 돌아도 통과)
 """
@@ -65,6 +65,10 @@ rows = {r[0]: (r[2], r[3], r[1]) for r in RC.classify(HERE, K)} if RC else {}
 I18N = ['test_v1093.py', 'test_v1104.py', 'test_v1105.py', 'test_v1119.py', 'test_v1296.py']
 ok('② i18n.enabled 시험 5개 — 모두 잠금 set:i18n(LOCK) · 서로 동시에 안 돎',
    all(rows.get(t, ('',))[0] == 'LOCK' and 'set:i18n' in rows.get(t, ('', []))[1] for t in I18N), str({t: rows.get(t, ('',))[:2] for t in I18N}))
+JR = ['test_v1382.py', 'test_v1383.py', 'test_v1423.py', 'test_v1428.py', 'test_v1433.py']
+ok('② 묶음 실행 POST /admin/…/run(전표 journal/run)을 부르는 시험은 잠금 job — 11/22 전체 점검 test_v1382 가 동시 단계에서 1423 · 1428 · 1433 의 journal/run 에 걸림',
+   all('job' in rows.get(t, ('', []))[1] for t in JR) and RC is not None and any(n == 'JOB' and r.search("POST /admin/acct/journal/run None") for n, r in RC.CALL_RULES),
+   str({t: rows.get(t, ('', []))[:2] for t in JR}))
 GL = ['test_v1564.py', 'test_v1631.py', 'test_v1196_daily.py']
 ok('② perm.mode · admin.mfa_required 를 바꾸는 시험은 SOLO', all(rows.get(t, ('',))[0] == 'SOLO' for t in GL), str({t: rows.get(t, ('',))[:1] for t in GL}))
 

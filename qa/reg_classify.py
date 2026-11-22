@@ -19,7 +19,7 @@
     SETREAD  v10.638 설정 값을 읽어 확인 — psql 의 SELECT … FROM site_settings → 키가 있으면 같은 잠금(set:앞마디) · 키가 없으면 그대로(PAR)
     SETGLOBAL v10.638 설정을 바꾸는데 그 키가 모든 요청에 걸리는 것(권한 판정 · 운영자 2단계 · 로그인 잠금 · 점검 시간 · 가입 열기 · 나라 막기 …) → SOLO
              (11/22 test_v1119 가 SQL 글 안 i18n.enabled 를 바꿔 잠금이 없었고 test_v1104 와 부딪힘 · test_v1093 은 값만 확인해 PAR 이었음)
-    JOB      정기 작업 · 묶음 셈 — POST /admin/jobs · member-notice-jobs · run_job( · SELECT fn_…(daily|hourly|build|close|watch|purge|run|digest) → LOCK(job)
+    JOB      정기 작업 · 묶음 셈 — POST /admin/jobs · member-notice-jobs · POST /admin/…/run · run_job( · SELECT fn_…(daily|hourly|build|close|watch|purge|run|digest) → LOCK(job)
     SHARED   같이 쓰는 시험 회원(admin · buyer · seller · intro · person · ops · payout · reviewer · member · bizowner …)의 계정 · 역할 · 동의 · 세션 · 2단계 · 권한을 바꿈 ·
              모든 기기 로그아웃 · 비밀번호 바꾸기 · 약관 넣기 · 게시(지금 판이 바뀌면 다른 시험이 동의 화면으로 감) → SOLO
     GLOBAL   TRUNCATE · ALTER TABLE · DROP · CREATE OR REPLACE · DISABLE TRIGGER → SOLO
@@ -48,7 +48,7 @@ SQL_RULES = [
 # API 를 부르는 곳(call 의 방법 · 주소 · 본문)에 거는 규칙
 CALL_RULES = [
     ('SET', re.compile(r"^(PUT|PATCH|POST) \S*(site-settings|settings\b)", re.I)),
-    ('JOB', re.compile(r"^POST \S*(/admin/jobs|member-notice-jobs)", re.I)),
+    ('JOB', re.compile(r"^POST \S*(/admin/jobs|member-notice-jobs|/admin/\S*/run\b)", re.I)),   # v10.638 묶음 실행(/admin/…/run — 전표 · 은행 · 재주문 등)도 정기 작업 — 11/22 test_v1382 가 동시 단계에서 다른 시험의 journal/run 에 걸림
     ('SHARED', re.compile(r"^\w+ \S*(logout-all|/me/password|/admin/terms\S*/publish)", re.I)),
     ('THROTTLE', re.compile(r"^POST \S*/auth/login .*'password':\s*'(?!sgb-dev-1234|sgb-test-1234)", re.I)),
     ('ALERT', re.compile(r"^\w+ \S*/admin/ops-alerts/(push|slack)-preview", re.I)),
