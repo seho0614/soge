@@ -25,7 +25,7 @@ K=$(ls -d ~/kits/run/current/SGB_* | tail -1)
 D="$LOG.d"; mkdir -p "$D"; : > "$LOG"; : > "$D/_times.tsv"
 API=http://localhost:13000/api/v1; SITE=http://localhost:15174; DB=postgresql://sgb:sgb@localhost:15432/sgb; BO=http://localhost:15173
 PAR=${PAR:-3}; UI_LANE=${UI_LANE:-0}; HIST=${REG_HISTORY:-$HOME/reg_times.tsv}
-HOST="test_v1621.py test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py test_v1238.py test_v1244_boot.py test_v1247_files.py test_v1250_files.py test_v1298.py test_v1299.py test_v1303.py test_v1306.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
+HOST="test_v1637.py test_v1636.py test_v1630.py test_v1621.py test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py test_v1238.py test_v1244_boot.py test_v1247_files.py test_v1250_files.py test_v1298.py test_v1299.py test_v1303.py test_v1306.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
 
 head -1 "$K/KIT_COMMITS.txt" | tee -a "$LOG"
 # AI 를 부르는 시험은 MOCK 공급자로(실제 외부 호출 없음)
@@ -47,7 +47,7 @@ one() {   # $1 시험 파일 · $2 host|box · $3 단계 이름(시간 기록)
   echo "$1 | $(echo "$out" | grep -E '^결과' | tail -1)" | tee -a "$LOG"
   echo "$out" | grep '^FAIL' | sed 's/^/    /' | tee -a "$LOG"
 }
-ALL=$(cd "$Q" && ls test_v109*.py test_v11*.py test_v12*.py test_v13*.py test_v14*.py test_v15*.py test_v16*.py 2>/dev/null | sort)
+ALL=$(cd "$Q" && python3 -I -c "import sys; sys.path.insert(0, '.'); import os, reg_classify as R; print('\n'.join(sorted(x for x in os.listdir('.') if R.is_reg_test(x))))")   # v10.635 (docs/779) 번호 1090 이상 모두
 T0=$(date +%s)
 for f in $HOST; do [ -f "$Q/$f" ] && one "$f" host host; done
 T1=$(date +%s)

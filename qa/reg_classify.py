@@ -143,6 +143,24 @@ def known_keys(core):
     return frozenset(out)
 
 
+# v10.635 (docs/779) 먼 해(2050 ~ 2999)를 고정으로 쓰는 시험 — 같은 해를 쓰는 시험끼리 동시에 돌지 않게 잠금 year:NNNN
+#   (11/22 test_v1420 · test_v1421 이 2096 급여를 만들고 그 해를 통째로 지우다 동시에 돌아 실패)
+YEAR_RE = re.compile(r"\b(?:YR|YEAR|yr|year)\s*=\s*(20[5-9]\d|2[1-9]\d\d)\b|['\"](20[5-9]\d|2[1-9]\d\d)-(?:0[1-9]|1[0-2])")
+
+
+def fixed_years(src):
+    return sorted({a or b for a, b in YEAR_RE.findall(src)})
+
+
+# v10.635 (docs/779) 회귀 대상 — 판 번호 1090 이상 모든 test_v<번호>*.py(이름 규칙 1[1-5] 로 v16xx 26개가 빠졌던 것 · 번호로 셈 · v2xxx 도)
+TEST_RE = re.compile(r'^test_v(\d{4,})\S*\.py$')
+
+
+def is_reg_test(name):
+    m = TEST_RE.match(name)
+    return bool(m) and int(m.group(1)) >= 1090
+
+
 STRICT = {'GLOBAL', 'SHARED', 'THROTTLE', 'ALERT', 'DOCKER', 'PARSE', 'FORCE'}
 
 
@@ -172,10 +190,9 @@ def read_list(path):
 
 def classify(qdir, core=None):
     force, par_ok = read_list(os.path.join(qdir, 'reg_solo_force.txt')), read_list(os.path.join(qdir, 'reg_par_ok.txt'))
-    pat = re.compile(r'^test_v(109|1[1-9])\S*\.py$')   # v10.626 — 1[1-5] 이라 v16xx 26개가 회귀에 빠졌음(11/22)
     known = known_keys(core)
     out = []
-    for f in sorted(x for x in os.listdir(qdir) if pat.match(x)):
+    for f in sorted(x for x in os.listdir(qdir) if is_reg_test(x)):
         src = open(os.path.join(qdir, f), encoding='utf-8', errors='replace').read()
         got = analyze(src, known)
         why, keys, jobs = (['PARSE'], set(), set()) if got is None else (sorted(got[0]), got[1], got[2])
@@ -184,6 +201,12 @@ def classify(qdir, core=None):
         elif f in par_ok and why:
             why = []
         mode, locks = mode_of(why, keys, jobs)
+        yrs = fixed_years(src) if got is not None else []
+        if yrs and mode in ('PAR', 'LOCK', 'UI'):   # v10.635 같은 먼 해를 쓰는 시험끼리 잠금
+            locks = set(locks) | {f'year:{y}' for y in yrs}
+            why = why + ['YEAR']
+            if mode == 'PAR':
+                mode = 'LOCK'
         out.append((f, why, mode, sorted(locks)))
     return out
 

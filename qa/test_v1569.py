@@ -180,7 +180,7 @@ ok('① 혼자 판정 — 코드 검사 줄은 동시 · 설정 키는 앞마디
    and cls.get('test_v1104x.py', ('',))[0] == 'UI' and cls.get('test_v1105x.py') == ('LOCK', ['job']) and cls.get('test_v1106x.py', ('',))[0] == 'SOLO', str(cls)[:300])
 
 real = RC.classify(HERE, K) if RC else []
-names = sorted(x for x in os.listdir(HERE) if re.match(r'^test_v(109|1[1-9])\S*\.py$', x))
+names = sorted(x for x in os.listdir(HERE) if (RC.is_reg_test(x) if RC and hasattr(RC, 'is_reg_test') else re.match(r'^test_v(109|1[1-9])\S*\.py$', x)))   # v10.635 번호로 셈
 modes = {}
 for _f, _w, m, _l in real:
     modes[m] = modes.get(m, 0) + 1

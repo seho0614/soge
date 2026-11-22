@@ -7,6 +7,9 @@
   ③ apply.sh 의 stop · drop_new 를 그대로 꺼내 11/5 상황으로 — 멈춘 뒤 새 판 없어짐 · 되돌린 상태 아님
 """
 import os, re, shutil, subprocess, tempfile
+import sys as _sys_m, os as _os_m   # v10.629 (docs/773) 마이그레이션 수는 「이 판 이상」
+_sys_m.path.insert(0, _os_m.path.dirname(_os_m.path.abspath(__file__)))
+from qa_helpers import MigFrom
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb'
@@ -42,7 +45,7 @@ ok('① apply.sh — 새 판 만든 바로 뒤 NEW_REL 적기 · 바로가기 �
    and '지워도 됩니다' not in AP and AP.index('drop_new() {') < AP.index('stop() {'), f'mkdir {mk_i + 1}줄 · ln {ln_i + 1}줄')
 
 ok('① 문서 · 판 · 마이그레이션 그대로 — docs/301 · v10.192 이상 · 210',
-   any(f.startswith('301_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) in (210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344)
+   any(f.startswith('301_') for f in os.listdir(os.path.join(K, 'docs'))) and len(mig) in MigFrom(210)
    and tuple(int(x) for x in re.findall(r'\d+', rd('VERSION'))) >= (10, 192), f"{rd('VERSION').strip()} · {len(mig)}")
 
 # ── ② lib.sh 함수 — 가짜 판 폴더 ─────────────────────────────────────

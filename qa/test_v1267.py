@@ -10,6 +10,9 @@
   읽기만 — 바꾸는 설정 없음(두 번 돌아도 통과).
 """
 import json, os, re, subprocess, urllib.error, urllib.request
+import sys as _sys_m, os as _os_m   # v10.629 (docs/773) 마이그레이션 수는 「이 판 이상」
+_sys_m.path.insert(0, _os_m.path.dirname(_os_m.path.abspath(__file__)))
+from qa_helpers import MigFrom
 # 혼자 돌려도(새 DB) 시험 회원이 약관 동의 화면으로 가지 않게 · 실패해도 멈추지 않음(consent_ok)
 __import__('consent_ok').agree_seed()
 
@@ -53,7 +56,7 @@ D398 = [f for f in docs if f.startswith('398_')]
 t398 = open(os.path.join(K, 'docs', D398[0]), encoding='utf-8').read() if D398 else ''
 mig = [d for d in os.listdir(os.path.join(K, 'prisma/migrations')) if os.path.isfile(os.path.join(K, 'prisma/migrations', d, 'migration.sql'))] if os.path.isdir(os.path.join(K, 'prisma/migrations')) else []
 ok('① 문서 397 · 398(입점 약관 빈칸 10곳 · 「회원(개인 또는 사업자)」 · 법무 물음) · 마이그레이션 없음(243) · 판 v10.269 이상',
-   bool(D397) and bool(D398) and '회원(개인 또는 사업자)' in t398 and '제21조' in t398 and len(mig) in (243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344)
+   bool(D397) and bool(D398) and '회원(개인 또는 사업자)' in t398 and '제21조' in t398 and len(mig) in MigFrom(243)
    and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 269), f'{D397} · {D398} · {len(mig)} · {VER}')
 
 

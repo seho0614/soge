@@ -8,6 +8,9 @@
   설정은 처음대로 · 만든 공지 · 기록은 지움(두 번 돌아도 통과).
 """
 import json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import sys as _sys_m, os as _os_m   # v10.629 (docs/773) 마이그레이션 수는 「이 판 이상」
+_sys_m.path.insert(0, _os_m.path.dirname(_os_m.path.abspath(__file__)))
+from qa_helpers import MigFrom
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -45,7 +48,7 @@ ok('① D216 — privacy.notice_notified_days 365 · fn_purge_notice_notified(�
 ok('① 파기 작업 · 기록 · 문서 — pii_purge 가 부름(건수 noticeNotified) · 파기 기록 칸 「공지 알림 기록」 · 문서 414 · 마이그레이션 254 · 판 v10.290',
    'SELECT fn_purge_notice_notified() AS n' in SCH and 'noticeNotified: noticeNotified.n' in SCH and 'taxIds.n + noticeNotified.n' in SCH
    and "'taxIds', 'noticeNotified', 'overdue'" in RR and "['noticeNotified', '공지 알림 기록']" in PL and '공지 알림' in D414
-   and len(mig) in (254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 290), f'{len(mig)} · {VER} · 414 {bool(D414)}')
+   and len(mig) in MigFrom(254) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 290), f'{len(mig)} · {VER} · 414 {bool(D414)}')
 
 
 def call(m_, p, b=None, t=None):

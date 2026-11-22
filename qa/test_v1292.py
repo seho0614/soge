@@ -8,6 +8,9 @@
   만든 공지는 지움(두 번 돌아도 통과).
 """
 import json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import sys as _sys_m, os as _os_m   # v10.629 (docs/773) 마이그레이션 수는 「이 판 이상」
+_sys_m.path.insert(0, _os_m.path.dirname(_os_m.path.abspath(__file__)))
+from qa_helpers import MigFrom
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -44,7 +47,7 @@ ok('① 서버 — adminNotices(상태 5개만 · 제목 글자 그대로 · 50�
    and 'LIMIT 50 OFFSET $4' in SS and 'count(*) OVER ()::int AS total' in SS and "@ApiQuery({ name: 'page'" in SC and 'this.svc.adminNotices({ gwanCode, status, q' in SC, f'{len(SS)}')
 ok('① 화면 · 문서 — 「공지」 표 상태 고르기 · 찾기 · 「앞」 · 「뒤」 · 쪽 · 문서 415 · 마이그레이션 254 · 판 v10.292',
    all(x in MO for x in ('data-notice-filter-status', 'data-notice-q-go', 'data-notice-prev', 'data-notice-next', 'data-notice-page', 'data-notice-filter-clear', 'data-notice-total'))
-   and '걸러 보기' in D415 and len(mig) in (254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344) and verok(292), f'{len(mig)} · {VER} · 415 {bool(D415)}')
+   and '걸러 보기' in D415 and len(mig) in MigFrom(254) and verok(292), f'{len(mig)} · {VER} · 415 {bool(D415)}')
 
 
 def call(m_, p, b=None, t=None):

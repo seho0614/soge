@@ -13,6 +13,9 @@
   설정은 처음대로 · 예약은 취소 · 시험 공지는 끝냄(두 번 돌아도 통과).
 """
 import json, os, re, subprocess, sys, time, urllib.error, urllib.request
+import sys as _sys_m, os as _os_m   # v10.629 (docs/773) 마이그레이션 수는 「이 판 이상」
+_sys_m.path.insert(0, _os_m.path.dirname(_os_m.path.abspath(__file__)))
+from qa_helpers import MigFrom
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -62,7 +65,7 @@ ok('① 화면 · 명세 · 문서 — 판매자센터 펼치면 읽음 · 읽�
    'markRead(x.id)' in CEN and '/notices/${id}/read' in CEN and 'data-rate-notice-reads=' in TR and 'data-rate-notice-remind=' in TR
    and "'sending'" in MO and 'askBulk' in MO and 'data-notice-notify-limits' in MO and 'data-notice-limit=' in MO
    and '"POST /admin/health/rate-schedules/{id}/remind"' in SCR and '"POST /me/health/seller/notices/{id}/read"' in SCR
-   and '"다시 알림은 24시간에 한 번만 보낼 수 있습니다.": ' in EN and bool(D411) and len(mig) in (250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 285),
+   and '"다시 알림은 24시간에 한 번만 보낼 수 있습니다.": ' in EN and bool(D411) and len(mig) in MigFrom(250) and tuple(int(x) for x in re.findall(r'\d+', VER)) >= (10, 285),
    f'{len(mig)} · {VER} · 411 {bool(D411)}')
 
 

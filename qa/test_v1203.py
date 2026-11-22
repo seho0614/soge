@@ -31,6 +31,10 @@ def rd(rel):
 
 # ── ① 코드 ────────────────────────────────────────────────────────────
 MIG = rd('prisma/migrations/D180_help_manual_ai/migration.sql')
+# v10.634 (docs/778) 설명서 저장 한도 2만 → 3만 자 · AI 가 읽는 양은 그대로 2만 자(HELP_AI_MAX_CHARS)
+VT_ = tuple(int(x) for x in __import__('re').findall(r'\d+', rd('VERSION')))
+V634 = VT_ >= (10, 634)
+MAXC = 30000 if V634 else 20000
 ok('① D180 — help_docs(2만 자 · 판 유일 · 고치기 · 지우기 막는 트리거) · v_help_doc_current · 처음 판 USER_MANUAL · 옛 안내 글은 옛 글 그대로인 줄만 · 입점 신청 「중요 설정 바뀜」',
    'CREATE TABLE IF NOT EXISTS public.help_docs' in MIG and 'char_length(body) BETWEEN 100 AND 20000' in MIG and 'UNIQUE (code, version)' in MIG
    and 'BEFORE UPDATE OR DELETE ON public.help_docs' in MIG and 'CREATE OR REPLACE VIEW public.v_help_doc_current' in MIG
@@ -42,11 +46,12 @@ ok('① 설명서 API — 공개 GET /site/manual · 운영 GET(ADMIN · SUPER) 
    "@Get('site/manual')" in HC and "@Controller('api/v1/admin/help')" in HC and "@Roles('SUPER')\n  @Audit('HELP_MANUAL_SAVE', 'SITE')" in HC
    and "@Get('manual/versions/:v')" in HC and 'HelpSectionRefDto' in HC and HC.index('class HelpSectionRefDto') < HC.index('class HelpManualDto')
    and "new PolicyViolation('HELP_TOO_LONG'" in HS and "new PolicyViolation('HELP_NO_SECTION'" in HS and 'pg_advisory_xact_lock' in HS
-   and '바뀐 내용이 없어 새 판을 만들지 않았습니다.' in HS and 'export const HELP_MAX_CHARS = 20000;' in HS
+   and '바뀐 내용이 없어 새 판을 만들지 않았습니다.' in HS and f'export const HELP_MAX_CHARS = {MAXC};' in HS
    and 'HelpPublicController,' in AM and 'HelpAdminController,' in AM and 'HelpService,' in AM, '')
 AC = rd('src/modules/agent/agent-chat.service.ts')
+AC += rd('src/modules/agent/manual-pick.ts')   # v10.637 (docs/781) 설명서 절 글([설명서 m번호])은 manual-pick 으로 옮김
 ok('① AI 상담 — 지식 묶음에 사용자 설명서(FAQ · 공지 · 약관 4만 자와 따로 · 2만 자 · [설명서 m번호]) · 출처는 「사용자 설명서 › 절」 · /guide/manual#m번호 · 지시문에 user manual',
-   'const MANUAL_MAX = HELP_MAX_CHARS;' in AC and 'FROM v_help_doc_current WHERE code = $1' in AC and '[설명서 ${x.id}]' in AC
+   ('const MANUAL_MAX = HELP_AI_MAX_CHARS;' if V634 else 'const MANUAL_MAX = HELP_MAX_CHARS;') in AC and 'FROM v_help_doc_current WHERE code = $1' in AC and '[설명서 ${x.id}]' in AC
    and 'linkHref: `/guide/manual#${x.id}`' in AC and '사용자 설명서 › ' in AC and AC.count('(FAQ, user manual, notices, terms excerpts)') == 2
    and 'FAQ ids or user manual section ids' in AC and AC.index('if (text.length > KNOWLEDGE_MAX)') < AC.index('const [man] = await this.db.query'), '')
 PG = rd('site/src/app/guide/manual/page.tsx'); MB = rd('site/src/components/guide/ManualBody.tsx'); GP = rd('site/src/app/guide/page.tsx'); SM = rd('site/src/app/sitemap.ts')
@@ -135,7 +140,7 @@ if API and DB:
         # ② 저장 — 권한 · 한도 · 절 · 같은 글 · 새 판 · 옛 판 · 되돌림
         am = call('GET', '/admin/help/manual', None, tok[ADMU])
         s1 = call('POST', '/admin/help/manual', {'body': orig}, tok[ADMU])
-        s2 = call('POST', '/admin/help/manual', {'body': orig + '\n' + 'a' * max(1, 20001 - len(orig or ''))}, tok[SUPU])
+        s2 = call('POST', '/admin/help/manual', {'body': orig + '\n' + 'a' * max(1, MAXC + 1 - len(orig or ''))}, tok[SUPU])
         s3 = call('POST', '/admin/help/manual', {'body': '## 장만 있음\n\n' + '설명 ' * 60}, tok[SUPU])
         s4 = call('POST', '/admin/help/manual', {'body': orig}, tok[SUPU])
         v0 = pub.get('version') or 0
@@ -145,7 +150,7 @@ if API and DB:
         s6 = call('POST', '/admin/help/manual', {'body': orig, 'note': '시험 T1203 되돌림'}, tok[SUPU])
         pub3 = call('GET', '/site/manual')
         ok('② 저장 — ADMIN 읽기 됨 · 저장 403 · 2만 자 넘음 422 HELP_TOO_LONG · 절 없음 422 HELP_NO_SECTION · 같은 글은 판 안 만듦 · 새 판 → 공개에 바로 · 옛 판 보기 · 원래 글로 새 판',
-           (am.get('current') or {}).get('version') == v0 and am.get('maxChars') == 20000 and s1.get('_err') == 403
+           (am.get('current') or {}).get('version') == v0 and am.get('maxChars') == MAXC and s1.get('_err') == 403
            and s2.get('_err') == 422 and s2.get('code') == 'HELP_TOO_LONG' and s3.get('_err') == 422 and s3.get('code') == 'HELP_NO_SECTION'
            and s4.get('version') == v0 and '바뀐 내용이 없어' in (s4.get('note') or '')
            and s5.get('version') == v0 + 1 and pub2.get('version') == v0 + 1 and (pub2.get('sections') or [{}])[-1].get('heading') == '시험 절 T1203'

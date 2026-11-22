@@ -235,6 +235,75 @@ def menu_map(sgb, d):
         return None
 
 
+def parse_ops_log(text):
+    """v10.636 (docs/780) 운영 적용 화면 출력(precheck · apply · postcheck 를 붙여 넣은 글) → 숫자
+       open = 「오픈 차단 n건 [...]」 · terms = 「약관: 게시 …」 · pre / post = (통과, 실패, 확인) · cmp = 「같음 n개 · 바뀜 m개」"""
+    if not text:
+        return {}
+    g = lambda rx: (re.search(rx, text, re.M) or [None, None])[1]
+    out = {'open': g(r'^\s*(오픈 차단 \d+건 \[[^\]]*\])\s*$'), 'terms': g(r'^\s*(약관: 게시 [^\n]+?)\s*$'),
+           'cmp': g(r'(같음 \d+개 · 바뀜 \d+개)')}
+    for k, rx in (('pre', r'적용 전 점검 — 통과 (\d+) · 실패 (\d+) · 확인 (\d+)'), ('post', r'적용 후 확인 — 통과 (\d+) · 실패 (\d+) · 확인 (\d+)')):
+        m = re.findall(rx, text)
+        out[k] = tuple(int(x) for x in m[-1]) if m else None
+    return out
+
+
+def ops_result(results_dir, vo):
+    """v10.636 — ~/kits/ops/results/<판>_apply.txt(그 판을 운영에 올릴 때 화면 출력) → (파일 이름, 숫자) · 없으면 None"""
+    f = os.path.join(results_dir, f'{vo}_apply.txt')
+    if not os.path.isfile(f):
+        return None
+    r = parse_ops_log(read(f))
+    return (os.path.basename(f), r) if (r.get('open') or r.get('post')) else None
+
+
+def prev_precheck5(docs_dir, vo):
+    """v10.630 (docs/774) 지난 운영 절차서(제목 「… → {vo} 한 번에」)의 precheck [5] 기대 줄 — (문서 번호, 글) · 없으면 None"""
+    if not os.path.isdir(docs_dir):
+        return None
+    best = None
+    for f in sorted(os.listdir(docs_dir)):
+        if not f.endswith('.md') or not f[:3].isdigit():
+            continue
+        txt = read(os.path.join(docs_dir, f))
+        first = txt.split('\n', 1)[0]
+        if '운영 적용' not in first or not re.search(r'→\s*' + re.escape(vo) + r'\b', first):
+            continue
+        m = re.search(r'\[5\]\s*(`오픈 차단[^④|]*?)\s*(?:—[^④|]*)?(?=\s*④|\s*\|)', txt)
+        if m:
+            best = (f.split('_')[0], m.group(1).strip())
+    return best
+
+
+SEED_RE = re.compile(r'INSERT\s+INTO\s+(?:public\.)?(\w+)[^;]*?ON\s+CONFLICT[^;]*?DO\s+NOTHING', re.I | re.S)
+SET_ROW_RE = re.compile(r"\(\s*'([a-z][a-z0-9_]*\.[a-z0-9_.]+)'\s*,\s*'([^']*)'\s*,\s*'([A-Z]+)'\s*,\s*'((?:[^']|'')*)'")
+
+
+def seed_tables(sqls):
+    """v10.630 — 새 마이그레이션의 「처음 값 넣기(ON CONFLICT DO NOTHING)」 표 — [(마이그레이션 앞머리, 표)]"""
+    out = []
+    for m, s in sqls:
+        for tb in dict.fromkeys(SEED_RE.findall(sql_strip(s))):
+            out.append((m.split('_')[0], tb))
+    return out
+
+
+def new_settings(sqls):
+    """v10.630 — 새 마이그레이션이 넣는 설정 줄 — [(마이그레이션 앞머리, 키, 처음 값, 설명 앞 70자)]"""
+    out = []
+    for m, s in sqls:
+        for blk in re.findall(r'INSERT\s+INTO\s+(?:public\.)?site_settings\b.*?;', sql_strip(s), re.I | re.S):
+            for k, v, _sc, d in SET_ROW_RE.findall(blk):
+                out.append((m.split('_')[0], k, v, d.replace("''", "'")[:70]))
+    return out
+
+
+def sql_strip(s):
+    """-- 주석 줄 뺌(설명 글 속 INSERT 낱말을 잘못 세지 않게)"""
+    return '\n'.join(l for l in s.split('\n') if not l.lstrip().startswith('--'))
+
+
 def menu_rows(om, nm):
     """옛 메뉴 ↔ 새 메뉴 — 새 탭(묶음별) · 이름 바뀐 묶음 · 옮긴 탭 · 이름 바뀐 탭 → 4-1 표 줄(위치 · 할 일 · 맞으면)"""
     rows = []
@@ -278,6 +347,7 @@ def main():
     ap.add_argument('--no', default='', help='쓰지 않는 옛 운영 절차서 번호(쉼표) — 머리말에 적음')
     ap.add_argument('--doc', default='〔번호〕', help='이 절차서 번호(예: 418)')
     ap.add_argument('--rehearsal', default='', help='tools/mig-rehearsal.sh 결과 파일 — postcheck [11] · 리허설 줄을 채움')
+    ap.add_argument('--results', default=os.path.expanduser('~/kits/ops/results'), help='운영 적용 화면 출력 보관 폴더(<판>_apply.txt) — [5] · postcheck 기대 숫자를 실제로(v10.636)')
     ap.add_argument('--postcheck-base', default='', help='지난 운영 적용 postcheck 「통과/실패/확인」(예: 54/0/5) — 리허설의 postcheck DB 줄 차이를 더해 기대 숫자를 채움(v10.306)')
     a = ap.parse_args()
     pcb = None
@@ -344,6 +414,22 @@ def main():
             elif reh.get('old_applied') != str(len(om)) or mst.get('마이그레이션 적용', ('', ''))[1] != str(len(nm)):
                 reh_fail = f"리허설 마이그레이션 수({reh.get('old_applied')} → {mst.get('마이그레이션 적용', ('', ''))[1]})가 킷({len(om)} → {len(nm)})과 다름"
         vo, vn = ov, nv
+        # v10.630 (docs/774) precheck [5] · 7절 · 8절 — 지난 절차서 · 새 마이그레이션에서 채움
+        sqls = [(m, read(nm[m])) for m in new_m]
+        p5 = prev_precheck5(os.path.join(n_sgb, 'docs'), ov)
+        touch5 = [m.split('_')[0] for m, s in sqls if re.search(r'\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|ALTER\s+TABLE)\s+(?:public\.)?(open_blockers|terms)\b', sql_strip(s), re.I)]
+        res = ops_result(a.results, ov)   # v10.636 (docs/780) 지난 운영 적용 화면 출력 — 있으면 실제 숫자
+        if res and res[1].get('post') and not pcb:
+            pcb = res[1]['post']
+        if res and res[1].get('open'):
+            p5_text = f"`{res[1]['open']}`" + (f" · `{res[1]['terms']}`" if res[1].get('terms') else '') + f' — {ov} 적용 때 실제 숫자(results/{res[0]} · 그 뒤 약관을 게시했으면 그 수)' + (
+                f' · ⚠ {" · ".join(touch5)} 가 오픈 차단 · 약관 표를 건드림 — 숫자가 바뀔 수 있음' if touch5 else ' · 이번 마이그레이션은 이 숫자를 바꾸지 않음')
+        elif p5:
+            p5_text = f'{p5[1]} — docs/{p5[0]} 적용 때와 같은 숫자(그 뒤 약관을 게시했으면 그 수)' + (
+                f' · ⚠ {" · ".join(touch5)} 가 오픈 차단 · 약관 표를 건드림 — 숫자가 바뀔 수 있음' if touch5 else ' · 이번 마이그레이션은 이 숫자를 바꾸지 않음')
+        else:
+            p5_text = '〔채울 것: 오픈 차단 · 약관 줄 — 지난 절차서(「→ ' + ov + '」)를 찾지 못함〕'
+        seeds, sets = seed_tables(sqls), new_settings(sqls)
         snapname = f"sgb-before-{vn.replace('.', '-')}-<적용하는 날 YYYYMMDD>"
         L = []
         w = L.append
@@ -377,7 +463,7 @@ def main():
         w(f"| 올릴 마이그레이션 | **{len(new_m)}개**" + (' — ' + ' · '.join(f'`{m}`' for m in new_m) if new_m else '') + mig_note + ' |')
         w(f"| precheck 기대 줄 | ① `적용됨 {len(om)} · 새 킷의 파일 {len(nm)} · 올릴 것 {len(new_m)} · 바뀐 파일 {len(chg_m)}`"
           + (' · 올릴 것 이름 ' + ' · '.join(m.split('_')[0] for m in new_m) if new_m else '')
-          + (f' ② [4] `판 보관 폴더: {prev_ops(a.old, ov)}_… {ov}_…`' if prev_ops(a.old, ov) else ' ② [4] `판 보관 폴더: 〔채울 것〕`') + '(「되돌린 상태」 줄이 **없어야 함**) ③ [5] 〔채울 것: 오픈 차단 · 약관 줄〕 ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
+          + (f' ② [4] `판 보관 폴더: {prev_ops(a.old, ov)}_… {ov}_…`' if prev_ops(a.old, ov) else ' ② [4] `판 보관 폴더: 〔채울 것〕`') + '(「되돌린 상태」 줄이 **없어야 함**) ③ [5] ' + p5_text + ' ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
         w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`')
           + (' → `NOTICE …` 줄(1절 「마이그레이션 NOTICE」 표)' if notes and prints_notice else '') +
           f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → " + (f"`옛 판 1개 정리 … {prev_ops(a.old, ov)}_… (남김: {nv}_… · {ov}_…)`" if prev_ops(a.old, ov) else "〔채울 것: 옛 판 정리 줄〕") + " → postcheck 실패 0 |")
@@ -388,7 +474,8 @@ def main():
             w('| 적용 스크립트 | ⚠ **바뀜** — ' + ' · '.join(f'`{p}`' for p in sorted(dep)) + ' 〔채울 것: 무엇이 왜 바뀌었는지 · 운영 `.env` · Nginx 할 일〕' + (' ·' + job_note if job_note else '') + ' |')
         else:
             w(f'| 적용 스크립트 | **바뀌지 않음** — `deploy/` 전체 · `package.json` · 잠금 파일 · `.env.example` 모두 {vo} 과 같음. **운영 `.env` · Nginx 는 고치지 않음.**' + job_note + ' |')
-        pc = f'〔채울 것: 통과 · 실패 0 · 확인 — 적용 스크립트가 그대로면 지난 절차서와 같음〕 · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
+        pc = (f'**통과 {pcb[0]} · 실패 {pcb[1]} · 확인 {pcb[2]}** 안팎({ov} 적용 때 실제' + (f' · results/{res[0]}' if res else '') + ' — 적용 스크립트 · 점검 줄이 그대로면 같음 · 「올린 파일 백업」 줄이 확인이면 확인 +1 · 통과 -1 도 정상)'
+              if pcb else '〔채울 것: 통과 · 실패 0 · 확인 — 적용 스크립트가 그대로면 지난 절차서와 같음〕') + f' · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
         pcx = postcheck_expect(reh, pcb) if reh and not reh_fail else None
         if pcx:
             pc = pcx + f' · [2] `돌고 있는 API 판 = 올린 판 ({vn})`'
@@ -579,11 +666,26 @@ def main():
         w('| 무엇 | 까닭 |')
         w('|---|---|')
         w(f'| 운영 판({vo}) · 디스크 · 메모리 · 판 보관 폴더 | sgbdev 는 운영 서버를 볼 수 없음 — 3-0 으로 확인 |')
-        w('| 〔채울 것〕 | 운영 DB 를 볼 수 없음 |')
+        if seeds:
+            for mm, tb in seeds:
+                w(f'| `{mm}` 의 `{tb}` 처음 값 넣기(ON CONFLICT DO NOTHING) — 운영에 이미 있는 줄은 그대로라 들어가는 줄 수는 운영 DB 따라 다름 | 운영 DB 를 볼 수 없음 — postcheck · 화면으로 확인 |')
+        else:
+            w('| 이번 마이그레이션은 처음 값 넣기 없음 | — |')
+        w('| 약관 게시 · 스위치 · 설정 값(운영에서 바꾼 것) | 운영 DB 를 볼 수 없음 — precheck [5] · 화면으로 확인 |')
         w('')
         w('## 8. 적용 뒤 대표 할 일')
         w('')
-        w('1. 〔채울 것〕')
+        n8 = 1
+        w(f'{n8}. 4-1 화면 확인 결과(이상 없음 · 이상 있으면 번호와 화면)를 알려 주십시오.'); n8 += 1
+        offs = [(mm, k, d) for mm, k, v, d in sets if v.lower() in ('off', 'false', '0', 'role', 'assume')]
+        ons = [(mm, k, v) for mm, k, v, d in sets if (mm, k, d) not in offs]
+        if offs:
+            w(f'{n8}. 새로 생긴 스위치는 **꺼진 채** 올라갑니다 — 켤지 정하기(정책 › 전체 설정 · 켜기 도우미 정책 › 「기능 스위치 한눈에」):'); n8 += 1
+            for mm, k, d in offs:
+                w(f'   - `{k}`({mm}) — {d}')
+        if ons:
+            w(f'{n8}. 처음 값이 있는 새 설정(알림 기준 등) — 그대로 두거나 바꿈: ' + ' · '.join(f'`{k}` = {v}' for mm, k, v in ons)); n8 += 1
+        w(f'{n8}. 〔채울 것: 판 문서의 「운영 적용」 · 「대표」 줄 — 게시 · 공지 · 직원 안내〕')
         text = '\n'.join(L) + '\n'
         # 스스로 대조 — 문서 안 64자 값은 모두 올릴 킷 sha 여야 함
         shas = set(re.findall(r'\b[0-9a-f]{64}\b', text))
