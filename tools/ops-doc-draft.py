@@ -218,13 +218,14 @@ console.log(JSON.stringify(out));
 """
 
 
-def menu_map(sgb):
-    """v10.621 (docs/764) — 운영 화면 메뉴(web/src/lib/adminMenu.ts)를 node 로 읽어 탭 → 묶음 · 하위 묶음 · 이름. 못 읽으면 None"""
+def menu_map(sgb, d):
+    """v10.621 (docs/764) — 운영 화면 메뉴(web/src/lib/adminMenu.ts)를 node 로 읽어 탭 → 묶음 · 하위 묶음 · 이름. 못 읽으면 None
+    d = 큰 임시 폴더(tmp) 안의 하위 폴더 — 끝에 tmp 와 함께 지움(지우는 곳은 tmp 하나 · test_v1298)"""
     src = os.path.join(sgb, 'web', 'src', 'lib', 'adminMenu.ts')
     if not os.path.exists(src) or not shutil.which('node'):
         return None
-    d = tempfile.mkdtemp(prefix='opsmenu_')
     try:
+        os.makedirs(d, exist_ok=True)
         open(os.path.join(d, 'm.mts'), 'w', encoding='utf-8').write(read(src).replace('import.meta.env.DEV', 'false'))
         open(os.path.join(d, 'p.mjs'), 'w', encoding='utf-8').write(MENU_JS)
         r = subprocess.run(['node', '--experimental-strip-types', '--no-warnings', os.path.join(d, 'p.mjs'), os.path.join(d, 'm.mts')],
@@ -232,8 +233,6 @@ def menu_map(sgb):
         return json.loads(r.stdout) if r.returncode == 0 and r.stdout.strip() else None
     except Exception:
         return None
-    finally:
-        shutil.rmtree(d, ignore_errors=True)
 
 
 def menu_rows(om, nm):
@@ -378,7 +377,7 @@ def main():
         w(f"| 올릴 마이그레이션 | **{len(new_m)}개**" + (' — ' + ' · '.join(f'`{m}`' for m in new_m) if new_m else '') + mig_note + ' |')
         w(f"| precheck 기대 줄 | ① `적용됨 {len(om)} · 새 킷의 파일 {len(nm)} · 올릴 것 {len(new_m)} · 바뀐 파일 {len(chg_m)}`"
           + (' · 올릴 것 이름 ' + ' · '.join(m.split('_')[0] for m in new_m) if new_m else '')
-          + ' ② [4] `판 보관 폴더: 〔채울 것〕`(「되돌린 상태」 줄이 **없어야 함**) ③ [5] 〔채울 것: 오픈 차단 · 약관 줄〕 ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
+          + (f' ② [4] `판 보관 폴더: {prev_ops(a.old, ov)}_… {ov}_…`' if prev_ops(a.old, ov) else ' ② [4] `판 보관 폴더: 〔채울 것〕`') + '(「되돌린 상태」 줄이 **없어야 함**) ③ [5] 〔채울 것: 오픈 차단 · 약관 줄〕 ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
         w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`')
           + (' → `NOTICE …` 줄(1절 「마이그레이션 NOTICE」 표)' if notes and prints_notice else '') +
           f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → " + (f"`옛 판 1개 정리 … {prev_ops(a.old, ov)}_… (남김: {nv}_… · {ov}_…)`" if prev_ops(a.old, ov) else "〔채울 것: 옛 판 정리 줄〕") + " → postcheck 실패 0 |")
@@ -535,16 +534,18 @@ def main():
         w('### 4-1. 화면 확인 (PC 브라우저 · Ctrl + F5 · 집 또는 사무실 IP)')
         w('')
         rows = None
-        omm, nmm = menu_map(o_sgb), menu_map(n_sgb)
+        omm, nmm = menu_map(o_sgb, os.path.join(tmp, 'menu_o')), menu_map(n_sgb, os.path.join(tmp, 'menu_n'))
         if omm and nmm:
             rows = menu_rows(omm, nmm)
-        if rows:
+        if rows is not None:
             w('4-1 은 **보기만** 합니다. ⚠ 저장 · 켜기 · 보내기 · 확정 · 만들기 단추는 누르지 않습니다. (아래 표는 두 킷의 운영 화면 메뉴를 견주어 기계로 만든 것 — 스위치 · 사용자 웹 줄은 〔채울 것〕)')
             w('')
             w('| # | 정확한 위치 | 할 일 | 맞으면 |')
             w('|---|---|---|---|')
             for i, (loc, todo, okk) in enumerate(rows, 1):
                 w(f'| {i} | {loc} | {todo} | {okk} |')
+            if not rows:
+                w('| — | 운영 화면 메뉴 바뀜 없음(새 탭 · 옮긴 탭 · 이름 바뀐 탭 0 — 두 킷 메뉴를 견줌) | — | — |')
             w(f'| {len(rows) + 1} | 〔채울 것: 정책 › 「기능 스위치 한눈에」 — 이번에 처음부터 on 인 스위치〕 | 보기만 | 〔채울 것〕 |')
             w(f'| {len(rows) + 2} | 〔채울 것: 사용자 웹 · 파트너센터 · 판매자센터에서 볼 곳〕 | 보기만 | 〔채울 것〕 |')
         else:

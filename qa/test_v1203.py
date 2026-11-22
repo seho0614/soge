@@ -135,7 +135,7 @@ if API and DB:
         # ② 저장 — 권한 · 한도 · 절 · 같은 글 · 새 판 · 옛 판 · 되돌림
         am = call('GET', '/admin/help/manual', None, tok[ADMU])
         s1 = call('POST', '/admin/help/manual', {'body': orig}, tok[ADMU])
-        s2 = call('POST', '/admin/help/manual', {'body': orig + '\n' + '가' * 6000}, tok[SUPU])
+        s2 = call('POST', '/admin/help/manual', {'body': orig + '\n' + 'a' * max(1, 20001 - len(orig or ''))}, tok[SUPU])
         s3 = call('POST', '/admin/help/manual', {'body': '## 장만 있음\n\n' + '설명 ' * 60}, tok[SUPU])
         s4 = call('POST', '/admin/help/manual', {'body': orig}, tok[SUPU])
         v0 = pub.get('version') or 0

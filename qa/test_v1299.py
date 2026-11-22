@@ -38,6 +38,10 @@ MIGJS, APPLY = rd(os.path.join(K, 'scripts', 'migrate.js')), rd(os.path.join(K, 
 README = rd(os.path.join(TOOLS, 'README.md'))
 host = re.search(r'^HOST="([^"]*)"', rd(os.path.join(HERE, 'run_regression.sh')), re.M)
 
+# v10.621 (docs/764) — 메뉴 읽기만 node 로 1곳(내 컴퓨터 node · 메뉴 파일만 · 네트워크 · DB · 지우기 없음) 허용 · 그 판 아래는 그대로 막음
+VT_ = tuple(int(x) for x in re.findall(r'\d+', VER))
+NODE_OK = VT_ >= (10, 621) and SRC.count("subprocess.run(['node', '--experimental-strip-types'") == 1 and SRC.count('subprocess') == 2
+SRC_RO = SRC.replace(' subprocess,', ',').replace("subprocess.run(['node', '--experimental-strip-types'", 'NODE_MENU(') if NODE_OK else SRC
 # ① 코드
 ok('① mig-rehearsal.sh — 실행 권한 · trap 으로 컨테이너 · 네트워크 · 임시 폴더 지움 · postgres:16 · 자기 네트워크 · 포트 안 엶 · RDS · 운영 주소 없음 · zip 밖 경로 막음 · state_lines 를 새 킷 lib.sh 에서',
    bool(SH) and os.access(REH, os.X_OK) and 'trap cleanup EXIT INT TERM' in SH and 'docker rm -f "$DB"' in SH and 'docker network rm "$NET"' in SH
@@ -47,7 +51,7 @@ ok('① mig-rehearsal.sh — 실행 권한 · trap 으로 컨테이너 · 네트
 ok('① 초안 도구 — --rehearsal · 지우는 문장(DO 블록 · 맨 위 · 함수 본문 뺌) · DO 블록 NOTICE · job_schedules · 회귀 수 · 리허설 실패면 ⛔ 종료 2 · 읽기만 그대로',
    "'--rehearsal'" in SRC and 'def sql_parts' in SRC and 'def sql_scan' in SRC and 'DELETE\\s+FROM' in SRC and 'RAISE\\s+NOTICE' in SRC
    and 'job_schedules' in SRC and '회귀' in SRC and '**리허설 실패**' in SRC and 'if reh_fail and not bad:' in SRC
-   and not re.search(r'\b(import (socket|requests|urllib|http)|psycopg|subprocess|ssh |os\.remove|os\.unlink)\b', SRC)
+   and not re.search(r'\b(import (socket|requests|urllib|http)|psycopg|subprocess|ssh |os\.remove|os\.unlink)\b', SRC_RO)
    and SRC.count('shutil.rmtree(') == 1, '')
 ok('① migrate.js NOTICE 출력 · apply.sh 3단계가 NOTICE 줄도 보임 · README 2줄 · docs/419 · 회귀 HOST test_v1299 · 판 v10.299 이상',
    "c.on('notice', (m) => { if (/ at RAISE\\b/.test(m.where ?? '')) console.log(`   NOTICE ${m.message}`); });" in MIGJS and "grep -E '^(ok|!!) |^   NOTICE '" in APPLY

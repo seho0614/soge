@@ -172,7 +172,7 @@ def read_list(path):
 
 def classify(qdir, core=None):
     force, par_ok = read_list(os.path.join(qdir, 'reg_solo_force.txt')), read_list(os.path.join(qdir, 'reg_par_ok.txt'))
-    pat = re.compile(r'^test_v(109|1[1-5])\S*\.py$')
+    pat = re.compile(r'^test_v(109|1[1-9])\S*\.py$')   # v10.626 — 1[1-5] 이라 v16xx 26개가 회귀에 빠졌음(11/22)
     known = known_keys(core)
     out = []
     for f in sorted(x for x in os.listdir(qdir) if pat.match(x)):

@@ -39,9 +39,13 @@ host = re.search(r'^HOST="([^"]*)"', RUNNER, re.M)
 ok('① 도구 — tools/ops-doc-draft.py · 실행 권한 · 킷 두 개 · -o · --no · --doc · 〔채울 것〕 · 스스로 sha 대조 · 종료 코드(0 · 2 · 3)',
    bool(SRC) and os.access(TOOL, os.X_OK) and "ap.add_argument('old'); ap.add_argument('new')" in SRC and "'--no'" in SRC and "'--doc'" in SRC
    and '〔채울 것' in SRC and "re.findall(r'\\b[0-9a-f]{64}\\b', text)" in SRC and 'return 3 if bad else (2 if chg_m or gone_m else 0)' in SRC, TOOL)
+# v10.621 (docs/764) — 메뉴 읽기만 node 로 1곳(내 컴퓨터 node · 메뉴 파일만 · 네트워크 · DB · 지우기 없음) 허용 · 그 판 아래는 그대로 막음
+VT_ = tuple(int(x) for x in re.findall(r'\d+', VER))
+NODE_OK = VT_ >= (10, 621) and SRC.count("subprocess.run(['node', '--experimental-strip-types'") == 1 and SRC.count('subprocess') == 2
+SRC_RO = SRC.replace(' subprocess,', ',').replace("subprocess.run(['node', '--experimental-strip-types'", 'NODE_MENU(') if NODE_OK else SRC
 BAD = re.compile(r'\b(import (socket|requests|urllib|http)|psycopg|subprocess|ssh |os\.remove|os\.unlink)\b')
 ok('① 읽기만 — 네트워크 · DB · 다른 명령 부르지 않음 · 지우는 것은 임시 폴더(rmtree tmp) 하나 · zip 밖 경로 막음',
-   bool(SRC) and not BAD.search(SRC) and SRC.count('shutil.rmtree(') == 1 and 'shutil.rmtree(tmp, ignore_errors=True)' in SRC
+   bool(SRC) and not BAD.search(SRC_RO) and SRC.count('shutil.rmtree(') == 1 and 'shutil.rmtree(tmp, ignore_errors=True)' in SRC
    and "'..' in n.split('/')" in SRC, '')
 ok('① README · docs/417 · 회귀 실행기 HOST 에 test_v1298 · 판 v10.298 이상',
    '`ops-doc-draft.py`' in README and 'docs/417' in README and bool(D417) and 'ops-doc-draft.py' in D417 and '〔채울 것' in D417
