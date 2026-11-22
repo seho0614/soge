@@ -86,13 +86,17 @@ def section(md, word):
     return (rest[:n.start()] if n else rest).strip()
 
 
+OPS_DOC_RE = re.compile(r'^\d{2,3}_운영적용_v\d')   # v10.640 (docs/784) 운영 절차서 이름 「NNN_운영적용_v10.X(에서)_v10.Y_…」만 뺌
+
+
 def version_docs(docs_dir, lo, hi, skip):
+    """그 사이 판 문서 — 운영 절차서(OPS_DOC_RE)는 뺌 · 이름에 「운영적용」이 들어간 판 문서(780_운영적용출력보관_v10.636 · 509_운영적용_확인표_v10.374)는 넣음"""
     out = []
     if not os.path.isdir(docs_dir):
         return out
     for f in sorted(os.listdir(docs_dir)):
         m0 = re.match(r'^(\d{3})_', f)
-        if not m0 or not f.endswith('.md') or '운영적용' in f or m0.group(1) in skip:
+        if not m0 or not f.endswith('.md') or OPS_DOC_RE.match(f) or m0.group(1) in skip:
             continue
         m = VER_RE.search(f)
         if not m:
@@ -360,7 +364,8 @@ def main():
         raise SystemExit(f'리허설 결과 파일이 없음: {a.rehearsal}')
     for p in (a.old, a.new):
         if not (os.path.isfile(p) and p.endswith('.zip')):
-            raise SystemExit(f'킷 zip 이 아님: {p}')
+            z = re.sub(r'\.tar\.gz$', '.zip', p)   # v10.640 같은 판 zip 이 있으면 알려 줌
+            raise SystemExit(f'킷 zip 이 아님: {p}' + (f' — 같은 판 zip 을 쓰십시오: {z}' if z != p and os.path.isfile(z) else ''))
     tmp = tempfile.mkdtemp(prefix='opsdraft_')
     try:
         o_root, n_root = unpack(a.old, os.path.join(tmp, 'o')), unpack(a.new, os.path.join(tmp, 'n'))

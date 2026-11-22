@@ -6,23 +6,28 @@
 #   ③ 이 묶음 새 시험 NEW(점검판 · 컨테이너) · HOSTNEW(서버에서 python3 -I)
 #   ④ 회귀 run_regression.sh(PAR · UI_LANE 그대로 넘김) — 기대 수는 reg_classify 판정 줄 수(직접 셈)
 #   ⑤ ~/sgb-check.sh main down
+#   v10.639 (docs/783) 줄인 점검 — ONLY="test_v1104 test_v1623" bash qa/full_check.sh <갈래> [결과 폴더]
+#     ① realcheck → ② · ③ 건너뜀 → ④ run_regression.sh ONLY(그 시험만 · AI MOCK · HOST 는 서버) → ⑤ main down · 결과 폴더 기본 mini_<날짜>
+#     시험만 고친 뒤(대표 11/7 「필요한 것만」) 쓰는 길 — 서비스 코드가 바뀌었으면 ONLY 없이 전체
 #   이 qa 폴더(작업 트리)의 시험을 그대로 씀 — 돌리는 동안 시험 파일을 고치지 말 것.
 set -u
 B=${1:?갈래 이름(예 feature/v10.627)}
 Q=$(cd "$(dirname "$0")" && pwd)
-OUT=${2:-$HOME/check-results/full_$(date +%Y%m%d_%H%M)}
+ONLY=${ONLY:-}
+OUT=${2:-$HOME/check-results/$([ -n "$ONLY" ] && echo mini || echo full)_$(date +%Y%m%d_%H%M)}
 mkdir -p "$OUT"
 export PATH=$HOME/.local/bin:$PATH
 DBU=postgresql://sgb:sgb@localhost:15432/sgb
 say() { echo "$*"; echo "$*" >> "$OUT/summary.txt"; }
 : > "$OUT/summary.txt"
-say "== 전체 점검 $B · 시작 $(TZ=Asia/Seoul date '+%m/%d %H:%M') KST · 결과 $OUT"
+say "== $([ -n "$ONLY" ] && echo "줄인 점검(ONLY $ONLY)" || echo 전체 점검) $B · 시작 $(TZ=Asia/Seoul date '+%m/%d %H:%M') KST · 결과 $OUT"
 
 SITE_MODE=prod ~/sgb-check.sh "$B" realcheck fresh > "$OUT/realcheck.log" 2>&1; say "① realcheck rc=$?"
 say "$(sed -n 3p "$OUT/realcheck.log")"; say "$(grep '진짜 이미지 확인' "$OUT/realcheck.log" | tail -1)"; say "$(grep '리허설' "$OUT/realcheck.log" | tail -1)"
 grep -q "진짜 이미지 확인 — 전체 통과" "$OUT/realcheck.log" || { ~/sgb-check.sh main down >/dev/null 2>&1; say "realcheck 실패 — 멈춤"; exit 1; }
 K=$(ls -d ~/kits/run/current/SGB_* | tail -1); say "$(cat "$K/KIT_COMMITS.txt")"
 
+if [ -z "$ONLY" ]; then   # v10.639 줄인 점검이면 ② · ③ 건너뜀
 SITE_MODE=prod bash "$Q/func_check.sh" > "$OUT/func_check.log" 2>&1; say "② 기능 점검 rc=$?"
 say "$(grep -E '기능 점검 집계|건너뜀 [1-9]|실패 [1-9]' "$OUT/func_check.log" | tail -6)"
 
@@ -36,8 +41,12 @@ for t in ${HOSTNEW:-}; do
   grep -E '^FAIL' "$OUT/$t.log" | cut -c1-300 >> "$OUT/summary.txt"
 done
 
-EXP=$(cd "$Q" && python3 -I -c "import sys; sys.path.insert(0, '.'); import reg_classify as R; print(len(R.classify('.', '$K/sgb')))" 2>/dev/null || echo 0)
-PAR=${PAR:-3} UI_LANE=${UI_LANE:-0} bash "$Q/run_regression.sh" "$OUT/regression.log" "$EXP" > "$OUT/regression.out" 2>&1; say "④ 회귀 rc=$? · 기대 $EXP"
+else
+  say "② 기능 점검 · ③ 새 시험 — 건너뜀(줄인 점검 ONLY: $ONLY)"
+fi
+if [ -n "$ONLY" ]; then EXP=$(echo $ONLY | tr " " "\n" | sed "s/\.py$//" | sort -u | grep -c .); else
+EXP=$(cd "$Q" && python3 -I -c "import sys; sys.path.insert(0, '.'); import reg_classify as R; print(len(R.classify('.', '$K/sgb')))" 2>/dev/null || echo 0); fi
+ONLY="$ONLY" PAR=${PAR:-3} UI_LANE=${UI_LANE:-0} bash "$Q/run_regression.sh" "$OUT/regression.log" "$EXP" > "$OUT/regression.out" 2>&1; say "④ 회귀 rc=$? · 기대 $EXP"
 say "$(grep -E '실패  test|회귀 집계' "$OUT/regression.out")"; say "$(grep -E '걸린 시간|단계 —' "$OUT/regression.log" | tail -2)"
 
 ~/sgb-check.sh main down >/dev/null 2>&1; say "⑤ main down rc=$?"

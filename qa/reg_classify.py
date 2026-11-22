@@ -15,6 +15,10 @@
 
   까닭(점검판 DB 하나 · API 하나 · 사용자 웹 하나를 같이 씀):
     SET      설정을 바꿈 — setting( · setv( · sv( · site_settings · setting_schedules 쓰기 · PUT/PATCH/POST …settings 주소 → 키를 찾으면 LOCK(set:앞마디) · 못 찾으면 SOLO
+             v10.638 (docs/782) 키는 psql 글 안(`key = 'i18n.enabled'` · `key IN ('a.b', …)` · f-string 고정 부분)에서도 찾음
+    SETREAD  v10.638 설정 값을 읽어 확인 — psql 의 SELECT … FROM site_settings → 키가 있으면 같은 잠금(set:앞마디) · 키가 없으면 그대로(PAR)
+    SETGLOBAL v10.638 설정을 바꾸는데 그 키가 모든 요청에 걸리는 것(권한 판정 · 운영자 2단계 · 로그인 잠금 · 점검 시간 · 가입 열기 · 나라 막기 …) → SOLO
+             (11/22 test_v1119 가 SQL 글 안 i18n.enabled 를 바꿔 잠금이 없었고 test_v1104 와 부딪힘 · test_v1093 은 값만 확인해 PAR 이었음)
     JOB      정기 작업 · 묶음 셈 — POST /admin/jobs · member-notice-jobs · run_job( · SELECT fn_…(daily|hourly|build|close|watch|purge|run|digest) → LOCK(job)
     SHARED   같이 쓰는 시험 회원(admin · buyer · seller · intro · person · ops · payout · reviewer · member · bizowner …)의 계정 · 역할 · 동의 · 세션 · 2단계 · 권한을 바꿈 ·
              모든 기기 로그아웃 · 비밀번호 바꾸기 · 약관 넣기 · 게시(지금 판이 바뀌면 다른 시험이 동의 화면으로 감) → SOLO
@@ -77,6 +81,13 @@ def _fname(call):
 
 
 KEY_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z0-9_.]+$")
+# v10.638 (docs/782) psql 글 안의 설정 키 — 설정 표를 다루는 글에서 따옴표 안 키 꼴 글자
+SQL_KEY_RE = re.compile(r"'([a-z][a-z0-9_]*\.[a-z0-9_.]+)'")
+SET_TABLE_RE = re.compile(r"\b(site_settings|setting_schedules)\b", re.I)
+# v10.638 바꾸면 다른 시험의 로그인 · 권한 · 접속이 달라지는 키 — 이 키를 쓰는 SET 시험은 잠금이 아니라 혼자
+GLOBAL_KEY_RE = re.compile(r"^(perm\.(mode|enforce|allow_widen|auto_role_group)|admin\.(ip_verify|mfa_required|passkey|passkey_mode)|auth\.login\.\w+|"
+                           r"sec2\.(member_mfa|pwned_check)|security\.geo_(mode|block|allow)|signup\.open|site\.maintenance_(from|until))$")
+SET_READ_RE = re.compile(r"\bSELECT\b.{0,300}?\bFROM\s+(public\.)?site_settings\b", re.I | re.S)
 
 
 def analyze(src, known=frozenset()):
@@ -113,6 +124,10 @@ def analyze(src, known=frozenset()):
         if fn == 'psql' or (fn == 'run' and 'psql' in ' '.join(_strs(n, {}))):
             sql = ' '.join(_strs(n, names))
             why.update(k for k, rx in SQL_RULES if rx.search(sql))
+            if SET_TABLE_RE.search(sql):   # v10.638 글 안 키 · 읽기 확인
+                keys.update(x for x in SQL_KEY_RE.findall(sql) if KEY_RE.match(x) and (x in known if known else True))
+                if SET_READ_RE.search(sql):
+                    why.add('SETREAD')
         elif fn == 'call' and n.args:
             parts = _strs(n.args[0], {}) if isinstance(n.args[0], (ast.Constant, ast.JoinedStr)) else []
             m = parts[0] if parts else ''
@@ -174,6 +189,10 @@ def mode_of(why, keys, jobs, ui_lane=False):
     if 'SET' in w:
         if not keys:
             return 'SOLO', locks
+        if any(GLOBAL_KEY_RE.match(k) for k in keys):   # v10.638 모든 요청에 걸리는 키
+            return 'SOLO', locks
+        locks.update('set:' + k.split('.')[0] for k in keys)
+    if 'SETREAD' in w and keys:   # v10.638 값을 확인하는 시험도 같은 잠금 — 키가 없으면 잠그지 않음
         locks.update('set:' + k.split('.')[0] for k in keys)
     if 'JOB' in w:
         locks.add('job')
@@ -201,6 +220,8 @@ def classify(qdir, core=None):
         elif f in par_ok and why:
             why = []
         mode, locks = mode_of(why, keys, jobs)
+        if 'SET' in why and 'FORCE' not in why and any(GLOBAL_KEY_RE.match(k) for k in keys):
+            why = why + ['SETGLOBAL']   # v10.638 판정 까닭에 보임
         yrs = fixed_years(src) if got is not None else []
         if yrs and mode in ('PAR', 'LOCK', 'UI'):   # v10.635 같은 먼 해를 쓰는 시험끼리 잠금
             locks = set(locks) | {f'year:{y}' for y in yrs}
