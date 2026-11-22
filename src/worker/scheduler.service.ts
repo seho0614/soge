@@ -91,6 +91,7 @@ import { lsyHourlyJob, lsyTriageJob } from '../modules/lsy/jobs';   // v10.524 ~
 import { mtrDailyJob, mtrHourlyJob } from '../modules/mtr/jobs';   // v10.573 ~ 576 11차 회원 · 거래
 import { opxArchiveJob, opxRiskDailyJob, opxRiskEventsJob } from '../modules/opx/jobs';   // v10.509 · 510 (D275)
 import { sfxDailyJob } from '../modules/sfx/jobs';   // v10.546 ~ 548 (D285)
+import { jobFailWatch } from './job-fail-watch';   // v10.627 (D307 · docs/771) 정기 작업 연속 실패 알림
 import { sec2TickJob } from '../modules/sec2/jobs';   // v10.590 ~ 593 (docs/732 ~ 735) 15차 보안 · 기반
 import { acctDeadlineJob } from '../modules/acct/month';   // v10.390 (D244)
 import { opbGroupMail, opbRoutePending } from '../modules/opb/alert-routes';   // v10.572 (docs/714) 운영 알림 받을 사람 규칙
@@ -256,6 +257,8 @@ export class SchedulerService {
       await this.db.query(
         `UPDATE job_runs SET ended_at = now(), ok = $2, affected = $3, detail = $4
           WHERE id = $1`, [c.id, ok, affected, detail]);
+      /* v10.627 (D307 · docs/771) 연속 실패 알림 JOB_FAILING · 성공이면 풂 — 알림이 실패해도 작업 기록은 그대로 */
+      await jobFailWatch(this.db, d.job, ok).catch((e) => this.log.warn(`JOB_FAILING 확인 실패 ${d.job}: ${String((e as Error)?.message ?? e).slice(0, 200)}`));
       ran.push(d.job);
     }
     return { ran, skipped };

@@ -10,7 +10,7 @@ import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
 
 interface Guide {
-  code: string; maxChars: number; canEdit: boolean;
+  code: string; maxChars: number; maxBytes?: number; canEdit: boolean;   // v10.632 (docs/776) maxBytes
   current: { version: number; title: string; body: string; updatedAt: string; sections: Array<{ id: string; heading: string; key: string | null }> } | null;
   versions: Array<{ version: number; chars: number; note: string | null; by: string | null; createdAt: string }>;
 }
@@ -38,9 +38,15 @@ export function ScxHelp() {
       ) : (
         <div data-scx-help-form="">
           <textarea className="inp" rows={18} style={{ width: '100%' }} value={body} onChange={(e) => setBody(e.target.value)} />
+          {(() => {   /* v10.632 (docs/776) 글자 · 크기(KB) — 넘으면 저장 막음(서버도 422 HELP_TOO_BIG) */
+            const mb = d.maxBytes ?? 95 * 1024, n = body.replace(/\r\n/g, '\n').trim().length + 1, b = new TextEncoder().encode(body.replace(/\r\n/g, '\n').trim() + '\n').length;
+            return <p data-scx-help-size={b} className={n > d.maxChars || b > mb ? 'warn-text' : 'muted'}>
+              {n.toLocaleString('ko-KR')}자 / {d.maxChars.toLocaleString('ko-KR')}자 · {Math.ceil(b / 1024).toLocaleString('ko-KR')}KB / {Math.round(mb / 1024)}KB
+              {(n > d.maxChars || b > mb) && ' — 한도를 넘어 저장할 수 없습니다(한글은 한 자 3바이트)'}</p>;
+          })()}
           <p>
             <input className="inp" value={note} onChange={(e) => setNote(e.target.value)} placeholder="고친 까닭(선택 · 200자)" />{' '}
-            <button className="btn-sm" disabled={!!a.busy} data-scx-help-save="" onClick={() => void a.run('save', () => api('/admin/help/guide', { method: 'POST', body: JSON.stringify({ body, note }) }), () => { setBody(null); setNote(''); g.reload(); })}>저장</button>{' '}
+            <button className="btn-sm" disabled={!!a.busy || body.replace(/\r\n/g, '\n').trim().length + 1 > d.maxChars || new TextEncoder().encode(body.replace(/\r\n/g, '\n').trim() + '\n').length > (d.maxBytes ?? 95 * 1024)} data-scx-help-save="" onClick={() => void a.run('save', () => api('/admin/help/guide', { method: 'POST', body: JSON.stringify({ body, note }) }), () => { setBody(null); setNote(''); g.reload(); })}>저장</button>{' '}
             <button className="btn-sm btn-plain" onClick={() => setBody(null)}>닫기</button>
           </p>
         </div>

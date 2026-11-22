@@ -8,7 +8,7 @@ import { Flash } from '../../components/Flash';
 
 interface Ver { version: number; chars: number; note: string | null; by: string | null; createdAt: string }
 interface Data {
-  code: string; maxChars: number;
+  code: string; maxChars: number; maxBytes?: number;   // v10.632 (docs/776) 저장 크기(바이트)
   current: { version: number; title: string; body: string; chars: number; updatedAt: string; sections: number } | null;
   versions: Ver[];
 }
@@ -17,7 +17,7 @@ interface Data {
  * SB-ADM-SIT-090 사용자 설명서 (v10.203 · D180 · docs/324)
  *
  * 대표 11/6 「사용자 설명서는 AI 학습」 → 「설명서 본문을 AI 자료로 통째」.
- * 사용자 웹 /guide/manual 에 나가고 AI 상담이 FAQ · 공지 · 약관과 따로 읽습니다(2만 자까지 · 10분 안에 새 판).
+ * 사용자 웹 /guide/manual 에 나가고 AI 상담이 FAQ · 공지 · 약관과 따로 읽습니다(3만 자까지 · AI 는 2만 자까지 — 넘으면 질문과 맞는 절부터 · 10분 안에 새 판 · v10.634).
  * 「### 제목」 한 줄이 한 절 — AI 답의 출처 · 화면 목차가 됩니다. 저장은 SUPER(새 판 · 옛 판은 남음).
  */
 export function HelpManual() {
@@ -30,10 +30,13 @@ export function HelpManual() {
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const { current, versions, maxChars } = q.data;
+  const maxBytes = q.data.maxBytes ?? 95 * 1024;
   const text = draft ?? current?.body ?? '';
   const chars = text.replace(/\r\n/g, '\n').trim().length + 1;
   const sections = text.split('\n').filter((l) => /^###\s+\S/.test(l)).length;
-  const over = chars > maxChars;
+  const bytes = new TextEncoder().encode(text.replace(/\r\n/g, '\n').trim() + '\n').length;   // v10.632 한글 한 자 3바이트
+  const big = bytes > maxBytes;
+  const over = chars > maxChars || big;
   const save = () => {
     if (!confirm(`사용자 설명서를 새 판으로 저장합니다(${chars.toLocaleString('ko-KR')}자 · 절 ${sections}개). 사용자 웹에 바로 나가고 AI 상담은 10분 안에 새 판을 읽습니다.`)) return;
     void a.run('save', () => api('/admin/help/manual', { method: 'POST', body: JSON.stringify({ body: text, note }) }),
@@ -54,8 +57,9 @@ export function HelpManual() {
       <textarea name="help-body" value={text} readOnly={!isSuper} onChange={(e) => setDraft(e.target.value)}
         rows={24} style={{ width: '100%', fontFamily: 'var(--font-mono, monospace)', fontSize: 13 }} data-help-body="" />
       <p data-help-count={chars} className={over ? 'warn-text' : 'muted'}>
-        {chars.toLocaleString('ko-KR')}자 / {maxChars.toLocaleString('ko-KR')}자 · 절 {sections}개
-        {over && ' — 한도를 넘어 저장할 수 없습니다(AI 상담이 읽는 양)'}
+        {chars.toLocaleString('ko-KR')}자 / {maxChars.toLocaleString('ko-KR')}자 · <span data-help-bytes={bytes}>{Math.ceil(bytes / 1024).toLocaleString('ko-KR')}KB / {Math.round(maxBytes / 1024)}KB</span> · 절 {sections}개
+        {chars > maxChars && ' — 한도를 넘어 저장할 수 없습니다(설명서 저장 한도)'}
+        {big && chars <= maxChars && ' — 크기(KB)를 넘어 저장할 수 없습니다(한글은 한 자 3바이트)'}
         {!sections && ' — 「### 제목」 절이 하나는 있어야 합니다'}
       </p>
       {isSuper ? (

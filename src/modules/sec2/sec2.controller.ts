@@ -191,7 +191,7 @@ export class Sec2HelpController {
   @ApiOperation({ summary: '운영 화면 도움말 — 새 판 저장 (v10.594 · SUPER)', description: '옛 판은 남음 · 같은 본문이면 판을 만들지 않음 · 회원 설명서(USER_MANUAL)는 건드리지 않음.' })
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'CONFLICT' })
-  @ApiResponse({ status: 422, type: ErrorDto, description: 'HELP_TOO_SHORT · HELP_TOO_LONG · HELP_NO_SECTION' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'HELP_TOO_SHORT · HELP_TOO_LONG · HELP_TOO_BIG(95KB · v10.632) · HELP_NO_SECTION' })
   saveGuide(@Body() dto: ScxGuideSaveDto) { return sec2SaveGuide(this.db, dto.body, dto.note); }
 }
 

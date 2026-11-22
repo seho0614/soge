@@ -3,11 +3,13 @@
  *   ① 07시(한국) 뒤 어제 운영자 이상 행동 셈 — sec2.anomaly_watch on 일 때만 · 하루 한 번(sec2_anomaly_runs)
  *   ② 회원 「내가 아니에요」 1시간 몰림 알림 — sec2.not_me_surge > 0
  *   ③ 정리(꺼져 있어도 — 줄이기만): 하루 지난 2단계 표 · 로그인 기록 보관 날수 지난 낯선 로그인 줄 · 400일 지난 유출 확인 건수
+ *   ④ v10.631 (D307 · docs/775) 권한 COMPARE 「다름」 하루 요약 PERM_COMPARE_DIFF — perm.mode = COMPARE · 08시 뒤 어제 · 하루 한 번
  *   하나가 실패해도 나머지는 함(결과에 오류 글).
  * ------------------------------------------------------------------- */
 import { Sec2Db } from './common';
 import { sec2AnomalyDaily } from './anomaly';
 import { sec2NotMeSurge } from './login-alert';
+import { permCompareDaily } from '../admin/perm-compare-daily';
 
 export async function sec2TickJob(db: Sec2Db) {
   const out: Record<string, unknown> = {};
@@ -16,6 +18,7 @@ export async function sec2TickJob(db: Sec2Db) {
   };
   await step('anomaly', () => sec2AnomalyDaily(db));
   await step('notMe', () => sec2NotMeSurge(db));
+  await step('permCompare', () => permCompareDaily(db));
   await step('purge', async () => {
     const t = await db.query(`DELETE FROM sec2_mfa_tickets WHERE created_at < now() - interval '1 day' RETURNING 1`);
     const a = await db.query(

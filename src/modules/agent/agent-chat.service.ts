@@ -8,15 +8,19 @@ import { redactContacts } from './review-shadow.service';
 import { AgentLookupService, LOOKUP_NAMES, LOOKUP_TOOLS } from './agent-lookup.service';
 import { AgentDraftService, DRAFT_NAMES, DRAFT_TOOLS, DraftCard, PendingDraft } from './agent-draft.service';
 import { AgentBlock, AgentMessage, AgentReply } from './agent.provider';
-import { HELP_MANUAL, HELP_MAX_CHARS, HelpService } from '../help/help.service';
+import { HELP_AI_MAX_CHARS, HELP_MANUAL, HelpService } from '../help/help.service';
+import { ManualSec, manualBlock as pickBlock } from './manual-pick';   // v10.634 · 637 (docs/778 · 781) 설명서 절 고르기 — 따로 떼어 시험이 직접 돌림
 
 /** 질문 한 번의 글자 수 · 한 대화의 질문 수 · 지식 묶음 크기 · 다시 만드는 간격 */
 const MAX_MESSAGE = 500;
 const MAX_TURNS = 10;
 const KNOWLEDGE_MAX = 40_000;
 const KNOWLEDGE_TTL_MS = 10 * 60_000;
-/** v10.203 (D180) — 사용자 설명서는 FAQ · 공지 · 약관(KNOWLEDGE_MAX)과 따로 이만큼까지(앞 자료가 잘리지 않게) */
-const MANUAL_MAX = HELP_MAX_CHARS;
+/** v10.203 (D180) — 사용자 설명서는 FAQ · 공지 · 약관(KNOWLEDGE_MAX)과 따로 이만큼까지(앞 자료가 잘리지 않게)
+ *  v10.634 (docs/778) 설명서 저장 한도는 3만 자로 올렸지만 AI 가 읽는 양은 그대로 2만 자 — 넘으면 질문과 맞는 절부터(manualFor) */
+const MANUAL_MAX = HELP_AI_MAX_CHARS;
+const manualBlock = (version: number, secs: ManualSec[], question: string) => pickBlock(version, secs, question, MANUAL_MAX);
+
 const VISITOR_RE = /^[A-Za-z0-9-]{8,64}$/;
 /** v10.137 — 한 질문에 도구를 부르는 횟수(왕복) · 한 번에 받는 도구 수 — Claude 호출은 많아야 3번 */
 const MAX_TOOL_ROUNDS = 2;
@@ -62,7 +66,7 @@ export type ChatAnswer = { conversationId: string; answer: string; handoff: bool
 export class AgentChatService {
   private readonly log = new Logger(AgentChatService.name);
   private readonly busy = new Set<string>();
-  private knowledge: { at: number; text: string; faqs: { id: string; question: string; linkHref: string | null }[] } | null = null;
+  private knowledge: { at: number; text: string; base: string; manual: { version: number; secs: ManualSec[] } | null; faqs: { id: string; question: string; linkHref: string | null }[] } | null = null;
 
   constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly lookup: AgentLookupService,
               private readonly drafter: AgentDraftService) {}
@@ -126,8 +130,12 @@ export class AgentChatService {
         }
       }
 
-      const kn = await this.knowledgePack();
+      const kn0 = await this.knowledgePack();
       const safe = redactChat(message);
+      /* v10.634 (docs/778) 설명서가 AI 읽는 양(2만 자)보다 길면 이 질문(과 바로 앞 질문)에 맞는 절만 */
+      const kn = { ...kn0, text: kn0.manual && kn0.text === kn0.base
+        ? kn0.base + '\n\n' + manualBlock(kn0.manual.version, kn0.manual.secs, `${safe} ${history.filter((h) => h.role === 'user').slice(-1).map((h) => h.body).join(' ')}`).text
+        : kn0.text };
       // v10.137 — 3단계: 스위치가 켜져 있고 로그인한 회원일 때만 조회 도구를 줌(비회원 · 꺼짐이면 지금처럼 글만)
       const me = this.me;
       const lookupOn = !!me && (await this.setting('agent.chat.member_lookup.enabled')) === 'on';
@@ -402,12 +410,12 @@ export class AgentChatService {
     const [man] = await this.db.query<{ version: number; body: string }>(
       `SELECT version, body FROM v_help_doc_current WHERE code = $1`, [HELP_MANUAL]).catch(() => [] as { version: number; body: string }[]);
     const secs = man ? HelpService.sections(man.body) : [];
+    const base = text;
     if (secs.length) {
-      let m = `## 사용자 설명서(${man!.version}판 — 회원용 사용 방법)\n\n` + secs.map((x) => `[설명서 ${x.id}] ${x.heading}\n${x.text}`).join('\n\n');
-      if (m.length > MANUAL_MAX) m = m.slice(0, MANUAL_MAX) + '\n…(이하 생략)';
-      text += '\n\n' + m;
+      const mb = manualBlock(man!.version, secs, '');
+      if (mb.all) text += '\n\n' + mb.text;   // v10.634 다 들어가면 지금처럼 묶음에 넣어 둠(질문마다 같음)
     }
-    this.knowledge = { at: Date.now(), text, faqs: [
+    this.knowledge = { at: Date.now(), text, base, manual: secs.length ? { version: man!.version, secs } : null, faqs: [
       ...faqs.map((f) => ({ id: f.id, question: f.question, linkHref: f.linkHref })),
       ...secs.map((x) => ({ id: x.id, question: `사용자 설명서 › ${x.heading.replace(/`/g, '')}`, linkHref: `/guide/manual#${x.id}` })),
     ] };

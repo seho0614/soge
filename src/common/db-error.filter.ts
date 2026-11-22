@@ -271,6 +271,12 @@ export class DbErrorFilter implements ExceptionFilter {
       return;
     }
 
+    /* v10.632 (docs/776) 본문이 서버가 받는 크기(100KB)를 넘음 — body-parser 의 413 을 500 대신 413 PAYLOAD_TOO_LARGE 로(도움말 4만 자 저장에서 드러남) */
+    if ((err as any)?.type === 'entity.too.large' || (err as any)?.status === 413) {
+      send(413, { code: 'PAYLOAD_TOO_LARGE', message: '보내는 글이 너무 큽니다(100KB 까지) — 줄이거나 나눠서 저장하십시오.' });
+      return;
+    }
+
     const raw = err instanceof Error ? err.message : String(err);
     for (const rule of RULES) {
       const m = raw.match(rule.test);

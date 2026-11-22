@@ -5636,6 +5636,11 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "스위치가 아닙니다.": "This setting is not a switch.",
   "이 스위치의 켤 조건에는 이 선행 조건이 없습니다.": "This prerequisite is not part of this switch's turn-on conditions.",
   "이상 행동 기록은 확인(한 번)만 적습니다.": "Anomaly records only accept a single review.",
+  /* v10.633 (docs/777) */
+  "보내는 글이 너무 큽니다(CSV 200KB 까지) — 나눠서 올리십시오.": "The request is too large (CSV up to 200KB). Split it and upload again.",
+  "CSV 본문을 읽지 못했습니다.": "The CSV body could not be read.",
+  /* v10.632 (docs/776) */
+  "보내는 글이 너무 큽니다(100KB 까지) — 줄이거나 나눠서 저장하십시오.": "The request is too large (up to 100KB). Shorten it or save it in parts.",
   /* v10.614 (D301) */
   "시 · 도 이름이 맞지 않습니다.": "The province or city name is not valid.",
   "시 · 군 · 구 이름이 맞지 않습니다.": "The city, county or district name is not valid.",

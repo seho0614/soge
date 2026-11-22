@@ -12,7 +12,7 @@ import { HELP_MAX_CHARS, HelpService } from './help.service';
  *   공개         GET  /site/manual                      지금 판(공개 구역 site — check-acl) 본문 · 절 목차(SB-HOM-ETC-020 /guide/manual)
  *   ADMIN·SUPER  GET  /admin/help/manual                지금 판 · 판 목록(SB-ADM-SIT-090)
  *                GET  /admin/help/manual/versions/:v    옛 판 본문
- *   SUPER        POST /admin/help/manual                새 판 저장(2만 자까지 · ### 절이 하나 이상)
+ *   SUPER        POST /admin/help/manual                새 판 저장(3만 자 · 95KB 까지 · ### 절이 하나 이상 · v10.634)
  * ------------------------------------------------------------------- */
 
 export class HelpSectionRefDto {
@@ -78,6 +78,6 @@ export class HelpAdminController {
   @Audit('HELP_MANUAL_SAVE', 'SITE')
   @ApiOperation({ summary: '사용자 설명서 — 새 판 저장(SUPER)', description: '옛 판은 남고 새 판이 지금 판이 됩니다. 같은 본문이면 판을 만들지 않음. AI 상담은 10분 안에 새 판을 읽습니다.' })
   @ApiOkResponse({ type: HelpSaveResultDto })
-  @ApiResponse({ status: 422, type: ErrorDto, description: 'HELP_TOO_SHORT · HELP_TOO_LONG(2만 자 넘음) · HELP_NO_SECTION(### 절 없음)' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'HELP_TOO_SHORT · HELP_TOO_LONG(3만 자 넘음 · v10.634) · HELP_TOO_BIG(95KB 넘음 · v10.632) · HELP_NO_SECTION(### 절 없음)' })
   save(@Body() dto: HelpSaveDto) { return this.help.save(dto.body, dto.note); }
 }

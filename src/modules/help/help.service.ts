@@ -3,19 +3,35 @@ import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { maskMail } from '../../common/mail/mail-admin.service';
+import { splitManual } from '../agent/manual-pick';
 
 /** 설명서 한 절(### 제목 아래 글) — AI 상담 출처 · 사용자 웹 #m번호 */
 export interface HelpSection { id: string; heading: string; text: string }
 
 export const HELP_MANUAL = 'USER_MANUAL';
-export const HELP_MAX_CHARS = 20000;
+export const HELP_MAX_CHARS = 30000;   // v10.634 (docs/778) 2만 → 3만 자(설명서가 1만 8천 자를 넘어 절을 더할 자리가 없던 것)
+/** v10.634 (docs/778) AI 상담이 한 번에 읽는 설명서 양 — 그대로 2만 자 · 설명서가 이보다 길면 질문과 맞는 절부터 골라 이만큼까지(agent-chat.service) */
+export const HELP_AI_MAX_CHARS = 20000;
+/** v10.632 (docs/776) 저장 크기(UTF-8 바이트) — 서버가 받는 본문 크기(100KB)보다 작게 · 한글은 한 자 3바이트라 4만 자(운영 화면 도움말)는 약 12만 바이트
+ *  넘으면 422 HELP_TOO_BIG(글자 수 · 바이트와 함께) · 100KB 를 넘어 서버가 본문을 받지 못하면 413 PAYLOAD_TOO_LARGE(db-error.filter) */
+export const HELP_MAX_BYTES = 95 * 1024;
+export function helpBytes(text: string) { return Buffer.byteLength(text, 'utf8'); }
+export function helpTooBig(text: string, what: string) {
+  const b = helpBytes(text);
+  if (b > HELP_MAX_BYTES) {
+    throw new PolicyViolation('HELP_TOO_BIG',
+      `${what}이(가) 너무 큽니다 — ${Math.ceil(b / 1024).toLocaleString('ko-KR')}KB(${text.length.toLocaleString('ko-KR')}자) · ${HELP_MAX_BYTES / 1024}KB 까지(한글은 한 자 3바이트 — 한글만이면 약 3만 2천 자).`,
+      { bytes: b, maxBytes: HELP_MAX_BYTES, chars: text.length });
+  }
+  return b;
+}
 
 /**
  * v10.203 (D180 · docs/324) — 사용자 설명서(help_docs)
  *
  *   대표 11/6 「사용자 설명서는 AI 학습」 → 「설명서 본문을 AI 자료로 통째」.
  *   판을 쌓기만 합니다(고치면 새 판 · 옛 판은 남음 · DB 가 고치기 · 지우기를 막음).
- *   AI 상담은 FAQ · 공지 · 약관(4만 자)과 따로 이 본문(2만 자까지)을 읽고, 답의 출처로 절 번호(m1 · m2 …)를 붙입니다.
+ *   AI 상담은 FAQ · 공지 · 약관(4만 자)과 따로 이 본문을 읽고(2만 자까지 · v10.634 부터 설명서가 더 길면 질문과 맞는 절부터), 답의 출처로 절 번호(m1 · m2 …)를 붙입니다.
  */
 @Injectable()
 export class HelpService {
@@ -23,16 +39,7 @@ export class HelpService {
 
   /** ### 제목마다 한 절 — 번호는 위에서부터 m1, m2 … (사용자 웹 #m번호 · AI 출처가 같은 번호를 씀) */
   static sections(body: string): HelpSection[] {
-    const out: HelpSection[] = [];
-    let cur: HelpSection | null = null;
-    for (const line of body.split('\n')) {
-      const h = /^###\s+(.+?)\s*$/.exec(line);
-      if (h) { cur = { id: `m${out.length + 1}`, heading: h[1]!, text: '' }; out.push(cur); continue; }
-      if (/^##\s/.test(line)) { cur = null; continue; }
-      if (cur) cur.text += line + '\n';
-    }
-    for (const s of out) s.text = s.text.trim();
-    return out;
+    return splitManual(body);   // v10.637 (docs/781) 순수 함수로 떼어 냄(AI 절 고르기 시험이 같은 규칙을 씀)
   }
 
   async current(code = HELP_MANUAL) {
@@ -57,8 +64,8 @@ export class HelpService {
          FROM help_docs h LEFT JOIN accounts a ON a.id = h.created_by
         WHERE h.code = $1 ORDER BY h.version DESC LIMIT 50`, [HELP_MANUAL]);
     return {
-      code: HELP_MANUAL, maxChars: HELP_MAX_CHARS,
-      current: r ? { version: r.version, title: r.title, body: r.body, chars: r.chars, updatedAt: r.createdAt, sections: HelpService.sections(r.body).length } : null,
+      code: HELP_MANUAL, maxChars: HELP_MAX_CHARS, maxBytes: HELP_MAX_BYTES,
+      current: r ? { version: r.version, title: r.title, body: r.body, chars: r.chars, bytes: helpBytes(r.body), updatedAt: r.createdAt, sections: HelpService.sections(r.body).length } : null,
       versions: versions.map((v) => ({ ...v, by: maskMail(v.by) })),
     };
   }
@@ -77,6 +84,7 @@ export class HelpService {
     if (text.length > HELP_MAX_CHARS) {
       throw new PolicyViolation('HELP_TOO_LONG', `설명서는 ${HELP_MAX_CHARS.toLocaleString('ko-KR')}자까지입니다(지금 ${text.length.toLocaleString('ko-KR')}자) — AI 상담이 읽는 양의 한도입니다.`);
     }
+    helpTooBig(text, '설명서');
     if (!HelpService.sections(text).length) {
       throw new PolicyViolation('HELP_NO_SECTION', '「### 제목」으로 시작하는 절이 하나도 없습니다 — 절 제목이 AI 답의 출처와 화면 목차가 됩니다.');
     }
@@ -90,7 +98,7 @@ export class HelpService {
          SELECT $1, coalesce(max(version), 0) + 1, $2, $3, nullif($4, ''), $5 FROM help_docs WHERE code = $1
          RETURNING version`,
         [HELP_MANUAL, cur?.title ?? '사용자 설명서', text, (note ?? '').trim().slice(0, 200), RequestCtx.actorId() ?? null]);
-      return { ok: true, version: r!.version, chars: text.length,
+      return { ok: true, version: r!.version, chars: text.length, bytes: helpBytes(text),
                note: `사용자 설명서 ${r!.version}판으로 저장했습니다 — AI 상담은 10분 안에 새 판을 읽습니다.` };
     });
   }

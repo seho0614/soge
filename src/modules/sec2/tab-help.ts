@@ -8,7 +8,7 @@
  * ------------------------------------------------------------------- */
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { HelpService } from '../help/help.service';
+import { HelpService, HELP_MAX_BYTES, helpBytes, helpTooBig } from '../help/help.service';
 import { Sec2Db, sec2Mask } from './common';
 import { pgxEffectiveOf } from '../admin/pgx-perm';   // v10.615 (docs/757) GROUPS 면 자기가 볼 수 있는 탭의 절만
 
@@ -106,8 +106,8 @@ export async function sec2Guide(db: Sec2Db) {
     `SELECT h.version, char_length(h.body) AS chars, h.note, a.email::text AS by, h.created_at AS "createdAt"
        FROM help_docs h LEFT JOIN accounts a ON a.id = h.created_by WHERE h.code = $1 ORDER BY h.version DESC LIMIT 30`, [SEC2_GUIDE]);
   return {
-    code: SEC2_GUIDE, maxChars: MAX,
-    current: d ? { version: d.version, title: d.title, body: d.body, updatedAt: d.createdAt,
+    code: SEC2_GUIDE, maxChars: MAX, maxBytes: HELP_MAX_BYTES,
+    current: d ? { version: d.version, title: d.title, body: d.body, updatedAt: d.createdAt, chars: d.body.length, bytes: helpBytes(d.body),
                    sections: HelpService.sections(d.body).map((s) => ({ id: s.id, heading: s.heading, key: /\[([a-z0-9-]+)\]\s*$/.exec(s.heading)?.[1] ?? null })) } : null,
     versions: versions.map((v) => ({ ...v, by: sec2Mask(v.by) })),
     canEdit: RequestCtx.get()?.actorRole === 'SUPER',
@@ -119,6 +119,7 @@ export async function sec2SaveGuide(db: Sec2Db & { transaction<T>(fn: () => Prom
   const text = String(body ?? '').replace(/\r\n/g, '\n').trim() + '\n';
   if (text.length < 100) throw new PolicyViolation('HELP_TOO_SHORT', '도움말 본문이 너무 짧습니다(100자 이상).');
   if (text.length > MAX) throw new PolicyViolation('HELP_TOO_LONG', `도움말은 ${MAX.toLocaleString('ko-KR')}자까지입니다(지금 ${text.length.toLocaleString('ko-KR')}자).`);
+  helpTooBig(text, '도움말');   // v10.632 (docs/776) 바이트 한도 — 4만 자 한글은 100KB 를 넘음
   if (!HelpService.sections(text).length) throw new PolicyViolation('HELP_NO_SECTION', '「### 제목」으로 시작하는 절이 하나도 없습니다.');
   return db.transaction(async () => {
     await db.query(`SELECT pg_advisory_xact_lock(hashtext('help_docs:' || $1))`, [SEC2_GUIDE]);
