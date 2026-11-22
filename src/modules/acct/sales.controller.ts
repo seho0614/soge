@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -8,6 +8,7 @@ import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { addOppNote, createOpp, linkOppQuote, listOpps, oppDetail, OPP_STAGES, setOppStage, updateOpp } from './crm';
 import { addFeedAccount, bankFeedView, runBankFeed, setFeedAccount } from './bankfeed';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.466 · 467 (D264 · docs/604 · 605) 영업 · 자금 — 대표 11/20 「㉝」
@@ -61,7 +62,7 @@ export class BankFeedAccountNewDto {
 }
 export class BankFeedAccountEditDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 40) label?: string;
-  @ApiPropertyOptional({ description: 'false = 자동 조회 끔(기록은 그대로)' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ description: 'false = 자동 조회 끔(기록은 그대로)' }) @IsOptional() @StrictBoolean() active?: boolean;
 }
 export class BankFeedRunDto {
   @ApiPropertyOptional({ example: '1', description: '한 계좌만(비우면 쓰는 계좌 모두)' }) @IsOptional() @IsString() @Matches(/^(\d{1,18})?$/) accountId?: string;

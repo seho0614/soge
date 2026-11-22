@@ -1,12 +1,13 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery,
          ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsString, Length, Matches } from 'class-validator';
+import { IsIn, IsString, Length, Matches } from 'class-validator';
 import { I18nService, I18N_FIELDS } from './i18n.service';
 import { TranslateService } from './translate.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ─────────────────────────────────────────────────────────────────────
  * 다국어 1단계 기반 — v10.93 (D115 · docs/148 · docs/150)
@@ -25,7 +26,7 @@ const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT', 'PROF
   'NOTIFY_EVENT', 'REPORT_REASON', 'PLAN', 'INTRO_GRADE', 'GWAN_FORM', 'UI_MESSAGE', 'AD_PLACEMENT'];   // v10.123 (D126)
 
 export class LangActiveDto {
-  @ApiProperty({ example: true }) @IsBoolean() isActive!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() isActive!: boolean;
 }
 export class I18nLangDto {
   @ApiProperty({ example: 'ko' }) code!: string;

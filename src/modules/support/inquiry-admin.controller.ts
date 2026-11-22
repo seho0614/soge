@@ -1,10 +1,11 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { INQUIRY_ANSWER_MAX, InquiryAdminService } from './inquiry-admin.service';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.333 (D225 · docs/464) — 운영 화면 「1:1 문의」 답변함(SB-ADM-INQ-010)
@@ -18,7 +19,7 @@ import { INQUIRY_ANSWER_MAX, InquiryAdminService } from './inquiry-admin.service
 export class InquiryAnswerDto {
   @ApiProperty({ maxLength: INQUIRY_ANSWER_MAX, description: `답변(2 ~ ${INQUIRY_ANSWER_MAX}자 · 회원에게 그대로 보임)` })
   @IsString() @MaxLength(8000) answer!: string;
-  @ApiPropertyOptional({ description: 'true = 답하면서 닫음' }) @IsOptional() @IsBoolean() close?: boolean;
+  @ApiPropertyOptional({ description: 'true = 답하면서 닫음' }) @IsOptional() @StrictBoolean() close?: boolean;
   @ApiPropertyOptional({ format: 'uuid', description: 'v10.337 — 「답변 틀 고르기」로 고른 틀(지표 「답변 틀별 쓴 횟수」 · 없는 틀이면 무시)' })
   @IsOptional() @IsString() @MaxLength(40) templateId?: string;
 }

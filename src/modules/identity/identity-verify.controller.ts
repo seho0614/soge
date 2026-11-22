@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { IdentityVerifyService } from './identity-verify.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.141 (D137 · docs/214 · 설계 docs/213) — 본인인증 표준창
@@ -51,7 +52,7 @@ export class IdentityCompleteResultDto {
 export class IdentityMockSignDto extends IdentityCompleteDto {
   @ApiPropertyOptional({ maxLength: 40 }) @IsOptional() @IsString() @MaxLength(40) name!: string;
   @ApiPropertyOptional({ example: '19900101' }) @IsOptional() @IsString() @MaxLength(8) birthdate!: string;
-  @ApiPropertyOptional({ description: 'true 면 표준창에서 취소한 결과' }) @IsOptional() @IsBoolean() cancel?: boolean;
+  @ApiPropertyOptional({ description: 'true 면 표준창에서 취소한 결과' }) @IsOptional() @StrictBoolean() cancel?: boolean;
 }
 export class IdentityMockSignResultDto {
   @ApiProperty() returnUrl!: string;

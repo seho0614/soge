@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
 import { ModulesContainer } from '@nestjs/core';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -13,6 +13,7 @@ import {
   conflictList, createTask, permStaffList, roleGroupSets, saveConflict, saveRoleGroupSets, saveTaskGroupFull, saveTaskInfo, taskGroupList, taskList,
 } from './perm-sets';
 import { PERM_MODES, modeView, setMode, unmappedRoutes } from './perm-mode';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.562 · 563 · 564 (D291 · docs/704 · 705 · 706) 업무 목록 → 업무그룹 → 권한그룹 → 사원에게 부여 · 판정 바꾸기 — 모두 SUPER
@@ -45,13 +46,13 @@ export class PermTaskInfoDto {
   @ApiPropertyOptional({ example: '운영자 목록' }) @IsOptional() @IsString() @Length(1, 60) name?: string;
   @ApiPropertyOptional({ example: '설명' }) @IsOptional() @IsString() @Length(0, 300) description?: string;
   @ApiPropertyOptional({ enum: LEVELS, isArray: true }) @IsOptional() @IsArray() @ArrayMaxSize(4) @IsIn(LEVELS as unknown as string[], { each: true }) levels?: string[];
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ example: '설명 고침' }) @IsString() @Length(1, 400) reason!: string;
 }
 export class PermTaskGroupFullDto {
   @ApiProperty({ example: '돈 보기' }) @IsString() @Length(1, 40) name!: string;
   @ApiPropertyOptional({ example: 5000 }) @IsOptional() @IsInt() @Min(0) @Max(100000) sort?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: '정산 · 회계 보기 묶음' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
   @ApiPropertyOptional({ example: ['settlement', 'acct-journal'], isArray: true }) @IsOptional() @IsArray() @ArrayMaxSize(600) @IsString({ each: true }) tasks?: string[];
   @ApiProperty({ example: '업무그룹 새로 둠' }) @IsString() @Length(1, 400) reason!: string;
@@ -69,7 +70,7 @@ export class PermRoleSetsDto {
   @ApiProperty({ example: '회계 담당' }) @IsString() @Length(1, 40) name!: string;
   @ApiPropertyOptional({ enum: ['STAFF', 'MANAGER'] }) @IsOptional() @IsIn(['STAFF', 'MANAGER']) kind?: string;
   @ApiPropertyOptional({ example: '매입 · 경비' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ type: [PermSetDto] }) @IsArray() @ArrayMaxSize(400) @ValidateNested({ each: true }) @Type(() => PermSetDto) sets!: PermSetDto[];
   @ApiPropertyOptional({ type: [PermSetItemDto] }) @IsOptional() @IsArray() @ArrayMaxSize(2000) @ValidateNested({ each: true }) @Type(() => PermSetItemDto) items?: PermSetItemDto[];
   @ApiProperty({ example: '회계 담당 새로 둠' }) @IsString() @Length(1, 400) reason!: string;
@@ -77,7 +78,7 @@ export class PermRoleSetsDto {
 export class PermConflictDto {
   @ApiProperty({ example: '정산 승인 ↔ 지급 실행' }) @IsString() @Length(1, 60) name!: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) note?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ example: ['settlement:APPROVE'], isArray: true }) @IsArray() @ArrayMaxSize(200) @IsString({ each: true }) a!: string[];
   @ApiProperty({ example: ['fin-transfer:EDIT'], isArray: true }) @IsArray() @ArrayMaxSize(200) @IsString({ each: true }) b!: string[];
   @ApiProperty({ example: '겸직 금지 옮김' }) @IsString() @Length(1, 400) reason!: string;

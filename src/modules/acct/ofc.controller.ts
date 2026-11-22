@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -11,6 +11,7 @@ import type { Viewer } from './ofc-calendar';
 import { TASK_PRIORITIES, assignTask, cancelTask, commentTask, createTask, moveTask, taskBoard, taskDetail } from './ofc-tasks';
 import { TRIP_REGIONS, cancelTrip, createTrip, listTrips, setTripStandards, settleTrip, tripDetail } from './ofc-trips';
 import { NOTIFY_KINDS, myNotify, notifyFeed, setMyNotify } from './ofc-notify';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㉜ 사무 2 (D263 · docs/600 ~ 603) — 대표 11/20
@@ -91,7 +92,7 @@ export class OfcTripStandardsDto {
   @ApiProperty({ example: '2027 여비 규정' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class OfcNotifyPrefsDto {
-  @ApiPropertyOptional({ description: '켬 · 끔' }) @IsOptional() @IsBoolean() enabled?: boolean;
+  @ApiPropertyOptional({ description: '켬 · 끔' }) @IsOptional() @StrictBoolean() enabled?: boolean;
   @ApiPropertyOptional({ type: [String], enum: NOTIFY_KINDS, description: 'OPS · APV · TASK' }) @IsOptional() @IsArray() @ArrayMaxSize(3) @IsIn(NOTIFY_KINDS as unknown as string[], { each: true }) kinds?: string[];
 }
 

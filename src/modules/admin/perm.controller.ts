@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -10,6 +10,7 @@ import { DatabaseService } from '../../db/database.service';
 import {
   LEVELS, accountDetail, myPerms, overview, permChanges, roleGroupDetail, saveAccount, saveRoleGroup, saveTask, saveTaskGroup, shadowLog, widenLog,
 } from './perm.service';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.441 ~ 444 (D258 · docs/578 ~ 581) 업무별 권한 관리 — 운영 화면 「사무」 › 「권한 관리」(SUPER)
@@ -37,7 +38,7 @@ export class PermRoleGroupDto {
   @ApiProperty({ example: '회계 담당' }) @IsString() @Length(1, 40) name!: string;
   @ApiPropertyOptional({ enum: ['STAFF', 'MANAGER'] }) @IsOptional() @IsIn(['STAFF', 'MANAGER']) kind?: string;
   @ApiPropertyOptional({ example: '매입 · 경비 · 재고' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ type: [PermItemDto] }) @IsArray() @ArrayMaxSize(2000) @ValidateNested({ each: true }) @Type(() => PermItemDto) items!: PermItemDto[];
   @ApiProperty({ example: '회계 담당 새로 둠' }) @IsString() @Length(1, 400) reason!: string;
 }
@@ -48,7 +49,7 @@ export class PermTaskGroupDto {
 }
 export class PermTaskDto {
   @ApiPropertyOptional({ example: 'admacc' }) @IsOptional() @IsString() @Matches(/^[a-z][a-z0-9_]{1,30}$/) groupKey?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ example: '업무그룹 옮김' }) @IsString() @Length(1, 400) reason!: string;
 }
 export class PermAccountGroupDto {

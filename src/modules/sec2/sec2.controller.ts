@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { sec2SetSettings } from './settings';
 import { sec2MemberMfaDisable, sec2MemberMfaEnable, sec2MemberMfaRedeem, sec2MemberMfaSetup, sec2MemberMfaStatus } from './member-mfa';
 import { sec2AnswerLoginAlert, sec2LoginAlert, sec2MyLoginAlerts } from './login-alert';
 import { sec2Guide, sec2RemoveTabLink, sec2SaveGuide, sec2SetTabLink, sec2TabHelp, sec2TabLinks } from './tab-help';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.590 ~ 594 (docs/732 ~ 736) 15차 보안 · 기반 — API
@@ -35,15 +36,15 @@ const SCX_SIGNED_IN = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'ADMIN', 'REVIEWER', 
 const SCX_CODE_RE = /^(\d{6}|\d{5}-?\d{5})$/;
 
 export class ScxSettingsDto {
-  @ApiPropertyOptional({ description: 'sec2.anomaly_watch' }) @IsOptional() @IsBoolean() anomalyWatch?: boolean;
+  @ApiPropertyOptional({ description: 'sec2.anomaly_watch' }) @IsOptional() @StrictBoolean() anomalyWatch?: boolean;
   @ApiPropertyOptional({ example: 100 }) @IsOptional() @IsInt() @Min(1) @Max(9999) viewMin?: number;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(1) @Max(999) exportMin?: number;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(1) @Max(9999) nightMin?: number;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(2) @Max(10) factor?: number;
   @ApiPropertyOptional({ enum: ['off', 'ASSUME', 'LIVE'] }) @IsOptional() @IsIn(['off', 'ASSUME', 'LIVE']) pwnedMode?: string;
   @ApiPropertyOptional({ example: 1 }) @IsOptional() @IsInt() @Min(1) @Max(9999) pwnedMin?: number;
-  @ApiPropertyOptional({ description: 'sec2.pwned_legal_ok — 법무 확인 · 처리방침 1.2 게시 뒤' }) @IsOptional() @IsBoolean() pwnedLegalOk?: boolean;
-  @ApiPropertyOptional({ description: 'sec2.member_mfa' }) @IsOptional() @IsBoolean() memberMfa?: boolean;
+  @ApiPropertyOptional({ description: 'sec2.pwned_legal_ok — 법무 확인 · 처리방침 1.2 게시 뒤' }) @IsOptional() @StrictBoolean() pwnedLegalOk?: boolean;
+  @ApiPropertyOptional({ description: 'sec2.member_mfa' }) @IsOptional() @StrictBoolean() memberMfa?: boolean;
   @ApiPropertyOptional({ example: 5, description: '0 = 끔' }) @IsOptional() @IsInt() @Min(0) @Max(999) notMeSurge?: number;
   @ApiProperty({ example: '직원 공지 뒤 감지 시작' }) @IsString() @Length(2, 200) reason!: string;
 }
@@ -76,7 +77,7 @@ export class ScxTabLinkDto {
   @ApiProperty({ example: '운영 알림 [ops-alerts]' }) @IsString() @Length(1, 120) heading!: string;
 }
 export class ScxGuideSaveDto {
-  @ApiProperty({ description: '새 판 본문(100 ~ 20000자 · ### 절 하나 이상)' }) @IsString() @MinLength(100) @MaxLength(60000) body!: string;
+  @ApiProperty({ description: '새 판 본문(100 ~ 40000자 · ### 절 하나 이상)' }) @IsString() @MinLength(100) @MaxLength(60000) body!: string;
   @ApiPropertyOptional({ example: '이상 행동 감지 절 더함' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
 }
 

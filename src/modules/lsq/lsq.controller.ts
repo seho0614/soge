@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Param, Post, Put, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { RequireGate, Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -20,6 +20,7 @@ import {
   addPhoto, adminEvidence, adminHidePhoto, adminReturns, adminVerdict, LSQ_CONDITIONS, LSQ_FAULTS, myEvidence, photoBytes, sellerReturns, sellerVerdict, VerdictIn,
 } from './return-evidence';
 import { lsqDailyJob } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.602 ~ 608 (docs/744 ~ 750) 17차 매물 · 소개몰 — 대표 11/21 「모두 개발진행」
@@ -56,24 +57,24 @@ export class LsqVerdictDto {
   @ApiPropertyOptional({ enum: LSQ_CONDITIONS }) @IsOptional() @IsIn(LSQ_CONDITIONS as unknown as string[]) condition?: string;
   @ApiPropertyOptional({ enum: LSQ_FAULTS }) @IsOptional() @IsIn(LSQ_FAULTS as unknown as string[]) fault?: string;
   @ApiPropertyOptional({ example: '포장 훼손 · 내용물 이상 없음', description: '메모(500자)' }) @IsOptional() @IsString() @MaxLength(500) note?: string;
-  @ApiPropertyOptional({ example: true, description: '회원에게 보임(처음 true · false 면 판매자 · 운영만)' }) @IsOptional() @IsBoolean() visibleToBuyer?: boolean;
+  @ApiPropertyOptional({ example: true, description: '회원에게 보임(처음 true · false 면 판매자 · 운영만)' }) @IsOptional() @StrictBoolean() visibleToBuyer?: boolean;
 }
 export class LsqSettingsDto {
-  @ApiPropertyOptional({ description: 'lsq.bulk' }) @IsOptional() @IsBoolean() bulkOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.bulk' }) @IsOptional() @StrictBoolean() bulkOn?: boolean;
   @ApiPropertyOptional({ example: 50 }) @IsOptional() @IsInt() @Min(10) @Max(200) bulkMaxRows?: number;
-  @ApiPropertyOptional({ description: 'lsq.review_ask' }) @IsOptional() @IsBoolean() reviewAskOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.review_ask' }) @IsOptional() @StrictBoolean() reviewAskOn?: boolean;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(1) @Max(14) reviewAskDays?: number;
   @ApiPropertyOptional({ example: 7, description: '0 = 다시 묻지 않음' }) @IsOptional() @IsInt() @Min(0) @Max(30) reviewAskAgain?: number;
-  @ApiPropertyOptional({ description: 'lsq.search_click' }) @IsOptional() @IsBoolean() searchClickOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.search_click' }) @IsOptional() @StrictBoolean() searchClickOn?: boolean;
   @ApiPropertyOptional({ example: 180 }) @IsOptional() @IsInt() @Min(30) @Max(730) searchClickKeepDays?: number;
-  @ApiPropertyOptional({ description: 'lsq.region_pages' }) @IsOptional() @IsBoolean() regionOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.region_pages' }) @IsOptional() @StrictBoolean() regionOn?: boolean;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(1) @Max(50) regionMin?: number;
-  @ApiPropertyOptional({ description: 'lsq.sub_retry' }) @IsOptional() @IsBoolean() subRetryOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.sub_retry' }) @IsOptional() @StrictBoolean() subRetryOn?: boolean;
   @ApiPropertyOptional({ example: [1, 3, 5], description: '실패 차례마다 며칠 뒤(1 ~ 14 · 다섯 칸까지)' }) @IsOptional() @IsArray() @ArrayMaxSize(5) @IsInt({ each: true }) @Min(1, { each: true }) @Max(14, { each: true }) subRetryDays?: number[];
-  @ApiPropertyOptional({ description: 'lsq.track' }) @IsOptional() @IsBoolean() trackOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.track' }) @IsOptional() @StrictBoolean() trackOn?: boolean;
   @ApiPropertyOptional({ enum: ['ASSUME', 'LIVE'] }) @IsOptional() @IsIn(['ASSUME', 'LIVE']) trackMode?: string;
-  @ApiPropertyOptional({ description: 'lsq.track_auto_deliver' }) @IsOptional() @IsBoolean() trackAutoDeliver?: boolean;
-  @ApiPropertyOptional({ description: 'lsq.return_photos' }) @IsOptional() @IsBoolean() returnPhotosOn?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.track_auto_deliver' }) @IsOptional() @StrictBoolean() trackAutoDeliver?: boolean;
+  @ApiPropertyOptional({ description: 'lsq.return_photos' }) @IsOptional() @StrictBoolean() returnPhotosOn?: boolean;
   @ApiPropertyOptional({ example: 5 }) @IsOptional() @IsInt() @Min(1) @Max(10) returnPhotoMax?: number;
   @ApiProperty({ example: '대표 확인 · 매물 일괄 등록 켬' }) @IsString() @Length(2, 200) reason!: string;
 }

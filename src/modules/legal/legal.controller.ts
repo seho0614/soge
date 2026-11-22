@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags, type ApiPropertyOptions } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { REVIEW_KINDS, REVIEW_RISKS, addOpinion, addReview, cancelReview, decide
 import { AT_RE, CASE_KINDS, CASE_RESULTS, CASE_SIDES, COST_KINDS, HEARING_KINDS, addCase, addCost, addHearing, caseBoard, caseOne, closeCase, updateCase, updateHearing, voidCost } from './lgl-cases';
 import { INS_BOOK_MODES, INS_KINDS, INS_PAY_MODES, INS_POST_KINDS, addPolicy, endPolicy, insuranceBoard, insuranceJournal, insuranceOne, updatePolicy } from './lgl-insurance';
 import { legalDue } from './lgl-due';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㊴ 법무 (D269 · docs/624 ~ 627) — 대표 11/20 · 운영 화면 사무 › 인허가 · 계약 검토 · 소송 · 분쟁 · 회사 보험
@@ -67,7 +68,7 @@ export class LglKindDto {
   @ApiPropertyOptional({ example: '관할 시 · 군 · 구청' }) @IsOptional() @IsString() @Length(0, 100) authority?: string;
   @ApiPropertyOptional({ example: 12, description: 'null 이면 갱신 없음' }) @IsOptional() @IsInt() @Min(1) @Max(120) cycleMonths?: number | null;
   @ApiPropertyOptional({ example: '전자상거래법 제12조' }) @IsOptional() @IsString() @Length(0, 300) basis?: string;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: 60 }) @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
 }
 
@@ -85,11 +86,11 @@ export class LglReviewDto {
 export class LglOpinionDto {
   @ApiPropertyOptional({ enum: REVIEW_RISKS }) @IsOptional() @IsIn(REVIEW_RISKS as unknown as string[]) risk?: string;
   @ApiProperty({ example: '제9조 손해배상 한도가 없음 — 계약금액 한도로 고칠 것' }) @IsString() @Length(2, 4000) body!: string;
-  @ApiPropertyOptional({ example: false, description: '외부 변호사 의견을 옮겨 적음' }) @IsOptional() @IsBoolean() outside?: boolean;
+  @ApiPropertyOptional({ example: false, description: '외부 변호사 의견을 옮겨 적음' }) @IsOptional() @StrictBoolean() outside?: boolean;
   @ApiPropertyOptional({ type: [String], description: '수정본(LGL_DOC · 3개)' }) @IsOptional() @IsArray() @ArrayMaxSize(3) @IsUUID('all', { each: true }) fileIds?: string[];
 }
 export class LglDecideDto {
-  @ApiProperty({ description: '승인(true) · 반려(false)' }) @IsBoolean() approve!: boolean;
+  @ApiProperty({ description: '승인(true) · 반려(false)' }) @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ example: '수정본으로 진행', description: '반려는 2자 이상' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class LglLinkDto {

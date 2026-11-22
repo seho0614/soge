@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { RequestCtx } from '../../core/request-context';
 import { SocialAuthService, providerOf } from './social';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.498 (D272 · docs/636) 카카오 · 네이버 간편 로그인
@@ -51,10 +52,10 @@ export class SocPasswordDto {
   @ApiProperty() @IsString() @Length(10, 200) password!: string;
 }
 export class SocSettingsDto {
-  @ApiPropertyOptional({ description: 'social.kakao' }) @IsOptional() @IsBoolean() kakao?: boolean;
-  @ApiPropertyOptional({ description: 'social.naver' }) @IsOptional() @IsBoolean() naver?: boolean;
+  @ApiPropertyOptional({ description: 'social.kakao' }) @IsOptional() @StrictBoolean() kakao?: boolean;
+  @ApiPropertyOptional({ description: 'social.naver' }) @IsOptional() @StrictBoolean() naver?: boolean;
   @ApiPropertyOptional({ enum: ['ASSUME', 'LIVE'] }) @IsOptional() @IsIn(['ASSUME', 'LIVE']) mode?: string;
-  @ApiPropertyOptional({ description: 'social.privacy_ok — 처리방침 게시 · 법무 확인 마침' }) @IsOptional() @IsBoolean() privacyOk?: boolean;
+  @ApiPropertyOptional({ description: 'social.privacy_ok — 처리방침 게시 · 법무 확인 마침' }) @IsOptional() @StrictBoolean() privacyOk?: boolean;
   @ApiProperty({ example: '간편 로그인 시험 켜기' }) @IsString() @Length(2, 200) reason!: string;
 }
 

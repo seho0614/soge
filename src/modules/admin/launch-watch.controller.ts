@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, Length } from 'class-validator';
 import { LaunchWatchService } from './launch-watch.service';
 import { StateCheckService } from './state-check.service';
 import { OwnerTodoService } from './owner-todo.service';
@@ -9,6 +9,7 @@ import { ServerTrendService } from './server-trend.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* v10.173 — 시험 결제 주문 정리: 주문번호를 주면 그 주문만(없으면 전부) */
 export class LaunchStubCancelDto {
@@ -21,7 +22,7 @@ export class OwnerTodoMarkDto {
   @ApiProperty({ enum: ['plans', 'legal', 'ebs', 'rate-legal'], description: '직접 확인 줄 — plans 요금제 금액 · legal 법무 · 세무 · ebs EBS 스냅샷 예약 · rate-legal 요율 공지 방식 법무 알림(v10.284)' })
   @IsString() @IsIn(['plans', 'legal', 'ebs', 'rate-legal']) key!: string;
   @ApiProperty({ description: 'true 끝남 · false 다시 아직' })
-  @IsBoolean() done!: boolean;
+  @StrictBoolean() done!: boolean;
   @ApiProperty({ description: '메모 5 ~ 500자(무엇을 언제 했는지)' })
   @IsString() @Length(5, 500) note!: string;
 }

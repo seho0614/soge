@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import type { Request } from 'express';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Principal, Roles } from '../../core/auth';
@@ -11,6 +11,7 @@ import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { staffTodo } from './member-ops';
 import { pgxEffective } from './pgx-perm';   // v10.615 (docs/757)
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.361 ~ 364 (D237 · docs/495 ~ 498)
@@ -25,7 +26,7 @@ import { pgxEffective } from './pgx-perm';   // v10.615 (docs/757)
 
 export class MemberNoteDto {
   @ApiProperty({ example: '전화로 정산 일정 문의 — 금요일 다시 안내', description: '메모(2 ~ 1,000자)' }) @IsString() @Length(1, 2000) body!: string;
-  @ApiPropertyOptional({ description: '중요(문의 · 분쟁 화면에 먼저 보임)' }) @IsOptional() @IsBoolean() important?: boolean;
+  @ApiPropertyOptional({ description: '중요(문의 · 분쟁 화면에 먼저 보임)' }) @IsOptional() @StrictBoolean() important?: boolean;
 }
 export class SignupBlockDto {
   @ApiProperty({ enum: ['EMAIL_DOMAIN', 'IP_CIDR', 'PERSON'] }) @IsIn(['EMAIL_DOMAIN', 'IP_CIDR', 'PERSON']) kind!: string;

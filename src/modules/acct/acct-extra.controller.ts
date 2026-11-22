@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -14,6 +14,7 @@ import { accountantDesk, addAccountantNote, replyAccountantNote } from './accoun
 import { readReceipt, receiptReads } from './receipt-ai';
 import { accrualView, matchAccrual, setAccrualRule } from './accrual';
 import { archiveExport, archiveList, controlReport, makeArchive } from './archive';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㉔ (D257 · docs/574 ~ 577) 회계 덧붙임 — 대표 11/19 「다음개발」
@@ -46,8 +47,8 @@ export class ReceiptReadDto {
 }
 export class AccrualRuleDto {
   @ApiPropertyOptional({ example: 'EXP_RENT', description: '비용 계정(비우면 계약 종류로 · 임대 → 지급임차료 · 그 밖 → 지급수수료 · 잡비)' }) @IsOptional() @IsString() @Matches(/^[A-Z][A-Z0-9_]{1,39}$/) accountRole?: string;
-  @ApiPropertyOptional({ description: '달 금액이 부가세 포함(처음 예 — ÷ 1.1 을 비용으로)' }) @IsOptional() @IsBoolean() vatIncluded?: boolean;
-  @ApiPropertyOptional({ description: '이 계약 고정비 전표 켜기(처음 예)' }) @IsOptional() @IsBoolean() enabled?: boolean;
+  @ApiPropertyOptional({ description: '달 금액이 부가세 포함(처음 예 — ÷ 1.1 을 비용으로)' }) @IsOptional() @StrictBoolean() vatIncluded?: boolean;
+  @ApiPropertyOptional({ description: '이 계약 고정비 전표 켜기(처음 예)' }) @IsOptional() @StrictBoolean() enabled?: boolean;
 }
 export class AccrualMatchDto {
   @ApiProperty({ example: '42', description: '맞출 매입 번호' }) @IsString() @Matches(/^\d{1,18}$/) purchaseId!: string;

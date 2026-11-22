@@ -6,7 +6,7 @@
  * (adminMenu · App.tsx 연결 줄은 patches/1_wiring.md) · CSS 는 기존 클래스만(tbl · card pad · btn-sm · btn-plain · muted · warn-text) — 새 색 없음
  */
 import { useState } from 'react';
-import { api } from '../../lib/api';
+import { api, tokenRoles } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { useAct, ymdhm } from '../../lib/act';
 import { Flash } from '../../components/Flash';
@@ -214,25 +214,37 @@ export function OpxBulk({ roles }: { roles: string[] }) {
 
 /* ═════════════ 기능 스위치 한눈에 ═════════════ */
 interface SwRow { key: string; group: string; value: string; initial: string | null; changed: boolean; state: string; choices: string[]; cond: string | null; docRef: string | null;
-  who: string | null; description: string | null; lastAt: string | null; lastBy: string | null; lastReason: string | null }
-interface SwView { items: SwRow[]; counts: { all: number; on: number; assume: number; changed: number; noCond: number; docOnly: number }; note: string }
+  who: string | null; description: string | null; lastAt: string | null; lastBy: string | null; lastReason: string | null;
+  checks?: Array<{ prereq: string; label: string; done: boolean; note: string | null; at: string | null; by: string | null }>; ready?: boolean }   // v10.625 켜기 도우미
+interface SwView { items: SwRow[]; counts: { all: number; on: number; assume: number; changed: number; noCond: number; docOnly: number; ready?: number; waiting?: number }; note: string }
 
 export function OpxSwitches({ onGo }: { onGo?: (t: 'settings') => void }) {
   const q = useApi<SwView>('/admin/opx/switches');
+  const a = useAct();
+  const sup = tokenRoles().includes('SUPER');
+  /* v10.625 (D306 · docs/768) 선행 조건 「확인함」 · 「확인 취소」 — 켜기는 「전체 설정」 그대로(이 표는 막지 않음) */
+  const mark = (key: string, prereq: string, label: string, undo: boolean) => {
+    const v = prompt(undo ? `「${label}」 확인을 취소합니다. 까닭을 적어 주십시오` : `「${label}」을 확인했습니까? 어디서 · 언제 · 누가 확인했는지 적어 주십시오`, '');
+    if (v == null || !v.trim()) return;
+    void a.run(`p${key}${prereq}`, () => post(`/admin/opx/switches/${encodeURIComponent(key)}/prereq`, { prereq, state: undo ? 'UNDO' : 'DONE', note: v.trim() }), q.reload, () => (undo ? '확인을 취소했습니다.' : '확인함으로 적었습니다.'));
+  };
   const [text, setText] = useState('');
   const [only, setOnly] = useState('');
   const d = q.data;
   const items = (d?.items ?? []).filter((r) => (!text || r.key.includes(text) || (r.description ?? '').includes(text) || (r.cond ?? '').includes(text))
-    && (!only || (only === 'changed' ? r.changed : only === 'nocond' ? !r.cond : r.state === only)));
+    && (!only || (only === 'changed' ? r.changed : only === 'nocond' ? !r.cond : only === 'ready' ? r.ready && r.state === 'OFF' : only === 'waiting' ? r.state === 'OFF' && !r.ready : r.state === only)));
   return (
     <section data-opx-switches={d ? d.counts.all : ''}>
       {d && <p>스위치 <b>{d.counts.all}</b> · 켜짐 {d.counts.on} · 간주 {d.counts.assume} · 처음과 다름 <b>{d.counts.changed}</b> · 켤 조건 없음 {d.counts.noCond}{' '}
         {onGo && <button className="btn-sm btn-plain" onClick={() => onGo('settings')} data-opx-go-settings="">「전체 설정」에서 고치기</button>}</p>}
+      <Flash msg={a.msg} err={a.err} />
+      {d && d.counts.ready !== undefined && <p data-opx-sw-ready={d.counts.ready}>켜기 도우미 — 꺼진 스위치 중 <b>선행 조건 확인 끝 {d.counts.ready}</b> · 남음 {d.counts.waiting ?? 0}
+        <small className="muted"> (선행 조건은 켤 조건 글에서 고름 · 확인은 SUPER 가 적음 · 켜기는 「전체 설정」)</small></p>}
       {d && <p className="muted">{d.note}</p>}
       <p>
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="키 · 설명 · 조건 찾기" size={20} aria-label="찾기" data-opx-sw-search="" />{' '}
         <select value={only} onChange={(e) => setOnly(e.target.value)} aria-label="거르기" data-opx-sw-filter="">
-          <option value="">모두</option><option value="ON">켜짐</option><option value="OFF">꺼짐</option><option value="ASSUME">간주</option><option value="changed">처음과 다름</option><option value="nocond">켤 조건 없음</option>
+          <option value="">모두</option><option value="ON">켜짐</option><option value="OFF">꺼짐</option><option value="ASSUME">간주</option><option value="changed">처음과 다름</option><option value="nocond">켤 조건 없음</option><option value="ready">켤 준비 끝(꺼짐)</option><option value="waiting">선행 조건 남음(꺼짐)</option>
         </select>
       </p>
       <table className="tbl"><thead><tr><th>설정 키</th><th>지금</th><th>처음</th><th>켤 조건 · 문서</th><th>마지막 바꿈</th></tr></thead>
@@ -241,7 +253,11 @@ export function OpxSwitches({ onGo }: { onGo?: (t: 'settings') => void }) {
             <td><code>{r.key}</code>{r.description && <div><small className="muted">{r.description.slice(0, 90)}{r.description.length > 90 ? '…' : ''}</small></div>}</td>
             <td><b>{r.value || '(빈 값)'}</b> <small className="muted">{r.choices.join(' · ')}</small></td>
             <td>{r.initial ?? '—'}{r.changed && <small className="warn-text"> 바뀜</small>}</td>
-            <td>{r.cond ?? <span className="muted">—</span>}{r.docRef && <small className="muted"> ({r.docRef})</small>}</td>
+            <td>{r.cond ?? <span className="muted">—</span>}{r.docRef && <small className="muted"> ({r.docRef})</small>}
+              {!!r.checks?.length && <div data-opx-sw-checks={r.checks.filter((c) => c.done).length}>{r.checks.map((c) => (
+                <span key={c.prereq} className={`badge ${c.done ? 'badge-verified' : 'badge-urgent'}`} title={c.note ? `${c.note} · ${c.by ?? ''} ${c.at ? ymdhm(c.at) : ''}` : '아직 확인 안 함'}>
+                  {c.done ? '✓' : '·'} {c.label}{sup && <button className="btn-sm btn-plain" disabled={a.busy === `p${r.key}${c.prereq}`} onClick={() => mark(r.key, c.prereq, c.label, c.done)} data-opx-sw-mark={`${r.key}:${c.prereq}`}>{c.done ? '취소' : '확인함'}</button>}
+                </span>))}{r.ready && r.state === 'OFF' && <small className="muted"> 켤 준비 끝</small>}</div>}</td>
             <td>{r.lastAt ? <><small>{ymdhm(r.lastAt)} · {r.lastBy ?? '—'}</small>{r.lastReason && <div><small className="muted">{r.lastReason}</small></div>}</> : <span className="muted">바뀐 적 없음</span>}</td>
           </tr>))}</tbody></table>
     </section>

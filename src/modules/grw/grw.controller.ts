@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { Roles } from '../../core/auth';
@@ -33,18 +33,18 @@ export class GrwHideDto {
   @ApiProperty({ example: true, description: 'true = 그만 보기 · false = 다시 보기' }) @StrictBoolean() hidden!: boolean;   // v10.617 받은 값 그대로("x" 400)
 }
 export class GrwDigestDto {
-  @ApiProperty({ example: true, description: '알림 하루 요약 받기' }) @IsBoolean() enabled!: boolean;
+  @ApiProperty({ example: true, description: '알림 하루 요약 받기' }) @StrictBoolean() enabled!: boolean;
 }
 export class GrwSettingsDto {
-  @ApiPropertyOptional({ description: '가입 단계 수 세기(grw.signup_steps)' }) @IsOptional() @IsBoolean() signupSteps?: boolean;
-  @ApiPropertyOptional({ description: '첫 거래 안내 카드(grw.first_steps)' }) @IsOptional() @IsBoolean() firstSteps?: boolean;
+  @ApiPropertyOptional({ description: '가입 단계 수 세기(grw.signup_steps)' }) @IsOptional() @StrictBoolean() signupSteps?: boolean;
+  @ApiPropertyOptional({ description: '첫 거래 안내 카드(grw.first_steps)' }) @IsOptional() @StrictBoolean() firstSteps?: boolean;
   @ApiPropertyOptional({ example: 60, description: '첫 거래 안내를 보여 주는 가입 뒤 날 수(7 ~ 365)' }) @IsOptional() @IsInt() @Min(7) @Max(365) firstStepsDays?: number;
-  @ApiPropertyOptional({ description: '알림 하루 요약(grw.digest)' }) @IsOptional() @IsBoolean() digest?: boolean;
-  @ApiPropertyOptional({ description: '여러 단계 추천 보상(grw.tier_reward) — 법무 확인 끝 표시가 있어야 켜짐' }) @IsOptional() @IsBoolean() tierReward?: boolean;
-  @ApiPropertyOptional({ description: '여러 단계 추천 보상 법무 확인 끝(grw.tier_legal_ok) — 사유에 확인한 곳 · 날짜' }) @IsOptional() @IsBoolean() tierLegalOk?: boolean;
+  @ApiPropertyOptional({ description: '알림 하루 요약(grw.digest)' }) @IsOptional() @StrictBoolean() digest?: boolean;
+  @ApiPropertyOptional({ description: '여러 단계 추천 보상(grw.tier_reward) — 법무 확인 끝 표시가 있어야 켜짐' }) @IsOptional() @StrictBoolean() tierReward?: boolean;
+  @ApiPropertyOptional({ description: '여러 단계 추천 보상 법무 확인 끝(grw.tier_legal_ok) — 사유에 확인한 곳 · 날짜' }) @IsOptional() @StrictBoolean() tierLegalOk?: boolean;
   @ApiPropertyOptional({ example: '300,100', description: '2 · 3 · 4단계 점수(쉼표 · 최대 3개)' }) @IsOptional() @IsString() @Matches(TIER_POINTS_RE) tierPoints?: string;
   @ApiPropertyOptional({ example: 10, description: '한 사람 한 달 여러 단계 보상 횟수(0 = 제한 없음 · 1,000 까지)' }) @IsOptional() @IsInt() @Min(0) @Max(1000) tierMonthlyCap?: number;
-  @ApiPropertyOptional({ description: '매물 충실도 안내(grw.fill_helper)' }) @IsOptional() @IsBoolean() fillHelper?: boolean;
+  @ApiPropertyOptional({ description: '매물 충실도 안내(grw.fill_helper)' }) @IsOptional() @StrictBoolean() fillHelper?: boolean;
   @ApiProperty({ example: '법무 확인 끝 — 여러 단계 보상 켬', minLength: 2, maxLength: 200 }) @IsString() @Length(2, 200) reason!: string;
 }
 

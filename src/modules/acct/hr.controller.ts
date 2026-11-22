@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -14,6 +14,7 @@ import { myPayslip, notifyPayslips, payslipOne, payslips } from './payslip';
 import { YE_ITEMS, setYearendCheck, yearendCsv, yearendView } from './yearend';
 import { hrCard } from './hr-card';   // v10.559 (docs/698) 사원 카드
 import { hrCardSelf } from './hr-card-self';   // v10.567 (docs/709) 내 사원 카드(본인)
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㉖ 인사 2 (D259 · docs/582 ~ 585) — 대표 11/20 「다음개발」
@@ -87,7 +88,7 @@ export class YearendCheckDto {
   @ApiProperty({ example: '1' }) @IsString() @Matches(/^\d{1,18}$/) employeeId!: string;
   @ApiProperty({ example: 2026 }) @IsInt() @Min(2000) @Max(2100) year!: number;
   @ApiProperty({ enum: YE_ITEMS }) @IsIn(YE_ITEMS as unknown as string[]) item!: string;
-  @ApiProperty({ example: true }) @IsBoolean() done!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() done!: boolean;
   @ApiPropertyOptional({ example: '1/20 메일로 받음' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
 }
 

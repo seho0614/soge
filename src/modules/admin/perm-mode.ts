@@ -125,7 +125,18 @@ export async function modeView(db: DatabaseService, modules: ModulesContainer) {
   const d = await diffs(db);
   const [since] = await db.query<{ at: string | null }>(
     `SELECT max(at) AS at FROM site_setting_changes WHERE key = 'perm.mode'`).catch(() => [{ at: null }]);
+  /* v10.624 (docs/767) GROUPS 로 바꾸기 전 점검표 — 꼭(서버가 막음) 3줄 · 권장(화면이 알림만) 2줄 */
+  const [enf] = await db.query<{ value: string | null }>(`SELECT value FROM site_settings WHERE key = 'perm.enforce'`).catch(() => [{ value: null }]);
+  const compareHours = mode === 'COMPARE' && since?.at ? Math.floor((Date.now() - new Date(since.at).getTime()) / 3_600_000) : 0;
+  const checklist = [
+    { key: 'unmapped', label: '연결 안 된 /admin 주소 0', ok: um.unmapped === 0, need: true, detail: String(um.unmapped) },
+    { key: 'diff24', label: '최근 24시간 COMPARE 다름 0', ok: d.diff24 === 0, need: true, detail: String(d.diff24) },
+    { key: 'roleChecks', label: '역할 이름으로 막는 곳 중 맞추지 않은 곳 0(docs/757)', ok: PGX_OPEN.length === 0, need: true, detail: String(PGX_OPEN.length) },
+    { key: 'compare24', label: 'COMPARE 로 24시간 이상 돌림(다름 0 이 하루치여야 뜻이 있음)', ok: compareHours >= 24, need: false, detail: mode === 'COMPARE' ? `${compareHours}시간` : `지금 ${mode}` },
+    { key: 'enforceOn', label: '검사 모드 perm.enforce = ON(SHADOW 기록을 본 뒤)', ok: enf?.value === 'ON', need: false, detail: String(enf?.value ?? '—') },
+  ];
   return { mode, modes: PERM_MODES, unmapped: um.unmapped, unmappedItems: um.items.slice(0, 100), diff24: d.diff24, recent: d.recent, since: since?.at ?? null,
+           checklist, compareHours, enforce: enf?.value ?? null,
            groupsReady: um.unmapped === 0 && d.diff24 === 0 && PGX_OPEN.length === 0, roleChecksOpen: PGX_OPEN.length,   // v10.615 (docs/757)
            note: 'ROLE → COMPARE 로 하루 이상 돌려 「다름」이 없고 연결 안 된 주소가 0 이면 GROUPS 로 바꿀 수 있습니다. 되돌리기는 언제든(SUPER).' };
 }

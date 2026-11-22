@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { REVIEW_FLAG_STATES, reviewFlagDecide, reviewFlagDetail, reviewFlagList,
 import { myTrust, setTrustRules, TRUST_CODES, trustLookup, trustOverview, trustRecompute } from './trust';
 import { DORMANT_VIEWS, dormantList, dormantWakeByAdmin } from './dormant';
 import { mtrOverview } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.573 ~ 576 (docs/715 ~ 718) 11차 회원 · 거래 — 신고 이의 제기 · 가짜 후기 탐지 · 소개자 신뢰 점수 · 휴면 계정
@@ -31,20 +32,20 @@ const OPS = ['ADMIN', 'SUPER'] as const;
 const me = () => RequestCtx.actorId()!;
 
 export class MtrSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() appeal?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() appeal?: boolean;
   @ApiPropertyOptional({ example: 30 }) @IsOptional() @IsInt() @Min(1) @Max(90) appealDays?: number;
   @ApiPropertyOptional({ example: 72 }) @IsOptional() @IsInt() @Min(24) @Max(336) appealSlaHours?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() reviewWatch?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() reviewWatch?: boolean;
   @ApiPropertyOptional({ example: 50 }) @IsOptional() @IsInt() @Min(20) @Max(100) reviewThreshold?: number;
   @ApiPropertyOptional({ example: 5 }) @IsOptional() @IsInt() @Min(2) @Max(50) reviewBurstCount?: number;
   @ApiPropertyOptional({ example: 24 }) @IsOptional() @IsInt() @Min(1) @Max(168) reviewBurstHours?: number;
   @ApiPropertyOptional({ example: 80 }) @IsOptional() @IsInt() @Min(50) @Max(100) reviewSimilarPct?: number;
   @ApiPropertyOptional({ example: 30 }) @IsOptional() @IsInt() @Min(1) @Max(90) reviewScanDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() trust?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() dormant?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() trust?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() dormant?: boolean;
   @ApiPropertyOptional({ example: 365 }) @IsOptional() @IsInt() @Min(180) @Max(1095) dormantDays?: number;
   @ApiPropertyOptional({ example: 30 }) @IsOptional() @IsInt() @Min(7) @Max(60) dormantNoticeDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() dormantMail?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() dormantMail?: boolean;
   @ApiProperty({ example: '대표 결정 — 이의 제기 켜기' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class MtrAppealCreateDto {
@@ -53,13 +54,13 @@ export class MtrAppealCreateDto {
   @ApiProperty({ minLength: 10, maxLength: 1000, example: '신고 사유의 연락처는 회사 대표 번호이고 매물 설명에도 공개된 것입니다.' }) @IsString() @Length(10, 1000) body!: string;
 }
 export class MtrAppealDecideDto {
-  @ApiProperty({ description: 'true 받아들임(다시 올림 · 매물은 검수 대기) · false 받아들이지 않음' }) @IsBoolean() accept!: boolean;
+  @ApiProperty({ description: 'true 받아들임(다시 올림 · 매물은 검수 대기) · false 받아들이지 않음' }) @StrictBoolean() accept!: boolean;
   @ApiProperty({ minLength: 2, maxLength: 500, description: '작성자에게 보이는 사유' }) @IsString() @Length(2, 500) note!: string;
 }
 export class MtrReviewDecideDto {
   @ApiProperty({ enum: ['FAKE', 'OK'] }) @IsIn(['FAKE', 'OK']) verdict!: string;
   @ApiProperty({ minLength: 2, maxLength: 300 }) @IsString() @Length(2, 300) note!: string;
-  @ApiPropertyOptional({ description: '가짜(FAKE)로 정할 때 소개몰 리뷰를 가림(거래 후기는 가릴 수 없음)' }) @IsOptional() @IsBoolean() hide?: boolean;
+  @ApiPropertyOptional({ description: '가짜(FAKE)로 정할 때 소개몰 리뷰를 가림(거래 후기는 가릴 수 없음)' }) @IsOptional() @StrictBoolean() hide?: boolean;
 }
 export class MtrTrustRuleItemDto {
   @ApiProperty({ enum: TRUST_CODES }) @IsIn(TRUST_CODES as unknown as string[]) code!: string;

@@ -1,10 +1,11 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { FAQ_CHANNELS, FAQ_TOPICS, FaqAdminService } from './faq-admin.service';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.332 (D224 · docs/463) — 운영 화면 「자주 묻는 질문」 관리(SB-ADM-SIT-100)
@@ -28,11 +29,11 @@ export class FaqPatchDto {
   @IsOptional() @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) keywords?: string[];
   @ApiPropertyOptional({ example: '/my/settlement', description: '「…에서 보기」 주소(사이트 안 · 비우면 없음)' }) @IsOptional() @IsString() @MaxLength(200) linkHref?: string;
   @ApiPropertyOptional({ example: '정산 내역에서 보기' }) @IsOptional() @IsString() @MaxLength(60) linkLabel?: string;
-  @ApiPropertyOptional({ description: '챗봇 답 아래 「상담원 연결」' }) @IsOptional() @IsBoolean() handoff?: boolean;
+  @ApiPropertyOptional({ description: '챗봇 답 아래 「상담원 연결」' }) @IsOptional() @StrictBoolean() handoff?: boolean;
   @ApiPropertyOptional({ example: 'HLT', description: '이 관에서만(비우면 모든 관)' }) @IsOptional() @IsString() @MaxLength(10) gwanCode?: string;
   @ApiPropertyOptional({ example: 10, description: '순서(작을수록 위 · 0 ~ 9999)' }) @IsOptional() @IsInt() @Min(0) @Max(9999) sortOrder?: number;
-  @ApiPropertyOptional({ description: '「많이 찾는 질문」에 올림(10개까지)' }) @IsOptional() @IsBoolean() isTop?: boolean;
-  @ApiPropertyOptional({ description: 'false = 숨김(사용자 웹에서 빠짐)' }) @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ description: '「많이 찾는 질문」에 올림(10개까지)' }) @IsOptional() @StrictBoolean() isTop?: boolean;
+  @ApiPropertyOptional({ description: 'false = 숨김(사용자 웹에서 빠짐)' }) @IsOptional() @StrictBoolean() isActive?: boolean;
 }
 /** 새로 등록 — 분류 · 질문 · 답은 꼭(비면 서비스가 422 FAQ_CATEGORY · FAQ_QUESTION · FAQ_ANSWER) */
 export class FaqCreateDto extends FaqPatchDto {}

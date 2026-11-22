@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { MAIL_BODY_MAX, MAIL_CODES, MAIL_SUBJECT_MAX } from './mail-render';
 import { mailTemplateList, mailTemplateOne, mailTemplatePreview, mailTemplateReset, mailTemplateRevert, mailTemplateSave } from './mail-templates';
 import { MERGE_STATES, mergeApprove, mergeCancel, mergeCheck, mergeFindAccount, mergeList, mergeReject, mergeRequest } from './merge';
 import { csxOverview } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.528 ~ 531 (D280 · docs/666 ~ 669) ㊿ 고객센터 · 회원 — 운영 화면만(회원 화면 없음 · 공개 API 없음)
@@ -30,15 +31,15 @@ const me = () => RequestCtx.actorId()!;
 const CODE_RE = /^[A-Z][A-Z0-9_]{2,39}$/;   // DB CHECK csx_mail_template_defs.code 와 같음
 
 export class CsxSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() aiDraft?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() aiDraftAuto?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() aiDraft?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() aiDraftAuto?: boolean;
   @ApiPropertyOptional({ example: '' }) @IsOptional() @IsString() @Matches(/^(|[a-z0-9][a-z0-9.-]{2,59})$/) aiDraftModel?: string;
   @ApiPropertyOptional({ example: 5 }) @IsOptional() @IsInt() @Min(1) @Max(20) aiDraftBatch?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() churn?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() churn?: boolean;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(1) @Max(60) churnMinPrevDays?: number;
   @ApiPropertyOptional({ example: 70 }) @IsOptional() @IsInt() @Min(10) @Max(99) churnDropPct?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() mailTemplates?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() accountMerge?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() mailTemplates?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() accountMerge?: boolean;
   @ApiProperty({ example: '대표 결정 — AI 초안 시험 운영' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class CsxMailTplSaveDto {

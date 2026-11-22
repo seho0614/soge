@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -10,6 +10,7 @@ import { addPopup, editPopup, listPopups, POPUP_AUDIENCES, POPUP_LINK_RE, public
 import { addRefEvent, editRefEvent, endRefEvent, listRefEvents, setRefEventCheck, setRefEventSwitch, startRefEvent } from './refevent';
 import { listReports, makeReports, PERIOD_KEY_RE, REPORT_CYCLES, reportDetail, sendReport, setOwner, setReportSettings } from './adreport';
 import { abDetail, addAbTest, cancelAbTest, endAbTest, listAbTests, startAbTest } from './abtest';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.517 ~ 520 (D277 · docs/655 ~ 658) ㊼ 회원 · 광고
@@ -34,7 +35,7 @@ export class PrxPopupDto {
   @ApiPropertyOptional({ example: 100, description: '작을수록 먼저(0 ~ 999)' }) @IsOptional() @IsInt() @Min(0) @Max(999) priority?: number;
 }
 export class PrxToggleDto {
-  @ApiProperty({ example: true }) @IsBoolean() on!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() on!: boolean;
 }
 export class PrxRefEventDto {
   @ApiProperty({ example: '12월 친구 추천 2배' }) @IsString() @Length(2, 80) title!: string;
@@ -45,18 +46,18 @@ export class PrxRefEventDto {
   @ApiPropertyOptional({ description: '비우면 처음 틀({from} {until} {points} {base} {budget})' }) @IsOptional() @IsString() @Length(0, 2000) noticeText?: string;
 }
 export class PrxRefEventCheckDto {
-  @ApiProperty({ example: true, description: '약관(추천 보상 · 포인트 · 처리방침) 확인' }) @IsBoolean() terms!: boolean;
-  @ApiProperty({ example: true, description: '안내 문구(기간 · 금액 · 조기 종료 · 지급 시점 · 1단계) 확인' }) @IsBoolean() notice!: boolean;
+  @ApiProperty({ example: true, description: '약관(추천 보상 · 포인트 · 처리방침) 확인' }) @StrictBoolean() terms!: boolean;
+  @ApiProperty({ example: true, description: '안내 문구(기간 · 금액 · 조기 종료 · 지급 시점 · 1단계) 확인' }) @StrictBoolean() notice!: boolean;
   @ApiProperty({ example: '법무 자문' }) @IsString() @Length(2, 60) by!: string;
   @ApiProperty({ example: '2026-11-20' }) @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) on!: string;
   @ApiPropertyOptional({ example: '경품 고시 해당 없음 확인' }) @IsOptional() @IsString() @Length(0, 500) memo?: string;
 }
 export class PrxSwitchDto {
-  @ApiProperty({ example: false }) @IsBoolean() on!: boolean;
+  @ApiProperty({ example: false }) @StrictBoolean() on!: boolean;
   @ApiProperty({ example: '법무 확인 끝 · 이벤트 준비' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class PrxReportSettingDto {
-  @ApiPropertyOptional({ example: false, description: '메일 켜기 · 끄기(처음 off · 메일 준비가 된 뒤 켬)' }) @IsOptional() @IsBoolean() on?: boolean;
+  @ApiPropertyOptional({ example: false, description: '메일 켜기 · 끄기(처음 off · 메일 준비가 된 뒤 켬)' }) @IsOptional() @StrictBoolean() on?: boolean;
   @ApiPropertyOptional({ enum: REPORT_CYCLES, description: '보내는 주기 — DAILY 어제 하루 · WEEKLY 지난주 · MONTHLY 지난달(처음)' }) @IsOptional() @IsIn(REPORT_CYCLES as unknown as string[]) cycle?: string;
   @ApiProperty({ example: '법무 확인 끝(대표 11/20) · 메일 준비 됨' }) @IsString() @Length(2, 200) reason!: string;
 }

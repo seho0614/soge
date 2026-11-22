@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -40,6 +40,7 @@ import { balanceSheet, incomeStatement, openingCreate, openingFix, openingList, 
 import { accountLedger, bookCsv, ledgerCsv, salesPurchaseBook } from './ledger';
 import { addAsset, assetDetail, depreciationJob, disposeAsset, listAssets } from './assets';
 import { budgetView, setBudget } from './budget';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.381 ~ 384 (D242 · docs/517 ~ 520) 회계 · 세무 1단계 — 운영 화면 「회계」 메뉴
@@ -112,8 +113,8 @@ export class BankUploadDto {
 }
 export class BankMatchDto {
   @ApiPropertyOptional({ example: '123', description: '맞출 전표 번호' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) entryId?: string;
-  @ApiPropertyOptional({ description: '맞출 것 없음(이자 · 수수료 등 — 사유 필요)' }) @IsOptional() @IsBoolean() ignore?: boolean;
-  @ApiPropertyOptional({ description: '맞춤 풀기(사유 필요)' }) @IsOptional() @IsBoolean() clear?: boolean;
+  @ApiPropertyOptional({ description: '맞출 것 없음(이자 · 수수료 등 — 사유 필요)' }) @IsOptional() @StrictBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ description: '맞춤 풀기(사유 필요)' }) @IsOptional() @StrictBoolean() clear?: boolean;
   @ApiPropertyOptional({ example: '예금 이자' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class YmDto {
@@ -130,8 +131,8 @@ export class AcctFormatDto {
   @ApiPropertyOptional({ enum: ['SPLIT', 'SIGN'] }) @IsOptional() @IsIn(['SPLIT', 'SIGN']) dcStyle?: string;
   @ApiPropertyOptional({ example: '차변' }) @IsOptional() @IsString() @Length(0, 10) dcDebit?: string;
   @ApiPropertyOptional({ example: '대변' }) @IsOptional() @IsString() @Length(0, 10) dcCredit?: string;
-  @ApiPropertyOptional({ description: '머리줄 넣기(처음 예)' }) @IsOptional() @IsBoolean() header?: boolean;
-  @ApiPropertyOptional({ description: '기본 양식으로' }) @IsOptional() @IsBoolean() isDefault?: boolean;
+  @ApiPropertyOptional({ description: '머리줄 넣기(처음 예)' }) @IsOptional() @StrictBoolean() header?: boolean;
+  @ApiPropertyOptional({ description: '기본 양식으로' }) @IsOptional() @StrictBoolean() isDefault?: boolean;
 }
 export class TaxInvoiceRequestDto {
   @ApiProperty({ enum: ['AD', 'COMMISSION'] }) @IsIn(['AD', 'COMMISSION']) kind!: 'AD' | 'COMMISSION';
@@ -166,12 +167,12 @@ export class PurchaseAddDto {
   @ApiProperty({ example: '복사용지' }) @IsString() @Length(1, 120) item!: string;
   @ApiProperty({ example: 100000, description: '공급가(간이영수증은 합계)' }) @IsInt() @Min(1) @Max(10_000_000_000) supply!: number;
   @ApiPropertyOptional({ example: 10000, description: '부가세(간이영수증은 0)' }) @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) vat?: number;
-  @ApiPropertyOptional({ description: '부가세 공제(처음 예 · 간이영수증 · 기업업무추진비는 언제나 아니오)' }) @IsOptional() @IsBoolean() deductible?: boolean;
+  @ApiPropertyOptional({ description: '부가세 공제(처음 예 · 간이영수증 · 기업업무추진비는 언제나 아니오)' }) @IsOptional() @StrictBoolean() deductible?: boolean;
   @ApiProperty({ example: 'EXP_SUPPLIES', description: '비용 · 자산 계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole!: string;
   @ApiProperty({ enum: PAY_ROLES, description: 'CASH 보통예금 · AP 미지급금 · CARD_AP 법인카드' }) @IsIn(PAY_ROLES as unknown as string[]) payRole!: string;
   @ApiPropertyOptional({ example: '11월 사무용품' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
   @ApiPropertyOptional({ type: [String], description: `증빙 파일 id — POST /files(ACCT_EVIDENCE)로 올린 것 · ${PURCHASE_MAX_FILES}개까지` }) @IsOptional() @IsArray() @ArrayMaxSize(PURCHASE_MAX_FILES) @IsString({ each: true }) attachments?: string[];
-  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계가 있어도 넣기' }) @IsOptional() @IsBoolean() force?: boolean;
+  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계가 있어도 넣기' }) @IsOptional() @StrictBoolean() force?: boolean;
   @ApiPropertyOptional({ example: '12', description: 'v10.417 붙일 품의 번호(승인 · 쓰는 중) — 합계가 품의 금액 × (1 + 허용 %) 넘으면 422 REQ_OVER' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
 }
 export class PurchaseCancelDto {
@@ -202,8 +203,8 @@ export class CardUploadDto {
 }
 export class CardBookDto {
   @ApiPropertyOptional({ example: 'EXP_WELFARE', description: '비용 · 자산 계정 역할' }) @IsOptional() @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole?: string;
-  @ApiPropertyOptional({ description: '매입세액 공제(÷ 11) — 간이과세 · 면세 가맹점 · 접대비는 아니오' }) @IsOptional() @IsBoolean() deductible?: boolean;
-  @ApiPropertyOptional({ description: '장부에 넣지 않음(사유 필요)' }) @IsOptional() @IsBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ description: '매입세액 공제(÷ 11) — 간이과세 · 면세 가맹점 · 접대비는 아니오' }) @IsOptional() @StrictBoolean() deductible?: boolean;
+  @ApiPropertyOptional({ description: '장부에 넣지 않음(사유 필요)' }) @IsOptional() @StrictBoolean() ignore?: boolean;
   @ApiPropertyOptional({ example: '개인 사용 — 본인 부담 처리' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 
@@ -343,7 +344,7 @@ export class AcctPayRateDto {
 export class AcctWhtTableDto {
   @ApiProperty({ example: 2026 }) @IsInt() @Min(2000) @Max(2100) year!: number;
   @ApiProperty({ description: '국세청 근로소득 간이세액표 CSV(머리줄 이상 · 미만 · 1 ~ 11 · 95,000자까지 — 넘으면 나눠 올리고 둘째부터 append)' }) @IsString() @Length(1, 95000) csv!: string;
-  @ApiPropertyOptional({ description: '이어 올리기(처음 false = 그 해 전체 바꿈)' }) @IsOptional() @IsBoolean() append?: boolean;
+  @ApiPropertyOptional({ description: '이어 올리기(처음 false = 그 해 전체 바꿈)' }) @IsOptional() @StrictBoolean() append?: boolean;
   @ApiPropertyOptional({ enum: ['THOUSAND', 'WON'], description: '이상 · 미만 칸 단위(처음 천원)' }) @IsOptional() @IsIn(['THOUSAND', 'WON']) unit?: 'THOUSAND' | 'WON';
   @ApiProperty({ example: '국세청 2026 간이세액표' }) @IsString() @Length(1, 400) reason!: string;
 }
@@ -356,8 +357,8 @@ export class AcctPgUploadDto {
 }
 export class AcctPgMatchDto {
   @ApiPropertyOptional({ example: '123', description: '맞출 전표 번호(PG 정산 받을 돈 줄이 있는 전표)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) entryId?: string;
-  @ApiPropertyOptional({ description: '맞출 것 없음(회계 시작일 전 결제 · 시험 결제 등 — 사유 필요 · 전표 만들지 않음)' }) @IsOptional() @IsBoolean() ignore?: boolean;
-  @ApiPropertyOptional({ description: '맞춤 풀기(사유 · PG 정산 전표가 만들어지기 전만)' }) @IsOptional() @IsBoolean() clear?: boolean;
+  @ApiPropertyOptional({ description: '맞출 것 없음(회계 시작일 전 결제 · 시험 결제 등 — 사유 필요 · 전표 만들지 않음)' }) @IsOptional() @StrictBoolean() ignore?: boolean;
+  @ApiPropertyOptional({ description: '맞춤 풀기(사유 · PG 정산 전표가 만들어지기 전만)' }) @IsOptional() @StrictBoolean() clear?: boolean;
   @ApiPropertyOptional({ example: '회계 시작일 전 결제' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class AcctManualLineDto {
@@ -374,7 +375,7 @@ export class AcctManualDto {
   @ApiProperty({ type: [AcctManualLineDto], description: '줄 2 ~ 30 · 차변 합 = 대변 합' }) @IsArray() lines!: AcctManualLineDto[];
 }
 export class AcctManualDecideDto {
-  @ApiProperty({ description: 'true 승인(전표 넣기) · false 반려(사유)' }) @IsBoolean() approve!: boolean;
+  @ApiProperty({ description: 'true 승인(전표 넣기) · false 반려(사유)' }) @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ example: '계약서 확인' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class AcctSeveranceRunDto {
@@ -416,7 +417,7 @@ export class AcctContractDto {
   @ApiProperty({ enum: CONTRACT_KINDS }) @IsIn(CONTRACT_KINDS as unknown as string[]) kind!: string;
   @ApiProperty({ example: '2026-11-01' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) startOn!: string;
   @ApiPropertyOptional({ example: '2027-10-31', description: '비우면 기한 없음' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) endOn?: string;
-  @ApiPropertyOptional({ description: '자동 갱신' }) @IsOptional() @IsBoolean() autoRenew?: boolean;
+  @ApiPropertyOptional({ description: '자동 갱신' }) @IsOptional() @StrictBoolean() autoRenew?: boolean;
   @ApiPropertyOptional({ example: 30, description: '만기 며칠 전부터 알림(1 ~ 180)' }) @IsOptional() @IsInt() @Min(1) @Max(180) noticeDays?: number;
   @ApiPropertyOptional({ example: 1100000, description: '달 금액(부가세 포함 · 0 이면 예정 없음)' }) @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) monthlyAmount?: number;
   @ApiPropertyOptional({ example: 25, description: '낼 날(1 ~ 28 · 달 금액이 있으면 필수)' }) @IsOptional() @IsInt() @Min(1) @Max(28) payDay?: number;
@@ -440,7 +441,7 @@ export class ReqAddDto {
   @ApiPropertyOptional({ example: '2026-11-25' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) neededOn?: string;
 }
 export class ReqDecideDto {
-  @ApiProperty({ description: 'true 승인 · false 반려' }) @IsBoolean() approve!: boolean;
+  @ApiProperty({ description: 'true 승인 · false 반려' }) @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ example: '예산 안', description: '반려면 사유(2 ~ 200자) 필수' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class ReqUseDto {
@@ -487,7 +488,7 @@ export class TaxInboxBookDto {
   @ApiProperty({ example: 'EXP_SUPPLIES', description: '비용 · 자산 계정 역할' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole!: string;
   @ApiProperty({ enum: ['CASH', 'AP', 'CARD_AP'], description: '낸 방법' }) @IsIn(['CASH', 'AP', 'CARD_AP']) payRole!: string;
   @ApiPropertyOptional({ example: '11월 사무용품' }) @IsOptional() @IsString() @Length(0, 400) memo?: string;
-  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계 매입이 있어도 넘기기' }) @IsOptional() @IsBoolean() force?: boolean;
+  @ApiPropertyOptional({ description: '같은 공급자 · 날짜 · 합계 매입이 있어도 넘기기' }) @IsOptional() @StrictBoolean() force?: boolean;
   @ApiPropertyOptional({ example: '12', description: '붙일 품의 번호(v10.417)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) requisitionId?: string;
 }
 export class TaxInboxIgnoreDto {
@@ -539,7 +540,7 @@ export class PoReceiveDto {
   @ApiProperty({ example: '2026-11-27' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) date!: string;
   @ApiPropertyOptional({ enum: ['TAX_INVOICE', 'CARD', 'CASH', 'SIMPLE'] }) @IsOptional() @IsIn(['TAX_INVOICE', 'CARD', 'CASH', 'SIMPLE']) kind?: string;
   @ApiPropertyOptional({ example: 12000, description: '부가세(비우면 공급가의 10% · 간이영수증 0)' }) @IsOptional() @IsInt() @Min(0) @Max(10000000000) vat?: number;
-  @ApiPropertyOptional({ description: '부가세 공제(처음 예)' }) @IsOptional() @IsBoolean() deductible?: boolean;
+  @ApiPropertyOptional({ description: '부가세 공제(처음 예)' }) @IsOptional() @StrictBoolean() deductible?: boolean;
   @ApiPropertyOptional({ example: 'INVENTORY', description: '계정(비우면 모두 직판 옵션이면 상품 · 아니면 소모품비)' }) @IsOptional() @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) accountRole?: string;
   @ApiPropertyOptional({ enum: ['CASH', 'AP', 'CARD_AP'] }) @IsOptional() @IsIn(['CASH', 'AP', 'CARD_AP']) payRole?: string;
   @ApiPropertyOptional({ type: [String], description: '증빙 파일(ACCT_EVIDENCE)' }) @IsOptional() @IsArray() @ArrayMaxSize(5) @IsString({ each: true }) attachments?: string[];

@@ -5631,6 +5631,10 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "지금 쓰는 이 기기라 로그아웃하지 않았습니다. 비밀번호를 바로 바꾸고, 2단계 인증을 켜 두십시오.": "This is the device you are using now, so it was not signed out. Change your password now and turn on two-step verification.",
   "비밀번호를 바로 바꾸고, 2단계 인증을 켜 두십시오.": "Change your password now and turn on two-step verification.",
   "이상 행동 기록은 지우지 않습니다.": "Anomaly records are never deleted.",
+  "선행 조건 확인 기록은 고치거나 지울 수 없습니다.": "Prerequisite check records cannot be edited or deleted.",
+  "확인 내용(어디서 · 언제 · 누가)은 2 ~ 300자입니다.": "The check note (where · when · who) must be 2 to 300 characters.",
+  "스위치가 아닙니다.": "This setting is not a switch.",
+  "이 스위치의 켤 조건에는 이 선행 조건이 없습니다.": "This prerequisite is not part of this switch's turn-on conditions.",
   "이상 행동 기록은 확인(한 번)만 적습니다.": "Anomaly records only accept a single review.",
   /* v10.614 (D301) */
   "시 · 도 이름이 맞지 않습니다.": "The province or city name is not valid.",

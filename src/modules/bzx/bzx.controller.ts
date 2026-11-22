@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Post, Put, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -14,6 +14,7 @@ import { addMyPhotos, addStaffPhotos, myPhotoFile, myPhotos, staffPhotos } from 
 import { csQuality, csReview, csSamples } from './answer-quality';
 import { cardNoticeJob, cardNotices } from './card-notice';
 import { hcPlanArchive, hcPlanOne, hcPlans, hcPlanSave, hcSimulate } from './hc-sim';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.609 ~ 614 (docs/751 ~ 756) 18차 파트너 · 고객센터 · 회계 · 인사
@@ -29,7 +30,7 @@ const UUID = /^[0-9a-fA-F-]{36}$/;
 
 export class BzxSwitchDto {
   @ApiProperty({ enum: Object.keys(BZX_SWITCHES), example: 'bzx.card_notify' }) @IsString() @IsIn(Object.keys(BZX_SWITCHES)) key!: string;
-  @ApiProperty({ example: true }) @IsBoolean() on!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() on!: boolean;
   @ApiProperty({ example: '카드 한도에 쓰는 사람을 모두 정함' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class BzxReasonDto {
@@ -42,12 +43,12 @@ export class BzxPcCreateDto {
   @ApiPropertyOptional({ example: '2027-01-01', description: '비우면 갱신은 지금 만기 다음 날 · 새 계약은 오늘' }) @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) startOn?: string;
   @ApiProperty({ example: '2027-12-31' }) @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) endOn!: string;
   @ApiPropertyOptional({ example: 30, description: '만기 며칠 전부터 알림(1 ~ 180 · 처음 30)' }) @IsOptional() @IsInt() @Min(1) @Max(180) noticeDays?: number;
-  @ApiPropertyOptional({ example: false }) @IsOptional() @IsBoolean() autoRenew?: boolean;
-  @ApiPropertyOptional({ example: false, description: 'true 면 이미 종이로 맺은 계약을 적기만(서명 끝 · PAPER)' }) @IsOptional() @IsBoolean() paper?: boolean;
+  @ApiPropertyOptional({ example: false }) @IsOptional() @StrictBoolean() autoRenew?: boolean;
+  @ApiPropertyOptional({ example: false, description: 'true 면 이미 종이로 맺은 계약을 적기만(서명 끝 · PAPER)' }) @IsOptional() @StrictBoolean() paper?: boolean;
 }
 export class BzxPcSignDto {
   @ApiProperty({ example: '홍길동', description: '대표자 이름(또는 상호)' }) @IsString() @Length(1, 60) signerName!: string;
-  @ApiProperty({ example: true }) @IsBoolean() agree!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() agree!: boolean;
   @ApiPropertyOptional({ description: '본 계약서 지문(보는 사이 바뀌었는지 확인)' }) @IsOptional() @IsString() @Matches(/^[0-9a-f]{64}$/) docHash?: string;
 }
 export class BzxAdBudgetDto {
@@ -55,7 +56,7 @@ export class BzxAdBudgetDto {
   @ApiProperty({ example: 100000 }) @IsInt() @Min(1) @Max(1000000000) capValue!: number;
   @ApiPropertyOptional({ enum: CAP_PERIODS, description: 'TOTAL 기간 전체(처음) · DAY 하루(한국 날짜)' }) @IsOptional() @IsString() @IsIn(CAP_PERIODS as unknown as string[]) period?: string;
   @ApiPropertyOptional({ example: 80, description: '알림 기준 %(50 ~ 99 · 처음 80)' }) @IsOptional() @IsInt() @Min(50) @Max(99) alertPct?: number;
-  @ApiPropertyOptional({ example: false, description: '상한에 닿으면 소재 자동 정지(스위치 bzx.ad_autopause 도 켜져야 함)' }) @IsOptional() @IsBoolean() autoPause?: boolean;
+  @ApiPropertyOptional({ example: false, description: '상한에 닿으면 소재 자동 정지(스위치 bzx.ad_autopause 도 켜져야 함)' }) @IsOptional() @StrictBoolean() autoPause?: boolean;
   @ApiPropertyOptional({ example: '11월 계약분' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
 }
 export class BzxPhotoDto {
@@ -86,7 +87,7 @@ export class BzxHcPlanDto {
   @ApiProperty({ example: '2027-01' }) @IsString() @Matches(/^\d{4}-(0[1-9]|1[0-2])$/) startYm!: string;
   @ApiProperty({ example: 12, description: '1 ~ 36개월' }) @IsInt() @Min(1) @Max(36) months!: number;
   @ApiPropertyOptional({ example: 3, description: '해마다 인상률 %(0 ~ 30 · 시작부터 12개월마다)' }) @IsOptional() @IsNumber() @Min(0) @Max(30) raisePct?: number;
-  @ApiPropertyOptional({ example: true, description: '지금 직원(재직자)을 함께 셈(처음 true)' }) @IsOptional() @IsBoolean() includeCurrent?: boolean;
+  @ApiPropertyOptional({ example: true, description: '지금 직원(재직자)을 함께 셈(처음 true)' }) @IsOptional() @StrictBoolean() includeCurrent?: boolean;
   @ApiProperty({ type: [BzxHcLineDto], description: '채용 줄(30개까지 · 칸 검사는 서버가)' }) @IsArray() @ArrayMaxSize(30) lines!: BzxHcLineDto[];
 }
 

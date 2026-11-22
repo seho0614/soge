@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -10,6 +10,7 @@ import { DatabaseService } from '../../db/database.service';
 import { DOC_KINDS, STEP_ROLES, approvalStatus, inbox, listLines, setLines, stepDecide } from './approval';
 import { budgetPeriod, setYearBudget } from './budget-period';
 import { CORP_DOC_CATS, addCorpDoc, addCorpDocVersion, archiveCorpDoc, corpDocVersions, listCorpDocs } from '../admin/corpdocs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ⑳ (D253 · docs/561 ~ 564) 결재선 · 사내 문서함 · 분기 · 연 예산
@@ -31,7 +32,7 @@ async function rolesOf(db: DatabaseService, id: string | null) {
 }
 
 export class ApvStepDto {
-  @ApiProperty({ description: '결재(true) · 반려(false)' }) @IsBoolean() approve!: boolean;
+  @ApiProperty({ description: '결재(true) · 반려(false)' }) @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ example: '금액 확인함' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class ApvLineStepDto {

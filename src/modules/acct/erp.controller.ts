@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { MailService } from '../../common/mail/mail.service';
 import { Roles } from '../../core/auth';
@@ -13,6 +13,7 @@ import { DOC_KINDS, TAX_TYPES, company, convertDoc, createDoc, docDetail, listDo
 import { addDept, addProject, deptPnl, deptsView, setRuleDept, tagEntry, taggedEntries, tagSource, updateDept, updateProject } from './depts';
 import { addWarehouse, findBarcode, listBarcodes, listWarehouses, setBarcode, transferStock, updateWarehouse, whAdjust, whStock, whStockIn } from './warehouse';
 import { addPromise, closePromise, dunningView, previewDunning, sendDunning, setTemplate } from './dunning';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.433 ~ 436 (D256 · docs/570 ~ 573) 내부 ERP 완성 — 대표 11/19 「이카운트 연동은 보류 → 그냥 내부 시스템으로」
@@ -71,7 +72,7 @@ export class DeptAddDto {
 }
 export class DeptPatchDto {
   @ApiPropertyOptional({ example: '소개몰 사업부' }) @IsOptional() @IsString() @Length(0, 60) name?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
 }
 export class ProjectAddDto {
@@ -84,7 +85,7 @@ export class ProjectAddDto {
 export class ProjectPatchDto {
   @ApiPropertyOptional({ example: '리드관 2026(연장)' }) @IsOptional() @IsString() @Length(0, 80) name?: string;
   @ApiPropertyOptional({ example: '2027-06-30' }) @IsOptional() @Matches(YMD) endsOn?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() closed?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() closed?: boolean;
 }
 export class DeptRuleItemDto {
   @ApiProperty({ example: 'MALL_SALE' }) @IsString() @Matches(/^[A-Z][A-Z_]{1,39}$/) source!: string;
@@ -111,7 +112,7 @@ export class WarehouseAddDto {
 export class WarehousePatchDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 60) name?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) address?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
 }
 export class WhTransferDto {
   @ApiProperty({ format: 'uuid' }) @IsString() @Matches(/^[0-9a-fA-F-]{36}$/) optionId!: string;

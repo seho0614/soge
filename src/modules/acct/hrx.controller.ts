@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { HRX_HM_RE, HRX_OT_RATES_RE, HRX_PAY_BASES, HRX_WEEK_LIMITS_RE, cancelMy
 import { HRX_SHIFT_CODE_RE, HRX_SHIFT_KINDS, copyLastWeek, myShifts, setShiftType, setShifts, shiftWeek } from './hrx-shifts';
 import { HRX_RESOURCE_KINDS, addResource, bookingBoard, cancelBooking, createBooking, updateResource } from './hrx-booking';
 import { HRX_ST_RESULTS, assetLabels, closeStocktake, disposeMissing, markLine, openStocktake, scanAsset, stocktakeDetail, stocktakes } from './hrx-stocktake';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㉟ 인사 4 (D265 · docs/609 ~ 612) — 대표 11/20 「㉟ 인사 4」
@@ -59,8 +60,8 @@ export class HrxOtRulesDto {
   @ApiPropertyOptional({ example: 'OT:50,NIGHT:50,HOL:50,HOL8:100' }) @IsOptional() @IsString() @Matches(HRX_OT_RATES_RE) rates?: string;
   @ApiPropertyOptional({ example: 'BASE:40,OT:12,WARN:48' }) @IsOptional() @IsString() @Matches(HRX_WEEK_LIMITS_RE) weekLimits?: string;
   @ApiPropertyOptional({ example: 209 }) @IsOptional() @IsInt() @Min(100) @Max(249) stdHours?: number;
-  @ApiPropertyOptional({ example: true, description: '주 연장 한도 넘는 승인 막기' }) @IsOptional() @IsBoolean() block?: boolean;
-  @ApiPropertyOptional({ example: false, description: '토요일을 휴일로 셈' }) @IsOptional() @IsBoolean() satHoliday?: boolean;
+  @ApiPropertyOptional({ example: true, description: '주 연장 한도 넘는 승인 막기' }) @IsOptional() @StrictBoolean() block?: boolean;
+  @ApiPropertyOptional({ example: false, description: '토요일을 휴일로 셈' }) @IsOptional() @StrictBoolean() satHoliday?: boolean;
   @ApiPropertyOptional({ enum: HRX_PAY_BASES }) @IsOptional() @IsIn(HRX_PAY_BASES as unknown as string[]) basis?: string;
   @ApiProperty({ example: '노무사 확인 반영' }) @IsString() @Length(2, 200) reason!: string;
 }
@@ -87,7 +88,7 @@ export class HrxShiftTypeDto {
   @ApiPropertyOptional({ example: '09:00' }) @IsOptional() @Matches(HRX_HM_RE) startHm?: string | null;
   @ApiPropertyOptional({ example: '18:00' }) @IsOptional() @Matches(HRX_HM_RE) endHm?: string | null;
   @ApiPropertyOptional({ example: 60 }) @IsOptional() @IsInt() @Min(0) @Max(240) breakMin?: number;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: 50 }) @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
 }
 
@@ -109,7 +110,7 @@ export class HrxResourceDto {
   @ApiPropertyOptional({ example: '3층' }) @IsOptional() @IsString() @Length(0, 60) location?: string | null;
   @ApiPropertyOptional({ example: 8 }) @IsOptional() @IsInt() @Min(1) @Max(500) capacity?: number | null;
   @ApiPropertyOptional({ example: 'TV · 화이트보드' }) @IsOptional() @IsString() @Length(0, 200) note?: string | null;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
 }
 
@@ -129,7 +130,7 @@ export class HrxStLineDto {
   @ApiPropertyOptional({ example: '파손 · 수리 중' }) @IsOptional() @IsString() @Length(0, 200) note?: string | null;
 }
 export class HrxStCloseDto {
-  @ApiPropertyOptional({ example: false, description: '확인 전 자산을 없음으로 바꾸고 닫음' }) @IsOptional() @IsBoolean() pendingAsMissing?: boolean;
+  @ApiPropertyOptional({ example: false, description: '확인 전 자산을 없음으로 바꾸고 닫음' }) @IsOptional() @StrictBoolean() pendingAsMissing?: boolean;
 }
 export class HrxStDisposeDto {
   @ApiPropertyOptional({ type: [String], example: ['12'], description: '처분할 자산 번호(비우면 없음 자산 모두)' }) @IsOptional() @IsArray() @ArrayMaxSize(500) @IsString({ each: true }) @Matches(ID_RE, { each: true }) assetIds?: string[];

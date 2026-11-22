@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { adminExpiryList, adminGrace, adminSetExpiry, decideExtend, EXPIRY_VIEWS
 import { ADMIN_BUMP_REASONS, adminBump, adminBumpList, bumpQuote, memberBump, refundBump } from './bump';
 import { adminSummaryList, decideSummary, publicSummary, requestSummary, SUMMARY_STATES } from './summary';
 import { lsxOverview, myListingTools } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.513 ~ 516 (D276 · docs/651 ~ 654) ㊻ 매물 — 저장한 검색 · 만료 · 연장 · 끌어올리기 · AI 요약
@@ -37,11 +38,11 @@ export class LsxSavedCreateDto {
   @ApiPropertyOptional({ minLength: 2, maxLength: 60, example: '카페 양도' }) @IsOptional() @IsString() @Length(2, 60) keyword?: string;
   @ApiPropertyOptional({ example: '11', description: '시 · 도 코드(regions)' }) @IsOptional() @IsString() @Matches(/^[0-9A-Z]{2,10}$/) regionCode?: string;
   @ApiPropertyOptional({ enum: SAVED_AXES }) @IsOptional() @IsIn(SAVED_AXES as unknown as string[]) axis?: string;
-  @ApiPropertyOptional({ example: true, description: '새 매물 하루 묶음 알림(처음 켬)' }) @IsOptional() @IsBoolean() notify?: boolean;
+  @ApiPropertyOptional({ example: true, description: '새 매물 하루 묶음 알림(처음 켬)' }) @IsOptional() @StrictBoolean() notify?: boolean;
 }
 export class LsxSavedUpdateDto {
   @ApiPropertyOptional({ maxLength: 40 }) @IsOptional() @IsString() @Length(1, 40) name?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() notify?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() notify?: boolean;
 }
 export class LsxBumpDto {
   @ApiPropertyOptional({ description: 'PAID 방식 — 결제창이 준 결제 키(시험 결제는 stub_…)' }) @IsOptional() @IsString() @Length(1, 200) paymentKey?: string;
@@ -53,9 +54,9 @@ export class LsxExtendRequestDto {
   @ApiPropertyOptional({ maxLength: 200 }) @IsOptional() @IsString() @MaxLength(200) note?: string;
 }
 export class LsxSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() savedSearch?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() savedSearch?: boolean;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(1) @Max(10) savedSearchMax?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() expiry?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() expiry?: boolean;
   @ApiPropertyOptional({ example: 6 }) @IsOptional() @IsInt() @Min(1) @Max(24) expiryDefaultMonths?: number;
   @ApiPropertyOptional({ example: 7 }) @IsOptional() @IsInt() @Min(1) @Max(30) expiryWarnDays?: number;
   @ApiPropertyOptional({ enum: BUMP_MODES }) @IsOptional() @IsIn(BUMP_MODES as unknown as string[]) bumpMode?: string;
@@ -64,7 +65,7 @@ export class LsxSettingsDto {
   @ApiPropertyOptional({ example: 24 }) @IsOptional() @IsInt() @Min(1) @Max(720) bumpMinHours?: number;
   @ApiPropertyOptional({ example: 3000, description: '1회 금액(공급가 · 원) — 0 이면 정하지 않음' }) @IsOptional() @IsInt() @Min(0) @Max(1000000) bumpPrice?: number;
   @ApiPropertyOptional({ example: 72 }) @IsOptional() @IsInt() @Min(1) @Max(168) bumpEffectHours?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() aiSummary?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() aiSummary?: boolean;
   @ApiPropertyOptional({ example: '' }) @IsOptional() @IsString() @Matches(/^(|[a-z0-9][a-z0-9.-]{2,59})$/) aiSummaryModel?: string;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(1) @Max(30) aiSummaryBatch?: number;
   @ApiProperty({ example: '대표 결정 — 끌어올리기 무료로 시작' }) @IsString() @Length(2, 200) reason!: string;
@@ -73,14 +74,14 @@ export class LsxSetExpiryDto {
   @ApiPropertyOptional({ enum: EXPIRY_MONTHS, description: '지금 만료일(지났으면 오늘)부터 더할 개월' }) @IsOptional() @IsInt() @IsIn(EXPIRY_MONTHS as unknown as number[]) months?: number;
   @ApiPropertyOptional({ example: '2027-05-31', description: '직접 날짜(그 날 끝까지 · 36개월 안)' }) @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) expiresOn?: string;
   @ApiProperty({ example: '대표 요청 — 행사 기간까지 연장' }) @IsString() @Length(2, 300) reason!: string;
-  @ApiPropertyOptional({ description: '만료로 내린 매물을 다시 게시' }) @IsOptional() @IsBoolean() restore?: boolean;
+  @ApiPropertyOptional({ description: '만료로 내린 매물을 다시 게시' }) @IsOptional() @StrictBoolean() restore?: boolean;
 }
 export class LsxGraceDto {
   @ApiProperty({ example: 30, description: '지났거나 그 안에 끝나는 게시 매물을 오늘 + N일로' }) @IsInt() @Min(1) @Max(90) days!: number;
   @ApiProperty({ example: '만료 스위치 켜기 전 유예' }) @IsString() @Length(2, 300) reason!: string;
 }
 export class LsxExtendDecideDto {
-  @ApiProperty() @IsBoolean() approve!: boolean;
+  @ApiProperty() @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ enum: EXPIRY_MONTHS, description: '없으면 회원이 요청한 개월' }) @IsOptional() @IsInt() @IsIn(EXPIRY_MONTHS as unknown as number[]) months?: number;
   @ApiPropertyOptional({ example: '2027-05-31' }) @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) expiresOn?: string;
   @ApiProperty({ example: '계속 거래 중 확인' }) @IsString() @Length(2, 300) reason!: string;
@@ -94,7 +95,7 @@ export class LsxRefundDto {
   @ApiProperty({ example: '중복 결제 — 고객센터 문의 1234' }) @IsString() @Length(2, 300) reason!: string;
 }
 export class LsxSummaryDecideDto {
-  @ApiProperty() @IsBoolean() approve!: boolean;
+  @ApiProperty() @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ type: [String], description: '고친 3줄(줄마다 80자까지)' }) @IsOptional() @IsArray() @ArrayMinSize(3) @ArrayMaxSize(3) @IsString({ each: true }) @MaxLength(80, { each: true }) lines?: string[];
   @ApiPropertyOptional({ maxLength: 300, description: '반려 때 필수' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
 }

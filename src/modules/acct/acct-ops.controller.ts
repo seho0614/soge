@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { addCost, addTrip, addVehicle, cancelVehicleLine, CAR_CLASSES, COST_KIND
 import { cashPlan } from './cashplan';
 import { cancelExempt, exemptOn, listExempt, requestExempt } from './exemptinv';
 import { acctReorderJob, convertDraft, dismissDraft, editDraft, reorderView, setReorderRule } from './reorder';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.475 ~ 478 (D266 · docs/613 ~ 616) 사무 · 자금 — 대표 11/20 「㊱」
@@ -39,7 +40,7 @@ export class VehicleNewDto {
   @ApiPropertyOptional({ enum: OWNERSHIPS }) @IsOptional() @IsIn(OWNERSHIPS as unknown as string[]) ownership?: string;
   @ApiProperty({ example: '2026-03-02', description: '취득 · 리스 · 렌트 계약일' }) @IsString() @Matches(YMD) acquiredOn!: string;
   @ApiPropertyOptional({ example: 32000000 }) @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) acquireCost?: number;
-  @ApiPropertyOptional({ example: true, description: '업무전용 자동차보험 가입' }) @IsOptional() @IsBoolean() bizInsurance?: boolean;
+  @ApiPropertyOptional({ example: true, description: '업무전용 자동차보험 가입' }) @IsOptional() @StrictBoolean() bizInsurance?: boolean;
   @ApiPropertyOptional({ example: '2027-03-01' }) @IsOptional() @IsString() @Matches(YMD_OR_EMPTY) insuranceUntil?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) memo?: string;
 }
@@ -51,9 +52,9 @@ export class VehicleEditDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(YMD) acquiredOn?: string;
   @ApiPropertyOptional({ description: '처분일 · 빈 글자 = 지움' }) @IsOptional() @IsString() @Matches(YMD_OR_EMPTY) disposedOn?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) acquireCost?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() bizInsurance?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() bizInsurance?: boolean;
   @ApiPropertyOptional({ description: '빈 글자 = 지움' }) @IsOptional() @IsString() @Matches(YMD_OR_EMPTY) insuranceUntil?: string;
-  @ApiPropertyOptional({ description: 'false = 끔(운행을 더 넣지 않음)' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ description: 'false = 끔(운행을 더 넣지 않음)' }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) memo?: string;
 }
 export class VehicleTripDto {
@@ -89,7 +90,7 @@ export class ReorderRuleDto {
   @ApiProperty({ example: 50, description: '재주문 수량' }) @IsInt() @Min(1) @Max(1_000_000) reorderQty!: number;
   @ApiPropertyOptional({ example: '3', description: '매입처(거래처 번호 · 비우면 초안에서 고름)' }) @IsOptional() @IsString() @Matches(/^(\d{1,18})?$/) partyId?: string;
   @ApiPropertyOptional({ example: 12000, description: '단가(비우면 재고 평균 단가)' }) @IsOptional() @IsInt() @Min(0) @Max(10_000_000_000) unitPrice?: number;
-  @ApiPropertyOptional({ example: true, description: 'false = 규칙 끔' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true, description: 'false = 규칙 끔' }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) memo?: string;
 }
 export class ReorderDraftLineDto {

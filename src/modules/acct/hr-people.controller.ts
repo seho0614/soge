@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { KIND_CODE_RE, TRAINING_METHODS, addRecords, decideRecord, kinds, myTrai
 import { TEMPLATE_CODE_RE, TEMPLATE_KINDS, addTemplate, cancelContract, checkContract, contractOne, contracts, createContract, myContract, myContracts, sendContract, signMyContract, templates } from './hr-contract';
 import { GRADES, advanceCycle, createCycle, cycleDetail, cycles, managerReview, myReviews, saveMySelf, setMyGoals } from './hr-review';
 import { APPLICANT_EMAIL_RE, EMP_TYPES, SOURCES, STAGES, addApplicant, addInterview, createPosting, hireApplicant, moveStage, postingDetail, purgeNow, recruitBoard, updateInterview, updatePosting } from './hr-recruit';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㉛ 인사 3 (D262 · docs/596 ~ 599) — 대표 11/20 「다음개발 ㉛」
@@ -42,7 +43,7 @@ export class HreKindDto {
   @ApiPropertyOptional({ example: '남녀고용평등법 제13조 — 연 1회 이상' }) @IsOptional() @IsString() @Length(0, 200) basis?: string;
   @ApiPropertyOptional({ enum: [6, 12], description: '6 반기 · 12 연' }) @IsOptional() @IsInt() @IsIn([6, 12]) cycleMonths?: number;
   @ApiPropertyOptional({ example: 1, description: '기간마다 최소 이수 시간(0.1 ~ 40)' }) @IsOptional() @IsNumber() @Min(0.1) @Max(40) minHours?: number;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ example: 50 }) @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
 }
 export class HreRecordDto {
@@ -102,7 +103,7 @@ export class HreContractDto {
 }
 export class HreSignDto {
   @ApiProperty({ example: '홍길동', description: '직원 이름과 같아야 함' }) @IsString() @Length(1, 40) signerName!: string;
-  @ApiProperty({ example: true }) @IsBoolean() agree!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() agree!: boolean;
   @ApiPropertyOptional({ description: '본 본문 지문(다르면 409)' }) @IsOptional() @Matches(/^[0-9a-f]{64}$/) docHash?: string;
 }
 
@@ -130,7 +131,7 @@ export class HreScoreDto {
 export class HreSelfDto {
   @ApiPropertyOptional({ type: [HreScoreDto] }) @IsOptional() @IsArray() @ArrayMaxSize(10) @ValidateNested({ each: true }) @Type(() => HreScoreDto) scores?: HreScoreDto[];
   @ApiPropertyOptional({ example: '분기 동안 한 일' }) @IsOptional() @IsString() @Length(0, 1000) comment?: string;
-  @ApiPropertyOptional({ example: false, description: 'true 면 제출(뒤 못 고침 · 모든 목표 점수 필요)' }) @IsOptional() @IsBoolean() submit?: boolean;
+  @ApiPropertyOptional({ example: false, description: 'true 면 제출(뒤 못 고침 · 모든 목표 점수 필요)' }) @IsOptional() @StrictBoolean() submit?: boolean;
 }
 export class HreMgrDto {
   @ApiPropertyOptional({ type: [HreScoreDto] }) @IsOptional() @IsArray() @ArrayMaxSize(10) @ValidateNested({ each: true }) @Type(() => HreScoreDto) scores?: HreScoreDto[];

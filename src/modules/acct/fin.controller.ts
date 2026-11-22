@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { cardLimitsView, setCardLimit } from './cardlimit';
 import { addTransferItems, approveTransfer, cancelTransfer, checkTransfer, createTransfer, listTransfers, removeTransferItem, sendTransfer, transferDetail, TRANSFER_STATES } from './transfer';
 import { setTarget, targetsView, TARGET_AXES } from './salestarget';
 import { partyLedger, partyLedgerCsv, partyLedgerSummary } from './partyledger';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.453 ~ 456 (D261 · docs/590 ~ 593) 자금 · 영업 — 대표 11/20 「㉘ · ㉙」
@@ -36,7 +37,7 @@ export class CardLimitSetDto {
   @ApiProperty({ example: '법인카드 1(대표)' }) @IsString() @Length(1, 40) name!: string;
   @ApiPropertyOptional({ format: 'uuid', description: '쓰는 사람(운영자) — 비우면 정하지 않음' }) @IsOptional() @IsString() @Matches(/^([0-9a-fA-F-]{36})?$/) holderId?: string;
   @ApiProperty({ example: 3000000, description: '달 한도(원)' }) @IsInt() @Min(1) @Max(1_000_000_000_000) monthlyLimit!: number;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
   @ApiProperty({ example: '11월부터 한도 300만 원' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class TransferNewDto {

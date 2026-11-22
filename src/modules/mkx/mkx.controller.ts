@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsInt, IsISO8601, IsOptional, IsString, IsUUID, Length, Matches, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsInt, IsISO8601, IsOptional, IsString, IsUUID, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -11,6 +11,7 @@ import { myPush, pushAdminView, pushMakeKeys, pushRunNow, pushSubscribe, pushTes
 import { rebuyAdminView, rebuyDeleteRule, rebuyRunNow, rebuySetRule } from './rebuy';
 import { gbAdminList, gbCancel, gbCreate, gbJoin, gbJoinsOf, gbMine, gbOpen, gbPublicList, gbRunNow, gbUpdate } from './groupbuy';
 import { applyOptout080, optout080Hook, rotateOptoutToken, smsAdminView } from './sms';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.538 ~ 541 (D283 · docs/676 ~ 679) (53) 회원 · 소개몰 — 대표 11/20
@@ -29,7 +30,7 @@ import { applyOptout080, optout080Hook, rotateOptoutToken, smsAdminView } from '
 const PCODE = /^[A-Za-z0-9_-]{1,40}$/;   // common.ts PRODUCT_CODE_RE 와 같음
 
 export class MkxPushKeysDto {
-  @ApiPropertyOptional({ description: 'true 면 이미 있는 키를 바꿈(모든 구독 GONE · 회원이 다시 켜야 함)' }) @IsOptional() @IsBoolean() force?: boolean;
+  @ApiPropertyOptional({ description: 'true 면 이미 있는 키를 바꿈(모든 구독 GONE · 회원이 다시 켜야 함)' }) @IsOptional() @StrictBoolean() force?: boolean;
 }
 export class MkxPushSubscribeDto {
   @ApiProperty({ description: '브라우저 PushSubscription.endpoint(알려진 푸시 서비스 https 주소 · 1,000자 안)' }) @IsString() @MaxLength(1000) endpoint!: string;
@@ -43,7 +44,7 @@ export class MkxPushUnsubscribeDto {
 export class MkxRebuyRuleDto {
   @ApiProperty({ example: 30, description: '사용 일수 7 ~ 730(개월 옵션이 있으면 개월 × 30일이 먼저)' }) @IsInt() @Min(7) @Max(730) useDays!: number;
   @ApiPropertyOptional({ example: 7, description: '며칠 전에 알릴지 0 ~ 60(사용 일수보다 작게)' }) @IsOptional() @IsInt() @Min(0) @Max(60) beforeDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional({ description: '메모 200자' }) @IsOptional() @IsString() @MaxLength(200) memo?: string;
 }
 export class MkxGbNewDto {

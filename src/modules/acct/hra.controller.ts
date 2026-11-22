@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { ackPromo, designate, issueRound1, leavePromoView, myLeavePromos, submit
 import { addLibPost, archiveLibPost, libFile, libPost, libReads, manageLibrary, markRead, myLibrary, updateLibPost } from './hra-library';
 import { PAY_DATE_STYLES, PAY_FIELDS, bankFormats, exportPayfile, payfileView, saveBankFormat, setPayBank } from './hra-payfile';
 import { addCloseItem, closeCheck, markClose, updateCloseItem } from './hra-close';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * 13차 인사 · 회계 (v10.581 ~ 584 · docs/723 ~ 726) — 대표 11/21 「16개 모두 동시에」
@@ -52,9 +53,9 @@ export class HraLibPostDto {
   @ApiProperty({ example: '12월 연말 근무 안내' }) @IsString() @Length(2, 120) title!: string;
   @ApiPropertyOptional({ example: '12/31 은 오전 근무입니다.' }) @IsOptional() @IsString() @Length(0, 20000) body?: string;
   @ApiPropertyOptional({ type: [String], example: ['R_ADMIN'], description: '권한그룹 키 · 비우면 운영 계정 모두(세무사 빠짐)' }) @IsOptional() @IsArray() @ArrayMaxSize(20) @Matches(/^[A-Z][A-Z0-9_]{1,40}$/, { each: true }) audience?: string[];
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() mustRead?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() mustRead?: boolean;
   @ApiPropertyOptional({ example: '2026-12-05', description: '꼭 읽기 글만' }) @IsOptional() @Matches(YMD_RE) readDue?: string;
-  @ApiPropertyOptional({ example: false }) @IsOptional() @IsBoolean() pinned?: boolean;
+  @ApiPropertyOptional({ example: false }) @IsOptional() @StrictBoolean() pinned?: boolean;
   @ApiPropertyOptional({ example: '00000000-0000-0000-0000-000000000000', description: 'POST /files(purpose CORP_DOC) 로 올린 파일' }) @IsOptional() @Matches(/^[0-9a-fA-F-]{36}$/) fileId?: string;
   @ApiPropertyOptional({ example: '1', description: '사내 문서함 문서(가장 최근 판을 보여 줌)' }) @IsOptional() @Matches(/^\d{1,18}$/) corpDocId?: string;
 }
@@ -62,9 +63,9 @@ export class HraLibEditDto {
   @ApiPropertyOptional({ example: '12월 연말 근무 안내(고침)' }) @IsOptional() @IsString() @Length(2, 120) title?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 20000) body?: string;
   @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @ArrayMaxSize(20) @Matches(/^[A-Z][A-Z0-9_]{1,40}$/, { each: true }) audience?: string[];
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() mustRead?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() mustRead?: boolean;
   @ApiPropertyOptional({ example: '2026-12-05' }) @IsOptional() @Matches(YMD_RE) readDue?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() pinned?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() pinned?: boolean;
 }
 export class HraReasonDto {
   @ApiProperty({ example: '내용이 바뀌어 새 글로 올림' }) @IsString() @Length(2, 200) reason!: string;
@@ -82,26 +83,26 @@ export class HraBankColDto {
 export class HraBankFormatDto {
   @ApiProperty({ example: '○○은행 대량 이체' }) @IsString() @Length(1, 40) name!: string;
   @ApiProperty({ type: [HraBankColDto] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(20) @ValidateNested({ each: true }) @Type(() => HraBankColDto) columns!: HraBankColDto[];
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() header?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() header?: boolean;
   @ApiPropertyOptional({ enum: PAY_DATE_STYLES }) @IsOptional() @IsIn(PAY_DATE_STYLES as unknown as string[]) dateStyle?: string;
-  @ApiPropertyOptional({ example: false }) @IsOptional() @IsBoolean() isDefault?: boolean;
+  @ApiPropertyOptional({ example: false }) @IsOptional() @StrictBoolean() isDefault?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) note?: string;
 }
 export class HraSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() leavePromo?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() leavePromo?: boolean;
   @ApiPropertyOptional({ example: 6 }) @IsOptional() @IsInt() @Min(1) @Max(11) firstMonths?: number;
   @ApiPropertyOptional({ example: 2 }) @IsOptional() @IsInt() @Min(1) @Max(10) secondMonths?: number;
   @ApiPropertyOptional({ example: 10 }) @IsOptional() @IsInt() @Min(1) @Max(30) replyDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() libUnreadAlert?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() payfileExport?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() closeAlert?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() libUnreadAlert?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() payfileExport?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() closeAlert?: boolean;
   @ApiPropertyOptional({ example: 3 }) @IsOptional() @IsInt() @Min(0) @Max(10) closeAlertDaysBefore?: number;
   @ApiProperty({ example: '노무사 확인 뒤 켬' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class HraCloseMarkDto {
   @ApiProperty({ example: '2026-11' }) @Matches(YM_RE) ym!: string;
   @ApiProperty({ example: 'cash_count' }) @Matches(/^[a-z][a-z0-9_]{1,30}$/) key!: string;
-  @ApiPropertyOptional({ example: true, description: 'false 면 확인 풂' }) @IsOptional() @IsBoolean() done?: boolean;
+  @ApiPropertyOptional({ example: true, description: 'false 면 확인 풂' }) @IsOptional() @StrictBoolean() done?: boolean;
   @ApiPropertyOptional({ example: '그 달 상각 대상 없음(자산 처분)', description: '저절로 셈 항목의 예외 확인은 2자 이상 꼭' }) @IsOptional() @IsString() @Length(0, 200) note?: string;
 }
 export class HraCloseItemDto {
@@ -114,7 +115,7 @@ export class HraCloseItemEditDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(2, 60) label?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 60) where?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
 }
 
 /** 보낸 칸만(undefined 를 거름 · 규칙 11) */

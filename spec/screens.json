@@ -8296,7 +8296,8 @@
    "gates": [],
    "nav": "SB-ADM-DSH-010",
    "apis": [
-    "GET /admin/opx/switches"
+    "GET /admin/opx/switches",
+    "POST /admin/opx/switches/{key}/prereq"
    ],
    "note": "2026-11-20 v10.512 (D275 · docs/650) 켜고 끄는 설정(값 무늬 on · off · ASSUME · LIVE · SHADOW 등) 모두 — 지금 값 · 처음 값 · 처음과 다름 · 켤 조건 · 문서(opx_switch_docs) · 마지막 바꾼 사람 · 때 · 까닭 · 읽기만 · 「전체 설정」으로 가는 길"
   },

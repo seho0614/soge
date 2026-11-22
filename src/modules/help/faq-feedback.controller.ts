@@ -1,9 +1,10 @@
 import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsString, MaxLength } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { DatabaseService } from '../../db/database.service';
 import { NotFound } from '../../core/errors';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.334 (D226 · docs/465) — 고객센터 질문 펼침 · 「도움이 되었나요?」(공개 · 로그인 없이)
@@ -14,7 +15,7 @@ import { NotFound } from '../../core/errors';
  * ------------------------------------------------------------------- */
 
 export class FaqHelpfulDto {
-  @ApiProperty({ description: 'true = 도움이 됨 · false = 도움이 안 됨' }) @IsBoolean() yes!: boolean;
+  @ApiProperty({ description: 'true = 도움이 됨 · false = 도움이 안 됨' }) @StrictBoolean() yes!: boolean;
 }
 export class FaqCountResultDto {
   @ApiProperty() ok!: boolean;

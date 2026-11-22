@@ -1,11 +1,12 @@
 import { Body, Controller, Get, HttpCode, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { DatabaseService } from '../../db/database.service';
 import { geoTest, geoView, setGeoSettings } from './geo-guard';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.485 (D268 · docs/623) 해외 접속 경고 — 운영 화면 › 위험감지 › 「해외 접속 경고」(SB-ADM-SCU-030)
@@ -14,11 +15,11 @@ import { geoTest, geoView, setGeoSettings } from './geo-guard';
  * ------------------------------------------------------------------- */
 
 export class SecGeoSettingsDto {
-  @ApiPropertyOptional({ description: 'security.geo_watch' }) @IsOptional() @IsBoolean() watch?: boolean;
+  @ApiPropertyOptional({ description: 'security.geo_watch' }) @IsOptional() @StrictBoolean() watch?: boolean;
   @ApiPropertyOptional({ enum: ['ASSUME', 'LIVE'] }) @IsOptional() @IsIn(['ASSUME', 'LIVE']) mode?: string;
   @ApiPropertyOptional({ example: 'KR', description: '간주 판별 나라(두 글자)' }) @IsOptional() @IsString() @Matches(/^[A-Z]{2}$/) assumeCountry?: string;
   @ApiPropertyOptional({ example: 'KR,JP', description: '허용 나라(쉼표 · KR 꼭)' }) @IsOptional() @IsString() @Length(2, 120) allow?: string;
-  @ApiPropertyOptional({ description: 'security.geo_block — 켠 경고 위에서만' }) @IsOptional() @IsBoolean() block?: boolean;
+  @ApiPropertyOptional({ description: 'security.geo_block — 켠 경고 위에서만' }) @IsOptional() @StrictBoolean() block?: boolean;
   @ApiProperty({ example: '해외 접속 경고 시작' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class SecGeoTestDto {

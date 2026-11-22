@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import type { Request } from 'express';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Principal, Roles } from '../../core/auth';
@@ -12,6 +12,7 @@ import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
 import { EXPORT_TARGETS, ExportApprovalService } from './export-approval';
 import { ACTIVITY_KINDS, memberActivity } from './member-activity';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.365 ~ 368 (D238 · docs/500 ~ 503)
@@ -29,15 +30,15 @@ export class ExportRequestDto {
   @ApiProperty({ example: '11월 원천징수 신고', description: '사유(2 ~ 200자)' }) @IsString() @Length(1, 400) reason!: string;
 }
 export class ExportDecideDto {
-  @ApiProperty({ description: 'true 승인 · false 거절' }) @IsBoolean() approve!: boolean;
+  @ApiProperty({ description: 'true 승인 · false 거절' }) @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ example: '신고 기한 확인', description: '메모(200자까지)' }) @IsOptional() @IsString() @Length(0, 400) note?: string;
 }
 export class RestoreDrillDto {
   @ApiProperty({ example: '2026-11-18', description: '시험한 날(오늘 · 지난 1년 안)' }) @Matches(/^\d{4}-\d{2}-\d{2}$/) drillDate!: string;
   @ApiProperty({ example: 'rds:sgb-db-2026-11-18-03-10', description: '복원한 스냅샷 이름' }) @IsString() @Length(2, 100) snapshot!: string;
   @ApiProperty({ example: 25, description: '복원에 걸린 분(1 ~ 1440)' }) @IsInt() @Min(1) @Max(1440) minutes!: number;
-  @ApiProperty({ description: '행 수 대조가 맞았는가' }) @IsBoolean() rowsMatch!: boolean;
-  @ApiProperty({ description: '이상 없이 끝났는가' }) @IsBoolean() ok!: boolean;
+  @ApiProperty({ description: '행 수 대조가 맞았는가' }) @StrictBoolean() rowsMatch!: boolean;
+  @ApiProperty({ description: '이상 없이 끝났는가' }) @StrictBoolean() ok!: boolean;
   @ApiPropertyOptional({ example: '새 DB 지움', description: '메모(500자까지)' }) @IsOptional() @IsString() @Length(0, 500) note?: string;
 }
 

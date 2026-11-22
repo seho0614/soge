@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsObject, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -14,6 +14,7 @@ import { ASSET_CYCLES, ASSET_KINDS, cancelAsset, createAsset, listAssets, update
 import { RECEIPT_RE, SUGGEST_CATEGORIES, SUGGEST_STATES, decideSuggestion, lookupSuggestion, mySuggestions, reviewList, submitSuggestion, suggestionDetail } from './its-suggest';
 import { SURVEY_QTYPES, SURVEY_ROLES, answerSurvey, createSurvey, listSurveys, moveSurvey, mySurveys, surveyDetail, surveyExport, surveyForm, surveyResults, updateSurvey } from './its-survey';
 import type { Viewer } from './its-survey';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * ㊵ 사무 · 보안 (D270 · docs/628 ~ 631) — 대표 11/20
@@ -52,8 +53,8 @@ export class ItsAssetNewDto {
   @ApiPropertyOptional({ enum: ASSET_CYCLES }) @IsOptional() @IsIn(ASSET_CYCLES as unknown as string[]) billingCycle?: string;
   @ApiPropertyOptional({ example: 168000, description: '한 번 금액(원 · 부가세 포함 · 외화는 원으로)' }) @IsOptional() @IsInt() @Min(0) @Max(1_000_000_000) costAmount?: number;
   @ApiPropertyOptional({ example: '2026-12-01', description: '다음 갱신(결제)일 — 매달 · 매년은 꼭' }) @IsOptional() @IsString() @Matches(/^(\d{4}-\d{2}-\d{2})?$/) renewOn?: string | null;
-  @ApiPropertyOptional({ description: '자동 갱신(처음 켬)' }) @IsOptional() @IsBoolean() autoRenew?: boolean;
-  @ApiPropertyOptional({ description: '자금 흐름 예정에 넣기(처음 켬)' }) @IsOptional() @IsBoolean() cashPlan?: boolean;
+  @ApiPropertyOptional({ description: '자동 갱신(처음 켬)' }) @IsOptional() @StrictBoolean() autoRenew?: boolean;
+  @ApiPropertyOptional({ description: '자금 흐름 예정에 넣기(처음 켬)' }) @IsOptional() @StrictBoolean() cashPlan?: boolean;
   @ApiPropertyOptional({ example: '관리자 계정 2개 포함' }) @IsOptional() @IsString() @Length(0, 400) memo?: string | null;
 }
 export class ItsAssetEditDto {
@@ -66,8 +67,8 @@ export class ItsAssetEditDto {
   @ApiPropertyOptional({ enum: ASSET_CYCLES }) @IsOptional() @IsIn(ASSET_CYCLES as unknown as string[]) billingCycle?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(1_000_000_000) costAmount?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(/^(\d{4}-\d{2}-\d{2})?$/) renewOn?: string | null;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() autoRenew?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() cashPlan?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() autoRenew?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() cashPlan?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 400) memo?: string | null;
 }
 export class ItsAssetCancelDto {
@@ -77,7 +78,7 @@ export class ItsSuggestNewDto {
   @ApiProperty({ enum: SUGGEST_CATEGORIES }) @IsIn(SUGGEST_CATEGORIES as unknown as string[]) category!: string;
   @ApiProperty({ example: '회의실 예약을 캘린더로' }) @IsString() @Length(2, 100) title!: string;
   @ApiProperty({ example: '지금은 메신저로 묻고 있어 겹치는 일이 잦습니다 …' }) @IsString() @Length(10, 3000) body!: string;
-  @ApiPropertyOptional({ description: 'true 면 익명 — 쓴 사람 · 시각을 저장하지 않음 · 접수 번호를 한 번만 돌려줌' }) @IsOptional() @IsBoolean() anonymous?: boolean;
+  @ApiPropertyOptional({ description: 'true 면 익명 — 쓴 사람 · 시각을 저장하지 않음 · 접수 번호를 한 번만 돌려줌' }) @IsOptional() @StrictBoolean() anonymous?: boolean;
 }
 export class ItsSuggestLookupDto {
   @ApiProperty({ example: 'ABCD-EFGH-JKLM' }) @IsString() @Matches(RECEIPT_RE) code!: string;
@@ -91,12 +92,12 @@ export class ItsSurveyQuestionDto {
   @ApiProperty({ example: '지금 업무 도구에 얼마나 만족하십니까?' }) @IsString() @Length(2, 300) body!: string;
   @ApiPropertyOptional({ type: [String], description: '하나 · 여럿 고르기 보기 2 ~ 12개' }) @IsOptional() @IsArray() @ArrayMaxSize(12) @IsString({ each: true }) options?: string[];
   @ApiPropertyOptional({ example: 5, description: '점수 질문의 가장 큰 점수(3 ~ 10)' }) @IsOptional() @IsInt() @Min(3) @Max(10) scaleMax?: number | null;
-  @ApiPropertyOptional({ description: '꼭 답할 질문(처음 켬)' }) @IsOptional() @IsBoolean() required?: boolean;
+  @ApiPropertyOptional({ description: '꼭 답할 질문(처음 켬)' }) @IsOptional() @StrictBoolean() required?: boolean;
 }
 export class ItsSurveyNewDto {
   @ApiProperty({ example: '2026 하반기 업무 환경 설문' }) @IsString() @Length(2, 100) title!: string;
   @ApiPropertyOptional({ example: '5분이면 끝납니다.' }) @IsOptional() @IsString() @Length(0, 1000) intro?: string | null;
-  @ApiPropertyOptional({ description: '익명(처음 켬) — 답에 계정을 저장하지 않음' }) @IsOptional() @IsBoolean() anonymous?: boolean;
+  @ApiPropertyOptional({ description: '익명(처음 켬) — 답에 계정을 저장하지 않음' }) @IsOptional() @StrictBoolean() anonymous?: boolean;
   @ApiPropertyOptional({ type: [String], enum: SURVEY_ROLES, description: '대상 역할(비우면 운영 계정 모두)' }) @IsOptional() @IsArray() @ArrayMaxSize(6) @IsIn(SURVEY_ROLES as unknown as string[], { each: true }) audience?: string[];
   @ApiProperty({ example: '2026-11-23' }) @Matches(YMD_RE) opensOn!: string;
   @ApiProperty({ example: '2026-12-04' }) @Matches(YMD_RE) closesOn!: string;
@@ -106,7 +107,7 @@ export class ItsSurveyNewDto {
 export class ItsSurveyEditDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(2, 100) title?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 1000) intro?: string | null;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() anonymous?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() anonymous?: boolean;
   @ApiPropertyOptional({ type: [String], enum: SURVEY_ROLES }) @IsOptional() @IsArray() @ArrayMaxSize(6) @IsIn(SURVEY_ROLES as unknown as string[], { each: true }) audience?: string[];
   @ApiPropertyOptional({ example: '2026-11-23' }) @IsOptional() @Matches(YMD_RE) opensOn?: string;
   @ApiPropertyOptional({ example: '2026-12-11', description: '받는 중이면 이것만(늦추기)' }) @IsOptional() @Matches(YMD_RE) closesOn?: string;

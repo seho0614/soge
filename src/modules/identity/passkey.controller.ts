@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches } from 'class-validator';
 import type { Request } from 'express';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Principal, Roles } from '../../core/auth';
@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import {
   passkeyStatus, registerOptions, registerPasskey, revokeMyPasskey, revokeStaffPasskey, setPasskeyPolicy, staffPasskeys, verifyOptions, verifyPasskey,
 } from './passkey';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.484 (D268 · docs/622) 운영자 패스키 — 운영 화면 › 권한 계층 › 내 2단계 인증 › 「패스키」 구역(SB-ADM-SCU-020)
@@ -40,7 +41,7 @@ export class PasskeyRevokeDto {
   @ApiPropertyOptional({ example: '노트북 바꿈', description: '사유(본인 2 ~ 200자 · SUPER 가 남의 것을 끌 때 5 ~ 200자)' }) @IsOptional() @IsString() @Length(0, 200) reason?: string;
 }
 export class PasskeyPolicyDto {
-  @ApiPropertyOptional({ description: 'admin.passkey' }) @IsOptional() @IsBoolean() on?: boolean;
+  @ApiPropertyOptional({ description: 'admin.passkey' }) @IsOptional() @StrictBoolean() on?: boolean;
   @ApiPropertyOptional({ enum: ['EXTRA', 'REPLACE_MFA'] }) @IsOptional() @IsIn(['EXTRA', 'REPLACE_MFA']) mode?: string;
   @ApiPropertyOptional({ example: 'sogaebank.com', description: 'admin.passkey_rp_id(빈 글자 = 지움)' }) @IsOptional() @IsString()
   @Matches(/^(|localhost|([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63})$/) rpId?: string;

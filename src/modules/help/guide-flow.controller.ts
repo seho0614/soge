@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -8,6 +8,7 @@ import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { maskMail } from '../../common/mail/mail-admin.service';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.347 (D233 · docs/481) — 사용자 웹 이용 흐름(/guide/flows · SB-HOM-ETC-050)을 운영 화면에서 고치기
@@ -48,7 +49,7 @@ export class GuideFlowSaveDto {
   @ApiPropertyOptional({ type: String, isArray: true, description: '영어 단계(비우면 사전 영어 글 · 쓰면 한국어 단계 수와 같게)' })
   @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) @MaxLength(600, { each: true }) stepsEn?: string[];
   @ApiProperty({ example: '/signup', description: '「바로 가기」 주소(사이트 안 · / 로 시작)' }) @IsString() @MaxLength(200) href!: string;
-  @ApiPropertyOptional({ description: 'false = 숨김(사용자 웹에서 빠짐)' }) @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ description: 'false = 숨김(사용자 웹에서 빠짐)' }) @IsOptional() @StrictBoolean() isActive?: boolean;
 }
 export class GuideFlowSaveResultDto {
   @ApiProperty() ok!: boolean;

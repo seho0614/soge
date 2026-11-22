@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -9,6 +9,7 @@ import { DatabaseService } from '../../db/database.service';
 import { deviceDetail, deviceOverview } from './device';
 import { RET_DATE_RE, retentionDestroy, retentionDestroyed, retentionEdit, retentionList, retentionRuleEdit, retentionRules, retentionSync } from './retention';
 import { TM_TEXT_MAX, tmBackfill, tmEdit, tmList } from './tm';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.546 ~ 548 (D285 · docs/684 ~ 686) (55) 운영 · 보안 — 운영 화면 api/v1/admin/sfx
@@ -23,11 +24,11 @@ const actor = () => RequestCtx.actorId() ?? null;
 
 export class SfxRetRuleEditDto {
   @ApiPropertyOptional({ example: 60, description: '보관 개월 1 ~ 600(법정 최소 밑이면 422 SFX_RET_MIN)' }) @IsOptional() @IsInt() @Min(1) @Max(600) months?: number;
-  @ApiPropertyOptional({ example: true, description: '켜기 — 끄면 대장 맞추기가 그 용도를 새로 넣지 않음(이미 있는 줄은 그대로)' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true, description: '켜기 — 끄면 대장 맞추기가 그 용도를 새로 넣지 않음(이미 있는 줄은 그대로)' }) @IsOptional() @StrictBoolean() active?: boolean;
 }
 export class SfxRetEditDto {
   @ApiPropertyOptional({ example: '2026-03-31', description: '기준일 YYYY-MM-DD(2000-01-01 ~ 오늘) — 만료일 = 기준일 + 보관 개월' }) @IsOptional() @IsString() @Matches(RET_DATE_RE) baseDate?: string;
-  @ApiPropertyOptional({ example: true, description: '법정 보관(보존) 걸기 true · 풀기 false — 걸린 서류는 어떤 화면에서도 지우지 못함' }) @IsOptional() @IsBoolean() hold?: boolean;
+  @ApiPropertyOptional({ example: true, description: '법정 보관(보존) 걸기 true · 풀기 false — 걸린 서류는 어떤 화면에서도 지우지 못함' }) @IsOptional() @StrictBoolean() hold?: boolean;
   @ApiPropertyOptional({ example: '세무조사 자료 보존 요청(2026-11)', description: '보존 까닭 2 ~ 300자(걸 때 필수)' }) @IsOptional() @IsString() @Length(0, 300) holdReason?: string;
   @ApiProperty({ example: '퇴직일로 기준일 고침', description: '사유 2 ~ 300자(감사 기록)' }) @IsString() @Length(2, 300) reason!: string;
 }
@@ -37,7 +38,7 @@ export class SfxRetDestroyDto {
 }
 export class SfxTmEditDto {
   @ApiPropertyOptional({ example: 'Two-room office near the station', description: `번역 1 ~ ${TM_TEXT_MAX}자 — 고치면 사람 번역(HUMAN)` }) @IsOptional() @IsString() @Length(1, TM_TEXT_MAX) text?: string;
-  @ApiPropertyOptional({ example: false, description: '끄면 자동 번역이 이 줄을 쓰지 않음' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: false, description: '끄면 자동 번역이 이 줄을 쓰지 않음' }) @IsOptional() @StrictBoolean() active?: boolean;
 }
 
 @ApiTags('ADM')

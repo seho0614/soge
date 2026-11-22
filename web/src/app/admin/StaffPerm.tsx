@@ -351,13 +351,17 @@ function PermChangeLog() {
 }
 
 /* ── v10.564 판정 방식(업무별 권한 탭 위) ──────────────────────── */
-interface ModeT { mode: string; modes: string[]; unmapped: number; unmappedItems: Array<{ method: string; pattern: string; roles: string[]; controller: string }>; diff24: number;
+interface CheckT { key: string; label: string; ok: boolean; need: boolean; detail: string }   // v10.624 (docs/767)
+interface ModeT { checklist?: CheckT[]; compareHours?: number; mode: string; modes: string[]; unmapped: number; unmappedItems: Array<{ method: string; pattern: string; roles: string[]; controller: string }>; diff24: number;
   recent: Array<{ at: string; who: string | null; method: string; pattern: string; taskKeys: string[]; level: string; diff: string }>; since: string | null; groupsReady: boolean; note: string }
 const MODE_KO: Record<string, string> = { ROLE: '역할로(지금처럼)', COMPARE: '역할로 · 권한그룹과 비교 기록', GROUPS: '권한그룹으로' };
 export function PermModeBox() {
   const m = useApi<ModeT>('/admin/perm/mode');
   const a = useAct();
   const change = (to: string) => {
+    /* v10.624 (docs/767) — 권장 줄(COMPARE 24시간 · 검사 ON)이 아직이면 GROUPS 전에 한 번 더 묻습니다(서버는 꼭 줄만 막음) */
+    const soft = to === 'GROUPS' ? (m.data?.checklist ?? []).filter((c) => !c.need && !c.ok) : [];
+    if (soft.length && !window.confirm(`권장 조건이 아직입니다 — ${soft.map((c) => `${c.label}(${c.detail})`).join(' · ')}. 그래도 GROUPS 로 바꿀까요?`)) return;
     const reason = ask(`판정 방식을 「${MODE_KO[to] ?? to}」(${to})로 바꿉니다. 사유를 적어 주십시오`); if (!reason) return;
     void a.run(`m${to}`, () => api<{ note: string }>('/admin/perm/mode', { method: 'PUT', body: JSON.stringify({ mode: to, reason }) }), m.reload, (r) => r.note);
   };
@@ -375,6 +379,12 @@ export function PermModeBox() {
           <p>{d.modes.filter((x) => x !== d.mode).map((x) => (
             <button key={x} className="btn-sm" disabled={a.busy === `m${x}` || (x === 'GROUPS' && !d.groupsReady)} onClick={() => change(x)} data-perm-mode-to={x}>{MODE_KO[x] ?? x}로</button>))}
             {!d.groupsReady && d.mode !== 'GROUPS' && <small className="muted"> 권한그룹으로 바꾸려면 연결 안 된 주소 0 · 24시간 다름 0 이어야 합니다.</small>}</p>
+          {(d.checklist ?? []).length > 0 && (
+            <table className="tbl" data-perm-mode-check={(d.checklist ?? []).filter((c) => c.ok).length}>
+              <caption className="muted">GROUPS 로 바꾸기 전 점검(「꼭」은 서버가 막고 「권장」은 알림만)</caption>
+              <tbody>{(d.checklist ?? []).map((c) => (
+                <tr key={c.key} data-perm-check={c.key}><td>{c.ok ? '통과' : <b className="warn-text">아직</b>}</td><td>{c.label}</td><td className="muted">{c.need ? '꼭' : '권장'}</td><td className="mono">{c.detail}</td></tr>))}</tbody>
+            </table>)}
           {d.unmappedItems.length > 0 && (
             <details><summary>연결 안 된 주소 {d.unmapped}</summary>
               <table className="tbl"><tbody>{d.unmappedItems.map((u) => <tr key={`${u.method}${u.pattern}`}><td className="mono">{u.method} {u.pattern}</td><td className="muted">{u.roles.join(', ')}</td><td className="muted">{u.controller}</td></tr>)}</tbody></table>

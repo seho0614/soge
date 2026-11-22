@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { myPhotoChecks, photoList, photoRecheck, PHOTO_VIEWS } from './photo';
 import { adminVideoList, attachVideo, decideVideo, myVideos, publicVideo, removeVideo, VIDEO_STATES } from './video';
 import { TRIAGE_KINDS, TRIAGE_URGENCIES, TRIAGE_VIEWS, triageConfirm, triageList } from './triage';
 import { lsyOverview } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.524 ~ 527 (D279 · docs/662 ~ 665) ㊾ 매물 2 — 중복 매물 자동 탐지 · 사진 품질 검사 · 매물 동영상 · 신고 자동 분류 · 우선순위
@@ -31,19 +32,19 @@ const REV = ['ADMIN', 'SUPER', 'REVIEWER'] as const;
 const me = () => RequestCtx.actorId()!;
 
 export class LsySettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() dupDetect?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() dupDetect?: boolean;
   @ApiPropertyOptional({ example: 80 }) @IsOptional() @IsInt() @Min(50) @Max(100) dupThreshold?: number;
   @ApiPropertyOptional({ example: 60 }) @IsOptional() @IsInt() @Min(1) @Max(180) dupWindowDays?: number;
-  @ApiPropertyOptional({ description: '기준 넘은 짝의 나중 매물을 검수 대기에(처음 켬 · 탐지가 켜졌을 때만)' }) @IsOptional() @IsBoolean() dupQueue?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() photoCheck?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() photoAi?: boolean;
+  @ApiPropertyOptional({ description: '기준 넘은 짝의 나중 매물을 검수 대기에(처음 켬 · 탐지가 켜졌을 때만)' }) @IsOptional() @StrictBoolean() dupQueue?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() photoCheck?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() photoAi?: boolean;
   @ApiPropertyOptional({ example: 600 }) @IsOptional() @IsInt() @Min(200) @Max(2000) photoMinPx?: number;
   @ApiPropertyOptional({ example: 20 }) @IsOptional() @IsInt() @Min(1) @Max(50) photoBatch?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() video?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() video?: boolean;
   @ApiPropertyOptional({ example: 30 }) @IsOptional() @IsInt() @Min(1) @Max(50) videoMaxMb?: number;
   @ApiPropertyOptional({ example: 60 }) @IsOptional() @IsInt() @Min(5) @Max(120) videoMaxSec?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() reportTriage?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() reportAi?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() reportTriage?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() reportAi?: boolean;
   @ApiPropertyOptional({ example: '' }) @IsOptional() @IsString() @Matches(/^(|[a-z0-9][a-z0-9.-]{2,59})$/) aiModel?: string;
   @ApiProperty({ example: '대표 결정 — 중복 탐지 켜기' }) @IsString() @Length(2, 200) reason!: string;
 }
@@ -58,7 +59,7 @@ export class LsyListingRefDto {
   @ApiProperty({ format: 'uuid' }) @IsString() @Matches(/^[0-9a-fA-F-]{36}$/) listingId!: string;
 }
 export class LsyVideoDecideDto {
-  @ApiProperty() @IsBoolean() approve!: boolean;
+  @ApiProperty() @StrictBoolean() approve!: boolean;
   @ApiPropertyOptional({ maxLength: 300, description: '반려 때 필수(2자 이상)' }) @IsOptional() @IsString() @MaxLength(300) reason?: string;
 }
 export class LsyTriageConfirmDto {

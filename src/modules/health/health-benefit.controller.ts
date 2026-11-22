@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles, RequireGate } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -8,6 +8,7 @@ import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { GIFT_KINDS, createTier, giftCheck, giftClose, giftDetail, giftIssue, giftLookup, giftView, mallTierJob, myBenefits, pointAdjust, pointsView, setMemberTier, tiersView, updateTier } from './health-benefit';
 import { SUB_CYCLES, createSub, mallSubscribeJob, mySubs, subAction, subsView } from './health-subscribe';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.479 ~ 482 (D267 · docs/617 ~ 620) 소개몰 회원 혜택 — 적립금 · 회원 등급 · 정기 배송 · 상품권
@@ -45,7 +46,7 @@ export class HltTierEditDto {
   @ApiPropertyOptional() @IsOptional() @IsNumber({ maxDecimalPlaces: 1 }) @Min(0) @Max(20) earnRate?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) benefit?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(9999) sort?: number;
-  @ApiPropertyOptional({ description: '끄기는 그 등급 회원이 없을 때만' }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ description: '끄기는 그 등급 회원이 없을 때만' }) @IsOptional() @StrictBoolean() active?: boolean;
 }
 export class HltTierMemberDto {
   @ApiPropertyOptional({ example: 'GOLD', description: '빈 글자 = 운영이 정한 등급 풀기' }) @IsOptional() @IsString() @Matches(/^([A-Z][A-Z0-9_]{1,19})?$/) tierCode?: string;

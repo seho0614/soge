@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional,
          ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { SearchAdminService } from './search-admin.service';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ─────────────────────────────────────────────────────────────────────
  * 검색 사전 · 성향 학습 — 관리자
@@ -53,7 +54,7 @@ export class TermHideDto {
   @ApiProperty({ example: '08ae6c', description: '검색어 통계의 말 그대로' })
   @IsString() @Length(1, 60) term!: string;
   @ApiProperty({ example: true, description: 'true 숨김 · false 다시 보임' })
-  @IsBoolean() hidden!: boolean;
+  @StrictBoolean() hidden!: boolean;
 }
 export class IntentRowDto {
   @ApiProperty() term!: string;

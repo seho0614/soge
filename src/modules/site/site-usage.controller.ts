@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { DatabaseService } from '../../db/database.service';
 import { USAGE_GOALS, usageBeat, usageView } from './site-usage';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.508 (D274 · docs/646) 회원 화면 사용 통계
@@ -15,7 +16,7 @@ import { USAGE_GOALS, usageBeat, usageView } from './site-usage';
 export class SiteUsageBeatDto {
   @ApiProperty({ example: '/community/3f0c…', description: '지금 화면 주소(서버가 번호 · 코드를 :id 로 묶음 · 물음표 뒤 버림)' }) @IsString() @MaxLength(400) p!: string;
   @ApiPropertyOptional({ example: '/', description: '이 탭에서 처음 들어온 화면(지금 화면이 첫 화면이면 비움)' }) @IsOptional() @IsString() @MaxLength(400) e?: string;
-  @ApiPropertyOptional({ example: true, description: '이 탭의 둘째 화면 — 첫 화면을 「이어 봄」으로 셈(이탈 아님)' }) @IsOptional() @IsBoolean() s?: boolean;
+  @ApiPropertyOptional({ example: true, description: '이 탭의 둘째 화면 — 첫 화면을 「이어 봄」으로 셈(이탈 아님)' }) @IsOptional() @StrictBoolean() s?: boolean;
   @ApiPropertyOptional({ enum: [...USAGE_GOALS], description: '전환 목표(완료 화면에 닿았을 때만)' }) @IsOptional() @IsIn(USAGE_GOALS as unknown as string[]) g?: string;
 }
 

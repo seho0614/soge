@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -11,6 +11,7 @@ import {
   CAMPAIGN_AUDIENCES, CAMPAIGN_CHANNELS, campaignAudience, campaignDetail, cancelCampaign, createCampaign, listCampaigns, runCampaignBatch,
   sendCampaign, setCampaignSettings, testCampaign, unsubscribe, unsubscribePage, unsubscribeResultPage, updateCampaign,
 } from './campaign';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.483 (D268 · docs/621) 문자 · 메일 캠페인 — 운영 화면 › 회원 › 「문자 · 메일 캠페인」(SB-ADM-SCU-010)
@@ -42,7 +43,7 @@ export class MktCampaignCancelDto {
   @ApiProperty({ example: '할인 조건 바뀜' }) @IsString() @Length(2, 200) reason!: string;
 }
 export class MktSettingsDto {
-  @ApiPropertyOptional({ description: 'campaign.enabled' }) @IsOptional() @IsBoolean() enabled?: boolean;
+  @ApiPropertyOptional({ description: 'campaign.enabled' }) @IsOptional() @StrictBoolean() enabled?: boolean;
   @ApiPropertyOptional({ enum: ['ASSUME', 'LIVE'] }) @IsOptional() @IsIn(['ASSUME', 'LIVE']) mode?: string;
   @ApiPropertyOptional({ example: '(주)한국바이오헬스케어 소개뱅크 사업부' }) @IsOptional() @IsString() @Length(2, 60) senderName?: string;
   @ApiPropertyOptional({ example: '소개뱅크' }) @IsOptional() @IsString() @Length(2, 20) smsName?: string;

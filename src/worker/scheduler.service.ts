@@ -1499,6 +1499,10 @@ export class SchedulerService {
         detail = { accounts: acc.n, ipMasked: ip.n, leads: leads.length, consultRequests: consult.n, authRecords: authRec.n, taxIds: taxIds.n, noticeNotified: noticeNotified.n, overdue: Number(over.n) };
         break;
       }
+      /* v10.620 (docs/763) — 이 판에 없는 작업(새 판에서 생긴 작업을 옛 판이 받은 경우 · 되돌린 상태)은 「성공 · 0건」으로 적지 않고
+       *   실패(UNKNOWN_JOB)로 남깁니다. 예전에는 아무 일도 안 하고 성공으로 적혀 돌지 않은 것을 알 수 없었습니다. 다시 새 판을 올리면 다음 차례부터 돕니다. */
+      default:
+        throw new Error(`UNKNOWN_JOB ${String(job)} — 이 판에는 없는 작업입니다(되돌린 상태라면 정상 · 새 판을 다시 올리면 다음 차례부터 돎)`);
     }
 
     const ms = Date.now() - t0;

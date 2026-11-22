@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { DatabaseService } from '../../db/database.service';
 import { RequestCtx } from '../../core/request-context';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.334 (D226 · docs/465) — 1:1 문의 답변 틀(운영 화면 「1:1 문의」에서 골라 답변 칸에 채움)
@@ -21,7 +22,7 @@ export class InquiryTemplatePatchDto {
   @ApiPropertyOptional({ example: '정산 일정 안내', description: '이름(1 ~ 40자)' }) @IsOptional() @IsString() @MaxLength(80) title?: string;
   @ApiPropertyOptional({ description: '답변 글(2 ~ 4,000자)' }) @IsOptional() @IsString() @MaxLength(8000) body?: string;
   @ApiPropertyOptional({ example: 10, description: '순서(작을수록 위)' }) @IsOptional() @IsInt() @Min(0) @Max(9999) sortOrder?: number;
-  @ApiPropertyOptional({ description: 'false = 숨김' }) @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ description: 'false = 숨김' }) @IsOptional() @StrictBoolean() isActive?: boolean;
 }
 export class InquiryTemplateCreateDto extends InquiryTemplatePatchDto {}
 export class InquiryTemplateResultDto {

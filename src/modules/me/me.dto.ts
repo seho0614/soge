@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -67,7 +67,7 @@ export class MyInquiryDto {
 }
 
 export class InquiryFeedbackDto {
-  @ApiProperty({ description: 'true = 해결됨 · false = 아직 해결 안 됨(문의가 다시 열림)' }) @IsBoolean() resolved!: boolean;
+  @ApiProperty({ description: 'true = 해결됨 · false = 아직 해결 안 됨(문의가 다시 열림)' }) @StrictBoolean() resolved!: boolean;
 }
 export class InquiryFeedbackResultDto {
   @ApiProperty() ok!: boolean;

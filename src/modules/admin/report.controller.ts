@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { MailService } from '../../common/mail/mail.service';
 import { SlackService } from '../../common/slack/slack.service';
@@ -14,6 +14,7 @@ import { KINDS, kindOk, makeSnapshot, reportView, snapshotById } from './report-
 import { sendSettings, sendSnapshot, setSendSettings } from './report-send';
 import { addWorklog, listWorklogs, worklogBoard, reviewWorklog } from './worklog';
 import { trend } from './report-trend';   // v10.429 (D254) 경영 대시보드 그래프
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.412 ~ 415 (D250 · docs/549 ~ 552) 업무 보고 — 운영 화면 「보고」 메뉴
@@ -36,7 +37,7 @@ export class ReportMakeDto {
   @ApiProperty({ example: '2026-11-18', description: 'DAY 그날 · WEEK 그 주 아무 날 · MONTH YYYY-MM' }) @IsString() @Length(7, 10) period!: string;
 }
 export class ReportSettingDto {
-  @ApiPropertyOptional({ description: '보내기 켜기' }) @IsOptional() @IsBoolean() on?: boolean;
+  @ApiPropertyOptional({ description: '보내기 켜기' }) @IsOptional() @StrictBoolean() on?: boolean;
   @ApiPropertyOptional({ type: [String], example: ['DAY', 'WEEK', 'MONTH'] }) @IsOptional() @IsArray() @IsIn(KINDS as unknown as string[], { each: true }) kinds?: string[];
   @ApiProperty({ example: '주보만 보내기' }) @IsString() @Length(1, 400) reason!: string;
 }

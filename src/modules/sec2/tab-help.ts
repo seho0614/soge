@@ -14,7 +14,7 @@ import { pgxEffectiveOf } from '../admin/pgx-perm';   // v10.615 (docs/757) GROU
 
 export const SEC2_GUIDE = 'ADMIN_GUIDE';
 const MANUAL = 'USER_MANUAL';
-const MAX = 20000;
+const MAX = 40000;   // v10.623 (D305 · docs/766) 운영 화면 도움말(ADMIN_GUIDE)만 4만 자 — 옛 탭 119개 절 · 사용자 설명서는 2만 자 그대로(DB 검사 help_docs_body_len)
 const KEY_RE = /^[a-z][a-z0-9-]{1,39}$/;
 
 async function current(db: Sec2Db, code: string) {

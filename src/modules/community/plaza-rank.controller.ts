@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { PLZ_TARGETS, adminRanking, helpfulCounts, myActivity, publicRanking, revokeBadge, runRanking, setRankPref, toggleHelpful } from './plaza-rank';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.507 (D274 · docs/645) 소개광장 활동 배지 · 랭킹
@@ -22,7 +23,7 @@ export class PlzHelpfulDto {
   @ApiProperty({ format: 'uuid' }) @IsUUID() targetId!: string;
 }
 export class PlzRankPrefDto {
-  @ApiProperty({ example: true, description: 'true = 공개 랭킹에 나오지 않음' }) @IsBoolean() hide!: boolean;
+  @ApiProperty({ example: true, description: 'true = 공개 랭킹에 나오지 않음' }) @StrictBoolean() hide!: boolean;
 }
 export class PlzRankRunDto {
   @ApiPropertyOptional({ example: '2026-11', description: '비우면 이번 달' }) @IsOptional() @IsString() @Matches(MONTH_IN) month?: string;

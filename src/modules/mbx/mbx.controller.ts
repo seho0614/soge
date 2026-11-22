@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { RequireGate, Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -13,6 +13,7 @@ import { compareItems } from './compare';
 import { addWatch, listWatches, removeWatch } from './price';
 import { adminDecide, adminOpenReported, adminReports, dmBlock, dmCheck, dmDetail, dmPartners, dmReport, dmSend, DM_BASIS, DM_REPORT_REASONS, DM_SIDES, listDm, openDm } from './dm';
 import { mbxOverview, setMbxSettings } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.501 ~ 504 (D273 · docs/639 ~ 642) ㊸ 회원 2 — 최근 본 · 비교하기 · 가격 변동 알림 · 회원 간 1:1 대화
@@ -43,7 +44,7 @@ export class MbxRecentMergeDto {
 export class MbxWatchDto {
   @ApiProperty({ enum: TARGET_TYPES }) @IsIn(TARGET_TYPES as unknown as string[]) type!: string;
   @ApiProperty({ description: '매물 uuid(관심 목록에 담은 것) 또는 소개몰 상품 코드' }) @IsString() @Length(1, 60) key!: string;
-  @ApiPropertyOptional({ example: false, description: '내릴 때만 알림' }) @IsOptional() @IsBoolean() dropOnly?: boolean;
+  @ApiPropertyOptional({ example: false, description: '내릴 때만 알림' }) @IsOptional() @StrictBoolean() dropOnly?: boolean;
 }
 export class MbxDmOpenDto {
   @ApiProperty({ enum: DM_BASIS }) @IsIn(DM_BASIS as unknown as string[]) basisType!: string;
@@ -52,23 +53,23 @@ export class MbxDmOpenDto {
 }
 export class MbxDmSendDto {
   @ApiProperty({ minLength: 1, maxLength: 1000 }) @IsString() @Length(1, 1000) body!: string;
-  @ApiPropertyOptional({ description: '경고를 보고도 보냄(「그래도 보내기」)' }) @IsOptional() @IsBoolean() confirm?: boolean;
+  @ApiPropertyOptional({ description: '경고를 보고도 보냄(「그래도 보내기」)' }) @IsOptional() @StrictBoolean() confirm?: boolean;
 }
 export class MbxDmCheckDto {
   @ApiProperty({ minLength: 1, maxLength: 1000 }) @IsString() @Length(1, 1000) body!: string;
 }
 export class MbxDmBlockDto {
-  @ApiProperty({ example: true }) @IsBoolean() on!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() on!: boolean;
 }
 export class MbxDmReportDto {
   @ApiProperty({ enum: DM_REPORT_REASONS }) @IsIn(DM_REPORT_REASONS as unknown as string[]) reason!: string;
   @ApiPropertyOptional({ maxLength: 500 }) @IsOptional() @IsString() @MaxLength(500) detail?: string;
 }
 export class MbxAdminSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() recent?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() compare?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() priceAlert?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() dm?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() recent?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() compare?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() priceAlert?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() dm?: boolean;
   @ApiPropertyOptional({ enum: ['WARN', 'MASK', 'BLOCK'] }) @IsOptional() @IsIn(['WARN', 'MASK', 'BLOCK']) patternMode?: string;
   @ApiPropertyOptional({ example: 20 }) @IsOptional() @IsInt() @Min(5) @Max(50) recentMax?: number;
   @ApiPropertyOptional({ example: 90 }) @IsOptional() @IsInt() @Min(7) @Max(365) recentKeepDays?: number;
@@ -85,7 +86,7 @@ export class MbxAdminOpenDto {
 export class MbxAdminDecideDto {
   @ApiProperty({ enum: ['UPHELD', 'DISMISSED'] }) @IsIn(['UPHELD', 'DISMISSED']) result!: string;
   @ApiProperty({ example: '계좌 안내로 직접 입금 유도 — 대화 닫음 · 경고' }) @IsString() @Length(2, 400) note!: string;
-  @ApiPropertyOptional({ description: '조치(UPHELD)면 대화 닫기' }) @IsOptional() @IsBoolean() lock?: boolean;
+  @ApiPropertyOptional({ description: '조치(UPHELD)면 대화 닫기' }) @IsOptional() @StrictBoolean() lock?: boolean;
 }
 
 @ApiTags('MYP')

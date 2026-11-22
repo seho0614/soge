@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -14,7 +14,8 @@ import { AdminMemberService } from '../admin/admin-member.service';
 import { archiveDetail, archiveJob, archiveState, verifyBundle } from './archive';
 import { decideCase, editRule, listCases, listRules, listScores, recompute } from './risk';
 import { BULK_MAX, bulkRuns, runBulk } from './bulk';
-import { switchOverview } from './switches';
+import { savePrereq, switchOverview } from './switches';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.509 ~ 512 (D275 · docs/647 ~ 650) ㊺ 기록 · 안전 · 운영 — 운영 화면
@@ -31,7 +32,7 @@ const actor = () => RequestCtx.actorId() ?? null;
 export class OpxRiskRuleEditDto {
   @ApiPropertyOptional({ example: 25, description: '점수 0 ~ 100' }) @IsOptional() @IsInt() @Min(0) @Max(100) points?: number;
   @ApiPropertyOptional({ example: 5, description: '기준값 1 ~ 3650(규칙마다 뜻이 다름 — 일 · 개 · 건)' }) @IsOptional() @IsInt() @Min(1) @Max(3650) param?: number;
-  @ApiPropertyOptional({ example: true }) @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional({ example: true }) @IsOptional() @StrictBoolean() active?: boolean;
 }
 export class OpxRiskDecideDto {
   @ApiProperty({ enum: ['CLEARED', 'ACTIONED'], description: 'CLEARED 문제없음 · ACTIONED 조치함(정지 · 매물 내림 등은 그 화면에서)' }) @IsIn(['CLEARED', 'ACTIONED']) result!: string;
@@ -53,6 +54,12 @@ export class OpxBulkInquiryDto {
   @ApiProperty({ enum: ['CLOSE', 'REOPEN', 'ASSIGN'] }) @IsIn(['CLOSE', 'REOPEN', 'ASSIGN']) action!: string;
   @ApiProperty({ example: '중복 문의 정리', description: '사유 2 ~ 300자(감사 기록)' }) @IsString() @Length(2, 300) reason!: string;
   @ApiPropertyOptional({ format: 'uuid', description: 'ASSIGN 때 담당 운영자(빈 글자 = 담당 없음)' }) @IsOptional() @IsString() @Matches(/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})?$/) assigneeId?: string;
+}
+/* v10.625 (D306 · docs/768) 켜기 도우미 — 선행 조건 확인 적기 */
+export class OpxPrereqDto {
+  @ApiProperty({ enum: ['LEGAL', 'PRIVACY', 'KEY', 'CONTRACT', 'NOTICE'], description: '선행 조건 — 법무 · 처리방침 · 연동 키 · 계약 · 회원 · 직원 안내' }) @IsIn(['LEGAL', 'PRIVACY', 'KEY', 'CONTRACT', 'NOTICE']) prereq!: string;
+  @ApiPropertyOptional({ enum: ['DONE', 'UNDO'], description: 'DONE 확인함(기본) · UNDO 확인 취소' }) @IsOptional() @IsIn(['DONE', 'UNDO']) state?: 'DONE' | 'UNDO';
+  @ApiProperty({ example: '법무법인 ○○ 11/22 회신 — 문제없음', description: '확인 내용(어디서 · 언제 · 누가 · 2 ~ 300자)' }) @IsString() @Length(2, 300) note!: string;
 }
 export class OpxBulkMemberDto {
   @ApiProperty({ type: [String], description: `회원 번호(uuid) 1 ~ ${BULK_MAX}` }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(BULK_MAX) @IsString({ each: true }) @Matches(UUID, { each: true }) ids!: string[];
@@ -221,4 +228,17 @@ export class OpxController {
   @ApiOperation({ summary: '기능 스위치 한눈에 (v10.512)', description: '켜고 끄는 설정 모두 — 지금 값 · 처음 값 · 처음과 다름 · 켤 조건 · 문서 · 마지막 바꾼 사람 · 때 · 까닭. 읽기만(고치기는 정책 › 전체 설정).' })
   @ApiOkResponse({ type: Object })
   switches() { return switchOverview(this.db); }
+
+  /* ── v10.625 켜기 도우미 — 선행 조건 확인 적기(켜기는 「전체 설정」 그대로) ── */
+  @Post('switches/:key/prereq')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('OPX_SWITCH_PREREQ', 'SETTING')
+  @ApiParam({ name: 'key', example: 'grw.tier_reward', description: '스위치 설정 키' })
+  @ApiOperation({ summary: '스위치 선행 조건 확인 적기 (v10.625 · SUPER)', description: '켤 조건 글에서 고른 선행 조건(법무 · 처리방침 · 연동 키 · 계약 · 안내)을 「확인함」 · 「확인 취소」로 적음 · 쌓기만 · 켜기를 막지 않음.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND(스위치가 아님)' })
+  @ApiResponse({ status: 409, type: ErrorDto, description: '없음' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'OPX_PREREQ_NOTE · OPX_PREREQ_NOT_NEEDED' })
+  switchPrereq(@Param('key') key: string, @Body() dto: OpxPrereqDto) { return savePrereq(this.db, key, dto.prereq, dto.state ?? 'DONE', dto.note, actor()); }
 }

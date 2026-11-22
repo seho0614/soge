@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -12,6 +12,7 @@ import { adminAway, endAway, myAway, setAway } from './away';
 import { adminMark, listingExtras } from './watermark';
 import { adminStats, publicStats, statsRunNow } from './stats';
 import { lpxHourlyJob } from './jobs';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.549 ~ 552 (D286 · docs/687 ~ 690) (56) 매물 3 — 대표 11/21
@@ -44,18 +45,18 @@ export class LpxStatsRunDto {
   @ApiPropertyOptional({ example: '2026-10', description: '이 달만 다시 셈(비우면 이번 달 · 지난달 · 빠진 달)' }) @IsOptional() @IsString() @Matches(LPX_YM_RE) ym?: string;
 }
 export class LpxSettingsDto {
-  @ApiPropertyOptional({ description: 'lpx.offer' }) @IsOptional() @IsBoolean() offerOn?: boolean;
+  @ApiPropertyOptional({ description: 'lpx.offer' }) @IsOptional() @StrictBoolean() offerOn?: boolean;
   @ApiPropertyOptional({ example: ['MNY', 'HLT'], description: 'lpx.offer_gwans — 가격 제안을 쓰는 관(빈 배열 = 모두 끔 · 30개까지)' }) @IsOptional() @IsArray() @ArrayMaxSize(30) @IsString({ each: true }) @Matches(LPX_GWAN_RE, { each: true }) offerGwans?: string[];
   @ApiPropertyOptional({ example: 7 }) @IsOptional() @IsInt() @Min(1) @Max(14) offerDays?: number;
   @ApiPropertyOptional({ example: 30, description: '거래 금액의 몇 % 아래는 받지 않음(0 = 하한 없음)' }) @IsOptional() @IsInt() @Min(0) @Max(99) offerMinPct?: number;
   @ApiPropertyOptional({ example: 20 }) @IsOptional() @IsInt() @Min(1) @Max(50) offerMemberMax?: number;
   @ApiPropertyOptional({ example: 3, description: 'lpx.offer_counter_max — 되제안 · 다시 제안 합친 횟수(1 ~ 5 · DB 트리거가 넘는 것을 막음)' }) @IsOptional() @IsInt() @Min(1) @Max(5) offerCounterMax?: number;
-  @ApiPropertyOptional({ description: 'lpx.watermark' }) @IsOptional() @IsBoolean() markOn?: boolean;
+  @ApiPropertyOptional({ description: 'lpx.watermark' }) @IsOptional() @StrictBoolean() markOn?: boolean;
   @ApiPropertyOptional({ enum: LPX_POSITIONS }) @IsOptional() @IsIn(LPX_POSITIONS as unknown as string[]) markPos?: string;
   @ApiPropertyOptional({ example: 35 }) @IsOptional() @IsInt() @Min(10) @Max(60) markOpacity?: number;
-  @ApiPropertyOptional({ description: 'lpx.away' }) @IsOptional() @IsBoolean() awayOn?: boolean;
+  @ApiPropertyOptional({ description: 'lpx.away' }) @IsOptional() @StrictBoolean() awayOn?: boolean;
   @ApiPropertyOptional({ example: 30 }) @IsOptional() @IsInt() @Min(1) @Max(90) awayMaxDays?: number;
-  @ApiPropertyOptional({ description: 'lpx.stats' }) @IsOptional() @IsBoolean() statsOn?: boolean;
+  @ApiPropertyOptional({ description: 'lpx.stats' }) @IsOptional() @StrictBoolean() statsOn?: boolean;
   @ApiPropertyOptional({ example: 5, description: '공개 칸 최소 매물 수(5 아래로 못 내림)' }) @IsOptional() @IsInt() @Min(5) @Max(50) statsMin?: number;
   @ApiPropertyOptional({ example: 12 }) @IsOptional() @IsInt() @Min(3) @Max(24) statsMonths?: number;
   @ApiProperty({ example: '법무 확인 끝 · 가격 제안 소개장터부터 켬' }) @IsString() @Length(2, 200) reason!: string;

@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
 import { RecommendService } from './recommend.service';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { AppError } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 export class SetRecommenderDto {
   @ApiPropertyOptional({ nullable: true, example: 'K7MZ3Q', description: '새 추천인의 추천 코드 · 비우거나 null 이면 추천인을 지움' })
@@ -16,7 +17,7 @@ export class SetRecommenderDto {
 }
 
 export class RecommendRewardDto {
-  @ApiProperty() @IsBoolean() isActive!: boolean;
+  @ApiProperty() @StrictBoolean() isActive!: boolean;
   @ApiProperty({ minimum: 1, maximum: 100000, example: 1000 }) @IsInt() points!: number;
   @ApiPropertyOptional({ nullable: true, minimum: 1, maximum: 1000, description: '한 사람이 한 달에 받는 횟수 상한 · null 이면 없음' })
   @IsOptional() @IsInt() monthlyCap?: number | null;

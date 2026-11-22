@@ -1,13 +1,14 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { COUPON_KINDS, couponsView, couponUses, createCoupon, createPromotion, promotionDetail, quoteForAdmin, updateCoupon, updatePromotion } from './health-coupon';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.469 (D264 · docs/607) 소개몰 할인 쿠폰 · 기획전 — 운영 화면 › 소개몰 › 쿠폰 · 기획전
@@ -70,7 +71,7 @@ export class HltPromoEditDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(2, 60) title?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) startsOn?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/) endsOn?: string;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean;
+  @ApiPropertyOptional() @IsOptional() @StrictBoolean() active?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) memo?: string;
   @ApiPropertyOptional({ type: [String], description: '보내면 상품 목록을 통째로 바꿈' }) @IsOptional() @IsArray() @ArrayMaxSize(200) @IsString({ each: true }) productCodes?: string[];
 }

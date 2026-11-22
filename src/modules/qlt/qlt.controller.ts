@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min, ValidateNested } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -10,6 +10,7 @@ import { DatabaseService } from '../../db/database.service';
 import { confirmEval, listSuppliers, PERIOD_RE, saveEval, setPoDue, supplierDetail } from './supeval';
 import { addLot, adjustLot, listLots, LOT_NO_RE, LOT_STATES, lotDetail, savePicks, setLotProduct, setLotState, shipQueue, traceLot } from './lots';
 import { addClaim, CLAIM_SOURCES, claimDetail, claimStats, closeClaim, DEFECT_TYPES, editClaim, listClaims, supplierReturn } from './claims';
+import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
  * v10.494 ~ 496 (D271 · docs/632 ~ 634) ㊶ 구매 · 소개몰 품질 — 운영 화면 › 소개몰 › 로트 · 유통기한 · 품질 클레임 · 협력사 평가
@@ -57,7 +58,7 @@ export class QltLotAdjustDto {
   @ApiPropertyOptional({ example: '1', description: '창고(비우면 본 창고)' }) @IsOptional() @IsString() @Matches(/^\d{1,18}$/) whId?: string;
 }
 export class QltLotProductDto {
-  @ApiProperty({ example: true }) @IsBoolean() on!: boolean;
+  @ApiProperty({ example: true }) @StrictBoolean() on!: boolean;
 }
 export class QltPickItemDto {
   @ApiProperty({ format: 'uuid', description: '주문 품목' }) @IsString() @Matches(/^[0-9a-fA-F-]{36}$/) itemId!: string;
