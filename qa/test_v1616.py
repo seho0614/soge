@@ -243,8 +243,8 @@ if API and DB and reachable(API):
     cur = psql("SELECT version || '|' || char_length(body) FROM v_help_doc_current WHERE code = 'ADMIN_GUIDE'")
     has = psql(f"SELECT count(*) FROM unnest({KEYS}) k WHERE position('[' || k || ']' IN (SELECT body FROM v_help_doc_current WHERE code = 'ADMIN_GUIDE')) > 0")
     lk = psql(f"SELECT count(*) FROM sec2_tab_help WHERE doc_code = 'ADMIN_GUIDE' AND tab_key = ANY ({KEYS})")
-    ok('② DB — 지움 없이 새 판(2판 이상 · 2만 자 안) · 새 탭 절 모두 · 탭 → 절 잇기 모두',
-       '|' in cur and int(cur.split('|')[0]) >= 2 and int(cur.split('|')[1]) <= 20000 and has == str(len(ROWS)) and lk == str(len(ROWS)), f"{cur} {has} {lk}")
+    ok('② DB — 지움 없이 새 판(2판 이상 · 2만 자 안 — v10.623 부터 ADMIN_GUIDE 4만) · 새 탭 절 모두 · 탭 → 절 잇기 모두',
+       '|' in cur and int(cur.split('|')[0]) >= 2 and int(cur.split('|')[1]) <= (40000 if VT >= (10, 623) else 20000) and has == str(len(ROWS)) and lk == str(len(ROWS)), f"{cur} {has} {lk}")
     again = psql_in("BEGIN;\nSELECT max(version) || '|' || (SELECT count(*) FROM sec2_tab_help) FROM help_docs WHERE code = 'ADMIN_GUIDE';\n"
                     + HDX + "\nSELECT max(version) || '|' || (SELECT count(*) FROM sec2_tab_help) FROM help_docs WHERE code = 'ADMIN_GUIDE';\nROLLBACK;\n")
     ln = [x for x in again.split('\n') if re.match(r'^\d+\|\d+$', x)]

@@ -133,7 +133,7 @@ M75 = migr('D275_')
 SW, OC, MN, AP, UI = (rd('src/modules/opx/switches.ts'), rd('src/modules/opx/opx.controller.ts'), rd('web/src/lib/adminMenu.ts'), rd('web/src/App.tsx'), rd('web/src/app/admin/Opx.tsx'))
 ok('① 코드 — opx_switch_docs(처음 값 · 켤 조건 · 문서) 시드 · isSwitchPattern · 처음 값 순서 · 고치기 없음(GET 만) · 메뉴 정책 › 기능 스위치 한눈에 · 「전체 설정」 단추 · 화면 OPX-040 · 문서 650 · 판 v10.512',
    'CREATE TABLE IF NOT EXISTS public.opx_switch_docs' in M75 and "('signup.open', 'on'," in M75 and "('perm.enforce', 'SHADOW'," in M75 and "('opx.archive', 'off', '보관 폴더" in M75
-   and 'export function isSwitchPattern' in SW and 'site_setting_changes' in SW and "@Get('switches')" in OC and "@Put('switches" not in OC and "@Post('switches" not in OC
+   and 'export function isSwitchPattern' in SW and 'site_setting_changes' in SW and "@Get('switches')" in OC and "@Put('switches" not in OC and ("@Post('switches" not in OC or (VT >= (10, 625) and OC.count("@Post('switches") == 1 and "@Post('switches/:key/prereq')" in OC))   # v10.625 (docs/768) 선행 조건 확인 적기 하나만
    and "['opx-switches', '기능 스위치 한눈에']" in MN and "hrxAddTabs(GROUPS.find((g) => g.key === 'admpol')?.tabs, 'settings', ['opx-switches'])" in MN
    and "<OpxSwitches onGo=" in AP and 'data-opx-go-settings' in UI and '"SB-ADM-OPX-040"' in SJ and '켤 조건' in doc('650_') and VT >= (10, 512), VER)
 

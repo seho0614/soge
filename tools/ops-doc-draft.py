@@ -13,7 +13,7 @@
     DO 블록의 RAISE NOTICE 표 · 새 정기 작업(job_schedules) · 판 문서의 회귀 수 · --rehearsal(tools/mig-rehearsal.sh 결과)로 postcheck [11] · 리허설 줄.
   - 운영 서버 · DB · 네트워크에 닿지 않습니다. 킷은 임시 폴더에 풀고 끝나면 지웁니다(리허설 파일은 읽기만).
 """
-import argparse, hashlib, os, re, shutil, sys, tempfile, time, zipfile
+import argparse, glob, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, zipfile
 
 VER_RE = re.compile(r'v10[._](\d+)(?:[-_~](\d{3}))?(?!\d)')
 
@@ -205,6 +205,73 @@ def group(paths):
     return g
 
 
+MENU_JS = r"""
+const m = await import(process.argv[2]);
+const out = { tabs: {}, groups: {} };
+const nav = {}; for (const s of (m.NAV_SECTIONS || [])) for (const k of s.keys) nav[k] = s.label;
+for (const g of m.GROUPS) {
+  out.groups[g.key] = { label: g.label, nav: nav[g.key] || null };
+  for (const t of g.tabs) out.tabs[t] = { group: g.key, label: m.tabLabel(t),
+    section: ((m.GROUP_SECTIONS || {})[g.key] || []).find((s) => s.tabs.includes(t))?.label || null };
+}
+console.log(JSON.stringify(out));
+"""
+
+
+def menu_map(sgb):
+    """v10.621 (docs/764) — 운영 화면 메뉴(web/src/lib/adminMenu.ts)를 node 로 읽어 탭 → 묶음 · 하위 묶음 · 이름. 못 읽으면 None"""
+    src = os.path.join(sgb, 'web', 'src', 'lib', 'adminMenu.ts')
+    if not os.path.exists(src) or not shutil.which('node'):
+        return None
+    d = tempfile.mkdtemp(prefix='opsmenu_')
+    try:
+        open(os.path.join(d, 'm.mts'), 'w', encoding='utf-8').write(read(src).replace('import.meta.env.DEV', 'false'))
+        open(os.path.join(d, 'p.mjs'), 'w', encoding='utf-8').write(MENU_JS)
+        r = subprocess.run(['node', '--experimental-strip-types', '--no-warnings', os.path.join(d, 'p.mjs'), os.path.join(d, 'm.mts')],
+                           capture_output=True, text=True, timeout=60)
+        return json.loads(r.stdout) if r.returncode == 0 and r.stdout.strip() else None
+    except Exception:
+        return None
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def menu_rows(om, nm):
+    """옛 메뉴 ↔ 새 메뉴 — 새 탭(묶음별) · 이름 바뀐 묶음 · 옮긴 탭 · 이름 바뀐 탭 → 4-1 표 줄(위치 · 할 일 · 맞으면)"""
+    rows = []
+    def where(g, sec=None):
+        gi = nm['groups'][g]
+        return '운영 화면 왼쪽 메뉴 › ' + (f"{gi['nav']} › " if gi.get('nav') else '') + f"**{gi['label']}**" + (f' › 하위 묶음 **{sec}**' if sec else '')
+    for g, gi in nm['groups'].items():
+        og = om['groups'].get(g)
+        if og and og['label'] != gi['label']:
+            rows.append((where(g), '묶음 이름 확인', f"이름이 「{gi['label']}」(옛 이름 「{og['label']}」)"))
+        elif not og:
+            rows.append((where(g), '새 묶음 열어 보기만', '묶음이 보이고 탭이 열림'))
+    new_by = {}
+    for t, ti in nm['tabs'].items():
+        o = om['tabs'].get(t)
+        if not o:
+            new_by.setdefault((ti['group'], ti['section']), []).append(ti['label'])
+        elif o['group'] != ti['group']:
+            rows.append((where(ti['group'], ti['section']) + f" › 「{ti['label']}」", '옮긴 탭 — 열어 보기만', f"여기로 옮김(옛 위치 {om['groups'].get(o['group'], {}).get('label', o['group'])} › 「{o['label']}」)"))
+        elif o['label'] != ti['label']:
+            rows.append((where(ti['group'], ti['section']) + f" › 「{ti['label']}」", '이름 확인', f"탭 이름이 「{ti['label']}」(옛 이름 「{o['label']}」)"))
+    for (g, sec), labels in sorted(new_by.items(), key=lambda x: (list(nm['groups']).index(x[0][0]), x[0][1] or '')):
+        rows.append((where(g, sec) + f' › 새 탭 {len(labels)}개', '「' + '」 · 「'.join(labels) + '」 하나씩 열어 보기만', '모두 열림 · 빨간 오류 없음 · 「꺼져 있음」 안내 정상'))
+    return rows
+
+
+def prev_ops(old_zip, vo):
+    """v10.621 — 지금 운영 킷 옆(~/kits/ops)의 그 전 판 — 운영 판 보관 폴더에 남아 있을 판(3-0 · apply 옛 판 정리 줄)"""
+    best = None
+    for z in glob.glob(os.path.join(os.path.dirname(os.path.abspath(old_zip)), 'SGB_*.zip')):
+        m = re.search(r'v10_(\d+)\.zip$', z)
+        if m and int(m.group(1)) < ver_num(vo) and (best is None or int(m.group(1)) > best):
+            best = int(m.group(1))
+    return f'v10.{best}' if best else None
+
+
 def main():
     ap = argparse.ArgumentParser(description='운영 절차서 초안 만들기 (킷 두 개 → 초안 .md)')
     ap.add_argument('old'); ap.add_argument('new')
@@ -314,7 +381,7 @@ def main():
           + ' ② [4] `판 보관 폴더: 〔채울 것〕`(「되돌린 상태」 줄이 **없어야 함**) ③ [5] 〔채울 것: 오픈 차단 · 약관 줄〕 ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
         w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`')
           + (' → `NOTICE …` 줄(1절 「마이그레이션 NOTICE」 표)' if notes and prints_notice else '') +
-          f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → 〔채울 것: 옛 판 정리 줄〕 → postcheck 실패 0 |")
+          f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → " + (f"`옛 판 1개 정리 … {prev_ops(a.old, ov)}_… (남김: {nv}_… · {ov}_…)`" if prev_ops(a.old, ov) else "〔채울 것: 옛 판 정리 줄〕") + " → postcheck 실패 0 |")
         w(f"| 스냅샷 이름 | `{snapname}`" + (' (**꼭 만듦**)' if snap else ' (마이그레이션 없음 — skip 가능)') + ' |')
         job_note = (' 새 정기 작업 ' + ' · '.join(f'`{j}`' + (f'({w_} · {m})' if w_ else f'({m})') for j, w_, m in jobs)
                     + '은 마이그레이션이 작업 표에 넣어 지금 돌고 있는 `sgb-jobs` 가 부름 — 따로 할 일 없음') if jobs else ''
@@ -390,10 +457,10 @@ def main():
             w('〔채울 것: 판 문서를 찾지 못함 — sgb/docs/NNN_…_v10.X… 이름 확인〕')
         for num, f, x, y in docs:
             md = read(os.path.join(n_sgb, 'docs', f))
-            body = section(md, '바뀐 것')
+            body = section(md, '바뀐 것') or section(md, '결론')   # v10.621 — 「바뀐 것」 절이 없으면 「결론」 절
             w(f'### docs/{num} — v10.{x}' + (f' ~ {y}' if y != x else '') + f' (`{f}`)')
             w('')
-            w(body if body else '〔채울 것: 「바뀐 것」 절 없음〕')
+            w(body if body else '〔채울 것: 「바뀐 것」 · 「결론」 절 없음〕')
             w('')
         w('## 3. 순서')
         w('')
@@ -404,7 +471,8 @@ def main():
         w('```bash')
         w(f'cat ~/sgb/VERSION          # {vo} (그 밖이면 멈추고 알려 주십시오)')
         w('pm2 ls                     # 3개 online')
-        w('ls ~/sgb-releases          # 〔채울 것〕')
+        pv = prev_ops(a.old, vo)
+        w(f'ls ~/sgb-releases          # {pv}_… · {vo}_…' if pv else 'ls ~/sgb-releases          # 〔채울 것: 그 전 운영 판 · ' + vo + '〕')
         w('df -h / | tail -1          # 여유 3GB 이상')
         w('free -m | head -2          # 사용 가능(available) 1GB 이상')
         w('```')
@@ -466,7 +534,21 @@ def main():
         w('')
         w('### 4-1. 화면 확인 (PC 브라우저 · Ctrl + F5 · 집 또는 사무실 IP)')
         w('')
-        w('〔채울 것: 아래 판 문서의 「운영 적용」 줄을 메뉴 › 탭 › 하위 탭 › 상자 순서 표로 · 저장 · 게시 · 켜기는 누르지 않게〕')
+        rows = None
+        omm, nmm = menu_map(o_sgb), menu_map(n_sgb)
+        if omm and nmm:
+            rows = menu_rows(omm, nmm)
+        if rows:
+            w('4-1 은 **보기만** 합니다. ⚠ 저장 · 켜기 · 보내기 · 확정 · 만들기 단추는 누르지 않습니다. (아래 표는 두 킷의 운영 화면 메뉴를 견주어 기계로 만든 것 — 스위치 · 사용자 웹 줄은 〔채울 것〕)')
+            w('')
+            w('| # | 정확한 위치 | 할 일 | 맞으면 |')
+            w('|---|---|---|---|')
+            for i, (loc, todo, okk) in enumerate(rows, 1):
+                w(f'| {i} | {loc} | {todo} | {okk} |')
+            w(f'| {len(rows) + 1} | 〔채울 것: 정책 › 「기능 스위치 한눈에」 — 이번에 처음부터 on 인 스위치〕 | 보기만 | 〔채울 것〕 |')
+            w(f'| {len(rows) + 2} | 〔채울 것: 사용자 웹 · 파트너센터 · 판매자센터에서 볼 곳〕 | 보기만 | 〔채울 것〕 |')
+        else:
+            w('〔채울 것: 아래 판 문서의 「운영 적용」 줄을 메뉴 › 탭 › 하위 탭 › 상자 순서 표로 · 저장 · 게시 · 켜기는 누르지 않게(메뉴를 읽지 못함 — node 확인)〕')
         w('')
         for num, f, x, y in docs:
             body = section(read(os.path.join(n_sgb, 'docs', f)), '운영 적용')
