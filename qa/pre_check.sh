@@ -5,7 +5,9 @@
 #   ② 마이그레이션 — 버리는 DB(자기 네트워크 · 포트 안 엶)에 처음부터 · 다시 돌려 「적용 0 · 변경감지 0」 · INV-9 · INV-11 · 정규식 반복 255 넘음 0
 #      MT_SQL 환경 변수(줄마다 SQL 한 줄)가 있으면 그 DB 에서 차례로 돌려 결과를 보임(새 함수 확인용)
 #   ③ verify-docs · check-acl · 컨트롤러 getter
+#      v10.641 (docs/785) verify-docs 「DB 대조」는 ② 의 버리는 DB(자기 네트워크 · 포트 안 엶)에 붙여 돌림 — 전에는 DB 가 없어 늘 rc=1 이라 진짜 실패가 묻혔음
 #   ④ 옛 시험 코드 부분 — main(~/sogaebank) ↔ 작업 트리 결과 비교(닿지 않는 주소 127.0.0.1:1 · --network none)
+#      v10.641 「작업 트리에서만 FAIL」은 「시험 | FAIL 확인 이름」만 숫자를 지우고 견줌(판 번호 글자 · test_v1122 처럼 돌 때마다 다른 보기 값만 다른 줄이 새 실패로 보이던 것)
 #   점검판 · 확인판 포트 · RDS 는 쓰지 않음(버리는 DB 만 · 포트를 열지 않음).
 set -u
 C=$(cd "${1:?core 작업 트리}" && pwd)
@@ -41,9 +43,10 @@ cat "$OUT/migrate.txt"
 
 echo "== ③ verify-docs · check-acl · getter"
 cp -r "$C/docs" "$C/spec" "$VD/"
-docker run --rm --network none -v "$C/src:/app/src:ro" -v "$C/scripts:/app/scripts:ro" -v "$C/prisma:/app/prisma:ro" -v "$VD/docs:/app/docs" -v "$VD/spec:/app/spec" -w /app --entrypoint bash sgb-dev-checks:latest \
+docker run --rm --network "$NET" -e DATABASE_URL=postgresql://sgb:sgb@$DB:5432/sgb -v "$C/src:/app/src:ro" -v "$C/scripts:/app/scripts:ro" -v "$C/prisma:/app/prisma:ro" -v "$VD/docs:/app/docs" -v "$VD/spec:/app/spec" -w /app --entrypoint bash sgb-dev-checks:latest \
   -c "node scripts/gen-docs.js >/dev/null; npm run docs:swagger >/dev/null 2>&1; node scripts/merge-openapi.js >/dev/null; node scripts/verify-docs.js > /tmp/vd.txt 2>&1; echo verify-docs rc=\$?; grep -vE '^\s+ok ' /tmp/vd.txt | head -30" > "$OUT/verify_docs.txt" 2>&1
 cat "$OUT/verify_docs.txt"
+echo "③ verify-docs $(grep -oE 'rc=[0-9]+' "$OUT/verify_docs.txt" | head -1) · DB 대조 = 버리는 DB($DB · 포트 안 엶)"
 docker run --rm --network none -v "$C/src:/app/src:ro" -v "$C/scripts:/app/scripts:ro" -w /app --entrypoint node sgb-dev-api:latest scripts/check-acl.js 2>&1 | tail -4
 grep -rnE "^\s+(private |public |protected )?get [a-zA-Z_]+\(\)" "$C/src" --include=*.controller.ts | head -5
 
@@ -55,5 +58,10 @@ norm() { sed -E 's/[0-9]+/N/g' "$1"; }
 echo "main $(wc -l < "$OUT/static_main.txt") 줄 · 작업 트리 $(wc -l < "$OUT/static_new.txt") 줄 — 다른 줄(앞 40):"
 diff <(norm "$OUT/static_main.txt") <(norm "$OUT/static_new.txt") | grep '^[<>]' | head -40
 echo "-- 작업 트리에서만 FAIL(앞 30):"
-grep -E '\| FAIL' "$OUT/static_new.txt" | grep -vF -f <(grep -E '\| FAIL' "$OUT/static_main.txt"; echo '@@없음@@') | head -30
+# v10.641 「시험 | FAIL 확인 이름」만 숫자를 지우고 견줌 — 「 — 」 뒤 자세한 값(판 번호 · 집합에서 뽑은 보기 4개 등 돌 때마다 다름)은 뺌
+fkey() { sed -E 's/ — .*$//; s/[0-9]+/N/g'; }
+grep -E '\| FAIL' "$OUT/static_main.txt" | fkey > "$OUT/fail_main.keys"; echo '@@없음@@' >> "$OUT/fail_main.keys"
+grep -E '\| FAIL' "$OUT/static_new.txt" | while IFS= read -r l; do
+  printf '%s\n' "$l" | fkey | grep -qxF -f "$OUT/fail_main.keys" || printf '%s\n' "$l"
+done | head -30
 echo "== 미리 검사 끝 $(TZ=Asia/Seoul date '+%H:%M') KST"
