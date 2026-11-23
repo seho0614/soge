@@ -52,7 +52,7 @@ BEGIN
     /* v10.119 (D125) — 바닥줄 링크 · 법정 고지 · 투표 · 소개몰 성분 · 고민 */
     WHEN 'FOOTER_LINK' THEN IF p_field = 'label' THEN
         SELECT f.label INTO src FROM footer_links f WHERE f.id = p_id::int; END IF;
-    WHEN 'SETTING' THEN IF p_field = 'value' AND p_id IN ('legal.intermediary_notice','legal.direct_notice') THEN
+    WHEN 'SETTING' THEN IF p_field = 'value' AND p_id IN ('legal.intermediary_notice','legal.direct_notice','footer.company_name') THEN   -- v10.132 상호(D130 그대로)
         SELECT s.value INTO src FROM site_settings s WHERE s.key = p_id; END IF;
     WHEN 'POLL' THEN IF p_field IN ('title','description') THEN
         SELECT CASE p_field WHEN 'title' THEN p.title ELSE p.description END INTO src FROM polls p WHERE p.id = p_id::uuid; END IF;

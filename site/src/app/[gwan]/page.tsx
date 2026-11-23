@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiGetPublic } from '@/lib/api';
 import type { Gwan, ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
 import { GWAN_PATH, PATH_GWAN, isFixedGwan, safeSort } from '@/lib/format';
@@ -40,7 +40,8 @@ export default async function GwanPage({ params, searchParams }: Props) {
   if (!code) notFound();
   /* v10.646 (D309 · docs/791) 새 관 — 고정 표에 없는 관은 켠 관(/gwans)이고 허브가 아닐 때만 · 주소는 /g/<코드 소문자> 하나로 */
   if (!isFixedGwan(code)) {
-    const on = await apiGet<Gwan[]>('/gwans', 300).catch(() => []);
+    /* 캐시 없이 — 5분 캐시면 방금 연 관이 최대 5분 404(v10.655 전체 점검 3차) */
+    const on = await apiGetPublic<Gwan[]>('/gwans', 0).catch(() => [] as Gwan[]);
     if (!on.some((x) => x.code === code && !x.isHub)) notFound();
   }
   /* v10.29 — 소개장터 · 안심소개 · 소개창업 첫 화면은 시안 배치(gwanLanding)로 그립니다(components/gwan/GwanLanding).
