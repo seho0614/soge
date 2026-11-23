@@ -84,7 +84,9 @@ ok('① D311 — gwan_pages · gwan_page_versions · 첫 화면 새 관만 · �
    and 'GWAN_PAGE_VERSION_RO' in MG and "'/admin/gwan-pages/{id}/publish'" in MG
    and not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE|DROP COLUMN)\b', MG, re.I) and not re.search(r"RAISE EXCEPTION\s+'[^']*%", MG), str(len(MG)))
 ok('① 서버 — 블록 8종 검사(HTML · 주소) · 게시 · 숨김 SUPER · 초안 ADMIN · 공개 2 · 등록',
-   all(w in SV for w in ("'HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ'", 'HTML 태그는 쓸 수 없습니다', 'https 주소만'))
+   # v10.656 · 664 표(TABLE) · 동영상(VIDEO)이 끼어도 되게 — PAGE_BLOCKS 안에 처음 9종이 모두 있는지
+   all(f"'{k}'" in (re.search(r"PAGE_BLOCKS = \[([^\]]*)\]", SV) or [None, ''])[1] for k in ('HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ'))
+   and all(w in SV for w in ('HTML 태그는 쓸 수 없습니다', 'https 주소만'))
    and "@Post('admin/gwan-pages/:id/publish')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('SUPER')" in CT and "@Get('gwans/:code/pages/:slug')" in CT
    and '@StrictBoolean()' in CT and 'GwanPagesController' in AM and 'GwanPagesService' in AM, '')
 ok('① 운영 화면 「관 페이지」 — ADMIN 도 · 블록 편집 · 게시(SUPER) · 판 기록 · 미리보기',

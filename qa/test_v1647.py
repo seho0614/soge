@@ -75,7 +75,7 @@ ok('① 관 이름 번역 — 서버 칸 · 원문 목록 · 대상 목록 · �
    and "overlay(rows as Array<Record<string, any>>, 'GWAN'" in CS, '')
 ok('① 시세 · 공급처 · 메인 카드 · CSV 대량 등록에 켠 새 관',
    'extra.map((g) => <option' in PS and 'const extra = q.gwan && !GWAN[q.gwan]' in SU and 'const back =' in SI
-   and 'extra={_gwans.filter(' in HV and 'more.map((g) =>' in SC and "NOT is_hub AND code NOT IN ('HLT', 'LED')" in BK, '')
+   and ('extra={_gwans.filter(' in HV or 'extra={newCards(_gwans' in HV) and 'more.map((g) =>' in SC and "NOT is_hub AND code NOT IN ('HLT', 'LED')" in BK, '')
 
 if API and DB:
     ck = psql("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'content_translations_target_type_check'")
