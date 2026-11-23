@@ -7,8 +7,9 @@ import { GwanNew } from './gwans/GwanNew';
 import type { STab } from './gwans/shared';
 import { GwanSettings } from './gwans/GwanSettings';
 import { GwanScope } from './gwans/GwanScope';
+import { GwanPages } from './gwans/GwanPages';   // v10.651 (D311 · docs/793)
 
-type View = 'list' | 'new' | 'settings' | 'scope';
+type View = 'list' | 'new' | 'settings' | 'pages' | 'scope';
 
 /**
  * SB-ADM-SIT-010 관 목록 · 현황
@@ -16,6 +17,7 @@ type View = 'list' | 'new' | 'settings' | 'scope';
  * SB-ADM-SIT-020 새 관 만들기
  * SB-ADM-SIT-030 관 설정 (8개 탭)
  * SB-ADM-SIT-060 공유 경계 · 영향 범위
+ * SB-ADM-PAGE-010 관 페이지 — 첫 화면(새 관) · 관 안 페이지 블록 편집 · 초안 ADMIN · 게시 SUPER (v10.651 · D311)
  *
  * 관 계층은 메인의 첫인상을 정합니다.
  * '소개하고 벌기'가 상위이고 나머지가 그 아래 품목별 갈래입니다.
@@ -32,7 +34,7 @@ type View = 'list' | 'new' | 'settings' | 'scope';
  */
 export function Gwans({ onGo }: { onGo?: (tab: string) => void }) {
   const isSuper = tokenRoles().includes('SUPER');
-  const [view, setView] = useHashSub<View>('list', ['list', 'new', 'settings', 'scope']);
+  const [view, setView] = useHashSub<View>('list', ['list', 'new', 'settings', 'pages', 'scope']);
   const [code, setCode] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
   const [stab, setStab] = useState<STab>('basic');
@@ -41,6 +43,7 @@ export function Gwans({ onGo }: { onGo?: (tab: string) => void }) {
     { key: 'list', label: '관 목록', screen: 'SB-ADM-SIT-010' },
     { key: 'new', label: '새 관 만들기', screen: 'SB-ADM-SIT-020', hidden: !isSuper },
     { key: 'settings', label: '관 설정', screen: 'SB-ADM-SIT-030', hidden: !isSuper },
+    { key: 'pages', label: '관 페이지', screen: 'SB-ADM-PAGE-010' },   // v10.651 — 관리자(ADMIN)도 초안
     { key: 'scope', label: '공유 경계', screen: 'SB-ADM-SIT-060', hidden: !isSuper },
   ];
   const open = (c: string, t: STab = 'basic') => { setCode(c); setCreated(null); setStab(t); setView('settings'); };
@@ -52,6 +55,7 @@ export function Gwans({ onGo }: { onGo?: (tab: string) => void }) {
       {view === 'list' && <GwanList isSuper={isSuper} onOpen={open} onGo={onGo} onNew={() => setView('new')} />}
       {view === 'new' && isSuper && <GwanNew onCreated={onCreated} onCancel={() => setView('list')} />}
       {view === 'settings' && isSuper && <GwanSettings key={`${code}-${stab}`} code={code} created={created} initialTab={stab} onPick={(c) => { setCreated(null); setCode(c); }} onGo={onGo} />}
+      {view === 'pages' && <GwanPages isSuper={isSuper} />}
       {view === 'scope' && isSuper && <GwanScope />}
     </section>
   );

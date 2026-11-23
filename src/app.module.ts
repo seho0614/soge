@@ -103,6 +103,8 @@ import { PublicController } from './modules/public/public.controller';
 import { HealthController } from './modules/public/health.controller';
 import { PublicService } from './modules/public/public.service';
 import { SiteController } from './modules/site/site.controller';
+import { GwanPagesController } from './modules/site/gwan-pages.controller';   // v10.650 (D311) 관 페이지
+import { GwanPagesService } from './modules/site/gwan-pages.service';
 import { GeoAdminController, GeoPublicController, GeoReviewController } from './modules/geo/geo.controller';   // v10.46 (D099) 카카오맵
 import { GeoService } from './common/geo/geo.service';
 import { IntegrationSecretService } from './common/integration/secret.service';
@@ -398,6 +400,7 @@ import { LeadService } from './modules/lead/lead.service';
     PublicController,
     HealthController,
     SiteController,
+    GwanPagesController,   // v10.650 (D311)
     BillingController,
     SettlementController,
     AdminOpsController,
@@ -652,6 +655,7 @@ import { LeadService } from './modules/lead/lead.service';
     SearchService,
     PublicService,
     SiteService,
+    GwanPagesService,   // v10.650 (D311)
     BillingService,
     SettlementService,
     SchedulerService,

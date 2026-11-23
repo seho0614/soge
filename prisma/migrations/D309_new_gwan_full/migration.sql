@@ -5,7 +5,8 @@
 --   ① gwans.intro_target — 새 관 만들기에서 고른 소개 대상(GOODS 상품 · 서비스 / ASSET 자산 · 매물 / BIZ 사업 기회)을 칸으로 둠
 --      (전에는 설명 앞 글자로만 붙었음) · 처음 관 6개는 비워 둠(NULL = 정하지 않음)
 --   ② fn_gwan_open_guard — 처음 여는 opened_at 은 일괄 오픈(app.opening_phase) 때만 되던 것을,
---      다른 관이 이미 운영 중(is_active)이면(오픈 뒤 새로 만든 관) 하나씩 열 수 있게 함. 나머지(폼 문구 · 승인 업종 · 리드관 법무 · 연 관 닫기 막음)는 그대로
+--      운영 화면에서 새로 만든 관(intro_target 있음)은 다른 관이 이미 운영 중(is_active)이면 하나씩 열 수 있게 함 — 처음 관 6개(intro_target NULL)는
+--      그대로 일괄 오픈만(공격 검정 CE-01 「손으로 관 열기 차단」). 나머지(폼 문구 · 승인 업종 · 리드관 법무 · 연 관 닫기 막음)는 그대로
 --   ③ fn_gwan_parent_guard — 상위 관(parent_code)은 허브 관(is_hub)만 · 자기 자신 · 허브 관 자신은 상위 관을 갖지 않음
 --   표 하나에 칸 하나 더함 · 지우는 문장 없음 · 다시 돌려도 같음 · RAISE 글자에 퍼센트 기호 없음
 -- =====================================================================
@@ -44,8 +45,9 @@ BEGIN
   END IF;
 
   IF NEW.opened_at IS NOT NULL AND OLD.opened_at IS NULL THEN
-    /* v10.646 (D309) 오픈 뒤 새로 만든 관 — 다른 관이 이미 운영 중이면 하나씩 엶(일괄 오픈은 처음 한 번뿐) */
-    v_after := EXISTS (SELECT 1 FROM public.gwans o WHERE o.code <> NEW.code AND o.is_active AND NOT o.is_hub);
+    /* v10.646 (D309) 운영 화면에서 새로 만든 관(intro_target 있음)만 — 다른 관이 이미 운영 중이면 하나씩 엶. 처음 관은 일괄 오픈만(CE-01) */
+    v_after := NEW.intro_target IS NOT NULL
+               AND EXISTS (SELECT 1 FROM public.gwans o WHERE o.code <> NEW.code AND o.is_active AND NOT o.is_hub);
     IF coalesce(current_setting('app.opening_phase', true), '') <> 'on' AND NOT (v_lead AND v_legal) AND NOT v_after THEN
       RAISE EXCEPTION
         'GWAN: 관은 fn_open_phase() 로만 엽니다 — 하나씩 열면 순차가 됩니다';
@@ -58,7 +60,7 @@ BEGIN
 
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION public.fn_gwan_open_guard() IS 'v10.646 (D309) 관 방어 — is_active 켤 때 폼 문구 · 승인 업종(리드관 LED 는 안심소개 상담 축 MAL · CONSULT 업종을 셈 · lead.legal_ok = on 이어야 함) · opened_at 은 일괄 오픈 · 리드관 법무 · 다른 관이 운영 중일 때(오픈 뒤 새 관). 연 관은 닫지 않음.';
+COMMENT ON FUNCTION public.fn_gwan_open_guard() IS 'v10.646 (D309) 관 방어 — is_active 켤 때 폼 문구 · 승인 업종(리드관 LED 는 안심소개 상담 축 MAL · CONSULT 업종을 셈 · lead.legal_ok = on 이어야 함) · opened_at 은 일괄 오픈 · 리드관 법무 · 운영 화면에서 만든 새 관(intro_target)이고 다른 관이 운영 중일 때. 연 관은 닫지 않음.';
 
 CREATE OR REPLACE FUNCTION public.fn_gwan_parent_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

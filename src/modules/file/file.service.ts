@@ -34,12 +34,13 @@ const UPLOADERS: Record<string, string[]> = {
   HR_DOC: ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.458 ~ 461 (D262) — 인사 서류(의무교육 증빙 · 지원자 서류) · 열람 ADMIN · SUPER · 올린 사람만(지급 담당 · 세무사 · 검수 못 엶 · fn_file_can_read)
   LGL_DOC: ['SUPER', 'ADMIN'],   // v10.486 ~ 489 (D269) — 법무 서류(인허가 · 계약 검토 · 사건 · 보험) · 열람 ADMIN · SUPER · 올린 사람 · 보험 증권에 붙은 파일만 PAYOUT(fn_file_can_read) · 세무사 · 검수 못 엶
   LISTING_VIDEO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],   // v10.526 (D279) — 매물 동영상(MP4 · 50MB) · 붙이기는 POST /me/lsy/listings/{id}/video(내 매물 · 내 파일) · 공개는 승인 뒤 GET /site/lsy/listings/{id}/video · 그 밖은 주인 · 운영만(fn_file_can_read 그대로)
+  PAGE_IMAGE: ['ADMIN', 'SUPER'],   // v10.653 (D312 · docs/793) 관 페이지 그림(JPG · PNG 5MB) · 누구나 GET /site/page-images/{id}
   RETURN_PHOTO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF'],   // v10.608 (docs/750) — 반품 · 교환 사진(JPG · PNG 10MB) · 붙이기는 POST /lsq/returns/{id}/photos(구매 회원 · 그 주문의 입점 판매자 · 내 파일) · 보기는 GET /lsq/returns/{id}/photos/{pid} · 운영은 GET /files/{id}(fn_file_can_read 그대로)
 };
 /** v10.615 (docs/757) perm.mode GROUPS — 운영 쪽 올리기를 업무(고치기 이상)로 볼 용도(R_역할과 같은 범위인 것만) · 나머지 용도는 역할 그대로
  *   CORP_DOC(사내 문서함 — 지급 담당도 고치기를 가져 넓어짐) · MARKETING_MATERIAL · PARTNER_GUIDE(제휴 — 제휴 파트너 담당도 가짐) · 운영 역할 모두인 ACCT_EVIDENCE · HR_DOC 는 넣지 않음 */
 const PGX_UPLOAD_TASKS: Record<string, string[]> = {
-  PRODUCT_IMAGE: ['hlt-products'], LGL_DOC: ['lgl-reviews', 'lgl-cases', 'lgl-licenses'], INQUIRY_ATTACHMENT: ['inquiries'],
+  PRODUCT_IMAGE: ['hlt-products'], PAGE_IMAGE: ['gwan-ux'], LGL_DOC: ['lgl-reviews', 'lgl-cases', 'lgl-licenses'], INQUIRY_ATTACHMENT: ['inquiries'],
 };
 
 interface FileRow {

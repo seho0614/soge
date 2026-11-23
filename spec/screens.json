@@ -708,6 +708,45 @@
    "state": "listing.status"
   },
   {
+   "id": "SB-HOM-GWN-010",
+   "name": "새 관 첫 화면 · 목록(운영 화면에서 만든 관)",
+   "group": "HOM",
+   "url": "/g/{gwan}",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /gwans",
+    "GET /listings",
+    "GET /gwans/{code}/pages",
+    "GET /gwans/{code}/pages/{slug}",
+    "GET /site/page-images/{id}"
+   ],
+   "nav": "SB-HOM-MAIN-010",
+   "note": "2026-11-24 v10.646 · v10.652 (D309 · D311 · docs/791 · 793) — 게시된 첫 화면(home) 블록이 있으면 그것을, 없으면 제목 + 매물 목록"
+  },
+  {
+   "id": "SB-HOM-GWN-020",
+   "name": "관 안 페이지",
+   "group": "HOM",
+   "url": "/g/{gwan}/info/{slug}",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /gwans/{code}/pages",
+    "GET /gwans/{code}/pages/{slug}",
+    "GET /listings",
+    "GET /site/page-images/{id}"
+   ],
+   "nav": "SB-HOM-GWN-010",
+   "note": "2026-11-24 v10.652 (D311 · docs/793) — 관 안 페이지(이용 안내 · 소개 등) · 처음 관은 /money/info/{slug} 등(소개몰 /health/p 는 상품이라 겹치지 않게 info)"
+  },
+  {
    "id": "SB-MAL-MAIN-010",
    "name": "안심소개 랜딩 · 목록",
    "group": "MAL",
@@ -1571,7 +1610,14 @@
     "PATCH /admin/gwans/order",
     "PATCH /admin/gwans/landing",
     "GET /admin/gwans/{code}/form-copy",
-    "PUT /admin/gwans/{code}/form-copy/{role}"
+    "PUT /admin/gwans/{code}/form-copy/{role}",
+    "GET /admin/gwans/{code}/pages",
+    "POST /admin/gwans/{code}/pages",
+    "GET /admin/gwan-pages/{id}",
+    "PATCH /admin/gwan-pages/{id}",
+    "POST /admin/gwan-pages/{id}/publish",
+    "POST /admin/gwan-pages/{id}/hide",
+    "POST /admin/gwan-pages/{id}/restore"
    ],
    "nav": "SB-ADM-SIT-010"
   },
@@ -1629,6 +1675,33 @@
     "GET /admin/scope"
    ],
    "nav": "SB-ADM-SIT-010"
+  },
+  {
+   "id": "SB-ADM-PAGE-010",
+   "name": "관 페이지(첫 화면 · 관 안 페이지 블록 편집)",
+   "group": "ADM",
+   "url": "/admin/gwans/pages",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/gwans/manage",
+    "GET /admin/gwans/{code}/pages",
+    "POST /admin/gwans/{code}/pages",
+    "GET /admin/gwan-pages/{id}",
+    "PATCH /admin/gwan-pages/{id}",
+    "POST /admin/gwan-pages/{id}/publish",
+    "POST /admin/gwan-pages/{id}/hide",
+    "POST /admin/gwan-pages/{id}/restore",
+    "POST /files",
+    "POST /files/{id}/complete",
+    "GET /admin/gwan-pages/{id}/versions/{version}"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-24 v10.651 (D311 · docs/793) — 초안 ADMIN · SUPER · 게시 · 숨김 SUPER · 판 기록 · 예전 판으로 초안"
   },
   {
    "id": "SB-ADM-SIT-070",

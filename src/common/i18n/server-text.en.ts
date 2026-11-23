@@ -5758,4 +5758,18 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "관은 자기 자신을 상위 관으로 둘 수 없습니다.": "A section cannot be its own parent.",
   "허브 관은 상위 관을 두지 않습니다.": "A hub section does not have a parent section.",
   "상위 관은 허브 관만 고를 수 있습니다.": "Only a hub section can be chosen as the parent section.",
+  /* v10.650 (D311 · docs/793) 관 페이지 */
+  "블록은 목록이어야 합니다.": "Blocks must be a list.",
+  "블록은 30개까지입니다.": "Up to 30 blocks are allowed.",
+  "없는 페이지입니다.": "The page was not found.",
+  "없는 판입니다.": "The version was not found.",
+  "이 관에 같은 주소의 페이지가 있습니다.": "This section already has a page with the same address.",
+  "블록이 하나도 없어 게시할 수 없습니다.": "The page has no blocks, so it cannot be published.",
+  "페이지 주소는 home 또는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "A page address is home or 2 to 40 lowercase letters, digits or hyphens.",
+  "페이지의 관과 주소는 만든 뒤 바꿀 수 없습니다 — 새 페이지를 만드십시오.": "A page's section and address cannot be changed after creation — create a new page.",
+  "허브 관에는 페이지를 두지 않습니다 — 하위 관에 만드십시오.": "Hub sections do not have pages — create the page in a sub-section.",
+  "첫 화면 편집은 운영 화면에서 만든 새 관만 됩니다 — 처음 관은 따로 꾸민 첫 화면을 씁니다.": "Only sections created in the admin console can have an edited first screen — the original sections use their own designed first screens.",
+  "게시된 판이 없어 게시 상태로 둘 수 없습니다.": "There is no published version, so the page cannot be set to published.",
+  "게시된 판은 고치거나 지울 수 없습니다 — 새 판을 게시하십시오.": "A published version cannot be edited or deleted — publish a new version.",
+  "그림이 없습니다.": "The image was not found.",   // v10.653 (D312)
 };

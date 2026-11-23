@@ -3,7 +3,7 @@ import { IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, Min } from 'cl
 
 /* v10.31 — 매물 · 요청 이미지 · 문의 첨부(w1) · BROKER_DOC 중개사 제출 서류(w2 · D050) · PARTNER_MEDIA 파트너 사진 · 로고(w5 · D072)
  *   DB 의 ck_files_purpose(D090 합침) · file_policies 와 같은 목록입니다 */
-export const FILE_PURPOSES = ['OWNERSHIP_DOC', 'MARKETING_MATERIAL', 'PARTNER_GUIDE', 'PRODUCT_IMAGE', 'LISTING_IMAGE', 'REQUEST_IMAGE', 'INQUIRY_ATTACHMENT', 'BROKER_DOC', 'PARTNER_MEDIA', 'NOTICE_ATTACHMENT', 'ACCT_EVIDENCE', 'CORP_DOC', 'HR_DOC', 'RETURN_PHOTO', 'LGL_DOC', 'LISTING_VIDEO'] as const;   // + PARTNER_MEDIA(w5 · D072) · NOTICE_ATTACHMENT(v10.295 · D217) · ACCT_EVIDENCE(v10.392 · D245)   // v10.425 (D253) 사내 문서   // v10.458 ~ 461 (D262) 인사 서류   // v10.486 ~ 489 (D269) 법무 서류   // v10.526 (D279) 매물 동영상   // v10.608 (docs/750) 반품 · 교환 사진(가운데 자리 — 끝 「'LGL_DOC', 'LISTING_VIDEO'] as const;」는 test_v1526 이 글자로 봄)
+export const FILE_PURPOSES = ['OWNERSHIP_DOC', 'MARKETING_MATERIAL', 'PARTNER_GUIDE', 'PRODUCT_IMAGE', 'LISTING_IMAGE', 'REQUEST_IMAGE', 'INQUIRY_ATTACHMENT', 'BROKER_DOC', 'PARTNER_MEDIA', 'NOTICE_ATTACHMENT', 'ACCT_EVIDENCE', 'CORP_DOC', 'HR_DOC', 'RETURN_PHOTO', 'PAGE_IMAGE', 'LGL_DOC', 'LISTING_VIDEO'] as const;   // + PARTNER_MEDIA(w5 · D072) · NOTICE_ATTACHMENT(v10.295 · D217) · ACCT_EVIDENCE(v10.392 · D245)   // v10.425 (D253) 사내 문서   // v10.458 ~ 461 (D262) 인사 서류   // v10.486 ~ 489 (D269) 법무 서류   // v10.526 (D279) 매물 동영상   // v10.608 (docs/750) 반품 · 교환 사진(가운데 자리 — 끝 「'LGL_DOC', 'LISTING_VIDEO'] as const;」는 test_v1526 이 글자로 봄)
 
 export class CreateFileDto {
   @ApiProperty({ enum: FILE_PURPOSES, description: '어디에 쓸 파일인가 — 용도마다 받는 형식 · 크기가 다릅니다' })

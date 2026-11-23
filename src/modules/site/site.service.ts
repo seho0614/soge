@@ -59,7 +59,7 @@ export class SiteService {
       `INSERT INTO gwans (code, name, description, is_active, sort_order, intro_target, parent_code)
        VALUES ($1,$2,$3,false,(SELECT coalesce(max(sort_order),0)+1 FROM gwans),$4,$5)
        RETURNING code, name, is_active AS "isActive", intro_target AS "introTarget", parent_code AS "parentCode"`,
-      [input.code, input.name, input.description ?? null, input.introTarget ?? null, input.parentCode ?? null]);   // v10.646 (D309) 상위 관은 허브만(DB)
+      [input.code, input.name, input.description ?? null, input.introTarget ?? 'GOODS', input.parentCode ?? null]);   // 소개 대상이 있으면 「운영 화면에서 만든 관」 — 하나씩 열 수 있음(D309 · 처음 관은 NULL)   // v10.646 (D309) 상위 관은 허브만(DB)
     return row;
   }
 

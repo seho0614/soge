@@ -10,6 +10,7 @@ import { SecHead, ShopMain } from '@/components/shop/ShopMain';
 import { GwanLanding } from '@/components/gwan/GwanLanding';
 import { MoneyMain } from '@/components/money/MoneyMain';
 import { HltBand } from '@/components/health/HltParts';
+import { GwanBlocks, GwanPageMenu, type GwanPageData, type GwanPageMenuItem } from '@/components/gwan/GwanBlocks';   // v10.652 (D311)
 import '@/styles/mal.css';
 
 type Props = {
@@ -46,8 +47,14 @@ export default async function GwanPage({ params, searchParams }: Props) {
    *   안심소개의 「상담 축 통합」(?axis=consult · D005)도 그 안에 그대로 있습니다. 소개몰(HLT)만 아래 전용 메인입니다. */
   /* v10.30 — 소개장터 첫 화면만 2026-10-09 제시 디자인입니다(components/money/MoneyMain · 10/9 답 ①~④).
    *   v10.29 의 관 화면 부품 · 조회 규칙은 그 화면 아래 「지금 있던 구역」(#mny-list)에 그대로 씁니다. 안심소개 · 소개창업은 v10.29 그대로입니다. */
-  if (code === 'MNY') return <MoneyMain q={q0} />;
-  if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} /><i hidden data-root-end="" /></>;
+  /* v10.652 (D311 · docs/793) 관 안 페이지 메뉴(게시된 것이 있을 때만 · 없으면 아무것도 안 그림) */
+  const menu = await apiGet<GwanPageMenuItem[]>(`/gwans/${code}/pages`, 60).catch(() => [] as GwanPageMenuItem[]);
+  const pm = menu.length ? <div className="gw-wrap"><GwanPageMenu code={code} items={menu} /></div> : null;
+  if (code === 'MNY') return <><MoneyMain q={q0} />{pm}</>;
+  if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} />{pm}<i hidden data-root-end="" /></>;
+  /* v10.652 새 관 — 게시된 첫 화면(home)이 있으면 블록으로 그림(없으면 아래 일반 화면) */
+  const home = !isFixedGwan(code) ? await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null) : null;
+  if (home) return <div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /></div>;
 
   const qs = new URLSearchParams({ gwanCode: code, limit: '20' });
   if (q.sort) qs.set('sort', q.sort);
@@ -80,12 +87,13 @@ export default async function GwanPage({ params, searchParams }: Props) {
             )}
           </section>
         </div>
-      </div><i hidden data-root-end="" /></>
+      </div>{pm}<i hidden data-root-end="" /></>
     );
   }
 
   return (
     <>
+      {pm}
       <div className="page-head">
         <h1>{g?.name ?? t('page.fallbackTitle')}</h1>
         <div className="quick">
