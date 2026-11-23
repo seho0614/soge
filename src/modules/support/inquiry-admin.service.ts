@@ -34,7 +34,8 @@ export class InquiryAdminService {
               i.created_at AS "createdAt", i.due_at AS "dueAt", i.answered_at AS "answeredAt",
               (i.status = 'OPEN' AND i.due_at < now()) AS overdue, (i.account_id IS NULL) AS guest,
               coalesce(a.email, i.email)::text AS email, left(coalesce(a.name, ''), 1) AS "nameHead",
-              s.email::text AS assignee, cardinality(i.attachment_keys) AS files, i.feedback, i.reopen_count AS "reopenCount"
+              s.email::text AS assignee, cardinality(i.attachment_keys) AS files, i.feedback, i.reopen_count AS "reopenCount",
+              i.source_gwan AS "sourceGwan", i.source_page AS "sourcePage"   /* v10.681 (D318) 관 페이지에서 온 문의 */
          FROM inquiries i
          LEFT JOIN accounts a ON a.id = i.account_id
          LEFT JOIN accounts s ON s.id = i.assignee_id
@@ -60,7 +61,8 @@ export class InquiryAdminService {
       `SELECT i.id::text AS id, i.account_id AS "accountId", i.category, cl.label AS "categoryLabel", i.title, i.body, i.status, i.channel,
               i.answer, i.answered_at AS "answeredAt", ab.email::text AS "answeredBy", i.created_at AS "createdAt", i.due_at AS "dueAt",
               (i.status = 'OPEN' AND i.due_at < now()) AS overdue, i.assignee_id AS "assigneeId", s.email::text AS assignee, i.staff_note AS "staffNote",
-              coalesce(a.email, i.email)::text AS email, a.name, i.attachment_keys AS files, i.deal_id AS "dealId", d.status AS "dealStatus"
+              coalesce(a.email, i.email)::text AS email, a.name, i.attachment_keys AS files, i.deal_id AS "dealId", d.status AS "dealStatus",
+              i.source_gwan AS "sourceGwan", i.source_page AS "sourcePage"   /* v10.681 (D318) */
          FROM inquiries i
          LEFT JOIN accounts a ON a.id = i.account_id
          LEFT JOIN accounts s ON s.id = i.assignee_id

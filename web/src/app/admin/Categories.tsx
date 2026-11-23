@@ -155,6 +155,80 @@ const LABOR = [
  *   판정이 없거나 APPLICABLE 이면 DB 가 승인을 거부합니다.
  *   승인 담당자가 무심코 등록 의무를 발생시키는 것을 막는 지점입니다.
  */
+/* v10.686 (docs/800) 업종 CSV 한꺼번에 등록 — 줄마다 「업종 이름,업종 코드(선택),직업안정법(선택)」 · 미리보기 → 「승인 대기로 넣기」
+ *   한 줄씩 기존 POST /admin/categories(승인 대기 · 만든 사람은 승인 못 함 · 허브 · 소개리드 막음 · 같은 코드 409)를 부름 · 200줄까지 · 직업안정법 비우면 「검토 필요」 */
+const LABOR_OK = ['NOT_APPLICABLE', 'REVIEW_REQUIRED', 'APPLICABLE'];
+function parseCatCsv(text: string, gwan: string): Array<{ name: string; code: string; labor: string; bad?: string }> {
+  return text.replace(/\r/g, '').split('\n').map((l) => l.trim()).filter((l) => l && !/^(업종 이름|name)(\s|,|$)/i.test(l)).slice(0, 200).map((l, i) => {
+    const [n0 = '', c0 = '', f0 = ''] = l.split(/[,\t]/).map((x) => x.trim().replace(/^"|"$/g, ''));
+    const code = (c0 || `${gwan}_C${String(i + 1).padStart(3, '0')}`).toUpperCase();
+    const labor = LABOR_OK.includes(f0.toUpperCase()) ? f0.toUpperCase() : 'REVIEW_REQUIRED';
+    const bad = !n0 ? '이름 빔' : n0.length > 40 ? '이름 40자 넘음' : !/^[A-Z][A-Z0-9_]{2,39}$/.test(code) ? '코드 모양(대문자 · 숫자 · _ 3 ~ 40자)' : undefined;
+    return { name: n0, code, labor, bad };
+  });
+}
+function CsvCategories({ onDone }: { onDone: () => void }) {
+  const gw = useApi<GwanRow[]>('/admin/gwans/manage');
+  const [to, setTo] = useState('');
+  const [axis, setAxis] = useState('');
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const targets = (gw.data ?? []).filter((g) => !g.isHub && g.code !== 'LED');
+  const rows = to ? parseCatCsv(text, to) : [];
+  const good = rows.filter((r) => !r.bad);
+  async function run() {
+    setErr(null); setMsg(null);
+    if (to === 'MAL' && !axis) { setErr('안심소개(MAL)는 축을 고릅니다.'); return; }
+    setBusy(true);
+    const done: string[] = []; const fail: string[] = [];
+    for (const r of good) {
+      try { await api('/admin/categories', { method: 'POST', body: JSON.stringify({ gwanCode: to, code: r.code, name: r.name, laborLawFlag: r.labor, ...(to === 'MAL' ? { axis } : {}) }) }); done.push(r.name); }
+      catch (e) { fail.push(`${r.name}: ${e instanceof ApiFailure ? e.body.message : '실패'}`); }
+    }
+    setBusy(false);
+    setMsg(`승인 대기로 ${done.length}개 넣었습니다 — 다른 관리자가 승인합니다.`); if (fail.length) setErr(fail.join(' · '));
+    if (done.length) { setText(''); onDone(); }
+  }
+  return (
+    <details className="card pad" data-cat-csv>
+      <summary><b>CSV 로 한꺼번에 넣기</b> <span className="dim">— 줄마다 「업종 이름,업종 코드(선택),직업안정법(선택)」 · 200줄까지 · 승인 대기로 들어감</span></summary>
+      <div className="form-grid">
+        <label><span>넣을 관</span><select value={to} onChange={(e) => setTo(e.target.value)}><option value="">고르십시오</option>{targets.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}</select></label>
+        {to === 'MAL' && <label><span>축</span><select value={axis} onChange={(e) => setAxis(e.target.value)}><option value="">고르십시오</option>{AXIS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>}
+        <label style={{ gridColumn: '1 / -1' }}><span>CSV(엑셀에서 복사해 붙여 넣어도 됨 · 코드를 비우면 관 코드_C001 …)</span>
+          <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'수학 과외,EDU_MATH,NOT_APPLICABLE\n영어 회화,EDU_ENG\n피아노'} /></label>
+        <input type="file" accept=".csv,text/csv,text/plain" onChange={(e) => { const f = e.target.files?.[0]; if (f) void f.text().then(setText); }} aria-label="CSV 파일" />
+      </div>
+      {rows.length > 0 && <table className="tbl"><thead><tr><th>#</th><th>이름</th><th>코드</th><th>직업안정법</th><th>확인</th></tr></thead><tbody>
+        {rows.map((r, i) => <tr key={i}><td>{i + 1}</td><td>{r.name}</td><td className="mono">{r.code}</td><td>{r.labor}</td><td>{r.bad ? <b className="warn-text">{r.bad}</b> : '넣음'}</td></tr>)}</tbody></table>}
+      {msg && <p className="form-ok">{msg}</p>}{err && <p className="form-error">{err}</p>}
+      <div className="acts"><button className="btn-ok" disabled={busy || !to || !good.length} onClick={() => void run()} data-cat-csv-go>{busy ? '넣는 중…' : `승인 대기로 넣기(${good.length})`}</button></div>
+    </details>
+  );
+}
+
+/* v10.693 (docs/801) 업종 CSV 내려받기 — 이미 보이는 목록에서 관을 골라 CSV(이름 · 코드 · 상태 · 직업안정법 · 등급 · 부담) · 개인정보 없음 · 엑셀이 한글을 읽게 BOM */
+function CsvExport({ cats }: { cats: Cat[] }) {
+  const [g, setG] = useState('');
+  const codes = [...new Set(cats.map((c) => c.gwanCode))].sort();
+  const rows = cats.filter((c) => !g || c.gwanCode === g);
+  const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const down = () => {
+    /* 앞 세 칸(이름 · 코드 · 직업안정법)은 「CSV 로 한꺼번에 넣기」와 같은 차례 — 받은 파일을 고쳐 다시 넣을 수 있음 */
+    const csv = ['업종 이름,업종 코드,직업안정법,관,상태,등급,부담', ...rows.map((c) => [c.name, c.code, c.laborLawFlag ?? '', c.gwanCode, c.status, c.gradeCode ?? '', c.feeBearer ?? ''].map(q).join(','))].join('\r\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `categories_${g || 'ALL'}_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url);
+  };
+  return (
+    <p className="card pad" data-cat-csv-export><b>CSV 로 내려받기</b>{' '}
+      <select value={g} onChange={(e) => setG(e.target.value)} aria-label="내려받을 관"><option value="">모든 관</option>{codes.map((c) => <option key={c} value={c}>{c}</option>)}</select>{' '}
+      <button className="btn-sm" disabled={!rows.length} onClick={down} data-cat-csv-down>내려받기({rows.length})</button>
+      <span className="dim"> — 그대로 고쳐 「CSV 로 한꺼번에 넣기」에 다시 쓸 수 있습니다(이름 · 코드 · 직업안정법 칸)</span></p>
+  );
+}
+
 export function Categories() {
   const { data, error, loading, reload } = useApi<Cat[]>('/admin/categories');
   const [busy, setBusy] = useState<string | null>(null);
@@ -189,6 +263,8 @@ export function Categories() {
 
       <NewCategory onDone={reload} />
       <CopyCategory cats={data} onDone={reload} />
+      <CsvCategories onDone={reload} />
+      <CsvExport cats={data} />
 
       <h3 className="sec">승인 대기 <em>{pending.length}</em></h3>
       {pending.length === 0 && <p className="muted">대기 중인 업종이 없습니다.</p>}

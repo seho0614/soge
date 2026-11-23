@@ -9,6 +9,8 @@ export interface Gwan {
   isHub?: boolean; childGwans?: number; childCategories?: number; consultCategories?: number | null;
   /** v10.646 (D309 · docs/791) 상위 관(허브) · 소개 대상 */
   parentCode?: string | null; parentName?: string | null; introTarget?: string | null;
+  /** v10.660 · 663 (D314 · docs/795) 아이콘 · 대표 색 · 지울 수 있는 준비중 관 */
+  icon?: string | null; color?: string | null; deletable?: boolean;
 }
 
 /** v10.642 (docs/786) 「업종 1종 이상 승인」 — 허브 관은 해당 없음(하위 관) · 리드관은 안심소개 상담 업종 수로 */
@@ -23,6 +25,8 @@ export interface Manage {
   sortOrder: number; categories: number; listings: number; isLanding: boolean;
   /** v10.36 — 신규 가입자 첫 화면(site.landing_new_member) */
   isNewMemberLanding?: boolean;
+  /** v10.676 · 677 (docs/798) 최근 7일 비교 숫자 · 운영 화면에서 만든 관인지(메인 새 관 카드 후보) */
+  views7?: number; newListings7?: number; newRequests7?: number; reviewPending?: number; isNew?: boolean;
 }
 
 /* ── SB-ADM-SIT-030 관 설정 (8개 탭) ─────────────────────────────── */

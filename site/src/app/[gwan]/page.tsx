@@ -5,12 +5,15 @@ import { isGwanKey } from '@/i18n/keys';
 import { apiGet, apiGetPublic } from '@/lib/api';
 import type { Gwan, ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
+import { GwanIcon, gwanColor, gwanHeadStyle } from '@/components/gwan/GwanLook';   // v10.663 (D314)
+import { siteOrigin } from '@/components/refcode/origin';   // v10.682 공유 미리보기 주소
 import { GWAN_PATH, PATH_GWAN, isFixedGwan, safeSort } from '@/lib/format';
 import { SecHead, ShopMain } from '@/components/shop/ShopMain';
 import { GwanLanding } from '@/components/gwan/GwanLanding';
 import { MoneyMain } from '@/components/money/MoneyMain';
 import { HltBand } from '@/components/health/HltParts';
 import { GwanBlocks, GwanPageMenu, type GwanPageData, type GwanPageMenuItem } from '@/components/gwan/GwanBlocks';   // v10.652 (D311)
+import { ViewPing } from '@/components/gwan/ViewPing';   // v10.667 (D315) 방문 수
 import '@/styles/mal.css';
 
 type Props = {
@@ -28,7 +31,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations('gwan.page');
   const [locale, th] = await Promise.all([getLocale(), getTranslations('header.gwan')]);
   /* v10.97 — 관 이름: 한국어는 서버 이름 · 다른 언어만 사전 */
-  return { title: locale !== 'ko' && isGwanKey(code) ? th(code) : g?.name ?? t('fallbackTitle'), description: g?.description ?? undefined };
+  const title = locale !== 'ko' && isGwanKey(code) ? th(code) : g?.name ?? t('fallbackTitle');
+  /* v10.682 (docs/799) 새 관 공유 미리보기 — 게시된 첫 화면의 머리 띠 그림(없으면 첫 사진) · 설명(머리 띠 설명 → 관 설명) · 정식 주소 */
+  if (!isFixedGwan(code)) {
+    const home = await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null);
+    const bl = home?.blocks ?? [];
+    const img = (home?.seoImage || bl.find((b) => b.type === 'HERO' && b.image)?.image || bl.find((b) => b.type === 'IMAGE')?.src || bl.find((b) => b.type === 'GALLERY')?.items?.[0]?.src) as string | undefined;   // v10.692 직접 쓴 그림 먼저
+    const desc = String(home?.seoDescription || bl.find((b) => b.type === 'HERO' && b.sub)?.sub || g?.description || '').slice(0, 160) || undefined;
+    const o = await siteOrigin();
+    const url = `${o}/${GWAN_PATH[code]}`;
+    return { title, description: desc, alternates: { canonical: url }, ...(home?.noindex ? { robots: { index: false, follow: false } } : {}),
+      openGraph: { title, description: desc, url, type: 'website', ...(img && /^(\/(?!\/)|https:\/\/)/.test(img) ? { images: [img.startsWith('/') ? o + img : img] } : {}) } };
+  }
+  return { title, description: g?.description ?? undefined };
 }
 
 /** SB-{G}-MAIN-010 · SB-{G}-LST-010 — 관 랜딩 겸 목록 */
@@ -55,7 +70,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
   if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} />{pm}<i hidden data-root-end="" /></>;
   /* v10.652 새 관 — 게시된 첫 화면(home)이 있으면 블록으로 그림(없으면 아래 일반 화면) */
   const home = !isFixedGwan(code) ? await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null) : null;
-  if (home) return <div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /></div>;
+  if (home) return <div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /><ViewPing code={code} slug="home" /></div>;
 
   const qs = new URLSearchParams({ gwanCode: code, limit: '20' });
   if (q.sort) qs.set('sort', q.sort);
@@ -95,8 +110,8 @@ export default async function GwanPage({ params, searchParams }: Props) {
   return (
     <>
       {pm}
-      <div className="page-head">
-        <h1>{g?.name ?? t('page.fallbackTitle')}</h1>
+      <div className="page-head" style={gwanHeadStyle(g?.color)} data-gwan-color={g?.color ?? undefined}>
+        <h1 style={{ color: gwanColor(g?.color) }}><GwanIcon name={g?.icon} size={26} /> {g?.name ?? t('page.fallbackTitle')}</h1>
         <div className="quick">
           {tabs.map(([v, l]) => (
             <a key={l} href={`/${GWAN_PATH[code]}${v ? `?badge=${v}` : ''}`}

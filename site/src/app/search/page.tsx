@@ -80,6 +80,10 @@ export default async function SearchPage({ searchParams }: {
       : Promise.resolve({ requests: [] as ReqHit[] }),
     apiGet<Board>(`/community/board?${new URLSearchParams({ q: q.slice(0, 50), size: '10' })}`, 10).catch(() => ({ items: [], total: 0 })),
   ]) : [EMPTY, { requests: [] as ReqHit[] }, { items: [], total: 0 } as Board];
+  /* v10.669 (docs/796) 관 안내 페이지 — 전체 탭에서만 · 2자 이상 · 5개 */
+  const pages = tab === 'ALL' && q.length >= 2 && !short
+    ? await apiGet<Array<{ gwanCode: string; gwanName: string; slug: string; title: string; snippet: string }>>(`/gwan-pages/search?${new URLSearchParams({ q: q.slice(0, 50) })}`, 60).catch(() => [])
+    : [];
   /* 관 탭이면 그 관만 따로 읽습니다(전체 20건 안에 안 든 줄까지) */
   const list = gTab && q && !short
     ? await apiGet<ListingListData>(`/listings?${new URLSearchParams({ limit: '20', sort: 'RELEVANCE', keyword: q, match: 'TITLE', gwanCode: gTab })}`, 10).catch(() => EMPTY)
@@ -171,6 +175,19 @@ export default async function SearchPage({ searchParams }: {
             </>
           ) : (tab === 'ALL' || gTab) && <><h2 className="s2">{t('list.head')}</h2><div className="emp">{gTab ? t('list.emptyGwan') : t('list.empty')}</div></>)}
 
+          {pages.length > 0 && (   /* v10.669 (docs/796) 관 안내 페이지(이용 안내 · 새 관 첫 화면) */
+            <section data-search-pages>
+              <h2 className="s2">{t('pages.headCount', { n: pages.length })}</h2>
+              {pages.map((p) => {
+                const href = `/${GWAN_PATH[p.gwanCode] ?? `g/${p.gwanCode.toLowerCase()}`}${p.slug === 'home' ? '' : `/info/${p.slug}`}`;
+                return (
+                  <div key={`${p.gwanCode}-${p.slug}`} className="lrow">
+                    <div className="lt"><b>{p.title}</b><span className="ls">{p.gwanName}{p.snippet ? ` · ${p.snippet}` : ''}</span></div>
+                    <div className="lact"><Link className="pc-bo sm" href={href}>{t('pages.view')}</Link></div>
+                  </div>);
+              })}
+            </section>
+          )}
           {/* v10.32 — 시안 순서: 상품 · 서비스 → 소개광장 글 → 소개받기 요청(개발) */}
           {showPost && (posts.length ? (
             <>

@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
   CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeReadsDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES, NoticePublishDto,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
-  GwanOrderDto, LandingDto, GwanFormCopyDto, GwanFormCopyPutDto,
+  GwanOrderDto, LandingDto, GwanFormCopyDto, GwanFormCopyPutDto, DeleteGwanDto, GwanManagersDto,
 } from './site.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -145,6 +145,38 @@ export class SiteController {
   putFormCopy(@Param('code') code: string, @Param('role') role: string, @Body() dto: GwanFormCopyPutDto) {
     return this.svc.putFormCopy(code, role, dto);
   }
+
+  /* v10.680 (D318 · docs/799) 관 담당자 */
+  @Get('gwans/:code/managers')
+  @ApiOperation({ summary: '관 담당자 (v10.680 · SUPER)', description: '담당 운영자(순서 · 첫째가 그 관 페이지 문의의 처음 담당) · 고를 수 있는 운영 계정(ADMIN · SUPER).' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: Object })
+  managers(@Param('code') code: string) { return this.svc.managers(code); }
+
+  @Put('gwans/:code/managers')
+  @ApiOperation({ summary: '관 담당자 저장 (v10.680 · SUPER)', description: '계정 번호 목록(순서대로 · 5명까지 · 비우면 담당 없음) · 운영 역할이 없으면 422 GWAN_MANAGER_ROLE.' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'GWAN_MANAGER_ROLE', type: ErrorDto })
+  @Audit('GWAN_MANAGERS', 'GWAN')
+  putManagers(@Param('code') code: string, @Body() dto: GwanManagersDto) { return this.svc.putManagers(code, dto.accountIds); }
+
+  /* v10.672 (D316 · docs/797) 관 현황판 */
+  @Get('gwans/:code/stats')
+  @ApiOperation({ summary: '관 현황판 (v10.672 · SUPER)', description: '최근 days(7 · 30 · 90 · 처음 30)일 서울 날짜 — 페이지 방문 · 새 매물 · 새로 노출된 매물 · 새 요청 합과 날마다 · 지금 노출 중 매물 · 요청 · 승인 업종 · 검수 대기 · 게시 페이지.' })
+  @ApiParam({ name: 'code' }) @ApiQuery({ name: 'days', required: false, enum: ['7', '30', '90'] })
+  @ApiOkResponse({ type: Object })
+  stats(@Param('code') code: string, @Query('days') days?: string) { return this.svc.gwanStats(code, Number(days ?? 30)); }
+
+  /* v10.660 (D314 · docs/795) 준비중 관 지우기 — 운영 화면에서 만들고 한 번도 열지 않은 관만(DB 도 막음) */
+  @Delete('gwans/:code')
+  @Roles('SUPER')
+  @ApiOperation({ summary: '준비중 관 지우기 (v10.660 · SUPER)', description: '운영 화면에서 만들고 한 번도 열지 않은 준비중 관만. 업종 · 등록 폼 문구 · 관 페이지 · 번역도 함께 지움. 매물 · 요청 · 공지 등이 있거나 로그인 랜딩이면 422 GWAN_IN_USE. 확인 글자(confirm)에 관 코드.' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, description: 'GWAN_DELETE · GWAN_IN_USE · GWAN_DELETE_CONFIRM', type: ErrorDto })
+  @Audit('GWAN_DELETE', 'GWAN')
+  remove(@Param('code') code: string, @Body() dto: DeleteGwanDto) { return this.svc.deleteGwan(code, dto.confirm); }
 
   @Patch('gwans/:code/visibility')
   @ApiOperation({ summary: '관 노출 전환', description: '메인에서 보일지 여부입니다.' })

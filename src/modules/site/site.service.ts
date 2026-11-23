@@ -29,6 +29,8 @@ export class SiteService {
                 AS "reviewPending",
               /* v10.31 — 시안 「상위」 열 */
               g.parent_code AS "parentCode", pg.name AS "parentName", g.is_hub AS "isHub", g.intro_target AS "introTarget",   /* v10.646 (D309) */
+              g.icon, g.color,   /* v10.663 (D314) 아이콘 · 대표 색 */
+              (g.intro_target IS NOT NULL AND g.opened_at IS NULL AND NOT g.is_active AND NOT g.is_hub) AS "deletable",   /* v10.660 (D314) */
               /* v10.642 (docs/786) 오픈 점검 — 허브 관은 업종을 직접 갖지 않음(하위 관 수 · 하위 관 승인 업종) ·
                  리드관(LED)은 안심소개 상담 축(MAL · CONSULT) 업종을 씀(fn_gwan_open_guard · updateGwan 과 같은 기준) */
               (SELECT count(*)::int FROM gwans cg WHERE cg.parent_code = g.code) AS "childGwans",
@@ -86,6 +88,7 @@ export class SiteService {
   /** 비활성으로 바꾸면 등록·노출이 즉시 멈춥니다. 매물은 지우지 않습니다 */
   async updateGwan(code: string, input: {
     name?: string; description?: string; isActive?: boolean; sortOrder?: number; parentCode?: string;
+    introTarget?: string; icon?: string; color?: string;   // v10.660 · 663 (D314) — 소개 대상은 준비중일 때만(DB) · '' = 아이콘 · 색 없음
   }) {
     if (input.isActive === true) {
       // 업종 없이 열면 등록 폼의 선택지가 비어 사용자가 막힙니다 — 리드관(LED)은 안심소개 상담 축 업종을 씀(v10.335)
@@ -103,13 +106,108 @@ export class SiteService {
           SET name = coalesce($2, name), description = coalesce($3, description),
               is_active = coalesce($4, is_active), sort_order = coalesce($5, sort_order),
               opened_at = CASE WHEN $4 = true AND opened_at IS NULL THEN now() ELSE opened_at END,
-              parent_code = CASE WHEN $6::text IS NULL THEN parent_code ELSE nullif($6, '') END   /* v10.646 (D309) '' = 상위 관 없음 */
+              parent_code = CASE WHEN $6::text IS NULL THEN parent_code ELSE nullif($6, '') END,   /* v10.646 (D309) '' = 상위 관 없음 */
+              intro_target = coalesce($7, intro_target),   /* v10.660 (D314) 준비중 새 관만(fn_gwan_draft_guard) */
+              icon = CASE WHEN $8::text IS NULL THEN icon ELSE nullif($8, '') END,
+              color = CASE WHEN $9::text IS NULL THEN color ELSE nullif($9, '') END   /* v10.663 (D314) */
         WHERE code = $1
       RETURNING code, name, is_active AS "isActive", opened_at AS "openedAt", parent_code AS "parentCode"`,
       [code, input.name ?? null, input.description ?? null,
-       input.isActive ?? null, input.sortOrder ?? null, input.parentCode ?? null]);
+       input.isActive ?? null, input.sortOrder ?? null, input.parentCode ?? null,
+       input.introTarget ?? null, input.icon ?? null, input.color ?? null]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 관입니다.');
     return row;
+  }
+
+  /* ── v10.680 (D318 · docs/799) 관 담당자 — 운영 역할(ADMIN · SUPER) 계정만 · 순서대로(첫째 = 그 관 페이지 문의의 처음 담당) ── */
+  async managers(code: string) {
+    await this.gwan(code);
+    const items = await this.db.query(
+      `SELECT m.account_id AS "accountId", a.name, a.email::text AS email, m.sort_order AS "sortOrder"
+         FROM gwan_managers m JOIN accounts a ON a.id = m.account_id WHERE m.gwan_code = $1 ORDER BY m.sort_order, a.name`, [code]);
+    const candidates = await this.db.query(
+      `SELECT DISTINCT a.id AS "accountId", a.name, a.email::text AS email FROM accounts a JOIN account_roles r ON r.account_id = a.id
+        WHERE r.role IN ('ADMIN', 'SUPER') ORDER BY a.name LIMIT 300`);
+    return { items, candidates };
+  }
+  async putManagers(code: string, ids: string[]) {
+    await this.gwan(code);
+    const uniq = [...new Set(ids)].slice(0, 5);
+    if (uniq.length) {
+      const ok = await this.db.query<{ id: string }>(
+        `SELECT DISTINCT a.id FROM accounts a JOIN account_roles r ON r.account_id = a.id WHERE a.id = ANY($1::uuid[]) AND r.role IN ('ADMIN', 'SUPER')`, [uniq]);
+      if (ok.length !== uniq.length) throw new PolicyViolation('GWAN_MANAGER_ROLE', '관 담당자는 운영 역할(ADMIN · SUPER)이 있는 계정만 됩니다.');
+    }
+    await this.db.transaction(async () => {
+      await this.db.query(`DELETE FROM gwan_managers WHERE gwan_code = $1`, [code]);
+      for (let i = 0; i < uniq.length; i++)
+        await this.db.query(`INSERT INTO gwan_managers (gwan_code, account_id, sort_order, created_by) VALUES ($1, $2::uuid, $3, $4)`, [code, uniq[i], i, RequestCtx.actorId() ?? null]);
+    });
+    return this.managers(code);
+  }
+
+  /* ── v10.672 (D316 · docs/797) 관 현황판 — 최근 days(7 · 30 · 90)일 · 서울 날짜 · 읽기만 ──
+   *   합: 페이지 방문 · 새 매물 · 새 요청 · 새로 노출된 매물 / 지금: 노출 중 매물 · 승인 업종 · 검수 대기 · 게시 페이지 · 날마다 추이 */
+  async gwanStats(code: string, days0 = 30) {
+    const days = [7, 30, 90].includes(days0) ? days0 : 30;
+    await this.gwan(code);
+    const rows = await this.db.query<{ day: string; views: number; listings: number; published: number; requests: number; inquiries: number }>(
+      `WITH d AS (SELECT x::date AS day FROM generate_series((now() AT TIME ZONE 'Asia/Seoul')::date - ($2::int - 1), (now() AT TIME ZONE 'Asia/Seoul')::date, interval '1 day') x)
+       SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+              coalesce((SELECT sum(w.views)::int FROM gwan_page_views w JOIN gwan_pages p ON p.id = w.page_id WHERE p.gwan_code = $1 AND w.day = d.day), 0) AS views,
+              (SELECT count(*)::int FROM listings l WHERE l.gwan_code = $1 AND (l.created_at AT TIME ZONE 'Asia/Seoul')::date = d.day) AS listings,
+              (SELECT count(*)::int FROM listings l WHERE l.gwan_code = $1 AND (l.published_at AT TIME ZONE 'Asia/Seoul')::date = d.day) AS published,
+              (SELECT count(*)::int FROM requests r WHERE r.gwan_code = $1 AND (r.created_at AT TIME ZONE 'Asia/Seoul')::date = d.day) AS requests,
+              (SELECT count(*)::int FROM inquiries q WHERE q.source_gwan = $1 AND (q.created_at AT TIME ZONE 'Asia/Seoul')::date = d.day) AS inquiries   /* v10.688 (docs/800) 관 페이지에서 온 문의 */
+         FROM d ORDER BY d.day`, [code, days]);
+    const [now] = await this.db.query<Record<string, number>>(
+      `SELECT (SELECT count(*)::int FROM listings WHERE gwan_code = $1 AND status = 'PUBLISHED') AS "liveListings",
+              (SELECT count(*)::int FROM categories WHERE gwan_code = $1 AND status = 'APPROVED') AS categories,
+              (SELECT count(*)::int FROM review_items WHERE gwan_code = $1 AND status IN ('QUEUED', 'IN_PROGRESS')) AS "reviewPending",
+              (SELECT count(*)::int FROM gwan_pages WHERE gwan_code = $1 AND status = 'PUBLISHED') AS "publishedPages",
+              (SELECT count(*)::int FROM requests WHERE gwan_code = $1 AND status = 'PUBLISHED') AS "liveRequests",
+              (SELECT count(*)::int FROM inquiries WHERE source_gwan = $1 AND status = 'OPEN') AS "openInquiries",   /* v10.688 */
+              (SELECT count(*)::int FROM banned_words WHERE gwan_code = $1) AS "bannedWords"`, [code]);   /* v10.689 (docs/800) 이 관 금칙어 */
+    const sum = (k: 'views' | 'listings' | 'published' | 'requests' | 'inquiries') => rows.reduce((n, r) => n + Number(r[k]), 0);
+    return { code, days, total: { views: sum('views'), listings: sum('listings'), published: sum('published'), requests: sum('requests'), inquiries: sum('inquiries') }, now, rows };
+  }
+
+  /* ── v10.660 (D314 · docs/795) 준비중 관 지우기(SUPER · 컨트롤러) ──
+   *   운영 화면에서 만들고 한 번도 열지 않은 관만(DB fn_gwan_draft_guard 가 한 번 더 막음) · 매물 · 요청 · 공지 등이 있으면 422 GWAN_IN_USE
+   *   그 관에 딸린 것(업종 · 등록 폼 문구 · 관 페이지(판 포함) · 번역 · 축 · 저장한 검색)을 한 거래 안에서 지움 · 로그인 랜딩이면 막음 */
+  async deleteGwan(code: string, confirm: string) {
+    if (confirm !== code) throw new PolicyViolation('GWAN_DELETE_CONFIRM', '확인 글자에 관 코드를 그대로 넣으십시오.');
+    const [g] = await this.db.query<{ intro_target: string | null; opened_at: string | null; is_active: boolean; is_hub: boolean; name: string }>(
+      `SELECT intro_target, opened_at, is_active, is_hub, name FROM gwans WHERE code = $1`, [code]);
+    if (!g) throw new NotFound('없는 관입니다.');
+    if (!g.intro_target || g.opened_at || g.is_active || g.is_hub)
+      throw new PolicyViolation('GWAN_DELETE', '운영 화면에서 만들고 한 번도 열지 않은 준비중 관만 지울 수 있습니다.');
+    const [use] = await this.db.query<Record<string, number>>(
+      `SELECT (SELECT count(*)::int FROM listings WHERE gwan_code = $1) AS listings,
+              (SELECT count(*)::int FROM requests WHERE gwan_code = $1) AS requests,
+              (SELECT count(*)::int FROM notices WHERE gwan_code = $1) AS notices,
+              (SELECT count(*)::int FROM faqs WHERE gwan_code = $1) AS faqs,
+              (SELECT count(*)::int FROM terms WHERE gwan_code = $1) AS terms,
+              (SELECT count(*)::int FROM events WHERE gwan_code = $1) AS events,
+              (SELECT count(*)::int FROM ad_slots WHERE gwan_code = $1) AS "adSlots",
+              (SELECT count(*)::int FROM site_settings WHERE key IN ('site.landing_after_login', 'site.landing_new_member') AND value = $1) AS landing`, [code]);
+    const busy = Object.entries(use ?? {}).filter(([, v]) => Number(v) > 0);
+    if (busy.length) throw new PolicyViolation('GWAN_IN_USE', `이 관에 딸린 것이 있어 지울 수 없습니다 — ${busy.map(([k, v]) => `${k} ${v}`).join(' · ')}`);
+    return this.db.transaction(async () => {
+      await this.db.query(`SELECT set_config('app.gwan_delete', 'on', true)`);
+      await this.db.query(`DELETE FROM content_translations WHERE (target_type = 'GWAN' AND target_id = $1) OR (target_type = 'GWAN_FORM' AND target_id LIKE $1 || ':%')`, [code]);
+      await this.db.query(`DELETE FROM gwan_page_versions WHERE page_id IN (SELECT id FROM gwan_pages WHERE gwan_code = $1)`, [code]);
+      await this.db.query(`DELETE FROM gwan_pages WHERE gwan_code = $1`, [code]);
+      await this.db.query(`DELETE FROM gwan_form_copy WHERE gwan_code = $1`, [code]);
+      await this.db.query(`DELETE FROM gwan_axes WHERE gwan_code = $1`, [code]);
+      await this.db.query(`DELETE FROM lsx_saved_searches WHERE gwan_code = $1`, [code]);
+      await this.db.query(`DELETE FROM categories WHERE gwan_code = $1`, [code]);
+      await this.db.query(`DELETE FROM gwans WHERE code = $1`, [code]);
+      return { deleted: code, name: g.name };
+    }).catch((e: any) => {
+      if (e?.code === '23503') throw new PolicyViolation('GWAN_IN_USE', `이 관(또는 업종)을 가리키는 기록이 있어 지울 수 없습니다 — ${String(e.table ?? e.detail ?? '').slice(0, 120)}`);
+      throw e;
+    });
   }
 
   /* ── 광고 ── */
@@ -710,8 +808,15 @@ export class SiteService {
               "is_landing" AS "isLanding",
               /* v10.36 — 신규 가입자 첫 화면(site.landing_new_member)도 함께 돌려 줍니다.
                  전에는 저장은 되는데 화면에 보이지 않아 「저장이 안 된다」로 보였습니다. */
-              (code = (SELECT value FROM site_settings WHERE key = 'site.landing_new_member')) AS "isNewMemberLanding"
-         FROM v_gwan_admin`);
+              (code = (SELECT value FROM site_settings WHERE key = 'site.landing_new_member')) AS "isNewMemberLanding",
+              /* v10.677 (docs/798) 관끼리 비교 — 최근 7일(서울 날짜) 페이지 방문 · 새 매물 · 새 요청 · 지금 검수 대기 */
+              (SELECT coalesce(sum(w.views), 0)::int FROM gwan_page_views w JOIN gwan_pages p ON p.id = w.page_id
+                WHERE p.gwan_code = v.code AND w.day > (now() AT TIME ZONE 'Asia/Seoul')::date - 7) AS "views7",
+              (SELECT count(*)::int FROM listings l WHERE l.gwan_code = v.code AND l.created_at > now() - interval '7 days') AS "newListings7",
+              (SELECT count(*)::int FROM requests r WHERE r.gwan_code = v.code AND r.created_at > now() - interval '7 days') AS "newRequests7",
+              (SELECT count(*)::int FROM review_items ri WHERE ri.gwan_code = v.code AND ri.status IN ('QUEUED', 'IN_PROGRESS')) AS "reviewPending",
+              (SELECT intro_target IS NOT NULL FROM gwans g WHERE g.code = v.code) AS "isNew"   /* v10.676 메인 새 관 카드 후보 */
+         FROM v_gwan_admin v`);
   }
 
   /** 순서 일괄 저장. 하나씩 바꾸면 중간에 값이 겹칩니다. */

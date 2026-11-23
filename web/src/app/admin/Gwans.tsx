@@ -38,6 +38,7 @@ export function Gwans({ onGo }: { onGo?: (tab: string) => void }) {
   const [code, setCode] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
   const [stab, setStab] = useState<STab>('basic');
+  const [pageCode, setPageCode] = useState<string | undefined>(undefined);   // v10.668 길잡이 → 관 페이지(그 관을 고른 채)
 
   const tabs: SubTab<View>[] = [
     { key: 'list', label: '관 목록', screen: 'SB-ADM-SIT-010' },
@@ -54,8 +55,8 @@ export function Gwans({ onGo }: { onGo?: (tab: string) => void }) {
       <SubTabs tabs={tabs} value={view} onChange={setView} />
       {view === 'list' && <GwanList isSuper={isSuper} onOpen={open} onGo={onGo} onNew={() => setView('new')} />}
       {view === 'new' && isSuper && <GwanNew onCreated={onCreated} onCancel={() => setView('list')} />}
-      {view === 'settings' && isSuper && <GwanSettings key={`${code}-${stab}`} code={code} created={created} initialTab={stab} onPick={(c) => { setCreated(null); setCode(c); }} onGo={onGo} />}
-      {view === 'pages' && <GwanPages isSuper={isSuper} />}
+      {view === 'settings' && isSuper && <GwanSettings key={`${code}-${stab}`} code={code} created={created} initialTab={stab} onPick={(c) => { setCreated(null); setCode(c); }} onGo={onGo} onPages={(c) => { setPageCode(c); setView('pages'); }} />}
+      {view === 'pages' && <GwanPages key={pageCode ?? '-'} isSuper={isSuper} initialCode={pageCode} />}
       {view === 'scope' && isSuper && <GwanScope />}
     </section>
   );

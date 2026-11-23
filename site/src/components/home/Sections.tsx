@@ -8,6 +8,7 @@
  * 사진 · 아이콘은 그림에서 그대로 잘라 낸 것입니다(/home/d/*.png). 글자 · 버튼은 화면 요소입니다.
  * 무엇을 넣을지는 content.ts 가 정합니다 — 그림 내용 그대로(sample · 지금 값) / 서버 데이터(live).
  */
+import { GwanIcon, gwanColor } from '@/components/gwan/GwanLook';   // v10.663 (D314)
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useFmt } from '@/lib/useFmt';
@@ -94,7 +95,7 @@ const NEEDS: { gwan: 'HLT' | 'MNY' | 'MAL' | 'BIZ' | 'CMU'; ic: string; href: st
 ];
 
 /** 중지된 관은 뺍니다(20260930 규칙). 소개광장은 관이 아니라 늘 둡니다. */
-export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ code: string; name: string; description: string | null }> }) {
+export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ code: string; name: string; description: string | null; icon?: string | null; color?: string | null }> }) {
   const t = useTranslations('main');
   const cards = NEEDS.filter((c) => c.gwan === 'CMU' || live.includes(c.gwan));
   /* v10.649 (docs/792) 운영 화면에서 만든 새 관 — 사전 글이 없어 관 이름 · 설명(번역 승인되면 그 언어)으로 카드 · 주소 /g/<코드 소문자> · 소개광장 앞에 둠 */
@@ -117,8 +118,8 @@ export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ co
             </Link>
           ))}
           {more.map((g) => (
-            <Link key={g.code} className="home-nd" href={`/g/${g.code.toLowerCase()}`} data-gwan={g.code}>
-              <Pic name="need-2" h={50} />
+            <Link key={g.code} className="home-nd" href={`/g/${g.code.toLowerCase()}`} data-gwan={g.code} style={gwanColor(g.color) ? { borderTop: `4px solid ${gwanColor(g.color)}` } : undefined}>
+              {g.icon ? <span style={{ color: gwanColor(g.color), height: 50, display: 'inline-flex', alignItems: 'center' }}><GwanIcon name={g.icon} size={40} /></span> : <Pic name="need-2" h={50} />}   {/* v10.663 (D314) 고른 아이콘 · 색 */}
               <b>{g.name}</b>
               <span>{g.description ?? ''}</span>
               <i aria-hidden="true"><Line name="chev" size={18} w={2.4} /></i>

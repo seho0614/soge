@@ -12,7 +12,8 @@ import { ListingList } from '@/components/ListingList';
  * ------------------------------------------------------------------- */
 
 type Block = Record<string, any>;
-export interface GwanPageData { slug: string; title: string; blocks: Block[]; version: number; publishedAt: string }
+export interface GwanPageData { slug: string; lang?: string; title: string; blocks: Block[]; version: number; publishedAt: string;
+  visibility?: string; seoDescription?: string | null; seoImage?: string | null; noindex?: boolean }   // v10.691 · 692 (D320)
 export interface GwanPageMenuItem { slug: string; title: string }
 
 const SAFE = (u: string) => /^\/(?!\/)/.test(u) || /^https:\/\//.test(u);
@@ -95,6 +96,28 @@ export function GwanBlocks({ code, page }: { code: string; page: GwanPageData })
                   <figure key={k} style={{ margin: 0 }}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={x.src} alt={x.alt} loading="lazy" style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 6 }} />
                     {x.caption && <figcaption className="dim" style={{ fontSize: 13 }}>{x.caption}</figcaption>}</figure>))}
               </div>
+            </section>);
+          case 'TABLE': return (   /* v10.656 (docs/794) 표 — 글자만(HTML 없이) · 좁은 화면은 옆으로 밀어 봄 */
+            <section key={i} className="gp-table">{h}
+              <div style={{ overflowX: 'auto' }}><table className="tbl">
+                <thead><tr>{(b.head ?? []).map((x: string, k: number) => <th key={k} scope="col">{x}</th>)}</tr></thead>
+                <tbody>{(b.rows ?? []).map((r: string[], j: number) => <tr key={j}>{(b.head ?? []).map((_: string, k: number) => <td key={k}>{r[k] ?? ''}</td>)}</tr>)}</tbody>
+              </table></div>
+              {b.caption && <p className="dim" style={{ fontSize: 13 }}>{b.caption}</p>}
+            </section>);
+          case 'VIDEO': return /^[\w-]{11}$/.test(String(b.videoId ?? '')) ? (   /* v10.664 (docs/795) 동영상 — 유튜브 개인정보 보호 주소 · 누르기 전엔 재생 안 함 */
+            <section key={i} className="gp-video">{h}
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
+                <iframe src={`https://www.youtube-nocookie.com/embed/${b.videoId}?rel=0`} title={b.title || b.caption || '동영상'} loading="lazy"
+                        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+              </div>
+              {b.caption && <p className="dim" style={{ fontSize: 13 }}>{b.caption}</p>}
+            </section>) : null;
+          case 'INQUIRY': return (   /* v10.681 (D318 · docs/799) 문의 받기 — 고객센터 1:1 문의로(관 · 페이지 출처가 붙음) */
+            <section key={i} className="gp-inquiry card pad" data-gwan-inquiry>{h}
+              {b.body && <p>{b.body}</p>}
+              <Link className="btn-ok" href={`/support/new?${new URLSearchParams({ type: String(b.category ?? 'HOWTO'), gwan: code, page: page.slug })}`}>{b.label || '문의하기'}</Link>
             </section>);
           case 'LISTINGS': return <section key={i} className="gp-list">{h}<Listings code={code} b={b} /></section>;
           case 'CATEGORIES': return <section key={i} className="gp-cats">{h}<Cats code={code} /></section>;

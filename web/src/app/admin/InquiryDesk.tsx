@@ -13,6 +13,7 @@ interface Row {
   createdAt: string; dueAt: string | null; answeredAt: string | null; overdue: boolean; guest: boolean;
   email: string | null; nameHead: string; assignee: string | null; files: number;
   feedback?: string | null; reopenCount?: number;   /* v10.341 (D231) 회원 만족도 · 다시 연 횟수 */
+  sourceGwan?: string | null; sourcePage?: string | null;   /* v10.681 (D318) 관 페이지에서 온 문의 */
 }
 interface ListData {
   rows: Row[]; more: boolean; page: number;
@@ -79,7 +80,8 @@ export function InquiryDesk() {
           {rows.map((r) => (
             <tr key={r.id} data-inquiry-row={r.id} className={r.overdue ? 'warn' : undefined}>
               <td className="mono">{r.no}</td>
-              <td>{r.categoryLabel ?? r.category}{r.channel === 'BOT' && <><br /><small className="dim">챗봇 → 상담원</small></>}</td>
+              <td>{r.categoryLabel ?? r.category}{r.channel === 'BOT' && <><br /><small className="dim">챗봇 → 상담원</small></>}
+                {r.sourceGwan && <><br /><small className="dim" data-inquiry-source>관 {r.sourceGwan}{r.sourcePage ? ` › ${r.sourcePage === 'home' ? '첫 화면' : r.sourcePage}` : ''}</small></>}</td>
               <td><button className="linkbtn" onClick={() => setOpen(open === r.id ? null : r.id)} data-inquiry-open={r.id}>{r.title}</button>
                 {r.files > 0 && <small className="dim"> · 첨부 {r.files}</small>}
                 {r.feedback === 'UNRESOLVED' && <span className="badge badge-urgent" data-inquiry-reopened=""> 다시 열림{(r.reopenCount ?? 0) > 1 ? ` ${r.reopenCount}` : ''}</span>}
@@ -137,6 +139,7 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
         {d.guest ? '비회원' : (d.name ?? '회원')} · {d.email ?? '—'} · 접수 {ymdhm(d.createdAt)}{d.dueAt && d.status === 'OPEN' ? ` · 기한 ${ymdhm(d.dueAt)}` : ''}
         {d.channel === 'BOT' && ' · 챗봇에서 상담원 연결(대화가 본문에 붙어 있음)'}
         {d.dealId && <> · 관련 거래 <span className="mono">{d.dealId.slice(0, 8)}</span>({d.dealStatus})</>}
+        {d.sourceGwan && <> · 관 페이지에서 옴 <span className="mono">{d.sourceGwan}{d.sourcePage ? ` › ${d.sourcePage}` : ''}</span></>}
       </p>
       <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--g50, #f8fafc)', padding: 12, borderRadius: 8 }} data-inquiry-body="">{d.body}</pre>
       {d.files.length > 0 && <p>첨부: {d.files.map((fid, i) => <button key={fid} className="btn-plain btn-sm" onClick={() => openFile(fid)}>파일 {i + 1}</button>)}</p>}

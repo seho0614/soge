@@ -17,7 +17,7 @@ export interface MyDeal { id: string; title: string | null; statusLabel?: string
 
 /* v10.31 — ?type=DISPUTE · ?deal= 로 들어오면(1:1 문의 화면의 「신고」) 그 유형 · 거래를 고른 채로 엽니다
  * v10.139 — draft: AI 상담 초안(제목 · 내용을 채워 둠 · 제출은 회원이 · 접수 때 agentDraftId 를 붙여 「제출됨」만 적음) */
-export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, draft, faqs = [] }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string; draft?: { id: string; title?: string; body?: string }; faqs?: SimilarItem[] }) {
+export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, draft, faqs = [], source }: { email: string | null; deals: MyDeal[]; loggedIn: boolean; initialType?: string; initialDeal?: string; draft?: { id: string; title?: string; body?: string }; faqs?: SimilarItem[]; source?: { gwan: string; page?: string } }) {
   const router = useRouter();
   const ft = useTranslations('forms');
   const t = useTranslations('forms.inq');
@@ -55,6 +55,7 @@ export function InquiryForm({ email, deals, loggedIn, initialType, initialDeal, 
           email: loggedIn ? undefined : mail.trim(), dealId: (type === 'DEAL' || type === 'SETTLE') && dealId ? dealId : undefined,
           ...(files.length ? { attachmentKeys: files.map((f) => f.id) } : {}),
           ...(draft ? { agentDraftId: draft.id } : {}),
+          ...(source ? { sourceGwan: source.gwan, ...(source.page ? { sourcePage: source.page } : {}) } : {}),   // v10.681 (D318)
         }),
       });
       const d = await r.json().catch(() => null);

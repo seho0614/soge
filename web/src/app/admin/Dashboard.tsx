@@ -49,6 +49,27 @@ const REVIEW_CAP = 50;
  * v10.31 (10/10 시안 기준) — 시안 칸 이름(정산 승인 대기 · 신규 가입 승인)과 「활주로」 4칸.
  * 활주로는 가정치가 아니라 실제 매출 · 운영이 넣은 월 비용으로 서버가 계산합니다(GET /admin/finance/runway).
  */
+/* v10.685 (D319 · docs/800) 내 담당 관 — 관 설정 › 관 담당자에 내가 있으면 관마다 검수 대기 · 관 페이지 문의(내 담당) · 7일 지난 초안 */
+function MyGwans({ onGo }: { onGo: (tab: string) => void }) {
+  const [rows, setRows] = useState<Array<{ code: string; name: string; isActive: boolean; reviewPending: number; openInquiries: number; myInquiries: number; staleDrafts: number }> | null>(null);
+  useEffect(() => { api<NonNullable<typeof rows>>('/admin/my-gwans').then(setRows).catch(() => setRows([])); }, []);
+  if (!rows?.length) return null;
+  return (
+    <div className="card pad" data-my-gwans>
+      <h3 style={{ marginTop: 0 }}>내 담당 관 <span className="dim">— 관 관리 › 관 설정 › 관 담당자</span></h3>
+      <table className="tbl"><thead><tr><th>관</th><th>검수 대기</th><th>관 페이지 문의(내 담당)</th><th>7일 지난 초안</th><th></th></tr></thead><tbody>
+        {rows.map((r) => (<tr key={r.code}><td><b>{r.name}</b> <span className="mono dim">{r.code}</span>{r.isActive ? '' : <span className="dim"> · 준비중</span>}</td>
+          <td className="num-cell">{r.reviewPending > 0 ? <b className="warn-text">{r.reviewPending}</b> : 0}</td>
+          <td className="num-cell">{r.openInquiries}{r.myInquiries ? ` (${r.myInquiries})` : ''}</td>
+          <td className="num-cell">{r.staleDrafts > 0 ? <b className="warn-text">{r.staleDrafts}</b> : 0}</td>
+          <td style={{ whiteSpace: 'nowrap' }}>{r.reviewPending > 0 && <button className="btn-sm" onClick={() => onGo('queue')}>검수</button>}{' '}
+            {r.openInquiries > 0 && <button className="btn-sm" onClick={() => onGo('inquiries')}>문의</button>}{' '}
+            <button className="btn-sm btn-plain" onClick={() => onGo('gwans')}>관 관리</button></td></tr>))}
+      </tbody></table>
+    </div>
+  );
+}
+
 export function Dashboard({ onGo, canGo }: { onGo: (tab: string) => void; canGo?: (tab: string) => boolean }) {
   /* 2026-10-02 — 요약 API 는 ADMIN · SUPER 전용입니다. 지급 담당(PAYOUT) · 검수자(REVIEWER)는
    * 대시보드가 늘 403 오류였습니다. 그 역할에게는 할 일로 가는 안내만 보여 줍니다. */
@@ -179,7 +200,7 @@ function SummaryView({ onGo, canGo }: { onGo: (tab: string) => void; canGo: (tab
   /* v10.536 (D282 · docs/674) 위젯 배치 — 카드 조각을 열쇠별로 넘기면 DashSlots 가 이 계정에 저장한 차례 · 숨김대로 그림(저장한 배치가 없으면 아래 차례 그대로) */
   return (
     <DashSlots parts={{
-      todo: <TodoBox onGo={onGo} canGo={canGo} />,   /* v10.364 (docs/498) 오늘 할 일 */
+      todo: <><MyGwans onGo={onGo} /><TodoBox onGo={onGo} canGo={canGo} /></>,   /* v10.364 (docs/498) 오늘 할 일 · v10.685 (D319) 내 담당 관(담당이 없으면 안 보임 · 카드 열쇠는 그대로) */
       notices: <StaffNotices />,   /* v10.279 (D210 · docs/408) 관리자 공지 — 등급 「관리자」 · 운영 화면 계정만 */
       /* v10.170 (D159) — 사용자 웹 전체 공개(11/1) 뒤 첫 화면 맨 위 */
       launch: <LaunchWatch />,

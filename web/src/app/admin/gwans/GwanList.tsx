@@ -6,6 +6,33 @@ import { ErrorView } from '../../../components/ErrorView';
 import { Flash } from '../../../components/Flash';
 import type { Gwan, Manage, STab } from './shared';
 
+/* v10.676 (D317 · docs/798) 메인 새 관 카드 — 설정 site.new_gwan_cards(쉼표 3개까지 · 적은 순서 · 비우면 앞에서부터 3개) · SUPER */
+function MainCards({ rows }: { rows: Manage[] }) {
+  const cand = rows.filter((g) => g.isNew && !g.isHub);
+  const [pick, setPick] = useState<string[] | null>(null);
+  const a = useAct();
+  useEffect(() => { api<Record<string, string | null>>('/site-settings/public').then((s) => setPick(String(s['site.new_gwan_cards'] ?? '').split(',').filter(Boolean))).catch(() => setPick([])); }, []);
+  if (!cand.length || !pick) return null;
+  const slot = (i: number) => pick[i] ?? '';
+  const set = (i: number, v: string) => { const n = [slot(0), slot(1), slot(2)]; n[i] = v; setPick(n.filter(Boolean).filter((x, k, arr) => arr.indexOf(x) === k)); };
+  return (
+    <div className="card pad" data-gwan-main-cards>
+      <h3 style={{ marginTop: 0 }}>메인 새 관 카드 <span className="dim">— 메인 「지금, 어떤 소개가 필요하세요?」 · 3개까지 · 적은 순서 · 비우면 앞에서부터 3개 · 켠 관만 보임</span></h3>
+      <Flash msg={a.msg} err={a.err} />
+      <div className="acts">
+        {[0, 1, 2].map((i) => (
+          <select key={i} value={slot(i)} aria-label={`${i + 1}번째 카드`} onChange={(e) => set(i, e.target.value)}>
+            <option value="">{i === 0 ? '자동(앞에서부터)' : '없음'}</option>
+            {cand.map((g) => <option key={g.code} value={g.code}>{g.name}({g.code}){g.isActive ? '' : ' · 준비중'}</option>)}
+          </select>))}
+        <button className="btn-ok" disabled={a.busy === 'cards'} data-gwan-main-cards-save
+                onClick={() => void a.run('cards', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'site.new_gwan_cards', value: pick.join(','), reason: '메인 새 관 카드' }) }),
+                  () => undefined, pick.length ? `메인에 ${pick.join(' · ')} 순서로 보입니다(1분 안).` : '자동(앞에서부터 3개)으로 돌렸습니다.')}>저장</button>
+      </div>
+    </div>
+  );
+}
+
 /* ── SB-ADM-SIT-010 · GWN-010 관 목록 ────────────────────────────── */
 export function GwanList({ isSuper, onOpen, onGo, onNew }: {
   isSuper: boolean; onOpen: (c: string, t?: STab) => void; onGo?: (t: string) => void; onNew: () => void;
@@ -70,6 +97,7 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
         <thead>
           <tr>
             <th>관</th><th>코드 · 사용자 웹 주소</th><th>상태</th><th>업종</th><th>등록 건수</th>
+            <th title="최근 7일 — 관 페이지 방문 · 새 매물 · 새 요청">7일 방문 · 매물 · 요청</th>
             {isSuper && <th>오픈일</th>}{isSuper && <th>검수 대기</th>}<th>랜딩</th><th>순서</th>{isSuper && <th />}
           </tr>
         </thead>
@@ -85,6 +113,7 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
                   : <span className="ad-bg wait">{g.categories === 0 ? '준비중' : '숨김'}</span>}</td>
                 <td className="num-cell">{g.categories === 0 ? <b className="warn-text">0종</b> : `${g.categories}종`}</td>
                 <td className="num-cell">{(st?.publishedListings ?? g.listings).toLocaleString('ko-KR')}</td>
+                <td className="num-cell" data-gwan-week={g.code}>{g.isHub ? '—' : `${(g.views7 ?? 0).toLocaleString('ko-KR')} · ${g.newListings7 ?? 0} · ${g.newRequests7 ?? 0}`}</td>
                 {isSuper && <td>{st?.openedAt ? new Date(st.openedAt).toLocaleDateString('ko-KR') : '—'}</td>}
                 {isSuper && <td className="num-cell">{(st?.reviewPending ?? 0) > 0 ? <b className="warn-text">{st?.reviewPending}</b> : 0}</td>}
                 <td>{g.isLanding || g.isNewMemberLanding
@@ -108,6 +137,7 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
           })}
         </tbody>
       </table></div>
+      {isSuper && <MainCards rows={rows} />}
 
       <div className="acts">
         <button className="btn-ok" disabled={!dirty || a.busy === 'order'} onClick={saveOrder}>순서 저장</button>

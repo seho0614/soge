@@ -58,6 +58,14 @@ export interface HomeViewProps {
   notices?: HomeNotice[];
 }
 
+/** v10.676 (D317 · docs/798) 메인 새 관 카드 — 설정 site.new_gwan_cards(쉼표 · 적은 순서 · 켠 관만)가 있으면 그것, 없으면 앞에서부터(최대 3은 Needs) */
+function newCards<G extends { code: string; isActive: boolean; isHub?: boolean }>(gwans: G[], pick?: string | null): G[] {
+  const all = gwans.filter((g) => g.isActive && !g.isHub && !['MNY', 'MAL', 'BIZ', 'HLT', 'LED'].includes(g.code));
+  const want = String(pick ?? '').split(',').map((x) => x.trim()).filter((x) => /^[A-Z]{3,4}$/.test(x));
+  if (!want.length) return all;
+  return want.map((c) => all.find((g) => g.code === c)).filter((g): g is G => !!g);
+}
+
 export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false, notices = [] }: HomeViewProps) {
   const t = useTranslations('main');
   const tq = useTranslations('gwan.qm');
@@ -127,7 +135,7 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
       {/* v10.49 (D103 · docs/101) — 「오늘의 날씨」 한 줄(v10.644 부터 「나를 위한 소개」 아래) */}
       {weather?.available && <Weather w={weather} />}
       <Today c={c} />
-      <Needs live={live} extra={_gwans.filter((g) => g.isActive && !g.isHub && !['MNY', 'MAL', 'BIZ', 'HLT', 'LED'].includes(g.code))} />   {/* v10.649 (docs/792) 새 관 카드 */}
+      <Needs live={live} extra={newCards(_gwans, settings['site.new_gwan_cards'])} />   {/* v10.649 (docs/792) 새 관 카드 · v10.676 운영이 고른 순서 */}
       <Picks c={c} />
       <Poll polls={polls} />
       <Strip c={c} />

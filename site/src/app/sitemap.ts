@@ -14,6 +14,9 @@ type Entries = {
   listings: Array<{ id: string; gwan: string; at: string }>;
   posts: Array<{ id: string; at: string }>;
   products: Array<{ code: string; at: string }>;
+  /* v10.658 (docs/794) 관 페이지 · 새 관 첫 화면 */
+  pages?: Array<{ gwan: string; slug: string; at: string }>;
+  gwans?: Array<{ code: string; at: string | null }>;
 };
 const STATIC: Array<[string, MetadataRoute.Sitemap[number]['changeFrequency'], number]> = [
   ['/', 'daily', 1], ['/money', 'daily', 0.9], ['/mall', 'daily', 0.9], ['/biz', 'daily', 0.9], ['/health', 'daily', 0.9],
@@ -31,6 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...e.listings.filter((l) => GWAN_PATH[l.gwan]).map((l) => ({ url: `${o}/${GWAN_PATH[l.gwan]}/${l.id}`, lastModified: at(l.at), changeFrequency: 'weekly' as const, priority: 0.6 })),
     ...e.posts.map((p) => ({ url: `${o}/community/${p.id}`, lastModified: at(p.at), changeFrequency: 'weekly' as const, priority: 0.5 })),
     ...e.products.map((p) => ({ url: `${o}/health/p/${encodeURIComponent(p.code)}`, lastModified: at(p.at), changeFrequency: 'weekly' as const, priority: 0.6 })),
+    ...(e.gwans ?? []).filter((g) => GWAN_PATH[g.code]).map((g) => ({ url: `${o}/${GWAN_PATH[g.code]}`, ...(g.at ? { lastModified: at(g.at) } : {}), changeFrequency: 'daily' as const, priority: 0.8 })),
+    ...(e.pages ?? []).filter((p) => GWAN_PATH[p.gwan]).map((p) => ({ url: `${o}/${GWAN_PATH[p.gwan]}/info/${p.slug}`, lastModified: at(p.at), changeFrequency: 'monthly' as const, priority: 0.5 })),
     ...lsqAreaEntries(o, rg),
   ];
 }

@@ -64,5 +64,9 @@
       "cheap": "Lowest price",
       "new": "New"
     }
+  },
+  "pages": {
+    "headCount": "Section guide pages {n}",
+    "view": "View"
   }
 }

@@ -93,6 +93,8 @@ export interface Gwan {
   isActive: boolean; listingCount: number;
   /** v10.646 (D309) 허브 관 — 메뉴 · 관 목록에서 뺌(새 관은 GWAN_PATH 가 늘 주소를 주므로) */
   isHub?: boolean;
+  /** v10.663 (D314) 관 아이콘 · 대표 색 이름(components/gwan/GwanLook) */
+  icon?: string | null; color?: string | null;
 }
 
 export interface FooterLink {

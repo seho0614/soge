@@ -11,6 +11,7 @@ export class CatalogService {
   gwans() {
     return this.db.query(
       `SELECT g.code, g.name, g.description, g.is_active AS "isActive", g.is_hub AS "isHub",   /* v10.646 (D309) 새 관 — 사용자 웹 메뉴에서 허브 뺌 */
+              g.icon, g.color,   /* v10.663 (D314) 관 아이콘 · 대표 색 */
               (SELECT count(*)::int FROM listings l
                 WHERE l.gwan_code = g.code AND l.status = 'PUBLISHED') AS "listingCount"
          FROM gwans g WHERE g.is_active ORDER BY g.sort_order`)

@@ -3,7 +3,7 @@
  *   blocksToHtml — 블록을 HTML 파일 하나로(글자는 모두 이스케이프 · 스크립트 없음) — 내려받기 · 「HTML 로 편집」의 시작 글
  *   htmlToBlocks — 브라우저 DOMParser 로 읽어 블록으로 바꿈(HTML 은 저장하지 않음 · 서버가 블록을 다시 검사)
  *     h1 → 머리 띠 · h2 ~ h4 → 글 블록 제목 · p · blockquote · 목록 → 글 · img · figure → 사진 · details → 자주 묻는 질문
- *     script · style · iframe · form · table · 이벤트 속성 · 위험한 주소는 버리고 「바꾸지 못한 것」 목록으로 알림
+ *     script · style · iframe(유튜브는 v10.664 동영상 블록) · form · 이벤트 속성 · 위험한 주소는 버리고 「바꾸지 못한 것」 목록으로 알림
  *   blocksFile · readBlocksFile — 블록 파일(JSON · format sgb-gwan-page) 내려받기 · 불러오기
  * ------------------------------------------------------------------- */
 
@@ -48,6 +48,9 @@ export function blocksToBody(blocks: Block[]): string {
       case 'BUTTONS': return `<nav data-block="BUTTONS">\n${(b.items ?? []).map((x: Block) => `<a class="button" href="${escAttr(x.href ?? '')}">${esc(x.label)}</a>`).join('\n')}\n</nav>`;
       case 'IMAGE': return `<figure data-block="IMAGE"><img src="${escAttr(b.src ?? '')}" alt="${esc(b.alt)}">${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}</figure>`;
       case 'GALLERY': return `<section data-block="GALLERY" data-cols="${Number(b.cols ?? 3)}">\n${h}${(b.items ?? []).map((x: Block) => `<figure><img src="${escAttr(x.src ?? '')}" alt="${esc(x.alt)}">${x.caption ? `<figcaption>${esc(x.caption)}</figcaption>` : ''}</figure>`).join('\n')}\n</section>`;
+      case 'TABLE': return `<section data-block="TABLE">\n${h}<table>\n<thead><tr>${(b.head ?? []).map((x: string) => `<th>${esc(x)}</th>`).join('')}</tr></thead>\n<tbody>\n${(b.rows ?? []).map((r: string[]) => `<tr>${(b.head ?? []).map((_: string, k: number) => `<td>${esc(r[k] ?? '')}</td>`).join('')}</tr>`).join('\n')}\n</tbody>\n</table>${b.caption ? `\n<p class="caption">${esc(b.caption)}</p>` : ''}\n</section>`;
+      case 'FRAGMENT': return `<section data-block="FRAGMENT" data-fragment="${Number(b.fragmentId)}"><p>(공통 조각 「${esc(b.name ?? '')}」 — 게시할 때 펼쳐짐)</p></section>`;   // v10.674 HTML 로 편집해도 조각 자리 그대로
+      case 'VIDEO': return `<section data-block="VIDEO">\n${h}<p><a href="${escAttr(b.url ?? '')}">${esc(b.caption || b.url || '')}</a></p>\n</section>`;   // v10.664 동영상 — 내려받은 HTML 에는 링크로
       case 'FAQ': return `<section data-block="FAQ">\n${h}${(b.items ?? []).map((x: Block) => `<details><summary>${esc(x.q)}</summary>\n${textHtml(x.a)}\n</details>`).join('\n')}\n</section>`;
       case 'LISTINGS': return `<section data-block="LISTINGS" data-limit="${Number(b.limit ?? 8)}" data-sort="${esc(b.sort ?? 'RECENT')}"${b.categoryId ? ` data-category="${esc(b.categoryId)}"` : ''}>${h}<p>(매물 목록 ${Number(b.limit ?? 8)}개 — 사용자 웹에서 채워짐)</p></section>`;
       case 'CATEGORIES': return `<section data-block="CATEGORIES">${h}<p>(업종 칩 — 사용자 웹에서 채워짐)</p></section>`;
@@ -123,8 +126,38 @@ export function htmlToBlocks(html: string): Imported {
   const walk = (root: Element) => {
     Array.from(root.children).forEach((e) => {
       const tag = e.tagName.toLowerCase(); const kind = e.getAttribute('data-block');
+      if (kind === 'FRAGMENT') {   // v10.674 조각 자리 — 번호가 있으면 그대로 · 없으면 버림
+        const id = Number(e.getAttribute('data-fragment'));
+        if (Number.isInteger(id) && id > 0) { blocks.push({ type: 'FRAGMENT', fragmentId: id, name: clip((/「(.*)」/.exec(e.textContent ?? '') ?? [])[1] ?? '', 40) }); cur = null; }
+        else dropped.push('공통 조각(번호 없음)');
+        return;
+      }
+      /* v10.664 동영상 — 우리가 내려준 VIDEO 구역 · 유튜브 끼워 보기(iframe)는 동영상 블록으로(다른 iframe 은 버림) */
+      const yt = (u: string) => /^https:\/\/(?:www\.|m\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/.exec(u)?.[1];
+      if (kind === 'VIDEO' || (tag === 'iframe' && yt(e.getAttribute('src') ?? ''))) {
+        const raw = tag === 'iframe' ? e.getAttribute('src') ?? '' : e.querySelector('a')?.getAttribute('href') ?? '';
+        const id = yt(raw);
+        if (!id) { dropped.push('동영상(유튜브 주소 아님)'); return; }
+        const title = tag === 'iframe' ? clip(e.getAttribute('title') ?? '', 80) : clip(e.querySelector('h2')?.textContent ?? '', 80);
+        const cap = tag === 'iframe' ? '' : clip(e.querySelector('a')?.textContent ?? '', 200);
+        blocks.push({ type: 'VIDEO', title, url: `https://www.youtube.com/watch?v=${id}`, caption: cap.startsWith('http') ? '' : cap });
+        cur = null; return;
+      }
       if (['script', 'style', 'iframe', 'object', 'embed', 'form', 'noscript', 'svg', 'canvas', 'link', 'meta'].includes(tag)) { dropped.push(`<${tag}>`); return; }
-      if (tag === 'table') { dropped.push('표(table) — 글로 옮겨 적으십시오'); return; }
+      if (tag === 'table' || kind === 'TABLE') {   // v10.656 표 블록으로(칸 8 · 줄 50 · 칸 200자 · 합친 칸은 풀어 씀)
+        const t = tag === 'table' ? e : e.querySelector('table'); if (!t) return;
+        const trs = Array.from(t.querySelectorAll('tr'));
+        const cells = trs.map((tr) => Array.from(tr.querySelectorAll('th,td')).map((c) => clip(c.textContent ?? '', 200)));
+        const w = Math.min(8, Math.max(0, ...cells.map((r) => r.length)));
+        if (!w || cells.length < 2) { dropped.push('빈 표'); return; }
+        if (cells.some((r) => r.length > 8)) dropped.push('표의 9번째 칸부터');
+        if (cells.length > 51) dropped.push('표의 51번째 줄부터');
+        if (t.querySelector('[colspan],[rowspan]')) dropped.push('표의 합친 칸(풀어서 넣음)');
+        const fit = (r: string[]) => Array.from({ length: w }, (_, c) => r[c] ?? '');
+        blocks.push({ type: 'TABLE', title: kind === 'TABLE' ? clip(e.querySelector(':scope > h2, :scope > h3')?.textContent ?? '', 80) : '', caption: clip((kind === 'TABLE' ? e.querySelector('p.caption')?.textContent : t.querySelector('caption')?.textContent) ?? '', 200),
+          head: fit(cells[0]!), rows: cells.slice(1, 51).map(fit) });
+        cur = null; return;
+      }
       if (kind === 'HERO' || (tag === 'header' && e.querySelector('h1'))) {
         const btn = e.querySelector('a');
         const image = e.getAttribute('data-image') ?? '';

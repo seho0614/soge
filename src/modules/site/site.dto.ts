@@ -3,6 +3,9 @@ import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsIn, IsInt, IsOptio
 
 /** v10.279 (D210) 공지 열람 등급 코드 — 판단은 DB fn_notice_grades */
 export const NOTICE_GRADES = ['PUBLIC', 'MEMBER', 'BIZ', 'MAL_PARTNER', 'AFF_PARTNER', 'SELLER', 'STAFF'] as const;
+/** v10.663 (D314 · docs/795) 관 아이콘 · 대표 색 이름 — DB gwans_icon_check · gwans_color_check 와 같게 · 색은 sgb-tokens.css --sgb-<이름> */
+export const GWAN_ICONS = ['book', 'home', 'briefcase', 'heart', 'car', 'tool', 'leaf', 'star', 'cart', 'people', 'gift', 'map'] as const;
+export const GWAN_COLORS = ['money', 'mall', 'biz', 'shop', 'plaza', 'navy', 'link'] as const;
 import { StrictBoolean } from '../../common/strict-boolean';
 
 export class GwanAdminDto {
@@ -24,6 +27,19 @@ export class GwanAdminDto {
   @ApiProperty({ nullable: true, description: '상위 관(허브) 코드' }) parentCode!: string | null;
   @ApiProperty({ nullable: true }) parentName!: string | null;
   @ApiProperty({ nullable: true, enum: ['GOODS', 'ASSET', 'BIZ'], description: '소개 대상 — 처음 관은 null' }) introTarget!: string | null;
+  /* v10.660 · 663 (D314 · docs/795) */
+  @ApiProperty({ nullable: true, enum: GWAN_ICONS, description: '아이콘 이름' }) icon!: string | null;
+  @ApiProperty({ nullable: true, enum: GWAN_COLORS, description: '대표 색(디자인 시트 관 색 이름)' }) color!: string | null;
+  @ApiProperty({ description: '지울 수 있는 준비중 관(운영 화면에서 만들고 한 번도 안 염)' }) deletable!: boolean;
+}
+
+export class GwanManagersDto {
+  @ApiProperty({ type: [String], description: '담당 계정 번호(순서대로 · 5명까지 · 빈 목록 = 담당 없음)' })
+  @IsArray() @ArrayMaxSize(5) @Matches(/^[0-9a-f-]{36}$/i, { each: true, message: '계정 번호 모양이 맞지 않습니다.' }) accountIds!: string[];
+}
+
+export class DeleteGwanDto {
+  @ApiProperty({ example: 'EDU', description: '확인 — 지울 관 코드를 그대로' }) @IsString() confirm!: string;
 }
 
 export class CreateGwanDto {
@@ -53,6 +69,10 @@ export class UpdateGwanDto {
   /* v10.646 (D309) 상위 관(허브) — 빈 글자면 상위 관 없음 */
   @ApiPropertyOptional({ example: 'EARN', description: '상위 관(허브 관만 · 빈 글자 = 없음 · 422 GWAN_PARENT)' })
   @IsOptional() @Matches(/^([A-Z]{3,4})?$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) parentCode?: string;
+  /* v10.660 · 663 (D314 · docs/795) 소개 대상(준비중 새 관만) · 아이콘 · 대표 색('' = 없음) */
+  @ApiPropertyOptional({ enum: ['GOODS', 'ASSET', 'BIZ'] }) @IsOptional() @IsIn(['GOODS', 'ASSET', 'BIZ'], { message: '소개 대상은 GOODS · ASSET · BIZ 중 하나입니다.' }) introTarget?: string;
+  @ApiPropertyOptional({ enum: ['', ...GWAN_ICONS] }) @IsOptional() @IsIn(['', ...GWAN_ICONS], { message: '아이콘 이름이 목록에 없습니다.' }) icon?: string;
+  @ApiPropertyOptional({ enum: ['', ...GWAN_COLORS] }) @IsOptional() @IsIn(['', ...GWAN_COLORS], { message: '색 이름이 목록에 없습니다.' }) color?: string;
 }
 
 export class AdSlotDto {

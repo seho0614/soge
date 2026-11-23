@@ -5772,4 +5772,40 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "게시된 판이 없어 게시 상태로 둘 수 없습니다.": "There is no published version, so the page cannot be set to published.",
   "게시된 판은 고치거나 지울 수 없습니다 — 새 판을 게시하십시오.": "A published version cannot be edited or deleted — publish a new version.",
   "그림이 없습니다.": "The image was not found.",   // v10.653 (D312)
+  /* v10.656 ~ 659 (D313 · docs/794) 관 페이지 언어판 · 표 · 그림 정리 */
+  "사이트 언어 목록에 없는 말입니다.": "That language is not in the site language list.",
+  "이 관에 같은 주소 · 언어의 페이지가 있습니다.": "This section already has a page with the same address and language.",
+  "언어 코드는 영문 소문자 2자입니다.": "A language code is 2 lowercase letters.",
+  "페이지의 관 · 주소 · 언어는 만든 뒤 바꿀 수 없습니다 — 새 페이지를 만드십시오.": "A page's section, address and language cannot be changed after creation — create a new page.",
+  "한국어판을 먼저 만드십시오 — 언어판은 한국어판을 복사해 번역합니다.": "Create the Korean page first — a language version is made by copying and translating the Korean page.",
+  /* v10.660 ~ 667 (D314 · D315 · docs/795) 관 지우기 · 아이콘 · 예약 게시 · 번역 초안 · 미리보기 · 방문 수 */
+  "확인 글자에 관 코드를 그대로 넣으십시오.": "Type the section code exactly as the confirmation.",
+  "운영 화면에서 만들고 한 번도 열지 않은 준비중 관만 지울 수 있습니다.": "Only a section created in the admin console that has never been opened can be deleted.",
+  "처음 관의 소개 대상은 정하지 않습니다 · 새 관은 비울 수 없습니다.": "Original sections have no introduction target, and a new section's target cannot be empty.",
+  "한 번 연 관의 소개 대상은 바꿀 수 없습니다.": "The introduction target of a section that has been opened cannot be changed.",
+  "소개 대상은 GOODS · ASSET · BIZ 중 하나입니다.": "The introduction target must be GOODS, ASSET or BIZ.",
+  "아이콘 이름이 목록에 없습니다.": "That icon name is not in the list.",
+  "색 이름이 목록에 없습니다.": "That color name is not in the list.",
+  "예약 시각은 5분 뒤부터 90일 안이어야 합니다.": "The scheduled time must be between 5 minutes and 90 days from now.",
+  "예약 시각 모양이 맞지 않습니다.": "The scheduled time format is invalid.",
+  "한국어판은 번역하지 않습니다 — 언어판에서 누르십시오.": "The Korean page is not translated — use this on a language version.",
+  "한국어판이 없습니다.": "There is no Korean page.",
+  "AI 키가 없습니다 — 통합 현황 › 외부 연동 › 연동 키에서 넣으십시오.": "There is no AI key — add it under Integrations › External services › Keys.",
+  "번역이 끝나지 않았습니다(거절 또는 길이) — 직접 옮겨 주십시오.": "The translation did not finish (refused or too long) — please translate it manually.",
+  "열린 미리보기 링크는 페이지마다 5개까지입니다 — 쓰지 않는 링크를 끊으십시오.": "Up to 5 open preview links are allowed per page — revoke links you no longer use.",
+  "없거나 이미 끊긴 링크입니다.": "The link does not exist or has already been revoked.",
+  "미리보기 링크가 없거나 끝났습니다.": "The preview link does not exist or has expired.",
+  /* v10.672 ~ 674 (D316 · docs/797) 관 현황판 · 공통 조각 */
+  "없는 조각입니다.": "The fragment was not found.",
+  "같은 이름의 조각이 있습니다.": "A fragment with the same name already exists.",
+  "조각 이름을 넣으십시오.": "Enter a fragment name.",
+  /* v10.675 ~ 679 (D317 · docs/798) */
+  "되돌리는 사유를 2자 이상 적으십시오.": "Enter a reason of at least 2 characters for the rollback.",
+  "지금 게시된 판입니다.": "That is the version currently published.",
+  /* v10.680 ~ 684 (D318 · docs/799) */
+  "관 담당자는 운영 역할(ADMIN · SUPER)이 있는 계정만 됩니다.": "Section managers must be accounts with an admin role (ADMIN or SUPER).",
+  "계정 번호 모양이 맞지 않습니다.": "The account ID format is invalid.",
+  /* v10.690 ~ 694 (D320 · docs/801) */
+  "첫 화면은 누구나 보게만 둘 수 있습니다.": "The first screen can only be visible to everyone.",
+  "회원만 볼 수 있는 페이지입니다 — 로그인하십시오.": "This page is for members only — please log in.",
 };

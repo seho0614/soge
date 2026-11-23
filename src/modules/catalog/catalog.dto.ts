@@ -15,6 +15,8 @@ export class GwanDto {
   @ApiProperty() isActive!: boolean;
   @ApiProperty({ example: 1240, description: '노출 중인 매물 수' }) listingCount!: number;
   @ApiProperty({ description: '허브 관(소개하고 벌기 등 · 매물을 직접 갖지 않음) — v10.646' }) isHub!: boolean;
+  @ApiProperty({ nullable: true, description: 'v10.663 (D314) 아이콘 이름 — 없으면 기본 모양' }) icon!: string | null;
+  @ApiProperty({ nullable: true, description: 'v10.663 (D314) 대표 색 이름(sgb-tokens.css --sgb-<이름>)' }) color!: string | null;
 }
 
 export class CategoryDto {

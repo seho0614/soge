@@ -1,3 +1,4 @@
+import { gwanWeeklyJob } from '../modules/site/gwan-weekly';   // v10.694 관별 주간 보고
 import { opsBoardPost, sendResult } from '../modules/admin/ops-board.service';   // v10.286 (D213)
 import { nginxDenied, nginxListState, nginxWatcher, writeNginxRequest } from '../modules/identity/nginx-allow-script';   // v10.349 · 350 · 353 (docs/483 · 484 · 487)
 import { auditChainCheck, securityMonthlyStats, securityMonthlyText } from '../modules/admin/security-report';   // v10.354 · 356 (D235 · docs/488 · 490)
@@ -702,7 +703,8 @@ export class SchedulerService {
 
       case 'owner_todo_weekly': {
         const w = await this.ownerTodoWeekly();
-        affected = w.left; detail = w;
+        const gw = await gwanWeeklyJob(this.db, this.mail).catch((e) => ({ error: String((e as Error).message).slice(0, 200) }));   /* v10.694 (docs/801) 관별 주간 보고 — 같은 월요일 차례에 이어서 */
+        affected = w.left; detail = { ...w, gwanWeekly: gw };
         break;
       }
 

@@ -106,6 +106,20 @@ export class LaunchWatchService {
   }
 
   /** v10.344 (docs/478) — 하루 요약 「리드관 꺼짐」 또는 「리드관 어제 신청 n · 받을 업체 없음 m · 받을 업체 0곳 업종 k」 */
+  /** v10.683 (docs/799) 하루 요약 — 어제(한국 날짜) 새 매물 · 새 요청 · 관 페이지 방문이 많은 관 3곳(켠 관 · 허브 빼고 · 모두 0 이면 한 줄) */
+  async gwanDigestLines(): Promise<string[]> {
+    const Y = `((now() AT TIME ZONE 'Asia/Seoul')::date - 1)`;
+    const rows = await this.db.query<{ code: string; name: string; l: number; r: number; v: number }>(
+      `SELECT g.code, g.name,
+              (SELECT count(*)::int FROM listings x WHERE x.gwan_code = g.code AND (x.created_at AT TIME ZONE 'Asia/Seoul')::date = ${Y}) AS l,
+              (SELECT count(*)::int FROM requests x WHERE x.gwan_code = g.code AND (x.created_at AT TIME ZONE 'Asia/Seoul')::date = ${Y}) AS r,
+              (SELECT coalesce(sum(w.views), 0)::int FROM gwan_page_views w JOIN gwan_pages p ON p.id = w.page_id WHERE p.gwan_code = g.code AND w.day = ${Y}) AS v
+         FROM gwans g WHERE g.is_active AND NOT g.is_hub`);
+    const top = rows.filter((x) => x.l + x.r + x.v > 0).sort((a, b) => (b.l + b.r) - (a.l + a.r) || b.v - a.v).slice(0, 3);
+    if (!top.length) return ['관별 — 어제 새 매물 · 요청 · 관 페이지 방문 없음'];
+    return ['관별(어제 많은 순):', ...top.map((x) => `  - ${x.name}(${x.code}) 새 매물 ${x.l} · 새 요청 ${x.r} · 페이지 방문 ${x.v}`)];
+  }
+
   private async leadDigestLine(): Promise<string> {
     const [l] = await this.db.query<{ active: boolean; yday: number; noPartner: number; empty: number }>(
       `SELECT coalesce((SELECT is_active FROM gwans WHERE code = 'LED'), false) AS active,
@@ -215,6 +229,7 @@ export class LaunchWatchService {
       await this.serverErrorDigestLine().catch(() => '어제 서버 오류 — 읽지 못함'),   // v10.250 (D204 · docs/387)
       await this.inquiryDigestLine().catch(() => '1:1 문의 — 읽지 못함'),   // v10.337 (docs/470)
       await this.leadDigestLine().catch(() => '리드관 — 읽지 못함'),   // v10.344 (docs/478)
+      ...(await this.gwanDigestLines().catch(() => ['관별 숫자 — 읽지 못함'])),   // v10.683 (docs/799)
       '',
       '운영 화면 첫 화면 「공개 직후 지켜보기」에서 자세히 볼 수 있습니다.',
     ].join('\n');

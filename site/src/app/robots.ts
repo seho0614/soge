@@ -12,6 +12,7 @@ export const DISALLOW = [
   '/api/', '/my', '/login', '/signup/done', '/verify', '/contract', '/contracts', '/deal', '/chat', '/cart-count',
   '/partner', '/partners', '/repair-inbox', '/register', '/report', '/i/', '/r/', '/go/', '/ad/', '/ai/', '/search',
   '/request/new', '/community/write', '/safety/cases/new', '/health/cart', '/health/order', '/health/seller', '/consult', '/support/history', '/support/done', '/terms/agree',
+  '/preview/',   // v10.666 (D315) 관 페이지 미리보기 링크(게시 전 초안)
 ];
 
 export default async function robots(): Promise<MetadataRoute.Robots> {

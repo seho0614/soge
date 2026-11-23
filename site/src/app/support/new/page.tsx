@@ -28,7 +28,7 @@ const QUICK = [
   ['notice', '/community?board=NOTICE'], ['guide', '/guide'], ['terms', '/guide#terms'], ['account', '/my'],
 ] as const;
 
-export default async function NewInquiryPage({ searchParams }: { searchParams: Promise<{ type?: string; deal?: string; draft?: string }> }) {
+export default async function NewInquiryPage({ searchParams }: { searchParams: Promise<{ type?: string; deal?: string; draft?: string; gwan?: string; page?: string }> }) {
   const sp = await searchParams;
   const user = await me().catch(() => null);
   /* v10.139 (AI 상담 4단계 · docs/209) — ?draft= 면 본인 초안으로 칸을 채움(없음 · 만료 · 남의 것이면 빈 화면) · 제출은 회원이 */
@@ -103,7 +103,8 @@ export default async function NewInquiryPage({ searchParams }: { searchParams: P
         </aside>
       </div>
       <div id="cs-form" />
-      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={aiDraft?.category ?? sp.type} initialDeal={sp.deal} draft={aiDraft} faqs={hub} /></Msgs>
+      <Msgs ns={['forms']}><InquiryForm email={sum?.email ?? null} deals={deals} loggedIn={!!user} initialType={aiDraft?.category ?? sp.type} initialDeal={sp.deal} draft={aiDraft} faqs={hub}
+        source={/^[A-Z]{3,4}$/.test(sp.gwan ?? '') ? { gwan: sp.gwan!, page: /^(home|[a-z0-9][a-z0-9-]{1,39})$/.test(sp.page ?? '') ? sp.page : undefined } : undefined} /></Msgs>   {/* v10.681 관 페이지에서 온 문의 */}
     </div>
   );
 }

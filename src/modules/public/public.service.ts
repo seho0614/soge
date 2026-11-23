@@ -1,3 +1,4 @@
+import { MailService } from '../../common/mail/mail.service';   // v10.690
 import { checkOwnImages } from '../file/attach-images';
 import { storageFromEnv } from '../file/storage';
 import { contentDisposition } from '../file/sniff';
@@ -18,7 +19,8 @@ import { AgentDraftService } from '../agent/agent-draft.service';
  */
 @Injectable()
 export class PublicService {
-  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly drafts: AgentDraftService) {}
+  constructor(private readonly db: DatabaseService, private readonly i18n: I18nService, private readonly drafts: AgentDraftService,
+              private readonly mail: MailService) {}   // v10.690 (docs/801) 관 담당자 알림 메일
   private get me() { return RequestCtx.actorId()!; }
 
   /* 본인인증은 v10.141 부터 IdentityVerifyService(modules/identity · 표준창 · 옛 단추 STUB) */
@@ -95,7 +97,7 @@ export class PublicService {
    *   제목 · 본문 · 작성자는 내보내지 않음(주소와 바뀐 시각만) · 갈래마다 최근 바뀐 순 5,000개까지.
    */
   async sitemapEntries() {
-    const [listings, posts, products] = await Promise.all([
+    const [listings, posts, products, pages, gwans] = await Promise.all([
       this.db.query<{ id: string; gwan: string; at: Date }>(
         /* 관 코드는 박지 않고 gwans 에서(검정 ⑫) — 켜진 관 중 허브 제외 · 소개몰(HLT)은 매물 상세 화면이 없어 뺌 */
         `SELECT l.id, l.gwan_code AS gwan, l.updated_at AS at FROM listings l
@@ -106,8 +108,16 @@ export class PublicService {
         `SELECT id, updated_at AS at FROM posts WHERE state = 'PUBLISHED' AND board <> 'FOOD' ORDER BY updated_at DESC LIMIT 5000`),
       this.db.query<{ code: string; at: Date }>(
         `SELECT code, updated_at AS at FROM hlt_products WHERE status = 'ON_SALE' ORDER BY updated_at DESC LIMIT 5000`),
+      /* v10.658 (docs/794) 관 페이지(게시 · 한국어판 · 첫 화면 home 빼고) · 운영 화면에서 만든 새 관 첫 화면 — 켜진 관 · 허브 빼고 */
+      this.db.query<{ gwan: string; slug: string; at: Date }>(
+        `SELECT p.gwan_code AS gwan, p.slug, p.published_at AS at FROM gwan_pages p JOIN gwans g ON g.code = p.gwan_code AND g.is_active AND NOT g.is_hub
+          WHERE p.status = 'PUBLISHED' AND p.lang = 'ko' AND p.slug <> 'home' AND p.visibility = 'ALL' AND NOT p.noindex ORDER BY p.published_at DESC LIMIT 2000`),   /* v10.691 · 692 (D320) 회원만 · 검색엔진 끔은 뺌 */
+      this.db.query<{ code: string; at: Date | null }>(
+        `SELECT g.code, (SELECT max(p.published_at) FROM gwan_pages p WHERE p.gwan_code = g.code AND p.slug = 'home' AND p.status = 'PUBLISHED') AS at
+           FROM gwans g WHERE g.is_active AND NOT g.is_hub AND g.intro_target IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM gwan_pages h WHERE h.gwan_code = g.code AND h.slug = 'home' AND h.lang = 'ko' AND h.noindex) ORDER BY g.sort_order`),   /* v10.692 첫 화면 검색엔진 끔 */
     ]);
-    return { listings, posts, products };
+    return { listings, posts, products, pages, gwans };
   }
 
   /** FAQ 는 데이터입니다. 관리자가 바꿀 때 배포가 필요하면 안 됩니다 */
@@ -216,8 +226,29 @@ export class PublicService {
     return { stream, contentType: f.content_type, size: Number(f.size_bytes), disposition };
   }
 
+  /* v10.690 (docs/801) 관 담당자 알림 — 관 페이지 문의가 첫째 담당자에게 배정되면 운영 알림(INFO · 문의마다 한 번) · 메일이 준비됐으면 그 담당자 메일로도
+   *   알림 글에 회원 글은 제목만(80자) · 연락처 · 본문은 넣지 않음 */
+  private async notifyManager(inquiryId: string, gwan: string, page: string | null, title: string) {
+    const [m] = await this.db.query<{ name: string; email: string | null; gname: string }>(
+      `SELECT a.name, a.email::text AS email, g.name AS gname FROM inquiries i JOIN accounts a ON a.id = i.assignee_id JOIN gwans g ON g.code = $2 WHERE i.id = $1::uuid`, [inquiryId, gwan]);
+    if (!m) return;
+    const t = `관 페이지 문의 배정 — ${m.gname}(${gwan})${page ? ` › ${page === 'home' ? '첫 화면' : page}` : ''} · 담당 ${m.name} · 「${title.slice(0, 80)}」`;
+    let mailed = false;
+    if (m.email && (await this.mail.ready())) {
+      const r = await this.mail.send({ to: m.email, subject: `[소개뱅크] 담당 관 문의가 들어왔습니다 — ${m.gname}`,
+        text: `${t}\n\n운영 화면 › 고객센터 › 1:1 문의에서 답변해 주십시오.` });
+      mailed = !!r.ok;
+    }
+    await this.db.query(
+      `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at)
+       SELECT 'GWAN_INQUIRY_ASSIGNED', 'INFO', $1::text, $2::jsonb, clock_timestamp()
+        WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = 'GWAN_INQUIRY_ASSIGNED' AND a.detail->>'key' = $3::text) ON CONFLICT DO NOTHING`,
+      [t.slice(0, 200), JSON.stringify({ key: `inq:${inquiryId}`, inquiryId, gwan, page, manager: m.name, mailed }), `inq:${inquiryId}`]);
+  }
+
   async createInquiry(input: {
     category: string; title: string; body: string; email?: string; dealId?: string; channel?: string; attachmentKeys?: string[]; agentDraftId?: string;
+    sourceGwan?: string; sourcePage?: string;   // v10.681 (D318)
   }) {
     const me = RequestCtx.actorId();
     /* 첨부는 로그인한 사람이 올린 READY 파일만(남의 파일 id 를 붙이지 못하게) */
@@ -233,13 +264,18 @@ export class PublicService {
         [input.dealId, me]) : [];
       if (!d) throw new Forbidden('NOT_A_PARTY', '내가 참여한 거래만 고를 수 있습니다.');
     }
+    /* v10.681 (D318 · docs/799) 관 페이지에서 온 문의 — 켠 관이면 출처를 붙이고 그 관 첫째 담당자를 처음 담당으로(없으면 그대로) · 꺼진 · 없는 관은 출처 없이 접수 */
+    const [src] = input.sourceGwan ? await this.db.query<{ code: string; mgr: string | null }>(
+      `SELECT g.code, (SELECT m.account_id FROM gwan_managers m WHERE m.gwan_code = g.code ORDER BY m.sort_order LIMIT 1) AS mgr FROM gwans g WHERE g.code = $1 AND g.is_active`, [input.sourceGwan]) : [];
     const [row] = await this.db.query<{ id: string; status: string; createdAt: Date; category: string }>(
-      `INSERT INTO inquiries (account_id, category, title, body, email, status, deal_id, channel, attachment_keys)
-       VALUES ($1,$2,$3,$4,$5,'OPEN',$6,$7,$8) RETURNING id, status, created_at AS "createdAt", category`,
-      [me ?? null, input.category, input.title, input.body, input.email ?? null, input.dealId ?? null, input.channel ?? 'FORM', files]);
+      `INSERT INTO inquiries (account_id, category, title, body, email, status, deal_id, channel, attachment_keys, source_gwan, source_page, assignee_id)
+       VALUES ($1,$2,$3,$4,$5,'OPEN',$6,$7,$8,$9,$10,$11) RETURNING id, status, created_at AS "createdAt", category`,
+      [me ?? null, input.category, input.title, input.body, input.email ?? null, input.dealId ?? null, input.channel ?? 'FORM', files,
+       src?.code ?? null, src ? input.sourcePage ?? null : null, src?.mgr ?? null]);
     /* 시안 접수 완료 화면(SB-HOM-ETC-031): 접수번호 · 유형 · 답변 예정 시각(영업일 1일 — 주말이면 다음 월요일) */
     const [meta] = await this.db.query<{ label: string | null }>(
       `SELECT label FROM code_labels WHERE domain = 'inquiry.category' AND code = $1`, [row.category]);
+    if (src?.mgr) void this.notifyManager(row.id, src.code, input.sourcePage ?? null, input.title).catch(() => undefined);   // v10.690 담당자 알림(응답을 기다리게 하지 않음)
     await this.drafts.markSubmitted(input.agentDraftId, 'INQUIRY', row.id);   // v10.139 — AI 초안으로 낸 문의(숫자용 · 실패해도 접수는 그대로)
     /* v10.206 (D183) — 영업일은 DB 가 셈(토 · 일 · 공휴일 표 public_holidays 를 건너뜀 · 전에는 여기서 주말만) */
     const [due] = await this.db.query<{ at: Date }>(`SELECT fn_business_day_after($1::timestamptz) AS at`, [row.createdAt]);

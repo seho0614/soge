@@ -275,7 +275,8 @@
     "GET /search",
     "POST /search/log",
     "GET /search/keywords",
-    "POST /me/saved-searches"
+    "POST /me/saved-searches",
+    "GET /gwan-pages/search"
    ],
    "nav": "SB-HOM-MAIN-010"
   },
@@ -722,7 +723,8 @@
     "GET /listings",
     "GET /gwans/{code}/pages",
     "GET /gwans/{code}/pages/{slug}",
-    "GET /site/page-images/{id}"
+    "GET /site/page-images/{id}",
+    "POST /gwans/{code}/pages/{slug}/view"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "2026-11-24 v10.646 · v10.652 (D309 · D311 · docs/791 · 793) — 게시된 첫 화면(home) 블록이 있으면 그것을, 없으면 제목 + 매물 목록"
@@ -741,10 +743,29 @@
     "GET /gwans/{code}/pages",
     "GET /gwans/{code}/pages/{slug}",
     "GET /listings",
-    "GET /site/page-images/{id}"
+    "GET /site/page-images/{id}",
+    "POST /gwans/{code}/pages/{slug}/view"
    ],
    "nav": "SB-HOM-GWN-010",
    "note": "2026-11-24 v10.652 (D311 · docs/793) — 관 안 페이지(이용 안내 · 소개 등) · 처음 관은 /money/info/{slug} 등(소개몰 /health/p 는 상품이라 겹치지 않게 info)"
+  },
+  {
+   "id": "SB-HOM-GWN-030",
+   "name": "관 페이지 미리보기",
+   "group": "HOM",
+   "url": "/preview/page/{token}",
+   "p": "P2",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /gwan-pages/preview/{token}",
+    "GET /listings",
+    "GET /site/page-images/{id}"
+   ],
+   "nav": "SB-HOM-MAIN-010",
+   "note": "2026-11-24 v10.666 (D315 · docs/795) — 운영 화면에서 만든 미리보기 링크(처음 24시간 · 최대 72) · 게시 전 초안 · 검색엔진 막음(noindex · robots /preview/)"
   },
   {
    "id": "SB-MAL-MAIN-010",
@@ -1340,7 +1361,8 @@
     "POST /admin/maintenance/clear",
     "GET /admin/apply-checks",
     "POST /admin/apply-checks",
-    "POST /admin/apply-checks/{id}/mark"
+    "POST /admin/apply-checks/{id}/mark",
+    "GET /admin/my-gwans"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": " · v10.344 고객센터 한눈에(docs/478) · v10.352 고객센터 주간 보고 미리 보기(docs/486) · v10.357 · 360 자동 로그아웃 · 비밀번호 나이(docs/491 · 494) · v10.364 오늘 할 일(docs/498) · v10.371 (D239 · docs/506) 사이트 점검 예약 · v10.374 (D240 · docs/509) 운영 적용 확인표"
@@ -1574,7 +1596,9 @@
     "GET /admin/gwans",
     "GET /admin/gwans/{code}",
     "GET /admin/gwans/{code}/open-check",
-    "POST /admin/gwans/{code}/open"
+    "POST /admin/gwans/{code}/open",
+    "GET /site-settings/public",
+    "PATCH /admin/site-settings"
    ],
    "nav": "SB-ADM-DSH-010"
   },
@@ -1617,7 +1641,11 @@
     "PATCH /admin/gwan-pages/{id}",
     "POST /admin/gwan-pages/{id}/publish",
     "POST /admin/gwan-pages/{id}/hide",
-    "POST /admin/gwan-pages/{id}/restore"
+    "POST /admin/gwan-pages/{id}/restore",
+    "DELETE /admin/gwans/{code}",
+    "GET /admin/gwans/{code}/stats",
+    "GET /admin/gwans/{code}/managers",
+    "PUT /admin/gwans/{code}/managers"
    ],
    "nav": "SB-ADM-SIT-010"
   },
@@ -1698,10 +1726,27 @@
     "POST /admin/gwan-pages/{id}/restore",
     "POST /files",
     "POST /files/{id}/complete",
-    "GET /admin/gwan-pages/{id}/versions/{version}"
+    "GET /admin/gwan-pages/{id}/versions/{version}",
+    "GET /admin/gwan-pages/images/unused",
+    "POST /admin/gwan-pages/images/purge",
+    "GET /admin/i18n/langs",
+    "POST /admin/gwan-pages/{id}/schedule",
+    "POST /admin/gwan-pages/{id}/translate",
+    "POST /admin/gwan-pages/{id}/previews",
+    "DELETE /admin/gwan-pages/{id}/previews/{token}",
+    "GET /admin/gwan-pages/{id}/views",
+    "GET /admin/gwan-fragments",
+    "POST /admin/gwan-fragments",
+    "GET /admin/gwan-fragments/{id}",
+    "PATCH /admin/gwan-fragments/{id}",
+    "DELETE /admin/gwan-fragments/{id}",
+    "POST /admin/gwan-fragments/{id}/republish",
+    "POST /admin/gwan-pages/{id}/rollback",
+    "GET /admin/gwan-pages/{id}/draft-log",
+    "GET /admin/faqs"
    ],
    "nav": "SB-ADM-SIT-010",
-   "note": "2026-11-24 v10.651 (D311 · docs/793) — 초안 ADMIN · SUPER · 게시 · 숨김 SUPER · 판 기록 · 예전 판으로 초안"
+   "note": "2026-11-24 v10.651 (D311 · docs/793) — 초안 ADMIN · SUPER · 게시 · 숨김 SUPER · 판 기록 · 예전 판으로 초안 · v10.661 ~ 667 (D315 · docs/795) 예약 게시 SUPER · 번역 초안 채우기 · 동영상 · 방문 수 · 틀 · 미리보기 링크 · v10.673 · 674 (D316 · docs/797) 블록 끌어 놓기 · 공통 조각"
   },
   {
    "id": "SB-ADM-SIT-070",

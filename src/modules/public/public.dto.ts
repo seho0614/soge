@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class IdentityVerifyDto {
   @ApiPropertyOptional({ enum: ['PASS', 'IPIN'], default: 'PASS' })
@@ -46,6 +46,9 @@ export class CreateInquiryDto {
   @ApiPropertyOptional({ type: [String], maxItems: 3 }) @IsOptional() @IsArray() @ArrayMaxSize(3) @IsString({ each: true }) attachmentKeys?: string[];
   /* v10.139 (D135) — AI 상담 초안으로 채운 화면에서 낸 문의면 그 초안 번호(본인 초안이면 「제출됨」만 적음 · 접수 검사는 그대로) */
   @ApiPropertyOptional({ format: 'uuid', description: 'AI 상담 신청서 초안 번호(v10.139)' }) @IsOptional() @IsUUID('all') agentDraftId?: string;
+  /* v10.681 (D318 · docs/799) 관 페이지 「문의 받기」 블록에서 온 문의 — 관 코드 · 페이지 주소(켠 관만 · 아니면 붙이지 않음) */
+  @ApiPropertyOptional({ example: 'EDU', description: '관 페이지에서 온 문의의 관 코드(v10.681)' }) @IsOptional() @Matches(/^[A-Z]{3,4}$/) sourceGwan?: string;
+  @ApiPropertyOptional({ example: 'guide', description: '관 페이지 주소(v10.681)' }) @IsOptional() @Matches(/^(home|[a-z0-9][a-z0-9-]{1,39})$/) sourcePage?: string;
 }
 
 export class FaqDto {

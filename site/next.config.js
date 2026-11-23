@@ -5,7 +5,8 @@ const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 const CSP_REPORT_ONLY = [
   "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:", "media-src 'self' blob: https:", "font-src 'self' data:",
-  "connect-src 'self'", "frame-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+  "connect-src 'self'", "frame-src 'self' https://www.youtube-nocookie.com",   /* v10.664 관 페이지 동영상 블록(유튜브 개인정보 보호 주소) */
+  "object-src 'none'", "base-uri 'self'", "form-action 'self'",
   'report-uri /api/v1/csp-report',
 ].join('; ');
 
