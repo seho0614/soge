@@ -1404,6 +1404,7 @@
    "gates": [],
    "apis": [
     "GET /admin/categories",
+    "POST /admin/categories",
     "PATCH /admin/categories/{id}"
    ],
    "nav": "SB-ADM-DSH-010",

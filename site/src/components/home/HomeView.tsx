@@ -122,7 +122,9 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
         </div>
       </section>
 
-      {/* v10.49 (D103 · docs/101) — 상단 배너(히어로) 바로 아래 「오늘의 날씨」 한 줄 */}
+      {/* v10.644 (docs/788) 대표 11/23 「나를 위한 소개 띠를 오늘의 날씨 위로」 — 히어로 바로 아래 */}
+      <ForMe loggedIn={loggedIn} summary={summary} />
+      {/* v10.49 (D103 · docs/101) — 「오늘의 날씨」 한 줄(v10.644 부터 「나를 위한 소개」 아래) */}
       {weather?.available && <Weather w={weather} />}
       <Today c={c} />
       <Needs live={live} />
@@ -132,7 +134,6 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
       <Town c={c} />
       {on('MAL') && <Trust c={c} />}
       {on('BIZ') && <Startup c={c} />}
-      <ForMe loggedIn={loggedIn} summary={summary} />
       <Core />
 
       <DemoBar ops={isOps(summary?.principal?.roles)} />

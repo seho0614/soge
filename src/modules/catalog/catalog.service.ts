@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../db/database.service';
-import { StateConflict } from '../../core/errors';
+import { PolicyViolation, StateConflict } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { I18nService } from '../i18n/i18n.service';
 
@@ -41,12 +41,43 @@ export class CatalogService {
       `SELECT c.id, c.gwan_code AS "gwanCode", c.code, c.name, c.status,
               c.labor_law_flag AS "laborLawFlag", c.restricted_code AS "restrictedCode",
               c.fee_bearer AS "feeBearer", coalesce(cg.grade_code,'G3') AS "gradeCode",
-              (SELECT count(*)::int FROM listings l WHERE l.category_id = c.id) AS "listingCount"
+              (SELECT count(*)::int FROM listings l WHERE l.category_id = c.id) AS "listingCount",
+              c.requested_by AS "requestedBy", ra.name AS "requestedByName", c.axis   /* v10.643 (D308) */
          FROM categories c
+         LEFT JOIN accounts ra ON ra.id = c.requested_by
          LEFT JOIN LATERAL (
            SELECT grade_code FROM category_grades g WHERE g.category_id = c.id
             ORDER BY g.effective_from DESC LIMIT 1) cg ON true
         ORDER BY c.status, c.gwan_code, c.name`);
+  }
+
+  /**
+   * v10.643 (D308 · docs/787) 새 업종 — 「승인 대기」로 만듦 · 만든 사람(requested_by)은 승인 못 함(DB) ·
+   * 허브 관 · 소개리드는 DB 가 막음(CATEGORY_GWAN_NOT_ALLOWED) · 등급은 G3 로 시작(승인 칸에서 바꿈)
+   */
+  async createCategory(dto: {
+    gwanCode: string; code: string; name: string; laborLawFlag: string; laborLawMemo?: string;
+    feeBearer?: string; axis?: string; restrictedCode?: string;
+  }) {
+    const [g] = await this.db.query<{ code: string }>(`SELECT code FROM gwans WHERE code = $1`, [dto.gwanCode]);
+    if (!g) throw new PolicyViolation('CATEGORY_GWAN_UNKNOWN', '없는 관입니다.');
+    if (dto.gwanCode === 'MAL' && !dto.axis) throw new PolicyViolation('CATEGORY_AXIS_REQUIRED', '안심소개 업종은 축(기계 · 설비 / 부동산 / 태양광 / 상담)을 골라야 합니다.');
+    if (dto.gwanCode !== 'MAL' && dto.axis) throw new PolicyViolation('CATEGORY_AXIS_REQUIRED', '축은 안심소개(MAL) 업종에만 고릅니다.');
+    if (dto.restrictedCode) {
+      const [r] = await this.db.query(`SELECT code FROM restricted_industries WHERE code = $1`, [dto.restrictedCode]);
+      if (!r) throw new PolicyViolation('CATEGORY_RESTRICTED_UNKNOWN', '없는 제한업종 코드입니다.');
+    }
+    const [dup] = await this.db.query(`SELECT id FROM categories WHERE gwan_code = $1 AND code = $2`, [dto.gwanCode, dto.code]);
+    if (dup) throw new StateConflict('CATEGORY_EXISTS', '같은 관에 같은 업종 코드가 있습니다.');
+    const actor = RequestCtx.actorId() ?? null;
+    const [row] = await this.db.query(
+      `INSERT INTO categories (gwan_code, code, name, status, labor_law_flag, labor_law_memo, labor_law_checked_by, labor_law_checked_at,
+                               fee_bearer, axis, restricted_code, requested_by)
+       VALUES ($1, $2, $3, 'PENDING', $4, $5, $9, now(), $6, $7, $8, $9)
+       RETURNING id, gwan_code AS "gwanCode", code, name, status, labor_law_flag AS "laborLawFlag"`,
+      [dto.gwanCode, dto.code, dto.name.trim(), dto.laborLawFlag, dto.laborLawMemo ?? null,
+       dto.feeBearer ?? null, dto.axis ?? null, dto.restrictedCode ?? null, actor]);
+    return row;
   }
 
   /** A-14 판정은 DB 트리거가 강제합니다. 여기서 다시 검사하지 않습니다. */
@@ -61,11 +92,13 @@ export class CatalogService {
                 labor_law_checked_at = now(),
                 fee_bearer = coalesce($5, fee_bearer),
                 restricted_code = coalesce($6, restricted_code),
-                approved_at = CASE WHEN $2 = 'APPROVED' THEN now() ELSE approved_at END
+                approved_at = CASE WHEN $2 = 'APPROVED' THEN now() ELSE approved_at END,
+                approved_by = CASE WHEN $2 = 'APPROVED' THEN $7::uuid ELSE approved_by END,   /* v10.643 (D308) 만든 사람 ≠ 승인한 사람(DB) */
+                updated_at = now()
           WHERE id = $1
         RETURNING id, code, name, status, labor_law_flag AS "laborLawFlag"`,
         [id, dto.status, dto.laborLawFlag, dto.laborLawMemo ?? null,
-         dto.feeBearer ?? null, dto.restrictedCode ?? null]);
+         dto.feeBearer ?? null, dto.restrictedCode ?? null, RequestCtx.actorId() ?? null]);
       if (!row) throw new StateConflict('NOT_FOUND', '업종을 찾을 수 없습니다.');
 
       if (dto.gradeCode) {

@@ -5,7 +5,7 @@ import { useAct, n, ymd } from '../../../lib/act';
 import { ErrorView } from '../../../components/ErrorView';
 import { Flash } from '../../../components/Flash';
 import { SubTabs, type SubTab } from '../../../components/SubTabs';
-import type { Gwan, Manage, STab } from './shared';
+import { categoryCheck, type Gwan, type Manage, type STab } from './shared';
 
 const STABS: SubTab<STab>[] = [
   { key: 'basic', label: '기본 정보', screen: 'SB-ADM-SIT-030' },
@@ -63,7 +63,7 @@ export function GwanSettings({ code, created, onPick, onGo, initialTab }: {
   }
 
   const checks: Array<[string, boolean, string]> = [
-    ['업종 1종 이상 승인', g.categories > 0, `${g.categories}종 승인됨`],
+    ['업종 1종 이상 승인', ...categoryCheck(g)],   // v10.642 (docs/786) 허브 · 리드관
     ['설명 입력', !!g.description, g.description ? '입력됨' : '비어 있음 — 메인 카드가 빕니다'],
     ['검수 대기 없음', g.reviewPending === 0, `대기 ${g.reviewPending}건`],
     ['공개 상태', g.isActive, g.isActive ? '운영중' : '준비중'],
@@ -203,7 +203,9 @@ export function GwanSettings({ code, created, onPick, onGo, initialTab }: {
 
       {tab === 'category' && (
         <div className="card pad">
-          <p>승인된 업종 <b>{g.categories}</b>종 {g.categories === 0 && <b className="warn-text">— 이 상태로는 열 수 없습니다</b>}</p>
+          {g.isHub || g.consultCategories != null
+            ? <p data-cat-basis={g.isHub ? 'hub' : 'consult'}>{categoryCheck(g)[1]}</p>   /* v10.642 (docs/786) */
+            : <p>승인된 업종 <b>{g.categories}</b>종 {g.categories === 0 && <b className="warn-text">— 이 상태로는 열 수 없습니다</b>}</p>}
           {onGo && <button className="btn-plain" onClick={() => onGo('category')}>업종 승인 화면으로</button>}
           <p className="hint">카테고리가 등급을 결정합니다 (A-11). 업종은 관에 종속되고 관마다 다릅니다.</p>
         </div>

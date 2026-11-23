@@ -15,6 +15,11 @@ export class GwanAdminDto {
   @ApiProperty({ description: '노출 중인 매물' }) publishedListings!: number;
   @ApiProperty({ description: '승인된 업종' }) categories!: number;
   @ApiProperty({ description: '검수 대기' }) reviewPending!: number;
+  /* v10.642 (docs/786) 오픈 점검 — 허브 · 리드관 */
+  @ApiProperty({ description: '허브 관인지(업종을 직접 갖지 않음)' }) isHub!: boolean;
+  @ApiProperty({ description: '하위 관 수' }) childGwans!: number;
+  @ApiProperty({ description: '하위 관의 승인된 업종' }) childCategories!: number;
+  @ApiProperty({ nullable: true, description: '리드관(LED)만 — 안심소개 상담 축(MAL · CONSULT) 승인 업종 · 다른 관은 null' }) consultCategories!: number | null;
 }
 
 export class CreateGwanDto {

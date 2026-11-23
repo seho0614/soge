@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CodeService } from './code.service';
 import { CatalogService } from './catalog.service';
 import {
-  AdminCategoryDto, ApproveCategoryDto, CategoryDto, CodeBundleDto,
+  AdminCategoryDto, ApproveCategoryDto, CategoryDto, CodeBundleDto, CreateCategoryDto,
   FooterLinkDto, GwanDto, PolicyBundleDto, RestrictedIndustryDto,
   UpdateAutoReviewDto, UpdateRestrictionDto,
 } from './catalog.dto';
@@ -66,6 +66,22 @@ export class CatalogController {
   @ApiOkResponse({ type: AdminCategoryDto, isArray: true })
   adminCategories() { return this.catalog.adminCategories(); }
 
+  @Post('admin/categories')
+  @ApiBearerAuth() @Roles('ADMIN','SUPER')
+  @ApiOperation({
+    summary: '새 업종 추가(승인 대기)',
+    description:
+      'v10.643 (D308 · docs/787) **「승인 대기」로 만듭니다 — 만든 사람은 승인할 수 없고 다른 관리자가 승인합니다(DB).** ' +
+      '허브 관 · 소개리드(LED)는 안 됩니다. 관은 만든 뒤 바꿀 수 없습니다. 안심소개(MAL)는 축을 꼭 고릅니다.',
+  })
+  @ApiOkResponse({ type: AdminCategoryDto })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'CATEGORY_EXISTS — 같은 관에 같은 코드' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CATEGORY_GWAN_NOT_ALLOWED · CATEGORY_GWAN_UNKNOWN · CATEGORY_AXIS_REQUIRED · CATEGORY_RESTRICTED_UNKNOWN' })
+  @Audit('CATEGORY_CREATE', 'CATEGORY')
+  createCategory(@Body() dto: CreateCategoryDto) {
+    return this.catalog.createCategory(dto);
+  }
+
   @Patch('admin/categories/:id')
   @ApiBearerAuth() @Roles('ADMIN','SUPER')
   @ApiOperation({
@@ -78,7 +94,7 @@ export class CatalogController {
   @ApiOkResponse({ type: AdminCategoryDto })
   @ApiResponse({
     status: 422, type: ErrorDto,
-    description: 'LABOR_LAW_CHECK_REQUIRED — 판정 누락 또는 등록 대상 업종',
+    description: 'LABOR_LAW_CHECK_REQUIRED — 판정 누락 또는 등록 대상 업종 · CATEGORY_SAME_PERSON — 만든 사람이 승인(v10.643)',
   })
   @Audit('CATEGORY_DECIDE', 'CATEGORY')
   approveCategory(@Param('id') id: string, @Body() dto: ApproveCategoryDto) {

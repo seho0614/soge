@@ -214,9 +214,13 @@ export class AdminV31Service {
     const [g] = await this.db.query<any>(`SELECT code, name, is_active AS "isActive", is_hub AS "isHub" FROM gwans WHERE code = $1`, [code]);
     if (!g) throw new NotFound('없는 관입니다.');
     const [r] = await this.db.query<Record<string, string>>(
-      `SELECT (SELECT count(*) FROM categories WHERE gwan_code = $1 AND status = 'APPROVED') AS cats,
-              (SELECT count(*) FROM categories WHERE gwan_code = $1 AND status = 'APPROVED' AND fee_bearer IS NULL) AS no_bearer,
-              (SELECT string_agg(DISTINCT fee_bearer, ' · ') FROM categories WHERE gwan_code = $1 AND status = 'APPROVED' AND fee_bearer IS NOT NULL) AS bearers,
+      /* v10.642 (docs/786) 리드관(LED)은 안심소개 상담 축(MAL · CONSULT) 업종으로 셈(fn_gwan_open_guard 와 같음) · 허브 관은 아래에서 해당 없음 */
+      `WITH cat AS (SELECT * FROM categories WHERE status = 'APPROVED' AND (gwan_code = $1 OR ($1 = 'LED' AND gwan_code = 'MAL' AND axis = 'CONSULT')))
+       SELECT (SELECT count(*) FROM cat) AS cats,
+              (SELECT count(*) FROM cat WHERE fee_bearer IS NULL) AS no_bearer,
+              (SELECT string_agg(DISTINCT fee_bearer, ' · ') FROM cat WHERE fee_bearer IS NOT NULL) AS bearers,
+              (SELECT count(*) FROM gwans WHERE parent_code = $1) AS child_gwans,
+              (SELECT count(*) FROM categories c JOIN gwans cg ON cg.code = c.gwan_code WHERE cg.parent_code = $1 AND c.status = 'APPROVED') AS child_cats,
               (SELECT count(*) FROM site_settings WHERE key LIKE 'footer.%' AND is_required_for_open AND coalesce(btrim(value), '') = '') AS legal_empty,
               (SELECT count(*) FROM v_open_blockers WHERE kind = 'SETTING' AND item LIKE 'footer.%') AS legal_bad,
               (SELECT value FROM site_settings WHERE key = 'footer.biz_reg_no') AS biz_no,
@@ -227,10 +231,15 @@ export class AdminV31Service {
               (SELECT count(DISTINCT r.account_id) FROM account_roles r JOIN accounts a ON a.id = r.account_id
                 WHERE r.role IN ('REVIEWER') AND a.status = 'ACTIVE') AS reviewers`, [code]);
     const n = (k: string) => Number(r[k] ?? 0);
+    const hub = !!g.isHub, lead = g.code === 'LED';   // v10.642 (docs/786)
+    const hubNote = `해당 없음 — 허브 관(하위 관 ${n('child_gwans')}곳 · 승인 업종 ${n('child_cats')}종)`;
     const checks = [
-      { key: 'CATEGORY', label: '업종 1종 이상 승인', ok: n('cats') > 0, detail: `${n('cats')}종 승인됨`, go: 'category' },
-      { key: 'FEE_BEARER', label: '소개비 부담 주체 지정', ok: n('cats') > 0 && n('no_bearer') === 0,
-        detail: n('no_bearer') ? `부담 주체가 비어 있는 업종 ${n('no_bearer')}종` : (r.bearers ?? '—'), go: 'category' },
+      hub ? { key: 'CATEGORY', label: '업종 1종 이상 승인', ok: true, detail: hubNote, go: null }
+          : { key: 'CATEGORY', label: '업종 1종 이상 승인', ok: n('cats') > 0,
+              detail: lead ? `상담 업종 ${n('cats')}종(안심소개 상담 축)` : `${n('cats')}종 승인됨`, go: 'category' },
+      hub ? { key: 'FEE_BEARER', label: '소개비 부담 주체 지정', ok: true, detail: '해당 없음 — 허브 관', go: null }
+          : { key: 'FEE_BEARER', label: '소개비 부담 주체 지정', ok: n('cats') > 0 && n('no_bearer') === 0,
+              detail: n('no_bearer') ? `부담 주체가 비어 있는 업종 ${n('no_bearer')}종` : (r.bearers ?? '—'), go: 'category' },
       { key: 'GATE', label: '인증 게이트 지정', ok: true, detail: '등록 · 1:1 문의 시작 시 — 서버 게이트(본인인증 · 사업자 인증)', go: null },
       { key: 'LEGAL', label: '사이트 기본 정보 · 법정 고지', ok: n('legal_empty') === 0 && n('legal_bad') === 0,
         detail: n('legal_empty') || n('legal_bad') ? `비었거나 형식이 틀린 항목 ${n('legal_empty') + n('legal_bad')}개` : `채워졌습니다 — ${r.biz_no ?? ''} · ${r.mail_no ?? ''}`, go: 'siteinfo' },

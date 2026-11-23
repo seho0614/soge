@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
 
 /* ★ 관을 늘릴 때 **여기도 고쳐야 합니다.** 건강상품관을 만들었을 때
  *   이 배열을 놓쳐, DB 에는 있는데 API 가 "허용되지 않은 값" 으로
@@ -43,6 +43,10 @@ export class AdminCategoryDto extends CategoryDto {
   laborLawFlag!: string | null;
   @ApiProperty({ nullable: true, description: '제한업종 코드' }) restrictedCode!: string | null;
   @ApiProperty({ example: 32, description: '이 업종의 매물 수' }) listingCount!: number;
+  /* v10.643 (D308) 누가 만들었는지 — 만든 사람은 승인 못 함 */
+  @ApiPropertyOptional({ nullable: true, format: 'uuid', description: '만든 관리자(운영 화면에서 만든 업종만 · 옛 업종은 null)' }) requestedBy?: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '만든 관리자 이름' }) requestedByName?: string | null;
+  @ApiPropertyOptional({ nullable: true, description: '안심소개(MAL) 축' }) axis?: string | null;
 }
 
 export class ApproveCategoryDto {
@@ -58,13 +62,40 @@ export class ApproveCategoryDto {
   @ApiPropertyOptional({ description: '판정 근거 메모' })
   @IsOptional() @IsString() laborLawMemo?: string;
 
-  @ApiPropertyOptional({ enum: ['BUYER','SELLER','NEGOTIABLE'] })
-  @IsOptional() @IsString() feeBearer?: string;
+  @ApiPropertyOptional({ enum: ['BUYER','SELLER','NEGOTIABLE'], description: 'v10.643 승인 칸에서 고름 — 비우면 그대로' })
+  @IsOptional() @IsIn(['BUYER','SELLER','NEGOTIABLE']) feeBearer?: string;
 
   @ApiPropertyOptional({ enum: ['G1','G2','G3'] })
   @IsOptional() @IsString() gradeCode?: string;
 
   @ApiPropertyOptional({ description: '제한업종에 연결할 경우' })
+  @IsOptional() @IsString() restrictedCode?: string;
+}
+
+/** v10.643 (D308 · docs/787) 새 업종 — 「승인 대기」로 만들고 다른 관리자가 승인 · 관은 만든 뒤 바꿀 수 없음 */
+export class CreateCategoryDto {
+  @ApiProperty({ example: 'MNY', description: '관 코드(대문자 3자) — 허브 관 · 소개리드(LED)는 안 됨(422 CATEGORY_GWAN_NOT_ALLOWED)' })
+  @Matches(/^[A-Z]{3}$/) gwanCode!: string;
+
+  @ApiProperty({ example: 'MNY_CLEANING', description: '업종 코드 — 대문자 · 숫자 · 밑줄 3 ~ 40자 · 같은 관 안에서 하나(409 CATEGORY_EXISTS)' })
+  @Matches(/^[A-Z][A-Z0-9_]{2,39}$/) code!: string;
+
+  @ApiProperty({ example: '청소', minLength: 1, maxLength: 40 })
+  @IsString() @Length(1, 40) name!: string;
+
+  @ApiProperty({ enum: LABOR, description: '직업안정법 판정 — APPLICABLE(등록 대상)은 만들 수는 있지만 승인할 수 없음' })
+  @IsIn(LABOR) laborLawFlag!: string;
+
+  @ApiPropertyOptional({ description: '판정 근거 메모', maxLength: 500 })
+  @IsOptional() @IsString() @Length(0, 500) laborLawMemo?: string;
+
+  @ApiPropertyOptional({ enum: ['BUYER','SELLER','NEGOTIABLE'], description: '소개비 부담 주체(오픈 점검 「부담 주체 지정」)' })
+  @IsOptional() @IsIn(['BUYER','SELLER','NEGOTIABLE']) feeBearer?: string;
+
+  @ApiPropertyOptional({ enum: ['EQUIP','RE','SOLAR','CONSULT'], description: '안심소개(MAL) 축 — MAL 이면 꼭(422 CATEGORY_AXIS_REQUIRED) · 다른 관은 비움' })
+  @IsOptional() @IsIn(['EQUIP','RE','SOLAR','CONSULT']) axis?: string;
+
+  @ApiPropertyOptional({ description: '제한업종 코드(정책 › 제한업종에 있는 것)' })
   @IsOptional() @IsString() restrictedCode?: string;
 }
 

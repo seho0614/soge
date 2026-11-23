@@ -28,7 +28,14 @@ export class SiteService {
                 WHERE r.gwan_code = g.code AND r.status IN ('QUEUED','IN_PROGRESS'))
                 AS "reviewPending",
               /* v10.31 — 시안 「상위」 열 */
-              g.parent_code AS "parentCode", pg.name AS "parentName", g.is_hub AS "isHub"
+              g.parent_code AS "parentCode", pg.name AS "parentName", g.is_hub AS "isHub",
+              /* v10.642 (docs/786) 오픈 점검 — 허브 관은 업종을 직접 갖지 않음(하위 관 수 · 하위 관 승인 업종) ·
+                 리드관(LED)은 안심소개 상담 축(MAL · CONSULT) 업종을 씀(fn_gwan_open_guard · updateGwan 과 같은 기준) */
+              (SELECT count(*)::int FROM gwans cg WHERE cg.parent_code = g.code) AS "childGwans",
+              (SELECT count(*)::int FROM categories c JOIN gwans cg ON cg.code = c.gwan_code
+                WHERE cg.parent_code = g.code AND c.status='APPROVED') AS "childCategories",
+              CASE WHEN g.code = 'LED' THEN (SELECT count(*)::int FROM categories c
+                WHERE c.gwan_code='MAL' AND c.axis='CONSULT' AND c.status='APPROVED') END AS "consultCategories"
          FROM gwans g LEFT JOIN gwans pg ON pg.code = g.parent_code ORDER BY g.sort_order`);
   }
 

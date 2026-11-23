@@ -5742,4 +5742,12 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "인건비 계획은 지우지 않습니다(보관).": "Labor cost plans are not deleted (archived).",
   "이 탭을 볼 권한이 없어 도움말을 보이지 않습니다 — 권한은 SUPER 에게 요청하십시오.": "You do not have permission to view this tab, so its help is hidden — ask a SUPER for access.",
   "GROUPS 로 바꿀 수 없습니다 — 역할 이름으로 막는 곳 중 권한그룹과 맞추지 않은 곳 {0}개(docs/757 3절).": "Cannot switch to GROUPS — {0} role-name checks are not yet aligned with permission groups (docs/757 section 3).",
+  /* v10.643 (D308 · docs/787) 새 업종 추가 · 다른 관리자 승인 */
+  "같은 관에 같은 업종 코드가 있습니다.": "This section already has a business type with the same code.",
+  "안심소개 업종은 축(기계 · 설비 / 부동산 / 태양광 / 상담)을 골라야 합니다.": "Safe Referral categories need an axis (machinery · equipment / real estate / solar / consultation).",
+  "축은 안심소개(MAL) 업종에만 고릅니다.": "An axis is chosen only for Safe Referral (MAL) categories.",
+  "없는 제한업종 코드입니다.": "Unknown restricted industry code.",
+  "업종을 만든 사람은 그 업종을 승인할 수 없습니다 — 다른 관리자가 승인하십시오.": "The person who created a business type cannot approve it — another administrator must approve it.",
+  "업종의 관은 만든 뒤 바꿀 수 없습니다 — 새 관에 업종을 새로 만드십시오.": "A business type's section cannot be changed after creation — create a new business type in the other section.",
+  "허브 관과 소개리드에는 업종을 넣지 않습니다 — 허브는 하위 관에, 소개리드는 안심소개 상담 축 업종을 씁니다.": "Hub sections and Consult Leads do not take categories — hubs use their sub-sections, and Consult Leads uses the Safe Referral consultation categories.",
 };
