@@ -33,7 +33,7 @@ if [ -n "${ONLY:-}" ]; then   # v10.639 이름 맞추기(.py 없어도 됨) · �
   ONLY_FILES=$(echo $ONLY_FILES | tr ' ' '\n' | sort -u | tr '\n' ' '); PAR=1; EXPECT=${EXPECT:-$(echo $ONLY_FILES | wc -w)}
   echo "줄인 점검 ONLY — $(echo $ONLY_FILES | wc -w)개: $ONLY_FILES" | tee -a "$LOG"
 fi
-HOST="test_v1640.py test_v1637.py test_v1636.py test_v1630.py test_v1621.py test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py test_v1238.py test_v1244_boot.py test_v1247_files.py test_v1250_files.py test_v1298.py test_v1299.py test_v1303.py test_v1306.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
+HOST="test_v1645.py test_v1640.py test_v1637.py test_v1636.py test_v1630.py test_v1621.py test_v1103.py test_v1095.py test_v1097.py test_v1098.py test_v1099.py test_v1100.py test_v1101.py test_v1102.py test_v1122.py test_v1124.py test_v1149.py test_v1152.py test_v1155_etax.py test_v1196_daily.py test_v1200_push.py test_v1221_deps.py test_v1226_tg.py test_v1227.py test_v1233.py test_v1237.py test_v1238.py test_v1244_boot.py test_v1247_files.py test_v1250_files.py test_v1298.py test_v1299.py test_v1303.py test_v1306.py"   # v10.221 — 외부 묶음 검사는 서버 npm 으로
 
 head -1 "$K/KIT_COMMITS.txt" | tee -a "$LOG"
 # AI 를 부르는 시험은 MOCK 공급자로(실제 외부 호출 없음)

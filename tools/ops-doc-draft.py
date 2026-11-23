@@ -334,6 +334,22 @@ def menu_rows(om, nm):
     return rows
 
 
+KEPT_RE = re.compile(r'남김:\s*(v10\.\d+_\d{8}_\d{6})\s*·\s*(v10\.\d+_\d{8}_\d{6})')
+
+
+def kept_releases(results_dir, vo):
+    """v10.645 (docs/789) 지난 운영 적용 화면 출력(<vo>_apply.txt)의 「옛 판 1개 정리 … (남김: <vo 폴더> · <그 전 폴더>)」 —
+    지금 운영 판 보관 폴더에 실제로 남은 두 폴더(그 전, vo) · 없으면 None.
+    11/23 docs/770 이 킷 폴더 기준(prev_ops)으로 `v10.567_…` 을 적었는데 실제 운영은 `v10.558_…` 이었던 것을 고침."""
+    f = os.path.join(results_dir, f'{vo}_apply.txt')
+    if not os.path.isfile(f):
+        return None
+    for a, b in KEPT_RE.findall(read(f)):
+        if a.startswith(vo + '_') and not b.startswith(vo + '_'):
+            return (b, a)
+    return None
+
+
 def prev_ops(old_zip, vo):
     """v10.621 — 지금 운영 킷 옆(~/kits/ops)의 그 전 판 — 운영 판 보관 폴더에 남아 있을 판(3-0 · apply 옛 판 정리 줄)"""
     best = None
@@ -424,6 +440,11 @@ def main():
         p5 = prev_precheck5(os.path.join(n_sgb, 'docs'), ov)
         touch5 = [m.split('_')[0] for m, s in sqls if re.search(r'\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|ALTER\s+TABLE)\s+(?:public\.)?(open_blockers|terms)\b', sql_strip(s), re.I)]
         res = ops_result(a.results, ov)   # v10.636 (docs/780) 지난 운영 적용 화면 출력 — 있으면 실제 숫자
+        kp = kept_releases(a.results, ov)   # v10.645 (docs/789) 판 보관 폴더 — 지난 적용 출력의 「남김:」 이 먼저 · 없으면 킷 폴더로 짐작
+        _pv = prev_ops(a.old, ov)
+        pv_dir = kp[0] if kp else (f'{_pv}_…' if _pv else None)   # 그 전 판 폴더(실제 이름 또는 짐작)
+        ov_dir = kp[1] if kp else f'{ov}_…'
+        pv_src = f'(results/{ov}_apply.txt 「남김:」)' if kp else ('(킷 폴더로 짐작 — 지난 적용 출력이 없음)' if _pv else '')
         if res and res[1].get('post') and not pcb:
             pcb = res[1]['post']
         if res and res[1].get('open'):
@@ -468,10 +489,10 @@ def main():
         w(f"| 올릴 마이그레이션 | **{len(new_m)}개**" + (' — ' + ' · '.join(f'`{m}`' for m in new_m) if new_m else '') + mig_note + ' |')
         w(f"| precheck 기대 줄 | ① `적용됨 {len(om)} · 새 킷의 파일 {len(nm)} · 올릴 것 {len(new_m)} · 바뀐 파일 {len(chg_m)}`"
           + (' · 올릴 것 이름 ' + ' · '.join(m.split('_')[0] for m in new_m) if new_m else '')
-          + (f' ② [4] `판 보관 폴더: {prev_ops(a.old, ov)}_… {ov}_…`' if prev_ops(a.old, ov) else ' ② [4] `판 보관 폴더: 〔채울 것〕`') + '(「되돌린 상태」 줄이 **없어야 함**) ③ [5] ' + p5_text + ' ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
+          + (f' ② [4] `판 보관 폴더: {pv_dir} {ov_dir}` {pv_src}' if pv_dir else ' ② [4] `판 보관 폴더: 〔채울 것〕`') + '(「되돌린 상태」 줄이 **없어야 함**) ③ [5] ' + p5_text + ' ④ [6] 「sgb 따로 있는 파일」 · 「사용자 웹 — 누구나 열림 · 운영 화면 — 허용 IP 만」 |')
         w(f"| apply 기대 줄 | 3단계 올릴 것 {len(new_m)}개 → 「RDS 스냅샷을 방금 만들었습니까?」 → " + ('`yes`(이름을 물으면 3-2 이름)' if snap else '`skip`')
           + (' → `NOTICE …` 줄(1절 「마이그레이션 NOTICE」 표)' if notes and prints_notice else '') +
-          f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → " + (f"`옛 판 1개 정리 … {prev_ops(a.old, ov)}_… (남김: {nv}_… · {ov}_…)`" if prev_ops(a.old, ov) else "〔채울 것: 옛 판 정리 줄〕") + " → postcheck 실패 0 |")
+          f" → `적용 {len(new_m)} · 기존 {len(om)} · 변경감지 0` → `{len(nm)} / {len(nm)}` → 설치 · 빌드 → 기동 확인 → " + (f"`옛 판 1개 정리 … {pv_dir} (남김: {nv}_… · {ov_dir})`" if pv_dir else "〔채울 것: 옛 판 정리 줄〕") + " → postcheck 실패 0 |")
         w(f"| 스냅샷 이름 | `{snapname}`" + (' (**꼭 만듦**)' if snap else ' (마이그레이션 없음 — skip 가능)') + ' |')
         job_note = (' 새 정기 작업 ' + ' · '.join(f'`{j}`' + (f'({w_} · {m})' if w_ else f'({m})') for j, w_, m in jobs)
                     + '은 마이그레이션이 작업 표에 넣어 지금 돌고 있는 `sgb-jobs` 가 부름 — 따로 할 일 없음') if jobs else ''
@@ -562,8 +583,8 @@ def main():
         w('```bash')
         w(f'cat ~/sgb/VERSION          # {vo} (그 밖이면 멈추고 알려 주십시오)')
         w('pm2 ls                     # 3개 online')
-        pv = prev_ops(a.old, vo)
-        w(f'ls ~/sgb-releases          # {pv}_… · {vo}_…' if pv else 'ls ~/sgb-releases          # 〔채울 것: 그 전 운영 판 · ' + vo + '〕')
+        # v10.645 (docs/789) 판 보관 폴더는 위 pv_dir · ov_dir(지난 적용 출력의 실제 이름이 먼저)
+        w(f'ls ~/sgb-releases          # {pv_dir} · {ov_dir}' if pv_dir else 'ls ~/sgb-releases          # 〔채울 것: 그 전 운영 판 · ' + vo + '〕')
         w('df -h / | tail -1          # 여유 3GB 이상')
         w('free -m | head -2          # 사용 가능(available) 1GB 이상')
         w('```')
