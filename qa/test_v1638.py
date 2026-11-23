@@ -74,7 +74,8 @@ ok('② perm.mode · admin.mfa_required 를 바꾸는 시험은 SOLO', all(rows.
 
 # ── ③ 손 목록 · 문서 · 판 ─────────────────────────────
 force = RC.read_list(os.path.join(HERE, 'reg_solo_force.txt')) if RC else set()
-ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421(i18n 5개는 규칙이 맡음)', force == {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'}, str(sorted(force)))
+# v10.646 (docs/791) test_v1646 더함 — 새 관을 잠깐 열어 /gwans · 머리줄 관 수가 바뀜(규칙은 SETREAD 만 잡음)
+ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421 · 1646(i18n 5개는 규칙이 맡음)', {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'} <= force <= {'test_v1570.py', 'test_v1420.py', 'test_v1421.py', 'test_v1646.py'}, str(sorted(force)))
 d = os.path.join(K, 'docs')
 d782 = next((rd(os.path.join(d, x)) for x in (os.listdir(d) if os.path.isdir(d) else []) if x.startswith('782_')), '')
 ok('③ 문서 782 — SETREAD · SETGLOBAL · set:i18n', all(w in d782 for w in ('SETREAD', 'SETGLOBAL', 'set:i18n')), str(len(d782)))

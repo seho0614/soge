@@ -62,7 +62,8 @@ ui = open(K + '/site/src/components/my/ui.tsx', encoding='utf-8').read()
 ok('나의공간 꼬리표 — HLT 는 「소개몰」', "HLT: '소개몰'" in ui and '소개뱅크몰' not in ui, '')
 gw = ''.join(open(K + '/web/src/app/admin/' + x, encoding='utf-8').read() for x in ('Gwans.tsx', 'gwans/GwanList.tsx', 'gwans/GwanSettings.tsx')
              if os.path.exists(K + '/web/src/app/admin/' + x))   # v10.86 — 하위 화면을 gwans/ 로 나눔
-ok('운영 화면 관 관리 — 서브도메인 xxx.sogaebank.com', gw.count('.sogaebank.com') == 2, '')
+# v10.647 (docs/792) 쓰지 않는 서브도메인 대신 실제 사용자 웹 주소(sogaebank.com/<경로>)를 보임 — 도메인이 sogaebank.com 인지만 봄
+ok('운영 화면 관 관리 — 사용자 웹 주소 sogaebank.com/… (옛 도메인 없음)', 'sogaebank.com/' in gw and 'sogaebaenk' not in gw and '.co.kr' not in gw, '')
 ok('리드관 보류 폴더 없음', not os.path.exists(K + '/prisma/migrations-deferred'), '')
 names = [json.load(open(K + f, encoding='utf-8'))['name'] for f in ('/package.json', '/site/package.json', '/web/package.json')]
 locks = [json.load(open(K + f, encoding='utf-8'))['name'] for f in ('/package-lock.json', '/site/package-lock.json', '/web/package-lock.json')]
