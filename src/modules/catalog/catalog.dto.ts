@@ -74,8 +74,8 @@ export class ApproveCategoryDto {
 
 /** v10.643 (D308 · docs/787) 새 업종 — 「승인 대기」로 만들고 다른 관리자가 승인 · 관은 만든 뒤 바꿀 수 없음 */
 export class CreateCategoryDto {
-  @ApiProperty({ example: 'MNY', description: '관 코드(대문자 3자) — 허브 관 · 소개리드(LED)는 안 됨(422 CATEGORY_GWAN_NOT_ALLOWED)' })
-  @Matches(/^[A-Z]{3}$/) gwanCode!: string;
+  @ApiProperty({ example: 'MNY', description: '관 코드(대문자 3 ~ 4자 · gwans 와 같음) — 허브 관 · 소개리드(LED)는 안 됨(422 CATEGORY_GWAN_NOT_ALLOWED)' })
+  @Matches(/^[A-Z]{3,4}$/) gwanCode!: string;
 
   @ApiProperty({ example: 'MNY_CLEANING', description: '업종 코드 — 대문자 · 숫자 · 밑줄 3 ~ 40자 · 같은 관 안에서 하나(409 CATEGORY_EXISTS)' })
   @Matches(/^[A-Z][A-Z0-9_]{2,39}$/) code!: string;

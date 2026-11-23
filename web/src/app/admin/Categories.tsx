@@ -46,7 +46,7 @@ function NewCategory({ onDone }: { onDone: () => void }) {
       <div className="form-grid">
         {gw.error
           ? /* 관 목록(/admin/gwans/manage)은 SUPER 만 — ADMIN 은 관 코드를 직접 넣음(허브 · 소개리드는 서버가 막음) */
-            <label>관 코드 <input value={f.gwanCode} onChange={(e) => setF({ ...f, gwanCode: e.target.value.toUpperCase() })} placeholder="예: MNY" maxLength={3} data-cat-new-gwan /></label>
+            <label>관 코드 <input value={f.gwanCode} onChange={(e) => setF({ ...f, gwanCode: e.target.value.toUpperCase() })} placeholder="예: MNY" maxLength={4} data-cat-new-gwan /></label>
           : <label>관 <select value={f.gwanCode} onChange={set('gwanCode')} data-cat-new-gwan>
               <option value="">고르기</option>
               {pick.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}
