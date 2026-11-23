@@ -7,6 +7,8 @@ export interface Gwan {
   publishedListings: number; categories: number; reviewPending: number;
   /** v10.642 (docs/786) 오픈 점검 — 허브는 하위 관 · 리드관은 안심소개 상담 업종 */
   isHub?: boolean; childGwans?: number; childCategories?: number; consultCategories?: number | null;
+  /** v10.646 (D309 · docs/791) 상위 관(허브) · 소개 대상 */
+  parentCode?: string | null; parentName?: string | null; introTarget?: string | null;
 }
 
 /** v10.642 (docs/786) 「업종 1종 이상 승인」 — 허브 관은 해당 없음(하위 관) · 리드관은 안심소개 상담 업종 수로 */
@@ -24,4 +26,4 @@ export interface Manage {
 }
 
 /* ── SB-ADM-SIT-030 관 설정 (8개 탭) ─────────────────────────────── */
-export type STab = 'basic' | 'status' | 'order' | 'landing' | 'stats' | 'fixed' | 'category' | 'open';
+export type STab = 'basic' | 'form' | 'status' | 'order' | 'landing' | 'stats' | 'fixed' | 'category' | 'open';   // v10.646 form 등록 폼 문구

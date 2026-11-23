@@ -30,7 +30,7 @@ export default async function AllListings({ searchParams }: {
   if (sort) qs.set('sort', sort);
   const [data, gwans] = await Promise.all([
     apiGet<ListingListData>(`/listings?${qs}`).catch(() => ({ promoted: [], organic: [], nextCursor: null, adNotice: '' }) as ListingListData),
-    apiGet<Array<{ code: string; name: string; isActive: boolean; listingCount?: number }>>('/gwans', 300).catch(() => []),
+    apiGet<Array<{ code: string; name: string; isActive: boolean; listingCount?: number; isHub?: boolean }>>('/gwans', 300).catch(() => []),
   ]);
   const t = await getTranslations('forms.all');
   const th = await getTranslations('header.gwan');
@@ -39,9 +39,9 @@ export default async function AllListings({ searchParams }: {
   /* 관 이름 — 한국어는 서버 이름 그대로 · 다른 언어만 사전(header.gwan.*) */
   const gname = (code: string, name: string) => (!ko && isGwanKey(code) ? th(code) : name);
   const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, gname(g.code, g.name)]));
-  const nav = gwans.filter((g) => g.isActive && GWAN_PATH[g.code]);
+  const nav = gwans.filter((g) => g.isActive && !g.isHub && GWAN_PATH[g.code]);
   const rows: Array<ListingCardData & { ad?: boolean }> = [...data.promoted.map((r) => ({ ...r, ad: true })), ...data.organic];
-  const total = gwans.filter((g) => GWAN_PATH[g.code] && g.code !== 'HLT').reduce((n, g) => n + (g.listingCount ?? 0), 0);
+  const total = gwans.filter((g) => !g.isHub && GWAN_PATH[g.code] && g.code !== 'HLT').reduce((n, g) => n + (g.listingCount ?? 0), 0);
 
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-LST-010">

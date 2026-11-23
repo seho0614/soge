@@ -14,7 +14,7 @@ import { Audit } from '../../core/audit.interceptor';
 
 const ALL = ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF', 'REVIEWER', 'ADMIN', 'PAYOUT', 'SUPER', 'PARTNER_MAL', 'PARTNER_AFF'] as const;
 const GWANS = ['MNY', 'MAL', 'BIZ', 'HLT'];
-const gw = (g?: string) => (g && GWANS.includes(g) ? g : undefined);
+const gw = (g?: string) => (g && (GWANS.includes(g) || /^[A-Z]{3,4}$/.test(g)) ? g : undefined);   // v10.646 (D309) 새 관도 걸러 봄(전: 모르는 관은 거르지 않고 전체)
 const OBJ = { schema: { type: 'object' } };
 
 function pipe(res: Response, r: { stream: NodeJS.ReadableStream; contentType: string; size: number }) {

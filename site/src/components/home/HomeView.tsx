@@ -127,7 +127,7 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
       {/* v10.49 (D103 · docs/101) — 「오늘의 날씨」 한 줄(v10.644 부터 「나를 위한 소개」 아래) */}
       {weather?.available && <Weather w={weather} />}
       <Today c={c} />
-      <Needs live={live} />
+      <Needs live={live} extra={_gwans.filter((g) => g.isActive && !g.isHub && !['MNY', 'MAL', 'BIZ', 'HLT', 'LED'].includes(g.code))} />   {/* v10.649 (docs/792) 새 관 카드 */}
       <Picks c={c} />
       <Poll polls={polls} />
       <Strip c={c} />

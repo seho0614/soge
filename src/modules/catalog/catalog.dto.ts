@@ -14,6 +14,7 @@ export class GwanDto {
   @ApiProperty({ nullable: true }) description!: string | null;
   @ApiProperty() isActive!: boolean;
   @ApiProperty({ example: 1240, description: '노출 중인 매물 수' }) listingCount!: number;
+  @ApiProperty({ description: '허브 관(소개하고 벌기 등 · 매물을 직접 갖지 않음) — v10.646' }) isHub!: boolean;
 }
 
 export class CategoryDto {
@@ -72,10 +73,20 @@ export class ApproveCategoryDto {
   @IsOptional() @IsString() restrictedCode?: string;
 }
 
+/** v10.646 (D309 · docs/791) 다른 관 업종 가져오기 — 옮기지 않고 같은 이름 · 판정으로 새 관에 「승인 대기」 복사 */
+export class CopyCategoryDto {
+  @ApiProperty({ format: 'uuid', description: '가져올 업종(다른 관)' }) @IsUUID() fromId!: string;
+  @ApiProperty({ example: 'EDU', description: '넣을 관(허브 · 소개리드 안 됨)' }) @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) gwanCode!: string;
+  @ApiPropertyOptional({ example: 'EDU_CLEANING', description: '새 업종 코드 — 비우면 앞머리만 새 관 코드로 바꿈' })
+  @IsOptional() @Matches(/^[A-Z][A-Z0-9_]{2,39}$/) code?: string;
+  @ApiPropertyOptional({ enum: ['EQUIP', 'RE', 'SOLAR', 'CONSULT'], description: '넣을 관이 안심소개(MAL)일 때 축' })
+  @IsOptional() @IsIn(['EQUIP', 'RE', 'SOLAR', 'CONSULT']) axis?: string;
+}
+
 /** v10.643 (D308 · docs/787) 새 업종 — 「승인 대기」로 만들고 다른 관리자가 승인 · 관은 만든 뒤 바꿀 수 없음 */
 export class CreateCategoryDto {
   @ApiProperty({ example: 'MNY', description: '관 코드(대문자 3 ~ 4자 · gwans 와 같음) — 허브 관 · 소개리드(LED)는 안 됨(422 CATEGORY_GWAN_NOT_ALLOWED)' })
-  @Matches(/^[A-Z]{3,4}$/) gwanCode!: string;
+  @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) gwanCode!: string;
 
   @ApiProperty({ example: 'MNY_CLEANING', description: '업종 코드 — 대문자 · 숫자 · 밑줄 3 ~ 40자 · 같은 관 안에서 하나(409 CATEGORY_EXISTS)' })
   @Matches(/^[A-Z][A-Z0-9_]{2,39}$/) code!: string;

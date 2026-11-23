@@ -6,6 +6,8 @@ import { BackBar } from '@/components/common/BackBar';
 import { GwFrame } from '@/components/gwan/GwParts';
 import { photoSrc } from '@/components/gwan/gw';
 import { getTranslations } from 'next-intl/server';
+import { GWAN_PATH } from '@/lib/format';
+import type { Gwan } from '@/lib/types';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('billing.supplier'))('title') };
@@ -22,7 +24,10 @@ const GWAN: Record<string, ['MNY' | 'MAL' | 'BIZ', string]> = { MNY: ['MNY', '/m
  */
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
-  const code = q.gwan && GWAN[q.gwan] ? q.gwan : 'MNY';
+  /* v10.648 (docs/792) 운영 화면에서 만든 새 관(켠 관 · 허브 아님)도 — 테두리 모양은 소개장터 것을 씀 */
+  const gws = await apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]);
+  const extra = q.gwan && !GWAN[q.gwan] ? gws.find((g) => g.code === q.gwan && !g.isHub) : undefined;
+  const code = q.gwan && (GWAN[q.gwan] || extra) ? q.gwan : 'MNY';
   const ai = q.ai === '1';
   const region = q.region && /^\d{10}$/.test(q.region) ? q.region : undefined;
   const rq = region ? `&regionCode=${region}` : '';
@@ -31,10 +36,10 @@ export default async function Page({ searchParams }: Props) {
     : await apiGet<Supplier[]>(`/market/suppliers?gwanCode=${code}&limit=40${rq}`, 30).catch(() => [] as Supplier[]);
   const t = await getTranslations('billing.supplier');
   const tg = await getTranslations('header.gwan');
-  const [gk, base] = GWAN[code]!;
-  const nm = tg(gk);
+  const [gk, base] = GWAN[code] ?? (['MNY', `/${GWAN_PATH[code]}`] as ['MNY', string]);
+  const nm = extra ? extra.name : tg(gk);
   return (
-    <><GwFrame code={code as 'MNY'}>
+    <><GwFrame code={gk}>
       <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href={base} label={nm} wrap={false} /></div>
       <div className="gw-wrap" style={{ paddingTop: 14, paddingBottom: 20 }}>
         <div className="gw-pgh"><div><h1>{ai ? t('aiTitle') : t('title')}</h1>

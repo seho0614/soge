@@ -14,6 +14,7 @@ export const I18N_FIELDS: Record<string, string[]> = {
   NOTIFY_EVENT: ['name', 'legal_basis'], REPORT_REASON: ['label'], PLAN: ['name', 'features'],   // v10.123 · D126 DB 기준표 문구
   INTRO_GRADE: ['name', 'criteria', 'benefit', 'next_hint'], GWAN_FORM: ['subject', 'title_hint', 'body_hint', 'notice'],
   UI_MESSAGE: ['message'], AD_PLACEMENT: ['title', 'body', 'cta'],
+  GWAN: ['name', 'description'],   // v10.647 (D310 · docs/792) 관 이름 — 새 관도 다른 언어 이름
 };
 /** SETTING 대상으로 번역하는 설정 키 — DB 함수 fn_i18n_source(D125)와 같음 */
 export const I18N_SETTING_KEYS = ['legal.intermediary_notice', 'legal.direct_notice', 'footer.company_name'];   // v10.132 (D130) 바닥줄 상호
@@ -235,6 +236,7 @@ export class I18nService {
       INTRO_GRADE: { from: 'introducer_grades s', id: 's.code', label: 's.name', gwan: 'NULL::text', order: 's.sort_order' },
       GWAN_FORM: { from: 'gwan_form_copy s', id: "s.gwan_code || ':' || s.role", label: "s.gwan_code || ' › ' || s.subject || ' (' || s.role || ')'", gwan: 's.gwan_code', order: 's.gwan_code, s.role DESC' },
       UI_MESSAGE: { from: 'ui_messages s', id: 's.code', label: 's.message', gwan: 'NULL::text', order: 's.code' },
+      GWAN: { from: 'gwans s', id: 's.code', label: "s.name || ' (' || s.code || ')'", gwan: 's.code', order: 's.sort_order' },   // v10.647 (D310)
       AD_PLACEMENT: { from: 'ad_placements s', id: 's.id::text', label: "coalesce(s.creative_code, s.slot_code) || ' › ' || coalesce(s.title, '')", gwan: 'NULL::text', order: 's.creative_code NULLS LAST, s.slot_code' },
     };
     const src = SRC[q.targetType];

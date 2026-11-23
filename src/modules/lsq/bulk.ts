@@ -56,9 +56,10 @@ export async function bulkPreview(db: DatabaseService, me: string, csv: string, 
   if (!body.length) throw new PolicyViolation('LSQ_BULK_EMPTY', 'CSV 가 비어 있습니다 — 첫 줄에 칸 이름(gwan,category,title …)을 적으십시오.');
   if (body.length > s.bulkMaxRows) throw new PolicyViolation('LSQ_BULK_TOO_MANY', `한 번에 ${s.bulkMaxRows}줄까지입니다 — 나눠서 올리십시오.`);
 
-  const gwans = await db.query<{ code: string; name: string }>(`SELECT code, name FROM gwans WHERE is_active AND code = ANY($1::text[])`, [BULK_GWANS]);
+  /* v10.649 (docs/792) 켠 새 관도(허브 · 소개몰 · 소개리드 빼고) — 전: 처음 관 셋만 */
+  const gwans = await db.query<{ code: string; name: string }>(`SELECT code, name FROM gwans WHERE is_active AND (code = ANY($1::text[]) OR (NOT is_hub AND code NOT IN ('HLT', 'LED')))`, [BULK_GWANS]);
   const cats = await db.query<{ id: string; gwan: string; code: string; name: string }>(
-    `SELECT id::text AS id, gwan_code AS gwan, code, name FROM categories WHERE status = 'APPROVED' AND gwan_code = ANY($1::text[])`, [BULK_GWANS]);
+    `SELECT id::text AS id, gwan_code AS gwan, code, name FROM categories WHERE status = 'APPROVED' AND gwan_code = ANY($1::text[])`, [gwans.map((g) => g.code)]);
   const regions = await db.query<{ code: string; sido: string }>(`SELECT code, sido FROM regions WHERE is_active AND sigungu IS NULL`);
   const col = (r: string[], k: string) => { const i = head.indexOf(k); return i >= 0 ? String(r[i] ?? '').trim() : ''; };
 

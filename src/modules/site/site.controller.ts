@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SiteService } from './site.service';
 import {
   AdPlacementDto, BannedWordDto, CreateAdDto, CreateBannedWordDto, CreateGwanDto,
   CreateNoticeDto, GwanAdminDto, HubDto, IntegrationDto, LayoutDto, NoticeDto, NoticeReadsDto, NoticeGradePatchDto, NoticeReasonDto, UpdateNoticeDto, NOTICE_GRADES, NoticePublishDto,
   ScopeDto, UpdateGwanDto, UpdateIntegrationDto,
-  GwanOrderDto, LandingDto,
+  GwanOrderDto, LandingDto, GwanFormCopyDto, GwanFormCopyPutDto,
 } from './site.dto';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
@@ -111,6 +111,7 @@ export class SiteController {
       '등록만 쌓이고 노출이 안 됩니다. 여는 것은 별도 조작입니다.',
   })
   @ApiResponse({ status: 409, description: 'GWAN_EXISTS', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'GWAN_PARENT — 상위 관은 허브 관만(v10.646 · D309)', type: ErrorDto })
   @Audit('GWAN_CREATE', 'GWAN')
   create(@Body() dto: CreateGwanDto) { return this.svc.createGwan(dto); }
 
@@ -122,10 +123,27 @@ export class SiteController {
       '**승인된 업종이 없으면 열 수 없습니다** — 등록 폼의 선택지가 비어 사용자가 막힙니다.',
   })
   @ApiParam({ name: 'code' })
-  @ApiResponse({ status: 422, description: 'NO_APPROVED_CATEGORY', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'NO_APPROVED_CATEGORY · NO_FORM_COPY · GWAN_PARENT(v10.646)', type: ErrorDto })
   @Audit('GWAN_UPDATE', 'GWAN')
   update(@Param('code') code: string, @Body() dto: UpdateGwanDto) {
     return this.svc.updateGwan(code, dto);
+  }
+
+  /* v10.646 (D309 · docs/791) 등록 폼 문구 — 관을 열려면 OFFER · REQUEST 중 하나 이상 */
+  @Get('gwans/:code/form-copy')
+  @ApiOperation({ summary: '관 등록 폼 문구 (v10.646)', description: '소개합니다(OFFER) · 찾습니다(REQUEST) 폼의 머리 · 제목 · 본문 안내 · 주의. 하나도 없으면 관을 열 수 없습니다(422 NO_FORM_COPY).' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: GwanFormCopyDto, isArray: true })
+  formCopy(@Param('code') code: string) { return this.svc.formCopy(code); }
+
+  @Put('gwans/:code/form-copy/:role')
+  @ApiOperation({ summary: '관 등록 폼 문구 저장 (v10.646)', description: 'role = OFFER · REQUEST. 있으면 고치고 없으면 만듭니다. 영어 등 번역은 관 관리 › 번역 검수(GWAN_FORM)에서.' })
+  @ApiParam({ name: 'code' }) @ApiParam({ name: 'role', enum: ['OFFER', 'REQUEST'] })
+  @ApiOkResponse({ type: GwanFormCopyDto })
+  @ApiResponse({ status: 422, description: 'GWAN_FORM_ROLE', type: ErrorDto })
+  @Audit('GWAN_FORM_COPY', 'GWAN')
+  putFormCopy(@Param('code') code: string, @Param('role') role: string, @Body() dto: GwanFormCopyPutDto) {
+    return this.svc.putFormCopy(code, role, dto);
   }
 
   @Patch('gwans/:code/visibility')

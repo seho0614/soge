@@ -91,6 +91,8 @@ export type ListingGeo =
 export interface Gwan {
   code: string; name: string; description: string | null;
   isActive: boolean; listingCount: number;
+  /** v10.646 (D309) 허브 관 — 메뉴 · 관 목록에서 뺌(새 관은 GWAN_PATH 가 늘 주소를 주므로) */
+  isHub?: boolean;
 }
 
 export interface FooterLink {

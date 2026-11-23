@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResp
 import { CodeService } from './code.service';
 import { CatalogService } from './catalog.service';
 import {
-  AdminCategoryDto, ApproveCategoryDto, CategoryDto, CodeBundleDto, CreateCategoryDto,
+  AdminCategoryDto, ApproveCategoryDto, CategoryDto, CodeBundleDto, CopyCategoryDto, CreateCategoryDto,
   FooterLinkDto, GwanDto, PolicyBundleDto, RestrictedIndustryDto,
   UpdateAutoReviewDto, UpdateRestrictionDto,
 } from './catalog.dto';
@@ -80,6 +80,22 @@ export class CatalogController {
   @Audit('CATEGORY_CREATE', 'CATEGORY')
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.catalog.createCategory(dto);
+  }
+
+  @Post('admin/categories/copy')
+  @ApiBearerAuth() @Roles('ADMIN','SUPER')
+  @ApiOperation({
+    summary: '다른 관 업종 가져오기(승인 대기 · v10.646)',
+    description:
+      'v10.646 (D309 · docs/791) 다른 관의 업종을 **옮기지 않고** 같은 이름 · 직업안정법 판정 · 부담 주체로 넣을 관에 「승인 대기」 업종을 만듭니다. ' +
+      '만든 사람은 승인할 수 없고 다른 관리자가 승인합니다. 코드를 비우면 앞머리만 새 관 코드로 바꿉니다(MNY_CLEANING → EDU_CLEANING).',
+  })
+  @ApiOkResponse({ type: AdminCategoryDto })
+  @ApiResponse({ status: 409, type: ErrorDto, description: 'CATEGORY_EXISTS · NOT_FOUND' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'CATEGORY_COPY_SAME · CATEGORY_GWAN_NOT_ALLOWED · CATEGORY_GWAN_UNKNOWN · CATEGORY_AXIS_REQUIRED' })
+  @Audit('CATEGORY_COPY', 'CATEGORY')
+  copyCategory(@Body() dto: CopyCategoryDto) {
+    return this.catalog.copyCategory(dto);
   }
 
   @Patch('admin/categories/:id')

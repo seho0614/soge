@@ -5750,4 +5750,12 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "업종을 만든 사람은 그 업종을 승인할 수 없습니다 — 다른 관리자가 승인하십시오.": "The person who created a business type cannot approve it — another administrator must approve it.",
   "업종의 관은 만든 뒤 바꿀 수 없습니다 — 새 관에 업종을 새로 만드십시오.": "A business type's section cannot be changed after creation — create a new business type in the other section.",
   "허브 관과 소개리드에는 업종을 넣지 않습니다 — 허브는 하위 관에, 소개리드는 안심소개 상담 축 업종을 씁니다.": "Hub sections and Consult Leads do not take categories — hubs use their sub-sections, and Consult Leads uses the Safe Referral consultation categories.",
+  /* v10.646 (D309 · docs/791) 새 관을 끝까지 — 코드 3 ~ 4자 · 등록 폼 문구 · 상위 관 · 다른 관 업종 가져오기 */
+  "관 코드는 영문 대문자 3 ~ 4자입니다.": "A section code is 3 to 4 uppercase English letters.",
+  "폼 종류는 OFFER(소개합니다) · REQUEST(찾습니다) 둘뿐입니다.": "The form type must be OFFER (offering) or REQUEST (looking for).",
+  "가져올 업종이 없습니다.": "The category to copy was not found.",
+  "같은 관으로는 가져올 수 없습니다.": "A category cannot be copied into its own section.",
+  "관은 자기 자신을 상위 관으로 둘 수 없습니다.": "A section cannot be its own parent.",
+  "허브 관은 상위 관을 두지 않습니다.": "A hub section does not have a parent section.",
+  "상위 관은 허브 관만 고를 수 있습니다.": "Only a hub section can be chosen as the parent section.",
 };

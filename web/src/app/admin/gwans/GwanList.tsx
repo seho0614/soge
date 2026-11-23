@@ -57,7 +57,9 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
     const nx = [...sorted]; const t = nx[i]!; nx[i] = nx[j]!; nx[j] = t;
     setOrder(Object.fromEntries(nx.map((g, k) => [g.code, String(k)])));
   };
-  const sub = (c: string) => `${c.toLowerCase()}.sogaebank.com`;
+  /* v10.647 (docs/792) 실제 사용자 웹 주소(전: 쓰지 않는 서브도메인) — 처음 관은 고정 · 새 관은 /g/<코드 소문자> · 허브는 없음 */
+  const PATHS: Record<string, string> = { MNY: 'money', MAL: 'mall', BIZ: 'biz', HLT: 'health', LED: 'lead' };
+  const sub = (c: string) => (rows.find((x) => x.code === c)?.isHub ? '주소 없음(허브)' : `/${PATHS[c] ?? `g/${c.toLowerCase()}`}`);
 
   return (
     <>
@@ -67,7 +69,7 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
       <div className="ad-tw"><table className="tbl" data-gwan-list>
         <thead>
           <tr>
-            <th>관</th><th>코드 · 서브도메인</th><th>상태</th><th>업종</th><th>등록 건수</th>
+            <th>관</th><th>코드 · 사용자 웹 주소</th><th>상태</th><th>업종</th><th>등록 건수</th>
             {isSuper && <th>오픈일</th>}{isSuper && <th>검수 대기</th>}<th>랜딩</th><th>순서</th>{isSuper && <th />}
           </tr>
         </thead>
@@ -152,7 +154,7 @@ export function GwanList({ isSuper, onOpen, onGo, onNew }: {
         보이고, 이용자는 서비스가 고장 난 것으로 봅니다.
       </p>
       <div className="ad-nt info">
-        <b>관 URL은 관마다 서브도메인입니다 (C-10).</b> 루트 도메인은 어느 관에도 속하지 않는 통합 메인입니다. 로그인 세션은 상위 도메인 쿠키로 관을 넘나듭니다.
+        <b>관 주소는 sogaebank.com 아래 경로입니다</b> — 처음 관은 /money · /mall · /biz · /health · /lead, 운영 화면에서 만든 새 관은 /g/&lt;코드 소문자&gt;(v10.647). 허브 관은 주소 없이 하위 관을 묶습니다.
       </div>
       {/* v10.31 — 시안 아래 바로가기 4장 */}
       {onGo && (

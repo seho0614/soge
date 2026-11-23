@@ -33,7 +33,7 @@ const me = () => RequestCtx.actorId()!;
 
 export class LsxSavedCreateDto {
   @ApiPropertyOptional({ maxLength: 40, example: '강남 카페 양도' }) @IsOptional() @IsString() @MaxLength(40) name?: string;
-  @ApiPropertyOptional({ enum: SAVED_GWANS }) @IsOptional() @IsIn(SAVED_GWANS as unknown as string[]) gwanCode?: string;
+  @ApiPropertyOptional({ example: 'MNY', description: `관 코드(${SAVED_GWANS.join(' · ')} · 새 관)` }) @IsOptional() @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) gwanCode?: string;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsString() @Matches(/^[0-9a-fA-F-]{36}$/) categoryId?: string;
   @ApiPropertyOptional({ minLength: 2, maxLength: 60, example: '카페 양도' }) @IsOptional() @IsString() @Length(2, 60) keyword?: string;
   @ApiPropertyOptional({ example: '11', description: '시 · 도 코드(regions)' }) @IsOptional() @IsString() @Matches(/^[0-9A-Z]{2,10}$/) regionCode?: string;

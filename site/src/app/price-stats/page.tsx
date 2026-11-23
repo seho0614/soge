@@ -27,7 +27,11 @@ const won = (v: string | null | undefined) => (v == null ? '—' : Number(v).toL
 export default async function PriceStatsPage({ searchParams }: { searchParams: Promise<{ gwan?: string; category?: string; sido?: string; sigungu?: string }> }) {
   const sp = await searchParams;
   const t = await getTranslations('lpx.stats');
-  const gwan = (GWANS as readonly string[]).includes(String(sp.gwan ?? '')) ? String(sp.gwan) : 'MNY';
+  /* v10.648 (docs/792) 운영 화면에서 만든 새 관(켠 관 · 허브 · 소개몰 · 소개리드 아님)도 고를 수 있게 — 이름은 서버 이름(번역 승인되면 그 언어) */
+  const gws = await apiGet<Array<{ code: string; name: string; isHub?: boolean }>>('/gwans', 300).catch(() => []);
+  const extra = gws.filter((g) => !g.isHub && !['MNY', 'MAL', 'BIZ', 'HLT', 'LED'].includes(g.code));
+  const ALL: string[] = [...GWANS, ...extra.map((g) => g.code)];
+  const gwan = ALL.includes(String(sp.gwan ?? '')) ? String(sp.gwan) : 'MNY';
   const q = new URLSearchParams({ gwan, category: sp.category || 'ALL', sido: sp.sido || '', sigungu: sp.sido ? (sp.sigungu || '') : '' });
   const d = await apiGet<StatsRes>(`/site/lpx/price-stats?${q.toString()}`, 300).catch(() => null);
   const max = Math.max(1, ...(d?.months ?? []).map((m) => Number(m.median ?? 0)));
@@ -40,7 +44,7 @@ export default async function PriceStatsPage({ searchParams }: { searchParams: P
         {!d || !d.enabled ? <p className="lpx-empty">{t('off')}</p> : (
           <>
             <form className="lpx-row" method="get" action="/price-stats">
-              <select name="gwan" defaultValue={gwan} aria-label={t('gwan')}>{GWANS.map((g) => <option key={g} value={g}>{t(`g${g}`)}</option>)}</select>
+              <select name="gwan" defaultValue={gwan} aria-label={t('gwan')}>{GWANS.map((g) => <option key={g} value={g}>{t(`g${g}`)}</option>)}{extra.map((g) => <option key={g.code} value={g.code}>{g.name}</option>)}</select>
               <select name="category" defaultValue={d.category ?? 'ALL'} aria-label={t('category')}>
                 <option value="ALL">{t('allCategories')}</option>
                 {d.options.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

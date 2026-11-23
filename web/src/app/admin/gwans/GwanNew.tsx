@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
+import { useApi } from '../../../lib/useApi';
+import type { Manage } from './shared';
 import { useAct } from '../../../lib/act';
 import { Flash } from '../../../components/Flash';
 
@@ -12,7 +14,7 @@ const TARGETS = [
 
 const STEPS = [
   ['무엇을 소개하는 관인가', '고정자산이 넘어가는가로 가릅니다 (A-01). 이것을 먼저 정하지 않으면 요율도 게이트도 정할 수 없습니다.'],
-  ['관 이름 · 코드 · 서브도메인', '코드와 소개 대상은 생성 후 바꿀 수 없습니다.'],
+  ['관 이름 · 코드 · 상위 관', '코드와 소개 대상은 생성 후 바꿀 수 없습니다. 사용자 웹 주소는 sogaebank.com/g/<코드 소문자>입니다.'],
   ['업종 · 등급', '카테고리가 등급을 결정합니다 (A-11). 업종 › 업종 승인 › 「새 업종 추가」로 이 관에 업종을 만들고, 다른 관리자가 승인합니다(v10.643).'],
   ['소개비 부담 주체', '업종마다 정합니다 — 새 업종 추가 때 또는 승인 칸에서 부담 주체(판매자 · 구매자 · 협의)를 고릅니다.'],
   ['오픈 체크리스트', '전부 통과해야 준비중 → 운영중으로 넘어갑니다.'],
@@ -25,8 +27,13 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
   const [desc, setDesc] = useState('');
   const [step, setStep] = useState<0 | 1>(0);   // v10.32 — 시안 위자드: 1단계(소개 대상) → 다음 → 2단계(이름 · 코드)
   const a = useAct();
+  /* v10.646 (D309 · docs/791) 상위 관(허브) — 허브 아래에 두면 허브 화면 · 「소개하고 벌기」 묶음에 함께 나옴 */
+  const manage = useApi<Manage[]>('/admin/gwans/manage');
+  const hubs = (manage.data ?? []).filter((x) => x.isHub);
+  const [parent, setParent] = useState<string>('');
+  useEffect(() => { if (!parent && hubs[0]) setParent(hubs[0].code); }, [hubs.length]);   // eslint-disable-line react-hooks/exhaustive-deps
 
-  const codeOk = /^[A-Z]{3}$/.test(code);
+  const codeOk = /^[A-Z]{3,4}$/.test(code);   // v10.646 — 관 표(gwans_code_check)와 같게 3 ~ 4자
   const nameOk = name.trim().length >= 2 && name.trim().length <= 20;
 
   async function create() {
@@ -35,8 +42,9 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
       method: 'POST',
       body: JSON.stringify({
         code, name: name.trim(),
-        // 소개 대상은 아직 서버 필드가 없어 설명 앞에 적어 둡니다(보고서 참조)
-        description: [t ? `[${t}]` : '', desc.trim()].filter(Boolean).join(' ') || undefined,
+        description: desc.trim() || undefined,
+        introTarget: t ? target : undefined,   // v10.646 (D309) 소개 대상 칸(전에는 설명 앞 글자)
+        ...(parent ? { parentCode: parent } : {}),
       }),
     }), undefined, '관을 만들었습니다. 비활성(준비중)으로 만들어집니다 — 업종을 붙인 뒤 여십시오.');
     if (r) onCreated(code);
@@ -72,27 +80,34 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
           <h3>2. 관 이름 · 코드 <span className="dim" style={{ fontWeight: 500 }}>· 소개 대상 {TARGETS.find((x) => x[0] === target)?.[1]}</span></h3>
           <div className="form-grid">
             <label>
-              <span>코드 (영문 대문자 3자 · 생성 후 변경 불가)</span>
-              <input value={code} maxLength={3} placeholder="예) EDU"
+              <span>코드 (영문 대문자 3 ~ 4자 · 생성 후 변경 불가)</span>
+              <input value={code} maxLength={4} placeholder="예) EDU"
                      onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))} />
             </label>
             <label>
               <span>관 이름 (2~20자)</span>
               <input value={name} maxLength={20} placeholder="예) 소개배움" onChange={(e) => setName(e.target.value)} />
             </label>
+            <label>
+              <span>상위 관(허브)</span>
+              <select value={parent} onChange={(e) => setParent(e.target.value)} data-gwan-new-parent>
+                <option value="">없음(허브 밖 · 따로 둠)</option>
+                {hubs.map((h) => <option key={h.code} value={h.code}>{h.name} ({h.code})</option>)}
+              </select>
+            </label>
             <label style={{ gridColumn: '1 / -1' }}>
               <span>설명 (메인 카드에 나갑니다)</span>
               <input value={desc} onChange={(e) => setDesc(e.target.value)} />
             </label>
           </div>
-          {code && !codeOk && <p className="warn-text">코드는 영문 대문자 3자입니다.</p>}
+          {code && !codeOk && <p className="warn-text">코드는 영문 대문자 3 ~ 4자입니다.</p>}
           <Flash msg={a.msg} err={a.err} />
         </div>
       )}
 
       <div className="ad-nt warn">
         <b>새 관은 준비중(비활성) 상태로만 생성됩니다.</b> 업종 · 검수 인력 · 정산 흐름이 준비되기 전에
-        열면 등록만 쌓이고 노출이 안 됩니다. 여는 것은 관 설정의 &lsquo;공개 상태&rsquo;에서 합니다 — 3~5단계(업종 · 부담 주체 · 오픈 체크리스트)는 만든 뒤 관 설정에서 합니다.
+        열면 등록만 쌓이고 노출이 안 됩니다. 여는 것은 관 설정의 &lsquo;공개 상태&rsquo;에서 합니다 — 만든 뒤 ① 관 설정 › &lsquo;등록 폼 문구&rsquo; ② 업종 › 업종 승인 › &lsquo;새 업종 추가&rsquo; 또는 &lsquo;다른 관 업종 가져오기&rsquo;(다른 관리자 승인) ③ &lsquo;오픈 점검&rsquo; 통과 뒤 엽니다(v10.646).
       </div>
 
       <div className="ad-dact">

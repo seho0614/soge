@@ -30,6 +30,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const { id } = await params;
   const g = (await searchParams).gwan;
   const code = g === 'MAL' || g === 'BIZ' ? g : 'MNY';
+  const back = g && /^[A-Z]{3,4}$/.test(g) && !['MNY', 'MAL', 'BIZ'].includes(g) ? g : code;   // v10.648 새 관이면 그 관 목록으로 돌아감(테두리는 소개장터)
   const p = await apiGet<Profile>(`/market/suppliers/${encodeURIComponent(id)}`, 30).catch((e) => {
     if (e instanceof ApiFailure && (e.status === 404 || e.status === 400)) return null;
     throw e;
@@ -41,7 +42,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const ts = await getTranslations('billing.supplier');
   return (
     <><GwFrame code={code}>
-      <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href={`/supplier?gwan=${code}`} label={ts('title')} wrap={false} /></div>
+      <div className="gw-wrap" style={{ paddingTop: 16 }}><BackBar href={`/supplier?gwan=${back}`} label={ts('title')} wrap={false} /></div>
       <div className="gw-wrap" style={{ paddingTop: 14, paddingBottom: 20 }}>
         <div className="gw-panel" style={{ overflow: 'hidden' }} data-supplier={p.id}>
           <div className="gw-dtprof">

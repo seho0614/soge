@@ -1405,6 +1405,7 @@
    "apis": [
     "GET /admin/categories",
     "POST /admin/categories",
+    "POST /admin/categories/copy",
     "PATCH /admin/categories/{id}"
    ],
    "nav": "SB-ADM-DSH-010",
@@ -1568,7 +1569,9 @@
     "PATCH /admin/gwans/{code}",
     "GET /admin/gwans/manage",
     "PATCH /admin/gwans/order",
-    "PATCH /admin/gwans/landing"
+    "PATCH /admin/gwans/landing",
+    "GET /admin/gwans/{code}/form-copy",
+    "PUT /admin/gwans/{code}/form-copy/{role}"
    ],
    "nav": "SB-ADM-SIT-010"
   },

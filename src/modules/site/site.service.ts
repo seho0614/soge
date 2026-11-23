@@ -28,7 +28,7 @@ export class SiteService {
                 WHERE r.gwan_code = g.code AND r.status IN ('QUEUED','IN_PROGRESS'))
                 AS "reviewPending",
               /* v10.31 — 시안 「상위」 열 */
-              g.parent_code AS "parentCode", pg.name AS "parentName", g.is_hub AS "isHub",
+              g.parent_code AS "parentCode", pg.name AS "parentName", g.is_hub AS "isHub", g.intro_target AS "introTarget",   /* v10.646 (D309) */
               /* v10.642 (docs/786) 오픈 점검 — 허브 관은 업종을 직접 갖지 않음(하위 관 수 · 하위 관 승인 업종) ·
                  리드관(LED)은 안심소개 상담 축(MAL · CONSULT) 업종을 씀(fn_gwan_open_guard · updateGwan 과 같은 기준) */
               (SELECT count(*)::int FROM gwans cg WHERE cg.parent_code = g.code) AS "childGwans",
@@ -50,22 +50,42 @@ export class SiteService {
    * 새 관. 비활성으로 만듭니다.
    * 업종·검수 인력·정산 흐름이 준비되기 전에 열면 등록만 쌓이고 노출이 안 됩니다.
    */
-  async createGwan(input: { code: string; name: string; description?: string }) {
+  async createGwan(input: { code: string; name: string; description?: string; introTarget?: string; parentCode?: string }) {
     const [dup] = await this.db.query<{ code: string }>(
       `SELECT code FROM gwans WHERE code = $1`, [input.code]);
     if (dup) throw new StateConflict('GWAN_EXISTS', '이미 있는 관 코드입니다.');
 
     const [row] = await this.db.query(
-      `INSERT INTO gwans (code, name, description, is_active, sort_order)
-       VALUES ($1,$2,$3,false,(SELECT coalesce(max(sort_order),0)+1 FROM gwans))
-       RETURNING code, name, is_active AS "isActive"`,
-      [input.code, input.name, input.description ?? null]);
+      `INSERT INTO gwans (code, name, description, is_active, sort_order, intro_target, parent_code)
+       VALUES ($1,$2,$3,false,(SELECT coalesce(max(sort_order),0)+1 FROM gwans),$4,$5)
+       RETURNING code, name, is_active AS "isActive", intro_target AS "introTarget", parent_code AS "parentCode"`,
+      [input.code, input.name, input.description ?? null, input.introTarget ?? null, input.parentCode ?? null]);   // v10.646 (D309) 상위 관은 허브만(DB)
+    return row;
+  }
+
+  /* v10.646 (D309 · docs/791) 관 등록 폼 문구 — 운영 화면에서 읽고 고침(전에는 마이그레이션으로만 넣어 새 관을 열 수 없었음) */
+  async formCopy(code: string) {
+    await this.gwan(code);
+    return this.db.query(
+      `SELECT role, subject, title_hint AS "titleHint", body_hint AS "bodyHint", notice
+         FROM gwan_form_copy WHERE gwan_code = $1 ORDER BY role`, [code]);
+  }
+  async putFormCopy(code: string, role: string, input: { subject: string; titleHint: string; bodyHint: string; notice?: string }) {
+    if (role !== 'OFFER' && role !== 'REQUEST') throw new PolicyViolation('GWAN_FORM_ROLE', '폼 종류는 OFFER(소개합니다) · REQUEST(찾습니다) 둘뿐입니다.');
+    await this.gwan(code);
+    const [row] = await this.db.query(
+      `INSERT INTO gwan_form_copy (gwan_code, role, subject, title_hint, body_hint, notice)
+       VALUES ($1, $2, $3, $4, $5, nullif($6, ''))
+       ON CONFLICT (gwan_code, role) DO UPDATE
+          SET subject = EXCLUDED.subject, title_hint = EXCLUDED.title_hint, body_hint = EXCLUDED.body_hint, notice = EXCLUDED.notice
+       RETURNING role, subject, title_hint AS "titleHint", body_hint AS "bodyHint", notice`,
+      [code, role, input.subject.trim(), input.titleHint.trim(), input.bodyHint.trim(), (input.notice ?? '').trim()]);
     return row;
   }
 
   /** 비활성으로 바꾸면 등록·노출이 즉시 멈춥니다. 매물은 지우지 않습니다 */
   async updateGwan(code: string, input: {
-    name?: string; description?: string; isActive?: boolean; sortOrder?: number;
+    name?: string; description?: string; isActive?: boolean; sortOrder?: number; parentCode?: string;
   }) {
     if (input.isActive === true) {
       // 업종 없이 열면 등록 폼의 선택지가 비어 사용자가 막힙니다 — 리드관(LED)은 안심소개 상담 축 업종을 씀(v10.335)
@@ -82,11 +102,12 @@ export class SiteService {
       `UPDATE gwans
           SET name = coalesce($2, name), description = coalesce($3, description),
               is_active = coalesce($4, is_active), sort_order = coalesce($5, sort_order),
-              opened_at = CASE WHEN $4 = true AND opened_at IS NULL THEN now() ELSE opened_at END
+              opened_at = CASE WHEN $4 = true AND opened_at IS NULL THEN now() ELSE opened_at END,
+              parent_code = CASE WHEN $6::text IS NULL THEN parent_code ELSE nullif($6, '') END   /* v10.646 (D309) '' = 상위 관 없음 */
         WHERE code = $1
-      RETURNING code, name, is_active AS "isActive", opened_at AS "openedAt"`,
+      RETURNING code, name, is_active AS "isActive", opened_at AS "openedAt", parent_code AS "parentCode"`,
       [code, input.name ?? null, input.description ?? null,
-       input.isActive ?? null, input.sortOrder ?? null]);
+       input.isActive ?? null, input.sortOrder ?? null, input.parentCode ?? null]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 관입니다.');
     return row;
   }

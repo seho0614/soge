@@ -209,6 +209,8 @@ echo "======================================================="
 codes=$(psql "$DATABASE_URL" -t -A -c "SELECT code FROM gwans WHERE is_active AND NOT is_hub ORDER BY 1" 2>/dev/null | tr -d '\r')
 n=$(printf '%s\n' "$codes" | grep -c '[A-Z]')
 miss=""; for c in $codes; do grep -q "'$c'" site/src/lib/format.ts 2>/dev/null || miss="$miss $c"; done
+# v10.646 (D309 · docs/791) 새 관은 고정 표 대신 /g/<코드 소문자> — format.ts 에 그 표시(GENERIC_GWAN_PATH)가 있으면 모든 켠 관에 주소가 있음
+grep -q 'GENERIC_GWAN_PATH' site/src/lib/format.ts 2>/dev/null && miss=""
 if [ "${n:-0}" -gt 0 ] && [ -z "$miss" ]; then
   echo "  ok   ⑬ 주소 매핑에 켠 관 ${n}개 전부"
 else

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { apiGet } from '@/lib/api';
 import type { ListingListData } from '@/lib/types';
-import { GWAN_PATH, ago } from '@/lib/format';
+import { GWAN_PATH, ago, isFixedGwan } from '@/lib/format';
 import { getFmt } from '@/lib/getFmt';
 import { BackBar } from '@/components/common/BackBar';
 import { SearchBox, type SearchGwan } from '@/components/search/SearchBox';
@@ -57,11 +57,13 @@ export default async function SearchPage({ searchParams }: {
   const q = (sp.q ?? '').trim();
   /* v10.83 — 한 글자는 어디서든 「두 글자 이상」(통합 검색 API 규칙과 같게 · 전: 상품 탭만 한 글자로 찾아 13건 등) */
   const short = !!q && q.replace(/\s/g, '').length < 2;
-  const gwanCode = sp.gwanCode && LIST_GWANS.includes(sp.gwanCode) ? sp.gwanCode : undefined;
-  const tab = sp.tab && (sp.tab in TABS_FIXED || LIST_GWANS.includes(sp.tab)) ? sp.tab : (gwanCode ?? 'ALL');
-  const gTab = LIST_GWANS.includes(tab) ? tab : undefined;
+  const gwans = await apiGet<Array<{ code: string; name: string; isHub?: boolean }>>('/gwans', 300).catch(() => []);
+  /* v10.646 (D309 · docs/791) 운영 화면에서 만든 새 관(켠 관 · 허브 · 소개몰 · 소개리드 아님)도 관 탭 */
+  const LIST = [...LIST_GWANS, ...gwans.filter((g) => !g.isHub && !isFixedGwan(g.code)).map((g) => g.code)];
+  const gwanCode = sp.gwanCode && LIST.includes(sp.gwanCode) ? sp.gwanCode : undefined;
+  const tab = sp.tab && (sp.tab in TABS_FIXED || LIST.includes(sp.tab)) ? sp.tab : (gwanCode ?? 'ALL');
+  const gTab = LIST.includes(tab) ? tab : undefined;
 
-  const gwans = await apiGet<Array<{ code: string; name: string }>>('/gwans', 300).catch(() => []);
   /* v10.97 — 한국어는 늘 서버 이름 · 다른 언어만 사전 */
   const GN: Record<string, string> = Object.fromEntries(gwans.map((g) => [g.code, locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name]));
 
@@ -91,13 +93,13 @@ export default async function SearchPage({ searchParams }: {
   for (const x of [...all.promoted, ...all.organic]) seen.set(x.id, x.gwanCode);
   const gCount = (g: string) => [...seen.values()].filter((c) => c === g).length;
   const cnt: Record<string, number> = { REQ: hit.requests.length, CMU: board.total };
-  for (const g of LIST_GWANS) cnt[g] = gCount(g);
+  for (const g of LIST) cnt[g] = gCount(g);
   cnt.ALL = seen.size + hit.requests.length + board.total;
   const n = cnt[tab] ?? 0;
 
   const tabs: Array<[string, string]> = [
     ['ALL', t(TABS_FIXED.ALL)],
-    ...LIST_GWANS.filter((g) => GN[g]).map((g) => [g, GN[g]] as [string, string]),
+    ...LIST.filter((g) => GN[g]).map((g) => [g, GN[g]] as [string, string]),
     ['REQ', t(TABS_FIXED.REQ)], ['CMU', t(TABS_FIXED.CMU)],
   ];
   const tabHref = (v: string) => {

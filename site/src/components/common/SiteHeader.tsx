@@ -38,7 +38,7 @@ export function SiteHeader({ gwans }: { gwans: Gwan[] }) {
   const t = useTranslations('header');
   const locale = useLocale();
   /* 20260930 — 주소가 없는 관(허브 EARN 등)은 뺍니다(href="/undefined" 방지) */
-  const menu = gwans.filter((g) => GWAN_PATH[g.code]).map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: locale !== 'ko' && isGwanKey(g.code) ? t(`gwan.${g.code}`) : g.name }));   // v10.95 — 한국어는 늘 서버 이름(운영자가 바꿀 수 있음) · 다른 언어만 사전
+  const menu = gwans.filter((g) => !g.isHub && GWAN_PATH[g.code]).map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: locale !== 'ko' && isGwanKey(g.code) ? t(`gwan.${g.code}`) : g.name }));   // v10.95 — 한국어는 늘 서버 이름(운영자가 바꿀 수 있음) · 다른 언어만 사전
   return (
     <header className="pc-hd">
       <div className="pc-wrap pc-hdin">

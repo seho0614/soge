@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { StrictBoolean } from '../../common/strict-boolean';   // v10.31 검정 — 참 · 거짓 입력은 받은 값 그대로(G-134 · "false" 글자가 true 로 바뀌지 않게)
 import { Type } from 'class-transformer';
 
 /* ★ 관을 늘릴 때 **여기도 고쳐야 합니다.** 건강상품관을 만들었을 때
  *   이 배열을 놓쳐, DB 에는 있는데 API 가 "허용되지 않은 값" 으로
  *   막았습니다. 검정이 gwans 표와 대조합니다. */
-const GWAN = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;
+const GWAN = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;   // 문서 보기용 — 받는 값은 무늬(v10.646 · 새 관)
 const REQ_STATUS = ['DRAFT','IN_REVIEW','PUBLISHED','REJECTED','CLOSED','ARCHIVED'] as const;
 
 export class RequestAddressDto {
@@ -16,7 +16,7 @@ export class RequestAddressDto {
 }
 
 export class CreateRequestDto {
-  @ApiProperty({ enum: GWAN }) @IsIn(GWAN) gwanCode!: string;
+  @ApiProperty({ example: 'MNY', description: `관 코드(${GWAN.join(' · ')} · 운영 화면에서 만든 새 관 · v10.646)` }) @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) gwanCode!: string;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID('all') categoryId?: string;
   @ApiProperty({ minLength: 5, maxLength: 100 })
   @IsString() @MinLength(5) @MaxLength(100) title!: string;

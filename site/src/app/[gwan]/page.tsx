@@ -5,7 +5,7 @@ import { isGwanKey } from '@/i18n/keys';
 import { apiGet } from '@/lib/api';
 import type { Gwan, ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
-import { PATH_GWAN, safeSort } from '@/lib/format';
+import { GWAN_PATH, PATH_GWAN, isFixedGwan, safeSort } from '@/lib/format';
 import { SecHead, ShopMain } from '@/components/shop/ShopMain';
 import { GwanLanding } from '@/components/gwan/GwanLanding';
 import { MoneyMain } from '@/components/money/MoneyMain';
@@ -37,6 +37,11 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const q = { ...q0, sort: safeSort(q0.sort) };
   const code = PATH_GWAN[gwan];
   if (!code) notFound();
+  /* v10.646 (D309 · docs/791) 새 관 — 고정 표에 없는 관은 켠 관(/gwans)이고 허브가 아닐 때만 · 주소는 /g/<코드 소문자> 하나로 */
+  if (!isFixedGwan(code)) {
+    const on = await apiGet<Gwan[]>('/gwans', 300).catch(() => []);
+    if (!on.some((x) => x.code === code && !x.isHub)) notFound();
+  }
   /* v10.29 — 소개장터 · 안심소개 · 소개창업 첫 화면은 시안 배치(gwanLanding)로 그립니다(components/gwan/GwanLanding).
    *   안심소개의 「상담 축 통합」(?axis=consult · D005)도 그 안에 그대로 있습니다. 소개몰(HLT)만 아래 전용 메인입니다. */
   /* v10.30 — 소개장터 첫 화면만 2026-10-09 제시 디자인입니다(components/money/MoneyMain · 10/9 답 ①~④).
@@ -85,14 +90,14 @@ export default async function GwanPage({ params, searchParams }: Props) {
         <h1>{g?.name ?? t('page.fallbackTitle')}</h1>
         <div className="quick">
           {tabs.map(([v, l]) => (
-            <a key={l} href={`/${gwan}${v ? `?badge=${v}` : ''}`}
+            <a key={l} href={`/${GWAN_PATH[code]}${v ? `?badge=${v}` : ''}`}
                className={q.badge === v || (!q.badge && !v) ? 'on' : ''}>{l}</a>
           ))}
         </div>
       </div>
       <ListingList data={data} />
       {data.nextCursor && (
-        <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`} /* 20261001 — 정렬·배지를 이어 붙입니다. 빠지면 2쪽이 다른 정렬의 커서로 500 이었습니다 */>
+        <a className="more" href={`/${GWAN_PATH[code]}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`} /* 20261001 — 정렬·배지를 이어 붙입니다. 빠지면 2쪽이 다른 정렬의 커서로 500 이었습니다 */>
           {t('page.more')}
         </a>
       )}

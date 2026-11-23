@@ -13,7 +13,8 @@ import { lsxSettings, kstYmd, UUID_RE } from './common';
  * ------------------------------------------------------------------- */
 
 export const SAVED_AXES = ['RE', 'EQUIP', 'CONSULT'] as const;
-export const SAVED_GWANS = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;
+export const SAVED_GWANS = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;   // 문서 보기용 — v10.646 새 관도 받음(무늬 · DB saved_searches_gwan_code_fmt)
+export const SAVED_GWAN_RE = /^[A-Z]{3,4}$/;
 /** DB CHECK 와 같은 글자(계약 규칙 2) */
 export const REGION_RE = /^[0-9A-Z]{2,10}$/;
 
@@ -25,7 +26,7 @@ const shape = (r: Row & { category_name?: string | null }) => ({
   id: Number(r.id), name: r.name, gwanCode: r.gwan_code, categoryId: r.category_id, categoryName: r.category_name ?? null,
   keyword: r.keyword, regionCode: r.region_code, axis: r.axis, notify: r.notify, lastCheckedAt: r.last_checked_at, createdAt: r.created_at,
   /* 사용자 웹 검색 화면으로 가는 주소(검색어 · 관만 — 나머지는 관 목록 화면 조건) */
-  searchUrl: r.keyword ? `/search?q=${encodeURIComponent(r.keyword)}${r.gwan_code && ['MNY', 'MAL', 'BIZ'].includes(r.gwan_code) ? `&gwanCode=${r.gwan_code}` : ''}` : null,
+  searchUrl: r.keyword ? `/search?q=${encodeURIComponent(r.keyword)}${r.gwan_code && !['HLT', 'LED'].includes(r.gwan_code) ? `&gwanCode=${r.gwan_code}` : ''}` : null,
 });
 
 async function needOn(db: DatabaseService) {
@@ -38,7 +39,7 @@ async function needOn(db: DatabaseService) {
 function clean(d: SavedInput) {
   const s = (v?: string) => { const t = String(v ?? '').replace(/\s+/g, ' ').trim(); return t || null; };
   const gwan = s(d.gwanCode)?.toUpperCase() ?? null;
-  if (gwan && !(SAVED_GWANS as readonly string[]).includes(gwan)) throw new PolicyViolation('LSX_SAVED_FIELD', '관 코드가 맞지 않습니다.');
+  if (gwan && !SAVED_GWAN_RE.test(gwan)) throw new PolicyViolation('LSX_SAVED_FIELD', '관 코드가 맞지 않습니다.');
   const cat = s(d.categoryId);
   if (cat && !UUID_RE.test(cat)) throw new PolicyViolation('LSX_SAVED_FIELD', '업종 번호가 맞지 않습니다.');
   const kw = s(d.keyword);

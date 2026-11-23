@@ -23,9 +23,18 @@ export function ym(iso: string | null): string {
 }
 
 /* 관 코드 → 주소 조각. PATH_GWAN 의 역방향입니다 — 둘을 같이 고치십시오. */
-export const GWAN_PATH: Record<string, string> = {
+const FIXED_GWAN_PATH: Record<string, string> = {
   MNY: 'money', MAL: 'mall', BIZ: 'biz', HLT: 'health', LED: 'lead',   // v10.335 (D227) 리드관 — 켜야 메뉴에 나옴
 };
+/* v10.646 (D309 · docs/791) GENERIC_GWAN_PATH — 운영 화면에서 만든 새 관은 고정 표에 없어도 `g/<코드 소문자>`(예: EDU → /g/edu)로 감.
+ *   앞머리 g/ 는 사용자 웹의 다른 폴더(ad · area · lead …)와 겹치지 않게 함. 허브 관(EARN)은 메뉴에서 isHub 로 뺌.
+ *   검정 ⑬ 은 이 표시(GENERIC_GWAN_PATH)가 있으면 새 관도 주소가 있는 것으로 봄. */
+const GWAN_CODE_RE = /^[A-Z]{3,4}$/;
+export const GWAN_PATH: Record<string, string> = new Proxy(FIXED_GWAN_PATH, {
+  get: (o, k) => (typeof k === 'string' ? o[k] ?? (GWAN_CODE_RE.test(k) ? `g/${k.toLowerCase()}` : undefined) : undefined),
+});
+/** 고정 표에 있는 처음 관인가(MoneyMain · GwanLanding 같은 전용 화면) — 아니면 일반 관 화면 */
+export const isFixedGwan = (code: string) => Object.prototype.hasOwnProperty.call(FIXED_GWAN_PATH, code);
 /* 주소 조각 → 관 코드.
  *
  * ★ 건강상품(HLT)이 빠져 있어 `/health` 가 404 였습니다.
@@ -34,9 +43,13 @@ export const GWAN_PATH: Record<string, string> = {
  *
  *   관을 더하시면 **여기와 GWAN_PATH 를 같이** 고치십시오.
  *   검정 ⑫ 가 관 코드 목록이 최신인지 감시합니다. */
-export const PATH_GWAN: Record<string, string> = {
+const FIXED_PATH_GWAN: Record<string, string> = {
   money: 'MNY', mall: 'MAL', biz: 'BIZ', health: 'HLT', lead: 'LED',
 };
+/* v10.646 새 관 — /g/<코드 소문자> 의 조각(3 ~ 4자 소문자)은 대문자 코드로. 켠 관인지는 화면이 /gwans 로 확인(없으면 404) */
+export const PATH_GWAN: Record<string, string> = new Proxy(FIXED_PATH_GWAN, {
+  get: (o, k) => (typeof k === 'string' ? o[k] ?? (/^[a-z]{3,4}$/.test(k) ? k.toUpperCase() : undefined) : undefined),
+});
 
 /* 20261001 — 목록 정렬값. 주소창에 모르는 값(예: sort=PRICE_ASC)이 오면
  * API 가 400 을 주고 화면 전체가 500 이 되었습니다. 모르는 값은 기본 정렬로 돌립니다.

@@ -75,6 +75,73 @@ function NewCategory({ onDone }: { onDone: () => void }) {
   );
 }
 
+/* v10.646 (D309 · docs/791) 다른 관 업종 가져오기 — 옮기지 않고 같은 이름 · 판정 · 부담 주체로 넣을 관에 「승인 대기」 복사(다른 관리자가 승인) */
+function CopyCategory({ cats, onDone }: { cats: Cat[]; onDone: () => void }) {
+  const gw = useApi<GwanRow[]>('/admin/gwans/manage');
+  const [to, setTo] = useState('');
+  const [q, setQ] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
+  const [axis, setAxis] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const targets = (gw.data ?? []).filter((g) => !g.isHub && g.code !== 'LED');
+  const have = new Set(cats.filter((c) => c.gwanCode === to).map((c) => c.name));
+  const src = cats.filter((c) => c.gwanCode !== to && c.status === 'APPROVED' && (!q.trim() || c.name.includes(q.trim()) || c.code.includes(q.trim().toUpperCase())));
+  async function run() {
+    setErr(null); setMsg(null);
+    if (!to || picked.length === 0) { setErr('넣을 관과 가져올 업종을 고르십시오.'); return; }
+    if (to === 'MAL' && !axis) { setErr('안심소개(MAL)로 가져올 때는 축을 고릅니다.'); return; }
+    setBusy(true);
+    const done: string[] = []; const fail: string[] = [];
+    for (const id of picked) {
+      const c = cats.find((x) => x.id === id);
+      try { await api('/admin/categories/copy', { method: 'POST', body: JSON.stringify({ fromId: id, gwanCode: to, ...(to === 'MAL' ? { axis } : {}) }) }); done.push(c?.name ?? id); }
+      catch (e) { fail.push(`${c?.name ?? id}: ${e instanceof ApiFailure ? e.body.message : '실패'}`); }
+    }
+    setBusy(false); setPicked([]);
+    if (done.length) setMsg(`${done.length}개를 승인 대기로 가져왔습니다(${done.join(' · ')}) — 다른 관리자가 승인합니다.`);
+    if (fail.length) setErr(fail.join(' / '));
+    onDone();
+  }
+  return (
+    <details className="card pad" data-cat-copy>
+      <summary><b>다른 관 업종 가져오기</b> <span className="dim">— 이미 있는 업종을 옮기지 않고, 같은 이름 · 판정 · 부담 주체로 넣을 관에 「승인 대기」로 만듭니다</span></summary>
+      {msg && <p className="form-ok">{msg}</p>}
+      {err && <p className="form-error">{err}</p>}
+      <div className="form-grid">
+        {gw.error
+          ? <label>넣을 관 코드 <input value={to} onChange={(e) => setTo(e.target.value.toUpperCase())} maxLength={4} data-cat-copy-to /></label>
+          : <label>넣을 관 <select value={to} onChange={(e) => { setTo(e.target.value); setPicked([]); }} data-cat-copy-to>
+              <option value="">고르기</option>
+              {targets.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}
+            </select></label>}
+        <label>찾기 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="업종 이름 · 코드" /></label>
+        {to === 'MAL' && <label>안심소개 축 <select value={axis} onChange={(e) => setAxis(e.target.value)}>
+          <option value="">고르기</option>{AXIS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></label>}
+      </div>
+      {to && (
+        <div className="ad-tw" style={{ maxHeight: 280, overflow: 'auto' }}><table className="tbl">
+          <thead><tr><th></th><th>업종</th><th>지금 관</th><th>판정</th></tr></thead>
+          <tbody>
+            {src.slice(0, 200).map((c) => (
+              <tr key={c.id}>
+                <td><input type="checkbox" aria-label={`${c.name} 가져오기`} disabled={have.has(c.name)} checked={picked.includes(c.id)}
+                           onChange={(e) => setPicked(e.target.checked ? [...picked, c.id] : picked.filter((x) => x !== c.id))} data-cat-copy-pick={c.code} /></td>
+                <td>{c.name} <span className="dim">{c.code}</span>{have.has(c.name) && <span className="dim"> · 이미 있음</span>}</td>
+                <td>{c.gwanCode}</td><td>{c.laborLawFlag ? label('category.labor_law', c.laborLawFlag) : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      )}
+      <button className="btn-ok" disabled={busy || !to || picked.length === 0} onClick={() => void run()} data-cat-copy-save>
+        {picked.length ? `${picked.length}개 승인 대기로 가져오기` : '가져오기'}
+      </button>
+    </details>
+  );
+}
+
 const LABOR = [
   ['NOT_APPLICABLE', '해당 없음'],
   ['REVIEW_REQUIRED', '검토 필요'],
@@ -121,6 +188,7 @@ export function Categories() {
       {err && <p className="form-error">{err}</p>}
 
       <NewCategory onDone={reload} />
+      <CopyCategory cats={data} onDone={reload} />
 
       <h3 className="sec">승인 대기 <em>{pending.length}</em></h3>
       {pending.length === 0 && <p className="muted">대기 중인 업종이 없습니다.</p>}

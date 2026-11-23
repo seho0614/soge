@@ -88,7 +88,7 @@ export function UniHeader({ gwans, lang }: { gwans: Gwan[]; lang?: React.ReactNo
 
   /* 주소가 없는 관(허브 EARN 등)과 중지된 관은 뺍니다 — 전의 세 머리줄과 같은 규칙 · 한국어는 늘 서버 이름(다른 언어만 사전) */
   const menu = [
-    ...gwans.filter((g) => g.isActive !== false && GWAN_PATH[g.code])
+    ...gwans.filter((g) => g.isActive !== false && !g.isHub && GWAN_PATH[g.code])
       .map((g) => ({ href: `/${GWAN_PATH[g.code]}`, label: locale !== 'ko' && isGwanKey(g.code) ? h(`gwan.${g.code}`) : g.name })),
     { href: '/community', label: h('community') },
     { href: '/guide', label: h('guide') },

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { me } from '@/lib/session';
 import { apiGet } from '@/lib/api';
+import { isFixedGwan } from '@/lib/format';
 import { gradeLabels } from '@/lib/grades';
 import { BackBar } from '@/components/common/BackBar';
 import { RoleTabs } from '@/components/gwan/GwParts';
@@ -33,16 +34,18 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const th = await getTranslations('header');
   const locale = await getLocale();
 
-  const [gw, labels, ...lists] = await Promise.all([
-    apiGet<Array<Gwan & { isActive: boolean }>>('/gwans', 300).catch(() => []),
+  /* v10.646 (D309 · docs/791) 운영 화면에서 만든 새 관(켠 관 · 허브 · 소개몰 · 소개리드 아님)도 고르기에 넣음 */
+  const gw = await apiGet<Array<Gwan & { isActive: boolean; isHub?: boolean }>>('/gwans', 300).catch(() => []);
+  const ALL = [...REG_GWANS, ...gw.filter((g) => g.isActive && !g.isHub && !isFixedGwan(g.code)).map((g) => g.code)];
+  const [labels, ...lists] = await Promise.all([
     gradeLabels(),
-    ...REG_GWANS.map((g) => apiGet<Cat[]>(`/categories?gwanCode=${g}`, 300).catch(() => [] as Cat[])),
+    ...ALL.map((g) => apiGet<Cat[]>(`/categories?gwanCode=${g}`, 300).catch(() => [] as Cat[])),
   ]);
   /* 제한업종(다단계 · 대부 등)은 고르기에서 뺍니다 — 골라 봐야 등록 때 막힙니다 */
   const cats = (lists as Array<Array<Cat & { restrictedCode?: string | null }>>).flat().filter((c) => !c.restrictedCode);
   /* v10.37 (D095 · P2P) — 개인 회원도 모든 관에 등록합니다(사업자 여부를 보지 않음). 인증이 필요한 업종(보험 · 의료 자격 · 공인중개사 · 제한업종)은
      제한업종은 폼이 미리 알려 주고(POST /restrictions/check) 자격 · 중개사 인증은 서버 · DB 게이트가 봅니다 */
-  const gwans = gw.filter((g) => g.isActive && REG_GWANS.includes(g.code) && cats.some((c) => c.gwanCode === g.code))
+  const gwans = gw.filter((g) => g.isActive && ALL.includes(g.code) && cats.some((c) => c.gwanCode === g.code))
     .map((g) => ({ code: g.code, name: locale !== 'ko' && isGwanKey(g.code) ? th(`gwan.${g.code}`) : g.name }));   // 관 이름 — 한국어는 서버 이름, 다른 언어만 사전(2-2 규칙)
   return (
     <div className="w1 w1-wrap" data-screen="SB-HOM-REG-010">
@@ -51,7 +54,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
         <RoleTabs on="give" note={t('regPage.note')} />
       </div>
       {gwans.length > 0 ? (
-        <Msgs ns={['forms']}><RegisterForm gwans={gwans} cats={cats} gradeLabels={labels} initialGwan={REG_GWANS.includes(sp.g ?? '') ? sp.g : undefined} /></Msgs>
+        <Msgs ns={['forms']}><RegisterForm gwans={gwans} cats={cats} gradeLabels={labels} initialGwan={ALL.includes(sp.g ?? '') ? sp.g : undefined} /></Msgs>
       ) : (
         <div className="w1-rgw w1-rgw-reg">
           <div className="w1-rghd"><div><h1>{t('reg.title')}</h1></div></div>

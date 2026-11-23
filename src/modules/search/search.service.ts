@@ -193,7 +193,8 @@ export class SearchService {
       this.db.query<{ name: string }>(
         `SELECT name FROM (
            SELECT DISTINCT c.name FROM categories c
-            WHERE c.status = 'APPROVED' AND c.restricted_code IS NULL AND c.gwan_code = ANY($2::text[])
+            WHERE c.status = 'APPROVED' AND c.restricted_code IS NULL AND (c.gwan_code = ANY($2::text[])
+                   OR c.gwan_code IN (SELECT g.code FROM gwans g WHERE g.is_active AND NOT g.is_hub AND g.code NOT IN ('HLT', 'LED')))   /* v10.646 (D309) 켠 새 관 */
               AND ($1 = '' OR lower(c.name) LIKE fn_search_like($1))) x
           ORDER BY name LIMIT 12`, [q, SUGGEST_GWANS]),
     ]);

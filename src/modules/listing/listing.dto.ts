@@ -1,11 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /* ★ 관을 늘릴 때 **여기도 고쳐야 합니다.** 건강상품관을 만들었을 때
  *   이 배열을 놓쳐, DB 에는 있는데 API 가 "허용되지 않은 값" 으로
  *   막았습니다. 검정이 gwans 표와 대조합니다. */
-const GWAN = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;
+const GWAN = ['MNY', 'MAL', 'BIZ', 'HLT'] as const;   // 문서(enum) 보기용 — 받는 값은 아래 무늬(v10.646)
+/* v10.646 (D309 · docs/791) 운영 화면에서 만든 새 관도 받음 — 관 코드 무늬(gwans_code_check 3 ~ 4자) · 없는 관은 DB 외래 키 · 업종 관 대조가 막음 */
+const GWAN_RE = /^[A-Z]{3,4}$/;
+const GWAN_MSG = { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' };
 const FEE_BEARER = ['BUYER', 'SELLER', 'NEGOTIABLE'] as const;
 const LISTING_STATUS = ['DRAFT','IN_REVIEW','PUBLISHED','REJECTED','SUSPENDED','ARCHIVED'] as const;
 /* 20260930 — POPULAR 추가, 소문자 별칭(new · best · fee) 허용.
@@ -37,8 +40,8 @@ export class ListingBizInfoDto {
 }
 
 export class CreateListingDto {
-  @ApiProperty({ enum: GWAN })
-  @IsIn(GWAN) gwanCode!: string;
+  @ApiProperty({ example: 'MNY', description: `관 코드(${GWAN.join(' · ')} · 운영 화면에서 만든 새 관)` })
+  @Matches(GWAN_RE, GWAN_MSG) gwanCode!: string;
 
   @ApiProperty({ format: 'uuid', description: '승인된 업종만 허용됩니다' })
   @IsUUID('all') categoryId!: string;
@@ -93,9 +96,9 @@ export class UpdateListingDto extends CreateListingDto {
 }
 
 export class ListingQueryDto {
-  @ApiPropertyOptional({ enum: GWAN }) @IsOptional() @IsIn(GWAN) gwanCode?: string;
-  @ApiPropertyOptional({ enum: GWAN, description: 'gwanCode 의 별칭 (예전 화면 호환)' })
-  @IsOptional() @IsIn(GWAN) gwan?: string;
+  @ApiPropertyOptional({ example: 'MNY' }) @IsOptional() @Matches(GWAN_RE, GWAN_MSG) gwanCode?: string;
+  @ApiPropertyOptional({ example: 'MNY', description: 'gwanCode 의 별칭 (예전 화면 호환)' })
+  @IsOptional() @Matches(GWAN_RE, GWAN_MSG) gwan?: string;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID('all') categoryId?: string;
   @ApiPropertyOptional({ description: '제목 부분 일치' }) @IsOptional() @IsString() keyword?: string;
   /* v10.31 (w1 · 공유) — 통합 검색(SB-HOM-SRC-010)은 시안대로 「제목 · 업종에 그 낱말이 든 것」만. 빼면 전과 같음(제목 + 본문) */

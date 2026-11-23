@@ -94,9 +94,11 @@ const NEEDS: { gwan: 'HLT' | 'MNY' | 'MAL' | 'BIZ' | 'CMU'; ic: string; href: st
 ];
 
 /** 중지된 관은 뺍니다(20260930 규칙). 소개광장은 관이 아니라 늘 둡니다. */
-export function Needs({ live }: { live: string[] }) {
+export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ code: string; name: string; description: string | null }> }) {
   const t = useTranslations('main');
   const cards = NEEDS.filter((c) => c.gwan === 'CMU' || live.includes(c.gwan));
+  /* v10.649 (docs/792) 운영 화면에서 만든 새 관 — 사전 글이 없어 관 이름 · 설명(번역 승인되면 그 언어)으로 카드 · 주소 /g/<코드 소문자> · 소개광장 앞에 둠 */
+  const more = extra.slice(0, 3);
   return (
     <section className="home-band needs" aria-labelledby="home-needs-h">
       <div className="home-in">
@@ -105,8 +107,24 @@ export function Needs({ live }: { live: string[] }) {
           <h2 id="home-needs-h">{t('sec.needs.h')}</h2>
           <span className="home-sd">{t('sec.needs.sub')}</span>
         </div>
-        <nav className="home-needs" aria-label={t('sec.needs.aria')} style={{ ['--n' as string]: cards.length }}>
-          {cards.map((c) => (
+        <nav className="home-needs" aria-label={t('sec.needs.aria')} style={{ ['--n' as string]: cards.length + more.length }}>
+          {cards.filter((c) => c.gwan !== 'CMU').map((c) => (
+            <Link key={c.gwan} className="home-nd" href={c.href} data-gwan={c.gwan}>
+              <Pic name={c.ic} h={50} />
+              <b>{t(`sec.needs.cards.${c.gwan}.t`)}</b>
+              <span>{t(`sec.needs.cards.${c.gwan}.d1`)}{' '}<br />{t(`sec.needs.cards.${c.gwan}.d2`)}</span>
+              <i aria-hidden="true"><Line name="chev" size={18} w={2.4} /></i>
+            </Link>
+          ))}
+          {more.map((g) => (
+            <Link key={g.code} className="home-nd" href={`/g/${g.code.toLowerCase()}`} data-gwan={g.code}>
+              <Pic name="need-2" h={50} />
+              <b>{g.name}</b>
+              <span>{g.description ?? ''}</span>
+              <i aria-hidden="true"><Line name="chev" size={18} w={2.4} /></i>
+            </Link>
+          ))}
+          {cards.filter((c) => c.gwan === 'CMU').map((c) => (
             <Link key={c.gwan} className="home-nd" href={c.href} data-gwan={c.gwan}>
               <Pic name={c.ic} h={50} />
               <b>{t(`sec.needs.cards.${c.gwan}.t`)}</b>

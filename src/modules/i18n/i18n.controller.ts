@@ -23,7 +23,8 @@ const STATUSES_DOC = I18nService.STATUSES;
 /** 원문 목록(운영 글) 대상 — v10.103 · 3-1 */
 const CATALOG_TYPES = ['NOTICE', 'FAQ', 'TERM', 'CATEGORY', 'HLT_PRODUCT', 'PROFILE_Q', 'PROFILE_OPT', 'AD_SEGMENT',   // v10.118 관심 성향
   'FOOTER_LINK', 'SETTING', 'POLL', 'POLL_OPT', 'INGREDIENT', 'HLT_CONCERN',   // v10.119 (D125)
-  'NOTIFY_EVENT', 'REPORT_REASON', 'PLAN', 'INTRO_GRADE', 'GWAN_FORM', 'UI_MESSAGE', 'AD_PLACEMENT'];   // v10.123 (D126)
+  'NOTIFY_EVENT', 'REPORT_REASON', 'PLAN', 'INTRO_GRADE', 'GWAN_FORM', 'UI_MESSAGE', 'AD_PLACEMENT',   // v10.123 (D126)
+  'GWAN'];   // v10.647 (D310) 관 이름
 
 export class LangActiveDto {
   @ApiProperty({ example: true }) @StrictBoolean() isActive!: boolean;

@@ -20,16 +20,26 @@ export class GwanAdminDto {
   @ApiProperty({ description: '하위 관 수' }) childGwans!: number;
   @ApiProperty({ description: '하위 관의 승인된 업종' }) childCategories!: number;
   @ApiProperty({ nullable: true, description: '리드관(LED)만 — 안심소개 상담 축(MAL · CONSULT) 승인 업종 · 다른 관은 null' }) consultCategories!: number | null;
+  /* v10.646 (D309 · docs/791) 새 관 — 상위 관(허브) · 소개 대상 */
+  @ApiProperty({ nullable: true, description: '상위 관(허브) 코드' }) parentCode!: string | null;
+  @ApiProperty({ nullable: true }) parentName!: string | null;
+  @ApiProperty({ nullable: true, enum: ['GOODS', 'ASSET', 'BIZ'], description: '소개 대상 — 처음 관은 null' }) introTarget!: string | null;
 }
 
 export class CreateGwanDto {
-  @ApiProperty({ example: 'LED', description: '대문자 3자. 만든 뒤 바꿀 수 없습니다' })
-  @Matches(/^[A-Z]{3}$/) code!: string;
+  @ApiProperty({ example: 'EDU', description: '영문 대문자 3 ~ 4자(관 표 gwans_code_check 와 같음 · v10.646). 만든 뒤 바꿀 수 없습니다' })
+  @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) code!: string;
 
   @ApiProperty({ minLength: 2, maxLength: 20 })
   @IsString() @MinLength(2) @MaxLength(20) name!: string;
 
   @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
+
+  /* v10.646 (D309) 소개 대상 · 상위 관(허브) — 만들 때 고름 */
+  @ApiPropertyOptional({ enum: ['GOODS', 'ASSET', 'BIZ'], description: '소개 대상 — 상품 · 서비스 / 자산 · 매물 / 사업 기회 · 만든 뒤 바꾸지 않음' })
+  @IsOptional() @IsIn(['GOODS', 'ASSET', 'BIZ']) introTarget?: string;
+  @ApiPropertyOptional({ example: 'EARN', description: '상위 관(허브 관만 · DB 가 막음 422 GWAN_PARENT)' })
+  @IsOptional() @Matches(/^[A-Z]{3,4}$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) parentCode?: string;
 }
 
 export class UpdateGwanDto {
@@ -40,6 +50,9 @@ export class UpdateGwanDto {
   })
   @IsOptional() @StrictBoolean() isActive?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
+  /* v10.646 (D309) 상위 관(허브) — 빈 글자면 상위 관 없음 */
+  @ApiPropertyOptional({ example: 'EARN', description: '상위 관(허브 관만 · 빈 글자 = 없음 · 422 GWAN_PARENT)' })
+  @IsOptional() @Matches(/^([A-Z]{3,4})?$/, { message: '관 코드는 영문 대문자 3 ~ 4자입니다.' }) parentCode?: string;
 }
 
 export class AdSlotDto {
@@ -272,6 +285,21 @@ export class CreateBannedWordDto {
   @ApiProperty({ enum: ['BLOCK','WARN'] }) @IsIn(['BLOCK', 'WARN']) severity!: string;
   @ApiPropertyOptional({ enum: ['MNY', 'MAL', 'BIZ', 'HLT'] })
   @IsOptional() @IsString() gwanCode?: string;
+}
+
+/* v10.646 (D309 · docs/791) 관 등록 폼 문구 — 관을 열려면 꼭 있어야 함(fn_gwan_open_guard NO_FORM_COPY) */
+export class GwanFormCopyDto {
+  @ApiProperty({ enum: ['OFFER', 'REQUEST'], description: 'OFFER 소개합니다(파는 쪽) · REQUEST 찾습니다(구하는 쪽)' }) role!: string;
+  @ApiProperty({ example: '배움 · 강의', description: '무엇을 등록하는지(폼 머리)' }) subject!: string;
+  @ApiProperty({ description: '제목 칸 안내' }) titleHint!: string;
+  @ApiProperty({ description: '본문 칸 안내' }) bodyHint!: string;
+  @ApiProperty({ nullable: true, description: '주의 한 줄' }) notice!: string | null;
+}
+export class GwanFormCopyPutDto {
+  @ApiProperty({ example: '배움 · 강의' }) @IsString() @MinLength(1) @MaxLength(40) subject!: string;
+  @ApiProperty({ example: '무엇을 가르치는지 한 줄로' }) @IsString() @MinLength(1) @MaxLength(200) titleHint!: string;
+  @ApiProperty({ example: '대상 · 기간 · 장소 · 비용을 적어 주세요' }) @IsString() @MinLength(1) @MaxLength(1000) bodyHint!: string;
+  @ApiPropertyOptional({ example: '자격이 필요한 강의는 자격 번호를 적어 주세요' }) @IsOptional() @IsString() @MaxLength(500) notice?: string;
 }
 
 export class GwanOrderItem {
