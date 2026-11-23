@@ -68,8 +68,8 @@ HV, SC, BK = rd('site/src/components/home/HomeView.tsx'), rd('site/src/component
 
 ok('① 주소 표시 — 서브도메인 대신 사용자 웹 주소(/g/<코드>) · 허브 주소 없음',
    '.sogaebank.com`' not in GL and 'g/${c.toLowerCase()}' in GL and '사용자 웹 주소' in GS and 'GWAN_WEB_PATH' in GS and '서브도메인' not in GN, '')
-ok('① D310 — 번역 대상 GWAN · fn_i18n_source GWAN · 지우는 문장 없음',
-   "'GWAN'" in MG and "WHEN 'GWAN' THEN" in MG and "WHEN 'GWAN_FORM' THEN" in MG and not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE|DROP COLUMN)\b', MG, re.I), str(len(MG)))
+ok('① D310 — 번역 대상 GWAN · fn_i18n_source GWAN · 앞 판(D130) 상호 그대로 · 지우는 문장 없음',
+   "'GWAN'" in MG and "'legal.direct_notice','footer.company_name'" in MG and "WHEN 'GWAN' THEN" in MG and "WHEN 'GWAN_FORM' THEN" in MG and not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE|DROP COLUMN)\b', MG, re.I), str(len(MG)))
 ok('① 관 이름 번역 — 서버 칸 · 원문 목록 · 대상 목록 · 번역 화면 · 공개 /gwans 덮어씀',
    "GWAN: ['name', 'description']" in IS and "GWAN: { from: 'gwans s'" in IS and "'GWAN'];" in IC and "GWAN: '관 이름'" in TR and "'AD_PLACEMENT', 'GWAN'] as const" in TR
    and "overlay(rows as Array<Record<string, any>>, 'GWAN'" in CS, '')
