@@ -60,8 +60,12 @@ if len(zips) >= 3:
     vprev = re.search(r'v10_(\d+)\.zip$', zips[-3]).group(1)
     vo = re.search(r'v10_(\d+)\.zip$', old).group(1)
     ok('③ 진짜 킷 초안 — 종료 0 · sha 대조 맞음', r.returncode == 0 and 'sha 대조 맞음' in (r.stdout + r.stderr), (r.stdout + r.stderr).strip()[-160:])
-    ok('③ 3-0 판 보관 줄 = 그 전 운영 판 · 지금 운영 판', f'ls ~/sgb-releases          # v10.{vprev}_… · v10.{vo}_…' in md, f'v10.{vprev} · v10.{vo}')
-    ok('③ 4-1 표 — 메뉴에서 만든 줄 1개 이상', md.count('| 운영 화면 왼쪽 메뉴 › ') >= 1, str(md.count('| 운영 화면 왼쪽 메뉴 › ')))
+    # v10.645: 적용 결과 파일(~/kits/ops/results/<판>_apply.txt)이 있으면 실제 폴더 이름(v10.N_YYYYMMDD_HHMMSS)
+    m30 = re.search(rf'ls ~/sgb-releases {{10}}# v10\.{vprev}_(…|\d{{8}}_\d{{6}}) · v10\.{vo}_(…|\d{{8}}_\d{{6}})', md)
+    ok('③ 3-0 판 보관 줄 = 그 전 운영 판 · 지금 운영 판(… 또는 실제 폴더 이름)', bool(m30), m30.group(0)[20:] if m30 else f'v10.{vprev} · v10.{vo} 없음')
+    # 두 킷 메뉴가 같으면 「운영 화면 메뉴 바뀜 없음」 한 줄(v10.637 킷이 들어온 뒤 617 → 637)
+    n41 = md.count('| 운영 화면 왼쪽 메뉴 › ')
+    ok('③ 4-1 표 — 메뉴에서 만든 줄 1개 이상 또는 「메뉴 바뀜 없음」 줄', n41 >= 1 or '| — | 운영 화면 메뉴 바뀜 없음' in md, str(n41))
 else:
     print(f'  (~/kits/ops 운영 킷 {len(zips)}개 — ③ 건너뜀)')
 

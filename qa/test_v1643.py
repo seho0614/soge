@@ -79,12 +79,14 @@ if API and DB:
     db_hub = psql("BEGIN; INSERT INTO categories (gwan_code, code, name, labor_law_flag) VALUES ('EARN', 'T1643H', '시험', 'NOT_APPLICABLE'); ROLLBACK;")
     db_led = psql("BEGIN; INSERT INTO categories (gwan_code, code, name, labor_law_flag) VALUES ('LED', 'T1643L', '시험', 'NOT_APPLICABLE'); ROLLBACK;")
     db_mv = psql("BEGIN; UPDATE categories SET gwan_code = 'BIZ' WHERE id = (SELECT id FROM categories WHERE gwan_code = 'MNY' LIMIT 1); ROLLBACK;")
-    db_same = psql("BEGIN; WITH a AS (SELECT id FROM accounts WHERE email = 'admin@x.com'), c AS (INSERT INTO categories (gwan_code, code, name, labor_law_flag, requested_by) "
-                   f"SELECT 'MNY', 'T1643S{stamp}', '시험', 'NOT_APPLICABLE', id FROM a RETURNING id) "
-                   "UPDATE categories SET status = 'APPROVED', approved_by = (SELECT id FROM a), approved_at = now() WHERE id = (SELECT id FROM c); ROLLBACK;")
+    # 같은 문장(CTE)에서 넣고 고치면 UPDATE 가 새 줄을 못 봄 — 두 문장으로(v10.646)
+    db_same = psql("BEGIN; INSERT INTO categories (gwan_code, code, name, labor_law_flag, requested_by) "
+                   f"SELECT 'MNY', 'T1643S{stamp}', '시험', 'NOT_APPLICABLE', id FROM accounts WHERE email = 'admin@x.com'; "
+                   "UPDATE categories SET status = 'APPROVED', approved_by = requested_by, approved_at = now() "
+                   f"WHERE gwan_code = 'MNY' AND code = 'T1643S{stamp}'; ROLLBACK;")
     ok('② DB — 허브(EARN) · LED 넣기 · 관 바꾸기 · 같은 사람 승인 모두 막힘(되돌림)',
        'CATEGORY_GWAN_NOT_ALLOWED' in db_hub and 'CATEGORY_GWAN_NOT_ALLOWED' in db_led and 'CATEGORY_GWAN_LOCKED' in db_mv and 'CATEGORY_SAME_PERSON' in db_same,
-       ' | '.join(x[-50:] for x in (db_hub, db_led, db_mv, db_same)))
+       ' | '.join((re.search(r'CATEGORY_[A-Z_]+', x) or [x[-40:]])[0] for x in (db_hub, db_led, db_mv, db_same)))
 
     # 시험 관리자(ADMIN) — 만든 사람
     em = f't1643a{stamp}@x.com'
