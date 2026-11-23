@@ -192,7 +192,7 @@ LETTERS = ''.join('가나다라마바사아자차'[int(c)] for c in str(STAMP)) 
 """시험 몸통"""
 RE_ = src('return-evidence.ts')
 ok('① 코드 — RETURN_PHOTO(DTO · 올릴 사람 · CHECK 는 목록을 읽어 더함) · 사진은 신청의 회원 · 판매자 · 운영만 · 가리기만 · 판정 쌓기만 · 상태 바뀜 트리거 · 회원은 보이는 기록만 · 사이트 화면 · 화면 · 문서 750 · 판 v10.608',
-   "'HR_DOC', 'RETURN_PHOTO', 'LGL_DOC', 'LISTING_VIDEO'] as const;" in rd('src/modules/file/file.dto.ts') and "RETURN_PHOTO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF']" in rd('src/modules/file/file.service.ts')
+   re.search(r"'HR_DOC', 'RETURN_PHOTO', ('PAGE_IMAGE', )?'LGL_DOC', 'LISTING_VIDEO'\] as const;", rd('src/modules/file/file.dto.ts'))   # v10.653 PAGE_IMAGE 가 RETURN_PHOTO 뒤에 들어옴 and "RETURN_PHOTO: ['MEMBER', 'BIZ_OWNER', 'BIZ_STAFF']" in rd('src/modules/file/file.service.ts')
    and "position('RETURN_PHOTO' IN v_def) = 0" in ML and 'trg_lsq_return_state_log' in ML and 'trg_lsq_return_verdict_lock' in ML and 'hidden_at = now()' in RE_
    and "($2::boolean OR v.visible_to_buyer)" in RE_ and rd('site/src/components/lsq/ReturnEvidence.tsx') and rd('site/src/app/health/seller/center/returns-evidence/page.tsx')
    and 'SB-HLT-LSQ-020' in SCREEN_IDS and 'SB-ADM-LSQ-070' in SCREEN_IDS and 'v10.608' in doc('750_') and VT >= (10, 608), VER)

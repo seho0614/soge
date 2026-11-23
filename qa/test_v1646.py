@@ -70,7 +70,7 @@ GP, GI = rd('site/src/app/g/[gwan]/page.tsx'), rd('site/src/app/g/[gwan]/[id]/pa
 EN, SJ, TS = rd('src/common/i18n/server-text.en.ts'), rd('spec/screens.json'), rd('scripts/check-testsafety.sh')
 
 ok('① D309 — intro_target · 오픈 뒤 새 관(다른 관 운영 중) · 상위 관 허브만 · saved_searches · 설정 무늬 · 권한 주소 · 지우는 문장 없음 · 퍼센트 RAISE 없음',
-   'intro_target' in MG and 'o.is_active AND NOT o.is_hub' in MG and 'fn_gwan_parent_guard' in MG and 'GWAN_PARENT' in MG
+   'intro_target' in MG and 'v_after := NEW.intro_target IS NOT NULL' in MG and 'o.is_active AND NOT o.is_hub' in MG and 'fn_gwan_parent_guard' in MG and 'GWAN_PARENT' in MG
    and 'lsx_saved_searches_gwan_code_fmt' in MG and "'^$|^[A-Z]{3,4}$'" in MG and "'^(HERO|[A-Z]{3,4})?$'" in MG
    and "('PUT', '/admin/gwans/{code}/form-copy/{role}'" in MG and "('POST', '/admin/categories', 'category', 'EDIT')" in MG
    and not re.search(r'\b(DELETE FROM|TRUNCATE|DROP TABLE|DROP COLUMN)\b', MG, re.I) and not re.search(r"RAISE EXCEPTION\s+'[^']*%", MG), str(len(MG)))
