@@ -63,9 +63,9 @@ def psql(sql):
 
 if API and DB:
     T_ = call('POST', '/auth/login', {'email': 'admin@x.com', 'password': PW}).get('accessToken')
-    n0 = psql('SELECT count(*) FROM ops_alerts')
+    n0 = psql("SELECT count(*) FROM ops_alerts WHERE alert_code = 'DAILY_DIGEST'")   # 동시 단계에서 다른 시험이 넣는 알림은 빼고 셈(v10.646)
     g = call('GET', '/admin/launch-watch/digest', t=T_)
-    n1 = psql('SELECT count(*) FROM ops_alerts')
+    n1 = psql("SELECT count(*) FROM ops_alerts WHERE alert_code = 'DAILY_DIGEST'")
     ok('② 요약 보기 — 어제 날짜 · 글 · 숫자 · 운영 알림 늘지 않음', '소개뱅크 운영 하루 요약' in str(g.get('text')) and isinstance(g.get('signups'), int)
        and g.get('day') == psql("SELECT ((now() AT TIME ZONE 'Asia/Seoul')::date - 1)::text") and n0 == n1, f"{g.get('day')} · 알림 {n0} → {n1}")
     mt = call('POST', '/auth/login', {'email': 'buyer@x.com', 'password': PW}).get('accessToken')
