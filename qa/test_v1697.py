@@ -12,7 +12,7 @@ PG, HV, HP, HT, SE = (rd('site/src/app/page.tsx'), rd('site/src/components/home/
 LY = rd('site/src/lib/layout.ts')
 ok('① 메인 page.tsx — 배치 읽기(?lp=) · 안내 장 숨김 · 글 · 주소 · 그림 · 구역 차례 · 블록(서버가 그려 넘김)',
    "getLayout('HOME', (await searchParams).lp)" in PG and "so[s.k]?.show !== false" in PG and "artUrl: so[s.k]!.image" in PG and 'layOrder(lay, HOME_SECS)' in PG
-   and '<LayBlocks code="MNY" blocks={b} at={at} />' in PG and 'order={order} texts={lay?.texts ?? {}} ins={ins}' in PG, '')
+   and '<LayBlocks code="MNY" k="HOME" blocks={b} at={at} />' in PG and 'order={order} texts={lay?.texts ?? {}} ins={ins}' in PG, '')
 ok('① HomeView — 구역 차례 · 보이기 · 맨 위 · 구역 뒤 블록 · hero 글 · 구역 제목 9 · 관이 꺼지면 안심소개 · 창업 안 나옴',
    '(order ?? HOME_DEFAULT).map(({ key, show })' in HV and '{ins._top}' in HV and '{sec}{ins[key]}' in HV and 'texts.heroTitleA ||' in HV
    and "key === 'trust' ? (on('MAL') ? <Trust c={c} /> : null)" in HV and '<HTitles.Provider value={texts}>' in HV

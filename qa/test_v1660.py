@@ -56,14 +56,14 @@ def psql(sql):
 _call_open = call
 
 
-def call(m_, p, b=None, t=None):
+def call(m_, p, b=None, t=None, hd0=None):
     if m_ != 'GET' and re.match(r'^/admin/(gwan-pages|gwans/MNY/pages|gwan-fragments/\d+/republish)', p):
         psql("UPDATE gwans SET is_active = false WHERE code = 'MNY'")
         try:
-            return _call_open(m_, p, b, t)
+            return _call_open(m_, p, b, t, hd0)
         finally:
             psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")
-    return _call_open(m_, p, b, t)
+    return _call_open(m_, p, b, t, hd0)
 
 
 

@@ -15,7 +15,7 @@ ok('① D322 — 꾸밀 페이지 editable 처음 false · 관 안 페이지 edi
    'ADD COLUMN IF NOT EXISTS editable boolean NOT NULL DEFAULT false' in M and "ALTER TABLE public.gwan_pages ADD COLUMN IF NOT EXISTS editable boolean NOT NULL DEFAULT true" in M
    and "'HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'" in M and "('POST', '/admin/site-layouts/{key}/editable', 'gwan-ux', 'EDIT')" in M and 'DELETE FROM' not in M, '')
 ok('① 서버 — gate(수정 불가 · 관 열림) · 초안 · 게시 · 예약 · 처음 배치 · 되돌리기 모두 막음 · 규칙 검사 먼저 · 예약 게시는 기다림 · 메인은 관 규칙 없음',
-   "reason: !editable ? 'SITE_LAYOUT_LOCKED' : gwanOpen ? 'SITE_LAYOUT_GWAN_OPEN' : null" in SV and SV.count('await this.assertEditable(k);') == 5
+   "reason: !editable ? 'SITE_LAYOUT_LOCKED' : gwanOpen ? 'SITE_LAYOUT_GWAN_OPEN' : mgr ? 'SITE_LAYOUT_MANAGER_ONLY' : null" in SV and SV.count('await this.assertEditable(k);') >= 5
    and 'const l = cleanLayout(k, layout);   // 입력 규칙을 먼저' in SV and 'if ((await this.gate(due[i]!.key as LayoutKey)).reason) due.splice(i, 1);' in SV
    and "GWAN_LAYOUT_KEYS = ['MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN']" in SV, '')   # 메인(HOME)은 관 규칙 없음
 ok('① 관 안 페이지 — GWAN_PAGE_LOCKED · v10.705 GWAN_PAGE_GWAN_OPEN(만들기 · 저장 · 게시 · 숨김 · 예약 · 되돌리기 · 번역 · 예약 게시 기다림) · 스위치 SUPER · 화면 잠금 표시',

@@ -15,7 +15,7 @@ ok('① 소개장터 — 배치 · CSS(data-lay-css) · 구역 5 · 머리 띠 �
    and all(f'data-lay-sec="{k}"' in MV for k in ('quick', 'cat', 'cols', 'band', 'bottom')) and 'data-lay-box=""' in MV and 'lay?.texts?.title' in MV and '{lay?.top}' in MV and '{lay?.bottom}' in MV, '')
 ok('① 안심소개 · 소개창업 — 구역(검색 · 축 · 안내 · 목록 · 특징) · 위 · 아래 블록 · 관 화면 ?lp= 넘김',
    "await getLayout(code, lp)" in GL and all(f'data-lay-sec="{k}"' in GL for k in ('search', 'axis', 'notice', 'body', 'features')) and 'data-lay-top=""' in GL and 'data-lay-bottom=""' in GL
-   and '<MoneyMain q={q0} lp={lp} />' in GP and '<GwanLanding code={code} q={q0} lp={lp} />' in GP, '')
+   and '<MoneyMain q={q0} lp={lp} staff={staff} />' in GP and '<GwanLanding code={code} q={q0} lp={lp} staff={staff} />' in GP, '')
 ok('① 소개리드 — 제목 · 설명 · 구역 차례(안내 · 업종 · 파트너) · 맨 위 · 구역 뒤 블록',
    "getLayout('LED', (await searchParams).lp)" in LD and "lay?.texts.title || t('lead.title')" in LD and "layOrder(lay, ['warn', 'list', 'cta'])" in LD and "ins('_top')" in LD and '{ins(key)}' in LD, '')
 
