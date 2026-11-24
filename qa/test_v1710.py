@@ -9,7 +9,7 @@ from _lay_common import *   # noqa
 
 M, SV, SP = rd('prisma/migrations/D324_maint_notice_publish_requests/migration.sql'), rd('src/modules/site/gwan-maint.service.ts'), rd('web/src/app/admin/SitePages.tsx')
 ok('① D324 · 서버 — announce · notice_id · 공지(상단 고정 · PUBLIC · 끝 = 점검 끝 · notify) · 취소 · 지금 끝내기 → 공지 내림',
-   'ADD COLUMN IF NOT EXISTS notice_id uuid REFERENCES public.notices(id)' in M and "VALUES ($1, $2, $3, true, now(), $4, $5, ARRAY['PUBLIC'], $6)" in SV
+   'ADD COLUMN IF NOT EXISTS notice_id uuid REFERENCES public.notices(id)' in M and "VALUES ($1, $2, $3, true, greatest(now(), $7::timestamptz - make_interval(mins => $8)), $4, $5, ARRAY['PUBLIC'], $6)" in SV
    and "await this.dropNotice(id, '점검 취소');" in SV and "await this.dropNotice(id, '점검 일찍 끝남');" in SV and 'private async dropNotice(' in SV, '')
 ok('① 화면 — 「손님에게 미리 알림」 · 「회원 알림도」(미리 알림일 때만) · 목록 「공지함」', 'data-gwan-maint-announce' in SP and 'data-gwan-maint-notify' in SP and 'disabled={!f.announce}' in SP and '공지함' in SP, '')
 

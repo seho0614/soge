@@ -9,7 +9,7 @@ from _lay_common import *   # noqa
 
 SP, GP, SV = rd('web/src/app/admin/SitePages.tsx'), rd('web/src/app/admin/gwans/GwanPages.tsx'), rd('src/modules/site/site-layouts.service.ts')
 ok('① 바로 편집 — GwanPageEditor · 아래 표 「편집」 · 돌아오면 목록 다시 읽음',
-   'export function GwanPageEditor(' in GP and "import { BlockList, GwanPageEditor } from './gwans/GwanPages';" in SP and 'data-site-page-row-edit' in SP
+   'export function GwanPageEditor(' in GP and "import { BlockList, GwanPageEditor" in SP and 'data-site-page-row-edit' in SP
    and '<GwanPageEditor id={pageEdit} isSuper={isSuper} onBack={() => { setPageEdit(null); reload(); }} />' in SP, '')
 ok('① 수정 칸 — 꾸밀 페이지 · 관 안 페이지 모두(가능 · 불가 · 관 열림 · SUPER 스위치) · 서버 응답 칸',
    'data-site-page-editable=' in SP and 'data-site-page-row-editable' in SP and "/admin/gwan-pages/${p.id}/editable" in SP and 'p.editable, g.is_active AS "gwanOpen"' in SV, '')

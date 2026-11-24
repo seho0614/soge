@@ -38,9 +38,9 @@ ok('① D172 — 설정 home.hero_chips 빈 값 · ADMIN · 형식(쉼표 최대
 SS = rd('src/modules/search/search.service.ts'); MS = rd('src/modules/market/market.service.ts'); MC = rd('src/modules/market/market.controller.ts')
 PG = rd(S + 'app/page.tsx'); SD = rd('web/src/app/admin/ailearn/SearchDict.tsx')
 ok('① 서버 · 메인 · 운영 화면 — heroPicks(제한업종 빼기) · place=hero(pick · auto) · 메인 1분 · 운영 화면 칸(검색 사전)',
-   'async heroPicks()' in SS and "WHERE key = 'home.hero_chips'" in SS and 'restrict_vocab' in SS.split('async heroPicks()')[1][:900]
+   'async heroPicks()' in SS and "'home.hero_chips_en' : 'home.hero_chips'" in SS and 'restrict_vocab' in SS.split('async heroPicks()')[1][:900]
    and "place === 'hero' && !gwanCode" in MS and "source: 'pick'" in MS and "source: 'auto'" in MS and "@Query('place') place?: string" in MC
-   and "'/search/keywords?limit=4&place=hero', 60" in PG and "hotKw?.source === 'pick' && hot.length" in PG
+   and '/search/keywords?limit=4&place=hero&lang=${locale}`, 60' in PG and "hotKw?.source === 'pick' && hot.length" in PG
    and 'data-hero-chips=""' in SD and "key: 'home.hero_chips'" in SD and "method: 'PATCH'" in SD, '')
 gone = [f for f in ('components/b2/AuthArea.tsx', 'components/b2/NavLink.tsx', 'components/home/HomeLogout.tsx', 'i18n/LangAuto.tsx') if os.path.exists(os.path.join(K, S + f))]
 B2 = rd(S + 'components/b2/Frame.tsx'); HF = rd(S + 'components/home/Frame.tsx')
