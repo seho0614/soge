@@ -8,6 +8,10 @@
 #      v10.641 (docs/785) verify-docs 「DB 대조」는 ② 의 버리는 DB(자기 네트워크 · 포트 안 엶)에 붙여 돌림 — 전에는 DB 가 없어 늘 rc=1 이라 진짜 실패가 묻혔음
 #   ④ 옛 시험 코드 부분 — main(~/sogaebank) ↔ 작업 트리 결과 비교(닿지 않는 주소 127.0.0.1:1 · --network none)
 #      v10.641 「작업 트리에서만 FAIL」은 「시험 | FAIL 확인 이름」만 숫자를 지우고 견줌(판 번호 글자 · test_v1122 처럼 돌 때마다 다른 보기 값만 다른 줄이 새 실패로 보이던 것)
+#   v10.784 (docs/893) ⑤ 시험 로그인 계정 대조 — 바뀐 · 새 시험의 login('…') · agree('…') 계정이 시드에 있는지(qa/login_accounts_check.py)
+#      11/25 super@x.com(시드에 없음) 로그인 실패가 IP 잠금 → 뒤 시험 16개 UNAUTHENTICATED 연쇄 실패
+#   v10.784 ⑥ 새 시험 점검판 먼저 — main 에 없는 새 시험 목록과 qa/new_tests_on_board.sh 안내(점검판에서 돌리는 일은 그 스크립트가 · 여기서는 점검판을 쓰지 않음)
+#      (fork · 보조 일꾼이 쓴 시험은 전체 점검 전에 점검판에서 한 번 — 전체 점검 2시간 반을 시험 탓으로 다시 돌리지 않게)
 #   점검판 · 확인판 포트 · RDS 는 쓰지 않음(버리는 DB 만 · 포트를 열지 않음).
 set -u
 C=$(cd "${1:?core 작업 트리}" && pwd)
@@ -64,4 +68,11 @@ grep -E '\| FAIL' "$OUT/static_main.txt" | fkey > "$OUT/fail_main.keys"; echo '@
 grep -E '\| FAIL' "$OUT/static_new.txt" | while IFS= read -r l; do
   printf '%s\n' "$l" | fkey | grep -qxF -f "$OUT/fail_main.keys" || printf '%s\n' "$l"
 done | head -30
+echo "== ⑤ 시험 로그인 계정"
+python3 "$I/qa/login_accounts_check.py" "$C" "$I/qa" "$MAIN_QA" | tee "$OUT/login_accounts.txt"; echo "⑤ rc=${PIPESTATUS[0]}"
+
+echo "== ⑥ 새 시험(main 에 없음)"
+NEWT=$(cd "$I/qa" && for f in test_v*.py; do [ -f "$MAIN_QA/$f" ] || echo "$f"; done)
+echo "새 시험 $(echo $NEWT | wc -w)개: $(echo $NEWT | tr '\n' ' ' | head -c 600)"
+[ -n "$NEWT" ] && echo "⑥ 전체 점검 전에 점검판에서 먼저: ~/sgb-check.sh <갈래> up (백그라운드 · 회귀 중 금지) 뒤 bash qa/new_tests_on_board.sh <core 작업 트리>"
 echo "== 미리 검사 끝 $(TZ=Asia/Seoul date '+%H:%M') KST"

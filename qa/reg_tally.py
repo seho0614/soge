@@ -40,7 +40,36 @@ def main(argv):
     short = expect is not None and len(rows) < expect
     print(f'회귀 집계 — 시험 {len(rows)}개' + (f' (기대 {expect})' if expect else '') + f' · 모두 통과 {ok_n} · 실패 {len(bad)}'
           + (' · 수가 모자람' if short else ''))
+    lockout_hint(argv[1], bad)
     return 0 if rows and not bad and not short else 1
+
+
+def lockout_hint(log, bad):
+    """v10.784 (docs/893) 실패 시험 3개 이상이 UNAUTHENTICATED 면 로그인 잠금 연쇄를 먼저 의심 — _times.tsv 순서로 앞선 로그인 실패 시험을 보여 줌
+    (11/25 super@x.com 실패 로그인 하나가 IP 잠금 → 뒤 시험 16개 실패)"""
+    import os
+    d = log + '.d'
+    if len(bad) < 3 or not os.path.isdir(d):
+        return
+    def body(n):
+        try:
+            return open(os.path.join(d, n + '.log'), encoding='utf-8', errors='replace').read()
+        except OSError:
+            return ''
+    un = [n for n, _, _ in bad if 'UNAUTHENTICATED' in body(n)]
+    if len(un) < 3:
+        return
+    order = []
+    try:
+        for l in open(os.path.join(d, '_times.tsv'), encoding='utf-8', errors='replace'):
+            f = l.split('\t')
+            if f and f[0].startswith('test_'):
+                order.append(f[0])
+    except OSError:
+        pass
+    first = next((n for n in order if n in un), un[0])
+    print(f'  ※ 실패 {len(bad)}개 중 {len(un)}개가 UNAUTHENTICATED — 로그인 잠금 연쇄 의심(fn_login_fail · 같은 IP)')
+    print(f'    가장 먼저 실패한 것: {first} · 그 앞 순서 시험의 login 계정이 시드에 있는지 확인(qa/login_accounts_check.py)')
 
 
 if __name__ == '__main__':

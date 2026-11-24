@@ -100,11 +100,12 @@ UH, SH, SJ = rd('site/src/components/common/UniHeader.tsx'), rd('site/src/compon
 EN = json.loads(rd('site/src/i18n/messages/en.json') or '{}')
 CEN = json.loads(rd('site/src/i18n/messages/en/consult.json') or '{}')
 STX = rd('src/common/i18n/server-text.en.ts')
+LEDN = 'Leeds' if VT >= (10, 788) else 'Consult Leads'   # v10.788 (docs/897) 영어 이름 「Leeds」(대표 11/25)
 ok('① 코드 — 리드 현황 API(읽기만 · PARTNER_MAL) · 하위 탭 「리드 현황」 · 머리줄 영어 Consult Leads · /lead 영어 제목 · 서버 영어 · screens.json · 문서 471 · 판 v10.338',
    "@Controller('api/v1/admin/lead-status')" in LC and "@Roles('ADMIN', 'SUPER', 'PARTNER_MAL')" in LC and '@Post' not in LC and 'LeadStatusController' in AM
    and "{ key: 'status', label: '리드 현황', screen: 'SB-ADM-PTN-100' }" in PT and 'data-lead-status' in LS
    and "'LED'" in KEYS and 'isHeaderGwanKey as isGwanKey' in UH and 'isHeaderGwanKey as isGwanKey' in SH
-   and EN.get('header', {}).get('gwan', {}).get('LED') == 'Consult Leads' and CEN.get('lead', {}).get('title') == 'Consult Leads'
+   and EN.get('header', {}).get('gwan', {}).get('LED') == LEDN and CEN.get('lead', {}).get('title') == LEDN
    and 'Sogae Lead' not in STX and '"SB-ADM-PTN-100"' in SJ and '"GET /admin/lead-status"' in SJ and 'Consult Leads' in doc('471_') and VT >= (10, 338), VER)
 if API and DB:
     import consent_ok

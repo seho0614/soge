@@ -4,6 +4,8 @@
     환경 값: Q(qa 폴더) · K(kit) · API · DB · ADMIN_WEB · SITE — run_regression.sh 의 one() 과 같은 docker 명령으로 돌림
     · 방식 PAR(아무와 동시) · LOCK(잠금 이름이 겹치는 시험과는 같이 안 돎 · 설정 키 앞마디 set:… · 정기 작업 job) 만 돌림
     · --ui-lane: 화면 시험(UI)도 「ui」 잠금 하나로 넣어 한 번에 하나씩(처음은 끔 — 화면 시험은 실행기가 혼자 돌림)
+    · v10.785 (docs/894) --ui-lane N: 화면 시험을 동시에 N개까지(「ui」 자리 N개 · 회귀 3차) — 화면 시험끼리도 설정 키 · 정기 작업 잠금은 그대로라
+      같은 설정을 만지는 화면 시험은 같이 안 돎 · 「--ui-lane」만 쓰면 1(예전과 같음)
     · 지난 시간(--times)이 있으면 오래 걸린 시험부터 시작(끝이 덜 늘어짐)
     · 시험마다 출력은 <dir>/<시험>.log (예전과 같음) · 시간은 <dir>/_times.tsv 에 덧붙임
     · 다 끝나면 「시험 | 결과: n / m」 줄과 그 아래 FAIL 줄(네 칸 들여쓰기)을 **시험 이름 순서로** 표준 출력 — 실행기가 로그에 덧붙임(reg_tally.py 판정 그대로)
@@ -46,7 +48,10 @@ def summary_lines(name, out):
 
 def main(argv):
     plan, d, n = opt(argv, '--plan'), opt(argv, '--dir'), max(1, int(opt(argv, '--n', '3')))
-    ui_lane = '--ui-lane' in argv
+    ui_lane = 0
+    if '--ui-lane' in argv:   # v10.785 「--ui-lane」 뒤 숫자가 있으면 그 수 · 없으면 1
+        nx = opt(argv, '--ui-lane', '')
+        ui_lane = max(1, int(nx)) if nx.isdigit() else 1
     env = {k: os.environ.get(k, '') for k in ('Q', 'K', 'API', 'DB', 'ADMIN_WEB', 'SITE')}
     tasks = []
     for line in open(plan, encoding='utf-8'):
@@ -57,7 +62,7 @@ def main(argv):
         if mode in ('PAR', 'LOCK'):
             tasks.append((f, lk))
         elif mode == 'UI' and ui_lane:
-            tasks.append((f, lk | {'ui'}))
+            tasks.append((f, lk | {'ui'}))   # 「ui」는 자리 수(ui_lane)만큼 함께 쥘 수 있음
     skip = set(filter(None, os.environ.get('SKIP_TESTS', '').split()))   # 실행기가 HOST 시험을 넘겨 줌(여기서 다시 돌리지 않음)
     tasks = [t for t in tasks if t[0] not in skip and os.path.exists(os.path.join(env['Q'], t[0]))]
     past = {}
@@ -71,6 +76,7 @@ def main(argv):
 
     lock = threading.Lock()
     held, running, results = set(), set(), {}
+    ui_held = [0]   # v10.785 「ui」 자리 쓰는 수
     cv = threading.Condition(lock)
     left = list(tasks)
     total = len(tasks)
@@ -78,10 +84,16 @@ def main(argv):
     def take():
         """잠금이 겹치지 않는 첫 시험 — 없으면 None"""
         for i, (f, lk) in enumerate(left):
-            if not (lk & held):
-                left.pop(i)
-                held.update(lk)
-                return f, lk
+            plain = lk - {'ui'}
+            if plain & held:
+                continue
+            if 'ui' in lk and ui_held[0] >= ui_lane:
+                continue
+            left.pop(i)
+            held.update(plain)
+            if 'ui' in lk:
+                ui_held[0] += 1
+            return f, lk
         return None
 
     def worker():
@@ -101,7 +113,9 @@ def main(argv):
             with open(os.path.join(d, f + '.log'), 'w', encoding='utf-8') as fh:
                 fh.write(out + '\n')
             with cv:
-                held.difference_update(lk)
+                held.difference_update(lk - {'ui'})
+                if 'ui' in lk:
+                    ui_held[0] -= 1
                 running.discard(f)
                 results[f] = out
                 with open(os.path.join(d, '_times.tsv'), 'a', encoding='utf-8') as fh:
