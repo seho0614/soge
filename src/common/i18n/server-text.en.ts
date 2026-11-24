@@ -5,55 +5,56 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
-  "게시 · 예약 · 되돌리기는 최고 관리자(SUPER)나 「관 UI/UX」 승인 권한을 따로 받은 운영자만 합니다.": "Only a super admin or a staff member with the Hall UI/UX approve permission can publish, schedule or roll back.",   // v10.7xx (D328)
-  "A/B 비교 기간은 1 ~ 31일입니다.": "An A/B comparison runs for 1 to 31 days.",   // v10.7xx (D328)
-  "게시된 판(A)이 있어야 비교합니다 — 먼저 게시하십시오.": "A published version (A) is needed to compare. Publish first.",   // v10.7xx (D328)
-  "초안(B)이 게시된 판(A)과 같습니다 — 초안을 고쳐 저장한 뒤 시작하십시오.": "The draft (B) is the same as the published version (A). Edit and save the draft before starting.",   // v10.7xx (D328)
-  "이 페이지는 이미 A/B 비교 중입니다 — 끝낸 뒤 새로 시작하십시오.": "This page already has an A/B comparison running. End it before starting a new one.",   // v10.7xx (D328)
-  "진행 중인 A/B 비교가 없습니다.": "No A/B comparison is running.",   // v10.7xx (D328)
-  "1차 승인한 사람은 2차 승인을 할 수 없습니다 — 다른 최고 관리자(SUPER)가 승인합니다.": "The first approver cannot give the second approval. Another super admin must approve.",   // v10.7xx (D328)
-  "지역 코드 모양이 맞지 않습니다.": "The region code is not valid.",   // v10.7xx (D328)
-  "공개 범위는 ALL · MEMBER 입니다.": "Visibility must be ALL or MEMBER.",   // v10.747
-  "페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "The page address must be 2 to 40 lowercase letters, digits or -.",   // v10.742
-  "달력은 62일까지 봅니다.": "The calendar shows up to 62 days.",   // v10.734 ~ 743 (D326)
-  "이 페이지에서 내려받은 판 파일이 아닙니다.": "This is not a version file exported from this page.",   // v10.734 ~ 743 (D326)
-  "이 페이지는 고칠 글자가 없습니다.": "This page has no editable texts.",   // v10.734 ~ 743 (D326)
-  "AI 답을 읽지 못했습니다 — 다시 누르십시오.": "Could not read the AI reply — please try again.",   // v10.734 ~ 743 (D326)
-  "첫 화면은 복사하지 않습니다 — 관 안 페이지만 복사합니다.": "The first screen is not copied — only in-hall pages can be copied.",   // v10.734 ~ 743 (D326)
-  "{0}번째 블록 보이는 기간은 YYYY-MM-DD 모양입니다.": "The display period of block {0} must be YYYY-MM-DD.",   // v10.714 ~ 733 (D325)
-  "{0}번째 블록 보이는 기간의 끝이 시작보다 앞입니다.": "The display period end of block {0} is before its start.",   // v10.714 ~ 733 (D325)
-  "이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.": "Only this hall's managers can edit it (per-hall page editing) — check Hall settings › Basic info › Hall managers.",   // v10.714 ~ 733 (D325)
-  "수정 불가로 둔 페이지가 들어 있습니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "Some pages are set to not editable — a super administrator must switch them to “editable” first.",   // v10.714 ~ 733 (D325)
-  "같은 페이지입니다.": "It is the same page.",   // v10.714 ~ 733 (D325)
-  "없거나 이미 멈춘 반복입니다.": "The repeat does not exist or is already stopped.",   // v10.714 ~ 733 (D325)
-  "한 줄 의견에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in the comment.",   // v10.714 ~ 733 (D325)
-  "이 페이지에는 이미 열린 게시 요청이 있습니다.": "This page already has an open publish request.",   // v10.711 (D324)
-  "없는 게시 요청입니다.": "There is no such publish request.",   // v10.711 (D324)
-  "이미 끝난 게시 요청입니다.": "This publish request is already closed.",   // v10.711 (D324)
-  "요청한 뒤 초안이 바뀌었습니다 — 되돌려 보내고 다시 요청을 받으십시오.": "The draft changed after the request — send it back and have it requested again.",   // v10.711 (D324)
-  "되돌려 보내는 사유를 2자 이상 적으십시오.": "Enter a reason of at least 2 characters to send it back.",   // v10.711 (D324)
-  "요청한 사람만 철회합니다.": "Only the requester can withdraw it.",   // v10.711 (D324)
-  "없는 점검 시간입니다.": "There is no such maintenance window.",   // v10.706 ~ 709 (D323)
-  "시작은 지금부터 90일 안이어야 합니다.": "The start must be within 90 days from now.",   // v10.706 ~ 709 (D323)
-  "끝은 시작 뒤 2시간 안이어야 합니다.": "The end must be within 2 hours after the start.",   // v10.706 ~ 709 (D323)
-  "안내 글은 200자까지 · HTML 태그는 쓸 수 없습니다.": "The notice can be up to 200 characters, without HTML tags.",   // v10.706 ~ 709 (D323)
-  "같은 관에 겹치는 점검 시간이 있습니다.": "There is an overlapping maintenance window for this hall.",   // v10.706 ~ 709 (D323)
-  "시작 전인 점검만 취소합니다 — 점검 중이면 「지금 끝내기」를 쓰십시오.": "Only maintenance that has not started can be canceled — use “End now” while it is running.",   // v10.706 ~ 709 (D323)
-  "점검 중인 것만 끝냅니다.": "Only running maintenance can be ended.",   // v10.706 ~ 709 (D323)
-  "시각 모양이 맞지 않습니다.": "The time format is not valid.",   // v10.706 ~ 709 (D323)
-  "언어별 글자는 8개 언어까지입니다.": "Per-language texts are allowed for up to 8 languages.",   // v10.706 ~ 709 (D323)
-  "한국어가 아닌 두 글자 언어 코드를 고르십시오.": "Choose a two-letter language code other than Korean.",   // v10.706 ~ 709 (D323)
-  "옮길 한국어 글이 없습니다 — 비운 칸은 그 언어 사전 글이 나옵니다.": "There is no Korean text to translate — empty fields show that language's dictionary text.",   // v10.706 ~ 709 (D323)
-  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” in the page list first.",   // v10.701 (D322) 수정 가능 스위치
-  "관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.": "The hall is open, so it cannot be edited — close (pause) the hall in hall settings, edit, then open it again.",   // v10.701 (D322) 수정 가능 스위치
-  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” first.",   // v10.701 (D322) 수정 가능 스위치
-  "{0}에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in {0}.",   // v10.696 (D321) 꾸밀 페이지
-  "{0}은(는) /로 시작하는 사이트 안 주소나 https 주소만 됩니다.": "{0} must be a site path starting with / or an https address.",   // v10.696 (D321) 꾸밀 페이지
-  "{0}은(는) {1}개까지 고릅니다.": "Up to {1} items can be chosen for {0}.",   // v10.696 (D321) 꾸밀 페이지
-  "{0}은(는) {1}자까지입니다.": "{0} can be up to {1} characters.",   // v10.696 (D321) 꾸밀 페이지
-  "{0}의 상품 코드 모양이 맞지 않습니다.": "The product code format in {0} is not valid.",   // v10.696 (D321) 꾸밀 페이지
-  "끼운 블록은 페이지 전체에서 30개까지입니다.": "Up to 30 inserted blocks are allowed per page.",   // v10.696 (D321) 꾸밀 페이지
-  "처음 배치와 같아 게시할 것이 없습니다 — 고친 뒤 「초안 저장」을 먼저 누르십시오.": "This is the same as the default layout, so there is nothing to publish — make changes and press “Save draft” first.",   // v10.696 (D321) 꾸밀 페이지
+  "게시 · 예약 · 되돌리기는 최고 관리자(SUPER)나 「관 UI/UX」 승인 권한을 따로 받은 운영자만 합니다.": "Only a super admin or a staff member with the Hall UI/UX approve permission can publish, schedule or roll back.",
+  "A/B 비교 기간은 1 ~ 31일입니다.": "An A/B comparison runs for 1 to 31 days.",
+  "게시된 판(A)이 있어야 비교합니다 — 먼저 게시하십시오.": "A published version (A) is needed to compare. Publish first.",
+  "초안(B)이 게시된 판(A)과 같습니다 — 초안을 고쳐 저장한 뒤 시작하십시오.": "The draft (B) is the same as the published version (A). Edit and save the draft before starting.",
+  "이 페이지는 이미 A/B 비교 중입니다 — 끝낸 뒤 새로 시작하십시오.": "This page already has an A/B comparison running. End it before starting a new one.",
+  "진행 중인 A/B 비교가 없습니다.": "No A/B comparison is running.",
+  "1차 승인한 사람은 2차 승인을 할 수 없습니다 — 다른 최고 관리자(SUPER)가 승인합니다.": "The first approver cannot give the second approval. Another super admin must approve.",
+  "지역 코드 모양이 맞지 않습니다.": "The region code is not valid.",
+  "공개 범위는 ALL · MEMBER 입니다.": "Visibility must be ALL or MEMBER.",
+  "같은 관에 겹치는 점검 시간이 있습니다.": "This hall already has an overlapping maintenance window.",
+  "관 열기 · 닫기 기록은 고치거나 지울 수 없습니다.": "Hall open/close records cannot be edited or deleted.",
+  "페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "The page address must be 2 to 40 lowercase letters, digits or -.",
+  "달력은 62일까지 봅니다.": "The calendar shows up to 62 days.",
+  "이 페이지에서 내려받은 판 파일이 아닙니다.": "This is not a version file exported from this page.",
+  "이 페이지는 고칠 글자가 없습니다.": "This page has no editable texts.",
+  "AI 답을 읽지 못했습니다 — 다시 누르십시오.": "Could not read the AI reply — please try again.",
+  "첫 화면은 복사하지 않습니다 — 관 안 페이지만 복사합니다.": "The first screen is not copied — only in-hall pages can be copied.",
+  "{0}번째 블록 보이는 기간은 YYYY-MM-DD 모양입니다.": "The display period of block {0} must be YYYY-MM-DD.",
+  "{0}번째 블록 보이는 기간의 끝이 시작보다 앞입니다.": "The display period end of block {0} is before its start.",
+  "이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.": "Only this hall's managers can edit it (per-hall page editing) — check Hall settings › Basic info › Hall managers.",
+  "수정 불가로 둔 페이지가 들어 있습니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "Some pages are set to not editable — a super administrator must switch them to “editable” first.",
+  "같은 페이지입니다.": "It is the same page.",
+  "없거나 이미 멈춘 반복입니다.": "The repeat does not exist or is already stopped.",
+  "한 줄 의견에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in the comment.",
+  "이 페이지에는 이미 열린 게시 요청이 있습니다.": "This page already has an open publish request.",
+  "없는 게시 요청입니다.": "There is no such publish request.",
+  "이미 끝난 게시 요청입니다.": "This publish request is already closed.",
+  "요청한 뒤 초안이 바뀌었습니다 — 되돌려 보내고 다시 요청을 받으십시오.": "The draft changed after the request — send it back and have it requested again.",
+  "되돌려 보내는 사유를 2자 이상 적으십시오.": "Enter a reason of at least 2 characters to send it back.",
+  "요청한 사람만 철회합니다.": "Only the requester can withdraw it.",
+  "없는 점검 시간입니다.": "There is no such maintenance window.",
+  "시작은 지금부터 90일 안이어야 합니다.": "The start must be within 90 days from now.",
+  "끝은 시작 뒤 2시간 안이어야 합니다.": "The end must be within 2 hours after the start.",
+  "안내 글은 200자까지 · HTML 태그는 쓸 수 없습니다.": "The notice can be up to 200 characters, without HTML tags.",
+  "시작 전인 점검만 취소합니다 — 점검 중이면 「지금 끝내기」를 쓰십시오.": "Only maintenance that has not started can be canceled — use “End now” while it is running.",
+  "점검 중인 것만 끝냅니다.": "Only running maintenance can be ended.",
+  "시각 모양이 맞지 않습니다.": "The time format is not valid.",
+  "언어별 글자는 8개 언어까지입니다.": "Per-language texts are allowed for up to 8 languages.",
+  "한국어가 아닌 두 글자 언어 코드를 고르십시오.": "Choose a two-letter language code other than Korean.",
+  "옮길 한국어 글이 없습니다 — 비운 칸은 그 언어 사전 글이 나옵니다.": "There is no Korean text to translate — empty fields show that language's dictionary text.",
+  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” in the page list first.",
+  "관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.": "The hall is open, so it cannot be edited — close (pause) the hall in hall settings, edit, then open it again.",
+  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” first.",
+  "{0}에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in {0}.",
+  "{0}은(는) /로 시작하는 사이트 안 주소나 https 주소만 됩니다.": "{0} must be a site path starting with / or an https address.",
+  "{0}은(는) {1}개까지 고릅니다.": "Up to {1} items can be chosen for {0}.",
+  "{0}은(는) {1}자까지입니다.": "{0} can be up to {1} characters.",
+  "{0}의 상품 코드 모양이 맞지 않습니다.": "The product code format in {0} is not valid.",
+  "끼운 블록은 페이지 전체에서 30개까지입니다.": "Up to 30 inserted blocks are allowed per page.",
+  "처음 배치와 같아 게시할 것이 없습니다 — 고친 뒤 「초안 저장」을 먼저 누르십시오.": "This is the same as the default layout, so there is nothing to publish — make changes and press “Save draft” first.",
   "\"{0}\"는 사용할 수 없는 표현입니다.": "\"{0}\" is an expression that cannot be used.",
   "\"{0}\"는 상품 이름 · 설명 · 주의사항에 쓸 수 없는 표현입니다.": "\"{0}\" is an expression that cannot be used in product names, descriptions or precautions.",
   "(D022) 같은 결제 키가 청구서 여러 줄에 들어 있습니다({0}종) — 결제 1건이 두 번 쓰인 것입니다. 먼저 확인해 주십시오: SELECT payment_key, count(*) FROM subscription_invoices GROUP BY 1 HAVING count(*) > 1": "(D022) The same payment key appears in several invoice lines ({0} kinds) — one payment was used twice. Check first: SELECT payment_key, count(*) FROM subscription_invoices GROUP BY 1 HAVING count(*) > 1",
@@ -5820,7 +5821,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "첫 화면 편집은 운영 화면에서 만든 새 관만 됩니다 — 처음 관은 따로 꾸민 첫 화면을 씁니다.": "Only sections created in the admin console can have an edited first screen — the original sections use their own designed first screens.",
   "게시된 판이 없어 게시 상태로 둘 수 없습니다.": "There is no published version, so the page cannot be set to published.",
   "게시된 판은 고치거나 지울 수 없습니다 — 새 판을 게시하십시오.": "A published version cannot be edited or deleted — publish a new version.",
-  "그림이 없습니다.": "The image was not found.",   // v10.653 (D312)
+  "그림이 없습니다.": "The image was not found.",
   /* v10.656 ~ 659 (D313 · docs/794) 관 페이지 언어판 · 표 · 그림 정리 */
   "사이트 언어 목록에 없는 말입니다.": "That language is not in the site language list.",
   "이 관에 같은 주소 · 언어의 페이지가 있습니다.": "This section already has a page with the same address and language.",
