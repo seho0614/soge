@@ -7,6 +7,7 @@ import { cleanBlocks, GwanPagesService } from './gwan-pages.service';
 import { createHash } from 'crypto';
 import { pagesBoard } from './pages-board';
 import { toCsv } from './csv';
+import { assertPublisher, canPublish } from './page-publisher';
 import { AgentService } from '../agent/agent.service';
 import { translateSystem, parseTranslation } from '../i18n/translate.service';
 
@@ -17,10 +18,10 @@ import { translateSystem, parseTranslation } from '../i18n/translate.service';
  *   게시된 판이 없으면 공개 응답은 null — 사용자 웹은 코드의 처음 배치 그대로
  * ------------------------------------------------------------------- */
 
-export const LAYOUT_KEYS = ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'] as const;   // v10.702 (D322) EARN 허브 페이지
+export const LAYOUT_KEYS = ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN', 'COMM', 'HELP', 'PARTNER', 'MALL_ITEM'] as const;   // v10.702 (D322) EARN 허브 페이지 · v10.755 · 757 ~ 759 (D328) 소개광장 · 고객센터 · 파트너센터 · 상품 상세
 /** v10.701 (D322 · docs/809) 관 메인은 그 관이 닫혀 있을 때만 고침(대표 「관이 열려 있는 상태에서 변경 불가」) · 메인(HOME)은 수정 가능 스위치만 */
 const GWAN_LAYOUT_KEYS = ['MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'];   // 검정 ⑫ — 관 코드 목록은 이 모양(['MNY' … 'HLT'])으로
-export const LAYOUT_GWAN: Partial<Record<string, string>> = Object.fromEntries(GWAN_LAYOUT_KEYS.map((c) => [c, c]));
+export const LAYOUT_GWAN: Partial<Record<string, string>> = { ...Object.fromEntries(GWAN_LAYOUT_KEYS.map((c) => [c, c])), MALL_ITEM: 'HLT' };   // v10.755 상품 상세는 소개몰 관 규칙
 export type LayoutKey = (typeof LAYOUT_KEYS)[number];
 
 interface Spec {
@@ -82,6 +83,23 @@ export const LAYOUT_SPECS: Record<LayoutKey, Spec> = {
     texts: [['title', '제목', 40], ['desc', '설명', 160], ['guide', '이용 안내 글', 300]],
     inserts: 'each',
   },
+  /* v10.757 ~ 759 · 755 (D328 · docs/863 · 865 ~ 867) — 관이 아닌 페이지(메인처럼 스위치만) · 상품 상세는 소개몰 관 규칙 · 안내 띠 글 + 위 · 아래 블록 */
+  COMM: {
+    name: '소개광장 메인', path: '/community',
+    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+  },
+  HELP: {
+    name: '고객센터 홈', path: '/support',
+    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+  },
+  PARTNER: {
+    name: '파트너센터 첫 화면', path: '/partner',
+    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+  },
+  MALL_ITEM: {
+    name: '소개몰 상품 상세(모든 상품)', path: '/health/p/…',
+    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+  },
 };
 
 const bad = (msg: string): never => { throw new PolicyViolation('SITE_LAYOUT_INVALID', msg); };
@@ -105,6 +123,20 @@ export interface Layout {
   inserts: Record<string, Array<Record<string, unknown>>>;
   /** v10.708 (docs/816) 언어별 글자 — { en: { heroTitleA: '…', 'slide.pf.title': '…' } } · 한국어는 texts · 비우면 그 언어 사전 글 */
   i18n?: Record<string, Record<string, string>>;
+  /** v10.764 (docs/872) 번역할 때의 한국어 글 지문(언어마다 md5 앞 12자) — 지금 한국어 글 지문과 다르면 「다시 번역 필요」 */
+  i18nSig?: Record<string, string>;
+}
+/** v10.764 한국어 글 지문 — 언어별로 옮기는 칸(i18nKeys)의 한국어 값만 */
+export function koSig(key: LayoutKey, l: Pick<Layout, 'texts' | 'slides'>): string {
+  const src: Record<string, string> = {};
+  for (const [tk] of LAYOUT_SPECS[key].texts) if (l.texts?.[tk]) src[tk] = l.texts[tk]!;
+  for (const [sk] of LAYOUT_SPECS[key].slides ?? []) for (const f of ['tag', 'title', 'desc', 'cta'] as const) { const v = l.slides?.[sk]?.[f]; if (v) src[`slide.${sk}.${f}`] = v; }
+  return createHash('md5').update(JSON.stringify(src)).digest('hex').slice(0, 12);
+}
+/** v10.764 다시 번역이 필요한 언어 — 번역 지문이 있고 지금 한국어 지문과 다름 */
+export function staleLangs(key: LayoutKey, l: Layout): string[] {
+  const now = koSig(key, l);
+  return Object.entries(l.i18nSig ?? {}).filter(([lang, sig]) => l.i18n?.[lang] && sig !== now).map(([lang]) => lang);
 }
 /** v10.708 언어별로 고칠 수 있는 글 열쇠 — 글자(texts) + 안내 장 글(slide.<장>.<칸>) */
 export function i18nKeys(key: LayoutKey): Array<[string, string, number]> {
@@ -171,6 +203,12 @@ export function cleanLayout(key: LayoutKey, input: unknown): Layout {
     }
     if (Object.keys(i18n).length > 8) bad('언어별 글자는 8개 언어까지입니다.');
     if (Object.keys(i18n).length) out.i18n = i18n;
+  }
+  /* v10.764 번역 지문 — 남은 언어 것만 · 모양이 맞는 것만 */
+  if (out.i18n && o.i18nSig && typeof o.i18nSig === 'object') {
+    const sig: Record<string, string> = {};
+    for (const [lang, v] of Object.entries(o.i18nSig as Record<string, unknown>)) if (out.i18n[lang] && typeof v === 'string' && /^[0-9a-f]{12}$/.test(v)) sig[lang] = v;
+    if (Object.keys(sig).length) out.i18nSig = sig;
   }
   return out;
 }
@@ -285,7 +323,7 @@ export class SiteLayoutsService {
     catch (e) { throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', `번역 답을 읽지 못했습니다 — 다시 누르십시오(${String((e as Error).message)}).`); }
     const max = Object.fromEntries(i18nKeys(k).map(([x, , n]) => [x, n]));
     const one = Object.fromEntries(keys.map((x) => [x, String(tr[x] ?? '').replace(/<[^>]*>/g, '').trim().slice(0, max[x] ?? 40)]).filter(([, v]) => v));
-    const next = cleanLayout(k, { ...l, i18n: { ...(l.i18n ?? {}), [lang]: { ...(l.i18n?.[lang] ?? {}), ...one } } });
+    const next = cleanLayout(k, { ...l, i18n: { ...(l.i18n ?? {}), [lang]: { ...(l.i18n?.[lang] ?? {}), ...one } }, i18nSig: { ...(l.i18nSig ?? {}), [lang]: koSig(k, l) } });   // v10.764 번역 지문
     await this.writeDraft(k, next, `${lang} 번역 초안(AI)`);
     return { ...(await this.get(k)), translatedFields: Object.keys(one).length, model };
   }
@@ -343,6 +381,7 @@ export class SiteLayoutsService {
         draftUpdatedAt: r.draftUpdatedAt ?? null, draftUpdatedByName: r.draftUpdatedByName ?? null,
         draftChanged: JSON.stringify(draft) !== JSON.stringify(r.published ? cleanLayoutSafe(k, r.published) : cleanLayout(k, {})),
         scheduledAt: r.scheduledAt ?? null, scheduledByName: r.scheduledByName ?? null,
+        staleLangs: staleLangs(k, draft),   // v10.764 다시 번역 필요
       };
     });
   }
@@ -367,6 +406,8 @@ export class SiteLayoutsService {
       draftUpdatedAt: r.draftUpdatedAt, draftUpdatedByName: r.draftUpdatedByName,
       draftChanged: JSON.stringify(draft) !== JSON.stringify(pub ?? cleanLayout(k, {})),
       scheduledAt: r.scheduledAt, scheduledByName: r.scheduledByName, versions, previews,
+      staleLangs: staleLangs(k, draft),   // v10.764
+      canPublish: await canPublish(this.db),   // v10.771 이 사람이 게시 · 예약 · 되돌리기를 할 수 있음
     };
   }
   async saveDraft(key: string, layout: unknown) {
@@ -378,6 +419,7 @@ export class SiteLayoutsService {
   }
   async publish(key: string) {
     const k = this.k(key);
+    await assertPublisher(this.db);   // v10.771 (docs/879)
     await this.assertEditable(k);
     const ver = await this.db.transaction(async () => {
       const [r] = await this.db.query<{ draft: unknown; published: unknown }>(`SELECT draft, published FROM site_layouts WHERE key = $1 FOR UPDATE`, [k]);
@@ -398,6 +440,7 @@ export class SiteLayoutsService {
   /** 예약(SUPER) — at 이 null 이면 취소 · 5분 뒤 ~ 90일 안 · 지금 초안을 떠 둠 */
   async schedule(key: string, at: string | null) {
     const k = this.k(key);
+    await assertPublisher(this.db);   // v10.771 (docs/879) 예약 · 취소
     if (at === null) {
       await this.db.query(`UPDATE site_layouts SET scheduled_at = NULL, scheduled_by = NULL, scheduled_layout = NULL WHERE key = $1`, [k]);
       return this.get(k);
@@ -432,6 +475,7 @@ export class SiteLayoutsService {
     const k = this.k(key);
     const why = String(reason ?? '').trim();
     if (why.length < 2) throw new PolicyViolation('SITE_LAYOUT_ROLLBACK_REASON', '되돌리는 사유를 2자 이상 적으십시오.');
+    await assertPublisher(this.db);   // v10.771
     await this.assertEditable(k);
     const ver = await this.db.transaction(async () => {
       const [r] = await this.db.query<{ published_version: number | null }>(`SELECT published_version FROM site_layouts WHERE key = $1 FOR UPDATE`, [k]);
@@ -479,7 +523,10 @@ export class SiteLayoutsService {
     }
     await this.publishDue().catch(() => 0);
     const [r] = await this.db.query<{ published: unknown; published_version: number | null }>(`SELECT published, published_version FROM site_layouts WHERE key = $1`, [k]);
-    return { key: k, version: r?.published_version ?? 0, preview: false, layout: r?.published ? await this.expandLayout(cleanLayoutSafe(k, r.published)) : null };
+    /* v10.760 (D328 · docs/868) A/B 비교 중이면 B 판도 같이 — 사용자 웹이 방문자 쿠키(sgb_ab)로 고름 */
+    const [ab] = await this.db.query<{ id: number; layout_b: unknown }>(`SELECT id::int AS id, layout_b FROM site_layout_ab WHERE key = $1 AND status = 'RUNNING' AND starts_at <= now() AND ends_at > now()`, [k]).catch(() => []);
+    return { key: k, version: r?.published_version ?? 0, preview: false, layout: r?.published ? await this.expandLayout(cleanLayoutSafe(k, r.published)) : null,
+      ab: ab ? { id: ab.id, layout: await this.expandLayout(cleanLayoutSafe(k, ab.layout_b)) } : null };
   }
   /** v10.720 공통 조각 블록을 지금 내용으로 펼침(조각을 지웠거나 못 읽으면 그 블록만 뺌) */
   private async expandLayout(l: Layout): Promise<Layout> {
@@ -491,14 +538,19 @@ export class SiteLayoutsService {
   /* ── v10.722 (D325 · docs/830) 꾸밀 페이지 방문 수 — 같은 기기(IP · 브라우저 글자 해시) · 같은 날 한 번(서버 기억 · 최대 5만 줄) ── */
   private seen = new Set<string>();
   private seenDay = '';
-  async recordView(key: string, ip: string, ua: string) {
+  async recordView(key: string, ip: string, ua: string, variant?: string) {
     const k = this.k(key);
+    const v = variant === 'a' || variant === 'A' ? 'A' : variant === 'b' || variant === 'B' ? 'B' : null;   // v10.760 A/B 판
     const day = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
     if (day !== this.seenDay || this.seen.size > 50_000) { this.seen = new Set(); this.seenDay = day; }
     const sig = `${k}|${createHash('sha256').update(`${ip}|${ua}`).digest('hex').slice(0, 16)}`;
     if (this.seen.has(sig)) return { counted: false };
     this.seen.add(sig);
     await this.db.query(`INSERT INTO site_layout_views (key, day, views) VALUES ($1, $2, 1) ON CONFLICT (key, day) DO UPDATE SET views = site_layout_views.views + 1`, [k, day]);
+    if (v) await this.db.query(
+      `INSERT INTO site_layout_ab_views (ab_id, variant, day, views)
+       SELECT id, $2, $3, 1 FROM site_layout_ab WHERE key = $1 AND status = 'RUNNING' AND starts_at <= now() AND ends_at > now()
+       ON CONFLICT (ab_id, variant, day) DO UPDATE SET views = site_layout_ab_views.views + 1`, [k, v, day]).catch(() => undefined);
     return { counted: true };
   }
 
@@ -609,6 +661,79 @@ export class SiteLayoutsService {
     return this.get(k);
   }
 
+  /* ── v10.760 (D328 · docs/868) A/B 비교 — A = 게시된 판 · B = 지금 초안을 떠 둠 · 방문자 반반(쿠키 sgb_ab) · 1 ~ 31일 · 페이지마다 하나 ── */
+  async abList(key: string) {
+    const k = this.k(key);
+    const rows = await this.db.query<Record<string, any>>(
+      `SELECT t.id::int AS id, t.status, t.winner, t.starts_at AS "startsAt", t.ends_at AS "endsAt", t.created_at AS "createdAt", t.ended_at AS "endedAt",
+              (SELECT name FROM accounts a WHERE a.id = t.created_by) AS "createdByName",
+              coalesce((SELECT sum(v.views)::int FROM site_layout_ab_views v WHERE v.ab_id = t.id AND v.variant = 'A'), 0) AS "viewsA",
+              coalesce((SELECT sum(v.views)::int FROM site_layout_ab_views v WHERE v.ab_id = t.id AND v.variant = 'B'), 0) AS "viewsB"
+         FROM site_layout_ab t WHERE t.key = $1 ORDER BY t.id DESC LIMIT 10`, [k]);
+    return { key: k, items: rows };
+  }
+  async abStart(key: string, days: number) {
+    const k = this.k(key);
+    await assertPublisher(this.db);
+    await this.assertEditable(k);
+    const d = Math.floor(Number(days));
+    if (!(d >= 1 && d <= 31)) throw new PolicyViolation('SITE_LAYOUT_AB', 'A/B 비교 기간은 1 ~ 31일입니다.');
+    const [r] = await this.db.query<{ draft: unknown; published: unknown }>(`SELECT draft, published FROM site_layouts WHERE key = $1`, [k]);
+    if (!r?.published) throw new PolicyViolation('SITE_LAYOUT_AB', '게시된 판(A)이 있어야 비교합니다 — 먼저 게시하십시오.');
+    const b = cleanLayout(k, r.draft);
+    if (JSON.stringify(b) === JSON.stringify(cleanLayoutSafe(k, r.published))) throw new PolicyViolation('SITE_LAYOUT_AB', '초안(B)이 게시된 판(A)과 같습니다 — 초안을 고쳐 저장한 뒤 시작하십시오.');
+    try {
+      await this.db.query(`INSERT INTO site_layout_ab (key, layout_b, starts_at, ends_at, created_by) VALUES ($1, $2::jsonb, now(), now() + make_interval(days => $3), $4)`, [k, JSON.stringify(b), d, RequestCtx.actorId() ?? null]);
+    } catch (e) {
+      if (String((e as Error)?.message).includes('site_layout_ab_running_uq')) throw new PolicyViolation('SITE_LAYOUT_AB', '이 페이지는 이미 A/B 비교 중입니다 — 끝낸 뒤 새로 시작하십시오.');
+      throw e;
+    }
+    await this.note(`꾸밀 페이지 A/B 비교 시작 — ${LAYOUT_SPECS[k].name} · ${d}일`, `ab:${k}:${Date.now()}`, { page: k, days: d });
+    return this.abList(k);
+  }
+  /** 끝내기 — winner B 면 B 판을 새 판으로 게시(게시 규칙 그대로) · A 면 그대로 · 사람이 끝내지 않아도 기간이 지나면 B 는 보이지 않음 */
+  async abEnd(key: string, winner: string) {
+    const k = this.k(key);
+    await assertPublisher(this.db);
+    const w = winner === 'B' ? 'B' : 'A';
+    const [t] = await this.db.query<{ id: number; layout_b: unknown }>(`SELECT id::int AS id, layout_b FROM site_layout_ab WHERE key = $1 AND status = 'RUNNING'`, [k]);
+    if (!t) throw new NotFound('진행 중인 A/B 비교가 없습니다.');
+    if (w === 'B') {
+      await this.assertEditable(k);
+      const ver = await this.db.transaction(async () => {
+        const l = cleanLayoutSafe(k, t.layout_b);
+        const me = RequestCtx.actorId() ?? null;
+        const [v] = await this.db.query<{ version: number }>(
+          `INSERT INTO site_layout_versions (key, version, layout, published_by, how, reason)
+           VALUES ($1, coalesce((SELECT max(version) FROM site_layout_versions WHERE key = $1), 0) + 1, $2::jsonb, $3, 'PUBLISH', $4) RETURNING version`, [k, JSON.stringify(l), me, `A/B 비교 ${t.id}번 B 판`]);
+        await this.db.query(`UPDATE site_layouts SET published = $2::jsonb, published_version = $3, published_at = now(), published_by = $4 WHERE key = $1`, [k, JSON.stringify(l), v!.version, me]);
+        return v!.version;
+      });
+      await this.note(`꾸밀 페이지 A/B 비교 끝 — ${LAYOUT_SPECS[k].name} · B 판을 ${ver}판으로 게시`, `pub:${k}:${ver}`, { page: k, version: ver, ab: t.id });
+    }
+    await this.db.query(`UPDATE site_layout_ab SET status = 'ENDED', winner = $2, ended_by = $3, ended_at = now() WHERE id = $1 AND status = 'RUNNING'`, [t.id, w, RequestCtx.actorId() ?? null]);
+    return this.abList(k);
+  }
+
+  /** v10.773 (docs/881) 게시 기록 CSV(감사) — 그 달(한국) 꾸밀 페이지 판 · 관 안 페이지 판 · 누가 · 언제 · 어떻게 */
+  async publishLogCsv(month: string) {
+    const m = /^\d{4}-(0[1-9]|1[0-2])$/.test(month) ? month : new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 7);
+    const a = await this.db.query<Record<string, any>>(
+      `SELECT v.published_at AS at, v.key AS ref, v.version, v.how, v.reason, (SELECT email FROM accounts x WHERE x.id = v.published_by) AS who
+         FROM site_layout_versions v
+        WHERE v.published_at >= (($1 || '-01')::date AT TIME ZONE 'Asia/Seoul') AND v.published_at < ((($1 || '-01')::date + interval '1 month') AT TIME ZONE 'Asia/Seoul')`, [m]);
+    const b = await this.db.query<Record<string, any>>(
+      `SELECT v.published_at AS at, p.gwan_code || ' ' || CASE WHEN p.slug = 'home' THEN '첫 화면' ELSE '/info/' || p.slug END AS ref, v.version,
+              (SELECT email FROM accounts x WHERE x.id = v.published_by) AS who
+         FROM gwan_page_versions v JOIN gwan_pages p ON p.id = v.page_id
+        WHERE v.published_at >= (($1 || '-01')::date AT TIME ZONE 'Asia/Seoul') AND v.published_at < ((($1 || '-01')::date + interval '1 month') AT TIME ZONE 'Asia/Seoul')`, [m]);
+    const rows: unknown[][] = [
+      ...a.map((x) => [new Date(x.at).toISOString(), '꾸밀 페이지', `${LAYOUT_SPECS[x.ref as LayoutKey]?.name ?? x.ref}(${x.ref})`, x.version, HOW_KO[x.how] ?? x.how, x.reason ?? '', x.who ?? '(예약 · 정기 작업)']),
+      ...b.map((x) => [new Date(x.at).toISOString(), '관 안 페이지', x.ref, x.version, '게시', '', x.who ?? '(예약 · 정기 작업)']),
+    ].sort((p, q) => String(p[0]).localeCompare(String(q[0])));
+    return { csv: toCsv(['때(UTC)', '구분', '페이지', '판', '어떻게', '사유', '누가'], rows), rows: rows.length, month: m, filename: `페이지게시기록_${m}.csv` };
+  }
+
   /** v10.700 (docs/808) 페이지 목록 — 꾸밀 페이지 6 · 관 안 페이지(새 관 첫 화면 포함) 한 표 */
   async sitePages() {
     const layouts = await this.list();
@@ -622,6 +747,8 @@ export class SiteLayoutsService {
     return { layouts, pages };
   }
 }
+
+const HOW_KO: Record<string, string> = { PUBLISH: '게시', SCHEDULE: '예약 게시', ROLLBACK: '되돌림' };
 
 /** 옛 초안 · 판이 지금 규칙에 안 맞으면 처음 배치로(화면이 깨지지 않게) */
 export function cleanLayoutSafe(k: LayoutKey, v: unknown): Layout {

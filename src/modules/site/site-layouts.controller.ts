@@ -40,6 +40,7 @@ export class SiteLayoutRowDto {
   @ApiProperty({ nullable: true, description: '관 메인이면 그 관 코드(메인 HOME 은 null)' }) gwanCode!: string | null;
   @ApiProperty({ description: '그 관이 열려 있음 — 열려 있으면 고칠 수 없음' }) gwanOpen!: boolean;
   @ApiProperty({ description: 'v10.722 최근 7일 방문' }) views7!: number;
+  @ApiProperty({ type: [String], description: 'v10.764 다시 번역이 필요한 언어(한국어 글이 번역 뒤 바뀜)' }) staleLangs!: string[];
 }
 export class SiteLayoutDetailDto {
   @ApiProperty() key!: string;
@@ -62,6 +63,8 @@ export class SiteLayoutDetailDto {
   @ApiProperty({ nullable: true, enum: ['SITE_LAYOUT_LOCKED', 'SITE_LAYOUT_GWAN_OPEN'], description: '지금 고칠 수 없는 까닭(null = 고칠 수 있음)' }) lockReason!: string | null;
   @ApiProperty({ nullable: true }) editableAt!: string | null;
   @ApiProperty({ nullable: true }) editableByName!: string | null;
+  @ApiProperty({ type: [String], description: 'v10.764 다시 번역이 필요한 언어' }) staleLangs!: string[];
+  @ApiProperty({ description: 'v10.771 지금 사람이 게시 · 예약 · 되돌리기를 할 수 있음(SUPER 또는 관 UI/UX 승인)' }) canPublish!: boolean;
 }
 export class SiteLayoutDraftLogDto {
   @ApiProperty() at!: string;
@@ -88,7 +91,7 @@ export class SiteLayoutVersionDto {
   @ApiProperty({ type: SiteLayoutDto }) layout!: SiteLayoutDto;
 }
 export class SiteLayoutCopyDto {
-  @ApiProperty({ example: 'MAL', description: '가져올 꾸밀 페이지' }) @IsString() @Matches(/^[A-Za-z]{3,4}$/) from!: string;
+  @ApiProperty({ example: 'MAL', description: '가져올 꾸밀 페이지' }) @IsString() @Matches(/^[A-Za-z_]{3,10}$/) from!: string;
 }
 export class SiteLayoutViewDto {
   @ApiProperty() counted!: boolean;
@@ -114,6 +117,17 @@ export class SiteLayoutPublicDto {
   @ApiProperty({ description: '게시 판(0 = 없음 · 미리보기)' }) version!: number;
   @ApiProperty() preview!: boolean;
   @ApiProperty({ type: SiteLayoutDto, nullable: true, description: 'null = 게시한 판 없음(처음 배치)' }) layout!: SiteLayoutDto | null;
+  @ApiPropertyOptional({ type: 'object', nullable: true, additionalProperties: true, description: 'v10.760 A/B 비교 중이면 { id, layout(B 판) } — 방문자 쿠키 sgb_ab=b 면 B' }) ab?: { id: number; layout: SiteLayoutDto } | null;
+}
+export class SiteLayoutAbStartDto {
+  @ApiProperty({ example: 7, minimum: 1, maximum: 31 }) @IsInt() @Min(1) @Max(31) days!: number;
+}
+export class SiteLayoutAbEndDto {
+  @ApiProperty({ enum: ['A', 'B'], description: 'B = B 판을 새 판으로 게시 · A = 그대로' }) @IsString() @Matches(/^[AB]$/) winner!: string;
+}
+export class SiteLayoutAbListDto {
+  @ApiProperty() key!: string;
+  @ApiProperty({ type: 'array', items: { type: 'object' }, description: 'id · status · winner · startsAt · endsAt · viewsA · viewsB' }) items!: unknown[];
 }
 export class SitePagesDto {
   @ApiProperty({ type: [SiteLayoutRowDto] }) layouts!: SiteLayoutRowDto[];
@@ -161,6 +175,13 @@ export class SiteLayoutsController {
   @ApiOperation({ summary: '페이지 목록 CSV (v10.743)', description: '꾸밀 페이지 · 관 안 페이지 — 상태 · 수정 · 관 · 7일 방문 · 예약 · 30일 의견 · 엑셀 BOM.' })
   @ApiOkResponse({ type: Object })
   sitePagesCsv() { return this.svc.sitePagesCsv(); }
+
+  @Get('admin/site-pages/publish-log.csv')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '페이지 게시 기록 CSV (v10.773)', description: '그 달(한국) 꾸밀 페이지 · 관 안 페이지 게시 · 예약 게시 · 되돌림 — 누가 · 언제 · 판 · 사유 · 엑셀 BOM.' })
+  @ApiQuery({ name: 'month', required: false, example: '2026-11' })
+  @ApiOkResponse({ type: Object })
+  publishLogCsv(@Query('month') month?: string) { return this.svc.publishLogCsv(month ?? ''); }
 
   @Get('admin/site-schedules')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
@@ -246,8 +267,8 @@ export class SiteLayoutsController {
 
   @Post('admin/site-layouts/:key/publish')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '꾸밀 페이지 게시 (v10.696 · SUPER)', description: '저장된 초안을 새 판으로 쌓고 사용자 웹에 보임. 처음 배치 그대로면 422 SITE_LAYOUT_EMPTY.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '꾸밀 페이지 게시 (v10.696 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '저장된 초안을 새 판으로 쌓고 사용자 웹에 보임. 처음 배치 그대로면 422 SITE_LAYOUT_EMPTY.' })
   @ApiParam({ name: 'key' })
   @ApiOkResponse({ type: SiteLayoutDetailDto })
   @ApiResponse({ status: 422, description: 'SITE_LAYOUT_EMPTY · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN', type: ErrorDto })
@@ -256,8 +277,8 @@ export class SiteLayoutsController {
 
   @Post('admin/site-layouts/:key/schedule')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '꾸밀 페이지 예약 게시 (v10.696 · SUPER)', description: '지금 초안을 떠 두고 그 시각에 게시 · at null 이면 취소.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '꾸밀 페이지 예약 게시 (v10.696 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '지금 초안을 떠 두고 그 시각에 게시 · at null 이면 취소.' })
   @ApiParam({ name: 'key' })
   @ApiOkResponse({ type: SiteLayoutDetailDto })
   @ApiResponse({ status: 422, description: 'SITE_LAYOUT_SCHEDULE', type: ErrorDto })
@@ -300,8 +321,8 @@ export class SiteLayoutsController {
 
   @Post('admin/site-layouts/:key/rollback')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '바로 되돌리기 (v10.696 · SUPER)', description: '예전 판을 새 판으로 다시 게시 · 초안은 그대로 · 사유.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '바로 되돌리기 (v10.696 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '예전 판을 새 판으로 다시 게시 · 초안은 그대로 · 사유.' })
   @ApiParam({ name: 'key' })
   @ApiOkResponse({ type: SiteLayoutDetailDto })
   @ApiResponse({ status: 422, description: 'SITE_LAYOUT_ROLLBACK_SAME · SITE_LAYOUT_ROLLBACK_REASON', type: ErrorDto })
@@ -325,12 +346,40 @@ export class SiteLayoutsController {
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   revokePreview(@Param('key') key: string, @Param('token') token: string) { return this.svc.revokePreview(key, token); }
 
+  @Get('admin/site-layouts/:key/ab')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'A/B 비교 목록 (v10.760)', description: '최근 10 · 판마다 방문 수.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutAbListDto })
+  abList(@Param('key') key: string) { return this.svc.abList(key); }
+
+  @Post('admin/site-layouts/:key/ab')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'A/B 비교 시작 (v10.760)', description: 'A = 게시된 판 · B = 지금 초안 · 1 ~ 31일 · 페이지마다 하나 · 게시 권한 · 수정 가능 · 관 닫힘.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutAbListDto })
+  @ApiResponse({ status: 422, description: 'SITE_LAYOUT_AB · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN', type: ErrorDto })
+  @Audit('SITE_LAYOUT_AB_START', 'SITE')
+  abStart(@Param('key') key: string, @Body() dto: SiteLayoutAbStartDto) { return this.svc.abStart(key, dto.days); }
+
+  @Post('admin/site-layouts/:key/ab/end')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: 'A/B 비교 끝 (v10.760)', description: 'winner B 면 B 판을 새 판으로 게시 · A 면 그대로.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutAbListDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @Audit('SITE_LAYOUT_AB_END', 'SITE')
+  abEnd(@Param('key') key: string, @Body() dto: SiteLayoutAbEndDto) { return this.svc.abEnd(key, dto.winner); }
+
   @Post('site-layouts/:key/view')
   @HttpCode(200)
-  @ApiOperation({ summary: '꾸밀 페이지 방문 (v10.722 · 공개)', description: '같은 기기 같은 날 한 번만 셈 · 개인 정보 없음.' })
+  @ApiOperation({ summary: '꾸밀 페이지 방문 (v10.722 · 공개)', description: '같은 기기 같은 날 한 번만 셈 · 개인 정보 없음 · v10.760 v=a|b 면 A/B 판 방문도.' })
   @ApiParam({ name: 'key' })
+  @ApiQuery({ name: 'v', required: false, enum: ['a', 'b'] })
   @ApiOkResponse({ type: SiteLayoutViewDto })
-  view(@Param('key') key: string, @Ip() ip: string, @Headers('user-agent') ua?: string) { return this.svc.recordView(key, ip ?? '', ua ?? ''); }
+  view(@Param('key') key: string, @Ip() ip: string, @Headers('user-agent') ua?: string, @Query('v') v?: string) { return this.svc.recordView(key, ip ?? '', ua ?? '', v); }
 
   @Get('site-layouts/:key')
   @ApiOperation({ summary: '꾸밀 페이지 (v10.696 · 공개)', description: '게시된 판(없으면 layout null = 처음 배치) · preview 토큰이 살아 있으면 초안.' })

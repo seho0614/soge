@@ -273,8 +273,8 @@ export class GwanPagesController {
 
   @Post('admin/gwan-pages/:id/publish')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '관 페이지 게시 (v10.650 · SUPER)', description: '초안을 새 판으로 쌓고 사용자 웹에 보임. 블록이 없으면 422 GWAN_PAGE_EMPTY.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 페이지 게시 (v10.650 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '초안을 새 판으로 쌓고 사용자 웹에 보임. 블록이 없으면 422 GWAN_PAGE_EMPTY.' })
   @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: GwanPageDetailDto })
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_EMPTY · GWAN_PAGE_BLOCK', type: ErrorDto })
@@ -331,8 +331,8 @@ export class GwanPagesController {
   /* ── v10.661 ~ 667 (D315 · docs/795) ── */
   @Post('admin/gwan-pages/:id/schedule')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '관 페이지 예약 게시 (v10.661 · SUPER)', description: '지금 초안 · 제목을 떠 두고 at 시각에 새 판으로 게시(예약 뒤 초안을 고쳐도 예약 내용은 그대로). at = null 이면 취소.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 페이지 예약 게시 (v10.661 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '지금 초안 · 제목을 떠 두고 at 시각에 새 판으로 게시(예약 뒤 초안을 고쳐도 예약 내용은 그대로). at = null 이면 취소.' })
   @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: GwanPageDetailDto })
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_SCHEDULE · GWAN_PAGE_EMPTY · GWAN_PAGE_BLOCK', type: ErrorDto })
@@ -433,8 +433,8 @@ export class GwanPagesController {
 
   @Post('admin/gwan-pages/:id/rollback')
   @HttpCode(200)
-  @ApiBearerAuth() @Roles('SUPER')
-  @ApiOperation({ summary: '관 페이지 판 바로 되돌리기 (v10.679 · SUPER)', description: '예전 판의 블록 그대로 새 판으로 게시(사유 2자 이상 · 운영 알림). 초안은 그대로.' })
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 페이지 판 바로 되돌리기 (v10.679 · SUPER · v10.771 관 UI/UX 승인 권한)', description: '예전 판의 블록 그대로 새 판으로 게시(사유 2자 이상 · 운영 알림). 초안은 그대로.' })
   @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: GwanPageDetailDto })
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_ROLLBACK_REASON · GWAN_PAGE_ROLLBACK_SAME', type: ErrorDto })

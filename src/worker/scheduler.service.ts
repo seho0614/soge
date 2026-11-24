@@ -116,6 +116,7 @@ export type JobName =
   | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice'   // v10.377 ~ 379 (D241)
   | 'gwan_maint'   // v10.706 (D323) 관 점검 시간
   | 'page_link_check'   // v10.750 (D327) 깨진 링크
+  | 'page_feedback_purge'   // v10.756 (D328) 한 줄 의견 1년 파기
   | 'acct_journal'    // v10.382 (D242)
   | 'acct_deadline'   // v10.390 (D244)
   | 'acct_cashflow'   // v10.394 (D245)
@@ -843,6 +844,12 @@ export class SchedulerService {
       case 'page_link_check': {
         const r = await this.gwanMaint.linkCheck();
         affected = r.broken.length; detail = { checked: r.checked, broken: r.broken.slice(0, 20) };
+        break;
+      }
+      /* v10.756 (D328 · docs/864) 손님 한 줄 의견 1년 지난 줄 파기(매일 04:40 · 한 번에 5천 줄씩 · 남으면 다음 날) */
+      case 'page_feedback_purge': {
+        const r = await this.db.query<{ id: number }>(`DELETE FROM page_feedback WHERE id IN (SELECT id FROM page_feedback WHERE at < now() - interval '1 year' ORDER BY id LIMIT 5000) RETURNING id`);
+        affected = r.length; detail = { purged: r.length, keep: '1 year' };
         break;
       }
 

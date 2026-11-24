@@ -7,6 +7,7 @@ import { randomBytes, createHash } from 'crypto';
 import { AgentService } from '../agent/agent.service';
 import { translateSystem, parseTranslation } from '../i18n/translate.service';
 import { pagesBoard } from './pages-board';
+import { assertPublisher } from './page-publisher';
 
 /* ---------------------------------------------------------------------
  * v10.650 (D311 · docs/793) 관 페이지 — 새 관 첫 화면(slug home) 블록 편집 · 관 안 페이지 등록
@@ -14,7 +15,7 @@ import { pagesBoard } from './pages-board';
  *   블록은 아래 8종만 · 칸마다 길이 · 주소 검사(HTML 은 받지 않음 · 링크는 관 안 주소(/…) 또는 https 만)
  * ------------------------------------------------------------------- */
 
-export const PAGE_BLOCKS = ['HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'TABLE', 'VIDEO', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ', 'INQUIRY', 'FRAGMENT', 'FEEDBACK'] as const;   // v10.729 FEEDBACK 손님 한 줄 의견   // v10.681 INQUIRY 문의 받기   // v10.674 FRAGMENT 공통 조각(초안에만 · 게시 때 펼침)   // v10.654 GALLERY 사진 묶음 · v10.656 TABLE 표 · v10.664 VIDEO 동영상(유튜브)
+export const PAGE_BLOCKS = ['HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'TABLE', 'VIDEO', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ', 'INQUIRY', 'FRAGMENT', 'FEEDBACK', 'PICKS'] as const;   // v10.761 PICKS 이번 주 추천   // v10.729 FEEDBACK 손님 한 줄 의견   // v10.681 INQUIRY 문의 받기   // v10.674 FRAGMENT 공통 조각(초안에만 · 게시 때 펼침)   // v10.654 GALLERY 사진 묶음 · v10.656 TABLE 표 · v10.664 VIDEO 동영상(유튜브)
 
 /** v10.664 (docs/795) 유튜브 주소 → 영상 번호(11자) — watch?v= · youtu.be/ · shorts/ · embed/ 만 · 그 밖은 null */
 export function youtubeId(u: string): string | null {
@@ -22,6 +23,7 @@ export function youtubeId(u: string): string | null {
   return m ? m[1]! : null;
 }
 const SORTS = ['RECENT', 'POPULAR', 'FEE_DESC', 'DEADLINE'];
+const LIST_BADGES = ['URGENT', 'VERIFIED_DOC'];   // v10.762 매물 목록 API badge 값
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const bad = (msg: string): never => { throw new PolicyViolation('GWAN_PAGE_BLOCK', msg); };
@@ -113,8 +115,15 @@ function cleanOne(b0: unknown, i: number, opts: { noFragment?: boolean; max?: nu
       case 'LISTINGS': {
         const cat = typeof b.categoryId === 'string' && b.categoryId ? b.categoryId : '';
         if (cat && !UUID_RE.test(cat)) bad(`${n} 업종 번호가 맞지 않습니다.`);
-        return { type: 'LISTINGS', title: str(b.title, 80, `${n} 제목`), limit: int(b.limit, 1, 20, 8), sort: SORTS.includes(String(b.sort)) ? String(b.sort) : 'RECENT', categoryId: cat };
+        /* v10.762 (docs/870) 거르기 — 지역(시 · 도 코드) · 배지(매물 목록 API 가 받는 값만) · 가격 상한은 매물 목록 API 에 없어 받지 않음 */
+        const region = typeof b.regionCode === 'string' ? b.regionCode.trim().toUpperCase() : '';
+        if (region && !/^[A-Z0-9_]{1,12}$/.test(region)) bad(`${n} 지역 코드 모양이 맞지 않습니다.`);
+        const badge = LIST_BADGES.includes(String(b.badge)) ? String(b.badge) : '';
+        return { type: 'LISTINGS', title: str(b.title, 80, `${n} 제목`), limit: int(b.limit, 1, 20, 8), sort: SORTS.includes(String(b.sort)) ? String(b.sort) : 'RECENT', categoryId: cat,
+          ...(region ? { regionCode: region } : {}), ...(badge ? { badge } : {}) };
       }
+      /* v10.761 (docs/869) 이번 주 추천 — 많이 본 매물(VIEWED · 인기 순) · 새로 올라온 매물(NEW · 최신 순)을 그때그때 채움 · 1 ~ 12개 */
+      case 'PICKS': return { type: 'PICKS', title: str(b.title, 80, `${n} 제목`) || '이번 주 추천', limit: int(b.limit, 1, 12, 6), mode: b.mode === 'NEW' ? 'NEW' : 'VIEWED' };
       case 'CATEGORIES': return { type: 'CATEGORIES', title: str(b.title, 80, `${n} 제목`) };
       case 'NOTICES': return { type: 'NOTICES', title: str(b.title, 80, `${n} 제목`), limit: int(b.limit, 1, 10, 5) };
       case 'FAQ': {
@@ -341,6 +350,7 @@ export class GwanPagesService {
   }
   /** 예약(SUPER · 컨트롤러) — at 이 null 이면 예약 취소 · 5분 뒤 ~ 90일 안 · 지금 초안 · 제목을 떠 둠 */
   async schedule(id: number, at: string | null) {
+    await assertPublisher(this.db);   // v10.771 (docs/879) 예약 · 취소
     if (at === null) {
       const [r] = await this.db.query(`UPDATE gwan_pages SET scheduled_at = NULL, scheduled_by = NULL, scheduled_title = NULL, scheduled_blocks = NULL, scheduled_source = NULL WHERE id = $1 RETURNING id`, [id]);
       if (!r) throw new NotFound('없는 페이지입니다.');
@@ -448,6 +458,7 @@ export class GwanPagesService {
 
   /** 게시(SUPER · 컨트롤러) — 초안을 새 판으로 쌓고 게시 상태로 */
   async publish(id: number) {
+    await assertPublisher(this.db);   // v10.771 (docs/879)
     await this.assertEditable(id);   // v10.701
     const ver = await this.db.transaction(async () => {
       const [p] = await this.db.query<{ title: string; draft: unknown }>(`SELECT title, draft FROM gwan_pages WHERE id = $1 FOR UPDATE`, [id]);
@@ -627,6 +638,7 @@ export class GwanPagesService {
   async rollback(id: number, version: number, reason: string) {
     const why = String(reason ?? '').trim();
     if (why.length < 2) throw new PolicyViolation('GWAN_PAGE_ROLLBACK_REASON', '되돌리는 사유를 2자 이상 적으십시오.');
+    await assertPublisher(this.db);   // v10.771
     await this.assertEditable(id);   // v10.701
     const ver = await this.db.transaction(async () => {
       const [p] = await this.db.query<{ published_version: number | null }>(`SELECT published_version FROM gwan_pages WHERE id = $1 FOR UPDATE`, [id]);

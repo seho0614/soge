@@ -38,7 +38,8 @@ export class PublishRequestsService {
   async list() {
     const rows = await this.db.query<Record<string, any>>(
       `SELECT r.id::int AS id, r.kind, r.ref, r.note, r.status, r.reason, r.requested_at AS "requestedAt", r.decided_at AS "decidedAt",
-              (SELECT name FROM accounts a WHERE a.id = r.requested_by) AS "requestedByName", (SELECT name FROM accounts a WHERE a.id = r.decided_by) AS "decidedByName", r.draft_sig AS sig
+              (SELECT name FROM accounts a WHERE a.id = r.requested_by) AS "requestedByName", (SELECT name FROM accounts a WHERE a.id = r.decided_by) AS "decidedByName", r.draft_sig AS sig,
+              r.first_approved_at AS "firstApprovedAt", (SELECT name FROM accounts a WHERE a.id = r.first_approved_by) AS "firstApprovedByName"
          FROM page_publish_requests r WHERE r.status = 'OPEN' OR r.decided_at > now() - interval '30 days' ORDER BY (r.status = 'OPEN') DESC, r.requested_at DESC LIMIT 100`);
     const out = [];
     for (const r of rows) {
@@ -107,8 +108,8 @@ export class PublishRequestsService {
     return due.length;
   }
   private async openOne(id: number) {
-    const [r] = await this.db.query<{ kind: string; ref: string; draft_sig: string; requested_by: string | null; status: string }>(
-      `SELECT kind, ref, draft_sig, requested_by, status FROM page_publish_requests WHERE id = $1`, [id]);
+    const [r] = await this.db.query<{ kind: string; ref: string; draft_sig: string; requested_by: string | null; status: string; first_approved_by: string | null }>(
+      `SELECT kind, ref, draft_sig, requested_by, status, first_approved_by FROM page_publish_requests WHERE id = $1`, [id]);
     if (!r) throw new NotFound('없는 게시 요청입니다.');
     if (r.status !== 'OPEN') throw new PolicyViolation('PUBLISH_REQ_STATE', '이미 끝난 게시 요청입니다.');
     return r;
@@ -118,6 +119,19 @@ export class PublishRequestsService {
     const r = await this.openOne(id);
     const { sig } = await this.sigOf(r.kind, r.ref);
     if (sig !== r.draft_sig) throw new PolicyViolation('PUBLISH_REQ_STALE', '요청한 뒤 초안이 바뀌었습니다 — 되돌려 보내고 다시 요청을 받으십시오.');
+    /* v10.772 (D328 · docs/880) 두 사람 승인 — 설정 site.publish_two_person = on 이고 메인(HOME) 요청이면 1차 승인만 적고 · 2차는 다른 SUPER */
+    if (r.kind === 'LAYOUT' && String(r.ref).toUpperCase() === 'HOME') {
+      const [two] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'site.publish_two_person'`);
+      if (two?.value === 'on') {
+        const me = RequestCtx.actorId() ?? null;
+        if (!r.first_approved_by) {
+          await this.db.query(`UPDATE page_publish_requests SET first_approved_by = $2, first_approved_at = now() WHERE id = $1 AND status = 'OPEN' AND first_approved_by IS NULL`, [id, me]);
+          await pagesBoard(this.db, `게시 요청 1차 승인 — ${(await this.sigOf(r.kind, r.ref)).label} · 다른 SUPER 의 2차 승인을 기다림`);
+          return { id, status: 'OPEN', firstApproved: true };
+        }
+        if (r.first_approved_by === me) throw new PolicyViolation('PUBLISH_REQ_SAME_PERSON', '1차 승인한 사람은 2차 승인을 할 수 없습니다 — 다른 최고 관리자(SUPER)가 승인합니다.');
+      }
+    }
     if (r.kind === 'LAYOUT') await this.layouts.publish(r.ref); else await this.pages.publish(Number(r.ref));   // 수정 가능 · 관 닫힘 규칙은 게시가 봄
     await this.db.query(`UPDATE page_publish_requests SET status = 'APPROVED', decided_by = $2, decided_at = now() WHERE id = $1 AND status = 'OPEN'`, [id, RequestCtx.actorId() ?? null]);
     await pagesBoard(this.db, `게시 요청 승인 — ${(await this.sigOf(r.kind, r.ref)).label}`);   // v10.734

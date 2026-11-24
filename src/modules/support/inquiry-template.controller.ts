@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -23,6 +23,7 @@ export class InquiryTemplatePatchDto {
   @ApiPropertyOptional({ description: '답변 글(2 ~ 4,000자)' }) @IsOptional() @IsString() @MaxLength(8000) body?: string;
   @ApiPropertyOptional({ example: 10, description: '순서(작을수록 위)' }) @IsOptional() @IsInt() @Min(0) @Max(9999) sortOrder?: number;
   @ApiPropertyOptional({ description: 'false = 숨김' }) @IsOptional() @StrictBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ example: 'MAL', description: 'v10.766 관별 틀 — 관 코드(그 관 페이지에서 온 문의에 먼저) · 빈 글자 = 모든 문의' }) @IsOptional() @IsString() @Matches(/^([A-Z][A-Z0-9_]{1,19})?$/) gwanCode?: string;
 }
 export class InquiryTemplateCreateDto extends InquiryTemplatePatchDto {}
 export class InquiryTemplateResultDto {
@@ -38,8 +39,9 @@ export class InquiryTemplateResultDto {
 export class InquiryTemplateController {
   constructor(private readonly db: DatabaseService) {}
 
-  private clean(v: InquiryTemplatePatchDto, base: { title: string; body: string; sortOrder: number; isActive: boolean }) {
+  private clean(v: InquiryTemplatePatchDto, base: { title: string; body: string; sortOrder: number; isActive: boolean; gwanCode?: string | null }) {
     const o = {
+      gwanCode: v.gwanCode !== undefined ? (v.gwanCode || null) : (base.gwanCode ?? null),   // v10.766
       title: v.title !== undefined ? v.title.trim().slice(0, 40) : base.title,
       body: v.body !== undefined ? v.body.replace(/\r\n/g, '\n').trim() : base.body,
       sortOrder: v.sortOrder ?? base.sortOrder,
@@ -48,6 +50,13 @@ export class InquiryTemplateController {
     if (!o.title) throw new PolicyViolation('TEMPLATE_TITLE', '틀 이름을 적어 주십시오.');
     if (o.body.length < 2 || o.body.length > 4000) throw new PolicyViolation('TEMPLATE_BODY', '답변 글은 2 ~ 4,000자입니다.');
     return o;
+  }
+
+  /** v10.766 관별 틀 — 있는 관만 */
+  private async gwanOk(code: string | null) {
+    if (!code) return;
+    const [g] = await this.db.query(`SELECT 1 FROM gwans WHERE code = $1`, [code]);
+    if (!g) throw new PolicyViolation('TEMPLATE_GWAN', '없는 관입니다.');
   }
 
   private async dup(title: string, id: string | null) {
@@ -61,7 +70,7 @@ export class InquiryTemplateController {
   @ApiOkResponse({ type: Object })
   async list() {
     const rows = await this.db.query(
-      `SELECT t.id::text AS id, t.title, t.body, t.sort_order AS "sortOrder", t.is_active AS "isActive", t.updated_at AS "updatedAt"
+      `SELECT t.id::text AS id, t.title, t.body, t.sort_order AS "sortOrder", t.is_active AS "isActive", t.updated_at AS "updatedAt", t.gwan_code AS "gwanCode"
          FROM inquiry_templates t ORDER BY t.is_active DESC, t.sort_order, t.title`);
     return { rows };
   }
@@ -73,13 +82,14 @@ export class InquiryTemplateController {
   @ApiOperation({ summary: '1:1 문의 답변 틀 — 새로' })
   @ApiOkResponse({ type: InquiryTemplateResultDto })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'TEMPLATE_DUPLICATE' })
-  @ApiResponse({ status: 422, type: ErrorDto, description: 'TEMPLATE_TITLE · TEMPLATE_BODY' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TEMPLATE_TITLE · TEMPLATE_BODY · TEMPLATE_GWAN' })
   async create(@Body() dto: InquiryTemplateCreateDto) {
     const o = this.clean(dto, { title: '', body: '', sortOrder: 100, isActive: true });
     if (o.isActive) await this.dup(o.title, null);
+    await this.gwanOk(o.gwanCode);
     const [r] = await this.db.query<{ id: string }>(
-      `INSERT INTO inquiry_templates (title, body, sort_order, is_active, updated_by) VALUES ($1, $2, $3, $4, $5) RETURNING id::text AS id`,
-      [o.title, o.body, o.sortOrder, o.isActive, RequestCtx.actorId() ?? null]);
+      `INSERT INTO inquiry_templates (title, body, sort_order, is_active, updated_by, gwan_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::text AS id`,
+      [o.title, o.body, o.sortOrder, o.isActive, RequestCtx.actorId() ?? null, o.gwanCode]);
     return { ok: true, id: r!.id, note: `답변 틀 「${o.title}」을 만들었습니다.` };
   }
 
@@ -91,16 +101,17 @@ export class InquiryTemplateController {
   @ApiOkResponse({ type: InquiryTemplateResultDto })
   @ApiResponse({ status: 404, type: ErrorDto, description: 'NOT_FOUND' })
   @ApiResponse({ status: 409, type: ErrorDto, description: 'TEMPLATE_DUPLICATE' })
-  @ApiResponse({ status: 422, type: ErrorDto, description: 'TEMPLATE_TITLE · TEMPLATE_BODY' })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'TEMPLATE_TITLE · TEMPLATE_BODY · TEMPLATE_GWAN' })
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: InquiryTemplatePatchDto) {
-    const [cur] = await this.db.query<{ title: string; body: string; sortOrder: number; isActive: boolean }>(
-      `SELECT title, body, sort_order AS "sortOrder", is_active AS "isActive" FROM inquiry_templates WHERE id = $1::uuid`, [id]);
+    const [cur] = await this.db.query<{ title: string; body: string; sortOrder: number; isActive: boolean; gwanCode: string | null }>(
+      `SELECT title, body, sort_order AS "sortOrder", is_active AS "isActive", gwan_code AS "gwanCode" FROM inquiry_templates WHERE id = $1::uuid`, [id]);
     if (!cur) throw new NotFound('그 틀이 없습니다.');
     const o = this.clean(dto, cur);
     if (o.isActive) await this.dup(o.title, id);
+    await this.gwanOk(o.gwanCode);
     await this.db.query(
-      `UPDATE inquiry_templates SET title = $2, body = $3, sort_order = $4, is_active = $5, updated_by = $6, updated_at = now() WHERE id = $1::uuid`,
-      [id, o.title, o.body, o.sortOrder, o.isActive, RequestCtx.actorId() ?? null]);
+      `UPDATE inquiry_templates SET title = $2, body = $3, sort_order = $4, is_active = $5, updated_by = $6, updated_at = now(), gwan_code = $7 WHERE id = $1::uuid`,
+      [id, o.title, o.body, o.sortOrder, o.isActive, RequestCtx.actorId() ?? null, o.gwanCode]);
     return { ok: true, id, note: cur.isActive !== o.isActive ? (o.isActive ? '틀을 다시 보이게 했습니다.' : '틀을 숨겼습니다.') : '틀을 고쳤습니다.' };
   }
 }

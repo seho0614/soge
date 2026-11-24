@@ -1829,7 +1829,11 @@
     "POST /admin/site-layouts/{key}/suggest",
     "GET /admin/site-pages.csv",
     "GET /admin/my-page-tasks",
-    "POST /admin/page-feedback/{id}/check"
+    "POST /admin/page-feedback/{id}/check",
+    "GET /admin/site-layouts/{key}/ab",
+    "POST /admin/site-layouts/{key}/ab",
+    "POST /admin/site-layouts/{key}/ab/end",
+    "GET /admin/site-pages/publish-log.csv"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-24 v10.696 ~ 700 (D321 · docs/804 ~ 808) — 대표 「수정 가능한 페이지: hero · 각 관 메인 · 소개몰(메인 · 구성) · 페이지 목록 관리」 · 구역 편집 · 게시 SUPER"
@@ -3733,7 +3737,8 @@
     "GET /admin/csx/inquiries/{id}/ai-draft",
     "POST /admin/csx/inquiries/{id}/ai-draft",
     "POST /admin/csx/ai-drafts/{id}/used",
-    "POST /admin/csx/ai-drafts/{id}/discard"
+    "POST /admin/csx/ai-drafts/{id}/discard",
+    "GET /admin/gwans"
    ],
    "nav": "SB-ADM-MBR-010",
    "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리 · v10.337 (docs/470) 처리 지표 상자(최근 7 · 30 · 90일 · 처음 답까지 시간 · 기한 안 비율 · 분류별 · 답변 틀별) · v10.361 그 회원 운영 메모(docs/495)"

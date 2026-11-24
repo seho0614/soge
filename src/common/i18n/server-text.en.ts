@@ -5,6 +5,14 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "게시 · 예약 · 되돌리기는 최고 관리자(SUPER)나 「관 UI/UX」 승인 권한을 따로 받은 운영자만 합니다.": "Only a super admin or a staff member with the Hall UI/UX approve permission can publish, schedule or roll back.",   // v10.7xx (D328)
+  "A/B 비교 기간은 1 ~ 31일입니다.": "An A/B comparison runs for 1 to 31 days.",   // v10.7xx (D328)
+  "게시된 판(A)이 있어야 비교합니다 — 먼저 게시하십시오.": "A published version (A) is needed to compare. Publish first.",   // v10.7xx (D328)
+  "초안(B)이 게시된 판(A)과 같습니다 — 초안을 고쳐 저장한 뒤 시작하십시오.": "The draft (B) is the same as the published version (A). Edit and save the draft before starting.",   // v10.7xx (D328)
+  "이 페이지는 이미 A/B 비교 중입니다 — 끝낸 뒤 새로 시작하십시오.": "This page already has an A/B comparison running. End it before starting a new one.",   // v10.7xx (D328)
+  "진행 중인 A/B 비교가 없습니다.": "No A/B comparison is running.",   // v10.7xx (D328)
+  "1차 승인한 사람은 2차 승인을 할 수 없습니다 — 다른 최고 관리자(SUPER)가 승인합니다.": "The first approver cannot give the second approval. Another super admin must approve.",   // v10.7xx (D328)
+  "지역 코드 모양이 맞지 않습니다.": "The region code is not valid.",   // v10.7xx (D328)
   "공개 범위는 ALL · MEMBER 입니다.": "Visibility must be ALL or MEMBER.",   // v10.747
   "페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "The page address must be 2 to 40 lowercase letters, digits or -.",   // v10.742
   "달력은 62일까지 봅니다.": "The calendar shows up to 62 days.",   // v10.734 ~ 743 (D326)

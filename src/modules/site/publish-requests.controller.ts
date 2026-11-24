@@ -42,6 +42,7 @@ export class MyPageTasksDto {
 export class PublishRequestResultDto {
   @ApiProperty() id!: number;
   @ApiProperty({ enum: ['OPEN', 'APPROVED', 'REJECTED', 'WITHDRAWN'] }) status!: string;
+  @ApiPropertyOptional({ description: 'v10.772 두 사람 승인 — 1차 승인만 적음(아직 OPEN)' }) firstApproved?: boolean;
 }
 
 @ApiTags('ADM')
@@ -77,7 +78,7 @@ export class PublishRequestsController {
   @ApiOperation({ summary: '게시 요청 승인 (v10.711 · SUPER)', description: '요청 때 초안 그대로 게시 · 초안이 바뀌었으면 422 PUBLISH_REQ_STALE · 수정 가능 · 관 닫힘 규칙 그대로.' })
   @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: PublishRequestResultDto })
-  @ApiResponse({ status: 422, description: 'PUBLISH_REQ_STALE · PUBLISH_REQ_STATE · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN · GWAN_PAGE_LOCKED · GWAN_PAGE_GWAN_OPEN', type: ErrorDto })
+  @ApiResponse({ status: 422, description: 'PUBLISH_REQ_STALE · PUBLISH_REQ_STATE · PUBLISH_REQ_SAME_PERSON(v10.772) · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN · GWAN_PAGE_LOCKED · GWAN_PAGE_GWAN_OPEN', type: ErrorDto })
   @Audit('PAGE_PUBLISH_APPROVE', 'SITE')
   approve(@Param('id', ParseIntPipe) id: number) { return this.svc.approve(id); }
 
