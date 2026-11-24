@@ -56,6 +56,7 @@ async function Listings({ code, b }: { code: string; b: Block }) {
   if (b.categoryId) qs.set('categoryId', String(b.categoryId));
   if (b.regionCode) qs.set('regionCode', String(b.regionCode));   // v10.762 (docs/870) 지역 · 배지 거르기
   if (b.badge) qs.set('badge', String(b.badge));
+  if (Number(b.priceMax) > 0) qs.set('priceMax', String(Math.floor(Number(b.priceMax))));   // v10.777 (docs/885) 거래 금액 상한
   const data = await apiGet<ListingListData>(`/listings?${qs}`, 300).catch(() => null);
   return data ? <ListingList data={data} /> : null;
 }

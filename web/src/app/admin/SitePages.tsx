@@ -263,7 +263,13 @@ function Editor({ k, isSuper: isSuperRole, onBack }: { k: string; isSuper: boole
         </div>)}
 
       {/* v10.763 (docs/871) 검색 결과 미리 보기 */}
-      <SeoPreview title={(l.texts.title || l.texts.heroTitleA || sp.name).slice(0, 80)} desc={l.texts.desc || l.texts.lead || l.texts.heroLeadA || l.texts.band || ''} path={sp.path} />
+      <SeoPreview title={(l.texts.title || l.texts.heroTitleA || sp.name).slice(0, 80)} desc={l.texts.seoDesc || l.texts.desc || l.texts.lead || l.texts.heroLeadA || l.texts.band || ''} path={sp.path} />
+      {/* v10.778 (D329 · docs/886) 검색 · 공유 설명 · 공유 그림 — 게시하면 사용자 웹 description · openGraph 에 */}
+      <div className="card pad form-grid" data-site-layout-seo>
+        <label><span>검색 · 공유 설명(160자 · 비우면 처음 설명)</span><textarea maxLength={160} rows={2} value={l.texts.seoDesc ?? ''} disabled={locked} onChange={(e) => set({ texts: { ...l.texts, seoDesc: e.target.value } })} data-site-layout-seo-desc /></label>
+        <ImageField label="공유 그림(카카오톡 · 검색 공유 · 비우면 없음)" v={l.texts.ogImage ?? ''} on={(v) => set({ texts: { ...l.texts, ogImage: v } })} />
+      </div>
+      {k === 'MALL_ITEM' && <MallItemOverrides canPublish={isSuper} />}   {/* v10.780 (D329 · docs/888) 분류 · 상품마다 덮어쓰기 */}
       {/* v10.760 (D328 · docs/868) A/B 비교 */}
       <AbCard k={k} canRun={isSuper && !locked} published={!!d.published} draftChanged={d.draftChanged} dirty={dirty} onMsg={(m, e) => { setMsg(m); setErr(e); }} />
       {/* v10.703 (docs/811) 초안 ↔ 게시 판 차이 · 운영 화면 안 미리보기 */}
@@ -333,7 +339,8 @@ function Editor({ k, isSuper: isSuperRole, onBack }: { k: string; isSuper: boole
 }
 
 /* v10.760 (D328 · docs/868) A/B 비교 — A = 게시된 판 · B = 지금 저장된 초안 · 방문자 반반(쿠키) · 1 ~ 31일 · 끝낼 때 B 를 고르면 B 를 새 판으로 게시 */
-interface AbRow { id: number; status: string; winner: string | null; startsAt: string; endsAt: string; createdByName: string | null; viewsA: number; viewsB: number }
+interface AbRow { id: number; status: string; winner: string | null; startsAt: string; endsAt: string; createdByName: string | null; viewsA: number; viewsB: number;
+  clicksA?: number; clicksB?: number; yesA?: number; noA?: number; yesB?: number; noB?: number }   // v10.781 누름 · 의견
 function AbCard({ k, canRun, published, draftChanged, dirty, onMsg }: { k: string; canRun: boolean; published: boolean; draftChanged: boolean; dirty: boolean; onMsg: (m: string | null, e: string | null) => void }) {
   const q = useApi<{ items: AbRow[] }>(`/admin/site-layouts/${k}/ab`);
   const [days, setDays] = useState(7);
@@ -341,7 +348,8 @@ function AbCard({ k, canRun, published, draftChanged, dirty, onMsg }: { k: strin
   const go = (path: string, body: unknown, ok: string) => void api(path, { method: 'POST', body: JSON.stringify(body) }).then(() => { q.reload(); onMsg(ok, null); }).catch((e) => onMsg(null, msgOf(e)));
   return (
     <div className="card pad" data-site-layout-ab={run ? 'running' : 'off'}><b>A/B 비교</b> <span className="dim">— A = 게시된 판 · B = 저장된 초안 · 방문자를 반반(처음 방문 화면은 A) · 방문 수로 비교</span>
-      {run ? <p>진행 중: {when(run.startsAt)} ~ {when(run.endsAt)}(UTC) · 방문 A <b>{run.viewsA}</b> · B <b>{run.viewsB}</b>{' '}
+      {run ? <p>진행 중: {when(run.startsAt)} ~ {when(run.endsAt)}(UTC) · 방문 A <b>{run.viewsA}</b> · B <b>{run.viewsB}</b>
+        <span data-site-layout-ab-more> · 누름 A {run.clicksA ?? 0} · B {run.clicksB ?? 0} · 도움됨/아님 A {run.yesA ?? 0}/{run.noA ?? 0} · B {run.yesB ?? 0}/{run.noB ?? 0}</span>{' '}
         {canRun && <><button className="btn-sm" onClick={() => { if (confirm('A(지금 게시된 판)를 그대로 두고 비교를 끝냅니다.')) go(`/admin/site-layouts/${k}/ab/end`, { winner: 'A' }, 'A/B 비교를 끝냈습니다 — A 그대로.'); }} data-site-layout-ab-end-a>A 로 끝내기</button>{' '}
           <button className="btn-sm btn-ok" onClick={() => { if (confirm('B 판을 새 판으로 게시하고 비교를 끝냅니다.')) go(`/admin/site-layouts/${k}/ab/end`, { winner: 'B' }, 'B 판을 게시하고 비교를 끝냈습니다.'); }} data-site-layout-ab-end-b>B 로 끝내기(게시)</button></>}</p>
         : canRun && <div className="acts"><label>기간 <input type="number" min={1} max={31} value={days} onChange={(e) => setDays(Number(e.target.value))} style={{ width: 70 }} />일</label>
@@ -356,6 +364,45 @@ function AbCard({ k, canRun, published, draftChanged, dirty, onMsg }: { k: strin
 interface MaintRow { id: number; gwanCode: string; gwanName: string; startsAt: string; endsAt: string; note: string | null; createdByName: string | null; announce?: boolean;
   wasOpen: boolean | null; reopenError: string | null; status: string }
 const MSTATUS: Record<string, string> = { SCHEDULED: '예약', RUNNING: '점검 중(관 닫힘)', DONE: '끝', CANCELED: '취소' };
+/* v10.780 (D329 · docs/888) 소개몰 상품 상세 — 분류마다 · 상품마다 덮어쓰기(상품 > 분류 > 모든 상품) · 같은 규칙(수정 가능 · 소개몰 닫힘) */
+interface ItemRow { scope: string; ref: string; label: string; published: boolean; draftChanged: boolean; publishedAt: string | null; updatedByName: string | null }
+interface ItemDetail extends ItemRow { draft: Layout; publishedLayout: Layout | null }
+function MallItemOverrides({ canPublish }: { canPublish: boolean }) {
+  const rows = useApi<ItemRow[]>('/admin/mall-item-layouts');
+  const [scope, setScope] = useState('CATEGORY');
+  const [ref, setRef] = useState('');
+  const [d, setD] = useState<ItemDetail | null>(null);
+  const [l, setL] = useState<Layout | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const go = (p: Promise<ItemDetail>, ok: string) => { setErr(null); setMsg(null); void p.then((x) => { setD(x); setL(x.draft); setMsg(ok); rows.reload(); }).catch((e) => setErr(msgOf(e))); };
+  const open = (s: string, r: string) => { setScope(s); setRef(r); go(api<ItemDetail>(`/admin/mall-item-layouts/${s}/${encodeURIComponent(r)}`), ''); };
+  const path = d ? `/admin/mall-item-layouts/${d.scope}/${encodeURIComponent(d.ref)}` : '';
+  return (
+    <div className="card pad" data-mall-item-overrides={(rows.data ?? []).length}>
+      <b>분류 · 상품마다 덮어쓰기</b> <span className="dim">— 게시된 덮어쓰기가 있으면 그 상품은 「상품 &gt; 분류 &gt; 모든 상품」 차례로 하나만 보입니다</span>
+      {(rows.data ?? []).length > 0 && <table className="tbl"><tbody>{rows.data!.map((r) => (
+        <tr key={`${r.scope}${r.ref}`}><td>{r.scope === 'CATEGORY' ? '분류' : '상품'}</td><td>{r.label} <span className="dim mono">{r.ref}</span></td>
+          <td>{r.published ? '게시됨' : '초안만'}{r.draftChanged ? ' · 초안 바뀜' : ''}</td><td><button className="btn-sm" onClick={() => open(r.scope, r.ref)}>열기</button></td></tr>))}</tbody></table>}
+      <p className="acts"><select value={scope} onChange={(e) => setScope(e.target.value)} aria-label="범위" data-mall-item-scope><option value="CATEGORY">분류 코드</option><option value="PRODUCT">상품 코드</option></select>
+        <input value={ref} onChange={(e) => setRef(e.target.value.trim())} placeholder={scope === 'CATEGORY' ? '예 VITAMIN' : '예 P-0001'} aria-label="코드" data-mall-item-ref />
+        <button className="btn-sm" disabled={!ref} onClick={() => open(scope, ref)} data-mall-item-open>열기 · 새로</button></p>
+      {msg && <p className="form-ok">{msg}</p>}
+      {err && <p className="form-error">{err}</p>}
+      {d && l && (
+        <div data-mall-item-editor={d.scope}>
+          <p><b>{d.label}</b> <span className="dim">({d.scope === 'CATEGORY' ? '분류' : '상품'} {d.ref}) · {d.published ? `게시 ${when(d.publishedAt)}` : '게시 안 함'}</span></p>
+          <label className="form-grid"><span>안내 띠 글(120자)</span><input maxLength={120} value={l.texts.band ?? ''} onChange={(e) => setL({ ...l, texts: { ...l.texts, band: e.target.value } })} /></label>
+          {(['top', 'bottom'] as const).map((at) => <div key={at}><p className="dim">{at === 'top' ? '위' : '아래'} 블록</p><BlockList blocks={l.inserts[at] ?? []} max={10} onChange={(b) => setL({ ...l, inserts: { ...l.inserts, [at]: b } })} /></div>)}
+          <p className="acts"><button className="btn-sm" onClick={() => go(api<ItemDetail>(path, { method: 'PUT', body: JSON.stringify({ layout: l }) }), '초안을 저장했습니다.')} data-mall-item-save>초안 저장</button>
+            {canPublish && <button className="btn-sm btn-ok" disabled={JSON.stringify(l) !== JSON.stringify(d.draft)} onClick={() => { if (confirm('이 덮어쓰기를 게시합니다.')) go(api<ItemDetail>(`${path}/publish`, { method: 'POST' }), '게시했습니다.'); }} data-mall-item-publish>게시</button>}
+            {canPublish && d.published && <button className="btn-sm btn-no" onClick={() => { if (confirm('게시를 내리면 이 상품 · 분류는 모든 상품 배치로 돌아갑니다(초안은 남음).')) go(api<ItemDetail>(`${path}/publish`, { method: 'DELETE' }), '게시를 내렸습니다.'); }} data-mall-item-unpublish>게시 내리기</button>}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Maint({ isSuper }: { isSuper: boolean }) {
   const rows = useApi<MaintRow[]>('/admin/gwan-maintenances');
   const gw = useApi<Array<{ code: string; name: string; isActive: boolean }>>('/admin/gwans/manage');

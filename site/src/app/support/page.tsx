@@ -6,13 +6,13 @@ import { BackBar } from '@/components/common/BackBar';
 import { ChatBot, type BotQa } from '@/components/support/ChatBot';
 import { Msgs } from '@/i18n/Msgs';
 import { getTranslations } from 'next-intl/server';
-import { getLayout } from '@/lib/layout';   // v10.758 (D328) 꾸밀 페이지
+import { getLayout, layCss, layMeta } from '@/lib/layout';   // v10.758 (D328) 꾸밀 페이지
 import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import '@/styles/proto-w1.css';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getTranslations('deal.meta'))('support') };
+  return { title: (await getTranslations('deal.meta'))('support'), ...(await layMeta('HELP')) };   // v10.778
 }
 
 /**
@@ -32,8 +32,11 @@ export default async function SupportPage({ searchParams }: { searchParams?: Pro
         <span className="w1-did">{t('botOn')}</span>
       </div>
       <LayBand text={lay?.texts.band} /><LayBlocks code="MNY" k="HELP" blocks={lay?.inserts.top} at="top" />
-      <Msgs ns={['deal']}><ChatBot qa={list} loggedIn={!!user} /></Msgs>
-      <p className="w1-ls" style={{ marginTop: 14 }}>{t.rich('disputeFoot', { link: (x) => <Link href="/support/dispute">{x}</Link> })}</p>
+      {lay && <style data-lay-css="HELP" dangerouslySetInnerHTML={{ __html: layCss(lay, '[data-lay-scope="HELP"]', ['bot', 'foot']) }} />}
+      <div data-lay-scope="HELP"><div data-lay-box="">   {/* v10.779 (D329 · docs/887) 구역 보이기 · 순서 */}
+        <div data-lay-sec="bot"><Msgs ns={['deal']}><ChatBot qa={list} loggedIn={!!user} /></Msgs></div>
+        <p data-lay-sec="foot" className="w1-ls" style={{ marginTop: 14 }}>{t.rich('disputeFoot', { link: (x) => <Link href="/support/dispute">{x}</Link> })}</p>
+      </div></div>
       <LayBlocks code="MNY" k="HELP" blocks={lay?.inserts.bottom} at="bottom" /><LayoutViewPing k="HELP" />
     </div>
   );

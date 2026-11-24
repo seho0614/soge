@@ -22,6 +22,21 @@ const SRC: Record<KeyRow['source'], string> = { ADMIN: '이 화면에서 넣음'
 const ADAPTER: Record<KeyRow['adapter'], string> = { REAL: '', STUB: '연동 구현 전 — 넣어 두어도 아직 부르지 않음', NONE: '업체 미정 — 넣어 두어도 아직 부르지 않음' };
 const OWN_PANEL = ['MAP', 'WEATHER', 'AGENT'];
 
+/* v10.782 (D329 · docs/890) 결제(토스) 준비 상태 — 키 값 없이 시험 · 실제 · 짝 · 결제 간주 · 순서 */
+interface PgReadyT { secretMode: string; clientMode: string; paired: boolean; provider: string; assumePayment: string; steps: Array<{ key: string; label: string; ok: boolean | null }>; note: string }
+function PgReady() {
+  const [d, setD] = useState<PgReadyT | null>(null);
+  useEffect(() => { void api<PgReadyT>('/admin/integration-keys/pg-readiness').then(setD).catch(() => undefined); }, []);
+  if (!d) return null;
+  return (
+    <div className="card pad" data-pg-ready={d.provider}>
+      <b>결제(토스) 준비</b> <span className="dim">시크릿 {d.secretMode} · 클라이언트 {d.clientMode} · 승인 {d.provider === 'TOSS' ? '토스' : '시험(스텁)'} · 결제 간주 {d.assumePayment}</span>
+      <ol>{d.steps.map((s) => <li key={s.key} data-pg-step={s.key}>{s.ok === true ? '됨 — ' : s.ok === false ? '아직 — ' : '사람이 확인 — '}{s.label}</li>)}</ol>
+      <p className="dim">{d.note}</p>
+    </div>
+  );
+}
+
 export function IntegrationKeys() {
   const [rows, setRows] = useState<KeyRow[] | null>(null);
   const [val, setVal] = useState<Record<string, string>>({});
@@ -63,6 +78,7 @@ export function IntegrationKeys() {
 
   return (
     <div data-integration-keys>
+      <PgReady />
       <h2 className="ad-s2">연동 키 <em>{list.length}</em> <small className="dim">v10.128 · 암호화 저장 · 이 화면 키가 먼저, 없으면 .env</small></h2>
       <div className="ad-nt info">
         업체 콘솔에서 받은 키를 여기에 넣습니다. 넣은 키는 <b>다시 보이지 않습니다</b>(끝 4자리만) · 1분 안에 반영(다시 띄우거나 빌드할 필요 없음).

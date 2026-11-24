@@ -95,6 +95,32 @@ export function HealthOrders({ onGo }: { onGo?: (tab: string) => void } = {}) {
         <button className="btn-plain" onClick={() => onGo('hlt-reviews')}>소개몰 리뷰 · 문의 →</button>
         <button className="btn-plain" onClick={() => onGo('hlt-settle')}>소개몰 정산 →</button>
       </div>}
+      <Carriers />
     </section>
+  );
+}
+
+/* v10.783 (D329 · docs/891) 택배사 조회 주소 — 회원 「택배사에서 보기」가 여는 주소 · 고치기 · 시험 송장으로 열어 보고 「확인함」 */
+interface CarrierT { name: string; trackUrl: string; checkedAt: string | null; note: string | null }
+function Carriers() {
+  const q = useApi<CarrierT[]>('/admin/hlt-carriers');
+  const a = useAct();
+  const [no, setNo] = useState('');
+  const [ed, setEd] = useState<Record<string, string>>({});
+  if (!q.data) return null;
+  return (
+    <div className="card pad" data-hlt-carriers={q.data.filter((c) => c.checkedAt).length}>
+      <Flash msg={a.msg} err={a.err} />
+      <b>택배사 조회 주소</b> <small className="dim">회원 주문 화면 「택배사에서 보기」가 이 주소({'{no}'} = 송장번호)를 엽니다 · 고치면 다시 확인</small>
+      <p><input value={no} onChange={(e) => setNo(e.target.value.replace(/[^0-9]/g, ''))} placeholder="시험 송장번호(실제 지난 송장)" aria-label="시험 송장번호" /></p>
+      <table className="tbl"><tbody>{q.data.map((c) => (
+        <tr key={c.name} data-hlt-carrier={c.name}><td>{c.name}</td>
+          <td><input style={{ width: '100%' }} value={ed[c.name] ?? c.trackUrl} onChange={(e) => setEd({ ...ed, [c.name]: e.target.value })} aria-label={`${c.name} 조회 주소`} /></td>
+          <td>{c.checkedAt ? <span className="st ok">확인 {ymdhm(c.checkedAt)}</span> : <b className="warn-text">확인 전</b>}</td>
+          <td className="nowrap">
+            {no && <a className="btn-sm" href={(ed[c.name] ?? c.trackUrl).replace('{no}', no)} target="_blank" rel="noopener noreferrer">열어 보기</a>}{' '}
+            {ed[c.name] !== undefined && ed[c.name] !== c.trackUrl && <button className="btn-sm" disabled={!!a.busy} onClick={() => void a.run(`u${c.name}`, () => api(`/admin/hlt-carriers/${encodeURIComponent(c.name)}`, { method: 'PUT', body: JSON.stringify({ trackUrl: ed[c.name] }) }), () => { setEd({}); q.reload(); }, '주소를 고쳤습니다 — 열어 보고 「확인함」을 누르십시오.')}>저장</button>}{' '}
+            <button className="btn-sm" disabled={!!a.busy} onClick={() => void a.run(`c${c.name}`, () => api(`/admin/hlt-carriers/${encodeURIComponent(c.name)}/check`, { method: 'POST' }), q.reload, `${c.name} 확인함`)} data-hlt-carrier-check>확인함</button></td></tr>))}</tbody></table>
+    </div>
   );
 }

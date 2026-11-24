@@ -13,5 +13,17 @@ export function LayoutViewPing({ k }: { k: string }) {
     const v = /(?:^|;\s*)sgb_ab=([ab])/.exec(document.cookie)?.[1];   // v10.760 A/B 비교 판(비교가 없으면 서버가 무시)
     fetch(`/api/v1/site-layouts/${encodeURIComponent(k)}/view${v ? `?v=${v}` : ''}`, { method: 'POST', keepalive: true, credentials: 'omit' }).catch(() => undefined);
   }, [k]);
+  /* v10.781 (D329 · docs/889) A/B 비교 판이 있을 때만 — 끼운 블록(.lay-ins) 안 링크 · 단추 누름을 셈(서버가 비교 중일 때만 · 하루 20번까지) */
+  useEffect(() => {
+    const v = /(?:^|;\s*)sgb_ab=([ab])/.exec(document.cookie)?.[1];
+    if (!v || /[?&]lp=/.test(location.search)) return;
+    const on = (e: MouseEvent) => {
+      const el = e.target instanceof Element ? e.target.closest('a, button') : null;
+      if (!el || !el.closest('.lay-ins')) return;
+      fetch(`/api/v1/site-layouts/${encodeURIComponent(k)}/click?v=${v}`, { method: 'POST', keepalive: true, credentials: 'omit' }).catch(() => undefined);
+    };
+    document.addEventListener('click', on, true);
+    return () => document.removeEventListener('click', on, true);
+  }, [k]);
   return null;
 }

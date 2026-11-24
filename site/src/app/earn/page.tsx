@@ -6,7 +6,7 @@ import { apiGet } from '@/lib/api';
 import type { Gwan } from '@/lib/types';
 import { GWAN_PATH } from '@/lib/format';
 import { GwanIcon, gwanColor, gwanHeadStyle } from '@/components/gwan/GwanLook';
-import { getLayout, layOrder } from '@/lib/layout';
+import { getLayout, layMeta, layOrder } from '@/lib/layout';
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
@@ -23,7 +23,7 @@ import { me } from '@/lib/session';
 export async function generateMetadata(): Promise<Metadata> {
   const gwans = await apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]);
   const hub = gwans.find((g) => g.code === 'EARN' && g.isHub);
-  return { title: hub?.name ?? 'EARN', description: hub?.description ?? undefined };
+  return { title: hub?.name ?? 'EARN', description: hub?.description ?? undefined, ...(await layMeta('EARN')) };   // v10.778
 }
 
 export default async function HubPage({ searchParams }: { searchParams: Promise<{ lp?: string }> }) {

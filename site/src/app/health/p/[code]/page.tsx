@@ -1,7 +1,7 @@
 /** SB-HLT-PRD-010 상품 상세 — v10.26 시안(spec/proto.html 20184 ~ 20378) 그대로 */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { apiGet, ApiFailure } from '@/lib/api';
 import type { HltProductDetail } from '@/components/health/types';
 import { Crumb, HltEmpty, HltNav, ProductGrid, SellerBox } from '@/components/health/HltParts';
@@ -14,7 +14,7 @@ import { me } from '@/lib/session';
 import { getFmt } from '@/lib/getFmt';
 import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
 import { siteOrigin } from '@/components/refcode/origin';
-import { getLayout } from '@/lib/layout';   // v10.755 (D328) 꾸밀 페이지
+import { forLocale, getLayout, type Lay } from '@/lib/layout';   // v10.755 (D328) 꾸밀 페이지 · v10.780 상품 · 분류 덮어쓰기
 import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
@@ -55,7 +55,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   const f = await getFmt();
   const tc = await getTranslations('hlt.common');
   const tk = await getTranslations('hlt.card');
-  const lay = await getLayout('MALL_ITEM', sp.lp);   // v10.755 (D328 · docs/863) 모든 상품 상세 안내 띠 · 위 · 아래 블록
+  let lay = await getLayout('MALL_ITEM', sp.lp);   // v10.755 (D328 · docs/863) 모든 상품 상세 안내 띠 · 위 · 아래 블록
 
   let p: HltProductDetail | null = null;
   let err: string | null = null;
@@ -75,6 +75,12 @@ export default async function HltProductPage({ params, searchParams }: Props) {
     );
   }
 
+  /* v10.780 (D329 · docs/888) 상품 > 분류 덮어쓰기가 게시돼 있으면 그것(미리보기 ?lp= 는 모든 상품 배치 그대로) */
+  if (!sp.lp) {
+    const qs = new URLSearchParams({ product: p.code, ...(p.categoryCode ? { category: p.categoryCode } : {}) });
+    const ov = await apiGet<{ layout: Lay | null }>(`/mall-item-layouts/for?${qs}`, 60).catch(() => null);
+    if (ov?.layout) lay = forLocale(ov.layout, await getLocale().catch(() => 'ko'));
+  }
   const ing = p.mainIngredient ?? null;
   const cons = p.concerns ?? [];
   const same = (p.sameIngredient ?? []).slice(0, 4);

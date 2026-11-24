@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getLayout } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
+import { getLayout, layMeta } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
 import { me } from '@/lib/session';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';   // v10.722 (D325) 꾸밀 페이지 방문 수
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title, description: desc, alternates: { canonical: url }, ...(home?.noindex ? { robots: { index: false, follow: false } } : {}),
       openGraph: { title, description: desc, url, type: 'website', ...(img && /^(\/(?!\/)|https:\/\/)/.test(img) ? { images: [img.startsWith('/') ? o + img : img] } : {}) } };
   }
-  return { title, description: g?.description ?? undefined };
+  return { title, description: g?.description ?? undefined, ...(code === 'MNY' || code === 'MAL' || code === 'BIZ' || code === 'HLT' ? await layMeta(code) : {}) };   // v10.778 꾸밀 페이지 검색 · 공유
 }
 
 /** SB-{G}-MAIN-010 · SB-{G}-LST-010 — 관 랜딩 겸 목록 */

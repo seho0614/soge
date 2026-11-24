@@ -36,9 +36,10 @@ import { getFmt } from '@/lib/getFmt';
 import '@/styles/home.css';
 import { HomePopups } from '@/components/home/HomePopups';   // v10.517 (D277) 메인 팝업 공지
 import type { HomePopup } from '@/components/home/popupTypes';
-import { getLayout, layOrder } from '@/lib/layout';   // v10.697 (D321 · docs/805) 꾸밀 페이지
+import { getLayout, layMeta, layOrder } from '@/lib/layout';   // v10.697 (D321 · docs/805) 꾸밀 페이지
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';   // v10.722 (D325) 꾸밀 페이지 방문 수
 
@@ -57,6 +58,11 @@ const SLIDES: (Omit<PromoSlide, 'k' | 'tag' | 'title' | 'desc' | 'cta'> & { k: S
   { k: 'health', gwan: 'HLT', href: '/health', imgs: ['d/pick-1.png', 'd/poll-purifier.png'] },
   { k: 'community', href: '/community', imgs: ['d/pick-4.png', 'd/town-3.png'] },
 ];
+
+/** v10.778 (D329 · docs/886) 메인 검색 · 공유 — 꾸밀 페이지 HOME 의 설명 · 공유 그림(없으면 사이트 기본 메타 그대로) */
+export async function generateMetadata(): Promise<Metadata> {
+  return layMeta('HOME');
+}
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ lp?: string }> }) {
   const lay = await getLayout('HOME', (await searchParams).lp);   // v10.697 게시한 배치(없으면 null = 처음 배치) · ?lp= 미리보기

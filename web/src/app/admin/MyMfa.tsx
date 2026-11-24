@@ -19,6 +19,24 @@ interface TurnOn { mode: string; need: number; enrolled: number; notEnrolled: { 
  *   모든 운영 역할은 「모든 기기에서 로그아웃」(「운영자 낯선 로그인」이 본인이 아닐 때 — 비밀번호를 바꾼 뒤).
  * v10.236 (docs/375) — 설정에서 SUPER · ALL 을 고르면 저장 전에 「켜기 전 점검」(번호를 넣어야 하는 사람 · 등록 안 한 사람).
  */
+/* v10.775 (D329 · docs/883) 「이날부터 필수」 예약 · 등록 안 한 운영자에게 알림 — SUPER */
+function MfaFromBox({ from, onDone }: { from: string | null; onDone: () => void }) {
+  const [d, setD] = useState(from ?? '');
+  const a = useAct();
+  return (
+    <div className="card pad" data-mfa-from={from ?? ''}>
+      <b>이날부터 필수(예약)</b> <small className="dim">그날(한국 날짜)부터 설정이 꺼져 있어도 운영 역할 모두 번호를 넣어야 합니다 · 비우면 예약 없음</small>
+      <p><input type="date" value={d} onChange={(e) => setD(e.target.value)} data-mfa-from-date />{' '}
+        <button className="btn-sm" disabled={a.busy === 'from' || d === (from ?? '')} onClick={() => {
+          if (!confirm(d ? `${d}부터 운영 역할 모두 2단계 인증이 필요합니다(그 전에 등록 안내를 보내십시오).` : '「이날부터 필수」 예약을 지웁니다.')) return;
+          void a.run('from', () => api('/admin/site-settings', { method: 'PATCH', body: JSON.stringify({ key: 'admin.mfa_from', value: d }) }), onDone);
+        }} data-mfa-from-save>저장</button>{' '}
+        <button className="btn-sm" disabled={a.busy === 'remind'} onClick={() => void a.run('remind', () => api<{ sent: number; skipped: number }>('/admin/mfa/remind', { method: 'POST' }), undefined, (r) => `등록 안내 ${r.sent}명에게 보냄${r.skipped ? ` · 오늘 이미 보낸 ${r.skipped}명 건너뜀` : ''}`)} data-mfa-remind>등록 안 한 운영자에게 알림</button></p>
+      <Flash msg={a.msg} err={a.err} />
+    </div>
+  );
+}
+
 export function MyMfa() {
   const q = useApi<MfaStatus>('/auth/mfa');
   const [setup, setSetup] = useState(false);
@@ -96,6 +114,7 @@ export function MyMfa() {
           {pv.notEnrolled.length > 0 && <small className="dim">등록 안 한 사람에게 먼저 「내 2단계 인증」에서 등록하도록 알리면 켠 뒤 바로 들어올 수 있습니다.</small>}
         </div>
       )}
+      {isSuper && <MfaFromBox from={(s as MfaStatus & { from?: string | null }).from ?? null} onDone={q.reload} />}
       <h3 className="sec">모든 기기에서 로그아웃</h3>
       <p data-logout-all="">
         <input type="password" name="logout-all-pw" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="지금 비밀번호" autoComplete="current-password" />{' '}

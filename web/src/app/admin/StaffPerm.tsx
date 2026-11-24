@@ -397,8 +397,37 @@ export function PermModeBox() {
             </details>
           )}
           <p className="muted">{d.note}</p>
+          <PermReadiness mode={d.mode} onDone={m.reload} />
         </>
       )}
+    </div>
+  );
+}
+
+/* v10.774 (D329 · docs/882) GROUPS 전환 준비 — 7일 다름 · 권한그룹 없는 운영 계정 · 바꾼 뒤 이틀 확인 카드 · COMPARE 로 한 번에 되돌리기 */
+interface ReadyT { mode: string; days: Array<{ day: string; diff: number }>; zeroDays: number; lastDiffAt: string | null; staffNoGroup: number; staffNoGroupItems: Array<{ name: string | null; email: string }>; roleGroups: number; after: { since: string; hours: number } | null; note: string }
+function PermReadiness({ mode, onDone }: { mode: string; onDone: () => void }) {
+  const r = useApi<ReadyT>('/admin/perm/mode/readiness', [mode]);
+  const a = useAct();
+  if (!r.data) return null;
+  const d = r.data;
+  const revert = () => {
+    const reason = ask('판정 방식을 GROUPS 에서 COMPARE(역할로 · 비교 기록)로 되돌립니다. 사유를 적어 주십시오'); if (!reason) return;
+    void a.run('revert', () => api<{ note: string }>('/admin/perm/mode/revert', { method: 'POST', body: JSON.stringify({ reason }) }), () => { r.reload(); onDone(); }, (x) => x.note);
+  };
+  return (
+    <div className="card pad" data-perm-ready={d.zeroDays}>
+      <Flash msg={a.msg} err={a.err} />
+      <b>GROUPS 전환 준비</b>
+      {d.after && <p className="ad-nt warn" data-perm-after={d.after.hours}>GROUPS 로 바꾼 지 {d.after.hours}시간 — 첫 이틀은 운영자들이 평소 화면을 열 수 있는지 확인하십시오(막히면 아래 「COMPARE 로 되돌리기」).</p>}
+      <table className="tbl"><tbody>
+        <tr><th>최근 7일 다름</th><td data-perm-ready-days>{d.days.map((x) => <span key={x.day} className={x.diff ? 'chip warn-text' : 'chip'}>{x.day.slice(5)} {x.diff}</span>)}</td></tr>
+        <tr><th>이어진 다름 0</th><td>{d.zeroDays}일{d.lastDiffAt ? <small className="muted"> · 마지막 다름 {ymdhm(d.lastDiffAt)}</small> : null}</td></tr>
+        <tr><th>권한그룹 없는 운영 계정</th><td className={d.staffNoGroup ? 'warn-text' : undefined} data-perm-ready-nogroup={d.staffNoGroup}>{d.staffNoGroup}{d.staffNoGroupItems.length > 0 && <small className="muted"> — {d.staffNoGroupItems.map((x) => x.name ?? x.email).join(' · ')}</small>}</td></tr>
+        <tr><th>역할에서 만든 권한그룹(R_)</th><td>{d.roleGroups}</td></tr>
+      </tbody></table>
+      {d.mode === 'GROUPS' && <p><button className="btn-sm btn-no" disabled={a.busy === 'revert'} onClick={revert} data-perm-revert>COMPARE 로 되돌리기</button></p>}
+      <p className="muted">{d.note}</p>
     </div>
   );
 }

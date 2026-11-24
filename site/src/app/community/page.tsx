@@ -9,14 +9,17 @@ import { TownPicks } from '@/components/community/TownPicks';
 import { RankingLink } from '@/components/community/RankingLink';   // v10.507 (D274)
 import { PlazaNotices, type PlazaNotice } from '@/components/community/PlazaNotices';
 import { me } from '@/lib/session';
-import { getLayout } from '@/lib/layout';   // v10.757 (D328) 꾸밀 페이지
+import { getLayout, layCss, layMeta } from '@/lib/layout';   // v10.757 (D328) 꾸밀 페이지
 import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import '@/styles/plaza.css';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getTranslations('plaza'))('hero.name') };
+  return { title: (await getTranslations('plaza'))('hero.name'), ...(await layMeta('COMM')) };   // v10.778
 }
+
+/* v10.779 (D329 · docs/887) 꾸밀 페이지 구역 — 서버 LAYOUT_SPECS.COMM 과 같은 열쇠 · 처음 차례 */
+const COMM_SECS = ['notices', 'picks', 'ranking', 'verify', 'list'];
 
 interface Board { items: PostRow[]; total: number; page: number; size: number; pages: number }
 
@@ -70,14 +73,17 @@ export default async function CommunityPage({ searchParams }: {
   return (
     <><div className="plz">
       <PlazaHero q={q} board={cur} />
-      <div className="plz-body">
+      <div className="plz-body" data-lay-scope="COMM">
+        {lay && <style data-lay-css="COMM" dangerouslySetInnerHTML={{ __html: layCss(lay, '[data-lay-scope="COMM"]', COMM_SECS) }} />}
         <LayBand text={lay?.texts.band} /><LayBlocks code="MNY" k="COMM" blocks={lay?.inserts.top} at="top" />
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
-        {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} nq={nq} np={np} />}
-        {!q && cur !== 'NOTICE' && <TownPicks loggedIn={login} />}
-        {!q && cur === '' && <RankingLink />}
-        {cur !== 'NOTICE' && <TownVerify loggedIn={login} />}
+        <div data-lay-box="">
+        {showNtc && <div data-lay-sec="notices"><PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} nq={nq} np={np} /></div>}
+        {!q && cur !== 'NOTICE' && <div data-lay-sec="picks"><TownPicks loggedIn={login} /></div>}
+        {!q && cur === '' && <div data-lay-sec="ranking"><RankingLink /></div>}
+        {cur !== 'NOTICE' && <div data-lay-sec="verify"><TownVerify loggedIn={login} /></div>}
+        <div data-lay-sec="list">
         {q && b && (
           <p className="plz-found" role="status">
             {t.rich('list.found', { b: (c) => <b>{c}</b>, q, n: b.total.toLocaleString('ko-KR'), clear: (c) => <Link href={plazaHref({ board: cur })}>{c}</Link> })}
@@ -122,6 +128,8 @@ export default async function CommunityPage({ searchParams }: {
         <div className="plz-foot">
           {b && b.pages > 0 && <Pager page={b.page} pages={b.pages} hrefOf={hrefOf} />}
           <Link className="plz-write cmu-write" href="/community/write">{t('list.write')}</Link>
+        </div>
+        </div>
         </div>
         <LayBlocks code="MNY" k="COMM" blocks={lay?.inserts.bottom} at="bottom" />
       </div>

@@ -342,7 +342,7 @@ function BlockFormBody({ b, set }: { b: Block; set: (b: Block) => void }) {
       <F label="지역 코드(선택 · 시 · 도 코드 · 예 SEOUL)" v={b.regionCode} on={p('regionCode')} max={12} />   {/* v10.762 (docs/870) */}
       <label><span>배지(선택)</span><select value={b.badge ?? ''} onChange={(e) => set({ ...b, badge: e.target.value })} data-block-listings-badge>
         <option value="">모두</option><option value="URGENT">급매 · 급구</option><option value="VERIFIED_DOC">서류 확인</option></select></label>
-      <p className="dim">가격 상한은 매물 목록이 받지 않아 넣지 않았습니다.</p></div>);
+      <label><span>가격 상한(원 · 선택)</span><input type="number" min={0} step={10000} value={b.priceMax ?? ''} onChange={(e) => set({ ...b, priceMax: e.target.value ? Number(e.target.value) : undefined })} data-block-listings-pricemax /></label>   {/* v10.777 (docs/885) 거래 금액 */}</div>);
     case 'PICKS': return (<div className="form-grid">   {/* v10.761 (docs/869) */}
       <F label="제목(80자)" v={b.title} on={p('title')} max={80} />
       <label><span>개수</span><input type="number" min={1} max={12} value={b.limit ?? 6} onChange={(e) => set({ ...b, limit: Number(e.target.value) })} /></label>

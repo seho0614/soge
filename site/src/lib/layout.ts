@@ -57,3 +57,14 @@ export function layCss(lay: Lay | null, scope: string, order: string[]): string 
   const rules = o.map((s, i) => `${scope} [data-lay-sec="${s.key}"]{${s.show ? '' : 'display:none!important;'}${moved ? `order:${i + 1};` : ''}}`).filter((r) => !r.endsWith('{}'));
   return (moved ? `${scope} [data-lay-box]{display:flex;flex-direction:column}` : '') + rules.join('');
 }
+
+/** v10.778 (D329 · docs/886) 꾸밀 페이지 검색 · 공유 — 게시한 배치의 seoDesc · ogImage(없으면 빈 것 · 페이지 처음 메타 그대로) */
+export async function layMeta(key: LayKey): Promise<{ description?: string; openGraph?: { description?: string; images?: string[] } }> {
+  const r = await apiGet<{ layout: Lay | null }>(`/site-layouts/${key}`, 60).catch(() => null);
+  const t = r?.layout?.texts ?? {};
+  const desc = t.seoDesc || undefined;
+  const img = t.ogImage && /^(\/(?!\/)|https:\/\/)/.test(t.ogImage) ? t.ogImage : undefined;
+  if (!desc && !img) return {};
+  const o = (process.env.SITE_ORIGIN || 'https://sogaebank.com').replace(/\/$/, '');
+  return { ...(desc ? { description: desc } : {}), openGraph: { ...(desc ? { description: desc } : {}), ...(img ? { images: [img.startsWith('/') ? o + img : img] } : {}) } };
+}

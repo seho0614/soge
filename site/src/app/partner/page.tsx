@@ -7,7 +7,7 @@ import { Bg, bizNo, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, S2, Tile, Tw, won }
 import { ymdKst } from '@/lib/format';
 import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
-import { getLayout } from '@/lib/layout';   // v10.759 (D328) 꾸밀 페이지
+import { getLayout, layCss } from '@/lib/layout';   // v10.759 (D328) 꾸밀 페이지
 import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 
@@ -84,8 +84,10 @@ export default async function PartnerHome() {
     <><Pgh title={t('title')} sub={SUB} />
       <LayBand text={lay?.texts.band} /><LayBlocks code="MNY" k="PARTNER" blocks={lay?.inserts.top} at="top" />
 
+      {lay && <style data-lay-css="PARTNER" dangerouslySetInnerHTML={{ __html: layCss(lay, '[data-lay-scope="PARTNER"]', ['prof', 'tiles', 'pact']) }} />}
+      <div data-lay-scope="PARTNER"><div data-lay-box="">   {/* v10.779 (D329 · docs/887) 구역 보이기 · 순서 */}
       {/* 업체 카드 (시안 .prof) */}
-      <div className="pt-prof" data-ptn-prof>
+      <div className="pt-prof" data-ptn-prof data-lay-sec="prof">
         <div className="av" aria-hidden>{initial}</div>
         <div className="pi">
           <b>{corp}</b> <Bg tone={st[1]}>{st[0]}</Bg>
@@ -100,7 +102,7 @@ export default async function PartnerHome() {
       </div>
 
       {/* 숫자 4칸 (시안 .tiles) — 시안 그대로 · 실제 값 */}
-      <div className="pt-tiles" data-ptn-tiles>
+      <div className="pt-tiles" data-ptn-tiles data-lay-sec="tiles">
         <Tile label={t('tLeads')} value={(d.today?.leads ?? 0).toLocaleString('ko-KR')} unit={tp('common.unit.case')} sub={t('tLeadsSub', { n: String(d.today?.unviewed ?? 0) })} href="/partner/leads" />
         <Tile label={t('tFee')} value={f.ko ? won(d.month?.fee) : f.wonOf(won(d.month?.fee))} unit={f.ko ? tp('common.unit.won') : undefined} sub={t('tFeeSub', { bonus: f.ko ? won(d.month?.bonus) : f.wonOf(won(d.month?.bonus)), balance: f.wonOf(won(d.balance)) })} href="/partner/cash" />
         <Tile label={t('tSvc')} value={d.services?.approved ?? 0} unit={tp('common.unit.ea')} sub={t('tSvcSub', { n: String(d.services?.in_review ?? 0) })} href="/partner/services" />
@@ -108,12 +110,13 @@ export default async function PartnerHome() {
       </div>
 
       {/* 시안 .pact — 「신뢰지표 보기 · 성과 관리」. 개발에 있던 바로가기(서비스 등록 · 활동 지역)는 없애지 않고 같은 줄에 둡니다(diffs) */}
-      <div className="pt-pact">
+      <div className="pt-pact" data-lay-sec="pact">
         <Link className="pt-bo" href="/partner/trust">{t('trust')}</Link>
         <Link className="pt-bo" href="/partner/performance">{t('perf')}</Link>
         <Link className="pt-bo" href="/partner/services/new">{t('newSvc')}</Link>
         <Link className="pt-bo" href="/partner/regions">{t('regions')}</Link>
       </div>
+      </div></div>
 
       <S2>{t('blockedN', { n: String(blocked.length) })}</S2>
       {blocked.length ? (

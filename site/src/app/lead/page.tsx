@@ -7,14 +7,14 @@ import type { ConsultCat } from '@/components/mal/types';
 import '@/styles/mal.css';
 import { getTranslations } from 'next-intl/server';
 import { Fragment } from 'react';
-import { getLayout, layOrder } from '@/lib/layout';   // v10.698 (D321 · docs/806) 꾸밀 페이지
+import { getLayout, layMeta, layOrder } from '@/lib/layout';   // v10.698 (D321 · docs/806) 꾸밀 페이지
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
 import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import { me } from '@/lib/session';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getTranslations('consult'))('lead.title') };
+  return { title: (await getTranslations('consult'))('lead.title'), ...(await layMeta('LED')) };   // v10.778
 }
 
 /**
