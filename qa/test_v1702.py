@@ -12,7 +12,7 @@ ok('① /earn — 허브(EARN · isHub)가 없으면 404 · 하위 관(parentCod
    "g.code === 'EARN' && g.isHub" in EP and 'notFound()' in EP and "g.parentCode === 'EARN'" in EP and "getLayout('EARN', (await searchParams).lp)" in EP
    and "layOrder(lay, ['cards', 'guide'])" in EP and 'data-hub-cards' in EP and 'data-screen="SB-HOM-HUB-010"' in EP, '')
 ok('① 서버 — 꾸밀 페이지 EARN(/earn · 구역 2 · 글 3) · 관 열림 규칙 대상 · 공개 /gwans 에 parentCode',
-   "name: '소개하고 벌기(허브) 메인', path: '/earn'" in SV and "EARN: 'EARN'" in SV and 'g.parent_code AS "parentCode"' in CS, '')
+   "name: '소개하고 벌기(허브) 메인', path: '/earn'" in SV and "'HLT', 'EARN']" in SV and 'g.parent_code AS "parentCode"' in CS, '')
 ok('① screens.json — SB-HOM-HUB-010 /earn', any(s.get('id') == 'SB-HOM-HUB-010' and s.get('url') == '/earn' for s in json.loads(SJ or '{}').get('screens', [])), '')
 
 if up() and SITE:
