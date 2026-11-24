@@ -177,7 +177,8 @@ ok('공개 API 응답에 키 칸 없음', not re.search(r'class WeatherTodayDto[
 HV = rd('site/src/components/home/HomeView.tsx')
 i_hero, i_wx, i_today = HV.find('</section>\n\n'), HV.find('<Weather w={weather} />'), HV.find('<Today c={c} />')
 ok('히어로 바로 다음 · 「오늘의 소개뱅크」 앞', 0 < i_hero < i_wx < i_today, f'{i_hero} {i_wx} {i_today}')
-ok('available 일 때만 그림', '{weather?.available && <Weather w={weather} />}' in HV, '')
+# v10.697 (D321 · docs/805) 메인 구역은 운영이 정한 차례대로 — 날씨 칸은 「weather?.available ? <Weather … : null」 모양
+ok('available 일 때만 그림', '{weather?.available && <Weather w={weather} />}' in HV or '(weather?.available ? <Weather w={weather} /> : null)' in HV, '')
 W = rd('site/src/components/home/Weather.tsx')
 ok("Weather.tsx 는 'use client' · 쿠키 이름은 types.ts 에서", W.startswith("'use client';") and "WX_COOKIE, type WeatherToday } from './types'" in W, '')
 T = rd('site/src/components/home/types.ts')

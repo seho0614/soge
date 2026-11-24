@@ -205,7 +205,9 @@ for s in SECS:
     m = re.search(r'\[([a-z][a-z0-9-]{1,39})\]$', s['heading'])
     if m and m.group(1) not in KEYED:
         KEYED[m.group(1)] = s
-missing = [k for k in NEW if k not in KEYED]
+# v10.700 (docs/808) 1판(D300) · 2판(이 SQL) 뒤 새 탭은 그 판의 hdx 절(D305 다음 마이그레이션 · 「[탭 키]', $hdx$」)로 들어감
+LATER = {k for n, t in MIGS.items() if n > 'D305' and n[:1] == 'D' and '$hdx$' in t for k in re.findall(r"'([a-z][a-z0-9-]{1,39})', '[^']*\[\1\]', \$hdx\$", t)}
+missing = [k for k in NEW if k not in KEYED and k not in LATER]
 typo = [r[2] for r in ROWS if r[2] not in ALL_TABS]
 dup = [k for k in [r[2] for r in ROWS] if [r[2] for r in ROWS].count(k) > 1]
 in_v1 = [r[2] for r in ROWS if '[' + r[2] + ']' in V1]

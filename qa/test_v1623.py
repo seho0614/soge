@@ -90,7 +90,9 @@ key_of = lambda t: set(re.findall(r'###[^\n]*\[([a-z][a-z0-9-]{1,39})\]', t)) | 
 K300, K302 = key_of(D300), key_of(D302)
 ROWS = re.findall(r"^  \((\d+), '([^']*)', '([a-z0-9-]+)', '([^']*)', \$hdx\$(.*?)\$hdx\$\)", D305, re.M | re.S)
 K305 = [r[2] for r in ROWS]
-miss = [k for k in TABS if k not in (K300 | K302 | set(K305))]
+# v10.700 (docs/808) 3판 뒤 새 탭은 그 판의 hdx 절(D305 다음 마이그레이션)로 들어감
+LATER = {k for n, t in MIGS.items() if n > 'D305' and n[:1] == 'D' and '$hdx$' in t for k in re.findall(r"'([a-z][a-z0-9-]{1,39})', '[^']*\[\1\]', \$hdx\$", t)}
+miss = [k for k in TABS if k not in (K300 | K302 | set(K305) | LATER)]
 ok('① 빠진 탭 0 — TABS 모든 키가 ADMIN_GUIDE 절(1판 D300 · 2판 D302 · 3판 D305)에 있음',
    len(TABS) >= 250 and not miss and len(ROWS) >= 100, f"TABS {len(TABS)} · D305 {len(ROWS)} · 빠짐 {miss[:8]}")
 ok('① D305 절 — 키가 TABS 에 있음 · 겹침 없음 · 1 · 2판에 이미 있는 키는 안 넣음 · 제목 「이름 [키]」',

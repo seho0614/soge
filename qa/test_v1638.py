@@ -78,7 +78,8 @@ force = RC.read_list(os.path.join(HERE, 'reg_solo_force.txt')) if RC else set()
 # v10.646 (docs/791) test_v1646 더함 — 새 관을 잠깐 열어 /gwans · 머리줄 관 수가 바뀜(규칙은 SETREAD 만 잡음)
 # v10.660 (docs/795) test_v1660 더함 — 준비중 새 관을 만들고 지움 · 관 페이지 방문 수 · 예약 게시
 # v10.694 (docs/801) test_v1104(동시 단계 번역 줄 겹침) · test_v1147(buyer 비밀번호 재설정으로 옆 시험 로그인 풀림) 더함
-ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421 · 1646 · 1660 · 1675 · 1680 · 1685 · 1690 · 1104 · 1147', {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'} <= force <= {'test_v1570.py', 'test_v1420.py', 'test_v1421.py', 'test_v1646.py', 'test_v1660.py', 'test_v1675.py', 'test_v1680.py', 'test_v1685.py', 'test_v1690.py', 'test_v1104.py', 'test_v1147.py'}, str(sorted(force)))
+# v10.696 (docs/804) test_v1696(BIZ 메인 배치 게시 → 처음 배치) 더함
+ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421 · 1646 · 1660 · 1675 · 1680 · 1685 · 1690 · 1104 · 1147 · 1696', {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'} <= force <= {'test_v1570.py', 'test_v1420.py', 'test_v1421.py', 'test_v1646.py', 'test_v1660.py', 'test_v1675.py', 'test_v1680.py', 'test_v1685.py', 'test_v1690.py', 'test_v1104.py', 'test_v1147.py', 'test_v1696.py'}, str(sorted(force)))
 d = os.path.join(K, 'docs')
 d782 = next((rd(os.path.join(d, x)) for x in (os.listdir(d) if os.path.isdir(d) else []) if x.startswith('782_')), '')
 ok('③ 문서 782 — SETREAD · SETGLOBAL · set:i18n', all(w in d782 for w in ('SETREAD', 'SETGLOBAL', 'set:i18n')), str(len(d782)))

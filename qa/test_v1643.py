@@ -70,8 +70,9 @@ ok('① API — POST admin/categories(ADMIN · SUPER · 감사 CATEGORY_CREATE �
    "@Post('admin/categories')" in CT and "@Audit('CATEGORY_CREATE', 'CATEGORY')" in CT and 'class CreateCategoryDto' in DT and '/^[A-Z][A-Z0-9_]{2,39}$/' in DT
    and "'CATEGORY_AXIS_REQUIRED'" in SV and "'CATEGORY_EXISTS'" in SV and "VALUES ($1, $2, $3, 'PENDING'" in SV, '')
 ok('① 승인 때 approved_by = 지금 관리자 · 목록에 만든 사람', "approved_by = CASE WHEN $2 = 'APPROVED' THEN $7::uuid" in SV and 'AS "requestedByName"' in SV, '')
-ok('① 화면 — 새 업종 추가(허브 · LED 빼고) · 승인 칸 부담 주체 · 만든 사람 표시 · screens.json · 새 관 안내',
-   all(w in UI for w in ('function NewCategory', "!g.isHub && g.code !== 'LED'", 'data-cat-new-save', 'data-cat-bearer', '이 분은 승인할 수 없음')) and '"POST /admin/categories"' in SJ
+ok('① 화면 — 새 업종 추가(허브 빼고 · LED 는 상담 축으로) · 승인 칸 부담 주체 · 만든 사람 표시 · screens.json · 새 관 안내',
+   # v10.695 (docs/803) 관 목록은 허브만 뺌 · 소개리드는 보이고 안심소개(MAL) · 상담(CONSULT)으로 저장(DB 의 LED 막음 그대로)
+   all(w in UI for w in ('function NewCategory', "(rows ?? []).filter((g) => !g.isHub)", "code === LEAD ? { gwanCode: 'MAL', axis: 'CONSULT' }", 'data-cat-new-save', 'data-cat-bearer', '이 분은 승인할 수 없음')) and '"POST /admin/categories"' in SJ
    and '「새 업종 추가」' in GN, '')
 
 if API and DB:

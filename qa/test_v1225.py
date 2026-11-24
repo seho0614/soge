@@ -34,7 +34,7 @@ ok('① 띠 부품 — 주문 꺼짐 · 판매자(정지 · 제한 · 폐점 · 
    and "getJson('/cart-count')" in NB and "'/api/v1/health/order-config'" in NB and "'/api/v1/health/tenant/config'" in NB and "'/api/v1/me/health/seller'" in NB
    and "under(p, '/health/cart')" in NB and "under(p, '/health/order')" in NB and "under(p, '/health/seller')" in NB and 'sessionStorage' in NB and 'data-hlt-band={b.kind}' in NB, '')
 ok('① 붙는 곳 — HltNav(소개몰 하위 화면) · 소개몰 첫 화면(ShopMain 위)',
-   '<HltBand />' in HP and 'export function HltBand()' in HP and "useTranslations('hlt.band')" in HP and '<HltBand />\n        <ShopMain />' in GW, '')
+   '<HltBand />' in HP and 'export function HltBand()' in HP and "useTranslations('hlt.band')" in HP and ('<HltBand />\n        <ShopMain />' in GW or '<HltBand />\n        <ShopMain lay={lay} listings={' in GW), '')   # v10.699 (D321) 소개몰 메인 꾸밀 페이지 — 배치 · 매물 구역을 넘김
 ko = json.loads(rd('site/src/i18n/messages/ko/hlt.json') or '{}').get('band', {}); en = json.loads(rd('site/src/i18n/messages/en/hlt.json') or '{}').get('band', {})
 KEYS = ('orderOff', 'saleOff', 'paused', 'blocked', 'closed', 'pending', 'applyOn', 'applyOff', 'center', 'apply', 'view', 'dismiss', 'aria')
 ok('① 사전 ko · en — 띠 13줄 · 사유 자리 {reason} · 영어에 operator 없음',
