@@ -59,8 +59,8 @@ export class GwanMaintService {
           const title = `[점검 안내] ${g.name} ${k(s)} ~ ${k(e).slice(-5)}(한국 시각)`.slice(0, 120);
           const body = `${g.name}이(가) ${k(s)}부터 ${k(e)}까지(한국 시각) 잠시 점검합니다. 이 시간에는 ${g.name} 화면이 열리지 않습니다.${note ? `\n\n${note}` : ''}`;
           const [n] = await this.db.query<{ id: string }>(
-            `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, ends_at, author_id, grades, notify, notify_code) VALUES ($1, $2, $3, true, greatest(now(), $7::timestamptz - make_interval(mins => $8)), $4, $5, ARRAY['PUBLIC'], $6, 'GWAN_MAINT') RETURNING id::text AS id`,
-            [input.gwanCode, title, body, e.toISOString(), RequestCtx.actorId() ?? null, input.notifyMembers === true, s.toISOString(), [60, 1440].includes(Number(input.noticeLeadMin)) ? Number(input.noticeLeadMin) : 0]);   // v10.748 (D327) 공지 올리는 때
+            `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, ends_at, author_id, grades, notify, notify_code) VALUES ($1, $2, $3, true, CASE WHEN $8::int = 0 THEN now() ELSE greatest(now(), $7::timestamptz - make_interval(mins => $8)) END, $4, $5, ARRAY['PUBLIC'], $6, 'GWAN_MAINT') RETURNING id::text AS id`,
+            [input.gwanCode, title, body, e.toISOString(), RequestCtx.actorId() ?? null, input.notifyMembers === true, s.toISOString(), [60, 1440].includes(Number(input.noticeLeadMin)) ? Number(input.noticeLeadMin) : 0]);   // v10.748 (D327) 공지 올리는 때 · 0 = 예약 즉시(지금)
           await this.db.query(`UPDATE gwan_maintenances SET notice_id = $2::uuid WHERE id = $1`, [r!.id, n!.id]);
         }
         return r!.id;
