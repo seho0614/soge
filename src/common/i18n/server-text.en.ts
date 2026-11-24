@@ -5,6 +5,7 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "공개 범위는 ALL · MEMBER 입니다.": "Visibility must be ALL or MEMBER.",   // v10.747
   "페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "The page address must be 2 to 40 lowercase letters, digits or -.",   // v10.742
   "달력은 62일까지 봅니다.": "The calendar shows up to 62 days.",   // v10.734 ~ 743 (D326)
   "이 페이지에서 내려받은 판 파일이 아닙니다.": "This is not a version file exported from this page.",   // v10.734 ~ 743 (D326)

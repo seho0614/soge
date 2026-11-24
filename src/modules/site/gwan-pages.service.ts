@@ -171,6 +171,14 @@ export class GwanPagesService {
     const [ok] = await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1 AND role = 'SUPER' UNION ALL SELECT 1 FROM gwan_managers WHERE gwan_code = $2 AND account_id = $1 LIMIT 1`, [me, code]);
     if (!ok) throw new PolicyViolation('GWAN_PAGE_MANAGER_ONLY', '이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.');
   }
+  /** v10.747 (docs/855) 관 안 페이지 공개 범위 한꺼번에 — 첫 화면은 늘 누구나(빼고) · 수정 불가 페이지는 건너뜀 · 관 닫힘 · 담당자 규칙 */
+  async setVisibilityAll(code: string, visibility: string) {
+    if (visibility !== 'ALL' && visibility !== 'MEMBER') throw new PolicyViolation('GWAN_PAGE_VISIBILITY', '공개 범위는 ALL · MEMBER 입니다.');
+    await this.assertGwanClosed(code);
+    const r = await this.db.query(`UPDATE gwan_pages SET visibility = $2 WHERE gwan_code = $1 AND slug <> 'home' AND editable AND visibility <> $2 RETURNING id`, [code, visibility]);
+    const [skip] = await this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM gwan_pages WHERE gwan_code = $1 AND slug <> 'home' AND NOT editable`, [code]);
+    return { changed: r.length, skipped: skip?.n ?? 0, rows: await this.list(code) };
+  }
   /** v10.742 (docs/850) 관 안 페이지 복사 — 다른 관(또는 같은 관 다른 주소)에 새 페이지로 · 초안 · 제목 · 공개 범위만(게시 · 판 기록 · 방문 수는 안 옮김) · 받는 관 규칙(닫힘 · 담당자) */
   async copy(id: number, input: { gwanCode: string; slug: string }) {
     const [p] = await this.db.query<{ title: string; draft: unknown; lang: string; visibility: string; slug: string }>(`SELECT title, draft, lang, visibility, slug FROM gwan_pages WHERE id = $1`, [id]);

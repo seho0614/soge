@@ -560,7 +560,7 @@ function Console() {
       {tab === 'csx-churn' && <CsxChurn isSuper={roles.includes('SUPER')} />}
       {tab === 'csx-mailtpl' && <CsxMailTemplates isSuper={roles.includes('SUPER')} />}
       {tab === 'csx-merge' && <CsxMerges isSuper={roles.includes('SUPER')} />}
-      {tab === 'ops-board' && <OpsBoard />}
+      {tab === 'ops-board' && <OpsBoard onGo={visible('site-pages') ? go : undefined} />}
       {tab === 'my-mfa' && <><MyMfa /><MyPasskey /></>}
       {tab === 'my-password' && <><MyPassword /><MySessions /></>}
       {tab === 'acct-journal' && <AcctJournal />}

@@ -111,6 +111,15 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   useEffect(() => { if (d && !d.published && !base0) setBase0({ sections: d.spec.sections.map(([key]) => ({ key, show: true })), texts: {}, inserts: {}, ...(d.spec.slides ? { slides: Object.fromEntries(d.spec.slides.map(([x]) => [x, { show: true }])) } : {}), ...(d.spec.picks ? { picks: {} } : {}) }); }, [d, base0]);
   useEffect(() => { if (k === 'HLT' && !prods) void api<Array<{ code: string; name: string }>>('/health/products').then((r) => setProds(Array.isArray(r) ? r : [])).catch(() => setProds([])); }, [k, prods]);
   const dirty = !!l && JSON.stringify(l) !== saved;
+  /* v10.745 (docs/853) 임시 저장 — 저장 안 한 고침을 이 브라우저에 1초마다 남김 · 다시 열면 「되살리기」(서버에는 저장 안 함 · 저장하면 지움) */
+  const tmpKey = `slay-tmp:${k}`;
+  const [tmp, setTmp] = useState<{ at: string; layout: Layout } | null>(null);
+  useEffect(() => { try { const t = localStorage.getItem(tmpKey); if (t) setTmp(JSON.parse(t)); } catch { /* 저장소 못 씀 */ } }, [tmpKey]);
+  useEffect(() => {
+    if (!l) return;
+    const h = setTimeout(() => { try { if (dirty) localStorage.setItem(tmpKey, JSON.stringify({ at: new Date().toISOString(), layout: l })); else localStorage.removeItem(tmpKey); } catch { /* 저장소 못 씀 */ } }, 1000);
+    return () => clearTimeout(h);
+  }, [l, dirty, tmpKey]);
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
@@ -129,10 +138,12 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   const ins = (at2: string) => l.inserts[at2] ?? [];
   const setIns = (at2: string, b: Block[]) => { const n = { ...l.inserts }; if (b.length) n[at2] = b; else delete n[at2]; set({ inserts: n }); };
   const total = Object.values(l.inserts).reduce((s, b) => s + b.length, 0);
+  const allSpots: Array<[string, string]> = sp.inserts === 'each' ? [['_top', '맨 위'], ...sp.sections.map(([x, n]) => [x, `「${n}」 뒤`] as [string, string])] : [['top', '위'], ['bottom', '아래']];   // v10.746
   const spot = (a: string, label: string) => (
     <div style={{ margin: '4px 0 10px 24px' }}>
       <button className="btn-sm btn-plain" onClick={() => setOpen(open === a ? null : a)} data-lay-spot={a}>{open === a ? '▾' : '▸'} {label} 블록 {ins(a).length ? `(${ins(a).length})` : ''}</button>
-      {open === a && <BlockList blocks={ins(a)} onChange={(b) => setIns(a, b)} max={10} />}
+      {open === a && <BlockList blocks={ins(a)} onChange={(b) => setIns(a, b)} max={10}
+        spots={allSpots.filter(([x]) => x !== a)} onMoveOut={(i, to) => { const from = [...ins(a)]; const [blk] = from.splice(i, 1); const n = { ...l.inserts }; if (from.length) n[a] = from; else delete n[a]; n[to] = [...(n[to] ?? []), blk!].slice(0, 10); set({ inserts: n }); setOpen(to); }} />}
     </div>
   );
   const locked = !!d.lockReason;   // v10.701 (D322) 수정 불가 · 관이 열려 있음 — 서버도 막음(422)
@@ -157,6 +168,9 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
         {' '}<a href={siteHref(sp.path)} target="_blank" rel="noreferrer">사용자 웹 열기 ↗</a></p>
       {msg && <p className="form-ok">{msg}</p>}
       {err && <p className="form-error">{err}</p>}
+      {tmp && !dirty && JSON.stringify(tmp.layout) !== saved && <p className="warn-text" data-site-layout-tmp>저장하지 않은 고침이 이 브라우저에 남아 있습니다({when(tmp.at)}).{' '}
+        <button className="btn-sm" onClick={() => { setL(tmp.layout); setMsg('남은 고침을 되살렸습니다 — 「초안 저장」을 눌러야 저장됩니다.'); }} data-site-layout-tmp-restore>되살리기</button>{' '}
+        <button className="btn-sm btn-plain" onClick={() => { try { localStorage.removeItem(tmpKey); } catch { /* 무시 */ } setTmp(null); }}>버리기</button></p>}
       {/* v10.701 (D322 · docs/809) 수정 가능 스위치 · 관 열림 규칙 */}
       <div className={`card pad${locked ? ' warn' : ''}`} data-site-layout-lock={d.lockReason ?? 'open'}>
         <b>{d.editable ? '수정 가능' : '수정 불가'}</b>{d.gwanCode && <> · 관 {d.gwanCode} {d.gwanOpen ? '열림' : '닫힘'}</>}
@@ -319,7 +333,10 @@ const MSTATUS: Record<string, string> = { SCHEDULED: '예약', RUNNING: '점검 
 function Maint({ isSuper }: { isSuper: boolean }) {
   const rows = useApi<MaintRow[]>('/admin/gwan-maintenances');
   const gw = useApi<Array<{ code: string; name: string; isActive: boolean }>>('/admin/gwans/manage');
-  const [f, setF] = useState({ gwanCode: '', start: '', minutes: 30, note: '', announce: true, notifyMembers: false });
+  const [f, setF] = useState({ gwanCode: '', start: '', minutes: 30, note: '', announce: true, notifyMembers: false, lead: 0 });
+  /* v10.753 (docs/861) 예약하려는 날의 예약 게시 · 다른 점검 미리 보기 */
+  const day = f.start ? new Date(f.start).toISOString().slice(0, 10) : '';
+  const near = useApi<{ items: Array<{ type: string; at: string; end: string | null; label: string }> }>(day ? `/admin/site-schedules?from=${day}&to=${day}` : '/admin/site-schedules?from=2000-01-01&to=2000-01-01', [day]);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const act = (p: Promise<unknown>, ok: string) => { setErr(null); setMsg(null); void p.then(() => { setMsg(ok); rows.reload(); }).catch((e) => setErr(msgOf(e))); };
@@ -337,9 +354,12 @@ function Maint({ isSuper }: { isSuper: boolean }) {
           {/* v10.710 (D324 · docs/818) 손님 미리 알림 — 상단 고정 공지(메인 공지 띠 · 소개광장 › 공지 · 지금 ~ 점검 끝) · 회원 알림은 공지 알림 길 */}
           <label><input type="checkbox" checked={f.announce} onChange={(e) => setF({ ...f, announce: e.target.checked, notifyMembers: e.target.checked && f.notifyMembers })} data-gwan-maint-announce /> 손님에게 미리 알림(상단 고정 공지)</label>
           <label><input type="checkbox" checked={f.notifyMembers} disabled={!f.announce} onChange={(e) => setF({ ...f, notifyMembers: e.target.checked })} data-gwan-maint-notify /> 회원 알림도(내 알림)</label>
+          <label><span>공지 올리는 때</span><select value={f.lead} disabled={!f.announce} onChange={(e) => setF({ ...f, lead: Number(e.target.value) })} data-gwan-maint-lead>   {/* v10.748 (docs/856) */}
+            <option value={0}>지금</option><option value={1440}>하루 전</option><option value={60}>한 시간 전</option></select></label>
+          {day && <div style={{ gridColumn: '1 / -1' }} data-gwan-maint-near={near.data?.items.length ?? 0}><span className="dim">그날 일정: </span>{(near.data?.items ?? []).length ? (near.data!.items.map((x, i) => <span key={i} className="chip">{new Date(new Date(x.at).getTime() + 9 * 3_600_000).toISOString().slice(11, 16)} {x.label}</span>)) : <span className="dim">없음</span>}</div>}
           <div className="acts"><button className="btn-ok" disabled={!f.gwanCode || !f.start} data-gwan-maint-create onClick={() => {
             const s0 = new Date(f.start);
-            act(api('/admin/gwan-maintenances', { method: 'POST', body: JSON.stringify({ gwanCode: f.gwanCode, startsAt: s0.toISOString(), endsAt: new Date(s0.getTime() + f.minutes * 60_000).toISOString(), note: f.note || undefined, announce: f.announce, notifyMembers: f.announce && f.notifyMembers }) }), '점검 시간을 예약했습니다 — 시작 시각에 관이 닫힙니다(1분 안).');
+            act(api('/admin/gwan-maintenances', { method: 'POST', body: JSON.stringify({ gwanCode: f.gwanCode, startsAt: s0.toISOString(), endsAt: new Date(s0.getTime() + f.minutes * 60_000).toISOString(), note: f.note || undefined, announce: f.announce, notifyMembers: f.announce && f.notifyMembers, noticeLeadMin: f.announce ? f.lead : 0 }) }), '점검 시간을 예약했습니다 — 시작 시각에 관이 닫힙니다(1분 안).');
           }}>예약</button></div>
         </div>) : <p className="dim">점검 시간 예약은 최고 관리자(SUPER)가 합니다.</p>}
       <Repeats isSuper={isSuper} gws={gw.data ?? []} />
@@ -414,6 +434,19 @@ function Calendar() {
   );
 }
 
+/* v10.744 (docs/852) 내 할 일 — SUPER 승인 대기 · 내 열린 요청 · 되돌려 받은 요청 */
+function MyTasks() {
+  const t = useApi<{ isSuper: boolean; waiting: number; mineOpen: number; mineRejected: number }>('/admin/my-page-tasks');
+  if (!t.data || (!t.data.waiting && !t.data.mineOpen && !t.data.mineRejected)) return null;
+  return (
+    <p className="card pad warn" data-my-page-tasks={t.data.waiting + t.data.mineRejected}><b>내 할 일</b>{' '}
+      {t.data.isSuper && t.data.waiting > 0 && <span>· 승인 기다리는 게시 요청 <b>{t.data.waiting}</b>건 </span>}
+      {t.data.mineRejected > 0 && <span>· 되돌려 받은 내 요청 <b>{t.data.mineRejected}</b>건(30일) </span>}
+      {t.data.mineOpen > 0 && <span>· 내가 낸 요청 대기 {t.data.mineOpen}건 </span>}
+      <span className="dim">— 아래 「게시 요청」에서 봅니다.</span></p>
+  );
+}
+
 /* v10.727 (D325 · docs/835) 관 열기 · 닫기 기록 */
 function OpenLog() {
   const rows = useApi<Array<{ id: number; gwanName: string; gwanCode: string; opened: boolean; source: string; byName: string | null; maintId: number | null; at: string }>>('/admin/gwan-open-log');
@@ -427,7 +460,7 @@ function OpenLog() {
 }
 /* v10.729 (D325 · docs/837) 손님 한 줄 의견 모아 보기 */
 function Feedback() {
-  const d = useApi<{ pages: Array<{ kind: string; ref: string; yes: number; no: number; lastAt: string }>; recent: Array<{ kind: string; ref: string; helpful: boolean; comment: string; at: string }> }>('/admin/page-feedback?days=30');
+  const d = useApi<{ pages: Array<{ kind: string; ref: string; yes: number; no: number; lastAt: string }>; recent: Array<{ id: number; kind: string; ref: string; helpful: boolean; comment: string; at: string; checkedAt: string | null; checkedByName: string | null }> }>('/admin/page-feedback?days=30');
   return (
     <details className="card pad" data-page-feedback-box={d.data?.pages.length ?? 0}><summary><b>손님 한 줄 의견</b> <span className="dim">— 「손님 한 줄 의견」 블록을 넣은 페이지 · 30일</span></summary>
       <p><button className="btn-sm" data-page-feedback-csv onClick={() => void api<{ csv: string; filename: string }>('/admin/page-feedback.csv?days=90').then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>CSV 내려받기(90일)</button></p>   {/* v10.738 (docs/846) */}
@@ -435,7 +468,8 @@ function Feedback() {
         {(d.data?.pages ?? []).map((r) => <tr key={`${r.kind}${r.ref}`}><td>{r.kind === 'LAYOUT' ? `꾸밀 페이지 ${r.ref}` : r.ref}</td><td>{r.yes}</td><td>{r.no}</td><td>{when(r.lastAt)}</td></tr>)}
         {d.data?.pages.length === 0 && <tr><td colSpan={4} className="muted">아직 의견이 없습니다.</td></tr>}
       </tbody></table>
-      {(d.data?.recent ?? []).length > 0 && <><b>최근 한 줄</b><ul>{d.data!.recent.map((r, i) => <li key={i}>{when(r.at)} · {r.ref} · {r.helpful ? '도움됨' : '아쉬움'} — {r.comment}</li>)}</ul></>}
+      {(d.data?.recent ?? []).length > 0 && <><b>최근 한 줄</b><ul>{d.data!.recent.map((r, i) => <li key={i} data-page-feedback-row={r.checkedAt ? 'checked' : 'new'}>{when(r.at)} · {r.ref} · {r.helpful ? '도움됨' : '아쉬움'} — {r.comment}
+        {r.checkedAt ? <span className="dim"> · 확인함 {r.checkedByName ?? ''}</span> : <> <button className="btn-sm" onClick={() => void api(`/admin/page-feedback/${r.id}/check`, { method: 'POST' }).then(() => d.reload())} data-page-feedback-check>확인함</button></>}</li>)}</ul></>}   {/* v10.749 (docs/857) */}
     </details>
   );
 }
@@ -479,6 +513,7 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
     && (!fl || (fl === 'draft' && p.status !== 'PUBLISHED') || (fl === 'editable' && p.editable) || (fl === 'open' && p.gwanOpen) || (fl === 'sched' && p.scheduledAt)));
   return (
     <div data-site-pages={data.layouts.length + data.pages.length}>
+      <MyTasks />
       <Maint isSuper={isSuper} />
       <Requests isSuper={isSuper} onOpen={(kind, ref) => (kind === 'LAYOUT' ? setEdit(ref) : setPageEdit(Number(ref)))} />
       <Calendar />

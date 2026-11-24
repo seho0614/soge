@@ -29,7 +29,7 @@ const sent = (v: string | null) => v === null ? '—' : v === 'SENT' ? '보냄' 
  * 자동 글(하루 요약 · 급한 알림 · 대표 할 일 주간 · 시험 메시지)은 텔레그램 · 슬랙 결과와 함께 항상 올라옴(꺼져 있어도).
  * 운영자 글쓰기 · 고치기(쓴 사람 · SUPER · 전 내용 기록) · 내리기 · 댓글 · 「확인함」. 사용자 웹에는 없음.
  */
-export function OpsBoard() {
+export function OpsBoard({ onGo }: { onGo?: (tab: string) => void } = {}) {   // v10.752 (docs/860) 페이지 · 점검 글에서 페이지 목록 바로 열기
   const isSuper = tokenRoles().includes('SUPER');
   const [kind, setKind] = useState('');
   const [from, setFrom] = useState('');
@@ -140,6 +140,7 @@ export function OpsBoard() {
           <div className="acts">
             {<button className="btn-ok" disabled={a.busy === `read:${open.id}`} onClick={() => read(open.id)} data-ops-board-read>확인함</button>}
             {open.kind === 'STAFF' && !open.takenDownAt && (open.mine || isSuper) && !ed && <button className="btn-sm" onClick={() => setEd({ title: open.title, body: open.body, reason: '' })} data-ops-board-edit>고치기</button>}
+            {open.kind === 'PAGES' && onGo && <button className="btn-sm btn-ok" onClick={() => onGo('site-pages')} data-ops-board-go-pages>페이지 목록 열기</button>}
             {isSuper && !open.takenDownAt && <button className="btn-sm" onClick={() => pin(open)} data-ops-board-pin>{open.isPinned ? '고정 풀기' : '고정'}</button>}
             {!open.takenDownAt && (open.mine || isSuper) && <button className="btn-sm" onClick={() => down(open)} data-ops-board-down>내리기</button>}
           </div>

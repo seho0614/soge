@@ -888,6 +888,9 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
           {gws.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}</select></label>
       </div>
       {err && <p className="form-error">{err}</p>}
+      {rows && rows.some((r) => r.slug !== 'home') && <p className="acts" data-gwan-pages-visibility-all>공개 범위 한꺼번에(첫 화면 빼고):   {/* v10.747 (docs/855) */}
+        {(['MEMBER', 'ALL'] as const).map((v) => <button key={v} className="btn-sm" onClick={() => { if (!confirm(`이 관의 관 안 페이지를 모두 「${v === 'MEMBER' ? '로그인한 회원만' : '누구나'}」로 바꿉니다(관이 닫혀 있어야 함).`)) return; setErr(null);
+          void api<{ changed: number; skipped: number; rows: PageRow[] }>(`/admin/gwans/${code}/pages/visibility`, { method: 'POST', body: JSON.stringify({ visibility: v }) }).then((r) => { setRows(r.rows); setErr(`${r.changed}개 바꿈${r.skipped ? ` · 수정 불가 ${r.skipped}개 건너뜀` : ''}`); }).catch((e) => setErr(msgOf(e))); }}>{v === 'MEMBER' ? '모두 회원만' : '모두 누구나'}</button>)}</p>}
       {rows && (
         <table className="tbl" data-gwan-pages>
           <thead><tr><th>페이지</th><th>주소</th><th>언어</th><th>상태</th><th>게시 판</th><th>7일 방문</th><th>초안 고친 때</th><th></th></tr></thead>
@@ -931,16 +934,21 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
 }
 
 /* v10.696 (D321 · docs/804) 꾸밀 페이지에서 쓰는 블록 목록 — 관 페이지와 같은 블록 칸(BlockForm) · 위아래 · 빼기 · 더하기(조각은 받지 않음) */
-export function BlockList({ blocks, onChange, max = 10 }: { blocks: Block[]; onChange: (b: Block[]) => void; max?: number }) {
+export function BlockList({ blocks, onChange, max = 10, spots, onMoveOut }: { blocks: Block[]; onChange: (b: Block[]) => void; max?: number;
+  /** v10.746 (docs/854) 다른 자리로 옮기기 — [자리 열쇠, 이름] · 고르면 이 자리에서 빼서 그 자리 끝에 */ spots?: Array<[string, string]>; onMoveOut?: (i: number, to: string) => void }) {
   const [add, setAdd] = useState('TEXT');
+  const today = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);   // v10.751 기간 밖 표시
   const move = (i: number, d: number) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j]!, n[i]!]; onChange(n); };
   return (
     <div data-block-list={blocks.length}>
       {blocks.map((b, i) => (
         <div key={i} className="card pad" data-block-list-item={b.type}>
           <p style={{ marginTop: 0 }}><b>{i + 1}. {KIND[b.type] ?? b.type}</b>{' '}
+            {((b.from && b.from > today) || (b.until && b.until < today)) && <span className="warn-text" data-block-list-hidden>지금 안 보임(기간 {b.from ?? '…'} ~ {b.until ?? '…'}) </span>}
             <button className="btn-sm" disabled={i === 0} onClick={() => move(i, -1)} aria-label="위로">↑</button>{' '}
             <button className="btn-sm" disabled={i === blocks.length - 1} onClick={() => move(i, 1)} aria-label="아래로">↓</button>{' '}
+            <button className="btn-sm" disabled={blocks.length >= max} onClick={() => onChange([...blocks.slice(0, i + 1), JSON.parse(JSON.stringify(b)), ...blocks.slice(i + 1)])} data-block-list-dup>복제</button>{' '}
+            {spots && onMoveOut && <select value="" aria-label="다른 자리로 옮기기" onChange={(e) => { if (e.target.value) onMoveOut(i, e.target.value); }} data-block-list-move><option value="">다른 자리로…</option>{spots.map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select>}{' '}
             <button className="btn-sm btn-no" onClick={() => onChange(blocks.filter((_, j) => j !== i))}>빼기</button></p>
           <BlockForm b={b} set={(nb) => onChange(blocks.map((x, j) => (j === i ? nb : x)))} />
         </div>

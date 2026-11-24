@@ -43,6 +43,14 @@ export class GwanPageRowDto {
 export class GwanPageOrderDto {
   @ApiProperty({ type: [Number], description: '한국어판 페이지 번호 차례(첫 화면 빼고)' }) @IsArray() @ArrayMaxSize(100) @IsInt({ each: true }) ids!: number[];
 }
+export class GwanPageVisibilityAllDto {
+  @ApiProperty({ enum: ['ALL', 'MEMBER'] }) @IsIn(['ALL', 'MEMBER']) visibility!: string;
+}
+export class GwanPageVisibilityAllResultDto {
+  @ApiProperty() changed!: number;
+  @ApiProperty({ description: '수정 불가라 건너뛴 페이지' }) skipped!: number;
+  @ApiProperty({ type: [GwanPageRowDto] }) rows!: GwanPageRowDto[];
+}
 export class GwanPageCopyDto {
   @ApiProperty({ example: 'EDU' }) @IsString() @Matches(/^[A-Z]{3,4}$/) gwanCode!: string;
   @ApiProperty({ example: 'guide' }) @IsString() @Matches(/^[a-z0-9][a-z0-9-]{1,39}$/, { message: '페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.' }) slug!: string;
@@ -232,6 +240,16 @@ export class GwanPagesController {
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_GWAN_OPEN · GWAN_PAGE_LOCKED · GWAN_PAGE_MANAGER_ONLY', type: ErrorDto })
   @Audit('GWAN_PAGE_ORDER', 'GWAN')
   reorder(@Param('code') code: string, @Body() dto: GwanPageOrderDto) { return this.svc.reorder(code, dto.ids); }
+
+  @Post('admin/gwans/:code/pages/visibility')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 안 페이지 공개 범위 한꺼번에 (v10.747)', description: '첫 화면 빼고 · 수정 불가 건너뜀 · 관 닫힘 · 담당자 규칙.' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: GwanPageVisibilityAllResultDto })
+  @ApiResponse({ status: 422, description: 'GWAN_PAGE_GWAN_OPEN · GWAN_PAGE_MANAGER_ONLY', type: ErrorDto })
+  @Audit('GWAN_PAGE_VISIBILITY_ALL', 'GWAN')
+  setVisibilityAll(@Param('code') code: string, @Body() dto: GwanPageVisibilityAllDto) { return this.svc.setVisibilityAll(code, dto.visibility); }
 
   @Post('admin/gwan-pages/:id/copy')
   @HttpCode(200)

@@ -33,6 +33,12 @@ export class PublishRequestCreateDto {
 export class PublishRequestRejectDto {
   @ApiProperty({ example: '그림 설명을 채워 주세요' }) @IsString() @MinLength(2) @MaxLength(300) reason!: string;
 }
+export class MyPageTasksDto {
+  @ApiProperty() isSuper!: boolean;
+  @ApiProperty({ description: 'SUPER 만 — 승인 대기 수' }) waiting!: number;
+  @ApiProperty() mineOpen!: number;
+  @ApiProperty({ description: '30일 안 되돌려 받은 내 요청' }) mineRejected!: number;
+}
 export class PublishRequestResultDto {
   @ApiProperty() id!: number;
   @ApiProperty({ enum: ['OPEN', 'APPROVED', 'REJECTED', 'WITHDRAWN'] }) status!: string;
@@ -49,6 +55,12 @@ export class PublishRequestsController {
   @ApiOperation({ summary: '게시 요청 목록 (v10.711)', description: '열린 요청 · 최근 30일 끝난 요청 · 요청 뒤 초안이 바뀌었는지(stale).' })
   @ApiOkResponse({ type: PublishRequestRowDto, isArray: true })
   list() { return this.svc.list(); }
+
+  @Get('admin/my-page-tasks')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '페이지 내 할 일 (v10.744)', description: 'SUPER 승인 대기 · 내 열린 요청 · 30일 안 되돌려 받은 요청 수.' })
+  @ApiOkResponse({ type: MyPageTasksDto })
+  myTasks() { return this.svc.myTasks(); }
 
   @Post('admin/publish-requests')
   @HttpCode(200)

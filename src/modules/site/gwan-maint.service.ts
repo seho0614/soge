@@ -19,7 +19,7 @@ import { PublishRequestsService } from './publish-requests.service';
 
 const COLS = `m.id::int AS id, m.gwan_code AS "gwanCode", g.name AS "gwanName", m.starts_at AS "startsAt", m.ends_at AS "endsAt", m.note,
   m.created_at AS "createdAt", (SELECT name FROM accounts a WHERE a.id = m.created_by) AS "createdByName",
-  m.announce, m.notice_id::text AS "noticeId",
+  m.announce, m.notice_id::text AS "noticeId", m.notice_lead_min AS "noticeLeadMin",
   m.was_open AS "wasOpen", m.closed_at AS "closedAt", m.reopened_at AS "reopenedAt", m.reopen_error AS "reopenError", m.canceled_at AS "canceledAt",
   CASE WHEN m.canceled_at IS NOT NULL THEN 'CANCELED' WHEN m.reopened_at IS NOT NULL THEN 'DONE' WHEN m.closed_at IS NOT NULL THEN 'RUNNING' ELSE 'SCHEDULED' END AS status`;
 
@@ -39,7 +39,7 @@ export class GwanMaintService {
     if (!r) throw new NotFound('없는 점검 시간입니다.');
     return r;
   }
-  async create(input: { gwanCode: string; startsAt: string; endsAt: string; note?: string; announce?: boolean; notifyMembers?: boolean }) {
+  async create(input: { gwanCode: string; startsAt: string; endsAt: string; note?: string; announce?: boolean; notifyMembers?: boolean; noticeLeadMin?: number }) {
     const [g] = await this.db.query<{ is_hub: boolean; name: string }>(`SELECT is_hub, name FROM gwans WHERE code = $1`, [input.gwanCode]);
     if (!g) throw new NotFound('없는 관입니다.');
     const s = new Date(input.startsAt), e = new Date(input.endsAt), now = Date.now();
@@ -51,16 +51,16 @@ export class GwanMaintService {
     try {
       const id = await this.db.transaction(async () => {
         const [r] = await this.db.query<{ id: number }>(
-          `INSERT INTO gwan_maintenances (gwan_code, starts_at, ends_at, note, created_by, announce) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::int AS id`,
-          [input.gwanCode, s.toISOString(), e.toISOString(), note || null, RequestCtx.actorId() ?? null, input.announce === true]);
+          `INSERT INTO gwan_maintenances (gwan_code, starts_at, ends_at, note, created_by, announce, notice_lead_min) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id::int AS id`,
+          [input.gwanCode, s.toISOString(), e.toISOString(), note || null, RequestCtx.actorId() ?? null, input.announce === true, [60, 1440].includes(Number(input.noticeLeadMin)) ? Number(input.noticeLeadMin) : 0]);
         /* v10.710 (D324 · docs/818) 손님 미리 알림 — 상단 고정 공지(메인 공지 띠 · 소개광장 › 공지) · 지금부터 점검 끝까지 · 「회원 알림도」면 공지 알림 길(notify) */
         if (input.announce === true) {
           const k = (d: Date) => { const x = new Date(d.getTime() + 9 * 3_600_000); return `${x.getUTCMonth() + 1}/${x.getUTCDate()} ${String(x.getUTCHours()).padStart(2, '0')}:${String(x.getUTCMinutes()).padStart(2, '0')}`; };
           const title = `[점검 안내] ${g.name} ${k(s)} ~ ${k(e).slice(-5)}(한국 시각)`.slice(0, 120);
           const body = `${g.name}이(가) ${k(s)}부터 ${k(e)}까지(한국 시각) 잠시 점검합니다. 이 시간에는 ${g.name} 화면이 열리지 않습니다.${note ? `\n\n${note}` : ''}`;
           const [n] = await this.db.query<{ id: string }>(
-            `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, ends_at, author_id, grades, notify) VALUES ($1, $2, $3, true, now(), $4, $5, ARRAY['PUBLIC'], $6) RETURNING id::text AS id`,
-            [input.gwanCode, title, body, e.toISOString(), RequestCtx.actorId() ?? null, input.notifyMembers === true]);
+            `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, ends_at, author_id, grades, notify) VALUES ($1, $2, $3, true, greatest(now(), $7::timestamptz - make_interval(mins => $8)), $4, $5, ARRAY['PUBLIC'], $6) RETURNING id::text AS id`,
+            [input.gwanCode, title, body, e.toISOString(), RequestCtx.actorId() ?? null, input.notifyMembers === true, s.toISOString(), [60, 1440].includes(Number(input.noticeLeadMin)) ? Number(input.noticeLeadMin) : 0]);   // v10.748 (D327) 공지 올리는 때
           await this.db.query(`UPDATE gwan_maintenances SET notice_id = $2::uuid WHERE id = $1`, [r!.id, n!.id]);
         }
         return r!.id;
@@ -219,6 +219,43 @@ export class GwanMaintService {
     await this.note(ok ? 'GWAN_MAINT_SITE_OK' : 'GWAN_MAINT_SITE_FAIL', ok ? 'INFO' : 'WARN',
       ok ? `관 점검 뒤 화면 확인 — ${code} ${path} 200` : `관 점검 뒤 화면이 열리지 않음 — ${code} ${path} · ${status || why} · 사용자 웹에서 직접 확인하십시오`, `site:${id}`, { id, gwan: code, path, status });
     return { status };
+  }
+
+  /** v10.750 (D327 · docs/858) 게시된 페이지 깨진 링크 — 정기 작업 page_link_check(매일 05:10) · 사이트 안 링크(/…)만 · 최대 200 · 404 면 운영 알림 PAGE_LINK_BROKEN(WARN · 날마다 한 번) */
+  async linkCheck(): Promise<{ checked: number; broken: Array<{ url: string; status: number; where: string }> }> {
+    const found = new Map<string, string>();
+    const take = (blocks: unknown, where: string) => {
+      const walk = (o: unknown) => {
+        if (Array.isArray(o)) { o.forEach(walk); return; }
+        if (!o || typeof o !== 'object') return;
+        for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
+          if (typeof v === 'string') {
+            if ((k === 'href' || k === 'src') && /^\/(?!\/)/.test(v) && !found.has(v.split('#')[0]!)) found.set(v.split('#')[0]!, where);
+            if (k === 'body') for (const m of v.matchAll(/\]\((\/(?!\/)[^)\s]*)\)/g)) if (!found.has(m[1]!.split('#')[0]!)) found.set(m[1]!.split('#')[0]!, where);
+          } else walk(v);
+        }
+      };
+      walk(blocks);
+    };
+    const pgs = await this.db.query<{ gwan_code: string; slug: string; blocks: unknown }>(
+      `SELECT p.gwan_code, p.slug, v.blocks FROM gwan_pages p JOIN gwan_page_versions v ON v.page_id = p.id AND v.version = p.published_version WHERE p.status = 'PUBLISHED' LIMIT 500`);
+    for (const p of pgs) take(p.blocks, `${p.gwan_code} ${p.slug === 'home' ? '첫 화면' : `/info/${p.slug}`}`);
+    const lays = await this.db.query<{ key: string; published: { inserts?: unknown; slides?: unknown } | null }>(`SELECT key, published FROM site_layouts WHERE published IS NOT NULL`);
+    for (const l of lays) { take(l.published?.inserts, `꾸밀 페이지 ${l.key}`); take(l.published?.slides, `꾸밀 페이지 ${l.key} 안내 장`); }
+    const urls = [...found.entries()].filter(([u]) => !u.startsWith('/api/')).slice(0, 200);   // 그림(/api/v1/…)은 파일 쪽이라 뺌
+    const base = (process.env.SITE_INTERNAL_URL || 'http://127.0.0.1:5174').replace(/\/$/, '');
+    const broken: Array<{ url: string; status: number; where: string }> = [];
+    for (const [u, where] of urls) {
+      try {
+        const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 10_000);
+        try { const st = (await fetch(base + u, { signal: ac.signal, redirect: 'manual' })).status; if (st === 404) broken.push({ url: u, status: st, where }); } finally { clearTimeout(tm); }
+      } catch { /* 사이트가 안 닿으면 깨진 링크로 세지 않음(사이트 문제는 다른 알림) */ }
+    }
+    if (broken.length) {
+      const day = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+      await this.note('PAGE_LINK_BROKEN', 'WARN', `깨진 링크 ${broken.length}개 — ${broken.slice(0, 3).map((b) => `${b.where} ${b.url}`).join(' · ')}${broken.length > 3 ? ' …' : ''}`, `links:${day}`, { broken: broken.slice(0, 50) });
+    }
+    return { checked: urls.length, broken };
   }
 
   /** v10.727 (D325 · docs/835) 관 열기 · 닫기 기록 — 최근 200줄 */

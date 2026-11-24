@@ -115,6 +115,7 @@ export type JobName =
   | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly'
   | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice'   // v10.377 ~ 379 (D241)
   | 'gwan_maint'   // v10.706 (D323) 관 점검 시간
+  | 'page_link_check'   // v10.750 (D327) 깨진 링크
   | 'acct_journal'    // v10.382 (D242)
   | 'acct_deadline'   // v10.390 (D244)
   | 'acct_cashflow'   // v10.394 (D245)
@@ -836,6 +837,12 @@ export class SchedulerService {
       case 'gwan_maint': {
         const r = await this.gwanMaint.tick();
         affected = r.closed + r.reopened; detail = r;
+        break;
+      }
+      /* v10.750 (D327 · docs/858) 게시된 페이지 깨진 링크(매일 05:10) */
+      case 'page_link_check': {
+        const r = await this.gwanMaint.linkCheck();
+        affected = r.broken.length; detail = { checked: r.checked, broken: r.broken.slice(0, 20) };
         break;
       }
 

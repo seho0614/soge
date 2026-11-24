@@ -39,6 +39,7 @@ export class GwanMaintCreateDto {
   @ApiPropertyOptional({ example: '안내 페이지를 새로 꾸미는 중입니다.', description: '손님 안내 글(200자)' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
   @ApiPropertyOptional({ description: 'v10.710 손님에게 미리 알림 — 상단 고정 공지(지금 ~ 점검 끝)' }) @IsOptional() @StrictBoolean() announce?: boolean;
   @ApiPropertyOptional({ description: 'v10.710 회원 알림도(공지 알림 길 · announce 일 때만)' }) @IsOptional() @StrictBoolean() notifyMembers?: boolean;
+  @ApiPropertyOptional({ enum: [0, 60, 1440], description: 'v10.748 공지를 올리는 때 — 0 지금 · 60 한 시간 전 · 1440 하루 전' }) @IsOptional() @IsIn([0, 60, 1440]) noticeLeadMin?: number;
 }
 export class GwanMaintRepeatCreateDto {
   @ApiProperty({ example: 'EDU' }) @IsString() @Matches(/^[A-Z]{3,4}$/) gwanCode!: string;

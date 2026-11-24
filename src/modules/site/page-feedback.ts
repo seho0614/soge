@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, HttpCode, Injectable, Ip, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Injectable, Ip, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { RequestCtx } from '../../core/request-context';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { createHash } from 'crypto';
@@ -23,6 +24,10 @@ export class PageFeedbackCreateDto {
 export class PageFeedbackResultDto {
   @ApiProperty() saved!: boolean;
 }
+export class PageFeedbackCheckDto {
+  @ApiProperty() id!: number;
+  @ApiProperty() checked!: boolean;
+}
 export class PageFeedbackSummaryDto {
   @ApiProperty({ type: 'array', items: { type: 'object' }, description: '페이지마다 도움됨 · 아님 · 30일' }) pages!: unknown[];
   @ApiProperty({ type: 'array', items: { type: 'object' }, description: '최근 한 줄 의견 50' }) recent!: unknown[];
@@ -46,8 +51,13 @@ export class PageFeedbackService {
     const pages = await this.db.query(
       `SELECT page_kind AS kind, page_ref AS ref, count(*) FILTER (WHERE helpful)::int AS yes, count(*) FILTER (WHERE NOT helpful)::int AS no, max(at) AS "lastAt"
          FROM page_feedback WHERE at > now() - make_interval(days => $1) GROUP BY page_kind, page_ref ORDER BY count(*) DESC LIMIT 100`, [d]);
-    const recent = await this.db.query(`SELECT page_kind AS kind, page_ref AS ref, helpful, comment, at FROM page_feedback WHERE comment IS NOT NULL ORDER BY at DESC LIMIT 50`);
+    const recent = await this.db.query(`SELECT id::int AS id, page_kind AS kind, page_ref AS ref, helpful, comment, at, checked_at AS "checkedAt", (SELECT name FROM accounts a WHERE a.id = checked_by) AS "checkedByName" FROM page_feedback WHERE comment IS NOT NULL ORDER BY (checked_at IS NULL) DESC, at DESC LIMIT 50`);
     return { pages, recent };
+  }
+  /** v10.749 (D327 · docs/857) 「확인함」 — 한 번만 */
+  async check(id: number, by: string | null) {
+    const [r] = await this.db.query(`UPDATE page_feedback SET checked_at = now(), checked_by = $2 WHERE id = $1 AND checked_at IS NULL RETURNING id`, [id, by]);
+    return { id, checked: !!r };
   }
   /** v10.738 (docs/846) 의견 CSV — 기간 안 모든 줄(때 · 페이지 · 도움됨 · 한 줄) · 기기 지문은 빼고 */
   async csv(days = 30) {
@@ -70,6 +80,13 @@ export class PageFeedbackController {
   @ApiOkResponse({ type: PageFeedbackResultDto })
   @ApiResponse({ status: 422, description: 'PAGE_FEEDBACK', type: ErrorDto })
   create(@Body() dto: PageFeedbackCreateDto, @Ip() ip: string, @Headers('user-agent') ua?: string) { return this.svc.create(dto, ip ?? '', ua ?? ''); }
+
+  @Post('admin/page-feedback/:id/check')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '한 줄 의견 확인함 (v10.749)', description: '한 번만 · 이미 확인했으면 checked false.' })
+  @ApiOkResponse({ type: PageFeedbackCheckDto })
+  check(@Param('id', ParseIntPipe) id: number) { return this.svc.check(id, RequestCtx.actorId() ?? null); }
 
   @Get('admin/page-feedback.csv')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')

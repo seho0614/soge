@@ -82,6 +82,17 @@ export class PublishRequestsService {
     } catch { /* 메일 실패는 요청과 상관없음 */ }
     return { telegram, mailed };
   }
+  /** v10.744 (docs/852) 내 할 일 — SUPER 는 승인 대기 · 모두는 내 열린 요청 · 30일 안 되돌려 받은 요청 */
+  async myTasks() {
+    const me = RequestCtx.actorId() ?? null;
+    const [sup] = me ? await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1 AND role = 'SUPER'`, [me]) : [];
+    const [c] = await this.db.query<{ open: number; mine: number; rejected: number }>(
+      `SELECT count(*) FILTER (WHERE status = 'OPEN')::int AS open,
+              count(*) FILTER (WHERE status = 'OPEN' AND requested_by = $1)::int AS mine,
+              count(*) FILTER (WHERE status = 'REJECTED' AND requested_by = $1 AND decided_at > now() - interval '30 days')::int AS rejected
+         FROM page_publish_requests`, [me]);
+    return { isSuper: !!sup, waiting: sup ? c?.open ?? 0 : 0, mineOpen: c?.mine ?? 0, mineRejected: c?.rejected ?? 0 };
+  }
   /** v10.737 (D326 · docs/845) 하루 넘게 대기한 요청 — 하루 한 번 다시 알림(텔레그램 · 메일 · 게시판) · 정기 작업 gwan_maint 가 부름 */
   async remind(): Promise<number> {
     const due = await this.db.query<{ id: number; kind: string; ref: string; requested_at: string }>(

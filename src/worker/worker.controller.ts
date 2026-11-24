@@ -25,6 +25,7 @@ const JOBS = [
   'notice_schedule',    /* v10.282 (D211) 예약 공지 알림 — 10분마다 */
   'setting_schedule',   /* v10.377 (D241) 설정 예약 변경 — 5분마다 */
   'gwan_maint',         /* v10.706 (D323) 관 점검 시간 — 1분마다 */
+  'page_link_check',    /* v10.750 (D327) 깨진 링크 — 매일 05:10 */
   'withdraw_grace_mail', /* v10.378 (D241) 탈퇴 유예 끝 하루 전 메일 — 매시간 */
   'maint_notice',       /* v10.379 (D241) 점검 예정 회원 알림 — 10분마다 */
   'acct_journal',       /* v10.382 (D242) 자동 전표 — 매시간 */

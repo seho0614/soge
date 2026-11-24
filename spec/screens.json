@@ -1765,7 +1765,8 @@
     "POST /admin/gwan-pages/{id}/editable",
     "POST /admin/publish-requests",
     "POST /admin/gwans/{code}/pages/order",
-    "POST /admin/gwan-pages/{id}/copy"
+    "POST /admin/gwan-pages/{id}/copy",
+    "POST /admin/gwans/{code}/pages/visibility"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-24 v10.651 (D311 · docs/793) — 초안 ADMIN · SUPER · 게시 · 숨김 SUPER · 판 기록 · 예전 판으로 초안 · v10.661 ~ 667 (D315 · docs/795) 예약 게시 SUPER · 번역 초안 채우기 · 동영상 · 방문 수 · 틀 · 미리보기 링크 · v10.673 · 674 (D316 · docs/797) 블록 끌어 놓기 · 공통 조각"
@@ -1826,7 +1827,9 @@
     "GET /admin/site-layouts/{key}/export",
     "POST /admin/site-layouts/{key}/import",
     "POST /admin/site-layouts/{key}/suggest",
-    "GET /admin/site-pages.csv"
+    "GET /admin/site-pages.csv",
+    "GET /admin/my-page-tasks",
+    "POST /admin/page-feedback/{id}/check"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-24 v10.696 ~ 700 (D321 · docs/804 ~ 808) — 대표 「수정 가능한 페이지: hero · 각 관 메인 · 소개몰(메인 · 구성) · 페이지 목록 관리」 · 구역 편집 · 게시 SUPER"
