@@ -34,7 +34,8 @@ interface Body { kind: Kind; period: string; from: string; to: string; m: M; pre
 interface View { kind: Kind; period: string; from: string; to: string; snapshot: { id: string; createdAt: string; source: string } | null; live: boolean; body: Body; text: string;
   history: Array<{ id: string; period: string; source: string; createdAt: string; sent: number }>; sends: Array<{ channel: string; result: string; createdAt: string }>; note: string;
   control?: { text: string; exceptions: number } | null;   // v10.440 (D257)
-  maint?: { text: string; failed: number } | null }   // v10.713 (docs/821) 관 점검 기록
+  maint?: { text: string; failed: number } | null;   // v10.713 (docs/821) 관 점검 기록
+  pages?: { text: string } | null }   // v10.731 (docs/839) 페이지 게시 기록
 interface Settings { on: boolean; kinds: Kind[]; mailTo: string; canEdit: boolean }
 
 const KO: Record<Kind, string> = { DAY: '일보', WEEK: '주보', MONTH: '월보' };
@@ -85,6 +86,7 @@ function ReportView({ kind }: { kind: Kind }) {
             <small className="dim">{d.live ? '지금 계산(남긴 보고 없음)' : `남긴 보고 #${d.snapshot!.id} · ${d.snapshot!.source === 'JOB' ? '정기 작업' : '직접'} · ${ymdhm(d.snapshot!.createdAt)}`}</small></h3>
           {d.control && <p className={d.control.exceptions ? 'warn-text' : 'muted'} data-rpt-control="">{d.control.text} — 회계 › 장부 보관 · 통제</p>}
           {d.maint && <p className={d.maint.failed ? 'warn-text' : 'muted'} data-rpt-maint="">{d.maint.text} — 관 관리 › 페이지 목록 › 관 점검 시간</p>}
+          {d.pages && <p className="muted" data-rpt-pages="">{d.pages.text} — 관 관리 › 페이지 목록</p>}
           <table className="tbl" data-rpt-table={kind}><thead><tr><th>구분</th><th>항목</th><th>이번</th><th>지난 기간</th><th>증감</th></tr></thead>
             <tbody>{GROUPS.flatMap(([g, gk, items]) => items.map(([k, label], i) => (
               <tr key={`${g}.${k}`}><td>{i === 0 ? gk : ''}</td><td>{label}</td><td>{num(d.body.m[g]?.[k])}</td><td className="dim">{num(d.body.prev?.[g]?.[k])}</td>

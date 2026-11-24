@@ -105,7 +105,7 @@ function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: Se
   return { ...def, tabs };
 }
 
-export async function GwanLanding({ code, q, lp }: { code: GwanCode; q: GwQuery; lp?: string }) {
+export async function GwanLanding({ code, q, lp, staff = false }: { code: GwanCode; q: GwQuery; lp?: string; staff?: boolean }) {
   /* v10.698 (D321 · docs/806) 안심소개 · 소개창업 메인 꾸밀 페이지 — 구역 숨기기 · 순서(CSS) · 위 · 아래 블록(없으면 처음 화면) */
   const lay = code === 'MAL' || code === 'BIZ' ? await getLayout(code, lp) : null;
   const g = GW[code];
@@ -137,7 +137,7 @@ export async function GwanLanding({ code, q, lp }: { code: GwanCode; q: GwQuery;
   ]);
   const gw = gwans.find((x) => x.code === code);
   /* F-6 — GET /gwans 는 중지한 관을 빼고 줍니다. 목록은 왔는데 이 관이 없으면 중지(목록 자체를 못 받은 것은 중지로 보지 않음) */
-  const stopped = (gw && !gw.isActive) || (!gw && gwans.length > 0);
+  const stopped = !staff && ((gw && !gw.isActive) || (!gw && gwans.length > 0));   // v10.714 (docs/822) 점검 중 운영자는 관 화면 그대로
   const dash = code === 'MAL' && p ? await apiGetPersonal<PartnerDash>('/partner/dashboard').catch(() => null) : null;
   const partner = dash?.status === 'ACTIVE';
 

@@ -27,6 +27,7 @@ interface PageDetail extends PageRow { blocks: Block[]; versions: Array<{ versio
 
 const KINDS: Array<[string, string]> = [['HERO', '머리 띠'], ['TEXT', '글'], ['BUTTONS', '바로가기 단추'], ['IMAGE', '사진'],
   ['GALLERY', '사진 묶음'], ['TABLE', '표'], ['VIDEO', '동영상(유튜브)'], ['LISTINGS', '매물 목록'], ['CATEGORIES', '업종 칩'], ['NOTICES', '공지'], ['FAQ', '자주 묻는 질문'], ['INQUIRY', '문의 받기']];   // v10.681
+KINDS.push(['FEEDBACK', '손님 한 줄 의견']);   // v10.729 (D325 · docs/837)
 const KIND: Record<string, string> = { ...Object.fromEntries(KINDS), FRAGMENT: '공통 조각' };   // v10.674 조각은 「조각 넣기」로만
 const STATUS: Record<string, string> = { DRAFT: '초안(안 보임)', PUBLISHED: '게시됨', HIDDEN: '숨김' };
 const blank = (t: string): Block => ({
@@ -42,6 +43,7 @@ const blank = (t: string): Block => ({
   CATEGORIES: { type: 'CATEGORIES', title: '' },
   NOTICES: { type: 'NOTICES', title: '', limit: 5 },
   FAQ: { type: 'FAQ', title: '', items: [{ q: '', a: '' }] },
+  FEEDBACK: { type: 'FEEDBACK', title: '이 안내가 도움이 됐나요?' },   // v10.729
 }[t] ?? { type: t });
 /* v10.665 (docs/795) 페이지 틀 — 빈 페이지에서 고르면 블록이 채워짐(글은 예시 · 고쳐서 저장) · 주소는 사용자 웹에 있는 곳만 */
 const TEMPLATES: Array<{ key: string; label: string; blocks: Block[] }> = [
@@ -128,7 +130,7 @@ function F({ label, v, on, max, area }: { label: string; v: string; on: (s: stri
 
 /* v10.653 (D312 · docs/793 7절) 편집 화면 안에서 그림 올리기 — JPG · PNG 5MB · 올리면 공개 주소(/api/v1/site/page-images/<번호>)가 칸에 들어감 */
 const PAGE_IMG = (id: string) => `/api/v1/site/page-images/${id}`;
-function ImageField({ label, v, on }: { label: string; v: string; on: (s: string) => void }) {
+export function ImageField({ label, v, on }: { label: string; v: string; on: (s: string) => void }) {   // v10.718 (docs/826) 꾸밀 페이지 그림 올리기에도 씀
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function pick(f: File | undefined) {
@@ -278,11 +280,23 @@ function FaqImport({ have, onAdd }: { have: number; onAdd: (items: Array<{ q: st
   );
 }
 
+/* v10.715 (docs/823) 블록 기간 보이기 — 모든 블록 아래 「보이는 기간」(한국 날짜 · 끝 날 포함 · 비우면 늘) */
 function BlockForm({ b, set }: { b: Block; set: (b: Block) => void }) {
+  return (<>
+    <BlockFormBody b={b} set={set} />
+    <div className="form-grid" data-block-period>
+      <label><span>보이기 시작(선택)</span><input type="date" value={b.from ?? ''} onChange={(e) => { const n = { ...b }; if (e.target.value) n.from = e.target.value; else delete n.from; set(n); }} /></label>
+      <label><span>보이기 끝(선택 · 그날까지)</span><input type="date" value={b.until ?? ''} onChange={(e) => { const n = { ...b }; if (e.target.value) n.until = e.target.value; else delete n.until; set(n); }} /></label>
+    </div>
+  </>);
+}
+function BlockFormBody({ b, set }: { b: Block; set: (b: Block) => void }) {
   const p = (k: string) => (s: string) => set({ ...b, [k]: s });
   const items: Block[] = Array.isArray(b.items) ? b.items : [];
   const setItem = (i: number, k: string, s: string) => set({ ...b, items: items.map((x, j) => (j === i ? { ...x, [k]: s } : x)) });
   switch (b.type) {
+    case 'FEEDBACK': return (<div className="form-grid"><F label="질문(80자)" v={b.title} on={p('title')} max={80} />
+      <p className="dim">사용자 웹에 「도움이 됐어요 · 아쉬워요」 단추와 한 줄 의견 칸이 나옵니다 — 모은 의견은 관 관리 › 페이지 목록 › 손님 한 줄 의견.</p></div>);
     case 'HERO': return (<div className="form-grid">
       <F label="제목(80자)" v={b.title} on={p('title')} max={80} /><F label="한 줄 설명(200자)" v={b.sub} on={p('sub')} max={200} />
       <ImageField label="배경 그림(선택)" v={b.image} on={p('image')} />
@@ -847,6 +861,16 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
   const [tl, setTl] = useState<Record<number, string>>({});
   useEffect(() => { if (!code && gws[0]) setCode(gws[0].code); }, [gws.length]);   // eslint-disable-line react-hooks/exhaustive-deps
   const load = () => { if (code) api<PageRow[]>(`/admin/gwans/${code}/pages`).then(setRows).catch((e) => setErr(msgOf(e))); };
+  const [drag, setDrag] = useState<number | null>(null);   // v10.719 (docs/827) 관 메뉴 순서 끌어 놓기
+  const reorder = (from: number, to: number) => {
+    if (!rows || from === to) return;
+    const ko = rows.filter((r) => (r.lang ?? 'ko') === 'ko' && r.slug !== 'home');
+    const a = ko.findIndex((r) => r.id === from), b2 = ko.findIndex((r) => r.id === to);
+    if (a < 0 || b2 < 0) return;
+    const n = [...ko]; const [x] = n.splice(a, 1); n.splice(b2, 0, x!);
+    setErr(null);
+    void api<PageRow[]>(`/admin/gwans/${code}/pages/order`, { method: 'POST', body: JSON.stringify({ ids: n.map((r) => r.id) }) }).then(setRows).catch((e) => setErr(msgOf(e)));
+  };
   useEffect(load, [code]);
   if (manage.error) return <ErrorView error={manage.error} onRetry={manage.reload} />;
   if (open) return <Editor id={open} isSuper={isSuper} onBack={() => { setOpen(null); load(); }} />;
@@ -869,8 +893,10 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
           <thead><tr><th>페이지</th><th>주소</th><th>언어</th><th>상태</th><th>게시 판</th><th>7일 방문</th><th>초안 고친 때</th><th></th></tr></thead>
           <tbody>
             {rows.length === 0 && <tr><td colSpan={8} className="muted">아직 페이지가 없습니다.</td></tr>}
-            {rows.map((r) => (<tr key={r.id}>
-              <td>{r.title}{r.draftChanged && <span className="dim"> · 게시 안 된 초안</span>}</td>
+            {rows.map((r) => (<tr key={r.id} draggable={(r.lang ?? 'ko') === 'ko' && r.slug !== 'home'} data-gwan-page-row={r.slug}
+                onDragStart={() => setDrag(r.id)} onDragOver={(e) => { if (drag !== null) e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); if (drag !== null) reorder(drag, r.id); setDrag(null); }}
+                style={drag === r.id ? { opacity: 0.5 } : undefined}>
+              <td>{(r.lang ?? 'ko') === 'ko' && r.slug !== 'home' && <span title="끌어서 관 메뉴 순서 바꾸기" style={{ cursor: 'grab', paddingRight: 4 }} data-gwan-page-drag-row>⠿</span>}{r.title}{r.draftChanged && <span className="dim"> · 게시 안 된 초안</span>}</td>
               <td className="mono">{r.slug === 'home' ? '첫 화면' : `/info/${r.slug}`}{r.visibility === 'MEMBER' ? <span className="dim"> · 회원만</span> : null}{r.noindex ? <span className="dim"> · 검색 끔</span> : null}</td><td>{r.lang ?? 'ko'}</td><td>{STATUS[r.status] ?? r.status}{r.scheduledAt ? <span className="dim"> · 예약 {new Date(r.scheduledAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span> : null}</td>
               <td>{r.publishedVersion ?? '—'}</td><td className="num-cell">{r.views7 ?? 0}</td><td>{r.draftUpdatedAt?.slice(0, 16).replace('T', ' ')} {r.draftUpdatedByName ?? ''}</td>
               <td><button className="btn-sm" onClick={() => setOpen(r.id)} data-gwan-page-open={r.slug}>편집</button>

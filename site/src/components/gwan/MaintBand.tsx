@@ -23,11 +23,14 @@ export async function MaintNotice({ code, m }: { code: string; m?: MaintStatus |
   const s = m === undefined ? await maintOf(code) : m;
   if (!s?.running) return null;
   const t = await getTranslations('gwan.maint');
+  /* v10.728 (D325 · docs/836) 운영이 정한 점검 화면 제목 · 글(정책 › 전체 설정 site.maint_title · site.maint_body · 비우면 사전 글) */
+  const st = await apiGet<Record<string, string | null>>('/site-settings/public', 60).catch(() => ({} as Record<string, string | null>));
   return (
     <div className="gw-wrap" style={{ paddingTop: 32, paddingBottom: 48 }} data-gwan-maint="running" data-gwan-maint-code={code}>
       <div className="page-head" role="status">
-        <h1>{t('title')}</h1>
+        <h1>{st['site.maint_title'] || t('title')}</h1>
         <p>{t('until', { time: kst(s.running.endsAt) })}</p>
+        {st['site.maint_body'] && <p style={{ whiteSpace: 'pre-line' }} data-gwan-maint-body="">{st['site.maint_body']}</p>}
         {s.running.note && <p style={{ whiteSpace: 'pre-line' }}>{s.running.note}</p>}
         <Link className="btn-ok" href="/">{t('home')}</Link>
       </div>

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
 import { publicAuthor } from '../community/community.service';
 
@@ -163,7 +164,9 @@ export class SearchService {
    *   인기 검색어와 같은 규칙으로 제한업종 낱말이 든 말은 뺍니다. 비어 있으면 빈 목록(부르는 쪽이 인기 검색어로).
    */
   async heroPicks(): Promise<string[]> {
-    const [row] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'home.hero_chips'`);
+    /* v10.724 (D325 · docs/832) 영어 화면이면 home.hero_chips_en(비우면 빈 목록 → 사용자 웹이 사전 칩) — 한국어 칩을 영어 화면에 내지 않음 */
+    const lang = RequestCtx.lang();
+    const [row] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = $1`, [lang === 'en' ? 'home.hero_chips_en' : 'home.hero_chips']);
     const picks = [...new Set((row?.v ?? '').split(',').map((x) => x.trim().replace(/\s+/g, ' ')).filter((x) => x.length >= 2 && x.length <= 20))].slice(0, 4);
     if (!picks.length) return [];
     const blockRows = await this.db.query<{ t: string }>(

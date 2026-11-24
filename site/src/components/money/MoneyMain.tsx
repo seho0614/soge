@@ -50,7 +50,7 @@ const at = (p: Record<string, string | undefined | null>) => qhref(BASE, p) + AT
 /* v10.698 (D321) 소개장터 메인 구역 열쇠 — 처음 차례 · 서버 LAYOUT_SPECS.MNY 와 같음 */
 const MNY_SECS = ['quick', 'cat', 'cols', 'band', 'bottom'];
 
-export async function MoneyMain({ q, lp }: { q: GwQuery & { region?: string }; lp?: string }) {
+export async function MoneyMain({ q, lp, staff = false }: { q: GwQuery & { region?: string }; lp?: string; staff?: boolean }) {
   const lay = await getLayout('MNY', lp);   // v10.698 (D321 · docs/806) 게시한 배치(없으면 처음 화면) · ?lp= 미리보기
   const t = await getTranslations('money');
   const g = GW.MNY;
@@ -80,7 +80,7 @@ export async function MoneyMain({ q, lp }: { q: GwQuery & { region?: string }; l
   /* 관을 **중지**했을 때 — 시안(E-01)의 안내 한 줄만 냅니다(신규 등록 · 문의가 막히므로 바로가기 · 목록을 내지 않습니다).
    *   GET /gwans 는 중지한 관을 **빼고** 내려줍니다(catalog.service.ts — WHERE is_active). 그래서 「목록은 왔는데 소개장터가 없음」도 중지로 봅니다.
    *   목록 자체를 못 받은 것(빈 배열)은 중지로 보지 않습니다 — 서버가 잠깐 느린 것을 중지로 알리면 안 됩니다. */
-  if ((gw && !gw.isActive) || (!gw && gwans.length > 0)) {
+  if (!staff && ((gw && !gw.isActive) || (!gw && gwans.length > 0))) {   // v10.714 (docs/822) 점검 중 운영자는 관 화면 그대로
     return (
       <><div className="mny" data-sgb-gwan="money" data-mny-off="1">
         <div className="mny-wrap">

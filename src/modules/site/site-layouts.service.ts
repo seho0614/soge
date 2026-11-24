@@ -3,7 +3,8 @@ import { randomBytes } from 'crypto';
 import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
-import { cleanBlocks } from './gwan-pages.service';
+import { cleanBlocks, GwanPagesService } from './gwan-pages.service';
+import { createHash } from 'crypto';
 import { AgentService } from '../agent/agent.service';
 import { translateSystem, parseTranslation } from '../i18n/translate.service';
 
@@ -151,7 +152,7 @@ export function cleanLayout(key: LayoutKey, input: unknown): Layout {
   for (const at of spots) {
     const raw = o.inserts?.[at];
     if (!Array.isArray(raw) || !raw.length) continue;
-    const blocks = cleanBlocks(raw, { noFragment: true, max: 10 });
+    const blocks = cleanBlocks(raw, { max: 10 });   // v10.720 (docs/828) 공통 조각도 넣음(사용자 웹에 줄 때 펼침)
     total += blocks.length;
     if (blocks.length) out.inserts[at] = blocks;
   }
@@ -197,7 +198,7 @@ const COLS = `l.key, l.draft, l.editable, l.editable_at AS "editableAt", (SELECT
 
 @Injectable()
 export class SiteLayoutsService {
-  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService, private readonly pages: GwanPagesService) {}
 
   private k(key: string): LayoutKey {
     const k = String(key ?? '').toUpperCase();
@@ -217,11 +218,25 @@ export class SiteLayoutsService {
     const [r] = await this.db.query<{ editable: boolean; open: boolean | null }>(
       `SELECT l.editable, (SELECT g.is_active FROM gwans g WHERE g.code = $2) AS open FROM site_layouts l WHERE l.key = $1`, [k, LAYOUT_GWAN[k] ?? null]);
     const editable = r?.editable === true, gwanOpen = r?.open === true;
-    return { editable, gwanOpen, reason: !editable ? 'SITE_LAYOUT_LOCKED' : gwanOpen ? 'SITE_LAYOUT_GWAN_OPEN' : null };
+    const mgr = editable && !gwanOpen ? await this.managerOnly(LAYOUT_GWAN[k] ?? null) : false;
+    return { editable, gwanOpen, reason: !editable ? 'SITE_LAYOUT_LOCKED' : gwanOpen ? 'SITE_LAYOUT_GWAN_OPEN' : mgr ? 'SITE_LAYOUT_MANAGER_ONLY' : null };
+  }
+  /** v10.726 (D325 · docs/834) 관별 페이지 편집 권한 — 설정 site.page_edit_managers_only = on 이면 SUPER 가 아닌 운영자는 자기가 담당자인 관만(메인은 SUPER 만) · 정기 작업(사람 없음)은 막지 않음 */
+  private async managerOnly(gwan: string | null): Promise<boolean> {
+    const me = RequestCtx.actorId();
+    if (!me) return false;
+    const [on] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'site.page_edit_managers_only'`);
+    if (on?.value !== 'on') return false;
+    const [sup] = await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1 AND role = 'SUPER'`, [me]);
+    if (sup) return false;
+    if (!gwan) return true;
+    const [m] = await this.db.query(`SELECT 1 FROM gwan_managers WHERE gwan_code = $1 AND account_id = $2`, [gwan, me]);
+    return !m;
   }
   private async assertEditable(k: LayoutKey) {
     const g = await this.gate(k);
     if (g.reason === 'SITE_LAYOUT_LOCKED') throw new PolicyViolation('SITE_LAYOUT_LOCKED', '수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.');
+    if (g.reason === 'SITE_LAYOUT_MANAGER_ONLY') throw new PolicyViolation('SITE_LAYOUT_MANAGER_ONLY', '이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.');
     if (g.reason === 'SITE_LAYOUT_GWAN_OPEN') throw new PolicyViolation('SITE_LAYOUT_GWAN_OPEN', '관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.');
   }
   /** v10.709 (docs/817) 초안 쓰기 + 고친 기록 한 줄(바뀐 곳이 없으면 기록 안 함) */
@@ -311,6 +326,8 @@ export class SiteLayoutsService {
     await this.publishDue().catch(() => 0);
     const rows = await this.db.query<Record<string, any>>(`SELECT ${COLS} FROM site_layouts l`);
     const open = new Set((await this.db.query<{ code: string }>(`SELECT code FROM gwans WHERE is_active`)).map((x) => x.code));
+    const views = Object.fromEntries((await this.db.query<{ key: string; n: number }>(
+      `SELECT key, sum(views)::int AS n FROM site_layout_views WHERE day > (now() AT TIME ZONE 'Asia/Seoul')::date - 7 GROUP BY key`)).map((x) => [x.key, x.n]));   // v10.722
     return LAYOUT_KEYS.map((k) => {
       const r = rows.find((x) => x.key === k) ?? {};
       const draft = (() => { try { return cleanLayout(k, r.draft); } catch { return cleanLayout(k, {}); } })();
@@ -318,7 +335,7 @@ export class SiteLayoutsService {
         key: k, name: LAYOUT_SPECS[k].name, path: LAYOUT_SPECS[k].path,
         status: r.published ? 'PUBLISHED' : 'DEFAULT',
         editable: r.editable === true, editableAt: r.editableAt ?? null, editableByName: r.editableByName ?? null,
-        gwanCode: LAYOUT_GWAN[k] ?? null, gwanOpen: open.has(LAYOUT_GWAN[k] ?? ''),
+        gwanCode: LAYOUT_GWAN[k] ?? null, gwanOpen: open.has(LAYOUT_GWAN[k] ?? ''), views7: views[k] ?? 0,
         publishedVersion: r.publishedVersion ?? null, publishedAt: r.publishedAt ?? null, publishedByName: r.publishedByName ?? null,
         draftUpdatedAt: r.draftUpdatedAt ?? null, draftUpdatedByName: r.draftUpdatedByName ?? null,
         draftChanged: JSON.stringify(draft) !== JSON.stringify(r.published ? cleanLayoutSafe(k, r.published) : cleanLayout(k, {})),
@@ -455,11 +472,68 @@ export class SiteLayoutsService {
       const [r] = await this.db.query<{ draft: unknown }>(
         `SELECT l.draft FROM site_layout_previews p JOIN site_layouts l ON l.key = p.key WHERE p.token = $1 AND p.key = $2 AND p.revoked_at IS NULL AND p.expires_at > now()`, [preview, k]);
       if (!r) throw new NotFound('미리보기 링크가 없거나 끝났습니다.');
-      return { key: k, version: 0, preview: true, layout: cleanLayoutSafe(k, r.draft) };
+      return { key: k, version: 0, preview: true, layout: await this.expandLayout(cleanLayoutSafe(k, r.draft)) };
     }
     await this.publishDue().catch(() => 0);
     const [r] = await this.db.query<{ published: unknown; published_version: number | null }>(`SELECT published, published_version FROM site_layouts WHERE key = $1`, [k]);
-    return { key: k, version: r?.published_version ?? 0, preview: false, layout: r?.published ? cleanLayoutSafe(k, r.published) : null };
+    return { key: k, version: r?.published_version ?? 0, preview: false, layout: r?.published ? await this.expandLayout(cleanLayoutSafe(k, r.published)) : null };
+  }
+  /** v10.720 공통 조각 블록을 지금 내용으로 펼침(조각을 지웠거나 못 읽으면 그 블록만 뺌) */
+  private async expandLayout(l: Layout): Promise<Layout> {
+    const ins: Layout['inserts'] = {};
+    for (const [at, b] of Object.entries(l.inserts)) ins[at] = await this.pages.expand(b).catch(() => b.filter((x) => x.type !== 'FRAGMENT'));
+    return { ...l, inserts: ins };
+  }
+
+  /* ── v10.722 (D325 · docs/830) 꾸밀 페이지 방문 수 — 같은 기기(IP · 브라우저 글자 해시) · 같은 날 한 번(서버 기억 · 최대 5만 줄) ── */
+  private seen = new Set<string>();
+  private seenDay = '';
+  async recordView(key: string, ip: string, ua: string) {
+    const k = this.k(key);
+    const day = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+    if (day !== this.seenDay || this.seen.size > 50_000) { this.seen = new Set(); this.seenDay = day; }
+    const sig = `${k}|${createHash('sha256').update(`${ip}|${ua}`).digest('hex').slice(0, 16)}`;
+    if (this.seen.has(sig)) return { counted: false };
+    this.seen.add(sig);
+    await this.db.query(`INSERT INTO site_layout_views (key, day, views) VALUES ($1, $2, 1) ON CONFLICT (key, day) DO UPDATE SET views = site_layout_views.views + 1`, [k, day]);
+    return { counted: true };
+  }
+
+  /** v10.717 (docs/825) 게시 판 하나(판 비교) */
+  async version(key: string, version: number) {
+    const k = this.k(key);
+    const [v] = await this.db.query<{ layout: unknown; published_at: string; how: string }>(`SELECT layout, published_at, how FROM site_layout_versions WHERE key = $1 AND version = $2`, [k, version]);
+    if (!v) throw new NotFound('없는 판입니다.');
+    return { key: k, version, how: v.how, publishedAt: v.published_at, layout: cleanLayoutSafe(k, v.layout) };
+  }
+  /** v10.716 (docs/824) 여러 페이지 한꺼번에 예약 게시(SUPER) — 하나씩 같은 규칙(수정 가능 · 관 닫힘 · 초안 떠 둠) · 결과를 줄마다 */
+  async scheduleBatch(keys: string[], at: string) {
+    const out: Array<{ key: string; ok: boolean; error?: string }> = [];
+    for (const key of [...new Set(keys)].slice(0, LAYOUT_KEYS.length)) {
+      try { await this.schedule(key, at); out.push({ key: this.k(key), ok: true }); }
+      catch (e) { out.push({ key: String(key).toUpperCase(), ok: false, error: String((e as Error).message).slice(0, 160) }); }
+    }
+    return { at, scheduled: out.filter((x) => x.ok).length, items: out };
+  }
+  /** v10.733 (docs/841) 관 메인 배치 복사 — 다른 꾸밀 페이지에서 같은 열쇠의 구역 차례 · 보이기 · 글자 · 위 · 아래 · 맨 위 블록만 가져와 초안으로(게시는 따로) */
+  async copyFrom(key: string, from: string) {
+    const k = this.k(key), f = this.k(from);
+    if (k === f) throw new PolicyViolation('SITE_LAYOUT_COPY', '같은 페이지입니다.');
+    await this.assertEditable(k);
+    const [r] = await this.db.query<{ draft: unknown }>(`SELECT draft FROM site_layouts WHERE key = $1`, [f]);
+    const src = cleanLayoutSafe(f, r?.draft);
+    const mySecs = new Set(LAYOUT_SPECS[k].sections.map(([x]) => x));
+    const myTexts = new Set(LAYOUT_SPECS[k].texts.map(([x]) => x));
+    const edge: Record<string, string> = LAYOUT_SPECS[k].inserts === 'each' ? { top: '_top', _top: '_top' } : { _top: 'top', top: 'top', bottom: 'bottom' };
+    const inserts: Layout['inserts'] = {};
+    for (const [at, b] of Object.entries(src.inserts)) { const to = edge[at] ?? (LAYOUT_SPECS[k].inserts === 'each' && mySecs.has(at) ? at : null); if (to) inserts[to] = [...(inserts[to] ?? []), ...b].slice(0, 10); }
+    const next = cleanLayout(k, {
+      sections: src.sections.filter((x) => mySecs.has(x.key)),
+      texts: Object.fromEntries(Object.entries(src.texts).filter(([x]) => myTexts.has(x))),
+      inserts,
+    });
+    await this.writeDraft(k, next, `${LAYOUT_SPECS[f].name}에서 복사`);
+    return this.get(k);
   }
 
   /** v10.700 (docs/808) 페이지 목록 — 꾸밀 페이지 6 · 관 안 페이지(새 관 첫 화면 포함) 한 표 */
@@ -479,4 +553,12 @@ export class SiteLayoutsService {
 /** 옛 초안 · 판이 지금 규칙에 안 맞으면 처음 배치로(화면이 깨지지 않게) */
 export function cleanLayoutSafe(k: LayoutKey, v: unknown): Layout {
   try { return cleanLayout(k, v); } catch { return cleanLayout(k, {}); }
+}
+
+/** v10.731 (docs/839) 페이지 바뀐 기록 — 월보 한 줄(그 달 한국 날짜 · 꾸밀 페이지 게시 · 되돌림 · 관 안 페이지 게시 · 게시 요청) */
+export async function pagesLine(db: DatabaseService, from: string, to: string): Promise<{ text: string } | null> {
+  const [a] = await db.query<{ pub: number; rb: number }>(`SELECT count(*) FILTER (WHERE how <> 'ROLLBACK')::int AS pub, count(*) FILTER (WHERE how = 'ROLLBACK')::int AS rb FROM site_layout_versions WHERE published_at >= ($1::date AT TIME ZONE 'Asia/Seoul') AND published_at < (($2::date + 1) AT TIME ZONE 'Asia/Seoul')`, [from, to]);
+  const [b] = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM gwan_page_versions WHERE published_at >= ($1::date AT TIME ZONE 'Asia/Seoul') AND published_at < (($2::date + 1) AT TIME ZONE 'Asia/Seoul')`, [from, to]);
+  const [c] = await db.query<{ n: number; ok: number; no: number }>(`SELECT count(*)::int AS n, count(*) FILTER (WHERE status = 'APPROVED')::int AS ok, count(*) FILTER (WHERE status = 'REJECTED')::int AS no FROM page_publish_requests WHERE requested_at >= ($1::date AT TIME ZONE 'Asia/Seoul') AND requested_at < (($2::date + 1) AT TIME ZONE 'Asia/Seoul')`, [from, to]);
+  return { text: `페이지 게시 — 메인 · 관 메인 ${a?.pub ?? 0}번(되돌림 ${a?.rb ?? 0}) · 관 안 페이지 ${b?.n ?? 0}번 · 게시 요청 ${c?.n ?? 0}건(승인 ${c?.ok ?? 0} · 되돌려 보냄 ${c?.no ?? 0})` };
 }

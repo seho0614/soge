@@ -5,6 +5,13 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "{0}번째 블록 보이는 기간은 YYYY-MM-DD 모양입니다.": "The display period of block {0} must be YYYY-MM-DD.",   // v10.714 ~ 733 (D325)
+  "{0}번째 블록 보이는 기간의 끝이 시작보다 앞입니다.": "The display period end of block {0} is before its start.",   // v10.714 ~ 733 (D325)
+  "이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.": "Only this hall's managers can edit it (per-hall page editing) — check Hall settings › Basic info › Hall managers.",   // v10.714 ~ 733 (D325)
+  "수정 불가로 둔 페이지가 들어 있습니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "Some pages are set to not editable — a super administrator must switch them to “editable” first.",   // v10.714 ~ 733 (D325)
+  "같은 페이지입니다.": "It is the same page.",   // v10.714 ~ 733 (D325)
+  "없거나 이미 멈춘 반복입니다.": "The repeat does not exist or is already stopped.",   // v10.714 ~ 733 (D325)
+  "한 줄 의견에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in the comment.",   // v10.714 ~ 733 (D325)
   "이 페이지에는 이미 열린 게시 요청이 있습니다.": "This page already has an open publish request.",   // v10.711 (D324)
   "없는 게시 요청입니다.": "There is no such publish request.",   // v10.711 (D324)
   "이미 끝난 게시 요청입니다.": "This publish request is already closed.",   // v10.711 (D324)

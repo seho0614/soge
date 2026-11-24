@@ -4,6 +4,7 @@ import { apiGet } from '@/lib/api';
 import { GWAN_PATH } from '@/lib/format';
 import type { ListingListData } from '@/lib/types';
 import { ListingList } from '@/components/ListingList';
+import { FeedbackBlock } from './FeedbackBlock';   // v10.729 (D325) 손님 한 줄 의견
 
 /* ---------------------------------------------------------------------
  * v10.652 (D311 · docs/793) 관 페이지 블록 그리기 — 운영 화면 › 관 관리 › 관 페이지에서 게시한 판(GET /gwans/{code}/pages/{slug})
@@ -74,10 +75,15 @@ export function GwanPageMenu({ code, items, on }: { code: string; items: GwanPag
   );
 }
 
+/** v10.715 (docs/823) 블록 기간 보이기 — from · until(한국 날짜 · 끝 날 포함) 밖이면 그리지 않음 */
+const kstDay = () => new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+const inPeriod = (b: Block, d: string) => (!b.from || String(b.from) <= d) && (!b.until || d <= String(b.until));
 export function GwanBlocks({ code, page }: { code: string; page: GwanPageData }) {
+  const today = kstDay();
   return (
     <div className="gp" data-gwan-page={page.slug} data-gwan-page-version={page.version}>
       {page.blocks.map((b, i) => {
+        if (!inPeriod(b, today)) return null;
         const h = b.title ? <h2 className="gp-h">{b.title}</h2> : null;
         switch (b.type) {
           case 'HERO': return (
@@ -86,6 +92,7 @@ export function GwanBlocks({ code, page }: { code: string; page: GwanPageData })
               {b.button?.label && b.button?.href && <A href={b.button.href} className="btn-ok">{b.button.label}</A>}
             </section>);
           case 'TEXT': return <section key={i} className="gp-text">{h}<Text body={b.body} /></section>;
+          case 'FEEDBACK': return <FeedbackBlock key={i} kind={page.slug.startsWith('lay:') ? 'LAYOUT' : 'PAGE'} refKey={page.slug.startsWith('lay:') ? page.slug.split(':')[1]! : `${code}/${page.slug}`.slice(0, 40)} title={String(b.title ?? '')} />;
           case 'BUTTONS': return <section key={i} className="quick gp-btns">{(b.items ?? []).map((x: Block, k: number) => <A key={k} href={x.href}>{x.label}</A>)}</section>;
           case 'IMAGE': return SAFE(String(b.src ?? '')) ? (
             <figure key={i} className="gp-img">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={b.src} alt={b.alt} loading="lazy" style={{ maxWidth: '100%' }} />{b.caption && <figcaption>{b.caption}</figcaption>}</figure>) : null;

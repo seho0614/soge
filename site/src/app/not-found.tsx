@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { connection } from 'next/server';
 import { DocTitle } from '@/components/common/DocTitle';
+import { apiGet } from '@/lib/api';
 
 /**
  * 없는 주소(404) — v10.25 (G-166)
@@ -17,11 +18,14 @@ import { DocTitle } from '@/components/common/DocTitle';
 export default async function NotFound() {
   await connection();
   const t = await getTranslations('join.notFound');
+  /* v10.728 (D325 · docs/836) 운영이 정한 404 제목 · 글(site.notfound_title · site.notfound_body · 비우면 사전 글 · 한국어 화면만) */
+  const st = await apiGet<Record<string, string | null>>('/site-settings/public', 60).catch(() => ({} as Record<string, string | null>));
+  const ko = (await getLocale().catch(() => 'ko')) === 'ko';
   return (
     <article className="doc" data-notfound>
       <DocTitle title={t('docTitle')} />
-      <h1>{t('title')}</h1>
-      <p>{t('body')}</p>
+      <h1>{(ko && st['site.notfound_title']) || t('title')}</h1>
+      <p>{(ko && st['site.notfound_body']) || t('body')}</p>
       <p><Link className="btn-sm" href="/">{t('home')}</Link></p>
     </article>
   );

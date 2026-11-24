@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getLayout } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
+import { me } from '@/lib/session';
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';   // v10.722 (D325) 꾸밀 페이지 방문 수
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
@@ -58,13 +60,18 @@ export default async function GwanPage({ params, searchParams }: Props) {
   if (!code) notFound();
   /* v10.707 (D323 · docs/815) 운영이 예약한 관 점검 중(관이 닫혀 있음)이면 관 화면 · 404 대신 「잠시 점검 중 · ○시에 다시 엽니다」 */
   const mt = await maintOf(code);
-  if (mt?.running) return <><MaintNotice code={code} m={mt} /><i hidden data-root-end="" /></>;
-  const band = <MaintBand code={code} m={mt} />;   // 48시간 안 다음 점검이면 맨 위 작은 띠
+  /* v10.714 (D325 · docs/822) 점검 중이어도 운영자(ADMIN · SUPER 로그인)에게는 관 화면 그대로 + 「점검 중 — 운영자에게만 보임」 띠(손님은 안내) */
+  const viewer = mt?.running ? await me().catch(() => null) : null;
+  const staff = !!viewer?.roles?.some((r) => r === 'ADMIN' || r === 'SUPER');
+  if (mt?.running && !staff) return <><MaintNotice code={code} m={mt} /><i hidden data-root-end="" /></>;
+  const band = staff ? <div className="gw-wrap" data-gwan-maint="staff"><p className="mal-warn" role="status" style={{ margin: '8px 0' }}>점검 중 — 손님에게는 점검 안내가 보이고, 이 화면은 운영자에게만 보입니다.</p></div>
+    : <MaintBand code={code} m={mt} />;   // 48시간 안 다음 점검이면 맨 위 작은 띠
+  const ping = isFixedGwan(code) ? <LayoutViewPing k={code} /> : null;   // v10.722 관 메인 방문 수(꾸밀 페이지 열쇠 = 관 코드)
   /* v10.646 (D309 · docs/791) 새 관 — 고정 표에 없는 관은 켠 관(/gwans)이고 허브가 아닐 때만 · 주소는 /g/<코드 소문자> 하나로 */
   if (!isFixedGwan(code)) {
     /* 캐시 없이 — 5분 캐시면 방금 연 관이 최대 5분 404(v10.655 전체 점검 3차) */
     const on = await apiGetPublic<Gwan[]>('/gwans', 0).catch(() => [] as Gwan[]);
-    if (!on.some((x) => x.code === code && !x.isHub)) notFound();
+    if (!staff && !on.some((x) => x.code === code && !x.isHub)) notFound();
   }
   /* v10.29 — 소개장터 · 안심소개 · 소개창업 첫 화면은 시안 배치(gwanLanding)로 그립니다(components/gwan/GwanLanding).
    *   안심소개의 「상담 축 통합」(?axis=consult · D005)도 그 안에 그대로 있습니다. 소개몰(HLT)만 아래 전용 메인입니다. */
@@ -74,8 +81,8 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const menu = await apiGet<GwanPageMenuItem[]>(`/gwans/${code}/pages`, 60).catch(() => [] as GwanPageMenuItem[]);
   const pm = menu.length ? <div className="gw-wrap"><GwanPageMenu code={code} items={menu} /></div> : null;
   const lp = typeof q0.lp === 'string' ? q0.lp : undefined;   // v10.698 (D321 · docs/806) 꾸밀 페이지 미리보기
-  if (code === 'MNY') return <>{band}<MoneyMain q={q0} lp={lp} />{pm}</>;
-  if (code === 'MAL' || code === 'BIZ') return <>{band}<GwanLanding code={code} q={q0} lp={lp} />{pm}<i hidden data-root-end="" /></>;
+  if (code === 'MNY') return <>{band}<MoneyMain q={q0} lp={lp} staff={staff} />{pm}{ping}</>;
+  if (code === 'MAL' || code === 'BIZ') return <>{band}<GwanLanding code={code} q={q0} lp={lp} staff={staff} />{pm}{ping}<i hidden data-root-end="" /></>;
   /* v10.652 새 관 — 게시된 첫 화면(home)이 있으면 블록으로 그림(없으면 아래 일반 화면) */
   const home = !isFixedGwan(code) ? await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null) : null;
   if (home) return <>{band}<div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /><ViewPing code={code} slug="home" /></div></>;
@@ -110,7 +117,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
               <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`}>{t('page.more')}</a>
             )}
           </section>} />
-      </div>{pm}<i hidden data-root-end="" /></>
+      </div>{pm}{ping}<i hidden data-root-end="" /></>
     );
   }
 

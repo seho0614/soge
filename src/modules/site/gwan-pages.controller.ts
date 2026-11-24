@@ -40,6 +40,9 @@ export class GwanPageRowDto {
   @ApiProperty({ description: 'v10.701 (D322) 수정 가능(SUPER 가 정함 · 처음 true)' }) editable!: boolean;
   @ApiProperty({ description: 'v10.705 그 관이 열려 있음 — 열려 있으면 고칠 수 없음(422 GWAN_PAGE_GWAN_OPEN)' }) gwanOpen!: boolean;
 }
+export class GwanPageOrderDto {
+  @ApiProperty({ type: [Number], description: '한국어판 페이지 번호 차례(첫 화면 빼고)' }) @IsArray() @ArrayMaxSize(100) @IsInt({ each: true }) ids!: number[];
+}
 export class GwanPageEditableDto {
   @ApiProperty({ example: false, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
 }
@@ -215,6 +218,16 @@ export class GwanPagesController {
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_BLOCK', type: ErrorDto })
   @Audit('GWAN_PAGE_EDIT', 'GWAN')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: GwanPageUpdateDto) { return this.svc.update(id, dto); }
+
+  @Post('admin/gwans/:code/pages/order')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 안 페이지 메뉴 순서 (v10.719)', description: '한국어판 번호를 차례대로 — 관 닫힘 · 수정 가능 · 담당자 규칙.' })
+  @ApiParam({ name: 'code' })
+  @ApiOkResponse({ type: GwanPageRowDto, isArray: true })
+  @ApiResponse({ status: 422, description: 'GWAN_PAGE_GWAN_OPEN · GWAN_PAGE_LOCKED · GWAN_PAGE_MANAGER_ONLY', type: ErrorDto })
+  @Audit('GWAN_PAGE_ORDER', 'GWAN')
+  reorder(@Param('code') code: string, @Body() dto: GwanPageOrderDto) { return this.svc.reorder(code, dto.ids); }
 
   @Post('admin/gwan-pages/:id/editable')
   @HttpCode(200)

@@ -10,6 +10,8 @@ import { Fragment } from 'react';
 import { getLayout, layOrder } from '@/lib/layout';   // v10.698 (D321 · docs/806) 꾸밀 페이지
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
+import { me } from '@/lib/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('consult'))('lead.title') };
@@ -26,12 +28,13 @@ export default async function LeadHallPage({ searchParams }: { searchParams: Pro
   const gwans = await apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]);
   const g = gwans.find((x) => x.code === 'LED' && x.isActive !== false);
   const mt = await maintOf('LED');   // v10.707 점검 중이면 404 대신 안내
-  if (mt?.running) return <><MaintNotice code="LED" m={mt} /><i hidden data-root-end="" /></>;
+  const staff = mt?.running ? !!(await me().catch(() => null))?.roles?.some((r) => r === 'ADMIN' || r === 'SUPER') : false;   // v10.714 점검 중 운영자는 그대로
+  if (mt?.running && !staff) return <><MaintNotice code="LED" m={mt} /><i hidden data-root-end="" /></>;
   if (!g) notFound();
   const t = await getTranslations('consult');
   const cats = await apiGet<ConsultCat[]>('/consult/categories', 60).catch(() => [] as ConsultCat[]);
   const lay = await getLayout('LED', (await searchParams).lp);   // v10.698 게시한 배치(없으면 처음 화면)
-  const ins = (at: string) => <LayBlocks code="MAL" blocks={lay?.inserts[at]} at={at} />;   // 매물 · 업종 블록은 안심소개 기준
+  const ins = (at: string) => <LayBlocks code="MAL" k="LED" blocks={lay?.inserts[at]} at={at} />;   // 매물 · 업종 블록은 안심소개 기준
   return (
     <><MaintBand code="LED" m={mt} /><div className="mal mal-narrow mal-proto mal-csl32" data-screen="SB-LED-MAIN-010" data-lead-hall="">
       <div className="page-head mal-head">
@@ -52,6 +55,6 @@ export default async function LeadHallPage({ searchParams }: { searchParams: Pro
         <span>{t('list.ctaText')}</span>
         <a className="mal-btn ghost sm" href="/partner/apply">{t('list.ctaBtn')}</a>
       </div>}{ins(key)}</Fragment>)}
-    </div><i hidden data-root-end="" /></>
+    </div><LayoutViewPing k="LED" /><i hidden data-root-end="" /></>
   );
 }

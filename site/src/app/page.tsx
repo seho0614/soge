@@ -39,6 +39,8 @@ import type { HomePopup } from '@/components/home/popupTypes';
 import { getLayout, layOrder } from '@/lib/layout';   // v10.697 (D321 · docs/805) 꾸밀 페이지
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import type { ReactNode } from 'react';
+import { getLocale } from 'next-intl/server';
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';   // v10.722 (D325) 꾸밀 페이지 방문 수
 
 /* v10.697 (D321) 메인 구역 열쇠 — 처음 차례 · 서버 LAYOUT_SPECS.HOME 과 같음 */
 const HOME_SECS = ['forme', 'weather', 'today', 'needs', 'picks', 'poll', 'strip', 'town', 'trust', 'startup', 'core'];
@@ -59,6 +61,7 @@ const SLIDES: (Omit<PromoSlide, 'k' | 'tag' | 'title' | 'desc' | 'cta'> & { k: S
 export default async function Home({ searchParams }: { searchParams: Promise<{ lp?: string }> }) {
   const lay = await getLayout('HOME', (await searchParams).lp);   // v10.697 게시한 배치(없으면 null = 처음 배치) · ?lp= 미리보기
   const t = await getTranslations('main');
+  const locale = await getLocale().catch(() => 'ko');   // v10.724 (D325) 추천 칩 언어별
   const principal = await me().catch(() => null);
   const loggedIn = !!principal;
   const liveMode = process.env.HOME_CONTENT === 'live';
@@ -82,7 +85,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
     apiGet<{ enabled?: boolean }>('/agent/chat/status', 60).catch(() => null),
     /* v10.188 (Hero ③) — 추천 칩은 실제로 결과가 나온 인기 검색어(제한업종 낱말 뺌 · 검색 팝업과 같은 규칙). 3개 미만이면 사전의 예시 칩
      * v10.189 (D172 · docs/296) — place=hero: 운영이 고른 말(설정 home.hero_chips)이 있으면 그 말(source pick · 1분 안에 반영) */
-    apiGet<{ items?: { term: string }[]; source?: string }>('/search/keywords?limit=4&place=hero', 60).catch(() => null),
+    apiGet<{ items?: { term: string }[]; source?: string }>(`/search/keywords?limit=4&place=hero&lang=${locale}`, 60).catch(() => null),
     /* v10.319 (docs/445) — 공지는 고객센터 › 공지사항에만 나와 메인에서 보이지 않았음 → 「상단 고정」 공지만 메인 띠에(서버 순서 = 고정 먼저 · 최근 순) */
     apiGetPersonal<HomeNotice[]>('/notices').catch(() => [] as HomeNotice[]),
   ]);
@@ -121,7 +124,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
   }));
   /* v10.697 구역 차례 · 구역 뒤 블록(서버에서 그려 넘김 · 매물 · 업종 블록은 소개장터 기준) */
   const ins: Record<string, ReactNode> = {};
-  for (const [at, b] of Object.entries(lay?.inserts ?? {})) ins[at] = <LayBlocks code="MNY" blocks={b} at={at} />;
+  for (const [at, b] of Object.entries(lay?.inserts ?? {})) ins[at] = <LayBlocks code="MNY" k="HOME" blocks={b} at={at} />;
   const order = layOrder(lay, HOME_SECS);
   /* 그림은 「2 / 5」 — 광고가 첫 장일 때 그림에 있는 장이 둘째 장입니다. 그 장부터 엽니다 */
   const start = heroAd && slides[0]?.k === 'pf' ? 1 : 0;
@@ -130,9 +133,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
   return (
     <Msgs ns={['main']}>
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
-        live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
+        live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || (locale === 'ko' && hot.length >= 3) ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
         weather={weather} notices={pinned} order={order} texts={lay?.texts ?? {}} ins={ins} />
       <HomePopups items={popups} />
+      <LayoutViewPing k="HOME" />
     </Msgs>
   );
 }

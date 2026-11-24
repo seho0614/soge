@@ -34,6 +34,7 @@ const PUBLIC_OK = new Set([
   /* ★ 관 페이지 찾기 GET /gwan-pages/search(v10.669) · 미리보기 GET /gwan-pages/preview/{token}(v10.666) — 사이트 검색은 게시된 공개 페이지만 ·
      미리보기는 운영이 만든 40자 링크가 살아 있을 때만 초안(로그인 없이 보여 주려고 만든 것 · 끊으면 404). 개인정보 없음. */
   'gwan-pages',
+  'page-feedback',   // v10.729 (D325 · docs/837) 손님 한 줄 의견 POST /page-feedback — 로그인 없이 · 기기 지문 해시만 · 하루 한 번 · 개인 정보 없음
   'site-layouts',   // v10.696 (D321 · docs/804) 꾸밀 페이지 공개 판(GET /site-layouts/{key} · 미리보기 토큰) — 게시된 배치만 · 개인 정보 없음
   /* ★ 소개광장 목록·상세는 **로그인 없이 보입니다.** 글을 보려고
      가입해야 하면 아무도 안 들어옵니다 — 쓰는 것만 로그인입니다.

@@ -325,5 +325,6 @@
     "hltLead": "Referrals for health product deals between businesses.",
     "more": "Load more"
   },
-  "maint": { "title": "Temporarily under maintenance", "until": "We will reopen at {time} (Korea time).", "next": "Scheduled maintenance — {from} ~ {to} (Korea time)", "home": "Go to home" }
+  "maint": { "title": "Temporarily under maintenance", "until": "We will reopen at {time} (Korea time).", "next": "Scheduled maintenance — {from} ~ {to} (Korea time)", "home": "Go to home" },
+  "feedback": { "yes": "Helpful", "no": "Not helpful", "placeholder": "One-line comment (optional · 200 chars)", "send": "Send", "thanks": "Thank you for your feedback." }
 }

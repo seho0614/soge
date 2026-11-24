@@ -13,7 +13,7 @@ import { translateSystem, parseTranslation } from '../i18n/translate.service';
  *   블록은 아래 8종만 · 칸마다 길이 · 주소 검사(HTML 은 받지 않음 · 링크는 관 안 주소(/…) 또는 https 만)
  * ------------------------------------------------------------------- */
 
-export const PAGE_BLOCKS = ['HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'TABLE', 'VIDEO', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ', 'INQUIRY', 'FRAGMENT'] as const;   // v10.681 INQUIRY 문의 받기   // v10.674 FRAGMENT 공통 조각(초안에만 · 게시 때 펼침)   // v10.654 GALLERY 사진 묶음 · v10.656 TABLE 표 · v10.664 VIDEO 동영상(유튜브)
+export const PAGE_BLOCKS = ['HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'TABLE', 'VIDEO', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ', 'INQUIRY', 'FRAGMENT', 'FEEDBACK'] as const;   // v10.729 FEEDBACK 손님 한 줄 의견   // v10.681 INQUIRY 문의 받기   // v10.674 FRAGMENT 공통 조각(초안에만 · 게시 때 펼침)   // v10.654 GALLERY 사진 묶음 · v10.656 TABLE 표 · v10.664 VIDEO 동영상(유튜브)
 
 /** v10.664 (docs/795) 유튜브 주소 → 영상 번호(11자) — watch?v= · youtu.be/ · shorts/ · embed/ 만 · 그 밖은 null */
 export function youtubeId(u: string): string | null {
@@ -47,7 +47,18 @@ export function cleanBlocks(input: unknown, opts: { noFragment?: boolean; max?: 
   if (!Array.isArray(input)) bad('블록은 목록이어야 합니다.');
   const arr = input as unknown[];
   if (arr.length > (opts.max ?? 30)) bad(opts.max ? `조각의 블록은 ${opts.max}개까지입니다.` : '블록은 30개까지입니다.');
-  return arr.map((b0, i) => {
+  return arr.map((b0, i) => withPeriod(cleanOne(b0, i, opts), b0, i));
+}
+/** v10.715 (docs/823) 블록 기간 보이기 — from · until(YYYY-MM-DD · 한국 날짜 · 끝 날 포함) · 비우면 늘 · 사용자 웹이 그 기간에만 그림(다시 게시하지 않아도) */
+function withPeriod(one: Record<string, unknown>, b0: unknown, i: number): Record<string, unknown> {
+  const b = (b0 ?? {}) as Record<string, unknown>;
+  const D = /^\d{4}-\d{2}-\d{2}$/;
+  const from = typeof b.from === 'string' && b.from ? b.from : '', until = typeof b.until === 'string' && b.until ? b.until : '';
+  if ((from && !D.test(from)) || (until && !D.test(until))) bad(`${i + 1}번째 블록 보이는 기간은 YYYY-MM-DD 모양입니다.`);
+  if (from && until && until < from) bad(`${i + 1}번째 블록 보이는 기간의 끝이 시작보다 앞입니다.`);
+  return { ...one, ...(from ? { from } : {}), ...(until ? { until } : {}) };
+}
+function cleanOne(b0: unknown, i: number, opts: { noFragment?: boolean; max?: number }): Record<string, unknown> {
     const b = (b0 ?? {}) as Record<string, unknown>;
     const n = `${i + 1}번째 블록`;
     switch (b.type) {
@@ -110,9 +121,9 @@ export function cleanBlocks(input: unknown, opts: { noFragment?: boolean; max?: 
         if (!items.length || items.length > 20) bad(`${n} 질문은 1 ~ 20개입니다.`);
         return { type: 'FAQ', title: str(b.title, 80, `${n} 제목`), items: items.map((x, k) => ({ q: str(x.q, 200, `${n} ${k + 1}번 질문`, true), a: str(x.a, 2000, `${n} ${k + 1}번 답`, true) })) };
       }
+      case 'FEEDBACK': return { type: 'FEEDBACK', title: str(b.title, 80, `${n} 질문`) || '이 안내가 도움이 됐나요?' };   // v10.729 (D325) 손님 한 줄 의견
       default: return bad(`${n}의 종류가 맞지 않습니다(${PAGE_BLOCKS.join(' · ')}).`);
     }
-  });
 }
 
 const PAGE_COLS = `p.id::int AS id, p.gwan_code AS "gwanCode", p.slug, p.lang, p.title, p.show_in_menu AS "showInMenu", p.sort_order AS "sortOrder", p.status,
@@ -150,6 +161,27 @@ export class GwanPagesService {
   private async assertGwanClosed(code: string) {
     const [g] = await this.db.query<{ is_active: boolean }>(`SELECT is_active FROM gwans WHERE code = $1`, [code]);
     if (g?.is_active) throw new PolicyViolation('GWAN_PAGE_GWAN_OPEN', '관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.');
+    /* v10.726 (D325 · docs/834) 관별 페이지 편집 권한 — 설정이 on 이면 SUPER 가 아닌 운영자는 그 관 담당자일 때만(정기 작업 · 사람 없음은 막지 않음) */
+    const me = RequestCtx.actorId();
+    if (!me) return;
+    const [on] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'site.page_edit_managers_only'`);
+    if (on?.value !== 'on') return;
+    const [ok] = await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1 AND role = 'SUPER' UNION ALL SELECT 1 FROM gwan_managers WHERE gwan_code = $2 AND account_id = $1 LIMIT 1`, [me, code]);
+    if (!ok) throw new PolicyViolation('GWAN_PAGE_MANAGER_ONLY', '이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.');
+  }
+  /** v10.719 (docs/827) 관 안 페이지 메뉴 순서 — 한국어판 id 차례대로 sort_order 10, 20, … (같은 주소의 언어판도 같은 순서) · 관 닫힘 · 담당자 규칙 */
+  async reorder(code: string, ids: number[]) {
+    await this.assertGwanClosed(code);
+    const rows = await this.db.query<{ id: number; slug: string; editable: boolean }>(`SELECT id::int AS id, slug, editable FROM gwan_pages WHERE gwan_code = $1 AND id = ANY($2::bigint[]) AND slug <> 'home'`, [code, ids]);
+    if (rows.some((r) => r.editable === false)) throw new PolicyViolation('GWAN_PAGE_LOCKED', '수정 불가로 둔 페이지가 들어 있습니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.');
+    let n = 0;
+    for (const id of ids) {
+      const r = rows.find((x) => x.id === id);
+      if (!r) continue;
+      n += 10;
+      await this.db.query(`UPDATE gwan_pages SET sort_order = $3 WHERE gwan_code = $1 AND slug = $2`, [code, r.slug, n]);
+    }
+    return this.list(code);
   }
   async setEditable(id: number, on: boolean) {
     const [r] = await this.db.query(`UPDATE gwan_pages SET editable = $2 WHERE id = $1 RETURNING id`, [id, on === true]);

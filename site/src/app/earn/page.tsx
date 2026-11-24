@@ -9,6 +9,8 @@ import { GwanIcon, gwanColor, gwanHeadStyle } from '@/components/gwan/GwanLook';
 import { getLayout, layOrder } from '@/lib/layout';
 import { LayBlocks } from '@/components/layout/LayBlocks';
 import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
+import { me } from '@/lib/session';
 
 /**
  * SB-HOM-HUB-010 — 허브(소개하고 벌기) 사용자 웹 페이지 /earn (v10.702 · D322 · docs/810)
@@ -28,12 +30,13 @@ export default async function HubPage({ searchParams }: { searchParams: Promise<
   const gwans = await apiGet<Gwan[]>('/gwans', 60).catch(() => [] as Gwan[]);
   const hub = gwans.find((g) => g.code === 'EARN' && g.isHub);
   const mt = await maintOf('EARN');   // v10.707 점검 중이면 404 대신 안내
-  if (mt?.running) return <><MaintNotice code="EARN" m={mt} /><i hidden data-root-end="" /></>;
+  const staff = mt?.running ? !!(await me().catch(() => null))?.roles?.some((r) => r === 'ADMIN' || r === 'SUPER') : false;   // v10.714 점검 중 운영자는 그대로
+  if (mt?.running && !staff) return <><MaintNotice code="EARN" m={mt} /><i hidden data-root-end="" /></>;
   if (!hub) notFound();
   const lay = await getLayout('EARN', (await searchParams).lp);
   const kids = gwans.filter((g) => g.parentCode === 'EARN' && !g.isHub && g.isActive !== false);
   const tx = lay?.texts ?? {};
-  const ins = (at: string) => <LayBlocks code="MNY" blocks={lay?.inserts[at]} at={at} />;
+  const ins = (at: string) => <LayBlocks code="MNY" k="EARN" blocks={lay?.inserts[at]} at={at} />;
   return (
     <><MaintBand code="EARN" m={mt} /><div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-HUB-010" data-hub="EARN">
       <div className="page-head" style={gwanHeadStyle(hub.color)}>
@@ -59,6 +62,6 @@ export default async function HubPage({ searchParams }: { searchParams: Promise<
           {ins(key)}
         </Fragment>
       ))}
-    </div><i hidden data-root-end="" /></>
+    </div><LayoutViewPing k="EARN" /><i hidden data-root-end="" /></>
   );
 }

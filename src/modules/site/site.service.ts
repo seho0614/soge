@@ -101,6 +101,7 @@ export class SiteService {
           '승인된 업종이 없어 관을 열 수 없습니다. 업종을 먼저 승인하십시오.');
       }
     }
+    const [was] = await this.db.query<{ is_active: boolean }>(`SELECT is_active FROM gwans WHERE code = $1`, [code]);   // v10.727 관 열기 · 닫기 기록
     const [row] = await this.db.query(
       `UPDATE gwans
           SET name = coalesce($2, name), description = coalesce($3, description),
@@ -116,6 +117,8 @@ export class SiteService {
        input.isActive ?? null, input.sortOrder ?? null, input.parentCode ?? null,
        input.introTarget ?? null, input.icon ?? null, input.color ?? null]);
     if (!row) throw new StateConflict('NOT_FOUND', '없는 관입니다.');
+    if (was && typeof input.isActive === 'boolean' && was.is_active !== input.isActive)   /* v10.727 (D325 · docs/835) 관 열기 · 닫기 기록(운영 화면) */
+      await this.db.query(`INSERT INTO gwan_open_log (gwan_code, opened, source, by) VALUES ($1, $2, 'ADMIN', $3)`, [code, input.isActive, RequestCtx.actorId() ?? null]).catch(() => undefined);
     return row;
   }
 

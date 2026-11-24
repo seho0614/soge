@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Ip, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsObject, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsInt, IsObject, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -39,6 +39,7 @@ export class SiteLayoutRowDto {
   @ApiProperty({ nullable: true }) editableByName!: string | null;
   @ApiProperty({ nullable: true, description: '관 메인이면 그 관 코드(메인 HOME 은 null)' }) gwanCode!: string | null;
   @ApiProperty({ description: '그 관이 열려 있음 — 열려 있으면 고칠 수 없음' }) gwanOpen!: boolean;
+  @ApiProperty({ description: 'v10.722 최근 7일 방문' }) views7!: number;
 }
 export class SiteLayoutDetailDto {
   @ApiProperty() key!: string;
@@ -69,6 +70,28 @@ export class SiteLayoutDraftLogDto {
 }
 export class SiteLayoutTranslateDto {
   @ApiProperty({ example: 'en', description: '사이트 언어(ko 빼고)' }) @IsString() @Matches(/^[a-z]{2}$/) lang!: string;
+}
+export class SiteLayoutBatchDto {
+  @ApiProperty({ type: [String], example: ['HOME', 'EARN'] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(7) @IsString({ each: true }) keys!: string[];
+  @ApiProperty({ example: '2026-12-01T00:00:00Z' }) @IsDateString({}, { message: '예약 시각 모양이 맞지 않습니다.' }) at!: string;
+}
+export class SiteLayoutBatchResultDto {
+  @ApiProperty() at!: string;
+  @ApiProperty() scheduled!: number;
+  @ApiProperty({ type: 'array', items: { type: 'object' } }) items!: unknown[];
+}
+export class SiteLayoutVersionDto {
+  @ApiProperty() key!: string;
+  @ApiProperty() version!: number;
+  @ApiProperty() how!: string;
+  @ApiProperty() publishedAt!: string;
+  @ApiProperty({ type: SiteLayoutDto }) layout!: SiteLayoutDto;
+}
+export class SiteLayoutCopyDto {
+  @ApiProperty({ example: 'MAL', description: '가져올 꾸밀 페이지' }) @IsString() @Matches(/^[A-Za-z]{3,4}$/) from!: string;
+}
+export class SiteLayoutViewDto {
+  @ApiProperty() counted!: boolean;
 }
 export class SiteLayoutEditableDto {
   @ApiProperty({ example: true, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
@@ -125,6 +148,31 @@ export class SiteLayoutsController {
   @ApiOperation({ summary: '페이지 목록 (v10.700)', description: '꾸밀 페이지 6과 관 안 페이지(새 관 첫 화면 포함)를 한 번에 · 7일 방문.' })
   @ApiOkResponse({ type: SitePagesDto })
   sitePages() { return this.svc.sitePages(); }
+
+  @Post('admin/site-layouts/schedule-batch')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('SUPER')
+  @ApiOperation({ summary: '여러 페이지 한꺼번에 예약 게시 (v10.716 · SUPER)', description: '페이지마다 같은 규칙(수정 가능 · 관 닫힘 · 초안 떠 둠) · 결과를 줄마다.' })
+  @ApiOkResponse({ type: SiteLayoutBatchResultDto })
+  @Audit('SITE_LAYOUT_SCHEDULE_BATCH', 'SITE')
+  scheduleBatch(@Body() dto: SiteLayoutBatchDto) { return this.svc.scheduleBatch(dto.keys, dto.at); }
+
+  @Get('admin/site-layouts/:key/versions/:version')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '꾸밀 페이지 게시 판 하나 (v10.717)', description: '판 비교용.' })
+  @ApiParam({ name: 'key' }) @ApiParam({ name: 'version' })
+  @ApiOkResponse({ type: SiteLayoutVersionDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  version(@Param('key') key: string, @Param('version', ParseIntPipe) version: number) { return this.svc.version(key, version); }
+
+  @Post('admin/site-layouts/:key/copy-from')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '다른 꾸밀 페이지에서 배치 복사 (v10.733)', description: '같은 열쇠의 구역 · 글자 · 위 · 아래 블록만 초안으로 · 수정 가능 · 관 닫힘이어야.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutDetailDto })
+  @ApiResponse({ status: 422, description: 'SITE_LAYOUT_COPY · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN', type: ErrorDto })
+  copyFrom(@Param('key') key: string, @Body() dto: SiteLayoutCopyDto) { return this.svc.copyFrom(key, dto.from); }
 
   @Get('admin/site-layouts/:key')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
@@ -223,6 +271,13 @@ export class SiteLayoutsController {
   @ApiOkResponse({ type: SiteLayoutRevokedDto })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   revokePreview(@Param('key') key: string, @Param('token') token: string) { return this.svc.revokePreview(key, token); }
+
+  @Post('site-layouts/:key/view')
+  @HttpCode(200)
+  @ApiOperation({ summary: '꾸밀 페이지 방문 (v10.722 · 공개)', description: '같은 기기 같은 날 한 번만 셈 · 개인 정보 없음.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutViewDto })
+  view(@Param('key') key: string, @Ip() ip: string, @Headers('user-agent') ua?: string) { return this.svc.recordView(key, ip ?? '', ua ?? ''); }
 
   @Get('site-layouts/:key')
   @ApiOperation({ summary: '꾸밀 페이지 (v10.696 · 공개)', description: '게시된 판(없으면 layout null = 처음 배치) · preview 토큰이 살아 있으면 초안.' })

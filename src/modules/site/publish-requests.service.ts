@@ -4,6 +4,8 @@ import { DatabaseService } from '../../db/database.service';
 import { Forbidden, NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { GwanPagesService } from './gwan-pages.service';
+import { TelegramService } from '../../common/telegram/telegram.service';
+import { MailService } from '../../common/mail/mail.service';
 import { LAYOUT_KEYS, LAYOUT_SPECS, SiteLayoutsService, cleanLayoutSafe, type LayoutKey } from './site-layouts.service';
 
 /* ---------------------------------------------------------------------
@@ -16,7 +18,8 @@ const md5 = (v: unknown) => createHash('md5').update(JSON.stringify(v ?? null)).
 
 @Injectable()
 export class PublishRequestsService {
-  constructor(private readonly db: DatabaseService, private readonly layouts: SiteLayoutsService, private readonly pages: GwanPagesService) {}
+  constructor(private readonly db: DatabaseService, private readonly layouts: SiteLayoutsService, private readonly pages: GwanPagesService,
+              private readonly telegram: TelegramService, private readonly mail: MailService) {}
 
   private async sigOf(kind: string, ref: string): Promise<{ sig: string; label: string }> {
     if (kind === 'LAYOUT') {
@@ -58,11 +61,24 @@ export class PublishRequestsService {
         `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at)
          SELECT 'PAGE_PUBLISH_REQUEST', 'INFO', $1::text, $2::jsonb, clock_timestamp() ON CONFLICT DO NOTHING`,
         [`게시 요청 — ${label}${note ? ` · ${note.slice(0, 60)}` : ''} · 관 관리 › 페이지 목록 › 게시 요청`.slice(0, 200), JSON.stringify({ key: `req:${r!.id}`, id: r!.id, kind, ref })]).catch(() => undefined);
-      return { id: r!.id, kind, ref, label, status: 'OPEN' };
+      const sent = await this.tell(`[소개뱅크] 게시 요청 — ${label}${note ? `\n메모: ${note}` : ''}\n운영 화면 › 관 관리 › 페이지 목록 › 게시 요청에서 승인하거나 되돌려 보내 주십시오.`);   // v10.725
+      return { id: r!.id, kind, ref, label, status: 'OPEN', ...sent };
     } catch (e) {
       if (String((e as Error)?.message).includes('page_publish_req_open_uq')) throw new PolicyViolation('PUBLISH_REQ_OPEN', '이 페이지에는 이미 열린 게시 요청이 있습니다.');
       throw e;
     }
+  }
+  /** v10.725 (docs/833) 게시 요청 알림 — 텔레그램(대화방이 준비됐을 때) · SUPER 메일(메일이 준비됐을 때) · 못 보내도 요청은 그대로 */
+  private async tell(text: string): Promise<{ telegram: boolean; mailed: number }> {
+    let telegram = false, mailed = 0;
+    try { telegram = (await this.telegram.send(text)).ok === true; } catch { /* 준비 안 됨 */ }
+    try {
+      if (await this.mail.ready()) {
+        const to = await this.db.query<{ email: string }>(`SELECT DISTINCT a.email::text AS email FROM accounts a JOIN account_roles r ON r.account_id = a.id WHERE r.role = 'SUPER' AND a.email IS NOT NULL LIMIT 5`);
+        for (const x of to) { const r = await this.mail.send({ to: x.email, subject: '[소개뱅크] 페이지 게시 요청이 들어왔습니다', text }); if (r.ok) mailed++; }
+      }
+    } catch { /* 메일 실패는 요청과 상관없음 */ }
+    return { telegram, mailed };
   }
   private async openOne(id: number) {
     const [r] = await this.db.query<{ kind: string; ref: string; draft_sig: string; requested_by: string | null; status: string }>(
