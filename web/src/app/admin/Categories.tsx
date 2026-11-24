@@ -12,6 +12,17 @@ interface Cat {
 
 /* v10.643 (D308 · docs/787) 새 업종 추가 · 승인 칸 부담 주체 */
 interface GwanRow { code: string; name: string; isHub: boolean }
+/* v10.695 (docs/803) 관 목록에 소개리드(LED) · 새 관 — 소개리드는 업종을 따로 두지 않으므로(gwan-structure-naming #32 · D308 이 막음)
+   목록에는 보이고, 고르면 안심소개(MAL) · 상담(CONSULT) 업종으로 저장 → 소개리드 상담 업종으로 잡힘. 허브 관만 뺌 */
+const LEAD = 'LED';
+const catTargets = (rows: GwanRow[] | null | undefined) => (rows ?? []).filter((g) => !g.isHub);
+const saveAs = (code: string, axis: string): { gwanCode: string; axis?: string } =>
+  code === LEAD ? { gwanCode: 'MAL', axis: 'CONSULT' } : code === 'MAL' ? { gwanCode: 'MAL', ...(axis ? { axis } : {}) } : { gwanCode: code };
+const gwanOpt = (g: GwanRow) => g.code === LEAD ? `${g.name} (LED) — 안심소개 상담 축으로 저장` : `${g.name} (${g.code})`;
+const LEAD_NOTE = '소개리드는 업종을 따로 두지 않습니다 — 안심소개(MAL) · 상담 축 업종으로 저장되고, 승인되면 소개리드 상담 업종으로 잡힙니다.';
+function GwanHint({ code }: { code: string }) {
+  return <p className="dim" data-cat-gwan-hint>{code === LEAD ? LEAD_NOTE : '새 관은 관 관리 › 관 관리 › 「새 관 만들기」로 먼저 만들면 이 목록에 나옵니다(준비중도).'}</p>;
+}
 const BEARER = [['SELLER', '판매자(등록자)'], ['BUYER', '구매자(요청자)'], ['NEGOTIABLE', '협의']] as const;
 const AXIS = [['EQUIP', '기계 · 설비 · 시설'], ['RE', '부동산'], ['SOLAR', '태양광'], ['CONSULT', '생활 · 금융 상담']] as const;
 
@@ -22,16 +33,16 @@ function NewCategory({ onDone }: { onDone: () => void }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const pick = (gw.data ?? []).filter((g) => !g.isHub && g.code !== 'LED');   // 허브 관 · 소개리드는 업종을 따로 두지 않음(DB 도 막음)
+  const pick = catTargets(gw.data);   // v10.695 허브 관만 뺌 · 소개리드는 안심소개 상담 축으로 저장(saveAs)
   async function save() {
     setErr(null); setMsg(null);
     if (!f.gwanCode || !f.code || !f.name.trim() || !f.laborLawFlag) { setErr('관 · 코드 · 이름 · 직업안정법 판정은 꼭 넣습니다.'); return; }
     setBusy(true);
     try {
-      const body: Record<string, string> = { gwanCode: f.gwanCode, code: f.code.trim().toUpperCase(), name: f.name.trim(), laborLawFlag: f.laborLawFlag };
-      for (const k of ['laborLawMemo', 'feeBearer', 'axis', 'restrictedCode'] as const) if (f[k].trim()) body[k] = f[k].trim();
+      const body: Record<string, string> = { ...saveAs(f.gwanCode, f.axis.trim()), code: f.code.trim().toUpperCase(), name: f.name.trim(), laborLawFlag: f.laborLawFlag };
+      for (const k of ['laborLawMemo', 'feeBearer', 'restrictedCode'] as const) if (f[k].trim()) body[k] = f[k].trim();
       await api('/admin/categories', { method: 'POST', body: JSON.stringify(body) });
-      setMsg(`「${body.name}」을(를) 승인 대기로 만들었습니다 — 다른 관리자가 승인합니다.`);
+      setMsg(`「${body.name}」을(를) 승인 대기로 만들었습니다${f.gwanCode === LEAD ? '(안심소개 · 상담 축 → 승인되면 소개리드 상담 업종)' : ''} — 다른 관리자가 승인합니다.`);
       setF({ ...f, code: '', name: '', laborLawMemo: '', restrictedCode: '' });
       onDone();
     } catch (e) {
@@ -39,7 +50,7 @@ function NewCategory({ onDone }: { onDone: () => void }) {
     } finally { setBusy(false); }
   }
   return (
-    <details className="card pad" data-cat-new>
+    <details className="card pad" data-cat-new onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) gw.reload(); }}>
       <summary><b>새 업종 추가</b> <span className="dim">— 승인 대기로 만들고, 만든 사람이 아닌 다른 관리자가 승인합니다 · 관은 만든 뒤 바꿀 수 없습니다</span></summary>
       {msg && <p className="form-ok">{msg}</p>}
       {err && <p className="form-error">{err}</p>}
@@ -49,7 +60,7 @@ function NewCategory({ onDone }: { onDone: () => void }) {
             <label>관 코드 <input value={f.gwanCode} onChange={(e) => setF({ ...f, gwanCode: e.target.value.toUpperCase() })} placeholder="예: MNY" maxLength={4} data-cat-new-gwan /></label>
           : <label>관 <select value={f.gwanCode} onChange={set('gwanCode')} data-cat-new-gwan>
               <option value="">고르기</option>
-              {pick.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}
+              {pick.map((g) => <option key={g.code} value={g.code}>{gwanOpt(g)}</option>)}
             </select></label>}
         <label>업종 코드 <input value={f.code} onChange={set('code')} placeholder="예: MNY_CLEANING (대문자 · 숫자 · 밑줄)" maxLength={40} /></label>
         <label>업종 이름 <input value={f.name} onChange={set('name')} placeholder="예: 청소" maxLength={40} /></label>
@@ -70,6 +81,7 @@ function NewCategory({ onDone }: { onDone: () => void }) {
         )}
         <label>제한업종 코드(있으면) <input value={f.restrictedCode} onChange={set('restrictedCode')} placeholder="예: INSURANCE" /></label>
       </div>
+      {!gw.error && <GwanHint code={f.gwanCode} />}
       <button className="btn-ok" disabled={busy} onClick={save} data-cat-new-save>승인 대기로 만들기</button>
     </details>
   );
@@ -85,9 +97,10 @@ function CopyCategory({ cats, onDone }: { cats: Cat[]; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const targets = (gw.data ?? []).filter((g) => !g.isHub && g.code !== 'LED');
-  const have = new Set(cats.filter((c) => c.gwanCode === to).map((c) => c.name));
-  const src = cats.filter((c) => c.gwanCode !== to && c.status === 'APPROVED' && (!q.trim() || c.name.includes(q.trim()) || c.code.includes(q.trim().toUpperCase())));
+  const targets = catTargets(gw.data);   // v10.695
+  const real = saveAs(to, '').gwanCode;   // v10.695 소개리드 → MAL
+  const have = new Set(cats.filter((c) => c.gwanCode === real).map((c) => c.name));
+  const src = cats.filter((c) => c.gwanCode !== real && c.status === 'APPROVED' && (!q.trim() || c.name.includes(q.trim()) || c.code.includes(q.trim().toUpperCase())));
   async function run() {
     setErr(null); setMsg(null);
     if (!to || picked.length === 0) { setErr('넣을 관과 가져올 업종을 고르십시오.'); return; }
@@ -96,7 +109,7 @@ function CopyCategory({ cats, onDone }: { cats: Cat[]; onDone: () => void }) {
     const done: string[] = []; const fail: string[] = [];
     for (const id of picked) {
       const c = cats.find((x) => x.id === id);
-      try { await api('/admin/categories/copy', { method: 'POST', body: JSON.stringify({ fromId: id, gwanCode: to, ...(to === 'MAL' ? { axis } : {}) }) }); done.push(c?.name ?? id); }
+      try { await api('/admin/categories/copy', { method: 'POST', body: JSON.stringify({ fromId: id, ...saveAs(to, axis) }) }); done.push(c?.name ?? id); }
       catch (e) { fail.push(`${c?.name ?? id}: ${e instanceof ApiFailure ? e.body.message : '실패'}`); }
     }
     setBusy(false); setPicked([]);
@@ -105,7 +118,7 @@ function CopyCategory({ cats, onDone }: { cats: Cat[]; onDone: () => void }) {
     onDone();
   }
   return (
-    <details className="card pad" data-cat-copy>
+    <details className="card pad" data-cat-copy onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) gw.reload(); }}>
       <summary><b>다른 관 업종 가져오기</b> <span className="dim">— 이미 있는 업종을 옮기지 않고, 같은 이름 · 판정 · 부담 주체로 넣을 관에 「승인 대기」로 만듭니다</span></summary>
       {msg && <p className="form-ok">{msg}</p>}
       {err && <p className="form-error">{err}</p>}
@@ -114,12 +127,13 @@ function CopyCategory({ cats, onDone }: { cats: Cat[]; onDone: () => void }) {
           ? <label>넣을 관 코드 <input value={to} onChange={(e) => setTo(e.target.value.toUpperCase())} maxLength={4} data-cat-copy-to /></label>
           : <label>넣을 관 <select value={to} onChange={(e) => { setTo(e.target.value); setPicked([]); }} data-cat-copy-to>
               <option value="">고르기</option>
-              {targets.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}
+              {targets.map((g) => <option key={g.code} value={g.code}>{gwanOpt(g)}</option>)}
             </select></label>}
         <label>찾기 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="업종 이름 · 코드" /></label>
         {to === 'MAL' && <label>안심소개 축 <select value={axis} onChange={(e) => setAxis(e.target.value)}>
           <option value="">고르기</option>{AXIS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></label>}
       </div>
+      {!gw.error && <GwanHint code={to} />}
       {to && (
         <div className="ad-tw" style={{ maxHeight: 280, overflow: 'auto' }}><table className="tbl">
           <thead><tr><th></th><th>업종</th><th>지금 관</th><th>판정</th></tr></thead>
@@ -175,8 +189,8 @@ function CsvCategories({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const targets = (gw.data ?? []).filter((g) => !g.isHub && g.code !== 'LED');
-  const rows = to ? parseCatCsv(text, to) : [];
+  const targets = catTargets(gw.data);   // v10.695
+  const rows = to ? parseCatCsv(text, saveAs(to, '').gwanCode) : [];
   const good = rows.filter((r) => !r.bad);
   async function run() {
     setErr(null); setMsg(null);
@@ -184,7 +198,7 @@ function CsvCategories({ onDone }: { onDone: () => void }) {
     setBusy(true);
     const done: string[] = []; const fail: string[] = [];
     for (const r of good) {
-      try { await api('/admin/categories', { method: 'POST', body: JSON.stringify({ gwanCode: to, code: r.code, name: r.name, laborLawFlag: r.labor, ...(to === 'MAL' ? { axis } : {}) }) }); done.push(r.name); }
+      try { await api('/admin/categories', { method: 'POST', body: JSON.stringify({ ...saveAs(to, axis), code: r.code, name: r.name, laborLawFlag: r.labor }) }); done.push(r.name); }
       catch (e) { fail.push(`${r.name}: ${e instanceof ApiFailure ? e.body.message : '실패'}`); }
     }
     setBusy(false);
@@ -192,15 +206,16 @@ function CsvCategories({ onDone }: { onDone: () => void }) {
     if (done.length) { setText(''); onDone(); }
   }
   return (
-    <details className="card pad" data-cat-csv>
+    <details className="card pad" data-cat-csv onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) gw.reload(); }}>
       <summary><b>CSV 로 한꺼번에 넣기</b> <span className="dim">— 줄마다 「업종 이름,업종 코드(선택),직업안정법(선택)」 · 200줄까지 · 승인 대기로 들어감</span></summary>
       <div className="form-grid">
-        <label><span>넣을 관</span><select value={to} onChange={(e) => setTo(e.target.value)}><option value="">고르십시오</option>{targets.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code})</option>)}</select></label>
+        <label><span>넣을 관</span><select value={to} onChange={(e) => setTo(e.target.value)}><option value="">고르십시오</option>{targets.map((g) => <option key={g.code} value={g.code}>{gwanOpt(g)}</option>)}</select></label>
         {to === 'MAL' && <label><span>축</span><select value={axis} onChange={(e) => setAxis(e.target.value)}><option value="">고르십시오</option>{AXIS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>}
         <label style={{ gridColumn: '1 / -1' }}><span>CSV(엑셀에서 복사해 붙여 넣어도 됨 · 코드를 비우면 관 코드_C001 …)</span>
           <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'수학 과외,EDU_MATH,NOT_APPLICABLE\n영어 회화,EDU_ENG\n피아노'} /></label>
         <input type="file" accept=".csv,text/csv,text/plain" onChange={(e) => { const f = e.target.files?.[0]; if (f) void f.text().then(setText); }} aria-label="CSV 파일" />
       </div>
+      <GwanHint code={to} />
       {rows.length > 0 && <table className="tbl"><thead><tr><th>#</th><th>이름</th><th>코드</th><th>직업안정법</th><th>확인</th></tr></thead><tbody>
         {rows.map((r, i) => <tr key={i}><td>{i + 1}</td><td>{r.name}</td><td className="mono">{r.code}</td><td>{r.labor}</td><td>{r.bad ? <b className="warn-text">{r.bad}</b> : '넣음'}</td></tr>)}</tbody></table>}
       {msg && <p className="form-ok">{msg}</p>}{err && <p className="form-error">{err}</p>}

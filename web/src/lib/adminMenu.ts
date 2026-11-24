@@ -169,6 +169,7 @@ export const TABS = [
   ['adx', '외부 송출'],
   ['adx-payout', '퍼블리셔 지급'],
   ['gwan-ux', '관 UI/UX'],
+  ['site-pages', '페이지 목록'],   /* v10.700 (D321 · docs/808) 메인 · 관 메인 · 소개몰 메인 꾸미기 · 관 안 페이지 한 표 */
 ] as const;
 
 export type Tab = (typeof TABS)[number][0];
@@ -193,7 +194,7 @@ export const GROUPS: MenuGroup[] = [
   { key: 'admcat',  label: '업종',      tabs: ['category'] },
   { key: 'admdsp',  label: '노출',      tabs: ['mainops'] },
   { key: 'admpol',  label: '정책',      tabs: ['policy', 'settings', 'codes'] },
-  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'gwan-ux', 'hub', 'i18n-review', 'checklist', 'guide-flows', 'faq', 'ops-guide', 'siteinfo', 'terms', 'manual', 'i18n'] },
+  { key: 'admsit',  label: '관 관리',   tabs: ['gwans', 'site-pages', 'gwan-ux', 'hub', 'i18n-review', 'checklist', 'guide-flows', 'faq', 'ops-guide', 'siteinfo', 'terms', 'manual', 'i18n'] },
   { key: 'admad',   label: '광고',      tabs: ['ads', 'ad-billing', 'adx', 'adx-payout'] },
   { key: 'admrsk',  label: '위험감지',  tabs: ['risk', 'ops-alerts', 'report-queue', 'ai-ops', 'gov-audit', 'pii-review', 'role-review', 'purge-log', 'privacy-requests', 'sec-geo', 'server-errors', 'ops-board'] },
   { key: 'admbrk',  label: '인증 심사', tabs: ['quals', 'ownership'] },
@@ -656,6 +657,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   integ:         { title: '통합 현황', sub: '지금 어떤 상태인지 한 장으로 봅니다. 숫자는 실제 DB 조회값과 서버에 등록된 라우트입니다.', screen: 'SB-ADM-ITG-010' },
   adx:           { title: '광고 플랫폼 (외부 송출)', sub: '소개뱅크 지면뿐 아니라 외부 사이트에도 광고를 싣고, 클릭당 과금해 퍼블리셔와 나눕니다.', screen: 'SB-ADS-PLT-010' },
   'adx-payout':  { title: '퍼블리셔 지급', sub: '월 마감 → 명세서 → 신청 → 승인 → 집행. 각 단계에 사람이 다르고, 각 단계에 막는 장치가 있습니다.', screen: 'SB-ADS-PAY-010' },
+  'site-pages':  { title: '페이지 목록', sub: '메인 hero · 관 메인 · 소개몰 메인의 구역 보이기 · 순서 · 글자 · 그림 · 블록을 고치고, 관 안 페이지까지 한 표로 봅니다. 게시 전에는 사용자 웹이 그대로입니다.', screen: 'SB-ADM-PAGE-020' },
   'gwan-ux':     { title: '관 UI/UX 관리', sub: '관마다 성격이 다르면 화면도 달라야 합니다. 축을 켜고 끄고, 축의 UI 유형을 여기서 정합니다.', screen: 'SB-ADM-GWN-010' },
   invariants:    { title: '불변식 현황', sub: '감시 뷰를 한 번에 훑습니다.', screen: 'SB-ADM-INV-010' },
 };

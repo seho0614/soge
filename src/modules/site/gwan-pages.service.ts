@@ -119,6 +119,7 @@ const PAGE_COLS = `p.id::int AS id, p.gwan_code AS "gwanCode", p.slug, p.lang, p
   p.published_version AS "publishedVersion", p.published_at AS "publishedAt", p.draft_updated_at AS "draftUpdatedAt",
   p.scheduled_at AS "scheduledAt", (SELECT name FROM accounts a WHERE a.id = p.scheduled_by) AS "scheduledByName",   -- v10.661 (D315) 예약 게시
   p.visibility, p.seo_description AS "seoDescription", p.seo_image AS "seoImage", p.noindex,   -- v10.691 · 692 (D320) 공개 범위 · 검색엔진
+  p.editable,   -- v10.701 (D322) 수정 가능(SUPER)
   (SELECT coalesce(sum(w.views), 0)::int FROM gwan_page_views w WHERE w.page_id = p.id AND w.day > (now() AT TIME ZONE 'Asia/Seoul')::date - 7) AS "views7",   -- v10.667 최근 7일
   (SELECT name FROM accounts a WHERE a.id = p.draft_updated_by) AS "draftUpdatedByName",
   (p.published_version IS NULL OR p.draft IS DISTINCT FROM (SELECT coalesce(v.source, v.blocks) FROM gwan_page_versions v WHERE v.page_id = p.id AND v.version = p.published_version)
@@ -136,6 +137,17 @@ export class GwanPagesService {
        SELECT $1::text, 'INFO', $2::text, $3::jsonb, clock_timestamp()
         WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = $1::text AND a.detail->>'key' = $4::text)
        ON CONFLICT DO NOTHING`, [code, title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
+  }
+  /** v10.701 (D322 · docs/809) 수정 불가로 둔 페이지는 초안 · 게시 · 예약 · 되돌리기 · 번역 초안을 막음(SUPER 가 페이지 목록 · 편집 화면에서 바꿈) */
+  private async assertEditable(id: number) {
+    const [r] = await this.db.query<{ editable: boolean }>(`SELECT editable FROM gwan_pages WHERE id = $1`, [id]);
+    if (!r) throw new NotFound('없는 페이지입니다.');
+    if (r.editable === false) throw new PolicyViolation('GWAN_PAGE_LOCKED', '수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.');
+  }
+  async setEditable(id: number, on: boolean) {
+    const [r] = await this.db.query(`UPDATE gwan_pages SET editable = $2 WHERE id = $1 RETURNING id`, [id, on === true]);
+    if (!r) throw new NotFound('없는 페이지입니다.');
+    return this.get(id);
   }
   private async pageLabel(id: number) {
     const [r] = await this.db.query<{ gwan_code: string; gname: string; slug: string; lang: string; title: string }>(
@@ -241,7 +253,7 @@ export class GwanPagesService {
    *   배치 줄을 더하지 않고 관리 목록 · 공개 페이지 · 메뉴를 읽을 때 부름(같은 줄은 SKIP LOCKED 로 한 번만) · 판의 게시 시각 = 예약 시각 */
   async publishDue(code?: string): Promise<number> {
     const due = await this.db.query<{ id: number }>(
-      `SELECT id::int AS id FROM gwan_pages WHERE scheduled_at IS NOT NULL AND scheduled_at <= now() AND ($1::text IS NULL OR gwan_code = $1) ORDER BY scheduled_at LIMIT 20`, [code ?? null]);
+      `SELECT id::int AS id FROM gwan_pages WHERE scheduled_at IS NOT NULL AND scheduled_at <= now() AND editable AND ($1::text IS NULL OR gwan_code = $1) ORDER BY scheduled_at LIMIT 20`   /* v10.701 수정 불가면 기다림 */, [code ?? null]);
     let n = 0;
     for (const d of due) {
       const ver = await this.db.transaction(async () => {
@@ -274,6 +286,7 @@ export class GwanPagesService {
       if (!r) throw new NotFound('없는 페이지입니다.');
       return this.get(id);
     }
+    await this.assertEditable(id);   // v10.701
     const t = new Date(at);
     const now = Date.now();
     if (Number.isNaN(t.getTime()) || t.getTime() < now + 5 * 60_000 || t.getTime() > now + 90 * 86_400_000)
@@ -335,6 +348,7 @@ export class GwanPagesService {
 
   async update(id: number, input: { title?: string; showInMenu?: boolean; sortOrder?: number; blocks?: unknown;
     visibility?: string; seoDescription?: string; seoImage?: string; noindex?: boolean }) {
+    await this.assertEditable(id);   // v10.701
     const blocks = input.blocks === undefined ? null : JSON.stringify(cleanBlocks(input.blocks));
     /* v10.691 · 692 (D320) 공개 범위 · 검색엔진 설정 — 바로 반영(게시와 상관없음) · '' = 비움(블록에서 자동) · 첫 화면은 ALL 만(DB) */
     if (input.visibility !== undefined || input.seoDescription !== undefined || input.seoImage !== undefined || input.noindex !== undefined) {
@@ -373,6 +387,7 @@ export class GwanPagesService {
 
   /** 게시(SUPER · 컨트롤러) — 초안을 새 판으로 쌓고 게시 상태로 */
   async publish(id: number) {
+    await this.assertEditable(id);   // v10.701
     const ver = await this.db.transaction(async () => {
       const [p] = await this.db.query<{ title: string; draft: unknown }>(`SELECT title, draft FROM gwan_pages WHERE id = $1 FOR UPDATE`, [id]);
       if (!p) throw new NotFound('없는 페이지입니다.');
@@ -423,6 +438,7 @@ export class GwanPagesService {
 
   /** 예전 판으로 초안 만들기 — 게시는 따로 */
   async restore(id: number, version: number) {
+    await this.assertEditable(id);   // v10.701
     const [v] = await this.db.query<{ title: string; blocks: unknown }>(`SELECT title, blocks FROM gwan_page_versions WHERE page_id = $1 AND version = $2`, [id, version]);
     if (!v) throw new NotFound('없는 판입니다.');
     await this.db.query(`UPDATE gwan_pages SET title = $2, draft = $3::jsonb, draft_updated_by = $4, draft_updated_at = now() WHERE id = $1`,
@@ -433,6 +449,7 @@ export class GwanPagesService {
   /* ── v10.662 (docs/795) 번역 초안 자동 채우기 — 언어판(ko 아님)에 한국어판 초안을 AI 로 옮겨 그 언어판 초안으로 씀(게시는 SUPER) ──
    *   AI 통로 TRANSLATE(스위치 · 월 상한) · 모델 i18n.translate_model(요금표에 있어야) · 글 칸만 옮김(주소 · 영상 · 업종 번호 · 숫자 칸은 그대로) · 비용 기록 */
   async translate(id: number) {
+    await this.assertEditable(id);   // v10.701
     const [p] = await this.db.query<{ gwan_code: string; slug: string; lang: string }>(`SELECT gwan_code, slug, lang FROM gwan_pages WHERE id = $1`, [id]);
     if (!p) throw new NotFound('없는 페이지입니다.');
     if (p.lang === 'ko') throw new PolicyViolation('GWAN_PAGE_TRANSLATE', '한국어판은 번역하지 않습니다 — 언어판에서 누르십시오.');
@@ -548,6 +565,7 @@ export class GwanPagesService {
   async rollback(id: number, version: number, reason: string) {
     const why = String(reason ?? '').trim();
     if (why.length < 2) throw new PolicyViolation('GWAN_PAGE_ROLLBACK_REASON', '되돌리는 사유를 2자 이상 적으십시오.');
+    await this.assertEditable(id);   // v10.701
     const ver = await this.db.transaction(async () => {
       const [p] = await this.db.query<{ published_version: number | null }>(`SELECT published_version FROM gwan_pages WHERE id = $1 FOR UPDATE`, [id]);
       if (!p) throw new NotFound('없는 페이지입니다.');

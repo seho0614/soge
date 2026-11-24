@@ -31,6 +31,12 @@ module.exports = withNextIntl({
         { key: 'Content-Security-Policy-Report-Only', value: CSP_REPORT_ONLY },
       ],
     }, {
+      /* v10.703 (docs/811) 꾸밀 페이지 미리보기(?lp=<40자>)만 운영 화면 안에 끼워 보이게 — 운영 화면 주소(ADMIN_ORIGIN · 없으면 운영 admin 주소)만 허용.
+       *   뒤에 오는 같은 머리글이 앞을 덮음(Next) · frame-ancestors 가 있으면 브라우저는 X-Frame-Options 를 보지 않음 · 미리보기 토큰이 없으면 위 규칙 그대로 */
+      source: '/((?!api/).*)',
+      has: [{ type: 'query', key: 'lp', value: '(?<lp>[0-9a-f]{40})' }],
+      headers: [{ key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${process.env.ADMIN_ORIGIN || 'https://admin.sogaebank.com'}` }],
+    }, {
       /* v10.499 (D272 · docs/637) — 서비스 워커(public/sw.js)는 늘 새로 받게 · 범위는 사이트 전체 */
       source: '/sw.js',
       headers: [

@@ -11,7 +11,7 @@
  *   사진 — 업체 · 사례 · 요청에 실제 사진이 없으면 분류 그림(시안 PHOTO_MAP 규칙 · photoSrc)을 씁니다. 그림의 견본 사진(svc_* · ai_* · req_* · case_*)은 쓰지 않습니다.
  */
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ListingCardData } from '@/lib/types';
 import type { AdServe } from '@/components/home/types';
@@ -89,6 +89,8 @@ function SupplierCards({ rows, ai }: { rows: Supplier[]; ai?: boolean }) {
 }
 
 export interface MoneyViewProps {
+  /** v10.698 (D321 · docs/806) 꾸밀 페이지 — 글자 · 위 · 아래 블록(서버가 그려 넘김) · 없으면 처음 화면 */
+  lay?: { texts?: Record<string, string>; top?: ReactNode; bottom?: ReactNode };
   keyword: string;
   reqs: MarketReqs;
   ad: AdServe | null;
@@ -112,7 +114,7 @@ export interface MoneyViewProps {
   keep: Record<string, string | undefined>;
 }
 
-export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppliers, ai, cases, band, float, title, sel, total, josa, grades, cats, grade, cat, badge, sort, page, pageCount, bar, data, organic, sortHrefs, keep }: MoneyViewProps) {
+export function MoneyView({ lay, keyword, reqs, ad, keywords, regions, region, suppliers, ai, cases, band, float, title, sel, total, josa, grades, cats, grade, cat, badge, sort, page, pageCount, bar, data, organic, sortHrefs, keep }: MoneyViewProps) {
   const t = useTranslations('money');
   const locale = useLocale();
   const f = useFmt();
@@ -126,8 +128,9 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
       {/* 1. 맨 위 구역 */}
       <section className="mny-hero" id="mny-main" tabIndex={-1} aria-labelledby="mny-h1"><div className="mny-hero-in">
         <div className="mny-hero-l">
-          <h1 className="mny-h1" id="mny-h1">{t.rich('view.h1', { br: () => <br />, em: (c) => <em>{c}</em> })}</h1>
-          <p className="mny-lead">{t.rich('view.lead', { br: () => <br /> })}</p>
+          {/* v10.698 (D321 · docs/806) 운영이 페이지 목록 › 소개장터 메인에서 넣은 제목 · 설명(비우면 사전 글) */}
+          <h1 className="mny-h1" id="mny-h1">{lay?.texts?.title ? <em>{lay.texts.title}</em> : t.rich('view.h1', { br: () => <br />, em: (c) => <em>{c}</em> })}</h1>
+          <p className="mny-lead">{lay?.texts?.lead || t.rich('view.lead', { br: () => <br /> })}</p>
           <MoneySearch />
           {/* v10.31 — 많이 찾는 키워드(검색어 통계 · 결과가 나온 말 · 제한 업종 낱말 뺌). 누르면 그 말로 검색 결과
                v10.41 (대표 결정 2026-10-14 「시안대로」) — 시안 그대로 통합 검색 결과의 「전체」 탭으로(시안: S.q = 그 말 · stab2 = 「전체」 · go("src")).
@@ -144,16 +147,18 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
         {ad && <MoneyAd ad={ad} />}
       </div></section>
 
-      <div className="mny-wrap">
+      {lay?.top}
+      {/* v10.698 (D321) 구역 순서 · 숨기기는 MoneyMain 이 낸 CSS(data-lay-box · data-lay-sec) */}
+      <div className="mny-wrap" data-lay-box="">
         {/* 2. 바로가기 3장 */}
-        <nav className="mny-quick" aria-label={t('view.quickAria')}>
+        <nav className="mny-quick" aria-label={t('view.quickAria')} data-lay-sec="quick">
           <Link className="mny-qc" href="/register"><i className="mny-qc-i"><MnyPic name="quick_send" /></i><div><b>{t('view.quickSend')}</b><span>{t('view.quickSendSub')}</span></div><Chev /></Link>
           <Link className="mny-qc" href="/request/new"><i className="mny-qc-i"><MnyPic name="quick_want" /></i><div><b>{t('view.quickWant')}</b><span>{t('view.quickWantSub')}</span></div><Chev /></Link>
           <Link className="mny-qc" href="/request"><i className="mny-qc-i"><MnyPic name="quick_recv" /></i><div><b>{t('view.quickRecv')}</b><span>{t('view.quickRecvSub')}</span></div><Chev /></Link>
         </nav>
 
         {/* 3. 분야 고르기 — 「전체」 칸의 옅은 주황 바탕은 그림에 든 것이라 늘 그대로입니다. 지금 고른 칸에는 주황 테두리를 둘러 알립니다(styles/money.css) */}
-        <section className="mny-cat" aria-labelledby="mny-cat-t">
+        <section className="mny-cat" aria-labelledby="mny-cat-t" data-lay-sec="cat">
           <div className="mny-cat-h">
             <h2 id="mny-cat-t">{t('view.catTitle')}</h2>
             <p>{t('view.catLead')}</p>
@@ -169,7 +174,7 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
           </div>
         </section>
 
-        <div className="mny-cols">
+        <div className="mny-cols" data-lay-sec="cols">
           {/* 4. 왼쪽 분류 목록 + 지역으로 찾기(v10.31 · 시 · 도로 아래 목록을 거름) */}
           <MoneySide now={keyword} regions={regions} region={region} />
 
@@ -280,10 +285,10 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
         </div>
 
         {/* 9. 띠 광고(v10.31 · 칸 GBAND) — 소재가 없으면 그리지 않습니다 */}
-        <MoneyBand ad={band} />
+        <div data-lay-sec="band"><MoneyBand ad={band} /></div>
 
         {/* 10. 최근 실제 연결 사례(v10.31 · 성사 확정 거래) + 공급자 등록 */}
-        <div className="mny-bottom">
+        <div className="mny-bottom" data-lay-sec="bottom">
           <section className="mny-cases" aria-labelledby="mny-p4" data-mny-cases={cases.length}>
             <div className="mny-cases-h"><MnyPic name="badge_s" /><h2 id="mny-p4">{t('view.cases')}</h2></div>
             {cases.length === 0 ? (
@@ -312,6 +317,7 @@ export function MoneyView({ keyword, reqs, ad, keywords, regions, region, suppli
         </div>
 
       </div>
+      {lay?.bottom}
       {/* 오른쪽 아래 떠 있는 광고(칸 FLOAT) — 소재가 없거나 이 세션에서 닫았으면 그리지 않습니다 */}
       <GwFloatAd ad={float} />
     </div>

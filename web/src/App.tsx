@@ -141,6 +141,7 @@ import { Audit } from './app/admin/Audit';
 import { Invariants } from './app/admin/Invariants';
 import { Integ } from './app/admin/Integ';
 import { GwanUx } from './app/admin/GwanUx';
+import { SitePages } from './app/admin/SitePages';   // v10.696 ~ 700 (D321) 페이지 목록 · 꾸밀 페이지
 import { Adx } from './app/admin/Adx';
 import { Footer, type FooterLink } from './components/Footer';
 import { TABS, GROUPS, PAGE, SUB_PAGE, SUB_GROUP, groupOf, type Tab } from './lib/adminMenu';
@@ -223,7 +224,8 @@ const TAB_ROLES: Partial<Record<Tab, string[]>> = {
   'staff-list': ['ADMIN', 'SUPER'], 'perm-log': ['ADMIN', 'SUPER'], 'perm-staff': ['SUPER'], 'perm-roles': ['SUPER'], 'perm-groups': ['SUPER'], 'perm-tasks': ['SUPER'],   // v10.561 ~ 563 (D291) 권한 관리는 SUPER 만
   'perm-review': ['ADMIN', 'SUPER'], 'staff-cases': ['ADMIN', 'SUPER'],   // v10.566 · 568 — 거두기 · 흐름 고치기는 서버가 SUPER 만 · 'acct-' 가 아니라 세무사 안 보임
   'prx-popup': ['ADMIN', 'SUPER'], 'prx-refevent': ['ADMIN', 'SUPER'], 'prx-adreport': ['ADMIN', 'SUPER'], 'prx-adab': ['ADMIN', 'SUPER'],   // v10.517 ~ 520 (D277)
-  'opx-archive': ['SUPER'], 'opx-risk': ['ADMIN', 'SUPER'], 'opx-bulk': ['ADMIN', 'SUPER', 'REVIEWER'], 'opx-switches': ['ADMIN', 'SUPER'],   // v10.509 ~ 512 (D275)
+  'opx-archive': ['SUPER'], 'opx-risk': ['ADMIN', 'SUPER'], 'opx-bulk': ['ADMIN', 'SUPER', 'REVIEWER'], 'opx-switches': ['ADMIN', 'SUPER'], 'site-pages': ['ADMIN', 'SUPER'],   // v10.700 (D321)
+    // v10.509 ~ 512 (D275)
   'csx-aidraft': ['ADMIN', 'SUPER'], 'csx-churn': ['ADMIN', 'SUPER'], 'csx-mailtpl': ['ADMIN', 'SUPER'], 'csx-merge': ['ADMIN', 'SUPER'],   // v10.528 ~ 531 (D280) — 메일 문구 저장 · 합치기 승인은 서버가 SUPER 만
   'hr-attend': ['SUPER', 'ADMIN'], 'hr-leave': ['SUPER', 'ADMIN'], 'acct-payslip': ['SUPER', 'PAYOUT', 'ACCOUNTANT'], 'acct-yearend': ['SUPER', 'PAYOUT', 'ACCOUNTANT'],   // v10.445 ~ 448 (D259)
   'my-hr': ['SUPER', 'ADMIN', 'PAYOUT', 'REVIEWER', 'PARTNER_MAL', 'PARTNER_AFF'],   // v10.445 ~ 447 (D259) 본인 것만 · 세무사 빠짐
@@ -679,6 +681,7 @@ function Console() {
       {tab === 'codes' && <CodeLabels />}
       {tab === 'integ' && <Integ />}
       {tab === 'gwan-ux' && <GwanUx onGo={go} />}
+      {tab === 'site-pages' && <SitePages isSuper={roles.includes('SUPER')} onGo={go} />}
       {tab === 'adx' && <Adx view="platform" onGo={go} />}
       {tab === 'adx-payout' && <Adx view="payout" onGo={go} />}
         </PermScope>

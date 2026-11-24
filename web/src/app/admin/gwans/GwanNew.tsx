@@ -33,6 +33,14 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
   const [parent, setParent] = useState<string>('');
   useEffect(() => { if (!parent && hubs[0]) setParent(hubs[0].code); }, [hubs.length]);   // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* v10.695 (docs/803) 만들면서 업종 복사 — 다른 관의 승인된 업종을 골라 두면, 관을 만든 뒤 이 관에 「승인 대기」로 복사(POST /admin/categories/copy ·
+     옮기지 않음 · 같은 이름 · 판정 · 부담 주체 · 코드 앞머리만 새 관 코드) · 다른 관리자가 승인 */
+  const cats = useApi<Array<{ id: string; gwanCode: string; code: string; name: string; status: string }>>('/admin/categories');
+  const [q, setQ] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
+  const [copied, setCopied] = useState<string | null>(null);
+  const srcCats = (cats.data ?? []).filter((c) => c.status === 'APPROVED' && (!q.trim() || c.name.includes(q.trim()) || c.code.includes(q.trim().toUpperCase())));
+
   const codeOk = /^[A-Z]{3,4}$/.test(code);   // v10.646 — 관 표(gwans_code_check)와 같게 3 ~ 4자
   const nameOk = name.trim().length >= 2 && name.trim().length <= 20;
 
@@ -47,7 +55,18 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
         ...(parent ? { parentCode: parent } : {}),
       }),
     }), undefined, '관을 만들었습니다. 비활성(준비중)으로 만들어집니다 — 업종을 붙인 뒤 여십시오.');
-    if (r) onCreated(code);
+    if (!r) return;
+    if (picked.length) {   // v10.695 — 관을 만든 뒤 고른 업종을 승인 대기로 복사(하나가 실패해도 나머지는 계속)
+      let ok = 0; const fail: string[] = [];
+      for (const id of picked) {
+        const c = (cats.data ?? []).find((x) => x.id === id);
+        try { await api('/admin/categories/copy', { method: 'POST', body: JSON.stringify({ fromId: id, gwanCode: code }) }); ok++; }
+        catch { fail.push(c?.name ?? id); }
+      }
+      setCopied(`업종 ${ok}개를 「승인 대기」로 복사했습니다 — 다른 관리자가 업종 › 업종 승인에서 승인합니다.${fail.length ? ` 복사 못 함: ${fail.join(' · ')}` : ''}`);
+      if (fail.length) return;   // 실패가 있으면 이 화면에 남겨 까닭을 보게 함
+    }
+    onCreated(code);
   }
 
   /* v10.32 — 시안(scAdmSitNew) 배치: 세로 5단계(지금 단계 강조) → 지금 단계 카드 하나 → 노란 띠 → 다음 · 취소.
@@ -100,6 +119,30 @@ export function GwanNew({ onCreated, onCancel }: { onCreated: (code: string) => 
               <input value={desc} onChange={(e) => setDesc(e.target.value)} />
             </label>
           </div>
+          <details className="card pad" data-gwan-new-copy open={picked.length > 0 || undefined}>
+            <summary><b>업종 복사(선택)</b> <span className="dim">— 다른 관의 승인된 업종을 골라 두면, 관을 만든 뒤 이 관에 「승인 대기」로 복사합니다(옮기지 않음 · 다른 관리자 승인) · 고른 것 {picked.length}개</span></summary>
+            <div className="form-grid">
+              <label><span>찾기</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="업종 이름 · 코드" /></label>
+              <div className="acts">
+                <button className="btn-plain" onClick={() => setPicked([...new Set([...picked, ...srcCats.slice(0, 200).map((c) => c.id)])])} data-gwan-new-copy-all>보이는 것 모두 고르기</button>
+                <button className="btn-plain" onClick={() => setPicked([])}>고른 것 비우기</button>
+              </div>
+            </div>
+            <div className="ad-tw" style={{ maxHeight: 260, overflow: 'auto' }}><table className="tbl">
+              <thead><tr><th></th><th>업종</th><th>코드</th><th>지금 관</th></tr></thead>
+              <tbody>
+                {srcCats.slice(0, 200).map((c) => (
+                  <tr key={c.id}>
+                    <td><input type="checkbox" aria-label={`${c.name} 복사`} checked={picked.includes(c.id)}
+                               onChange={(e) => setPicked(e.target.checked ? [...picked, c.id] : picked.filter((x) => x !== c.id))} data-gwan-new-copy-pick={c.code} /></td>
+                    <td>{c.name}</td><td className="mono">{c.code}</td><td>{c.gwanCode}</td>
+                  </tr>
+                ))}
+                {srcCats.length === 0 && <tr><td colSpan={4} className="muted">{cats.error ? '업종 목록을 읽지 못했습니다.' : '승인된 업종이 없습니다.'}</td></tr>}
+              </tbody>
+            </table></div>
+          </details>
+          {copied && <p className="form-ok" data-gwan-new-copied>{copied} <button className="btn-plain" onClick={() => onCreated(code)}>관 설정으로 →</button></p>}
           {code && !codeOk && <p className="warn-text">코드는 영문 대문자 3 ~ 4자입니다.</p>}
           <Flash msg={a.msg} err={a.err} />
         </div>

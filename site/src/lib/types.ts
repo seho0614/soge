@@ -95,6 +95,8 @@ export interface Gwan {
   isHub?: boolean;
   /** v10.663 (D314) 관 아이콘 · 대표 색 이름(components/gwan/GwanLook) */
   icon?: string | null; color?: string | null;
+  /** v10.702 (D322) 상위 관(허브) 코드 — 허브 페이지 /earn 하위 관 카드 */
+  parentCode?: string | null;
 }
 
 export interface FooterLink {

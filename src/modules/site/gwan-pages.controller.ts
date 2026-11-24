@@ -37,6 +37,10 @@ export class GwanPageRowDto {
   @ApiProperty({ nullable: true }) seoDescription!: string | null;
   @ApiProperty({ nullable: true }) seoImage!: string | null;
   @ApiProperty({ description: 'v10.692 검색엔진에 안 나오게' }) noindex!: boolean;
+  @ApiProperty({ description: 'v10.701 (D322) 수정 가능(SUPER 가 정함 · 처음 true)' }) editable!: boolean;
+}
+export class GwanPageEditableDto {
+  @ApiProperty({ example: false, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
 }
 export class GwanPagePreviewRowDto {
   @ApiProperty({ description: '링크 열쇠(40자) — 사용자 웹 /preview/page/{token}' }) token!: string;
@@ -210,6 +214,16 @@ export class GwanPagesController {
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_BLOCK', type: ErrorDto })
   @Audit('GWAN_PAGE_EDIT', 'GWAN')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: GwanPageUpdateDto) { return this.svc.update(id, dto); }
+
+  @Post('admin/gwan-pages/:id/editable')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('SUPER')
+  @ApiOperation({ summary: '관 페이지 수정 가능 스위치 (v10.701 · SUPER)', description: '수정 불가면 초안 · 게시 · 예약 · 되돌리기 · 번역 초안 422 GWAN_PAGE_LOCKED.' })
+  @ApiParam({ name: 'id' })
+  @ApiOkResponse({ type: GwanPageDetailDto })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
+  @Audit('GWAN_PAGE_EDITABLE', 'GWAN')
+  setEditable(@Param('id', ParseIntPipe) id: number, @Body() dto: GwanPageEditableDto) { return this.svc.setEditable(id, dto.editable); }
 
   @Post('admin/gwan-pages/:id/publish')
   @HttpCode(200)

@@ -27,6 +27,8 @@
  * v10.29 관 첫 화면에 있다가 **이 디자인으로 바뀌며 빠진 것**: 지역 설정 칸(고른 값을 기억만 하고 목록을 거르지 않던 칸) · 검색줄 옆 띠 그림(스마트팜 견본) ·
  *   아래 안내 6칸 · 왼쪽 「상품 분류」 목록(같은 분류를 「소개상품 찾기」의 고르기 칸에서 고릅니다). 관이 **중지**되면 안내 한 줄만 냅니다.
  */
+import { getLayout, layCss } from '@/lib/layout';   // v10.698 (D321) 꾸밀 페이지
+import { LayBlocks } from '@/components/layout/LayBlocks';
 import { getTranslations } from 'next-intl/server';
 import { apiGet, apiGetPersonal } from '@/lib/api';
 import type { Gwan, ListingCardData, ListingListData } from '@/lib/types';
@@ -45,7 +47,11 @@ const AT = '#mny-list';              // 고르면 다시 이 구역으로 옵니
 /** 조건을 주소에 남기고(빈 값은 뺌) 목록 구역으로 */
 const at = (p: Record<string, string | undefined | null>) => qhref(BASE, p) + AT;
 
-export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
+/* v10.698 (D321) 소개장터 메인 구역 열쇠 — 처음 차례 · 서버 LAYOUT_SPECS.MNY 와 같음 */
+const MNY_SECS = ['quick', 'cat', 'cols', 'band', 'bottom'];
+
+export async function MoneyMain({ q, lp }: { q: GwQuery & { region?: string }; lp?: string }) {
+  const lay = await getLayout('MNY', lp);   // v10.698 (D321 · docs/806) 게시한 배치(없으면 처음 화면) · ?lp= 미리보기
   const t = await getTranslations('money');
   const g = GW.MNY;
   const tg = await getTranslations('gwan.meta.MNY');   // v10.97 — 관 안내 이름도 사전(한국어는 gw.ts 와 같음)
@@ -121,7 +127,8 @@ export async function MoneyMain({ q }: { q: GwQuery & { region?: string } }) {
 
   /* 화면은 MoneyView 가 그립니다 — 여기서 정한 값(주소 · 글자)만 넘깁니다. 맨 바깥은 여러 마디(G-94 규칙) */
   return (
-    <><MoneyView
+    <>{lay && <style data-lay-css="MNY" dangerouslySetInnerHTML={{ __html: layCss(lay, '.mny', MNY_SECS) }} />}<MoneyView
+      lay={lay ? { texts: lay.texts, top: <LayBlocks code="MNY" blocks={lay.inserts.top} at="top" />, bottom: <LayBlocks code="MNY" blocks={lay.inserts.bottom} at="bottom" /> } : undefined}
       keyword={keyword ?? ''} reqs={reqs} ad={ad && !ad.empty && ad.id ? ad : null}
       keywords={kw.items} regions={regions} region={region} suppliers={sup} ai={ai} cases={cases.items}
       band={band && !band.empty && band.id ? band : null} float={float && !float.empty && float.id ? float : null}

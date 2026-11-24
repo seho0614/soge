@@ -17,6 +17,7 @@ import { blocksFile, blocksToBody, blocksToHtml, DATA_IMG, dataUrlToFile, htmlTo
 
 type Block = Record<string, any>;
 interface PageRow { id: number; gwanCode: string; slug: string; lang?: string; title: string; showInMenu: boolean; sortOrder: number; status: string;
+  editable?: boolean;   // v10.701 (D322)
   publishedVersion: number | null; publishedAt: string | null; draftUpdatedAt: string; draftUpdatedByName: string | null; draftChanged: boolean;
   scheduledAt?: string | null; scheduledByName?: string | null; views7?: number;
   visibility?: string; seoDescription?: string | null; seoImage?: string | null; noindex?: boolean }   // v10.691 · 692 (D320)
@@ -607,6 +608,8 @@ function Views({ id }: { id: number }) {
   );
 }
 
+/* v10.704 (docs/812) 페이지 목록에서도 그 자리에서 편집(GwanPageEditor) */
+export function GwanPageEditor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack: () => void }) { return <Editor id={id} isSuper={isSuper} onBack={onBack} />; }
 function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack: () => void }) {
   const [p, setP] = useState<PageDetail | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -653,6 +656,10 @@ function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack:
         <b>{p.slug === 'home' ? '첫 화면' : `/info/${p.slug}`}</b>{p.lang && p.lang !== 'ko' ? <b> · {p.lang} 판</b> : null} · {STATUS[p.status] ?? p.status}{p.publishedVersion ? ` · 게시 ${p.publishedVersion}판` : ''}{p.draftChanged ? ' · 게시 안 된 초안 있음' : ''}</p>
       {msg && <p className="form-ok">{msg}</p>}
       {err && <p className="form-error">{err}</p>}
+      {/* v10.701 (D322 · docs/809) 수정 가능 스위치 — 수정 불가면 서버가 저장 · 게시를 막음(422 GWAN_PAGE_LOCKED) */}
+      <p className={p.editable === false ? 'warn-text' : 'dim'} data-gwan-page-editable={p.editable === false ? 'off' : 'on'}>
+        {p.editable === false ? '수정 불가로 둔 페이지입니다 — 고치려면 최고 관리자(SUPER)가 「수정 가능」으로 바꿉니다.' : '수정 가능'}
+        {isSuper && <> <button className="btn-sm" disabled={!!busy} data-gwan-page-editable-toggle onClick={() => void run('ed', () => api<PageDetail>(`/admin/gwan-pages/${id}/editable`, { method: 'POST', body: JSON.stringify({ editable: p.editable === false }) }), p.editable === false ? '수정 가능으로 바꿨습니다.' : '수정 불가로 바꿨습니다.')}>{p.editable === false ? '수정 가능으로' : '수정 불가로'}</button></>}</p>
       <div className="card pad"><div className="form-grid">
         <F label="페이지 제목(60자)" v={title} on={setTitle} max={60} />
         {p.slug !== 'home' && <label><span>관 메뉴에 보임</span><input type="checkbox" checked={menu} onChange={(e) => setMenu(e.target.checked)} /></label>}
@@ -699,8 +706,8 @@ function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack:
         <button className="btn-sm" disabled={!hist.length} onClick={undo} data-gwan-page-undo>실행 취소{hist.length ? `(${hist.length})` : ''}</button>
       </div>
       <div className="acts">
-        <button className="btn-ok" disabled={!!busy} onClick={() => void save()} data-gwan-page-save>초안 저장</button>
-        {isSuper && <button className="btn-ok" disabled={!!busy} data-gwan-page-publish onClick={() => {
+        <button className="btn-ok" disabled={!!busy || p.editable === false} onClick={() => void save()} data-gwan-page-save>초안 저장</button>
+        {isSuper && <button className="btn-ok" disabled={!!busy || p.editable === false} data-gwan-page-publish onClick={() => {
           const warn = found.filter((x) => x.level === 'warn').length;   // v10.671
           if (!confirm(`지금 저장된 초안을 사용자 웹에 게시합니다.\n(저장하지 않은 고침은 먼저 「초안 저장」을 누르십시오)${warn ? `\n\n페이지 점검: 고칠 것 ${warn}개가 남아 있습니다.` : ''}`)) return;
           void run('pub', () => api<PageDetail>(`/admin/gwan-pages/${id}/publish`, { method: 'POST' }), '게시했습니다 — 사용자 웹에 바로 보입니다.');
@@ -882,5 +889,29 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
         </div>
       </div>
     </>
+  );
+}
+
+/* v10.696 (D321 · docs/804) 꾸밀 페이지에서 쓰는 블록 목록 — 관 페이지와 같은 블록 칸(BlockForm) · 위아래 · 빼기 · 더하기(조각은 받지 않음) */
+export function BlockList({ blocks, onChange, max = 10 }: { blocks: Block[]; onChange: (b: Block[]) => void; max?: number }) {
+  const [add, setAdd] = useState('TEXT');
+  const move = (i: number, d: number) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j]!, n[i]!]; onChange(n); };
+  return (
+    <div data-block-list={blocks.length}>
+      {blocks.map((b, i) => (
+        <div key={i} className="card pad" data-block-list-item={b.type}>
+          <p style={{ marginTop: 0 }}><b>{i + 1}. {KIND[b.type] ?? b.type}</b>{' '}
+            <button className="btn-sm" disabled={i === 0} onClick={() => move(i, -1)} aria-label="위로">↑</button>{' '}
+            <button className="btn-sm" disabled={i === blocks.length - 1} onClick={() => move(i, 1)} aria-label="아래로">↓</button>{' '}
+            <button className="btn-sm btn-no" onClick={() => onChange(blocks.filter((_, j) => j !== i))}>빼기</button></p>
+          <BlockForm b={b} set={(nb) => onChange(blocks.map((x, j) => (j === i ? nb : x)))} />
+        </div>
+      ))}
+      <div className="acts">
+        <select value={add} onChange={(e) => setAdd(e.target.value)} aria-label="더할 블록">{KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+        <button className="btn-sm" disabled={blocks.length >= max} onClick={() => onChange([...blocks, blank(add)])} data-block-list-add>블록 더하기</button>
+        <span className="dim">이 자리 {blocks.length} / {max}</span>
+      </div>
+    </div>
   );
 }

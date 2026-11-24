@@ -32,6 +32,8 @@ import { Line, Pic } from './Icons';
 import { Core, ForMe, Needs, Picks, Poll, Startup, Strip, Today, Town, Trust } from './Sections';
 import { Weather } from './Weather';
 import { QM } from '@/components/gwan/gw';
+import { Fragment, type ReactNode } from 'react';
+import { HTitles } from './hTitles';
 
 export interface HomeViewProps {
   c: HomeContent;
@@ -56,7 +58,13 @@ export interface HomeViewProps {
   ai?: boolean;
   /** v10.319 (docs/445) 「상단 고정」 공지(최대 2건 · 없으면 띠 없음) */
   notices?: HomeNotice[];
+  /** v10.697 (D321 · docs/805) 꾸밀 페이지 — 구역 차례 · 보이기(없으면 처음 차례) · 글자 · 구역 뒤 블록(서버가 그려 넘김) */
+  order?: Array<{ key: string; show: boolean }>;
+  texts?: Record<string, string>;
+  ins?: Record<string, ReactNode>;
 }
+
+const HOME_DEFAULT = ['forme', 'weather', 'today', 'needs', 'picks', 'poll', 'strip', 'town', 'trust', 'startup', 'core'].map((key) => ({ key, show: true }));
 
 /** v10.676 (D317 · docs/798) 메인 새 관 카드 — 설정 site.new_gwan_cards(쉼표 · 적은 순서 · 켠 관만)가 있으면 그것, 없으면 앞에서부터(최대 3은 Needs) */
 function newCards<G extends { code: string; isActive: boolean; isHub?: boolean }>(gwans: G[], pick?: string | null): G[] {
@@ -66,7 +74,7 @@ function newCards<G extends { code: string; isActive: boolean; isHub?: boolean }
   return want.map((c) => all.find((g) => g.code === c)).filter((g): g is G => !!g);
 }
 
-export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false, notices = [] }: HomeViewProps) {
+export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary, live, ad, slides, start, chips, year, polls, weather, ai = false, notices = [], order, texts = {}, ins = {} }: HomeViewProps) {
   const t = useTranslations('main');
   const tq = useTranslations('gwan.qm');
   const on = (code: string) => live.includes(code);
@@ -101,8 +109,8 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
           <div className="home-heroin">
             <div className="home-herol">
               <span className="home-aibdg" data-hero-ai={ai ? 'on' : 'off'}><Pic name="spark-s" h={19} /> {t(ai ? 'hero.aiBadge' : 'hero.aiBadgeOff')}</span>
-              <h1 id="home-h1">{t('hero.titleA')}<br />{t.rich(ai ? 'hero.titleB' : 'hero.titleBOff', { em: (x) => <em>{x}</em> })}</h1>
-              <p className="home-lead">{t('hero.leadA')}{' '}<br />{t('hero.leadB')}</p>
+              <h1 id="home-h1">{texts.heroTitleA || t('hero.titleA')}<br />{texts.heroTitleB ? <em>{texts.heroTitleB}</em> : t.rich(ai ? 'hero.titleB' : 'hero.titleBOff', { em: (x) => <em>{x}</em> })}</h1>
+              <p className="home-lead">{texts.heroLeadA || t('hero.leadA')}{' '}<br />{texts.heroLeadB || t('hero.leadB')}</p>
               <HeroSearch live={live} ai={ai} />
             </div>
             <HeroPromo ad={ad} slides={slides} start={start} />
@@ -130,19 +138,27 @@ export function HomeView({ c, gwans: _gwans, links, settings, loggedIn, summary,
         </div>
       </section>
 
-      {/* v10.644 (docs/788) 대표 11/23 「나를 위한 소개 띠를 오늘의 날씨 위로」 — 히어로 바로 아래 */}
-      <ForMe loggedIn={loggedIn} summary={summary} />
-      {/* v10.49 (D103 · docs/101) — 「오늘의 날씨」 한 줄(v10.644 부터 「나를 위한 소개」 아래) */}
-      {weather?.available && <Weather w={weather} />}
-      <Today c={c} />
-      <Needs live={live} extra={newCards(_gwans, settings['site.new_gwan_cards'])} />   {/* v10.649 (docs/792) 새 관 카드 · v10.676 운영이 고른 순서 */}
-      <Picks c={c} />
-      <Poll polls={polls} />
-      <Strip c={c} />
-      <Town c={c} />
-      {on('MAL') && <Trust c={c} />}
-      {on('BIZ') && <Startup c={c} />}
-      <Core />
+      {/* v10.697 (D321 · docs/805) 구역은 운영이 정한 차례 · 보이기대로(게시한 배치가 없으면 처음 차례) · 구역 뒤 블록
+       *   처음 차례: 나를 위한 소개(v10.644 히어로 바로 아래) → 오늘의 날씨 → 오늘의 소개뱅크 → 어떤 소개가 필요하세요?(v10.649 새 관 카드 · v10.676 운영이 고른 순서)
+       *   → 오늘의 PICK → 이건 어때? → 띠 → 우리동네 → 안심소개(관이 켜졌을 때) → 창업(관이 켜졌을 때) → 핵심 */}
+      <HTitles.Provider value={texts}>
+      {ins._top}
+      {(order ?? HOME_DEFAULT).map(({ key, show }) => {
+        if (!show) return null;
+        const sec = key === 'forme' ? <ForMe loggedIn={loggedIn} summary={summary} />
+          : key === 'weather' ? (weather?.available ? <Weather w={weather} /> : null)
+          : key === 'today' ? <Today c={c} />
+          : key === 'needs' ? <Needs live={live} extra={newCards(_gwans, settings['site.new_gwan_cards'])} />
+          : key === 'picks' ? <Picks c={c} />
+          : key === 'poll' ? <Poll polls={polls} />
+          : key === 'strip' ? <Strip c={c} />
+          : key === 'town' ? <Town c={c} />
+          : key === 'trust' ? (on('MAL') ? <Trust c={c} /> : null)
+          : key === 'startup' ? (on('BIZ') ? <Startup c={c} /> : null)
+          : key === 'core' ? <Core /> : null;
+        return <Fragment key={key}>{sec}{ins[key]}</Fragment>;
+      })}
+      </HTitles.Provider>
 
       <DemoBar ops={isOps(summary?.principal?.roles)} />
       <HomeFooter links={links} settings={settings} sample={c.mode === 'sample'} year={year} loggedIn={loggedIn} ops={isOps(summary?.principal?.roles)} />

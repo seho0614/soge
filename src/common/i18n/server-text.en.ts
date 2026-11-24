@@ -5,6 +5,16 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” in the page list first.",   // v10.701 (D322) 수정 가능 스위치
+  "관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.": "The hall is open, so it cannot be edited — close (pause) the hall in hall settings, edit, then open it again.",   // v10.701 (D322) 수정 가능 스위치
+  "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” first.",   // v10.701 (D322) 수정 가능 스위치
+  "{0}에 HTML 태그는 쓸 수 없습니다.": "HTML tags cannot be used in {0}.",   // v10.696 (D321) 꾸밀 페이지
+  "{0}은(는) /로 시작하는 사이트 안 주소나 https 주소만 됩니다.": "{0} must be a site path starting with / or an https address.",   // v10.696 (D321) 꾸밀 페이지
+  "{0}은(는) {1}개까지 고릅니다.": "Up to {1} items can be chosen for {0}.",   // v10.696 (D321) 꾸밀 페이지
+  "{0}은(는) {1}자까지입니다.": "{0} can be up to {1} characters.",   // v10.696 (D321) 꾸밀 페이지
+  "{0}의 상품 코드 모양이 맞지 않습니다.": "The product code format in {0} is not valid.",   // v10.696 (D321) 꾸밀 페이지
+  "끼운 블록은 페이지 전체에서 30개까지입니다.": "Up to 30 inserted blocks are allowed per page.",   // v10.696 (D321) 꾸밀 페이지
+  "처음 배치와 같아 게시할 것이 없습니다 — 고친 뒤 「초안 저장」을 먼저 누르십시오.": "This is the same as the default layout, so there is nothing to publish — make changes and press “Save draft” first.",   // v10.696 (D321) 꾸밀 페이지
   "\"{0}\"는 사용할 수 없는 표현입니다.": "\"{0}\" is an expression that cannot be used.",
   "\"{0}\"는 상품 이름 · 설명 · 주의사항에 쓸 수 없는 표현입니다.": "\"{0}\" is an expression that cannot be used in product names, descriptions or precautions.",
   "(D022) 같은 결제 키가 청구서 여러 줄에 들어 있습니다({0}종) — 결제 1건이 두 번 쓰인 것입니다. 먼저 확인해 주십시오: SELECT payment_key, count(*) FROM subscription_invoices GROUP BY 1 HAVING count(*) > 1": "(D022) The same payment key appears in several invoice lines ({0} kinds) — one payment was used twice. Check first: SELECT payment_key, count(*) FROM subscription_invoices GROUP BY 1 HAVING count(*) > 1",

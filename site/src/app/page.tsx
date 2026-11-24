@@ -36,6 +36,12 @@ import { getFmt } from '@/lib/getFmt';
 import '@/styles/home.css';
 import { HomePopups } from '@/components/home/HomePopups';   // v10.517 (D277) 메인 팝업 공지
 import type { HomePopup } from '@/components/home/popupTypes';
+import { getLayout, layOrder } from '@/lib/layout';   // v10.697 (D321 · docs/805) 꾸밀 페이지
+import { LayBlocks } from '@/components/layout/LayBlocks';
+import type { ReactNode } from 'react';
+
+/* v10.697 (D321) 메인 구역 열쇠 — 처음 차례 · 서버 LAYOUT_SPECS.HOME 과 같음 */
+const HOME_SECS = ['forme', 'weather', 'today', 'needs', 'picks', 'poll', 'strip', 'town', 'trust', 'startup', 'core'];
 
 /* 추천 칩 — 글은 사전(main.hero.chips) */
 const CHIPS = ['c1', 'c2', 'c3', 'c4'] as const;
@@ -50,7 +56,8 @@ const SLIDES: (Omit<PromoSlide, 'k' | 'tag' | 'title' | 'desc' | 'cta'> & { k: S
   { k: 'community', href: '/community', imgs: ['d/pick-4.png', 'd/town-3.png'] },
 ];
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ lp?: string }> }) {
+  const lay = await getLayout('HOME', (await searchParams).lp);   // v10.697 게시한 배치(없으면 null = 처음 배치) · ?lp= 미리보기
   const t = await getTranslations('main');
   const principal = await me().catch(() => null);
   const loggedIn = !!principal;
@@ -106,9 +113,16 @@ export default async function Home() {
   }
 
   const heroAd = ad && !ad.empty && ad.id ? ad : null;
-  const slides = SLIDES.filter((s) => !s.gwan || on(s.gwan)).map(({ gwan: _g, ...s }): PromoSlide => ({
-    ...s, tag: t(`promo.slides.${s.k}.tag`), title: t(`promo.slides.${s.k}.title`), desc: t(`promo.slides.${s.k}.desc`), cta: t('promo.cta'),
+  /* v10.697 (D321) 안내 장 — 운영이 숨긴 장은 빼고, 넣은 글 · 주소 · 그림이 있으면 그것(비우면 사전 글) */
+  const so = lay?.slides ?? {};
+  const slides = SLIDES.filter((s) => (!s.gwan || on(s.gwan)) && so[s.k]?.show !== false).map(({ gwan: _g, ...s }): PromoSlide => ({
+    ...s, tag: so[s.k]?.tag || t(`promo.slides.${s.k}.tag`), title: so[s.k]?.title || t(`promo.slides.${s.k}.title`), desc: so[s.k]?.desc || t(`promo.slides.${s.k}.desc`),
+    cta: so[s.k]?.cta || t('promo.cta'), href: so[s.k]?.href || s.href, ...(so[s.k]?.image ? { artUrl: so[s.k]!.image } : {}),
   }));
+  /* v10.697 구역 차례 · 구역 뒤 블록(서버에서 그려 넘김 · 매물 · 업종 블록은 소개장터 기준) */
+  const ins: Record<string, ReactNode> = {};
+  for (const [at, b] of Object.entries(lay?.inserts ?? {})) ins[at] = <LayBlocks code="MNY" blocks={b} at={at} />;
+  const order = layOrder(lay, HOME_SECS);
   /* 그림은 「2 / 5」 — 광고가 첫 장일 때 그림에 있는 장이 둘째 장입니다. 그 장부터 엽니다 */
   const start = heroAd && slides[0]?.k === 'pf' ? 1 : 0;
 
@@ -117,7 +131,7 @@ export default async function Home() {
     <Msgs ns={['main']}>
       <HomeView c={c} gwans={gwans} links={links} settings={settings} loggedIn={loggedIn} summary={summary}
         live={live} ad={heroAd} slides={slides} start={start} chips={(hotKw?.source === 'pick' && hot.length) || hot.length >= 3 ? hot : CHIPS.map((k) => t(`hero.chips.${k}`))} ai={aiOn} year={new Date().getFullYear()} polls={polls}
-        weather={weather} notices={pinned} />
+        weather={weather} notices={pinned} order={order} texts={lay?.texts ?? {}} ins={ins} />
       <HomePopups items={popups} />
     </Msgs>
   );

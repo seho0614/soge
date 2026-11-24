@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getLayout } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
@@ -19,7 +20,8 @@ import '@/styles/mal.css';
 type Props = {
   params: Promise<{ gwan: string }>;
   searchParams: Promise<{ sort?: string; cursor?: string; badge?: string; axis?: string; cat?: string; grade?: string; keyword?: string; p?: string;
-    /* v10.31 (w2) — 지역 · 소개창업 축의 갈래(d) · 초단기(hot) */ region?: string; d?: string; hot?: string }>;
+    /* v10.31 (w2) — 지역 · 소개창업 축의 갈래(d) · 초단기(hot) */ region?: string; d?: string; hot?: string;
+    /* v10.698 (D321) 꾸밀 페이지 미리보기 */ lp?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -66,8 +68,9 @@ export default async function GwanPage({ params, searchParams }: Props) {
   /* v10.652 (D311 · docs/793) 관 안 페이지 메뉴(게시된 것이 있을 때만 · 없으면 아무것도 안 그림) */
   const menu = await apiGet<GwanPageMenuItem[]>(`/gwans/${code}/pages`, 60).catch(() => [] as GwanPageMenuItem[]);
   const pm = menu.length ? <div className="gw-wrap"><GwanPageMenu code={code} items={menu} /></div> : null;
-  if (code === 'MNY') return <><MoneyMain q={q0} />{pm}</>;
-  if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} />{pm}<i hidden data-root-end="" /></>;
+  const lp = typeof q0.lp === 'string' ? q0.lp : undefined;   // v10.698 (D321 · docs/806) 꾸밀 페이지 미리보기
+  if (code === 'MNY') return <><MoneyMain q={q0} lp={lp} />{pm}</>;
+  if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} lp={lp} />{pm}<i hidden data-root-end="" /></>;
   /* v10.652 새 관 — 게시된 첫 화면(home)이 있으면 블록으로 그림(없으면 아래 일반 화면) */
   const home = !isFixedGwan(code) ? await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null) : null;
   if (home) return <div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /><ViewPing code={code} slug="home" /></div>;
@@ -85,11 +88,11 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const tabs = [['', t('page.all')], ['URGENT', t('badge.URGENT')], ['VERIFIED_DOC', t('badge.VERIFIED_DOC')]];
   /* 20261007 (v10.25) — 소개몰(HLT)은 제시 디자인의 메인을 씁니다(components/shop/ShopMain). 도매 · 납품 매물 목록은 그 아래 한 구역으로 남깁니다(지금 있던 것). */
   if (code === 'HLT') {
+    const lay = await getLayout('HLT', lp);   // v10.699 (D321 · docs/807) 소개몰 메인 꾸밀 페이지(없으면 처음 화면) · 도매 · 납품 매물도 한 구역(listings)
     return (
       <><div className="shop">
         <HltBand />
-        <ShopMain />
-        <div className="shop-in">
+        <ShopMain lay={lay} listings={
           <section className="shop-sec" data-shop-listings="1">
             <SecHead title={t('page.hltTitle')} lead={t('page.hltLead')} />
             <div className="quick" style={{ margin: '0 10px 14px' }}>
@@ -101,8 +104,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
             {data.nextCursor && (
               <a className="more" href={`/${gwan}?${new URLSearchParams({ ...(q.sort ? { sort: q.sort } : {}), ...(q.badge ? { badge: q.badge } : {}), cursor: data.nextCursor })}`}>{t('page.more')}</a>
             )}
-          </section>
-        </div>
+          </section>} />
       </div>{pm}<i hidden data-root-end="" /></>
     );
   }

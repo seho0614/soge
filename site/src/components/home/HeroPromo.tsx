@@ -20,7 +20,8 @@ import { useTranslations } from 'next-intl';
 import type { AdServe } from './types';
 import { Line } from './Icons';
 
-export interface PromoSlide { k: string; tag: string; title: string; desc: string; cta: string; href: string; art?: string; imgs?: string[] }
+export interface PromoSlide { k: string; tag: string; title: string; desc: string; cta: string; href: string; art?: string; imgs?: string[];
+  /** v10.697 (D321 · docs/805) 운영이 페이지 목록에서 넣은 그림(/… 또는 https · 그대로 씀) */ artUrl?: string }
 
 /* 시안 화면 키 → 실제 경로. 서버 소재의 landing_route 는 시안 키(reg 등)로 들어 있습니다. */
 const ROUTE: Record<string, string> = {
@@ -135,7 +136,10 @@ export function HeroPromo({ ad, slides, start = 0 }: { ad: AdServe | null; slide
             <p>{lines(s.desc)}</p>
             <Link className="home-pcta" href={s.href}>{s.cta} <Line name="arrow" size={18} w={2.4} /></Link>
             <span className="home-part" aria-hidden="true">
-              {s.art ? (
+              {s.artUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="home-partimg" src={s.artUrl} alt="" loading="eager" data-lay-art="" />
+              ) : s.art ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img className="home-partimg" src={`/home/${s.art}`} alt="" loading="eager" />
               ) : (s.imgs ?? []).slice(0, 2).map((src, k) => (

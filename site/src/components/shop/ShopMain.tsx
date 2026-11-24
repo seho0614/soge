@@ -21,6 +21,9 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { Fragment, type ReactNode } from 'react';
+import { layOrder, type Lay } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
+import { LayBlocks } from '@/components/layout/LayBlocks';
 import { apiGet } from '@/lib/api';
 import { ymdKst } from '@/lib/format';
 import type { HltConcern, HltIngredient, HltProduct } from '@/components/health/types';
@@ -62,7 +65,10 @@ export function SecHead({ title, lead, all }: { title: string; lead?: string; al
   );
 }
 
-export async function ShopMain() {
+/* v10.699 (D321 · docs/807) 소개몰 메인 구역 열쇠 — 처음 차례 · 서버 LAYOUT_SPECS.HLT 와 같음(listings 는 page.tsx 가 넘김) */
+const HLT_SECS = ['hero', 'nav', 'ing', 'con', 'low', 'today', 'two', 'deal', 'band', 'listings'];
+
+export async function ShopMain({ lay = null, listings }: { lay?: Lay | null; listings?: ReactNode } = {}) {
   const t = await getTranslations('shop');
   const f = await getFmt();
   const krw = (n: number | string | null | undefined) => f.won(n, '-');   // v10.102 (2-5c) — ko 「12,000원」(없으면 「-」) 그대로 · 다른 언어 「₩12,000」
@@ -85,16 +91,20 @@ export async function ShopMain() {
   const priced = monthly.length ? [] : ings.filter((g) => g.minPrice != null).sort((a, b) => (a.minPrice ?? 0) - (b.minPrice ?? 0));
   const lowOf = (code: string, unit: number) => prods.find((p) => p.mainIngredient?.code === code && p.minUnit === unit && !p.soldOut)
     ?? prods.filter((p) => p.mainIngredient?.code === code && p.minUnit != null && !p.soldOut).sort((a, b) => Number(a.minUnit) - Number(b.minUnit))[0];
-  const fresh = prods.filter((p) => !p.soldOut).slice(0, 4);           // API 가 올린 순서(최근 먼저)로 줍니다
-  const deals = prods.filter((p) => p.badge === '특별가격' && p.offPct && !p.soldOut).slice(0, 6);
+  /* v10.699 (D321) 운영이 고른 상품이 있으면 고른 차례대로(품절 · 없는 코드는 빠짐) · 없으면 처음 규칙 */
+  const pick = (k: string) => (lay?.picks?.[k] ?? []).map((c) => prods.find((p) => p.code === c && !p.soldOut)).filter((p): p is HltProduct => !!p);
+  const fresh = pick('fresh').length ? pick('fresh').slice(0, 8) : prods.filter((p) => !p.soldOut).slice(0, 4);           // API 가 올린 순서(최근 먼저)로 줍니다
+  const deals = pick('deal').length ? pick('deal').slice(0, 12) : prods.filter((p) => p.badge === '특별가격' && p.offPct && !p.soldOut).slice(0, 6);
+  const tx = lay?.texts ?? {};
+  const ins = (at: string) => <LayBlocks code="HLT" blocks={lay?.inserts[at]} at={at} />;
 
-  return (
-    <>
+  const secs: Record<string, ReactNode> = {};
+  secs.hero = (
       <section className="shop-hero" data-shop-hero="1">
         <div className="shop-hero-in">
           <ShopPic name="hero-right" h={326} />
-          <h1>{t.rich('hero.title', { br: () => <br />, em: (c) => <em>{c}</em> })}</h1>
-          <p className="shop-lead">{t('hero.lead')}</p>
+          <h1>{tx.heroTitle ? <em>{tx.heroTitle}</em> : t.rich('hero.title', { br: () => <br />, em: (c) => <em>{c}</em> })}</h1>
+          <p className="shop-lead">{tx.heroLead || t('hero.lead')}</p>
           <form className="shop-find" action="/health/search" role="search">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden><path fill="#1D6BF3" d="M12 1.5c.7 5.6 4.9 9.8 10.5 10.5C16.9 12.7 12.7 16.9 12 22.5 11.3 16.9 7.1 12.7 1.5 12 7.1 11.3 11.3 7.1 12 1.5z" /></svg>
             <label>
@@ -106,9 +116,9 @@ export async function ShopMain() {
             </button>
           </form>
         </div>
-      </section>
+      </section>);
 
-      <div className="shop-in">
+  secs.nav = (
         <nav className="shop-lnav" aria-label={t('nav.aria')}>
           <Link href="/health/direct">{t('nav.direct')}</Link>
           <Link href="/health/c/ALL">{t('nav.all')}</Link>
@@ -118,9 +128,9 @@ export async function ShopMain() {
           <Link href="/health/guide">{t('nav.guide')}</Link>
           <Link href="/my/health/orders">{t('nav.orders')}</Link>
           <Link href="/health/cart">{t('nav.cart')}</Link>
-        </nav>
+        </nav>);
 
-        {ings.length > 0 && (
+  secs.ing = ings.length > 0 && (
           <section className="shop-sec cream" data-shop-ing="1">
             <SecHead title={t('sec.ing')} lead={t('sec.ingLead')} all="/health/ingredients" />
             <div className="shop-tiles">
@@ -135,9 +145,9 @@ export async function ShopMain() {
               })}
             </div>
           </section>
-        )}
+        );
 
-        {cons.length > 0 && (
+  secs.con = cons.length > 0 && (
           <section className="shop-sec cream" data-shop-con="1">
             <SecHead title={t('sec.con')} lead={t('sec.conLead')} all="/health/concerns" />
             <div className="shop-tiles">
@@ -152,9 +162,9 @@ export async function ShopMain() {
               })}
             </div>
           </section>
-        )}
+        );
 
-        {monthly.length > 0 && (
+  secs.low = <>{monthly.length > 0 && (
           <section className="shop-sec" data-shop-low="1">
             <SecHead title={t('sec.low')} lead={t('sec.lowLead')} all="/health/ingredients" />
             <div className="shop-low">
@@ -190,9 +200,9 @@ export async function ShopMain() {
               })}
             </div>
           </section>
-        )}
+        )}</>;
 
-        {(promo || ranks.sales.items.length > 0 || ranks.orders.items.length > 0 || fresh.length > 0) && (
+  secs.today = (promo || ranks.sales.items.length > 0 || ranks.orders.items.length > 0 || fresh.length > 0) && (
           <section className="shop-sec pale" data-shop-today="1">
             <SecHead title={t('sec.today')} lead={t('sec.todayLead')} all="/health/c/ALL" />
             <div className="shop-today">
@@ -211,9 +221,9 @@ export async function ShopMain() {
                 periods={{ hot: ranks.sales.from ? `${md(ranks.sales.from)} ~ ${md(ranks.sales.to)}` : '', many: ranks.orders.from ? `${md(ranks.orders.from)} ~ ${md(ranks.orders.to)}` : '' }} />
             </div>
           </section>
-        )}
+        );
 
-        {(ranks.orders.items.length > 0 || fresh.length > 0) && (
+  secs.two = (ranks.orders.items.length > 0 || fresh.length > 0) && (
           <div className="shop-two">
             {ranks.orders.items.length > 0 ? (
               <section className="shop-sec" data-shop-many="1">
@@ -248,9 +258,9 @@ export async function ShopMain() {
               </section>
             )}
           </div>
-        )}
+        );
 
-        {deals.length > 0 && (
+  secs.deal = deals.length > 0 && (
           <section className="shop-sec" data-shop-deal="1">
             <SecHead title={t('sec.deal')} lead={t('sec.dealLead')} all="/health/c/ALL" />
             <div className="shop-deal">
@@ -266,18 +276,29 @@ export async function ShopMain() {
               ))}
             </div>
           </section>
-        )}
+        );
 
+  secs.band = (
         <section className="shop-band" data-shop-band="1">
           <ShopPic name="band-left" h={110} className="l" />
           <ShopPic name="band-right" h={110} className="r" />
           <div className="tx">
-            <b>{t.rich('band.title', { em: (c) => <em>{c}</em> })}</b>
-            <span>{t('band.lead')}</span>
+            <b>{tx.bandTitle ? <em>{tx.bandTitle}</em> : t.rich('band.title', { em: (c) => <em>{c}</em> })}</b>
+            <span>{tx.bandLead || t('band.lead')}</span>
           </div>
           {/* v10.31 (시안 「특가 상품 보러가기」) */}
           <Link className="go" href="/health/c/ALL">{t('band.go')}</Link>
-        </section>
+        </section>);
+  secs.listings = listings ?? null;
+
+  /* v10.699 (D321 · docs/807) 운영이 정한 차례 · 보이기대로(게시한 배치가 없으면 처음 차례) — 머리 띠는 늘 맨 위(숨길 수는 있음) · 구역 뒤 블록 */
+  const order = layOrder(lay, HLT_SECS);
+  return (
+    <>
+      {order.find((x) => x.key === 'hero')?.show !== false && secs.hero}
+      {ins('_top')}{ins('hero')}
+      <div className="shop-in">
+        {order.filter((x) => x.key !== 'hero').map(({ key, show }) => <Fragment key={key}>{show && secs[key]}{ins(key)}</Fragment>)}
       </div>
     </>
   );

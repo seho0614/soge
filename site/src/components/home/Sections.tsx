@@ -8,6 +8,8 @@
  * 사진 · 아이콘은 그림에서 그대로 잘라 낸 것입니다(/home/d/*.png). 글자 · 버튼은 화면 요소입니다.
  * 무엇을 넣을지는 content.ts 가 정합니다 — 그림 내용 그대로(sample · 지금 값) / 서버 데이터(live).
  */
+import { useContext } from 'react';
+import { HTitles } from './hTitles';   // v10.697 (D321) 구역 제목 바꾸기(맨 위에서 읽음 — 훅 차례)
 import { GwanIcon, gwanColor } from '@/components/gwan/GwanLook';   // v10.663 (D314)
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -55,13 +57,14 @@ function Rank({ c }: { c: RankCard }) {
 }
 
 export function Today({ c }: { c: HomeContent }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   return (
     <section className="home-band today" aria-labelledby="home-today-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-today" h={36} />
-          <h2 id="home-today-h">{t('sec.today.h')}</h2>
+          <h2 id="home-today-h">{H['h.today'] || t('sec.today.h')}</h2>
           <span className="home-sd">{c.todaySub}</span>
           <More href={c.todayMore} />
         </div>
@@ -96,6 +99,7 @@ const NEEDS: { gwan: 'HLT' | 'MNY' | 'MAL' | 'BIZ' | 'CMU'; ic: string; href: st
 
 /** 중지된 관은 뺍니다(20260930 규칙). 소개광장은 관이 아니라 늘 둡니다. */
 export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ code: string; name: string; description: string | null; icon?: string | null; color?: string | null }> }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   const cards = NEEDS.filter((c) => c.gwan === 'CMU' || live.includes(c.gwan));
   /* v10.649 (docs/792) 운영 화면에서 만든 새 관 — 사전 글이 없어 관 이름 · 설명(번역 승인되면 그 언어)으로 카드 · 주소 /g/<코드 소문자> · 소개광장 앞에 둠 */
@@ -105,7 +109,7 @@ export function Needs({ live, extra = [] }: { live: string[]; extra?: Array<{ co
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-need" h={36} />
-          <h2 id="home-needs-h">{t('sec.needs.h')}</h2>
+          <h2 id="home-needs-h">{H['h.needs'] || t('sec.needs.h')}</h2>
           <span className="home-sd">{t('sec.needs.sub')}</span>
         </div>
         <nav className="home-needs" aria-label={t('sec.needs.aria')} style={{ ['--n' as string]: cards.length + more.length }}>
@@ -158,6 +162,7 @@ function PickItem({ c }: { c: PickCard }) {
 }
 
 export function Picks({ c }: { c: HomeContent }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   if (!c.picks.length) return null;
   return (
@@ -165,7 +170,7 @@ export function Picks({ c }: { c: HomeContent }) {
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-pick" h={36} />
-          <h2 id="home-picks-h">{t('sec.picks.h')}</h2>
+          <h2 id="home-picks-h">{H['h.picks'] || t('sec.picks.h')}</h2>
           <span className="home-sd">{c.picksSub}</span>
           <More href={c.picksMore} />
         </div>
@@ -184,13 +189,14 @@ export function Picks({ c }: { c: HomeContent }) {
  * 참여 수는 서버의 실제 표 수만 씁니다.
  */
 export function Poll({ polls }: { polls: PollData[] }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   return (
     <section className="home-band poll" aria-labelledby="home-poll-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-poll" h={36} />
-          <h2 id="home-poll-h">{t('sec.poll.h')}</h2>
+          <h2 id="home-poll-h">{H['h.poll'] || t('sec.poll.h')}</h2>
           <span className="home-sd">{t('sec.poll.sub')}</span>
           {polls.length === 0 && <span className="home-ex">{t('sec.soon')}</span>}
           <More href="/community/polls" />
@@ -227,13 +233,14 @@ export function Strip({ c }: { c: HomeContent }) {
 /* ── 지금 우리동네 ───────────────────────────────────────────────────── */
 
 export function Town({ c }: { c: HomeContent }) {
+  const H = useContext(HTitles);
   const tr = useTranslations('main');
   return (
     <section className="home-band town" aria-labelledby="home-town-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-town" h={36} />
-          <h2 id="home-town-h">{tr('sec.town.h')}</h2>
+          <h2 id="home-town-h">{H['h.town'] || tr('sec.town.h')}</h2>
           <span className="home-sd pin"><Pic name="town-pin" h={24} /> {tr('sec.town.sub')}</span>
           {!c.townReady && <span className="home-ex">{tr('sec.soon')}</span>}
           <More href="/community" />
@@ -259,13 +266,14 @@ export function Town({ c }: { c: HomeContent }) {
 /* ── 믿고 연결받는 안심소개 ───────────────────────────────────────────── */
 
 export function Trust({ c }: { c: HomeContent }) {
+  const H = useContext(HTitles);
   const tr = useTranslations('main');
   return (
     <section className="home-band trust" aria-labelledby="home-trust-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-trust" h={36} />
-          <h2 id="home-trust-h">{tr('sec.trust.h')}</h2>
+          <h2 id="home-trust-h">{H['h.trust'] || tr('sec.trust.h')}</h2>
           <span className="home-sd">{tr('sec.trust.sub')}</span>
           <More href="/mall" />
         </div>
@@ -289,13 +297,14 @@ export function Trust({ c }: { c: HomeContent }) {
 /* ── 최근 뜨는 창업 ──────────────────────────────────────────────────── */
 
 export function Startup({ c }: { c: HomeContent }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   return (
     <section className="home-band startup" aria-labelledby="home-startup-h">
       <div className="home-in">
         <div className="home-sh">
           <Pic name="sec-startup" h={36} />
-          <h2 id="home-startup-h">{t('sec.startup.h')}</h2>
+          <h2 id="home-startup-h">{H['h.startup'] || t('sec.startup.h')}</h2>
           <span className="home-sd">{t('sec.startup.sub')}</span>
           <More href="/biz" />
         </div>
@@ -320,6 +329,7 @@ export function Startup({ c }: { c: HomeContent }) {
 /* ── 나를 위한 소개 ───────────────────────────────────────────────── */
 
 export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSummary | null }) {
+  const H = useContext(HTitles);
   const t = useTranslations('main');
   const f = useFmt();
   return (
@@ -327,7 +337,7 @@ export function ForMe({ loggedIn, summary }: { loggedIn: boolean; summary: MeSum
       <div className="home-in">
         <div className="home-forme">
           <Pic name="sec-forme" h={38} />
-          <h2 id="home-forme-h">{t('sec.forme.h')}</h2>
+          <h2 id="home-forme-h">{H['h.forme'] || t('sec.forme.h')}</h2>
           <span className="home-sd">{loggedIn ? t('sec.forme.subIn') : t('sec.forme.subOut')}</span>
           {loggedIn && summary && (
             <span className="home-fmi">
@@ -363,12 +373,13 @@ const CORE: [string, 'c1' | 'c2' | 'c3' | 'c4', string][] = [
 ];
 
 export function Core() {
+  const H = useContext(HTitles);
   const tr = useTranslations('main');
   return (
     <section className="home-band core" aria-labelledby="home-core-h">
       <div className="home-in">
         <div className="home-cores">
-          <div className="home-coreh"><Pic name="sec-core" h={36} /><h2 id="home-core-h">{tr('sec.core.h')}</h2></div>
+          <div className="home-coreh"><Pic name="sec-core" h={36} /><h2 id="home-core-h">{H['h.core'] || tr('sec.core.h')}</h2></div>
           {CORE.map(([ic, k, href]) => {
             const t = tr(`sec.core.items.${k}.t`), d = tr(`sec.core.items.${k}.d`);
             const body = <><Pic name={ic} h={40} /><span><b>{t}</b><span>{d}</span></span></>;

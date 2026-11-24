@@ -109,7 +109,8 @@
     "GET /community/polls",
     "POST /community/polls/{id}/vote",
     "GET /weather/today",
-    "GET /i18n/langs"
+    "GET /i18n/langs",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "★ 2026-10-02 v10.13 「hero 페이지」 디자인 적용 — 메인 전용 헤더 · 푸터(다른 화면은 공통 헤더 · 푸터 그대로). 사진 · 아이콘 · 로고는 주신 그림(spec/design/hero_page_20261002.png)에서 잘라 넣었고, 내용은 그림 그대로입니다(예시). HOME_CONTENT=live 로 켜면 실제 매물 · 상품 · 요청 · 글로 바뀝니다. ★ v10.14 「이건 어때?」 3장은 실제 투표입니다(D021) — 표 수는 실제 표 수, 푸터 사회관계망 아이콘은 운영 화면에서 넣은 주소로 연결됩니다. ★ v10.49 (D103) — 히어로 바로 아래 「오늘의 날씨」 한 줄(기상청 단기예보 · 시 · 도 17곳 중 고른 지역 · 처음 서울). 날씨 사용(weather.enabled)이 꺼져 있거나 키 · 응답이 없으면 띠를 그리지 않습니다. ★ v10.50 (docs/102) — 히어로 검색칩 아래 소개장터 퀵메뉴 5칸(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존 → /money/new · best · urgent · verified · event). 소개장터 관이 꺼져 있으면 숨김."
@@ -145,7 +146,8 @@
     "POST /community/polls/{id}/vote",
     "GET /weather/today",
     "GET /i18n/langs",
-    "PUT /me/lang"
+    "PUT /me/lang",
+    "GET /site-layouts/{key}"
    ],
    "nav": "root",
    "note": "★ 2026-10-02 v10.13 「hero 페이지」 디자인 적용 — 메인 전용 헤더 · 푸터(다른 화면은 공통 헤더 · 푸터 그대로). 사진 · 아이콘 · 로고는 주신 그림(spec/design/hero_page_20261002.png)에서 잘라 넣었고, 내용은 그림 그대로입니다(예시). HOME_CONTENT=live 로 켜면 실제 매물 · 상품 · 요청 · 글로 바뀝니다. ★ v10.14 「이건 어때?」 3장은 실제 투표입니다(D021) — 표 수는 실제 표 수, 푸터 사회관계망 아이콘은 운영 화면에서 넣은 주소로 연결됩니다. ★ v10.50 (docs/102) — 히어로 검색칩 아래 소개장터 퀵메뉴 5칸(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존 → /money/new · best · urgent · verified · event). 소개장터 관이 꺼져 있으면 숨김."
@@ -702,7 +704,8 @@
     "GET /market/success/recent",
     "GET /market/suppliers",
     "GET /market/suppliers/recommended",
-    "GET /market/suppliers/{id}"
+    "GET /market/suppliers/{id}",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "랜딩과 목록을 한 화면으로 통합. 필터 탭으로 급구·서류확인을 가릅니다",
@@ -791,7 +794,8 @@
     "GET /market/regions",
     "GET /market/suppliers",
     "GET /market/suppliers/recommended",
-    "GET /market/suppliers/{id}"
+    "GET /market/suppliers/{id}",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "랜딩과 목록을 한 화면으로 통합. 필터 탭으로 급구·서류확인을 가릅니다",
@@ -850,7 +854,8 @@
     "GET /biz/quick",
     "POST /biz/quick",
     "POST /biz/quick/{id}/offer",
-    "POST /biz/quick/{id}/close"
+    "POST /biz/quick/{id}/close",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "랜딩과 목록을 한 화면으로 통합. 필터 탭으로 급구·서류확인을 가릅니다",
@@ -1613,7 +1618,9 @@
    ],
    "gates": [],
    "apis": [
-    "POST /admin/gwans"
+    "POST /admin/gwans",
+    "GET /admin/categories",
+    "POST /admin/categories/copy"
    ],
    "nav": "SB-ADM-SIT-010"
   },
@@ -1743,10 +1750,60 @@
     "POST /admin/gwan-fragments/{id}/republish",
     "POST /admin/gwan-pages/{id}/rollback",
     "GET /admin/gwan-pages/{id}/draft-log",
-    "GET /admin/faqs"
+    "GET /admin/faqs",
+    "POST /admin/gwan-pages/{id}/editable"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-24 v10.651 (D311 · docs/793) — 초안 ADMIN · SUPER · 게시 · 숨김 SUPER · 판 기록 · 예전 판으로 초안 · v10.661 ~ 667 (D315 · docs/795) 예약 게시 SUPER · 번역 초안 채우기 · 동영상 · 방문 수 · 틀 · 미리보기 링크 · v10.673 · 674 (D316 · docs/797) 블록 끌어 놓기 · 공통 조각"
+  },
+  {
+   "id": "SB-ADM-PAGE-020",
+   "name": "페이지 목록 · 꾸밀 페이지(메인 hero · 관 메인 · 소개몰 메인 구역 편집)",
+   "group": "ADM",
+   "url": "/admin/site-pages",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/site-pages",
+    "GET /admin/site-layouts",
+    "GET /admin/site-layouts/{key}",
+    "PATCH /admin/site-layouts/{key}",
+    "POST /admin/site-layouts/{key}/publish",
+    "POST /admin/site-layouts/{key}/schedule",
+    "POST /admin/site-layouts/{key}/restore",
+    "POST /admin/site-layouts/{key}/rollback",
+    "POST /admin/site-layouts/{key}/previews",
+    "DELETE /admin/site-layouts/{key}/previews/{token}",
+    "GET /health/products",
+    "POST /admin/site-layouts/{key}/editable",
+    "POST /admin/gwan-pages/{id}/editable",
+    "GET /admin/gwan-pages/{id}",
+    "PATCH /admin/gwan-pages/{id}",
+    "POST /admin/gwan-pages/{id}/publish"
+   ],
+   "nav": "SB-ADM-SIT-010",
+   "note": "2026-11-24 v10.696 ~ 700 (D321 · docs/804 ~ 808) — 대표 「수정 가능한 페이지: hero · 각 관 메인 · 소개몰(메인 · 구성) · 페이지 목록 관리」 · 구역 편집 · 게시 SUPER"
+  },
+  {
+   "id": "SB-HOM-HUB-010",
+   "name": "허브(소개하고 벌기) 페이지",
+   "group": "HOM",
+   "url": "/earn",
+   "p": "P1",
+   "roles": [
+    "GUEST"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /gwans",
+    "GET /site-layouts/{key}"
+   ],
+   "nav": "root",
+   "note": "2026-11-24 v10.702 (D322 · docs/810) — 허브가 열려 있을 때만 · 하위 관 카드 · 꾸밀 페이지 EARN(제목 · 설명 · 이용 안내 · 구역 · 블록)"
   },
   {
    "id": "SB-ADM-SIT-070",
@@ -2956,7 +3013,8 @@
    "apis": [
     "GET /health/products",
     "GET /health/rankings",
-    "GET /health/promos"
+    "GET /health/promos",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010"
   },
@@ -5039,7 +5097,8 @@
    "gates": [],
    "apis": [
     "GET /gwans",
-    "GET /consult/categories"
+    "GET /consult/categories",
+    "GET /site-layouts/{key}"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "2026-11-17 v10.335 D227 — 리드관 되살림(꺼진 채 · 법무 재확인 회신 lead.legal_ok 뒤 SUPER 가 켬). 업종 · 상담 신청은 안심소개 생활 · 금융 상담(SB-MAL-CSL-020 · /mal/consult/{code})을 그대로 씀. 켜면 안심소개 상담 축 탭 숨김."

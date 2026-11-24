@@ -22,6 +22,8 @@
  * 자료는 전부 서버 것입니다 — 매물 GET /listings · 분류 GET /categories · 건수 GET /gwans(listingCount) · 지역 GET /market/regions ·
  *   안심소개 상담 업종 GET /consult/categories · 입점 여부 GET /partner/dashboard · 광고 GET /ads/serve?slot=FLOAT.
  */
+import { getLayout, layCss } from '@/lib/layout';   // v10.698 (D321) 꾸밀 페이지
+import { LayBlocks } from '@/components/layout/LayBlocks';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -103,7 +105,9 @@ function withServerAxes(def: { nm: string; why: string; tabs: Axis[] }, rows: Se
   return { ...def, tabs };
 }
 
-export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
+export async function GwanLanding({ code, q, lp }: { code: GwanCode; q: GwQuery; lp?: string }) {
+  /* v10.698 (D321 · docs/806) 안심소개 · 소개창업 메인 꾸밀 페이지 — 구역 숨기기 · 순서(CSS) · 위 · 아래 블록(없으면 처음 화면) */
+  const lay = code === 'MAL' || code === 'BIZ' ? await getLayout(code, lp) : null;
   const g = GW[code];
   const t = await getTranslations('gwan');
   const tc = await getTranslations('consult');
@@ -189,9 +193,11 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
 
   return (
     <GwFrame code={code}>
-      <div className="gw-wrap" style={{ paddingTop: 13 }}>
+      {lay && <style data-lay-css={code} dangerouslySetInnerHTML={{ __html: layCss(lay, '.gw-wrap', code === 'MAL' ? ['search', 'axis', 'notice', 'body', 'features'] : ['search', 'axis', 'body', 'features']) }} />}
+      <div className="gw-wrap" style={{ paddingTop: 13 }} data-lay-box="">
         <h1 className="gw-sr">{locale === 'ko' ? gw?.name ?? gname : gname}</h1>{/* 시안에는 보이는 제목이 없어 읽기 프로그램용으로만 둡니다(시안 .sr) */}
-        <SearchRow code={code} />
+        {lay?.inserts.top && <div data-lay-top=""><LayBlocks code={code} blocks={lay.inserts.top} at="top" /></div>}
+        <div data-lay-sec="search"><SearchRow code={code} /></div>
 
         {code === 'MNY' && (
           <div className="gw-rrow"><RoleTabs /><QuickMenu /></div>
@@ -202,7 +208,7 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
         ) : (
           <>
             {axDef && ax && (
-              <div className="gw-axw">
+              <div className="gw-axw" data-lay-sec="axis">
                 <div className="gw-axbar" role="tablist" aria-label={axDef.nm}>
                   {axDef.tabs.map((t) => (
                     <Link key={t.k} role="tab" aria-selected={t.k === ax.k} className={`gw-axt${t.k === ax.k ? ' gw-on' : ''}${t.gate && !t.open ? ' gw-gate' : ''}`}
@@ -228,14 +234,14 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
 
             {code === 'MAL' && (
               /* 인증업체만 게시 — 운영 스위치(mal.partner_only)를 그대로 알립니다(개발에만 있는 안내 · 시안 모양 안에 둠) */
-              <p className={`gw-po${settings['mal.partner_only'] === 'on' ? ' gw-on' : ''}`} data-partner-only={settings['mal.partner_only'] === 'on' ? 'on' : 'off'}>
+              <p className={`gw-po${settings['mal.partner_only'] === 'on' ? ' gw-on' : ''}`} data-lay-sec="notice" data-partner-only={settings['mal.partner_only'] === 'on' ? 'on' : 'off'}>
                 {settings['mal.partner_only'] === 'on'
                   ? <>{t.rich('landing.partnerOnlyOn', { b: (c) => <b>{c}</b> })}</>
                   : <>{t.rich('landing.partnerOnlyOff', { b: (c) => <b>{c}</b> })}</>}
               </p>
             )}
 
-            <div className="gw-body2"><div className="gw-lay">
+            <div className="gw-body2" data-lay-sec="body"><div className="gw-lay">
               <GwSide code={code} cats={listing ? cats : []} cat={cat?.id} register={register}
                 regions={regions?.all} region={region}
                 extra={!listing && ax ? (
@@ -340,7 +346,8 @@ export async function GwanLanding({ code, q }: { code: GwanCode; q: GwQuery }) {
             </div></div>
           </>
         )}
-        <Features />
+        <div data-lay-sec="features"><Features /></div>
+        {lay?.inserts.bottom && <div data-lay-bottom="" style={{ order: 99 }}><LayBlocks code={code} blocks={lay.inserts.bottom} at="bottom" /></div>}
       </div>
       <GwFloatAd ad={float && !float.empty && float.id ? float : null} />
     </GwFrame>
