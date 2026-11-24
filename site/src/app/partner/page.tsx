@@ -7,6 +7,10 @@ import { Bg, bizNo, GRADE_KO, Note, PARTNER_ST, Pgh, ptCode, S2, Tile, Tw, won }
 import { ymdKst } from '@/lib/format';
 import { getFmt } from '@/lib/getFmt';
 import { getTranslations } from 'next-intl/server';
+import { getLayout } from '@/lib/layout';   // v10.759 (D328) 꾸밀 페이지
+import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
+
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('partner.meta'))('home') };
@@ -74,9 +78,11 @@ export default async function PartnerHome() {
   const blocked = d.blocked ?? [];
   const c = d.card;
   const since = d.approvedAt ? ymdKst(d.approvedAt) : null;
+  const lay = await getLayout('PARTNER');   // v10.759 (D328 · docs/867) 파트너센터 첫 화면 안내 띠 · 위 · 아래 블록
 
   return (
     <><Pgh title={t('title')} sub={SUB} />
+      <LayBand text={lay?.texts.band} /><LayBlocks code="MNY" k="PARTNER" blocks={lay?.inserts.top} at="top" />
 
       {/* 업체 카드 (시안 .prof) */}
       <div className="pt-prof" data-ptn-prof>
@@ -126,6 +132,7 @@ export default async function PartnerHome() {
       <Note kind="info">
         {t.rich('feeNote', { b: B })}
       </Note>
+      <LayBlocks code="MNY" k="PARTNER" blocks={lay?.inserts.bottom} at="bottom" /><LayoutViewPing k="PARTNER" />
     <i hidden data-root-end="" /></>
   );
 }

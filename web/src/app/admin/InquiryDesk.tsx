@@ -27,7 +27,7 @@ interface One extends Omit<Row, 'files' | 'nameHead'> { accountId?: string | nul
   staff: Array<{ id: string; email: string }>;
 }
 
-interface Tpl { id: string; title: string; body: string; sortOrder: number; isActive: boolean; updatedAt: string }
+interface Tpl { id: string; title: string; body: string; sortOrder: number; isActive: boolean; updatedAt: string; gwanCode?: string | null }   // v10.766 관별 틀
 
 const ST: Record<string, string> = { OPEN: '답변 전', ANSWERED: '답변 완료', CLOSED: '닫힘' };
 const ST_CLS: Record<string, string> = { OPEN: 'wait', ANSWERED: 'ok', CLOSED: '' };
@@ -149,7 +149,8 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
           <select name="inq-template" value="" data-inquiry-template=""
             onChange={(e) => { const t = tq.data?.rows.find((x) => x.id === e.target.value); if (t && (!ans.trim() || confirm('답변 칸의 글을 이 틀로 바꿉니다.'))) { setText(t.body); setTplId(t.id); } }}>
             <option value="">답변 틀 고르기 — 칸에 채운 뒤 고쳐서 보냄</option>
-            {(tq.data?.rows ?? []).filter((t) => t.isActive).map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+            {(tq.data?.rows ?? []).filter((t) => t.isActive && (!t.gwanCode || t.gwanCode === d.sourceGwan)).sort((a, b) => Number(!!b.gwanCode && b.gwanCode === d.sourceGwan) - Number(!!a.gwanCode && a.gwanCode === d.sourceGwan))
+              .map((t) => <option key={t.id} value={t.id}>{t.gwanCode ? `[${t.gwanCode}] ` : ''}{t.title}</option>)}   {/* v10.766 (docs/874) 그 관 틀 먼저 · 다른 관 틀은 숨김 */}
           </select>
         </p>
       )}
@@ -186,7 +187,8 @@ function InquiryOne({ id, onChanged }: { id: string; onChanged: () => void }) {
 function TemplateManager() {
   const q = useApi<{ rows: Tpl[] }>('/admin/inquiry-templates');
   const a = useAct();
-  const [edit, setEdit] = useState<{ id: string | null; title: string; body: string; sortOrder: number } | null>(null);
+  const [edit, setEdit] = useState<{ id: string | null; title: string; body: string; sortOrder: number; gwanCode: string } | null>(null);
+  const gws = useApi<Array<{ code: string; name: string }>>('/admin/gwans');   // v10.766 관별 틀
   if (q.error) return <ErrorView error={q.error} onRetry={q.reload} />;
   if (!q.data) return <p className="muted">불러오는 중…</p>;
   const save = () => {
@@ -202,25 +204,27 @@ function TemplateManager() {
   return (
     <div className="card" data-inquiry-templates={q.data.rows.length}>
       <Flash msg={a.msg} err={a.err} />
-      <h3 className="sec">답변 틀 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: null, title: '', body: '', sortOrder: 100 })} data-inquiry-tpl-new="">새 틀</button></h3>
+      <h3 className="sec">답변 틀 <button className="btn-plain btn-sm" onClick={() => setEdit({ id: null, title: '', body: '', sortOrder: 100, gwanCode: '' })} data-inquiry-tpl-new="">새 틀</button></h3>
       {edit && (
         <div>
           <p><input name="tpl-title" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} maxLength={40} placeholder="틀 이름(40자)" />{' '}
-            <input name="tpl-sort" type="number" min={0} max={9999} value={edit.sortOrder} onChange={(e) => setEdit({ ...edit, sortOrder: Number(e.target.value) })} style={{ width: 80 }} /></p>
+            <input name="tpl-sort" type="number" min={0} max={9999} value={edit.sortOrder} onChange={(e) => setEdit({ ...edit, sortOrder: Number(e.target.value) })} style={{ width: 80 }} />{' '}
+            <select name="tpl-gwan" value={edit.gwanCode} onChange={(e) => setEdit({ ...edit, gwanCode: e.target.value })} aria-label="관(선택)" data-inquiry-tpl-gwan>
+              <option value="">모든 문의</option>{(Array.isArray(gws.data) ? gws.data : []).map((g) => <option key={g.code} value={g.code}>{g.name}({g.code}) 문의</option>)}</select></p>
           <p><textarea name="tpl-body" value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} rows={6} maxLength={4000} style={{ width: '100%' }} placeholder="답변 글(2 ~ 4,000자)" /></p>
           <p><button className="btn-ok" disabled={a.busy === 'tpl' || !edit.title.trim() || edit.body.trim().length < 2} onClick={save} data-inquiry-tpl-save="">저장</button>{' '}
             <button className="btn-plain btn-sm" onClick={() => setEdit(null)}>취소</button></p>
         </div>
       )}
       <table className="tbl">
-        <thead><tr><th>순서</th><th>이름</th><th>글 앞부분</th><th>상태</th><th></th></tr></thead>
+        <thead><tr><th>순서</th><th>이름</th><th>관</th><th>글 앞부분</th><th>상태</th><th></th></tr></thead>
         <tbody>
           {q.data.rows.map((t) => (
             <tr key={t.id} className={t.isActive ? undefined : 'muted'}>
-              <td>{t.sortOrder}</td><td>{t.title}</td><td className="muted">{t.body.slice(0, 50)}{t.body.length > 50 ? '…' : ''}</td>
+              <td>{t.sortOrder}</td><td>{t.title}</td><td>{t.gwanCode ?? '모두'}</td><td className="muted">{t.body.slice(0, 50)}{t.body.length > 50 ? '…' : ''}</td>
               <td>{t.isActive ? '보임' : '숨김'}</td>
               <td style={{ whiteSpace: 'nowrap' }}>
-                <button className="btn-plain btn-sm" onClick={() => setEdit({ id: t.id, title: t.title, body: t.body, sortOrder: t.sortOrder })}>고치기</button>{' '}
+                <button className="btn-plain btn-sm" onClick={() => setEdit({ id: t.id, title: t.title, body: t.body, sortOrder: t.sortOrder, gwanCode: t.gwanCode ?? '' })}>고치기</button>{' '}
                 <button className="btn-plain btn-sm" disabled={a.busy === `t-${t.id}`} onClick={() => toggle(t)}>{t.isActive ? '숨기기' : '보이기'}</button>
               </td>
             </tr>

@@ -74,6 +74,7 @@ function sameSite(req: NextRequest, origin: string): boolean {
  * · sgb_ref 쿠키(90일 · lax)를 남깁니다.
  * · 링크 미리보기 로봇 · 중복(24시간) · 본인 코드는 API 가 걸러 냅니다(User-Agent 를 그대로 넘깁니다). */
 const VISITOR = 'sgb_visitor';
+const AB = 'sgb_ab';   // v10.760 A/B 비교 판(a · b)
 const REF = 'sgb_ref';
 const REF_RE = /^[A-Za-z0-9]{3,16}$/;
 const VISITOR_RE = /^[A-Za-z0-9-]{8,64}$/;
@@ -85,6 +86,8 @@ const RCM_RE = /^[A-HJ-NP-Z2-9]{6}$/;
 async function withRef(req: NextRequest, res: NextResponse, at?: string): Promise<NextResponse> {
   const rc = (req.nextUrl.searchParams.get('rc') ?? '').toUpperCase();
   if (rc && RCM_RE.test(rc) && req.method === 'GET') res.cookies.set(RCM, rc, { sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 });
+  /* v10.760 (D328 · docs/868) 꾸밀 페이지 A/B 비교 — 방문자를 반반(a · b · 90일) · 개인 정보 없음 · 비교가 없으면 쓰지 않음 */
+  if (req.method === 'GET' && !/^[ab]$/.test(req.cookies.get(AB)?.value ?? '')) res.cookies.set(AB, Math.random() < 0.5 ? 'a' : 'b', { sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 90 });
   const raw = req.nextUrl.searchParams.get('ref');
   if (!raw || !REF_RE.test(raw) || req.method !== 'GET') return res;
   const code = raw.toUpperCase();

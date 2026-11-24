@@ -58,6 +58,14 @@ const GWAN_WEB_PATH: Record<string, string> = { MNY: 'money', MAL: 'mall', BIZ: 
 /* v10.663 (D314 · docs/795) 아이콘 · 대표 색 — 서버 GWAN_ICONS · GWAN_COLORS 와 같게 · 색 값은 디자인 시트(sgb-tokens.css) */
 const ICONS: Array<[string, string]> = [['book', '책'], ['home', '집'], ['briefcase', '가방'], ['heart', '하트'], ['car', '자동차'], ['tool', '공구'],
   ['leaf', '잎'], ['star', '별'], ['cart', '장바구니'], ['people', '사람들'], ['gift', '선물'], ['map', '지도']];
+/* v10.769 (docs/877) 관 대표 색 대비 — 흰 바탕(#ffffff)과의 명암비(WCAG) · 4.5 아래면 작은 글자로 읽기 어려움 */
+export function contrastOnWhite(hex: string): number {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return 1;
+  const ch = [0, 2, 4].map((i) => parseInt(m[1]!.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const lum = 0.2126 * ch[0]! + 0.7152 * ch[1]! + 0.0722 * ch[2]!;
+  return 1.05 / (lum + 0.05);
+}
 const COLORS: Array<[string, string, string]> = [['money', '주황(소개장터)', '#ffa03e'], ['mall', '청록(안심소개)', '#0f766e'], ['biz', '보라(소개창업)', '#6d28d9'],
   ['shop', '초록(소개몰)', '#16a34a'], ['plaza', '진한 주황(소개광장)', '#fd580a'], ['navy', '남색', '#00245a'], ['link', '파랑', '#156afd']];
 const TARGETS: Array<[string, string]> = [['GOODS', '상품 · 서비스'], ['ASSET', '자산 · 매물'], ['BIZ', '사업 기회']];
@@ -295,7 +303,9 @@ export function GwanSettings({ code, created, onPick, onGo, initialTab, onPages 
               <select value={icon} onChange={(e) => setIcon(e.target.value)} data-gwan-icon><option value="">없음(기본 모양)</option>{ICONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             <label><span>대표 색</span>
               <select value={color} onChange={(e) => setColor(e.target.value)} data-gwan-color style={color ? { borderLeft: `8px solid ${COLORS.find((x) => x[0] === color)?.[2]}` } : undefined}>
-                <option value="">없음(기본 색)</option>{COLORS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+                <option value="">없음(기본 색)</option>{COLORS.map(([k, l, hex]) => <option key={k} value={k}>{l} · 흰 바탕 대비 {contrastOnWhite(hex).toFixed(1)}</option>)}</select>
+              {color && (() => { const r = contrastOnWhite(COLORS.find((x) => x[0] === color)?.[2] ?? '#000000'); return <small className={r < 4.5 ? 'warn-text' : 'dim'} data-gwan-color-contrast={r.toFixed(1)}>   {/* v10.769 (docs/877) */}
+                흰 바탕 대비 {r.toFixed(1)} : 1 {r < 4.5 ? '— 4.5 아래라 작은 글자가 읽기 어렵습니다(관 이름 · 아이콘처럼 큰 글자 · 장식에만 쓰십시오)' : '— 글자로 써도 읽힙니다'}</small>; })()}</label>
             {g.introTarget && !g.openedAt && !g.isActive && (   /* v10.660 (D314) */
               <label><span>소개 대상(준비중일 때만)</span>
                 <select value={target} onChange={(e) => setTarget(e.target.value)} data-gwan-target>{TARGETS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>)}

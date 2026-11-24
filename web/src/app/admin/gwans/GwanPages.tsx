@@ -28,6 +28,7 @@ interface PageDetail extends PageRow { blocks: Block[]; versions: Array<{ versio
 const KINDS: Array<[string, string]> = [['HERO', '머리 띠'], ['TEXT', '글'], ['BUTTONS', '바로가기 단추'], ['IMAGE', '사진'],
   ['GALLERY', '사진 묶음'], ['TABLE', '표'], ['VIDEO', '동영상(유튜브)'], ['LISTINGS', '매물 목록'], ['CATEGORIES', '업종 칩'], ['NOTICES', '공지'], ['FAQ', '자주 묻는 질문'], ['INQUIRY', '문의 받기']];   // v10.681
 KINDS.push(['FEEDBACK', '손님 한 줄 의견']);   // v10.729 (D325 · docs/837)
+KINDS.push(['PICKS', '이번 주 추천(자동)']);   // v10.761 (docs/869)
 const KIND: Record<string, string> = { ...Object.fromEntries(KINDS), FRAGMENT: '공통 조각' };   // v10.674 조각은 「조각 넣기」로만
 const STATUS: Record<string, string> = { DRAFT: '초안(안 보임)', PUBLISHED: '게시됨', HIDDEN: '숨김' };
 const blank = (t: string): Block => ({
@@ -40,6 +41,7 @@ const blank = (t: string): Block => ({
   VIDEO: { type: 'VIDEO', title: '', url: '', caption: '' },   // v10.664
   INQUIRY: { type: 'INQUIRY', title: '궁금한 점이 있으신가요?', body: '', label: '문의하기', category: 'HOWTO' },   // v10.681
   LISTINGS: { type: 'LISTINGS', title: '', limit: 8, sort: 'RECENT', categoryId: '' },
+  PICKS: { type: 'PICKS', title: '이번 주 추천', limit: 6, mode: 'VIEWED' },   // v10.761
   CATEGORIES: { type: 'CATEGORIES', title: '' },
   NOTICES: { type: 'NOTICES', title: '', limit: 5 },
   FAQ: { type: 'FAQ', title: '', items: [{ q: '', a: '' }] },
@@ -336,7 +338,17 @@ function BlockFormBody({ b, set }: { b: Block; set: (b: Block) => void }) {
       <label><span>개수</span><input type="number" min={1} max={20} value={b.limit ?? 8} onChange={(e) => set({ ...b, limit: Number(e.target.value) })} /></label>
       <label><span>정렬</span><select value={b.sort ?? 'RECENT'} onChange={(e) => set({ ...b, sort: e.target.value })}>
         <option value="RECENT">최신</option><option value="POPULAR">인기</option><option value="FEE_DESC">소개비 높은 순</option><option value="DEADLINE">마감 임박</option></select></label>
-      <F label="업종 번호(선택 · 그 업종만)" v={b.categoryId} on={p('categoryId')} max={36} /></div>);
+      <F label="업종 번호(선택 · 그 업종만)" v={b.categoryId} on={p('categoryId')} max={36} />
+      <F label="지역 코드(선택 · 시 · 도 코드 · 예 SEOUL)" v={b.regionCode} on={p('regionCode')} max={12} />   {/* v10.762 (docs/870) */}
+      <label><span>배지(선택)</span><select value={b.badge ?? ''} onChange={(e) => set({ ...b, badge: e.target.value })} data-block-listings-badge>
+        <option value="">모두</option><option value="URGENT">급매 · 급구</option><option value="VERIFIED_DOC">서류 확인</option></select></label>
+      <p className="dim">가격 상한은 매물 목록이 받지 않아 넣지 않았습니다.</p></div>);
+    case 'PICKS': return (<div className="form-grid">   {/* v10.761 (docs/869) */}
+      <F label="제목(80자)" v={b.title} on={p('title')} max={80} />
+      <label><span>개수</span><input type="number" min={1} max={12} value={b.limit ?? 6} onChange={(e) => set({ ...b, limit: Number(e.target.value) })} /></label>
+      <label><span>무엇으로</span><select value={b.mode ?? 'VIEWED'} onChange={(e) => set({ ...b, mode: e.target.value })} data-block-picks-mode>
+        <option value="VIEWED">많이 본 매물(인기 순)</option><option value="NEW">새로 올라온 매물(최신 순)</option></select></label>
+      <p className="dim">그때그때 자동으로 채웁니다(5분마다 새로 읽음).</p></div>);
     case 'CATEGORIES': return <div className="form-grid"><F label="제목(선택)" v={b.title} on={p('title')} max={80} /></div>;
     case 'NOTICES': return (<div className="form-grid"><F label="제목(선택)" v={b.title} on={p('title')} max={80} />
       <label><span>개수</span><input type="number" min={1} max={10} value={b.limit ?? 5} onChange={(e) => set({ ...b, limit: Number(e.target.value) })} /></label></div>);
@@ -517,6 +529,22 @@ function PageTools({ p, title, blocks, apply }: { p: PageDetail; title: string; 
   );
 }
 
+/* v10.763 (docs/871) 검색 결과 미리 보기 — 검색엔진이 보여 줄 모양(제목 60자 · 설명 160자 · 주소) · 넘치면 잘린다고 알림 */
+export function SeoPreview({ title, desc, path }: { title: string; desc: string; path: string }) {
+  const t = title || '(제목 없음)';
+  const url = siteHref(path).replace(/^https?:\/\//, '');
+  return (
+    <div className="card pad" data-seo-preview={t.length > 60 || desc.length > 160 ? 'long' : 'ok'}><b>검색 결과 미리 보기</b> <span className="dim">— 검색엔진이 보여 줄 모양(대강) · 제목 60자 · 설명 160자 넘으면 잘림</span>
+      <div style={{ border: '1px solid var(--sgb-line, #e5e7eb)', borderRadius: 8, padding: 12, marginTop: 6, maxWidth: 600 }}>
+        <div className="dim" style={{ fontSize: 12 }}>{url}</div>
+        <div style={{ color: '#1a0dab', fontSize: 18 }}>{t.length > 60 ? `${t.slice(0, 60)}…` : t}</div>
+        <div style={{ fontSize: 13 }}>{desc ? (desc.length > 160 ? `${desc.slice(0, 160)}…` : desc) : <span className="dim">(설명 없음 — 검색엔진이 화면 글에서 골라 씀)</span>}</div>
+      </div>
+      {(t.length > 60 || desc.length > 160) && <p className="warn-text">{t.length > 60 ? `제목 ${t.length}자 ` : ''}{desc.length > 160 ? `설명 ${desc.length}자 ` : ''}— 줄이는 것이 좋습니다.</p>}
+    </div>
+  );
+}
+
 /* v10.691 · 692 (D320 · docs/801) 공개 범위 · 검색엔진 설정 — 바로 반영(게시와 상관없음) */
 function PageMeta({ p, onSaved }: { p: PageDetail; onSaved: (d: PageDetail) => void }) {
   const [vis, setVis] = useState(p.visibility ?? 'ALL');
@@ -536,6 +564,7 @@ function PageMeta({ p, onSaved }: { p: PageDetail; onSaved: (d: PageDetail) => v
         <F label="검색엔진 · 공유 설명(160자 · 비우면 블록에서 자동)" v={desc} on={setDesc} max={160} area />
         <ImageField label="검색엔진 · 공유 그림(비우면 블록에서 자동)" v={img} on={setImg} />
       </div>
+      <SeoPreview title={p.title} desc={desc} path={p.slug === 'home' ? `/g/${String(p.gwanCode).toLowerCase()}` : `/info/${p.slug}`} />   {/* v10.763 (docs/871) */}
       {p.slug === 'home' && <p className="dim">첫 화면은 누구나 보게만 둘 수 있습니다.</p>}
       <div className="acts"><button className="btn-sm btn-ok" data-gwan-page-meta-save onClick={() => { setErr(null); setMsg(null);
         void api<PageDetail>(`/admin/gwan-pages/${p.id}`, { method: 'PATCH', body: JSON.stringify({ visibility: vis, seoDescription: desc.trim(), seoImage: img.trim(), noindex: ni }) })

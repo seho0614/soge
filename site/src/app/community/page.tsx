@@ -9,6 +9,9 @@ import { TownPicks } from '@/components/community/TownPicks';
 import { RankingLink } from '@/components/community/RankingLink';   // v10.507 (D274)
 import { PlazaNotices, type PlazaNotice } from '@/components/community/PlazaNotices';
 import { me } from '@/lib/session';
+import { getLayout } from '@/lib/layout';   // v10.757 (D328) 꾸밀 페이지
+import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import '@/styles/plaza.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,7 +35,7 @@ interface Board { items: PostRow[]; total: number; page: number; size: number; p
  *   소개광장 공지 글(posts · NOTICE)은 그 아래 그대로 — 새로 쓰기는 입구(CreatePostDto)에서 이미 받지 않음.
  */
 export default async function CommunityPage({ searchParams }: {
-  searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string; nq?: string | string[]; np?: string | string[] }>;
+  searchParams: Promise<{ board?: string | string[]; q?: string | string[]; page?: string | string[]; deleted?: string; nq?: string | string[]; np?: string | string[]; lp?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const t = await getTranslations('plaza');
@@ -62,11 +65,13 @@ export default async function CommunityPage({ searchParams }: {
   const ntc = showNtc ? await apiGetPersonal<PlazaNotice[]>(`/notices${nqs.toString() ? `?${nqs}` : ''}`).catch(() => [] as PlazaNotice[]) : [];
   const ntcRows = Array.isArray(ntc) ? ntc : [];
   const hrefOf = (p: number) => plazaHref({ board: cur, q, page: p });
+  const lay = await getLayout('COMM', sp.lp);   // v10.757 (D328 · docs/865) 소개광장 메인 안내 띠 · 위 · 아래 블록
 
   return (
     <><div className="plz">
       <PlazaHero q={q} board={cur} />
       <div className="plz-body">
+        <LayBand text={lay?.texts.band} /><LayBlocks code="MNY" k="COMM" blocks={lay?.inserts.top} at="top" />
         {sp.deleted && <p className="ok-note" role="status">{t('list.deleted')}</p>}
         <PlazaTabs cur={cur} q={q} />
         {showNtc && <PlazaNotices rows={ntcRows} login={login} mode={cur === 'NOTICE' ? 'full' : 'pinned'} nq={nq} np={np} />}
@@ -118,7 +123,8 @@ export default async function CommunityPage({ searchParams }: {
           {b && b.pages > 0 && <Pager page={b.page} pages={b.pages} hrefOf={hrefOf} />}
           <Link className="plz-write cmu-write" href="/community/write">{t('list.write')}</Link>
         </div>
+        <LayBlocks code="MNY" k="COMM" blocks={lay?.inserts.bottom} at="bottom" />
       </div>
-    </div><i hidden data-root-end="" /></>
+    </div><LayoutViewPing k="COMM" /><i hidden data-root-end="" /></>
   );
 }

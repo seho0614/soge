@@ -10,7 +10,8 @@ export function LayoutViewPing({ k }: { k: string }) {
       if (navigator.doNotTrack === '1' || sessionStorage.getItem(key) || /[?&]lp=/.test(location.search)) return;
       sessionStorage.setItem(key, '1');
     } catch { /* 저장소를 못 써도 한 번은 보냄(서버가 거름) */ }
-    fetch(`/api/v1/site-layouts/${encodeURIComponent(k)}/view`, { method: 'POST', keepalive: true, credentials: 'omit' }).catch(() => undefined);
+    const v = /(?:^|;\s*)sgb_ab=([ab])/.exec(document.cookie)?.[1];   // v10.760 A/B 비교 판(비교가 없으면 서버가 무시)
+    fetch(`/api/v1/site-layouts/${encodeURIComponent(k)}/view${v ? `?v=${v}` : ''}`, { method: 'POST', keepalive: true, credentials: 'omit' }).catch(() => undefined);
   }, [k]);
   return null;
 }

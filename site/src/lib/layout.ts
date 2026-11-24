@@ -1,4 +1,5 @@
 import { getLocale } from 'next-intl/server';
+import { cookies } from 'next/headers';
 import { apiGet, apiGetPublic } from '@/lib/api';
 
 /* ---------------------------------------------------------------------
@@ -7,7 +8,7 @@ import { apiGet, apiGetPublic } from '@/lib/api';
  *   ?lp=<40자> 미리보기 — 저장된 초안(캐시 없이) · 링크가 끝나면 처음 배치
  *   구역 열쇠는 서버 LAYOUT_SPECS(site-layouts.service.ts)와 같음
  * ------------------------------------------------------------------- */
-export type LayKey = 'HOME' | 'MNY' | 'MAL' | 'BIZ' | 'LED' | 'HLT' | 'EARN';   // v10.702 EARN 허브
+export type LayKey = 'HOME' | 'MNY' | 'MAL' | 'BIZ' | 'LED' | 'HLT' | 'EARN' | 'COMM' | 'HELP' | 'PARTNER' | 'MALL_ITEM';   // v10.702 EARN 허브 · v10.755 · 757 ~ 759 (D328)
 export interface LaySlide { show: boolean; tag?: string; title?: string; desc?: string; cta?: string; href?: string; image?: string }
 export interface Lay {
   sections: Array<{ key: string; show: boolean }>;
@@ -22,8 +23,11 @@ export async function getLayout(key: LayKey, lp?: string | string[] | null): Pro
   const tok = typeof lp === 'string' && /^[0-9a-f]{40}$/.test(lp) ? lp : null;
   const r = await (tok
     ? apiGetPublic<{ layout: Lay | null }>(`/site-layouts/${key}?preview=${tok}`, 0)
-    : apiGet<{ layout: Lay | null }>(`/site-layouts/${key}`, 60)).catch(() => null);
-  const lay = r?.layout ?? null;
+    : apiGet<{ layout: Lay | null; ab?: { id: number; layout: Lay } | null }>(`/site-layouts/${key}`, 60)).catch(() => null);
+  /* v10.760 (D328 · docs/868) A/B 비교 중이면 방문자 쿠키 sgb_ab(proxy 가 처음 방문에 a · b 를 나눠 줌 · 첫 화면은 a) = b 인 사람에게 B 판 */
+  const ab = !tok && r && 'ab' in r ? r.ab : null;
+  const pickB = ab ? (await cookies().catch(() => null))?.get('sgb_ab')?.value === 'b' : false;
+  const lay = pickB && ab ? ab.layout : r?.layout ?? null;
   return lay ? forLocale(lay, await getLocale().catch(() => 'ko')) : null;
 }
 /** v10.708 (docs/816) 언어별 글자 — 한국어는 texts · 다른 언어는 i18n[언어](없는 칸은 비움 → 그 언어 사전 글) · 안내 장 글도 같은 규칙(slide.<장>.<칸>) */

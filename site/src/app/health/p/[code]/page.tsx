@@ -14,9 +14,12 @@ import { me } from '@/lib/session';
 import { getFmt } from '@/lib/getFmt';
 import { JsonLd, breadcrumbLd } from '@/components/common/JsonLd';
 import { siteOrigin } from '@/components/refcode/origin';
+import { getLayout } from '@/lib/layout';   // v10.755 (D328) 꾸밀 페이지
+import { LayBand, LayBlocks } from '@/components/layout/LayBlocks';
+import { LayoutViewPing } from '@/components/layout/LayoutViewPing';
 import { MbxItemTools } from '@/components/mbx/MbxItemTools';   // v10.501 ~ 503 (D273) 최근 본 · 비교에 담기 · 가격 알림
 
-type Props = { params: Promise<{ code: string }>; searchParams?: Promise<{ tab?: string; rating?: string }> };
+type Props = { params: Promise<{ code: string }>; searchParams?: Promise<{ tab?: string; rating?: string; lp?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
@@ -52,6 +55,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   const f = await getFmt();
   const tc = await getTranslations('hlt.common');
   const tk = await getTranslations('hlt.card');
+  const lay = await getLayout('MALL_ITEM', sp.lp);   // v10.755 (D328 · docs/863) 모든 상품 상세 안내 띠 · 위 · 아래 블록
 
   let p: HltProductDetail | null = null;
   let err: string | null = null;
@@ -93,6 +97,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
   return (
     <><JsonLd data={productLd} /><JsonLd data={breadcrumbLd(origin, [{ name: tc('mall'), path: '/health' }, { name: p.name, path }])} /><div className="hlt" data-screen="SB-HLT-PRD-010">
       <HltNav back="/health" />
+      <LayBand text={lay?.texts.band} /><LayBlocks code="HLT" k="MALL_ITEM" blocks={lay?.inserts.top} at="top" />
       <Crumb items={[
         ing ? { href: `/health/i/${encodeURIComponent(ing.code)}`, label: ing.name } : { href: '/health/c/ALL', label: tc('allProducts') },
         { label: p.name },
@@ -210,6 +215,7 @@ export default async function HltProductPage({ params, searchParams }: Props) {
           </div>
         </section>
       )}
+      <LayBlocks code="HLT" k="MALL_ITEM" blocks={lay?.inserts.bottom} at="bottom" /><LayoutViewPing k="MALL_ITEM" />
     </div><i hidden data-root-end="" /></>
   );
 }

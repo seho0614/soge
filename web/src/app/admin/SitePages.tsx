@@ -3,7 +3,7 @@ import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { siteHref } from '../../lib/siteUrl';
-import { BlockList, GwanPageEditor, ImageField, checkPage } from './gwans/GwanPages';
+import { BlockList, GwanPageEditor, ImageField, SeoPreview, checkPage } from './gwans/GwanPages';
 
 /* ---------------------------------------------------------------------
  * SB-ADM-PAGE-020 페이지 목록 · 꾸밀 페이지 — v10.696 ~ 700 (D321 · docs/804 ~ 808)
@@ -17,13 +17,13 @@ interface Spec { key: string; name: string; path: string; sections: Array<[strin
   slides?: Array<[string, string]>; picks?: Array<[string, string, number]>; inserts: 'each' | 'edge' }
 interface Slide { show: boolean; tag?: string; title?: string; desc?: string; cta?: string; href?: string; image?: string }
 interface Layout { sections: Array<{ key: string; show: boolean }>; texts: Record<string, string>; slides?: Record<string, Slide>; picks?: Record<string, string[]>; inserts: Record<string, Block[]>;
-  i18n?: Record<string, Record<string, string>> }   // v10.708 언어별 글자
+  i18n?: Record<string, Record<string, string>>; i18nSig?: Record<string, string> }   // v10.708 언어별 글자 · v10.764 번역 지문
 interface Row { key: string; name: string; path: string; status: string; publishedVersion: number | null; publishedAt: string | null; publishedByName: string | null;
   draftUpdatedAt: string | null; draftUpdatedByName: string | null; draftChanged: boolean; scheduledAt: string | null; scheduledByName: string | null;
-  editable: boolean; gwanCode: string | null; gwanOpen: boolean; views7?: number }   // v10.701 (D322) 수정 가능 · 관 열림 · v10.722 7일 방문
+  editable: boolean; gwanCode: string | null; gwanOpen: boolean; views7?: number; staleLangs?: string[] }   // v10.701 (D322) 수정 가능 · 관 열림 · v10.722 7일 방문 · v10.764 다시 번역 필요
 interface Detail extends Omit<Row, 'name' | 'path' | 'status'> { spec: Spec; draft: Layout; published: Layout | null;
   versions: Array<{ version: number; how: string; reason: string | null; publishedAt: string; publishedByName: string | null }>;
-  previews: Array<{ token: string; expiresAt: string; createdByName: string | null }>; lockReason: string | null }
+  previews: Array<{ token: string; expiresAt: string; createdByName: string | null }>; lockReason: string | null; canPublish?: boolean }
 interface PageRow { id: number; gwanCode: string; gwanName: string; slug: string; lang: string; title: string; status: string; publishedVersion: number | null;
   publishedAt: string | null; draftUpdatedAt: string; draftUpdatedByName: string | null; scheduledAt: string | null; visibility: string; views7: number;
   editable: boolean; gwanOpen: boolean }
@@ -87,7 +87,7 @@ export function checkLayout(sp: Spec, l: Layout, langs: string[]): LayFinding[] 
   return out;
 }
 
-function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: () => void }) {
+function Editor({ k, isSuper: isSuperRole, onBack }: { k: string; isSuper: boolean; onBack: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [l, setL] = useState<Layout | null>(null);
   const [saved, setSaved] = useState('');
@@ -132,6 +132,8 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   };
   if (!d || !l) return err ? <p className="form-error">{err}</p> : <p className="muted">불러오는 중…</p>;
   const sp = d.spec;
+  const isSuper = isSuperRole || !!d.canPublish;   // v10.771 (docs/879) 게시 · 예약 · 되돌리기 = SUPER 또는 「관 UI/UX」 승인 권한(서버가 다시 봄)
+  const stale = new Set(d.staleLangs ?? []);   // v10.764 다시 번역 필요
   const nm = Object.fromEntries(sp.sections);
   const set = (p: Partial<Layout>) => setL({ ...l, ...p });
   const move = (i: number, dir: number) => { const j = i + dir; if (j < 0 || j >= l.sections.length) return; const n = [...l.sections]; [n[i], n[j]] = [n[j]!, n[i]!]; set({ sections: n }); };
@@ -176,7 +178,7 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
         <b>{d.editable ? '수정 가능' : '수정 불가'}</b>{d.gwanCode && <> · 관 {d.gwanCode} {d.gwanOpen ? '열림' : '닫힘'}</>}
         {d.lockReason === 'SITE_LAYOUT_LOCKED' && <span className="warn-text"> — 최고 관리자(SUPER)가 「수정 가능」으로 바꿔야 고칠 수 있습니다.</span>}
         {d.lockReason === 'SITE_LAYOUT_GWAN_OPEN' && <span className="warn-text"> — 관이 열려 있어 고칠 수 없습니다. 관 관리 › 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오. 또는 페이지 목록 맨 위 「관 점검 시간」을 예약하면 그 시간에 닫혔다가 다시 열립니다.</span>}
-        {isSuper && <> <button className="btn-sm" disabled={!!busy} data-site-layout-editable onClick={() => void run('ed', () => api<Detail>(`/admin/site-layouts/${k}/editable`, { method: 'POST', body: JSON.stringify({ editable: !d.editable }) }), d.editable ? '수정 불가로 바꿨습니다.' : '수정 가능으로 바꿨습니다.')}>{d.editable ? '수정 불가로' : '수정 가능으로'}</button></>}
+        {isSuperRole && <> <button className="btn-sm" disabled={!!busy} data-site-layout-editable onClick={() => void run('ed', () => api<Detail>(`/admin/site-layouts/${k}/editable`, { method: 'POST', body: JSON.stringify({ editable: !d.editable }) }), d.editable ? '수정 불가로 바꿨습니다.' : '수정 가능으로 바꿨습니다.')}>{d.editable ? '수정 불가로' : '수정 가능으로'}</button></>}
         <span className="dim"> · 엔진 기능(검색 · 목록 · 주문 · 정산)은 고칠 수 없고, 글자 · 그림 · 순서 · 숨기기 · 블록 같은 디자인만 고칩니다.</span>
       </div>
 
@@ -184,7 +186,7 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
         <div className="card pad" data-site-layout-texts={lang}><h3 style={{ marginTop: 0 }}>글자 <span className="dim" style={{ fontWeight: 400 }}>— 비우면 {lang === 'ko' ? '처음 글' : '그 언어 사전 글'}</span></h3>
           {/* v10.708 (docs/816) 언어별 글자 — 한국어 글은 한국어 화면에만 · 다른 언어는 그 언어 칸(비우면 그 언어 사전 글) */}
           <div className="acts" data-site-layout-langs>{['ko', ...langs.filter((x) => x !== 'ko')].map((x) => (
-            <button key={x} className={`btn-sm${x === lang ? ' btn-ok' : ''}`} onClick={() => setLang(x)} data-lay-lang={x}>{x === 'ko' ? '한국어' : x}{x !== 'ko' && l.i18n?.[x] ? ` (${Object.keys(l.i18n[x]!).length})` : ''}</button>))}
+            <button key={x} className={`btn-sm${x === lang ? ' btn-ok' : ''}`} onClick={() => setLang(x)} data-lay-lang={x}>{x === 'ko' ? '한국어' : x}{x !== 'ko' && l.i18n?.[x] ? ` (${Object.keys(l.i18n[x]!).length})` : ''}{stale.has(x) && <b className="warn-text" data-lay-lang-stale={x}> · 다시 번역 필요</b>}</button>))}
             {lang === 'ko' && <button className="btn-sm" disabled={!!busy} data-site-layout-suggest title="관 이름 · 설명으로 한국어 글을 제안합니다(칸만 채움 · 저장은 직접)"
               onClick={() => { if (!confirm('AI 로 이 페이지 글자를 제안받아 빈 칸에 채웁니다(AI 비용 · 월 상한). 채운 뒤 읽어 보고 「초안 저장」을 누르십시오.')) return; setBusy('sg'); setErr(null); setMsg(null);
                 void api<{ texts: Record<string, string> }>(`/admin/site-layouts/${k}/suggest`, { method: 'POST' }).then((r) => { const n = Object.fromEntries(Object.entries(r.texts).filter(([tk]) => !l.texts[tk])); set({ texts: { ...l.texts, ...n } }); setMsg(`빈 칸 ${Object.keys(n).length}개를 AI 제안으로 채웠습니다 — 읽어 보고 저장하십시오.`); }).catch((e) => setErr(msgOf(e))).finally(() => setBusy('')); }}>AI 글자 초안</button>}   {/* v10.741 (docs/849) */}
@@ -260,6 +262,10 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
               {dirty && <span className="dim">저장한 뒤 예약합니다</span>}</div>}
         </div>)}
 
+      {/* v10.763 (docs/871) 검색 결과 미리 보기 */}
+      <SeoPreview title={(l.texts.title || l.texts.heroTitleA || sp.name).slice(0, 80)} desc={l.texts.desc || l.texts.lead || l.texts.heroLeadA || l.texts.band || ''} path={sp.path} />
+      {/* v10.760 (D328 · docs/868) A/B 비교 */}
+      <AbCard k={k} canRun={isSuper && !locked} published={!!d.published} draftChanged={d.draftChanged} dirty={dirty} onMsg={(m, e) => { setMsg(m); setErr(e); }} />
       {/* v10.703 (docs/811) 초안 ↔ 게시 판 차이 · 운영 화면 안 미리보기 */}
       <div className="card pad" data-site-layout-diff={diff.length}><b>게시하면 바뀌는 것</b> <span className="dim">— {d.published ? `게시된 ${d.publishedVersion}판` : '처음 배치'}과 견줌{dirty ? ' · 저장 안 한 고침 포함' : ''}</span>
         {diff.length ? <ul>{diff.map((x, i) => <li key={i}>{x}</li>)}</ul> : <p className="dim">바뀌는 것이 없습니다.</p>}</div>
@@ -301,7 +307,7 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
       {/* v10.733 (docs/841) 다른 꾸밀 페이지에서 배치 복사 */}
       <div className="card pad" data-site-layout-copy><b>다른 페이지에서 배치 복사</b> <span className="dim">— 같은 이름의 구역 차례 · 보이기 · 글자 · 위 · 아래 블록만 가져와 초안으로(게시는 따로)</span>
         <div className="acts"><select value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} aria-label="가져올 페이지"><option value="">고르기</option>
-          {['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'].filter((x) => x !== k).map((x) => <option key={x} value={x}>{x}</option>)}</select>
+          {['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN', 'COMM', 'HELP', 'PARTNER', 'MALL_ITEM'].filter((x) => x !== k).map((x) => <option key={x} value={x}>{x}</option>)}</select>
           <button className="btn-sm" disabled={!copyFrom || !!busy || locked || dirty} onClick={() => { if (confirm(`${copyFrom} 의 배치를 이 페이지 초안으로 가져옵니다(지금 초안을 덮어씀).`)) void run('cp', () => api<Detail>(`/admin/site-layouts/${k}/copy-from`, { method: 'POST', body: JSON.stringify({ from: copyFrom }) }), `${copyFrom} 배치를 초안으로 가져왔습니다 — 확인 뒤 게시하십시오.`); }} data-site-layout-copy-go>가져오기</button></div></div>
       {/* v10.717 (docs/825) 판 비교 */}
       <div className="card pad" data-site-layout-compare><b>판 비교</b> <span className="dim">— 두 판을 골라 차이를 봄</span>
@@ -322,6 +328,26 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
                   void run('rb', () => api<Detail>(`/admin/site-layouts/${k}/rollback`, { method: 'POST', body: JSON.stringify({ version: v.version, reason: why.trim() }) }), `${v.version}판으로 되돌려 게시했습니다.`);
                 }}>바로 되돌리기</button></>}</td></tr>))}
           </tbody></table></div>)}
+    </div>
+  );
+}
+
+/* v10.760 (D328 · docs/868) A/B 비교 — A = 게시된 판 · B = 지금 저장된 초안 · 방문자 반반(쿠키) · 1 ~ 31일 · 끝낼 때 B 를 고르면 B 를 새 판으로 게시 */
+interface AbRow { id: number; status: string; winner: string | null; startsAt: string; endsAt: string; createdByName: string | null; viewsA: number; viewsB: number }
+function AbCard({ k, canRun, published, draftChanged, dirty, onMsg }: { k: string; canRun: boolean; published: boolean; draftChanged: boolean; dirty: boolean; onMsg: (m: string | null, e: string | null) => void }) {
+  const q = useApi<{ items: AbRow[] }>(`/admin/site-layouts/${k}/ab`);
+  const [days, setDays] = useState(7);
+  const run = q.data?.items.find((x) => x.status === 'RUNNING');
+  const go = (path: string, body: unknown, ok: string) => void api(path, { method: 'POST', body: JSON.stringify(body) }).then(() => { q.reload(); onMsg(ok, null); }).catch((e) => onMsg(null, msgOf(e)));
+  return (
+    <div className="card pad" data-site-layout-ab={run ? 'running' : 'off'}><b>A/B 비교</b> <span className="dim">— A = 게시된 판 · B = 저장된 초안 · 방문자를 반반(처음 방문 화면은 A) · 방문 수로 비교</span>
+      {run ? <p>진행 중: {when(run.startsAt)} ~ {when(run.endsAt)}(UTC) · 방문 A <b>{run.viewsA}</b> · B <b>{run.viewsB}</b>{' '}
+        {canRun && <><button className="btn-sm" onClick={() => { if (confirm('A(지금 게시된 판)를 그대로 두고 비교를 끝냅니다.')) go(`/admin/site-layouts/${k}/ab/end`, { winner: 'A' }, 'A/B 비교를 끝냈습니다 — A 그대로.'); }} data-site-layout-ab-end-a>A 로 끝내기</button>{' '}
+          <button className="btn-sm btn-ok" onClick={() => { if (confirm('B 판을 새 판으로 게시하고 비교를 끝냅니다.')) go(`/admin/site-layouts/${k}/ab/end`, { winner: 'B' }, 'B 판을 게시하고 비교를 끝냈습니다.'); }} data-site-layout-ab-end-b>B 로 끝내기(게시)</button></>}</p>
+        : canRun && <div className="acts"><label>기간 <input type="number" min={1} max={31} value={days} onChange={(e) => setDays(Number(e.target.value))} style={{ width: 70 }} />일</label>
+          <button className="btn-sm" disabled={!published || !draftChanged || dirty} title={!published ? '게시된 판이 있어야 합니다' : !draftChanged ? '초안이 게시된 판과 같습니다' : dirty ? '저장한 뒤 누르십시오' : ''}
+            onClick={() => { if (confirm(`지금 저장된 초안을 B 로 ${days}일 동안 방문자 절반에게 보입니다.`)) go(`/admin/site-layouts/${k}/ab`, { days }, 'A/B 비교를 시작했습니다.'); }} data-site-layout-ab-start>비교 시작</button></div>}
+      {(q.data?.items ?? []).filter((x) => x.status === 'ENDED').slice(0, 3).map((x) => <p key={x.id} className="dim">지난 비교 {when(x.startsAt)} ~ {when(x.endsAt)} · A {x.viewsA} · B {x.viewsB} · {x.winner === 'B' ? 'B 게시' : 'A 그대로'}</p>)}
     </div>
   );
 }
@@ -377,7 +403,8 @@ function Maint({ isSuper }: { isSuper: boolean }) {
 }
 
 /* v10.711 (D324 · docs/819) 게시 요청 — ADMIN 요청 → SUPER 승인(그 초안 게시) · 되돌려 보냄(사유) · 요청한 사람 철회 · 요청 뒤 초안이 바뀌면 승인 막힘 */
-interface ReqRow { id: number; kind: string; ref: string; label: string; note: string | null; status: string; reason: string | null; requestedAt: string; requestedByName: string | null; decidedAt: string | null; decidedByName: string | null; stale: boolean }
+interface ReqRow { id: number; kind: string; ref: string; label: string; note: string | null; status: string; reason: string | null; requestedAt: string; requestedByName: string | null; decidedAt: string | null; decidedByName: string | null; stale: boolean;
+  firstApprovedAt?: string | null; firstApprovedByName?: string | null }   // v10.772 두 사람 승인
 const RSTATUS: Record<string, string> = { OPEN: '요청 대기', APPROVED: '승인(게시함)', REJECTED: '되돌려 보냄', WITHDRAWN: '철회' };
 function Requests({ isSuper, onOpen }: { isSuper: boolean; onOpen: (kind: string, ref: string) => void }) {
   const rows = useApi<ReqRow[]>('/admin/publish-requests');
@@ -392,7 +419,7 @@ function Requests({ isSuper, onOpen }: { isSuper: boolean; onOpen: (kind: string
       <table className="tbl"><thead><tr><th>페이지</th><th>메모</th><th>요청</th><th>상태</th><th></th></tr></thead><tbody>
         {(rows.data ?? []).map((r) => (
           <tr key={r.id} data-publish-request={r.status}><td>{r.label}</td><td>{r.note ?? ''}</td><td>{when(r.requestedAt)} · {r.requestedByName ?? '—'}</td>
-            <td>{RSTATUS[r.status] ?? r.status}{r.stale && <b className="warn-text"> · 요청 뒤 초안 바뀜</b>}{r.reason ? ` · ${r.reason}` : ''}{r.decidedByName ? ` · ${r.decidedByName}` : ''}</td>
+            <td>{RSTATUS[r.status] ?? r.status}{r.stale && <b className="warn-text"> · 요청 뒤 초안 바뀜</b>}{r.status === 'OPEN' && r.firstApprovedAt && <b data-publish-request-first> · 1차 승인 {r.firstApprovedByName ?? ''} — 다른 SUPER 의 2차 승인 대기</b>}{r.reason ? ` · ${r.reason}` : ''}{r.decidedByName ? ` · ${r.decidedByName}` : ''}</td>
             <td>{r.status === 'OPEN' && <>
               <button className="btn-sm" onClick={() => onOpen(r.kind, r.ref)}>열어 보기</button>{' '}
               {isSuper && <button className="btn-sm btn-ok" disabled={r.stale} data-publish-request-approve onClick={() => { if (confirm(`「${r.label}」 요청 초안을 사용자 웹에 게시합니다.`)) act(api(`/admin/publish-requests/${r.id}/approve`, { method: 'POST' }), '승인했습니다 — 게시했습니다.'); }}>승인(게시)</button>}{' '}
@@ -501,6 +528,7 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
   const [edit, setEdit] = useState<string | null>(null);
   const [pageEdit, setPageEdit] = useState<number | null>(null);   // v10.704 (docs/812) 관 안 페이지 그 자리에서 편집
   const [q, setQ] = useState(''); const [fl, setFl] = useState('');   // v10.723 (docs/831) 찾기 · 거르기
+  const [logMonth, setLogMonth] = useState(() => new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 7));   // v10.773
   const [pick, setPick] = useState<string[]>([]); const [bat, setBat] = useState(''); const [batMsg, setBatMsg] = useState<string | null>(null);   // v10.716 한꺼번에 예약
   if (pageEdit) return <GwanPageEditor id={pageEdit} isSuper={isSuper} onBack={() => { setPageEdit(null); reload(); }} />;
   if (edit) return <Editor k={edit} isSuper={isSuper} onBack={() => { setEdit(null); reload(); }} />;
@@ -508,9 +536,9 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
   if (loading || !data) return <p className="muted">불러오는 중…</p>;
   const qq = q.trim().toLowerCase();
   const lays = data.layouts.filter((r) => (!qq || `${r.name} ${r.path} ${r.key}`.toLowerCase().includes(qq))
-    && (!fl || (fl === 'draft' && r.draftChanged) || (fl === 'editable' && r.editable) || (fl === 'open' && r.gwanOpen) || (fl === 'sched' && r.scheduledAt)));
+    && (!fl || (fl === 'draft' && r.draftChanged) || (fl === 'editable' && r.editable) || (fl === 'open' && r.gwanOpen) || (fl === 'sched' && r.scheduledAt) || (fl === 'stale' && (r.staleLangs ?? []).length > 0)));
   const pgs = data.pages.filter((p) => (!qq || `${p.gwanName} ${p.gwanCode} ${p.slug} ${p.title}`.toLowerCase().includes(qq))
-    && (!fl || (fl === 'draft' && p.status !== 'PUBLISHED') || (fl === 'editable' && p.editable) || (fl === 'open' && p.gwanOpen) || (fl === 'sched' && p.scheduledAt)));
+    && (!fl || (fl === 'draft' && p.status !== 'PUBLISHED') || (fl === 'editable' && p.editable) || (fl === 'open' && p.gwanOpen) || (fl === 'sched' && p.scheduledAt)) && fl !== 'stale');
   return (
     <div data-site-pages={data.layouts.length + data.pages.length}>
       <MyTasks />
@@ -519,12 +547,15 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
       <Calendar />
       {/* v10.723 (docs/831) 찾기 · 거르기 · v10.743 (docs/851) 목록 CSV */}
       <div className="search-row" data-site-pages-filter><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="페이지 · 관 · 주소 찾기" aria-label="페이지 찾기" />
-        <select value={fl} onChange={(e) => setFl(e.target.value)} aria-label="거르기"><option value="">모두</option><option value="draft">게시 안 한 초안</option><option value="editable">수정 가능</option><option value="open">관 열림</option><option value="sched">예약 있음</option></select>
-        <button className="btn-sm" data-site-pages-csv onClick={() => void api<{ csv: string; filename: string }>('/admin/site-pages.csv').then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>목록 CSV</button></div>
+        <select value={fl} onChange={(e) => setFl(e.target.value)} aria-label="거르기"><option value="">모두</option><option value="draft">게시 안 한 초안</option><option value="editable">수정 가능</option><option value="open">관 열림</option><option value="sched">예약 있음</option><option value="stale">다시 번역 필요</option></select>   {/* v10.764 */}
+        <button className="btn-sm" data-site-pages-csv onClick={() => void api<{ csv: string; filename: string }>('/admin/site-pages.csv').then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>목록 CSV</button>
+        {/* v10.773 (docs/881) 게시 기록 CSV(감사 · 달마다) */}
+        <input type="month" value={logMonth} onChange={(e) => setLogMonth(e.target.value)} aria-label="게시 기록 달" />
+        <button className="btn-sm" data-site-pages-publish-log onClick={() => void api<{ csv: string; filename: string }>(`/admin/site-pages/publish-log.csv?month=${logMonth}`).then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>게시 기록 CSV</button></div>
       <div className="card pad"><h3 style={{ marginTop: 0 }}>메인 · 관 메인 · 소개몰 메인 <span className="dim" style={{ fontWeight: 400 }}>— 구역 보이기 · 순서 · 글자 · 그림 · 블록(게시 전에는 사용자 웹 그대로)</span></h3>
         <table className="tbl"><thead><tr>{isSuper && <th></th>}<th>페이지</th><th>주소</th><th>상태</th><th>수정</th><th>7일 방문</th><th>마지막 초안</th><th>예약</th><th></th></tr></thead><tbody>
           {lays.map((r) => (
-            <tr key={r.key} data-site-page-layout={r.key}>{isSuper && <td><input type="checkbox" aria-label={`${r.name} 고르기`} checked={pick.includes(r.key)} onChange={(e) => setPick(e.target.checked ? [...pick, r.key] : pick.filter((x) => x !== r.key))} data-site-page-pick={r.key} /></td>}<td><b>{r.name}</b></td><td className="mono">{r.path}</td>
+            <tr key={r.key} data-site-page-layout={r.key}>{isSuper && <td><input type="checkbox" aria-label={`${r.name} 고르기`} checked={pick.includes(r.key)} onChange={(e) => setPick(e.target.checked ? [...pick, r.key] : pick.filter((x) => x !== r.key))} data-site-page-pick={r.key} /></td>}<td><b>{r.name}</b>{(r.staleLangs ?? []).length > 0 && <small className="warn-text" data-site-page-stale={r.key}> · 다시 번역 필요({r.staleLangs!.join(', ')})</small>}</td><td className="mono">{r.path}</td>
               <td>{r.status === 'PUBLISHED' ? `게시 ${r.publishedVersion}판(${when(r.publishedAt)})` : '처음 배치'}{r.draftChanged && <b className="warn-text"> · 게시 안 한 초안</b>}</td>
               <td data-site-page-editable={r.editable ? (r.gwanOpen ? 'open' : 'on') : 'off'}>{r.editable ? (r.gwanOpen ? <span className="warn-text">가능 · 관 열림(닫아야 편집)</span> : '가능') : '불가'}
                 {isSuper && <> <button className="btn-sm" onClick={() => void api(`/admin/site-layouts/${r.key}/editable`, { method: 'POST', body: JSON.stringify({ editable: !r.editable }) }).then(reload)} data-site-page-editable-toggle={r.key}>{r.editable ? '불가로' : '가능으로'}</button></>}</td>
