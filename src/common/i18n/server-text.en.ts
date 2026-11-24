@@ -1745,8 +1745,8 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "동네 인증은 위치기반서비스 이용약관(LOCATION)을 게시해 시행된 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service terms (LOCATION) are published and in effect.",
   "동네 인증은 위치기반서비스사업 신고번호(community.lbs_report_no)를 넣은 뒤에 켤 수 있습니다.": "Neighborhood verification can be turned on only after the location-based service business report number (community.lbs_report_no) is entered.",
   /* v10.335 (D227) — 리드관 켜기 전 안전장치 */
-  "리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.": "The Consult Leads section can be turned on only after the legal re-review reply is received (setting lead.legal_ok = on).",
-  "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Consult Leads legal confirmation setting.",
+  "리드관(소개리드)은 법무 재확인 회신을 받은 뒤(설정 lead.legal_ok = on) 켤 수 있습니다.": "The Leeds section can be turned on only after the legal re-review reply is received (setting lead.legal_ok = on).",
+  "리드관 법무 확인 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.": "Only a super admin (SUPER) can change the Leeds legal confirmation setting.",
   "업무 안내는 고치거나 지우지 않고 새 판을 더합니다.": "Work guides are not edited or deleted — save a new version instead.",
   "이용 흐름은 고치거나 지우지 않고 새 판을 더합니다.": "How-to flows are not edited or deleted — save a new version instead.",
   "지금은 가입할 수 없습니다. 고객센터로 문의해 주십시오.": "Sign-up is not available right now. Please contact customer support.",
@@ -5809,7 +5809,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "없는 제한업종 코드입니다.": "Unknown restricted industry code.",
   "업종을 만든 사람은 그 업종을 승인할 수 없습니다 — 다른 관리자가 승인하십시오.": "The person who created a business type cannot approve it — another administrator must approve it.",
   "업종의 관은 만든 뒤 바꿀 수 없습니다 — 새 관에 업종을 새로 만드십시오.": "A business type's section cannot be changed after creation — create a new business type in the other section.",
-  "허브 관과 소개리드에는 업종을 넣지 않습니다 — 허브는 하위 관에, 소개리드는 안심소개 상담 축 업종을 씁니다.": "Hub sections and Consult Leads do not take categories — hubs use their sub-sections, and Consult Leads uses the Safe Referral consultation categories.",
+  "허브 관과 소개리드에는 업종을 넣지 않습니다 — 허브는 하위 관에, 소개리드는 안심소개 상담 축 업종을 씁니다.": "Hub sections and Leeds do not take categories — hubs use their sub-sections, and Leeds uses the Safe Referral consultation categories.",
   /* v10.646 (D309 · docs/791) 새 관을 끝까지 — 코드 3 ~ 4자 · 등록 폼 문구 · 상위 관 · 다른 관 업종 가져오기 */
   "관 코드는 영문 대문자 3 ~ 4자입니다.": "A section code is 3 to 4 uppercase English letters.",
   "폼 종류는 OFFER(소개합니다) · REQUEST(찾습니다) 둘뿐입니다.": "The form type must be OFFER (offering) or REQUEST (looking for).",

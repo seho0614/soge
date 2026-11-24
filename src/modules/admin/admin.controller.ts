@@ -94,7 +94,7 @@ export class AdminController {
   }
 
   @Get('assume-readiness')
-  @ApiOperation({ summary: '간주 모드 끄는 순서', description: 'v10.315 (docs/439) 간주 4개(수금 계좌 · 중개사 · 세금계산서 · 결제)마다 서버가 끌 때 보는 조건 · 업체 진행표 · 키 등록 · ready(끌 수 있음) · missing(빠진 것). 키 · 주소 값은 보내지 않음 · 읽기만.' })
+  @ApiOperation({ summary: '간주 모드 끄는 순서', description: 'v10.315 (docs/439) 간주 4개(수금 계좌 · 중개사 · 세금계산서 · 결제)마다 서버가 끌 때 보는 조건 · 업체 진행표 · 키 등록 · ready(끌 수 있음) · missing(빠진 것) · v10.786 (docs/895) rehearsal(끄면 달라지는 것 — 간주 기록 수 · 바뀌는 동작 · 끈 뒤 할 일 · 어댑터 REAL/STUB · 경고). 키 · 주소 값은 보내지 않음 · 읽기만.' })
   @ApiOkResponse({ type: Object })
   assumeReadiness() { return this.admin.assumeReadiness(); }
 

@@ -5678,7 +5678,7 @@
     "GET /admin/lead-status"
    ],
    "nav": "SB-ADM-PTN-010",
-   "note": "2026-11-17 v10.338 (docs/471) 리드관(소개리드 · Consult Leads) 운영 현황 — 관 상태 · lead.legal_ok · 신청 받을 길 · 상담 업종별 신청 · 전달 · 받을 업체 없음 · 반려 · 받을 업체 0곳 경고. 읽기만"
+   "note": "2026-11-17 v10.338 (docs/471) 리드관(소개리드 · Leeds — v10.788 영어 이름 바꿈 · 옛 Consult Leads) 운영 현황 — 관 상태 · lead.legal_ok · 신청 받을 길 · 상담 업종별 신청 · 전달 · 받을 업체 없음 · 반려 · 받을 업체 0곳 경고. 읽기만"
   },
   {
    "id": "SB-ADM-SIT-110",

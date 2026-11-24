@@ -8,6 +8,7 @@ import { IdentityVerifyService } from '../identity/identity-verify.service';
 import { MailAdminService } from '../../common/mail/mail-admin.service';
 import { HttpESign } from '../deal/esign.provider';   // v10.143 (D139)
 import { SafenumService } from '../listing/safenum.service';   // v10.145 (D141)
+import { INTEGRATIONS } from '../../common/integration/registry';   // v10.786 (docs/895) 간주 끄기 리허설 — 어댑터 REAL · STUB
 import { AlimtalkService } from '../../common/alimtalk/alimtalk.service';
 import { IntegTestService } from '../site/integ-test.service';   // v10.155 — 세금계산서 간주 끄기 전 시험(정적 검사만)
 
@@ -710,13 +711,91 @@ export class AdminService {
         steps: [...integSteps('PG', ['TESTING', 'LIVE']),
           { label: '최근 7일 「결제 키 확인」 성공(연결됨(LIVE)으로 올릴 때 필요)', ok: t7('PG_KEY'), must: false, now: t7('PG_KEY') ? '있음' : '없음' }] },
     ];
+    const rehearsal = await this.assumeRehearsal();
     return {
       rows: rows.map((r) => {
         const miss = r.steps.filter((s) => s.must && !s.ok).map((s) => s.label);
-        return { ...r, off: r.value === 'off', ready: miss.length === 0, missing: miss };
+        return { ...r, off: r.value === 'off', ready: miss.length === 0, missing: miss, rehearsal: rehearsal[r.key] };
       }),
       note: '권하는 순서: 수금 계좌 → 중개사 → 세금계산서 → 결제(돈이 실제로 오가는 것을 마지막에) · 끄기는 오픈 체크리스트 › 관리자 스위치(서버가 같은 조건을 다시 봄)',
     };
+  }
+
+  /**
+   * v10.786 (docs/895) — 간주 끄기 리허설(읽기만): 간주 4개마다 「끄면 달라지는 것」
+   *   · records — 간주로 남은 기록 수(끈 뒤 다시 보거나 정리할 것) · 값은 세기만(개인정보 · 키 없음)
+   *   · adapter — 그 간주가 끄면 부르게 되는 연동(registry.ts 의 REAL · STUB · NONE)과 외부 연동 상태
+   *   · changes — 끄면 바뀌는 동작(site_settings 설명 · 코드 기준) · after — 끈 뒤 할 일
+   *   세금계산서 표는 etax_status 칸이 있는 표를 모두 셈(정보 스키마 · 이름은 소문자 · 숫자 · _ 만).
+   */
+  private async assumeRehearsal() {
+    type Rec = { label: string; n: number };
+    const one = async (sql: string): Promise<number> => {
+      const [r] = await this.db.query<{ n: string }>(sql).catch(() => [{ n: '0' }]);
+      return Number(r?.n ?? 0);
+    };
+    const integ = await this.db.query<{ code: string; status: string }>(`SELECT code, status FROM integrations WHERE code IN ('PG', 'BROKER', 'ETAX')`);
+    const ad = (code: string) => {
+      const e = INTEGRATIONS.find((x) => x.code === code);
+      return { code, name: e?.name ?? code, adapter: e?.adapter ?? 'NONE', status: integ.find((x) => x.code === code)?.status ?? '없음' };
+    };
+    const etaxTables = (await this.db.query<{ t: string; mode: boolean; appr: boolean }>(
+      `SELECT c.table_name AS t,
+              EXISTS (SELECT 1 FROM information_schema.columns m WHERE m.table_schema = 'public' AND m.table_name = c.table_name AND m.column_name = 'etax_mode') AS mode,
+              EXISTS (SELECT 1 FROM information_schema.columns a WHERE a.table_schema = 'public' AND a.table_name = c.table_name AND a.column_name = 'etax_approval_no') AS appr
+         FROM information_schema.columns c JOIN information_schema.tables tb ON tb.table_schema = c.table_schema AND tb.table_name = c.table_name AND tb.table_type = 'BASE TABLE'
+        WHERE c.table_schema = 'public' AND c.column_name = 'etax_status' ORDER BY 1`))
+      .filter((x) => /^[a-z0-9_]+$/.test(x.t));
+    const etaxRecs: Rec[] = [];
+    for (const x of etaxTables) {
+      const cond = `(etax_status = 'ASSUMED'${x.mode ? ` OR etax_mode = 'ASSUMED'` : ''})${x.appr ? ' AND etax_approval_no IS NULL' : ''}`;
+      etaxRecs.push({ label: `${x.t} 간주 발행(승인번호 없음)`, n: await one(`SELECT count(*) AS n FROM public.${x.t} WHERE ${cond}`) });
+    }
+    const [bank] = await this.db.query<{ ready: boolean }>(
+      `SELECT count(*) >= 3 AND bool_and(coalesce(btrim(value), '') <> '' AND value NOT LIKE '%시험용%' AND value NOT LIKE '999999-%') AS ready
+         FROM site_settings WHERE key LIKE 'company.bank%'`);
+    const out: Record<string, { adapter: { code: string; name: string; adapter: string; status: string } | null; records: Rec[]; changes: string[]; after: string[]; warn: string[] }> = {
+      'assume.bank': {
+        adapter: null,
+        records: [{ label: '수금 계좌가 시험용 값 · 빈칸(가상 계좌로 도는 중)', n: bank?.ready ? 0 : 1 }],
+        changes: ['청구 · 입금 안내에 가상(시험) 계좌 대신 사이트 기본 정보의 실제 수금 계좌가 나감'],
+        after: ['입금 안내를 받은 회원 화면에서 계좌 글자 확인(보기만)'],
+        warn: [],
+      },
+      'assume.broker': {
+        adapter: ad('BROKER'),
+        records: [{ label: '실제 대조 없이 승인된 중개사(v_broker_verified_assumed · 재대조 대상)', n: await one(`SELECT count(*) AS n FROM v_broker_verified_assumed`) }],
+        changes: ['중개사 인증 신청이 간주 승인 대신 국토부 대조 결과(MATCH · MISMATCH · NOT_FOUND)로 판정됨'],
+        after: ['간주로 승인된 중개사를 다시 대조(재대조 대상 수가 0 이 될 때까지)'],
+        warn: [],
+      },
+      'assume.etax': {
+        adapter: ad('ETAX'),
+        records: etaxRecs,
+        changes: ['운영의 「발행」이 「간주 발행」 기록 대신 업체(ASP)를 거쳐 국세청으로 전송됨(승인번호 생김)'],
+        after: ['간주 발행 기록 중 실제 발행이 필요한 것을 세무 기준으로 골라 다시 발행(수정 발행 여부는 세무 확인)'],
+        warn: [],
+      },
+      'assume.payment': {
+        adapter: ad('PG'),
+        records: [
+          { label: '구독 청구 시험 결제(subscription_invoices.is_stub)', n: await one(`SELECT count(*) AS n FROM subscription_invoices WHERE is_stub`) },
+          { label: '소개몰 시험 결제(hlt_payments.stub)', n: await one(`SELECT count(*) AS n FROM hlt_payments WHERE stub`) },
+          { label: '리드 캐시 시험 충전(lead_cash_charges.stub)', n: await one(`SELECT count(*) AS n FROM lead_cash_charges WHERE stub`) },
+          { label: '소개몰 시험 하위가맹점 번호(STUB-SUB-…)', n: await one(`SELECT count(*) AS n FROM hlt_sellers WHERE submerchant_id LIKE 'STUB-SUB-%'`) },
+          { label: '소개몰 시험 지급 요청(hlt_payout_requests.stub)', n: await one(`SELECT count(*) AS n FROM hlt_payout_requests WHERE stub`) },
+        ],
+        changes: ['결제가 시험(스텁) 승인 대신 토스페이먼츠 실제 승인으로 감',
+          '소개몰 하위가맹점 자동 등록(시험 번호)이 막힘 — 결제대행사 화면에서 받은 번호를 직접 적어야 함(PG_SUBMERCHANT_NOT_READY)'],
+        after: ['시험 하위가맹점 번호(STUB-SUB-…)를 실제 번호로 바꾸기', '시험 결제 · 충전 · 지급 기록은 매출 · 정산에서 빼고 보는지 확인'],
+        warn: ['하위가맹점 · 지급대행 실제 연동은 결제대행사 계약 뒤 — 지금은 시험 공급자(STUB)만 있음'],
+      },
+    };
+    for (const v of Object.values(out)) {
+      if (v.adapter && v.adapter.adapter !== 'REAL') v.warn.unshift(`연결 어댑터 ${v.adapter.code} 가 ${v.adapter.adapter} — 끄면 실제 호출이 실패함`);
+      if (v.adapter && !['TESTING', 'LIVE'].includes(v.adapter.status)) v.warn.push(`외부 연동 ${v.adapter.name} 상태 ${v.adapter.status} — 서버가 끄기를 막음`);
+    }
+    return out;
   }
 
   openBlockers() {
