@@ -94,7 +94,7 @@ export class PermReadinessDto {
   @ApiProperty() staffNoGroup!: number;
   @ApiProperty({ type: 'array', items: { type: 'object' } }) staffNoGroupItems!: unknown[];
   @ApiProperty() roleGroups!: number;
-  @ApiPropertyOptional({ nullable: true, type: 'object', description: 'GROUPS 로 바꾼 뒤 48시간 안이면 { since, hours }' }) after!: unknown;
+  @ApiPropertyOptional({ nullable: true, type: Object, description: 'GROUPS 로 바꾼 뒤 48시간 안이면 { since, hours }' }) after!: unknown;
   @ApiProperty() note!: string;
 }
 export class PermModeDto {

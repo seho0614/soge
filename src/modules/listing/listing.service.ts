@@ -237,6 +237,7 @@ export class ListingService {
     gwanCode?: string; gwan?: string; categoryId?: string; keyword?: string;
     badge?: string; sort?: string; cursor?: string; limit?: number; match?: string;
     regionCode?: string; axis?: string; urgent?: string; group?: string; page?: number; withTotal?: string;
+    priceMin?: number; priceMax?: number;
   }) {
     /* 20260930 — 사용자 웹 일부가 gwan= · sort=new 처럼 보내 왔습니다.
      * 조용히 무시되면(화이트리스트) 관 필터가 빠진 목록이 나갑니다. 받아서 옮깁니다. */

@@ -21,7 +21,7 @@ export interface Lay {
 }
 export async function getLayout(key: LayKey, lp?: string | string[] | null): Promise<Lay | null> {
   const tok = typeof lp === 'string' && /^[0-9a-f]{40}$/.test(lp) ? lp : null;
-  const r = await (tok
+  const r: { layout: Lay | null; ab?: { id: number; layout: Lay } | null } | null = await (tok
     ? apiGetPublic<{ layout: Lay | null }>(`/site-layouts/${key}?preview=${tok}`, 0)
     : apiGet<{ layout: Lay | null; ab?: { id: number; layout: Lay } | null }>(`/site-layouts/${key}`, 60)).catch(() => null);
   /* v10.760 (D328 · docs/868) A/B 비교 중이면 방문자 쿠키 sgb_ab(proxy 가 처음 방문에 a · b 를 나눠 줌 · 첫 화면은 a) = b 인 사람에게 B 판 */

@@ -13,7 +13,7 @@ export function FeedbackBlock({ kind, refKey, title }: { kind: 'LAYOUT' | 'PAGE'
     if (helpful === null) return;
     void fetch('/api/v1/page-feedback', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kind, ref: refKey, helpful, comment: comment.trim() || undefined,
-        ...(kind === 'LAYOUT' ? { variant: /(?:^|;\s*)sgb_ab=([ab])/.exec(document.cookie)?.[1] } : {}) }) })   // v10.781 A/B 판(쿠키 없으면 빠짐).catch(() => undefined).finally(() => setDone(true));
+        ...(kind === 'LAYOUT' ? { variant: /(?:^|;\s*)sgb_ab=([ab])/.exec(document.cookie)?.[1] } : {}) }) }).catch(() => undefined).finally(() => setDone(true));   // v10.781 A/B 판(쿠키 없으면 빠짐)
   };
   if (done) return <section className="gp-feedback" data-page-feedback="done"><p>{t('thanks')}</p></section>;
   return (
