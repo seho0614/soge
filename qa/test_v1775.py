@@ -11,8 +11,8 @@ ok('① 서버 · 화면', "'admin.mfa_from'" in M and "if (from && mode !== 'AL
    and "(key === 'admin.mfa_from' && (value ?? '').trim())" in AS and 'function MfaFromBox(' in UI and 'data-mfa-remind' in UI, '')
 if up():
     import consent_ok
-    consent_ok.agree('super@x.com', PW); consent_ok.agree('buyer@x.com', PW)
-    r = call('POST', '/admin/mfa/remind', None, login('super@x.com'))
+    consent_ok.agree('admin@x.com', PW); consent_ok.agree('buyer@x.com', PW)
+    r = call('POST', '/admin/mfa/remind', None, login('admin@x.com'))
     ok('③ remind 칸 · 회원 403 · 설정 비어 있음', all(k in r for k in ('notEnrolled', 'sent', 'skipped')) and call('POST', '/admin/mfa/remind', None, login('buyer@x.com')).get('_err') == 403
        and psql("SELECT coalesce(value, '') FROM site_settings WHERE key = 'admin.mfa_from'") == '', str(r))
 

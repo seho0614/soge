@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _lay_common import *   # noqa
 
 M, MS, SP = rd('prisma/migrations/D327_pages_ops_more2/migration.sql'), rd('src/modules/site/gwan-maint.service.ts'), rd('web/src/app/admin/SitePages.tsx')
-ok('① 표 · 서버 · 화면', 'CHECK (notice_lead_min IN (0, 60, 1440))' in M and "greatest(now(), $7::timestamptz - make_interval(mins => $8))" in MS and 'data-gwan-maint-lead' in SP, '')
+ok('① 표 · 서버 · 화면', 'CHECK (notice_lead_min IN (0, 60, 1440))' in M and "CASE WHEN $8::int = 0 THEN now() ELSE greatest(now(), $7::timestamptz - make_interval(mins => $8)) END" in MS and 'data-gwan-maint-lead' in SP, '')
 if up():
     mark = psql("SELECT coalesce(max(id), 0) FROM gwan_maintenances"); nid = ''
     try:

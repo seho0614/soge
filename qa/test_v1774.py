@@ -11,8 +11,8 @@ ok('① 서버 · 화면', 'export async function modeReadiness(db: DatabaseServ
    and 'function PermReadiness(' in SP and 'data-perm-revert' in SP, '')
 if up():
     import consent_ok
-    consent_ok.agree('super@x.com', PW); consent_ok.agree('buyer@x.com', PW)
-    TS = login('super@x.com')
+    consent_ok.agree('admin@x.com', PW); consent_ok.agree('buyer@x.com', PW)
+    TS = login('admin@x.com')
     r = call('GET', '/admin/perm/mode/readiness', None, TS)
     mode = psql("SELECT value FROM site_settings WHERE key = 'perm.mode'")
     rv = call('POST', '/admin/perm/mode/revert', {'reason': '시험 1774'}, TS) if mode != 'GROUPS' else {'code': 'PERM_REVERT_NOT_GROUPS'}

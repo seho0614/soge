@@ -1,5 +1,5 @@
 """v10.696 ~ 700 (D321 · docs/804 ~ 808) 꾸밀 페이지 시험 공통 — test_v1696 ~ 1700 이 씀(시험 파일이 아님 · 회귀가 돌리지 않음)"""
-import json, os, re, subprocess, urllib.error, urllib.request
+import time, json, os, re, subprocess, urllib.error, urllib.request
 
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
 K = KIT + '/sgb' if os.path.isdir(KIT + '/sgb') else KIT
@@ -48,6 +48,16 @@ def page(path):
         return e.code, ''
     except Exception as e:
         return 0, str(e)
+
+
+def page_until(path, pred, wait=75):
+    """사용자 웹은 관 점검 안내를 30초 캐시(stale-while-revalidate)로 읽음 — 바뀐 값이 보일 때까지 5초마다 다시 읽음(최대 wait 초)"""
+    end = time.time() + wait
+    while True:
+        st, h = page(path)
+        if (st == 200 and pred(h)) or time.time() > end:
+            return st, h
+        time.sleep(5)
 
 
 def psql(sql):

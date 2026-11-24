@@ -29,7 +29,7 @@ if up():
         pl = call('GET', '/gwans/LED/maintenance')
         ok('③ 공개 안내 — 다음 점검(48시간 안) · 점검 중 아님', pl.get('running') is None and (pl.get('next') or {}).get('note') == '시험 1707 리드', str(pl))
         if SITE and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == 't':
-            st, h = page('/biz')
+            st, h = page_until('/biz', lambda h: 'data-gwan-maint="next"' in h and '시험 1707 창업' in h)
             ok('③ 사용자 웹 /biz — 맨 위 「점검 예정」 띠 · 관 화면 그대로', st == 200 and 'data-gwan-maint="next"' in h and '시험 1707 창업' in h and 'data-gwan-maint="running"' not in h, str(st))
     finally:
         psql(f"DELETE FROM gwan_maintenances WHERE id > {int(mark or 0)}")

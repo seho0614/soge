@@ -11,8 +11,8 @@ ok('① 서버 · 화면 · 이미 있는 토스 코드', 'async pgReadiness()' 
    and 'export class TossPaymentProvider' in PP and 'process.env.TOSS_SECRET_KEY' in SS, '')
 if up():
     import consent_ok
-    consent_ok.agree('super@x.com', PW); consent_ok.agree('buyer@x.com', PW)
-    r = call('GET', '/admin/integration-keys/pg-readiness', None, login('super@x.com'))
+    consent_ok.agree('admin@x.com', PW); consent_ok.agree('buyer@x.com', PW)
+    r = call('GET', '/admin/integration-keys/pg-readiness', None, login('admin@x.com'))
     ok('③ 칸 · 회원 403', all(k in r for k in ('secretMode', 'clientMode', 'paired', 'provider', 'assumePayment', 'steps')) and len(r.get('steps', [])) == 5
        and call('GET', '/admin/integration-keys/pg-readiness', None, login('buyer@x.com')).get('_err') == 403, str(r)[:200])
 

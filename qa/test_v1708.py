@@ -39,13 +39,18 @@ if up():
         if SITE:
             psql("UPDATE site_settings SET value = 'on' WHERE key = 'i18n.enabled'; UPDATE i18n_langs SET is_active = true WHERE code = 'en';")
             tok = call('POST', '/admin/site-layouts/HOME/previews', {'hours': 1}, TS).get('token', '')
-            s1, h1 = page_lang(f'/?lp={tok}', 'ko')
-            s2, h2 = page_lang(f'/?lp={tok}', 'en')
+            end_ = time.time() + 75   # 사용자 웹은 다국어 켜짐(i18n.enabled · 언어 목록)을 잠시 캐시 — 켠 값이 보일 때까지 5초마다 다시 읽음
+            while True:
+                s1, h1 = page_lang(f'/?lp={tok}', 'ko')
+                s2, h2 = page_lang(f'/?lp={tok}', 'en')
+                if ('Test 1708 English' in h2 and '시험 1708 한국어' in h1) or time.time() > end_:
+                    break
+                time.sleep(5)
             ok('③ 미리보기 — 한국어 화면은 한국어 글 · 영어 화면은 영어 글(한국어 글 안 나옴)', s1 == 200 and '시험 1708 한국어' in h1 and 'Test 1708 English' not in h1
                and s2 == 200 and 'Test 1708 English' in h2 and '시험 1708 한국어' not in h2, f'{s1} {s2}')
     finally:
         reset('HOME')
-        psql(f"UPDATE site_settings SET value = {('NULL' if was == '' else repr(was).replace(chr(34), chr(39)))} WHERE key = 'i18n.enabled'; UPDATE i18n_langs SET is_active = {en_was or 'false'} WHERE code = 'en';")
+        psql(f"UPDATE site_settings SET value = {('NULL' if was == '' else repr(was).replace(chr(34), chr(39)))} WHERE key = 'i18n.enabled'; UPDATE i18n_langs SET is_active = {'true' if en_was == 't' else 'false'} WHERE code = 'en';")
         ok('③ 끝 — HOME 처음 · i18n.enabled · en 되돌림', psql("SELECT value FROM site_settings WHERE key = 'i18n.enabled'") == was and psql("SELECT is_active FROM i18n_langs WHERE code = 'en'") == en_was, '')
 else:
     print('API · DB 없음 — ③ 건너뜀')

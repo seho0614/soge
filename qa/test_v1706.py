@@ -44,7 +44,7 @@ if up():
            and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == 'f' and st.get('status') == 'RUNNING' and st.get('wasOpen') is (biz_was == 't')
            and (pb.get('running') or {}).get('note') == '시험 1706 점검', f"{m1.get('status')} {ov.get('code')} {jb.get('detail', jb)} {st.get('status')} {pb.get('running')}")
         if SITE:
-            s1, h1 = page('/biz')
+            s1, h1 = page_until('/biz', lambda h: 'data-gwan-maint="running"' in h and '시험 1706 점검' in h)
             ok('③ 사용자 웹 /biz — 점검 안내(관 화면 대신)', s1 == 200 and 'data-gwan-maint="running"' in h1 and '시험 1706 점검' in h1, str(s1))
         en = call('POST', f"/admin/gwan-maintenances/{m1.get('id')}/end", None, TS)
         ok('③ 지금 끝내기 → DONE · BIZ 처음대로(열려 있던 관이면 다시 열림) · 공개 안내 없음', en.get('status') == 'DONE' and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == biz_was
@@ -54,10 +54,10 @@ if up():
         c3 = call('POST', f"/admin/gwan-maintenances/{m1.get('id')}/cancel", None, TS)
         ok('③ 시작 전 취소 · 끝난 것 취소 422', c2.get('status') == 'CANCELED' and c3.get('code') == 'GWAN_MAINT_STATE', f"{c2.get('status')} {c3.get('code')}")
     finally:
-        psql(f"DELETE FROM gwan_maintenances WHERE id > {int(mark or 0)}")
+        psql(f"DELETE FROM gwan_maintenances m WHERE m.id > {int(mark or 0)} AND NOT EXISTS (SELECT 1 FROM gwan_open_log l WHERE l.maint_id = m.id)")   # v10.727 (D325) 관 열기 · 닫기 기록(쌓기만)이 가리키는 점검은 남김
         if biz_was == 't':
             psql("UPDATE gwans SET is_active = true WHERE code = 'BIZ' AND NOT is_active")
-        ok('③ 끝 — 시험 점검 지움 · BIZ 처음대로', psql(f"SELECT count(*) FROM gwan_maintenances WHERE id > {int(mark or 0)}") == '0' and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == biz_was, '')
+        ok('③ 끝 — 시험 점검 지움 · BIZ 처음대로', psql(f"SELECT count(*) FROM gwan_maintenances m WHERE m.id > {int(mark or 0)} AND NOT EXISTS (SELECT 1 FROM gwan_open_log l WHERE l.maint_id = m.id)") == '0' and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == biz_was, '')
 else:
     print('API · DB 없음 — ② · ③ 건너뜀')
 
