@@ -5,7 +5,7 @@ import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
 import { StrictBoolean } from '../../common/strict-boolean';
-import { SiteLayoutsService } from './site-layouts.service';
+import { LAYOUT_KEYS, SiteLayoutsService } from './site-layouts.service';
 
 /* ---------------------------------------------------------------------
  * v10.696 ~ 700 (D321 · docs/804 ~ 808) 꾸밀 페이지 — 메인 · 관 메인 · 소개몰 메인 · 페이지 목록
@@ -22,7 +22,7 @@ export class SiteLayoutDto {
   @ApiProperty({ type: 'object', additionalProperties: true, description: '끼운 블록(자리 → 블록 배열 · 관 페이지 블록)' }) inserts!: Record<string, unknown>;
 }
 export class SiteLayoutRowDto {
-  @ApiProperty({ enum: ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'] }) key!: string;
+  @ApiProperty({ enum: [...LAYOUT_KEYS] }) key!: string;
   @ApiProperty() name!: string;
   @ApiProperty({ example: '/' }) path!: string;
   @ApiProperty({ enum: ['DEFAULT', 'PUBLISHED'], description: 'DEFAULT = 게시한 판 없음(코드의 처음 배치)' }) status!: string;
@@ -121,7 +121,7 @@ export class SiteLayoutsController {
   @Get('admin/site-layouts/:key')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '꾸밀 페이지 하나 (v10.696)', description: '고칠 수 있는 것 · 초안 · 게시된 판 · 판 기록 · 미리보기 링크.' })
-  @ApiParam({ name: 'key', enum: ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'] })
+  @ApiParam({ name: 'key', enum: [...LAYOUT_KEYS] })
   @ApiOkResponse({ type: SiteLayoutDetailDto })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   get(@Param('key') key: string) { return this.svc.get(key); }
@@ -202,7 +202,7 @@ export class SiteLayoutsController {
 
   @Get('site-layouts/:key')
   @ApiOperation({ summary: '꾸밀 페이지 (v10.696 · 공개)', description: '게시된 판(없으면 layout null = 처음 배치) · preview 토큰이 살아 있으면 초안.' })
-  @ApiParam({ name: 'key', enum: ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'] })
+  @ApiParam({ name: 'key', enum: [...LAYOUT_KEYS] })
   @ApiQuery({ name: 'preview', required: false })
   @ApiOkResponse({ type: SiteLayoutPublicDto })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })

@@ -14,7 +14,8 @@ import { cleanBlocks } from './gwan-pages.service';
 
 export const LAYOUT_KEYS = ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'] as const;   // v10.702 (D322) EARN 허브 페이지
 /** v10.701 (D322 · docs/809) 관 메인은 그 관이 닫혀 있을 때만 고침(대표 「관이 열려 있는 상태에서 변경 불가」) · 메인(HOME)은 수정 가능 스위치만 */
-export const LAYOUT_GWAN: Partial<Record<string, string>> = { MNY: 'MNY', MAL: 'MAL', BIZ: 'BIZ', LED: 'LED', HLT: 'HLT', EARN: 'EARN' };
+const GWAN_LAYOUT_KEYS = ['MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN'];   // 검정 ⑫ — 관 코드 목록은 이 모양(['MNY' … 'HLT'])으로
+export const LAYOUT_GWAN: Partial<Record<string, string>> = Object.fromEntries(GWAN_LAYOUT_KEYS.map((c) => [c, c]));
 export type LayoutKey = (typeof LAYOUT_KEYS)[number];
 
 interface Spec {
