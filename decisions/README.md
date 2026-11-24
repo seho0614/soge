@@ -10,6 +10,7 @@
 - deploy-cicd.md
 - design-standard.md
 - domain-dns.md
+- erp-separation.md
 - gwan-structure-naming.md
 - legal-tax-listing-fee.md
 - mail-ses.md
