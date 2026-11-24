@@ -26,6 +26,15 @@ export class IntegrationKeyStateDto {
   @ApiPropertyOptional({ nullable: true, example: '••••••ab12' }) masked!: string | null;
   @ApiPropertyOptional({ nullable: true }) updatedAt!: Date | null;
 }
+export class PgReadinessDto {
+  @ApiProperty({ enum: ['NONE', 'TEST', 'LIVE', 'UNKNOWN'] }) secretMode!: string;
+  @ApiProperty({ enum: ['NONE', 'TEST', 'LIVE', 'UNKNOWN'] }) clientMode!: string;
+  @ApiProperty() paired!: boolean;
+  @ApiProperty({ enum: ['TOSS', 'STUB'], description: '지금 서버 승인을 하는 곳' }) provider!: string;
+  @ApiProperty() assumePayment!: string;
+  @ApiProperty({ type: 'array', items: { type: 'object' } }) steps!: unknown[];
+  @ApiProperty() note!: string;
+}
 export class IntegrationKeySetDto {
   @ApiProperty({ minLength: 8, maxLength: 512, description: '업체 콘솔에서 복사한 키 — 형식은 키마다 DB 가 봄(INTEG_SECRET_FORMAT)' })
   @IsString() @MinLength(8) @MaxLength(512) value!: string;
@@ -45,6 +54,11 @@ export class IntegrationKeysController {
   @ApiOperation({ summary: '외부 연동 키 목록', description: '키 값은 내보내지 않습니다 — 끝 4자리와 어디서 왔는지(운영 화면 · .env · 없음)만. 운영 화면 키가 먼저 쓰입니다.' })
   @ApiOkResponse({ type: IntegrationKeyStateDto, isArray: true })
   list() { return this.keys.list(); }
+
+  @Get('integration-keys/pg-readiness')
+  @ApiOperation({ summary: '결제(토스) 준비 상태 (v10.782)', description: '키 값 없이 시험 · 실제 · 짝 · 결제 간주 · 승인하는 곳 · 순서 5줄.' })
+  @ApiOkResponse({ type: PgReadinessDto })
+  pgReadiness() { return this.keys.pgReadiness(); }
 
   @Put('integration-keys/:code/:name')
   @ApiOperation({ summary: '외부 연동 키 넣기 · 바꾸기', description: '암호화해 저장하고 바로 반영합니다. 넣은 뒤에는 다시 볼 수 없습니다 — 끝 4자리만.' })

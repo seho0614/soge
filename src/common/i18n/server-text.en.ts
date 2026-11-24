@@ -5,6 +5,17 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "관 열기 · 닫기 기록은 고치거나 지울 수 없습니다.": "The gwan open/close log cannot be edited or deleted.",
+  "시크릿 · 클라이언트 키의 쪽(test · live)이 달라 결제창은 시험 결제로 둡니다 — 두 키를 같은 쪽으로 맞추십시오.": "The secret and client keys are on different sides (test / live), so checkout stays in test mode. Put both keys on the same side.",
+  "시크릿 키가 없어 승인은 시험(스텁)으로 돕니다 — 토스 공개 시험 키를 넣으면 실제 토스 시험 서버로 승인 · 취소를 해 볼 수 있습니다.": "No secret key, so approval runs in test (stub) mode. Enter the public Toss test keys to try approval and cancellation on the real Toss test server.",
+  "토스 시험 키로 연결돼 있습니다 — 돈은 나가지 않습니다. 계약 뒤 실제 키로 바꾸고 결제 간주를 끕니다.": "Connected with Toss test keys. No money moves. After the contract, switch to live keys and turn off assumed payment.",
+  "토스 실제 키입니다 — 결제 간주를 끄기 전에 결제 · 취소를 한 번씩 확인하십시오.": "These are live Toss keys. Check one payment and one cancellation before turning off assumed payment.",
+  "지금 판정 방식이 GROUPS 가 아니라 되돌릴 것이 없습니다.": "The decision mode is not GROUPS, so there is nothing to revert.",
+  "덮어쓰기 범위는 CATEGORY · PRODUCT 입니다.": "The override scope must be CATEGORY or PRODUCT.",
+  "없는 분류 · 상품입니다.": "No such category or product.",
+  "저장한 초안이 없습니다 — 먼저 「초안 저장」을 하십시오.": "There is no saved draft. Save the draft first.",
+  "https 로 시작하고 {no}(송장번호 자리)가 든 주소여야 합니다.": "The address must start with https and contain {no} (the tracking number).",
+  "없는 택배사입니다.": "No such courier.",
   "게시 · 예약 · 되돌리기는 최고 관리자(SUPER)나 「관 UI/UX」 승인 권한을 따로 받은 운영자만 합니다.": "Only a super admin or a staff member with the Hall UI/UX approve permission can publish, schedule or roll back.",   // v10.7xx (D328)
   "A/B 비교 기간은 1 ~ 31일입니다.": "An A/B comparison runs for 1 to 31 days.",   // v10.7xx (D328)
   "게시된 판(A)이 있어야 비교합니다 — 먼저 게시하십시오.": "A published version (A) is needed to compare. Publish first.",   // v10.7xx (D328)
@@ -37,7 +48,7 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "시작은 지금부터 90일 안이어야 합니다.": "The start must be within 90 days from now.",   // v10.706 ~ 709 (D323)
   "끝은 시작 뒤 2시간 안이어야 합니다.": "The end must be within 2 hours after the start.",   // v10.706 ~ 709 (D323)
   "안내 글은 200자까지 · HTML 태그는 쓸 수 없습니다.": "The notice can be up to 200 characters, without HTML tags.",   // v10.706 ~ 709 (D323)
-  "같은 관에 겹치는 점검 시간이 있습니다.": "There is an overlapping maintenance window for this hall.",   // v10.706 ~ 709 (D323)
+  "같은 관에 겹치는 점검 시간이 있습니다.": "There is an overlapping maintenance window for this hall.",
   "시작 전인 점검만 취소합니다 — 점검 중이면 「지금 끝내기」를 쓰십시오.": "Only maintenance that has not started can be canceled — use “End now” while it is running.",   // v10.706 ~ 709 (D323)
   "점검 중인 것만 끝냅니다.": "Only running maintenance can be ended.",   // v10.706 ~ 709 (D323)
   "시각 모양이 맞지 않습니다.": "The time format is not valid.",   // v10.706 ~ 709 (D323)

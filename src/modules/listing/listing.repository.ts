@@ -90,6 +90,7 @@ export class ListingRepository {
     sort?: string; cursor?: { sortValue: string; id: string } | null; limit: number; match?: string;
     /* v10.31 — 지역(시 · 도 코드 · 「ETC」= 시안 「기타 지역」) · 안심소개 축 · 급구/급매 · 분류 묶음 · 쪽 번호 */
     regionCode?: string; axis?: string; urgent?: string; group?: string; offset?: number;
+    priceMin?: number; priceMax?: number;   // v10.777 (docs/885)
   }) {
     /* ── 정렬 키와 커서 (20260930) ─────────────────────────────────
      * ★ 전에는 어떤 정렬이든 커서를 `published_at < ?` 하나로만 걸었습니다.
@@ -151,7 +152,7 @@ export class ListingRepository {
 
   /** v10.31 — 같은 조건의 전체 건수(쪽 번호용) */
   async count(p: { gwanCode?: string; categoryId?: string; keyword?: string; badge?: string;
-    regionCode?: string; axis?: string; urgent?: string; group?: string; match?: string }) {
+    regionCode?: string; axis?: string; urgent?: string; group?: string; match?: string; priceMin?: number; priceMax?: number }) {
     const [r] = await this.db.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM listings l
          JOIN categories cat ON cat.id = l.category_id
@@ -168,7 +169,11 @@ export class ListingRepository {
   }
 
   /** 목록 · 건수가 같은 조건을 씁니다 — $1~$4 · $8~$12 */
-  private filters(p: { group?: string }) {
+  private filters(p: { group?: string; priceMin?: number; priceMax?: number }) {
+    /* v10.777 (docs/885) 거래 금액 범위 — 자리 번호를 늘리지 않으려고 정수로 확인한 값을 그대로 넣음(DTO @IsInt · 여기서 한 번 더) */
+    const num = (v: unknown) => (typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : null);
+    const pmin = num(p.priceMin), pmax = num(p.priceMax);
+    const price = `${pmin !== null ? ` AND l.deal_amount >= ${pmin}` : ''}${pmax !== null ? ` AND l.deal_amount <= ${pmax}` : ''}`;
     const grp = p.group === 'LIFE'
       ? `NOT (${Object.values(ListingRepository.GROUP_SQL).join(' OR ')})`
       : p.group && ListingRepository.GROUP_SQL[p.group] ? ListingRepository.GROUP_SQL[p.group] : 'TRUE';
@@ -209,7 +214,7 @@ export class ListingRepository {
                OR ($10 = 'ANY' AND ur.kind IS NOT NULL)
                OR ($10 = 'BUY' AND ur.kind = 'URGENT')
                OR ($10 = 'SELL' AND ur.kind = 'URGENT_SALE'))
-          AND ($11::text IS NULL OR ${grp})`;
+          AND ($11::text IS NULL OR ${grp})${price}`;
   }
 
   /** 우선노출 — 별도 슬롯. 라벨 없이는 DB 가 애초에 저장을 막습니다 (B-20). */

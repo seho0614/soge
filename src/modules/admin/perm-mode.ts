@@ -141,6 +141,39 @@ export async function modeView(db: DatabaseService, modules: ModulesContainer) {
            note: 'ROLE → COMPARE 로 하루 이상 돌려 「다름」이 없고 연결 안 된 주소가 0 이면 GROUPS 로 바꿀 수 있습니다. 되돌리기는 언제든(SUPER).' };
 }
 
+/** v10.774 (D329 · docs/882) GROUPS 전환 준비 — 최근 7일(한국 날짜) COMPARE 다름 수 · 마지막 다름 · 권한그룹 없는 운영 계정 · 역할에서 만든 R_ 권한그룹 · 바꾼 뒤 첫날 확인(48시간 안) */
+export async function modeReadiness(db: DatabaseService) {
+  const mode = await permDecideMode(db);
+  const days = await db.query<{ day: string; diff: number }>(
+    `SELECT d::date::text AS day,
+            (SELECT count(*)::int FROM perm_shadow_log s WHERE s.mode = 'COMPARE' AND s.diff IS NOT NULL
+               AND s.created_at >= (d::date)::timestamp AT TIME ZONE 'Asia/Seoul' AND s.created_at < (d::date + 1)::timestamp AT TIME ZONE 'Asia/Seoul') AS diff
+       FROM generate_series((now() AT TIME ZONE 'Asia/Seoul')::date - 6, (now() AT TIME ZONE 'Asia/Seoul')::date, interval '1 day') d ORDER BY d DESC`);
+  const [last] = await db.query<{ at: string | null }>(`SELECT max(created_at) AS at FROM perm_shadow_log WHERE mode = 'COMPARE' AND diff IS NOT NULL`);
+  const ops = PERM_OPS.filter((r) => r !== 'SUPER');   // 최고 관리자는 늘 통과라 뺌(docs/757 3-3)
+  const noGroup = await db.query<{ name: string | null; email: string }>(
+    `SELECT a.name, a.email::text AS email FROM accounts a
+      WHERE a.status = 'ACTIVE' AND EXISTS (SELECT 1 FROM account_roles r WHERE r.account_id = a.id AND r.role = ANY($1::text[]))
+        AND NOT EXISTS (SELECT 1 FROM perm_account_groups g WHERE g.account_id = a.id AND (g.expires_at IS NULL OR g.expires_at > now()))
+      ORDER BY a.email LIMIT 50`, [ops]);
+  const [rg] = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM perm_role_groups WHERE key LIKE 'R\_%' AND active`);
+  const [since] = await db.query<{ at: string | null }>(`SELECT max(at) AS at FROM site_setting_changes WHERE key = 'perm.mode'`).catch(() => [{ at: null }]);
+  const hours = since?.at ? Math.floor((Date.now() - new Date(since.at).getTime()) / 3_600_000) : null;
+  const zeroDays = (() => { let n = 0; for (const d of days) { if (d.diff) break; n++; } return n; })();
+  return {
+    mode, days, zeroDays, lastDiffAt: last?.at ?? null,
+    staffNoGroup: noGroup.length, staffNoGroupItems: noGroup.map((r) => ({ name: r.name, email: r.email.replace(/^(.).*(@.*)$/, '$1***$2') })),
+    roleGroups: rg?.n ?? 0,
+    after: mode === 'GROUPS' && hours !== null && hours < 48 ? { since: since!.at, hours } : null,
+    note: '7일 내내 다름 0 · 권한그룹 없는 운영 계정 0 이면 GROUPS 로 바꿔도 막히는 사람이 없습니다. 바꾼 뒤 이틀 동안은 위 카드로 확인하고, 문제가 있으면 「COMPARE 로 되돌리기」.',
+  };
+}
+/** v10.774 GROUPS → COMPARE 한 번에 되돌리기 — GROUPS 일 때만(아니면 422) · 사유 · 기록은 setMode 와 같음 */
+export async function revertToCompare(db: DatabaseService, modules: ModulesContainer, reason: string | undefined, actor: string | null) {
+  if ((await permDecideMode(db)) !== 'GROUPS') throw new PolicyViolation('PERM_REVERT_NOT_GROUPS', '지금 판정 방식이 GROUPS 가 아니라 되돌릴 것이 없습니다.');
+  return setMode(db, modules, 'COMPARE', reason, actor);
+}
+
 /** PUT /admin/perm/mode — SUPER · 사유 · GROUPS 는 조건 */
 export async function setMode(db: DatabaseService, modules: ModulesContainer, mode: string, reason: string | undefined, actor: string | null) {
   const why = String(reason ?? '').replace(/\s+/g, ' ').trim();

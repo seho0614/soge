@@ -427,7 +427,7 @@ export class AdminService {
       if (RequestCtx.get()?.actorRole !== 'SUPER') {
         throw new Forbidden('MFA_SETTING_SUPER', '2단계 인증 설정은 최고 관리자(SUPER)만 바꿀 수 있습니다.');
       }
-      if (key === 'admin.mfa_required' && value !== 'off') {
+      if ((key === 'admin.mfa_required' && value !== 'off') || (key === 'admin.mfa_from' && (value ?? '').trim())) {   // v10.775 「이날부터 필수」도 켜는 것과 같음
         const [m] = await this.db.query<{ ok: boolean }>(
           `SELECT EXISTS (SELECT 1 FROM account_mfa WHERE account_id = $1 AND enabled_at IS NOT NULL) AS ok`, [RequestCtx.actorId()]);
         if (!m?.ok) {

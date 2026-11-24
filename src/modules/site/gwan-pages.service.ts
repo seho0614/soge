@@ -119,8 +119,10 @@ function cleanOne(b0: unknown, i: number, opts: { noFragment?: boolean; max?: nu
         const region = typeof b.regionCode === 'string' ? b.regionCode.trim().toUpperCase() : '';
         if (region && !/^[A-Z0-9_]{1,12}$/.test(region)) bad(`${n} 지역 코드 모양이 맞지 않습니다.`);
         const badge = LIST_BADGES.includes(String(b.badge)) ? String(b.badge) : '';
+        /* v10.777 (docs/885) 가격(거래 금액 · 원) 상한 — 매물 목록 API priceMax · 0 · 비우면 없음 */
+        const pmax = b.priceMax === undefined || b.priceMax === null || b.priceMax === '' || Number(b.priceMax) === 0 ? 0 : int(b.priceMax, 1, 1e13, 0);
         return { type: 'LISTINGS', title: str(b.title, 80, `${n} 제목`), limit: int(b.limit, 1, 20, 8), sort: SORTS.includes(String(b.sort)) ? String(b.sort) : 'RECENT', categoryId: cat,
-          ...(region ? { regionCode: region } : {}), ...(badge ? { badge } : {}) };
+          ...(region ? { regionCode: region } : {}), ...(badge ? { badge } : {}), ...(pmax ? { priceMax: pmax } : {}) };
       }
       /* v10.761 (docs/869) 이번 주 추천 — 많이 본 매물(VIEWED · 인기 순) · 새로 올라온 매물(NEW · 최신 순)을 그때그때 채움 · 1 ~ 12개 */
       case 'PICKS': return { type: 'PICKS', title: str(b.title, 80, `${n} 제목`) || '이번 주 추천', limit: int(b.limit, 1, 12, 6), mode: b.mode === 'NEW' ? 'NEW' : 'VIEWED' };

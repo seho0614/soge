@@ -13,6 +13,12 @@ export class MfaCodeDto {
   @IsString() @Matches(/^(\d{6}|\d{5}-?\d{5})$/, { message: '6자리 번호 또는 예비 번호(12345-67890)를 넣어 주십시오.' }) code!: string;
 }
 
+export class MfaRemindDto {
+  @ApiProperty() notEnrolled!: number;
+  @ApiProperty({ description: '이번에 보낸 수' }) sent!: number;
+  @ApiProperty({ description: '오늘 이미 보내 건너뛴 수' }) skipped!: number;
+  @ApiProperty({ nullable: true, type: String }) from!: string | null;
+}
 export class MfaResetDto {
   @ApiProperty({ example: '휴대폰 분실 — 본인 전화로 확인', description: '초기화 사유(5 ~ 200자)' })
   @IsString() @Length(5, 200) reason!: string;
@@ -70,6 +76,14 @@ export class MfaController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, description: 'MFA_MODE_INVALID', type: ErrorDto })
   turnOnPreview(@Query('mode') mode: string) { return this.mfa.turnOnPreview(mode); }
+
+  @Post('admin/mfa/remind')
+  @HttpCode(200)
+  @Roles('SUPER')
+  @Audit('MFA_REMIND', 'SETTING')
+  @ApiOperation({ summary: '2단계 인증 등록 안내 보내기(SUPER)', description: 'v10.775 — 등록 안 한 운영자에게 내 알림 한 통(한 사람 하루 한 번) · 「이날부터 필수」 날짜가 있으면 적음 · 운영 알림 한 줄.' })
+  @ApiOkResponse({ type: MfaRemindDto })
+  remind() { return this.mfa.remind(); }
 
   @Post('admin/accounts/:id/mfa-reset')
   @HttpCode(200)

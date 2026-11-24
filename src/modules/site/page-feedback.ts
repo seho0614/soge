@@ -20,6 +20,7 @@ export class PageFeedbackCreateDto {
   @ApiProperty({ example: 'HOME', description: '꾸밀 페이지 열쇠 또는 관 페이지 「관/주소」' }) @IsString() @Matches(/^[A-Za-z0-9_\-/]{1,40}$/) ref!: string;
   @ApiProperty() @StrictBoolean() helpful!: boolean;
   @ApiPropertyOptional({ example: '연락처를 더 크게 보여 주세요' }) @IsOptional() @IsString() @MaxLength(200) comment?: string;
+  @ApiPropertyOptional({ enum: ['a', 'b'], description: 'v10.781 A/B 비교 판(꾸밀 페이지 · 방문자 쿠키 sgb_ab)' }) @IsOptional() @IsIn(['a', 'b']) variant?: string;
 }
 export class PageFeedbackResultDto {
   @ApiProperty() saved!: boolean;
@@ -36,14 +37,15 @@ export class PageFeedbackSummaryDto {
 @Injectable()
 export class PageFeedbackService {
   constructor(private readonly db: DatabaseService) {}
-  async create(input: { kind: string; ref: string; helpful: boolean; comment?: string }, ip: string, ua: string) {
+  async create(input: { kind: string; ref: string; helpful: boolean; comment?: string; variant?: string }, ip: string, ua: string) {
     const comment = String(input.comment ?? '').replace(/\r/g, '').trim().slice(0, 200);
     if (/<\s*\/?\s*[a-z!]/i.test(comment)) throw new PolicyViolation('PAGE_FEEDBACK', '한 줄 의견에 HTML 태그는 쓸 수 없습니다.');
     const day = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
     const dev = createHash('sha256').update(`${ip}|${ua}|${day}`).digest('hex').slice(0, 16);
     const [dup] = await this.db.query(`SELECT 1 FROM page_feedback WHERE page_kind = $1 AND page_ref = $2 AND dev_hash = $3 AND at > now() - interval '1 day'`, [input.kind, input.ref, dev]);
     if (dup) return { saved: false };
-    await this.db.query(`INSERT INTO page_feedback (page_kind, page_ref, helpful, comment, dev_hash) VALUES ($1, $2, $3, $4, $5)`, [input.kind, input.ref, input.helpful === true, comment || null, dev]);
+    const variant = input.kind === 'LAYOUT' && (input.variant === 'a' || input.variant === 'b') ? input.variant.toUpperCase() : null;   // v10.781 (D329) A/B 판
+    await this.db.query(`INSERT INTO page_feedback (page_kind, page_ref, helpful, comment, dev_hash, variant) VALUES ($1, $2, $3, $4, $5, $6)`, [input.kind, input.ref, input.helpful === true, comment || null, dev, variant]);
     return { saved: true };
   }
   async summary(days = 30) {

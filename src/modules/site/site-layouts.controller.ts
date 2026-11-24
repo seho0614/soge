@@ -127,7 +127,7 @@ export class SiteLayoutAbEndDto {
 }
 export class SiteLayoutAbListDto {
   @ApiProperty() key!: string;
-  @ApiProperty({ type: 'array', items: { type: 'object' }, description: 'id · status · winner · startsAt · endsAt · viewsA · viewsB' }) items!: unknown[];
+  @ApiProperty({ type: 'array', items: { type: 'object' }, description: 'id · status · winner · startsAt · endsAt · viewsA · viewsB · v10.781 clicksA · clicksB · yesA · noA · yesB · noB' }) items!: unknown[];
 }
 export class SitePagesDto {
   @ApiProperty({ type: [SiteLayoutRowDto] }) layouts!: SiteLayoutRowDto[];
@@ -372,6 +372,14 @@ export class SiteLayoutsController {
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   @Audit('SITE_LAYOUT_AB_END', 'SITE')
   abEnd(@Param('key') key: string, @Body() dto: SiteLayoutAbEndDto) { return this.svc.abEnd(key, dto.winner); }
+
+  @Post('site-layouts/:key/click')
+  @HttpCode(200)
+  @ApiOperation({ summary: '꾸밀 페이지 블록 누름 (v10.781 · 공개)', description: 'A/B 비교 중일 때만 셈 · v=a|b · 같은 기기 같은 날 페이지마다 20번까지 · 개인 정보 없음.' })
+  @ApiParam({ name: 'key' })
+  @ApiQuery({ name: 'v', required: true, enum: ['a', 'b'] })
+  @ApiOkResponse({ type: SiteLayoutViewDto })
+  click(@Param('key') key: string, @Ip() ip: string, @Headers('user-agent') ua?: string, @Query('v') v?: string) { return this.svc.recordClick(key, ip ?? '', ua ?? '', v); }
 
   @Post('site-layouts/:key/view')
   @HttpCode(200)

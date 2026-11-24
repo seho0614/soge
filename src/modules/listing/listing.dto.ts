@@ -123,6 +123,9 @@ export class ListingQueryDto {
   @IsOptional() @IsIn(['RE', 'CAR', 'BIZ', 'MACHINE', 'LIFE']) group?: string;
   @ApiPropertyOptional({ minimum: 1, maximum: 500, description: '쪽 번호(시안 「1 · 2 · …」). 주면 total · pageCount 가 함께 오고 nextCursor 는 null' })
   @IsOptional() @IsInt() @Min(1) @Max(500) page?: number;
+  /* v10.777 (docs/885) 거래 금액(deal_amount · 원) 범위 — 금액이 없는 매물은 범위를 주면 빠짐 */
+  @ApiPropertyOptional({ minimum: 0, maximum: 1e13, description: '거래 금액 최소(원)' }) @IsOptional() @IsInt() @Min(0) @Max(1e13) priceMin?: number;
+  @ApiPropertyOptional({ minimum: 0, maximum: 1e13, description: '거래 금액 최대(원)' }) @IsOptional() @IsInt() @Min(0) @Max(1e13) priceMax?: number;
   @ApiPropertyOptional({ enum: ['1'], description: '1 이면 커서 목록에도 total 을 싣습니다' })
   @IsOptional() @IsIn(['1', 'true']) withTotal?: string;
 }

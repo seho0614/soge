@@ -253,7 +253,8 @@ export class ListingService {
     /* v10.83 (D111) — 검색어를 낱말마다 동의어 · 오타 교정어로 넓혀 넘깁니다(목록 · 건수 · 관련순이 같은 검색어) */
     const keyword = (await expandKeyword(this.db, q.keyword)) ?? undefined;
     const f = { gwanCode: q.gwanCode, categoryId: q.categoryId, keyword, badge: q.badge,
-                regionCode, axis: q.axis, urgent: q.urgent, group: q.group, match: q.match };
+                regionCode, axis: q.axis, urgent: q.urgent, group: q.group, match: q.match,
+                priceMin: q.priceMin, priceMax: q.priceMax };   // v10.777 (docs/885) 거래 금액 범위
     const wantTotal = !!page || q.withTotal === '1' || q.withTotal === 'true';
     const [promoted, rows, total] = await Promise.all([
       cursor || (page && page > 1) ? Promise.resolve([]) : this.repo.promoted(q.gwanCode, q.categoryId),

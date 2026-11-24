@@ -86,15 +86,18 @@ export const LAYOUT_SPECS: Record<LayoutKey, Spec> = {
   /* v10.757 ~ 759 · 755 (D328 · docs/863 · 865 ~ 867) — 관이 아닌 페이지(메인처럼 스위치만) · 상품 상세는 소개몰 관 규칙 · 안내 띠 글 + 위 · 아래 블록 */
   COMM: {
     name: '소개광장 메인', path: '/community',
-    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+    sections: [['notices', '공지'], ['picks', '동네픽'], ['ranking', '순위 바로가기'], ['verify', '동네 인증'], ['list', '글 목록']],   // v10.779 (D329 · docs/887) 구역 보이기 · 순서
+    texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
   },
   HELP: {
     name: '고객센터 홈', path: '/support',
-    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+    sections: [['bot', '챗봇 상담'], ['foot', '분쟁 안내 줄']],   // v10.779
+    texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
   },
   PARTNER: {
     name: '파트너센터 첫 화면', path: '/partner',
-    sections: [], texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
+    sections: [['prof', '업체 카드'], ['tiles', '숫자 4칸'], ['pact', '바로가기 줄']],   // v10.779
+    texts: [['band', '안내 띠 글', 120]], inserts: 'edge',
   },
   MALL_ITEM: {
     name: '소개몰 상품 상세(모든 상품)', path: '/health/p/…',
@@ -159,6 +162,9 @@ export function cleanLayout(key: LayoutKey, input: unknown): Layout {
   for (const [k] of sp.sections) if (!seen.has(k)) sections.push({ key: k, show: true });
   const texts: Record<string, string> = {};
   for (const [k, nm, max] of sp.texts) { const v = txt(o.texts?.[k], max, nm); if (v) texts[k] = v; }
+  /* v10.778 (D329 · docs/886) 검색엔진 · 공유 — 모든 꾸밀 페이지 · 설명 160자 · 공유 그림은 사이트 안 주소나 https(번역 대상 아님) */
+  const seo = txt(o.texts?.seoDesc, 160, '검색 · 공유 설명'); if (seo) texts.seoDesc = seo;
+  const og = link(o.texts?.ogImage, '공유 그림'); if (og) texts.ogImage = og;
   const out: Layout = { sections, texts, inserts: {} };
   if (sp.slides) {
     out.slides = {};
@@ -528,6 +534,9 @@ export class SiteLayoutsService {
     return { key: k, version: r?.published_version ?? 0, preview: false, layout: r?.published ? await this.expandLayout(cleanLayoutSafe(k, r.published)) : null,
       ab: ab ? { id: ab.id, layout: await this.expandLayout(cleanLayoutSafe(k, ab.layout_b)) } : null };
   }
+  /** v10.780 (D329 · docs/888) 상품 상세 덮어쓰기 — MALL_ITEM 과 같은 고치기 규칙 · 사용자 웹에 줄 때 조각 펼침 */
+  async assertItemEditable() { await this.assertEditable('MALL_ITEM'); }
+  async expandPublic(k: LayoutKey, raw: unknown): Promise<Layout> { return this.expandLayout(cleanLayoutSafe(k, raw)); }
   /** v10.720 공통 조각 블록을 지금 내용으로 펼침(조각을 지웠거나 못 읽으면 그 블록만 뺌) */
   private async expandLayout(l: Layout): Promise<Layout> {
     const ins: Layout['inserts'] = {};
@@ -552,6 +561,26 @@ export class SiteLayoutsService {
        SELECT id, $2, $3, 1 FROM site_layout_ab WHERE key = $1 AND status = 'RUNNING' AND starts_at <= now() AND ends_at > now()
        ON CONFLICT (ab_id, variant, day) DO UPDATE SET views = site_layout_ab_views.views + 1`, [k, v, day]).catch(() => undefined);
     return { counted: true };
+  }
+
+  /** v10.781 (D329 · docs/889) A/B 비교 중 블록 누름 — 같은 기기(IP · 브라우저 글자 해시) 같은 날 페이지마다 20번까지 · 비교가 없으면 세지 않음 · 개인 정보 없음 */
+  private clickSeen = new Map<string, number>();
+  private clickDay = '';
+  async recordClick(key: string, ip: string, ua: string, variant?: string) {
+    const k = this.k(key);
+    const v = variant === 'a' || variant === 'A' ? 'A' : variant === 'b' || variant === 'B' ? 'B' : null;
+    if (!v) return { counted: false };
+    const day = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+    if (day !== this.clickDay || this.clickSeen.size > 50_000) { this.clickSeen = new Map(); this.clickDay = day; }
+    const sig = `${k}|${createHash('sha256').update(`${ip}|${ua}`).digest('hex').slice(0, 16)}`;
+    const n = (this.clickSeen.get(sig) ?? 0) + 1;
+    if (n > 20) return { counted: false };
+    this.clickSeen.set(sig, n);
+    const r = await this.db.query(
+      `INSERT INTO site_layout_ab_clicks (ab_id, variant, day, clicks)
+       SELECT id, $2, $3, 1 FROM site_layout_ab WHERE key = $1 AND status = 'RUNNING' AND starts_at <= now() AND ends_at > now()
+       ON CONFLICT (ab_id, variant, day) DO UPDATE SET clicks = site_layout_ab_clicks.clicks + 1 RETURNING ab_id`, [k, v, day]).catch(() => []);
+    return { counted: r.length > 0 };
   }
 
   /** v10.717 (docs/825) 게시 판 하나(판 비교) */
@@ -668,7 +697,14 @@ export class SiteLayoutsService {
       `SELECT t.id::int AS id, t.status, t.winner, t.starts_at AS "startsAt", t.ends_at AS "endsAt", t.created_at AS "createdAt", t.ended_at AS "endedAt",
               (SELECT name FROM accounts a WHERE a.id = t.created_by) AS "createdByName",
               coalesce((SELECT sum(v.views)::int FROM site_layout_ab_views v WHERE v.ab_id = t.id AND v.variant = 'A'), 0) AS "viewsA",
-              coalesce((SELECT sum(v.views)::int FROM site_layout_ab_views v WHERE v.ab_id = t.id AND v.variant = 'B'), 0) AS "viewsB"
+              coalesce((SELECT sum(v.views)::int FROM site_layout_ab_views v WHERE v.ab_id = t.id AND v.variant = 'B'), 0) AS "viewsB",
+              /* v10.781 (D329 · docs/889) 블록 누름 · 손님 한 줄 의견(비교 기간 · 같은 페이지 열쇠 · 판마다) */
+              coalesce((SELECT sum(c.clicks)::int FROM site_layout_ab_clicks c WHERE c.ab_id = t.id AND c.variant = 'A'), 0) AS "clicksA",
+              coalesce((SELECT sum(c.clicks)::int FROM site_layout_ab_clicks c WHERE c.ab_id = t.id AND c.variant = 'B'), 0) AS "clicksB",
+              (SELECT count(*) FILTER (WHERE f.helpful)::int FROM page_feedback f WHERE f.page_kind = 'LAYOUT' AND f.page_ref = t.key AND f.variant = 'A' AND f.at >= t.starts_at AND f.at < coalesce(t.ended_at, t.ends_at)) AS "yesA",
+              (SELECT count(*) FILTER (WHERE NOT f.helpful)::int FROM page_feedback f WHERE f.page_kind = 'LAYOUT' AND f.page_ref = t.key AND f.variant = 'A' AND f.at >= t.starts_at AND f.at < coalesce(t.ended_at, t.ends_at)) AS "noA",
+              (SELECT count(*) FILTER (WHERE f.helpful)::int FROM page_feedback f WHERE f.page_kind = 'LAYOUT' AND f.page_ref = t.key AND f.variant = 'B' AND f.at >= t.starts_at AND f.at < coalesce(t.ended_at, t.ends_at)) AS "yesB",
+              (SELECT count(*) FILTER (WHERE NOT f.helpful)::int FROM page_feedback f WHERE f.page_kind = 'LAYOUT' AND f.page_ref = t.key AND f.variant = 'B' AND f.at >= t.starts_at AND f.at < coalesce(t.ended_at, t.ends_at)) AS "noB"
          FROM site_layout_ab t WHERE t.key = $1 ORDER BY t.id DESC LIMIT 10`, [k]);
     return { key: k, items: rows };
   }

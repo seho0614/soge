@@ -160,6 +160,29 @@ export class IntegrationSecretService implements OnApplicationBootstrap, OnModul
     return this.list();
   }
 
+  /** v10.782 (D329 · docs/890) 결제(토스) 준비 상태 — 키 값은 내보내지 않음 · 시크릿 · 클라이언트 키가 시험(test_) · 실제(live_) 중 무엇인지 · 짝 · 결제 간주 · 지금 승인을 누가 하는지
+   *  토스 연결 코드(payment.provider.ts TossPaymentProvider · 시크릿 키가 있으면 씀)는 이미 있음 — 계약 전에는 토스 공개 시험 키로 결제창 · 승인 · 취소를 미리 봄 */
+  async pgReadiness() {
+    const kind = (k?: string) => { const v = k?.trim(); return !v ? 'NONE' : v.startsWith('test_') ? 'TEST' : v.startsWith('live_') ? 'LIVE' : 'UNKNOWN'; };
+    const secretMode = kind(process.env.TOSS_SECRET_KEY), clientMode = kind(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY);
+    const [a] = await this.db.query<{ value: string | null }>(`SELECT value FROM site_settings WHERE key = 'assume.payment'`).catch(() => [{ value: null }]);
+    const assume = a?.value ?? 'on';
+    const paired = secretMode !== 'NONE' && secretMode === clientMode;
+    const provider = secretMode === 'NONE' ? 'STUB' : 'TOSS';
+    const steps = [
+      { key: 'testKeys', label: '토스 시험 키 둘(시크릿 test_sk · 클라이언트 test_ck)을 이 화면에 넣음', ok: secretMode === 'TEST' && clientMode === 'TEST' || secretMode === 'LIVE' && clientMode === 'LIVE' },
+      { key: 'paired', label: '두 키가 같은 쪽(test · live)', ok: paired },
+      { key: 'trial', label: '시험 키로 결제 · 취소를 한 번씩 해 봄(사용자 웹 결제창 · 운영 화면 주문)', ok: null },
+      { key: 'live', label: '계약 뒤 실제 키(live_)로 바꿈', ok: secretMode === 'LIVE' && clientMode === 'LIVE' },
+      { key: 'assumeOff', label: '결제 간주(assume.payment) 끔 — 실제 키 · 결제 시험이 끝난 뒤', ok: assume === 'off' },
+    ];
+    return { secretMode, clientMode, paired, provider, assumePayment: assume, steps,
+      note: provider === 'STUB' ? '시크릿 키가 없어 승인은 시험(스텁)으로 돕니다 — 토스 공개 시험 키를 넣으면 실제 토스 시험 서버로 승인 · 취소를 해 볼 수 있습니다.'
+        : !paired ? '시크릿 · 클라이언트 키의 쪽(test · live)이 달라 결제창은 시험 결제로 둡니다 — 두 키를 같은 쪽으로 맞추십시오.'
+        : secretMode === 'TEST' ? '토스 시험 키로 연결돼 있습니다 — 돈은 나가지 않습니다. 계약 뒤 실제 키로 바꾸고 결제 간주를 끕니다.'
+        : '토스 실제 키입니다 — 결제 간주를 끄기 전에 결제 · 취소를 한 번씩 확인하십시오.' };
+  }
+
   /** 사용자 웹 결제창(토스) 공개 키 — 운영 화면 값 → .env(NEXT_PUBLIC_TOSS_CLIENT_KEY) · 없으면 null(시험 결제).
    *  ★ 서버 승인(TOSS_SECRET_KEY)과 짝이 맞을 때만 줌 — 시크릿 키가 없거나 test/live 가 다르면 null.
    *    한쪽만 있으면 결제창은 실제인데 승인은 시험(스텁)이 「결제됨」으로 처리하거나, 그 반대로 모든 결제가 실패합니다. */

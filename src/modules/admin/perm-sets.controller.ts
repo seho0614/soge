@@ -12,7 +12,7 @@ import { LEVELS } from './perm.service';
 import {
   conflictList, createTask, permStaffList, roleGroupSets, saveConflict, saveRoleGroupSets, saveTaskGroupFull, saveTaskInfo, taskGroupList, taskList,
 } from './perm-sets';
-import { PERM_MODES, modeView, setMode, unmappedRoutes } from './perm-mode';
+import { PERM_MODES, modeReadiness, modeView, revertToCompare, setMode, unmappedRoutes } from './perm-mode';
 import { StrictBoolean } from '../../common/strict-boolean';
 
 /* ---------------------------------------------------------------------
@@ -82,6 +82,20 @@ export class PermConflictDto {
   @ApiProperty({ example: ['settlement:APPROVE'], isArray: true }) @IsArray() @ArrayMaxSize(200) @IsString({ each: true }) a!: string[];
   @ApiProperty({ example: ['fin-transfer:EDIT'], isArray: true }) @IsArray() @ArrayMaxSize(200) @IsString({ each: true }) b!: string[];
   @ApiProperty({ example: '겸직 금지 옮김' }) @IsString() @Length(1, 400) reason!: string;
+}
+export class PermRevertDto {
+  @ApiProperty({ example: '권한그룹 판정에서 막히는 사람이 있어 되돌림' }) @IsString() @Length(2, 200) reason!: string;
+}
+export class PermReadinessDto {
+  @ApiProperty() mode!: string;
+  @ApiProperty({ type: 'array', items: { type: 'object' }, description: '최근 7일 날마다 다름 수(새 날 먼저)' }) days!: unknown[];
+  @ApiProperty({ description: '오늘부터 거꾸로 이어진 다름 0 날 수' }) zeroDays!: number;
+  @ApiPropertyOptional({ nullable: true }) lastDiffAt!: string | null;
+  @ApiProperty() staffNoGroup!: number;
+  @ApiProperty({ type: 'array', items: { type: 'object' } }) staffNoGroupItems!: unknown[];
+  @ApiProperty() roleGroups!: number;
+  @ApiPropertyOptional({ nullable: true, type: 'object', description: 'GROUPS 로 바꾼 뒤 48시간 안이면 { since, hours }' }) after!: unknown;
+  @ApiProperty() note!: string;
 }
 export class PermModeDto {
   @ApiProperty({ enum: PERM_MODES }) @IsIn(PERM_MODES as unknown as string[]) mode!: string;
@@ -178,6 +192,19 @@ export class PermSetsController {
   @ApiOkResponse({ type: Object })
   @ApiResponse({ status: 422, type: ErrorDto, description: 'PERM_MODE · PERM_MODE_NOT_READY · PERM_REASON' })
   setMode(@Body() dto: PermModeDto) { return setMode(this.db, this.modules, dto.mode, dto.reason, actorNow()); }
+
+  @Get('mode/readiness')
+  @ApiOperation({ summary: 'GROUPS 전환 준비 (v10.774 · SUPER)', description: '최근 7일 COMPARE 다름 · 이어진 다름 0 날 수 · 권한그룹 없는 운영 계정 · R_ 권한그룹 · 바꾼 뒤 48시간 확인. 읽기만.' })
+  @ApiOkResponse({ type: PermReadinessDto })
+  readiness() { return modeReadiness(this.db); }
+
+  @Post('mode/revert')
+  @HttpCode(200)
+  @Audit('PERM_MODE_REVERT', 'SETTING')
+  @ApiOperation({ summary: 'GROUPS → COMPARE 한 번에 되돌리기 (v10.774 · SUPER)', description: 'GROUPS 일 때만(아니면 422 PERM_REVERT_NOT_GROUPS) · 사유 2 ~ 200자 · 바뀐 기록은 판정 방식 바꾸기와 같음.' })
+  @ApiOkResponse({ type: Object })
+  @ApiResponse({ status: 422, type: ErrorDto, description: 'PERM_REVERT_NOT_GROUPS · PERM_REASON' })
+  revert(@Body() dto: PermRevertDto) { return revertToCompare(this.db, this.modules, dto.reason, actorNow()); }
 
   @Get('unmapped-routes')
   @ApiOperation({ summary: '연결 안 된 /admin 주소 (v10.564 · SUPER)', description: '운영 역할만 요구하고 SUPER 전용이 아닌데 perm_route_map 에 없는 주소(실행 중 데코레이터 · 500줄).' })

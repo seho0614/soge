@@ -150,7 +150,8 @@
     "PUT /me/lang",
     "GET /site-layouts/{key}",
     "POST /site-layouts/{key}/view",
-    "POST /page-feedback"
+    "POST /page-feedback",
+    "POST /site-layouts/{key}/click"
    ],
    "nav": "root",
    "note": "★ 2026-10-02 v10.13 「hero 페이지」 디자인 적용 — 메인 전용 헤더 · 푸터(다른 화면은 공통 헤더 · 푸터 그대로). 사진 · 아이콘 · 로고는 주신 그림(spec/design/hero_page_20261002.png)에서 잘라 넣었고, 내용은 그림 그대로입니다(예시). HOME_CONTENT=live 로 켜면 실제 매물 · 상품 · 요청 · 글로 바뀝니다. ★ v10.14 「이건 어때?」 3장은 실제 투표입니다(D021) — 표 수는 실제 표 수, 푸터 사회관계망 아이콘은 운영 화면에서 넣은 주소로 연결됩니다. ★ v10.50 (docs/102) — 히어로 검색칩 아래 소개장터 퀵메뉴 5칸(성공현황 · 베스트매칭 · 급구 · 급매 · 사고예방 · 이벤트존 → /money/new · best · urgent · verified · event). 소개장터 관이 꺼져 있으면 숨김."
@@ -710,7 +711,8 @@
     "GET /market/suppliers/{id}",
     "GET /site-layouts/{key}",
     "GET /gwans/{code}/maintenance",
-    "POST /site-layouts/{key}/view"
+    "POST /site-layouts/{key}/view",
+    "POST /site-layouts/{key}/click"
    ],
    "nav": "SB-HOM-MAIN-010",
    "note": "랜딩과 목록을 한 화면으로 통합. 필터 탭으로 급구·서류확인을 가릅니다",
@@ -1833,7 +1835,12 @@
     "GET /admin/site-layouts/{key}/ab",
     "POST /admin/site-layouts/{key}/ab",
     "POST /admin/site-layouts/{key}/ab/end",
-    "GET /admin/site-pages/publish-log.csv"
+    "GET /admin/site-pages/publish-log.csv",
+    "GET /admin/mall-item-layouts",
+    "GET /admin/mall-item-layouts/{scope}/{ref}",
+    "PUT /admin/mall-item-layouts/{scope}/{ref}",
+    "POST /admin/mall-item-layouts/{scope}/{ref}/publish",
+    "DELETE /admin/mall-item-layouts/{scope}/{ref}/publish"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "2026-11-24 v10.696 ~ 700 (D321 · docs/804 ~ 808) — 대표 「수정 가능한 페이지: hero · 각 관 메인 · 소개몰(메인 · 구성) · 페이지 목록 관리」 · 구역 편집 · 게시 SUPER"
@@ -2063,7 +2070,8 @@
     "GET /admin/safenum/calls",
     "GET /admin/mail/suppressions",
     "POST /admin/mail/suppressions/{id}/release",
-    "POST /webhooks/ses"
+    "POST /webhooks/ses",
+    "GET /admin/integration-keys/pg-readiness"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
@@ -2313,7 +2321,8 @@
     "GET /admin/mfa/turn-on-preview",
     "POST /admin/accounts/{id}/mfa-reset",
     "PATCH /admin/site-settings",
-    "POST /me/logout-all"
+    "POST /me/logout-all",
+    "POST /admin/mfa/remind"
    ],
    "nav": "SB-ADM-DSH-010",
    "note": "2026-11-03 v10.180 D169 — 운영자 2단계 인증(휴대폰 인증 앱 6자리 · RFC 6238) 등록 · 예비 번호 10개 · 로그인 뒤 번호 넣기 화면(admin.mfa_required 켜졌을 때) · SUPER 가 회원 상세에서 초기화. 기본 꺼짐. · 2026-11-06 v10.203 — SUPER 가 이 화면에서 설정(admin.mfa_required)을 바꿈 · 운영 역할 모두 「모든 기기에서 로그아웃」."
@@ -3196,7 +3205,8 @@
     "GET /health/products/{code}/image",
     "GET /health/products/{code}/reviews",
     "GET /health/products/{code}/qna",
-    "POST /health/products/{code}/qna"
+    "POST /health/products/{code}/qna",
+    "GET /mall-item-layouts/for"
    ],
    "nav": "SB-HLT-CAT-010"
   },
@@ -5413,7 +5423,10 @@
     "GET /admin/health/orders",
     "POST /admin/health/orders/{no}/ship",
     "POST /admin/health/orders/{no}/tracking",
-    "POST /admin/health/orders/{no}/advance"
+    "POST /admin/health/orders/{no}/advance",
+    "GET /admin/hlt-carriers",
+    "PUT /admin/hlt-carriers/{name}",
+    "POST /admin/hlt-carriers/{name}/check"
    ],
    "nav": "SB-ADM-DSH-010",
    "new": true
@@ -9975,7 +9988,9 @@
    "apis": [
     "GET /admin/perm/mode",
     "PUT /admin/perm/mode",
-    "GET /admin/perm/unmapped-routes"
+    "GET /admin/perm/unmapped-routes",
+    "GET /admin/perm/mode/readiness",
+    "POST /admin/perm/mode/revert"
    ],
    "note": "2026-11-21 v10.564 (D291 · docs/706) 직원 · 권한 › 업무별 권한 위 상자 — perm.mode ROLE(처음) · COMPARE(다름 기록) · GROUPS(연결 안 된 /admin 주소 0 · 24시간 다름 0 일 때만 · 서버 · DB 가 막음)"
   },

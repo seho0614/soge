@@ -112,6 +112,8 @@ import { GwanMaintService } from './modules/site/gwan-maint.service';
 import { PublishRequestsController } from './modules/site/publish-requests.controller';   // v10.711 (D324) 게시 요청
 import { PublishRequestsService } from './modules/site/publish-requests.service';
 import { PageFeedbackController, PageFeedbackService } from './modules/site/page-feedback';   // v10.729 (D325) 손님 한 줄 의견
+import { MallItemLayoutsController, MallItemLayoutsService } from './modules/site/mall-item-layouts';   // v10.780 (D329) 상품 상세 덮어쓰기
+import { HltCarriersController, HltCarriersService } from './modules/health/hlt-carriers';   // v10.783 (D329) 택배사 조회 주소 확인
 import { GeoAdminController, GeoPublicController, GeoReviewController } from './modules/geo/geo.controller';   // v10.46 (D099) 카카오맵
 import { GeoService } from './common/geo/geo.service';
 import { IntegrationSecretService } from './common/integration/secret.service';
@@ -412,6 +414,8 @@ import { LeadService } from './modules/lead/lead.service';
     GwanMaintController,   // v10.706 (D323)
     PublishRequestsController,   // v10.711 (D324)
     PageFeedbackController,   // v10.729 (D325)
+    MallItemLayoutsController,   // v10.780 (D329)
+    HltCarriersController,   // v10.783 (D329)
     BillingController,
     SettlementController,
     AdminOpsController,
@@ -671,6 +675,8 @@ import { LeadService } from './modules/lead/lead.service';
     GwanMaintService,   // v10.706 (D323)
     PublishRequestsService,   // v10.711 (D324)
     PageFeedbackService,   // v10.729 (D325)
+    MallItemLayoutsService,   // v10.780 (D329)
+    HltCarriersService,   // v10.783 (D329)
     BillingService,
     SettlementService,
     SchedulerService,

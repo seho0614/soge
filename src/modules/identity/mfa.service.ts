@@ -22,7 +22,7 @@ const MAX_FAILS = 5;
 const LOCK_MIN = 15;
 const CACHE_MS = 30_000;
 
-let cache: { at: number; mode: string; hours: number } | null = null;
+let cache: { at: number; mode: string; hours: number; from?: string } | null = null;
 /** 시험 · 설정 저장 뒤 — 바로 다시 읽게 */
 export function resetMfaSettingCache() { cache = null; }
 
@@ -30,14 +30,17 @@ export function resetMfaSettingCache() { cache = null; }
 export class MfaService {
   constructor(private readonly db: DatabaseService, private readonly auth: AuthService) {}
 
-  async settings(): Promise<{ mode: string; hours: number }> {
+  async settings(): Promise<{ mode: string; hours: number; from?: string }> {
     if (cache && Date.now() - cache.at < CACHE_MS) return cache;
     const rows = await this.db.query<{ key: string; value: string | null }>(
-      `SELECT key, value FROM site_settings WHERE key IN ('admin.mfa_required', 'admin.mfa_hours')`).catch(() => []);
+      `SELECT key, value FROM site_settings WHERE key IN ('admin.mfa_required', 'admin.mfa_hours', 'admin.mfa_from')`).catch(() => []);
     const m = Object.fromEntries(rows.map((r) => [r.key, r.value ?? '']));
-    const mode = ['SUPER', 'ALL'].includes(m['admin.mfa_required']) ? m['admin.mfa_required'] : 'off';
+    let mode = ['SUPER', 'ALL'].includes(m['admin.mfa_required']) ? m['admin.mfa_required'] : 'off';
+    /* v10.775 (D329 · docs/883) 「이날부터 필수」 — admin.mfa_from(한국 날짜)이 오늘이거나 지났으면 설정이 off 라도 운영 역할 모두(ALL) · 비우면 전과 같음 */
+    const from = /^\d{4}-\d{2}-\d{2}$/.test(m['admin.mfa_from'] ?? '') ? m['admin.mfa_from'] : '';
+    if (from && mode !== 'ALL' && new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10) >= from) mode = 'ALL';
     const h = Number(m['admin.mfa_hours']);
-    cache = { at: Date.now(), mode, hours: h >= 1 && h <= 24 ? h : 12 };
+    cache = { at: Date.now(), mode, hours: h >= 1 && h <= 24 ? h : 12, ...(from ? { from } : {}) };
     return cache;
   }
 
@@ -76,7 +79,7 @@ export class MfaService {
     const s = await this.settings();
     const r = await this.row(p.accountId);
     return {
-      mode: s.mode, hours: s.hours,
+      mode: s.mode, hours: s.hours, from: s.from ?? null,   // v10.775 이날부터 필수
       required: MfaService.requiredFor(s.mode, p.roles),
       enrolled: !!r?.enabled,
       verified: !!(mfaAt && mfaAt * 1000 > Date.now() - s.hours * 3600_000),
@@ -214,6 +217,30 @@ export class MfaService {
         : !missing.length ? `번호를 넣어야 하는 운영자 ${need.length}명 모두 등록했습니다.`
         : `번호를 넣어야 하는 운영자 ${need.length}명 중 ${missing.length}명이 아직 등록하지 않았습니다 — 켜면 그 사람은 다음 로그인 때 등록부터 해야 운영 화면을 씁니다${meNeed && !meNeed.enrolled ? ' · 나도 등록하지 않아 켤 수 없습니다(MFA_ENROLL_FIRST)' : ''}.`,
     };
+  }
+
+  /** v10.775 (D329 · docs/883) 등록 안 한 운영자에게 알림 — 「이날부터 필수」(admin.mfa_from)가 있으면 그날을 적음 · 한 사람 하루 한 번(이미 오늘 보냈으면 건너뜀) · 운영 알림에 한 줄 */
+  async remind() {
+    const s = await this.settings();
+    const pv = await this.turnOnPreview('ALL');
+    const ids = await this.db.query<{ id: string }>(
+      `SELECT a.id FROM accounts a JOIN account_roles r ON r.account_id = a.id AND r.role = ANY($1::text[])
+         LEFT JOIN account_mfa m ON m.account_id = a.id AND m.enabled_at IS NOT NULL
+        WHERE a.status = 'ACTIVE' AND m.account_id IS NULL GROUP BY a.id`, [OPS_ROLES]);
+    const when = s.from ? ` — ${s.from}부터 운영 화면을 쓰려면 꼭 필요합니다` : '';
+    let sent = 0;
+    for (const r of ids) {
+      const [x] = await this.db.query(
+        `INSERT INTO notifications (account_id, event_code, title, body)
+         SELECT $1, 'MFA_ENROLL_REMIND', '운영자 2단계 인증을 등록해 주십시오', $2
+          WHERE NOT EXISTS (SELECT 1 FROM notifications n WHERE n.account_id = $1 AND n.event_code = 'MFA_ENROLL_REMIND' AND n.created_at > (date_trunc('day', now() AT TIME ZONE 'Asia/Seoul') AT TIME ZONE 'Asia/Seoul'))
+         RETURNING id`, [r.id, `운영 화면 › 내 2단계 인증에서 휴대폰 인증 앱으로 등록해 주십시오${when}.`]);
+      if (x) sent++;
+    }
+    if (sent) await this.db.query(
+      `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at) VALUES ('MFA_ENROLL_REMIND', 'INFO', $1, $2::jsonb, clock_timestamp()) ON CONFLICT DO NOTHING`,
+      [`2단계 인증 등록 안내 ${sent}명에게 보냄${s.from ? ` · ${s.from}부터 필수` : ''}`, JSON.stringify({ sent, from: s.from ?? null })]).catch(() => undefined);
+    return { notEnrolled: pv.notEnrolled.length, sent, skipped: ids.length - sent, from: s.from ?? null };
   }
 
   /** 설정 저장 전(AdminService) — 켜는 사람이 먼저 등록했는지 */
