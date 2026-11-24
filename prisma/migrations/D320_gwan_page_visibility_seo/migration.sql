@@ -29,3 +29,8 @@ COMMENT ON COLUMN public.gwan_pages.noindex IS 'v10.692 (D320) 검색엔진에 �
 INSERT INTO public.site_settings (key, value, scope, description, is_required_for_open, value_pattern, value_example) VALUES
   ('ops.gwan_weekly', 'on', 'ADMIN', '관별 주간 보고(v10.694 · docs/801) — 월요일 아침 대표 할 일 주간 작업에 이어 관 담당자마다 맡은 관의 지난 7일 숫자(운영 알림 GWAN_WEEKLY · 메일이 준비됐으면 담당자 메일) · 담당자가 없으면 아무것도 안 함 · off 면 안 보냄', false, '^(on|off)$', 'on')
 ON CONFLICT (key) DO NOTHING;
+
+-- v10.694 (docs/801) 켤 조건 글(켜기 도우미 · test_v1625 「켤 조건 없는 스위치 0」) — 있으면 그대로 둠
+INSERT INTO public.opx_switch_docs (key, initial_value, cond, doc_ref, who) VALUES
+  ('ops.gwan_weekly', 'on', '처음부터 켜짐(선행 조건 없음) — 관 담당자가 있어야 보냄 · 메일은 메일(SES)이 준비된 뒤에만', 'docs/801', 'ADMIN')
+ON CONFLICT (key) DO NOTHING;
