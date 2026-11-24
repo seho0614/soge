@@ -63,8 +63,9 @@ ok('① 모든 요청 키 — perm.mode · admin.mfa_required · auth.login.max_
 # ── ② 실제 시험 ──────────────────────────────────────
 rows = {r[0]: (r[2], r[3], r[1]) for r in RC.classify(HERE, K)} if RC else {}
 I18N = ['test_v1093.py', 'test_v1104.py', 'test_v1105.py', 'test_v1119.py', 'test_v1296.py']
-ok('② i18n.enabled 시험 5개 — 모두 잠금 set:i18n(LOCK) · 서로 동시에 안 돎',
-   all(rows.get(t, ('',))[0] == 'LOCK' and 'set:i18n' in rows.get(t, ('', []))[1] for t in I18N), str({t: rows.get(t, ('',))[:2] for t in I18N}))
+# v10.694 (docs/801) test_v1104 는 손 목록으로 SOLO(혼자 돌면 서로 동시에 안 돎 — 잠금보다 강함)
+ok('② i18n.enabled 시험 5개 — 모두 잠금 set:i18n(LOCK) 또는 늘 혼자(SOLO) · 서로 동시에 안 돎',
+   all((rows.get(t, ('',))[0] == 'LOCK' and 'set:i18n' in rows.get(t, ('', []))[1]) or rows.get(t, ('',))[0] == 'SOLO' for t in I18N), str({t: rows.get(t, ('',))[:2] for t in I18N}))
 JR = ['test_v1382.py', 'test_v1383.py', 'test_v1423.py', 'test_v1428.py', 'test_v1433.py']
 ok('② 묶음 실행 POST /admin/…/run(전표 journal/run)을 부르는 시험은 잠금 job — 11/22 전체 점검 test_v1382 가 동시 단계에서 1423 · 1428 · 1433 의 journal/run 에 걸림',
    all('job' in rows.get(t, ('', []))[1] for t in JR) and RC is not None and any(n == 'JOB' and r.search("POST /admin/acct/journal/run None") for n, r in RC.CALL_RULES),
@@ -76,7 +77,8 @@ ok('② perm.mode · admin.mfa_required 를 바꾸는 시험은 SOLO', all(rows.
 force = RC.read_list(os.path.join(HERE, 'reg_solo_force.txt')) if RC else set()
 # v10.646 (docs/791) test_v1646 더함 — 새 관을 잠깐 열어 /gwans · 머리줄 관 수가 바뀜(규칙은 SETREAD 만 잡음)
 # v10.660 (docs/795) test_v1660 더함 — 준비중 새 관을 만들고 지움 · 관 페이지 방문 수 · 예약 게시
-ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421 · 1646 · 1660 · 1675 · 1680 · 1685 · 1690(i18n 5개는 규칙이 맡음)', {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'} <= force <= {'test_v1570.py', 'test_v1420.py', 'test_v1421.py', 'test_v1646.py', 'test_v1660.py', 'test_v1675.py', 'test_v1680.py', 'test_v1685.py', 'test_v1690.py'}, str(sorted(force)))
+# v10.694 (docs/801) test_v1104(동시 단계 번역 줄 겹침) · test_v1147(buyer 비밀번호 재설정으로 옆 시험 로그인 풀림) 더함
+ok('③ 늘 혼자 손 목록 = 1570 · 1420 · 1421 · 1646 · 1660 · 1675 · 1680 · 1685 · 1690 · 1104 · 1147', {'test_v1570.py', 'test_v1420.py', 'test_v1421.py'} <= force <= {'test_v1570.py', 'test_v1420.py', 'test_v1421.py', 'test_v1646.py', 'test_v1660.py', 'test_v1675.py', 'test_v1680.py', 'test_v1685.py', 'test_v1690.py', 'test_v1104.py', 'test_v1147.py'}, str(sorted(force)))
 d = os.path.join(K, 'docs')
 d782 = next((rd(os.path.join(d, x)) for x in (os.listdir(d) if os.path.isdir(d) else []) if x.startswith('782_')), '')
 ok('③ 문서 782 — SETREAD · SETGLOBAL · set:i18n', all(w in d782 for w in ('SETREAD', 'SETGLOBAL', 'set:i18n')), str(len(d782)))
