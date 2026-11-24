@@ -18,10 +18,11 @@ ok('① 서버 — gate(수정 불가 · 관 열림) · 초안 · 게시 · 예�
    "reason: !editable ? 'SITE_LAYOUT_LOCKED' : gwanOpen ? 'SITE_LAYOUT_GWAN_OPEN' : null" in SV and SV.count('await this.assertEditable(k);') == 5
    and 'const l = cleanLayout(k, layout);   // 입력 규칙을 먼저' in SV and 'if ((await this.gate(due[i]!.key as LayoutKey)).reason) due.splice(i, 1);' in SV
    and "GWAN_LAYOUT_KEYS = ['MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN']" in SV, '')   # 메인(HOME)은 관 규칙 없음
-ok('① 관 안 페이지 — GWAN_PAGE_LOCKED(저장 · 게시 · 예약 · 되돌리기 · 번역 · 예약 게시 기다림) · 스위치 SUPER · 화면 잠금 표시',
-   "'GWAN_PAGE_LOCKED'" in GS and GS.count('await this.assertEditable(id);   // v10.701') == 6 and 'AND editable AND' in GS
+ok('① 관 안 페이지 — GWAN_PAGE_LOCKED · v10.705 GWAN_PAGE_GWAN_OPEN(만들기 · 저장 · 게시 · 숨김 · 예약 · 되돌리기 · 번역 · 예약 게시 기다림) · 스위치 SUPER · 화면 잠금 표시',
+   "'GWAN_PAGE_LOCKED'" in GS and "'GWAN_PAGE_GWAN_OPEN'" in GS and GS.count('await this.assertEditable(id);   // v10.701') == 6 and 'await this.assertGwanClosed(code);   // v10.705' in GS
+   and 'await this.assertEditable(id);   // v10.705 숨김' in GS and 'AND editable AND NOT EXISTS (SELECT 1 FROM gwans g' in GS
    and "@Post('admin/gwan-pages/:id/editable')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('SUPER')" in GC and "@Post('admin/site-layouts/:key/editable')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('SUPER')" in CT
-   and 'data-site-layout-lock' in SP and 'data-site-page-editable-toggle' in SP and 'data-gwan-page-editable-toggle' in GP and "disabled={!!busy || p.editable === false}" in GP, '')
+   and 'data-site-layout-lock' in SP and 'data-site-page-editable-toggle' in SP and 'data-gwan-page-editable-toggle' in GP and "disabled={!!busy || p.editable === false || !!p.gwanOpen}" in GP, '')
 
 if up():
     ok('② DB 처음 값 — 꾸밀 페이지 수정 불가 · 관 안 페이지 수정 가능', psql("SELECT column_default FROM information_schema.columns WHERE table_name = 'site_layouts' AND column_name = 'editable'") == 'false'
@@ -41,6 +42,9 @@ if up():
         ok('③ 메인 — 처음 422 LOCKED · 회원 스위치 403 · SUPER 가능 → 초안 저장 · 불가로 → 게시 422 LOCKED',
            h0.get('code') == 'SITE_LAYOUT_LOCKED' and hb.get('_err') == 403 and h1.get('editable') is True and h1.get('lockReason') is None
            and (h2.get('draft') or {}).get('texts', {}).get('heroTitleA') == '시험 1701' and h3.get('code') == 'SITE_LAYOUT_LOCKED', f"{h0.get('code')} {hb.get('_err')} {h1.get('lockReason')} {h3.get('code')}")
+        mny_was = psql("SELECT is_active FROM gwans WHERE code = 'MNY'")
+        g0 = call('POST', '/admin/gwans/MNY/pages', {'slug': slug + 'o', 'title': '시험 1701'}, TS) if mny_was == 't' else {'code': 'GWAN_PAGE_GWAN_OPEN'}
+        psql("UPDATE gwans SET is_active = false WHERE code = 'MNY'")   # v10.705 관 안 페이지도 관을 닫고 고침(이 시험은 늘 혼자)
         pg = call('POST', '/admin/gwans/MNY/pages', {'slug': slug, 'title': '시험 1701'}, TS)
         pid = pg.get('id')
         e0 = call('POST', f'/admin/gwan-pages/{pid}/editable', {'editable': False}, TS)
@@ -48,16 +52,25 @@ if up():
         p2 = call('POST', f'/admin/gwan-pages/{pid}/publish', None, TS)
         call('POST', f'/admin/gwan-pages/{pid}/editable', {'editable': True}, TS)
         p3 = call('PATCH', f'/admin/gwan-pages/{pid}', {'blocks': [{'type': 'TEXT', 'body': '시험'}]}, TS)
+        if mny_was == 't':
+            psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")
+        p4 = call('PATCH', f'/admin/gwan-pages/{pid}', {'blocks': [{'type': 'TEXT', 'body': '열린 관'}]}, TS) if mny_was == 't' else {'code': 'GWAN_PAGE_GWAN_OPEN'}
+        dt = call('GET', f'/admin/gwan-pages/{pid}', None, TS)
+        ok('③ 관 열림(v10.705) — 열린 관에 페이지 만들기 · 고치기 422 GWAN_PAGE_GWAN_OPEN · 상세에 gwanOpen', g0.get('code') == 'GWAN_PAGE_GWAN_OPEN' and p4.get('code') == 'GWAN_PAGE_GWAN_OPEN'
+           and dt.get('gwanOpen') is (mny_was == 't'), f"{g0.get('code')} {p4.get('code')} {dt.get('gwanOpen')}")
         ok('③ 관 안 페이지 — 처음 수정 가능 · 불가 → 저장 · 게시 422 GWAN_PAGE_LOCKED · 가능 → 저장', pg.get('editable') is True and e0.get('editable') is False
            and p1.get('code') == 'GWAN_PAGE_LOCKED' and p2.get('code') == 'GWAN_PAGE_LOCKED' and len(p3.get('blocks') or []) == 1, f"{pg.get('editable')} {p1.get('code')} {p2.get('code')}")
     finally:
         reset('HOME')
-        psql(f"DELETE FROM gwan_pages WHERE gwan_code = 'MNY' AND slug = '{slug}'")
+        psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")   # 개발 DB 의 소개장터는 늘 열림
+        psql(f"DELETE FROM gwan_pages WHERE gwan_code = 'MNY' AND slug IN ('{slug}', '{slug}o')")
         ok('③ 끝 — 메인 처음 · 시험 페이지 지움', psql(f"SELECT count(*) FROM gwan_pages WHERE slug = '{slug}'") == '0' and psql("SELECT editable FROM site_layouts WHERE key = 'HOME'") == 'f', '')
 else:
     print('API · DB 없음 — ② · ③ 건너뜀')
 
 d = doc('809_')
 ok('④ 문서 809 — 수정 가능 · SUPER · 관이 열려 있으면 · 닫은 뒤 · 엔진 · 디자인', all(w in d for w in ('수정 가능', 'SUPER', '열려 있', '닫', '엔진', '디자인', 'D322')), str(len(d)))
-ok('④ VERSION v10.701 이상', VT >= (10, 701), VER)
+d13 = doc('813_')
+ok('④ 문서 813 — 관 안 페이지도 관이 열려 있으면 · 닫고 고침', all(w in d13 for w in ('관 안 페이지', '열려 있으면', '닫', 'GWAN_PAGE_GWAN_OPEN')), str(len(d13)))
+ok('④ VERSION v10.705 이상', VT >= (10, 705), VER)
 done()

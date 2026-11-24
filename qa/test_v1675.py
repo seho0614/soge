@@ -51,6 +51,20 @@ def psql(sql):
     r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True)
     return (r.stdout.strip() + ('\n!' + r.stderr.strip() if r.returncode else '')).strip()
 
+# v10.705 (docs/813) 관이 열려 있으면 관 페이지를 만들거나 고칠 수 없음 → 고치는 부르기만 소개장터(MNY)를 잠깐 닫았다 다시 엶(이 시험은 늘 혼자 · reg_solo_force)
+_call_open = call
+
+
+def call(m_, p, b=None, t=None):
+    if m_ != 'GET' and re.match(r'^/admin/(gwan-pages|gwans/MNY/pages|gwan-fragments/\d+/republish)', p):
+        psql("UPDATE gwans SET is_active = false WHERE code = 'MNY'")
+        try:
+            return _call_open(m_, p, b, t)
+        finally:
+            psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")
+    return _call_open(m_, p, b, t)
+
+
 
 def login(e):
     return call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken')
@@ -136,7 +150,9 @@ if API and DB and API_UP and DB_UP:
         # 예약 판 source
         sch = call('POST', f'/admin/gwan-pages/{id2}/schedule', {'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() + 3600))}, TS_)
         psql(f"UPDATE gwan_pages SET scheduled_at = now() - interval '1 minute' WHERE id = {int(id2 or 0)}")
+        psql("UPDATE gwans SET is_active = false WHERE code = 'MNY'")   # v10.705 예약 게시는 관이 닫혀 있을 때만(열려 있으면 기다림)
         rows = call('GET', '/admin/gwans/MNY/pages', None, TS_)
+        psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")
         me = next((r for r in rows if r.get('id') == id2), {}) if isinstance(rows, list) else {}
         src = psql(f"SELECT (v.source IS NOT NULL)::text FROM gwan_page_versions v JOIN gwan_pages p ON p.id = v.page_id AND v.version = p.published_version WHERE p.id = {int(id2 or 0)}")
         ok('③ 예약 판 — 조각 페이지 예약 게시 뒤 source 있음 · 「초안 다름」 아님', bool(sch.get('scheduledAt')) and me.get('scheduledAt') is None and src == 'true' and me.get('draftChanged') is False,

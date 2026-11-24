@@ -51,6 +51,20 @@ def psql(sql):
     r = subprocess.run(['psql', DB, '-X', '-q', '-At', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True)
     return (r.stdout.strip() + ('\n!' + r.stderr.strip() if r.returncode else '')).strip()
 
+# v10.705 (docs/813) 관이 열려 있으면 관 페이지를 만들거나 고칠 수 없음 → 고치는 부르기만 소개장터(MNY)를 잠깐 닫았다 다시 엶(이 시험은 늘 혼자 · reg_solo_force)
+_call_open = call
+
+
+def call(m_, p, b=None, t=None):
+    if m_ != 'GET' and re.match(r'^/admin/(gwan-pages|gwans/MNY/pages|gwan-fragments/\d+/republish)', p):
+        psql("UPDATE gwans SET is_active = false WHERE code = 'MNY'")
+        try:
+            return _call_open(m_, p, b, t)
+        finally:
+            psql("UPDATE gwans SET is_active = true WHERE code = 'MNY' AND NOT is_active")
+    return _call_open(m_, p, b, t)
+
+
 
 def login(e):
     return call('POST', '/auth/login', {'email': e, 'password': PW}).get('accessToken')
