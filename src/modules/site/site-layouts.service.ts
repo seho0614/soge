@@ -5,6 +5,8 @@ import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { cleanBlocks, GwanPagesService } from './gwan-pages.service';
 import { createHash } from 'crypto';
+import { pagesBoard } from './pages-board';
+import { toCsv } from './csv';
 import { AgentService } from '../agent/agent.service';
 import { translateSystem, parseTranslation } from '../i18n/translate.service';
 
@@ -211,6 +213,7 @@ export class SiteLayoutsService {
        SELECT 'SITE_LAYOUT_PUBLISHED', 'INFO', $1::text, $2::jsonb, clock_timestamp()
         WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = 'SITE_LAYOUT_PUBLISHED' AND a.detail->>'key' = $3::text)
        ON CONFLICT DO NOTHING`, [title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
+    await pagesBoard(this.db, title);   // v10.734 운영자 게시판
   }
 
   /** v10.701 (D322 · docs/809) 고칠 수 있는가 — SUPER 가 「수정 가능」으로 둔 페이지 · 관 메인은 그 관이 닫혀 있을 때만 */
@@ -514,6 +517,76 @@ export class SiteLayoutsService {
       catch (e) { out.push({ key: String(key).toUpperCase(), ok: false, error: String((e as Error).message).slice(0, 160) }); }
     }
     return { at, scheduled: out.filter((x) => x.ok).length, items: out };
+  }
+  /** v10.735 · 736 (docs/843 · 844) 달력 — 예약 게시(꾸밀 페이지 · 관 안 페이지) · 관 점검 시간을 한 목록으로(기간 · 최대 62일) */
+  async schedules(from: string, to: string) {
+    const f = /^\d{4}-\d{2}-\d{2}$/.test(from) ? from : new Date().toISOString().slice(0, 10);
+    const t0 = /^\d{4}-\d{2}-\d{2}$/.test(to) ? to : f;
+    if ((new Date(t0).getTime() - new Date(f).getTime()) / 86_400_000 > 62) throw new PolicyViolation('SITE_SCHEDULE_RANGE', '달력은 62일까지 봅니다.');
+    const rng = `>= ($1::date AT TIME ZONE 'Asia/Seoul') AND %s < (($2::date + 1) AT TIME ZONE 'Asia/Seoul')`;
+    const L = await this.db.query<{ key: string; at: string }>(`SELECT key, scheduled_at AS at FROM site_layouts WHERE scheduled_at ${rng.replace('%s', 'scheduled_at')}`, [f, t0]);
+    const P = await this.db.query<{ id: number; gwan_code: string; slug: string; title: string; at: string }>(`SELECT id::int AS id, gwan_code, slug, title, scheduled_at AS at FROM gwan_pages WHERE scheduled_at ${rng.replace('%s', 'scheduled_at')}`, [f, t0]);
+    const M = await this.db.query<{ id: number; gwan_code: string; starts_at: string; ends_at: string; note: string | null; status: string }>(
+      `SELECT id::int AS id, gwan_code, starts_at, ends_at, note, CASE WHEN reopened_at IS NOT NULL THEN 'DONE' WHEN closed_at IS NOT NULL THEN 'RUNNING' ELSE 'SCHEDULED' END AS status
+         FROM gwan_maintenances WHERE canceled_at IS NULL AND starts_at ${rng.replace('%s', 'starts_at')}`, [f, t0]);
+    const items = [
+      ...L.map((x) => ({ type: 'LAYOUT', at: x.at, end: null, label: `${LAYOUT_SPECS[x.key as LayoutKey]?.name ?? x.key} 예약 게시`, ref: x.key })),
+      ...P.map((x) => ({ type: 'PAGE', at: x.at, end: null, label: `${x.gwan_code} ${x.slug === 'home' ? '첫 화면' : `/info/${x.slug}`} 「${x.title}」 예약 게시`, ref: String(x.id) })),
+      ...M.map((x) => ({ type: 'MAINT', at: x.starts_at, end: x.ends_at, label: `${x.gwan_code} 관 점검${x.note ? ` · ${x.note}` : ''}`, ref: String(x.id), status: x.status })),
+    ].sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    return { from: f, to: t0, items };
+  }
+  /** v10.739 (docs/847) 판 내려받기 — 지금 초안(또는 게시 판 하나)을 JSON 파일로(백업 · 다른 서버로 옮기기) */
+  async exportLayout(key: string, version?: number) {
+    const k = this.k(key);
+    const l = version ? (await this.version(k, version)).layout : cleanLayoutSafe(k, (await this.db.query<{ draft: unknown }>(`SELECT draft FROM site_layouts WHERE key = $1`, [k]))[0]?.draft);
+    return { kind: 'sogaebank.site-layout', v: 1, key: k, from: version ? `${version}판` : '초안', exportedAt: new Date().toISOString(), layout: l };
+  }
+  /** v10.739 판 올리기 — 같은 열쇠의 파일만 · 지금 규칙으로 검사 · 초안으로(게시는 따로) · 수정 가능 · 관 닫힘 */
+  async importLayout(key: string, file: unknown) {
+    const k = this.k(key);
+    const f = (file && typeof file === 'object' ? file : {}) as Record<string, unknown>;
+    if (f.kind !== 'sogaebank.site-layout' || String(f.key ?? '').toUpperCase() !== k) throw new PolicyViolation('SITE_LAYOUT_IMPORT', '이 페이지에서 내려받은 판 파일이 아닙니다.');
+    const l = cleanLayout(k, f.layout);
+    await this.assertEditable(k);
+    await this.writeDraft(k, l, `파일에서 올림(${String(f.from ?? '')} · ${String(f.exportedAt ?? '').slice(0, 10)})`);
+    return this.get(k);
+  }
+  /** v10.741 (docs/849) 관 메인 글자 AI 초안 — 관 이름 · 설명으로 한국어 글자를 제안(초안에 쓰지 않음 · 화면이 칸에 채움 · 저장은 사람) */
+  async suggest(key: string) {
+    const k = this.k(key);
+    const keys = LAYOUT_SPECS[k].texts.filter(([tk]) => !tk.startsWith('h.'));
+    if (!keys.length) throw new PolicyViolation('SITE_LAYOUT_SUGGEST', '이 페이지는 고칠 글자가 없습니다.');
+    const code = LAYOUT_GWAN[k];
+    const [g] = code ? await this.db.query<{ name: string; description: string | null }>(`SELECT name, description FROM gwans WHERE code = $1`, [code]) : [{ name: '소개뱅크', description: '아는 사람과 기업을 필요한 곳에 소개하고 소개비를 받는 P2P 소개 플랫폼' }];
+    const gate = await this.agent.allowed('TRANSLATE');
+    if (!gate.ok) throw new PolicyViolation('AGENT_OFF', `AI 를 쓸 수 없습니다(${gate.reason}) — 정책 › AI 에이전트에서 스위치 · 월 상한을 확인하십시오.`);
+    const prov = await this.agent.provider();
+    if (!prov) throw new PolicyViolation('AGENT_OFF', 'AI 키가 없습니다 — 통합 현황 › 외부 연동 › 연동 키에서 넣으십시오.');
+    const [m] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'i18n.translate_model'`);
+    const model = m?.value || 'claude-haiku-5-5';
+    const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
+    if (!priced) throw new PolicyViolation('MODEL_UNPRICED', `요금표에 없는 모델입니다(${model}).`);
+    const ask = Object.fromEntries(keys.map(([tk, tn, max]) => [tk, `${tn} — 한국어 ${max}자 안`]));
+    const system = 'You write short, plain Korean UI copy for a referral marketplace page. Reply with one JSON object only, same keys as given, each value a Korean string within the stated length. No HTML, no emoji, no exaggeration or price claims.';
+    const reply = await prov.complete({ model, system, messages: [{ role: 'user', content: JSON.stringify({ page: LAYOUT_SPECS[k].name, hall: g?.name ?? '', about: g?.description ?? '', fields: ask }) }], maxTokens: 1500, effort: 'low' });
+    await this.agent.record('TRANSLATE', model, reply.inputTokens, reply.outputTokens, reply.cacheReadTokens);
+    let out: Record<string, string> = {};
+    if (prov.name === 'MOCK') out = Object.fromEntries(keys.map(([tk, tn]) => [tk, `[MOCK] ${g?.name ?? ''} ${tn}`]));
+    else { try { out = parseTranslation(reply.text, keys.map(([tk]) => tk)); } catch { throw new PolicyViolation('SITE_LAYOUT_SUGGEST', 'AI 답을 읽지 못했습니다 — 다시 누르십시오.'); } }
+    const max = Object.fromEntries(keys.map(([tk, , n]) => [tk, n]));
+    return { key: k, model, texts: Object.fromEntries(Object.entries(out).map(([tk, v]) => [tk, String(v ?? '').replace(/<[^>]*>/g, '').trim().slice(0, max[tk] ?? 40)]).filter(([, v]) => v)) };
+  }
+  /** v10.743 (docs/851) 페이지 목록 CSV — 꾸밀 페이지 · 관 안 페이지 한 표(상태 · 수정 가능 · 관 열림 · 7일 방문 · 예약 · 30일 의견) */
+  async sitePagesCsv() {
+    const { layouts, pages } = await this.sitePages();
+    const fb = Object.fromEntries((await this.db.query<{ k: string; yes: number; no: number }>(
+      `SELECT page_kind || ':' || page_ref AS k, count(*) FILTER (WHERE helpful)::int AS yes, count(*) FILTER (WHERE NOT helpful)::int AS no FROM page_feedback WHERE at > now() - interval '30 days' GROUP BY 1`)).map((x) => [x.k, x]));
+    const rows: unknown[][] = [
+      ...layouts.map((r: any) => ['꾸밀 페이지', r.name, r.path, r.status === 'PUBLISHED' ? `게시 ${r.publishedVersion}판` : '처음 배치', r.draftChanged ? '예' : '', r.editable ? '가능' : '불가', r.gwanOpen ? '열림' : '', r.views7 ?? 0, r.scheduledAt ?? '', fb[`LAYOUT:${r.key}`]?.yes ?? 0, fb[`LAYOUT:${r.key}`]?.no ?? 0]),
+      ...pages.map((p: any) => ['관 안 페이지', `${p.gwanName} ${p.slug === 'home' ? '첫 화면' : `/info/${p.slug}`} ${p.title}`, p.slug === 'home' ? `/g/${String(p.gwanCode).toLowerCase()}` : `/info/${p.slug}`, p.status, '', p.editable ? '가능' : '불가', p.gwanOpen ? '열림' : '', p.views7 ?? 0, p.scheduledAt ?? '', fb[`PAGE:${p.gwanCode}/${p.slug}`]?.yes ?? 0, fb[`PAGE:${p.gwanCode}/${p.slug}`]?.no ?? 0]),
+    ];
+    return { csv: toCsv(['구분', '페이지', '주소', '상태', '게시 안 한 초안', '수정', '관', '7일 방문', '예약(UTC)', '의견 도움됨(30일)', '의견 아쉬움(30일)'], rows), rows: rows.length, filename: '페이지목록.csv' };
   }
   /** v10.733 (docs/841) 관 메인 배치 복사 — 다른 꾸밀 페이지에서 같은 열쇠의 구역 차례 · 보이기 · 글자 · 위 · 아래 · 맨 위 블록만 가져와 초안으로(게시는 따로) */
   async copyFrom(key: string, from: string) {

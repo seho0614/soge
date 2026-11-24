@@ -4,6 +4,8 @@ import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { GwanPagesService } from './gwan-pages.service';
 import { SiteLayoutsService } from './site-layouts.service';
+import { pagesBoard } from './pages-board';
+import { PublishRequestsService } from './publish-requests.service';
 
 /* ---------------------------------------------------------------------
  * v10.706 · v10.707 (D323 · docs/814 · 815) 관 점검 시간 예약 · 닫힌 관 손님 안내
@@ -23,7 +25,8 @@ const COLS = `m.id::int AS id, m.gwan_code AS "gwanCode", g.name AS "gwanName", 
 
 @Injectable()
 export class GwanMaintService {
-  constructor(private readonly db: DatabaseService, private readonly pages: GwanPagesService, private readonly layouts: SiteLayoutsService) {}
+  constructor(private readonly db: DatabaseService, private readonly pages: GwanPagesService, private readonly layouts: SiteLayoutsService,
+              private readonly requests: PublishRequestsService) {}
 
   async list(code?: string) {
     return this.db.query(
@@ -106,11 +109,13 @@ export class GwanMaintService {
        SELECT $1::text, $2::text, $3::text, $4::jsonb, clock_timestamp()
         WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = $1::text AND a.detail->>'key' = $5::text)
        ON CONFLICT DO NOTHING`, [code, severity, title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
+    await pagesBoard(this.db, title);   // v10.734 운영자 게시판
   }
   /** 정기 작업 gwan_maint(1분마다) */
   async tick(): Promise<{ closed: number; reopened: number; published: number; failed: number; made: number }> {
     let closed = 0, reopened = 0, published = 0, failed = 0;
     const made = await this.fillRepeats().catch(() => 0);   // v10.721 반복 점검을 7일 앞까지
+    await this.requests.remind().catch(() => 0);   // v10.737 하루 넘은 게시 요청 다시 알림
     const start = await this.db.query<{ id: number; gwan_code: string; ends_at: string }>(
       `SELECT id::int AS id, gwan_code, ends_at FROM gwan_maintenances WHERE canceled_at IS NULL AND closed_at IS NULL AND starts_at <= now() ORDER BY starts_at LIMIT 20`);
     for (const m of start) {
@@ -145,7 +150,7 @@ export class GwanMaintService {
       }
       await this.db.query(`UPDATE gwan_maintenances SET reopened_at = now(), reopen_error = $2 WHERE id = $1 AND reopened_at IS NULL`, [m.id, err]);
       if (err) { failed++; await this.note('GWAN_MAINT_REOPEN_FAIL', 'WARN', `관 점검 뒤 다시 열지 못함 — ${m.gwan_code} · 관 관리 › 관 설정에서 여십시오 · ${err.slice(0, 80)}`, `fail:${m.id}`, { id: m.id, gwan: m.gwan_code, error: err }); }
-      else { reopened++; await this.note('GWAN_MAINT_END', 'INFO', `관 점검 끝 — ${m.gwan_code}${m.was_open ? ' · 다시 엶' : ' · 원래 닫힌 관이라 그대로'}`, `end:${m.id}`, { id: m.id, gwan: m.gwan_code, reopened: m.was_open }); }
+      else { reopened++; if (m.was_open) await this.siteCheck(m.id, m.gwan_code); await this.note('GWAN_MAINT_END', 'INFO', `관 점검 끝 — ${m.gwan_code}${m.was_open ? ' · 다시 엶' : ' · 원래 닫힌 관이라 그대로'}`, `end:${m.id}`, { id: m.id, gwan: m.gwan_code, reopened: m.was_open }); }
     }
     return { closed, reopened, published, failed, made };
   }
@@ -198,6 +203,22 @@ export class GwanMaintService {
       }
     }
     return n;
+  }
+
+  /** v10.740 (D326 · docs/848) 점검 끝나 다시 연 뒤 사용자 웹 관 첫 화면을 한 번 열어 봄(200 이면 INFO · 아니면 WARN) — 사이트 안쪽 주소 SITE_INTERNAL_URL(없으면 127.0.0.1:5174) */
+  private async siteCheck(id: number, code: string) {
+    const fixed: Record<string, string> = { MNY: 'money', MAL: 'mall', BIZ: 'biz', HLT: 'health', LED: 'lead', EARN: 'earn' };
+    const path = '/' + (fixed[code] ?? `g/${code.toLowerCase()}`);
+    const base = (process.env.SITE_INTERNAL_URL || 'http://127.0.0.1:5174').replace(/\/$/, '');
+    let status = 0, why = '';
+    try {
+      const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 15_000);
+      try { status = (await fetch(base + path, { signal: ac.signal, redirect: 'manual' })).status; } finally { clearTimeout(tm); }
+    } catch (e) { why = String((e as Error)?.name ?? 'error'); }
+    const ok = status === 200;
+    await this.note(ok ? 'GWAN_MAINT_SITE_OK' : 'GWAN_MAINT_SITE_FAIL', ok ? 'INFO' : 'WARN',
+      ok ? `관 점검 뒤 화면 확인 — ${code} ${path} 200` : `관 점검 뒤 화면이 열리지 않음 — ${code} ${path} · ${status || why} · 사용자 웹에서 직접 확인하십시오`, `site:${id}`, { id, gwan: code, path, status });
+    return { status };
   }
 
   /** v10.727 (D325 · docs/835) 관 열기 · 닫기 기록 — 최근 200줄 */

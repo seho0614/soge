@@ -5,7 +5,7 @@ import { useAct, ymdhm } from '../../lib/act';
 import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 
-type Kind = 'DAILY_DIGEST' | 'URGENT' | 'OWNER_TODO' | 'TEST' | 'STAFF';
+type Kind = 'DAILY_DIGEST' | 'URGENT' | 'OWNER_TODO' | 'TEST' | 'STAFF' | 'PAGES';
 interface Row {
   id: string; kind: Kind; title: string; preview: string; telegram: string | null; slack: string | null; isPinned: boolean;
   takenDownAt: string | null; createdAt: string; updatedAt: string | null; author: string | null; reads: number; comments: number; readByMe: boolean;
@@ -18,7 +18,7 @@ interface DetailData {
   reads: { at: string; who: string | null }[];
   revisions: { id: string; before: { title?: string; body?: string }; reason: string | null; at: string; who: string | null }[];
 }
-const KIND: Record<Kind, string> = { DAILY_DIGEST: '하루 요약', URGENT: '급한 알림', OWNER_TODO: '대표 할 일', TEST: '시험 메시지', STAFF: '운영자 글' };
+const KIND: Record<Kind, string> = { DAILY_DIGEST: '하루 요약', URGENT: '급한 알림', OWNER_TODO: '대표 할 일', TEST: '시험 메시지', STAFF: '운영자 글', PAGES: '페이지 · 점검' };   // v10.734 (D326)
 /** 보낸 결과 낱말 → 글자 */
 const sent = (v: string | null) => v === null ? '—' : v === 'SENT' ? '보냄' : v === 'OFF' ? '꺼짐'
   : ['NO_TOKEN', 'NO_CHAT', 'NO_WEBHOOK'].includes(v) ? `준비 안 됨(${v})` : `실패(${v.replace(/^SEND_/, '')})`;

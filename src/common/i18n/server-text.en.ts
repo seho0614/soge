@@ -5,6 +5,12 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.": "The page address must be 2 to 40 lowercase letters, digits or -.",   // v10.742
+  "달력은 62일까지 봅니다.": "The calendar shows up to 62 days.",   // v10.734 ~ 743 (D326)
+  "이 페이지에서 내려받은 판 파일이 아닙니다.": "This is not a version file exported from this page.",   // v10.734 ~ 743 (D326)
+  "이 페이지는 고칠 글자가 없습니다.": "This page has no editable texts.",   // v10.734 ~ 743 (D326)
+  "AI 답을 읽지 못했습니다 — 다시 누르십시오.": "Could not read the AI reply — please try again.",   // v10.734 ~ 743 (D326)
+  "첫 화면은 복사하지 않습니다 — 관 안 페이지만 복사합니다.": "The first screen is not copied — only in-hall pages can be copied.",   // v10.734 ~ 743 (D326)
   "{0}번째 블록 보이는 기간은 YYYY-MM-DD 모양입니다.": "The display period of block {0} must be YYYY-MM-DD.",   // v10.714 ~ 733 (D325)
   "{0}번째 블록 보이는 기간의 끝이 시작보다 앞입니다.": "The display period end of block {0} is before its start.",   // v10.714 ~ 733 (D325)
   "이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.": "Only this hall's managers can edit it (per-hall page editing) — check Hall settings › Basic info › Hall managers.",   // v10.714 ~ 733 (D325)

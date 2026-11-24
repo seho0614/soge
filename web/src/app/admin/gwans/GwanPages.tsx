@@ -900,6 +900,12 @@ export function GwanPages({ isSuper, initialCode }: { isSuper: boolean; initialC
               <td className="mono">{r.slug === 'home' ? '첫 화면' : `/info/${r.slug}`}{r.visibility === 'MEMBER' ? <span className="dim"> · 회원만</span> : null}{r.noindex ? <span className="dim"> · 검색 끔</span> : null}</td><td>{r.lang ?? 'ko'}</td><td>{STATUS[r.status] ?? r.status}{r.scheduledAt ? <span className="dim"> · 예약 {new Date(r.scheduledAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span> : null}</td>
               <td>{r.publishedVersion ?? '—'}</td><td className="num-cell">{r.views7 ?? 0}</td><td>{r.draftUpdatedAt?.slice(0, 16).replace('T', ' ')} {r.draftUpdatedByName ?? ''}</td>
               <td><button className="btn-sm" onClick={() => setOpen(r.id)} data-gwan-page-open={r.slug}>편집</button>
+                {r.slug !== 'home' && <> <button className="btn-sm btn-plain" data-gwan-page-copy={r.slug} onClick={() => {   /* v10.742 (docs/850) 다른 관으로 복사 */
+                  const to = prompt(`「${r.title}」을(를) 복사할 관 코드(영문 대문자 3 ~ 4자 · 받는 관이 닫혀 있어야 함):`, code); if (!to) return;
+                  const sl = prompt('새 페이지 주소(영문 소문자 · 숫자 · - 2 ~ 40자):', r.slug); if (!sl) return;
+                  setErr(null);
+                  void api<PageDetail>(`/admin/gwan-pages/${r.id}/copy`, { method: 'POST', body: JSON.stringify({ gwanCode: to.trim().toUpperCase(), slug: sl.trim() }) }).then((d) => { if (to.trim().toUpperCase() === code) load(); setOpen(d.id); }).catch((e) => setErr(msgOf(e)));
+                }}>복사</button></>}
                 {(r.lang ?? 'ko') === 'ko' && others.length > 0 && <> <select value={tl[r.id] ?? ''} aria-label="번역판 언어" onChange={(e) => setTl({ ...tl, [r.id]: e.target.value })}>
                   <option value="">번역판…</option>
                   {others.filter((l) => !rows.some((x) => x.slug === r.slug && x.lang === l.code)).map((l) => <option key={l.code} value={l.code}>{l.name}{l.isActive ? '' : '(꺼짐)'}</option>)}</select>

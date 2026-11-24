@@ -12,8 +12,8 @@ import { Forbidden, NotFound, PolicyViolation, StateConflict } from '../../core/
  *   · 운영자 글 · 고치기(전 내용 기록) · 내림(쓴 사람 · SUPER) · 댓글 · 「확인함」
  *   · 운영 화면 계정만(컨트롤러 @Roles) — 사용자 웹에는 없음
  * ------------------------------------------------------------------- */
-export type BoardKind = 'DAILY_DIGEST' | 'URGENT' | 'OWNER_TODO' | 'TEST' | 'STAFF';
-export const BOARD_KINDS: BoardKind[] = ['DAILY_DIGEST', 'URGENT', 'OWNER_TODO', 'TEST', 'STAFF'];
+export type BoardKind = 'DAILY_DIGEST' | 'URGENT' | 'OWNER_TODO' | 'TEST' | 'STAFF' | 'PAGES';   // v10.734 (D326) PAGES 페이지 · 점검 자동 글
+export const BOARD_KINDS: BoardKind[] = ['DAILY_DIGEST', 'URGENT', 'OWNER_TODO', 'TEST', 'STAFF', 'PAGES'];
 const log = new Logger('OpsBoard');
 
 /** 보내기 결과를 한 낱말로 — 보냄 SENT · 그 밖에는 까닭(OFF · NO_TOKEN · NO_CHAT · NO_WEBHOOK · SEND_…) · 해당 없음 null */

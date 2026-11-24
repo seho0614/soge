@@ -43,6 +43,10 @@ export class GwanPageRowDto {
 export class GwanPageOrderDto {
   @ApiProperty({ type: [Number], description: '한국어판 페이지 번호 차례(첫 화면 빼고)' }) @IsArray() @ArrayMaxSize(100) @IsInt({ each: true }) ids!: number[];
 }
+export class GwanPageCopyDto {
+  @ApiProperty({ example: 'EDU' }) @IsString() @Matches(/^[A-Z]{3,4}$/) gwanCode!: string;
+  @ApiProperty({ example: 'guide' }) @IsString() @Matches(/^[a-z0-9][a-z0-9-]{1,39}$/, { message: '페이지 주소는 영문 소문자 · 숫자 · - 2 ~ 40자입니다.' }) slug!: string;
+}
 export class GwanPageEditableDto {
   @ApiProperty({ example: false, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
 }
@@ -228,6 +232,16 @@ export class GwanPagesController {
   @ApiResponse({ status: 422, description: 'GWAN_PAGE_GWAN_OPEN · GWAN_PAGE_LOCKED · GWAN_PAGE_MANAGER_ONLY', type: ErrorDto })
   @Audit('GWAN_PAGE_ORDER', 'GWAN')
   reorder(@Param('code') code: string, @Body() dto: GwanPageOrderDto) { return this.svc.reorder(code, dto.ids); }
+
+  @Post('admin/gwan-pages/:id/copy')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '관 안 페이지 복사 (v10.742)', description: '다른 관(또는 같은 관 다른 주소)에 새 페이지로 · 초안 · 제목 · 공개 범위만 · 받는 관 규칙(닫힘 · 담당자).' })
+  @ApiParam({ name: 'id' })
+  @ApiOkResponse({ type: GwanPageDetailDto })
+  @ApiResponse({ status: 422, description: 'GWAN_PAGE_COPY · GWAN_PAGE_GWAN_OPEN · GWAN_PAGE_SLUG', type: ErrorDto })
+  @Audit('GWAN_PAGE_COPY', 'GWAN')
+  copy(@Param('id', ParseIntPipe) id: number, @Body() dto: GwanPageCopyDto) { return this.svc.copy(id, dto); }
 
   @Post('admin/gwan-pages/:id/editable')
   @HttpCode(200)

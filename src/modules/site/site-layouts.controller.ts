@@ -93,6 +93,19 @@ export class SiteLayoutCopyDto {
 export class SiteLayoutViewDto {
   @ApiProperty() counted!: boolean;
 }
+export class SiteLayoutImportDto {
+  @ApiProperty({ type: 'object', additionalProperties: true, description: '「판 내려받기」로 받은 JSON 그대로(kind · key · layout)' }) @IsObject() file!: Record<string, unknown>;
+}
+export class SiteLayoutSuggestDto {
+  @ApiProperty() key!: string;
+  @ApiProperty() model!: string;
+  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' }, description: '제안 글자(초안에 쓰지 않음)' }) texts!: Record<string, string>;
+}
+export class SiteSchedulesDto {
+  @ApiProperty() from!: string;
+  @ApiProperty() to!: string;
+  @ApiProperty({ type: 'array', items: { type: 'object' }, description: 'type LAYOUT · PAGE · MAINT · at · end · label · ref' }) items!: unknown[];
+}
 export class SiteLayoutEditableDto {
   @ApiProperty({ example: true, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
 }
@@ -143,6 +156,20 @@ export class SiteLayoutsController {
   @ApiOkResponse({ type: SiteLayoutRowDto, isArray: true })
   list() { return this.svc.list(); }
 
+  @Get('admin/site-pages.csv')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '페이지 목록 CSV (v10.743)', description: '꾸밀 페이지 · 관 안 페이지 — 상태 · 수정 · 관 · 7일 방문 · 예약 · 30일 의견 · 엑셀 BOM.' })
+  @ApiOkResponse({ type: Object })
+  sitePagesCsv() { return this.svc.sitePagesCsv(); }
+
+  @Get('admin/site-schedules')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '예약 · 점검 달력 (v10.735 · 736)', description: '기간(최대 62일) 안 꾸밀 페이지 · 관 안 페이지 예약 게시와 관 점검 시간.' })
+  @ApiQuery({ name: 'from', example: '2026-12-01' }) @ApiQuery({ name: 'to', example: '2026-12-31' })
+  @ApiOkResponse({ type: SiteSchedulesDto })
+  @ApiResponse({ status: 422, description: 'SITE_SCHEDULE_RANGE', type: ErrorDto })
+  schedules(@Query('from') from: string, @Query('to') to: string) { return this.svc.schedules(from, to); }
+
   @Get('admin/site-pages')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
   @ApiOperation({ summary: '페이지 목록 (v10.700)', description: '꾸밀 페이지 6과 관 안 페이지(새 관 첫 화면 포함)를 한 번에 · 7일 방문.' })
@@ -164,6 +191,32 @@ export class SiteLayoutsController {
   @ApiOkResponse({ type: SiteLayoutVersionDto })
   @ApiResponse({ status: 404, description: 'NOT_FOUND', type: ErrorDto })
   version(@Param('key') key: string, @Param('version', ParseIntPipe) version: number) { return this.svc.version(key, version); }
+
+  @Get('admin/site-layouts/:key/export')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '판 내려받기 (v10.739)', description: '지금 초안 또는 게시 판 하나를 JSON 으로(백업 · 옮기기).' })
+  @ApiParam({ name: 'key' }) @ApiQuery({ name: 'version', required: false })
+  @ApiOkResponse({ type: Object })
+  exportLayout(@Param('key') key: string, @Query('version') version?: string) { return this.svc.exportLayout(key, version ? Number(version) : undefined); }
+
+  @Post('admin/site-layouts/:key/import')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '판 올리기 (v10.739)', description: '같은 페이지에서 내려받은 파일만 · 지금 규칙으로 검사 · 초안으로(게시는 따로) · 수정 가능 · 관 닫힘.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutDetailDto })
+  @ApiResponse({ status: 422, description: 'SITE_LAYOUT_IMPORT · SITE_LAYOUT_INVALID · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN', type: ErrorDto })
+  @Audit('SITE_LAYOUT_IMPORT', 'SITE')
+  importLayout(@Param('key') key: string, @Body() dto: SiteLayoutImportDto) { return this.svc.importLayout(key, dto.file); }
+
+  @Post('admin/site-layouts/:key/suggest')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '글자 AI 초안 (v10.741)', description: '관 이름 · 설명으로 한국어 글자 제안 — 초안에 쓰지 않음(화면이 칸에 채우고 사람이 저장) · AI 스위치 · 월 상한.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutSuggestDto })
+  @ApiResponse({ status: 422, description: 'SITE_LAYOUT_SUGGEST · AGENT_OFF · MODEL_UNPRICED', type: ErrorDto })
+  suggest(@Param('key') key: string) { return this.svc.suggest(key); }
 
   @Post('admin/site-layouts/:key/copy-from')
   @HttpCode(200)

@@ -6,6 +6,7 @@ import { storageFromEnv } from '../file/storage';
 import { randomBytes, createHash } from 'crypto';
 import { AgentService } from '../agent/agent.service';
 import { translateSystem, parseTranslation } from '../i18n/translate.service';
+import { pagesBoard } from './pages-board';
 
 /* ---------------------------------------------------------------------
  * v10.650 (D311 · docs/793) 관 페이지 — 새 관 첫 화면(slug home) 블록 편집 · 관 안 페이지 등록
@@ -149,6 +150,7 @@ export class GwanPagesService {
        SELECT $1::text, 'INFO', $2::text, $3::jsonb, clock_timestamp()
         WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = $1::text AND a.detail->>'key' = $4::text)
        ON CONFLICT DO NOTHING`, [code, title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
+    if (code === 'GWAN_PAGE_PUBLISHED' || code === 'GWAN_PAGE_HIDDEN') await pagesBoard(this.db, title);   // v10.734 운영자 게시판(게시 · 숨김만)
   }
   /** v10.701 (D322 · docs/809) 수정 불가로 둔 페이지는 초안 · 게시 · 예약 · 되돌리기 · 번역 초안을 막음(SUPER 가 페이지 목록 · 편집 화면에서 바꿈) */
   private async assertEditable(id: number) {
@@ -168,6 +170,17 @@ export class GwanPagesService {
     if (on?.value !== 'on') return;
     const [ok] = await this.db.query(`SELECT 1 FROM account_roles WHERE account_id = $1 AND role = 'SUPER' UNION ALL SELECT 1 FROM gwan_managers WHERE gwan_code = $2 AND account_id = $1 LIMIT 1`, [me, code]);
     if (!ok) throw new PolicyViolation('GWAN_PAGE_MANAGER_ONLY', '이 관의 담당자만 고칠 수 있습니다(관별 페이지 편집 권한) — 관 설정 › 기본 정보 › 관 담당자를 확인하십시오.');
+  }
+  /** v10.742 (docs/850) 관 안 페이지 복사 — 다른 관(또는 같은 관 다른 주소)에 새 페이지로 · 초안 · 제목 · 공개 범위만(게시 · 판 기록 · 방문 수는 안 옮김) · 받는 관 규칙(닫힘 · 담당자) */
+  async copy(id: number, input: { gwanCode: string; slug: string }) {
+    const [p] = await this.db.query<{ title: string; draft: unknown; lang: string; visibility: string; slug: string }>(`SELECT title, draft, lang, visibility, slug FROM gwan_pages WHERE id = $1`, [id]);
+    if (!p) throw new NotFound('없는 페이지입니다.');
+    if (p.slug === 'home' || input.slug === 'home') throw new PolicyViolation('GWAN_PAGE_COPY', '첫 화면은 복사하지 않습니다 — 관 안 페이지만 복사합니다.');
+    const made = await this.create(input.gwanCode, { slug: input.slug, title: p.title, lang: p.lang });
+    const nid = Number((made as { id?: number }).id);
+    await this.db.query(`UPDATE gwan_pages SET draft = $2::jsonb, visibility = $3, draft_updated_by = $4, draft_updated_at = now() WHERE id = $1`,
+      [nid, JSON.stringify(cleanBlocks(p.draft)), p.visibility === 'MEMBER' ? 'MEMBER' : 'ALL', RequestCtx.actorId() ?? null]);
+    return this.get(nid);
   }
   /** v10.719 (docs/827) 관 안 페이지 메뉴 순서 — 한국어판 id 차례대로 sort_order 10, 20, … (같은 주소의 언어판도 같은 순서) · 관 닫힘 · 담당자 규칙 */
   async reorder(code: string, ids: number[]) {

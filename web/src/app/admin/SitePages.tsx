@@ -28,6 +28,10 @@ interface PageRow { id: number; gwanCode: string; gwanName: string; slug: string
   publishedAt: string | null; draftUpdatedAt: string; draftUpdatedByName: string | null; scheduledAt: string | null; visibility: string; views7: number;
   editable: boolean; gwanOpen: boolean }
 
+/* v10.738 · 739 · 743 파일 내려받기 — 글을 파일로 저장(서버가 준 CSV · JSON 그대로) */
+const saveText = (name: string, text: string, type = 'text/csv;charset=utf-8') => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
 const msgOf = (e: unknown) => (e instanceof ApiFailure ? e.body.message : '처리하지 못했습니다.');
 const when = (s: string | null | undefined) => (s ? s.slice(0, 16).replace('T', ' ') : '—');
 const HOW: Record<string, string> = { PUBLISH: '게시', SCHEDULE: '예약 게시', ROLLBACK: '되돌림' };
@@ -167,6 +171,9 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
           {/* v10.708 (docs/816) 언어별 글자 — 한국어 글은 한국어 화면에만 · 다른 언어는 그 언어 칸(비우면 그 언어 사전 글) */}
           <div className="acts" data-site-layout-langs>{['ko', ...langs.filter((x) => x !== 'ko')].map((x) => (
             <button key={x} className={`btn-sm${x === lang ? ' btn-ok' : ''}`} onClick={() => setLang(x)} data-lay-lang={x}>{x === 'ko' ? '한국어' : x}{x !== 'ko' && l.i18n?.[x] ? ` (${Object.keys(l.i18n[x]!).length})` : ''}</button>))}
+            {lang === 'ko' && <button className="btn-sm" disabled={!!busy} data-site-layout-suggest title="관 이름 · 설명으로 한국어 글을 제안합니다(칸만 채움 · 저장은 직접)"
+              onClick={() => { if (!confirm('AI 로 이 페이지 글자를 제안받아 빈 칸에 채웁니다(AI 비용 · 월 상한). 채운 뒤 읽어 보고 「초안 저장」을 누르십시오.')) return; setBusy('sg'); setErr(null); setMsg(null);
+                void api<{ texts: Record<string, string> }>(`/admin/site-layouts/${k}/suggest`, { method: 'POST' }).then((r) => { const n = Object.fromEntries(Object.entries(r.texts).filter(([tk]) => !l.texts[tk])); set({ texts: { ...l.texts, ...n } }); setMsg(`빈 칸 ${Object.keys(n).length}개를 AI 제안으로 채웠습니다 — 읽어 보고 저장하십시오.`); }).catch((e) => setErr(msgOf(e))).finally(() => setBusy('')); }}>AI 글자 초안</button>}   {/* v10.741 (docs/849) */}
             {lang !== 'ko' && <button className="btn-sm" disabled={!!busy || locked || dirty} data-site-layout-translate title={dirty ? '저장한 뒤 누르십시오' : ''}
               onClick={() => { if (confirm(`한국어 글을 AI 로 ${lang} 에 옮겨 이 언어 칸에 넣습니다(AI 비용 · 월 상한). 게시 전에 꼭 읽어 보십시오.`)) void run('tr', () => api<Detail>(`/admin/site-layouts/${k}/translate`, { method: 'POST', body: JSON.stringify({ lang }) }), `${lang} 번역 초안을 넣었습니다 — 읽어 보고 고친 뒤 게시하십시오.`); }}>AI 번역 초안</button>}</div>
           <div className="form-grid">{(lang === 'ko' ? sp.texts : [...sp.texts, ...(sp.slides ?? []).flatMap(([sk, sn]) => (([['tag', 20], ['title', 40], ['desc', 120], ['cta', 20]] as Array<[string, number]>).map(([f, mx]) => [`slide.${sk}.${f}`, `${sn} ${f}`, mx] as [string, string, number])))]).map(([tk, tn, max]) => {
@@ -271,6 +278,12 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
             <button className="btn-sm btn-no" onClick={() => void api(`/admin/site-layouts/${k}/previews/${p.token}`, { method: 'DELETE' }).then(() => api<Detail>(`/admin/site-layouts/${k}`)).then(setD).catch((e) => setErr(msgOf(e)))}>끊기</button></p>); })}
       </div>
 
+      {/* v10.739 (docs/847) 판 내려받기 · 올리기(백업 · 다른 서버로 옮기기) */}
+      <div className="card pad" data-site-layout-file><b>판 파일</b> <span className="dim">— 지금 초안을 JSON 으로 내려받기 · 이 페이지에서 받은 파일을 초안으로 올리기(게시는 따로)</span>
+        <div className="acts"><button className="btn-sm" data-site-layout-export onClick={() => void api<unknown>(`/admin/site-layouts/${k}/export`).then((j) => saveText(`꾸밀페이지_${k}_초안.json`, JSON.stringify(j, null, 2), 'application/json')).catch((e) => setErr(msgOf(e)))}>초안 내려받기</button>
+          <label className="btn-sm" style={{ cursor: locked ? 'not-allowed' : 'pointer' }}>파일 올리기<input type="file" accept="application/json,.json" hidden disabled={locked || !!busy} data-site-layout-import
+            onChange={(e) => { const fl = e.target.files?.[0]; e.target.value = ''; if (!fl) return; void fl.text().then((t) => { let j: unknown; try { j = JSON.parse(t); } catch { setErr('JSON 파일이 아닙니다.'); return; }
+              if (confirm('이 파일로 지금 초안을 덮어씁니다(게시는 따로).')) void run('im', () => api<Detail>(`/admin/site-layouts/${k}/import`, { method: 'POST', body: JSON.stringify({ file: j }) }), '파일의 판을 초안으로 올렸습니다 — 확인 뒤 게시하십시오.'); }); }} /></label></div></div>
       {/* v10.733 (docs/841) 다른 꾸밀 페이지에서 배치 복사 */}
       <div className="card pad" data-site-layout-copy><b>다른 페이지에서 배치 복사</b> <span className="dim">— 같은 이름의 구역 차례 · 보이기 · 글자 · 위 · 아래 블록만 가져와 초안으로(게시는 따로)</span>
         <div className="acts"><select value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} aria-label="가져올 페이지"><option value="">고르기</option>
@@ -371,6 +384,36 @@ function Requests({ isSuper, onOpen }: { isSuper: boolean; onOpen: (kind: string
   );
 }
 
+/* v10.735 · 736 (docs/843 · 844) 달력 — 한 달 · 예약 게시(꾸밀 페이지 · 관 안 페이지) · 관 점검 시간(한국 날짜) */
+const TYPE_KO: Record<string, string> = { LAYOUT: '예약 게시', PAGE: '관 페이지 예약', MAINT: '관 점검' };
+function Calendar() {
+  const now = new Date(Date.now() + 9 * 3_600_000);
+  const [ym, setYm] = useState({ y: now.getUTCFullYear(), m: now.getUTCMonth() });
+  const [show, setShow] = useState<Record<string, boolean>>({ LAYOUT: true, PAGE: true, MAINT: true });
+  const first = new Date(Date.UTC(ym.y, ym.m, 1)), last = new Date(Date.UTC(ym.y, ym.m + 1, 0));
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const d = useApi<{ items: Array<{ type: string; at: string; end: string | null; label: string; status?: string }> }>(`/admin/site-schedules?from=${iso(first)}&to=${iso(last)}`, [ym.y, ym.m]);
+  const kday = (s: string) => new Date(new Date(s).getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
+  const ktime = (s: string) => new Date(new Date(s).getTime() + 9 * 3_600_000).toISOString().slice(11, 16);
+  const items = (d.data?.items ?? []).filter((x) => show[x.type]);
+  const byDay: Record<string, typeof items> = {};
+  for (const x of items) (byDay[kday(x.at)] ??= []).push(x);
+  const cells: Array<string | null> = [...Array(first.getUTCDay()).fill(null), ...Array.from({ length: last.getUTCDate() }, (_, i) => iso(new Date(Date.UTC(ym.y, ym.m, i + 1))))];
+  const mv = (n: number) => setYm(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
+  return (
+    <details className="card pad" data-site-calendar={items.length}><summary><b>달력</b> <span className="dim">— 예약 게시 · 관 점검 시간(한국 날짜 · 시각)</span></summary>
+      <div className="acts"><button className="btn-sm" onClick={() => mv(-1)} aria-label="지난달">←</button><b>{ym.y}년 {ym.m + 1}월</b><button className="btn-sm" onClick={() => mv(1)} aria-label="다음 달">→</button>
+        {Object.keys(TYPE_KO).map((t) => <label key={t}><input type="checkbox" checked={show[t]} onChange={(e) => setShow({ ...show, [t]: e.target.checked })} data-site-calendar-type={t} /> {TYPE_KO[t]}</label>)}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
+        {['일', '월', '화', '수', '목', '금', '토'].map((w) => <b key={w} style={{ textAlign: 'center' }}>{w}</b>)}
+        {cells.map((c, i) => <div key={i} style={{ minHeight: 64, border: '1px solid var(--sgb-line, #e5e7eb)', borderRadius: 6, padding: 4, fontSize: 12 }} data-site-calendar-day={c ?? ''}>
+          {c && <><b>{Number(c.slice(8))}</b>{(byDay[c] ?? []).map((x, k) => <div key={k} title={x.label} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ktime(x.at)}{x.end ? `~${ktime(x.end)}` : ''} {TYPE_KO[x.type]}{x.status === 'RUNNING' ? '(지금)' : ''} · {x.label}</div>)}</>}
+        </div>)}
+      </div>
+    </details>
+  );
+}
+
 /* v10.727 (D325 · docs/835) 관 열기 · 닫기 기록 */
 function OpenLog() {
   const rows = useApi<Array<{ id: number; gwanName: string; gwanCode: string; opened: boolean; source: string; byName: string | null; maintId: number | null; at: string }>>('/admin/gwan-open-log');
@@ -387,6 +430,7 @@ function Feedback() {
   const d = useApi<{ pages: Array<{ kind: string; ref: string; yes: number; no: number; lastAt: string }>; recent: Array<{ kind: string; ref: string; helpful: boolean; comment: string; at: string }> }>('/admin/page-feedback?days=30');
   return (
     <details className="card pad" data-page-feedback-box={d.data?.pages.length ?? 0}><summary><b>손님 한 줄 의견</b> <span className="dim">— 「손님 한 줄 의견」 블록을 넣은 페이지 · 30일</span></summary>
+      <p><button className="btn-sm" data-page-feedback-csv onClick={() => void api<{ csv: string; filename: string }>('/admin/page-feedback.csv?days=90').then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>CSV 내려받기(90일)</button></p>   {/* v10.738 (docs/846) */}
       <table className="tbl"><thead><tr><th>페이지</th><th>도움됨</th><th>아쉬움</th><th>마지막</th></tr></thead><tbody>
         {(d.data?.pages ?? []).map((r) => <tr key={`${r.kind}${r.ref}`}><td>{r.kind === 'LAYOUT' ? `꾸밀 페이지 ${r.ref}` : r.ref}</td><td>{r.yes}</td><td>{r.no}</td><td>{when(r.lastAt)}</td></tr>)}
         {d.data?.pages.length === 0 && <tr><td colSpan={4} className="muted">아직 의견이 없습니다.</td></tr>}
@@ -437,9 +481,11 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
     <div data-site-pages={data.layouts.length + data.pages.length}>
       <Maint isSuper={isSuper} />
       <Requests isSuper={isSuper} onOpen={(kind, ref) => (kind === 'LAYOUT' ? setEdit(ref) : setPageEdit(Number(ref)))} />
-      {/* v10.723 (docs/831) 찾기 · 거르기 */}
+      <Calendar />
+      {/* v10.723 (docs/831) 찾기 · 거르기 · v10.743 (docs/851) 목록 CSV */}
       <div className="search-row" data-site-pages-filter><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="페이지 · 관 · 주소 찾기" aria-label="페이지 찾기" />
-        <select value={fl} onChange={(e) => setFl(e.target.value)} aria-label="거르기"><option value="">모두</option><option value="draft">게시 안 한 초안</option><option value="editable">수정 가능</option><option value="open">관 열림</option><option value="sched">예약 있음</option></select></div>
+        <select value={fl} onChange={(e) => setFl(e.target.value)} aria-label="거르기"><option value="">모두</option><option value="draft">게시 안 한 초안</option><option value="editable">수정 가능</option><option value="open">관 열림</option><option value="sched">예약 있음</option></select>
+        <button className="btn-sm" data-site-pages-csv onClick={() => void api<{ csv: string; filename: string }>('/admin/site-pages.csv').then((r) => saveText(r.filename, r.csv)).catch(() => undefined)}>목록 CSV</button></div>
       <div className="card pad"><h3 style={{ marginTop: 0 }}>메인 · 관 메인 · 소개몰 메인 <span className="dim" style={{ fontWeight: 400 }}>— 구역 보이기 · 순서 · 글자 · 그림 · 블록(게시 전에는 사용자 웹 그대로)</span></h3>
         <table className="tbl"><thead><tr>{isSuper && <th></th>}<th>페이지</th><th>주소</th><th>상태</th><th>수정</th><th>7일 방문</th><th>마지막 초안</th><th>예약</th><th></th></tr></thead><tbody>
           {lays.map((r) => (

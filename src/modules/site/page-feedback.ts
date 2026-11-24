@@ -7,6 +7,7 @@ import { StrictBoolean } from '../../common/strict-boolean';
 import { Roles } from '../../core/auth';
 import { PolicyViolation } from '../../core/errors';
 import { DatabaseService } from '../../db/database.service';
+import { toCsv } from './csv';
 
 /* ---------------------------------------------------------------------
  * v10.729 (D325 · docs/837) 손님 한 줄 의견 블록 — 페이지 끝 「이 안내가 도움이 됐나요?」 예 · 아니오 + 한 줄(200자)
@@ -48,6 +49,14 @@ export class PageFeedbackService {
     const recent = await this.db.query(`SELECT page_kind AS kind, page_ref AS ref, helpful, comment, at FROM page_feedback WHERE comment IS NOT NULL ORDER BY at DESC LIMIT 50`);
     return { pages, recent };
   }
+  /** v10.738 (docs/846) 의견 CSV — 기간 안 모든 줄(때 · 페이지 · 도움됨 · 한 줄) · 기기 지문은 빼고 */
+  async csv(days = 30) {
+    const d = Math.min(Math.max(Math.floor(days), 1), 365);
+    const rows = await this.db.query<{ at: string; kind: string; ref: string; helpful: boolean; comment: string | null }>(
+      `SELECT at, page_kind AS kind, page_ref AS ref, helpful, comment FROM page_feedback WHERE at > now() - make_interval(days => $1) ORDER BY at DESC LIMIT 20000`, [d]);
+    return { csv: toCsv(['때(UTC)', '종류', '페이지', '도움됨', '한 줄 의견'], rows.map((r) => [String(r.at).slice(0, 19), r.kind === 'LAYOUT' ? '꾸밀 페이지' : '관 페이지', r.ref, r.helpful ? '예' : '아니오', r.comment ?? ''])),
+             rows: rows.length, filename: `손님한줄의견_${d}일.csv` };
+  }
 }
 
 @ApiTags('ADM')
@@ -61,6 +70,13 @@ export class PageFeedbackController {
   @ApiOkResponse({ type: PageFeedbackResultDto })
   @ApiResponse({ status: 422, description: 'PAGE_FEEDBACK', type: ErrorDto })
   create(@Body() dto: PageFeedbackCreateDto, @Ip() ip: string, @Headers('user-agent') ua?: string) { return this.svc.create(dto, ip ?? '', ua ?? ''); }
+
+  @Get('admin/page-feedback.csv')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '손님 한 줄 의견 CSV (v10.738)', description: '기간 안 모든 줄 · 기기 지문 뺌 · 엑셀 BOM.' })
+  @ApiQuery({ name: 'days', required: false, example: 30 })
+  @ApiOkResponse({ type: Object })
+  csv(@Query('days') days?: string) { return this.svc.csv(Number(days) || 30); }
 
   @Get('admin/page-feedback')
   @ApiBearerAuth() @Roles('ADMIN', 'SUPER')

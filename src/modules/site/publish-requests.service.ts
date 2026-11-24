@@ -6,6 +6,7 @@ import { RequestCtx } from '../../core/request-context';
 import { GwanPagesService } from './gwan-pages.service';
 import { TelegramService } from '../../common/telegram/telegram.service';
 import { MailService } from '../../common/mail/mail.service';
+import { pagesBoard } from './pages-board';
 import { LAYOUT_KEYS, LAYOUT_SPECS, SiteLayoutsService, cleanLayoutSafe, type LayoutKey } from './site-layouts.service';
 
 /* ---------------------------------------------------------------------
@@ -71,6 +72,7 @@ export class PublishRequestsService {
   /** v10.725 (docs/833) 게시 요청 알림 — 텔레그램(대화방이 준비됐을 때) · SUPER 메일(메일이 준비됐을 때) · 못 보내도 요청은 그대로 */
   private async tell(text: string): Promise<{ telegram: boolean; mailed: number }> {
     let telegram = false, mailed = 0;
+    await pagesBoard(this.db, text.split('\n')[0]!.replace('[소개뱅크] ', ''), text);   // v10.734 운영자 게시판
     try { telegram = (await this.telegram.send(text)).ok === true; } catch { /* 준비 안 됨 */ }
     try {
       if (await this.mail.ready()) {
@@ -79,6 +81,19 @@ export class PublishRequestsService {
       }
     } catch { /* 메일 실패는 요청과 상관없음 */ }
     return { telegram, mailed };
+  }
+  /** v10.737 (D326 · docs/845) 하루 넘게 대기한 요청 — 하루 한 번 다시 알림(텔레그램 · 메일 · 게시판) · 정기 작업 gwan_maint 가 부름 */
+  async remind(): Promise<number> {
+    const due = await this.db.query<{ id: number; kind: string; ref: string; requested_at: string }>(
+      `SELECT id::int AS id, kind, ref, requested_at FROM page_publish_requests WHERE status = 'OPEN' AND requested_at < now() - interval '1 day'
+          AND (reminded_at IS NULL OR reminded_at < now() - interval '1 day') ORDER BY requested_at LIMIT 10`);
+    for (const r of due) {
+      const [u] = await this.db.query(`UPDATE page_publish_requests SET reminded_at = now() WHERE id = $1 AND (reminded_at IS NULL OR reminded_at < now() - interval '1 day') RETURNING id`, [r.id]);
+      if (!u) continue;
+      let label = r.ref; try { label = (await this.sigOf(r.kind, r.ref)).label; } catch { /* 지운 페이지 */ }
+      await this.tell(`[소개뱅크] 게시 요청이 하루 넘게 기다립니다 — ${label}(${String(r.requested_at).slice(0, 16)} UTC 요청)\n운영 화면 › 관 관리 › 페이지 목록 › 게시 요청`);
+    }
+    return due.length;
   }
   private async openOne(id: number) {
     const [r] = await this.db.query<{ kind: string; ref: string; draft_sig: string; requested_by: string | null; status: string }>(
@@ -94,6 +109,7 @@ export class PublishRequestsService {
     if (sig !== r.draft_sig) throw new PolicyViolation('PUBLISH_REQ_STALE', '요청한 뒤 초안이 바뀌었습니다 — 되돌려 보내고 다시 요청을 받으십시오.');
     if (r.kind === 'LAYOUT') await this.layouts.publish(r.ref); else await this.pages.publish(Number(r.ref));   // 수정 가능 · 관 닫힘 규칙은 게시가 봄
     await this.db.query(`UPDATE page_publish_requests SET status = 'APPROVED', decided_by = $2, decided_at = now() WHERE id = $1 AND status = 'OPEN'`, [id, RequestCtx.actorId() ?? null]);
+    await pagesBoard(this.db, `게시 요청 승인 — ${(await this.sigOf(r.kind, r.ref)).label}`);   // v10.734
     return { id, status: 'APPROVED' };
   }
   async reject(id: number, reason: string) {
@@ -101,6 +117,7 @@ export class PublishRequestsService {
     const why = String(reason ?? '').trim();
     if (why.length < 2) throw new PolicyViolation('PUBLISH_REQ_REASON', '되돌려 보내는 사유를 2자 이상 적으십시오.');
     await this.db.query(`UPDATE page_publish_requests SET status = 'REJECTED', reason = $2, decided_by = $3, decided_at = now() WHERE id = $1 AND status = 'OPEN'`, [id, why.slice(0, 300), RequestCtx.actorId() ?? null]);
+    await pagesBoard(this.db, `게시 요청 되돌려 보냄 — #${id} · ${why.slice(0, 80)}`);   // v10.734
     return { id, status: 'REJECTED' };
   }
   /** 철회 — 요청한 사람 또는 SUPER */
