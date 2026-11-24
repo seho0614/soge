@@ -43,7 +43,7 @@ ok('① 모양 — 주황 밑줄 · 가입 남색(관 표시 안에서도) · �
    and '.sh-txt { display: none; }' in CSS and '.sh-nav .m-only { display: inline; }' in CSS and '@media (max-width: 900px)' in CSS and '.sh-nav { order: 3; width: 100%; overflow-x: auto;' in CSS, '')
 ok('① Hero — ① 이전 · 멈춤 · 화면에 보일 때만 노출 ② AI 켜짐일 때만 「소뱅AI」 ③ 인기 검색어 칩 · 사전 ko · en',
    "data-promo=\"prev\"" in HP and "data-promo=\"pause\"" in HP and 'IntersectionObserver' in HP and '!onAd || !seen' in HP and 'hold || paused' in HP
-   and "/agent/chat/status" in PG and "/search/keywords?limit=4" in PG and 'hot.length >= 3 ? hot' in PG
+   and "/agent/chat/status" in PG and "/search/keywords?limit=4" in PG and 'hot.length >= 3) ? hot' in PG
    and "ai ? 'hero.aiBadge' : 'hero.aiBadgeOff'" in HV and "heroSearch.tabs.ai.tOff" in HS
    and ko.get('hero', {}).get('aiBadgeOff') == '소개뱅크 통합 검색' and bool(en.get('hero', {}).get('aiBadgeOff'))
    and ko.get('promo', {}).get('pause') and en.get('promo', {}).get('prev') and ko.get('heroSearch', {}).get('tabs', {}).get('ai', {}).get('tOff') == '통합 검색', '')

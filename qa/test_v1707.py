@@ -13,8 +13,8 @@ ok('① 부품 — 점검 중 안내(끝 시각 · 글 · 처음 화면) · 48�
    'export async function MaintNotice(' in MB and 'export async function MaintBand(' in MB and "apiGet<MaintStatus>(`/gwans/${code}/maintenance`, 30)" in MB
    and 'data-gwan-maint="running"' in MB and 'data-gwan-maint="next"' in MB and "if (!s?.running) return null;" in MB, '')
 ok('① 붙는 곳 — 관 화면(점검 중이면 404 · 관 화면 대신) · 소개리드 · 허브 · 띠 5곳',
-   'if (mt?.running) return <><MaintNotice code={code} m={mt} />' in GP and GP.count('{band}') == 5 and "if (mt?.running) return <><MaintNotice code=\"LED\"" in LD
-   and "if (mt?.running) return <><MaintNotice code=\"EARN\"" in EP and LD.index("MaintNotice code=\"LED\"") < LD.index('if (!g) notFound();'), str(GP.count('{band}')))
+   'if (mt?.running && !staff) return <><MaintNotice code={code} m={mt} />' in GP and GP.count('{band}') == 5 and "if (mt?.running && !staff) return <><MaintNotice code=\"LED\"" in LD
+   and "if (mt?.running && !staff) return <><MaintNotice code=\"EARN\"" in EP and LD.index("MaintNotice code=\"LED\"") < LD.index('if (!g) notFound();'), str(GP.count('{band}')))
 ok('① 사전 ko · en — 제목 · 다시 여는 시각 · 예정 · 처음 화면', all(k in KO and k in EN for k in ('title', 'until', 'next', 'home')) and '{time}' in KO.get('until', '') and '{from}' in EN.get('next', ''), str(list(KO)))
 
 if up():
