@@ -38,6 +38,7 @@ export class GwanPageRowDto {
   @ApiProperty({ nullable: true }) seoImage!: string | null;
   @ApiProperty({ description: 'v10.692 검색엔진에 안 나오게' }) noindex!: boolean;
   @ApiProperty({ description: 'v10.701 (D322) 수정 가능(SUPER 가 정함 · 처음 true)' }) editable!: boolean;
+  @ApiProperty({ description: 'v10.705 그 관이 열려 있음 — 열려 있으면 고칠 수 없음(422 GWAN_PAGE_GWAN_OPEN)' }) gwanOpen!: boolean;
 }
 export class GwanPageEditableDto {
   @ApiProperty({ example: false, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;

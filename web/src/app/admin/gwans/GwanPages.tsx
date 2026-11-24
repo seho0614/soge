@@ -18,6 +18,7 @@ import { blocksFile, blocksToBody, blocksToHtml, DATA_IMG, dataUrlToFile, htmlTo
 type Block = Record<string, any>;
 interface PageRow { id: number; gwanCode: string; slug: string; lang?: string; title: string; showInMenu: boolean; sortOrder: number; status: string;
   editable?: boolean;   // v10.701 (D322)
+  gwanOpen?: boolean;   // v10.705 관이 열려 있으면 고칠 수 없음
   publishedVersion: number | null; publishedAt: string | null; draftUpdatedAt: string; draftUpdatedByName: string | null; draftChanged: boolean;
   scheduledAt?: string | null; scheduledByName?: string | null; views7?: number;
   visibility?: string; seoDescription?: string | null; seoImage?: string | null; noindex?: boolean }   // v10.691 · 692 (D320)
@@ -657,8 +658,8 @@ function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack:
       {msg && <p className="form-ok">{msg}</p>}
       {err && <p className="form-error">{err}</p>}
       {/* v10.701 (D322 · docs/809) 수정 가능 스위치 — 수정 불가면 서버가 저장 · 게시를 막음(422 GWAN_PAGE_LOCKED) */}
-      <p className={p.editable === false ? 'warn-text' : 'dim'} data-gwan-page-editable={p.editable === false ? 'off' : 'on'}>
-        {p.editable === false ? '수정 불가로 둔 페이지입니다 — 고치려면 최고 관리자(SUPER)가 「수정 가능」으로 바꿉니다.' : '수정 가능'}
+      <p className={p.editable === false || p.gwanOpen ? 'warn-text' : 'dim'} data-gwan-page-editable={p.editable === false ? 'off' : 'on'}>
+        {p.editable === false ? '수정 불가로 둔 페이지입니다 — 고치려면 최고 관리자(SUPER)가 「수정 가능」으로 바꿉니다.' : p.gwanOpen ? '수정 가능 · 관이 열려 있어 지금은 고칠 수 없습니다 — 관 관리 › 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.' : '수정 가능 · 관 닫힘(고칠 수 있음)'}
         {isSuper && <> <button className="btn-sm" disabled={!!busy} data-gwan-page-editable-toggle onClick={() => void run('ed', () => api<PageDetail>(`/admin/gwan-pages/${id}/editable`, { method: 'POST', body: JSON.stringify({ editable: p.editable === false }) }), p.editable === false ? '수정 가능으로 바꿨습니다.' : '수정 불가로 바꿨습니다.')}>{p.editable === false ? '수정 가능으로' : '수정 불가로'}</button></>}</p>
       <div className="card pad"><div className="form-grid">
         <F label="페이지 제목(60자)" v={title} on={setTitle} max={60} />
@@ -706,8 +707,8 @@ function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack:
         <button className="btn-sm" disabled={!hist.length} onClick={undo} data-gwan-page-undo>실행 취소{hist.length ? `(${hist.length})` : ''}</button>
       </div>
       <div className="acts">
-        <button className="btn-ok" disabled={!!busy || p.editable === false} onClick={() => void save()} data-gwan-page-save>초안 저장</button>
-        {isSuper && <button className="btn-ok" disabled={!!busy || p.editable === false} data-gwan-page-publish onClick={() => {
+        <button className="btn-ok" disabled={!!busy || p.editable === false || !!p.gwanOpen} onClick={() => void save()} data-gwan-page-save>초안 저장</button>
+        {isSuper && <button className="btn-ok" disabled={!!busy || p.editable === false || !!p.gwanOpen} data-gwan-page-publish onClick={() => {
           const warn = found.filter((x) => x.level === 'warn').length;   // v10.671
           if (!confirm(`지금 저장된 초안을 사용자 웹에 게시합니다.\n(저장하지 않은 고침은 먼저 「초안 저장」을 누르십시오)${warn ? `\n\n페이지 점검: 고칠 것 ${warn}개가 남아 있습니다.` : ''}`)) return;
           void run('pub', () => api<PageDetail>(`/admin/gwan-pages/${id}/publish`, { method: 'POST' }), '게시했습니다 — 사용자 웹에 바로 보입니다.');

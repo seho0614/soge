@@ -120,6 +120,7 @@ const PAGE_COLS = `p.id::int AS id, p.gwan_code AS "gwanCode", p.slug, p.lang, p
   p.scheduled_at AS "scheduledAt", (SELECT name FROM accounts a WHERE a.id = p.scheduled_by) AS "scheduledByName",   -- v10.661 (D315) 예약 게시
   p.visibility, p.seo_description AS "seoDescription", p.seo_image AS "seoImage", p.noindex,   -- v10.691 · 692 (D320) 공개 범위 · 검색엔진
   p.editable,   -- v10.701 (D322) 수정 가능(SUPER)
+  (SELECT g.is_active FROM gwans g WHERE g.code = p.gwan_code) AS "gwanOpen",   -- v10.705 (docs/813) 관이 열려 있으면 고칠 수 없음
   (SELECT coalesce(sum(w.views), 0)::int FROM gwan_page_views w WHERE w.page_id = p.id AND w.day > (now() AT TIME ZONE 'Asia/Seoul')::date - 7) AS "views7",   -- v10.667 최근 7일
   (SELECT name FROM accounts a WHERE a.id = p.draft_updated_by) AS "draftUpdatedByName",
   (p.published_version IS NULL OR p.draft IS DISTINCT FROM (SELECT coalesce(v.source, v.blocks) FROM gwan_page_versions v WHERE v.page_id = p.id AND v.version = p.published_version)
@@ -140,9 +141,15 @@ export class GwanPagesService {
   }
   /** v10.701 (D322 · docs/809) 수정 불가로 둔 페이지는 초안 · 게시 · 예약 · 되돌리기 · 번역 초안을 막음(SUPER 가 페이지 목록 · 편집 화면에서 바꿈) */
   private async assertEditable(id: number) {
-    const [r] = await this.db.query<{ editable: boolean }>(`SELECT editable FROM gwan_pages WHERE id = $1`, [id]);
+    const [r] = await this.db.query<{ editable: boolean; gwan_code: string }>(`SELECT editable, gwan_code FROM gwan_pages WHERE id = $1`, [id]);
     if (!r) throw new NotFound('없는 페이지입니다.');
     if (r.editable === false) throw new PolicyViolation('GWAN_PAGE_LOCKED', '수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.');
+    await this.assertGwanClosed(r.gwan_code);
+  }
+  /** v10.705 (docs/813) 대표 「모두 동일하게 적용」 — 관 안 페이지 · 새 관 첫 화면도 그 관이 열려 있으면 만들기 · 고치기 · 게시 · 숨김을 막음(관을 닫고 고침) */
+  private async assertGwanClosed(code: string) {
+    const [g] = await this.db.query<{ is_active: boolean }>(`SELECT is_active FROM gwans WHERE code = $1`, [code]);
+    if (g?.is_active) throw new PolicyViolation('GWAN_PAGE_GWAN_OPEN', '관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.');
   }
   async setEditable(id: number, on: boolean) {
     const [r] = await this.db.query(`UPDATE gwan_pages SET editable = $2 WHERE id = $1 RETURNING id`, [id, on === true]);
@@ -253,7 +260,7 @@ export class GwanPagesService {
    *   배치 줄을 더하지 않고 관리 목록 · 공개 페이지 · 메뉴를 읽을 때 부름(같은 줄은 SKIP LOCKED 로 한 번만) · 판의 게시 시각 = 예약 시각 */
   async publishDue(code?: string): Promise<number> {
     const due = await this.db.query<{ id: number }>(
-      `SELECT id::int AS id FROM gwan_pages WHERE scheduled_at IS NOT NULL AND scheduled_at <= now() AND editable AND ($1::text IS NULL OR gwan_code = $1) ORDER BY scheduled_at LIMIT 20`   /* v10.701 수정 불가면 기다림 */, [code ?? null]);
+      `SELECT id::int AS id FROM gwan_pages WHERE scheduled_at IS NOT NULL AND scheduled_at <= now() AND editable AND NOT EXISTS (SELECT 1 FROM gwans g WHERE g.code = gwan_pages.gwan_code AND g.is_active) AND ($1::text IS NULL OR gwan_code = $1) ORDER BY scheduled_at LIMIT 20`   /* v10.701 수정 불가면 기다림 */, [code ?? null]);
     let n = 0;
     for (const d of due) {
       const ver = await this.db.transaction(async () => {
@@ -315,6 +322,7 @@ export class GwanPagesService {
   async create(code: string, input: { slug: string; title: string; showInMenu?: boolean; sortOrder?: number; lang?: string }) {
     const [g] = await this.db.query(`SELECT code FROM gwans WHERE code = $1`, [code]);
     if (!g) throw new NotFound('없는 관입니다.');
+    await this.assertGwanClosed(code);   // v10.705
     const lang = input.lang ?? 'ko';
     if (lang !== 'ko') {   // v10.657 (D313) 언어판 — 사이트 언어 목록에 있는 말만 · 한국어판을 복사해 시작
       const [l] = await this.db.query(`SELECT code FROM i18n_langs WHERE code = $1`, [lang]);
@@ -411,6 +419,7 @@ export class GwanPagesService {
 
   /** 숨김 · 다시 보임(SUPER) — 다시 보이려면 게시된 판이 있어야 함(DB) */
   async hide(id: number, hidden: boolean) {
+    await this.assertEditable(id);   // v10.705 숨김 · 다시 보임도 고침
     const [r] = await this.db.query(`UPDATE gwan_pages SET status = CASE WHEN $2 THEN 'HIDDEN' WHEN published_version IS NULL THEN 'DRAFT' ELSE 'PUBLISHED' END WHERE id = $1 RETURNING id`, [id, hidden]);
     if (!r) throw new NotFound('없는 페이지입니다.');
     const l = await this.pageLabel(id);   // v10.670
