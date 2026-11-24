@@ -1,0 +1,158 @@
+import { Injectable } from '@nestjs/common';
+import { DatabaseService } from '../../db/database.service';
+import { NotFound, PolicyViolation } from '../../core/errors';
+import { RequestCtx } from '../../core/request-context';
+import { GwanPagesService } from './gwan-pages.service';
+import { SiteLayoutsService } from './site-layouts.service';
+
+/* ---------------------------------------------------------------------
+ * v10.706 · v10.707 (D323 · docs/814 · 815) 관 점검 시간 예약 · 닫힌 관 손님 안내
+ *   대표 11/24 「관이 열려 있는 상태에서 변경 불가 · 관을 닫고 수정」 뒤 다음개발 「관 점검 시간 예약」 —
+ *   SUPER 가 관마다 시작 · 끝(최대 2시간) · 손님 안내 글을 예약 → 정기 작업 gwan_maint(1분마다)가
+ *   ① 시작 시각: 관이 열려 있으면 닫음(was_open = true) · 닫혀 있으면 그대로(was_open = false)
+ *   ② 사이: 시각이 된 예약 게시(꾸밀 페이지 · 관 안 페이지)를 내보냄(관이 닫혀 있어야 나감 — docs/809 · 813)
+ *   ③ 끝 시각: 한 번 더 예약 게시를 내보낸 뒤, 열려 있던 관만 다시 엶 · 못 열면 운영 알림 GWAN_MAINT_REOPEN_FAIL(WARN)
+ *   손님 안내 — 공개 GET /gwans/{code}/maintenance 가 지금 점검 중이면 끝 시각 · 글(사용자 웹이 관 화면 대신 안내)
+ * ------------------------------------------------------------------- */
+
+const COLS = `m.id::int AS id, m.gwan_code AS "gwanCode", g.name AS "gwanName", m.starts_at AS "startsAt", m.ends_at AS "endsAt", m.note,
+  m.created_at AS "createdAt", (SELECT name FROM accounts a WHERE a.id = m.created_by) AS "createdByName",
+  m.announce, m.notice_id::text AS "noticeId",
+  m.was_open AS "wasOpen", m.closed_at AS "closedAt", m.reopened_at AS "reopenedAt", m.reopen_error AS "reopenError", m.canceled_at AS "canceledAt",
+  CASE WHEN m.canceled_at IS NOT NULL THEN 'CANCELED' WHEN m.reopened_at IS NOT NULL THEN 'DONE' WHEN m.closed_at IS NOT NULL THEN 'RUNNING' ELSE 'SCHEDULED' END AS status`;
+
+@Injectable()
+export class GwanMaintService {
+  constructor(private readonly db: DatabaseService, private readonly pages: GwanPagesService, private readonly layouts: SiteLayoutsService) {}
+
+  async list(code?: string) {
+    return this.db.query(
+      `SELECT ${COLS} FROM gwan_maintenances m JOIN gwans g ON g.code = m.gwan_code
+        WHERE ($1::text IS NULL OR m.gwan_code = $1) AND (m.reopened_at IS NULL OR m.reopened_at > now() - interval '30 days')
+        ORDER BY (m.reopened_at IS NULL AND m.canceled_at IS NULL) DESC, m.starts_at DESC LIMIT 100`, [code ?? null]);
+  }
+  private async one(id: number) {
+    const [r] = await this.db.query(`SELECT ${COLS} FROM gwan_maintenances m JOIN gwans g ON g.code = m.gwan_code WHERE m.id = $1`, [id]);
+    if (!r) throw new NotFound('없는 점검 시간입니다.');
+    return r;
+  }
+  async create(input: { gwanCode: string; startsAt: string; endsAt: string; note?: string; announce?: boolean; notifyMembers?: boolean }) {
+    const [g] = await this.db.query<{ is_hub: boolean; name: string }>(`SELECT is_hub, name FROM gwans WHERE code = $1`, [input.gwanCode]);
+    if (!g) throw new NotFound('없는 관입니다.');
+    const s = new Date(input.startsAt), e = new Date(input.endsAt), now = Date.now();
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) throw new PolicyViolation('GWAN_MAINT_TIME', '시각 모양이 맞지 않습니다.');
+    if (s.getTime() < now - 60_000 || s.getTime() > now + 90 * 86_400_000) throw new PolicyViolation('GWAN_MAINT_TIME', '시작은 지금부터 90일 안이어야 합니다.');
+    if (e.getTime() <= s.getTime() || e.getTime() - s.getTime() > 2 * 3_600_000) throw new PolicyViolation('GWAN_MAINT_TIME', '끝은 시작 뒤 2시간 안이어야 합니다.');
+    const note = String(input.note ?? '').trim();
+    if (note.length > 200 || /<\s*\/?\s*[a-z!]/i.test(note)) throw new PolicyViolation('GWAN_MAINT_TIME', '안내 글은 200자까지 · HTML 태그는 쓸 수 없습니다.');
+    try {
+      const id = await this.db.transaction(async () => {
+        const [r] = await this.db.query<{ id: number }>(
+          `INSERT INTO gwan_maintenances (gwan_code, starts_at, ends_at, note, created_by, announce) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::int AS id`,
+          [input.gwanCode, s.toISOString(), e.toISOString(), note || null, RequestCtx.actorId() ?? null, input.announce === true]);
+        /* v10.710 (D324 · docs/818) 손님 미리 알림 — 상단 고정 공지(메인 공지 띠 · 소개광장 › 공지) · 지금부터 점검 끝까지 · 「회원 알림도」면 공지 알림 길(notify) */
+        if (input.announce === true) {
+          const k = (d: Date) => { const x = new Date(d.getTime() + 9 * 3_600_000); return `${x.getUTCMonth() + 1}/${x.getUTCDate()} ${String(x.getUTCHours()).padStart(2, '0')}:${String(x.getUTCMinutes()).padStart(2, '0')}`; };
+          const title = `[점검 안내] ${g.name} ${k(s)} ~ ${k(e).slice(-5)}(한국 시각)`.slice(0, 120);
+          const body = `${g.name}이(가) ${k(s)}부터 ${k(e)}까지(한국 시각) 잠시 점검합니다. 이 시간에는 ${g.name} 화면이 열리지 않습니다.${note ? `\n\n${note}` : ''}`;
+          const [n] = await this.db.query<{ id: string }>(
+            `INSERT INTO notices (gwan_code, title, body, is_pinned, published_at, ends_at, author_id, grades, notify) VALUES ($1, $2, $3, true, now(), $4, $5, ARRAY['PUBLIC'], $6) RETURNING id::text AS id`,
+            [input.gwanCode, title, body, e.toISOString(), RequestCtx.actorId() ?? null, input.notifyMembers === true]);
+          await this.db.query(`UPDATE gwan_maintenances SET notice_id = $2::uuid WHERE id = $1`, [r!.id, n!.id]);
+        }
+        return r!.id;
+      });
+      return this.one(id);
+    } catch (err) {
+      if (String((err as Error)?.message).includes('GWAN_MAINT_OVERLAP')) throw new PolicyViolation('GWAN_MAINT_OVERLAP', '같은 관에 겹치는 점검 시간이 있습니다.');
+      throw err;
+    }
+  }
+  /** 시작 전 취소(SUPER) */
+  async cancel(id: number) {
+    const [r] = await this.db.query(`UPDATE gwan_maintenances SET canceled_at = now(), canceled_by = $2 WHERE id = $1 AND closed_at IS NULL AND canceled_at IS NULL RETURNING id`, [id, RequestCtx.actorId() ?? null]);
+    if (!r) throw new PolicyViolation('GWAN_MAINT_STATE', '시작 전인 점검만 취소합니다 — 점검 중이면 「지금 끝내기」를 쓰십시오.');
+    await this.dropNotice(id, '점검 취소');   // v10.710
+    return this.one(id);
+  }
+  /** 점검 중 지금 끝내기(SUPER) — 끝 시각을 지금으로 · 다음 차례(1분 안)에 다시 엶 · 바로 한 번 돌림 */
+  async end(id: number) {
+    const [r] = await this.db.query(`UPDATE gwan_maintenances SET ends_at = greatest(starts_at + interval '1 second', now()) WHERE id = $1 AND closed_at IS NOT NULL AND reopened_at IS NULL RETURNING id`, [id]);
+    if (!r) throw new PolicyViolation('GWAN_MAINT_STATE', '점검 중인 것만 끝냅니다.');
+    await this.tick();
+    await this.dropNotice(id, '점검 일찍 끝남');   // v10.710
+    return this.one(id);
+  }
+  /** 공개 — 지금 점검 중이면 끝 시각 · 글 · 다음 점검(48시간 안) */
+  async publicStatus(code: string) {
+    const [now] = await this.db.query(
+      `SELECT starts_at AS "startsAt", ends_at AS "endsAt", note FROM gwan_maintenances
+        WHERE gwan_code = $1 AND canceled_at IS NULL AND closed_at IS NOT NULL AND reopened_at IS NULL ORDER BY starts_at LIMIT 1`, [code]);
+    const [next] = await this.db.query(
+      `SELECT starts_at AS "startsAt", ends_at AS "endsAt", note FROM gwan_maintenances
+        WHERE gwan_code = $1 AND canceled_at IS NULL AND closed_at IS NULL AND starts_at > now() AND starts_at < now() + interval '48 hours' ORDER BY starts_at LIMIT 1`, [code]);
+    return { gwanCode: code, running: now ?? null, next: next ?? null };
+  }
+
+  /** v10.710 미리 알림 공지를 지금 내림(이미 끝났으면 그대로) */
+  private async dropNotice(id: number, why: string) {
+    await this.db.query(
+      `UPDATE notices n SET ends_at = greatest(now(), n.published_at + interval '1 second'), ended_reason = $2, ended_by = $3
+         FROM gwan_maintenances m WHERE m.id = $1 AND n.id = m.notice_id AND (n.ends_at IS NULL OR n.ends_at > now())`, [id, why, RequestCtx.actorId() ?? null]).catch(() => undefined);
+  }
+  private async note(code: string, severity: 'INFO' | 'WARN', title: string, key: string, detail: Record<string, unknown>) {
+    await this.db.query(
+      `INSERT INTO ops_alerts (alert_code, severity, title, detail, raised_at)
+       SELECT $1::text, $2::text, $3::text, $4::jsonb, clock_timestamp()
+        WHERE NOT EXISTS (SELECT 1 FROM ops_alerts a WHERE a.alert_code = $1::text AND a.detail->>'key' = $5::text)
+       ON CONFLICT DO NOTHING`, [code, severity, title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
+  }
+  /** 정기 작업 gwan_maint(1분마다) */
+  async tick(): Promise<{ closed: number; reopened: number; published: number; failed: number }> {
+    let closed = 0, reopened = 0, published = 0, failed = 0;
+    const start = await this.db.query<{ id: number; gwan_code: string; ends_at: string }>(
+      `SELECT id::int AS id, gwan_code, ends_at FROM gwan_maintenances WHERE canceled_at IS NULL AND closed_at IS NULL AND starts_at <= now() ORDER BY starts_at LIMIT 20`);
+    for (const m of start) {
+      const ok = await this.db.transaction(async () => {
+        const [g] = await this.db.query<{ is_active: boolean }>(`SELECT is_active FROM gwans WHERE code = $1 FOR UPDATE`, [m.gwan_code]);
+        const [row] = await this.db.query(`UPDATE gwan_maintenances SET closed_at = now(), was_open = $2 WHERE id = $1 AND closed_at IS NULL RETURNING id`, [m.id, g?.is_active === true]);
+        if (!row) return false;
+        if (g?.is_active) await this.db.query(`UPDATE gwans SET is_active = false WHERE code = $1`, [m.gwan_code]);
+        return true;
+      });
+      if (ok) { closed++; await this.note('GWAN_MAINT_START', 'INFO', `관 점검 시작 — ${m.gwan_code} · 끝 ${String(m.ends_at).slice(0, 16)} UTC`, `start:${m.id}`, { id: m.id, gwan: m.gwan_code }); }
+    }
+    const pub = async () => {
+      try { published += await this.layouts.publishDue(); } catch { /* 다음 차례 */ }
+      try { published += await this.pages.publishDue(); } catch { /* 다음 차례 */ }
+    };
+    await pub();
+    const done = await this.db.query<{ id: number; gwan_code: string; was_open: boolean }>(
+      `SELECT id::int AS id, gwan_code, was_open FROM gwan_maintenances WHERE canceled_at IS NULL AND closed_at IS NOT NULL AND reopened_at IS NULL AND ends_at <= now() ORDER BY ends_at LIMIT 20`);
+    if (done.length) await pub();
+    for (const m of done) {
+      let err: string | null = null;
+      if (m.was_open) {
+        try { await this.db.query(`UPDATE gwans SET is_active = true WHERE code = $1 AND NOT is_active`, [m.gwan_code]); }
+        catch (e) { err = String((e as Error).message).slice(0, 300); }
+      }
+      await this.db.query(`UPDATE gwan_maintenances SET reopened_at = now(), reopen_error = $2 WHERE id = $1 AND reopened_at IS NULL`, [m.id, err]);
+      if (err) { failed++; await this.note('GWAN_MAINT_REOPEN_FAIL', 'WARN', `관 점검 뒤 다시 열지 못함 — ${m.gwan_code} · 관 관리 › 관 설정에서 여십시오 · ${err.slice(0, 80)}`, `fail:${m.id}`, { id: m.id, gwan: m.gwan_code, error: err }); }
+      else { reopened++; await this.note('GWAN_MAINT_END', 'INFO', `관 점검 끝 — ${m.gwan_code}${m.was_open ? ' · 다시 엶' : ' · 원래 닫힌 관이라 그대로'}`, `end:${m.id}`, { id: m.id, gwan: m.gwan_code, reopened: m.was_open }); }
+    }
+    return { closed, reopened, published, failed };
+  }
+}
+
+/** v10.713 (docs/821) 관 점검 기록 — 월보 한 줄(그 달에 시작한 점검 · 취소 뺌) */
+export async function maintLine(db: DatabaseService, from: string, to: string): Promise<{ text: string; failed: number } | null> {
+  const [r] = await db.query<{ n: number; gw: number; minutes: number; failed: number; open: number }>(
+    `SELECT count(*)::int AS n, count(DISTINCT gwan_code)::int AS gw,
+            coalesce(sum(extract(epoch FROM (coalesce(reopened_at, now()) - closed_at)) / 60) FILTER (WHERE closed_at IS NOT NULL AND was_open), 0)::int AS minutes,
+            count(*) FILTER (WHERE reopen_error IS NOT NULL)::int AS failed,
+            count(*) FILTER (WHERE closed_at IS NOT NULL AND reopened_at IS NULL)::int AS open
+       FROM gwan_maintenances
+      WHERE canceled_at IS NULL AND starts_at >= ($1::date AT TIME ZONE 'Asia/Seoul') AND starts_at < (($2::date + 1) AT TIME ZONE 'Asia/Seoul')`, [from, to]);
+  if (!r || !r.n) return { text: '관 점검 0건', failed: 0 };
+  return { text: `관 점검 ${r.n}건(관 ${r.gw}곳) · 손님이 관을 못 본 시간 합 ${r.minutes}분${r.failed ? ` · 다시 열지 못함 ${r.failed}건` : ''}${r.open ? ` · 지금 점검 중 ${r.open}건` : ''}`, failed: r.failed };
+}

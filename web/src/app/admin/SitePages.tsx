@@ -3,7 +3,7 @@ import { api, ApiFailure } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { ErrorView } from '../../components/ErrorView';
 import { siteHref } from '../../lib/siteUrl';
-import { BlockList, GwanPageEditor } from './gwans/GwanPages';
+import { BlockList, GwanPageEditor, checkPage } from './gwans/GwanPages';
 
 /* ---------------------------------------------------------------------
  * SB-ADM-PAGE-020 페이지 목록 · 꾸밀 페이지 — v10.696 ~ 700 (D321 · docs/804 ~ 808)
@@ -16,7 +16,8 @@ type Block = Record<string, any>;
 interface Spec { key: string; name: string; path: string; sections: Array<[string, string]>; texts: Array<[string, string, number]>;
   slides?: Array<[string, string]>; picks?: Array<[string, string, number]>; inserts: 'each' | 'edge' }
 interface Slide { show: boolean; tag?: string; title?: string; desc?: string; cta?: string; href?: string; image?: string }
-interface Layout { sections: Array<{ key: string; show: boolean }>; texts: Record<string, string>; slides?: Record<string, Slide>; picks?: Record<string, string[]>; inserts: Record<string, Block[]> }
+interface Layout { sections: Array<{ key: string; show: boolean }>; texts: Record<string, string>; slides?: Record<string, Slide>; picks?: Record<string, string[]>; inserts: Record<string, Block[]>;
+  i18n?: Record<string, Record<string, string>> }   // v10.708 언어별 글자
 interface Row { key: string; name: string; path: string; status: string; publishedVersion: number | null; publishedAt: string | null; publishedByName: string | null;
   draftUpdatedAt: string | null; draftUpdatedByName: string | null; draftChanged: boolean; scheduledAt: string | null; scheduledByName: string | null;
   editable: boolean; gwanCode: string | null; gwanOpen: boolean }   // v10.701 (D322) 수정 가능 · 관 열림
@@ -53,6 +54,30 @@ export function layoutDiff(sp: Spec, a: Layout, b: Layout): string[] {
   return out;
 }
 
+/* v10.712 (docs/820) 꾸밀 페이지 게시 전 점검 — 결과만 알려 주고 게시는 막지 않음(관 페이지 「페이지 점검」과 같은 규칙 + 배치 규칙) */
+interface LayFinding { level: 'warn' | 'info'; at: string; msg: string }
+export function checkLayout(sp: Spec, l: Layout, langs: string[]): LayFinding[] {
+  const out: LayFinding[] = [];
+  const nm = Object.fromEntries(sp.sections);
+  const shown = l.sections.filter((x) => x.show);
+  if (!shown.length) out.push({ level: 'warn', at: '구역', msg: '모든 구역을 숨겼습니다 — 머리 띠와 블록만 보입니다.' });
+  else if (shown.length <= Math.ceil(sp.sections.length / 3)) out.push({ level: 'info', at: '구역', msg: `구역 ${sp.sections.length}개 가운데 ${shown.length}개만 보입니다.` });
+  if (sp.slides && l.slides && sp.slides.every(([k2]) => l.slides?.[k2]?.show === false)) out.push({ level: 'warn', at: 'hero 안내 장', msg: '안내 장을 모두 숨겼습니다 — hero 오른쪽이 비어 보일 수 있습니다(광고가 있으면 광고만).' });
+  for (const [k2, sn] of sp.slides ?? []) { const x = l.slides?.[k2]; if (x?.show !== false && x?.image && !/^(\/(?!\/)|https:\/\/)/.test(x.image)) out.push({ level: 'warn', at: `안내 장 「${sn}」`, msg: '그림 주소는 /… 또는 https://… 여야 합니다.' }); }
+  for (const [tk, tn, max] of sp.texts) { const v = l.texts[tk] ?? ''; if (v && v.length > Math.round(max * 0.8)) out.push({ level: 'info', at: tn, msg: `${v.length}자 — 휴대폰에서 두 줄 넘게 꺾일 수 있습니다.` }); }
+  for (const [at, blocks] of Object.entries(l.inserts)) {
+    const where = at === '_top' || at === 'top' ? '맨 위' : at === 'bottom' ? '맨 아래' : `「${nm[at] ?? at}」 뒤`;
+    if (at !== '_top' && at !== 'top' && at !== 'bottom' && l.sections.find((x) => x.key === at)?.show === false) out.push({ level: 'warn', at: `블록 ${where}`, msg: '숨긴 구역 뒤 블록 — 구역은 안 보여도 블록은 보입니다.' });
+    checkPage('-', blocks, 'lay').filter((f) => f.at !== '제목').forEach((f) => out.push({ level: f.level, at: `블록 ${where} · ${f.at}`, msg: f.msg }));
+  }
+  const koKeys = sp.texts.map(([tk]) => tk).filter((tk) => l.texts[tk]);
+  for (const lg of langs.filter((x) => x !== 'ko')) {
+    const miss = koKeys.filter((tk) => !l.i18n?.[lg]?.[tk]);
+    if (koKeys.length && miss.length) out.push({ level: 'info', at: `${lg} 글자`, msg: `한국어로 바꾼 글 ${miss.length}개가 ${lg} 칸에 없습니다 — ${lg} 화면에는 사전 글이 나옵니다(「AI 번역 초안」).` });
+  }
+  return out;
+}
+
 function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [l, setL] = useState<Layout | null>(null);
@@ -65,6 +90,11 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   const [prods, setProds] = useState<Array<{ code: string; name: string }> | null>(null);
   const [frame, setFrame] = useState<{ token: string; mobile: boolean; tick: number } | null>(null);   // v10.703 운영 화면 안 미리보기
   const [base0, setBase0] = useState<Layout | null>(null);   // 처음 배치(차이 보기 — 게시한 판이 없을 때)
+  const [lang, setLang] = useState('ko');   // v10.708 언어별 글자
+  const [langs, setLangs] = useState<string[]>([]);
+  const [log, setLog] = useState<Array<{ at: string; byName: string | null; changes: string[] }> | null>(null);   // v10.709 초안 고친 기록
+  useEffect(() => { void api<{ items: Array<{ code: string }> }>('/admin/i18n/langs').then((r) => setLangs((r.items ?? []).map((x) => x.code))).catch(() => setLangs([])); }, []);
+  useEffect(() => { void api<Array<{ at: string; byName: string | null; changes: string[] }>>(`/admin/site-layouts/${k}/draft-log`).then(setLog).catch(() => setLog([])); }, [k, saved]);
   const fill = (x: Detail) => { setD(x); setL(x.draft); setSaved(JSON.stringify(x.draft)); };
   useEffect(() => { api<Detail>(`/admin/site-layouts/${k}`).then(fill).catch((e) => setErr(msgOf(e))); }, [k]);
   useEffect(() => { if (d && !d.published && !base0) setBase0({ sections: d.spec.sections.map(([key]) => ({ key, show: true })), texts: {}, inserts: {}, ...(d.spec.slides ? { slides: Object.fromEntries(d.spec.slides.map(([x]) => [x, { show: true }])) } : {}), ...(d.spec.picks ? { picks: {} } : {}) }); }, [d, base0]);
@@ -96,6 +126,8 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   );
   const locked = !!d.lockReason;   // v10.701 (D322) 수정 불가 · 관이 열려 있음 — 서버도 막음(422)
   const diff = layoutDiff(sp, d.published ?? base0 ?? l, l);
+  const found = checkLayout(sp, l, langs);   // v10.712
+  const warnN = found.filter((x) => x.level === 'warn').length;
   const openFrame = async (mobile: boolean) => {
     let tok = d.previews[0]?.token;
     if (!tok) { try { tok = (await api<{ token: string }>(`/admin/site-layouts/${k}/previews`, { method: 'POST', body: JSON.stringify({ hours: 24 }) })).token; setD(await api<Detail>(`/admin/site-layouts/${k}`)); } catch (e) { setErr(msgOf(e)); return; } }
@@ -114,15 +146,22 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
       <div className={`card pad${locked ? ' warn' : ''}`} data-site-layout-lock={d.lockReason ?? 'open'}>
         <b>{d.editable ? '수정 가능' : '수정 불가'}</b>{d.gwanCode && <> · 관 {d.gwanCode} {d.gwanOpen ? '열림' : '닫힘'}</>}
         {d.lockReason === 'SITE_LAYOUT_LOCKED' && <span className="warn-text"> — 최고 관리자(SUPER)가 「수정 가능」으로 바꿔야 고칠 수 있습니다.</span>}
-        {d.lockReason === 'SITE_LAYOUT_GWAN_OPEN' && <span className="warn-text"> — 관이 열려 있어 고칠 수 없습니다. 관 관리 › 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.</span>}
+        {d.lockReason === 'SITE_LAYOUT_GWAN_OPEN' && <span className="warn-text"> — 관이 열려 있어 고칠 수 없습니다. 관 관리 › 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오. 또는 페이지 목록 맨 위 「관 점검 시간」을 예약하면 그 시간에 닫혔다가 다시 열립니다.</span>}
         {isSuper && <> <button className="btn-sm" disabled={!!busy} data-site-layout-editable onClick={() => void run('ed', () => api<Detail>(`/admin/site-layouts/${k}/editable`, { method: 'POST', body: JSON.stringify({ editable: !d.editable }) }), d.editable ? '수정 불가로 바꿨습니다.' : '수정 가능으로 바꿨습니다.')}>{d.editable ? '수정 불가로' : '수정 가능으로'}</button></>}
         <span className="dim"> · 엔진 기능(검색 · 목록 · 주문 · 정산)은 고칠 수 없고, 글자 · 그림 · 순서 · 숨기기 · 블록 같은 디자인만 고칩니다.</span>
       </div>
 
       {sp.texts.length > 0 && (
-        <div className="card pad" data-site-layout-texts><h3 style={{ marginTop: 0 }}>글자 <span className="dim" style={{ fontWeight: 400 }}>— 비우면 처음 글</span></h3>
-          <div className="form-grid">{sp.texts.map(([tk, tn, max]) => (
-            <label key={tk}><span>{tn}({max}자)</span><input value={l.texts[tk] ?? ''} maxLength={max} onChange={(e) => set({ texts: { ...l.texts, [tk]: e.target.value } })} data-lay-text={tk} /></label>))}</div></div>)}
+        <div className="card pad" data-site-layout-texts={lang}><h3 style={{ marginTop: 0 }}>글자 <span className="dim" style={{ fontWeight: 400 }}>— 비우면 {lang === 'ko' ? '처음 글' : '그 언어 사전 글'}</span></h3>
+          {/* v10.708 (docs/816) 언어별 글자 — 한국어 글은 한국어 화면에만 · 다른 언어는 그 언어 칸(비우면 그 언어 사전 글) */}
+          <div className="acts" data-site-layout-langs>{['ko', ...langs.filter((x) => x !== 'ko')].map((x) => (
+            <button key={x} className={`btn-sm${x === lang ? ' btn-ok' : ''}`} onClick={() => setLang(x)} data-lay-lang={x}>{x === 'ko' ? '한국어' : x}{x !== 'ko' && l.i18n?.[x] ? ` (${Object.keys(l.i18n[x]!).length})` : ''}</button>))}
+            {lang !== 'ko' && <button className="btn-sm" disabled={!!busy || locked || dirty} data-site-layout-translate title={dirty ? '저장한 뒤 누르십시오' : ''}
+              onClick={() => { if (confirm(`한국어 글을 AI 로 ${lang} 에 옮겨 이 언어 칸에 넣습니다(AI 비용 · 월 상한). 게시 전에 꼭 읽어 보십시오.`)) void run('tr', () => api<Detail>(`/admin/site-layouts/${k}/translate`, { method: 'POST', body: JSON.stringify({ lang }) }), `${lang} 번역 초안을 넣었습니다 — 읽어 보고 고친 뒤 게시하십시오.`); }}>AI 번역 초안</button>}</div>
+          <div className="form-grid">{(lang === 'ko' ? sp.texts : [...sp.texts, ...(sp.slides ?? []).flatMap(([sk, sn]) => (([['tag', 20], ['title', 40], ['desc', 120], ['cta', 20]] as Array<[string, number]>).map(([f, mx]) => [`slide.${sk}.${f}`, `${sn} ${f}`, mx] as [string, string, number])))]).map(([tk, tn, max]) => {
+            const v = lang === 'ko' ? l.texts[tk] ?? '' : l.i18n?.[lang]?.[tk] ?? '';
+            const put = (val: string) => lang === 'ko' ? set({ texts: { ...l.texts, [tk]: val } }) : set({ i18n: { ...(l.i18n ?? {}), [lang]: { ...(l.i18n?.[lang] ?? {}), [tk]: val } } });
+            return <label key={tk}><span>{tn}({max}자)</span><input value={v} maxLength={max} onChange={(e) => put(e.target.value)} data-lay-text={tk} placeholder={lang !== 'ko' ? l.texts[tk] ?? '' : undefined} /></label>; })}</div></div>)}
 
       {sp.slides && l.slides && (
         <div className="card pad" data-site-layout-slides><h3 style={{ marginTop: 0 }}>hero 오른쪽 안내 장 <span className="dim" style={{ fontWeight: 400 }}>— 비우면 처음 글 · 관이 꺼져 있으면 그 장은 안 나옴</span></h3>
@@ -169,10 +208,15 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
         <button className="btn-ok" disabled={!!busy || locked} onClick={() => void save()} data-site-layout-save>초안 저장</button>
         {isSuper && <button className="btn-ok" disabled={!!busy || locked} data-site-layout-publish onClick={() => {
           if (dirty) { alert('저장하지 않은 고침이 있습니다 — 「초안 저장」을 먼저 누르십시오.'); return; }
-          if (!confirm(`지금 저장된 초안을 사용자 웹(${sp.path})에 게시합니다.\n\n바뀌는 것:\n${diff.length ? diff.slice(0, 15).join('\n') : '(게시된 판과 같음)'}`)) return;
+          if (!confirm(`지금 저장된 초안을 사용자 웹(${sp.path})에 게시합니다.\n\n바뀌는 것:\n${diff.length ? diff.slice(0, 15).join('\n') : '(게시된 판과 같음)'}${warnN ? `\n\n게시 전 점검: 고칠 것 ${warnN}개가 남아 있습니다.` : ''}`)) return;
           void run('pub', () => api<Detail>(`/admin/site-layouts/${k}/publish`, { method: 'POST' }), '게시했습니다 — 사용자 웹에 1분 안에 보입니다.');
         }}>게시</button>}
-        {!isSuper && <span className="dim">게시는 최고 관리자(SUPER)가 합니다.</span>}
+        {!isSuper && <><button className="btn-ok" disabled={!!busy || dirty || !d.draftChanged} data-site-layout-request title={dirty ? '저장한 뒤 누르십시오' : !d.draftChanged ? '게시된 판과 같습니다' : ''} onClick={() => {   /* v10.711 (D324 · docs/819) 게시 요청 */
+          const note = prompt('최고 관리자(SUPER)에게 게시를 요청합니다. 한 줄 메모(비워도 됨):');
+          if (note === null) return;
+          setBusy('rq'); setErr(null); setMsg(null);
+          void api('/admin/publish-requests', { method: 'POST', body: JSON.stringify({ kind: 'LAYOUT', ref: k, note: note.trim() || undefined }) }).then(() => setMsg('게시를 요청했습니다 — 최고 관리자가 승인하면 사용자 웹에 나갑니다. 요청 뒤 초안을 고치면 다시 요청해야 합니다.')).catch((e) => setErr(msgOf(e))).finally(() => setBusy(''));
+        }}>게시 요청</button> <span className="dim">게시는 최고 관리자(SUPER)가 합니다.</span></>}
         <button className="btn-sm" disabled={!!busy || locked} onClick={() => { if (confirm('처음 배치(코드에 있는 배치)로 초안을 바꿉니다. 게시는 따로입니다.')) void run('def', () => api<Detail>(`/admin/site-layouts/${k}/restore`, { method: 'POST', body: JSON.stringify({ version: 0 }) }), '처음 배치로 초안을 만들었습니다.'); }} data-site-layout-default>처음 배치로 초안</button>
       </div>
 
@@ -187,6 +231,12 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
       {/* v10.703 (docs/811) 초안 ↔ 게시 판 차이 · 운영 화면 안 미리보기 */}
       <div className="card pad" data-site-layout-diff={diff.length}><b>게시하면 바뀌는 것</b> <span className="dim">— {d.published ? `게시된 ${d.publishedVersion}판` : '처음 배치'}과 견줌{dirty ? ' · 저장 안 한 고침 포함' : ''}</span>
         {diff.length ? <ul>{diff.map((x, i) => <li key={i}>{x}</li>)}</ul> : <p className="dim">바뀌는 것이 없습니다.</p>}</div>
+      {/* v10.712 (docs/820) 게시 전 점검 */}
+      <div className="card pad" data-site-layout-check={warnN}><b>게시 전 점검</b> <span className="dim">— 알려 주기만 하고 게시는 막지 않음</span>
+        {found.length ? <ul>{found.map((x, i) => <li key={i} className={x.level === 'warn' ? 'warn-text' : undefined}>{x.level === 'warn' ? '고칠 것' : '참고'} · {x.at} — {x.msg}</li>)}</ul> : <p className="dim">걸리는 것이 없습니다.</p>}</div>
+      {/* v10.709 (docs/817) 초안 고친 기록 */}
+      <div className="card pad" data-site-layout-draft-log={log?.length ?? 0}><b>초안 고친 기록</b> <span className="dim">— 최근 50줄 · 누가 · 언제 · 바뀐 곳</span>
+        {log && log.length ? <table className="tbl"><tbody>{log.map((x, i) => <tr key={i}><td>{when(x.at)}</td><td>{x.byName ?? '—'}</td><td>{(x.changes ?? []).join(' · ')}</td></tr>)}</tbody></table> : <p className="dim">아직 기록이 없습니다.</p>}</div>
       <div className="card pad" data-site-layout-frame={frame ? (frame.mobile ? 'mobile' : 'pc') : 'off'}><b>옆에서 보기</b> <span className="dim">— 저장된 초안을 사용자 웹 그대로(미리보기 링크 · 저장하면 다시 그림)</span>
         <div className="acts"><button className="btn-sm" onClick={() => void openFrame(false)} data-site-layout-frame-pc>PC 폭</button>
           <button className="btn-sm" onClick={() => void openFrame(true)} data-site-layout-frame-mobile>휴대폰 폭(375)</button>
@@ -220,6 +270,77 @@ function Editor({ k, isSuper, onBack }: { k: string; isSuper: boolean; onBack: (
   );
 }
 
+/* v10.706 (D323 · docs/814) 관 점검 시간 — 시작에 관을 닫고(열려 있던 관만) · 그 사이 예약 게시 · 끝에 다시 엶 · 최대 2시간 · SUPER */
+interface MaintRow { id: number; gwanCode: string; gwanName: string; startsAt: string; endsAt: string; note: string | null; createdByName: string | null; announce?: boolean;
+  wasOpen: boolean | null; reopenError: string | null; status: string }
+const MSTATUS: Record<string, string> = { SCHEDULED: '예약', RUNNING: '점검 중(관 닫힘)', DONE: '끝', CANCELED: '취소' };
+function Maint({ isSuper }: { isSuper: boolean }) {
+  const rows = useApi<MaintRow[]>('/admin/gwan-maintenances');
+  const gw = useApi<Array<{ code: string; name: string; isActive: boolean }>>('/admin/gwans/manage');
+  const [f, setF] = useState({ gwanCode: '', start: '', minutes: 30, note: '', announce: true, notifyMembers: false });
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const act = (p: Promise<unknown>, ok: string) => { setErr(null); setMsg(null); void p.then(() => { setMsg(ok); rows.reload(); }).catch((e) => setErr(msgOf(e))); };
+  return (
+    <details className="card pad" data-gwan-maint-box={rows.data?.filter((r) => r.status === 'SCHEDULED' || r.status === 'RUNNING').length ?? 0} open={!!rows.data?.some((r) => r.status === 'RUNNING') || undefined}>
+      <summary><b>관 점검 시간</b> <span className="dim">— 관이 열려 있으면 페이지를 고칠 수 없으므로, 정한 시간에 관을 닫았다가(열려 있던 관만) 끝나면 다시 엽니다 · 그 사이 시각이 된 예약 게시를 내보냄 · 손님에게는 「잠시 점검 중 · ○시에 다시 엽니다」 · 최대 2시간</span></summary>
+      {msg && <p className="form-ok">{msg}</p>}{err && <p className="form-error">{err}</p>}
+      {isSuper ? (
+        <div className="form-grid" data-gwan-maint-form>
+          <label><span>관</span><select value={f.gwanCode} onChange={(e) => setF({ ...f, gwanCode: e.target.value })}><option value="">고르기</option>
+            {(gw.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.name} ({g.code}){g.isActive ? '' : ' · 닫힘'}</option>)}</select></label>
+          <label><span>시작(내 컴퓨터 시각)</span><input type="datetime-local" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} /></label>
+          <label><span>길이</span><select value={f.minutes} onChange={(e) => setF({ ...f, minutes: Number(e.target.value) })}>{[15, 30, 60, 90, 120].map((m) => <option key={m} value={m}>{m}분</option>)}</select></label>
+          <label style={{ gridColumn: '1 / -1' }}><span>손님 안내 글(200자 · 비워도 됨)</span><input value={f.note} maxLength={200} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="예: 안내 페이지를 새로 꾸미는 중입니다." /></label>
+          {/* v10.710 (D324 · docs/818) 손님 미리 알림 — 상단 고정 공지(메인 공지 띠 · 소개광장 › 공지 · 지금 ~ 점검 끝) · 회원 알림은 공지 알림 길 */}
+          <label><input type="checkbox" checked={f.announce} onChange={(e) => setF({ ...f, announce: e.target.checked, notifyMembers: e.target.checked && f.notifyMembers })} data-gwan-maint-announce /> 손님에게 미리 알림(상단 고정 공지)</label>
+          <label><input type="checkbox" checked={f.notifyMembers} disabled={!f.announce} onChange={(e) => setF({ ...f, notifyMembers: e.target.checked })} data-gwan-maint-notify /> 회원 알림도(내 알림)</label>
+          <div className="acts"><button className="btn-ok" disabled={!f.gwanCode || !f.start} data-gwan-maint-create onClick={() => {
+            const s0 = new Date(f.start);
+            act(api('/admin/gwan-maintenances', { method: 'POST', body: JSON.stringify({ gwanCode: f.gwanCode, startsAt: s0.toISOString(), endsAt: new Date(s0.getTime() + f.minutes * 60_000).toISOString(), note: f.note || undefined, announce: f.announce, notifyMembers: f.announce && f.notifyMembers }) }), '점검 시간을 예약했습니다 — 시작 시각에 관이 닫힙니다(1분 안).');
+          }}>예약</button></div>
+        </div>) : <p className="dim">점검 시간 예약은 최고 관리자(SUPER)가 합니다.</p>}
+      <table className="tbl"><thead><tr><th>관</th><th>시작 ~ 끝</th><th>상태</th><th>안내 글</th><th>누가</th><th></th></tr></thead><tbody>
+        {(rows.data ?? []).map((r) => (
+          <tr key={r.id} data-gwan-maint-row={r.status}><td>{r.gwanName}({r.gwanCode})</td><td>{when(r.startsAt)} ~ {when(r.endsAt).slice(11)} UTC</td>
+            <td>{MSTATUS[r.status] ?? r.status}{r.status === 'DONE' && r.wasOpen === false ? ' · 원래 닫힌 관' : ''}{r.reopenError && <b className="warn-text"> · 다시 열지 못함 — 관 설정에서 여십시오</b>}</td>
+            <td>{r.note ?? ''}{r.announce && <span className="dim"> · 공지함</span>}</td><td>{r.createdByName ?? '—'}</td>
+            <td>{isSuper && r.status === 'SCHEDULED' && <button className="btn-sm btn-no" onClick={() => act(api(`/admin/gwan-maintenances/${r.id}/cancel`, { method: 'POST' }), '취소했습니다.')}>취소</button>}
+              {isSuper && r.status === 'RUNNING' && <button className="btn-sm" data-gwan-maint-end onClick={() => { if (confirm('지금 점검을 끝내고 관을 다시 엽니다(예약 게시는 먼저 내보냄).')) act(api(`/admin/gwan-maintenances/${r.id}/end`, { method: 'POST' }), '점검을 끝냈습니다.'); }}>지금 끝내기</button>}</td></tr>))}
+        {rows.data?.length === 0 && <tr><td colSpan={6} className="muted">예약한 점검 시간이 없습니다.</td></tr>}
+      </tbody></table>
+    </details>
+  );
+}
+
+/* v10.711 (D324 · docs/819) 게시 요청 — ADMIN 요청 → SUPER 승인(그 초안 게시) · 되돌려 보냄(사유) · 요청한 사람 철회 · 요청 뒤 초안이 바뀌면 승인 막힘 */
+interface ReqRow { id: number; kind: string; ref: string; label: string; note: string | null; status: string; reason: string | null; requestedAt: string; requestedByName: string | null; decidedAt: string | null; decidedByName: string | null; stale: boolean }
+const RSTATUS: Record<string, string> = { OPEN: '요청 대기', APPROVED: '승인(게시함)', REJECTED: '되돌려 보냄', WITHDRAWN: '철회' };
+function Requests({ isSuper, onOpen }: { isSuper: boolean; onOpen: (kind: string, ref: string) => void }) {
+  const rows = useApi<ReqRow[]>('/admin/publish-requests');
+  const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const act = (p: Promise<unknown>, ok: string) => { setErr(null); setMsg(null); void p.then(() => { setMsg(ok); rows.reload(); }).catch((e) => setErr(msgOf(e))); };
+  const open = (rows.data ?? []).filter((r) => r.status === 'OPEN');
+  return (
+    <details className="card pad" data-publish-requests={open.length} open={open.length > 0 || undefined}>
+      <summary><b>게시 요청</b> {open.length > 0 && <b className="warn-text">{open.length}건 대기</b>} <span className="dim">— 운영자(ADMIN)가 초안을 다 고치면 요청 · 최고 관리자(SUPER)가 열어 보고 승인(게시) 또는 되돌려 보냄</span></summary>
+      {msg && <p className="form-ok">{msg}</p>}{err && <p className="form-error">{err}</p>}
+      <table className="tbl"><thead><tr><th>페이지</th><th>메모</th><th>요청</th><th>상태</th><th></th></tr></thead><tbody>
+        {(rows.data ?? []).map((r) => (
+          <tr key={r.id} data-publish-request={r.status}><td>{r.label}</td><td>{r.note ?? ''}</td><td>{when(r.requestedAt)} · {r.requestedByName ?? '—'}</td>
+            <td>{RSTATUS[r.status] ?? r.status}{r.stale && <b className="warn-text"> · 요청 뒤 초안 바뀜</b>}{r.reason ? ` · ${r.reason}` : ''}{r.decidedByName ? ` · ${r.decidedByName}` : ''}</td>
+            <td>{r.status === 'OPEN' && <>
+              <button className="btn-sm" onClick={() => onOpen(r.kind, r.ref)}>열어 보기</button>{' '}
+              {isSuper && <button className="btn-sm btn-ok" disabled={r.stale} data-publish-request-approve onClick={() => { if (confirm(`「${r.label}」 요청 초안을 사용자 웹에 게시합니다.`)) act(api(`/admin/publish-requests/${r.id}/approve`, { method: 'POST' }), '승인했습니다 — 게시했습니다.'); }}>승인(게시)</button>}{' '}
+              {isSuper && <button className="btn-sm btn-no" onClick={() => { const why = prompt('되돌려 보내는 사유(2자 이상):'); if (why && why.trim().length >= 2) act(api(`/admin/publish-requests/${r.id}/reject`, { method: 'POST', body: JSON.stringify({ reason: why.trim() }) }), '되돌려 보냈습니다.'); }}>되돌려 보냄</button>}{' '}
+              <button className="btn-sm btn-plain" onClick={() => act(api(`/admin/publish-requests/${r.id}/withdraw`, { method: 'POST' }), '철회했습니다.')}>철회</button></>}</td></tr>))}
+        {rows.data?.length === 0 && <tr><td colSpan={5} className="muted">게시 요청이 없습니다.</td></tr>}
+      </tbody></table>
+    </details>
+  );
+}
+
 /** v10.700 (docs/808) 페이지 목록 — 꾸밀 페이지 6 · 관 안 페이지 한 표 */
 export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: string) => void }) {
   const { data, error, loading, reload } = useApi<{ layouts: Row[]; pages: PageRow[] }>('/admin/site-pages');
@@ -231,6 +352,8 @@ export function SitePages({ isSuper, onGo }: { isSuper: boolean; onGo?: (tab: st
   if (loading || !data) return <p className="muted">불러오는 중…</p>;
   return (
     <div data-site-pages={data.layouts.length + data.pages.length}>
+      <Maint isSuper={isSuper} />
+      <Requests isSuper={isSuper} onOpen={(kind, ref) => (kind === 'LAYOUT' ? setEdit(ref) : setPageEdit(Number(ref)))} />
       <div className="card pad"><h3 style={{ marginTop: 0 }}>메인 · 관 메인 · 소개몰 메인 <span className="dim" style={{ fontWeight: 400 }}>— 구역 보이기 · 순서 · 글자 · 그림 · 블록(게시 전에는 사용자 웹 그대로)</span></h3>
         <table className="tbl"><thead><tr><th>페이지</th><th>주소</th><th>상태</th><th>수정</th><th>마지막 초안</th><th>예약</th><th></th></tr></thead><tbody>
           {data.layouts.map((r) => (

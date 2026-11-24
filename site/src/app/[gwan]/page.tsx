@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getLayout } from '@/lib/layout';   // v10.699 (D321) 꾸밀 페이지
+import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isGwanKey } from '@/i18n/keys';
@@ -55,6 +56,10 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const q = { ...q0, sort: safeSort(q0.sort) };
   const code = PATH_GWAN[gwan];
   if (!code) notFound();
+  /* v10.707 (D323 · docs/815) 운영이 예약한 관 점검 중(관이 닫혀 있음)이면 관 화면 · 404 대신 「잠시 점검 중 · ○시에 다시 엽니다」 */
+  const mt = await maintOf(code);
+  if (mt?.running) return <><MaintNotice code={code} m={mt} /><i hidden data-root-end="" /></>;
+  const band = <MaintBand code={code} m={mt} />;   // 48시간 안 다음 점검이면 맨 위 작은 띠
   /* v10.646 (D309 · docs/791) 새 관 — 고정 표에 없는 관은 켠 관(/gwans)이고 허브가 아닐 때만 · 주소는 /g/<코드 소문자> 하나로 */
   if (!isFixedGwan(code)) {
     /* 캐시 없이 — 5분 캐시면 방금 연 관이 최대 5분 404(v10.655 전체 점검 3차) */
@@ -69,11 +74,11 @@ export default async function GwanPage({ params, searchParams }: Props) {
   const menu = await apiGet<GwanPageMenuItem[]>(`/gwans/${code}/pages`, 60).catch(() => [] as GwanPageMenuItem[]);
   const pm = menu.length ? <div className="gw-wrap"><GwanPageMenu code={code} items={menu} /></div> : null;
   const lp = typeof q0.lp === 'string' ? q0.lp : undefined;   // v10.698 (D321 · docs/806) 꾸밀 페이지 미리보기
-  if (code === 'MNY') return <><MoneyMain q={q0} lp={lp} />{pm}</>;
-  if (code === 'MAL' || code === 'BIZ') return <><GwanLanding code={code} q={q0} lp={lp} />{pm}<i hidden data-root-end="" /></>;
+  if (code === 'MNY') return <>{band}<MoneyMain q={q0} lp={lp} />{pm}</>;
+  if (code === 'MAL' || code === 'BIZ') return <>{band}<GwanLanding code={code} q={q0} lp={lp} />{pm}<i hidden data-root-end="" /></>;
   /* v10.652 새 관 — 게시된 첫 화면(home)이 있으면 블록으로 그림(없으면 아래 일반 화면) */
   const home = !isFixedGwan(code) ? await apiGet<GwanPageData>(`/gwans/${code}/pages/home`, 60).catch(() => null) : null;
-  if (home) return <div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /><ViewPing code={code} slug="home" /></div>;
+  if (home) return <>{band}<div className="gw-wrap" style={{ paddingTop: 16, paddingBottom: 24 }} data-screen="SB-HOM-GWN-010"><GwanPageMenu code={code} items={menu} /><GwanBlocks code={code} page={home} /><ViewPing code={code} slug="home" /></div></>;
 
   const qs = new URLSearchParams({ gwanCode: code, limit: '20' });
   if (q.sort) qs.set('sort', q.sort);
@@ -90,7 +95,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
   if (code === 'HLT') {
     const lay = await getLayout('HLT', lp);   // v10.699 (D321 · docs/807) 소개몰 메인 꾸밀 페이지(없으면 처음 화면) · 도매 · 납품 매물도 한 구역(listings)
     return (
-      <><div className="shop">
+      <>{band}<div className="shop">
         <HltBand />
         <ShopMain lay={lay} listings={
           <section className="shop-sec" data-shop-listings="1">
@@ -111,7 +116,7 @@ export default async function GwanPage({ params, searchParams }: Props) {
 
   return (
     <>
-      {pm}
+      {band}{pm}
       <div className="page-head" style={gwanHeadStyle(g?.color)} data-gwan-color={g?.color ?? undefined}>
         <h1 style={{ color: gwanColor(g?.color) }}><GwanIcon name={g?.icon} size={26} /> {g?.name ?? t('page.fallbackTitle')}</h1>
         <div className="quick">

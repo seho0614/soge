@@ -714,7 +714,12 @@ function Editor({ id, isSuper, onBack }: { id: number; isSuper: boolean; onBack:
           void run('pub', () => api<PageDetail>(`/admin/gwan-pages/${id}/publish`, { method: 'POST' }), '게시했습니다 — 사용자 웹에 바로 보입니다.');
         }}>게시</button>}
         {isSuper && p.status !== 'DRAFT' && <button className="btn-sm" disabled={!!busy} onClick={() => void run('hide', () => api<PageDetail>(`/admin/gwan-pages/${id}/hide`, { method: 'POST', body: JSON.stringify({ hidden: p.status !== 'HIDDEN' }) }), p.status === 'HIDDEN' ? '다시 보이게 했습니다.' : '숨겼습니다.')}>{p.status === 'HIDDEN' ? '다시 보이기' : '숨기기'}</button>}
-        {!isSuper && <span className="dim">게시는 최고 관리자(SUPER)가 합니다.</span>}
+        {!isSuper && <><button className="btn-ok" disabled={!!busy || dirty || !p.draftChanged} data-gwan-page-request onClick={() => {   /* v10.711 (D324 · docs/819) 게시 요청 */
+          const note = prompt('최고 관리자(SUPER)에게 게시를 요청합니다. 한 줄 메모(비워도 됨):');
+          if (note === null) return;
+          setErr(null); setMsg(null);
+          void api('/admin/publish-requests', { method: 'POST', body: JSON.stringify({ kind: 'PAGE', ref: String(id), note: note.trim() || undefined }) }).then(() => setMsg('게시를 요청했습니다 — 최고 관리자가 승인하면 사용자 웹에 나갑니다.')).catch((e) => setErr(msgOf(e)));
+        }}>게시 요청</button> <span className="dim">게시는 최고 관리자(SUPER)가 합니다.</span></>}
         {p.lang && p.lang !== 'ko' && <button className="btn-sm" disabled={!!busy} data-gwan-page-ai onClick={() => {   /* v10.662 번역 초안 채우기 */
           if (dirty && !confirm('저장하지 않은 고침이 있습니다. 번역 초안이 이 판 초안을 덮어씁니다. 계속하시겠습니까?')) return;
           if (!confirm(`한국어판 초안을 AI 로 ${p.lang} 로 옮겨 이 판 초안을 덮어씁니다(AI 비용 · 월 상한).\n게시 전 꼭 읽어 보십시오.`)) return;

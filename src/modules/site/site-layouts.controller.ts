@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiPropertyOptional, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsObject, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsDateString, IsInt, IsObject, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { ErrorDto } from '../../common/dto/common.dto';
 import { Roles } from '../../core/auth';
 import { Audit } from '../../core/audit.interceptor';
@@ -61,6 +61,14 @@ export class SiteLayoutDetailDto {
   @ApiProperty({ nullable: true, enum: ['SITE_LAYOUT_LOCKED', 'SITE_LAYOUT_GWAN_OPEN'], description: '지금 고칠 수 없는 까닭(null = 고칠 수 있음)' }) lockReason!: string | null;
   @ApiProperty({ nullable: true }) editableAt!: string | null;
   @ApiProperty({ nullable: true }) editableByName!: string | null;
+}
+export class SiteLayoutDraftLogDto {
+  @ApiProperty() at!: string;
+  @ApiProperty({ nullable: true }) byName!: string | null;
+  @ApiProperty({ type: [String], description: '바뀐 곳(구역 순서 · 글자 이름 · 블록 자리 · 언어 글자 …)' }) changes!: string[];
+}
+export class SiteLayoutTranslateDto {
+  @ApiProperty({ example: 'en', description: '사이트 언어(ko 빼고)' }) @IsString() @Matches(/^[a-z]{2}$/) lang!: string;
 }
 export class SiteLayoutEditableDto {
   @ApiProperty({ example: true, description: 'true = 수정 가능 · false = 수정 불가' }) @StrictBoolean() editable!: boolean;
@@ -163,6 +171,22 @@ export class SiteLayoutsController {
   @ApiOkResponse({ type: SiteLayoutDetailDto })
   @Audit('SITE_LAYOUT_EDITABLE', 'SITE')
   setEditable(@Param('key') key: string, @Body() dto: SiteLayoutEditableDto) { return this.svc.setEditable(key, dto.editable); }
+
+  @Get('admin/site-layouts/:key/draft-log')
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '꾸밀 페이지 초안 고친 기록 (v10.709)', description: '최근 50줄 — 누가 · 언제 · 바뀐 곳.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutDraftLogDto, isArray: true })
+  draftLog(@Param('key') key: string) { return this.svc.draftLog(key); }
+
+  @Post('admin/site-layouts/:key/translate')
+  @HttpCode(200)
+  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')
+  @ApiOperation({ summary: '언어별 글자 번역 초안 (v10.708)', description: '한국어 글을 AI 로 그 언어에 옮겨 초안에 씀(게시는 SUPER) · AI 스위치 · 월 상한 · 수정 가능 · 관 닫힘이어야.' })
+  @ApiParam({ name: 'key' })
+  @ApiOkResponse({ type: SiteLayoutDetailDto })
+  @ApiResponse({ status: 422, description: 'SITE_LAYOUT_TRANSLATE · AGENT_OFF · MODEL_UNPRICED · SITE_LAYOUT_LOCKED · SITE_LAYOUT_GWAN_OPEN', type: ErrorDto })
+  translate(@Param('key') key: string, @Body() dto: SiteLayoutTranslateDto) { return this.svc.translate(key, dto.lang); }
 
   @Post('admin/site-layouts/:key/restore')
   @HttpCode(200)

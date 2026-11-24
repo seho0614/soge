@@ -5,6 +5,23 @@
  *   운영 화면(/api/v1/admin)과 한국어 화면에는 쓰지 않습니다(server-text.ts).
  */
 export const SERVER_TEXT_EN: Record<string, string> = {
+  "이 페이지에는 이미 열린 게시 요청이 있습니다.": "This page already has an open publish request.",   // v10.711 (D324)
+  "없는 게시 요청입니다.": "There is no such publish request.",   // v10.711 (D324)
+  "이미 끝난 게시 요청입니다.": "This publish request is already closed.",   // v10.711 (D324)
+  "요청한 뒤 초안이 바뀌었습니다 — 되돌려 보내고 다시 요청을 받으십시오.": "The draft changed after the request — send it back and have it requested again.",   // v10.711 (D324)
+  "되돌려 보내는 사유를 2자 이상 적으십시오.": "Enter a reason of at least 2 characters to send it back.",   // v10.711 (D324)
+  "요청한 사람만 철회합니다.": "Only the requester can withdraw it.",   // v10.711 (D324)
+  "없는 점검 시간입니다.": "There is no such maintenance window.",   // v10.706 ~ 709 (D323)
+  "시작은 지금부터 90일 안이어야 합니다.": "The start must be within 90 days from now.",   // v10.706 ~ 709 (D323)
+  "끝은 시작 뒤 2시간 안이어야 합니다.": "The end must be within 2 hours after the start.",   // v10.706 ~ 709 (D323)
+  "안내 글은 200자까지 · HTML 태그는 쓸 수 없습니다.": "The notice can be up to 200 characters, without HTML tags.",   // v10.706 ~ 709 (D323)
+  "같은 관에 겹치는 점검 시간이 있습니다.": "There is an overlapping maintenance window for this hall.",   // v10.706 ~ 709 (D323)
+  "시작 전인 점검만 취소합니다 — 점검 중이면 「지금 끝내기」를 쓰십시오.": "Only maintenance that has not started can be canceled — use “End now” while it is running.",   // v10.706 ~ 709 (D323)
+  "점검 중인 것만 끝냅니다.": "Only running maintenance can be ended.",   // v10.706 ~ 709 (D323)
+  "시각 모양이 맞지 않습니다.": "The time format is not valid.",   // v10.706 ~ 709 (D323)
+  "언어별 글자는 8개 언어까지입니다.": "Per-language texts are allowed for up to 8 languages.",   // v10.706 ~ 709 (D323)
+  "한국어가 아닌 두 글자 언어 코드를 고르십시오.": "Choose a two-letter language code other than Korean.",   // v10.706 ~ 709 (D323)
+  "옮길 한국어 글이 없습니다 — 비운 칸은 그 언어 사전 글이 나옵니다.": "There is no Korean text to translate — empty fields show that language's dictionary text.",   // v10.706 ~ 709 (D323)
   "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” in the page list first.",   // v10.701 (D322) 수정 가능 스위치
   "관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.": "The hall is open, so it cannot be edited — close (pause) the hall in hall settings, edit, then open it again.",   // v10.701 (D322) 수정 가능 스위치
   "수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 「수정 가능」으로 바꾼 뒤 고칩니다.": "This page is set to not editable — a super administrator must switch it to “editable” first.",   // v10.701 (D322) 수정 가능 스위치

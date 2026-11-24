@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server';
 import { Fragment } from 'react';
 import { getLayout, layOrder } from '@/lib/layout';   // v10.698 (D321 · docs/806) 꾸밀 페이지
 import { LayBlocks } from '@/components/layout/LayBlocks';
+import { MaintBand, MaintNotice, maintOf } from '@/components/gwan/MaintBand';   // v10.707 (D323) 관 점검 안내
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('consult'))('lead.title') };
@@ -24,13 +25,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LeadHallPage({ searchParams }: { searchParams: Promise<{ lp?: string }> }) {
   const gwans = await apiGet<Gwan[]>('/gwans', 300).catch(() => [] as Gwan[]);
   const g = gwans.find((x) => x.code === 'LED' && x.isActive !== false);
+  const mt = await maintOf('LED');   // v10.707 점검 중이면 404 대신 안내
+  if (mt?.running) return <><MaintNotice code="LED" m={mt} /><i hidden data-root-end="" /></>;
   if (!g) notFound();
   const t = await getTranslations('consult');
   const cats = await apiGet<ConsultCat[]>('/consult/categories', 60).catch(() => [] as ConsultCat[]);
   const lay = await getLayout('LED', (await searchParams).lp);   // v10.698 게시한 배치(없으면 처음 화면)
   const ins = (at: string) => <LayBlocks code="MAL" blocks={lay?.inserts[at]} at={at} />;   // 매물 · 업종 블록은 안심소개 기준
   return (
-    <><div className="mal mal-narrow mal-proto mal-csl32" data-screen="SB-LED-MAIN-010" data-lead-hall="">
+    <><MaintBand code="LED" m={mt} /><div className="mal mal-narrow mal-proto mal-csl32" data-screen="SB-LED-MAIN-010" data-lead-hall="">
       <div className="page-head mal-head">
         <h1>{lay?.texts.title || t('lead.title')}</h1>
         <p className="mal-desc">{lay?.texts.desc || t('lead.desc')}</p>

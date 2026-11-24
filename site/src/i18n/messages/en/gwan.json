@@ -324,5 +324,6 @@
     "hltTitle": "Wholesale & supply listings",
     "hltLead": "Referrals for health product deals between businesses.",
     "more": "Load more"
-  }
+  },
+  "maint": { "title": "Temporarily under maintenance", "until": "We will reopen at {time} (Korea time).", "next": "Scheduled maintenance — {from} ~ {to} (Korea time)", "home": "Go to home" }
 }

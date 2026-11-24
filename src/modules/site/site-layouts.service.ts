@@ -4,6 +4,8 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { cleanBlocks } from './gwan-pages.service';
+import { AgentService } from '../agent/agent.service';
+import { translateSystem, parseTranslation } from '../i18n/translate.service';
 
 /* ---------------------------------------------------------------------
  * v10.696 ~ 700 (D321 · docs/804 ~ 808) 꾸밀 페이지(구역 편집) — 메인 · 관 메인 · 소개몰 메인 · 페이지 목록
@@ -98,6 +100,13 @@ export interface Layout {
   slides?: Record<string, { show: boolean; tag?: string; title?: string; desc?: string; cta?: string; href?: string; image?: string }>;
   picks?: Record<string, string[]>;
   inserts: Record<string, Array<Record<string, unknown>>>;
+  /** v10.708 (docs/816) 언어별 글자 — { en: { heroTitleA: '…', 'slide.pf.title': '…' } } · 한국어는 texts · 비우면 그 언어 사전 글 */
+  i18n?: Record<string, Record<string, string>>;
+}
+/** v10.708 언어별로 고칠 수 있는 글 열쇠 — 글자(texts) + 안내 장 글(slide.<장>.<칸>) */
+export function i18nKeys(key: LayoutKey): Array<[string, string, number]> {
+  const sp = LAYOUT_SPECS[key];
+  return [...sp.texts, ...(sp.slides ?? []).flatMap(([k, nm]) => ([['tag', 20], ['title', 40], ['desc', 120], ['cta', 20]] as const).map(([f, max]) => [`slide.${k}.${f}`, `${nm} ${f}`, max] as [string, string, number]))];
 }
 
 /** 초안 검사 · 정리 — 모르는 칸은 버림 · 빠진 구역은 처음 순서로 뒤에 붙임(코드에 구역이 늘어도 사라지지 않게) */
@@ -147,7 +156,34 @@ export function cleanLayout(key: LayoutKey, input: unknown): Layout {
     if (blocks.length) out.inserts[at] = blocks;
   }
   if (total > 30) bad('끼운 블록은 페이지 전체에서 30개까지입니다.');
+  /* v10.708 언어별 글자 — 두 글자 언어 코드(ko 빼고) · 열쇠는 i18nKeys · 비운 칸은 버림 */
+  const keys = i18nKeys(key);
+  if (keys.length && o.i18n && typeof o.i18n === 'object') {
+    const i18n: Record<string, Record<string, string>> = {};
+    for (const [lang, m] of Object.entries(o.i18n as Record<string, any>)) {
+      if (!/^[a-z]{2}$/.test(lang) || lang === 'ko' || !m || typeof m !== 'object') continue;
+      const one: Record<string, string> = {};
+      for (const [k, nm, max] of keys) { const v = txt(m[k], max, `${lang} ${nm}`); if (v) one[k] = v; }
+      if (Object.keys(one).length) i18n[lang] = one;
+    }
+    if (Object.keys(i18n).length > 8) bad('언어별 글자는 8개 언어까지입니다.');
+    if (Object.keys(i18n).length) out.i18n = i18n;
+  }
   return out;
+}
+/** v10.709 (docs/817) 초안 고친 기록 — 바뀐 곳 요약(운영 화면 「게시하면 바뀌는 것」과 같은 말) */
+export function layoutChanges(key: LayoutKey, a: Layout, b: Layout): string[] {
+  const sp = LAYOUT_SPECS[key];
+  const nm = Object.fromEntries(sp.sections);
+  const out: string[] = [];
+  if (a.sections.map((x) => x.key).join(',') !== b.sections.map((x) => x.key).join(',')) out.push('구역 순서');
+  for (const x of b.sections) { const o = a.sections.find((y) => y.key === x.key); if (o && o.show !== x.show) out.push(`「${nm[x.key]}」 ${x.show ? '보이기' : '숨기기'}`); }
+  for (const [tk, tn] of sp.texts) if ((a.texts[tk] ?? '') !== (b.texts[tk] ?? '')) out.push(tn);
+  for (const [sk, sn] of sp.slides ?? []) if (JSON.stringify(a.slides?.[sk] ?? {}) !== JSON.stringify(b.slides?.[sk] ?? {})) out.push(`안내 장 「${sn}」`);
+  for (const [pk, pn] of sp.picks ?? []) if (JSON.stringify(a.picks?.[pk] ?? []) !== JSON.stringify(b.picks?.[pk] ?? [])) out.push(pn);
+  for (const at of new Set([...Object.keys(a.inserts), ...Object.keys(b.inserts)])) if (JSON.stringify(a.inserts[at] ?? []) !== JSON.stringify(b.inserts[at] ?? [])) out.push(`블록 「${at === '_top' || at === 'top' ? '맨 위' : at === 'bottom' ? '맨 아래' : `${nm[at] ?? at} 뒤`}」`);
+  for (const lang of new Set([...Object.keys(a.i18n ?? {}), ...Object.keys(b.i18n ?? {})])) if (JSON.stringify(a.i18n?.[lang] ?? {}) !== JSON.stringify(b.i18n?.[lang] ?? {})) out.push(`${lang} 글자`);
+  return out.slice(0, 40);
 }
 /** 처음 배치와 같은가(게시해도 바뀌는 것이 없음) */
 function isDefault(key: LayoutKey, l: Layout): boolean {
@@ -161,7 +197,7 @@ const COLS = `l.key, l.draft, l.editable, l.editable_at AS "editableAt", (SELECT
 
 @Injectable()
 export class SiteLayoutsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly agent: AgentService) {}
 
   private k(key: string): LayoutKey {
     const k = String(key ?? '').toUpperCase();
@@ -188,6 +224,54 @@ export class SiteLayoutsService {
     if (g.reason === 'SITE_LAYOUT_LOCKED') throw new PolicyViolation('SITE_LAYOUT_LOCKED', '수정 불가로 둔 페이지입니다 — 최고 관리자(SUPER)가 페이지 목록에서 「수정 가능」으로 바꾼 뒤 고칩니다.');
     if (g.reason === 'SITE_LAYOUT_GWAN_OPEN') throw new PolicyViolation('SITE_LAYOUT_GWAN_OPEN', '관이 열려 있어 고칠 수 없습니다 — 관 설정에서 관을 닫은(중지) 뒤 고치고, 다 고친 뒤 다시 여십시오.');
   }
+  /** v10.709 (docs/817) 초안 쓰기 + 고친 기록 한 줄(바뀐 곳이 없으면 기록 안 함) */
+  private async writeDraft(k: LayoutKey, l: Layout, how?: string) {
+    const [r] = await this.db.query<{ draft: unknown }>(`SELECT draft FROM site_layouts WHERE key = $1`, [k]);
+    const ch = layoutChanges(k, cleanLayoutSafe(k, r?.draft), l);
+    const me = RequestCtx.actorId() ?? null;
+    await this.db.query(`UPDATE site_layouts SET draft = $2::jsonb, draft_updated_at = now(), draft_updated_by = $3 WHERE key = $1`, [k, JSON.stringify(l), me]);
+    if (ch.length || how) await this.db.query(`INSERT INTO site_layout_draft_log (key, by, changes) VALUES ($1, $2, $3::jsonb)`, [k, me, JSON.stringify(how ? [how, ...ch].slice(0, 40) : ch)]);
+  }
+  /** v10.709 초안 고친 기록 — 최근 50줄 */
+  async draftLog(key: string) {
+    const k = this.k(key);
+    return this.db.query(`SELECT l.at, (SELECT name FROM accounts a WHERE a.id = l.by) AS "byName", l.changes FROM site_layout_draft_log l WHERE l.key = $1 ORDER BY l.at DESC, l.id DESC LIMIT 50`, [k]);
+  }
+  /* ── v10.708 (docs/816) 언어별 글자 번역 초안 — 한국어 글(지금 초안 · 비운 칸은 사전 글이라 옮기지 않음)을 AI 로 그 언어에 · 초안의 i18n[lang] 에 씀(게시는 SUPER) ── */
+  async translate(key: string, lang: string) {
+    const k = this.k(key);
+    if (!/^[a-z]{2}$/.test(lang) || lang === 'ko') throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', '한국어가 아닌 두 글자 언어 코드를 고르십시오.');
+    const [ln] = await this.db.query(`SELECT code FROM i18n_langs WHERE code = $1`, [lang]);
+    if (!ln) throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', '사이트 언어 목록에 없는 말입니다.');
+    await this.assertEditable(k);
+    const [r] = await this.db.query<{ draft: unknown }>(`SELECT draft FROM site_layouts WHERE key = $1`, [k]);
+    const l = cleanLayoutSafe(k, r?.draft);
+    const src: Record<string, string> = {};
+    for (const [tk] of LAYOUT_SPECS[k].texts) if (l.texts[tk]) src[tk] = l.texts[tk]!;
+    for (const [sk] of LAYOUT_SPECS[k].slides ?? []) for (const f of ['tag', 'title', 'desc', 'cta'] as const) { const v = l.slides?.[sk]?.[f]; if (v) src[`slide.${sk}.${f}`] = v; }
+    const keys = Object.keys(src);
+    if (!keys.length) throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', '옮길 한국어 글이 없습니다 — 비운 칸은 그 언어 사전 글이 나옵니다.');
+    const g = await this.agent.allowed('TRANSLATE');
+    if (!g.ok) throw new PolicyViolation('AGENT_OFF', `AI 번역을 쓸 수 없습니다(${g.reason}) — 정책 › AI 에이전트에서 스위치 · 월 상한을 확인하십시오.`);
+    const prov = await this.agent.provider();
+    if (!prov) throw new PolicyViolation('AGENT_OFF', 'AI 키가 없습니다 — 통합 현황 › 외부 연동 › 연동 키에서 넣으십시오.');
+    const [m] = await this.db.query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'i18n.translate_model'`);
+    const model = m?.value || 'claude-haiku-5-5';
+    const [priced] = await this.db.query(`SELECT 1 FROM agent_model_prices WHERE model = $1`, [model]);
+    if (!priced) throw new PolicyViolation('MODEL_UNPRICED', `요금표에 없는 모델입니다(${model}).`);
+    const reply = await prov.complete({ model, system: translateSystem(lang, 'short headings and banner texts on the main pages of a referral marketplace'), messages: [{ role: 'user', content: JSON.stringify(src) }], maxTokens: 4000, effort: 'low' });
+    await this.agent.record('TRANSLATE', model, reply.inputTokens, reply.outputTokens, reply.cacheReadTokens);
+    if (reply.stopReason === 'refusal' || reply.stopReason === 'max_tokens') throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', '번역이 끝나지 않았습니다(거절 또는 길이) — 직접 옮겨 주십시오.');
+    let tr: Record<string, string>;
+    try { tr = prov.name === 'MOCK' ? Object.fromEntries(keys.map((x) => [x, `[MOCK ${lang}] ${src[x]}`])) : parseTranslation(reply.text, keys); }
+    catch (e) { throw new PolicyViolation('SITE_LAYOUT_TRANSLATE', `번역 답을 읽지 못했습니다 — 다시 누르십시오(${String((e as Error).message)}).`); }
+    const max = Object.fromEntries(i18nKeys(k).map(([x, , n]) => [x, n]));
+    const one = Object.fromEntries(keys.map((x) => [x, String(tr[x] ?? '').replace(/<[^>]*>/g, '').trim().slice(0, max[x] ?? 40)]).filter(([, v]) => v));
+    const next = cleanLayout(k, { ...l, i18n: { ...(l.i18n ?? {}), [lang]: { ...(l.i18n?.[lang] ?? {}), ...one } } });
+    await this.writeDraft(k, next, `${lang} 번역 초안(AI)`);
+    return { ...(await this.get(k)), translatedFields: Object.keys(one).length, model };
+  }
+
   /** v10.701 수정 가능 스위치(SUPER · 컨트롤러) */
   async setEditable(key: string, on: boolean) {
     const k = this.k(key);
@@ -269,7 +353,7 @@ export class SiteLayoutsService {
     const k = this.k(key);
     const l = cleanLayout(k, layout);   // 입력 규칙을 먼저(무엇이 틀렸는지 알려 줌) · 그다음 수정 가능 · 관 닫힘
     await this.assertEditable(k);
-    await this.db.query(`UPDATE site_layouts SET draft = $2::jsonb, draft_updated_at = now(), draft_updated_by = $3 WHERE key = $1`, [k, JSON.stringify(l), RequestCtx.actorId() ?? null]);
+    await this.writeDraft(k, l);
     return this.get(k);
   }
   async publish(key: string) {
@@ -320,7 +404,7 @@ export class SiteLayoutsService {
       if (!v) throw new NotFound('없는 판입니다.');
       l = cleanLayoutSafe(k, v.layout);
     }
-    await this.db.query(`UPDATE site_layouts SET draft = $2::jsonb, draft_updated_at = now(), draft_updated_by = $3 WHERE key = $1`, [k, JSON.stringify(l), RequestCtx.actorId() ?? null]);
+    await this.writeDraft(k, l, version === 0 ? '처음 배치로' : `${version}판으로`);
     return this.get(k);
   }
   /** 바로 되돌리기(SUPER) — 예전 판을 새 판으로 다시 게시 · 초안은 그대로 · 사유 */

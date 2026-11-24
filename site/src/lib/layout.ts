@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server';
 import { apiGet, apiGetPublic } from '@/lib/api';
 
 /* ---------------------------------------------------------------------
@@ -14,13 +15,27 @@ export interface Lay {
   slides?: Record<string, LaySlide>;
   picks?: Record<string, string[]>;
   inserts: Record<string, Array<Record<string, any>>>;
+  /** v10.708 언어별 글자 */
+  i18n?: Record<string, Record<string, string>>;
 }
 export async function getLayout(key: LayKey, lp?: string | string[] | null): Promise<Lay | null> {
   const tok = typeof lp === 'string' && /^[0-9a-f]{40}$/.test(lp) ? lp : null;
   const r = await (tok
     ? apiGetPublic<{ layout: Lay | null }>(`/site-layouts/${key}?preview=${tok}`, 0)
     : apiGet<{ layout: Lay | null }>(`/site-layouts/${key}`, 60)).catch(() => null);
-  return r?.layout ?? null;
+  const lay = r?.layout ?? null;
+  return lay ? forLocale(lay, await getLocale().catch(() => 'ko')) : null;
+}
+/** v10.708 (docs/816) 언어별 글자 — 한국어는 texts · 다른 언어는 i18n[언어](없는 칸은 비움 → 그 언어 사전 글) · 안내 장 글도 같은 규칙(slide.<장>.<칸>) */
+export function forLocale(lay: Lay, locale: string): Lay {
+  if (!locale || locale === 'ko') return lay;
+  const m = lay.i18n?.[locale] ?? {};
+  const texts = Object.fromEntries(Object.entries(m).filter(([k]) => !k.startsWith('slide.')));
+  const slides = lay.slides ? Object.fromEntries(Object.entries(lay.slides).map(([k, s]) => [k, {
+    show: s.show, href: s.href, image: s.image,
+    tag: m[`slide.${k}.tag`], title: m[`slide.${k}.title`], desc: m[`slide.${k}.desc`], cta: m[`slide.${k}.cta`],
+  }])) : undefined;
+  return { ...lay, texts, ...(slides ? { slides } : {}) };
 }
 /** 구역 차례 — 배치가 없으면 처음 차례(order) 그대로 · 있으면 배치 차례(빠진 구역은 뒤에) */
 export function layOrder(lay: Lay | null, order: string[]): Array<{ key: string; show: boolean }> {

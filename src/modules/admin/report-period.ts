@@ -2,6 +2,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation } from '../../core/errors';
 import { ReportBody, addDays, buildDay, changeOf, dayOk, kstToday, metrics, nowState, textOf, tops } from './report-day';
 import { controlLine } from '../acct/archive';   // v10.440 (D257) 월보에 내부통제 한 줄
+import { maintLine } from '../site/gwan-maint.service';   // v10.713 (docs/821) 월보에 관 점검 한 줄
 
 /* ---------------------------------------------------------------------
  * v10.413 (D250 · docs/550) 주보 · 월보 · 보고 기록
@@ -73,6 +74,7 @@ export async function reportView(db: DatabaseService, kind: Kind, period?: strin
   return { kind, period: r.period, from: r.from, to: r.to, snapshot: snap ? { id: snap.id, createdAt: snap.created_at, source: snap.source } : null,
            live: !snap, body, text: textOf(body), history, sends,
            control: kind === 'MONTH' ? await controlLine(db, r.period).catch(() => null) : null,   // v10.440 (D257) 내부통제
+           maint: kind === 'MONTH' ? await maintLine(db, r.from, r.to).catch(() => null) : null,   // v10.713 (docs/821) 관 점검 기록
            note: '숫자만 담습니다(이름 · 연락처 없음). 매출은 전표 기준 공급가(부가세 뺌)이고, 「만들 때」 칸은 보고를 만든 때의 값입니다.' };
 }
 

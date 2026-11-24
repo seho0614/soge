@@ -1,4 +1,5 @@
 import { gwanWeeklyJob } from '../modules/site/gwan-weekly';   // v10.694 관별 주간 보고
+import { GwanMaintService } from '../modules/site/gwan-maint.service';   // v10.706 (D323)
 import { opsBoardPost, sendResult } from '../modules/admin/ops-board.service';   // v10.286 (D213)
 import { nginxDenied, nginxListState, nginxWatcher, writeNginxRequest } from '../modules/identity/nginx-allow-script';   // v10.349 · 350 · 353 (docs/483 · 484 · 487)
 import { auditChainCheck, securityMonthlyStats, securityMonthlyText } from '../modules/admin/security-report';   // v10.354 · 356 (D235 · docs/488 · 490)
@@ -113,6 +114,7 @@ export type JobName =
   | 'geo_backfill' | 'translate_jobs' | 'review_shadow' | 'agent_chat_purge' | 'esign_poll' | 'safenum_release' | 'town_pick_daily'
   | 'seller_license_watch' | 'owner_todo_weekly' | 'hlt_rate_schedule' | 'notice_schedule' | 'ops_board_purge' | 'cs_weekly' | 'security_monthly'
   | 'setting_schedule' | 'withdraw_grace_mail' | 'maint_notice'   // v10.377 ~ 379 (D241)
+  | 'gwan_maint'   // v10.706 (D323) 관 점검 시간
   | 'acct_journal'    // v10.382 (D242)
   | 'acct_deadline'   // v10.390 (D244)
   | 'acct_cashflow'   // v10.394 (D245)
@@ -223,6 +225,7 @@ export class SchedulerService {
     private readonly ownerTodo: OwnerTodoService,   // v10.249 (D203 · docs/386) 대표 할 일 주간 알림
     private readonly trend: ServerTrendService,   // v10.248 (D203 · docs/386) 서버 자원 하루 기록
     private readonly admin: AdminService,   // v10.317 (D220 · docs/442) 간주 끌 수 있음 알림(간주 모드 끄는 순서)
+    private readonly gwanMaint: GwanMaintService,   // v10.706 (D323 · docs/814) 관 점검 시간
   ) {}
 
   /**
@@ -829,6 +832,13 @@ export class SchedulerService {
 
       /* v10.282 (D211 · docs/410) — 예약 공지 알림: 게시 시각이 된 공지 중 「알림 보냄」을 고른 것을 그 등급 회원에게(한 번) */
       /* v10.377 (D241 · docs/513) — 시각이 된 설정 예약을 운영 화면과 같은 검사로 · 실패하면 SETTING_SCHEDULE_FAIL(WARN) */
+      /* v10.706 (D323 · docs/814) 관 점검 시간 — 시작에 닫고 · 예약 게시 · 끝에 다시 엶(1분마다) */
+      case 'gwan_maint': {
+        const r = await this.gwanMaint.tick();
+        affected = r.closed + r.reopened; detail = r;
+        break;
+      }
+
       case 'setting_schedule': {
         const r = await applyDueSettingSchedules(this.db, this.admin);
         if (r.failed.length) {
