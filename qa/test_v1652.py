@@ -101,7 +101,8 @@ ok('① 서버 — 블록 8종 검사(HTML · 주소) · 게시 · 숨김 SUPER 
    # v10.656 · 664 표(TABLE) · 동영상(VIDEO)이 끼어도 되게 — PAGE_BLOCKS 안에 처음 9종이 모두 있는지
    all(f"'{k}'" in (re.search(r"PAGE_BLOCKS = \[([^\]]*)\]", SV) or [None, ''])[1] for k in ('HERO', 'TEXT', 'BUTTONS', 'IMAGE', 'GALLERY', 'LISTINGS', 'CATEGORIES', 'NOTICES', 'FAQ'))
    and all(w in SV for w in ('HTML 태그는 쓸 수 없습니다', 'https 주소만'))
-   and "@Post('admin/gwan-pages/:id/publish')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('SUPER')" in CT and "@Get('gwans/:code/pages/:slug')" in CT
+   and ("@Post('admin/gwan-pages/:id/publish')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('SUPER')" in CT or "@Post('admin/gwan-pages/:id/publish')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')" in CT)   # v10.771 서버 assertPublisher
+   and "@Get('gwans/:code/pages/:slug')" in CT
    and '@StrictBoolean()' in CT and 'GwanPagesController' in AM and 'GwanPagesService' in AM, '')
 ok('① 운영 화면 「관 페이지」 — ADMIN 도 · 블록 편집 · 게시(SUPER) · 판 기록 · 미리보기',
    "key: 'pages', label: '관 페이지'" in GW and 'data-gwan-page-publish' in GP and 'isSuper &&' in GP and '이 판으로 초안' in GP and 'data-gwan-page-preview' in GP, '')

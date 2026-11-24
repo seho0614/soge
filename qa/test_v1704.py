@@ -20,7 +20,8 @@ if up():
     TS = login('admin@x.com')
     sp = call('GET', '/admin/site-pages', None, TS)
     ly, pg = sp.get('layouts') or [], sp.get('pages') or []
-    ok('③ site-pages — 꾸밀 페이지 7(EARN 포함) · editable · gwanCode · gwanOpen · 관 안 페이지 editable · gwanOpen', [x.get('key') for x in ly] == ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN']
+    ok('③ site-pages — 꾸밀 페이지 7(EARN 포함) · editable · gwanCode · gwanOpen · 관 안 페이지 editable · gwanOpen', [x.get('key') for x in ly][:7] == ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT', 'EARN']   # v10.755 · 757 ~ 759 (D328) 뒤에 COMM · HELP · PARTNER · MALL_ITEM
+      
        and all('editable' in x and 'gwanOpen' in x and 'gwanCode' in x for x in ly) and next((x for x in ly if x['key'] == 'HOME'), {}).get('gwanCode') is None
        and all('editable' in p and 'gwanOpen' in p for p in pg), f"{[x.get('key') for x in ly]} pages {len(pg)}")
 else:

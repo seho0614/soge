@@ -6,7 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _lay_common import *   # noqa
 
 SP, GP = rd('web/src/app/admin/SitePages.tsx'), rd('web/src/app/admin/gwans/GwanPages.tsx')
-ok('① 그림 칸 — ImageField 내보냄 · 안내 장 그림 · 블록 사진은 전처럼', 'export function ImageField(' in GP and '<ImageField label="그림(올리기 또는 주소' in SP and 'ImageField, checkPage' in SP, '')
+ok('① 그림 칸 — ImageField 내보냄 · 안내 장 그림 · 블록 사진은 전처럼', 'export function ImageField(' in GP and '<ImageField label="그림(올리기 또는 주소' in SP and ('ImageField, checkPage' in SP or 'ImageField, SeoPreview, checkPage' in SP)   # v10.763 SeoPreview 더함
+   , '')
 
 d = doc('826_')
 ok('④ 문서 826', all(w in d for w in ('그림', '올리')), str(len(d)))

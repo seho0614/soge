@@ -20,7 +20,8 @@ ok('① 서버 — LAYOUT_SPECS 6(+ v10.702 EARN) · cleanLayout(빠진 구역 �
    "export const LAYOUT_KEYS = ['HOME', 'MNY', 'MAL', 'BIZ', 'LED', 'HLT'" in SV   # v10.702 EARN 더함 and 'export function cleanLayout(' in SV and "cleanBlocks(raw, { noFragment: true, max: 10 })" in SV
    and 'if (total > 30)' in SV and "'SITE_LAYOUT_EMPTY'" in SV and 'scheduled_layout = $4::jsonb' in SV and "'SITE_LAYOUT_PUBLISHED'" in SV and 'async publishDue(' in SV, '')
 ok('① 컨트롤러 · 등록 · 공개 구역 · 영어 — 게시 · 예약 · 되돌리기 · 수정 가능 SUPER · 초안 ADMIN · 공개 GET /site-layouts/{key}',
-   "@Post('admin/site-layouts/:key/publish')" in CT and CT.count("@Roles('SUPER')") >= 4 and "@Get('site-layouts/:key')" in CT and "@Audit('SITE_LAYOUT_PUBLISH', 'SITE')" in CT
+   "@Post('admin/site-layouts/:key/publish')" in CT and (CT.count("@Roles('SUPER')") >= 4 or (CT.count("@Roles('SUPER')") >= 2 and "@Post('admin/site-layouts/:key/publish')\n  @HttpCode(200)\n  @ApiBearerAuth() @Roles('ADMIN', 'SUPER')" in CT and 'assertPublisher' in SV))   # v10.771 게시 · 예약 · 되돌리기는 서버가 SUPER · 관 UI/UX 승인을 봄
+   and "@Get('site-layouts/:key')" in CT and "@Audit('SITE_LAYOUT_PUBLISH', 'SITE')" in CT
    and 'SiteLayoutsController,' in AP and 'SiteLayoutsService,' in AP and "'site-layouts'," in ACL
    and '"끼운 블록은 페이지 전체에서 30개까지입니다."' in EN and '"{0}은(는) {1}개까지 고릅니다."' in EN, '')
 
