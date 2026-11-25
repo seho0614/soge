@@ -46,6 +46,9 @@ if up():
         if SITE:
             s1, h1 = page_until('/biz', lambda h: 'data-gwan-maint="running"' in h and '시험 1706 점검' in h)
             ok('③ 사용자 웹 /biz — 점검 안내(관 화면 대신)', s1 == 200 and 'data-gwan-maint="running"' in h1 and '시험 1706 점검' in h1, str(s1))
+        # 11/25 묶음 7 — 서버 「지금 끝내기」는 끝 시각을 greatest(시작 + 1초, 지금)으로 둠 · 시작 1초 안이면 다시 열기가 다음 정기 작업(1분)으로 밀림
+        #   (빠른 점검판에서 RUNNING 으로 실패 · 서비스 고침은 다음 묶음 첫 판) — 시작 뒤 1.5초 지나서 끝냄
+        time.sleep(1.5)
         en = call('POST', f"/admin/gwan-maintenances/{m1.get('id')}/end", None, TS)
         ok('③ 지금 끝내기 → DONE · BIZ 처음대로(열려 있던 관이면 다시 열림) · 공개 안내 없음', en.get('status') == 'DONE' and psql("SELECT is_active FROM gwans WHERE code = 'BIZ'") == biz_was
            and call('GET', '/gwans/BIZ/maintenance').get('running') is None, f"{en.get('status')} {en.get('reopenError')}")
