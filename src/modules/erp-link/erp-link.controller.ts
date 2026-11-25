@@ -38,8 +38,8 @@ export class IntrospectDto {
 
 /* v10.800 (docs/916) ERP → 소개뱅크 쓰기 길 · 넘겨주기 */
 export class ErpAlertDto {
-  @ApiProperty({ example: 'ACCT_CLOSE_DUE', description: 'ERP 업무 앞마디(ACCT_ · HR_ · HRA_ · HRX_ · OFC_ · QLT_ · LGL_ · ITS_ · PRR_ · SAL_ · ERP_ · TRD_)' })
-  @IsString() @Matches(/^(ACCT|HR|HRA|HRX|OFC|QLT|LGL|ITS|PRR|SAL|ERP|TRD)_[A-Z0-9_]{1,40}$/) code!: string;
+  @ApiProperty({ example: 'ACCT_CLOSE_DUE', description: 'ERP 업무 앞마디(ACCT_ · HR_ · HRA_ · HRX_ · OFC_ · QLT_ · LGL_ · ITS_ · PRR_ · SAL_ · ERP_ · TRD_ · STOCK_)' })
+  @IsString() @Matches(/^(ACCT|HR|HRA|HRX|OFC|QLT|LGL|ITS|PRR|SAL|ERP|TRD|STOCK)_[A-Z0-9_]{1,40}$/) code!: string;
   @ApiPropertyOptional({ enum: ['RAISE', 'ONCE', 'RESOLVE'], default: 'RAISE' }) @IsOptional() @IsIn(['RAISE', 'ONCE', 'RESOLVE']) mode?: string;
   @ApiPropertyOptional({ enum: ['INFO', 'WARN', 'CRITICAL'], default: 'WARN' }) @IsOptional() @IsIn(['INFO', 'WARN', 'CRITICAL']) severity?: string;
   @ApiPropertyOptional({ maxLength: 200 }) @IsOptional() @IsString() @MaxLength(200) title?: string;

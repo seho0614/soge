@@ -2937,10 +2937,24 @@
     "GET /auth/introspect",
     "POST /internal/erp/alerts",
     "POST /internal/erp/notify",
-    "POST /internal/erp/handoff/redeem"
+    "POST /internal/erp/handoff/redeem",
+    "POST /internal/erp/export/consume",
+    "POST /internal/erp/agent/allowed",
+    "GET /internal/erp/agent/provider",
+    "POST /internal/erp/agent/complete",
+    "POST /internal/erp/agent/record",
+    "GET /internal/erp/files/{id}/content",
+    "POST /internal/erp/biz-status",
+    "GET /internal/erp/mail/ready",
+    "POST /internal/erp/mail",
+    "POST /internal/erp/etax/send",
+    "POST /internal/erp/products/tax-type",
+    "POST /internal/erp/bank/fetch",
+    "POST /internal/erp/taxinbox/fetch",
+    "POST /internal/erp/transfer/send"
    ],
    "nav": "SB-ADM-SIT-080",
-   "note": "2026-11-25 v10.799 D334 (docs/915) ERP 분리 E1 — ERP 서버(서비스 토큰 X-Erp-Service-Token)가 부르는 내부 길: 운영자 토큰 확인(introspect) · v10.800 운영 알림 · 회원 알림 · 로그인 넘겨주기 코드"
+   "note": "2026-11-25 v10.799 D334 (docs/915) ERP 분리 E1 — ERP 서버(서비스 토큰 X-Erp-Service-Token)가 부르는 내부 길: 운영자 토큰 확인(introspect) · v10.800 운영 알림 · 회원 알림 · 로그인 넘겨주기 코드 · v10.801 (docs/917) 묶음 8 — 내려받기 승인 썼음 · AI(영수증) · 파일 몸통 · 사업자 상태 · 메일 · 세금계산서 전송 · 직판 상품 과세 · 은행 거래내역 · 매입 세금계산서 대신 호출 · 대량 이체(501)"
   },
   {
    "id": "SB-HOM-RPT-010",

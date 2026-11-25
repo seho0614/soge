@@ -307,6 +307,7 @@ import { MailFeedbackController } from './modules/site/mail-feedback.controller'
 import { MailboxController, MailboxService } from './modules/support/mailbox.controller';   /* v10.789 (D330) 사내 웹메일 W1 공용 메일함 */
 import { AssumeAfterController, AssumeAfterService } from './modules/admin/assume-after.controller';   /* v10.792 (D331) 간주 끈 뒤 처리 도구 */
 import { ErpLinkAdminController, ErpLinkInternalController, ErpLinkService } from './modules/erp-link/erp-link.controller';   /* v10.799 (D334) ERP 연결 introspect · 서비스 토큰 */
+import { ErpLinkMoreController, ErpLinkMoreService } from './modules/erp-link/erp-link-more.controller';   /* v10.801 (docs/917) ERP 내부 길 묶음 8 */
 import { IdentityVerifyService } from './modules/identity/identity-verify.service';   /* v10.141 (D137) 본인인증 표준창 */
 import { IdentityVerifyController } from './modules/identity/identity-verify.controller';
 import { AlimtalkService } from './common/alimtalk/alimtalk.service';   /* v10.142 (D138) 알림톡 */
@@ -571,6 +572,7 @@ import { LeadService } from './modules/lead/lead.service';
     AssumeAfterController,    // v10.792 (D331) 간주 끈 뒤 처리 도구
     ErpLinkInternalController, // v10.799 (D334) ERP introspect(서비스 토큰)
     ErpLinkAdminController,   // v10.799 ERP 연동 상태 · 서비스 토큰
+    ErpLinkMoreController,    // v10.801 (docs/917) ERP 내부 길 묶음 8(서비스 토큰)
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
     AlimtalkAdminController,   // v10.142 (D138) 운영 화면 › 외부 연동 › 알림톡
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
@@ -701,6 +703,7 @@ import { LeadService } from './modules/lead/lead.service';
     MailboxService,           /* v10.789 (D330) */
     AssumeAfterService,       /* v10.792 (D331) */
     ErpLinkService,           /* v10.799 (D334) */
+    ErpLinkMoreService,       /* v10.801 (docs/917) */
     IdentityVerifyService,
     AlimtalkService,
     EsignService,

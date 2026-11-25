@@ -78,11 +78,12 @@ export class GwanMaintService {
     await this.dropNotice(id, '점검 취소');   // v10.710
     return this.one(id);
   }
-  /** 점검 중 지금 끝내기(SUPER) — 끝 시각을 지금으로 · 다음 차례(1분 안)에 다시 엶 · 바로 한 번 돌림 */
+  /** 점검 중 지금 끝내기(SUPER) — 끝 시각을 지금으로 · 바로 한 번 돌려 이 점검을 다시 엶
+   *  v10.801 — 시작 직후 끝내면 ends_at 이 starts_at + 1초(아직 미래)라 「ends_at <= now()」 에 안 걸려 1분 뒤 차례까지 닫힌 채였음 → tick(id) 로 이 점검만 끝 시각과 상관없이 다시 엶 */
   async end(id: number) {
     const [r] = await this.db.query(`UPDATE gwan_maintenances SET ends_at = greatest(starts_at + interval '1 second', now()) WHERE id = $1 AND closed_at IS NOT NULL AND reopened_at IS NULL RETURNING id`, [id]);
     if (!r) throw new PolicyViolation('GWAN_MAINT_STATE', '점검 중인 것만 끝냅니다.');
-    await this.tick();
+    await this.tick(id);
     await this.dropNotice(id, '점검 일찍 끝남');   // v10.710
     return this.one(id);
   }
@@ -111,8 +112,8 @@ export class GwanMaintService {
        ON CONFLICT DO NOTHING`, [code, severity, title.slice(0, 200), JSON.stringify({ ...detail, key }), key]).catch(() => undefined);
     await pagesBoard(this.db, title);   // v10.734 운영자 게시판
   }
-  /** 정기 작업 gwan_maint(1분마다) */
-  async tick(): Promise<{ closed: number; reopened: number; published: number; failed: number; made: number }> {
+  /** 정기 작업 gwan_maint(1분마다) · v10.801 forceEndId — 「지금 끝내기」가 부를 때 그 점검은 끝 시각이 1초 남아도 다시 엶(그 밖은 그대로) */
+  async tick(forceEndId?: number): Promise<{ closed: number; reopened: number; published: number; failed: number; made: number }> {
     let closed = 0, reopened = 0, published = 0, failed = 0;
     const made = await this.fillRepeats().catch(() => 0);   // v10.721 반복 점검을 7일 앞까지
     await this.requests.remind().catch(() => 0);   // v10.737 하루 넘은 게시 요청 다시 알림
@@ -137,7 +138,8 @@ export class GwanMaintService {
     };
     await pub();
     const done = await this.db.query<{ id: number; gwan_code: string; was_open: boolean }>(
-      `SELECT id::int AS id, gwan_code, was_open FROM gwan_maintenances WHERE canceled_at IS NULL AND closed_at IS NOT NULL AND reopened_at IS NULL AND ends_at <= now() ORDER BY ends_at LIMIT 20`);
+      `SELECT id::int AS id, gwan_code, was_open FROM gwan_maintenances WHERE canceled_at IS NULL AND closed_at IS NOT NULL AND reopened_at IS NULL
+          AND (ends_at <= now() OR id = $1::int) ORDER BY ends_at LIMIT 20`, [forceEndId ?? null]);
     if (done.length) await pub();
     for (const m of done) {
       let err: string | null = null;

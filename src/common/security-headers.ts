@@ -6,6 +6,8 @@ import { cspReportRoute } from './csp-report';
 const parseSnsText = express.text({ type: 'text/plain', limit: '256kb' });
 /* v10.633 (docs/777) 매물 CSV 일괄 등록 미리보기만 본문 300KB(CSV 200KB · JSON 으로 감싸면 줄바꿈 · 따옴표가 늘어남) — 다른 API 는 그대로 100KB */
 const parseBulkJson = express.json({ limit: '300kb' });
+/* v10.801 (docs/917) ERP 영수증 읽기 — AI 요청에 사진 한 장(원본 5MB → base64 약 6.7MB)이 실림 · 이 주소만 8MB */
+const parseErpAgentJson = express.json({ limit: '8mb' });
 
 /**
  * v10.176 (D165 · docs/273) — API 보안 머리글. 운영(main.ts)과 점검판(scripts/dev-server.js)이 같이 부릅니다.
@@ -37,5 +39,23 @@ export function applySecurityHeaders(app: INestApplication): void {
         return;
       }
       res.status(400).json({ code: 'VALIDATION_ERROR', message: 'CSV 본문을 읽지 못했습니다.' });
+    });
+  /* v10.801 (docs/917) — ERP 내부 길 AI 한 번 부르기(사진 한 장)만 본문 8MB. ERP 서비스 토큰 머리가 있을 때만 크게 읽음(없으면 기본 100KB · 토큰 검사는 ErpLinkGuard)
+     ★ 이름이 다른 함수로 감쌈(위와 같은 까닭) · 넘으면 413 PAYLOAD_TOO_LARGE */
+  app.use('/api/v1/internal/erp/agent/complete',
+    function erpAgentBody(req: Request, res: Response, next: NextFunction) {
+      /* 11/26 검토 — 머리가 「있기만」 하면 8MB 를 읽던 것을 서비스 토큰 꼴(erp_ + 64자 16진)일 때만으로 좁힘(토큰이 맞는지는 ErpLinkGuard)
+       *   운영: /api/v1/internal/ 은 Nginx 에서 바깥을 막고 ERP 는 서버 안(127.0.0.1:3000)으로만 부름 — E8 절차서 */
+      const t = String(req.headers['x-erp-service-token'] ?? '');
+      if (!/^erp_[0-9a-f]{64}$/.test(t)) return next();
+      parseErpAgentJson(req, res, next);
+    },
+    function erpAgentBodyError(err: { status?: number; type?: string } | undefined, _req: Request, res: Response, next: NextFunction) {
+      if (!err) return next();
+      if (err.status === 413 || err.type === 'entity.too.large') {
+        res.status(413).json({ code: 'PAYLOAD_TOO_LARGE', message: 'AI 요청이 너무 큽니다(사진 5MB 까지).' });
+        return;
+      }
+      res.status(400).json({ code: 'VALIDATION_ERROR', message: 'AI 요청 본문을 읽지 못했습니다.' });
     });
 }

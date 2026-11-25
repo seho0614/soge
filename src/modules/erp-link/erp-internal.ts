@@ -7,13 +7,13 @@ import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
  *
  *   ① 운영 알림  POST /internal/erp/alerts  — ERP 코드가 쓰던 ops_alerts INSERT 82곳을 이 길 하나로(설계서 4-4)
  *        mode RAISE(같은 시각 겹침만 막음 · clock_timestamp) · ONCE(풀리지 않은 같은 알림이 있으면 안 올림) · RESOLVE(풀림 표시)
- *        알림 종류는 ERP 업무 앞마디만(ACCT_ · HR_ · HRA_ · HRX_ · OFC_ · QLT_ · LGL_ · ITS_ · PRR_ · SAL_ · ERP_ · TRD_) — 소개뱅크 알림을 흉내 내지 못하게
+ *        알림 종류는 ERP 업무 앞마디만(ACCT_ · HR_ · HRA_ · HRX_ · OFC_ · QLT_ · LGL_ · ITS_ · PRR_ · SAL_ · ERP_ · TRD_ · v10.801 STOCK_ 재고(acct stock · reorder)) — 소개뱅크 알림을 흉내 내지 못하게
  *   ② 회원 알림  POST /internal/erp/notify  — 급여 명세 · 결재 요청 등 화면 알림(notifications) · 받는 사람은 쓰는 계정만 · 링크는 / 또는 https://erp. 로만
  *   ③ 넘겨주기  운영 화면 POST /admin/erp/handoff(운영자 · 2단계 확인 뒤) → 60초 · 한 번 코드 → ERP 서버 POST /internal/erp/handoff/redeem → 같은 기기 줄(sid) · 같은 2단계 시각으로 새 증표
  *        코드는 해시만 저장 · 원문은 ERP 주소(#code=)에만 잠깐
  * ------------------------------------------------------------------- */
 
-export const ERP_ALERT_RE = /^(ACCT|HR|HRA|HRX|OFC|QLT|LGL|ITS|PRR|SAL|ERP|TRD)_[A-Z0-9_]{1,40}$/;
+export const ERP_ALERT_RE = /^(ACCT|HR|HRA|HRX|OFC|QLT|LGL|ITS|PRR|SAL|ERP|TRD|STOCK)_[A-Z0-9_]{1,40}$/;
 export const HANDOFF_SEC = 60;
 const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
 

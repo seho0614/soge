@@ -125,6 +125,10 @@ if [ -n "${DATABASE_URL:-}" ] && db -c "SELECT 1" >/dev/null 2>&1; then
   info "발신 IP(infra.egress_ip): $(q "select coalesce(nullif(value,''),'(비어 있음)') from site_settings where key='infra.egress_ip'")"
   info "암호화 열쇠(이 접속 기준 — 앱이 띄울 때 걸므로 여기서는 f 가 정상): $(q "select is_set from v_enc_key_status")"
   info "오픈 차단 $(q "select count(*) from v_open_blockers")건 [$(q "select string_agg(kind||':'||c, ' ') from (select kind, count(*) c from v_open_blockers group by kind) x")]"
+  # v10.801 (docs/917 · 추가 개발 A3) DB 설정 · 성능 — 읽기만(SHOW · pg_settings) · 개발 점검판과 달라 느려진 일이 있었음(D333 JIT)
+  info "DB 설정: $(qn "select name||'='||setting||coalesce(unit,'') from pg_settings where name in ('jit','jit_above_cost','work_mem','shared_buffers','effective_cache_size','random_page_cost','max_connections','statement_timeout','log_min_duration_statement','autovacuum') order by name" | tr '\n' ' ')"
+  info "확장: $(qn "select extname||' '||extversion from pg_extension where extname <> 'plpgsql' order by 1" | paste -sd', ') · postgres_fdw 사용 가능: $(q "select case when exists(select 1 from pg_available_extensions where name='postgres_fdw') then '예' else '아니오' end")"
+  info "집합 함수 ROWS 기본값(1000) 그대로: $(q "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace and n.nspname='public' where p.proretset and p.prorows=1000")개 (D335 적용 뒤 52 가 기대)"
   # v10.214 (docs/344) — 오픈 차단 항목 이름 · 약관 게시(시행 중 · 시행 예정) — 지난 적용 때와 숫자가 다르면 무엇이 바뀌었는지
   qn "select kind || ' ' || item from v_open_blockers order by kind, item" | while IFS= read -r l; do info "  · $l"; done
   info "약관: 게시 $(q "select count(*) from terms where status='PUBLISHED'")(시행 중 $(q "select count(*) from terms where status='PUBLISHED' and effective_from <= now()") · 새 판 시행 예정 $(q "select count(*) from v_terms_upcoming") · 첫 판 시행일 전 $(q "select count(*) from v_terms_current where effective_from > now()")) · 초안 $(q "select count(*) from terms where status in ('DRAFT','LEGAL_REVIEW')")"
