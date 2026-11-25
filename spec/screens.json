@@ -1687,7 +1687,11 @@
     "GET /admin/open-date",
     "PUT /admin/open-date",
     "GET /admin/gwans/{code}/open-check",
-    "POST /admin/gwans/{code}/open"
+    "POST /admin/gwans/{code}/open",
+    "GET /admin/assume-after",
+    "POST /admin/assume-after/broker-recheck",
+    "POST /admin/assume-after/broker-recheck/{id}/ack",
+    "POST /admin/health/sellers/{id}/submerchant"
    ],
    "nav": "SB-ADM-SIT-010",
    "note": "v_open_blockers — 설정 7 · 약관 3 · 푸터 5 (현재 15건)"
@@ -3754,6 +3758,31 @@
    "note": "2026-11-17 v10.333 D225 — 고객센터 문의 답변함. 상태별 수 · 기한 넘김(영업일 1일 · 운영 알림 INQUIRY_DUE_BREACH) · 답변(회원 알림 INQUIRY_ANSWERED · 감사 INQUIRY_ANSWER) · 담당 · 메모 · 닫기 · 다시 열기. · v10.334 (D226) 답변 틀 고르기 · 관리 · v10.337 (docs/470) 처리 지표 상자(최근 7 · 30 · 90일 · 처음 답까지 시간 · 기한 안 비율 · 분류별 · 답변 틀별) · v10.361 그 회원 운영 메모(docs/495)"
   },
   {
+   "id": "SB-ADM-MAIL-010",
+   "name": "공용 메일함",
+   "group": "ADM",
+   "url": "/admin/mailbox",
+   "p": "P1",
+   "roles": [
+    "ADMIN",
+    "SUPER"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /admin/mailbox/state",
+    "GET /admin/mailbox/messages",
+    "GET /admin/mailbox/messages/{id}",
+    "POST /admin/mailbox/messages/{id}/assign",
+    "POST /admin/mailbox/messages/{id}/state",
+    "POST /admin/mailbox/messages/{id}/reply",
+    "GET /admin/mailbox/attachments/{id}",
+    "POST /admin/mailbox/messages/{id}/fetch",
+    "POST /webhooks/ses/inbound"
+   ],
+   "nav": "SB-ADM-MBR-010",
+   "note": "2026-11-25 v10.789 D330 (docs/904) 사내 웹메일 W1 — 공용 메일함(privacy@ · help@ · admin@ · dmarc@sogaebank.com) 받기: SES 받기 → SNS → POST /webhooks/ses/inbound(공개 · 스위치 mail.inbound · 주제 · AWS 서명) · 받기 상태 · v10.790 (docs/905) 목록 · 한 통 · 맡기기 · 끝냄 · 스팸 · 답장(SES · 보내는 주소 = 공용 주소) · 첨부(바이러스 FAIL 막음) · 메일함마다 업무 권한 mailbox-* · 열람 기록 mail_access_log"
+  },
+  {
    "id": "SB-HOM-CMU-010",
    "name": "소개광장 목록",
    "group": "HOM",
@@ -5678,7 +5707,7 @@
     "GET /admin/lead-status"
    ],
    "nav": "SB-ADM-PTN-010",
-   "note": "2026-11-17 v10.338 (docs/471) 리드관(소개리드 · Consult Leads) 운영 현황 — 관 상태 · lead.legal_ok · 신청 받을 길 · 상담 업종별 신청 · 전달 · 받을 업체 없음 · 반려 · 받을 업체 0곳 경고. 읽기만"
+   "note": "2026-11-17 v10.338 (docs/471) 리드관(소개리드 · Leeds — v10.788 영어 이름 바꿈 · 옛 Consult Leads) 운영 현황 — 관 상태 · lead.legal_ok · 신청 받을 길 · 상담 업종별 신청 · 전달 · 받을 업체 없음 · 반려 · 받을 업체 0곳 경고. 읽기만"
   },
   {
    "id": "SB-ADM-SIT-110",

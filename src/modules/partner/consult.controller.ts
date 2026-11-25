@@ -59,7 +59,8 @@ export class ConsultCreatedDto {
 export class ConsultReadyDto {
   @ApiProperty({ description: '신청을 받는가 — 인증번호를 휴대폰(알림톡) · 메일 중 하나로 보낼 수 있음(개발 환경은 늘 받음)' }) ready!: boolean;
   @ApiProperty({ description: '알림톡으로 보낼 수 있음' }) byPhone!: boolean;
-  @ApiProperty({ description: '메일로 보낼 수 있음(notify.email_verified)' }) byMail!: boolean;
+  @ApiProperty({ description: '메일로 보낼 수 있음(notify.email_verified) — v10.793 알림톡이 없으면 consult.mail_otp = on 일 때만' }) byMail!: boolean;
+  @ApiProperty({ description: 'v10.793 (D332) 메일 인증번호만으로 받기 설정(consult.mail_otp · 처음 off · 법무 판단 뒤 켬)' }) mailOtp!: boolean;
 }
 
 export class ConsultVerifyDto {

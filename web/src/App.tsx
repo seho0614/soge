@@ -107,6 +107,7 @@ import { StaffSession } from './app/admin/StaffSession';
 import { PiiReasonGate } from './components/PiiReasonGate';   // v10.359 (D236) 개인정보 열람 사유   // v10.357 · 360 (D236) 자동 로그아웃 · 비밀번호 나이
 import { GuideFlows } from './app/admin/GuideFlows';   // v10.347 (D233)
 import { InquiryDesk } from './app/admin/InquiryDesk';   // v10.333 (D225)
+import { Mailbox } from './app/admin/Mailbox';   // v10.791 (D330) 공용 메일함
 import { CsxAiDrafts, CsxChurn, CsxMailTemplates, CsxMerges } from './app/admin/CsxDesk';   // v10.528 ~ 531 (D280) ㊿ 고객센터 · 회원
 import { Ads } from './app/admin/Ads';
 import { Gwans } from './app/admin/Gwans';
@@ -511,6 +512,7 @@ function Console() {
         {tab === 'ops-guide' && <OpsGuide onGo={go} canGo={(t) => visible(t.split('/')[0] as Tab)} />}
         {tab === 'guide-flows' && <GuideFlows />}
         {tab === 'inquiries' && <InquiryDesk />}
+        {tab === 'mailbox' && <Mailbox />}
         {tab === 'integrations' && <Integrations />}
         {tab === 'mainops' && <MainOps onGo={go} />}
       {tab === 'gwans' && <Gwans onGo={go} />}

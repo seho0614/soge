@@ -114,6 +114,12 @@ async function main() {
   const t0 = Date.now();
 
   await c.query('SET session_replication_role = replica');
+  /* v10.797 (docs/912) replica 로 계정만 지우면 외래 키가 돌지 않아 사업자 · 매물 · 요청이 주인 없이 남아 다시 돌릴 때
+   *   businesses_biz_reg_no_key(L000000) 로 멈췄음 — 딸린 줄을 먼저 지우고 · 지난번에 남은 주인 없는 부하 사업자(L+6자리)도 지움 */
+  const LOAD = `SELECT id FROM accounts WHERE email LIKE '%${DOMAIN}'`;
+  await c.query(`DELETE FROM listings WHERE owner_account_id IN (${LOAD}) OR (owner_account_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = listings.owner_account_id))`);
+  await c.query(`DELETE FROM requests WHERE owner_account_id IN (${LOAD}) OR (owner_account_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = requests.owner_account_id))`);
+  await c.query(`DELETE FROM businesses WHERE account_id IN (${LOAD}) OR (biz_reg_no ~ '^L[0-9]{6}$' AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = businesses.account_id))`);
   await c.query(`DELETE FROM accounts WHERE email LIKE $1`, ['%' + DOMAIN]);
   await c.query('SET session_replication_role = origin');
 
@@ -162,6 +168,7 @@ async function main() {
    　 시드가 고를 것을 고르지 않은 것이 문제였습니다. */
     `SELECT c.id, c.gwan_code FROM categories c
       WHERE c.status='APPROVED'
+        AND c.axis IS DISTINCT FROM 'CONSULT'   -- v10.787 (docs/896) 상담 축 업종은 매물이 될 수 없음(D005 INV-AX2 trg_aa_) — 빠지면 시드가 멈춤
         AND NOT EXISTS (
           SELECT 1 FROM restricted_industries r
            WHERE r.code = c.restricted_code AND r.is_active
@@ -181,8 +188,11 @@ async function main() {
    *
    * 다만 COPY 는 **트리거를 거칩니다** — 중개사 게이트가 그대로
    * 도므로, 부동산은 인증된 계정으로만 만들어야 합니다. */
-  const useCopy = N_LISTINGS >= 50000;
+  /* v10.797 (docs/912) COPY 는 pg-copy-streams 가 있을 때만(킷 의존 묶음에 없음 — 10만 건이 「Cannot find module」 로 멈췄음) · 없으면 500개씩 INSERT(v10.787 규칙 건너뛰기 포함) */
+  const hasCopy = (() => { try { require.resolve('pg-copy-streams'); return true; } catch { return false; } })();
+  const useCopy = N_LISTINGS >= 50000 && hasCopy && process.env.SEED_COPY === '1';
   let made = 0;
+  const skipped = {};   // v10.787 규칙에 걸려 건너뛴 줄(까닭 앞마디 → 수)
   const BATCH = 500;
 
   if (useCopy) {
@@ -225,18 +235,26 @@ async function main() {
       const owner = g === 'MAL' ? pick(brokers) : pick(accs);
       const title = `${weightedRegion()[1]} ${pick(p.what)} ${pick(p.size)} ${pick(p.deal)}`;
       const body = `${pick(p.note)}. ${pick(p.note)}. ${pick(BODY_TAIL)}`;
-      const fee = int(30, 3000) * 10000;
+      const fee = g === 'MAL' ? null : int(30, 3000) * 10000;   // v10.787 부동산은 소개비가 아니라 노출료(A-07 RE_EXPOSURE_FEE)
       const days = int(0, 180);
       vals.push(`($${++n},$${++n},$${++n},$${++n},$${++n},$${++n},'SELLER','PUBLISHED',$${++n},$${++n}, now() - ($${++n}||' days')::interval, now() - ($${++n}||' days')::interval)`);
       args.push(g, pick(byGwan[g]), owner.account, title, body, fee,
                 skewed(3000), skewed(120), days, days);
     }
-    await c.query(
-      `INSERT INTO listings (gwan_code, category_id, owner_account_id, title, body,
+    const LSQL = `INSERT INTO listings (gwan_code, category_id, owner_account_id, title, body,
                              desired_fee, fee_bearer, status, view_count, like_count,
-                             published_at, created_at)
-       VALUES ${vals.join(',')}`, args);
-    made += Math.min(BATCH, N_LISTINGS - s);
+                             published_at, created_at) VALUES `;
+    try {
+      await c.query(LSQL + vals.join(','), args);
+      made += Math.min(BATCH, N_LISTINGS - s);
+    } catch (e) {
+      /* v10.787 (docs/896) 묶음이 DB 규칙(트리거)에 걸리면 한 줄씩 넣고 걸린 줄은 건너뜀 — 규칙이 새로 생겨도 시드가 멈추지 않게 · 건너뛴 까닭은 끝에 셈 */
+      for (let k = 0; k < vals.length; k++) {
+        const one = vals[k].replace(/\$(\d+)/g, (_, d) => `$${Number(d) - k * 10}`);
+        try { await c.query(LSQL + one, args.slice(k * 10, k * 10 + 10)); made++; }
+        catch (e2) { const code = String(e2.message).split(':')[0].slice(0, 40); skipped[code] = (skipped[code] || 0) + 1; }
+      }
+    }
     if (made % 2000 === 0) process.stdout.write(`  등록 ${made}…\n`);
   }
 
@@ -265,7 +283,8 @@ async function main() {
     `SELECT (SELECT count(*) FROM listings) AS l,
             (SELECT count(*) FROM requests) AS r,
             (SELECT count(*) FROM accounts WHERE email LIKE '%${DOMAIN}') AS a`);
-  console.log(`  완료  등록 ${n.l} · 요청 ${n.r} · 계정 ${n.a} · ${((Date.now()-t0)/1000).toFixed(1)}초`);
+  const sk = Object.entries(skipped).map(([k, v]) => `${k} ${v}`).join(' · ');
+  console.log(`  완료  등록 ${n.l} · 요청 ${n.r} · 계정 ${n.a} · ${((Date.now()-t0)/1000).toFixed(1)}초${sk ? ` · 건너뜀 ${sk}` : ''}`);
   await c.end();
 }
 

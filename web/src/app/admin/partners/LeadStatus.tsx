@@ -33,7 +33,7 @@ export function LeadStatus({ onGo }: { onGo?: (tab: string) => void }) {
     <section data-lead-status={`${hall.active ? 'on' : 'off'}|${rows.length}`}>
       <table className="tbl" data-lead-hall-state="">
         <tbody>
-          <tr><th>리드관(소개리드 · Consult Leads)</th>
+          <tr><th>리드관(소개리드 · Leeds)</th>
             <td>{hall.active ? <span className="badge badge-verified">켜짐</span> : <b>꺼짐</b>}{hall.openedAt ? ` · 처음 연 때 ${ymdhm(hall.openedAt)}` : ''}
               {hall.active && <> · <a href={siteHref('/lead')} target="_blank" rel="noreferrer">사용자 웹 /lead</a></>}</td>
             <td>노출 › 메인 운영 › 관 노출 {go('mainops/gwan')}</td></tr>
