@@ -6,6 +6,7 @@ import { codeList } from '../../lib/codes';
 import { MapKeys } from './MapKeys';
 import { WeatherKeys } from './WeatherKeys';
 import { IntegrationKeys } from './IntegrationKeys';
+import { ErpLinkBox } from './ErpLinkBox';   // v10.799 (D333 · docs/915)
 import { MailPanel } from './MailPanel';
 import { IdentityPanel } from './IdentityPanel';
 import { AlimtalkPanel } from './AlimtalkPanel';
@@ -322,6 +323,7 @@ export function Integrations() {
 
       {/* v10.128 (D128 · docs/192) — 결제 · 계좌 · 국세청 · 중개사 · 세금계산서 · 메일 · 본인인증 · 전자계약 · 알림톡 · 안심번호 키(2026-10-27 대표 승인) */}
       <IntegrationKeys />
+      <ErpLinkBox />   {/* v10.799 (D333) ERP 서비스 토큰 */}
 
       {/* v10.140 (D136 · docs/211) — 메일 준비 상태 · 연결 확인 · 시험 메일 · 발송 기록 */}
       <MailPanel />

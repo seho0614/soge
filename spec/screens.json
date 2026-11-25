@@ -2075,7 +2075,10 @@
     "GET /admin/mail/suppressions",
     "POST /admin/mail/suppressions/{id}/release",
     "POST /webhooks/ses",
-    "GET /admin/integration-keys/pg-readiness"
+    "GET /admin/integration-keys/pg-readiness",
+    "GET /admin/erp/link",
+    "POST /admin/erp/service-token",
+    "POST /admin/erp/handoff"
    ],
    "nav": "SB-ADM-SIT-010",
    "state": "integration.status",
@@ -2919,6 +2922,25 @@
     "GET /internal/businesses/{id}"
    ],
    "nav": "SB-ADM-ADS-010"
+  },
+  {
+   "id": "SB-ADM-ERP-010",
+   "name": "ERP 연동 (내부)",
+   "group": "ADM",
+   "url": "/admin/erp/internal",
+   "p": "P3",
+   "roles": [
+    "ADMIN"
+   ],
+   "gates": [],
+   "apis": [
+    "GET /auth/introspect",
+    "POST /internal/erp/alerts",
+    "POST /internal/erp/notify",
+    "POST /internal/erp/handoff/redeem"
+   ],
+   "nav": "SB-ADM-SIT-080",
+   "note": "2026-11-25 v10.799 D333 (docs/915) ERP 분리 E1 — ERP 서버(서비스 토큰 X-Erp-Service-Token)가 부르는 내부 길: 운영자 토큰 확인(introspect) · v10.800 운영 알림 · 회원 알림 · 로그인 넘겨주기 코드"
   },
   {
    "id": "SB-HOM-RPT-010",
