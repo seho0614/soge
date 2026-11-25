@@ -33,13 +33,24 @@ def main(argv):
         print(__doc__); return 2
     expect = int(argv[argv.index('--expect') + 1]) if '--expect' in argv else None
     rows = tally(open(argv[1], encoding='utf-8', errors='replace'))
-    bad = [r for r in rows if r[1] is None or r[1] != r[2]]
+    # v10.798 (docs/913) 끝에 혼자 다시 돌려 통과한 시험 — 실패에서 빼되 「일시 실패(다시 통과)」로 이름을 보임
+    retry_ok = set()
+    if '--retry-ok' in argv:
+        try:
+            retry_ok = {l.strip() for l in open(argv[argv.index('--retry-ok') + 1], encoding='utf-8') if l.strip()}
+        except OSError:
+            retry_ok = set()
+    bad_all = [r for r in rows if r[1] is None or r[1] != r[2]]
+    flaky = [r for r in bad_all if r[0] in retry_ok]
+    bad = [r for r in bad_all if r[0] not in retry_ok]
     for n, p, t in bad:
         print(f'  실패  {n} — ' + (f'{p} / {t}' if p is not None else '결과 줄 없음(멈춤 · 시간 초과)'))
-    ok_n = len(rows) - len(bad)
+    for n, p, t in flaky:
+        print(f'  일시 실패(혼자 다시 돌려 통과)  {n} — 처음 ' + (f'{p} / {t}' if p is not None else '결과 줄 없음'))
+    ok_n = len(rows) - len(bad_all)
     short = expect is not None and len(rows) < expect
     print(f'회귀 집계 — 시험 {len(rows)}개' + (f' (기대 {expect})' if expect else '') + f' · 모두 통과 {ok_n} · 실패 {len(bad)}'
-          + (' · 수가 모자람' if short else ''))
+          + (f' · 일시 실패(다시 통과) {len(flaky)}' if flaky else '') + (' · 수가 모자람' if short else ''))
     lockout_hint(argv[1], bad)
     return 0 if rows and not bad and not short else 1
 

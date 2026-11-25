@@ -102,4 +102,28 @@ LAST1=$(awk -F'\t' '$2 == 1 {s = $5; n = $4} END {if (s) print int(s / 60) "분(
 [ "$PAR" -gt 1 ] && [ -n "$LAST1" ] && echo "  비교 — 마지막 하나씩(PAR=1) ${LAST1} → 이번 ${M}분(${NT}개)" | tee -a "$LOG"
 cp "$D/_times.tsv" "$HOME/reg_last_times.tsv" 2>/dev/null
 fi
-python3 "$Q/reg_tally.py" "$LOG" ${EXPECT:+--expect $EXPECT}
+# v10.798 (sgb-core docs/913) 실패한 시험만 끝에 한 번 더 — 혼자(동시 없음) · 줄인 점검(ONLY)은 안 함 · RETRY_FAILS=0 이면 안 함 · 6개 넘으면 안 함(진짜 고장)
+#   다시 돌린 결과는 「다시 test_….py | 결과」 줄과 $D/<시험>.retry.log · 다시 통과한 시험은 집계에서 「일시 실패(다시 통과)」로 따로 보임(숨기지 않음)
+RETRY_OK="$D/_retry_ok.txt"; : > "$RETRY_OK"
+if [ -z "$ONLY_FILES" ] && [ "${RETRY_FAILS:-1}" != 0 ]; then
+  FAILS=$(python3 -I -c "import sys; sys.path.insert(0, '$Q'); import reg_tally as T; print(' '.join(n for n, p, t in T.tally(open('$LOG', encoding='utf-8', errors='replace')) if p is None or p != t))")
+  NF=$(echo $FAILS | wc -w)
+  if [ "$NF" -ge 1 ] && [ "$NF" -le "${RETRY_MAX:-6}" ]; then
+    echo "== 실패 ${NF}개 한 번 더(혼자): $FAILS" | tee -a "$LOG"
+    for f in $FAILS; do
+      wait_site
+      if echo " $HOST " | grep -q " $f "; then
+        out=$(cd "$Q" && KIT=$K SITE=$SITE API=$API DB=$DB ADMIN_WEB=$BO timeout 1800 python3 -I "$f" 2>&1)
+      else
+        out=$(docker run --rm --network host -v "$Q":/w -v "$K":/core:ro -w /w -e KIT=/core -e API=$API -e DB=$DB -e ADMIN_WEB=$BO -e SITE=$SITE sgb-qa:v1 timeout 1800 python3 "$f" 2>&1)
+      fi
+      echo "$out" > "$D/$f.retry.log"
+      r=$(echo "$out" | grep -E '^결과' | tail -1)
+      echo "다시 $f | $r" | tee -a "$LOG"
+      if R="$r" python3 -I -c "import os, re, sys; m = re.search(r'결과:\s*(\d+)\s*/\s*(\d+)', os.environ['R']); sys.exit(0 if m and m.group(1) == m.group(2) else 1)"; then echo "$f" >> "$RETRY_OK"; fi
+    done
+  elif [ "$NF" -gt "${RETRY_MAX:-6}" ]; then
+    echo "== 실패 ${NF}개 — ${RETRY_MAX:-6}개 넘어 다시 돌리지 않음(진짜 고장 · 잠금 연쇄 의심)" | tee -a "$LOG"
+  fi
+fi
+python3 "$Q/reg_tally.py" "$LOG" ${EXPECT:+--expect $EXPECT} --retry-ok "$RETRY_OK"

@@ -84,7 +84,7 @@ if DB_OK:
     env = dict(os.environ, APP_LINK=os.path.join(tmp, 'app'), DATA_DIR=os.path.join(tmp, 'data'))
     r = subprocess.run(['bash', os.path.join(K, 'deploy/aws/open-prep.sh'), 'check'], capture_output=True, text=True, env=env, timeout=300, stdin=subprocess.DEVNULL)
     out = r.stdout
-    new_lines = [l for l in out.splitlines() if '소개몰 주문' in l or '시험(스텁) 기록' in l or 'STUB-SUB' in l]
+    new_lines = [l for l in out.splitlines() if '(그대로 둠)' in l and ('소개몰 주문' in l or '시험(스텁) 기록' in l or 'STUB-SUB' in l)]
     logs = os.listdir(os.path.join(tmp, 'data', 'logs')) if os.path.isdir(os.path.join(tmp, 'data', 'logs')) else []
     ok('② 점검판 DB 에 check — 새 줄 3 · 「?」 없음 · 간주 모드 줄 · consult.mail_otp=off · 결과 파일 · 읽기만 끝',
        r.returncode == 0 and len(new_lines) == 3 and not any("?" in l.replace('(?', '') for l in new_lines) and ('간주 모드' in out) and 'consult.mail_otp=off' in out

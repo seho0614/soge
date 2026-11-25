@@ -4,7 +4,7 @@
   ② (API) 목록(메일함 4 · 새 메일) · 한 통(본문 · 첨부 · 확인 안 됨 표시) · 열면 VIEW 기록 · 맡기기 · 끝냄 · 다시 열기 · 답장 준비 안 됨 422 · 첨부 Base64 · 바이러스 422
   (시험 메일은 스스로 넣고 시작 시각 뒤만 봄 — 두 번 돌아도 통과)
 """
-import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.request
+import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -84,7 +84,7 @@ if API and DB:
     aid = psql(f"INSERT INTO mail_attachments (message_id, filename, content_type, size_bytes, data) VALUES ({mid}, 'a.txt', 'text/plain', 5, convert_to('hello', 'UTF8')) RETURNING id").splitlines()[0]
     vmid = psql(f"""INSERT INTO mail_messages (box_id, direction, ses_message_id, from_addr, subject, has_content, virus, state) VALUES ({box}, 'IN', 'ses-t1790v-{sid}', 'bad@example.com', '시험 1790 바이러스 {sid}', true, 'FAIL', 'SPAM') RETURNING id""").splitlines()[0]
     vaid = psql(f"INSERT INTO mail_attachments (message_id, filename, content_type, size_bytes, data) VALUES ({vmid}, 'v.exe', 'application/octet-stream', 1, '\\x00') RETURNING id").splitlines()[0]
-    L = call('GET', f'/admin/mailbox/messages?q=1790%20열람%20요청%20{sid}&state=NEW', None, T)
+    L = call('GET', '/admin/mailbox/messages?q=' + urllib.parse.quote(f'1790 열람 요청 {sid}') + '&state=NEW', None, T)
     rows = L.get('items') or []
     ok('② 목록 — 메일함 4(SUPER) · 넣은 메일 · 새 메일 · 첨부 1', len(L.get('boxes') or []) == 4 and len(rows) == 1 and rows[0].get('id') == mid and rows[0].get('attachments') == 1 and rows[0].get('state') == 'NEW', json.dumps(L, ensure_ascii=False)[:300])
     D = call('GET', f'/admin/mailbox/messages/{mid}', None, T)

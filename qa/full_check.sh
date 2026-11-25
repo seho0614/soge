@@ -26,6 +26,13 @@ SITE_MODE=prod ~/sgb-check.sh "$B" realcheck fresh > "$OUT/realcheck.log" 2>&1; 
 say "$(sed -n 3p "$OUT/realcheck.log")"; say "$(grep '진짜 이미지 확인' "$OUT/realcheck.log" | tail -1)"; say "$(grep '리허설' "$OUT/realcheck.log" | tail -1)"
 grep -q "진짜 이미지 확인 — 전체 통과" "$OUT/realcheck.log" || { ~/sgb-check.sh main down >/dev/null 2>&1; say "realcheck 실패 — 멈춤"; exit 1; }
 K=$(ls -d ~/kits/run/current/SGB_* | tail -1); say "$(cat "$K/KIT_COMMITS.txt")"
+# v10.796 (sgb-core docs/911) DB 복원 리허설을 전체 점검마다 — 버리는 DB 에 pg_dump → pg_restore → 행 수 견주기 · 일부러 지워 「다름」도 봄(2 ~ 3분 · 운영 · RDS 안 닿음)
+#   실패해도 점검은 계속(결과 줄만) · 줄인 점검(ONLY)은 건너뜀 · RESTORE_REH=0 이면 건너뜀
+if [ -z "$ONLY" ] && [ "${RESTORE_REH:-1}" != 0 ] && [ -f "$Q/../tools/restore-drill-rehearse.sh" ]; then
+  KZ=$(ls -t ~/kits/out/*.zip 2>/dev/null | head -1)
+  bash "$Q/../tools/restore-drill-rehearse.sh" "$KZ" -o "$OUT/restore-drill.txt" > "$OUT/restore-drill.log" 2>&1; RDRC=$?
+  say "①-2 복원 리허설 rc=$RDRC · $(grep -m1 '^result=' "$OUT/restore-drill.txt" 2>/dev/null || tail -1 "$OUT/restore-drill.log")"
+fi
 
 if [ -z "$ONLY" ]; then   # v10.639 줄인 점검이면 ② · ③ 건너뜀
 SITE_MODE=prod bash "$Q/func_check.sh" > "$OUT/func_check.log" 2>&1; say "② 기능 점검 rc=$?"
@@ -47,7 +54,7 @@ fi
 if [ -n "$ONLY" ]; then EXP=$(echo $ONLY | tr " " "\n" | sed "s/\.py$//" | sort -u | grep -c .); else
 EXP=$(cd "$Q" && python3 -I -c "import sys; sys.path.insert(0, '.'); import reg_classify as R; print(len(R.classify('.', '$K/sgb')))" 2>/dev/null || echo 0); fi
 ONLY="$ONLY" PAR=${PAR:-3} UI_LANE=${UI_LANE:-0} bash "$Q/run_regression.sh" "$OUT/regression.log" "$EXP" > "$OUT/regression.out" 2>&1; say "④ 회귀 rc=$? · 기대 $EXP"
-say "$(grep -E '실패  test|회귀 집계' "$OUT/regression.out")"; say "$(grep -E '걸린 시간|단계 —' "$OUT/regression.log" | tail -2)"
+say "$(grep -E '실패  test|일시 실패|회귀 집계|한 번 더|다시 돌리지 않음' "$OUT/regression.out")"; say "$(grep -E '걸린 시간|단계 —' "$OUT/regression.log" | tail -2)"
 
 ~/sgb-check.sh main down >/dev/null 2>&1; say "⑤ main down rc=$?"
 say "== 끝 $(TZ=Asia/Seoul date '+%m/%d %H:%M') KST"
