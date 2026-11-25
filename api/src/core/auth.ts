@@ -25,7 +25,9 @@ export interface ErpPrincipal {
 }
 
 /** 판정만(시험이 그대로 부름) */
-export function decide(p: Introspect, need?: { task: string; level: string }, roles?: string[]): { ok: true } | { ok: false; status: 401 | 403; code: string; message: string } {
+/* ts-node strict:false(dev-server · 소개뱅크와 같음)에서는 ok: true | false 유니온을 갈라 보지 못함 → 실패 모양을 따로 둠(11/25 점검판 기동 실패) */
+export type DecideFail = { ok: false; status: 401 | 403; code: string; message: string };
+export function decide(p: Introspect, need?: { task: string; level: string }, roles?: string[]): { ok: true } | DecideFail {
   if (!p.active) {
     return p.reason === 'NOT_STAFF'
       ? { ok: false, status: 403, code: 'ERP_NOT_STAFF', message: 'ERP 는 운영자 계정만 쓸 수 있습니다.' }
@@ -56,7 +58,7 @@ export class ErpAuthGuard implements CanActivate {
     if (!h.startsWith('Bearer ') || h.length < 20) throw Unauthorized('UNAUTHENTICATED', '로그인이 필요합니다 — 운영 화면에서 「ERP 열기」로 들어오십시오.');
     const p = await this.sgb.introspect(h.slice(7));
     const r = decide(p, this.reflector.getAllAndOverride(TASK_KEY, targets), this.reflector.getAllAndOverride(ROLES_KEY, targets));
-    if (!r.ok) throw r.status === 401 ? Unauthorized(r.code, r.message) : Forbidden(r.code, r.message);
+    if (!r.ok) { const f = r as DecideFail; throw f.status === 401 ? Unauthorized(f.code, f.message) : Forbidden(f.code, f.message); }
     req.erp = { accountId: p.accountId!, name: p.name ?? null, roles: p.roles ?? [], super: !!p.super, perm: p.perm ?? { enforce: 'OFF', decide: 'ROLE', tasks: [] } } as ErpPrincipal;
     return true;
   }
