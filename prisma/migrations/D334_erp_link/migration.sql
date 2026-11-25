@@ -1,5 +1,5 @@
 -- =====================================================================
--- D333 (v10.799 · v10.800 · docs/915 · 916) ERP 연결 — 서비스 토큰 · 로그인 넘겨주기 코드
+-- D334 (v10.799 · v10.800 · docs/915 · 916) ERP 연결 — 서비스 토큰 · 로그인 넘겨주기 코드
 --
 --   대표 11/25 ERP 분리 · E1 계획 승인(로그인은 짧은 교환 코드 · 비밀 키 공유 없음).
 --   ① 설정 erp.service_token_hash — ERP 서버가 소개뱅크 내부 길(introspect · /internal/erp/*)을 부를 때 내는 토큰의 sha256(토큰 원문은 저장 안 함)
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.erp_handoff_codes (
   CHECK (expires_at > created_at AND expires_at <= created_at + interval '5 minutes')
 );
 CREATE INDEX IF NOT EXISTS erp_handoff_codes_exp ON public.erp_handoff_codes (expires_at);
-COMMENT ON TABLE public.erp_handoff_codes IS 'v10.800 (D333 · docs/916) 운영 화면 → ERP 로그인 넘겨주기 코드 — 60초 · 한 번 · 해시만(원문은 주소에만 잠깐)';
+COMMENT ON TABLE public.erp_handoff_codes IS 'v10.800 (D334 · docs/916) 운영 화면 → ERP 로그인 넘겨주기 코드 — 60초 · 한 번 · 해시만(원문은 주소에만 잠깐)';
 
 -- ── 주소 표(외부 연동 관리 업무) — ERP 연동 상태 보기 · 서비스 토큰 만들기(SUPER 는 컨트롤러 @Roles) ──
 INSERT INTO public.perm_route_map (method, pattern, task_key, level) VALUES
