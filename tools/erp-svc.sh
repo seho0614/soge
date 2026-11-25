@@ -66,7 +66,9 @@ CREATE SCHEMA svc;
 IMPORT FOREIGN SCHEMA public LIMIT TO ($IN) FROM SERVER sgb_src INTO svc;
 SQL
 # e2.3 svc 를 읽는 조회 — svc 를 지우고 다시 가져오면 함께 지워지므로 여기서 다시 만듦
-[ -f "$ROOT/prisma/svc-views.sql" ] && { ERP < "$ROOT/prisma/svc-views.sql" || { echo "[중단] svc 조회 실패"; exit 1; }; echo "  ②-1 svc 조회 $(grep -c '^CREATE OR REPLACE VIEW' "$ROOT/prisma/svc-views.sql")개"; }
+for VF in svc-views.sql svc-views-erp.sql; do   # 도구가 만든 것 · 손으로 쓴 것(e3.1 erp_site_settings)
+  [ -f "$ROOT/prisma/$VF" ] && { ERP < "$ROOT/prisma/$VF" || { echo "[중단] svc 조회 실패 — $VF"; exit 1; }; echo "  ②-1 svc 조회 $VF $(grep -c '^CREATE OR REPLACE VIEW' "$ROOT/prisma/$VF")개"; }
+done
 G=$(ERP -At -c "SELECT count(*) FROM information_schema.foreign_tables WHERE foreign_table_schema = 'svc'")
 A=$(ERP -At -c "SELECT count(*) FROM svc.accounts" 2>&1 | tail -1)
 W=$(ERP -At -c "INSERT INTO svc.public_holidays SELECT * FROM svc.public_holidays LIMIT 0" 2>&1 | tail -1)

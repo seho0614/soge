@@ -8,17 +8,22 @@ import { createHash } from 'crypto';
  *   실패: 기록 + 소개뱅크 운영 알림 ERP_JOB_FAIL(ONCE) · 다음 성공 때 RESOLVE
  * ------------------------------------------------------------------- */
 
+import { alertFlush } from './alert-flush';
 type Q = <T = any>(sql: string, params?: unknown[]) => Promise<T[]>;
-export type JobFn = (q: Q) => Promise<string | void>;
+export type JobFn = (q: Q, a: Alerter) => Promise<string | void>;   // e3.1 — 알림 넘기기가 소개뱅크 연결(Alerter)을 씀
 export interface Alerter { alert(a: { code: string; title?: string; severity?: 'INFO' | 'WARN' | 'CRITICAL'; detail?: Record<string, unknown>; mode?: 'RAISE' | 'ONCE' | 'RESOLVE'; note?: string }): Promise<boolean> }
 
 export const JOBS: Record<string, JobFn> = {
   erp_heartbeat: async () => 'ok',
+  erp_alert_flush: (q, a) => alertFlush(q, a),   // e3.1 (E007)
   erp_runs_purge: async (q) => {
     const r = await q<{ n: number }>(`WITH d AS (DELETE FROM erp_job_runs WHERE started_at < now() - interval '90 days' RETURNING 1) SELECT count(*)::int AS n FROM d`);
     return `지움 ${r[0]?.n ?? 0}`;
   },
 };
+
+/** 주인(erp.jobs_owner)과 상관없이 도는 ERP 자기 작업 */
+export const ALWAYS_JOBS = ['erp_heartbeat', 'erp_runs_purge', 'erp_alert_flush'];
 
 export const lockKey = (name: string) => {
   const h = createHash('sha256').update('erp_job:' + name).digest();
@@ -46,7 +51,7 @@ export async function runJob(q: Q, alerter: Alerter, name: string, manualBy: str
   if (!l?.got) return { ok: false, note: '다른 곳에서 도는 중 — 건너뜀', skipped: true };
   const [run] = await q<{ id: number }>(`INSERT INTO erp_job_runs (job, manual_by) VALUES ($1, $2) RETURNING id`, [name, manualBy]);
   let ok = true, note = '';
-  try { note = String((await fn(q)) ?? '').slice(0, 500); }
+  try { note = String((await fn(q, alerter)) ?? '').slice(0, 500); }
   catch (e: any) { ok = false; note = String(e?.message ?? e).slice(0, 500); }
   finally {
     await q(`UPDATE erp_job_runs SET ended_at = now(), ok = $2, note = $3 WHERE id = $1`, [run.id, ok, note || null]);
@@ -61,13 +66,15 @@ export async function runJob(q: Q, alerter: Alerter, name: string, manualBy: str
 /** 1분마다 부름 — 주인이 ERP 일 때만 · 켜진 작업 중 차례인 것 */
 export async function tick(q: Q, alerter: Alerter, now = new Date()) {
   const [o] = await q<{ v: string | null }>(`SELECT value AS v FROM erp_settings WHERE key = 'erp.jobs_owner'`);
-  if ((o?.v ?? 'SGB') !== 'ERP') return { owner: o?.v ?? 'SGB', ran: [] as string[] };
+  const owner = o?.v ?? 'SGB';
   const jobs = await q<{ name: string; schedule: string; last_run_at: Date | null }>(`SELECT name, schedule, last_run_at FROM erp_jobs WHERE enabled ORDER BY name`);
   const ran: string[] = [];
   for (const j of jobs) {
+    /* e3.1 — ERP 자기 일(ALWAYS_JOBS · 알림 넘기기)은 주인과 상관없이 · 회계 · 인사 작업은 주인이 ERP 일 때만(E7 에서 넘김) */
+    if (owner !== 'ERP' && !ALWAYS_JOBS.includes(j.name)) continue;
     if (!JOBS[j.name] || !due(j.schedule, j.last_run_at ? new Date(j.last_run_at) : null, now)) continue;
     await runJob(q, alerter, j.name);
     ran.push(j.name);
   }
-  return { owner: 'ERP', ran };
+  return { owner, ran };
 }

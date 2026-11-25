@@ -43,7 +43,7 @@ export class JobsController {
   @ApiOperation({ summary: 'ERP 작업 손으로 돌리기', description: 'e1.3 — SUPER · 주인이 SGB 여도 됨(시험 · 확인용) · 겹치면 건너뜀 · 감사 ERP_JOB_RUN' })
   @ApiOkResponse({ type: Object })
   async run(@Param('name') name: string, @Req() req: any) {
-    if (!/^[a-z][a-z0-9_]{2,40}$/.test(name) || !JOBS[name]) throw NotFound('등록되지 않은 작업입니다.');
+    if (!/^[a-z][a-z0-9_]{2,40}$/.test(name) || !JOBS[name]) throw new NotFound('등록되지 않은 작업입니다.');
     const r = await runJob(this.svc.q, this.svc.sgb, name, req.erp.accountId);
     await this.svc.q(`INSERT INTO erp_audit (account_id, action, target, detail) VALUES ($1, 'ERP_JOB_RUN', $2, $3::jsonb)`, [req.erp.accountId, name, JSON.stringify(r)]);
     return r;

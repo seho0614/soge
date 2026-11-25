@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, SetMetadata } from '@nestjs/
 import { Reflector } from '@nestjs/core';
 import { Forbidden, Unauthorized } from './errors';
 import { Introspect, SgbClient } from './sgb-client';
+import { RequestCtx } from './request-context';
 
 /* ---------------------------------------------------------------------
  * e1.2 (docs/002) ERP 로그인 확인 · 권한 — 모든 길에 걸림(전역 가드) · @Public 만 빼기
@@ -18,6 +19,16 @@ export const TASK_KEY = 'erp_task';
 export const Task = (task: string, level: 'VIEW' | 'EDIT' | 'APPROVE' | 'EXPORT') => SetMetadata(TASK_KEY, { task, level });
 export const ROLES_KEY = 'erp_roles';
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
+
+/* e3.1 (docs/010) 소개뱅크 core/auth.ts 와 같은 이름(옮겨 온 회계 코드가 씀) — Role · isSuper · hasRole · Principal(req.principal) */
+export type Role = 'MEMBER' | 'REVIEWER' | 'ADMIN' | 'PAYOUT' | 'SUPER' | 'PARTNER_MAL' | 'PARTNER_AFF' | 'ACCOUNTANT' | string;
+export const isSuper = (roles: readonly string[] | undefined | null): boolean => !!roles?.includes('SUPER');
+export const hasRole = (roles: readonly string[] | undefined | null, ...want: string[]): boolean => isSuper(roles) || !!roles?.some((r) => want.includes(r));
+export interface Principal {
+  accountId: string; roles: Role[];
+  identityVerifiedAt: Date | null; businessVerifiedAt: Date | null; hasActiveSubscription: boolean;
+  mfaPending?: boolean;
+}
 
 export interface ErpPrincipal {
   accountId: string; name: string | null; roles: string[]; super: boolean;
@@ -58,8 +69,12 @@ export class ErpAuthGuard implements CanActivate {
     if (!h.startsWith('Bearer ') || h.length < 20) throw Unauthorized('UNAUTHENTICATED', '로그인이 필요합니다 — 운영 화면에서 「ERP 열기」로 들어오십시오.');
     const p = await this.sgb.introspect(h.slice(7));
     const r = decide(p, this.reflector.getAllAndOverride(TASK_KEY, targets), this.reflector.getAllAndOverride(ROLES_KEY, targets));
-    if (!r.ok) { const f = r as DecideFail; throw f.status === 401 ? Unauthorized(f.code, f.message) : Forbidden(f.code, f.message); }
+    if (!r.ok) { const f = r as DecideFail; throw f.status === 401 ? Unauthorized(f.code, f.message) : new Forbidden(f.code, f.message); }
     req.erp = { accountId: p.accountId!, name: p.name ?? null, roles: p.roles ?? [], super: !!p.super, perm: p.perm ?? { enforce: 'OFF', decide: 'ROLE', tasks: [] } } as ErpPrincipal;
+    /* e3.1 — 옮겨 온 코드가 보는 req.principal · RequestCtx 행위자(감사 · 결재 · 작성자) */
+    req.principal = { accountId: p.accountId!, roles: (p.roles ?? []) as Role[], identityVerifiedAt: null, businessVerifiedAt: null, hasActiveSubscription: false, mfaPending: false } as Principal;
+    const c = RequestCtx.get();
+    if (c) { c.actorId = p.accountId!; c.actorRole = (p.roles ?? []).includes('SUPER') ? 'SUPER' : (p.roles ?? [])[0]; }
     return true;
   }
 }
