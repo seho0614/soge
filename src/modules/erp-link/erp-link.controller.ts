@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Injectable, Post, Req, UseGuards } from '@nestjs/common';
-import { IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiProperty, ApiPropertyOptional, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Audit } from '../../core/audit.interceptor';
 import { ErrorDto } from '../../common/dto/common.dto';
@@ -47,7 +47,8 @@ export class ErpAlertDto {
   @ApiPropertyOptional({ maxLength: 200, description: 'RESOLVE 때 풀림 메모' }) @IsOptional() @IsString() @MaxLength(200) note?: string;
 }
 export class ErpNotifyDto {
-  @ApiProperty({ format: 'uuid' }) @IsUUID('all') accountId!: string;
+  /* 11/25 — IsUUID('all') 는 점검판 시드 계정(22222222-2222-…)을 막음 · 서비스(erpNotify)와 같은 36자 꼴로 보고 있는지는 DB 가 봄 */
+  @ApiProperty({ format: 'uuid' }) @IsString() @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) accountId!: string;
   @ApiProperty({ example: 'ERP_PAYSLIP' }) @IsString() @Matches(/^ERP_[A-Z0-9_]{2,40}$/) kind!: string;
   @ApiProperty({ maxLength: 200 }) @IsString() @MinLength(1) @MaxLength(200) title!: string;
   @ApiProperty({ maxLength: 2000 }) @IsString() @MinLength(1) @MaxLength(2000) body!: string;
