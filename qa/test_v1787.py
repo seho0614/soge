@@ -9,8 +9,9 @@
 import os, re, sys, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TOOLS = os.path.join(HERE, '..', 'tools')
 KIT = os.environ.get('KIT', '/home/claude/pkg/SGB_DevDocker_Integrated_20261002')
+# 서버(HOST)에서는 sgb-infra 의 tools/ · 컨테이너(전체 점검 ③ · KIT=/core)에서는 킷 맨 위 tools/(킷 = sgb-infra 맨 위 + sgb/)
+TOOLS = next((d for d in (os.path.join(HERE, '..', 'tools'), os.path.join(KIT, 'tools')) if os.path.isfile(os.path.join(d, 'mig-measure.sh'))), os.path.join(HERE, '..', 'tools'))
 K = KIT + '/sgb' if os.path.isdir(KIT + '/sgb') else KIT
 RES = []
 
