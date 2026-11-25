@@ -9,6 +9,7 @@ import { Audit } from '../../core/audit.interceptor';
 import { AppError, NotFound, PolicyViolation } from '../../core/errors';
 import { RequestCtx } from '../../core/request-context';
 import { DatabaseService } from '../../db/database.service';
+import { sgb, sgbOk } from '../../core/sgb-client';   // e3.5 손 고침(상품 과세)
 import { ExportGate } from '../admin/export-approval';
 import { runJournal } from './journal';
 import { ALL_SOURCES } from './sources';
@@ -646,10 +647,8 @@ export class AcctController {
   @ApiResponse({ status: 422, type: ErrorDto, description: 'ACCT_REASON' })
   async setTaxType(@Param('code') code: string, @Body() dto: TaxTypeDto) {
     reasonOk(dto.reason, 'ACCT_REASON');
-    const r = await this.db.query(
-      `UPDATE hlt_products p SET tax_type = $2, updated_at = now() FROM svc.hlt_sellers s WHERE p.code = $1 AND s.id = p.seller_id AND s.type = 'DIRECT' RETURNING p.code`,
-      [code, dto.taxType]);
-    if (!r.length) throw new NotFound('없거나 직판 상품이 아닙니다.');
+    /* e3.5 손 고침(docs/011 4절 예외 목록 1) — ERP 는 소개뱅크 표에 쓰지 않음 → 소개뱅크 내부 API(같은 SQL · 감사 · 404 그대로) */
+    sgbOk(await sgb.post('/internal/erp/products/tax-type', { code, taxType: dto.taxType, reason: dto.reason, actorId: RequestCtx.actorId() }));
     return { ok: true, code, taxType: dto.taxType, note: dto.taxType === 'EXEMPT' ? '면세로 바꿨습니다 — 다음 주문부터 부가세를 나누지 않습니다.' : '과세로 바꿨습니다 — 다음 주문부터 부가세를 나눕니다.' };
   }
 

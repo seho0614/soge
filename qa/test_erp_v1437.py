@@ -70,6 +70,7 @@ if API and DB:
         time.sleep(1)
         logs = psql_erp(f"SELECT count(*) FROM acct_accountant_access WHERE account_id = '{aid}'")
         psql_sgb(f"UPDATE account_roles SET expires_at = now() - interval '1 minute' WHERE account_id = '{aid}' AND role = 'ACCOUNTANT'")
+        time.sleep(62)   # [ERP: 로그인 확인 결과 60초 기억(설계서 4-1) — 기한이 끝난 뒤 1분 지나 막힘 · 소개뱅크는 바로]
         late = erp('GET', '/admin/acct/accounts', None, TA)
         ok('② 세무사 — 기한 없이 주기 DB 막음 · 기한 두고 주기 · 2단계 전 MFA_REQUIRED · 2단계 뒤 회계 GET 200 · 전표 만들기 · 매입 넣기 403 · 다른 운영 화면 403 · 질문 · SUPER 답 · 세무사 답 403 · 내 질문 · 답 보임 · SUPER 목록 · 접속 기록 · 기한 지나면 403',
            'ACCOUNTANT_EXPIRY' in noexp and '!' not in good and pend.get('code') == 'MFA_REQUIRED' and isinstance(acc.get('accounts'), list) and mon.get('ym') == ym

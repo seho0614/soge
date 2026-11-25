@@ -3,6 +3,9 @@ import { Reflector } from '@nestjs/core';
 import { Forbidden, Unauthorized } from './errors';
 import { Introspect, SgbClient } from './sgb-client';
 import { RequestCtx } from './request-context';
+import { Optional } from '@nestjs/common';
+import { DatabaseService } from '../db/database.service';
+import { accountantOnly, logAccountantAccess } from '../modules/acct/accountant';
 
 /* ---------------------------------------------------------------------
  * e1.2 (docs/002) ERP 로그인 확인 · 권한 — 모든 길에 걸림(전역 가드) · @Public 만 빼기
@@ -59,7 +62,7 @@ export function decide(p: Introspect, need?: { task: string; level: string }, ro
 
 @Injectable()
 export class ErpAuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector, private readonly sgb: SgbClient) {}
+  constructor(private readonly reflector: Reflector, private readonly sgb: SgbClient, @Optional() private readonly db?: DatabaseService) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const targets = [ctx.getHandler(), ctx.getClass()];
@@ -68,7 +71,12 @@ export class ErpAuthGuard implements CanActivate {
     const h = String(req.headers?.authorization ?? '');
     if (!h.startsWith('Bearer ') || h.length < 20) throw Unauthorized('UNAUTHENTICATED', '로그인이 필요합니다 — 운영 화면에서 「ERP 열기」로 들어오십시오.');
     const p = await this.sgb.introspect(h.slice(7));
-    const r = decide(p, this.reflector.getAllAndOverride(TASK_KEY, targets), this.reflector.getAllAndOverride(ROLES_KEY, targets));
+    const needRoles = this.reflector.getAllAndOverride<string[] | undefined>(ROLES_KEY, targets);
+    /* e3.5 (docs/011) 소개뱅크 core/auth accountantRead 와 같음 — 세무사만인 계정은 회계(/api/v1/admin/acct/) GET 중 지급 담당이 볼 수 있는 것만 · 접속 기록 */
+    const acctOnly = !!p.active && accountantOnly(p.roles);
+    const acctRead = acctOnly && !!p.mfaOk && req.method === 'GET' && String(req.originalUrl ?? req.url ?? '').startsWith('/api/v1/admin/acct/') && !!needRoles?.includes('PAYOUT');
+    const r = acctRead ? { ok: true as const } : decide(p, this.reflector.getAllAndOverride(TASK_KEY, targets), needRoles);
+    if (acctOnly && this.db) void logAccountantAccess(this.db, p.accountId!, String(req.method ?? 'GET'), String(req.originalUrl ?? req.url ?? ''), RequestCtx.get()?.ip ?? null);
     if (!r.ok) { const f = r as DecideFail; throw f.status === 401 ? Unauthorized(f.code, f.message) : new Forbidden(f.code, f.message); }
     req.erp = { accountId: p.accountId!, name: p.name ?? null, roles: p.roles ?? [], super: !!p.super, perm: p.perm ?? { enforce: 'OFF', decide: 'ROLE', tasks: [] } } as ErpPrincipal;
     /* e3.1 — 옮겨 온 코드가 보는 req.principal · RequestCtx 행위자(감사 · 결재 · 작성자) */
