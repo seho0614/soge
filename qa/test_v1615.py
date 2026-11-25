@@ -150,7 +150,7 @@ def api_up():
 
 
 ROLE_RE = re.compile(r"'(ADMIN|SUPER|PAYOUT|REVIEWER|PARTNER_MAL|PARTNER_AFF|ACCOUNTANT)'")
-ROLE_LINES_MAX = 335   # c1569 318 + v10.615 패치 5(문의 담당 SQL 의 운영 역할 목록) + v10.653 PAGE_IMAGE 올리기 1 + v10.680 관 담당자 운영 계정 2+ v10.706 ~ 744 관 점검 · 게시 요청 7 + v10.771 · 774 게시 권한 · GROUPS 준비 2(docs/757 3-3) — 늘면 docs/757 3절 표에 줄을 더하고 이 값을 고침
+ROLE_LINES_MAX = 337   # c1569 318 + v10.615 패치 5(문의 담당 SQL 의 운영 역할 목록) + v10.653 PAGE_IMAGE 올리기 1 + v10.680 관 담당자 운영 계정 2+ v10.706 ~ 744 관 점검 · 게시 요청 7 + v10.771 · 774 게시 권한 · GROUPS 준비 2 + v10.790 공용 메일함 SUPER · 맡길 운영자 2(docs/757 3-3) — 늘면 docs/757 3절 표에 줄을 더하고 이 값을 고침
 
 
 def role_lines():
