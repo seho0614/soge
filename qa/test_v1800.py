@@ -1,4 +1,4 @@
-"""v10.800 (docs/916 · D333) ERP 연결 ② — 운영 알림 · 회원 알림 쓰기 길 · 로그인 넘겨주기 코드
+"""v10.800 (docs/916 · D334) ERP 연결 ② — 운영 알림 · 회원 알림 쓰기 길 · 로그인 넘겨주기 코드
   KIT=<kit> API=http://localhost:13000/api/v1 DB=postgresql://sgb:sgb@localhost:15432/sgb python3 test_v1800.py
   ① (코드) 알림 종류 앞마디 · ONCE · RESOLVE · 링크 제한 · 코드 해시만 · 같은 기기 줄 · 2단계 시각 · 운영자만 · 명세 · 문서 916
   ② (API) 넘겨주기 → redeem → 새 증표로 introspect active · 다시 쓰면 404 · 지난 코드 409 · 서비스 토큰 없이 403 · 알림 RAISE · ONCE 0 · RESOLVE · 남의 앞마디 400 · 회원 알림 줄 · 나쁜 링크 422
@@ -78,7 +78,7 @@ def call_h(m_, p, hd, b=None):
         return {'_err': e.code, 'code': bd.get('code')}
 
 
-MIG = rd('prisma/migrations/D333_erp_link/migration.sql')
+MIG = rd('prisma/migrations/D334_erp_link/migration.sql')
 I, C = rd('src/modules/erp-link/erp-internal.ts'), rd('src/modules/erp-link/erp-link.controller.ts')
 ok('① 알림 — 앞마디 목록 · ONCE(풀리지 않은 같은 알림) · RESOLVE · clock_timestamp · 회원 알림 ERP_ · 링크 / 또는 ERP 주소',
    'ACCT|HR|HRA|HRX|OFC|QLT|LGL|ITS|PRR|SAL|ERP|TRD' in I and 'AND NOT EXISTS (SELECT 1 FROM ops_alerts WHERE alert_code = $1 AND resolved_at IS NULL)' in I

@@ -1,6 +1,6 @@
-"""v10.799 (docs/915 · D333) ERP 연결 ① — introspect(서비스 토큰) · ERP 서비스 토큰 만들기
+"""v10.799 (docs/915 · D334) ERP 연결 ① — introspect(서비스 토큰) · ERP 서비스 토큰 만들기
   KIT=<kit> API=http://localhost:13000/api/v1 DB=postgresql://sgb:sgb@localhost:15432/sgb python3 test_v1799.py
-  ① (코드) D333 설정 · 넘겨주기 표 · 가드(비면 닫힘 · timingSafeEqual) · AuthMiddleware 결과 그대로 · 원문 저장 안 함 · SUPER · 명세 · 문서 915
+  ① (코드) D334 설정 · 넘겨주기 표 · 가드(비면 닫힘 · timingSafeEqual) · AuthMiddleware 결과 그대로 · 원문 저장 안 함 · SUPER · 명세 · 문서 915
   ② (API) 토큰 없음 403 · SUPER 토큰 만들기(64자 해시만 DB) · 틀린 토큰 403 · 맞는 토큰 + 운영자 → active · staff · mfaOk · tasks · exp · 맞는 토큰 + 로그인 없음 → active false · 회원 → NOT_STAFF · 상태 tokenSet
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.error, urllib.request
@@ -78,10 +78,10 @@ def call_h(m_, p, hd, b=None):
         return {'_err': e.code, 'code': bd.get('code')}
 
 
-MIG = rd('prisma/migrations/D333_erp_link/migration.sql')
+MIG = rd('prisma/migrations/D334_erp_link/migration.sql')
 G, L, C = rd('src/modules/erp-link/erp-link.guard.ts'), rd('src/modules/erp-link/erp-link.ts'), rd('src/modules/erp-link/erp-link.controller.ts')
 SC = rd('spec/screens.json')
-ok('① D333 — erp.service_token_hash(NULL · sha256 꼴 · SUPER) · erp_handoff_codes(해시 · 5분 안) · 주소 표 2 이상',
+ok('① D334 — erp.service_token_hash(NULL · sha256 꼴 · SUPER) · erp_handoff_codes(해시 · 5분 안) · 주소 표 2 이상',
    "('erp.service_token_hash', NULL, 'SUPER'" in MIG and "'^[0-9a-f]{64}$'" in MIG and 'CREATE TABLE IF NOT EXISTS public.erp_handoff_codes' in MIG
    and "interval '5 minutes'" in MIG and MIG.count("'integrations'") >= 2, '')
 ok('① 가드 · 판정 — 비면 ERP_TOKEN_UNSET · timingSafeEqual · req.principal 그대로 · 원문은 sha256 만 저장 · 만들기 SUPER · @UseGuards · 명세 ERP-010 · 문서 915',
