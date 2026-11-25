@@ -131,18 +131,35 @@ export class ListingRepository {
     const where = this.filters(p);
     /* v10.558 (docs/696) 「끌어올림」 표시는 끌어올림이 자리를 바꾸는 최신순에서만 — 소개비순 · 인기순 등에서는 자리가 그대로라 표시하지 않음(docs/653) */
     const bumpLabel = !rel && k === KEY.RECENT
-      ? `CASE WHEN bx.listing_id IS NULL THEN NULL WHEN bx.kind = 'PAID' THEN '유료 끌어올림' ELSE '끌어올림' END`
+      ? `CASE WHEN pg.bx_id IS NULL THEN NULL WHEN pg.bx_kind = 'PAID' THEN '유료 끌어올림' ELSE '끌어올림' END`
       : 'NULL::text';
+    /* v10.797 (docs/912) 두 단계 조회 — 매물 10만 건에서 최신순 5.4초 · 지역 11.5초였음(카드 정보를 모든 줄에 붙인 뒤 정렬하고 20건만 자름).
+     *   ① pg: 거르기 · 정렬에 필요한 것(분류 · 끌어올림 · 필요할 때만 지역 · 급구/급매)으로 한 쪽 번호만 고름(정렬 · 커서 · 쪽 번호 그대로)
+     *   ② 그 번호에만 카드 정보(지역 · 신뢰 점수 · 사진 · 배지 …)를 붙여 ①과 같은 순서로 냄
+     *   지역 · 급구/급매 보기를 쓰지 않는 요청에서는 빈 자리(ON false)를 붙여 조건 글자는 그대로 둠 */
+    const needVr = !!p.regionCode;
+    const needUr = !!p.urgent || k === KEY.DEADLINE;
+    const vrJoin = needVr ? 'LEFT JOIN v_listing_region vr ON vr.listing_id = l.id' : 'LEFT JOIN (SELECT NULL::text AS sido_code) vr ON false';
+    const urJoin = needUr ? 'LEFT JOIN v_listing_urgent ur ON ur.listing_id = l.id' : 'LEFT JOIN (SELECT NULL::text AS kind, NULL::timestamptz AS until) ur ON false';
+    const ordExpr = rel ? 'fn_search_rank(l.title, $3)' : k.expr;
 
     return this.db.query(
-      `SELECT ${this.CARD}, (${k.expr})::text AS "_sk", l.category_id::text AS "_cid",
+      `WITH pg AS (
+         SELECT l.id, (${k.expr})::text AS sk, ${ordExpr} AS ord, bx.listing_id AS bx_id, bx.kind AS bx_kind
+           FROM listings l
+           JOIN categories cat ON cat.id = l.category_id
+           ${vrJoin}
+           ${urJoin}
+           LEFT JOIN lsx_bump_live bx ON bx.listing_id = l.id   /* v10.515 (D276) 끌어올림 효과 중 */
+          WHERE ${where}
+            AND ${after}
+          ORDER BY ${order}
+          LIMIT $6 ${p.offset != null ? 'OFFSET $13' : ''}
+       )
+       SELECT ${this.CARD}, pg.sk AS "_sk", l.category_id::text AS "_cid",
               ${bumpLabel} AS "bumpLabel"   /* v10.515 (D276) · v10.558 최신순만 */   /* v10.103 — _cid: 업종 이름 번역용(응답 전에 지움) */
-         FROM listings l ${this.JOINS}
-         LEFT JOIN lsx_bump_live bx ON bx.listing_id = l.id   /* v10.515 (D276) 끌어올림 효과 중 */
-        WHERE ${where}
-          AND ${after}
-        ORDER BY ${order}
-        LIMIT $6 ${p.offset != null ? 'OFFSET $13' : ''}`,
+         FROM pg JOIN listings l ON l.id = pg.id ${this.JOINS}
+        ORDER BY pg.ord ${rel ? 'ASC' : 'DESC'}, l.id DESC`,
       /* 자리 번호: $1 관 · $2 분류 · $3 낱말 · $4 배지 · $5 커서값 · $6 한도 · $7 커서 id · $8 지역 · $9 축 · $10 급구/급매 · $11 묶음 · $12 제목만(w1 match=TITLE) · $13 건너뛸 수 */
       [...this.params(p), p.cursor?.sortValue ?? null, p.limit + 1, p.cursor?.id ?? null,
        p.regionCode ?? null, p.axis ?? null, p.urgent ?? null, p.group ?? null, p.match === 'TITLE',
@@ -156,8 +173,8 @@ export class ListingRepository {
     const [r] = await this.db.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM listings l
          JOIN categories cat ON cat.id = l.category_id
-         LEFT JOIN v_listing_region vr ON vr.listing_id = l.id
-         LEFT JOIN v_listing_urgent ur ON ur.listing_id = l.id
+         ${p.regionCode ? 'LEFT JOIN v_listing_region vr ON vr.listing_id = l.id' : 'LEFT JOIN (SELECT NULL::text AS sido_code) vr ON false'}   /* v10.797 (docs/912) 필요할 때만 */
+         ${p.urgent ? 'LEFT JOIN v_listing_urgent ur ON ur.listing_id = l.id' : 'LEFT JOIN (SELECT NULL::text AS kind) ur ON false'}
         WHERE ${this.filters(p)}
           AND ($5::text IS NULL OR TRUE) AND ($6::int IS NULL OR TRUE) AND ($7::uuid IS NULL OR TRUE)`,
       [...this.params(p), null, null, null, p.regionCode ?? null, p.axis ?? null, p.urgent ?? null, p.group ?? null, p.match === 'TITLE']);

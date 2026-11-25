@@ -114,6 +114,12 @@ async function main() {
   const t0 = Date.now();
 
   await c.query('SET session_replication_role = replica');
+  /* v10.797 (docs/912) replica 로 계정만 지우면 외래 키가 돌지 않아 사업자 · 매물 · 요청이 주인 없이 남아 다시 돌릴 때
+   *   businesses_biz_reg_no_key(L000000) 로 멈췄음 — 딸린 줄을 먼저 지우고 · 지난번에 남은 주인 없는 부하 사업자(L+6자리)도 지움 */
+  const LOAD = `SELECT id FROM accounts WHERE email LIKE '%${DOMAIN}'`;
+  await c.query(`DELETE FROM listings WHERE owner_account_id IN (${LOAD}) OR (owner_account_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = listings.owner_account_id))`);
+  await c.query(`DELETE FROM requests WHERE owner_account_id IN (${LOAD}) OR (owner_account_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = requests.owner_account_id))`);
+  await c.query(`DELETE FROM businesses WHERE account_id IN (${LOAD}) OR (biz_reg_no ~ '^L[0-9]{6}$' AND NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = businesses.account_id))`);
   await c.query(`DELETE FROM accounts WHERE email LIKE $1`, ['%' + DOMAIN]);
   await c.query('SET session_replication_role = origin');
 
@@ -182,7 +188,9 @@ async function main() {
    *
    * 다만 COPY 는 **트리거를 거칩니다** — 중개사 게이트가 그대로
    * 도므로, 부동산은 인증된 계정으로만 만들어야 합니다. */
-  const useCopy = N_LISTINGS >= 50000;
+  /* v10.797 (docs/912) COPY 는 pg-copy-streams 가 있을 때만(킷 의존 묶음에 없음 — 10만 건이 「Cannot find module」 로 멈췄음) · 없으면 500개씩 INSERT(v10.787 규칙 건너뛰기 포함) */
+  const hasCopy = (() => { try { require.resolve('pg-copy-streams'); return true; } catch { return false; } })();
+  const useCopy = N_LISTINGS >= 50000 && hasCopy && process.env.SEED_COPY === '1';
   let made = 0;
   const skipped = {};   // v10.787 규칙에 걸려 건너뛴 줄(까닭 앞마디 → 수)
   const BATCH = 500;
