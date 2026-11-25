@@ -57,7 +57,9 @@ TB = login('buyer@x.com')
 mb = call(ERP, 'GET', '/me', t=TB or '')
 jobs = call(ERP, 'GET', '/admin/jobs', t=ET)
 run = call(ERP, 'POST', '/admin/jobs/erp_heartbeat/run', {}, ET)
-aud = subprocess.run(['docker', 'exec', 'sgb-db', 'psql', '-U', 'sgb', '-d', 'sgb_erp', '-Atc', "SELECT count(*) FROM erp_audit WHERE action IN ('ERP_LOGIN', 'ERP_JOB_RUN') AND at > now() - interval '10 minutes'"], capture_output=True, text=True).stdout.strip()
+_AQ = "SELECT count(*) FROM erp_audit WHERE action IN ('ERP_LOGIN', 'ERP_JOB_RUN') AND at > now() - interval '10 minutes'"
+# 11/25 qa 컨테이너(playwright)에는 docker 가 없음 → ERP_DB(점검판 15432 · sgb_erp)가 있으면 psql 로 · 없으면 docker exec
+aud = (subprocess.run(['psql', os.environ['ERP_DB'], '-X', '-At', '-c', _AQ], capture_output=True, text=True).stdout.strip() if os.environ.get('ERP_DB') else None) or subprocess.run(['docker', 'exec', 'sgb-db', 'psql', '-U', 'sgb', '-d', 'sgb_erp', '-Atc', "SELECT count(*) FROM erp_audit WHERE action IN ('ERP_LOGIN', 'ERP_JOB_RUN') AND at > now() - interval '10 minutes'"], capture_output=True, text=True).stdout.strip()
 ok('③ 회원 403 ERP_NOT_STAFF · 작업 목록 주인 SGB · heartbeat 손 실행 성공 · 감사 2줄 이상', mb.get('_err') == 403 and mb.get('code') == 'ERP_NOT_STAFF'
    and jobs.get('owner') == 'SGB' and any(j.get('name') == 'erp_heartbeat' for j in jobs.get('jobs', [])) and run.get('ok') is True and aud.isdigit() and int(aud) >= 2,
    f"{mb.get('code')} · {jobs.get('owner')} · {run} · 감사 {aud}")
