@@ -37,7 +37,7 @@ function signed(m: Partial<SnsMessage>): SnsMessage {
 const note = (id: string, message: unknown) => signed({ Type: 'Notification', MessageId: id, Message: JSON.stringify(message) });
 
 /* EUC-KR 「개인정보 열람 요청」 바이트(TextDecoder 로 되돌려 확인) */
-const EUCKR_SUBJ = Buffer.from('b0b3c0ceb1a4bab820bfadb6f720bfe4c3bb', 'hex');
+const EUCKR_SUBJ = Buffer.from('b0b3c0cec1a4bab820bfadb6f720bfe4c3bb', 'hex');
 
 function sampleMail(sid: string): Buffer {
   const b = 'BOUNDARY-' + sid, b2 = 'ALT-' + sid;
