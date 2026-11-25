@@ -12,7 +12,7 @@ import { createHandoff, erpAlert, erpNotify, redeemHandoff } from './erp-interna
 import { AuthService } from '../identity/auth.service';
 
 /* ---------------------------------------------------------------------
- * v10.799 (D333 · docs/915) ERP 연결 — 소개뱅크 쪽
+ * v10.799 (D334 · docs/915) ERP 연결 — 소개뱅크 쪽
  *   ERP 서버(서비스 토큰)  GET  /auth/introspect          운영자 토큰 → 누구 · 운영자 · 2단계 · 권한(task) · 끝 시각
  *   ADMIN · SUPER          GET  /admin/erp/link           서비스 토큰 있음 / 없음 · 바꾼 시각(값은 안 보임)
  *   SUPER                  POST /admin/erp/service-token  새 서비스 토큰(원문은 한 번만) · 전 토큰 무효

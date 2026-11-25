@@ -5,7 +5,7 @@ import { permDecideMode } from '../admin/perm-mode';
 import { sha256hex } from './erp-link.guard';
 
 /* ---------------------------------------------------------------------
- * v10.799 (D333 · docs/915) ERP 로그인 확인(introspect) · 서비스 토큰
+ * v10.799 (D334 · docs/915) ERP 로그인 확인(introspect) · 서비스 토큰
  *
  *   ERP 서버는 비밀 키(JWT_SECRET)를 갖지 않음 — 화면이 낸 운영자 토큰을 그대로 이 길에 물어 「누구 · 운영자인지 · 2단계 확인 · 권한」을 받음(ERP 가 1분 기억).
  *   토큰 검사 · 계정 다시 읽기 · 2단계 · 패스키 판정은 소개뱅크 AuthMiddleware 가 이미 함(req.principal) — 여기서는 그 결과를 정리만.

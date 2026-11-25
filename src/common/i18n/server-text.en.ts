@@ -5896,12 +5896,12 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   "재대조 기록은 확인 칸만 한 번 채울 수 있습니다": "Only the confirmation fields of a re-check record can be filled, once",
   /* v10.793 (D332 · docs/908) 상담 신청 메일 인증번호만으로 받기 스위치 */
   "휴대폰 인증번호(알림톡) 준비 중이라 지금은 상담 신청을 받지 않습니다. 메일 인증번호만으로 받는 것은 운영 설정 consult.mail_otp 를 켠 뒤입니다.": "Consultation requests are not accepted right now because the phone verification code (KakaoTalk notification) is not ready. Accepting with an email code alone requires turning on the consult.mail_otp setting.",
-  /* v10.799 (D333 · docs/915) ERP 연결 */
+  /* v10.799 (D334 · docs/915) ERP 연결 */
   "ERP 서비스 토큰이 설정되지 않았습니다.": "The ERP service token is not set.",
   "ERP 서비스 토큰이 맞지 않습니다.": "The ERP service token does not match.",
   "2단계 인증(또는 패스키) 확인 뒤에만 ERP 를 쓸 수 있습니다 — 운영 화면에서 먼저 확인하십시오.": "ERP can be used only after two-step verification (or passkey) — confirm it on the admin screen first.",
   "이 값은 지금 한 번만 보입니다 — ERP 서버 .env 의 SGB_SERVICE_TOKEN 에 넣으십시오. 전 토큰은 바로 쓸 수 없습니다.": "This value is shown only once now — put it in SGB_SERVICE_TOKEN in the ERP server .env. The previous token stops working immediately.",
-  /* v10.800 (D333 · docs/916) ERP 쓰기 길 · 넘겨주기 */
+  /* v10.800 (D334 · docs/916) ERP 쓰기 길 · 넘겨주기 */
   "ERP 업무 알림 종류만 올릴 수 있습니다.": "Only ERP business alert codes can be raised.",
   "알림 제목은 1 ~ 200자입니다.": "The alert title must be 1 to 200 characters.",
   "알림 내용이 너무 깁니다(4,000자).": "The alert detail is too long (4,000 characters).",

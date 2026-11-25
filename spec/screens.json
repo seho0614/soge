@@ -2940,7 +2940,7 @@
     "POST /internal/erp/handoff/redeem"
    ],
    "nav": "SB-ADM-SIT-080",
-   "note": "2026-11-25 v10.799 D333 (docs/915) ERP 분리 E1 — ERP 서버(서비스 토큰 X-Erp-Service-Token)가 부르는 내부 길: 운영자 토큰 확인(introspect) · v10.800 운영 알림 · 회원 알림 · 로그인 넘겨주기 코드"
+   "note": "2026-11-25 v10.799 D334 (docs/915) ERP 분리 E1 — ERP 서버(서비스 토큰 X-Erp-Service-Token)가 부르는 내부 길: 운영자 토큰 확인(introspect) · v10.800 운영 알림 · 회원 알림 · 로그인 넘겨주기 코드"
   },
   {
    "id": "SB-HOM-RPT-010",

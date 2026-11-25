@@ -6,7 +6,7 @@ import { ErrorView } from '../../components/ErrorView';
 import { Flash } from '../../components/Flash';
 
 /**
- * v10.799 (D333 · docs/915) — 외부 연동 › 「ERP 연동」 상자(연동 키 아래)
+ * v10.799 (D334 · docs/915) — 외부 연동 › 「ERP 연동」 상자(연동 키 아래)
  *   ERP 서버가 소개뱅크에 운영자 토큰을 물을 때 내는 서비스 토큰 — 있음 / 없음 · 바꾼 시각만 보임(값은 DB 에 sha256).
  *   「새 토큰 만들기」(SUPER) → 원문을 이 화면에 한 번만 보여 줌 → ERP 서버 .env SGB_SERVICE_TOKEN 에 넣음 · 전 토큰은 바로 무효.
  */

@@ -4,7 +4,7 @@ import { Forbidden } from '../../core/errors';
 import { DatabaseService } from '../../db/database.service';
 
 /**
- * v10.799 (D333 · docs/915) ERP 서비스 토큰 가드 — ERP 서버만 부르는 자리(introspect · /internal/erp/*).
+ * v10.799 (D334 · docs/915) ERP 서비스 토큰 가드 — ERP 서버만 부르는 자리(introspect · /internal/erp/*).
  *   머리 X-Erp-Service-Token 의 sha256 을 설정 erp.service_token_hash 와 같은 길이 비교 · 비어 있으면 닫힘(fail-closed · InternalKeyGuard 와 같은 원칙).
  *   토큰 원문은 DB · 로그 · 응답에 남기지 않음.
  */

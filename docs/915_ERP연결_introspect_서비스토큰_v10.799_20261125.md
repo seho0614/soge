@@ -20,7 +20,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 마이그레이션 D333 | 설정 `erp.service_token_hash`(NULL = 닫힘 · sha256 꼴) · 표 `erp_handoff_codes`(v10.800 이 씀 · 60초 · 한 번 · 해시만) · 주소 표 2줄(업무 integrations) |
+| 마이그레이션 D334 | 설정 `erp.service_token_hash`(NULL = 닫힘 · sha256 꼴) · 표 `erp_handoff_codes`(v10.800 이 씀 · 60초 · 한 번 · 해시만) · 주소 표 2줄(업무 integrations) |
 | 서버 | `src/modules/erp-link/` — `erp-link.guard.ts`(같은 길이 비교 · timingSafeEqual) · `erp-link.ts` · `erp-link.controller.ts` |
 | 화면 | `ErpLinkBox.tsx`(Integrations 에 끼움) |
 | 명세 | 새 화면 `SB-ADM-ERP-010 ERP 연동 (내부)` · SIT-080 에 API 2 |

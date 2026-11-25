@@ -3,7 +3,7 @@ import { DatabaseService } from '../../db/database.service';
 import { NotFound, PolicyViolation, StateConflict } from '../../core/errors';
 
 /* ---------------------------------------------------------------------
- * v10.800 (D333 · docs/916) ERP 연결 ② — ERP → 소개뱅크 쓰기 길 · 로그인 넘겨주기
+ * v10.800 (D334 · docs/916) ERP 연결 ② — ERP → 소개뱅크 쓰기 길 · 로그인 넘겨주기
  *
  *   ① 운영 알림  POST /internal/erp/alerts  — ERP 코드가 쓰던 ops_alerts INSERT 82곳을 이 길 하나로(설계서 4-4)
  *        mode RAISE(같은 시각 겹침만 막음 · clock_timestamp) · ONCE(풀리지 않은 같은 알림이 있으면 안 올림) · RESOLVE(풀림 표시)
