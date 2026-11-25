@@ -27,7 +27,8 @@ class FakeLookup extends BrokerLookupProvider {
     return { result: null, stub: false, errorKind: 'TIMEOUT', detail: '시험 조회 지연' } as BrokerLookupOutcome;
   }
 }
-const code = async (p: Promise<unknown>) => { try { await p; return 'OK'; } catch (e: any) { return String(e?.code ?? e?.response?.code ?? e?.message ?? e).slice(0, 80); } };
+/* 서비스 오류는 code(RECHECK_ACKED …) · DB 트리거 오류는 글(BROKER_RECHECK_APPEND_ONLY: …)로 — pg 오류의 code 는 P0001 이라 글을 봄 */
+const code = async (p: Promise<unknown>) => { try { await p; return 'OK'; } catch (e: any) { const c = e?.response?.code ?? (e?.code && !/^[0-9A-Z]{5}$/.test(String(e.code)) ? e.code : null); return String(c ?? e?.message ?? e).slice(0, 80); } };
 
 async function main() {
   const c = new Client({ connectionString: process.env.DATABASE_URL });

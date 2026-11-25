@@ -16,7 +16,7 @@ type Q = <T = any>(sql: string, params?: unknown[]) => Promise<T[]>;
 export const RECHECK_MAX = 50;
 export const STUB_KINDS = [
   { key: 'subscription', label: '구독 청구 시험 결제', sql: `SELECT id::text, amount::bigint AS amount, status, issued_at AS at FROM subscription_invoices WHERE is_stub ORDER BY issued_at DESC LIMIT 50`, count: `SELECT count(*)::int AS n FROM subscription_invoices WHERE is_stub` },
-  { key: 'mallPayment', label: '소개몰 시험 결제', sql: `SELECT id::text, amount::bigint AS amount, status, created_at AS at FROM hlt_payments WHERE stub ORDER BY created_at DESC LIMIT 50`, count: `SELECT count(*)::int AS n FROM hlt_payments WHERE stub` },
+  { key: 'mallPayment', label: '소개몰 시험 결제', sql: `SELECT id::text, amount::bigint AS amount, state AS status, created_at AS at FROM hlt_payments WHERE stub ORDER BY created_at DESC LIMIT 50`, count: `SELECT count(*)::int AS n FROM hlt_payments WHERE stub` },
   { key: 'leadCash', label: '리드 캐시 시험 충전', sql: `SELECT id::text, amount::bigint AS amount, NULL::text AS status, created_at AS at FROM lead_cash_charges WHERE stub ORDER BY created_at DESC LIMIT 50`, count: `SELECT count(*)::int AS n FROM lead_cash_charges WHERE stub` },
   { key: 'payout', label: '소개몰 시험 지급 요청', sql: `SELECT id::text, amount::bigint AS amount, NULL::text AS status, created_at AS at FROM hlt_payout_requests WHERE stub ORDER BY created_at DESC LIMIT 50`, count: `SELECT count(*)::int AS n FROM hlt_payout_requests WHERE stub` },
 ] as const;
