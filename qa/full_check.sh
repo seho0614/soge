@@ -35,6 +35,27 @@ if [ -z "$ONLY" ] && [ "${RESTORE_REH:-1}" != 0 ] && [ -f "$Q/../tools/restore-d
 fi
 
 if [ -z "$ONLY" ]; then   # v10.639 줄인 점검이면 ② · ③ 건너뜀
+# v10.801 (sgb-core docs/917 · 추가 개발 A11) 의존 패키지 보안 — 운영에 실리는 의존(dev 빼고) 높음 · 매우 높음만 줄로(실패로 세지 않음 · 고치는 것은 판으로)
+#   소개뱅크 api · 운영 화면 · 사용자 웹 + ERP api · web(있으면) · 잠금 파일만 읽음(npm audit --package-lock-only · 인터넷 필요)
+if [ -z "$ONLY" ] && [ "${AUDIT:-1}" != 0 ]; then
+  AU=""; AUD=$(mktemp -d -t audit_XXXXXX)
+  for sub in . web site; do   # 이 갈래의 잠금 파일(git show) — 작업 트리가 아니라 점검하는 갈래 그대로
+    mkdir -p "$AUD/core-$sub" && git -C "$HOME/sogaebank/sgb-core" show "origin/$B:${sub#./}${sub:+/}package-lock.json" > "$AUD/core-$sub/package-lock.json" 2>/dev/null \
+      && git -C "$HOME/sogaebank/sgb-core" show "origin/$B:${sub#./}${sub:+/}package.json" > "$AUD/core-$sub/package.json" 2>/dev/null || rm -rf "$AUD/core-$sub"
+  done
+  for d in "$AUD"/core-* "$HOME/sogaebank/sgb-erp/api" "$HOME/sogaebank/sgb-erp/web"; do
+    [ -f "$d/package-lock.json" ] || continue
+    n=$(docker run --rm -v "$d":/w:ro -w /w node:22-slim sh -c 'npm audit --omit=dev --package-lock-only --json 2>/dev/null' \
+        | python3 -c 'import sys,json; m=(json.load(sys.stdin).get("metadata") or {}).get("vulnerabilities") or {}; print(m.get("high",0)+m.get("critical",0))' 2>/dev/null || echo "?")
+    AU="$AU $(echo "$d" | sed -E "s#.*/(core-[^/]*)$#\1#; s#.*/sgb-erp/#erp-#")=$n"
+  done
+  rm -rf -- "${AUD:?}"; say "①-4 의존 패키지 보안(높음 이상) —$AU"
+fi
+# v10.801 (sgb-core docs/917 · 추가 개발 A1) 느린 조회 회귀 감시 — 공개 GET 중앙값을 지난 통과 기준과 견줌 · 2배 넘고 200ms 넘으면 실패 줄 · JIT 비용
+if [ -z "$ONLY" ] && [ -f "$Q/plan_guard.py" ]; then
+  API=http://localhost:13000/api/v1 DB=postgresql://sgb:sgb@localhost:15432/sgb python3 "$Q/plan_guard.py" > "$OUT/plan_guard.log" 2>&1; PGRC=$?
+  say "①-3 느린 조회 감시 rc=$PGRC · $(tail -1 "$OUT/plan_guard.log")"
+fi
 SITE_MODE=prod bash "$Q/func_check.sh" > "$OUT/func_check.log" 2>&1; say "② 기능 점검 rc=$?"
 say "$(grep -E '기능 점검 집계|건너뜀 [1-9]|실패 [1-9]' "$OUT/func_check.log" | tail -6)"
 
