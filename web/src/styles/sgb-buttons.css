@@ -1,0 +1,20 @@
+/* 2026-10-22 v10.62(docs/118) — 디자인 통일 4단계: 단추 3종. 모양은 하나(높이 40 · 모서리 7 · 14px 굵게 · 작은 단추 32 · 13px), 색만 관을 따름 */
+:root {
+  --sgb-btn-h: 40px; --sgb-btn-py: 10px; --sgb-btn-px: 18px; --sgb-btn-fs: 14px;
+  --sgb-btn-h-sm: 32px; --sgb-btn-py-sm: 6px; --sgb-btn-px-sm: 12px; --sgb-btn-fs-sm: 13px;
+  --sgb-btn-r: var(--sgb-r-sm); --sgb-btn-fw: 700;
+}
+:root, [data-sgb-gwan] {
+  --sgb-btn-bg: var(--sgb-point); --sgb-btn-fg: var(--sgb-on-point);            /* 주요 */
+  --sgb-btn2-bg: #ffffff; --sgb-btn2-fg: var(--sgb-navy); --sgb-btn2-line: var(--sgb-line); --sgb-btn2-hover: var(--sgb-bg);   /* 보조 */
+  --sgb-btn3-bg: #ffffff; --sgb-btn3-fg: var(--sgb-point-text);                 /* 줄 */
+}
+/* 새로 만드는 화면은 이 이름을 씁니다 — <button class="sgb-btn sgb-btn--pri"> */
+.sgb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--sgb-btn-h); padding: 0 var(--sgb-btn-px); border-radius: var(--sgb-btn-r);
+  font: var(--sgb-btn-fw) var(--sgb-btn-fs)/1 var(--sgb-font-body); white-space: nowrap; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+.sgb-btn--sm { height: var(--sgb-btn-h-sm); padding: 0 var(--sgb-btn-px-sm); font-size: var(--sgb-btn-fs-sm); }
+.sgb-btn--pri { background: var(--sgb-btn-bg); color: var(--sgb-btn-fg); border-color: var(--sgb-btn-bg); }
+.sgb-btn--pri:hover { filter: brightness(.94); }
+.sgb-btn--sec { background: var(--sgb-btn2-bg); color: var(--sgb-btn2-fg); border-color: var(--sgb-btn2-line); }
+.sgb-btn--sec:hover { background: var(--sgb-btn2-hover); }
+.sgb-btn--line { background: var(--sgb-btn3-bg); color: var(--sgb-btn3-fg); border-color: var(--sgb-btn3-fg); }

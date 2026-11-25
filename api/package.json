@@ -1,0 +1,31 @@
+{
+  "name": "sgb-erp-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "소개뱅크 ERP API (e1.1 ~) — 회계 · 세무 · 인사 · 사무 · 그룹웨어",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "db:migrate": "node scripts/migrate.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.3",
+    "@nestjs/core": "11.2.3",
+    "@nestjs/platform-express": "11.2.9",
+    "@nestjs/swagger": "11.4.8",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "pg": "8.23.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "@types/pg": "8.23.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  }
+}

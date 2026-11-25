@@ -1,0 +1,25 @@
+{
+  "name": "sgb-erp-web",
+  "private": true,
+  "type": "module",
+  "description": "소개뱅크 ERP 화면 (e1.4 ~) — Vite · 디자인 시트 sgb-tokens.css",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "5.9.3",
+    "vite": "8.2.6"
+  },
+  "overrides": {
+    "source-map-js": "1.2.2"
+  }
+}
