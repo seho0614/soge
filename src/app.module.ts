@@ -304,6 +304,8 @@ import { MailAdminService } from './common/mail/mail-admin.service';   /* v10.14
 import { MailAdminController } from './modules/site/mail-admin.controller';
 import { MailSuppressionService } from './common/mail/mail-suppression.service';   /* v10.209 (D186) 메일 반송 · 수신 거부 */
 import { MailFeedbackController } from './modules/site/mail-feedback.controller';
+import { MailboxController, MailboxService } from './modules/support/mailbox.controller';   /* v10.789 (D330) 사내 웹메일 W1 공용 메일함 */
+import { AssumeAfterController, AssumeAfterService } from './modules/admin/assume-after.controller';   /* v10.792 (D331) 간주 끈 뒤 처리 도구 */
 import { IdentityVerifyService } from './modules/identity/identity-verify.service';   /* v10.141 (D137) 본인인증 표준창 */
 import { IdentityVerifyController } from './modules/identity/identity-verify.controller';
 import { AlimtalkService } from './common/alimtalk/alimtalk.service';   /* v10.142 (D138) 알림톡 */
@@ -564,6 +566,8 @@ import { LeadService } from './modules/lead/lead.service';
     IntegrationKeysController,
     MailAdminController,   // v10.140 (D136) 운영 화면 › 외부 연동 › 메일
     MailFeedbackController,   // v10.209 (D186) 반송 · 수신 거부(SNS 웹훅 · 운영 화면)
+    MailboxController,        // v10.789 (D330) 공용 메일함 받기(SES 받기 SNS 웹훅)
+    AssumeAfterController,    // v10.792 (D331) 간주 끈 뒤 처리 도구
     IdentityVerifyController,   // v10.141 (D137) 본인인증 표준창 · 운영 화면 「본인인증」
     AlimtalkAdminController,   // v10.142 (D138) 운영 화면 › 외부 연동 › 알림톡
     EsignController, EsignAdminController,   // v10.143 (D139) 전자계약 요청 · 웹훅 · 운영 화면 「전자계약」
@@ -691,6 +695,8 @@ import { LeadService } from './modules/lead/lead.service';
     SlackService,
     MailAdminService,
     MailSuppressionService,
+    MailboxService,           /* v10.789 (D330) */
+    AssumeAfterService,       /* v10.792 (D331) */
     IdentityVerifyService,
     AlimtalkService,
     EsignService,

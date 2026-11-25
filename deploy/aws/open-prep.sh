@@ -16,6 +16,7 @@
 #   그대로 두는 것(개수만 보여 줌): 거래 · 주문 · 상담 — 상대가 있는 기록이라 사람이 판단
 #
 #   check 가 더 보는 것: 메인 내용 모드(HOME_CONTENT — 비어 있으면 운영 기본 live) · 오픈 차단 수(v_open_blockers)
+#   v10.794 (docs/909) check 에 더함: 소개몰 주문 · 시험 계정 판매자 · 시험(스텁) 결제 · 충전 · 지급 · 구독 청구 · STUB-SUB · 간주 승인 중개사 · 간주 모드 · 스위치 2개
 #   결과: 화면 + ~/sgb-data/logs/open-prep_날짜_시각.txt
 #
 #   APP_LINK   앱 폴더 (기본 ~/sgb — 이 폴더의 .env 로 DB 에 붙습니다)
@@ -40,6 +41,10 @@ count() {
   say "  · 소개광장 글 $(q "SELECT count(*) FROM posts WHERE author_id IN $T AND state IN ('PUBLISHED','PENDING')")건 · 댓글 $(q "SELECT count(*) FROM post_comments WHERE author_id IN $T AND state = 'PUBLISHED'")건 (보이는 것)"
   say "  · 추천 검색어로 보이는 말 $(q "SELECT count(*) FROM search_term_stats WHERE NOT hidden" || echo '?')개 (오픈 전 시험 기간에 쌓인 것)"
   say "  · (그대로 둠 — 사람이 판단) 거래 $(q "SELECT count(*) FROM deals WHERE buyer_account_id IN $T OR seller_account_id IN $T" || echo '?')건"
+  # v10.794 (docs/909) — v10.82 뒤 생긴 기능의 시험 자료(읽기만 · 사람이 판단 — 상대 · 돈 기록이라 apply 가 건드리지 않음)
+  say "  · (그대로 둠) 소개몰 주문 $(q "SELECT count(*) FROM hlt_orders WHERE account_id IN $T" || echo '?')건 · 시험 계정 판매자 $(q "SELECT count(*) FROM hlt_sellers WHERE account_id IN $T" || echo '?')곳"
+  say "  · (그대로 둠) 시험(스텁) 기록 — 구독 청구 $(q "SELECT count(*) FROM subscription_invoices WHERE is_stub" || echo '?') · 소개몰 결제 $(q "SELECT count(*) FROM hlt_payments WHERE stub" || echo '?') · 리드 캐시 충전 $(q "SELECT count(*) FROM lead_cash_charges WHERE stub" || echo '?') · 지급 요청 $(q "SELECT count(*) FROM hlt_payout_requests WHERE stub" || echo '?')건 — 운영 화면 › 오픈 체크리스트 › 간주 끈 뒤 처리(v10.792)"
+  say "  · (그대로 둠) 시험 하위가맹점 번호(STUB-SUB-…) $(q "SELECT count(*) FROM hlt_sellers WHERE submerchant_id LIKE 'STUB-SUB-%'" || echo '?')곳 · 간주로 승인된 중개사(재대조 대상) $(q "SELECT count(*) FROM v_broker_verified_assumed" || echo '?')곳"
 }
 
 say "소개뱅크 오픈 직전 정리 — $MODE ($(date '+%Y-%m-%d %H:%M:%S %Z')) · 앱 $(cat "$APP_LINK/VERSION" 2>/dev/null || echo '?')"
@@ -52,6 +57,10 @@ case "$hc" in
   ''|live) ok "메인 내용 = 실제 자료" "HOME_CONTENT=${hc:-(비어 있음 — 운영 기본 live)}" ;;
   *) bad "메인 내용이 실제 자료가 아님" "HOME_CONTENT=$hc — .env 에서 지우거나 live 로 · pm2 restart sgb-site" ;;
 esac
+# v10.794 (docs/909) — 간주 모드 · 손님에게 보이는 스위치 한눈에(읽기만)
+am=$(q "SELECT string_agg(key || '=' || coalesce(value, ''), ' ' ORDER BY key) FROM site_settings WHERE key IN ('assume.payment', 'assume.broker', 'assume.bank', 'assume.etax')" || echo '?')
+case "$am" in *=on*) warn "간주 모드 켜진 것 있음" "$am — 끄는 순서: 운영 화면 › 오픈 체크리스트 › 간주 모드 끄는 순서(docs/439 · 895)" ;; *) ok "간주 모드 모두 꺼짐" "$am" ;; esac
+say "  · 상담 신청 메일 인증번호만 consult.mail_otp=$(q "SELECT value FROM site_settings WHERE key = 'consult.mail_otp'" || echo '?') · 소개몰 주문 받기 mall.order_open=$(q "SELECT value FROM site_settings WHERE key = 'mall.order_open'" || echo '?')"
 b=$(q "SELECT count(*) FROM v_open_blockers")
 if [ "${b:-x}" = "0" ]; then ok "오픈 차단 0건"
 else warn "오픈 차단 ${b:-?}건" "$(q "SELECT string_agg(kind||':'||c, ' ') FROM (SELECT kind, count(*) c FROM v_open_blockers GROUP BY kind) x") — 간주 모드 · 약관 · 연동(docs/111)"; fi

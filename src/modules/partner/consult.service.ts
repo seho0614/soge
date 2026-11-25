@@ -29,6 +29,7 @@ import { I18nService } from '../i18n/i18n.service';
  *   메일만으로 확인하면 휴대폰 번호는 확인되지 않습니다 — 대표 결정으로 허용.
  *   메일이 유일한 길인데 보내지 못하면 그 신청을 지우고(연락처 암호문 포함) OTP_SEND_FAILED — 받지 못한 신청이 하루 횟수를 쓰지 않게.
  *   알림톡도 준비된 경우 메일 실패는 신청을 막지 않고 안내 문구에서 뺍니다.
+ *   v10.793 (D332 · docs/908) — **메일만**(알림톡 없음)으로 받는 것은 설정 consult.mail_otp = on 일 때만(처음 off · 법무 판단 뒤 켬).
  * 둘 다 없으면: 개발 환경(NODE_ENV=development)에서만 응답에 devCode 를 실어 흐름을 시험할 수 있게 하고,
  * 그 밖의 환경(staging · production)에서는 신청 자체를 받지 않습니다(NOTIFY_NOT_READY).
  *
@@ -71,9 +72,21 @@ export class ConsultService {
   /** v10.147 — 신청을 받을 수 있는가(인증번호를 휴대폰 · 메일 중 하나로 보낼 수 있는가) — 화면이 칸을 채우기 전에 안내하려고. createRequest 와 같은 기준 */
   async readiness() {
     const byPhone = await this.notifyReady();
-    const byMail = await this.mail.ready();
+    const mailOtp = await this.mailOtpAlone();
+    /* v10.793 (D332) — 메일만으로 받는 것은 consult.mail_otp = on 일 때만(휴대폰이 되면 메일은 함께 보내는 길) */
+    const byMail = (await this.mail.ready()) && (byPhone || mailOtp);
     const devMode = (process.env.NODE_ENV ?? 'development') === 'development';
-    return { ready: byPhone || byMail || devMode, byPhone, byMail };
+    return { ready: byPhone || byMail || devMode, byPhone, byMail, mailOtp };
+  }
+
+  /**
+   * v10.793 (D332 · docs/908) — 휴대폰(알림톡) 없이 **메일 인증번호만으로** 신청을 받아 업체에 전달하는가.
+   *   consult.mail_otp(처음 off · SUPER) — 켜기는 법무 판단(휴대폰 확인 없이 업체에 연락처 전달) 뒤 · open-blockers #8.
+   *   off 면 메일은 알림톡이 될 때 함께 보내는 길로만 씀(v10.43 「둘 중 하나로 확인」 그대로).
+   */
+  private async mailOtpAlone(): Promise<boolean> {
+    const [r] = await this.db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'consult.mail_otp'`);
+    return (r?.v ?? 'off') === 'on';
   }
 
   /** 상담 업종 목록 — 공개 · 준비 중 상태까지 내려 화면이 "준비 중"을 그대로 보이게 합니다 */
@@ -170,6 +183,10 @@ export class ConsultService {
     const alimtalk = await this.notifyReady();
     const byMail = await this.mail.ready();   /* v10.43 — 휴대폰 · 이메일 둘 다 (둘 중 하나로 확인) */
     const ready = alimtalk || byMail;
+    /* v10.793 (D332) — 알림톡 없이 메일만 되는 때는 consult.mail_otp = on 이어야 받음(법무 판단 뒤 켬 · 처음 off) */
+    if (!alimtalk && byMail && !(await this.mailOtpAlone())) {
+      throw new PolicyViolation('NOTIFY_NOT_READY', '휴대폰 인증번호(알림톡) 준비 중이라 지금은 상담 신청을 받지 않습니다. 메일 인증번호만으로 받는 것은 운영 설정 consult.mail_otp 를 켠 뒤입니다.');
+    }
     /* ★ 인증번호를 응답에 싣는 것은 **개발 환경(NODE_ENV=development)일 때만**입니다.
      *   올린 kit 은 「운영(production)이 아니면」 실었습니다 — staging 처럼 실제 번호가 들어오는 환경에서도
      *   인증번호가 응답으로 나가 휴대폰 확인을 건너뛸 수 있었습니다. 개발이 아니면 연동 전에는 신청을 받지 않습니다. */

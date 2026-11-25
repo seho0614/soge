@@ -28,7 +28,14 @@ export interface SmtpConfig {
   timeoutMs?: number;
 }
 
-export interface MailMessage { to: string; subject: string; text: string }
+export interface MailMessage {
+  to: string; subject: string; text: string;
+  /** v10.790 (docs/905) 공용 메일함 답장 — 보내는 주소를 그 공용 주소로(SES 에서 인증한 도메인만) · 비우면 설정 그대로 */
+  from?: string; fromName?: string;
+  /** v10.790 답장 연결 머리(In-Reply-To · References) — <…> 꼴만 */
+  inReplyTo?: string; references?: string[];
+}
+const MSGID_RE = /^<[^<>\s]{3,490}>$/;
 
 export type SmtpErrorKind = 'NETWORK' | 'TIMEOUT' | 'AUTH' | 'REJECTED' | 'BAD_INPUT';
 export interface SmtpResult { ok: boolean; messageId?: string; errorKind?: SmtpErrorKind; error?: string }
@@ -45,13 +52,20 @@ const wrap76 = (b64: string) => (b64.match(/.{1,76}/g) ?? []).join('\r\n');
 
 /** 메일 본문(머리줄 + base64 본문). 시험에서 모양을 확인하려고 내보냅니다 */
 export function buildMessage(cfg: SmtpConfig, m: MailMessage, messageId: string, now = new Date()): string {
-  const from = cfg.fromName ? `${enc(cfg.fromName)} <${cfg.from}>` : cfg.from;
+  const addr = m.from ?? cfg.from;
+  const name = m.from ? (m.fromName ?? null) : cfg.fromName;
+  const from = name ? `${enc(name)} <${addr}>` : addr;
+  const thread: string[] = [];
+  if (m.inReplyTo && MSGID_RE.test(m.inReplyTo)) thread.push(`In-Reply-To: ${m.inReplyTo}`);
+  const refs = (m.references ?? []).filter((x) => MSGID_RE.test(x)).slice(-20);
+  if (refs.length) thread.push(`References: ${refs.join(' ')}`);
   return [
     `From: ${from}`,
     `To: ${m.to}`,
     `Subject: ${enc(m.subject)}`,
     `Date: ${now.toUTCString().replace('GMT', '+0000')}`,
     `Message-ID: ${messageId}`,
+    ...thread,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
@@ -61,10 +75,11 @@ export function buildMessage(cfg: SmtpConfig, m: MailMessage, messageId: string,
 }
 
 export async function smtpSend(cfg: SmtpConfig, m: MailMessage, connect: SmtpConnect = tlsConnect): Promise<SmtpResult> {
-  if (!EMAIL_RE.test(m.to) || /[\r\n]/.test(m.to) || /[\r\n]/.test(m.subject) || !EMAIL_RE.test(cfg.from)) {
+  const sender = m.from ?? cfg.from;
+  if (!EMAIL_RE.test(m.to) || /[\r\n]/.test(m.to) || /[\r\n]/.test(m.subject) || !EMAIL_RE.test(sender) || /[\r\n]/.test(sender) || /[\r\n]/.test(m.fromName ?? '')) {
     return { ok: false, errorKind: 'BAD_INPUT', error: '받는 주소 · 제목 · 보내는 주소 형식이 맞지 않습니다' };
   }
-  const domain = cfg.from.split('@')[1];
+  const domain = sender.split('@')[1];
   const messageId = `<${Date.now().toString(36)}.${randomBytes(8).toString('hex')}@${domain}>`;
   const sock = connect(cfg);
   sock.setEncoding('utf8');
@@ -110,7 +125,7 @@ export async function smtpSend(cfg: SmtpConfig, m: MailMessage, connect: SmtpCon
     await step('AUTH LOGIN', 334, 'AUTH');
     await step(Buffer.from(cfg.user).toString('base64'), 334, 'AUTH');
     await step(Buffer.from(cfg.pass).toString('base64'), 235, 'AUTH');
-    await step(`MAIL FROM:<${cfg.from}>`, 250, 'REJECTED');
+    await step(`MAIL FROM:<${sender}>`, 250, 'REJECTED');
     await step(`RCPT TO:<${m.to}>`, 250, 'REJECTED');
     await step('DATA', 354, 'REJECTED');
     await step(buildMessage(cfg, m, messageId) + '\r\n.', 250, 'REJECTED');

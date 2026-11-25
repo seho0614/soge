@@ -55,6 +55,12 @@ npx ts-node -P tsconfig.scripts.json scripts/test-notify-mail.ts | tail -1 || FA
 step "메일 반송 · 수신 거부 받기 (v10.209 · 거래 안에서 되돌림)"
 npx ts-node -P tsconfig.scripts.json scripts/test-ses-feedback.ts | tail -1 || FAIL=1
 
+step "공용 메일함 받기 (v10.789 ~ 791 · 거래 안에서 되돌림)"
+npx ts-node -P tsconfig.scripts.json scripts/test-mail-inbound.ts | tail -1 || FAIL=1
+
+step "간주 끈 뒤 처리 도구 (v10.792 · 거래 안에서 되돌림)"
+npx ts-node -P tsconfig.scripts.json scripts/test-assume-after.ts | tail -1 || FAIL=1
+
 step "동네픽 AI 큐레이션 (v10.211 · 거래 안에서 되돌림)"
 npx ts-node -P tsconfig.scripts.json scripts/test-town-pick.ts | tail -1 || FAIL=1
 

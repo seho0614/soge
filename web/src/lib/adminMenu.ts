@@ -34,6 +34,7 @@ export const TABS = [
   ['members', '회원'],
   ['users', '사업자 인증'],
   ['inquiries', '1:1 문의'],   /* v10.333 (D225) — 고객센터 문의 답변함 */
+  ['mailbox', '공용 메일함'],   /* v10.791 (D330 · docs/906) 사내 웹메일 W1 — privacy@ · help@ · admin@ · dmarc@ */
   ['mkt-campaign', '문자 · 메일 캠페인'],   /* v10.483 (D268 · docs/621) — 마케팅 동의자만 · 야간 동의 · (광고) · 수신 거부 */
   ['mkx-push', '웹 푸시'], ['mkx-sms', '문자 마케팅'], ['mkx-rebuy', '재구매 알림'], ['mkx-groupbuy', '공동구매'],   /* v10.538 ~ 541 (D283 · docs/676 ~ 679) */
   ['mbx-ops', '회원 편의 기능'], ['mbx-dm', '회원 대화 신고'],   /* v10.501 ~ 504 (D273 · docs/639 ~ 642) 최근 본 · 비교 · 가격 알림 · 회원 대화 */
@@ -328,6 +329,7 @@ hrxAddTabs(GROUP_SECTIONS.admacc?.find((s) => s.label === '매입 · 경비')?.t
 hrxAddTabs(GROUPS.find((g) => g.key === 'admptn')?.tabs, 'partners', ['bzx-ptn-contract']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admad')?.tabs, 'prx-adab', ['bzx-ad-budget']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'inquiries', ['bzx-cs-quality']);
+hrxAddTabs(GROUPS.find((g) => g.key === 'admusr')?.tabs, 'inquiries', ['mailbox']);   /* v10.791 (D330) 회원 › 1:1 문의 바로 뒤 */
 hrxAddTabs(GROUPS.find((g) => g.key === 'admacc')?.tabs, 'acct-cardlimit', ['bzx-card-notice']);
 hrxAddTabs(GROUPS.find((g) => g.key === 'admacc')?.tabs, 'acct-severance', ['bzx-hc-sim']);
 hrxAddTabs(GROUP_SECTIONS.admacc?.find((s) => s.label === '자금')?.tabs, 'acct-cardlimit', ['bzx-card-notice']);
@@ -472,6 +474,7 @@ export const PAGE: Record<Tab, { title: string; sub?: string; screen?: string }>
   'hlt-orders':  { title: '소개몰 주문', sub: '결제 완료 주문의 발송을 처리합니다 — 택배사 · 송장번호를 넣으면 배송중, 「배송 완료로」를 누르면 배송 완료.', screen: 'SB-ADM-HOR-010' },
   members:       { title: '회원 목록', sub: '이름 · 이메일 · 연락처로 찾습니다.', screen: 'SB-ADM-MBR-010' },
   users:         { title: '회원 관리', sub: '사업자 신청을 승인 · 반려하고 회원을 정지합니다. 승인 시각이 소개비 수령 자격의 기준일입니다 (INV-10).', screen: 'SB-ADM-USR-010' },
+  mailbox:       { title: '공용 메일함', sub: 'privacy@ · help@ · admin@ · dmarc@sogaebank.com 으로 온 메일입니다. 메일함마다 업무 권한이 있어야 보이고, 열면 열람 기록이 남습니다. 본문은 격리 틀로만 보입니다.', screen: 'SB-ADM-MAIL-010' },
   inquiries:     { title: '1:1 문의', sub: '고객센터 문의하기 · 챗봇 「상담원 연결」로 들어온 문의입니다. 답하면 회원에게 알림이 가고, 기한(접수 뒤 영업일 1일)을 넘기면 운영 알림이 뜹니다.', screen: 'SB-ADM-INQ-010' },
   'csx-aidraft': { title: 'AI 답변 초안', sub: '1:1 문의마다 자주 묻는 질문 · 답변 틀 · 지난 답변을 바탕으로 AI 가 만든 초안입니다. 회원에게 보이지 않고, 운영자가 고쳐 보냅니다.', screen: 'SB-ADM-CSX-010' },
   'csx-churn':   { title: '이탈 위험 신호', sub: '최근 30일 활동이 앞 60일보다 크게 줄어든 회원입니다. 운영 화면 안에서만 보고, 재방문 안내는 마케팅 동의자에게만 캠페인으로 보냅니다.', screen: 'SB-ADM-CSX-020' },

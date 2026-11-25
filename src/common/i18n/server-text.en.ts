@@ -5868,4 +5868,32 @@ export const SERVER_TEXT_EN: Record<string, string> = {
   /* v10.690 ~ 694 (D320 · docs/801) */
   "첫 화면은 누구나 보게만 둘 수 있습니다.": "The first screen can only be visible to everyone.",
   "회원만 볼 수 있는 페이지입니다 — 로그인하십시오.": "This page is for members only — please log in.",
+  /* v10.789 ~ 791 (D330 · docs/904 ~ 906) 사내 웹메일 W1 공용 메일함 */
+  "메일이 없습니다.": "Mail not found.",
+  "이 공용 메일함의 권한이 없습니다 — SUPER 에게 권한그룹을 요청하십시오.": "You do not have permission for this shared mailbox — ask a SUPER for a permission group.",
+  "받은 메일만 처리할 수 있습니다.": "Only received mail can be handled.",
+  "운영자에게만 맡길 수 있습니다.": "Mail can only be assigned to an operator.",
+  "바꿀 수 있는 상태는 DONE · NEW · SPAM 입니다.": "The state can only be changed to DONE, NEW or SPAM.",
+  "답장은 2 ~ 20000자입니다.": "A reply must be 2 to 20,000 characters.",
+  "보낸 사람 주소가 없어 답장할 수 없습니다.": "There is no sender address, so you cannot reply.",
+  "메일 보내기 준비가 안 됐습니다 — 외부 연동 › 메일에서 설정 · 시험 메일을 먼저 하십시오.": "Mail sending is not ready — finish the settings and test mail in Integrations › Mail first.",
+  "답장을 보내지 못했습니다 — 잠시 뒤 다시 해 주십시오.": "The reply could not be sent — please try again shortly.",
+  "첨부가 없습니다.": "Attachment not found.",
+  "바이러스 판정이 나온 메일의 첨부는 내려받을 수 없습니다.": "Attachments of mail flagged with a virus cannot be downloaded.",
+  "공용 메일함 열람 기록은 고치거나 지울 수 없습니다": "Shared mailbox access records cannot be changed or deleted",
+  "이미 본문이 있습니다.": "The body is already there.",
+  "S3 위치나 S3 읽기 설정이 없습니다 — docs/902 W0 블록 6.": "There is no S3 location or S3 read setting — see docs/902 W0 block 6.",
+  "S3 에서 원본을 가져오지 못했습니다 — 읽기 권한 · 크기(15MB)를 확인하십시오.": "Could not fetch the original from S3 — check the read permission and the size (15MB).",
+  "원본을 풀지 못했습니다.": "Could not parse the original.",
+  "본문을 가져왔습니다.": "The body was fetched.",
+  /* v10.792 (D331 · docs/907) 간주 끈 뒤 처리 도구 */
+  "국토부 중개사무소 조회 연동이 설정되지 않았습니다(BROKER_LOOKUP_URL · BROKER_LOOKUP_KEY) — 연동 뒤 다시 하십시오.": "The Ministry of Land brokerage office lookup integration is not configured (BROKER_LOOKUP_URL · BROKER_LOOKUP_KEY) — try again after it is connected.",
+  "재대조 기록이 없습니다.": "There is no re-check record.",
+  "확인 내용을 2 ~ 200자로 적어 주십시오.": "Please enter a confirmation note of 2 to 200 characters.",
+  "다름 · 없음 결과만 확인으로 닫습니다.": "Only mismatch or not-found results can be closed as confirmed.",
+  "이미 확인한 기록입니다.": "This record has already been confirmed.",
+  "재대조 기록은 지울 수 없습니다": "Re-check records cannot be deleted",
+  "재대조 기록은 확인 칸만 한 번 채울 수 있습니다": "Only the confirmation fields of a re-check record can be filled, once",
+  /* v10.793 (D332 · docs/908) 상담 신청 메일 인증번호만으로 받기 스위치 */
+  "휴대폰 인증번호(알림톡) 준비 중이라 지금은 상담 신청을 받지 않습니다. 메일 인증번호만으로 받는 것은 운영 설정 consult.mail_otp 를 켠 뒤입니다.": "Consultation requests are not accepted right now because the phone verification code (KakaoTalk notification) is not ready. Accepting with an email code alone requires turning on the consult.mail_otp setting.",
 };
