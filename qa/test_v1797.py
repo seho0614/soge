@@ -89,6 +89,21 @@ if API and DB:
     pg = call('GET', '/listings?view=0&limit=5&page=2')
     ok('② 정렬 8종 · 관 · 지역 · 급구 · 낱말 · 관련순 200 · 커서 2쪽 안 겹침 · 쪽 번호 total',
        not bad and isinstance(pg.get('total'), int) and pg.get('page') == 2, f'{bad} · total {pg.get("total")}')
+
+# ③ 11/25 묶음 7 전체 점검 고침 — fn_trust_score 예상 줄 수 1(D333) · 카드 21줄에 신뢰 점수를 붙인 조회 비용이 JIT 기준(10만) 아래
+MIG3 = rd('prisma/migrations/D333_trust_score_rows/migration.sql')
+ok('③ D333 — ALTER FUNCTION fn_trust_score(uuid) ROWS 1 · 문서 912 6절',
+   'ALTER FUNCTION public.fn_trust_score(uuid) ROWS 1;' in MIG3 and 'JIT 컴파일' in doc('912_'), '')
+if DB:
+    rows = psql("SELECT prorows FROM pg_proc WHERE proname = 'fn_trust_score'")
+    plan = psql("EXPLAIN (FORMAT JSON) SELECT tr.score FROM (SELECT owner_account_id FROM listings LIMIT 21) l "
+                "LEFT JOIN v_account_trust tr ON tr.account_id = l.owner_account_id")
+    try:
+        cost = json.loads(plan)[0]['Plan']['Total Cost']
+    except Exception:
+        cost = None
+    ok('③ DB — prorows 1 · 신뢰 점수 21줄 조회 비용이 jit_above_cost(100000) 아래',
+       rows == '1' and cost is not None and cost < 100000, f'prorows {rows} · 비용 {cost}')
 passed = sum(1 for r in RES if r[0])
 print(f'\n결과: {passed} / {len(RES)}')
 raise SystemExit(0 if passed == len(RES) else 1)

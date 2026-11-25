@@ -140,7 +140,7 @@ if API and DB:
 
     # ── ④ 느린 조회 ──────────────────────────────────────────────────
     def lock():
-        psql("BEGIN; LOCK TABLE polls IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(1.2); COMMIT;")
+        psql("BEGIN; LOCK TABLE polls IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(2.5); COMMIT;")  # 11/25 묶음 7 — 바쁜 회귀에서 다른 조회가 1.6초까지라 상위 5개에 들게 2.5초
     t = threading.Thread(target=lock); t.start(); time.sleep(0.3)
     call('GET', '/community/polls'); t.join()
     w = call('GET', '/admin/launch-watch', TA)[1]
