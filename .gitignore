@@ -1,0 +1,11 @@
+node_modules
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+npm-debug.log*
+.DS_Store
+# ERP 파일 저장소(서버 디스크 · 재설계 때 S3)
+uploads/
+qa/out/
