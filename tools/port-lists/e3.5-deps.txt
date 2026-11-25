@@ -1,0 +1,6 @@
+# e3.5 공용 의존(docs/plan_e3_deps · 대표 승인 방식) — 복사 · 블록만(R3)
+src/common/integration/switches.ts
+src/modules/qlt/claims.ts::QLT_SOURCES
+src/modules/lsx/bump.ts::LSX_SOURCES
+src/modules/health/health-coupon.ts::COUPON_SOURCES
+src/modules/health/health-benefit.ts::BENEFIT_SOURCES

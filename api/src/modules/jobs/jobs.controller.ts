@@ -14,7 +14,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   readonly q = <T = any>(sql: string, params?: unknown[]) => this.db.query<T>(sql, params ?? []);
   onModuleInit() {
     if ((process.env.ERP_JOBS ?? 'on') === 'off') return;
-    this.timer = setInterval(() => { void tick(this.q, this.sgb).catch(() => undefined); }, 60_000);
+    this.timer = setInterval(() => { void tick(this.q, this.sgb, new Date(), this.db).catch(() => undefined); }, 60_000);
     this.timer.unref?.();
   }
   onModuleDestroy() { if (this.timer) clearInterval(this.timer); }
@@ -44,7 +44,7 @@ export class JobsController {
   @ApiOkResponse({ type: Object })
   async run(@Param('name') name: string, @Req() req: any) {
     if (!/^[a-z][a-z0-9_]{2,40}$/.test(name) || !JOBS[name]) throw new NotFound('등록되지 않은 작업입니다.');
-    const r = await runJob(this.svc.q, this.svc.sgb, name, req.erp.accountId);
+    const r = await runJob(this.svc.q, this.svc.sgb, name, req.erp.accountId, this.svc.db);
     await this.svc.q(`INSERT INTO erp_audit (account_id, action, target, detail) VALUES ($1, 'ERP_JOB_RUN', $2, $3::jsonb)`, [req.erp.accountId, name, JSON.stringify(r)]);
     return r;
   }

@@ -92,6 +92,8 @@ BEGIN
   IF bad > 0 THEN
     RAISE EXCEPTION USING MESSAGE = format('ERP_COPY_MISMATCH: 대조가 다른 표 %s개 — 되돌렸습니다', bad);
   END IF;
+  /* e3.5 (E009) 회계 설정의 운영 값 — 소개뱅크 site_settings 에 저장된 값으로(꼴 검사는 erp_settings 트리거) · 인사 · 사무는 E4 에서 넓힘 */
+  UPDATE erp_settings e SET value = s.value FROM svc.site_settings s WHERE s.key = e.key AND e.key LIKE 'acct.%' AND s.value IS DISTINCT FROM e.value;
   INSERT INTO erp_settings (key, value, scope, description) VALUES ('erp.copy_done_at', now()::text, 'SUPER',
     '소개뱅크 → ERP 자료 복사한 시각(e2.4 · tools/erp-copy.sh) — 있으면 다시 복사하지 않음(스냅샷으로 되돌린 뒤에만)')
     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

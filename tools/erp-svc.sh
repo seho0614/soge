@@ -16,7 +16,9 @@ MODE="${1:-}"; HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$HERE/.."
 export DOCKER_HOST="${DOCKER_HOST:-unix:///run/user/$(id -u)/docker.sock}"
 case "$MODE" in board|apply) ;; *) echo "쓰는 법: bash tools/erp-svc.sh board|apply"; exit 2 ;; esac
 
-LIST=$( { grep -v '^#' "$HERE/svc-tables.txt"; tail -n +2 "$ROOT/docs/e2-svc-refs.tsv" 2>/dev/null | cut -f3; tail -n +2 "$ROOT/docs/e2-fk-dropped.tsv" 2>/dev/null | cut -f4; } \
+# e3.5 (docs/011) — 옮긴 코드(api/src)가 svc.<표> 로 읽는 표도 더함(11/26 svc.hlt_point_txns 빠져 자동 전표 500)
+LIST=$( { grep -v '^#' "$HERE/svc-tables.txt"; tail -n +2 "$ROOT/docs/e2-svc-refs.tsv" 2>/dev/null | cut -f3; tail -n +2 "$ROOT/docs/e2-fk-dropped.tsv" 2>/dev/null | cut -f4;
+          grep -rhoiE '(from|join)[[:space:]]+svc\.[a-z_][a-z0-9_]*' "$ROOT/api/src" "$ROOT/prisma" 2>/dev/null | sed -E 's/.*svc\.//'; } \
         | grep -E '^[a-z_][a-z0-9_]*$' | sort -u)
 N=$(echo "$LIST" | wc -l); IN=$(echo "$LIST" | paste -sd, -)
 GRANTS=$(echo "$LIST" | sed 's/.*/GRANT SELECT ON public.& TO erp_ro;/')

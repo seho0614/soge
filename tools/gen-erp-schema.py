@@ -24,6 +24,7 @@ args = sys.argv[1:]
 OUT = args[args.index('--out') + 1] if '--out' in args else os.path.join(os.path.dirname(__file__), '..', 'prisma', 'migrations')
 DOCS = os.path.join(os.path.dirname(__file__), '..', 'docs')
 CHECK = '--check' in args
+TS_DIR = os.path.join(os.path.dirname(__file__), '..', 'api', 'src')   # e3.5 — 옮긴 코드가 SQL 로 부르는 fn_* 도 E008 로
 
 if not SRC or re.search(r'/sgb(\?|$)', SRC) or ':5432/' in SRC or 'rds.amazonaws.com' in SRC:
     print('SRC_DB 는 버리는 DB(예: …:15432/sgb_gen)로 주십시오 — sgb · 확인판 · RDS 는 쓰지 않습니다'); sys.exit(2)
@@ -102,6 +103,20 @@ while todo:
         for oid in names[w] - need:
             need.add(oid); todo.append(funcs[oid][1])
 
+# e3.5 (docs/011) 옮긴 TypeScript 가 SQL 로 직접 부르는 함수(fn_acct_from 등) — ERP 표를 쓰지 않아 위 규칙에 안 걸림 → 따로 모아 E008
+ts_names = set()
+for dp, _, fs in os.walk(TS_DIR):
+    for fn in fs:
+        if fn.endswith('.ts'):
+            ts_names |= set(re.findall(r'\b((?:fn|pii\.fn|audit\.fn)_[a-z0-9_]+)\s*\(', open(os.path.join(dp, fn), encoding='utf-8').read()))
+e4_need = set(need)
+extra, todo2 = set(), [names.get(n.split('.')[-1], set()) for n in ts_names]
+for oids in todo2:
+    for oid in oids - e4_need - extra:
+        extra.add(oid)
+        for w in refs_in(funcs[oid][1]) & set(names):
+            todo2.append(names[w])
+
 # 소개뱅크 표만 쓰는 함수가 ERP 표를 건드리면(소개뱅크 → ERP 쓰기) — 옮기지 않고 목록에만
 
 # e2.3 (docs/008) 소개뱅크 표 이름을 svc. 로 — 읽기(FROM · JOIN)만 바꿈 · 쓰기(INSERT INTO · UPDATE · DELETE FROM)는 그대로 두고 목록에 'write'
@@ -162,17 +177,38 @@ e004 = head + '\n-- ===== 함수 =====\n' + '\n\n'.join(fn_sql) + '\n\n-- ===== 
 e005 = ('-- E005 소개뱅크 마이그레이션이 넣은 처음 자료(tools/gen-erp-schema.py · 회원 자료 아님 · docs/006)\n'
         '-- 트리거(쌓기만 · 소개뱅크 표 확인)를 건너뛰려고 replica — RDS 는 마스터 사용자로(확인 필요)\n'
         "SET session_replication_role = replica;\nSET search_path = public;\n" + seed + '\nSET session_replication_role = origin;\n')
+e8_sql = []
+for oid in sorted(extra, key=lambda o: (funcs[o][0], o)):
+    n, b = funcs[oid]
+    core = sorted(refs_in(b) & core_tables)
+    b, w = to_svc(b, core)
+    for t in core:
+        svc_refs.append(('write' if t in w else 'function', n, t))
+    e8_sql.append(b.rstrip().rstrip(';') + ';')
+e008 = ('-- E008 옮긴 회계 코드가 SQL 로 부르는 소개뱅크 함수(tools/gen-erp-schema.py · E004 에 없는 것 · 소개뱅크 표는 svc. · docs/011)\n'
+        f'-- 함수 {len(e8_sql)}\nSET check_function_bodies = off;\nSET search_path = public;\n\n' + '\n\n'.join(e8_sql) + '\n')
 fk_tsv = 'table\tconstraint\tcolumns\treferences\n' + ''.join('\t'.join(r) + '\n' for r in sorted(fk_dropped))
 svc_tsv = 'kind\tname\tcore_table\n' + ''.join('\t'.join(r) + '\n' for r in sorted(set(svc_refs)))
 
 files = {os.path.join(OUT, 'E004_core_tables', 'migration.sql'): e004,
          os.path.join(OUT, 'E005_core_seed', 'migration.sql'): e005,
+         os.path.join(OUT, 'E008_core_ts_functions', 'migration.sql'): e008,
          os.path.join(OUT, '..', 'svc-views.sql'): '-- svc 를 읽는 조회(tools/gen-erp-schema.py 가 만듦 · tools/erp-svc.sh 가 svc 를 가져온 뒤 실행 · docs/008)\nSET search_path = public;\n' + '\n\n'.join(svc_view_sql) + '\n',
          os.path.join(DOCS, 'e2-fk-dropped.tsv'): fk_tsv,
          os.path.join(DOCS, 'e2-svc-refs.tsv'): svc_tsv}
+# e3.5 (docs/011) 병합된 마이그레이션은 다시 쓰지 않음(적용된 파일 체크섬) — E004 · E005 는 파일이 있으면 그대로
+#   pg_attver(열 속성 번호) · 처음 자료 updated_at 은 DB 를 새로 만들 때마다 달라 글자가 바뀜 → --check 는 그 둘을 빼고 비교
+FROZEN = ('E004_core_tables', 'E005_core_seed')
+def norm(t):
+    t = re.sub(r'pg_attver=\d+', 'pg_attver=N', t or '')
+    return re.sub(r"'\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+)?\+\d\d'", "'TS'", t)
 diff = 0
 for p, body in files.items():
     old = open(p, encoding='utf-8').read() if os.path.exists(p) else None
+    if old is not None and any(f in p for f in FROZEN):
+        if norm(old) != norm(body):
+            diff += 1; print(f'다름(구조)  {p} — 병합된 파일이라 고치지 않음 · 새 E 번호로 더하십시오')
+        continue
     if CHECK:
         if old != body:
             diff += 1; print(f'다름  {p}')
@@ -180,6 +216,6 @@ for p, body in files.items():
     os.makedirs(os.path.dirname(p), exist_ok=True)
     with open(p, 'w', encoding='utf-8') as f:
         f.write(body)
-print(f'== 표 {len(tables)} · 함수 {len(fn_sql)} · 조회 {len(view_sql)} + svc 조회 {len(svc_view_sql)} · 지운 외래 키 {len(fk_dropped)} · '
+print(f'== 표 {len(tables)} · 함수 {len(fn_sql)} + 코드가 부르는 함수 {len(e8_sql)} · 조회 {len(view_sql)} + svc 조회 {len(svc_view_sql)} · 지운 외래 키 {len(fk_dropped)} · '
       f'소개뱅크 표 읽는 곳 {len(set(svc_refs))} · 처음 자료 {seed.count("INSERT INTO")}줄')
 sys.exit(1 if diff else 0)

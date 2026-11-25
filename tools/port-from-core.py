@@ -11,6 +11,8 @@
     R2 site_settings 읽기 → erp_site_settings (ERP 설정 먼저 · 없으면 소개뱅크 svc.site_settings — E008)
     W  소개뱅크 표 쓰기(INSERT INTO · UPDATE · DELETE FROM) → 바꾸지 않고 목록에 'write'(E3 다음 판에서 내부 API 로)
     I  import 가 ERP 에 없는 파일을 가리키면 목록에 'missing-import'(바꾸지 않음 · 그 판에서 옮기거나 대체)
+    R3 목록 줄이 `경로::이름1,이름2` 면 파일 전체가 아니라 그 최상위 선언(과 그것이 쓰는 같은 파일 안 선언 · 쓰는 import 줄)만 글자 그대로
+       (e3.2 — 자동 전표가 쓰는 소개몰 · 품질 · 끌어올리기 *_SOURCES 블록 · 파일째 가져오면 결제 등 소개뱅크 의존이 딸려 옴)
   --check : 쓰지 않고 지금 파일과 같은지만(같으면 0)
 """
 import os, re, sys
@@ -36,6 +38,39 @@ for d in sorted(os.listdir(mdir)):
                 core_tables.add(t)
 core_tables.discard('site_settings')   # R2 가 따로
 
+
+def top_decls(text):
+    """최상위 선언 이름 → (시작 줄, 끝 줄) — 괄호 깊이로 끝을 찾음(문자열 안 괄호는 템플릿 ${} 만 짝이 맞는다고 봄)"""
+    lines = text.split('\n'); out = {}; i = 0
+    while i < len(lines):
+        m = re.match(r'(?:export\s+)?(?:const|let|function|async\s+function|type|interface|class)\s+([A-Za-z_][A-Za-z0-9_]*)', lines[i])
+        if not m:
+            i += 1; continue
+        depth, j = 0, i
+        while j < len(lines):
+            depth += sum(lines[j].count(c) for c in '{[(') - sum(lines[j].count(c) for c in '}])')
+            if depth <= 0 and (lines[j].rstrip().endswith((';', '}')) or j > i and depth < 0):
+                break
+            j += 1
+        out[m.group(1)] = (i, j); i = j + 1
+    return out, lines
+
+def pick(text, names):
+    decls, lines = top_decls(text)
+    want, todo = set(), list(names)
+    while todo:
+        n = todo.pop()
+        if n in want or n not in decls: continue
+        want.add(n); a, b = decls[n]
+        body = '\n'.join(lines[a:b + 1])
+        todo += [w for w in set(re.findall(r'\b[A-Za-z_][A-Za-z0-9_]*\b', body)) if w in decls and w not in want]
+    keep = sorted((decls[n] for n in want))
+    body = '\n\n'.join('\n'.join(lines[a:b + 1]) for a, b in keep)
+    imps = [l for l in lines if l.startswith('import ') and any(re.search(r'\b' + re.escape(x.strip().split(' as ')[-1]) + r'\b', body)
+            for x in re.sub(r"^import\s+(type\s+)?\{?|\}?\s+from.*$", '', l).split(','))]
+    missing = [n for n in names if n not in decls]
+    return '\n'.join(imps) + '\n\n' + body + '\n', missing
+
 files = [ln.strip() for ln in open(LIST, encoding='utf-8') if ln.strip() and not ln.lstrip().startswith('#')]
 report, diff = [], 0
 R1 = re.compile(r'(?<![\w.])(FROM|JOIN)(\s+)(?:public\.)?(' + '|'.join(sorted(map(re.escape, core_tables), key=len, reverse=True)) + r')\b(?!\s*\()', re.I)
@@ -43,12 +78,17 @@ R2 = re.compile(r'(?<![\w.])(FROM|JOIN)(\s+)(?:public\.)?site_settings\b', re.I)
 RW = re.compile(r'\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:public\.)?([a-z_][a-z0-9_]*)\b', re.I)
 IMP = re.compile(r"""from\s+'(\.{1,2}/[^']+)'""")
 
-for rel in files:
+for entry in files:
+    rel, _, syms = entry.partition('::')
     src = os.path.join(CORE, rel)
     if not os.path.isfile(src):
         report.append((rel, '0', 'missing-file', rel, '')); continue
+    text = open(src, encoding='utf-8').read()
+    if syms:
+        text, miss = pick(text, [x.strip() for x in syms.split(',') if x.strip()])
+        report.append((rel, '0', 'R3-pick', syms, ', '.join(miss) or 'ok'))
     out_lines = []
-    for i, line in enumerate(open(src, encoding='utf-8').read().split('\n'), 1):
+    for i, line in enumerate(text.split('\n'), 1):
         new = line
         # DELETE FROM <소개뱅크 표> 는 쓰기 — R1 이 FROM 을 읽기로 보지 않게 먼저 표시
         for m in RW.finditer(line):
@@ -64,11 +104,12 @@ for rel in files:
         for m in IMP.finditer(new):
             target = os.path.normpath(os.path.join(os.path.dirname(rel), m.group(1)))
             erp_t = os.path.join(ROOT, 'api', target)
-            if not (os.path.isfile(erp_t + '.ts') or os.path.isfile(os.path.join(erp_t, 'index.ts')) or target + '.ts' in [os.path.normpath(f) for f in files]):
+            if not (os.path.isfile(erp_t + '.ts') or os.path.isfile(os.path.join(erp_t, 'index.ts')) or target + '.ts' in [os.path.normpath(f.partition('::')[0]) for f in files]):
                 report.append((rel, str(i), 'missing-import', m.group(1), target))
         out_lines.append(new)
     body = '\n'.join(out_lines)
-    head = f'/* e3 (docs/010) 소개뱅크 {rel} 를 tools/port-from-core.py 로 옮김 — 규칙 R1 · R2 만 적용 · 바꾼 줄은 docs/e3-port-*.tsv */\n'
+    head = (f'/* e3 (docs/010) 소개뱅크 {rel} 를 tools/port-from-core.py 로 옮김 — 규칙 R1 · R2 만 적용 · 바꾼 줄은 docs/e3-port-*.tsv */\n' if not syms else
+            f'/* e3 (docs/010) 소개뱅크 {rel} 에서 {syms} 와 그것이 쓰는 선언만 옮김(R3) — 글자 그대로 · R1 · R2 · 나머지는 소개뱅크에 남음 */\n')
     body = head + body
     dst = os.path.join(ROOT, 'api', rel)
     old = open(dst, encoding='utf-8').read() if os.path.isfile(dst) else None

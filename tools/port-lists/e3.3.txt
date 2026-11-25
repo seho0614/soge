@@ -1,0 +1,9 @@
+# e3.3 신고 — 부가세 · 법인세 · 원천세 · 연말정산 · 신고 서식 (docs/e3.3-notes.md)
+# 씨앗: filings · vatform · corptax · whtformula · yearend · exemptinv · acct-filings.controller + ./ import 닫힘(예약 컨트롤러 acct.controller 제외)
+src/modules/acct/acct-filings.controller.ts
+src/modules/acct/corptax.ts
+src/modules/acct/exemptinv.ts
+src/modules/acct/filings.ts
+src/modules/acct/vatform.ts
+src/modules/acct/whtformula.ts
+src/modules/acct/yearend.ts

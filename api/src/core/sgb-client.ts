@@ -21,7 +21,7 @@ export const introspectCacheClear = () => cache.clear();
 export type FetchLike = (url: string, init?: any) => Promise<{ ok: boolean; status: number; json(): Promise<any> }>;
 
 export class SgbClient {
-  constructor(private readonly f: FetchLike = (u, i) => fetch(u, { ...i, signal: AbortSignal.timeout(5000) }) as any,
+  constructor(private readonly f: FetchLike = (u, i) => fetch(u, { ...i, signal: AbortSignal.timeout(i?.timeoutMs ?? 5000) }) as any,   // e3.5 — AI 한 번 부르기만 60초(timeoutMs)
               private readonly env: NodeJS.ProcessEnv = process.env) {}
 
   private base() { return String(this.env.SGB_API_URL ?? 'http://localhost:3000/api/v1').replace(/\/+$/, ''); }
@@ -48,7 +48,8 @@ export class SgbClient {
   async post<T = any>(path: string, body: unknown): Promise<{ status: number; body: T }> {
     let r;
     try {
-      r = await this.f(`${this.base()}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'X-Erp-Service-Token': this.svc() }, body: JSON.stringify(body) });
+      r = await this.f(`${this.base()}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'X-Erp-Service-Token': this.svc() }, body: JSON.stringify(body),
+        timeoutMs: path.startsWith('/internal/erp/agent/complete') ? 60_000 : undefined });
     } catch {
       throw Unavailable('ERP_SGB_DOWN', '소개뱅크에 연결하지 못했습니다 — 잠시 뒤 다시 해 주십시오.');
     }
@@ -64,5 +65,30 @@ export class SgbClient {
     try { return (await this.post('/internal/erp/notify', n)).status === 200; } catch { return false; }
   }
 
+  /* e3.5 (docs/011) 소개뱅크 내부 API 부르기 — GET · POST · 바이트(파일 몸통) · 결과를 그대로(상태 · 본문) */
+  async get<T = any>(path: string): Promise<{ status: number; body: T }> {
+    let r;
+    try { r = await this.f(`${this.base()}${path}`, { headers: { 'X-Erp-Service-Token': this.svc() } }); }
+    catch { throw Unavailable('ERP_SGB_DOWN', '소개뱅크에 연결하지 못했습니다 — 잠시 뒤 다시 해 주십시오.'); }
+    return { status: r.status, body: (await r.json().catch(() => ({}))) as T };
+  }
+  async bytes(path: string): Promise<{ status: number; data: Buffer; contentType: string }> {
+    let r: any;
+    try { r = await this.f(`${this.base()}${path}`, { headers: { 'X-Erp-Service-Token': this.svc() } }); }
+    catch { throw Unavailable('ERP_SGB_DOWN', '소개뱅크에 연결하지 못했습니다 — 잠시 뒤 다시 해 주십시오.'); }
+    const data = r.ok && r.arrayBuffer ? Buffer.from(await r.arrayBuffer()) : Buffer.alloc(0);
+    return { status: r.status, data, contentType: String(r.headers?.get?.('content-type') ?? 'application/octet-stream') };
+  }
+
   async redeem(code: string) { return this.post<{ accessToken?: string; refreshToken?: string; accountId?: string; code?: string; message?: string }>('/internal/erp/handoff/redeem', { code }); }
+}
+
+/* e3.5 — 함수에서도 부를 수 있게 하나만(app.module 도 이것을 씀) */
+export const sgb = new SgbClient();
+
+/** 내부 API 결과가 200 이 아니면 소개뱅크가 준 오류(code · message)를 그대로 다시 던짐 */
+export function sgbOk<T>(r: { status: number; body: any }): T {
+  if (r.status >= 200 && r.status < 300) return r.body as T;
+  const { HttpException } = require('@nestjs/common');
+  throw new HttpException({ code: r.body?.code ?? 'ERP_SGB_ERROR', message: r.body?.message ?? '소개뱅크 처리에 실패했습니다.' }, r.status || 502);
 }

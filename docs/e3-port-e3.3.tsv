@@ -1,0 +1,12 @@
+file	line	rule	before	after
+src/modules/acct/acct-filings.controller.ts	9	missing-import	../admin/export-approval	src/modules/admin/export-approval
+src/modules/acct/acct-filings.controller.ts	10	missing-import	./acct.controller	src/modules/acct/acct.controller
+src/modules/acct/corptax.ts	42	R1/R2	`SELECT key, value FROM site_settings WHERE key IN ('acct.corp_tax_brackets', 'acct.corp_local_rate', 'acct.corp_fiscal_end')`);	`SELECT key, value FROM erp_site_settings WHERE key IN ('acct.corp_tax_brackets', 'acct.corp_local_rate', 'acct.corp_fiscal_end')`);
+src/modules/acct/exemptinv.ts	3	missing-import	../../common/integration/switches	src/common/integration/switches
+src/modules/acct/exemptinv.ts	23	R1/R2	const [r] = await db.query<{ value: string | null }>(`SELECT value FROM site_settings WHERE key = 'acct.exempt_invoice'`);	const [r] = await db.query<{ value: string | null }>(`SELECT value FROM erp_site_settings WHERE key = 'acct.exempt_invoice'`);
+src/modules/acct/filings.ts	40	R1/R2	FROM point_cashouts WHERE status = 'PAID' AND to_char(paid_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM') = $1`, [ym]);	FROM svc.point_cashouts WHERE status = 'PAID' AND to_char(paid_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM') = $1`, [ym]);
+src/modules/acct/filings.ts	107	R1/R2	const [co] = await db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'footer.company_name'`);	const [co] = await db.query<{ v: string | null }>(`SELECT value AS v FROM erp_site_settings WHERE key = 'footer.company_name'`);
+src/modules/acct/filings.ts	123	R1/R2	FROM acct_insurance_done d LEFT JOIN accounts a ON a.id = d.created_by ORDER BY d.employee_id, d.kind, d.id DESC`);	FROM acct_insurance_done d LEFT JOIN svc.accounts a ON a.id = d.created_by ORDER BY d.employee_id, d.kind, d.id DESC`);
+src/modules/acct/filings.ts	161	R1/R2	const [s] = await db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'acct.insurance_alert'`);	const [s] = await db.query<{ v: string | null }>(`SELECT value AS v FROM erp_site_settings WHERE key = 'acct.insurance_alert'`);
+src/modules/acct/vatform.ts	81	R1/R2	const [st] = await db.query<{ v: string | null }>(`SELECT value AS v FROM site_settings WHERE key = 'acct.vat_efile_credit'`);	const [st] = await db.query<{ v: string | null }>(`SELECT value AS v FROM erp_site_settings WHERE key = 'acct.vat_efile_credit'`);
+src/modules/acct/yearend.ts	31	R1/R2	FROM acct_yearend_checks c LEFT JOIN accounts a ON a.id = c.created_by	FROM acct_yearend_checks c LEFT JOIN svc.accounts a ON a.id = c.created_by

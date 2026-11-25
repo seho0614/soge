@@ -1,0 +1,26 @@
+# e3.4 (docs/010) 은행 · PG 정산 · 매입 · 경비 · 영수증 AI · 세금계산서 받은 함 · 카드 한도 · 미수 독촉 · 자금 — 씨앗 15 + ./ import 닫힌 모음(tools 결정적 · 다른 갈래와 겹치면 같은 결과) · 예약 컨트롤러 제외
+src/modules/acct/accountant.ts
+src/modules/acct/accrual.ts
+src/modules/acct/acct-extra.controller.ts
+src/modules/acct/aging.ts
+src/modules/acct/approval.ts
+src/modules/acct/archive.ts
+src/modules/acct/bank.ts
+src/modules/acct/bankfeed.ts
+src/modules/acct/bizcheck.ts
+src/modules/acct/cardlimit.ts
+src/modules/acct/cashflow.ts
+src/modules/acct/cashplan.ts
+src/modules/acct/contracts.ts
+src/modules/acct/corptax.ts
+src/modules/acct/depts.ts
+src/modules/acct/dunning.ts
+src/modules/acct/expense.ts
+src/modules/acct/journal.ts
+src/modules/acct/payroll.ts
+src/modules/acct/pgsettle.ts
+src/modules/acct/purchase.ts
+src/modules/acct/receipt-ai.ts
+src/modules/acct/taxinbox.ts
+src/modules/acct/transfer.ts
+src/modules/acct/whtformula.ts

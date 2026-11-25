@@ -1,5 +1,6 @@
 kind	name	core_table
 function	fn_acct_approval_line_guard	accounts
+function	fn_acct_from	site_settings
 function	fn_acct_manual_guard	account_roles
 function	fn_acct_req_link_guard	site_settings
 function	fn_acct_stock_move	hlt_product_options
@@ -8,6 +9,7 @@ function	fn_acct_stock_move	hlt_sellers
 function	fn_acct_stock_rule_guard	hlt_product_options
 function	fn_acct_stock_rule_guard	hlt_products
 function	fn_acct_stock_rule_guard	hlt_sellers
+function	fn_acct_stub_ok	site_settings
 function	fn_corp_doc_versions_guard	files
 function	fn_file_can_read	businesses
 function	fn_file_can_read	files
@@ -43,6 +45,9 @@ function	fn_qlt_lot_guard	hlt_products
 function	fn_qlt_lot_guard	hlt_sellers
 function	fn_qlt_lot_product_guard	hlt_products
 function	fn_qlt_lot_product_guard	hlt_sellers
+function	fn_smx_remote_exempt	hlt_order_items
+function	fn_smx_remote_exempt	hlt_orders
+function	fn_smx_remote_exempt	site_settings
 function	fn_staff_left_role	account_roles
 function	pgx_groups_task	account_roles
 function	pgx_groups_task	site_settings

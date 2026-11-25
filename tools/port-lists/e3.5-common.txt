@@ -1,0 +1,7 @@
+# e3.5 (docs/011) 오류 변환기 — 소개뱅크 DbErrorFilter(DB 트리거 오류 → 409 · 422 · 코드 · 화면 언어 글) 와 그것이 쓰는 것
+src/common/db-error.filter.ts
+src/common/server-error-count.ts
+src/common/i18n/server-text.ts
+src/common/i18n/server-text.en.ts
+src/common/i18n/server-text.ja.ts
+src/common/i18n/server-text.zh.ts
