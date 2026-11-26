@@ -47,7 +47,7 @@ if [ -z "$ONLY" ] && [ "${AUDIT:-1}" != 0 ]; then
     [ -f "$d/package-lock.json" ] || continue
     n=$(docker run --rm -v "$d":/w:ro -w /w node:22-slim sh -c 'npm audit --omit=dev --package-lock-only --json 2>/dev/null' \
         | python3 -c 'import sys,json; m=(json.load(sys.stdin).get("metadata") or {}).get("vulnerabilities") or {}; print(m.get("high",0)+m.get("critical",0))' 2>/dev/null || echo "?")
-    AU="$AU $(echo "$d" | sed -E "s#.*/(core-[^/]*)$#\1#; s#.*/sgb-erp/#erp-#")=$n"
+    case "$d" in */core-*) lab=${d##*/};; */sgb-erp/*) lab=erp-${d##*/};; *) lab=$d;; esac; AU="$AU $lab=$n"
   done
   rm -rf -- "${AUD:?}"; say "①-4 의존 패키지 보안(높음 이상) —$AU"
 fi

@@ -15,7 +15,7 @@ ok('① D323 — 점검 표 · 2시간 · 겹침 트리거 · 정기 작업 1분
    all(w in M for w in ('CREATE TABLE IF NOT EXISTS public.gwan_maintenances', "ends_at <= starts_at + interval '2 hours'", 'GWAN_MAINT_OVERLAP:', "VALUES ('gwan_maint', 1,",
                         "('POST', '/admin/gwan-maintenances/{id}/end', 'gwan-ux', 'EDIT')")) and 'DELETE FROM' not in M, '')
 ok('① 서버 — tick(시작에 닫고 was_open · 예약 게시 · 끝에 열려 있던 관만 다시 엶 · 못 열면 WARN) · 취소 · 지금 끝내기 · 정기 작업 이름 3곳',
-   all(w in SV for w in ('async tick()', "UPDATE gwans SET is_active = false WHERE code = $1", "UPDATE gwans SET is_active = true WHERE code = $1 AND NOT is_active", 'this.layouts.publishDue()',
+   all(w in SV for w in ('async tick(', "UPDATE gwans SET is_active = false WHERE code = $1", "UPDATE gwans SET is_active = true WHERE code = $1 AND NOT is_active", 'this.layouts.publishDue()',
                          'this.pages.publishDue()', "'GWAN_MAINT_REOPEN_FAIL', 'WARN'", 'async cancel(', 'async end(', 'async publicStatus('))
    and "case 'gwan_maint':" in SC and "| 'gwan_maint'" in SC and "'gwan_maint'," in WC and CT.count("@Roles('SUPER')") >= 3 and "@Get('gwans/:code/maintenance')" in CT, '')
 ok('① 화면 — 페이지 목록 맨 위 「관 점검 시간」(관 · 시작 · 길이 15 ~ 120분 · 안내 글 · 예약 · 취소 · 지금 끝내기)',
